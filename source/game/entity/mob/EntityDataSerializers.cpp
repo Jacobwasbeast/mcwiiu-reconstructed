@@ -45,11 +45,11 @@ EntityDataSerializers::COMPOUND_TAG_EntityDataSerializer::COMPOUND_TAG_EntityDat
 void EntityDataSerializers::COMPOUND_TAG_EntityDataSerializer::write(DataOutputStream* output, CompoundTag* value) const { output->writeNbt(value); }
 CompoundTag* EntityDataSerializers::COMPOUND_TAG_EntityDataSerializer::read(DataInputStream* input) const { return input->readNbt(); }
 EntityDataAccessor<CompoundTag*>* EntityDataSerializers::COMPOUND_TAG_EntityDataSerializer::createAccessor(int id) { return getOrCreateStoredAccessor(id); }
-CompoundTag* EntityDataSerializers::COMPOUND_TAG_EntityDataSerializer::copy(CompoundTag* value) const { return value == NULL ? NULL : value->copy(); }
+CompoundTag* EntityDataSerializers::COMPOUND_TAG_EntityDataSerializer::copy(CompoundTag* value) const { return value->copy(); }
 
 EntityDataSerializers::DIRECTION_EntityDataSerializer::DIRECTION_EntityDataSerializer(EntityDataSerializerEnum::EEntityDataSerializer id) : EntityDataSerializer<const Direction*>(id) {}
-void EntityDataSerializers::DIRECTION_EntityDataSerializer::write(DataOutputStream* output, const Direction* value) const { output->writeByte(static_cast<unsigned char>(value->get3DDataValue())); }
-const Direction* EntityDataSerializers::DIRECTION_EntityDataSerializer::read(DataInputStream* input) const { return Direction::from3DDataValue(input->readUnsignedByte()); }
+void EntityDataSerializers::DIRECTION_EntityDataSerializer::write(DataOutputStream* output, const Direction* value) const { output->write(value->get3DDataValue()); }
+const Direction* EntityDataSerializers::DIRECTION_EntityDataSerializer::read(DataInputStream* input) const { return Direction::from3DDataValue(input->read()); }
 EntityDataAccessor<const Direction*>* EntityDataSerializers::DIRECTION_EntityDataSerializer::createAccessor(int id) { return getOrCreateStoredAccessor(id); }
 const Direction* EntityDataSerializers::DIRECTION_EntityDataSerializer::copy(const Direction* value) const { return value; }
 
@@ -79,9 +79,9 @@ BlockPos* EntityDataSerializers::OPTIONAL_BLOCK_POS_EntityDataSerializer::copy(B
 
 EntityDataSerializers::ROTATIONS_EntitySerializer::ROTATIONS_EntitySerializer(EntityDataSerializerEnum::EEntityDataSerializer id) : EntityDataSerializer<const Rotations*>(id) {}
 void EntityDataSerializers::ROTATIONS_EntitySerializer::write(DataOutputStream* output, const Rotations* value) const { output->writeFloat(value->getX()); output->writeFloat(value->getY()); output->writeFloat(value->getZ()); }
-const Rotations* EntityDataSerializers::ROTATIONS_EntitySerializer::read(DataInputStream* input) const { return new Rotations(input->readFloat(), input->readFloat(), input->readFloat()); }
+const Rotations* EntityDataSerializers::ROTATIONS_EntitySerializer::read(DataInputStream* input) const { float x = input->readFloat(); float y = input->readFloat(); float z = input->readFloat(); return new Rotations(x, y, z); }
 EntityDataAccessor<const Rotations*>* EntityDataSerializers::ROTATIONS_EntitySerializer::createAccessor(int id) { return getOrCreateStoredAccessor(id); }
-const Rotations* EntityDataSerializers::ROTATIONS_EntitySerializer::copy(const Rotations* value) const { return value == NULL ? NULL : new Rotations(value->getX(), value->getY(), value->getZ()); }
+const Rotations* EntityDataSerializers::ROTATIONS_EntitySerializer::copy(const Rotations* value) const { return value == NULL ? NULL : new Rotations(*value); }
 
 EntityDataSerializers::STRING_EntityDataSerializer::STRING_EntityDataSerializer(EntityDataSerializerEnum::EEntityDataSerializer id) : EntityDataSerializer<std::wstring>(id) {}
 void EntityDataSerializers::STRING_EntityDataSerializer::write(DataOutputStream* output, std::wstring value) const { output->writeUTF(value); }

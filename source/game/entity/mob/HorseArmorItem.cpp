@@ -9,13 +9,13 @@
 static const wchar_t* HORSE_ARMOR_COLOR = L"customColor";
 
 HorseArmorItem::HorseArmorItem(int tier, int protection, int itemId, const wchar_t* hash)
-    : Item(), mTier(tier), mProtection(protection), mTextures(), mHash(hash == NULL ? L"" : hash), mArmorIcon(NULL)
+    : Item(), mArmorIcon(NULL), mTier(tier), mTextures(), mHash(hash == NULL ? L"" : hash), mProtection(protection)
 {
     setBaseItemTypeAndMaterial(itemId, 0);
 }
 
 HorseArmorItem::HorseArmorItem(int tier, int protection, const int* textures, int textureCount, const wchar_t* hash)
-    : Item(), mTier(tier), mProtection(protection), mTextures(), mHash(hash == NULL ? L"" : hash), mArmorIcon(NULL)
+    : Item(), mArmorIcon(NULL), mTier(tier), mTextures(), mHash(hash == NULL ? L"" : hash), mProtection(protection)
 {
     int i;
     for (i = 0; i < textureCount; ++i)
@@ -25,7 +25,7 @@ HorseArmorItem::HorseArmorItem(int tier, int protection, const int* textures, in
 }
 
 HorseArmorItem::HorseArmorItem(int tier, int protection)
-    : Item(), mTier(tier), mProtection(protection), mTextures(1, -1), mHash(L""), mArmorIcon(NULL)
+    : Item(), mArmorIcon(NULL), mTier(tier), mTextures(1, -1), mHash(L""), mProtection(protection)
 {
 }
 
@@ -37,6 +37,11 @@ bool HorseArmorItem::isHorseArmor(Item* item)
 {
     return item == Items::leatherHorseArmor || item == Items::ironHorseArmor || item == Items::goldenHorseArmor
         || item == Items::diamondHorseArmor;
+}
+
+bool HorseArmorItem::isDyeable() const
+{
+    return getTier() == 1;
 }
 
 int HorseArmorItem::getTier() const
@@ -56,11 +61,7 @@ int HorseArmorItem::getProtection() const
 
 int HorseArmorItem::getTexture(int index) const
 {
-    if (index < 0 || index >= (int)mTextures.size())
-    {
-        return -1;
-    }
-    return mTextures[(unsigned int)index];
+    return mTextures.at(index);
 }
 
 int HorseArmorItem::getTextureCount() const
@@ -138,11 +139,6 @@ void HorseArmorItem::setColor(const not_null_ptr<ItemInstance>& itemInstance, in
         itemInstance->setTag(new CompoundTag());
     }
     itemInstance->getTag()->putInt(HORSE_ARMOR_COLOR, color);
-}
-
-bool HorseArmorItem::isDyeable() const
-{
-    return mTier == 1;
 }
 
 std::wstring HorseArmorItem::getTexture() const

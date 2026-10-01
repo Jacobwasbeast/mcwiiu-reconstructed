@@ -52,8 +52,11 @@ public:
     virtual std::wstring getDisplayName();
     virtual float getMaxHealth();
     virtual float getHealth();
-    virtual int getDimension();
+    virtual bool hurt(boost::shared_ptr<MultiEntityMobPart> part, const DamageSource* source, float amount);
+    virtual void reallyHurt(const DamageSource* source, float amount);
     virtual Level* getLevel();
+    virtual void GetInteractTooltip(boost::shared_ptr<MultiEntityMobPart> part, const EntityTooltipDataHolder& holder);
+    virtual int getDimension();
     unsigned int getSynchedAction();
     bool setSynchedAction(EEnderdragonAction action, bool force);
     unsigned int findClosestNode(double x, double y, double z);
@@ -65,8 +68,6 @@ public:
     void navigateToNextPathNode();
     void strafeAttackTarget();
     void findNewTarget();
-    virtual bool hurt(boost::shared_ptr<MultiEntityMobPart> part, const DamageSource* source, float amount);
-    virtual void GetInteractTooltip(boost::shared_ptr<MultiEntityMobPart> part, const EntityTooltipDataHolder& holder);
     void AddParts();
     void onCrystalDestroyed(boost::shared_ptr<EnderCrystal> crystal, const BlockPos& pos, const DamageSource* source);
     void _init();
@@ -86,9 +87,8 @@ public:
     virtual void aiStep();
     virtual ResourceLocation* getDefaultLootTable();
     virtual bool hurt(const DamageSource* source, float amount);
-    virtual void reallyHurt(const DamageSource* source, float amount);
     virtual void kill();
-    virtual void dropExperience(int experience);
+    void dropExperience(int experience);
     virtual void tickDeath();
     virtual void checkDespawn();
     virtual std::vector<boost::shared_ptr<Entity> >* getSubEntities();
@@ -102,7 +102,7 @@ public:
     double getHeadPartYRotDiff(int part, arrayWithLength<double> first, arrayWithLength<double> second);
     virtual unsigned int GetInteractTooltip(const EntityTooltipDataHolder& holder);
     virtual unsigned long long GetType();
-    static boost::shared_ptr<EnderDragon> create(Level* level);
+    static void create(Level* level);
     bool checkAttack();
 
     double mXTarget;

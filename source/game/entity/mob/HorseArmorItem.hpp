@@ -41,11 +41,11 @@ public:
     bool hasMultipleTextures() const;
 
 private:
+    TextureAtlasSprite* mArmorIcon;
     int mTier;
-    int mProtection;
     std::vector<int> mTextures;
     std::wstring mHash;
-    TextureAtlasSprite* mArmorIcon;
+    int mProtection;
 };
 
 #endif

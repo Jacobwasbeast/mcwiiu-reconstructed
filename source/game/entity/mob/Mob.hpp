@@ -117,8 +117,8 @@ public:
     virtual bool checkSpawnRules();
     static const EquipmentSlot* getEquipmentSlotForItem(not_null_ptr<ItemInstance> item);
     virtual bool checkSpawnObstruction();
-    virtual double getSizeScale();
-    virtual double getHeadSizeScale();
+    virtual float getSizeScale();
+    virtual float getHeadSizeScale();
     virtual int getMaxSpawnClusterSize();
     virtual void populateDefaultEquipmentSlots(const DifficultyInstance& difficulty);
     virtual void populateDefaultEquipmentEnchantments(const DifficultyInstance& difficulty);
@@ -146,8 +146,8 @@ public:
     static bool isValidSlotForItem(const EquipmentSlot* slot, not_null_ptr<ItemInstance> item);
     bool setSlot(int slot, const not_null_ptr<ItemInstance>& item);
     bool isControlledByLocalInstance();
-    unsigned int maxFlockSize();
-    unsigned int shouldFollow();
+    int maxFlockSize();
+    bool shouldFollow();
     void setFollowsLeader(bool follows);
     bool followsLeader();
     bool isLeader();
@@ -181,8 +181,8 @@ protected:
     long long mLootTableSeed;
     bool mLeader;
     bool mFollowsLeader;
-    unsigned int mMaxFlockSize;
-    unsigned int mFlockSize;
+    int mMaxFlockSize;
+    int mFlockSize;
 
 private:
     static const EntityDataAccessor<unsigned char>* DATA_MOB_FLAGS_ID;

@@ -54,7 +54,7 @@ private:
     ServerBossEvent* dragonEvent;
     ServerLevel* level;
     std::vector<int> gateways;
-    int mReserved;
+    BlockPattern* exitPortalPattern;
     int ticksSinceDragonSeen;
     int crystalsAlive;
     int ticksSinceCrystalsScanned;

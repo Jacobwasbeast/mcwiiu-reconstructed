@@ -3,6 +3,7 @@
 #include "game/world/block/BlockId.hpp"
 #include "game/core/EntityType.hpp"
 
+#include <algorithm>
 #include <cmath>
 #include <vector>
 
@@ -109,6 +110,7 @@
 #include "game/world/generation/PlayerList.hpp"
 #include "game/world/generation/PlayerTeam.hpp"
 #include "game/core/MemSect.hpp"
+#include "game/core/PIXNamedEvents.hpp"
 
 
 const AttributeModifier* LivingEntity::SPEED_MODIFIER_SPRINTING =
@@ -208,12 +210,9 @@ void LivingEntity::_init()
     mElytraSpeedBoost = 0.0;
     mThermalArea = NULL;
     mThermalAreaChanged = true;
-    mElytraCollisionDistance = 0.0;
     mThermalAreasChecked = false;
-    mDeathMessageId = 0;
-    mDeathMessage = L"";
+    mLastHurtByPlayer = boost::shared_ptr<Player>();
     mHurtByPlayerOnPeaceful = false;
-    mLastHurtByPlayer.reset();
     mLastHurtByPlayerTime = 0;
     mDead = false;
     mNoActionTime = 0;
@@ -225,7 +224,6 @@ void LivingEntity::_init()
     mDeathScore = 0;
     mLastHurt = 0.0f;
     mJumping = false;
-    mInsomniaComponent = NULL;
     mXxa = 0.0f;
     mYya = 0.0f;
     mZza = 0.0f;
@@ -243,14 +241,16 @@ void LivingEntity::_init()
     mLastHurtMobTimestamp = 0;
     mSpeed = 0.0f;
     mNoJumpDelay = 0;
+    mAbsorptionAmount = 0.0f;
+    mLastPos = BlockPos(0, 0, 0);
     mUseItem = ItemInstance::EMPTY;
     mUseItemRemaining = 0;
-    mFallFlyTicks = 0;
-    mAbsorptionAmount = 0.0f;
     mLastDamageSource = NULL;
-    mLastDamageStamp = 0LL;
-    mLastPos = BlockPos(0, 0, 0);
     mFallFlyingStateDisabled = false;
+    mElytraCollisionDistance = 0.0;
+    mDeathMessageId = 0;
+    mDeathMessage = L"";
+    mInsomniaComponent = NULL;
     mLightCacheTicks = 5;
     mLightSampleMinX = 0;
     mLightSampleMinY = 0;
@@ -471,7 +471,7 @@ bool LivingEntity::generatesBubbles()
 
 void LivingEntity::baseTick()
 {
-    if (g_pApp->IsAppPaused())
+    if (gApp.IsAppPaused())
     {
         return;
     }
@@ -504,7 +504,7 @@ void LivingEntity::baseTick()
 
                 if (damagePerBlock > 0.0)
                 {
-                    hurt(DamageSource::IN_WALL, Mth::clamp((float)floor(-distance * damagePerBlock), 1.0f, 3.4028234663852886e+38f));
+                    hurt(DamageSource::IN_WALL, std::max(1.0f, (float)floor(-distance * damagePerBlock)));
                 }
             }
         }
@@ -517,14 +517,9 @@ void LivingEntity::baseTick()
 
     bool instabuildPlayer = false;
 
-    if (isPlayer)
+    if (isPlayer && boost::static_pointer_cast<Player>(shared_from_this())->mAbilities.mInstabuild)
     {
-        boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(shared_from_this());
-
-        if (player->mAbilities.mInstabuild)
-        {
-            instabuildPlayer = true;
-        }
+        instabuildPlayer = true;
     }
 
     if (isAlive())
@@ -637,7 +632,7 @@ void LivingEntity::baseTick()
         mLastHurtByPlayer.reset();
     }
 
-    boost::shared_ptr<LivingEntity> lastHurtMob = getLastHurtMob();
+    boost::shared_ptr<LivingEntity> lastHurtMob = mLastHurtMob.lock();
 
     if (lastHurtMob && !lastHurtMob->isAlive())
     {
@@ -863,7 +858,7 @@ void LivingEntity::addAdditonalSaveData(CompoundTag* tag)
 
         if (!itemInstance->isEmpty())
         {
-            getAttributes()->removeAttributeModifiers(itemInstance->getAttributeModifiers(slot));
+            mAttributes->removeAttributeModifiers(itemInstance->getAttributeModifiers(slot));
         }
     }
 
@@ -876,7 +871,7 @@ void LivingEntity::addAdditonalSaveData(CompoundTag* tag)
 
         if (!itemInstance->isEmpty())
         {
-            getAttributes()->addAttributeModifiers(itemInstance->getAttributeModifiers(slot));
+            mAttributes->addAttributeModifiers(itemInstance->getAttributeModifiers(slot));
         }
     }
 
@@ -921,7 +916,7 @@ void LivingEntity::readAdditionalSaveData(CompoundTag* tag)
 
             if (effectInstance != NULL)
             {
-                mActiveEffects[effectInstance->getEffect()] = effectInstance;
+                mActiveEffects.insert(std::make_pair(effectInstance->getEffect(), effectInstance));
             }
         }
     }
@@ -1306,24 +1301,29 @@ bool LivingEntity::hurt(const DamageSource* source, float damage)
 
     float initialDamage = damage;
 
+    bool helmetHit = false;
+
     if (source == DamageSource::ANVIL || source == DamageSource::FALLING_BLOCK)
     {
-        not_null_ptr<ItemInstance> helmet = getItemSlot(EquipmentSlot::HEAD);
-
-        if (!helmet->isEmpty())
+        if (!getItemSlot(EquipmentSlot::HEAD)->isEmpty())
         {
-            helmet->hurtAndBreak((int)(damage * 4.0f + mRandom->nextFloat() * damage * 2.0f),
-                                 boost::static_pointer_cast<LivingEntity>(shared_from_this()));
-            damage *= 0.75f;
+            helmetHit = true;
         }
+    }
+
+    if (helmetHit)
+    {
+        getItemSlot(EquipmentSlot::HEAD)->hurtAndBreak(
+            (int)(damage * 4.0f + mRandom->nextFloat() * damage * 2.0f),
+            boost::static_pointer_cast<LivingEntity>(shared_from_this()));
+        damage *= 0.75f;
     }
 
     bool blocked = false;
 
     if (damage > 0.0f && isDamageSourceBlocked(source))
     {
-        hurtCurrentlyUsedShield(damage);
-        damage = 0.0f;
+        damage = (damage + 1.0f) * 0.5f;
         blocked = true;
     }
 
@@ -1533,11 +1533,12 @@ bool LivingEntity::checkTotemDeathProtection(const DamageSource* source)
         return false;
     }
 
-    not_null_ptr<ItemInstance> totem = ItemInstance::EMPTY;
+    not_null_ptr<ItemInstance> totem;
+    not_null_ptr<ItemInstance> held = ItemInstance::EMPTY;
 
     for (int hand = 0; hand < 2; ++hand)
     {
-        not_null_ptr<ItemInstance> held = getItemInHand((InteractionHand::EInteractionHand)hand);
+        held = getItemInHand((InteractionHand::EInteractionHand)hand);
 
         if (held->getItem() == Items::totemOfUndying)
         {
@@ -1547,7 +1548,7 @@ bool LivingEntity::checkTotemDeathProtection(const DamageSource* source)
         }
     }
 
-    if (!totem->isEmpty())
+    if (totem)
     {
         setHealth(1.0f);
         removeAllEffects();
@@ -1557,7 +1558,7 @@ bool LivingEntity::checkTotemDeathProtection(const DamageSource* source)
         mLevel->broadcastEntityEvent(shared_from_this(), EntityEvent::TALISMAN_ACTIVATE, 0);
     }
 
-    return !totem->isEmpty();
+    return totem != NULL;
 }
 
 bool LivingEntity::isDamageSourceBlocked(const DamageSource* source)
@@ -2432,7 +2433,7 @@ void LivingEntity::CheckThermalAreas()
 {
     SetLiftForceModifier(1.0);
 
-    LevelGenerationOptions* options = g_pApp->getLevelGenerationOptions();
+    LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
 
     if (options == NULL)
     {
@@ -2441,7 +2442,7 @@ void LivingEntity::CheckThermalAreas()
 
     LevelRuleset* ruleset = options->getRequiredGameRules();
 
-    if (g_pApp->GetFirstMiniGameType() != eMiniGameId_Glide || ruleset == NULL)
+    if (gApp.GetFirstMiniGameType() != eMiniGameId_Glide || ruleset == NULL)
     {
         return;
     }
@@ -2710,16 +2711,20 @@ void LivingEntity::fallFlyingTravel(double& xd, double& yd, double& zd, Vec3* lo
 
 void LivingEntity::travel(float xxa, float yya, float zza)
 {
-    boost::shared_ptr<Player> player;
+    Player* player = NULL;
     bool skeletonHorseWithPlayerPassenger = false;
 
     if ((GetType() & EntityType::PLAYER) == EntityType::PLAYER)
     {
-        player = boost::static_pointer_cast<Player>(shared_from_this());
+        player = static_cast<Player*>(this);
     }
 
-    skeletonHorseWithPlayerPassenger = GetType() == EntityType::SKELETON_HORSE
-                                       && hasPassenger(EntityType::PLAYER);
+    bool isSkeletonHorse = GetType() == EntityType::SKELETON_HORSE;
+
+    if (isSkeletonHorse && hasPassenger(EntityType::PLAYER))
+    {
+        skeletonHorseWithPlayerPassenger = true;
+    }
 
     if (PositionLocked())
     {
@@ -2732,259 +2737,281 @@ void LivingEntity::travel(float xxa, float yya, float zza)
         }
     }
 
-    if (!isEffectiveAi() && !isControlledByLocalInstance())
+    if (isEffectiveAi() || isControlledByLocalInstance())
     {
-        updateModelAnimation();
-        return;
-    }
-
-    bool flyingPlayer = player && player->mAbilities.mFlying;
-
-    if (isFallFlying() && !PositionLocked() && !g_pApp->IsAppPaused()
-        && (flyingPlayer || (!isInWater() && !isInLava())))
-    {
-        CheckThermalAreas();
-
-        double horizontalSpeed = 0.0;
-        Vec3* lookAngle = getLookAngle();
-        fallFlyingTravel(mXd, mYd, mZd, lookAngle, mXRot, mFallDistance, horizontalSpeed,
-                         GetLiftForceModifier());
-
-        if (g_pApp->GetFirstMiniGameType() == eMiniGameId_Glide && player
-            && player->CheckPowerup(PowerupItems::eGlide_Timed_Powerup_ID_SlowFall) && mYd < 0.0)
+        if (isInWater() && !(player != NULL && player->mAbilities.mFlying))
         {
-            move(eMoverType_Self, mXd, mYd * 0.2, mZd, false);
-            updateModelAnimation();
-            return;
-        }
+            PIXBeginNamedEvent(0.0f, "Travel in water");
 
-        double glideLift = mGlideDistance + mThermalLiftSpeed;
-        if (glideLift == 0.0)
-        {
-            move(eMoverType_Self, mXd, mYd, mZd, false);
-            updateModelAnimation();
-            return;
-        }
+            double oldY = mY;
+            float waterSlowdown = isSprinting() ? 0.9f : getWaterSlowDown();
+            float moveSpeed = 0.02f;
 
-        move(eMoverType_Self, mXd, glideLift, mZd, false);
-        if (mThermalLiftSpeed != 0.0)
-        {
-            mYd = 0.0;
-        }
-        updateModelAnimation();
-        return;
-    }
-
-    if (isInLava() && !isInWater() && !flyingPlayer)
-    {
-        double oldY = mY;
-        moveRelative(xxa, yya, zza, 0.02f);
-        move(eMoverType_Self, mXd, mYd, mZd, false);
-
-        mXd *= 0.5;
-        mYd *= 0.5;
-        mZd *= 0.5;
-
-        if (!isNoGravity())
-        {
-            mYd -= 0.02;
-        }
-
-        if (mHorizontalCollision && isFree(mXd, mYd + 0.6 - (mY - oldY), mZd))
-        {
-            mYd = 0.3;
-        }
-
-        updateModelAnimation();
-        return;
-    }
-
-    if (isInWater() && !flyingPlayer)
-    {
-        double oldY = mY;
-        float waterSlowdown = isSprinting() ? 0.9f : getWaterSlowDown();
-        float moveSpeed = GetType() == EntityType::DOLPHIN ? (float)getSpeed() : 0.02f;
-        int depthStrider = EnchantmentHelper::getDepthStrider(
-            boost::static_pointer_cast<LivingEntity>(shared_from_this()));
-
-        if (depthStrider > 3)
-        {
-            depthStrider = 3;
-        }
-
-        if (depthStrider > 0)
-        {
-            float depthFactor = (float)depthStrider / 3.0f;
-            waterSlowdown += (0.546000063419342f - waterSlowdown) * depthFactor;
-            moveSpeed += ((float)getSpeed() - moveSpeed) * depthFactor;
-        }
-
-        if (skeletonHorseWithPlayerPassenger)
-        {
-            float friction = getFrictionForTravel();
-            float acceleration = 0.16277135908603668f / (friction * friction * friction);
-            if (mOnGround)
+            if (GetType() == EntityType::DOLPHIN)
             {
-                moveSpeed = (float)(getSpeed() * (double)acceleration);
+                moveSpeed = getSpeed();
             }
-        }
 
-        if (!isSwimming())
+            if (skeletonHorseWithPlayerPassenger)
+            {
+                float friction = getFrictionForTravel();
+                float acceleration = 0.16277135908603668f / (friction * friction * friction);
+
+                if (mOnGround)
+                {
+                    moveSpeed = (float)(getSpeed() * (double)acceleration);
+                }
+            }
+
+            float depthStrider = (float)EnchantmentHelper::getDepthStrider(
+                boost::static_pointer_cast<LivingEntity>(shared_from_this()));
+
+            if (depthStrider > 3.0f)
+            {
+                depthStrider = 3.0f;
+            }
+
+            if (depthStrider > 0.0f)
+            {
+                waterSlowdown = waterSlowdown + (0.546000063419342f - waterSlowdown) * depthStrider / 3.0f;
+                moveSpeed = moveSpeed + (getSpeed() * 1.0f - moveSpeed) * depthStrider / 3.0f;
+            }
+
+            if (!isSwimming())
+            {
+                mWaterTravelSpeedFactor = 1.0f;
+                moveRelative(xxa, yya, zza, moveSpeed * mWaterTravelSpeedFactor);
+                move(eMoverType_Self, mXd, mYd, mZd, false);
+            }
+            else if (mWaterTravelCheckTicks - 1 < 1)
+            {
+                mWaterTravelCheckTicks = 60;
+                AABB* searchBox = mBoundingBox->grow(5.0);
+                std::vector<boost::shared_ptr<Entity> >* drownedEntities =
+                    mLevel->getEntitiesOfClass(typeid(Drowned), searchBox);
+                mWaterTravelSpeedFactor = drownedEntities->empty() ? 1.0f : 2.0f;
+                delete drownedEntities;
+
+                moveRelative(xxa, yya, zza, moveSpeed * mWaterTravelSpeedFactor);
+                move(eMoverType_Self, mXd, mYd, mZd, false);
+            }
+            else
+            {
+                --mWaterTravelCheckTicks;
+                moveRelative(xxa, yya, zza, moveSpeed * mWaterTravelSpeedFactor);
+                move(eMoverType_Self, mXd, mYd, mZd, false);
+            }
+
+            if (skeletonHorseWithPlayerPassenger)
+            {
+                waterSlowdown = getFrictionForTravel();
+            }
+
+            mXd *= (double)waterSlowdown;
+            mYd *= 0.8;
+            mZd *= (double)waterSlowdown;
+
+            if (player == NULL)
+            {
+                if (shouldApplyWaterGravity())
+                {
+                    mYd -= 0.02;
+                }
+            }
+            else if (!isNoGravity() && !isSwimming())
+            {
+                mYd -= 0.005;
+            }
+
+            if (mHorizontalCollision && isFree(mXd, mYd + 0.6 - mY + oldY, mZd))
+            {
+                mYd = 0.3;
+            }
+
+            PIXEndNamedEvent();
+        }
+        else if (isInLava() && !(player != NULL && player->mAbilities.mFlying))
         {
-            mWaterTravelSpeedFactor = 1.0f;
-            moveRelative(xxa, yya, zza, moveSpeed);
+            PIXBeginNamedEvent(0.0f, "Travel in lava");
+
+            double oldY = mY;
+            moveRelative(xxa, yya, zza, 0.02f);
             move(eMoverType_Self, mXd, mYd, mZd, false);
-        }
-        else if (mWaterTravelCheckTicks <= 1)
-        {
-            mWaterTravelCheckTicks = 60;
-            AABB* searchBox = mBoundingBox->grow(5.0);
-            std::vector<boost::shared_ptr<Entity> >* drownedEntities =
-                mLevel->getEntitiesOfClass(typeid(Drowned), searchBox);
-            mWaterTravelSpeedFactor = drownedEntities->empty() ? 1.0f : 2.0f;
-            delete drownedEntities;
 
-            moveRelative(xxa, yya, zza, moveSpeed * mWaterTravelSpeedFactor);
-            move(eMoverType_Self, mXd, mYd, mZd, false);
-        }
-        else
-        {
-            --mWaterTravelCheckTicks;
-            moveRelative(xxa, yya, zza, moveSpeed * mWaterTravelSpeedFactor);
-            move(eMoverType_Self, mXd, mYd, mZd, false);
-        }
+            mXd *= 0.5;
+            mYd *= 0.5;
+            mZd *= 0.5;
 
-        if (skeletonHorseWithPlayerPassenger)
-        {
-            waterSlowdown = getFrictionForTravel();
-        }
-
-        mXd *= (double)waterSlowdown;
-        mYd *= 0.8;
-        mZd *= (double)waterSlowdown;
-
-        if (!player)
-        {
-            if (shouldApplyWaterGravity())
+            if (!isNoGravity())
             {
                 mYd -= 0.02;
             }
+
+            if (mHorizontalCollision && isFree(mXd, mYd + 0.6 - mY + oldY, mZd))
+            {
+                mYd = 0.3;
+            }
+
+            PIXEndNamedEvent();
         }
-        else if (!isNoGravity() && !isSwimming())
+        else if (isFallFlying() && !PositionLocked() && !gApp.IsAppPaused())
         {
-            mYd -= 0.005;
-        }
+            CheckThermalAreas();
 
-        if (mHorizontalCollision && isFree(mXd, mYd + 0.6 - (mY - oldY), mZd))
-        {
-            mYd = 0.3;
-        }
+            double glideLift = mGlideDistance + mThermalLiftSpeed;
+            double horizontalSpeed = 0.0;
+            double liftForce = GetLiftForceModifier();
+            fallFlyingTravel(mXd, mYd, mZd, getLookAngle(), mXRot, mFallDistance, horizontalSpeed, liftForce);
 
-        updateModelAnimation();
-        return;
-    }
+            if (gApp.GetFirstMiniGameType() == eMiniGameId_Glide && player != NULL
+                && player->CheckPowerup(PowerupItems::eGlide_Timed_Powerup_ID_SlowFall) && mYd < 0.0)
+            {
+                move(eMoverType_Self, mXd, mYd * 0.2, mZd, false);
+            }
+            else if (glideLift == 0.0)
+            {
+                move(eMoverType_Self, mXd, mYd, mZd, false);
+            }
+            else
+            {
+                move(eMoverType_Self, mXd, glideLift, mZd, false);
 
-    MutableBlockPos groundPos(Mth::floor(mX), Mth::floor(mBoundingBox->mMinY - 1.0), Mth::floor(mZ));
-
-    float friction = getFrictionForTravel();
-    float acceleration = 0.16277135908603668f / (friction * friction * friction);
-
-    float speed;
-
-    if (!mOnGround)
-    {
-        if (GetType() == EntityType::WITHER_BOSS)
-        {
-            speed = mFlyingSpeed * acceleration;
+                if (mThermalLiftSpeed != 0.0)
+                {
+                    mYd = 0.0;
+                }
+            }
         }
         else
         {
-            speed = mFlyingSpeed;
+            MutableBlockPos groundPos(Mth::floor(mX), Mth::floor(mBoundingBox->mMinY - 1.0), Mth::floor(mZ));
+
+            float friction = getFrictionForTravel();
+            float acceleration = 0.16277135908603668f / (friction * friction * friction);
+
+            PIXBeginNamedEvent(0.0f, "Update speed");
+
+            float speed;
+
+            if (!mOnGround)
+            {
+                if (GetType() == EntityType::WITHER_BOSS)
+                {
+                    speed = mFlyingSpeed * acceleration;
+                }
+                else
+                {
+                    speed = mFlyingSpeed;
+                }
+            }
+            else
+            {
+                speed = (float)(getSpeed() * (double)acceleration);
+            }
+
+            PIXEndNamedEvent();
+
+            PIXBeginNamedEvent(0.0f, "moveRelative");
+            moveRelative(xxa, yya, zza, speed);
+            PIXEndNamedEvent();
+
+            friction = getFrictionForTravel();
+
+            if (onLadder())
+            {
+                mXd = (double)Mth::clamp((float)mXd, -0.15000000596046448f, 0.15000000596046448f);
+                mZd = (double)Mth::clamp((float)mZd, -0.15000000596046448f, 0.15000000596046448f);
+                mFallDistance = 0.0f;
+
+                if (mYd < -0.15)
+                {
+                    mYd = -0.15;
+                }
+
+                if (isSneaking() && (GetType() & EntityType::PLAYER) == EntityType::PLAYER && mYd < 0.0)
+                {
+                    mYd = 0.0;
+                }
+            }
+
+            PIXBeginNamedEvent(0.0f, "move");
+            move(eMoverType_Self, mXd, mYd, mZd, false);
+            PIXEndNamedEvent();
+
+            if (mHorizontalCollision && onLadder())
+            {
+                mYd = 0.20000000298023224;
+            }
+
+            PIXBeginNamedEvent(0.0f, "Update y delta");
+
+            if (!hasEffect(MobEffects::LEVITATION))
+            {
+                groundPos.set(Mth::floor(mX), 0, Mth::floor(mZ));
+
+                bool loadedChunk = true;
+
+                if (mLevel->mIsClientSide)
+                {
+                    if (!CGameNetworkManager::sInstance.IsHost())
+                    {
+                        loadedChunk = false;
+                    }
+                }
+
+                bool chunkPopulated = false;
+
+                if (mLevel->hasChunkAt(groundPos))
+                {
+                    if (mLevel->getChunkAt(groundPos)->isTerrainPopulated())
+                    {
+                        chunkPopulated = true;
+                    }
+                }
+
+                bool lockVertical = false;
+
+                if (PositionLocked()
+                    && (Minecraft::InMiniGame(eMiniGameId_Tumble, false)
+                        || Minecraft::InMiniGame(eMiniGameId_Glide, false)))
+                {
+                    lockVertical = true;
+                }
+
+                if ((!loadedChunk && !chunkPopulated) || lockVertical)
+                {
+                    mYd = 0.0;
+                }
+                else if (!isNoGravity())
+                {
+                    if (mYd >= 0.0)
+                    {
+                        mYd = mYd + -0.07999999821186066;
+                    }
+                    else if (hasEffect(MobEffects::SLOW_FALLING))
+                    {
+                        mYd = mYd + -0.009999999776482582;
+                        mFallDistance = 0.0f;
+                    }
+                    else
+                    {
+                        mYd = mYd + -0.07999999821186066;
+                    }
+                }
+            }
+            else
+            {
+                mYd = mYd + (0.05 * (double)(getEffect(MobEffects::LEVITATION)->getAmplifier() + 1) - mYd) * 0.2;
+            }
+
+            PIXEndNamedEvent();
+
+            mYd = mYd * 0.9800000190734863;
+            mXd = mXd * (double)friction;
+            mZd = mZd * (double)friction;
         }
     }
-    else
-    {
-        speed = (float)(getSpeed() * (double)acceleration);
-    }
 
-    moveRelative(xxa, yya, zza, speed);
-
-    friction = getFrictionForTravel();
-
-    if (onLadder())
-    {
-        mXd = (double)Mth::clamp((float)mXd, -0.15000000596046448f, 0.15000000596046448f);
-        mZd = (double)Mth::clamp((float)mZd, -0.15000000596046448f, 0.15000000596046448f);
-        mFallDistance = 0.0f;
-
-        if (mYd < -0.15)
-        {
-            mYd = -0.15;
-        }
-
-        if (isSneaking() && (GetType() & EntityType::PLAYER) == EntityType::PLAYER && mYd < 0.0)
-        {
-            mYd = 0.0;
-        }
-    }
-
-    move(eMoverType_Self, mXd, mYd, mZd, false);
-
-    if (mHorizontalCollision && onLadder())
-    {
-        mYd = 0.20000000298023224;
-    }
-
-    bool levitating = hasEffect(MobEffects::LEVITATION);
-    bool loadedChunk = true;
-
-    if (!levitating)
-    {
-        BlockPos here(Mth::floor(mX), 0, Mth::floor(mZ));
-
-        if (mLevel->mIsClientSide && !CGameNetworkManager::sInstance.IsHost())
-        {
-            loadedChunk = false;
-        }
-
-        if (mLevel->hasChunkAt(here) && mLevel->getChunkAt(here)->isTerrainPopulated())
-        {
-            loadedChunk = true;
-        }
-    }
-
-    bool lockVertical = PositionLocked()
-                        && (Minecraft::InMiniGame(eMiniGameId_Tumble, false)
-                            || Minecraft::InMiniGame(eMiniGameId_Glide, false));
-
-    if ((!levitating && !loadedChunk) || lockVertical)
-    {
-        mYd = 0.0;
-    }
-    else if (levitating)
-    {
-        mYd = mYd + (0.05 * (double)(getEffect(MobEffects::LEVITATION)->getAmplifier() + 1) - mYd) * 0.2;
-    }
-    else if (!isNoGravity())
-    {
-        if (mYd >= 0.0)
-        {
-            mYd = mYd - 0.07999999821186066;
-        }
-        else if (hasEffect(MobEffects::SLOW_FALLING))
-        {
-            mYd = mYd - 0.009999999776482582;
-            mFallDistance = 0.0f;
-        }
-        else
-        {
-            mYd = mYd - 0.07999999821186066;
-        }
-    }
-
-    mYd = mYd * 0.9800000190734863;
-    mXd = mXd * (double)friction;
-    mZd = mZd * (double)friction;
     updateModelAnimation();
 }
 
@@ -3031,20 +3058,21 @@ void LivingEntity::takeFallFlyingCollisionDamage()
     float liftFactor = mFallDistance;
     double horizontalSpeed = 0.0;
 
-    fallFlyingTravel(xd, yd, zd, getLookAngle(), xRot, liftFactor, horizontalSpeed,
-                     GetLiftForceModifier());
+    double lookHorizontal = GetLiftForceModifier();
+
+    fallFlyingTravel(xd, yd, zd, getLookAngle(), xRot, liftFactor, horizontalSpeed, lookHorizontal);
 
     if (mHorizontalCollision)
     {
         double speed = sqrt(xd * xd + zd * zd);
-        double damage = (horizontalSpeed - speed) * 10.0 - 3.0;
+        float damage = (float)((horizontalSpeed - speed) * 10.0 - 3.0);
 
-        if (Minecraft::InMiniGame(eMiniGameId_Glide, true) && TakeGlideCollisionDamage())
+        if (Minecraft::InMiniGame(eMiniGameId_Glide, true))
         {
-            damage = 1.0;
+            damage = TakeGlideCollisionDamage() ? 1.0f : 0.0f;
         }
 
-        if (hurt(DamageSource::FALL, (float)damage))
+        if (hurt(DamageSource::FALL, damage))
         {
             playSound(getFallDamageSound((int)damage), 1.0f, 1.0f);
         }
@@ -3061,7 +3089,7 @@ void LivingEntity::takeFallFlyingCollisionDamage()
         {
             float health = getHealth();
 
-            if (hurt(DamageSource::FLY_INTO_WALL, health + 1.0f))
+            if (hurt(DamageSource::FALL, health + 1.0f))
             {
                 playSound(getFallDamageSound((int)(health + 1.0f)), 1.0f, 1.0f);
             }
@@ -3082,12 +3110,14 @@ int LivingEntity::getLightColor()
     double maxY = box->mMaxY;
     double maxZ = box->mMaxZ;
 
+    float blockLight = 0.0f;
+    float skyLight = 0.0f;
     bool riding = false;
 
-    if (isPassenger() && getVehicle())
+    if (isPassenger())
     {
-        if ((getVehicle()->GetType() & EntityType::MINECART) != EntityType::MINECART
-            && getVehicle()->GetType() == EntityType::BOAT)
+        if ((getVehicle()->GetType() & EntityType::MINECART) == EntityType::MINECART
+            || getVehicle()->GetType() == EntityType::BOAT)
         {
             riding = true;
         }
@@ -3099,23 +3129,26 @@ int LivingEntity::getLightColor()
     int maxBlockX = mLightSampleMaxX;
     int maxBlockY = mLightSampleMaxY;
     int maxBlockZ = mLightSampleMaxZ;
+    float volume;
 
     if (riding)
     {
-        double liftedMinY = minY + 1.0;
+        minY = minY + 1.0;
 
-        if (maxY <= liftedMinY)
+        if (maxY <= minY)
         {
-            maxY = liftedMinY + 0.1;
+            maxY = minY + 0.1;
         }
 
         minBlockX = Mth::floor(minX);
-        minBlockY = Mth::floor(liftedMinY);
+        minBlockY = Mth::floor(minY);
         minBlockZ = Mth::floor(minZ);
         maxBlockX = Mth::floor(maxX);
         maxBlockY = Mth::floor(maxY);
         maxBlockZ = Mth::floor(maxZ);
     }
+
+    volume = (float)((maxX - minX) * (maxY - minY) * (maxZ - minZ));
 
     int sampleCount = ((maxBlockX - minBlockX) + 1) * ((maxBlockY - minBlockY) + 1) * ((maxBlockZ - minBlockZ) + 1);
 
@@ -3156,7 +3189,7 @@ int LivingEntity::getLightColor()
         resample = false;
     }
 
-    if (resample)
+    if (resample || sampleCount > 32)
     {
         int index = 0;
 
@@ -3173,28 +3206,68 @@ int LivingEntity::getLightColor()
         }
     }
 
-    float blockLight = 0.0f;
-    float skyLight = 0.0f;
     int index = 0;
 
     for (int x = minBlockX; x <= maxBlockX; ++x)
     {
+        float lowX = (float)x;
+        float highX = lowX + 1.0f;
+
+        if (lowX < minX)
+        {
+            lowX = (float)minX;
+        }
+
+        if (maxX < highX)
+        {
+            highX = (float)maxX;
+        }
+
         for (int y = minBlockY; y <= maxBlockY; ++y)
         {
+            float lowY = (float)y;
+            float highY = lowY + 1.0f;
+
+            if (lowY < minY)
+            {
+                lowY = (float)minY;
+            }
+
+            if (maxY < highY)
+            {
+                highY = (float)maxY;
+            }
+
+            float areaXY = (highX - lowX) * (highY - lowY);
+
             for (int z = minBlockZ; z <= maxBlockZ; ++z)
             {
+                float lowZ = (float)z;
+                float highZ = lowZ + 1.0f;
+
+                if (lowZ < minZ)
+                {
+                    lowZ = (float)minZ;
+                }
+
+                if (maxZ < highZ)
+                {
+                    highZ = (float)maxZ;
+                }
+
+                float weight = (areaXY * (highZ - lowZ)) / volume;
                 int sample = samples[index];
                 ++index;
 
-                blockLight = blockLight + (float)(sample & 255);
-                skyLight = skyLight + (float)((sample >> 16) & 255);
+                blockLight = blockLight + weight * (float)(sample & 0xffff);
+                skyLight = skyLight + weight * (float)(sample >> 16);
             }
         }
     }
 
     if (sampleCount > 32)
     {
-        delete[] samples;
+        delete samples;
     }
 
     if (blockLight > 240.0f)
@@ -3288,12 +3361,12 @@ void LivingEntity::updateEquipmentSlots()
 
         if (!previous->isEmpty())
         {
-            getAttributes()->removeAttributeModifiers(previous->getAttributeModifiers(slot));
+            mAttributes->removeAttributeModifiers(previous->getAttributeModifiers(slot));
         }
 
         if (!current->isEmpty())
         {
-            getAttributes()->addAttributeModifiers(current->getAttributeModifiers(slot));
+            mAttributes->addAttributeModifiers(current->getAttributeModifiers(slot));
         }
 
         if (slot->getType() == EquipmentSlot::HAND)
@@ -3309,6 +3382,8 @@ void LivingEntity::updateEquipmentSlots()
 
 void LivingEntity::tick()
 {
+    PIXBeginNamedEvent(0.0f, "Living entity tick");
+
     mTickCache.buildCache(mLevel, AABB::newTemp(mBoundingBox));
 
     Entity::tick();
@@ -3338,7 +3413,9 @@ void LivingEntity::tick()
 
         if (mTickCount % 20 == 0)
         {
+            PIXBeginNamedEvent(0.0f, "Recheck combat tracker status");
             getCombatTracker()->recheckStatus();
+            PIXEndNamedEvent();
         }
 
         if (!mGlowing)
@@ -3357,8 +3434,8 @@ void LivingEntity::tick()
         mInsomniaComponent->tick();
     }
 
-    BlockPos pos(mX + (double)(mBbWidth * 0.5f), mY, mZ + (double)(mBbWidth * 0.5f));
-    const BlockState* state = mLevel->getBlockState(mTickCache, pos);
+    const BlockState* state = mLevel->getBlockState(
+        mTickCache, BlockPos(mX + (double)(mBbWidth * 0.5f), mY, mZ + (double)(mBbWidth * 0.5f)));
 
     if (Block::getId(state->getBlock()) == BlockId::BUBBLE_COLUMN_SEGMENT)
     {
@@ -3383,7 +3460,9 @@ void LivingEntity::tick()
         mSwimSoundPlayed = false;
     }
 
+    PIXBeginNamedEvent(0.0f, "aiStep");
     aiStep();
+    PIXEndNamedEvent();
 
     double dx = mX - mXo;
     double dz = mZ - mZo;
@@ -3395,7 +3474,7 @@ void LivingEntity::tick()
 
     if (travelled > 0.0025000000745058060f)
     {
-        travelled = Mth::sqrt(travelled) * 3.0f;
+        travelled = sqrtf(travelled) * 3.0f;
 
         float wanted = (float)atan2(dz, dx) * 57.2957763671875f - 90.0f;
         float diff = Mth::abs(Mth::wrapDegrees(mYRot) - wanted);
@@ -3479,6 +3558,7 @@ void LivingEntity::tick()
         mFallFlyTicks = 0;
     }
 
+    PIXEndNamedEvent();
 }
 
 float LivingEntity::tickHeadTurn(float yBodyRot, float headTurnDelta)
@@ -3561,7 +3641,7 @@ void LivingEntity::updateFallFlying()
         {
             float health = getHealth();
 
-            if (hurt(DamageSource::FLY_INTO_WALL, health + 1.0f))
+            if (hurt(DamageSource::FALL, health + 1.0f))
             {
                 playSound(getFallDamageSound((int)(health + 1.0f)), 1.0f, 1.0f);
             }
@@ -3578,20 +3658,19 @@ void LivingEntity::aiStep()
         --mNoJumpDelay;
     }
 
-    if (isControlledByLocalInstance())
-    {
-        mLerpSteps = 0;
-        absMoveTo(mX, mY, mZ, mYRot, mXRot);
-    }
+    bool effectiveAi = isEffectiveAi();
 
-    if (mLerpSteps > 0)
+    if (mLerpSteps > 0 && !isControlledByLocalInstance())
     {
         double lerpX = mX + (mLerpX - mX) / (double)mLerpSteps;
         double lerpY = mY + (mLerpY - mY) / (double)mLerpSteps;
         double lerpZ = mZ + (mLerpZ - mZ) / (double)mLerpSteps;
 
-        mYRot = mYRot + (float)(Mth::wrapDegrees(mLerpYRot - (double)mYRot) / (double)mLerpSteps);
-        mXRot = mXRot + (float)((mLerpXRot - (double)mXRot) / (double)mLerpSteps);
+        double yRotDelta = Mth::wrapDegrees(mLerpYRot - (double)mYRot);
+        double xRotDelta = Mth::wrapDegrees(mLerpXRot - (double)mXRot);
+
+        mYRot = mYRot + (float)(yRotDelta / (double)mLerpSteps);
+        mXRot = mXRot + (float)(xRotDelta / (double)mLerpSteps);
 
         --mLerpSteps;
 
@@ -3625,24 +3704,24 @@ void LivingEntity::aiStep()
             }
         }
     }
-    else if (!isEffectiveAi())
+    else if (!effectiveAi)
     {
         mXd = mXd * 0.98;
         mYd = mYd * 0.98;
         mZd = mZd * 0.98;
     }
 
-    if (Mth::abs(mXd) < 5e-05)
+    if (fabs(mXd) < 5e-05)
     {
         mXd = 0.0;
     }
 
-    if (Mth::abs(mYd) < 5e-05)
+    if (fabs(mYd) < 5e-05)
     {
         mYd = 0.0;
     }
 
-    if (Mth::abs(mZd) < 5e-05)
+    if (fabs(mZd) < 5e-05)
     {
         mZd = 0.0;
     }
@@ -3655,9 +3734,18 @@ void LivingEntity::aiStep()
         mZza = 0.0f;
         mYRota = 0.0f;
     }
-    else if (isEffectiveAi())
+    else
     {
-        serverAiStep();
+        MemSect(25);
+
+        if (effectiveAi)
+        {
+            PIXBeginNamedEvent(0.0f, "serverAiStep");
+            serverAiStep();
+            PIXEndNamedEvent();
+        }
+
+        MemSect(0);
     }
 
 
@@ -3687,18 +3775,24 @@ void LivingEntity::aiStep()
     mZza = mZza * 0.9800000190734863f;
     mYRota = mYRota * 0.8999999761581421f;
 
+    PIXBeginNamedEvent(0.0f, "travel");
     travel(mXxa, mYya, mZza);
 
-    if (!g_pApp->IsAppPaused())
+    if (!gApp.IsAppPaused())
     {
         updateFallFlying();
     }
 
+    PIXEndNamedEvent();
+
+    PIXBeginNamedEvent(0.0f, "Push entities");
 
     if (!Minecraft::InMiniGame(eMiniGameId_Glide, false))
     {
         pushEntities();
     }
+
+    PIXEndNamedEvent();
 
 }
 
@@ -4145,65 +4239,72 @@ bool LivingEntity::randomTeleport(double x, double y, double z)
     mZ = z;
 
     BlockPos pos(this);
+    Level* level = mLevel;
     Random* random = getRandom();
 
     bool teleported = false;
 
-    if (mLevel->hasChunkAt(pos) && pos.y > 0)
+    if (level->hasChunkAt(pos) && pos.y > 0)
     {
         bool grounded = true;
-        while (!mLevel->getBlockState(mTickCache, pos.below())->getMaterial()->blocksMotion())
+
+        BlockPos below = pos.below();
+
+        while (!level->getBlockState(mTickCache, below)->getMaterial()->blocksMotion())
         {
-            pos = pos.below();
             mY = mY - 1.0;
-            if (pos.y < 1)
+
+            if (below.y < 1)
             {
                 grounded = false;
                 break;
             }
+
+            below = pos.below();
         }
 
         if (grounded)
         {
-            setPos(mX, mY, mZ);
-            std::vector<AABB*>* collisions = mLevel->getCollisionAABBs(shared_from_this(), mBoundingBox, false, false, false);
-            if (collisions->empty() && !mLevel->containsAnyLiquid(mBoundingBox))
+            Entity::setPos(mX, mY, mZ);
+            AABB* box = mBoundingBox;
+            if (level->getCollisionAABBs(shared_from_this(), box, false, false, false)->empty()
+                && !level->containsAnyLiquid(box))
             {
                 teleported = true;
             }
         }
     }
 
-    if (!teleported)
+    if (teleported)
     {
-        setPos(oldX, oldY, oldZ);
-        return false;
+        teleportTo(mX, mY, mZ);
+
+        for (int i = 0; i < 128; ++i)
+        {
+            double progress = (double)i / 127.0;
+
+            float xd = (random->nextFloat() - 0.5f) * 0.20000000298023224f;
+            float yd = (random->nextFloat() - 0.5f) * 0.20000000298023224f;
+            float zd = (random->nextFloat() - 0.5f) * 0.20000000298023224f;
+
+            double px = oldX + (mX - oldX) * progress + (random->nextDouble() - 0.5) * (double)mBbWidth * 2.0;
+            double py = oldY + (mY - oldY) * progress + random->nextDouble() * (double)mBbHeight;
+            double pz = oldZ + (mZ - oldZ) * progress + (random->nextDouble() - 0.5) * (double)mBbWidth * 2.0;
+
+            level->addParticle(PARTICLE_PORTAL, px, py, pz, (double)xd, (double)yd, (double)zd,
+                                arrayWithLength<int>());
+        }
+
+        if ((GetType() & EntityType::PATHFINDER_MOB) == EntityType::PATHFINDER_MOB)
+        {
+            static_cast<PathfinderMob*>(this)->getNavigation()->stop();
+        }
+
+        return true;
     }
 
-    teleportTo(mX, mY, mZ);
-
-    for (int i = 0; i < 128; ++i)
-    {
-        double progress = (double)i / 127.0;
-
-        float xd = (random->nextFloat() - 0.5f) * 0.20000000298023224f;
-        float yd = (random->nextFloat() - 0.5f) * 0.20000000298023224f;
-        float zd = (random->nextFloat() - 0.5f) * 0.20000000298023224f;
-
-        double px = oldX + (mX - oldX) * progress + (random->nextDouble() - 0.5) * (double)mBbWidth * 2.0;
-        double py = oldY + (mY - oldY) * progress + random->nextDouble() * (double)mBbHeight;
-        double pz = oldZ + (mZ - oldZ) * progress + (random->nextDouble() - 0.5) * (double)mBbWidth * 2.0;
-
-        mLevel->addParticle(PARTICLE_PORTAL, px, py, pz, (double)xd, (double)yd, (double)zd,
-                            arrayWithLength<int>());
-    }
-
-    if ((GetType() & EntityType::PATHFINDER_MOB) == EntityType::PATHFINDER_MOB)
-    {
-        static_cast<PathfinderMob*>(this)->getNavigation()->stop();
-    }
-
-    return true;
+    Entity::setPos(oldX, oldY, oldZ);
+    return false;
 }
 
 bool LivingEntity::isAffectedByPotions()

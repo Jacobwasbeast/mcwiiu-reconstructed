@@ -139,8 +139,7 @@ void AbstractHorse::stand()
     if (mLevel->mIsClientSide)
         return;
     mStandCounter = 1;
-    setEating(false);
-    setFlag(32, true);
+    setStanding(true);
 }
 
 void AbstractHorse::onPlayerJump(int jump)
@@ -187,7 +186,11 @@ void AbstractHorse::handleStartJump(int)
 
 void AbstractHorse::handleStopJump() { }
 
-std::wstring AbstractHorse::getOwnerUUID() { return mEntityData->get(DATA_OWNER_UUID); }
+std::wstring AbstractHorse::getOwnerUUID()
+{
+    std::wstring uuid = mEntityData->get(DATA_OWNER_UUID);
+    return uuid;
+}
 
 boost::shared_ptr<LivingEntity> AbstractHorse::getOwner()
 {
@@ -244,12 +247,12 @@ void AbstractHorse::setOwnerUUID(const std::wstring& uuid)
     mEntityData->set(DATA_OWNER_UUID, uuid, true);
 }
 
-double AbstractHorse::getFoalScale() const { return 0.5; }
+float AbstractHorse::getFoalScale() const { return 0.5f; }
 
 void AbstractHorse::updateSize(bool baby)
 {
     if (baby)
-        internalSetSize(static_cast<float>(getFoalScale()));
+        internalSetSize(getFoalScale());
     else
         internalSetSize(1.0f);
 }
@@ -393,21 +396,22 @@ int AbstractHorse::getInventorySize() { return 2; }
 void AbstractHorse::createInventory()
 {
     boost::shared_ptr<SimpleContainer> previous = mInventory;
-    mInventory = boost::shared_ptr<SimpleContainer>(new HorseChest(L"HorseChest", getInventorySize()));
+    mInventory = boost::shared_ptr<HorseChest>(new HorseChest(L"HorseChest", getInventorySize()));
     mInventory->setCustomName(getName());
     if (previous)
     {
         previous->removeListener(this);
-        unsigned int count = previous->getContainerSize();
+        int count = previous->getContainerSize();
         const unsigned int size = mInventory->getContainerSize();
         if (size < count)
             count = size;
-        for (unsigned int slot = 0; slot < count; ++slot)
+        for (int slot = 0; slot < count; ++slot)
         {
             not_null_ptr<ItemInstance> item = previous->getItem(slot);
             if (!item->isEmpty())
                 mInventory->setItem(slot, item->copy());
         }
+        previous.reset();
     }
     mInventory->addListener(this);
     updateEquipment();
@@ -1078,7 +1082,7 @@ void AbstractHorse::positionRider(const boost::shared_ptr<Entity>& passenger)
 }
 
 bool AbstractHorse::onLadder() { return false; }
-double AbstractHorse::getEyeHeight() { return 1.0; }
+double AbstractHorse::getEyeHeight() { return mBbHeight; }
 bool AbstractHorse::wearsArmor() { return false; }
 bool AbstractHorse::isArmor(const not_null_ptr<ItemInstance>&) { return false; }
 
@@ -1110,7 +1114,8 @@ boost::shared_ptr<Entity> AbstractHorse::getControllingPassenger()
 {
     if (getPassengers()->empty())
         return boost::shared_ptr<Entity>();
-    return getPassengers()->at(0).lock();
+    const std::vector<boost::weak_ptr<Entity> >* passengers = getPassengers();
+    return passengers->at(0).lock();
 }
 
 MobGroupData* AbstractHorse::finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data,

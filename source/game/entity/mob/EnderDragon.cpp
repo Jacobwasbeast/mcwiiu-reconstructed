@@ -9,6 +9,7 @@
 
 #include "game/data/DataFixerUpper.hpp"
 #include "game/core/BinaryHeap.hpp"
+#include "game/core/BuiltInLootTables.hpp"
 #include "game/core/L10N.hpp"
 #include "game/util/Vec3.hpp"
 #include "game/core/Node.hpp"
@@ -47,30 +48,10 @@
 #include <typeinfo>
 
 static const EntityDataAccessor<int>* DATA_DRAGON_PHASE = NULL;
-static const double SITTING_TARGET_RANGE = 20.0;
+static double SITTING_TARGET_RANGE = 20.0;
 
 namespace
 {
-
-const int NODE_ADJACENCY[EnderDragon::PATH_NODE_COUNT] = {
-    0x1802, 0x2005, 0x200a, 0x4014, 0x8028, 0x8050, 0x100a0, 0x20140,
-    0x20280, 0x40500, 0x80a00, 0x80401, 0x182001, 0x305006, 0x20a008, 0x614030,
-    0x428040, 0xc50180, 0x8a0200, 0x941c00, 0xe83000, 0xd0e000, 0xb38000, 0x7e0000};
-
-bool isCheckWallsExcludedBlock(Block* block)
-{
-    return block == Blocks::bedrock
-        || block == Blocks::obsidian
-        || block == Blocks::end_stone
-        || block == Blocks::end_portal
-        || block == Blocks::end_portal_frame
-        || block == Blocks::command_block
-        || block == Blocks::barrier
-        || block == Blocks::repeating_command_block
-        || block == Blocks::chain_command_block
-        || block == Blocks::iron_bars
-        || block == Blocks::end_gateway;
-}
 
 bool isSittingAction(unsigned int action)
 {
@@ -96,10 +77,10 @@ EnderDragon::EnderDragon(Level* level)
     mNoCulling = true;
     mYTarget = 100.0;
     mGrowlTime = 100;
-    TheEndDimension* dimension = NULL;
-    if (!level->mIsClientSide)
-        dimension = dynamic_cast<TheEndDimension*>(level->mDimension);
-    mDragonFight = dimension != NULL ? dimension->getDragonFight() : NULL;
+    if (!level->mIsClientSide && dynamic_cast<TheEndDimension*>(level->mDimension) != NULL)
+        mDragonFight = static_cast<TheEndDimension*>(level->mDimension)->getDragonFight();
+    else
+        mDragonFight = NULL;
 }
 
 EnderDragon::~EnderDragon()
@@ -176,7 +157,7 @@ bool EnderDragon::setSynchedAction(EEnderdragonAction action, bool force)
 
 unsigned int EnderDragon::findClosestNode(double x, double y, double z)
 {
-    double closestDistance = 100.0;
+    float closestDistance = 100.0f;
     unsigned int closest = 0;
     Node* target = new Node(static_cast<int>(std::floor(x)), static_cast<int>(std::floor(y)),
                             static_cast<int>(std::floor(z)));
@@ -189,7 +170,7 @@ unsigned int EnderDragon::findClosestNode(double x, double y, double z)
         Node* node = mNodes->data[i];
         if (node != NULL)
         {
-            const double distance = node->distanceTo(target);
+            const float distance = node->distanceTo(target);
             if (distance < closestDistance)
             {
                 closest = i;
@@ -213,23 +194,23 @@ unsigned int EnderDragon::findClosestNode()
             int heightOffset;
             if (i < 12)
             {
-                const float angle = static_cast<float>(i) * 0.2617994f + -Mth::PI;
-                x = static_cast<int>(Mth::cos(angle + angle) * 60.0);
-                z = static_cast<int>(Mth::sin(angle + angle) * 60.0);
+                const float angle = 0.2617994f * static_cast<float>(i) + -Mth::PI;
+                x = static_cast<int>(60.0f * Mth::cos(angle + angle));
+                z = static_cast<int>(60.0f * Mth::sin(angle + angle));
                 heightOffset = 5;
             }
             else if (i < 20)
             {
-                const float angle = static_cast<float>(i - 12) * 0.3926991f + -Mth::PI;
-                x = static_cast<int>(Mth::cos(angle + angle) * 40.0);
-                z = static_cast<int>(Mth::sin(angle + angle) * 40.0);
+                const float angle = 0.3926991f * static_cast<float>(i - 12) + -Mth::PI;
+                x = static_cast<int>(40.0f * Mth::cos(angle + angle));
+                z = static_cast<int>(40.0f * Mth::sin(angle + angle));
                 heightOffset = 15;
             }
             else
             {
-                const float angle = static_cast<float>(i - 20) * 0.7853982f + -Mth::PI;
-                x = static_cast<int>(Mth::cos(angle + angle) * 20.0);
-                z = static_cast<int>(Mth::sin(angle + angle) * 20.0);
+                const float angle = 0.7853982f * static_cast<float>(i - 20) + -Mth::PI;
+                x = static_cast<int>(20.0f * Mth::cos(angle + angle));
+                z = static_cast<int>(20.0f * Mth::sin(angle + angle));
                 heightOffset = 5;
             }
 
@@ -241,8 +222,30 @@ unsigned int EnderDragon::findClosestNode()
             mNodes->data[i] = new Node(x, y, z);
         }
 
-        for (int i = 0; i < PATH_NODE_COUNT; ++i)
-            mNodeAdjacency[i] = NODE_ADJACENCY[i];
+        mNodeAdjacency[0] = 0x1802;
+        mNodeAdjacency[1] = 0x2005;
+        mNodeAdjacency[2] = 0x200a;
+        mNodeAdjacency[3] = 0x4014;
+        mNodeAdjacency[4] = 0x8028;
+        mNodeAdjacency[5] = 0x8050;
+        mNodeAdjacency[6] = 0x100a0;
+        mNodeAdjacency[7] = 0x20140;
+        mNodeAdjacency[8] = 0x20280;
+        mNodeAdjacency[9] = 0x40500;
+        mNodeAdjacency[10] = 0x80a00;
+        mNodeAdjacency[11] = 0x80401;
+        mNodeAdjacency[12] = 0x182001;
+        mNodeAdjacency[13] = 0x305006;
+        mNodeAdjacency[14] = 0x20a008;
+        mNodeAdjacency[15] = 0x614030;
+        mNodeAdjacency[16] = 0x428040;
+        mNodeAdjacency[17] = 0xc50180;
+        mNodeAdjacency[18] = 0x8a0200;
+        mNodeAdjacency[19] = 0x941c00;
+        mNodeAdjacency[20] = 0xe83000;
+        mNodeAdjacency[21] = 0xd0e000;
+        mNodeAdjacency[22] = 0xb38000;
+        mNodeAdjacency[23] = 0x7e0000;
     }
 
     return findClosestNode(mX, mY, mZ);
@@ -252,6 +255,7 @@ double EnderDragon::getHeadYRotDiff(float) { return 0.0; }
 
 Vec3* EnderDragon::getHeadLookVector(float partialTicks)
 {
+    Vec3* result;
     if (getSynchedAction() == ACTION_LANDING || getSynchedAction() == ACTION_TAKEOFF)
     {
         const BlockPos top = mLevel->getTopSolidBlockPos(BlockPos(0, 0, 0));
@@ -263,25 +267,26 @@ Vec3* EnderDragon::getHeadLookVector(float partialTicks)
         const float xRot = mXRot;
         mXRot = -((6.0f / scale) * 1.5f * 5.0f);
         mYRot = yRot + static_cast<float>(getHeadYRotDiff(partialTicks));
-        Vec3* result = getViewVector(partialTicks);
+        result = getViewVector(partialTicks);
         mXRot = xRot;
         mYRot = yRot;
-        return result;
     }
-
-    if (isSittingAction(getSynchedAction()))
+    else if (getSynchedAction() == ACTION_SITTING_FLAMING || getSynchedAction() == ACTION_SITTING_SCANNING
+             || getSynchedAction() == ACTION_SITTING_ATTACKING)
     {
         const float xRot = mXRot;
         mXRot = -45.0f;
         const float yRot = mYRot;
         mYRot = yRot + static_cast<float>(getHeadYRotDiff(partialTicks));
-        Vec3* result = getViewVector(partialTicks);
+        result = getViewVector(partialTicks);
         mXRot = xRot;
         mYRot = yRot;
-        return result;
     }
-
-    return getViewVector(partialTicks);
+    else
+    {
+        result = getViewVector(partialTicks);
+    }
+    return result;
 }
 
 Path* EnderDragon::reconstruct_path(Node*, Node* end)
@@ -291,10 +296,14 @@ Path* EnderDragon::reconstruct_path(Node*, Node* end)
         ++count;
 
     arrayWithLength<Node*> nodes(count, true);
-    unsigned int index = count - 1;
-    nodes.data[index] = end;
+    unsigned int last = count - 1;
+    nodes.data[last] = end;
+    Node** slot = nodes.data + last;
     for (Node* node = end->cameFrom; node != NULL; node = node->cameFrom)
-        nodes.data[--index] = node;
+    {
+        --slot;
+        *slot = node;
+    }
 
     Path* path = new Path(nodes);
     delete[] nodes.data;
@@ -446,51 +455,53 @@ void EnderDragon::findNewTarget()
     boost::shared_ptr<Player> player;
     const unsigned int action = getSynchedAction();
 
-    if (action == ACTION_STRAFE_PLAYER)
+    switch (action)
     {
+    case ACTION_HOLDING_PATTERN:
+    case ACTION_TAKEOFF:
+        if (!mNewTarget && mPath != NULL && mPath->isDone())
+        {
+            int y = mLevel->getSeaLevel() + 5;
+            const BlockPos top = mLevel->getTopSolidBlockPos(BlockPos(0, 0, 0));
+            if (top.y > y)
+                y = top.y;
+            player = mLevel->getNearestPlayer(0.0, static_cast<double>(y), 0.0, 64.0, false, 64.0);
+
+            double distance = 64.0;
+            if (player != NULL)
+                distance = player->distanceToSqr(0.0, static_cast<double>(y), 0.0) / 512.0;
+
+            if (mDragonFight != NULL)
+            {
+                if (mRandom->nextInt(mDragonFight->getCrystalsAlive() + 3) == 0)
+                {
+                    setSynchedAction(ACTION_LANDING_APPROACH, false);
+                }
+                else if (player != NULL
+                         && (mRandom->nextInt(static_cast<int>(std::fabs(distance)) + 2) == 0
+                             || mRandom->nextInt(mDragonFight->getCrystalsAlive() + 2) == 0))
+                {
+                    setSynchedAction(ACTION_STRAFE_PLAYER, false);
+                }
+            }
+        }
+        mNewTarget = false;
+        break;
+    case ACTION_STRAFE_PLAYER:
         if (mPath == NULL || (mPath->isDone() && mNewTarget))
             setSynchedAction(ACTION_HOLDING_PATTERN, false);
         mNewTarget = false;
-    }
-    else if (action == ACTION_LANDING)
-    {
+        break;
+    case ACTION_LANDING:
         mFlameCount = 0;
         setSynchedAction(ACTION_SITTING_SCANNING, false);
         mAttackTarget = mLevel->getNearestPlayer(shared_from_this(), SITTING_TARGET_RANGE, 10.0);
         mActionTicks = 0;
         mNewTarget = false;
-    }
-    else if ((action == ACTION_HOLDING_PATTERN || action == ACTION_TAKEOFF) && !mNewTarget && mPath != NULL
-             && mPath->isDone())
-    {
-        int y = mLevel->getSeaLevel() + 5;
-        const BlockPos top = mLevel->getTopSolidBlockPos(BlockPos(0, 0, 0));
-        if (top.y > y)
-            y = top.y;
-        player = mLevel->getNearestPlayer(0.0, static_cast<double>(y), 0.0, 64.0, false, 64.0);
-
-        double distance = 64.0;
-        if (player != NULL)
-            distance = player->distanceToSqr(0.0, static_cast<double>(y), 0.0) / 512.0;
-
-        if (mDragonFight != NULL)
-        {
-            if (mRandom->nextInt(mDragonFight->getCrystalsAlive() + 3) == 0)
-            {
-                setSynchedAction(ACTION_LANDING_APPROACH, false);
-            }
-            else if (player != NULL
-                     && (mRandom->nextInt(static_cast<int>(std::fabs(distance)) + 2) == 0
-                         || mRandom->nextInt(mDragonFight->getCrystalsAlive() + 2) == 0))
-            {
-                setSynchedAction(ACTION_STRAFE_PLAYER, false);
-            }
-        }
+        break;
+    default:
         mNewTarget = false;
-    }
-    else
-    {
-        mNewTarget = false;
+        break;
     }
 
     if (getSynchedAction() == ACTION_STRAFE_PLAYER && player != NULL)
@@ -642,17 +653,22 @@ void EnderDragon::GetInteractTooltip(boost::shared_ptr<MultiEntityMobPart>, cons
 
 void EnderDragon::AddParts()
 {
-    boost::shared_ptr<MultiEntityMob> parent =
-        boost::dynamic_pointer_cast<MultiEntityMob>(shared_from_this());
-
-    mHead = boost::shared_ptr<MultiEntityMobPart>(new MultiEntityMobPart(parent, L"head", 6.0f, 6.0f));
-    mNeck = boost::shared_ptr<MultiEntityMobPart>(new MultiEntityMobPart(parent, L"neck", 6.0f, 6.0f));
-    mBody = boost::shared_ptr<MultiEntityMobPart>(new MultiEntityMobPart(parent, L"body", 8.0f, 8.0f));
-    mTail1 = boost::shared_ptr<MultiEntityMobPart>(new MultiEntityMobPart(parent, L"tail", 4.0f, 4.0f));
-    mTail2 = boost::shared_ptr<MultiEntityMobPart>(new MultiEntityMobPart(parent, L"tail", 4.0f, 4.0f));
-    mTail3 = boost::shared_ptr<MultiEntityMobPart>(new MultiEntityMobPart(parent, L"tail", 4.0f, 4.0f));
-    mWing1 = boost::shared_ptr<MultiEntityMobPart>(new MultiEntityMobPart(parent, L"wing", 4.0f, 4.0f));
-    mWing2 = boost::shared_ptr<MultiEntityMobPart>(new MultiEntityMobPart(parent, L"wing", 4.0f, 4.0f));
+    mHead = boost::shared_ptr<MultiEntityMobPart>(
+        new MultiEntityMobPart(boost::dynamic_pointer_cast<MultiEntityMob>(shared_from_this()), L"head", 6.0f, 6.0f));
+    mNeck = boost::shared_ptr<MultiEntityMobPart>(
+        new MultiEntityMobPart(boost::dynamic_pointer_cast<MultiEntityMob>(shared_from_this()), L"neck", 6.0f, 6.0f));
+    mBody = boost::shared_ptr<MultiEntityMobPart>(
+        new MultiEntityMobPart(boost::dynamic_pointer_cast<MultiEntityMob>(shared_from_this()), L"body", 8.0f, 8.0f));
+    mTail1 = boost::shared_ptr<MultiEntityMobPart>(
+        new MultiEntityMobPart(boost::dynamic_pointer_cast<MultiEntityMob>(shared_from_this()), L"tail", 4.0f, 4.0f));
+    mTail2 = boost::shared_ptr<MultiEntityMobPart>(
+        new MultiEntityMobPart(boost::dynamic_pointer_cast<MultiEntityMob>(shared_from_this()), L"tail", 4.0f, 4.0f));
+    mTail3 = boost::shared_ptr<MultiEntityMobPart>(
+        new MultiEntityMobPart(boost::dynamic_pointer_cast<MultiEntityMob>(shared_from_this()), L"tail", 4.0f, 4.0f));
+    mWing1 = boost::shared_ptr<MultiEntityMobPart>(
+        new MultiEntityMobPart(boost::dynamic_pointer_cast<MultiEntityMob>(shared_from_this()), L"wing", 4.0f, 4.0f));
+    mWing2 = boost::shared_ptr<MultiEntityMobPart>(
+        new MultiEntityMobPart(boost::dynamic_pointer_cast<MultiEntityMob>(shared_from_this()), L"wing", 4.0f, 4.0f));
 
     mSubEntities.push_back(mHead);
     mSubEntities.push_back(mNeck);
@@ -781,14 +797,17 @@ double EnderDragon::getTilt(float partialTicks)
 
 double EnderDragon::getHeadYOffset(float)
 {
-    if (isSittingAction(getSynchedAction()))
-        return -1.0;
-
-    double body[3];
-    double head[3];
-    getLatencyPos(arrayWithLength<double>(body, 3), 5, 1.0f);
-    getLatencyPos(arrayWithLength<double>(head, 3), 0, 1.0f);
-    return head[1] - body[1];
+    double offset = -1.0;
+    if (getSynchedAction() != ACTION_SITTING_FLAMING && getSynchedAction() != ACTION_SITTING_SCANNING
+        && getSynchedAction() != ACTION_SITTING_ATTACKING)
+    {
+        double body[3];
+        double head[3];
+        getLatencyPos(arrayWithLength<double>(body, 3), 5, 1.0f);
+        getLatencyPos(arrayWithLength<double>(head, 3), 0, 1.0f);
+        offset = head[1] - body[1];
+    }
+    return offset;
 }
 
 double EnderDragon::rotWrap(double angle)
@@ -890,7 +909,12 @@ bool EnderDragon::checkWalls(AABB* box)
                 if (state->getMaterial() == Material::AIR || state->getMaterial() == Material::FIRE)
                     continue;
 
-                if (mLevel->getGameRules()->getBoolean(GameRules::RULE_MOBGRIEFING) && !isCheckWallsExcludedBlock(block))
+                if (mLevel->getGameRules()->getBoolean(GameRules::RULE_MOBGRIEFING) && block != Blocks::barrier
+                    && block != Blocks::obsidian && block != Blocks::end_stone && block != Blocks::bedrock
+                    && block != Blocks::end_portal && block != Blocks::end_portal_frame
+                    && block != Blocks::command_block && block != Blocks::repeating_command_block
+                    && block != Blocks::chain_command_block && block != Blocks::iron_bars
+                    && block != Blocks::end_gateway)
                     destroyedBlock = mLevel->removeBlock(pos) || destroyedBlock;
                 else
                     hitWall = true;
@@ -1391,7 +1415,7 @@ void EnderDragon::aiStep()
     }
 }
 
-ResourceLocation* EnderDragon::getDefaultLootTable() { return NULL; }
+ResourceLocation* EnderDragon::getDefaultLootTable() { return &BuiltInLootTables::ENDER_DRAGON; }
 
 bool EnderDragon::hurt(const DamageSource* source, float amount)
 {
@@ -1431,7 +1455,8 @@ void EnderDragon::dropExperience(int experience)
 
 void EnderDragon::tickDeath()
 {
-    if (!isSittingAction(getSynchedAction()))
+    if (getSynchedAction() != ACTION_SITTING_FLAMING && getSynchedAction() != ACTION_SITTING_SCANNING
+        && getSynchedAction() != ACTION_SITTING_ATTACKING)
     {
         if (!mLevel->mIsClientSide)
             setHealth(1.0f);
@@ -1532,7 +1557,7 @@ double EnderDragon::getHeadPartYRotDiff(int, arrayWithLength<double> first, arra
 unsigned int EnderDragon::GetInteractTooltip(const EntityTooltipDataHolder&) { return 0xffffffffU; }
 unsigned long long EnderDragon::GetType() { return EntityType::ENDER_DRAGON; }
 
-boost::shared_ptr<EnderDragon> EnderDragon::create(Level* level)
+void EnderDragon::create(Level* level)
 {
-    return boost::shared_ptr<EnderDragon>(new EnderDragon(level));
+    new EnderDragon(level);
 }

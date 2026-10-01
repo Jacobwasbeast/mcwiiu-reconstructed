@@ -2,16 +2,13 @@
 #include "game/core/StringIds.hpp"
 #include "game/core/EntityType.hpp"
 
-#if defined(RECON_NATIVE)
-#include <cstdio>
-#endif
-
 #include <vector>
 
 #include <boost/unordered_map.hpp>
 #include <boost/unordered_set.hpp>
 
 #include "game/data/CompoundTag.hpp"
+#include "game/world/block/MappedRegistry.hpp"
 #include "game/entity/mob/ItemEntity.hpp"
 #include "game/core/ExperienceOrb.hpp"
 #include "game/item/AreaEffectCloud.hpp"
@@ -104,25 +101,24 @@
 #include "game/world/generation/Villager.hpp"
 #include "game/core/EnderCrystal.hpp"
 
+namespace
+{
+    typedef MappedRegistry<ResourceLocation, unsigned long long> EntityRegistry;
+    typedef boost::unordered_map<unsigned long long, EntityIO::Creator> Creators;
+
+    ResourceLocation sLightningBolt(std::wstring(L"LightningBolt"));
+    ResourceLocation sPlayer(std::wstring(L"Player"));
+    EntityRegistry sRegistry;
+}
+
 EntityIO::SpawnInfo EntityIO::sSpawnInfo;
 
 namespace
 {
-    typedef boost::unordered_map<unsigned long long, ResourceLocation> TypeKeys;
-    typedef boost::unordered_map<ResourceLocation, unsigned long long> KeysByType;
-    typedef boost::unordered_map<unsigned long long, EntityIO::Creator> Creators;
-    typedef boost::unordered_map<unsigned long long, int> TypeIds;
-
-    const ResourceLocation sLightningBolt(std::wstring(L"LightningBolt"));
-    const ResourceLocation sPlayer(std::wstring(L"Player"));
-
-    TypeKeys sTypeKeys;
-    KeysByType sKeysByType;
-    Creators sCreators;
     boost::unordered_set<ResourceLocation> sEntityTypes;
     std::vector<std::wstring> sTranslationNames;
-    std::vector<unsigned long long> sTypesById;
-    TypeIds sTypeIds;
+    Creators sCreators;
+
     template <typename T>
     Entity* createEntity(Level* level)
     {
@@ -153,9 +149,14 @@ EntityIO::SpawnableMobInfo::SpawnableMobInfo(int infoId, const ResourceLocation&
                                               eMinecraftColour infoColour,
                                               eMinecraftColour infoSecondaryColour,
                                               eMinecraftIconOverride infoIcon)
-    : id(infoId), location(infoLocation), colour(infoColour), secondaryColour(infoSecondaryColour),
-      icon(infoIcon), type(0), flags(0)
 {
+    id = infoId;
+    location = ResourceLocation(infoLocation);
+    colour = infoColour;
+    secondaryColour = infoSecondaryColour;
+    type = 0;
+    icon = infoIcon;
+    flags = 0;
 }
 
 EntityIO::SpawnableMobInfo::SpawnableMobInfo(const SpawnableMobInfo& other)
@@ -166,68 +167,54 @@ EntityIO::SpawnableMobInfo::SpawnableMobInfo(const SpawnableMobInfo& other)
 
 ResourceLocation EntityIO::getKey(unsigned long long entityType)
 {
-    TypeKeys::const_iterator it = sTypeKeys.find(entityType);
-    if (it == sTypeKeys.end())
-    {
-        return ResourceLocation();
-    }
-    return it->second;
+    return sRegistry.getKey(entityType);
 }
 
 boost::shared_ptr<Entity> EntityIO::newEntity(unsigned long long entityType, Level* level)
 {
-    if ((entityType & EntityType::ENTITY) != EntityType::ENTITY)
+    if (!eTYPE_DERIVED_FROM(EntityType::ENTITY, entityType))
     {
         return boost::shared_ptr<Entity>();
     }
-
+    boost::shared_ptr<Entity> entity;
     Creators::const_iterator it = sCreators.find(entityType);
-    if (it == sCreators.end() || it->second == NULL)
+    if (it != sCreators.end())
     {
-        return boost::shared_ptr<Entity>();
-    }
-
-    boost::shared_ptr<Entity> entity((it->second)(level));
-    if (entity->GetType() == EntityType::ENDER_DRAGON)
-    {
-        boost::static_pointer_cast<EnderDragon>(entity)->AddParts();
+        if (it->second != NULL)
+        {
+            entity = boost::shared_ptr<Entity>((it->second)(level));
+        }
+        if (entity->GetType() == EntityType::ENDER_DRAGON)
+        {
+            boost::static_pointer_cast<EnderDragon>(entity)->AddParts();
+        }
     }
     return entity;
 }
 
 ResourceLocation EntityIO::getKey(const boost::shared_ptr<Entity>& entity)
 {
-    if (!entity)
-    {
-        return ResourceLocation();
-    }
     return getKey(entity->GetType());
 }
 
 std::wstring EntityIO::getTranslationName(boost::shared_ptr<Entity> entity)
 {
-    unsigned long long type = entity->GetType();
-    TypeIds::const_iterator found = sTypeIds.find(type);
-    if (found != sTypeIds.end() && found->second >= 0 && found->second < (int)sTranslationNames.size())
+    int id = sRegistry.getId(entity->GetType());
+    if (id != -1)
     {
-        return sTranslationNames[found->second];
+        return sTranslationNames[id];
     }
     return std::wstring(L"");
 }
 
 unsigned long long EntityIO::byId(int id)
 {
-    if (id >= 0 && id < (int)sTypesById.size())
-    {
-        return sTypesById[id];
-    }
-    return 0;
+    return sRegistry.byId(id);
 }
 
 unsigned long long EntityIO::byString(const std::wstring& name)
 {
-    ResourceLocation location(name);
-    return sKeysByType.at(location);
+    return sRegistry.get(ResourceLocation(name));
 }
 
 boost::shared_ptr<Entity> EntityIO::newEntity(int id, Level* level)
@@ -237,7 +224,7 @@ boost::shared_ptr<Entity> EntityIO::newEntity(int id, Level* level)
 
 boost::shared_ptr<Entity> EntityIO::newEntity(const ResourceLocation& location, Level* level)
 {
-    return newEntity(sKeysByType.at(location), level);
+    return newEntity(sRegistry.get(location), level);
 }
 
 boost::unordered_set<ResourceLocation>* EntityIO::getAllEntityTypes()
@@ -247,41 +234,26 @@ boost::unordered_set<ResourceLocation>* EntityIO::getAllEntityTypes()
 
 bool EntityIO::isValidEntityType(const ResourceLocation& location)
 {
-    return sPlayer.equals(&location) || sEntityTypes.find(location) != sEntityTypes.end();
+    boost::unordered_set<ResourceLocation>* types = getAllEntityTypes();
+    bool found = types->find(location) != types->end();
+    return sPlayer.equals(&location) || found;
 }
 
 boost::shared_ptr<Entity> EntityIO::newEntity(CompoundTag* tag, Level* level)
 {
-    if (tag == NULL)
+    if (!isValidEntityType(ResourceLocation(tag->getString(L"id"))))
     {
         return boost::shared_ptr<Entity>();
     }
-
-    std::wstring name = tag->getString(L"id");
-    ResourceLocation location(name);
-    if (!isValidEntityType(location))
+    if (tag->getString(L"id").compare(L"Minecart") == 0)
     {
-        return boost::shared_ptr<Entity>();
+        tag->putString(L"id", std::wstring(Minecart::Type::NAMES[Minecart::Type::VALUES[tag->getInt(L"Type")]->mId]));
+        tag->remove(L"Type");
     }
-
-    if (location.getPath() == L"Minecart" && tag->contains(L"Type"))
-    {
-        static const wchar_t* names[] = { L"Minecart", L"minecraft:chest_minecart", L"minecraft:furnace_minecart", L"minecraft:tnt_minecart", L"minecraft:hopper_minecart", L"minecraft:spawner_minecart" };
-        int type = tag->getInt(L"Type");
-        if (type >= 0 && type < 6)
-        {
-            tag->putString(L"id", names[type]);
-            tag->remove(L"Type");
-            location = ResourceLocation(tag->getString(L"id"));
-        }
-    }
-
-    boost::shared_ptr<Entity> entity = newEntity(location, level);
+    ResourceLocation location(tag->getString(L"id"));
+    boost::shared_ptr<Entity> entity = newEntity(sRegistry.get(location), level);
     if (entity)
     {
-#if defined(RECON_NATIVE)
-        std::fprintf(stderr, "[native-world] loading entity type=%llx\n", entity->GetType());
-#endif
         entity->load(tag);
     }
     return entity;
@@ -289,26 +261,27 @@ boost::shared_ptr<Entity> EntityIO::newEntity(CompoundTag* tag, Level* level)
 
 bool EntityIO::isEntityOfType(boost::shared_ptr<Entity> entity, const ResourceLocation& location)
 {
-    if (!entity)
-    {
-        return false;
-    }
-
     ResourceLocation key = getKey(entity->GetType());
     if (!key.isDefault())
     {
         return key.equals(&location);
     }
-    return (entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER
-        ? sPlayer.equals(&location)
-        : (entity->GetType() == EntityType::LIGHTNING_BOLT && sLightningBolt.equals(&location));
+    if (eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()))
+    {
+        return sPlayer.equals(&location);
+    }
+    if (entity->GetType() == EntityType::LIGHTNING_BOLT)
+    {
+        return sLightningBolt.equals(&location);
+    }
+    return false;
 }
 
 int EntityIO::getNameDisplayId(const std::wstring& name)
 {
     ResourceLocation location(name);
     SpawnInfo::const_iterator it = sSpawnInfo.find(location);
-    if (it == sSpawnInfo.end() || it->second == NULL)
+    if (it == sSpawnInfo.end())
     {
         return -1;
     }
@@ -317,12 +290,7 @@ int EntityIO::getNameDisplayId(const std::wstring& name)
 
 int EntityIO::eTypeToIoid(unsigned long long entityType)
 {
-    TypeIds::const_iterator it = sTypeIds.find(entityType);
-    if (it == sTypeIds.end())
-    {
-        return -1;
-    }
-    return it->second;
+    return sRegistry.getId(entityType);
 }
 
 EntityIO::SpawnableMobInfo EntityIO::addSpawnInfo(int id, std::wstring name,
@@ -346,26 +314,18 @@ void EntityIO::Register(Creator creator, int id, const std::wstring& name,
                         const std::wstring& translationName)
 {
     ResourceLocation location(name);
-    sKeysByType[location] = entityType;
-    sTypeKeys[entityType] = location;
-    sCreators[entityType] = creator;
+    sRegistry.registerMapping(id, location, entityType);
     sEntityTypes.insert(location);
-    while ((int)sTypesById.size() <= id)
+    while ((int)sTranslationNames.size() <= id)
     {
-        sTypesById.push_back(0);
-        sTranslationNames.push_back(std::wstring());
+        sTranslationNames.push_back(std::wstring(L""));
     }
-    sTypesById[id] = entityType;
-    sTranslationNames[id] = translationName;
-    sTypeIds[entityType] = id;
+    sTranslationNames.at(id) = translationName;
+    sCreators[entityType] = creator;
 }
 
 void EntityIO::bootStrap()
 {
-    if (!sEntityTypes.empty())
-    {
-        return;
-    }
     Register(createEntity<ItemEntity>, 1, L"item", EntityType::ITEM_ENTITY, L"Item");
     Register(createEntity<ExperienceOrb>, 2, L"xp_orb", EntityType::EXPERIENCE_ORB, L"XPOrb");
     Register(createEntity<AreaEffectCloud>, 3, L"area_effect_cloud", EntityType::AREA_EFFECT_CLOUD, L"AreaEffectCloud");
@@ -611,5 +571,5 @@ void EntityIO::bootStrap()
     addSpawnInfo(static_cast<int>(IDS_PHANTOM), L"phantom",
                  eMinecraftColour_Mob_Phantom_Colour1, eMinecraftColour_Mob_Phantom_Colour2,
                  eMinecraftIconOverride_NONE);
-    sEntityTypes.insert(ResourceLocation(std::wstring(L"LightningBolt")));
+    sEntityTypes.insert(sLightningBolt);
 }

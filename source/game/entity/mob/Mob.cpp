@@ -64,40 +64,35 @@ const EntityDataAccessor<unsigned char>* Mob::DATA_MOB_FLAGS_ID = NULL;
 
 Mob::Mob(Level* level)
     : LivingEntity(level),
-      mAmbientSoundTime(0),
-      mExperienceReward(0),
-      mLookControl(NULL),
-      mMoveControl(NULL),
-      mJumpControl(NULL),
-      mBodyControl(NULL),
-      mNavigation(NULL),
       mGoalSelector(),
       mTargetSelector(),
       mTarget(),
-      mSensing(NULL),
       mHandItems(),
       mArmorItems(),
       mAdditionalItems(),
       mAdditionalDropChances(NULL),
       mAdditionalItemCount(0),
-      mCanPickUpLoot(false),
-      mPersistenceRequired(false),
       mPathfindingMalus(),
-      mCustomName(),
-      mMoveSpeed(0.0f),
-      mLootTable(NULL),
-      mLootTableSeed(0),
-      mLeader(false),
-      mFollowsLeader(false),
-      mMaxFlockSize(1),
-      mFlockSize(0)
+      mCustomName()
 {
+    MemSect(0x39);
     _init();
+    MemSect(0);
+    MemSect(0x3a);
     registerAttributes();
+    MemSect(0);
     mLookControl = new LookControl(this);
     mMoveControl = new MoveControl(this);
     mJumpControl = new JumpControl(this);
+    mBodyControl = NULL;
+    mNavigation = NULL;
     mSensing = new Sensing(this);
+    mHandDropChances[0] = 0.085f;
+    mHandDropChances[1] = 0.085f;
+    mArmorDropChances[0] = 0.085f;
+    mArmorDropChances[1] = 0.085f;
+    mArmorDropChances[2] = 0.085f;
+    mArmorDropChances[3] = 0.085f;
 }
 
 Mob::~Mob()
@@ -128,30 +123,27 @@ void Mob::staticCtor()
 void Mob::_init()
 {
     mAmbientSoundTime = 0;
+    mMoveSpeed = 0.0f;
     mExperienceReward = 0;
     mTarget.reset();
-    mMoveSpeed = 0.0f;
-    mHandItems = NonNullList<not_null_ptr<ItemInstance> >::withSize(2, ItemInstance::EMPTY);
-    mArmorItems = NonNullList<not_null_ptr<ItemInstance> >::withSize(4, ItemInstance::EMPTY);
+    mSensing = NULL;
     mAdditionalItems = NonNullList<not_null_ptr<ItemInstance> >::withSize(5, ItemInstance::EMPTY);
-    mAdditionalItemCount = 5;
-    mAdditionalDropChances = new float[mAdditionalItemCount];
-    for (unsigned int i = 0; i < mAdditionalItemCount; ++i)
+    mAdditionalDropChances = new float[5];
+    for (int i = 0; i < 5; ++i)
         mAdditionalDropChances[i] = 0.0f;
-    mHandDropChances[0] = 0.085f;
-    mHandDropChances[1] = 0.085f;
-    for (unsigned int i = 0; i < 4; ++i)
-        mArmorDropChances[i] = 0.085f;
     mCanPickUpLoot = false;
     mPersistenceRequired = false;
-    mCustomName.reset(new CensoredString());
+    mAdditionalItemCount = 5;
+    mCustomName = boost::shared_ptr<CensoredString>(new CensoredString());
     mLootTable = NULL;
     mLootTableSeed = 0;
+    mHandItems = NonNullList<not_null_ptr<ItemInstance> >::withSize(2, ItemInstance::EMPTY);
+    mArmorItems = NonNullList<not_null_ptr<ItemInstance> >::withSize(4, ItemInstance::EMPTY);
     mLeader = false;
-    mFollowsLeader = false;
-    mMaxFlockSize = 1;
     mFlockSize = 0;
     mCategories |= EntityCategory::eEntityCategory_Mob;
+    mMaxFlockSize = 1;
+    mFollowsLeader = false;
 }
 
 void Mob::registerAttributes()
@@ -180,7 +172,7 @@ void Mob::registerGoals()
 
 PathNavigation* Mob::createNavigation(Level* level)
 {
-    return new GroundPathNavigation(this, level, true);
+    return new GroundPathNavigation(this, mLevel, true);
 }
 
 float Mob::getPathfindingMalus(const BlockPathTypes* type)
@@ -188,7 +180,7 @@ float Mob::getPathfindingMalus(const BlockPathTypes* type)
     boost::unordered_map<const BlockPathTypes*, float>::const_iterator it = mPathfindingMalus.find(type);
     if (it != mPathfindingMalus.end())
         return it->second;
-    return type == NULL ? 0.0f : type->getMalus();
+    return type->getMalus();
 }
 
 void Mob::setPathfindingMalus(const BlockPathTypes* type, float malus)
@@ -239,8 +231,7 @@ void Mob::setTarget(boost::shared_ptr<LivingEntity> target)
 void Mob::setLevel(Level* level)
 {
     Entity::setLevel(level);
-    if (mNavigation != NULL)
-        mNavigation->setLevel(level);
+    mNavigation->setLevel(level);
     mGoalSelector.setLevel(level);
     mTargetSelector.setLevel(level);
 }
@@ -261,9 +252,11 @@ int Mob::getAmbientSoundInterval()
 
 void Mob::playAmbientSound()
 {
+    MemSect(0x1f);
     const SoundEvent* sound = getAmbientSound();
     if (sound != NULL)
         playSound(sound, getSoundVolume(), getVoicePitch());
+    MemSect(0);
 }
 
 void Mob::baseTick()
@@ -424,25 +417,31 @@ void Mob::dropEquipment(bool hitByPlayer, int lootingLevel)
     {
         const EquipmentSlot* slot = EquipmentSlot::SLOTS[i];
         not_null_ptr<ItemInstance> item = getItemSlot(slot);
-        float chance = slot->getType() == EquipmentSlot::HAND
-                           ? mHandDropChances[slot->getIndex()]
-                           : mArmorDropChances[slot->getIndex()];
-        if (item->isEmpty() || EnchantmentHelper::hasVanishingCurse(item))
-            continue;
-        if (!hitByPlayer && chance <= 1.0f)
-            continue;
-        if (mRandom->nextFloat() - lootingLevel * 0.01f >= chance)
-            continue;
-        if (chance <= 1.0f && item->isDamageableItem())
+        double chance;
+        switch (slot->getType())
         {
-            int bound = item->getMaxDamage() - 3;
-            if (bound < 1)
-                bound = 1;
-            int damage = mRandom->nextInt(bound);
-            damage = mRandom->nextInt(damage + 1);
-            item->setAuxValue(item->getMaxDamage() - damage);
+        case EquipmentSlot::HAND:
+            chance = mHandDropChances[slot->getIndex()];
+            break;
+        case EquipmentSlot::ARMOR:
+            chance = mArmorDropChances[slot->getIndex()];
+            break;
+        default:
+            chance = 0.0;
+            break;
         }
-        spawnAtLocation(item, 0.0f);
+        bool guaranteed = chance > 1.0;
+        if (!item->isEmpty() && !EnchantmentHelper::hasVanishingCurse(item) && (hitByPlayer || guaranteed) &&
+            mRandom->nextFloat() - lootingLevel * 0.01f < chance)
+        {
+            if (!guaranteed && item->isDamageableItem())
+            {
+                int bound = item->getMaxDamage() - 3;
+                bound = bound < 1 ? 1 : bound;
+                item->setAuxValue(item->getMaxDamage() - mRandom->nextInt(mRandom->nextInt(bound) + 1));
+            }
+            spawnAtLocation(item, 0.0f);
+        }
     }
 }
 
@@ -467,32 +466,34 @@ void Mob::addAdditonalSaveData(CompoundTag* tag)
     tag->putBoolean(L"CanPickUpLoot", canPickUpLoot());
     tag->putBoolean(L"PersistenceRequired", mPersistenceRequired);
 
-    ListTag* armorItems = new ListTag(0);
-    for (unsigned int i = 0; i < mArmorItems.size(); ++i)
+    ListTag* armorItems = new ListTag();
+    for (int i = 0; i < 4; ++i)
     {
+        not_null_ptr<ItemInstance> armorItem = mArmorItems[i];
         CompoundTag* itemTag = new CompoundTag();
-        if (!mArmorItems[i]->isEmpty())
-            mArmorItems[i]->save(itemTag);
+        if (!armorItem->isEmpty())
+            armorItem->save(itemTag);
         armorItems->add(itemTag);
     }
     tag->put(L"ArmorItems", armorItems);
 
-    ListTag* handItems = new ListTag(0);
-    for (unsigned int i = 0; i < mHandItems.size(); ++i)
+    ListTag* handItems = new ListTag();
+    for (int i = 0; i < 2; ++i)
     {
+        not_null_ptr<ItemInstance> handItem = mHandItems[i];
         CompoundTag* itemTag = new CompoundTag();
-        if (!mHandItems[i]->isEmpty())
-            mHandItems[i]->save(itemTag);
+        if (!handItem->isEmpty())
+            handItem->save(itemTag);
         handItems->add(itemTag);
     }
     tag->put(L"HandItems", handItems);
 
-    ListTag* armorDropChances = new ListTag(0);
+    ListTag* armorDropChances = new ListTag();
     for (unsigned int i = 0; i < 4; ++i)
         armorDropChances->add(new FloatTag(mArmorDropChances[i]));
     tag->put(L"ArmorDropChances", armorDropChances);
 
-    ListTag* handDropChances = new ListTag(0);
+    ListTag* handDropChances = new ListTag();
     for (unsigned int i = 0; i < 2; ++i)
         handDropChances->add(new FloatTag(mHandDropChances[i]));
     tag->put(L"HandDropChances", handDropChances);
@@ -503,13 +504,12 @@ void Mob::addAdditonalSaveData(CompoundTag* tag)
     if (leashHolder)
     {
         CompoundTag* leashTag = new CompoundTag();
-        unsigned long long holderType = leashHolder->GetType();
 
-        if ((holderType & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+        if ((leashHolder->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
         {
             leashTag->putString(L"UUID", leashHolder->getUUID());
         }
-        else if ((holderType & EntityType::HANGING_ENTITY) == EntityType::HANGING_ENTITY)
+        else if ((leashHolder->GetType() & EntityType::HANGING_ENTITY) == EntityType::HANGING_ENTITY)
         {
             boost::shared_ptr<HangingEntity> hanging =
                 boost::dynamic_pointer_cast<HangingEntity>(leashHolder);
@@ -592,7 +592,6 @@ void Mob::readAdditionalSaveData(CompoundTag* tag)
     mLeashed = tag->getBoolean(L"Leashed");
     if (mLeashed && tag->contains(L"Leash", Tag::TAG_COMPOUND))
     {
-        delete mLeashInfoTag;
         mLeashInfoTag = tag->getCompound(L"Leash")->copy();
     }
 
@@ -606,6 +605,11 @@ void Mob::readAdditionalSaveData(CompoundTag* tag)
 
     setNoAi(tag->getBoolean(L"NoAI"));
 
+    if (tag->contains(L"DeathLootTable"))
+    {
+        mLootTable = new ResourceLocation(tag->getString(L"DeathLootTable"));
+        mLootTableSeed = tag->getLong(L"DeathLootTableSeed");
+    }
 }
 
 ResourceLocation* Mob::getDefaultLootTable()
@@ -686,7 +690,7 @@ void Mob::aiStep()
 {
     LivingEntity::aiStep();
 
-    if (mLevel->mIsClientSide || !canPickUpLoot() || isNoAi())
+    if (mLevel->mIsClientSide || !canPickUpLoot() || mDead)
         return;
 
     if (!mLevel->getGameRules()->getBoolean(GameRules::RULE_MOBGRIEFING))
@@ -700,12 +704,7 @@ void Mob::aiStep()
          ++it)
     {
         boost::shared_ptr<ItemEntity> itemEntity = boost::static_pointer_cast<ItemEntity>(*it);
-        if (itemEntity->mRemoved)
-            continue;
-        not_null_ptr<ItemInstance> item = itemEntity->getItem();
-        if (item->isEmpty())
-            continue;
-        if (itemEntity->hasPickUpDelay())
+        if (itemEntity->mRemoved || itemEntity->getItem()->isEmpty() || itemEntity->hasPickUpDelay())
             continue;
         pickUpItem(itemEntity);
     }
@@ -842,29 +841,28 @@ bool Mob::removeWhenFarAway()
 
 void Mob::checkDespawn()
 {
-    if (isPersistenceRequired())
-        return;
-
-    boost::shared_ptr<Player> player = mLevel->getNearestPlayer(shared_from_this(), -1.0, -1.0);
-    if (!player)
-        return;
-
-    double distSq = distanceToSqr(player);
-    if (removeWhenFarAway() && distSq > 16384.0)
+    if (mPersistenceRequired)
     {
-        remove();
-        return;
-    }
-
-    const double closeDistSq = 1024.0;
-    if (mNoActionTime >= 601 && mRandom->nextInt(800) == 0 && distSq > closeDistSq && removeWhenFarAway())
-    {
-        remove();
-        return;
-    }
-
-    if (distSq < closeDistSq)
         mNoActionTime = 0;
+        return;
+    }
+
+    boost::shared_ptr<Entity> player = mLevel->getNearestPlayer(shared_from_this(), -1.0, -1.0);
+    if (player)
+    {
+        double dx = player->mX - mX;
+        double dy = player->mY - mY;
+        double dz = player->mZ - mZ;
+        double distSq = dx * dx + dy * dy + dz * dz;
+
+        if (removeWhenFarAway() && distSq > 16384.0)
+            remove();
+
+        if (mNoActionTime > 600 && mRandom->nextInt(800) == 0 && distSq > 1024.0 && removeWhenFarAway())
+            remove();
+        else if (distSq < 1024.0)
+            mNoActionTime = 0;
+    }
 }
 
 void Mob::serverAiStep()
@@ -897,20 +895,16 @@ void Mob::serverAiStep()
     customServerAiStep();
     PIXEndNamedEvent();
 
-    if (isPassenger())
+    if (isPassenger() && (getVehicle()->GetType() & EntityType::MOB) == EntityType::MOB)
     {
-        boost::shared_ptr<Entity> vehicle = getVehicle();
-        if (Entity::instanceof(vehicle, EntityType::MOB))
-        {
-            boost::shared_ptr<Mob> vehicleMob = boost::static_pointer_cast<Mob>(getVehicle());
+        boost::shared_ptr<Mob> vehicleMob = boost::static_pointer_cast<Mob>(getVehicle());
 
-            PathNavigation* navigation = getNavigation();
-            Path* currentPath = navigation->getPath();
-            Path* clonedPath = currentPath != NULL ? currentPath->clone() : NULL;
-            vehicleMob->getNavigation()->moveTo(clonedPath, 1.5);
+        PathNavigation* navigation = getNavigation();
+        Path* currentPath = navigation->getPath();
+        Path* clonedPath = currentPath != NULL ? currentPath->clone() : NULL;
+        vehicleMob->getNavigation()->moveTo(clonedPath, 1.5);
 
-            vehicleMob->getMoveControl()->copyFrom(getMoveControl());
-        }
+        vehicleMob->getMoveControl()->copyFrom(getMoveControl());
     }
 
     PIXBeginNamedEvent(0.0f, "Tick look");
@@ -1002,12 +996,12 @@ bool Mob::checkSpawnObstruction()
            !mLevel->containsAnyLiquid_NoLoad(mBoundingBox);
 }
 
-double Mob::getSizeScale()
+float Mob::getSizeScale()
 {
     return 1.0f;
 }
 
-double Mob::getHeadSizeScale()
+float Mob::getHeadSizeScale()
 {
     return 1.0f;
 }
@@ -1251,15 +1245,15 @@ bool Mob::canBeControlledByRider()
 
 void Mob::setDropChance(const EquipmentSlot* slot, float chance)
 {
-    if (slot == NULL)
-        return;
-    if (slot->getType() == EquipmentSlot::HAND)
+    switch (slot->getType())
     {
+    case EquipmentSlot::HAND:
         mHandDropChances[slot->getIndex()] = chance;
-        return;
-    }
-    if (slot->getType() == EquipmentSlot::ARMOR)
+        break;
+    case EquipmentSlot::ARMOR:
         mArmorDropChances[slot->getIndex()] = chance;
+        break;
+    }
 }
 
 bool Mob::canPickUpLoot()
@@ -1416,12 +1410,12 @@ std::wstring Mob::getName()
     return LivingEntity::getName();
 }
 
-unsigned int Mob::maxFlockSize()
+int Mob::maxFlockSize()
 {
     return mMaxFlockSize;
 }
 
-unsigned int Mob::shouldFollow()
+bool Mob::shouldFollow()
 {
     return mLeader && mFlockSize < maxFlockSize();
 }
