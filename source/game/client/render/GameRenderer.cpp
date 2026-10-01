@@ -127,20 +127,11 @@ C4JThreadImpl* sRenderUpdateThread = NULL;
 OSFastMutex sDeleteMutex;
 bool sRenderUpdateThreadActive = false;
 
-std::vector<LevelChunk*> sPendingChunkDeletes[2];
-int sPendingChunkDeleteList = 0;
-
-std::vector<unsigned char*> sPendingByteDeletes[2];
-int sPendingByteDeleteList = 0;
-
-std::vector<SparseLightStorage*> sPendingLightDeletes[2];
-int sPendingLightDeleteList = 0;
-
-std::vector<CompressedBlockStorage*> sPendingCompressedDeletes[2];
-int sPendingCompressedDeleteList = 0;
-
-std::vector<SparseDataStorage*> sPendingDataDeletes[2];
-int sPendingDataDeleteList = 0;
+std::vector<unsigned char*> sPendingByteDeletes;
+std::vector<SparseLightStorage*> sPendingLightDeletes;
+std::vector<CompressedBlockStorage*> sPendingCompressedDeletes;
+std::vector<SparseDataStorage*> sPendingDataDeletes;
+std::vector<LevelChunk*> sPendingChunkDeletes;
 
 std::vector<GameRenderer::ElementStorageWithTick> sPendingElementStorageDeletes;
 
@@ -323,8 +314,6 @@ GameRenderer::~GameRenderer()
     if (mOwnedArrays[1] != NULL)
         delete[] mOwnedArrays[1];
     DeleteCriticalSection(&mUpdateThreadMutex);
-
-    mPointedEntity.reset();
 }
 
 bool GameRenderer::anaglyph3d = false;
@@ -502,60 +491,54 @@ int GameRenderer::runUpdate(void*)
         sRenderUpdateEvents->Set(0);
 
         int passCount = 0;
-        while (passCount < 10
-               && minecraft->mLevelRenderer->updateDirtyChunks(dirtyChunkBuffer) != 0)
+        do
+        {
+            const int updated = minecraft->mLevelRenderer->updateDirtyChunks(dirtyChunkBuffer);
             ++passCount;
+            if (updated == 0)
+                break;
+        } while (passCount < 10);
 
         gRenderer->CBuffDeferredModeEnd();
         minecraft->mLevelRenderer->fullyFlagRenderableBlockEntitiesToBeRemoved();
 
         EnterCriticalSection(&sDeleteMutex);
 
-        const int chunkList = (sPendingChunkDeleteList + 1) % 2;
-        for (size_t i = 0; i < sPendingChunkDeletes[chunkList].size(); ++i)
+        for (size_t i = 0; i < sPendingChunkDeletes.size(); ++i)
         {
-            LevelChunk* chunk = sPendingChunkDeletes[chunkList][i];
+            LevelChunk* chunk = sPendingChunkDeletes[i];
             if (chunk != NULL)
                 delete chunk;
         }
-        sPendingChunkDeletes[chunkList].clear();
-        sPendingChunkDeleteList = chunkList;
+        sPendingChunkDeletes.clear();
 
-        const int byteList = (sPendingByteDeleteList + 1) % 2;
-        for (size_t i = 0; i < sPendingByteDeletes[byteList].size(); ++i)
-            operator delete(static_cast<void*>(sPendingByteDeletes[byteList][i]));
-        sPendingByteDeletes[byteList].clear();
-        sPendingByteDeleteList = byteList;
+        for (size_t i = 0; i < sPendingByteDeletes.size(); ++i)
+            operator delete(static_cast<void*>(sPendingByteDeletes[i]));
+        sPendingByteDeletes.clear();
 
-        const int lightList = (sPendingLightDeleteList + 1) % 2;
-        for (size_t i = 0; i < sPendingLightDeletes[lightList].size(); ++i)
-            delete sPendingLightDeletes[lightList][i];
-        sPendingLightDeletes[lightList].clear();
-        sPendingLightDeleteList = lightList;
+        for (size_t i = 0; i < sPendingLightDeletes.size(); ++i)
+            delete sPendingLightDeletes[i];
+        sPendingLightDeletes.clear();
 
-        const int compressedList = (sPendingCompressedDeleteList + 1) % 2;
-        for (size_t i = 0; i < sPendingCompressedDeletes[compressedList].size(); ++i)
-            delete sPendingCompressedDeletes[compressedList][i];
-        sPendingCompressedDeletes[compressedList].clear();
-        sPendingCompressedDeleteList = compressedList;
+        for (size_t i = 0; i < sPendingCompressedDeletes.size(); ++i)
+            delete sPendingCompressedDeletes[i];
+        sPendingCompressedDeletes.clear();
 
-        const int dataList = (sPendingDataDeleteList + 1) % 2;
-        for (size_t i = 0; i < sPendingDataDeletes[dataList].size(); ++i)
-            delete sPendingDataDeletes[dataList][i];
-        sPendingDataDeletes[dataList].clear();
-        sPendingDataDeleteList = dataList;
+        for (size_t i = 0; i < sPendingDataDeletes.size(); ++i)
+            delete sPendingDataDeletes[i];
+        sPendingDataDeletes.clear();
 
-        for (size_t i = 0; i < sPendingElementStorageDeletes.size();)
+        std::vector<ElementStorageWithTick>::iterator entry = sPendingElementStorageDeletes.begin();
+        while (entry != sPendingElementStorageDeletes.end())
         {
-            ElementStorageWithTick& entry = sPendingElementStorageDeletes[i];
-            if (entry.tick != 0)
+            if (entry->tick != 0)
             {
-                ++i;
+                ++entry;
                 continue;
             }
 
-            delete entry.storage;
-            sPendingElementStorageDeletes.erase(sPendingElementStorageDeletes.begin() + i);
+            delete entry->storage;
+            entry = sPendingElementStorageDeletes.erase(entry);
         }
 
         LeaveCriticalSection(&sDeleteMutex);
@@ -590,12 +573,12 @@ void GameRenderer::shutdownEffect()
     mEffectIndex = EFFECT_NONE;
 }
 
-void GameRenderer::checkEntityPostEffect(boost::shared_ptr<Entity>)
+void GameRenderer::cycleEffect()
 {
     return;
 }
 
-void GameRenderer::cycleEffect()
+void GameRenderer::checkEntityPostEffect(boost::shared_ptr<Entity>)
 {
     return;
 }
@@ -608,10 +591,7 @@ void GameRenderer::onResourceManagerReload(ResourceManager*)
     mPostEffect = NULL;
 
     if (mEffectIndex == EFFECT_NONE)
-    {
-        boost::shared_ptr<Entity> camera = mMinecraft->getCameraEntity();
-        checkEntityPostEffect(camera);
-    }
+        checkEntityPostEffect(mMinecraft->getCameraEntity());
 }
 
 double GameRenderer::GetFovVal()
@@ -636,15 +616,17 @@ void GameRenderer::tickFov()
     boost::shared_ptr<MultiplayerLocalPlayer> player = Minecraft::GetInstance()->mPlayer;
     const int playerIndex = player != NULL ? player->mUserIndex : 0;
 
-    const double targetFov = player->getFieldOfViewModifier();
+    const float targetFov = player->getFieldOfViewModifier();
 
     mFovO[playerIndex] = mFov[playerIndex];
-    mFov[playerIndex] = static_cast<float>((targetFov - mFov[playerIndex]) * 0.5 + mFov[playerIndex]);
+    float fov = (targetFov - mFov[playerIndex]) * 0.5f + mFov[playerIndex];
 
-    if (mFov[playerIndex] > 1.5f)
-        mFov[playerIndex] = 1.5f;
-    else if (mFov[playerIndex] < 0.1f)
-        mFov[playerIndex] = 0.1f;
+    if (fov > 1.5f)
+        fov = 1.5f;
+    else if (fov < 0.1f)
+        fov = 0.1f;
+
+    mFov[playerIndex] = fov;
 }
 
 void GameRenderer::tickLightTexture()
@@ -1041,34 +1023,28 @@ double GameRenderer::getFov(float amount, bool useSmoothing)
     if (mPanoramicMode)
         return static_cast<double>(kPanoramicFov);
 
-    boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = Minecraft::GetInstance()->mPlayer;
-    MultiplayerLocalPlayer* player = localPlayer.get();
-    const int playerIndex = player != NULL ? player->mUserIndex : 0;
+    boost::shared_ptr<MultiplayerLocalPlayer> player = Minecraft::GetInstance()->mPlayer;
+    const int playerIndex = player != NULL ? player.get()->mUserIndex : 0;
 
     float fov = mFovSetting;
     if (useSmoothing)
     {
-        const float optionFov = mMinecraft->mOptions != NULL ? mMinecraft->mOptions->mFov : kZero;
-        fov = (fov + optionFov) * ((mFov[playerIndex] - mFovO[playerIndex]) * amount + mFovO[playerIndex]);
+        const float previous = mFovO[playerIndex];
+        const float blended = (mFov[playerIndex] - previous) * amount + previous;
+        fov = (fov + mMinecraft->mOptions->mFov) * blended;
     }
 
-
-    if (player != NULL)
+    if (player->getHealth() <= kZero)
     {
-        if (player->getHealth() <= kZero)
-        {
-            float deathTime = static_cast<float>(player->mDeathTime) + amount;
-            if (deathTime > kNauseaMax)
-                deathTime = kNauseaMax;
-            const float divisor = kOne - kNauseaDenom / (deathTime + kNauseaAdd);
-            fov = fov / (divisor + divisor + kOne);
-        }
+        float deathTime = static_cast<float>(player->mDeathTime) + amount;
+        if (deathTime > kNauseaMax)
+            deathTime = kNauseaMax;
+        const float divisor = kOne - kNauseaDenom / (deathTime + kNauseaAdd);
+        fov = fov / (divisor + divisor + kOne);
     }
 
-    boost::shared_ptr<Entity> cameraEntity = mMinecraft->getCameraEntity();
-    const BlockState* cameraBlock =
-        Camera::getBlockAt(mMinecraft->mLevel, cameraEntity, amount);
-    if (cameraBlock != NULL && cameraBlock->getMaterial()->isUnderWater())
+    const BlockState* cameraBlock = Camera::getBlockAt(mMinecraft->mLevel, player, amount);
+    if (cameraBlock->getMaterial()->isUnderWater())
         fov = fov * kUnderwaterScale / kUnderwaterDivisor;
 
     return static_cast<double>(fov);
@@ -1126,28 +1102,21 @@ void GameRenderer::bobView(float partialTick)
     static const float kPi = 3.1415927410125732f;
     static const float kRollOffset = 0.2f;
 
-    boost::shared_ptr<Entity> cameraEntity = getCamera();
-    if ((cameraEntity->GetType() & EntityType::PLAYER) != EntityType::PLAYER)
-        return;
+    if ((getCamera()->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+    {
+        boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(getCamera());
 
-    boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(cameraEntity);
-    Player* entity = player.get();
+        const float walk = -((player->mWalkDist - player->mWalkDistO) * partialTick + player->mWalkDist);
+        const float dist = (player->mCameraYaw - player->mPrevCameraYaw) * partialTick + player->mPrevCameraYaw;
+        const float roll = (player->mBob - player->mOBob) * partialTick + player->mOBob;
+        const float angle = walk * kPi;
 
-    const float walkDistO = entity->mWalkDistO;
-    const float walkDist = entity->mWalkDist;
-    const float walk = (walkDist - walkDistO) * partialTick + walkDist;
-    const float bobDist = (entity->mCameraYaw - entity->mPrevCameraYaw) * partialTick + entity->mPrevCameraYaw;
-    const float roll = (entity->mBob - entity->mOBob) * partialTick + entity->mOBob;
-    const float angle = -walk * kPi;
-    const float dist = bobDist;
-
-    const float sinAngle = Mth::sin(angle);
-    const float cosAngle = Mth::cos(angle);
-    GlStateManager::translatef(sinAngle * dist * kHalf, -Mth::abs(cosAngle * dist), kZero);
-    GlStateManager::rotatef(sinAngle * dist * kWalkScale, kZero, kZero, kOne);
-    GlStateManager::rotatef(Mth::abs(Mth::cos(angle - kRollOffset) * dist) * kRollScale, kOne, kZero,
-                            kZero);
-    GlStateManager::rotatef(roll, kOne, kZero, kZero);
+        GlStateManager::translatef(Mth::sin(angle) * dist * kHalf, -std::fabs(Mth::cos(angle) * dist), kZero);
+        GlStateManager::rotatef(Mth::sin(angle) * dist * kWalkScale, kZero, kZero, kOne);
+        GlStateManager::rotatef(std::fabs(Mth::cos(angle - kRollOffset) * dist) * kRollScale, kOne, kZero,
+                                kZero);
+        GlStateManager::rotatef(roll, kOne, kZero, kZero);
+    }
 }
 
 unsigned int GameRenderer::getCameraThirdPerson()
@@ -1158,16 +1127,14 @@ unsigned int GameRenderer::getCameraThirdPerson()
 
 double GameRenderer::getCameraYRot(float amount)
 {
-    boost::shared_ptr<Entity> camera = mMinecraft->getCameraEntity();
-    Entity* entity = camera.get();
-    return static_cast<double>((entity->mYRot - entity->mYRotO) * amount + entity->mYRotO);
+    return static_cast<double>((mMinecraft->mPlayer->mYRot - mMinecraft->mPlayer->mYRotO) * amount +
+                               mMinecraft->mPlayer->mYRotO);
 }
 
 double GameRenderer::getCameraXRot(float amount)
 {
-    boost::shared_ptr<Entity> camera = mMinecraft->getCameraEntity();
-    Entity* entity = camera.get();
-    return static_cast<double>((entity->mXRot - entity->mXRotO) * amount + entity->mXRotO);
+    return static_cast<double>((mMinecraft->mPlayer->mXRot - mMinecraft->mPlayer->mXRotO) * amount +
+                               mMinecraft->mPlayer->mXRotO);
 }
 
 void GameRenderer::moveCameraToPlayer(float partialTick)
@@ -1542,14 +1509,8 @@ void GameRenderer::setupCamera(float partialTick, int eyeIndex)
 
 void GameRenderer::turnOnLightLayer(double)
 {
-    boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = mMinecraft->mPlayer;
-    MultiplayerLocalPlayer* player = localPlayer.get();
-    if (player == NULL)
-        return;
-
-    const unsigned int texture = getLightTexture(
-        player->mUserIndex, mMinecraft->mLevel);
-    gRenderer->TextureBindVertex(static_cast<int>(texture));
+    gRenderer->TextureBindVertex(static_cast<int>(
+        getLightTexture(mMinecraft->mPlayer->mUserIndex, mMinecraft->mLevel)));
     GlStateManager::texParameteri(1, 1, 1);
     GlStateManager::texParameteri(1, 2, 1);
     GlStateManager::texParameteri(1, 3, 0);
@@ -1975,28 +1936,15 @@ double GameRenderer::getTargetFogDistance(const BlockPos& pos)
     static const float kUnitWeight = 1.0f;
 
     const BlockPos* table = getFogOffsets();
-    Level* level = mMinecraft->mLevel;
 
-    float weightSum = 0.0f;
     float distanceSum = 0.0f;
+    float weightSum = 0.0f;
 
-    for (int group = 0; group < 6; ++group)
+    const BlockPos* delta = table;
+    for (int i = 0; i < 27; ++i, ++delta)
     {
-        for (int sample = 0; sample < 4; ++sample)
-        {
-            const BlockPos& delta = table[group * 4 + sample];
-            BlockPos samplePos = pos.offset(delta.x, delta.y, delta.z);
-            Biome* biome = level->getBiome(samplePos);
-            distanceSum += biome->getFogDistance();
-        }
-        weightSum += kUnitWeight + kUnitWeight + kUnitWeight + kUnitWeight;
-    }
-
-    for (int i = 0; i < 3; ++i)
-    {
-        const BlockPos& delta = table[24 + i];
-        BlockPos samplePos = pos.offset(delta.x, delta.y, delta.z);
-        Biome* biome = level->getBiome(samplePos);
+        BlockPos samplePos = pos.offset(delta->x, delta->y, delta->z);
+        Biome* biome = mMinecraft->mLevel->getBiome(samplePos);
         distanceSum += biome->getFogDistance();
         weightSum += kUnitWeight;
     }
@@ -2008,39 +1956,22 @@ void GameRenderer::getTargetFogColor(const BlockPos& pos, float& red, float& gre
 {
     static const float kByteScale = 0.00390625f;
     const BlockPos* table = getFogOffsets();
-    Level* level = mMinecraft->mLevel;
 
     float redSum = 0.0f;
     float greenSum = 0.0f;
     float blueSum = 0.0f;
     float weight = 0.0f;
 
-    for (int pair = 0; pair < 13; ++pair)
+    const BlockPos* delta = table;
+    for (int i = 0; i < 27; ++i, ++delta)
     {
-        const BlockPos& firstDelta = table[pair * 2];
-        Biome* firstBiome = level->getBiome(pos.offset(firstDelta.x, firstDelta.y, firstDelta.z));
-        const unsigned int firstColour = firstBiome->getUnderWaterFogColor();
-
-        const BlockPos& secondDelta = table[pair * 2 + 1];
-        Biome* secondBiome = level->getBiome(pos.offset(secondDelta.x, secondDelta.y, secondDelta.z));
-        const unsigned int secondColour = secondBiome->getUnderWaterFogColor();
-
-        redSum = static_cast<float>((secondColour >> 16) & 255u) * kByteScale
-            + static_cast<float>((firstColour >> 16) & 255u) * kByteScale + redSum;
-        greenSum = static_cast<float>((secondColour >> 8) & 255u) * kByteScale
-            + static_cast<float>((firstColour >> 8) & 255u) * kByteScale + greenSum;
-        blueSum = static_cast<float>(secondColour & 255u) * kByteScale
-            + static_cast<float>(firstColour & 255u) * kByteScale + blueSum;
-        weight += 1.0f + 1.0f;
+        Biome* biome = mMinecraft->mLevel->getBiome(pos.offset(delta->x, delta->y, delta->z));
+        const unsigned int colour = biome->getUnderWaterFogColor();
+        redSum = static_cast<float>((colour >> 16) & 255u) * kByteScale + redSum;
+        greenSum = static_cast<float>((colour >> 8) & 255u) * kByteScale + greenSum;
+        blueSum = static_cast<float>(colour & 255u) * kByteScale + blueSum;
+        weight += 1.0f;
     }
-
-    const BlockPos& finalDelta = table[26];
-    Biome* finalBiome = level->getBiome(pos.offset(finalDelta.x, finalDelta.y, finalDelta.z));
-    const unsigned int finalColour = finalBiome->getUnderWaterFogColor();
-    redSum = static_cast<float>((finalColour >> 16) & 255u) * kByteScale + redSum;
-    greenSum = static_cast<float>((finalColour >> 8) & 255u) * kByteScale + greenSum;
-    blueSum = static_cast<float>(finalColour & 255u) * kByteScale + blueSum;
-    weight += 1.0f;
 
     red = redSum / weight;
     green = greenSum / weight;
@@ -2435,8 +2366,7 @@ void GameRenderer::prepareAndRenderClouds(LevelRenderer* levelRenderer, float pa
     if (GameSettings::GetGameSettings(playerIndex, eGameSetting_Clouds) == 0)
         return;
 
-    const MiniGameDef* miniGame = mMinecraft->GetMiniGame();
-    if (miniGame == NULL || !miniGame->HasFeatureClouds())
+    if (!Minecraft::GetInstance()->GetMiniGame()->HasFeatureClouds())
         return;
 
     GlStateManager::pushMatrix();
@@ -3477,9 +3407,11 @@ void GameRenderer::renderItemActivationAnimation(int width, int height, float pa
     const float progress = (static_cast<float>(40 - mItemActivationTicks[playerIndex]) + partialTick) / 40.0f;
     const float progressSquared = progress * progress;
     const float progressCubed = progress * progressSquared;
-    const float curve = 10.25f * progressCubed * progressSquared - 24.95f * progressSquared * progressSquared
-                        + 25.5f * progressCubed - 13.8f * progressSquared + 4.0f * progress;
+    const float curve = 10.25f * progressCubed * progressSquared + -24.95f * progressSquared * progressSquared
+                        + 25.5f * progressCubed + -13.8f * progressSquared + 4.0f * progress;
     const float angle = curve * kPi;
+    const float offsetX = mItemActivationOffX[playerIndex];
+    const float offsetY = mItemActivationOffY[playerIndex];
 
     GlStateManager::enableAlphaTest();
     GlStateManager::pushMatrix();
@@ -3489,9 +3421,9 @@ void GameRenderer::renderItemActivationAnimation(int width, int height, float pa
 
     const float swingX = sinf(angle * 2.0f);
     const float swingY = sinf(angle * 2.0f);
-    GlStateManager::translatef(mItemActivationOffX[playerIndex] * static_cast<float>(width / 4) * Mth::abs(swingX)
+    GlStateManager::translatef(offsetX * static_cast<float>(width / 4) * Mth::abs(swingX)
                                    + static_cast<float>(width / 2),
-                               mItemActivationOffY[playerIndex] * static_cast<float>(height / 4) * Mth::abs(swingY)
+                               offsetY * static_cast<float>(height / 4) * Mth::abs(swingY)
                                    + static_cast<float>(height / 2),
                                -50.0f);
     const float scale = 50.0f + 175.0f * Mth::sin(angle);
@@ -3514,13 +3446,12 @@ void GameRenderer::render(float partialTick, long long frameNanoTime, bool refre
 {
     static const float kAlphaRef = 0.009999999776482582f;
     static const int kMinFps = 60;
-    static const long long kNanoPerSecond = 1000000000LL;
+    static const int kNanoPerSecond = 1000000000;
 
     if (mLightTextureDirty && refreshLightTexture)
         this->updateLightTexture(partialTick);
 
-    const long long nowMs = System::processTimeInMilliSecs();
-    mLastActiveTime = nowMs;
+    mLastActiveTime = System::processTimeInMilliSecs();
 
     if (mMinecraft->mNoRender)
         return;
@@ -3528,17 +3459,10 @@ void GameRenderer::render(float partialTick, long long frameNanoTime, bool refre
     anaglyph3d = mMinecraft->mOptions->mAnaglyph3d;
 
     ScreenSizeCalculator calculator(mMinecraft->mOptions, -1);
-    const int screenWidth = static_cast<int>(calculator.getWidth());
+    calculator.getWidth();
     const int screenHeight = static_cast<int>(calculator.getHeight());
 
-    int fpsCap = fjGetFpsCap(mMinecraft->mOptions != NULL
-                                 ? mMinecraft->mOptions->mFpsLimit
-                                 : 0);
-    const int averageFps = Minecraft::getAverageFps();
-    if (averageFps < fpsCap)
-        fpsCap = averageFps;
-    if (fpsCap < kMinFps)
-        fpsCap = kMinFps;
+    int fpsCap = fjGetFpsCap(mMinecraft->mOptions->mFpsLimit);
 
     if (mMinecraft->mLevel == NULL)
     {
@@ -3547,27 +3471,28 @@ void GameRenderer::render(float partialTick, long long frameNanoTime, bool refre
         GlStateManager::matrixMode(0);
         GlStateManager::loadIdentity();
         setupGuiScreen(-1);
-        const long long nanoNow = System::processTimeInNanoSecs();
-        mLastNanos = nanoNow;
+        mLastNanos = System::processTimeInNanoSecs();
     }
     else
     {
+        const int averageFps = Minecraft::getAverageFps();
+        if (averageFps < fpsCap)
+            fpsCap = averageFps;
+        if (fpsCap < kMinFps)
+            fpsCap = kMinFps;
+
         const long long startNano = System::processTimeInNanoSecs();
-        const long long frameBudget = kNanoPerSecond / fpsCap;
-        const long long targetNano = startNano + frameBudget - frameNanoTime;
-        const long long clampedTarget = targetNano < startNano ? startNano : targetNano;
-        renderLevel(partialTick, clampedTarget);
+        int remainingNanos = kNanoPerSecond / fpsCap / 4 - static_cast<int>(startNano - frameNanoTime);
+        if (remainingNanos < 0)
+            remainingNanos = 0;
+        renderLevel(partialTick, System::processTimeInNanoSecs() + remainingNanos);
 
-        const long long endNano = System::processTimeInNanoSecs();
-        mLastNanos = endNano;
+        mLastNanos = System::processTimeInNanoSecs();
 
-        const bool hideGui =
-            mMinecraft->mOptions != NULL && mMinecraft->mOptions->mHideGui;
-        if (!hideGui || mMinecraft->mScreen != NULL)
+        if (!mMinecraft->mOptions->mHideGui || mMinecraft->mScreen != NULL)
         {
             GlStateManager::alphaFunc(4, kAlphaRef);
-            mMinecraft->mGui->render(partialTick, mMinecraft->mScreen != NULL, screenWidth,
-                                     screenHeight - 1);
+            mMinecraft->mGui->render(partialTick, mMinecraft->mScreen != NULL, 0, screenHeight - 1);
         }
     }
 
@@ -3631,13 +3556,13 @@ void GameRenderer::setItemInHandRenderer(ItemInHandRenderer* renderer)
 void GameRenderer::AddForDelete(SparseLightStorage* storage)
 {
     EnterCriticalSection(&sDeleteMutex);
-    sPendingLightDeletes[sPendingLightDeleteList].push_back(storage);
+    sPendingLightDeletes.push_back(storage);
 }
 
 void GameRenderer::AddForDelete(LevelChunk* chunk)
 {
     EnterCriticalSection(&sDeleteMutex);
-    sPendingChunkDeletes[sPendingChunkDeleteList].push_back(chunk);
+    sPendingChunkDeletes.push_back(chunk);
 }
 
 void GameRenderer::AddForDelete(ElementStorage* storage)
