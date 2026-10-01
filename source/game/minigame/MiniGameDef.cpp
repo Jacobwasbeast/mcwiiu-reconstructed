@@ -40,6 +40,7 @@
 #include "game/entity/mob/MobEffect.hpp"
 #include "game/entity/mob/MobEffectInstance.hpp"
 #include "game/network/ClientboundMGPlayerSettingsUpdatePacket.hpp"
+#include "game/network/Packet.hpp"
 #include "game/server/MinecraftServer.hpp"
 #include "game/server/ServerPlayer.hpp"
 #include "game/ui/LaunchMoreOptionsMenuInitData.hpp"
@@ -1433,9 +1434,9 @@ std::wstring MiniGameDef::GetLootSetDescription(int id) const
 
 MiniGamePlayerSettings MiniGameDef::GetDefaultPlayerSettings() const { return mPlayerSettings; }
 
-boost::shared_ptr<ClientboundMGPlayerSettingsUpdatePacket> MiniGameDef::GetPlayerSettingsPacket() const
+boost::shared_ptr<Packet> MiniGameDef::GetPlayerSettingsPacket() const
 {
-    return boost::shared_ptr<ClientboundMGPlayerSettingsUpdatePacket>(new ClientboundMGPlayerSettingsUpdatePacket(sPlayerSettings));
+    return boost::shared_ptr<Packet>(new ClientboundMGPlayerSettingsUpdatePacket(sPlayerSettings));
 }
 
 std::wstring MiniGameDef::getVersionString() const
@@ -1512,27 +1513,27 @@ double MiniGameDef::getExhaustionSneak(float value) const { const FoodBalance* f
 double MiniGameDef::getExhaustionSwim(float value) const { const FoodBalance* f = GetFoodBalance(); return f->mExhaustionSwimEnabled ? f->mExhaustionSwim : value; }
 double MiniGameDef::getExhaustionIdle(float value) const { const FoodBalance* f = GetFoodBalance(); return f->mExhaustionIdleEnabled ? f->mExhaustionIdle : value; }
 
-unsigned int MiniGameDef::getCentralRefillChance() const
+int MiniGameDef::getCentralRefillChance() const
 {
     return mChestRefill.mCentralRefillChance.isSet() ? mChestRefill.mCentralRefillChance.get() : 0;
 }
-unsigned int MiniGameDef::getOuterRefillChance() const
+int MiniGameDef::getOuterRefillChance() const
 {
     return mChestRefill.mOuterRefillChance.isSet() ? mChestRefill.mOuterRefillChance.get() : 0;
 }
-unsigned int MiniGameDef::getHVRefillChance() const
+int MiniGameDef::getHVRefillChance() const
 {
     return mChestRefill.mHVRefillChance.isSet() ? mChestRefill.mHVRefillChance.get() : 0;
 }
-unsigned int MiniGameDef::getNumberOfChestsToRefill() const
+int MiniGameDef::getNumberOfChestsToRefill() const
 {
     return mChestRefill.mNumberOfChestsToRefill.isSet() ? mChestRefill.mNumberOfChestsToRefill.get() : 0;
 }
-unsigned int MiniGameDef::getMinPlayerDistanceToEffectChance() const
+int MiniGameDef::getMinPlayerDistanceToEffectChance() const
 {
     return mChestRefill.mMinPlayerDistanceToEffectChance.isSet() ? mChestRefill.mMinPlayerDistanceToEffectChance.get() : 0;
 }
-unsigned int MiniGameDef::getMaxPlayerDistanceToEffectChance() const
+int MiniGameDef::getMaxPlayerDistanceToEffectChance() const
 {
     return mChestRefill.mMaxPlayerDistanceToEffectChance.isSet() ? mChestRefill.mMaxPlayerDistanceToEffectChance.get() : 0;
 }
@@ -1931,7 +1932,7 @@ std::wstring MiniGameDef::GetFoodBalanceIndexDescription(int index) const
 
 void MiniGameDef::SetDisabledEditActions(bool disabled) const { const_cast<MiniGameDef*>(this)->mEditActionsDisabled = disabled; }
 bool MiniGameDef::EditActionsDisabled() const { return mEditActionsDisabled; }
-unsigned int MiniGameDef::GetItemRespawnTime() const { return 30; }
+int MiniGameDef::GetItemRespawnTime() const { return 30; }
 unsigned int MiniGameDef::IsShowdownEnabled() const { return 1; }
 bool MiniGameDef::CanCraft() const { return mAllowCrafting; }
 bool MiniGameDef::HasMultipleRounds() const { return GetRoundCount() > 1; }

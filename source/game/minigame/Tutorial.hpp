@@ -405,7 +405,7 @@ public:
     virtual ~Tutorial();
 
     void addMessage(int messageId, bool repeatMessage, unsigned char maxDisplayCount);
-    unsigned int getCompleted(int completionId);
+    bool getCompleted(int completionId);
     unsigned int isHintCompleted(eTutorial_Hint hint);
     void addHint(eTutorial_State state, TutorialHint* hint);
     void addHintIfIncomplete(eTutorial_State state, TutorialHint* hint);

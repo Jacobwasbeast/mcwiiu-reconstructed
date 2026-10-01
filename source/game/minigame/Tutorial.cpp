@@ -60,7 +60,7 @@ namespace
 }
 
 Tutorial::PopupMessageDetails::PopupMessageDetails()
-    : titleId(-1), messageId(-1), promptId(-1), title(), message(), itemDescription(),
+    : titleId(-1), messageId(-1), promptId(-1), title(L""), message(L""), itemDescription(L""),
       itemInstance(ItemInstance::EMPTY), displayTime(-1), priority(0), repeat(true), unknown(false),
       displayed(false), allowFade(false), isItem(false), force(false), state(-1)
 {
@@ -79,15 +79,34 @@ unsigned int Tutorial::PopupMessageDetails::isSameContent(PopupMessageDetails* d
 
 Tutorial::Tutorial(int playerIdValue, GameModeConstraints* constraints, bool enabledValue,
                    bool skipSetup)
-    : currentState(eTutorial_State_Gameplay), stateChanged(false), started(false), startTime(0),
-      gameModeConstraints(constraints), messages(), tasks(), currentTask(),
-      completedStates(), overridesGameHostOptions(false), gameHostOptionsOverridden(false),
-      gameMode(eTutorial_GameMode_ChestRefill), gameModeChanged(false), hintShown(false),
-      playerId(playerIdValue), visibleTime(0), currentMessage(NULL), messageState(0),
-      messageRepeatCount(0), popupVisible(true), popupPending(false), uiControllerSet(false),
-      tutorialHidden(false), currentScene(NULL), tasksChecked(false), completed(false),
-      enabled(enabledValue)
 {
+    playerId = playerIdValue;
+    enabled = enabledValue;
+    currentScene = NULL;
+    gameMode = eTutorial_GameMode_ChestRefill;
+    popupPending = false;
+    currentMessage = NULL;
+    startTime = 0;
+    hintShown = false;
+    started = false;
+    popupVisible = true;
+    uiControllerSet = false;
+    currentState = eTutorial_State_Gameplay;
+    completed = false;
+    gameHostOptionsOverridden = false;
+    gameModeChanged = false;
+    stateChanged = false;
+    messageRepeatCount = 0;
+    tasksChecked = false;
+    tutorialHidden = false;
+    gameModeConstraints = constraints;
+    overridesGameHostOptions = false;
+    visibleTime = 0;
+    messageState = 0;
+    for (int i = 0; i < eTutorial_State_Max; ++i)
+    {
+        currentTask[i] = NULL;
+    }
     if (!skipSetup)
     {
         AddHints();
@@ -103,7 +122,20 @@ Tutorial::~Tutorial()
         delete message->second;
         ++message;
     }
-    delete currentMessage;
+    for (int state = 0; state < eTutorial_State_Max; ++state)
+    {
+        for (std::vector<TutorialTask*>::iterator it = stateTasks[state].begin();
+             it < stateTasks[state].end(); ++it)
+        {
+            delete *it;
+        }
+        for (std::vector<TutorialHint*>::iterator it = stateHints[state].begin();
+             it < stateHints[state].end(); ++it)
+        {
+            delete *it;
+        }
+        currentTask[state] = NULL;
+    }
 }
 
 void Tutorial::addMessage(int messageId, bool repeatMessage, unsigned char maxDisplayCount)
@@ -115,11 +147,11 @@ void Tutorial::addMessage(int messageId, bool repeatMessage, unsigned char maxDi
     messages[messageId] = new TutorialMessage(messageId, repeatMessage, maxDisplayCount);
 }
 
-unsigned int Tutorial::getCompleted(int completionId)
+bool Tutorial::getCompleted(int completionId)
 {
     unsigned int index = static_cast<unsigned int>(-1);
     for (std::vector<int>::const_iterator it = gTutorialCompletionIds.begin();
-         it != gTutorialCompletionIds.end(); ++it)
+         it < gTutorialCompletionIds.end(); ++it)
     {
         ++index;
         if (*it == completionId)
@@ -412,13 +444,7 @@ void Tutorial::AddHints()
     addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtBlockHint(eTutorial_Hint_SeaLantern, this, seaLanternStates, 1, NULL, 0, -1, -1, false));
     const BlockState* slimeStates[] = { Blocks::slime->defaultBlockState() };
     addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtBlockHint(eTutorial_Hint_SlimeBlock, this, slimeStates, 1, NULL, 0, -1, -1, false));
-    TypedBoxed<DoublePlantBlock::Variant*> doublePlantValue(DoublePlantBlock::Variant::byData(0));
-    TypedBoxed<DoublePlantBlock::Variant*> doublePlantValue2(DoublePlantBlock::Variant::byData(1));
-    TypedBoxed<DoublePlantBlock::Variant*> doublePlantValue3(DoublePlantBlock::Variant::byData(2));
-    TypedBoxed<DoublePlantBlock::Variant*> doublePlantValue4(DoublePlantBlock::Variant::byData(3));
-    TypedBoxed<DoublePlantBlock::Variant*> doublePlantValue5(DoublePlantBlock::Variant::byData(4));
-    TypedBoxed<DoublePlantBlock::Variant*> doublePlantValue6(DoublePlantBlock::Variant::byData(5));
-    const BlockState* doublePlantStates[] = { Blocks::double_plant->defaultBlockState()->setBoxedValue(DoublePlantBlock::VARIANT, &doublePlantValue), Blocks::double_plant->defaultBlockState()->setBoxedValue(DoublePlantBlock::VARIANT, &doublePlantValue2), Blocks::double_plant->defaultBlockState()->setBoxedValue(DoublePlantBlock::VARIANT, &doublePlantValue3), Blocks::double_plant->defaultBlockState()->setBoxedValue(DoublePlantBlock::VARIANT, &doublePlantValue4), Blocks::double_plant->defaultBlockState()->setBoxedValue(DoublePlantBlock::VARIANT, &doublePlantValue5), Blocks::double_plant->defaultBlockState()->setBoxedValue(DoublePlantBlock::VARIANT, &doublePlantValue6) };
+    const BlockState* doublePlantStates[] = { Blocks::double_plant->defaultBlockState()->setValue(DoublePlantBlock::VARIANT, DoublePlantBlock::Variant::SUNFLOWER), Blocks::double_plant->defaultBlockState()->setValue(DoublePlantBlock::VARIANT, DoublePlantBlock::Variant::SYRINGA), Blocks::double_plant->defaultBlockState()->setValue(DoublePlantBlock::VARIANT, DoublePlantBlock::Variant::GRASS), Blocks::double_plant->defaultBlockState()->setValue(DoublePlantBlock::VARIANT, DoublePlantBlock::Variant::FERN), Blocks::double_plant->defaultBlockState()->setValue(DoublePlantBlock::VARIANT, DoublePlantBlock::Variant::ROSE), Blocks::double_plant->defaultBlockState()->setValue(DoublePlantBlock::VARIANT, DoublePlantBlock::Variant::PAEONIA) };
     const Property* doublePlantProperties[] = { DoublePlantBlock::VARIANT };
     addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtBlockHint(eTutorial_Hint_DoublePlant, this, doublePlantStates, 6, doublePlantProperties, 1, -1, -1, true));
     const BlockState* redSandstoneStates[] = { Blocks::red_sandstone->defaultBlockState() };
@@ -447,16 +473,13 @@ void Tutorial::AddHints()
     addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtBlockHint(eTutorial_Hint_PurpurBlock, this, purpurBlockStates, 2, NULL, 0, -1, -1, false));
     const BlockState* grassStates[] = { Blocks::grass->defaultBlockState() };
     addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtBlockHint(eTutorial_Hint_Grass, this, grassStates, 1, NULL, 0, -1, -1, false));
-    TypedBoxed<DirtBlock::Variant*> dirtValue(DirtBlock::Variant::byData(0));
-    const BlockState* dirtStates[] = { Blocks::dirt->defaultBlockState()->setBoxedValue(DirtBlock::VARIANT, &dirtValue) };
+    const BlockState* dirtStates[] = { Blocks::dirt->defaultBlockState()->setValue(DirtBlock::VARIANT, DirtBlock::Variant::DIRT) };
     const Property* dirtProperties[] = { DirtBlock::VARIANT };
     addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtBlockHint(eTutorial_Hint_Dirt, this, dirtStates, 1, dirtProperties, 1, -1, -1, true));
-    TypedBoxed<DirtBlock::Variant*> dirtValue2(DirtBlock::Variant::byData(1));
-    const BlockState* dirtStates2[] = { Blocks::dirt->defaultBlockState()->setBoxedValue(DirtBlock::VARIANT, &dirtValue2) };
+    const BlockState* dirtStates2[] = { Blocks::dirt->defaultBlockState()->setValue(DirtBlock::VARIANT, DirtBlock::Variant::COARSE_DIRT) };
     const Property* dirtProperties2[] = { DirtBlock::VARIANT };
     addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtBlockHint(eTutorial_Hint_CoarseDirt, this, dirtStates2, 1, dirtProperties2, 1, -1, -1, true));
-    TypedBoxed<DirtBlock::Variant*> dirtValue3(DirtBlock::Variant::byData(2));
-    const BlockState* dirtStates3[] = { Blocks::dirt->defaultBlockState()->setBoxedValue(DirtBlock::VARIANT, &dirtValue3) };
+    const BlockState* dirtStates3[] = { Blocks::dirt->defaultBlockState()->setValue(DirtBlock::VARIANT, DirtBlock::Variant::PODZOL) };
     const Property* dirtProperties3[] = { DirtBlock::VARIANT };
     addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtBlockHint(eTutorial_Hint_Podzol, this, dirtStates3, 1, dirtProperties3, 1, -1, -1, true));
     const BlockState* fenceStates[] = { Blocks::fence->defaultBlockState(), Blocks::spruce_fence->defaultBlockState(), Blocks::birch_fence->defaultBlockState(), Blocks::jungle_fence->defaultBlockState(), Blocks::acacia_fence->defaultBlockState(), Blocks::dark_oak_fence->defaultBlockState() };
@@ -483,17 +506,13 @@ void Tutorial::AddHints()
     addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtBlockHint(eTutorial_Hint_Observer, this, observerStates, 1, NULL, 0, -1, -1, false));
     const BlockState* coralBlockStates[] = { Blocks::coral_block->defaultBlockState() };
     addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtBlockHint(eTutorial_Hint_CoralBlock, this, coralBlockStates, 1, NULL, 0, -1, -1, false));
-    TypedBoxed<bool> coralBlockValue(true);
-    const BlockState* coralBlockStates2[] = { Blocks::coral_block->defaultBlockState()->setBoxedValue(CoralBlock::DEAD, &coralBlockValue) };
+    const BlockState* coralBlockStates2[] = { Blocks::coral_block->defaultBlockState()->setValue(CoralBlock::DEAD, true) };
     addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtBlockHint(eTutorial_Hint_DeadCoralBlock, this, coralBlockStates2, 1, NULL, 0, -1, -1, false));
     const BlockState* coralStates[] = { Blocks::coral->defaultBlockState() };
     addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtBlockHint(eTutorial_Hint_Coral, this, coralStates, 1, NULL, 0, -1, -1, false));
     const BlockState* coralFanStates[] = { Blocks::coral_fan->defaultBlockState(), Blocks::coral_fan_hang->defaultBlockState(), Blocks::coral_fan_hang2->defaultBlockState(), Blocks::coral_fan_hang3->defaultBlockState() };
     addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtBlockHint(eTutorial_Hint_CoralFan, this, coralFanStates, 4, NULL, 0, -1, -1, false));
-    TypedBoxed<bool> coralFanHangValue(true);
-    TypedBoxed<bool> coralFanHang2Value(true);
-    TypedBoxed<bool> coralFanHang3Value(true);
-    const BlockState* coralFanDeadStates[] = { Blocks::coral_fan_dead->defaultBlockState(), Blocks::coral_fan_hang->defaultBlockState()->setBoxedValue(CoralFanHang::DEAD, &coralFanHangValue), Blocks::coral_fan_hang2->defaultBlockState()->setBoxedValue(CoralFanHang::DEAD, &coralFanHang2Value), Blocks::coral_fan_hang3->defaultBlockState()->setBoxedValue(CoralFanHang::DEAD, &coralFanHang3Value) };
+    const BlockState* coralFanDeadStates[] = { Blocks::coral_fan_dead->defaultBlockState(), Blocks::coral_fan_hang->defaultBlockState()->setValue(CoralFanHang::DEAD, true), Blocks::coral_fan_hang2->defaultBlockState()->setValue(CoralFanHang::DEAD, true), Blocks::coral_fan_hang3->defaultBlockState()->setValue(CoralFanHang::DEAD, true) };
     addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtBlockHint(eTutorial_Hint_CoralFanDead, this, coralFanDeadStates, 4, NULL, 0, -1, -1, false));
     const BlockState* kelpStates[] = { Blocks::kelp->defaultBlockState() };
     addHintIfIncomplete(eTutorial_State_Gameplay, new LookAtBlockHint(eTutorial_Hint_Kelp, this, kelpStates, 1, NULL, 0, -1, -1, false));
@@ -766,7 +785,7 @@ unsigned int Tutorial::AddTasks(bool enabledValue)
     if (!enabledValue)
         goto check_state_8;
     create_state_8:
-    addTask(eTutorial_State_NameTag, new InfoTask(this, IDS_TUTORIAL_TASK_NAMETAG_OVERVIEW, 0x3F9463F, true, 0x3A, eTelemetryChallenges_None));
+    addTask(eTutorial_State_NameTag, new InfoTask(this, IDS_TUTORIAL_TASK_NAMETAG_OVERVIEW, 0x3F9463F, true, 0, eTelemetryChallenges_Challenge58));
     if (!enabledValue)
         goto check_state_9;
     goto add_state_9;
@@ -839,7 +858,21 @@ unsigned int Tutorial::AddTasks(bool enabledValue)
 
 unsigned int Tutorial::setMessage(PopupMessageDetails* details)
 {
-    if (details == NULL)
+    if (details != NULL)
+    {
+        if (!details->allowFade && messageState == currentState &&
+            details->isSameContent(currentMessage) != 0 &&
+            (!details->unknown ||
+             (static_cast<unsigned int>(visibleTime) + gTutorialMessageRepeatTime > GetTickCount() &&
+              details->unknown)))
+        {
+            delete details;
+            return 0;
+        }
+    }
+
+    if (details == NULL ||
+        ((details->titleId == -1 || details->titleId == -2) && details->title.empty()))
     {
         if (currentMessage != NULL && currentMessage->titleId != -1 &&
             currentMessage->titleId != -2)
@@ -849,43 +882,31 @@ unsigned int Tutorial::setMessage(PopupMessageDetails* details)
             info.tutorial = this;
             gConsoleUIController.SetTutorialDescription(playerId, &info);
         }
-        delete currentMessage;
-        currentMessage = NULL;
-        popupPending = false;
-        return 0;
     }
-    if (!details->allowFade && messageState == currentState && currentMessage != NULL &&
-        details->isSameContent(currentMessage) != 0 &&
-        (!details->unknown || GetTickCount() <
-             static_cast<unsigned int>(visibleTime) + gTutorialMessageRepeatTime))
+    else
     {
-        delete details;
-        return 0;
-    }
+        messageState = currentState;
+        if (!details->displayed)
+            visibleTime = static_cast<int>(GetTickCount());
 
-    messageState = currentState;
-    if (!details->displayed)
-        visibleTime = static_cast<int>(GetTickCount());
-
-    if ((details->titleId != -1 && details->titleId != -2) || !details->title.empty())
-    {
         std::wstring title;
-        if (!details->title.empty())
-            title = details->title;
-        else
+        if (details->title.empty())
         {
             boost::unordered_map<int, TutorialMessage*>::iterator found = messages.find(details->titleId);
-            title = found != messages.end() && !details->force
-                ? found->second->getMessageForDisplay()
-                : L10N::GetString(details->titleId);
+            if (details->force || found == messages.end() || found->second == NULL)
+                title = std::wstring(L10N::GetString(details->titleId));
+            else
+                title = std::wstring(found->second->getMessageForDisplay());
         }
+        else
+            title = details->title;
 
         if (!details->message.empty())
             title += details->message;
         else if (details->messageId != -1)
         {
             boost::unordered_map<int, TutorialMessage*>::iterator found = messages.find(details->messageId);
-            if (found != messages.end())
+            if (found != messages.end() && found->second != NULL)
                 title += found->second->getMessageForDisplay();
         }
 
@@ -893,7 +914,7 @@ unsigned int Tutorial::setMessage(PopupMessageDetails* details)
         if (!details->itemDescription.empty())
             description = details->itemDescription;
         else if (details->promptId != -1 && details->promptId != -2)
-            description = L10N::GetString(details->promptId);
+            description = std::wstring(L10N::GetString(details->promptId));
 
         _TutorialPopupInfo info;
         info.scene = currentScene;
@@ -911,7 +932,6 @@ unsigned int Tutorial::setMessage(PopupMessageDetails* details)
 
     delete currentMessage;
     currentMessage = details;
-    popupPending = true;
     return 1;
 }
 
@@ -919,14 +939,16 @@ void Tutorial::setCompleted(int completionId)
 {
     unsigned int index = static_cast<unsigned int>(-1);
     for (std::vector<int>::const_iterator it = gTutorialCompletionIds.begin();
-         it != gTutorialCompletionIds.end(); ++it)
+         it < gTutorialCompletionIds.end(); ++it)
     {
         ++index;
         if (*it == completionId)
             break;
     }
     if (index < 0x200)
+    {
         GameSettings::SetTutorialCompletionFlag(playerId, static_cast<int>(index));
+    }
 }
 
 void Tutorial::setHintCompleted(eTutorial_Hint hint)
@@ -992,7 +1014,15 @@ int Tutorial::setMessage(TutorialHint* hint, PopupMessageDetails* details)
 
 unsigned int Tutorial::isSelectedItemState()
 {
-    return currentState == eTutorial_State_Gameplay || currentState >= eTutorial_State_Fishing ? 1U : 0U;
+    switch (currentState)
+    {
+    case eTutorial_State_Gameplay:
+    case eTutorial_State_Fishing:
+    case eTutorial_State_NameTag:
+        return 1;
+    default:
+        return 0;
+    }
 }
 
 void Tutorial::tick()
@@ -1293,7 +1323,7 @@ void Tutorial::tick()
 
 unsigned char Tutorial::isStateCompleted(eTutorial_State state)
 {
-    return (unsigned char)(getCompleted((int)state) != 0);
+    return getCompleted(state);
 }
 
 void Tutorial::setStateCompleted(eTutorial_State state)
@@ -1373,7 +1403,7 @@ void Tutorial::showTutorialPopup(bool show)
         TutorialTask* task = currentTask[currentState];
         if (task != NULL
             && (!task->AllowFade()
-                || GetTickCount() < (unsigned int)visibleTime + gTutorialVisibleTime))
+                || (unsigned int)visibleTime + gTutorialVisibleTime > GetTickCount()))
         {
             tutorialHidden = true;
         }
@@ -1449,11 +1479,9 @@ unsigned int Tutorial::startDestroyBlock(not_null_ptr<ItemInstance> item, const 
 unsigned int Tutorial::destroyBlock(Block* block)
 {
     for (std::vector<TutorialHint*>::iterator it = stateHints[currentState].begin();
-         it != stateHints[currentState].end(); ++it)
+         it < stateHints[currentState].end(); ++it)
     {
         TutorialHint* hint = *it;
-        if (hint == NULL)
-            continue;
         int result = static_cast<int>(hint->destroyBlock(block));
         if (result != -1)
         {
@@ -1633,18 +1661,18 @@ void Tutorial::onLookAt(const BlockState* state)
 {
     if (!popupPending)
     {
-        bool handled = false;
         for (std::vector<TutorialHint*>::iterator it = stateHints[currentState].begin();
-             it != stateHints[currentState].end(); ++it)
+             it < stateHints[currentState].end(); ++it)
         {
-            if (*it != NULL && (*it)->onLookAt(state) != 0)
+            if ((*it)->onLookAt(state) != 0)
             {
-                handled = true;
                 break;
             }
         }
-        if (!handled && currentState == eTutorial_State_Gameplay && state != NULL && state->getBlock() == Blocks::bed)
+        if (currentState == eTutorial_State_Gameplay && state->getBlock() == Blocks::bed)
+        {
             changeTutorialState(eTutorial_State_Bed, NULL);
+        }
     }
 }
 
@@ -1653,7 +1681,7 @@ void Tutorial::onLookAtSkull(Level* level, const BlockPos& pos, const BlockState
     if (!popupPending && state->getBlock() == Blocks::skull)
     {
         for (std::vector<TutorialHint*>::iterator it = stateHints[currentState].begin();
-             it != stateHints[currentState].end(); ++it)
+             it < stateHints[currentState].end(); ++it)
         {
             if ((*it)->onLookAtSkull(level, pos, state) != 0)
                 break;
@@ -1724,11 +1752,11 @@ unsigned int Tutorial::onRideEntity(boost::shared_ptr<Entity> entity)
 
 void Tutorial::onEffectChanged(MobEffect* effect, bool added)
 {
-    if (effect == NULL)
+    for (std::vector<TutorialTask*>::iterator it = stateTasks[currentState].begin();
+         it < stateTasks[currentState].end(); ++it)
     {
-        return;
+        (*it)->onEffectChanged(effect, added);
     }
-    enabled = added || enabled;
 }
 
 void Tutorial::onGameModeChange(eTutorial_GameMode newGameMode)

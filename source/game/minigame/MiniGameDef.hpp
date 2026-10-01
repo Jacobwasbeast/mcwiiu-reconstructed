@@ -24,6 +24,7 @@ class Container;
 class ServerPlayer;
 class ArchiveFile;
 class ClientboundMGPlayerSettingsUpdatePacket;
+class Packet;
 class WeighedTreasure;
 enum EGameModeSound
 {
@@ -290,7 +291,7 @@ public:
     std::wstring GetLootSetText() const;
     std::wstring GetLootSetDescription(int id) const;
     MiniGamePlayerSettings GetDefaultPlayerSettings() const;
-    boost::shared_ptr<ClientboundMGPlayerSettingsUpdatePacket> GetPlayerSettingsPacket() const;
+    boost::shared_ptr<Packet> GetPlayerSettingsPacket() const;
     std::wstring getVersionString() const;
     bool IsCRCValid() const;
     bool HasPermission(EBuildMode mode, const std::vector<int>& permissions, int value) const;
@@ -340,12 +341,12 @@ public:
     double getExhaustionSneak(float value) const;
     double getExhaustionSwim(float value) const;
     double getExhaustionIdle(float value) const;
-    unsigned int getCentralRefillChance() const;
-    unsigned int getOuterRefillChance() const;
-    unsigned int getHVRefillChance() const;
-    unsigned int getNumberOfChestsToRefill() const;
-    unsigned int getMinPlayerDistanceToEffectChance() const;
-    unsigned int getMaxPlayerDistanceToEffectChance() const;
+    int getCentralRefillChance() const;
+    int getOuterRefillChance() const;
+    int getHVRefillChance() const;
+    int getNumberOfChestsToRefill() const;
+    int getMinPlayerDistanceToEffectChance() const;
+    int getMaxPlayerDistanceToEffectChance() const;
     std::wstring getCentralLootGroup() const;
     std::wstring getOuterLootGroup() const;
     std::wstring getHVLootGroup() const;
@@ -393,7 +394,7 @@ public:
     std::wstring GetFoodBalanceIndexDescription(int index) const;
     void SetDisabledEditActions(bool disabled) const;
     bool EditActionsDisabled() const;
-    unsigned int GetItemRespawnTime() const;
+    int GetItemRespawnTime() const;
     unsigned int IsShowdownEnabled() const;
     bool HasMultipleRounds() const;
     bool HasMultipleMaps() const;
