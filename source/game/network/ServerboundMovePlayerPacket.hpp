@@ -15,7 +15,7 @@ class ServerboundMovePlayerPacket : public Packet, public boost::enable_shared_f
 public:
     ServerboundMovePlayerPacket();
     ServerboundMovePlayerPacket(bool onGround, bool isFlying);
-    virtual ~ServerboundMovePlayerPacket();
+    virtual ~ServerboundMovePlayerPacket() {}
 
     virtual void handle(PacketListener* listener);
     virtual void read(DataInputStream* input);
@@ -64,7 +64,6 @@ class ServerboundMovePlayerPacket::Pos : public ServerboundMovePlayerPacket
 public:
     Pos();
     Pos(double x, double y, double unused, double z, bool onGround, bool isFlying);
-    virtual ~Pos();
     virtual void read(DataInputStream* input);
     virtual void write(DataOutputStream* output);
     virtual int getEstimatedSize();
@@ -77,7 +76,6 @@ class ServerboundMovePlayerPacket::PosRot : public ServerboundMovePlayerPacket
 public:
     PosRot();
     PosRot(double x, double y, double z, float yRot, float xRot, bool onGround, bool isFlying);
-    virtual ~PosRot();
     virtual void read(DataInputStream* input);
     virtual void write(DataOutputStream* output);
     virtual int getEstimatedSize();
@@ -90,7 +88,6 @@ class ServerboundMovePlayerPacket::Rot : public ServerboundMovePlayerPacket
 public:
     Rot();
     Rot(float yRot, float xRot, bool onGround, bool isFlying);
-    virtual ~Rot();
     virtual void read(DataInputStream* input);
     virtual void write(DataOutputStream* output);
     virtual int getEstimatedSize();

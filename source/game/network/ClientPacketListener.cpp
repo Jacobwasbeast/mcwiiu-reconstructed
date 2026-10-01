@@ -123,7 +123,7 @@
 #include "game/core/ClientMasterGameMode.hpp"
 #include "game/core/GhostController.hpp"
 #include "game/core/GameModeTransitionParams.hpp"
-#include "game/core/MOJJANG_DATA.hpp"
+#include "game/core/MOJANG_DATA.hpp"
 #include "game/client/render/GameRenderer.hpp"
 #include "game/client/render/MapRenderer.hpp"
 #include "game/core/Socket.hpp"
@@ -515,7 +515,7 @@ void ClientPacketListener::handleLogin(boost::shared_ptr<ClientboundLoginPacket>
 
     PlayerUID suid(0);
     gProfile->GetXUID(m_playerId, &suid, true);
-    MOJJANG_DATA* mojangData = 0;
+    MOJANG_DATA* mojangData = 0;
     if (!CGameNetworkManager::sInstance.IsLocalGame())
         mojangData = gApp.GetMojangDataForXuid(suid);
 

@@ -6,14 +6,6 @@
 #include "game/core/TeamInvite.hpp"
 #include "game/network/PacketListener.hpp"
 
-GameModePacket::Data::~Data()
-{
-}
-
-GameModePacket::EmptyData::~EmptyData()
-{
-}
-
 void GameModePacket::EmptyData::ReadPacket(boost::shared_ptr<GameModePacket> packet)
 {
 }
@@ -82,10 +74,6 @@ GameModePacket::TransitionData::TransitionData(int transition, int level, int x,
 {
 }
 
-GameModePacket::TransitionData::~TransitionData()
-{
-}
-
 void GameModePacket::TransitionData::ReadPacket(boost::shared_ptr<GameModePacket> packet)
 {
     transition = packet->ints[0];
@@ -147,10 +135,6 @@ GameModePacket::ChangeCustomGameMode::ChangeCustomGameMode(int gameMode,
 {
 }
 
-GameModePacket::ChangeCustomGameMode::~ChangeCustomGameMode()
-{
-}
-
 void GameModePacket::ChangeCustomGameMode::ReadPacket(boost::shared_ptr<GameModePacket> packet)
 {
     gameMode = packet->ints[0];
@@ -194,10 +178,6 @@ GameModePacket::LockPlayerLocation::LockPlayerLocation()
 
 GameModePacket::LockPlayerLocation::LockPlayerLocation(bool locked)
     : locked(locked)
-{
-}
-
-GameModePacket::LockPlayerLocation::~LockPlayerLocation()
 {
 }
 
@@ -367,10 +347,6 @@ GameModePacket::AddAreaBoundsData::AddAreaBoundsData(
 {
 }
 
-GameModePacket::AddAreaBoundsData::~AddAreaBoundsData()
-{
-}
-
 void GameModePacket::AddAreaBoundsData::ReadPacket(boost::shared_ptr<GameModePacket> packet)
 {
     minX = packet->ints[0];
@@ -420,10 +396,6 @@ GameModePacket::TutorialGameModeData::TutorialGameModeData()
 {
 }
 
-GameModePacket::TutorialGameModeData::~TutorialGameModeData()
-{
-}
-
 void GameModePacket::TutorialGameModeData::ReadPacket(boost::shared_ptr<GameModePacket> packet)
 {
     tutorial = packet->ints[0];
@@ -442,10 +414,6 @@ GameModePacket::UpdateSeedGameModeData::UpdateSeedGameModeData()
 GameModePacket::UpdateSeedGameModeData::UpdateSeedGameModeData(
     long long seed, float mapSizeMultiplier)
     : seed(seed), mapSizeMultiplier(mapSizeMultiplier)
-{
-}
-
-GameModePacket::UpdateSeedGameModeData::~UpdateSeedGameModeData()
 {
 }
 
@@ -478,10 +446,6 @@ GameModePacket::UpdateThemeGameModeData::UpdateThemeGameModeData()
 
 GameModePacket::UpdateThemeGameModeData::UpdateThemeGameModeData(int themeData)
     : themeData(themeData)
-{
-}
-
-GameModePacket::UpdateThemeGameModeData::~UpdateThemeGameModeData()
 {
 }
 

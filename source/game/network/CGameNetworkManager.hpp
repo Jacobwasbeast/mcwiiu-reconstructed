@@ -157,7 +157,7 @@ public:
 private:
     friend class CMinecraftApp;
 
-    unsigned char m_unknown00[4];
+    C4JEventImpl* m_serverStoppedEvent;
     C4JEventImpl* m_serverReadyEvent;
     bool m_initialised;
     unsigned char m_initialisedPadding[3];
@@ -165,18 +165,15 @@ private:
     unsigned int m_pendingInviteUserMask;
     FriendPresence* m_pendingInvitePresence;
     int m_unknown18;
-    unsigned char m_pendingInvitePresenceData[0x28];
-    CPlatformNetworkManager* m_platform;
-    C4JEventImpl* m_serverStoppedEvent;
-    unsigned char m_eventStatePadding[8];
+    unsigned char m_pendingInvitePresenceData[0x38];
     bool m_networkThreadRunning;
     bool m_disconnectError;
     bool m_unknownState;
     bool m_publicJoinable;
     void* m_inviteInfo;
     std::vector<ClientPacketListener*> m_connections;
-    unsigned char m_connectionsPadding[4];
     OSFastMutex m_connectionsMutex;
+    unsigned char m_trailingPadding[4];
 
 public:
     EMiniGameId m_joiningMiniGameId;

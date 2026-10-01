@@ -70,7 +70,7 @@ public:
     class Data
     {
     public:
-        virtual ~Data();
+        virtual ~Data() {}
         virtual void ReadPacket(boost::shared_ptr<GameModePacket> packet) = 0;
         virtual void WritePacket(boost::shared_ptr<GameModePacket> packet) const = 0;
     };
@@ -78,7 +78,7 @@ public:
     class EmptyData : public Data
     {
     public:
-        virtual ~EmptyData();
+        virtual ~EmptyData() {}
         virtual void ReadPacket(boost::shared_ptr<GameModePacket> packet);
         virtual void WritePacket(boost::shared_ptr<GameModePacket> packet) const;
     };
@@ -113,7 +113,7 @@ public:
     public:
         TransitionData();
         TransitionData(int transition, int level, int x, int y);
-        virtual ~TransitionData();
+        virtual ~TransitionData() {}
         virtual void ReadPacket(boost::shared_ptr<GameModePacket> packet);
         virtual void WritePacket(boost::shared_ptr<GameModePacket> packet) const;
 
@@ -143,7 +143,7 @@ public:
     public:
         ChangeCustomGameMode();
         ChangeCustomGameMode(int gameMode, int customGameMode);
-        virtual ~ChangeCustomGameMode();
+        virtual ~ChangeCustomGameMode() {}
         virtual void ReadPacket(boost::shared_ptr<GameModePacket> packet);
         virtual void WritePacket(boost::shared_ptr<GameModePacket> packet) const;
 
@@ -168,7 +168,7 @@ public:
     public:
         LockPlayerLocation();
         LockPlayerLocation(bool locked);
-        virtual ~LockPlayerLocation();
+        virtual ~LockPlayerLocation() {}
         virtual void ReadPacket(boost::shared_ptr<GameModePacket> packet);
         virtual void WritePacket(boost::shared_ptr<GameModePacket> packet) const;
 
@@ -258,7 +258,7 @@ public:
         AddAreaBoundsData();
         AddAreaBoundsData(int minX, int minY, int minZ,
                           int maxX, int maxY, int maxZ);
-        virtual ~AddAreaBoundsData();
+        virtual ~AddAreaBoundsData() {}
         virtual void ReadPacket(boost::shared_ptr<GameModePacket> packet);
         virtual void WritePacket(boost::shared_ptr<GameModePacket> packet) const;
 
@@ -287,7 +287,7 @@ public:
     public:
         TutorialGameModeData();
         TutorialGameModeData(int tutorial);
-        virtual ~TutorialGameModeData();
+        virtual ~TutorialGameModeData() {}
         virtual void ReadPacket(boost::shared_ptr<GameModePacket> packet);
         virtual void WritePacket(boost::shared_ptr<GameModePacket> packet) const;
 
@@ -299,7 +299,7 @@ public:
     public:
         UpdateSeedGameModeData();
         UpdateSeedGameModeData(long long seed, float mapSizeMultiplier);
-        virtual ~UpdateSeedGameModeData();
+        virtual ~UpdateSeedGameModeData() {}
         virtual void ReadPacket(boost::shared_ptr<GameModePacket> packet);
         virtual void WritePacket(boost::shared_ptr<GameModePacket> packet) const;
         long long getSeed() const;
@@ -314,7 +314,7 @@ public:
     public:
         UpdateThemeGameModeData();
         UpdateThemeGameModeData(int themeData);
-        virtual ~UpdateThemeGameModeData();
+        virtual ~UpdateThemeGameModeData() {}
         virtual void ReadPacket(boost::shared_ptr<GameModePacket> packet);
         virtual void WritePacket(boost::shared_ptr<GameModePacket> packet) const;
         unsigned int getThemeData() const;

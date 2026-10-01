@@ -16,10 +16,6 @@ ServerboundMovePlayerPacket::ServerboundMovePlayerPacket(bool onGround, bool isF
 {
 }
 
-ServerboundMovePlayerPacket::~ServerboundMovePlayerPacket()
-{
-}
-
 void ServerboundMovePlayerPacket::handle(PacketListener* listener)
 {
     listener->handleMovePlayer(shared_from_this());
@@ -27,18 +23,14 @@ void ServerboundMovePlayerPacket::handle(PacketListener* listener)
 
 void ServerboundMovePlayerPacket::read(DataInputStream* input)
 {
-    unsigned char flags = input->readByte();
+    char flags = input->readByte();
     onGround = (flags & 1) != 0;
     flying = (flags & 2) != 0;
 }
 
 void ServerboundMovePlayerPacket::write(DataOutputStream* output)
 {
-    unsigned char flags = flying ? 2 : 0;
-    if (onGround)
-    {
-        flags |= 1;
-    }
+    unsigned char flags = onGround | (flying ? 2 : 0);
     output->writeByte(flags);
 }
 
@@ -130,16 +122,14 @@ ServerboundMovePlayerPacket::Pos::Pos()
 
 ServerboundMovePlayerPacket::Pos::Pos(double x, double y, double unused, double z,
                                      bool onGround, bool isFlying)
-    : ServerboundMovePlayerPacket(onGround, isFlying)
+    : ServerboundMovePlayerPacket()
 {
     this->x = x;
     this->y = y;
     this->z = z;
+    this->onGround = onGround;
+    this->flying = isFlying;
     hasPositionValue = true;
-}
-
-ServerboundMovePlayerPacket::Pos::~Pos()
-{
 }
 
 void ServerboundMovePlayerPacket::Pos::read(DataInputStream* input)
@@ -176,25 +166,23 @@ boost::shared_ptr<Packet> ServerboundMovePlayerPacket::Pos::create()
 ServerboundMovePlayerPacket::PosRot::PosRot()
     : ServerboundMovePlayerPacket()
 {
-    hasPositionValue = true;
     hasRotationValue = true;
+    hasPositionValue = true;
 }
 
 ServerboundMovePlayerPacket::PosRot::PosRot(double x, double y, double z, float yRot, float xRot,
                                            bool onGround, bool isFlying)
-    : ServerboundMovePlayerPacket(onGround, isFlying)
+    : ServerboundMovePlayerPacket()
 {
     this->x = x;
     this->y = y;
     this->z = z;
     this->yRot = yRot;
     this->xRot = xRot;
+    this->onGround = onGround;
+    this->flying = isFlying;
     hasPositionValue = true;
     hasRotationValue = true;
-}
-
-ServerboundMovePlayerPacket::PosRot::~PosRot()
-{
 }
 
 void ServerboundMovePlayerPacket::PosRot::read(DataInputStream* input)
@@ -239,15 +227,13 @@ ServerboundMovePlayerPacket::Rot::Rot()
 }
 
 ServerboundMovePlayerPacket::Rot::Rot(float yRot, float xRot, bool onGround, bool isFlying)
-    : ServerboundMovePlayerPacket(onGround, isFlying)
+    : ServerboundMovePlayerPacket()
 {
     this->yRot = yRot;
     this->xRot = xRot;
+    this->onGround = onGround;
+    this->flying = isFlying;
     hasRotationValue = true;
-}
-
-ServerboundMovePlayerPacket::Rot::~Rot()
-{
 }
 
 void ServerboundMovePlayerPacket::Rot::read(DataInputStream* input)
