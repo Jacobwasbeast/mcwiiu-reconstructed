@@ -31,6 +31,7 @@
 #include "game/world/block/CauldronBlock.hpp"
 #include "game/world/block/CocoaBlock.hpp"
 #include "game/world/block/MutableBlockPos.hpp"
+#include "game/world/block/QuartzBlock.hpp"
 #include "game/world/block/TurtleEggBlock.hpp"
 #include "game/world/block/EndRodBlock.hpp"
 #include "game/world/block/TripWireHookBlock.hpp"
@@ -375,7 +376,10 @@ void BlockRenderer::setShape(float x0, float y0, float z0, float x1, float y1, f
     mMaxX = x1;
     mMaxY = y1;
     mMaxZ = z1;
-    mShapeOutside = x0 > 0.0f || y0 > 0.0f || z0 > 0.0f || x1 < 1.0f || y1 < 1.0f || z1 < 1.0f;
+    bool outside = true;
+    if (x0 <= 0.0f && x1 >= 1.0f && y0 <= 0.0f && y1 >= 1.0f && z0 <= 0.0f && z1 >= 1.0f)
+        outside = false;
+    mShapeOutside = outside;
 }
 
 bool BlockRenderer::hasFixedTexture()
@@ -422,7 +426,10 @@ void BlockRenderer::setFixedShape(float x0, float y0, float z0, float x1, float 
     mMaxY = y1;
     mMaxZ = z1;
     mFixedShape = true;
-    mShapeOutside = x0 > 0.0f || y0 > 0.0f || z0 > 0.0f || x1 < 1.0f || y1 < 1.0f || z1 < 1.0f;
+    bool outside = true;
+    if (x0 <= 0.0f && x1 >= 1.0f && y0 <= 0.0f && y1 >= 1.0f && z0 <= 0.0f && z1 >= 1.0f)
+        outside = false;
+    mShapeOutside = outside;
 }
 
 void BlockRenderer::clearFixedShape()
@@ -455,251 +462,256 @@ void BlockRenderer::AOCalculate(Block* block, LevelSource* levelSource, const Bl
                                 bool useColor, float red, float green, float blue,
                                 bool partialBounds)
 {
-    const Direction* face = Direction::DOWN;
-    int ux = 1;
-    int uy = 0;
-    int uz = 0;
-    int vx = 0;
-    int vy = 0;
-    int vz = 1;
-    float faceShade = 0.5f;
+    MutableBlockPos neighbours[8];
+    BlockPos facePos(0, 0, 0);
+    const float faceShades[6] = { 0.5f, 1.0f, 0.8f, 0.8f, 0.6f, 0.6f };
+    const int neighbourOffsets[12][8][3] =
+    {
+        { { 0, 0, 1 }, { -1, 0, 1 }, { -1, 0, 0 }, { -1, 0, -1 }, { 0, 0, -1 }, { 1, 0, -1 }, { 1, 0, 0 }, { 1, 0, 1 } },
+        { { 0, 0, 1 }, { 1, 0, 1 }, { 1, 0, 0 }, { 1, 0, -1 }, { 0, 0, -1 }, { -1, 0, -1 }, { -1, 0, 0 }, { -1, 0, 1 } },
+        { { -1, 0, 0 }, { -1, 1, 0 }, { 0, 1, 0 }, { 1, 1, 0 }, { 1, 0, 0 }, { 1, -1, 0 }, { 0, -1, 0 }, { -1, -1, 0 } },
+        { { 0, 1, 0 }, { -1, 1, 0 }, { -1, 0, 0 }, { -1, -1, 0 }, { 0, -1, 0 }, { 1, -1, 0 }, { 1, 0, 0 }, { 1, 1, 0 } },
+        { { 0, 0, 1 }, { 0, 1, 1 }, { 0, 1, 0 }, { 0, 1, -1 }, { 0, 0, -1 }, { 0, -1, -1 }, { 0, -1, 0 }, { 0, -1, 1 } },
+        { { 0, 0, 1 }, { 0, -1, 1 }, { 0, -1, 0 }, { 0, -1, -1 }, { 0, 0, -1 }, { 0, 1, -1 }, { 0, 1, 0 }, { 0, 1, 1 } },
+        { { 0, -1, 1 }, { -1, -1, 1 }, { -1, -1, 0 }, { -1, -1, -1 }, { 0, -1, -1 }, { 1, -1, -1 }, { 1, -1, 0 }, { 1, -1, 1 } },
+        { { 0, 1, 1 }, { 1, 1, 1 }, { 1, 1, 0 }, { 1, 1, -1 }, { 0, 1, -1 }, { -1, 1, -1 }, { -1, 1, 0 }, { -1, 1, 1 } },
+        { { -1, 0, -1 }, { -1, 1, -1 }, { 0, 1, -1 }, { 1, 1, -1 }, { 1, 0, -1 }, { 1, -1, -1 }, { 0, -1, -1 }, { -1, -1, -1 } },
+        { { 0, 1, 1 }, { -1, 1, 1 }, { -1, 0, 1 }, { -1, -1, 1 }, { 0, -1, 1 }, { 1, -1, 1 }, { 1, 0, 1 }, { 1, 1, 1 } },
+        { { -1, 0, 1 }, { -1, 1, 1 }, { -1, 1, 0 }, { -1, 1, -1 }, { -1, 0, -1 }, { -1, -1, -1 }, { -1, -1, 0 }, { -1, -1, 1 } },
+        { { 1, 0, 1 }, { 1, -1, 1 }, { 1, -1, 0 }, { 1, -1, -1 }, { 1, 0, -1 }, { 1, 1, -1 }, { 1, 1, 0 }, { 1, 1, 1 } }
+    };
+    float ringShade[8];
+    int ringLight[8];
+    bool ringSolid[8];
+    float weights[4][4][4];
+
+    const int (*offsets)[3] = neighbourOffsets[atBoundary * 6 + direction];
+
+    for (int i = 0; i < 8; i += 2)
+        neighbours[i].set(pos.x + offsets[i][0], pos.y + offsets[i][1], pos.z + offsets[i][2]);
 
     switch (direction)
     {
+    case Direction::eDirection_Down:
+        facePos.x = pos.x;
+        facePos.y = pos.y - 1;
+        facePos.z = pos.z;
+        break;
     case Direction::eDirection_Up:
-        face = Direction::UP;
-        faceShade = 1.0f;
+        facePos.x = pos.x;
+        facePos.y = pos.y + 1;
+        facePos.z = pos.z;
         break;
     case Direction::eDirection_North:
-        face = Direction::NORTH;
-        vx = 0;
-        vy = 1;
-        vz = 0;
-        faceShade = 0.8f;
+        facePos.x = pos.x;
+        facePos.y = pos.y;
+        facePos.z = pos.z - 1;
         break;
     case Direction::eDirection_South:
-        face = Direction::SOUTH;
-        vx = 0;
-        vy = 1;
-        vz = 0;
-        faceShade = 0.8f;
+        facePos.x = pos.x;
+        facePos.y = pos.y;
+        facePos.z = pos.z + 1;
         break;
     case Direction::eDirection_West:
-        face = Direction::WEST;
-        ux = 0;
-        uz = 1;
-        vx = 0;
-        vy = 1;
-        vz = 0;
-        faceShade = 0.6f;
+        facePos.x = pos.x - 1;
+        facePos.y = pos.y;
+        facePos.z = pos.z;
         break;
     case Direction::eDirection_East:
-        face = Direction::EAST;
-        ux = 0;
-        uz = 1;
-        vx = 0;
-        vy = 1;
-        vz = 0;
-        faceShade = 0.6f;
-        break;
-    default:
+        facePos.x = pos.x + 1;
+        facePos.y = pos.y;
+        facePos.z = pos.z;
         break;
     }
 
-    BlockPos facePos = pos.relative(face);
-    BlockPos sampleBase = atBoundary ? facePos : pos;
-    BlockPos leftPos = sampleBase.offset(-ux, -uy, -uz);
-    BlockPos rightPos = sampleBase.offset(ux, uy, uz);
-    BlockPos bottomPos = sampleBase.offset(-vx, -vy, -vz);
-    BlockPos topPos = sampleBase.offset(vx, vy, vz);
-
-    float leftAo = getShadeBrightness(levelSource, leftPos);
-    float rightAo = getShadeBrightness(levelSource, rightPos);
-    float bottomAo = getShadeBrightness(levelSource, bottomPos);
-    float topAo = getShadeBrightness(levelSource, topPos);
-    int leftLight = getLightColor(block, levelSource, leftPos);
-    int rightLight = getLightColor(block, levelSource, rightPos);
-    int bottomLight = getLightColor(block, levelSource, bottomPos);
-    int topLight = getLightColor(block, levelSource, topPos);
-
-    bool leftSolid = isSolidBlockingAt(levelSource, leftPos);
-    bool rightSolid = isSolidBlockingAt(levelSource, rightPos);
-    bool bottomSolid = isSolidBlockingAt(levelSource, bottomPos);
-    bool topSolid = isSolidBlockingAt(levelSource, topPos);
-
-    BlockPos leftBottomPos = sampleBase.offset(-ux - vx, -uy - vy, -uz - vz);
-    BlockPos leftTopPos = sampleBase.offset(-ux + vx, -uy + vy, -uz + vz);
-    BlockPos rightBottomPos = sampleBase.offset(ux - vx, uy - vy, uz - vz);
-    BlockPos rightTopPos = sampleBase.offset(ux + vx, uy + vy, uz + vz);
-
-    float leftBottomAo;
-    float leftTopAo;
-    float rightBottomAo;
-    float rightTopAo;
-    int leftBottomLight;
-    int leftTopLight;
-    int rightBottomLight;
-    int rightTopLight;
-
-    if (leftSolid && bottomSolid)
+    if (partialBounds)
     {
-        leftBottomAo = leftAo;
-        leftBottomLight = leftLight;
-    }
-    else
-    {
-        leftBottomAo = getShadeBrightness(levelSource, leftBottomPos);
-        leftBottomLight = getLightColor(block, levelSource, leftBottomPos);
-    }
-    if (leftSolid && topSolid)
-    {
-        leftTopAo = leftAo;
-        leftTopLight = leftLight;
-    }
-    else
-    {
-        leftTopAo = getShadeBrightness(levelSource, leftTopPos);
-        leftTopLight = getLightColor(block, levelSource, leftTopPos);
-    }
-    if (rightSolid && bottomSolid)
-    {
-        rightBottomAo = rightAo;
-        rightBottomLight = rightLight;
-    }
-    else
-    {
-        rightBottomAo = getShadeBrightness(levelSource, rightBottomPos);
-        rightBottomLight = getLightColor(block, levelSource, rightBottomPos);
-    }
-    if (rightSolid && topSolid)
-    {
-        rightTopAo = rightAo;
-        rightTopLight = rightLight;
-    }
-    else
-    {
-        rightTopAo = getShadeBrightness(levelSource, rightTopPos);
-        rightTopLight = getLightColor(block, levelSource, rightTopPos);
-    }
-
-    float faceAo = getShadeBrightness(levelSource, facePos);
-    int faceLight = lightColor;
-    if (atBoundary || !levelSource->getBlockState(facePos)->isSolidRender())
-        faceLight = getLightColor(block, levelSource, facePos);
-    float cornerAo[4];
-    int cornerLight[4];
-    cornerAo[0] = (leftAo + leftTopAo + topAo + faceAo) * 0.25f;
-    cornerAo[1] = (leftAo + leftBottomAo + bottomAo + faceAo) * 0.25f;
-    cornerAo[2] = (rightAo + rightBottomAo + bottomAo + faceAo) * 0.25f;
-    cornerAo[3] = (rightAo + rightTopAo + topAo + faceAo) * 0.25f;
-    cornerLight[0] = blend(leftLight, leftTopLight, topLight, faceLight);
-    cornerLight[1] = blend(leftLight, leftBottomLight, bottomLight, faceLight);
-    cornerLight[2] = blend(rightLight, rightBottomLight, bottomLight, faceLight);
-    cornerLight[3] = blend(rightLight, rightTopLight, topLight, faceLight);
-
-    float outputAo[4];
-    int outputLight[4];
-    if (!partialBounds)
-    {
-        for (int i = 0; i < 4; ++i)
+        switch (direction)
         {
-            outputAo[i] = cornerAo[i];
-            outputLight[i] = cornerLight[i];
+        case Direction::eDirection_North:
+            weights[0][0][0] = 1.0f - mMinX;
+            weights[0][0][1] = mMaxY;
+            weights[0][0][2] = 1.0f;
+            weights[1][1][0] = mMaxX;
+            weights[1][1][1] = mMaxY;
+            weights[1][1][2] = 1.0f;
+            weights[2][2][0] = mMaxX;
+            weights[2][2][1] = 1.0f - mMinY;
+            weights[2][2][2] = 1.0f;
+            weights[3][3][0] = 1.0f - mMinX;
+            weights[3][3][1] = 1.0f - mMinY;
+            weights[3][3][2] = 1.0f;
+            break;
+        case Direction::eDirection_South:
+            weights[0][0][0] = 1.0f - mMinX;
+            weights[0][0][1] = mMaxY;
+            weights[0][0][2] = 1.0f;
+            weights[1][1][0] = 1.0f - mMinX;
+            weights[1][1][1] = 1.0f - mMinY;
+            weights[1][1][2] = 1.0f;
+            weights[2][2][0] = mMaxX;
+            weights[2][2][1] = 1.0f - mMinY;
+            weights[2][2][2] = 1.0f;
+            weights[3][3][0] = mMaxX;
+            weights[3][3][1] = mMaxY;
+            weights[3][3][2] = 1.0f;
+            break;
+        case Direction::eDirection_West:
+            weights[0][0][0] = 1.0f;
+            weights[0][0][1] = mMaxY;
+            weights[0][0][2] = mMaxZ;
+            weights[1][1][0] = 1.0f;
+            weights[1][1][1] = mMaxY;
+            weights[1][1][2] = 1.0f - mMinZ;
+            weights[2][2][0] = 1.0f;
+            weights[2][2][1] = 1.0f - mMinY;
+            weights[2][2][2] = 1.0f - mMinZ;
+            weights[3][3][0] = 1.0f;
+            weights[3][3][1] = 1.0f - mMinY;
+            weights[3][3][2] = mMaxZ;
+            break;
+        case Direction::eDirection_East:
+            weights[0][0][0] = 1.0f;
+            weights[0][0][1] = 1.0f - mMinY;
+            weights[0][0][2] = mMaxZ;
+            weights[1][1][0] = 1.0f;
+            weights[1][1][1] = 1.0f - mMinY;
+            weights[1][1][2] = 1.0f - mMinZ;
+            weights[2][2][0] = 1.0f;
+            weights[2][2][1] = mMaxY;
+            weights[2][2][2] = 1.0f - mMinZ;
+            weights[3][3][0] = 1.0f;
+            weights[3][3][1] = mMaxY;
+            weights[3][3][2] = mMaxZ;
+            break;
+        }
+
+        for (int vertex = 0; vertex < 4; ++vertex)
+        {
+            float first = weights[vertex][vertex][0];
+            float second = weights[vertex][vertex][1];
+            float third = weights[vertex][vertex][2];
+            for (int corner = 0; corner < 4; ++corner)
+            {
+                if (vertex != corner)
+                {
+                    const int* vertexOffset = neighbourOffsets[direction][vertex * 2 + 1];
+                    const int* cornerOffset = neighbourOffsets[direction][corner * 2 + 1];
+                    weights[vertex][corner][0] = vertexOffset[0] == cornerOffset[0] ? first : 1.0f - first;
+                    weights[vertex][corner][1] = vertexOffset[1] == cornerOffset[1] ? second : 1.0f - second;
+                    weights[vertex][corner][2] = vertexOffset[2] == cornerOffset[2] ? third : 1.0f - third;
+                }
+                weights[vertex][corner][3] = weights[vertex][corner][0] * weights[vertex][corner][1] * weights[vertex][corner][2];
+            }
         }
     }
-    else
+
+    for (int i = 0; i < 8; i += 2)
     {
-        float u0;
-        float u1;
-        float v0;
-        float v1;
-        if (direction < Direction::eDirection_North)
+        ringLight[i] = getLightColor(block, levelSource, neighbours[i]);
+        ringShade[i] = getShadeBrightness(levelSource, neighbours[i]);
+        ringSolid[i] = isSolidBlockingAt(levelSource, neighbours[i]);
+    }
+
+    for (int i = 1; i < 8; i += 4)
+    {
+        if (ringSolid[i - 1] && ringSolid[(i + 1) % 8])
         {
-            u0 = mMinX;
-            u1 = mMaxX;
-            v0 = mMinZ;
-            v1 = mMaxZ;
-        }
-        else if (direction < Direction::eDirection_West)
-        {
-            u0 = mMinX;
-            u1 = mMaxX;
-            v0 = mMinY;
-            v1 = mMaxY;
+            ringLight[i] = ringLight[i - 1];
+            ringShade[i] = ringShade[i - 1];
         }
         else
         {
-            u0 = mMinZ;
-            u1 = mMaxZ;
-            v0 = mMinY;
-            v1 = mMaxY;
+            neighbours[i].set(pos.x + offsets[i][0], pos.y + offsets[i][1], pos.z + offsets[i][2]);
+            ringLight[i] = getLightColor(block, levelSource, neighbours[i]);
+            ringShade[i] = getShadeBrightness(levelSource, neighbours[i]);
         }
+        if (ringSolid[i + 1] && ringSolid[(i + 3) % 8])
+        {
+            ringLight[i + 2] = ringLight[i + 1];
+            ringShade[i + 2] = ringShade[i + 1];
+        }
+        else
+        {
+            neighbours[i + 2].set(pos.x + offsets[i + 2][0], pos.y + offsets[i + 2][1], pos.z + offsets[i + 2][2]);
+            ringLight[i + 2] = getLightColor(block, levelSource, neighbours[i + 2]);
+            ringShade[i + 2] = getShadeBrightness(levelSource, neighbours[i + 2]);
+        }
+    }
 
-        float cornerU[4] = { u0, u0, u1, u1 };
-        float cornerV[4] = { v1, v0, v0, v1 };
+    if (atBoundary || !levelSource->getBlockState(facePos)->isSolidRender())
+        lightColor = getLightColor(block, levelSource, facePos);
+    float faceShade = getShadeBrightness(levelSource, facePos);
+
+    float vertexShade[4];
+    vertexShade[0] = (ringShade[0] + ringShade[1] + ringShade[2] + faceShade) * 0.25f;
+    vertexShade[1] = (ringShade[2] + ringShade[3] + ringShade[4] + faceShade) * 0.25f;
+    vertexShade[2] = (ringShade[4] + ringShade[5] + ringShade[6] + faceShade) * 0.25f;
+    vertexShade[3] = (ringShade[6] + ringShade[7] + ringShade[0] + faceShade) * 0.25f;
+
+    int vertexLight[4];
+    float outputShade[4];
+    if (!partialBounds)
+    {
+        mAoBrightnessTopLeft = blend(ringLight[0], ringLight[1], ringLight[2], lightColor);
+        mAoBrightnessBottomLeft = blend(ringLight[2], ringLight[3], ringLight[4], lightColor);
+        mAoBrightnessBottomRight = blend(ringLight[4], ringLight[5], ringLight[6], lightColor);
+        mAoBrightnessTopRight = blend(ringLight[6], ringLight[7], ringLight[0], lightColor);
+        for (int i = 0; i < 4; ++i)
+            outputShade[i] = vertexShade[i];
+    }
+    else
+    {
+        vertexLight[0] = blend(ringLight[0], ringLight[1], ringLight[2], lightColor);
+        vertexLight[1] = blend(ringLight[2], ringLight[3], ringLight[4], lightColor);
+        vertexLight[2] = blend(ringLight[4], ringLight[5], ringLight[6], lightColor);
+        vertexLight[3] = blend(ringLight[6], ringLight[7], ringLight[0], lightColor);
         for (int i = 0; i < 4; ++i)
         {
-            double w0 = (1.0f - cornerU[i]) * cornerV[i];
-            double w1 = (1.0f - cornerU[i]) * (1.0f - cornerV[i]);
-            double w2 = cornerU[i] * (1.0f - cornerV[i]);
-            double w3 = cornerU[i] * cornerV[i];
-            outputAo[i] = (float)(cornerAo[0] * w0 + cornerAo[1] * w1 +
-                                  cornerAo[2] * w2 + cornerAo[3] * w3);
-            outputLight[i] = blend(cornerLight[0], cornerLight[1], cornerLight[2],
-                                   cornerLight[3], w0, w1, w2, w3);
+            outputShade[i] = vertexShade[0] * weights[i][0][3] + vertexShade[1] * weights[i][1][3] +
+                             vertexShade[2] * weights[i][2][3] + vertexShade[3] * weights[i][3][3];
         }
+        mAoBrightnessTopLeft = blend(vertexLight[0], vertexLight[1], vertexLight[2], vertexLight[3],
+                                     weights[0][0][3], weights[0][1][3], weights[0][2][3], weights[0][3][3]);
+        mAoBrightnessBottomLeft = blend(vertexLight[0], vertexLight[1], vertexLight[2], vertexLight[3],
+                                        weights[1][0][3], weights[1][1][3], weights[1][2][3], weights[1][3][3]);
+        mAoBrightnessBottomRight = blend(vertexLight[0], vertexLight[1], vertexLight[2], vertexLight[3],
+                                         weights[2][0][3], weights[2][1][3], weights[2][2][3], weights[2][3][3]);
+        mAoBrightnessTopRight = blend(vertexLight[0], vertexLight[1], vertexLight[2], vertexLight[3],
+                                      weights[3][0][3], weights[3][1][3], weights[3][2][3], weights[3][3][3]);
     }
 
-    int faceCorner[4] = { 0, 1, 2, 3 };
-    if (direction == Direction::eDirection_Up)
+    float shade = faceShades[direction];
+    if (!useColor)
     {
-        faceCorner[0] = 3;
-        faceCorner[1] = 2;
-        faceCorner[2] = 1;
-        faceCorner[3] = 0;
+        mColorRedTopLeft = outputShade[0] * shade;
+        mColorGreenTopLeft = outputShade[0] * shade;
+        mColorBlueTopLeft = outputShade[0] * shade;
+        mColorRedBottomLeft = outputShade[1] * shade;
+        mColorGreenBottomLeft = outputShade[1] * shade;
+        mColorBlueBottomLeft = outputShade[1] * shade;
+        mColorRedBottomRight = outputShade[2] * shade;
+        mColorGreenBottomRight = outputShade[2] * shade;
+        mColorBlueBottomRight = outputShade[2] * shade;
+        mColorRedTopRight = outputShade[3] * shade;
+        mColorGreenTopRight = outputShade[3] * shade;
+        mColorBlueTopRight = outputShade[3] * shade;
     }
-    else if (direction == Direction::eDirection_North)
+    else
     {
-        faceCorner[0] = 0;
-        faceCorner[1] = 3;
-        faceCorner[2] = 2;
-        faceCorner[3] = 1;
+        mColorRedTopLeft = outputShade[0] * red * shade;
+        mColorRedBottomLeft = outputShade[1] * red * shade;
+        mColorRedBottomRight = outputShade[2] * red * shade;
+        mColorRedTopRight = outputShade[3] * red * shade;
+        mColorGreenTopLeft = outputShade[0] * green * shade;
+        mColorGreenBottomLeft = outputShade[1] * green * shade;
+        mColorGreenBottomRight = outputShade[2] * green * shade;
+        mColorGreenTopRight = outputShade[3] * green * shade;
+        mColorBlueTopLeft = outputShade[0] * blue * shade;
+        mColorBlueBottomLeft = outputShade[1] * blue * shade;
+        mColorBlueBottomRight = outputShade[2] * blue * shade;
+        mColorBlueTopRight = outputShade[3] * blue * shade;
     }
-    else if (direction == Direction::eDirection_West)
-    {
-        faceCorner[0] = 3;
-        faceCorner[1] = 0;
-        faceCorner[2] = 1;
-        faceCorner[3] = 2;
-    }
-    else if (direction == Direction::eDirection_East)
-    {
-        faceCorner[0] = 2;
-        faceCorner[1] = 1;
-        faceCorner[2] = 0;
-        faceCorner[3] = 3;
-    }
-
-    mAoBrightnessTopLeft = outputLight[faceCorner[0]];
-    mAoBrightnessBottomLeft = outputLight[faceCorner[1]];
-    mAoBrightnessBottomRight = outputLight[faceCorner[2]];
-    mAoBrightnessTopRight = outputLight[faceCorner[3]];
-
-    float redScale = useColor ? red : 1.0f;
-    float greenScale = useColor ? green : 1.0f;
-    float blueScale = useColor ? blue : 1.0f;
-    mColorRedTopLeft = outputAo[faceCorner[0]] * faceShade * redScale;
-    mColorRedBottomLeft = outputAo[faceCorner[1]] * faceShade * redScale;
-    mColorRedBottomRight = outputAo[faceCorner[2]] * faceShade * redScale;
-    mColorRedTopRight = outputAo[faceCorner[3]] * faceShade * redScale;
-    mColorGreenTopLeft = outputAo[faceCorner[0]] * faceShade * greenScale;
-    mColorGreenBottomLeft = outputAo[faceCorner[1]] * faceShade * greenScale;
-    mColorGreenBottomRight = outputAo[faceCorner[2]] * faceShade * greenScale;
-    mColorGreenTopRight = outputAo[faceCorner[3]] * faceShade * greenScale;
-    mColorBlueTopLeft = outputAo[faceCorner[0]] * faceShade * blueScale;
-    mColorBlueBottomLeft = outputAo[faceCorner[1]] * faceShade * blueScale;
-    mColorBlueBottomRight = outputAo[faceCorner[2]] * faceShade * blueScale;
-    mColorBlueTopRight = outputAo[faceCorner[3]] * faceShade * blueScale;
 }
 
 void BlockRenderer::renderFaceDown(const BlockState* state, double x, double y, double z, TextureAtlasSprite* texture)
@@ -1354,12 +1366,12 @@ void BlockRenderer::tesselateCrossTexture(TextureAtlasSprite* texture, TextureAt
 {
     BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
     float u0 = (float)texture->getU0(true);
-    float u1 = (float)texture->getU1(true);
     float v0 = (float)texture->getV0(true);
+    float u1 = (float)texture->getU1(true);
     float v1 = (float)texture->getV1(true);
     float overlayU0 = (float)overlay->getU0(true);
-    float overlayU1 = (float)overlay->getU1(true);
     float overlayV0 = (float)overlay->getV0(true);
+    float overlayU1 = (float)overlay->getU1(true);
     float overlayV1 = (float)overlay->getV1(true);
     float y1 = y + scale;
     float radius = 0.45 * scale;
@@ -1512,10 +1524,8 @@ int BlockRenderer::getLightColor(Block* block, LevelSource* levelSource, const B
 {
     if (mCache != NULL)
     {
-        unsigned int index = (unsigned int)((pos.x - mCacheMinX) * 0x400 +
-                                            (pos.y - mCacheMinY) * 0x20 +
-                                            pos.z - mCacheMinZ);
-        if ((index & 0xffff8000) == 0 && block != Blocks::flowing_water && block != Blocks::water &&
+        unsigned int index = (pos.x - mCacheMinX) * 0x400 + (pos.y - mCacheMinY) * 0x20 + (pos.z - mCacheMinZ);
+        if ((index & 0xffff8000) == 0 && block != Blocks::water && block != Blocks::flowing_water &&
             block != Blocks::flowing_lava && block != Blocks::lava &&
             block != Blocks::magma && block != Blocks::blue_ice)
         {
@@ -1534,9 +1544,7 @@ bool BlockRenderer::isSolidBlockingAt(LevelSource* levelSource, const BlockPos& 
 {
     if (mCache != NULL)
     {
-        unsigned int index = (unsigned int)((pos.x - mCacheMinX) * 0x400 +
-                                            (pos.y - mCacheMinY) * 0x20 +
-                                            pos.z - mCacheMinZ);
+        unsigned int index = (pos.x - mCacheMinX) * 0x400 + (pos.y - mCacheMinY) * 0x20 + (pos.z - mCacheMinZ);
         if ((index & 0xffff8000) == 0)
         {
             unsigned int cached = mCache[index];
@@ -1958,7 +1966,7 @@ void BlockRenderer::tesselateEndRod(const BlockState* state, float x, float y, f
 
 bool BlockRenderer::tesselateSlimeBlockInWorld(const BlockState* state, const BlockPos& pos)
 {
-    if (tesselateBlockInWorld(state, pos, 0x3f))
+    if (tesselateBlockInWorld(state, pos, 0))
     {
         setFixedShape(0.1875f, 0.1875f, 0.1875f, 0.8125f, 0.8125f, 0.8125f);
         tesselateBlockInWorld(state, pos, 0x3f);
@@ -2084,11 +2092,11 @@ void BlockRenderer::renderBlock(const BlockState* state, Level* level, const Blo
 
 void BlockRenderer::renderCube(const BlockState* state, float alpha)
 {
-    Block* block = state->getBlock();
-    if (block->getRenderShape(state) != BLOCK_RENDER_MODEL)
+    int renderShape = state->getRenderShape();
+    BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
+    if (renderShape != BLOCK_RENDER_MODEL)
         return;
 
-    BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
     GlStateManager::translatef(-0.5f, -0.5f, -0.5f);
     builder->begin();
     builder->color(1.0f, 1.0f, 1.0f, alpha);
@@ -3571,13 +3579,26 @@ bool BlockRenderer::tesselateTreeInWorld(const BlockState* state, const BlockPos
 
 bool BlockRenderer::tesselateQuartzInWorld(const BlockState* state, const BlockPos& pos)
 {
+    QuartzBlock::Variant* variant = state->getValue(QuartzBlock::VARIANT);
+    if (variant == QuartzBlock::Variant::LINES_X)
+    {
+        mFaceRotation0 = 1;
+        mFaceRotation4 = 1;
+        mFaceRotation5 = 1;
+        mFaceRotation1 = 1;
+    }
+    else if (variant == QuartzBlock::Variant::LINES_Z)
+    {
+        mFaceRotation2 = 1;
+        mFaceRotation3 = 1;
+    }
     bool rendered = tesselateBlockInWorld(state, pos);
-    mFaceRotation0 = 0;
-    mFaceRotation1 = 0;
-    mFaceRotation2 = 0;
     mFaceRotation3 = 0;
+    mFaceRotation1 = 0;
+    mFaceRotation0 = 0;
     mFaceRotation4 = 0;
     mFaceRotation5 = 0;
+    mFaceRotation2 = 0;
     return rendered;
 }
 
@@ -3917,29 +3938,35 @@ bool BlockRenderer::tesselateCactusInWorld(const BlockState* state, const BlockP
     Block* block = state->getBlock();
     int lightAtPos = block->getLightColor(state, mLevelSource, pos, -1);
 
-    if (mMinY <= 0.0f)
+    if (mRenderAllFaces || block->shouldRenderFace(state, mLevelSource, pos, Direction::DOWN))
     {
-        BlockPos lightPos = pos.offset(0, -1, 0);
-        builder->tex2(block->getLightColor(state, mLevelSource, lightPos, -1));
+        if (mMinY <= 0.0f)
+        {
+            BlockPos lightPos = pos.offset(0, -1, 0);
+            builder->tex2(block->getLightColor(state, mLevelSource, lightPos, -1));
+        }
+        else
+        {
+            builder->tex2(lightAtPos);
+        }
+        builder->color(red * 0.5f, green * 0.5f, blue * 0.5f);
+        renderFaceDown(state, pos.x, pos.y, pos.z, getTexture(state, mLevelSource, pos, Direction::DOWN));
     }
-    else
-    {
-        builder->tex2(lightAtPos);
-    }
-    builder->color(red * 0.5f, green * 0.5f, blue * 0.5f);
-    renderFaceDown(state, pos.x, pos.y, pos.z, getTexture(state, mLevelSource, pos, Direction::DOWN));
 
-    if (mMaxY >= 1.0f)
+    if (mRenderAllFaces || block->shouldRenderFace(state, mLevelSource, pos, Direction::UP))
     {
-        BlockPos lightPos = pos.offset(0, 1, 0);
-        builder->tex2(block->getLightColor(state, mLevelSource, lightPos, -1));
+        if (1.0f <= mMaxY)
+        {
+            BlockPos lightPos = pos.offset(0, 1, 0);
+            builder->tex2(block->getLightColor(state, mLevelSource, lightPos, -1));
+        }
+        else
+        {
+            builder->tex2(lightAtPos);
+        }
+        builder->color(red, green, blue);
+        renderFaceUp(state, pos.x, pos.y, pos.z, getTexture(state, mLevelSource, pos, Direction::UP));
     }
-    else
-    {
-        builder->tex2(lightAtPos);
-    }
-    builder->color(red, green, blue);
-    renderFaceUp(state, pos.x, pos.y, pos.z, getTexture(state, mLevelSource, pos, Direction::UP));
 
     builder->tex2(lightAtPos);
     builder->color(red * 0.8f, green * 0.8f, blue * 0.8f);

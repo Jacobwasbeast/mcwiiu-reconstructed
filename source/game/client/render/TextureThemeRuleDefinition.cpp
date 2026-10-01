@@ -111,8 +111,7 @@ TextureThemeRuleDefinition::IndexedBlockDef::~IndexedBlockDef()
 
 void TextureThemeRuleDefinition::IndexedBlockDef::getStack(TextureTheme::BlockStack& stack)
 {
-    TextureTheme::BlockStack blockStack(getBlockState(), 1, 0);
-    stack = blockStack;
+    stack = TextureTheme::BlockStack(getBlockState(), 1, 0);
 }
 
 TextureThemeRuleDefinition::LayerTexture::LayerTexture()
@@ -141,6 +140,5 @@ void TextureThemeRuleDefinition::MaskedShaftsThemeRuleDefinition::getStack(Textu
 {
     std::vector<const BlockState*> blocks;
     fillStack(blocks);
-    TextureTheme::BlockStack blockStack(blocks, mHeightOffset);
-    stack = blockStack;
+    stack = TextureTheme::BlockStack(blocks, mHeightOffset);
 }

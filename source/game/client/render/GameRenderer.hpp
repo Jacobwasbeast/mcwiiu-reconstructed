@@ -149,7 +149,7 @@ private:
     float mFogDistance;
     ItemInHandRenderer* mItemInHandRenderer;
     MapRenderer* mMapRenderer;
-    unsigned int mTickCount;
+    int mTickCount;
     boost::shared_ptr<Entity> mPointedEntity;
     SmoothFloat mSmoothTurnX;
     SmoothFloat mSmoothTurnY;

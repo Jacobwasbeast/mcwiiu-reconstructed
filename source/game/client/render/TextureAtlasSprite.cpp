@@ -67,12 +67,12 @@ unsigned int TextureAtlasSprite::getX() const { return mX; }
 unsigned int TextureAtlasSprite::getY() const { return mY; }
 unsigned int TextureAtlasSprite::getWidth() const { return mWidth; }
 unsigned int TextureAtlasSprite::getHeight() const { return mHeight; }
-double TextureAtlasSprite::getU0(bool shrink) const { return shrink ? mU0+mUOffset : mU0; }
-double TextureAtlasSprite::getU1(bool shrink) const { return shrink ? mU1-mUOffset : mU1; }
-double TextureAtlasSprite::getU(double x) const { return (getU1(false)-getU0(false))*(float(x)*0.0625f)+getU0(false); }
-double TextureAtlasSprite::getV0(bool shrink) const { return shrink ? mV0+mVOffset : mV0; }
-double TextureAtlasSprite::getV1(bool shrink) const { return shrink ? mV1-mVOffset : mV1; }
-double TextureAtlasSprite::getV(double y) const { return (getV1(false)-getV0(false))*(float(y)*0.0625f)+getV0(false); }
+float TextureAtlasSprite::getU0(bool shrink) const { return shrink ? mU0+mUOffset : mU0; }
+float TextureAtlasSprite::getU1(bool shrink) const { return shrink ? mU1-mUOffset : mU1; }
+float TextureAtlasSprite::getU(double x) const { return (getU1(false)-getU0(false))*(float(x)*0.0625f)+getU0(false); }
+float TextureAtlasSprite::getV0(bool shrink) const { return shrink ? mV0+mVOffset : mV0; }
+float TextureAtlasSprite::getV1(bool shrink) const { return shrink ? mV1-mVOffset : mV1; }
+float TextureAtlasSprite::getV(double y) const { return (getV1(false)-getV0(false))*(float(y)*0.0625f)+getV0(false); }
 void TextureAtlasSprite::adjustU(float& a,float& b) { if(a<b){a+=mUOffset;b-=mUOffset;} else if(a>b){b+=mUOffset;a-=mUOffset;} }
 void TextureAtlasSprite::adjustV(float& a,float& b) { if(a<b){a+=mVOffset;b-=mVOffset;} else if(a>b){b+=mVOffset;a-=mVOffset;} }
 void TextureAtlasSprite::adjustUVs(float& u0,float& u1,float& v0,float& v1) { adjustU(u0,u1); adjustV(v0,v1); }

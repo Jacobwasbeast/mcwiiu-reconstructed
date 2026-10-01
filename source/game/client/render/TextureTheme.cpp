@@ -32,10 +32,6 @@ TextureTheme::BlockStack::BlockStack(std::vector<const BlockState*>& states, int
 {
 }
 
-TextureTheme::BlockStack::~BlockStack()
-{
-}
-
 const BlockState* TextureTheme::BlockStack::at(int index) const
 {
     index += mOffset;

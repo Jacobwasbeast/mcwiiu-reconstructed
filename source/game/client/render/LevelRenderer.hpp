@@ -165,7 +165,7 @@ private:
     friend class Chunk;
     friend class MultiPlayerGameMode;
 
-    int mUnused;
+    int mDebugRenderTick;
     ChunkBlockEntityMap mBlockEntities;
     OSFastMutex mBlockEntityMutex;
     OSFastMutex mLevelMutex;
@@ -197,11 +197,11 @@ private:
     int mCountEntitiesTotal;
     int mCountEntitiesRendered;
     int mCountEntitiesHidden;
-    unsigned char mAlignmentPadding[4];
+    int mUnknown0x128;
     std::vector<Chunk*> mChunks;
     OSFastMutex mRenderableBlockEntityMutex;
     boost::unordered_set<boost::shared_ptr<BlockEntity> > mRenderableBlockEntities;
-    unsigned char mRenderableBlockEntityPadding[4];
+    int mUnknown0x180;
     int mAuxiliaryDisplayList;
     double mLastSortX[4];
     double mLastSortY[4];

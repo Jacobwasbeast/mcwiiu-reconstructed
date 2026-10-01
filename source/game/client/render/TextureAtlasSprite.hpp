@@ -17,12 +17,12 @@ public:
     virtual unsigned int getY() const;
     virtual unsigned int getWidth() const;
     virtual unsigned int getHeight() const;
-    virtual double getU0(bool) const;
-    virtual double getU1(bool) const;
-    virtual double getU(double) const;
-    virtual double getV0(bool) const;
-    virtual double getV1(bool) const;
-    virtual double getV(double) const;
+    virtual float getU0(bool) const;
+    virtual float getU1(bool) const;
+    virtual float getU(double) const;
+    virtual float getV0(bool) const;
+    virtual float getV1(bool) const;
+    virtual float getV(double) const;
     void adjustUVs(float&, float&, float&, float&);
     void adjustU(float&, float&);
     void adjustV(float&, float&);
