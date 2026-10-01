@@ -40,7 +40,6 @@ public:
     ElementStorage(bool threaded, arrayWithLength<unsigned char> blocks, arrayWithLength<unsigned char> data, unsigned int headroom);
     ElementStorage(bool threaded, arrayWithLength<unsigned short> elements, unsigned int headroom);
     ElementStorage(bool threaded, CompressedBlockStorage* blocks, CompressedBlockStorage* extraBlocks, SparseDataStorage* data, SparseDataStorage* extraData);
-    ~ElementStorage() {}
     int getCriticalSectionIndex(bool mainThread);
     void getWriteLock(int reason);
     void releaseWriteLock();
@@ -54,8 +53,8 @@ public:
     void getData(arrayWithLength<unsigned char> blocks, arrayWithLength<unsigned char> data, int minSlice, int maxSlice);
     void getData(arrayWithLength<unsigned short> elements, int minSlice, int maxSlice);
     void getData(arrayWithLength<unsigned short> elements, arrayWithLength<unsigned short> extraElements, int minSlice, int maxSlice);
-    unsigned int get(unsigned int x, unsigned int y, unsigned int z, bool* isUniformSection);
-    unsigned int getExtraElement(unsigned int x, unsigned int y, unsigned int z);
+    unsigned short get(unsigned int x, unsigned int y, unsigned int z, bool* isUniformSection);
+    unsigned short getExtraElement(unsigned int x, unsigned int y, unsigned int z);
     void getElementAndExtraElement_NoLock(unsigned int x, unsigned int y, unsigned int z, unsigned short* element, unsigned short* extraElement);
     void getElementAndExtraElement(unsigned int x, unsigned int y, unsigned int z, unsigned short* element, unsigned short* extraElement);
     void getReadLockExternal();
@@ -79,6 +78,7 @@ public:
     virtual void getReadLockUnconditional(int reason);
     virtual void releaseReadLockUnconditional();
     virtual unsigned char* getTempData();
+    virtual ~ElementStorage();
     unsigned char* getAllocatedRawData();
 private:
     unsigned int mFrameLastUpdated;

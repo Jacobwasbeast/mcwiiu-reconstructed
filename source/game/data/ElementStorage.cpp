@@ -52,6 +52,10 @@ ElementStorage::ElementStorage(bool threaded, CompressedBlockStorage* blocks, Co
     mCriticalSectionIndex = getCriticalSectionIndex(threaded);
 }
 
+ElementStorage::~ElementStorage()
+{
+}
+
 int ElementStorage::getCriticalSectionIndex(bool mainThread)
 {
     int value = std::rand() % 64;
@@ -188,7 +192,7 @@ void ElementStorage::getData(arrayWithLength<unsigned short> elements, arrayWith
     }
 }
 
-unsigned int ElementStorage::get(unsigned int x, unsigned int y, unsigned int z, bool* isUniformSection)
+unsigned short ElementStorage::get(unsigned int x, unsigned int y, unsigned int z, bool* isUniformSection)
 {
     getReadLock(0x68);
     unsigned int value = HierarchicalElementStorage::get(x, y, z, isUniformSection);
@@ -196,18 +200,18 @@ unsigned int ElementStorage::get(unsigned int x, unsigned int y, unsigned int z,
     return value & 0x7fff;
 }
 
-unsigned int ElementStorage::getExtraElement(unsigned int x, unsigned int y, unsigned int z)
+unsigned short ElementStorage::getExtraElement(unsigned int x, unsigned int y, unsigned int z)
 {
     getReadLock(0x69);
-    unsigned int value = HierarchicalElementStorage::get(x, y, z, 0);
+    unsigned short value = HierarchicalElementStorage::get(x, y, z, 0);
     if ((value & 0x8000) != 0)
     {
         releaseReadLock();
         return 0x90;
     }
-    value = HierarchicalElementStorage::getExtraElement(x, y, z);
+    unsigned short extraElement = HierarchicalElementStorage::getExtraElement(x, y, z);
     releaseReadLock();
-    return value;
+    return extraElement;
 }
 
 void ElementStorage::getElementAndExtraElement_NoLock(unsigned int x, unsigned int y, unsigned int z, unsigned short* element, unsigned short* extraElement)
