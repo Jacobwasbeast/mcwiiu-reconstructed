@@ -34,10 +34,6 @@ VillageFeature::VillageFeature(SuperflatConfig* config, int size)
     mSpacing = generatorInfo.getVillageDistance();
 }
 
-VillageFeature::~VillageFeature()
-{
-}
-
 void VillageFeature::staticCtor()
 {
     allowedBiomes.push_back(Biome::PLAINS);

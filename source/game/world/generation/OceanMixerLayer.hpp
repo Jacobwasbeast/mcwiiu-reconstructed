@@ -10,7 +10,6 @@ class OceanMixerLayer : public Layer
 {
 public:
     OceanMixerLayer(long long seed, boost::shared_ptr<Layer> landLayer, boost::shared_ptr<Layer> oceanLayer);
-    virtual ~OceanMixerLayer();
 
     virtual void init(long long seed);
     virtual arrayWithLength<int> getArea(int x, int z, int width, int height);

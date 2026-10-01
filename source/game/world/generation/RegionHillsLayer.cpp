@@ -10,10 +10,6 @@ RegionHillsLayer::RegionHillsLayer(long long seed, boost::shared_ptr<Layer> pare
     this->riverLayer = riverLayer;
 }
 
-RegionHillsLayer::~RegionHillsLayer()
-{
-}
-
 arrayWithLength<int> RegionHillsLayer::getArea(int x, int z, int width, int height)
 {
     int parentWidth = width + 2;

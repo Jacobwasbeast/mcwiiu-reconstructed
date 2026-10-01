@@ -9,10 +9,6 @@ AddMushroomIslandLayer::AddMushroomIslandLayer(long long seed, boost::shared_ptr
     parent = parentLayer;
 }
 
-AddMushroomIslandLayer::~AddMushroomIslandLayer()
-{
-}
-
 arrayWithLength<int> AddMushroomIslandLayer::getArea(int x, int z, int width, int height)
 {
     int parentWidth = width + 2;

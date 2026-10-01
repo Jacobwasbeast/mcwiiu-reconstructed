@@ -13,7 +13,6 @@ public:
     {
     }
 
-    virtual ~WinningOnTopLayerMedal();
 
     virtual double GetScore(PlayerStats* playerStats) const;
 };

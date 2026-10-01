@@ -25,10 +25,6 @@ LookAtPlayerGoal::LookAtPlayerGoal(Mob* mob, const std::type_info& lookAtType, f
     setRequiredControlFlags(2);
 }
 
-LookAtPlayerGoal::~LookAtPlayerGoal()
-{
-}
-
 bool LookAtPlayerGoal::canUse()
 {
     if (mMob->getRandom()->nextFloat() >= mProbability)

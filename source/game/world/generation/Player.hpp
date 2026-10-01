@@ -67,6 +67,12 @@ struct sp_LivingEntity;
 struct sp_Player;
 
 
+enum EDefaultSkins
+{
+    eDefaultSkins_ServerSelected = 0,
+    eDefaultSkins_Skin0 = 1
+};
+
 class Player : public LivingEntity {
 public:
 
@@ -430,7 +436,7 @@ public:
     static uint32_t hash_fnct(boost::shared_ptr<Player> player);
     static bool eq_test(boost::shared_ptr<Player> first, boost::shared_ptr<Player> second);
     virtual void onUpdateAbilities();
-    void setPlayerDefaultSkin(uint32_t skin);
+    void setPlayerDefaultSkin(EDefaultSkins skin);
     static _SkinAdjustments getSkinAdjustmentsById(uint32_t id);
     void SetAdditionalModelParts(std::vector<ModelPart*>* parts);
     virtual void setGameMode(const GameType* gameType);

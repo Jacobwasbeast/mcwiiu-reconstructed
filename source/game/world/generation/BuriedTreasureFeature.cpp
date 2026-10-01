@@ -58,10 +58,6 @@ BuriedTreasureFeature::BuriedTreasureFeature(int)
 {
 }
 
-BuriedTreasureFeature::~BuriedTreasureFeature()
-{
-}
-
 std::wstring BuriedTreasureFeature::getFeatureName()
 {
     return L"Buried Treasure";

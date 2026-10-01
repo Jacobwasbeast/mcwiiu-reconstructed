@@ -28,10 +28,6 @@ OceanRuinFeature::OceanRuinFeature(SuperflatConfig* config)
     mSpacing = info.getShipwreckSpacing();
 }
 
-OceanRuinFeature::~OceanRuinFeature()
-{
-}
-
 bool OceanRuinFeature::IsValidSpawnArea(Level* level, int x, int z, int radius)
 {
     std::vector<Biome*> biomes(10);

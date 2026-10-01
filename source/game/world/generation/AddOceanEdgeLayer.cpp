@@ -10,10 +10,6 @@ AddOceanEdgeLayer::AddOceanEdgeLayer(long long seed, boost::shared_ptr<Layer> pa
     (void)useOceanTemperatures;
 }
 
-AddOceanEdgeLayer::~AddOceanEdgeLayer()
-{
-}
-
 arrayWithLength<int> AddOceanEdgeLayer::getArea(int x, int z, int width, int height)
 {
     int parentWidth = width + 2;

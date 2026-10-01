@@ -91,10 +91,6 @@ WoodlandMansionFeature::WoodlandMansionFeature(GenericOverworldLevelSource* sour
     mReducedFeatureChunk = FjIsFeatureChunk::CreateReduced(mFeatureChunk);
 }
 
-WoodlandMansionFeature::~WoodlandMansionFeature()
-{
-}
-
 std::wstring WoodlandMansionFeature::getFeatureName()
 {
     return L"Mansion";

@@ -24,7 +24,6 @@ public:
 
     LookAtPlayerGoal(Mob* mob, const std::type_info& lookAtType, float lookDistance);
     LookAtPlayerGoal(Mob* mob, const std::type_info& lookAtType, float lookDistance, float probability);
-    virtual ~LookAtPlayerGoal();
     virtual bool canUse();
     virtual bool canContinueToUse();
     virtual void start();

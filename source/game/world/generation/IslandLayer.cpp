@@ -8,10 +8,6 @@ IslandLayer::IslandLayer(long long seed)
 {
 }
 
-IslandLayer::~IslandLayer()
-{
-}
-
 arrayWithLength<int> IslandLayer::getArea(int x, int z, int width, int height)
 {
     PIXBeginNamedEvent(0.0f, "IslandLayer::getArea");

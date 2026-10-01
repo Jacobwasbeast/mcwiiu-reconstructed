@@ -21,7 +21,6 @@ public:
 
     MineShaftFeature();
     MineShaftFeature(SuperflatConfig* config);
-    virtual ~MineShaftFeature();
 
     virtual std::wstring getFeatureName();
     virtual bool isFeatureChunk(int chunkX, int chunkZ, bool flatWorld);

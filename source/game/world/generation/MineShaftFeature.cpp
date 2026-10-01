@@ -19,10 +19,6 @@ MineShaftFeature::MineShaftFeature(SuperflatConfig* config)
 {
 }
 
-MineShaftFeature::~MineShaftFeature()
-{
-}
-
 std::wstring MineShaftFeature::getFeatureName()
 {
     return std::wstring(L"Mineshaft");

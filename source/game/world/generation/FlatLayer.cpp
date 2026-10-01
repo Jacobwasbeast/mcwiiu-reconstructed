@@ -7,10 +7,6 @@ FlatLayer::FlatLayer(int biome)
 {
 }
 
-FlatLayer::~FlatLayer()
-{
-}
-
 arrayWithLength<int> FlatLayer::getArea(int x, int z, int width, int height)
 {
     arrayWithLength<int> area = IntCache::allocate(width * height);

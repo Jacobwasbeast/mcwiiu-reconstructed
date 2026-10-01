@@ -193,7 +193,7 @@ void FlatGeneratorInfo::insertLayer(int index, const FlatLayerInfo& layer)
     layers.insert(layers.begin() + index, layer);
     core()->updateLayers();
 }
-void FlatGeneratorInfo::addLayer(const FlatLayerInfo& layer) { core()->layers.insert(core()->layers.begin(), layer); core()->updateLayers(); }
+void FlatGeneratorInfo::addLayer(const FlatLayerInfo& layer) { insertLayer(0, layer); }
 void FlatGeneratorInfo::setDisplayname(const std::wstring& displayname) { core()->setDisplayname(displayname); }
 void FlatGeneratorInfo::setWoodlandMansion(int spacing, int separation) { setWoodlandMansion(true); core()->setOption(0x27, 0, spacing); core()->setOption(0x27, 1, separation); }
 void FlatGeneratorInfo::setOceanMonument(int spacing, int separation) { setOceanMonument(true); core()->setOption(0x24, 0, spacing); core()->setOption(0x24, 1, separation); }

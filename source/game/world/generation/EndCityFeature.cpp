@@ -21,10 +21,6 @@ EndCityFeature::EndCityFeature(TheEndLevelSource* source)
 {
 }
 
-EndCityFeature::~EndCityFeature()
-{
-}
-
 std::wstring EndCityFeature::getFeatureName()
 {
     return L"EndCity";
@@ -121,7 +117,7 @@ void EndCityFeature::EndCityStart::create(Level* levelIn, TheEndLevelSource* sou
     Rotation* rotation = Rotation::getRandom(random);
     int y = EndCityFeature::getYPositionForFeature(chunkX, chunkZ, source);
     BlockPos position(chunkX * 16 + 8, y, chunkZ * 16 + 8);
-    boost::shared_ptr<LevelStorage> storage = levelIn->getLevelStorage();
+    LevelStorage* storage = levelIn->getLevelStorage();
     EndCityPieces::startHouseTower(storage->getStructureManager(), position, rotation,
                                     *this, random);
     calculateBoundingBox();

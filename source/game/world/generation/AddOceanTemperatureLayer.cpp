@@ -10,10 +10,6 @@ AddOceanTemperatureLayer::AddOceanTemperatureLayer(long long seed, boost::shared
     this->parent = parent;
 }
 
-AddOceanTemperatureLayer::~AddOceanTemperatureLayer()
-{
-}
-
 arrayWithLength<int> AddOceanTemperatureLayer::getArea(int x, int z, int width, int height)
 {
     PIXBeginNamedEvent(0.0f, "AddOceanTemperatureLayer::getArea");

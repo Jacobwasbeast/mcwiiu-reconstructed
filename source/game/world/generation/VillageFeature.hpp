@@ -42,7 +42,6 @@ public:
     VillageFeature(int size);
     VillageFeature(SuperflatConfig* config, int size);
     VillageFeature(boost::unordered_map<std::wstring, std::wstring> options, int size);
-    virtual ~VillageFeature();
 
     static std::vector<Biome*> allowedBiomes;
 

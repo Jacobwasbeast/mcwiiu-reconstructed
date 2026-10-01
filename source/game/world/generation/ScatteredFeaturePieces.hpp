@@ -45,7 +45,6 @@ public:
     public:
         DesertPyramidPiece();
         DesertPyramidPiece(Level* level, Random& random, int x, int z);
-        virtual ~DesertPyramidPiece();
         virtual void addAdditionalSaveData(DataOutputStream* output);
         virtual void readAdditionalSaveData(DataInputStream* input, StructureManager* structureManager);
         virtual bool postProcess(Level* level, Random& random, BoundingBox* box);
@@ -60,7 +59,6 @@ public:
     public:
         Igloo();
         Igloo(Level* level, Random& random, int x, int z);
-        virtual ~Igloo();
         virtual bool postProcess(Level* level, Random& random, BoundingBox* box);
         virtual void addAdditionalSaveData(DataOutputStream* output);
         virtual void readAdditionalSaveData(DataInputStream* input, StructureManager* structureManager);
@@ -77,15 +75,13 @@ public:
         class MossStoneSelector : public StructurePiece::BlockSelector
         {
         public:
-            virtual ~MossStoneSelector();
-            virtual void next(Random& random, int x, int y, int z, bool edge);
+                virtual void next(Random& random, int x, int y, int z, bool edge);
         };
 
         static MossStoneSelector* mStoneSelector;
 
         JunglePyramidPiece();
         JunglePyramidPiece(Level* level, Random& random, int x, int z);
-        virtual ~JunglePyramidPiece();
         virtual void addAdditionalSaveData(DataOutputStream* output);
         virtual void readAdditionalSaveData(DataInputStream* input, StructureManager* structureManager);
         virtual bool postProcess(Level* level, Random& random, BoundingBox* box);
@@ -104,7 +100,6 @@ public:
     public:
         SwamplandHut();
         SwamplandHut(Level* level, Random& random, int x, int z);
-        virtual ~SwamplandHut();
         virtual void addAdditionalSaveData(DataOutputStream* output);
         virtual void readAdditionalSaveData(DataInputStream* input, StructureManager* structureManager);
         virtual bool postProcess(Level* level, Random& random, BoundingBox* box);

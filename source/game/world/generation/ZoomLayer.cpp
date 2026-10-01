@@ -9,10 +9,6 @@ ZoomLayer::ZoomLayer(long long seed, boost::shared_ptr<Layer> parent)
     this->parent = parent;
 }
 
-ZoomLayer::~ZoomLayer()
-{
-}
-
 boost::shared_ptr<Layer> ZoomLayer::zoom(long long seed, boost::shared_ptr<Layer> parent, int count)
 {
     boost::shared_ptr<Layer> layer = parent;

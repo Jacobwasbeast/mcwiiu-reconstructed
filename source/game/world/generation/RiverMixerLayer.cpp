@@ -10,10 +10,6 @@ RiverMixerLayer::RiverMixerLayer(long long seed,
 {
 }
 
-RiverMixerLayer::~RiverMixerLayer()
-{
-}
-
 void RiverMixerLayer::init(long long seed)
 {
     biomeLayer->init(seed);

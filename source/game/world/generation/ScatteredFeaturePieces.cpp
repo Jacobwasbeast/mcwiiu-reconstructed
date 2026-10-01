@@ -188,22 +188,18 @@ ScatteredFeaturePieces::DesertPyramidPiece::DesertPyramidPiece()
     : ScatteredFeaturePiece()
 {
     mHasPlacedChest[0] = false;
+    mHasPlacedChest[1] = false;
     mHasPlacedChest[2] = false;
     mHasPlacedChest[3] = false;
-    mHasPlacedChest[1] = false;
 }
 
 ScatteredFeaturePieces::DesertPyramidPiece::DesertPyramidPiece(Level* level, Random& random, int x, int z)
     : ScatteredFeaturePiece(level, random, x, 64, z, 21, 15, 21)
 {
     mHasPlacedChest[0] = false;
-    mHasPlacedChest[3] = false;
     mHasPlacedChest[1] = false;
     mHasPlacedChest[2] = false;
-}
-
-ScatteredFeaturePieces::DesertPyramidPiece::~DesertPyramidPiece()
-{
+    mHasPlacedChest[3] = false;
 }
 
 void ScatteredFeaturePieces::DesertPyramidPiece::addAdditionalSaveData(DataOutputStream* output)
@@ -476,8 +472,6 @@ ScatteredFeaturePieces::Igloo::Igloo(Level* level, Random& random, int x, int z)
     mBasementDepth = random.nextInt(8) + 4;
 }
 
-ScatteredFeaturePieces::Igloo::~Igloo() {}
-
 bool ScatteredFeaturePieces::Igloo::postProcess(Level* level, Random& random, BoundingBox* box)
 {
     if (!updateAverageGroundHeight(level, box, -1, true)) return false;
@@ -540,13 +534,11 @@ void ScatteredFeaturePieces::Igloo::addAdditionalSaveData(DataOutputStream* outp
 void ScatteredFeaturePieces::Igloo::readAdditionalSaveData(DataInputStream* input, StructureManager* structureManager)
 {
     ScatteredFeaturePiece::readAdditionalSaveData(input, structureManager);
-    if (StructureFeatureIO::getVersion() > 2) { mHasBasement = input->readBoolean(); mBasementDepth = input->readInt(); }
+    if (StructureFeatureIO::getVersion() >= 3) { mHasBasement = input->readBoolean(); mBasementDepth = input->readInt(); }
 }
 
 StructurePiece* ScatteredFeaturePieces::Igloo::Create() { return new Igloo(); }
 EStructurePiece ScatteredFeaturePieces::Igloo::GetType() { return eStructurePiece_Igloo; }
-
-ScatteredFeaturePieces::JunglePyramidPiece::MossStoneSelector::~MossStoneSelector() {}
 
 void ScatteredFeaturePieces::JunglePyramidPiece::MossStoneSelector::next(Random& random, int x, int y, int z, bool edge)
 {
@@ -565,12 +557,10 @@ ScatteredFeaturePieces::JunglePyramidPiece::JunglePyramidPiece(Level* level, Ran
     : ScatteredFeaturePiece(level, random, x, 64, z, 12, 10, 15)
 {
     mPlacedMainChest = false;
-    mPlacedTrap2 = false;
     mPlacedHiddenChest = false;
     mPlacedTrap1 = false;
+    mPlacedTrap2 = false;
 }
-
-ScatteredFeaturePieces::JunglePyramidPiece::~JunglePyramidPiece() {}
 
 void ScatteredFeaturePieces::JunglePyramidPiece::addAdditionalSaveData(DataOutputStream* output)
 {
@@ -814,8 +804,6 @@ ScatteredFeaturePieces::SwamplandHut::SwamplandHut(Level* level, Random& random,
 {
     mHasWitch = false;
 }
-
-ScatteredFeaturePieces::SwamplandHut::~SwamplandHut() {}
 
 void ScatteredFeaturePieces::SwamplandHut::addAdditionalSaveData(DataOutputStream* output)
 {

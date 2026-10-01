@@ -7,7 +7,6 @@ class SmoothZoomLayer : public Layer
 {
 public:
     SmoothZoomLayer(long long seed, boost::shared_ptr<Layer> parent);
-    virtual ~SmoothZoomLayer();
     virtual arrayWithLength<int> getArea(int x, int z, int width, int height);
     static boost::shared_ptr<Layer> zoom(long long seed, boost::shared_ptr<Layer> parent, int count);
 };

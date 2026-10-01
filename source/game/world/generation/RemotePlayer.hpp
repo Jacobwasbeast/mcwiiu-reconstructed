@@ -14,7 +14,6 @@ class RemotePlayer : public AbstractClientPlayer
 {
 public:
     RemotePlayer(Level* level, const std::wstring& name);
-    virtual ~RemotePlayer();
     virtual bool hasPermission(EGameCommand command);
     virtual BlockPos getCommandSenderBlockPosition();
     virtual bool hurt(const DamageSource* source, float damage);

@@ -47,7 +47,6 @@ public:
 
     OceanRuinFeature();
     OceanRuinFeature(SuperflatConfig* config);
-    virtual ~OceanRuinFeature();
 
     static bool IsValidSpawnArea(Level* level, int x, int z, int radius);
 

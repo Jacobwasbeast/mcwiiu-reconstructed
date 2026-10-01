@@ -41,7 +41,6 @@ public:
 
     WoodlandMansionFeature(GenericOverworldLevelSource* source);
     WoodlandMansionFeature(GenericOverworldLevelSource* source, SuperflatConfig* config);
-    virtual ~WoodlandMansionFeature();
 
     static void staticCtor();
     virtual std::wstring getFeatureName();

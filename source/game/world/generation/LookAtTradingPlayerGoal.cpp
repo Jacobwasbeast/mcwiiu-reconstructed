@@ -11,10 +11,6 @@ LookAtTradingPlayerGoal::LookAtTradingPlayerGoal(Villager* villager)
 {
 }
 
-LookAtTradingPlayerGoal::~LookAtTradingPlayerGoal()
-{
-}
-
 bool LookAtTradingPlayerGoal::canUse()
 {
     if (!mVillager->isTrading())

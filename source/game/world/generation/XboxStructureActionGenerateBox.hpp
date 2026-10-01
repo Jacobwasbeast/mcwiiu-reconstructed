@@ -14,7 +14,6 @@ class XboxStructureActionGenerateBox : public GameRuleDefinition
 {
 public:
     XboxStructureActionGenerateBox();
-    virtual ~XboxStructureActionGenerateBox();
 
     uint32_t generateBoxInLevel(StructurePiece* structurePiece, Level* level, BoundingBox* box);
     virtual ConsoleGameRules::EGameRuleType getActionType();

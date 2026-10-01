@@ -10,7 +10,6 @@ class RegionHillsLayer : public Layer
 {
 public:
     RegionHillsLayer(long long seed, boost::shared_ptr<Layer> parent, boost::shared_ptr<Layer> riverLayer);
-    virtual ~RegionHillsLayer();
 
     virtual arrayWithLength<int> getArea(int x, int z, int width, int height);
 

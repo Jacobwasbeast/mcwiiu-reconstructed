@@ -9,10 +9,6 @@ SwampRiversLayer::SwampRiversLayer(long long seed, boost::shared_ptr<Layer> pare
     this->parent = parent;
 }
 
-SwampRiversLayer::~SwampRiversLayer()
-{
-}
-
 arrayWithLength<int> SwampRiversLayer::getArea(int x, int z, int width, int height)
 {
     int parentWidth = width + 2;

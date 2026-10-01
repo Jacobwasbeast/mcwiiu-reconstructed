@@ -35,7 +35,7 @@
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/GameType.hpp"
 #include "game/core/User.hpp"
-#include "game/core/MOJJANG_DATA.hpp"
+#include "game/core/MOJANG_DATA.hpp"
 #include "game/core/Input.hpp"
 #include "platform/wiiu/CInput.hpp"
 #include "game/core/FoodConstants.hpp"
@@ -182,7 +182,7 @@ LocalPlayer::LocalPlayer(Minecraft* minecraft, Level* level, User* user, int dim
             mSkinLocation = skinUrl + L".png";
         }
         setName(user->name);
-        MOJJANG_DATA* data = g_pApp->GetMojangDataForXuid(mOnlineXuid);
+        MOJANG_DATA* data = g_pApp->GetMojangDataForXuid(mOnlineXuid);
         if (data != NULL)
             mSkinLocation = data->skinPath;
     }
@@ -1973,7 +1973,7 @@ int LocalPlayer::getIndicatorSegment(float x, float z)
 {
     Vec3* view = getViewVector(1.0f);
     double angle = std::atan2(view->x * z - view->z * x, view->x * x + view->z * z);
-    int segment = static_cast<int>(Math::round((angle * 57.2957763671875f + 180.0) / 45.0));
+    int segment = static_cast<int>(Math::round((angle * Mth::RAD_TO_DEG + 180.0) / 45.0));
     return segment % 8;
 }
 

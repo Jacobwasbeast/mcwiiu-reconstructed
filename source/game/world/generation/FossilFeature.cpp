@@ -42,9 +42,9 @@ FossilFeature::~FossilFeature()
 
 bool FossilFeature::place(Level* level, Random& random, const BlockPos& origin)
 {
-    Random placementRandom = level->getChunkAt(origin)->getRandom(0x3ad8025fLL);
-    Rotation* rotation = Rotation::VALUES[placementRandom.nextInt(4)];
-    const int fossilIndex = placementRandom.nextInt(8);
+    Random* placementRandom = level->getChunkAt(origin)->getRandom(0x3ad8025fLL);
+    Rotation* rotation = Rotation::VALUES[placementRandom->nextInt(4)];
+    const int fossilIndex = placementRandom->nextInt(8);
 
     Minecraft* minecraft = Minecraft::GetInstance();
     StructureManager* structureManager = minecraft->getStructureManager();
@@ -55,11 +55,11 @@ bool FossilFeature::place(Level* level, Random& random, const BlockPos& origin)
     BoundingBox* boundingBox = new BoundingBox(chunkPos.getMinBlockX(), 0, chunkPos.getMinBlockZ(),
                                                chunkPos.getMaxBlockX(), 256, chunkPos.getMaxBlockZ());
     StructurePlaceSettings* settings =
-        (new StructurePlaceSettings())->setRotation(rotation)->setBoundingBox(boundingBox)->setRandom(&placementRandom);
+        (new StructurePlaceSettings())->setRotation(rotation)->setBoundingBox(boundingBox)->setRandom(placementRandom);
 
     const BlockPos size = fossil->getSize(rotation);
-    const int xOffset = placementRandom.nextInt(16 - size.x);
-    const int zOffset = placementRandom.nextInt(16 - size.z);
+    const int xOffset = placementRandom->nextInt(16 - size.x);
+    const int zOffset = placementRandom->nextInt(16 - size.z);
     int height = 256;
     for (int x = 0; x < size.x; ++x)
     {
@@ -74,7 +74,7 @@ bool FossilFeature::place(Level* level, Random& random, const BlockPos& origin)
         }
     }
 
-    int yOffset = height - 15 - placementRandom.nextInt(10);
+    int yOffset = height - 15 - placementRandom->nextInt(10);
     if (yOffset < 10)
     {
         yOffset = 10;

@@ -9,7 +9,6 @@ class RiverLayer : public Layer
 {
 public:
     RiverLayer(long long seed, boost::shared_ptr<Layer> parent);
-    virtual ~RiverLayer();
 
     virtual arrayWithLength<int> getArea(int x, int z, int width, int height);
 

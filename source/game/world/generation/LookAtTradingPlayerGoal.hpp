@@ -9,7 +9,7 @@ class LookAtTradingPlayerGoal : public LookAtPlayerGoal
 {
 public:
     LookAtTradingPlayerGoal(Villager* villager);
-    virtual ~LookAtTradingPlayerGoal();
+    virtual ~LookAtTradingPlayerGoal() {}
     virtual bool canUse();
     virtual std::wstring getName();
 

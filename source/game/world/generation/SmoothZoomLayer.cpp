@@ -8,10 +8,6 @@ SmoothZoomLayer::SmoothZoomLayer(long long seed, boost::shared_ptr<Layer> parent
     this->parent = parent;
 }
 
-SmoothZoomLayer::~SmoothZoomLayer()
-{
-}
-
 boost::shared_ptr<Layer> SmoothZoomLayer::zoom(long long seed,
     boost::shared_ptr<Layer> parent, int count)
 {

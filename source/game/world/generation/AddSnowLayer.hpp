@@ -10,7 +10,6 @@ class AddSnowLayer : public Layer
 {
 public:
     AddSnowLayer(long long seed, boost::shared_ptr<Layer> parent);
-    virtual ~AddSnowLayer();
 
     virtual arrayWithLength<int> getArea(int x, int z, int width, int height);
 };

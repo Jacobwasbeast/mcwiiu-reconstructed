@@ -10,10 +10,6 @@ OceanMixerLayer::OceanMixerLayer(long long seed, boost::shared_ptr<Layer> landLa
 {
 }
 
-OceanMixerLayer::~OceanMixerLayer()
-{
-}
-
 void OceanMixerLayer::init(long long seed)
 {
     landLayer->init(seed);

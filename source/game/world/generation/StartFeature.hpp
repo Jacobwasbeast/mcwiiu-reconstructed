@@ -12,7 +12,6 @@ class StartFeature : public GameRuleDefinition
 {
 public:
     StartFeature();
-    virtual ~StartFeature();
 
     virtual ConsoleGameRules::EGameRuleType getActionType();
     virtual void writeAttributes(GameRuleSaveInterface* saveInterface, unsigned int extraAttributeCount);

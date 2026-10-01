@@ -9,10 +9,6 @@ AddSnowLayer::AddSnowLayer(long long seed, boost::shared_ptr<Layer> parent)
     this->parent = parent;
 }
 
-AddSnowLayer::~AddSnowLayer()
-{
-}
-
 arrayWithLength<int> AddSnowLayer::getArea(int x, int z, int width, int height)
 {
     int parentWidth = width + 2;

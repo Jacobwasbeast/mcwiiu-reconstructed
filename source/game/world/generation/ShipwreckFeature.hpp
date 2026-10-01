@@ -38,7 +38,6 @@ public:
     ShipwreckFeature(GenericOverworldLevelSource* source, OceanMonumentFeature* monument);
     ShipwreckFeature(GenericOverworldLevelSource* source, OceanMonumentFeature* monument,
                      SuperflatConfig* config);
-    virtual ~ShipwreckFeature();
 
     static std::vector<Biome*>* GetSpawnBiomes();
     static std::vector<Biome*>* GetAllowedBiomes();

@@ -8,10 +8,6 @@ AddIslandLayer::AddIslandLayer(long long seed, boost::shared_ptr<Layer> parentLa
     parent = parentLayer;
 }
 
-AddIslandLayer::~AddIslandLayer()
-{
-}
-
 arrayWithLength<int> AddIslandLayer::getArea(int x, int z, int width, int height)
 {
     int parentWidth = width + 2;

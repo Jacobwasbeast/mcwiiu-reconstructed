@@ -2,10 +2,6 @@
 
 #include "game/world/generation/PlayerStats.hpp"
 
-TimeInLayerCentreMedal::~TimeInLayerCentreMedal()
-{
-}
-
 double TimeInLayerCentreMedal::GetScore(PlayerStats* playerStats) const
 {
     int total = 0;

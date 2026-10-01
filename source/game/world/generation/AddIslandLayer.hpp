@@ -9,7 +9,6 @@ class AddIslandLayer : public Layer
 {
 public:
     AddIslandLayer(long long seed, boost::shared_ptr<Layer> parent);
-    virtual ~AddIslandLayer();
 
     virtual arrayWithLength<int> getArea(int x, int z, int width, int height);
 };

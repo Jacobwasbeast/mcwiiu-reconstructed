@@ -60,7 +60,7 @@
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/MemSect.hpp"
 #include "game/ui/InventoryMenu.hpp"
-#include "game/core/MOJJANG_DATA.hpp"
+#include "game/core/MOJANG_DATA.hpp"
 #include "game/core/DamageSource.hpp"
 #include "game/core/CameraController.hpp"
 #include "game/core/LockCode.hpp"
@@ -157,7 +157,7 @@ Player::Player(Level* level, const std::wstring& name) : LivingEntity(level), mA
     SetPowerupTicks(0, 0);
     SetPowerupTicks(1, 0);
     SetPowerupTicks(2, 0);
-    mShowOnMaps = g_pApp->GetGameHostOption(eGameHostOption_Gamertags) != 0;
+    mShowOnMaps = gApp.GetGameHostOption(eGameHostOption_Gamertags) != 0;
     mIsGuest = false;
     setUUID(name);
 }
@@ -298,7 +298,9 @@ void Player::resetPos()
 
 void Player::handleEntityEvent(uint8_t event, int32_t data)
 {
-    if (event == 22) {
+    if (event == 9) {
+        completeUsingItem();
+    } else if (event == 22) {
         mReducedDebugInfo = 1;
     } else if (event == 23) {
         mReducedDebugInfo = 0;
@@ -327,7 +329,8 @@ void Player::setScore(int32_t score)
 
 void Player::increaseScore(int32_t amount)
 {
-    setScore(static_cast<int32_t>(getScore()) + amount);
+    int32_t score = static_cast<int32_t>(getScore());
+    mEntityData->set(DATA_SCORE_ID, score + amount, true);
 }
 
 CompoundTag* Player::getShoulderEntityLeft()
@@ -381,38 +384,34 @@ unsigned int Player::getPlayerGamePrivilege(unsigned int privileges, EPlayerGame
 
 unsigned int Player::getPlayerGamePrivilege(EPlayerGamePrivileges privilege)
 {
-    if (privilege == ePlayerGamePrivilege_All)
-        return mGamePrivileges;
-    if (privilege < 32)
-        return mGamePrivileges & (1u << privilege);
-    return 0;
+    return getPlayerGamePrivilege(mGamePrivileges, privilege);
 }
 
 uint32_t Player::hasInvulnerablePrivilege()
 {
-    return g_pApp->GetGameHostOption(eGameHostOption_HostCanBeInvisible) != 0 && getPlayerGamePrivilege(ePlayerGamePrivilege_Invulnerable) != 0;
+    return gApp.GetGameHostOption(eGameHostOption_HostCanBeInvisible) != 0 && getPlayerGamePrivilege(ePlayerGamePrivilege_Invulnerable) != 0;
 }
 
 uint32_t Player::isAllowedToFly()
 {
-    return g_pApp->GetGameHostOption(eGameHostOption_HostCanFly) != 0 && getPlayerGamePrivilege(ePlayerGamePrivilege_CanFly) != 0;
+    return gApp.GetGameHostOption(eGameHostOption_HostCanFly) != 0 && getPlayerGamePrivilege(ePlayerGamePrivilege_CanFly) != 0;
 }
 
 uint32_t Player::hasInvisiblePrivilege()
 {
-    return g_pApp->GetGameHostOption(eGameHostOption_HostCanBeInvisible) != 0 && getPlayerGamePrivilege(ePlayerGamePrivilege_Invisible) != 0;
+    return gApp.GetGameHostOption(eGameHostOption_HostCanBeInvisible) != 0 && getPlayerGamePrivilege(ePlayerGamePrivilege_Invisible) != 0;
 }
 
 uint32_t Player::isAllowedToAttackPlayers()
 {
     return !hasInvisiblePrivilege()
-        && g_pApp->GetGameHostOption(eGameHostOption_PvP) != 0
-        && (g_pApp->GetGameHostOption(eGameHostOption_TrustPlayers) != 0 || getPlayerGamePrivilege(ePlayerGamePrivilege_CannotAttackPlayers) == 0);
+        && gApp.GetGameHostOption(eGameHostOption_PvP) != 0
+        && (gApp.GetGameHostOption(eGameHostOption_TrustPlayers) != 0 || getPlayerGamePrivilege(ePlayerGamePrivilege_CannotAttackPlayers) == 0);
 }
 
 uint32_t Player::isAllowedToIgnoreExhaustion()
 {
-    return g_pApp->GetGameHostOption(eGameHostOption_HostCanChangeHunger) != 0 && getPlayerGamePrivilege(ePlayerGamePrivilege_ExhaustionDisabled) != 0;
+    return gApp.GetGameHostOption(eGameHostOption_HostCanChangeHunger) != 0 && getPlayerGamePrivilege(ePlayerGamePrivilege_ExhaustionDisabled) != 0;
 }
 
 void Player::causeFoodExhaustion(float exhaustion)
@@ -420,18 +419,18 @@ void Player::causeFoodExhaustion(float exhaustion)
     if (isAllowedToIgnoreExhaustion()) return;
     if (isAllowedToFly() && mAbilities.mFlying) return;
     if (mAbilities.mInvulnerable || hasInvulnerablePrivilege()) return;
-    if (g_pApp->GetGameHostOption(eGameHostOption_TrustPlayers) == 0 && getPlayerGamePrivilege(ePlayerGamePrivilege_CannotBuild) != 0) return;
-    if (mLevel != NULL && !mLevel->mIsClientSide) getFoodData()->addExhaustion(exhaustion);
+    if (gApp.GetGameHostOption(eGameHostOption_TrustPlayers) == 0 && getPlayerGamePrivilege(ePlayerGamePrivilege_CannotBuild) != 0) return;
+    if (!mLevel->mIsClientSide) mFoodData.addExhaustion(exhaustion);
 }
 
 uint32_t Player::isAllowedToMine()
 {
-    return g_pApp->GetGameHostOption(eGameHostOption_TrustPlayers) != 0 || getPlayerGamePrivilege(ePlayerGamePrivilege_CannotMine) == 0;
+    return gApp.GetGameHostOption(eGameHostOption_TrustPlayers) != 0 || getPlayerGamePrivilege(ePlayerGamePrivilege_CannotMine) == 0;
 }
 
 uint32_t Player::isAllowedToAttackAnimals()
 {
-    return g_pApp->GetGameHostOption(eGameHostOption_TrustPlayers) != 0 || getPlayerGamePrivilege(ePlayerGamePrivilege_CannotAttackAnimals) == 0;
+    return gApp.GetGameHostOption(eGameHostOption_TrustPlayers) != 0 || getPlayerGamePrivilege(ePlayerGamePrivilege_CannotAttackAnimals) == 0;
 }
 
 bool Player::canCreateParticles()
@@ -595,10 +594,10 @@ GameMode* Player::GetGameMode()
 
 bool Player::isPickable()
 {
-    return !LivingEntity::isPickable();
+    return !isSpectator();
 }
 
-void Player::setPlayerDefaultSkin(uint32_t skin)
+void Player::setPlayerDefaultSkin(EDefaultSkins skin)
 {
     mField0x7d8 = skin;
 }
@@ -753,7 +752,7 @@ bool Player::ShouldRenderShadow()
 
 std::wstring Player::getDisplayName()
 {
-    return mDisplayName;
+    return mDisplayName.empty() ? mName : mDisplayName;
 }
 
 void Player::stopSpinAttack()
@@ -770,8 +769,7 @@ void Player::makeStuckInWeb()
 void Player::respawn()
 {
     mDeathFadeTimer = 0;
-    InsomniaComponent* insomnia = getInsomniaComponent();
-    if (insomnia != NULL) insomnia->restartTimer();
+    if (mInsomniaComponent != NULL) mInsomniaComponent->restartTimer();
 }
 
 int Player::getPortalWaitTime()
@@ -798,7 +796,7 @@ bool Player::isLocalPlayer()
 
 bool Player::isInWall()
 {
-    return !isSleeping() && Entity::isInWall();
+    return !mSleeping && Entity::isInWall();
 }
 
 std::wstring Player::getGameProfile()
@@ -1018,7 +1016,7 @@ void Player::resetAttackStrengthTicker()
 
 bool Player::isSendMessageEnabled()
 {
-    return mLevel != NULL && mLevel->getGameRules()->getBoolean(GameRules::RULE_SENDCOMMANDFEEDBACK);
+    return getServer()->mLevels.data[0]->getGameRules()->getBoolean(GameRules::RULE_SENDCOMMANDFEEDBACK);
 }
 
 bool Player::makeStepSound()
@@ -1063,17 +1061,16 @@ ItemCooldowns* Player::getCooldowns()
 
 void Player::hurtArmor(float damage)
 {
-    if (mInventory) mInventory->hurtArmor(damage);
+    mInventory->hurtArmor(damage);
 }
 
 double Player::getArmorCoverPercentage()
 {
-    if (!mInventory) return 0.0;
     int worn = 0;
-    for (int slot = 0; slot < 4; ++slot) {
-        if (!mInventory->getArmor(slot)->isEmpty()) ++worn;
+    for (unsigned int slot = 0; slot < mInventory->m_armor.size(); ++slot) {
+        if (!mInventory->m_armor[slot]->isEmpty()) ++worn;
     }
-    return static_cast<double>(worn) / 4.0;
+    return static_cast<float>(worn) / static_cast<float>(mInventory->m_armor.size());
 }
 
 uint8_t Player::canUseCommandBlocks()
@@ -1122,14 +1119,12 @@ double Player::getCurrentItemAttackStrengthDelay()
 
 float Player::getSpeed()
 {
-    AttributeInstance* movementSpeed = getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED);
-    return movementSpeed == NULL ? 0.0f : static_cast<float>(movementSpeed->getValue());
+    return static_cast<float>(getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->getValue());
 }
 
 double Player::getLuck()
 {
-    AttributeInstance* luck = getAttribute(SharedMonsterAttributes::LUCK);
-    return luck == NULL ? 0.0 : static_cast<float>(luck->getValue());
+    return static_cast<float>(getAttribute(SharedMonsterAttributes::LUCK)->getValue());
 }
 
 std::wstring Player::getName()
@@ -1179,14 +1174,14 @@ void Player::AwardTimerAchievement(TimerAchievements achievement)
 {
     if (achievement == eTimerAchievement_Castaway) {
         if (!mLastAteKelp) {
-            mTimerAchievementAwarded[eTimerAchievement_Castaway] = false;
+            mTimerAchievementAwarded[achievement] = false;
         } else {
             awardStat(GenericStats::castaway(), GenericStats::param_castaway());
-            mTimerAchievementAwarded[eTimerAchievement_Castaway] = true;
+            mTimerAchievementAwarded[achievement] = true;
         }
     } else if (achievement == eTimerAchievement_SleepWithTheFishes) {
         awardStat(GenericStats::sleepWithTheFishes(), GenericStats::param_sleepWithTheFishes());
-        mTimerAchievementAwarded[eTimerAchievement_SleepWithTheFishes] = true;
+        mTimerAchievementAwarded[achievement] = true;
     } else {
         mTimerAchievementAwarded[achievement] = true;
     }
@@ -1351,7 +1346,8 @@ void Player::calculateFlapping()
 {
     mOFlap = mFlap;
     mOFlapSpeed = mFlapSpeed;
-    mFlapSpeed = Mth::clamp(mFlapSpeed + (mOnGround ? -0.3f : 1.2f), 0.0f, 1.0f);
+    mFlapSpeed += (mOnGround ? -1 : 4) * 0.3f;
+    mFlapSpeed = Mth::clamp(mFlapSpeed, 0.0f, 1.0f);
     if (!mOnGround && mField0x850 < 1.0f) mField0x850 = 1.0f;
     mField0x850 *= 0.9f;
     mFlap += mField0x850 * 2.0f;
@@ -1421,7 +1417,7 @@ void Player::giveExperienceLevels(int32_t levels)
 void Player::setXuid(PlayerUID xuid)
 {
     mXuid = xuid;
-    if ((xuid.flags & 0x20000000) != 0 || mIsGuest) setName(xuid.toString());
+    if ((xuid.flags & 0x20000000) != 0 || mIsGuest) setUUID(xuid.toString());
 }
 
 Scoreboard* Player::GetScoreboard()
@@ -1431,9 +1427,8 @@ Scoreboard* Player::GetScoreboard()
 
 Team* Player::getTeam()
 {
-    PlayerUID uid = mXuid == PlayerUID(0) ? mOnlineXuid : mXuid;
-    Scoreboard* scoreboard = GetScoreboard();
-    return scoreboard != NULL ? scoreboard->getPlayersTeam(uid) : NULL;
+    PlayerUID uid = getXuid() == PlayerUID(0) ? mOnlineXuid : mXuid;
+    return GetScoreboard()->getPlayersTeam(uid);
 }
 
 double Player::getSleepRotation()
@@ -1482,18 +1477,18 @@ Vec3* Player::getAttachPos(Entity::EEntityLocation location, float partialTicks)
 
 uint32_t Player::CanRecordStats(Stat* stat, arrayWithLength<unsigned char> parameters)
 {
-    return stat != NULL && g_pApp->CanRecordStatsAndAchievements(stat, parameters) != 0;
+    return stat != NULL && gApp.CanRecordStatsAndAchievements(stat, parameters) != 0;
 }
 
 void Player::setAbsorptionAmount(float amount)
 {
     if (amount < 0.0f) amount = 0.0f;
-    if (mEntityData != NULL) getEntityData()->set(DATA_PLAYER_ABSORPTION_ID, amount, true);
+    getEntityData()->set(DATA_PLAYER_ABSORPTION_ID, amount, true);
 }
 
 float Player::getAbsorptionAmount()
 {
-    return mEntityData != NULL ? getEntityData()->get(DATA_PLAYER_ABSORPTION_ID) : 0.0f;
+    return getEntityData()->get(DATA_PLAYER_ABSORPTION_ID);
 }
 
 const HumanoidArm* Player::getMainArm()
@@ -1560,7 +1555,7 @@ _SkinAdjustments Player::getSkinAdjustmentsById(uint32_t id)
 {
     _SkinAdjustments adjustments;
     if (static_cast<int32_t>(id) < 0) {
-        adjustments = g_pApp->GetSkinAdjustments(id);
+        adjustments = gApp.GetSkinAdjustments(id);
         id &= 0x7fffffff;
     }
 
@@ -1577,16 +1572,15 @@ _SkinAdjustments Player::getSkinAdjustmentsById(uint32_t id)
 
 std::wstring Player::getCapePathFromId(uint32_t id)
 {
-    std::wostringstream path;
-    path << std::setfill(L'0');
-    if (static_cast<int32_t>(id) < 0) {
-        path << L"dlccape" << std::setw(8) << std::dec << (id & 0x7fffffff) << L".png";
+    wchar_t path[256];
+    if ((id >> 31) != 0) {
+        swprintf(path, 256, L"dlccape%08d.png", id & 0x7fffffff);
     } else if ((id & 0x7fffffe0) == 0) {
-        path << L"defcape" << std::setw(8) << std::uppercase << std::hex << (id & 0x1f) << L".png";
+        swprintf(path, 256, L"defcape%08X.png", id & 0x1f);
     } else {
-        path << L"ugccape" << std::setw(8) << std::uppercase << std::hex << id << L".png";
+        swprintf(path, 256, L"ugccape%08X.png", id & 0x7fffffe0);
     }
-    return path.str();
+    return path;
 }
 
 uint32_t Player::getCapeIdFromPath(const std::wstring& path)
@@ -1643,16 +1637,16 @@ double Player::getEyeHeight()
         }
     }
 
-    if (isFallFlying() || (mBbHeight == 0.6f && !isSwimming()))
+    float eyeHeight = 0.4f;
+    if (!isFallFlying() && (mBbHeight != 0.6f || isSwimming()))
     {
-        return 0.4f;
+        eyeHeight = height;
+        if (isSneaking() || mBbHeight == 1.65f)
+        {
+            eyeHeight = height - 0.08f;
+        }
     }
-
-    if (isSneaking() || mBbHeight == 1.65f)
-    {
-        height -= 0.08f;
-    }
-    return height;
+    return eyeHeight;
 }
 
 bool Player::setSlot(int slot, const not_null_ptr<ItemInstance>& item)
@@ -1698,11 +1692,17 @@ uint32_t Player::getModelName()
 
 void Player::setCustomSkin(uint32_t skin)
 {
-    setInvisible(false);
+    setIsIdle(false);
     setSkinAdjustments(getSkinAdjustmentsById(skin));
-    uint32_t defaultSkin = ((skin & 0x7fffffe0) == 0 && (skin & 0x1f) != 0)
-        ? skin & 0x1f : static_cast<uint32_t>(mPlayerIndex + 1);
-    setPlayerDefaultSkin(defaultSkin);
+    uint32_t defaultSkin = mPlayerIndex + 1;
+    if ((skin >> 31) == 0) {
+        if ((skin & 0x7fffffe0) == 0) {
+            defaultSkin = skin & 0x1f;
+            if (defaultSkin == 0)
+                defaultSkin = mPlayerIndex + 1;
+        }
+    }
+    setPlayerDefaultSkin(static_cast<EDefaultSkins>(defaultSkin));
     mCustomSkin = skin;
     mSkinLocation = CMinecraftApp::getSkinPathFromId(skin);
     mAdditionalModelPartsChecked = 0;
@@ -1715,10 +1715,10 @@ uint64_t Player::setCustomCape(uint32_t cape)
     mCustomCape = cape;
     if (cape == 0)
     {
-        MOJJANG_DATA* data = g_pApp->GetMojangDataForXuid(mOnlineXuid);
+        MOJANG_DATA* data = gApp.GetMojangDataForXuid(mOnlineXuid);
         if (data == NULL)
         {
-            if (g_pApp->DefaultCapeExists())
+            if (gApp.DefaultCapeExists())
                 mCapeLocation = L"Special_Cape.png";
             else
                 mCapeLocation = L"";
@@ -1730,7 +1730,7 @@ uint64_t Player::setCustomCape(uint32_t cape)
                 mCapeLocation = data->capePath;
                 return cape;
             }
-            if (g_pApp->DefaultCapeExists())
+            if (gApp.DefaultCapeExists())
                 mCapeLocation = L"Special_Cape.png";
             else
                 mCapeLocation = L"";
@@ -1777,7 +1777,7 @@ std::vector<ModelPart*>* Player::GetAdditionalModelParts()
 void Player::tickArmor()
 {
     not_null_ptr<ItemInstance> helmet = getItemSlot(EquipmentSlot::HEAD);
-    if (!helmet->isEmpty() && helmet->getItem() == Items::turtleHelmet && !headInWater()) {
+    if (helmet->getItem() == Items::turtleHelmet && !headInWater()) {
         addEffect(new MobEffectInstance(MobEffects::WATER_BREATHING, 200, 0, false, false),
                   boost::shared_ptr<Entity>());
     }
@@ -1901,9 +1901,9 @@ void Player::PlayerRingSoundEffect(int ring)
 
 void Player::prepareCustomTextures()
 {
-    MOJJANG_DATA* data = g_pApp->GetMojangDataForXuid(mOnlineXuid);
-    if (data != NULL && data->capePath[0] != L'\0') {
-        mDisplayName.assign(data->capePath, std::wcslen(data->capePath));
+    MOJANG_DATA* data = gApp.GetMojangDataForXuid(mOnlineXuid);
+    if (data != NULL && data->skinPath[0] != L'\0') {
+        mSkinLocation.assign(data->skinPath, std::wcslen(data->skinPath));
     }
 }
 
@@ -1994,7 +1994,7 @@ void Player::_init()
 
 void Player::tick()
 {
-    if (!g_pApp->IsAppPaused())
+    if (!gApp.IsAppPaused())
         CheckTimerAchievements();
 
     mWasFallFlying = isFallFlying();
@@ -2479,7 +2479,7 @@ void Player::die(const DamageSource* source)
     setSize(0.2f, 0.2f);
     setPos(mX, mY, mZ);
     mYd = 0.10000000149011612;
-    if (g_pApp->isXuidNotch(mXuid)) drop(not_null_ptr<ItemInstance>(new ItemInstance(Items::apple, 1)), true, false);
+    if (gApp.isXuidNotch(mXuid)) drop(not_null_ptr<ItemInstance>(new ItemInstance(Items::apple, 1)), true, false);
     if (!mLevel->getGameRules()->getBoolean(GameRules::RULE_KEEPINVENTORY) && !isSpectator()) {
         destroyVanishingCursedItems();
         mInventory->dropAll();
@@ -2814,10 +2814,9 @@ void Player::playShoulderEntityAmbientSound(CompoundTag* tag)
 
 void Player::respawnEntityOnShoulder(CompoundTag* tag)
 {
-    if (mLevel->mIsClientSide || tag == NULL || tag->isEmpty()) return;
+    if (mLevel->mIsClientSide || tag->isEmpty()) return;
     boost::shared_ptr<Entity> entity = EntityIO::newEntity(tag, mLevel);
-    if (!entity) return;
-    if (Entity::instanceof(entity, EntityType::TAMABLE_ANIMAL))
+    if ((entity->GetType() & EntityType::TAMABLE_ANIMAL) == EntityType::TAMABLE_ANIMAL)
         boost::static_pointer_cast<TamableAnimal>(entity)->setOwnerUUID(getUUID());
     entity->setPos(mX, mY + 0.699999988079071, mZ);
     mLevel->addEntity(entity);
@@ -3134,7 +3133,7 @@ uint32_t Player::isAllowedToUse(Block* block)
     unsigned int id = Block::getId(block);
     if (Minecraft::InMiniGame(eMiniGameId_Any, true))
         return Minecraft::GetInstance()->GetMiniGame()->MayUseBlock(static_cast<int>(id));
-    if (block == NULL || g_pApp->GetGameHostOption(eGameHostOption_TrustPlayers) != 0)
+    if (block == NULL || gApp.GetGameHostOption(eGameHostOption_TrustPlayers) != 0)
         return 1;
 
     const bool isDoorOrGate = DoorBlock::isDoor(block) || FenceGateBlock::isFenceGate(block);
@@ -3170,7 +3169,7 @@ uint32_t Player::isAllowedToUse(not_null_ptr<ItemInstance> item)
     unsigned int id = Item::getId(item->getItem());
     if (Minecraft::InMiniGame(eMiniGameId_Any, true))
         return Minecraft::GetInstance()->GetMiniGame()->MayUse(static_cast<int>(id));
-    if (item->isEmpty() || g_pApp->GetGameHostOption(eGameHostOption_TrustPlayers) != 0)
+    if (item->isEmpty() || gApp.GetGameHostOption(eGameHostOption_TrustPlayers) != 0)
         return 1;
     const bool allowedWithoutPrivilege = getPlayerGamePrivilege(ePlayerGamePrivilege_CannotBuild) == 0;
     const bool restrictedItem = id == 0x104 || id == 0x105 || (id >= 0x107 && id <= 0x10a)
@@ -3191,7 +3190,7 @@ bool Player::isAllowedToInteract(boost::shared_ptr<Entity> entity)
         return false;
     }
 
-    if (g_pApp->GetGameHostOption(eGameHostOption_TrustPlayers) == 0)
+    if (gApp.GetGameHostOption(eGameHostOption_TrustPlayers) == 0)
     {
         if ((entity->GetType() & EntityType::MINECART) == EntityType::MINECART)
         {
@@ -3245,7 +3244,7 @@ uint32_t Player::isAllowedToHurtEntity(boost::shared_ptr<Entity> entity)
     const unsigned long long type = entity->GetType();
     uint32_t allowed = 1;
 
-    if (!isAllowedToMine() || g_pApp->GetGameHostOption(eGameHostOption_MiniGame) != 0)
+    if (!isAllowedToMine() || gApp.GetGameHostOption(eGameHostOption_MiniGame) != 0)
     {
         if (type == EntityType::ARMOR_STAND || type == EntityType::LEASH_FENCE_KNOT_ENTITY
             || type == EntityType::ITEM_FRAME || type == EntityType::PAINTING
@@ -3267,7 +3266,7 @@ uint32_t Player::isAllowedToHurtEntity(boost::shared_ptr<Entity> entity)
     {
         boost::shared_ptr<Player> target = boost::dynamic_pointer_cast<Player>(entity);
         allowed = 0;
-        if (isAllowedToAttackPlayers() && g_pApp->GetGameHostOption(eGameHostOption_PvP) != 0
+        if (isAllowedToAttackPlayers() && gApp.GetGameHostOption(eGameHostOption_PvP) != 0
             && (GetGameMode() == NULL || GetGameType() != GameType::LOBBY)
             && !Minecraft::InMiniGame(eMiniGameId_Glide, true)
             && !target->mAbilities.mInstabuild && !target->isSpectator())
@@ -3281,7 +3280,11 @@ uint32_t Player::isAllowedToHurtEntity(boost::shared_ptr<Entity> entity)
 
 uint32_t Player::SpectateAsSkull()
 {
-    return SpectateAsFloatingHead() && GetModelTypeFromTextureId(getTexture()) == 2;
+    bool spectating = false;
+    if (SpectateAsFloatingHead()) {
+        if (std::find(sDlcSkinIds.begin(), sDlcSkinIds.end(), mCustomSkin) != sDlcSkinIds.end()) spectating = true;
+    }
+    return spectating;
 }
 
 int32_t Player::AutoEquip(not_null_ptr<ItemInstance>& item, not_null_ptr<ItemInstance>& replaced,

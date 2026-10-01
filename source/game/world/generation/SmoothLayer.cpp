@@ -9,10 +9,6 @@ SmoothLayer::SmoothLayer(long long seed, boost::shared_ptr<Layer> parent)
     this->parent = parent;
 }
 
-SmoothLayer::~SmoothLayer()
-{
-}
-
 arrayWithLength<int> SmoothLayer::getArea(int x, int z, int width, int height)
 {
     int parentWidth = width + 2;

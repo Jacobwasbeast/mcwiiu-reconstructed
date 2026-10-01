@@ -10,10 +10,6 @@ RiverLayer::RiverLayer(long long seed, boost::shared_ptr<Layer> parent)
     this->parent = parent;
 }
 
-RiverLayer::~RiverLayer()
-{
-}
-
 int RiverLayer::riverFilter(int biomeId)
 {
     return biomeId >= 2 ? 2 + (biomeId & 1) : biomeId;

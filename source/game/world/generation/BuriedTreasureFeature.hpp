@@ -46,7 +46,6 @@ public:
     };
 
     BuriedTreasureFeature(int sizeInChunks);
-    virtual ~BuriedTreasureFeature();
 
     static void staticCtor();
     virtual std::wstring getFeatureName();

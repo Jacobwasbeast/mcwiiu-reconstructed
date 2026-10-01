@@ -9,10 +9,6 @@ RiverInitLayer::RiverInitLayer(long long seed, boost::shared_ptr<Layer> parent)
     this->parent = parent;
 }
 
-RiverInitLayer::~RiverInitLayer()
-{
-}
-
 arrayWithLength<int> RiverInitLayer::getArea(int x, int z, int width, int height)
 {
     arrayWithLength<int> parentArea = parent->getArea(x, z, width, height);

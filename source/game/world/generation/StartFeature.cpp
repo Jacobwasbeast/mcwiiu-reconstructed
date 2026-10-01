@@ -20,10 +20,6 @@ StartFeature::StartFeature()
     mFeatureType = 2;
 }
 
-StartFeature::~StartFeature()
-{
-}
-
 ConsoleGameRules::EGameRuleType StartFeature::getActionType()
 {
     return ConsoleGameRules::eGameRuleType_StartFeature;

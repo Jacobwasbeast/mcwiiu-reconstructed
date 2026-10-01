@@ -28,10 +28,6 @@ XboxStructureActionGenerateBox::XboxStructureActionGenerateBox()
     addBoolAttribute(ConsoleGameRules::eGameRuleAttr_skipAir, &mExistingOnly);
 }
 
-XboxStructureActionGenerateBox::~XboxStructureActionGenerateBox()
-{
-}
-
 uint32_t XboxStructureActionGenerateBox::generateBoxInLevel(StructurePiece* structurePiece, Level* level, BoundingBox* box)
 {
     const BlockState* outerState = mOuterBlock->defaultBlockState();

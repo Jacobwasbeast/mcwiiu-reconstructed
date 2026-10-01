@@ -12,7 +12,6 @@ public:
     static boost::shared_ptr<Layer> zoom(long long seed, boost::shared_ptr<Layer> parent, int count);
 
     ZoomLayer(long long seed, boost::shared_ptr<Layer> parent);
-    virtual ~ZoomLayer();
 
     virtual arrayWithLength<int> getArea(int x, int z, int width, int height);
 };

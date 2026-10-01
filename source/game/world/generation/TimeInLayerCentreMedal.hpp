@@ -12,7 +12,6 @@ public:
     {
     }
 
-    virtual ~TimeInLayerCentreMedal();
     virtual double GetScore(PlayerStats* playerStats) const;
 };
 

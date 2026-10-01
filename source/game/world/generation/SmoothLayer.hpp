@@ -10,7 +10,6 @@ class SmoothLayer : public Layer
 {
 public:
     SmoothLayer(long long seed, boost::shared_ptr<Layer> parent);
-    virtual ~SmoothLayer();
 
     virtual arrayWithLength<int> getArea(int x, int z, int width, int height);
 };

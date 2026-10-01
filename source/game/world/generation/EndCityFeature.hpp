@@ -30,7 +30,6 @@ public:
     };
 
     EndCityFeature(TheEndLevelSource* source);
-    virtual ~EndCityFeature();
     virtual std::wstring getFeatureName();
     virtual bool isFeatureChunk(int chunkX, int chunkZ, bool flatWorld);
     static int getYPositionForFeature(int chunkX, int chunkZ,

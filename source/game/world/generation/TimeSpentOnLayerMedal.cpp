@@ -10,10 +10,6 @@ TimeSpentOnLayerMedal::TimeSpentOnLayerMedal(ELayerMedal layer, int name, float 
 {
 }
 
-TimeSpentOnLayerMedal::~TimeSpentOnLayerMedal()
-{
-}
-
 double TimeSpentOnLayerMedal::GetScore(PlayerStats* playerStats) const
 {
     unsigned int total = 0;

@@ -11,10 +11,6 @@ ShoreLayer::ShoreLayer(long long seed, boost::shared_ptr<Layer> parentLayer)
     parent = parentLayer;
 }
 
-ShoreLayer::~ShoreLayer()
-{
-}
-
 bool ShoreLayer::isJungleCompatible(int biomeId)
 {
     if (Biome::getBiome(biomeId) != NULL

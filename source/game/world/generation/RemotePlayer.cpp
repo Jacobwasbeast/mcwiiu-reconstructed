@@ -20,10 +20,6 @@ RemotePlayer::RemotePlayer(Level* level, const std::wstring& name)
     mField0x880 = 0.0f;
 }
 
-RemotePlayer::~RemotePlayer()
-{
-}
-
 bool RemotePlayer::hasPermission(EGameCommand)
 {
     return false;

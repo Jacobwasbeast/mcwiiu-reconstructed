@@ -9,7 +9,6 @@ class ShoreLayer : public Layer
 {
 public:
     ShoreLayer(long long seed, boost::shared_ptr<Layer> parent);
-    virtual ~ShoreLayer();
     virtual arrayWithLength<int> getArea(int x, int z, int width, int height);
 
 private:

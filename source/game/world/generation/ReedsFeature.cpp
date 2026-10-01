@@ -2,6 +2,7 @@
 
 #include "game/util/Random.hpp"
 #include "game/core/CMinecraftApp.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/world/LevelGenerationOptions.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
@@ -9,8 +10,6 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/Material.hpp"
-
-extern CMinecraftApp* g_pApp;
 
 ReedsFeature::~ReedsFeature()
 {
@@ -25,8 +24,8 @@ bool ReedsFeature::place(Level* level, Random& random, const BlockPos& origin)
         const int zOffsetStart = random.nextInt(4);
         const int dz = zOffsetStart - random.nextInt(4);
         const BlockPos position = origin.offset(dx, 0, dz);
-        if (g_pApp->getLevelGenerationOptions() != NULL
-            && g_pApp->getLevelGenerationOptions()->checkIntersects(position, position))
+        if (gApp.getLevelGenerationOptions() != NULL
+            && gApp.getLevelGenerationOptions()->checkIntersects(position, position))
         {
             continue;
         }

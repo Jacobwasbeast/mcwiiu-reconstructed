@@ -807,7 +807,7 @@ boost::shared_ptr<ServerPlayer> PlayerList::respawn(boost::shared_ptr<ServerPlay
     replacement->setXuid(player->mXuid);
     replacement->mOnlineXuid = player->mOnlineXuid;
     replacement->mSuid = player->mSuid;
-    replacement->setPlayerDefaultSkin(player->mField0x7d8);
+    replacement->setPlayerDefaultSkin(static_cast<EDefaultSkins>(player->mField0x7d8));
     replacement->mPlayerIndex = player->mPlayerIndex;
     replacement->setCustomSkin(player->mCustomSkin);
     replacement->setCustomCape(player->mCustomCape);

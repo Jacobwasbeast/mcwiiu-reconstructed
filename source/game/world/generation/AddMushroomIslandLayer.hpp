@@ -9,7 +9,6 @@ class AddMushroomIslandLayer : public Layer
 {
 public:
     AddMushroomIslandLayer(long long seed, boost::shared_ptr<Layer> parent);
-    virtual ~AddMushroomIslandLayer();
 
     virtual arrayWithLength<int> getArea(int x, int z, int width, int height);
 };

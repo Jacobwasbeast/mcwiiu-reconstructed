@@ -96,10 +96,6 @@ ShipwreckFeature::ShipwreckFeature(GenericOverworldLevelSource* source,
     mReducedFeatureChunk = FjIsFeatureChunk::CreateReduced(mFeatureChunk);
 }
 
-ShipwreckFeature::~ShipwreckFeature()
-{
-}
-
 std::wstring ShipwreckFeature::getFeatureName()
 {
     return L"Shipwreck";

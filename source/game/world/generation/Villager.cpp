@@ -272,19 +272,19 @@ void Villager::_init(int profession)
     setProfession(profession);
     setSize(0.6f, 1.95f);
     mRandomTickDivider = 0;
-    mChasing = false;
     mInLove = false;
-    mVillage.reset();
-    mTradingPlayer.reset();
+    mChasing = false;
+    mVillage = boost::weak_ptr<Village>();
+    mTradingPlayer = boost::weak_ptr<Player>();
     mOffers = NULL;
-    mWillingToBreed = false;
-    mNeedsInitialization = false;
-    mRiches = 0;
     mTimeUntilReset = 0;
+    mNeedsInitialization = false;
+    mWillingToBreed = false;
+    mRiches = 0;
     mLastTradedPlayerName = L"";
+    mRewardPlayersInVillage = false;
     mCareerLevel = 0;
     mAdditionalTasksSet = false;
-    mRewardPlayersInVillage = false;
     mInventory = new SimpleContainer(IDS_ITEMS, L"", false, 8);
     static_cast<GroundPathNavigation*>(getNavigation())->setCanOpenDoors(true);
     setCanPickUpLoot(true);
@@ -1187,31 +1187,25 @@ unsigned int Villager::GetInteractTooltip(const EntityTooltipDataHolder& holder)
 {
     int itemId = Item::getId(holder.m_pItemInstance->getItem());
 
-    if (itemId == ItemId::SPAWN_EGG)
+    switch (itemId)
     {
+    case ItemId::NAME_TAG:
+        {
+            if (!holder.m_pItemInstance->hasCustomHoverName())
+            {
+                return IDS_NONE;
+            }
+
+            int differs = !hasCustomName() || holder.m_pItemInstance->getHoverName().compare(getCustomName()) != 0;
+
+            return differs ? IDS_TOOLTIPS_NAME : IDS_NONE;
+        }
+    case ItemId::SPAWN_EGG:
         if (SpawnEggItem::fjGetType(holder.m_pItemInstance) == EntityType::VILLAGER)
         {
             return IDS_TOOLTIPS_PLACE;
         }
-    }
-    else if (itemId == ItemId::NAME_TAG)
-    {
-        if (!holder.m_pItemInstance->hasCustomHoverName())
-        {
-            return IDS_NONE;
-        }
-
-        if (hasCustomName())
-        {
-            std::wstring hoverName = holder.m_pItemInstance->getHoverName();
-
-            if (hoverName.compare(getCustomName()) == 0)
-            {
-                return IDS_NONE;
-            }
-        }
-
-        return IDS_TOOLTIPS_NAME;
+        break;
     }
 
     if (!isBaby() && getProfession() != 5)
@@ -1230,18 +1224,18 @@ bool Villager::HideUseTooltips()
 void Villager::addAdditonalSaveData(CompoundTag* tag)
 {
     AgableMob::addAdditonalSaveData(tag);
-    tag->putInt(L"Profession", getProfession());
-    tag->putInt(L"Riches", mRiches);
-    tag->putInt(L"Career", getCareer());
-    tag->putInt(L"CareerLevel", mCareerLevel);
-    tag->putBoolean(L"Willing", mWillingToBreed);
+    tag->putInt(std::wstring(L"Profession"), getProfession());
+    tag->putInt(std::wstring(L"Riches"), mRiches);
+    tag->putInt(std::wstring(L"Career"), getCareer());
+    tag->putInt(std::wstring(L"CareerLevel"), mCareerLevel);
+    tag->putBoolean(std::wstring(L"Willing"), mWillingToBreed);
 
     if (mOffers != NULL)
     {
-        tag->put(L"Offers", mOffers->createTag());
+        tag->put(std::wstring(L"Offers"), mOffers->createTag());
     }
 
-    ListTag* inventory = new ListTag(0);
+    ListTag* inventory = new ListTag();
 
     for (unsigned int slot = 0; slot < mInventory->getContainerSize(); slot++)
     {
@@ -1253,7 +1247,7 @@ void Villager::addAdditonalSaveData(CompoundTag* tag)
         }
     }
 
-    tag->put(L"Inventory", inventory);
+    tag->put(std::wstring(L"Inventory"), inventory);
 }
 
 void Villager::readAdditionalSaveData(CompoundTag* tag)
@@ -1370,7 +1364,18 @@ void Villager::die(const DamageSource* source)
     {
         boost::shared_ptr<Entity> killer = source->getEntity();
 
-        if (killer == NULL)
+        if (killer != NULL)
+        {
+            if ((killer->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+            {
+                village->modifyStanding(killer->getName(), -2);
+            }
+            else if ((killer->GetType() & EntityType::ENEMY) == EntityType::ENEMY)
+            {
+                village->resetNoBreedTimer();
+            }
+        }
+        else
         {
             boost::shared_ptr<Player> player = mLevel->getNearestPlayer(shared_from_this(), 16.0, -1.0);
 
@@ -1378,14 +1383,6 @@ void Villager::die(const DamageSource* source)
             {
                 village->resetNoBreedTimer();
             }
-        }
-        else if ((killer->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
-        {
-            village->modifyStanding(killer->getName(), -2);
-        }
-        else if ((killer->GetType() & EntityType::ENEMY) == EntityType::ENEMY)
-        {
-            village->resetNoBreedTimer();
         }
     }
 
@@ -1463,10 +1460,10 @@ void Villager::addParticlesAroundSelf(const ParticleType* particle)
         double xd = mRandom->nextGaussian() * 0.02;
         double yd = mRandom->nextGaussian() * 0.02;
         double zd = mRandom->nextGaussian() * 0.02;
+        arrayWithLength<int> params;
         float xo = mRandom->nextFloat();
         float yo = mRandom->nextFloat();
         float zo = mRandom->nextFloat();
-        arrayWithLength<int> params;
         mLevel->addParticle(particle,
                             mX + (double)(xo * mBbWidth * 2.0f) - (double)mBbWidth,
                             mY + 1.0 + (double)(yo * mBbHeight),

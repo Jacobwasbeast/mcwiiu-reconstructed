@@ -8,7 +8,6 @@ class IslandLayer : public Layer
 {
 public:
     IslandLayer(long long seed);
-    virtual ~IslandLayer();
 
     virtual arrayWithLength<int> getArea(int x, int z, int width, int height);
 };

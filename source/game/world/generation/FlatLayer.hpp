@@ -8,7 +8,6 @@ class FlatLayer : public Layer
 {
 public:
     FlatLayer(int biome);
-    virtual ~FlatLayer();
 
     virtual arrayWithLength<int> getArea(int x, int z, int width, int height);
 

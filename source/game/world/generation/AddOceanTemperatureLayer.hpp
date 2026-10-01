@@ -10,7 +10,6 @@ class AddOceanTemperatureLayer : public Layer
 {
 public:
     AddOceanTemperatureLayer(long long seed, boost::shared_ptr<Layer> parent);
-    virtual ~AddOceanTemperatureLayer();
 
     virtual arrayWithLength<int> getArea(int x, int z, int width, int height);
 };
