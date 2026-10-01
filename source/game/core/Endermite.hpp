@@ -16,7 +16,6 @@ class Endermite : public Monster
 public:
     Endermite(Level* level);
     virtual unsigned long long GetType();
-    virtual ~Endermite();
     virtual void tick();
     virtual void playStepSound(const BlockPos& pos, Block* block);
     virtual bool makeStepSound();

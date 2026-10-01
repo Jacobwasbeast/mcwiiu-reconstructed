@@ -34,10 +34,6 @@ BubbleColumnSegment::BubbleColumnSegment(Material* material)
     registerDefaultState(defaultBlockState()->setBoxedValue(DRAG, &drag));
 }
 
-BubbleColumnSegment::~BubbleColumnSegment()
-{
-}
-
 bool BubbleColumnSegment::isCubeShaped(const BlockState* state)
 {
     return false;

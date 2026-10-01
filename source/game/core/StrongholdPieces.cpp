@@ -428,8 +428,6 @@ StrongholdPieces::ChestCorridor::ChestCorridor(int depth, Random& random, Boundi
     mHasPlacedChest = false;
 }
 
-StrongholdPieces::ChestCorridor::~ChestCorridor() { }
-
 StrongholdPieces::FillerCorridor::FillerCorridor()
     : StrongholdPiece(), mSteps(0)
 {
@@ -446,11 +444,10 @@ StrongholdPieces::FillerCorridor::FillerCorridor(int depth, Random& random, Boun
     mBoundingBox = box;
 }
 
-StrongholdPieces::FillerCorridor::~FillerCorridor() { }
-
 StrongholdPieces::FiveCrossing::FiveCrossing()
-    : StrongholdPiece(), mLeftLow(false), mLeftHigh(false), mRightLow(false), mRightHigh(false)
+    : StrongholdPiece()
 {
+    mLeftLow = mLeftHigh = mRightLow = mRightHigh = false;
 }
 
 StrongholdPieces::FiveCrossing::FiveCrossing(int depth, Random& random, BoundingBox* box, const Direction* direction)
@@ -465,8 +462,6 @@ StrongholdPieces::FiveCrossing::FiveCrossing(int depth, Random& random, Bounding
     mRightHigh = random.nextInt(3) > 0;
 }
 
-StrongholdPieces::FiveCrossing::~FiveCrossing() { }
-
 StrongholdPieces::LeftTurn::LeftTurn()
     : StrongholdPiece()
 {
@@ -479,8 +474,6 @@ StrongholdPieces::LeftTurn::LeftTurn(int depth, Random& random, BoundingBox* box
     setOrientation(direction);
     mBoundingBox = box;
 }
-
-StrongholdPieces::LeftTurn::~LeftTurn() { }
 
 StrongholdPieces::Library::Library()
     : StrongholdPiece(), mIsTall(false)
@@ -495,8 +488,6 @@ StrongholdPieces::Library::Library(int depth, Random& random, BoundingBox* box, 
     mBoundingBox = box;
 }
 
-StrongholdPieces::Library::~Library() { }
-
 StrongholdPieces::PortalRoom::PortalRoom()
     : StrongholdPiece()
 {
@@ -508,8 +499,6 @@ StrongholdPieces::PortalRoom::PortalRoom(int depth, Random&, BoundingBox* box, c
     setOrientation(direction);
     mBoundingBox = box;
 }
-
-StrongholdPieces::PortalRoom::~PortalRoom() { }
 
 StrongholdPieces::PrisonHall::PrisonHall()
     : StrongholdPiece()
@@ -524,8 +513,6 @@ StrongholdPieces::PrisonHall::PrisonHall(int depth, Random& random, BoundingBox*
     mBoundingBox = box;
 }
 
-StrongholdPieces::PrisonHall::~PrisonHall() { }
-
 StrongholdPieces::RoomCrossing::RoomCrossing()
     : StrongholdPiece()
 {
@@ -538,8 +525,6 @@ StrongholdPieces::RoomCrossing::RoomCrossing(int depth, Random& random, Bounding
     setOrientation(direction);
     mBoundingBox = box;
 }
-
-StrongholdPieces::RoomCrossing::~RoomCrossing() { }
 
 StrongholdPieces::StairsDown::StairsDown()
     : StrongholdPiece()
@@ -565,8 +550,6 @@ StrongholdPieces::StairsDown::StairsDown(int depth, Random& random, int x, int z
         mBoundingBox = new BoundingBox(x, 64, z, x + 5 - 1, 74, z + 5 - 1);
 }
 
-StrongholdPieces::StairsDown::~StairsDown() { }
-
 StrongholdPieces::Straight::Straight()
     : StrongholdPiece()
 {
@@ -580,8 +563,6 @@ StrongholdPieces::Straight::Straight(int depth, Random& random, BoundingBox* box
     mBoundingBox = box;
 }
 
-StrongholdPieces::Straight::~Straight() { }
-
 StrongholdPieces::StraightStairsDown::StraightStairsDown()
     : StrongholdPiece()
 {
@@ -594,8 +575,6 @@ StrongholdPieces::StraightStairsDown::StraightStairsDown(int depth, Random& rand
     setOrientation(direction);
     mBoundingBox = box;
 }
-
-StrongholdPieces::StraightStairsDown::~StraightStairsDown() { }
 
 BoundingBox* StrongholdPieces::FillerCorridor::findPieceBox(std::vector<StructurePiece*>* pieces, Random&, int x, int y, int z, const Direction* direction)
 {
@@ -1532,8 +1511,6 @@ StrongholdPieces::RightTurn::RightTurn(int depth, Random& random, BoundingBox* b
 {
 }
 
-StrongholdPieces::RightTurn::~RightTurn() { }
-
 void StrongholdPieces::RightTurn::addChildren(StructurePiece* start, std::vector<StructurePiece*>* pieces, Random& random)
 {
     const Direction* orientation = getOrientation();
@@ -1577,8 +1554,6 @@ StrongholdPieces::StartPiece::StartPiece()
 {
 }
 
-StrongholdPieces::StartPiece::~StartPiece() { }
-
 BlockPos StrongholdPieces::StartPiece::getLocatorPosition()
 {
     if (mPortalRoom != NULL)
@@ -1587,8 +1562,6 @@ BlockPos StrongholdPieces::StartPiece::getLocatorPosition()
 }
 
 EStructurePiece StrongholdPieces::StartPiece::GetType() { return eStructurePiece_StrongholdStartPiece; }
-
-StrongholdPieces::SmoothStoneSelector::~SmoothStoneSelector() { }
 
 void StrongholdPieces::SmoothStoneSelector::next(Random& random, int, int, int, bool edge)
 {

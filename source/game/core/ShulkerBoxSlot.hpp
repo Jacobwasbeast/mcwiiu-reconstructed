@@ -13,7 +13,6 @@ class ShulkerBoxSlot : public Slot
 {
 public:
     ShulkerBoxSlot(boost::shared_ptr<Container> container, int index, int x, int y);
-    virtual ~ShulkerBoxSlot();
 
     virtual bool mayPlace(not_null_ptr<ItemInstance> itemInstance);
 };

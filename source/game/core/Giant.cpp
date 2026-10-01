@@ -15,10 +15,6 @@ Giant::Giant(Level* level)
     setSize(mBbWidth * 6.0f, mBbHeight * 6.0f);
 }
 
-Giant::~Giant()
-{
-}
-
 void Giant::create(Level* level)
 {
     new Giant(level);

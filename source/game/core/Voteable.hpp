@@ -21,19 +21,19 @@ public:
 
     Voteable(int voteableId, bool isServer, bool oneVotePerPlayer);
     ~Voteable();
-    std::map<int, int> getVotesFromPlayer(int playerId) const;
-    std::map<int, int> getVotesToVoteable(int voteableId) const;
-    boost::unordered_map<int, int> getTotalledVotes() const;
-    int getWinningVote(int& voteCount) const;
+    std::map<int, int> getVotesFromPlayer(int playerId);
+    std::map<int, int> getVotesToVoteable(int voteableId);
+    boost::unordered_map<int, int> getTotalledVotes();
+    int getWinningVote(int& voteCount);
     bool getOnlyVote(int playerId, int* voteableId) const;
     static std::pair<int, int> getKey(int playerId, int voteableId);
-    int getVote(int playerId, int voteableId) const;
-    int getVote(const boost::shared_ptr<MultiplayerLocalPlayer>& player, int voteableId) const;
+    int getVote(int playerId, int voteableId);
+    int getVote(boost::shared_ptr<MultiplayerLocalPlayer> player, int voteableId);
     void setVote(int playerId, int voteableId, char vote);
     void setVoteAndSync(int playerId, int voteableId, char vote);
     void setIncludedVotesAndSync(int playerId, char vote);
     void setIncludedVotesAndSync(int playerId, int voteableId, char vote);
-    void syncAllVotesToPlayer(const boost::shared_ptr<ServerPlayer>& player) const;
+    void syncAllVotesToPlayer(const boost::shared_ptr<ServerPlayer>& player);
     void clearVotes();
     void setVote(int, char);
     void setVoteAndSync(int, char);

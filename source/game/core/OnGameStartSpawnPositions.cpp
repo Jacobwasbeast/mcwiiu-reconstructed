@@ -2,10 +2,6 @@
 
 #include "game/core/SpawnPositionSet.hpp"
 
-OnGameStartSpawnPositions::~OnGameStartSpawnPositions()
-{
-}
-
 ConsoleGameRules::EGameRuleType OnGameStartSpawnPositions::getActionType()
 {
     return ConsoleGameRules::eGameRuleType_OnGameStartSpawnPositions;

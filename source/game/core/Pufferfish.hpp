@@ -24,7 +24,6 @@ public:
     };
 
     Pufferfish(Level* level);
-    virtual ~Pufferfish();
 
     static void create(Level* level);
     void setNextPuffedState(PuffedState state, int delay);

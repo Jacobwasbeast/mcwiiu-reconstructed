@@ -8,7 +8,6 @@ class AmbientCreature : public Mob, public Creature
 {
 public:
     AmbientCreature(Level* level);
-    virtual ~AmbientCreature();
     virtual bool canBeLeashed(const boost::shared_ptr<Player>& player);
 };
 

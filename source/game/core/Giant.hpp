@@ -11,7 +11,6 @@ class Giant : public Monster
 {
 public:
     Giant(Level* level);
-    virtual ~Giant();
 
     static void create(Level* level);
     static void addDataWalkers(DataFixerUpper* fixer);

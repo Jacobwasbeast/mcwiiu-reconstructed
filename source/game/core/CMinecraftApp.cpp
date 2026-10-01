@@ -58,7 +58,7 @@
 #include "game/core/UnityClient6.hpp"
 #include "game/core/DLCPack.hpp"
 #include "game/core/IUIScene_DLCUpsell.hpp"
-#include "game/core/MOJJANG_DATA.hpp"
+#include "game/core/MOJANG_DATA.hpp"
 #include "game/core/GameModeOptions.hpp"
 #include "game/core/GameRuleManager.hpp"
 #include "game/core/Gui.hpp"
@@ -101,7 +101,7 @@
 #include <sstream>
 #include <vector>
 
-static boost::unordered_map<PlayerUID, MOJJANG_DATA*> g_mojangData;
+static boost::unordered_map<PlayerUID, MOJANG_DATA*> g_mojangData;
 unsigned int CMinecraftApp::sPreviousSignInUsersMask = 0;
 CConsoleMinecraftApp gApp;
 CMinecraftApp* g_pApp = &gApp;
@@ -330,10 +330,14 @@ uint32_t DeviceFullErrorReturn(void* context)
 }
 
 CMinecraftApp::PngTagData::PngTagData()
-    : flags(0), seed(0), hostOptions(0), texturePack(0), extraData(0), numLoads(0)
+    : hostOptions(0), texturePack(0), extraData(0)
 {
-    std::fill(baseSaveName, baseSaveName + 20, '\0');
-    std::fill(exploredChunks, exploredChunks + 5, 0);
+    for (int index = 0; index < 5; ++index)
+        exploredChunks[index] = 0;
+    seed = 0;
+    flags &= ~(eFlag_ExploredChunks | eFlag_ExtraData | eFlag_TexturePack | eFlag_HostOptions |
+               eFlag_BaseSaveName | eFlag_Seed);
+    memset(baseSaveName, 0, sizeof(baseSaveName));
 }
 CMinecraftApp::_TipData::_TipData() : m_index(0), m_count(0), m_tips(0) {}
 CMinecraftApp::_TipData::_TipData(TIPSTRUCT* tips, unsigned int count)
@@ -534,19 +538,25 @@ void CMinecraftApp::UpdateTime()
 {
     _LARGE_INTEGER counter;
     QueryPerformanceCounter(&counter);
-    long long elapsed = counter.QuadPart - mLastPerformanceCounter;
-    mAccumulatedPerformanceCounter += elapsed;
-    mLastPerformanceCounter = counter.QuadPart;
-    mFrameTime = mPerformanceCounterScale * elapsed;
-    mAppTime = mPerformanceCounterScale * mAccumulatedPerformanceCounter;
+    _LARGE_INTEGER elapsed;
+    elapsed.QuadPart = counter.QuadPart - mLastPerformanceCounter.QuadPart;
+    mAccumulatedPerformanceCounter += elapsed.QuadPart;
+    mLastPerformanceCounter = counter;
+    float scale = mPerformanceCounterScale;
+    mFrameTime = scale * elapsed.QuadPart;
+    mAppTime = scale * mAccumulatedPerformanceCounter;
 }
 int CMinecraftApp::GetLocalPlayerCount()
 {
-    Minecraft* minecraft = Minecraft::GetInstance();
-    if (minecraft == 0) return 0;
     int count = 0;
-    for (int index = 0; index < 4; ++index)
-        if (minecraft->GetPlayerByPlayerIndex(index)) ++count;
+    Minecraft* minecraft = Minecraft::GetInstance();
+    if (minecraft != 0)
+    {
+        if (minecraft->mLocalPlayers[0].get() != 0) ++count;
+        if (minecraft->mLocalPlayers[1].get() != 0) ++count;
+        if (minecraft->mLocalPlayers[2].get() != 0) ++count;
+        if (minecraft->mLocalPlayers[3].get() != 0) ++count;
+    }
     return count;
 }
 void CMinecraftApp::loadMediaArchive()
@@ -595,9 +605,7 @@ void CMinecraftApp::InitTime()
     _LARGE_INTEGER frequency;
     QueryPerformanceFrequency(&frequency);
     mPerformanceCounterScale = 1.0f / frequency.QuadPart;
-    _LARGE_INTEGER counter;
-    QueryPerformanceCounter(&counter);
-    mLastPerformanceCounter = counter.QuadPart;
+    QueryPerformanceCounter(&mLastPerformanceCounter);
     mAccumulatedPerformanceCounter = 0;
     mFrameTime = 0.0f;
     mAppTime = 0.0f;
@@ -633,8 +641,8 @@ bool CMinecraftApp::isValidStateTransition(eXuiAction current, eXuiAction next)
     case eXuiAction_ReloadTexturePack:
         return next == eXuiAction_Idle;
     case eXuiAction_ConnectionLost:
-        return next == eXuiAction_Idle ||
-               (next >= eXuiAction_ConnectionLost && next <= eXuiAction_ChangeSessionType);
+        return next == eXuiAction_Idle || next == eXuiAction_ConnectionLost ||
+               next == eXuiAction_ConnectionLostWait || next == eXuiAction_ChangeSessionType;
     case eXuiAction_ConnectionLostWait:
         return next == eXuiAction_ExitWorldAfterDisconnect || next == eXuiAction_ReturnToMenuAfterDisconnect;
     case eXuiAction_ReloadTexturePackInTransition:
@@ -1022,9 +1030,8 @@ int CMinecraftApp::UnlockFullSaveReturned(void* context, int pad, C4JStorage::EM
     Minecraft* minecraft = Minecraft::GetInstance();
     if (result == C4JStorage::EMessageResult_Accept)
     {
-        const int userIndex = minecraft->mPlayer->mUserIndex;
-        if (gProfile->IsSignedInLive(userIndex))
-            gProfile->DisplayFullVersionPurchase(false, userIndex, 1);
+        if (gProfile->IsSignedInLive(minecraft->mPlayer.get()->mUserIndex))
+            gProfile->DisplayFullVersionPurchase(false, minecraft->mPlayer.get()->mUserIndex, 1);
     }
     else
     {
@@ -1050,22 +1057,21 @@ uint32_t CMinecraftApp::GetXuiServerAction(int32_t player)
 int CMinecraftApp::UnlockFullExitReturned(void* context, int pad, C4JStorage::EMessageResult result)
 {
     Minecraft* minecraft = Minecraft::GetInstance();
-    int userIndex = minecraft->mPlayer->mUserIndex;
     CMinecraftApp* app = static_cast<CMinecraftApp*>(context);
 
     if (result == C4JStorage::EMessageResult_Accept)
     {
-        if (gProfile->IsSignedInLive(userIndex))
+        if (gProfile->IsSignedInLive(minecraft->mPlayer.get()->mUserIndex))
         {
-            gProfile->DisplayFullVersionPurchase(false, userIndex, 1);
-            app->SetAction(userIndex, eXuiAction_ExitWorldAfterUpsell, NULL);
+            gProfile->DisplayFullVersionPurchase(false, minecraft->mPlayer.get()->mUserIndex, 1);
+            app->SetAction(minecraft->mPlayer.get()->mUserIndex, eXuiAction_ExitWorldAfterUpsell, NULL);
         }
     }
     else
     {
         telemetryManagerInstance->RecordUpsellResponded(pad, eSen_UpsellID_FullGame, 1,
                                               eSen_UpsellOutcome_Cancelled);
-        app->SetAction(userIndex, eXuiAction_ExitWorldAfterUpsell, NULL);
+        app->SetAction(minecraft->mPlayer.get()->mUserIndex, eXuiAction_ExitWorldAfterUpsell, NULL);
     }
     return 0;
 }
@@ -1175,6 +1181,7 @@ int CMinecraftApp::TrialOverReturned(void* context, int pad, C4JStorage::EMessag
 }
 int CMinecraftApp::UnlockFullInviteReturned(void* context, int pad, C4JStorage::EMessageResult result)
 {
+    Minecraft* minecraft = Minecraft::GetInstance();
     if (result == C4JStorage::EMessageResult_Accept)
     {
         if (gProfile->IsSignedInLive(pad))
@@ -2657,9 +2664,12 @@ bool CMinecraftApp::isXuidNotch(PlayerUID uid)
 }
 bool CMinecraftApp::isXuidDeadmau5(PlayerUID uid)
 {
-    boost::unordered_map<PlayerUID, MOJJANG_DATA*>::const_iterator found = g_mojangData.find(uid);
-    if (found != g_mojangData.end() && found->second != NULL && found->second->field0 == 5)
-        return true;
+    if (g_mojangData.find(uid) != g_mojangData.end())
+    {
+        MOJANG_DATA* data = g_mojangData[uid];
+        if (data != NULL && data->field0 == 5)
+            return true;
+    }
     return false;
 }
 void CMinecraftApp::AddMemoryTextureFile(const std::wstring& path, unsigned char* data, unsigned int size)
@@ -2835,7 +2845,7 @@ uint32_t CMinecraftApp::GetNextTip(bool firstTipRequest, EMiniGameId miniGame)
 }
 unsigned int CMinecraftApp::GetHTMLColour(eMinecraftColour colour)
 {
-    return Minecraft::GetInstance()->getColourTable()->getColour(colour);
+    return Minecraft::GetInstance()->mTexturePackRepository->getSelected()->getColourTable()->getColour(colour);
 }
 unsigned int CMinecraftApp::GetHTMLColor(eMinecraftColour colour)
 {
@@ -3129,7 +3139,7 @@ uint32_t CMinecraftApp::GetTerrainFeaturePosition(_eTerrainFeatureType type, int
     LeaveCriticalSection(&mTerrainFeaturePositionsMutex);
     return 0;
 }
-MOJJANG_DATA* CMinecraftApp::GetMojangDataForXuid(PlayerUID uid)
+MOJANG_DATA* CMinecraftApp::GetMojangDataForXuid(PlayerUID uid)
 {
     return g_mojangData[uid];
 }
@@ -3637,7 +3647,7 @@ std::wstring CMinecraftApp::getEntityName(uint64_t entityType, int32_t auxValue)
 int CMinecraftApp::DLCOffersReturned(void* context, unsigned int offerValue, unsigned int contentId, int status)
 {
     CMinecraftApp* app = static_cast<CMinecraftApp*>(context);
-    EnterCriticalSection(&app->mDLCRetrieveMutex);
+    EnterCriticalSection(&app->mDLCDownloadQueueMutex);
     for (std::vector<_DLCRequest*>::iterator it = app->mDLCDownloadQueue.begin();
          it != app->mDLCDownloadQueue.end(); ++it)
     {
@@ -3648,7 +3658,7 @@ int CMinecraftApp::DLCOffersReturned(void* context, unsigned int offerValue, uns
             break;
         }
     }
-    LeaveCriticalSection(&app->mDLCRetrieveMutex);
+    LeaveCriticalSection(&app->mDLCDownloadQueueMutex);
     return 0;
 }
 uint32_t CMinecraftApp::RetrieveNextDLCContent()
@@ -3769,18 +3779,28 @@ std::vector<ModelPart*>* CMinecraftApp::SetAdditionalSkinBoxes(unsigned int skin
 std::vector<ModelPart*>* CMinecraftApp::GetAdditionalModelParts(unsigned int value)
 {
     EnterCriticalSection(&mAdditionalModelPartsMutex);
-    boost::unordered_map<unsigned int, std::vector<ModelPart*>*>::iterator it =
-        mAdditionalModelParts.find(value);
-    std::vector<ModelPart*>* result = it == mAdditionalModelParts.end() ? NULL : it->second;
+    std::vector<ModelPart*>* result = NULL;
+    if (!mAdditionalModelParts.empty())
+    {
+        boost::unordered_map<unsigned int, std::vector<ModelPart*>*>::iterator it =
+            mAdditionalModelParts.find(value);
+        if (it != mAdditionalModelParts.end())
+            result = it->second;
+    }
     LeaveCriticalSection(&mAdditionalModelPartsMutex);
     return result;
 }
 std::vector<SKIN_BOX*>* CMinecraftApp::GetAdditionalSkinBoxes(unsigned int skinId)
 {
     EnterCriticalSection(&mAdditionalSkinBoxesMutex);
-    boost::unordered_map<unsigned int, std::vector<SKIN_BOX*>*>::iterator it =
-        mAdditionalSkinBoxes.find(skinId);
-    std::vector<SKIN_BOX*>* result = it == mAdditionalSkinBoxes.end() ? NULL : it->second;
+    std::vector<SKIN_BOX*>* result = NULL;
+    if (!mAdditionalSkinBoxes.empty())
+    {
+        boost::unordered_map<unsigned int, std::vector<SKIN_BOX*>*>::iterator it =
+            mAdditionalSkinBoxes.find(skinId);
+        if (it != mAdditionalSkinBoxes.end())
+            result = it->second;
+    }
     LeaveCriticalSection(&mAdditionalSkinBoxesMutex);
     return result;
 }
@@ -4752,11 +4772,14 @@ void CMinecraftApp::SetSkinAdjustments(uint32_t id, _SkinAdjustments value)
 }
 _SkinAdjustments CMinecraftApp::GetSkinAdjustments(uint32_t id)
 {
-    _SkinAdjustments result;
     EnterCriticalSection(&mSkinAdjustmentsMutex);
-    boost::unordered_map<unsigned int, _SkinAdjustments>::const_iterator found = mSkinAdjustments.find(id);
-    if (found != mSkinAdjustments.end())
-        result = found->second;
+    _SkinAdjustments result;
+    if (!mSkinAdjustments.empty())
+    {
+        boost::unordered_map<unsigned int, _SkinAdjustments>::iterator found = mSkinAdjustments.find(id);
+        if (found != mSkinAdjustments.end())
+            result = found->second;
+    }
     LeaveCriticalSection(&mSkinAdjustmentsMutex);
     return result;
 }

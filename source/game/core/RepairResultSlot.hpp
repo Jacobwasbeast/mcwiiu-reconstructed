@@ -16,7 +16,6 @@ class RepairResultSlot : public Slot
 public:
     RepairResultSlot(AnvilMenu* menu, const BlockPos& position,
                      boost::shared_ptr<Container> container, int index, int x, int y);
-    virtual ~RepairResultSlot();
 
     virtual not_null_ptr<ItemInstance> onTake(boost::shared_ptr<Player> player,
                                                not_null_ptr<ItemInstance> item);

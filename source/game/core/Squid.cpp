@@ -35,10 +35,6 @@ Squid::Squid(Level* level) : WaterAnimal(level)
     mTentacleSpeed = 1.0f / (mRandom->nextFloat() + 1.0f) * 0.2f;
 }
 
-Squid::~Squid()
-{
-}
-
 void Squid::create(Level* level)
 {
     new Squid(level);

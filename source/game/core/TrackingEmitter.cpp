@@ -15,10 +15,6 @@ TrackingEmitter::TrackingEmitter(Level* level, boost::shared_ptr<Entity> entity,
     tick();
 }
 
-TrackingEmitter::~TrackingEmitter()
-{
-}
-
 void TrackingEmitter::tick()
 {
     for (int i = 0x10; i != 0; --i)

@@ -14,7 +14,6 @@ class EyeOfEnderSignal : public Entity
 public:
     EyeOfEnderSignal(Level* level, double x, double y, double z);
     EyeOfEnderSignal(Level* level);
-    virtual ~EyeOfEnderSignal();
 
     void _init();
     void signalTo(const BlockPos& pos);

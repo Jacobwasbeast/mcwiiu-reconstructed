@@ -238,7 +238,7 @@ void CommonMasterGameMode::UpdateGeneratorSeed(long long seed, float scale)
     mGeneratorSeed = seed;
 }
 
-void CommonMasterGameMode::RestartMapGenerator()
+long long CommonMasterGameMode::RestartMapGenerator()
 {
     EnterCriticalSection(&mGeneratorMutex);
 

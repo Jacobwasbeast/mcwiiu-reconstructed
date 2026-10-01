@@ -29,7 +29,7 @@ Voteable::Voteable(int voteableId, bool isServer, bool oneVotePerPlayer)
 
 Voteable::~Voteable() {}
 
-std::map<int, int> Voteable::getVotesFromPlayer(int playerId) const
+std::map<int, int> Voteable::getVotesFromPlayer(int playerId)
 {
     std::map<int, int> votes;
     for (boost::unordered_map<std::pair<int, int>, char, KeyHasher>::const_iterator it = mVotes.begin(); it != mVotes.end(); ++it) {
@@ -38,7 +38,7 @@ std::map<int, int> Voteable::getVotesFromPlayer(int playerId) const
     return votes;
 }
 
-std::map<int, int> Voteable::getVotesToVoteable(int voteableId) const
+std::map<int, int> Voteable::getVotesToVoteable(int voteableId)
 {
     std::map<int, int> votes;
     for (boost::unordered_map<std::pair<int, int>, char, KeyHasher>::const_iterator it = mVotes.begin(); it != mVotes.end(); ++it) {
@@ -47,7 +47,7 @@ std::map<int, int> Voteable::getVotesToVoteable(int voteableId) const
     return votes;
 }
 
-boost::unordered_map<int, int> Voteable::getTotalledVotes() const
+boost::unordered_map<int, int> Voteable::getTotalledVotes()
 {
     boost::unordered_map<int, int> totals;
     for (boost::unordered_map<std::pair<int, int>, char, KeyHasher>::const_iterator it = mVotes.begin(); it != mVotes.end(); ++it) {
@@ -56,7 +56,7 @@ boost::unordered_map<int, int> Voteable::getTotalledVotes() const
     return totals;
 }
 
-int Voteable::getWinningVote(int& voteCount) const
+int Voteable::getWinningVote(int& voteCount)
 {
     const boost::unordered_map<int, int> totals = getTotalledVotes();
     Random random;
@@ -88,13 +88,13 @@ std::pair<int, int> Voteable::getKey(int playerId, int voteableId)
     return std::make_pair(playerId, voteableId);
 }
 
-int Voteable::getVote(int playerId, int voteableId) const
+int Voteable::getVote(int playerId, int voteableId)
 {
     const boost::unordered_map<std::pair<int, int>, char, KeyHasher>::const_iterator it = mVotes.find(getKey(playerId, voteableId));
     return it == mVotes.end() ? -1 : static_cast<int>(it->second);
 }
 
-int Voteable::getVote(const boost::shared_ptr<MultiplayerLocalPlayer>& player, int voteableId) const
+int Voteable::getVote(boost::shared_ptr<MultiplayerLocalPlayer> player, int voteableId)
 {
     return player ? getVote(player->mPlayerIndex, voteableId) : -1;
 }
@@ -144,7 +144,7 @@ void Voteable::setIncludedVotesAndSync(int playerId, int voteableId, char vote)
     for (std::vector<std::pair<int, int> >::const_iterator it = keys.begin(); it != keys.end(); ++it) setVoteAndSync(it->first, it->second, vote);
 }
 
-void Voteable::syncAllVotesToPlayer(const boost::shared_ptr<ServerPlayer>& player) const
+void Voteable::syncAllVotesToPlayer(const boost::shared_ptr<ServerPlayer>& player)
 {
     if (!mIsServer) return;
     for (boost::unordered_map<std::pair<int, int>, char, KeyHasher>::const_iterator it = mVotes.begin(); it != mVotes.end(); ++it) {

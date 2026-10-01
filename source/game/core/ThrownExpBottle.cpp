@@ -28,10 +28,6 @@ ThrownExpBottle::ThrownExpBottle(Level* level, double x, double y, double z)
     _init();
 }
 
-ThrownExpBottle::~ThrownExpBottle()
-{
-}
-
 void ThrownExpBottle::create(Level* level)
 {
     new ThrownExpBottle(level);

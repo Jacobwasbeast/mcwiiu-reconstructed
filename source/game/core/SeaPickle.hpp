@@ -25,7 +25,6 @@ class SeaPickle : public Bush, public BonemealableBlock
 {
 public:
     SeaPickle();
-    virtual ~SeaPickle();
 
     virtual bool isValidBonemealTarget(Level*, const BlockPos&, const BlockState*, bool);
     virtual bool isBonemealSuccess(Level*, Random*, const BlockPos&, const BlockState*);

@@ -14,10 +14,6 @@ StatTask::StatTask(Tutorial* tutorial, int descriptionId, bool preCompletionEnab
     mRequiredValue = Minecraft::GetInstance()->mStats[playerIndex]->getTotalValue(mStat) + requiredValue;
 }
 
-StatTask::~StatTask()
-{
-}
-
 bool StatTask::isCompleted()
 {
     if (completed)

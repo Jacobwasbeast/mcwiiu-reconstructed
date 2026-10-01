@@ -46,10 +46,6 @@ OceanRuin::OceanRuin(Level* level, Random& random, int x, int z, int width, int 
     setRotation(Rotation::getRandom(random));
 }
 
-OceanRuin::~OceanRuin()
-{
-}
-
 eMinecraftStructureTemplate OceanRuin::getBigWarmRuin(Random& random)
 {
     eMinecraftStructureTemplate ruins[4] =

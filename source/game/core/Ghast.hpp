@@ -73,7 +73,6 @@ public:
     };
 
     explicit Ghast(Level* level);
-    virtual ~Ghast();
     static void create(Level* level);
     static void staticCtor();
     void _init();

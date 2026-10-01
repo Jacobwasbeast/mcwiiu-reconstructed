@@ -21,7 +21,6 @@ class MinecartFurnace : public Minecart
 public:
     MinecartFurnace(Level* level);
     MinecartFurnace(Level* level, double x, double y, double z);
-    virtual ~MinecartFurnace();
     static void create(Level* level);
     static void staticCtor();
     virtual unsigned int getContainerType();

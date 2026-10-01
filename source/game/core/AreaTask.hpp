@@ -20,7 +20,6 @@ public:
     AreaTask(eTutorial_State state, Tutorial* tutorial,
              std::vector<TutorialConstraint*>* constraints, int descriptionId,
              EAreaTaskCompletionStates completionState);
-    virtual ~AreaTask();
     virtual bool isCompleted();
     virtual void setAsCurrentTask(bool currentTask);
     virtual void onStateChange(eTutorial_State state);

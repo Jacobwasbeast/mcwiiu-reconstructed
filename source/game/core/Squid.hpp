@@ -32,7 +32,6 @@ public:
     };
 
     Squid(Level* level);
-    virtual ~Squid();
     static void create(Level* level);
     static void addDataWalkers(DataFixerUpper* fixer);
     void _init();

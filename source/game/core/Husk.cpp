@@ -22,10 +22,6 @@ Husk::Husk(Level* level)
     fjDerivedCtorCalls();
 }
 
-Husk::~Husk()
-{
-}
-
 void Husk::create(Level* level)
 {
     new Husk(level);

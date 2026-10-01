@@ -30,10 +30,6 @@ Snowball::Snowball(Level* level, double x, double y, double z)
     _init();
 }
 
-Snowball::~Snowball()
-{
-}
-
 void Snowball::create(Level* level)
 {
     new Snowball(level);

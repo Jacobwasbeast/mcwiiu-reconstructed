@@ -20,10 +20,6 @@ RepairResultSlot::RepairResultSlot(AnvilMenu* menu, const BlockPos& position,
     mPosition = position;
 }
 
-RepairResultSlot::~RepairResultSlot()
-{
-}
-
 bool RepairResultSlot::mayPlace(not_null_ptr<ItemInstance>)
 {
     return false;

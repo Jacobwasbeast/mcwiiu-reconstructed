@@ -86,10 +86,6 @@ Boat::Boat(Level* level, double x, double y, double z) : Entity(level, true)
     mZd = 0.0;
 }
 
-Boat::~Boat()
-{
-}
-
 void Boat::staticCtor()
 {
     DATA_HURT_TIME = SynchedEntityData::defineId<int>(EntityType::BOAT, EntityType::ENTITY,

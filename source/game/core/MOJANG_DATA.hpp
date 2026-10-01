@@ -1,7 +1,7 @@
-#ifndef GAME_CORE_MOJJANG_DATA_HPP
-#define GAME_CORE_MOJJANG_DATA_HPP
+#ifndef GAME_CORE_MOJANG_DATA_HPP
+#define GAME_CORE_MOJANG_DATA_HPP
 
-struct MOJJANG_DATA
+struct MOJANG_DATA
 {
     int field0;
     wchar_t capePath[30];

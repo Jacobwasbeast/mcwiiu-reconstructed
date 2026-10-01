@@ -37,10 +37,6 @@ Endermite::Endermite(Level* level)
     mCategories |= EntityCategory::eEntityCategory_Arthropod;
 }
 
-Endermite::~Endermite()
-{
-}
-
 unsigned long long Endermite::GetType()
 {
     return EntityType::ENDERMITE;

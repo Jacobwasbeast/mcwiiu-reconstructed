@@ -16,7 +16,6 @@ class EnderCrystal : public Entity
 public:
     EnderCrystal(Level* level);
     EnderCrystal(Level* level, double x, double y, double z);
-    virtual ~EnderCrystal();
 
     void _init(Level* level);
     static void staticCtor();

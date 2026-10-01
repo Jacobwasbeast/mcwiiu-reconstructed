@@ -14,7 +14,6 @@ public:
     explicit WitherSkull(Level* level);
     WitherSkull(Level* level, boost::shared_ptr<LivingEntity> owner, double x, double y, double z);
     WitherSkull(Level* level, double x, double y, double z, double xd, double yd, double zd);
-    ~WitherSkull();
     static void create(Level* level);
     static void staticCtor();
     static void addDataWalkers(DataFixerUpper* fixer);

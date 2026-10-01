@@ -20,10 +20,6 @@ FurnaceResultSlot::FurnaceResultSlot(boost::shared_ptr<Player> player,
 {
 }
 
-FurnaceResultSlot::~FurnaceResultSlot()
-{
-}
-
 bool FurnaceResultSlot::mayPlace(not_null_ptr<ItemInstance> item)
 {
     return false;

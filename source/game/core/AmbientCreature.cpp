@@ -5,10 +5,6 @@ AmbientCreature::AmbientCreature(Level* level)
 {
 }
 
-AmbientCreature::~AmbientCreature()
-{
-}
-
 bool AmbientCreature::canBeLeashed(const boost::shared_ptr<Player>&)
 {
     return false;

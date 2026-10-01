@@ -13,7 +13,6 @@ class ResultSlot : public Slot
 public:
     ResultSlot(Player* player, boost::shared_ptr<CraftingContainer> craftSlots,
                boost::shared_ptr<Container> resultContainer, int slot, int x, int y);
-    virtual ~ResultSlot();
 
     virtual void onQuickCraft(not_null_ptr<ItemInstance> item, int count);
     virtual void onSwapCraft(int count);

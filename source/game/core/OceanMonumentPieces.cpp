@@ -1114,10 +1114,6 @@ OceanMonumentPieces::OceanMonumentEntryRoom::OceanMonumentEntryRoom(
 {
 }
 
-OceanMonumentPieces::OceanMonumentEntryRoom::~OceanMonumentEntryRoom()
-{
-}
-
 bool OceanMonumentPieces::OceanMonumentEntryRoom::postProcess(Level* level, Random& random, BoundingBox* box)
 {
     generateBox(level, box, 0, 3, 0, 2, 3, 7, BASE_LIGHT, BASE_LIGHT, false);
@@ -1165,10 +1161,6 @@ OceanMonumentPieces::OceanMonumentSimpleRoom::OceanMonumentSimpleRoom(
 {
     mMainDesign = random.nextInt(3);
     fjKeepReference(mRoomDefinition->fjConnection(Direction::UP));
-}
-
-OceanMonumentPieces::OceanMonumentSimpleRoom::~OceanMonumentSimpleRoom()
-{
 }
 
 bool OceanMonumentPieces::OceanMonumentSimpleRoom::postProcess(Level* level, Random& random, BoundingBox* box)
@@ -1368,10 +1360,6 @@ OceanMonumentPieces::OceanMonumentSimpleTopRoom::OceanMonumentSimpleTopRoom(
     fjKeepReference(mRoomDefinition->fjConnection(Direction::UP));
 }
 
-OceanMonumentPieces::OceanMonumentSimpleTopRoom::~OceanMonumentSimpleTopRoom()
-{
-}
-
 bool OceanMonumentPieces::OceanMonumentSimpleTopRoom::postProcess(Level* level, Random& random, BoundingBox* box)
 {
     if (mRoomDefinition->mIndex / 25 > 0)
@@ -1438,10 +1426,6 @@ OceanMonumentPieces::OceanMonumentDoubleYRoom::OceanMonumentDoubleYRoom(
 {
     fjKeepReference(mRoomDefinition->fjConnection(Direction::UP));
     fjKeepReference(mRoomDefinition->fjConnection(Direction::UP)->fjConnection(Direction::UP));
-}
-
-OceanMonumentPieces::OceanMonumentDoubleYRoom::~OceanMonumentDoubleYRoom()
-{
 }
 
 bool OceanMonumentPieces::OceanMonumentDoubleYRoom::postProcess(Level* level, Random& random, BoundingBox* box)
@@ -1544,10 +1528,6 @@ OceanMonumentPieces::OceanMonumentDoubleXRoom::OceanMonumentDoubleXRoom(
     fjKeepReference(mRoomDefinition->fjConnection(Direction::EAST)->fjConnection(Direction::UP));
 }
 
-OceanMonumentPieces::OceanMonumentDoubleXRoom::~OceanMonumentDoubleXRoom()
-{
-}
-
 bool OceanMonumentPieces::OceanMonumentDoubleXRoom::postProcess(Level* level, Random& random, BoundingBox* box)
 {
     boost::shared_ptr<RoomDefinition> eastRoom = mRoomDefinition->fjConnection(Direction::EAST);
@@ -1631,10 +1611,6 @@ OceanMonumentPieces::OceanMonumentDoubleXYRoom::OceanMonumentDoubleXYRoom(
     fjKeepReference(mRoomDefinition->fjConnection(Direction::UP));
     fjKeepReference(mRoomDefinition->fjConnection(Direction::EAST));
     fjKeepReference(mRoomDefinition->fjConnection(Direction::EAST)->fjConnection(Direction::UP));
-}
-
-OceanMonumentPieces::OceanMonumentDoubleXYRoom::~OceanMonumentDoubleXYRoom()
-{
 }
 
 bool OceanMonumentPieces::OceanMonumentDoubleXYRoom::postProcess(Level* level, Random& random, BoundingBox* box)
@@ -1769,10 +1745,6 @@ OceanMonumentPieces::OceanMonumentDoubleYZRoom::OceanMonumentDoubleYZRoom(
         mRoomDefinition->fjConnection(Direction::NORTH)->fjConnection(Direction::UP)->fjConnection(Direction::UP));
 }
 
-OceanMonumentPieces::OceanMonumentDoubleYZRoom::~OceanMonumentDoubleYZRoom()
-{
-}
-
 bool OceanMonumentPieces::OceanMonumentDoubleYZRoom::postProcess(Level* level, Random& random, BoundingBox* box)
 {
     boost::shared_ptr<RoomDefinition> northRoom = mRoomDefinition->fjConnection(Direction::NORTH);
@@ -1900,10 +1872,6 @@ OceanMonumentPieces::OceanMonumentDoubleZRoom::OceanMonumentDoubleZRoom(
     fjKeepReference(mRoomDefinition->fjConnection(Direction::NORTH)->fjConnection(Direction::UP));
 }
 
-OceanMonumentPieces::OceanMonumentDoubleZRoom::~OceanMonumentDoubleZRoom()
-{
-}
-
 bool OceanMonumentPieces::OceanMonumentDoubleZRoom::postProcess(Level* level, Random& random, BoundingBox* box)
 {
     boost::shared_ptr<RoomDefinition> northRoom = mRoomDefinition->fjConnection(Direction::NORTH);
@@ -2005,10 +1973,6 @@ OceanMonumentPieces::OceanMonumentCoreRoom::OceanMonumentCoreRoom(
 {
 }
 
-OceanMonumentPieces::OceanMonumentCoreRoom::~OceanMonumentCoreRoom()
-{
-}
-
 bool OceanMonumentPieces::OceanMonumentCoreRoom::postProcess(Level* level, Random& random, BoundingBox* box)
 {
     generateBoxOnFillOnly(level, box, 1, 8, 0, 14, 8, 14, BASE_GRAY);
@@ -2097,10 +2061,6 @@ OceanMonumentPieces::OceanMonumentWingRoom::OceanMonumentWingRoom(const Directio
     : OceanMonumentPiece(orientation, boundingBox)
 {
     mMainDesign = randomValue & 1;
-}
-
-OceanMonumentPieces::OceanMonumentWingRoom::~OceanMonumentWingRoom()
-{
 }
 
 bool OceanMonumentPieces::OceanMonumentWingRoom::postProcess(Level* level, Random& random, BoundingBox* box)
@@ -2205,10 +2165,6 @@ OceanMonumentPieces::OceanMonumentPenthouse::OceanMonumentPenthouse()
 OceanMonumentPieces::OceanMonumentPenthouse::OceanMonumentPenthouse(const Direction* orientation,
                                                                     BoundingBox* boundingBox)
     : OceanMonumentPiece(orientation, boundingBox)
-{
-}
-
-OceanMonumentPieces::OceanMonumentPenthouse::~OceanMonumentPenthouse()
 {
 }
 

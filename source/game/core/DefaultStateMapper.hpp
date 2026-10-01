@@ -9,8 +9,6 @@ class ModelResourceLocation;
 class DefaultStateMapper : public AbstractStateMapper
 {
 public:
-    virtual ~DefaultStateMapper();
-
     virtual ModelResourceLocation* getLocation(const BlockState* state);
 };
 

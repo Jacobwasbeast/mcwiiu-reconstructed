@@ -93,10 +93,6 @@ Painting::Painting(Level* level, const BlockPos& pos, const Direction* direction
     setDirection(direction);
 }
 
-Painting::~Painting()
-{
-}
-
 void Painting::create(Level* level)
 {
     new Painting(level);

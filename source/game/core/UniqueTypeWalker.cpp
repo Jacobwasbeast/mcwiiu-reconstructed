@@ -16,10 +16,6 @@ UniqueTypeWalker::UniqueTypeWalker(const ResourceLocation& key)
     mKey = key;
 }
 
-UniqueTypeWalker::~UniqueTypeWalker()
-{
-}
-
 CompoundTag* UniqueTypeWalker::walk(DataFixer* fixer, CompoundTag* tag, int version)
 {
     if (mKey.toString() != tag->getString(L"id"))

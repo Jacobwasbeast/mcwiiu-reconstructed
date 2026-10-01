@@ -14,7 +14,6 @@ public:
               int index,
               int x,
               int y);
-    virtual ~ArmorSlot();
 
     virtual int getMaxStackSize();
     virtual bool mayPlace(not_null_ptr<ItemInstance> item);

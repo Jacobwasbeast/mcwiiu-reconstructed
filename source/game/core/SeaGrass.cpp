@@ -36,10 +36,6 @@ SeaGrass::SeaGrass()
     setTicking(true);
 }
 
-SeaGrass::~SeaGrass()
-{
-}
-
 bool SeaGrass::isValidBonemealTarget(Level* level, const BlockPos& pos, const BlockState* state, bool clientSide)
 {
     return true;

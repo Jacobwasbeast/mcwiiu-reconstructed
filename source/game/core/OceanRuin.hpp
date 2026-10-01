@@ -30,7 +30,6 @@ public:
     OceanRuin();
     OceanRuin(Level* level, Random& random, int x, int z, int width, int height, int depth,
         bool isWarm, bool isLarge);
-    virtual ~OceanRuin();
 
     eMinecraftStructureTemplate getBigWarmRuin(Random& random);
     eMinecraftStructureTemplate getSmallWarmRuin(Random& random);

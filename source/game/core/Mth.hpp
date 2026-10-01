@@ -14,6 +14,7 @@ class Mth
 public:
     static const float PI;
     static const float DEG_TO_RAD;
+    static const float RAD_TO_DEG;
 
     static int cached_atan_index(int y, int x);
     static void init();

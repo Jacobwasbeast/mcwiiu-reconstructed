@@ -25,7 +25,6 @@ public:
     {
     }
 
-    virtual ~ProgressFlagTask();
 
     virtual bool isCompleted();
 

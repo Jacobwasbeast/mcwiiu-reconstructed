@@ -106,7 +106,11 @@ void ClientScoreboard::UpdatePlayerStats(const StatsUID& suid, PlayerStats* stat
 ClientScoreboard::PlayerStats* ClientScoreboard::GetPlayerStats(const StatsUID& suid)
 {
     PlayerStatsMap::iterator found = mPlayerStats.find(suid);
-    return found == mPlayerStats.end() ? NULL : found->second;
+    if (found != mPlayerStats.end())
+    {
+        return found->second;
+    }
+    return NULL;
 }
 
 Scoreboard::PlayerStats::_RoundStats* ClientScoreboard::GetPlayerRoundStats(const StatsUID& suid,
@@ -215,19 +219,29 @@ GameMedal* ClientScoreboard::GetMedal(const StatsUID& suid)
 bool ClientScoreboard::IsWinner(const StatsUID& suid, int round)
 {
     PlayerStats::_RoundStats* stats = GetPlayerRoundStats(suid, round);
-    return stats != NULL && stats->mWinner;
+    bool winner = false;
+    if (stats != NULL)
+    {
+        winner = stats->mActive;
+    }
+    return winner;
 }
 
 bool ClientScoreboard::GetSurvived(const StatsUID& suid, int round)
 {
     PlayerStats::_RoundStats* stats = GetPlayerRoundStats(suid, round);
-    return stats != NULL && stats->mFinished;
+    bool survived = false;
+    if (stats != NULL)
+    {
+        survived = stats->mFinished;
+    }
+    return survived;
 }
 
 int ClientScoreboard::GetKills(const StatsUID& suid, int round)
 {
     PlayerStats::_RoundStats* stats = GetPlayerRoundStats(suid, round);
-    return stats == NULL ? 0 : stats->mKills;
+    return stats == NULL ? 0 : stats->mScore;
 }
 
 Scoreboard::Weapon ClientScoreboard::GetFavouriteWeapon(const StatsUID& suid)
@@ -320,16 +334,17 @@ int ClientScoreboard::GetLifeSpan(const StatsUID& suid, int round)
 
 int ClientScoreboard::GetBestLifeSpan(const StatsUID& suid, int* round)
 {
-    PlayerStats* player = GetPlayerStats(suid);
     unsigned int best = 0xffffffffu;
+    PlayerStats* player = GetPlayerStats(suid);
     if (player != NULL)
     {
         PlayerStats::RoundStatsMap::iterator it = player->mRoundStats.begin();
         for (; it != player->mRoundStats.end(); ++it)
         {
-            if (it->second.mWinner && static_cast<unsigned int>(it->second.mPlacement) < best)
+            unsigned int lifeSpan = it->second.mPlacement;
+            if (it->second.mWinner && lifeSpan < best)
             {
-                best = static_cast<unsigned int>(it->second.mPlacement);
+                best = lifeSpan;
                 if (round != NULL) *round = it->first;
             }
         }
@@ -363,12 +378,12 @@ int ClientScoreboard::GetTotalLifeSpan(const StatsUID& suid)
 
 int ClientScoreboard::GetRoundsWon(const StatsUID& suid)
 {
-    PlayerStats* player = GetPlayerStats(suid);
     int total = 0;
+    PlayerStats* player = GetPlayerStats(suid);
     if (player != NULL)
     {
         PlayerStats::RoundStatsMap::iterator it = player->mRoundStats.begin();
-        for (; it != player->mRoundStats.end(); ++it) if (it->second.mActive) ++total;
+        for (; it != player->mRoundStats.end(); ++it) total += it->second.mActive;
     }
     return total;
 }
@@ -411,28 +426,32 @@ int ClientScoreboard::GetPoints(const StatsUID& suid, int round)
 int ClientScoreboard::GetLastPointsAdded(const StatsUID& suid, int round)
 {
     PlayerStats::_RoundStats* stats = GetPlayerRoundStats(suid, round);
-    if (stats == NULL)
+    int points;
+    if (stats != NULL)
     {
-        return 0;
+        points = stats->mTotalTime;
+        if (points == 0)
+        {
+            return stats->mTimePlayed;
+        }
     }
-    int points = stats->mTotalTime;
-    if (points == 0)
+    else
     {
-        points = stats->mTimePlayed;
+        points = 0;
     }
     return points;
 }
 
 int ClientScoreboard::GetBestPoints(const StatsUID& suid, int* round)
 {
+    unsigned int best = 0;
     PlayerStats* player = GetPlayerStats(suid);
-    int best = 0;
     if (player != NULL)
     {
         PlayerStats::RoundStatsMap::iterator it = player->mRoundStats.begin();
         for (; it != player->mRoundStats.end(); ++it)
         {
-            int points = it->second.mItemsCollected + it->second.mBlocksMined;
+            unsigned int points = it->second.mItemsCollected + it->second.mBlocksMined;
             if (it->second.mWinner && points > best)
             {
                 best = points;
@@ -440,7 +459,7 @@ int ClientScoreboard::GetBestPoints(const StatsUID& suid, int* round)
             }
         }
     }
-    return best;
+    return static_cast<int>(best);
 }
 
 int ClientScoreboard::GetBestPoints()
@@ -454,13 +473,13 @@ int ClientScoreboard::GetBestPoints()
 void ClientScoreboard::SetPersonalBest(const StatsUID& suid, int round)
 {
     PlayerStats::_RoundStats* stats = GetPlayerRoundStats(suid, round);
-    if (stats != NULL) stats->mFinished = true;
+    if (stats != NULL) stats->mQuit = true;
 }
 
 bool ClientScoreboard::IsPersonalBest(const StatsUID& suid, int round)
 {
     PlayerStats::_RoundStats* stats = GetPlayerRoundStats(suid, round);
-    return stats != NULL && stats->mFinished;
+    return stats != NULL && stats->mQuit;
 }
 
 int ClientScoreboard::GetLastCheckpointID(const StatsUID& suid, int round)
@@ -484,23 +503,36 @@ int ClientScoreboard::GetDeaths(const StatsUID& suid, int round)
 double ClientScoreboard::GetPercentageOfMapTraversed(const StatsUID& suid, int round)
 {
     PlayerStats::_RoundStats* stats = GetPlayerRoundStats(suid, round);
-    return stats == NULL ? 0.0 : stats->mFallDistance;
+    if (stats != NULL)
+    {
+        return stats->mFallDistance;
+    }
+    return 0.0;
 }
 
 bool ClientScoreboard::GetEndZoneEntered(const StatsUID& suid, int round)
 {
     PlayerStats::_RoundStats* stats = GetPlayerRoundStats(suid, round);
-    return stats != NULL && stats->mEndZoneEntered != 0;
+    bool entered = false;
+    if (stats != NULL)
+    {
+        entered = stats->mWinner;
+    }
+    return entered;
 }
 
 int ClientScoreboard::GetTotalBlocksDestroyed(const StatsUID& suid)
 {
-    PlayerStats* player = GetPlayerStats(suid);
     int total = 0;
+    PlayerStats* player = GetPlayerStats(suid);
     if (player != NULL)
     {
         PlayerStats::RoundStatsMap::iterator it = player->mRoundStats.begin();
-        for (; it != player->mRoundStats.end(); ++it) total += it->second.mDamageTaken;
+        while (it != player->mRoundStats.end())
+        {
+            total += it->second.mDamageTaken;
+            ++it;
+        }
     }
     return total;
 }
@@ -564,7 +596,7 @@ int ClientScoreboard::GetRoundLength(unsigned int round)
     PlayerStatsMap::iterator it = mPlayerStats.begin();
     for (; it != mPlayerStats.end(); ++it)
     {
-        if (it->second != NULL && longest < static_cast<unsigned int>(it->second->mRoundStats[round].mPlacement))
+        if (it->second != NULL && static_cast<unsigned int>(it->second->mRoundStats[round].mPlacement) > longest)
             longest = static_cast<unsigned int>(it->second->mRoundStats[round].mPlacement);
     }
     return static_cast<int>(longest);
@@ -699,12 +731,13 @@ bool ClientScoreboard::GlideHasOverallWinner()
     PlayerStatsMap::iterator it = mPlayerStats.begin();
     for (; it != mPlayerStats.end(); ++it)
     {
-        if (it->second == NULL)
+        PlayerStats* player = it->second;
+        if (player == NULL)
         {
             continue;
         }
-        PlayerStats::RoundStatsMap::iterator rit = it->second->mRoundStats.begin();
-        for (; rit != it->second->mRoundStats.end(); ++rit)
+        PlayerStats::RoundStatsMap::iterator rit = player->mRoundStats.begin();
+        for (; rit != player->mRoundStats.end(); ++rit)
         {
             if (rit->second.mWinner) return true;
         }

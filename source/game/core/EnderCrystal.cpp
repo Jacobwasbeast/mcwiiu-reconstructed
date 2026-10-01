@@ -19,7 +19,6 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
 
-
 const EntityDataAccessor<BlockPos*>* EnderCrystal::DATA_BEAM_TARGET = NULL;
 const EntityDataAccessor<bool>* EnderCrystal::DATA_SHOW_BOTTOM = NULL;
 
@@ -32,10 +31,6 @@ EnderCrystal::EnderCrystal(Level* level, double x, double y, double z) : Entity(
 {
     _init(level);
     setPos(x, y, z);
-}
-
-EnderCrystal::~EnderCrystal()
-{
 }
 
 void EnderCrystal::staticCtor()

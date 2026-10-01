@@ -164,7 +164,7 @@ public:
     static void OnTimerCountdown(ETimerID timer, MasterGameMode* gameMode, void* context);
     void PopulateChests();
     int ChooseItemSet(const MiniGameDef& definition, bool central);
-    int GetTeamCount();
+    unsigned int GetTeamCount();
     void SetupTeams();
     void SelectNewGameRules();
     void GetKillBoxes(LevelGenerationOptions* options, std::vector<KillboxRuleDefinition*>& killboxes);
@@ -261,7 +261,7 @@ public:
     void BlockDestroyedAt(const BlockPos& position);
     void ResetSpawnLayers();
     void RegenTumbleLayers();
-    virtual void RestartMapGenerator();
+    virtual long long RestartMapGenerator();
     virtual EGameModeState GetGameModeState() const;
     virtual ServerLevel* GeneratorTargetLevel() const;
     virtual void setChosenThemeWordId(int wordId);

@@ -17,7 +17,6 @@ class Creeper : public Monster
 public:
     Creeper(Level* level);
     virtual unsigned long long GetType();
-    virtual ~Creeper();
     virtual void defineSynchedData();
     virtual void tick();
     virtual void causeFallDamage(float fallDistance, float damageMultiplier);

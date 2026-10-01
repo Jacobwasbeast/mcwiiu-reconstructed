@@ -40,7 +40,6 @@ public:
         Wolf* mWolf;
     };
     explicit Wolf(Level* level);
-    virtual ~Wolf();
     static void create(Level* level);
     static void staticCtor();
     static void addDataWalkers(DataFixerUpper* fixer);

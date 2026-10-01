@@ -36,10 +36,6 @@ MineShaftStart::MineShaftStart()
 {
 }
 
-MineShaftStart::~MineShaftStart()
-{
-}
-
 EStructureStart MineShaftStart::GetType()
 {
     return eStructureStart_MineShaft;

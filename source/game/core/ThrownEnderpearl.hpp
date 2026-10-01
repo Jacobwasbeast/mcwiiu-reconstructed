@@ -16,7 +16,6 @@ public:
     ThrownEnderpearl(Level* level, boost::shared_ptr<LivingEntity> owner);
     ThrownEnderpearl(Level* level, double x, double y, double z);
     virtual unsigned long long GetType();
-    virtual ~ThrownEnderpearl();
     virtual void tick();
     virtual bool onHit(const HitResult* result);
 

@@ -12,7 +12,6 @@ class ElderGuardian : public Guardian
 {
 public:
     ElderGuardian(Level* level);
-    virtual ~ElderGuardian();
 
     static void addDataWalkers(DataFixerUpper* fixer);
     static void create(Level* level);

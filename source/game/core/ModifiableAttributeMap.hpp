@@ -12,7 +12,6 @@ class ModifiableAttributeMap : public BaseAttributeMap
 public:
     typedef boost::unordered_set<AttributeInstance*> AttributeInstanceSet;
 
-    virtual ~ModifiableAttributeMap();
 
     virtual AttributeInstance* getInstance(Attribute* attribute);
     virtual AttributeInstance* getInstance(eATTRIBUTE_ID id);

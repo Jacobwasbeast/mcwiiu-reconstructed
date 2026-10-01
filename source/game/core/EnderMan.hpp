@@ -69,7 +69,6 @@ public:
     };
 
     EnderMan(Level* level);
-    virtual ~EnderMan();
     static void staticCtor();
     virtual void registerGoals();
     virtual void registerAttributes();

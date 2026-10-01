@@ -19,12 +19,12 @@ public:
     {
     public:
         BlazeAttackGoal(Blaze* blaze);
-        virtual ~BlazeAttackGoal();
+        virtual ~BlazeAttackGoal() {}
         virtual bool canUse();
         virtual void start();
         virtual void stop();
         virtual void tick();
-        virtual std::wstring getName();
+        virtual std::wstring getName() { return L"BlazeAttack"; }
 
     private:
         Blaze* mBlaze;
@@ -33,7 +33,7 @@ public:
     };
 
     Blaze(Level* level);
-    virtual ~Blaze();
+    virtual ~Blaze() {}
     static void staticCtor();
     static void addDataWalkers(DataFixerUpper* fixer);
     virtual void registerGoals();

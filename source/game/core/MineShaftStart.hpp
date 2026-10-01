@@ -13,7 +13,6 @@ public:
     MineShaftStart(Level* level, Random& random, int chunkX, int chunkZ,
                    MineShaftFeature::MineShaftType type);
     MineShaftStart();
-    virtual ~MineShaftStart();
 
     virtual EStructureStart GetType();
 

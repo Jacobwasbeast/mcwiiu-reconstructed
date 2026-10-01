@@ -20,7 +20,6 @@ public:
     static AbstractProperty<bool>* DRAG;
 
     BubbleColumnSegment(Material* material);
-    virtual ~BubbleColumnSegment();
 
     virtual bool isCubeShaped(const BlockState* state);
     virtual const AABB* getClipAABB(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);

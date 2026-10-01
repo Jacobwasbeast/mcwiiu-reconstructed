@@ -42,10 +42,6 @@ Ghast::Ghast(Level* level) : FlyingMob(level), mUnused(0), mExplosionPower(1)
     mMoveControl = new GhastMoveControl(this);
 }
 
-Ghast::~Ghast()
-{
-}
-
 void Ghast::create(Level* level)
 {
     new Ghast(level);

@@ -46,10 +46,6 @@ MinecartTNT::MinecartTNT(Level* level, double x, double y, double z)
     _init();
 }
 
-MinecartTNT::~MinecartTNT()
-{
-}
-
 void MinecartTNT::_init()
 {
     fjDerivedCtorCalls();

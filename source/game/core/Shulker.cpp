@@ -75,7 +75,7 @@ void Shulker::ShulkerAttackGoal::start()
 
 void Shulker::ShulkerAttackGoal::stop()
 {
-    mAttackTime = 0;
+    mShulker->setRawPeekAmount(0);
 }
 
 void Shulker::ShulkerAttackGoal::tick()
@@ -106,11 +106,6 @@ void Shulker::ShulkerAttackGoal::tick()
     Goal::tick();
 }
 
-std::wstring Shulker::ShulkerAttackGoal::getName()
-{
-    return std::wstring(L"ShulkerAttack");
-}
-
 Shulker::ShulkerBodyControl::ShulkerBodyControl(Shulker* shulker)
     : BodyControl(shulker), mShulker(shulker)
 {
@@ -125,33 +120,25 @@ void Shulker::ShulkerBodyControl::clientTick()
 }
 
 Shulker::ShulkerDefenseAttackGoal::ShulkerDefenseAttackGoal(Shulker* shulker)
-    : NearestAttackableTargetGoal(shulker, typeid(LivingEntity), 10, true, false, NULL, false, false), mShulker(shulker)
-{
-}
-
-Shulker::ShulkerDefenseAttackGoal::~ShulkerDefenseAttackGoal()
+    : NearestAttackableTargetGoal(shulker, typeid(LivingEntity), 10, true, false, NULL, false, false)
 {
 }
 
 bool Shulker::ShulkerDefenseAttackGoal::canUse()
 {
-    return mShulker != NULL && mShulker->getTeam() != NULL && NearestAttackableTargetGoal::canUse();
+    if (mMob->getTeam() == NULL)
+        return false;
+    return NearestAttackableTargetGoal::canUse();
 }
 
 AABB* Shulker::ShulkerDefenseAttackGoal::getTargetSearchArea(double distance)
 {
-    const Direction* attachFace = mShulker->getAttachFace();
-    Direction::Axis* axis = attachFace->getAxis();
-    if (axis == Direction::Axis::X)
-        return mShulker->mBoundingBox->grow(4.0, distance, distance);
-    if (axis == Direction::Axis::Y)
-        return mShulker->mBoundingBox->grow(distance, distance, 4.0);
-    return mShulker->mBoundingBox->grow(distance, 4.0, distance);
-}
-
-std::wstring Shulker::ShulkerDefenseAttackGoal::getName()
-{
-    return std::wstring(L"ShulkerDefenseAttack");
+    const Direction* attachFace = static_cast<Shulker*>(mMob)->getAttachFace();
+    if (attachFace->getAxis() == Direction::Axis::X)
+        return mMob->mBoundingBox->grow(4.0, distance, distance);
+    if (attachFace->getAxis() == Direction::Axis::Y)
+        return mMob->mBoundingBox->grow(distance, distance, 4.0);
+    return mMob->mBoundingBox->grow(distance, 4.0, distance);
 }
 
 Shulker::ShulkerNearestAttackGoal::ShulkerNearestAttackGoal(Shulker* shulker)
@@ -159,33 +146,26 @@ Shulker::ShulkerNearestAttackGoal::ShulkerNearestAttackGoal(Shulker* shulker)
 {
 }
 
-Shulker::ShulkerNearestAttackGoal::~ShulkerNearestAttackGoal()
-{
-}
-
 bool Shulker::ShulkerNearestAttackGoal::canUse()
 {
-    return mShulker->mLevel->getDifficulty() != Difficulty::PEACEFUL && NearestAttackableTargetGoal::canUse();
+    bool result = false;
+    if (mShulker->mLevel->getDifficulty() != Difficulty::PEACEFUL)
+        result = NearestAttackableTargetGoal::canUse();
+    return result;
 }
 
 AABB* Shulker::ShulkerNearestAttackGoal::getTargetSearchArea(double distance)
 {
-    const Direction* attachFace = mShulker->getAttachFace();
-    Direction::Axis* axis = attachFace->getAxis();
-    if (axis == Direction::Axis::X)
-        return mShulker->mBoundingBox->grow(4.0, distance, distance);
-    if (axis == Direction::Axis::Y)
-        return mShulker->mBoundingBox->grow(distance, distance, 4.0);
-    return mShulker->mBoundingBox->grow(distance, 4.0, distance);
-}
-
-std::wstring Shulker::ShulkerNearestAttackGoal::getName()
-{
-    return std::wstring(L"ShulkerNearestAttack");
+    const Direction* attachFace = static_cast<Shulker*>(mMob)->getAttachFace();
+    if (attachFace->getAxis() == Direction::Axis::X)
+        return mMob->mBoundingBox->grow(4.0, distance, distance);
+    if (attachFace->getAxis() == Direction::Axis::Y)
+        return mMob->mBoundingBox->grow(distance, distance, 4.0);
+    return mMob->mBoundingBox->grow(distance, 4.0, distance);
 }
 
 Shulker::ShulkerPeekGoal::ShulkerPeekGoal(Shulker* shulker)
-    : Goal(), mShulker(shulker), mPeekTime(0)
+    : Goal(), mShulker(shulker)
 {
 }
 
@@ -195,16 +175,12 @@ Shulker::ShulkerPeekGoal::~ShulkerPeekGoal()
 
 bool Shulker::ShulkerPeekGoal::canUse()
 {
-    return mShulker != NULL && mShulker->getTarget() == NULL && mShulker->mRandom->nextInt(40) == 0;
+    return mShulker->getTarget().get() == NULL && mShulker->mRandom->nextInt(40) == 0;
 }
 
 bool Shulker::ShulkerPeekGoal::canContinueToUse()
 {
-    bool result = false;
-    boost::shared_ptr<LivingEntity> target = mShulker->getTarget();
-    if (target.get() == NULL && mPeekTime > 0)
-        result = true;
-    return result;
+    return mShulker->getTarget().get() == NULL && mPeekTime > 0;
 }
 
 void Shulker::ShulkerPeekGoal::start()
@@ -215,19 +191,13 @@ void Shulker::ShulkerPeekGoal::start()
 
 void Shulker::ShulkerPeekGoal::stop()
 {
-    boost::shared_ptr<LivingEntity> target = mShulker->getTarget();
-    if (target.get() == NULL)
+    if (mShulker->getTarget().get() == NULL)
         mShulker->setRawPeekAmount(0);
 }
 
 void Shulker::ShulkerPeekGoal::tick()
 {
     --mPeekTime;
-}
-
-std::wstring Shulker::ShulkerPeekGoal::getName()
-{
-    return std::wstring(L"ShulkerPeak");
 }
 
 Shulker::Shulker(Level* level)
@@ -246,10 +216,6 @@ Shulker::Shulker(Level* level)
     mYBodyRotO = 180.0f;
     mExperienceReward = 5;
     mYRot = 180.0f;
-}
-
-Shulker::~Shulker()
-{
 }
 
 void Shulker::create(Level* level)
@@ -656,7 +622,7 @@ bool Shulker::hurt(const DamageSource* source, float damage)
     if (!LivingEntity::hurt(source, damage))
         return false;
 
-    if (getHealth() < getMaxHealth() * 0.5f && mRandom->nextInt(4) == 0)
+    if (getHealth() < getMaxHealth() * 0.5 && mRandom->nextInt(4) == 0)
         teleportSomewhere();
 
     return true;
@@ -705,9 +671,9 @@ void Shulker::setRawPeekAmount(int amount)
     mEntityData->set(DATA_PEEK, static_cast<unsigned char>(amount), true);
 }
 
-double Shulker::getClientPeekAmount(float partialTick)
+float Shulker::getClientPeekAmount(float partialTick)
 {
-    return (double)(mOldPeekAmount + (mPeekAmount - mOldPeekAmount) * partialTick);
+    return mOldPeekAmount + (mPeekAmount - mOldPeekAmount) * partialTick;
 }
 
 int Shulker::getClientSideTeleportInterpolation()
@@ -722,7 +688,7 @@ BlockPos* Shulker::getOldAttachPosition()
 
 double Shulker::getEyeHeight()
 {
-    return 0.5;
+    return 0.5f;
 }
 
 int Shulker::getMaxHeadXRot()

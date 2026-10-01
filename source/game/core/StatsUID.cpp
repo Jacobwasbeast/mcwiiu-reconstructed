@@ -3,6 +3,11 @@
 #include "game/network/INetworkPlayer.hpp"
 #include "game/world/generation/PlayerUID.hpp"
 
+StatsUID::StatsUID(const PlayerUID& uid)
+{
+    PlayerUID::operator=(uid);
+}
+
 StatsUID StatsUID::EMPTY_SUID()
 {
     return StatsUID(PlayerUID(0));

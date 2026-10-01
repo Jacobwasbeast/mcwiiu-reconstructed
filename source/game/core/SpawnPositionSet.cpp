@@ -6,10 +6,6 @@ SpawnPositionSet::SpawnPositionSet()
     addUnsignedCharAttribute(ConsoleGameRules::eGameRuleAttr_method, &mType);
 }
 
-SpawnPositionSet::~SpawnPositionSet()
-{
-}
-
 ConsoleGameRules::EGameRuleType SpawnPositionSet::getActionType()
 {
     return ConsoleGameRules::eGameRuleType_SpawnPositionSet;

@@ -28,7 +28,6 @@ class Dolphin : public AgableWaterAnimal, public Creature
 {
 public:
     Dolphin(Level* level);
-    virtual ~Dolphin();
     virtual MobGroupData* finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data, const std::wstring& name);
     virtual unsigned int getMaxAirSupply();
     virtual double getEyeHeight();

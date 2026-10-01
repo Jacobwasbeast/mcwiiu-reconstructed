@@ -40,10 +40,6 @@ ExperienceOrb::ExperienceOrb(Level* level)
     setSize(0.25f, 0.25f);
 }
 
-ExperienceOrb::~ExperienceOrb()
-{
-}
-
 int ExperienceOrb::getExperienceValue(int value)
 {
     if (value > 2476)

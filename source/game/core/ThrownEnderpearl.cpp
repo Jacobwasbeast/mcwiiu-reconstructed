@@ -34,10 +34,6 @@ ThrownEnderpearl::ThrownEnderpearl(Level* level, double x, double y, double z)
     _init();
 }
 
-ThrownEnderpearl::~ThrownEnderpearl()
-{
-}
-
 void ThrownEnderpearl::create(Level* level)
 {
     new ThrownEnderpearl(level);

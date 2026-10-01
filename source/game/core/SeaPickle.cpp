@@ -39,10 +39,6 @@ SeaPickle::SeaPickle()
     mFullBlock = false;
 }
 
-SeaPickle::~SeaPickle()
-{
-}
-
 bool SeaPickle::isValidBonemealTarget(Level*, const BlockPos&, const BlockState*, bool)
 {
     return true;

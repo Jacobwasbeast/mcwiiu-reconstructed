@@ -8,10 +8,6 @@ ShulkerBoxSlot::ShulkerBoxSlot(boost::shared_ptr<Container> container, int index
 {
 }
 
-ShulkerBoxSlot::~ShulkerBoxSlot()
-{
-}
-
 bool ShulkerBoxSlot::mayPlace(not_null_ptr<ItemInstance> itemInstance)
 {
     return dynamic_cast<ShulkerBoxBlock*>(Block::byItem(itemInstance->getItem())) == NULL;

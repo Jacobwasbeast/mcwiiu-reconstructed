@@ -14,10 +14,7 @@ public:
     {
     }
 
-    StatsUID(const PlayerUID& uid)
-    {
-        PlayerUID::operator=(uid);
-    }
+    StatsUID(const PlayerUID& uid);
 
     static StatsUID EMPTY_SUID();
     static StatsUID NETWORKPLAYER_SUID(INetworkPlayer* networkPlayer);

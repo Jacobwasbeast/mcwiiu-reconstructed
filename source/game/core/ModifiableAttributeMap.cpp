@@ -4,10 +4,6 @@
 
 #include "game/core/ModifiableAttributeInstance.hpp"
 
-ModifiableAttributeMap::~ModifiableAttributeMap()
-{
-}
-
 AttributeInstance* ModifiableAttributeMap::getInstance(Attribute* attribute)
 {
     return BaseAttributeMap::getInstance(attribute);

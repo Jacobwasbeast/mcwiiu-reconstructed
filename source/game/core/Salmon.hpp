@@ -19,7 +19,6 @@ public:
     };
 
     Salmon(Level* level);
-    virtual ~Salmon();
 
     static void create(Level* level);
     static void staticCtor();

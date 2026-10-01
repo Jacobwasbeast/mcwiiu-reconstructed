@@ -15,7 +15,6 @@ class Stray : public AbstractSkeleton
 {
 public:
     Stray(Level* level);
-    virtual ~Stray();
 
     static void create(Level* level);
     static void addDataWalkers(DataFixerUpper* fixer);

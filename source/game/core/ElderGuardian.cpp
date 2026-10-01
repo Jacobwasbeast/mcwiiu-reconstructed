@@ -30,10 +30,6 @@ ElderGuardian::ElderGuardian(Level* level)
     }
 }
 
-ElderGuardian::~ElderGuardian()
-{
-}
-
 void ElderGuardian::registerAttributes()
 {
     Guardian::registerAttributes();

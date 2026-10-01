@@ -34,7 +34,6 @@ public:
     static const AABB* SHAPE;
 
     SeaGrass();
-    virtual ~SeaGrass();
     virtual bool isValidBonemealTarget(Level*, const BlockPos&, const BlockState*, bool);
     virtual bool isBonemealSuccess(Level*, Random*, const BlockPos&, const BlockState*);
     virtual void performBonemeal(Level*, Random*, const BlockPos&, const BlockState*);

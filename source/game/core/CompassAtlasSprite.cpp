@@ -23,10 +23,6 @@ CompassAtlasSprite::CompassAtlasSprite(int playerIndex, CompassAtlasSprite* pare
 {
 }
 
-CompassAtlasSprite::~CompassAtlasSprite()
-{
-}
-
 void CompassAtlasSprite::updateFromPosition(Level* level, double x, double z, double yRot, bool noJitter, bool instant)
 {
     const double pi = Mth::PI;

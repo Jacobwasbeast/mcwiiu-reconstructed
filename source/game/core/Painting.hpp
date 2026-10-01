@@ -32,7 +32,6 @@ public:
     Painting(Level* level, const BlockPos& pos, const Direction* direction);
     Painting(Level* level, const BlockPos& pos, const Direction* direction,
              const std::wstring& motiveName);
-    virtual ~Painting();
 
     static void create(Level* level);
     void _init(Level* level);

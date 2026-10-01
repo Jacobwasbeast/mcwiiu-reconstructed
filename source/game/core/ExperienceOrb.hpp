@@ -15,7 +15,6 @@ public:
     ExperienceOrb(Level* level, double x, double y, double z, int value);
     ExperienceOrb(Level* level);
     virtual unsigned long long GetType();
-    virtual ~ExperienceOrb();
     virtual void defineSynchedData();
     virtual void tick();
     virtual bool makeStepSound();

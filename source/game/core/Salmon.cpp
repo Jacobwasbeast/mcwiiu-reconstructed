@@ -25,10 +25,6 @@ Salmon::Salmon(Level* level)
     mWaterValueC = 12.0f;
 }
 
-Salmon::~Salmon()
-{
-}
-
 void Salmon::create(Level* level)
 {
     new Salmon(level);

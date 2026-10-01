@@ -40,7 +40,6 @@ public:
 
     Boat(Level* level);
     Boat(Level* level, double x, double y, double z);
-    virtual ~Boat();
 
     static void staticCtor();
     void _init();

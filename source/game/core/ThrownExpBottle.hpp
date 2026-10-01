@@ -15,7 +15,6 @@ public:
     ThrownExpBottle(Level* level);
     ThrownExpBottle(Level* level, boost::shared_ptr<LivingEntity> owner);
     ThrownExpBottle(Level* level, double x, double y, double z);
-    virtual ~ThrownExpBottle();
 
     static void create(Level* level);
     virtual bool onHit(const HitResult* result);

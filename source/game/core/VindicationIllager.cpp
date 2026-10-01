@@ -22,9 +22,6 @@ VindicationIllager::VindicationIllager(Level* level) : AbstractIllager(level)
     mJohnny = false;
     mCategories |= EntityCategory::eEntityCategory_Humanoid | EntityCategory::eEntityCategory_Monster;
 }
-VindicationIllager::~VindicationIllager()
-{
-}
 VindicationIllager* VindicationIllager::create(Level* level) { return new VindicationIllager(level); }
 void VindicationIllager::addDataWalkers(DataFixerUpper* fixer)
 { Mob::addDataWalkers(fixer, EntityType::VINDICATION_ILLAGER); }

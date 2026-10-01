@@ -42,10 +42,6 @@ Pufferfish::Pufferfish(Level* level)
     fjDerivedCtorCalls();
 }
 
-Pufferfish::~Pufferfish()
-{
-}
-
 void Pufferfish::create(Level* level)
 {
     new Pufferfish(level);

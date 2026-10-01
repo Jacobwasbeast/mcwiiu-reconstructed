@@ -40,7 +40,6 @@ Witch::Witch(Level* level) : Monster(level), mUsingTime(0) {
     setSize(0.6f, 1.95f);
     mCategories |= EntityCategory::eEntityCategory_Humanoid | EntityCategory::eEntityCategory_Monster;
 }
-Witch::~Witch() {}
 void Witch::create(Level* level) { new Witch(level); }
 void Witch::staticCtor() { DATA_USING_ITEM = SynchedEntityData::defineId<bool>(EntityType::WITCH, EntityType::MONSTER, EntityDataSerializers::BOOLEAN); }
 void Witch::addDataWalkers(DataFixerUpper* fixer) { Mob::addDataWalkers(fixer, EntityType::WITCH); }

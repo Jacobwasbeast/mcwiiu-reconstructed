@@ -49,10 +49,6 @@ Creeper::Creeper(Level* level) : Monster(level)
     setSize(0.6f, 1.7f);
 }
 
-Creeper::~Creeper()
-{
-}
-
 void Creeper::staticCtor()
 {
     DATA_SWELL_DIR = SynchedEntityData::defineId<int>(EntityType::CREEPER, EntityType::MONSTER, EntityDataSerializers::INT);

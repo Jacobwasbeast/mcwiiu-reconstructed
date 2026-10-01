@@ -14,7 +14,6 @@ public:
     FurnaceResultSlot(boost::shared_ptr<Player> player,
                       boost::shared_ptr<Container> container,
                       int index, int x, int y);
-    virtual ~FurnaceResultSlot();
 
     virtual bool mayPlace(not_null_ptr<ItemInstance> item);
     virtual not_null_ptr<ItemInstance> remove(int count);

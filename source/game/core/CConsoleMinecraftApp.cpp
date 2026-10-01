@@ -23,7 +23,6 @@
 
 extern "C" void OSReport(const char*, ...);
 
-
 extern void altMain();
 struct _OVERLAPPED;
 unsigned char g_fatalLoadErrorRequested = 0;
@@ -41,7 +40,6 @@ static unsigned char s_signInRequested = 0;
 unsigned char s_altMainOKToRun = 0;
 unsigned char s_altMainPending = 0;
 unsigned char s_altMainExit = 0;
-
 
 void setAltMainOKToRun()
 {
@@ -97,7 +95,6 @@ CConsoleMinecraftApp::CConsoleMinecraftApp() : CMinecraftApp()
     m_drcOutputEnabled = true;
     m_drcIconEnabled = false;
 }
-CConsoleMinecraftApp::~CConsoleMinecraftApp() { }
 bool CConsoleMinecraftApp::IsAmericanSKU() { return m_productSKU == 1; }
 cCommerceNintendoWiiU* CConsoleMinecraftApp::GetCommerceInstance() { return m_commerce; }
 void CConsoleMinecraftApp::RequestToBackground() { s_requestBackground = 1; }

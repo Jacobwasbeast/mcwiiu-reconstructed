@@ -8,10 +8,6 @@ TrialMode::TrialMode(int playerId, ClientPacketListener* connection, int userInd
     mTutorial = new FullTutorial(playerId, mGameModeConstraints, true);
 }
 
-TrialMode::~TrialMode()
-{
-}
-
 uint32_t TrialMode::isImplemented()
 {
     return 1;

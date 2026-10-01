@@ -15,10 +15,6 @@ ResultSlot::ResultSlot(Player* player, boost::shared_ptr<CraftingContainer> craf
 {
 }
 
-ResultSlot::~ResultSlot()
-{
-}
-
 bool ResultSlot::mayPlace(not_null_ptr<ItemInstance>)
 {
     return false;

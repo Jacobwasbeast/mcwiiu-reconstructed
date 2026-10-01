@@ -34,21 +34,17 @@ static const EntityDataAccessor<unsigned char>* DATA_FLAGS = NULL;
 
 Blaze::Blaze(Level* level)
     : Monster(level)
-    , mHeightOffset(0.5f)
-    , mHeightOffsetUpdateTime(0)
-    , mUnused(0)
 {
     fjDerivedCtorCalls();
     setPathfindingMalus(BlockPathTypes::WATER, -1.0f);
     setPathfindingMalus(BlockPathTypes::LAVA, 8.0f);
     setPathfindingMalus(BlockPathTypes::DANGER_FIRE, 0.0f);
     setPathfindingMalus(BlockPathTypes::DAMAGE_FIRE, 0.0f);
-    mExperienceReward = 10;
     mFireImmune = true;
-}
-
-Blaze::~Blaze()
-{
+    mExperienceReward = 10;
+    mHeightOffset = 0.5f;
+    mHeightOffsetUpdateTime = 0;
+    mUnused = 0;
 }
 
 void Blaze::staticCtor()
@@ -77,7 +73,7 @@ void Blaze::registerAttributes()
 {
     Monster::registerAttributes();
     getAttribute(SharedMonsterAttributes::ATTACK_DAMAGE)->setBaseValue(6.0);
-    getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(0.23);
+    getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(0.23f);
     getAttribute(SharedMonsterAttributes::FOLLOW_RANGE)->setBaseValue(48.0);
 }
 
@@ -151,13 +147,13 @@ void Blaze::customServerAiStep()
     if (--mHeightOffsetUpdateTime <= 0)
     {
         mHeightOffsetUpdateTime = 100;
-        mHeightOffset = static_cast<float>(mRandom->nextGaussian() * 3.0 + 0.5);
+        mHeightOffset = static_cast<float>(mRandom->nextGaussian()) * 3.0f + 0.5f;
     }
 
     boost::shared_ptr<LivingEntity> target = getTarget();
     if (target && target->mY + target->getEyeHeight() > mY + getEyeHeight() + mHeightOffset)
     {
-        mYd += (0.3 - mYd) * 0.3;
+        mYd += (0.3f - mYd) * 0.3f;
         mHasImpulse = true;
     }
 
@@ -180,7 +176,7 @@ bool Blaze::isCharged()
 
 bool Blaze::isOnFire()
 {
-    return isCharged();
+    return Blaze::isCharged();
 }
 
 void Blaze::dropDeathLoot(bool hitByPlayer, int lootingLevel)
@@ -234,13 +230,9 @@ void Blaze::create(Level* level)
 Blaze::BlazeAttackGoal::BlazeAttackGoal(Blaze* blaze)
     : Goal()
     , mBlaze(blaze)
-    , mAttackTime(0)
 {
     setRequiredControlFlags(3);
-}
-
-Blaze::BlazeAttackGoal::~BlazeAttackGoal()
-{
+    mAttackTime = 0;
 }
 
 bool Blaze::BlazeAttackGoal::canUse()
@@ -323,7 +315,3 @@ void Blaze::BlazeAttackGoal::tick()
     }
 }
 
-std::wstring Blaze::BlazeAttackGoal::getName()
-{
-    return std::wstring(L"BlazeAttack");
-}

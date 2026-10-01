@@ -24,6 +24,7 @@
 #include "game/entity/ai/MobNearestMobTargetGoal.hpp"
 #include "game/world/generation/MobNearestPlayerTargetGoal.hpp"
 #include "game/world/generation/VillagerGolem.hpp"
+#include "game/world/generation/Player.hpp"
 #include "game/core/Difficulty.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
@@ -41,11 +42,8 @@ Slime::Slime(Level* level)
 {
     fjDerivedCtorCalls();
     _init();
+    delete mMoveControl;
     mMoveControl = new SlimeMoveControl(this);
-}
-
-Slime::~Slime()
-{
 }
 
 unsigned long long Slime::GetType()
@@ -66,10 +64,8 @@ void Slime::create(Level* level)
 
 void Slime::_init()
 {
-    mSquishO = 0.0f;
-    mSquish = 0.0f;
-    mTargetSquish = 0.0f;
     mWasOnGround = false;
+    mTargetSquish = mSquish = mSquishO = 0.0f;
 }
 
 void Slime::registerGoals()
@@ -91,11 +87,10 @@ void Slime::defineSynchedData()
 void Slime::setSize(int size, bool reset)
 {
     mEntityData->set(DATA_ID_SIZE, size, true);
-    const float scale = (float)size;
-    setSize(0.51f * scale, 0.51f * scale);
+    setSize(0.51000005f * (float)size, 0.51000005f * (float)size);
     setPos(mX, mY, mZ);
     getAttribute(SharedMonsterAttributes::MAX_HEALTH)->setBaseValue((double)(size * size));
-    getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue((double)(0.1f * scale + 0.2f));
+    getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue((double)(0.1f * (float)size + 0.2f));
     if (reset)
         setHealth(getMaxHealth());
     mExperienceReward = size;
@@ -130,7 +125,7 @@ void Slime::readAdditionalSaveData(CompoundTag* tag)
 
 bool Slime::isTiny()
 {
-    return getSize() < 2;
+    return getSize() <= 1;
 }
 
 const ParticleType* Slime::getParticleType()
@@ -180,7 +175,7 @@ void Slime::tick()
     if (mLevel->mIsClientSide)
     {
         float scale = 0.6f * (float)getSize();
-        Entity::setSize(scale, scale);
+        setSize(scale, scale);
     }
 
     PIXEndNamedEvent();
@@ -198,20 +193,14 @@ int Slime::getJumpDelay()
 
 boost::shared_ptr<Slime> Slime::createChild()
 {
-    boost::shared_ptr<Slime> child(new Slime(mLevel));
-    child->setSize(getSize() / 2, true);
-    child->setPos(mX, mY, mZ);
-    child->mYRot = mYRot;
-    child->mXRot = mXRot;
-    return child;
+    return boost::shared_ptr<Slime>(new Slime(mLevel));
 }
 
 void Slime::onSyncedDataUpdated(const EntityDataAccessor_Base* accessor)
 {
-    if (accessor == DATA_ID_SIZE)
+    if (DATA_ID_SIZE->getId() == accessor->getId())
     {
-        int size = getSize();
-        float f = 0.51f * (float)size;
+        float f = (float)getSize() * 0.51000005f;
         setSize(f, f);
         mYRot = mYHeadRot;
         mYBodyRot = mYHeadRot;
@@ -286,7 +275,7 @@ void Slime::dealDamage(boost::shared_ptr<LivingEntity> entity)
 
 double Slime::getEyeHeight()
 {
-    return (double)mBbHeight * 0.625;
+    return 0.625f * mBbHeight;
 }
 
 bool Slime::isDealsDamage()
@@ -316,18 +305,12 @@ const SoundEvent* Slime::getSquishSound()
 
 ResourceLocation* Slime::getDefaultLootTable()
 {
-    return isTiny() ? NULL : &BuiltInLootTables::SLIME;
+    return getSize() == 1 ? &BuiltInLootTables::SLIME : NULL;
 }
 
 bool Slime::checkSpawnRules()
 {
-    int x = static_cast<int>(mX);
-    if (mX < static_cast<double>(x))
-        --x;
-    int z = static_cast<int>(mZ);
-    if (mZ < static_cast<double>(z))
-        --z;
-    BlockPos pos(x, 0, z);
+    BlockPos pos(Mth::floor(mX), 0, Mth::floor(mZ));
     LevelChunk* chunk = mLevel->getChunkAt(pos);
     if ((mLevel->getLevelData()->getGeneratorType() != LevelType::FLAT || mRandom->nextInt(4) == 1) &&
         mLevel->getDifficulty() != Difficulty::PEACEFUL)
@@ -337,8 +320,7 @@ bool Slime::checkSpawnRules()
         {
             if (mRandom->nextFloat() < mLevel->getMoonBrightness())
             {
-                BlockPos entityPos(this);
-                if (mLevel->getRawBrightness(entityPos) <= mRandom->nextInt(8))
+                if (mLevel->getRawBrightness(BlockPos(this)) <= mRandom->nextInt(8))
                     return Mob::checkSpawnRules();
             }
         }
@@ -399,7 +381,17 @@ Slime::SlimeAttackGoal::~SlimeAttackGoal()
 bool Slime::SlimeAttackGoal::canUse()
 {
     boost::shared_ptr<LivingEntity> target = mSlime->getTarget();
-    return target && target->isAlive();
+    if (!target)
+        return false;
+    if (!target->isAlive())
+        return false;
+    if ((target->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+    {
+        boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(target);
+        if (player->mAbilities.mInvulnerable)
+            return false;
+    }
+    return true;
 }
 
 void Slime::SlimeAttackGoal::start()
@@ -411,33 +403,30 @@ void Slime::SlimeAttackGoal::start()
 bool Slime::SlimeAttackGoal::canContinueToUse()
 {
     boost::shared_ptr<LivingEntity> target = mSlime->getTarget();
-    if (!target || !target->isAlive())
+    if (!target)
         return false;
+    if (!target->isAlive())
+        return false;
+    if ((target->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+    {
+        boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(target);
+        if (player->mAbilities.mInvulnerable)
+            return false;
+    }
     return --mGrowTiredTimer > 0;
 }
 
 void Slime::SlimeAttackGoal::tick()
 {
-    boost::shared_ptr<LivingEntity> target = mSlime->getTarget();
-    if (target)
-    {
-        mSlime->lookAt(target, 10.0f, 10.0f);
-    }
+    mSlime->lookAt(mSlime->getTarget(), 10.0f, 10.0f);
     static_cast<SlimeMoveControl*>(mSlime->getMoveControl())->setDirection(mSlime->mYRot, mSlime->isDealsDamage());
-}
-
-std::wstring Slime::SlimeAttackGoal::getName()
-{
-    return L"SlimeAttack";
 }
 
 Slime::SlimeFloatGoal::SlimeFloatGoal(Slime* slime)
     : mSlime(slime)
 {
     setRequiredControlFlags(5);
-    GroundPathNavigation* navigation = dynamic_cast<GroundPathNavigation*>(mSlime->getNavigation());
-    if (navigation)
-        navigation->setCanFloat(true);
+    static_cast<GroundPathNavigation*>(slime->getNavigation())->setCanFloat(true);
 }
 
 Slime::SlimeFloatGoal::~SlimeFloatGoal()
@@ -454,11 +443,6 @@ void Slime::SlimeFloatGoal::tick()
     if (mSlime->getRandom()->nextFloat() < 0.8f)
         mSlime->getJumpControl()->jump();
     static_cast<SlimeMoveControl*>(mSlime->getMoveControl())->setWantedMovement(1.2);
-}
-
-std::wstring Slime::SlimeFloatGoal::getName()
-{
-    return L"SlimeFloat";
 }
 
 Slime::SlimeKeepOnJumpingGoal::SlimeKeepOnJumpingGoal(Slime* slime)
@@ -481,14 +465,11 @@ void Slime::SlimeKeepOnJumpingGoal::tick()
     static_cast<SlimeMoveControl*>(mSlime->getMoveControl())->setWantedMovement(1.0);
 }
 
-std::wstring Slime::SlimeKeepOnJumpingGoal::getName()
-{
-    return L"SlimeKeepOnJumping";
-}
-
 Slime::SlimeMoveControl::SlimeMoveControl(Slime* slime)
-    : MoveControl(slime), mYRot(180.0f * slime->mYRot / Mth::PI), mJumpDelay(0), mSlime(slime), mWasOnGround(false)
+    : MoveControl(slime), mYRot(180.0f * slime->mYRot / Mth::PI), mSlime(slime)
 {
+    mJumpDelay = 0;
+    mWasOnGround = false;
 }
 
 Slime::SlimeMoveControl::~SlimeMoveControl()
@@ -509,25 +490,18 @@ void Slime::SlimeMoveControl::setWantedMovement(double speed)
 
 void Slime::SlimeMoveControl::tick()
 {
-    mSlime->mYRot = rotlerp(mSlime->mYRot, mYRot, 30.0f);
-    mSlime->mYHeadRot = mSlime->mYRot;
-    mSlime->mYBodyRot = mSlime->mYRot;
+    float yRot = rotlerp(mMob->mYRot, mYRot, 30.0f);
+    mMob->mYRot = mMob->mYBodyRot = mMob->mYHeadRot = yRot;
     if (mOperation != MOVE_TO)
     {
-        mSlime->setZza(0.0f);
+        mMob->setZza(0.0f);
         return;
     }
     mOperation = WAIT;
-    mSlime->setSpeed((float)(mSpeedModifier * mSlime->getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->getValue()));
-    if (mSlime->mOnGround)
+    if (mMob->mOnGround)
     {
-        if (mJumpDelay-- > 0)
-        {
-            mSlime->mXxa = 0.0f;
-            mSlime->mZza = 0.0f;
-            mSlime->setSpeed(0.0f);
-        }
-        else
+        mMob->setSpeed((float)(mSpeedModifier * mMob->getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->getValue()));
+        if (mJumpDelay-- <= 0)
         {
             mJumpDelay = mSlime->getJumpDelay();
             if (mWasOnGround)
@@ -539,6 +513,15 @@ void Slime::SlimeMoveControl::tick()
                                    ((mSlime->getRandom()->nextFloat() - mSlime->getRandom()->nextFloat()) * 0.2f + 1.0f) * 0.8f);
             }
         }
+        else
+        {
+            mSlime->mZza = mSlime->mXxa = 0.0f;
+            mMob->setSpeed(0.0f);
+        }
+    }
+    else
+    {
+        mMob->setSpeed((float)(mSpeedModifier * mMob->getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->getValue()));
     }
 }
 
@@ -554,23 +537,17 @@ Slime::SlimeRandomDirectionGoal::~SlimeRandomDirectionGoal()
 
 bool Slime::SlimeRandomDirectionGoal::canUse()
 {
-    if (mSlime->getTarget())
-        return false;
-    return mSlime->mOnGround || mSlime->isInWater() || mSlime->isInLava() ||
-           mSlime->hasEffect(MobEffects::LEVITATION);
+    return !mSlime->getTarget() && (mSlime->mOnGround || mSlime->isInWater() || mSlime->isInLava() ||
+                                   mSlime->hasEffect(MobEffects::LEVITATION));
 }
 
 void Slime::SlimeRandomDirectionGoal::tick()
 {
     if (--mChosenTicks <= 0)
     {
-        mChosenTicks = mSlime->mRandom->nextInt(60) + 40;
-        mChosenDegrees = (float)mSlime->mRandom->nextInt(360);
+        mChosenTicks = mSlime->getRandom()->nextInt(60) + 40;
+        mChosenDegrees = (float)mSlime->getRandom()->nextInt(360);
     }
     static_cast<SlimeMoveControl*>(mSlime->getMoveControl())->setDirection(mChosenDegrees, false);
 }
 
-std::wstring Slime::SlimeRandomDirectionGoal::getName()
-{
-    return L"SlimeRandomDirection";
-}

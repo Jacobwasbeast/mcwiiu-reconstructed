@@ -123,10 +123,6 @@ ShipwreckPiece::ShipwreckPiece(Level* level, GenericOverworldLevelSource* levelS
     }
 }
 
-ShipwreckPiece::~ShipwreckPiece()
-{
-}
-
 bool ShipwreckPiece::IsUpsideDownShipwreckType(int type)
 {
     eMinecraftStructureTemplate value = SHIPWRECK_TYPES[type];

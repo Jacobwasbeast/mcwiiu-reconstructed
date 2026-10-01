@@ -48,10 +48,6 @@ SnowMan::SnowMan(Level* level) : Golem(level)
     setSize(0.7f, 1.9f);
 }
 
-SnowMan::~SnowMan()
-{
-}
-
 void SnowMan::create(Level* level)
 {
     new SnowMan(level);

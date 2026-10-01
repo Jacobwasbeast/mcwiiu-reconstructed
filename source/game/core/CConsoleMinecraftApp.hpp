@@ -16,7 +16,6 @@ class CConsoleMinecraftApp : public CMinecraftApp
 {
 public:
     CConsoleMinecraftApp();
-    virtual ~CConsoleMinecraftApp();
     bool IsAmericanSKU();
     cCommerceNintendoWiiU* GetCommerceInstance();
     static void RequestToBackground();

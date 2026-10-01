@@ -51,10 +51,6 @@ EnderMan::EnderMan(Level* level) : Monster(level), mLastCreepySound(0), mTargetC
     setPathfindingMalus(NULL, -1.0f);
 }
 
-EnderMan::~EnderMan()
-{
-}
-
 void EnderMan::staticCtor()
 {
     DATA_CARRIED_BLOCK = SynchedEntityData::defineId<const BlockState*>(EntityType::ENDER_MAN, EntityType::MONSTER, EntityDataSerializers::BLOCK_STATE);

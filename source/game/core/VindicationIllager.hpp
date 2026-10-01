@@ -22,7 +22,6 @@ class VindicationIllager : public AbstractIllager
 {
 public:
     explicit VindicationIllager(Level* level);
-    virtual ~VindicationIllager();
     static VindicationIllager* create(Level* level);
     static void addDataWalkers(DataFixerUpper* fixer);
     virtual void registerGoals();

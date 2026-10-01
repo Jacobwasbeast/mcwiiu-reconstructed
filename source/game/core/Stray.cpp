@@ -23,10 +23,6 @@ Stray::Stray(Level* level)
     Mob::fjDerivedCtorCalls();
 }
 
-Stray::~Stray()
-{
-}
-
 void Stray::create(Level* level)
 {
     new Stray(level);

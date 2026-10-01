@@ -40,7 +40,7 @@ public:
         virtual void start();
         virtual void stop();
         virtual void tick();
-        virtual std::wstring getName();
+        virtual std::wstring getName() { return L"ShulkerAttack"; }
     private:
         Shulker* mShulker;
         int mAttackTime;
@@ -60,22 +60,18 @@ public:
     {
     public:
         ShulkerDefenseAttackGoal(Shulker* shulker);
-        virtual ~ShulkerDefenseAttackGoal();
         virtual bool canUse();
         virtual AABB* getTargetSearchArea(double distance);
-        virtual std::wstring getName();
-    private:
-        Shulker* mShulker;
+        virtual std::wstring getName() { return L"ShulkerDefenseAttack"; }
     };
 
     class ShulkerNearestAttackGoal : public NearestAttackableTargetGoal
     {
     public:
         ShulkerNearestAttackGoal(Shulker* shulker);
-        virtual ~ShulkerNearestAttackGoal();
         virtual bool canUse();
         virtual AABB* getTargetSearchArea(double distance);
-        virtual std::wstring getName();
+        virtual std::wstring getName() { return L"ShulkerNearestAttack"; }
     private:
         Shulker* mShulker;
     };
@@ -90,14 +86,13 @@ public:
         virtual void start();
         virtual void stop();
         virtual void tick();
-        virtual std::wstring getName();
+        virtual std::wstring getName() { return L"ShulkerPeak"; }
     private:
         Shulker* mShulker;
         int mPeekTime;
     };
 
     Shulker(Level* level);
-    virtual ~Shulker();
     static void create(Level* level);
     static void staticCtor();
     virtual MobGroupData* finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data, const std::wstring& name);
@@ -129,7 +124,7 @@ public:
     virtual void setAttachPosition(BlockPos* position);
     virtual unsigned char getRawPeekAmount();
     virtual void setRawPeekAmount(int amount);
-    virtual double getClientPeekAmount(float partialTick);
+    virtual float getClientPeekAmount(float partialTick);
     virtual int getClientSideTeleportInterpolation();
     virtual BlockPos* getOldAttachPosition();
     virtual double getEyeHeight();

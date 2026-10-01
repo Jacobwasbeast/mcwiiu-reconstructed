@@ -33,10 +33,6 @@ MinecartFurnace::MinecartFurnace(Level* level, double x, double y, double z)
     fjDerivedCtorCalls();
 }
 
-MinecartFurnace::~MinecartFurnace()
-{
-}
-
 void MinecartFurnace::create(Level* level)
 {
     new MinecartFurnace(level);

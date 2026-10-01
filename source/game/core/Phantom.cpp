@@ -25,7 +25,6 @@
 #include "game/world/Level.hpp"
 #include "game/world/generation/Player.hpp"
 
-
 Phantom::Phantom(Level* level) : Monster(level)
 {
     fjDerivedCtorCalls();
@@ -35,8 +34,6 @@ Phantom::Phantom(Level* level) : Monster(level)
     setSize(0.9f, 0.5f);
     setNoGravity(true);
 }
-
-Phantom::~Phantom() { }
 
 void Phantom::create(Level* level) { new Phantom(level); }
 

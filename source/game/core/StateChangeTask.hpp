@@ -15,7 +15,6 @@ public:
                     bool preCompletionEnabled,
                     std::vector<TutorialConstraint*>* constraints,
                     bool showMinimumTime, bool allowFade, bool repeatMessage);
-    virtual ~StateChangeTask();
 
     virtual bool isCompleted();
     virtual void onStateChange(eTutorial_State state);

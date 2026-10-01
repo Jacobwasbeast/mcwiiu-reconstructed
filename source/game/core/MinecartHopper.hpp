@@ -17,7 +17,7 @@ class Inventory;
 class Level;
 class Player;
 
-class MinecartHopper : public MinecartContainer, public Hopper
+class MinecartHopper : public MinecartContainer, public virtual Hopper
 {
 public:
     MinecartHopper(Level* level);

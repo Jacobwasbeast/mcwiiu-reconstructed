@@ -64,10 +64,6 @@ Dolphin::Dolphin(Level* level)
     mMaxFlockSize = mRandom->nextInt(2, 5);
 }
 
-Dolphin::~Dolphin()
-{
-}
-
 MobGroupData* Dolphin::finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data, const std::wstring& name)
 {
     setAirSupply(getMaxAirSupply());

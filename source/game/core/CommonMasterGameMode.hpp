@@ -41,7 +41,7 @@ public:
     static const MiniGameDef* GetMiniGame();
     void SetupMiniGameInstance(const MiniGameDef& definition, int variant);
     virtual void OnExitedGame();
-    virtual void RestartMapGenerator();
+    virtual long long RestartMapGenerator();
     virtual EGameModeState GetGameModeState() const = 0;
     virtual Level* GeneratorTargetLevel() const = 0;
     virtual void setChosenThemeWordId(int id);

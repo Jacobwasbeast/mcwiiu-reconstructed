@@ -34,7 +34,8 @@ int AreaHint::tick()
     Minecraft* minecraft = Minecraft::GetInstance();
     if ((state == AREA_HINT_ANY_STATE || tutorial->currentState == state) && active)
     {
-        if (area->contains(minecraft->mPlayer->getPos(1.0f)) == insideArea)
+        Vec3* pos = minecraft->mPlayer->getPos(1.0f);
+        if (area->contains(pos) == insideArea)
         {
             if (completionState == AREA_HINT_NO_COMPLETION_STATE)
             {

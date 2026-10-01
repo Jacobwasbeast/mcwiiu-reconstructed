@@ -34,9 +34,6 @@ WitherSkull::WitherSkull(Level* level, double x, double y, double z, double xd, 
     fjDerivedCtorCalls();
     setSize(0.3125f, 0.3125f);
 }
-WitherSkull::~WitherSkull()
-{
-}
 void WitherSkull::create(Level* level)
 {
     new WitherSkull(level);

@@ -15,10 +15,6 @@ AreaTask::AreaTask(eTutorial_State stateValue, Tutorial* tutorialValue,
     completionState = completionStateValue;
 }
 
-AreaTask::~AreaTask()
-{
-}
-
 bool AreaTask::isCompleted()
 {
     if (completed)

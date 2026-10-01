@@ -19,10 +19,6 @@ ClockAtlasSprite::ClockAtlasSprite(int playerIndex, ClockAtlasSprite* parent)
 {
 }
 
-ClockAtlasSprite::~ClockAtlasSprite()
-{
-}
-
 void ClockAtlasSprite::cycleFrames()
 {
     Minecraft* minecraft = Minecraft::GetInstance();

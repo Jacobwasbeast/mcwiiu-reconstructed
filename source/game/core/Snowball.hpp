@@ -16,7 +16,6 @@ public:
     Snowball(Level* level, boost::shared_ptr<LivingEntity> owner);
     Snowball(Level* level);
     Snowball(Level* level, double x, double y, double z);
-    virtual ~Snowball();
 
     static void create(Level* level);
     void _init();

@@ -9,6 +9,7 @@
 #include "game/core/CameraController.hpp"
 #include "game/core/ClientScoreboard.hpp"
 #include "game/core/ClientVoteables.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/CommonMasterGameMode.hpp"
 #include "game/core/ConsoleUIController.hpp"
@@ -100,11 +101,11 @@ ClientMasterGameMode::~ClientMasterGameMode()
     delete mVoteables;
 }
 
-bool ClientMasterGameMode::IsRoundRestarting() const { return GetGameModeState() == eGameModeState_LoadingSubRound; }
+bool ClientMasterGameMode::IsRoundRestarting() const { return mGameModeState == eGameModeState_LoadingSubRound; }
 
 void ClientMasterGameMode::ResetReadyStates()
 {
-    for (int i = 0; i < 8; ++i) mPlayerReady[i] = false;
+    std::memset(mPlayerReady, 0, sizeof(mPlayerReady));
 }
 
 void ClientMasterGameMode::Reset()
@@ -430,9 +431,7 @@ void ClientMasterGameMode::SetMapVote(int playerIndex, int vote, bool remove)
 unsigned int ClientMasterGameMode::GetMapVote(int playerIndex, int vote)
 {
     Minecraft* minecraft = Minecraft::GetInstance();
-    boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = minecraft->mLocalPlayers[playerIndex];
-    Voteable* voteable = mVoteables->getVoteable(Voteables::eVoteable_Map);
-    return static_cast<unsigned int>(voteable->getVote(localPlayer, vote) >= 0);
+    return static_cast<unsigned int>(mVoteables->getVoteable(Voteables::eVoteable_Map)->getVote(minecraft->mLocalPlayers[playerIndex], vote) >= 0);
 }
 
 void ClientMasterGameMode::GetUniquePlaylist(std::vector<MapSelectInfo>& playlist)
@@ -549,9 +548,7 @@ unsigned int ClientMasterGameMode::GetBuildOffTeamIndexToScore(int playerIndex)
 unsigned int ClientMasterGameMode::GetBuildOffScoringVote(int playerIndex, int vote)
 {
     Minecraft* minecraft = Minecraft::GetInstance();
-    boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = minecraft->mLocalPlayers[playerIndex];
-    Voteable* voteable = mVoteables->getVoteable(Voteables::eVoteable_BuildOffScoring);
-    return static_cast<unsigned int>(voteable->getVote(localPlayer, vote));
+    return static_cast<unsigned int>(mVoteables->getVoteable(Voteables::eVoteable_BuildOffScoring)->getVote(minecraft->mLocalPlayers[playerIndex], vote));
 }
 
 void ClientMasterGameMode::SetBuildOffThemeVote(int playerIndex, int vote, int value)
@@ -563,9 +560,7 @@ void ClientMasterGameMode::SetBuildOffThemeVote(int playerIndex, int vote, int v
 unsigned int ClientMasterGameMode::GetBuildOffThemeVote(int playerIndex)
 {
     Minecraft* minecraft = Minecraft::GetInstance();
-    boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = minecraft->mLocalPlayers[playerIndex];
-    Voteable* voteable = mVoteables->getVoteable(Voteables::eVoteable_BuildOffTheme);
-    return static_cast<unsigned int>(voteable->getVote(localPlayer, 0));
+    return static_cast<unsigned int>(mVoteables->getVoteable(Voteables::eVoteable_BuildOffTheme)->getVote(minecraft->mLocalPlayers[playerIndex], 0));
 }
 
 const wchar_t* ClientMasterGameMode::GetString(const int& id) { return mStringTable.getString(id); }
@@ -662,8 +657,6 @@ void ClientMasterGameMode::OnShowdown()
 void ClientMasterGameMode::OnChestRefill()
 {
     const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
-    if (miniGame == NULL)
-        return;
     const MiniGameDef::SoundSpec sound = miniGame->getSoundSpec(EGameModeSound_OnChestRefill);
     PlaySound(SoundEvents::MG01_CHEST, static_cast<float>(sound.Volume()), 1.0f);
 }
@@ -794,22 +787,36 @@ void ClientMasterGameMode::SetGeneratorSeed(long long seed, float scale)
     UpdateGeneratorSeed(seed, scale);
     ResetMapDistances();
 }
-bool ClientMasterGameMode::IsWaitingToStart() const { return GetGameModeState() == eGameModeState_WaitingToStart; }
-bool ClientMasterGameMode::IsRoundStarting() const { return GetGameModeState() == eGameModeState_RoundStarting; }
+bool ClientMasterGameMode::IsWaitingToStart() const { return mGameModeState == eGameModeState_WaitingToStart; }
+bool ClientMasterGameMode::IsRoundStarting() const { return mGameModeState == eGameModeState_RoundStarting; }
 bool ClientMasterGameMode::IsWaitingForMusicStartEvent() const
 {
     if (!IsWaitingToStart() && !IsRoundStarting() && mGameModeState != eGameModeState_SelectingGameRules && mGameModeState != eGameModeState_LoadingRound)
         return false;
     return true;
 }
-bool ClientMasterGameMode::IsRoundEnding() const { return GetGameModeState() == eGameModeState_RoundEnding; }
-bool ClientMasterGameMode::IsRoundPlaying() const { return GetGameModeState() == eGameModeState_RoundPlaying; }
+bool ClientMasterGameMode::IsRoundEnding() const { return mGameModeState == eGameModeState_RoundEnding; }
+bool ClientMasterGameMode::IsRoundPlaying() const { return mGameModeState == eGameModeState_RoundPlaying; }
 bool ClientMasterGameMode::IsInScoringState() const
 {
-    return Minecraft::InMiniGame(eMiniGameId_Build, true) && GetGameModeState() == eGameModeState_PostRound;
+    return Minecraft::InMiniGame(eMiniGameId_Build, true) && mGameModeState == eGameModeState_PostRound;
 }
-bool ClientMasterGameMode::IsInLobbyState() { return GetGameModeState() <= eGameModeState_LoadingRound; }
-bool ClientMasterGameMode::IsInActiveRoundState() { return GetGameModeState() >= eGameModeState_RoundStarting && GetGameModeState() <= eGameModeState_LoadingSubRound; }
+int ClientMasterGameMode::IsInLobbyState()
+{
+    int inLobby = 0;
+    if (static_cast<unsigned int>(mGameModeState) <= eGameModeState_LoadingRound)
+        inLobby = 1;
+    return inLobby;
+}
+int ClientMasterGameMode::IsInActiveRoundState()
+{
+    unsigned int state = mGameModeState;
+    if (state < eGameModeState_RoundStarting)
+        return 0;
+    if (state > eGameModeState_LoadingSubRound)
+        return 0;
+    return 1;
+}
 bool ClientMasterGameMode::IsInTrasitionFromLobby()
 {
     const EGameModeState state = mGameModeState;
@@ -1028,7 +1035,7 @@ void ClientMasterGameMode::Tick()
     }
 }
 bool ClientMasterGameMode::isNewLevelDataPending() { return mNewLevelDataPending; }
-bool ClientMasterGameMode::isWaitingToTransition() { return !mTransitions.empty() && IsInActiveRoundState(); }
+bool ClientMasterGameMode::isWaitingToTransition() { return !mTransitions.empty() && gApp.GetGameStarted() && gApp.GetXuiAction(gProfile->GetPrimaryPad()) == eXuiAction_Idle; }
 
 GameModeTransitionParams* ClientMasterGameMode::popTransition()
 {
@@ -1064,8 +1071,8 @@ void ClientMasterGameMode::queueTransition(GameModeTransitionParams* transition)
 
 void ClientMasterGameMode::dropAllTransitions()
 {
-    for (std::vector<GameModeTransitionParams*>::iterator it = mTransitions.begin(); it != mTransitions.end(); ++it) delete *it;
-    mTransitions.clear();
+    while (!mTransitions.empty())
+        delete popTransition();
 }
 
 void ClientMasterGameMode::onChangeCustomGameMode()

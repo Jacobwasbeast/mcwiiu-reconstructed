@@ -10,38 +10,31 @@ template <class T>
 class XLockFreeStack
 {
 public:
-    XLockFreeStack();
-    ~XLockFreeStack();
+    XLockFreeStack()
+    {
+        InitializeCriticalSectionAndSpinCount(&m_lock, 5120);
+    }
 
-    void Push(T* pItem);
+    ~XLockFreeStack()
+    {
+        DeleteCriticalSection(&m_lock);
+    }
+
+    void Push(T* pItem)
+    {
+        EnterCriticalSection(&m_lock);
+
+        m_items.push_back(pItem);
+
+        LeaveCriticalSection(&m_lock);
+    }
+
     T* Pop();
 
 private:
     std::vector<T*> m_items;
     OSFastMutex m_lock;
 };
-
-template <class T>
-XLockFreeStack<T>::XLockFreeStack()
-{
-    InitializeCriticalSectionAndSpinCount(&m_lock, 5120);
-}
-
-template <class T>
-XLockFreeStack<T>::~XLockFreeStack()
-{
-    DeleteCriticalSection(&m_lock);
-}
-
-template <class T>
-void XLockFreeStack<T>::Push(T* pItem)
-{
-    EnterCriticalSection(&m_lock);
-
-    m_items.push_back(pItem);
-
-    LeaveCriticalSection(&m_lock);
-}
 
 template <class T>
 T* XLockFreeStack<T>::Pop()

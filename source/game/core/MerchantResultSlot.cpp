@@ -15,10 +15,6 @@ MerchantResultSlot::MerchantResultSlot(Player* player, boost::shared_ptr<Merchan
 {
 }
 
-MerchantResultSlot::~MerchantResultSlot()
-{
-}
-
 bool MerchantResultSlot::mayPlace(not_null_ptr<ItemInstance> item)
 {
     return false;

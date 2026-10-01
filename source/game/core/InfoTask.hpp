@@ -11,7 +11,6 @@ class InfoTask : public TutorialTask
 public:
     InfoTask(Tutorial* tutorial, int descriptionId, int promptId, bool addConstraint,
              int completionId, ETelemetryChallenges telemetryChallenge);
-    virtual ~InfoTask();
 
     virtual int getPromptId();
     virtual bool isCompleted();

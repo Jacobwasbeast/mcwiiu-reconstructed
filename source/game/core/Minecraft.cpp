@@ -2609,7 +2609,7 @@ void Minecraft::respawnPlayer(int playerIdx, int dimension, int entityId, bool a
     newPlayer->mPlayerIndex = oldPlayer->mPlayerIndex;
 
     newPlayer->setCustomSkin(oldPlayer->mCustomSkin);
-    newPlayer->setPlayerDefaultSkin(oldPlayer->mField0x7d8);
+    newPlayer->setPlayerDefaultSkin(static_cast<EDefaultSkins>(oldPlayer->mField0x7d8));
     newPlayer->setCustomCape(oldPlayer->mCustomCape);
     newPlayer->mSessionTimerStart = oldPlayer->mSessionTimerStart;
     newPlayer->mChangeDimensionTimerStart = oldPlayer->mChangeDimensionTimerStart;

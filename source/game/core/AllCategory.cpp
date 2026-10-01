@@ -4,11 +4,10 @@
 
 bool AllCategory::canEnchant(Item* item) const
 {
-    for (std::vector<const EnchantmentCategory*>::const_iterator category = CATEGORIES.begin();
-         category != CATEGORIES.end();
-         ++category)
+    for (std::vector<const EnchantmentCategory*>::const_iterator it = CATEGORIES.begin(); it != CATEGORIES.end(); ++it)
     {
-        if (*category != ALL && (*category)->canEnchant(item))
+        const EnchantmentCategory* category = *it;
+        if (category != ALL && category->canEnchant(item))
         {
             return true;
         }

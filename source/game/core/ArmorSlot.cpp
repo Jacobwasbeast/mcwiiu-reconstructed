@@ -15,10 +15,6 @@ ArmorSlot::ArmorSlot(const EquipmentSlot* equipmentSlot,
 {
 }
 
-ArmorSlot::~ArmorSlot()
-{
-}
-
 int ArmorSlot::getMaxStackSize()
 {
     return 1;

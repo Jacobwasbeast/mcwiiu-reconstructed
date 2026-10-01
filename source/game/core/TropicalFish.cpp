@@ -189,7 +189,7 @@ MobGroupData* TropicalFish::finalizeMobSpawn(const DifficultyInstance& difficult
     return Mob::finalizeMobSpawn(difficulty, data, std::wstring(L""));
 }
 
-ResourceLocation* TropicalFish::getDefaultLootTable() { return &BuiltInLootTables::ENTITY_FISH; }
+ResourceLocation* TropicalFish::getDefaultLootTable() { return &BuiltInLootTables::TROPICALFISH; }
 unsigned long long TropicalFish::GetType() { return EntityType::TROPICAL_FISH; }
 
 TropicalFish::TropicalFishGroupData::TropicalFishGroupData(int baseVariant, int markVariant, int color1, int color2)

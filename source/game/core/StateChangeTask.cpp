@@ -15,10 +15,6 @@ StateChangeTask::StateChangeTask(eTutorial_State stateValue, Tutorial* tutorialV
 {
 }
 
-StateChangeTask::~StateChangeTask()
-{
-}
-
 bool StateChangeTask::isCompleted()
 {
     return completed;

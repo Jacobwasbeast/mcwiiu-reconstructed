@@ -13,7 +13,6 @@ class DelayedRelease : public Entity
 {
 public:
     DelayedRelease(Level* level, boost::shared_ptr<Entity> entity, int delay);
-    virtual ~DelayedRelease();
     virtual bool makeStepSound();
     virtual void tick();
     virtual bool hurt(const DamageSource* source, float damage);

@@ -50,10 +50,6 @@ Spider::Spider(Level* level, bool callDerivedConstructor) : Monster(level)
     mCategories |= EntityCategory::eEntityCategory_Arthropod;
 }
 
-Spider::~Spider()
-{
-}
-
 void Spider::create(Level* level)
 {
     new Spider(level);

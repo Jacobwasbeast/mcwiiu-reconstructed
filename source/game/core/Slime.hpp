@@ -33,7 +33,7 @@ public:
         virtual void start();
         virtual bool canContinueToUse();
         virtual void tick();
-        virtual std::wstring getName();
+        virtual std::wstring getName() { return L"SlimeAttack"; }
 
     private:
         Slime* mSlime;
@@ -47,7 +47,7 @@ public:
         virtual ~SlimeFloatGoal();
         virtual bool canUse();
         virtual void tick();
-        virtual std::wstring getName();
+        virtual std::wstring getName() { return L"SlimeFloat"; }
 
     private:
         Slime* mSlime;
@@ -60,7 +60,7 @@ public:
         virtual ~SlimeKeepOnJumpingGoal();
         virtual bool canUse();
         virtual void tick();
-        virtual std::wstring getName();
+        virtual std::wstring getName() { return L"SlimeKeepOnJumping"; }
 
     private:
         Slime* mSlime;
@@ -89,7 +89,7 @@ public:
         virtual ~SlimeRandomDirectionGoal();
         virtual bool canUse();
         virtual void tick();
-        virtual std::wstring getName();
+        virtual std::wstring getName() { return L"SlimeRandomDirection"; }
 
     private:
         Slime* mSlime;
@@ -98,7 +98,6 @@ public:
     };
 
     Slime(Level* level);
-    virtual ~Slime();
     virtual unsigned long long GetType();
     virtual void defineSynchedData();
     virtual void tick();

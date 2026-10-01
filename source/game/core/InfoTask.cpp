@@ -24,10 +24,6 @@ InfoTask::InfoTask(Tutorial* tutorial, int descriptionId, int promptId, bool add
     tutorial->addMessage(promptId, false, 3);
 }
 
-InfoTask::~InfoTask()
-{
-}
-
 void InfoTask::sendTelemetry()
 {
     Minecraft* minecraft = Minecraft::GetInstance();

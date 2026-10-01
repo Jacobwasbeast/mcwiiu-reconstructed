@@ -8,7 +8,6 @@ class SpawnPositionSet : public CompoundGameRuleDefinition
 public:
     SpawnPositionSet();
 
-    virtual ~SpawnPositionSet();
 
     virtual ConsoleGameRules::EGameRuleType getActionType();
 

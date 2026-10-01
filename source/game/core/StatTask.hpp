@@ -11,7 +11,6 @@ class StatTask : public TutorialTask
 public:
     StatTask(Tutorial* tutorial, int descriptionId, bool preCompletionEnabled,
              Stat* stat, int requiredValue);
-    virtual ~StatTask();
 
     virtual bool isCompleted();
 

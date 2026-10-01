@@ -91,8 +91,8 @@ public:
     bool IsRoundEnding() const;
     bool IsRoundPlaying() const;
     bool IsInScoringState() const;
-    bool IsInLobbyState();
-    bool IsInActiveRoundState();
+    int IsInLobbyState();
+    int IsInActiveRoundState();
     bool IsInTrasitionFromLobby();
     bool CheckLocalChunksLoaded();
     void FireGameRoundStats();

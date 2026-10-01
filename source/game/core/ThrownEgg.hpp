@@ -16,7 +16,6 @@ public:
     ThrownEgg(Level* level);
     ThrownEgg(Level* level, boost::shared_ptr<LivingEntity> owner);
     ThrownEgg(Level* level, double x, double y, double z);
-    virtual ~ThrownEgg();
 
     static void create(Level* level);
     virtual bool onHit(const HitResult* result);

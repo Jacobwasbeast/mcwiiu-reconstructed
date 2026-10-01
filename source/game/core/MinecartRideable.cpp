@@ -22,10 +22,6 @@ MinecartRideable::MinecartRideable(Level* level, double x, double y, double z)
     mCategories |= EntityCategory::eEntityCategory_Rideable;
 }
 
-MinecartRideable::~MinecartRideable()
-{
-}
-
 void MinecartRideable::create(Level* level)
 {
     new MinecartRideable(level);

@@ -17,6 +17,7 @@
 #include "platform/wiiu/CProfile.hpp"
 #include "platform/wiiu/C4JStorage.hpp"
 #include "game/core/CriticalSection.hpp"
+#include "platform/wiiu/PlatformTiming.hpp"
 #include "vendor/_XUSER_SIGNIN_INFO.hpp"
 struct NOTIFICATION
 {
@@ -55,7 +56,7 @@ struct MEMDATA
     unsigned int size;
     unsigned char refCount;
 };
-struct MOJJANG_DATA;
+struct MOJANG_DATA;
 struct BANNEDLISTDATA;
 struct _TMSPPRequest;
 struct FEATURE_DATA
@@ -391,7 +392,7 @@ public:
     float getAppTime();
     void AddTerrainFeaturePosition(_eTerrainFeatureType type, int x, int z);
     uint32_t GetTerrainFeaturePosition(_eTerrainFeatureType type, int* x, int* z);
-    MOJJANG_DATA* GetMojangDataForXuid(PlayerUID uid);
+    MOJANG_DATA* GetMojangDataForXuid(PlayerUID uid);
     uint8_t GetBanListCheck(int32_t player);
     bool AutosaveDue();
     uint32_t SecondsToAutosave();
@@ -568,7 +569,7 @@ private:
     bool mDebugInputEnabled;
     float mTrialTimerStart;
     float mTrialPausedTime;
-    long long mLastPerformanceCounter;
+    _LARGE_INTEGER mLastPerformanceCounter;
     long long mAccumulatedPerformanceCounter;
     float mAppTime;
     float mFrameTime;

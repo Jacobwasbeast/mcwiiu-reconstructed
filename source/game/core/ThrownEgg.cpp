@@ -31,10 +31,6 @@ ThrownEgg::ThrownEgg(Level* level, double x, double y, double z)
     _init();
 }
 
-ThrownEgg::~ThrownEgg()
-{
-}
-
 void ThrownEgg::create(Level* level)
 {
     new ThrownEgg(level);

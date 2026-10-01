@@ -30,10 +30,6 @@ EyeOfEnderSignal::EyeOfEnderSignal(Level* level)
     setSize(0.25f, 0.25f);
 }
 
-EyeOfEnderSignal::~EyeOfEnderSignal()
-{
-}
-
 void EyeOfEnderSignal::_init()
 {
     fjDerivedCtorCalls();

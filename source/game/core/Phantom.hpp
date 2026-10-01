@@ -28,7 +28,6 @@ public:
     };
 
     Phantom(Level* level);
-    virtual ~Phantom();
     static void create(Level* level);
     virtual void tick();
     virtual bool checkSpawnRules();

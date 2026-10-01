@@ -16,7 +16,6 @@ class MinecartRideable : public Minecart
 public:
     MinecartRideable(Level* level);
     MinecartRideable(Level* level, double x, double y, double z);
-    virtual ~MinecartRideable();
 
     static void create(Level* level);
     static void addDataWalkers(DataFixerUpper* dataFixerUpper);

@@ -204,7 +204,6 @@ public:
     public:
         OceanMonumentEntryRoom();
         OceanMonumentEntryRoom(const Direction* orientation, const boost::shared_ptr<RoomDefinition>& roomDefinition);
-        virtual ~OceanMonumentEntryRoom();
 
         static StructurePiece* Create();
         virtual EStructurePiece GetType();
@@ -217,7 +216,6 @@ public:
         OceanMonumentSimpleRoom();
         OceanMonumentSimpleRoom(const Direction* orientation, const boost::shared_ptr<RoomDefinition>& roomDefinition,
                                 Random& random);
-        virtual ~OceanMonumentSimpleRoom();
 
         static StructurePiece* Create();
         virtual EStructurePiece GetType();
@@ -233,7 +231,6 @@ public:
         OceanMonumentSimpleTopRoom();
         OceanMonumentSimpleTopRoom(const Direction* orientation,
                                    const boost::shared_ptr<RoomDefinition>& roomDefinition, Random& random);
-        virtual ~OceanMonumentSimpleTopRoom();
 
         static StructurePiece* Create();
         virtual EStructurePiece GetType();
@@ -246,7 +243,6 @@ public:
         OceanMonumentDoubleYRoom();
         OceanMonumentDoubleYRoom(const Direction* orientation, const boost::shared_ptr<RoomDefinition>& roomDefinition,
                                  Random& random);
-        virtual ~OceanMonumentDoubleYRoom();
 
         static StructurePiece* Create();
         virtual EStructurePiece GetType();
@@ -259,7 +255,6 @@ public:
         OceanMonumentDoubleXRoom();
         OceanMonumentDoubleXRoom(const Direction* orientation, const boost::shared_ptr<RoomDefinition>& roomDefinition,
                                  Random& random);
-        virtual ~OceanMonumentDoubleXRoom();
 
         static StructurePiece* Create();
         virtual EStructurePiece GetType();
@@ -272,7 +267,6 @@ public:
         OceanMonumentDoubleXYRoom();
         OceanMonumentDoubleXYRoom(const Direction* orientation,
                                   const boost::shared_ptr<RoomDefinition>& roomDefinition, Random& random);
-        virtual ~OceanMonumentDoubleXYRoom();
 
         static StructurePiece* Create();
         virtual EStructurePiece GetType();
@@ -285,7 +279,6 @@ public:
         OceanMonumentDoubleYZRoom();
         OceanMonumentDoubleYZRoom(const Direction* orientation,
                                   const boost::shared_ptr<RoomDefinition>& roomDefinition, Random& random);
-        virtual ~OceanMonumentDoubleYZRoom();
 
         static StructurePiece* Create();
         virtual EStructurePiece GetType();
@@ -298,7 +291,6 @@ public:
         OceanMonumentDoubleZRoom();
         OceanMonumentDoubleZRoom(const Direction* orientation, const boost::shared_ptr<RoomDefinition>& roomDefinition,
                                  Random& random);
-        virtual ~OceanMonumentDoubleZRoom();
 
         static StructurePiece* Create();
         virtual EStructurePiece GetType();
@@ -311,7 +303,6 @@ public:
         OceanMonumentCoreRoom();
         OceanMonumentCoreRoom(const Direction* orientation, const boost::shared_ptr<RoomDefinition>& roomDefinition,
                               Random& random);
-        virtual ~OceanMonumentCoreRoom();
 
         static StructurePiece* Create();
         virtual EStructurePiece GetType();
@@ -323,7 +314,6 @@ public:
     public:
         OceanMonumentWingRoom();
         OceanMonumentWingRoom(const Direction* orientation, BoundingBox* boundingBox, int randomValue);
-        virtual ~OceanMonumentWingRoom();
 
         virtual EStructurePiece GetType();
         virtual bool postProcess(Level* level, Random& random, BoundingBox* box);
@@ -337,7 +327,6 @@ public:
     public:
         OceanMonumentPenthouse();
         OceanMonumentPenthouse(const Direction* orientation, BoundingBox* boundingBox);
-        virtual ~OceanMonumentPenthouse();
 
         static StructurePiece* Create();
         virtual EStructurePiece GetType();

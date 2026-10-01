@@ -1,9 +1,5 @@
 #include "game/core/ProgressFlagTask.hpp"
 
-ProgressFlagTask::~ProgressFlagTask()
-{
-}
-
 bool ProgressFlagTask::isCompleted()
 {
     switch (flagAction)

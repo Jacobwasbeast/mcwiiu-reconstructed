@@ -11,7 +11,6 @@ class TrialMode : public MultiPlayerGameMode
 {
 public:
     TrialMode(int playerId, ClientPacketListener* connection, int userIndex);
-    virtual ~TrialMode();
 
     virtual uint32_t isImplemented();
 };

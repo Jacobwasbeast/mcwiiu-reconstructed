@@ -13,10 +13,6 @@ DelayedRelease::DelayedRelease(Level* level, boost::shared_ptr<Entity> entity, i
     mDelay = delay;
 }
 
-DelayedRelease::~DelayedRelease()
-{
-}
-
 bool DelayedRelease::makeStepSound()
 {
     return false;
@@ -26,7 +22,7 @@ void DelayedRelease::tick()
 {
     if (mDelay-- < 1)
     {
-        mLevel->removeEntity(mEntity);
+        mLevel->addEntity(mEntity);
         remove();
     }
 }

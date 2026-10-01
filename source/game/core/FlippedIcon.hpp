@@ -6,7 +6,6 @@
 class FlippedIcon : public TextureAtlasSprite {
 public:
     FlippedIcon(TextureAtlasSprite* sprite, bool flipU, bool flipV);
-    virtual ~FlippedIcon();
     virtual unsigned int getX() const;
     virtual unsigned int getY() const;
     virtual unsigned int getWidth() const;

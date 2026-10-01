@@ -132,17 +132,17 @@ const float UNMEASURED_CHEST_DISTANCE = -1.0f;
 const int CHEST_REFILL_ATTEMPTS_PER_CHEST = 3;
 const double TEAM_AREA_BOUNDS_HEIGHT_MARGIN = 1.0;
 
-PlayerList* ServerPlayers()
+inline PlayerList* ServerPlayers()
 {
-    return gMinecraftServer == NULL ? NULL : gMinecraftServer->getPlayers();
+    return gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers;
 }
 
-void BroadcastGameModePacket(GameModePacket::EMessage message, const GameModePacket::Data& data)
+inline void BroadcastGameModePacket(GameModePacket::EMessage message, const GameModePacket::Data& data)
 {
     ServerPlayers()->broadcastAll(GameModePacket::Create(message, data));
 }
 
-void BroadcastChatMessage(ClientboundChatPacket::EChatPacketMessage message)
+inline void BroadcastChatMessage(ClientboundChatPacket::EChatPacketMessage message)
 {
     ServerPlayers()->broadcastAll(boost::shared_ptr<Packet>(new ClientboundChatPacket(message, -1)));
 }
@@ -811,7 +811,8 @@ void MasterGameMode::PopulateChests()
 
 int MasterGameMode::ChooseItemSet(const MiniGameDef& definition, bool central)
 {
-    if (definition.GetId() == eMiniGameId_Tumble)
+    const EMiniGameId miniGameId = definition.GetId();
+    if (miniGameId == eMiniGameId_Tumble)
     {
         if (central && definition.HostOption_Bool(eCustomGameModeHostOption_EnableVoting))
         {
@@ -843,20 +844,19 @@ int MasterGameMode::ChooseItemSet(const MiniGameDef& definition, bool central)
         if (!definition.IsCustomGame())
             return definition.GetGameVariant();
     }
-    else if (definition.GetId() == eMiniGameId_Battle)
+    else if (miniGameId == eMiniGameId_Battle)
     {
         const int lootSetId = definition.GetLootSetId();
-        if (!mRandomLootSetChosen && lootSetId != RANDOM_LOOT_SET)
+        if (mRandomLootSetChosen || lootSetId != RANDOM_LOOT_SET)
             return lootSetId;
 
         mRandomLootSetChosen = true;
-        Random random;
-        return random.nextInt(RANDOM_LOOT_SET);
+        return Random().nextInt(RANDOM_LOOT_SET);
     }
     return definition.GetLootSetId();
 }
 
-int MasterGameMode::GetTeamCount()
+unsigned int MasterGameMode::GetTeamCount()
 {
     if (Minecraft::GetInstance()->GetMiniGame()->GetId() == eMiniGameId_Build && mNextLevelGenOptions != NULL)
     {
@@ -1083,11 +1083,15 @@ bool MasterGameMode::LoadNewGameRules()
 
 void MasterGameMode::SetLockPlayerPositions(bool locked)
 {
-    BroadcastGameModePacket(GameModePacket::eMessage_LockPlayerLocation, GameModePacket::LockPlayerLocation(locked));
+    GameModePacket::LockPlayerLocation data(locked);
+    BroadcastGameModePacket(GameModePacket::eMessage_LockPlayerLocation, data);
 
     std::vector<boost::shared_ptr<ServerPlayer> >* players = ServerPlayers()->getPlayers();
     for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator playerIt = players->begin(); playerIt != players->end(); ++playerIt)
-        (*playerIt)->SetPositionLocked(locked);
+    {
+        boost::shared_ptr<ServerPlayer> player = *playerIt;
+        player->SetPositionLocked(locked);
+    }
 }
 
 void MasterGameMode::UpdateGeneratorSeed()
@@ -1432,8 +1436,9 @@ void MasterGameMode::SetPlayersInvulnerable(bool invulnerable)
     std::vector<boost::shared_ptr<ServerPlayer> >* players = ServerPlayers()->getPlayers();
     for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator playerIt = players->begin(); playerIt != players->end(); ++playerIt)
     {
-        if (!(*playerIt)->isSpectator())
-            SetPlayerInvulnerable(*playerIt, invulnerable);
+        boost::shared_ptr<ServerPlayer> player = *playerIt;
+        if (!player->isSpectator())
+            SetPlayerInvulnerable(player, invulnerable);
     }
 }
 
@@ -2588,7 +2593,7 @@ void MasterGameMode::OnServerResume(long long suspendedTime)
     if (HasTimer(eTimerID_RoundEndDelay))
         RestartTimer(eTimerID_RoundEndDelay, GetTimerRemainingTime(eTimerID_RoundEndDelay) + static_cast<int>(suspendedTime));
 
-    std::vector<boost::shared_ptr<ServerPlayer> > roundPlayers = GetPlayers(true, false);
+    const std::vector<boost::shared_ptr<ServerPlayer> > roundPlayers = GetPlayers(true, false);
     std::vector<boost::shared_ptr<Player> > players(roundPlayers.begin(), roundPlayers.end());
     CheckTargets(players);
     CheckCheckpoints(players);
@@ -2846,11 +2851,12 @@ void MasterGameMode::RegenTumbleLayers()
     RestartMapGenerator();
 }
 
-void MasterGameMode::RestartMapGenerator()
+long long MasterGameMode::RestartMapGenerator()
 {
     ResetSpawnLayers();
-    CommonMasterGameMode::RestartMapGenerator();
-    BroadcastGameModePacket(GameModePacket::eMessage_UpdateSeed, GameModePacket::UpdateSeedGameModeData(mGeneratorSeed, mGeneratorSeedScale));
+    long long seed = CommonMasterGameMode::RestartMapGenerator();
+    BroadcastGameModePacket(GameModePacket::eMessage_UpdateSeed, GameModePacket::UpdateSeedGameModeData(seed, mGeneratorSeedScale));
+    return seed;
 }
 
 EGameModeState MasterGameMode::GetGameModeState() const
@@ -2866,7 +2872,8 @@ ServerLevel* MasterGameMode::GeneratorTargetLevel() const
 void MasterGameMode::setChosenThemeWordId(int themeWordId)
 {
     mChosenThemeWordId = themeWordId;
-    BroadcastGameModePacket(GameModePacket::eMessage_UpdateTheme, GameModePacket::UpdateThemeGameModeData(themeWordId));
+    GameModePacket::UpdateThemeGameModeData data(themeWordId);
+    BroadcastGameModePacket(GameModePacket::eMessage_UpdateTheme, data);
 }
 
 bool MasterGameMode::IsRoundPlaying() const

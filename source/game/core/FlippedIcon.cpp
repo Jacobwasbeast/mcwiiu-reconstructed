@@ -6,10 +6,6 @@ FlippedIcon::FlippedIcon(TextureAtlasSprite* sprite, bool flipU, bool flipV)
 {
 }
 
-FlippedIcon::~FlippedIcon()
-{
-}
-
 unsigned int FlippedIcon::getX() const
 {
     return mSprite->getX();

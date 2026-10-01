@@ -11,7 +11,6 @@ class UniqueTypeWalker : public DataWalker
 {
 public:
     explicit UniqueTypeWalker(const ResourceLocation& key);
-    virtual ~UniqueTypeWalker();
 
     virtual CompoundTag* walk(DataFixer* fixer, CompoundTag* tag, int version);
 

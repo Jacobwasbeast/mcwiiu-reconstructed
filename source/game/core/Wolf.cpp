@@ -73,7 +73,6 @@ Wolf::Wolf(Level* level)
     fjDerivedCtorCalls();
     setSize(0.6f, 0.85f);
 }
-Wolf::~Wolf() {}
 void Wolf::create(Level* level) { new Wolf(level); }
 void Wolf::staticCtor()
 {

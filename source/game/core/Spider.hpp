@@ -54,7 +54,6 @@ public:
 
     Spider(Level* level);
     Spider(Level* level, bool callDerivedConstructor);
-    virtual ~Spider();
 
     static void create(Level* level);
     static void staticCtor();

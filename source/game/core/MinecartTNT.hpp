@@ -16,7 +16,6 @@ class MinecartTNT : public Minecart
 public:
     MinecartTNT(Level* level);
     MinecartTNT(Level* level, double x, double y, double z);
-    virtual ~MinecartTNT();
 
     static void create(Level* level);
     void _init();

@@ -100,7 +100,6 @@ public:
     public:
         ChestCorridor();
         ChestCorridor(int depth, Random& random, BoundingBox* box, const Direction* direction);
-        virtual ~ChestCorridor();
         static ChestCorridor* createPiece(std::vector<StructurePiece*>* pieces, Random& random,
                                           int x, int y, int z, const Direction* direction, int depth);
         virtual void addAdditionalSaveData(DataOutputStream* output);
@@ -117,7 +116,6 @@ public:
     public:
         FillerCorridor();
         FillerCorridor(int depth, Random& random, BoundingBox* box, const Direction* direction);
-        virtual ~FillerCorridor();
         static BoundingBox* findPieceBox(std::vector<StructurePiece*>* pieces, Random& random,
                                          int x, int y, int z, const Direction* direction);
         virtual void addAdditionalSaveData(DataOutputStream* output);
@@ -133,7 +131,6 @@ public:
     public:
         FiveCrossing();
         FiveCrossing(int depth, Random& random, BoundingBox* box, const Direction* direction);
-        virtual ~FiveCrossing();
         static FiveCrossing* createPiece(std::vector<StructurePiece*>* pieces, Random& random,
                                          int x, int y, int z, const Direction* direction, int depth);
         virtual void addAdditionalSaveData(DataOutputStream* output);
@@ -153,7 +150,6 @@ public:
     public:
         LeftTurn();
         LeftTurn(int depth, Random& random, BoundingBox* box, const Direction* direction);
-        virtual ~LeftTurn();
         static LeftTurn* createPiece(std::vector<StructurePiece*>* pieces, Random& random,
                                      int x, int y, int z, const Direction* direction, int depth);
         virtual void addChildren(StructurePiece* start, std::vector<StructurePiece*>* pieces, Random& random);
@@ -167,7 +163,6 @@ public:
     public:
         Library();
         Library(int depth, Random& random, BoundingBox* box, const Direction* direction);
-        virtual ~Library();
         static Library* createPiece(std::vector<StructurePiece*>* pieces, Random& random,
                                     int x, int y, int z, const Direction* direction, int depth);
         virtual void addAdditionalSaveData(DataOutputStream* output);
@@ -183,7 +178,6 @@ public:
     public:
         PortalRoom();
         PortalRoom(int depth, Random& random, BoundingBox* box, const Direction* direction);
-        virtual ~PortalRoom();
         static PortalRoom* createPiece(std::vector<StructurePiece*>* pieces, Random& random,
                                        int x, int y, int z, const Direction* direction, int depth);
         virtual void addAdditionalSaveData(DataOutputStream* output);
@@ -200,7 +194,6 @@ public:
     public:
         PrisonHall();
         PrisonHall(int depth, Random& random, BoundingBox* box, const Direction* direction);
-        virtual ~PrisonHall();
         static PrisonHall* createPiece(std::vector<StructurePiece*>* pieces, Random& random,
                                        int x, int y, int z, const Direction* direction, int depth);
         virtual void addChildren(StructurePiece* start, std::vector<StructurePiece*>* pieces, Random& random);
@@ -214,7 +207,6 @@ public:
     public:
         RoomCrossing();
         RoomCrossing(int depth, Random& random, BoundingBox* box, const Direction* direction);
-        virtual ~RoomCrossing();
         static RoomCrossing* createPiece(std::vector<StructurePiece*>* pieces, Random& random,
                                          int x, int y, int z, const Direction* direction, int depth);
         virtual void addAdditionalSaveData(DataOutputStream* output);
@@ -231,7 +223,6 @@ public:
     public:
         Straight();
         Straight(int depth, Random& random, BoundingBox* box, const Direction* direction);
-        virtual ~Straight();
         static Straight* createPiece(std::vector<StructurePiece*>* pieces, Random& random,
                                      int x, int y, int z, const Direction* direction, int depth);
         virtual void addAdditionalSaveData(DataOutputStream* output);
@@ -249,7 +240,6 @@ public:
     public:
         StraightStairsDown();
         StraightStairsDown(int depth, Random& random, BoundingBox* box, const Direction* direction);
-        virtual ~StraightStairsDown();
         static StraightStairsDown* createPiece(std::vector<StructurePiece*>* pieces, Random& random,
                                                int x, int y, int z, const Direction* direction, int depth);
         virtual void addChildren(StructurePiece* start, std::vector<StructurePiece*>* pieces, Random& random);
@@ -264,7 +254,6 @@ public:
         StairsDown(int depth, Random& random, int x, int z);
         StairsDown();
         StairsDown(int depth, Random& random, BoundingBox* box, const Direction* direction);
-        virtual ~StairsDown();
         static StairsDown* createPiece(std::vector<StructurePiece*>* pieces, Random& random,
                                        int x, int y, int z, const Direction* direction, int depth);
         virtual void addAdditionalSaveData(DataOutputStream* output);
@@ -281,7 +270,6 @@ public:
     public:
         RightTurn();
         RightTurn(int depth, Random& random, BoundingBox* box, const Direction* direction);
-        virtual ~RightTurn();
         virtual void addChildren(StructurePiece* start, std::vector<StructurePiece*>* pieces, Random& random);
         virtual bool postProcess(Level* level, Random& random, BoundingBox* box);
         static StructurePiece* Create();
@@ -293,7 +281,6 @@ public:
     public:
         StartPiece(int depth, Random& random, int x, int z, Level* level);
         StartPiece();
-        virtual ~StartPiece();
         virtual BlockPos getLocatorPosition();
         virtual EStructurePiece GetType();
         bool mStartFlag;
@@ -306,7 +293,6 @@ public:
     class SmoothStoneSelector : public StructurePiece::BlockSelector
     {
     public:
-        virtual ~SmoothStoneSelector();
         virtual void next(Random& random, int x, int y, int z, bool edge);
     };
 

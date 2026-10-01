@@ -18,7 +18,6 @@ public:
     MerchantResultSlot(Player* player, boost::shared_ptr<Merchant> merchant,
                        boost::shared_ptr<MerchantContainer> merchantContainer,
                        int slot, int x, int y);
-    virtual ~MerchantResultSlot();
 
     virtual bool mayPlace(not_null_ptr<ItemInstance> item);
     virtual not_null_ptr<ItemInstance> remove(int count);
