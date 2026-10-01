@@ -9,6 +9,7 @@
 #include <boost/unordered_map.hpp>
 #include <boost/functional/hash.hpp>
 #include "game/world/biome/arrayWithLength.hpp"
+#include "game/core/CriticalSection.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/LevelSource.hpp"
 #include "game/util/Random.hpp"
@@ -249,6 +250,9 @@ public:
     void setChunkVersion(int version);
     void swapEntities(LevelChunk* chunk);
     static bool touchedSky;
+    static OSFastMutex m_csLighting;
+    static OSFastMutex m_csEntities;
+    static OSFastMutex m_csTileEntities;
     static int PackBlockPos(const BlockPos& pos);
     static BlockPos UnpackBlockPos(short packed);
     static void CreateNewThreadStorage();

@@ -58,9 +58,9 @@ extern MinecraftServer* gMinecraftServer;
 extern CMinecraftApp* g_pApp;
 
 static unsigned int sLevelChunkThreadStorage = TlsAlloc();
-static OSFastMutex sLevelChunkLightingMutex;
-static OSFastMutex sLevelChunkEntityMutex;
-static OSFastMutex sLevelChunkBlockEntityMutex;
+OSFastMutex LevelChunk::m_csLighting;
+OSFastMutex LevelChunk::m_csEntities;
+OSFastMutex LevelChunk::m_csTileEntities;
 bool LevelChunk::touchedSky = false;
 
 LevelChunk::LevelChunk(Level* level, int x, int z)
@@ -118,7 +118,7 @@ LevelChunk::~LevelChunk()
     delete mSkyLightUpper;
     delete mBlockLightUpper;
     delete[] mHeightmap.data;
-    EnterCriticalSection(&sLevelChunkEntityMutex);
+    EnterCriticalSection(&m_csEntities);
     for (int i = 0; i < mEntitySectionCount; ++i)
     {
         mEntitySections[i]->clear();
@@ -126,7 +126,7 @@ LevelChunk::~LevelChunk()
     }
     delete[] mEntitySections;
     mEntitySections = NULL;
-    LeaveCriticalSection(&sLevelChunkEntityMutex);
+    LeaveCriticalSection(&m_csEntities);
     delete mPendingBlockEntityTag;
 }
 int LevelChunk::BlockChange::GetPackedPos() const
@@ -499,7 +499,7 @@ unsigned int LevelChunk::getBiomePresentFlag()
 }
 void LevelChunk::reSyncLighting()
 {
-    EnterCriticalSection(&sLevelChunkLightingMutex);
+    EnterCriticalSection(&m_csLighting);
     if (!isEmpty())
     {
         const DimensionType* dimensionType = level->mDimension->getType();
@@ -524,12 +524,12 @@ void LevelChunk::reSyncLighting()
             mElements = new ElementStorage(level->mIsClientSide, otherChunk->mElements);
             GameRenderer::FinishedReassigning();
             level->setBlocksDirty(BlockPos(x * 16 - 1, 0, z * 16 - 1), BlockPos(x * 16 + 16, 256, z * 16 + 16));
-            LeaveCriticalSection(&sLevelChunkLightingMutex);
+            LeaveCriticalSection(&m_csLighting);
             mLightingDropped = false;
             return;
         }
     }
-    LeaveCriticalSection(&sLevelChunkLightingMutex);
+    LeaveCriticalSection(&m_csLighting);
 }
 bool LevelChunk::reSyncLightingNearby()
 {
@@ -549,10 +549,10 @@ bool LevelChunk::reSyncLightingNearby()
 }
 void LevelChunk::dropLighting()
 {
-    EnterCriticalSection(&sLevelChunkLightingMutex);
+    EnterCriticalSection(&m_csLighting);
     if (isEmpty())
     {
-        LeaveCriticalSection(&sLevelChunkLightingMutex);
+        LeaveCriticalSection(&m_csLighting);
         return;
     }
 
@@ -569,7 +569,7 @@ void LevelChunk::dropLighting()
     mBlockLightUpper = new SparseLightStorage(false, true);
     GameRenderer::FinishedReassigning();
 
-    LeaveCriticalSection(&sLevelChunkLightingMutex);
+    LeaveCriticalSection(&m_csLighting);
     mLightingDropped = true;
 }
 void LevelChunk::SetInvalid(bool invalid)
@@ -577,15 +577,15 @@ void LevelChunk::SetInvalid(bool invalid)
     mInvalid = invalid;
     if (invalid)
     {
-        EnterCriticalSection(&sLevelChunkEntityMutex);
+        EnterCriticalSection(&m_csEntities);
         for (int i = 0; i < mEntitySectionCount; ++i)
             mEntitySections[i]->clear();
-        LeaveCriticalSection(&sLevelChunkEntityMutex);
-        EnterCriticalSection(&sLevelChunkBlockEntityMutex);
+        LeaveCriticalSection(&m_csEntities);
+        EnterCriticalSection(&m_csTileEntities);
         for (BlockEntityMap::iterator it = mBlockEntityMap.begin(); it != mBlockEntityMap.end(); ++it)
             level->markForRemoval(it->second);
         mBlockEntityMap.clear();
-        LeaveCriticalSection(&sLevelChunkBlockEntityMutex);
+        LeaveCriticalSection(&m_csTileEntities);
         delete mPendingBlockEntityTag;
         mPendingBlockEntityTag = NULL;
         mUnloaded = true;
@@ -597,11 +597,11 @@ bool LevelChunk::isInvalid() const
 }
 void LevelChunk::getEntityReadLock()
 {
-    EnterCriticalSection(&sLevelChunkEntityMutex);
+    EnterCriticalSection(&m_csEntities);
 }
 void LevelChunk::releaseEntityReadLock()
 {
-    LeaveCriticalSection(&sLevelChunkEntityMutex);
+    LeaveCriticalSection(&m_csEntities);
 }
 bool LevelChunk::hasLightingBeenDropped()
 {
@@ -614,11 +614,11 @@ void LevelChunk::init(Level* level, int x, int z)
     for (int i = 0; i < 256; ++i)
         mBiomes.data[i] = 255;
     mOwnsBiomes = false;
-    EnterCriticalSection(&sLevelChunkEntityMutex);
+    EnterCriticalSection(&m_csEntities);
     mEntitySections = new std::vector<boost::shared_ptr<Entity> >*[mEntitySectionCount]();
     for (int i = 0; i < mEntitySectionCount; ++i)
         mEntitySections[i] = new std::vector<boost::shared_ptr<Entity> >;
-    LeaveCriticalSection(&sLevelChunkEntityMutex);
+    LeaveCriticalSection(&m_csEntities);
     mUnsaved = false;
     mLightingDropped = false;
     mPostProcess = false;
@@ -1629,9 +1629,9 @@ void LevelChunk::addEntity(boost::shared_ptr<Entity> entity)
     entity->mChunkX = x;
     entity->mChunkY = section;
     entity->mChunkZ = z;
-    EnterCriticalSection(&sLevelChunkEntityMutex);
+    EnterCriticalSection(&m_csEntities);
     mEntitySections[section]->push_back(entity);
-    LeaveCriticalSection(&sLevelChunkEntityMutex);
+    LeaveCriticalSection(&m_csEntities);
 }
 void LevelChunk::removeEntity(boost::shared_ptr<Entity> entity)
 {
@@ -1643,7 +1643,7 @@ void LevelChunk::removeEntity(boost::shared_ptr<Entity> entity, int section)
         section = 0;
     if (section >= mEntitySectionCount)
         section = mEntitySectionCount - 1;
-    EnterCriticalSection(&sLevelChunkEntityMutex);
+    EnterCriticalSection(&m_csEntities);
     std::vector<boost::shared_ptr<Entity> >& entities = *mEntitySections[section];
     for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities.begin(); it != entities.end(); ++it)
     {
@@ -1653,7 +1653,7 @@ void LevelChunk::removeEntity(boost::shared_ptr<Entity> entity, int section)
             break;
         }
     }
-    LeaveCriticalSection(&sLevelChunkEntityMutex);
+    LeaveCriticalSection(&m_csEntities);
 }
 bool LevelChunk::isSkyLit(const BlockPos& pos)
 {
@@ -1671,11 +1671,11 @@ boost::shared_ptr<BlockEntity> LevelChunk::createBlockEntity(const BlockPos& pos
 boost::shared_ptr<BlockEntity> LevelChunk::getBlockEntity(const BlockPos& pos, EntityCreationType type)
 {
     boost::shared_ptr<BlockEntity> result;
-    EnterCriticalSection(&sLevelChunkBlockEntityMutex);
+    EnterCriticalSection(&m_csTileEntities);
     BlockEntityMap::iterator it = mBlockEntityMap.find(pos);
     if (it == mBlockEntityMap.end())
     {
-        LeaveCriticalSection(&sLevelChunkBlockEntityMutex);
+        LeaveCriticalSection(&m_csTileEntities);
         if (level->mScheduledUpdatesAreImmediate)
             return boost::shared_ptr<BlockEntity>();
         if (type == IMMEDIATE)
@@ -1687,17 +1687,17 @@ boost::shared_ptr<BlockEntity> LevelChunk::getBlockEntity(const BlockPos& pos, E
         {
             mPendingBlockEntities.push_back(pos);
         }
-        EnterCriticalSection(&sLevelChunkBlockEntityMutex);
+        EnterCriticalSection(&m_csTileEntities);
         it = mBlockEntityMap.find(pos);
     }
     if (it != mBlockEntityMap.end())
         result = it->second;
-    LeaveCriticalSection(&sLevelChunkBlockEntityMutex);
+    LeaveCriticalSection(&m_csTileEntities);
     if (result && result->isRemoved())
     {
-        EnterCriticalSection(&sLevelChunkBlockEntityMutex);
+        EnterCriticalSection(&m_csTileEntities);
         mBlockEntityMap.erase(pos);
-        LeaveCriticalSection(&sLevelChunkBlockEntityMutex);
+        LeaveCriticalSection(&m_csTileEntities);
         return boost::shared_ptr<BlockEntity>();
     }
     return result;
@@ -1723,16 +1723,16 @@ void LevelChunk::setBlockEntity(const BlockPos& pos, boost::shared_ptr<BlockEnti
         if (old != mBlockEntityMap.end())
             old->second->setRemoved();
         entity->clearRemoved();
-        EnterCriticalSection(&sLevelChunkBlockEntityMutex);
+        EnterCriticalSection(&m_csTileEntities);
         mBlockEntityMap[pos] = entity;
-        LeaveCriticalSection(&sLevelChunkBlockEntityMutex);
+        LeaveCriticalSection(&m_csTileEntities);
     }
 }
 void LevelChunk::removeBlockEntity(const BlockPos& pos)
 {
     if (mLoaded)
     {
-        EnterCriticalSection(&sLevelChunkBlockEntityMutex);
+        EnterCriticalSection(&m_csTileEntities);
         BlockEntityMap::iterator it = mBlockEntityMap.find(pos);
         if (it != mBlockEntityMap.end())
         {
@@ -1741,7 +1741,7 @@ void LevelChunk::removeBlockEntity(const BlockPos& pos)
             if (removed.get() != NULL)
                 removed->setRemoved();
         }
-        LeaveCriticalSection(&sLevelChunkBlockEntityMutex);
+        LeaveCriticalSection(&m_csTileEntities);
     }
 }
 void LevelChunk::load(bool blockEntitiesOnly)
@@ -1813,17 +1813,17 @@ void LevelChunk::load(bool blockEntitiesOnly)
     }
     mUnloaded = false;
     std::vector<boost::shared_ptr<BlockEntity> > blockEntities;
-    EnterCriticalSection(&sLevelChunkBlockEntityMutex);
+    EnterCriticalSection(&m_csTileEntities);
     for (BlockEntityMap::iterator it = mBlockEntityMap.begin(); it != mBlockEntityMap.end(); ++it)
         blockEntities.push_back(it->second);
-    LeaveCriticalSection(&sLevelChunkBlockEntityMutex);
+    LeaveCriticalSection(&m_csTileEntities);
     level->addAllPendingBlockEntities(blockEntities);
     if (!blockEntitiesOnly)
     {
-        EnterCriticalSection(&sLevelChunkEntityMutex);
+        EnterCriticalSection(&m_csEntities);
         for (int i = 0; i < mEntitySectionCount; ++i)
             level->addEntities(mEntitySections[i]);
-        LeaveCriticalSection(&sLevelChunkEntityMutex);
+        LeaveCriticalSection(&m_csEntities);
     }
 }
 void LevelChunk::unload(bool removeBlockEntities, bool removeEntities)
@@ -1831,17 +1831,17 @@ void LevelChunk::unload(bool removeBlockEntities, bool removeEntities)
     mLoaded = false;
     if (removeBlockEntities)
     {
-        EnterCriticalSection(&sLevelChunkBlockEntityMutex);
+        EnterCriticalSection(&m_csTileEntities);
         for (BlockEntityMap::iterator it = mBlockEntityMap.begin(); it != mBlockEntityMap.end(); ++it)
             level->markForRemoval(it->second);
-        LeaveCriticalSection(&sLevelChunkBlockEntityMutex);
+        LeaveCriticalSection(&m_csTileEntities);
     }
     if (removeEntities)
     {
-        EnterCriticalSection(&sLevelChunkEntityMutex);
+        EnterCriticalSection(&m_csEntities);
         for (int i = 0; i < mEntitySectionCount; ++i)
             level->removeEntities(mEntitySections[i]);
-        LeaveCriticalSection(&sLevelChunkEntityMutex);
+        LeaveCriticalSection(&m_csEntities);
     }
     if (!mUnloaded)
     {
@@ -1852,7 +1852,7 @@ void LevelChunk::unload(bool removeBlockEntities, bool removeEntities)
             mPendingBlockEntityTag = new CompoundTag();
             PIXBeginNamedEvent(0.0f, "Saving entities");
             ListTag* entities = new ListTag();
-            EnterCriticalSection(&sLevelChunkEntityMutex);
+            EnterCriticalSection(&m_csEntities);
             for (int i = 0; i < mEntitySectionCount; ++i)
             {
                 std::vector<boost::shared_ptr<Entity> >& section = *mEntitySections[i];
@@ -1865,7 +1865,7 @@ void LevelChunk::unload(bool removeBlockEntities, bool removeEntities)
                 }
                 section.clear();
             }
-            LeaveCriticalSection(&sLevelChunkEntityMutex);
+            LeaveCriticalSection(&m_csEntities);
             mPendingBlockEntityTag->put(L"Entities", entities);
             PIXEndNamedEvent();
             PIXBeginNamedEvent(0.0f, "Saving block entities");
@@ -1908,7 +1908,7 @@ void LevelChunk::unload(bool removeBlockEntities, bool removeEntities)
 }
 bool LevelChunk::containsPlayer()
 {
-    EnterCriticalSection(&sLevelChunkEntityMutex);
+    EnterCriticalSection(&m_csEntities);
     for (int section = 0; section < mEntitySectionCount; ++section)
     {
         std::vector<boost::shared_ptr<Entity> >* entities = mEntitySections[section];
@@ -1917,12 +1917,12 @@ bool LevelChunk::containsPlayer()
             boost::shared_ptr<Entity>& entity = entities->at(index);
             if (entity->GetType() == EntityType::SERVER_PLAYER)
             {
-                LeaveCriticalSection(&sLevelChunkEntityMutex);
+                LeaveCriticalSection(&m_csEntities);
                 return true;
             }
         }
     }
-    LeaveCriticalSection(&sLevelChunkEntityMutex);
+    LeaveCriticalSection(&m_csEntities);
     return false;
 }
 bool LevelChunk::isUnloaded()
@@ -2056,10 +2056,10 @@ void LevelChunk::getEntitiesOfClass(const std::type_info& type, const AABB* box,
 int LevelChunk::countEntities()
 {
     int count = 0;
-    EnterCriticalSection(&sLevelChunkEntityMutex);
+    EnterCriticalSection(&m_csEntities);
     for (int section = 0; section < mEntitySectionCount; ++section)
         count += (int)mEntitySections[section]->size();
-    LeaveCriticalSection(&sLevelChunkEntityMutex);
+    LeaveCriticalSection(&m_csEntities);
     return count;
 }
 bool LevelChunk::shouldSave(bool force)
@@ -2145,9 +2145,9 @@ bool LevelChunk::isEmpty()
 }
 void LevelChunk::staticCtor()
 {
-    InitializeCriticalSection(&sLevelChunkLightingMutex);
-    InitializeCriticalSection(&sLevelChunkEntityMutex);
-    InitializeCriticalSection(&sLevelChunkBlockEntityMutex);
+    InitializeCriticalSection(&m_csLighting);
+    InitializeCriticalSection(&m_csEntities);
+    InitializeCriticalSection(&m_csTileEntities);
 }
 void LevelChunk::postProcess()
 {
@@ -2491,11 +2491,11 @@ void LevelChunk::setChunkVersion(int version)
 }
 void LevelChunk::swapEntities(LevelChunk* chunk)
 {
-    EnterCriticalSection(&sLevelChunkEntityMutex);
+    EnterCriticalSection(&m_csEntities);
     std::vector<boost::shared_ptr<Entity> >** sections = chunk->mEntitySections;
     chunk->mEntitySections = mEntitySections;
     mEntitySections = sections;
-    LeaveCriticalSection(&sLevelChunkEntityMutex);
+    LeaveCriticalSection(&m_csEntities);
 }
 int LevelChunk::PackBlockPos(const BlockPos& pos)
 {
