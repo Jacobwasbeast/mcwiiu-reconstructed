@@ -29,6 +29,7 @@ class Vec3;
 class ItemInstance;
 class Entity;
 class MiniGameDef;
+class MultiplayerLocalPlayer;
 
 class MultiPlayerGameMode : public GameMode
 {
@@ -71,9 +72,9 @@ public:
     Tutorial* getTutorial();
     void releaseUsingItem(boost::shared_ptr<Player> player);
     bool isServerControlledInventory();
-    boost::shared_ptr<Player> GetLocalPlayer();
+    boost::shared_ptr<MultiplayerLocalPlayer> GetLocalPlayer();
     bool SpectateSoundEnabled();
-    double CalcSpectateSoundAllowance();
+    float CalcSpectateSoundAllowance();
     bool CanMakeSpectateSound();
     void MakeSpectateSound();
     bool isCutScene();

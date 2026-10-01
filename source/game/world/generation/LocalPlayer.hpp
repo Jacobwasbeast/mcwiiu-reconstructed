@@ -102,7 +102,7 @@ public:
     unsigned int pickBlock(bool);
     unsigned char handleMouseClick(int);
     unsigned int creativeModeHandleMouseClick(int, bool);
-    unsigned long long handleMouseDown(int, bool);
+    void handleMouseDown(int, bool);
     void SetWaitingForScoreboard(bool);
     void updateRichPresence();
     void ResetPercentageTraversed();

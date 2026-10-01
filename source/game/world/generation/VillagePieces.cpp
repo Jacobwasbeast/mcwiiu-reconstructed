@@ -264,23 +264,27 @@ VillagePieces::VillagePiece::VillagePiece(StartPiece* startPiece, int depth)
 
 VillagePieces::VillagePiece::VillagePiece()
     : StructurePiece(),
-      mAverageGroundHeight(-1),
-      mVillagerCount(0),
-      mType(0),
-      mIsZombieVillage(false),
-      mCobblestoneSelector(NULL),
       mFirstBools(),
       mSecondBools(),
       mFirstInts(),
       mSecondInts(),
       mStartPiece(NULL)
 {
+    mAverageGroundHeight = -1;
+    mVillagerCount = 0;
+    mType = 0;
+    mIsZombieVillage = false;
+    mSecondBools.clear();
+    mFirstInts.clear();
+    mFirstBools.clear();
+    mSecondInts.clear();
     mCobblestoneSelector = new CobbleStoneSelector(mIsZombieVillage, mType);
 }
 
 VillagePieces::VillagePiece::~VillagePiece()
 {
     delete mCobblestoneSelector;
+    mCobblestoneSelector = NULL;
 }
 
 void VillagePieces::VillagePiece::setStructureType(int type)
@@ -516,8 +520,13 @@ void VillagePieces::VillagePiece::placeTorch(Level* level, const Direction* dire
 {
     if (!mIsZombieVillage)
     {
-        TypedBoxed<const Direction*> facing(direction);
-        placeBlock(level, Blocks::torch->defaultBlockState()->setBoxedValue(TorchBlock::FACING, &facing), x, y, z, box);
+        const BlockState* torch = Blocks::torch->defaultBlockState();
+        const BlockState* state;
+        {
+            TypedBoxed<const Direction*> facing(direction);
+            state = torch->setBoxedValue(TorchBlock::FACING, &facing);
+        }
+        placeBlock(level, state, x, y, z, box);
     }
 }
 
@@ -528,10 +537,12 @@ void VillagePieces::VillagePiece::placeBlock(Level* level, Random& random, const
     if (selector == NULL)
     {
         StructurePiece::placeBlock(level, state, x, y, z, box);
-        return;
     }
-    selector->next(random, x, y, z, false);
-    StructurePiece::placeBlock(level, selector->getNext(), x, y, z, box);
+    else
+    {
+        selector->next(random, x, y, z, false);
+        StructurePiece::placeBlock(level, selector->getNext(), x, y, z, box);
+    }
 }
 
 VillagePieces::Well::Well(StartPiece* startPiece, int depth, Random& random, int x, int z)
@@ -983,7 +994,7 @@ void VillagePieces::SimpleHouse::readAdditionalSaveData(DataInputStream* input, 
 {
     VillagePiece::readAdditionalSaveData(input, manager);
     if (StructureFeatureIO::getVersion() == 1)
-        mIsRoofAccessible = mFirstBools.empty() ? false : mFirstBools[0];
+        mIsRoofAccessible = mSecondBools.empty() ? false : mSecondBools[0];
     else
         mIsRoofAccessible = input->readBoolean();
 }
@@ -1289,9 +1300,7 @@ EStructurePiece VillagePieces::BookHouse::GetType()
 }
 
 VillagePieces::SmallHut::SmallHut()
-    : VillagePiece(),
-      mIsTallHouse(false),
-      mTablePosition(0)
+    : VillagePiece()
 {
 }
 
@@ -1434,7 +1443,7 @@ void VillagePieces::SmallHut::readAdditionalSaveData(DataInputStream* input, Str
     if (StructureFeatureIO::getVersion() == 1)
     {
         mTablePosition = mFirstInts.empty() ? 0 : mFirstInts[0];
-        mIsTallHouse = mFirstBools.empty() ? false : mFirstBools[0];
+        mIsTallHouse = mSecondBools.empty() ? false : mSecondBools[0];
     }
     else
     {
@@ -1578,7 +1587,9 @@ bool VillagePieces::PigHouse::postProcess(Level* level, Random& random, Bounding
 
 int VillagePieces::PigHouse::getVillagerProfession(int index, int profession)
 {
-    return index == 0 ? 4 : profession;
+    if (index == 0)
+        return 4;
+    return VillagePiece::getVillagerProfession(index, profession);
 }
 
 StructurePiece* VillagePieces::PigHouse::Create()
@@ -1592,8 +1603,7 @@ EStructurePiece VillagePieces::PigHouse::GetType()
 }
 
 VillagePieces::TwoRoomHouse::TwoRoomHouse()
-    : VillagePiece(),
-      mHasPlacedChest(false)
+    : VillagePiece()
 {
 }
 
@@ -1786,8 +1796,7 @@ EStructurePiece VillagePieces::TwoRoomHouse::GetType()
 }
 
 VillagePieces::Smithy::Smithy()
-    : VillagePiece(),
-      mHasPlacedChest(false)
+    : VillagePiece()
 {
 }
 
@@ -2002,8 +2011,8 @@ Block* VillagePieces::Farmland::selectOldCrops(int crop)
 void VillagePieces::Farmland::addAdditionalSaveData(DataOutputStream* output)
 {
     VillagePiece::addAdditionalSaveData(output);
-    output->writeInt(Block::getId(mCropA));
-    output->writeInt(Block::getId(mCropB));
+    output->writeInt(Block::blockRegistry->getId(mCropA));
+    output->writeInt(Block::blockRegistry->getId(mCropB));
 }
 
 void VillagePieces::Farmland::readAdditionalSaveData(DataInputStream* input, StructureManager* manager)
@@ -2146,10 +2155,10 @@ Block* VillagePieces::DoubleFarmland::selectOldCrops(int crop)
 void VillagePieces::DoubleFarmland::addAdditionalSaveData(DataOutputStream* output)
 {
     VillagePiece::addAdditionalSaveData(output);
-    output->writeInt(Block::getId(mCropA));
-    output->writeInt(Block::getId(mCropB));
-    output->writeInt(Block::getId(mCropC));
-    output->writeInt(Block::getId(mCropD));
+    output->writeInt(Block::blockRegistry->getId(mCropA));
+    output->writeInt(Block::blockRegistry->getId(mCropB));
+    output->writeInt(Block::blockRegistry->getId(mCropC));
+    output->writeInt(Block::blockRegistry->getId(mCropD));
 }
 
 void VillagePieces::DoubleFarmland::readAdditionalSaveData(DataInputStream* input, StructureManager* manager)

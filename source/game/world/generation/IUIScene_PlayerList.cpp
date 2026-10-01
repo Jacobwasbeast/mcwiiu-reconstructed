@@ -4,6 +4,7 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/network/CGameNetworkManager.hpp"
@@ -123,32 +124,51 @@ bool IUIScene_PlayerList::hasAPlayerChanged()
 void IUIScene_PlayerList::BuildPlayerInfo(INetworkPlayer* player, PlayerInfo* info)
 {
     info->smallId = player->GetSmallId();
-    info->voiceStatus = 0;
-    info->name = player->GetDisplayName();
+
+    std::wstring displayName(L"");
+    displayName = player->GetDisplayName();
+
+    char voiceStatus = 0;
     if (player->HasVoice())
-        info->voiceStatus = player->IsTalking() ? 3 : (player->IsMutedByLocalUser(0) ? 2 : 1);
-    info->colour = static_cast<unsigned short>(g_pApp->GetPlayerColour(info->smallId));
+    {
+        if (player->IsMutedByLocalUser(GetPad()))
+        {
+            voiceStatus = 3;
+        }
+        else
+        {
+            voiceStatus = 1;
+            if (player->IsTalking())
+            {
+                voiceStatus = 2;
+            }
+        }
+    }
+
+    info->voiceStatus = voiceStatus;
+    info->colour = static_cast<short>(gApp.GetPlayerColour(info->smallId));
+    info->name = displayName;
 }
 
 PlayerInfo* IUIScene_PlayerList::CreatePlayerInfo()
 {
-    PlayerInfo* info = new PlayerInfo;
-    info->smallId = 0;
-    info->voiceStatus = 0;
-    info->colour = 0;
-    return info;
+    return new PlayerInfo();
 }
 
 int IUIScene_PlayerList::FindPlayer(unsigned char smallId)
 {
-    UIControl_ButtonList* list = GetPlayerList();
-    if (list == NULL)
-        return -1;
-    for (int index = 0; index < list->getItemCount(); ++index)
+    for (int index = 0; index < GetPlayerCount(); ++index)
     {
-        PlayerInfo* info = GetPlayer(index);
-        if (info != NULL && info->smallId == smallId)
+        if (GetPlayer(index)->smallId == smallId)
+        {
+            if (GetPlayerList()->getCurrentSelection() != GetPlayerList()->getItemCount() - 1)
+            {
+                return index;
+            }
+            int selection = GetPlayerList()->getItemCount() - 2;
+            GetPlayerList()->setCurrentSelection(selection < 0 ? 0 : selection, false, false);
             return index;
+        }
     }
     return -1;
 }

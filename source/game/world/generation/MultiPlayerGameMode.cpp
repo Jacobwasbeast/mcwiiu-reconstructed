@@ -52,13 +52,19 @@
 
 MultiPlayerGameMode::MultiPlayerGameMode(int playerId, ClientPacketListener* connection, int userIndex,
                                          bool primaryPlayer, bool splitScreen)
-    : GameMode(), mDestroying(false), mDestroyBlockPos(-1, -1, -1), mDestroyProgress(0.0f), mDestroyTicks(0),
-      mDestroyDelay(0), mConnection(connection), mPlayerId(playerId), mPrimaryPlayer(primaryPlayer),
-      mCarriedItemSlot(0), mGameModeConstraints(new GameModeConstraints(playerId)), mTutorial(0), mTeamInvites(),
-      mSpectateSoundAllowance(5.0f), mSpectateSoundTime(System::processTimeInMilliSecs())
 {
+    mDestroyBlockPos = BlockPos(-1, -1, -1);
     mDestroyItem = ItemInstance::EMPTY;
     mGameType = GameType::SURVIVAL;
+    mDestroying = false;
+    mDestroyProgress = 0.0f;
+    mDestroyTicks = 0;
+    mDestroyDelay = 0;
+    mConnection = connection;
+    mPlayerId = playerId;
+    mPrimaryPlayer = primaryPlayer;
+    mCarriedItemSlot = 0;
+    mGameModeConstraints = new GameModeConstraints(playerId);
     if (!Minecraft::InMiniGame(eMiniGameId_Any, true) && !splitScreen)
     {
         if (mPrimaryPlayer)
@@ -75,6 +81,9 @@ MultiPlayerGameMode::MultiPlayerGameMode(int playerId, ClientPacketListener* con
     {
         mTutorial = new GameModeTutorial(playerId, mGameModeConstraints, userIndex);
     }
+    mTeamInvites = std::vector<TeamInvite*>();
+    mSpectateSoundAllowance = 5.0f;
+    mSpectateSoundTime = System::processTimeInMilliSecs();
 }
 
 MultiPlayerGameMode::~MultiPlayerGameMode()
@@ -446,46 +455,54 @@ bool MultiPlayerGameMode::continueDestroyBlock(const BlockPos& pos, const Direct
         return true;
     }
 
+    bool result;
     if (!sameDestroyTarget(pos))
-        return startDestroyBlock(pos, direction);
-
-    const BlockState* state = mMinecraft->mLevel->getBlockState(pos);
-    if (state->getMaterial() == Material::AIR)
     {
-        mDestroying = false;
-        return false;
+        result = startDestroyBlock(pos, direction);
     }
-
-    if (isSpectator() && Minecraft::GetInstance()->GetMiniGame()->HasSpectatorParticipation())
-        mDestroyProgress += 0.02f;
     else
-        mDestroyProgress += state->getDestroyProgress(mMinecraft->mPlayer, mMinecraft->mPlayer->mLevel, pos);
-
-    if ((mDestroyTicks & 3) == 0)
     {
-        const SoundType* soundType = state->getBlock()->getSoundType();
-        const float volume = (soundType->getVolume() + 1.0f) * 0.125f;
-        const float pitch = soundType->getPitch() * 0.5f;
-        mMinecraft->mSoundEngine->play(soundType->getHitSound(),
-            static_cast<float>(pos.x) + 0.5f, static_cast<float>(pos.y) + 0.5f,
-            static_cast<float>(pos.z) + 0.5f, volume, pitch, 0);
-    }
-    ++mDestroyTicks;
+        const BlockState* state = mMinecraft->mLevel->getBlockState(pos);
+        Block* block = state->getBlock();
+        if (block->mMaterial == Material::AIR)
+        {
+            mDestroying = false;
+            return false;
+        }
 
-    if (mDestroyProgress >= 1.0f)
-    {
-        mDestroying = false;
-        mConnection->send(boost::shared_ptr<Packet>(new ServerboundPlayerActionPacket(
-            ServerboundPlayerActionPacket::STOP_DESTROY_BLOCK, pos, direction, 0)));
-        destroyBlock(pos);
-        mDestroyTicks = 0;
-        mDestroyDelay = 5;
-        mDestroyProgress = 0.0f;
-    }
+        if (isSpectator() && Minecraft::GetInstance()->GetMiniGame()->HasSpectatorParticipation())
+            mDestroyProgress += 0.02f;
+        else
+            mDestroyProgress += state->getDestroyProgress(mMinecraft->mPlayer, mMinecraft->mPlayer->mLevel, pos);
 
-    mMinecraft->mLevel->destroyBlockProgress(mMinecraft->mPlayer->getId(), mDestroyBlockPos,
-        static_cast<int>(mDestroyProgress * 10.0f) - 1);
-    return true;
+        if ((mDestroyTicks & 3) == 0)
+        {
+            const SoundType* soundType = block->getSoundType();
+            const SoundEvent* hitSound = soundType->getHitSound();
+            const float volume = (block->mSoundType->getVolume() + 1.0f) * 0.125f;
+            const float pitch = block->mSoundType->getPitch() * 0.5f;
+            mMinecraft->mSoundEngine->play(hitSound,
+                static_cast<float>(pos.x) + 0.5f, static_cast<float>(pos.y) + 0.5f,
+                static_cast<float>(pos.z) + 0.5f, volume, pitch, 0);
+        }
+        ++mDestroyTicks;
+
+        if (mDestroyProgress >= 1.0f)
+        {
+            mDestroying = false;
+            mConnection->send(boost::shared_ptr<Packet>(new ServerboundPlayerActionPacket(
+                ServerboundPlayerActionPacket::STOP_DESTROY_BLOCK, pos, direction, 0)));
+            destroyBlock(pos);
+            mDestroyTicks = 0;
+            mDestroyDelay = 5;
+            mDestroyProgress = 0.0f;
+        }
+
+        mMinecraft->mLevel->destroyBlockProgress(mMinecraft->mPlayer->getId(), mDestroyBlockPos,
+            static_cast<int>(mDestroyProgress * 10.0f) - 1);
+        result = true;
+    }
+    return result;
 }
 void MultiPlayerGameMode::stopDestroyBlock()
 {
@@ -526,54 +543,51 @@ bool MultiPlayerGameMode::isServerControlledInventory()
     }
     return result;
 }
-boost::shared_ptr<Player> MultiPlayerGameMode::GetLocalPlayer()
+boost::shared_ptr<MultiplayerLocalPlayer> MultiPlayerGameMode::GetLocalPlayer()
 {
-    return boost::static_pointer_cast<Player>(mMinecraft->mLocalPlayers[mPlayerId]);
+    return mMinecraft->mLocalPlayers[mPlayerId];
 }
 bool MultiPlayerGameMode::SpectateSoundEnabled()
 {
-    if (!Minecraft::InMiniGame(eMiniGameId_Any, true))
-        return false;
-    boost::shared_ptr<Player> player = GetLocalPlayer();
-    if (!player || !player->SpectateAsOtherEntity())
-        return false;
-    if (mMinecraft == NULL || mMinecraft->GetMiniGame() == NULL)
-        return false;
-    return !mMinecraft->GetMiniGame()->IsBatSqueakDisabled();
+    return Minecraft::InMiniGame(eMiniGameId_Any, true) && GetLocalPlayer()->SpectateAsOtherEntity()
+        && !GetMiniGame()->IsBatSqueakDisabled();
 }
-double MultiPlayerGameMode::CalcSpectateSoundAllowance()
+float MultiPlayerGameMode::CalcSpectateSoundAllowance()
 {
     const long long now = System::processTimeInMilliSecs();
     const float elapsed = static_cast<float>(now - static_cast<long long>(mSpectateSoundTime));
-    const float allowance = mSpectateSoundAllowance + static_cast<float>(elapsed * 5.0) / 8000.0f;
+    const float allowance = mSpectateSoundAllowance + elapsed * 5.0f / 8000.0f;
     if (allowance > 5.0f)
-        return 5.0;
+        return 5.0f;
     return allowance;
 }
 bool MultiPlayerGameMode::CanMakeSpectateSound()
 {
     if (!SpectateSoundEnabled())
         return false;
-    const uint64_t now = System::processTimeInMilliSecs();
-    return CalcSpectateSoundAllowance() >= 1.0 && now - mSpectateSoundTime > 300;
+    const float elapsed = static_cast<float>(
+        static_cast<long long>(System::processTimeInMilliSecs() - mSpectateSoundTime));
+    return CalcSpectateSoundAllowance() >= 1.0 && elapsed > 300.0f;
 }
 void MultiPlayerGameMode::MakeSpectateSound()
 {
-    boost::shared_ptr<Player> player = GetLocalPlayer();
+    boost::shared_ptr<MultiplayerLocalPlayer> player = GetLocalPlayer();
     const unsigned long long entityType = player->GetSpectateEntity();
-    const SoundEvent* sound = 0;
+    const SoundEvent* sound;
     if (entityType == EntityType::VEX)
         sound = SoundEvents::VEX_CHARGE;
     else if (entityType == EntityType::PARROT)
         sound = SoundEvents::PARROT_AMBIENT;
     else if (entityType == EntityType::BAT)
         sound = SoundEvents::BAT_AMBIENT;
-    if (!sound || !mConnection)
+    else
         return;
-    mSpectateSoundAllowance = static_cast<float>(CalcSpectateSoundAllowance() - 1.0);
+    mSpectateSoundAllowance = CalcSpectateSoundAllowance() - 1.0f;
     mSpectateSoundTime = System::processTimeInMilliSecs();
-    mConnection->send(boost::shared_ptr<Packet>(new ClientboundSoundPacket(
-        sound, SoundSource::eSoundSource_Master, player->mX, player->mY, player->mZ, 0.5f, 0.0f)));
+    mMinecraft->mSoundEngine->play(sound, static_cast<float>(player->mX), static_cast<float>(player->mY),
+                                   static_cast<float>(player->mZ), 0.5f, 0.0f, 0);
+    player->mPacketListener->send(boost::shared_ptr<Packet>(new ClientboundSoundPacket(
+        sound, SoundSource::eSoundSource_Players, player->mX, player->mY, player->mZ, 0.5f, 0.0f)));
 }
 bool MultiPlayerGameMode::isCutScene() { return false; }
 
@@ -593,12 +607,9 @@ void MultiPlayerGameMode::Follow(bool follow, bool immediate)
 }
 void MultiPlayerGameMode::StartSpectating()
 {
-    if (!mConnection)
-        return;
     GameModePacket::EmptyData data;
-    mConnection->send(GameModePacket::Create(GameModePacket::eMessage_StartSpectating, data));
-
-
+    Minecraft::GetInstance()->mLocalPlayers[mPlayerId]->mPacketListener->send(
+        GameModePacket::Create(GameModePacket::eMessage_StartSpectating, data));
 }
 bool MultiPlayerGameMode::startDestroyBlock(const BlockPos& pos, const Direction* direction)
 {
@@ -716,7 +727,7 @@ InteractionResult::EInteractionResult MultiPlayerGameMode::useItem(
 }
 void MultiPlayerGameMode::SetGameType(const GameType* gameType)
 {
-    boost::shared_ptr<Player> player = GetLocalPlayer();
+    boost::shared_ptr<MultiplayerLocalPlayer> player = mMinecraft->mLocalPlayers[mPlayerId];
     if (!mMinecraft->GetClientMasterGameMode()->IsRoundEnding() && gameType != GameType::LOBBY &&
         gameType == GameType::SPECTATOR && getTutorial() != 0)
     {
@@ -726,7 +737,7 @@ void MultiPlayerGameMode::SetGameType(const GameType* gameType)
         getTutorial()->onGameModeChange(mode);
     }
     mGameType = gameType;
-    if (!player->isPassenger())
+    if (!player->isSleeping())
         player->UpdateSize();
 }
 const GameType* MultiPlayerGameMode::GetGameType() { return mGameType; }
@@ -748,8 +759,7 @@ bool MultiPlayerGameMode::_destroyBlock(const BlockPos& pos)
 
     level->levelEvent(LevelEvent::PARTICLES_DESTROY_BLOCK, pos, Block::getIdWithData(state));
 
-    boost::shared_ptr<Player> player = GetLocalPlayer();
-    bool handled = block->playerWillDestroy(level, pos, state, player);
+    bool handled = block->playerWillDestroy(level, pos, state, mMinecraft->mLocalPlayers[mPlayerId]);
     if (!handled)
     {
         mMinecraft->mLevelRenderer->mDestroyedBlocks->destroyingBlockAt(level, pos);
@@ -765,9 +775,9 @@ bool MultiPlayerGameMode::_destroyBlock(const BlockPos& pos)
         not_null_ptr<ItemInstance> heldItem = mMinecraft->mPlayer->getMainHandItem();
         if (!heldItem->isEmpty())
         {
-            heldItem->mineBlock(level, state, pos, player);
+            heldItem->mineBlock(level, state, pos, mMinecraft->mPlayer);
             if (heldItem->isEmpty())
-                mMinecraft->mPlayer->setItemInHand(InteractionHand::eInteractionHand_MainHand, heldItem);
+                mMinecraft->mPlayer->setItemInHand(InteractionHand::eInteractionHand_MainHand, ItemInstance::EMPTY);
         }
     }
 
@@ -845,7 +855,7 @@ void MultiPlayerGameMode::handleDebugOptions(unsigned int option, boost::shared_
     player->mDebugOptions = option;
     mConnection->send(boost::shared_ptr<Packet>(new DebugOptionsPacket(option)));
 }
-const MiniGameDef* MultiPlayerGameMode::GetMiniGame() { return mMinecraft == 0 ? 0 : mMinecraft->GetMiniGame(); }
+const MiniGameDef* MultiPlayerGameMode::GetMiniGame() { return mMinecraft->GetMiniGame(); }
 Level* MultiPlayerGameMode::GetLevel()
 {
     return mMinecraft->mLevel;
@@ -853,7 +863,8 @@ Level* MultiPlayerGameMode::GetLevel()
 
 boost::shared_ptr<Player> MultiPlayerGameMode::GetPlayer()
 {
-    return GetLocalPlayer();
+    boost::shared_ptr<MultiplayerLocalPlayer> player = GetLocalPlayer();
+    return player;
 }
 void MultiPlayerGameMode::OnMouseDown() {}
 
@@ -867,10 +878,9 @@ std::vector<TeamInvite*>::iterator MultiPlayerGameMode::FindTeamInvite(unsigned 
 
 void MultiPlayerGameMode::SyncTeamInvite(TeamInvite* invite)
 {
-    if (invite == 0) return;
     std::vector<TeamInvite*>::iterator it = FindTeamInvite(invite->m_uTeamID);
     if (it == mTeamInvites.end()) mTeamInvites.push_back(invite);
-    else *it = invite;
+    else delete invite;
 }
 
 void MultiPlayerGameMode::RemoveTeamInvite(unsigned int teamId)
@@ -952,12 +962,11 @@ void MultiPlayerGameMode::LeaveTeam()
         return;
 
     Scoreboard* scoreboard = Minecraft::GetInstance()->mLevel->GetScoreboard();
-    boost::shared_ptr<Player> player = GetPlayer();
-    PlayerTeam* team = scoreboard->getPlayersTeam(player->getSUID());
+    PlayerTeam* team = scoreboard->getPlayersTeam(GetPlayer()->mXuid);
     if (team != 0)
     {
         GameModePacket::EmptyData data;
-        mConnection->send(GameModePacket::Create(GameModePacket::eMessage_LeaveTeam, data));
+        GetLocalPlayer()->mPacketListener->send(GameModePacket::Create(GameModePacket::eMessage_LeaveTeam, data));
     }
 }
 bool MultiPlayerGameMode::RecordLastCheckpoint(int checkpoint, int, bool, bool, bool)

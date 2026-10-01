@@ -36,9 +36,8 @@ public:
     virtual bool RemovePlayer(unsigned char smallId) = 0;
     virtual void AddPlayer(unsigned char smallId) = 0;
     virtual UIControl_ButtonList* GetPlayerList() = 0;
-    virtual int GetPad() = 0;
-
     virtual void UpdatePlayer(int index, PlayerInfo* oldInfo, PlayerInfo* newInfo);
+    virtual int GetPad() = 0;
 
     void tick();
     bool hasAPlayerChanged();

@@ -78,6 +78,7 @@
 #include "game/minigame/Tutorial.hpp"
 #include "game/item/PowerupItems.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/LevelData.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/BlockState.hpp"
@@ -232,7 +233,7 @@ LocalPlayer::~LocalPlayer()
 
 bool LocalPlayer::hasPermission(EGameCommand command)
 {
-    return mPermissionLevel > 0;
+    return mLevel->getLevelData()->getAllowCommands();
 }
 
 BlockPos LocalPlayer::getCommandSenderBlockPosition()
@@ -357,23 +358,38 @@ bool LocalPlayer::isInWall()
     mInWallCacheY = mY;
     mInWallCacheZ = mZ;
 
+    BlockPos lastPos(INT_MIN, INT_MIN, INT_MIN);
     double eyeHeight = getEyeHeight();
+    int blockX = 0;
+    int blockZ = 0;
 
     for (int i = 0; i < 8; ++i)
     {
-        double y = mY + eyeHeight + (double)(((i & 1) != 0 ? 0.5f : -0.5f) * 0.1f);
-        double x = mX + (double)(((i & 2) != 0 ? 0.5f : -0.5f) * mBbWidth * 0.8f);
-        double z = mZ + (double)(((i & 4) != 0 ? 0.5f : -0.5f) * mBbWidth * 0.8f);
-
-        BlockPos pos(Mth::floor(x), Mth::floor(y), Mth::floor(z));
-        const BlockState* state = mLevel->getBlockState(mTickCache, pos);
-        if (state->isSolid())
+        double y = mY + (double)(((float)((i >> 0) % 2) - 0.5f) * 0.1f) + eyeHeight;
+        int blockY = Mth::floor(y);
+        if ((i & 1) == 0)
         {
-            if (!Minecraft::InMiniGame(eMiniGameId_Any, true) ||
-                g_pApp->ShouldCollideWith(state->getBlock()))
+            double x = mX + (double)(((float)((i >> 1) % 2) - 0.5f) * mBbWidth * 0.8f);
+            blockX = Mth::floor(x);
+        }
+        if ((i & 2) == 0)
+        {
+            double z = mZ + (double)(((float)((i >> 2) % 2) - 0.5f) * mBbWidth * 0.8f);
+            blockZ = Mth::floor(z);
+        }
+
+        if (lastPos.x != blockX || lastPos.y != blockY || lastPos.z != blockZ)
+        {
+            lastPos = BlockPos(blockX, blockY, blockZ);
+            const BlockState* state = mLevel->getBlockState(mTickCache, lastPos);
+            if (state->isViewBlocking())
             {
-                mInWallCacheResult = true;
-                return true;
+                if (!Minecraft::InMiniGame(eMiniGameId_Any, true) ||
+                    g_pApp->ShouldCollideWith(state->getBlock()))
+                {
+                    mInWallCacheResult = true;
+                    return true;
+                }
             }
         }
     }
@@ -1528,7 +1544,7 @@ unsigned int LocalPlayer::pickBlock(bool select)
 unsigned char LocalPlayer::handleMouseClick(int button)
 {
     MultiPlayerGameMode* gameMode = mMinecraft->mGameModes[mUserIndex];
-    boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(shared_from_this());
+    boost::shared_ptr<LocalPlayer> player = boost::static_pointer_cast<LocalPlayer>(shared_from_this());
     HitResult* hitResult = mMinecraft->mHitResult;
     const InteractionHand::EInteractionHand hand = InteractionHand::eInteractionHand_MainHand;
 
@@ -1544,12 +1560,13 @@ unsigned char LocalPlayer::handleMouseClick(int button)
         {
             if (gameMode->hasMissTime())
                 mMissTime = 10;
-            resetAttackStrengthTicker();
+            player->resetAttackStrengthTicker();
             if (swing(hand))
             {
                 playSound(SoundEvents::PLAYER_ATTACK_WEAK, 0.6f, 1.0f);
-                mPacketListener->send(boost::shared_ptr<Packet>(new ClientboundSoundPacket(
-                    SoundEvents::PLAYER_ATTACK_WEAK, SoundSource::eSoundSource_Players, mX, mY, mZ, 0.6f, 1.0f)));
+                player->mPacketListener->send(boost::shared_ptr<Packet>(new ClientboundSoundPacket(
+                    SoundEvents::PLAYER_ATTACK_WEAK, SoundSource::eSoundSource_Players, player->mX, player->mY,
+                    player->mZ, 0.6f, 1.0f)));
             }
             return 0;
         }
@@ -1561,7 +1578,7 @@ unsigned char LocalPlayer::handleMouseClick(int button)
             {
                 if (gameMode->hasMissTime())
                     mMissTime = 10;
-                resetAttackStrengthTicker();
+                player->resetAttackStrengthTicker();
             }
             else
             {
@@ -1587,12 +1604,13 @@ unsigned char LocalPlayer::handleMouseClick(int button)
         {
             if (mCreativeRepeatState == 4)
                 return 0;
-            MultiplayerLocalPlayer* multiplayerPlayer =
-                dynamic_cast<MultiplayerLocalPlayer*>(this);
-            if (multiplayerPlayer != NULL && mPacketListener != NULL)
+            boost::shared_ptr<MultiplayerLocalPlayer> multiplayerPlayer =
+                boost::dynamic_pointer_cast<MultiplayerLocalPlayer>(shared_from_this());
+            if (multiplayerPlayer && multiplayerPlayer->mPacketListener != NULL)
                 multiplayerPlayer->StopSleeping();
-            return 0;
         }
+        if (isSleeping() && mLevel != NULL && mLevel->mIsClientSide)
+            return 0;
 
         if (Minecraft::InMiniGame(eMiniGameId_Glide, false))
         {
@@ -1603,12 +1621,12 @@ unsigned char LocalPlayer::handleMouseClick(int button)
                 if (!item->isEmpty())
                 {
                     boost::shared_ptr<MultiplayerLocalPlayer> multiplayerPlayer =
-                        boost::dynamic_pointer_cast<MultiplayerLocalPlayer>(player);
+                        boost::dynamic_pointer_cast<MultiplayerLocalPlayer>(shared_from_this());
                     if (multiplayerPlayer)
                     {
                         PowerupItems::UsePowerupItem(player, Item::getId(item->getItem()));
-                        multiplayerPlayer->mPacketListener->send(
-                            boost::shared_ptr<Packet>(new ServerboundUseItemPacket(hand)));
+                        boost::shared_ptr<ServerboundUseItemPacket> packet(new ServerboundUseItemPacket(hand));
+                        multiplayerPlayer->mPacketListener->send(packet);
                         item->shrink(1);
                         if (item->getCount() == 0)
                             setItemInHand(hand, ItemInstance::EMPTY);
@@ -1826,18 +1844,18 @@ unsigned int LocalPlayer::creativeModeHandleMouseClick(int button, bool pressed)
     return 0;
 }
 
-unsigned long long LocalPlayer::handleMouseDown(int button, bool pressed)
+void LocalPlayer::handleMouseDown(int button, bool pressed)
 {
     if (button == 0 && pressed)
     {
-        GetLocalGameMode()->OnMouseDown();
+        GetGameMode()->OnMouseDown();
     }
 
     if (isSpectator())
     {
         if (!Minecraft::GetInstance()->GetMiniGame()->HasSpectatorParticipation())
         {
-            return 0;
+            return;
         }
     }
 
@@ -1852,33 +1870,32 @@ unsigned long long LocalPlayer::handleMouseDown(int button, bool pressed)
         {
             if (pressed)
             {
-                HitResult* hitResult = mMinecraft->mHitResult;
-                if (hitResult == 0 || hitResult->mType != HitResult::BLOCK || button != 0)
+                if (mMinecraft->mHitResult == 0 || mMinecraft->mHitResult->mType != HitResult::BLOCK || button != 0)
                 {
                     mMinecraft->mGameMode->stopDestroyBlock();
-                    return 0;
+                    return;
                 }
 
                 if (!isUsingItem())
                 {
-                    BlockPos pos = hitResult->getBlockPos();
+                    BlockPos pos = mMinecraft->mHitResult->getBlockPos();
                     if (!doesLevelAllowBlockToBreak(pos))
                     {
-                        return 0;
+                        return;
                     }
-                    if (!mMinecraft->mGameMode->continueDestroyBlock(pos, hitResult->mDirection))
+                    if (!mMinecraft->mGameMode->continueDestroyBlock(pos, mMinecraft->mHitResult->mDirection))
                     {
-                        return 0;
+                        return;
                     }
-                    mMinecraft->mParticleEngine->crack(pos, hitResult->mDirection);
+                    mMinecraft->mParticleEngine->crack(pos, mMinecraft->mHitResult->mDirection);
                     swing(InteractionHand::eInteractionHand_MainHand);
-                    return 0;
+                    return;
                 }
             }
             mMinecraft->mGameMode->stopDestroyBlock();
         }
     }
-    return 0;
+    return;
 }
 
 void LocalPlayer::SetWaitingForScoreboard(bool waiting)
@@ -1892,53 +1909,40 @@ void LocalPlayer::updateRichPresence()
         return;
 
     not_null_ptr<ItemInstance> selected = mInventory->getSelected();
-    if (!selected->isEmpty())
+    if (!selected->isEmpty() && Item::getId(selected->getItem()) == ItemId::FISHING_ROD)
     {
-        Item* item = selected->getItem();
-        if (item != NULL)
+        gApp.SetRichPresenceContext(mUserIndex, 4);
+    }
+    else if (!selected->isEmpty() && Item::getId(selected->getItem()) == ItemId::FILLED_MAP)
+    {
+        gApp.SetRichPresenceContext(mUserIndex, 9);
+    }
+    else
+    {
+        if (isPassenger() && (getVehicle()->GetType() & EntityType::MINECART) == EntityType::MINECART)
         {
-            if (Item::getId(item) == ItemId::FISHING_ROD)
-            {
-                g_pApp->SetRichPresenceContext(mUserIndex, 4);
-                return;
-            }
-            if (Item::getId(item) == ItemId::FILLED_MAP)
-            {
-                g_pApp->SetRichPresenceContext(mUserIndex, 9);
-                return;
-            }
+            gApp.SetRichPresenceContext(mUserIndex, 2);
+        }
+        else if (isPassenger() && getVehicle()->GetType() == EntityType::BOAT)
+        {
+            gApp.SetRichPresenceContext(mUserIndex, 3);
+        }
+        else if (isPassenger() && getVehicle()->GetType() == EntityType::PIG)
+        {
+            gApp.SetRichPresenceContext(mUserIndex, 1);
+        }
+        else if (mDimension == -1)
+        {
+            gApp.SetRichPresenceContext(mUserIndex, 7);
+        }
+        else
+        {
+            int context = 0;
+            if (mMinecraft->mSoundEngine->GetIsPlayingStreamingCDMusic())
+                context = 8;
+            gApp.SetRichPresenceContext(mUserIndex, context);
         }
     }
-
-    if (mContainerMenu != NULL && mContainerMenu != mInventoryMenu)
-    {
-        if (dynamic_cast<EnchantmentMenu*>(mContainerMenu) != NULL)
-        {
-            g_pApp->SetRichPresenceContext(mUserIndex, 2);
-            return;
-        }
-        if (dynamic_cast<BrewingStandMenu*>(mContainerMenu) != NULL)
-        {
-            g_pApp->SetRichPresenceContext(mUserIndex, 3);
-            return;
-        }
-        if (dynamic_cast<AnvilMenu*>(mContainerMenu) != NULL)
-        {
-            g_pApp->SetRichPresenceContext(mUserIndex, 1);
-            return;
-        }
-    }
-
-    if (mDimension == -1)
-    {
-        g_pApp->SetRichPresenceContext(mUserIndex, 7);
-        return;
-    }
-
-    int context = 0;
-    if (mMinecraft != NULL && mMinecraft->isTutorial())
-        context = 8;
-    g_pApp->SetRichPresenceContext(mUserIndex, context);
 }
 
 void LocalPlayer::ResetPercentageTraversed()
@@ -1959,11 +1963,11 @@ bool LocalPlayer::canMoveOrBeMovedFromTo(double a, double b, double c, double d,
 {
     MultiPlayerGameMode* gameMode = mMinecraft->mGameModes[mUserIndex];
     GameModeConstraints* constraints = gameMode->getGameModeConstraints();
-    if (!constraints->canMoveToPosition(a, b, c, d, e, f, result))
+    if (constraints->canMoveToPosition(a, b, c, d, e, f, result))
         return false;
-    if (!g_pApp->DebugDevToolsOn() && mLevel->mIsClientSide)
+    if (!gApp.DebugDevToolsOn() && mLevel->mIsClientSide)
     {
-        if (!mLevel->reallyHasChunk((int)std::floor(d * 0.0625), (int)std::floor(f * 0.0625)))
+        if (!mLevel->reallyHasChunk(Mth::floor(d * 0.0625), Mth::floor(f * 0.0625)))
             return false;
     }
     return true;
@@ -2158,8 +2162,7 @@ void LocalPlayer::actuallyHurt(const DamageSource* source, float amount)
 
 void LocalPlayer::clientSideCloseContainer()
 {
-    not_null_ptr<ItemInstance> empty(new ItemInstance());
-    mInventory->setCarried(empty);
+    mInventory->setCarried(ItemInstance::EMPTY);
     Player::closeContainer();
     mMinecraft->setScreen(NULL);
     if (gConsoleUIController.IsContainerMenuDisplayed(mUserIndex))
@@ -2519,18 +2522,12 @@ void LocalPlayer::updateAutoJump(float xMovement, float zMovement)
 
 void LocalPlayer::mapPlayerChunk(unsigned int targetBlockId)
 {
-    int localX = (int)std::floor(mX) % 16;
+    int centerChunkX = mChunkX;
+    int centerChunkZ = mChunkZ;
     int localZ = (int)std::floor(mZ) % 16;
-    if (localX < 0)
-    {
-        localX += 16;
-    }
-    if (localZ < 0)
-    {
-        localZ += 16;
-    }
+    int localX = (int)std::floor(mX) % 16;
 
-    std::cout << "player in chunk (" << mChunkX << "," << mChunkZ << ") at ("
+    std::cout << "player in chunk (" << centerChunkX << "," << centerChunkZ << ") at ("
               << mX << "," << mY << "," << mZ << ")\n";
 
     for (int chunkZ = -1; chunkZ <= 1; ++chunkZ)
@@ -2539,47 +2536,42 @@ void LocalPlayer::mapPlayerChunk(unsigned int targetBlockId)
         {
             for (int chunkX = -1; chunkX <= 1; ++chunkX)
             {
-                LevelChunk* chunk = mLevel->getChunk(mChunkX + chunkX, mChunkZ + chunkZ);
                 for (int x = 0; x < 16; ++x)
                 {
-                    if (chunkX == 0 && chunkZ == 0 && x == localX && z == localZ)
+                    LevelChunk* chunk = mLevel->getChunk(centerChunkX + chunkX, centerChunkZ + chunkZ);
+                    if (x == localX && z == localZ && chunkX == 0 && chunkZ == 0)
                     {
-                        std::cout << 'O';
+                        std::cout << "O";
                         continue;
                     }
 
-                    int blockId = 0;
                     for (int y = 127; y > 0; --y)
                     {
-                        blockId = Block::getId(chunk->getBlock(BlockPos(x, y, z)));
+                        int blockId = Block::getId(chunk->getBlock(BlockPos(x, y, z)));
+                        if (targetBlockId != BlockId::AIR && blockId == (int)targetBlockId)
+                        {
+                            std::cout << "@";
+                            break;
+                        }
                         if (blockId != BlockId::AIR)
                         {
+                            if (blockId < 10)
+                            {
+                                std::cout << blockId;
+                            }
+                            else
+                            {
+                                std::cout << "#";
+                            }
                             break;
                         }
                     }
-
-                    if (targetBlockId != BlockId::AIR && blockId == (int)targetBlockId)
-                    {
-                        std::cout << '@';
-                    }
-                    else if (blockId == BlockId::AIR)
-                    {
-                        std::cout << ' ';
-                    }
-                    else if (blockId < 10)
-                    {
-                        std::cout << blockId;
-                    }
-                    else
-                    {
-                        std::cout << '#';
-                    }
                 }
             }
-            std::cout << '\n';
+            std::cout << "\n";
         }
-        std::cout << '\n';
     }
+    std::cout << "\n";
 }
 
 double LocalPlayer::getDamageTaken()
@@ -2599,20 +2591,23 @@ not_null_ptr<ItemInstance> LocalPlayer::getCarriedItem()
 
 MultiPlayerGameMode* LocalPlayer::GetLocalGameMode()
 {
+    MultiPlayerGameMode* gameMode = 0;
     if ((unsigned int)mUserIndex < 4)
     {
-        return mMinecraft->mGameModes[mUserIndex];
+        gameMode = mMinecraft->mGameModes[mUserIndex];
     }
-
-    for (int index = 0; index < 4; ++index)
+    else
     {
-        if (static_cast<const void*>(mMinecraft->mLocalPlayers[index].get()) ==
-            static_cast<const void*>(this))
+        for (int index = 0; index < 4; ++index)
         {
-            return mMinecraft->mGameModes[index];
+            if (mMinecraft->mLocalPlayers[index] && mMinecraft->mLocalPlayers[index].get() == this)
+            {
+                gameMode = mMinecraft->mGameModes[index];
+                break;
+            }
         }
     }
-    return 0;
+    return gameMode;
 }
 
 GameMode* LocalPlayer::GetGameMode()
