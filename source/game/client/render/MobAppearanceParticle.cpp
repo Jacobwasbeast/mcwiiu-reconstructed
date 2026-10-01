@@ -16,10 +16,6 @@ MobAppearanceParticle::MobAppearanceParticle(Level* level, double x, double y, d
 {
 }
 
-MobAppearanceParticle::~MobAppearanceParticle()
-{
-}
-
 int MobAppearanceParticle::getParticleTexture()
 {
     return 3;

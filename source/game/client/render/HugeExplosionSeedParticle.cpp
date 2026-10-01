@@ -14,10 +14,6 @@ HugeExplosionSeedParticle::HugeExplosionSeedParticle(Level* level, double x, dou
     lifetime = 8;
 }
 
-HugeExplosionSeedParticle::~HugeExplosionSeedParticle()
-{
-}
-
 void HugeExplosionSeedParticle::render(BufferBuilder* buffer, const boost::shared_ptr<Entity>& camera,
                                        float partialTicks, float xa, float ya, float za,
                                        float xa2, float za2)

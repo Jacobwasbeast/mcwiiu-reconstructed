@@ -19,10 +19,9 @@ class BoatModel : public Model, public TwoPassModel
 public:
     BoatModel(const ModelDefinition& definition);
 
-    virtual ~BoatModel();
 
     virtual void render(boost::shared_ptr<Entity>& entity, float partialTicks, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList);
-    virtual std::wstring getName();
+    virtual std::wstring getName() { return L"boat"; }
     virtual void renderSecondPass(boost::shared_ptr<Entity> entity, float partialTicks, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList);
 
     ModelPartSkin* makePaddle(bool left);

@@ -56,10 +56,6 @@ SheepFurModel::SheepFurModel(const ModelDefinition& modelDefinition)
     }
 }
 
-SheepFurModel::~SheepFurModel()
-{
-}
-
 void SheepFurModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing,
                                     float limbSwingAmount, float partialTicks)
 {

@@ -18,7 +18,6 @@ class OcelotModel : public Model
 public:
     OcelotModel();
     OcelotModel(const ModelDefinition& modelDefinition);
-    virtual ~OcelotModel();
 
     void LoadOcelotModelDefinition(const ModelDefinition& modelDefinition);
     virtual void render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount,
@@ -30,7 +29,7 @@ public:
                            boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments);
     virtual void prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing,
                                  float limbSwingAmount, float partialTicks);
-    virtual std::wstring getName();
+    virtual std::wstring getName() { return L"ocelot"; }
 
     ModelPart* mBackLegL;
     ModelPart* mBackLegR;

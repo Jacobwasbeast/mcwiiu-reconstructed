@@ -70,7 +70,6 @@ WolfModel::WolfModel(const ModelDefinition& modelDefinition):mHead(NULL),mBody(N
         builder->useDefaultShaders();
     }
 }
-WolfModel::~WolfModel(){}
 void WolfModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks,
                        float netHeadYaw, float headPitch, float scale, bool useDisplayList)
 {
@@ -166,8 +165,4 @@ void WolfModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTic
     mHead->mXRot = headPitch * 0.017453292f;
     mHead->mYRot = netHeadYaw * 0.017453292f;
     mTail->mXRot = ageInTicks;
-}
-std::wstring WolfModel::getName()
-{
-    return L"wolf";
 }

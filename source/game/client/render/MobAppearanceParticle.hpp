@@ -15,7 +15,6 @@ class MobAppearanceParticle : public Particle
 {
 public:
     MobAppearanceParticle(Level* level, double x, double y, double z);
-    virtual ~MobAppearanceParticle();
     virtual uint64_t GetType();
     virtual void tick();
     bool isAffected();

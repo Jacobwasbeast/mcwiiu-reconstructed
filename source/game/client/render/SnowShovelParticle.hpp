@@ -17,7 +17,6 @@ public:
                        double xa, double ya, double za);
     SnowShovelParticle(Level* level, double x, double y, double z,
                        double xa, double ya, double za, float scale);
-    virtual ~SnowShovelParticle();
     virtual uint64_t GetType();
     void init(Level* level, double x, double y, double z,
               double xa, double ya, double za, float scale);

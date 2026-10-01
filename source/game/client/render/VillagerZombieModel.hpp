@@ -17,10 +17,9 @@ public:
     VillagerZombieModel(const ModelDefinition& definition);
     VillagerZombieModel(float scale, float yOffset, bool armourModel, const ModelDefinition& definition);
 
-    virtual ~VillagerZombieModel();
 
     virtual void setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments);
-    virtual std::wstring getName();
+    virtual std::wstring getName() { return L"zombie.villager"; }
 
     void _init(float scale, float yOffset, bool armourModel, const ModelDefinition& definition);
 

@@ -14,9 +14,9 @@ class BedModel : public Model
 public:
     BedModel(const ModelDefinition& modelDefinition);
 
-    virtual ~BedModel();
+    virtual ~BedModel() {}
 
-    virtual std::wstring getName();
+    virtual std::wstring getName() { return L"bed"; }
 
     uint32_t modelVersion();
 

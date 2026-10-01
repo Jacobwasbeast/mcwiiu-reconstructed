@@ -17,7 +17,7 @@ public:
     virtual void render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount,
                         float ageInTicks, float netHeadYaw, float headPitch, float scale,
                         bool useDisplayList);
-    virtual std::wstring getName();
+    virtual std::wstring getName() { return L"llama"; }
 
     ModelPartSkin* mChest1;
     ModelPartSkin* mChest2;

@@ -18,7 +18,6 @@ public:
 
     WakeParticle(Level* level, double x, double y, double z,
                  double xa, double ya, double za);
-    virtual ~WakeParticle();
     virtual void tick();
     virtual uint64_t GetType();
 };

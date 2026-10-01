@@ -25,7 +25,6 @@ public:
                     float red, float green, float blue);
     RedDustParticle(Level* level, double x, double y, double z,
                     float alpha, float red, float green, float blue);
-    virtual ~RedDustParticle();
     void init(Level* level, double x, double y, double z,
               float alpha, float red, float green, float blue);
     virtual void render(BufferBuilder* buffer,

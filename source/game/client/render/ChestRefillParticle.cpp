@@ -12,10 +12,6 @@ ChestRefillParticle::ChestRefillParticle(Level* level, double x, double y, doubl
     _init(level, x, y, z, xa, ya, za, 1.0f);
 }
 
-ChestRefillParticle::~ChestRefillParticle()
-{
-}
-
 void ChestRefillParticle::render(BufferBuilder* buffer,
                                  const boost::shared_ptr<Entity>& camera,
                                  float partialTicks,

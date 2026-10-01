@@ -62,10 +62,6 @@ TurtleModel::TurtleModel(float scale, const ModelDefinition& modelDefinition)
     compileSkinnedDrawlist();
 }
 
-TurtleModel::~TurtleModel()
-{
-}
-
 void TurtleModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount,
                          float ageInTicks, float netHeadYaw, float headPitch, float scale,
                          bool useDisplayList)
@@ -165,7 +161,3 @@ void TurtleModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInT
     mLeg3->mZRot = 0.0f;
 }
 
-std::wstring TurtleModel::getName()
-{
-    return L"turtle";
-}

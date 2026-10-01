@@ -189,7 +189,3 @@ void GuardianModel::setupAnim(float limbSwing, float limbSwingAmount, float ageI
     mTailParts[2]->mZ = 6.0f;
 }
 
-std::wstring GuardianModel::getName()
-{
-    return L"guardian";
-}

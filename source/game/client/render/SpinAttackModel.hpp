@@ -14,7 +14,6 @@ class SpinAttackModel : public Model
 public:
     SpinAttackModel(const ModelDefinition& modelDefinition);
 
-    virtual ~SpinAttackModel();
 
     void renderSpin(boost::shared_ptr<Entity> entity, float ageInTicks, float scale, bool useDisplayList);
 

@@ -10,10 +10,6 @@ CritParticle::CritParticle(Level* level, double x, double y, double z,
     _init(level, x, y, z, xa, ya, za, 1.0f);
 }
 
-CritParticle::~CritParticle()
-{
-}
-
 void CritParticle::render(BufferBuilder* buffer,
                           const boost::shared_ptr<Entity>& camera,
                           float partialTicks,

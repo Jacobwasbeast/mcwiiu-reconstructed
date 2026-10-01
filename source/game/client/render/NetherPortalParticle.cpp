@@ -39,10 +39,6 @@ NetherPortalParticle::NetherPortalParticle(Level* level,
     setMiscTex(random.nextInt(8));
 }
 
-NetherPortalParticle::~NetherPortalParticle()
-{
-}
-
 void NetherPortalParticle::render(BufferBuilder* buffer,
                                   const boost::shared_ptr<Entity>& camera,
                                   float partialTicks,

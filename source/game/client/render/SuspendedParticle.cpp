@@ -25,10 +25,6 @@ SuspendedParticle::SuspendedParticle(Level* level, double x, double y, double z,
     lifetime = (int)(16.0f / (random.nextDouble() * 0.8 + 0.2));
 }
 
-SuspendedParticle::~SuspendedParticle()
-{
-}
-
 void SuspendedParticle::tick()
 {
     xo = x;

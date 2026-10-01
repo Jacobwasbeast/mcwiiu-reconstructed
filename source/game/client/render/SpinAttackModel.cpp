@@ -15,10 +15,6 @@ SpinAttackModel::SpinAttackModel(const ModelDefinition& modelDefinition)
     compileSkinnedDrawlist();
 }
 
-SpinAttackModel::~SpinAttackModel()
-{
-}
-
 void SpinAttackModel::renderSpin(boost::shared_ptr<Entity> entity, float ageInTicks, float scale, bool useDisplayList)
 {
     GlStateManager::pushMatrix();

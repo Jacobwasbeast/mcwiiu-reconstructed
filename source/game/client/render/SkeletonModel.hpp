@@ -26,11 +26,10 @@ public:
     SkeletonModel(float scale, bool armourModel, const ModelDefinition& definition);
     SkeletonModel(SkeletonType skeletonType, const ModelDefinition& definition);
 
-    virtual ~SkeletonModel();
 
     virtual void setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments);
     virtual void prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount, float partialTicks);
-    virtual std::wstring getName();
+    virtual std::wstring getName() { return L"skeleton"; }
     virtual void translateToHandItem(float scale, const HumanoidArm* arm);
 
     void _init(float scale, bool armourModel, SkeletonType skeletonType, const ModelDefinition& definition);

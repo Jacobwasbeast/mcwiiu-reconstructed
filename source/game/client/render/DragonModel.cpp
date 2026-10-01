@@ -273,10 +273,6 @@ DragonModel::DragonModel(const ModelDefinition& modelDefinition)
     }
 }
 
-DragonModel::~DragonModel()
-{
-}
-
 void DragonModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount, float partialTicks)
 {
     mPartialTicks = partialTicks;
@@ -500,7 +496,3 @@ void DragonModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, flo
     callSkinnedDrawlist();
 }
 
-std::wstring DragonModel::getName()
-{
-    return L"dragon";
-}

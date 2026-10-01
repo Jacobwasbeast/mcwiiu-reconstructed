@@ -45,10 +45,6 @@ MinecartModel::MinecartModel(const ModelDefinition& modelDefinition)
     compileSkinnedDrawlist();
 }
 
-MinecartModel::~MinecartModel()
-{
-}
-
 void MinecartModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)
 {
     mBottom->render(scale, useDisplayList, false);
@@ -60,7 +56,3 @@ void MinecartModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, f
     callSkinnedDrawlist();
 }
 
-std::wstring MinecartModel::getName()
-{
-    return L"minecart";
-}

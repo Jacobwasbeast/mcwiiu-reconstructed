@@ -29,10 +29,6 @@ EnderCrystalModel::EnderCrystalModel(float, bool renderBase, const ModelDefiniti
     compileSkinnedDrawlist();
 }
 
-EnderCrystalModel::~EnderCrystalModel()
-{
-}
-
 void EnderCrystalModel::render(boost::shared_ptr<Entity>&, float limbSwing, float,
                                float ageInTicks, float, float, float scale,
                                bool useDisplayList)

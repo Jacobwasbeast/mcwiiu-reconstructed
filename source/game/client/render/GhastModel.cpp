@@ -93,7 +93,3 @@ void GhastModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTi
     }
 }
 
-std::wstring GhastModel::getName()
-{
-    return L"ghast";
-}

@@ -12,18 +12,14 @@ BarrierParticle::BarrierParticle(Level* level, double x, double y, double z, Ite
     : Particle(level, x, y, z, 0.0, 0.0, 0.0)
 {
     setSprite(Blocks::barrier->getTexture(Direction::UP));
-    xd = 0.0;
-    yd = 0.0;
-    zd = 0.0;
     rCol = 1.0f;
     gCol = 1.0f;
     bCol = 1.0f;
+    xd = 0.0;
+    yd = 0.0;
+    zd = 0.0;
     gravity = 0.0f;
     lifetime = 80;
-}
-
-BarrierParticle::~BarrierParticle()
-{
 }
 
 int BarrierParticle::getParticleTexture()

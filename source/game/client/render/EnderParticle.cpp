@@ -21,7 +21,6 @@ EnderParticle::EnderParticle(Level* level, double x, double y, double z, double 
     hasPhysics = false;
     setMiscTex((int)(Math::random() * 8.0));
 }
-EnderParticle::~EnderParticle() {}
 void EnderParticle::render(BufferBuilder* buffer, const boost::shared_ptr<Entity>& camera, float partialTicks, float xa, float ya, float za, float xa2, float za2)
 {
     float progress = ((float)age + partialTicks) / (float)lifetime;

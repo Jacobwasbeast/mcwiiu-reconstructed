@@ -16,7 +16,6 @@ public:
     SkiModel(bool mirrored);
     SkiModel(const ModelDefinition& modelDefinition);
 
-    virtual ~SkiModel();
 
     void _init(bool mirrored);
 

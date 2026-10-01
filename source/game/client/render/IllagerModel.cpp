@@ -11,7 +11,6 @@
 #include "game/core/Mth.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 
-
 IllagerModel::IllagerModel(float scale, float yOffset, int texWidth, int texHeight, const ModelDefinition& modelDefinition)
 {
     if (modelDefinition.DoesOverrideModel())
@@ -197,11 +196,6 @@ void IllagerModel::setupAnim(float limbSwing, float limbSwingAmount, float ageIn
         mLeftArm->mZRot = 1.5707964f;
         mLeftArm->mYRot = mHead->mYRot - 0.4f;
     }
-}
-
-std::wstring IllagerModel::getName()
-{
-    return L"vindicator";
 }
 
 ModelPart* IllagerModel::getArm(const HumanoidArm* arm)

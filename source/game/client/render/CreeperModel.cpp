@@ -15,10 +15,6 @@ CreeperModel::CreeperModel(float delta, const ModelDefinition& modelDefinition)
     _init(delta, modelDefinition);
 }
 
-CreeperModel::~CreeperModel()
-{
-}
-
 void CreeperModel::_init(float delta, const ModelDefinition& modelDefinition)
 {
     if (modelDefinition.DoesOverrideModel())
@@ -89,7 +85,3 @@ void CreeperModel::setupAnim(float limbSwing, float limbSwingAmount, float ageIn
     mLeg3->mXRot = Mth::cos(swing) * 1.399999976158142f * limbSwingAmount;
 }
 
-std::wstring CreeperModel::getName()
-{
-    return L"creeper";
-}

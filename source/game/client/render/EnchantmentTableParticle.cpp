@@ -34,10 +34,6 @@ EnchantmentTableParticle::EnchantmentTableParticle(Level* level, double x, doubl
     setMiscTex((int)(Math::random() * 26.0) + 225);
 }
 
-EnchantmentTableParticle::~EnchantmentTableParticle()
-{
-}
-
 int EnchantmentTableParticle::getLightColor(float partialTicks)
 {
     int light = Particle::getLightColor(partialTicks);

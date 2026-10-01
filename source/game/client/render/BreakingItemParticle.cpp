@@ -27,10 +27,6 @@ BreakingItemParticle::BreakingItemParticle(Level* level, double x, double y, dou
     zd = zd * 0.10000000149011612 + za;
 }
 
-BreakingItemParticle::~BreakingItemParticle()
-{
-}
-
 int BreakingItemParticle::getParticleTexture()
 {
     return item->getIconType() != 0 ? 2 : 1;

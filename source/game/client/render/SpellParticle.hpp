@@ -10,7 +10,6 @@ public:
     SpellParticle(Level* level, double x, double y, double z,
                   double xa, double ya, double za);
     virtual uint64_t GetType();
-    virtual ~SpellParticle();
     virtual void tick();
     virtual bool isTransparent();
     void setBaseTex(int texture);

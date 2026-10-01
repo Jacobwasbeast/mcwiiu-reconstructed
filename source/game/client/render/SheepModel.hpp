@@ -15,7 +15,6 @@ class SheepModel : public QuadrupedModel
 {
 public:
     SheepModel(const ModelDefinition& modelDefinition);
-    virtual ~SheepModel();
 
     virtual void setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks,
                            float netHeadYaw, float headPitch, float scale,

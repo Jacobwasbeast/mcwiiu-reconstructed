@@ -10,7 +10,6 @@ class ConduitWindModel : public Model
 public:
     ConduitWindModel(int xTexOffs, int yTexOffs, int texWidth, int texHeight);
 
-    virtual ~ConduitWindModel();
 
     void renderWind(bool useDisplayList);
 

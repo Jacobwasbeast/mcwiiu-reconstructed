@@ -18,10 +18,6 @@ SuspendedTownParticle::SuspendedTownParticle(Level* level, double x, double y, d
     lifetime = (int)(20.0 / (random.nextDouble() * 0.8 + 0.2));
 }
 
-SuspendedTownParticle::~SuspendedTownParticle()
-{
-}
-
 void SuspendedTownParticle::tick()
 {
     xo = x;

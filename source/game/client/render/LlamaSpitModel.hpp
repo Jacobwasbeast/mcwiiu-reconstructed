@@ -13,7 +13,6 @@ public:
     LlamaSpitModel(const ModelDefinition& modelDefinition);
     LlamaSpitModel(float delta, const ModelDefinition& modelDefinition);
 
-    virtual ~LlamaSpitModel();
 
     virtual void render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount,
                         float ageInTicks, float netHeadYaw, float headPitch, float scale,

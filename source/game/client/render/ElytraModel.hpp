@@ -15,7 +15,6 @@ class ElytraModel : public Model
 public:
     ElytraModel(const ModelDefinition& modelDefinition);
 
-    virtual ~ElytraModel();
 
     virtual void render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount,
                         float ageInTicks, float netHeadYaw, float headPitch, float scale,

@@ -602,13 +602,13 @@ void LevelRenderer::createCloudMesh()
     }
 }
 
-unsigned char LevelRenderer::activePlayers()
+int LevelRenderer::activePlayers()
 {
-    unsigned char count = 0;
+    int count = 0;
 
-    for (int player = 0; player < 4; ++player)
+    for (int i = 0; i < 4; ++i)
     {
-        if (mLevels[player] != 0)
+        if (mLevels[i] != 0)
         {
             ++count;
         }
@@ -712,22 +712,26 @@ void LevelRenderer::resortChunks(int x, int y, int z, int dimension)
 
 void LevelRenderer::setLevel(int dimension, MultiPlayerLevel* level)
 {
-    if (dimension < 0 || dimension >= 4)
-        return;
-
     EnterCriticalSection(&mLevelMutex);
 
     Level* oldLevel = mLevels[dimension];
+
     if (oldLevel != 0)
     {
         int oldReferences = 0;
+
         for (int i = 0; i < 4; ++i)
         {
             if (mLevels[i] == oldLevel)
+            {
                 ++oldReferences;
+            }
         }
+
         if (oldReferences == 1)
+        {
             oldLevel->removeListener(this);
+        }
     }
 
     mLevels[dimension] = level;
@@ -735,16 +739,36 @@ void LevelRenderer::setLevel(int dimension, MultiPlayerLevel* level)
     mLastSortY[dimension] = -9999.0;
     mLastSortZ[dimension] = -9999.0;
 
-    if (mBlockRenderers[dimension] != 0)
+    BlockRenderer* oldRenderer = mBlockRenderers[dimension];
+
+    if (oldRenderer != 0)
     {
-        delete mBlockRenderers[dimension];
-        mBlockRenderers[dimension] = 0;
+        delete oldRenderer;
     }
 
-    if (level != 0)
-        mBlockRenderers[dimension] = new BlockRenderer(level);
+    mBlockRenderers[dimension] = new BlockRenderer(level);
 
-    if (level == 0)
+    if (level != 0)
+    {
+        int newReferences = 0;
+
+        for (int i = 0; i < 4; ++i)
+        {
+            if (mLevels[i] == level)
+            {
+                ++newReferences;
+            }
+        }
+
+        if (newReferences == 1)
+        {
+            level->addListener(this);
+        }
+
+        allChanged(dimension);
+        LeaveCriticalSection(&mLevelMutex);
+    }
+    else
     {
         if (mClipChunks[dimension].data != 0)
         {
@@ -753,34 +777,19 @@ void LevelRenderer::setLevel(int dimension, MultiPlayerLevel* level)
                 mClipChunks[dimension].data[index].mChunk->_delete();
                 delete mClipChunks[dimension].data[index].mChunk;
             }
-            delete[] mClipChunks[dimension].data;
-            mClipChunks[dimension].data = 0;
+
+            delete mClipChunks[dimension].data;
             mClipChunks[dimension].length = 0;
+            mClipChunks[dimension].data = 0;
         }
 
-        if (mMinecraft != 0 && mMinecraft->mLevel != 0
-            && dimension == getDimensionIndexFromId(mMinecraft->mLevel->mDimension->getType()->getId()))
+        if (dimension == gProfile->GetPrimaryPad())
         {
-            EnterCriticalSection(&mBlockEntityMutex);
             mBlockEntities.clear();
-            LeaveCriticalSection(&mBlockEntityMutex);
         }
 
         LeaveCriticalSection(&mLevelMutex);
-        return;
     }
-
-    int newReferences = 0;
-    for (int i = 0; i < 4; ++i)
-    {
-        if (mLevels[i] == level)
-            ++newReferences;
-    }
-    if (newReferences == 1)
-        level->addListener(this);
-
-    allChanged(dimension);
-    LeaveCriticalSection(&mLevelMutex);
 }
 
 void LevelRenderer::allChanged(int dimension)
@@ -1326,26 +1335,29 @@ void LevelRenderer::setupCameraInsideAreas(boost::shared_ptr<Entity> camera)
 
 unsigned int LevelRenderer::clippedByCameraInsideAreas(ClipChunk* chunk)
 {
-    if (!Minecraft::InMiniGame(eMiniGameId_Glide, true))
-    {
-        return 0;
-    }
+    unsigned int clipped = 0;
 
-    if (mCameraInsideAreas.empty())
+    if (Minecraft::InMiniGame(eMiniGameId_Glide, true))
     {
-        return 0;
-    }
+        clipped = 1;
 
-    unsigned int clipped = 1;
-    Vec3* position = Vec3::newTemp((double)Mth::intFloorDiv(chunk->mX, 16),
-                                   (double)Mth::intFloorDiv(chunk->mY, 16),
-                                   (double)Mth::intFloorDiv(chunk->mZ, 16));
+        unsigned int areaCount = mCameraInsideAreas.size();
 
-    for (unsigned int index = 0; index < mCameraInsideAreas.size(); ++index)
-    {
-        if (mCameraInsideAreas[index]->insideXZ(position))
+        if (areaCount == 0)
         {
             clipped = 0;
+        }
+        else
+        {
+            Vec3* position = Vec3::newTemp((double)(chunk->mX / 16), (double)(chunk->mY / 16), (double)(chunk->mZ / 16));
+
+            for (unsigned int index = 0; index < areaCount; ++index)
+            {
+                if (mCameraInsideAreas[index]->insideXZ(position))
+                {
+                    clipped = 0;
+                }
+            }
         }
     }
 
@@ -2947,21 +2959,29 @@ void LevelRenderer::addParticle(Level* level, ePARTICLE_TYPE type, bool override
 
 int LevelRenderer::calculateParticleLevel(Level* level, bool overrideLimiter)
 {
-    int particles = mMinecraft->mOptions->mParticles;
+    int result = mMinecraft->mOptions->mParticles;
 
-    if (overrideLimiter && particles == 2)
+    if (overrideLimiter && result == 2)
     {
-        if (level->mRandom->nextInt(10) != 0)
+        if (level->mRandom->nextInt(10) == 0)
         {
-            return 2;
+            result = 1;
+
+            if (level->mRandom->nextInt(3) == 0)
+            {
+                result = 2;
+            }
         }
     }
-    else if (particles != 1)
+    else if (result == 1)
     {
-        return particles;
+        if (level->mRandom->nextInt(3) == 0)
+        {
+            result = 2;
+        }
     }
 
-    return level->mRandom->nextInt(3) == 0 ? 2 : 1;
+    return result;
 }
 
 Particle* LevelRenderer::addParticleInternal(Level* level, ePARTICLE_TYPE type, bool overrideLimiter, double x, double y, double z, double xa, double ya, double za, arrayWithLength<int> params)
@@ -2981,6 +3001,9 @@ void LevelRenderer::addParticle(Level* level, const ParticleType* particle, doub
 
 void LevelRenderer::destroyBlockProgress(int breakerId, const BlockPos& pos, int progress)
 {
+    int x = pos.x;
+    int y = pos.y;
+    int z = pos.z;
     boost::unordered_map<int, BlockDestructionProgress*>::iterator entry =
         mDestroyingBlocks.find(breakerId);
 
@@ -3002,8 +3025,8 @@ void LevelRenderer::destroyBlockProgress(int breakerId, const BlockPos& pos, int
         destruction = entry->second;
     }
 
-    if (destruction == 0 || destruction->getPos().x != pos.x || destruction->getPos().y != pos.y ||
-        destruction->getPos().z != pos.z)
+    if (destruction == 0 || destruction->getPos().x != x || destruction->getPos().y != y ||
+        destruction->getPos().z != z)
     {
         destruction = new BlockDestructionProgress(breakerId, pos);
         mDestroyingBlocks[breakerId] = destruction;
@@ -3030,8 +3053,10 @@ void LevelRenderer::fullyFlagRenderableBlockEntitiesToBeRemoved()
     {
         std::vector<boost::shared_ptr<BlockEntity> >& list = entry->second;
 
+        std::vector<boost::shared_ptr<BlockEntity> >::iterator end = list.end();
+
         for (std::vector<boost::shared_ptr<BlockEntity> >::iterator blockEntity = list.begin();
-             blockEntity != list.end(); ++blockEntity)
+             blockEntity != end; ++blockEntity)
         {
             (*blockEntity)->upgradeRenderRemoveStage();
         }

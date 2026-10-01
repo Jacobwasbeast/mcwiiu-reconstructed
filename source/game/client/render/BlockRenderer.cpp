@@ -4,6 +4,7 @@
 
 
 #include <cmath>
+#include <cstdlib>
 #include <cstring>
 
 #include "game/client/render/TextureAtlasSprite.hpp"
@@ -17,6 +18,7 @@
 #include "game/core/Minecraft.hpp"
 #include "game/core/SeaPickle.hpp"
 #include "game/core/Mth.hpp"
+#include "game/core/XMem.hpp"
 #include "game/world/generation/MultiPlayerLevel.hpp"
 #include "game/util/AABB.hpp"
 #include "game/util/Vec3.hpp"
@@ -225,8 +227,10 @@ BlockRenderer::BlockRenderer(BlockColors* blockColors)
 }
 
 BlockRenderer::BlockRenderer(LevelSource* levelSource, int x, int y, int z, unsigned int* cache)
-    : mBlockColors(Minecraft::GetInstance()->getBlockColors()), mLevelSource(levelSource), mBrightnessCache()
+    : mBrightnessCache()
 {
+    mBlockColors = Minecraft::GetInstance()->getBlockColors();
+    mLevelSource = levelSource;
     _init();
     mOriginX = x;
     mOriginY = y;
@@ -235,7 +239,7 @@ BlockRenderer::BlockRenderer(LevelSource* levelSource, int x, int y, int z, unsi
     mCacheMinY = y - 2;
     mCacheMinZ = z - 2;
     mCache = cache;
-    std::memset(cache, 0, 0x20000);
+    XMemSet(cache, 0, 0x20000);
 }
 
 BlockRenderer::BlockRenderer(LevelSource* levelSource)
@@ -254,7 +258,6 @@ void BlockRenderer::_init()
     mLightOverride = -1;
     mFlipTexture = false;
     mRenderAllFaces = false;
-    mUseInventoryTint = false;
     mUseColor = true;
     mMinX = 0.0f;
     mMaxX = 0.0f;
@@ -264,14 +267,6 @@ void BlockRenderer::_init()
     mMaxZ = 0.0f;
     mFixedShape = false;
     mShapeOutside = false;
-    mMinecraft = Minecraft::GetInstance();
-    mOriginX = 0;
-    mOriginY = 0;
-    mOriginZ = 0;
-    mCacheMinX = 0;
-    mCacheMinY = 0;
-    mCacheMinZ = 0;
-    mCache = NULL;
     for (int i = 0; i < 6; ++i)
     {
         (&mFaceRotation0)[i] = 0;
@@ -279,6 +274,12 @@ void BlockRenderer::_init()
     }
     mRenderFromInside = false;
     mEnableAO = false;
+    mMinecraft = Minecraft::GetInstance();
+    mUseInventoryTint = false;
+    mOriginX = 0;
+    mOriginY = 0;
+    mOriginZ = 0;
+    mCache = NULL;
 }
 
 bool BlockRenderer::canRender(int renderShape)
@@ -343,8 +344,19 @@ void BlockRenderer::setShape(const AABB* shape)
 {
     if (mFixedShape)
         return;
-    setShape((float)shape->mMinX, (float)shape->mMinY, (float)shape->mMinZ,
-             (float)shape->mMaxX, (float)shape->mMaxY, (float)shape->mMaxZ);
+    float x0 = (float)shape->mMinX;
+    float y0 = (float)shape->mMinY;
+    float z0 = (float)shape->mMinZ;
+    float x1 = (float)shape->mMaxX;
+    float y1 = (float)shape->mMaxY;
+    float z1 = (float)shape->mMaxZ;
+    mMinX = x0;
+    mMaxX = x1;
+    mMinY = y0;
+    mMaxY = y1;
+    mMinZ = z0;
+    mMaxZ = z1;
+    mShapeOutside = x0 > 0.0f || x1 < 1.0f || y0 > 0.0f || y1 < 1.0f || z0 > 0.0f || z1 < 1.0f;
 }
 
 void BlockRenderer::setShape(float x0, float y0, float z0, float x1, float y1, float z1)
@@ -1608,6 +1620,16 @@ bool BlockRenderer::tesselateCrossInWorld(const BlockState* state, const BlockPo
     float red = (float)(color >> 16 & 255) / 255.0f;
     float green = (float)(color >> 8 & 255) / 255.0f;
     float blue = (float)(color & 255) / 255.0f;
+    if (GameRenderer::anaglyph3d)
+    {
+        float redPart = red * 30.0f;
+        float newRed = (blue * 11.0f + (green * 59.0f + redPart)) / 100.0f;
+        float newGreen = (green * 70.0f + redPart) / 100.0f;
+        float newBlue = (blue * 70.0f + redPart) / 100.0f;
+        red = newRed;
+        green = newGreen;
+        blue = newBlue;
+    }
     builder->color(red, green, blue);
 
     float x = (float)pos.x;
@@ -1616,9 +1638,9 @@ bool BlockRenderer::tesselateCrossInWorld(const BlockState* state, const BlockPo
     if (!mUseInventoryTint)
     {
         Vec3* offset = state->getOffset(mLevelSource, pos);
-        x += (float)offset->x;
-        y += (float)offset->y;
-        z += (float)offset->z;
+        x += offset->x;
+        y += offset->y;
+        z += offset->z;
     }
     tesselateCrossTexture(state, x, y, z, 1.0f);
     return true;
@@ -1639,6 +1661,16 @@ bool BlockRenderer::tesselateCactusInWorld(const BlockState* state, const BlockP
     float red = (float)(color >> 16 & 255) / 255.0f;
     float green = (float)(color >> 8 & 255) / 255.0f;
     float blue = (float)(color & 255) / 255.0f;
+    if (GameRenderer::anaglyph3d)
+    {
+        float redPart = red * 30.0f;
+        float newRed = (blue * 11.0f + (green * 59.0f + redPart)) / 100.0f;
+        float newGreen = (green * 70.0f + redPart) / 100.0f;
+        float newBlue = (blue * 70.0f + redPart) / 100.0f;
+        red = newRed;
+        green = newGreen;
+        blue = newBlue;
+    }
     return tesselateCactusInWorld(state, pos, red, green, blue);
 }
 
@@ -3300,34 +3332,53 @@ float BlockRenderer::getWaterHeight(const BlockPos& pos, Material* material)
 {
     float total = 0.0f;
     int weight = 0;
+    MutableBlockPos samplePos(0, 0, 0);
     for (int i = 0; i < 4; ++i)
     {
-        BlockPos sample = pos.offset(-(i & 1), 0, -((i >> 1) & 1));
-        BlockPos above = sample.above();
-        Block* aboveLiquid = mLevelSource->getLiquidBlock(above);
-        if (mLevelSource->getBlockState(above)->getMaterial() == material ||
+        int x = pos.x - (i & 1);
+        int y = pos.y;
+        int z = pos.z - ((i >> 1) & 1);
+        samplePos.set(x, y + 1, z);
+        Block* aboveLiquid = mLevelSource->getExtraBlock(samplePos);
+        if (mLevelSource->getBlockState(samplePos)->getBlock()->getCraftingMaterial() == material ||
             (aboveLiquid != Blocks::air && aboveLiquid->getCraftingMaterial() == material))
             return 1.0f;
 
-        const BlockState* state = mLevelSource->getBlockState(sample);
-        const BlockState* liquidState = mLevelSource->getLiquidBlockState(sample);
-        const BlockState* fluid = state->getMaterial() == material ? state :
-            liquidState->getMaterial() == material ? liquidState : NULL;
-        if (fluid != NULL)
+        samplePos.set(x, y, z);
+        const BlockState* state = mLevelSource->getBlockState(samplePos);
+        Material* stateMaterial = state->getBlock()->getCraftingMaterial();
+        const BlockState* liquidState = mLevelSource->getExtraBlockState(samplePos);
+        Material* liquidMaterial = NULL;
+        if (liquidState->getBlock() != Blocks::air)
+            liquidMaterial = liquidState->getMaterial();
+        if (stateMaterial == material)
         {
-            int level = fluid->getValue(LiquidBlock::LEVEL);
-            float height = static_cast<float>(LiquidBlock::getHeightFromData(level));
-            if (level == 0 || level > 7)
+            int level = state->getValue(LiquidBlock::LEVEL);
+            if (level >= 8 || level == 0)
             {
-                total += height * 10.0f;
+                total += LiquidBlock::getHeightFromData(level) * 10.0f;
                 weight += 10;
             }
-            total += height;
+            total += LiquidBlock::getHeightFromData(level);
             ++weight;
         }
-        else if (!state->getMaterial()->isSolid() && !liquidState->getMaterial()->isSolid())
+        else if (liquidMaterial == NULL || liquidMaterial != material)
         {
-            total += 1.0f;
+            if (!stateMaterial->isSolid() || (liquidMaterial != NULL && !liquidMaterial->isSolid()))
+            {
+                total += 1.0f;
+                ++weight;
+            }
+        }
+        else
+        {
+            int level = liquidState->getValue(LiquidBlock::LEVEL);
+            if (level >= 8 || level == 0)
+            {
+                total += LiquidBlock::getHeightFromData(level) * 10.0f;
+                weight += 10;
+            }
+            total += LiquidBlock::getHeightFromData(level);
             ++weight;
         }
     }
@@ -3631,11 +3682,12 @@ bool BlockRenderer::tesselateDoublePlantInWorld(const BlockState* state, const B
     float red = (float)(color >> 16 & 255) / 255.0f;
     float green = (float)(color >> 8 & 255) / 255.0f;
     float blue = (float)(color & 255) / 255.0f;
-    if (mMinecraft->mOptions->mAnaglyph3d)
+    if (GameRenderer::anaglyph3d)
     {
-        float newRed = (blue * 11.0f + green * 59.0f + red * 30.0f) / 100.0f;
-        float newGreen = (green * 70.0f + red * 30.0f) / 100.0f;
-        float newBlue = (blue * 70.0f + red * 30.0f) / 100.0f;
+        float redPart = red * 30.0f;
+        float newRed = (blue * 11.0f + (green * 59.0f + redPart)) / 100.0f;
+        float newGreen = (green * 70.0f + redPart) / 100.0f;
+        float newBlue = (blue * 70.0f + redPart) / 100.0f;
         red = newRed;
         green = newGreen;
         blue = newBlue;
@@ -3648,15 +3700,15 @@ bool BlockRenderer::tesselateDoublePlantInWorld(const BlockState* state, const B
 
     DoublePlantBlock* block = static_cast<DoublePlantBlock*>(state->getBlock());
     const BlockState* virtualState = block->fillVirtualBlockStateProperties(state, mLevelSource, pos);
-    if (virtualState->getValue(DoublePlantBlock::VARIANT) == DoublePlantBlock::VARIANTS[0] &&
+    if (virtualState->getValue(DoublePlantBlock::VARIANT) == DoublePlantBlock::Variant::SUNFLOWER &&
         virtualState->getValue(DoublePlantBlock::HALF) == DoublePlantBlock::HALVES[DoublePlantBlock::Half::UPPER])
     {
-        tesselateSunflowerCrossTexture(state, x, y, z);
-        tesselateSunflowerDirTexture(state, x, y, z);
+        tesselateSunflowerCrossTexture(virtualState, x, y, z);
+        tesselateSunflowerDirTexture(virtualState, x, y, z);
     }
     else
     {
-        tesselateCrossTexture(state, x, y, z, 1.0f);
+        tesselateCrossTexture(virtualState, x, y, z, 1.0f);
     }
     return true;
 }
@@ -3670,11 +3722,12 @@ bool BlockRenderer::tesselateKelpInWorld(const BlockState* state, const BlockPos
     float red = (float)(color >> 16 & 255) / 255.0f;
     float green = (float)(color >> 8 & 255) / 255.0f;
     float blue = (float)(color & 255) / 255.0f;
-    if (mMinecraft->mOptions->mAnaglyph3d)
+    if (GameRenderer::anaglyph3d)
     {
-        float newRed = (blue * 11.0f + green * 59.0f + red * 30.0f) / 100.0f;
-        float newGreen = (green * 70.0f + red * 30.0f) / 100.0f;
-        float newBlue = (blue * 70.0f + red * 30.0f) / 100.0f;
+        float redPart = red * 30.0f;
+        float newRed = (blue * 11.0f + (green * 59.0f + redPart)) / 100.0f;
+        float newGreen = (green * 70.0f + redPart) / 100.0f;
+        float newBlue = (blue * 70.0f + redPart) / 100.0f;
         red = newRed;
         green = newGreen;
         blue = newBlue;
@@ -3688,8 +3741,8 @@ bool BlockRenderer::tesselateKelpInWorld(const BlockState* state, const BlockPos
     int aboveId = mLevelSource->getBlockId((int)pos.x, (int)pos.y + 1, (int)pos.z);
     if (aboveId == 258)
     {
-        int dir1 = Mth::abs(pos.getRandomSeed()) % 4;
-        int dir2 = (dir1 + Mth::abs(pos.getRandomSeed()) % 3 + 1) % 4;
+        int dir1 = std::abs(pos.getRandomSeed()) % 4;
+        int dir2 = (dir1 + std::abs(pos.getRandomSeed()) % 3 + 1) % 4;
         TextureAtlasSprite* texture1 = getTexture(state, Direction::from3DDataValue(dir1));
         TextureAtlasSprite* texture2 = getTexture(state, Direction::from3DDataValue(dir2));
         tesselateCrossTexture(texture1, texture2, x, y, z, 1.0f);
@@ -3915,7 +3968,7 @@ bool BlockRenderer::tessellateCoralFanHangInWorld(const BlockState* state, const
     return true;
 }
 
-void BlockRenderer::tesselateStemDirTexture(const BlockState* state, const Direction* direction, float x, float y, float z, float scale)
+void BlockRenderer::tesselateStemDirTexture(const BlockState* state, const Direction* direction, float height, float x, float y, float z)
 {
     BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
     StemBlock* stemBlock = static_cast<StemBlock*>(state->getBlock());
@@ -3928,11 +3981,11 @@ void BlockRenderer::tesselateStemDirTexture(const BlockState* state, const Direc
     float u1 = (float)texture->getU1(true);
     float v1 = (float)texture->getV1(true);
 
-    float yPlus1 = y + 1.0f;
-    float yHalf = y + 0.5f;
-    float scaleHalf = scale + 0.5f;
-    float scalePlus1 = scale + 1.0f;
-    float xz = z + x;
+    float xPlus1 = x + 1.0f;
+    float xHalf = x + 0.5f;
+    float zHalf = z + 0.5f;
+    float zPlus1 = z + 1.0f;
+    float yTop = height + y;
 
     float ua = u0;
     float ub = u1;
@@ -3944,42 +3997,44 @@ void BlockRenderer::tesselateStemDirTexture(const BlockState* state, const Direc
 
     if (direction == Direction::WEST || direction == Direction::EAST)
     {
-        builder->vertexUV(y, xz, scaleHalf, ua, v0);
-        builder->vertexUV(y, z, scaleHalf, ua, v1);
-        builder->vertexUV(yPlus1, z, scaleHalf, ub, v1);
-        builder->vertexUV(yPlus1, xz, scaleHalf, ub, v0);
-        builder->vertexUV(yPlus1, xz, scaleHalf, ub, v0);
-        builder->vertexUV(yPlus1, z, scaleHalf, ub, v1);
-        builder->vertexUV(y, z, scaleHalf, ua, v1);
-        builder->vertexUV(y, xz, scaleHalf, ua, v0);
+        builder->vertexUV(x, yTop, zHalf, ua, v0);
+        builder->vertexUV(x, y, zHalf, ua, v1);
+        builder->vertexUV(xPlus1, y, zHalf, ub, v1);
+        builder->vertexUV(xPlus1, yTop, zHalf, ub, v0);
+        builder->vertexUV(xPlus1, yTop, zHalf, ub, v0);
+        builder->vertexUV(xPlus1, y, zHalf, ub, v1);
+        builder->vertexUV(x, y, zHalf, ua, v1);
+        builder->vertexUV(x, yTop, zHalf, ua, v0);
     }
     else
     {
-        builder->vertexUV(yHalf, xz, scalePlus1, ua, v0);
-        builder->vertexUV(yHalf, z, scalePlus1, ua, v1);
-        builder->vertexUV(yHalf, z, scale, ub, v1);
-        builder->vertexUV(yHalf, xz, scale, ub, v0);
-        builder->vertexUV(yHalf, xz, scale, ub, v0);
-        builder->vertexUV(yHalf, z, scale, ub, v1);
-        builder->vertexUV(yHalf, z, scalePlus1, ua, v1);
-        builder->vertexUV(yHalf, xz, scalePlus1, ua, v0);
+        builder->vertexUV(xHalf, yTop, zPlus1, ua, v0);
+        builder->vertexUV(xHalf, y, zPlus1, ua, v1);
+        builder->vertexUV(xHalf, y, z, ub, v1);
+        builder->vertexUV(xHalf, yTop, z, ub, v0);
+        builder->vertexUV(xHalf, yTop, z, ub, v0);
+        builder->vertexUV(xHalf, y, z, ub, v1);
+        builder->vertexUV(xHalf, y, zPlus1, ua, v1);
+        builder->vertexUV(xHalf, yTop, zPlus1, ua, v0);
     }
 }
 
 bool BlockRenderer::tesselateStemInWorld(const BlockState* state, const BlockPos& pos)
 {
+    Block* block = state->getBlock();
     BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
-    builder->tex2(getLightColor(state->getBlock(), mLevelSource, pos));
+    builder->tex2(getLightColor(block, mLevelSource, pos));
 
     int color = mBlockColors->getColor(state, mLevelSource, &pos, 0);
     float red = (float)(color >> 16 & 255) / 255.0f;
     float green = (float)(color >> 8 & 255) / 255.0f;
     float blue = (float)(color & 255) / 255.0f;
-    if (mMinecraft->mOptions->mAnaglyph3d)
+    if (GameRenderer::anaglyph3d)
     {
-        float newRed = (blue * 11.0f + green * 59.0f + red * 30.0f) / 100.0f;
-        float newGreen = (green * 70.0f + red * 30.0f) / 100.0f;
-        float newBlue = (blue * 70.0f + red * 30.0f) / 100.0f;
+        float redPart = red * 30.0f;
+        float newRed = (blue * 11.0f + (green * 59.0f + redPart)) / 100.0f;
+        float newGreen = (green * 70.0f + redPart) / 100.0f;
+        float newBlue = (blue * 70.0f + redPart) / 100.0f;
         red = newRed;
         green = newGreen;
         blue = newBlue;
@@ -3998,7 +4053,7 @@ bool BlockRenderer::tesselateStemInWorld(const BlockState* state, const BlockPos
     else
     {
         tesselateStemTexture(state, 0.5f, x, y, z);
-        tesselateStemDirTexture(state, direction, x, y, z, mMaxY);
+        tesselateStemDirTexture(state, direction, mMaxY, x, y, z);
     }
     return true;
 }
@@ -6048,14 +6103,14 @@ bool BlockRenderer::tesselatePistonBaseInWorld(const BlockState* state, const Bl
 
 void BlockRenderer::renderPistonArmUpDown(float x0, float x1, float y0, float y1, float z0, float z1, float shade, float length)
 {
-    TextureAtlasSprite* texture = PistonBaseBlock::getTexture(L"piston_side");
+    TextureAtlasSprite* texture = PistonBaseBlock::getTexture(PistonBaseBlock::TEXTURE_SIDE);
     if (hasFixedTexture())
         texture = mFixedTexture;
     BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
     float u0 = (float)texture->getU0(false);
     float v0 = (float)texture->getV0(false);
     float u1 = (float)texture->getU(length);
-    float v1 = (float)texture->getV(0.25);
+    float v1 = (float)texture->getV(0.25f);
     texture->adjustUVs(u0, u1, v0, v1);
     builder->color(shade, shade, shade);
     builder->vertexUV(x0, y1, z0, u1, v0);
@@ -6066,14 +6121,14 @@ void BlockRenderer::renderPistonArmUpDown(float x0, float x1, float y0, float y1
 
 void BlockRenderer::renderPistonArmNorthSouth(float x0, float x1, float y0, float y1, float z0, float z1, float shade, float length)
 {
-    TextureAtlasSprite* texture = PistonBaseBlock::getTexture(L"piston_side");
+    TextureAtlasSprite* texture = PistonBaseBlock::getTexture(PistonBaseBlock::TEXTURE_SIDE);
     if (hasFixedTexture())
         texture = mFixedTexture;
     BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
     float u0 = (float)texture->getU0(false);
     float v0 = (float)texture->getV0(false);
     float u1 = (float)texture->getU(length);
-    float v1 = (float)texture->getV(0.25);
+    float v1 = (float)texture->getV(0.25f);
     texture->adjustUVs(u0, u1, v0, v1);
     builder->color(shade, shade, shade);
     builder->vertexUV(x0, y0, z1, u1, v0);
@@ -6084,14 +6139,14 @@ void BlockRenderer::renderPistonArmNorthSouth(float x0, float x1, float y0, floa
 
 void BlockRenderer::renderPistonArmEastWest(float x0, float x1, float y0, float y1, float z0, float z1, float shade, float length)
 {
-    TextureAtlasSprite* texture = PistonBaseBlock::getTexture(L"piston_side");
+    TextureAtlasSprite* texture = PistonBaseBlock::getTexture(PistonBaseBlock::TEXTURE_SIDE);
     if (hasFixedTexture())
         texture = mFixedTexture;
     BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
     float u0 = (float)texture->getU0(false);
     float v0 = (float)texture->getV0(false);
     float u1 = (float)texture->getU(length);
-    float v1 = (float)texture->getV(0.25);
+    float v1 = (float)texture->getV(0.25f);
     texture->adjustUVs(u0, u1, v0, v1);
     builder->color(shade, shade, shade);
     builder->vertexUV(x1, y0, z0, u1, v0);
@@ -6242,158 +6297,298 @@ bool BlockRenderer::tesselateThinFenceInWorld(const BlockState* state, const Blo
 {
     BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
     Block* block = state->getBlock();
-    builder->tex2(getLightColor(block, mLevelSource, pos));
+    builder->tex2(state->getLightColor(mLevelSource, pos));
 
     int color = mBlockColors->getColor(state, mLevelSource, &pos, 0);
     float red = (float)(color >> 16 & 255) / 255.0f;
     float green = (float)(color >> 8 & 255) / 255.0f;
     float blue = (float)(color & 255) / 255.0f;
-    if (mMinecraft->mOptions->mAnaglyph3d)
+    if (GameRenderer::anaglyph3d)
     {
-        float newRed = (blue * 11.0f + green * 59.0f + red * 30.0f) / 100.0f;
-        float newGreen = (green * 70.0f + red * 30.0f) / 100.0f;
-        float newBlue = (blue * 70.0f + red * 30.0f) / 100.0f;
-        red = newRed;
-        green = newGreen;
-        blue = newBlue;
+        float anaglyphRed = (blue * 11.0f + (green * 59.0f + red * 30.0f)) / 100.0f;
+        float anaglyphGreen = (green * 70.0f + red * 30.0f) / 100.0f;
+        float anaglyphBlue = (blue * 70.0f + red * 30.0f) / 100.0f;
+        red = anaglyphRed;
+        green = anaglyphGreen;
+        blue = anaglyphBlue;
     }
     builder->color(red, green, blue);
 
-    TextureAtlasSprite* texture = hasFixedTexture() ? mFixedTexture : getTexture(state, Direction::DOWN);
-    ThinFenceBlock* fence = dynamic_cast<ThinFenceBlock*>(block);
-    StainedGlassPaneBlock* stainedPane = dynamic_cast<StainedGlassPaneBlock*>(block);
-    TextureAtlasSprite* edge = hasFixedTexture() ? mFixedTexture :
-        stainedPane ? stainedPane->getEdgeTexture(state) : fence->getEdgeTexture();
+    bool stainedPane = dynamic_cast<StainedGlassPaneBlock*>(block) != NULL;
+    TextureAtlasSprite* texture;
+    TextureAtlasSprite* edgeTexture;
+    if (hasFixedTexture())
+    {
+        texture = mFixedTexture;
+        edgeTexture = texture;
+    }
+    else
+    {
+        texture = getTexture(state, Direction::DOWN);
+        edgeTexture = stainedPane ? static_cast<StainedGlassPaneBlock*>(block)->getEdgeTexture(state)
+                                  : static_cast<ThinFenceBlock*>(block)->getEdgeTexture();
+    }
+
+    double u0 = texture->getU0(false);
+    double u7 = texture->getU(7.0);
+    double u9 = texture->getU(9.0);
+    double u16 = texture->getU1(false);
+    double v0 = texture->getV0(false);
+    double v16 = texture->getV1(false);
+    double edgeU7 = edgeTexture->getU(7.0);
+    double edgeU9 = edgeTexture->getU(9.0);
+    double edgeV0 = edgeTexture->getV0(false);
+    double edgeV16 = edgeTexture->getV1(false);
+    double edgeV7 = edgeTexture->getV(7.0);
+    double edgeV9 = edgeTexture->getV(9.0);
+
+    double xMin = pos.x;
+    double xCoreMin = xMin + 0.4375;
+    double xMax = pos.x + 1;
+    double zMin = pos.z;
+    double zMax = pos.z + 1;
+    double xCoreMax = xMin + 0.5625;
+    double zCoreMax = zMin + 0.5625;
+    double zCoreMin = zMin + 0.4375;
+
     bool north = state->getValue(THIN_FENCE_NORTH);
-    bool east = state->getValue(THIN_FENCE_EAST);
     bool south = state->getValue(THIN_FENCE_SOUTH);
     bool west = state->getValue(THIN_FENCE_WEST);
+    bool east = state->getValue(THIN_FENCE_EAST);
+    float yTop = pos.y + 0.999;
+    float yBottom = pos.y + 0.001;
 
-    const double x = (double)pos.x;
-    const double z = (double)pos.z;
-    const double y0 = (double)pos.y + 0.001;
-    const double y1 = (double)pos.y + 0.999;
-    const double center0 = 0.4375;
-    const double center1 = 0.5625;
-    const double mainV0 = texture->getV(0.0);
-    const double mainV1 = texture->getV(16.0);
-
-    auto northFace = [&](double from, double to) {
-        const double u0 = texture->getU(from * 16.0);
-        const double u1 = texture->getU(to * 16.0);
-        builder->vertexUV(x + to, y1, z + center0, u1, mainV0);
-        builder->vertexUV(x + to, y0, z + center0, u1, mainV1);
-        builder->vertexUV(x + from, y0, z + center0, u0, mainV1);
-        builder->vertexUV(x + from, y1, z + center0, u0, mainV0);
-    };
-    auto southFace = [&](double from, double to, bool reverse) {
-        const double u0 = texture->getU((reverse ? to : from) * 16.0);
-        const double u1 = texture->getU((reverse ? from : to) * 16.0);
-        builder->vertexUV(x + from, y1, z + center1, u0, mainV0);
-        builder->vertexUV(x + from, y0, z + center1, u0, mainV1);
-        builder->vertexUV(x + to, y0, z + center1, u1, mainV1);
-        builder->vertexUV(x + to, y1, z + center1, u1, mainV0);
-    };
-    auto westFace = [&](double from, double to, bool reverse) {
-        const double u0 = texture->getU((reverse ? to : from) * 16.0);
-        const double u1 = texture->getU((reverse ? from : to) * 16.0);
-        builder->vertexUV(x + center0, y1, z + from, u0, mainV0);
-        builder->vertexUV(x + center0, y0, z + from, u0, mainV1);
-        builder->vertexUV(x + center0, y0, z + to, u1, mainV1);
-        builder->vertexUV(x + center0, y1, z + to, u1, mainV0);
-    };
-    auto eastFace = [&](double from, double to) {
-        const double u0 = texture->getU(from * 16.0);
-        const double u1 = texture->getU(to * 16.0);
-        builder->vertexUV(x + center1, y1, z + to, u1, mainV0);
-        builder->vertexUV(x + center1, y0, z + to, u1, mainV1);
-        builder->vertexUV(x + center1, y0, z + from, u0, mainV1);
-        builder->vertexUV(x + center1, y1, z + from, u0, mainV0);
-    };
-    auto horizontalEdges = [&](double from, double to) {
-        const double u0 = edge->getU(7.0);
-        const double u1 = edge->getU(9.0);
-        const double v0 = edge->getV(from * 16.0);
-        const double v1 = edge->getV(to * 16.0);
-        const double topV1 = edge->getV(!west && east ? 0.0 : to * 16.0);
-        builder->vertexUV(x + from, y1, z + center1, u1, v0);
-        builder->vertexUV(x + to, y1, z + center1, u1, topV1);
-        builder->vertexUV(x + to, y1, z + center0, u0, topV1);
-        builder->vertexUV(x + from, y1, z + center0, u0, v0);
-        builder->vertexUV(x + to, y0, z + center1, u0, v1);
-        builder->vertexUV(x + from, y0, z + center1, u0, v0);
-        builder->vertexUV(x + from, y0, z + center0, u1, v0);
-        builder->vertexUV(x + to, y0, z + center0, u1, v1);
-    };
-    auto verticalEdges = [&](double from, double to) {
-        const double u0 = edge->getU(7.0);
-        const double u1 = edge->getU(9.0);
-        const double v0 = edge->getV(from * 16.0);
-        const double v1 = edge->getV(to * 16.0);
-        builder->vertexUV(x + center1, y1, z + from, u1, v0);
-        builder->vertexUV(x + center0, y1, z + from, u0, v0);
-        builder->vertexUV(x + center0, y1, z + to, u0, v1);
-        builder->vertexUV(x + center1, y1, z + to, u1, v1);
-        builder->vertexUV(x + center0, y0, z + from, u0, v0);
-        builder->vertexUV(x + center1, y0, z + from, u1, v0);
-        builder->vertexUV(x + center1, y0, z + to, u1, v1);
-        builder->vertexUV(x + center0, y0, z + to, u0, v1);
-    };
-
-    if (west || east)
+    if (west)
     {
         if (north)
         {
-            if (west) northFace(0.0, center0);
-            if (east) northFace(center1, 1.0);
+            builder->vertexUV(xCoreMin, yTop, zCoreMin, u7, v0);
+            builder->vertexUV(xCoreMin, yBottom, zCoreMin, u7, v16);
+            builder->vertexUV(xMin, yBottom, zCoreMin, u0, v16);
+            builder->vertexUV(xMin, yTop, zCoreMin, u0, v0);
+            if (east)
+            {
+                builder->vertexUV(xMax, yTop, zCoreMin, u16, v0);
+                builder->vertexUV(xMax, yBottom, zCoreMin, u16, v16);
+                builder->vertexUV(xCoreMax, yBottom, zCoreMin, u9, v16);
+                builder->vertexUV(xCoreMax, yTop, zCoreMin, u9, v0);
+            }
+        }
+        else if (east)
+        {
+            builder->vertexUV(xMax, yTop, zCoreMin, u16, v0);
+            builder->vertexUV(xMax, yBottom, zCoreMin, u16, v16);
+            builder->vertexUV(xMin, yBottom, zCoreMin, u0, v16);
+            builder->vertexUV(xMin, yTop, zCoreMin, u0, v0);
         }
         else
-            northFace(west ? 0.0 : center0, east ? 1.0 : center1);
+        {
+            builder->vertexUV(xCoreMax, yTop, zCoreMin, u9, v0);
+            builder->vertexUV(xCoreMax, yBottom, zCoreMin, u9, v16);
+            builder->vertexUV(xMin, yBottom, zCoreMin, u0, v16);
+            builder->vertexUV(xMin, yTop, zCoreMin, u0, v0);
+        }
         if (south)
         {
-            if (west) southFace(0.0, center0, false);
-            if (east) southFace(center1, 1.0, false);
+            builder->vertexUV(xMin, yTop, zCoreMax, u0, v0);
+            builder->vertexUV(xMin, yBottom, zCoreMax, u0, v16);
+            builder->vertexUV(xCoreMin, yBottom, zCoreMax, u7, v16);
+            builder->vertexUV(xCoreMin, yTop, zCoreMax, u7, v0);
+            if (east)
+            {
+                builder->vertexUV(xCoreMax, yTop, zCoreMax, u9, v0);
+                builder->vertexUV(xCoreMax, yBottom, zCoreMax, u9, v16);
+                builder->vertexUV(xMax, yBottom, zCoreMax, u16, v16);
+                builder->vertexUV(xMax, yTop, zCoreMax, u16, v0);
+            }
+        }
+        else if (east)
+        {
+            builder->vertexUV(xMin, yTop, zCoreMax, u0, v0);
+            builder->vertexUV(xMin, yBottom, zCoreMax, u0, v16);
+            builder->vertexUV(xMax, yBottom, zCoreMax, u16, v16);
+            builder->vertexUV(xMax, yTop, zCoreMax, u16, v0);
         }
         else
-            southFace(west ? 0.0 : center0, east ? 1.0 : center1, false);
-        horizontalEdges(west ? 0.0 : center1, east ? 1.0 : center0);
+        {
+            builder->vertexUV(xMin, yTop, zCoreMax, u0, v0);
+            builder->vertexUV(xMin, yBottom, zCoreMax, u0, v16);
+            builder->vertexUV(xCoreMax, yBottom, zCoreMax, u9, v16);
+            builder->vertexUV(xCoreMax, yTop, zCoreMax, u9, v0);
+        }
+        if (east)
+        {
+            builder->vertexUV(xMin, yTop, zCoreMax, edgeU9, edgeV0);
+            builder->vertexUV(xMax, yTop, zCoreMax, edgeU9, edgeV16);
+            builder->vertexUV(xMax, yTop, zCoreMin, edgeU7, edgeV16);
+            builder->vertexUV(xMin, yTop, zCoreMin, edgeU7, edgeV0);
+            builder->vertexUV(xMax, yBottom, zCoreMax, edgeU7, edgeV16);
+            builder->vertexUV(xMin, yBottom, zCoreMax, edgeU7, edgeV0);
+            builder->vertexUV(xMin, yBottom, zCoreMin, edgeU9, edgeV0);
+            builder->vertexUV(xMax, yBottom, zCoreMin, edgeU9, edgeV16);
+        }
+        else
+        {
+            builder->vertexUV(xMin, yTop, zCoreMax, edgeU9, edgeV0);
+            builder->vertexUV(xCoreMin, yTop, zCoreMax, edgeU9, edgeV7);
+            builder->vertexUV(xCoreMin, yTop, zCoreMin, edgeU7, edgeV7);
+            builder->vertexUV(xMin, yTop, zCoreMin, edgeU7, edgeV0);
+            builder->vertexUV(xCoreMin, yBottom, zCoreMax, edgeU7, edgeV7);
+            builder->vertexUV(xMin, yBottom, zCoreMax, edgeU7, edgeV0);
+            builder->vertexUV(xMin, yBottom, zCoreMin, edgeU9, edgeV0);
+            builder->vertexUV(xCoreMin, yBottom, zCoreMin, edgeU9, edgeV7);
+        }
+        if (!east && !north && !south)
+        {
+            builder->vertexUV(xCoreMax, yTop, zCoreMax, u9, v0);
+            builder->vertexUV(xCoreMax, yBottom, zCoreMax, u9, v16);
+            builder->vertexUV(xCoreMax, yBottom, zCoreMin, u7, v16);
+            builder->vertexUV(xCoreMax, yTop, zCoreMin, u7, v0);
+        }
+    }
+    else if (east)
+    {
         if (!north && !south)
         {
-            if (!west) westFace(center0, center1, true);
-            if (!east) eastFace(center0, center1);
+            builder->vertexUV(xCoreMin, yTop, zCoreMin, u9, v0);
+            builder->vertexUV(xCoreMin, yBottom, zCoreMin, u9, v16);
+            builder->vertexUV(xCoreMin, yBottom, zCoreMax, u7, v16);
+            builder->vertexUV(xCoreMin, yTop, zCoreMax, u7, v0);
         }
+        if (south)
+        {
+            builder->vertexUV(xCoreMax, yTop, zCoreMax, u9, v0);
+            builder->vertexUV(xCoreMax, yBottom, zCoreMax, u9, v16);
+            builder->vertexUV(xMax, yBottom, zCoreMax, u16, v16);
+            builder->vertexUV(xMax, yTop, zCoreMax, u16, v0);
+        }
+        else
+        {
+            builder->vertexUV(xCoreMin, yTop, zCoreMax, u7, v0);
+            builder->vertexUV(xCoreMin, yBottom, zCoreMax, u7, v16);
+            builder->vertexUV(xMax, yBottom, zCoreMax, u16, v16);
+            builder->vertexUV(xMax, yTop, zCoreMax, u16, v0);
+        }
+        if (north)
+        {
+            builder->vertexUV(xMax, yTop, zCoreMin, u16, v0);
+            builder->vertexUV(xMax, yBottom, zCoreMin, u16, v16);
+            builder->vertexUV(xCoreMax, yBottom, zCoreMin, u9, v16);
+            builder->vertexUV(xCoreMax, yTop, zCoreMin, u9, v0);
+        }
+        else
+        {
+            builder->vertexUV(xMax, yTop, zCoreMin, u16, v0);
+            builder->vertexUV(xMax, yBottom, zCoreMin, u16, v16);
+            builder->vertexUV(xCoreMin, yBottom, zCoreMin, u7, v16);
+            builder->vertexUV(xCoreMin, yTop, zCoreMin, u7, v0);
+        }
+        builder->vertexUV(xCoreMax, yTop, zCoreMax, edgeU9, edgeV9);
+        builder->vertexUV(xMax, yTop, zCoreMax, edgeU9, edgeV0);
+        builder->vertexUV(xMax, yTop, zCoreMin, edgeU7, edgeV0);
+        builder->vertexUV(xCoreMax, yTop, zCoreMin, edgeU7, edgeV9);
+        builder->vertexUV(xMax, yBottom, zCoreMax, edgeU7, edgeV16);
+        builder->vertexUV(xCoreMax, yBottom, zCoreMax, edgeU7, edgeV9);
+        builder->vertexUV(xCoreMax, yBottom, zCoreMin, edgeU9, edgeV9);
+        builder->vertexUV(xMax, yBottom, zCoreMin, edgeU9, edgeV16);
     }
     else
     {
         if (!north && !south)
         {
-            westFace(center0, center1, true);
-            eastFace(center0, center1);
+            builder->vertexUV(xCoreMin, yTop, zCoreMin, u9, v0);
+            builder->vertexUV(xCoreMin, yBottom, zCoreMin, u9, v16);
+            builder->vertexUV(xCoreMin, yBottom, zCoreMax, u7, v16);
+            builder->vertexUV(xCoreMin, yTop, zCoreMax, u7, v0);
+            builder->vertexUV(xCoreMax, yTop, zCoreMax, u9, v0);
+            builder->vertexUV(xCoreMax, yBottom, zCoreMax, u9, v16);
+            builder->vertexUV(xCoreMax, yBottom, zCoreMin, u7, v16);
+            builder->vertexUV(xCoreMax, yTop, zCoreMin, u7, v0);
         }
-        if (!north) northFace(center0, center1);
+        if (!north)
+        {
+            builder->vertexUV(xCoreMax, yTop, zCoreMin, u9, v0);
+            builder->vertexUV(xCoreMax, yBottom, zCoreMin, u9, v16);
+            builder->vertexUV(xCoreMin, yBottom, zCoreMin, u7, v16);
+            builder->vertexUV(xCoreMin, yTop, zCoreMin, u7, v0);
+        }
     }
-
+    
     if (north || south)
     {
         if (west)
         {
-            if (north) westFace(0.0, center0, false);
-            if (south) westFace(center1, 1.0, false);
+            if (north)
+            {
+                builder->vertexUV(xCoreMin, yTop, zMin, u0, v0);
+                builder->vertexUV(xCoreMin, yBottom, zMin, u0, v16);
+                builder->vertexUV(xCoreMin, yBottom, zCoreMin, u7, v16);
+                builder->vertexUV(xCoreMin, yTop, zCoreMin, u7, v0);
+            }
+            if (south)
+            {
+                builder->vertexUV(xCoreMin, yTop, zCoreMax, u9, v0);
+                builder->vertexUV(xCoreMin, yBottom, zCoreMax, u9, v16);
+                builder->vertexUV(xCoreMin, yBottom, zMax, u16, v16);
+                builder->vertexUV(xCoreMin, yTop, zMax, u16, v0);
+            }
         }
         else
-            westFace(north ? 0.0 : center0, south ? 1.0 : center1, false);
+        {
+            builder->vertexUV(xCoreMin, yTop, north ? zMin : zCoreMin, north ? u0 : u7, v0);
+            builder->vertexUV(xCoreMin, yBottom, north ? zMin : zCoreMin, north ? u0 : u7, v16);
+            builder->vertexUV(xCoreMin, yBottom, south ? zMax : zCoreMax, south ? u16 : u9, v16);
+            builder->vertexUV(xCoreMin, yTop, south ? zMax : zCoreMax, south ? u16 : u9, v0);
+        }
         if (east)
         {
-            if (north) eastFace(0.0, center0);
-            if (south) eastFace(center1, 1.0);
+            if (north)
+            {
+                builder->vertexUV(xCoreMax, yTop, zCoreMin, u7, v0);
+                builder->vertexUV(xCoreMax, yBottom, zCoreMin, u7, v16);
+                builder->vertexUV(xCoreMax, yBottom, zMin, u0, v16);
+                builder->vertexUV(xCoreMax, yTop, zMin, u0, v0);
+            }
+            if (south)
+            {
+                builder->vertexUV(xCoreMax, yTop, zMax, u16, v0);
+                builder->vertexUV(xCoreMax, yBottom, zMax, u16, v16);
+                builder->vertexUV(xCoreMax, yBottom, zCoreMax, u9, v16);
+                builder->vertexUV(xCoreMax, yTop, zCoreMax, u9, v0);
+            }
         }
         else
-            eastFace(north ? 0.0 : center0, south ? 1.0 : center1);
-        verticalEdges(north ? 0.0 : center1, south ? 1.0 : center0);
+        {
+            builder->vertexUV(xCoreMax, yTop, south ? zMax : zCoreMax, south ? u16 : u9, v0);
+            builder->vertexUV(xCoreMax, yBottom, south ? zMax : zCoreMax, south ? u16 : u9, v16);
+            builder->vertexUV(xCoreMax, yBottom, north ? zMin : zCoreMin, north ? u0 : u7, v16);
+            builder->vertexUV(xCoreMax, yTop, north ? zMin : zCoreMin, north ? u0 : u7, v0);
+        }
+        builder->vertexUV(xCoreMax, yTop, north ? zMin : zCoreMax, edgeU9, north ? edgeV0 : edgeV9);
+        builder->vertexUV(xCoreMin, yTop, north ? zMin : zCoreMax, edgeU7, north ? edgeV0 : edgeV9);
+        builder->vertexUV(xCoreMin, yTop, south ? zMax : zCoreMin, edgeU7, south ? edgeV16 : edgeV7);
+        builder->vertexUV(xCoreMax, yTop, south ? zMax : zCoreMin, edgeU9, south ? edgeV16 : edgeV7);
+        builder->vertexUV(xCoreMin, yBottom, north ? zMin : zCoreMax, edgeU7, north ? edgeV0 : edgeV9);
+        builder->vertexUV(xCoreMax, yBottom, north ? zMin : zCoreMax, edgeU9, north ? edgeV0 : edgeV9);
+        builder->vertexUV(xCoreMax, yBottom, south ? zMax : zCoreMin, edgeU9, south ? edgeV16 : edgeV7);
+        builder->vertexUV(xCoreMin, yBottom, south ? zMax : zCoreMin, edgeU7, south ? edgeV16 : edgeV7);
     }
+    
     if (!south && !west && !east)
-        southFace(center0, center1, true);
-    verticalEdges(center0, center1);
+    {
+        builder->vertexUV(xCoreMin, yTop, zCoreMax, u9, v0);
+        builder->vertexUV(xCoreMin, yBottom, zCoreMax, u9, v16);
+        builder->vertexUV(xCoreMax, yBottom, zCoreMax, u7, v16);
+        builder->vertexUV(xCoreMax, yTop, zCoreMax, u7, v0);
+    }
+    builder->vertexUV(xCoreMax, yTop, zCoreMin, edgeU9, edgeV7);
+    builder->vertexUV(xCoreMin, yTop, zCoreMin, edgeU7, edgeV7);
+    builder->vertexUV(xCoreMin, yTop, zCoreMax, edgeU7, edgeV9);
+    builder->vertexUV(xCoreMax, yTop, zCoreMax, edgeU9, edgeV9);
+    builder->vertexUV(xCoreMin, yBottom, zCoreMin, edgeU7, edgeV7);
+    builder->vertexUV(xCoreMax, yBottom, zCoreMin, edgeU9, edgeV7);
+    builder->vertexUV(xCoreMax, yBottom, zCoreMax, edgeU9, edgeV9);
+    builder->vertexUV(xCoreMin, yBottom, zCoreMax, edgeU7, edgeV9);
     return true;
 }
 
@@ -7130,14 +7325,14 @@ bool BlockRenderer::tesselateBeaconInWorld(const BlockState* state, const BlockP
         setFixedTexture(getTexture(Blocks::glass, Direction::UP));
         setShape(0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f);
         tesselateBlockInWorld(state, pos);
-        mFlipTexture = true;
+        mRenderAllFaces = true;
         setFixedTexture(getTexture(Blocks::obsidian, Direction::UP));
         setShape(0.125f, 0.00625f, 0.125f, 0.875f, 0.1875f, 0.875f);
         tesselateBlockInWorld(state, pos);
         setFixedTexture(getTexture(Blocks::beacon, Direction::UP));
         setShape(0.1875f, 0.1875f, 0.1875f, 0.8125f, 0.875f, 0.8125f);
         tesselateBlockInWorld(state, pos);
-        mFlipTexture = false;
+        mRenderAllFaces = false;
         clearFixedTexture();
     }
     else
@@ -7172,38 +7367,37 @@ bool BlockRenderer::tesselateHopperInWorld(const BlockState* state, const BlockP
 
 bool BlockRenderer::tesselateChorusFlowerInWorld(const BlockState* state, const BlockPos& pos)
 {
+    mRenderFromInside = true;
     ChorusFlowerBlock* flower = static_cast<ChorusFlowerBlock*>(state->getBlock());
 
-    mRenderAllFaces = true;
-
-    flower->setCulledFace(0);
     setShape(ChorusFlowerBlock::getDownShape());
-    bool renderedDown = tesselateBlockInWorld(state, pos);
+    flower->setCulledFace(0);
+    bool rendered = tesselateBlockInWorld(state, pos);
 
     setShape(ChorusFlowerBlock::getUpShape());
-    flower->setCulledFace(Direction::UP);
-    bool renderedUp = tesselateBlockInWorld(state, pos);
+    flower->setCulledFace(Direction::DOWN);
+    rendered |= tesselateBlockInWorld(state, pos);
 
     setShape(ChorusFlowerBlock::getNorthShape());
-    flower->setCulledFace(Direction::NORTH);
-    bool renderedNorth = tesselateBlockInWorld(state, pos);
+    flower->setCulledFace(Direction::SOUTH);
+    rendered |= tesselateBlockInWorld(state, pos);
 
     setShape(ChorusFlowerBlock::getSouthShape());
-    flower->setCulledFace(Direction::SOUTH);
-    bool renderedSouth = tesselateBlockInWorld(state, pos);
+    flower->setCulledFace(Direction::NORTH);
+    rendered |= tesselateBlockInWorld(state, pos);
 
     setShape(ChorusFlowerBlock::getEastShape());
-    flower->setCulledFace(Direction::EAST);
-    bool renderedEast = tesselateBlockInWorld(state, pos);
+    flower->setCulledFace(Direction::WEST);
+    rendered |= tesselateBlockInWorld(state, pos);
 
     setShape(ChorusFlowerBlock::getWestShape());
-    flower->setCulledFace(Direction::WEST);
-    bool renderedWest = tesselateBlockInWorld(state, pos);
+    flower->setCulledFace(Direction::EAST);
+    rendered |= tesselateBlockInWorld(state, pos);
 
     flower->setCulledFace(0);
-    mRenderAllFaces = false;
+    mRenderFromInside = false;
 
-    return renderedDown | renderedUp | renderedNorth | renderedSouth | renderedEast | renderedWest;
+    return rendered;
 }
 
 bool BlockRenderer::tesselateChorusPlantInWorld(const BlockState* state, const BlockPos& pos)

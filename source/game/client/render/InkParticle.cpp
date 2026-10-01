@@ -34,10 +34,6 @@ InkParticle::InkParticle(Level* level, double x, double y, double z,
     lifetime = (int)(12.0f * scale / ((float)Math::random() * 0.8f + 0.2f));
 }
 
-InkParticle::~InkParticle()
-{
-}
-
 void InkParticle::render(BufferBuilder* buffer, const boost::shared_ptr<Entity>& camera,
                          float partialTicks, float xa, float ya, float za,
                          float xa2, float za2)

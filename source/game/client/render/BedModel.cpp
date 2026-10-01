@@ -43,15 +43,6 @@ BedModel::BedModel(const ModelDefinition& modelDefinition)
     compileSkinnedDrawlist();
 }
 
-BedModel::~BedModel()
-{
-}
-
-std::wstring BedModel::getName()
-{
-    return L"bed";
-}
-
 uint32_t BedModel::modelVersion()
 {
     return 51;

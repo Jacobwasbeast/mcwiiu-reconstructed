@@ -11,7 +11,6 @@ public:
                         double xa, double ya, double za);
     ChestRefillParticle(Level* level, double x, double y, double z,
                         double xa, double ya, double za, float scale);
-    virtual ~ChestRefillParticle();
     virtual uint64_t GetType();
     virtual void tick();
     virtual void render(BufferBuilder* buffer,

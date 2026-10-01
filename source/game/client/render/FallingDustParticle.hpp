@@ -30,7 +30,6 @@ public:
                         float red,
                         float green,
                         float blue);
-    virtual ~FallingDustParticle();
     virtual void render(BufferBuilder* buffer,
                          const boost::shared_ptr<Entity>& camera,
                          float partialTicks,

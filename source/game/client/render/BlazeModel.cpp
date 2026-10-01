@@ -58,10 +58,6 @@ BlazeModel::BlazeModel(const ModelDefinition& modelDefinition)
     }
 }
 
-BlazeModel::~BlazeModel()
-{
-}
-
 void BlazeModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)
 {
     setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, _SkinAdjustments());
@@ -112,7 +108,3 @@ void BlazeModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTi
     mHead->mXRot = headPitch * 0.01745329238474369f;
 }
 
-std::wstring BlazeModel::getName()
-{
-    return L"blaze";
-}

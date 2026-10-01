@@ -11,7 +11,6 @@ class ShieldModel : public Model
 public:
     ShieldModel(const ModelDefinition& modelDefinition);
 
-    virtual ~ShieldModel();
 
     void render(bool useDisplayList);
 

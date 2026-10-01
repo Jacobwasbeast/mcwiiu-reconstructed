@@ -11,7 +11,6 @@ class WolfModel : public Model
 {
 public:
     WolfModel(const ModelDefinition& modelDefinition);
-    virtual ~WolfModel();
     virtual void render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount,
                         float ageInTicks, float netHeadYaw, float headPitch, float scale,
                         bool useDisplayList);
@@ -20,7 +19,7 @@ public:
     virtual void setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw,
                            float headPitch, float scale, boost::shared_ptr<Entity> entity,
                            _SkinAdjustments skinAdjustments);
-    virtual std::wstring getName();
+    virtual std::wstring getName() { return L"wolf"; }
     ModelPart* mHead;
     ModelPart* mBody;
     ModelPart* mLeg1;

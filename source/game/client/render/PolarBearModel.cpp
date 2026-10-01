@@ -62,10 +62,6 @@ PolarBearModel::PolarBearModel(const ModelDefinition& modelDefinition)
     compileSkinnedDrawlist();
 }
 
-PolarBearModel::~PolarBearModel()
-{
-}
-
 void PolarBearModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount,
                             float ageInTicks, float netHeadYaw, float headPitch, float scale,
                             bool useDisplayList)
@@ -133,7 +129,3 @@ void PolarBearModel::setupAnim(float limbSwing, float limbSwingAmount, float age
     mHead->mXRot += standingAngle * 0.15f;
 }
 
-std::wstring PolarBearModel::getName()
-{
-    return L"polarbear";
-}

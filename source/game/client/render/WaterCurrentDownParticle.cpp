@@ -23,10 +23,6 @@ WaterCurrentDownParticle::WaterCurrentDownParticle(Level* level, double x, doubl
     gravity = 0.002f;
 }
 
-WaterCurrentDownParticle::~WaterCurrentDownParticle()
-{
-}
-
 void WaterCurrentDownParticle::tick()
 {
     xo = x;

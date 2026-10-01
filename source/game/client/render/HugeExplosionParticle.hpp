@@ -14,7 +14,6 @@ class HugeExplosionParticle : public Particle
 public:
     HugeExplosionParticle(Textures* textures, Level* level, double x, double y, double z,
                           double xa, double ya, double za);
-    virtual ~HugeExplosionParticle();
     virtual uint64_t GetType();
     virtual void tick();
     virtual void render(BufferBuilder* buffer, const boost::shared_ptr<Entity>& camera,

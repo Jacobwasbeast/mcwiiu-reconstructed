@@ -23,10 +23,6 @@ LavaParticle::LavaParticle(Level* level, double x, double y, double z)
     setMiscTex(0x31);
 }
 
-LavaParticle::~LavaParticle()
-{
-}
-
 int LavaParticle::getLightColor(float partialTicks)
 {
     return Particle::getLightColor(partialTicks) & 0xff0000 | 0xf0;

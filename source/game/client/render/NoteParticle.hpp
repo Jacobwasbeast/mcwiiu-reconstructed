@@ -11,7 +11,6 @@ public:
                  double xa, double ya, double za);
     NoteParticle(Level* level, double x, double y, double z,
                  double xa, double ya, double za, float scale);
-    virtual ~NoteParticle();
     virtual void render(BufferBuilder* buffer,
                         const boost::shared_ptr<Entity>& camera,
                         float partialTicks,

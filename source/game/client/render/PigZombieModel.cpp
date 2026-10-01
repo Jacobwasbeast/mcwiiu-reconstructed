@@ -19,10 +19,6 @@ PigZombieModel::PigZombieModel(const ModelDefinition& definition)
     init(definition, 0.0f, false);
 }
 
-PigZombieModel::~PigZombieModel()
-{
-}
-
 void PigZombieModel::init(const ModelDefinition& definition, float scale, bool armourModel)
 {
     BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
@@ -146,7 +142,3 @@ void PigZombieModel::setupAnim(float limbSwing, float limbSwingAmount, float age
     mLeftArm->mXRot -= Mth::sin(ageInTicks * 0.06700000166893005f) * 0.05000000074505806f;
 }
 
-std::wstring PigZombieModel::getName()
-{
-    return L"pigzombie";
-}

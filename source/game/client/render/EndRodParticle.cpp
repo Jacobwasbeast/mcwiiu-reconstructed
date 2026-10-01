@@ -5,22 +5,17 @@ EndRodParticle::EndRodParticle(Level* level, double x, double y, double z,
                                double xa, double ya, double za)
     : SimpleAnimatedParticle(level, x, y, z, 176, 8, -0.0005f)
 {
-    size *= 0.75f;
     xd = xa;
     yd = ya;
     zd = za;
+    size *= 0.75f;
     lifetime = random.nextInt(12) + 60;
     setFadeColor(0xf2dec9);
 }
 
-EndRodParticle::~EndRodParticle()
-{
-}
-
 void EndRodParticle::move(double xa, double ya, double za)
 {
-    AABB* box = getBoundingBox();
-    setBoundingBox(box->move(xa, ya, za));
+    setBoundingBox(getBoundingBox()->move(xa, ya, za));
     setLocationFromBoundingbox();
 }
 

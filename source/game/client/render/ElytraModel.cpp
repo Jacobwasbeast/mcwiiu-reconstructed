@@ -40,10 +40,6 @@ ElytraModel::ElytraModel(const ModelDefinition& modelDefinition)
     compileSkinnedDrawlist();
 }
 
-ElytraModel::~ElytraModel()
-{
-}
-
 void ElytraModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)
 {
     GlStateManager::disableRescaleNormal();

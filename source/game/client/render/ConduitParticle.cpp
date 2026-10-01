@@ -38,10 +38,6 @@ ConduitParticle::ConduitParticle(Level* level,
     uvs = TextureUVCoordinateSet::fromOldSystem(texture * 3 + 0xd0 + variant);
 }
 
-ConduitParticle::~ConduitParticle()
-{
-}
-
 void ConduitParticle::tick()
 {
     xo = x;

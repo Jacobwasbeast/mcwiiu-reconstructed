@@ -12,7 +12,6 @@ public:
     CritParticle(Level* level, double x, double y, double z,
                  double xa, double ya, double za, float scale);
     virtual uint64_t GetType();
-    virtual ~CritParticle();
     virtual void render(BufferBuilder* buffer,
                         const boost::shared_ptr<Entity>& camera,
                         float partialTicks,

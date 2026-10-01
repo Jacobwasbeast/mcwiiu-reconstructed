@@ -13,10 +13,6 @@ LeashKnotModel::LeashKnotModel(int xTexOffs, int yTexOffs, int texWidth, int tex
     _init(xTexOffs, yTexOffs, texWidth, texHeight);
 }
 
-LeashKnotModel::~LeashKnotModel()
-{
-}
-
 void LeashKnotModel::_init(int xTexOffs, int yTexOffs, int texWidth, int texHeight)
 {
     mTexWidth = texWidth;

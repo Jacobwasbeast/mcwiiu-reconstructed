@@ -23,10 +23,6 @@ AttackSweepParticle::AttackSweepParticle(Textures* textures, Level* level,
     bCol = rCol;
 }
 
-AttackSweepParticle::~AttackSweepParticle()
-{
-}
-
 void AttackSweepParticle::render(BufferBuilder* buffer,
                                  const boost::shared_ptr<Entity>& camera,
                                  float partialTicks,

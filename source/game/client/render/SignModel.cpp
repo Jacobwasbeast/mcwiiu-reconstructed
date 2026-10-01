@@ -14,10 +14,6 @@ SignModel::SignModel(const ModelDefinition& modelDefinition)
     compileSkinnedDrawlist();
 }
 
-SignModel::~SignModel()
-{
-}
-
 void SignModel::render(bool useDisplayList)
 {
     mSignBoard->render(0.0625f, useDisplayList, false);

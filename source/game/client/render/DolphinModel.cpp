@@ -125,7 +125,3 @@ void DolphinModel::setupAnim(float limbSwing, float limbSwingAmount, float ageIn
     }
 }
 
-std::wstring DolphinModel::getName()
-{
-    return L"dolphin";
-}

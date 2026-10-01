@@ -13,7 +13,6 @@ class ChestedHorseModel : public AbstractHorseModel
 public:
     ChestedHorseModel(const ModelDefinition& modelDefinition);
 
-    virtual ~ChestedHorseModel();
 
     virtual void render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList);
 };

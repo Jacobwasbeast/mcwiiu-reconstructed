@@ -34,10 +34,6 @@ TridentModel::TridentModel(const ModelDefinition& modelDefinition)
     compileSkinnedDrawlist();
 }
 
-TridentModel::~TridentModel()
-{
-}
-
 void TridentModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)
 {
     mPole->render(0.0625f, useDisplayList, false);
@@ -45,7 +41,3 @@ void TridentModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, fl
     callSkinnedDrawlist();
 }
 
-std::wstring TridentModel::getName()
-{
-    return L"trident";
-}

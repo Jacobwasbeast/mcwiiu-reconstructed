@@ -19,7 +19,6 @@ public:
     BreakingItemParticle(Level* level, double x, double y, double z,
                          double xa, double ya, double za, Item* item, int meta);
     virtual uint64_t GetType();
-    virtual ~BreakingItemParticle();
     virtual void render(BufferBuilder* buffer,
                         const boost::shared_ptr<Entity>& camera,
                         float partialTicks, float xa, float ya, float za,

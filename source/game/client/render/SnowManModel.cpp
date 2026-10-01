@@ -48,10 +48,6 @@ SnowManModel::SnowManModel(const ModelDefinition& modelDefinition)
     }
 }
 
-SnowManModel::~SnowManModel()
-{
-}
-
 void SnowManModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)
 {
     setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, _SkinAdjustments());
@@ -89,7 +85,3 @@ void SnowManModel::setupAnim(float limbSwing, float limbSwingAmount, float ageIn
     mArm2->mZ = sinBody * 5.0f;
 }
 
-std::wstring SnowManModel::getName()
-{
-    return L"snowgolem";
-}

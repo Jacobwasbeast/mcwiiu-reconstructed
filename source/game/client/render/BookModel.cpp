@@ -37,10 +37,6 @@ BookModel::BookModel(const ModelDefinition& modelDefinition)
     compileSkinnedDrawlist();
 }
 
-BookModel::~BookModel()
-{
-}
-
 void BookModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)
 {
     setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, _SkinAdjustments());

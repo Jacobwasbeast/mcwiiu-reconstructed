@@ -57,10 +57,6 @@ DragonHeadModel::DragonHeadModel(float scale, const ModelDefinition& modelDefini
     }
 }
 
-DragonHeadModel::~DragonHeadModel()
-{
-}
-
 void DragonHeadModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)
 {
     mJaw->mXRot = (sinf(limbSwing * 3.1415927f * 0.2f) + 1.0f) * 0.2f;
@@ -72,11 +68,6 @@ void DragonHeadModel::render(boost::shared_ptr<Entity>& entity, float limbSwing,
     GlStateManager::scalef(0.75f, 0.75f, 0.75f);
 
     mHead->render(scale, useDisplayList, false);
-}
-
-std::wstring DragonHeadModel::getName()
-{
-    return L"dragon_head";
 }
 
 bool DragonHeadModel::hasJawPart()

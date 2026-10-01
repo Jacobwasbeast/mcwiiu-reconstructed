@@ -31,10 +31,13 @@
 static ResourceLocation ITEMS_LOCATION(TN_MISC_FOLIAGECOLOR);
 
 ItemEntityRenderer::ItemEntityRenderer(EntityRenderDispatcher* dispatcher, ItemRenderer* itemRenderer)
-    : EntityRenderer(dispatcher), mItemRenderer(itemRenderer), mRandom(), mItemFrame(false), mIsGui3d(true)
+    : EntityRenderer(dispatcher), mRandom()
 {
+    mItemRenderer = itemRenderer;
     mShadowRadius = 0.15F;
     mShadowStrength = 0.75F;
+    mItemFrame = false;
+    mIsGui3d = true;
 }
 
 ItemEntityRenderer::~ItemEntityRenderer()

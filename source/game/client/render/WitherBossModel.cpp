@@ -73,10 +73,6 @@ WitherBossModel::WitherBossModel(float scale, const ModelDefinition& modelDefini
     }
 }
 
-WitherBossModel::~WitherBossModel()
-{
-}
-
 void WitherBossModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount,
                              float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)
 {
@@ -120,7 +116,3 @@ void WitherBossModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, f
     mHeads[2]->mXRot = wither->getHeadXRot(1) * 0.01745329238474369f;
 }
 
-std::wstring WitherBossModel::getName()
-{
-    return L"witherBoss";
-}

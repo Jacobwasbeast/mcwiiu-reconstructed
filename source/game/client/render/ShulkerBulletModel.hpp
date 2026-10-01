@@ -15,7 +15,6 @@ class ShulkerBulletModel : public Model
 public:
     ShulkerBulletModel(const ModelDefinition& modelDefinition);
 
-    virtual ~ShulkerBulletModel();
 
     virtual void render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList);
     virtual void setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments);

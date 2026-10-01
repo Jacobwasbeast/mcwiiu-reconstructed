@@ -31,7 +31,6 @@ public:
                     double ya,
                     double za,
                     arrayWithLength<int> params);
-    virtual ~ConduitParticle();
     virtual void tick();
     virtual uint64_t GetType();
 

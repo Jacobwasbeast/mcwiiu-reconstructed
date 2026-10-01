@@ -16,7 +16,6 @@ class AttackSweepParticle : public Particle
 public:
     AttackSweepParticle(Textures* textures, Level* level, double x, double y, double z,
                         double xa, double ya, double za);
-    virtual ~AttackSweepParticle();
     virtual void render(BufferBuilder* buffer, const boost::shared_ptr<Entity>& camera,
                         float partialTicks, float xa, float ya, float za,
                         float xa2, float za2);

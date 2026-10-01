@@ -13,7 +13,6 @@ class EnderCrystalModel : public Model
 {
 public:
     EnderCrystalModel(float scale, bool renderBase, const ModelDefinition& modelDefinition);
-    virtual ~EnderCrystalModel();
 
     virtual void render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount,
                         float ageInTicks, float netHeadYaw, float headPitch, float scale,

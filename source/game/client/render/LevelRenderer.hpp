@@ -78,7 +78,7 @@ public:
     static unsigned int getGlobalChunkCount();
     void renderStars();
     void createCloudMesh();
-    unsigned char activePlayers();
+    int activePlayers();
     void nonStackDirtyChunksAdded();
     void resortChunks(int x, int y, int z, int dimension);
     void allChanged(int dimension);
@@ -165,6 +165,7 @@ private:
     friend class Chunk;
     friend class MultiPlayerGameMode;
 
+    int mUnused;
     ChunkBlockEntityMap mBlockEntities;
     OSFastMutex mBlockEntityMutex;
     OSFastMutex mLevelMutex;

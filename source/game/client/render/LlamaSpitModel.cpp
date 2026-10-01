@@ -13,10 +13,6 @@ LlamaSpitModel::LlamaSpitModel(float delta, const ModelDefinition& modelDefiniti
     _init(delta, modelDefinition);
 }
 
-LlamaSpitModel::~LlamaSpitModel()
-{
-}
-
 void LlamaSpitModel::_init(float delta, const ModelDefinition& modelDefinition)
 {
     mSpit = new ModelPart(this);

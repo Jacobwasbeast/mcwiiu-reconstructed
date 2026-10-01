@@ -24,10 +24,6 @@ OcelotModel::OcelotModel(const ModelDefinition& modelDefinition)
     LoadOcelotModelDefinition(modelDefinition);
 }
 
-OcelotModel::~OcelotModel()
-{
-}
-
 void OcelotModel::LoadOcelotModelDefinition(const ModelDefinition& modelDefinition)
 {
     mPose = 1;
@@ -258,7 +254,3 @@ void OcelotModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float
     }
 }
 
-std::wstring OcelotModel::getName()
-{
-    return L"ocelot";
-}

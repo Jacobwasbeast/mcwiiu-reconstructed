@@ -5,8 +5,6 @@
 
 #include <math.h>
 
-SkiModel::~SkiModel() { }
-
 void SkiModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)
 {
     for (unsigned int i = 0; i < mSkiParts.length; i++)

@@ -9,7 +9,6 @@ class EnchantmentTableParticle : public Particle
 public:
     EnchantmentTableParticle(Level* level, double x, double y, double z,
                              double xa, double ya, double za);
-    virtual ~EnchantmentTableParticle();
     virtual int getLightColor(float partialTicks);
     virtual float getBrightness(float partialTicks);
     virtual void move(double xa, double ya, double za);

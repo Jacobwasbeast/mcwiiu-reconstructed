@@ -10,7 +10,6 @@ public:
     EndRodParticle(Level* level, double x, double y, double z,
                    double xa, double ya, double za);
     virtual uint64_t GetType();
-    virtual ~EndRodParticle();
     virtual void move(double xa, double ya, double za);
 
     class Provider : public ParticleProvider

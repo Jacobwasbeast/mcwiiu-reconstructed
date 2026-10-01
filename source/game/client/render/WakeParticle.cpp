@@ -22,10 +22,6 @@ WakeParticle::WakeParticle(Level* level, double x, double y, double z,
     gravity = 0.0f;
 }
 
-WakeParticle::~WakeParticle()
-{
-}
-
 void WakeParticle::tick()
 {
     xo = x;

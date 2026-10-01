@@ -99,7 +99,3 @@ void VillagerModel::setupAnim(float limbSwing, float limbSwingAmount, float ageI
     mLeg1->mYRot = 0.0f;
 }
 
-std::wstring VillagerModel::getName()
-{
-    return L"villager";
-}

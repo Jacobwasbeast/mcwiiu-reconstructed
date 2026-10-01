@@ -46,7 +46,3 @@ void SkeletonHeadModel::setupAnim(float limbSwing, float limbSwingAmount, float 
     mHead->mXRot = headPitch * 0.01745329238474369f;
 }
 
-std::wstring SkeletonHeadModel::getName()
-{
-    return L"mob_head";
-}

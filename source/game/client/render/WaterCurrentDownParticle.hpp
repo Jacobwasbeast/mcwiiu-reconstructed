@@ -19,7 +19,6 @@ public:
     };
 
     WaterCurrentDownParticle(Level* level, double x, double y, double z);
-    virtual ~WaterCurrentDownParticle();
     virtual void tick();
     virtual float getBrightness(float partialTicks);
     virtual int getLightColor(float partialTicks);

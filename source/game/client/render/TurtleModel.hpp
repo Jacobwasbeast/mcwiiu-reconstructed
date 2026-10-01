@@ -12,7 +12,6 @@ class TurtleModel : public QuadrupedModel
 {
 public:
     TurtleModel(float scale, const ModelDefinition& modelDefinition);
-    virtual ~TurtleModel();
 
     virtual void render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount,
                         float ageInTicks, float netHeadYaw, float headPitch, float scale,
@@ -20,7 +19,7 @@ public:
     virtual void setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks,
                            float netHeadYaw, float headPitch, float scale,
                            boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments);
-    virtual std::wstring getName();
+    virtual std::wstring getName() { return L"turtle"; }
 
     ModelPartSkin* mEggBelly;
 };

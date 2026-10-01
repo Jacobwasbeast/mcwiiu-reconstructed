@@ -33,10 +33,6 @@ DripParticle::DripParticle(Level* level, double x, double y, double z, Material*
     zd = 0.0;
 }
 
-DripParticle::~DripParticle()
-{
-}
-
 int DripParticle::getLightColor(float partialTicks)
 {
     if (material != Material::WATER)

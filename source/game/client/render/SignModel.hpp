@@ -11,7 +11,6 @@ class SignModel : public Model
 public:
     SignModel(const ModelDefinition& modelDefinition);
 
-    virtual ~SignModel();
 
     void render(bool useDisplayList);
 

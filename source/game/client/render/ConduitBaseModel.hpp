@@ -10,7 +10,6 @@ class ConduitBaseModel : public Model
 public:
     ConduitBaseModel(int xTexOffs, int yTexOffs, int texWidth, int texHeight);
 
-    virtual ~ConduitBaseModel();
 
     void renderBase(bool useDisplayList);
 

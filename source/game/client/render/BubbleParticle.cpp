@@ -49,10 +49,6 @@ BubbleParticle::BubbleParticle(Level* level,
     }
 }
 
-BubbleParticle::~BubbleParticle()
-{
-}
-
 void BubbleParticle::tick()
 {
     xo = x;

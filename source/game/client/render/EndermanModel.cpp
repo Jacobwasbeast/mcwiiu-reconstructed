@@ -306,7 +306,3 @@ void EndermanModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, f
     }
 }
 
-std::wstring EndermanModel::getName()
-{
-    return L"enderman";
-}

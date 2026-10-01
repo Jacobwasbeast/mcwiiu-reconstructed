@@ -9,7 +9,6 @@ class LargeChestModel : public ChestModel
 {
 public:
     LargeChestModel(const ModelDefinition& modelDefinition);
-    virtual ~LargeChestModel();
 };
 
 #endif

@@ -19,10 +19,6 @@ TerrainDustParticle::TerrainDustParticle(Level* level,
     zd = za;
 }
 
-TerrainDustParticle::~TerrainDustParticle()
-{
-}
-
 uint64_t TerrainDustParticle::GetType()
 {
     return ParticleKind::TERRAIN_DUST;

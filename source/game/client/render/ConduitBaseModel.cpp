@@ -10,10 +10,6 @@ ConduitBaseModel::ConduitBaseModel(int xTexOffs, int yTexOffs, int texWidth, int
     compileSkinnedDrawlist();
 }
 
-ConduitBaseModel::~ConduitBaseModel()
-{
-}
-
 void ConduitBaseModel::renderBase(bool useDisplayList)
 {
     mBase->render(0.0625f, useDisplayList, false);

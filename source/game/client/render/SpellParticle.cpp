@@ -22,10 +22,6 @@ SpellParticle::SpellParticle(Level* level, double x, double y, double z,
     setMiscTex(0x87 - (age << 3) / lifetime);
 }
 
-SpellParticle::~SpellParticle()
-{
-}
-
 bool SpellParticle::isTransparent()
 {
     return true;

@@ -19,7 +19,7 @@ uint64_t SpitParticle::GetType()
 void SpitParticle::tick()
 {
     ExplodeParticle::tick();
-    y -= 0.04 * (double)gravity + 0.004;
+    yd -= 0.04 * (double)gravity + 0.004;
 }
 
 Particle* SpitParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* level, double x, double y,

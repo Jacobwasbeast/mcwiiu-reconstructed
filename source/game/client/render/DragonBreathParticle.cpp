@@ -13,10 +13,6 @@ DragonBreathParticle::DragonBreathParticle(Level* level, double x, double y, dou
     init(level, x, y, z, xa, ya, za, 1.0f);
 }
 
-DragonBreathParticle::~DragonBreathParticle()
-{
-}
-
 void DragonBreathParticle::init(Level* level, double x, double y, double z,
                                 double xa, double ya, double za, float scale)
 {

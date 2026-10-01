@@ -11,10 +11,6 @@
 
 #include <algorithm>
 
-MobSpawnerRenderer::~MobSpawnerRenderer()
-{
-}
-
 void MobSpawnerRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x, double y, double z, float a, int breakProgress, bool bTranslucent, float alpha, bool bUseDisplayList)
 {
     boost::shared_ptr<MobSpawnerBlockEntity> spawnerBlockEntity = boost::static_pointer_cast<MobSpawnerBlockEntity>(blockEntity);

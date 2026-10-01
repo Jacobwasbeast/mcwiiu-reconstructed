@@ -8,7 +8,6 @@ class LavaParticle : public Particle
 {
 public:
     LavaParticle(Level* level, double x, double y, double z);
-    virtual ~LavaParticle();
     virtual int getLightColor(float partialTicks);
     virtual float getBrightness(float partialTicks);
     virtual void render(BufferBuilder* buffer, const boost::shared_ptr<Entity>& camera,

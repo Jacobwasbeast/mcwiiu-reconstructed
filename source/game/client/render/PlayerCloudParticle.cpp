@@ -29,10 +29,6 @@ PlayerCloudParticle::PlayerCloudParticle(Level* level,
     lifetime = (int)std::floor(8.0 / (random.nextDouble() * 0.8 + 0.3) * 2.5);
 }
 
-PlayerCloudParticle::~PlayerCloudParticle()
-{
-}
-
 void PlayerCloudParticle::render(BufferBuilder* buffer,
                                  const boost::shared_ptr<Entity>& camera,
                                  float partialTicks,

@@ -120,10 +120,6 @@ ParrotModel::ParrotModel(const ModelDefinition& modelDefinition)
     compileSkinnedDrawlist();
 }
 
-ParrotModel::~ParrotModel()
-{
-}
-
 void ParrotModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount,
                          float ageInTicks, float netHeadYaw, float headPitch, float scale,
                          bool useDisplayList)
@@ -272,7 +268,3 @@ void ParrotModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float
     }
 }
 
-std::wstring ParrotModel::getName()
-{
-    return L"parrot";
-}

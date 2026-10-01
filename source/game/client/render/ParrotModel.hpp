@@ -17,7 +17,6 @@ class ParrotModel : public Model
 {
 public:
     ParrotModel(const ModelDefinition& modelDefinition);
-    virtual ~ParrotModel();
 
     virtual void render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount,
                         float ageInTicks, float netHeadYaw, float headPitch, float scale,
@@ -27,7 +26,7 @@ public:
                            boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments);
     virtual void prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing,
                                  float limbSwingAmount, float partialTicks);
-    virtual std::wstring getName();
+    virtual std::wstring getName() { return L"parrot"; }
 
     ModelPart* mBody;
     ModelPart* mTail;

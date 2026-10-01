@@ -13,9 +13,8 @@ public:
     PigModel(const ModelDefinition& modelDefinition);
     PigModel(float scale, const ModelDefinition& modelDefinition);
 
-    virtual ~PigModel();
 
-    virtual std::wstring getName();
+    virtual std::wstring getName() { return L"pig"; }
 };
 
 #endif

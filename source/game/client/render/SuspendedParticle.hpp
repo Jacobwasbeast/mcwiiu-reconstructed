@@ -9,7 +9,6 @@ class SuspendedParticle : public Particle
 public:
     SuspendedParticle(Level* level, double x, double y, double z,
                       double xa, double ya, double za);
-    virtual ~SuspendedParticle();
     virtual void tick();
     virtual uint64_t GetType();
 

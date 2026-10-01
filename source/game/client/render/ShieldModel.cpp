@@ -30,10 +30,6 @@ ShieldModel::ShieldModel(const ModelDefinition& modelDefinition)
     mPlateFront->compile(0.0625f);
 }
 
-ShieldModel::~ShieldModel()
-{
-}
-
 void ShieldModel::render(bool useDisplayList)
 {
     mPlate->render(0.0625f, useDisplayList, false);

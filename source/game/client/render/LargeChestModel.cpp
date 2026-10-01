@@ -32,6 +32,3 @@ LargeChestModel::LargeChestModel(const ModelDefinition& modelDefinition)
     mBottom->compile(0.0625f);
 }
 
-LargeChestModel::~LargeChestModel()
-{
-}

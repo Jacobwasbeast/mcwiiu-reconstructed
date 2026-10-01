@@ -10,14 +10,13 @@ class SquidModel : public Model
 {
 public:
     explicit SquidModel(const ModelDefinition& definition);
-    virtual ~SquidModel();
     virtual void setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw,
                            float headPitch, float scale, boost::shared_ptr<Entity> entity,
                            _SkinAdjustments skinAdjustments);
     virtual void render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount,
                         float ageInTicks, float netHeadYaw, float headPitch, float scale,
                         bool useDisplayList);
-    virtual std::wstring getName();
+    virtual std::wstring getName() { return L"squid"; }
 
     ModelPartSkin* mBody;
     ModelPartSkin* mTentacle1;

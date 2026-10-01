@@ -33,11 +33,3 @@ PigModel::PigModel(float scale, const ModelDefinition& modelDefinition)
     }
 }
 
-PigModel::~PigModel()
-{
-}
-
-std::wstring PigModel::getName()
-{
-    return L"pig";
-}

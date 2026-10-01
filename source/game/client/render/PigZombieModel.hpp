@@ -17,10 +17,9 @@ public:
     PigZombieModel(const ModelDefinition& definition);
     PigZombieModel(float scale, bool armourModel, const ModelDefinition& definition);
 
-    virtual ~PigZombieModel();
 
     virtual void setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments);
-    virtual std::wstring getName();
+    virtual std::wstring getName() { return L"pigzombie"; }
 
     void init(const ModelDefinition& definition, float scale, bool armourModel);
 };

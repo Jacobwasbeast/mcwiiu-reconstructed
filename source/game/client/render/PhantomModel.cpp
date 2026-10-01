@@ -205,7 +205,3 @@ void PhantomModel::setupAnim(float limbSwing, float limbSwingAmount, float ageIn
     mPhantomParts[7]->mXRot = -(Mth::cos(angle + angle) * 5.0f + 5.0f) * radians;
 }
 
-std::wstring PhantomModel::getName()
-{
-    return L"phantom";
-}

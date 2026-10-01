@@ -5,10 +5,10 @@ TotemParticle::TotemParticle(Level* level, double x, double y, double z,
                              double xa, double ya, double za)
     : SimpleAnimatedParticle(level, x, y, z, 176, 8, -0.05f)
 {
-    size *= 0.75f;
     xd = xa;
     yd = ya;
     zd = za;
+    size *= 0.75f;
     lifetime = random.nextInt(12) + 60;
 
     if (random.nextInt(4) == 0)
@@ -16,19 +16,15 @@ TotemParticle::TotemParticle(Level* level, double x, double y, double z,
         Particle::setColor(random.nextFloat() * 0.2f + 0.6f,
                            random.nextFloat() * 0.3f + 0.6f,
                            random.nextFloat() * 0.2f);
-        setBaseAirFriction(0.3f);
+        setBaseAirFriction(0.6f);
     }
     else
     {
         Particle::setColor(random.nextFloat() * 0.2f + 0.1f,
                            random.nextFloat() * 0.3f + 0.4f,
                            random.nextFloat() * 0.2f);
-        setBaseAirFriction(0.3f);
+        setBaseAirFriction(0.6f);
     }
-}
-
-TotemParticle::~TotemParticle()
-{
 }
 
 uint64_t TotemParticle::GetType()

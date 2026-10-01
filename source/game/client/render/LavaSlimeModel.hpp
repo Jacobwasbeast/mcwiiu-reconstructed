@@ -17,11 +17,11 @@ class LavaSlimeModel : public Model
 public:
     LavaSlimeModel(const ModelDefinition& modelDefinition);
 
-    virtual ~LavaSlimeModel();
+    virtual ~LavaSlimeModel() {}
 
     virtual void render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList);
     virtual void prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount, float partialTicks);
-    virtual std::wstring getName();
+    virtual std::wstring getName() { return L"lavaslime"; }
 
     int getModelVersion();
 

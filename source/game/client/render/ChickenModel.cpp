@@ -59,10 +59,6 @@ ChickenModel::ChickenModel(const ModelDefinition& modelDefinition)
     }
 }
 
-ChickenModel::~ChickenModel()
-{
-}
-
 void ChickenModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)
 {
     setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, _SkinAdjustments());
@@ -118,7 +114,3 @@ void ChickenModel::setupAnim(float limbSwing, float limbSwingAmount, float ageIn
     mWing1->mZRot = -ageInTicks;
 }
 
-std::wstring ChickenModel::getName()
-{
-    return L"chicken";
-}

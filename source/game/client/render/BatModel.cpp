@@ -87,10 +87,6 @@ BatModel::BatModel(const ModelDefinition& modelDefinition)
     }
 }
 
-BatModel::~BatModel()
-{
-}
-
 void BatModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)
 {
     setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, _SkinAdjustments());
@@ -146,7 +142,3 @@ void BatModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTick
     }
 }
 
-std::wstring BatModel::getName()
-{
-    return L"bat";
-}

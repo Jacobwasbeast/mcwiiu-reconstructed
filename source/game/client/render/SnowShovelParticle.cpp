@@ -12,10 +12,6 @@ SnowShovelParticle::SnowShovelParticle(Level* level, double x, double y, double 
     init(level, x, y, z, xa, ya, za, 1.0f);
 }
 
-SnowShovelParticle::~SnowShovelParticle()
-{
-}
-
 void SnowShovelParticle::render(BufferBuilder* buffer,
                                 const boost::shared_ptr<Entity>& camera,
                                 float partialTicks,

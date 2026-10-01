@@ -32,7 +32,6 @@ public:
                       double xa,
                       double ya,
                       double za);
-    virtual ~BubblePopParticle();
     virtual void tick();
     virtual uint64_t GetType();
 };

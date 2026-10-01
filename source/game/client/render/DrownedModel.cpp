@@ -28,10 +28,6 @@ DrownedModel::DrownedModel(const ModelDefinition& definition)
     init(0.0f, definition);
 }
 
-DrownedModel::~DrownedModel()
-{
-}
-
 void DrownedModel::init(float scale, const ModelDefinition& definition)
 {
     if (!definition.DoesOverrideModel())
@@ -235,7 +231,3 @@ void DrownedModel::setAllVisible(bool visible)
     mJacket->mShow = visible;
 }
 
-std::wstring DrownedModel::getName()
-{
-    return L"zombie.drowned";
-}

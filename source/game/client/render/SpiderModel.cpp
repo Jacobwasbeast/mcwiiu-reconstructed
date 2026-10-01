@@ -173,7 +173,3 @@ void SpiderModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInT
     mSpiderParts[10]->mZRot -= roll3;
 }
 
-std::wstring SpiderModel::getName()
-{
-    return L"spider";
-}

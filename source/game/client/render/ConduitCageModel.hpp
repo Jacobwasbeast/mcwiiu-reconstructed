@@ -10,7 +10,6 @@ class ConduitCageModel : public Model
 public:
     ConduitCageModel(int texOffsX, int texOffsY, int texWidth, int texHeight);
 
-    virtual ~ConduitCageModel();
 
     void renderCage(bool useDisplayList);
 

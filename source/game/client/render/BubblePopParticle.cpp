@@ -22,10 +22,6 @@ BubblePopParticle::BubblePopParticle(Level* level,
     lifetime = 4;
 }
 
-BubblePopParticle::~BubblePopParticle()
-{
-}
-
 void BubblePopParticle::tick()
 {
     xo = x;

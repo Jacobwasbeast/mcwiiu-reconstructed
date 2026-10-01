@@ -463,7 +463,3 @@ void AbstractHorseModel::render(boost::shared_ptr<Entity>& entity, float limbSwi
     }
 }
 
-std::wstring AbstractHorseModel::getName()
-{
-    return L"horse.v2";
-}

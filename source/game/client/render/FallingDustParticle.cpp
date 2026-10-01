@@ -33,10 +33,6 @@ FallingDustParticle::FallingDustParticle(Level* level,
     uo = random.nextFloat() * 6.2831855f;
 }
 
-FallingDustParticle::~FallingDustParticle()
-{
-}
-
 void FallingDustParticle::render(BufferBuilder* buffer,
                                  const boost::shared_ptr<Entity>& camera,
                                  float partialTicks,

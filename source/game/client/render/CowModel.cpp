@@ -38,11 +38,3 @@ CowModel::CowModel(const ModelDefinition& modelDefinition)
     }
 }
 
-CowModel::~CowModel()
-{
-}
-
-std::wstring CowModel::getName()
-{
-    return L"cow";
-}

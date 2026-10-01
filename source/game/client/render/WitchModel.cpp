@@ -58,10 +58,6 @@ WitchModel::WitchModel(float scale, const ModelDefinition& modelDefinition)
     }
 }
 
-WitchModel::~WitchModel()
-{
-}
-
 void WitchModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments)
 {
     VillagerModel::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, _SkinAdjustments());
@@ -80,7 +76,3 @@ void WitchModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTi
     }
 }
 
-std::wstring WitchModel::getName()
-{
-    return L"villager.witch";
-}

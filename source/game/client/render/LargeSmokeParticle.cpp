@@ -11,10 +11,6 @@ LargeSmokeParticle::LargeSmokeParticle(Level* level, double x, double y, double 
 {
 }
 
-LargeSmokeParticle::~LargeSmokeParticle()
-{
-}
-
 uint64_t LargeSmokeParticle::GetType()
 {
     return kLargeSmokeParticleType;

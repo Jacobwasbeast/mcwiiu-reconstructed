@@ -22,10 +22,6 @@ VillagerZombieModel::VillagerZombieModel(float scale, float yOffset, bool armour
     _init(scale, yOffset, armourModel, definition);
 }
 
-VillagerZombieModel::~VillagerZombieModel()
-{
-}
-
 void VillagerZombieModel::_init(float scale, float yOffset, bool armourModel, const ModelDefinition& definition)
 {
     if (!definition.DoesOverrideModel())
@@ -117,7 +113,3 @@ void VillagerZombieModel::setupAnim(float limbSwing, float limbSwingAmount, floa
     mLeftArm->mXRot -= Mth::sin(ageInTicks * 0.067f) * 0.05f;
 }
 
-std::wstring VillagerZombieModel::getName()
-{
-    return L"zombie.villager";
-}

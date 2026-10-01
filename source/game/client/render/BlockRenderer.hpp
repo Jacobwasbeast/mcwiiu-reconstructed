@@ -118,7 +118,7 @@ public:
     bool tesselateKelpInWorld(const BlockState* state, const BlockPos& pos);
     bool tessellateCoralFanInWorld(const BlockState* state, const BlockPos& pos);
     bool tessellateCoralFanHangInWorld(const BlockState* state, const BlockPos& pos);
-    void tesselateStemDirTexture(const BlockState* state, const Direction* direction, float x, float y, float z, float scale);
+    void tesselateStemDirTexture(const BlockState* state, const Direction* direction, float height, float x, float y, float z);
     bool tesselateStemInWorld(const BlockState* state, const BlockPos& pos);
     bool tesselateLilypadInWorld(const BlockState* state, const BlockPos& pos);
     bool tesselateRowInWorld(const BlockState* state, const BlockPos& pos);

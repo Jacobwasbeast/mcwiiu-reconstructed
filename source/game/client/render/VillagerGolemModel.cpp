@@ -78,10 +78,6 @@ VillagerGolemModel::VillagerGolemModel(float scale, float yOffset, const ModelDe
     }
 }
 
-VillagerGolemModel::~VillagerGolemModel()
-{
-}
-
 void VillagerGolemModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)
 {
     setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, _SkinAdjustments());
@@ -141,7 +137,3 @@ void VillagerGolemModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity
     }
 }
 
-std::wstring VillagerGolemModel::getName()
-{
-    return L"irongolem";
-}

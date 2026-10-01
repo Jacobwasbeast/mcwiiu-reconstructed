@@ -38,11 +38,11 @@ static ResourceLocation MAP_BACKGROUND_LOCATION(TN_MISC_MAPBG);
 
 ItemFrameRenderer::ItemFrameRenderer(EntityRenderDispatcher* dispatcher, ItemRenderer* itemRenderer)
     : EntityRenderer(dispatcher),
-      mMinecraft(Minecraft::GetInstance()),
-      mItemRenderer(itemRenderer),
-      mBlockFrameDisplayList(-1),
-      mFrameDisplayList(-1)
+      mItemRenderer(itemRenderer)
 {
+    mMinecraft = Minecraft::GetInstance();
+    mBlockFrameDisplayList = -1;
+    mFrameDisplayList = -1;
 }
 
 ItemFrameRenderer::~ItemFrameRenderer()

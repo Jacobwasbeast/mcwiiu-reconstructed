@@ -25,10 +25,6 @@ ItemPickupParticle::ItemPickupParticle(Level* level,
     this->yOffs = yOffs;
 }
 
-ItemPickupParticle::~ItemPickupParticle()
-{
-}
-
 uint64_t ItemPickupParticle::GetType()
 {
     return ParticleKind::ITEM_PICKUP;

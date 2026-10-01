@@ -69,10 +69,6 @@ BoatModel::BoatModel(const ModelDefinition& definition)
     mSecondPassBottom->compile(0.0625f);
 }
 
-BoatModel::~BoatModel()
-{
-}
-
 ModelPartSkin* BoatModel::makePaddle(bool left)
 {
     ModelPartSkin* paddle = new ModelPartSkin(this, 62, left ? 0 : 20, NULL);
@@ -116,11 +112,6 @@ void BoatModel::render(boost::shared_ptr<Entity>& entity, float partialTicks, fl
     animatePaddle(mPaddleRight, boat, 1, scale, partialTicks, useDisplayList);
 
     callSkinnedDrawlist();
-}
-
-std::wstring BoatModel::getName()
-{
-    return L"boat";
 }
 
 void BoatModel::renderSecondPass(boost::shared_ptr<Entity> entity, float partialTicks, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)

@@ -8,14 +8,13 @@
 FlameParticle::FlameParticle(Level* level, double x, double y, double z,
                              double xa, double ya, double za)
     : Particle(level, x, y, z, xa, ya, za)
-    , mOriginalSize(0.0f)
 {
     xd = xd * 0.01f + xa;
     yd = yd * 0.01f + ya;
     zd = zd * 0.01f + za;
-    xd += (random.nextFloat() - random.nextFloat()) * 0.05f;
-    yd += (random.nextFloat() - random.nextFloat()) * 0.05f;
-    zd += (random.nextFloat() - random.nextFloat()) * 0.05f;
+    this->x += (random.nextFloat() - random.nextFloat()) * 0.05f;
+    this->y += (random.nextFloat() - random.nextFloat()) * 0.05f;
+    this->z += (random.nextFloat() - random.nextFloat()) * 0.05f;
     rCol = 1.0f;
     gCol = 1.0f;
     bCol = 1.0f;

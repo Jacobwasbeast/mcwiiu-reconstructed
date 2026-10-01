@@ -12,7 +12,6 @@ public:
     NetherPortalParticle(Level* level, double x, double y, double z,
                          double xa, double ya, double za);
     virtual uint64_t GetType();
-    virtual ~NetherPortalParticle();
     virtual void tick();
     virtual void render(BufferBuilder* buffer,
                         const boost::shared_ptr<Entity>& camera,

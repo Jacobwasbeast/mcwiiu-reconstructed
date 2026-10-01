@@ -59,7 +59,3 @@ void ZombieModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInT
     mLeftArm->mXRot -= Mth::sin(ageInTicks * 0.067f) * 0.05f;
 }
 
-std::wstring ZombieModel::getName()
-{
-    return L"zombie";
-}

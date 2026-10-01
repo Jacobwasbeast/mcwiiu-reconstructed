@@ -118,10 +118,6 @@ PlayerModel::PlayerModel(float scale, bool slimArms, bool is64x64)
     compileSkinnedDrawlist();
 }
 
-PlayerModel::~PlayerModel()
-{
-}
-
 void PlayerModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)
 {
     setupBoneMatrices(entity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, useDisplayList);

@@ -18,7 +18,6 @@ class WitherBossModel : public Model
 public:
     WitherBossModel(float scale, const ModelDefinition& modelDefinition);
 
-    virtual ~WitherBossModel();
 
     virtual void render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks,
                         float netHeadYaw, float headPitch, float scale, bool useDisplayList);
@@ -27,7 +26,7 @@ public:
                            _SkinAdjustments skinAdjustments);
     virtual void prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount,
                                  float partialTicks);
-    virtual std::wstring getName();
+    virtual std::wstring getName() { return L"witherBoss"; }
 
     ModelPartSkin** mUpperBodyParts;
     unsigned int mNumUpperBodyParts;

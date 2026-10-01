@@ -11,9 +11,8 @@ class CowModel : public QuadrupedModel
 {
 public:
     CowModel(const ModelDefinition& modelDefinition);
-    virtual ~CowModel();
 
-    virtual std::wstring getName();
+    virtual std::wstring getName() { return L"cow"; }
 };
 
 #endif

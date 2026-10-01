@@ -160,10 +160,10 @@ double ViewportCuller::_max(double x, double y, double z)
 {
     if (x > y)
     {
-        return x > z ? x : z;
+        return z < x ? z : x;
     }
 
-    return z > y ? z : y;
+    return y > z ? y : z;
 }
 
 bool ViewportCuller::cubeInFrustum(double x0, double y0, double z0, double x1, double y1, double z1)

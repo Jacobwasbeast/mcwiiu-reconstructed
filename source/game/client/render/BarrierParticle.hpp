@@ -10,7 +10,6 @@ class BarrierParticle : public Particle
 {
 public:
     BarrierParticle(Level* level, double x, double y, double z, Item* item);
-    virtual ~BarrierParticle();
     virtual int getParticleTexture();
     virtual void render(BufferBuilder* buffer,
                         const boost::shared_ptr<Entity>& camera,

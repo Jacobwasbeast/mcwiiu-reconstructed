@@ -82,7 +82,3 @@ void EndermiteModel::setupAnim(float limbSwing, float limbSwingAmount, float age
     }
 }
 
-std::wstring EndermiteModel::getName()
-{
-    return L"endermite";
-}

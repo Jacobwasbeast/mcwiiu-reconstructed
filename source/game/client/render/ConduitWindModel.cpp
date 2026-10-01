@@ -10,10 +10,6 @@ ConduitWindModel::ConduitWindModel(int xTexOffs, int yTexOffs, int texWidth, int
     compileSkinnedDrawlist();
 }
 
-ConduitWindModel::~ConduitWindModel()
-{
-}
-
 void ConduitWindModel::renderWind(bool useDisplayList)
 {
     mWind->render(0.0625f, useDisplayList, false);

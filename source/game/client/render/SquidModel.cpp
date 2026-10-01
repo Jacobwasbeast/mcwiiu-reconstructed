@@ -64,10 +64,6 @@ SquidModel::SquidModel(const ModelDefinition& definition)
     }
 }
 
-SquidModel::~SquidModel()
-{
-}
-
 void SquidModel::setupAnim(float, float, float ageInTicks, float, float, float,
                            boost::shared_ptr<Entity>, _SkinAdjustments)
 {
@@ -96,7 +92,3 @@ void SquidModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, floa
     callSkinnedDrawlist();
 }
 
-std::wstring SquidModel::getName()
-{
-    return L"squid";
-}

@@ -101,7 +101,3 @@ unsigned int VexModel::getModelVersion()
     return 23;
 }
 
-std::wstring VexModel::getName()
-{
-    return L"vex";
-}

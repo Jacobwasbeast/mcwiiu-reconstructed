@@ -15,10 +15,6 @@ NoteParticle::NoteParticle(Level* level, double x, double y, double z,
     init(level, x, y, z, xa, ya, za, 2.0f);
 }
 
-NoteParticle::~NoteParticle()
-{
-}
-
 void NoteParticle::render(BufferBuilder* buffer,
                           const boost::shared_ptr<Entity>& camera,
                           float partialTicks,

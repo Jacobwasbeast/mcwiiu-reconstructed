@@ -10,10 +10,6 @@ ConduitCageModel::ConduitCageModel(int texOffsX, int texOffsY, int texWidth, int
     compileSkinnedDrawlist();
 }
 
-ConduitCageModel::~ConduitCageModel()
-{
-}
-
 void ConduitCageModel::renderCage(bool useDisplayList)
 {
     mCage->render(0.0625f, useDisplayList, false);

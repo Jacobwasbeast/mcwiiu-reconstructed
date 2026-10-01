@@ -33,10 +33,6 @@ SkeletonModel::SkeletonModel(SkeletonType skeletonType, const ModelDefinition& d
     _init(0.0f, false, skeletonType, definition);
 }
 
-SkeletonModel::~SkeletonModel()
-{
-}
-
 void SkeletonModel::_init(float scale, bool armourModel, SkeletonType skeletonType, const ModelDefinition& definition)
 {
     BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
@@ -208,7 +204,3 @@ void SkeletonModel::translateToHandItem(float scale, const HumanoidArm* arm)
     }
 }
 
-std::wstring SkeletonModel::getName()
-{
-    return L"skeleton";
-}

@@ -30,10 +30,6 @@ HugeExplosionParticle::HugeExplosionParticle(Textures* textures, Level* level, d
     bCol = blue * intensity;
 }
 
-HugeExplosionParticle::~HugeExplosionParticle()
-{
-}
-
 void HugeExplosionParticle::render(BufferBuilder* buffer, const boost::shared_ptr<Entity>& camera,
                                    float partialTicks, float xa, float ya, float za, float xa2, float za2)
 {

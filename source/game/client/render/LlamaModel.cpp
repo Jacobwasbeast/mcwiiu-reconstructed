@@ -136,7 +136,3 @@ void LlamaModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, floa
     callSkinnedDrawlist();
 }
 
-std::wstring LlamaModel::getName()
-{
-    return L"llama";
-}
