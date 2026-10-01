@@ -81,7 +81,7 @@ public:
     virtual void SetPrimaryPlayerChanged(bool) = 0;
     virtual int QuerySigninStatus() = 0;
     virtual void GetXUID(int, PlayerUID*, bool) = 0;
-    virtual bool AreXUIDSEqual(PlayerUID, PlayerUID) = 0;
+    virtual int AreXUIDSEqual(PlayerUID, PlayerUID) = 0;
     virtual bool AllowedToPlayMultiplayer(int) = 0;
     virtual void StartTrialGame() = 0;
     virtual void AllowedPlayerCreatedContent(int, bool, int*, int*) = 0;
@@ -235,7 +235,7 @@ public:
     virtual void SetPrimaryPlayerChanged(bool);
     virtual int QuerySigninStatus();
     virtual void GetXUID(int, PlayerUID*, bool);
-    virtual bool AreXUIDSEqual(PlayerUID, PlayerUID);
+    virtual int AreXUIDSEqual(PlayerUID, PlayerUID);
     virtual bool AllowedToPlayMultiplayer(int);
     virtual void StartTrialGame();
     virtual void AllowedPlayerCreatedContent(int, bool, int*, int*);

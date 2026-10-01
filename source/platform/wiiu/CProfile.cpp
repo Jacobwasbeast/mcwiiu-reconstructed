@@ -467,7 +467,7 @@ void CProfile::GetXUID(int quadrant, PlayerUID* uid, bool online)
     *uid = online ? QuadrantOnlineXUID(quadrant) : QuadrantOfflineXUID(quadrant);
 }
 
-bool CProfile::AreXUIDSEqual(PlayerUID first, PlayerUID second)
+int CProfile::AreXUIDSEqual(PlayerUID first, PlayerUID second)
 {
     return first == second;
 }
