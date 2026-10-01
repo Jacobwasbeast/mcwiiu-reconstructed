@@ -57,6 +57,9 @@
 
 static Predicate<boost::shared_ptr<Entity> >* PREY_SELECTOR = new PreySelector();
 static const int WOLF_SPAWN_EGG_AUX = 95;
+static const int WOLF_ANGRY_FLAG = 2;
+static const int WOLF_COLLAR_COLOR_MASK = 15;
+static const float WOLF_PI = 3.14159265358979323846f;
 
 const EntityDataAccessor<float>* Wolf::DATA_HEALTH_ID = NULL;
 const EntityDataAccessor<bool>* Wolf::DATA_INTERESTED = NULL;
@@ -121,8 +124,10 @@ void Wolf::registerAttributes()
 void Wolf::setAngry(bool angry)
 {
     unsigned char flags = mEntityData->get(DATA_FLAGS);
-    mEntityData->set(DATA_FLAGS, angry ? static_cast<unsigned char>(flags | 2)
-                                           : static_cast<unsigned char>(flags & 0xfd), true);
+    if (angry)
+        mEntityData->set(DATA_FLAGS, static_cast<unsigned char>(flags | WOLF_ANGRY_FLAG), true);
+    else
+        mEntityData->set(DATA_FLAGS, static_cast<unsigned char>(flags & ~WOLF_ANGRY_FLAG), true);
 }
 void Wolf::setTarget(boost::shared_ptr<LivingEntity> target)
 {
@@ -139,20 +144,20 @@ void Wolf::customServerAiStep()
 void Wolf::defineSynchedData()
 {
     TamableAnimal::defineSynchedData();
-    mEntityData->createDateItem(DATA_HEALTH_ID, 1.0f);
+    mEntityData->createDateItem(DATA_HEALTH_ID, getHealth());
     mEntityData->createDateItem(DATA_INTERESTED, false);
     mEntityData->createDateItem(DATA_COLLAR_COLOR, DyeColor::RED->getItemData());
 }
 void Wolf::playStepSound(const BlockPos&, Block*) { playSound(SoundEvents::WOLF_STEP, 0.15f, 1.0f); }
-bool Wolf::isAngry() { return (mEntityData->get(DATA_FLAGS) & 2) != 0; }
-const DyeColor* Wolf::getCollarColor() { return DyeColor::byItemData(mEntityData->get(DATA_COLLAR_COLOR)); }
+bool Wolf::isAngry() { return (mEntityData->get(DATA_FLAGS) & WOLF_ANGRY_FLAG) != 0; }
+const DyeColor* Wolf::getCollarColor() { return DyeColor::byItemData(mEntityData->get(DATA_COLLAR_COLOR) & WOLF_COLLAR_COLOR_MASK); }
 void Wolf::addAdditonalSaveData(CompoundTag* tag)
 {
     TamableAnimal::addAdditonalSaveData(tag);
     tag->putBoolean(L"Angry", isAngry());
     tag->putByte(L"CollarColor", static_cast<unsigned char>(getCollarColor()->getItemData()));
 }
-void Wolf::setCollarColor(const DyeColor* color) { if (color != NULL) mEntityData->set(DATA_COLLAR_COLOR, color->getItemData(), true); }
+void Wolf::setCollarColor(const DyeColor* color) { mEntityData->set(DATA_COLLAR_COLOR, color->getItemData() & WOLF_COLLAR_COLOR_MASK, true); }
 void Wolf::readAdditionalSaveData(CompoundTag* tag)
 {
     TamableAnimal::readAdditionalSaveData(tag);
@@ -185,12 +190,8 @@ void Wolf::aiStep()
         mShakeAnimO = 0.0f;
         mLevel->broadcastEntityEvent(shared_from_this(), EntityEvent::SHAKE_WETNESS, 0);
     }
-    if (!mLevel->mIsClientSide)
-    {
-        boost::shared_ptr<LivingEntity> target = getTarget();
-        if ((target == NULL || !target->isAlive()) && isAngry())
-            setAngry(false);
-    }
+    if (!mLevel->mIsClientSide && (getTarget() == NULL || !getTarget()->isAlive()) && isAngry())
+        setAngry(false);
 }
 bool Wolf::isInterested() { return mEntityData->get(DATA_INTERESTED); }
 void Wolf::tick()
@@ -223,27 +224,32 @@ void Wolf::tick()
                       (mRandom->nextFloat() - mRandom->nextFloat()) * 0.2f + 1.0f);
         }
 
-        mShakeAnimO = mShakeAnim;
-        mShakeAnim += 0.05f;
+        const float previousShakeAnim = mShakeAnim;
+        const float currentShakeAnim = previousShakeAnim + 0.05f;
+        mShakeAnim = currentShakeAnim;
 
-        if (mShakeAnimO >= 2.0f)
+        if (previousShakeAnim >= 2.0f)
         {
             mIsWet = false;
             mIsShaking = false;
             mShakeAnimO = 0.0f;
             mShakeAnim = 0.0f;
         }
-        else if (mShakeAnim > 0.4f)
+        else
         {
-            float y = (float)mBoundingBox->mMinY;
-            int count = (int)(Mth::sin((mShakeAnim - 0.4f) * Mth::PI) * 7.0f);
-
-            for (int i = 0; i < count; ++i)
+            mShakeAnimO = previousShakeAnim;
+            if (currentShakeAnim > 0.4f)
             {
-                float xOffset = (mRandom->nextFloat() * 2.0f - 1.0f) * mBbWidth * 0.5f;
-                float zOffset = (mRandom->nextFloat() * 2.0f - 1.0f) * mBbWidth * 0.5f;
-                mLevel->addParticle(PARTICLE_SPLASH, mX + xOffset, y + 0.8f, mZ + zOffset, mXd, mYd, mZd,
-                                    arrayWithLength<int>());
+                float y = (float)mBoundingBox->mMinY;
+                int count = (int)(Mth::sin((currentShakeAnim - 0.4f) * WOLF_PI) * 7.0f);
+
+                for (int i = 0; i < count; ++i)
+                {
+                    float xOffset = (mRandom->nextFloat() * 2.0f - 1.0f) * mBbWidth * 0.5f;
+                    float zOffset = (mRandom->nextFloat() * 2.0f - 1.0f) * mBbWidth * 0.5f;
+                    mLevel->addParticle(PARTICLE_SPLASH, mX + xOffset, y + 0.8f, mZ + zOffset, mXd, mYd, mZd,
+                                        arrayWithLength<int>());
+                }
             }
         }
     }
@@ -266,11 +272,11 @@ double Wolf::getBodyRollAngle(float partialTick, float bodyRotation)
     {
         shake = 1.0f;
     }
-    return Mth::sin(shake * Mth::PI) * Mth::sin(shake * Mth::PI * 11.0f) * 0.15f * Mth::PI;
+    return Mth::sin(shake * WOLF_PI) * Mth::sin(shake * WOLF_PI * 11.0f) * 0.15f * WOLF_PI;
 }
 double Wolf::getHeadRollAngle(float partialTick)
 {
-    return static_cast<double>(((mInterestedAngle - mInterestedAngleO) * partialTick + mInterestedAngleO) * 0.15f * 3.14159265358979323846f);
+    return static_cast<double>(((mInterestedAngle - mInterestedAngleO) * partialTick + mInterestedAngleO) * 0.15f * WOLF_PI);
 }
 double Wolf::getEyeHeight() { return static_cast<double>(mBbHeight * 0.8f); }
 int Wolf::getMaxHeadXRot() { return isSitting() ? 20 : Mob::getMaxHeadXRot(); }
@@ -434,15 +440,15 @@ double Wolf::getTailAngle()
 {
     if (isAngry())
     {
-        return 1.5393804f;
+        return WOLF_PI * 0.49f;
     }
 
     if (isTame())
     {
-        return (0.55f - (getMaxHealth() - mEntityData->get(DATA_HEALTH_ID)) * 0.02f) * Mth::PI;
+        return (0.55f - (getMaxHealth() - mEntityData->get(DATA_HEALTH_ID)) * 0.02f) * WOLF_PI;
     }
 
-    return Mth::PI / 5.0f;
+    return WOLF_PI / 5.0f;
 }
 bool Wolf::isFood(const not_null_ptr<ItemInstance>& item)
 {
@@ -597,16 +603,16 @@ bool Wolf::WolfAvoidEntityGoal::canUse()
     if (!AvoidEntityGoal::canUse())
         return false;
     boost::shared_ptr<Entity> target = mToAvoid.lock();
-    boost::shared_ptr<Llama> llama = boost::dynamic_pointer_cast<Llama>(target);
-    return avoidLlama(llama);
+    return target->GetType() == EntityType::LLAMA && !mWolf->isTame()
+        && avoidLlama(boost::static_pointer_cast<Llama>(target));
 }
 void Wolf::WolfAvoidEntityGoal::start()
 {
-    boost::shared_ptr<LivingEntity> owner = mWolf->getOwner();
+    mWolf->setTarget(boost::shared_ptr<LivingEntity>());
     AvoidEntityGoal::start();
 }
 void Wolf::WolfAvoidEntityGoal::tick()
 {
-    boost::shared_ptr<LivingEntity> owner = mWolf->getOwner();
+    mWolf->setTarget(boost::shared_ptr<LivingEntity>());
     AvoidEntityGoal::tick();
 }

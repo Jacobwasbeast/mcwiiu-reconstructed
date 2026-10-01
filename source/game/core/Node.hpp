@@ -25,9 +25,9 @@ public:
     void _init();
     static Node* GetNodeFromPool(int x, int y, int z);
     Node* cloneMove(int x, int y, int z);
-    double distanceTo(Node* node);
+    float distanceTo(Node* node);
     double distanceToSqr(Node* node);
-    double distanceManhattan(Node* node);
+    float distanceManhattan(Node* node);
     double distanceManhattan(const BlockPos& pos);
     bool equals(Node* node);
     bool inOpenSet();

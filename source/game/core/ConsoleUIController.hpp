@@ -123,7 +123,7 @@ public:
     void updateViewportTouchOffset(int x, int y);
     void SetMenuDisplayed(int playerId, bool displayed);
     void setFullscreenMenuDisplayed(bool displayed);
-    bool handleKeyPress(unsigned int key, unsigned int character);
+    void handleKeyPress(unsigned int key, unsigned int character);
     bool handleInput();
     void tickInput();
     static int reloadSkinThreadProc(void* context);

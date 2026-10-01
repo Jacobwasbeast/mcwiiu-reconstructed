@@ -37,9 +37,9 @@ HitResult::HitResult(boost::shared_ptr<Entity> entity, Vec3* location)
 {
 }
 
-BlockPos HitResult::getBlockPos() const
+const BlockPos& HitResult::getBlockPos() const
 {
-    return BlockPos(x, y, z);
+    return *this;
 }
 
 double HitResult::distanceTo(boost::shared_ptr<Entity> entity) const

@@ -26,33 +26,33 @@ unsigned int FlippedIcon::getHeight() const
     return mSprite->getHeight();
 }
 
-double FlippedIcon::getU0(bool) const
+float FlippedIcon::getU0(bool) const
 {
     return mFlipU ? mSprite->getU1(false) : mSprite->getU0(false);
 }
 
-double FlippedIcon::getU1(bool) const
+float FlippedIcon::getU1(bool) const
 {
     return mFlipU ? mSprite->getU0(false) : mSprite->getU1(false);
 }
 
-double FlippedIcon::getU(double value) const
+float FlippedIcon::getU(double value) const
 {
     const double width = getU1(false) - getU0(false);
     return static_cast<float>(static_cast<float>(width) * (static_cast<float>(value) * 0.0625f) + static_cast<float>(getU0(false)));
 }
 
-double FlippedIcon::getV0(bool) const
+float FlippedIcon::getV0(bool) const
 {
     return mSprite->getV0(false);
 }
 
-double FlippedIcon::getV1(bool) const
+float FlippedIcon::getV1(bool) const
 {
     return mFlipV ? mSprite->getV0(false) : mSprite->getV1(false);
 }
 
-double FlippedIcon::getV(double value) const
+float FlippedIcon::getV(double value) const
 {
     const double height = getV1(false) - getV0(false);
     return static_cast<float>(static_cast<float>(height) * (static_cast<float>(value) * 0.0625f) + static_cast<float>(getV0(false)));

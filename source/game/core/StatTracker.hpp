@@ -11,7 +11,7 @@ public:
     StatTracker(const StatsUID& statsUID, T initialValue);
     virtual ~StatTracker();
 
-    T getValue() const;
+    T getValue() const { return mValue; }
 
 protected:
     T mValue;
@@ -27,12 +27,6 @@ StatTracker<T>::StatTracker(const StatsUID& statsUID, T initialValue)
 template <class T>
 StatTracker<T>::~StatTracker()
 {
-}
-
-template <class T>
-T StatTracker<T>::getValue() const
-{
-    return mValue;
 }
 
 #endif

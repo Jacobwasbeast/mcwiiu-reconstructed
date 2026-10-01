@@ -831,13 +831,14 @@ bool ConsoleUIController::NavigateBack(int playerId, bool closeCurrent, EUIScene
     bool result = false;
     bool gameStarted = gApp.GetGameStarted();
     bool navigated = m_groups[EUIGroup_Fullscreen]->NavigateBack(playerId, scene, layer);
+    EUIGroup groupId = static_cast<EUIGroup>(playerId + EUIGroup_Player1);
     if (!gameStarted) {
         result = navigated;
         if (!m_groups[EUIGroup_Fullscreen]->GetMenuDisplayed())
             SetMenuDisplayed(0xff, false);
     } else if (!navigated && playerId != 0xff && playerId >= 0) {
-        m_groups[EUIGroup_Player1 + playerId]->NavigateBack(playerId, scene, layer);
-        if (!m_groups[EUIGroup_Player1 + playerId]->GetMenuDisplayed()) {
+        m_groups[groupId]->NavigateBack(playerId, scene, layer);
+        if (!m_groups[groupId]->GetMenuDisplayed()) {
             Tooltips::ForceTooltipReload(playerId);
             SetMenuDisplayed(playerId, false);
         }
@@ -887,14 +888,19 @@ unsigned int ConsoleUIController::RegisterForCallbackId(UIScene* scene)
 void ConsoleUIController::UnregisterCallbackId(unsigned int callbackId)
 {
     EnterCriticalSection(&m_callbackMutex);
-    m_callbackScenes.erase(callbackId);
+    boost::unordered_map<unsigned int, UIScene*>::iterator found = m_callbackScenes.find(callbackId);
+    if (found != m_callbackScenes.end())
+        m_callbackScenes.erase(found);
     LeaveCriticalSection(&m_callbackMutex);
 }
 
 UIScene* ConsoleUIController::GetSceneFromCallbackId(unsigned int callbackId)
 {
+    UIScene* scene = 0;
     boost::unordered_map<unsigned int, UIScene*>::iterator found = m_callbackScenes.find(callbackId);
-    return found == m_callbackScenes.end() ? 0 : found->second;
+    if (found != m_callbackScenes.end())
+        scene = found->second;
+    return scene;
 }
 
 void ConsoleUIController::EnterCallbackIdCriticalSection()
@@ -1026,12 +1032,12 @@ void ConsoleUIController::AnimateKeyPress(int playerId, int action, bool repeat,
 {
     if (!pressed)
         return;
-    UIGroup* group = (!gApp.GetGameStarted() || playerId == 0xff || playerId > 3)
-        ? m_groups[EUIGroup_Fullscreen] : m_groups[playerId + 2];
-    UIComponent_Tooltips* tooltips = group->getTooltips();
-    if (tooltips != 0) {
+    EUIGroup groupId = static_cast<EUIGroup>(playerId + EUIGroup_Player1);
+    UIGroup* group = (gApp.GetGameStarted() && playerId != 0xff && (unsigned int)playerId < 4)
+        ? m_groups[groupId] : m_groups[EUIGroup_Fullscreen];
+    if (group->getTooltips() != 0) {
         bool handled = false;
-        tooltips->handleInput(playerId, action, repeat, pressed, released, handled);
+        group->getTooltips()->handleInput(playerId, action, repeat, pressed, released, handled);
     }
 }
 
@@ -1075,13 +1081,15 @@ void ConsoleUIController::ShowTooltip(unsigned int playerId, unsigned int toolti
 void ConsoleUIController::SetTooltips(unsigned int playerId, int* tooltips, bool show,
                                       bool useGlobalGroup)
 {
-    if (IsReloadingSkin())
+    if (gConsoleUIController.IsReloadingSkin())
         return;
-    int groupId = EUIGroup_Fullscreen;
+    UIGroup* tooltipGroup;
     if (gApp.GetGameStarted() && !useGlobalGroup)
-        groupId = GetGroup((int)playerId);
-    if (m_groups[groupId]->getTooltips() != 0)
-        m_groups[groupId]->getTooltips()->SetTooltips((int)playerId, tooltips, show);
+        tooltipGroup = m_groups[GetGroup((int)playerId)];
+    else
+        tooltipGroup = m_groups[EUIGroup_Fullscreen];
+    if (tooltipGroup->getTooltips() != 0)
+        tooltipGroup->getTooltips()->SetTooltips((int)playerId, tooltips, show);
 }
 
 void ConsoleUIController::SetTooltips(unsigned int playerId, int tooltip0, int tooltip1,
@@ -1090,20 +1098,19 @@ void ConsoleUIController::SetTooltips(unsigned int playerId, int tooltip0, int t
                                       int tooltip10, int tooltip11, int tooltip12, int tooltip13,
                                       int tooltip14, int tooltip15, bool show, bool useGlobalGroup)
 {
-    if (IsReloadingSkin())
+    if (gConsoleUIController.IsReloadingSkin())
         return;
     if (tooltip2 == IDS_TOOLTIPS_SELECTDEVICE || tooltip2 == IDS_TOOLTIPS_CHANGEDEVICE)
         tooltip2 = -1;
     if (tooltip3 == IDS_TOOLTIPS_VIEW_GAMERCARD || tooltip3 == IDS_TOOLTIPS_VIEW_GAMERPROFILE)
         tooltip3 = -1;
-    int groupId = EUIGroup_Fullscreen;
-    if (gApp.GetGameStarted() && !useGlobalGroup)
-        groupId = GetGroup((int)playerId);
-    UIComponent_Tooltips* component = m_groups[groupId]->getTooltips();
-    if (component != 0)
-        component->SetTooltips((int)playerId, tooltip0, tooltip1, tooltip2, tooltip3, tooltip4,
-                               tooltip5, tooltip6, tooltip7, tooltip8, tooltip9, tooltip10,
-                               tooltip11, tooltip12, tooltip13, tooltip14, tooltip15, show);
+    UIGroup* tooltipGroup = gApp.GetGameStarted() && !useGlobalGroup
+        ? m_groups[GetGroup((int)playerId)] : m_groups[EUIGroup_Fullscreen];
+    if (tooltipGroup->getTooltips() != 0)
+        tooltipGroup->getTooltips()->SetTooltips((int)playerId, tooltip0, tooltip1, tooltip2,
+                                                 tooltip3, tooltip4, tooltip5, tooltip6, tooltip7,
+                                                 tooltip8, tooltip9, tooltip10, tooltip11,
+                                                 tooltip12, tooltip13, tooltip14, tooltip15, show);
 }
 
 void ConsoleUIController::EnableTooltip(unsigned int playerId, unsigned int tooltipIndex,
@@ -1135,12 +1142,12 @@ void ConsoleUIController::DisplayGamertag(unsigned int playerId, bool show)
 {
     if (!GameSettings::GetGameSettings(gProfile->GetPrimaryPad(), eGameSetting_SplitscreenNicknames))
         show = false;
-    UIGroup** group = &m_groups[playerId + EUIGroup_Player1];
-    if ((*group)->getHUD() != 0)
-        (*group)->getHUD()->ShowDisplayName(show);
-    if (gApp.GetLocalPlayerCount() > 1 && (*group)->getTutorialPopup() != 0 &&
-        !(*group)->m_containerMenuDisplayed)
-        (*group)->getTutorialPopup()->UpdateTutorialPopup();
+    EUIGroup groupId = static_cast<EUIGroup>(playerId + EUIGroup_Player1);
+    if (m_groups[groupId]->getHUD() != 0)
+        m_groups[groupId]->getHUD()->ShowDisplayName(show);
+    if (gApp.GetLocalPlayerCount() > 1 && m_groups[groupId]->getTutorialPopup() != 0 &&
+        !m_groups[groupId]->m_containerMenuDisplayed)
+        m_groups[groupId]->getTutorialPopup()->UpdateTutorialPopup();
 }
 
 void ConsoleUIController::SetSelectedItem(unsigned int playerId, const std::wstring& itemName,
@@ -1215,9 +1222,10 @@ bool ConsoleUIController::GetQuickSelectVisible(unsigned int playerId)
     int groupId = EUIGroup_Fullscreen;
     if (gApp.GetGameStarted())
         groupId = GetGroup((int)playerId);
+    bool visible = false;
     if (m_groups[groupId]->getHUD() != 0)
-        return m_groups[groupId]->getHUD()->m_quickSelectVisible;
-    return false;
+        visible = m_groups[groupId]->getHUD()->m_quickSelectVisible;
+    return visible;
 }
 
 bool ConsoleUIController::GetDRCEnabled()
@@ -1389,7 +1397,7 @@ void ConsoleUIController::ShowSavingMessage(unsigned int playerId,
 {
     static const bool visible[3] = { false, true, true };
     bool show = false;
-    if ((unsigned int)message < 3)
+    if ((unsigned int)message <= 2)
         show = visible[(unsigned int)message];
     if (m_groups[EUIGroup_Fullscreen]->getPressStartToPlay() != 0)
         m_groups[EUIGroup_Fullscreen]->getPressStartToPlay()->showSaveIcon(show);
@@ -1421,7 +1429,7 @@ void ConsoleUIController::ShowTimedSplash(unsigned int playerId, const std::wstr
 void ConsoleUIController::ShowPlayerDisplayname(bool show)
 {
     if (m_groups[EUIGroup_Fullscreen]->getPressStartToPlay() != 0)
-        m_groups[EUIGroup_Fullscreen]->getPressStartToPlay()->showPlayerDisplayName(false);
+        m_groups[EUIGroup_Fullscreen]->getPressStartToPlay()->showPlayerDisplayName(show);
 }
 
 bool ConsoleUIController::PressStartPlaying(unsigned int playerId)
@@ -1505,7 +1513,7 @@ int ConsoleUIController::RequestProfileSignInMenu(int titleId, int messageId,
     ProfileSignInMenuData data = { titleId, messageId, messageParameters, parameterCount,
                                    userIndex, callback, callbackData, overrideText,
                                    controllerIndex };
-    return NavigateToScene((int)userIndex, EUIScene_AvatarSelectMenu, &data,
+    return gConsoleUIController.NavigateToScene((int)userIndex, EUIScene_AvatarSelectMenu, &data,
                            EUILayer_Popup, EUIGroup_Fullscreen)
                ? 2 : 1;
 }
@@ -1535,6 +1543,7 @@ int ConsoleUIController::RequestMessageBox(
     void* callbackData, wchar_t* overrideText, unsigned int buttonFlags, bool alert,
     bool blocking)
 {
+    EUILayer layer = alert ? EUILayer_Alert : EUILayer_Popup;
     _MessageBoxData data;
     data.titleId = titleId;
     data.messageId = messageId;
@@ -1546,20 +1555,26 @@ int ConsoleUIController::RequestMessageBox(
     data.overrideText = overrideText;
     data.buttonFlags = buttonFlags;
     data.blocking = blocking;
-    if (!IsReloadingSkin()) {
-        EUIGroup groupId = !gApp.GetGameStarted() || alert ? EUIGroup_Fullscreen : EUIGroup_PlayerDefault;
-        return NavigateToScene((int)userIndex, EUIScene_MessageBox, &data,
-                               alert ? EUILayer_Alert : EUILayer_Popup, groupId) ? 2 : 1;
+    if (!gConsoleUIController.IsReloadingSkin()) {
+        bool navigated = (!gApp.GetGameStarted() || layer == EUILayer_Alert)
+            ? gConsoleUIController.NavigateToScene((int)userIndex, EUIScene_MessageBox, &data,
+                                                   layer, EUIGroup_Fullscreen)
+            : gConsoleUIController.NavigateToScene((int)userIndex, EUIScene_MessageBox, &data,
+                                                   layer, EUIGroup_PlayerDefault);
+        if (navigated)
+            return 2;
+    } else {
+        _QueuedMessageBoxData* queued = new _QueuedMessageBoxData();
+        queued->info = data;
+        int* parameters = new int[data.parameterCount];
+        queued->info.messageParameters = parameters;
+        std::memcpy(parameters, data.messageParameters, data.parameterCount * sizeof(int));
+        queued->layer = EUILayer_Alert;
+        queued->queuedUserIndex = userIndex;
+        EnterCriticalSection(&m_messageBoxMutex);
+        m_queuedMessageBoxes.push_back(queued);
+        LeaveCriticalSection(&m_messageBoxMutex);
     }
-    _QueuedMessageBoxData* queued = new _QueuedMessageBoxData();
-    queued->info = data;
-    queued->info.messageParameters = new int[parameterCount];
-    std::memcpy(queued->info.messageParameters, messageParameters, parameterCount * sizeof(int));
-    queued->layer = EUILayer_Alert;
-    queued->queuedUserIndex = userIndex;
-    EnterCriticalSection(&m_messageBoxMutex);
-    m_queuedMessageBoxes.push_back(queued);
-    LeaveCriticalSection(&m_messageBoxMutex);
     return 1;
 }
 
@@ -1574,8 +1589,8 @@ void ConsoleUIController::RequestUGCMessageBox(
     if (buttonId == -1)
         buttonId = gProfile->GetPrimaryPad();
     int messageParameter = (int)IDS_CONFIRM_OK;
-    RequestAlertMessage(titleId, messageId, &messageParameter, 1, buttonId, callback,
-                        callbackData, 0, true);
+    gConsoleUIController.RequestAlertMessage(titleId, messageId, &messageParameter, 1, buttonId,
+                                             callback, callbackData, 0, true);
 }
 
 bool ConsoleUIController::IsShowingErrorMessage(int playerId)
@@ -1748,28 +1763,28 @@ void ConsoleUIController::tickInput()
     }
 }
 
-bool ConsoleUIController::handleKeyPress(unsigned int key, unsigned int character)
+void ConsoleUIController::handleKeyPress(unsigned int key, unsigned int character)
 {
-    bool handled = false;
+    bool touchPressed = false;
+    bool touchReleased = false;
+    bool repeatFired = false;
     if (character == 0x14)
     {
         bool newTouch = false;
-        bool touchPressed = false;
-        bool touchRepeat = false;
-        bool touchReleased = false;
+        bool touchDataValid = false;
+        int touchX = 0;
+        int touchY = 0;
         if (m_touchHeld && key > 4 && g_pInput->ButtonPressed((int)key, 0x14, 0) != 0)
             m_touchHeld = false;
         unsigned short* touchData = g_pInput->GetTouchPadData((int)key, C_4JInput::ETouchType_0, true);
-        int touchX = 0;
-        int touchY = 0;
-        bool touchDataValid = false;
         if (touchData != 0 && touchData[2] == 1 && touchData[3] == 0)
         {
             touchX = touchData[0];
             touchY = touchData[1];
             touchDataValid = true;
         }
-        if (!IsReloadingSkin() && !m_rebuildingTouchBoxes && touchData != 0 && GetDRCEnabled())
+        if (!gConsoleUIController.IsReloadingSkin() && !m_rebuildingTouchBoxes && touchData != 0 &&
+            GetDRCEnabled())
         {
             if (touchDataValid)
             {
@@ -1777,18 +1792,27 @@ bool ConsoleUIController::handleKeyPress(unsigned int key, unsigned int characte
                 {
                     m_touchPressElement = 0;
                     m_touchCurrentElement = 0;
-                    UIGroup* touchGroup = m_groups[EUIGroup_Fullscreen];
-                    UIScene* touchScene = touchGroup->getCurrentScene((int)key);
+                    UIScene* touchScene = m_groups[EUIGroup_Fullscreen]->getCurrentScene((int)key);
+                    UIComponent_Tooltips* touchTooltips = m_groups[EUIGroup_Fullscreen]->getTooltips();
                     if (touchScene == 0)
                     {
-                        touchGroup = key < 4 ? m_groups[2 + key] : m_groups[EUIGroup_Player1];
-                        touchScene = touchGroup->getCurrentScene((int)key);
+                        if (key < 4)
+                        {
+                            touchScene = m_groups[static_cast<EUIGroup>(key + EUIGroup_Player1)]
+                                             ->getCurrentScene((int)key);
+                            touchTooltips = m_groups[2 + key]->getTooltips();
+                        }
+                        else
+                        {
+                            touchScene = m_groups[EUIGroup_Player1]->getCurrentScene((int)key);
+                            touchTooltips = m_groups[EUIGroup_Player1]->getTooltips();
+                        }
                     }
                     bool hitFound = false;
                     if (touchScene != 0)
                         hitFound = TouchBoxHit(touchScene, touchX, touchY);
-                    if (!hitFound && touchGroup->getTooltips() != 0)
-                        hitFound = TouchBoxHit(touchGroup->getTooltips(), touchX, touchY);
+                    if (!hitFound && touchTooltips != 0)
+                        hitFound = TouchBoxHit(touchTooltips, touchX, touchY);
                     if (hitFound)
                     {
                         touchPressed = true;
@@ -1800,18 +1824,27 @@ bool ConsoleUIController::handleKeyPress(unsigned int key, unsigned int characte
                 }
                 else if (m_touchHoldPad == (int)key)
                 {
-                    UIGroup* touchGroup = m_groups[EUIGroup_Fullscreen];
-                    UIScene* touchScene = touchGroup->getCurrentScene((int)key);
+                    UIScene* touchScene = m_groups[EUIGroup_Fullscreen]->getCurrentScene((int)key);
+                    UIComponent_Tooltips* touchTooltips = m_groups[EUIGroup_Fullscreen]->getTooltips();
                     if (touchScene == 0)
                     {
-                        touchGroup = key < 4 ? m_groups[2 + key] : m_groups[EUIGroup_Player1];
-                        touchScene = touchGroup->getCurrentScene((int)key);
+                        if (key < 4)
+                        {
+                            touchScene = m_groups[static_cast<EUIGroup>(key + EUIGroup_Player1)]
+                                             ->getCurrentScene((int)key);
+                            touchTooltips = m_groups[2 + key]->getTooltips();
+                        }
+                        else
+                        {
+                            touchScene = m_groups[EUIGroup_Player1]->getCurrentScene((int)key);
+                            touchTooltips = m_groups[EUIGroup_Player1]->getTooltips();
+                        }
                     }
                     bool hitFound = false;
                     if (touchScene != 0)
                         hitFound = TouchBoxHit(touchScene, touchX, touchY);
-                    if (!hitFound && touchGroup->getTooltips() != 0)
-                        hitFound = TouchBoxHit(touchGroup->getTooltips(), touchX, touchY);
+                    if (!hitFound && touchTooltips != 0)
+                        hitFound = TouchBoxHit(touchTooltips, touchX, touchY);
                     if (hitFound)
                     {
                         newTouch = true;
@@ -1819,7 +1852,7 @@ bool ConsoleUIController::handleKeyPress(unsigned int key, unsigned int characte
                         if (m_actionTimer[key][0x14] != 0 &&
                             (unsigned int)m_actionTimer[key][0x14] < now)
                         {
-                            touchRepeat = true;
+                            repeatFired = true;
                             touchPressed = true;
                             m_actionTimer[key][0x14] = now + 100;
                         }
@@ -1833,9 +1866,9 @@ bool ConsoleUIController::handleKeyPress(unsigned int key, unsigned int characte
                 touchReleased = true;
                 m_actionTimer[key][0x14] = 0;
             }
-            HandleTouchInput(key, 0x14, touchPressed, touchRepeat, touchReleased);
+            HandleTouchInput(key, 0x14, touchPressed, repeatFired, touchReleased);
             if (newTouch)
-                return newTouch;
+                return;
         }
     }
 
@@ -1843,7 +1876,6 @@ bool ConsoleUIController::handleKeyPress(unsigned int key, unsigned int characte
     bool buttonDown = g_pInput->ButtonDown((int)key, actionByte) != 0;
     bool buttonPressed = g_pInput->ButtonPressed((int)key, actionByte, 0) != 0;
     bool buttonReleased = g_pInput->ButtonReleased((int)key, actionByte) != 0;
-    bool repeatFired = false;
 
     if (buttonPressed)
     {
@@ -1866,28 +1898,28 @@ bool ConsoleUIController::handleKeyPress(unsigned int key, unsigned int characte
     }
 
     if (!repeatFired && !buttonPressed && !buttonReleased)
-        return handled;
+        return;
 
-    UIComponent_PressStartToPlay* pressStart =
-        m_groups[EUIGroup_Fullscreen]->getPressStartToPlay();
-    unsigned int toastShowing = pressStart->GetAchievementToastShowing((int)key);
-    if ((toastShowing != 0 || pressStart->GetHoldToShowAchievementsActive(false)) &&
-        !IsSceneInStack((int)key, EUIScene_PauseMenu) &&
-        !pressStart->handleHold((int)key, (int)character, repeatFired, buttonPressed, buttonReleased,
-                                handled))
+    bool handled = false;
+    UIGroup* fullscreenGroup = m_groups[EUIGroup_Fullscreen];
+    unsigned int toastShowing = fullscreenGroup->getPressStartToPlay()->GetAchievementToastShowing((int)key);
+    if ((toastShowing != 0 ||
+         fullscreenGroup->getPressStartToPlay()->GetHoldToShowAchievementsActive(false)) &&
+        !gConsoleUIController.IsSceneInStack((int)key, EUIScene_PauseMenu) &&
+        !m_groups[EUIGroup_Fullscreen]->getPressStartToPlay()->handleHold(
+            (int)key, (int)character, repeatFired, buttonPressed, buttonReleased, handled))
     {
         buttonPressed = true;
     }
 
     if (!handled)
     {
-        m_groups[EUIGroup_Fullscreen]->handleInput((int)key, (int)character, repeatFired, buttonPressed, buttonReleased,
-                                 handled);
+        m_groups[EUIGroup_Fullscreen]->handleInput((int)key, (int)character, repeatFired,
+                                                   buttonPressed, buttonReleased, handled);
         if (!handled && key < 4)
-            m_groups[2 + key]->handleInput((int)key, (int)character, repeatFired, buttonPressed,
-                                           buttonReleased, handled);
+            m_groups[2 + key]->handleInput((int)key, (int)character, repeatFired,
+                                           buttonPressed, buttonReleased, handled);
     }
-    return handled;
 }
 
 bool ConsoleUIController::handleInput()

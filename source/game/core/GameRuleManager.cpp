@@ -339,7 +339,7 @@ void GameRuleManager::loadGameRules(DLCPack* pack)
         unsigned int size = 0;
         unsigned char* data = header->getData(size);
         LevelGenerationOptions* options = new LevelGenerationOptions(pack);
-        options->setGrSource(&header->m_gameRulesSource);
+        options->setGrSource(header);
         options->setSrc(LevelGenerationOptions::eSrc_DLC);
         readRuleFile(options, data, size, table);
         header->m_levelGenerationOptions = options;

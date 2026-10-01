@@ -13,7 +13,11 @@ class Level;
 class ProcedureCompoundTask : public TutorialTask
 {
 public:
-    ProcedureCompoundTask(Tutorial* tutorial);
+    ProcedureCompoundTask(Tutorial* tutorial)
+        : TutorialTask(tutorial, -1, false, NULL, false, true, false), tasks()
+    {
+    }
+
     virtual ~ProcedureCompoundTask();
 
     void AddTask(TutorialTask* task);

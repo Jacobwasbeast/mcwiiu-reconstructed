@@ -23,30 +23,6 @@ struct PlayerInfo
     char voiceStatus;
     short colour;
     std::wstring name;
-    int roundsWon;
-    int kills;
-    int lifeSpan;
-    int damageDealt;
-    int damageReceived;
-    int totalBlocksDestroyed;
-    int totalDistanceTravelled;
-    int totalLifeSpan;
-    int totalJumps;
-    int totalTrapsSetOff;
-    int deaths;
-    int secondaryTargets;
-    int points;
-    double mapTraversed;
-    int blocksPlaced;
-    int blocksDestroyed;
-    unsigned char localPlayer;
-    unsigned char survived;
-    unsigned char teamInvite;
-    unsigned char priority;
-    unsigned char highlight;
-    unsigned char endZoneEntered;
-    unsigned int votesGiven[4];
-    unsigned int votesReceived[4];
 };
 
 class IScoreboardLayout

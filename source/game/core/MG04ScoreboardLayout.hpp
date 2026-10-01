@@ -4,6 +4,14 @@
 #include "game/core/IScoreboardLayout.hpp"
 #include "game/ui/UIString.hpp"
 
+struct MG04PlayerInfo : public PlayerInfo
+{
+    int votesGiven[4];
+    int votesReceived[4];
+    int blocksPlaced;
+    int blocksDestroyed;
+};
+
 class MG04ScoreboardLayout : public IScoreboardLayout
 {
 public:

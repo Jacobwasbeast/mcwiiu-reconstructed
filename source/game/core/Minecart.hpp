@@ -35,10 +35,9 @@ public:
         static const Type* COMMAND_BLOCK;
         static const Type* VALUES[7];
 
-        int mId;
-
-    private:
         static std::wstring NAMES[7];
+
+        int mId;
     };
 
     Minecart(Level* level);

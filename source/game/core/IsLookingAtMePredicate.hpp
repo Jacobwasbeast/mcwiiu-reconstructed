@@ -12,7 +12,9 @@ class IsLookingAtMePredicate : public Predicate<boost::shared_ptr<Entity> >
 {
 public:
     virtual bool apply(boost::shared_ptr<Entity> entity) const;
-    virtual ~IsLookingAtMePredicate();
+    virtual ~IsLookingAtMePredicate()
+    {
+    }
 
     EnderMan* mEnderMan;
 };

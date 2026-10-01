@@ -15,7 +15,3 @@ bool IsLookingAtMePredicate::apply(boost::shared_ptr<Entity> entity) const
 
     return mEnderMan->isLookingAtMe(boost::static_pointer_cast<Player>(entity));
 }
-
-IsLookingAtMePredicate::~IsLookingAtMePredicate()
-{
-}

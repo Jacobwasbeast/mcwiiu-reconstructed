@@ -33,55 +33,61 @@ namespace
 
 bool MG02ScoreboardLayout::SORTBYSCORE(PlayerInfo* first, PlayerInfo* second)
 {
-    if (first->priority == 0)
+    const MG02PlayerInfo* firstInfo = static_cast<const MG02PlayerInfo*>(first);
+    const MG02PlayerInfo* secondInfo = static_cast<const MG02PlayerInfo*>(second);
+    if (firstInfo->priority != 0)
     {
-        if (second->priority != 0)
+        if (secondInfo->priority == 0)
         {
-            return false;
+            return true;
         }
     }
-    else if (second->priority == 0)
-    {
-        return true;
-    }
-
-    if (second->deaths < first->deaths)
-    {
-        return true;
-    }
-    if (second->deaths > first->deaths)
+    else if (secondInfo->priority != 0)
     {
         return false;
     }
 
-    if (first->roundsWon > second->roundsWon)
+    if (secondInfo->deaths > firstInfo->deaths)
     {
         return true;
     }
-    if (first->roundsWon < second->roundsWon)
+    if (secondInfo->deaths < firstInfo->deaths)
     {
         return false;
     }
 
-    if (first->totalBlocksDestroyed > second->totalBlocksDestroyed)
+    if (firstInfo->roundsWon > secondInfo->roundsWon)
     {
         return true;
     }
-    if (first->totalBlocksDestroyed < second->totalBlocksDestroyed)
+    if (firstInfo->roundsWon < secondInfo->roundsWon)
     {
         return false;
     }
 
-    if (second->totalDistanceTravelled < first->totalDistanceTravelled)
+    if (firstInfo->totalBlocksDestroyed > secondInfo->totalBlocksDestroyed)
     {
         return true;
     }
-    if (second->totalDistanceTravelled > first->totalDistanceTravelled)
+    if (firstInfo->totalBlocksDestroyed < secondInfo->totalBlocksDestroyed)
     {
         return false;
     }
 
-    return first->totalLifeSpan > second->totalLifeSpan;
+    if (firstInfo->totalDistanceTravelled < secondInfo->totalDistanceTravelled)
+    {
+        return true;
+    }
+    if (secondInfo->totalDistanceTravelled < firstInfo->totalDistanceTravelled)
+    {
+        return false;
+    }
+
+    if (firstInfo->totalLifeSpan > secondInfo->totalLifeSpan)
+    {
+        return true;
+    }
+    return false;
 }
 
 void MG02ScoreboardLayout::Init(int value)
@@ -97,7 +103,7 @@ void MG02ScoreboardLayout::Init(int value)
         INetworkPlayer* networkPlayer = CGameNetworkManager::sInstance.GetPlayerByIndex(index);
         if (networkPlayer != 0)
         {
-            PlayerInfo* info = CreatePlayerInfo();
+            PlayerInfo* info = new MG02PlayerInfo();
             BuildPlayerInfo(networkPlayer, info);
             m_players.push_back(info);
         }
@@ -221,18 +227,28 @@ boost::shared_ptr<ItemInstance> MG02ScoreboardLayout::getItemForSlot(int column,
     return ItemInstance::EMPTY;
 }
 
-unsigned char MG02ScoreboardLayout::GetEndBarIcon(PlayerInfo* info)
+unsigned char MG02ScoreboardLayout::GetEndBarIcon(PlayerInfo* baseInfo)
 {
-    return info == 0 ? 0x6e : (unsigned int)(info->priority ^ 1);
+    const MG02PlayerInfo* info = static_cast<const MG02PlayerInfo*>(baseInfo);
+    unsigned char icon = 0x6e;
+    if (info != 0)
+    {
+        icon = info->priority ^ 1;
+    }
+    return icon;
 }
 
-void MG02ScoreboardLayout::BuildPlayerInfo(INetworkPlayer* player, PlayerInfo* info)
+void MG02ScoreboardLayout::BuildPlayerInfo(INetworkPlayer* player, PlayerInfo* baseInfo)
 {
+    MG02PlayerInfo* info = static_cast<MG02PlayerInfo*>(baseInfo);
     IScoreboardLayout::BuildPlayerInfo(player, info);
 
-    const std::wstring playerName(player->GetOnlineName());
     boost::shared_ptr<AbstractClientPlayer> localPlayer =
-        Minecraft::GetInstance()->GetLocalPlayerByName(playerName);
+        Minecraft::GetInstance()->GetLocalPlayerByName(player->GetOnlineName());
+
+    ClientScoreboard* scoreboard =
+        Minecraft::GetInstance()->mLocalPlayers[m_userIndex]->GetLevel()->GetClientScoreboard();
+    const StatsUID uid = StatsUID::NETWORKPLAYER_SUID(player);
 
     unsigned char priorityFlag = 0;
     if (localPlayer != 0 && localPlayer->isAlive() && !localPlayer->isSpectator())
@@ -240,10 +256,6 @@ void MG02ScoreboardLayout::BuildPlayerInfo(INetworkPlayer* player, PlayerInfo* i
         priorityFlag = 1;
     }
     info->priority = priorityFlag;
-
-    ClientScoreboard* scoreboard =
-        Minecraft::GetInstance()->mLocalPlayers[m_userIndex]->GetLevel()->GetClientScoreboard();
-    const StatsUID uid = StatsUID::NETWORKPLAYER_SUID(player);
 
     info->totalBlocksDestroyed = scoreboard->GetTotalBlocksDestroyed(uid);
     info->survived = scoreboard->GetSurvived(uid, -1);
@@ -257,21 +269,24 @@ void MG02ScoreboardLayout::BuildPlayerInfo(INetworkPlayer* player, PlayerInfo* i
 
 PlayerInfo* MG02ScoreboardLayout::CreatePlayerInfo()
 {
-    return new PlayerInfo();
+    return new MG02PlayerInfo();
 }
 
 void MG02ScoreboardLayout::AddPlayer(unsigned char id)
 {
-    PlayerInfo* info = CreatePlayerInfo();
+    PlayerInfo* info = new MG02PlayerInfo();
     INetworkPlayer* networkPlayer = CGameNetworkManager::sInstance.GetPlayerBySmallId(id);
     BuildPlayerInfo(networkPlayer, info);
     m_players.push_back(info);
 }
 
-void MG02ScoreboardLayout::UpdatePlayer(int index, PlayerInfo*, PlayerInfo* info, bool)
+void MG02ScoreboardLayout::UpdatePlayer(int index, PlayerInfo*, PlayerInfo* newInfo, bool)
 {
-    if (index >= 0 && index < (int)m_players.size() && info != 0)
-        *m_players[index] = *info;
+    PlayerInfo* info = m_players[index];
+    info->smallId = newInfo->smallId;
+    info->voiceStatus = newInfo->voiceStatus;
+    info->colour = newInfo->colour;
+    info->name = newInfo->name;
 }
 
 bool MG02ScoreboardLayout::showLifeSpanProgress()

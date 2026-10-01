@@ -9,7 +9,7 @@
 class LevelGenerationOptions;
 class StringTable;
 
-class DLCGameRulesHeader : public DLCFile
+class DLCGameRulesHeader : public DLCFile, public GameRulesSource
 {
 public:
     DLCGameRulesHeader(const std::wstring& path);
@@ -36,7 +36,6 @@ public:
 private:
     friend class GameRuleManager;
 
-    GameRulesSource m_gameRulesSource;
     unsigned char* m_data;
     unsigned int m_dataSize;
     bool m_ready;

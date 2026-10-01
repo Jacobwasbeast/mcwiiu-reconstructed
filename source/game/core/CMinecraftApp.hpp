@@ -270,7 +270,7 @@ public:
     static uint32_t OptionsDataCallback(void* context, int profile, unsigned short size, C4JStorage::eOptionsCallback status);
     void EnterSaveNotificationSection();
     void LeaveSaveNotificationSection();
-    uint8_t GetGameStarted();
+    bool GetGameStarted();
     void SetDefaultHostOptions();
     void InitGameSettings();
     static int UpsellReturnedCallback(void* context, eUpsellType type, eUpsellResponse response, int userIndex);

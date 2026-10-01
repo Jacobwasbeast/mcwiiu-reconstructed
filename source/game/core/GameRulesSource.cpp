@@ -12,10 +12,6 @@ GameRulesSource::GameRulesSource()
     m_requiresBaseSave = false;
 }
 
-GameRulesSource::~GameRulesSource()
-{
-}
-
 bool GameRulesSource::requiresTexturePack()
 {
     return m_requiresTexturePack;

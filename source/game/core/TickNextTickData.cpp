@@ -69,11 +69,6 @@ int TickNextTickData::compareTo(const TickNextTickData* other) const
     return 0;
 }
 
-Block* TickNextTickData::getBlock()
-{
-    return block;
-}
-
 bool TickNextTickData::compare_fnct(const TickNextTickData& first, const TickNextTickData& second)
 {
     return first.compareTo(&second) < 0;

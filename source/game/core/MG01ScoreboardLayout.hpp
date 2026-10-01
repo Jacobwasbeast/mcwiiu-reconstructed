@@ -4,6 +4,18 @@
 #include "game/core/IScoreboardLayout.hpp"
 #include "game/ui/UIString.hpp"
 
+struct MG01PlayerInfo : public PlayerInfo
+{
+    int roundsWon;
+    int kills;
+    int lifeSpan;
+    int damageDealt;
+    int damageReceived;
+    unsigned char localPlayer;
+    unsigned char survived;
+    unsigned char teamInvite;
+};
+
 class MG01ScoreboardLayout : public IScoreboardLayout
 {
 private:

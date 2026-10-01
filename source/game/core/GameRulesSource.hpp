@@ -26,7 +26,7 @@ public:
     virtual void setBaseSavePath(const std::wstring& baseSavePath);
     virtual void setIsGameModeLobby(bool isGameModeLobby);
     virtual bool ready();
-    virtual ~GameRulesSource();
+    virtual ~GameRulesSource() {}
 
 protected:
     std::wstring m_worldName;

@@ -4,6 +4,7 @@
 #include "game/core/DamageSource.hpp"
 #include "game/core/EntityType.hpp"
 #include "game/core/Endermite.hpp"
+#include "game/core/Mth.hpp"
 
 #include <cmath>
 #include <typeinfo>
@@ -34,6 +35,7 @@
 #include "game/world/generation/LookAtPlayerGoal.hpp"
 #include "game/world/generation/Player.hpp"
 #include "game/world/block/Block.hpp"
+#include "game/world/block/BlockPathTypes.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
@@ -44,11 +46,14 @@ static const EntityDataAccessor<const BlockState*>* DATA_CARRIED_BLOCK = NULL;
 static const EntityDataAccessor<bool>* DATA_CREEPY = NULL;
 static boost::unordered_set<Block*> sCarriableBlocks;
 
-EnderMan::EnderMan(Level* level) : Monster(level), mLastCreepySound(0), mTargetChangeTime(0)
+EnderMan::EnderMan(Level* level) : Monster(level)
 {
     fjDerivedCtorCalls();
+    mLastCreepySound = 0;
+    mTargetChangeTime = 0;
     setSize(0.6f, 2.9f);
-    setPathfindingMalus(NULL, -1.0f);
+    mMaxUpStep = 1.0f;
+    setPathfindingMalus(BlockPathTypes::WATER, -1.0f);
 }
 
 void EnderMan::staticCtor()
@@ -90,7 +95,7 @@ void EnderMan::registerAttributes()
 {
     Monster::registerAttributes();
     getAttribute(SharedMonsterAttributes::MAX_HEALTH)->setBaseValue(40.0);
-    getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(0.3);
+    getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(0.3f);
     getAttribute(SharedMonsterAttributes::ATTACK_DAMAGE)->setBaseValue(7.0);
     getAttribute(SharedMonsterAttributes::FOLLOW_RANGE)->setBaseValue(64.0);
 }
@@ -119,7 +124,7 @@ void EnderMan::defineSynchedData()
 
 void EnderMan::playCreepySound()
 {
-    if (mLastCreepySound + 400 <= mTickCount)
+    if (mTickCount >= mLastCreepySound + 400)
     {
         mLastCreepySound = mTickCount;
         if (!isSilent())
@@ -137,7 +142,7 @@ bool EnderMan::isCreepy()
 
 void EnderMan::onSyncedDataUpdated(const EntityDataAccessor_Base* accessor)
 {
-    if (accessor != NULL && isCreepy() && mLevel != NULL && mLevel->mIsClientSide)
+    if (DATA_CREEPY->getId() == accessor->getId() && isCreepy() && mLevel->mIsClientSide)
         playCreepySound();
     LivingEntity::onSyncedDataUpdated(accessor);
 }
@@ -159,7 +164,7 @@ void EnderMan::addAdditonalSaveData(CompoundTag* tag)
     if (state != NULL)
     {
         tag->putShort(L"carried", (short)Block::getId(state->getBlock()));
-        tag->putShort(L"carriedData", (short)Block::getIdWithData(state));
+        tag->putShort(L"carriedData", (short)state->getBlock()->convertBlockStateToLegacyData(state));
     }
 }
 
@@ -171,11 +176,13 @@ void EnderMan::setCarryingBlock(const BlockState* state)
 void EnderMan::readAdditionalSaveData(CompoundTag* tag)
 {
     Mob::readAdditionalSaveData(tag);
-    Block* block = tag->contains(L"carried", Tag::TAG_STRING)
-        ? Block::byString(tag->getString(L"carried"))
-        : Block::byId(tag->getShort(L"carried"));
-    const BlockState* state = block->getBlockState(tag->getShort(L"carriedData"));
-    if (state != NULL && state->getBlock() == NULL)
+    bool hasStringId = tag->contains(L"carried", Tag::TAG_STRING);
+    const BlockState* state;
+    if (!hasStringId)
+        state = Block::byId(tag->getShort(L"carried"))->getBlockState(tag->getShort(L"carriedData") & 0xffff);
+    else
+        state = Block::byString(tag->getString(L"carried"))->getBlockState(tag->getShort(L"carriedData") & 0xffff);
+    if (state == NULL || state->getBlock() == NULL || state->getMaterial() == Material::AIR)
         state = NULL;
     setCarryingBlock(state);
 }
@@ -196,7 +203,8 @@ bool EnderMan::isLookingAtMe(boost::shared_ptr<Player> player)
 
 double EnderMan::getEyeHeight()
 {
-    return 2.55f;
+    float eyeHeight = 2.55f;
+    return eyeHeight;
 }
 
 void EnderMan::aiStep()
@@ -205,7 +213,7 @@ void EnderMan::aiStep()
     {
         for (int i = 0; i < 2; ++i)
         {
-            mLevel->addParticle(PARTICLE_ENDER, false, mX + (mRandom->nextDouble() - 0.5) * (double)mBbWidth,
+            mLevel->addParticle(PARTICLE_ENDER, mX + (mRandom->nextDouble() - 0.5) * (double)mBbWidth,
                                 mY + mRandom->nextDouble() * (double)mBbHeight - 0.25,
                                 mZ + (mRandom->nextDouble() - 0.5) * (double)mBbWidth,
                                 (mRandom->nextDouble() - 0.5) * 2.0, -mRandom->nextDouble(),
@@ -246,8 +254,9 @@ void EnderMan::customServerAiStep()
         float brightness = (float)getBrightness();
         if (brightness > 0.5f)
         {
-            BlockPos pos(shared_from_this());
-            if (mLevel->canSeeSky(pos) && mRandom->nextFloat() * 30.0f < 2.0f * (brightness - 0.4f))
+            int shouldTeleport = mLevel->canSeeSky(BlockPos(shared_from_this())) &&
+                                  mRandom->nextFloat() * 30.0f < 2.0f * (brightness - 0.4f);
+            if (shouldTeleport)
             {
                 setTarget(boost::shared_ptr<LivingEntity>());
                 teleport();
@@ -279,8 +288,12 @@ void EnderMan::dropEquipment(bool wasRecentlyHit, int lootingModifier)
     {
         Block* block = state->getBlock();
         Item* item = Item::byBlock(block);
-        int data = item->isStackedByData() ? Block::getIdWithData(state) : 0;
-        spawnAtLocation(not_null_ptr<ItemInstance>(new ItemInstance(item, 1, data)), 0.0f);
+        ItemInstance* stack;
+        if (item->isStackedByData())
+            stack = new ItemInstance(item, 1, block->convertBlockStateToLegacyData(state));
+        else
+            stack = new ItemInstance(item, 1, 0);
+        spawnAtLocation(not_null_ptr<ItemInstance>(stack), 0.0f);
     }
 }
 ResourceLocation* EnderMan::getDefaultLootTable() { return &BuiltInLootTables::ENDERMAN; }
@@ -311,47 +324,57 @@ unsigned long long EnderMan::GetType() { return EntityType::ENDER_MAN; }
 
 EnderMan::EndermanLeaveBlockGoal::EndermanLeaveBlockGoal(EnderMan* enderMan) : mEnderMan(enderMan) { }
 EnderMan::EndermanLeaveBlockGoal::~EndermanLeaveBlockGoal() { }
-bool EnderMan::EndermanLeaveBlockGoal::canUse() { return mEnderMan->getCarryingBlock() != NULL && mEnderMan->mLevel->getGameRules()->getBoolean(GameRules::RULE_MOBGRIEFING) && mEnderMan->mRandom->nextInt(2000) == 0; }
+bool EnderMan::EndermanLeaveBlockGoal::canUse()
+{
+    if (mEnderMan->getCarryingBlock() != NULL)
+    {
+        if (mEnderMan->mLevel->getGameRules()->getBoolean(GameRules::RULE_MOBGRIEFING))
+        {
+            if (mEnderMan->getRandom()->nextInt(2000) == 0)
+                return true;
+        }
+    }
+    return false;
+}
 bool EnderMan::EndermanLeaveBlockGoal::canPlaceBlock(Level* level, const BlockPos& pos, Block* block,
                                                      const BlockState* oldState, const BlockState* newState)
 {
-    return block->mayPlace(level, pos)
-        && oldState->getMaterial() == Material::AIR
-        && newState->getMaterial() != Material::AIR && newState->isCubeShaped();
+    if (block->mayPlace(level, pos))
+    {
+        if (oldState->getMaterial() == Material::AIR)
+        {
+            if (newState->getMaterial() != Material::AIR)
+            {
+                if (newState->isCubeShaped())
+                    return true;
+            }
+        }
+    }
+    return false;
 }
 
 void EnderMan::EndermanLeaveBlockGoal::tick()
 {
     Random* random = mEnderMan->getRandom();
-    double x = mEnderMan->mX - 1.0;
-    double draw = random->nextDouble();
-    x = x + draw;
-    x = x + draw;
-    double y = mEnderMan->mY;
-    draw = random->nextDouble();
-    y = y + draw;
-    y = y + draw;
-    double z = mEnderMan->mZ - 1.0;
-    draw = random->nextDouble();
-    z = z + draw;
-    z = z + draw;
-    BlockPos pos(static_cast<int>(std::floor(x)), static_cast<int>(std::floor(y)),
-                 static_cast<int>(std::floor(z)));
+    Level* level = mEnderMan->mLevel;
+    int x = Mth::floor(mEnderMan->mX - 1.0 + random->nextDouble() * 2.0);
+    int y = Mth::floor(mEnderMan->mY + random->nextDouble() * 2.0);
+    int z = Mth::floor(mEnderMan->mZ - 1.0 + random->nextDouble() * 2.0);
+    BlockPos pos(x, y, z);
+    const BlockState* state = level->getBlockState(pos);
     BlockPos below = pos.below();
-    const BlockState* state = mEnderMan->mLevel->getBlockState(pos);
-    const BlockState* belowState = mEnderMan->mLevel->getBlockState(below);
+    const BlockState* belowState = level->getBlockState(below);
     const BlockState* carried = mEnderMan->getCarryingBlock();
-    if (carried != NULL && canPlaceBlock(mEnderMan->mLevel, pos, carried->getBlock(), state, belowState))
+    if (carried != NULL && canPlaceBlock(level, pos, carried->getBlock(), state, belowState))
     {
-        mEnderMan->mLevel->setBlock(pos, carried, Block::UPDATE_ALL, false);
+        level->setBlock(pos, mEnderMan->getCarryingBlock(), Block::UPDATE_ALL, false);
         mEnderMan->setCarryingBlock(NULL);
     }
 }
 std::wstring EnderMan::EndermanLeaveBlockGoal::getName() { return L"EndermanLeaveBlock"; }
 
 EnderMan::EndermanLookForPlayerGoal::EndermanLookForPlayerGoal(EnderMan* enderMan)
-    : NearestAttackableTargetGoal(enderMan, typeid(Player), true, false, false), mAggroTime(0), mTeleportTime(0),
-      mEnderMan(enderMan)
+    : NearestAttackableTargetGoal(enderMan, typeid(Player), true, false, false), mEnderMan(enderMan)
 {
 }
 
@@ -366,7 +389,7 @@ bool EnderMan::EndermanLookForPlayerGoal::canUse()
     predicate.mEnderMan = mEnderMan;
     mPendingTarget = boost::static_pointer_cast<Player>(mEnderMan->mLevel->getNearestAttackablePlayer(
         mEnderMan->mX, mEnderMan->mY, mEnderMan->mZ, range, range, NULL, &predicate));
-    return mPendingTarget != NULL;
+    return mPendingTarget.get() != NULL;
 }
 
 void EnderMan::EndermanLookForPlayerGoal::start()
@@ -377,7 +400,7 @@ void EnderMan::EndermanLookForPlayerGoal::start()
 
 void EnderMan::EndermanLookForPlayerGoal::stop()
 {
-    mPendingTarget.reset();
+    mPendingTarget = boost::shared_ptr<Player>();
     TargetGoal::stop();
 }
 
@@ -403,22 +426,24 @@ void EnderMan::EndermanLookForPlayerGoal::tick()
         return;
     }
 
-    boost::shared_ptr<LivingEntity> target = NearestAttackableTargetGoal::mTarget.lock();
+    boost::shared_ptr<Entity> target = NearestAttackableTargetGoal::mTarget.lock();
     if (target != NULL)
     {
-        bool lookedAt = false;
-        if ((target->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
-            lookedAt = mEnderMan->isLookingAtMe(boost::static_pointer_cast<Player>(target));
-        if (lookedAt)
+        if ((target->GetType() & EntityType::PLAYER) == EntityType::PLAYER &&
+            mEnderMan->isLookingAtMe(boost::static_pointer_cast<Player>(target)))
         {
             if (target->distanceToSqr(mEnderMan->shared_from_this()) < 16.0)
                 mEnderMan->teleport();
             mTeleportTime = 0;
         }
-        else if (target->distanceToSqr(mEnderMan->shared_from_this()) > 256.0 && mTeleportTime++ >= 30 &&
-                 mEnderMan->teleportTowards(target))
+        else
         {
-            mTeleportTime = 0;
+            bool tooFar = target->distanceToSqr(mEnderMan->shared_from_this()) > 256.0;
+            if (tooFar && mTeleportTime++ >= 30)
+            {
+                if (mEnderMan->teleportTowards(target))
+                    mTeleportTime = 0;
+            }
         }
     }
     Goal::tick();
@@ -426,22 +451,36 @@ void EnderMan::EndermanLookForPlayerGoal::tick()
 
 EnderMan::EndermanTakeBlockGoal::EndermanTakeBlockGoal(EnderMan* enderMan) : mEnderMan(enderMan) { }
 EnderMan::EndermanTakeBlockGoal::~EndermanTakeBlockGoal() { }
-bool EnderMan::EndermanTakeBlockGoal::canUse() { return mEnderMan->getCarryingBlock() == NULL && mEnderMan->mLevel->getGameRules()->getBoolean(GameRules::RULE_MOBGRIEFING) && mEnderMan->mRandom->nextInt(20) == 0; }
+bool EnderMan::EndermanTakeBlockGoal::canUse()
+{
+    if (mEnderMan->getCarryingBlock() == NULL)
+    {
+        if (mEnderMan->mLevel->getGameRules()->getBoolean(GameRules::RULE_MOBGRIEFING))
+        {
+            if (mEnderMan->getRandom()->nextInt(20) == 0)
+                return true;
+        }
+    }
+    return false;
+}
 void EnderMan::EndermanTakeBlockGoal::tick()
 {
     Random* random = mEnderMan->getRandom();
     Level* level = mEnderMan->mLevel;
-    int x = static_cast<int>(std::floor(mEnderMan->mX - 2.0 + random->nextDouble() * 4.0));
-    int y = static_cast<int>(std::floor(mEnderMan->mY + random->nextDouble() * 3.0));
-    int z = static_cast<int>(std::floor(mEnderMan->mZ - 2.0 + random->nextDouble() * 4.0));
+    int x = Mth::floor(mEnderMan->mX - 2.0 + random->nextDouble() * 4.0);
+    int y = Mth::floor(mEnderMan->mY + random->nextDouble() * 3.0);
+    int z = Mth::floor(mEnderMan->mZ - 2.0 + random->nextDouble() * 4.0);
     BlockPos pos(x, y, z);
     const BlockState* state = level->getBlockState(pos);
     Block* block = state->getBlock();
-    Vec3* from = Vec3::newTemp(std::floor(mEnderMan->mX) + 0.5, (double)y + 0.5, std::floor(mEnderMan->mZ) + 0.5);
-    Vec3* to = Vec3::newTemp((double)x + 0.5, (double)y + 0.5, (double)z + 0.5);
+    Vec3* from = Vec3::newTemp(std::floor(mEnderMan->mX) + 0.5, static_cast<float>(y) + 0.5f,
+                               std::floor(mEnderMan->mZ) + 0.5);
+    Vec3* to = Vec3::newTemp(static_cast<float>(x) + 0.5f, static_cast<float>(y) + 0.5f,
+                             static_cast<float>(z) + 0.5f);
     HitResult* hit = level->clip(from, to, false, true, false, false, NULL, false);
     bool hitMatchesPos = hit != NULL && hit->getBlockPos().equals(pos);
-    if (hitMatchesPos && sCarriableBlocks.find(block) != sCarriableBlocks.end())
+    bool carriable = sCarriableBlocks.find(block) != sCarriableBlocks.end();
+    if (carriable && hitMatchesPos)
     {
         mEnderMan->setCarryingBlock(state);
         level->removeBlock(pos);

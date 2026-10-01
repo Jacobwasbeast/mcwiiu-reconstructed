@@ -37,62 +37,54 @@ MG03ScoreboardLayout::~MG03ScoreboardLayout()
 
 unsigned int MG03ScoreboardLayout::SORTBYSCORE(PlayerInfo* first, PlayerInfo* second)
 {
-    if (first->highlight == 0)
+    const MG03PlayerInfo* firstInfo = static_cast<const MG03PlayerInfo*>(first);
+    const MG03PlayerInfo* secondInfo = static_cast<const MG03PlayerInfo*>(second);
+    if (firstInfo->highlight == 0)
     {
-        if (second->highlight != 0)
+        if (secondInfo->highlight != 0)
         {
             return 1;
         }
     }
-    else if (second->highlight == 0)
+    else if (secondInfo->highlight == 0)
     {
         return 0;
     }
 
-    int secondScore = second->points;
-    int firstScore = first->points;
+    int secondScore = secondInfo->points;
+    int firstScore = firstInfo->points;
     if (secondScore < firstScore)
     {
         return 1;
     }
     if (secondScore <= firstScore)
     {
-        if (first->endZoneEntered == 0)
+        if (firstInfo->endZoneEntered == 0)
         {
-            if (second->endZoneEntered != 0)
+            if (secondInfo->endZoneEntered != 0)
             {
                 return 0;
             }
         }
-        else if (second->endZoneEntered == 0)
+        else if (secondInfo->endZoneEntered == 0)
         {
             return 1;
         }
 
-        int firstValue = first->lifeSpan;
-        int secondValue = second->lifeSpan;
-        if (firstValue <= secondValue)
+        if (firstInfo->lifeSpan < secondInfo->lifeSpan)
         {
-            if (firstValue < secondValue)
-            {
-                return 1;
-            }
-            if (first->damageDealt < second->damageDealt)
-            {
-                return 1;
-            }
+            return 1;
         }
-        if (firstValue < secondValue ||
-            (firstValue <= secondValue && first->damageDealt <= second->damageDealt))
+        if (!(firstInfo->lifeSpan > secondInfo->lifeSpan))
         {
-            secondScore = second->secondaryTargets;
-            firstScore = first->secondaryTargets;
+            secondScore = secondInfo->secondaryTargets;
+            firstScore = firstInfo->secondaryTargets;
             if (secondScore < firstScore)
             {
                 return 1;
             }
             if (secondScore <= firstScore &&
-                second->mapTraversed < first->mapTraversed)
+                secondInfo->mapTraversed < firstInfo->mapTraversed)
             {
                 return 1;
             }
@@ -112,7 +104,7 @@ void MG03ScoreboardLayout::Init(int value)
         INetworkPlayer* player = CGameNetworkManager::sInstance.GetPlayerByIndex(index);
         if (player != 0)
         {
-            PlayerInfo* info = CreatePlayerInfo();
+            PlayerInfo* info = new MG03PlayerInfo();
             BuildPlayerInfo(player, info);
             m_players.push_back(info);
         }
@@ -330,44 +322,39 @@ boost::shared_ptr<ItemInstance> MG03ScoreboardLayout::getItemForSlot(int row, in
     return boost::shared_ptr<ItemInstance>();
 }
 
-unsigned char MG03ScoreboardLayout::GetEndBarIcon(PlayerInfo* info)
+unsigned char MG03ScoreboardLayout::GetEndBarIcon(PlayerInfo* baseInfo)
 {
+    const MG03PlayerInfo* info = static_cast<const MG03PlayerInfo*>(baseInfo);
     return info->teamInvite != 0 ? 2 : 0;
 }
 
-void MG03ScoreboardLayout::BuildPlayerInfo(INetworkPlayer* player, PlayerInfo* info)
+void MG03ScoreboardLayout::BuildPlayerInfo(INetworkPlayer* player, PlayerInfo* baseInfo)
 {
+    MG03PlayerInfo* info = static_cast<MG03PlayerInfo*>(baseInfo);
     IScoreboardLayout::BuildPlayerInfo(player, info);
 
-    Minecraft* minecraft = Minecraft::GetInstance();
-    const std::wstring& playerName = player->GetDisplayName();
-    boost::shared_ptr<AbstractClientPlayer> localPlayer = minecraft->GetLocalPlayerByName(playerName);
+    boost::shared_ptr<AbstractClientPlayer> localPlayer =
+        Minecraft::GetInstance()->GetLocalPlayerByName(player->GetOnlineName());
 
-    bool isLocalPlayerActive = false;
-    if (localPlayer != 0 && localPlayer->isAlive())
-    {
-        isLocalPlayerActive = true;
-    }
-
-    const MiniGameDef* miniGame = minecraft->GetMiniGame();
-    ClientMasterGameMode* gameMode = minecraft->GetClientMasterGameMode();
+    const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
+    ClientMasterGameMode* gameMode = Minecraft::GetInstance()->GetClientMasterGameMode();
     ClientScoreboard* scoreboard =
-        minecraft->mLocalPlayers[m_userIndex]->GetLevel()->GetClientScoreboard();
+        Minecraft::GetInstance()->mLocalPlayers[m_userIndex]->GetLevel()->GetClientScoreboard();
+
+    const bool isSpectating = localPlayer != 0 && localPlayer->isSpectator();
+
     const StatsUID uid = StatsUID::NETWORKPLAYER_SUID(player);
 
     int round = -1;
     int lifespan = 0;
     int points = 0;
     int secondaryTargets = 0;
-    bool endZoneEntered = false;
+    unsigned char endZoneEntered = 0;
     double mapTraversed = 100.0;
-
-    const bool useBestStats =
-        m_type == EScoreboardType_Award || gameMode->IsWaitingToStart() || gameMode->IsRoundStarting();
 
     if (miniGame->ArePointsActive())
     {
-        if (useBestStats)
+        if (m_type == EScoreboardType_Award || gameMode->IsWaitingToStart() || gameMode->IsRoundStarting())
         {
             points = scoreboard->GetBestPoints(uid, &round);
             lifespan = scoreboard->GetLifeSpan(uid, round);
@@ -398,7 +385,7 @@ void MG03ScoreboardLayout::BuildPlayerInfo(INetworkPlayer* player, PlayerInfo* i
             }
         }
     }
-    else if (useBestStats)
+    else if (m_type == EScoreboardType_Award || gameMode->IsWaitingToStart() || gameMode->IsRoundStarting())
     {
         lifespan = scoreboard->GetBestLifeSpan(uid, &round);
         endZoneEntered = scoreboard->GetEndZoneEntered(uid, round);
@@ -424,33 +411,27 @@ void MG03ScoreboardLayout::BuildPlayerInfo(INetworkPlayer* player, PlayerInfo* i
         }
     }
 
-    const unsigned char highlight = (isLocalPlayerActive && !endZoneEntered) ? 1 : 0;
+    const unsigned char highlight = (isSpectating && !endZoneEntered) ? 1 : 0;
     info->highlight = highlight;
-    info->endZoneEntered = static_cast<unsigned char>(endZoneEntered);
-    info->damageDealt = lifespan >> 31;
+    info->endZoneEntered = endZoneEntered;
     info->points = points;
     info->secondaryTargets = secondaryTargets;
     info->mapTraversed = mapTraversed;
     info->lifeSpan = lifespan;
 
-    MultiPlayerGameMode* localGameMode = minecraft->mLocalPlayers[m_userIndex]->GetLocalGameMode();
-    info->teamInvite = static_cast<unsigned char>(localGameMode->IsTeamInvite(playerName));
+    MultiPlayerGameMode* localGameMode = Minecraft::GetInstance()->mLocalPlayers[m_userIndex]->GetLocalGameMode();
+    info->teamInvite = static_cast<unsigned char>(localGameMode->IsTeamInvite(player->GetOnlineName()));
     info->colour = static_cast<short>(gApp.GetPlayerColour(info->smallId));
 }
 
 PlayerInfo* MG03ScoreboardLayout::CreatePlayerInfo()
 {
-    PlayerInfo* info = new PlayerInfo;
-    info->smallId = 0;
-    info->voiceStatus = 0;
-    info->colour = 0;
-    info->name.clear();
-    return info;
+    return new MG03PlayerInfo();
 }
 
 void MG03ScoreboardLayout::AddPlayer(unsigned char smallId)
 {
-    PlayerInfo* info = CreatePlayerInfo();
+    PlayerInfo* info = new MG03PlayerInfo();
     INetworkPlayer* player = CGameNetworkManager::sInstance.GetPlayerBySmallId(smallId);
     BuildPlayerInfo(player, info);
     m_players.push_back(info);

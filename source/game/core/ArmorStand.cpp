@@ -218,7 +218,15 @@ void ArmorStand::_init()
 
 unsigned char ArmorStand::setBit(unsigned char value, int bit, bool enabled)
 {
-    return enabled ? (unsigned char)(value | bit) : (unsigned char)(value & ~bit);
+    if (enabled)
+    {
+        value |= bit;
+    }
+    else
+    {
+        value &= ~bit;
+    }
+    return value;
 }
 
 void ArmorStand::setShowArms(bool showArms)
@@ -309,7 +317,7 @@ void ArmorStand::addAdditonalSaveData(CompoundTag* tag)
     LivingEntity::addAdditonalSaveData(tag);
     ListTag* armorItems = new ListTag();
     unsigned int index;
-    for (index = 0; index < mArmorItems.size(); ++index)
+    for (index = 0; index < 4; ++index)
     {
         CompoundTag* itemTag = new CompoundTag();
         if (!mArmorItems[index]->isEmpty())
@@ -321,7 +329,7 @@ void ArmorStand::addAdditonalSaveData(CompoundTag* tag)
     tag->put(L"ArmorItems", armorItems);
 
     ListTag* handItems = new ListTag();
-    for (index = 0; index < mHandItems.size(); ++index)
+    for (index = 0; index < 2; ++index)
     {
         CompoundTag* itemTag = new CompoundTag();
         if (!mHandItems[index]->isEmpty())
@@ -338,13 +346,15 @@ void ArmorStand::addAdditonalSaveData(CompoundTag* tag)
     tag->putBoolean(L"NoBasePlate", isNoBasePlate());
     if (isMarker())
     {
-        tag->putBoolean(L"Marker", true);
+        tag->putBoolean(L"Marker", isMarker());
     }
 
-    CompoundTag* pose = new CompoundTag();
-    pose->putInt(L"PoseIndex", getPoseIndex());
-    pose->putInt(L"LastSignal", mLastSignal);
-    tag->put(L"Pose", pose);
+    {
+        CompoundTag* pose = new CompoundTag();
+        pose->putInt(L"PoseIndex", getPoseIndex());
+        pose->putInt(L"LastSignal", mLastSignal);
+        tag->put(L"Pose", pose);
+    }
 }
 void ArmorStand::setSmall(bool small)
 {
@@ -367,12 +377,7 @@ void ArmorStand::readAdditionalSaveData(CompoundTag* tag)
     if (tag->contains(L"ArmorItems", Tag::TAG_LIST))
     {
         ListTag* armorItems = tag->getList(L"ArmorItems", Tag::TAG_COMPOUND);
-        int count = armorItems->size();
-        if (count > (int)mArmorItems.size())
-        {
-            count = (int)mArmorItems.size();
-        }
-        for (int index = 0; index < count; ++index)
+        for (int index = 0; index < 4; ++index)
         {
             mArmorItems[index] = not_null_ptr<ItemInstance>(new ItemInstance(armorItems->getCompound(index)));
         }
@@ -380,12 +385,7 @@ void ArmorStand::readAdditionalSaveData(CompoundTag* tag)
     if (tag->contains(L"HandItems", Tag::TAG_LIST))
     {
         ListTag* handItems = tag->getList(L"HandItems", Tag::TAG_COMPOUND);
-        int count = handItems->size();
-        if (count > (int)mHandItems.size())
-        {
-            count = (int)mHandItems.size();
-        }
-        for (int index = 0; index < count; ++index)
+        for (int index = 0; index < 2; ++index)
         {
             mHandItems[index] = not_null_ptr<ItemInstance>(new ItemInstance(handItems->getCompound(index)));
         }
@@ -399,7 +399,7 @@ void ArmorStand::readAdditionalSaveData(CompoundTag* tag)
     setMarker(tag->getBoolean(L"Marker"));
     mWasMarker = !isMarker();
     mNoPhysics = isNoGravity();
-    if (tag->contains(L"Pose", Tag::TAG_COMPOUND))
+    if (tag->contains(L"Pose"))
     {
         CompoundTag* pose = tag->getCompound(L"Pose");
         setPoseIndex(pose->getInt(L"PoseIndex"));
@@ -409,8 +409,9 @@ void ArmorStand::readAdditionalSaveData(CompoundTag* tag)
 bool ArmorStand::isPushable(boost::shared_ptr<Entity> entity) { return entity.get() != this; }
 const EquipmentSlot* ArmorStand::getClickedSlot(const Vec3* hit)
 {
-    double y = hit->y;
+    const EquipmentSlot* slot = EquipmentSlot::MAINHAND;
     bool small = isSmall();
+    double y = hit->y;
     if (small)
     {
         y *= 2.0;
@@ -418,24 +419,24 @@ const EquipmentSlot* ArmorStand::getClickedSlot(const Vec3* hit)
 
     if (y >= 0.1 && y < (small ? 0.8 : 0.45) + 0.1 && hasItemInSlot(EquipmentSlot::FEET))
     {
-        return EquipmentSlot::FEET;
+        slot = EquipmentSlot::FEET;
     }
-    if (y >= (small ? 0.3 : 0.0) + 0.9
-        && y < (small ? 1.0 : 0.7) + 0.9
-        && hasItemInSlot(EquipmentSlot::CHEST))
+    else if (y >= (small ? 0.3 : 0.0) + 0.9
+             && y < (small ? 1.0 : 0.7) + 0.9
+             && hasItemInSlot(EquipmentSlot::CHEST))
     {
-        return EquipmentSlot::CHEST;
+        slot = EquipmentSlot::CHEST;
     }
-    if (y >= 0.4 && y < (small ? 1.0 : 0.8) + 0.4
-        && hasItemInSlot(EquipmentSlot::LEGS))
+    else if (y >= 0.4 && y < (small ? 1.0 : 0.8) + 0.4
+             && hasItemInSlot(EquipmentSlot::LEGS))
     {
-        return EquipmentSlot::LEGS;
+        slot = EquipmentSlot::LEGS;
     }
-    if (y >= 1.6 && hasItemInSlot(EquipmentSlot::HEAD))
+    else if (y >= 1.6 && hasItemInSlot(EquipmentSlot::HEAD))
     {
-        return EquipmentSlot::HEAD;
+        slot = EquipmentSlot::HEAD;
     }
-    return EquipmentSlot::MAINHAND;
+    return slot;
 }
 
 bool ArmorStand::isDisabled(const EquipmentSlot* slot)
@@ -569,21 +570,21 @@ ArmorStand::EInteraction ArmorStand::test_interactAt(boost::shared_ptr<Player> p
 }
 unsigned int ArmorStand::GetInteractTooltip(const EntityTooltipDataHolder& tooltipData)
 {
-    static const unsigned int INTERACTION_TOOLTIPS[] = {IDS_TOOLTIPS_PLACE, 0x3D8502AFU, 0x387566E2U, 0x3C2D9AD6U};
+    static const unsigned int INTERACTION_TOOLTIPS[] = {IDS_TOOLTIPS_PLACE, IDS_TOOLTIPS_PICKUP_GENERIC, IDS_TOOLTIPS_PICKUPPLACE, IDS_TOOLTIPS_ARMOUR_STAND_POSE};
 
     if (Item::getId(tooltipData.m_pItemInstance->getItem()) == ItemId::NAME_TAG
         && tooltipData.m_pItemInstance->hasCustomHoverName())
     {
         if (!hasCustomName() || tooltipData.m_pItemInstance->getHoverName().compare(getCustomName()) != 0)
             return IDS_TOOLTIPS_NAME;
-        return tooltipData.m_pPlayer->isSneaking() ? 0x3c2d9ad6U : IDS_NONE;
+        return tooltipData.m_pPlayer->isSneaking() ? IDS_TOOLTIPS_ARMOUR_STAND_POSE : IDS_NONE;
     }
 
     if (tooltipData.m_bAllowedToInteract)
     {
         Vec3* viewerLocation = Minecraft::GetInstance()->mHitResult->mLocation;
         Vec3* hit = Vec3::newTemp(viewerLocation->x - mX, viewerLocation->y - mY, viewerLocation->z - mZ);
-        EInteraction interaction =
+        unsigned int interaction =
             test_interactAt(tooltipData.m_pPlayer, hit, tooltipData.m_pItemInstance, InteractionHand::eInteractionHand_MainHand);
         if (interaction != eInteraction_None && interaction <= eInteraction_ChangePose)
             return INTERACTION_TOOLTIPS[interaction - 1];
@@ -602,23 +603,21 @@ void ArmorStand::playBrokenSound()
 void ArmorStand::brokenByAnything()
 {
     playBrokenSound();
-    for (std::size_t i = 0; i < mHandItems.size(); ++i)
+    for (int i = 0; i < 2; ++i)
     {
-        if (!mHandItems[i]->isEmpty())
+        not_null_ptr<ItemInstance> item = mHandItems[i];
+        if (!item->isEmpty())
         {
-            BlockPos pos(this);
-            BlockPos dropPos = pos.above();
-            Block::popResource(mLevel, dropPos, mHandItems[i]);
+            Block::popResource(mLevel, BlockPos(this).above(), item);
             mHandItems[i] = ItemInstance::EMPTY;
         }
     }
-    for (std::size_t i = 0; i < mArmorItems.size(); ++i)
+    for (int i = 0; i < 4; ++i)
     {
-        if (!mArmorItems[i]->isEmpty())
+        not_null_ptr<ItemInstance> item = mArmorItems[i];
+        if (!item->isEmpty())
         {
-            BlockPos pos(this);
-            BlockPos dropPos = pos.above();
-            Block::popResource(mLevel, dropPos, mArmorItems[i]);
+            Block::popResource(mLevel, BlockPos(this).above(), item);
             mArmorItems[i] = ItemInstance::EMPTY;
         }
     }
@@ -641,16 +640,15 @@ void ArmorStand::showBreakingParticles()
     ServerLevel* level = dynamic_cast<ServerLevel*>(mLevel);
     if (level == NULL)
         return;
-    arrayWithLength<int> data(1, false);
-    data.data[0] = Block::getIdWithData(Blocks::planks->defaultBlockState());
+    int blockData = Block::getIdWithData(Blocks::planks->defaultBlockState());
+    arrayWithLength<int> data(&blockData, 1);
     level->sendParticles(PARTICLE_BLOCK_DUST, mX, mY + mBbHeight / 1.5, mZ, 10, mBbWidth / 4.0f, mBbHeight / 4.0f,
                          mBbWidth / 4.0f, 0.05, data);
 }
 void ArmorStand::brokenByPlayer()
 {
-    not_null_ptr<ItemInstance> armorStandItem(new ItemInstance(Items::armorStand));
-    BlockPos pos(shared_from_this());
-    Block::popResource(mLevel, pos, armorStandItem);
+    Block::popResource(mLevel, BlockPos(shared_from_this()),
+                       not_null_ptr<ItemInstance>(new ItemInstance(Items::armorStand)));
     brokenByAnything();
 }
 bool ArmorStand::hurt(const DamageSource* source, float damage)
@@ -769,11 +767,12 @@ void ArmorStand::handleEntityEvent(unsigned char event, int data)
 }
 bool ArmorStand::shouldRenderAtSqrDistance(double distanceSqr) {
     double size = mBoundingBox->getSize();
-    if (size == 0.0)
+    if (size != size || size == 0.0)
     {
         size = 4.0;
     }
-    return distanceSqr < size * 64.0 * size * 64.0;
+    size *= 64.0;
+    return distanceSqr < size * size;
 }
 void ArmorStand::setInvisible(bool invisible)
 {
@@ -787,7 +786,7 @@ int ArmorStand::getPistonPushReaction() { return isMarker() ? 3 : Entity::getPis
 bool ArmorStand::isAffectedByPotions() { return false; }
 void ArmorStand::onSyncedDataUpdated(const EntityDataAccessor_Base* accessor)
 {
-    if (accessor != NULL && accessor->getId() >= 0)
+    if (accessor->getId() == DATA_FLAGS->getId())
     {
         setSize(0.5f, 1.975f);
     }
@@ -808,12 +807,8 @@ bool ArmorStand::isPickable()
 const HumanoidArm* ArmorStand::getMainArm() { return HumanoidArm::RIGHT; }
 float ArmorStand::tickHeadTurn(float bodyRot, float headTurnDelta)
 {
+    mYBodyRot = mYRot;
     mYBodyRotO = mYRotO;
-    mYHeadRotO = mYRotO;
-    if (headTurnDelta == 0.0f)
-    {
-        mYBodyRot = bodyRot;
-    }
     return 0.0f;
 }
 double ArmorStand::getRidingHeight() { return isMarker() ? 0.0 : 0.1; }
@@ -920,17 +915,15 @@ void ArmorStand::setSize(float width, float height)
     }
     else
     {
-        Entity::setSize(width, height);
+        Entity::setSize(width * 1.0f, height * 1.0f);
     }
     setPos(x, y, z);
 }
 void ArmorStand::defineSynchedData()
 {
     LivingEntity::defineSynchedData();
-    if (DATA_FLAGS != NULL)
-        mEntityData->createDateItem(DATA_FLAGS, static_cast<unsigned char>(0));
-    if (DATA_POSE != NULL)
-        mEntityData->createDateItem(DATA_POSE, 0);
+    mEntityData->createDateItem(DATA_FLAGS, static_cast<unsigned char>(0));
+    mEntityData->createDateItem(DATA_POSE, 0);
 }
 void ArmorStand::doPush(boost::shared_ptr<Entity>) {}
 void ArmorStand::pushEntities()

@@ -32,39 +32,24 @@ MG01ScoreboardLayout::~MG01ScoreboardLayout()
 {
 }
 
-namespace
-{
-boost::shared_ptr<ItemInstance> weaponOrDefaultSkull(const Scoreboard::Weapon& weapon)
-{
-    if (!weapon.HasItem())
-    {
-        return boost::shared_ptr<ItemInstance>(new ItemInstance(Items::skull, 1, 3));
-    }
-    boost::shared_ptr<ItemInstance> item = weapon.GetItemInstance();
-    if (item == 0 || item->isEmpty())
-    {
-        return boost::shared_ptr<ItemInstance>(new ItemInstance(Items::skull, 1, 3));
-    }
-    return item;
-}
-}
-
 unsigned int MG01ScoreboardLayout::SORTBYSCORE(PlayerInfo* first, PlayerInfo* second)
 {
-    if (first->localPlayer == 0)
+    const MG01PlayerInfo* firstInfo = static_cast<const MG01PlayerInfo*>(first);
+    const MG01PlayerInfo* secondInfo = static_cast<const MG01PlayerInfo*>(second);
+    if (firstInfo->localPlayer == 0)
     {
-        if (second->localPlayer != 0)
+        if (secondInfo->localPlayer != 0)
         {
             return 0;
         }
     }
-    else if (second->localPlayer == 0)
+    else if (secondInfo->localPlayer == 0)
     {
         return 1;
     }
 
-    int firstValue = first->roundsWon;
-    int secondValue = second->roundsWon;
+    int firstValue = firstInfo->roundsWon;
+    int secondValue = secondInfo->roundsWon;
     if (firstValue > secondValue)
     {
         return 1;
@@ -74,8 +59,8 @@ unsigned int MG01ScoreboardLayout::SORTBYSCORE(PlayerInfo* first, PlayerInfo* se
         return 0;
     }
 
-    firstValue = first->kills;
-    secondValue = second->kills;
+    firstValue = firstInfo->kills;
+    secondValue = secondInfo->kills;
     if (firstValue > secondValue)
     {
         return 1;
@@ -85,8 +70,8 @@ unsigned int MG01ScoreboardLayout::SORTBYSCORE(PlayerInfo* first, PlayerInfo* se
         return 0;
     }
 
-    firstValue = first->lifeSpan;
-    secondValue = second->lifeSpan;
+    firstValue = firstInfo->lifeSpan;
+    secondValue = secondInfo->lifeSpan;
     if (firstValue > secondValue)
     {
         return 1;
@@ -96,8 +81,8 @@ unsigned int MG01ScoreboardLayout::SORTBYSCORE(PlayerInfo* first, PlayerInfo* se
         return 0;
     }
 
-    firstValue = first->damageDealt;
-    secondValue = second->damageDealt;
+    firstValue = firstInfo->damageDealt;
+    secondValue = secondInfo->damageDealt;
     if (firstValue > secondValue)
     {
         return 1;
@@ -107,8 +92,8 @@ unsigned int MG01ScoreboardLayout::SORTBYSCORE(PlayerInfo* first, PlayerInfo* se
         return 0;
     }
 
-    firstValue = first->damageReceived;
-    secondValue = second->damageReceived;
+    firstValue = firstInfo->damageReceived;
+    secondValue = secondInfo->damageReceived;
     if (secondValue > firstValue)
     {
         return 1;
@@ -118,11 +103,11 @@ unsigned int MG01ScoreboardLayout::SORTBYSCORE(PlayerInfo* first, PlayerInfo* se
         return 0;
     }
 
-    if (first->survived == 0)
+    if (firstInfo->survived == 0)
     {
         return 0;
     }
-    if (second->survived != 0)
+    if (secondInfo->survived != 0)
     {
         return 0;
     }
@@ -143,7 +128,7 @@ void MG01ScoreboardLayout::Init(int value)
         INetworkPlayer* networkPlayer = CGameNetworkManager::sInstance.GetPlayerByIndex(index);
         if (networkPlayer != 0)
         {
-            PlayerInfo* info = new PlayerInfo();
+            PlayerInfo* info = new MG01PlayerInfo();
             BuildPlayerInfo(networkPlayer, info);
             m_players.push_back(info);
         }
@@ -163,59 +148,74 @@ unsigned int MG01ScoreboardLayout::getNumberOfColumns()
 
 boost::shared_ptr<ItemInstance> MG01ScoreboardLayout::getItemForSlot(int column, int row, const unsigned int& slot, const EScoreboardType& type)
 {
+    boost::shared_ptr<ItemInstance> item = ItemInstance::EMPTY;
+
     if (column == -1)
     {
-        if (type != EScoreboardType_Award)
+        if (type == EScoreboardType_Award)
         {
-            return ItemInstance::EMPTY;
-        }
+            ClientScoreboard* scoreboard =
+                Minecraft::GetInstance()->mLocalPlayers[m_userIndex]->GetLevel()->GetClientScoreboard();
+            const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
+            const bool multiRoundOrMultiLife =
+                miniGame->HasMultipleRounds() || miniGame->GetLivesPerRound() != 1;
 
-        ClientScoreboard* scoreboard =
-            Minecraft::GetInstance()->mLocalPlayers[m_userIndex]->GetLevel()->GetClientScoreboard();
-        const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
-        const bool multiRoundOrMultiLife =
-            miniGame->HasMultipleRounds() || miniGame->GetLivesPerRound() != 1;
-
-        if (slot >= m_players.size() || m_players[slot] == 0)
-        {
-            return ItemInstance::EMPTY;
-        }
-
-        INetworkPlayer* networkPlayer =
-            CGameNetworkManager::sInstance.GetPlayerBySmallId(m_players[slot]->smallId);
-        const StatsUID uid = StatsUID::NETWORKPLAYER_SUID(networkPlayer);
-
-        if (row != 1)
-        {
-            if (row == 4 && networkPlayer != 0 && scoreboard->HasStats(uid))
+            if (slot < m_players.size() && m_players[slot] != 0)
             {
-                if (multiRoundOrMultiLife)
+                INetworkPlayer* networkPlayer =
+                    CGameNetworkManager::sInstance.GetPlayerBySmallId(m_players[slot]->smallId);
+                const StatsUID uid = StatsUID::NETWORKPLAYER_SUID(networkPlayer);
+
+                if (row != 1)
                 {
-                    return weaponOrDefaultSkull(scoreboard->GetWeaknessWeapon(uid));
+                    if (row == 4 && networkPlayer != 0 && scoreboard->HasStats(uid))
+                    {
+                        not_null_ptr<ItemInstance> weapon;
+                        if (multiRoundOrMultiLife)
+                        {
+                            weapon = scoreboard->GetWeaknessWeapon(uid);
+                        }
+                        else
+                        {
+                            weapon = scoreboard->GetKillerWeapon(uid, -1);
+                        }
+                        if (!weapon->isEmpty())
+                        {
+                            item = weapon;
+                        }
+                        else
+                        {
+                            item = not_null_ptr<ItemInstance>(new ItemInstance(Items::skull, 1, 3));
+                        }
+                    }
                 }
-                return weaponOrDefaultSkull(scoreboard->GetKillerWeapon(uid, -1));
+                else if (networkPlayer != 0)
+                {
+                    not_null_ptr<ItemInstance> weapon = scoreboard->GetFavouriteWeapon(uid);
+                    if (!weapon->isEmpty())
+                    {
+                        item = weapon;
+                    }
+                    else
+                    {
+                        item = not_null_ptr<ItemInstance>(new ItemInstance(Items::skull, 1, 3));
+                    }
+                }
             }
-            return ItemInstance::EMPTY;
         }
-
-        if (networkPlayer == 0)
-        {
-            return ItemInstance::EMPTY;
-        }
-
-        return weaponOrDefaultSkull(scoreboard->GetFavouriteWeapon(uid));
+        return item;
     }
 
     const unsigned int columns = getNumberOfColumns();
     if (column == columns - 2)
     {
-        return boost::shared_ptr<ItemInstance>(new ItemInstance(Items::diamondSword, 1, 0));
+        item = not_null_ptr<ItemInstance>(new ItemInstance(Items::diamondSword, 1, 0));
     }
-    if (column == columns - 1 && type == EScoreboardType_Scoreboard)
+    else if (column == columns - 1 && type == EScoreboardType_Scoreboard)
     {
-        return boost::shared_ptr<ItemInstance>(new ItemInstance(Items::skull, 1, 3));
+        item = not_null_ptr<ItemInstance>(new ItemInstance(Items::skull, 1, 3));
     }
-    return ItemInstance::EMPTY;
+    return item;
 }
 
 UIString MG01ScoreboardLayout::getLabel2(const StatsUID&)
@@ -364,15 +364,15 @@ std::wstring MG01ScoreboardLayout::GetRowLabel(int column, const StatsUID& uid, 
 
     if (column != static_cast<int>(getNumberOfColumns()) - 2)
     {
-        return std::wstring();
+        return std::wstring(L"");
     }
 
     ClientScoreboard* scoreboard =
         Minecraft::GetInstance()->mLocalPlayers[m_userIndex]->GetLevel()->GetClientScoreboard();
+    const int rounds = static_cast<int>(Minecraft::GetInstance()->GetMiniGame()->GetRoundCount());
     int total = 0;
     if (type == EScoreboardType_Award)
     {
-        const int rounds = static_cast<int>(Minecraft::GetInstance()->GetMiniGame()->GetRoundCount());
         for (int round = 0; round < rounds; ++round)
         {
             total += scoreboard->GetKills(uid, round);
@@ -385,17 +385,14 @@ std::wstring MG01ScoreboardLayout::GetRowLabel(int column, const StatsUID& uid, 
     return _toString<int>(total);
 }
 
-void MG01ScoreboardLayout::BuildPlayerInfo(INetworkPlayer* player, PlayerInfo* info)
+void MG01ScoreboardLayout::BuildPlayerInfo(INetworkPlayer* player, PlayerInfo* baseInfo)
 {
+    MG01PlayerInfo* info = static_cast<MG01PlayerInfo*>(baseInfo);
     IScoreboardLayout::BuildPlayerInfo(player, info);
 
-    unsigned char localFlag = 0;
     boost::shared_ptr<AbstractClientPlayer> localPlayer =
-        Minecraft::GetInstance()->GetLocalPlayerByName(player->GetDisplayName());
-    if (localPlayer != 0 && localPlayer->isAlive() && !localPlayer->isSpectator())
-    {
-        localFlag = 1;
-    }
+        Minecraft::GetInstance()->GetLocalPlayerByName(player->GetOnlineName());
+    const bool localFlag = localPlayer != 0 && localPlayer->isAlive() && !localPlayer->isSpectator();
 
     const StatsUID uid = StatsUID::NETWORKPLAYER_SUID(player);
     ClientScoreboard* scoreboard =
@@ -404,7 +401,15 @@ void MG01ScoreboardLayout::BuildPlayerInfo(INetworkPlayer* player, PlayerInfo* i
     info->localPlayer = localFlag;
     info->roundsWon = scoreboard->GetRoundsWon(uid);
 
-    if (m_type == EScoreboardType_Award)
+    if (m_type != EScoreboardType_Award)
+    {
+        info->kills = scoreboard->GetKills(uid, -1);
+        info->lifeSpan = scoreboard->GetLifeSpan(uid, -1);
+        info->damageDealt = scoreboard->GetDamageDealt(uid, -1);
+        info->damageReceived = scoreboard->GetDamageReceived(uid, -1);
+        info->survived = scoreboard->GetSurvived(uid, -1) ? 1 : 0;
+    }
+    else
     {
         const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
         const int rounds = static_cast<int>(miniGame->GetRoundCount());
@@ -425,34 +430,21 @@ void MG01ScoreboardLayout::BuildPlayerInfo(INetworkPlayer* player, PlayerInfo* i
         info->damageReceived = damageReceived;
         info->survived = scoreboard->GetSurvived(uid, -1) ? 1 : 0;
     }
-    else
-    {
-        info->kills = scoreboard->GetKills(uid, -1);
-        info->lifeSpan = scoreboard->GetLifeSpan(uid, -1);
-        info->damageDealt = scoreboard->GetDamageDealt(uid, -1);
-        info->damageReceived = scoreboard->GetDamageReceived(uid, -1);
-        info->survived = scoreboard->GetSurvived(uid, -1) ? 1 : 0;
-    }
 
     MultiPlayerGameMode* gameMode =
         Minecraft::GetInstance()->mLocalPlayers[m_userIndex]->GetLocalGameMode();
-    info->teamInvite = gameMode != 0 && gameMode->IsTeamInvite(player->GetDisplayName()) ? 1 : 0;
+    info->teamInvite = static_cast<unsigned char>(gameMode->IsTeamInvite(player->GetOnlineName()));
     info->colour = static_cast<short>(gApp.GetPlayerColour(info->smallId));
 }
 
 PlayerInfo* MG01ScoreboardLayout::CreatePlayerInfo()
 {
-    PlayerInfo* info = new PlayerInfo();
-    info->smallId = 0;
-    info->voiceStatus = 0;
-    info->colour = 0;
-    info->name.clear();
-    return info;
+    return new MG01PlayerInfo();
 }
 
 void MG01ScoreboardLayout::AddPlayer(unsigned char smallId)
 {
-    PlayerInfo* info = new PlayerInfo();
+    PlayerInfo* info = new MG01PlayerInfo();
     INetworkPlayer* networkPlayer = CGameNetworkManager::sInstance.GetPlayerBySmallId(smallId);
     BuildPlayerInfo(networkPlayer, info);
     m_players.push_back(info);
@@ -467,8 +459,9 @@ void MG01ScoreboardLayout::UpdatePlayer(int index, PlayerInfo*, PlayerInfo* newI
     info->name = newInfo->name;
 }
 
-unsigned char MG01ScoreboardLayout::GetEndBarIcon(PlayerInfo* info)
+unsigned char MG01ScoreboardLayout::GetEndBarIcon(PlayerInfo* baseInfo)
 {
+    const MG01PlayerInfo* info = static_cast<const MG01PlayerInfo*>(baseInfo);
     if (info->teamInvite != 0)
     {
         return 2;

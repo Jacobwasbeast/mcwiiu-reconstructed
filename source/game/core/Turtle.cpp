@@ -49,13 +49,11 @@ const EntityDataAccessor<bool>* Turtle::DATA_GOING_HOME = NULL;
 const EntityDataAccessor<bool>* Turtle::DATA_TRAVELLING = NULL;
 
 static Item* turtleTemptItem = NULL;
-static bool turtleTemptItemInitialized = false;
-Predicate<boost::shared_ptr<Entity> >* Turtle::BABY_ON_LAND_SELECTOR = 0;
+static int turtleTemptItemInitialized = 0;
+Predicate<boost::shared_ptr<Entity> >* Turtle::BABY_ON_LAND_SELECTOR = new BabyOnLandSelector();
 
 void Turtle::staticCtor()
 {
-    if (BABY_ON_LAND_SELECTOR == 0)
-        BABY_ON_LAND_SELECTOR = new BabyOnLandSelector();
     DATA_HOME_POS = SynchedEntityData::defineId(EntityType::TURTLE, EntityType::ANIMAL, EntityDataSerializers::BLOCK_POS);
     DATA_HAS_EGG = SynchedEntityData::defineId(EntityType::TURTLE, EntityType::ANIMAL, EntityDataSerializers::BOOLEAN);
     DATA_HAS_GIVEN_UP_ON_EGG = SynchedEntityData::defineId(EntityType::TURTLE, EntityType::ANIMAL, EntityDataSerializers::BOOLEAN);
@@ -65,12 +63,13 @@ void Turtle::staticCtor()
     DATA_TRAVELLING = SynchedEntityData::defineId(EntityType::TURTLE, EntityType::ANIMAL, EntityDataSerializers::BOOLEAN);
 }
 
-Turtle::Turtle(Level* level) : Animal(level), mLayEggTime(0)
+Turtle::Turtle(Level* level) : Animal(level)
 {
     fjDerivedCtorCalls();
     setSize(1.2f, 0.4f);
     mMoveControl = new TurtleMoveControl(this);
     mSpawnableBlock = Blocks::sand;
+    mLayEggTime = 0;
     mMaxUpStep = 1.0f;
 }
 
@@ -116,9 +115,15 @@ void Turtle::setGoingHome(bool goingHome)
 bool Turtle::closeToNextPos()
 {
     Path* path = getNavigation()->getPath();
-    if (path == NULL || path->getTarget() == NULL) return false;
-    Node* target = path->getTarget();
-    return distanceToSqr(target->x, target->y, target->z) < 64.0;
+    if (path != NULL)
+    {
+        Node* target = path->getTarget();
+        if (target != NULL && distanceToSqr(target->x, target->y, target->z) < 64.0)
+        {
+            return true;
+        }
+    }
+    return false;
 }
 
 bool Turtle::isGoingHome()
@@ -164,11 +169,10 @@ void Turtle::registerGoals()
     mGoalSelector.addGoal(2, new TurtleBreedGoal(this, 1.0), true);
     if (!turtleTemptItemInitialized)
     {
-        turtleTemptItemInitialized = true;
+        turtleTemptItemInitialized = 1;
         turtleTemptItem = Item::byBlock(Blocks::sea_grass);
     }
-    arrayWithLength<Item*> temptItems(1, false);
-    temptItems.data[0] = turtleTemptItem;
+    arrayWithLength<Item*> temptItems(&turtleTemptItem, 1);
     mGoalSelector.addGoal(3, new TemptGoal(this, 1.1, temptItems, false, arrayWithLength<int>()), true);
     mGoalSelector.addGoal(4, new TurtleGoToWaterGoal(this, 1.0), true);
     mGoalSelector.addGoal(7, new TurtleTravelGoal(this, 1.0), true);
@@ -186,22 +190,19 @@ void Turtle::registerAttributes()
 void Turtle::grewUp()
 {
     AgableMob::grewUp();
-    if (mLevel != NULL && !mLevel->mIsClientSide) spawnAtLocation(Items::turtleShellPiece, 1);
+    if (!mLevel->mIsClientSide) spawnAtLocation(Items::turtleShellPiece, 1);
 }
 
 void Turtle::defineSynchedData()
 {
     Animal::defineSynchedData();
-    if (mEntityData != NULL)
-    {
-        mEntityData->createDateItem(DATA_HOME_POS, BlockPos());
-        mEntityData->createDateItem(DATA_HAS_EGG, false);
-        mEntityData->createDateItem(DATA_HAS_GIVEN_UP_ON_EGG, false);
-        mEntityData->createDateItem(DATA_IS_LAYING_EGG, false);
-        mEntityData->createDateItem(DATA_TRAVEL_POS, BlockPos());
-        mEntityData->createDateItem(DATA_GOING_HOME, false);
-        mEntityData->createDateItem(DATA_TRAVELLING, false);
-    }
+    mEntityData->createDateItem(DATA_HOME_POS, BlockPos::ZERO);
+    mEntityData->createDateItem(DATA_HAS_EGG, false);
+    mEntityData->createDateItem(DATA_HAS_GIVEN_UP_ON_EGG, false);
+    mEntityData->createDateItem(DATA_IS_LAYING_EGG, false);
+    mEntityData->createDateItem(DATA_TRAVEL_POS, BlockPos::ZERO);
+    mEntityData->createDateItem(DATA_GOING_HOME, false);
+    mEntityData->createDateItem(DATA_TRAVELLING, false);
 }
 
 PathNavigation* Turtle::createNavigation(Level* level)
@@ -217,34 +218,42 @@ bool Turtle::generatesBubbles()
 void Turtle::tick()
 {
     Mob::tick();
-    if (!isLayingEgg())
+    if (isLayingEgg())
+    {
+        if (++mLayEggTime % 5 == 0)
+        {
+            BlockPos pos(getPos(0.0f));
+            const BlockState* state = mLevel->getBlockState(pos.below());
+            if (state->getBlock() == Blocks::sand)
+            {
+                mLevel->levelEvent(LevelEvent::PARTICLES_DESTROY_BLOCK, pos, Block::getIdWithData(state));
+            }
+        }
+    }
+    else
     {
         mLayEggTime = 0;
-    }
-    else if (++mLayEggTime % 5 == 0 && mLevel != NULL)
-    {
-        BlockPos pos(getPos(0.0f));
-        BlockPos below = pos.below();
-        const BlockState* state = mLevel->getBlockState(below);
-        if (state != NULL && Block::getIdWithData(state) == Block::getId(Blocks::sand))
-            mLevel->levelEvent(LevelEvent::PARTICLES_DESTROY_BLOCK, below, Block::getIdWithData(state));
     }
 }
 
 void Turtle::travel(float xxa, float yya, float zza)
 {
-    if (!isEffectiveAi() || !isInWater())
+    if (isEffectiveAi() && isInWater())
+    {
+        moveRelative(xxa, yya, zza, 0.1f);
+        move(eMoverType_Self, mXd, mYd, mZd, false);
+        mXd *= 0.9f;
+        mYd *= 0.9f;
+        mZd *= 0.9f;
+        if (getTarget() == NULL && (!isGoingHome() || !(distanceToSqr(getHomePos()) < 400.0)))
+        {
+            mYd -= 0.005;
+        }
+    }
+    else
     {
         LivingEntity::travel(xxa, yya, zza);
-        return;
     }
-    moveRelative(xxa, yya, zza, 0.1f);
-    move(eMoverType_Self, mXd, mYd, mZd, false);
-    mXd *= 0.9;
-    mYd *= 0.9;
-    mZd *= 0.9;
-    if (isGoingHome() && distanceToSqr(getHomePos()) < 400.0) mYd += 0.005;
-    else mYd -= 0.005;
 }
 
 boost::shared_ptr<AgableMob> Turtle::getBreedOffspring(boost::shared_ptr<AgableMob> partner)
@@ -257,30 +266,34 @@ boost::shared_ptr<AgableMob> Turtle::getBreedOffspring(boost::shared_ptr<AgableM
 void Turtle::addAdditonalSaveData(CompoundTag* tag)
 {
     Animal::addAdditonalSaveData(tag);
-    BlockPos home = getHomePos();
-    tag->putInt(L"HomePosX", home.x);
-    tag->putInt(L"HomePosY", home.y);
-    tag->putInt(L"HomePosZ", home.z);
+    tag->putInt(L"HomePosX", getHomePos().x);
+    tag->putInt(L"HomePosY", getHomePos().y);
+    tag->putInt(L"HomePosZ", getHomePos().z);
     tag->putBoolean(L"HasEgg", hasEgg());
     tag->putBoolean(L"HasGivenUpOnEgg", hasGivenUpOnEgg());
-    BlockPos travel = getTravelPos();
-    tag->putInt(L"TravelPosX", travel.x);
-    tag->putInt(L"TravelPosY", travel.y);
-    tag->putInt(L"TravelPosZ", travel.z);
+    tag->putInt(L"TravelPosX", getTravelPos().x);
+    tag->putInt(L"TravelPosY", getTravelPos().y);
+    tag->putInt(L"TravelPosZ", getTravelPos().z);
 }
 
 void Turtle::readAdditionalSaveData(CompoundTag* tag)
 {
-    setHomePos(BlockPos(tag->getInt(L"HomePosX"), tag->getInt(L"HomePosY"), tag->getInt(L"HomePosZ")));
+    int homeX = tag->getInt(L"HomePosX");
+    int homeY = tag->getInt(L"HomePosY");
+    int homeZ = tag->getInt(L"HomePosZ");
+    setHomePos(BlockPos(homeX, homeY, homeZ));
     Animal::readAdditionalSaveData(tag);
     setHasEgg(tag->getBoolean(L"HasEgg"));
     if (tag->getBoolean(L"HasGivenUpOnEgg")) GiveUpOnEgg();
-    setTravelPos(BlockPos(tag->getInt(L"TravelPosX"), tag->getInt(L"TravelPosY"), tag->getInt(L"TravelPosZ")));
+    int travelX = tag->getInt(L"TravelPosX");
+    int travelY = tag->getInt(L"TravelPosY");
+    int travelZ = tag->getInt(L"TravelPosZ");
+    setTravelPos(BlockPos(travelX, travelY, travelZ));
 }
 
 unsigned int Turtle::GetInteractTooltip(const EntityTooltipDataHolder& holder)
 {
-    if (isFood(holder.m_pItemInstance))
+    if (Item::getBlockId(holder.m_pItemInstance->getItem()) == BlockId::SEA_GRASS)
     {
         if (isBaby())
         {
@@ -313,7 +326,7 @@ MobGroupData* Turtle::finalizeMobSpawn(const DifficultyInstance& difficulty, Mob
 
 bool Turtle::checkSpawnRules()
 {
-    return mBoundingBox != NULL && mLevel != NULL && mBoundingBox->mMinY < mLevel->getSeaLevel() + 4 && Animal::checkSpawnRules();
+    return mBoundingBox->mMinY < mLevel->getSeaLevel() + 4 && Animal::checkSpawnRules();
 }
 
 bool Turtle::isPushedByWater()
@@ -373,7 +386,14 @@ const SoundEvent* Turtle::getDeathSound()
 
 void Turtle::playStepSound(const BlockPos& pos, Block* block)
 {
-    playSound(isBaby() ? SoundEvents::TURTLE_SHAMBLE_BABY : SoundEvents::TURTLE_SHAMBLE, 1.0f, 1.0f);
+    if (isBaby())
+    {
+        playSound(SoundEvents::TURTLE_SHAMBLE_BABY, 1.0f, 1.0f);
+    }
+    else
+    {
+        playSound(SoundEvents::TURTLE_SHAMBLE, 1.0f, 1.0f);
+    }
 }
 
 const SoundEvent* Turtle::getSwimSound()

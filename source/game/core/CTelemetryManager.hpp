@@ -101,6 +101,7 @@ enum ETelemetryChallenges
     eTelemetryChallenges_DeathBySlime = 40,
     eTelemetryChallenges_DeathByGhast = 41,
     eTelemetryChallenges_DeathByZombiePigman = 42,
+    eTelemetryChallenges_Challenge58 = 58,
     eTelemetryChallenges_DeathByIronGolem = 59,
     eTelemetryChallenges_DeathBySnowGolem = 60,
     eTelemetryChallenges_DeathByCaveSpider = 61,

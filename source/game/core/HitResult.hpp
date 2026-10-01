@@ -26,7 +26,7 @@ public:
     HitResult(Type type, Vec3* location, const Direction* direction, const BlockPos& blockPos);
     HitResult(boost::shared_ptr<Entity> entity, Vec3* location);
 
-    BlockPos getBlockPos() const;
+    const BlockPos& getBlockPos() const;
     double distanceTo(boost::shared_ptr<Entity> entity) const;
     std::wstring toString() const;
 

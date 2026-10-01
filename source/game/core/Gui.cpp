@@ -94,14 +94,12 @@ BossHealthOverlay* Gui::getBossOverlay(int index)
 void Gui::renderVignette(float partialTick, int width, int height)
 {
     float target = 1.0f - partialTick;
-    if (target < 0.5f) {
-        mVignetteBrightness += (0.5f - mVignetteBrightness) * 0.01f;
-    } else {
-        if (target > 1.0f) {
-            target = 1.0f;
-        }
-        mVignetteBrightness += (target - mVignetteBrightness) * 0.01f;
+    if (target < 0.0f) {
+        target = 0.0f;
+    } else if (target > 1.0f) {
+        target = 1.0f;
     }
+    mVignetteBrightness += (target - mVignetteBrightness) * 0.01f;
 }
 
 void Gui::renderPumpkin(int width, int height)

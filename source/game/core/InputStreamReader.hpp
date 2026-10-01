@@ -10,7 +10,7 @@ class InputStreamReader : public Reader
 {
 public:
     InputStreamReader(InputStream* stream);
-    virtual ~InputStreamReader();
+    virtual ~InputStreamReader() {}
 
     virtual void close();
     virtual int read();

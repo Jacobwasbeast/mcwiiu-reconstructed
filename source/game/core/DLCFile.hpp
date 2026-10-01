@@ -15,7 +15,7 @@ class DLCFile
 
 public:
     DLCFile(DLCManager::EDLCType type, const std::wstring& path);
-    virtual ~DLCFile();
+    virtual ~DLCFile() {}
 
     virtual void addData(unsigned char* pData, unsigned int size);
     virtual unsigned char* getData(unsigned int& size);

@@ -20,7 +20,6 @@ private:
     int mId;
     int mLabel;
     bool mIncludeRandom;
-    unsigned char mPadding[3];
     eCustomGameModeHostOption mOption;
     EMiniGameId mMiniGameId;
 };

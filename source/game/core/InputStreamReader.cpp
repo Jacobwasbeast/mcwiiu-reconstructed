@@ -7,10 +7,6 @@ InputStreamReader::InputStreamReader(InputStream* stream)
     mStream = new DataInputStream(stream);
 }
 
-InputStreamReader::~InputStreamReader()
-{
-}
-
 void InputStreamReader::close()
 {
     mStream->close();

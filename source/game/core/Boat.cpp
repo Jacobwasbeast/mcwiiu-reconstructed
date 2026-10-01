@@ -49,20 +49,13 @@ const EntityDataAccessor<int>* Boat::DATA_HURT_TIME = 0;
 const EntityDataAccessor<int>* Boat::DATA_HURT_DIR = 0;
 const EntityDataAccessor<float>* Boat::DATA_DAMAGE = 0;
 const EntityDataAccessor<int>* Boat::DATA_TYPE = 0;
-const EntityDataAccessor<bool>* Boat::DATA_PADDLE_LEFT = 0;
-const EntityDataAccessor<bool>* Boat::DATA_PADDLE_RIGHT = 0;
+const EntityDataAccessor<bool>* Boat::DATA_ID_PADDLE[2] = { 0, 0 };
 const EntityDataAccessor<int>* Boat::DATA_BUBBLE_TIME = 0;
 const EntityDataAccessor<bool>* Boat::DATA_SINKING = 0;
 
 namespace
 {
-const BlockState* getWaterState(Level* level, EntityTickCache& tickCache, const BlockPos& pos)
-{
-    const BlockState* state = level->getBlockState(tickCache, pos);
-    if (state->getMaterial() != Material::WATER)
-        state = level->getExtraBlockState(pos);
-    return state;
-}
+typedef std::vector<boost::weak_ptr<Entity> > PassengerList;
 }
 
 Boat::Boat(Level* level) : Entity(level, true)
@@ -96,9 +89,9 @@ void Boat::staticCtor()
                                                       EntityDataSerializers::FLOAT);
     DATA_TYPE = SynchedEntityData::defineId<int>(EntityType::BOAT, EntityType::ENTITY,
                                                   EntityDataSerializers::INT);
-    DATA_PADDLE_LEFT = SynchedEntityData::defineId<bool>(EntityType::BOAT, EntityType::ENTITY,
+    DATA_ID_PADDLE[0] = SynchedEntityData::defineId<bool>(EntityType::BOAT, EntityType::ENTITY,
                                                           EntityDataSerializers::BOOLEAN);
-    DATA_PADDLE_RIGHT = SynchedEntityData::defineId<bool>(EntityType::BOAT, EntityType::ENTITY,
+    DATA_ID_PADDLE[1] = SynchedEntityData::defineId<bool>(EntityType::BOAT, EntityType::ENTITY,
                                                            EntityDataSerializers::BOOLEAN);
     DATA_BUBBLE_TIME = SynchedEntityData::defineId<int>(EntityType::BOAT, EntityType::ENTITY,
                                                          EntityDataSerializers::INT);
@@ -108,6 +101,8 @@ void Boat::staticCtor()
 
 void Boat::_init()
 {
+    fjDerivedCtorCalls();
+
     mPaddlePositions[0] = 0.0f;
     mPaddlePositions[1] = 0.0f;
     mInvFriction = 0.0f;
@@ -150,8 +145,8 @@ void Boat::defineSynchedData()
     mEntityData->createDateItem(DATA_HURT_DIR, 1);
     mEntityData->createDateItem(DATA_DAMAGE, 0.0f);
     mEntityData->createDateItem(DATA_TYPE, static_cast<int>(OAK));
-    mEntityData->createDateItem(DATA_PADDLE_LEFT, false);
-    mEntityData->createDateItem(DATA_PADDLE_RIGHT, false);
+    mEntityData->createDateItem(DATA_ID_PADDLE[0], false);
+    mEntityData->createDateItem(DATA_ID_PADDLE[1], false);
     mEntityData->createDateItem(DATA_BUBBLE_TIME, 0);
     mEntityData->createDateItem(DATA_SINKING, false);
 }
@@ -220,7 +215,7 @@ bool Boat::hurt(const DamageSource* source, float damage)
     if (source != NULL && dynamic_cast<const EntityDamageSource*>(source) != NULL)
     {
         boost::shared_ptr<Entity> attacker = source->getDirectEntity();
-        if (Entity::instanceof(attacker, EntityType::PLAYER)
+        if ((attacker->GetType() & EntityType::PLAYER) == EntityType::PLAYER
             && !boost::static_pointer_cast<Player>(attacker)->isAllowedToHurtEntity(shared_from_this()))
         {
             return false;
@@ -234,20 +229,18 @@ bool Boat::hurt(const DamageSource* source, float damage)
     setDamage(getDamage() + damage * 10.0f);
     markHurt();
 
-    bool creativePlayer = false;
-    if (source->getEntity() != NULL && Entity::instanceof(source->getEntity(), EntityType::PLAYER))
-        creativePlayer = boost::static_pointer_cast<Player>(source->getEntity())->mAbilities.mInstabuild;
+    const bool creativePlayer = source->getEntity() != NULL
+        && (source->getEntity()->GetType() & EntityType::PLAYER) == EntityType::PLAYER
+        && boost::static_pointer_cast<Player>(source->getEntity())->mAbilities.mInstabuild;
 
-    if (!creativePlayer)
+    if (creativePlayer || getDamage() > 40.0f)
     {
-        if (getDamage() <= 40.0f)
-            return true;
-
-        if (mLevel->getGameRules()->getBoolean(GameRules::RULE_DOENTITYDROPS))
+        if (!creativePlayer && mLevel->getGameRules()->getBoolean(GameRules::RULE_DOENTITYDROPS))
             spawnAtLocation(getDropItem(), 1, 0.0f);
+
+        remove();
     }
 
-    remove();
     return true;
 }
 
@@ -341,7 +334,9 @@ Boat::EStatus Boat::isUnderwater()
             for (int z = minZ; z < maxZ; ++z)
             {
                 pos = BlockPos(x, y, z);
-                const BlockState* state = getWaterState(mLevel, mTickCache, pos);
+                const BlockState* state = mLevel->getBlockState(mTickCache, pos);
+                if (state->getMaterial() != Material::WATER)
+                    state = mLevel->getExtraBlockState(pos);
                 if (state->getMaterial() == Material::WATER
                     && surfaceY < LiquidBlock::getLiquidHeight(state, mLevel, pos))
                 {
@@ -422,11 +417,13 @@ bool Boat::checkInWater()
             for (int z = minZ; z < maxZ; ++z)
             {
                 pos = BlockPos(x, y, z);
-                const BlockState* state = getWaterState(mLevel, mTickCache, pos);
+                const BlockState* state = mLevel->getBlockState(mTickCache, pos);
+                if (state->getMaterial() != Material::WATER)
+                    state = mLevel->getExtraBlockState(pos);
                 if (state->getMaterial() == Material::WATER)
                 {
                     const double height = LiquidBlock::getLiquidHeight(state, mLevel, pos);
-                    mWaterLevel = std::max(height, mWaterLevel);
+                    mWaterLevel = height > mWaterLevel ? height : mWaterLevel;
                     inWater |= box->mMinY < height;
                 }
             }
@@ -497,8 +494,8 @@ void Boat::tickLerp()
 
 void Boat::setPaddleState(bool left, bool right)
 {
-    mEntityData->set(DATA_PADDLE_LEFT, left, true);
-    mEntityData->set(DATA_PADDLE_RIGHT, right, true);
+    mEntityData->set(DATA_ID_PADDLE[0], left, true);
+    mEntityData->set(DATA_ID_PADDLE[1], right, true);
 }
 
 bool Boat::findBlockHeightOnPlane(const AABB* box, float& height, BlockPos& pos)
@@ -513,7 +510,9 @@ bool Boat::findBlockHeightOnPlane(const AABB* box, float& height, BlockPos& pos)
         for (int z = minZ; z < maxZ; ++z)
         {
             pos = BlockPos(x, pos.y, z);
-            const BlockState* state = getWaterState(mLevel, mTickCache, pos);
+            const BlockState* state = mLevel->getBlockState(mTickCache, pos);
+            if (state->getMaterial() != Material::WATER)
+                state = mLevel->getExtraBlockState(pos);
             if (state->getMaterial() == Material::WATER)
                 height = static_cast<float>(std::max(static_cast<double>(height),
                                                      LiquidBlock::getLiquidHeight(state, mLevel, pos)));
@@ -556,12 +555,12 @@ void Boat::floatBoat()
     const Material* extraMaterial = mLevel->getExtraBlockState(pos)->getMaterial();
     const Material* materialAbove = mLevel->getBlockState(mTickCache, pos.above())->getMaterial();
     const Material* extraMaterialAbove = mLevel->getExtraBlockState(pos.above())->getMaterial();
-    const bool inWater = material == Material::WATER || extraMaterial == Material::WATER;
     const double buoyancyOffset = 0.1;
     double buoyancy = 1.0;
     double rock = 0.0;
 
-    if (inWater && materialAbove == Material::AIR && !getIsSinking())
+    if ((material == Material::WATER || extraMaterial == Material::WATER) && materialAbove == Material::AIR
+        && !getIsSinking())
     {
         buoyancy = (1.0 - (mY - pos.y)) * 0.9 + buoyancyOffset;
         rock = (std::sin(mRockPhase) + 1.0) * 0.035;
@@ -578,7 +577,8 @@ void Boat::floatBoat()
             return;
         }
     }
-    else if (inWater && (materialAbove == Material::WATER || extraMaterialAbove == Material::WATER))
+    else if ((material == Material::WATER || extraMaterial == Material::WATER)
+             && (materialAbove == Material::WATER || extraMaterialAbove == Material::WATER))
     {
         mInvFriction = 0.9f;
         ++mOutOfControlTicks;
@@ -599,11 +599,20 @@ void Boat::floatBoat()
         buoyancy = 0.0;
         if (material == Material::AIR || material == Material::TOP_SNOW)
         {
-            const Material* materialBelow = getWaterState(mLevel, mTickCache, pos.below())->getMaterial();
+            const Material* materialBelow = mLevel->getBlockState(mTickCache, pos.below())->getMaterial();
+            if (materialBelow != Material::WATER)
+                materialBelow = mLevel->getExtraBlockState(pos.below())->getMaterial();
+
+            mInvFriction = 1.0f;
             if (!mOnGround)
-                mInvFriction = materialBelow == Material::WATER ? 0.9f : 1.0f;
+            {
+                if (materialBelow == Material::WATER)
+                    mInvFriction = 0.9f;
+            }
             else
+            {
                 mInvFriction = mLevel->getBlock(pos.below())->mFriction;
+            }
         }
         mXd *= mInvFriction;
         mZd *= mInvFriction;
@@ -612,7 +621,11 @@ void Boat::floatBoat()
 
     mYd = (mYd - 0.04) * 0.98;
     if (buoyancy > 0.0)
-        mYd = std::min(mYd * 0.7 + 0.05, (buoyancy - rock - buoyancyOffset) * 0.15);
+    {
+        const double rising = mYd * 0.7 + 0.05;
+        const double limit = (buoyancy - rock - buoyancyOffset) * 0.15;
+        mYd = rising < limit ? rising : limit;
+    }
 }
 
 void Boat::controlBoat()
@@ -634,15 +647,14 @@ void Boat::controlBoat()
     if (mInputDown)
         acceleration -= 0.005f;
 
-    mXd += Mth::sin(-mYRot * Mth::DEG_TO_RAD) * acceleration;
-    mZd += Mth::cos(mYRot * Mth::DEG_TO_RAD) * acceleration;
+    mXd += Mth::sin(-mYRot * 0.017453292f) * acceleration;
+    mZd += Mth::cos(mYRot * 0.017453292f) * acceleration;
     setPaddleState((mInputRight && !mInputLeft) || mInputUp, (mInputLeft && !mInputRight) || mInputUp);
 }
 
 bool Boat::getPaddleState(int paddle)
 {
-    const EntityDataAccessor<bool>* accessor = paddle == 0 ? DATA_PADDLE_LEFT : DATA_PADDLE_RIGHT;
-    return mEntityData->get(accessor) && getControllingPassenger() != NULL;
+    return mEntityData->get(DATA_ID_PADDLE[paddle]) && getControllingPassenger() != NULL;
 }
 
 void Boat::setIsSinking(bool sinking)
@@ -652,7 +664,17 @@ void Boat::setIsSinking(bool sinking)
 
 void Boat::tickBubbleColumn()
 {
-    if (!mLevel->mIsClientSide)
+    if (mLevel->mIsClientSide)
+    {
+        if (getBubbleTime() > 0)
+            mBubbleMultiplier += 0.05f;
+        else
+            mBubbleMultiplier -= 0.1f;
+        mBubbleMultiplier = Mth::clamp(mBubbleMultiplier, 0.0f, 1.0f);
+        mBubbleAngleO = mBubbleAngle;
+        mBubbleAngle = 10.0f * Mth::sin(0.5f * static_cast<float>(mLevel->getGameTime())) * mBubbleMultiplier;
+    }
+    else
     {
         if (!mIsAboveBubbleColumn)
             setBubbleTime(0);
@@ -663,7 +685,7 @@ void Boat::tickBubbleColumn()
             --bubbleTime;
             setBubbleTime(bubbleTime);
             const int elapsed = 60 - bubbleTime - 1;
-            if (elapsed > 0 && bubbleTime == 0)
+            if (elapsed > 0 && bubbleTime <= 0)
             {
                 setBubbleTime(0);
                 if (mBubbleColumnDirectionIsDown)
@@ -675,16 +697,7 @@ void Boat::tickBubbleColumn()
             }
             mIsAboveBubbleColumn = false;
         }
-        return;
     }
-
-    if (getBubbleTime() > 0)
-        mBubbleMultiplier += 0.05f;
-    else
-        mBubbleMultiplier -= 0.1f;
-    mBubbleMultiplier = Mth::clamp(mBubbleMultiplier, 0.0f, 1.0f);
-    mBubbleAngleO = mBubbleAngle;
-    mBubbleAngle = 10.0f * Mth::sin(0.5f * static_cast<float>(mLevel->getGameTime())) * mBubbleMultiplier;
 }
 
 void Boat::tick()
@@ -716,18 +729,17 @@ void Boat::tick()
 
     if (isControlledByLocalInstance())
     {
-        std::vector<boost::weak_ptr<Entity> >* passengers = getPassengers();
-        if (passengers->empty() || !Entity::instanceof(passengers->at(0).lock(), EntityType::PLAYER))
+        if (getPassengers()->empty()
+            || (static_cast<const PassengerList*>(getPassengers())->at(0).lock()->GetType() & EntityType::PLAYER)
+                != EntityType::PLAYER)
             setPaddleState(false, false);
 
         floatBoat();
         if (mLevel->mIsClientSide)
         {
             controlBoat();
-            boost::shared_ptr<LocalPlayer> player =
-                boost::static_pointer_cast<LocalPlayer>(getControllingPassenger());
-            player->mPacketListener->send(boost::shared_ptr<Packet>(
-                new ServerboundPaddleBoatPacket(getPaddleState(0), getPaddleState(1))));
+            boost::static_pointer_cast<LocalPlayer>(getControllingPassenger())->mPacketListener->send(
+                boost::shared_ptr<Packet>(new ServerboundPaddleBoatPacket(getPaddleState(0), getPaddleState(1))));
         }
         move(eMoverType_Self, mXd, mYd, mZd, false);
     }
@@ -740,59 +752,69 @@ void Boat::tick()
 
     tickBubbleColumn();
 
-    const float paddleStroke = Mth::PI / 8.0f;
-    const float paddleSplash = Mth::PI / 4.0f;
-    const float paddleCycle = Mth::PI * 2.0f;
+    const float paddleStroke = 3.1415927f / 8.0f;
+    const float paddleSplash = 3.1415927f / 4.0f;
+    const float paddleCycle = 3.1415927f * 2.0f;
     for (int i = 0; i < 2; ++i)
     {
-        if (!getPaddleState(i))
+        if (getPaddleState(i))
+        {
+            if (!isSilent()
+                && std::fmod(mPaddlePositions[i], paddleCycle) <= paddleSplash
+                && std::fmod(mPaddlePositions[i] + paddleStroke, paddleCycle) >= paddleSplash)
+            {
+                const SoundEvent* sound = getPaddleSound();
+                if (sound != NULL)
+                {
+                    const Vec3* view = getViewVector(1.0f);
+                    if (i == 1)
+                    {
+                        mLevel->playSound(boost::shared_ptr<Player>(), mX - view->z, mY, mZ + view->x, sound,
+                                          getSoundSource(), 1.0f, 0.8f + 0.4f * mRandom->nextFloat(), 16.0f);
+                    }
+                    else
+                    {
+                        mLevel->playSound(boost::shared_ptr<Player>(), mX + view->z, mY, mZ - view->x, sound,
+                                          getSoundSource(), 1.0f, 0.8f + 0.4f * mRandom->nextFloat(), 16.0f);
+                    }
+                }
+            }
+            mPaddlePositions[i] += paddleStroke;
+        }
+        else
         {
             mPaddlePositions[i] = 0.0f;
-            continue;
         }
-
-        if (!isSilent()
-            && std::fmod(mPaddlePositions[i], paddleCycle) <= paddleSplash
-            && std::fmod(mPaddlePositions[i] + paddleStroke, paddleCycle) >= paddleSplash)
-        {
-            const SoundEvent* sound = getPaddleSound();
-            if (sound != NULL)
-            {
-                const Vec3* view = getViewVector(1.0f);
-                const double x = i == 1 ? mX - view->z : mX + view->z;
-                const double z = i == 1 ? mZ + view->x : mZ - view->x;
-                mLevel->playSound(boost::shared_ptr<Player>(), x, mY, z, sound, getSoundSource(), 1.0f,
-                                  0.8f + 0.4f * mRandom->nextFloat(), 16.0f);
-            }
-        }
-        mPaddlePositions[i] += paddleStroke;
     }
 
     checkInsideBlocks();
 
     PushableBySelector selector(shared_from_this());
     std::vector<boost::shared_ptr<Entity> >* entities =
-        mLevel->getEntities(shared_from_this(), mBoundingBox->grow(0.2, -0.01, 0.2), &selector, NULL);
-    const bool clientSide = mLevel->mIsClientSide;
-    for (unsigned int i = 0; i < entities->size(); ++i)
+        mLevel->getEntities(shared_from_this(), mBoundingBox->grow(0.2f, -0.01f, 0.2f), &selector, NULL);
+    if (!entities->empty())
     {
-        boost::shared_ptr<Entity> entity = entities->at(i);
-        if (entity->hasPassenger(shared_from_this()))
-            continue;
+        const bool serverSide = !mLevel->mIsClientSide;
+        for (unsigned int i = 0; i < entities->size(); ++i)
+        {
+            boost::shared_ptr<Entity> entity = entities->at(i);
+            if (entity->hasPassenger(shared_from_this()))
+                continue;
 
-        if (!clientSide && getPassengers()->size() < 2 && !entity->isPassenger()
-            && Entity::instanceof(entity, EntityType::LIVING_ENTITY)
-            && !Entity::instanceof(entity, EntityType::WATER_ANIMAL)
-            && !Entity::instanceof(entity, EntityType::AGABLE_WATER_ANIMAL)
-            && entity->GetType() != EntityType::TURTLE
-            && !Entity::instanceof(entity, EntityType::PLAYER)
-            && !Entity::instanceof(entity, EntityType::MINECART))
-        {
-            entity->startRiding(shared_from_this());
-        }
-        else
-        {
-            push(entity);
+            if (serverSide && getPassengers()->size() < 2 && !entity->isPassenger()
+                && (entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY
+                && (entity->GetType() & EntityType::WATER_ANIMAL) != EntityType::WATER_ANIMAL
+                && (entity->GetType() & EntityType::AGABLE_WATER_ANIMAL) != EntityType::AGABLE_WATER_ANIMAL
+                && entity->GetType() != EntityType::TURTLE
+                && (entity->GetType() & EntityType::PLAYER) != EntityType::PLAYER
+                && (entity->GetType() & EntityType::MINECART) != EntityType::MINECART)
+            {
+                entity->startRiding(shared_from_this());
+            }
+            else
+            {
+                push(entity);
+            }
         }
     }
 
@@ -803,7 +825,7 @@ float Boat::getRowingTime(int paddle, float partialTicks)
 {
     if (!getPaddleState(paddle))
         return 0.0f;
-    return static_cast<float>(Mth::clampedLerp(mPaddlePositions[paddle] - Mth::PI / 8.0f,
+    return static_cast<float>(Mth::clampedLerp(mPaddlePositions[paddle] - 3.1415927f / 8.0f,
                                                mPaddlePositions[paddle], partialTicks));
 }
 
@@ -831,7 +853,7 @@ void Boat::positionRider(const boost::shared_ptr<Entity>& passenger)
             offset += 0.2f;
     }
 
-    const Vec3* seat = Vec3::newTemp(offset, 0.0, 0.0)->yRot(-mYRot * Mth::DEG_TO_RAD - Mth::PI / 2.0f);
+    const Vec3* seat = Vec3::newTemp(offset, 0.0, 0.0)->yRot(-mYRot * 0.017453292f - 3.1415927f / 2.0f);
     passenger->setPos(mX + seat->x, mY + height, mZ + seat->z);
     passenger->mYRot += mDeltaRotation;
     passenger->setYHeadRot(passenger->getYHeadRot() + mDeltaRotation);
@@ -860,11 +882,11 @@ void Boat::addAdditonalSaveData(CompoundTag* tag)
     if (leashHolder)
     {
         CompoundTag* leashTag = new CompoundTag();
-        if (Entity::instanceof(leashHolder, EntityType::LIVING_ENTITY))
+        if ((leashHolder->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
         {
             leashTag->putString(L"UUID", leashHolder->getUUID());
         }
-        else if (Entity::instanceof(leashHolder, EntityType::HANGING_ENTITY))
+        else if ((leashHolder->GetType() & EntityType::HANGING_ENTITY) == EntityType::HANGING_ENTITY)
         {
             BlockPos pos = boost::dynamic_pointer_cast<HangingEntity>(leashHolder)->getPos();
             leashTag->putInt(L"X", pos.x);
@@ -1022,7 +1044,7 @@ bool Boat::canAddPassenger(boost::shared_ptr<Entity> entity)
 
 boost::shared_ptr<Entity> Boat::getControllingPassenger()
 {
-    std::vector<boost::weak_ptr<Entity> >* passengers = getPassengers();
+    const std::vector<boost::weak_ptr<Entity> >* passengers = getPassengers();
     if (passengers->empty())
         return boost::shared_ptr<Entity>();
     return passengers->at(0).lock();
@@ -1043,10 +1065,11 @@ bool Boat::canBeLeashed(const boost::shared_ptr<Player>& player)
 
 bool Boat::hasPlayerPassenger()
 {
-    std::vector<boost::weak_ptr<Entity> >* passengers = getPassengers();
+    const std::vector<boost::weak_ptr<Entity> >* passengers = getPassengers();
     for (unsigned int i = 0; i < passengers->size(); ++i)
     {
-        if (Entity::instanceof(passengers->at(i).lock(), EntityType::PLAYER))
+        const std::vector<boost::weak_ptr<Entity> >* current = getPassengers();
+        if ((current->at(i).lock()->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
             return true;
     }
     return false;
@@ -1063,7 +1086,7 @@ void Boat::tickLeash()
 
     boost::shared_ptr<Entity> holder = getLeashHolder();
     const double distance = distanceTo(holder);
-    if (distance > 10.0)
+    if (distance > 10.0f)
     {
         dropLeash(true, true);
         return;
@@ -1072,9 +1095,9 @@ void Boat::tickLeash()
     if (!hasPlayerPassenger())
     {
         const Vec3* pos = getPos(0.0f);
-        if (distance > 6.0)
+        if (distance > 6.0f)
         {
-            const double scale = static_cast<float>(1.0 / distance);
+            const double scale = static_cast<float>(1.0f / distance);
             const double dx = (holder->getPos(0.0f)->x - pos->x) * scale;
             const double dy = (holder->getPos(0.0f)->y - pos->y) * scale;
             const double dz = (holder->getPos(0.0f)->z - pos->z) * scale;

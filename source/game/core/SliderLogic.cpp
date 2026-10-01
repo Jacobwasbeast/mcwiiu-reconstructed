@@ -5,12 +5,12 @@
 #include "game/ui/UIString.hpp"
 
 SliderLogic::SliderLogic()
-    : mId(0), mLabel(0), mIncludeRandom(false), mPadding(), mOption(eCustomGameModeHostOption_NoSmallSkins), mMiniGameId(eMiniGameId_Lobby)
+    : mId(0), mLabel(0), mIncludeRandom(false), mOption(eCustomGameModeHostOption_NoSmallSkins), mMiniGameId(eMiniGameId_Lobby)
 {
 }
 
 SliderLogic::SliderLogic(int id, int label, eCustomGameModeHostOption option, EMiniGameId miniGameId, bool includeRandom)
-    : mId(id), mLabel(label), mIncludeRandom(includeRandom), mPadding(), mOption(option), mMiniGameId(miniGameId)
+    : mId(id), mLabel(label), mIncludeRandom(includeRandom), mOption(option), mMiniGameId(miniGameId)
 {
 }
 

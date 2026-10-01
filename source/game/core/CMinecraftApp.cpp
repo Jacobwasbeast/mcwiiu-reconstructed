@@ -1,5 +1,6 @@
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/VirtualPadKeys.hpp"
+#include "game/core/System.hpp"
 #include "game/core/PIXNamedEvents.hpp"
 #include "game/core/StringIds.hpp"
 #include "game/core/XLanguage.hpp"
@@ -19,6 +20,7 @@
 #include "game/client/render/PlayerRenderer.hpp"
 #include "game/client/render/PlayerModel.hpp"
 #include "game/server/MinecraftServer.hpp"
+#include "game/server/ServerLevel.hpp"
 #include "game/world/generation/Player.hpp"
 #include "platform/wiiu/CStorage.hpp"
 #include <sstream>
@@ -84,6 +86,7 @@
 #include "vendor/_ConnectionProgressParams.hpp"
 #include "vendor/_LoadingInputParams.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/LevelData.hpp"
 #include "game/world/block/SignBlockEntity.hpp"
 #include "game/world/generation/LocalPlayer.hpp"
 #include "platform/wiiu/PlayerUID.hpp"
@@ -107,6 +110,7 @@ CConsoleMinecraftApp gApp;
 CMinecraftApp* g_pApp = &gApp;
 static Random* sTipRandom = new Random();
 static bool s_pendingDlcInstallTip = true;
+static const unsigned int PNG_CHUNK_TYPE_TEXT = 0x74455874U;
 
 struct BANNEDLISTDATA
 {
@@ -905,7 +909,7 @@ void CMinecraftApp::LeaveSaveNotificationSection()
     }
     LeaveCriticalSection(&mSaveNotificationMutex);
 }
-uint8_t CMinecraftApp::GetGameStarted()
+bool CMinecraftApp::GetGameStarted()
 {
     return mGameStarted;
 }
@@ -1335,7 +1339,7 @@ int CMinecraftApp::RemoteSaveThreadProc(void* context)
 
     const int player = gProfile->GetPrimaryPad();
     if (g_pApp->GetXuiAction(player) != eXuiAction_RemoteSaveInProgress)
-        return 0x4c7U;
+        return ERROR_CANCELLED;
 
     g_pApp->SetAction(player, eXuiAction_Idle, NULL);
     gConsoleUIController.UpdatePlayerBasePositions();
@@ -3251,6 +3255,11 @@ void CMinecraftApp::SetCurrentImageTextData(const PngTagData* data)
 void CMinecraftApp::CurrentImageTextData(PngTagData* data)
 {
     *data = mCurrentImageTextData;
+    if (gMinecraftServer != NULL && gMinecraftServer->mLevels.data != NULL && gMinecraftServer->mLevels.data[0] != NULL)
+    {
+        data->flags |= PngTagData::eFlag_Seed;
+        data->seed = gMinecraftServer->mLevels.data[0]->getLevelData()->getSeed();
+    }
     data->flags |= PngTagData::eFlag_HostOptions;
     data->hostOptions = GetGameHostOption(eGameHostOption_All);
     data->flags |= PngTagData::eFlag_ExtraData;
@@ -3403,16 +3412,18 @@ void CMinecraftApp::GetImageTextData(const unsigned char* image, unsigned int si
 {
     static const unsigned char signature[8] =
         { 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a };
-    if (size <= sizeof(signature) || std::memcmp(image, signature, sizeof(signature)) != 0)
+    if (std::memcmp(image, signature, sizeof(signature)) != 0)
         return;
     unsigned int offset = sizeof(signature);
     while (offset < size)
     {
-        unsigned int chunkSize;
-        unsigned int chunkType;
-        std::memcpy(&chunkSize, image + offset, sizeof(chunkSize));
-        std::memcpy(&chunkType, image + offset + 4, sizeof(chunkType));
-        if (chunkType == 0x74455874U)
+        unsigned int chunkSize = *(const unsigned int*)(image + offset);
+        unsigned int chunkType = *(const unsigned int*)(image + offset + 4);
+#if __BYTE_ORDER__ != __ORDER_BIG_ENDIAN__
+        System::ReverseULONG(&chunkSize);
+        System::ReverseULONG(&chunkType);
+#endif
+        if (chunkType == PNG_CHUNK_TYPE_TEXT)
             ParseImageTextData(image + offset + 8, chunkSize, data);
         offset += chunkSize + 12;
     }

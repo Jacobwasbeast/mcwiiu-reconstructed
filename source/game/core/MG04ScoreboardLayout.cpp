@@ -33,39 +33,37 @@ namespace
 
 bool MG04ScoreboardLayout::SORTBYSCORE(PlayerInfo* first, PlayerInfo* second)
 {
-    int firstScore =
-        first->damageReceived + first->totalJumps + first->deaths * 2;
-    int secondScore =
-        second->damageReceived + second->totalJumps + second->deaths * 2;
+    const MG04PlayerInfo* firstInfo = static_cast<const MG04PlayerInfo*>(first);
+    const MG04PlayerInfo* secondInfo = static_cast<const MG04PlayerInfo*>(second);
+    int firstScore = firstInfo->votesReceived[0] + firstInfo->votesReceived[2] + firstInfo->votesReceived[3] * 2;
+    int secondScore = secondInfo->votesReceived[0] + secondInfo->votesReceived[2] + secondInfo->votesReceived[3] * 2;
     if (firstScore != secondScore)
     {
-        return secondScore < firstScore;
+        return firstScore > secondScore;
     }
-    if (first->deaths != second->deaths)
+    if (firstInfo->votesReceived[3] != secondInfo->votesReceived[3])
     {
-        return second->deaths < first->deaths;
+        return firstInfo->votesReceived[3] > secondInfo->votesReceived[3];
     }
-    if (first->totalJumps != second->totalJumps)
+    if (firstInfo->votesReceived[2] != secondInfo->votesReceived[2])
     {
-        return second->totalJumps < first->totalJumps;
+        return firstInfo->votesReceived[2] > secondInfo->votesReceived[2];
     }
-    int firstValue =
-        first->roundsWon + first->totalLifeSpan + first->damageDealt * 2;
-    int secondValue =
-        second->roundsWon + second->totalLifeSpan + second->damageDealt * 2;
+    int firstValue = firstInfo->votesGiven[0] + firstInfo->votesGiven[2] + firstInfo->votesGiven[3] * 2;
+    int secondValue = secondInfo->votesGiven[0] + secondInfo->votesGiven[2] + secondInfo->votesGiven[3] * 2;
     if (firstValue != secondValue)
     {
-        return secondValue < firstValue;
+        return firstValue > secondValue;
     }
-    if (first->damageDealt != second->damageDealt)
+    if (firstInfo->votesGiven[3] != secondInfo->votesGiven[3])
     {
-        return second->damageDealt < first->damageDealt;
+        return firstInfo->votesGiven[3] > secondInfo->votesGiven[3];
     }
-    if (first->totalLifeSpan == second->totalLifeSpan)
+    if (firstInfo->votesGiven[2] == secondInfo->votesGiven[2])
     {
         return false;
     }
-    return second->totalLifeSpan < first->totalLifeSpan;
+    return firstInfo->votesGiven[2] > secondInfo->votesGiven[2];
 }
 
 void MG04ScoreboardLayout::Init(int value)
@@ -82,7 +80,7 @@ void MG04ScoreboardLayout::Init(int value)
         INetworkPlayer* networkPlayer = CGameNetworkManager::sInstance.GetPlayerByIndex(index);
         if (networkPlayer != 0)
         {
-            PlayerInfo* info = CreatePlayerInfo();
+            PlayerInfo* info = new MG04PlayerInfo();
             BuildPlayerInfo(networkPlayer, info);
             m_players.push_back(info);
         }
@@ -219,17 +217,21 @@ boost::shared_ptr<ItemInstance> MG04ScoreboardLayout::getItemForSlot(int row, in
 
 unsigned char MG04ScoreboardLayout::GetEndBarIcon(PlayerInfo* info)
 {
-    return static_cast<unsigned char>(info == 0 ? 0x6e : 0);
+    if (info != 0)
+    {
+        return 0;
+    }
+    return 0x6e;
 }
 
-void MG04ScoreboardLayout::BuildPlayerInfo(INetworkPlayer* player, PlayerInfo* info)
+void MG04ScoreboardLayout::BuildPlayerInfo(INetworkPlayer* player, PlayerInfo* baseInfo)
 {
+    MG04PlayerInfo* info = static_cast<MG04PlayerInfo*>(baseInfo);
     const StatsUID uid = StatsUID::NETWORKPLAYER_SUID(player);
     IScoreboardLayout::BuildPlayerInfo(player, info);
 
-    const std::wstring playerName(player->GetOnlineName());
     boost::shared_ptr<AbstractClientPlayer> localPlayer =
-        Minecraft::GetInstance()->GetLocalPlayerByName(playerName);
+        Minecraft::GetInstance()->GetLocalPlayerByName(player->GetOnlineName());
 
     ClientScoreboard* scoreboard =
         Minecraft::GetInstance()->mLocalPlayers[m_userIndex]->GetLevel()->GetClientScoreboard();
@@ -242,17 +244,12 @@ void MG04ScoreboardLayout::BuildPlayerInfo(INetworkPlayer* player, PlayerInfo* i
 
 PlayerInfo* MG04ScoreboardLayout::CreatePlayerInfo()
 {
-    PlayerInfo* info = new PlayerInfo;
-    info->smallId = 0;
-    info->voiceStatus = 0;
-    info->colour = 0;
-    info->name.clear();
-    return info;
+    return new MG04PlayerInfo();
 }
 
 void MG04ScoreboardLayout::AddPlayer(unsigned char smallId)
 {
-    PlayerInfo* info = CreatePlayerInfo();
+    PlayerInfo* info = new MG04PlayerInfo();
     INetworkPlayer* player = CGameNetworkManager::sInstance.GetPlayerBySmallId(smallId);
     BuildPlayerInfo(player, info);
     m_players.push_back(info);

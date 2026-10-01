@@ -16,6 +16,7 @@ public:
     friend class GameRenderer;
     friend class BlockRenderer;
     friend class Font;
+    friend class LevelRenderer;
     friend class GameSettings;
     friend class Textures;
 

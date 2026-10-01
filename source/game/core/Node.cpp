@@ -117,20 +117,20 @@ const BlockPathTypes* Node::GetType()
     return type;
 }
 
-double Node::distanceTo(Node* node)
+float Node::distanceTo(Node* node)
 {
     float dx = static_cast<float>(node->x - x);
     float dy = static_cast<float>(node->y - y);
     float dz = static_cast<float>(node->z - z);
-    return static_cast<double>(Mth::sqrt(dx * dx + dy * dy + dz * dz));
+    return Mth::sqrt(dx * dx + dy * dy + dz * dz);
 }
 
-double Node::distanceManhattan(Node* node)
+float Node::distanceManhattan(Node* node)
 {
     float dx = static_cast<float>(std::abs(node->x - x));
     float dy = static_cast<float>(std::abs(node->y - y));
     float dz = static_cast<float>(std::abs(node->z - z));
-    return static_cast<double>(dx + dy + dz);
+    return dx + dy + dz;
 }
 
 bool Node::equals(Node* node)

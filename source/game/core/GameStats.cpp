@@ -4,6 +4,7 @@
 #include <climits>
 #include <cfloat>
 #include <cmath>
+#include <cstring>
 #include <map>
 
 #include "game/core/CConsoleMinecraftApp.hpp"
@@ -158,10 +159,11 @@ GameStats::StatsMap* GameStats::GetPlayerStats()
 
 unsigned int GameStats::GetDeathCount(const StatsUID& uid)
 {
+    unsigned int deaths = 0;
     PlayerStats* stats = GetPlayerStats(uid);
-    if (stats == NULL)
-        return 0;
-    return stats->getRoundStats(mCurrentRound)->mDeaths;
+    if (stats != NULL)
+        deaths = stats->getRoundStats(mCurrentRound)->mDeaths;
+    return deaths;
 }
 
 void GameStats::RecordBlockPresent(const StatsUID& uid, const BlockPos& pos, int blockId)
@@ -175,11 +177,13 @@ void GameStats::RecordBlockPresent(const StatsUID& uid, const BlockPos& pos, int
 
 unsigned int GameStats::GetRoundTime()
 {
-    if (mRoundStartTime <= 0)
-        return 0;
-    if (mRoundEndTime > 0)
-        return Math::round(static_cast<float>(mRoundEndTime - mRoundStartTime) / MILLISECONDS_PER_SECOND);
-    return Math::round(static_cast<float>(System::processTimeInMilliSecs() - mRoundStartTime) / MILLISECONDS_PER_SECOND);
+    if (mRoundStartTime > 0)
+    {
+        if (mRoundEndTime > 0)
+            return Math::round(static_cast<float>(mRoundEndTime - mRoundStartTime) / MILLISECONDS_PER_SECOND);
+        return Math::round(static_cast<float>(static_cast<long long>(System::processTimeInMilliSecs()) - mRoundStartTime) / MILLISECONDS_PER_SECOND);
+    }
+    return 0;
 }
 
 void GameStats::AwardMG01Medals(const std::vector<boost::shared_ptr<ServerPlayer> >* players)
@@ -291,7 +295,7 @@ boost::shared_ptr<ServerPlayer> GameStats::getPlayerFromStatsVec(const std::vect
 {
     if (index >= stats.size())
         return boost::shared_ptr<ServerPlayer>();
-    return gMinecraftServer->getPlayers()->getPlayerFromStatsUID(stats.at(index)->mStatsUID);
+    return (gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers)->getPlayerFromStatsUID(stats.at(index)->mStatsUID);
 }
 
 void GameStats::AwardMG02Medals(const std::vector<boost::shared_ptr<ServerPlayer> >* players)
@@ -773,10 +777,10 @@ void GameStats::OnRoundStart()
 
 void GameStats::OnRoundEnd()
 {
-    mRoundWinner.reset();
     ++mCurrentRound;
+    mRoundWinner.reset();
 
-    std::vector<boost::shared_ptr<ServerPlayer> >* players = gMinecraftServer->getPlayers()->getPlayers();
+    std::vector<boost::shared_ptr<ServerPlayer> >* players = (gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers)->getPlayers();
     for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator it = players->begin(); it != players->end(); ++it)
     {
         boost::shared_ptr<ServerPlayer> player = *it;
@@ -874,7 +878,7 @@ void GameStats::RecordDamage(boost::shared_ptr<Entity> entity, CombatEntry* entr
 
     if (deathMessage != NULL && DeathMessageNamesKiller(deathMessage->getMessage()) && deathMessage->getFirstInt() == EntityType::SERVER_PLAYER
         && deathMessage->strings.size() > 1)
-        attacker = gMinecraftServer->getPlayers()->getPlayerByName(deathMessage->strings[1]);
+        attacker = (gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers)->getPlayerByName(deathMessage->strings[1]);
 
     DamageEvent event;
     event.mVictim = StatsUID::EMPTY_SUID();
@@ -1081,7 +1085,7 @@ void GameStats::RecordContainer(const StatsUID& uid, int type, int x, int y, int
     if (containerCount != round->mContainers.size())
         return;
 
-    boost::shared_ptr<ServerPlayer> player = gMinecraftServer->getPlayers()->getPlayerFromStatsUID(uid);
+    boost::shared_ptr<ServerPlayer> player = (gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers)->getPlayerFromStatsUID(uid);
     if (player != NULL)
         player->awardStat(GenericStats::mine(), GenericStats::param_mine());
 }
@@ -1136,8 +1140,7 @@ void GameStats::ResetTempPoints(const StatsUID& uid)
     round->mLastPointsAdded = 0;
     round->mUnbankedPoints = 0;
     round->mUnbankedTargets.clear();
-    for (int ring = 0; ring < PlayerStats::RoundStats::RING_SIZE_COUNT; ++ring)
-        round->mUnbankedRings[ring] = 0;
+    std::memset(round->mUnbankedRings, 0, sizeof(round->mUnbankedRings));
 }
 
 bool GameStats::RecordSecondaryTargetReached(const StatsUID& uid, const std::wstring& target, int points,
@@ -1166,7 +1169,7 @@ void GameStats::TakeTimestamp(const StatsUID& uid, eTimeSpentCategory category, 
 {
     PlayerStats* stats = GetPlayerStats(uid);
     if (stats != NULL)
-        stats->getRoundStats(mCurrentRound)->MedalTimestamp(category, start, System::processTimeInMilliSecs());
+        stats->getRoundStats(mCurrentRound)->MedalTimestamp(category, start, System::processTimeInMilliSecs() - mRoundStartTime);
 }
 
 void GameStats::RecordUseItem(const StatsUID& uid, not_null_ptr<ItemInstance> item)
@@ -1244,39 +1247,41 @@ void GameStats::RecordBlockDestroyed(const StatsUID& uid, const BlockPos& pos, i
 bool GameStats::RecordLastCheckpoint(const StatsUID& uid, int checkpoint, int sequence, bool banked)
 {
     PlayerStats* stats = GetPlayerStats(uid);
-    if (stats == NULL)
-        return false;
-    if (stats->getRoundStats(mCurrentRound)->mLastCheckpointID == checkpoint
-        && stats->getRoundStats(mCurrentRound)->mLastCheckpointSequenceID == sequence)
-        return false;
-
-    stats->getRoundStats(mCurrentRound)->mLastCheckpointID = checkpoint;
-    stats->getRoundStats(mCurrentRound)->mLastCheckpointSequenceID = sequence;
-
-    if (banked)
+    if (stats != NULL
+        && (stats->getRoundStats(mCurrentRound)->mLastCheckpointID != checkpoint
+            || stats->getRoundStats(mCurrentRound)->mLastCheckpointSequenceID != sequence))
     {
-        PlayerStats::RoundStats* round = stats->getRoundStats(mCurrentRound);
-        round->mLastBankedCheckpointID = checkpoint;
-        round->mCheckpointTimes[checkpoint] = ElapsedWholeSeconds(mRoundStartTime);
-        round->mPoints += round->mUnbankedPoints;
-        round->mUnbankedPoints = 0;
-        if (round->mLastPointsAdded != 0)
-            round->mLastBankedPoints = round->mLastPointsAdded;
-        round->mLastPointsAdded = 0;
+        stats->getRoundStats(mCurrentRound)->mLastCheckpointID = checkpoint;
+        stats->getRoundStats(mCurrentRound)->mLastCheckpointSequenceID = sequence;
 
-        for (unsigned int target = 0; target < round->mUnbankedTargets.size(); ++target)
-            round->mBankedTargets.push_back(round->mUnbankedTargets.at(target));
-        round->mUnbankedTargets.clear();
-
-        for (int ring = 0; ring < PlayerStats::RoundStats::RING_SIZE_COUNT; ++ring)
+        if (banked)
         {
-            round->mBankedRings[ring] += round->mUnbankedRings[ring];
-            round->mUnbankedRings[ring] = 0;
-        }
-    }
+            stats->getRoundStats(mCurrentRound)->mLastBankedCheckpointID = checkpoint;
+            const unsigned int elapsedSeconds = static_cast<unsigned int>(
+                std::floor(static_cast<double>(static_cast<long long>(System::processTimeInMilliSecs()) - mRoundStartTime))
+                / MILLISECONDS_PER_SECOND_EXACT);
+            stats->getRoundStats(mCurrentRound)->mCheckpointTimes[checkpoint] = elapsedSeconds;
+            stats->getRoundStats(mCurrentRound)->mPoints += stats->getRoundStats(mCurrentRound)->mUnbankedPoints;
+            stats->getRoundStats(mCurrentRound)->mUnbankedPoints = 0;
+            if (stats->getRoundStats(mCurrentRound)->mLastPointsAdded != 0)
+                stats->getRoundStats(mCurrentRound)->mLastBankedPoints = stats->getRoundStats(mCurrentRound)->mLastPointsAdded;
+            stats->getRoundStats(mCurrentRound)->mLastPointsAdded = 0;
 
-    mFarthestCheckpointReached = std::max(mFarthestCheckpointReached, static_cast<unsigned int>(checkpoint));
-    return true;
+            for (unsigned int target = 0; target < stats->getRoundStats(mCurrentRound)->mUnbankedTargets.size(); ++target)
+                stats->getRoundStats(mCurrentRound)->mBankedTargets.push_back(stats->getRoundStats(mCurrentRound)->mUnbankedTargets.at(target));
+            stats->getRoundStats(mCurrentRound)->mUnbankedTargets.clear();
+
+            for (int ring = 0; ring < PlayerStats::RoundStats::RING_SIZE_COUNT; ++ring)
+                stats->getRoundStats(mCurrentRound)->mBankedRings[ring] += stats->getRoundStats(mCurrentRound)->mUnbankedRings[ring];
+            std::memset(stats->getRoundStats(mCurrentRound)->mUnbankedRings, 0, sizeof(stats->getRoundStats(mCurrentRound)->mUnbankedRings));
+        }
+
+        if (static_cast<unsigned int>(checkpoint) < mFarthestCheckpointReached)
+            checkpoint = mFarthestCheckpointReached;
+        mFarthestCheckpointReached = checkpoint;
+        return true;
+    }
+    return false;
 }
 
 void GameStats::RecordLapCompleted(const StatsUID& uid)
@@ -1288,26 +1293,29 @@ void GameStats::RecordLapCompleted(const StatsUID& uid)
 
 unsigned int GameStats::GetLapsCompleted(const StatsUID& uid)
 {
+    unsigned int laps = 0;
     PlayerStats* stats = GetPlayerStats(uid);
-    if (stats == NULL)
-        return 0;
-    return stats->getRoundStats(mCurrentRound)->mLapsCompleted;
+    if (stats != NULL)
+        laps = stats->getRoundStats(mCurrentRound)->mLapsCompleted;
+    return laps;
 }
 
 unsigned int GameStats::GetLastCheckpointID(const StatsUID& uid)
 {
+    unsigned int checkpoint = 0;
     PlayerStats* stats = GetPlayerStats(uid);
-    if (stats == NULL)
-        return 0;
-    return stats->getRoundStats(mCurrentRound)->mLastCheckpointID;
+    if (stats != NULL)
+        checkpoint = stats->getRoundStats(mCurrentRound)->mLastCheckpointID;
+    return checkpoint;
 }
 
 unsigned int GameStats::GetLastCheckpointSequenceID(const StatsUID& uid)
 {
+    unsigned int sequence = 0;
     PlayerStats* stats = GetPlayerStats(uid);
-    if (stats == NULL)
-        return 0;
-    return stats->getRoundStats(mCurrentRound)->mLastCheckpointSequenceID;
+    if (stats != NULL)
+        sequence = stats->getRoundStats(mCurrentRound)->mLastCheckpointSequenceID;
+    return sequence;
 }
 
 void GameStats::RecordThermalEntered(const StatsUID& uid)
@@ -1368,9 +1376,11 @@ void GameStats::RecordTimeSpentInPosition(bool pointsActive)
     for (StatsMap::iterator it = mPlayerStats.begin(); it != mPlayerStats.end(); ++it)
     {
         PlayerStats::RoundStats* round = it->second->getRoundStats(mCurrentRound);
-        const long long now = System::processTimeInMilliSecs();
-        round->MedalTimestamp(eTimeSpentCategory_Leading, leader == it->first, now);
-        round->MedalTimestamp(eTimeSpentCategory_Trailing, trailer == it->first, now);
+        const long long elapsed = System::processTimeInMilliSecs() - mRoundStartTime;
+        const bool isLeader = leader == it->first;
+        const bool isTrailer = trailer == it->first;
+        round->MedalTimestamp(eTimeSpentCategory_Leading, isLeader, elapsed);
+        round->MedalTimestamp(eTimeSpentCategory_Trailing, isTrailer, elapsed);
     }
 }
 
@@ -1403,7 +1413,7 @@ boost::shared_ptr<ServerPlayer> GameStats::GetLeadingPlayer()
     boost::shared_ptr<ServerPlayer> leader;
     double leaderProgress = NO_PROGRESS;
 
-    std::vector<boost::shared_ptr<ServerPlayer> >* players = gMinecraftServer->getPlayers()->getPlayers();
+    std::vector<boost::shared_ptr<ServerPlayer> >* players = (gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers)->getPlayers();
     for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator it = players->begin(); it != players->end(); ++it)
     {
         boost::shared_ptr<ServerPlayer> player = *it;
@@ -1426,7 +1436,7 @@ boost::shared_ptr<ServerPlayer> GameStats::GetTrailingPlayer(const boost::shared
     boost::shared_ptr<ServerPlayer> trailer;
     double trailerProgress = NO_PROGRESS;
 
-    std::vector<boost::shared_ptr<ServerPlayer> >* players = gMinecraftServer->getPlayers()->getPlayers();
+    std::vector<boost::shared_ptr<ServerPlayer> >* players = (gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers)->getPlayers();
     for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator it = players->begin(); it != players->end(); ++it)
     {
         boost::shared_ptr<ServerPlayer> player = *it;

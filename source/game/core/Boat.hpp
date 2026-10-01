@@ -110,8 +110,7 @@ private:
     static const EntityDataAccessor<int>* DATA_HURT_DIR;
     static const EntityDataAccessor<float>* DATA_DAMAGE;
     static const EntityDataAccessor<int>* DATA_TYPE;
-    static const EntityDataAccessor<bool>* DATA_PADDLE_LEFT;
-    static const EntityDataAccessor<bool>* DATA_PADDLE_RIGHT;
+    static const EntityDataAccessor<bool>* DATA_ID_PADDLE[2];
     static const EntityDataAccessor<int>* DATA_BUBBLE_TIME;
     static const EntityDataAccessor<bool>* DATA_SINKING;
 

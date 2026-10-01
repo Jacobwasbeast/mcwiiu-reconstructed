@@ -15,7 +15,10 @@ public:
     void delay(long long triggerTick);
     void setPriorityTilt(int priorityTilt);
     int compareTo(const TickNextTickData* other) const;
-    Block* getBlock();
+    Block* getBlock()
+    {
+        return block;
+    }
 
     static bool compare_fnct(const TickNextTickData& first, const TickNextTickData& second);
     static int hash_fnct(const TickNextTickData& data);

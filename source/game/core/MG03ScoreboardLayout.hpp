@@ -4,6 +4,17 @@
 #include "game/core/IScoreboardLayout.hpp"
 #include "game/ui/UIString.hpp"
 
+struct MG03PlayerInfo : public PlayerInfo
+{
+    int secondaryTargets;
+    int points;
+    long long lifeSpan;
+    unsigned char highlight;
+    unsigned char endZoneEntered;
+    unsigned char teamInvite;
+    double mapTraversed;
+};
+
 class MG03ScoreboardLayout : public IScoreboardLayout
 {
 private:

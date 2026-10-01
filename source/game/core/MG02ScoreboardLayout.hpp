@@ -4,6 +4,19 @@
 #include "game/core/IScoreboardLayout.hpp"
 #include "game/ui/UIString.hpp"
 
+struct MG02PlayerInfo : public PlayerInfo
+{
+    int totalLifeSpan;
+    unsigned char priority;
+    unsigned char survived;
+    unsigned int roundsWon;
+    unsigned int totalBlocksDestroyed;
+    unsigned int totalDistanceTravelled;
+    int totalTrapsSetOff;
+    int totalJumps;
+    int deaths;
+};
+
 class MG02ScoreboardLayout : public IScoreboardLayout
 {
 public:

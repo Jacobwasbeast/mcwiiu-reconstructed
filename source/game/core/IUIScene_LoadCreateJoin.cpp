@@ -2,6 +2,8 @@
 #include "game/core/StringIds.hpp"
 
 #include <algorithm>
+#include <cstring>
+#include <cwchar>
 #include <new>
 #include <string>
 #include <vector>
@@ -43,7 +45,6 @@
 #include "vendor/DiskSaveBuffer.hpp"
 
 extern CConsoleMinecraftApp gApp;
-extern CMinecraftApp* g_pApp;
 extern ConsoleUIController gConsoleUIController;
 extern CProfile* gProfile;
 extern CStorage* gStorage;
@@ -58,19 +59,42 @@ struct LoadMenuSceneData
     LevelGenerationOptions* generationOptions;
     _SaveListDetails* saveDetails;
     EMiniGameId gameMode;
+
+    LoadMenuSceneData()
+        : playerId(0), saveIndex(0), generationOptions(NULL), saveDetails(NULL), gameMode(eMiniGameId_Any)
+    {
+    }
 };
 
 }
 
 IUIScene_LoadCreateJoin::IUIScene_LoadCreateJoin()
-    : m_friendSessions(NULL), m_saveListDetails(NULL), m_saveDetails(NULL), m_joinSceneData(NULL),
-      m_ignoreInput(false), m_onlinePlayAllowed(false), m_thumbnailRequested(false), m_saveInfoReady(false),
-      m_thumbnailsComplete(false), m_closing(false), m_partyGamesAvailable(false), m_partyGamesOnly(false),
-      m_miniGames(false), m_matchmakingButtonCount(0), m_pendingAction(ePendingAction_None), m_nextThumbnail(0),
-      m_saveListRefreshState(0), m_buttonCount(0), m_texturePackWorldCount(0), m_selectedSaveIndex(0),
-      m_selectedGameIndex(0), m_selectedCreateIndex(0), m_pressedList(0), m_sessionListMode(true),
-      m_currentTab(0), m_returnToHomeMenu(false)
+    : m_sessionListMode(true), m_currentTab(0)
 {
+    m_saveListDetails = NULL;
+    m_returnToHomeMenu = false;
+    m_saveDetails = NULL;
+    m_joinSceneData = NULL;
+    m_ignoreInput = false;
+    m_onlinePlayAllowed = false;
+    m_thumbnailRequested = false;
+    m_saveInfoReady = false;
+    m_thumbnailsComplete = false;
+    m_closing = false;
+    m_partyGamesAvailable = false;
+    m_partyGamesOnly = false;
+    m_miniGames = false;
+    m_matchmakingButtonCount = 0;
+    m_pendingAction = ePendingAction_None;
+    m_nextThumbnail = 0;
+    m_saveListRefreshState = 0;
+    m_buttonCount = 0;
+    m_texturePackWorldCount = 0;
+    m_selectedSaveIndex = 0;
+    m_selectedGameIndex = 0;
+    m_selectedCreateIndex = 0;
+    m_pressedList = 0;
+    m_friendSessions = NULL;
     InitializeCriticalSection(&m_lock);
 }
 
@@ -81,14 +105,16 @@ IUIScene_LoadCreateJoin::~IUIScene_LoadCreateJoin()
         for (std::vector<FriendSessionInfo*>::iterator it = m_friendSessions->begin();
              it < m_friendSessions->end(); ++it)
         {
-            if (*it != NULL)
+            FriendSessionInfo* session = *it;
+            if (session != NULL)
             {
-                delete (*it)->m_displayName;
-                delete *it;
+                if (session->m_displayName != NULL)
+                    delete session->m_displayName;
+                delete session;
             }
         }
-        delete m_friendSessions;
     }
+    delete m_friendSessions;
     delete m_joinSceneData;
     DeleteCriticalSection(&m_lock);
 }
@@ -100,14 +126,14 @@ uint32_t IUIScene_LoadCreateJoin::GetCustomGameModeID()
 
 void IUIScene_LoadCreateJoin::UpdateGamesList()
 {
-    TexturePackRepository* repository = Minecraft::GetInstance()->mTexturePackRepository;
-    if (m_ignoreInput != 0 || repository->getSelected()->isLoadingData() ||
-        repository->needsUIUpdate() || gConsoleUIController.IsReloadingSkin() ||
-        (m_saveInfoReady == 0 && m_miniGames == 0))
+    if (m_ignoreInput != 0 || Minecraft::GetInstance()->mTexturePackRepository->getSelected()->isLoadingData() ||
+        Minecraft::GetInstance()->mTexturePackRepository->needsUIUpdate() ||
+        gConsoleUIController.IsReloadingSkin() || (m_saveInfoReady == 0 && m_miniGames == 0))
         return;
 
     bool hadSelection = false;
-    unsigned int selectedSessionId = 0;
+    unsigned int selectedSessionId;
+    memset(&selectedSessionId, 0, sizeof(selectedSessionId));
     if (DoesGamesListHaveFocus() && GetJoinListSize() != 0)
     {
         FriendSessionInfo* selected = m_friendSessions->at(GetJoinListSelection());
@@ -124,14 +150,16 @@ void IUIScene_LoadCreateJoin::UpdateGamesList()
         for (std::vector<FriendSessionInfo*>::iterator it = m_friendSessions->begin();
              it < m_friendSessions->end(); ++it)
         {
-            if (*it != NULL)
+            FriendSessionInfo* session = *it;
+            if (session != NULL)
             {
-                delete[] (*it)->m_displayName;
-                delete *it;
+                if (session->m_displayName != NULL)
+                    delete session->m_displayName;
+                delete session;
             }
         }
-        delete m_friendSessions;
     }
+    delete m_friendSessions;
 
     m_friendSessions = CGameNetworkManager::sInstance.GetSessionList(GetPad(), m_sessionListMode, m_partyGamesOnly != 0);
     GetJoinListSize();
@@ -144,7 +172,6 @@ void IUIScene_LoadCreateJoin::UpdateGamesList()
         ShowJoinListTimer(false);
         if (gamesListHadFocus)
             InitFocusJoinList(GetPad());
-        ClearJoinList();
     }
     else
     {
@@ -155,49 +182,62 @@ void IUIScene_LoadCreateJoin::UpdateGamesList()
         }
         ShowNoGamesLabel(false);
         ShowJoinListTimer(false);
-        ClearJoinList();
-        SetGamesListSelection(0);
+    }
+    ClearJoinList();
 
+    if (sessionCount != 0)
+    {
         unsigned int index = 0;
+        SetGamesListSelection(0);
         for (std::vector<FriendSessionInfo*>::iterator it = m_friendSessions->begin();
              it < m_friendSessions->end(); ++it, ++index)
         {
             FriendSessionInfo* session = *it;
-            const bool lobbySession =
-                session->m_gameSessionData.m_gameModeId == static_cast<unsigned int>(GameType::LOBBY->getId());
-            if ((m_miniGames != 0) != lobbySession)
+            if (!((m_miniGames != 0 && session->m_gameSessionData.m_gameModeId == GameType::LOBBY->getId()) ||
+                  (m_miniGames == 0 && session->m_gameSessionData.m_gameModeId != GameType::LOBBY->getId())))
                 continue;
 
-            wchar_t gameIconName[64] = {};
+            wchar_t gameIconName[64] = L"";
             std::wstring gameIcon(L"");
-            const unsigned int gameModeId = session->m_gameSessionData.m_gameModeId;
-            if (gameModeId == static_cast<unsigned int>(GameType::SURVIVAL->getId()))
-                gameIcon = L"Graphics\SurvivalIcon.png";
-            else if (gameModeId == static_cast<unsigned int>(GameType::CREATIVE->getId()))
-                gameIcon = L"Graphics\CreativeIcon.png";
-            else if (gameModeId == static_cast<unsigned int>(GameType::ADVENTURE->getId()))
-                gameIcon = L"Graphics\AdventureIcon.png";
-            else if (lobbySession)
-                gameIcon = MiniGameDef::GetCustomGameModeById(
-                    static_cast<EMiniGameId>(session->m_gameSessionData.m_miniGameId), true)->getIcon();
+            bool hasGameIcon;
+            if (session->m_gameSessionData.m_gameModeId == GameType::SURVIVAL->getId())
+            {
+                gameIcon = L"Graphics\\SurvivalIcon.png";
+                hasGameIcon = gApp.hasArchiveFile(gameIcon, false);
+            }
+            else if (session->m_gameSessionData.m_gameModeId == GameType::CREATIVE->getId())
+            {
+                gameIcon = L"Graphics\\CreativeIcon.png";
+                hasGameIcon = gApp.hasArchiveFile(gameIcon, false);
+            }
+            else if (session->m_gameSessionData.m_gameModeId == GameType::ADVENTURE->getId())
+            {
+                gameIcon = L"Graphics\\AdventureIcon.png";
+                hasGameIcon = gApp.hasArchiveFile(gameIcon, false);
+            }
+            else
+            {
+                if (session->m_gameSessionData.m_gameModeId == GameType::LOBBY->getId())
+                    gameIcon = MiniGameDef::GetCustomGameModeById(
+                        static_cast<EMiniGameId>(session->m_gameSessionData.m_miniGameId), true)->getIcon();
+                hasGameIcon = gApp.hasArchiveFile(gameIcon, false);
+            }
 
             arrayWithLength<unsigned char> gameIconFile;
-            gameIconFile.data = NULL;
-            gameIconFile.length = 0;
-            if (g_pApp->hasArchiveFile(gameIcon, false))
+            if (hasGameIcon)
             {
-                gameIconFile = g_pApp->getArchiveFile(gameIcon, false);
+                gameIconFile = gApp.getArchiveFile(gameIcon, false);
                 if (gameIconFile.data != NULL && gameIconFile.length != 0)
                     std::swprintf(gameIconName, 64, L"gm%ls", session->m_displayName);
             }
 
-            wchar_t packIconName[64] = {};
-            unsigned char* packIcon = NULL;
+            wchar_t packIconName[64] = L"";
             unsigned int packIconSize = 0;
+            unsigned char* packIcon = NULL;
             const unsigned int packId = session->m_gameSessionData.m_texturePackParentId;
             if (packId != 0)
             {
-                TexturePack* pack = repository->getTexturePackById(packId);
+                TexturePack* pack = Minecraft::GetInstance()->mTexturePackRepository->getTexturePackById(packId);
                 if (pack != NULL)
                 {
                     packIcon = static_cast<unsigned char*>(const_cast<void*>(pack->getPackIcon(packIconSize)));
@@ -206,13 +246,13 @@ void IUIScene_LoadCreateJoin::UpdateGamesList()
                 {
                     unsigned char* tpdData = NULL;
                     unsigned int tpdSize = 0;
-                    g_pApp->GetTPD(packId, &tpdData, &tpdSize);
-                    g_pApp->GetFileFromTPD(eTPDFileType_Icon, tpdData, tpdSize, &packIcon, &packIconSize);
+                    gApp.GetTPD(packId, &tpdData, &tpdSize);
+                    gApp.GetFileFromTPD(eTPDFileType_Icon, tpdData, tpdSize, &packIcon, &packIconSize);
                 }
             }
             if (packId == 0 || packIcon == NULL)
             {
-                TexturePack* defaultPack = repository->getTexturePackByIndex(0);
+                TexturePack* defaultPack = Minecraft::GetInstance()->mTexturePackRepository->getTexturePackByIndex(0);
                 packIcon = static_cast<unsigned char*>(const_cast<void*>(defaultPack->getPackIcon(packIconSize)));
             }
             if (packIconSize != 0 && packIcon != NULL)
@@ -220,7 +260,8 @@ void IUIScene_LoadCreateJoin::UpdateGamesList()
 
             AddJoinListButton(session->m_displayName, static_cast<int>(index), packIcon, packIconSize,
                               packIconName, gameIconFile.data, gameIconFile.length, gameIconName);
-            if (hadSelection && session->m_sessionId == selectedSessionId)
+            int sessionMatch = memcmp(&selectedSessionId, &session->m_sessionId, sizeof(selectedSessionId));
+            if (hadSelection && sessionMatch == 0)
                 SetGamesListSelection(index);
         }
     }
@@ -239,9 +280,12 @@ void IUIScene_LoadCreateJoin::_init(bool miniGames)
     m_onlinePlayAllowed = gProfile->IsSignedInLive(GetPad()) && gProfile->AllowedToPlayMultiplayer(GetPad());
 
     CMinecraftApp::PngTagData imageData;
+    memset(&imageData, 0, sizeof(imageData));
     imageData.flags |= CMinecraftApp::PngTagData::eFlag_HostOptions | CMinecraftApp::PngTagData::eFlag_ExtraData;
+    imageData.hostOptions = 0;
+    imageData.extraData = 0;
     gApp.SetCurrentImageTextData(&imageData);
-    if (g_pApp->StartInstallDLCProcess(GetPad()) == 0 && g_pApp->DLCInstallPending() == 0)
+    if (gApp.StartInstallDLCProcess(GetPad()) == 0 && gApp.DLCInstallPending() == 0)
         Initialise();
     else
         m_ignoreInput = true;
@@ -261,9 +305,9 @@ void IUIScene_LoadCreateJoin::AddMatchmakingButton(std::wstring label, int id, s
     if (!icon.empty())
     {
         std::wstring path = formatwstr(L"Graphics\\%ls.png", icon.c_str());
-        if (g_pApp->hasArchiveFile(path, false))
+        if (gApp.hasArchiveFile(path, false))
         {
-            arrayWithLength<unsigned char> file = g_pApp->getArchiveFile(path, false);
+            arrayWithLength<unsigned char> file = gApp.getArchiveFile(path, false);
             if (file.data != NULL && file.length != 0)
                 SetCreateListIcon(m_matchmakingButtonCount, file.data, file.length, icon);
         }
@@ -275,9 +319,9 @@ void IUIScene_LoadCreateJoin::AddGameModeButton(std::wstring label, int id, std:
 {
     AddLoadListButton(label, id);
     std::wstring path = formatwstr(L"Graphics\\%ls.png", icon.c_str());
-    if (g_pApp->hasArchiveFile(path, false))
+    if (gApp.hasArchiveFile(path, false))
     {
-        arrayWithLength<unsigned char> file = g_pApp->getArchiveFile(path, false);
+        arrayWithLength<unsigned char> file = gApp.getArchiveFile(path, false);
         if (file.data != NULL && file.length != 0)
             SetLoadListIcon(m_buttonCount, file.data, file.length, icon);
     }
@@ -323,14 +367,14 @@ void IUIScene_LoadCreateJoin::AddDefaultButtons()
     AddCreateListButton(L10N::GetString(IDS_CREATE_NEW_WORLD), -1);
     ++m_buttonCount;
     std::wstring createWorldIcon = L"Graphics\\CreateWorldIcon.png";
-    if (g_pApp->hasArchiveFile(createWorldIcon, false))
+    if (gApp.hasArchiveFile(createWorldIcon, false))
     {
-        arrayWithLength<unsigned char> file = g_pApp->getArchiveFile(createWorldIcon, false);
+        arrayWithLength<unsigned char> file = gApp.getArchiveFile(createWorldIcon, false);
         if (file.data != NULL && file.length != 0)
             SetCreateListIcon(0, file.data, file.length, L"CreateWorldIcon");
     }
 
-    std::vector<LevelGenerationOptions*>* generators = g_pApp->getLevelGenerators();
+    std::vector<LevelGenerationOptions*>* generators = gApp.getLevelGenerators();
     for (std::vector<LevelGenerationOptions*>::iterator it = generators->begin(); it != generators->end(); ++it)
     {
         LevelGenerationOptions* options = *it;
@@ -355,9 +399,9 @@ void IUIScene_LoadCreateJoin::AddDefaultButtons()
             if (options->isTutorial())
             {
                 std::wstring tutorialIcon = L"Graphics\\TutorialIcon.png";
-                if (g_pApp->hasArchiveFile(tutorialIcon, false))
+                if (gApp.hasArchiveFile(tutorialIcon, false))
                 {
-                    arrayWithLength<unsigned char> file = g_pApp->getArchiveFile(tutorialIcon, false);
+                    arrayWithLength<unsigned char> file = gApp.getArchiveFile(tutorialIcon, false);
                     if (file.data != NULL && file.length != 0)
                         SetCreateListIcon(m_buttonCount, file.data, file.length, L"TutorialIcon");
                 }
@@ -392,9 +436,9 @@ void IUIScene_LoadCreateJoin::GetSaveInfo()
     if (m_miniGames)
         return;
 
-    if (g_pApp->DebugSettingsOn() != 0 && g_pApp->GetLoadSavesFromFolderEnabled() != 0)
+    if (gApp.DebugSettingsOn() != 0 && gApp.GetLoadSavesFromFolderEnabled() != 0)
     {
-        File directory(g_pApp->GetDebugRootPath() + L"Saves");
+        File directory(gApp.GetDebugRootPath() + L"Saves");
         unsigned int fileCount = 0;
         if (directory.exists())
         {
@@ -403,7 +447,15 @@ void IUIScene_LoadCreateJoin::GetSaveInfo()
         }
         AddDefaultButtons();
         for (unsigned int i = 0; i < fileCount; ++i)
-            AddLoadListButton(m_debugSaveFiles->at(i)->getName(), -1);
+        {
+            std::wstring fileName = m_debugSaveFiles->at(i)->getName();
+            unsigned int nameLength = fileName.length();
+            wchar_t* label = new wchar_t[nameLength + 1];
+            for (unsigned int c = 0; c < nameLength; ++c)
+                label[c] = fileName[c];
+            label[nameLength] = L'\0';
+            AddLoadListButton(std::wstring(label), -1);
+        }
         m_thumbnailsComplete = true;
         m_ignoreInput = false;
         m_saveInfoReady = true;
@@ -524,7 +576,7 @@ int IUIScene_LoadCreateJoin::DeleteSaveDialogReturned(void* context, int, C4JSto
 {
     IUIScene_LoadCreateJoin* scene = static_cast<IUIScene_LoadCreateJoin*>(context);
     if (result == C4JStorage::EMessageResult_Decline &&
-        (!g_pApp->DebugSettingsOn() || !g_pApp->GetLoadSavesFromFolderEnabled()))
+        (!gApp.DebugSettingsOn() || !gApp.GetLoadSavesFromFolderEnabled()))
     {
         scene->DeleteSaveFile(scene->m_selectedSaveIndex);
         scene->ShowSaveListTimer(true);
@@ -630,9 +682,13 @@ void IUIScene_LoadCreateJoin::LoadLevelGen(LevelGenerationOptions* options)
     gStorage->ResetSaveData();
     gStorage->SetSaveTitle(options->getDefaultSaveName().c_str());
 
-    boost::shared_ptr<Player> player;
     unsigned int hostOption = gApp.GetGameHostOption(eGameHostOption_All);
-    if (gApp.GetTutorialMode(player) != 0)
+    uint8_t tutorialMode;
+    {
+        boost::shared_ptr<Player> player;
+        tutorialMode = gApp.GetTutorialMode(player);
+    }
+    if (tutorialMode != 0)
         hostOption = gApp.GetGameHostOption(eGameHostOption_Tutorial);
     unsigned int hostOption6 =
         gApp.GetGameHostOption(hostOption, eGameHostOption_GameType);
@@ -641,12 +697,12 @@ void IUIScene_LoadCreateJoin::LoadLevelGen(LevelGenerationOptions* options)
                                              eMiniGameId_Any, 0, 0);
 
     _NetworkGameInitData* initData = new _NetworkGameInitData();
+    initData->m_seed = 0;
     initData->m_saveData = 0;
     initData->m_hostOptions = hostOption;
-    initData->m_miniGameHostOptions = 0;
     initData->m_levelGenerationOptions = options;
-    initData->m_texturePackId = options->getTexturePackId();
     initData->m_gameType = static_cast<unsigned char>(hostOption6);
+    initData->m_texturePackId = options->getTexturePackId();
     if (options->requiresTexturePack())
     {
         Minecraft::GetInstance()->mTexturePackRepository->selectTexturePackById(
@@ -675,41 +731,47 @@ void IUIScene_LoadCreateJoin::LoadLevelGen(LevelGenerationOptions* options)
 void IUIScene_LoadCreateJoin::LoadSaveFromDisk(File* file, ESavePlatform platform)
 {
     gStorage->ResetSaveData();
-    std::wstring saveName = file->getName();
-    gStorage->SetSaveTitle(saveName.c_str());
+    gStorage->SetSaveTitle(file->getName().c_str());
 
-    FileInputStream input(*file);
     unsigned int fileLength = static_cast<unsigned int>(file->length());
-    arrayWithLength<unsigned char> fileData;
-    fileData.data = new unsigned char[fileLength];
-    fileData.length = fileLength;
+    FileInputStream input(*file);
+    arrayWithLength<unsigned char> fileData(fileLength, true);
     input.read(fileData);
     input.close();
 
     bool hostOnline = gProfile->IsSignedInLive(gProfile->GetPrimaryPad());
-    boost::shared_ptr<Player> player;
-    if (g_pApp->GetTutorialMode(player) != 0)
+    uint8_t tutorialMode;
+    {
+        boost::shared_ptr<Player> player;
+        tutorialMode = gApp.GetTutorialMode(player);
+    }
+    if (tutorialMode != 0)
         hostOnline = false;
 
-    g_pApp->SetGameHostOption(eGameHostOption_GameType, GameType::SURVIVAL->getId());
+    gApp.SetGameHostOption(eGameHostOption_GameType, GameType::CREATIVE->getId());
     unsigned char gameType =
-        static_cast<unsigned char>(g_pApp->GetGameHostOption(eGameHostOption_GameType));
+        static_cast<unsigned char>(gApp.GetGameHostOption(eGameHostOption_GameType));
     CGameNetworkManager::sInstance.HostGame(0, hostOnline, false, gameType,
                                             eMiniGameId_Any, 0, 0);
 
-    DiskSaveBuffer* saveBuffer = new DiskSaveBuffer();
-    saveBuffer->data = fileData.data;
-    saveBuffer->length = fileLength;
-    saveBuffer->name = saveName;
+    DiskSaveBuffer* saveBuffer;
+    {
+        std::wstring saveName = file->getName();
+        saveBuffer = new DiskSaveBuffer;
+        saveBuffer->length = fileLength;
+        saveBuffer->data = fileData.data;
+        saveBuffer->name = saveName;
+    }
 
     _NetworkGameInitData* initData = new _NetworkGameInitData();
+    initData->m_seed = 0;
     initData->m_saveData = saveBuffer;
-    initData->m_hostOptions = g_pApp->GetGameHostOption(eGameHostOption_All);
+    initData->m_hostOptions = gApp.GetGameHostOption(eGameHostOption_All);
     const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
     initData->m_miniGameHostOptions =
         miniGame->GetHostOption(eCustomGameModeHostOption_All);
     initData->m_savePlatform = platform;
-    initData->m_gameType = g_pApp->GetGameHostOption(eGameHostOption_GameType);
+    initData->m_gameType = gApp.GetGameHostOption(eGameHostOption_GameType);
 
     CGameNetworkManager::sInstance.FakeLocalPlayerJoined();
 
@@ -735,15 +797,12 @@ void IUIScene_LoadCreateJoin::LoadSaveFromDisk(File* file, ESavePlatform platfor
 void IUIScene_LoadCreateJoin::LoadGameMode(EMiniGameId gameMode)
 {
     LevelGenerationOptions* lobbyOptions = 0;
-    std::vector<LevelGenerationOptions*>* generators = g_pApp->getLevelGenerators();
-    if (generators != 0)
+    std::vector<LevelGenerationOptions*>* generators = gApp.getLevelGenerators();
+    for (std::vector<LevelGenerationOptions*>::iterator it = generators->begin();
+         it != generators->end(); ++it)
     {
-        for (std::vector<LevelGenerationOptions*>::iterator it = generators->begin();
-             it != generators->end(); ++it)
-        {
-            if ((*it) != 0 && (*it)->isGameModeLobby())
-                lobbyOptions = *it;
-        }
+        if ((*it)->isGameModeLobby())
+            lobbyOptions = *it;
     }
 
     LoadMenuSceneData* sceneData = new LoadMenuSceneData();
@@ -772,16 +831,15 @@ void IUIScene_LoadCreateJoin::HandleLoadListPress(int index)
     }
 
     gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
-    if (g_pApp->DebugSettingsOn() && g_pApp->GetLoadSavesFromFolderEnabled())
+    if (gApp.DebugSettingsOn() && gApp.GetLoadSavesFromFolderEnabled())
     {
-        g_pApp->SetTutorialMode(false, boost::shared_ptr<Player>());
+        gApp.SetTutorialMode(false, boost::shared_ptr<Player>());
         LoadSaveFromDisk(m_debugSaveFiles->at(index), eSavePlatform_WIIU);
         return;
     }
 
-    g_pApp->SetTutorialMode(false, boost::shared_ptr<Player>());
+    gApp.SetTutorialMode(false, boost::shared_ptr<Player>());
     LoadMenuSceneData* sceneData = new LoadMenuSceneData();
-    sceneData->gameMode = eMiniGameId_Any;
     sceneData->playerId = GetPad();
     sceneData->saveIndex = index;
     sceneData->generationOptions = NULL;
@@ -798,30 +856,33 @@ void IUIScene_LoadCreateJoin::HandleNewListPress(int index, int variant)
     {
         if (index == 0)
         {
+            {
+                boost::shared_ptr<Player> player;
+                gApp.SetTutorialMode(false, player);
+            }
             ShowJoinListTimer(false);
-            boost::shared_ptr<Player> player;
-            g_pApp->SetTutorialMode(false, player);
-            g_pApp->SetCorruptSaveDeleted(false);
+            gApp.SetCorruptSaveDeleted(false);
             LoadMenuSceneData* sceneData = new LoadMenuSceneData();
             sceneData->playerId = GetPad();
             sceneData->saveIndex = -1;
             sceneData->generationOptions = NULL;
             sceneData->saveDetails = NULL;
-            sceneData->gameMode = eMiniGameId_Any;
-            gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), EUIScene_CreateWorldMenu,
+            gConsoleUIController.NavigateToScene(GetPad(), EUIScene_CreateWorldMenu,
                                                  sceneData, EUILayer_Scene, EUIGroup_PlayerDefault);
             return;
         }
         if (variant < 0 || static_cast<unsigned int>(variant) >= m_levelGenerationOptions.size())
             return;
         LevelGenerationOptions* options = m_levelGenerationOptions.at(static_cast<unsigned int>(variant));
-        g_pApp->SetBaseSaveName(options->getBaseSavePath());
-        boost::shared_ptr<Player> player;
-        g_pApp->SetTutorialMode(options->isTutorial(), player);
-        g_pApp->SetAutosaveTimerTime();
+        gApp.SetBaseSaveName(options->getBaseSavePath());
+        {
+            boost::shared_ptr<Player> player;
+            gApp.SetTutorialMode(options->isTutorial(), player);
+        }
+        gApp.SetAutosaveTimerTime();
         if (options->isTutorial())
         {
-            g_pApp->SetGameHostOption(eGameHostOption_Gamertags,
+            gApp.SetGameHostOption(eGameHostOption_Gamertags,
                                       GameSettings::GetGameSettings(gProfile->GetPrimaryPad(),
                                                                     eGameSetting_DisplayMii));
             LoadLevelGen(options);
@@ -832,32 +893,30 @@ void IUIScene_LoadCreateJoin::HandleNewListPress(int index, int variant)
         sceneData->saveIndex = -1;
         sceneData->generationOptions = options;
         sceneData->saveDetails = NULL;
-        sceneData->gameMode = eMiniGameId_Any;
         gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), EUIScene_LoadMenu,
                                              sceneData, EUILayer_Scene, EUIGroup_PlayerDefault);
         return;
     }
 
-    const int primaryPad = gProfile->GetPrimaryPad();
-    if (!gProfile->IsSignedInLive(primaryPad))
+    if (!gProfile->IsSignedInLive(gProfile->GetPrimaryPad()))
     {
         int parameter = IDS_CONFIRM_OK;
         gConsoleUIController.RequestAlertMessage(0x456f1349, 0x2cd8b529, &parameter, 1,
-                                                 primaryPad, 0, 0, 0, true);
+                                                 gProfile->GetPrimaryPad(), 0, 0, 0, true);
         m_ignoreInput = 0;
         return;
     }
 
     static bool settingsPromptShown = false;
-    int promptCount = GameSettings::GetGameSettings(primaryPad, eGameSetting_PublicMiniGamePrompts);
+    int promptCount = GameSettings::GetGameSettings(gProfile->GetPrimaryPad(), eGameSetting_PublicMiniGamePrompts);
     if (!settingsPromptShown && promptCount > 0)
     {
-        GameSettings::SetGameSettings(primaryPad, eGameSetting_PublicMiniGamePrompts,
+        GameSettings::SetGameSettings(gProfile->GetPrimaryPad(), eGameSetting_PublicMiniGamePrompts,
                                       static_cast<unsigned char>(promptCount - 1));
-        GameSettings::CheckGameSettingsChanged(true, primaryPad);
+        GameSettings::CheckGameSettingsChanged(true, gProfile->GetPrimaryPad());
         int parameter = IDS_CONFIRM_OK;
         gConsoleUIController.RequestAlertMessage(IDS_MG_PUBLIC_GAME_TITLE, IDS_MG_PUBLIC_GAME_TEXT, &parameter, 1,
-                                                 primaryPad, 0, 0, 0, true);
+                                                 gProfile->GetPrimaryPad(), 0, 0, 0, true);
         m_ignoreInput = 0;
         settingsPromptShown = true;
         return;
@@ -869,7 +928,7 @@ void IUIScene_LoadCreateJoin::HandleNewListPress(int index, int variant)
     sceneData->generationOptions = NULL;
     sceneData->saveDetails = NULL;
     sceneData->gameMode = static_cast<EMiniGameId>(m_buttonIds[index]);
-    gConsoleUIController.NavigateToScene(primaryPad, EUIScene_LoadMenu,
+    gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), EUIScene_LoadMenu,
                                          sceneData, EUILayer_Scene, EUIGroup_PlayerDefault);
 }
 
@@ -883,7 +942,7 @@ void IUIScene_LoadCreateJoin::CheckAndJoinGame(int index)
 {
     if (GetJoinListSize() == 0)
         return;
-    if (m_friendSessions->empty() || static_cast<unsigned int>(index) >= m_friendSessions->size())
+    if (static_cast<unsigned int>(index) >= m_friendSessions->size())
         return;
 
     m_joinSceneData->userIndex = GetPad();
@@ -894,12 +953,11 @@ void IUIScene_LoadCreateJoin::CheckAndJoinGame(int index)
     unsigned int texturePackId = session->m_gameSessionData.m_texturePackParentId;
     if (texturePackId != 0)
     {
-        TexturePackRepository* repository = Minecraft::GetInstance()->mTexturePackRepository;
-        unsigned int packCount = repository->getTexturePackCount();
+        int packCount = Minecraft::GetInstance()->mTexturePackRepository->getTexturePackCount();
         bool texturePackFound = false;
-        for (unsigned int packIndex = 0; packIndex < packCount; ++packIndex)
+        for (int packIndex = 0; packIndex < packCount; ++packIndex)
         {
-            if (repository->getTexturePackByIndex(packIndex)->getId() ==
+            if (Minecraft::GetInstance()->mTexturePackRepository->getTexturePackByIndex(packIndex)->getDLCParentPackId() ==
                 m_joinSceneData->session->m_gameSessionData.m_texturePackParentId)
             {
                 texturePackFound = true;

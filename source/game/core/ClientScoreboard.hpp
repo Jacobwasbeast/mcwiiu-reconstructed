@@ -35,11 +35,11 @@ public:
     bool IsWinner(const StatsUID& suid, int round);
     bool GetSurvived(const StatsUID& suid, int round);
     int GetKills(const StatsUID& suid, int round);
-    Weapon GetFavouriteWeapon(const StatsUID& suid);
-    Weapon GetWeaknessWeapon(const StatsUID& suid);
+    not_null_ptr<ItemInstance> GetFavouriteWeapon(const StatsUID& suid);
+    not_null_ptr<ItemInstance> GetWeaknessWeapon(const StatsUID& suid);
     std::wstring GetKiller(const StatsUID& suid, int round, int life);
     std::wstring GetNemesis(const StatsUID& suid);
-    Weapon GetKillerWeapon(const StatsUID& suid, int round);
+    not_null_ptr<ItemInstance> GetKillerWeapon(const StatsUID& suid, int round);
     int GetDamageDealt(const StatsUID& suid, int round);
     int GetDamageReceived(const StatsUID& suid, int round);
     int GetLifeSpan(const StatsUID& suid, int round);
