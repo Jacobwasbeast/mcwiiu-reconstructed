@@ -40,7 +40,7 @@ public:
 
     virtual std::wstring getMoviePath();
     virtual unsigned int mapElementsAndNames();
-    std::wstring getThumbnailName(int index);
+    wchar_t* getThumbnailName(int index);
     static int LoadSaveDataThumbnailReturned(void* context, unsigned char* data, unsigned int size);
     void requestNextThumbnail();
     void cleanUpThumbNails(bool all);

@@ -46,29 +46,6 @@ const int THUMBNAIL_WINDOW_LEAD = 7;
 const unsigned int UPLOAD_POLL_INTERVAL = 50;
 const unsigned int COPY_POLL_INTERVAL = 100;
 
-FJ_LoadCreateJoinMenu* GetMenuDocument(fuiFile* movie)
-{
-    return static_cast<FJ_LoadCreateJoinMenu*>(movie->getRootNode()->getFuiNode());
-}
-
-UIScene_LoadCreateJoinMenu* GetMenuFromCallbackId(void* context)
-{
-    UIScene* scene = gConsoleUIController.GetSceneFromCallbackId(reinterpret_cast<unsigned int>(context));
-    return static_cast<UIScene_LoadCreateJoinMenu*>(scene);
-}
-
-FullscreenProgressState* NewProgressState()
-{
-    FullscreenProgressState* state = new FullscreenProgressState();
-    state->showConfirmation = false;
-    state->reservedFlag1 = true;
-    state->reservedFlag2 = true;
-    state->showTip = true;
-    state->closeMode = 6;
-    state->playerId = 0;
-    state->backScene = EUIScene_None;
-    return state;
-}
 }
 
 UIScene_LoadCreateJoinMenu::UIScene_LoadCreateJoinMenu(int playerId, void* data, UILayer* layer)
@@ -84,7 +61,7 @@ UIScene_LoadCreateJoinMenu::UIScene_LoadCreateJoinMenu(int playerId, void* data,
     m_createTimer.setVisible(false);
     m_joinTimer.setVisible(true);
     gStorage->ClearSavesInfo();
-    GetMenuDocument(m_movie)->ShowSaveSizeBar(!m_miniGamesMenu);
+    static_cast<FJ_LoadCreateJoinMenu*>(m_movie->getRootNode()->getFuiNode())->ShowSaveSizeBar(!m_miniGamesMenu);
     m_loadList.init(0);
     m_createList.init(1);
     m_gamesList.init(2);
@@ -170,9 +147,9 @@ unsigned int UIScene_LoadCreateJoinMenu::mapElementsAndNames()
     return 1;
 }
 
-std::wstring UIScene_LoadCreateJoinMenu::getThumbnailName(int index)
+wchar_t* UIScene_LoadCreateJoinMenu::getThumbnailName(int index)
 {
-    wchar_t name[32];
+    wchar_t* name = new wchar_t[32];
     charTowchar_tArray(m_saveListDetails[index].m_filename, name, 32);
     return name;
 }
@@ -222,7 +199,7 @@ void UIScene_LoadCreateJoinMenu::cleanUpThumbNails(bool all)
         if (!all && index >= m_thumbnailWindowStart &&
             index < m_thumbnailWindowStart + static_cast<int>(THUMBNAIL_WINDOW_SIZE))
             continue;
-        std::wstring name = getThumbnailName(index);
+        const wchar_t* name = getThumbnailName(index);
         if (m_saveListDetails[m_nextThumbnail].m_thumbnail == NULL)
             continue;
         if (hasRegisteredSubstitutionTexture(name))
@@ -280,7 +257,7 @@ void UIScene_LoadCreateJoinMenu::tick()
                 {
                     for (int i = 0; i < m_saveDetailsCount; ++i)
                     {
-                        std::wstring name = getThumbnailName(i);
+                        const wchar_t* name = getThumbnailName(i);
                         if (hasRegisteredSubstitutionTexture(name))
                             unregisterSubstitutionTexture(name, false);
                         delete[] m_saveListDetails[i].m_thumbnail;
@@ -334,7 +311,7 @@ void UIScene_LoadCreateJoinMenu::tick()
                 _tick();
                 return;
             }
-            std::wstring name = getThumbnailName(m_nextThumbnail);
+            const wchar_t* name = getThumbnailName(m_nextThumbnail);
             _SaveListDetails& details = m_saveListDetails[m_nextThumbnail];
             if (details.m_thumbnail != NULL && !hasRegisteredSubstitutionTexture(name))
                 registerSubstitutionTexture(name, details.m_thumbnail, details.m_thumbnailSize, false);
@@ -464,7 +441,7 @@ void UIScene_LoadCreateJoinMenu::handleReload()
     int createSelection = m_selectedCreateIndex;
     int loadSelection = m_selectedSaveIndex;
     _init(m_miniGames);
-    GetMenuDocument(m_movie)->ShowSaveSizeBar(!m_miniGamesMenu);
+    static_cast<FJ_LoadCreateJoinMenu*>(m_movie->getRootNode()->getFuiNode())->ShowSaveSizeBar(!m_miniGamesMenu);
     SelectTab(m_activeTab);
     m_selectedSaveIndex = loadSelection;
     m_selectedCreateIndex = createSelection;
@@ -557,18 +534,18 @@ void UIScene_LoadCreateJoinMenu::SelectTab(int tab)
     gConsoleUIController.PlayUISFX(SoundEvents::UI_FOCUS);
     if (m_hideLoadTab)
         tab = tab == 0 ? 1 : 2;
-    GetMenuDocument(m_movie)->SetActiveTab(tab);
+    static_cast<FJ_LoadCreateJoinMenu*>(m_movie->getRootNode()->getFuiNode())->SetActiveTab(tab);
     gConsoleUIController.TouchBoxRebuild(this);
 }
 
 void UIScene_LoadCreateJoinMenu::SetMatchesAvailable(bool available)
 {
-    GetMenuDocument(m_movie)->SetMatchesAvailable(available);
+    static_cast<FJ_LoadCreateJoinMenu*>(m_movie->getRootNode()->getFuiNode())->SetMatchesAvailable(available);
 }
 
 void UIScene_LoadCreateJoinMenu::SetHideLoadTab()
 {
-    GetMenuDocument(m_movie)->HideLoadTab();
+    static_cast<FJ_LoadCreateJoinMenu*>(m_movie->getRootNode()->getFuiNode())->HideLoadTab();
     m_hideLoadTab = true;
 }
 
@@ -709,7 +686,8 @@ void UIScene_LoadCreateJoinMenu::ShowNoGamesLabel(bool)
 int UIScene_LoadCreateJoinMenu::DeleteSaveDataReturned(void* context, bool success)
 {
     gConsoleUIController.EnterCallbackIdCriticalSection();
-    UIScene_LoadCreateJoinMenu* menu = GetMenuFromCallbackId(context);
+    UIScene_LoadCreateJoinMenu* menu = static_cast<UIScene_LoadCreateJoinMenu*>(
+        gConsoleUIController.GetSceneFromCallbackId(reinterpret_cast<unsigned int>(context)));
     if (menu != NULL)
     {
         if (success)
@@ -731,7 +709,7 @@ void UIScene_LoadCreateJoinMenu::DeleteSaveFile(int index)
 void UIScene_LoadCreateJoinMenu::Initialise()
 {
     m_selectedGameIndex = 0;
-    m_pressedList = 0;
+    m_texturePackWorldCount = 0;
     m_selectedCreateIndex = 0;
     m_selectedSaveIndex = 0;
     m_buttonCount = 0;
@@ -765,7 +743,8 @@ bool UIScene_LoadCreateJoinMenu::DoesGamesListHaveFocus()
 
 int UIScene_LoadCreateJoinMenu::RenameSaveDataReturned(void* context, bool success)
 {
-    UIScene_LoadCreateJoinMenu* menu = GetMenuFromCallbackId(context);
+    UIScene_LoadCreateJoinMenu* menu = static_cast<UIScene_LoadCreateJoinMenu*>(
+        gConsoleUIController.GetSceneFromCallbackId(reinterpret_cast<unsigned int>(context)));
     if (menu == NULL)
         return 0;
     if (success)
@@ -778,35 +757,40 @@ int UIScene_LoadCreateJoinMenu::RenameSaveDataReturned(void* context, bool succe
 
 int UIScene_LoadCreateJoinMenu::KeyboardCompleteWorldNameCallback(void* context, bool accepted)
 {
-    UIScene_LoadCreateJoinMenu* menu = GetMenuFromCallbackId(context);
+    UIScene_LoadCreateJoinMenu* menu = static_cast<UIScene_LoadCreateJoinMenu*>(
+        gConsoleUIController.GetSceneFromCallbackId(reinterpret_cast<unsigned int>(context)));
     if (menu == NULL)
         return 0;
-    if (!accepted)
+    if (accepted)
+    {
+        menu->m_ignoreInput = false;
+        wchar_t worldName[128];
+        std::memset(worldName, 0, sizeof(worldName));
+        g_pInput->GetText(worldName, 127);
+        if (worldName[0] == L' ')
+        {
+            menu->m_ignoreInput = false;
+            menu->updateTooltips();
+        }
+        else
+        {
+            menu->m_ignoreInput = true;
+            gStorage->RenameSaveData(menu->m_selectedSaveIndex, worldName, &RenameSaveDataReturned, context);
+        }
+    }
+    else
     {
         menu->m_ignoreInput = false;
         menu->updateTooltips();
-        return 0;
     }
-
-    menu->m_ignoreInput = false;
-    wchar_t worldName[128];
-    std::memset(worldName, 0, sizeof(worldName));
-    g_pInput->GetText(worldName, 127);
-    if (worldName[0] == L'\0')
-    {
-        menu->m_ignoreInput = false;
-        menu->updateTooltips();
-        return 0;
-    }
-    menu->m_ignoreInput = true;
-    gStorage->RenameSaveData(menu->m_selectedSaveIndex, worldName, &RenameSaveDataReturned, context);
     return 0;
 }
 
 int UIScene_LoadCreateJoinMenu::CopySaveErrorDialogFinishedCallback(void* context, int, C4JStorage::EMessageResult)
 {
     gConsoleUIController.EnterCallbackIdCriticalSection();
-    UIScene_LoadCreateJoinMenu* menu = GetMenuFromCallbackId(context);
+    UIScene_LoadCreateJoinMenu* menu = static_cast<UIScene_LoadCreateJoinMenu*>(
+        gConsoleUIController.GetSceneFromCallbackId(reinterpret_cast<unsigned int>(context)));
     if (menu != NULL)
         menu->m_copyInProgress = false;
     gConsoleUIController.LeaveCallbackIdCriticalSection();
@@ -816,7 +800,8 @@ int UIScene_LoadCreateJoinMenu::CopySaveErrorDialogFinishedCallback(void* contex
 int UIScene_LoadCreateJoinMenu::CopySaveDataReturned(void* context, bool success, C4JStorage::ESaveGameState state)
 {
     gConsoleUIController.EnterCallbackIdCriticalSection();
-    UIScene_LoadCreateJoinMenu* menu = GetMenuFromCallbackId(context);
+    UIScene_LoadCreateJoinMenu* menu = static_cast<UIScene_LoadCreateJoinMenu*>(
+        gConsoleUIController.GetSceneFromCallbackId(reinterpret_cast<unsigned int>(context)));
     if (menu == NULL)
     {
         gConsoleUIController.LeaveCallbackIdCriticalSection();
@@ -847,7 +832,8 @@ bool UIScene_LoadCreateJoinMenu::CopySaveDataProgress(void* context, int percent
 {
     bool keepCopying = false;
     gConsoleUIController.EnterCallbackIdCriticalSection();
-    UIScene_LoadCreateJoinMenu* menu = GetMenuFromCallbackId(context);
+    UIScene_LoadCreateJoinMenu* menu = static_cast<UIScene_LoadCreateJoinMenu*>(
+        gConsoleUIController.GetSceneFromCallbackId(reinterpret_cast<unsigned int>(context)));
     if (menu != NULL)
         keepCopying = !menu->m_copyCancelled;
     gConsoleUIController.LeaveCallbackIdCriticalSection();
@@ -862,7 +848,8 @@ int UIScene_LoadCreateJoinMenu::CopySaveThreadProc(void* context)
     minecraft->mProgressRenderer->progressStage(-1);
 
     gConsoleUIController.EnterCallbackIdCriticalSection();
-    UIScene_LoadCreateJoinMenu* menu = GetMenuFromCallbackId(context);
+    UIScene_LoadCreateJoinMenu* menu = static_cast<UIScene_LoadCreateJoinMenu*>(
+        gConsoleUIController.GetSceneFromCallbackId(reinterpret_cast<unsigned int>(context)));
     if (menu == NULL)
     {
         gConsoleUIController.LeaveCallbackIdCriticalSection();
@@ -878,7 +865,8 @@ int UIScene_LoadCreateJoinMenu::CopySaveThreadProc(void* context)
     {
         Sleep(COPY_POLL_INTERVAL);
         gConsoleUIController.EnterCallbackIdCriticalSection();
-        menu = GetMenuFromCallbackId(context);
+        menu = static_cast<UIScene_LoadCreateJoinMenu*>(
+            gConsoleUIController.GetSceneFromCallbackId(reinterpret_cast<unsigned int>(context)));
         if (menu == NULL)
             break;
         bool copying = menu->m_copyInProgress;
@@ -902,7 +890,15 @@ int UIScene_LoadCreateJoinMenu::CopySaveDialogReturned(void* context, int pad, C
     params->m_threadParam = reinterpret_cast<void*>(menu->GetCallbackUniqueId());
     params->m_waitForThreadToDelete = true;
     params->m_threadProc = &CopySaveThreadProc;
-    params->m_completionData = NewProgressState();
+    FullscreenProgressState* progressState = new FullscreenProgressState;
+    params->m_completionData = progressState;
+    progressState->showConfirmation = false;
+    progressState->reservedFlag1 = true;
+    progressState->reservedFlag2 = true;
+    progressState->showTip = true;
+    progressState->closeMode = 6;
+    progressState->playerId = 0;
+    progressState->backScene = EUIScene_None;
     gConsoleUIController.NavigateToScene(pad, EUIScene_FullscreenProgress, params, EUILayer_Scene,
                                          EUIGroup_PlayerDefault);
     return 0;
@@ -1087,10 +1083,18 @@ void UIScene_LoadCreateJoinMenu::LaunchSaveUpload()
     _LoadingInputParams* params = new _LoadingInputParams();
     params->m_threadProc = &UploadNintendoLanSaveThreadProc;
     params->m_threadParam = this;
-    params->m_completionData = NewProgressState();
+    FullscreenProgressState* progressState = new FullscreenProgressState;
     params->m_cancelText = IDS_TOOLTIPS_CANCEL;
     params->m_cancelFunc = &CancelSaveUploadCallback;
     params->m_cancelFuncParam = this;
+    params->m_completionData = progressState;
+    progressState->showConfirmation = false;
+    progressState->reservedFlag1 = true;
+    progressState->reservedFlag2 = true;
+    progressState->showTip = true;
+    progressState->closeMode = 6;
+    progressState->playerId = 0;
+    progressState->backScene = EUIScene_None;
     gConsoleUIController.NavigateToScene(m_playerId, EUIScene_FullscreenProgress, params, EUILayer_Scene,
                                          EUIGroup_PlayerDefault);
 }

@@ -23,6 +23,7 @@
 #include "game/world/block/Block.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/core/GameSettings.hpp"
+#include "game/core/Rarity.hpp"
 #include "platform/wiiu/CInput.hpp"
 
 extern CInput* g_pInput;
@@ -172,7 +173,7 @@ void UIScene_SuperFlatEditLayer::SetPointerText(not_null_ptr<ItemInstance> item)
         lines = item->getTooltipLines(boost::shared_ptr<Player>(), false);
         if (lines != NULL && !lines->empty())
         {
-            lines->at(0).mColour = static_cast<eMinecraftColour>(item->getRarity());
+            lines->at(0).mColour = item->getRarity()->colour;
             if (item->hasCustomHoverName())
                 lines->at(0).mColour = eMinecraftColour_Color_RenamedItemTitle;
         }

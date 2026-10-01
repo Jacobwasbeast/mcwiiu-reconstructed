@@ -33,6 +33,7 @@
 #include "game/world/block/ShulkerBoxBlockItem.hpp"
 #include "game/world/generation/MultiPlayerGameMode.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
+#include "game/core/Rarity.hpp"
 #include "platform/wiiu/CInput.hpp"
 
 static const int s_toolTipStringIds[] = {
@@ -214,7 +215,7 @@ std::vector<HtmlString>* IUIScene_AbstractContainerMenu::GetItemDescription(Slot
     std::vector<HtmlString>* description = slot->getItem()->getTooltipLines(player, false);
     if (description->size() != 0)
     {
-        description->at(0).mColour = static_cast<eMinecraftColour>(slot->getItem()->getRarity());
+        description->at(0).mColour = slot->getItem()->getRarity()->colour;
         if (slot->getItem()->hasCustomHoverName())
             description->at(0).mColour = eMinecraftColour_Color_RenamedItemTitle;
     }

@@ -57,33 +57,47 @@
 #include "platform/wiiu/CProfile.hpp"
 
 UIScene_HUD::UIScene_HUD(int sceneType, void*, UILayer* layer)
-    : UIScene(sceneType, layer), m_splitScreen(false), m_animatedSplashIcon(-1),
-      m_hudSize(-1), m_air(10), m_hudGameMode(-1), m_selectedLabelTicks(0),
-      m_timedSplashTicks(0), m_ridingHorse(true), m_displayNameVisible(true),
-      m_scoreIcon(0), m_displayFlag(true), m_animatedSplashVisible(true),
-      m_resultSplashShown(false), m_timedSplashLocked(false), m_checkpointsInitialised(false),
-      m_wrongWayTicks(0), m_wrongWayVisible(false), m_levelGenerationId(-1),
-      m_previousHealth(0), m_comparisonScore(0), m_personalBestTime(0)
+    : UIScene(sceneType, layer)
 {
+    m_splitScreen = false;
     initialiseMovie();
-    SetSelectedLabel(std::wstring());
+    SetSelectedLabel(L"");
     for (int i = 0; i < 10; ++i)
         m_messageLabels[i].init(UIString(L""));
     m_selectedLabel.init(UIString(L""));
     for (int i = 0; i < 4; ++i)
         m_armorIcons[i] = m_shownArmorIcons[i] = !HideMainHUD();
+    m_previousHealth = 0;
+    m_air = 10;
+    m_animatedSplashIcon = -1;
+    m_hudSize = -1;
     m_healthVisible = !HideMainHUD();
     m_foodVisible = !HideMainHUD();
     m_airVisible = !HideMainHUD();
     m_armourVisible = !HideMainHUD();
+    m_selectedLabelTicks = 0;
+    m_displayNameText = L"";
+    m_displayNameVisible = true;
+    m_ridingHorse = true;
     m_quickSelectVisible = !HideMainHUD();
-    for (int i = 0; i < 4; ++i)
-        m_lastCheckpointIds[i] = 0;
+    m_lastCheckpointIds[3] = 0;
+    m_wrongWayVisible = false;
+    m_personalBestTime = 0;
+    m_scoreIcon = 0;
+    m_timedSplashTicks = 0;
+    m_lastCheckpointIds[1] = 0;
+    m_wrongWayTicks = 0;
+    m_resultSplashShown = false;
+    m_animatedSplashVisible = true;
+    m_levelGenerationId = -1;
+    m_displayFlag = true;
+    m_hudGameMode = -1;
+    m_timedSplashLocked = false;
+    m_lastCheckpointIds[0] = 0;
+    m_checkpointsInitialised = false;
+    m_comparisonScore = 0;
+    m_lastCheckpointIds[2] = 0;
     addTimer(0, 100);
-}
-
-UIScene_HUD::~UIScene_HUD()
-{
 }
 
 FJ_Hud* UIScene_HUD::getFJ_Hud()
@@ -209,48 +223,39 @@ bool UIScene_HUD::SORTBYTIMELEFT(MobEffectInstance* first, MobEffectInstance* se
 void UIScene_HUD::updateEffectsDisplay()
 {
     Minecraft* minecraft = Minecraft::GetInstance();
-    boost::shared_ptr<MultiplayerLocalPlayer> player = minecraft->mLocalPlayers[getPad()];
+    boost::shared_ptr<MultiplayerLocalPlayer> player = minecraft->mLocalPlayers[m_playerId];
     if (player == 0)
         return;
 
     std::vector<MobEffectInstance*>* effects = player->getActiveEffects();
-    if (effects == 0)
-        return;
-
     if (effects->empty())
     {
-        FJ_Hud* hud = getFJ_Hud();
-        if (hud != 0)
-            hud->UpdateStatusEffectTile(0, 0, 0, false, 0.0f);
-        delete effects;
-        return;
+        getFJ_Hud()->UpdateStatusEffectTile(0, 0, 0, false, 0.0f);
     }
-
-    std::sort(effects->begin(), effects->end(), SORTBYTIMELEFT);
-    const int activeCount = static_cast<int>(effects->size());
-    int slot = 0;
-    for (std::vector<MobEffectInstance*>::iterator it = effects->begin(); it != effects->end(); ++it)
+    else
     {
-        MobEffectInstance* instance = *it;
-        MobEffect* effect = instance->getEffect();
-        if (!effect->hasIcon())
-            continue;
-
-        float alpha = 1.0f;
-        const int duration = instance->getDuration();
-        if (duration < 200)
+        std::sort(effects->begin(), effects->end(), SORTBYTIMELEFT);
+        int slot = 0;
+        for (std::vector<MobEffectInstance*>::iterator it = effects->begin(); it != effects->end(); ++it)
         {
-            const float durationValue = static_cast<float>(duration);
-            const float clampedDuration = Mth::clamp(durationValue / 10.0f, 0.0f, 1.0f);
-            const float cosValue = Mth::cos((durationValue * 3.1415927f) / 5.0f);
-            const float blink = Mth::clamp((10.0f - static_cast<float>(duration) / 20.0f) / 10.0f, 0.0f, 1.0f);
-            alpha = cosValue * blink + clampedDuration;
-        }
+            MobEffectInstance* instance = *it;
+            MobEffect* effect = instance->getEffect();
+            if (!effect->hasIcon())
+                continue;
 
-        FJ_Hud* hud = getFJ_Hud();
-        if (hud != 0)
-            hud->UpdateStatusEffectTile(activeCount, slot, effect->getIcon(), instance->isAmbient(), alpha);
-        ++slot;
+            float alpha = 1.0f;
+            if (instance->getDuration() < 200)
+            {
+                const int duration = instance->getDuration();
+                const float fadeIn = Mth::clamp(static_cast<float>(instance->getDuration()) / 10.0f / 5.0f * 0.5f, 0.0f, 0.5f);
+                const float pulse = Mth::cos(static_cast<float>(instance->getDuration()) * 3.1415927f / 5.0f);
+                const float blink = Mth::clamp(static_cast<float>(10 - duration / 20) / 10.0f * 0.25f, 0.0f, 0.25f);
+                alpha = pulse * blink + fadeIn;
+            }
+
+            getFJ_Hud()->UpdateStatusEffectTile(static_cast<int>(effects->size()), slot, effect->getIcon(), effect->isBeneficial(), alpha);
+            ++slot;
+        }
     }
 
     delete effects;
@@ -279,7 +284,44 @@ void UIScene_HUD::tick()
     if (m_movie == 0)
         return;
 
-    if (!g_pApp->GetGameStarted())
+    if (gApp.GetGameStarted())
+    {
+        Minecraft* minecraft = Minecraft::GetInstance();
+        if (minecraft->mLocalPlayers[m_playerId] == 0 || minecraft->mGameModes[m_playerId] == 0)
+            return;
+
+        if (m_armorIcons[0] != m_shownArmorIcons[0])
+            ShowArmorIcons(0, m_armorIcons[0]);
+        if (m_armorIcons[1] != m_shownArmorIcons[1])
+            ShowArmorIcons(1, m_armorIcons[1]);
+        if (m_armorIcons[2] != m_shownArmorIcons[2])
+            ShowArmorIcons(2, m_armorIcons[2]);
+        if (m_armorIcons[3] != m_shownArmorIcons[3])
+            ShowArmorIcons(3, m_armorIcons[3]);
+
+        updateEffectsDisplay();
+
+        boost::unordered_map<std::wstring, LerpingBossEvent*> bossEvents =
+            minecraft->mGui->getBossOverlay(m_playerId)->mBossEvents;
+        SetNumBossBars(bossEvents.size() > 5 ? 5 : static_cast<int>(bossEvents.size()));
+        if (bossEvents.size() == 0)
+            return;
+
+        int index = 0;
+        for (boost::unordered_map<std::wstring, LerpingBossEvent*>::iterator it = bossEvents.begin();
+             it != bossEvents.end(); ++it, ++index)
+        {
+            if (index < 5)
+            {
+                BossEvent* bossEvent = it->second;
+                std::wstring name = L10N::GetString(bossEvent->getNameId());
+                if (!bossEvent->getName().empty())
+                    name = bossEvent->getName();
+                SetBossBar(index, bossEvent->getPercent(), name);
+            }
+        }
+    }
+    else
     {
         SetNumBossBars(0);
         if (m_selectedLabelTicks != 0)
@@ -287,41 +329,6 @@ void UIScene_HUD::tick()
             m_selectedLabelTicks = 0;
             HideSelectedLabel();
         }
-        return;
-    }
-
-    Minecraft* minecraft = Minecraft::GetInstance();
-    if (minecraft->mLocalPlayers[getPad()] == 0 || minecraft->mGameModes[getPad()] == 0)
-        return;
-
-    if (m_armorIcons[0] != m_shownArmorIcons[0])
-        ShowArmorIcons(0, m_armorIcons[0]);
-    if (m_armorIcons[1] != m_shownArmorIcons[1])
-        ShowArmorIcons(1, m_armorIcons[1]);
-    if (m_armorIcons[2] != m_shownArmorIcons[2])
-        ShowArmorIcons(2, m_armorIcons[2]);
-    if (m_armorIcons[3] != m_shownArmorIcons[3])
-        ShowArmorIcons(3, m_armorIcons[3]);
-
-    updateEffectsDisplay();
-
-    boost::unordered_map<std::wstring, LerpingBossEvent*> bossEvents =
-        minecraft->mGui->getBossOverlay(getPad())->mBossEvents;
-    SetNumBossBars(bossEvents.size() > 5 ? 5 : static_cast<int>(bossEvents.size()));
-    if (bossEvents.size() == 0)
-        return;
-
-    int index = 0;
-    for (boost::unordered_map<std::wstring, LerpingBossEvent*>::iterator it = bossEvents.begin();
-         it != bossEvents.end(); ++it, ++index)
-    {
-        if (index >= 5)
-            continue;
-        BossEvent* bossEvent = it->second;
-        std::wstring name = L10N::GetString(bossEvent->getNameId());
-        if (!bossEvent->getName().empty())
-            name = bossEvent->getName();
-        SetBossBar(index, bossEvent->getPercent(), name);
     }
 }
 
@@ -362,7 +369,7 @@ void UIScene_HUD::updateSafeZone()
 
 std::wstring UIScene_HUD::getMoviePath()
 {
-    const C4JRender::eViewportType viewport = m_layer->getViewport();
+    const unsigned int viewport = m_layer->getViewport();
     if (viewport == 0 || viewport > 8)
     {
         m_splitScreen = false;
@@ -439,7 +446,13 @@ void UIScene_HUD::customDraw(const char* name, fuiRect* rect)
 
 void UIScene_HUD::SetHudSize(int size)
 {
-    if (getFJ_Hud() != 0) getFJ_Hud()->LoadHud(size);
+    if (size != m_hudSize)
+    {
+        m_hudLoading = true;
+        m_hudSize = size;
+        if (getFJ_Hud() != 0)
+            getFJ_Hud()->LoadHud(size);
+    }
 }
 
 void UIScene_HUD::SetDisplayName(const std::wstring& name)
@@ -461,20 +474,13 @@ void UIScene_HUD::repositionHud()
     int width = 0;
     int height = 0;
     m_layer->getRenderDimensions(width, height);
-    const C4JRender::eViewportType viewport = m_layer->getViewport();
-    if (viewport == C4JRender::eViewportType_TopHalf ||
-        viewport == C4JRender::eViewportType_BottomHalf)
+    const unsigned int viewport = m_layer->getViewport();
+    if (viewport != C4JRender::eViewportType_FullScreen)
     {
-        int fullHeight;
-        gConsoleUIController.getRenderDimensions(C4JRender::eViewportType_FullScreen,
-                                                 width, fullHeight);
-    }
-    else if (viewport == C4JRender::eViewportType_LeftHalf ||
-             viewport == C4JRender::eViewportType_RightHalf)
-    {
-        int fullWidth;
-        gConsoleUIController.getRenderDimensions(C4JRender::eViewportType_FullScreen,
-                                                 fullWidth, height);
+        if (viewport < C4JRender::eViewportType_LeftHalf)
+            width = static_cast<int>(gConsoleUIController.m_screenWidth);
+        else if (viewport < C4JRender::eViewportType_TopLeftQuarter)
+            height = static_cast<int>(gConsoleUIController.m_screenHeight);
     }
 
     if (getFJ_Hud() != 0)
@@ -498,25 +504,28 @@ void UIScene_HUD::ShowHealth(bool visible)
 {
     if (HideMainHUD())
         visible = false;
-    m_healthVisible = ShowHudComponent(m_healthVisible, visible);
+    const bool shown = ShowHudComponent(m_healthVisible, visible);
+    m_healthVisible = shown;
     if (getFJ_Hud() != 0)
-        getFJ_Hud()->ShowHealth(m_healthVisible);
+        getFJ_Hud()->ShowHealth(shown);
 }
 void UIScene_HUD::ShowFood(bool visible)
 {
     if (HideMainHUD())
         visible = false;
-    m_foodVisible = ShowHudComponent(m_foodVisible, visible);
+    const bool shown = ShowHudComponent(m_foodVisible, visible);
+    m_foodVisible = shown;
     if (getFJ_Hud() != 0)
-        getFJ_Hud()->ShowFood(m_foodVisible);
+        getFJ_Hud()->ShowFood(shown);
 }
 void UIScene_HUD::ShowArmour(bool visible)
 {
     if (HideMainHUD())
         visible = false;
-    m_armourVisible = ShowHudComponent(m_armourVisible, visible);
+    const bool shown = ShowHudComponent(m_armourVisible, visible);
+    m_armourVisible = shown;
     if (getFJ_Hud() != 0)
-        getFJ_Hud()->ShowArmour(m_armourVisible);
+        getFJ_Hud()->ShowArmour(shown);
 }
 void UIScene_HUD::ShowArmorBar(bool visible) { if (getFJ_Hud() != 0) getFJ_Hud()->ShowArmorBar(visible); }
 void UIScene_HUD::ShowQuickSelect(bool visible)
@@ -539,9 +548,10 @@ void UIScene_HUD::ShowAir(bool visible)
 {
     if (HideMainHUD())
         visible = false;
-    m_airVisible = ShowHudComponent(m_airVisible, visible);
+    const bool shown = ShowHudComponent(m_airVisible, visible);
+    m_airVisible = shown;
     if (getFJ_Hud() != 0)
-        getFJ_Hud()->ShowAir(m_airVisible);
+        getFJ_Hud()->ShowAir(shown);
 }
 void UIScene_HUD::SetRidingHorse(bool riding, bool showJump, int health)
 {
@@ -592,14 +602,14 @@ void UIScene_HUD::handleReload()
     m_foodVisible = true;
     m_selectedLabelTicks = 0;
     m_healthVisible = true;
-    m_displayNameText.clear();
+    m_displayNameText = L"";
     m_displayFlag = true;
     m_hudGameMode = -1;
     m_quickSelectVisible = true;
     m_ridingHorse = true;
     m_animatedSplashVisible = true;
-    m_cachedLabel.clear();
-    m_animatedSplashText.clear();
+    m_cachedLabel = L"";
+    m_animatedSplashText = L"";
     m_displayNameVisible = true;
     m_scoreIcon = 0;
     m_animatedSplashIcon = -1;
@@ -610,30 +620,18 @@ void UIScene_HUD::handleReload()
 
     Minecraft* minecraft = Minecraft::GetInstance();
 
-    SetSelectedLabel(std::wstring());
+    SetSelectedLabel(L"");
 
-    m_messageLabels[0].init(UIString(L""));
-    m_messageLabels[1].init(UIString(L""));
-    m_messageLabels[2].init(UIString(L""));
-    m_messageLabels[3].init(UIString(L""));
-    m_messageLabels[4].init(UIString(L""));
-    m_messageLabels[5].init(UIString(L""));
-    m_messageLabels[6].init(UIString(L""));
-    m_messageLabels[7].init(UIString(L""));
-    m_messageLabels[8].init(UIString(L""));
-    m_messageLabels[9].init(UIString(L""));
+    for (int i = 0; i < 10; ++i)
+        m_messageLabels[i].init(UIString(L""));
     m_selectedLabel.init(UIString(L""));
 
-    const unsigned int playerId = getPad();
-    boost::shared_ptr<MultiplayerLocalPlayer> player = minecraft->mLocalPlayers[playerId];
-
-    if (player != 0 && player->mViewport != 0)
-        SetHudSize(GameSettings::GetGameSettings(playerId, eGameSetting_HUDSizeSplitscreen));
+    if (minecraft->mLocalPlayers[m_playerId] != 0 && minecraft->mLocalPlayers[m_playerId]->mViewport != 0)
+        SetHudSize(GameSettings::GetGameSettings(m_playerId, eGameSetting_HUDSizeSplitscreen));
     else
-        SetHudSize(GameSettings::GetGameSettings(playerId, eGameSetting_HUDSize));
+        SetHudSize(GameSettings::GetGameSettings(m_playerId, eGameSetting_HUDSize));
 
-    wchar_t* profileName = gProfile->GetMiiName(playerId);
-    SetDisplayName(std::wstring(profileName));
+    SetDisplayName(gProfile->GetMiiName(m_playerId));
 
     repositionHud();
     minecraft->mGui->clearSingleMessages();
@@ -642,8 +640,8 @@ void UIScene_HUD::handleReload()
         InitMainHUD();
 
     bool tooltipsEnabled = true;
-    if (!gConsoleUIController.GetMenuDisplayed(playerId) &&
-        GameSettings::GetGameSettings(playerId, eGameSetting_Tooltips) == 0)
+    if (!gConsoleUIController.GetMenuDisplayed(m_playerId) &&
+        GameSettings::GetGameSettings(m_playerId, eGameSetting_Tooltips) == 0)
         tooltipsEnabled = false;
     SetTooltipsEnabled(tooltipsEnabled);
 }
@@ -651,7 +649,11 @@ void UIScene_HUD::handleReload()
 unsigned int UIScene_HUD::getPad() { return static_cast<unsigned int>(m_playerId); }
 void UIScene_HUD::SetOpacity(float opacity) { setOpacity(opacity); }
 void UIScene_HUD::SetVisible(bool visible) { setVisible(visible); }
-unsigned char UIScene_HUD::GetHudLoading() { return getFJ_Hud() == 0 ? 0 : getFJ_Hud()->GetHudLoading(); }
+void UIScene_HUD::GetHudLoading()
+{
+    if (m_hudLoading)
+        m_hudLoading = getFJ_Hud()->GetHudLoading();
+}
 void UIScene_HUD::SetExpBarProgress(float progress, int) { if (getFJ_Hud() != 0) getFJ_Hud()->SetExpBarProgress(progress); }
 void UIScene_HUD::SetExpLevel(int level) { if (getFJ_Hud() != 0) getFJ_Hud()->SetPlayerLevel(level); }
 void UIScene_HUD::SetActiveSlot(int slot) { if (getFJ_Hud() != 0) getFJ_Hud()->SetActiveSlot(slot); }
@@ -677,19 +679,23 @@ void UIScene_HUD::SetAir(int air, int)
 void UIScene_HUD::SetArmour(int armour) { if (getFJ_Hud() != 0) getFJ_Hud()->SetArmour(armour); }
 void UIScene_HUD::SetRoundNumber(unsigned int round, unsigned int total, bool visible)
 {
-    wchar_t text[32];
-
     if (visible)
-        std::swprintf(text, 32, L"%u/%u", round, total);
+        m_splashLabel.setLabel(UIString(formatwstr(L"%d/%d", round, total)), false, false);
     else
-        text[0] = 0;
-
-    m_splashLabel.setLabel(UIString(text), false, false);
+        m_splashLabel.setLabel(UIString(L""), false, false);
 }
 void UIScene_HUD::ShowCrosshair(bool visible) { if (getFJ_Hud() != 0) getFJ_Hud()->ShowCrosshair(visible); }
 void UIScene_HUD::SetFoodSaturationLevel(int level) { if (getFJ_Hud() != 0) getFJ_Hud()->SetFoodSaturationLevel(level); }
-void UIScene_HUD::SetHorseHealth(int health, bool highlight) { if (getFJ_Hud() != 0) getFJ_Hud()->SetHorseHealth(health, highlight); }
-void UIScene_HUD::SetHorseJumpBarProgress(float progress) { if (getFJ_Hud() != 0) getFJ_Hud()->SetHorseJumpBarProgress(progress); }
+void UIScene_HUD::SetHorseHealth(int health, bool highlight)
+{
+    if (m_ridingHorse && getFJ_Hud() != 0)
+        getFJ_Hud()->SetHorseHealth(health, highlight);
+}
+void UIScene_HUD::SetHorseJumpBarProgress(float progress)
+{
+    if (m_ridingHorse && getFJ_Hud() != 0)
+        getFJ_Hud()->SetHorseJumpBarProgress(progress);
+}
 void UIScene_HUD::ShowDisplayName(bool visible)
 {
     m_displayNameVisible = visible;
@@ -776,7 +782,12 @@ void UIScene_HUD::SetSpeed(const std::wstring& speed) { m_foodLabel.setLabel(UIS
 void UIScene_HUD::SetTime(const std::wstring& time) { m_armourLabel.setLabel(UIString(time), false, false); }
 void UIScene_HUD::SetTimerIcon(int icon, int time) { if (getFJ_Hud() != 0) getFJ_Hud()->SetTimerIcon(icon, time); }
 void UIScene_HUD::SetWrongWay(const std::wstring& label) { if (getFJ_Hud() != 0) getFJ_Hud()->SetWrongWayLabel(label); }
-void UIScene_HUD::SetPercentageMapTraversed(int position, double percentage) { percentage = std::max(0.0, std::min(100.0, percentage)); if (getFJ_Hud() != 0) getFJ_Hud()->SetPercentageMapTraversed(position, (float)percentage); }
+void UIScene_HUD::SetPercentageMapTraversed(int position, double percentage)
+{
+    percentage = Mth::clamp(percentage, 0.0, 100.0);
+    if (getFJ_Hud() != 0)
+        getFJ_Hud()->SetPercentageMapTraversed(position, (float)percentage);
+}
 void UIScene_HUD::AddCheckpointAtPercentage(double percentage) { if (getFJ_Hud() != 0) getFJ_Hud()->AddCheckpointAtPercentage((float)percentage); }
 void UIScene_HUD::ClearCheckpointPositions() { if (getFJ_Hud() != 0) getFJ_Hud()->ClearCheckpointPositions(); }
 void UIScene_HUD::AnimateCheckpoint(unsigned int index) { if (getFJ_Hud() != 0) getFJ_Hud()->AnimateCheckpoint((int)index); }
@@ -792,45 +803,50 @@ unsigned int UIScene_HUD::GetStatusEffectsYOffset()
 }
 void UIScene_HUD::renderPlayerHealth()
 {
-    ShowHealth(true);
     Minecraft* minecraft = Minecraft::GetInstance();
-    boost::shared_ptr<MultiplayerLocalPlayer> player = minecraft->mLocalPlayers[getPad()];
-    if (player == 0)
-        return;
+    const unsigned int pad = getPad();
+    ShowHealth(true);
 
-    SetRegenerationEffect(player->hasEffect(MobEffects::REGENERATION));
+    SetRegenerationEffect(minecraft->mLocalPlayers[pad]->hasEffect(MobEffects::REGENERATION));
 
-    const int blinkCycleTime = player->mInvulnerableTime;
-    const int blinkActiveTime = player->mInvulnerableTime;
-    const int health = (int)std::ceil(player->getHealth());
-    const bool poisoned = player->hasEffect(MobEffects::POISON);
-    const bool withered = player->hasEffect(MobEffects::WITHER);
-    const int absorption = (int)player->getAbsorptionAmount();
-    const int armour = player->getArmorValue();
+    int blinkCycleTime = minecraft->mLocalPlayers[pad]->mInvulnerableTime;
+    int blinkActiveTime = minecraft->mLocalPlayers[pad]->mInvulnerableTime;
+    const int health = Mth::ceil(minecraft->mLocalPlayers[pad]->getHealth());
+    const bool poisoned = minecraft->mLocalPlayers[pad]->hasEffect(MobEffects::POISON);
+    const bool withered = minecraft->mLocalPlayers[pad]->hasEffect(MobEffects::WITHER);
+    const int absorption = (int)minecraft->mLocalPlayers[pad]->getAbsorptionAmount();
+    const int armour = minecraft->mLocalPlayers[pad]->getArmorValue();
     SetHealth(health, m_previousHealth,
               blinkActiveTime > 9 && (blinkCycleTime / 3) % 2 == 1,
               poisoned || withered, withered);
     m_previousHealth = health;
     SetHealthAbsorb(absorption);
-    ShowArmour(armour > 0);
     if (armour > 0)
+    {
+        ShowArmour(true);
         SetArmour(armour);
+    }
+    else
+    {
+        ShowArmour(false);
+    }
 
-    boost::shared_ptr<Entity> vehicle = player->getVehicle();
+    boost::shared_ptr<Entity> vehicle = minecraft->mLocalPlayers[pad]->getVehicle();
     if (vehicle == 0 || (vehicle->GetType() & EntityType::LIVING_ENTITY) != EntityType::LIVING_ENTITY)
     {
         SetRidingHorse(false, false, 0);
         ShowFood(true);
         ShowHorseHealth(false);
-        FoodData* food = player->getFoodData();
+        FoodData* food = minecraft->mLocalPlayers[pad]->getFoodData();
         const int foodLevel = food->getFoodLevel();
         const int lastFoodLevel = food->getLastFoodLevel();
-        const bool hungry = player->hasEffect(MobEffects::HUNGER);
-        const int saturation = (int)food->getSaturationLevel();
+        const bool hungry = minecraft->mLocalPlayers[pad]->hasEffect(MobEffects::HUNGER);
+        const int saturation = (int)minecraft->mLocalPlayers[pad]->getFoodData()->getSaturationLevel();
         SetFood(foodLevel, lastFoodLevel, hungry);
         SetFoodSaturationLevel(saturation);
     }
 
+    boost::shared_ptr<MultiplayerLocalPlayer> player = minecraft->mLocalPlayers[pad];
     if (!player->isUnderLiquid(Material::WATER) && !player->isUnderLiquid(Material::LAVA)
         && player->getAirSupply() >= (int)player->getMaxAirSupply())
     {
@@ -839,8 +855,8 @@ void UIScene_HUD::renderPlayerHealth()
     }
 
     ShowAir(true);
-    const int air = (int)std::ceil((float)(player->getAirSupply() - 2) * 10.0f / 300.0f);
-    const int popping = (int)std::ceil((float)player->getAirSupply() * 10.0f / 300.0f) - air;
+    const int air = (int)std::ceil((float)(minecraft->mLocalPlayers[pad]->getAirSupply() - 2) * 10.0f / 300.0f);
+    const int popping = (int)std::ceil((float)minecraft->mLocalPlayers[pad]->getAirSupply() * 10.0f / 300.0f) - air;
     SetAir(air, popping);
 }
 void UIScene_HUD::renderVehicleHealth()
@@ -1740,21 +1756,20 @@ void UIScene_HUD::updateFrameTick()
 }
 void UIScene_HUD::handleGameTick()
 {
-    if (m_movie == 0 || g_pApp->GetGameStarted() == 0)
+    if (m_movie == 0 || gApp.GetGameStarted() == 0)
         return;
 
     Minecraft* minecraft = Minecraft::GetInstance();
     const int playerId = m_playerId;
-    if (minecraft->mLocalPlayers[playerId] && minecraft->mGameModes[playerId])
-    {
-        m_layer->showComponent(playerId, EUIScene_HUD, true);
-        updateFrameTick();
-        GetHudLoading();
-    }
-    else
+    if (minecraft->mLocalPlayers[playerId] == 0 || minecraft->mGameModes[playerId] == 0)
     {
         m_layer->showComponent(playerId, EUIScene_HUD, false);
+        return;
     }
+
+    m_layer->showComponent(playerId, EUIScene_HUD, true);
+    updateFrameTick();
+    GetHudLoading();
 }
 void UIScene_HUD::render(int width, int height, C4JRender::eViewportType viewport)
 {
@@ -1852,22 +1867,39 @@ void UIScene_HUD::handleTimerComplete(int)
             m_messageLabels[i].setLabel(UIString(L""), false, false);
         }
         m_selectedLabel.setOpacity(0.0f);
-        return;
     }
-
-    for (int i = 0; i < 10; ++i)
+    else
     {
-        const float opacity = static_cast<float>(gui->getOpacity(playerId, static_cast<unsigned int>(i)));
-        m_messageControls[i].setOpacity(opacity);
-        m_messageLabels[i].setOpacity(opacity);
-        if (opacity > 0.0f && static_cast<size_t>(i) < gui->mMessages[playerId].size())
-            m_messageLabels[i].setLabel(UIString(escapeXML(gui->mMessages[playerId][i].message)), false, false);
-        else
-            m_messageLabels[i].setLabel(UIString(L""), false, false);
-    }
+        for (int i = 0; i < 10; ++i)
+        {
+            const float opacity = static_cast<float>(gui->getOpacity(playerId, static_cast<unsigned int>(i)));
+            if (opacity > 0.0f)
+            {
+                m_messageControls[i].setOpacity(opacity);
+                m_messageLabels[i].setOpacity(opacity);
+                if (gui->mMessages[m_playerId].empty())
+                {
+                    m_messageLabels[i].setLabel(UIString(std::wstring(L"")), false, false);
+                }
+                else
+                {
+                    std::wstring message = gui->mMessages[m_playerId].at(i).message;
+                    std::wstring escaped = escapeXML(message);
+                    m_messageLabels[i].setLabel(UIString(escaped), false, false);
+                }
+            }
+            else
+            {
+                m_messageControls[i].setOpacity(0.0f);
+                m_messageLabels[i].setOpacity(0.0f);
+                m_messageLabels[i].setLabel(UIString(L""), false, false);
+            }
+        }
 
-    m_selectedLabel.setOpacity(static_cast<float>(gui->getJukeboxOpacity(playerId)));
-    m_selectedLabel.setLabel(UIString(gui->mSingleMessages[playerId]), false, false);
+        m_selectedLabel.setOpacity(static_cast<float>(gui->getJukeboxOpacity(m_playerId)));
+        std::wstring selected = gui->mSingleMessages[m_playerId];
+        m_selectedLabel.setLabel(UIString(selected), false, false);
+    }
 }
 int UIScene_HUD::getSceneType() { return EUIScene_HUD; }
 bool UIScene_HUD::stealsFocus() { return false; }

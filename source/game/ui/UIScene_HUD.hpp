@@ -22,7 +22,6 @@ public:
     };
 
     UIScene_HUD(int sceneType, void* data, UILayer* layer);
-    virtual ~UIScene_HUD();
     FJ_Hud* getFJ_Hud();
     void SetSelectedLabel(const std::wstring& label);
     bool HideMainHUD();
@@ -59,7 +58,7 @@ public:
     unsigned int getPad();
     void SetOpacity(float opacity);
     void SetVisible(bool visible);
-    unsigned char GetHudLoading();
+    void GetHudLoading();
     void SetExpBarProgress(float progress, int unused);
     void SetExpLevel(int level);
     void SetActiveSlot(int slot);
@@ -156,7 +155,7 @@ private:
     bool m_wrongWayVisible;
     unsigned int m_levelGenerationId;
     int m_previousHealth;
-    bool m_hudSizeChanged;
+    bool m_hudLoading;
     unsigned int m_comparisonScore;
     long long m_personalBestTime;
     UIControl_Label m_messageLabels[10];
