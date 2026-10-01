@@ -4,10 +4,6 @@ DerivedLevelData::DerivedLevelData(LevelData* levelData) : LevelData(), mLevelDa
 {
 }
 
-DerivedLevelData::~DerivedLevelData()
-{
-}
-
 CompoundTag* DerivedLevelData::createTag(std::vector<boost::shared_ptr<Player> >* players)
 {
     return mLevelData->createTag(players);

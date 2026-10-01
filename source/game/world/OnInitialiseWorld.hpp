@@ -7,7 +7,6 @@
 class OnInitialiseWorld : public CompoundGameRuleDefinition
 {
 public:
-    virtual ~OnInitialiseWorld();
 
     virtual ConsoleGameRules::EGameRuleType getActionType();
 };

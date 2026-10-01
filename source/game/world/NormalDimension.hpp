@@ -7,7 +7,6 @@ class NormalDimension : public Dimension
 {
 public:
     NormalDimension();
-    virtual ~NormalDimension();
     virtual bool canUnloadChunk(int x, int z);
     virtual const DimensionType* getType() const;
 };

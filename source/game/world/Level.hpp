@@ -279,13 +279,13 @@ public:
     bool useNewSeaLevel();
     bool isFlatLand();
     bool isSpawnChunk(int chunkX, int chunkZ);
-    void tick(boost::shared_ptr<Entity> entity);
     bool addBlockEntity(boost::shared_ptr<BlockEntity> entity);
     void AddToBlockEntityList(boost::shared_ptr<BlockEntity> entity);
     virtual void tickEntities();
     virtual void tickServerPlayers();
     void addAllPendingBlockEntities(std::vector<boost::shared_ptr<BlockEntity> >& entities);
     virtual void tick(boost::shared_ptr<Entity> entity, bool updateChunk);
+    void tick(boost::shared_ptr<Entity> entity);
     bool isUnobstructed(const AABB* box, boost::shared_ptr<Entity> entity);
     bool isUnobstructed(const AABB* box);
     bool containsAnyBlocks(AABB* box);
@@ -421,7 +421,7 @@ public:
     int getAuxValueForMap(PlayerUID uid, int dimension, int x, int z, int scale);
     void globalLevelEvent(int type, const BlockPos& pos, int data);
     Random* getRandomFor(int x, int y, int z);
-    static Random fjGetRandomFor(long long seed, int x, int y, int z);
+    static long long fjGetRandomFor(long long seed, int x, int y, int z);
     bool isAllEmpty();
     double getHorizonHeight();
     void destroyBlockProgress(int breakerId, const BlockPos& pos, int progress);
@@ -447,7 +447,7 @@ public:
     BlockPos getSharedSpawnPos();
     ChunkSource* getChunkSource();
     PathNavigationListener* getPathNavigationListener();
-    boost::shared_ptr<LevelStorage> getLevelStorage();
+    LevelStorage* getLevelStorage();
     unsigned char getWeatherState();
     bool isWithinSpawnChunks(const BlockPos& pos);
     int getUnsavedChunkCount();

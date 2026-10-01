@@ -11,7 +11,6 @@ class DerivedLevelData : public LevelData
 {
 public:
     explicit DerivedLevelData(LevelData* levelData);
-    virtual ~DerivedLevelData();
     virtual CompoundTag* createTag(std::vector<boost::shared_ptr<Player> >* players);
     virtual void setTagData(CompoundTag* tag);
     virtual long long getSeed();

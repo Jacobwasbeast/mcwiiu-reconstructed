@@ -7,7 +7,6 @@
 class NetherDimension : public Dimension
 {
 public:
-    virtual ~NetherDimension();
     virtual void init();
     virtual Vec3* getFogColor(float celestialAngle, float timeOfDay);
     virtual void updateLightRamp();

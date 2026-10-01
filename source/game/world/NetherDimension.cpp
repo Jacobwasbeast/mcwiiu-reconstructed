@@ -15,10 +15,6 @@
 #include "game/world/NetherFlatLevelSource.hpp"
 #include "game/world/NetherLevelSource.hpp"
 
-NetherDimension::~NetherDimension()
-{
-}
-
 void NetherDimension::init()
 {
     mBiomeSource = new FixedBiomeSource(Biome::HELL, 0.0f);

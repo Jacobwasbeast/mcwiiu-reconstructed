@@ -244,30 +244,7 @@ bool Level::shouldFreeze(const BlockPos& pos, bool checkNeighbours)
 
 bool Level::shouldFreezeIgnoreNeighbors(const BlockPos& pos)
 {
-    if (getBiome(pos)->getTemperature(pos) > 0.15f)
-    {
-        return false;
-    }
-
-    if ((unsigned int)pos.y >= 256)
-    {
-        return false;
-    }
-
-    if (getBrightness(LightLayer::BLOCK, pos) >= 10)
-    {
-        return false;
-    }
-
-    const BlockState* state = getBlockState(pos);
-    Block* block = state->getBlock();
-
-    if (block != Blocks::water && block != Blocks::flowing_water)
-    {
-        return false;
-    }
-
-    return state->getValue(LiquidBlock::LEVEL) == 0;
+    return shouldFreeze(pos, false);
 }
 
 long long Level::getSeed()
@@ -367,7 +344,7 @@ LevelChunk* Level::getChunk(int chunkX, int chunkZ)
 
 LevelChunk* Level::getChunkAt(const BlockPos& pos)
 {
-    return mChunkSource->getChunk(pos.x >> 4, pos.z >> 4);
+    return getChunk(pos.x >> 4, pos.z >> 4);
 }
 
 bool Level::hasChunkAt(const BlockPos& pos, bool allowEmpty)
@@ -377,7 +354,7 @@ bool Level::hasChunkAt(const BlockPos& pos, bool allowEmpty)
 
 bool Level::hasChunkAt(const BlockPos& pos)
 {
-    return hasChunk(pos.x >> 4, pos.z >> 4, true);
+    return hasChunkAt(pos, true);
 }
 
 Biome* Level::getBiome(const BlockPos& pos)
@@ -439,12 +416,12 @@ const BlockState* Level::getTopBlockState(const BlockPos& pos)
 
 bool Level::isInWorldBounds(const BlockPos& pos)
 {
-    return (unsigned int)pos.y < 256;
+    return (pos.y & ~255) == 0;
 }
 
 bool Level::isInWorldBounds(int x, int y, int z)
 {
-    return (unsigned int)y < 256;
+    return (y & ~255) == 0;
 }
 
 bool Level::isOutsideBuildHeight(const BlockPos& pos)
@@ -470,8 +447,7 @@ bool Level::hasChunksAt(const BlockPos& pos, int radius, bool allowEmpty)
 
 bool Level::hasChunksAt(const BlockPos& pos, int radius)
 {
-    return hasChunksAt(pos.x - radius, pos.y - radius, pos.z - radius, pos.x + radius, pos.y + radius,
-                       pos.z + radius, true);
+    return hasChunksAt(pos, radius, true);
 }
 
 bool Level::hasChunksAt(const BlockPos& from, const BlockPos& to, bool allowEmpty)
@@ -481,7 +457,7 @@ bool Level::hasChunksAt(const BlockPos& from, const BlockPos& to, bool allowEmpt
 
 bool Level::hasChunksAt(const BlockPos& from, const BlockPos& to)
 {
-    return hasChunksAt(from.x, from.y, from.z, to.x, to.y, to.z, true);
+    return hasChunksAt(from, to, true);
 }
 
 bool Level::hasChunksAt(BoundingBox box, bool allowEmpty)
@@ -548,7 +524,7 @@ bool Level::hasChunksAt(int minX, int minY, int minZ, int maxX, int maxY, int ma
 
 LevelChunk* Level::getChunkAt(int x, int z)
 {
-    return mChunkSource->getChunk(x >> 4, z >> 4);
+    return getChunk(x >> 4, z >> 4);
 }
 
 LevelChunk* Level::getChunkLoadedOrUnloadedAt(int x, int z)
@@ -1876,55 +1852,7 @@ int Level::getRawBrightness(const BlockPos& pos, bool useNeighbourBrightness)
 
 int Level::getRawBrightness(const BlockPos& pos)
 {
-    if (!isWithinLevelBounds(pos.x, pos.z))
-    {
-        return 15;
-    }
-
-    if (getBlockState(pos)->doesPropagate())
-    {
-        int brightest = getRawBrightness(pos.above(), false);
-        int east = getRawBrightness(pos.east(), false);
-        int west = getRawBrightness(pos.west(), false);
-        int south = getRawBrightness(pos.south(), false);
-        int north = getRawBrightness(pos.north(), false);
-
-        if (brightest < east)
-        {
-            brightest = east;
-        }
-
-        if (brightest < west)
-        {
-            brightest = west;
-        }
-
-        if (brightest < south)
-        {
-            brightest = south;
-        }
-
-        if (brightest < north)
-        {
-            brightest = north;
-        }
-
-        return brightest;
-    }
-
-    if (pos.y < 0)
-    {
-        return 0;
-    }
-
-    BlockPos clamped = pos;
-
-    if (pos.y > 255)
-    {
-        clamped = BlockPos(pos.x, 255, pos.z);
-    }
-
-    return getChunkAt(clamped)->getRawBrightness(clamped, mSkyDarken);
+    return getRawBrightness(pos, true);
 }
 
 int Level::getHeightmapHeight(int x, int z)
@@ -2611,7 +2539,8 @@ void Level::playSoundToAllPlayers(const BlockPos& pos, const SoundEvent* sound,
                                   SoundSource::ESoundSource source, float volume, float pitch,
                                   float range)
 {
-    for (std::vector<LevelListener*>::iterator it = mListeners.begin(); it != mListeners.end(); ++it)
+    std::vector<LevelListener*>::iterator end = mListeners.end();
+    for (std::vector<LevelListener*>::iterator it = mListeners.begin(); it != end; ++it)
     {
         (*it)->playSoundToAllPlayers(sound, source, (double)pos.x + 0.5, (double)pos.y + 0.5,
                                      (double)pos.z + 0.5, volume, pitch, range);
@@ -2977,7 +2906,7 @@ int Level::getMoonPhase()
 float Level::getMoonBrightness()
 {
     static const float brightness[8] = {1.0f, 0.75f, 0.5f, 0.25f, 0.0f, 0.25f, 0.5f, 0.75f};
-    return brightness[getMoonPhase()];
+    return brightness[mDimension->getMoonPhase(mLevelData->getDayTime())];
 }
 
 float Level::getSunAngle(float partialTick)
@@ -3037,7 +2966,7 @@ float Level::getStarBrightness(float partialTick)
 
 const Difficulty* Level::getDifficulty()
 {
-    return mLevelData->getDifficulty();
+    return getLevelData()->getDifficulty();
 }
 
 DifficultyInstance Level::getCurrentDifficultyAt(const BlockPos& pos)
@@ -3124,7 +3053,7 @@ bool Level::useNewSeaLevel()
 
 bool Level::isFlatLand()
 {
-    return mLevelData->getGeneratorType() == LevelType::FLAT;
+    return getLevelData()->getGeneratorType() == LevelType::FLAT;
 }
 
 bool Level::AllPlayersAreSleeping()
@@ -3240,17 +3169,15 @@ void Level::globalLevelEvent(int type, const BlockPos& pos, int data)
 
 Random* Level::getRandomFor(int x, int y, int z)
 {
-    mRandom->setSeed(getSeed() + static_cast<long long>(x) * 341873128712LL
+    mRandom->setSeed(static_cast<long long>(x) * 341873128712LL
                      + static_cast<long long>(y) * 132897987541LL
-                     + z);
+                     + getLevelData()->getSeed() + z);
     return mRandom;
 }
 
-Random Level::fjGetRandomFor(long long seed, int x, int y, int z)
+long long Level::fjGetRandomFor(long long seed, int x, int y, int z)
 {
-    long long mixed = seed + (long long)x * 341873128712LL + (long long)y * 132897987541LL
-                      + (long long)z * 42317861LL;
-    return Random(mixed);
+    return (long long)x * 341873128712LL + (long long)y * 132897987541LL + seed + z;
 }
 
 bool Level::isAllEmpty()
@@ -3385,11 +3312,14 @@ bool Level::hasNeighborSignal(const BlockPos& pos)
 int Level::getBestNeighborSignal(const BlockPos& pos)
 {
     int signal = 0;
-    static const Direction* directions[6] = {Direction::DOWN, Direction::UP, Direction::NORTH,
-                                             Direction::SOUTH, Direction::WEST, Direction::EAST};
-    for (int i = 0; i < 6; ++i)
+    for (std::vector<const Direction*>::iterator it = Direction::VALUES.begin(); it != Direction::VALUES.end(); ++it)
     {
-        int value = getSignal(pos.relative(directions[i]), directions[i]);
+        const Direction* direction = *it;
+        int value = getSignal(pos.relative(direction), direction);
+        if (value >= 15)
+        {
+            return 15;
+        }
         if (value > signal)
         {
             signal = value;
@@ -3546,10 +3476,10 @@ bool Level::ShouldForceTimeUpdate()
 BlockPos Level::getSharedSpawnPos()
 {
     BlockPos spawn(mLevelData->getXSpawn(), mLevelData->getYSpawn(), mLevelData->getZSpawn());
-    if (!mWorldBorder->isWithinBounds(spawn))
+    if (!getWorldBorder()->isWithinBounds(spawn))
     {
-        spawn = getHeightmapPos(BlockPos(static_cast<int>(mWorldBorder->getCenterX()), 0,
-                                         static_cast<int>(mWorldBorder->getCenterZ())));
+        spawn = getHeightmapPos(BlockPos(static_cast<int>(getWorldBorder()->getCenterX()), 0,
+                                         static_cast<int>(getWorldBorder()->getCenterZ())));
     }
     return spawn;
 }
@@ -3559,9 +3489,9 @@ ChunkSource* Level::getChunkSource()
     return mChunkSource;
 }
 
-boost::shared_ptr<LevelStorage> Level::getLevelStorage()
+LevelStorage* Level::getLevelStorage()
 {
-    return mLevelStorage;
+    return mLevelStorage.get();
 }
 
 unsigned char Level::getWeatherState()
@@ -3688,7 +3618,7 @@ bool Level::isHumidAt(const BlockPos& pos)
 
 int Level::getAuxValueForMap(PlayerUID uid, int dimension, const BlockPos& pos, int scale)
 {
-    return getAuxValueForMap(uid, dimension, pos.x, pos.z, scale);
+    return getAuxValueForMap(uid, dimension, 0, 0, scale);
 }
 
 void Level::blockEntityAddedExtra(boost::shared_ptr<BlockEntity>)
@@ -3749,18 +3679,17 @@ bool Level::isFullAABBBlock(const BlockPos& pos)
 
 bool Level::isSolidBlockingBlock(const BlockPos& pos)
 {
-    const BlockState* state = getBlockState(pos);
-    return state != NULL && state->getBlock()->isSolidBlockingCube(state);
+    return getBlockState(pos)->isSolidBlockingBlock();
 }
 
 bool Level::isConsideredSolidBlock(const BlockPos& pos)
 {
-    return isSolidBlockingBlock(pos);
+    return getBlockState(pos)->isSolid();
 }
 
 bool Level::isConsideredSolidBlock(int x, int y, int z)
 {
-    return isConsideredSolidBlock(BlockPos(x, y, z));
+    return getBlockState(BlockPos(x, y, z))->isSolid();
 }
 
 void Level::updateSkyBrightness()
@@ -4263,12 +4192,12 @@ void Level::gatherChunkSourceStats()
 
 int Level::getSaveVersion()
 {
-    return mLevelStorage->getSaveFile()->getSaveVersion();
+    return getLevelStorage()->getSaveFile()->getSaveVersion();
 }
 
 int Level::getOriginalSaveVersion()
 {
-    return mLevelStorage->getSaveFile()->getOriginalSaveVersion();
+    return getLevelStorage()->getSaveFile()->getOriginalSaveVersion();
 }
 
 void Level::tickClientSideBlocks(int, int, LevelChunk*)
@@ -4541,7 +4470,7 @@ bool Level::isSolidBlockingBlockInLoadedChunk(const BlockPos& pos, bool allowEmp
     {
         return allowEmpty;
     }
-    return isSolidBlockingBlock(pos);
+    return getBlockState(pos)->isSolidBlockingBlock();
 }
 
 void Level::prepareWeather()
@@ -5672,7 +5601,7 @@ LevelChunk* Level::getCacheChunkDirect(int x, int z)
 
 bool Level::isChunkPostPostProcessed(int x, int z)
 {
-    LevelChunk* chunk = mChunkSource->getChunk(x, z);
+    LevelChunk* chunk = getChunkSource()->getChunkIfLoaded(x, z);
     if (chunk == NULL || chunk->isInvalid())
     {
         return false;
@@ -5697,15 +5626,15 @@ bool Level::isChunkFinalised(int x, int z)
 
 void Level::refreshLevelInfoFromLevelGen()
 {
-    LevelGenerationOptions* options = g_pApp->getLevelGenerationOptions();
-    mLevelData->setCloudHeight(options->getCloudHeight());
-    mLevelData->setDayTime(options->getDayTime());
+    LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
+    getLevelData()->setCloudHeight(options->getCloudHeight());
+    getLevelData()->setDayTime(options->getDayTime());
     mFogDistance = options->getFogDistance();
 }
 
 void Level::refreshFromLevelGen()
 {
-    ConsoleSaveFile* saveFile = mLevelStorage->getSaveFile();
+    ConsoleSaveFile* saveFile = getLevelStorage()->getSaveFile();
     saveFile->refreshFromLevelgen();
     refreshLevelInfoFromLevelGen();
 }

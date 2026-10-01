@@ -9,10 +9,6 @@ NormalDimension::NormalDimension()
     mSeaLevel = 63;
 }
 
-NormalDimension::~NormalDimension()
-{
-}
-
 const DimensionType* NormalDimension::getType() const
 {
     return DimensionType::OVERWORLD;
