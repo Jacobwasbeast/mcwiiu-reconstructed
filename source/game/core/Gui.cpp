@@ -655,19 +655,19 @@ void Gui::onDisconnected()
     }
 }
 
-double Gui::getOpacity(int playerIndex, unsigned int messageIndex)
+float Gui::getOpacity(int playerIndex, unsigned int messageIndex)
 {
     const float minimum = 0.5f;
     if (playerIndex >= 0 && playerIndex < 4 && messageIndex < mMessages[playerIndex].size() &&
         mMessages[playerIndex][messageIndex].age < 200) {
         float value = (1.0f - static_cast<float>(mMessages[playerIndex][messageIndex].age) / 200.0f) * 10.0f;
         float opacity = value < minimum ? minimum : (value > 1.0f ? 1.0f : value);
-        return static_cast<double>(opacity * opacity);
+        return opacity * opacity;
     }
-    return 0.0;
+    return 0.0f;
 }
 
-double Gui::getJukeboxOpacity(int playerIndex)
+float Gui::getJukeboxOpacity(int playerIndex)
 {
     float value = 0.0f;
     if (playerIndex >= 0 && playerIndex < 4) {
@@ -679,7 +679,7 @@ double Gui::getJukeboxOpacity(int playerIndex)
     if (value < 0.0f) {
         value = 0.0f;
     }
-    return static_cast<double>(value / 255.0f);
+    return value / 255.0f;
 }
 
 void Gui::ShowCharacterDisplay(int playerIndex)

@@ -47,6 +47,17 @@ bool compareStrings(const std::wstring& first, const std::wstring& second)
     return std::wcscmp(first.c_str(), second.c_str()) < 0;
 }
 
+wchar_t* stringtowchararray(const std::string& text)
+{
+    static wchar_t buffer[256];
+
+    const std::string::size_type length = text.size();
+    for (std::string::size_type index = 0; index < length; ++index)
+        buffer[index] = static_cast<signed char>(text[index]);
+    buffer[length] = 0;
+    return buffer;
+}
+
 std::wstring convStringToWstring(wchar_t* text)
 {
     return text == NULL ? std::wstring() : std::wstring(text);

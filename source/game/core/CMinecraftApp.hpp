@@ -19,6 +19,12 @@
 #include "game/core/CriticalSection.hpp"
 #include "platform/wiiu/PlatformTiming.hpp"
 #include "vendor/_XUSER_SIGNIN_INFO.hpp"
+struct _DLCRequest
+{
+    unsigned int mContentId;
+    unsigned int mStatus;
+};
+
 struct NOTIFICATION
 {
     unsigned int type;
@@ -515,12 +521,6 @@ public:
 
 
 private:
-    struct _DLCRequest
-    {
-        unsigned int mContentId;
-        unsigned int mStatus;
-    };
-
     struct XuiActionAndParam
     {
         eXuiAction action;
@@ -575,7 +575,7 @@ private:
     float mFrameTime;
     float mPerformanceCounterScale;
     unsigned int mUnusedTimeWord;
-    unsigned int mTipRotationIndex;
+    int mTipRotationIndex;
     _TipData mTipData[5];
     OSFastMutex mTerrainFeaturePositionsMutex;
     std::vector<FEATURE_DATA*> mTerrainFeaturePositions;

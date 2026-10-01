@@ -85,32 +85,32 @@ void Turtle::create(Level* level)
 
 void Turtle::setHomePos(const BlockPos& pos)
 {
-    if (mEntityData != NULL && DATA_HOME_POS != NULL) mEntityData->set(DATA_HOME_POS, pos, true);
+    mEntityData->set(DATA_HOME_POS, pos, true);
 }
 
 bool Turtle::hasEgg()
 {
-    return mEntityData != NULL && DATA_HAS_EGG != NULL && mEntityData->get(DATA_HAS_EGG);
+    return mEntityData->get(DATA_HAS_EGG);
 }
 
 void Turtle::setHasEgg(bool hasEgg)
 {
-    if (mEntityData != NULL && DATA_HAS_EGG != NULL) mEntityData->set(DATA_HAS_EGG, hasEgg, true);
+    mEntityData->set(DATA_HAS_EGG, hasEgg, true);
 }
 
 bool Turtle::hasGivenUpOnEgg()
 {
-    return mEntityData != NULL && DATA_HAS_GIVEN_UP_ON_EGG != NULL && mEntityData->get(DATA_HAS_GIVEN_UP_ON_EGG);
+    return mEntityData->get(DATA_HAS_GIVEN_UP_ON_EGG);
 }
 
 BlockPos Turtle::getHomePos()
 {
-    return mEntityData != NULL && DATA_HOME_POS != NULL ? mEntityData->get(DATA_HOME_POS) : BlockPos();
+    return mEntityData->get(DATA_HOME_POS);
 }
 
 void Turtle::setGoingHome(bool goingHome)
 {
-    if (mEntityData != NULL && DATA_GOING_HOME != NULL) mEntityData->set(DATA_GOING_HOME, goingHome, true);
+    mEntityData->set(DATA_GOING_HOME, goingHome, true);
 }
 
 bool Turtle::closeToNextPos()
@@ -123,37 +123,37 @@ bool Turtle::closeToNextPos()
 
 bool Turtle::isGoingHome()
 {
-    return mEntityData != NULL && DATA_GOING_HOME != NULL && mEntityData->get(DATA_GOING_HOME);
+    return mEntityData->get(DATA_GOING_HOME);
 }
 
 void Turtle::GiveUpOnEgg()
 {
-    if (mEntityData != NULL && DATA_HAS_GIVEN_UP_ON_EGG != NULL) mEntityData->set(DATA_HAS_GIVEN_UP_ON_EGG, true, true);
+    mEntityData->set(DATA_HAS_GIVEN_UP_ON_EGG, true, true);
 }
 
 void Turtle::setIsLayingEgg(bool layingEgg)
 {
-    if (mEntityData != NULL && DATA_IS_LAYING_EGG != NULL) mEntityData->set(DATA_IS_LAYING_EGG, layingEgg, true);
+    mEntityData->set(DATA_IS_LAYING_EGG, layingEgg, true);
 }
 
 bool Turtle::isLayingEgg()
 {
-    return mEntityData != NULL && DATA_IS_LAYING_EGG != NULL && mEntityData->get(DATA_IS_LAYING_EGG);
+    return mEntityData->get(DATA_IS_LAYING_EGG);
 }
 
 void Turtle::setTravelPos(const BlockPos& pos)
 {
-    if (mEntityData != NULL && DATA_TRAVEL_POS != NULL) mEntityData->set(DATA_TRAVEL_POS, pos, true);
+    mEntityData->set(DATA_TRAVEL_POS, pos, true);
 }
 
 void Turtle::setTravelling(bool travelling)
 {
-    if (mEntityData != NULL && DATA_TRAVELLING != NULL) mEntityData->set(DATA_TRAVELLING, travelling, true);
+    mEntityData->set(DATA_TRAVELLING, travelling, true);
 }
 
 BlockPos Turtle::getTravelPos()
 {
-    return mEntityData != NULL && DATA_TRAVEL_POS != NULL ? mEntityData->get(DATA_TRAVEL_POS) : BlockPos();
+    return mEntityData->get(DATA_TRAVEL_POS);
 }
 
 void Turtle::registerGoals()
@@ -296,7 +296,7 @@ unsigned int Turtle::GetInteractTooltip(const EntityTooltipDataHolder& holder)
 
 bool Turtle::isTravelling()
 {
-    return mEntityData != NULL && DATA_TRAVELLING != NULL && mEntityData->get(DATA_TRAVELLING);
+    return mEntityData->get(DATA_TRAVELLING);
 }
 
 bool Turtle::breathesWater()
@@ -358,7 +358,7 @@ void Turtle::die(const DamageSource* source)
 
 const SoundEvent* Turtle::getAmbientSound()
 {
-    return !isInWater() && !isBaby() ? SoundEvents::TURTLE_AMBIENT_LAND : Mob::getAmbientSound();
+    return !isInWater() && mOnGround && !isBaby() ? SoundEvents::TURTLE_AMBIENT_LAND : Mob::getAmbientSound();
 }
 
 const SoundEvent* Turtle::getHurtSound(const DamageSource* source)

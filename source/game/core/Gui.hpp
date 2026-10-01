@@ -43,8 +43,8 @@ public:
     void setNowPlaying(const std::wstring& message);
     void displayClientMessage(int stringId, int playerIndex);
     void onDisconnected();
-    double getOpacity(int playerIndex, unsigned int messageIndex);
-    double getJukeboxOpacity(int playerIndex);
+    float getOpacity(int playerIndex, unsigned int messageIndex);
+    float getJukeboxOpacity(int playerIndex);
     void ShowCharacterDisplay(int playerIndex);
     Minecraft* GetMinecraft();
     void DrawString(const std::wstring& text, int x, int y, int color);

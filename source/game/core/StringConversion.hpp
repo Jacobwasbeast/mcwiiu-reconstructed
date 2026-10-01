@@ -14,6 +14,7 @@ std::wstring convStringToWstring(wchar_t* text);
 std::wstring convStringToWstring(const std::string& text);
 std::wstring convUtf8ToWstring(const char* text);
 std::string convWstringToString(const std::wstring& text);
+wchar_t* stringtowchararray(const std::string& text);
 
 template <typename T>
 std::wstring _toString(T value);

@@ -1163,7 +1163,7 @@ void MasterGameMode::PlacePlayers(std::vector<boost::shared_ptr<ServerPlayer> >*
             for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator playerIt = players->begin(); playerIt != players->end(); ++playerIt)
             {
                 boost::shared_ptr<ServerPlayer> player = *playerIt;
-                ServerPlayerGameMode* playerGameMode = player->GetGameMode();
+                ServerPlayerGameMode* playerGameMode = static_cast<ServerPlayerGameMode*>(player->GetGameMode());
                 if (atStart)
                     playerGameMode->setLastCheckpoint(0);
 
@@ -2488,7 +2488,7 @@ void MasterGameMode::OnDeath(boost::shared_ptr<ServerPlayer> player)
     }
 
     if (GetMiniGame()->GetId() == eMiniGameId_Glide)
-        player->GetGameMode()->ResetTempPoints();
+        static_cast<ServerPlayerGameMode*>(player->GetGameMode())->ResetTempPoints();
 
     BroadcastGameModePacket(GameModePacket::eMessage_DeathPosition,
                             GameModePacket::SoundPositionData(static_cast<float>(player->mX), static_cast<float>(player->mY),
@@ -2962,7 +2962,7 @@ void MasterGameMode::OnPrimaryTargetEnter(const boost::shared_ptr<Player>& playe
 
 void MasterGameMode::OnSecondaryTargetEnter(const boost::shared_ptr<Player>& player, TargetAreaRuleDefinition* target)
 {
-    ServerPlayerGameMode* playerGameMode = boost::static_pointer_cast<ServerPlayer>(player)->GetGameMode();
+    ServerPlayerGameMode* playerGameMode = static_cast<ServerPlayerGameMode*>(player->GetGameMode());
     if (playerGameMode == NULL)
         return;
 

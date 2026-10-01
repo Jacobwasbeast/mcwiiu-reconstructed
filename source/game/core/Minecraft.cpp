@@ -249,6 +249,7 @@
 #include "game/core/PIXNamedEvents.hpp"
 #include "game/core/StringConversion.hpp"
 #include "game/core/StringUtils.hpp"
+#include "game/core/Rarity.hpp"
 
 void MinecraftWorld_RunStaticCtors();
 
@@ -1942,7 +1943,7 @@ void Minecraft::tick(bool handleInput, bool lastTickOfFrame)
                     std::vector<HtmlString>* tooltipLines = mainHandItem->getTooltipLines(mPlayer, false);
                     if (!tooltipLines->empty())
                     {
-                        tooltipLines->at(0).mColour = static_cast<eMinecraftColour>(mainHandItem->getRarity());
+                        tooltipLines->at(0).mColour = mainHandItem->getRarity()->colour;
                         if (mainHandItem->hasCustomHoverName())
                             tooltipLines->at(0).mColour = eMinecraftColour_Color_RenamedItemTitle;
                     }

@@ -127,12 +127,12 @@ void ClientMasterGameMode::OnRoundWaitingToStart()
     mLocalRoundTimeStart = 0;
     mSubRoundLoadStartTime = 0x7fffffff;
 
-    if (Minecraft::InMiniGame(eMiniGameId_Glide, true))
+    Scoreboard* scoreboard = Minecraft::GetInstance()->mLevel->GetScoreboard();
+    if (Minecraft::InMiniGame(eMiniGameId_Glide, true) && scoreboard->mCurrentRound > 0)
     {
-        Minecraft* minecraft = Minecraft::GetInstance();
         for (int playerIndex = 0; playerIndex < 4; ++playerIndex)
         {
-            boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = minecraft->mLocalPlayers[playerIndex];
+            boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = Minecraft::GetInstance()->mLocalPlayers[playerIndex];
             if (localPlayer != NULL)
             {
                 localPlayer->SetWaitingForScoreboard(true);
@@ -198,109 +198,87 @@ void ClientMasterGameMode::OnRoundPlay()
 {
     mLocalRoundTimeStart = System::processTimeInMilliSecs();
 
-    Minecraft* minecraft = Minecraft::GetInstance();
-    MiniGameDef* miniGame = const_cast<MiniGameDef*>(GetMiniGame());
-    minecraft->mSoundEngine->FlagMusicEventStart();
+    MiniGameDef::SoundSpec sound;
+    const MiniGameDef* miniGame = GetMiniGame();
+    Minecraft::GetInstance()->mSoundEngine->FlagMusicEventStart();
 
-    if (miniGame == NULL)
-        return;
-
-    const int miniGameId = miniGame->GetId();
-    if (miniGameId != 0)
+    switch (GetMiniGame()->GetId())
     {
-        if (miniGameId != 1)
+    case 1:
+    case 4:
+        sound = miniGame->getSoundSpec(EGameModeSound_OnRoundPlay);
+        PlaySound(SoundEvents::MG01_GAME_START, sound.Volume(), 1.0f);
+        break;
+    case 2:
+        miniGame->SetDisabledEditActions(false);
+        static_cast<ConsoleSoundEngine*>(Minecraft::GetInstance()->mSoundEngine)->RemoveMusicVolumeLimit();
+        sound = miniGame->getSoundSpec(EGameModeSound_OnRoundPlay);
+        PlaySound(SoundEvents::MG02_GAME_START, sound.Volume(), 1.0f);
+        break;
+    case 3:
+        sound = miniGame->getSoundSpec(EGameModeSound_OnRoundPlay);
+        PlaySound(SoundEvents::MG03_COUNTDOWN_ZERO, sound.Volume(), 1.0f);
+
+        if (Minecraft::GetInstance()->GetGhostController() != NULL)
         {
-            if (miniGameId < 3)
+            for (int playerIndex = 0; playerIndex < 4; ++playerIndex)
             {
-                miniGame->SetDisabledEditActions(false);
-                static_cast<ConsoleSoundEngine*>(minecraft->mSoundEngine)->RemoveMusicVolumeLimit();
-                const MiniGameDef::SoundSpec sound = miniGame->getSoundSpec(EGameModeSound_OnRoundPlay);
-                PlaySound(SoundEvents::MG02_GAME_START, static_cast<float>(sound.Volume()), 1.0f);
-                return;
+                boost::shared_ptr<MultiplayerLocalPlayer> player =
+                    Minecraft::GetInstance()->mLocalPlayers[playerIndex];
+                if (player != NULL && !player->isSpectator())
+                    Minecraft::GetInstance()->GetGhostController()->startRecording(playerIndex, player->getPos(1.0f));
             }
-            if (miniGameId == 3)
-            {
-                const MiniGameDef::SoundSpec sound = miniGame->getSoundSpec(EGameModeSound_OnRoundPlay);
-                PlaySound(SoundEvents::MG03_COUNTDOWN_ZERO, static_cast<float>(sound.Volume()), 1.0f);
-
-                GhostController* ghosts = minecraft->GetGhostController();
-                if (ghosts != NULL)
-                {
-                    int ghostSlot = 0;
-                    for (int playerIndex = 0; playerIndex < 4; ++playerIndex)
-                    {
-                        boost::shared_ptr<MultiplayerLocalPlayer> localPlayer =
-                            minecraft->mLocalPlayers[playerIndex];
-                        boost::shared_ptr<Player> player = localPlayer;
-                        if (player != NULL && !player->isSpectator())
-                        {
-                            Vec3* pos = player->getPos(1.0f);
-                            ghosts->startRecording(ghostSlot, pos);
-                        }
-                        ++ghostSlot;
-                    }
-                    if (miniGame->GetHostOption(eCustomGameModeHostOption_TimeTrial) != 0)
-                        ghosts->startPlayback();
-                }
-                return;
-            }
-            if (miniGameId != 4)
-                return;
+            if (GetMiniGame()->GetHostOption(eCustomGameModeHostOption_TimeTrial) != 0)
+                Minecraft::GetInstance()->GetGhostController()->startPlayback();
         }
-
-        const MiniGameDef::SoundSpec sound = miniGame->getSoundSpec(EGameModeSound_OnRoundPlay);
-        PlaySound(SoundEvents::MG01_GAME_START, static_cast<float>(sound.Volume()), 1.0f);
+        break;
     }
 }
 
 void ClientMasterGameMode::OnRoundEnding()
 {
-    MiniGameDef* miniGame = const_cast<MiniGameDef*>(GetMiniGame());
-    if (miniGame != NULL)
+    MiniGameDef::SoundSpec sound;
+    const MiniGameDef* miniGame = GetMiniGame();
+    switch (GetMiniGame()->GetId())
     {
-        const int miniGameId = miniGame->GetId();
-        if (miniGameId == 1 || miniGameId == 4)
-        {
-            const MiniGameDef::SoundSpec sound = miniGame->getSoundSpec(EGameModeSound_OnRoundEnding);
-            PlaySound(SoundEvents::MG01_CELEBRATION, static_cast<float>(sound.Volume()), 1.0f);
-        }
-        else if (miniGameId == 2)
-        {
-            miniGame->SetDisabledEditActions(false);
-            const MiniGameDef::SoundSpec sound = miniGame->getSoundSpec(EGameModeSound_OnRoundEnding);
-            PlaySound(SoundEvents::MG02_GAME_END, static_cast<float>(sound.Volume()), 1.0f);
-        }
+    case 1:
+    case 4:
+        sound = miniGame->getSoundSpec(EGameModeSound_OnRoundEnding);
+        PlaySound(SoundEvents::MG01_CELEBRATION, sound.Volume(), 1.0f);
+        break;
+    case 2:
+        miniGame->SetDisabledEditActions(false);
+        sound = miniGame->getSoundSpec(EGameModeSound_OnRoundEnding);
+        PlaySound(SoundEvents::MG02_GAME_END, sound.Volume(), 1.0f);
+        break;
     }
 
-    Minecraft* minecraft = Minecraft::GetInstance();
-    ClientScoreboard* scoreboard = minecraft->mLevel->GetClientScoreboard();
+    ClientScoreboard* scoreboard = Minecraft::GetInstance()->mLevel->GetClientScoreboard();
     for (int playerIndex = 0; playerIndex < 4; ++playerIndex)
     {
-        boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = minecraft->mLocalPlayers[playerIndex];
-        boost::shared_ptr<Player> player = localPlayer;
-        if (!player)
-            continue;
-
-        const StatsUID suid = player->getSUID();
-        if (!scoreboard->IsWinner(suid, -1))
+        boost::shared_ptr<MultiplayerLocalPlayer> player = Minecraft::GetInstance()->mLocalPlayers[playerIndex];
+        if (player != NULL)
         {
-            gConsoleUIController.CloseUIScenes(playerIndex, true);
-            if (Minecraft::InMiniGame(eMiniGameId_Battle, true))
-                ++mStrings[player->getDisplayName()];
-        }
-        else if (Minecraft::InMiniGame(eMiniGameId_Battle, true) &&
-                 CGameNetworkManager::sInstance.IsInPublicJoinableGame())
-        {
-            player->awardStat(GenericStats::theStudent(), GenericStats::param_theStudent());
-            const unsigned int winCount = ++mStrings[player->getDisplayName()];
-            if (winCount > 2)
-                player->awardStat(GenericStats::hasBecomeTheMaster(),
-                                  GenericStats::param_hasBecomeTheMaster());
+            const StatsUID suid = player->getSUID();
+            if (!scoreboard->IsWinner(suid, -1))
+            {
+                gConsoleUIController.CloseUIScenes(playerIndex, true);
+                if (Minecraft::InMiniGame(eMiniGameId_Battle, true))
+                    mStrings[player->getName()] = 0;
+            }
+            else if (Minecraft::InMiniGame(eMiniGameId_Battle, true) &&
+                     CGameNetworkManager::sInstance.IsInPublicJoinableGame())
+            {
+                player->awardStat(GenericStats::theStudent(), GenericStats::param_theStudent());
+                const unsigned int winCount = ++mStrings[player->getName()];
+                if (winCount > 2)
+                    player->awardStat(GenericStats::hasBecomeTheMaster(),
+                                      GenericStats::param_hasBecomeTheMaster());
+            }
         }
     }
 
-    if (telemetryManagerInstance != NULL)
-        telemetryManagerInstance->RecordGameModeRoundFinished();
+    telemetryManagerInstance->RecordGameModeRoundFinished();
 }
 
 void ClientMasterGameMode::OnRoundEndingToLobby()
@@ -424,8 +402,8 @@ void ClientMasterGameMode::AddMapToPlaylist(int uniqueId, const std::wstring& na
 
 void ClientMasterGameMode::SetMapVote(int playerIndex, int vote, bool remove)
 {
-    Voteable* voteable = mVoteables->getVoteable(Voteables::eVoteable_Map);
-    voteable->setVoteAndSync(playerIndex, vote, remove ? -1 : 1);
+    boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = Minecraft::GetInstance()->mLocalPlayers[playerIndex];
+    mVoteables->getVoteable(Voteables::eVoteable_Map)->setVoteAndSync(localPlayer->mPlayerIndex, vote, remove ? -1 : 1);
 }
 
 unsigned int ClientMasterGameMode::GetMapVote(int playerIndex, int vote)
@@ -518,26 +496,22 @@ void ClientMasterGameMode::SetKickVote(int playerIndex, unsigned char colour, bo
 
 unsigned int ClientMasterGameMode::GetKickVote(int playerIndex, unsigned char colour)
 {
-    const unsigned int voteableId = g_pApp->GetPlayerColour(colour);
-    Voteable* voteable = mVoteables->getVoteable(Voteables::eVoteable_Kick);
-    return static_cast<unsigned int>(voteable->getVote(playerIndex, voteableId) >= 0);
+    boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = Minecraft::GetInstance()->mLocalPlayers[playerIndex];
+    return static_cast<unsigned int>(mVoteables->getVoteable(Voteables::eVoteable_Kick)->getVote(localPlayer->mPlayerIndex, gApp.GetPlayerColour(colour)) >= 0);
 }
 
 void ClientMasterGameMode::SetBuildOffScoringVote(int playerIndex, int vote, int value)
 {
-    Minecraft* minecraft = Minecraft::GetInstance();
-    boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = minecraft->mLocalPlayers[playerIndex];
-    Voteable* voteable = mVoteables->getVoteable(Voteables::eVoteable_BuildOffScoring);
-    voteable->setVoteAndSync(playerIndex, vote, static_cast<char>(value));
+    boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = Minecraft::GetInstance()->mLocalPlayers[playerIndex];
+    mVoteables->getVoteable(Voteables::eVoteable_BuildOffScoring)->setVoteAndSync(localPlayer->mPlayerIndex, vote, static_cast<char>(value));
 }
 
 unsigned int ClientMasterGameMode::GetBuildOffTeamIndexToScore(int playerIndex)
 {
-    boost::shared_ptr<Player> player = Minecraft::GetInstance()->GetPlayerByPlayerIndex(playerIndex);
+    boost::shared_ptr<MultiplayerLocalPlayer> player = Minecraft::GetInstance()->mLocalPlayers[playerIndex];
     if (player != NULL)
     {
-        Vec3* position = player->getPos(1.0f);
-        Team* team = GetTeamAtPosition(position->x, position->y, position->z, 6.0);
+        Team* team = GetTeamAtPosition(player->mX, player->mY, player->mZ, 6.0);
         if (team != NULL && team != player->getTeam())
             return team->getTeamIndex();
     }
@@ -553,8 +527,8 @@ unsigned int ClientMasterGameMode::GetBuildOffScoringVote(int playerIndex, int v
 
 void ClientMasterGameMode::SetBuildOffThemeVote(int playerIndex, int vote, int value)
 {
-    Voteable* voteable = mVoteables->getVoteable(Voteables::eVoteable_BuildOffTheme);
-    voteable->setVoteAndSync(playerIndex, vote, 1);
+    boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = Minecraft::GetInstance()->mLocalPlayers[playerIndex];
+    mVoteables->getVoteable(Voteables::eVoteable_BuildOffTheme)->setVoteAndSync(localPlayer->mPlayerIndex, vote, 1);
 }
 
 unsigned int ClientMasterGameMode::GetBuildOffThemeVote(int playerIndex)
@@ -638,21 +612,19 @@ void ClientMasterGameMode::SetNextLevelGenerationOptions(LevelGenerationOptions*
 
 void ClientMasterGameMode::OnShowdown()
 {
-    const MiniGameDef* miniGame = GetMiniGame();
-    if (miniGame == NULL)
-        return;
-
-    const int id = miniGame->GetId();
-    const SoundEvent* event = NULL;
-    if (id == 1)
-        event = SoundEvents::MG01_SHOWDOWN;
-    else if (id == 2 || id == 4)
-        event = SoundEvents::MG02_SHOWDOWN;
-    else
-        return;
-
-    const MiniGameDef::SoundSpec sound = miniGame->getSoundSpec(EGameModeSound_OnShowdown);
-    PlaySound(event, static_cast<float>(sound.Volume()), 1.0f);
+    MiniGameDef::SoundSpec sound;
+    switch (GetMiniGame()->GetId())
+    {
+    case 1:
+        sound = Minecraft::GetInstance()->GetMiniGame()->getSoundSpec(EGameModeSound_OnShowdown);
+        PlaySound(SoundEvents::MG01_SHOWDOWN, sound.Volume(), 1.0f);
+        break;
+    case 2:
+    case 4:
+        sound = Minecraft::GetInstance()->GetMiniGame()->getSoundSpec(EGameModeSound_OnShowdown);
+        PlaySound(SoundEvents::MG02_SHOWDOWN, sound.Volume(), 1.0f);
+        break;
+    }
 }
 void ClientMasterGameMode::OnChestRefill()
 {
@@ -662,33 +634,31 @@ void ClientMasterGameMode::OnChestRefill()
 }
 void ClientMasterGameMode::OnDeath(const Vec3* position)
 {
-    const MiniGameDef* miniGame = GetMiniGame();
-    if (miniGame == NULL)
-        return;
-
     const float pitchStep =
         static_cast<float>(8 - Minecraft::GetInstance()->mLevel->GetClientScoreboard()->GetActivePlayerCount(
                                    eMiniGameId_Any)) *
         0.125f * 0.25f;
-    const MiniGameDef::SoundSpec sound = miniGame->getSoundSpec(EGameModeSound_OnDeath);
-
-    switch (miniGame->GetId())
+    MiniGameDef::SoundSpec sound;
+    const MiniGameDef* miniGame = GetMiniGame();
+    switch (GetMiniGame()->GetId())
     {
     case 1:
-        PlaySound(SoundEvents::MG01_DEATH, static_cast<float>(sound.Volume()) - pitchStep,
-                  1.0f - pitchStep);
+        sound = miniGame->getSoundSpec(EGameModeSound_OnDeath);
+        PlaySound(SoundEvents::MG01_DEATH, sound.Volume() - pitchStep, 1.0f - pitchStep);
         break;
     case 2:
         miniGame->SetDisabledEditActions(false);
-        PlaySound(SoundEvents::MG02_DEATH, static_cast<float>(sound.Volume()), 1.0f);
+        sound = miniGame->getSoundSpec(EGameModeSound_OnDeath);
+        PlaySound(SoundEvents::MG02_DEATH, sound.Volume(), 1.0f);
         break;
     case 3:
         if (position != NULL)
         {
+            sound = miniGame->getSoundSpec(EGameModeSound_OnDeath);
             Minecraft::GetInstance()->mSoundEngine->play(
                 SoundEvents::MG03_DEATH, static_cast<float>(position->x),
                 static_cast<float>(position->y), static_cast<float>(position->z),
-                static_cast<float>(sound.Volume()), 1.0f, NULL);
+                sound.Volume(), 1.0f, NULL);
         }
         break;
     }
@@ -721,7 +691,8 @@ void ClientMasterGameMode::DoRoundStartTickSound(int tick, const MiniGameDef::So
 
 void ClientMasterGameMode::OnRoundStartTimerTick(int tick)
 {
-    if (!Minecraft::InMiniGame(eMiniGameId_Glide, true) || tick != 3)
+    Scoreboard* scoreboard = Minecraft::GetInstance()->mLevel->GetScoreboard();
+    if (!Minecraft::InMiniGame(eMiniGameId_Glide, true) || scoreboard->mCurrentRound < 0 || tick != 3)
         return;
 
     for (int playerIndex = 0; playerIndex < 4; ++playerIndex)
@@ -874,47 +845,50 @@ bool ClientMasterGameMode::CheckLocalChunksLoaded()
 }
 void ClientMasterGameMode::FireGameRoundStats()
 {
-    if (!Minecraft::InMiniGame(eMiniGameId_Glide, true))
-        return;
-    LevelGenerationOptions* options = g_pApp != NULL ? g_pApp->getLevelGenerationOptions() : NULL;
-    if (options == NULL)
-        options = mNextLevelGenOptions;
-    const MiniGameDef* current = GetMiniGame();
-    if (current == NULL)
-        return;
-    MiniGameDef* definition = MiniGameDef::GetCustomGameModeById(
-        current->GetId(), true);
-    if (definition == NULL || !definition->IsCRCValid() || options == NULL || !options->isCRCValid())
-        return;
-
-    ClientScoreboard* scoreboard = Minecraft::GetInstance()->mLevel->GetClientScoreboard();
-    GhostController* ghosts = Minecraft::GetInstance()->GetGhostController();
-    if (scoreboard == NULL || ghosts == NULL)
-        return;
-    for (int slot = 0; slot < 4; ++slot)
+    if (Minecraft::InMiniGame(eMiniGameId_Glide, true))
     {
-        boost::shared_ptr<Player> player = Minecraft::GetInstance()->GetPlayerByPlayerIndex(slot);
-        if (!player)
-            continue;
-        StatsUID uid = player->getSUID();
-        const int uniqueId = static_cast<int>(options->getUniqueId());
-        if (!ghosts->mRecordingActive[slot] || player->isSpectator())
-            continue;
-        unsigned int lifespan = static_cast<unsigned int>(scoreboard->GetLifeSpan(uid, -1));
-        int recorded = 0;
-        if (definition->ArePointsActive())
+        LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
+        if (mCurrentLevelGenOptions != NULL && options == NULL)
+            options = mCurrentLevelGenOptions;
+
+        MiniGameDef* definition = MiniGameDef::GetCustomGameModeById(GetMiniGame()->GetId(), true);
+        if (definition->IsCRCValid() && options != NULL && options->isCRCValid())
         {
-            int points = scoreboard->GetPoints(uid, -1);
-            recorded = ghosts->RecordScore(slot, uniqueId, static_cast<unsigned short>(points), lifespan);
+            ClientScoreboard* scoreboard = Minecraft::GetInstance()->mLevel->GetClientScoreboard();
+            GetMiniGame()->GetGameVariant();
+            for (int slot = 0; slot < 4; ++slot)
+            {
+                boost::shared_ptr<MultiplayerLocalPlayer> player = Minecraft::GetInstance()->mLocalPlayers[slot];
+                if (player != NULL && !player->isSpectator())
+                {
+                    GhostController* ghosts = Minecraft::GetInstance()->GetGhostController();
+                    const MiniGameDef* miniGame = GetMiniGame();
+                    if (ghosts != NULL)
+                    {
+                        if (scoreboard->GetEndZoneEntered(player->getSUID(), -1) && ghosts->mRecordingPending[slot])
+                        {
+                            int recorded;
+                            if (miniGame->ArePointsActive())
+                            {
+                                recorded = ghosts->RecordScore(slot, options->getUniqueId(),
+                                                               scoreboard->GetPoints(player->getSUID(), -1),
+                                                               scoreboard->GetLifeSpan(player->getSUID(), -1));
+                            }
+                            else
+                            {
+                                recorded = ghosts->RecordTime(slot, options->getUniqueId(),
+                                                              scoreboard->GetLifeSpan(player->getSUID(), -1));
+                            }
+                            if (recorded != 0)
+                                scoreboard->SetPersonalBest(player->getSUID(), -1);
+                        }
+                    }
+                }
+            }
         }
-        else
-        {
-            recorded = ghosts->RecordTime(slot, uniqueId, lifespan);
-        }
-        if (recorded != 0)
-            scoreboard->SetPersonalBest(uid, -1);
     }
 }
+
 void ClientMasterGameMode::updateProgressRenderer()
 {
     ProgressRenderer* renderer = Minecraft::GetInstance()->mProgressRenderer;
@@ -970,14 +944,13 @@ void ClientMasterGameMode::Tick()
 {
     CommonMasterGameMode::Tick();
 
-    if (mNewLevelDataPending && mNextLevelGenOptions != NULL &&
-        mNextLevelGenOptions->hasBaseSaveData())
+    if (mNextLevelGenOptions != NULL && mNewLevelDataPending && mNextLevelGenOptions->hasBaseSaveData())
     {
-        Minecraft* minecraft = Minecraft::GetInstance();
-        MultiPlayerLevel* level = static_cast<MultiPlayerLevel*>(minecraft->getLevel(0));
-        level->BlockUntilSafeToChangeSaveData(false);
-        level->refreshFromLevelGen();
+        Minecraft::GetInstance()->getLevel(0)->BlockUntilSafeToChangeSaveData(false);
+        Minecraft::GetInstance()->getLevel(0)->refreshFromLevelGen();
         gRegionFileCache._clear();
+        mCurrentLevelGenOptions = mNextLevelGenOptions;
+        mNextLevelGenOptions = NULL;
         mNewLevelDataPending = false;
     }
 
@@ -988,45 +961,33 @@ void ClientMasterGameMode::Tick()
     {
     case eGameModeState_RoundPlaying:
     {
-        Minecraft* minecraft = Minecraft::GetInstance();
-        CheckProgress(minecraft->mLevel->mPlayers);
-        CheckCheckpoints(minecraft->mLevel->mPlayers);
+        CheckProgress(Minecraft::GetInstance()->getLevel(0)->mPlayers);
+        CheckCheckpoints(Minecraft::GetInstance()->getLevel(0)->mPlayers);
 
-        GhostController* ghosts = minecraft->GetGhostController();
+        GhostController* ghosts = Minecraft::GetInstance()->GetGhostController();
         if (ghosts != NULL)
         {
             const std::vector<boost::shared_ptr<Player> > ghostPlayers = ghosts->getPlayers();
             CheckCheckpoints(ghostPlayers);
             CheckProgress(ghostPlayers);
 
-            const std::vector<boost::shared_ptr<GhostPlayer> > ghostEntities =
-                ghosts->getGhostPlayers();
-            for (std::vector<boost::shared_ptr<GhostPlayer> >::const_iterator it =
-                     ghostEntities.begin();
+            const std::vector<boost::shared_ptr<GhostPlayer> > ghostEntities = ghosts->getGhostPlayers();
+            for (std::vector<boost::shared_ptr<GhostPlayer> >::const_iterator it = ghostEntities.begin();
                  it != ghostEntities.end(); ++it)
             {
-                const boost::shared_ptr<GhostPlayer>& ghost = *it;
-                if (!ghost)
-                    continue;
+                boost::shared_ptr<GhostPlayer> ghost = *it;
                 ghost->mXOld = ghost->mX;
                 ghost->mYOld = ghost->mY;
                 ghost->mZOld = ghost->mZ;
             }
         }
-        FireGameRoundStats();
-        break;
     }
     case eGameModeState_PostRound:
-        FireGameRoundStats();
-        break;
     case eGameModeState_RoundEnding:
-    {
         FireGameRoundStats();
-        GhostController* ghosts = Minecraft::GetInstance()->GetGhostController();
-        if (ghosts != NULL)
-            ghosts->stopPlayback();
+        if (Minecraft::GetInstance()->GetGhostController() != NULL && mGameModeState == eGameModeState_RoundEnding)
+            Minecraft::GetInstance()->GetGhostController()->stopPlayback();
         break;
-    }
     case eGameModeState_LoadingSubRound:
         updateProgressRenderer();
         break;
@@ -1077,31 +1038,23 @@ void ClientMasterGameMode::dropAllTransitions()
 
 void ClientMasterGameMode::onChangeCustomGameMode()
 {
-    if (g_pApp == NULL)
+    if (gApp.getLevelGenerationOptions() == NULL)
         return;
 
-    LevelGenerationOptions* options = g_pApp->getLevelGenerationOptions();
-    if (options == NULL)
-        return;
-
-    LevelRuleset* rules = options->getRequiredGameRules();
-    if (rules == NULL)
-        return;
-
-    std::vector<CheckpointRuleDefinition*>* checkpoints = rules->getCheckpoints();
-    if (checkpoints != NULL)
-        setCheckpoints(*checkpoints);
+    LevelRuleset* rules = gApp.getLevelGenerationOptions()->getRequiredGameRules();
+    setCheckpoints(*rules->getCheckpoints());
 
     std::vector<TargetAreaRuleDefinition*> targetAreas;
     rules->getTargetAreas(&targetAreas);
-    mActiveChunkAreas.clear();
+    mPrimaryTargetAreas.clear();
     for (std::vector<TargetAreaRuleDefinition*>::const_iterator it = targetAreas.begin();
          it != targetAreas.end(); ++it)
     {
-        if (*it != NULL && (*it)->mPrimary)
-            mActiveChunkAreas.push_back((*it)->getArea());
+        if ((*it)->mPrimary)
+            mPrimaryTargetAreas.push_back((*it)->getArea());
     }
 }
+
 void ClientMasterGameMode::SetServerIsWaitingOnChunkLoading() { mServerIsWaitingOnChunkLoading = true; }
 bool ClientMasterGameMode::ServerIsWaitingOnUsLoading() { return mServerIsWaitingOnChunkLoading; }
 void ClientMasterGameMode::RecievedBRUP() { if (mBRUPsRemaining > 0) --mBRUPsRemaining; }
@@ -1136,43 +1089,32 @@ void ClientMasterGameMode::ResetMapDistances() { CommonMasterGameMode::ResetMapD
 int ClientMasterGameMode::convertCheckpointIDToSpawnableID(int checkpoint)
 {
     int spawnableIndex = 0;
-    int lastSequenceId = -1;
 
-    if (g_pApp == NULL)
-        return spawnableIndex;
-
-    LevelGenerationOptions* options = g_pApp->getLevelGenerationOptions();
-    if (options == NULL)
-        return spawnableIndex;
-
-    LevelRuleset* rules = options->getRequiredGameRules();
-    if (rules == NULL)
-        return spawnableIndex;
-
-    std::vector<CheckpointRuleDefinition*>* checkpoints = rules->getCheckpoints();
-    if (checkpoints == NULL)
-        return spawnableIndex;
-
-    int checkpointIndex = 0;
-    for (std::vector<CheckpointRuleDefinition*>::const_iterator it = checkpoints->begin();
-         it != checkpoints->end(); ++it, ++checkpointIndex)
+    LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
+    if (options != NULL)
     {
-        CheckpointRuleDefinition* rule = *it;
-        if (rule != NULL && rule->hasSpawnPoint())
+        LevelRuleset* rules = options->getRequiredGameRules();
+        std::vector<CheckpointRuleDefinition*> checkpoints = *rules->getCheckpoints();
+        int lastSequenceId = -1;
+        int checkpointIndex = 0;
+        for (std::vector<CheckpointRuleDefinition*>::const_iterator it = checkpoints.begin();
+             it != checkpoints.end(); ++it, ++checkpointIndex)
         {
-            if (checkpointIndex == checkpoint)
+            if ((*it)->hasSpawnPoint())
             {
-                const int sequenceId = rule->getSequenceID();
-                if (lastSequenceId == sequenceId)
-                    return spawnableIndex - 2;
-                break;
-            }
+                if (checkpointIndex == checkpoint)
+                {
+                    --spawnableIndex;
+                    if (lastSequenceId == (*it)->getSequenceID())
+                        --spawnableIndex;
+                    break;
+                }
 
-            const int sequenceId = rule->getSequenceID();
-            if (lastSequenceId != sequenceId)
-            {
-                ++spawnableIndex;
-                lastSequenceId = sequenceId;
+                if (lastSequenceId != (*it)->getSequenceID())
+                {
+                    ++spawnableIndex;
+                    lastSequenceId = (*it)->getSequenceID();
+                }
             }
         }
     }
