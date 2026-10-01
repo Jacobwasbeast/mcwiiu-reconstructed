@@ -36,7 +36,3 @@ bool PushableBySelector::apply(boost::shared_ptr<Entity> entity) const
 
     return true;
 }
-
-PushableBySelector::~PushableBySelector()
-{
-}
