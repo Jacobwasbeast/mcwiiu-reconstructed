@@ -48,10 +48,6 @@ GameModePacket::FollowData::FollowData(bool follow, bool teleport)
 {
 }
 
-GameModePacket::FollowData::~FollowData()
-{
-}
-
 void GameModePacket::FollowData::ReadPacket(boost::shared_ptr<GameModePacket> packet)
 {
     follow = packet->bools[0];
@@ -101,10 +97,6 @@ GameModePacket::TransitionToRoundData::TransitionToRoundData(
       round(round),
       seed(seed),
       mapSize(mapSize)
-{
-}
-
-GameModePacket::TransitionToRoundData::~TransitionToRoundData()
 {
 }
 
@@ -198,10 +190,6 @@ GameModePacket::ChestRefill::ChestRefill()
 
 GameModePacket::ChestRefill::ChestRefill(std::vector<BlockPos> positions)
     : positions(positions)
-{
-}
-
-GameModePacket::ChestRefill::~ChestRefill()
 {
 }
 

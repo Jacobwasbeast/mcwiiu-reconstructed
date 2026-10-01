@@ -15,7 +15,7 @@ class ClientboundMoveEntityPacket : public Packet, public boost::enable_shared_f
 public:
     ClientboundMoveEntityPacket();
     explicit ClientboundMoveEntityPacket(int entityId);
-    virtual ~ClientboundMoveEntityPacket();
+    virtual ~ClientboundMoveEntityPacket() {}
     virtual int getPacketId();
     virtual void read(DataInputStream* input);
     virtual void write(DataOutputStream* output);

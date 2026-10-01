@@ -3694,8 +3694,8 @@ void ClientPacketListener::handleCustomPayload(boost::shared_ptr<ClientboundCust
         return;
     }
     UIScene_TradingMenu* tradingMenu = static_cast<UIScene_TradingMenu*>(scene);
-    boost::shared_ptr<MerchantMenu> menu = tradingMenu->getMerchant();
-    if (menu == 0)
+    boost::shared_ptr<Merchant> merchant = tradingMenu->getMerchant();
+    if (merchant == 0)
     {
         byteStream.mBuffer.data = NULL;
         byteStream.mBuffer.length = 0;
@@ -3704,7 +3704,6 @@ void ClientPacketListener::handleCustomPayload(boost::shared_ptr<ClientboundCust
         byteStream.mPosition = 0;
         return;
     }
-    boost::shared_ptr<Merchant> merchant = menu->getMerchant();
     boost::shared_ptr<ClientSideMerchant> clientMerchant =
         boost::dynamic_pointer_cast<ClientSideMerchant>(merchant);
     if (clientMerchant == 0)

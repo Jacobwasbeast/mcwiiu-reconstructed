@@ -100,7 +100,7 @@ public:
     public:
         FollowData();
         FollowData(bool follow, bool teleport);
-        virtual ~FollowData();
+        virtual ~FollowData() {}
         virtual void ReadPacket(boost::shared_ptr<GameModePacket> packet);
         virtual void WritePacket(boost::shared_ptr<GameModePacket> packet) const;
 
@@ -129,7 +129,7 @@ public:
         TransitionToRoundData();
         TransitionToRoundData(int round, int seed, int mapSize,
                               int transition, int level, int x, int y);
-        virtual ~TransitionToRoundData();
+        virtual ~TransitionToRoundData() {}
         virtual void ReadPacket(boost::shared_ptr<GameModePacket> packet);
         virtual void WritePacket(boost::shared_ptr<GameModePacket> packet) const;
 
@@ -180,7 +180,7 @@ public:
     public:
         ChestRefill();
         ChestRefill(std::vector<BlockPos> positions);
-        virtual ~ChestRefill();
+        virtual ~ChestRefill() {}
         virtual void ReadPacket(boost::shared_ptr<GameModePacket> packet);
         virtual void WritePacket(boost::shared_ptr<GameModePacket> packet) const;
 

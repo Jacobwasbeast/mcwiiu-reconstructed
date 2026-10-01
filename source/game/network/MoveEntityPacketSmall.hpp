@@ -25,7 +25,7 @@ class MoveEntityPacketSmall : public Packet, public boost::enable_shared_from_th
 public:
     MoveEntityPacketSmall();
     explicit MoveEntityPacketSmall(int entityId);
-    virtual ~MoveEntityPacketSmall();
+    virtual ~MoveEntityPacketSmall() {}
     virtual int getPacketId();
     virtual void read(DataInputStream* input);
     virtual void write(DataOutputStream* output);
