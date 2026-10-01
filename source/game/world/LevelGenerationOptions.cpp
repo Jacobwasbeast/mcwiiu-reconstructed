@@ -778,7 +778,7 @@ int LevelGenerationOptions::getDayTime()
     return mDayTime;
 }
 
-unsigned int LevelGenerationOptions::GetMapSizeFromUniqueId(int uniqueId)
+short LevelGenerationOptions::GetMapSizeFromUniqueId(int uniqueId)
 {
     return uniqueId >> 16;
 }

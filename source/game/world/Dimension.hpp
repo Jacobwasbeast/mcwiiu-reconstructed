@@ -37,7 +37,7 @@ public:
     virtual float* getSunriseColor(float celestialAngle, float timeOfDay);
     virtual Vec3* getFogColor(float celestialAngle, float timeOfDay);
     virtual bool mayRespawn() const;
-    virtual double getCloudHeight();
+    virtual float getCloudHeight();
     virtual bool hasGround();
     virtual BlockPos* getSpawnPos() const;
     virtual int getSpawnYPosition();

@@ -1,6 +1,7 @@
 #include "game/world/WorldBorder.hpp"
 
 #include <algorithm>
+#include "game/core/BorderStatus.hpp"
 #include "game/core/System.hpp"
 #include "game/network/BorderChangeListener.hpp"
 #include "game/util/AABB.hpp"
@@ -14,11 +15,15 @@ WorldBorder::WorldBorder(Level*)
 {
 }
 
-int WorldBorder::getStatus()
+BorderStatus* WorldBorder::GROWING = new BorderStatus(0x40ff80);
+BorderStatus* WorldBorder::SHRINKING = new BorderStatus(0xff3030);
+BorderStatus* WorldBorder::STATIONARY = new BorderStatus(0x20a0ff);
+
+BorderStatus* WorldBorder::getStatus()
 {
-    if (m_lerpTarget < m_size) return 1;
-    if (m_lerpTarget > m_size) return 2;
-    return 0;
+    if (m_lerpTarget < m_size) return SHRINKING;
+    if (m_lerpTarget > m_size) return GROWING;
+    return STATIONARY;
 }
 
 std::vector<BorderChangeListener*>& WorldBorder::getListeners() { return m_listeners; }
@@ -38,17 +43,50 @@ void WorldBorder::setSize(double size)
 
 double WorldBorder::getSize()
 {
-    if (getStatus() == 0) return m_size;
-    long long now = System::processTimeInMilliSecs();
-    if (now >= m_lerpEnd) { setSize(m_lerpTarget); return m_size; }
-    double t = static_cast<double>(now - m_lerpStart) / static_cast<double>(m_lerpEnd - m_lerpStart);
-    return m_size + (m_lerpTarget - m_size) * t;
+    double size;
+    if (getStatus() != STATIONARY)
+    {
+        long long now = System::processTimeInMilliSecs();
+        float progress = static_cast<float>(now - m_lerpStart) / static_cast<float>(m_lerpEnd - m_lerpStart);
+        if (progress < 1.0) return m_size + (m_lerpTarget - m_size) * progress;
+        setSize(m_lerpTarget);
+        size = m_size;
+    }
+    else
+    {
+        size = m_size;
+    }
+    return size;
 }
 
-double WorldBorder::getMinX() { return std::max(-static_cast<double>(m_absoluteMaxSize), m_centerX - getSize() * 0.5); }
-double WorldBorder::getMaxX() { return std::min(static_cast<double>(m_absoluteMaxSize), m_centerX + getSize() * 0.5); }
-double WorldBorder::getMinZ() { return std::max(-static_cast<double>(m_absoluteMaxSize), m_centerZ - getSize() * 0.5); }
-double WorldBorder::getMaxZ() { return std::min(static_cast<double>(m_absoluteMaxSize), m_centerZ + getSize() * 0.5); }
+double WorldBorder::getMinX()
+{
+    double lowest = getCenterX() - getSize() * 0.5;
+    double limit = static_cast<double>(-m_absoluteMaxSize);
+    if (lowest < limit) lowest = limit;
+    return lowest;
+}
+double WorldBorder::getMaxX()
+{
+    double highest = getCenterX() + getSize() * 0.5;
+    double limit = static_cast<double>(m_absoluteMaxSize);
+    if (limit < highest) highest = limit;
+    return highest;
+}
+double WorldBorder::getMinZ()
+{
+    double lowest = getCenterZ() - getSize() * 0.5;
+    double limit = static_cast<double>(-m_absoluteMaxSize);
+    if (lowest < limit) lowest = limit;
+    return lowest;
+}
+double WorldBorder::getMaxZ()
+{
+    double highest = getCenterZ() + getSize() * 0.5;
+    double limit = static_cast<double>(m_absoluteMaxSize);
+    if (limit < highest) highest = limit;
+    return highest;
+}
 
 bool WorldBorder::isWithinBounds(const BlockPos& pos)
 {
@@ -77,49 +115,55 @@ double WorldBorder::getCenterZ() { return m_centerZ; }
 void WorldBorder::setCenter(double x, double z)
 {
     m_centerX = x; m_centerZ = z;
-    for (std::vector<BorderChangeListener*>::iterator it = m_listeners.begin(); it != m_listeners.end(); ++it)
-        if (*it != NULL) (*it)->onBorderCenterSet(this, x, z);
+    std::vector<BorderChangeListener*>& listeners = getListeners();
+    for (std::vector<BorderChangeListener*>::iterator it = listeners.begin(); it != listeners.end(); ++it)
+        (*it)->onBorderCenterSet(this, x, z);
 }
 
-long long WorldBorder::getLerpRemainingTime() { return getStatus() == 0 ? 0 : m_lerpEnd - static_cast<long long>(System::processTimeInMilliSecs()); }
+long long WorldBorder::getLerpRemainingTime() { return getStatus() == STATIONARY ? 0 : m_lerpEnd - static_cast<long long>(System::processTimeInMilliSecs()); }
 double WorldBorder::getLerpTarget() { return m_lerpTarget; }
 
 void WorldBorder::lerpSizeBetween(double oldSize, double newSize, long long timeMs)
 {
     m_size = oldSize; m_lerpTarget = newSize; m_lerpStart = System::processTimeInMilliSecs(); m_lerpEnd = m_lerpStart + timeMs;
-    for (std::vector<BorderChangeListener*>::iterator it = m_listeners.begin(); it != m_listeners.end(); ++it)
-        if (*it != NULL) (*it)->onBorderSizeLerping(this, oldSize, newSize, timeMs);
+    std::vector<BorderChangeListener*>& listeners = getListeners();
+    for (std::vector<BorderChangeListener*>::iterator it = listeners.begin(); it != listeners.end(); ++it)
+        (*it)->onBorderSizeLerping(this, oldSize, newSize, timeMs);
 }
 
-void WorldBorder::addListener(BorderChangeListener* listener) { if (listener != NULL) m_listeners.push_back(listener); }
+void WorldBorder::addListener(BorderChangeListener* listener) { m_listeners.push_back(listener); }
 void WorldBorder::setAbsoluteMaxSize(int size) { m_absoluteMaxSize = size; }
 int WorldBorder::getAbsoluteMaxSize() { return m_absoluteMaxSize; }
 double WorldBorder::getDamageSafeZone() { return m_damageSafeZone; }
 void WorldBorder::setDamageSafeZone(double distance)
 {
     m_damageSafeZone = distance;
-    for (std::vector<BorderChangeListener*>::iterator it = m_listeners.begin(); it != m_listeners.end(); ++it)
+    std::vector<BorderChangeListener*>& listeners = getListeners();
+    for (std::vector<BorderChangeListener*>::iterator it = listeners.begin(); it != listeners.end(); ++it)
         (*it)->onBorderSetDamageSafeZOne(this, distance);
 }
 double WorldBorder::getDamagePerBlock() { return m_damagePerBlock; }
 void WorldBorder::setDamagePerBlock(double damage)
 {
     m_damagePerBlock = damage;
-    for (std::vector<BorderChangeListener*>::iterator it = m_listeners.begin(); it != m_listeners.end(); ++it)
+    std::vector<BorderChangeListener*>& listeners = getListeners();
+    for (std::vector<BorderChangeListener*>::iterator it = listeners.begin(); it != listeners.end(); ++it)
         (*it)->onBorderSetDamagePerBlock(this, damage);
 }
 int WorldBorder::getWarningTime() { return m_warningTime; }
 void WorldBorder::setWarningTime(int time)
 {
     m_warningTime = time;
-    for (std::vector<BorderChangeListener*>::iterator it = m_listeners.begin(); it != m_listeners.end(); ++it)
+    std::vector<BorderChangeListener*>& listeners = getListeners();
+    for (std::vector<BorderChangeListener*>::iterator it = listeners.begin(); it != listeners.end(); ++it)
         (*it)->onBorderSetWarningTime(this, time);
 }
 int WorldBorder::getWarningBlocks() { return m_warningBlocks; }
 void WorldBorder::setWarningBlocks(int blocks)
 {
     m_warningBlocks = blocks;
-    for (std::vector<BorderChangeListener*>::iterator it = m_listeners.begin(); it != m_listeners.end(); ++it)
+    std::vector<BorderChangeListener*>& listeners = getListeners();
+    for (std::vector<BorderChangeListener*>::iterator it = listeners.begin(); it != listeners.end(); ++it)
         (*it)->onBorderSetWarningBlocks(this, blocks);
 }
 bool WorldBorder::isWithinBounds(ChunkPos* pos)

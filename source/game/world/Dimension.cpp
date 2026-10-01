@@ -156,7 +156,7 @@ Vec3* Dimension::getFogColor(float celestialAngle, float timeOfDay)
 
 bool Dimension::mayRespawn() const { return true; }
 
-double Dimension::getCloudHeight() { return (double)mLevel->getCloudHeight(); }
+float Dimension::getCloudHeight() { return (float)mLevel->getCloudHeight(); }
 bool Dimension::hasGround() { return true; }
 BlockPos* Dimension::getSpawnPos() const { return NULL; }
 int Dimension::getSpawnYPosition() { return mLevelType == LevelType::FLAT ? 4 : 64; }

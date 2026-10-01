@@ -116,7 +116,7 @@ public:
     int getCloudHeight();
     int getFogDistance();
     int getDayTime();
-    static unsigned int GetMapSizeFromUniqueId(int uniqueId);
+    static short GetMapSizeFromUniqueId(int uniqueId);
     ConsoleSchematicFile* getSchematicFile(const std::wstring& name) const;
     void processSchematics(LevelChunk* chunk);
     void processSchematicsLighting(LevelChunk* chunk);

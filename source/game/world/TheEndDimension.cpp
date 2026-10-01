@@ -113,7 +113,7 @@ Vec3* TheEndDimension::getFogColor(float celestialAngle, float timeOfDay)
 bool TheEndDimension::hasGround() { return false; }
 bool TheEndDimension::mayRespawn() const { return false; }
 bool TheEndDimension::isNaturalDimension() { return false; }
-double TheEndDimension::getCloudHeight() { return 8.0; }
+float TheEndDimension::getCloudHeight() { return 8.0f; }
 
 bool TheEndDimension::isValidSpawn(int x, int z) const
 {

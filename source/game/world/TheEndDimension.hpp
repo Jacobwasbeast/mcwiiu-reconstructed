@@ -25,7 +25,7 @@ public:
     virtual bool hasGround();
     virtual bool mayRespawn() const;
     virtual bool isNaturalDimension();
-    virtual double getCloudHeight();
+    virtual float getCloudHeight();
     virtual bool isValidSpawn(int x, int z) const;
     virtual BlockPos* getSpawnPos() const;
     virtual int getSpawnYPosition();

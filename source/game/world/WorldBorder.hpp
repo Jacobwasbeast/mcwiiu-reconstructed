@@ -6,6 +6,7 @@
 #include "game/world/chunk/ChunkPos.hpp"
 
 class AABB;
+class BorderStatus;
 class BlockPos;
 class BorderChangeListener;
 class ChunkPos;
@@ -29,9 +30,13 @@ private:
     int m_warningBlocks;
 
 public:
+    static BorderStatus* GROWING;
+    static BorderStatus* SHRINKING;
+    static BorderStatus* STATIONARY;
+
     explicit WorldBorder(Level* level);
-    ~WorldBorder() {}
-    int getStatus();
+    virtual ~WorldBorder() {}
+    BorderStatus* getStatus();
     std::vector<BorderChangeListener*>& getListeners();
     void setSize(double size);
     double getSize();
