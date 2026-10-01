@@ -57,7 +57,6 @@ public:
     static MappedRegistry<ResourceLocation, MobEffect*>* mobEffectRegistry;
 
     MobEffect(bool harmful, eMinecraftColour color);
-    virtual ~MobEffect() {}
 
     MobEffect* setIcon(EMobEffectIcon icon);
     MobEffect* setDescriptionId(int descriptionId);
@@ -91,6 +90,7 @@ public:
     virtual void addAttributeModifiers(const boost::shared_ptr<LivingEntity>& entity,
                                        BaseAttributeMap* attributes, int amplifier);
     virtual double getAttributeModifierValue(int amplifier, AttributeModifier* modifier);
+    virtual ~MobEffect() {}
     static std::wstring formatDuration(MobEffectInstance* effect, float durationFactor);
 
 private:

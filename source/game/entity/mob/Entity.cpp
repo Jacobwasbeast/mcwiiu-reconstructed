@@ -37,6 +37,7 @@
 #include "game/entity/mob/SynchedEntityData.hpp"
 #include "game/entity/mob/TrackedEntity.hpp"
 #include "game/core/CMinecraftApp.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/item/DataItem.hpp"
 #include "game/item/EnchantmentHelper.hpp"
 #include "game/item/Item.hpp"
@@ -322,8 +323,9 @@ int Entity::getWanderingQuadrant()
 }
 
 Entity::Entity(Level* level, bool createEntityData)
-    : mLevel(level)
 {
+    mLevel = level;
+
     MemSect(16);
     _init(createEntityData, level);
     MemSect(0);
@@ -358,7 +360,6 @@ Entity::Entity(Level* level, bool createEntityData)
     mCategories = 0;
     mWaterCheckBox = AABB::newPermanent(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
     mCollisionCacheValid = false;
-    mFireCacheResult = false;
     mFireCacheMinX = 0;
     mFireCacheMinY = 0;
     mFireCacheMinZ = 0;
@@ -383,7 +384,7 @@ Entity::Entity(Level* level, bool createEntityData)
 
 void Entity::_init(bool createEntityData, Level* level)
 {
-    if (level != NULL && TlsGetValue(gSmallIdTlsIndex) != NULL)
+    if (createEntityData && TlsGetValue(gSmallIdTlsIndex) != NULL)
     {
         mId = getSmallId();
     }
@@ -427,7 +428,6 @@ void Entity::_init(bool createEntityData, Level* level)
     mCollision = false;
     mHurtMarked = false;
     mIsInWeb = false;
-    mOutsideWorldBorder = false;
     mBlocksSpawning = true;
     mRemoved = false;
     mBbWidth = 0.6f;
@@ -474,9 +474,10 @@ void Entity::_init(bool createEntityData, Level* level)
     mIgnoreVerticalCollision = false;
     mIgnorePortals = false;
 
-    if (level != NULL)
+    if (createEntityData)
     {
-        mUUID = std::wstring(L"ent") + Mth::createInsecureUUID(mRandom);
+        std::wstring uuid = Mth::createInsecureUUID(mRandom);
+        mUUID = std::wstring(L"ent") + uuid;
     }
 
     mCommandStats = new CommandStats();
@@ -486,6 +487,7 @@ void Entity::_init(bool createEntityData, Level* level)
     mPistonDeltas[0] = 0.0;
     mPistonDeltas[1] = 0.0;
     mPistonDeltas[2] = 0.0;
+    mAllSlots = NonNullList<not_null_ptr<ItemInstance> >();
     mPistonDeltaCount = 3;
     mPistonDeltasGameTime = 0;
 
@@ -493,7 +495,6 @@ void Entity::_init(bool createEntityData, Level* level)
     mLeashInfoTag = NULL;
     mType = 0;
     mShouldTickCounter = 0;
-    mTeleported = false;
 
     mWasOnFire = false;
     mFireTransitionStartTick = -1;
@@ -1742,14 +1743,9 @@ void Entity::playStepSound(const BlockPos& pos, Block* block)
 
 void Entity::playUnderwaterSound(const BlockPos& pos, Block* block)
 {
-    boost::shared_ptr<Entity> source = shared_from_this();
+    boost::shared_ptr<Entity> source = (isVehicle() && getControllingPassenger()) ? getControllingPassenger() : shared_from_this();
 
-    if (isVehicle() && getVehicle())
-    {
-        source = getVehicle();
-    }
-
-    float volume = source == shared_from_this() ? 0.6000000238418579f : 0.550000011920929f;
+    float volume = source == shared_from_this() ? 0.550000011920929f : 0.6000000238418579f;
 
     float speed = (float)sqrt(source->mXd * source->mXd * 0.20000000298023224
                               + source->mYd * source->mYd
@@ -1933,12 +1929,19 @@ bool Entity::updateInWaterState()
 
     if (!mIsInWater && !mTickCache.mCacheChanged)
     {
-        if (Mth::absFloor(box->mMinX) == Mth::absFloor(mWaterCheckBox->mMinX)
-            && (int)ceil(box->mMaxX) == (int)ceil(mWaterCheckBox->mMaxX)
-            && Mth::absFloor(box->mMinY) == Mth::absFloor(mWaterCheckBox->mMinY)
-            && (int)ceil(box->mMaxY) == (int)ceil(mWaterCheckBox->mMaxY)
-            && Mth::absFloor(box->mMinZ) == Mth::absFloor(mWaterCheckBox->mMinZ)
-            && (int)ceil(box->mMaxZ) == (int)ceil(mWaterCheckBox->mMaxZ))
+        int minX = Mth::absFloor(box->mMinX);
+        int maxX = Mth::ceil(box->mMaxX);
+        int minY = Mth::absFloor(box->mMinY);
+        int maxY = Mth::ceil(box->mMaxY);
+        int minZ = Mth::absFloor(box->mMinZ);
+        int maxZ = Mth::ceil(box->mMaxZ);
+
+        if (Mth::absFloor(mWaterCheckBox->mMinX) == minX
+            && Mth::ceil(mWaterCheckBox->mMaxX) == maxX
+            && Mth::absFloor(mWaterCheckBox->mMinY) == minY
+            && Mth::ceil(mWaterCheckBox->mMaxY) == maxY
+            && Mth::absFloor(mWaterCheckBox->mMinZ) == minZ
+            && Mth::ceil(mWaterCheckBox->mMaxZ) == maxZ)
         {
             mWaterCheckBox->set(box);
             return false;
@@ -2497,7 +2500,14 @@ bool Entity::shouldRender(double distanceSqr)
 
 bool Entity::shouldRenderAtSqrDistance(double distanceSqr)
 {
-    double range = mBoundingBox->getSize() * 48.0 * sViewScale;
+    double size = mBoundingBox->getSize();
+
+    if (size != size)
+    {
+        size = 1.0;
+    }
+
+    double range = size * (48.0 * sViewScale);
 
     return distanceSqr < range * range;
 }
@@ -2658,7 +2668,7 @@ CompoundTag* Entity::saveWithoutId(CompoundTag* tag)
 
     if (!mTags.empty())
     {
-        ListTag* tags = new ListTag(8);
+        ListTag* tags = new ListTag();
 
         for (std::set<std::wstring>::const_iterator it = mTags.begin(); it != mTags.end(); ++it)
         {
@@ -2672,7 +2682,7 @@ CompoundTag* Entity::saveWithoutId(CompoundTag* tag)
 
     if (isVehicle())
     {
-        ListTag* passengers = new ListTag(10);
+        ListTag* passengers = new ListTag();
 
         std::vector<boost::weak_ptr<Entity> > riders = *getPassengers();
 
@@ -2758,7 +2768,7 @@ void Entity::load(CompoundTag* tag)
 
     mXd = motion->getDouble(0);
     mYd = motion->getDouble(1);
-    mZd = motion->getDouble(2);
+    double zd = motion->getDouble(2);
 
     if (fabs(mXd) > 10.0)
     {
@@ -2770,10 +2780,12 @@ void Entity::load(CompoundTag* tag)
         mYd = 0.0;
     }
 
-    if (fabs(mZd) > 10.0)
+    if (fabs(zd) > 10.0)
     {
-        mZd = 0.0;
+        zd = 0.0;
     }
+
+    mZd = zd;
 
     mX = pos->getDouble(0);
     mY = pos->getDouble(1);
@@ -2861,28 +2873,32 @@ void Entity::load(CompoundTag* tag)
 
 bool Entity::shouldTick()
 {
-    double radius = mBoundingBox->getSize() * 48.0;
+    double radius = mBoundingBox->getSize();
 
-    boost::shared_ptr<Entity> cachedNearby = mShouldTickNearbyCache.lock();
+    if (radius != radius)
+    {
+        radius = 1.0;
+    }
+
+    radius *= 48.0 * sViewScale;
+
+    boost::shared_ptr<Entity> nearby = mShouldTickNearbyCache.lock();
     bool needsSearch = true;
 
-    if (cachedNearby && distanceToSqr(cachedNearby) <= radius * radius)
+    if (nearby && distanceToSqr(nearby) <= radius * radius)
     {
         needsSearch = false;
     }
 
-    bool foundNearby = !needsSearch;
-
     if (needsSearch)
     {
-        boost::shared_ptr<Entity> nearest = mLevel->getNearestPlayerPredicate(mX, mY, mZ, radius, NULL);
-        mShouldTickNearbyCache = nearest;
-        foundNearby = (nearest != NULL);
+        nearby = mLevel->getNearestPlayerPredicate(mX, mY, mZ, radius, NULL);
+        mShouldTickNearbyCache = nearby;
     }
 
     mShouldTickCounter++;
 
-    if (!foundNearby && mShouldTickCounter % 3 != 0)
+    if (!nearby && mShouldTickCounter % 3 != 0)
     {
         return false;
     }
@@ -3018,62 +3034,42 @@ void Entity::rideTick()
 
     vehicle->positionRider(shared_from_this());
 
-    if (vehicle->GetType() != EntityType::MINECART_RIDEABLE)
+    if (vehicle->GetType() == EntityType::MINECART_RIDEABLE)
     {
-        return;
+        mVehicleYRotDelta += (double)(vehicle->mYRot - vehicle->mYRotO);
+
+        double xRotDelta = mVehicleXRotDelta + (double)(vehicle->mXRot - vehicle->mXRotO);
+        double yRotDelta = mVehicleYRotDelta;
+
+        while (yRotDelta >= 180.0)
+        {
+            yRotDelta -= 360.0;
+        }
+
+        while (yRotDelta < -180.0)
+        {
+            yRotDelta += 360.0;
+        }
+
+        while (xRotDelta >= 180.0)
+        {
+            xRotDelta -= 360.0;
+        }
+
+        while (xRotDelta < -180.0)
+        {
+            xRotDelta += 360.0;
+        }
+
+        double yRotStep = yRotDelta * 0.5;
+        double xRotStep = xRotDelta * 0.5;
+
+        mVehicleXRotDelta = xRotDelta - xRotStep;
+        mVehicleYRotDelta = yRotDelta - yRotStep;
+
+        mYRot += (float)yRotStep;
+        mXRot += (float)xRotStep;
     }
-
-    mVehicleYRotDelta += (double)(vehicle->mYRot - vehicle->mYRotO);
-    mVehicleXRotDelta += (double)(vehicle->mXRot - vehicle->mXRotO);
-
-    while (mVehicleYRotDelta >= 180.0)
-    {
-        mVehicleYRotDelta -= 360.0;
-    }
-
-    while (mVehicleYRotDelta < -180.0)
-    {
-        mVehicleYRotDelta += 360.0;
-    }
-
-    while (mVehicleXRotDelta >= 180.0)
-    {
-        mVehicleXRotDelta -= 360.0;
-    }
-
-    while (mVehicleXRotDelta < -180.0)
-    {
-        mVehicleXRotDelta += 360.0;
-    }
-
-    double yRotStep = mVehicleYRotDelta * 0.5;
-    double xRotStep = mVehicleXRotDelta * 0.5;
-
-    if (yRotStep > 10.0)
-    {
-        yRotStep = 10.0;
-    }
-
-    if (yRotStep < -10.0)
-    {
-        yRotStep = -10.0;
-    }
-
-    if (xRotStep > 10.0)
-    {
-        xRotStep = 10.0;
-    }
-
-    if (xRotStep < -10.0)
-    {
-        xRotStep = -10.0;
-    }
-
-    mVehicleYRotDelta -= yRotStep;
-    mVehicleXRotDelta -= xRotStep;
-
-    mYRot += (float)yRotStep;
-    mXRot += (float)xRotStep;
 }
 
 void Entity::positionRider(const boost::shared_ptr<Entity>& passenger)
@@ -3182,11 +3178,7 @@ void Entity::ejectPassengers()
     for (int i = (int)mPassengers.size() - 1; i >= 0; i--)
     {
         boost::shared_ptr<Entity> passenger = mPassengers.at(i).lock();
-
-        if (passenger)
-        {
-            passenger->stopRiding();
-        }
+        passenger->stopRiding();
     }
 }
 
@@ -3840,38 +3832,42 @@ boost::shared_ptr<Entity> Entity::changeDimension(int dimension)
         return boost::shared_ptr<Entity>();
     }
 
-    bool dropsLeash = false;
-
     if ((GetType() & EntityType::MOB) == EntityType::MOB && isLeashed())
     {
-        dropsLeash = true;
         dropLeash(true, true);
     }
 
-    if (GetType() == EntityType::FALLING_BLOCK_ENTITY)
+    int fromDimension = mDimension;
+    ServerLevel* fromLevel = gMinecraftServer->getLevel(fromDimension);
+    ServerLevel* toLevel = gMinecraftServer->getLevel(dimension);
+
+    if (fromDimension == 1 && dimension == 1)
+    {
+        toLevel = gMinecraftServer->getLevel(0);
+    }
+
+    bool isFallingBlock = GetType() == EntityType::FALLING_BLOCK_ENTITY;
+
+    if (isFallingBlock)
     {
         mRemoved = true;
         return boost::shared_ptr<Entity>();
     }
 
-    ServerLevel* fromLevel = dynamic_cast<ServerLevel*>(mLevel);
-
-    if (fromLevel->atEntityLimit(shared_from_this()))
+    if (toLevel->atEntityLimit(shared_from_this()))
     {
         return boost::shared_ptr<Entity>();
     }
 
     if ((GetType() & EntityType::PLAYER) != EntityType::PLAYER
-        && !mLevel->canCreateMore(mType, Level::eSpawnType_Portal))
+        && !toLevel->canCreateMore(GetType(), Level::eSpawnType_Portal))
     {
         return boost::shared_ptr<Entity>();
     }
 
-    ServerLevel* toLevel = dynamic_cast<ServerLevel*>(mLevel->getServer()->getLevel(dimension));
-
     mDimension = toLevel->mDimension->getType()->getId();
 
-    stopRidingBeforeTeleport();
+    mLevel->removeEntity(shared_from_this());
 
     mRemoved = false;
 
@@ -3879,70 +3875,61 @@ boost::shared_ptr<Entity> Entity::changeDimension(int dimension)
 
     if (dimension == 1)
     {
-        if (dropsLeash)
-        {
-            BlockPos* dimensionSpawn = toLevel->getDimensionSpecificSpawn();
+        BlockPos* dimensionSpawn = toLevel->getDimensionSpecificSpawn();
 
-            if (dimensionSpawn != NULL)
-            {
-                spawnPos = *dimensionSpawn;
-            }
-            else
-            {
-                spawnPos = toLevel->getSharedSpawnPos();
-            }
+        if (dimensionSpawn == NULL)
+        {
+            spawnPos = toLevel->getSharedSpawnPos();
         }
         else
         {
-            spawnPos = toLevel->getSharedSpawnPos();
+            spawnPos = *dimensionSpawn;
         }
     }
     else
     {
-        double scale = (double)toLevel->getLevelData()->getHellScale();
-
         double x = mX;
         double z = mZ;
+        int blockX = (int)x;
+        int blockZ = (int)z;
+
+        double scale = (double)toLevel->getLevelData()->getHellScale();
 
         if (dimension == -1)
         {
-            x /= scale;
-            z /= scale;
-
-            x = Mth::clamp(x, toLevel->getWorldBorder()->getMinX() + 16.0,
+            x = Mth::clamp(x / scale, toLevel->getWorldBorder()->getMinX() + 16.0,
                            toLevel->getWorldBorder()->getMaxX() - 16.0);
-            z = Mth::clamp(z, toLevel->getWorldBorder()->getMinZ() + 16.0,
+            z = Mth::clamp(z / scale, toLevel->getWorldBorder()->getMinZ() + 16.0,
                            toLevel->getWorldBorder()->getMaxZ() - 16.0);
         }
         else if (dimension == 0)
         {
-            x *= scale;
-            z *= scale;
-
-            x = Mth::clamp(x, toLevel->getWorldBorder()->getMinX() + 16.0,
+            x = Mth::clamp(x * scale, toLevel->getWorldBorder()->getMinX() + 16.0,
                            toLevel->getWorldBorder()->getMaxX() - 16.0);
-            z = Mth::clamp(z, toLevel->getWorldBorder()->getMinZ() + 16.0,
+            z = Mth::clamp(z * scale, toLevel->getWorldBorder()->getMinZ() + 16.0,
                            toLevel->getWorldBorder()->getMaxZ() - 16.0);
         }
 
         mLevel->clampWithinLevelBounds(x, z, 0.0);
 
+        float yRot = mYRot;
+
         moveTo(x, mY, z, 90.0f, 0.0f);
 
-        toLevel->getPortalForcer()->findPortal(shared_from_this(), 0.0f, dimension, dimension);
+        toLevel->getPortalForcer()->findPortal(shared_from_this(), yRot, blockX, blockZ);
 
         spawnPos = BlockPos(this);
     }
 
-    fromLevel->removeEntity(shared_from_this());
+    fromLevel->tick(shared_from_this(), false);
 
-    boost::shared_ptr<Entity> copy = EntityIO::newEntity(mType, toLevel);
+    boost::shared_ptr<Entity> copy = EntityIO::newEntity(GetType(), toLevel);
 
     if (copy)
     {
         copy->restoreFrom(shared_from_this());
 
-        if (dropsLeash && dimension == 1)
+        if (fromDimension == 1 && dimension == 1)
         {
             copy->moveTo(toLevel->getTopSolidBlockPos(toLevel->getSharedSpawnPos()), copy->mYRot,
                          copy->mXRot);
@@ -4091,23 +4078,29 @@ bool Entity::wasNamedOnHost()
 
 bool Entity::hasCustomName()
 {
-    if (getCustomName().empty())
+    bool named = !Entity::getCustomName().empty();
+
+    if (!named)
     {
         return false;
     }
 
-    bool ownerIsLocal = g_pApp->IsUUIDLocal(getOwnerUUID());
     bool restrictedCase = false;
 
-    if (!ownerIsLocal)
+    if (!gApp.IsUUIDLocal(Entity::getOwnerUUID()))
     {
-        if (g_pApp->IsConsoleChatCensored() || mEntityData->get(DATA_NAMED_BY_RESTRICTED_PLAYER))
+        if (gApp.IsConsoleChatCensored() || mEntityData->get(DATA_NAMED_BY_RESTRICTED_PLAYER))
         {
             restrictedCase = true;
         }
     }
 
-    bool hostRestrictedCase = !mEntityData->get(DATA_CREATED_ON_HOST) && restrictedCase;
+    bool hostRestrictedCase = false;
+
+    if (!mEntityData->get(DATA_CREATED_ON_HOST) && restrictedCase)
+    {
+        hostRestrictedCase = true;
+    }
 
     if (CGameNetworkManager::sInstance.IsHost() && hostRestrictedCase)
     {
@@ -4654,60 +4647,59 @@ void Entity::setLeashedTo(boost::shared_ptr<Entity> leashHolder, bool broadcast)
 
 void Entity::restoreLeashFromSave()
 {
-    if (!mLeashed || mLeashInfoTag == NULL)
+    if (mLeashed && mLeashInfoTag != NULL)
     {
-        return;
-    }
-
-    if (mLeashInfoTag->contains(std::wstring(L"UUID")))
-    {
-        std::wstring uuid = mLeashInfoTag->getString(std::wstring(L"UUID"));
-
-        std::vector<boost::shared_ptr<Entity> >* nearby = mLevel->getEntitiesOfClass(
-            typeid(LivingEntity), mBoundingBox->grow(10.0, 10.0, 10.0));
-
-        for (std::vector<boost::shared_ptr<Entity> >::iterator it = nearby->begin();
-             it != nearby->end(); ++it)
+        if (mLeashInfoTag->contains(std::wstring(L"UUID")))
         {
-            boost::shared_ptr<LivingEntity> living = boost::dynamic_pointer_cast<LivingEntity>(*it);
+            std::wstring uuid = mLeashInfoTag->getString(std::wstring(L"UUID"));
 
-            if (living && living->getUUID() == uuid)
+            std::vector<boost::shared_ptr<Entity> >* nearby = mLevel->getEntitiesOfClass(
+                typeid(LivingEntity), mBoundingBox->grow(10.0, 10.0, 10.0));
+
+            for (std::vector<boost::shared_ptr<Entity> >::iterator it = nearby->begin();
+                 it != nearby->end(); ++it)
             {
-                setLeashedTo(living, true);
-                break;
+                boost::shared_ptr<LivingEntity> living = boost::dynamic_pointer_cast<LivingEntity>(*it);
+
+                if (living->getUUID() == uuid)
+                {
+                    setLeashedTo(living, true);
+                    break;
+                }
             }
+
+            delete nearby;
         }
-
-        delete nearby;
-    }
-    else if (mLeashInfoTag->contains(std::wstring(L"X"), 99)
-             && mLeashInfoTag->contains(std::wstring(L"Y"), 99)
-             && mLeashInfoTag->contains(std::wstring(L"Z"), 99))
-    {
-        BlockPos pos(mLeashInfoTag->getInt(std::wstring(L"X")),
-                     mLeashInfoTag->getInt(std::wstring(L"Y")),
-                     mLeashInfoTag->getInt(std::wstring(L"Z")));
-
-        boost::shared_ptr<LeashFenceKnotEntity> knot =
-            LeashFenceKnotEntity::findKnotAt(mLevel, pos);
-
-        if (!knot)
+        else if (mLeashInfoTag->contains(std::wstring(L"X"), 99)
+                 && mLeashInfoTag->contains(std::wstring(L"Y"), 99)
+                 && mLeashInfoTag->contains(std::wstring(L"Z"), 99))
         {
-            knot = LeashFenceKnotEntity::createAndAddKnot(mLevel, pos);
+            BlockPos pos(mLeashInfoTag->getInt(std::wstring(L"X")),
+                         mLeashInfoTag->getInt(std::wstring(L"Y")),
+                         mLeashInfoTag->getInt(std::wstring(L"Z")));
+
+            boost::shared_ptr<LeashFenceKnotEntity> knot =
+                LeashFenceKnotEntity::findKnotAt(mLevel, pos);
+
+            if (!knot)
+            {
+                knot = LeashFenceKnotEntity::createAndAddKnot(mLevel, pos);
+            }
+
+            setLeashedTo(knot, true);
         }
-
-        setLeashedTo(knot, true);
+        else
+        {
+            dropLeash(false, true);
+        }
     }
-    else
+
+    boost::shared_ptr<Entity> holder = mLeashHolder.lock();
+
+    if (holder)
     {
-        dropLeash(false, true);
+        setLeashedTo(holder, true);
     }
 
-    if (getLeashHolder())
-    {
-        setLeashedTo(getLeashHolder(), true);
-    }
-
-    delete mLeashInfoTag;
     mLeashInfoTag = NULL;
 }

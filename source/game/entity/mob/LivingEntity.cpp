@@ -36,6 +36,7 @@
 #include "game/core/InsomniaComponent.hpp"
 #include "game/core/InteractionHand.hpp"
 #include "game/core/CMinecraftApp.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/BubbleColumnSegment.hpp"
 #include "game/core/ClientMasterGameMode.hpp"
 #include "game/core/HitResult.hpp"
@@ -110,7 +111,8 @@
 #include "game/core/MemSect.hpp"
 
 
-const AttributeModifier* LivingEntity::SPEED_MODIFIER_SPRINTING;
+const AttributeModifier* LivingEntity::SPEED_MODIFIER_SPRINTING =
+    (new AttributeModifier(eMODIFIER_ID_SprintingSpeedBoost, 0.30000001192092896, 2))->setSerialize(false);
 const EntityDataAccessor<unsigned char>* LivingEntity::DATA_LIVING_ENTITY_FLAGS;
 const EntityDataAccessor<float>* LivingEntity::DATA_HEALTH_ID;
 const EntityDataAccessor<int>* LivingEntity::DATA_EFFECT_COLOR_ID;
@@ -119,10 +121,6 @@ const EntityDataAccessor<int>* LivingEntity::DATA_ARROW_COUNT_ID;
 
 void LivingEntity::staticCtor()
 {
-    SPEED_MODIFIER_SPRINTING =
-        (new AttributeModifier(eMODIFIER_ID_SprintingSpeedBoost, 0.30000001192092896, 2))
-            ->setSerialize(false);
-
     DATA_LIVING_ENTITY_FLAGS = SynchedEntityData::defineId(EntityType::LIVING_ENTITY, EntityType::ENTITY, EntityDataSerializers::BYTE);
     DATA_HEALTH_ID = SynchedEntityData::defineId(EntityType::LIVING_ENTITY, EntityType::ENTITY, EntityDataSerializers::FLOAT);
     DATA_EFFECT_COLOR_ID = SynchedEntityData::defineId(EntityType::LIVING_ENTITY, EntityType::ENTITY, EntityDataSerializers::INT);
@@ -138,7 +136,7 @@ LivingEntity::LivingEntity(Level* level)
     MemSect(0);
 
     mBlocksBuilding = true;
-    mRotA = (float)((Math::random() + 1.0) * 0.009999999776482582);
+    mRotA = (float)(Math::random() + 1.0) * 0.01f;
     setPos(mX, mY, mZ);
     mTimeOffs = (float)Math::random() * 12398.0f;
     mYRot = (float)(Math::random() * 3.1415927410125732 * 2.0);
@@ -350,13 +348,15 @@ void LivingEntity::checkFallDamage(double y, bool onGround, Block* block, const 
 
         if (block->mMaterial != Material::AIR)
         {
-            int count = (int)(150.0 * (double)Mth::clamp(excess / 15.0f + 0.20000000298023224f, 0.0f, 2.5f));
-            arrayWithLength<int> particleData(1, false);
-            particleData.data[0] = Block::getIdWithData(state);
+            float scale = excess / 15.0f + 0.2f;
+            float capped = scale > 2.5f ? 2.5f : scale;
+            int count = (int)(150.0 * capped);
+            int blockData = Block::getIdWithData(state);
+            arrayWithLength<int> particleData(&blockData, 1);
 
             static_cast<ServerLevel*>(mLevel)->sendParticles(PARTICLE_BLOCK_DUST, mX, mY, mZ,
-                                                             count, 0.0, 0.0, 0.0, 0.15000000596046448,
-                                                             particleData, 0.0, 0.0, 0.0);
+                                                             count, 0.0, 0.0, 0.0, 0.15f,
+                                                             particleData);
         }
     }
 
@@ -406,13 +406,14 @@ float LivingEntity::GetInhaleTime()
 int LivingEntity::GetAirRegenPerTick()
 {
     float inhaleTime = GetInhaleTime();
+    int maxAirSupply = getMaxAirSupply();
 
-    if (Mth::abs((double)inhaleTime) <= 9.999999747378752e-05)
+    if (fabsf(inhaleTime) > 0.0001f)
     {
-        return 0;
+        return Math::round((float)maxAirSupply / (inhaleTime * 20.0f));
     }
 
-    return (int)Math::round((float)getMaxAirSupply() / (inhaleTime * 20.0f));
+    return 0;
 }
 
 bool LivingEntity::canBreathe()
@@ -725,8 +726,7 @@ bool LivingEntity::shouldDropExperience()
 
 int LivingEntity::decreaseAirSupply(int airSupply)
 {
-    boost::shared_ptr<LivingEntity> self = boost::static_pointer_cast<LivingEntity>(shared_from_this());
-    int respiration = EnchantmentHelper::getRespiration(self);
+    int respiration = EnchantmentHelper::getRespiration(boost::static_pointer_cast<LivingEntity>(shared_from_this()));
 
     if (respiration > 0 && mRandom->nextInt(respiration + 1) > 0)
     {
@@ -1280,7 +1280,7 @@ void LivingEntity::setHealth(float health)
 bool LivingEntity::hurt(const DamageSource* source, float damage)
 {
     if ((isInvulnerableTo(source) && !source->isBypassInvul())
-        || g_pApp->IsAppPaused()
+        || gApp.IsAppPaused()
         || (mLevel->mIsClientSide && dynamic_cast<const EntityDamageSource*>(source) == NULL))
     {
         return false;
@@ -1737,7 +1737,7 @@ bool LivingEntity::onLadder()
     int z = Mth::floor(mZ);
 
     if ((GetType() & EntityType::PLAYER) == EntityType::PLAYER
-        && boost::static_pointer_cast<Player>(shared_from_this())->isSpectator())
+        && static_cast<Player*>(this)->isSpectator())
     {
         return false;
     }
@@ -1746,17 +1746,12 @@ bool LivingEntity::onLadder()
     const BlockState* state = mLevel->getBlockState(mTickCache, pos);
     Block* block = state->getBlock();
 
-    if (block == Blocks::ladder || block == Blocks::vine)
+    if (block != Blocks::ladder && block != Blocks::vine)
     {
-        return true;
+        return typeid(*block) == typeid(TrapDoorBlock) && trapdoorUsableAsLadder(pos, state);
     }
 
-    if (dynamic_cast<const TrapDoorBlock*>(block) != NULL && trapdoorUsableAsLadder(pos, state))
-    {
-        return true;
-    }
-
-    return false;
+    return true;
 }
 
 bool LivingEntity::isShootable()
@@ -1856,7 +1851,8 @@ float LivingEntity::getDamageAfterMagicAbsorb(const DamageSource* source, float 
         return 0.0f;
     }
 
-    int protection = EnchantmentHelper::getDamageProtection(getArmorSlots(), source);
+    NonNullList<not_null_ptr<ItemInstance> > armorSlots = getArmorSlots();
+    int protection = EnchantmentHelper::getDamageProtection(armorSlots, source);
 
     if (protection > 0)
     {
@@ -1903,13 +1899,15 @@ void LivingEntity::spawnEatParticles(const ItemInstance& itemInstance, int count
         velocity = velocity->yRot(-(mYBodyRot * 0.01745329238474369f));
         velocity->y = velocity->y + 0.05;
 
-        Vec3* offset = Vec3::newTemp((mRandom->nextDouble() - 0.5) * 0.3, -mRandom->nextDouble() * 0.6 - 0.3, 0.6);
+        double offsetX = (mRandom->nextDouble() - 0.5) * 0.3;
+        double offsetY = -mRandom->nextDouble() * 0.6 - 0.3;
+        Vec3* offset = Vec3::newTemp(offsetX, offsetY, 0.6);
         offset = offset->xRot(-(mXRot * 0.01745329238474369f));
         offset = offset->yRot(-(mYBodyRot * 0.01745329238474369f));
         offset = offset->add(mX, mY + (double)getEyeHeight(), mZ);
 
-        arrayWithLength<int> particleData(1, false);
-        particleData.data[0] = Item::getId(itemInstance.getItem());
+        int itemId = Item::getId(itemInstance.getItem());
+        arrayWithLength<int> particleData(&itemId, 1);
 
         mLevel->addParticle(PARTICLE_ICON_CRACK, offset->x, offset->y, offset->z,
                             velocity->x, velocity->y, velocity->z, particleData);
@@ -1923,19 +1921,18 @@ CombatTracker* LivingEntity::getCombatTracker()
 
 boost::shared_ptr<LivingEntity> LivingEntity::getKillCredit()
 {
-    boost::shared_ptr<LivingEntity> killer = mCombatTracker->getKiller();
-
-    if (killer)
+    if (mCombatTracker->getKiller())
     {
-        return killer;
+        return mCombatTracker->getKiller();
     }
 
     if (mLastHurtByPlayer)
     {
-        return boost::static_pointer_cast<LivingEntity>(mLastHurtByPlayer);
+        return mLastHurtByPlayer;
     }
 
-    return mLastHurtByMob.lock();
+    boost::shared_ptr<LivingEntity> attacker = mLastHurtByMob.lock();
+    return attacker;
 }
 
 float LivingEntity::getMaxHealth()
@@ -2673,11 +2670,12 @@ void LivingEntity::fallFlyingTravel(double& xd, double& yd, double& zd, Vec3* lo
 
     double length = (double)lookAngle->length();
     float cosPitch = cosf(pitch);
-    double lift = Mth::clamp(length / 0.4, 0.0, 1.0);
+    double ratio = length / 0.4;
+    double clamped = ratio < 1.0 ? ratio : 1.0;
 
-    lift = (double)((float)((double)cosPitch * (double)(float)((double)cosPitch * lift)) * (float)lookHorizontal);
+    float lift = cosPitch * (cosPitch * (float)clamped) * (float)lookHorizontal;
 
-    double newYd = yd + lift * 0.06 + -0.08;
+    double newYd = yd + (lift * 0.06 + -0.08);
 
     if (newYd < 0.0 && lookLength > 0.0)
     {
@@ -2691,16 +2689,19 @@ void LivingEntity::fallFlyingTravel(double& xd, double& yd, double& zd, Vec3* lo
         yd = newYd;
     }
 
-    if (pitch < 0.0f)
+    if (lookLength > 0.0)
     {
-        double dive = horizontalSpeed * -(double)sinf(pitch) * 0.04;
-        yd = yd + dive * 3.2;
-        xd = xd - (lookAngle->x * dive) / lookLength;
-        zd = zd - (lookAngle->z * dive) / lookLength;
-    }
+        if (pitch < 0.0f)
+        {
+            double dive = horizontalSpeed * -(double)sinf(pitch) * 0.04;
+            yd = yd + dive * 3.2;
+            xd = xd - (lookAngle->x * dive) / lookLength;
+            zd = zd - (lookAngle->z * dive) / lookLength;
+        }
 
-    xd = xd + ((lookAngle->x / lookLength) * horizontalSpeed - xd) * 0.1;
-    zd = zd + ((lookAngle->z / lookLength) * horizontalSpeed - zd) * 0.1;
+        xd = xd + ((lookAngle->x / lookLength) * horizontalSpeed - xd) * 0.1;
+        zd = zd + ((lookAngle->z / lookLength) * horizontalSpeed - zd) * 0.1;
+    }
 
     xd = xd * 0.9900000095367432;
     yd = yd * 0.9800000190734863;
@@ -2994,17 +2995,18 @@ void LivingEntity::updateModelAnimation()
 
     mAnimationSpeedOld = mAnimationSpeed;
 
-    float target;
+    double dy;
 
     if ((GetType() & EntityType::FLYING_MOB) == EntityType::FLYING_MOB)
     {
-        double dy = mY - mYo;
-        target = (float)(Mth::sqrt(dx * dx + dy * dy + dz * dz) * 4.0);
+        dy = mY - mYo;
     }
     else
     {
-        target = (float)(Mth::sqrt(dx * dx + dz * dz) * 4.0);
+        dy = 0.0;
     }
+
+    float target = (float)(Mth::sqrt(dx * dx + dy * dy + dz * dz) * 4.0f);
 
     if (target > 1.0f)
     {
@@ -3519,7 +3521,7 @@ void LivingEntity::updateFallFlying()
 
     bool blocked = false;
 
-    if (isInWater() && g_pApp->GetFirstMiniGameType() != eMiniGameId_Glide)
+    if (isInWater() && gApp.GetFirstMiniGameType() != eMiniGameId_Glide)
     {
         blocked = true;
     }
@@ -3531,23 +3533,31 @@ void LivingEntity::updateFallFlying()
     else
     {
         not_null_ptr<ItemInstance> chest = getItemSlot(EquipmentSlot::CHEST);
-
-        flying = false;
+        bool usable = false;
 
         if (chest->getItem() == Items::elytra && ElytraItem::isFlyEnabled(chest))
         {
+            usable = true;
+        }
+
+        if (usable)
+        {
             flying = true;
 
-            if ((mFallFlyTicks + 1) % 20 == 0)
+            if (!mLevel->mIsClientSide && (mFallFlyTicks + 1) % 20 == 0)
             {
-                chest->hurtAndBreak(1, boost::static_pointer_cast<LivingEntity>(shared_from_this()));
+                chest->hurtAndBreak(1, boost::dynamic_pointer_cast<LivingEntity>(shared_from_this()));
             }
+        }
+        else
+        {
+            flying = false;
         }
     }
 
     if (!mLevel->mIsClientSide)
     {
-        if (!flying && g_pApp->GetFirstMiniGameType() == eMiniGameId_Glide && TakeGlideCollisionDamage())
+        if (!flying && gApp.GetFirstMiniGameType() == eMiniGameId_Glide && TakeGlideCollisionDamage())
         {
             float health = getHealth();
 
@@ -4096,7 +4106,7 @@ bool LivingEntity::isBlocking()
         return false;
     }
 
-    return mUseItem->getUseAnimation() == UseAnim_block;
+    return mUseItem->getItem()->getUseAnimation(not_null_ptr<const ItemInstance>(mUseItem)) == UseAnim_block;
 }
 
 bool LivingEntity::isFallFlying()
