@@ -40,7 +40,7 @@ public:
     std::wstring getString(int index) const;
     unsigned char getType();
 
-    int size() const { return mList.size(); }
+    int size() const;
 
 private:
     std::vector<Tag*> mList;

@@ -64,7 +64,7 @@ public:
         void setType(unsigned int section, unsigned short sectionType);
         void setOffset(unsigned int section, unsigned short offset);
 
-        unsigned int getType(unsigned int section);
+        unsigned short getType(unsigned int section);
         bool getHasTwoIndices(unsigned int section);
         unsigned short getOffset(unsigned int section);
 
@@ -231,7 +231,7 @@ private:
 
     SubChunkInfo mSubChunkInfo;
     unsigned char* mData;
-    int mSubChunkCount;
+    unsigned int mSubChunkCount;
 };
 
 #endif

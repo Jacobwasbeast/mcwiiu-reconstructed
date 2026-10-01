@@ -39,7 +39,7 @@ ListTag::~ListTag()
 
 void ListTag::write(DataOutput* output)
 {
-    if (size() == 0)
+    if (mList.size() == 0)
     {
         mType = Tag::TAG_END;
     }
@@ -49,7 +49,7 @@ void ListTag::write(DataOutput* output)
     }
 
     output->writeByte(mType);
-    output->writeInt(size());
+    output->writeInt(mList.size());
 
     for (std::vector<Tag*>::iterator it = mList.begin(); it != mList.end(); ++it)
     {
@@ -126,7 +126,7 @@ void ListTag::add(Tag* tag)
     }
     else if (mType != tag->getId())
     {
-        if (size() != 0)
+        if (mList.size() != 0)
         {
             return;
         }
@@ -144,7 +144,7 @@ void ListTag::set(int index, Tag* tag)
         return;
     }
 
-    if (index < 0 || index >= size())
+    if (index < 0 || index >= mList.size())
     {
         return;
     }
@@ -155,7 +155,7 @@ void ListTag::set(int index, Tag* tag)
     }
     else if (mType != tag->getId())
     {
-        if (size() != 0 || index != 0)
+        if (mList.size() != 0 || index != 0)
         {
             return;
         }
@@ -172,7 +172,7 @@ void ListTag::set(int index, Tag* tag)
 
 Tag* ListTag::get(int index) const
 {
-    if (index >= 0 && index < size())
+    if (index >= 0 && index < mList.size())
     {
         return mList.at(index);
     }
@@ -211,12 +211,12 @@ void ListTag::stripEmptyChildren()
 
 bool ListTag::isEmpty() const
 {
-    return size() == 0;
+    return mList.size() == 0;
 }
 
 CompoundTag* ListTag::getCompound(int index) const
 {
-    if (index >= 0 && index < size())
+    if (index >= 0 && index < mList.size())
     {
         Tag* tag = mList.at(index);
 
@@ -231,7 +231,7 @@ CompoundTag* ListTag::getCompound(int index) const
 
 int ListTag::getInt(int index) const
 {
-    if (index >= 0 && index < size())
+    if (index >= 0 && index < mList.size())
     {
         Tag* tag = mList.at(index);
 
@@ -246,7 +246,7 @@ int ListTag::getInt(int index) const
 
 arrayWithLength<int> ListTag::getIntArray(int index) const
 {
-    if (index >= 0 && index < size())
+    if (index >= 0 && index < mList.size())
     {
         Tag* tag = mList.at(index);
 
@@ -261,7 +261,7 @@ arrayWithLength<int> ListTag::getIntArray(int index) const
 
 double ListTag::getDouble(int index) const
 {
-    if (index >= 0 && index < size())
+    if (index >= 0 && index < mList.size())
     {
         Tag* tag = mList.at(index);
 
@@ -276,7 +276,7 @@ double ListTag::getDouble(int index) const
 
 float ListTag::getFloat(int index) const
 {
-    if (index >= 0 && index < size())
+    if (index >= 0 && index < mList.size())
     {
         Tag* tag = mList.at(index);
 
@@ -291,7 +291,7 @@ float ListTag::getFloat(int index) const
 
 std::wstring ListTag::getString(int index) const
 {
-    if (index >= 0 && index < size())
+    if (index >= 0 && index < mList.size())
     {
         Tag* tag = mList.at(index);
 
@@ -335,7 +335,7 @@ bool ListTag::equals(Tag* other)
         return false;
     }
 
-    if (size() != list->size())
+    if (mList.size() != list->mList.size())
     {
         return false;
     }
@@ -354,4 +354,9 @@ bool ListTag::equals(Tag* other)
 unsigned char ListTag::getType()
 {
     return mType;
+}
+
+int ListTag::size() const
+{
+    return mList.size();
 }
