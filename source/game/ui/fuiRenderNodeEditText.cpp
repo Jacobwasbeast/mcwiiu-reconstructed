@@ -15,6 +15,8 @@
 
 extern Renderer* gRenderer;
 
+static wchar_t cjkPunctuation[] = { 0x3001, 0x3002, 0x3003, 0x3006, 0x3015, 0x3017, 0x301e };
+
 unsigned int setRGBAOrder(unsigned int colour)
 {
     return colour;
@@ -38,7 +40,10 @@ void fuiRenderNodeEditText::RenderStringStateData::init(fuiFontSet* fontSet, flo
     currentCharacter = 0;
     lineHeight = 0.0f;
     firstLineHeight = 0.0f;
-    rgba.rgba = 0;
+    rgba.r = 0;
+    rgba.g = 0;
+    rgba.b = 0;
+    rgba.a = 0;
     colour = 0;
     shadow = false;
     measure = false;
@@ -194,10 +199,7 @@ const wchar_t* fuiRenderNodeEditText::incStringPtr(const wchar_t* text) const
 {
     const wchar_t* cursor = text + 1;
     if (m_html)
-    {
-        while (*cursor == L'<')
-            cursor = getHtmlTag(cursor, NULL);
-    }
+        return parseHTMLString(cursor, NULL);
     return cursor;
 }
 
@@ -482,12 +484,16 @@ bool fuiRenderNodeEditText::renderHtmlTag(const std::wstring& tag, RenderStringS
 
 bool fuiRenderNodeEditText::isCJKChar(wchar_t character)
 {
-    return (character >= 0x2e80 && character <= 0x9fff) || (character >= 0xac00 && character <= 0xd7af);
+    return character - 0x2e80U < 0x7180;
 }
 
 bool fuiRenderNodeEditText::isCJKPunctuationChar(wchar_t character)
 {
-    return character >= 0x3000 && character <= 0x303f;
+    if (character == cjkPunctuation[0] || character == cjkPunctuation[1] || character == cjkPunctuation[2] ||
+        character == cjkPunctuation[3] || character == cjkPunctuation[4] || character == cjkPunctuation[5] ||
+        character == cjkPunctuation[6])
+        return true;
+    return false;
 }
 
 bool fuiRenderNodeEditText::endOfWord(wchar_t previous, wchar_t current)
@@ -717,7 +723,7 @@ bool fuiRenderNodeEditText::clipBottom(const fuiFontSet::FontVert& vertex)
 {
     const fuiMatrix& matrix = gFui->m_matrixStack[gFui->m_matrixDepth];
     const float y = vertex.x * matrix.rotateSkew0 + vertex.y * matrix.scaleY + matrix.translateY;
-    return gFui->m_screenHeight < y;
+    return y > gFui->m_screenHeight;
 }
 
 bool fuiRenderNodeEditText::clipTop(const fuiFontSet::FontVert& vertex)
@@ -1086,9 +1092,7 @@ fuiRect fuiRenderNodeEditText::getCharBoundaries(int index)
     m_renderState.font = m_font;
     m_renderState.fontSize = size;
 
-    wchar_t sampleChar = static_cast<std::wstring::size_type>(index) < m_text.size() ?
-        m_text[static_cast<std::wstring::size_type>(index)] : m_text[0];
-    float glyphHeight = getRenderedGlyphHeight(sampleChar);
+    float glyphHeight = getRenderedGlyphHeight(m_text[static_cast<std::wstring::size_type>(index)]);
     m_renderState.firstLineHeight = glyphHeight;
     m_renderState.lineHeight = glyphHeight;
     m_renderState.measure = true;
@@ -1174,12 +1178,16 @@ void fuiRenderNodeEditText::setY(float y)
 
 void fuiRenderNodeEditText::getParentSpaceBounds(fuiRect* rect)
 {
-    fuiRenderNode::getParentSpaceBounds(rect);
+    rect->xMin = m_bounds.xMin * m_localMatrix.scaleX + m_localMatrix.translateX;
+    rect->xMax = m_bounds.xMax * m_localMatrix.scaleX + m_localMatrix.translateX;
+    rect->yMin = m_bounds.yMin * m_localMatrix.scaleY;
+    rect->yMax = m_bounds.yMax * m_localMatrix.scaleY;
 }
 
 void fuiRenderNodeEditText::setVisibility(bool visible)
 {
-    m_dirty = true;
+    if (isVisible() != visible)
+        m_dirty = true;
     fuiRenderNode::setVisibility(visible);
 }
 

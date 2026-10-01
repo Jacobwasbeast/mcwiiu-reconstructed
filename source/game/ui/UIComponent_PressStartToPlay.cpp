@@ -32,11 +32,6 @@ struct AvatarRequest
     int player;
     int achievement;
 };
-
-FJ_PressStartToPlay* GetDocument(fuiRenderNode* root)
-{
-    return static_cast<FJ_PressStartToPlay*>(root->getFuiNode()->asFJ_Document());
-}
 }
 
 UIComponent_PressStartToPlay::Toast::Toast(const Toast& other)
@@ -107,7 +102,7 @@ unsigned int UIComponent_PressStartToPlay::handleHold(int player, int action, bo
 void UIComponent_PressStartToPlay::HideChestRefillAnimation()
 {
     if (hasMovie())
-        GetDocument(m_movie->getRootNode())->HideChestRefillAnimation();
+        static_cast<FJ_PressStartToPlay*>(m_movie->getRootNode()->getFuiNode())->HideChestRefillAnimation();
 }
 
 void UIComponent_PressStartToPlay::ResetUIComponents()
@@ -142,7 +137,7 @@ void UIComponent_PressStartToPlay::ShowChestRefillAnimation(bool show, int yOffs
 {
     if (hasMovie())
     {
-        GetDocument(m_movie->getRootNode())->ShowChestRefillAnimation(show, yOffset);
+        static_cast<FJ_PressStartToPlay*>(m_movie->getRootNode()->getFuiNode())->ShowChestRefillAnimation(show, yOffset);
         addTimer(3, 2500);
     }
 }
@@ -154,13 +149,10 @@ void UIComponent_PressStartToPlay::showPlayerDisplayName(bool show)
 
 void UIComponent_PressStartToPlay::SetText(UIString text, bool multiLine)
 {
-    if (!hasMovie())
-        return;
-    FJ_PressStartToPlay* document = GetDocument(m_movie->getRootNode());
     if (multiLine)
-        document->SetMultiLineText(text.getString());
+        static_cast<FJ_PressStartToPlay*>(m_movie->getRootNode()->getFuiNode())->SetMultiLineText(text.getString());
     else
-        document->SetText(text.getString());
+        static_cast<FJ_PressStartToPlay*>(m_movie->getRootNode()->getFuiNode())->SetText(text.getString());
 }
 
 void UIComponent_PressStartToPlay::showPressStart(int player, bool show)
@@ -178,7 +170,7 @@ void UIComponent_PressStartToPlay::showPressStart(int player, bool show)
         if (show)
         {
             addTimer(0, 3000);
-            GetDocument(m_movie->getRootNode())->ShowController(player, false);
+            static_cast<FJ_PressStartToPlay*>(m_movie->getRootNode()->getFuiNode())->ShowController(player, false);
         }
     }
 }
@@ -188,11 +180,10 @@ void UIComponent_PressStartToPlay::registerTexture(int achievement)
     AchievementInfo* info = (AchievementInfo*)(unsigned int)UIScene_AchievementsMenu::GetInfo(achievement);
     wchar_t path[64];
     std::swprintf(path, 64, L"Graphics\\Achievements\\%ls.png", info->icon);
-    std::wstring name(path);
-    if (g_pApp->hasArchiveFile(name, false))
+    if (gApp.hasArchiveFile(std::wstring(path), false))
     {
-        arrayWithLength<unsigned char> data = g_pApp->getArchiveFile(name, false);
-        if (data.data != 0 && data.length != 0)
+        arrayWithLength<unsigned char> data = gApp.getArchiveFile(std::wstring(path), false);
+        if (data.length != 0 && data.data != 0)
             registerSubstitutionTexture(std::wstring(info->icon), data.data, data.length, true);
     }
 }
@@ -201,7 +192,7 @@ void UIComponent_PressStartToPlay::ShowAchievementToast(const Toast& toast)
 {
     addTimer(1, 4000);
     m_achievementToastShowing = true;
-    GetDocument(m_movie->getRootNode())->ShowAchievementToast(toast.title, toast.description,
+    static_cast<FJ_PressStartToPlay*>(m_movie->getRootNode()->getFuiNode())->ShowAchievementToast(toast.title, toast.description,
                                                               toast.gamerPic, toast.achievementIcon);
 }
 
@@ -291,7 +282,7 @@ void UIComponent_PressStartToPlay::handleReload()
         {
             any = true;
             addTimer(0, 3000);
-            GetDocument(m_movie->getRootNode())->ShowController(i, false);
+            static_cast<FJ_PressStartToPlay*>(m_movie->getRootNode()->getFuiNode())->ShowController(i, false);
         }
     }
     m_mainPanel.setVisible(any);
@@ -300,7 +291,7 @@ void UIComponent_PressStartToPlay::handleReload()
 void UIComponent_PressStartToPlay::HideAchievementToast()
 {
     m_achievementToastShowing = false;
-    GetDocument(m_movie->getRootNode())->HideAchievementToast();
+    static_cast<FJ_PressStartToPlay*>(m_movie->getRootNode()->getFuiNode())->HideAchievementToast();
     if (!m_achievementToasts.empty())
     {
         ShowAchievementToast(m_achievementToasts.front());
@@ -312,7 +303,7 @@ void UIComponent_PressStartToPlay::ShowAchievementMenu()
 {
     m_achievementToastShowing = false;
     m_holdToShowAchievements = false;
-    if (g_pApp->GetGameStarted() != 0)
+    if (gApp.GetGameStarted() != 0)
         gConsoleUIController.CloseAllPlayersScenes(false);
     gConsoleUIController.NavigateToScene(m_player, EUIScene_AchievementsMenu,
                                          (void*)(unsigned int)m_achievement,
@@ -364,7 +355,7 @@ void UIComponent_PressStartToPlay::showAutosaveTimer(bool show)
 void UIComponent_PressStartToPlay::ShowBetaWatermark()
 {
     if (hasMovie())
-        GetDocument(m_movie->getRootNode())->ShowBetaWatermark();
+        static_cast<FJ_PressStartToPlay*>(m_movie->getRootNode()->getFuiNode())->ShowBetaWatermark();
 }
 
 void UIComponent_PressStartToPlay::tick()
@@ -374,7 +365,7 @@ void UIComponent_PressStartToPlay::tick()
     if (!gConsoleUIController.IsExpectingOrReloadingSkin() && hasMovie())
     {
         for (int i = 0; i < 4; ++i)
-            if (m_showPressStart[i] && minecraft->mConnectionFailed[i] != 0)
+            if (m_showPressStart[i] && minecraft->mLocalPlayers[i] != 0)
                 showPressStart(i, false);
     }
 }

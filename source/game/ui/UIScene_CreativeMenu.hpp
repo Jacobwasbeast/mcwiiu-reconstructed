@@ -104,32 +104,28 @@ public:
     UIScene_CreativeMenu(int type, void* data, UILayer* layer);
     virtual ~UIScene_CreativeMenu();
 
-    virtual bool IsSectionSlotList(IUIScene_AbstractContainerMenu::ESceneSection section);
-    virtual unsigned int CanHaveFocus(IUIScene_AbstractContainerMenu::ESceneSection section);
     virtual unsigned int getSectionColumns(IUIScene_AbstractContainerMenu::ESceneSection section);
     virtual unsigned int getSectionRows(IUIScene_AbstractContainerMenu::ESceneSection section);
-    virtual unsigned int GetSectionAndSlotInDirection(IUIScene_AbstractContainerMenu::ESceneSection section,
-                                                       IUIScene_AbstractContainerMenu::ETapState state,
-                                                       int* x, int* y);
     virtual void GetPositionOfSection(IUIScene_AbstractContainerMenu::ESceneSection section,
                                       _UIVec2D* position);
     virtual void GetItemScreenData(IUIScene_AbstractContainerMenu::ESceneSection section, int slot,
                                    _UIVec2D* position, _UIVec2D* size);
-    virtual unsigned int handleValidKeyPress(int key, int value, int player);
-    virtual void handleOutsideClicked(int x, int y, int button);
-    virtual void updateTabHighlightAndText(ECreativeInventoryTabs tab);
-    virtual void updateScrollCurrentPage(int page, int pageCount);
-    virtual void switchTab(ECreativeInventoryTabs tab);
-    virtual void ScrollBar(_UIVec2D position);
+    virtual void handleSectionClick(IUIScene_AbstractContainerMenu::ESceneSection section);
+    virtual void setSectionSelectedSlot(IUIScene_AbstractContainerMenu::ESceneSection section,
+                                        int slot, int direction, bool wrap);
     virtual void handleOtherClicked(int button, IUIScene_AbstractContainerMenu::ESceneSection section,
                                     int slot, bool pressed);
+    virtual unsigned int GetSectionAndSlotInDirection(IUIScene_AbstractContainerMenu::ESceneSection section,
+                                                       IUIScene_AbstractContainerMenu::ETapState state,
+                                                       int* x, int* y);
+    virtual unsigned int handleValidKeyPress(int key, int value, int player);
+    virtual void handleOutsideClicked(int x, int y, int button);
     virtual void handleAdditionalKeyPress(int key);
-    virtual int getEmptyInventorySlot(not_null_ptr<ItemInstance> item, int& slot);
     virtual void handleSlotListClicked(IUIScene_AbstractContainerMenu::ESceneSection section,
                                        int slot, int button);
     virtual int getSectionStartOffset(IUIScene_AbstractContainerMenu::ESceneSection section);
-    virtual void setSectionSelectedSlot(IUIScene_AbstractContainerMenu::ESceneSection section,
-                                        int slot, int direction, bool wrap);
+    virtual bool IsSectionSlotList(IUIScene_AbstractContainerMenu::ESceneSection section);
+    virtual unsigned int CanHaveFocus(IUIScene_AbstractContainerMenu::ESceneSection section);
     virtual unsigned int overrideTooltips(IUIScene_AbstractContainerMenu::ESceneSection section,
                                           not_null_ptr<ItemInstance> slotItem, bool carriedIsItem,
                                           bool slotIsItem, bool carriedSameAsSlot, int slotSpace,
@@ -137,6 +133,11 @@ public:
                                           EToolTipItem& toolTip3, EToolTipItem& toolTip5,
                                           EToolTipItem& toolTip10, EToolTipItem& toolTip6,
                                           EToolTipItem& toolTip7);
+    void updateTabHighlightAndText(ECreativeInventoryTabs tab);
+    void updateScrollCurrentPage(int page, int pageCount);
+    void switchTab(ECreativeInventoryTabs tab);
+    void ScrollBar(_UIVec2D position);
+    int getEmptyInventorySlot(not_null_ptr<ItemInstance> item, int& slot);
     static void staticCtor();
     virtual unsigned int mapElementsAndNames();
     virtual std::wstring getMoviePath();
@@ -149,7 +150,6 @@ public:
     virtual UIControl* GetMainPanel();
     virtual void handleTouchBoxRebuild();
     virtual void handleTimerComplete(int timerId);
-    virtual void handleSectionClick(IUIScene_AbstractContainerMenu::ESceneSection section);
     virtual int getSceneType();
 
 private:
@@ -166,7 +166,7 @@ private:
     int m_emptySlotY;
     bool m_unreferencedFlag;
 
-    static TabSpec* s_tabSpecs[8];
+    static TabSpec** s_tabSpecs;
 
 public:
     static std::vector<const ItemBuilder*> s_groupItems[ECreative_Inventory_Groups_Count];

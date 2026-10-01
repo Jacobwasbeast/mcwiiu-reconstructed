@@ -43,13 +43,14 @@ UIString::UIStringCore::UIStringCore(const std::string& value)
     mCharString = value;
 }
 
-unsigned int UIString::UIStringCore::hasNewString()
+unsigned char UIString::UIStringCore::hasNewString()
 {
     if (mIsConstant)
         return 0;
+    unsigned int result = 1;
     if (mLanguage == gCurrentLanguage && mLocale == gCurrentLocale)
-        return 0;
-    return 1;
+        result = 0;
+    return result;
 }
 
 unsigned int UIString::UIStringCore::update(bool force)
@@ -64,14 +65,15 @@ unsigned int UIString::UIStringCore::update(bool force)
     return 1;
 }
 
-unsigned int UIString::UIStringCore::needsUpdating()
+unsigned char UIString::UIStringCore::needsUpdating()
 {
     if (mIsConstant)
         return 0;
+    unsigned int result = 1;
     if (mLanguage == gCurrentLanguage && mUpdatedLanguage == mLanguage &&
         mLocale == gCurrentLocale && mUpdatedLocale == mLocale)
-        return 0;
-    return 1;
+        result = 0;
+    return result;
 }
 
 void UIString::UIStringCore::setUpdated()
@@ -101,42 +103,49 @@ unsigned char UIString::UIStringCore::isCharString()
 
 UIString::UIString()
 {
-    mCore.reset();
+    mCore = boost::shared_ptr<UIStringCore>();
 }
 
 UIString::UIString(int id)
 {
-    mCore.reset(new UIStringCore(FJStringBuilder(new IdsStringBuilder(id))));
+    FJStringBuilder builder(new IdsStringBuilder(id));
+    UIStringCore* core = new UIStringCore(builder);
+    mCore = boost::shared_ptr<UIStringCore>(core);
 }
 
 UIString::UIString(FJStringBuilder builder)
 {
-    mCore.reset(new UIStringCore(builder));
+    UIStringCore* core = new UIStringCore(builder);
+    mCore = boost::shared_ptr<UIStringCore>(core);
 }
 
 UIString::UIString(const std::string& value)
 {
-    mCore.reset(new UIStringCore(convStringToWstring(value)));
+    UIStringCore* core = new UIStringCore(convStringToWstring(value));
+    mCore = boost::shared_ptr<UIStringCore>(core);
 }
 
 UIString::UIString(const char* value)
 {
-    mCore.reset(new UIStringCore(std::string(value)));
+    UIStringCore* core = new UIStringCore(std::string(value));
+    mCore = boost::shared_ptr<UIStringCore>(core);
 }
 
 UIString::UIString(const std::wstring& value)
 {
-    mCore.reset(new UIStringCore(value));
+    UIStringCore* core = new UIStringCore(value);
+    mCore = boost::shared_ptr<UIStringCore>(core);
 }
 
 UIString::UIString(const wchar_t* value)
 {
-    mCore.reset(new UIStringCore(std::wstring(value)));
+    UIStringCore* core = new UIStringCore(std::wstring(value));
+    mCore = boost::shared_ptr<UIStringCore>(core);
 }
 
 UIString::~UIString()
 {
-    mCore.reset();
+    mCore = boost::shared_ptr<UIStringCore>();
 }
 
 unsigned int UIString::setCurrentLanguage()
@@ -165,11 +174,11 @@ bool UIString::compare(const UIString& value)
     return mCore != value.mCore;
 }
 
-unsigned int UIString::needsUpdating()
+unsigned char UIString::needsUpdating()
 {
-    if (!mCore)
-        return 0;
-    return mCore->needsUpdating();
+    if (mCore)
+        return mCore->needsUpdating();
+    return 0;
 }
 
 void UIString::setUpdated()
@@ -204,5 +213,5 @@ unsigned char UIString::isCharString()
 
 const wchar_t* UIString::c_str()
 {
-    return getString().c_str();
+    return &getString()[0];
 }

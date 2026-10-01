@@ -36,6 +36,7 @@
 #include "game/util/Random.hpp"
 #include "game/world/LevelGenerationOptions.hpp"
 #include "game/world/generation/LevelGenerators.hpp"
+#include "game/world/generation/Player.hpp"
 #include "platform/wiiu/WiiU_Runtime.hpp"
 #include "game/ui/UIScene_FullscreenProgress.hpp"
 #include "vendor/_LoadingInputParams.hpp"
@@ -43,22 +44,18 @@
 
 extern ConsoleUIController gConsoleUIController;
 extern CConsoleMinecraftApp gApp;
-extern CMinecraftApp* g_pApp;
 
 namespace
 {
     static const EUIScene s_componentDRC = EUIScene_Panorama;
     static const EUIScene s_componentTV = EUIScene_Logo;
     static EUIScene s_nextScene = EUIScene_Count;
-    static Random s_splashRandom;
+    static Random* s_splashRandom = new Random();
 
 }
 
 UIScene_MainMenu::UIScene_MainMenu(int sceneType, void*, UILayer* layer)
-    : UIScene(sceneType, layer), m_button1(), m_button2(), m_button3(), m_button4(), m_button5(),
-      m_button6(), m_button7(), m_buttonUpsell(), m_timer(), m_loading(false), m_showUpsell(false),
-      m_signedIn(false), m_miniGamesSelected(false), m_trial(false), m_splashX(0.0f), m_splashY(0.0f),
-      m_splashWidth(0.0f), m_splashHeight(0.0f), m_splashes(), m_splash(), m_pendingAction(0)
+    : UIScene(sceneType, layer), m_timer(), m_splashes(), m_splash()
 {
     Entity::fjDebugCheckSmallIdLeaks();
     gApp.SetDRCIconEnabled(true);
@@ -68,36 +65,36 @@ UIScene_MainMenu::UIScene_MainMenu(int sceneType, void*, UILayer* layer)
     layer->addComponent(sceneType, s_componentTV, NULL);
     m_loading = false;
     m_pendingAction = 0;
-    m_button1.init(UIString(IDS_PLAY_GAME), 0);
-    m_button2.init(UIString(IDS_MINI_GAMES), 1);
-    m_button3.init(UIString(IDS_LEADERBOARDS), 2);
-    m_button4.init(UIString(IDS_ACHIEVEMENTS), 3);
-    m_button5.init(UIString(IDS_HELP_AND_OPTIONS), 4);
+    m_buttons[0].init(UIString(IDS_PLAY_GAME), 0);
+    m_buttons[1].init(UIString(IDS_MINI_GAMES), 1);
+    m_buttons[2].init(UIString(IDS_LEADERBOARDS), 2);
+    m_buttons[3].init(UIString(IDS_ACHIEVEMENTS), 3);
+    m_buttons[4].init(UIString(IDS_HELP_AND_OPTIONS), 4);
     if (gProfile->IsFullVersion())
     {
-        m_button6.init(UIString(0xe6987a73), 5);
         m_showUpsell = false;
+        m_buttons[5].init(UIString(0xe6987a73), 5);
     }
     else
     {
-        m_button6.init(UIString(IDS_UNLOCK_FULL_GAME), 5);
         m_showUpsell = true;
+        m_buttons[5].init(UIString(IDS_UNLOCK_FULL_GAME), 5);
     }
-    m_button7.init(UIString(IDS_EXIT_GAME), 6);
+    m_buttons[6].init(UIString(IDS_EXIT_GAME), 6);
     handleReload();
     doHorizontalResizeCheck();
     m_splash = L"Default Text";
-    if (gApp.hasArchiveFile(L"splashes.txt", false)) {
-        arrayWithLength<unsigned char> data = gApp.getArchiveFile(L"splashes.txt", false);
+    std::wstring splashesFile(L"splashes.txt");
+    if (gApp.hasArchiveFile(splashesFile, false)) {
+        arrayWithLength<unsigned char> data = gApp.getArchiveFile(splashesFile, false);
         ByteArrayInputStream input(data);
         InputStreamReader reader(&input);
         BufferedReader buffered(&reader);
-        std::wstring line = buffered.readLine();
-        while (!line.empty()) {
+        std::wstring line = L"";
+        while (!(line = buffered.readLine()).empty()) {
             line = trimString(line);
             if (!line.empty())
                 m_splashes.push_back(line);
-            line = buffered.readLine();
         }
         buffered.close();
     }
@@ -114,24 +111,32 @@ UIScene_MainMenu::UIScene_MainMenu(int sceneType, void*, UILayer* layer)
 
 UIScene_MainMenu::~UIScene_MainMenu()
 {
-    if (m_layer != NULL) {
-        m_layer->removeComponent(s_componentDRC);
-        m_layer->removeComponent(s_componentTV);
-    }
+    m_layer->removeComponent(s_componentDRC);
+    m_layer->removeComponent(s_componentTV);
 }
 
 unsigned int UIScene_MainMenu::mapElementsAndNames()
 {
     UIScene::mapElementsAndNames();
     fuiRenderNode* root = m_movie->getRootNode();
-    const char* names[] = { "Button1", "Button2", "Button3", "Button4", "Button5", "Button6",
-                            "Button7", "ButtonUpsell", "Timer" };
-    UIControl* controls[] = { &m_button1, &m_button2, &m_button3, &m_button4, &m_button5,
-                              &m_button6, &m_button7, &m_buttonUpsell, &m_timer };
-    for (int i = 0; i < 9; ++i) {
-        controls[i]->setupControl(this, root, names[i]);
-        m_controls.push_back(controls[i]);
-    }
+    m_buttons[0].setupControl(this, root, "Button1");
+    m_controls.push_back(&m_buttons[0]);
+    m_buttons[1].setupControl(this, root, "Button2");
+    m_controls.push_back(&m_buttons[1]);
+    m_buttons[2].setupControl(this, root, "Button3");
+    m_controls.push_back(&m_buttons[2]);
+    m_buttons[3].setupControl(this, root, "Button4");
+    m_controls.push_back(&m_buttons[3]);
+    m_buttons[4].setupControl(this, root, "Button5");
+    m_controls.push_back(&m_buttons[4]);
+    m_buttons[5].setupControl(this, root, "Button6");
+    m_controls.push_back(&m_buttons[5]);
+    m_buttons[6].setupControl(this, root, "Button7");
+    m_controls.push_back(&m_buttons[6]);
+    m_buttons[7].setupControl(this, root, "ButtonUpsell");
+    m_controls.push_back(&m_buttons[7]);
+    m_timer.setupControl(this, root, "Timer");
+    m_controls.push_back(&m_timer);
     return 1;
 }
 
@@ -142,8 +147,8 @@ void UIScene_MainMenu::proceedToScene(int, EUIScene scene)
 
 void UIScene_MainMenu::handleReload()
 {
-    removeControl(&m_buttonUpsell, false);
-    removeControl(&m_button3, false);
+    removeControl(&m_buttons[7], false);
+    removeControl(&m_buttons[2], false);
 }
 
 void UIScene_MainMenu::updateTooltips()
@@ -161,18 +166,16 @@ void UIScene_MainMenu::updateTooltips()
 
 void UIScene_MainMenu::updateComponents()
 {
-    if (m_layer != NULL) {
-        m_layer->showComponent(m_playerId, s_componentDRC, true);
-        m_layer->showComponent(m_playerId, s_componentTV, true);
-    }
+    m_layer->showComponent(m_playerId, s_componentDRC, true);
+    m_layer->showComponent(m_playerId, s_componentTV, true);
 }
 
 void UIScene_MainMenu::customDrawSplash(fuiRect* rect)
 {
     Minecraft* minecraft = Minecraft::GetInstance();
-    ScreenSizeCalculator calculator(minecraft->mOptions, minecraft->mWidth, minecraft->mHeight, -1);
-    m_splashX = static_cast<float>(minecraft->mWidth);
-    m_splashY = static_cast<float>(minecraft->mHeight);
+    ScreenSizeCalculator calculator(minecraft->mOptions, minecraft->mFullWidth, minecraft->mFullHeight, -1);
+    m_splashX = static_cast<float>(minecraft->mFullWidth);
+    m_splashY = static_cast<float>(minecraft->mFullHeight);
     m_splashWidth = static_cast<float>(calculator.mWidthScale);
     m_splashHeight = static_cast<float>(calculator.mHeightScale);
     gRenderer->TextureBindVertex(-1);
@@ -185,7 +188,7 @@ void UIScene_MainMenu::customDrawSplash(fuiRect* rect)
     GlStateManager::translatef((rect->xMax - rect->xMin) * 0.5f, rect->yMax - rect->yMin, 0.0f);
     GlStateManager::rotatef(-17.0f, 0.0f, 0.0f, 1.0f);
 
-    float phase = static_cast<float>(System::processTimeInMilliSecs() % 1000) / 1000.0f * 3.1415927f;
+    float phase = static_cast<float>(static_cast<long long>(System::processTimeInMilliSecs()) % 1000) / 1000.0f * 3.1415927f;
     float scale = (1.8f - Mth::abs(Mth::sin(phase + phase) * 0.1f)) *
                   (m_splashX / m_splashWidth) * 100.0f;
     float factor = scale / static_cast<float>(font->width(m_splash) + 32);
@@ -198,10 +201,8 @@ void UIScene_MainMenu::customDrawSplash(fuiRect* rect)
 
 void UIScene_MainMenu::customDraw(const char* name, fuiRect* rect)
 {
-    if (name != NULL && std::strcmp(name, "Splash") == 0)
+    if (std::strcmp(name, "Splash") == 0)
         customDrawSplash(rect);
-    else
-        UIScene::customDraw(name, rect);
 }
 
 std::wstring UIScene_MainMenu::getMoviePath()
@@ -212,25 +213,26 @@ std::wstring UIScene_MainMenu::getMoviePath()
 void UIScene_MainMenu::tick()
 {
     UIScene::tick();
-    if (s_nextScene != EUIScene_Count && g_pApp->GetTMSAction(m_playerId) == 0) {
+    if (s_nextScene != EUIScene_Count && gApp.GetTMSAction(m_playerId) == 0) {
         int playerId = gProfile->GetLockedProfile();
         if (!m_miniGamesSelected) {
             gConsoleUIController.NavigateToScene(playerId, s_nextScene,
                                                  0, EUILayer_Scene,
                                                  EUIGroup_PlayerDefault);
+            s_nextScene = EUIScene_Count;
         } else {
-            gConsoleUIController.NavigateToScene(
-                playerId, s_nextScene,
-                reinterpret_cast<void*>(s_nextScene == EUIScene_LoadCreateJoinMenu),
-                EUILayer_Scene, EUIGroup_PlayerDefault);
+            void* sceneData = NULL;
+            if (s_nextScene == EUIScene_LoadCreateJoinMenu)
+                sceneData = reinterpret_cast<void*>(1);
+            gConsoleUIController.NavigateToScene(playerId, s_nextScene, sceneData,
+                                                 EUILayer_Scene, EUIGroup_PlayerDefault);
+            s_nextScene = EUIScene_Count;
         }
-        s_nextScene = EUIScene_Count;
     }
 
     if (m_showUpsell && gProfile->IsFullVersion()) {
         m_showUpsell = false;
-        UIString label(L10N::GetString(0xe6987a73));
-        m_button6.init(label, 5);
+        m_buttons[5].init(UIString(L10N::GetString(0xe6987a73)), 5);
     }
 }
 
@@ -258,7 +260,7 @@ void UIScene_MainMenu::handleInput(int playerId, int action, bool repeat, bool p
 
 void UIScene_MainMenu::handleUnlockFullVersion()
 {
-    m_button6.setLabel(UIString(0xe6987a73), true, false);
+    m_buttons[5].setLabel(UIString(0xe6987a73), true, false);
 }
 
 void UIScene_MainMenu::PrepareToPlayGame(int playerId)
@@ -331,7 +333,8 @@ void UIScene_MainMenu::RunUnlockOrDLC(int playerId)
         }
         if (!gProfile->IsSignedInLive(playerId))
         {
-            gConsoleUIController.RequestErrorMessage(0x8a21894b, 0xc34c0b77, &messageParameter, 1,
+            int signInParameter = IDS_CONFIRM_OK;
+            gConsoleUIController.RequestErrorMessage(0x8a21894b, 0xc34c0b77, &signInParameter, 1,
                                                      0xff, NULL, NULL, NULL, true);
             return;
         }
@@ -407,7 +410,10 @@ int UIScene_MainMenu::MustConnectReturnedNintendo(void* context, int userIndex,
     }
     else if (scene->m_pendingAction == 1)
     {
-        CreateLoad_SignInReturned(scene, result == C4JStorage::EMessageResult_Decline, 0, 0);
+        if (result == C4JStorage::EMessageResult_Decline)
+            CreateLoad_SignInReturned(scene, true, 0, 0);
+        else
+            CreateLoad_SignInReturned(scene, false, 0, 0);
     }
     else
     {
@@ -433,8 +439,7 @@ int UIScene_MainMenu::MiniGamesUnlock_Returned(void* context, int playerId,
 
 void UIScene_MainMenu::LoadTrial()
 {
-    boost::shared_ptr<Player> nullPlayer;
-    gApp.SetTutorialMode(true, nullPlayer);
+    gApp.SetTutorialMode(true, boost::shared_ptr<Player>());
     gApp.ClearTerrainFeaturePosition();
     gStorage->ResetSaveData();
     gProfile->StartTrialGame();
@@ -470,15 +475,15 @@ void UIScene_MainMenu::LoadTrial()
     loadingParams->m_threadProc = &CGameNetworkManager::RunNetworkGameThreadProc;
     loadingParams->m_threadParam = initData;
 
-    FullscreenProgressState* state = new FullscreenProgressState();
+    FullscreenProgressState* state = new FullscreenProgressState;
     state->showConfirmation = false;
     state->backScene = EUIScene_None;
     state->showTip = true;
     state->reservedFlag1 = true;
     state->reservedFlag2 = true;
     state->closeMode = 3;
-    loadingParams->m_completionData = state;
     state->playerId = gProfile->GetPrimaryPad();
+    loadingParams->m_completionData = state;
 
     gConsoleUIController.ShowTrialTimer(true);
     gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), EUIScene_FullscreenProgress,
@@ -504,7 +509,8 @@ void UIScene_MainMenu::RunPlayGame(int playerId)
     {
         if (!gProfile->IsSignedInLive(playerId))
         {
-            minecraft->mUser->name = convStringToWstring(gProfile->GetGamertag(gProfile->GetPrimaryPad()));
+            User* user = minecraft->mUser;
+            user->name = convStringToWstring(gProfile->GetGamertag(gProfile->GetPrimaryPad()));
             int messageParameters[2] = { 0x51d141b, 0x3f0766c7 };
             m_pendingAction = 1;
             gConsoleUIController.RequestErrorMessage(0x8a21894b, 0xb837024e, messageParameters, 2,
@@ -512,7 +518,8 @@ void UIScene_MainMenu::RunPlayGame(int playerId)
                                                      NULL, true);
             return;
         }
-        minecraft->mUser->name = convStringToWstring(gProfile->GetGamertag(gProfile->GetPrimaryPad()));
+        User* user = minecraft->mUser;
+        user->name = convStringToWstring(gProfile->GetGamertag(gProfile->GetPrimaryPad()));
         GameSettings::ApplyGameSettingsChanged(playerId);
         proceedToScene(gProfile->GetPrimaryPad(), EUIScene_LoadCreateJoinMenu);
         return;
@@ -529,7 +536,8 @@ void UIScene_MainMenu::RunPlayGame(int playerId)
         return;
     }
 
-    Minecraft::GetInstance()->mUser->name = convStringToWstring(gProfile->GetGamertag(gProfile->GetPrimaryPad()));
+    User* user = Minecraft::GetInstance()->mUser;
+    user->name = convStringToWstring(gProfile->GetGamertag(gProfile->GetPrimaryPad()));
     LoadTrial();
 }
 
@@ -778,32 +786,27 @@ void UIScene_MainMenu::handleGainFocus(bool hadFocus)
         m_loading = false;
         updateTooltips();
     } else {
-        int pad = gProfile->GetPrimaryPad();
-        if (gProfile->IsSignedIn(pad)) {
-            gProfile->GetPrimaryPad();
-            GameSettings::ApplyGameSettingsChanged(pad);
-        }
+        if (gProfile->IsSignedIn(gProfile->GetPrimaryPad()))
+            GameSettings::ApplyGameSettingsChanged(gProfile->GetPrimaryPad());
         m_loading = false;
         updateTooltips();
     }
 
     if (hadFocus && gProfile->IsFullVersion())
-        m_button6.setLabel(UIString(0xe6987a73), false, false);
+        m_buttons[5].setLabel(UIString(0xe6987a73), false, false);
 
     m_timer.setVisible(false);
-    m_button1.setVisible(true);
-    m_button2.setVisible(true);
-    m_button3.setVisible(true);
-    m_button4.setVisible(true);
-    m_button5.setVisible(true);
-    m_button6.setVisible(true);
-    m_button7.setVisible(true);
-    m_buttonUpsell.setVisible(true);
+    m_buttons[0].setVisible(true);
+    m_buttons[1].setVisible(true);
+    m_buttons[2].setVisible(true);
+    m_buttons[3].setVisible(true);
+    m_buttons[4].setVisible(true);
+    m_buttons[5].setVisible(true);
+    m_buttons[6].setVisible(true);
+    m_buttons[7].setVisible(true);
 
-    int splashIndex = 0;
-    if (!m_splashes.empty())
-        splashIndex = static_cast<int>(m_splashes.size());
-    splashIndex = s_splashRandom.nextInt(splashIndex - 4) + 4;
+    int splashIndex = static_cast<int>(m_splashes.size());
+    splashIndex = s_splashRandom->nextInt(splashIndex - 4) + 4;
 
     SYSTEMTIME localTime;
     GetLocalTime(&localTime);

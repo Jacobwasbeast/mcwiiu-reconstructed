@@ -38,52 +38,21 @@ EnchantmentMenu::EnchantmentMenu(boost::shared_ptr<Inventory> inventory, Level* 
     int column;
     for (row = 0; row < 3; ++row)
     {
-        for (column = 0; column < 3; ++column)
+        for (column = 0; column < 9; ++column)
         {
             addSlot(new Slot(boost::static_pointer_cast<Container>(inventory), row * 9 + column + 9, 8 + column * 18, 84 + row * 18));
         }
     }
-    for (row = 0; row < 3; ++row)
-    {
-        for (column = 0; column < 9; ++column)
-            addSlot(new Slot(boost::static_pointer_cast<Container>(inventory), row * 9 + column, 8 + column * 18, 142 + row * 18));
-    }
+    for (column = 0; column < 9; ++column)
+        addSlot(new Slot(boost::static_pointer_cast<Container>(inventory), column, 8 + column * 18, 142));
 
     mEnchantmentSeed = static_cast<long long>(static_cast<int>(inventory->m_player->getEnchantmentSeed()));
 }
 
 EnchantmentMenu::EnchantmentMenu(boost::shared_ptr<Inventory> inventory, Level* level)
-    : AbstractContainerMenu(), mEnchantmentContainer(new EnchantmentContainer(this)), mLevel(level), mPosition(BlockPos::ZERO), mRandom(), mDataChanged(false)
+    : AbstractContainerMenu()
 {
-    mCosts[0] = 0;
-    mCosts[1] = 0;
-    mCosts[2] = 0;
-    mEnchantmentIds[0] = -1;
-    mEnchantmentIds[1] = -1;
-    mEnchantmentIds[2] = -1;
-    mEnchantmentLevels[0] = -1;
-    mEnchantmentLevels[1] = -1;
-    mEnchantmentLevels[2] = -1;
-
-    addSlot(new Slot(mEnchantmentContainer, 0, 15, 47));
-    addSlot(new EnchantmentCostSlot(mEnchantmentContainer, 1, 35, 47));
-
-    int row;
-    int column;
-    for (row = 0; row < 3; ++row)
-    {
-        for (column = 0; column < 3; ++column)
-        {
-            addSlot(new Slot(boost::static_pointer_cast<Container>(inventory), row * 9 + column + 9, 8 + column * 18, 84 + row * 18));
-        }
-    }
-    for (row = 0; row < 3; ++row)
-    {
-        for (column = 0; column < 9; ++column)
-            addSlot(new Slot(boost::static_pointer_cast<Container>(inventory), row * 9 + column, 8 + column * 18, 142 + row * 18));
-    }
-
-    mEnchantmentSeed = static_cast<long long>(static_cast<int>(inventory->m_player->getEnchantmentSeed()));
+    EnchantmentMenu(inventory, level, BlockPos::ZERO);
 }
 
 void EnchantmentMenu::broadcastData(net_minecraft_world_inventory::ContainerListener* listener)
@@ -112,34 +81,30 @@ void EnchantmentMenu::broadcastChanges()
 
     if (mDataChanged)
     {
-        for (std::vector<net_minecraft_world_inventory::ContainerListener*>::iterator it = m_listeners.begin();
-             it != m_listeners.end(); ++it)
-        {
-            broadcastData(*it);
-        }
+        for (unsigned int i = 0; i < m_listeners.size(); ++i)
+            broadcastData(m_listeners.at(i));
         mDataChanged = false;
     }
 }
 
 void EnchantmentMenu::setData(int id, int value)
 {
-    unsigned int uid = static_cast<unsigned int>(id);
-    if (uid < 3)
+    if (static_cast<unsigned int>(id) < 3)
     {
+        mCosts[id] = value;
         mDataChanged = true;
-        mCosts[uid] = value;
     }
-    else if (uid == 3)
+    else if (id == 3)
     {
         mEnchantmentSeed = static_cast<long long>(value);
     }
-    else if (uid - 4 < 3)
+    else if (static_cast<unsigned int>(id - 4) < 3)
     {
-        mEnchantmentIds[uid - 4] = value;
+        mEnchantmentIds[id - 4] = value;
     }
-    else if (uid - 7 < 3)
+    else if (static_cast<unsigned int>(id - 7) < 3)
     {
-        mEnchantmentLevels[uid - 7] = value;
+        mEnchantmentLevels[id - 7] = value;
     }
     else
     {
@@ -168,67 +133,70 @@ void EnchantmentMenu::slotsChanged()
             mEnchantmentLevels[slot] = -1;
         }
         mDataChanged = true;
-        return;
     }
-    if (mLevel->mIsClientSide)
-        return;
-
-    int bookshelves = 0;
-    for (int dz = -1; dz <= 1; ++dz)
-        for (int dx = -1; dx <= 1; ++dx)
+    else if (!mLevel->mIsClientSide)
+    {
+        int bookshelves = 0;
+        for (int dz = -1; dz <= 1; ++dz)
         {
-            if (dx == 0 && dz == 0)
-                continue;
-            if (!mLevel->isEmptyBlock(mPosition.offset(dx, 0, dz)) || !mLevel->isEmptyBlock(mPosition.offset(dx, 1, dz)))
-                continue;
-            if (mLevel->getBlockState(mPosition.offset(dx * 2, 0, dz * 2))->getBlock() == Blocks::bookshelf)
-                ++bookshelves;
-            if (mLevel->getBlockState(mPosition.offset(dx * 2, 1, dz * 2))->getBlock() == Blocks::bookshelf)
-                ++bookshelves;
-            if (dx != 0 && dz != 0)
+            for (int dx = -1; dx <= 1; ++dx)
             {
-                if (mLevel->getBlockState(mPosition.offset(dx * 2, 0, dz))->getBlock() == Blocks::bookshelf)
-                    ++bookshelves;
-                if (mLevel->getBlockState(mPosition.offset(dx * 2, 1, dz))->getBlock() == Blocks::bookshelf)
-                    ++bookshelves;
-                if (mLevel->getBlockState(mPosition.offset(dx, 0, dz * 2))->getBlock() == Blocks::bookshelf)
-                    ++bookshelves;
-                if (mLevel->getBlockState(mPosition.offset(dx, 1, dz * 2))->getBlock() == Blocks::bookshelf)
-                    ++bookshelves;
+                if ((dz != 0 || dx != 0) && mLevel->isEmptyBlock(mPosition.offset(dx, 0, dz)) &&
+                    mLevel->isEmptyBlock(mPosition.offset(dx, 1, dz)))
+                {
+                    if (mLevel->getBlockState(mPosition.offset(dx * 2, 0, dz * 2))->getBlock() == Blocks::bookshelf)
+                        ++bookshelves;
+                    if (mLevel->getBlockState(mPosition.offset(dx * 2, 1, dz * 2))->getBlock() == Blocks::bookshelf)
+                        ++bookshelves;
+                    if (dx != 0 && dz != 0)
+                    {
+                        if (mLevel->getBlockState(mPosition.offset(dx * 2, 0, dz))->getBlock() == Blocks::bookshelf)
+                            ++bookshelves;
+                        if (mLevel->getBlockState(mPosition.offset(dx * 2, 1, dz))->getBlock() == Blocks::bookshelf)
+                            ++bookshelves;
+                        if (mLevel->getBlockState(mPosition.offset(dx, 0, dz * 2))->getBlock() == Blocks::bookshelf)
+                            ++bookshelves;
+                        if (mLevel->getBlockState(mPosition.offset(dx, 1, dz * 2))->getBlock() == Blocks::bookshelf)
+                            ++bookshelves;
+                    }
+                }
             }
         }
 
-    mRandom.setSeed(mEnchantmentSeed);
-    for (int slot = 0; slot < 3; ++slot)
-    {
-        const int cost = EnchantmentHelper::getEnchantmentCost(&mRandom, slot, bookshelves, item);
-        mEnchantmentIds[slot] = -1;
-        mEnchantmentLevels[slot] = -1;
-        mCosts[slot] = cost < slot + 1 ? 0 : cost;
-    }
+        mRandom.setSeed(mEnchantmentSeed);
+        for (int slot = 0; slot < 3; ++slot)
+        {
+            const int cost = EnchantmentHelper::getEnchantmentCost(&mRandom, slot, bookshelves, item);
+            mEnchantmentIds[slot] = -1;
+            mEnchantmentLevels[slot] = -1;
+            mCosts[slot] = cost < slot + 1 ? 0 : cost;
+        }
 
-    for (int slot = 0; slot < 3; ++slot)
-    {
-        if (mCosts[slot] <= 0)
-            continue;
-        std::vector<EnchantmentInstance*>* results = getEnchantmentList(item, slot, mCosts[slot]);
-        if (results == NULL)
-            continue;
-        if (!results->empty())
+        for (int slot = 0; slot < 3; ++slot)
         {
-            EnchantmentInstance* instance = (*results)[mRandom.nextInt(static_cast<int>(results->size()))];
-            mEnchantmentIds[slot] = Enchantment::getId(instance->enchantment);
-            mEnchantmentLevels[slot] = instance->level;
+            if (mCosts[slot] > 0)
+            {
+                std::vector<EnchantmentInstance*>* results = getEnchantmentList(item, slot, mCosts[slot]);
+                if (results != NULL)
+                {
+                    if (!results->empty())
+                    {
+                        EnchantmentInstance* instance = (*results)[mRandom.nextInt(static_cast<int>(results->size()))];
+                        mEnchantmentIds[slot] = Enchantment::getId(instance->enchantment);
+                        mEnchantmentLevels[slot] = instance->level;
+                    }
+                    while (!results->empty())
+                    {
+                        delete results->back();
+                        results->pop_back();
+                    }
+                    delete results;
+                }
+            }
         }
-        while (!results->empty())
-        {
-            delete results->back();
-            results->pop_back();
-        }
-        delete results;
+        mDataChanged = true;
+        broadcastChanges();
     }
-    mDataChanged = true;
-    broadcastChanges();
 }
 
 bool EnchantmentMenu::clickMenuButton(boost::shared_ptr<Player> player, int id)

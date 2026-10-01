@@ -28,19 +28,12 @@
 
 #include <cstdio>
 
-UIScene_CraftingMenu::_SlotInfo::_SlotInfo() : item(), displayValue(0x1f), visible(true)
-{
-}
-
-UIScene_CraftingMenu::_SlotInfo::~_SlotInfo()
-{
-}
-
 UIScene_CraftingMenu::UIScene_CraftingMenu(int type, void* data, UILayer* layer)
-    : UIScene(type, layer), IUIScene_CraftingMenu(), m_inventoryUpdatesDeferred(true)
+    : UIScene(type, layer), IUIScene_CraftingMenu()
 {
     _CraftingPanelScreenInput* input = static_cast<_CraftingPanelScreenInput*>(data);
     m_tabsDirty = false;
+    m_inventoryUpdatesDeferred = true;
     m_lastPanelDisplay = -1;
     IUIScene_CraftingMenu::Init(input);
     initialiseMovie();
@@ -97,10 +90,9 @@ UIScene_CraftingMenu::UIScene_CraftingMenu(int type, void* data, UILayer* layer)
     gApp.SetRichPresenceContext(m_playerId, 5);
     setGroupText(IUIScene_CraftingMenu::GetGroupNameText(IUIScene_CraftingMenu::getCurrentGroup()));
 
-    Minecraft* minecraft = Minecraft::GetInstance();
-    if (minecraft->mGameModes[m_playerId] != NULL)
+    if (Minecraft::GetInstance()->mGameModes[m_playerId] != NULL)
     {
-        Tutorial* tutorial = minecraft->mGameModes[m_playerId]->getTutorial();
+        Tutorial* tutorial = Minecraft::GetInstance()->mGameModes[m_playerId]->getTutorial();
         if (tutorial != NULL)
         {
             m_previousTutorialState = tutorial->currentState;
@@ -164,13 +156,13 @@ UIScene_CraftingMenu::~UIScene_CraftingMenu()
 
 std::wstring UIScene_CraftingMenu::getMoviePath()
 {
-    if (gApp.GetLocalPlayerCount() < 2)
+    if (gApp.GetLocalPlayerCount() > 1)
     {
-        m_compactInventory = false;
-        return L"CraftingMenu";
+        m_compactInventory = true;
+        return L"CraftingMenuSplit";
     }
-    m_compactInventory = true;
-    return L"CraftingMenuSplit";
+    m_compactInventory = false;
+    return L"CraftingMenu";
 }
 
 unsigned int UIScene_CraftingMenu::mapElementsAndNames()
@@ -298,9 +290,7 @@ unsigned int UIScene_CraftingMenu::mapElementsAndNames()
 
 int UIScene_CraftingMenu::getSceneType()
 {
-    if (m_craftingMode != 1)
-        return 6;
-    return 7;
+    return m_craftingMode == 1 ? 7 : 6;
 }
 
 int UIScene_CraftingMenu::getPad()
@@ -342,7 +332,8 @@ void UIScene_CraftingMenu::hideAllIngredientsSlots()
 
 void UIScene_CraftingMenu::SetItemDescription(int index, const wchar_t* text)
 {
-    static_cast<FJ_CraftingMenu*>(m_movie->getRootNode()->getFuiNode())->SetItemDescription(index, text);
+    std::wstring description(text);
+    static_cast<FJ_CraftingMenu*>(m_movie->getRootNode()->getFuiNode())->SetItemDescription(index, description);
 }
 
 void UIScene_CraftingMenu::setCraftHSlotItem(int, int index, not_null_ptr<ItemInstance> item, unsigned int displayValue)
@@ -405,7 +396,7 @@ void UIScene_CraftingMenu::setInventorySlotHighlighted(int index)
     else
     {
         m_inventory.setHighlightSlot(-1);
-        m_hotBar.setHighlightSlot(index < 10 ? index : -1);
+        m_hotBar.setHighlightSlot(index >= 0 && index < 10 ? index : -1);
     }
 }
 
@@ -473,7 +464,8 @@ void UIScene_CraftingMenu::setDescriptionTextTop(const wchar_t* text)
 
 void UIScene_CraftingMenu::SetItemName(const wchar_t* text)
 {
-    static_cast<FJ_CraftingMenu*>(m_movie->getRootNode()->getFuiNode())->SetItemName(text);
+    std::wstring name(text);
+    static_cast<FJ_CraftingMenu*>(m_movie->getRootNode()->getFuiNode())->SetItemName(name);
 }
 
 void UIScene_CraftingMenu::setItemText(const wchar_t* text)
@@ -544,22 +536,21 @@ void UIScene_CraftingMenu::SetHTabItem(int index, not_null_ptr<ItemInstance> ite
 
 void UIScene_CraftingMenu::handleDestroy()
 {
-    Minecraft* minecraft = Minecraft::GetInstance();
-    if (minecraft->mLocalPlayers[m_playerId].get() != 0)
+    if (Minecraft::GetInstance()->mGameModes[m_playerId] != 0)
     {
-        MultiPlayerGameMode* gameMode = minecraft->mGameModes[m_playerId];
-        if (gameMode != 0)
+        Minecraft* minecraft = Minecraft::GetInstance();
+        if (minecraft->mGameModes[m_playerId] != 0)
         {
-            Tutorial* tutorial = gameMode->getTutorial();
+            Tutorial* tutorial = minecraft->mGameModes[m_playerId]->getTutorial();
             if (tutorial != 0)
                 tutorial->changeTutorialState(m_previousTutorialState, 0);
         }
     }
-    if (minecraft->mGameModes[m_playerId] != 0)
+    if (Minecraft::GetInstance()->mLocalPlayers[m_playerId].get() != 0)
     {
-        boost::shared_ptr<Player> player = minecraft->mGameModes[m_playerId]->GetPlayer();
-        if (player->mContainerMenu->m_containerId == m_inventoryMenu->m_containerId)
-            player->closeContainer();
+        Minecraft* minecraft = Minecraft::GetInstance();
+        if (minecraft->mLocalPlayers[m_playerId]->mContainerMenu->m_containerId == m_openMenu->m_containerId)
+            Minecraft::GetInstance()->mLocalPlayers[m_playerId]->closeContainer();
     }
     gConsoleUIController.OverrideSFX(m_playerId, 0, false);
     gConsoleUIController.OverrideSFX(m_playerId, 20, false);
@@ -972,8 +963,10 @@ void UIScene_CraftingMenu::handleTouchInput(unsigned int, int touchX, int touchY
 void UIScene_CraftingMenu::handleInput(int, int action, bool repeat, bool pressed, bool released, bool& handled)
 {
     gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, pressed, released);
-    if (action == EControllerActions_MenuOtherStickUp || action == EControllerActions_MenuOtherStickDown)
+    switch (action)
     {
+    case EControllerActions_MenuOtherStickUp:
+    case EControllerActions_MenuOtherStickDown:
         sendInputToMovie(action, repeat, pressed, released);
         return;
     }
@@ -992,12 +985,11 @@ void UIScene_CraftingMenu::handleInventoryUpdated(void*)
         IUIScene_CraftingMenu::HandleInventoryUpdated();
 }
 
-void UIScene_CraftingMenu::HandleMessage(EUIMessage message, void*)
+void UIScene_CraftingMenu::HandleMessage(EUIMessage message, void* data)
 {
     if (message != 0)
         return;
-    if (!m_inventoryUpdatesDeferred)
-        IUIScene_CraftingMenu::HandleInventoryUpdated();
+    handleInventoryUpdated(data);
 }
 
 void UIScene_CraftingMenu::updateTooltips()

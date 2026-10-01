@@ -40,6 +40,8 @@ public:
     uint8_t getEnabled();
     uint32_t getCurrentState();
 
+    static bool s_keyDown;
+
 private:
     bool m_checked;
     bool m_enabled;

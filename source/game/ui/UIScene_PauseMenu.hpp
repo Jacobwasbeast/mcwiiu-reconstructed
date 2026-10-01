@@ -50,7 +50,7 @@ public:
     virtual void ShowScene(bool show);
     virtual void SetIgnoreInput(bool ignore);
     static unsigned int BuyTexturePack_SignInReturned(void* context, bool signedIn, int userIndex, int playerIndex);
-    unsigned int IsBanEnabled();
+    bool IsBanEnabled();
     virtual unsigned int mapElementsAndNames();
     virtual int getSceneType();
     static unsigned int MustSignInReturnedNintendo(void* context, int pad, C4JStorage::EMessageResult result);

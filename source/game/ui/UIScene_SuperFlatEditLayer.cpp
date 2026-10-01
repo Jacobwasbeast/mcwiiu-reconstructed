@@ -1,6 +1,7 @@
 #include "game/ui/UIScene_SuperFlatEditLayer.hpp"
 #include "game/core/StringIds.hpp"
 
+#include <algorithm>
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
@@ -29,13 +30,15 @@
 extern CInput* g_pInput;
 
 UIScene_SuperFlatEditLayer::UIScene_SuperFlatEditLayer(int sceneType, void* data, UILayer* layer)
-    : UIScene(sceneType, layer), m_pendingSnap(ESnap_None), m_moveTicks(0), m_maxLayerHeight(0),
-      m_newLayer(false), m_layerIndex(0), m_layer(1, Blocks::air),
-      m_generator(static_cast<SuperflatConfig*>(0)), m_customBlocks(0), m_listLeft(0.0f),
-      m_listRight(0.0f), m_listTop(0.0f), m_listBottom(0.0f), m_scrollPage(0), m_focusedControl(0),
-      m_cursor(), m_title(), m_heightSlider(), m_confirmButton(), m_heightLabel(), m_typeLabel(),
-      m_slotList(), m_sliderTouch(), m_listTouch(), m_mainPanel()
+    : UIScene(sceneType, layer), m_layer(1, Blocks::air),
+      m_generator(static_cast<SuperflatConfig*>(0)), m_cursor(), m_title(), m_heightSlider(),
+      m_confirmButton(), m_heightLabel(), m_typeLabel(), m_slotList(), m_sliderTouch(),
+      m_listTouch(), m_mainPanel()
 {
+    m_pendingSnap = ESnap_None;
+    m_scrollPage = 0;
+    m_moveTicks = 0;
+    m_focusedControl = 0;
     struct LayerData
     {
         bool newLayer;
@@ -112,8 +115,12 @@ int UIScene_SuperFlatEditLayer::getSlotId(int column, int row)
 
 int UIScene_SuperFlatEditLayer::getSlotId(float x, float y)
 {
-    return getSlotId(static_cast<int>(std::floor((x - m_slotList.getXPos()) / (m_slotList.getWidth() + 0.01f) * 10.0f)),
-                     static_cast<int>(std::floor((y - m_slotList.getYPos()) / (m_slotList.getHeight() + 0.01f) * 5.0f)));
+    float left = m_slotList.getXPos();
+    float width = m_slotList.getWidth();
+    float top = m_slotList.getYPos();
+    float height = m_slotList.getHeight();
+    return getSlotId(static_cast<int>(std::floor((x - left) / (width + 0.01f) * 10.0f)),
+                     static_cast<int>(std::floor((y - top) / (height + 0.01f) * 5.0f)));
 }
 
 void UIScene_SuperFlatEditLayer::componentExtents(UIControl& control, float& left, float& right, float& top, float& bottom)
@@ -277,7 +284,9 @@ void UIScene_SuperFlatEditLayer::_init()
 void UIScene_SuperFlatEditLayer::updateTooltips()
 {
     int component = getComponentByLocation(m_pointerPosition);
-    int select = component == 0 || component == 2 ? static_cast<int>(IDS_TOOLTIPS_SELECT) : -1;
+    int select = -1;
+    if (component == 0 || component == 2)
+        select = IDS_TOOLTIPS_SELECT;
     gConsoleUIController.SetTooltips(0, select, IDS_TOOLTIPS_CANCEL, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
                                      -1, -1, -1, -1, false, false);
 }
@@ -299,29 +308,38 @@ void UIScene_SuperFlatEditLayer::dmouse(float& moveX, float& moveY, float& direc
 {
     float sensitivity =
         static_cast<float>(GameSettings::GetGameSettings(m_playerId, eGameSetting_InterfaceSensitivity)) / 100.0f;
-    moveX = static_cast<float>(g_pInput->GetJoypadStick_Menu_LX(m_playerId) * sensitivity);
-    moveY = static_cast<float>(g_pInput->GetJoypadStick_Menu_LY(m_playerId) * sensitivity);
+    moveX = g_pInput->GetJoypadStick_Menu_LX(m_playerId) * sensitivity;
+    moveY = g_pInput->GetJoypadStick_Menu_LY(m_playerId) * sensitivity;
     if (std::fabs(moveX) < 0.01f)
         directionX = 0.0f;
     else
         directionX = moveX / std::fabs(moveX);
-    directionY = 0.0f;
-    if (std::fabs(moveY) >= 0.01f)
+    if (std::fabs(moveY) < 0.01f)
+        directionY = 0.0f;
+    else
         directionY = moveY / std::fabs(moveY);
 }
 
 void UIScene_SuperFlatEditLayer::componentCentre(UIControl& control, float& x, float& y)
 {
-    x = static_cast<float>(control.getWidth() * 0.5f + control.getXPos());
-    y = static_cast<float>(control.getHeight() * 0.5f + control.getYPos());
+    float left = control.getXPos();
+    float width = control.getWidth();
+    x = width * 0.5f + left;
+    float top = control.getYPos();
+    float height = control.getHeight();
+    y = height * 0.5f + top;
 }
 
 void UIScene_SuperFlatEditLayer::slotCentre(int slot, float& x, float& y)
 {
     float column = static_cast<float>((slot % 50) % 10) / 10.0f + 0.05f;
     float row = static_cast<float>((slot % 50) / 10) / 5.0f + 0.1f;
-    x = static_cast<float>(m_slotList.getWidth() * column + m_slotList.getXPos());
-    y = static_cast<float>(m_slotList.getHeight() * row + m_slotList.getYPos());
+    float left = m_slotList.getXPos();
+    float width = m_slotList.getWidth();
+    x = width * column + left;
+    float top = m_slotList.getYPos();
+    float height = m_slotList.getHeight();
+    y = height * row + top;
 }
 
 bool UIScene_SuperFlatEditLayer::onRow(int slot, int row)
@@ -440,8 +458,11 @@ void UIScene_SuperFlatEditLayer::setNewPointerPos(UIControl* control)
 {
     if (control != 0)
     {
-        setNewPointerPos(static_cast<float>(control->getWidth() * 0.5f + control->getXPos()),
-                         static_cast<float>(control->getHeight() * 0.5f + control->getYPos()));
+        float left = control->getXPos();
+        float width = control->getWidth();
+        float top = control->getYPos();
+        float height = control->getHeight();
+        setNewPointerPos(width * 0.5f + left, height * 0.5f + top);
     }
 }
 
@@ -454,25 +475,34 @@ void UIScene_SuperFlatEditLayer::onMouseTick()
     dmouse(moveX, moveY, directionX, directionY);
     ESnap snap = getSnap(directionX, directionY);
 
-    if (getComponentByLocation(m_pointerPosition) != 0 && m_moveTicks > 10 && snap != ESnap_None)
+    int component = getComponentByLocation(m_pointerPosition);
+    int ticks = m_moveTicks;
+    if (component != 0 && ticks > 10 && snap != ESnap_None)
     {
         doSnap(m_pointerPosition, snap);
-        m_pendingSnap = ESnap_None;
         if (getComponentByLocation(m_pointerPosition) == 1 && (snap == ESnap_Left || snap == ESnap_Right))
+        {
+            m_pendingSnap = ESnap_None;
             m_moveTicks = 4;
-        else
-            m_moveTicks = -10;
+            return;
+        }
+        m_pendingSnap = ESnap_None;
+        m_moveTicks = -10;
         return;
     }
 
     if (directionX == 0.0f && directionY == 0.0f)
     {
-        if (m_moveTicks > 0)
+        if (ticks > 0)
         {
-            if (m_moveTicks < 10 && getComponentByLocation(m_moveStartPosition) >= 0)
+            if (ticks < 10 && getComponentByLocation(m_moveStartPosition) >= 0)
+            {
                 doSnap(m_moveStartPosition, m_pendingSnap);
-            else
-                doSnap(m_pointerPosition, ESnap_None);
+                m_pendingSnap = ESnap_None;
+                m_moveTicks = 0;
+                return;
+            }
+            doSnap(m_pointerPosition, ESnap_None);
             m_pendingSnap = ESnap_None;
             m_moveTicks = 0;
             return;
@@ -483,43 +513,49 @@ void UIScene_SuperFlatEditLayer::onMouseTick()
             m_pendingSnap = ESnap_None;
             return;
         }
-        if (++m_moveTicks > 0)
-            m_moveTicks = 0;
+        ticks = ticks + 1;
+        if (ticks > 0)
+            ticks = 0;
+        m_moveTicks = ticks;
         return;
     }
 
-    if (m_moveTicks == 0)
+    if (ticks == 0)
     {
         m_moveStartPosition = m_pointerPosition;
         if (std::fabs(moveY) < std::fabs(moveX))
+        {
+            directionY = 0.0f;
             m_pendingSnap = getSnap(directionX, 0.0f);
+        }
         else
             m_pendingSnap = getSnap(directionX, directionY);
     }
-    ++m_moveTicks;
+    m_moveTicks = ticks + 1;
 
     if (getComponentByLocation(m_pointerPosition) != 0)
         return;
 
-    float stepX = moveX * moveX * directionX * 13.0f;
-    float stepY = moveY * moveY * directionY * 13.0f;
+    moveX = moveX * moveX * directionX * 13.0f;
     _UIVec2D position;
     position.x = m_pointerPosition.x + m_pointerOffset.x;
     position.y = m_pointerPosition.y + m_pointerOffset.y;
+    moveY = moveY * moveY * directionY * 13.0f;
     float scale = 1.0f;
     if (!gRenderer->IsHiDef() || gApp.GetLocalPlayerCount() > 1)
         scale = 0.6f;
-    position.x += stepX * scale;
-    position.y -= stepY * scale;
-    if (position.x < m_listLeft)
-        position.x = m_listLeft;
-    if (position.x > m_listRight)
+    moveX = moveX * scale;
+    moveY = moveY * scale;
+    position.x = position.x + moveX;
+    position.y = position.y - moveY;
+    position.x = std::max(m_listLeft, position.x);
+    if (m_listRight - position.x < 0.0f)
         position.x = m_listRight;
-    if (position.y < m_listTop)
-        position.y = m_listTop;
-    if (position.y > m_listBottom)
-        position.y = m_listBottom;
-    if (position.y != m_listBottom)
+    position.y = std::max(m_listTop, position.y);
+    float bottom = m_listBottom;
+    if (bottom - position.y < 0.0f)
+        position.y = bottom;
+    if (position.y != bottom)
     {
         setNewPointerPos(position);
         return;
@@ -538,8 +574,9 @@ void UIScene_SuperFlatEditLayer::tick()
     UIScene::m_layer->getRenderDimensions(width, height);
     if (width == 1280 && height == 480)
         width = 640;
-    gFui->dispatchMouseMoveEvent(m_movie, m_pointerPosition.x * static_cast<float>(width) / static_cast<float>(m_stageWidth),
-                                 m_pointerPosition.y * static_cast<float>(height) / static_cast<float>(m_stageHeight));
+    int mouseX = static_cast<int>(m_pointerPosition.x * (static_cast<float>(width) / static_cast<float>(m_stageWidth)));
+    int mouseY = static_cast<int>(m_pointerPosition.y * (static_cast<float>(height) / static_cast<float>(m_stageHeight)));
+    gFui->dispatchMouseMoveEvent(m_movie, static_cast<float>(mouseX), static_cast<float>(mouseY));
 }
 
 void UIScene_SuperFlatEditLayer::handleReload()
@@ -614,20 +651,19 @@ void UIScene_SuperFlatEditLayer::handleInput(int playerId, int action, bool repe
         if (!pressed)
             return;
         int component = getComponentByLocation(m_pointerPosition);
-        if (component == 2)
+        if (component != 0)
         {
-            exit(EExit_Save);
+            if (component == 2)
+                exit(EExit_Save);
             break;
         }
-        if (component != 0)
-            break;
         not_null_ptr<ItemInstance> item = m_customBlocks->item(getSlotId(m_pointerPosition));
         int itemId = 0;
         int auxValue = 0;
-        if (!item->isEmpty())
+        if (!item.get()->isEmpty())
         {
-            itemId = Item::getId(item->getItem());
-            auxValue = item->getAuxValue();
+            itemId = Item::getId(item.get()->getItem());
+            auxValue = item.get()->getAuxValue();
         }
         m_layer.setBlockState(Block::byId(itemId)->getBlockState(auxValue));
         updateLayerButtons();
@@ -653,7 +689,7 @@ void UIScene_SuperFlatEditLayer::handleSliderMove(int id, int value)
 {
     if (id != 1)
         return;
-    int height = value < m_maxLayerHeight ? value : m_maxLayerHeight;
+    int height = std::min(m_maxLayerHeight, value);
     if (height < 1)
         height = 1;
     m_heightSlider.handleSliderMove(height);
@@ -682,8 +718,10 @@ void UIScene_SuperFlatEditLayer::customDraw(const char* name, fuiRect* rect)
             item = not_null_ptr<ItemInstance>(new ItemInstance(Item::byId(itemId), 1, m_layer.getData()));
         }
     }
-    if (!item->isEmpty())
+    if (!item.get()->isEmpty())
         customDrawSlotControlFui(rect, m_playerId, item, 1.0f, false, true, false);
+    else
+        item = ItemInstance::EMPTY;
 }
 
 void UIScene_SuperFlatEditLayer::handleTouchInput(unsigned int playerId, int touchX, int touchY,
@@ -702,19 +740,18 @@ void UIScene_SuperFlatEditLayer::handleTouchInput(unsigned int playerId, int tou
             if (!released)
                 return;
             not_null_ptr<ItemInstance> item = m_customBlocks->item(getSlotId(m_pointerPosition));
-            if (!item->isEmpty())
+            if (!item.get()->isEmpty())
             {
-                Block* block = Block::byItem(item->getItem());
-                m_layer.setBlockState(block->getBlockState(item->getAuxValue()));
+                Block* block = Block::byItem(item.get()->getItem());
+                m_layer.setBlockState(block->getBlockState(item.get()->getAuxValue()));
             }
             else
             {
-                static const BlockState* airState = Blocks::air->defaultBlockState();
+                static const BlockState* const airState = Blocks::air->defaultBlockState();
                 m_layer.setBlockState(airState);
             }
             doSnap(m_pointerPosition, ESnap_None);
             updateLayerButtons();
-            return;
         }
     }
 

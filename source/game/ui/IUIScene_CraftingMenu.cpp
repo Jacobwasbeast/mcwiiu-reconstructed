@@ -43,13 +43,16 @@
 
 namespace
 {
-struct InventoryItemCount
-{
-    unsigned int key;
-    CompoundTag* tag;
-    int count;
-};
+typedef std::pair<std::pair<int, CompoundTag*>, int> InventoryItemCount;
 }
+
+static const wchar_t* TAG_ENCH = L"ench";
+static const wchar_t* TAG_REPAIR_COST = L"RepairCost";
+static const wchar_t* TAG_OWNER_ID = L"ownerID";
+static const wchar_t* TAG_CREATED_ON_HOST = L"createdOnHost";
+static const wchar_t* TAG_CREATED_BY_RESTRICTED = L"createdByRestricted";
+static const wchar_t* TAG_DISPLAY = L"display";
+static const wchar_t* TAG_NAME = L"Name";
 
 int IUIScene_CraftingMenu::m_craftingTabOrder[2][4] = {
     { 0, 1, 2, 3 },
@@ -111,7 +114,7 @@ int IUIScene_CraftingMenu::getGroupAtIndex(int index)
 
 int IUIScene_CraftingMenu::getCurrentGroup()
 {
-    return m_groupMap[m_currentTab * 7 + m_currentGroup];
+    return getGroupAtIndex(m_currentGroup);
 }
 
 int IUIScene_CraftingMenu::GetRecipeId(int group, int recipe)
@@ -223,17 +226,20 @@ int IUIScene_CraftingMenu::getCurrentVSlotCount()
 
 bool IUIScene_CraftingMenu::isItemSelected(int itemId)
 {
-    if (m_player == NULL || m_player->mInventory == NULL)
-        return false;
-
-    Recipe::INGREDIENTS_REQUIRED* ingredients =
-        Recipes::getInstance()->getRecipeIngredientsArray(static_cast<Recipes::ERecipeCategory>(m_currentTab));
-    int count = getCurrentVSlotCount();
-    if (count == 0)
-        return false;
-
-    int recipe = GetRecipeId(m_horizontalSlot, count > 1 ? m_verticalSlots[m_verticalColumn] : 0);
-    return Item::VALIDgetId(ingredients[recipe].recipe->getResultItem()->getItem()) == itemId;
+    bool selected = false;
+    if (m_player != NULL && m_player->mInventory != NULL)
+    {
+        Recipe::INGREDIENTS_REQUIRED* ingredients =
+            Recipes::getInstance()->getRecipeIngredientsArray(static_cast<Recipes::ERecipeCategory>(m_currentTab));
+        int count = getCurrentVSlotCount();
+        if (count != 0)
+        {
+            int recipe = GetRecipeId(m_horizontalSlot, count > 1 ? m_verticalSlots[m_verticalColumn] : 0);
+            if (Item::VALIDgetId(ingredients[recipe].recipe->getResultItem()->getItem()) == itemId)
+                selected = true;
+        }
+    }
+    return selected;
 }
 
 not_null_ptr<ItemInstance> IUIScene_CraftingMenu::GetBaseItemSlot(int column, int slot, bool& enabled)
@@ -729,69 +735,65 @@ void IUIScene_CraftingMenu::CheckRecipesAvailable()
 
     std::vector<InventoryItemCount> inventoryCounts;
     std::vector<std::wstring>* ignoredTags = new std::vector<std::wstring>();
-    ignoredTags->push_back(L"ench");
-    ignoredTags->push_back(L"RepairCost");
-    ignoredTags->push_back(L"ownerID");
-    ignoredTags->push_back(L"createdOnHost");
-    ignoredTags->push_back(L"createdByRestricted");
-    ignoredTags->push_back(L"display");
-    ignoredTags->push_back(L"Name");
+    ignoredTags->push_back(TAG_ENCH);
+    ignoredTags->push_back(TAG_REPAIR_COST);
+    ignoredTags->push_back(TAG_OWNER_ID);
+    ignoredTags->push_back(TAG_CREATED_ON_HOST);
+    ignoredTags->push_back(TAG_CREATED_BY_RESTRICTED);
+    ignoredTags->push_back(TAG_DISPLAY);
+    ignoredTags->push_back(TAG_NAME);
 
     for (unsigned int slot = 0; slot < m_player->mInventory->m_items.size(); ++slot)
     {
-        not_null_ptr<ItemInstance>& item = m_player->mInventory->m_items[slot];
-        if (item->isEmpty())
+        if (m_player->mInventory->m_items[slot]->isEmpty())
             continue;
 
-        int auxValue = item->getAuxValue();
-        if (item->isDamageableItem() && item->isDamaged())
+        int auxValue = m_player->mInventory->m_items[slot]->getAuxValue();
+        if (m_player->mInventory->m_items[slot]->isDamageableItem() && m_player->mInventory->m_items[slot]->isDamaged())
             auxValue = 0;
-        unsigned int key = Item::VALIDgetId(item->getItem()) | (auxValue << 16);
+        unsigned int key = Item::VALIDgetId(m_player->mInventory->m_items[slot]->getItem()) | (auxValue << 16);
 
         bool merged = false;
         for (std::vector<InventoryItemCount>::iterator count = inventoryCounts.begin(); count != inventoryCounts.end(); ++count)
         {
-            CompoundTag* countTag = count->tag;
-            CompoundTag* itemTag = item->getTag();
+            CompoundTag* countTag = count->first.second;
+            CompoundTag* itemTag = m_player->mInventory->m_items[slot]->getTag();
             if (countTag != NULL && countTag->GetNumValidTagsAfterException(ignoredTags) == 0)
                 countTag = NULL;
             if (itemTag != NULL && itemTag->GetNumValidTagsAfterException(ignoredTags) == 0)
                 itemTag = NULL;
             if ((countTag == NULL || (itemTag != NULL && countTag->equalsWithException(itemTag, ignoredTags)))
-                && count->key == key)
+                && count->first.first == key)
             {
-                count->count += item->getCount();
+                count->second += m_player->mInventory->m_items[slot]->getCount();
                 merged = true;
                 break;
             }
         }
         if (!merged)
         {
-            InventoryItemCount count;
-            count.key = key;
-            count.tag = item->getTag();
-            count.count = item->getCount();
-            inventoryCounts.push_back(count);
+            inventoryCounts.push_back(
+                InventoryItemCount(std::pair<int, CompoundTag*>(key, m_player->mInventory->m_items[slot]->getTag()), m_player->mInventory->m_items[slot]->getCount()));
         }
     }
 
-    for (std::vector<std::pair<unsigned int, int> >::iterator used = m_usedIngredients.begin(); used != m_usedIngredients.end();
+    for (std::vector<std::pair<int, int> >::iterator used = m_usedIngredients.begin(); used != m_usedIngredients.end();
          ++used)
     {
         unsigned int key = used->first;
         int remaining = used->second;
         for (std::vector<InventoryItemCount>::iterator count = inventoryCounts.begin(); count != inventoryCounts.end(); ++count)
         {
-            if ((static_cast<int>(key) >> 16 < 0 && (count->key & 0xffff) == (key & 0xffff)) || count->key == key)
+            if ((static_cast<int>(key) >> 16 < 0 && (count->first.first & 0xffff) == (key & 0xffff)) || count->first.first == key)
             {
-                if (count->count < remaining)
+                if (count->second < remaining)
                 {
-                    remaining -= count->count;
-                    count->count = 0;
+                    remaining -= count->second;
+                    count->second = 0;
                 }
                 else
                 {
-                    count->count -= remaining;
+                    count->second -= remaining;
                     remaining = 0;
                 }
             }
@@ -799,12 +801,22 @@ void IUIScene_CraftingMenu::CheckRecipesAvailable()
     }
 
     int customRow = 0;
-    for (int index = 0; index < recipeCount; ++index)
+    std::vector<Recipe*>::iterator recipeIterator = recipes->begin();
+    for (int index = 0; index < recipeCount; ++index, ++recipeIterator)
     {
-        Recipe* recipe = (*recipes)[index];
+        Recipe* recipe = *recipeIterator;
         Recipe::INGREDIENTS_REQUIRED& ingredients = required[index];
-        if (!recipe->displayInSimpleCrafting() || recipe->getGroup() != getCurrentGroup()
-            || (m_craftingMode == 0 && ingredients.requiresCraftingTable == 1))
+        if (!recipe->displayInSimpleCrafting())
+        {
+            ingredients.available[getPad()] = false;
+            continue;
+        }
+        if (recipe->getGroup() != getCurrentGroup())
+        {
+            ingredients.available[getPad()] = false;
+            continue;
+        }
+        if (m_craftingMode == 0 && ingredients.requiresCraftingTable == 1)
         {
             ingredients.available[getPad()] = false;
             continue;
@@ -839,8 +851,8 @@ void IUIScene_CraftingMenu::CheckRecipesAvailable()
                 for (std::vector<InventoryItemCount>::iterator count = inventoryCounts.begin(); count != inventoryCounts.end();
                      ++count)
                 {
-                    if ((count->key & 0xffff) == static_cast<unsigned int>(ingredients.itemIds[i]))
-                        have += count->count;
+                    if ((count->first.first & 0xffff) == static_cast<unsigned int>(ingredients.itemIds[i]))
+                        have += count->second;
                 }
             }
             else
@@ -850,11 +862,11 @@ void IUIScene_CraftingMenu::CheckRecipesAvailable()
                 for (std::vector<InventoryItemCount>::iterator count = inventoryCounts.begin(); count != inventoryCounts.end();
                      ++count)
                 {
-                    if (count->key != key)
+                    if (count->first.first != key)
                         continue;
-                    if (tag == NULL || (count->tag != NULL && tag->equalsWithException(count->tag, ignoredTags)))
+                    if (tag == NULL || (count->first.second != NULL && tag->equalsWithException(count->first.second, ignoredTags)))
                     {
-                        have = count->count;
+                        have = count->second;
                         break;
                     }
                 }
@@ -945,24 +957,17 @@ void IUIScene_CraftingMenu::CheckRecipesAvailable()
 
 int IUIScene_CraftingMenu::getNumSpinnerSlots()
 {
-    if (!isSpinnerGroup())
-        return 0;
-
-    if (m_currentTab == 1)
+    int slots = 0;
+    if (isSpinnerGroup())
     {
-        if (m_craftingMode == 1)
-            return 3;
+        if (m_currentTab == 1)
+            slots = m_craftingMode == 1 ? 3 : 2;
+        else if (m_currentTab == 2)
+            slots = m_currentGroup == 0 ? 3 : 2;
+        else if (m_currentTab == 3)
+            slots = 2;
     }
-    else if (m_currentTab == 2)
-    {
-        if (m_currentGroup == 0)
-            return 3;
-    }
-    else if (m_currentTab != 3)
-    {
-        return 0;
-    }
-    return 2;
+    return slots;
 }
 
 bool IUIScene_CraftingMenu::canAddMoreStacks()
@@ -1322,8 +1327,8 @@ void IUIScene_CraftingMenu::DisplayIngredients()
             if (tag != NULL)
             {
                 std::vector<std::wstring>* ignoredTags = new std::vector<std::wstring>();
-                ignoredTags->push_back(L"display");
-                ignoredTags->push_back(L"Name");
+                ignoredTags->push_back(TAG_DISPLAY);
+                ignoredTags->push_back(TAG_NAME);
                 bool found = false;
                 for (int x = 0; x < gridSize && !found; ++x)
                 {
@@ -1636,79 +1641,73 @@ void IUIScene_CraftingMenu::UpdateTooltips()
 void IUIScene_CraftingMenu::UpdateHighlight()
 {
     updateHighlightAndScrollPositions();
-    bool hasSelection = true;
-    if (getCurrentVSlotCount() == 0 && m_currentTab != 2 && m_currentTab != 3)
-        hasSelection = false;
+    bool hasSelection = getCurrentVSlotCount() != 0 || m_currentTab == 2 || m_currentTab == 3;
     if (!hasSelection)
     {
         setItemText(L"");
-        DisplayIngredients();
-        UpdateMultiPanel(false);
-        UpdateTooltips();
-        UpdateDescriptionText(false);
-        return;
-    }
-
-    std::wstring itemText;
-    not_null_ptr<ItemInstance> item = ItemInstance::EMPTY;
-    int descriptionId;
-    if (isInventoryItem())
-    {
-        item = m_player->mInventory->m_items[m_baseItemSlots[m_verticalSlots[m_verticalColumn]]];
-        descriptionId = item->getDescriptionId(-1);
-    }
-    else if (isDuplicateItem())
-    {
-        item = m_player->mInventory->m_items[m_duplicateItemSlots[m_verticalSlots[m_verticalColumn]].first];
-        descriptionId = item->getDescriptionId(-1);
     }
     else
     {
-        Recipe::INGREDIENTS_REQUIRED* ingredients =
-            Recipes::getInstance()->getRecipeIngredientsArray(static_cast<Recipes::ERecipeCategory>(m_currentTab));
-        int verticalSlot = getCurrentVSlotCount() > 1 ? m_verticalSlots[m_verticalColumn] : 0;
-        Recipe::INGREDIENTS_REQUIRED& required = ingredients[GetRecipeId(m_horizontalSlot, verticalSlot)];
-        item = required.recipe->assemble(boost::shared_ptr<CraftingContainer>());
-        descriptionId = item->getDescriptionId(-1);
-        if (descriptionId == static_cast<int>(IDS_TILE_TORCH))
+        std::wstring itemText;
+        not_null_ptr<ItemInstance> item = ItemInstance::EMPTY;
+        int descriptionId;
+        if (isInventoryItem())
         {
-            descriptionId = IDS_TILE_TORCHCOAL;
-            if (required.auxValues[0] == 1)
-                descriptionId = IDS_TILE_TORCHCHARCOAL;
+            item = m_player->mInventory->m_items[m_baseItemSlots[m_verticalSlots[m_verticalColumn]]];
+            descriptionId = item->getDescriptionId(-1);
         }
-        else if (descriptionId == static_cast<int>(IDS_ITEM_FIREBALL))
+        else if (isDuplicateItem())
         {
-            descriptionId = 0x7B7CBFA4;
-            if (required.auxValues[2] == 1)
-                descriptionId = 0x44D7620C;
-        }
-    }
-
-    if (m_currentTab == 1 && m_currentGroup != 0)
-    {
-        descriptionId = BannerItem::getFirstPatternName(item);
-    }
-    else if (item->hasTag())
-    {
-        std::vector<HtmlString>* lines = item->getTooltipLines(m_player, false);
-        if (lines->size() > 1)
-        {
-            std::vector<HtmlString>* nameLines = new std::vector<HtmlString>();
-            nameLines->push_back(lines->at(0));
-            nameLines->push_back(lines->at(1));
-            itemText = nameLines->at(0).mText + L"\n" + nameLines->at(1).mText;
+            item = m_player->mInventory->m_items[m_duplicateItemSlots[m_verticalSlots[m_verticalColumn]].first];
+            descriptionId = item->getDescriptionId(-1);
         }
         else
         {
-            itemText = item->getHoverNameUnfiltered();
+            Recipe::INGREDIENTS_REQUIRED* ingredients =
+                Recipes::getInstance()->getRecipeIngredientsArray(static_cast<Recipes::ERecipeCategory>(m_currentTab));
+            int verticalSlot = getCurrentVSlotCount() > 1 ? m_verticalSlots[m_verticalColumn] : 0;
+            item = ingredients[GetRecipeId(m_horizontalSlot, verticalSlot)].recipe->assemble(
+                boost::shared_ptr<CraftingContainer>());
+            descriptionId = item->getDescriptionId(-1);
+            if (descriptionId == static_cast<int>(IDS_TILE_TORCH))
+            {
+                descriptionId = IDS_TILE_TORCHCOAL;
+                if (ingredients[GetRecipeId(m_horizontalSlot, verticalSlot)].auxValues[0] == 1)
+                    descriptionId = IDS_TILE_TORCHCHARCOAL;
+            }
+            else if (descriptionId == static_cast<int>(IDS_ITEM_FIREBALL))
+            {
+                descriptionId = 0x7B7CBFA4;
+                if (ingredients[GetRecipeId(m_horizontalSlot, verticalSlot)].auxValues[2] == 1)
+                    descriptionId = 0x44D7620C;
+            }
         }
-    }
 
-    if (itemText.empty())
-        setItemText(L10N::GetString(descriptionId));
-    else
-        setItemText(itemText.c_str());
-    itemText = L"";
+        if (m_currentTab == 1 && m_currentGroup != 0)
+        {
+            descriptionId = BannerItem::getFirstPatternName(item);
+        }
+        else if (item->hasTag())
+        {
+            std::vector<HtmlString>* lines = item->getTooltipLines(m_player, false);
+            if (lines->size() > 1)
+            {
+                std::vector<HtmlString>* nameLines = new std::vector<HtmlString>();
+                nameLines->push_back(lines->at(0));
+                nameLines->push_back(lines->at(1));
+                itemText = nameLines->at(0).mText + L"\n" + nameLines->at(1).mText;
+            }
+            else
+            {
+                itemText = item->getHoverNameUnfiltered();
+            }
+        }
+
+        if (itemText.empty())
+            setItemText(L10N::GetString(descriptionId));
+        else
+            setItemText(itemText.c_str());
+    }
     DisplayIngredients();
     UpdateMultiPanel(false);
     UpdateTooltips();
@@ -2827,7 +2826,7 @@ void IUIScene_CraftingMenu::RemoveStackedCraftRecipe()
         for (int i = 0; i < required.numIngredients; ++i)
         {
             unsigned int key = required.itemIds[i] | (required.auxValues[i] << 16);
-            for (std::vector<std::pair<unsigned int, int> >::iterator used = m_usedIngredients.begin();
+            for (std::vector<std::pair<int, int> >::iterator used = m_usedIngredients.begin();
                  used != m_usedIngredients.end(); ++used)
             {
                 if (used->first == key)
@@ -2952,7 +2951,7 @@ bool IUIScene_CraftingMenu::AddStackedCraftRecipe(bool advanceGroup)
     {
         unsigned int key = required.itemIds[i] | (required.auxValues[i] << 16);
         bool counted = false;
-        for (std::vector<std::pair<unsigned int, int> >::iterator used = m_usedIngredients.begin();
+        for (std::vector<std::pair<int, int> >::iterator used = m_usedIngredients.begin();
              used != m_usedIngredients.end(); ++used)
         {
             if (used->first == key)
@@ -2963,7 +2962,7 @@ bool IUIScene_CraftingMenu::AddStackedCraftRecipe(bool advanceGroup)
             }
         }
         if (!counted)
-            m_usedIngredients.push_back(std::pair<unsigned int, int>(key, required.itemCounts[i]));
+            m_usedIngredients.push_back(std::pair<int, int>(key, required.itemCounts[i]));
     }
 
     if (!isSpinnerGroup() || isInventoryItem())

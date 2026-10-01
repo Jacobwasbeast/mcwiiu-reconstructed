@@ -18,7 +18,7 @@ public:
     explicit FJ_List(fuiRenderNode* renderNode);
     virtual ~FJ_List();
 
-    uint32_t FindHighlightItem(int index, bool forward, bool wrap);
+    uint32_t FindHighlightItem(int index, bool backward, bool wrap);
     void HighlightItem(int index, bool fromTouch);
     void HandlePageUpDownNavigation(bool up);
     void LoseListFocus();
@@ -34,7 +34,7 @@ public:
     virtual void setY(float y);
     void ListKeyDownHandler(FJ_Event* event);
     static void _ListKeyDownHandler(FJ_FuiNode* node, FJ_Event* event);
-    double GetListItemHeight(int index);
+    float GetListItemHeight(int index);
     void GetMaxItemsVisibleUp();
     std::wstring GetItemLabel(int index);
     void HandleScrollListArrows(bool addArrows);

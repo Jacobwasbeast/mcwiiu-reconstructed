@@ -25,7 +25,7 @@ public:
     {
     public:
         PendingUpdate(int value) : GenericPendingUpdate(value) {}
-        virtual ~PendingUpdate();
+        virtual ~PendingUpdate() {}
     };
 
     class PendingSetCurrentSelection : public PendingUpdate<UIControl_GridList>
@@ -82,10 +82,5 @@ private:
     boost::unordered_map<unsigned int, UIControl::eUIControlType> m_elementTypes;
     boost::unordered_map<unsigned int, bool> m_elementEnabled;
 };
-
-template <class T>
-UIControl_GridList::PendingUpdate<T>::~PendingUpdate()
-{
-}
 
 #endif

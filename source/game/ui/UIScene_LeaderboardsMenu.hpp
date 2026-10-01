@@ -19,15 +19,45 @@ class UILayer;
 class UIScene_LeaderboardsMenu : public UIScene, public LeaderboardReadListener
 {
 public:
+    enum
+    {
+        MAX_STAT_COLUMNS = 7,
+        MAX_LOADED_ENTRIES = 0x65,
+        ENTRIES_PER_PAGE = 15,
+        STAT_TEXT_LENGTH = 12,
+        SCORE_TEXT_LENGTH = 12,
+        GAMERTAG_TEXT_LENGTH = 34,
+        GAMERTAG_DISPLAY_LENGTH = 17,
+        MAX_DISPLAYED_SCORE = 9999999,
+        DEBUG_MASK_FAKE_LEADERBOARD = 0x10000,
+        LEADERBOARD_ICON_COUNT = 28,
+        ICON_ID_32002 = 32002,
+        ICON_ID_32003 = 32003,
+        ICON_ID_32005 = 32005,
+        ICON_ID_32006 = 32006,
+        ICON_ID_32008 = 32008,
+        ICON_ID_32009 = 32009,
+        ICON_ID_32010 = 32010,
+        ICON_ID_32011 = 32011,
+        ICON_ID_32012 = 32012
+    };
+
+    struct LeaderboardDescriptor
+    {
+        unsigned int numStats;
+        unsigned int id;
+        unsigned int themeId;
+    };
+
     struct LeaderboardEntry
     {
-        LeaderboardEntry() : uid(0), rank(0), score(0), complete(false), selected(false), loading(false), visible(false), messageStringId(0) {}
         PlayerUID uid;
         unsigned int rank;
         unsigned int score;
-        std::wstring gamertag;
-        unsigned int stats[8];
-        std::wstring statText[8];
+        wchar_t scoreText[SCORE_TEXT_LENGTH];
+        wchar_t gamertag[GAMERTAG_TEXT_LENGTH];
+        unsigned int stats[MAX_STAT_COLUMNS];
+        wchar_t statText[MAX_STAT_COLUMNS][STAT_TEXT_LENGTH];
         bool complete;
         bool selected;
         bool loading;
@@ -55,10 +85,10 @@ public:
     virtual void handleRequestMoreData(int id, bool forward);
 
     unsigned int GetEntryStartIndex();
-    unsigned int LanguageUsesCommaRadix(int language);
+    bool LanguageUsesCommaRadix(int language);
     void CopyLeaderboardEntry(LeaderboardManager::ReadScore* score, int index,
                               LeaderboardManager::EStatsType statsType);
-    void RetrieveStats();
+    bool RetrieveStats();
     void SetLeaderboardHeader();
     void ReadStats(int startRank);
     void SetLeaderboardTitleIcons();

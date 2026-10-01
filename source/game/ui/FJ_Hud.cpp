@@ -105,26 +105,16 @@ void FJ_Hud::SetActiveSlot(int slot)
 
 void FJ_Hud::SetHealth(int health, bool highlight, bool poisoned, bool withered)
 {
-    if (poisoned)
+    for (int i = 0; i < 10; ++i)
     {
-        for (int i = 0; i < 10; ++i)
-        {
-            int threshold = (i + 1) * 2;
-            int state = health >= threshold ? 2 : health >= threshold - 1 ? 1 : 0;
-            if (withered)
-                m_healthIcons[i]->gotoAndStop(s_witheredHealthFrames[highlight * 3 + state]);
-            else
-                m_healthIcons[i]->gotoAndStop(s_poisonedHealthFrames[highlight * 3 + state]);
-        }
-    }
-    else
-    {
-        for (int i = 0; i < 10; ++i)
-        {
-            int threshold = (i + 1) * 2;
-            int state = health >= threshold ? 2 : health >= threshold - 1 ? 1 : 0;
+        int threshold = (i + 1) * 2;
+        int state = health >= threshold ? 2 : health >= threshold - 1 ? 1 : 0;
+        if (poisoned && withered)
+            m_healthIcons[i]->gotoAndStop(s_witheredHealthFrames[highlight * 3 + state]);
+        else if (poisoned)
+            m_healthIcons[i]->gotoAndStop(s_poisonedHealthFrames[highlight * 3 + state]);
+        else
             m_healthIcons[i]->gotoAndStop(s_healthFrames[highlight * 3 + state]);
-        }
     }
     m_poisoned = poisoned;
     m_withered = withered;
@@ -133,11 +123,14 @@ void FJ_Hud::SetHealth(int health, bool highlight, bool poisoned, bool withered)
 
 void FJ_Hud::SetFood(int food, bool poisoned)
 {
-    for (int i = 0; i < 10; ++i)
+    for (int row = 0; row < 2; ++row)
     {
-        int threshold = (i + 1) * 2;
-        int state = food >= threshold ? 2 : food >= threshold - 1 ? 1 : 0;
-        m_foodIcons[i]->gotoAndStop(s_foodFrames[state * 2 + poisoned]);
+        for (int column = 0; column < 5; ++column)
+        {
+            int threshold = (row * 5 + column + 1) * 2;
+            int state = food >= threshold ? 2 : food >= threshold - 1 ? 1 : 0;
+            m_foodIcons[row * 5 + column]->gotoAndStop(s_foodFrames[state * 2 + poisoned]);
+        }
     }
     m_food = food;
     m_poisoned = poisoned;
@@ -159,11 +152,11 @@ void FJ_Hud::SetAir(int air)
 
 void FJ_Hud::SetArmour(int armour)
 {
-    for (int i = 0; i < 10; ++i)
+    for (int i = 1; i <= 10; ++i)
     {
-        int threshold = (i + 1) * 2;
+        int threshold = i * 2;
         int state = armour >= threshold ? 2 : armour >= threshold - 1 ? 1 : 0;
-        m_armourIcons[i]->gotoAndStop(s_armourFrames[state]);
+        m_armourIcons[i - 1]->gotoAndStop(s_armourFrames[state]);
     }
     m_armour = armour;
 }
@@ -228,11 +221,17 @@ void FJ_Hud::SetHealthAbsorb(bool visible, int health)
     m_showHealthAbsorb = visible;
     for (int i = 0; i < 10; ++i)
     {
-        m_healthAbsorbIcons[i]->setVisible(i * 2 < health);
-        if (health >= i * 2 + 2)
-            m_healthAbsorbIcons[i]->gotoAndStop(1);
+        if (i * 2 >= health)
+            m_healthAbsorbIcons[i]->setVisible(false);
         else
-            m_healthAbsorbIcons[i]->gotoAndStop(health >= i * 2 + 1 ? 2 : 0);
+            m_healthAbsorbIcons[i]->setVisible(true);
+        int threshold = (i + 1) * 2;
+        if (health >= threshold)
+            m_healthAbsorbIcons[i]->gotoAndStop(1);
+        else if (health >= threshold - 1)
+            m_healthAbsorbIcons[i]->gotoAndStop(2);
+        else
+            m_healthAbsorbIcons[i]->gotoAndStop(0);
     }
     if (!visible || health < 1)
         m_armourBar->setY(0.0f);
@@ -260,7 +259,10 @@ void FJ_Hud::SetRidingHorse(bool riding, bool showJump, int health)
     {
         for (int i = 0; i < 30; ++i)
         {
-            m_horseHealthIcons[i]->setVisible(i * 2 < health);
+            if (i * 2 >= health)
+                m_horseHealthIcons[i]->setVisible(false);
+            else
+                m_horseHealthIcons[i]->setVisible(true);
             if (m_horseHealthIcons[i]->isVisible())
             {
                 int threshold = (i + 1) * 2;
@@ -286,7 +288,12 @@ void FJ_Hud::SetHorseHealth(int health, bool highlight)
     for (int i = 0; i < 30; ++i)
     {
         if (m_horseMaxHealth < health)
-            m_horseHealthIcons[i]->setVisible(i * 2 < health);
+        {
+            if (i * 2 >= health)
+                m_horseHealthIcons[i]->setVisible(false);
+            else
+                m_horseHealthIcons[i]->setVisible(true);
+        }
         if (m_horseHealthIcons[i]->isVisible())
         {
             int threshold = (i + 1) * 2;

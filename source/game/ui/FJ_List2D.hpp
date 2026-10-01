@@ -33,8 +33,8 @@ protected:
     int m_touchX;
     int m_touchRow;
     bool m_touchFocus;
-    FJ_FuiNode* m_scrollDelegateNode;
     FJ_ScrollDelegateType m_scrollDelegate;
+    FJ_FuiNode* m_scrollDelegateNode;
 
 public:
     explicit FJ_List2D(fuiRenderNode* renderNode);

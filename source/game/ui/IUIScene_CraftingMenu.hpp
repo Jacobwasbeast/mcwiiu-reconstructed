@@ -141,11 +141,11 @@ protected:
     std::vector<int> m_baseItemSlots;
     std::vector<int> m_availableRecipes;
     std::vector<std::pair<int, bool> > m_duplicateItemSlots;
-    not_null_ptr<ItemInstance> m_baseRecipeItem;
+    boost::shared_ptr<ItemInstance> m_baseRecipeItem;
     int m_selectedInventorySlot;
     std::vector<std::pair<int, int> > m_stackedRecipes;
-    not_null_ptr<ItemInstance> m_accumulatedItem;
-    std::vector<std::pair<unsigned int, int> > m_usedIngredients;
+    boost::shared_ptr<ItemInstance> m_accumulatedItem;
+    std::vector<std::pair<int, int> > m_usedIngredients;
     bool m_baseFromInventory;
     bool m_hasGunpowder;
     std::vector<std::pair<not_null_ptr<ItemInstance>, bool> > m_customRecipes[3];

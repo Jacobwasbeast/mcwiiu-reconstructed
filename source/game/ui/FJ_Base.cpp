@@ -22,14 +22,15 @@ FJ_Base::FJ_Base(fuiRenderNode* renderNode) : FJ_FuiNode(renderNode)
     m_textChanged = false;
     m_labelTooWide = false;
     m_labelOverflowResolved = false;
+    m_iTabIndex = -1;
     m_objectHeight = -1.0f;
     m_newWidth = static_cast<int>(getWidth());
     m_wrapWidth = 0;
+    m_preScaleWidth = static_cast<int>(getWidth());
     m_textOnly = false;
     m_multilineWrap = false;
-    m_preScaleWidth = static_cast<int>(getWidth());
-    m_manualWrapFits = false;
     m_lineCount = 0;
+    m_manualWrapFits = false;
     m_multilineWrapFits = false;
     m_ellipsisWidthOverride = 0;
     m_maxLabelWidth = -1;
@@ -54,13 +55,13 @@ uint32_t FJ_Base::getId() { return static_cast<uint32_t>(m_id); }
 
 void FJ_Base::LostFocus()
 {
-    if (m_objListParent != 0 && m_objListParent->isFJ_List())
-    {
-        m_objListParent->asFJ_List()->LoseListFocus();
-        return;
-    }
     if (m_objListParent != 0)
     {
+        if (m_objListParent->isFJ_List())
+        {
+            static_cast<FJ_List*>(m_objListParent)->LoseListFocus();
+            return;
+        }
         m_objListParent->isFJ_List2D();
     }
 }
@@ -78,15 +79,25 @@ int FJ_Base::getOldWidth() { return static_cast<int>(getWidth()); }
 
 void FJ_Base::CorrectPixelPosition()
 {
-    float x = getX();
-    float y = getY();
-    if (std::fmod(x, 1.0f) != 0.0f)
+    if (std::fmod(getX(), 1.0f) != 0.0f)
     {
-        setX(x < 0.0f ? std::ceil(x - 0.5f) : std::floor(x + 0.5f));
+        float value = getX();
+        float corrected;
+        if (getX() < 0.0f)
+            corrected = ceilf(value - 0.5f);
+        else
+            corrected = floorf(value + 0.5f);
+        setX(corrected);
     }
-    if (std::fmod(y, 1.0f) != 0.0f)
+    if (std::fmod(getY(), 1.0f) != 0.0f)
     {
-        setY(y < 0.0f ? std::ceil(y - 0.5f) : std::floor(y + 0.5f));
+        float value = getY();
+        float corrected;
+        if (getY() < 0.0f)
+            corrected = ceilf(value - 0.5f);
+        else
+            corrected = floorf(value + 0.5f);
+        setY(corrected);
     }
 }
 
@@ -99,7 +110,8 @@ void FJ_Base::InitBase(const std::wstring& name, int id)
 
 fuiRenderNodeEditText* FJ_Base::GetTextField()
 {
-    FJ_FuiNode* node = 0;
+    fuiRenderNodeEditText* textField = 0;
+    FJ_FuiNode* node;
     if (isFJ_Label())
     {
         node = getChildAt(0);
@@ -108,17 +120,12 @@ fuiRenderNodeEditText* FJ_Base::GetTextField()
     else
     {
         node = getChildByName(std::string("FJ_TextContainer"));
-        if (node == 0 || node->getNumChildren() == 0)
-            return 0;
-        node = node->getChildAt(0);
+        node = (node != 0 && node->getNumChildren() != 0) ? node->getChildAt(0) : 0;
     }
-    if (node == 0)
-        return 0;
-    fuiRenderNode* timelineNode = node->m_pRenderNode->asTimeline();
-    if (timelineNode == 0)
-        return 0;
-    fuiRenderNodeTimeline* timeline = static_cast<fuiRenderNodeTimeline*>(timelineNode);
-    return timeline->getChildAt(0)->asEditText();
+    fuiRenderNode* timelineNode;
+    if (node != 0 && (timelineNode = node->m_pRenderNode->asTimeline()) != 0)
+        textField = static_cast<fuiRenderNodeTimeline*>(timelineNode)->getChildAt(0)->asEditText();
+    return textField;
 }
 
 void FJ_Base::CheckLabelWidth(const std::wstring& label)
@@ -133,172 +140,169 @@ void FJ_Base::CheckLabelWidth(const std::wstring& label)
 
 void FJ_Base::SetLabelAlignment(int alignment) { m_labelAlignment = alignment; }
 
-uint64_t FJ_Base::DoManualWordWrapCheck(FJ_FuiNode* container, fuiRenderNodeEditText* field)
+void FJ_Base::DoManualWordWrapCheck(FJ_FuiNode* container, fuiRenderNodeEditText* field)
 {
     if (m_wrapWidth == 0)
         m_wrapWidth = static_cast<int>(getWidth());
-    float offset = 0.0f;
-    unsigned int limit = static_cast<unsigned int>(m_wrapWidth);
+    int limit = m_wrapWidth;
+    int offset = 0;
     if (container == 0)
-        limit = static_cast<unsigned int>(static_cast<float>(limit) * getScaleX());
+        limit = static_cast<int>(static_cast<float>(limit) * getScaleX());
     else
-        offset = static_cast<float>(static_cast<int>(container->getX() * getScaleX()) * 2);
-    float measured = field->getWidth();
-    float total = offset + measured;
-    if (total <= static_cast<float>(limit))
+        offset = static_cast<int>(container->getX() * getScaleX()) * 2;
+    if (static_cast<float>(offset) + field->m_textWidth <= static_cast<float>(limit))
     {
         m_manualWrapFits = true;
-        return 0;
+        return;
     }
-    const std::wstring source = field->getText();
+    std::wstring source = field->getText();
+    float total = static_cast<float>(offset) + field->m_textWidth;
     int split = 0;
-    int index = static_cast<int>(source.size()) - 1;
-    const unsigned int pairCount = static_cast<unsigned int>(source.size()) >> 1;
-    const float halfTotal = static_cast<float>(Math::round(total * 0.5f));
-    m_labelTooWide = false;
-    unsigned int pairs = pairCount;
-    while (pairs != 0)
-    {
-        if (source[static_cast<std::wstring::size_type>(index)] == L' ')
-        {
-            field->setText(source.substr(0, static_cast<std::wstring::size_type>(index)));
-            if (offset + field->getWidth() <= halfTotal)
-            {
-                split = index;
-                break;
-            }
-        }
-        const int second = index - 1;
-        if (source[static_cast<std::wstring::size_type>(second)] == L' ')
-        {
-            field->setText(source.substr(0, static_cast<std::wstring::size_type>(second)));
-            if (offset + field->getWidth() <= halfTotal)
-            {
-                split = second;
-                break;
-            }
-        }
-        --pairs;
-        index -= 2;
-    }
-    if (pairs == 0 && (source.size() & 1u) != 0u && source[static_cast<std::wstring::size_type>(index)] == L' ')
-    {
-        field->setText(source.substr(0, static_cast<std::wstring::size_type>(index)));
-        if (offset + field->getWidth() <= static_cast<float>(limit))
-            split = index;
-    }
-    field->setText(source.substr(0, static_cast<std::wstring::size_type>(split)));
-    const int firstWidth = static_cast<int>(field->getWidth());
-    field->setText(source.substr(static_cast<std::wstring::size_type>(split + 1)));
-    const int secondWidth = static_cast<int>(field->getWidth());
-    field->setText(std::wstring(L" "));
-    const float spaceWidth = field->getWidth();
-    const int widthDelta = firstWidth < secondWidth ? secondWidth - firstWidth : firstWidth - secondWidth;
-    const unsigned int padding = spaceWidth == 0.0f ? 0u : static_cast<unsigned int>(Math::round(static_cast<float>(widthDelta) / spaceWidth));
-    std::wstring spaces;
-    for (unsigned int i = 0; i < padding; ++i)
-        spaces.append(L" ");
-    const std::wstring first = source.substr(0, static_cast<std::wstring::size_type>(split));
-    const std::wstring secondText = source.substr(static_cast<std::wstring::size_type>(split + 1));
-    if (firstWidth < secondWidth)
-        field->setText(first + spaces + L"\n" + secondText);
-    else if (secondWidth < firstWidth)
-        field->setText(first + L"\n" + spaces + secondText);
+    if (total <= static_cast<float>(limit * 2))
+        m_manualWrapFits = true;
     else
-        field->setText(first + L"\n" + secondText);
-    return 0;
+    {
+        limit = Math::round(total * 0.5f);
+        m_manualWrapFits = false;
+    }
+    int index = static_cast<int>(source.size()) - 1;
+    if (index >= 0)
+    {
+        unsigned int pairs = static_cast<unsigned int>(source.size()) >> 1;
+        bool found = false;
+        while (pairs != 0)
+        {
+            if (source[index] == L' ')
+            {
+                field->setText(source.substr(0, index));
+                if (static_cast<float>(offset) + field->m_textWidth <= static_cast<float>(limit))
+                {
+                    split = index;
+                    found = true;
+                    break;
+                }
+            }
+            int second = index - 1;
+            if (source[second] == L' ')
+            {
+                field->setText(source.substr(0, second));
+                if (static_cast<float>(offset) + field->m_textWidth <= static_cast<float>(limit))
+                {
+                    split = second;
+                    found = true;
+                    break;
+                }
+            }
+            --pairs;
+            index -= 2;
+        }
+        if (!found && (source.size() & 1) != 0 && source[index] == L' ')
+        {
+            field->setText(source.substr(0, index));
+            if (static_cast<float>(offset) + field->m_textWidth <= static_cast<float>(limit))
+                split = index;
+        }
+    }
+    field->setText(source.substr(0, split));
+    int firstWidth = static_cast<int>(field->m_textWidth);
+    field->setText(source.substr(split + 1));
+    int secondWidth = static_cast<int>(field->m_textWidth);
+    field->setText(std::wstring(L" "));
+    int widthDelta = 0;
+    if (firstWidth < secondWidth)
+        widthDelta = (secondWidth - firstWidth) / 2;
+    else if (secondWidth < firstWidth)
+        widthDelta = (firstWidth - secondWidth) / 2;
+    int padding = Math::round(static_cast<float>(widthDelta) / static_cast<float>(static_cast<int>(field->m_textWidth)));
+    std::wstring spaces = std::wstring(L"");
+    for (int i = 0; i < padding; ++i)
+        spaces.append(L" ");
+    if (firstWidth < secondWidth)
+        field->setText(spaces + source.substr(0, split) + L"\n" + source.substr(split + 1));
+    else if (secondWidth < firstWidth)
+        field->setText(source.substr(0, split) + L"\n" + spaces + source.substr(split + 1));
+    else
+        field->setText(source.substr(0, split) + L"\n" + source.substr(split + 1));
 }
 
-uint64_t FJ_Base::DoMultilineWordWrap(FJ_FuiNode* container, fuiRenderNodeEditText* field)
+void FJ_Base::DoMultilineWordWrap(FJ_FuiNode* container, fuiRenderNodeEditText* field)
 {
     if (m_wrapWidth == 0)
         m_wrapWidth = static_cast<int>(getWidth());
-    float offset;
-    float limit;
+    int offset = 0;
+    int limit;
     if (container == 0)
-    {
-        offset = 0.0f;
-        limit = static_cast<float>(static_cast<int>(static_cast<float>(m_wrapWidth) * getScaleX()));
-    }
+        limit = static_cast<int>(static_cast<float>(m_wrapWidth) * getScaleX());
     else
     {
-        offset = static_cast<float>(static_cast<int>(container->getX() * getScaleX()));
-        limit = static_cast<float>(m_wrapWidth);
+        offset = static_cast<int>(container->getX() * getScaleX());
+        limit = m_wrapWidth;
     }
     m_lineCount = 0;
     m_lineWidths.clear();
-    float measured = field->getWidth();
-    if (offset + measured <= limit)
-        return 0;
+    if (static_cast<float>(offset) + field->m_textWidth <= static_cast<float>(limit))
+        return;
     std::wstring source = field->getText();
     std::wstring accumulated = std::wstring(L"");
-    while (limit < offset + measured)
+    while (static_cast<float>(limit) < static_cast<float>(offset) + field->m_textWidth)
     {
         field->setText(std::wstring(L""));
-        std::size_t split = static_cast<std::size_t>(-1);
-        std::size_t latestSpace = 0;
-        std::size_t index = 0;
-        while (index < source.size())
+        int split = 0;
+        int latestSpace = 0;
+        for (unsigned int index = 0; index < source.size(); ++index)
         {
-            std::wstring character = source.substr(index, 1);
-            field->appendText(character);
-            if (limit <= offset + field->getWidth())
+            field->appendText(source.substr(index, 1));
+            if (static_cast<float>(limit) <= static_cast<float>(offset) + field->m_textWidth)
+            {
+                split = static_cast<int>(index) - 1;
                 break;
+            }
             if (source[index] == L' ')
-                latestSpace = index;
-            ++index;
+                latestSpace = static_cast<int>(index);
         }
         if (latestSpace > 0)
             split = latestSpace;
         ++m_lineCount;
-        m_lineWidths.push_back(static_cast<int>(split));
-        accumulated += source.substr(0, split + 1);
-        accumulated += L"\n";
+        m_lineWidths.push_back(split);
+        accumulated += source.substr(0, split + 1) + L"\n";
         source = source.substr(split + 1);
         field->setText(source);
-        measured = field->getWidth();
     }
     field->setText(accumulated + source);
     m_label = field->getText();
-    return 0;
 }
 
-uint64_t FJ_Base::DoEllipsisCheck(FJ_FuiNode* container, fuiRenderNodeEditText* field)
+void FJ_Base::DoEllipsisCheck(FJ_FuiNode* container, fuiRenderNodeEditText* field)
 {
     if (m_wrapWidth == 0)
         m_wrapWidth = static_cast<int>(getWidth());
     int offset = 0;
     int suffixAllowance = 5;
     int limitWidth;
-    if (container == 0)
-        limitWidth = static_cast<int>(static_cast<float>(m_wrapWidth) * getScaleX());
-    else
+    if (container != 0)
     {
         offset = static_cast<int>(container->getX() * getScaleX());
         limitWidth = m_wrapWidth;
     }
+    else
+        limitWidth = static_cast<int>(static_cast<float>(m_wrapWidth) * getScaleX());
     if (m_ellipsisWidthOverride > 0)
     {
         suffixAllowance = 0;
         limitWidth = m_ellipsisWidthOverride;
     }
-    if (static_cast<float>(limitWidth) < static_cast<float>(offset) + field->getWidth() + static_cast<float>(suffixAllowance))
+    if (static_cast<float>(limitWidth) < static_cast<float>(offset) + field->m_textWidth + static_cast<float>(suffixAllowance))
     {
         const float targetWidth = static_cast<float>(limitWidth - offset - suffixAllowance);
         do
         {
-            const std::wstring lengthSource = field->getText();
-            const std::wstring textSource = field->getText();
-            field->setText(textSource.substr(0, lengthSource.size() - 1));
+            field->setText(field->getText().substr(0, field->getText().size() - 1));
         }
-        while (targetWidth < field->getWidth());
-        const std::wstring lengthSource = field->getText();
-        const std::wstring textSource = field->getText();
-        field->setText(textSource.substr(0, lengthSource.size() - 3));
+        while (targetWidth < field->m_textWidth);
+        field->setText(field->getText().substr(0, field->getText().size() - 3));
         m_label = field->getText() + L"...";
         field->setText(m_label);
     }
-    return 0;
 }
 
 void FJ_Base::SetLabel(const std::wstring& label)
@@ -321,7 +325,7 @@ void FJ_Base::SetLabel(const std::wstring& label)
     if (m_objectHeight == -1.0f)
     {
         fuiRect rect = getRect(this);
-        m_objectHeight = getHeight() + rect.yMin + rect.yMin;
+        m_objectHeight = getHeight() + (rect.yMin + rect.yMin);
     }
     field->m_wordWrap = m_textContainerVisible;
     field->m_multiline = m_textContainerChanged;
@@ -441,14 +445,15 @@ void FJ_Base::SetTextOnly(const std::wstring& text)
 
 void FJ_Base::GetLabelTooWide(fuiRenderNodeEditText* field)
 {
-    int widest = m_maxLabelWidth;
-    if (static_cast<float>(widest) <= field->m_textWidth)
-        widest = static_cast<int>(field->m_textWidth);
-    float required = static_cast<float>(widest);
+    float label = static_cast<float>(m_maxLabelWidth);
+    float required = static_cast<float>(static_cast<int>(label <= field->m_textWidth ? field->m_textWidth : label));
     int width = required <= getWidth() ? static_cast<int>(getWidth()) : static_cast<int>(required);
-    if (m_newWidth < width)
-        m_newWidth = width;
-    if (!m_labelOverflowResolved && getWidth() < required)
+    bool resolved = m_labelOverflowResolved;
+    int newWidth = m_newWidth;
+    if (width > newWidth)
+        newWidth = width;
+    m_newWidth = newWidth;
+    if (!resolved && getWidth() < required)
     {
         m_ellipsisWidth = static_cast<int>(m_objectWidth * 0.8);
         m_labelTooWide = true;
@@ -464,9 +469,9 @@ void FJ_Base::SetNewObjectWidth(int width)
         setWidth(static_cast<float>(width));
         m_preScaleWidth = width;
         fuiRect rect = getRect(this);
+        m_objectWidth = getWidth() + (rect.xMin + rect.xMin);
         m_labelTooWide = false;
         m_labelOverflowResolved = false;
-        m_objectWidth = getWidth() + rect.xMin + rect.xMin;
         SetLabel(m_label);
     }
 }
@@ -479,7 +484,7 @@ void FJ_Base::SetNewObjectHeight(int height)
         SetTextOnly(std::wstring(L" "));
         setHeight(static_cast<float>(height));
         fuiRect rect = getRect(this);
-        m_objectHeight = getHeight() + rect.yMin + rect.yMin;
+        m_objectHeight = getHeight() + (rect.yMin + rect.yMin);
         SetLabel(m_label);
     }
 }

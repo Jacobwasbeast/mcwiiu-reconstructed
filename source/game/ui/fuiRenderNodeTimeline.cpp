@@ -71,8 +71,8 @@ fuiRenderNodeTimeline::fuiRenderNodeTimeline(fuiRenderNode* stage, fuiRenderNode
 
 fuiRenderNodeTimeline::~fuiRenderNodeTimeline()
 {
-    for (std::vector<fuiRenderNode*>::iterator it = m_children.begin(); it != m_children.end(); ++it)
-        delete *it;
+    for (unsigned int i = 0; i < m_children.size(); ++i)
+        delete m_children[i];
     delete m_mask;
 }
 
@@ -109,24 +109,22 @@ void fuiRenderNodeTimeline::addFrameAction(int frame, eFrameActionType type,
 
 void fuiRenderNodeTimeline::expandBoundsFromChild(fuiRect& bounds)
 {
-    if (m_bounds.xMin > bounds.xMin) m_bounds.xMin = bounds.xMin;
-    if (m_bounds.xMax < bounds.xMax) m_bounds.xMax = bounds.xMax;
-    if (m_bounds.yMin > bounds.yMin) m_bounds.yMin = bounds.yMin;
-    if (m_bounds.yMax < bounds.yMax) m_bounds.yMax = bounds.yMax;
+    m_bounds.xMin = m_bounds.xMin > bounds.xMin ? bounds.xMin : m_bounds.xMin;
+    m_bounds.xMax = m_bounds.xMax < bounds.xMax ? bounds.xMax : m_bounds.xMax;
+    m_bounds.yMin = m_bounds.yMin > bounds.yMin ? bounds.yMin : m_bounds.yMin;
+    m_bounds.yMax = m_bounds.yMax < bounds.yMax ? bounds.yMax : m_bounds.yMax;
 }
 
 void fuiRenderNodeTimeline::updateBoundsLocal()
 {
-    unsigned int index = 0;
-    for (std::vector<fuiRenderNode*>::iterator it = m_children.begin(); it != m_children.end(); ++it)
+    for (unsigned int i = 0; i < m_children.size(); ++i)
     {
         fuiRect bounds;
-        (*it)->getParentSpaceBounds(&bounds);
-        if (index == 0)
+        m_children[i]->getParentSpaceBounds(&bounds);
+        if (i == 0)
             m_bounds = bounds;
         else
             expandBoundsFromChild(bounds);
-        ++index;
     }
 }
 
@@ -143,8 +141,8 @@ void fuiRenderNodeTimeline::progogateBoundsFromChild()
 
 void fuiRenderNodeTimeline::shutdown()
 {
-    for (std::vector<fuiRenderNode*>::iterator it = m_children.begin(); it != m_children.end(); ++it)
-        if (*it != 0) (*it)->shutdown();
+    for (unsigned int i = 0; i < m_children.size(); ++i)
+        m_children[i]->shutdown();
 }
 
 fuiObject* fuiRenderNodeTimeline::getReferencedObject(fuiObject* object)
@@ -286,28 +284,28 @@ void fuiRenderNodeTimeline::handleConstruction()
                 {
                     FJ_Base* base = node->asFJ_Base();
                     if (base != 0)
-                        base->m_navLinkName[0] = action->actionValue;
+                        base->m_navUpName = action->actionValue;
                     break;
                 }
                 case 1:
                 {
                     FJ_Base* base = node->asFJ_Base();
                     if (base != 0)
-                        base->m_navLinkName[1] = action->actionValue;
+                        base->m_navDownName = action->actionValue;
                     break;
                 }
                 case 2:
                 {
                     FJ_Base* base = node->asFJ_Base();
                     if (base != 0)
-                        base->m_navLinkName[2] = action->actionValue;
+                        base->m_navLeftName = action->actionValue;
                     break;
                 }
                 case 3:
                 {
                     FJ_Base* base = node->asFJ_Base();
                     if (base != 0)
-                        base->m_navLinkName[3] = action->actionValue;
+                        base->m_navRightName = action->actionValue;
                     break;
                 }
                 case 4:
@@ -627,18 +625,7 @@ void fuiRenderNodeTimeline::gather(bool force)
                 fuiRenderNode* node = 0;
                 unsigned int index = 0;
 
-                if ((event->flags & 1) == 0)
-                {
-                    for (index = 0; index < m_children.size(); ++index)
-                    {
-                        if (m_children[index]->m_symbolIndex == event->depth)
-                        {
-                            node = m_children[index];
-                            break;
-                        }
-                    }
-                }
-                else
+                if ((event->flags & 1) != 0)
                 {
                     bool alreadyRemoved = false;
                     for (unsigned int r = 0; r < m_removedChildren.size(); ++r)
@@ -738,6 +725,17 @@ void fuiRenderNodeTimeline::gather(bool force)
                             m_children.push_back(node);
                     }
                 }
+                else
+                {
+                    for (index = 0; index < m_children.size(); ++index)
+                    {
+                        if (m_children[index]->m_symbolIndex == event->depth)
+                        {
+                            node = m_children[index];
+                            break;
+                        }
+                    }
+                }
 
                 if (node == 0)
                     continue;
@@ -773,63 +771,66 @@ void fuiRenderNodeTimeline::gather(bool force)
             m_previousFrame = (m_currentFrame + 1) %
                 static_cast<int>(timeline->timelineFrameCount);
 
-        unsigned int survivor = 0;
-        while (survivor < removed.size())
+        if (!removed.empty())
         {
-            bool reused = false;
-            for (unsigned int c = 0; c < m_children.size(); ++c)
+            unsigned int survivor = 0;
+            while (survivor < removed.size())
             {
-                fuiRenderNode* node = removed[survivor];
-                fuiRenderNode* created = m_children[c];
-                if (created->m_symbolIndex != node->m_symbolIndex)
-                    continue;
-                if (created->m_object != node->m_object)
-                    continue;
-                if (std::strcmp(created->m_name, node->m_name) != 0)
-                    continue;
+                bool reused = false;
+                for (unsigned int c = 0; c < m_children.size(); ++c)
+                {
+                    fuiRenderNode* node = removed[survivor];
+                    fuiRenderNode* created = m_children[c];
+                    if (created->m_symbolIndex != node->m_symbolIndex)
+                        continue;
+                    if (created->m_object != node->m_object)
+                        continue;
+                    if (std::strcmp(created->m_name, node->m_name) != 0)
+                        continue;
 
-                m_children[c] = node;
-                unsigned char filterFlags = node->m_filterFlags;
-                if ((filterFlags & 0x80) != 0)
-                {
-                    node->m_localMatrix.translateX = created->m_localMatrix.translateX;
-                    node->m_localMatrix.translateY = created->m_localMatrix.translateY;
-                }
-                if ((filterFlags & 0x20) != 0)
-                {
-                    node->m_localMatrix.scaleX = created->m_localMatrix.scaleX;
-                    node->m_localMatrix.scaleY = created->m_localMatrix.scaleY;
-                }
-                if ((filterFlags & 0x40) != 0)
-                {
-                    node->m_localMatrix.rotateSkew0 = created->m_localMatrix.rotateSkew0;
-                    node->m_localMatrix.rotateSkew1 = created->m_localMatrix.rotateSkew1;
-                }
-                node->m_globalMatrix = created->m_globalMatrix;
-                if ((filterFlags & 0x10) != 0)
-                {
-                    node->m_redAdd = created->m_redAdd;
-                    node->m_greenAdd = created->m_greenAdd;
-                    node->m_blueAdd = created->m_blueAdd;
-                    node->m_alphaAdd = created->m_alphaAdd;
-                    node->m_redMultiply = created->m_redMultiply;
-                    node->m_greenMultiply = created->m_greenMultiply;
-                    node->m_blueMultiply = created->m_blueMultiply;
-                    node->m_alpha = created->m_alpha;
-                }
+                    m_children[c] = node;
+                    unsigned char filterFlags = node->m_filterFlags;
+                    if ((filterFlags & 0x80) != 0)
+                    {
+                        node->m_localMatrix.translateX = created->m_localMatrix.translateX;
+                        node->m_localMatrix.translateY = created->m_localMatrix.translateY;
+                    }
+                    if ((filterFlags & 0x20) != 0)
+                    {
+                        node->m_localMatrix.scaleX = created->m_localMatrix.scaleX;
+                        node->m_localMatrix.scaleY = created->m_localMatrix.scaleY;
+                    }
+                    if ((filterFlags & 0x40) != 0)
+                    {
+                        node->m_localMatrix.rotateSkew0 = created->m_localMatrix.rotateSkew0;
+                        node->m_localMatrix.rotateSkew1 = created->m_localMatrix.rotateSkew1;
+                    }
+                    node->m_globalMatrix = created->m_globalMatrix;
+                    if ((filterFlags & 0x10) != 0)
+                    {
+                        node->m_redAdd = created->m_redAdd;
+                        node->m_greenAdd = created->m_greenAdd;
+                        node->m_blueAdd = created->m_blueAdd;
+                        node->m_alphaAdd = created->m_alphaAdd;
+                        node->m_redMultiply = created->m_redMultiply;
+                        node->m_greenMultiply = created->m_greenMultiply;
+                        node->m_blueMultiply = created->m_blueMultiply;
+                        node->m_alpha = created->m_alpha;
+                    }
 
-                removed[survivor] = removed[removed.size() - 1];
-                removed.pop_back();
-                delete created;
-                reused = true;
-                break;
+                    removed[survivor] = removed[removed.size() - 1];
+                    removed.pop_back();
+                    delete created;
+                    reused = true;
+                    break;
+                }
+                if (!reused)
+                    ++survivor;
             }
-            if (!reused)
-                ++survivor;
-        }
 
-        for (unsigned int d = 0; d < removed.size(); ++d)
-            delete removed[d];
+            for (unsigned int d = 0; d < removed.size(); ++d)
+                delete removed[d];
+        }
     }
 
     for (unsigned int i = 0; i < m_children.size(); ++i)
@@ -868,8 +869,8 @@ void fuiRenderNodeTimeline::gather(bool force)
 void fuiRenderNodeTimeline::preRender()
 {
     if (!isVisible()) return;
-    for (std::vector<fuiRenderNode*>::iterator it = m_children.begin(); it != m_children.end(); ++it)
-        (*it)->preRender();
+    for (unsigned int i = 0; i < m_children.size(); ++i)
+        m_children[i]->preRender();
 }
 
 void fuiRenderNodeTimeline::render(fuiRect* bounds, fuiMatrix* matrix)
@@ -925,11 +926,7 @@ void fuiRenderNodeTimeline::render(fuiRect* bounds, fuiMatrix* matrix)
     unsigned int clipDepth = 0;
     for (unsigned int i = 0; i < m_children.size(); ++i)
     {
-        if (m_children[i]->m_frame == 0)
-        {
-            m_children[i]->render(childBounds, childMatrix);
-        }
-        else
+        if (m_children[i]->m_frame != 0)
         {
             gFui->incrementStencilMask();
             gRenderer->StateSetStencil(7, gFui->getCurrentStencilMask(), 0, 255);
@@ -938,6 +935,10 @@ void fuiRenderNodeTimeline::render(fuiRect* bounds, fuiMatrix* matrix)
             gRenderer->StateSetStencil(2, gFui->getCurrentStencilMask(), 255, 0);
             gRenderer->StateSetBlendFunc(1, 5);
             clipDepth = m_children[i]->m_frame;
+        }
+        else
+        {
+            m_children[i]->render(childBounds, childMatrix);
         }
         if (clipDepth != 0 && clipDepth < m_children[i]->m_symbolIndex)
         {
@@ -961,8 +962,8 @@ void fuiRenderNodeTimeline::render(fuiRect* bounds, fuiMatrix* matrix)
 void fuiRenderNodeTimeline::handleAddedToStage()
 {
     fuiRenderNode::handleAddedToStage();
-    for (std::vector<fuiRenderNode*>::iterator it = m_children.begin(); it != m_children.end(); ++it)
-        (*it)->handleAddedToStage();
+    for (unsigned int i = 0; i < m_children.size(); ++i)
+        m_children[i]->handleAddedToStage();
 }
 
 fuiRenderNode* fuiRenderNodeTimeline::findNode(const char* name)
@@ -978,12 +979,25 @@ fuiRenderNode* fuiRenderNodeTimeline::findNode(const char* name)
 
 fuiRenderNode* fuiRenderNodeTimeline::getNodeFromPath(const char* path)
 {
-    const char* separator = std::strchr(path, '.');
-    if (*path == 0 || separator == 0)
+    const char* separator = path;
+    if (*separator == 0)
         return fuiRenderNode::getNodeFromPath(path);
-    if (std::strncmp(m_name, path, separator - path) != 0)
-        return 0;
-    return findNode(separator + 1);
+    while (*separator != '.')
+    {
+        ++separator;
+        if (*separator == 0)
+            return fuiRenderNode::getNodeFromPath(path);
+    }
+    if (std::strncmp(m_name, path, separator - path) == 0)
+    {
+        for (unsigned int i = 0; i < m_children.size(); ++i)
+        {
+            fuiRenderNode* result = m_children[i]->getNodeFromPath(separator + 1);
+            if (result != 0)
+                return result;
+        }
+    }
+    return 0;
 }
 
 std::string fuiRenderNodeTimeline::currentLabel()
@@ -999,15 +1013,19 @@ int fuiRenderNodeTimeline::currentFrame()
 
 void fuiRenderNodeTimeline::removeChild(fuiRenderNode* child, bool destroy)
 {
-    std::vector<fuiRenderNode*>::iterator it = std::find(m_children.begin(), m_children.end(), child);
-    if (it == m_children.end())
-        return;
-    m_children.erase(it);
-    m_removedChildren.push_back(fuiRenderNodeRemoved(child->m_symbolIndex, child->m_object));
-    if (destroy)
-        delete child;
-    else
-        child->m_parent = 0;
+    for (std::vector<fuiRenderNode*>::iterator it = m_children.begin(); it != m_children.end(); ++it)
+    {
+        if (*it == child)
+        {
+            m_children.erase(it);
+            m_removedChildren.push_back(fuiRenderNodeRemoved(child->m_symbolIndex, child->m_object));
+            if (destroy)
+                delete child;
+            else
+                child->m_parent = 0;
+            return;
+        }
+    }
 }
 
 void fuiRenderNodeTimeline::removeChildAt(int index, bool destroy)
@@ -1033,15 +1051,16 @@ void fuiRenderNodeTimeline::addChild(fuiRenderNode* child)
         if (depth < (*it)->m_symbolIndex)
             depth = (*it)->m_symbolIndex;
 
+    fuiRenderNode* node = child;
     if (child->m_parent != 0)
         static_cast<fuiRenderNodeTimeline*>(child->m_parent->asTimeline())->removeChild(child, false);
 
-    child->m_parent = this;
-    child->m_symbolIndex = depth + 1;
-    child->m_stage = m_stage;
-    m_children.push_back(child);
-    child->generateGlobalMatrix();
-    child->m_flags |= 0x80;
+    node->m_parent = this;
+    node->m_symbolIndex = depth + 1;
+    node->m_stage = m_stage;
+    m_children.push_back(node);
+    node->generateGlobalMatrix();
+    node->m_flags |= 0x80;
     depthSort();
 }
 
@@ -1069,8 +1088,10 @@ void fuiRenderNodeTimeline::addChildAt(fuiRenderNode* child, int index)
 
 unsigned int fuiRenderNodeTimeline::getChildIndex(fuiRenderNode* child)
 {
-    std::vector<fuiRenderNode*>::iterator it = std::find(m_children.begin(), m_children.end(), child);
-    return it == m_children.end() ? 0xffffffffu : static_cast<unsigned int>(it - m_children.begin());
+    for (unsigned int i = 0; i < m_children.size(); ++i)
+        if (m_children[i] == child)
+            return i;
+    return 0xffffffffu;
 }
 
 void fuiRenderNodeTimeline::generateGlobalMatrix()

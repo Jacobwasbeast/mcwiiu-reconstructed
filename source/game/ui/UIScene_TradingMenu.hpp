@@ -12,6 +12,7 @@
 #include "game/item/not_null_ptr.hpp"
 #include "game/minigame/Tutorial.hpp"
 
+class Merchant;
 class MerchantMenu;
 class MerchantRecipe;
 class UILayer;
@@ -22,14 +23,14 @@ class HtmlString;
 class UIScene_TradingMenu : public UIScene
 {
 public:
-    UIScene_TradingMenu(int type, void* data, UILayer* layer);
+    UIScene_TradingMenu(int iPad, void* initData, UILayer* layer);
     virtual ~UIScene_TradingMenu();
 
     virtual unsigned int mapElementsAndNames();
     virtual std::wstring getMoviePath();
     virtual void updateTooltips();
     virtual void handleDestroy();
-    int GetItemDescription(not_null_ptr<ItemInstance> item);
+    std::vector<HtmlString>* GetItemDescription(not_null_ptr<ItemInstance> item);
     bool canMake(MerchantRecipe* recipe);
     void setTradeRedBox(int trade, bool show);
     void setTitle(const std::wstring& title);
@@ -45,20 +46,20 @@ public:
     void handleTick();
     virtual void tick();
     void moveSelector(bool right);
-    int handleKeyDown(int playerId, int action, bool repeat);
+    bool handleKeyDown(int iPad, int action, bool repeat);
     virtual void handleInput(int playerId, int action, bool repeat, bool pressed,
                              bool released, bool& handled);
     virtual void customDraw(const char* name, fuiRect* rect);
     void handleInventoryUpdated(void* data);
     virtual void HandleMessage(EUIMessage message, void* data);
-    boost::shared_ptr<MerchantMenu> getMerchant();
+    boost::shared_ptr<Merchant> getMerchant();
     virtual int getSceneType();
 
 private:
     bool m_scrollRightShown;
     bool m_scrollLeftShown;
-    MerchantMenu* m_merchantMenuPtr;
-    boost::shared_ptr<MerchantMenu> m_merchantMenu;
+    MerchantMenu* m_merchantMenu;
+    boost::shared_ptr<Merchant> m_merchant;
     std::vector<std::pair<MerchantRecipe*, int> > m_trades;
     int m_tradeCount;
     int m_tradeRow;

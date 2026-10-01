@@ -26,7 +26,7 @@ public:
     {
     public:
         PendingUpdate(T* list, int item) : GenericPendingUpdate(item), m_list(list) {}
-        virtual ~PendingUpdate();
+        virtual ~PendingUpdate() {}
     protected:
         T* m_list;
     };
@@ -66,7 +66,10 @@ public:
     {
     public:
         PendingSetLabel(UIControl_List* list, int item, UIString label)
-            : PendingUpdate<UIControl_List>(list, item), m_label(label) {}
+            : PendingUpdate<UIControl_List>(list, item)
+        {
+            m_label = label;
+        }
         virtual ~PendingSetLabel();
         virtual unsigned int OnTick();
     private:
@@ -113,10 +116,5 @@ protected:
     boost::unordered_map<unsigned int, UIControl::eUIControlType> m_elementTypes;
     boost::unordered_map<unsigned int, bool> m_elementEnabled;
 };
-
-template <class T>
-UIControl_List::PendingUpdate<T>::~PendingUpdate()
-{
-}
 
 #endif

@@ -25,7 +25,8 @@
 #include "platform/wiiu/CProfile.hpp"
 #include "platform/wiiu/C4JThreadImpl.hpp"
 #include "vendor/_LoadingInputParams.hpp"
-#include "game/core/GameSettings.hpp"
+#include "game/core/GameSettings.hpp"
+#include "platform/wiiu/WiiU_Runtime.hpp"
 
 UIScene_FullscreenProgress::UIScene_FullscreenProgress(int type, void* data, UILayer* layer)
     : UIScene(type, layer), m_thread(NULL), m_threadStarted(false), m_completionData(NULL),
@@ -323,7 +324,7 @@ void UIScene_FullscreenProgress::tick()
                 }
             }
         }
-        else if (threadState != 0x4c7)
+        else if (threadState != ERROR_CANCELLED)
         {
             CGameNetworkManager::sInstance.WiiU_ShowErrorViewer();
             if (gApp.GetXuiAction(m_playerId) != eXuiAction_ConnectionLostWait)

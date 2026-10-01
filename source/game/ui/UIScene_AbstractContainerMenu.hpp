@@ -23,8 +23,10 @@ public:
     UIScene_AbstractContainerMenu(int type, UILayer* layer);
     virtual ~UIScene_AbstractContainerMenu();
 
+    virtual int getPad();
     virtual void PlatformInitialize(bool navigateBack, int pad, int startIndex);
     virtual void InitDataAssociations(int pad, AbstractContainerMenu* menu, int startIndex);
+    virtual bool doesSectionTreeHaveFocus(IUIScene_AbstractContainerMenu::ESceneSection section);
     virtual void setSectionFocus(IUIScene_AbstractContainerMenu::ESceneSection section, int pad);
     virtual void setFocusToPointer(int pad);
     virtual void SetPointerText(std::vector<HtmlString>* description, bool newSlot);
@@ -32,6 +34,8 @@ public:
     virtual Slot* getSlot(IUIScene_AbstractContainerMenu::ESceneSection section, int slot);
     virtual bool isSlotEmpty(IUIScene_AbstractContainerMenu::ESceneSection section, int slot);
     virtual void adjustPointerForSafeZone();
+    virtual UIControl* getSection(IUIScene_AbstractContainerMenu::ESceneSection section);
+    virtual unsigned int GetBaseSlotCount();
 
     virtual unsigned int mapElementsAndNames();
     virtual void handleDestroy();
@@ -40,10 +44,6 @@ public:
     virtual void customDraw(const char* name, fuiRect* rect);
     virtual void handleInput(int playerId, int action, bool repeat, bool pressed, bool released,
                              bool& handled);
-    virtual bool doesSectionTreeHaveFocus(IUIScene_AbstractContainerMenu::ESceneSection section);
-    virtual int getPad();
-    virtual UIControl* getSection(IUIScene_AbstractContainerMenu::ESceneSection section);
-    virtual unsigned int GetBaseSlotCount();
     virtual void updateTooltips();
 
 protected:

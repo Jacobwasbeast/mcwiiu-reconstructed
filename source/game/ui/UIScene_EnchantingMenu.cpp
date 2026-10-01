@@ -6,10 +6,12 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/HtmlString.hpp"
 #include "game/core/L10N.hpp"
 #include "game/core/Minecraft.hpp"
+#include "game/core/StringConversion.hpp"
 #include "game/core/StringUtils.hpp"
 #include "game/item/Enchantment.hpp"
 #include "game/item/Inventory.hpp"
@@ -24,8 +26,6 @@
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/ui/UILayer.hpp"
 
-extern std::wstring _toString(int value);
-extern CMinecraftApp* g_pApp;
 
 struct UIScene_EnchantingMenuData
 {
@@ -39,13 +39,11 @@ struct UIScene_EnchantingMenuData
     std::wstring name;
 };
 
-UIScene_EnchantingMenu::UIScene_EnchantingMenu(int type, void* data, UILayer* layer)
-    : UIScene_AbstractContainerMenu(type, layer), m_ingredientSlot(), m_lapisSlot(),
+UIScene_EnchantingMenu::UIScene_EnchantingMenu(int pad, void* data, UILayer* layer)
+    : UIScene_AbstractContainerMenu(pad, layer), m_ingredientSlot(), m_lapisSlot(),
       m_enchantLabel(), m_enchantmentButtons(), m_enchantmentBook()
 {
     UIScene_EnchantingMenuData* sceneData = static_cast<UIScene_EnchantingMenuData*>(data);
-    IUIScene_AbstractContainerMenu* sceneInterface =
-        static_cast<IUIScene_AbstractContainerMenu*>(this);
     initialiseMovie();
     m_enchantmentButtons[0].init(0);
     m_enchantmentButtons[1].init(1);
@@ -53,16 +51,13 @@ UIScene_EnchantingMenu::UIScene_EnchantingMenu(int type, void* data, UILayer* la
     m_enchantmentButtons[0].SetEnchantmentLevel(1);
     m_enchantmentButtons[1].SetEnchantmentLevel(2);
     m_enchantmentButtons[2].SetEnchantmentLevel(3);
-    if (!sceneData->name.empty())
-        m_enchantLabel.init(UIString(sceneData->name));
-    else
-        m_enchantLabel.init(UIString(L10N::GetString(IDS_ENCHANT)));
+    m_enchantLabel.init(UIString(sceneData->name.empty() ? std::wstring(L10N::GetString(IDS_ENCHANT)) : sceneData->name));
     if (Minecraft::GetInstance()->mGameModes[sceneData->playerIndex] != 0)
     {
-        Tutorial* tutorial = Minecraft::GetInstance()->mGameModes[sceneData->playerIndex]->getTutorial();
+        Tutorial* tutorial = Minecraft::GetInstance()->mGameModes[pad]->getTutorial();
         if (tutorial != 0)
         {
-            sceneInterface->m_previousTutorialState = tutorial->currentState;
+            m_previousTutorialState = tutorial->currentState;
             tutorial->changeTutorialState(eTutorial_State_EnchantingMenu, this);
         }
     }
@@ -73,7 +68,7 @@ UIScene_EnchantingMenu::UIScene_EnchantingMenu(int type, void* data, UILayer* la
                                  IUIScene_AbstractContainerMenu::ESceneSection_EnchantMax, false);
     m_ingredientSlot.addSlots(0, 1);
     m_lapisSlot.addSlots(1, 1);
-    g_pApp->SetRichPresenceContext(m_playerId, 10);
+    gApp.SetRichPresenceContext(m_playerId, 10);
     delete sceneData;
 }
 
@@ -83,21 +78,54 @@ UIScene_EnchantingMenu::~UIScene_EnchantingMenu()
 
 bool UIScene_EnchantingMenu::IsSectionSlotList(IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    return section >= IUIScene_AbstractContainerMenu::ESceneSection_EnchantItem && section <= IUIScene_AbstractContainerMenu::ESceneSection_EnchantLapis;
+    switch (section)
+    {
+    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantHotbar:
+    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantInventory:
+    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantItem:
+    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantLapis:
+        return true;
+    default:
+        return false;
+    }
 }
 
 unsigned int UIScene_EnchantingMenu::getSectionColumns(IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    if (section < IUIScene_AbstractContainerMenu::ESceneSection_EnchantHotbar || section > IUIScene_AbstractContainerMenu::ESceneSection_EnchantLapis) return 0;
-    static const unsigned int columns[4] = { 1, 1, 1, 1 };
-    return columns[static_cast<int>(section) - IUIScene_AbstractContainerMenu::ESceneSection_EnchantHotbar];
+    unsigned int columns = 0;
+    switch (section)
+    {
+    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantHotbar:
+    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantInventory:
+        columns = 9;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantItem:
+    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantLapis:
+        columns = 1;
+        break;
+    default:
+        break;
+    }
+    return columns;
 }
 
 unsigned int UIScene_EnchantingMenu::getSectionRows(IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    if (section < IUIScene_AbstractContainerMenu::ESceneSection_EnchantHotbar || section > IUIScene_AbstractContainerMenu::ESceneSection_EnchantLapis) return 0;
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_EnchantInventory) return static_cast<IUIScene_AbstractContainerMenu*>(this)->GetInventoryRows();
-    return 1;
+    unsigned int rows = 0;
+    switch (section)
+    {
+    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantHotbar:
+    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantItem:
+    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantLapis:
+        rows = 1;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantInventory:
+        rows = GetInventoryRows();
+        break;
+    default:
+        break;
+    }
+    return rows;
 }
 
 unsigned int UIScene_EnchantingMenu::GetSectionAndSlotInDirection(
@@ -298,59 +326,100 @@ void UIScene_EnchantingMenu::GetItemScreenData(
     position->y = static_cast<float>(slot / columns) * size->y;
 }
 
-void UIScene_EnchantingMenu::handleOtherClicked(int button,
+void UIScene_EnchantingMenu::handleOtherClicked(int pad,
     IUIScene_AbstractContainerMenu::ESceneSection section, int, bool)
 {
-    if (section < IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton1 || section > IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton3) return;
-    const int enchantment = getSectionStartOffset(section);
+    int buttonId = -1;
+    switch (section)
+    {
+    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton1:
+        buttonId = 0;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton2:
+        buttonId = 1;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton3:
+        buttonId = 2;
+        break;
+    default:
+        break;
+    }
     Minecraft* minecraft = Minecraft::GetInstance();
-    if (minecraft == 0 || minecraft->mGameModes[m_playerId] == 0) return;
-    minecraft->mGameModes[m_playerId]->handleInventoryButtonClick(m_menu->m_containerId, enchantment + button);
+    if (buttonId >= 0 &&
+        m_menu->clickMenuButton(boost::dynamic_pointer_cast<Player>(minecraft->mLocalPlayers[pad]), buttonId))
+        minecraft->mGameModes[pad]->handleInventoryButtonClick(m_menu->m_containerId, buttonId);
 }
 
 int UIScene_EnchantingMenu::getSectionStartOffset(IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    if (section < IUIScene_AbstractContainerMenu::ESceneSection_EnchantHotbar || section > IUIScene_AbstractContainerMenu::ESceneSection_EnchantLapis) return 0;
-    static const int offsets[4] = { 0, 1, 0, 1 };
-    return offsets[static_cast<int>(section) - IUIScene_AbstractContainerMenu::ESceneSection_EnchantHotbar];
+    int offset = 0;
+    switch (section)
+    {
+    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantHotbar:
+        offset = 29;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantInventory:
+        offset = 2;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantItem:
+        offset = 0;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantLapis:
+        offset = 1;
+        break;
+    default:
+        break;
+    }
+    return offset;
 }
 
 void UIScene_EnchantingMenu::setSectionSelectedSlot(
     IUIScene_AbstractContainerMenu::ESceneSection section, int slot, int direction, bool wrap)
 {
     const int columns = static_cast<int>(getSectionColumns(section));
+    const int index = direction * columns + slot;
     UIControl_SlotList* list = NULL;
     switch (section)
     {
-    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantHotbar:
-        list = &m_hotbarList;
-        break;
-    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantInventory:
-        list = &m_inventoryList;
-        break;
     case IUIScene_AbstractContainerMenu::ESceneSection_EnchantItem:
         list = &m_ingredientSlot;
         break;
     case IUIScene_AbstractContainerMenu::ESceneSection_EnchantLapis:
         list = &m_lapisSlot;
         break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantInventory:
+        list = &m_inventoryList;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantHotbar:
+        list = &m_hotbarList;
+        break;
     default:
         break;
     }
     if (wrap)
-        list->setHighlightSlot(direction * columns + slot);
+        list->setHighlightSlot(index);
 }
 
 std::vector<HtmlString>* UIScene_EnchantingMenu::GetSectionHoverText(
     IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    if (section < IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton1 ||
-        section > IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton3)
+    int index = 0;
+    switch (section)
+    {
+    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton1:
+        index = 0;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton2:
+        index = 1;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton3:
+        index = 2;
+        break;
+    default:
         return NULL;
+    }
 
-    const int index = static_cast<int>(section) - IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton1;
-    boost::shared_ptr<MultiplayerLocalPlayer> player = Minecraft::GetInstance()->mLocalPlayers[getPad()];
-    const bool instabuild = player->mAbilities.mInstabuild;
+    const bool instabuild = Minecraft::GetInstance()->mLocalPlayers[getPad()]->mAbilities.mInstabuild;
     const int lapisCount = getMenu()->getGoldCount();
     const int cost = getMenu()->mCosts[index];
     Enchantment* enchantment = Enchantment::byId(getMenu()->mEnchantmentIds[index]);
@@ -366,7 +435,7 @@ std::vector<HtmlString>* UIScene_EnchantingMenu::GetSectionHoverText(
         return result;
 
     result->push_back(HtmlString(L"", static_cast<eMinecraftColour>(0), false, false, 0));
-    if (player->mExperienceLevel < cost)
+    if (Minecraft::GetInstance()->mLocalPlayers[getPad()]->mExperienceLevel < cost)
     {
         std::wstring requirement =
             replaceAll(L10N::GetString(IDS_ENCHANT_LEVEL_REQUIREMENT), L"{*LEVEL*}", _toString(cost));
@@ -374,28 +443,38 @@ std::vector<HtmlString>* UIScene_EnchantingMenu::GetSectionHoverText(
         return result;
     }
 
-    std::wstring lapisText;
+    std::wstring text(L"");
     if (lapisCost == 1)
-        lapisText = L10N::GetString(0x8d500014);
+        text = L10N::GetString(IDS_ENCHANT_LAPIS_ONE);
     else
-        lapisText = replaceAll(L10N::GetString(0xf5706ab), L"{*COST*}", _toString(lapisCost));
-    result->push_back(HtmlString(lapisText,
+        text = replaceAll(L10N::GetString(IDS_ENCHANT_LAPIS_MANY), L"{*COST*}", _toString(lapisCost));
+    result->push_back(HtmlString(text,
                                  lapisCount < lapisCost ? eMinecraftColour_HTMLColor_c : eMinecraftColour_HTMLColor_7,
                                  false, false, 0));
 
-    std::wstring levelText;
     if (lapisCost == 1)
-        levelText = L10N::GetString(0x3acd0b7d);
+        text = L10N::GetString(IDS_ENCHANT_LEVEL_ONE);
     else
-        levelText = replaceAll(L10N::GetString(0x2d47653a), L"{*COST*}", _toString(lapisCost));
-    result->push_back(HtmlString(levelText, eMinecraftColour_HTMLColor_7, false, false, 0));
+        text = replaceAll(L10N::GetString(IDS_ENCHANT_LEVEL_MANY), L"{*COST*}", _toString(lapisCost));
+    result->push_back(HtmlString(text, eMinecraftColour_HTMLColor_7, false, false, 0));
     return result;
 }
 
 bool UIScene_EnchantingMenu::IsActiveButton(IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    if (section < IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton1 || section > IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton3) return false;
-    return !m_enchantmentButtons[static_cast<int>(section) - IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton1].IsInactive();
+    bool active = false;
+    switch (section)
+    {
+    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton1:
+    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton2:
+    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton3:
+        if (!static_cast<UIControl_EnchantmentButton*>(getSection(section))->IsInactive())
+            active = true;
+        break;
+    default:
+        break;
+    }
+    return active;
 }
 
 unsigned int UIScene_EnchantingMenu::overrideTooltips(
@@ -414,28 +493,50 @@ unsigned int UIScene_EnchantingMenu::overrideTooltips(
 unsigned int UIScene_EnchantingMenu::mapElementsAndNames()
 {
     UIScene_AbstractContainerMenu::mapElementsAndNames();
+    m_movie->getRootNode();
     fuiRenderNode* panel = m_mainPanel.getFuiRenderNode();
-    m_ingredientSlot.setupControl(this, panel, "ingredient");
-    m_lapisSlot.setupControl(this, panel, "lapis");
-    m_enchantmentButtons[0].setupControl(this, panel, "Button1");
-    m_enchantmentButtons[1].setupControl(this, panel, "Button2");
-    m_enchantmentButtons[2].setupControl(this, panel, "Button3");
-    m_enchantLabel.setupControl(this, panel, "enchantLabel");
-    m_enchantmentBook.setupControl(this, panel, "iggy_EnchantmentBook");
+    {
+        std::string name("ingredient");
+        m_ingredientSlot.setupControl(this, panel, name);
+    }
     m_controls.push_back(&m_ingredientSlot);
+    {
+        std::string name("lapis");
+        m_lapisSlot.setupControl(this, panel, name);
+    }
     m_controls.push_back(&m_lapisSlot);
+    {
+        std::string name("Button1");
+        m_enchantmentButtons[0].setupControl(this, panel, name);
+    }
     m_controls.push_back(&m_enchantmentButtons[0]);
+    {
+        std::string name("Button2");
+        m_enchantmentButtons[1].setupControl(this, panel, name);
+    }
     m_controls.push_back(&m_enchantmentButtons[1]);
+    {
+        std::string name("Button3");
+        m_enchantmentButtons[2].setupControl(this, panel, name);
+    }
     m_controls.push_back(&m_enchantmentButtons[2]);
+    {
+        std::string name("enchantLabel");
+        m_enchantLabel.setupControl(this, panel, name);
+    }
     m_controls.push_back(&m_enchantLabel);
+    {
+        std::string name("iggy_EnchantmentBook");
+        m_enchantmentBook.setupControl(this, panel, name);
+    }
     m_controls.push_back(&m_enchantmentBook);
     return 1;
 }
 
 std::wstring UIScene_EnchantingMenu::getMoviePath()
 {
-    return g_pApp->GetLocalPlayerCount() < 2 ? std::wstring(L"EnchantingMenu") :
-        std::wstring(L"EnchantingMenuSplit");
+    return gApp.GetLocalPlayerCount() > 1 ? std::wstring(L"EnchantingMenuSplit") :
+        std::wstring(L"EnchantingMenu");
 }
 
 void UIScene_EnchantingMenu::handleReload()
@@ -497,8 +598,13 @@ void UIScene_EnchantingMenu::customDraw(const char* name, fuiRect* rect)
         m_enchantmentBook.render(rect);
         return;
     }
-    int button = 0;
+    int button = -1;
     std::sscanf(name, "slot_Button%d", &button);
+    if (button >= 0)
+    {
+        m_enchantmentButtons[button - 1].render(rect);
+        return;
+    }
     UIScene_AbstractContainerMenu::customDraw(name, rect);
 }
 

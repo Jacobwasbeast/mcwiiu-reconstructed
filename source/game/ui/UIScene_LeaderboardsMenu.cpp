@@ -5,6 +5,7 @@
 #include <cstring>
 
 #include "game/core/CMinecraftApp.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/GameSettings.hpp"
 #include "game/core/L10N.hpp"
@@ -24,23 +25,11 @@
 #include "game/core/XLanguage.hpp"
 
 
-struct LeaderboardDescriptor
-{
-    unsigned int numStats;
-    unsigned int id;
-    unsigned int themeId;
-};
-
-static std::vector<LeaderboardDescriptor> gLeaderboardDescriptors[4];
-static int gLeaderboardIconIds[28];
+static std::vector<UIScene_LeaderboardsMenu::LeaderboardDescriptor> gLeaderboardDescriptors[4];
+static int gLeaderboardIconIds[UIScene_LeaderboardsMenu::LEADERBOARD_ICON_COUNT];
 
 UIScene_LeaderboardsMenu::UIScene_LeaderboardsMenu(int type, void* data, UILayer* layer)
-    : UIScene(type, layer), m_visibleRowCount(0), m_numStats(0), m_statsType(0), m_readType(0),
-      m_leaderboardIndex(0), m_startRank(0), m_numRows(0), m_loadedRowCount(0),
-      m_visibleStartRank(-1), m_selectedEntry(-1), m_leaderboardPopulated(false),
-      m_statsIconsValid(false), m_leaderboardInterface(g_pLeaderboardManager), m_totalRows(0),
-      m_numScores(0), m_pReadScores(NULL), m_loading(true),
-      m_result(static_cast<unsigned int>(-1))
+    : UIScene(type, layer), m_leaderboardInterface(g_pLeaderboardManager)
 {
     initialiseMovie();
     m_selectedEntry = -1;
@@ -48,24 +37,29 @@ UIScene_LeaderboardsMenu::UIScene_LeaderboardsMenu(int type, void* data, UILayer
     m_statsIconsValid = false;
     m_visibleStartRank = -1;
     m_loading = true;
-    g_pApp->SetLiveLinkRequired(true);
+    gApp.SetLiveLinkRequired(true);
     m_leaderboardIndex = 0;
     m_statsType = 0;
     SetLeaderboardHeader();
     m_readType = 0;
-    m_filterLabel.init(UIString(L10N::GetString(IDS_LEADERBOARD_FILTER)));
-    m_entriesLabel.init(UIString(L10N::GetString(IDS_LEADERBOARD_ENTRIES)));
+    wchar_t filterText[40];
+    swprintf(filterText, 40, L"%ls%ls", L10N::GetString(IDS_LEADERBOARD_FILTER),
+             L10N::GetString(IDS_LEADERBOARD_FILTER_FRIENDS));
+    m_filterLabel.init(UIString(filterText));
+    wchar_t entriesText[40];
+    swprintf(entriesText, 40, L"%ls%i", L10N::GetString(IDS_LEADERBOARD_ENTRIES), 0);
+    m_entriesLabel.init(UIString(entriesText));
     ReadStats(-1);
     addTimer(0, 100);
-    if (g_pApp->StartInstallDLCProcess(gProfile->GetPrimaryPad()) == 0)
-        g_pApp->getLevelRules()->getRulesByType(LevelRules::eLevelRuleType_Unknown,
-                                                  &m_levelRuleGroups, false);
+    if (gApp.StartInstallDLCProcess(gProfile->GetPrimaryPad()) == 0)
+        gApp.getLevelRules()->getRulesByType(LevelRules::eLevelRuleType_Glide,
+                                              &m_levelRuleGroups, false);
     m_result = static_cast<unsigned int>(-1);
 }
 
 UIScene_LeaderboardsMenu::~UIScene_LeaderboardsMenu()
 {
-    g_pApp->SetLiveLinkRequired(false);
+    gApp.SetLiveLinkRequired(false);
 }
 
 bool UIScene_LeaderboardsMenu::OnStatsReadComplete(LeaderboardManager::eStatsReturn result,
@@ -87,7 +81,7 @@ unsigned int UIScene_LeaderboardsMenu::GetEntryStartIndex()
     return 0;
 }
 
-unsigned int UIScene_LeaderboardsMenu::LanguageUsesCommaRadix(int language)
+bool UIScene_LeaderboardsMenu::LanguageUsesCommaRadix(int language)
 {
     switch (language)
     {
@@ -105,9 +99,9 @@ unsigned int UIScene_LeaderboardsMenu::LanguageUsesCommaRadix(int language)
     case XC_LANGUAGE_DANISH:
     case XC_LANGUAGE_CZECH:
     case XC_LANGUAGE_SLOVAK:
-        return 1;
+        return true;
     default:
-        return 0;
+        return false;
     }
 }
 
@@ -116,172 +110,202 @@ void UIScene_LeaderboardsMenu::CopyLeaderboardEntry(LeaderboardManager::ReadScor
                                                     LeaderboardManager::EStatsType statsType)
 {
     LeaderboardEntry& entry = m_entries[index];
+    memset(&entry, 0, sizeof(entry));
     entry.uid = score->m_uid;
-    entry.gamertag = score->m_wsGamertag;
-    entry.score = score->m_uiRating;
+    entry.score = score->m_uiRank;
+    unsigned int displayedScore = entry.score;
+    if (displayedScore > MAX_DISPLAYED_SCORE)
+        displayedScore = MAX_DISPLAYED_SCORE;
+    swprintf(entry.scoreText, SCORE_TEXT_LENGTH, L"%u", displayedScore);
     entry.messageStringId = score->m_iMessageStringId;
     if (m_readType != LeaderboardManager::eReadType_Friends)
     {
-        unsigned int provisionalRank = entry.score - 1;
-        if (index < 1 || m_entries[index - 1].rank < provisionalRank)
-            entry.rank = provisionalRank;
-        else
+        entry.rank = entry.score - 1;
+        if (index >= 1 && m_entries[index - 1].rank >= entry.rank)
             entry.rank = m_entries[index - 1].rank + 1;
     }
     else
     {
         entry.rank = static_cast<unsigned int>(index);
     }
-    entry.complete = true;
-    entry.selected = false;
-    entry.loading = false;
-    entry.visible = true;
-    for (unsigned int i = 0; i < 7; ++i)
-        entry.statText[i].clear();
-    unsigned int numStats = score->m_usNumStats;
-    if (numStats > 7)
-        numStats = 7;
-    for (unsigned int i = 0; i < numStats; ++i)
+    memcpy(entry.gamertag, score->m_wsGamertag.c_str(),
+           score->m_wsGamertag.size() * sizeof(wchar_t));
+    for (unsigned int i = 0; i < score->m_usNumStats; ++i)
     {
         entry.stats[i] = score->m_auiStats[i];
-        wchar_t buf[12];
+        memset(entry.statText[i], 0, sizeof(entry.statText[i]));
         if ((i == 0 && statsType == LeaderboardManager::eStatsType_TimePlayed) ||
             (i == 2 && statsType == LeaderboardManager::eStatsType_DistanceTravelled))
         {
             unsigned int value = entry.stats[i];
-            unsigned int minutes = value / 60000;
-            unsigned int seconds = (value / 1000) % 60;
             unsigned int millis = value % 1000;
-            swprintf(buf, 12, L"%i:%i%i.%i%i%i", minutes, seconds / 10, seconds % 10,
-                     millis / 100, (millis / 10) % 10, millis % 10);
+            unsigned int totalSeconds = (value - millis) / 1000;
+            unsigned int seconds = totalSeconds % 60;
+            unsigned int minutes = (totalSeconds - seconds) / 60;
+            swprintf(entry.statText[i], STAT_TEXT_LENGTH, L"%i:%i%i.%i%i%i", minutes % 60,
+                     (seconds / 10) % 10, seconds % 10, (millis / 100) % 10, (millis / 10) % 10,
+                     millis % 10);
         }
         else if (statsType == LeaderboardManager::eStatsType_Score)
         {
-            unsigned int value = entry.stats[i];
             unsigned int digits = 0;
-            unsigned int temp = value;
-            while (temp != 0)
-            {
-                temp /= 10;
+            for (unsigned int remaining = entry.stats[i]; remaining != 0; remaining /= 10)
                 ++digits;
-            }
             if (digits <= 3)
-                swprintf(buf, 12, L"%um", value);
+            {
+                swprintf(entry.statText[i], STAT_TEXT_LENGTH, L"%um", entry.stats[i]);
+            }
             else if (digits < 8)
-                swprintf(buf, 12, L"%.1fkm", static_cast<float>(value) / 1000.0f);
+            {
+                if (!LanguageUsesCommaRadix(XGetLanguage()))
+                {
+                    swprintf(entry.statText[i], STAT_TEXT_LENGTH, L"%.1fkm",
+                             static_cast<float>(entry.stats[i]) / 1000.0f);
+                }
+                else
+                {
+                    wchar_t* text = new wchar_t[STAT_TEXT_LENGTH];
+                    swprintf(text, STAT_TEXT_LENGTH, L"%.1fkm",
+                             static_cast<float>(entry.stats[i]) / 1000.0f);
+                    for (int k = 0; k < STAT_TEXT_LENGTH; ++k)
+                    {
+                        if (text[k] == L'.')
+                            text[k] = L',';
+                    }
+                    swprintf(entry.statText[i], STAT_TEXT_LENGTH, text);
+                    delete[] text;
+                }
+            }
             else
-                swprintf(buf, 12, L"%.0fkm", static_cast<float>(value) / 1000.0f);
+            {
+                swprintf(entry.statText[i], STAT_TEXT_LENGTH, L"%.0fkm",
+                         static_cast<float>(entry.stats[i]) / 1000.0f);
+            }
         }
         else
         {
-            swprintf(buf, 12, L"%u", entry.stats[i]);
+            swprintf(entry.statText[i], STAT_TEXT_LENGTH, L"%u", entry.stats[i]);
         }
-        entry.statText[i] = buf;
     }
 }
 
-void UIScene_LeaderboardsMenu::RetrieveStats()
+bool UIScene_LeaderboardsMenu::RetrieveStats()
 {
-    if (g_pApp->DebugSettingsOn() &&
-        (GameSettings::GetGameSettingsDebugMask(-1, false) & 0x10000) != 0)
+    if (gApp.DebugSettingsOn() &&
+        (GameSettings::GetGameSettingsDebugMask(-1, false) & DEBUG_MASK_FAKE_LEADERBOARD) != 0)
     {
-        m_entries.clear();
+        m_visibleRowCount = MAX_LOADED_ENTRIES;
         m_numStats = gLeaderboardDescriptors[m_statsType][m_leaderboardIndex].numStats;
-        for (unsigned int rank = 0; rank < 0x65; ++rank)
+        for (unsigned int rank = 0; rank < MAX_LOADED_ENTRIES; ++rank)
         {
-            LeaderboardEntry entry;
-            entry.uid = PlayerUID(0);
-            entry.rank = rank;
-            entry.score = rank + 1;
-            entry.gamertag = L"12345678";
-            for (unsigned int c = 0; c < 7; ++c)
+            LeaderboardEntry entry = LeaderboardEntry();
+            m_entries.push_back(entry);
+            m_entries[rank].uid = PlayerUID(0);
+            m_entries[rank].rank = rank;
+            m_entries[rank].score = rank + 1;
+            swprintf(m_entries[rank].scoreText, SCORE_TEXT_LENGTH, L"12345678");
+            swprintf(m_entries[rank].gamertag, GAMERTAG_DISPLAY_LENGTH, L"WWWWWWWWWWWWWWWW");
+            for (unsigned int column = 0; column < m_numStats; ++column)
             {
-                if (m_numStats != 0)
+                if (m_statsType != LeaderboardManager::eStatsType_Score)
                 {
-                    if (LanguageUsesCommaRadix(XGetLanguage()) == 0)
+                    m_entries[rank].stats[column] = 0xffff;
+                    swprintf(m_entries[rank].statText[column], STAT_TEXT_LENGTH, L"%u",
+                             m_entries[rank].stats[column]);
+                }
+                else
+                {
+                    m_entries[rank].stats[column] = 0xffffffff;
+                    if (!LanguageUsesCommaRadix(XGetLanguage()))
                     {
-                        entry.statText[c] = L"WWWWWWWWWWWW";
+                        swprintf(m_entries[rank].statText[column], STAT_TEXT_LENGTH, L"%.1fkm",
+                                 static_cast<float>(m_entries[rank].stats[column]) / 100.0f / 1000.0f);
                     }
                     else
                     {
-                        wchar_t* buf = new wchar_t[12];
-                        swprintf(buf, 12, L"WWWWWWWWWWWW");
-                        for (int k = 0; k < 12; ++k)
-                            if (buf[k] == L'.')
-                                buf[k] = L',';
-                        entry.statText[c] = buf;
-                        delete[] buf;
+                        wchar_t* text = new wchar_t[STAT_TEXT_LENGTH];
+                        swprintf(text, STAT_TEXT_LENGTH, L"%.1fkm",
+                                 static_cast<float>(m_entries[rank].stats[column]) / 100.0f / 1000.0f);
+                        for (int k = 0; k < STAT_TEXT_LENGTH; ++k)
+                        {
+                            if (text[k] == L'.')
+                                text[k] = L',';
+                        }
+                        swprintf(m_entries[rank].statText[column], STAT_TEXT_LENGTH, text);
+                        delete[] text;
                     }
                 }
             }
-            entry.complete = (rank == 0);
-            entry.selected = !entry.complete;
-            entry.loading = false;
-            entry.visible = false;
-            m_entries.push_back(entry);
+            m_entries[rank].complete = (rank == 0);
+            m_entries[rank].selected = (rank != 0);
+            m_entries[rank].loading = (rank != 0);
+            m_entries[rank].visible = false;
         }
         m_startRank = 0;
-        m_loadedRowCount = 0x65;
-        m_visibleRowCount = 0x65;
-        return;
+        m_loadedRowCount = MAX_LOADED_ENTRIES;
+        return true;
     }
 
-    m_loadedRowCount = m_numScores;
+    unsigned int numScores = m_numScores;
+    m_loadedRowCount = numScores;
     if (m_visibleRowCount == 0)
     {
         m_entries.clear();
-        unsigned int newTotal;
         if (m_readType == LeaderboardManager::eReadType_Friends)
-            newTotal = m_numScores;
+            m_visibleRowCount = numScores;
         else
-            newTotal = static_cast<unsigned int>(m_totalRows);
-        m_visibleRowCount = newTotal;
-        if (newTotal == 0 || m_numScores == 0)
-            return;
+            m_visibleRowCount = static_cast<unsigned int>(m_totalRows);
+        if (m_visibleRowCount == 0 || numScores == 0)
+            return false;
         m_numStats = m_pReadScores[0].m_usNumStats;
-        for (unsigned int i = 0; i < m_numScores; ++i)
+        unsigned int i = 0;
+        do
         {
-            m_entries.push_back(LeaderboardEntry());
+            LeaderboardEntry entry = LeaderboardEntry();
+            m_entries.push_back(entry);
             CopyLeaderboardEntry(&m_pReadScores[i], static_cast<int>(i),
                                   static_cast<LeaderboardManager::EStatsType>(m_statsType));
-        }
+            ++i;
+        } while (i < m_loadedRowCount);
         m_startRank = 0;
         m_visibleStartRank = -1;
         m_selectedEntry = -1;
+        unsigned int selection;
         if (m_readType == LeaderboardManager::eReadType_MyScore)
         {
             unsigned int firstRank = GetEntryStartIndex();
-            unsigned int selectedRank = firstRank;
-            unsigned int i = firstRank;
-            for (;; ++i)
+            m_visibleStartRank = static_cast<int>(firstRank);
+            unsigned int startRank = GetEntryStartIndex();
+            unsigned int selectedRank = startRank;
+            for (;; ++selectedRank)
             {
-                unsigned int loaded = m_entries.empty() ? 0 : static_cast<unsigned int>(m_entries.size());
-                if (firstRank + loaded <= i)
+                if (GetEntryStartIndex() + m_entries.size() <= selectedRank)
                 {
-                    selectedRank = GetEntryStartIndex();
+                    selection = startRank;
                     break;
                 }
-                if (m_entries[i - firstRank].complete)
+                if (m_entries[selectedRank - GetEntryStartIndex()].complete)
                 {
-                    selectedRank = i;
+                    m_selectedEntry = static_cast<int>(selectedRank);
+                    if (static_cast<int>(selectedRank - firstRank) > 9)
+                        m_visibleStartRank = static_cast<int>(selectedRank - 9);
+                    if (static_cast<int>(selectedRank) >= 0)
+                        return true;
+                    selection = GetEntryStartIndex();
                     break;
                 }
             }
-            m_visibleStartRank = static_cast<int>(selectedRank);
-            if (static_cast<int>(selectedRank - firstRank) > 9)
-                m_visibleStartRank = static_cast<int>(selectedRank - 9);
-            m_selectedEntry = static_cast<int>(selectedRank);
         }
         else
         {
-            m_visibleStartRank = static_cast<int>(GetEntryStartIndex());
-            m_selectedEntry = static_cast<int>(GetEntryStartIndex());
+            selection = GetEntryStartIndex();
         }
-        return;
+        m_visibleStartRank = m_selectedEntry = static_cast<int>(selection);
+        return true;
     }
 
     unsigned int previousStart = static_cast<unsigned int>(m_startRank);
-    unsigned int readCount = m_loadedRowCount;
+    unsigned int readCount = numScores;
     unsigned int firstVisible = GetEntryStartIndex();
     if (previousStart < firstVisible && previousStart == 1)
     {
@@ -292,7 +316,7 @@ void UIScene_LeaderboardsMenu::RetrieveStats()
 
     bool trimFront = false;
     bool trimBack = false;
-    const bool overCapacity = static_cast<unsigned int>(m_entries.size()) + readCount >= 0x65;
+    const bool overCapacity = m_entries.size() + readCount >= MAX_LOADED_ENTRIES;
     unsigned int insertRank = 0;
     if (previousStart < firstVisible)
     {
@@ -309,20 +333,22 @@ void UIScene_LeaderboardsMenu::RetrieveStats()
 
     for (unsigned int i = 0; i < m_loadedRowCount; ++i)
     {
-        m_entries.insert(m_entries.begin() + insertRank + i, LeaderboardEntry());
+        LeaderboardEntry entry = LeaderboardEntry();
+        m_entries.insert(m_entries.begin() + insertRank + i, entry);
         CopyLeaderboardEntry(&m_pReadScores[i], static_cast<int>(insertRank + i),
                               static_cast<LeaderboardManager::EStatsType>(m_statsType));
     }
 
     if (trimFront)
     {
-        m_entries.erase(m_entries.begin(), m_entries.begin() + 15);
+        m_entries.erase(m_entries.begin(), m_entries.begin() + ENTRIES_PER_PAGE);
         m_startRank -= m_numRows;
     }
     else if (trimBack)
     {
-        m_entries.erase(m_entries.end() - 15, m_entries.end());
+        m_entries.erase(m_entries.end() - ENTRIES_PER_PAGE, m_entries.end());
     }
+    return true;
 }
 
 void UIScene_LeaderboardsMenu::SetLeaderboardHeader()
@@ -334,7 +360,7 @@ void UIScene_LeaderboardsMenu::SetLeaderboardHeader()
     {
         unsigned int uniqueId = LevelGenerationOptions::CreateUniqueId(static_cast<int>(descriptor.themeId), 0);
         if (m_levelRuleGroups.empty())
-            g_pApp->getLevelRules()->getRulesByType(LevelRules::eLevelRuleType_Unknown,
+            gApp.getLevelRules()->getRulesByType(LevelRules::eLevelRuleType_Glide,
                                                       &m_levelRuleGroups, false);
         if (!m_levelRuleGroups.empty())
         {
@@ -388,7 +414,7 @@ void UIScene_LeaderboardsMenu::ReadStats(int startRank)
         m_leaderboardInterface.ReadStats_MyScore(
             this, m_leaderboardIndex, static_cast<LeaderboardManager::EStatsType>(m_statsType),
             uid, static_cast<unsigned int>(m_numRows));
-        m_infoLabel.setLabel(UIString(L10N::GetString(0xf14f12e4)), false, false);
+        m_infoLabel.setLabel(UIString(L10N::GetString(IDS_LEADERBOARD_LOADING)), false, false);
         m_infoLabel.setVisible(true);
         return;
     }
@@ -397,50 +423,103 @@ void UIScene_LeaderboardsMenu::ReadStats(int startRank)
         m_leaderboardInterface.ReadStats_TopRank(
             this, m_leaderboardIndex, static_cast<LeaderboardManager::EStatsType>(m_statsType),
             static_cast<unsigned int>(m_startRank), static_cast<unsigned int>(m_numRows));
-        m_infoLabel.setLabel(UIString(L10N::GetString(0xf14f12e4)), false, false);
+        m_infoLabel.setLabel(UIString(L10N::GetString(IDS_LEADERBOARD_LOADING)), false, false);
         m_infoLabel.setVisible(true);
         return;
     }
-    m_infoLabel.setLabel(UIString(L10N::GetString(0xf14f12e4)), false, false);
+    m_infoLabel.setLabel(UIString(L10N::GetString(IDS_LEADERBOARD_LOADING)), false, false);
     m_infoLabel.setVisible(true);
 }
 
 void UIScene_LeaderboardsMenu::staticCtor()
 {
-    const LeaderboardDescriptor first[] = {
-        {4, 0x42511ff4, 0}, {4, 0x5f8f0bf7, 0}, {4, 0x6771baea, 0}, {4, 0xa506abee, 0}
+    int iconIds[LEADERBOARD_ICON_COUNT] = {
+        ICON_ID_32003, ICON_ID_32002, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        ICON_ID_32005, ICON_ID_32009, ICON_ID_32008, ICON_ID_32010, ICON_ID_32011, ICON_ID_32006,
+        ICON_ID_32012
     };
-    const LeaderboardDescriptor second[] = {
-        {7, IDS_LEADERBOARD_MINING_BLOCKS_PEACEFUL, 0}, {7, IDS_LEADERBOARD_MINING_BLOCKS_EASY, 0}, {7, IDS_LEADERBOARD_MINING_BLOCKS_NORMAL, 0}, {7, IDS_LEADERBOARD_MINING_BLOCKS_HARD, 0}
-    };
-    const LeaderboardDescriptor third[] = {
-        {6, IDS_LEADERBOARD_FARMING_PEACEFUL, 0}, {6, IDS_LEADERBOARD_FARMING_EASY, 0}, {6, IDS_LEADERBOARD_FARMING_NORMAL, 0}, {6, IDS_LEADERBOARD_FARMING_HARD, 0}
-    };
-    const LeaderboardDescriptor fourth[] = {
-        {0, 0xffffffff, 0}, {7, IDS_LEADERBOARD_KILLS_EASY, 0}, {7, IDS_LEADERBOARD_KILLS_NORMAL, 0}, {7, IDS_LEADERBOARD_KILLS_HARD, 0}
-    };
-    gLeaderboardDescriptors[0].assign(first, first + 4);
-    gLeaderboardDescriptors[1].assign(second, second + 4);
-    gLeaderboardDescriptors[2].assign(third, third + 4);
-    gLeaderboardDescriptors[3].assign(fourth, fourth + 4);
+    iconIds[2] = Item::getId(Items::minecart);
+    iconIds[3] = Item::getId(Items::boat);
+    iconIds[7] = Block::getId(Blocks::dirt);
+    iconIds[8] = Block::getId(Blocks::cobblestone);
+    iconIds[9] = Block::getId(Blocks::sand);
+    iconIds[10] = Block::getId(Blocks::stone);
+    iconIds[11] = Block::getId(Blocks::gravel);
+    iconIds[12] = Block::getId(Blocks::clay);
+    iconIds[13] = Block::getId(Blocks::obsidian);
+    iconIds[14] = Item::getId(Items::egg);
+    iconIds[15] = Item::getId(Items::wheat);
+    iconIds[16] = Block::getId(Blocks::brown_mushroom);
+    iconIds[17] = Item::getId(Items::reeds);
+    iconIds[18] = Item::getId(Items::milkBucket);
+    iconIds[19] = Block::getId(Blocks::pumpkin);
+    memcpy(gLeaderboardIconIds, iconIds, sizeof(iconIds));
 
-    gLeaderboardIconIds[0] = 32003;
-    gLeaderboardIconIds[1] = 32002;
-    gLeaderboardIconIds[2] = Item::getId(Items::minecart);
-    gLeaderboardIconIds[3] = Item::getId(Items::boat);
-    gLeaderboardIconIds[7] = Block::getId(Blocks::dirt);
-    gLeaderboardIconIds[8] = Block::getId(Blocks::cobblestone);
-    gLeaderboardIconIds[9] = Block::getId(Blocks::sand);
-    gLeaderboardIconIds[10] = Block::getId(Blocks::stone);
-    gLeaderboardIconIds[11] = Block::getId(Blocks::gravel);
-    gLeaderboardIconIds[12] = Block::getId(Blocks::clay);
-    gLeaderboardIconIds[13] = Block::getId(Blocks::obsidian);
-    gLeaderboardIconIds[14] = Item::getId(Items::egg);
-    gLeaderboardIconIds[15] = Item::getId(Items::wheat);
-    gLeaderboardIconIds[16] = Block::getId(Blocks::brown_mushroom);
-    gLeaderboardIconIds[17] = Item::getId(Items::reeds);
-    gLeaderboardIconIds[18] = Item::getId(Items::milkBucket);
-    gLeaderboardIconIds[19] = Block::getId(Blocks::pumpkin);
+    LeaderboardDescriptor descriptor = {4, IDS_LEADERBOARD_TRAVELLING_PEACEFUL, 0};
+    gLeaderboardDescriptors[0].push_back(descriptor);
+    descriptor.numStats = 4;
+    descriptor.id = IDS_LEADERBOARD_TRAVELLING_EASY;
+    descriptor.themeId = 0;
+    gLeaderboardDescriptors[0].push_back(descriptor);
+    descriptor.numStats = 4;
+    descriptor.id = IDS_LEADERBOARD_TRAVELLING_NORMAL;
+    descriptor.themeId = 0;
+    gLeaderboardDescriptors[0].push_back(descriptor);
+    descriptor.numStats = 4;
+    descriptor.id = IDS_LEADERBOARD_TRAVELLING_HARD;
+    descriptor.themeId = 0;
+    gLeaderboardDescriptors[0].push_back(descriptor);
+
+    descriptor.numStats = 7;
+    descriptor.id = IDS_LEADERBOARD_MINING_BLOCKS_PEACEFUL;
+    descriptor.themeId = 0;
+    gLeaderboardDescriptors[1].push_back(descriptor);
+    descriptor.numStats = 7;
+    descriptor.id = IDS_LEADERBOARD_MINING_BLOCKS_EASY;
+    descriptor.themeId = 0;
+    gLeaderboardDescriptors[1].push_back(descriptor);
+    descriptor.numStats = 7;
+    descriptor.id = IDS_LEADERBOARD_MINING_BLOCKS_NORMAL;
+    descriptor.themeId = 0;
+    gLeaderboardDescriptors[1].push_back(descriptor);
+    descriptor.numStats = 7;
+    descriptor.id = IDS_LEADERBOARD_MINING_BLOCKS_HARD;
+    descriptor.themeId = 0;
+    gLeaderboardDescriptors[1].push_back(descriptor);
+
+    descriptor.numStats = 6;
+    descriptor.id = IDS_LEADERBOARD_FARMING_PEACEFUL;
+    descriptor.themeId = 0;
+    gLeaderboardDescriptors[2].push_back(descriptor);
+    descriptor.numStats = 6;
+    descriptor.id = IDS_LEADERBOARD_FARMING_EASY;
+    descriptor.themeId = 0;
+    gLeaderboardDescriptors[2].push_back(descriptor);
+    descriptor.numStats = 6;
+    descriptor.id = IDS_LEADERBOARD_FARMING_NORMAL;
+    descriptor.themeId = 0;
+    gLeaderboardDescriptors[2].push_back(descriptor);
+    descriptor.numStats = 6;
+    descriptor.id = IDS_LEADERBOARD_FARMING_HARD;
+    descriptor.themeId = 0;
+    gLeaderboardDescriptors[2].push_back(descriptor);
+
+    descriptor.numStats = 0;
+    descriptor.id = 0xffffffff;
+    descriptor.themeId = 0;
+    gLeaderboardDescriptors[3].push_back(descriptor);
+    descriptor.numStats = 7;
+    descriptor.id = IDS_LEADERBOARD_KILLS_EASY;
+    descriptor.themeId = 0;
+    gLeaderboardDescriptors[3].push_back(descriptor);
+    descriptor.numStats = 7;
+    descriptor.id = IDS_LEADERBOARD_KILLS_NORMAL;
+    descriptor.themeId = 0;
+    gLeaderboardDescriptors[3].push_back(descriptor);
+    descriptor.numStats = 7;
+    descriptor.id = IDS_LEADERBOARD_KILLS_HARD;
+    descriptor.themeId = 0;
+    gLeaderboardDescriptors[3].push_back(descriptor);
 }
 
 unsigned int UIScene_LeaderboardsMenu::mapElementsAndNames()
@@ -476,7 +555,7 @@ void UIScene_LeaderboardsMenu::updateTooltips()
 
 void UIScene_LeaderboardsMenu::updateComponents()
 {
-    m_layer->showComponent(m_playerId, EUIScene_Panorama, !g_pApp->GetGameStarted());
+    m_layer->showComponent(m_playerId, EUIScene_Panorama, !gApp.GetGameStarted());
     m_layer->showComponent(m_playerId, EUIScene_Logo, false);
 }
 
@@ -484,15 +563,13 @@ void UIScene_LeaderboardsMenu::handleTimerComplete(int timerId)
 {
     if (timerId == 0)
     {
-        unsigned int primaryPad = static_cast<unsigned int>(gProfile->GetPrimaryPad());
-        if (!gProfile->IsSignedInLive(static_cast<int>(primaryPad)))
+        if (!gProfile->IsSignedInLive(gProfile->GetPrimaryPad()))
         {
             int messageParameters[1];
             messageParameters[0] = IDS_CONFIRM_OK;
-            int messageId = CGameNetworkManager::sInstance.CorrectErrorIDS(0x16cb58e9);
-            unsigned int userIndex = static_cast<unsigned int>(gProfile->GetPrimaryPad());
-            gConsoleUIController.RequestErrorMessage(IDS_CONNECTION_LOST, messageId, messageParameters, 1,
-                                                      userIndex, ExitLeaderboards, this, 0, true);
+            gConsoleUIController.RequestErrorMessage(
+                IDS_CONNECTION_LOST, CGameNetworkManager::sInstance.CorrectErrorIDS(IDS_CONNECTION_LOST_LIVE_NO_EXIT),
+                messageParameters, 1, gProfile->GetPrimaryPad(), ExitLeaderboards, this, 0, true);
         }
     }
 }
@@ -518,38 +595,39 @@ void UIScene_LeaderboardsMenu::PopulateLeaderboard(LeaderboardManager::eStatsRet
     if (result == LeaderboardManager::eStatsReturn_Success && m_visibleRowCount != 0)
     {
         m_leaderboardList.setupTitles(L10N::GetString(IDS_LEADERBOARD_RANK), L10N::GetString(IDS_LEADERBOARD_GAMERTAG));
-        if (!g_pApp->DebugSettingsOn() ||
-            (GameSettings::GetGameSettingsDebugMask(-1, false) &
-             0x10000) == 0)
+        if (!gApp.DebugSettingsOn() ||
+            (GameSettings::GetGameSettingsDebugMask(-1, false) & DEBUG_MASK_FAKE_LEADERBOARD) == 0)
         {
             wchar_t buf[40];
-            swprintf(buf, 40, L"%ls%i", L10N::GetString(IDS_LEADERBOARD_ENTRIES), m_numRows);
+            swprintf(buf, 40, L"%ls%i", L10N::GetString(IDS_LEADERBOARD_ENTRIES), m_visibleRowCount);
             m_entriesLabel.setLabel(UIString(buf), false, false);
+            m_infoLabel.setLabel(UIString(L""), false, false);
+            m_infoLabel.setVisible(false);
         }
         else
         {
             wchar_t buf[40];
             swprintf(buf, 40, L"%ls12345678", L10N::GetString(IDS_LEADERBOARD_ENTRIES));
             m_entriesLabel.setLabel(UIString(buf), false, false);
+            m_infoLabel.setLabel(UIString(L""), false, false);
+            m_infoLabel.setVisible(false);
         }
-        m_infoLabel.setLabel(UIString(L""), false, false);
-        m_infoLabel.setVisible(false);
 
         m_leaderboardList.initLeaderboard(m_selectedEntry, static_cast<int>(m_visibleRowCount),
                                            static_cast<int>(gLeaderboardDescriptors[m_statsType][m_leaderboardIndex].numStats));
 
-        unsigned int start = static_cast<unsigned int>(m_startRank);
-        unsigned int count = m_loadedRowCount;
-        for (unsigned int i = 0; i < count && (start + i) < m_entries.size(); ++i)
+        int firstRow = m_startRank;
+        int lastRow = firstRow + m_loadedRowCount;
+        for (int i = firstRow; i < lastRow; ++i)
         {
-            const LeaderboardEntry& entry = m_entries[start + i];
-            bool isLast = (i == count - 1);
+            const LeaderboardEntry& entry = m_entries[i];
+            bool isLast = (i == lastRow - 1);
             if (entry.messageStringId >= 1)
             {
-                std::wstring text = L10N::GetString(entry.messageStringId);
                 m_leaderboardList.addDataSet(isLast, static_cast<int>(entry.rank),
                                               static_cast<int>(entry.score), entry.gamertag, true,
-                                              text, L"", L"", L"", L"", L"", L"");
+                                              L10N::GetString(entry.messageStringId), L"", L"", L"",
+                                              L"", L"", L"");
             }
             else
             {
@@ -583,14 +661,14 @@ void UIScene_LeaderboardsMenu::PopulateLeaderboard(LeaderboardManager::eStatsRet
 void UIScene_LeaderboardsMenu::finishUpdatingLeaderboards()
 {
     PopulateLeaderboard(static_cast<LeaderboardManager::eStatsReturn>(m_result));
-    updateComponents();
+    updateTooltips();
 }
 
 void UIScene_LeaderboardsMenu::tick()
 {
     UIScene::tick();
     m_leaderboardInterface.tick();
-    if (m_result != static_cast<unsigned int>(-1) && g_pApp->DLCInstallPending() == 0)
+    if (m_result != static_cast<unsigned int>(-1) && gApp.DLCInstallPending() == 0)
     {
         finishUpdatingLeaderboards();
         m_result = static_cast<unsigned int>(-1);
@@ -630,7 +708,7 @@ void UIScene_LeaderboardsMenu::handleInput(int playerId, int action, bool repeat
                 m_readType = LeaderboardManager::eReadType_MyScore;
                 wchar_t buf[40];
                 swprintf(buf, 40, L"%ls%ls", L10N::GetString(IDS_LEADERBOARD_FILTER),
-                         L10N::GetString(0x81f49d21));
+                         L10N::GetString(IDS_LEADERBOARD_FILTER_MYSCORE));
                 m_filterLabel.setLabel(UIString(buf), false, false);
             }
             else if (m_readType == LeaderboardManager::eReadType_MyScore)
@@ -780,13 +858,14 @@ void UIScene_LeaderboardsMenu::customDraw(const char* name, fuiRect* rect)
 
     int iconId = gLeaderboardIconIds[m_statsType * 7 + slot];
     not_null_ptr<ItemInstance> item(new ItemInstance(Item::byId(iconId), 1, 0));
-    customDrawSlotControlFui(rect, m_playerId, item, 0.0f, false, false, false);
+    customDrawSlotControlFui(rect, m_playerId, item, 1.0f, false, false, false);
 }
 
 void UIScene_LeaderboardsMenu::handleSelectionChanged(int selection)
 {
     gConsoleUIController.PlayUISFX(SoundEvents::UI_FOCUS);
     m_selectedEntry = selection;
+    updateTooltips();
 }
 
 void UIScene_LeaderboardsMenu::handleRequestMoreData(int id, bool forward)

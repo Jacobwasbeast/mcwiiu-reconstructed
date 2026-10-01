@@ -1,4 +1,6 @@
 #include "game/ui/FJ_Slider.hpp"
+
+#include <algorithm>
 #include "game/ui/FJ_Base.hpp"
 #include "game/ui/FJ_FuiNode.hpp"
 #include "game/ui/FJ_FuiNodeStage.hpp"
@@ -128,7 +130,6 @@ void FJ_Slider::InitSliderMask()
 void FJ_Slider::focusInHandler(FJ_Event*)
 {
     ChangeState(0);
-    m_keyPressTicks = 0;
 }
 
 void FJ_Slider::_focusInHandler(FJ_FuiNode* node, FJ_Event* event)
@@ -169,21 +170,19 @@ void FJ_Slider::MoveSlider(int amount)
 {
     const int oldValue = m_sliderCurrent;
     m_sliderCurrent += amount;
-    if (m_sliderCurrent > m_maxValue)
-        m_sliderCurrent = m_maxValue;
-    if (m_sliderCurrent < m_minValue)
-        m_sliderCurrent = m_minValue;
+    int clamped = std::min(m_maxValue, m_sliderCurrent);
+    if (clamped < m_minValue)
+        clamped = m_minValue;
+    m_sliderCurrent = clamped;
     if (oldValue != m_sliderCurrent)
     {
         SetSlider(m_sliderCurrent);
         if (getObjListParent() != NULL)
         {
-            UIScene* scene = getRoot()->m_pCallbackScene;
-            scene->handleSliderElementMove(getObjListParent()->asFJ_Base()->getId(), getId(), m_sliderCurrent);
+            getRoot()->m_pCallbackScene->handleSliderElementMove(static_cast<FJ_Base*>(getObjListParent())->getId(), getId(), m_sliderCurrent);
             return;
         }
-        UIScene* scene = getRoot()->m_pCallbackScene;
-        scene->handleSliderMove(getId(), m_sliderCurrent);
+        getRoot()->m_pCallbackScene->handleSliderMove(getId(), m_sliderCurrent);
     }
 }
 

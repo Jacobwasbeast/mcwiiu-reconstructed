@@ -31,7 +31,7 @@ public:
     virtual not_null_ptr<ItemInstance> quickMoveStack(boost::shared_ptr<Player> player, int index);
 
 private:
-    boost::shared_ptr<EnchantmentContainer> mEnchantmentContainer;
+    boost::shared_ptr<Container> mEnchantmentContainer;
     Level* mLevel;
     BlockPos mPosition;
     Random mRandom;

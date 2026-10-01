@@ -41,7 +41,7 @@ public:
     void removeAllItems();
     void SetTouchFocus(int x, int y, bool focus);
     unsigned int CanTouchTrigger(int x, int y);
-    int GetRealHeight();
+    float GetRealHeight();
     int getSelectedSlot();
 
 private:

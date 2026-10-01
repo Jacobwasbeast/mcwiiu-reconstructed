@@ -53,8 +53,8 @@ void FJ_MessageBox::Init(int buttonCount, int focusIndex)
         if (buttonCount == 1)
         {
             FJ_Base* base = button3->asFJ_Base();
-            base->m_navLinkName[0].clear();
-            base->m_navLinkName[1].clear();
+            base->m_navUpName.clear();
+            base->m_navDownName.clear();
             getStage()->setFocus(button3);
             return;
         }
@@ -65,8 +65,8 @@ void FJ_MessageBox::Init(int buttonCount, int focusIndex)
     {
         FJ_Base* button2Base = button2->asFJ_Base();
         FJ_Base* button3Base = button3->asFJ_Base();
-        button2Base->m_navLinkName[0] = button3->getName();
-        button3Base->m_navLinkName[1] = button2->getName();
+        button2Base->m_navUpName = button3->getName();
+        button3Base->m_navDownName = button2->getName();
         if (focusIndex == 0)
         {
             focus = button2;
@@ -80,8 +80,8 @@ void FJ_MessageBox::Init(int buttonCount, int focusIndex)
     {
         FJ_Base* button1Base = button1->asFJ_Base();
         FJ_Base* button3Base = button3->asFJ_Base();
-        button1Base->m_navLinkName[0] = button3->getName();
-        button3Base->m_navLinkName[1] = button1->getName();
+        button1Base->m_navUpName = button3->getName();
+        button3Base->m_navDownName = button1->getName();
         if (focusIndex == 0)
         {
             focus = button1;

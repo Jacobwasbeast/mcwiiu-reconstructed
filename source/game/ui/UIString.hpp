@@ -3,6 +3,7 @@
 
 #include <string>
 
+#include <boost/enable_shared_from_this.hpp>
 #include <boost/shared_ptr.hpp>
 
 #include "game/core/FJStringBuilder.hpp"
@@ -10,15 +11,15 @@
 class UIString
 {
 public:
-    class UIStringCore
+    class UIStringCore : public boost::enable_shared_from_this<UIStringCore>
     {
     public:
         explicit UIStringCore(FJStringBuilder builder);
         explicit UIStringCore(const std::wstring& value);
         explicit UIStringCore(const std::string& value);
-        unsigned int hasNewString();
+        unsigned char hasNewString();
         unsigned int update(bool force);
-        unsigned int needsUpdating();
+        unsigned char needsUpdating();
         void setUpdated();
         std::wstring& getString();
         std::string& getCharString();
@@ -47,7 +48,7 @@ public:
     static unsigned int getCurrentLanguage();
     bool empty();
     bool compare(const UIString& value);
-    unsigned int needsUpdating();
+    unsigned char needsUpdating();
     void setUpdated();
     std::wstring& getString();
     std::string& getCharString();

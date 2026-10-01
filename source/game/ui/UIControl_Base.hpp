@@ -18,7 +18,6 @@ public:
 
 protected:
     bool m_labelChanged;
-    unsigned char m_labelPadding[3];
     UIString m_label;
 };
 

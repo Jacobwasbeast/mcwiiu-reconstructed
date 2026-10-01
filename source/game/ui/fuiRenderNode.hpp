@@ -19,14 +19,15 @@ class fuiRenderNode
 	friend class fuiRenderNodeTimeline;
 	friend class fuiRenderNodeCodeGenRect;
 	friend class FJ_Factory;
+	friend class FJ_FuiNode;
 
 protected:
     unsigned int m_flags;
     unsigned char m_renderFlags;
     unsigned char m_filterFlags;
-    fuiObject* m_object;
-    unsigned int m_frame;
     unsigned int m_symbolIndex;
+    unsigned int m_frame;
+    fuiObject* m_object;
     eFuiObjectType m_type;
     fuiMatrix m_localMatrix;
     fuiMatrix m_globalMatrix;

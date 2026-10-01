@@ -126,7 +126,7 @@ private:
     UIControl_Touch m_layersTouch;
     UIControl_Touch m_biomesTouch;
     UIControl_Touch m_propertiesTouch;
-    int m_activeTab;
+    unsigned int m_activeTab;
     UIControl_Label m_layersTab;
     UIControl m_layersPanel;
     UIControl_LayerIconButtonList m_layersList;

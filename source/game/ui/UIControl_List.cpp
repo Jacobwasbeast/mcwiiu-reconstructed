@@ -38,13 +38,13 @@ void UIControl_List::setupControl(UIScene* scene, fuiRenderNode* node, const std
 
 unsigned int UIControl_List::GetTopItem()
 {
-    return m_fuiRenderNode->getFuiNode()->asFJ_List()->GetTopItem();
+    return static_cast<FJ_List*>(m_fuiRenderNode->getFuiNode())->GetTopItem();
 }
 
 void UIControl_List::setCurrentSelection(int selection, bool update, bool immediate)
 {
     if (immediate) {
-        m_fuiRenderNode->getFuiNode()->asFJ_List()->HighlightItem(selection, update);
+        static_cast<FJ_List*>(m_fuiRenderNode->getFuiNode())->HighlightItem(selection, update);
         return;
     }
     m_pendingUpdates.push_back(new PendingSetCurrentSelection(this, selection, update));
@@ -90,14 +90,17 @@ int UIControl_List::getListIndex(int index)
 
 void UIControl_List::EnableItem(int item, bool enabled, bool immediate)
 {
-    if (!immediate) {
+    if (immediate) {
+        m_elementEnabled[(unsigned int)item] = enabled;
+        int listIndex = getListIndex(item);
+        if (m_fuiRenderNode != NULL) {
+            FJ_List* list = static_cast<FJ_List*>(m_fuiRenderNode->getFuiNode());
+            if (list != NULL)
+                list->EnableItem(listIndex, enabled);
+        }
+    } else {
         m_pendingUpdates.push_back(new PendingSetEnable(this, item, enabled));
-        return;
     }
-    m_elementEnabled[(unsigned int)item] = enabled;
-    FJ_List* list = m_fuiRenderNode->getFuiNode()->asFJ_List();
-    if (list != NULL)
-        list->EnableItem(getListIndex(item), enabled);
 }
 
 bool UIControl_List::istype(UIControl::eUIControlType type, int index)
@@ -116,13 +119,13 @@ void UIControl_List::clearElements()
 
 void UIControl_List::clearList()
 {
-    m_fuiRenderNode->getFuiNode()->asFJ_List()->removeAllItems();
+    static_cast<FJ_List*>(m_fuiRenderNode->getFuiNode())->removeAllItems();
     clearElements();
 }
 
 void UIControl_List::SetItemLabel(int item, UIString label, bool immediate)
 {
-    FJ_List* list = m_fuiRenderNode->getFuiNode()->asFJ_List();
+    FJ_List* list = static_cast<FJ_List*>(m_fuiRenderNode->getFuiNode());
     if (list == NULL)
         return;
     if (!immediate) {
@@ -154,7 +157,7 @@ void UIControl_List::ReInit()
     UIControl::ReInit();
     init(m_controlId);
     clearElements();
-    m_pendingUpdates.erase(m_pendingUpdates.begin(), m_pendingUpdates.end());
+    m_pendingUpdates.clear();
 }
 
 void UIControl_List::tick()
@@ -166,13 +169,13 @@ void UIControl_List::tick()
         delete *update;
         ++update;
     }
-    m_pendingUpdates.erase(m_pendingUpdates.begin(), m_pendingUpdates.end());
+    m_pendingUpdates.clear();
 }
 
 void UIControl_List::removeItem(int item, bool immediate)
 {
     if (immediate) {
-        m_fuiRenderNode->getFuiNode()->asFJ_List()->RemoveItem(item);
+        static_cast<FJ_List*>(m_fuiRenderNode->getFuiNode())->RemoveItem(item);
         remElement(item);
         return;
     }
@@ -191,7 +194,7 @@ bool UIControl_List::CheckElementExists(int index)
 
 int UIControl_List::GetActiveItem()
 {
-    return m_fuiRenderNode->getFuiNode()->asFJ_List()->GetActiveItem();
+    return static_cast<FJ_List*>(m_fuiRenderNode->getFuiNode())->GetActiveItem();
 }
 
 void UIControl_List::UpdateControl()

@@ -18,6 +18,7 @@ class AbstractContainerMenu;
 class AnvilMenu;
 class CensoredString;
 class Container;
+class Inventory;
 class ItemInstance;
 class UILayer;
 class UIScene_AnvilMenu : public UIScene_AbstractContainerMenu,
@@ -47,17 +48,20 @@ public:
 
     virtual unsigned int getSectionColumns(IUIScene_AbstractContainerMenu::ESceneSection section);
     virtual unsigned int getSectionRows(IUIScene_AbstractContainerMenu::ESceneSection section);
-    virtual unsigned int GetSectionAndSlotInDirection(IUIScene_AbstractContainerMenu::ESceneSection section,
-                                                      IUIScene_AbstractContainerMenu::ETapState state, int* x,
-                                                      int* y);
     virtual void GetPositionOfSection(IUIScene_AbstractContainerMenu::ESceneSection section,
                                       _UIVec2D* position);
     virtual void GetItemScreenData(IUIScene_AbstractContainerMenu::ESceneSection section, int slot,
                                    _UIVec2D* position, _UIVec2D* size);
-    virtual void handleOtherClicked(int button, IUIScene_AbstractContainerMenu::ESceneSection section,
-                                    int slot, bool pressed);
+    virtual void handleSectionClick(IUIScene_AbstractContainerMenu::ESceneSection section);
     virtual void setSectionSelectedSlot(IUIScene_AbstractContainerMenu::ESceneSection section, int slot,
                                         int direction, bool wrap);
+    virtual unsigned int GetSectionAndSlotInDirection(IUIScene_AbstractContainerMenu::ESceneSection section,
+                                                      IUIScene_AbstractContainerMenu::ETapState state, int* x,
+                                                      int* y);
+    virtual int getSectionStartOffset(IUIScene_AbstractContainerMenu::ESceneSection section);
+    virtual void handleOtherClicked(int button, IUIScene_AbstractContainerMenu::ESceneSection section,
+                                    int slot, bool pressed);
+    virtual bool IsSectionSlotList(IUIScene_AbstractContainerMenu::ESceneSection section);
 
     virtual std::wstring getMoviePath();
     virtual unsigned int mapElementsAndNames();
@@ -65,10 +69,6 @@ public:
     virtual void tick();
     virtual void handleDestroy();
     virtual int getSceneType();
-    virtual void handleSectionClick(IUIScene_AbstractContainerMenu::ESceneSection section);
-
-    virtual bool IsSectionSlotList(IUIScene_AbstractContainerMenu::ESceneSection section);
-    virtual int getSectionStartOffset(IUIScene_AbstractContainerMenu::ESceneSection section);
     virtual UIControl* getSection(IUIScene_AbstractContainerMenu::ESceneSection section);
 
     void addPendingNameChange(const PendingNameInfo& info);
@@ -87,17 +87,17 @@ public:
     void setEditNameEditable(bool editable);
 
 private:
+    PendingNameInfo* m_pendingName;
+    boost::shared_ptr<Inventory> m_inventory;
+    AnvilMenu* m_anvilMenu;
+    boost::shared_ptr<CensoredString> m_itemName;
+    NameUpdateAction m_nameUpdateAction;
+    bool m_crossVisible;
     UIControl_SlotList m_ingredientSlot;
     UIControl_SlotList m_ingredientSlot2;
     UIControl_SlotList m_resultSlot;
     UIControl_Label m_anvilLabel;
     UIControl_TextInput m_editName;
-    IUIScene_AbstractContainerMenu* m_sceneInterface;
-    AnvilMenu* m_anvilMenu;
-    NameUpdateAction m_nameUpdateAction;
-    CensoredString* m_itemName;
-    PendingNameInfo* m_pendingName;
-    bool m_crossVisible;
 };
 
 #endif

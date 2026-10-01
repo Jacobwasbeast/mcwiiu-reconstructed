@@ -66,6 +66,7 @@ public:
     void setWidth(float width);
     void setOpacity(float opacity);
     void setId(int id) { m_controlId = id; }
+    int getId() { return m_controlId; }
     UIControl& operator=(const UIControl& other);
 
 protected:

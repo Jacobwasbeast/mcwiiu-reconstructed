@@ -48,8 +48,8 @@ void UIControl_MultiList::AddNewSlider(const std::wstring& label, int id, int mi
 void UIControl_MultiList::SetCheckboxValue(int id, bool checked, bool immediate)
 {
     if (immediate) {
-        m_fuiRenderNode->getFuiNode()->asFJ_List_MultiList()->SetCheckBox(
-            getListIndex(id), checked);
+        int index = getListIndex(id);
+        static_cast<FJ_List_MultiList*>(m_fuiRenderNode->getFuiNode())->SetCheckBox(index, checked);
         return;
     }
     m_pendingUpdates.push_back(new PendingSetChecked(this, id, checked));
@@ -62,7 +62,8 @@ bool UIControl_MultiList::IsCheckbox(int id)
 
 bool UIControl_MultiList::GetCheckboxValue(int id)
 {
-    return m_fuiRenderNode->getFuiNode()->asFJ_List_MultiList()->GetCheckBox(getListIndex(id));
+    int index = getListIndex(id);
+    return static_cast<FJ_List_MultiList*>(m_fuiRenderNode->getFuiNode())->GetCheckBox(index);
 }
 
 void UIControl_MultiList::AddNewTextInput(const std::wstring& label, int id, int charLimit)
@@ -74,8 +75,8 @@ void UIControl_MultiList::AddNewTextInput(const std::wstring& label, int id, int
 
 uint32_t UIControl_MultiList::GetSliderValue(int id)
 {
-    return m_fuiRenderNode->getFuiNode()->asFJ_List_MultiList()->GetSliderValue(
-        getListIndex(id));
+    int index = getListIndex(id);
+    return static_cast<FJ_List_MultiList*>(m_fuiRenderNode->getFuiNode())->GetSliderValue(index);
 }
 
 void UIControl_MultiList::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
@@ -88,20 +89,10 @@ void UIControl_MultiList::setAllPossibleLabels(int firstLabel, unsigned int labe
                                                 wchar_t (*labels)[256])
 {
     std::vector<std::wstring> possibleLabels;
-    unsigned int groupCount = labelCount / 4;
-    unsigned int remainder = labelCount & 3;
-    unsigned int i;
-    for (i = 0; i < groupCount; ++i) {
-        wchar_t* group = labels[i * 4 + 1];
-        possibleLabels.push_back(std::wstring(group - 256));
-        possibleLabels.push_back(std::wstring(group));
-        possibleLabels.push_back(std::wstring(group + 256));
-        possibleLabels.push_back(std::wstring(group + 512));
-    }
-    for (i = 0; i < remainder; ++i)
-        possibleLabels.push_back(std::wstring(labels[groupCount * 4 + i]));
+    for (unsigned int i = 0; i < labelCount; ++i)
+        possibleLabels.push_back(std::wstring(labels[i]));
 
-    FJ_List_MultiList* list = m_fuiRenderNode->getFuiNode()->asFJ_List_MultiList();
+    FJ_List_MultiList* list = static_cast<FJ_List_MultiList*>(m_fuiRenderNode->getFuiNode());
     list->SetPossibleLabels(firstLabel, possibleLabels);
 }
 
@@ -124,8 +115,8 @@ void UIControl_MultiList::HighlightItem(unsigned int id, bool update)
 void UIControl_MultiList::SetSliderValue(int id, int value, bool immediate)
 {
     if (immediate) {
-        m_fuiRenderNode->getFuiNode()->asFJ_List_MultiList()->SetSliderValue(
-            getListIndex(id), value);
+        int index = getListIndex(id);
+        static_cast<FJ_List_MultiList*>(m_fuiRenderNode->getFuiNode())->SetSliderValue(index, value);
         return;
     }
     m_pendingUpdates.push_back(new PendingSetSlider(this, id, value));
@@ -133,14 +124,15 @@ void UIControl_MultiList::SetSliderValue(int id, int value, bool immediate)
 
 void UIControl_MultiList::SetItemOpacity(int id, float opacity, bool immediate)
 {
-    if (!immediate) {
+    if (immediate) {
+        int index = getListIndex(id);
+        if (m_fuiRenderNode != NULL) {
+            FJ_FuiNode* node = m_fuiRenderNode->getFuiNode();
+            if (node != NULL)
+                static_cast<FJ_List_MultiList*>(node)->SetItemAlpha(index, opacity);
+        }
+    } else {
         m_pendingUpdates.push_back(new PendingSetOpacity(this, id, opacity));
-        return;
-    }
-    if (m_fuiRenderNode != NULL) {
-        FJ_List_MultiList* list = m_fuiRenderNode->getFuiNode()->asFJ_List_MultiList();
-        if (list != NULL)
-            list->SetItemAlpha(getListIndex(id), opacity);
     }
 }
 
@@ -148,15 +140,17 @@ void UIControl_MultiList::SetSecondaryLabel(int id, UIString label, bool html, b
                                              bool immediate)
 {
     (void)immediate;
-    m_fuiRenderNode->getFuiNode()->asFJ_List_MultiList()->SetSecondaryLabel(
-        getListIndex(id), label.getString(), html, autoSize);
+    int index = getListIndex(id);
+    const std::wstring& text = label.getString();
+    static_cast<FJ_List_MultiList*>(m_fuiRenderNode->getFuiNode())->SetSecondaryLabel(
+        index, text, html, autoSize);
 }
 
 void UIControl_MultiList::ToggleButtonOutline(int id, bool outline, bool immediate)
 {
     if (immediate) {
-        m_fuiRenderNode->getFuiNode()->asFJ_List_MultiList()->ToggleButtonOutline(
-            getListIndex(id), outline);
+        int index = getListIndex(id);
+        static_cast<FJ_List_MultiList*>(m_fuiRenderNode->getFuiNode())->ToggleButtonOutline(index, outline);
         return;
     }
     m_pendingUpdates.push_back(new PendingSetToggleButtonOutline(this, id, outline));

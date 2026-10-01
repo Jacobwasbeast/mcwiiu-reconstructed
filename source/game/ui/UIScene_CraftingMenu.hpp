@@ -22,8 +22,8 @@ public:
     class _SlotInfo
     {
     public:
-        _SlotInfo();
-        ~_SlotInfo();
+        _SlotInfo() : item(), displayValue(0x1f), visible(true) {}
+        ~_SlotInfo() {}
         not_null_ptr<ItemInstance> item;
         unsigned int displayValue;
         bool visible;

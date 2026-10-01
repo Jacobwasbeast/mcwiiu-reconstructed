@@ -9,7 +9,7 @@
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/ui/fuiRenderNodeEditText.hpp"
 
-static bool s_checkBoxKeyDown = false;
+bool FJ_CheckBox::s_keyDown = false;
 
 static std::string s_checkBoxStates[4] =
 {
@@ -29,7 +29,7 @@ FJ_CheckBox::FJ_CheckBox(fuiRenderNode* renderNode)
 {
     m_checked = true;
     m_enabled = true;
-    s_checkBoxKeyDown = false;
+    FJ_CheckBox::s_keyDown = false;
     ChangeState(1);
     addEventListener(eFJEventType_FocusIn, this, _focusInHandler, false);
     addEventListener(eFJEventType_FocusOut, this, _focusOutHandler, false);
@@ -126,10 +126,10 @@ void FJ_CheckBox::_focusOutHandler(FJ_FuiNode* node, FJ_Event* event)
 
 void FJ_CheckBox::keyDownHandler(FJ_Event* event)
 {
-    if (!m_enabled || s_checkBoxKeyDown ||
+    if (!m_enabled || FJ_CheckBox::s_keyDown ||
         static_cast<FJ_KeyboardEvent*>(event)->m_iKeyCode != 0)
         return;
-    s_checkBoxKeyDown = true;
+    FJ_CheckBox::s_keyDown = true;
     SetCheckBox(!m_checked);
 }
 
@@ -141,7 +141,7 @@ void FJ_CheckBox::_keyDownHandler(FJ_FuiNode* node, FJ_Event* event)
 void FJ_CheckBox::keyUpHandler(FJ_Event* event)
 {
     if (static_cast<FJ_KeyboardEvent*>(event)->m_iKeyCode == 0)
-        s_checkBoxKeyDown = false;
+        FJ_CheckBox::s_keyDown = false;
 }
 
 void FJ_CheckBox::_keyUpHandler(FJ_FuiNode* node, FJ_Event* event)

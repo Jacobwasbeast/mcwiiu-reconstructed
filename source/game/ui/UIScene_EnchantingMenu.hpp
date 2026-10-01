@@ -17,25 +17,25 @@ class UILayer;
 class UIScene_EnchantingMenu : public UIScene_AbstractContainerMenu
 {
 public:
-    UIScene_EnchantingMenu(int type, void* data, UILayer* layer);
+    UIScene_EnchantingMenu(int pad, void* data, UILayer* layer);
     virtual ~UIScene_EnchantingMenu();
 
-    virtual bool IsSectionSlotList(IUIScene_AbstractContainerMenu::ESceneSection section);
     virtual unsigned int getSectionColumns(IUIScene_AbstractContainerMenu::ESceneSection section);
     virtual unsigned int getSectionRows(IUIScene_AbstractContainerMenu::ESceneSection section);
-    virtual unsigned int GetSectionAndSlotInDirection(IUIScene_AbstractContainerMenu::ESceneSection section,
-                                                       IUIScene_AbstractContainerMenu::ETapState state,
-                                                       int* x, int* y);
     virtual void GetPositionOfSection(IUIScene_AbstractContainerMenu::ESceneSection section,
                                       _UIVec2D* position);
     virtual void GetItemScreenData(IUIScene_AbstractContainerMenu::ESceneSection section, int slot,
                                    _UIVec2D* position, _UIVec2D* size);
-    virtual void handleOtherClicked(int button, IUIScene_AbstractContainerMenu::ESceneSection section,
-                                    int slot, bool pressed);
     virtual void handleSectionClick(IUIScene_AbstractContainerMenu::ESceneSection section);
-    virtual int getSectionStartOffset(IUIScene_AbstractContainerMenu::ESceneSection section);
     virtual void setSectionSelectedSlot(IUIScene_AbstractContainerMenu::ESceneSection section,
                                         int slot, int direction, bool wrap);
+    virtual unsigned int GetSectionAndSlotInDirection(IUIScene_AbstractContainerMenu::ESceneSection section,
+                                                       IUIScene_AbstractContainerMenu::ETapState state,
+                                                       int* x, int* y);
+    virtual void handleOtherClicked(int pad, IUIScene_AbstractContainerMenu::ESceneSection section,
+                                    int slot, bool pressed);
+    virtual int getSectionStartOffset(IUIScene_AbstractContainerMenu::ESceneSection section);
+    virtual bool IsSectionSlotList(IUIScene_AbstractContainerMenu::ESceneSection section);
     virtual std::vector<HtmlString>* GetSectionHoverText(
         IUIScene_AbstractContainerMenu::ESceneSection section);
     virtual unsigned int overrideTooltips(IUIScene_AbstractContainerMenu::ESceneSection section,

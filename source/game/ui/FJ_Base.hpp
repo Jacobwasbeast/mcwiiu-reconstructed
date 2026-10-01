@@ -38,9 +38,9 @@ public:
     void CheckLabelWidth(const std::wstring& label);
     void CheckLabelWidths(std::vector<std::wstring>& labels);
     void SetLabelAlignment(int alignment);
-    uint64_t DoManualWordWrapCheck(FJ_FuiNode* container, fuiRenderNodeEditText* textField);
-    uint64_t DoMultilineWordWrap(FJ_FuiNode* container, fuiRenderNodeEditText* textField);
-    uint64_t DoEllipsisCheck(FJ_FuiNode* container, fuiRenderNodeEditText* textField);
+    void DoManualWordWrapCheck(FJ_FuiNode* container, fuiRenderNodeEditText* textField);
+    void DoMultilineWordWrap(FJ_FuiNode* container, fuiRenderNodeEditText* textField);
+    void DoEllipsisCheck(FJ_FuiNode* container, fuiRenderNodeEditText* textField);
     virtual void SetLabel(const std::wstring& label);
     const std::wstring& GetLabel();
     void SetTextOnly(const std::wstring& text);
@@ -52,7 +52,10 @@ public:
 protected:
     friend class FJ_BookAndQuillMenu;
 
-    std::string m_navLinkName[4];
+    std::string m_navUpName;
+    std::string m_navDownName;
+    std::string m_navLeftName;
+    std::string m_navRightName;
     int m_id;
     int m_labelAlignment;
     bool m_isLabel;

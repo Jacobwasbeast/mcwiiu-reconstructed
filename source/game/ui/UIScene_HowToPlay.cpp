@@ -27,6 +27,7 @@
 #include "game/item/BowItem.hpp"
 #include "game/item/FishingRodItem.hpp"
 #include "game/item/MapItem.hpp"
+#include "game/item/PotionItem.hpp"
 #include "game/item/ShearsItem.hpp"
 #include "game/ui/FJ_FuiNode.hpp"
 #include "game/ui/FJ_HowToPlay.hpp"
@@ -89,14 +90,13 @@ UIScene_HowToPlay::sCustomItems::sCustomItems(Item* item, Potion* potion, int co
 
 not_null_ptr<ItemInstance> UIScene_HowToPlay::sCustomItems::GetItemInstance() const
 {
-    not_null_ptr<ItemInstance> instance;
-    if (m_item == NULL)
-        instance = not_null_ptr<ItemInstance>(new ItemInstance(m_block, m_count, m_auxValue));
-    else
-        instance = not_null_ptr<ItemInstance>(new ItemInstance(m_item, m_count, m_auxValue));
-    if (m_potion != NULL)
-        instance = PotionUtils::setPotion(instance, m_potion);
-    return instance;
+    if (m_potion == NULL)
+    {
+        if (m_item == NULL)
+            return not_null_ptr<ItemInstance>(new ItemInstance(m_block, m_count, m_auxValue));
+        return not_null_ptr<ItemInstance>(new ItemInstance(m_item, m_count, m_auxValue));
+    }
+    return PotionUtils::setPotion(not_null_ptr<ItemInstance>(new ItemInstance(m_item, m_count, m_auxValue)), m_potion);
 }
 
 UIScene_HowToPlay::UIScene_HowToPlay(int playerId, void* data, UILayer* layer)
@@ -140,7 +140,7 @@ UIScene_HowToPlay::UIScene_HowToPlay(int playerId, void* data, UILayer* layer)
     m_labels[29].init(UIString(repeated.c_str()));
 
     text = L10N::GetString(IDS_VILLAGER_OFFERS_ITEM);
-    text = replaceAll(text, L"_VILLAGER_TYPE_", L10N::GetString(IDS_VILLAGER_CLERIC));
+    text = replaceAll(text, L"{*VILLAGER_TYPE*}", L10N::GetString(IDS_VILLAGER_CLERIC));
     text.replace(text.find(L"%s"), 2, L10N::GetString(0x5ae2b631));
     m_labels[23].init(UIString(text.c_str()));
 
@@ -154,13 +154,26 @@ UIScene_HowToPlay::~UIScene_HowToPlay()
 
 namespace
 {
-    static const unsigned int kHowToPlayTitleHash[EHowToPlayPage_Count] = {
-        0x018d8ea9, IDS_HOW_TO_PLAY_BASICS, IDS_HOW_TO_PLAY_MULTIPLAYER, IDS_HOW_TO_PLAY_HUD, 0xcef2334f, IDS_HOW_TO_PLAY_MG02,
-        IDS_HOW_TO_PLAY_MG03, IDS_HOW_TO_PLAY_CREATIVE, IDS_HOW_TO_PLAY_INVENTORY, IDS_HOW_TO_PLAY_CHEST, IDS_HOW_TO_PLAY_LARGECHEST, IDS_HOW_TO_PLAY_ENDERCHEST,
-        IDS_HOW_TO_PLAY_CRAFTING, IDS_HOW_TO_PLAY_CRAFT_TABLE, IDS_HOW_TO_PLAY_FURNACE, IDS_HOW_TO_PLAY_DISPENSER, IDS_HOW_TO_PLAY_BREWING, IDS_HOW_TO_PLAY_ENCHANTMENT,
-        IDS_HOW_TO_PLAY_ANVIL, 0x59f9a3a9, IDS_HOW_TO_PLAY_BREEDANIMALS, IDS_HOW_TO_PLAY_TRADING, IDS_HOW_TO_PLAY_HORSES, IDS_HOW_TO_PLAY_BEACONS,
-        IDS_HOW_TO_PLAY_FIREWORKS, IDS_HOW_TO_PLAY_BANNERS, IDS_HOW_TO_PLAY_HOPPERS, IDS_HOW_TO_PLAY_DROPPERS, IDS_HOW_TO_PLAY_NETHERPORTAL, IDS_HOW_TO_PLAY_THEEND,
-        IDS_HOW_TO_PLAY_ENDCITIES, IDS_HOW_TO_PLAY_ELYTRA, IDS_HOW_TO_PLAY_OCEANS, IDS_HOW_TO_PLAY_OCEAN_MOBS, IDS_HOW_TO_PLAY_CONDUIT, IDS_HOW_TO_PLAY_HOSTOPTIONS
+    struct HowToPlayTitle
+    {
+        unsigned int stringId;
+        int unknown0;
+        int unknown1;
+    };
+
+    static const HowToPlayTitle kHowToPlayTitle[EHowToPlayPage_Count] = {
+        { IDS_HOW_TO_PLAY_WHATSNEW, 0, 0 }, { IDS_HOW_TO_PLAY_BASICS, 0, 0 }, { IDS_HOW_TO_PLAY_MULTIPLAYER, 0, 0 },
+        { IDS_HOW_TO_PLAY_HUD, 0, 0 }, { IDS_HOW_TO_PLAY_MG01, 0, 0 }, { IDS_HOW_TO_PLAY_MG02, 0, 0 },
+        { IDS_HOW_TO_PLAY_MG03, 0, 0 }, { IDS_HOW_TO_PLAY_CREATIVE, 0, 0 }, { IDS_HOW_TO_PLAY_INVENTORY, 0, 0 },
+        { IDS_HOW_TO_PLAY_CHEST, 0, 0 }, { IDS_HOW_TO_PLAY_LARGECHEST, 0, 0 }, { IDS_HOW_TO_PLAY_ENDERCHEST, 0, 0 },
+        { IDS_HOW_TO_PLAY_CRAFTING, 0, 0 }, { IDS_HOW_TO_PLAY_CRAFT_TABLE, 0, 0 }, { IDS_HOW_TO_PLAY_FURNACE, 0, 0 },
+        { IDS_HOW_TO_PLAY_DISPENSER, 0, 0 }, { IDS_HOW_TO_PLAY_BREWING, 0, 0 }, { IDS_HOW_TO_PLAY_ENCHANTMENT, 0, 0 },
+        { IDS_HOW_TO_PLAY_ANVIL, 0, 0 }, { IDS_HOW_TO_PLAY_FARMANIMALS, 0, 0 }, { IDS_HOW_TO_PLAY_BREEDANIMALS, 0, 0 },
+        { IDS_HOW_TO_PLAY_TRADING, 0, 0 }, { IDS_HOW_TO_PLAY_HORSES, 0, 0 }, { IDS_HOW_TO_PLAY_BEACONS, 0, 0 },
+        { IDS_HOW_TO_PLAY_FIREWORKS, 0, 0 }, { IDS_HOW_TO_PLAY_BANNERS, 0, 0 }, { IDS_HOW_TO_PLAY_HOPPERS, 0, 0 },
+        { IDS_HOW_TO_PLAY_DROPPERS, 0, 0 }, { IDS_HOW_TO_PLAY_NETHERPORTAL, 0, 0 }, { IDS_HOW_TO_PLAY_THEEND, 0, 0 },
+        { IDS_HOW_TO_PLAY_ENDCITIES, 0, 0 }, { IDS_HOW_TO_PLAY_ELYTRA, 0, 0 }, { IDS_HOW_TO_PLAY_OCEANS, 0, 0 },
+        { IDS_HOW_TO_PLAY_OCEAN_MOBS, 0, 0 }, { IDS_HOW_TO_PLAY_CONDUIT, 0, 0 }, { IDS_HOW_TO_PLAY_HOSTOPTIONS, 0, 0 }
     };
 
     static const int kHowToPlayContentPage[EHowToPlayPage_Count] = {
@@ -175,14 +188,14 @@ void UIScene_HowToPlay::StartPage(EHowToPlayPage page)
 {
     m_page = static_cast<int>(page);
 
-    const wchar_t* title = L10N::GetString(static_cast<int>(kHowToPlayTitleHash[m_page]));
-    std::wstring text(title == NULL ? L"" : title);
+    const wchar_t* title = L10N::GetString(static_cast<int>(kHowToPlayTitle[m_page].stringId));
+    std::wstring text(title);
     text = gApp.FormatHTMLString(m_playerId, text, -1);
 
-    text = replaceAll(text, L"_KICK_PLAYER_DESCRIPTION_", L10N::GetString(IDS_KICK_PLAYER_DESCRIPTION));
-    text = replaceAll(text, L"_BACK_BUTTON_", L10N::GetString(IDS_BACK_BUTTON));
-    text = replaceAll(text, L"_DISABLES_ACHIEVEMENTS_", L10N::GetString(IDS_HOST_OPTION_DISABLES_ACHIEVEMENTS));
-    text = replaceAll(text, L"_PLATFORM_NAME_", L10N::GetString(IDS_PLATFORM_NAME));
+    text = replaceAll(text, L"{*KICK_PLAYER_DESCRIPTION*}", L10N::GetString(IDS_KICK_PLAYER_DESCRIPTION));
+    text = replaceAll(text, L"{*BACK_BUTTON*}", L10N::GetString(IDS_BACK_BUTTON));
+    text = replaceAll(text, L"{*DISABLES_ACHIEVEMENTS*}", L10N::GetString(IDS_HOST_OPTION_DISABLES_ACHIEVEMENTS));
+    text = replaceAll(text, L"{*PLATFORM_NAME*}", L10N::GetString(IDS_PLATFORM_NAME));
 
     if (!gConsoleUIController.UsingBitmapFont())
     {
@@ -224,13 +237,14 @@ unsigned int UIScene_HowToPlay::mapElementsAndNames()
     m_controls.push_back(&m_dynamicHtmlText);
     m_container.setupControl(this, root, "HowToPlayContainer_13");
     m_controls.push_back(&m_container);
-    m_enchantmentBook.setupControl(this, m_container.getFuiRenderNode(), "iggy_EnchantmentBook");
+    fuiRenderNode* containerNode = m_container.getFuiRenderNode();
+    m_enchantmentBook.setupControl(this, containerNode, "iggy_EnchantmentBook");
     m_controls.push_back(&m_enchantmentBook);
-    m_enchantmentBooks[0].setupControl(this, m_container.getFuiRenderNode(), "iggy_slot_Button_1");
+    m_enchantmentBooks[0].setupControl(this, containerNode, "iggy_slot_Button_1");
     m_controls.push_back(&m_enchantmentBooks[0]);
-    m_enchantmentBooks[1].setupControl(this, m_container.getFuiRenderNode(), "iggy_slot_Button_2");
+    m_enchantmentBooks[1].setupControl(this, containerNode, "iggy_slot_Button_2");
     m_controls.push_back(&m_enchantmentBooks[1]);
-    m_enchantmentBooks[2].setupControl(this, m_container.getFuiRenderNode(), "iggy_slot_Button_3");
+    m_enchantmentBooks[2].setupControl(this, containerNode, "iggy_slot_Button_3");
     m_controls.push_back(&m_enchantmentBooks[2]);
     m_labels[8].setupControl(this, root, "Label1_10");
     m_controls.push_back(&m_labels[8]);
@@ -308,10 +322,10 @@ void UIScene_HowToPlay::updateTooltips()
 
 std::wstring UIScene_HowToPlay::getMoviePath()
 {
-    if (gApp.GetLocalPlayerCount() < 2)
-        return L"HowToPlay";
-    else
+    if (gApp.GetLocalPlayerCount() > 1)
         return L"HowToPlaySplit";
+    else
+        return L"HowToPlay";
 }
 
 void UIScene_HowToPlay::handleReload()
@@ -323,31 +337,43 @@ void UIScene_HowToPlay::handleReload()
 void UIScene_HowToPlay::handleInput(int, int action, bool repeat, bool pressed, bool released, bool& handled)
 {
     gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, pressed, released);
-    if (action == EControllerActions_MenuA && pressed)
+    switch (action)
     {
-        if (m_page != EHowToPlayPage_HostOptions)
+    case EControllerActions_MenuCancel:
+        if (!pressed)
+            return;
+        navigateBack();
+        handled = true;
+        return;
+    case EControllerActions_MenuA:
+        if (!pressed)
+            return;
+        if (m_page + 1 != EHowToPlayPage_Count)
         {
             StartPage(static_cast<EHowToPlayPage>(m_page + 1));
             gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
         }
         handled = true;
-    }
-    else if (action == EControllerActions_MenuX && pressed)
-    {
+        return;
+    case EControllerActions_MenuX:
+        if (!pressed)
+            return;
         if (m_pageCount <= m_page - 1)
         {
             StartPage(static_cast<EHowToPlayPage>(m_page - 1));
             gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
         }
         handled = true;
+        return;
+    case EControllerActions_MenuUp:
+    case EControllerActions_MenuDown:
+    case EControllerActions_MenuPageUp:
+    case EControllerActions_MenuPageDown:
+        break;
+    default:
+        return;
     }
-    else if (action == EControllerActions_MenuCancel && pressed)
-    {
-        navigateBack();
-        handled = true;
-    }
-    else if (action == EControllerActions_MenuUp || action == EControllerActions_MenuDown || action == EControllerActions_MenuPageUp || action == EControllerActions_MenuPageDown)
-        sendInputToMovie(action, repeat, pressed, released);
+    sendInputToMovie(action, repeat, pressed, released);
 }
 
 void UIScene_HowToPlay::customDrawEnchantmentFont(fuiRect* rect, int variant)
@@ -405,11 +431,11 @@ const UIScene_HowToPlay::sCustomItems* SlotListHotBar()
         SLOT(Items::arrow, 64, 0),
         SLOT(Items::flintAndSteel, 1, 30),
         SLOT(Items::clock, 1, 0),
-        SLOT(Items::shears, 1, 0),
+        SLOT(static_cast<ShearsItem*>(Items::shears), 1, 0),
         SLOT(Items::ironAxe, 1, 50),
-        SLOT(Items::fishingRod, 1, 0),
+        SLOT(static_cast<FishingRodItem*>(Items::fishingRod), 1, 0),
         SLOT(Items::compass, 1, 0),
-        SLOT(Items::filledMap, 1, 0)
+        SLOT(static_cast<MapItem*>(Items::filledMap), 1, 0)
     };
     return slots;
 }
@@ -452,7 +478,7 @@ const UIScene_HowToPlay::sCustomItems* SlotListChestSmall()
 {
     static const UIScene_HowToPlay::sCustomItems slots[27] = {
         SLOT(Items::experienceBottle, 64, 0),
-        SLOT(Blocks::wooden_slab, 5, 0),
+        SLOT(static_cast<HalfSlabBlock*>(Blocks::wooden_slab), 5, 0),
         SLOT(0, 0, 0),
         SLOT(Items::glassBottle, 15, 0),
         SLOT(Blocks::enchanting_table, 1, 0),
@@ -514,8 +540,8 @@ const UIScene_HowToPlay::sCustomItems* SlotListChestLarge()
         SLOT(0, 0, 0),
         SLOT(0, 0, 0),
         SLOT(0, 0, 0),
-        SLOT(Items::ironHelmet, 1, 0),
-        SLOT(Items::ironChestplate, 0, 0),
+        SLOT(static_cast<ArmorItem*>(Items::ironHelmet), 1, 0),
+        SLOT(static_cast<ArmorItem*>(Items::ironChestplate), 0, 0),
         SLOT(0, 0, 0),
         SLOT(0, 0, 0),
         SLOT(Items::string, 3, 0),
@@ -569,9 +595,9 @@ const UIScene_HowToPlay::sCustomItems* SlotListBrewing()
 {
     static const UIScene_HowToPlay::sCustomItems slots[5] = {
         SLOT(Items::fermentedSpiderEye, 1, 0),
-        SLOT_POTION(Items::potion, Potions::WATER, 1, 0),
-        SLOT_POTION(Items::potion, Potions::WATER, 1, 0),
-        SLOT_POTION(Items::potion, Potions::WATER, 1, 0),
+        SLOT_POTION(static_cast<PotionItem*>(Items::potion), Potions::WATER, 1, 0),
+        SLOT_POTION(static_cast<PotionItem*>(Items::potion), Potions::WATER, 1, 0),
+        SLOT_POTION(static_cast<PotionItem*>(Items::potion), Potions::WATER, 1, 0),
         SLOT(Items::blazePowder, 3, 0)
     };
     return slots;
@@ -596,7 +622,7 @@ const UIScene_HowToPlay::sCustomItems* SlotListDispenser()
 const UIScene_HowToPlay::sCustomItems* SlotListEntchantment()
 {
     static const UIScene_HowToPlay::sCustomItems slots[2] = {
-        SLOT(Items::bow, 1, 0),
+        SLOT(static_cast<BowItem*>(Items::bow), 1, 0),
         SLOT(Items::dye, 7, 4)
     };
     return slots;
@@ -627,8 +653,8 @@ const UIScene_HowToPlay::sCustomItems* SlotListHopper()
 const UIScene_HowToPlay::sCustomItems* SlotListArmor()
 {
     static const UIScene_HowToPlay::sCustomItems slots[4] = {
-        SLOT(Items::ironHelmet, 1, 0),
-        SLOT(Items::leatherChestplate, 1, 0),
+        SLOT(static_cast<ArmorItem*>(Items::ironHelmet), 1, 0),
+        SLOT(static_cast<ArmorItem*>(Items::leatherChestplate), 1, 0),
         SLOT(0, 0, 0),
         SLOT(0, 0, 0)
     };
@@ -655,15 +681,15 @@ const UIScene_HowToPlay::sCustomItems* SlotListCreative()
 {
     static const UIScene_HowToPlay::sCustomItems slots[50] = {
         SLOT(Blocks::stone, 1, 0),
-        SLOT(Blocks::grass, 1, 0),
+        SLOT(static_cast<GrassBlock*>(Blocks::grass), 1, 0),
         SLOT(Blocks::grass_path, 1, 0),
         SLOT(Blocks::dirt, 1, 0),
         SLOT(Blocks::cobblestone, 1, 0),
-        SLOT(Blocks::sand, 1, 0),
+        SLOT(static_cast<SandBlock*>(Blocks::sand), 1, 0),
         SLOT(Blocks::sandstone, 1, SandStoneBlock::SANDSTONE->getData()),
         SLOT(Blocks::sandstone, 1, SandStoneBlock::SMOOTH->getData()),
         SLOT(Blocks::sandstone, 1, SandStoneBlock::CHISELED->getData()),
-        SLOT(Blocks::sand, 1, SandBlock::Variant::RED_SAND->getData()),
+        SLOT(static_cast<SandBlock*>(Blocks::sand), 1, SandBlock::Variant::RED_SAND->getData()),
         SLOT(Blocks::red_sandstone, 1, SandStoneBlock::SANDSTONE->getData()),
         SLOT(Blocks::red_sandstone, 1, SandStoneBlock::SMOOTH->getData()),
         SLOT(Blocks::red_sandstone, 1, SandStoneBlock::CHISELED->getData()),

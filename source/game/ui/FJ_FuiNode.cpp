@@ -76,7 +76,7 @@ FJ_FuiNode::~FJ_FuiNode()
 
     if (m_pRenderNode != NULL)
     {
-        if (m_pRenderNode->getStage() != NULL)
+        if (m_pRenderNode->m_stage != NULL)
             getStage()->removeFocus(this);
     }
 }
@@ -208,10 +208,11 @@ FJ_FuiNode* FJ_FuiNode::getChildAt(int iIndex)
 
 FJ_FuiNode* FJ_FuiNode::getParent()
 {
-    if (m_pRenderNode->getParent() == NULL)
+    fuiRenderNode* pParent = m_pRenderNode->getParent();
+    if (pParent == NULL)
         return NULL;
 
-    return m_pRenderNode->getParent()->getFuiNode();
+    return pParent->getFuiNode();
 }
 
 void FJ_FuiNode::removeChild(FJ_FuiNode* pNode, bool bDestroy)
@@ -685,11 +686,10 @@ std::string FJ_FuiNode::currentLabel()
 
 unsigned int FJ_FuiNode::currentFrame()
 {
-    fuiRenderNodeTimeline* pTimeline = static_cast<fuiRenderNodeTimeline*>(m_pRenderNode->asTimeline());
-    if (pTimeline == NULL)
+    if (m_pRenderNode->m_type != eFuiObjectType_Timeline)
         return 1;
 
-    return pTimeline->currentFrame();
+    return static_cast<fuiRenderNodeTimeline*>(m_pRenderNode)->currentFrame();
 }
 
 void FJ_FuiNode::setX(float fX)

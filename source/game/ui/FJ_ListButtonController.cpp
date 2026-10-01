@@ -5,9 +5,9 @@ FJ_ListButtonController::FJ_ListButtonController(fuiRenderNode* renderNode)
 {
 }
 
-double FJ_ListButtonController::getOriginalHeight()
+float FJ_ListButtonController::getOriginalHeight()
 {
-    return static_cast<double>(m_originalHeight);
+    return m_originalHeight;
 }
 
 void FJ_ListButtonController::Init(const std::wstring& name, int id)
