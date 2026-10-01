@@ -257,10 +257,6 @@ GameModePacket::SendTeamInviteData::~SendTeamInviteData()
 {
 }
 
-GameModePacket::SetCameraData::~SetCameraData()
-{
-}
-
 void GameModePacket::SetCameraData::ReadPacket(boost::shared_ptr<GameModePacket> packet)
 {
     camera = packet->ints[0];

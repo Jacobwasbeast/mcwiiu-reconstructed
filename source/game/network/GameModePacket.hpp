@@ -208,7 +208,7 @@ public:
     class SetCameraData : public Data
     {
     public:
-        virtual ~SetCameraData();
+        virtual ~SetCameraData() {}
         virtual void ReadPacket(boost::shared_ptr<GameModePacket> packet);
         virtual void WritePacket(boost::shared_ptr<GameModePacket> packet) const;
 
