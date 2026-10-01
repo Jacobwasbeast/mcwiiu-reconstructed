@@ -48,7 +48,7 @@ bool AbstractClientPlayer::isCreative()
     return GetGameType() == GameType::CREATIVE;
 }
 
-double AbstractClientPlayer::getFieldOfViewModifier()
+float AbstractClientPlayer::getFieldOfViewModifier()
 {
     float modifier = 1.0f;
     if (mAbilities.mFlying)

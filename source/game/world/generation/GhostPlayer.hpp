@@ -17,7 +17,7 @@ public:
     void setLapsCompleted(int lapsCompleted);
     double getProgress();
     void setProgress(double progress);
-    GhostGameMode* GetGameMode();
+    GameMode* GetGameMode();
     virtual unsigned long long GetType();
 
 private:

@@ -47,7 +47,7 @@ void GhostPlayer::setProgress(double progress)
     mProgress = progress;
 }
 
-GhostGameMode* GhostPlayer::GetGameMode()
+GameMode* GhostPlayer::GetGameMode()
 {
     return mGameMode;
 }
