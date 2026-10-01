@@ -9,10 +9,6 @@ EffectChangedTask::EffectChangedTask(Tutorial* tutorial, int descriptionId, MobE
 {
 }
 
-EffectChangedTask::~EffectChangedTask()
-{
-}
-
 bool EffectChangedTask::isCompleted()
 {
     return completed;

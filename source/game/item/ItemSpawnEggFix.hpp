@@ -13,7 +13,6 @@ class ItemSpawnEggFix : public DataFix
 public:
     ItemSpawnEggFix();
 
-    virtual ~ItemSpawnEggFix();
     virtual int getVersion();
     virtual CompoundTag* fix(CompoundTag* item);
 

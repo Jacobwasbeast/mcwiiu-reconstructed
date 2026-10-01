@@ -62,55 +62,23 @@ ItemInstance::ItemInstance()
 }
 
 ItemInstance::ItemInstance(Block* block)
-    : mCount(0),
-      mPopTime(0),
-      mItem(0),
-      mTag(0),
-      mEmptyCache(1),
-      mAuxValue(0),
-      mUnknown(0),
-      mFrame(),
-      mCensorshipInfo(),
-      mBreakBlock(0),
-      mCanBreak(0),
-      mPlaceBlock(0),
-      mCanPlace(0)
+    : mFrame(),
+      mCensorshipInfo()
 {
     _init(Item::byBlock(block), 1, 0);
 }
 
 ItemInstance::ItemInstance(Block* block, int count)
-    : mCount(0),
-      mPopTime(0),
-      mItem(0),
-      mTag(0),
-      mEmptyCache(1),
-      mAuxValue(0),
-      mUnknown(0),
-      mFrame(),
-      mCensorshipInfo(),
-      mBreakBlock(0),
-      mCanBreak(0),
-      mPlaceBlock(0),
-      mCanPlace(0)
+    : mFrame(),
+      mCensorshipInfo()
 {
-    _init(Item::byBlock(block), count, 0);
+    Item* item = Item::byBlock(block);
+    _init(item, count, block->convertBlockStateToLegacyData(block->defaultBlockState()));
 }
 
 ItemInstance::ItemInstance(Block* block, int count, int auxValue)
-    : mCount(0),
-      mPopTime(0),
-      mItem(0),
-      mTag(0),
-      mEmptyCache(1),
-      mAuxValue(0),
-      mUnknown(0),
-      mFrame(),
-      mCensorshipInfo(),
-      mBreakBlock(0),
-      mCanBreak(0),
-      mPlaceBlock(0),
-      mCanPlace(0)
+    : mFrame(),
+      mCensorshipInfo()
 {
     _init(Item::byBlock(block), count, auxValue);
 }
@@ -264,8 +232,7 @@ not_null_ptr<ItemInstance> ItemInstance::copy() const
 
 void ItemInstance::grow(int amount)
 {
-    mCount += amount;
-    updateEmptyCacheFlag();
+    setCount(mCount + amount);
 }
 
 void ItemInstance::shrink(int amount)
@@ -341,7 +308,7 @@ CompoundTag* ItemInstance::save(CompoundTag* tag)
 
 int ItemInstance::getMaxStackSize()
 {
-    return mItem != 0 ? mItem->getMaxStackSize() : 64;
+    return getItem()->getMaxStackSize();
 }
 
 bool ItemInstance::hasTag()
@@ -375,12 +342,12 @@ bool ItemInstance::isDamaged()
 
 bool ItemInstance::isStackable()
 {
-    return getMaxStackSize() > 1 && !isDamageableItem();
+    return getMaxStackSize() > 1 && (!isDamageableItem() || !isDamaged());
 }
 
 bool ItemInstance::isStackedByData()
 {
-    return mItem != 0 && mItem->isStackedByData();
+    return getItem()->isStackedByData();
 }
 
 int ItemInstance::getDamageValue()
@@ -398,12 +365,11 @@ void ItemInstance::setAuxValue(int auxValue)
     if (auxValue < 0)
         auxValue = 0;
     mAuxValue = auxValue;
-    updateEmptyCacheFlag();
 }
 
 int ItemInstance::getMaxDamage()
 {
-    return mItem != 0 ? mItem->getMaxDamage() : 0;
+    return getItem()->getMaxDamage();
 }
 
 bool ItemInstance::hurt(int amount, Random* random)
@@ -480,7 +446,7 @@ void ItemInstance::mineBlock(Level* level, const BlockState* state, const BlockP
 
 bool ItemInstance::canDestroySpecial(const BlockState* state)
 {
-    return mItem != 0 && mItem->canDestroySpecial(state);
+    return getItem()->canDestroySpecial(state);
 }
 
 bool ItemInstance::interactEnemy(boost::shared_ptr<Player> player, boost::shared_ptr<LivingEntity> entity,
@@ -623,7 +589,7 @@ bool ItemInstance::sameItemWithTags(const not_null_ptr<ItemInstance>& other, std
 
 bool ItemInstance::sameItem_not_shared(ItemInstance* other)
 {
-    return other != 0 && mItem == other->mItem && mAuxValue == other->mAuxValue;
+    return !isEmpty() && mItem == other->mItem && mAuxValue == other->mAuxValue;
 }
 
 int ItemInstance::getUseDescriptionId()
@@ -791,7 +757,6 @@ void ItemInstance::setTag(CompoundTag* tag)
     if (mTag != 0)
         delete mTag;
     mTag = tag;
-    updateEmptyCacheFlag();
 }
 
 void ItemInstance::addTagElement(std::wstring name, Tag* tag)
@@ -1213,7 +1178,7 @@ void ItemInstance::enchant(Enchantment* enchantment, int level)
 
 bool ItemInstance::mayBePlacedInAdventureMode()
 {
-    return mItem != 0 && mItem->mayBePlacedInAdventureMode();
+    return getItem()->mayBePlacedInAdventureMode();
 }
 
 bool ItemInstance::isFramed()
@@ -1237,12 +1202,14 @@ boost::shared_ptr<ItemFrame> ItemInstance::getFrame()
 
 int ItemInstance::getBaseRepairCost()
 {
-    return mTag != 0 && mTag->contains(L"RepairCost", Tag::TAG_INT) ? mTag->getInt(L"RepairCost") : 0;
+    if (hasTag() && mTag->contains(L"RepairCost", Tag::TAG_INT))
+        return mTag->getInt(L"RepairCost");
+    return 0;
 }
 
 void ItemInstance::setRepairCost(int cost)
 {
-    if (mTag == 0)
+    if (!hasTag())
         mTag = new CompoundTag();
     mTag->putInt(L"RepairCost", cost);
 }
@@ -1306,7 +1273,9 @@ void ItemInstance::set4JData(int data)
 
 int ItemInstance::get4JData()
 {
-    return mTag != 0 && mTag->contains(L"4jdata") ? mTag->getInt(L"4jdata") : 0;
+    if (mTag == 0 || !mTag->contains(L"4jdata"))
+        return 0;
+    return static_cast<IntTag*>(mTag->get(L"4jdata"))->mValue;
 }
 
 bool ItemInstance::hasPotionStrengthBar()

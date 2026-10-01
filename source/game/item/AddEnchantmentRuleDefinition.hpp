@@ -10,7 +10,6 @@ class AddEnchantmentRuleDefinition : public GameRuleDefinition
 {
 public:
     AddEnchantmentRuleDefinition();
-    virtual ~AddEnchantmentRuleDefinition();
 
     unsigned int enchantItem(not_null_ptr<ItemInstance> item);
     virtual ConsoleGameRules::EGameRuleType getActionType();

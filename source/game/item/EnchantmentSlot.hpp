@@ -16,7 +16,6 @@ public:
         : Slot(container, index, x, y)
     {
     }
-    virtual ~EnchantmentSlot();
 
     virtual bool mayPlace(not_null_ptr<ItemInstance> itemInstance);
     virtual int getMaxStackSize();

@@ -15,7 +15,6 @@ public:
     EquipItemTask(Item* item, int auxValue, Tutorial* tutorial, int descriptionId,
                   bool preCompletionEnabled, std::vector<TutorialConstraint*>* constraints,
                   bool showMinimumTime, bool allowFade, bool repeatMessage);
-    virtual ~EquipItemTask();
 
     virtual bool isCompleted();
     virtual void onEquip(not_null_ptr<ItemInstance> item);

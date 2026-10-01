@@ -14,7 +14,7 @@ public:
     virtual ~RecordItem();
     virtual InteractionResult::EInteractionResult useOn(boost::shared_ptr<Player> player, Level* level, const BlockPos& pos, InteractionHand::EInteractionHand hand, const Direction* direction, float x, float y, float z, bool flag);
     virtual void appendHoverText(not_null_ptr<ItemInstance> item, boost::shared_ptr<Player> player, std::vector<HtmlString>* lines, bool advanced);
-    virtual std::wstring getDisplayName();
+    std::wstring getDisplayName();
     virtual const Rarity* getRarity(not_null_ptr<ItemInstance> item);
     static RecordItem* getBySound(const SoundEvent* sound);
     const SoundEvent* getSound();

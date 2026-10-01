@@ -7,7 +7,12 @@ template <class T>
 class NonNullList
 {
 public:
-    NonNullList();
+    NonNullList()
+        : items(NULL),
+          length(0)
+    {
+    }
+
     ~NonNullList();
 
     static NonNullList<T> withSize(unsigned int size, const T& defaultValue);
@@ -34,13 +39,6 @@ public:
 private:
     NonNullList(T* items, unsigned int length, const T& defaultValue);
 };
-
-template <class T>
-NonNullList<T>::NonNullList()
-    : items(NULL),
-      length(0)
-{
-}
 
 template <class T>
 NonNullList<T>::NonNullList(T* items, unsigned int length, const T& defaultValue)

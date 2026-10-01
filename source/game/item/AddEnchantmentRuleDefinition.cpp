@@ -21,10 +21,6 @@ AddEnchantmentRuleDefinition::AddEnchantmentRuleDefinition()
     addIntAttribute(ConsoleGameRules::eGameRuleAttr_enchantmentLevel, &mLevel)->setMin(0);
 }
 
-AddEnchantmentRuleDefinition::~AddEnchantmentRuleDefinition()
-{
-}
-
 unsigned int AddEnchantmentRuleDefinition::enchantItem(not_null_ptr<ItemInstance> item)
 {
     if (item->isEmpty())

@@ -11,7 +11,6 @@ public:
     EffectChangedTask(Tutorial* tutorial, int descriptionId, MobEffect* effect,
                       bool effectRemoved, bool preCompletionEnabled,
                       bool showMinimumTime, bool allowFade, bool repeatMessage);
-    virtual ~EffectChangedTask();
 
     virtual bool isCompleted();
     virtual void onEffectChanged(MobEffect* effect, bool added);

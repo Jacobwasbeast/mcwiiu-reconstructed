@@ -9,10 +9,6 @@ EnchantmentCostSlot::EnchantmentCostSlot(boost::shared_ptr<Container> container,
 {
 }
 
-EnchantmentCostSlot::~EnchantmentCostSlot()
-{
-}
-
 bool EnchantmentCostSlot::mayPlace(not_null_ptr<ItemInstance> itemInstance)
 {
     if (itemInstance->getItem() == Items::dye)

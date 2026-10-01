@@ -11,7 +11,6 @@ class EnchantmentCostSlot : public Slot
 {
 public:
     EnchantmentCostSlot(boost::shared_ptr<Container> container, int index, int x, int y);
-    virtual ~EnchantmentCostSlot();
 
     virtual bool mayPlace(not_null_ptr<ItemInstance> itemInstance);
 };

@@ -80,10 +80,6 @@ ItemSpawnEggFix::ItemSpawnEggFix()
     mEntityNames[0x3064] = L"Mule";
 }
 
-ItemSpawnEggFix::~ItemSpawnEggFix()
-{
-}
-
 int ItemSpawnEggFix::getVersion()
 {
     return 105;

@@ -12,10 +12,6 @@ EquipItemTask::EquipItemTask(Item* item, int auxValue, Tutorial* tutorial, int d
 {
 }
 
-EquipItemTask::~EquipItemTask()
-{
-}
-
 void EquipItemTask::onEquip(not_null_ptr<ItemInstance> item)
 {
     if (item->getItem() == mItem && (mAuxValue == -1 || item->getAuxValue() == mAuxValue))

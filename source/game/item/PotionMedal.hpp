@@ -13,7 +13,6 @@ public:
     {
     }
 
-    virtual ~PotionMedal();
 
     virtual double GetScore(PlayerStats* playerStats) const;
 };

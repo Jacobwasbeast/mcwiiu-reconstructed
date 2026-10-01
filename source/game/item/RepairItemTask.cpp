@@ -12,10 +12,6 @@ RepairItemTask::RepairItemTask(Item* itemValue, int auxValueValue, Tutorial* tut
 {
 }
 
-RepairItemTask::~RepairItemTask()
-{
-}
-
 void RepairItemTask::onTakeFromAnvil(not_null_ptr<ItemInstance> itemInstance)
 {
     if (itemInstance->getItem() != item)
