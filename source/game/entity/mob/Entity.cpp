@@ -1699,7 +1699,7 @@ void Entity::onInsideBlock(const BlockState* state)
 _SkinAdjustments Entity::getSkinAdjustments()
 {
     if (GameSettings::GetGameSettings(eGameSetting_CustomSkinAnim) == 0
-        && (mCategories & 0x1F1F810) == 0)
+        && (mSkinAdjustments.mAnimFlags & 0x1F1F810) == 0)
     {
         return _SkinAdjustments();
     }
@@ -1926,7 +1926,7 @@ Vec3* Entity::getEyePosition(float partialTicks)
 
 bool Entity::updateInWaterState()
 {
-    mHeadInWater = mLevel->getBlock(BlockPos(getEyePosition(1.0f)))->defaultBlockState()
+    mHeadInWater = mLevel->getLiquidBlock(BlockPos(getEyePosition(1.0f)))->defaultBlockState()
                        ->getMaterial()->isLiquid();
 
     AABB* box = mBoundingBox->grow(0.0, -0.4000000059604645, 0.0)->shrink(0.001, 0.001, 0.001);
@@ -2057,7 +2057,10 @@ void Entity::updateSprintingState()
 
 void Entity::doSprintParticleEffect()
 {
-    BlockPos pos(Mth::absFloor(mX), Mth::absFloor(mY - 0.20000000298023224), Mth::absFloor(mZ));
+    int x = Mth::floor(mX);
+    int y = Mth::floor(mY - 0.20000000298023224);
+    int z = Mth::floor(mZ);
+    BlockPos pos(x, y, z);
     const BlockState* state = mLevel->getBlockState(mTickCache, pos);
 
     if (state->getRenderShape() == BLOCK_RENDER_INVISIBLE)
@@ -2067,92 +2070,105 @@ void Entity::doSprintParticleEffect()
 
     int stateId = Block::getIdWithData(state);
 
-    arrayWithLength<int> particleData(1, false);
-    particleData.data[0] = stateId;
+    arrayWithLength<int> particleData(&stateId, 1);
     mLevel->addParticle(PARTICLE_BLOCK_CRACK,
-                        mX + (double)((mRandom->nextFloat() - 0.5f) * mBbWidth),
+                        ((double)mRandom->nextFloat() - 0.5) * mBbWidth + mX,
                         mBoundingBox->mMinY + 0.1,
-                        mZ + (double)((mRandom->nextFloat() - 0.5f) * mBbWidth),
+                        ((double)mRandom->nextFloat() - 0.5) * mBbWidth + mZ,
                         -(mXd * 4.0), 1.5, -(mZd * 4.0), particleData);
 }
 
 bool Entity::isUnderLiquid(Material* material)
 {
+    bool onBoat = false;
+
     if (getVehicle() && getVehicle()->GetType() == EntityType::BOAT)
     {
-        return false;
+        onBoat = true;
     }
 
-    double eyeY = mY + (double)getEyeHeight();
-    BlockPos pos(mX, eyeY, mZ);
-
-    const BlockState* state = mLevel->getBlockState(mTickCache, pos);
-
-    if (state->getMaterial() != material)
+    if (!onBoat)
     {
-        unsigned short element = mLevel->getElement(pos.x, pos.y, pos.z);
+        double eyeY = mY + (double)getEyeHeight();
+        BlockPos pos(mX, eyeY, mZ);
 
-        if (element == 0)
+        const BlockState* state = mLevel->getBlockState(mTickCache, pos);
+
+        if (state->getMaterial() != material)
         {
-            return false;
+            unsigned short element = mLevel->getExtraElement(pos.x, pos.y, pos.z);
+
+            if (element == 0)
+            {
+                return false;
+            }
+
+            state = Block::getStateByElementId(element);
         }
 
-        state = Block::getStateByElementId(element);
+        if (state->getMaterial() == material)
+        {
+            double surface = (double)((float)(pos.y + 1)
+                                      - (float)(LiquidBlock::getHeightFromData(
+                                                    state->getBlock()->convertBlockStateToLegacyData(state))
+                                                - 0.1111111119389534f));
+
+            bool inside = eyeY < surface;
+
+            if (!inside && (GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+            {
+                return false;
+            }
+
+            return inside;
+        }
     }
 
-    if (state->getMaterial() != material)
-    {
-        return false;
-    }
-
-    double surface = (double)((float)(pos.y + 1)
-                              - (float)(LiquidBlock::getHeightFromData(
-                                            state->getBlock()->convertBlockStateToLegacyData(state))
-                                        - 0.1111111119389534));
-
-    if (eyeY < surface)
-    {
-        return true;
-    }
-
-    return (GetType() & EntityType::PLAYER) == EntityType::PLAYER ? false : false;
+    return false;
 }
 
 bool Entity::isInLiquid(Material* material, Vec3* pos)
 {
+    bool onBoat = false;
+
     if (getVehicle() && getVehicle()->GetType() == EntityType::BOAT)
     {
-        return false;
+        onBoat = true;
     }
 
-    BlockPos blockPos(pos->x, pos->y, pos->z);
-    const BlockState* state = mLevel->getBlockState(mTickCache, blockPos);
-
-    if (state->getMaterial() != material)
+    if (!onBoat)
     {
-        unsigned short element = mLevel->getElement(blockPos.x, blockPos.y, blockPos.z);
+        BlockPos blockPos(pos->x, pos->y, pos->z);
+        const BlockState* state = mLevel->getBlockState(mTickCache, blockPos);
 
-        if (element == 0)
+        if (state->getMaterial() != material)
         {
-            return false;
+            unsigned short element = mLevel->getExtraElement(blockPos.x, blockPos.y, blockPos.z);
+
+            if (element == 0)
+            {
+                return false;
+            }
+
+            state = Block::getStateByElementId(element);
         }
 
-        state = Block::getStateByElementId(element);
-    }
+        if (state->getMaterial() == material)
+        {
+            double surface = (double)((float)(blockPos.y + 1)
+                                      - (float)(LiquidBlock::getHeightFromData(
+                                                    state->getBlock()->convertBlockStateToLegacyData(state))
+                                                - 0.1111111119389534f));
 
-    if (state->getMaterial() != material)
-    {
-        return false;
-    }
+            bool inside = pos->y < surface;
 
-    double surface = (double)((float)(blockPos.y + 1)
-                              - (float)(LiquidBlock::getHeightFromData(
-                                            state->getBlock()->convertBlockStateToLegacyData(state))
-                                        - 0.1111111119389534));
+            if (!inside && (GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+            {
+                return false;
+            }
 
-    if (pos->y < surface)
-    {
-        return true;
+            return inside;
+        }
     }
 
     return false;
@@ -2499,7 +2515,8 @@ HitResult* Entity::pick(double distance, float partialTicks)
         inMiniGame = true;
         if (Minecraft::InMiniGame(eMiniGameId_Tumble, true))
         {
-            alwaysClipBlocks = new boost::unordered_set<Block*>(11);
+            void* storage = operator new(sizeof(boost::unordered_set<Block*>));
+            alwaysClipBlocks = new (storage) boost::unordered_set<Block*>(11);
             alwaysClipBlocks->insert(Blocks::web);
             alwaysClipBlocks->insert(Blocks::vine);
         }
@@ -2511,7 +2528,7 @@ HitResult* Entity::pick(double distance, float partialTicks)
 
 std::wstring Entity::getEncodeId()
 {
-    ResourceLocation key = EntityIO::getKey(mType);
+    ResourceLocation key = EntityIO::getKey(GetType());
 
     if (key.getPath().empty())
     {
@@ -3421,7 +3438,7 @@ bool Entity::isPassenger()
 
 bool Entity::isVehicle()
 {
-    return !mPassengers.empty();
+    return !getPassengers()->empty();
 }
 
 bool Entity::isSneaking()
@@ -4052,12 +4069,14 @@ void Entity::setCustomName(const std::wstring& customName, const std::wstring& o
 
 std::wstring Entity::getCustomName()
 {
-    return mEntityData->get(DATA_CUSTOM_NAME);
+    std::wstring value = mEntityData->get(DATA_CUSTOM_NAME);
+    return value;
 }
 
 std::wstring Entity::getOwnerUUID()
 {
-    return mEntityData->get(DATA_OWNER_UUID);
+    std::wstring value = mEntityData->get(DATA_OWNER_UUID);
+    return value;
 }
 
 bool Entity::wasNamedByRestrictedPlayer()
@@ -4117,7 +4136,7 @@ void Entity::teleportTo(double x, double y, double z)
 {
     mTeleported = true;
 
-    setPos(x, y, z);
+    moveTo(x, y, z, mYRot, mXRot);
 
     mLevel->tick(shared_from_this(), false);
 }
@@ -4282,28 +4301,32 @@ bool Entity::hasPassenger(boost::shared_ptr<Entity> passenger)
 
 bool Entity::hasPassenger(unsigned long long type)
 {
-    for (std::vector<boost::weak_ptr<Entity> >::iterator it = mPassengers.begin();
-         it != mPassengers.end(); ++it)
+    std::vector<boost::weak_ptr<Entity> >* passengers = getPassengers();
+
+    for (std::vector<boost::weak_ptr<Entity> >::iterator it = passengers->begin();
+         it != passengers->end(); ++it)
     {
         boost::shared_ptr<Entity> rider = it->lock();
 
-        if (!rider)
+        if (rider)
         {
-            continue;
-        }
+            unsigned long long riderType = rider->GetType();
 
-        unsigned long long riderType = rider->GetType();
+            bool matches;
 
-        if ((type & 0x3FULL) == 0)
-        {
-            if ((riderType & type) == type)
+            if ((type & 0x3FULL) == 0)
+            {
+                matches = (riderType & type) == type;
+            }
+            else
+            {
+                matches = riderType == type;
+            }
+
+            if (matches)
             {
                 return true;
             }
-        }
-        else if (riderType == type)
-        {
-            return true;
         }
     }
 
@@ -4403,28 +4426,32 @@ bool Entity::hasIndirectPassenger(boost::shared_ptr<Entity> passenger)
 
 bool Entity::hasIndirectPassenger(unsigned long long type)
 {
-    for (std::vector<boost::weak_ptr<Entity> >::iterator it = mPassengers.begin();
-         it != mPassengers.end(); ++it)
+    std::vector<boost::weak_ptr<Entity> >* passengers = getPassengers();
+
+    for (std::vector<boost::weak_ptr<Entity> >::iterator it = passengers->begin();
+         it != passengers->end(); ++it)
     {
         boost::shared_ptr<Entity> rider = it->lock();
 
-        if (!rider)
+        if (rider)
         {
-            continue;
-        }
+            unsigned long long riderType = rider->GetType();
 
-        unsigned long long riderType = rider->GetType();
+            bool matches;
 
-        if ((type & 0x3FULL) == 0)
-        {
-            if ((riderType & type) == type)
+            if ((type & 0x3FULL) == 0)
+            {
+                matches = (riderType & type) == type;
+            }
+            else
+            {
+                matches = riderType == type;
+            }
+
+            if (matches)
             {
                 return true;
             }
-        }
-        else if (riderType == type)
-        {
-            return true;
         }
     }
 

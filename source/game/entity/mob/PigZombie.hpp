@@ -30,7 +30,6 @@ public:
     };
 
     PigZombie(Level* level);
-    virtual ~PigZombie();
 
     static void create(Level* level);
     void _init();

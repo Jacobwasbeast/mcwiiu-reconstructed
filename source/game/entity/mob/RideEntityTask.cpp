@@ -2,10 +2,6 @@
 
 #include "game/entity/mob/Entity.hpp"
 
-RideEntityTask::~RideEntityTask()
-{
-}
-
 bool RideEntityTask::isCompleted()
 {
     return completed;

@@ -1773,17 +1773,9 @@ void LivingEntity::causeFallDamage(float fallDistance, float damageMultiplier)
 {
     Entity::causeFallDamage(fallDistance, damageMultiplier);
 
-    int damage;
-
-    if (hasEffect(MobEffects::JUMP))
-    {
-        int amplifier = getEffect(MobEffects::JUMP)->getAmplifier();
-        damage = (int)ceilf((fallDistance - 3.0f - (float)((double)amplifier + 1.0)) * damageMultiplier);
-    }
-    else
-    {
-        damage = (int)ceilf((fallDistance - 3.0f - 0.0f) * damageMultiplier);
-    }
+    MobEffectInstance* jumpBoost = getEffect(MobEffects::JUMP);
+    float jumpReduction = jumpBoost == NULL ? 0.0f : (float)((double)jumpBoost->getAmplifier() + 1.0);
+    int damage = (int)ceilf((fallDistance - 3.0f - jumpReduction) * damageMultiplier);
 
     if (Minecraft::InMiniGame(eMiniGameId_Glide, true) && !TakeGlideCollisionDamage())
     {

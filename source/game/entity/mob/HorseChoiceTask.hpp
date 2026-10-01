@@ -11,7 +11,6 @@ public:
                     int promptId, bool preCompletionEnabled, int firstInput, int secondInput,
                     eTutorial_CompletionAction completionAction,
                     ETelemetryChallenges telemetryChallenge);
-    virtual ~HorseChoiceTask();
 
     virtual int getDescriptionId();
     virtual void onLookAtEntity(boost::shared_ptr<Entity> entity);

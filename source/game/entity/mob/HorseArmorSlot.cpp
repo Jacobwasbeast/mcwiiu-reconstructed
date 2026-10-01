@@ -18,6 +18,3 @@ int HorseArmorSlot::getMaxStackSize()
     return 1;
 }
 
-HorseArmorSlot::~HorseArmorSlot()
-{
-}

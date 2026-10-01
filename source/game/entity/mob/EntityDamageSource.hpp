@@ -13,7 +13,6 @@ public:
     EntityDamageSource(ClientboundChatPacket::EChatPacketMessage message,
                        ClientboundChatPacket::EChatPacketMessage deathMessage,
                        boost::shared_ptr<Entity> entity);
-    virtual ~EntityDamageSource();
 
     bool isThorns() const;
     virtual boost::shared_ptr<Entity> getEntity() const;

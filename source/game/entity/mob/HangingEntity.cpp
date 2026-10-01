@@ -283,9 +283,9 @@ float HangingEntity::rotate(Rotation* rotation)
     float result = Mth::wrapDegrees(mYRot);
     switch (rotation->getType())
     {
-    case Rotation::eTYPE_Clockwise90: return result + 90.0f;
+    case Rotation::eTYPE_Clockwise90: return result + 270.0f;
     case Rotation::eTYPE_Clockwise180: return result + 180.0f;
-    case Rotation::eTYPE_CounterClockwise90: return result + 270.0f;
+    case Rotation::eTYPE_CounterClockwise90: return result + 90.0f;
     default: return result;
     }
 }

@@ -12,10 +12,6 @@ FlyingMob::FlyingMob(Level* level)
 {
 }
 
-FlyingMob::~FlyingMob()
-{
-}
-
 void FlyingMob::causeFallDamage(float fallDistance, float damageMultiplier)
 {
 }

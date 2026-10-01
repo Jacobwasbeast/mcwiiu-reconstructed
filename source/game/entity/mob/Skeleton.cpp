@@ -16,15 +16,10 @@
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
 
-
 Skeleton::Skeleton(Level* level)
     : AbstractSkeleton(level)
 {
     Mob::fjDerivedCtorCalls();
-}
-
-Skeleton::~Skeleton()
-{
 }
 
 void Skeleton::create(Level* level)

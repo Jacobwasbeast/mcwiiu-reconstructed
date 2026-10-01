@@ -18,10 +18,6 @@ HorseChoiceTask::HorseChoiceTask(Tutorial* tutorial, int horseDescriptionIdValue
 {
 }
 
-HorseChoiceTask::~HorseChoiceTask()
-{
-}
-
 int HorseChoiceTask::getDescriptionId()
 {
     if (entityType == EntityType::MULE)

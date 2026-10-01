@@ -15,7 +15,6 @@ class Skeleton : public AbstractSkeleton
 {
 public:
     Skeleton(Level* level);
-    virtual ~Skeleton();
 
     static void create(Level* level);
     static void addDataWalkers(DataFixerUpper* fixer);

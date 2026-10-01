@@ -18,10 +18,6 @@ IndirectEntityDamageSource::IndirectEntityDamageSource(ClientboundChatPacket::EC
 {
 }
 
-IndirectEntityDamageSource::~IndirectEntityDamageSource()
-{
-}
-
 boost::shared_ptr<Entity> IndirectEntityDamageSource::getDirectEntity() const
 {
     return entity;

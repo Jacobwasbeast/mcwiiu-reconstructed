@@ -14,10 +14,6 @@ EntityDamageSource::EntityDamageSource(ClientboundChatPacket::EChatPacketMessage
 {
 }
 
-EntityDamageSource::~EntityDamageSource()
-{
-}
-
 bool EntityDamageSource::isThorns() const
 {
     return thorns;

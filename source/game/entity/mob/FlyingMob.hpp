@@ -11,7 +11,6 @@ class FlyingMob : public Mob
 {
 public:
     FlyingMob(Level* level);
-    virtual ~FlyingMob();
     virtual void causeFallDamage(float fallDistance, float damageMultiplier);
     virtual void checkFallDamage(double y, bool onGround, Block* block, const BlockPos& pos);
     virtual void travel(float xxa, float yya, float zza);

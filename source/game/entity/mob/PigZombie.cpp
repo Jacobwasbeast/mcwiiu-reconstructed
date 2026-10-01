@@ -34,10 +34,6 @@ PigZombie::PigZombie(Level* level)
     _init();
 }
 
-PigZombie::~PigZombie()
-{
-}
-
 void PigZombie::create(Level* level)
 {
     new PigZombie(level);

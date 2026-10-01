@@ -17,10 +17,6 @@ AgableWaterAnimal::AgableWaterAnimal(Level* level)
 {
 }
 
-AgableWaterAnimal::~AgableWaterAnimal()
-{
-}
-
 bool AgableWaterAnimal::isWaterMob()
 {
     return true;

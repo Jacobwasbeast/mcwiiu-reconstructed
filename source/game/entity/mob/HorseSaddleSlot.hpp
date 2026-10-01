@@ -18,7 +18,6 @@ public:
     {
     }
 
-    virtual ~HorseSaddleSlot();
     virtual bool mayPlace(not_null_ptr<ItemInstance> item);
     virtual bool isActive();
 

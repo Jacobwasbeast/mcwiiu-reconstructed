@@ -16,7 +16,6 @@ public:
                                boost::shared_ptr<Entity> directEntity,
                                boost::shared_ptr<Entity> entity,
                                const DamageSource* baseDamageSource);
-    virtual ~IndirectEntityDamageSource();
 
     virtual boost::shared_ptr<Entity> getDirectEntity() const;
     virtual boost::shared_ptr<Entity> getEntity() const;

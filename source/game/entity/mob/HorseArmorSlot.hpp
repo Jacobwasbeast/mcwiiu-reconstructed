@@ -17,7 +17,6 @@ public:
     {
     }
 
-    virtual ~HorseArmorSlot();
     virtual bool mayPlace(not_null_ptr<ItemInstance> itemInstance);
     virtual int getMaxStackSize();
     virtual bool isActive();

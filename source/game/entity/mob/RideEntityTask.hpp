@@ -18,7 +18,6 @@ public:
                    std::vector<TutorialConstraint*>* constraints, bool showMinimumTime, bool allowFade,
                    bool repeatMessage);
 
-    virtual ~RideEntityTask();
 
     virtual bool isCompleted();
     virtual void onRideEntity(boost::shared_ptr<Entity> entity);

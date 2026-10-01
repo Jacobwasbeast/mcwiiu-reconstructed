@@ -14,7 +14,6 @@ class AgableWaterAnimal : public AgableMob
 {
 public:
     AgableWaterAnimal(Level* level);
-    virtual ~AgableWaterAnimal();
 
     virtual bool isWaterMob();
     virtual bool checkSpawnRules();

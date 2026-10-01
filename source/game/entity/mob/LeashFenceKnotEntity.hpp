@@ -13,7 +13,6 @@ public:
     LeashFenceKnotEntity(Level* level);
     LeashFenceKnotEntity(Level* level, const BlockPos& pos);
     virtual unsigned long long GetType();
-    virtual ~LeashFenceKnotEntity();
 
     virtual void defineSynchedData();
     virtual void setPos(double x, double y, double z);

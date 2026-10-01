@@ -87,10 +87,6 @@ FireworksRocketEntity::FireworksRocketEntity(Level* level, double x, double y, d
     mOwner = owner;
 }
 
-FireworksRocketEntity::~FireworksRocketEntity()
-{
-}
-
 void FireworksRocketEntity::_init(double x, double y, double z, const not_null_ptr<ItemInstance>& item)
 {
     defineSynchedData();
