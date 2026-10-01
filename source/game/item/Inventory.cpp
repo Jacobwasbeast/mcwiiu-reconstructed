@@ -59,8 +59,7 @@ std::wstring Inventory::getName()
 
 std::wstring Inventory::getCustomName()
 {
-    std::wstring customName;
-    return customName;
+    return std::wstring(L"");
 }
 
 bool Inventory::hasCustomName()
@@ -78,7 +77,7 @@ bool Inventory::isHotbarSlot(int slot)
     return slot >= 0 && slot < 9;
 }
 
-not_null_ptr<ItemInstance> Inventory::getSelected()
+not_null_ptr<ItemInstance>& Inventory::getSelected()
 {
     return isHotbarSlot(m_selected) ? m_items[m_selected] : ItemInstance::EMPTY;
 }
@@ -345,15 +344,15 @@ int Inventory::addResource(not_null_ptr<ItemInstance> item)
 
 void Inventory::tick()
 {
-    boost::shared_ptr<Entity> owner = m_player->shared_from_this();
-    for (int compartment = 0; compartment < 3; ++compartment)
+    NonNullList<not_null_ptr<ItemInstance> >* compartment = m_compartments;
+    for (int remaining = 3; remaining != 0; --remaining, ++compartment)
     {
-        for (unsigned int slot = 0; slot < m_compartments[compartment].size(); ++slot)
+        for (unsigned int slot = 0; slot < compartment->size(); ++slot)
         {
-            not_null_ptr<ItemInstance> item = m_compartments[compartment][slot];
-            if (!item->isEmpty())
+            if (!(*compartment)[slot]->isEmpty())
             {
-                item->inventoryTick(m_player->mLevel, owner, slot, m_selected == static_cast<int>(slot));
+                (*compartment)[slot]->inventoryTick(
+                    m_player->mLevel, m_player->shared_from_this(), slot, m_selected == static_cast<int>(slot));
             }
         }
     }
@@ -460,17 +459,19 @@ void Inventory::placeItemBackInInventory(Level* level, not_null_ptr<ItemInstance
 
 not_null_ptr<ItemInstance> Inventory::removeItem(unsigned int slot, int count)
 {
-    for (int compartment = 0; compartment < 3; ++compartment)
+    NonNullList<not_null_ptr<ItemInstance> > compartment;
+    for (int index = 0; index < 3; ++index)
     {
-        if (slot < m_compartments[compartment].size())
+        if (slot < m_compartments[index].size())
         {
-            if (!m_compartments[compartment][slot]->isEmpty())
-            {
-                return ContainerHelper::removeItem(m_compartments[compartment], slot, count);
-            }
-            return ItemInstance::EMPTY;
+            compartment = m_compartments[index];
+            break;
         }
-        slot -= m_compartments[compartment].size();
+        slot -= m_compartments[index].size();
+    }
+    if (!compartment[slot]->isEmpty())
+    {
+        return ContainerHelper::removeItem(compartment, slot, count);
     }
     return ItemInstance::EMPTY;
 }
@@ -492,22 +493,23 @@ void Inventory::removeItem(not_null_ptr<ItemInstance> item)
 
 not_null_ptr<ItemInstance> Inventory::removeItemNoUpdate(int slot)
 {
-    if (slot < 0)
+    NonNullList<not_null_ptr<ItemInstance> > compartment;
+    for (int index = 0; index < 3; ++index)
+    {
+        if (slot < m_compartments[index].size())
+        {
+            compartment = m_compartments[index];
+            break;
+        }
+        slot -= m_compartments[index].size();
+    }
+    if (compartment[slot]->isEmpty())
     {
         return ItemInstance::EMPTY;
     }
-    unsigned int index = static_cast<unsigned int>(slot);
-    for (int compartment = 0; compartment < 3; ++compartment)
-    {
-        if (index < m_compartments[compartment].size())
-        {
-            return m_compartments[compartment][index]->isEmpty()
-                ? ItemInstance::EMPTY
-                : ContainerHelper::takeItem(m_compartments[compartment], index);
-        }
-        index -= m_compartments[compartment].size();
-    }
-    return ItemInstance::EMPTY;
+    not_null_ptr<ItemInstance> item = compartment[slot];
+    compartment[slot] = ItemInstance::EMPTY;
+    return item;
 }
 
 void Inventory::setItem(unsigned int slot, not_null_ptr<ItemInstance> item)
@@ -530,8 +532,12 @@ void Inventory::setItem(unsigned int slot, not_null_ptr<ItemInstance> item)
 
 float Inventory::getDestroySpeed(const BlockState* block)
 {
-    not_null_ptr<ItemInstance> selected = getItem(m_selected);
-    return selected->isEmpty() ? 1.0f : selected->getDestroySpeed(block);
+    float speed = 1.0f;
+    if (!m_items[m_selected]->isEmpty())
+    {
+        speed *= m_items[m_selected]->getDestroySpeed(block);
+    }
+    return speed;
 }
 
 ListTag* Inventory::save(ListTag* tag)
@@ -603,14 +609,28 @@ unsigned int Inventory::getContainerSize()
 
 bool Inventory::isEmpty()
 {
-    for (int compartment = 0; compartment < 3; ++compartment)
+    for (unsigned int slot = 0; slot < m_items.size(); ++slot)
     {
-        for (unsigned int slot = 0; slot < m_compartments[compartment].size(); ++slot)
+        not_null_ptr<ItemInstance> item = m_items[slot];
+        if (!item->isEmpty())
         {
-            if (!m_compartments[compartment][slot]->isEmpty())
-            {
-                return false;
-            }
+            return false;
+        }
+    }
+    for (unsigned int slot = 0; slot < m_armor.size(); ++slot)
+    {
+        not_null_ptr<ItemInstance> item = m_armor[slot];
+        if (!item->isEmpty())
+        {
+            return false;
+        }
+    }
+    for (unsigned int slot = 0; slot < m_offhand.size(); ++slot)
+    {
+        not_null_ptr<ItemInstance> item = m_offhand[slot];
+        if (!item->isEmpty())
+        {
+            return false;
         }
     }
     return true;
@@ -618,15 +638,17 @@ bool Inventory::isEmpty()
 
 not_null_ptr<ItemInstance> Inventory::getItem(unsigned int slot)
 {
-    for (int compartment = 0; compartment < 3; ++compartment)
+    NonNullList<not_null_ptr<ItemInstance> > compartment;
+    for (int index = 0; index < 3; ++index)
     {
-        if (slot < m_compartments[compartment].size())
+        if (slot < m_compartments[index].size())
         {
-            return m_compartments[compartment][slot];
+            compartment = m_compartments[index];
+            break;
         }
-        slot -= m_compartments[compartment].size();
+        slot -= m_compartments[index].size();
     }
-    return ItemInstance::EMPTY;
+    return compartment.size() == 0 ? ItemInstance::EMPTY : compartment[slot];
 }
 
 int Inventory::getMaxStackSize()
@@ -651,19 +673,18 @@ not_null_ptr<ItemInstance> Inventory::getArmor(int slot)
 
 void Inventory::hurtArmor(float damage)
 {
-    int amount = static_cast<int>(damage / 4.0f);
-    if (amount < 1)
+    damage /= 4.0f;
+    if (damage < 1.0f)
     {
-        amount = 1;
+        damage = 1.0f;
     }
-    boost::shared_ptr<LivingEntity> owner =
-        boost::static_pointer_cast<LivingEntity>(m_player->shared_from_this());
     for (unsigned int slot = 0; slot < m_armor.size(); ++slot)
     {
         if (!m_armor[slot]->isEmpty()
             && dynamic_cast<ArmorItem*>(m_armor[slot]->getItem()) != NULL)
         {
-            m_armor[slot]->hurtAndBreak(amount, owner);
+            m_armor[slot]->hurtAndBreak(
+                static_cast<int>(damage), boost::static_pointer_cast<LivingEntity>(m_player->shared_from_this()));
             if (m_armor[slot]->getCount() == 0)
             {
                 m_armor[slot] = ItemInstance::EMPTY;
@@ -674,15 +695,28 @@ void Inventory::hurtArmor(float damage)
 
 void Inventory::dropAll()
 {
-    for (int compartment = 0; compartment < 3; ++compartment)
+    for (unsigned int slot = 0; slot < m_items.size(); ++slot)
     {
-        for (unsigned int slot = 0; slot < m_compartments[compartment].size(); ++slot)
+        if (!m_items[slot]->isEmpty())
         {
-            if (!m_compartments[compartment][slot]->isEmpty())
-            {
-                m_player->drop(m_compartments[compartment][slot], true, false);
-                m_compartments[compartment][slot] = ItemInstance::EMPTY;
-            }
+            m_player->drop(m_items[slot], true, false);
+            m_items[slot] = ItemInstance::EMPTY;
+        }
+    }
+    for (unsigned int slot = 0; slot < m_armor.size(); ++slot)
+    {
+        if (!m_armor[slot]->isEmpty())
+        {
+            m_player->drop(m_armor[slot], true, false);
+            m_armor[slot] = ItemInstance::EMPTY;
+        }
+    }
+    for (unsigned int slot = 0; slot < m_offhand.size(); ++slot)
+    {
+        if (!m_offhand[slot]->isEmpty())
+        {
+            m_player->drop(m_offhand[slot], true, false);
+            m_offhand[slot] = ItemInstance::EMPTY;
         }
     }
 }
@@ -770,7 +804,7 @@ void Inventory::clearContent()
     {
         for (unsigned int slot = 0; slot < m_compartments[compartment].size(); ++slot)
         {
-            m_compartments[compartment][slot] = ItemInstance::EMPTY;
+            m_compartments[compartment][slot] = m_compartments[compartment].defaultValue;
         }
     }
 }
@@ -794,11 +828,11 @@ int Inventory::countMatches(not_null_ptr<ItemInstance> item)
 
 void Inventory::OnRemove(int slot)
 {
-    if (!Minecraft::InMiniGame(eMiniGameId_Any, true) || !isHotbarSlot(slot))
+    if (!Minecraft::InMiniGame(eMiniGameId_Any, true) || slot < 0 || slot >= 9)
     {
         return;
     }
-    for (unsigned int source = 9; source < m_items.size(); ++source)
+    for (unsigned int source = 9; source < INVENTORY_SIZE; ++source)
     {
         if (!m_items[source]->isEmpty() && !m_items[source]->getItem()->PreferInventory())
         {
@@ -822,25 +856,52 @@ void Inventory::PrintContents()
 
 int Inventory::getSlot(Item* item, int auxValue, CompoundTag* tag)
 {
-    std::vector<std::wstring> exceptions;
-    exceptions.push_back(L"display");
-    exceptions.push_back(L"Name");
-    for (int compartment = 0; compartment < 3; ++compartment)
+    std::vector<std::wstring>* exceptions = new std::vector<std::wstring>();
+    exceptions->push_back(L"display");
+    exceptions->push_back(L"Name");
+    for (unsigned int slot = 0; slot < m_compartments[0].size(); ++slot)
     {
-        for (unsigned int slot = 0; slot < m_compartments[compartment].size(); ++slot)
+        if (m_compartments[0][slot]->getItem() == item
+            && (auxValue < 0 || m_compartments[0][slot]->getAuxValue() == auxValue))
         {
-            not_null_ptr<ItemInstance> current = m_compartments[compartment][slot];
-            if (current->getItem() != item
-                || (auxValue >= 0 && current->getAuxValue() != auxValue))
-            {
-                continue;
-            }
             if (tag == NULL)
             {
                 return static_cast<int>(slot);
             }
-            if (current->getTag() != NULL
-                && tag->equalsWithException(current->getTag(), &exceptions))
+            if (m_compartments[0][slot]->getTag() != NULL
+                && tag->equalsWithException(m_compartments[0][slot]->getTag(), exceptions))
+            {
+                return static_cast<int>(slot);
+            }
+        }
+    }
+    for (unsigned int slot = 0; slot < m_compartments[1].size(); ++slot)
+    {
+        if (m_compartments[1][slot]->getItem() == item
+            && (auxValue < 0 || m_compartments[1][slot]->getAuxValue() == auxValue))
+        {
+            if (tag == NULL)
+            {
+                return static_cast<int>(slot);
+            }
+            if (m_compartments[1][slot]->getTag() != NULL
+                && tag->equalsWithException(m_compartments[1][slot]->getTag(), exceptions))
+            {
+                return static_cast<int>(slot);
+            }
+        }
+    }
+    for (unsigned int slot = 0; slot < m_compartments[2].size(); ++slot)
+    {
+        if (m_compartments[2][slot]->getItem() == item
+            && (auxValue < 0 || m_compartments[2][slot]->getAuxValue() == auxValue))
+        {
+            if (tag == NULL)
+            {
+                return static_cast<int>(slot);
+            }
+            if (m_compartments[2][slot]->getTag() != NULL
+                && tag->equalsWithException(m_compartments[2][slot]->getTag(), exceptions))
             {
                 return static_cast<int>(slot);
             }

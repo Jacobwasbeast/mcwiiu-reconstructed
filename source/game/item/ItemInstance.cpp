@@ -1,4 +1,8 @@
 #include "game/item/ItemInstance.hpp"
+
+static const wchar_t* TAG_DISPLAY = L"display";
+static const wchar_t* TAG_NAME = L"Name";
+static const wchar_t* TAG_LOC_NAME = L"LocName";
 #include "game/core/StringIds.hpp"
 #include "game/item/Item.hpp"
 #include "game/item/Items.hpp"
@@ -202,11 +206,9 @@ void ItemInstance::_init(Item* item, int count, int auxValue)
     mCount = count;
     mPopTime = 0;
     mAuxValue = auxValue;
-    mCensorshipInfo.reset(new CensoredString(static_cast<int>(0xAD36B773u), 0x62950B66));
+    mCensorshipInfo = boost::shared_ptr<CensoredString>(new CensoredString(static_cast<int>(0xAD36B773u), 0x62950B66));
     mCanBreak = 0;
     mBreakBlock = 0;
-    mCanPlace = 0;
-    mPlaceBlock = 0;
     updateEmptyCacheFlag();
 }
 
@@ -267,8 +269,7 @@ InteractionResult::EInteractionResult ItemInstance::useOn(boost::shared_ptr<Play
 
 float ItemInstance::getDestroySpeed(const BlockState* state)
 {
-    not_null_ptr<ItemInstance> self(shared_from_this());
-    return mItem != 0 ? mItem->getDestroySpeed(self, state) : 0.0f;
+    return getItem()->getDestroySpeed(not_null_ptr<ItemInstance>(shared_from_this()), state);
 }
 
 bool ItemInstance::TestUse(Level* level, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand)
@@ -295,8 +296,6 @@ not_null_ptr<ItemInstance> ItemInstance::finishUsingItem(Level* level, boost::sh
 
 CompoundTag* ItemInstance::save(CompoundTag* tag)
 {
-    if (tag == 0)
-        tag = new CompoundTag();
     ResourceLocation location = Item::itemRegistry.getKey(mItem);
     tag->putString(L"id", location.toString());
     tag->putByte(L"Count", (unsigned char)mCount);
@@ -594,26 +593,19 @@ bool ItemInstance::sameItem_not_shared(ItemInstance* other)
 
 int ItemInstance::getUseDescriptionId()
 {
-    not_null_ptr<ItemInstance> self;
-    static_cast<boost::shared_ptr<ItemInstance>&>(self) = shared_from_this();
-    return mItem != 0 ? mItem->getUseDescriptionId(self) : 0;
+    return getItem()->getUseDescriptionId(not_null_ptr<ItemInstance>(shared_from_this()));
 }
 
 int ItemInstance::getDescriptionId(int auxValue)
 {
-    not_null_ptr<ItemInstance> self;
-    static_cast<boost::shared_ptr<ItemInstance>&>(self) = shared_from_this();
-    return mItem != 0 ? mItem->getDescriptionId(auxValue) : 0;
+    return getItem()->getDescriptionId(not_null_ptr<ItemInstance>(shared_from_this()));
 }
 
 std::wstring ItemInstance::toString()
 {
     std::wostringstream stream;
     stream.setf(std::ios::dec, std::ios::basefield);
-    not_null_ptr<ItemInstance> self;
-    static_cast<boost::shared_ptr<ItemInstance>&>(self) = shared_from_this();
-    const wchar_t* description = getItem()->getDescription(self);
-    stream << mCount << L"x" << description << L"@" << mAuxValue;
+    stream << mCount << L"x" << getItem()->getDescription(not_null_ptr<ItemInstance>(shared_from_this())) << L"@" << mAuxValue;
     return stream.str();
 }
 
@@ -731,16 +723,12 @@ void ItemInstance::onCraftedBy(Level* level, boost::shared_ptr<Player> player, i
 
 int ItemInstance::getUseDuration()
 {
-    not_null_ptr<ItemInstance> self;
-    static_cast<boost::shared_ptr<ItemInstance>&>(self) = shared_from_this();
-    return mItem != 0 ? mItem->getUseDuration(self) : 0;
+    return getItem()->getUseDuration(not_null_ptr<ItemInstance>(shared_from_this()));
 }
 
 int ItemInstance::getUseAnimation() const
 {
-    not_null_ptr<const ItemInstance> self;
-    static_cast<boost::shared_ptr<const ItemInstance>&>(self) = shared_from_this();
-    return mItem != 0 ? mItem->getUseAnimation(self) : UseAnim_none;
+    return getItem()->getUseAnimation(not_null_ptr<const ItemInstance>(shared_from_this()));
 }
 
 void ItemInstance::releaseUsing(Level* level, boost::shared_ptr<LivingEntity> entity, int duration)
@@ -796,16 +784,16 @@ bool ItemInstance::wasCreatedByRestrictedPlayer()
 
 std::wstring ItemInstance::getHoverNameUnfiltered()
 {
-    CompoundTag* display = static_cast<CompoundTag*>(getTagElement(L"display"));
+    CompoundTag* display = static_cast<CompoundTag*>(getTagElement(TAG_DISPLAY));
     if (display != 0)
     {
-        if (display->contains(L"Name"))
+        if (display->contains(TAG_NAME))
         {
-            return display->getString(L"Name");
+            return display->getString(TAG_NAME);
         }
-        if (display->contains(L"LocName", Tag::TAG_INT))
+        if (display->contains(TAG_LOC_NAME, Tag::TAG_INT))
         {
-            return L10N::GetString(display->getInt(L"LocName"));
+            return L10N::GetString(display->getInt(TAG_LOC_NAME));
         }
     }
     not_null_ptr<ItemInstance> self;
@@ -819,13 +807,13 @@ std::wstring ItemInstance::getHoverName()
     {
         return std::wstring(L"[NULL]");
     }
-    CompoundTag* display = static_cast<CompoundTag*>(getTagElement(L"display"));
-    bool hasName = display != 0 && display->contains(L"Name", Tag::TAG_STRING);
+    CompoundTag* display = static_cast<CompoundTag*>(getTagElement(TAG_DISPLAY));
+    bool hasName = display != 0 && display->contains(TAG_NAME, Tag::TAG_STRING);
     if (!hasName)
     {
         return getHoverNameUnfiltered();
     }
-    std::wstring name = display->getString(L"Name");
+    std::wstring name = display->getString(TAG_NAME);
     std::wstring ownerUUID = mTag->getString(L"ownerID");
     bool restricted = wasCreatedByRestrictedPlayer();
     mCensorshipInfo->set(name, ownerUUID, restricted, mTag->getByte(L"createdOnHost") != 0);
@@ -840,17 +828,14 @@ std::wstring ItemInstance::getHoverName()
 
 not_null_ptr<ItemInstance> ItemInstance::setTranslatableName(int name)
 {
-    CompoundTag* display = static_cast<CompoundTag*>(getOrCreateTagElement(L"display"));
-    display->putInt(L"LocName", name);
-    not_null_ptr<ItemInstance> self;
-    static_cast<boost::shared_ptr<ItemInstance>&>(self) = shared_from_this();
-    return self;
+    static_cast<CompoundTag*>(getOrCreateTagElement(TAG_DISPLAY))->putInt(TAG_LOC_NAME, name);
+    return not_null_ptr<ItemInstance>(shared_from_this());
 }
 
 not_null_ptr<ItemInstance> ItemInstance::setHoverName(const std::wstring& name)
 {
-    CompoundTag* display = static_cast<CompoundTag*>(getOrCreateTagElement(L"display"));
-    display->putString(L"Name", name);
+    CompoundTag* display = static_cast<CompoundTag*>(getOrCreateTagElement(TAG_DISPLAY));
+    display->putString(TAG_NAME, name);
     not_null_ptr<ItemInstance> self;
     static_cast<boost::shared_ptr<ItemInstance>&>(self) = shared_from_this();
     return self;
@@ -897,13 +882,13 @@ bool ItemInstance::wasCreatedOnHost()
 
 void ItemInstance::resetHoverName()
 {
-    CompoundTag* display = static_cast<CompoundTag*>(getTagElement(L"display"));
+    CompoundTag* display = static_cast<CompoundTag*>(getTagElement(TAG_DISPLAY));
     if (display != 0)
     {
-        display->remove(L"Name");
+        display->remove(TAG_NAME);
         if (display->isEmpty())
         {
-            display->remove(L"display");
+            display->remove(TAG_DISPLAY);
         }
     }
     if (mTag != 0 && mTag->isEmpty())
@@ -915,12 +900,8 @@ void ItemInstance::resetHoverName()
 
 bool ItemInstance::hasCustomHoverName()
 {
-    if (mTag == 0 || !mTag->contains(L"display", Tag::TAG_COMPOUND))
-    {
-        return false;
-    }
-    CompoundTag* display = mTag->getCompound(L"display");
-    return display != 0 && display->contains(L"Name", Tag::TAG_STRING);
+    CompoundTag* display = static_cast<CompoundTag*>(getTagElement(TAG_DISPLAY));
+    return display != 0 && display->contains(TAG_NAME, Tag::TAG_STRING);
 }
 
 boost::unordered_map<eATTRIBUTE_ID, AttributeModifier*>* ItemInstance::getAttributeModifiers(const EquipmentSlot* slot)
@@ -1114,33 +1095,12 @@ std::vector<HtmlString>* ItemInstance::getHoverTextOnly(boost::shared_ptr<Player
 
 bool ItemInstance::hasFoil()
 {
-    not_null_ptr<ItemInstance> self;
-    static_cast<boost::shared_ptr<ItemInstance>&>(self) = shared_from_this();
-    return mItem != 0 && mItem->isFoil(self);
+    return getItem()->isFoil(not_null_ptr<ItemInstance>(shared_from_this()));
 }
 
-int ItemInstance::getRarity()
+const Rarity* ItemInstance::getRarity()
 {
-    not_null_ptr<ItemInstance> self;
-    static_cast<boost::shared_ptr<ItemInstance>&>(self) = shared_from_this();
-    if (mItem == 0)
-    {
-        return eMinecraftColour_HTMLColor_White;
-    }
-    const Rarity* rarity = mItem->getRarity(self);
-    if (rarity == Rarity::UNCOMMON)
-    {
-        return eMinecraftColour_HTMLColor_e;
-    }
-    if (rarity == Rarity::RARE)
-    {
-        return eMinecraftColour_HTMLColor_b;
-    }
-    if (rarity == Rarity::EPIC)
-    {
-        return eMinecraftColour_HTMLColor_5;
-    }
-    return eMinecraftColour_HTMLColor_White;
+    return getItem()->getRarity(not_null_ptr<ItemInstance>(shared_from_this()));
 }
 
 bool ItemInstance::isEnchanted()
@@ -1155,11 +1115,8 @@ bool ItemInstance::isEnchanted()
 
 bool ItemInstance::isEnchantable()
 {
-    if (isEmpty() || mItem == 0)
-        return false;
-    not_null_ptr<ItemInstance> self;
-    static_cast<boost::shared_ptr<ItemInstance>&>(self) = shared_from_this();
-    return getItem()->isEnchantable(self) && !isEnchanted();
+    bool enchantable = getItem()->isEnchantable(not_null_ptr<ItemInstance>(shared_from_this()));
+    return enchantable && !isEnchanted();
 }
 
 void ItemInstance::enchant(Enchantment* enchantment, int level)
@@ -1263,7 +1220,8 @@ void ItemInstance::set4JData(int data)
     }
     if (mTag->contains(L"4jdata"))
     {
-        mTag->putInt(L"4jdata", data);
+        IntTag* tag4j = static_cast<IntTag*>(mTag->get(L"4jdata"));
+        tag4j->mValue = data;
     }
     else if (data != 0)
     {

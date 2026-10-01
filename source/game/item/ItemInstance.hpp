@@ -26,6 +26,7 @@ class Item;
 class Level;
 class ListTag;
 class Random;
+class Rarity;
 class Tag;
 class Player;
 class LivingEntity;
@@ -124,7 +125,7 @@ public:
     std::vector<HtmlString>* getTooltipLines(boost::shared_ptr<Player> player, bool advanced);
     std::vector<HtmlString>* getHoverTextOnly(boost::shared_ptr<Player> player, bool advanced);
     bool hasFoil();
-    int getRarity();
+    const Rarity* getRarity();
     bool isEnchanted();
     bool isEnchantable();
     void enchant(Enchantment* enchantment, int level);
