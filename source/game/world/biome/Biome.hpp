@@ -342,7 +342,6 @@ public:
     bool isSnowCovered();
     bool isMutated();
     float getDownfall();
-    float getTemperature() const;
     float getDepth();
     float getScale();
     float getDefaultBiomeTemperature() const;
@@ -360,6 +359,7 @@ public:
     virtual bool isHumid();
     virtual float getCreatureProbability();
     virtual float getTemperature(const BlockPos& pos);
+    float getTemperature() const;
     virtual void decorate(Level* level, Random& random, const BlockPos& pos);
     virtual unsigned int getGrassColor(const BlockPos& pos);
     virtual unsigned int getFoliageColor(const BlockPos& pos);

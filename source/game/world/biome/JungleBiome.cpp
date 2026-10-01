@@ -50,13 +50,13 @@ void JungleBiome::staticCtor()
     TypedBoxed<PlanksBlock::Variant*> jungleLeafVariant(PlanksBlock::Variant::JUNGLE);
     TypedBoxed<bool> jungleLeafDecayable(false);
     sJungleLeafState = Blocks::leaves->defaultBlockState()
-                           ->setBoxedValue(OldLeafBlock_VARIANT, &jungleLeafVariant)
+                           ->setBoxedValue(OldLeafBlock::VARIANT, &jungleLeafVariant)
                            ->setBoxedValue(LeafBlock::DECAYABLE, &jungleLeafDecayable);
 
     TypedBoxed<PlanksBlock::Variant*> oakLeafVariant(PlanksBlock::Variant::OAK);
     TypedBoxed<bool> oakLeafDecayable(false);
     sOakLeafState = Blocks::leaves->defaultBlockState()
-                        ->setBoxedValue(OldLeafBlock_VARIANT, &oakLeafVariant)
+                        ->setBoxedValue(OldLeafBlock::VARIANT, &oakLeafVariant)
                         ->setBoxedValue(LeafBlock::DECAYABLE, &oakLeafDecayable);
 }
 

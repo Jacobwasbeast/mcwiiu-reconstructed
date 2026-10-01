@@ -37,7 +37,8 @@ unsigned int BiomeColors::getAverageColor(LevelSource* level, const BlockPos& po
     int green = 0;
     int blue = 0;
 
-    MutableBlockPos samplePos(0, 0, 0);
+    BlockPos origin(0, 0, 0);
+    MutableBlockPos& samplePos = static_cast<MutableBlockPos&>(origin);
 
     for (int offsetZ = -1; offsetZ <= 1; ++offsetZ)
     {
@@ -60,7 +61,7 @@ unsigned int BiomeColors::getAverageColor(LevelSource* level, const BlockPos& po
     int averageGreen = (int)(green / 9.0f);
     int averageBlue = (int)(blue / 9.0f);
 
-    return (unsigned int)(((averageAlpha & 0xFF) << 24) | ((averageRed & 0xFF) << 16) | ((averageGreen & 0xFF) << 8) | (averageBlue & 0xFF));
+    return (unsigned int)((averageAlpha << 24) | ((averageRed & 0xFF) << 16) | ((averageGreen & 0xFF) << 8) | (averageBlue & 0xFF));
 }
 
 unsigned int BiomeColors::getAverageGrassColor(LevelSource* level, const BlockPos& pos)

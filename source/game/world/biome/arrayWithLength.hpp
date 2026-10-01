@@ -46,13 +46,17 @@ public:
 
     arrayWithLength(std::vector<T>& values)
     {
-        length = values.size();
-        data = new T[length];
+        unsigned int count = values.size();
+        T* newData = new T[count];
+        zero(newData, count);
 
-        for (unsigned int i = 0; i < length; i++)
+        for (unsigned int i = 0; i < count; i++)
         {
-            data[i] = values[i];
+            newData[i] = values.at(i);
         }
+
+        length = count;
+        data = newData;
     }
 
     void resize(unsigned int newLength)
