@@ -29,15 +29,15 @@ const EntityDataAccessor<int>* AreaEffectCloud::DATA_PARTICLE_PARAM_1 = NULL;
 const EntityDataAccessor<int>* AreaEffectCloud::DATA_PARTICLE_PARAM_2 = NULL;
 const EntityDataAccessor<int>* AreaEffectCloud::DATA_PARTICLE_RATE = NULL;
 
-AreaEffectCloud::AreaEffectCloud(Level* level) : Entity(level, true), mPotion(NULL), mDuration(600), mWaitTime(20), mReapplicationDelay(20), mFixedColor(false), mDurationOnUse(0), mRadiusOnUse(0.0f), mRadiusPerTick(0.0f), mOwner(), mOwnerUUID()
+AreaEffectCloud::AreaEffectCloud(Level* level) : Entity(level, true), mOwner(), mOwnerUUID()
 {
     _init();
 }
 
-AreaEffectCloud::AreaEffectCloud(Level* level, double x, double y, double z) : Entity(level, true), mPotion(NULL), mDuration(600), mWaitTime(20), mReapplicationDelay(20), mFixedColor(false), mDurationOnUse(0), mRadiusOnUse(0.0f), mRadiusPerTick(0.0f), mOwner(), mOwnerUUID()
+AreaEffectCloud::AreaEffectCloud(Level* level, double x, double y, double z) : Entity(level, true), mOwner(), mOwnerUUID()
 {
-    setPos(x, y, z);
     _init();
+    setPos(x, y, z);
 }
 
 AreaEffectCloud::~AreaEffectCloud()
@@ -61,7 +61,11 @@ void AreaEffectCloud::staticCtor()
 
 void AreaEffectCloud::setRadius(float radius)
 {
+    double x = mX;
+    double y = mY;
+    double z = mZ;
     setSize(radius * 2.0f, 0.5f);
+    setPos(x, y, z);
     if (!mLevel->mIsClientSide)
     {
         getEntityData()->set(DATA_RADIUS, radius, true);
@@ -72,16 +76,15 @@ void AreaEffectCloud::_init()
 {
     fjDerivedCtorCalls();
     mFixedColor = false;
-    mReapplicationDelay = 20;
-    mDurationOnUse = 0;
-    mRadiusOnUse = 0;
     mRadiusPerTick = 0.0f;
+    mDurationOnUse = 0;
+    mRadiusOnUse = 0.0f;
+    mOwnerUUID = L"";
     mPotion = Potions::EMPTY;
     mDuration = 600;
     mWaitTime = 20;
-    mFixedColor = 0;
-    mOwnerUUID = L"";
     mFireImmune = true;
+    mReapplicationDelay = 20;
     mNoPhysics = true;
     setRadius(3.0f);
 }
@@ -100,7 +103,7 @@ void AreaEffectCloud::updateColor()
 
 float AreaEffectCloud::getRadius()
 {
-    return DATA_RADIUS != NULL ? getEntityData()->get(DATA_RADIUS) : 3.0f;
+    return getEntityData()->get(DATA_RADIUS);
 }
 
 boost::shared_ptr<LivingEntity> AreaEffectCloud::getOwner()
@@ -119,18 +122,13 @@ boost::shared_ptr<LivingEntity> AreaEffectCloud::getOwner()
 
 void AreaEffectCloud::applyMobEffects()
 {
+    float radius = getRadius();
     if (mTickCount % 5 != 0)
     {
         return;
     }
 
-    std::vector<MobEffectInstance*> effects;
-    if (mReapplicationDelayMap.empty())
-    {
-        std::vector<MobEffectInstance*>& potionEffects = mPotion->getEffects();
-        effects.insert(effects.end(), potionEffects.begin(), potionEffects.end());
-    }
-    else
+    if (!mReapplicationDelayMap.empty())
     {
         for (boost::unordered_map<int, int>::iterator it = mReapplicationDelayMap.begin(); it != mReapplicationDelayMap.end(); )
         {
@@ -143,82 +141,87 @@ void AreaEffectCloud::applyMobEffects()
                 ++it;
             }
         }
+    }
 
-        std::vector<MobEffectInstance*>& potionEffects = mPotion->getEffects();
-        for (std::vector<MobEffectInstance*>::iterator it = potionEffects.begin(); it != potionEffects.end(); ++it)
-        {
-            MobEffectInstance* source = *it;
-            effects.push_back(new MobEffectInstance(source->getEffect(), source->getDuration() / 4, source->getAmplifier(), source->isAmbient(), source->isVisible()));
-        }
+    std::vector<MobEffectInstance*> effects;
+    for (std::vector<MobEffectInstance*>::iterator it = mPotion->getEffects().begin(); it != mPotion->getEffects().end(); ++it)
+    {
+        MobEffectInstance* source = *it;
+        effects.push_back(new MobEffectInstance(source->getEffect(), source->getDuration() / 4, source->getAmplifier(), source->isAmbient(), source->isVisible()));
     }
     effects.insert(effects.end(), mEffects.begin(), mEffects.end());
 
     if (effects.empty())
     {
+        mReapplicationDelayMap.clear();
         return;
     }
 
-    double radius = static_cast<double>(getRadius());
-    AABB* searchArea = mBoundingBox->grow(radius, radius, radius);
-    std::vector<boost::shared_ptr<Entity> >* nearby = mLevel->getEntitiesOfClass(typeid(LivingEntity), searchArea);
+    std::vector<boost::shared_ptr<Entity> >* nearby = mLevel->getEntitiesOfClass(typeid(LivingEntity), mBoundingBox);
 
-    for (std::vector<boost::shared_ptr<Entity> >::iterator it = nearby->begin(); it != nearby->end(); ++it)
+    if (!nearby->empty())
     {
-        boost::shared_ptr<LivingEntity> target = boost::static_pointer_cast<LivingEntity>(*it);
-
-        if (mReapplicationDelayMap.find(target->getId()) != mReapplicationDelayMap.end())
+        for (std::vector<boost::shared_ptr<Entity> >::iterator it = nearby->begin(); it != nearby->end(); ++it)
         {
-            continue;
-        }
+            boost::shared_ptr<LivingEntity> target = boost::static_pointer_cast<LivingEntity>(*it);
 
-        if (!target->isAlive())
-        {
-            continue;
-        }
-
-        double dx = target->mX - mX;
-        double dz = target->mZ - mZ;
-        if (dx * dx + dz * dz > radius * radius)
-        {
-            continue;
-        }
-
-        mReapplicationDelayMap[target->getId()] = mTickCount + mReapplicationDelay;
-
-        for (std::vector<MobEffectInstance*>::iterator effectIt = effects.begin(); effectIt != effects.end(); ++effectIt)
-        {
-            MobEffectInstance* instance = *effectIt;
-            if (instance->getEffect()->isInstantenous())
-                instance->getEffect()->applyInstantenousEffect(shared_from_this(), getOwner(), target,
-                                                               instance->getAmplifier(), 0.5);
-            else
-                target->addEffect(new MobEffectInstance(instance), boost::shared_ptr<Entity>());
-
-            if ((target->GetType() & EntityType::PLAYER) == EntityType::PLAYER
-                && instance->getEffect() == MobEffects::WATER_BREATHING)
-                boost::static_pointer_cast<Player>(target)->ResetTimerAchievement(Player::eTimerAchievement_SleepWithTheFishes);
-        }
-
-        if (mRadiusOnUse != 0.0f)
-        {
-            radius += static_cast<double>(mRadiusOnUse);
-            if (radius < 0.5)
+            if (mReapplicationDelayMap.find(target->getId()) != mReapplicationDelayMap.end())
             {
-                delete nearby;
-                return;
+                continue;
             }
-            setRadius(static_cast<float>(radius));
+
+            if (!target->isAffectedByPotions())
+            {
+                continue;
+            }
+
+            double dx = target->mX - mX;
+            double dz = target->mZ - mZ;
+            if (dx * dx + dz * dz > radius * radius)
+            {
+                continue;
+            }
+
+            mReapplicationDelayMap[target->getId()] = mTickCount + mReapplicationDelay;
+
+            for (std::vector<MobEffectInstance*>::iterator effectIt = effects.begin(); effectIt != effects.end(); ++effectIt)
+            {
+                MobEffectInstance* instance = *effectIt;
+                if (instance->getEffect()->isInstantenous())
+                    instance->getEffect()->applyInstantenousEffect(boost::static_pointer_cast<LivingEntity>(shared_from_this()), getOwner(), target,
+                                                                   instance->getAmplifier(), 0.5);
+                else
+                    target->addEffect(new MobEffectInstance(instance), boost::shared_ptr<Entity>());
+
+                if ((target->GetType() & EntityType::PLAYER) == EntityType::PLAYER
+                    && instance->getEffect() == MobEffects::WATER_BREATHING)
+                    boost::static_pointer_cast<Player>(target)->ResetTimerAchievement(Player::eTimerAchievement_SleepWithTheFishes);
+            }
+
+            if (mRadiusOnUse != 0.0f)
+            {
+                radius += mRadiusOnUse;
+                if (radius < 0.5f)
+                {
+                    remove();
+                    delete nearby;
+                    return;
+                }
+                setRadius(radius);
+            }
+
+            if (mDurationOnUse != 0)
+            {
+                mDuration += mDurationOnUse;
+                if (mDuration < 1)
+                {
+                    remove();
+                    delete nearby;
+                    return;
+                }
+            }
         }
 
-        if (mDurationOnUse != 0)
-        {
-            mDuration += mDurationOnUse;
-            if (mDuration < 1)
-            {
-                delete nearby;
-                return;
-            }
-        }
     }
 
     delete nearby;
@@ -226,7 +229,7 @@ void AreaEffectCloud::applyMobEffects()
 
 bool AreaEffectCloud::isWaiting()
 {
-    return DATA_WAITING != NULL ? getEntityData()->get(DATA_WAITING) : false;
+    return getEntityData()->get(DATA_WAITING);
 }
 
 const ParticleType* AreaEffectCloud::getParticle()
@@ -236,35 +239,36 @@ const ParticleType* AreaEffectCloud::getParticle()
 
 int AreaEffectCloud::getColor()
 {
-    return DATA_COLOR != NULL ? getEntityData()->get(DATA_COLOR) : 0;
+    return getEntityData()->get(DATA_COLOR);
 }
 
 int AreaEffectCloud::getParticleParam1()
 {
-    return DATA_PARTICLE_PARAM_1 != NULL ? getEntityData()->get(DATA_PARTICLE_PARAM_1) : 0;
+    return getEntityData()->get(DATA_PARTICLE_PARAM_1);
 }
 
 int AreaEffectCloud::getParticleParam2()
 {
-    return DATA_PARTICLE_PARAM_2 != NULL ? getEntityData()->get(DATA_PARTICLE_PARAM_2) : 0;
+    return getEntityData()->get(DATA_PARTICLE_PARAM_2);
 }
 
 void AreaEffectCloud::generateParticles()
 {
     bool waiting = isWaiting();
-    double radius = static_cast<double>(getRadius());
+    float radius = getRadius();
     const ParticleType* particleType = getParticle();
-    int particle = particleType->getId();
-    int paramCount = particleType != NULL ? particleType->getParamCount() : 0;
 
     arrayWithLength<int> params;
-    if (paramCount >= 1)
+    if (particleType->getParamCount() >= 1)
     {
-        params = arrayWithLength<int>(static_cast<unsigned int>(paramCount), true);
-        params.data[0] = getParticleParam1();
-        if (paramCount > 1)
+        params = arrayWithLength<int>(particleType->getParamCount(), true);
+        if (params.length != 0)
         {
-            params.data[1] = getParticleParam2();
+            params.data[0] = getParticleParam1();
+            if (params.length > 1)
+            {
+                params.data[1] = getParticleParam2();
+            }
         }
     }
 
@@ -279,17 +283,17 @@ void AreaEffectCloud::generateParticles()
                 double dx = static_cast<double>(std::cos(angle) * dist);
                 double dz = static_cast<double>(std::sin(angle) * dist);
 
-                if (particle == ePARTICLE_DRAGON_BREATH)
+                if (particleType == PARTICLE_MOB_SPELL)
                 {
                     int color = mRandom->nextBoolean() ? 0xffffff : getColor();
-                    mLevel->addAlwaysVisibleParticle(static_cast<ePARTICLE_TYPE>(particle), mX + dx, mY, mZ + dz,
+                    mLevel->addAlwaysVisibleParticle(static_cast<ePARTICLE_TYPE>(PARTICLE_MOB_SPELL->getId()), mX + dx, mY, mZ + dz,
                         static_cast<double>(((color >> 16) & 0xff) / 255.0f),
                         static_cast<double>(((color >> 8) & 0xff) / 255.0f),
                         static_cast<double>((color & 0xff) / 255.0f), params);
                 }
                 else
                 {
-                    mLevel->addAlwaysVisibleParticle(static_cast<ePARTICLE_TYPE>(particle), mX + dx, mY, mZ + dz, 0.0, 0.0, 0.0, params);
+                    mLevel->addAlwaysVisibleParticle(static_cast<ePARTICLE_TYPE>(particleType->getId()), mX + dx, mY, mZ + dz, 0.0, 0.0, 0.0, params);
                 }
             }
         }
@@ -297,36 +301,31 @@ void AreaEffectCloud::generateParticles()
     else
     {
         int rate = getEntityData()->get(DATA_PARTICLE_RATE);
-        float count = rate >= 1 ? static_cast<float>(rate) : static_cast<float>(Mth::PI * radius) * radius;
+        float count = rate >= 1 ? static_cast<float>(rate) : 3.1415927f * radius * radius;
 
         for (int i = 0; i < count; ++i)
         {
             float angle = mRandom->nextFloat() * 6.2831854820251465f;
-            float dist = static_cast<float>(std::sqrt(mRandom->nextFloat()) * radius);
+            float dist = std::sqrt(mRandom->nextFloat()) * radius;
             double dx = static_cast<double>(std::cos(angle) * dist);
             double dz = static_cast<double>(std::sin(angle) * dist);
 
-            if (particle == ePARTICLE_DRAGON_BREATH)
+            if (particleType == PARTICLE_MOB_SPELL)
             {
                 int color = getColor();
-                mLevel->addAlwaysVisibleParticle(static_cast<ePARTICLE_TYPE>(particle), mX + dx, mY, mZ + dz,
+                mLevel->addAlwaysVisibleParticle(static_cast<ePARTICLE_TYPE>(PARTICLE_MOB_SPELL->getId()), mX + dx, mY, mZ + dz,
                     static_cast<double>(((color >> 16) & 0xff) / 255.0f),
                     static_cast<double>(((color >> 8) & 0xff) / 255.0f),
                     static_cast<double>((color & 0xff) / 255.0f), params);
             }
             else
             {
-                double xa = (0.5 - mRandom->nextDouble()) * 0.15;
-                double za = (0.5 - mRandom->nextDouble()) * 0.15;
-                mLevel->addAlwaysVisibleParticle(static_cast<ePARTICLE_TYPE>(particle), mX + dx, mY, mZ + dz, xa, 0.009999999776482582, za, params);
+                mLevel->addAlwaysVisibleParticle(static_cast<ePARTICLE_TYPE>(particleType->getId()), mX + dx, mY, mZ + dz, (0.5 - mRandom->nextDouble()) * 0.15, 0.009999999776482582, (0.5 - mRandom->nextDouble()) * 0.15, params);
             }
         }
     }
 
-    if (paramCount >= 1)
-    {
-        delete[] params.data;
-    }
+    delete[] params.data;
 }
 
 void AreaEffectCloud::suckInNearbyPlayers()
@@ -387,22 +386,22 @@ void AreaEffectCloud::addEffect(MobEffectInstance* effect)
 void AreaEffectCloud::setFixedColor(int color)
 {
     mFixedColor = 1;
-    if (DATA_COLOR != NULL) getEntityData()->set(DATA_COLOR, color, true);
+    getEntityData()->set(DATA_COLOR, color, true);
 }
 
 void AreaEffectCloud::setParticle(const ParticleType* particle)
 {
-    if (DATA_PARTICLE != NULL && particle != NULL) getEntityData()->set(DATA_PARTICLE, static_cast<int>(particle->getId()), true);
+    getEntityData()->set(DATA_PARTICLE, static_cast<int>(particle->getId()), true);
 }
 
 void AreaEffectCloud::setParticleParam1(int value)
 {
-    if (DATA_PARTICLE_PARAM_1 != NULL) getEntityData()->set(DATA_PARTICLE_PARAM_1, value, true);
+    getEntityData()->set(DATA_PARTICLE_PARAM_1, value, true);
 }
 
 void AreaEffectCloud::setParticleParam2(int value)
 {
-    if (DATA_PARTICLE_PARAM_2 != NULL) getEntityData()->set(DATA_PARTICLE_PARAM_2, value, true);
+    getEntityData()->set(DATA_PARTICLE_PARAM_2, value, true);
 }
 
 void AreaEffectCloud::setParticleSpawnRateOnTick(int value)
@@ -415,7 +414,7 @@ void AreaEffectCloud::setParticleSpawnRateOnTick(int value)
 
 void AreaEffectCloud::setWaiting(bool waiting)
 {
-    if (DATA_WAITING != NULL) getEntityData()->set(DATA_WAITING, waiting, true);
+    getEntityData()->set(DATA_WAITING, waiting, true);
 }
 
 int AreaEffectCloud::getDuration()
@@ -562,7 +561,7 @@ void AreaEffectCloud::addAdditonalSaveData(CompoundTag* tag)
 
 void AreaEffectCloud::onSyncedDataUpdated(const EntityDataAccessor_Base* accessor)
 {
-    if (accessor == DATA_RADIUS) setRadius(getRadius());
+    if (accessor->getId() == DATA_RADIUS->getId()) setRadius(getRadius());
     Entity::onSyncedDataUpdated(accessor);
 }
 

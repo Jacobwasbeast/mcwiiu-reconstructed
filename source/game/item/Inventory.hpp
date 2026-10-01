@@ -22,7 +22,7 @@ class MultiPlayerGameMode;
 class Inventory : public Container
 {
 public:
-    static const int INVENTORY_SIZE = 36;
+    static const int INVENTORY_SIZE;
 
     explicit Inventory(Player* player);
     virtual ~Inventory();

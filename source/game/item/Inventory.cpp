@@ -29,6 +29,8 @@
 #include "game/network/ServerGamePacketListenerImpl.hpp"
 #include "game/server/ServerPlayer.hpp"
 
+const int Inventory::INVENTORY_SIZE = 36;
+
 Inventory::Inventory(Player* player)
     : m_items(NonNullList<not_null_ptr<ItemInstance> >::withSize(INVENTORY_SIZE, ItemInstance::EMPTY)),
       m_armor(NonNullList<not_null_ptr<ItemInstance> >::withSize(4, ItemInstance::EMPTY)),

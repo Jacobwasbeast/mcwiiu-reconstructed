@@ -388,7 +388,7 @@ int Item::VALIDgetId(Item* item)
 
 bool Item::isItemABlock(int id)
 {
-    return (unsigned int)(id - 256) > 767 && id < 2255;
+    return (unsigned int)(id - 256) >= 768 && id < 2255;
 }
 
 int Item::getBlockId(Item* item)
@@ -400,7 +400,7 @@ int Item::getBlockId(Item* item)
         return 0;
     }
 
-    if (id > 1023)
+    if (id >= 1024)
     {
         id -= 768;
     }
@@ -427,7 +427,7 @@ void Item::registerBlock(Block* block, Item* item)
 {
     int id = Block::getId(block);
 
-    if (id > 255)
+    if (id >= 256)
     {
         id += 768;
     }
@@ -661,8 +661,9 @@ Item* Item::setUseDescriptionId(int useDescriptionId)
 Item* Item::setDescriptionId(int descriptionId, int useDescriptionId)
 {
     setDescriptionId(descriptionId);
+    setUseDescriptionId(useDescriptionId);
 
-    return setUseDescriptionId(useDescriptionId);
+    return this;
 }
 
 Item* Item::setBaseItemTypeAndMaterial(int baseItemType, int baseItemMaterial)
@@ -782,9 +783,7 @@ bool Item::hasCraftingRemainingItem()
 
 std::wstring Item::getIconName()
 {
-    std::wstring iconName;
-    iconName.assign(mIconName);
-    return iconName;
+    return mIconName;
 }
 
 const wchar_t* Item::getDescription()
@@ -1748,10 +1747,8 @@ void Item::staticCtor()
     registerItem(321, L"painting",
         (new HangingEntityItem(EntityType::PAINTING))->setIconName(L"painting")->setBaseItemTypeAndMaterial(34, 6)->setDescriptionId(IDS_ITEM_PAINTING, IDS_DESC_PICTURE));
 
-    GoldenAppleItem* goldenApple = new GoldenAppleItem(4, 1.2f, false);
-    goldenApple->setCanAlwaysEat();
     registerItem(322, L"golden_apple",
-        goldenApple->setIconName(L"appleGold")->setBaseItemTypeAndMaterial(38, 46)->setDescriptionId(IDS_ITEM_APPLE_GOLD));
+        (new GoldenAppleItem(4, 1.2f, false))->setCanAlwaysEat()->setIconName(L"appleGold")->setBaseItemTypeAndMaterial(38, 46)->setDescriptionId(IDS_ITEM_APPLE_GOLD));
 
     registerItem(323, L"sign",
         (new SignItem())->setIconName(L"sign")->setBaseItemTypeAndMaterial(34, 1)->setDescriptionId(IDS_ITEM_SIGN, IDS_DESC_SIGN));
@@ -2082,10 +2079,8 @@ void Item::staticCtor()
     registerItem(431, L"dark_oak_door",
         (new DoorItem(Blocks::dark_oak_door))->setIconName(L"door_dark_oak")->setBaseItemTypeAndMaterial(6, 43)->setDescriptionId(IDS_ITEM_DOOR_DARKOAKWOOD, IDS_DESC_DOOR_WOOD));
 
-    ChorusFruitItem* chorusFruit = new ChorusFruitItem(4, 0.3f);
-    chorusFruit->setCanAlwaysEat();
     registerItem(432, L"chorus_fruit",
-        chorusFruit->setIconName(L"chorus_fruit")->setDescriptionId(IDS_ITEM_CHORUS_FRUIT, IDS_DESC_ITEM_CHORUS_FRUIT));
+        (new ChorusFruitItem(4, 0.3f))->setCanAlwaysEat()->setIconName(L"chorus_fruit")->setDescriptionId(IDS_ITEM_CHORUS_FRUIT, IDS_DESC_ITEM_CHORUS_FRUIT));
 
     registerItem(433, L"chorus_fruit_popped",
         (new Item())->setIconName(L"chorus_fruit_popped")->setDescriptionId(IDS_ITEM_CHORUS_FRUIT_POPPED, IDS_DESC_ITEM_CHORUS_FRUIT_POPPED));

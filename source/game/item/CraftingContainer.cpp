@@ -1,13 +1,15 @@
 #include "game/item/CraftingContainer.hpp"
 
+#include "game/item/ContainerHelper.hpp"
 #include "game/item/ItemInstance.hpp"
+#include "game/ui/AbstractContainerMenu.hpp"
 
 CraftingContainer::CraftingContainer(AbstractContainerMenu* menu, unsigned int width, unsigned int height)
     : Container(),
-      mMenu(menu),
       mItems(NonNullList<not_null_ptr<ItemInstance> >::withSize(width * height, ItemInstance::EMPTY)),
       mWidth(width),
-      mHeight(height)
+      mHeight(height),
+      mMenu(menu)
 {
 }
 
@@ -18,12 +20,12 @@ CraftingContainer::~CraftingContainer()
 
 std::wstring CraftingContainer::getName()
 {
-    return std::wstring(L"container.crafting");
+    return std::wstring(L"");
 }
 
 std::wstring CraftingContainer::getCustomName()
 {
-    return std::wstring();
+    return std::wstring(L"");
 }
 
 bool CraftingContainer::hasCustomName()
@@ -33,6 +35,7 @@ bool CraftingContainer::hasCustomName()
 
 std::wstring CraftingContainer::getDisplayName()
 {
+    hasCustomName();
     return getName();
 }
 
@@ -45,7 +48,8 @@ bool CraftingContainer::isEmpty()
 {
     for (unsigned int i = 0; i < mItems.size(); ++i)
     {
-        if (!mItems[i]->isEmpty())
+        not_null_ptr<ItemInstance> item = mItems[i];
+        if (!item->isEmpty())
         {
             return false;
         }
@@ -64,36 +68,24 @@ not_null_ptr<ItemInstance> CraftingContainer::getItem(unsigned int slot)
 
 not_null_ptr<ItemInstance> CraftingContainer::getItem(unsigned int row, unsigned int column)
 {
-    if (row >= mHeight || column >= mWidth)
+    if (row >= mWidth || column > mHeight)
         return ItemInstance::EMPTY;
-    return getItem(row + column * mHeight);
+    return getItem(row + column * mWidth);
 }
 
 not_null_ptr<ItemInstance> CraftingContainer::removeItem(unsigned int slot, int count)
 {
-    if (slot >= mItems.size() || count <= 0)
+    not_null_ptr<ItemInstance> result = ContainerHelper::removeItem(mItems, slot, count);
+    if (!result->isEmpty())
     {
-        return ItemInstance::EMPTY;
+        mMenu->slotsChanged();
     }
-    not_null_ptr<ItemInstance> item = mItems[slot];
-    if (item->isEmpty())
-    {
-        return ItemInstance::EMPTY;
-    }
-    not_null_ptr<ItemInstance> result = item->split(count);
-    setChanged();
     return result;
 }
 
 not_null_ptr<ItemInstance> CraftingContainer::removeItemNoUpdate(int slot)
 {
-    if (slot < 0 || (unsigned int)slot >= mItems.size())
-    {
-        return ItemInstance::EMPTY;
-    }
-    not_null_ptr<ItemInstance> result = mItems[(unsigned int)slot];
-    mItems[(unsigned int)slot] = ItemInstance::EMPTY;
-    return result;
+    return ContainerHelper::takeItem(mItems, slot);
 }
 
 void CraftingContainer::setItem(unsigned int slot, not_null_ptr<ItemInstance> item)
@@ -155,7 +147,7 @@ void CraftingContainer::clearContent()
 {
     for (unsigned int i = 0; i < mItems.size(); ++i)
     {
-        mItems[i] = ItemInstance::EMPTY;
+        mItems[i] = mItems.defaultValue;
     }
 }
 

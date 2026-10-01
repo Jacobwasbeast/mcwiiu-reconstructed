@@ -168,9 +168,10 @@ FoodItem* FoodItem::setEatEffect(MobEffectInstance* effect, float probability)
     return this;
 }
 
-void FoodItem::setCanAlwaysEat()
+FoodItem* FoodItem::setCanAlwaysEat()
 {
     mCanAlwaysEat = true;
+    return this;
 }
 
 void FoodItem::setIsFastFood()

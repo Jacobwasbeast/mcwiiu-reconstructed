@@ -23,6 +23,16 @@ class Player;
 class FireworksItem : public Item
 {
 public:
+    static const std::wstring TAG_FIREWORKS;
+    static const std::wstring TAG_EXPLOSION;
+    static const std::wstring TAG_EXPLOSIONS;
+    static const std::wstring TAG_FLIGHT;
+    static const std::wstring TAG_E_TYPE;
+    static const std::wstring TAG_E_TRAIL;
+    static const std::wstring TAG_E_FLICKER;
+    static const std::wstring TAG_E_COLORS;
+    static const std::wstring TAG_E_FADECOLORS;
+
     FireworksItem();
     virtual ~FireworksItem();
 

@@ -20,6 +20,16 @@
 #include "game/world/generation/Player.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 
+const std::wstring FireworksItem::TAG_FIREWORKS(L"Fireworks");
+const std::wstring FireworksItem::TAG_EXPLOSION(L"Explosion");
+const std::wstring FireworksItem::TAG_EXPLOSIONS(L"Explosions");
+const std::wstring FireworksItem::TAG_FLIGHT(L"Flight");
+const std::wstring FireworksItem::TAG_E_TYPE(L"Type");
+const std::wstring FireworksItem::TAG_E_TRAIL(L"Trail");
+const std::wstring FireworksItem::TAG_E_FLICKER(L"Flicker");
+const std::wstring FireworksItem::TAG_E_COLORS(L"Colors");
+const std::wstring FireworksItem::TAG_E_FADECOLORS(L"FadeColors");
+
 FireworksItem::FireworksItem()
     : Item()
 {
@@ -126,21 +136,21 @@ void FireworksItem::appendHoverText(not_null_ptr<ItemInstance> itemInstance,
         return;
     }
 
-    CompoundTag* fireworks = itemInstance->getTag()->getCompound(std::wstring(L"Fireworks"));
+    CompoundTag* fireworks = itemInstance->getTag()->getCompound(TAG_FIREWORKS);
     if (fireworks == NULL)
     {
         return;
     }
 
-    if (fireworks->contains(std::wstring(L"Flight"), 99))
+    if (fireworks->contains(TAG_FLIGHT, 99))
     {
         std::wstring flight(L10N::GetString(IDS_ITEM_FIREWORKS_FLIGHT));
         flight += L" ";
-        flight += _toString(static_cast<int>(fireworks->getByte(std::wstring(L"Flight"))));
+        flight += _toString(static_cast<int>(fireworks->getByte(TAG_FLIGHT)));
         lines->push_back(HtmlString(flight, eMinecraftColour_NOTSET, false, false, 0));
     }
 
-    ListTag* explosions = fireworks->getList(std::wstring(L"Explosions"), 10);
+    ListTag* explosions = fireworks->getList(TAG_EXPLOSIONS, 10);
     if (explosions == NULL || explosions->size() <= 0)
     {
         return;

@@ -33,7 +33,7 @@ public:
     virtual float getSaturationModifier(not_null_ptr<ItemInstance> itemInstance);
     virtual bool isMeat();
     virtual FoodItem* setEatEffect(MobEffectInstance* effect, float probability);
-    virtual void setCanAlwaysEat();
+    virtual FoodItem* setCanAlwaysEat();
     void setIsFastFood();
 
 protected:

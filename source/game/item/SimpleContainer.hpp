@@ -20,16 +20,20 @@ public:
     SimpleContainer(const std::wstring& name, int size);
     virtual ~SimpleContainer();
 
+    virtual void addListener(net_minecraft_world::ContainerListener* listener);
+    virtual void removeListener(net_minecraft_world::ContainerListener* listener);
+    virtual not_null_ptr<ItemInstance> getItem(unsigned int slot);
+    virtual not_null_ptr<ItemInstance> removeItem(unsigned int slot, int count);
+    virtual not_null_ptr<ItemInstance> addItem(not_null_ptr<ItemInstance> item);
+    virtual not_null_ptr<ItemInstance> removeItemNoUpdate(int slot);
+    virtual void setItem(unsigned int slot, not_null_ptr<ItemInstance> item);
+    virtual unsigned int getContainerSize();
+    virtual bool isEmpty();
     virtual std::wstring getName();
     virtual std::wstring getCustomName();
     virtual bool hasCustomName();
+    virtual void setCustomName(const std::wstring& name);
     virtual std::wstring getDisplayName();
-    virtual unsigned int getContainerSize();
-    virtual bool isEmpty();
-    virtual not_null_ptr<ItemInstance> getItem(unsigned int slot);
-    virtual not_null_ptr<ItemInstance> removeItem(unsigned int slot, int count);
-    virtual not_null_ptr<ItemInstance> removeItemNoUpdate(int slot);
-    virtual void setItem(unsigned int slot, not_null_ptr<ItemInstance> item);
     virtual int getMaxStackSize();
     virtual void setChanged();
     virtual bool stillValid(boost::shared_ptr<Player> player);
@@ -42,10 +46,6 @@ public:
     virtual void clearContent();
 
     void _init(int id, const std::wstring& name, bool hasCustomName, int size);
-    virtual void addListener(net_minecraft_world::ContainerListener* listener);
-    virtual void removeListener(net_minecraft_world::ContainerListener* listener);
-    virtual not_null_ptr<ItemInstance> addItem(not_null_ptr<ItemInstance> item);
-    virtual void setCustomName(const std::wstring& name);
 
 private:
     int mId;

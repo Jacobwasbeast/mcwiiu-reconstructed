@@ -44,10 +44,10 @@ public:
     unsigned int getWidth();
 
 private:
-    AbstractContainerMenu* mMenu;
     NonNullList<not_null_ptr<ItemInstance> > mItems;
     unsigned int mWidth;
     unsigned int mHeight;
+    AbstractContainerMenu* mMenu;
 };
 
 #endif
