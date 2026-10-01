@@ -60,7 +60,7 @@ void CheckpointCommand::execute(boost::shared_ptr<CommandSender> sender, arrayWi
 
     if (player && player->isAlive() && !gameMode->mGameStats.GetPlayerStats(uid)->getReachedEnd(round))
     {
-        ServerPlayerGameMode* playerGameMode = player->GetGameMode();
+        ServerPlayerGameMode* playerGameMode = static_cast<ServerPlayerGameMode*>(player->GetGameMode());
 
         if (checkpoint > 0)
         {
