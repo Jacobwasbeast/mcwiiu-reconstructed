@@ -35,9 +35,9 @@ void WaterLevelChunk::lightLava()
 {
 }
 
-void WaterLevelChunk::setBlock(const BlockPos&, const BlockState* state)
+const BlockState* WaterLevelChunk::setBlock(const BlockPos&, const BlockState* state)
 {
-    (void)state;
+    return state;
 }
 
 bool WaterLevelChunk::setBlockAndData(int, int, int, int, int, bool, bool)

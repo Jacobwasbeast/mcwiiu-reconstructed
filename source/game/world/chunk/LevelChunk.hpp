@@ -48,6 +48,7 @@ public:
 
     typedef boost::unordered_map<BlockPos, boost::shared_ptr<BlockEntity>, boost::hash<const BlockPos>, std::equal_to<const BlockPos> > BlockEntityMap;
     enum EntityCreationType { IMMEDIATE, QUEUED, NO_CREATE };
+    static const int CURRENT_CHUNK_VERSION = 12;
 
     enum BiomePresentFlag
     {
@@ -185,9 +186,9 @@ public:
     virtual int getData(const BlockPos& pos);
     unsigned int getData(int x, int y, int z);
     virtual bool setData(int x, int y, int z, int data, int dataMask, bool* maskedChange);
-    virtual void setBlock(const BlockPos& pos, const BlockState* state);
-    virtual void setExtraBlock(const BlockPos& pos, const BlockState* state);
-    virtual bool internalSetBlock(bool extra, const BlockPos& pos, const BlockState* state);
+    virtual const BlockState* setBlock(const BlockPos& pos, const BlockState* state);
+    virtual const BlockState* setExtraBlock(const BlockPos& pos, const BlockState* state);
+    virtual const BlockState* internalSetBlock(bool extra, const BlockPos& pos, const BlockState* state);
     virtual bool setBlockAndData(int x, int y, int z, int blockId, int data, bool update, bool extra);
     virtual void setExtraElement(int x, int y, int z, unsigned short element);
     virtual unsigned short getExtraElement(int x, int y, int z);

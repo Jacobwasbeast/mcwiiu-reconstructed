@@ -27,7 +27,7 @@ public:
     virtual void recalcHeightmapOnly();
     virtual void recalcHeightmap();
     virtual void lightLava();
-    virtual void setBlock(const BlockPos& pos, const BlockState* state);
+    virtual const BlockState* setBlock(const BlockPos& pos, const BlockState* state);
     virtual bool setBlockAndData(int x, int y, int z, int blockId, int data, bool update, bool extra);
     virtual void setExtraElement(int x, int y, int z, unsigned short element);
     virtual unsigned short getExtraElement(int x, int y, int z);

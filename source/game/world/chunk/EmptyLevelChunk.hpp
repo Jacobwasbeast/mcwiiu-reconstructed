@@ -55,7 +55,7 @@ public:
                                  int width, int height, int depth, int offset, bool includeLight);
     virtual Random* getRandom(long long seed);
     virtual bool isEmpty();
-    virtual void setBlock(const BlockPos& pos, const BlockState* state);
+    virtual const BlockState* setBlock(const BlockPos& pos, const BlockState* state);
     virtual void getElementRange(arrayWithLength<unsigned short> elements, int start, int end);
     virtual void compressLighting();
     virtual void compressBlocks();

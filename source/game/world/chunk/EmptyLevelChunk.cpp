@@ -182,9 +182,9 @@ bool EmptyLevelChunk::isEmpty()
     return true;
 }
 
-void EmptyLevelChunk::setBlock(const BlockPos&, const BlockState*)
+const BlockState* EmptyLevelChunk::setBlock(const BlockPos&, const BlockState*)
 {
-    Blocks::air->defaultBlockState();
+    return Blocks::air->defaultBlockState();
 }
 
 void EmptyLevelChunk::getElementRange(arrayWithLength<unsigned short> elements, int, int)
