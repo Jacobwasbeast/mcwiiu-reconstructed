@@ -49,6 +49,30 @@ static FSCmdBlock s_sciCommandBlock;
 static unsigned char s_sciBuffer[0x800];
 static char s_sciPath[1024];
 
+static const unsigned int PNG_CHUNK_TYPE_IEND = 0x49454e44U;
+static const unsigned int PNG_CHUNK_TYPE_TEXT = 0x74455874U;
+
+static inline unsigned int ReadPngChunkWord(const unsigned char* data)
+{
+#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+    return *(const unsigned int*)data;
+#else
+    return ((unsigned int)data[0] << 24) | ((unsigned int)data[1] << 16) | ((unsigned int)data[2] << 8) | data[3];
+#endif
+}
+
+static inline void WritePngChunkWord(unsigned char* data, unsigned int value)
+{
+#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+    *(unsigned int*)data = value;
+#else
+    data[0] = (unsigned char)(value >> 24);
+    data[1] = (unsigned char)(value >> 16);
+    data[2] = (unsigned char)(value >> 8);
+    data[3] = (unsigned char)value;
+#endif
+}
+
 void stateChangeCallback(FSClient* client, FSVolumeState state, void*)
 {
     if (state != static_cast<FSVolumeState>(1))
@@ -912,18 +936,18 @@ unsigned long long CStorage::AddTextFieldToPNG(unsigned char* data, unsigned int
 
     unsigned int offset = 8;
     do {
-        if (*(unsigned int*)(data + offset + 4) == 0x49454e44U) {
-            *(unsigned int*)(data + offset) = textSize;
-            *(unsigned int*)(data + offset + 4) = 0x74455874U;
+        if (ReadPngChunkWord(data + offset + 4) == PNG_CHUNK_TYPE_IEND) {
+            WritePngChunkWord(data + offset, textSize);
+            WritePngChunkWord(data + offset + 4, PNG_CHUNK_TYPE_TEXT);
             std::memcpy(data + offset + 8, text, textSize);
             unsigned int end = offset + 8 + textSize;
-            *(unsigned int*)(data + end) = CRC(data + offset + 4, textSize + 4);
-            *(unsigned int*)(data + end + 4) = 0;
-            *(unsigned int*)(data + end + 8) = 0x49454e44U;
-            *(unsigned int*)(data + end + 12) = CRC(data + end + 8, 4);
+            WritePngChunkWord(data + end, s_storage->CRC(data + offset + 4, textSize + 4));
+            WritePngChunkWord(data + end + 4, 0);
+            WritePngChunkWord(data + end + 8, PNG_CHUNK_TYPE_IEND);
+            WritePngChunkWord(data + end + 12, s_storage->CRC(data + end + 8, 4));
             offset = end + 16;
         } else {
-            offset += *(unsigned int*)(data + offset) + 12;
+            offset += ReadPngChunkWord(data + offset) + 12;
         }
     } while (offset < imageSize);
     return 0;

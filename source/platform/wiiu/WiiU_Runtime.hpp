@@ -3,6 +3,10 @@
 
 #include <coreinit/filesystem.h>
 
+#ifndef ERROR_CANCELLED
+#define ERROR_CANCELLED 1223
+#endif
+
 struct FILETIME
 {
     unsigned long low;
