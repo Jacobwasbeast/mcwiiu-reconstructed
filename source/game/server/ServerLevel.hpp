@@ -79,6 +79,13 @@ public:
         BlockPos pos;
         const BlockState* oldState;
         const BlockState* newState;
+
+        QueuedSendBlockData(int x, int y, int z, const BlockState* previousState, const BlockState* currentState)
+        {
+            pos = BlockPos(x, y, z);
+            oldState = previousState;
+            newState = currentState;
+        }
     };
 
     ServerLevel(MinecraftServer* server, boost::shared_ptr<LevelStorage> levelStorage, LevelData* levelData,

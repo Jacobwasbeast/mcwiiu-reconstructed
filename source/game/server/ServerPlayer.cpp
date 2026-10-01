@@ -117,6 +117,7 @@
 #include <cassert>
 #include <cmath>
 #include <cstring>
+#include <climits>
 #include <limits>
 #include <set>
 #include <vector>
@@ -127,6 +128,7 @@ namespace
 const int CHUNK_SIZE = 16;
 const int CHUNK_HEIGHT = 256;
 const int MAX_DELAYED_CHUNK_PACKETS = 3;
+const int MAX_REMOVED_ENTITIES_PER_PACKET = INT_MAX;
 }
 
 ServerPlayer::ServerPlayer(MinecraftServer* server, ServerLevel* level, const std::wstring& name, ServerPlayerGameMode* gameMode)
@@ -273,8 +275,8 @@ int ServerPlayer::getFlagIndexForChunk(const ChunkPos& chunkPos, int dimension)
 
 void ServerPlayer::disconnect()
 {
-    ejectPassengers();
     mDisconnected = true;
+    ejectPassengers();
     if (mSleeping != 0)
     {
         stopSleepInBed(true, false, false);
@@ -541,31 +543,32 @@ boost::shared_ptr<ServerPlayer> ServerPlayer::SpectatePlayerChange(bool previous
 {
     std::vector<boost::shared_ptr<ServerPlayer> > candidates;
     int currentIndex = -1;
-    std::vector<boost::shared_ptr<ServerPlayer> >* allPlayers = gMinecraftServer->getPlayers()->getPlayers();
+    PlayerList* playerList = gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers;
+    std::vector<boost::shared_ptr<ServerPlayer> >* allPlayers = playerList->getPlayers();
     for (unsigned int index = 0; index < allPlayers->size(); ++index)
     {
         if (index >= mLevel->mPlayers.size() || mLevel->mPlayers[index] == NULL || mLevel->mPlayers[index]->isSpectator())
             continue;
 
         candidates.push_back(allPlayers->at(index));
-        if (allPlayers->at(index) == GetCamera())
+        const bool isCurrent = allPlayers->at(index).get() == GetCamera().get();
+        if (isCurrent)
             currentIndex = static_cast<int>(candidates.size()) - 1;
     }
 
     boost::shared_ptr<ServerPlayer> target;
     if (!candidates.empty())
     {
-        const unsigned int count = candidates.size();
         int nextIndex;
         if (currentIndex == -1)
             nextIndex = previous ? -1 : 0;
         else
             nextIndex = previous ? currentIndex - 1 : currentIndex + 1;
-        nextIndex = (count + nextIndex) % count;
+        nextIndex = (candidates.size() + nextIndex) % candidates.size();
 
         target = candidates[nextIndex];
         std::wstring name = target->getName();
-        int messageParams[2] = { nextIndex + 1, static_cast<int>(count) };
+        int messageParams[2] = { nextIndex + 1, static_cast<int>(candidates.size()) };
         sendMessage(ClientboundChatPacket::eChatPacketMessage_NowSpectating, messageParams, 2, &name, 1);
     }
 
@@ -600,10 +603,19 @@ void ServerPlayer::notifyPlayerRespawn(boost::shared_ptr<ServerPlayer>* oldPlaye
 
 void ServerPlayer::flushEntitiesToRemove()
 {
-    if (!mEntitiesToRemove.empty())
-        mConnection->send(boost::shared_ptr<Packet>(new ClientboundRemoveEntitiesPacket(arrayWithLength<int>(mEntitiesToRemove))));
-
-    mEntitiesToRemove.clear();
+    while (!mEntitiesToRemove.empty())
+    {
+        int count = std::min(static_cast<int>(mEntitiesToRemove.size()), MAX_REMOVED_ENTITIES_PER_PACKET);
+        arrayWithLength<int> entityIds(count, true);
+        int index = 0;
+        for (std::vector<int32_t>::iterator it = mEntitiesToRemove.begin();
+             it != mEntitiesToRemove.end() && index < count; ++index)
+        {
+            entityIds.data[index] = *it;
+            it = mEntitiesToRemove.erase(it);
+        }
+        mConnection->send(boost::shared_ptr<Packet>(new ClientboundRemoveEntitiesPacket(entityIds)));
+    }
 }
 
 void ServerPlayer::markAttributesDirty()
@@ -726,7 +738,7 @@ void ServerPlayer::addAdditonalSaveData(CompoundTag* tag)
         ByteArrayOutputStream bytes;
         DataOutputStream output(&bytes);
         mGameMode->mGameRules->write(&output);
-        tag->putByteArray(std::wstring(L"GameRules"), bytes.toByteArray());
+        tag->putByteArray(std::wstring(L"GameRules"), bytes.mBuffer);
         output.close();
     }
 
@@ -1547,7 +1559,7 @@ void ServerPlayer::closeContainer()
 
 void ServerPlayer::broadcastCarriedItem()
 {
-    if (mConnection != NULL && mInventory != NULL && !mIsChangingQuantityOnly)
+    if (!mIsChangingQuantityOnly)
         mConnection->send(boost::shared_ptr<Packet>(new ClientboundContainerSetSlotPacket(-1, -1, mInventory->getCarried())));
 }
 
@@ -1893,7 +1905,9 @@ void ServerPlayer::setGameMode(const GameType* gameType)
 
 bool ServerPlayer::isSpectator()
 {
-    return mGameMode != NULL && mGameMode->GetGameType() == GameType::SPECTATOR;
+    if (mGameMode != NULL)
+        return mGameMode->GetGameType() == GameType::SPECTATOR;
+    return false;
 }
 
 bool ServerPlayer::isCreative()

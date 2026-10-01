@@ -93,7 +93,7 @@ int sBlockUpdateTickX[3][256];
 int sBlockUpdateTickY[3][256];
 int sBlockUpdateTickZ[3][256];
 
-PlayerList* serverPlayers()
+inline PlayerList* serverPlayers()
 {
     return gMinecraftServer != NULL ? gMinecraftServer->getPlayers() : NULL;
 }
@@ -665,7 +665,7 @@ BlockPos ServerLevel::findLightingTargetAround(const BlockPos& pos)
         new Predicates<boost::shared_ptr<Entity> >::FunctionPredicate(canSeeSkyFunction);
     std::vector<boost::shared_ptr<Entity> >* entities =
         getEntitiesOfClass(typeid(LivingEntity), box, canSeeSky, false);
-    if (entities != NULL && !entities->empty())
+    if (!entities->empty())
     {
         BlockPos result = entities->at(mRandom->nextInt(static_cast<int>(entities->size())))
                               ->getCommandSenderBlockPosition();
@@ -1627,10 +1627,7 @@ boost::shared_ptr<Player> ServerLevel::getPlayer(const PlayerUID& uid) const
 void ServerLevel::queueSendBlockUpdate(int x, int y, int z, const BlockState* oldState, const BlockState* newState)
 {
     EnterCriticalSection(&queuedSendBlockUpdateMutex);
-    QueuedSendBlockData* update = new QueuedSendBlockData();
-    update->pos = BlockPos(x, y, z);
-    update->oldState = oldState;
-    update->newState = newState;
+    QueuedSendBlockData* update = new QueuedSendBlockData(x, y, z, oldState, newState);
     queuedSendBlockUpdates.push_back(update);
     LeaveCriticalSection(&queuedSendBlockUpdateMutex);
 }

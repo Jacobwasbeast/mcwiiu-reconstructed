@@ -104,9 +104,10 @@ public:
                      uint32_t numIntParams, std::wstring* stringParams, uint32_t numStringParams);
     bool hasPermission(EGameCommand command);
     BlockPos getCommandSenderBlockPosition();
+    virtual int openFireworks(int32_t x, int32_t y, int32_t z);
+    virtual void slotChanged(AbstractContainerMenu* menu, int32_t slot, not_null_ptr<ItemInstance> item);
     virtual void refreshContainer(AbstractContainerMenu* menu,
                                   std::vector<not_null_ptr<ItemInstance> >* items);
-    virtual void slotChanged(AbstractContainerMenu* menu, int32_t slot, not_null_ptr<ItemInstance> item);
     virtual void setContainerData(AbstractContainerMenu* menu, int32_t dataIndex, int32_t value);
     virtual void setAllContainerData(AbstractContainerMenu* menu, boost::shared_ptr<Container> container);
     void flagEntitiesToBeRemoved(uint32_t* removedFlags, bool* flagsInitialised);
@@ -161,7 +162,6 @@ public:
     void nextContainerCounter();
     void openTextEdit(boost::shared_ptr<SignBlockEntity> sign);
     virtual int startBlockInteraction(InteractionObject& interaction);
-    virtual int openFireworks(int32_t x, int32_t y, int32_t z);
     virtual int openContainer(boost::shared_ptr<Container> container);
     virtual int openTrading(boost::shared_ptr<Merchant> merchant, const std::wstring& name, int entityId);
     virtual int openHorseInventory(boost::shared_ptr<AbstractHorse> horse,
