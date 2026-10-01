@@ -24,6 +24,14 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/generation/Player.hpp"
 
+static int brewingUpSlots[] = {3};
+static int brewingDownSlots[] = {0, 1, 2, 3};
+static int brewingSideSlots[] = {0, 1, 2, 4};
+
+arrayWithLength<int> BrewingStandBlockEntity::SLOTS_FOR_UP(brewingUpSlots, 1);
+arrayWithLength<int> BrewingStandBlockEntity::SLOTS_FOR_DOWN(brewingDownSlots, 4);
+arrayWithLength<int> BrewingStandBlockEntity::SLOTS_FOR_SIDES(brewingSideSlots, 4);
+
 BrewingStandBlockEntity::BrewingStandBlockEntity()
     : mItems(NonNullList<not_null_ptr<ItemInstance> >::withSize(5, ItemInstance::EMPTY)),
       mBrewTime(0),
@@ -46,7 +54,7 @@ std::wstring BrewingStandBlockEntity::getName()
     {
         return mCustomName->get();
     }
-    return std::wstring(L"container.brewing_stand");
+    return std::wstring(L"");
 }
 
 std::wstring BrewingStandBlockEntity::getCustomName()
@@ -55,12 +63,16 @@ std::wstring BrewingStandBlockEntity::getCustomName()
     {
         return mCustomName->get();
     }
-    return std::wstring();
+    return std::wstring(L"");
 }
 
 bool BrewingStandBlockEntity::hasCustomName()
 {
-    return mCustomName && mCustomName->checkParentalFilter() && !mCustomName->raw().empty();
+    if (!mCustomName->checkParentalFilter())
+    {
+        return false;
+    }
+    return !mCustomName->raw().empty();
 }
 
 unsigned int BrewingStandBlockEntity::getContainerSize()
@@ -72,7 +84,8 @@ bool BrewingStandBlockEntity::isEmpty()
 {
     for (unsigned int i = 0; i < mItems.size(); ++i)
     {
-        if (!mItems[i]->isEmpty())
+        not_null_ptr<ItemInstance> stack = mItems[i];
+        if (!stack->isEmpty())
         {
             return false;
         }
@@ -91,19 +104,11 @@ not_null_ptr<ItemInstance> BrewingStandBlockEntity::getItem(unsigned int slot)
 
 not_null_ptr<ItemInstance> BrewingStandBlockEntity::removeItem(unsigned int slot, int count)
 {
-    if (slot >= mItems.size())
-    {
-        return ItemInstance::EMPTY;
-    }
     return ContainerHelper::removeItem(mItems, slot, count);
 }
 
 not_null_ptr<ItemInstance> BrewingStandBlockEntity::removeItemNoUpdate(int slot)
 {
-    if (slot < 0 || (unsigned int)slot >= mItems.size())
-    {
-        return ItemInstance::EMPTY;
-    }
     return ContainerHelper::takeItem(mItems, (unsigned int)slot);
 }
 
@@ -158,26 +163,27 @@ bool BrewingStandBlockEntity::canPlaceItem(int slot, not_null_ptr<ItemInstance> 
 
 int BrewingStandBlockEntity::getContainerData(int id)
 {
-    if (id == 0)
+    switch (id)
     {
+    case 0:
         return mBrewTime;
-    }
-    if (id == 1)
-    {
+    case 1:
         return mFuel;
+    default:
+        return 0;
     }
-    return 0;
 }
 
 void BrewingStandBlockEntity::setContainerData(int id, int value)
 {
-    if (id == 0)
+    switch (id)
     {
+    case 0:
         mBrewTime = value;
-    }
-    else if (id == 1)
-    {
+        break;
+    case 1:
         mFuel = value;
+        break;
     }
 }
 
@@ -190,7 +196,7 @@ void BrewingStandBlockEntity::clearContent()
 {
     for (unsigned int i = 0; i < mItems.size(); ++i)
     {
-        mItems[i] = ItemInstance::EMPTY;
+        mItems[i] = mItems.defaultValue;
     }
 }
 
@@ -213,11 +219,15 @@ InteractionObject::NameData BrewingStandBlockEntity::GetNetworkNameData()
 
 arrayWithLength<int> BrewingStandBlockEntity::getSlotsForFace(const Direction* face)
 {
-    if (face == NULL)
+    if (face == Direction::UP)
     {
-        return arrayWithLength<int>(3, true);
+        return SLOTS_FOR_UP;
     }
-    return arrayWithLength<int>(3, true);
+    if (face == Direction::DOWN)
+    {
+        return SLOTS_FOR_DOWN;
+    }
+    return SLOTS_FOR_SIDES;
 }
 
 bool BrewingStandBlockEntity::canPlaceItemThroughFace(int slot, not_null_ptr<ItemInstance> itemInstance, const Direction* face)
@@ -241,10 +251,8 @@ void BrewingStandBlockEntity::setCustomName(const std::wstring& name, const std:
 
 void BrewingStandBlockEntity::addDataWalkers(DataFixerUpper* fixer)
 {
-    if (fixer != NULL)
-    {
-        fixer->addWalker(DataFixTypes::eDataFixTypes_BlockEntity, (DataWalker*)new ItemListDataWalker(0, L"Items"));
-    }
+    fixer->addWalker(DataFixTypes::eDataFixTypes_BlockEntity,
+                     (DataWalker*)new ItemListDataWalker(BlockEntityType::BREWING_STAND, L"Items"));
 }
 
 bool BrewingStandBlockEntity::isBrewable()
@@ -375,6 +383,7 @@ void BrewingStandBlockEntity::load(CompoundTag* tag)
 {
     BlockEntity::load(tag);
     mCustomName->loadFromTag(tag);
+    delete[] mItems.items;
     mItems = NonNullList<not_null_ptr<ItemInstance> >::withSize(getContainerSize(), ItemInstance::EMPTY);
     ContainerHelper::loadAllItems(tag, mItems);
     mBrewTime = tag->getShort(L"BrewTime");
@@ -385,8 +394,8 @@ CompoundTag* BrewingStandBlockEntity::save(CompoundTag* tag)
 {
     BlockEntity::save(tag);
     mCustomName->saveToTag(tag);
-    ContainerHelper::saveAllItems(tag, mItems);
     tag->putShort(L"BrewTime", (short)mBrewTime);
+    ContainerHelper::saveAllItems(tag, mItems);
     tag->putByte(L"Fuel", (unsigned char)mFuel);
     return tag;
 }
@@ -399,7 +408,7 @@ boost::shared_ptr<BlockEntity> BrewingStandBlockEntity::clone()
     copy->mLastPotionBits = mLastPotionBits;
     copy->mLastIngredientItem = mLastIngredientItem;
     copy->mFuel = mFuel;
-    copy->mCustomName->set(mCustomName->raw(), mCustomName->getUUID(), mCustomName->isChatCensored(), mCustomName->isUUIDLocal());
+    copy->mCustomName->set(mCustomName->raw(), std::wstring(mCustomName->getUUID()), mCustomName->isChatCensored(), mCustomName->isUUIDLocal());
     for (unsigned int i = 0; i < mItems.size(); ++i)
     {
         copy->mItems[i] = mItems[i]->copy();

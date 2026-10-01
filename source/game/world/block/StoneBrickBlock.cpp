@@ -1,10 +1,12 @@
 #include "game/world/block/StoneBrickBlock.hpp"
 
+#include <cstring>
 #include <typeinfo>
 
 #include <boost/unordered_set.hpp>
 
 #include "game/core/IconRegister.hpp"
+#include "game/core/StringIds.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/BlockStateDefinition.hpp"
 #include "game/world/block/EnumProperty.hpp"
@@ -12,17 +14,25 @@
 #include "game/world/block/TypedBoxed.hpp"
 #include "game/world/block/Material.hpp"
 
-static StoneBrickBlock::Variant gStoneBrickVariant0(0, L"stonebrick", 0);
-static StoneBrickBlock::Variant gStoneBrickVariant1(1, L"mossy_stonebrick", 1);
-static StoneBrickBlock::Variant gStoneBrickVariant2(2, L"cracked_stonebrick", 2);
-static StoneBrickBlock::Variant gStoneBrickVariant3(3, L"chiseled_stonebrick", 3);
-static StoneBrickBlock::Variant* gStoneBrickVariants[4] = {
-    &gStoneBrickVariant0, &gStoneBrickVariant1, &gStoneBrickVariant2, &gStoneBrickVariant3
+StoneBrickBlock::Variant* StoneBrickBlock::Variant::DEFAULT = new StoneBrickBlock::Variant(
+    StoneBrickBlock::Variant::eDataDefault, L"stonebrick", IDS_TILE_STONE_BRICK_SMOOTH);
+StoneBrickBlock::Variant* StoneBrickBlock::Variant::MOSSY = new StoneBrickBlock::Variant(
+    StoneBrickBlock::Variant::eDataMossy, L"mossy_stonebrick", IDS_TILE_STONE_BRICK_SMOOTH_MOSSY);
+StoneBrickBlock::Variant* StoneBrickBlock::Variant::CRACKED = new StoneBrickBlock::Variant(
+    StoneBrickBlock::Variant::eDataCracked, L"cracked_stonebrick", IDS_TILE_STONE_BRICK_SMOOTH_CRACKED);
+StoneBrickBlock::Variant* StoneBrickBlock::Variant::CHISELED = new StoneBrickBlock::Variant(
+    StoneBrickBlock::Variant::eDataChiseled, L"chiseled_stonebrick", IDS_TILE_STONE_BRICK_SMOOTH_CHISELED);
+StoneBrickBlock::Variant* StoneBrickBlock::Variant::BY_DATA[4] = {
+    StoneBrickBlock::Variant::DEFAULT, StoneBrickBlock::Variant::MOSSY,
+    StoneBrickBlock::Variant::CRACKED, StoneBrickBlock::Variant::CHISELED
 };
-StoneBrickBlock::Variant* StoneBrickBlock::Variant::DEFAULT = &gStoneBrickVariant0;
-StoneBrickBlock::Variant* StoneBrickBlock::Variant::MOSSY = &gStoneBrickVariant1;
-StoneBrickBlock::Variant* StoneBrickBlock::Variant::CRACKED = &gStoneBrickVariant2;
-StoneBrickBlock::Variant* StoneBrickBlock::Variant::CHISELED = &gStoneBrickVariant3;
+
+std::wstring StoneBrickBlock::TEXTURE_NAMES[4] = {
+    std::wstring(L""),
+    std::wstring(L"mossy"),
+    std::wstring(L"cracked"),
+    std::wstring(L"carved")
+};
 
 int StoneBrickBlock::DEFAULT_META = 0;
 int StoneBrickBlock::MOSSY_META = 0;
@@ -46,7 +56,7 @@ StoneBrickBlock::Variant* StoneBrickBlock::Variant::byData(int data)
     {
         data = 0;
     }
-    return gStoneBrickVariants[data];
+    return Variant::BY_DATA[data];
 }
 
 int StoneBrickBlock::Variant::getTranslationKey()
@@ -66,32 +76,31 @@ std::wstring StoneBrickBlock::Variant::getSerializedName() const
 
 void StoneBrickBlock::blockStaticCtor()
 {
-    if (VARIANT == NULL)
     {
-        boost::unordered_set<Variant*> values;
-        values.insert(gStoneBrickVariants[0]);
-        values.insert(gStoneBrickVariants[1]);
-        values.insert(gStoneBrickVariants[2]);
-        values.insert(gStoneBrickVariants[3]);
-    VARIANT = EnumProperty<Variant*>::create(
-            L"variant", typeid(Variant*), values, Predicates<Variant*>::alwaysTrue);
+        std::wstring name(L"variant");
+        EnumProperty<Variant*>* variant;
+        {
+            boost::unordered_set<Variant*> values;
+            for (int i = 0; i < 4; ++i)
+            {
+                values.insert(Variant::BY_DATA[i]);
+            }
+            variant = EnumProperty<Variant*>::create(name, typeid(Variant), values, Predicates<Variant*>::alwaysTrue);
+        }
+        VARIANT = variant;
     }
-    DEFAULT_META = gStoneBrickVariants[0]->getData();
-    MOSSY_META = gStoneBrickVariants[1]->getData();
-    CRACKED_META = gStoneBrickVariants[2]->getData();
-    CHISELED_META = gStoneBrickVariants[3]->getData();
+    DEFAULT_META = Variant::DEFAULT->getData();
+    MOSSY_META = Variant::MOSSY->getData();
+    CRACKED_META = Variant::CRACKED->getData();
+    CHISELED_META = Variant::CHISELED->getData();
 }
 
 StoneBrickBlock::StoneBrickBlock()
     : Block(Material::STONE)
 {
     DerivedInit();
-    TypedBoxed<Variant*> value(Variant::DEFAULT);
-    registerDefaultState(mStateDefinition->any()->setBoxedValue(VARIANT, &value));
-    for (int i = 0; i < 4; ++i)
-    {
-        mTextures[i] = NULL;
-    }
+    registerDefaultState(mStateDefinition->any()->setValue(VARIANT, Variant::DEFAULT));
+    memset(mTextures, 0, sizeof(mTextures));
 }
 
 int StoneBrickBlock::getSpawnResourcesAuxValue(const BlockState* state)
@@ -101,8 +110,7 @@ int StoneBrickBlock::getSpawnResourcesAuxValue(const BlockState* state)
 
 const BlockState* StoneBrickBlock::getBlockState(int data)
 {
-    TypedBoxed<Variant*> value(Variant::byData(data));
-    return defaultBlockState()->setBoxedValue(VARIANT, &value);
+    return defaultBlockState()->setValue(VARIANT, Variant::byData(data));
 }
 
 int StoneBrickBlock::convertBlockStateToLegacyData(const BlockState* state)
@@ -112,7 +120,7 @@ int StoneBrickBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 BlockStateDefinition* StoneBrickBlock::createBlockStateDefinition()
 {
-    const Property* properties[] = { VARIANT };
+    static const Property* properties[] = { VARIANT };
     return new BlockStateDefinition(this, properties, 1);
 }
 
@@ -123,14 +131,19 @@ TextureAtlasSprite* StoneBrickBlock::getTexture(const Direction* direction, cons
 
 void StoneBrickBlock::registerIcons(IconRegister* iconRegister)
 {
-    std::wstring base = getIconName();
-    mTextures[0] = iconRegister->registerIcon(base);
-    mTextures[1] = iconRegister->registerIcon(base + L"_mossy");
-    mTextures[2] = iconRegister->registerIcon(base + L"_cracked");
-    mTextures[3] = iconRegister->registerIcon(base + L"_carved");
+    for (int i = 0; i < 4; ++i)
+    {
+        std::wstring name = getIconName();
+        if (!TEXTURE_NAMES[i].empty())
+        {
+            std::wstring suffix = std::wstring(L"_").append(TEXTURE_NAMES[i]);
+            name.append(suffix);
+        }
+        mTextures[i] = iconRegister->registerIcon(name);
+    }
 }
 
 int StoneBrickBlock::getDescriptionId(int auxValue)
 {
-    return Variant::byData(auxValue)->getTranslationKey();
+    return getBlockState(auxValue)->getValue(VARIANT)->getTranslationKey();
 }

@@ -83,8 +83,7 @@ public:
 private:
     NonNullList<not_null_ptr<ItemInstance> > mItems;
     int mCooldown;
-    int mTransferCooldown;
-    int mEnabled;
+    long long mLastTick;
 };
 
 #endif

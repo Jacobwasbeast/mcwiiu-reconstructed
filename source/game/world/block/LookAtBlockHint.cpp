@@ -14,7 +14,7 @@
 
 LookAtBlockHint::LookAtBlockHint(eTutorial_Hint hint, Tutorial* tutorial,
                                  const BlockState** states, unsigned int stateCount,
-                                 const Property** properties, unsigned int propertyCount,
+                                 const Property* const* properties, unsigned int propertyCount,
                                  int descriptionId, int auxValue, bool useState)
     : TutorialHint(hint, tutorial, -1, TutorialHint::HINT_LOOK_AT_BLOCK, true, true, -1),
       mStateCount(stateCount), mStates(new const BlockState*[stateCount]),

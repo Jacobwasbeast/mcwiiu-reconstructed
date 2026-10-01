@@ -235,7 +235,7 @@ template <class T>
 std::wstring _toString(T value);
 
 static const ResourceLocation* AIR_LOCATION = new ResourceLocation(L"air");
-DefaultedMappedRegistry<ResourceLocation, Block*>* Block::blockRegistry =
+DefaultedMappedRegistry<ResourceLocation, Block*>* const Block::blockRegistry =
     new DefaultedMappedRegistry<ResourceLocation, Block*>(*AIR_LOCATION);
 IdMapper<const BlockState*>* Block::blockStateRegistry = new IdMapper<const BlockState*>();
 const AABB* Block::FULL_BLOCK_SHAPE = AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 1.0, 1.0);
@@ -362,13 +362,9 @@ Block* Block::byId(int id)
     if (id > 0x400)
     {
         id -= 0x300;
-
-        if (id > 0x13E)
-        {
-            return NULL;
-        }
     }
-    else if (id > 0x13E)
+
+    if (id > 0x13E)
     {
         return NULL;
     }
@@ -446,7 +442,7 @@ bool Block::calculateIsWaterBlocking() const
 
 void Block::setThickness(float thickness)
 {
-    mThickness = thickness;
+    mThickness = 0.0f;
     mWaterBlocking = calculateIsWaterBlocking();
 }
 
@@ -497,7 +493,8 @@ Block* Block::setNameAndDescriptionId(int descriptionId, int useDescriptionId)
 
 Block* Block::setIndestructible()
 {
-    return setDestroyTime(INDESTRUCTIBLE);
+    setDestroyTime(INDESTRUCTIBLE);
+    return this;
 }
 
 Block* Block::sendBlockData(unsigned char blockData)
@@ -889,22 +886,46 @@ bool Block::neighbourVisibleThroughShape(const AABB* shape, LevelSource* levelSo
     switch (direction->get3DDataValue())
     {
     case 0:
-        return shape->mMinY > 0.0;
+        if (shape->mMinY > 0.0)
+        {
+            return true;
+        }
+        break;
 
     case 1:
-        return shape->mMaxY < 1.0;
+        if (shape->mMaxY < 1.0)
+        {
+            return true;
+        }
+        break;
 
     case 2:
-        return shape->mMinZ > 0.0;
+        if (shape->mMinZ > 0.0)
+        {
+            return true;
+        }
+        break;
 
     case 3:
-        return shape->mMaxZ < 1.0;
+        if (shape->mMaxZ < 1.0)
+        {
+            return true;
+        }
+        break;
 
     case 4:
-        return shape->mMinX > 0.0;
+        if (shape->mMinX > 0.0)
+        {
+            return true;
+        }
+        break;
 
     case 5:
-        return shape->mMaxX < 1.0;
+        if (shape->mMaxX < 1.0)
+        {
+            return true;
+        }
+        break;
 
     default:
         break;
@@ -1298,7 +1319,7 @@ int Block::getColor(LevelSource* levelSource, const BlockPos& pos, int tintIndex
 
 int Block::getColor(LevelSource* levelSource, const BlockPos& pos)
 {
-    return getColor();
+    return getColor(levelSource, pos, 0);
 }
 
 int Block::getColor(LevelSource* levelSource, const BlockPos& pos, const BlockState* state)
@@ -1687,19 +1708,24 @@ Vec3* Block::getOffset(const BlockState* state, LevelSource* levelSource, const 
         return Vec3::newTemp(0.0, 0.0, 0.0);
     }
 
-    long seed = Mth::getSeed(pos.x, 0, pos.z);
+    long long seed = Mth::getSeed(pos.x, 0, pos.z);
 
-    double offsetX = ((double)(float)((double)((seed >> 16) & 0xF) / 15.0) - 0.5) * 0.5;
-    double offsetZ = ((double)(float)((double)((seed >> 24) & 0xF) / 15.0) - 0.5) * 0.5;
+    Vec3* offset;
 
     if (offsetType == BLOCK_OFFSET_XYZ)
     {
-        double offsetY = ((double)(float)((double)((seed >> 20) & 0xF) / 15.0) - 1.0) * 0.2;
-
-        return Vec3::newTemp(offsetX, offsetY, offsetZ);
+        offset = Vec3::newTemp(((float)((seed >> 16) & 0xF) / 15.0f - 0.5) * 0.5,
+                               ((float)((seed >> 20) & 0xF) / 15.0f - 1.0) * 0.2,
+                               ((float)((seed >> 24) & 0xF) / 15.0f - 0.5) * 0.5);
+    }
+    else
+    {
+        offset = Vec3::newTemp(((float)((seed >> 16) & 0xF) / 15.0f - 0.5) * 0.5,
+                               0.0,
+                               ((float)((seed >> 24) & 0xF) / 15.0f - 0.5) * 0.5);
     }
 
-    return Vec3::newTemp(offsetX, 0.0, offsetZ);
+    return offset;
 }
 
 const SoundType* Block::getSoundType()
@@ -2055,8 +2081,8 @@ void Block::staticCtor()
     registerBlock(86, L"carved_pumpkin",
         (new PumpkinBlock())->setIconName(L"pumpkin")->setDestroyTime(1.0f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_CARVED_PUMPKIN, IDS_DESC_CARVED_PUMPKIN));
 
-    registerBlock(257, L"pumpkin",
-        (new PumpkinBlock())->setIconName(L"pumpkin")->setDestroyTime(1.0f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_PUMPKIN, IDS_DESC_PUMPKIN));
+    Block* pumpkinBlock = (new PumpkinBlock())->setIconName(L"pumpkin")->setDestroyTime(1.0f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_PUMPKIN, IDS_DESC_PUMPKIN);
+    registerBlock(257, L"pumpkin", pumpkinBlock);
 
     registerBlock(87, L"netherrack",
         (new NetherrackBlock())->setIconName(L"netherrack")->setDestroyTime(0.4f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(0xC957BC78, 0xE7B08BCD));
@@ -2106,14 +2132,14 @@ void Block::staticCtor()
     registerBlock(102, L"glass_pane",
         (new ThinFenceBlock(L"glass", L"glass_pane_top", Material::GLASS, false))->setDestroyTime(0.3f)->setSoundType(SoundType::GLASS)->setNameAndDescriptionId(IDS_TILE_THIN_GLASS, IDS_DESC_THIN_GLASS)->setBaseItemTypeAndMaterial(42, 34));
 
-    registerBlock(103, L"melon_block",
-        (new MelonBlock())->setIconName(L"melon")->setDestroyTime(1.0f)->setSoundType(SoundType::WOOD)->setNameAndDescriptionId(IDS_TILE_MELON, IDS_DESC_MELON_BLOCK));
+    Block* melonBlock = (new MelonBlock())->setIconName(L"melon")->setDestroyTime(1.0f)->setSoundType(SoundType::WOOD)->setNameAndDescriptionId(IDS_TILE_MELON, IDS_DESC_MELON_BLOCK);
+    registerBlock(103, L"melon_block", melonBlock);
 
     registerBlock(104, L"pumpkin_stem",
-        (new StemBlock())->setIconName(L"pumpkin_stem")->setDestroyTime(0.0f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_PUMPKIN_STEM, -1)->disableMipmap());
+        (new StemBlock(pumpkinBlock))->setIconName(L"pumpkin_stem")->setDestroyTime(0.0f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_PUMPKIN_STEM, -1)->disableMipmap());
 
     registerBlock(105, L"melon_stem",
-        (new StemBlock())->setIconName(L"melon_stem")->setDestroyTime(0.0f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_MELON_STEM, -1)->disableMipmap());
+        (new StemBlock(melonBlock))->setIconName(L"melon_stem")->setDestroyTime(0.0f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_MELON_STEM, -1)->disableMipmap());
 
     registerBlock(106, L"vine",
         (new VineBlock())->setIconName(L"vine")->setDestroyTime(0.2f)->setSoundType(SoundType::GRASS)->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_VINE, IDS_DESC_VINE)->disableMipmap());

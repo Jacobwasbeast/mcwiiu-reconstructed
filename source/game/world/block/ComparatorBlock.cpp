@@ -9,8 +9,10 @@
 #include <vector>
 #include <boost/shared_ptr.hpp>
 
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/Direction.hpp"
+#include "game/core/EntityType.hpp"
 #include "game/core/L10N.hpp"
 #include "game/core/Mirror.hpp"
 #include "game/core/Rotation.hpp"
@@ -31,22 +33,21 @@
 #include "game/world/block/Material.hpp"
 #include "game/world/block/ComparatorBlockEntity.hpp"
 #include "game/world/block/EnumProperty.hpp"
+#include "game/world/block/Predicates.hpp"
 #include "game/world/block/BooleanProperty.hpp"
 #include "game/world/block/DirectionProperty.hpp"
 #include "game/world/block/HorizontalDirectionalBlock.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
 EnumProperty<ComparatorBlock::ComparatorMode*>* ComparatorBlock::MODE = NULL;
-ComparatorBlock::ComparatorMode* ComparatorBlock::ComparatorMode::COMPARE = NULL;
-ComparatorBlock::ComparatorMode* ComparatorBlock::ComparatorMode::SUBTRACT = NULL;
 static AbstractProperty<bool>* sPoweredProperty =
     static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"powered"));
-
-class ComparatorModePredicate : public Predicate<ComparatorBlock::ComparatorMode*>
-{
-public:
-    virtual bool apply(ComparatorBlock::ComparatorMode*) const { return true; }
-};
+ComparatorBlock::ComparatorMode* ComparatorBlock::ComparatorMode::COMPARE =
+    new ComparatorBlock::ComparatorMode(L"compare");
+ComparatorBlock::ComparatorMode* ComparatorBlock::ComparatorMode::SUBTRACT =
+    new ComparatorBlock::ComparatorMode(L"subtract");
+static ComparatorBlock::ComparatorMode* sModes[2] = { ComparatorBlock::ComparatorMode::COMPARE,
+                                                      ComparatorBlock::ComparatorMode::SUBTRACT };
 
 ComparatorBlock::ComparatorMode::ComparatorMode(const std::wstring& name) : mName(name) {}
 ComparatorBlock::ComparatorMode::~ComparatorMode() {}
@@ -54,7 +55,6 @@ std::wstring ComparatorBlock::ComparatorMode::toString() const { return mName; }
 std::wstring ComparatorBlock::ComparatorMode::getSerializedName() const { return mName; }
 
 ComparatorBlock::EntitySelector::EntitySelector(const Direction* direction) : mDirection(direction) {}
-ComparatorBlock::EntitySelector::~EntitySelector() {}
 bool ComparatorBlock::EntitySelector::apply(boost::shared_ptr<Entity> entity) const
 {
     return entity && entity->getDirection() == mDirection;
@@ -77,20 +77,24 @@ ComparatorBlock::ComparatorBlock(bool on) : DiodeBlock(on)
 }
 ComparatorBlock::~ComparatorBlock() {}
 
-boost::shared_ptr<BlockEntity> ComparatorBlock::newBlockEntity(Level*, int)
+boost::shared_ptr<BlockEntity> ComparatorBlock::newBlockEntity(Level* level, int)
 {
-    return boost::shared_ptr<BlockEntity>(new ComparatorBlockEntity());
+    boost::shared_ptr<ComparatorBlockEntity> blockEntity(new ComparatorBlockEntity());
+    blockEntity->setLevel(level);
+    return blockEntity;
 }
 
 void ComparatorBlock::blockStaticCtor()
 {
-    ComparatorMode::COMPARE = new ComparatorMode(L"compare");
-    ComparatorMode::SUBTRACT = new ComparatorMode(L"subtract");
-    boost::unordered_set<ComparatorMode*> values;
-    values.insert(ComparatorMode::COMPARE);
-    values.insert(ComparatorMode::SUBTRACT);
-    ComparatorModePredicate predicate;
-    MODE = EnumProperty<ComparatorMode*>::create(L"mode", typeid(ComparatorMode*), values, &predicate);
+    std::wstring name(L"mode");
+    EnumProperty<ComparatorMode*>* mode;
+    {
+        boost::unordered_set<ComparatorMode*> values;
+        for (int i = 0; i < 2; ++i) values.insert(sModes[i]);
+        mode = EnumProperty<ComparatorMode*>::create(name, typeid(ComparatorMode*), values,
+                                                     Predicates<ComparatorMode*>::alwaysTrue);
+    }
+    MODE = mode;
 }
 
 std::wstring ComparatorBlock::getName() { return L10N::GetString(IDS_ITEM_COMPARATOR); }
@@ -112,50 +116,57 @@ const BlockState* ComparatorBlock::getOffBlock(const BlockState* state)
 
 bool ComparatorBlock::isOn(const BlockState* state)
 {
-    return mOn && state->getValue(MODE) != NULL;
+    return mOn || state->getValue(sPoweredProperty);
 }
 
 int ComparatorBlock::getOutputSignal(LevelSource* levelSource, const BlockPos& pos, const BlockState* state)
 {
+    int signal = 0;
     boost::shared_ptr<BlockEntity> blockEntity = levelSource->getBlockEntity(pos);
-    boost::shared_ptr<ComparatorBlockEntity> comparator = boost::dynamic_pointer_cast<ComparatorBlockEntity>(blockEntity);
-    if (comparator) return comparator->getOutputSignal();
-    return 0;
+    bool isComparator = blockEntity->GetType() == BlockEntityType::COMPARATOR;
+    if (isComparator)
+    {
+        boost::shared_ptr<ComparatorBlockEntity> comparator =
+            boost::dynamic_pointer_cast<ComparatorBlockEntity>(blockEntity);
+        signal = comparator->getOutputSignal();
+    }
+    return signal;
 }
 
 int ComparatorBlock::calculateOutputSignal(Level* level, const BlockPos& pos, const BlockState* state)
 {
-    int input = getInputSignal(level, pos, state);
     if (state->getValue(MODE) == ComparatorMode::SUBTRACT)
     {
-        int side = getAlternateSignal(level, pos, state);
-        input -= side;
-        if (input < 0) input = 0;
+        int output = getInputSignal(level, pos, state) - getAlternateSignal(level, pos, state);
+        if (output < 0) output = 0;
+        return output;
     }
-    return input;
+    return getInputSignal(level, pos, state);
 }
 
 bool ComparatorBlock::shouldTurnOn(Level* level, const BlockPos& pos, const BlockState* state)
 {
     int input = getInputSignal(level, pos, state);
+    if (input >= 15) return true;
     if (input == 0) return false;
-    if (state->getValue(MODE) == ComparatorMode::SUBTRACT) return input > getAlternateSignal(level, pos, state);
-    return true;
+    int alternate = getAlternateSignal(level, pos, state);
+    if (alternate == 0) return true;
+    return input >= alternate;
 }
 
 boost::shared_ptr<ItemFrame> ComparatorBlock::getItemFrame(Level* level, const Direction* direction, const BlockPos& pos)
 {
-    AABB* box = AABB::newTemp(pos);
     EntitySelector selector(direction);
+    AABB* box = AABB::newTemp(pos.x, pos.y, pos.z, pos.x + 1, pos.y + 1, pos.z + 1);
     std::vector<boost::shared_ptr<Entity> >* entities = level->getEntitiesOfClass(typeid(ItemFrame), box, &selector, false);
-    if (entities->size() != 1)
+    if (entities->size() == 1)
     {
+        boost::shared_ptr<ItemFrame> frame = boost::dynamic_pointer_cast<ItemFrame>(entities->at(0));
         delete entities;
-        return boost::shared_ptr<ItemFrame>();
+        return frame;
     }
-    boost::shared_ptr<ItemFrame> frame = boost::dynamic_pointer_cast<ItemFrame>(entities->at(0));
     delete entities;
-    return frame;
+    return boost::shared_ptr<ItemFrame>();
 }
 
 int ComparatorBlock::getInputSignal(Level* level, const BlockPos& pos, const BlockState* state)
@@ -212,35 +223,44 @@ void ComparatorBlock::checkTickOnNeighbor(Level* level, const BlockPos& pos, con
 {
     if (level->isBlockToBeTickedAt(pos, this)) return;
     int newOutput = calculateOutputSignal(level, pos, state);
-    int oldOutput = getOutputSignal(level, pos, state);
+    int oldOutput = 0;
+    boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
+    bool isComparator = blockEntity->GetType() == BlockEntityType::COMPARATOR;
+    if (isComparator)
+    {
+        boost::shared_ptr<ComparatorBlockEntity> comparator =
+            boost::dynamic_pointer_cast<ComparatorBlockEntity>(blockEntity);
+        oldOutput = comparator->getOutputSignal();
+    }
     if (newOutput == oldOutput && isOn(state) == shouldTurnOn(level, pos, state)) return;
-    level->addToTickNextTick(pos, this, getTurnOnDelay(state), shouldPrioritize(level, pos, state) ? -1 : 0);
+    level->addToTickNextTick(pos, this, 2, shouldPrioritize(level, pos, state) ? -1 : 0);
 }
 
 void ComparatorBlock::refreshOutputState(Level* level, const BlockPos& pos, const BlockState* state)
 {
-    int oldOutput = getOutputSignal(level, pos, state);
     int output = calculateOutputSignal(level, pos, state);
+    int oldOutput = 0;
     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
-    boost::shared_ptr<ComparatorBlockEntity> comparator = boost::dynamic_pointer_cast<ComparatorBlockEntity>(blockEntity);
-    if (comparator) comparator->setOutputSignal(output);
+    bool isComparator = blockEntity->GetType() == BlockEntityType::COMPARATOR;
+    if (isComparator)
+    {
+        boost::shared_ptr<ComparatorBlockEntity> comparator =
+            boost::dynamic_pointer_cast<ComparatorBlockEntity>(blockEntity);
+        oldOutput = comparator->getOutputSignal();
+        comparator->setOutputSignal(output);
+    }
     if (oldOutput == output && state->getValue(MODE) != ComparatorMode::COMPARE) return;
 
     bool shouldOn = shouldTurnOn(level, pos, state);
     bool currentOn = isOn(state);
-    int flags = g_pApp->GetGameHostOption(eGameHostOption_MiniGame) ? 0x24 : 2;
-    if (!currentOn)
+    int flags = gApp.GetGameHostOption(eGameHostOption_MiniGame) ? 0x24 : 2;
+    if (currentOn && !shouldOn)
     {
-        if (shouldOn)
-        {
-            TypedBoxed<bool> powered(true);
-            level->setBlock(pos, state->setBoxedValue(sPoweredProperty, &powered), flags, false);
-        }
+        level->setBlock(pos, state->setValue(sPoweredProperty, false), flags, false);
     }
-    else if (!shouldOn)
+    else if (!currentOn && shouldOn)
     {
-        TypedBoxed<bool> powered(false);
-        level->setBlock(pos, state->setBoxedValue(sPoweredProperty, &powered), flags, false);
+        level->setBlock(pos, state->setValue(sPoweredProperty, true), flags, false);
     }
     updateNeighborsInFront(level, pos, state);
 }
@@ -249,8 +269,7 @@ void ComparatorBlock::tick(Level* level, const BlockPos& pos, const BlockState* 
 {
     if (mOn)
     {
-        TypedBoxed<bool> powered(true);
-        level->setBlock(pos, getOffBlock(state)->setBoxedValue(sPoweredProperty, &powered), Block::UPDATE_INVISIBLE, false);
+        level->setBlock(pos, getOffBlock(state)->setValue(sPoweredProperty, true), Block::UPDATE_INVISIBLE, false);
     }
     refreshOutputState(level, pos, state);
 }
@@ -306,8 +325,8 @@ unsigned int ComparatorBlock::GetInteractTooltip(const BlockTooltipDataHolder& t
 
 const BlockState* ComparatorBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    TypedBoxed<const Direction*> facing(rotation->rotate(state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY)));
-    return state->setBoxedValue(HorizontalDirectionalBlock::FACING_PROPERTY, &facing);
+    DirectionProperty* const facing = HorizontalDirectionalBlock::FACING_PROPERTY;
+    return state->setValue(facing, rotation->rotate(state->getValue(facing)));
 }
 
 const BlockState* ComparatorBlock::mirror(const BlockState* state, Mirror* mirror)
@@ -317,8 +336,8 @@ const BlockState* ComparatorBlock::mirror(const BlockState* state, Mirror* mirro
 
 BlockStateDefinition* ComparatorBlock::createBlockStateDefinition()
 {
-    const Property* properties[] = { HorizontalDirectionalBlock::FACING_PROPERTY, MODE,
-                                     sPoweredProperty };
+    static const Property* properties[] = { HorizontalDirectionalBlock::FACING_PROPERTY, MODE,
+                                            sPoweredProperty };
     return new BlockStateDefinition(this, properties, 3);
 }
 

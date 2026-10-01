@@ -25,7 +25,10 @@ public:
     class FunctionPredicate : public Predicate<T>
     {
     public:
-        FunctionPredicate(bool (*function)(T));
+        FunctionPredicate(bool (*function)(T))
+            : mFunction(function)
+        {
+        }
 
         virtual bool apply(T input) const;
         virtual ~FunctionPredicate();
@@ -91,12 +94,6 @@ Predicate<T>* Predicates<T>::ConstantPredicate::copy() const
 
 template <class T>
 Predicates<T>::ConstantPredicate::~ConstantPredicate()
-{
-}
-
-template <class T>
-Predicates<T>::FunctionPredicate::FunctionPredicate(bool (*function)(T))
-    : mFunction(function)
 {
 }
 

@@ -31,10 +31,6 @@ GenericMultiBlockThemeRuleDefinition::BlockRuleDefinition::BlockRuleDefinition()
     addIntAttribute(ConsoleGameRules::eGameRuleAttr_blockAux, &mBlockAux);
 }
 
-GenericMultiBlockThemeRuleDefinition::BlockRuleDefinition::~BlockRuleDefinition()
-{
-}
-
 ConsoleGameRules::EGameRuleType GenericMultiBlockThemeRuleDefinition::BlockRuleDefinition::getActionType()
 {
     return ConsoleGameRules::eGameRuleType_BlockDef;

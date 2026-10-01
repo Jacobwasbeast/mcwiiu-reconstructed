@@ -12,8 +12,27 @@ class BlockState;
 template<class T> class IdMapper : public IdMap<T>
 {
 public:
-    virtual int getId(T value);
-    virtual T byId(int id);
+    virtual int getId(T value)
+    {
+        typename boost::unordered_map<T, int>::iterator found = mIds.find(value);
+        int id = -1;
+        if (found != mIds.end())
+        {
+            id = found->second;
+        }
+
+        return id;
+    }
+
+    virtual T byId(int id)
+    {
+        if (id >= 0 && id < (int)mObjects.size())
+        {
+            return mObjects.at(id);
+        }
+
+        return T();
+    }
 
     void addMapping(T value, int id);
 
@@ -21,27 +40,6 @@ private:
     boost::unordered_map<T, int> mIds;
     std::vector<T> mObjects;
 };
-
-template<class T> int IdMapper<T>::getId(T value)
-{
-    typename boost::unordered_map<T, int>::iterator found = mIds.find(value);
-    if (found == mIds.end())
-    {
-        return -1;
-    }
-
-    return found->second;
-}
-
-template<class T> T IdMapper<T>::byId(int id)
-{
-    if (id >= 0 && id < (int)mObjects.size())
-    {
-        return mObjects.at(id);
-    }
-
-    return T();
-}
 
 template<class T> void IdMapper<T>::addMapping(T value, int id)
 {

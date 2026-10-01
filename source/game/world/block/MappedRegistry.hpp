@@ -22,15 +22,38 @@ public:
     MappedRegistry();
     ~MappedRegistry();
 
-    virtual V get(K key);
+    virtual V get(K key)
+    {
+        return SimpleRegistry<K, V, KeyHash, KeyEqual>::get(key);
+    }
+
     virtual void registerKey(K key, V value);
     virtual bool containsKey(K key);
 
-    virtual void registerMapping(int id, K key, V value);
+    virtual void registerMapping(int id, K key, V value)
+    {
+        mIdMapper.addMapping(value, id);
+
+        registerKey(key, value);
+    }
+
     virtual K getKey(V value) const;
-    virtual int getId(V value);
-    virtual V byId(int id);
-    virtual bool containsId(int id);
+
+    virtual int getId(V value)
+    {
+        return mIdMapper.getId(value);
+    }
+
+    virtual V byId(int id)
+    {
+        return mIdMapper.byId(id);
+    }
+
+    virtual bool containsId(int id)
+    {
+        IdMap<V>* idMap = &mIdMapper;
+        return idMap->byId(id) != V();
+    }
 
 private:
     int mNextId;
@@ -60,12 +83,6 @@ MappedRegistry<K, V, KeyHash, KeyEqual, ValueHash, ValueEqual>::~MappedRegistry(
 }
 
 template <class K, class V, class KeyHash, class KeyEqual, class ValueHash, class ValueEqual>
-V MappedRegistry<K, V, KeyHash, KeyEqual, ValueHash, ValueEqual>::get(K key)
-{
-    return SimpleRegistry<K, V, KeyHash, KeyEqual>::get(key);
-}
-
-template <class K, class V, class KeyHash, class KeyEqual, class ValueHash, class ValueEqual>
 void MappedRegistry<K, V, KeyHash, KeyEqual, ValueHash, ValueEqual>::registerKey(K key, V value)
 {
     SimpleRegistry<K, V, KeyHash, KeyEqual>::registerKey(key, value);
@@ -80,14 +97,6 @@ bool MappedRegistry<K, V, KeyHash, KeyEqual, ValueHash, ValueEqual>::containsKey
 }
 
 template <class K, class V, class KeyHash, class KeyEqual, class ValueHash, class ValueEqual>
-void MappedRegistry<K, V, KeyHash, KeyEqual, ValueHash, ValueEqual>::registerMapping(int id, K key, V value)
-{
-    mIdMapper.addMapping(value, id);
-
-    registerKey(key, value);
-}
-
-template <class K, class V, class KeyHash, class KeyEqual, class ValueHash, class ValueEqual>
 K MappedRegistry<K, V, KeyHash, KeyEqual, ValueHash, ValueEqual>::getKey(V value) const
 {
     typename boost::unordered_map<V, K, ValueHash, ValueEqual>::const_iterator found = mInverseRegistry.find(value);
@@ -97,24 +106,6 @@ K MappedRegistry<K, V, KeyHash, KeyEqual, ValueHash, ValueEqual>::getKey(V value
     }
 
     return found->second;
-}
-
-template <class K, class V, class KeyHash, class KeyEqual, class ValueHash, class ValueEqual>
-int MappedRegistry<K, V, KeyHash, KeyEqual, ValueHash, ValueEqual>::getId(V value)
-{
-    return mIdMapper.getId(value);
-}
-
-template <class K, class V, class KeyHash, class KeyEqual, class ValueHash, class ValueEqual>
-V MappedRegistry<K, V, KeyHash, KeyEqual, ValueHash, ValueEqual>::byId(int id)
-{
-    return mIdMapper.byId(id);
-}
-
-template <class K, class V, class KeyHash, class KeyEqual, class ValueHash, class ValueEqual>
-bool MappedRegistry<K, V, KeyHash, KeyEqual, ValueHash, ValueEqual>::containsId(int id)
-{
-    return mIdMapper.byId(id) != V();
 }
 
 #endif

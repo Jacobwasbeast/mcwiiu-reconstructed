@@ -28,6 +28,14 @@ class ShulkerBoxBlockEntity : public RandomizableLockableContainerBlockEntity,
                               public WorldlyContainer
 {
 public:
+    enum AnimationStatus
+    {
+        ANIMATION_CLOSED,
+        ANIMATION_OPENING,
+        ANIMATION_OPENED,
+        ANIMATION_CLOSING
+    };
+
     ShulkerBoxBlockEntity(const DyeColor* color);
     ShulkerBoxBlockEntity();
     virtual ~ShulkerBoxBlockEntity();
@@ -76,9 +84,12 @@ public:
     virtual boost::shared_ptr<Packet> getUpdatePacket();
     virtual boost::shared_ptr<BlockEntity> clone();
     virtual unsigned long long GetType();
-    void operator=(const ShulkerBoxBlockEntity& other);
+    ShulkerBoxBlockEntity& operator=(const ShulkerBoxBlockEntity& other);
 
 private:
+    static arrayWithLength<int> createSlots();
+    static arrayWithLength<int> SLOTS;
+
     NonNullList<not_null_ptr<ItemInstance> > mItems;
     bool mCleared;
     int mOpenCount;

@@ -26,7 +26,7 @@ public:
         int getHeight();
         bool isEmptyBlock(Block* block);
         int getDistanceUntilEdge(const BlockPos& pos, const Direction* direction);
-        void calculatePortalHeight();
+        int calculatePortalHeight();
         bool isValid();
         int getWidth();
         void createPortalBlocks();

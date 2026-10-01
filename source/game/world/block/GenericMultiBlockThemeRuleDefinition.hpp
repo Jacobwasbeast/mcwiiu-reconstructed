@@ -17,7 +17,7 @@ public:
     public:
         BlockRuleDefinition();
 
-        virtual ~BlockRuleDefinition();
+        virtual ~BlockRuleDefinition() {}
 
         virtual ConsoleGameRules::EGameRuleType getActionType();
 

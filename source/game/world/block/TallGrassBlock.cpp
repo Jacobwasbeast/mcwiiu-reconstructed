@@ -19,7 +19,7 @@
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/LevelSource.hpp"
-#include "game/world/biome/BiomeColors.hpp"
+#include "game/world/biome/Biome.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
@@ -32,14 +32,16 @@
 #include "game/world/generation/Player.hpp"
 #include "game/item/ItemId.hpp"
 
+static const AABB* gTallGrassShape = AABB::newPermanent(0.1, 0.0, 0.1, 0.9, 0.8, 0.9);
+static const std::wstring gIconNames[3] = { L"deadbush", L"tallgrass", L"fern" };
+
 AbstractProperty<TallGrassBlock::Variant*>* TallGrassBlock::VARIANT = NULL;
-TallGrassBlock::Variant* TallGrassBlock::VARIANTS[3] = { NULL, NULL, NULL };
-TallGrassBlock::Variant* TallGrassBlock::Variant::DEAD_BUSH = NULL;
-TallGrassBlock::Variant* TallGrassBlock::Variant::GRASS = NULL;
-TallGrassBlock::Variant* TallGrassBlock::Variant::FERN = NULL;
-TallGrassBlock::Variant* gTallGrass = NULL;
-TallGrassBlock::Variant* gFern = NULL;
-Property* TallGrassBlock_VARIANT = NULL;
+TallGrassBlock::Variant* TallGrassBlock::Variant::DEAD_BUSH = new TallGrassBlock::Variant(0, L"dead_bush");
+TallGrassBlock::Variant* TallGrassBlock::Variant::GRASS = new TallGrassBlock::Variant(1, L"tall_grass");
+TallGrassBlock::Variant* TallGrassBlock::Variant::FERN = new TallGrassBlock::Variant(2, L"fern");
+TallGrassBlock::Variant* TallGrassBlock::VARIANTS[3] = {
+    TallGrassBlock::Variant::DEAD_BUSH, TallGrassBlock::Variant::GRASS, TallGrassBlock::Variant::FERN
+};
 
 TallGrassBlock::Variant::Variant(int data, const std::wstring& name)
     : mData(data), mName(name)
@@ -72,35 +74,25 @@ std::wstring TallGrassBlock::Variant::getSerializedName() const
 
 void TallGrassBlock::blockStaticCtor()
 {
-    if (VARIANTS[0] == NULL)
+    std::wstring name(L"type");
+    AbstractProperty<Variant*>* property;
     {
-        VARIANTS[0] = new Variant(0, L"dead_bush");
-        VARIANTS[1] = new Variant(1, L"grass");
-        VARIANTS[2] = new Variant(2, L"fern");
-        Variant::DEAD_BUSH = VARIANTS[0];
-        Variant::GRASS = VARIANTS[1];
-        Variant::FERN = VARIANTS[2];
-        gTallGrass = Variant::GRASS;
-        gFern = Variant::FERN;
-
         boost::unordered_set<Variant*> values;
-        values.insert(VARIANTS[0]);
-        values.insert(VARIANTS[1]);
-        values.insert(VARIANTS[2]);
-        VARIANT = EnumProperty<Variant*>::create(L"type", typeid(Variant), values, Predicates<Variant*>::alwaysTrue);
-        TallGrassBlock_VARIANT = VARIANT;
+        for (int i = 0; i < 3; ++i)
+        {
+            values.insert(VARIANTS[i]);
+        }
+        property = EnumProperty<Variant*>::create(name, typeid(Variant), values, Predicates<Variant*>::alwaysTrue);
     }
+    VARIANT = property;
 }
 
 TallGrassBlock::TallGrassBlock()
-    : Bush(Material::PLANT)
+    : Bush(Material::REPLACEABLE_PLANT)
 {
     DerivedInit();
-    TypedBoxed<Variant*> variant(Variant::GRASS);
-    registerDefaultState(mStateDefinition->any()->setBoxedValue(VARIANT, &variant));
-    mIcons[0] = NULL;
-    mIcons[1] = NULL;
-    mIcons[2] = NULL;
+    registerDefaultState(mStateDefinition->any()->setValue(VARIANT, Variant::GRASS));
+    memset(mIcons, 0, sizeof(mIcons));
 }
 
 bool TallGrassBlock::isValidBonemealTarget(Level*, const BlockPos&, const BlockState* state, bool)
@@ -115,12 +107,12 @@ bool TallGrassBlock::isBonemealSuccess(Level*, Random*, const BlockPos&, const B
 
 void TallGrassBlock::performBonemeal(Level* level, Random*, const BlockPos& pos, const BlockState* state)
 {
-    DoublePlantBlock::Variant* variant = DoublePlantBlock::Variant::byData(2);
+    DoublePlantBlock::Variant* variant = DoublePlantBlock::Variant::GRASS;
     if (state->getValue(VARIANT) == Variant::FERN)
     {
-        variant = DoublePlantBlock::Variant::byData(3);
+        variant = DoublePlantBlock::Variant::FERN;
     }
-    if (level->isEmptyBlock(pos.above()))
+    if (Blocks::double_plant->mayPlace(level, pos))
     {
         DoublePlantBlock* doublePlant = static_cast<DoublePlantBlock*>(Blocks::double_plant);
         doublePlant->placeAt(level, pos, variant, 2);
@@ -129,7 +121,7 @@ void TallGrassBlock::performBonemeal(Level* level, Random*, const BlockPos& pos,
 
 const AABB* TallGrassBlock::getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
 {
-    return Bush::getShape(state, levelSource, pos);
+    return gTallGrassShape;
 }
 
 bool TallGrassBlock::canSurvive(Level* level, const BlockPos& pos, const BlockState* state)
@@ -149,25 +141,34 @@ int TallGrassBlock::getColor() const
 
 int TallGrassBlock::getColor(const BlockState* state)
 {
-    if (state->getBlock() != this || state->getValue(VARIANT) == Variant::DEAD_BUSH)
+    if (state->getBlock() != this)
     {
         return Block::getColor(state);
     }
-    return GrassColor::get(0.5, 1.0);
+    if (state->getValue(VARIANT) != Variant::DEAD_BUSH)
+    {
+        return GrassColor::get(0.5, 1.0);
+    }
+    return 0xFFFFFF;
 }
 
 int TallGrassBlock::getColor(LevelSource* levelSource, const BlockPos& pos, int)
 {
-    return getColor(levelSource, pos, levelSource->getBlockState(pos));
+    const BlockState* state = levelSource->getBlockState(pos);
+    return getColor(levelSource, pos, state);
 }
 
 int TallGrassBlock::getColor(LevelSource* levelSource, const BlockPos& pos, const BlockState* state)
 {
-    if (state->getBlock() != this || state->getValue(VARIANT) == Variant::DEAD_BUSH)
+    if (state->getBlock() != this)
     {
-        return BiomeColors::getAverageGrassColor(levelSource, pos);
+        return levelSource->getBiome(pos)->getGrassColor(pos);
     }
-    return 0xFFFFFF;
+    if (state->getValue(VARIANT) == Variant::DEAD_BUSH)
+    {
+        return 0xFFFFFF;
+    }
+    return levelSource->getBiome(pos)->getGrassColor(pos);
 }
 
 Item* TallGrassBlock::getResource(const BlockState*, Random* random, int)
@@ -202,14 +203,12 @@ not_null_ptr<ItemInstance> TallGrassBlock::getCloneItemInstance(Level*, const Bl
 
 const BlockState* TallGrassBlock::getBlockState(int data)
 {
-    TypedBoxed<Variant*> variant(Variant::byData(data));
-    return defaultBlockState()->setBoxedValue(VARIANT, &variant);
+    return defaultBlockState()->setValue(VARIANT, Variant::byData(data));
 }
 
 int TallGrassBlock::convertBlockStateToLegacyData(const BlockState* state)
 {
-    Variant* variant = state->getValue(VARIANT);
-    return variant == NULL ? 0 : variant->getData();
+    return state->getValue(VARIANT)->getData();
 }
 
 unsigned int TallGrassBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
@@ -230,7 +229,7 @@ bool TallGrassBlock::canContainLiquid(const BlockState*) const
 
 BlockStateDefinition* TallGrassBlock::createBlockStateDefinition()
 {
-    const Property* properties[] = { VARIANT };
+    static const Property* properties[1] = { VARIANT };
     return new BlockStateDefinition(this, properties, 1);
 }
 
@@ -246,7 +245,7 @@ TextureAtlasSprite* TallGrassBlock::getTexture(const Direction*, const BlockStat
 
 void TallGrassBlock::registerIcons(IconRegister* iconRegister)
 {
-    mIcons[0] = iconRegister->registerIcon(L"deadbush");
-    mIcons[1] = iconRegister->registerIcon(L"tallgrass");
-    mIcons[2] = iconRegister->registerIcon(L"fern");
+    mIcons[0] = iconRegister->registerIcon(gIconNames[0]);
+    mIcons[1] = iconRegister->registerIcon(gIconNames[1]);
+    mIcons[2] = iconRegister->registerIcon(gIconNames[2]);
 }

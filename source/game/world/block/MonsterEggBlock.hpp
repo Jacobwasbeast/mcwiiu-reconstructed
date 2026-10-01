@@ -3,6 +3,7 @@
 
 #include <string>
 
+#include "game/core/StringRepresentable.hpp"
 #include "game/world/block/Block.hpp"
 
 class BlockState;
@@ -17,7 +18,7 @@ template <class T> class EnumProperty;
 class MonsterEggBlock : public Block
 {
 public:
-    class Variant
+    class Variant : public StringRepresentable
     {
     public:
         Variant(int data, const std::wstring& name, int translationKey);

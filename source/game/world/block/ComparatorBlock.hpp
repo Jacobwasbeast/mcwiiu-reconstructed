@@ -53,7 +53,7 @@ public:
     {
     public:
         explicit EntitySelector(const Direction* direction);
-        virtual ~EntitySelector();
+        virtual ~EntitySelector() {}
         virtual bool apply(boost::shared_ptr<Entity> entity) const;
 
     private:
@@ -64,6 +64,8 @@ public:
 
     ComparatorBlock(bool on);
     virtual ~ComparatorBlock();
+    virtual int calculateOutputSignal(Level* level, const BlockPos& pos, const BlockState* state);
+    virtual void refreshOutputState(Level* level, const BlockPos& pos, const BlockState* state);
     virtual boost::shared_ptr<BlockEntity> newBlockEntity(Level* level, int type);
     static void blockStaticCtor();
     virtual std::wstring getName();
@@ -74,13 +76,11 @@ public:
     virtual const BlockState* getOffBlock(const BlockState* state);
     virtual bool isOn(const BlockState* state);
     virtual int getOutputSignal(LevelSource* levelSource, const BlockPos& pos, const BlockState* state);
-    virtual int calculateOutputSignal(Level* level, const BlockPos& pos, const BlockState* state);
     virtual bool shouldTurnOn(Level* level, const BlockPos& pos, const BlockState* state);
     boost::shared_ptr<ItemFrame> getItemFrame(Level* level, const Direction* direction, const BlockPos& pos);
     virtual int getInputSignal(Level* level, const BlockPos& pos, const BlockState* state);
     virtual bool use(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand, const Direction* direction, float hitX, float hitY, float hitZ, bool clientSide);
     virtual void checkTickOnNeighbor(Level* level, const BlockPos& pos, const BlockState* state);
-    virtual void refreshOutputState(Level* level, const BlockPos& pos, const BlockState* state);
     virtual void tick(Level* level, const BlockPos& pos, const BlockState* state, Random* random);
     virtual void onPlace(Level* level, const BlockPos& pos, const BlockState* state);
     virtual void onRemove(Level* level, const BlockPos& pos, const BlockState* state);

@@ -114,7 +114,7 @@ private:
     std::vector<BeaconBeamSection> mBeamSections;
     short mLastBeamBlockCount;
     short mBeamColorCounts[16];
-    short mBeamRebuildTicks;
+    unsigned short mBeamRebuildTicks;
     long long mNextClientSideUpdate;
     float mClientSideScale;
     bool mActive;

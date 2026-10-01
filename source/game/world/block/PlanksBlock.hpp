@@ -5,6 +5,7 @@
 
 #include "game/world/block/Block.hpp"
 #include "game/core/StringIds.hpp"
+#include "game/core/StringRepresentable.hpp"
 
 class BlockPos;
 class BlockState;
@@ -19,7 +20,7 @@ template <class T> class EnumProperty;
 class PlanksBlock : public Block
 {
 public:
-    class Variant
+    class Variant : public StringRepresentable
     {
     public:
         enum Data
@@ -57,6 +58,7 @@ public:
         static Variant* JUNGLE;
         static Variant* ACACIA;
         static Variant* DARK_OAK;
+        static Variant* BY_DATA[6];
 
         int mData;
         std::wstring mName;
@@ -76,10 +78,9 @@ public:
     virtual void registerIcons(IconRegister* iconRegister);
 
     static EnumProperty<Variant*>* VARIANT;
+    static std::wstring TEXTURE_NAMES[6];
 
     TextureAtlasSprite* mIcons[6];
 };
-
-extern PlanksBlock::Variant* gPlankVariants[6];
 
 #endif

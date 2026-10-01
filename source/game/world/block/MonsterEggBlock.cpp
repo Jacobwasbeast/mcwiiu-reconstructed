@@ -15,6 +15,7 @@
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/EnumProperty.hpp"
 #include "game/world/block/Predicates.hpp"
+#include "game/world/block/StoneBlock.hpp"
 #include "game/world/block/StoneBrickBlock.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 #include "game/world/block/Material.hpp"
@@ -68,7 +69,7 @@ int MonsterEggBlock::Variant::getTranslationKey()
 
 MonsterEggBlock::Variant* MonsterEggBlock::Variant::byData(int data)
 {
-    if (data > 5)
+    if (data < 0 || data > 5)
     {
         data = 0;
     }
@@ -77,24 +78,56 @@ MonsterEggBlock::Variant* MonsterEggBlock::Variant::byData(int data)
 
 const BlockState* MonsterEggBlock::Variant::getHostBlockState()
 {
-    if (mData == 1)
+    switch (mData)
     {
+    case 1:
         return Blocks::cobblestone->defaultBlockState();
-    }
-    if (mData >= 2 && mData <= 5)
+    case 2:
     {
-        return Blocks::stonebrick->getBlockState(mData - 2);
+        const BlockState* base = Blocks::stonebrick->defaultBlockState();
+        EnumProperty<StoneBrickBlock::Variant*>* property = StoneBrickBlock::VARIANT;
+        TypedBoxed<StoneBrickBlock::Variant*> type(StoneBrickBlock::Variant::DEFAULT);
+        return base->setBoxedValue(property, &type);
     }
-    return Blocks::stone->defaultBlockState();
+    case 3:
+    {
+        const BlockState* base = Blocks::stonebrick->defaultBlockState();
+        EnumProperty<StoneBrickBlock::Variant*>* property = StoneBrickBlock::VARIANT;
+        TypedBoxed<StoneBrickBlock::Variant*> type(StoneBrickBlock::Variant::MOSSY);
+        return base->setBoxedValue(property, &type);
+    }
+    case 4:
+    {
+        const BlockState* base = Blocks::stonebrick->defaultBlockState();
+        EnumProperty<StoneBrickBlock::Variant*>* property = StoneBrickBlock::VARIANT;
+        TypedBoxed<StoneBrickBlock::Variant*> type(StoneBrickBlock::Variant::CRACKED);
+        return base->setBoxedValue(property, &type);
+    }
+    case 5:
+    {
+        const BlockState* base = Blocks::stonebrick->defaultBlockState();
+        EnumProperty<StoneBrickBlock::Variant*>* property = StoneBrickBlock::VARIANT;
+        TypedBoxed<StoneBrickBlock::Variant*> type(StoneBrickBlock::Variant::CHISELED);
+        return base->setBoxedValue(property, &type);
+    }
+    default:
+    {
+        const BlockState* base = Blocks::stone->defaultBlockState();
+        EnumProperty<StoneBlock::Variant*>* property = StoneBlock::VARIANT;
+        TypedBoxed<StoneBlock::Variant*> type(StoneBlock::Variant::STONE);
+        return base->setBoxedValue(property, &type);
+    }
+    }
 }
 
 MonsterEggBlock::Variant* MonsterEggBlock::Variant::byHostBlock(const BlockState* state)
 {
     for (int i = 0; i < 6; ++i)
     {
-        if (VALUES[i]->getHostBlockState() == state)
+        Variant* variant = VALUES[i];
+        if (state == variant->getHostBlockState())
         {
-            return VALUES[i];
+            return variant;
         }
     }
     return STONE;
@@ -102,13 +135,18 @@ MonsterEggBlock::Variant* MonsterEggBlock::Variant::byHostBlock(const BlockState
 
 void MonsterEggBlock::blockStaticCtor()
 {
-    boost::unordered_set<Variant*> values;
-    for (int i = 0; i < 6; ++i)
+    std::wstring name(L"variant");
+    EnumProperty<Variant*>* property;
     {
-        values.insert(Variant::VALUES[i]);
+        boost::unordered_set<Variant*> values;
+        for (int i = 0; i < 6; ++i)
+        {
+            values.insert(Variant::VALUES[i]);
+        }
+        property = EnumProperty<Variant*>::create(
+            name, typeid(Variant*), values, Predicates<Variant*>::alwaysTrue);
     }
-    VARIANT = EnumProperty<Variant*>::create(
-        L"variant", typeid(Variant*), values, Predicates<Variant*>::alwaysTrue);
+    VARIANT = property;
 }
 
 MonsterEggBlock::MonsterEggBlock()
@@ -125,36 +163,46 @@ int MonsterEggBlock::getResourceCount(Random*)
 
 bool MonsterEggBlock::isCompatibleHostBlock(const BlockState* state)
 {
-    return state == Blocks::stone->defaultBlockState()
-        || state->getBlock() == Blocks::cobblestone
-        || state->getBlock() == Blocks::stonebrick;
+    const Block* block = state->getBlock();
+    const BlockState* stoneState;
+    {
+        const BlockState* base = Blocks::stone->defaultBlockState();
+        EnumProperty<StoneBlock::Variant*>* property = StoneBlock::VARIANT;
+        TypedBoxed<StoneBlock::Variant*> type(StoneBlock::Variant::STONE);
+        stoneState = base->setBoxedValue(property, &type);
+    }
+    return state == stoneState || block == Blocks::cobblestone || block == Blocks::stonebrick;
 }
 
 not_null_ptr<ItemInstance> MonsterEggBlock::getSilkTouchItemInstance(const BlockState* state)
 {
     int data = state->getValue(VARIANT)->getData();
-    if (data > 2)
+    switch (data)
     {
-        return not_null_ptr<ItemInstance>(new ItemInstance(
-            Blocks::stonebrick, 1, StoneBrickBlock::Variant::byData(data - 2)->getData()));
-    }
-    if (data == 1)
-    {
+    case 1:
         return not_null_ptr<ItemInstance>(new ItemInstance(Blocks::cobblestone));
-    }
-    if (data == 2)
-    {
+    case 2:
         return not_null_ptr<ItemInstance>(new ItemInstance(Blocks::stonebrick));
+    case 3:
+        return not_null_ptr<ItemInstance>(new ItemInstance(
+            Blocks::stonebrick, 1, StoneBrickBlock::Variant::MOSSY->getData()));
+    case 4:
+        return not_null_ptr<ItemInstance>(new ItemInstance(
+            Blocks::stonebrick, 1, StoneBrickBlock::Variant::CRACKED->getData()));
+    case 5:
+        return not_null_ptr<ItemInstance>(new ItemInstance(
+            Blocks::stonebrick, 1, StoneBrickBlock::Variant::CHISELED->getData()));
+    default:
+        return not_null_ptr<ItemInstance>(new ItemInstance(Blocks::stone));
     }
-    return not_null_ptr<ItemInstance>(new ItemInstance(Blocks::stone));
 }
 
 void MonsterEggBlock::spawnResources(Level* level, const BlockPos& pos, const BlockState*, float, int)
 {
     if (!level->mIsClientSide && level->getGameRules()->getBoolean(GameRules::RULE_DOBLOCKDROPS))
     {
-        if (level->countInstanceOf(EntityType::MONSTER, false, NULL, NULL) < 70
-            && level->countInstanceOf(EntityType::SILVERFISH, true, NULL, NULL) < 15)
+        if (static_cast<unsigned int>(level->countInstanceOf(EntityType::MONSTER, false, NULL, NULL)) < 70
+            && static_cast<unsigned int>(level->countInstanceOf(EntityType::SILVERFISH, true, NULL, NULL)) < 15)
         {
             boost::shared_ptr<Silverfish> silverfish(new Silverfish(level));
             silverfish->moveTo(pos.x + 0.5, pos.y, pos.z + 0.5, 0.0f, 0.0f);
@@ -172,8 +220,10 @@ not_null_ptr<ItemInstance> MonsterEggBlock::getCloneItemInstance(Level* level, c
 
 const BlockState* MonsterEggBlock::getBlockState(int data)
 {
+    const BlockState* state = defaultBlockState();
+    EnumProperty<Variant*>* property = VARIANT;
     TypedBoxed<Variant*> value(Variant::byData(data));
-    return defaultBlockState()->setBoxedValue(VARIANT, &value);
+    return state->setBoxedValue(property, &value);
 }
 
 int MonsterEggBlock::convertBlockStateToLegacyData(const BlockState* state)
@@ -183,44 +233,60 @@ int MonsterEggBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 BlockStateDefinition* MonsterEggBlock::createBlockStateDefinition()
 {
-    const Property* properties[] = { VARIANT };
+    static const Property* properties[] = { VARIANT };
     return new BlockStateDefinition(this, properties, 1);
 }
 
 TextureAtlasSprite* MonsterEggBlock::getTexture(const Direction* direction, const BlockState* state)
 {
     Variant* variant = state->getValue(VARIANT);
+    TextureAtlasSprite* result = NULL;
     if (variant == Variant::STONE)
     {
-        return Blocks::stone->getTexture(direction);
+        result = Blocks::stone->getTexture(direction);
     }
-    if (variant == Variant::COBBLESTONE)
+    else if (variant == Variant::COBBLESTONE)
     {
-        return Blocks::cobblestone->getTexture(direction);
+        result = Blocks::cobblestone->getTexture(direction);
     }
-    if (variant == Variant::STONEBRICK)
+    else if (variant == Variant::STONEBRICK)
     {
-        return Blocks::stonebrick->getTexture(direction);
+        result = Blocks::stonebrick->getTexture(direction);
     }
-    if (variant == Variant::MOSSY_STONEBRICK)
+    else if (variant == Variant::MOSSY_STONEBRICK)
     {
-        TypedBoxed<StoneBrickBlock::Variant*> type(StoneBrickBlock::Variant::byData(StoneBrickBlock::MOSSY_META));
-        return Blocks::stonebrick->getTexture(
-            direction, Blocks::stonebrick->defaultBlockState()->setBoxedValue(StoneBrickBlock::VARIANT, &type));
+        const BlockState* brickState;
+        {
+            const BlockState* base = Blocks::stonebrick->defaultBlockState();
+            EnumProperty<StoneBrickBlock::Variant*>* property = StoneBrickBlock::VARIANT;
+            TypedBoxed<StoneBrickBlock::Variant*> type(StoneBrickBlock::Variant::MOSSY);
+            brickState = base->setBoxedValue(property, &type);
+        }
+        result = Blocks::stonebrick->getTexture(direction, brickState);
     }
-    if (variant == Variant::CRACKED_STONEBRICK)
+    else if (variant == Variant::CRACKED_STONEBRICK)
     {
-        TypedBoxed<StoneBrickBlock::Variant*> type(StoneBrickBlock::Variant::byData(StoneBrickBlock::CRACKED_META));
-        return Blocks::stonebrick->getTexture(
-            direction, Blocks::stonebrick->defaultBlockState()->setBoxedValue(StoneBrickBlock::VARIANT, &type));
+        const BlockState* brickState;
+        {
+            const BlockState* base = Blocks::stonebrick->defaultBlockState();
+            EnumProperty<StoneBrickBlock::Variant*>* property = StoneBrickBlock::VARIANT;
+            TypedBoxed<StoneBrickBlock::Variant*> type(StoneBrickBlock::Variant::CRACKED);
+            brickState = base->setBoxedValue(property, &type);
+        }
+        result = Blocks::stonebrick->getTexture(direction, brickState);
     }
-    if (variant == Variant::CHISELED_STONEBRICK)
+    else if (variant == Variant::CHISELED_STONEBRICK)
     {
-        TypedBoxed<StoneBrickBlock::Variant*> type(StoneBrickBlock::Variant::byData(StoneBrickBlock::CHISELED_META));
-        return Blocks::stonebrick->getTexture(
-            direction, Blocks::stonebrick->defaultBlockState()->setBoxedValue(StoneBrickBlock::VARIANT, &type));
+        const BlockState* brickState;
+        {
+            const BlockState* base = Blocks::stonebrick->defaultBlockState();
+            EnumProperty<StoneBrickBlock::Variant*>* property = StoneBrickBlock::VARIANT;
+            TypedBoxed<StoneBrickBlock::Variant*> type(StoneBrickBlock::Variant::CHISELED);
+            brickState = base->setBoxedValue(property, &type);
+        }
+        result = Blocks::stonebrick->getTexture(direction, brickState);
     }
-    return NULL;
+    return result;
 }
 
 void MonsterEggBlock::registerIcons(IconRegister*)

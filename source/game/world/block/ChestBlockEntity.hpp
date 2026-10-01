@@ -64,7 +64,7 @@ public:
     boost::shared_ptr<ChestBlockEntity> getNeighbour();
     void removeNeighbour();
     bool isSameChest(const BlockPos& position);
-    boost::shared_ptr<ChestBlockEntity> findAndGreetChestEntity(const Direction* direction);
+    boost::weak_ptr<ChestBlockEntity> findAndGreetChestEntity(const Direction* direction);
     void tickRefilledAnimation();
     void startRefilledAnimation();
 

@@ -14,7 +14,7 @@ class LookAtBlockHint : public TutorialHint
 public:
     LookAtBlockHint(eTutorial_Hint hint, Tutorial* tutorial,
                     const BlockState** states, unsigned int stateCount,
-                    const Property** properties, unsigned int propertyCount,
+                    const Property* const* properties, unsigned int propertyCount,
                     int descriptionId, int auxValue, bool useState);
     virtual ~LookAtBlockHint();
 

@@ -31,16 +31,21 @@
 #include "game/world/Dimension.hpp"
 #include "game/world/DimensionType.hpp"
 
+arrayWithLength<int> ShulkerBoxBlockEntity::createSlots()
+{
+    arrayWithLength<int> slots(27, true);
+    for (unsigned int i = 0; i < slots.length; ++i)
+    {
+        slots.data[i] = i;
+    }
+    return slots;
+}
+
+arrayWithLength<int> ShulkerBoxBlockEntity::SLOTS = ShulkerBoxBlockEntity::createSlots();
+
 ShulkerBoxBlockEntity::ShulkerBoxBlockEntity(const DyeColor* color)
     : RandomizableLockableContainerBlockEntity()
     , WorldlyContainer()
-    , mCleared(false)
-    , mOpenCount(0)
-    , mAnimationStatus(0)
-    , mProgress(0.0f)
-    , mProgressOld(0.0f)
-    , mColor(color)
-    , mDestroyedByCreativePlayer(false)
 {
     _init(color);
 }
@@ -48,13 +53,6 @@ ShulkerBoxBlockEntity::ShulkerBoxBlockEntity(const DyeColor* color)
 ShulkerBoxBlockEntity::ShulkerBoxBlockEntity()
     : RandomizableLockableContainerBlockEntity()
     , WorldlyContainer()
-    , mCleared(false)
-    , mOpenCount(0)
-    , mAnimationStatus(0)
-    , mProgress(0.0f)
-    , mProgressOld(0.0f)
-    , mColor(NULL)
-    , mDestroyedByCreativePlayer(false)
 {
     _init(NULL);
 }
@@ -87,7 +85,7 @@ std::wstring ShulkerBoxBlockEntity::getName()
     {
         return mCustomName->get();
     }
-    return std::wstring(L"container.shulkerBox");
+    return std::wstring(L"");
 }
 
 std::wstring ShulkerBoxBlockEntity::getCustomName()
@@ -96,7 +94,7 @@ std::wstring ShulkerBoxBlockEntity::getCustomName()
     {
         return mCustomName->get();
     }
-    return std::wstring(L"container.shulkerBox");
+    return std::wstring(L"");
 }
 
 unsigned int ShulkerBoxBlockEntity::getContainerSize()
@@ -167,10 +165,8 @@ void ShulkerBoxBlockEntity::stopOpen(boost::shared_ptr<Player> player)
 
 void ShulkerBoxBlockEntity::clearContent()
 {
-    RandomizableLockableContainerBlockEntity::clearContent();
     mCleared = true;
-    mOpenCount = 0;
-    mAnimationStatus = 0;
+    RandomizableLockableContainerBlockEntity::clearContent();
 }
 
 AbstractContainerMenu* ShulkerBoxBlockEntity::createMenu(boost::shared_ptr<Inventory> inventory,
@@ -187,8 +183,7 @@ int ShulkerBoxBlockEntity::getTypeId(bool large)
 
 arrayWithLength<int> ShulkerBoxBlockEntity::getSlotsForFace(const Direction* face)
 {
-    arrayWithLength<int> slots;
-    return slots;
+    return SLOTS;
 }
 
 bool ShulkerBoxBlockEntity::canPlaceItemThroughFace(int slot, not_null_ptr<ItemInstance> item,
@@ -225,7 +220,7 @@ bool ShulkerBoxBlockEntity::isDestroyedByCreativePlayer()
 
 bool ShulkerBoxBlockEntity::shouldDrop()
 {
-    return !mDestroyedByCreativePlayer || !hasLevel() || onlyOpCanSetNbt() || mItems.size() == 0;
+    return !isDestroyedByCreativePlayer() || !isEmpty() || hasCustomName() || mLootTable != NULL;
 }
 
 CompoundTag* ShulkerBoxBlockEntity::saveToTag(CompoundTag* tag)
@@ -256,7 +251,7 @@ AABB* ShulkerBoxBlockEntity::getBoundingBox(const Direction* direction)
 
 AABB* ShulkerBoxBlockEntity::getBoundingBox(const BlockState* state)
 {
-    return getBoundingBox(state->getValue(DirectionalBlock::FACING_PROPERTY));
+    return getBoundingBox(state->getValue(DirectionalBlock::FACING));
 }
 
 AABB* ShulkerBoxBlockEntity::getTopBoundingBox(const Direction* direction)
@@ -269,74 +264,108 @@ AABB* ShulkerBoxBlockEntity::getTopBoundingBox(const Direction* direction)
 
 void ShulkerBoxBlockEntity::moveCollidedEntities()
 {
-    if (mLevel == NULL)
-        return;
-    const BlockState* state = mLevel->getBlockState(mPos);
-    if (state == NULL)
-        return;
-    const Direction* direction = state->getValue(DirectionalBlock::FACING_PROPERTY);
-    AABB* box = getTopBoundingBox(direction)->move(mPos);
-    std::vector<boost::shared_ptr<Entity> > entities;
-    mLevel->getEntities(boost::shared_ptr<Entity>(), box, &entities);
-    Direction::Axis* axis = direction->getAxis();
-    const int step = direction->getAxisDirection()->getStep();
-    for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities.begin(); it != entities.end(); ++it)
+    const BlockState* state = mLevel->getBlockState(getBlockPos());
+    if (dynamic_cast<ShulkerBoxBlock*>(state->getBlock()) == NULL)
     {
-        boost::shared_ptr<Entity> entity = *it;
-        if (!entity || entity->mRemoved || entity->getPistonPushReaction() == 3)
-            continue;
-        double dx = 0.0;
-        double dy = 0.0;
-        double dz = 0.0;
-        const AABB* entityBox = entity->mBoundingBox;
-        if (entityBox == NULL)
-            continue;
-        const double offset = 0.01;
-        if (axis->getId() == Direction::Axis::eAxis_X)
-            dx = step > 0 ? box->mMaxX - entityBox->mMinX + offset : entityBox->mMaxX - box->mMinX + offset;
-        else if (axis->getId() == Direction::Axis::eAxis_Y)
-            dy = step > 0 ? box->mMaxY - entityBox->mMinY + offset : entityBox->mMaxY - box->mMinY + offset;
-        else
-            dz = step > 0 ? box->mMaxZ - entityBox->mMinZ + offset : entityBox->mMaxZ - box->mMinZ + offset;
-        dx *= step;
-        dy *= step;
-        dz *= step;
-        entity->move(eMoverType_ShulkerBox, dx, dy, dz, false);
+        return;
+    }
+    const Direction* direction = state->getValue(DirectionalBlock::FACING);
+    AABB* box = getTopBoundingBox(direction)->move(mPos);
+    const std::vector<boost::shared_ptr<Entity> >* entities = mLevel->getEntities(boost::shared_ptr<Entity>(), box, NULL);
+    const double offset = 0.01;
+    if (!entities->empty())
+    {
+        for (unsigned int i = 0; i < entities->size(); ++i)
+        {
+            boost::shared_ptr<Entity> entity = entities->at(i);
+            if (entity->getPistonPushReaction() != 3)
+            {
+                AABB* entityBox = entity->mBoundingBox;
+                double dx = 0.0;
+                double dy = 0.0;
+                double dz = 0.0;
+                int axisId = direction->getAxis()->getId();
+                if (axisId == Direction::Axis::eAxis_X)
+                {
+                    if (direction->getAxisDirection() == Direction::AxisDirection::POSITIVE)
+                    {
+                        dx = box->mMaxX - entityBox->mMinX;
+                    }
+                    else
+                    {
+                        dx = entityBox->mMaxX - box->mMinX;
+                    }
+                    dx += offset;
+                }
+                else if (axisId == Direction::Axis::eAxis_Y)
+                {
+                    if (direction->getAxisDirection() == Direction::AxisDirection::POSITIVE)
+                    {
+                        dy = box->mMaxY - entityBox->mMinY;
+                    }
+                    else
+                    {
+                        dy = entityBox->mMaxY - box->mMinY;
+                    }
+                    dy += offset;
+                }
+                else if (axisId == Direction::Axis::eAxis_Z)
+                {
+                    if (direction->getAxisDirection() == Direction::AxisDirection::POSITIVE)
+                    {
+                        dz = box->mMaxZ - entityBox->mMinZ;
+                    }
+                    else
+                    {
+                        dz = entityBox->mMaxZ - box->mMinZ;
+                    }
+                    dz += offset;
+                }
+                entity->move(eMoverType_ShulkerBox, dx * direction->getStepX(), dy * direction->getStepY(),
+                             dz * direction->getStepZ(), false);
+            }
+        }
     }
 }
 
 void ShulkerBoxBlockEntity::updateAnimation()
 {
     mProgressOld = mProgress;
-    if (mAnimationStatus == 0)
+    switch (mAnimationStatus)
     {
+    case ANIMATION_CLOSED:
         mProgress = 0.0f;
-    }
-    else if (mAnimationStatus == 1)
-    {
+        break;
+    case ANIMATION_OPENING:
         mProgress += 0.1f;
         if (mProgress >= 1.0f)
         {
-            mProgress = 1.0f;
-            mAnimationStatus = 2;
             moveCollidedEntities();
+            mProgress = 1.0f;
+            mAnimationStatus = ANIMATION_OPENED;
         }
-    }
-    else if (mAnimationStatus == 3)
-    {
-        mProgress -= 0.1f;
-        if (mProgress <= 0.0f)
+        break;
+    case ANIMATION_OPENED:
+        mProgress = 1.0f;
+        break;
+    case ANIMATION_CLOSING:
+        if (mProgress - 0.1f > 0.0f)
+        {
+            mProgress -= 0.1f;
+        }
+        else
         {
             mProgress = 0.0f;
-            mAnimationStatus = 0;
+            mAnimationStatus = ANIMATION_CLOSED;
         }
+        break;
     }
 }
 
 void ShulkerBoxBlockEntity::tick()
 {
     updateAnimation();
-    if (mAnimationStatus == 1 || mAnimationStatus == 3)
+    if (mAnimationStatus == ANIMATION_OPENING || mAnimationStatus == ANIMATION_CLOSING)
     {
         moveCollidedEntities();
     }
@@ -347,7 +376,14 @@ bool ShulkerBoxBlockEntity::triggerEvent(int id, int param)
     if (id == 1)
     {
         mOpenCount = param;
-        mAnimationStatus = param == 0 ? 3 : 1;
+        if (param == 0)
+        {
+            mAnimationStatus = ANIMATION_CLOSING;
+        }
+        else if (param == 1)
+        {
+            mAnimationStatus = ANIMATION_OPENING;
+        }
         return true;
     }
     return BlockEntity::triggerEvent(id, param);
@@ -361,10 +397,14 @@ void ShulkerBoxBlockEntity::addDataWalkers(DataFixerUpper* fixer)
 
 void ShulkerBoxBlockEntity::loadFromTag(CompoundTag* tag)
 {
+    delete[] mItems.items;
     mItems = NonNullList<not_null_ptr<ItemInstance> >::withSize(getContainerSize(), ItemInstance::EMPTY);
-    if (!tryLoadLootTable(tag) && tag->contains(L"Items", Tag::TAG_LIST))
+    if (!tryLoadLootTable(tag))
     {
-        ContainerHelper::loadAllItems(tag, mItems);
+        if (tag->contains(L"Items", Tag::TAG_LIST))
+        {
+            ContainerHelper::loadAllItems(tag, mItems);
+        }
     }
     mCustomName->loadFromTag(tag);
 }
@@ -418,7 +458,7 @@ boost::shared_ptr<BlockEntity> ShulkerBoxBlockEntity::clone()
     result->mProgressOld = mProgressOld;
     result->mColor = mColor;
     result->mDestroyedByCreativePlayer = mDestroyedByCreativePlayer;
-    result->mCustomName->set(mCustomName->raw(), mCustomName->getUUID(), mCustomName->isChatCensored(), mCustomName->isUUIDLocal());
+    result->mCustomName->set(mCustomName->raw(), std::wstring(mCustomName->getUUID()), mCustomName->isChatCensored(), mCustomName->isUUIDLocal());
     return result;
 }
 
@@ -427,7 +467,7 @@ unsigned long long ShulkerBoxBlockEntity::GetType()
     return BlockEntityType::SHULKER_BOX;
 }
 
-void ShulkerBoxBlockEntity::operator=(const ShulkerBoxBlockEntity& other)
+ShulkerBoxBlockEntity& ShulkerBoxBlockEntity::operator=(const ShulkerBoxBlockEntity& other)
 {
     RandomizableLockableContainerBlockEntity::operator=(other);
     mItems = other.mItems;
@@ -438,4 +478,5 @@ void ShulkerBoxBlockEntity::operator=(const ShulkerBoxBlockEntity& other)
     mProgressOld = other.mProgressOld;
     mColor = other.mColor;
     mDestroyedByCreativePlayer = other.mDestroyedByCreativePlayer;
+    return *this;
 }

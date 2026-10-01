@@ -6,6 +6,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/core/Bush.hpp"
+#include "game/core/StringRepresentable.hpp"
 #include "game/world/block/BonemealableBlock.hpp"
 #include "game/item/not_null_ptr.hpp"
 
@@ -29,7 +30,7 @@ class AbstractProperty;
 class TallGrassBlock : public Bush, public BonemealableBlock
 {
 public:
-    class Variant
+    class Variant : public StringRepresentable
     {
     public:
         Variant(int data, const std::wstring& name);
@@ -82,8 +83,5 @@ private:
     TextureAtlasSprite* mIcons[3];
 };
 
-extern TallGrassBlock::Variant* gTallGrass;
-extern TallGrassBlock::Variant* gFern;
-extern Property* TallGrassBlock_VARIANT;
 
 #endif

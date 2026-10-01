@@ -107,9 +107,7 @@ const BlockState* PistonMovingBlockEntity::getBlockState()
 }
 CompoundTag* PistonMovingBlockEntity::getUpdateTag()
 {
-    CompoundTag* tag = new CompoundTag();
-    save(tag);
-    return tag;
+    return save(new CompoundTag());
 }
 int PistonMovingBlockEntity::getData()
 {
@@ -120,7 +118,7 @@ bool PistonMovingBlockEntity::isSourcePiston()
 {
     return mSourcePiston;
 }
-double PistonMovingBlockEntity::getProgress(float partialTick)
+float PistonMovingBlockEntity::getProgress(float partialTick)
 {
     if (partialTick > 1.0f)
     {
@@ -128,50 +126,49 @@ double PistonMovingBlockEntity::getProgress(float partialTick)
     }
     return mLastProgress + (mProgress - mLastProgress) * partialTick;
 }
-double PistonMovingBlockEntity::getExtendedProgress(float partialTick)
+float PistonMovingBlockEntity::getExtendedProgress(float partialTick)
 {
     return mExtending ? partialTick - 1.0f : 1.0f - partialTick;
 }
-double PistonMovingBlockEntity::getXOff(float partialTick)
+float PistonMovingBlockEntity::getXOff(float partialTick)
 {
-    return mDirection->getNormal().x * getExtendedProgress(partialTick);
+    return mDirection->getStepX() * getExtendedProgress(getProgress(partialTick));
 }
-double PistonMovingBlockEntity::getYOff(float partialTick)
+float PistonMovingBlockEntity::getYOff(float partialTick)
 {
-    return mDirection->getNormal().y * getExtendedProgress(partialTick);
+    return mDirection->getStepY() * getExtendedProgress(getProgress(partialTick));
 }
-double PistonMovingBlockEntity::getZOff(float partialTick)
+float PistonMovingBlockEntity::getZOff(float partialTick)
 {
-    return mDirection->getNormal().z * getExtendedProgress(partialTick);
+    return mDirection->getStepZ() * getExtendedProgress(getProgress(partialTick));
 }
 const BlockState* PistonMovingBlockEntity::getCollisionRelatedBlockState()
 {
     if (!isExtending() && isSourcePiston())
     {
         const BlockState* headState = Blocks::piston_head->defaultBlockState();
-        TypedBoxed<PistonHeadBlock::PistonType*> pistonType(
+        headState = headState->setValue(
+            PistonHeadBlock::TYPE,
             mMovedState->getBlock() == Blocks::sticky_piston ? pistonTypeSticky : pistonTypeNormal);
-        headState = headState->setBoxedValue(
-            static_cast<const Property*>(PistonHeadBlock::TYPE), &pistonType);
-        TypedBoxed<const Direction*> facing(mMovedState->getValue(PistonBaseBlock::FACING));
-        headState = headState->setBoxedValue(
-            static_cast<const Property*>(PistonHeadBlock::FACING), &facing);
+        headState = headState->setValue(PistonHeadBlock::FACING, mMovedState->getValue(PistonBaseBlock::FACING));
         return headState;
     }
     return mMovedState;
 }
 AABB* PistonMovingBlockEntity::getAABB(LevelSource* source, const BlockPos& pos, float partialTick)
 {
-    const AABB* shape = getCollisionRelatedBlockState()->getShape(source, pos);
-    AABB* result = new AABB(*shape);
-    return result->move(getXOff(partialTick), getYOff(partialTick), getZOff(partialTick));
+    float progress = getExtendedProgress(partialTick);
+    const BlockState* state = getCollisionRelatedBlockState();
+    const Direction* direction = mDirection;
+    const AABB* shape = state->getShape(source, pos);
+    return shape->move(progress * direction->getStepX(), progress * direction->getStepY(),
+                       progress * direction->getStepZ());
 }
 AABB* PistonMovingBlockEntity::getAABB(LevelSource* source, const BlockPos& pos)
 {
-    AABB* current = getAABB(source, pos, mProgress);
     AABB* previous = getAABB(source, pos, mLastProgress);
-    current->minmax(previous);
-    return current;
+    AABB* current = getAABB(source, pos, mProgress);
+    return current->minmax(previous);
 }
 AABB* PistonMovingBlockEntity::moveByPositionAndProgress(AABB* box)
 {
@@ -208,16 +205,16 @@ AABB* PistonMovingBlockEntity::getMovementArea(AABB* box, const Direction* direc
     {
     case 0:
         return AABB::newTemp(box->mMinX, box->mMinY + lo, box->mMinZ, box->mMaxX, box->mMinY + hi, box->mMaxZ);
-    case 1:
-        return AABB::newTemp(box->mMinX, box->mMaxY + lo, box->mMinZ, box->mMaxX, box->mMaxY + hi, box->mMaxZ);
     case 2:
         return AABB::newTemp(box->mMinX, box->mMinY, box->mMinZ + lo, box->mMaxX, box->mMaxY, box->mMinZ + hi);
     case 3:
         return AABB::newTemp(box->mMinX, box->mMinY, box->mMaxZ + lo, box->mMaxX, box->mMaxY, box->mMaxZ + hi);
     case 4:
         return AABB::newTemp(box->mMinX + lo, box->mMinY, box->mMinZ, box->mMinX + hi, box->mMaxY, box->mMaxZ);
-    default:
+    case 5:
         return AABB::newTemp(box->mMaxX + lo, box->mMinY, box->mMinZ, box->mMaxX + hi, box->mMaxY, box->mMaxZ);
+    default:
+        return AABB::newTemp(box->mMinX, box->mMaxY + lo, box->mMinZ, box->mMaxX, box->mMaxY + hi, box->mMaxZ);
     }
 }
 double PistonMovingBlockEntity::getDeltaX(AABB* box, const Direction* direction, AABB* other)
@@ -237,15 +234,15 @@ double PistonMovingBlockEntity::getDeltaZ(AABB* box, const Direction* direction,
 }
 double PistonMovingBlockEntity::getMovement(AABB* box, const Direction* direction, AABB* other)
 {
-    if (direction->getAxis() == Direction::Axis::X)
+    switch (direction->getAxis()->getId())
     {
+    case 0:
         return getDeltaX(box, direction, other);
-    }
-    if (direction->getAxis() == Direction::Axis::Y)
-    {
+    case 2:
+        return getDeltaZ(box, direction, other);
+    default:
         return getDeltaY(box, direction, other);
     }
-    return getDeltaZ(box, direction, other);
 }
 void PistonMovingBlockEntity::fixEntityWithinPistonBase(boost::shared_ptr<Entity> entity, const Direction* direction,
                                                         double distance)
@@ -277,66 +274,71 @@ void PistonMovingBlockEntity::moveCollidedEntities(float progress)
     std::vector<AABB*> pieces;
     getCollisionRelatedBlockState()->addCollissionAABBs(mLevel, BlockPos::ZERO, AABB::newTemp(BlockPos::ZERO),
                                                          &pieces, boost::shared_ptr<Entity>(), true);
-    if (pieces.empty())
-        return;
-
-    AABB* bounds = moveByPositionAndProgress(getMinMaxPiecesAABB(&pieces));
-    std::vector<boost::shared_ptr<Entity> >* entities =
-        mLevel->getEntities(boost::shared_ptr<Entity>(), getMovementArea(bounds, direction, distance)->minmax(bounds),
-                            NULL);
-    if (entities->empty())
-        return;
-
-    bool slime = mMovedState->getBlock() == Blocks::slime;
-    for (unsigned int i = 0; i < entities->size(); ++i)
+    if (!pieces.empty())
     {
-        boost::shared_ptr<Entity> entity = entities->at(i);
-        if (entity->getPistonPushReaction() == 3)
-            continue;
-
-        if (slime)
+        AABB* bounds = moveByPositionAndProgress(getMinMaxPiecesAABB(&pieces));
+        std::vector<boost::shared_ptr<Entity> >* entities =
+            mLevel->getEntities(boost::shared_ptr<Entity>(), getMovementArea(bounds, direction, distance)->minmax(bounds),
+                                NULL);
+        if (!entities->empty())
         {
-            switch (direction->getAxis()->getId())
+            bool slime = mMovedState->getBlock() == Blocks::slime;
+            for (unsigned int i = 0; i < entities->size(); ++i)
             {
-            case 0:
-                entity->mXd = direction->getStepX();
-                break;
-            case 1:
-                entity->mYd = direction->getStepY();
-                break;
-            case 2:
-                entity->mZd = direction->getStepZ();
-                break;
-            }
-        }
+                boost::shared_ptr<Entity> entity = entities->at(i);
+                if (entity->getPistonPushReaction() == 3)
+                    continue;
 
-        double movement = 0.0;
-        AABB* entityBox = entity->mBoundingBox;
-        for (unsigned int piece = 0; piece < pieces.size(); ++piece)
-        {
-            AABB* area = getMovementArea(moveByPositionAndProgress(pieces.at(piece)), direction, distance);
-            if (area->intersects(entityBox->mMinX, entityBox->mMinY, entityBox->mMinZ, entityBox->mMaxX,
-                                 entityBox->mMaxY, entityBox->mMaxZ))
-            {
-                movement = std::max(movement, getMovement(area, direction, entityBox));
-                if (movement >= distance)
-                    break;
-            }
-        }
+                if (slime)
+                {
+                    int axis = direction->getAxis()->getId();
+                    if (axis == 0)
+                    {
+                        entity->mXd = direction->getStepX();
+                    }
+                    else if (axis == 1)
+                    {
+                        entity->mYd = direction->getStepY();
+                    }
+                    else if (axis == 2)
+                    {
+                        entity->mZd = direction->getStepZ();
+                    }
+                }
 
-        if (movement > 0.0)
-        {
-            movement = std::min(movement, distance) + 0.01;
-            NOCLIP_set(direction);
-            int moves = (entity->GetType() & EntityType::MINECART) == EntityType::MINECART ? 2 : 1;
-            for (; moves > 0; --moves)
-            {
-                entity->move(eMoverType_Piston, movement * direction->getStepX(), movement * direction->getStepY(),
-                             movement * direction->getStepZ(), false);
+                double movement = 0.0;
+                AABB* entityBox = entity->mBoundingBox;
+                for (unsigned int piece = 0; piece < pieces.size(); ++piece)
+                {
+                    AABB* area = getMovementArea(moveByPositionAndProgress(pieces.at(piece)), direction, distance);
+                    if (area->intersects(entityBox->mMinX, entityBox->mMinY, entityBox->mMinZ, entityBox->mMaxX,
+                                         entityBox->mMaxY, entityBox->mMaxZ))
+                    {
+                        double areaMovement = getMovement(area, direction, entityBox);
+                        if (movement < areaMovement)
+                            movement = areaMovement;
+                        if (movement >= distance)
+                            break;
+                    }
+                }
+
+                if (movement > 0.0)
+                {
+                    double amount = movement < distance ? movement : distance;
+                    amount += 0.01;
+                    NOCLIP_set(direction);
+                    int moves = (entity->GetType() & EntityType::MINECART) == EntityType::MINECART ? 2 : 1;
+                    do
+                    {
+                        entity->move(eMoverType_Piston, amount * direction->getStepX(),
+                                     amount * direction->getStepY(), amount * direction->getStepZ(), false);
+                        --moves;
+                    } while (moves != 0);
+                    NOCLIP_set(NULL);
+                    if (!mExtending && mSourcePiston)
+                        fixEntityWithinPistonBase(entity, direction, distance);
+                }
             }
-            NOCLIP_set(NULL);
-            if (!mExtending && mSourcePiston)
-                fixEntityWithinPistonBase(entity, direction, distance);
         }
     }
 }
@@ -363,22 +365,20 @@ void PistonMovingBlockEntity::addDataWalkers(DataFixerUpper*)
 void PistonMovingBlockEntity::load(CompoundTag* tag)
 {
     BlockEntity::load(tag);
-    Block* block = Block::byId(tag->getInt(L"blockId"));
-    mMovedState = block->getBlockState(tag->getInt(L"blockData"));
+    mMovedState = Block::byId(tag->getInt(L"blockId"))->getBlockState(tag->getInt(L"blockData"));
     mDirection = Direction::from3DDataValue(tag->getInt(L"facing"));
-    mProgress = tag->getFloat(L"progress");
-    mLastProgress = mProgress;
+    mProgress = mLastProgress = tag->getFloat(L"progress");
     mExtending = tag->getBoolean(L"extending");
     mSourcePiston = tag->getBoolean(L"source");
 }
 
 CompoundTag* PistonMovingBlockEntity::save(CompoundTag* tag)
 {
-    tag = BlockEntity::save(tag);
+    BlockEntity::save(tag);
     tag->putInt(L"blockId", Block::getId(mMovedState->getBlock()));
     tag->putInt(L"blockData", mMovedState->getBlock()->convertBlockStateToLegacyData(mMovedState));
     tag->putInt(L"facing", mDirection->get3DDataValue());
-    tag->putFloat(L"progress", mProgress);
+    tag->putFloat(L"progress", mLastProgress);
     tag->putBoolean(L"extending", mExtending);
     tag->putBoolean(L"source", mSourcePiston);
     return tag;
@@ -427,15 +427,14 @@ void PistonMovingBlockEntity::addCollissionAABBs(Level* level, const BlockPos& p
 
 boost::shared_ptr<BlockEntity> PistonMovingBlockEntity::clone()
 {
-    boost::shared_ptr<BlockEntity> result(new PistonMovingBlockEntity());
+    boost::shared_ptr<PistonMovingBlockEntity> result(new PistonMovingBlockEntity());
     BlockEntity::clone(result);
-    PistonMovingBlockEntity* copy = static_cast<PistonMovingBlockEntity*>(result.get());
-    copy->mMovedState = mMovedState;
-    copy->mDirection = mDirection;
-    copy->mExtending = mExtending;
-    copy->mSourcePiston = mSourcePiston;
-    copy->mProgress = mProgress;
-    copy->mLastProgress = mLastProgress;
+    result->mMovedState = mMovedState;
+    result->mDirection = mDirection;
+    result->mExtending = mExtending;
+    result->mSourcePiston = mSourcePiston;
+    result->mProgress = mProgress;
+    result->mLastProgress = mLastProgress;
     return result;
 }
 unsigned long long PistonMovingBlockEntity::GetType()

@@ -19,38 +19,20 @@
 
 ChestBlockEntity::ChestBlockEntity(bool isBonusChest)
     : RandomizableLockableContainerBlockEntity(),
-      mIsBonusChest(isBonusChest),
-      mRefilledAnimationTicks(-1),
-      mNeighborsChecked(false),
       mNorthNeighbour(),
       mEastNeighbour(),
       mWestNeighbour(),
-      mSouthNeighbour(),
-      mOpen(0.0F),
-      mOpenOld(0.0F),
-      mOpenCount(0),
-      mTickCount(0),
-      mCachedType(-1),
-      mNeighbourRemoved(false)
+      mSouthNeighbour()
 {
     _init(isBonusChest);
 }
 
 ChestBlockEntity::ChestBlockEntity(ChestBlock::Type type, bool isBonusChest)
     : RandomizableLockableContainerBlockEntity(),
-      mIsBonusChest(isBonusChest),
-      mRefilledAnimationTicks(-1),
-      mNeighborsChecked(false),
       mNorthNeighbour(),
       mEastNeighbour(),
       mWestNeighbour(),
-      mSouthNeighbour(),
-      mOpen(0.0F),
-      mOpenOld(0.0F),
-      mOpenCount(0),
-      mTickCount(0),
-      mCachedType(type),
-      mNeighbourRemoved(false)
+      mSouthNeighbour()
 {
     _init(isBonusChest);
     mCachedType = type;
@@ -63,13 +45,13 @@ ChestBlockEntity::~ChestBlockEntity()
 
 BlockEntity* ChestBlockEntity::create()
 {
-    return new ChestBlockEntity(false);
+    return new ChestBlockEntity();
 }
 
 void ChestBlockEntity::_init(bool isBonusChest)
 {
-    mIsBonusChest = isBonusChest;
     mItems = NonNullList<not_null_ptr<ItemInstance> >::withSize(27, ItemInstance::EMPTY);
+    mIsBonusChest = isBonusChest;
     mRefilledAnimationTicks = -1;
     mOpen = 0.0F;
     mOpenOld = 0.0F;
@@ -84,18 +66,18 @@ std::wstring ChestBlockEntity::getName()
 {
     if (hasCustomName())
     {
-        return mCustomName ? mCustomName->get() : std::wstring();
+        return mCustomName->get();
     }
-    return L"container.chest";
+    return L"";
 }
 
 std::wstring ChestBlockEntity::getCustomName()
 {
     if (hasCustomName())
     {
-        return mCustomName ? mCustomName->get() : std::wstring();
+        return mCustomName->get();
     }
-    return L"container.chest";
+    return L"";
 }
 
 unsigned int ChestBlockEntity::getContainerSize()
@@ -108,7 +90,8 @@ bool ChestBlockEntity::isEmpty()
     unsigned int i;
     for (i = 0; i < mItems.size(); ++i)
     {
-        if (!mItems[i]->isEmpty())
+        not_null_ptr<ItemInstance> item = mItems[i];
+        if (!item->isEmpty())
         {
             return false;
         }
@@ -191,17 +174,15 @@ int ChestBlockEntity::getTypeId(bool large)
 
 void ChestBlockEntity::addDataWalkers(DataFixerUpper* fixer)
 {
-    if (fixer)
-    {
-        fixer->addWalker(DataFixTypes::eDataFixTypes_BlockEntity,
-                         (DataWalker*)new ItemListDataWalker(BlockEntityType::CHEST, L"Items"));
-    }
+    fixer->addWalker(DataFixTypes::eDataFixTypes_BlockEntity,
+                     (DataWalker*)new ItemListDataWalker(BlockEntityType::CHEST, L"Items"));
 }
 
 void ChestBlockEntity::load(CompoundTag* tag)
 {
     BlockEntity::load(tag);
     mCustomName->loadFromTag(tag);
+    delete[] mItems.items;
     mItems = NonNullList<not_null_ptr<ItemInstance> >::withSize(getContainerSize(), ItemInstance::EMPTY);
     if (!tryLoadLootTable(tag))
     {
@@ -297,26 +278,26 @@ bool ChestBlockEntity::isSameChest(const BlockPos& position)
     {
         return false;
     }
-    boost::shared_ptr<ChestBlockEntity> chest =
-        boost::dynamic_pointer_cast<ChestBlockEntity>(mLevel->getBlockEntity(position));
-    return chest && chest->getType() == getType();
+    Block* block = mLevel->getBlockState(position)->getBlock();
+    return block != NULL && dynamic_cast<ChestBlock*>(block) != NULL &&
+           ((ChestBlock*)block)->mType == getType();
 }
 
-boost::shared_ptr<ChestBlockEntity> ChestBlockEntity::findAndGreetChestEntity(const Direction* direction)
+boost::weak_ptr<ChestBlockEntity> ChestBlockEntity::findAndGreetChestEntity(const Direction* direction)
 {
     BlockPos position = mPos.relative(direction);
-    if (!isSameChest(position))
+    if (isSameChest(position))
     {
-        return boost::shared_ptr<ChestBlockEntity>();
+        boost::shared_ptr<BlockEntity> entity = mLevel->getBlockEntity(position);
+        boost::shared_ptr<ChestBlockEntity> neighbour = boost::static_pointer_cast<ChestBlockEntity>(entity);
+        if (neighbour)
+        {
+            neighbour->heyImYourNeighbor(boost::static_pointer_cast<ChestBlockEntity>(shared_from_this()),
+                                         direction->getOpposite());
+            return neighbour;
+        }
     }
-    boost::shared_ptr<ChestBlockEntity> neighbour =
-        boost::static_pointer_cast<ChestBlockEntity>(mLevel->getBlockEntity(position));
-    if (neighbour)
-    {
-        neighbour->heyImYourNeighbor(boost::static_pointer_cast<ChestBlockEntity>(shared_from_this()),
-                                     direction->getOpposite());
-    }
-    return neighbour;
+    return boost::weak_ptr<ChestBlockEntity>();
 }
 
 void ChestBlockEntity::checkNeighbors()
@@ -351,9 +332,9 @@ void ChestBlockEntity::tickRefilledAnimation()
     {
         return;
     }
-    double x = (double)getBlockPos().x + (double)getLevel()->mRandom->nextFloat();
+    double x = getBlockPos().x + getLevel()->mRandom->nextFloat();
     double y = (double)getBlockPos().y + 0.7;
-    double z = (double)getBlockPos().z + (double)getLevel()->mRandom->nextFloat();
+    double z = getBlockPos().z + getLevel()->mRandom->nextFloat();
     mLevel->addParticle(PARTICLE_CHEST_REFILL, true, x, y, z, 0.0, 0.1, 0.0, arrayWithLength<int>());
     --mRefilledAnimationTicks;
 }
@@ -403,15 +384,15 @@ void ChestBlockEntity::tick()
     }
 
     mOpenOld = mOpen;
-    if (mOpenCount > 0 && mOpen == 0.0f && mNorthNeighbour.expired() && mWestNeighbour.expired())
+    if (mOpenCount > 0 && mOpen == 0.0f && !mNorthNeighbour.lock() && !mWestNeighbour.lock())
     {
         double soundX = (double)x + 0.5;
         double soundZ = (double)z + 0.5;
-        if (!mEastNeighbour.expired())
+        if (mSouthNeighbour.lock())
         {
             soundZ += 0.5;
         }
-        if (!mSouthNeighbour.expired())
+        if (mEastNeighbour.lock())
         {
             soundX += 0.5;
         }
@@ -435,15 +416,15 @@ void ChestBlockEntity::tick()
         {
             mOpen = 1.0f;
         }
-        if (mOpen < 0.5f && previous >= 0.5f && mNorthNeighbour.expired() && mWestNeighbour.expired())
+        if (mOpen < 0.5f && previous >= 0.5f && !mNorthNeighbour.lock() && !mWestNeighbour.lock())
         {
             double soundX = (double)x + 0.5;
             double soundZ = (double)z + 0.5;
-            if (!mEastNeighbour.expired())
+            if (mSouthNeighbour.lock())
             {
                 soundZ += 0.5;
             }
-            if (!mSouthNeighbour.expired())
+            if (mEastNeighbour.lock())
             {
                 soundX += 0.5;
             }
@@ -511,7 +492,7 @@ boost::shared_ptr<BlockEntity> ChestBlockEntity::clone()
     {
         copy->mItems[i] = mItems[i]->copy();
     }
-    copy->mCustomName->set(mCustomName->raw(), mCustomName->getUUID(), mCustomName->isChatCensored(), mCustomName->isUUIDLocal());
+    copy->mCustomName->set(mCustomName->raw(), std::wstring(mCustomName->getUUID()), mCustomName->isChatCensored(), mCustomName->isUUIDLocal());
     return copy;
 }
 
@@ -524,6 +505,10 @@ CompoundTag* ChestBlockEntity::getUpdateTagForPistonMovement()
 {
     CompoundTag* tag = new CompoundTag();
     save(tag);
+    for (unsigned int i = 0; i < mItems.size(); ++i)
+    {
+        mItems[i] = mItems.defaultValue;
+    }
     return tag;
 }
 

@@ -34,8 +34,6 @@ public:
     virtual int getWoodType(const BlockState* state);
 };
 
-extern Property* OldLeafBlock_VARIANT;
-
 bool oldleaf_filter(PlanksBlock::Variant* value);
 
 #endif

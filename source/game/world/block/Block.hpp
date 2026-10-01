@@ -139,7 +139,7 @@ public:
         UPDATE_CHUNK_ONLY = 64
     };
 
-    static DefaultedMappedRegistry<ResourceLocation, Block*>* blockRegistry;
+    static DefaultedMappedRegistry<ResourceLocation, Block*>* const blockRegistry;
     static IdMapper<const BlockState*>* blockStateRegistry;
     static float INDESTRUCTIBLE;
     static const AABB* FULL_BLOCK_SHAPE;

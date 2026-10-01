@@ -1,5 +1,6 @@
 #include "game/world/block/PlanksBlock.hpp"
 
+#include <cstring>
 #include <typeinfo>
 #include <boost/unordered_set.hpp>
 
@@ -10,38 +11,35 @@
 #include "game/world/block/EnumProperty.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/block/MaterialColor.hpp"
+#include "game/world/block/Predicates.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
-PlanksBlock::Variant* PlanksBlock::Variant::OAK =
-    new PlanksBlock::Variant(Variant::eDataOak, L"oak", Variant::eTranslationKeyOak, MaterialColor::WOOD);
-PlanksBlock::Variant* PlanksBlock::Variant::SPRUCE =
-    new PlanksBlock::Variant(Variant::eDataSpruce, L"spruce", Variant::eTranslationKeySpruce, MaterialColor::PODZOL);
-PlanksBlock::Variant* PlanksBlock::Variant::BIRCH =
-    new PlanksBlock::Variant(Variant::eDataBirch, L"birch", Variant::eTranslationKeyBirch, MaterialColor::SAND);
-PlanksBlock::Variant* PlanksBlock::Variant::JUNGLE =
-    new PlanksBlock::Variant(Variant::eDataJungle, L"jungle", Variant::eTranslationKeyJungle, MaterialColor::DIRT);
-PlanksBlock::Variant* PlanksBlock::Variant::ACACIA =
-    new PlanksBlock::Variant(Variant::eDataAcacia, L"acacia", Variant::eTranslationKeyAcacia, MaterialColor::COLOR_ORANGE);
-PlanksBlock::Variant* PlanksBlock::Variant::DARK_OAK =
-    new PlanksBlock::Variant(Variant::eDataDarkOak, L"dark_oak", Variant::eTranslationKeyDarkOak, MaterialColor::COLOR_BROWN);
+PlanksBlock::Variant* PlanksBlock::Variant::OAK = NULL;
+PlanksBlock::Variant* PlanksBlock::Variant::SPRUCE = NULL;
+PlanksBlock::Variant* PlanksBlock::Variant::BIRCH = NULL;
+PlanksBlock::Variant* PlanksBlock::Variant::JUNGLE = NULL;
+PlanksBlock::Variant* PlanksBlock::Variant::ACACIA = NULL;
+PlanksBlock::Variant* PlanksBlock::Variant::DARK_OAK = NULL;
 
-PlanksBlock::Variant* gPlankVariants[6] = {
-    PlanksBlock::Variant::OAK,
-    PlanksBlock::Variant::SPRUCE,
-    PlanksBlock::Variant::BIRCH,
-    PlanksBlock::Variant::JUNGLE,
-    PlanksBlock::Variant::ACACIA,
-    PlanksBlock::Variant::DARK_OAK
-};
+PlanksBlock::Variant* PlanksBlock::Variant::BY_DATA[6];
 EnumProperty<PlanksBlock::Variant*>* PlanksBlock::VARIANT = NULL;
 
-class PlanksVariantPredicate : public Predicate<PlanksBlock::Variant*>
-{
-public:
-    virtual bool apply(PlanksBlock::Variant* value) const
-    {
-        return value != NULL;
-    }
+std::wstring PlanksBlock::TEXTURE_NAMES[6] = {
+    std::wstring(L"oak"),
+    std::wstring(L"spruce"),
+    std::wstring(L"birch"),
+    std::wstring(L"jungle"),
+    std::wstring(L"acacia"),
+    std::wstring(L"big_oak")
+};
+
+static const int gPlankTranslationKeys[6] = {
+    PlanksBlock::Variant::eTranslationKeyOak,
+    PlanksBlock::Variant::eTranslationKeySpruce,
+    PlanksBlock::Variant::eTranslationKeyBirch,
+    PlanksBlock::Variant::eTranslationKeyJungle,
+    PlanksBlock::Variant::eTranslationKeyAcacia,
+    PlanksBlock::Variant::eTranslationKeyDarkOak
 };
 
 PlanksBlock::Variant::Variant(int data, const std::wstring& name, int translationKey, const MaterialColor* materialColor)
@@ -76,41 +74,46 @@ const MaterialColor* PlanksBlock::Variant::getMaterialColor()
 
 PlanksBlock::Variant* PlanksBlock::Variant::byData(int data)
 {
-    switch (data)
+    if (static_cast<unsigned int>(data) >= 6)
     {
-    case Variant::eDataSpruce: return Variant::SPRUCE;
-    case Variant::eDataBirch: return Variant::BIRCH;
-    case Variant::eDataJungle: return Variant::JUNGLE;
-    case Variant::eDataAcacia: return Variant::ACACIA;
-    case Variant::eDataDarkOak: return Variant::DARK_OAK;
-    case Variant::eDataOak:
-    default: return Variant::OAK;
+        data = 0;
     }
+    return Variant::BY_DATA[data];
 }
 
 void PlanksBlock::blockStaticCtor()
 {
+    Variant::OAK = new Variant(Variant::eDataOak, L"oak", Variant::eTranslationKeyOak, MaterialColor::WOOD);
+    Variant::SPRUCE = new Variant(Variant::eDataSpruce, L"spruce", Variant::eTranslationKeySpruce, MaterialColor::PODZOL);
+    Variant::BIRCH = new Variant(Variant::eDataBirch, L"birch", Variant::eTranslationKeyBirch, MaterialColor::SAND);
+    Variant::JUNGLE = new Variant(Variant::eDataJungle, L"jungle", Variant::eTranslationKeyJungle, MaterialColor::DIRT);
+    Variant::ACACIA = new Variant(Variant::eDataAcacia, L"acacia", Variant::eTranslationKeyAcacia, MaterialColor::COLOR_ORANGE);
+    Variant::DARK_OAK = new Variant(Variant::eDataDarkOak, L"dark_oak", Variant::eTranslationKeyDarkOak, MaterialColor::COLOR_BROWN);
+
+    Variant::BY_DATA[4] = Variant::ACACIA;
+    Variant::BY_DATA[2] = Variant::BIRCH;
+    Variant::BY_DATA[1] = Variant::SPRUCE;
+    Variant::BY_DATA[0] = Variant::OAK;
+    Variant::BY_DATA[3] = Variant::JUNGLE;
+    Variant::BY_DATA[5] = Variant::DARK_OAK;
+
+    std::wstring name(L"variant");
     boost::unordered_set<Variant*> values;
-    values.insert(Variant::OAK);
-    values.insert(Variant::SPRUCE);
-    values.insert(Variant::BIRCH);
-    values.insert(Variant::JUNGLE);
-    values.insert(Variant::ACACIA);
-    values.insert(Variant::DARK_OAK);
-    PlanksVariantPredicate predicate;
-    VARIANT = EnumProperty<Variant*>::create(L"variant", typeid(Variant), values, &predicate);
+    values.insert(Variant::BY_DATA[0]);
+    values.insert(Variant::BY_DATA[1]);
+    values.insert(Variant::BY_DATA[2]);
+    values.insert(Variant::BY_DATA[3]);
+    values.insert(Variant::BY_DATA[4]);
+    values.insert(Variant::BY_DATA[5]);
+    VARIANT = EnumProperty<Variant*>::create(name, typeid(Variant), values, Predicates<Variant*>::alwaysTrue);
 }
 
 PlanksBlock::PlanksBlock()
     : Block(Material::WOOD)
 {
     DerivedInit();
-    TypedBoxed<Variant*> value(Variant::OAK);
-    registerDefaultState(mStateDefinition->any()->setBoxedValue(VARIANT, &value));
-    for (int i = 0; i < 6; ++i)
-    {
-        mIcons[i] = NULL;
-    }
+    registerDefaultState(mStateDefinition->any()->setValue(VARIANT, Variant::OAK));
+    memset(mIcons, 0, sizeof(mIcons));
 }
 
 int PlanksBlock::getSpawnResourcesAuxValue(const BlockState* state)
@@ -120,8 +123,7 @@ int PlanksBlock::getSpawnResourcesAuxValue(const BlockState* state)
 
 const BlockState* PlanksBlock::getBlockState(int data)
 {
-    TypedBoxed<Variant*> value(Variant::byData(data));
-    return defaultBlockState()->setBoxedValue(VARIANT, &value);
+    return defaultBlockState()->setValue(VARIANT, Variant::byData(data));
 }
 
 const MaterialColor* PlanksBlock::getMapColor(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
@@ -136,13 +138,17 @@ int PlanksBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 BlockStateDefinition* PlanksBlock::createBlockStateDefinition()
 {
-    const Property* properties[] = { VARIANT };
+    static const Property* properties[] = { VARIANT };
     return new BlockStateDefinition(this, properties, 1);
 }
 
 int PlanksBlock::getDescriptionId(int auxValue)
 {
-    return Variant::byData(auxValue)->getTranslationKey();
+    if (static_cast<unsigned int>(auxValue) >= 6)
+    {
+        auxValue = 0;
+    }
+    return gPlankTranslationKeys[auxValue];
 }
 
 TextureAtlasSprite* PlanksBlock::getTexture(const Direction* direction, const BlockState* state)
@@ -152,9 +158,8 @@ TextureAtlasSprite* PlanksBlock::getTexture(const Direction* direction, const Bl
 
 void PlanksBlock::registerIcons(IconRegister* iconRegister)
 {
-    std::wstring base = getIconName();
     for (int i = 0; i < 6; ++i)
     {
-        mIcons[i] = iconRegister->registerIcon(base + L"_" + gPlankVariants[i]->getSerializedName());
+        mIcons[i] = iconRegister->registerIcon(getIconName() + L"_" + TEXTURE_NAMES[i]);
     }
 }

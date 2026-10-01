@@ -32,7 +32,10 @@ template <class T>
 class EntityDataSerializer
 {
 public:
-    EntityDataSerializer(EntityDataSerializerEnum::EEntityDataSerializer id);
+    EntityDataSerializer(EntityDataSerializerEnum::EEntityDataSerializer id)
+        : mId(id)
+    {
+    }
 
     virtual void write(DataOutputStream* output, T value) const = 0;
     virtual T read(DataInputStream* input) const = 0;
@@ -46,12 +49,6 @@ private:
     boost::unordered_map<int, EntityDataAccessor<T>*> mAccessors;
     EntityDataSerializerEnum::EEntityDataSerializer mId;
 };
-
-template <class T>
-EntityDataSerializer<T>::EntityDataSerializer(EntityDataSerializerEnum::EEntityDataSerializer id)
-    : mId(id)
-{
-}
 
 template <class T>
 EntityDataAccessor<T>* EntityDataSerializer<T>::getOrCreateStoredAccessor(int id)

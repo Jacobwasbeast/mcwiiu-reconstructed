@@ -82,12 +82,16 @@ void CompressedBlockStorage::queueForDelete(unsigned char* data, int size)
 
 void CompressedBlockStorage::reverseIndices(unsigned char* data)
 {
+#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
     unsigned short* headers = (unsigned short*)data;
 
     for (int i = 0; i < 512; i++)
     {
         System::ReverseUSHORT(&headers[i]);
     }
+#else
+    (void)data;
+#endif
 }
 
 void CompressedBlockStorage::getDataSection(unsigned char* blocks, int x, int y, int z)

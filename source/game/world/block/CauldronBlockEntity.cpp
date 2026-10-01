@@ -22,7 +22,7 @@
 #include "game/world/generation/Player.hpp"
 
 CauldronBlockEntity::CauldronBlockEntity()
-    : BlockEntity(), Container(), mPotionId(), mPotionType(Potion::NORMAL), mHasCustomColor(false),
+    : BlockEntity(), Container(), mPotionId(L""), mHasCustomColor(false),
       mCustomColor(0), mItems(NonNullList<not_null_ptr<ItemInstance> >::withSize(10, ItemInstance::EMPTY)),
       mCustomName(new CensoredString())
 {
@@ -53,12 +53,16 @@ std::wstring CauldronBlockEntity::getCustomName()
     {
         return mCustomName->get();
     }
-    return std::wstring();
+    return L"";
 }
 
 bool CauldronBlockEntity::hasCustomName()
 {
-    return mCustomName && mCustomName->checkParentalFilter() && !mCustomName->raw().empty();
+    if (!mCustomName->checkParentalFilter())
+    {
+        return false;
+    }
+    return mCustomName->raw().size() != 0;
 }
 
 std::wstring CauldronBlockEntity::getDisplayName()
@@ -75,7 +79,8 @@ bool CauldronBlockEntity::isEmpty()
 {
     for (unsigned int i = 0; i < mItems.size(); ++i)
     {
-        if (!mItems[i]->isEmpty())
+        not_null_ptr<ItemInstance> item = mItems[i];
+        if (!item->isEmpty())
         {
             return false;
         }
@@ -85,19 +90,21 @@ bool CauldronBlockEntity::isEmpty()
 
 not_null_ptr<ItemInstance> CauldronBlockEntity::getItem(unsigned int slot)
 {
-    return slot < mItems.size() ? mItems[slot] : ItemInstance::EMPTY;
+    if (slot < mItems.size())
+    {
+        return mItems[slot];
+    }
+    return ItemInstance::EMPTY;
 }
 
 not_null_ptr<ItemInstance> CauldronBlockEntity::removeItem(unsigned int slot, int count)
 {
-    return slot < mItems.size() ? ContainerHelper::removeItem(mItems, slot, static_cast<unsigned int>(count))
-                                : ItemInstance::EMPTY;
+    return ContainerHelper::removeItem(mItems, slot, count);
 }
 
 not_null_ptr<ItemInstance> CauldronBlockEntity::removeItemNoUpdate(int slot)
 {
-    return slot >= 0 && static_cast<unsigned int>(slot) < mItems.size()
-        ? ContainerHelper::takeItem(mItems, static_cast<unsigned int>(slot)) : ItemInstance::EMPTY;
+    return ContainerHelper::takeItem(mItems, slot);
 }
 
 void CauldronBlockEntity::setItem(unsigned int slot, not_null_ptr<ItemInstance> item)
@@ -154,7 +161,7 @@ void CauldronBlockEntity::clearContent()
 {
     for (unsigned int i = 0; i < mItems.size(); ++i)
     {
-        mItems[i] = ItemInstance::EMPTY;
+        mItems[i] = mItems.defaultValue;
     }
 }
 
@@ -182,7 +189,7 @@ int CauldronBlockEntity::getCustomColor() const { return mCustomColor; }
 
 int CauldronBlockEntity::getColor() const
 {
-    if (getPotionId() != L"")
+    if (getPotionId().compare(L"") != 0)
     {
         return getPotionColor();
     }
@@ -198,40 +205,41 @@ void CauldronBlockEntity::setPotionType(Potion::EType type) { mPotionType = type
 
 int CauldronBlockEntity::getMixDyeColor()
 {
-    unsigned int red = mHasCustomColor ? ((mCustomColor >> 16) & 255) : 0;
-    unsigned int green = mHasCustomColor ? ((mCustomColor >> 8) & 255) : 0;
-    unsigned int blue = mHasCustomColor ? (mCustomColor & 255) : 0;
-    unsigned int count = mHasCustomColor ? 1 : 0;
-    for (int slot = 2; slot <= 3; ++slot)
+    unsigned int rgb[3] = {0, 0, 0};
+    unsigned int count = 0;
+    if (mHasCustomColor)
     {
-        not_null_ptr<ItemInstance> item = getItem(static_cast<unsigned int>(slot));
-        if (!item || item->isEmpty() || item->getItem() != Items::dye)
-        {
-            continue;
-        }
-        const DyeColor* dye = DyeColor::byItemData(item->getAuxValue());
-        if (dye == NULL)
-        {
-            continue;
-        }
-        arrayWithLength<const float> colors = dye->getTextureDiffuseColors();
-        int amount = item->getCount();
-        red += amount * static_cast<int>(colors.data[0] * 255.0f);
-        green += amount * static_cast<int>(colors.data[1] * 255.0f);
-        blue += amount * static_cast<int>(colors.data[2] * 255.0f);
-        count += amount;
+        rgb[2] = mCustomColor;
+        rgb[0] = (rgb[2] >> 16) & 255;
+        rgb[1] = (rgb[2] >> 8) & 255;
+        rgb[2] &= 255;
+        count = 1;
     }
-    if (count == 0)
+    for (int slot = 2; slot < 10; ++slot)
+    {
+        not_null_ptr<ItemInstance> item = getItem(slot);
+        if (!item->isEmpty() && item->getItem() == Items::dye)
+        {
+            arrayWithLength<const float> colors = DyeColor::byItemData(item->getAuxValue())->getTextureDiffuseColors();
+            int amount = item->getCount();
+            rgb[0] += amount * static_cast<int>(colors.data[0] * 255.0f);
+            rgb[1] += amount * static_cast<int>(colors.data[1] * 255.0f);
+            rgb[2] += amount * static_cast<int>(colors.data[2] * 255.0f);
+            count += amount;
+        }
+    }
+    if (static_cast<int>(count) <= 0)
     {
         return Minecraft::GetInstance()->getColourTable()->getColour(eMinecraftColour_Cauldron_Water);
     }
-    return ((red / count) << 16) | ((green / count) << 8) | (blue / count);
+    return (((static_cast<int>(rgb[0]) / static_cast<int>(count)) << 8) + static_cast<int>(rgb[1]) / static_cast<int>(count) << 8)
+        + static_cast<int>(rgb[2]) / static_cast<int>(count);
 }
 
 void CauldronBlockEntity::mixDyes()
 {
     setCustomColor(getMixDyeColor());
-    for (unsigned int slot = 2; slot < 10; ++slot)
+    for (int slot = 2; slot < 10; ++slot)
     {
         setItem(slot, ItemInstance::EMPTY);
     }
@@ -241,10 +249,19 @@ void CauldronBlockEntity::load(CompoundTag* tag)
 {
     BlockEntity::load(tag);
     mCustomName->loadFromTag(tag);
-    mItems = NonNullList<not_null_ptr<ItemInstance> >::withSize(10, ItemInstance::EMPTY);
+    delete[] mItems.items;
+    mItems = NonNullList<not_null_ptr<ItemInstance> >::withSize(getContainerSize(), ItemInstance::EMPTY);
     ContainerHelper::loadAllItems(tag, mItems);
     mPotionId = tag->getString(L"PotionId");
-    mPotionType = tag->getByte(L"IsSplash") == 0 ? static_cast<Potion::EType>(tag->getShort(L"PotionType")) : Potion::SPLASH;
+    bool splash = tag->getByte(L"IsSplash") != 0;
+    if (!splash)
+    {
+        mPotionType = static_cast<Potion::EType>(tag->getShort(L"PotionType"));
+    }
+    else
+    {
+        mPotionType = Potion::SPLASH;
+    }
     mHasCustomColor = tag->contains(L"CustomColor");
     if (mHasCustomColor)
     {
@@ -257,8 +274,7 @@ void CauldronBlockEntity::loadFromPacket(Level* level, const BlockPos& pos, Comp
     load(tag);
     if (level->getBlockId(pos.x, pos.y, pos.z) == BlockId::CAULDRON)
     {
-        int data = level->getBlockData(pos.x, pos.y, pos.z);
-        level->setData(pos, data, 2, true);
+        level->setData(pos, level->getBlockData(pos.x, pos.y, pos.z), 2, true);
     }
 }
 
@@ -285,9 +301,7 @@ boost::shared_ptr<Packet> CauldronBlockEntity::getUpdatePacket()
 
 CompoundTag* CauldronBlockEntity::getUpdateTag()
 {
-    CompoundTag* tag = new CompoundTag();
-    save(tag);
-    return tag;
+    return save(new CompoundTag());
 }
 
 boost::shared_ptr<BlockEntity> CauldronBlockEntity::clone()

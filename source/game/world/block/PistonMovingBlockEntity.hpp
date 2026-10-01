@@ -28,11 +28,11 @@ public:
     virtual CompoundTag* getUpdateTag();
     virtual int getData();
     bool isSourcePiston();
-    double getProgress(float);
-    double getExtendedProgress(float);
-    double getXOff(float);
-    double getYOff(float);
-    double getZOff(float);
+    float getProgress(float);
+    float getExtendedProgress(float);
+    float getXOff(float);
+    float getYOff(float);
+    float getZOff(float);
     const BlockState* getCollisionRelatedBlockState();
     AABB* getAABB(LevelSource*, const BlockPos&, float);
     AABB* getAABB(LevelSource*, const BlockPos&);

@@ -69,6 +69,10 @@ public:
     int getBrewTime();
 
 private:
+    static arrayWithLength<int> SLOTS_FOR_UP;
+    static arrayWithLength<int> SLOTS_FOR_DOWN;
+    static arrayWithLength<int> SLOTS_FOR_SIDES;
+
     NonNullList<not_null_ptr<ItemInstance> > mItems;
     int mBrewTime;
     arrayWithLength<unsigned char> mLastPotionBits;

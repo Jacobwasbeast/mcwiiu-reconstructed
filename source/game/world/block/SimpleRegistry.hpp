@@ -8,10 +8,25 @@
 #include "game/util/Random.hpp"
 
 template <class K, class V, class KeyHash, class KeyEqual>
-class SimpleRegistry
+class Registry
 {
 public:
-    virtual V get(K key);
+    virtual V get(K key) = 0;
+    virtual void registerKey(K key, V value) = 0;
+    virtual const boost::unordered_map<K, V, KeyHash, KeyEqual>& keySet() = 0;
+    virtual V getRandom(Random* random) = 0;
+    virtual bool containsKey(K key) = 0;
+};
+
+template <class K, class V, class KeyHash, class KeyEqual>
+class SimpleRegistry : public Registry<K, V, KeyHash, KeyEqual>
+{
+public:
+    virtual V get(K key)
+    {
+        return mRegistry.at(key);
+    }
+
     virtual void registerKey(K key, V value);
     virtual const boost::unordered_map<K, V, KeyHash, KeyEqual>& keySet();
     virtual V getRandom(Random* random);
@@ -22,12 +37,6 @@ private:
     boost::unordered_map<K, V, KeyHash, KeyEqual> mRegistry;
     std::set<V> mValues;
 };
-
-template <class K, class V, class KeyHash, class KeyEqual>
-V SimpleRegistry<K, V, KeyHash, KeyEqual>::get(K key)
-{
-    return mRegistry.at(key);
-}
 
 template <class K, class V, class KeyHash, class KeyEqual>
 void SimpleRegistry<K, V, KeyHash, KeyEqual>::registerKey(K key, V value)
