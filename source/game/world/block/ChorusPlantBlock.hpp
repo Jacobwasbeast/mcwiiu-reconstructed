@@ -16,7 +16,6 @@ class ChorusPlantBlock : public Block
 {
 public:
     ChorusPlantBlock();
-    virtual ~ChorusPlantBlock();
     virtual void DerivedInit();
     virtual const BlockState* fillVirtualBlockStateProperties(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
     virtual const AABB* getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);

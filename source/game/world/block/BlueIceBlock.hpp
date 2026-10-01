@@ -14,7 +14,6 @@ class BlueIceBlock : public Block
 public:
     BlueIceBlock(Material* material);
 
-    virtual ~BlueIceBlock();
     virtual int getLightColor(const BlockState* state, LevelSource* levelSource, const BlockPos& pos, int lightValue);
     virtual int getResourceCount(Random* random);
 };

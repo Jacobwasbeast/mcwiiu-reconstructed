@@ -12,10 +12,6 @@ WoodButtonBlock::WoodButtonBlock()
     DerivedInit();
 }
 
-WoodButtonBlock::~WoodButtonBlock()
-{
-}
-
 void WoodButtonBlock::playOnSound(boost::shared_ptr<Player> player, Level* level, const BlockPos& pos)
 {
     level->playSound(player, pos, SoundEvents::WOOD_BUTTON_CLICK_ON,

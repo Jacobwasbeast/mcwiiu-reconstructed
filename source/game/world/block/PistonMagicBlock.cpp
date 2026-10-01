@@ -40,10 +40,6 @@ PistonMagicBlock::PistonMagicBlock()
     setDestroyTime(Block::INDESTRUCTIBLE);
 }
 
-PistonMagicBlock::~PistonMagicBlock()
-{
-}
-
 boost::shared_ptr<BlockEntity> PistonMagicBlock::newBlockEntity(Level*, int)
 {
     return boost::shared_ptr<BlockEntity>();

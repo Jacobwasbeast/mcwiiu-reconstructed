@@ -12,10 +12,6 @@ BarrierBlock::BarrierBlock()
     mBlockData = 1;
 }
 
-BarrierBlock::~BarrierBlock()
-{
-}
-
 EBlockRenderShape BarrierBlock::getRenderShape(const BlockState* state)
 {
     return BLOCK_RENDER_INVISIBLE;

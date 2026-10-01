@@ -13,10 +13,6 @@ PoweredBlock::PoweredBlock(Material* material, const MaterialColor* materialColo
     DerivedInit();
 }
 
-PoweredBlock::~PoweredBlock()
-{
-}
-
 int PoweredBlock::getSignal(const BlockState* state, LevelSource* levelSource, const BlockPos& pos, const Direction* direction)
 {
     return 15;

@@ -25,6 +25,3 @@ const MaterialColor* ObsidianBlock::getMapColor(const BlockState* state, LevelSo
     return MaterialColor::COLOR_BLACK;
 }
 
-ObsidianBlock::~ObsidianBlock()
-{
-}

@@ -7,7 +7,6 @@ class FullWoodSlabBlock : public WoodSlabBlock
 {
 public:
     FullWoodSlabBlock();
-    virtual ~FullWoodSlabBlock();
     virtual bool isFullSize() const;
 };
 

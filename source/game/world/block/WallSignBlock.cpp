@@ -30,10 +30,6 @@ WallSignBlock::WallSignBlock()
     registerDefaultState(mStateDefinition->any()->setBoxedValue(FACING, &facing));
 }
 
-WallSignBlock::~WallSignBlock()
-{
-}
-
 void WallSignBlock::blockStaticCtor()
 {
     FACING = HorizontalDirectionalBlock::FACING_PROPERTY;

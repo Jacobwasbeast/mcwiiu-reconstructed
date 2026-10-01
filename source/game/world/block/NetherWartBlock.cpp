@@ -38,10 +38,6 @@ NetherWartBlock::NetherWartBlock()
     setTicking(true);
 }
 
-NetherWartBlock::~NetherWartBlock()
-{
-}
-
 const AABB* NetherWartBlock::getShape(const BlockState* state, LevelSource*, const BlockPos&)
 {
     return SHAPE_BY_AGE[state->getValue(AGE)];

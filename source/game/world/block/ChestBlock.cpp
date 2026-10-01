@@ -56,10 +56,6 @@ ChestBlock::ChestBlock(Type type)
     registerDefaultState(mStateDefinition->any()->setBoxedValue(FACING, &facing));
 }
 
-ChestBlock::~ChestBlock()
-{
-}
-
 boost::shared_ptr<BlockEntity> ChestBlock::newBlockEntity(Level*, int)
 {
     MemSect(0x32);

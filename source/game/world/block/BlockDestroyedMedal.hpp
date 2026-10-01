@@ -7,7 +7,6 @@ class BlockDestroyedMedal : public GameMedal
 {
 public:
     BlockDestroyedMedal(int name, float target, unsigned int weight, GameMedal::EOperator op);
-    virtual ~BlockDestroyedMedal();
     virtual double GetScore(PlayerStats* playerStats) const;
 };
 

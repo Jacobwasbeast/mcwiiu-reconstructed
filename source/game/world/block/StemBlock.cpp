@@ -56,10 +56,6 @@ StemBlock::StemBlock(Block* fruitType)
     setTicking(true);
 }
 
-StemBlock::~StemBlock()
-{
-}
-
 bool StemBlock::isValidBonemealTarget(Level*, const BlockPos&, const BlockState* state, bool)
 {
     return state->getValue(AGE) != 7;

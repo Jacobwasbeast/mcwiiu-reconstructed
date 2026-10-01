@@ -59,8 +59,6 @@ TrapDoorBlock::TrapDoorBlock(Material* material, const MaterialColor* materialCo
     registerDefaultState(state);
 }
 
-TrapDoorBlock::~TrapDoorBlock() {}
-
 void TrapDoorBlock::blockStaticCtor()
 {
     FACING = HorizontalDirectionalBlock::FACING_PROPERTY;

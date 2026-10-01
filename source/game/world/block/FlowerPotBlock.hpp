@@ -90,7 +90,6 @@ public:
     };
 
     FlowerPotBlock();
-    virtual ~FlowerPotBlock();
     virtual boost::shared_ptr<BlockEntity> newBlockEntity(Level* level, int data);
     static void blockStaticCtor();
     virtual std::wstring getName();

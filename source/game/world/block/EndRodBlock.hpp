@@ -19,7 +19,6 @@ class EndRodBlock : public DirectionalBlock
 {
 public:
     EndRodBlock();
-    virtual ~EndRodBlock();
     virtual void DerivedInit();
     virtual const BlockState* rotate(const BlockState* state, Rotation* rotation);
     virtual const BlockState* mirror(const BlockState* state, Mirror* mirror);

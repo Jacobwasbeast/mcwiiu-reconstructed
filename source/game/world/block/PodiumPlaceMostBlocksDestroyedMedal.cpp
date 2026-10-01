@@ -13,10 +13,6 @@ PodiumPlaceMostBlocksDestroyedMedal::PodiumPlaceMostBlocksDestroyedMedal(EPodium
 {
 }
 
-PodiumPlaceMostBlocksDestroyedMedal::~PodiumPlaceMostBlocksDestroyedMedal()
-{
-}
-
 double PodiumPlaceMostBlocksDestroyedMedal::GetScore(PlayerStats* playerStats) const
 {
     GameStats* gameStats = getGameStats();

@@ -45,10 +45,6 @@ ShulkerBoxBlock::ShulkerBoxBlock(const DyeColor* color)
     registerDefaultState(mStateDefinition->any()->setBoxedValue(DirectionalBlock::FACING_PROPERTY, &facing));
 }
 
-ShulkerBoxBlock::~ShulkerBoxBlock()
-{
-}
-
 boost::shared_ptr<BlockEntity> ShulkerBoxBlock::newBlockEntity(Level*, int)
 {
     return boost::shared_ptr<BlockEntity>(new ShulkerBoxBlockEntity(mColor));

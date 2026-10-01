@@ -12,7 +12,6 @@ public:
     BlockImpl(Material* material);
     BlockImpl(Material* material, const MaterialColor* materialColor);
 
-    virtual ~BlockImpl();
 };
 
 #endif

@@ -20,7 +20,6 @@ public:
                  int descriptionId, bool preCompletionEnabled,
                  std::vector<TutorialConstraint*>* constraints,
                  bool showMinimumTime, bool allowFade, bool repeatMessage);
-    virtual ~UseBlockTask();
 
     virtual bool isCompleted();
     virtual void useItemOn(Level* level, not_null_ptr<ItemInstance> item,

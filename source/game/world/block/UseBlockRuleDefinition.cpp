@@ -18,10 +18,6 @@ UseBlockRuleDefinition::UseBlockRuleDefinition()
     addIntAttribute(ConsoleGameRules::eGameRuleAttr_z, &mZ);
 }
 
-UseBlockRuleDefinition::~UseBlockRuleDefinition()
-{
-}
-
 ConsoleGameRules::EGameRuleType UseBlockRuleDefinition::getActionType()
 {
     return ConsoleGameRules::eGameRuleType_UseBlock;

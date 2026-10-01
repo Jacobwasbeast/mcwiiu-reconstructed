@@ -17,6 +17,3 @@ const MaterialColor* NetherrackBlock::getMapColor(const BlockState* state, Level
     return MaterialColor::NETHER;
 }
 
-NetherrackBlock::~NetherrackBlock()
-{
-}

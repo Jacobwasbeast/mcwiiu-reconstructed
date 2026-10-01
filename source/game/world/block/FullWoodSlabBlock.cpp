@@ -6,10 +6,6 @@ FullWoodSlabBlock::FullWoodSlabBlock()
     WoodSlabBlock::DerivedInit();
 }
 
-FullWoodSlabBlock::~FullWoodSlabBlock()
-{
-}
-
 bool FullWoodSlabBlock::isFullSize() const
 {
     return true;

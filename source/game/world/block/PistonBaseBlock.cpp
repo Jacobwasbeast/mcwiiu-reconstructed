@@ -38,6 +38,11 @@
 
 AbstractProperty<const Direction*>* PistonBaseBlock::FACING = NULL;
 AbstractProperty<bool>* PistonBaseBlock::EXTENDED = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"extended"));
+const std::wstring PistonBaseBlock::TEXTURE_SIDE = L"piston_side";
+const std::wstring PistonBaseBlock::TEXTURE_TOP = L"piston_top";
+const std::wstring PistonBaseBlock::TEXTURE_TOP_STICKY = L"piston_top_sticky";
+const std::wstring PistonBaseBlock::TEXTURE_BOTTOM = L"piston_bottom";
+const std::wstring PistonBaseBlock::TEXTURE_INNER_TOP = L"piston_inner_top";
 static const AABB* PISTON_EXTENDED_DOWN = AABB::newPermanent(0.0, 0.25, 0.0, 1.0, 1.0, 1.0);
 static const AABB* PISTON_EXTENDED_UP = AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.75, 1.0);
 static const AABB* PISTON_EXTENDED_NORTH = AABB::newPermanent(0.0, 0.0, 0.25, 1.0, 1.0, 1.0);
@@ -54,10 +59,6 @@ PistonBaseBlock::PistonBaseBlock(bool sticky)
     registerDefaultState(mStateDefinition->any()->setBoxedValue(FACING, &facing)->setBoxedValue(EXTENDED, &extended));
     setSoundType(SoundType::STONE);
     setDestroyTime(0.5f);
-}
-
-PistonBaseBlock::~PistonBaseBlock()
-{
 }
 
 void PistonBaseBlock::blockStaticCtor()
@@ -504,23 +505,23 @@ TextureAtlasSprite* PistonBaseBlock::getTexture(const Direction* direction, cons
 
 TextureAtlasSprite* PistonBaseBlock::getTexture(const std::wstring& name)
 {
-    if (name == L"piston_side")
+    if (name == TEXTURE_SIDE)
         return static_cast<PistonBaseBlock*>(Blocks::piston)->mIcon;
-    if (name == L"piston_top")
+    if (name == TEXTURE_TOP)
         return static_cast<PistonBaseBlock*>(Blocks::piston)->mTopIcon;
-    if (name == L"piston_top_sticky")
+    if (name == TEXTURE_TOP_STICKY)
         return static_cast<PistonBaseBlock*>(Blocks::sticky_piston)->mTopIcon;
-    if (name == L"piston_inner_top")
+    if (name == TEXTURE_INNER_TOP)
         return static_cast<PistonBaseBlock*>(Blocks::piston)->mInnerTopIcon;
     return NULL;
 }
 
 void PistonBaseBlock::registerIcons(IconRegister* iconRegister)
 {
-    mIcon = iconRegister->registerIcon(L"piston_side");
-    mTopIcon = iconRegister->registerIcon(mSticky ? L"piston_top_sticky" : L"piston_top");
-    mInnerTopIcon = iconRegister->registerIcon(L"piston_inner_top");
-    mBottomIcon = iconRegister->registerIcon(L"piston_bottom");
+    mIcon = iconRegister->registerIcon(TEXTURE_SIDE);
+    mTopIcon = iconRegister->registerIcon(mSticky ? TEXTURE_TOP_STICKY : TEXTURE_TOP);
+    mInnerTopIcon = iconRegister->registerIcon(TEXTURE_INNER_TOP);
+    mBottomIcon = iconRegister->registerIcon(TEXTURE_BOTTOM);
 }
 
 EBlockRenderShape PistonBaseBlock::getRenderShape(const BlockState*) { return BLOCK_RENDER_PISTON_BASE; }

@@ -15,7 +15,6 @@ class GravelBlock : public FallingBlock, public BonemealableBlock
 {
 public:
     GravelBlock();
-    virtual ~GravelBlock();
 
     virtual bool isValidBonemealTarget(Level* level, const BlockPos& pos, const BlockState* state,
                                        bool isClientSide);

@@ -27,10 +27,6 @@ EnchantmentTableBlock::EnchantmentTableBlock()
     setLightBlock(0);
 }
 
-EnchantmentTableBlock::~EnchantmentTableBlock()
-{
-}
-
 boost::shared_ptr<BlockEntity> EnchantmentTableBlock::newBlockEntity(Level*, int data)
 {
     boost::shared_ptr<EnchantmentTableEntity> entity(new EnchantmentTableEntity());

@@ -18,7 +18,6 @@ public:
     PodiumPlaceMostBlocksDestroyedMedal(EPodium podium, int name, float target,
         unsigned int weight, GameMedal::EOperator op);
 
-    virtual ~PodiumPlaceMostBlocksDestroyedMedal();
     virtual double GetScore(PlayerStats* playerStats) const;
 
 private:

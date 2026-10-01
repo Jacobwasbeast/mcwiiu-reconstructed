@@ -8,10 +8,6 @@ StructureBlock::StructureBlock()
     DerivedInit();
 }
 
-StructureBlock::~StructureBlock()
-{
-}
-
 EBlockRenderShape StructureBlock::getRenderShape(const BlockState* state)
 {
     return BLOCK_RENDER_INVISIBLE;

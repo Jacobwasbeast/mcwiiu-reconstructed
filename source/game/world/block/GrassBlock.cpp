@@ -35,10 +35,6 @@ GrassBlock::GrassBlock()
     setTicking(true);
 }
 
-GrassBlock::~GrassBlock()
-{
-}
-
 bool GrassBlock::isValidBonemealTarget(Level*, const BlockPos&, const BlockState*, bool)
 {
     return true;

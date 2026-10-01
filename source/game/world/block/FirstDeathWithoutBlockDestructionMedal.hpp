@@ -11,7 +11,6 @@ public:
     {
     }
 
-    virtual ~FirstDeathWithoutBlockDestructionMedal();
     virtual double GetScore(PlayerStats* playerStats) const;
 };
 

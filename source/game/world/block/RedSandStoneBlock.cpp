@@ -84,10 +84,6 @@ RedSandStoneBlock::RedSandStoneBlock()
     }
 }
 
-RedSandStoneBlock::~RedSandStoneBlock()
-{
-}
-
 int RedSandStoneBlock::getSpawnResourcesAuxValue(const BlockState* state)
 {
     return state->getValue(TYPE)->getData();

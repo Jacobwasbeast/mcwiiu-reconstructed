@@ -30,7 +30,6 @@ public:
     static DirectionProperty* FACING;
 
     EnderChestBlock();
-    virtual ~EnderChestBlock();
     virtual boost::shared_ptr<BlockEntity> newBlockEntity(Level* level, int data);
     static void blockStaticCtor();
     virtual const AABB* getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);

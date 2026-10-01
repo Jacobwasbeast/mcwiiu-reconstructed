@@ -24,7 +24,6 @@ public:
     };
 
     RedstoneTorchBlock(bool lit);
-    virtual ~RedstoneTorchBlock();
     static void removeLevelReferences(Level* level);
     bool isToggledTooFrequently(Level* level, const BlockPos& pos, bool addToggle);
     virtual int getTickDelay(Level* level);

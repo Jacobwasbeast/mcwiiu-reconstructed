@@ -21,10 +21,6 @@ HayBlock::HayBlock()
     registerDefaultState(definition->any()->setBoxedValue(definition->getProperties()[0], &value));
 }
 
-HayBlock::~HayBlock()
-{
-}
-
 void HayBlock::fallOn(Level* level, const BlockPos& pos, boost::shared_ptr<Entity> entity, float fallDistance)
 {
     entity->causeFallDamage(fallDistance, 0.2f);

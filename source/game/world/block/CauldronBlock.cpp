@@ -56,9 +56,6 @@ CauldronBlock::CauldronBlock()
     TypedBoxed<int> level(0);
     registerDefaultState(mStateDefinition->any()->setBoxedValue(LEVEL, &level));
 }
-CauldronBlock::~CauldronBlock()
-{
-}
 
 boost::shared_ptr<BlockEntity> CauldronBlock::newBlockEntity(Level*, int data)
 {

@@ -35,6 +35,3 @@ const MaterialColor* Glowstoneblock::getMapColor(const BlockState* state, LevelS
     return MaterialColor::SAND;
 }
 
-Glowstoneblock::~Glowstoneblock()
-{
-}

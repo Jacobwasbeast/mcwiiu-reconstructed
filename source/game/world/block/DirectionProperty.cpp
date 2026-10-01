@@ -12,10 +12,6 @@ DirectionProperty::DirectionProperty(const std::wstring& name,
 {
 }
 
-DirectionProperty::~DirectionProperty()
-{
-}
-
 DirectionProperty* DirectionProperty::create(const std::wstring& name,
                                              const boost::unordered_set<const Direction*>& values)
 {

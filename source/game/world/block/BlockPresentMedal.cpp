@@ -7,10 +7,6 @@ BlockPresentMedal::BlockPresentMedal(int name, float target, unsigned int weight
 {
 }
 
-BlockPresentMedal::~BlockPresentMedal()
-{
-}
-
 double BlockPresentMedal::GetScore(PlayerStats* playerStats) const
 {
     return GameMedal::totalOfAllRounds(playerStats, getBlocksPresent);

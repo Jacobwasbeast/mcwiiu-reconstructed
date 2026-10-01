@@ -40,7 +40,6 @@ public:
     static EnumProperty<Variant*>* TYPE;
 
     RedSandStoneBlock();
-    virtual ~RedSandStoneBlock();
     static void blockStaticCtor();
     virtual int getSpawnResourcesAuxValue(const BlockState* state);
     virtual const BlockState* getBlockState(int data);

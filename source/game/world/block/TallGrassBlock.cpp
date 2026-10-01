@@ -103,10 +103,6 @@ TallGrassBlock::TallGrassBlock()
     mIcons[2] = NULL;
 }
 
-TallGrassBlock::~TallGrassBlock()
-{
-}
-
 bool TallGrassBlock::isValidBonemealTarget(Level*, const BlockPos&, const BlockState* state, bool)
 {
     return state->getValue(VARIANT) != Variant::DEAD_BUSH;

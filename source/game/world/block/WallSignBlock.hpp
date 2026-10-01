@@ -17,7 +17,6 @@ class WallSignBlock : public SignBlock
 {
 public:
     WallSignBlock();
-    virtual ~WallSignBlock();
 
     static DirectionProperty* FACING;
     static void blockStaticCtor();

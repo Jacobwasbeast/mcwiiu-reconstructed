@@ -6,10 +6,6 @@ PurpurSlabBlockFull::PurpurSlabBlockFull()
     PurpurSlabBlock::DerivedInit();
 }
 
-PurpurSlabBlockFull::~PurpurSlabBlockFull()
-{
-}
-
 bool PurpurSlabBlockFull::isFullSize() const
 {
     return true;

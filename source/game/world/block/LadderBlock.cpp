@@ -28,10 +28,6 @@ LadderBlock::LadderBlock()
     mWaterBlocking = false;
 }
 
-LadderBlock::~LadderBlock()
-{
-}
-
 void LadderBlock::blockStaticCtor()
 {
     FACING = DirectionalBlock::FACING;

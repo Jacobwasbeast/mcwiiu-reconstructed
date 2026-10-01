@@ -21,7 +21,6 @@ public:
     static AbstractProperty<int>* AGE;
 
     BeetrootBlock();
-    virtual ~BeetrootBlock();
     virtual AbstractProperty<int>* getAgeProperty();
     virtual int getMaxAge();
     virtual Item* getBaseSeedId();

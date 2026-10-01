@@ -6,10 +6,6 @@ FullNewStoneSlabBlock::FullNewStoneSlabBlock()
     NewStoneSlabBlock::DerivedInit();
 }
 
-FullNewStoneSlabBlock::~FullNewStoneSlabBlock()
-{
-}
-
 bool FullNewStoneSlabBlock::isFullSize() const
 {
     return true;

@@ -15,10 +15,6 @@ SnowBlock::SnowBlock()
     setTicking(true);
 }
 
-SnowBlock::~SnowBlock()
-{
-}
-
 Item* SnowBlock::getResource(const BlockState* state, Random* random, int lootBonus)
 {
     return Items::snowball;

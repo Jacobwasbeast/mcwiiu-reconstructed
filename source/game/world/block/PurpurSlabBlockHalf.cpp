@@ -6,10 +6,6 @@ PurpurSlabBlockHalf::PurpurSlabBlockHalf()
     PurpurSlabBlock::DerivedInit();
 }
 
-PurpurSlabBlockHalf::~PurpurSlabBlockHalf()
-{
-}
-
 bool PurpurSlabBlockHalf::isFullSize() const
 {
     return false;

@@ -5,10 +5,6 @@ YellowFlowerBlock::YellowFlowerBlock()
     DerivedInit();
 }
 
-YellowFlowerBlock::~YellowFlowerBlock()
-{
-}
-
 FlowerBlock::FlowerCategory* YellowFlowerBlock::getFlowerCategory()
 {
     return FlowerCategory::YELLOW;

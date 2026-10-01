@@ -132,7 +132,7 @@ CompoundTag* SignBlockEntity::save(CompoundTag* tag)
 
 void SignBlockEntity::setLevelForLoading(Level* level)
 {
-    BlockEntity::setLevel(level);
+    setLevel(level);
 }
 
 void SignBlockEntity::load(CompoundTag* tag)

@@ -12,7 +12,6 @@ class SaplingBlock : public Bush, public BonemealableBlock
 {
 public:
     SaplingBlock();
-    virtual ~SaplingBlock();
     virtual bool isValidBonemealTarget(Level*, const BlockPos&, const BlockState*, bool);
     virtual bool isBonemealSuccess(Level*, Random*, const BlockPos&, const BlockState*);
     bool isSapling(Level*, const BlockPos&, PlanksBlock::Variant*);

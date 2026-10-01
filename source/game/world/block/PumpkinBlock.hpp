@@ -22,7 +22,6 @@ class PumpkinBlock : public HorizontalDirectionalBlock
 {
 public:
     PumpkinBlock();
-    virtual ~PumpkinBlock();
 
     void getOrCreateSnowGolemFull();
     void fjAwardCraftedGolemStat(unsigned long long craftedEntity);

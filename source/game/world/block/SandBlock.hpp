@@ -71,7 +71,6 @@ public:
     virtual unsigned int getDustColor(const BlockState* state);
     virtual TextureAtlasSprite* getTexture(const Direction* direction, const BlockState* state);
     virtual void registerIcons(IconRegister* iconRegister);
-    virtual ~SandBlock();
 
 private:
     TextureAtlasSprite* mTextures[2];

@@ -11,7 +11,6 @@ public:
     static AbstractProperty<bool>* EXPLODE;
 
     TntBlock();
-    virtual ~TntBlock();
 
     virtual void onPlace(Level* level, const BlockPos& pos, const BlockState* state);
     virtual void neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block, const BlockPos& fromPos);

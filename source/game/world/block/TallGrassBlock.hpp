@@ -48,7 +48,6 @@ public:
     };
 
     TallGrassBlock();
-    virtual ~TallGrassBlock();
     virtual bool isValidBonemealTarget(Level* level, const BlockPos& pos, const BlockState* state, bool isClientSide);
     virtual bool isBonemealSuccess(Level* level, Random* random, const BlockPos& pos, const BlockState* state);
     virtual void performBonemeal(Level* level, Random* random, const BlockPos& pos, const BlockState* state);

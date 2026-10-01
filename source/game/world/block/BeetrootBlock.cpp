@@ -33,10 +33,6 @@ BeetrootBlock::BeetrootBlock()
     CropBlock::DerivedInit();
 }
 
-BeetrootBlock::~BeetrootBlock()
-{
-}
-
 AbstractProperty<int>* BeetrootBlock::getAgeProperty()
 {
     return AGE;

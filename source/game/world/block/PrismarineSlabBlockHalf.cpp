@@ -6,10 +6,6 @@ PrismarineSlabBlockHalf::PrismarineSlabBlockHalf()
     PrismarineSlabBlock::DerivedInit();
 }
 
-PrismarineSlabBlockHalf::~PrismarineSlabBlockHalf()
-{
-}
-
 bool PrismarineSlabBlockHalf::isFullSize() const
 {
     return false;

@@ -22,10 +22,6 @@ GlazedTerracottaBlock::GlazedTerracottaBlock(const DyeColor* dyeColor)
     setSoundType(SoundType::STONE);
 }
 
-GlazedTerracottaBlock::~GlazedTerracottaBlock()
-{
-}
-
 const BlockState* GlazedTerracottaBlock::rotate(const BlockState* state, Rotation* rotation)
 {
     TypedBoxed<const Direction*> facing(rotation->rotate(state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY)));

@@ -7,7 +7,6 @@ class PrismarineSlabBlockFull : public PrismarineSlabBlock
 {
 public:
     PrismarineSlabBlockFull();
-    virtual ~PrismarineSlabBlockFull();
     virtual bool isFullSize() const;
 };
 

@@ -27,7 +27,6 @@ public:
     static AbstractProperty<int>* DELAY;
 
     RepeaterBlock(bool on);
-    virtual ~RepeaterBlock();
     virtual std::wstring getName();
     virtual const BlockState* fillVirtualBlockStateProperties(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
     virtual const BlockState* rotate(const BlockState* state, Rotation* rotation);

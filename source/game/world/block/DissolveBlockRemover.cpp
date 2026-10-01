@@ -15,10 +15,6 @@ DissolveBlockRemover::DissolveBlockRemover(Level* level, std::vector<AABB*>& are
     mBlocksPerRemoval = 1;
 }
 
-DissolveBlockRemover::~DissolveBlockRemover()
-{
-}
-
 void DissolveBlockRemover::Tick()
 {
     BlockRemover::Tick();

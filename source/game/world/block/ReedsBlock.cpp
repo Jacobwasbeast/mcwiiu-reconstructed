@@ -33,10 +33,6 @@ ReedsBlock::ReedsBlock()
     setTicking(true);
 }
 
-ReedsBlock::~ReedsBlock()
-{
-}
-
 bool ReedsBlock::isValidBonemealTarget(Level* level, const BlockPos& pos, const BlockState*, bool)
 {
     int bottom = pos.y;

@@ -13,7 +13,6 @@ class SoulSandBlock : public Block
 {
 public:
     SoulSandBlock();
-    virtual ~SoulSandBlock();
 
     virtual const AABB* getClipAABB(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
     virtual void entityInside(Level* level, const BlockPos& pos, const BlockState* state,

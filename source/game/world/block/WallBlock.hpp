@@ -41,7 +41,6 @@ public:
     static EnumProperty<Variant*>* VARIANT;
 
     WallBlock(Block* block);
-    virtual ~WallBlock();
     static void blockStaticCtor();
     static unsigned int getAABBIndex(const BlockState* state);
     virtual const AABB* getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);

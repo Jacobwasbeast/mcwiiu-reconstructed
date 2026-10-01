@@ -18,7 +18,6 @@ public:
     static AbstractProperty<bool>* UP;
 
     FireBlock();
-    virtual ~FireBlock();
 
     int getFlameOdds(Block* block);
     bool canBurn(LevelSource* levelSource, const BlockPos& pos);

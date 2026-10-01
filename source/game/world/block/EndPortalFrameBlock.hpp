@@ -15,7 +15,6 @@ public:
     static BooleanProperty* EYE;
 
     EndPortalFrameBlock();
-    virtual ~EndPortalFrameBlock();
 
     static void blockStaticCtor();
     virtual bool isSolidRender(const BlockState* state) const;

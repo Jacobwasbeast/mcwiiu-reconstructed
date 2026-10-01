@@ -47,7 +47,6 @@ public:
     static EnumProperty<Variant*>* VARIANT;
 
     MonsterEggBlock();
-    virtual ~MonsterEggBlock();
     static void blockStaticCtor();
     virtual int getResourceCount(Random* random);
     static bool isCompatibleHostBlock(const BlockState* state);

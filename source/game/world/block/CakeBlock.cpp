@@ -39,10 +39,6 @@ CakeBlock::CakeBlock()
     setTicking(true);
 }
 
-CakeBlock::~CakeBlock()
-{
-}
-
 const AABB* CakeBlock::getShape(const BlockState* state, LevelSource*, const BlockPos&)
 {
     return SHAPES[state->getValue(BITES)];

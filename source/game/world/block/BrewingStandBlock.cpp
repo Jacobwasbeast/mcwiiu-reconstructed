@@ -45,10 +45,6 @@ BrewingStandBlock::BrewingStandBlock()
     DerivedInit();
 }
 
-BrewingStandBlock::~BrewingStandBlock()
-{
-}
-
 boost::shared_ptr<BlockEntity> BrewingStandBlock::newBlockEntity(Level* level, int)
 {
     boost::shared_ptr<BrewingStandBlockEntity> blockEntity(new BrewingStandBlockEntity());

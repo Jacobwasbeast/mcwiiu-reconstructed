@@ -20,7 +20,6 @@ public:
     static EnumProperty<PlanksBlock::Variant*>* VARIANT;
 
     NewLogBlock();
-    virtual ~NewLogBlock();
     static void blockStaticCtor();
     virtual const MaterialColor* getMapColor(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
     virtual const BlockState* getBlockState(int data);

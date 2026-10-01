@@ -31,10 +31,6 @@ JukeboxBlock::JukeboxBlock()
     registerDefaultState(mStateDefinition->any()->setBoxedValue(gJukeboxHasRecord, &value));
 }
 
-JukeboxBlock::~JukeboxBlock()
-{
-}
-
 boost::shared_ptr<BlockEntity> JukeboxBlock::newBlockEntity(Level* level, int)
 {
     boost::shared_ptr<Entity> result(new Entity());

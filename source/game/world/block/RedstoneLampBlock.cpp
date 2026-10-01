@@ -18,10 +18,6 @@ RedstoneLampBlock::RedstoneLampBlock(bool lit)
         setLightEmission(1.0f);
 }
 
-RedstoneLampBlock::~RedstoneLampBlock()
-{
-}
-
 void RedstoneLampBlock::onPlace(Level* level, const BlockPos& pos, const BlockState* state)
 {
     if (!level->mIsClientSide)

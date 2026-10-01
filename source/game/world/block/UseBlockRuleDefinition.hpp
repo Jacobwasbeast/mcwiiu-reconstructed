@@ -10,7 +10,6 @@ class UseBlockRuleDefinition : public GameRuleDefinition
 public:
     UseBlockRuleDefinition();
 
-    virtual ~UseBlockRuleDefinition();
 
     virtual ConsoleGameRules::EGameRuleType getActionType();
     virtual bool onUseBlock(GameRule* gameRule, int blockId, int x, int y, int z);

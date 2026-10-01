@@ -17,7 +17,6 @@ class OldLeafBlock : public LeafBlock
 public:
     static EnumProperty<PlanksBlock::Variant*>* VARIANT;
     OldLeafBlock();
-    virtual ~OldLeafBlock();
     static void blockStaticCtor();
     virtual int getColor(const BlockState* state);
     virtual int getColor(LevelSource* levelSource, const BlockPos& pos, int tintIndex);

@@ -14,10 +14,6 @@ SeaLanternBlock::SeaLanternBlock(Material* material)
     DerivedInit();
 }
 
-SeaLanternBlock::~SeaLanternBlock()
-{
-}
-
 int SeaLanternBlock::getResourceCount(Random* random)
 {
     return random->nextInt(2) + 2;

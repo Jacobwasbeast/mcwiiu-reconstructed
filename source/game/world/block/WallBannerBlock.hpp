@@ -15,7 +15,6 @@ class WallBannerBlock : public BannerBlock
 {
 public:
     WallBannerBlock();
-    virtual ~WallBannerBlock();
 
     virtual const BlockState* rotate(const BlockState* state, Rotation* rotation);
     virtual const BlockState* mirror(const BlockState* state, Mirror* mirror);

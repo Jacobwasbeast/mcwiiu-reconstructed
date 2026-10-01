@@ -123,8 +123,6 @@ WallBlock::WallBlock(Block* block)
     setSoundType(block->mSoundType);
 }
 
-WallBlock::~WallBlock() {}
-
 unsigned int WallBlock::getAABBIndex(const BlockState* state)
 {
     unsigned int index = 0;

@@ -35,7 +35,6 @@ public:
     virtual bool canProvideSupport(const BlockState* state, const Direction* direction, EBlockSupportType supportType);
     virtual const BlockState* getBlockState(int data);
     virtual int convertBlockStateToLegacyData(const BlockState* state);
-    virtual ~ChorusFlowerBlock();
     virtual void DerivedInit();
     virtual bool isCubeShaped(const BlockState* state);
     virtual EBlockRenderShape getRenderShape(const BlockState* state);

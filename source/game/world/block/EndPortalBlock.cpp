@@ -34,10 +34,6 @@ EndPortalBlock::EndPortalBlock(Material* material)
     setLightEmission(1.0f);
 }
 
-EndPortalBlock::~EndPortalBlock()
-{
-}
-
 boost::shared_ptr<BlockEntity> EndPortalBlock::newBlockEntity(Level*, int data)
 {
     boost::shared_ptr<TheEndPortalBlockEntity> entity(new TheEndPortalBlockEntity());
@@ -142,7 +138,7 @@ not_null_ptr<ItemInstance> EndPortalBlock::getCloneItemInstance(Level*, const Bl
 
 const MaterialColor* EndPortalBlock::getMapColor(const BlockState*, LevelSource*, const BlockPos&)
 {
-    return MaterialColor::NONE;
+    return MaterialColor::COLOR_BLACK;
 }
 
 EBlockFaceShape EndPortalBlock::getBlockFaceShape(LevelSource*, const BlockState*, const BlockPos&,

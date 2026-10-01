@@ -28,10 +28,6 @@ MyceliumBlock::MyceliumBlock()
     setTicking(true);
 }
 
-MyceliumBlock::~MyceliumBlock()
-{
-}
-
 const BlockState* MyceliumBlock::fillVirtualBlockStateProperties(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
 {
     const BlockState* above = levelSource->getBlockState(pos.above());

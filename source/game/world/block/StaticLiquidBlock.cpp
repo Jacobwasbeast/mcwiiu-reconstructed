@@ -18,10 +18,6 @@ StaticLiquidBlock::StaticLiquidBlock(Material* material)
     }
 }
 
-StaticLiquidBlock::~StaticLiquidBlock()
-{
-}
-
 void StaticLiquidBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos,
                                         Block* block, const BlockPos& fromPos)
 {

@@ -12,7 +12,6 @@ class StainedHardenedClayBlock : public ColoredBlock
 {
 public:
     StainedHardenedClayBlock();
-    virtual ~StainedHardenedClayBlock();
 
     static void staticCtor();
     virtual const MaterialColor* getMapColor(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);

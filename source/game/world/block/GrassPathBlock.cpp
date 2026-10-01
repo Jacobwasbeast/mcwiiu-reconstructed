@@ -25,10 +25,6 @@ GrassPathBlock::GrassPathBlock()
     setLightBlock(0xff);
 }
 
-GrassPathBlock::~GrassPathBlock()
-{
-}
-
 bool GrassPathBlock::shouldRenderFace(const BlockState* state, LevelSource* levelSource, const BlockPos& pos, const Direction* direction)
 {
     int dataValue = direction->get3DDataValue();

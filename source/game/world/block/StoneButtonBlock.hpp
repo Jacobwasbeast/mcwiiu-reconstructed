@@ -7,7 +7,6 @@ class StoneButtonBlock : public ButtonBlock
 {
 public:
     StoneButtonBlock();
-    virtual ~StoneButtonBlock();
     virtual void playOnSound(boost::shared_ptr<Player> player, Level* level, const BlockPos& pos);
     virtual void playOffSound(Level* level, const BlockPos& pos);
 };

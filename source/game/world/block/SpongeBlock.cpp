@@ -30,10 +30,6 @@ SpongeBlock::SpongeBlock()
     registerDefaultState(mStateDefinition->any()->setBoxedValue(WET, &wet));
 }
 
-SpongeBlock::~SpongeBlock()
-{
-}
-
 std::wstring SpongeBlock::getName()
 {
     return std::wstring(L10N::GetString(IDS_TILE_SPONGE));

@@ -31,9 +31,13 @@ class PistonBaseBlock : public DirectionalBlock
 public:
     static AbstractProperty<const Direction*>* FACING;
     static AbstractProperty<bool>* EXTENDED;
+    static const std::wstring TEXTURE_SIDE;
+    static const std::wstring TEXTURE_TOP;
+    static const std::wstring TEXTURE_TOP_STICKY;
+    static const std::wstring TEXTURE_BOTTOM;
+    static const std::wstring TEXTURE_INNER_TOP;
 
     PistonBaseBlock(bool sticky);
-    virtual ~PistonBaseBlock();
 
     static void blockStaticCtor();
     virtual bool isViewBlocking(const BlockState* state);

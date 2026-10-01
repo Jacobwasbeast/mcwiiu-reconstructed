@@ -102,10 +102,6 @@ QuartzBlock::QuartzBlock()
     registerDefaultState(mStateDefinition->any()->setBoxedValue(VARIANT, &variant));
 }
 
-QuartzBlock::~QuartzBlock()
-{
-}
-
 const BlockState* QuartzBlock::getStateForPlacement(Level*, const BlockPos&, const Direction* direction,
                                                     float, float, float, int auxValue,
                                                     boost::shared_ptr<LivingEntity>)

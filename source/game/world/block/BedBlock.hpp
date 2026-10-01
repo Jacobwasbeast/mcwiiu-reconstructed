@@ -48,7 +48,6 @@ public:
     static AbstractProperty<bool>* OCCUPIED;
 
     BedBlock();
-    virtual ~BedBlock();
     virtual boost::shared_ptr<BlockEntity> newBlockEntity(Level* level, int data);
     static void blockStaticCtor();
     virtual const MaterialColor* getMapColor(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);

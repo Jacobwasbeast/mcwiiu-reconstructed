@@ -47,10 +47,6 @@ ChorusPlantBlock::ChorusPlantBlock()
     DerivedInit();
 }
 
-ChorusPlantBlock::~ChorusPlantBlock()
-{
-}
-
 void ChorusPlantBlock::DerivedInit()
 {
     Block::DerivedInit();

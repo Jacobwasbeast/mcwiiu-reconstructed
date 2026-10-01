@@ -55,8 +55,6 @@ SaplingBlock::SaplingBlock()
     for (int i = 0; i < 6; ++i) mIcons[i] = NULL;
 }
 
-SaplingBlock::~SaplingBlock() {}
-
 bool SaplingBlock::isValidBonemealTarget(Level*, const BlockPos&, const BlockState*, bool) { return true; }
 
 bool SaplingBlock::isBonemealSuccess(Level* level, Random*, const BlockPos&, const BlockState*)

@@ -8,7 +8,6 @@ class RedFlowerBlock : public FlowerBlock
 public:
     RedFlowerBlock();
 
-    virtual ~RedFlowerBlock();
     virtual FlowerBlock::FlowerCategory* getFlowerCategory();
 };
 

@@ -17,7 +17,6 @@ public:
     Glowstoneblock(Material* material);
 
     virtual const MaterialColor* getMapColor(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
-    virtual ~Glowstoneblock();
     virtual int getResourceCount(Random* random);
     virtual Item* getResource(const BlockState* state, Random* random, int lootBonus);
     virtual int getResourceCountForLootBonus(int lootBonus, Random* random);

@@ -128,10 +128,6 @@ LeverBlock::LeverBlock()
     registerDefaultState(state);
 }
 
-LeverBlock::~LeverBlock()
-{
-}
-
 void LeverBlock::blockStaticCtor()
 {
     LeverDirection::staticCtor();

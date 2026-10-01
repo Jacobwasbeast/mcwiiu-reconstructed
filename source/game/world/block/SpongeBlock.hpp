@@ -21,7 +21,6 @@ public:
     static AbstractProperty<bool>* WET;
 
     SpongeBlock();
-    virtual ~SpongeBlock();
 
     virtual std::wstring getName();
     virtual int getSpawnResourcesAuxValue(const BlockState* state);

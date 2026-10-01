@@ -117,6 +117,3 @@ int OreBlock::getSpawnResourcesAuxValue(const BlockState*)
     return DyeColor::BLUE->getItemData();
 }
 
-OreBlock::~OreBlock()
-{
-}

@@ -7,7 +7,6 @@ class BookshelfBlock : public Block
 {
 public:
     BookshelfBlock();
-    virtual ~BookshelfBlock();
     virtual int getResourceCount(Random* random);
     virtual Item* getResource(const BlockState* state, Random* random, int lootBonus);
     virtual TextureAtlasSprite* getTexture(const Direction* direction, const BlockState* state);

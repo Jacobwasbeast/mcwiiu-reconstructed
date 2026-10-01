@@ -33,7 +33,6 @@ public:
     static AbstractProperty<PistonHeadBlock::PistonType*>* TYPE;
 
     PistonMagicBlock();
-    virtual ~PistonMagicBlock();
 
     virtual boost::shared_ptr<BlockEntity> newBlockEntity(Level* level, int data);
     static boost::shared_ptr<BlockEntity> newMovingBlockEntity(const BlockState* state,

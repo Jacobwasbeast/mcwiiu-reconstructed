@@ -37,7 +37,6 @@ public:
     static DirectionProperty* FACING;
 
     explicit ChestBlock(Type type);
-    virtual ~ChestBlock();
     virtual boost::shared_ptr<BlockEntity> newBlockEntity(Level* level, int data);
     static void blockStaticCtor();
     virtual bool isSolidRender(const BlockState* state) const;

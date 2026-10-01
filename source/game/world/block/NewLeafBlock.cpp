@@ -54,10 +54,6 @@ NewLeafBlock::NewLeafBlock()
     registerDefaultState(state->setBoxedValue(DECAYABLE, &decayable));
 }
 
-NewLeafBlock::~NewLeafBlock()
-{
-}
-
 void NewLeafBlock::dropExtraLoot(Level* level, const BlockPos& pos, const BlockState* state, int lootBonus)
 {
     if (state->getValue(VARIANT) != PlanksBlock::Variant::byData(5))

@@ -15,6 +15,3 @@ BlockImpl::BlockImpl(Material* material, const MaterialColor* materialColor)
     Block::DerivedInit();
 }
 
-BlockImpl::~BlockImpl()
-{
-}

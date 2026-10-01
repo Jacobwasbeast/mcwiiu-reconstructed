@@ -113,10 +113,6 @@ PlanksBlock::PlanksBlock()
     }
 }
 
-PlanksBlock::~PlanksBlock()
-{
-}
-
 int PlanksBlock::getSpawnResourcesAuxValue(const BlockState* state)
 {
     return state->getValue(VARIANT)->getData();

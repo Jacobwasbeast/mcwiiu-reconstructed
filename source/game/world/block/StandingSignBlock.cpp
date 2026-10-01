@@ -21,10 +21,6 @@ StandingSignBlock::StandingSignBlock()
     registerDefaultState(mStateDefinition->any()->setBoxedValue(ROTATION, &rotation));
 }
 
-StandingSignBlock::~StandingSignBlock()
-{
-}
-
 void StandingSignBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos,
                                         Block* block, const BlockPos& fromPos)
 {

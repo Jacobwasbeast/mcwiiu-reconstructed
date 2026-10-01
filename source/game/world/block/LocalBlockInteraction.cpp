@@ -26,7 +26,7 @@ std::wstring LocalBlockInteraction::getName()
 
 std::wstring LocalBlockInteraction::getCustomName()
 {
-    return getDisplayName();
+    return getName();
 }
 
 bool LocalBlockInteraction::hasCustomName()

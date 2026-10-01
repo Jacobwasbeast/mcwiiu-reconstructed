@@ -6,10 +6,6 @@ HalfStoneSlabBlock::HalfStoneSlabBlock()
     StoneSlabBlock::DerivedInit();
 }
 
-HalfStoneSlabBlock::~HalfStoneSlabBlock()
-{
-}
-
 bool HalfStoneSlabBlock::isFullSize() const
 {
     return false;

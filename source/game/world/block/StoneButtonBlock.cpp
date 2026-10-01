@@ -12,10 +12,6 @@ StoneButtonBlock::StoneButtonBlock()
     DerivedInit();
 }
 
-StoneButtonBlock::~StoneButtonBlock()
-{
-}
-
 void StoneButtonBlock::playOnSound(boost::shared_ptr<Player> player, Level* level, const BlockPos& pos)
 {
     level->playSound(player, pos, SoundEvents::STONE_BUTTON_CLICK_ON,

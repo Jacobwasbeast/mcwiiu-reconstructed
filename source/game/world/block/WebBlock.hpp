@@ -7,7 +7,6 @@ class WebBlock : public Block
 {
 public:
     WebBlock();
-    virtual ~WebBlock();
 
     virtual void entityInside(Level* level, const BlockPos& pos, const BlockState* state, const boost::shared_ptr<Entity>& entity);
     virtual bool isSolidRender(const BlockState* state) const;

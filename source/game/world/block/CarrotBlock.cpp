@@ -27,10 +27,6 @@ static const AABB* SHAPE_BY_AGE[8] =
     AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.5625, 1.0)
 };
 
-CarrotBlock::~CarrotBlock()
-{
-}
-
 const AABB* CarrotBlock::getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
 {
     return SHAPE_BY_AGE[state->getValue(getAgeProperty())];

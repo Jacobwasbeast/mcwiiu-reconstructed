@@ -14,10 +14,6 @@ AirBlock::AirBlock()
     DerivedInit();
 }
 
-AirBlock::~AirBlock()
-{
-}
-
 EBlockRenderShape AirBlock::getRenderShape(const BlockState*)
 {
     return BLOCK_RENDER_INVISIBLE;

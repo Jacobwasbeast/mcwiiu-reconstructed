@@ -13,10 +13,6 @@ MelonBlock::MelonBlock()
     DerivedInit();
 }
 
-MelonBlock::~MelonBlock()
-{
-}
-
 Item* MelonBlock::getResource(const BlockState* state, Random* random, int lootBonus)
 {
     return Items::melon;
@@ -30,20 +26,16 @@ int MelonBlock::getResourceCount(Random* random)
 int MelonBlock::getResourceCountForLootBonus(int lootBonus, Random* random)
 {
     int count = getResourceCount(random) + random->nextInt(lootBonus + 1);
-    if (count > 9)
-    {
-        count = 9;
-    }
-    return count;
+    return count > 9 ? 9 : count;
 }
 
 TextureAtlasSprite* MelonBlock::getTexture(const Direction* direction, const BlockState* state)
 {
-    if (direction != Direction::UP && direction != Direction::DOWN)
+    if (direction == Direction::UP || direction == Direction::DOWN)
     {
-        return mIcon;
+        return mTopIcon;
     }
-    return mTopIcon;
+    return mIcon;
 }
 
 void MelonBlock::registerIcons(IconRegister* iconRegister)

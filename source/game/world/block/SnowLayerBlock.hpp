@@ -20,7 +20,6 @@ public:
     static AbstractProperty<int>* LAYERS;
 
     SnowLayerBlock();
-    virtual ~SnowLayerBlock();
     static const BlockState* buildSnowBlock(Level* level, const BlockPos& pos, int layers, int addLayers);
     virtual const AABB* getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
     virtual bool isPathfindable(LevelSource* levelSource, const BlockPos& pos);

@@ -2,6 +2,7 @@
 #define GAME_WORLD_BLOCK_DOUBLEPLANTBLOCK_HPP
 
 #include "game/core/Bush.hpp"
+#include "game/core/StringRepresentable.hpp"
 #include "game/world/block/BonemealableBlock.hpp"
 #include "game/item/not_null_ptr.hpp"
 
@@ -25,7 +26,7 @@ class Player;
 class DoublePlantBlock : public Bush, public BonemealableBlock
 {
 public:
-    class Half
+    class Half : public StringRepresentable
     {
     public:
         enum EHalf
@@ -35,7 +36,6 @@ public:
         };
 
         explicit Half(int id);
-        virtual ~Half();
         virtual std::wstring toString() const;
         virtual std::wstring getSerializedName() const;
         int getId() const;
@@ -43,7 +43,7 @@ public:
         int mId;
     };
 
-    class Variant
+    class Variant : public StringRepresentable
     {
     public:
         enum ETexture
@@ -56,7 +56,6 @@ public:
 
         Variant(int data, const std::wstring& name, int nameId, int descriptionId,
                 std::wstring* textures);
-        virtual ~Variant();
         int getData();
         static Variant* byData(int data);
 
@@ -85,8 +84,7 @@ public:
     };
 
     DoublePlantBlock();
-    virtual ~DoublePlantBlock();
-    virtual Variant* getType(LevelSource* levelSource, const BlockPos& pos, const BlockState* state);
+    Variant* getType(LevelSource* levelSource, const BlockPos& pos, const BlockState* state);
     virtual bool isValidBonemealTarget(Level* level, const BlockPos& pos, const BlockState* state, bool isClientSide);
     virtual bool isBonemealSuccess(Level* level, Random* random, const BlockPos& pos, const BlockState* state);
     virtual void performBonemeal(Level* level, Random* random, const BlockPos& pos, const BlockState* state);

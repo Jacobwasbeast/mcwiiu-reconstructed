@@ -7,7 +7,6 @@ class MelonBlock : public Block
 {
 public:
     MelonBlock();
-    virtual ~MelonBlock();
     virtual int getResourceCount(Random* random);
     virtual Item* getResource(const BlockState* state, Random* random, int lootBonus);
     virtual int getResourceCountForLootBonus(int lootBonus, Random* random);

@@ -69,7 +69,6 @@ public:
     virtual int convertBlockStateToLegacyData(const BlockState* state);
     virtual const BlockState* rotate(const BlockState* state, Rotation* rotation);
     virtual const BlockState* mirror(const BlockState* state, Mirror* mirror);
-    virtual ~LeverBlock();
     virtual bool isCubeShaped(const BlockState* state);
     virtual EBlockRenderShape getRenderShape(const BlockState* state);
     virtual const AABB* getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);

@@ -43,7 +43,6 @@ public:
     static const AABB* EAST_AABB;
 
     HopperBlock();
-    virtual ~HopperBlock();
     virtual boost::shared_ptr<BlockEntity> newBlockEntity(Level* level, int data);
     static void blockStaticCtor();
     virtual const AABB* getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);

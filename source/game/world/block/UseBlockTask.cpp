@@ -13,10 +13,6 @@ UseBlockTask::UseBlockTask(Block* block, Tutorial* tutorial, int descriptionId,
 {
 }
 
-UseBlockTask::~UseBlockTask()
-{
-}
-
 bool UseBlockTask::isCompleted()
 {
     return completed;

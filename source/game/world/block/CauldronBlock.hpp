@@ -34,7 +34,6 @@ public:
     static AbstractProperty<int>* LEVEL;
 
     CauldronBlock();
-    virtual ~CauldronBlock();
     virtual boost::shared_ptr<BlockEntity> newBlockEntity(Level*, int);
     virtual void addCollisionAABBs(const BlockState*, Level*, const BlockPos&, const AABB*,
                                    std::vector<AABB*>*, boost::shared_ptr<Entity>, bool);

@@ -75,10 +75,6 @@ SkullBlock::SkullBlock()
     registerDefaultState(state->setBoxedValue(NODROP, &noDrop));
 }
 
-SkullBlock::~SkullBlock()
-{
-}
-
 boost::shared_ptr<BlockEntity> SkullBlock::newBlockEntity(Level*, int)
 {
     return boost::shared_ptr<BlockEntity>(new SkullBlockEntity());

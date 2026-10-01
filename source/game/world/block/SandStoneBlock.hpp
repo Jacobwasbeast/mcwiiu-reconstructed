@@ -40,7 +40,6 @@ public:
     static Variant* SMOOTH;
 
     SandStoneBlock();
-    virtual ~SandStoneBlock();
     static void blockStaticCtor();
     virtual int getSpawnResourcesAuxValue(const BlockState* state);
     virtual const MaterialColor* getMapColor(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);

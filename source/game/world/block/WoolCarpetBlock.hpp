@@ -21,7 +21,6 @@ class WoolCarpetBlock : public Block
 {
 public:
     WoolCarpetBlock();
-    virtual ~WoolCarpetBlock();
 
     static void blockStaticCtor();
 

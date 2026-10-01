@@ -106,10 +106,6 @@ RedStoneWireBlock::RedStoneWireBlock()
     setThickness(0.07f);
 }
 
-RedStoneWireBlock::~RedStoneWireBlock()
-{
-}
-
 void RedStoneWireBlock::blockStaticCtor()
 {
     boost::unordered_set<ConnectingSide*> values;

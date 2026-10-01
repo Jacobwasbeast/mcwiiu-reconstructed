@@ -26,7 +26,6 @@ class TurtleEggBlock : public Block
 {
 public:
     TurtleEggBlock();
-    virtual ~TurtleEggBlock();
 
     bool shouldUpdateHatchLevel(Level* level);
     void _decreaseEggs(Level* level, const BlockPos& pos, int eggCount, bool crack, bool jump) const;

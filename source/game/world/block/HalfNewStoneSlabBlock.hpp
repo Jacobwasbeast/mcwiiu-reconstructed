@@ -7,7 +7,6 @@ class HalfNewStoneSlabBlock : public NewStoneSlabBlock
 {
 public:
     HalfNewStoneSlabBlock();
-    virtual ~HalfNewStoneSlabBlock();
     virtual bool isFullSize() const;
 };
 

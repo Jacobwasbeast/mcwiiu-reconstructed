@@ -28,10 +28,6 @@ MushroomBlock::MushroomBlock()
     setTicking(true);
 }
 
-MushroomBlock::~MushroomBlock()
-{
-}
-
 bool MushroomBlock::isValidBonemealTarget(Level*, const BlockPos&, const BlockState*, bool)
 {
     return true;

@@ -50,7 +50,6 @@ public:
     static AbstractProperty<int>* DAMAGE;
 
     AnvilBlock();
-    virtual ~AnvilBlock();
     static void blockStaticCtor();
     virtual bool isCubeShaped(const BlockState* state);
     virtual EBlockFaceShape getBlockFaceShape(LevelSource* levelSource, const BlockState* state,

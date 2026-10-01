@@ -10,7 +10,6 @@ class PackedIceBlock : public Block
 public:
     PackedIceBlock();
 
-    virtual ~PackedIceBlock();
 
     virtual int getResourceCount(Random* random);
 };

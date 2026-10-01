@@ -18,7 +18,6 @@ class GrassPathBlock : public Block
 {
 public:
     GrassPathBlock();
-    virtual ~GrassPathBlock();
 
     virtual bool shouldRenderFace(const BlockState* state, LevelSource* levelSource, const BlockPos& pos, const Direction* direction);
     void updateBlockState(Level* level, const BlockPos& pos);

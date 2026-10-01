@@ -14,7 +14,6 @@ class RedStoneOreBlock : public Block
 {
 public:
     RedStoneOreBlock(bool lit);
-    virtual ~RedStoneOreBlock();
 
     virtual int getTickDelay(Level* level);
     virtual void attack(Level* level, const BlockPos& pos, boost::shared_ptr<Player> player);

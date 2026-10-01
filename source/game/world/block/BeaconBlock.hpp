@@ -21,7 +21,6 @@ class BeaconBlock : public BaseEntityBlock
 {
 public:
     BeaconBlock();
-    virtual ~BeaconBlock();
 
     virtual boost::shared_ptr<BlockEntity> newBlockEntity(Level* level, int data);
     virtual bool use(Level* level, const BlockPos& pos, const BlockState* state,

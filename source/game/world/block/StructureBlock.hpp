@@ -7,7 +7,6 @@ class StructureBlock : public Block
 {
 public:
     StructureBlock();
-    virtual ~StructureBlock();
 
     virtual EBlockRenderShape getRenderShape(const BlockState* state);
     virtual const AABB* getClipAABB(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);

@@ -37,7 +37,6 @@ public:
 
     MinecartCommandBlock(Level* level);
     MinecartCommandBlock(Level* level, double x, double y, double z);
-    virtual ~MinecartCommandBlock();
     static void staticCtor();
     static void addDataWalkers(DataFixerUpper* dataFixerUpper);
     virtual void defineSynchedData();

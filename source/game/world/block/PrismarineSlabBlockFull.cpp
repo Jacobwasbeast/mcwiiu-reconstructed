@@ -6,10 +6,6 @@ PrismarineSlabBlockFull::PrismarineSlabBlockFull()
     PrismarineSlabBlock::DerivedInit();
 }
 
-PrismarineSlabBlockFull::~PrismarineSlabBlockFull()
-{
-}
-
 bool PrismarineSlabBlockFull::isFullSize() const
 {
     return true;

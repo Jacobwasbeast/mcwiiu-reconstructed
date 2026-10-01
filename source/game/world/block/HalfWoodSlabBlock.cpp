@@ -6,10 +6,6 @@ HalfWoodSlabBlock::HalfWoodSlabBlock()
     WoodSlabBlock::DerivedInit();
 }
 
-HalfWoodSlabBlock::~HalfWoodSlabBlock()
-{
-}
-
 bool HalfWoodSlabBlock::isFullSize() const
 {
     return false;

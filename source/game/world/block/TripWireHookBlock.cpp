@@ -43,8 +43,6 @@ TripWireHookBlock::TripWireHookBlock() : Block(Material::DECORATION)
     setTicking(true);
 }
 
-TripWireHookBlock::~TripWireHookBlock() {}
-
 void TripWireHookBlock::blockStaticCtor()
 {
     FACING = HorizontalDirectionalBlock::FACING_PROPERTY;

@@ -26,7 +26,6 @@ class EnchantmentTableBlock : public BaseEntityBlock
 {
 public:
     EnchantmentTableBlock();
-    virtual ~EnchantmentTableBlock();
     virtual boost::shared_ptr<BlockEntity> newBlockEntity(Level* level, int data);
     virtual const AABB* getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
     virtual bool isCubeShaped(const BlockState* state);

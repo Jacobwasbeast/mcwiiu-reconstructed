@@ -20,7 +20,6 @@ public:
     static EnumProperty<PlanksBlock::Variant*>* VARIANT;
 
     NewLeafBlock();
-    virtual ~NewLeafBlock();
 
     static void blockStaticCtor();
 

@@ -49,10 +49,6 @@ NewLogBlock::NewLogBlock()
     registerDefaultState(state->setBoxedValue(AXIS, &axis));
 }
 
-NewLogBlock::~NewLogBlock()
-{
-}
-
 const MaterialColor* NewLogBlock::getMapColor(const BlockState* state, LevelSource*, const BlockPos&)
 {
     PlanksBlock::Variant* variant = state->getValue(VARIANT);

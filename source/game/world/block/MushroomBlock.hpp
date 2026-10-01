@@ -16,7 +16,6 @@ class MushroomBlock : public Bush, public BonemealableBlock
 {
 public:
     MushroomBlock();
-    virtual ~MushroomBlock();
 
     virtual bool isValidBonemealTarget(Level* level, const BlockPos& pos, const BlockState* state,
                                        bool isClientSide);

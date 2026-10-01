@@ -94,10 +94,6 @@ StoneBrickBlock::StoneBrickBlock()
     }
 }
 
-StoneBrickBlock::~StoneBrickBlock()
-{
-}
-
 int StoneBrickBlock::getSpawnResourcesAuxValue(const BlockState* state)
 {
     return state->getValue(VARIANT)->getData();

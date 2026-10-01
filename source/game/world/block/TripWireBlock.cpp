@@ -53,8 +53,6 @@ TripWireBlock::TripWireBlock() : Block(Material::DECORATION)
     setTicking(true);
 }
 
-TripWireBlock::~TripWireBlock() {}
-
 const AABB* TripWireBlock::getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
 {
     const BlockState* actual = levelSource == NULL ? state : fillVirtualBlockStateProperties(state, levelSource, pos);

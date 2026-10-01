@@ -22,7 +22,6 @@ public:
     static AbstractProperty<int>* MOISTURE;
 
     FarmBlock();
-    virtual ~FarmBlock();
     virtual const AABB* getShape(const BlockState*, LevelSource*, const BlockPos&);
     virtual bool isSolidRender(const BlockState*) const;
     virtual bool isCubeShaped(const BlockState*);

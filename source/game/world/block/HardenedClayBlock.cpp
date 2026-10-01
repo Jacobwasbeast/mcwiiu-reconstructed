@@ -17,6 +17,3 @@ const MaterialColor* HardenedClayBlock::getMapColor(const BlockState* blockState
     return MaterialColor::COLOR_ORANGE;
 }
 
-HardenedClayBlock::~HardenedClayBlock()
-{
-}

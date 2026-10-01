@@ -23,7 +23,6 @@ public:
     static AbstractProperty<int>* AGE;
 
     KelpBlock();
-    virtual ~KelpBlock();
 
     virtual bool isValidBonemealTarget(Level* level, const BlockPos& pos, const BlockState* state,
                                        bool isClientSide);

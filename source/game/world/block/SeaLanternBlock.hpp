@@ -15,7 +15,6 @@ class SeaLanternBlock : public Block
 {
 public:
     SeaLanternBlock(Material* material);
-    virtual ~SeaLanternBlock();
     virtual int getResourceCount(Random* random);
     virtual int getResourceCountForLootBonus(int lootBonus, Random* random);
     virtual Item* getResource(const BlockState* state, Random* random, int lootBonus);

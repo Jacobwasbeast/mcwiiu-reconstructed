@@ -12,7 +12,6 @@ class DissolveBlockRemover : public BlockRemover
 {
 public:
     DissolveBlockRemover(Level* level, std::vector<AABB*>& areas, int passCount, int ticksPerRemoval);
-    virtual ~DissolveBlockRemover();
 
     virtual void Tick();
     virtual bool RemoveBlocks(int areaIndex, int maxBlocks);

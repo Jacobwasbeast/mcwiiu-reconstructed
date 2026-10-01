@@ -11,7 +11,6 @@ class BoneBlock : public RotatedPillarBlock
 {
 public:
     BoneBlock();
-    virtual ~BoneBlock();
 
     virtual TextureAtlasSprite* getTypeTexture(const BlockState* state);
     virtual void registerIcons(IconRegister* iconRegister);

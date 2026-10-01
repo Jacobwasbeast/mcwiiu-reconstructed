@@ -20,7 +20,6 @@ class PoweredRailBlock : public BaseRailBlock
 {
 public:
     PoweredRailBlock();
-    virtual ~PoweredRailBlock();
     static void blockStaticCtor();
     virtual bool findPoweredRailSignal(Level* level, const BlockPos& pos, const BlockState* state,
                                bool forward, int distance);

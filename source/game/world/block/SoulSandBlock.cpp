@@ -21,10 +21,6 @@ SoulSandBlock::SoulSandBlock()
     setTicking(true);
 }
 
-SoulSandBlock::~SoulSandBlock()
-{
-}
-
 const AABB* SoulSandBlock::getClipAABB(const BlockState*, LevelSource*, const BlockPos&)
 {
     return SOUL_SAND_CLIP_AABB;

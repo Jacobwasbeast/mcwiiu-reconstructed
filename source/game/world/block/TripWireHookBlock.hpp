@@ -21,7 +21,6 @@ public:
     static const AABB* AABB_EAST;
 
     TripWireHookBlock();
-    virtual ~TripWireHookBlock();
 
     static void blockStaticCtor();
     virtual const AABB* getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);

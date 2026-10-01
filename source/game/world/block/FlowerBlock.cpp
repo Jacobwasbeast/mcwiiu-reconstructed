@@ -195,10 +195,6 @@ bool FlowerBlock::FlowerCategoryPredicate::apply(FlowerBlock::Flower* flower) co
     return flower->getCategory() == mBlock->getFlowerCategory();
 }
 
-FlowerBlock::FlowerCategoryPredicate::~FlowerCategoryPredicate()
-{
-}
-
 FlowerBlock::FlowerBlock()
     : mTypeProperty(NULL)
 {
@@ -208,9 +204,10 @@ void FlowerBlock::DerivedInit()
 {
     Block::DerivedInit();
 
-    TypedBoxed<Flower*> flower(getFlowerCategory() == FlowerCategory::RED ? Flower::POPPY : Flower::DANDELION);
+    BlockStateDefinition::BlockStateImpl* state = mStateDefinition->any();
+    AbstractProperty<Flower*>* property = getFlowerProperty();
 
-    registerDefaultState(mStateDefinition->any()->setBoxedValue(getFlowerProperty(), &flower));
+    registerDefaultState(state->setValue(property, getFlowerCategory() == FlowerCategory::RED ? Flower::POPPY : Flower::DANDELION));
 }
 
 AbstractProperty<FlowerBlock::Flower*>* FlowerBlock::getFlowerProperty()
@@ -220,14 +217,19 @@ AbstractProperty<FlowerBlock::Flower*>* FlowerBlock::getFlowerProperty()
         std::wstring name = L"type";
 
         FlowerCategoryPredicate* filter = new FlowerCategoryPredicate(this);
+        AbstractProperty<Flower*>* property;
 
-        boost::unordered_set<Flower*> values;
-        for (int i = 0; i < Flower::FLOWER_COUNT; ++i)
         {
-            values.insert(Flower::FLOWERS[i]);
+            boost::unordered_set<Flower*> values;
+            for (int i = 0; i < Flower::FLOWER_COUNT; ++i)
+            {
+                values.insert(Flower::FLOWERS[i]);
+            }
+
+            property = EnumProperty<Flower*>::create(name, typeid(Flower), values, filter);
         }
 
-        mTypeProperty = EnumProperty<Flower*>::create(name, typeid(Flower), values, filter);
+        mTypeProperty = property;
     }
 
     return mTypeProperty;
@@ -243,10 +245,12 @@ BlockStateDefinition* FlowerBlock::createBlockStateDefinition()
 const BlockState* FlowerBlock::getBlockState(int data)
 {
     const BlockState* state = defaultBlockState();
+    AbstractProperty<Flower*>* property = getFlowerProperty();
+    FlowerCategory* category = getFlowerCategory();
+    TypedBoxed<Flower*> flower(Flower::byData(category, data));
+    const BlockState* result = state->setBoxedValue(property, &flower);
 
-    TypedBoxed<Flower*> flower(Flower::byData(getFlowerCategory(), data));
-
-    return state->setBoxedValue(getFlowerProperty(), &flower);
+    return result;
 }
 
 int FlowerBlock::convertBlockStateToLegacyData(const BlockState* state)
@@ -297,16 +301,20 @@ void FlowerBlock::registerIcons(IconRegister* iconRegister)
 {
     for (int i = 0; i < Flower::FLOWER_COUNT; ++i)
     {
-        Flower::FLOWERS[i]->registerIcons(iconRegister);
+        Flower* flower = Flower::FLOWERS[i];
+        flower->registerIcons(iconRegister);
     }
 }
 
 unsigned int FlowerBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
-    if (Item::getId(tooltipData.m_pItemInstance->getItem()) == ItemId::DYE
-        && tooltipData.m_eInteractionResult != InteractionResult::eInteractionResult_Fail)
+    int itemId = Item::getId(tooltipData.m_pItemInstance->getItem());
+
+    if (itemId == ItemId::DYE && tooltipData.m_eInteractionResult != InteractionResult::eInteractionResult_Fail)
     {
-        if (DyeColor::byItemData(tooltipData.m_pItemInstance->getAuxValue())->getBlockData() == 0)
+        const DyeColor* color = DyeColor::byItemData(tooltipData.m_pItemInstance->getAuxValue());
+
+        if (color->getBlockData() == 0)
         {
             return IDS_TOOLTIPS_GROW;
         }
@@ -346,13 +354,16 @@ bool FlowerBlock::performBonemeal(bool checkOnly, Level* level, Random* random, 
             continue;
         }
 
+        int roll = levelRandom->nextInt(8);
         Block* flowerBlock = Blocks::red_flower;
-        if (levelRandom->nextInt(8) == 0)
+        if (roll == 0)
         {
-            if (this == Blocks::red_flower)
+            if (this == flowerBlock)
+            {
                 flowerBlock = Blocks::yellow_flower;
+            }
         }
-        else if (this != Blocks::red_flower)
+        else if (this != flowerBlock)
         {
             flowerBlock = Blocks::yellow_flower;
         }
@@ -379,7 +390,8 @@ bool FlowerBlock::randomWalk(Level* level, MutableBlockPos& pos, int distance) c
     for (int step = 0; step < steps; ++step)
     {
         pos.addX(random->nextInt(3) - 1);
-        pos.addY((random->nextInt(3) - 1) * random->nextInt(3) / 2);
+        int yDirection = random->nextInt(3) - 1;
+        pos.addY(yDirection * random->nextInt(3) / 2);
         pos.addZ(random->nextInt(3) - 1);
 
         if (level->getBlockId(pos.x, pos.y - 1, pos.z) != BlockId::GRASS)

@@ -31,10 +31,6 @@ CactusBlock::CactusBlock()
     setTicking(true);
 }
 
-CactusBlock::~CactusBlock()
-{
-}
-
 void CactusBlock::tick(Level* level, const BlockPos& pos, const BlockState* state, Random*)
 {
     if (level->isEmptyBlock(pos.above()))

@@ -53,10 +53,6 @@ VineBlock::VineBlock() : Block(Material::REPLACEABLE_PLANT)
     setTicking(true);
 }
 
-VineBlock::~VineBlock()
-{
-}
-
 const AABB* VineBlock::getClipAABB(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
 {
     return NULL;

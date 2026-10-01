@@ -14,7 +14,6 @@ class StaticLiquidBlock : public LiquidBlock
 {
 public:
     StaticLiquidBlock(Material* material);
-    virtual ~StaticLiquidBlock();
 
     virtual void neighborChanged(const BlockState* state, Level* level, const BlockPos& pos,
                                  Block* block, const BlockPos& fromPos);

@@ -7,7 +7,6 @@ class BarrierBlock : public Block
 {
 public:
     BarrierBlock();
-    virtual ~BarrierBlock();
 
     virtual EBlockRenderShape getRenderShape(const BlockState* state);
     virtual bool isSolidRender(const BlockState* state) const;

@@ -65,7 +65,6 @@ public:
     };
 
     PlanksBlock();
-    virtual ~PlanksBlock();
     static void blockStaticCtor();
     virtual int getSpawnResourcesAuxValue(const BlockState* state);
     virtual const BlockState* getBlockState(int data);

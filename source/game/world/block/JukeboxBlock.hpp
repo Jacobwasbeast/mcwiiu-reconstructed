@@ -36,7 +36,6 @@ public:
         not_null_ptr<ItemInstance> mRecord;
     };
     JukeboxBlock();
-    virtual ~JukeboxBlock();
     virtual boost::shared_ptr<BlockEntity> newBlockEntity(Level* level, int data);
     static void addDataWalkers(DataFixerUpper* fixer);
     virtual bool TestUse(Level* level, const BlockPos& pos, const BlockState* state,

@@ -26,10 +26,6 @@ StandingBannerBlock::StandingBannerBlock()
     registerDefaultState(mStateDefinition->any()->setBoxedValue(gStandingBannerRotation, &rotation));
 }
 
-StandingBannerBlock::~StandingBannerBlock()
-{
-}
-
 const AABB* StandingBannerBlock::getShape(const BlockState*, LevelSource*, const BlockPos&)
 {
     return gStandingBannerShape;

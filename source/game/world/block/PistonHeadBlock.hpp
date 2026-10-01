@@ -38,7 +38,6 @@ public:
     static AbstractProperty<bool>* SHORT;
 
     PistonHeadBlock();
-    virtual ~PistonHeadBlock();
 
     static void blockStaticCtor();
     virtual const AABB* getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);

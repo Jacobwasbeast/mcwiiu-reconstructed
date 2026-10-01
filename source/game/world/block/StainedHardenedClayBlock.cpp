@@ -39,6 +39,3 @@ const MaterialColor* StainedHardenedClayBlock::getMapColor(const BlockState* sta
     return gStainedHardenedClayColors[getSpawnResourcesAuxValue(state)];
 }
 
-StainedHardenedClayBlock::~StainedHardenedClayBlock()
-{
-}

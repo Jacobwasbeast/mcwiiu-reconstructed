@@ -6,10 +6,6 @@ FullStoneSlabBlock::FullStoneSlabBlock()
     StoneSlabBlock::DerivedInit();
 }
 
-FullStoneSlabBlock::~FullStoneSlabBlock()
-{
-}
-
 EBlockFaceShape FullStoneSlabBlock::getBlockFaceShape(LevelSource* levelSource, const BlockState* state, const BlockPos& pos, const Direction* direction)
 {
     return BLOCK_FACE_SOLID;

@@ -22,10 +22,6 @@ BoneBlock::BoneBlock()
     setSoundType(SoundType::STONE);
 }
 
-BoneBlock::~BoneBlock()
-{
-}
-
 TextureAtlasSprite* BoneBlock::getTypeTexture(const BlockState*)
 {
     return mIcon;

@@ -8,10 +8,6 @@ StructureVoidBlock::StructureVoidBlock()
     DerivedInit();
 }
 
-StructureVoidBlock::~StructureVoidBlock()
-{
-}
-
 EBlockRenderShape StructureVoidBlock::getRenderShape(const BlockState* state)
 {
     return BLOCK_RENDER_INVISIBLE;

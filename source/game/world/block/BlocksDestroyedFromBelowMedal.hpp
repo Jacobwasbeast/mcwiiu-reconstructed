@@ -13,7 +13,6 @@ public:
     {
     }
 
-    virtual ~BlocksDestroyedFromBelowMedal();
 
     virtual double GetScore(PlayerStats* playerStats) const;
 };

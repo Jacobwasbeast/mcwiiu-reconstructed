@@ -47,10 +47,6 @@ PoweredRailBlock::PoweredRailBlock()
     registerDefaultState(state->setBoxedValue(PoweredRailBlock::POWERED, &poweredValue));
 }
 
-PoweredRailBlock::~PoweredRailBlock()
-{
-}
-
 bool PoweredRailBlock::findPoweredRailSignal(Level* level, const BlockPos& pos,
                                               const BlockState* state, bool forward, int distance)
 {

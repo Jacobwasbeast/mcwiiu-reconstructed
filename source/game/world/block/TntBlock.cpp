@@ -37,10 +37,6 @@ TntBlock::TntBlock()
     registerDefaultState(mStateDefinition->any()->setBoxedValue(EXPLODE, &explode));
 }
 
-TntBlock::~TntBlock()
-{
-}
-
 void TntBlock::onPlace(Level* level, const BlockPos& pos, const BlockState* state)
 {
     Block::onPlace(level, pos, state);

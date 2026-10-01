@@ -187,6 +187,3 @@ void SandBlock::registerIcons(IconRegister* iconRegister)
     mTextures[1] = iconRegister->registerIcon(gSandVariants[1]->getName());
 }
 
-SandBlock::~SandBlock()
-{
-}

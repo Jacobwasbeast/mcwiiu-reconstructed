@@ -35,8 +35,6 @@ FarmBlock::FarmBlock()
     setLightBlock(0xff);
 }
 
-FarmBlock::~FarmBlock() {}
-
 const AABB* FarmBlock::getShape(const BlockState*, LevelSource*, const BlockPos&) { return gFarmShape; }
 bool FarmBlock::isSolidRender(const BlockState*) const { return false; }
 bool FarmBlock::isCubeShaped(const BlockState*) { return false; }

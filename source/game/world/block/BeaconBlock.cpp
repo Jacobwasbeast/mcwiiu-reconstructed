@@ -24,10 +24,6 @@ BeaconBlock::BeaconBlock()
     setDestroyTime(3.0f);
 }
 
-BeaconBlock::~BeaconBlock()
-{
-}
-
 boost::shared_ptr<BlockEntity> BeaconBlock::newBlockEntity(Level* level, int)
 {
     boost::shared_ptr<BeaconBlockEntity> entity(new BeaconBlockEntity());

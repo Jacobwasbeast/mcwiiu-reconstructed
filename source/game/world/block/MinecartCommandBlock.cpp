@@ -16,10 +16,6 @@
 const EntityDataAccessor<std::wstring>* MinecartCommandBlock::DATA_COMMAND_ID = NULL;
 const EntityDataAccessor<std::wstring>* MinecartCommandBlock::DATA_LAST_OUTPUT_ID = NULL;
 
-MinecartCommandBlock::~MinecartCommandBlock()
-{
-}
-
 void MinecartCommandBlock::staticCtor()
 {
     DATA_COMMAND_ID = SynchedEntityData::defineId<std::wstring>(EntityType::MINECART_COMMAND_BLOCK, EntityType::MINECART, EntityDataSerializers::STRING);

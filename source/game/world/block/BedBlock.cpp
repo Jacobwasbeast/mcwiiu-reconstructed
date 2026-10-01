@@ -70,10 +70,6 @@ BedBlock::BedBlock()
     mBlockEntity = true;
 }
 
-BedBlock::~BedBlock()
-{
-}
-
 boost::shared_ptr<BlockEntity> BedBlock::newBlockEntity(Level* level, int data)
 {
     return boost::shared_ptr<BlockEntity>(new BedBlockEntity());

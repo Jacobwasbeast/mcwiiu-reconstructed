@@ -46,10 +46,6 @@ RailBlock::RailBlock()
     registerDefaultState(mStateDefinition->any()->setBoxedValue(RailBlock::SHAPE, &shape));
 }
 
-RailBlock::~RailBlock()
-{
-}
-
 void RailBlock::updateState(const BlockState* state, Level* level, const BlockPos& pos, Block* block)
 {
     if (block->defaultBlockState()->isSignalSource())

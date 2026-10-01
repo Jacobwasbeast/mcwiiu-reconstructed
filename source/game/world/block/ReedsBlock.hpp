@@ -8,7 +8,6 @@ class ReedsBlock : public Block, public BonemealableBlock
 {
 public:
     ReedsBlock();
-    virtual ~ReedsBlock();
     virtual bool isValidBonemealTarget(Level*, const BlockPos&, const BlockState*, bool);
     virtual bool isBonemealSuccess(Level*, Random*, const BlockPos&, const BlockState*);
     virtual void performBonemeal(Level*, Random*, const BlockPos&, const BlockState*);

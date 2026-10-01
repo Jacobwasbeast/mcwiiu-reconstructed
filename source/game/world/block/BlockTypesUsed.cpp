@@ -2,10 +2,6 @@
 
 #include <set>
 
-BlockTypesUsed::~BlockTypesUsed()
-{
-}
-
 double BlockTypesUsed::GetScore(PlayerStats* playerStats) const
 {
     std::set<int> blockTypes;

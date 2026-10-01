@@ -16,7 +16,6 @@ public:
     ObsidianBlock();
 
     virtual const MaterialColor* getMapColor(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
-    virtual ~ObsidianBlock();
     virtual Item* getResource(const BlockState* state, Random* random, int lootBonus);
 };
 

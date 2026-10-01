@@ -1881,8 +1881,8 @@ void Block::staticCtor()
     registerBlock(28, L"detector_rail",
         (new DetectorRailBlock())->setDestroyTime(0.7f)->setSoundType(SoundType::METAL)->setIconName(L"rail_detector")->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_DETECTOR_RAIL, IDS_DESC_DETECTORRAIL)->disableMipmap()->setBaseItemTypeAndMaterial(12, 8));
 
-    registerBlock(29, L"pistonStickyBase",
-        (new PistonBaseBlock(1))->sendBlockData(15)->setNameAndDescriptionId(0xC02ED983, IDS_DESC_STICKY_PISTON)->setBaseItemTypeAndMaterial(27, 28)->setIconName(L"sticky_piston"));
+    registerBlock(29, L"sticky_piston",
+        (new PistonBaseBlock(1))->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_PISTON_STICK_BASE, IDS_DESC_STICKY_PISTON)->setBaseItemTypeAndMaterial(27, 28)->setIconName(L"pistonStickyBase"));
 
     registerBlock(30, L"web",
         (new WebBlock())->setLightBlock(1)->setDestroyTime(4.0f)->setIconName(L"web")->setNameAndDescriptionId(IDS_TILE_WEB, IDS_DESC_WEB)->disableMipmap());

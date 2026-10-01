@@ -31,8 +31,6 @@ SnowLayerBlock::SnowLayerBlock() : FallingBlock(Material::TOP_SNOW)
     setThickness(0.13f);
 }
 
-SnowLayerBlock::~SnowLayerBlock() {}
-
 const AABB* SnowLayerBlock::getShape(const BlockState* state, LevelSource*, const BlockPos&)
 {
     return AABB::newTemp(0.0, 0.0, 0.0, 1.0, (double)state->getValue(LAYERS) * 0.125, 1.0);

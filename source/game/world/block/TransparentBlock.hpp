@@ -14,7 +14,6 @@ class TransparentBlock : public Block
 public:
     TransparentBlock(Material* material, bool ignoreSimilarity);
 
-    virtual ~TransparentBlock();
     virtual bool shouldRenderFace(const BlockState* state, LevelSource* levelSource, const BlockPos& pos, const Direction* direction);
     virtual bool isSolidRender(const BlockState* state) const;
 

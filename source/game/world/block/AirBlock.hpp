@@ -8,7 +8,6 @@ class AirBlock : public Block
 public:
     AirBlock();
 
-    virtual ~AirBlock();
     virtual EBlockRenderShape getRenderShape(const BlockState* state);
     virtual const AABB* getClipAABB(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
     virtual bool isSolidRender(const BlockState* state) const;

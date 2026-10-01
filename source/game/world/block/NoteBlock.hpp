@@ -19,7 +19,6 @@ class NoteBlock : public BaseEntityBlock
 {
 public:
     NoteBlock();
-    virtual ~NoteBlock();
 
     virtual boost::shared_ptr<BlockEntity> newBlockEntity(Level* level, int data);
     virtual void neighborChanged(const BlockState* state, Level* level, const BlockPos& pos,

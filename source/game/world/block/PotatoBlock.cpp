@@ -38,10 +38,6 @@ PotatoBlock::PotatoBlock()
     CropBlock::DerivedInit();
 }
 
-PotatoBlock::~PotatoBlock()
-{
-}
-
 Item* PotatoBlock::getBaseSeedId()
 {
     return Items::potato;

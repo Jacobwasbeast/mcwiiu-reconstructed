@@ -58,10 +58,6 @@ TurtleEggBlock::TurtleEggBlock()
     setTicking(true);
 }
 
-TurtleEggBlock::~TurtleEggBlock()
-{
-}
-
 bool TurtleEggBlock::shouldUpdateHatchLevel(Level* level)
 {
     float timeOfDay = level->getTimeOfDay(1.0f);

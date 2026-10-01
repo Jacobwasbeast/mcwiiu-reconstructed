@@ -55,10 +55,6 @@ AnvilBlock::AnvilBlock()
     setLightBlock(0);
 }
 
-AnvilBlock::~AnvilBlock()
-{
-}
-
 void AnvilBlock::blockStaticCtor()
 {
     FACING = HorizontalDirectionalBlock::FACING_PROPERTY;

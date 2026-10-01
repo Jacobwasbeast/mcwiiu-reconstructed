@@ -21,7 +21,6 @@ class RailBlock : public BaseRailBlock
 {
 public:
     RailBlock();
-    virtual ~RailBlock();
     static void blockStaticCtor();
     virtual void updateState(const BlockState* state, Level* level, const BlockPos& pos, Block* block);
     virtual const AbstractProperty<BaseRailBlock::RailShape*>* getShapeProperty();

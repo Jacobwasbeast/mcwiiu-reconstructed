@@ -12,7 +12,6 @@ class SimpleBlockRemover : public BlockRemover
 {
 public:
     SimpleBlockRemover(Level* level, std::vector<AABB*>& areas);
-    virtual ~SimpleBlockRemover();
 
     virtual bool RemoveBlocks(int areaIndex, int maxBlocks);
 };

@@ -18,7 +18,6 @@ class CactusBlock : public Block
 {
 public:
     CactusBlock();
-    virtual ~CactusBlock();
     virtual void tick(Level* level, const BlockPos& pos, const BlockState* state, Random* random);
     virtual const AABB* getClipAABB(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
     virtual const AABB* getOutlineAABB(const BlockState* state, Level* level, const BlockPos& pos);

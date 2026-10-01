@@ -44,10 +44,6 @@ WoolCarpetBlock::WoolCarpetBlock()
     setThickness(0.07f);
 }
 
-WoolCarpetBlock::~WoolCarpetBlock()
-{
-}
-
 void WoolCarpetBlock::addCollisionAABB(const BlockPos& pos, const AABB* entityBox,
                                        std::vector<AABB*>* collidingBoxes, const AABB* blockBox)
 {

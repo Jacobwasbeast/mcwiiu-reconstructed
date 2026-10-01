@@ -26,10 +26,6 @@ NoteBlock::NoteBlock()
     DerivedInit();
 }
 
-NoteBlock::~NoteBlock()
-{
-}
-
 boost::shared_ptr<BlockEntity> NoteBlock::newBlockEntity(Level*, int)
 {
     return boost::shared_ptr<BlockEntity>(new MusicBlockEntity());

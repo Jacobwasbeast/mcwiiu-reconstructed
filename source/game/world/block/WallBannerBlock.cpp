@@ -27,10 +27,6 @@ WallBannerBlock::WallBannerBlock()
     registerDefaultState(mStateDefinition->any()->setBoxedValue(BannerBlock::FACING, &facing));
 }
 
-WallBannerBlock::~WallBannerBlock()
-{
-}
-
 const BlockState* WallBannerBlock::rotate(const BlockState* state, Rotation* rotation)
 {
     const Direction* direction = state->getValue(BannerBlock::FACING);

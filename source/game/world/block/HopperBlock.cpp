@@ -48,10 +48,6 @@ HopperBlock::HopperBlock()
     registerDefaultState(mStateDefinition->any()->setBoxedValue(FACING, &facing)->setBoxedValue(ENABLED, &enabled));
 }
 
-HopperBlock::~HopperBlock()
-{
-}
-
 boost::shared_ptr<BlockEntity> HopperBlock::newBlockEntity(Level* level, int data)
 {
     boost::shared_ptr<HopperBlockEntity> blockEntity(new HopperBlockEntity());

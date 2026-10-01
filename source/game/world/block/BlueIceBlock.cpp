@@ -14,10 +14,6 @@ BlueIceBlock::BlueIceBlock(Material* material)
     mFriction = 0.989f;
 }
 
-BlueIceBlock::~BlueIceBlock()
-{
-}
-
 int BlueIceBlock::getLightColor(const BlockState* state, LevelSource* levelSource, const BlockPos& pos, int lightValue)
 {
     return 0x00F000F0;

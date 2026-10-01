@@ -7,7 +7,6 @@ class PurpurSlabBlockFull : public PurpurSlabBlock
 {
 public:
     PurpurSlabBlockFull();
-    virtual ~PurpurSlabBlockFull();
     virtual bool isFullSize() const;
 };
 

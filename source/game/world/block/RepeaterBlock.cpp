@@ -46,10 +46,6 @@ RepeaterBlock::RepeaterBlock(bool on) : DiodeBlock(on)
     registerDefaultState(state->setBoxedValue(DELAY, &delay));
 }
 
-RepeaterBlock::~RepeaterBlock()
-{
-}
-
 std::wstring RepeaterBlock::getName()
 {
     return L10N::GetString(IDS_ITEM_DIODE);

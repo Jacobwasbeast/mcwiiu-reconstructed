@@ -132,10 +132,6 @@ FlowerPotBlock::FlowerPotBlock()
     sendBlockData(15);
 }
 
-FlowerPotBlock::~FlowerPotBlock()
-{
-}
-
 void FlowerPotBlock::blockStaticCtor()
 {
     boost::unordered_set<const Contents*> values;

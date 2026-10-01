@@ -37,7 +37,6 @@ public:
     static AbstractProperty<bool>* NODROP;
 
     SkullBlock();
-    virtual ~SkullBlock();
     virtual boost::shared_ptr<BlockEntity> newBlockEntity(Level* level, int data);
     BlockPattern* getOrCreateWitherFull();
     void checkMobSpawn(Level* level, const BlockPos& pos,

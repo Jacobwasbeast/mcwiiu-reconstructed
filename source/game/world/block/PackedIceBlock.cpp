@@ -10,10 +10,6 @@ PackedIceBlock::PackedIceBlock()
     mFriction = 0.98f;
 }
 
-PackedIceBlock::~PackedIceBlock()
-{
-}
-
 int PackedIceBlock::getResourceCount(Random* random)
 {
     return 0;

@@ -43,10 +43,6 @@ EnderChestBlock::EnderChestBlock()
     registerDefaultState(mStateDefinition->any()->setBoxedValue(FACING, &facing));
 }
 
-EnderChestBlock::~EnderChestBlock()
-{
-}
-
 boost::shared_ptr<BlockEntity> EnderChestBlock::newBlockEntity(Level*, int data)
 {
     boost::shared_ptr<EnderChestBlockEntity> entity(new EnderChestBlockEntity());

@@ -16,7 +16,6 @@ class StandingBannerBlock : public BannerBlock
 {
 public:
     StandingBannerBlock();
-    virtual ~StandingBannerBlock();
 
     virtual const AABB* getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
     virtual const BlockState* rotate(const BlockState* state, Rotation* rotation);

@@ -26,10 +26,6 @@ RedStoneOreBlock::RedStoneOreBlock(bool lit)
     mLit = lit;
 }
 
-RedStoneOreBlock::~RedStoneOreBlock()
-{
-}
-
 int RedStoneOreBlock::getTickDelay(Level*)
 {
     return 30;

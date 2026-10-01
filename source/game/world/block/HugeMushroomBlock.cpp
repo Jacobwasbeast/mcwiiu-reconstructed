@@ -130,10 +130,6 @@ HugeMushroomBlock::HugeMushroomBlock(Material* material, const MaterialColor* ma
     mTextures[1] = NULL;
 }
 
-HugeMushroomBlock::~HugeMushroomBlock()
-{
-}
-
 int HugeMushroomBlock::getResourceCount(Random* random)
 {
     int count = random->nextInt(10) - 7;

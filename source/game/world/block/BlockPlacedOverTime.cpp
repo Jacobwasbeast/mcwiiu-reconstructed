@@ -36,10 +36,6 @@ BlockPlacedOverTime::BlockPlacedOverTime(
 {
 }
 
-BlockPlacedOverTime::~BlockPlacedOverTime()
-{
-}
-
 float BlockPlacedOverTime::START_DELAY(int lastRound, const std::map<int, int>& blocksPlaced)
 {
     return countEmpty(blocksPlaced, 0, lastRound);

@@ -55,9 +55,8 @@ DoublePlantBlock::Variant* gDoublePlantGrass = NULL;
 DoublePlantBlock::Variant* gDoublePlantFern = NULL;
 
 DoublePlantBlock::Half::Half(int id) : mId(id) {}
-DoublePlantBlock::Half::~Half() {}
 std::wstring DoublePlantBlock::Half::toString() const { return getSerializedName(); }
-std::wstring DoublePlantBlock::Half::getSerializedName() const { return mId == UPPER ? L"upper" : L"lower"; }
+std::wstring DoublePlantBlock::Half::getSerializedName() const { return this == HALVES[UPPER] ? L"upper" : L"lower"; }
 
 DoublePlantBlock::Variant::Variant(int data, const std::wstring& name, int nameId, int descriptionId,
                                    std::wstring* textures)
@@ -65,11 +64,10 @@ DoublePlantBlock::Variant::Variant(int data, const std::wstring& name, int nameI
 {
     mIcons[0] = NULL; mIcons[1] = NULL; mIcons[2] = NULL; mIcons[3] = NULL;
 }
-DoublePlantBlock::Variant::~Variant() {}
 int DoublePlantBlock::Variant::getData() { return mData; }
 DoublePlantBlock::Variant* DoublePlantBlock::Variant::byData(int data)
 {
-    if (data < 0 || data >= 6) return VARIANTS[0];
+    if (data < 0 || data >= 6) data = 0;
     return VARIANTS[data];
 }
 TextureAtlasSprite* DoublePlantBlock::Variant::getIcon(ETexture texture) { return mIcons[texture]; }
@@ -89,19 +87,18 @@ DoublePlantBlock::DoublePlantBlock() : Bush(Material::REPLACEABLE_PLANT)
     registerDefaultState(mStateDefinition->any()->setBoxedValue(VARIANT, &variantBox)->setBoxedValue(HALF, &halfBox)->setBoxedValue(FACING, &facingBox));
     setDestroyTime(0.0f)->setSoundType(SoundType::GRASS);
 }
-DoublePlantBlock::~DoublePlantBlock() {}
 
 DoublePlantBlock::Variant* DoublePlantBlock::getType(LevelSource* levelSource, const BlockPos& pos,
                                                      const BlockState* state)
 {
     if (state->getBlock() == this)
         return state->fillVirtualBlockStateProperties(levelSource, pos)->getValue(VARIANT);
-    return VARIANTS[3];
+    return gDoublePlantFern;
 }
 bool DoublePlantBlock::isValidBonemealTarget(Level* level, const BlockPos& pos, const BlockState* state, bool)
 {
     Variant* type = getType(level, pos, state);
-    return type != VARIANTS[2] && type != VARIANTS[3];
+    return type != gDoublePlantGrass && type != gDoublePlantFern;
 }
 bool DoublePlantBlock::isBonemealSuccess(Level*, Random*, const BlockPos&, const BlockState*) { return true; }
 void DoublePlantBlock::performBonemeal(Level* level, Random*, const BlockPos& pos, const BlockState* state)
@@ -159,10 +156,12 @@ void DoublePlantBlock::blockStaticCtor()
     FACING = HorizontalDirectionalBlock::FACING_PROPERTY;
 }
 
+static AABB* sLowerShape = AABB::newPermanent(0.3f, 0.0f, 0.3f, 0.7f, 1.0f, 0.7f);
+static AABB* sUpperShape = AABB::newPermanent(0.3f, 0.0f, 0.3f, 0.7f, 0.6f, 0.7f);
+
 const AABB* DoublePlantBlock::getShape(const BlockState* state, LevelSource*, const BlockPos&)
 {
-    return state->getValue(HALF) == HALVES[Half::UPPER] ? AABB::newTemp(0.0, 0.0, 0.0, 1.0, 1.0, 1.0)
-                                                        : AABB::newTemp(0.0, 0.0, 0.0, 1.0, 2.0, 1.0);
+    return state->getValue(HALF) == HALVES[Half::UPPER] ? sUpperShape : sLowerShape;
 }
 bool DoublePlantBlock::mayPlace(Level* level, const BlockPos& pos) { return Bush::mayPlace(level, pos) && level->isEmptyBlock(pos.above()); }
 bool DoublePlantBlock::mayReplaceWithPlace(LevelSource* levelSource, const BlockPos& pos)
@@ -206,25 +205,29 @@ Item* DoublePlantBlock::getResource(const BlockState* state, Random* random, int
         return Items::air;
 
     Variant* variant = state->getValue(VARIANT);
-    if (variant == VARIANTS[3])
+    if (variant == gDoublePlantFern)
         return Items::air;
-    if (variant == VARIANTS[2])
+    if (variant == gDoublePlantGrass)
         return random->nextInt(8) == 0 ? Items::wheatSeeds : Items::air;
     return Block::getResource(state, random, lootBonus);
 }
 int DoublePlantBlock::getSpawnResourcesAuxValue(const BlockState* state)
 {
-    if (state->getValue(HALF) != HALVES[Half::UPPER] && state->getValue(VARIANT) != gDoublePlantGrass)
+    if (state->getValue(HALF) == HALVES[Half::UPPER] || state->getValue(VARIANT) == gDoublePlantGrass)
     {
-        return state->getValue(VARIANT)->getData();
+        return 0;
     }
-    return 0;
+    return state->getValue(VARIANT)->getData();
 }
-int DoublePlantBlock::getColor(LevelSource* levelSource, const BlockPos& pos, int) { return getColor(levelSource, pos, levelSource->getBlockState(pos)); }
+int DoublePlantBlock::getColor(LevelSource* levelSource, const BlockPos& pos, int)
+{
+    const BlockState* state = levelSource->getBlockState(pos);
+    return getColor(levelSource, pos, state);
+}
 int DoublePlantBlock::getColor(LevelSource* levelSource, const BlockPos& pos, const BlockState* state)
 {
     Variant* type = getType(levelSource, pos, state);
-    return type == VARIANTS[2] || type == VARIANTS[3] ? BiomeColors::getAverageGrassColor(levelSource, pos) : 0xffffff;
+    return type == gDoublePlantGrass || type == gDoublePlantFern ? BiomeColors::getAverageGrassColor(levelSource, pos) : 0xffffff;
 }
 void DoublePlantBlock::placeAt(Level* level, const BlockPos& pos, Variant* variant, int flags)
 {
@@ -328,8 +331,7 @@ const BlockState* DoublePlantBlock::fillVirtualBlockStateProperties(const BlockS
         const BlockState* below = levelSource->getBlockState(pos.below());
         if (below->getBlock() == this)
         {
-            TypedBoxed<Variant*> variant(below->getValue(VARIANT));
-            return state->setBoxedValue(VARIANT, &variant);
+            state = state->setValue(VARIANT, below->getValue(VARIANT));
         }
     }
     return state;
@@ -355,7 +357,7 @@ unsigned int DoublePlantBlock::GetInteractTooltip(const BlockTooltipDataHolder& 
 }
 BlockStateDefinition* DoublePlantBlock::createBlockStateDefinition()
 {
-    const Property* properties[] = { HALF, VARIANT, FACING };
+    static const Property* properties[] = { HALF, VARIANT, FACING };
     return new BlockStateDefinition(this, properties, 3);
 }
 EBlockOffsetType DoublePlantBlock::getOffsetType() { return BLOCK_OFFSET_XZ; }

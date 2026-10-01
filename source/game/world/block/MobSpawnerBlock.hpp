@@ -17,7 +17,6 @@ class MobSpawnerBlock : public BaseEntityBlock
 {
 public:
     MobSpawnerBlock();
-    virtual ~MobSpawnerBlock();
 
     virtual boost::shared_ptr<BlockEntity> newBlockEntity(Level* level, int data);
     virtual Item* getResource(const BlockState* state, Random* random, int lootBonus);

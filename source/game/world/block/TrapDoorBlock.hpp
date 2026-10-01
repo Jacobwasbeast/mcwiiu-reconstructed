@@ -43,7 +43,6 @@ public:
 
     TrapDoorBlock(Material* material);
     TrapDoorBlock(Material* material, const MaterialColor* materialColor);
-    virtual ~TrapDoorBlock();
     static void blockStaticCtor();
     virtual const AABB* getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
     virtual bool isSolidRender(const BlockState* state) const;

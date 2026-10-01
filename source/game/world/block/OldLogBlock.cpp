@@ -46,10 +46,6 @@ OldLogBlock::OldLogBlock()
     registerDefaultState(state->setBoxedValue(AXIS, &axis));
 }
 
-OldLogBlock::~OldLogBlock()
-{
-}
-
 const MaterialColor* OldLogBlock::getMapColor(const BlockState* state, LevelSource*, const BlockPos&)
 {
     PlanksBlock::Variant* variant = state->getValue(VARIANT);

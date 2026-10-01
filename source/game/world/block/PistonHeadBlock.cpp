@@ -97,10 +97,6 @@ PistonHeadBlock::PistonHeadBlock()
     setDestroyTime(0.5f);
 }
 
-PistonHeadBlock::~PistonHeadBlock()
-{
-}
-
 const AABB* PistonHeadBlock::getShape(const BlockState* state, LevelSource*, const BlockPos&)
 {
     const Direction* facing = state->getValue(FACING);
@@ -140,7 +136,7 @@ void PistonHeadBlock::addCollisionAABBs(const BlockState* state, Level* level, c
 
 bool PistonHeadBlock::isTopSolidBlocking(const BlockState* state)
 {
-    return state->getValue(FACING) == Direction::DOWN;
+    return state->getValue(FACING) == Direction::UP;
 }
 
 bool PistonHeadBlock::playerWillDestroy(Level* level, const BlockPos& pos, const BlockState* state,
@@ -248,13 +244,13 @@ TextureAtlasSprite* PistonHeadBlock::getTexture(const Direction* direction, cons
         if (mOverrideTopTexture != NULL)
             return mOverrideTopTexture;
         if (state->getValue(TYPE) == pistonTypeSticky)
-            return PistonBaseBlock::getTexture(L"piston_top_sticky");
+            return PistonBaseBlock::getTexture(PistonBaseBlock::TEXTURE_TOP_STICKY);
     }
     else if (facing->get3DDataValue() > 5 || direction != facing->getOpposite())
     {
-        return PistonBaseBlock::getTexture(L"piston_side");
+        return PistonBaseBlock::getTexture(PistonBaseBlock::TEXTURE_SIDE);
     }
-    return PistonBaseBlock::getTexture(L"piston_top");
+    return PistonBaseBlock::getTexture(PistonBaseBlock::TEXTURE_TOP);
 }
 
 void PistonHeadBlock::registerIcons(IconRegister*)

@@ -5,6 +5,7 @@
 #include <utility>
 
 #include "game/core/Bush.hpp"
+#include "game/core/StringRepresentable.hpp"
 #include "game/world/block/BonemealableBlock.hpp"
 #include "game/world/block/AbstractProperty.hpp"
 #include "game/world/block/Predicate.hpp"
@@ -19,7 +20,7 @@ class FlowerBlock : public Bush, public BonemealableBlock
 public:
     class FlowerCategory;
 
-    class Flower
+    class Flower : public StringRepresentable
     {
     public:
         enum EFlower
@@ -101,7 +102,6 @@ public:
         FlowerCategoryPredicate(FlowerBlock* block);
 
         virtual bool apply(FlowerBlock::Flower* flower) const;
-        virtual ~FlowerCategoryPredicate();
 
     private:
         FlowerBlock* mBlock;

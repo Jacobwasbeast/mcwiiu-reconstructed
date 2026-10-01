@@ -43,10 +43,6 @@ KelpBlock::KelpBlock()
     mIcons[4] = NULL;
 }
 
-KelpBlock::~KelpBlock()
-{
-}
-
 bool KelpBlock::isValidBonemealTarget(Level* level, const BlockPos& pos, const BlockState*, bool)
 {
     int bottom = pos.y;

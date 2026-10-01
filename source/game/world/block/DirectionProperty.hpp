@@ -20,7 +20,6 @@ public:
 
     static bool NOT_DOWN(const Direction* direction);
 
-    virtual ~DirectionProperty();
 
 protected:
     DirectionProperty(const std::wstring& name,

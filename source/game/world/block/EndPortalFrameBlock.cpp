@@ -47,10 +47,6 @@ EndPortalFrameBlock::EndPortalFrameBlock()
         mStateDefinition->any()->setBoxedValue(FACING, &facing)->setBoxedValue(EYE, &eye));
 }
 
-EndPortalFrameBlock::~EndPortalFrameBlock()
-{
-}
-
 void EndPortalFrameBlock::blockStaticCtor()
 {
     FACING = HorizontalDirectionalBlock::FACING_PROPERTY;

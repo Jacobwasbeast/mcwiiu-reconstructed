@@ -13,7 +13,6 @@ class RedstoneLampBlock : public Block
 {
 public:
     RedstoneLampBlock(bool lit);
-    virtual ~RedstoneLampBlock();
 
     virtual void onPlace(Level* level, const BlockPos& pos, const BlockState* state);
     virtual void neighborChanged(const BlockState* state, Level* level, const BlockPos& pos,

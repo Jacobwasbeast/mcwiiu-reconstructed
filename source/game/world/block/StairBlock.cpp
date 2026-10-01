@@ -143,10 +143,6 @@ StairBlock::StairBlock(const BlockState* modelState)
     setLightBlock(STAIR_OPAQUE_LIGHT_BLOCK);
 }
 
-StairBlock::~StairBlock()
-{
-}
-
 void StairBlock::addCollisionAABBs(const BlockState* state, Level* level, const BlockPos& pos, const AABB* box, std::vector<AABB*>* result, boost::shared_ptr<Entity> entity, bool actual)
 {
     if (!actual)

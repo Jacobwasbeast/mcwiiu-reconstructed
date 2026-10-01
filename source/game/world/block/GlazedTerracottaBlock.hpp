@@ -17,7 +17,6 @@ class GlazedTerracottaBlock : public HorizontalDirectionalBlock
 {
 public:
     explicit GlazedTerracottaBlock(const DyeColor* dyeColor);
-    virtual ~GlazedTerracottaBlock();
 
     virtual BlockStateDefinition* createBlockStateDefinition();
     virtual const BlockState* rotate(const BlockState* state, Rotation* rotation);

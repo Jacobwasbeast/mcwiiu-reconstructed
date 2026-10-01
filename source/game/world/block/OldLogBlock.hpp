@@ -19,7 +19,6 @@ public:
     static EnumProperty<PlanksBlock::Variant*>* VARIANT;
 
     OldLogBlock();
-    virtual ~OldLogBlock();
 
     static void blockStaticCtor();
 

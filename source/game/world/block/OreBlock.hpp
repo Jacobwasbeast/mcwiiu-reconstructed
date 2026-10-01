@@ -14,7 +14,6 @@ class OreBlock : public Block
 public:
     OreBlock();
     OreBlock(const MaterialColor* materialColor);
-    virtual ~OreBlock();
     virtual Item* getResource(const BlockState* state, Random* random, int lootBonus);
     virtual int getResourceCount(Random* random);
     virtual int getResourceCountForLootBonus(int lootBonus, Random* random);

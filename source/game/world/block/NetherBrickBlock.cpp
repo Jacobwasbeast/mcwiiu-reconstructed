@@ -17,6 +17,3 @@ const MaterialColor* NetherBrickBlock::getMapColor(const BlockState* state, Leve
     return MaterialColor::NETHER;
 }
 
-NetherBrickBlock::~NetherBrickBlock()
-{
-}

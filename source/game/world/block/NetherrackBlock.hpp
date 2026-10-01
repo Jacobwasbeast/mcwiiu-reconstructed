@@ -14,7 +14,6 @@ public:
     NetherrackBlock();
 
     virtual const MaterialColor* getMapColor(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
-    virtual ~NetherrackBlock();
 };
 
 #endif

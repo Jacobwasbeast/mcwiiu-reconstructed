@@ -112,10 +112,6 @@ PrismarineBlock::PrismarineBlock()
     registerDefaultState(mStateDefinition->any()->setBoxedValue(VARIANT, &value));
 }
 
-PrismarineBlock::~PrismarineBlock()
-{
-}
-
 std::wstring PrismarineBlock::getName()
 {
     return L10N::GetString(IDS_TILE_PRISMARINE);

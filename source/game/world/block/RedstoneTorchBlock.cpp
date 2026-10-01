@@ -52,10 +52,6 @@ RedstoneTorchBlock::RedstoneTorchBlock(bool lit)
     setTicking(true);
 }
 
-RedstoneTorchBlock::~RedstoneTorchBlock()
-{
-}
-
 void RedstoneTorchBlock::removeLevelReferences(Level* level)
 {
     boost::unordered_map<Level*, std::deque<Toggle>*>::iterator it = sToggleLists.find(level);

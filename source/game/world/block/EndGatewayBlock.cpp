@@ -25,10 +25,6 @@ EndGatewayBlock::EndGatewayBlock(Material* material)
     setLightEmission(1.0f);
 }
 
-EndGatewayBlock::~EndGatewayBlock()
-{
-}
-
 boost::shared_ptr<BlockEntity> EndGatewayBlock::newBlockEntity(Level*, int data)
 {
     boost::shared_ptr<TheEndGatewayEntity> entity(new TheEndGatewayEntity());
@@ -104,7 +100,7 @@ not_null_ptr<ItemInstance> EndGatewayBlock::getCloneItemInstance(Level*, const B
 
 const MaterialColor* EndGatewayBlock::getMapColor(const BlockState*, LevelSource*, const BlockPos&)
 {
-    return MaterialColor::NONE;
+    return MaterialColor::COLOR_BLACK;
 }
 
 EBlockFaceShape EndGatewayBlock::getBlockFaceShape(LevelSource*, const BlockState*, const BlockPos&, const Direction*)

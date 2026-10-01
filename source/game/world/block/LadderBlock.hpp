@@ -11,7 +11,6 @@ public:
     static DirectionProperty* FACING;
 
     LadderBlock();
-    virtual ~LadderBlock();
     static void blockStaticCtor();
     virtual const AABB* getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
     virtual bool isSolidRender(const BlockState* state) const;

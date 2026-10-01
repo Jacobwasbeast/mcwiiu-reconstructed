@@ -17,7 +17,6 @@ class MagmaBlock : public Block
 {
 public:
     MagmaBlock();
-    virtual ~MagmaBlock();
 
     virtual const MaterialColor* getMapColor(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
     virtual void stepOn(Level* level, const BlockPos& pos, boost::shared_ptr<Entity> entity);

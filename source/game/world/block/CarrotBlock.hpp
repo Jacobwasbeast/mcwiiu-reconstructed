@@ -17,7 +17,6 @@ class CarrotBlock : public CropBlock
 public:
     CarrotBlock();
 
-    virtual ~CarrotBlock();
     virtual const AABB* getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
     virtual void registerIcons(IconRegister* iconRegister);
     virtual TextureAtlasSprite* getTexture(const Direction* direction, const BlockState* state);

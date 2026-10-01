@@ -48,7 +48,6 @@ public:
     static EnumProperty<Variant*>* VARIANT;
 
     QuartzBlock();
-    virtual ~QuartzBlock();
 
     static void blockStaticCtor();
     virtual const BlockState* getStateForPlacement(Level* level, const BlockPos& pos, const Direction* direction, float hitX, float hitY, float hitZ, int auxValue, boost::shared_ptr<LivingEntity> placer);

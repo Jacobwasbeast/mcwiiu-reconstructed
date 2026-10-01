@@ -54,8 +54,6 @@ OldLeafBlock::OldLeafBlock()
     registerDefaultState(state->setBoxedValue(CHECK_DECAY, &checkDecay));
 }
 
-OldLeafBlock::~OldLeafBlock() {}
-
 int OldLeafBlock::getColor(const BlockState* state)
 {
     if (state->getBlock() == this)

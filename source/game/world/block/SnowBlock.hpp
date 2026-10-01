@@ -12,7 +12,6 @@ class SnowBlock : public Block
 {
 public:
     SnowBlock();
-    virtual ~SnowBlock();
 
     virtual Item* getResource(const BlockState* state, Random* random, int lootBonus);
     virtual int getResourceCount(Random* random);

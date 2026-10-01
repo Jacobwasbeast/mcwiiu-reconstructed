@@ -27,7 +27,6 @@ public:
     static AbstractProperty<int>* PORTAL_NUMBER;
 
     EndGatewayBlock(Material* material);
-    virtual ~EndGatewayBlock();
 
     virtual boost::shared_ptr<BlockEntity> newBlockEntity(Level* level, int data);
     virtual bool shouldRenderFace(const BlockState* state, LevelSource* levelSource,

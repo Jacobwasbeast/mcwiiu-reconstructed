@@ -45,7 +45,6 @@ public:
     static ConnectingSide* NONE;
 
     RedStoneWireBlock();
-    virtual ~RedStoneWireBlock();
     static void blockStaticCtor();
     int getAABBIndex(const BlockState* state);
     virtual const AABB* getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);

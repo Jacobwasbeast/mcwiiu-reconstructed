@@ -11,7 +11,6 @@ public:
     {
     }
 
-    virtual ~WinnerWithoutBlockDestructionMedal();
     virtual double GetScore(PlayerStats* playerStats) const;
 };
 

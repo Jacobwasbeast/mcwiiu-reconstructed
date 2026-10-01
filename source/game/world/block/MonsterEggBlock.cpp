@@ -118,10 +118,6 @@ MonsterEggBlock::MonsterEggBlock()
     setDestroyTime(0.0f);
 }
 
-MonsterEggBlock::~MonsterEggBlock()
-{
-}
-
 int MonsterEggBlock::getResourceCount(Random*)
 {
     return 0;

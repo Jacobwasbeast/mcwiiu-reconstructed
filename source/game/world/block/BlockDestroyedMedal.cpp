@@ -7,10 +7,6 @@ BlockDestroyedMedal::BlockDestroyedMedal(int name, float target, unsigned int we
 {
 }
 
-BlockDestroyedMedal::~BlockDestroyedMedal()
-{
-}
-
 double BlockDestroyedMedal::GetScore(PlayerStats* playerStats) const
 {
     return GameMedal::totalOfAllRounds(playerStats, getBlocksDestroyed);

@@ -11,10 +11,6 @@ BookshelfBlock::BookshelfBlock()
     DerivedInit();
 }
 
-BookshelfBlock::~BookshelfBlock()
-{
-}
-
 int BookshelfBlock::getResourceCount(Random*)
 {
     return 3;

@@ -53,10 +53,6 @@ PumpkinBlock::PumpkinBlock()
     setTicking(true);
 }
 
-PumpkinBlock::~PumpkinBlock()
-{
-}
-
 void PumpkinBlock::getOrCreateSnowGolemFull()
 {
     if (mSnowGolemFullPattern == NULL)

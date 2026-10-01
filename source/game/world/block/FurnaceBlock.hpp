@@ -32,7 +32,6 @@ public:
     static DirectionProperty* FACING;
 
     FurnaceBlock(bool lit);
-    virtual ~FurnaceBlock();
     virtual boost::shared_ptr<BlockEntity> newBlockEntity(Level* level, int data);
     static void blockStaticCtor();
     virtual Item* getResource(const BlockState* state, Random* random, int lootBonus);

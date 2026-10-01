@@ -18,7 +18,6 @@ class NetherWartBlock : public Bush
 {
 public:
     NetherWartBlock();
-    virtual ~NetherWartBlock();
     virtual const AABB* getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
     virtual bool mayPlaceOn(Level* level, const BlockPos& pos, const BlockState* state);
     virtual bool canSurvive(Level* level, const BlockPos& pos, const BlockState* state);

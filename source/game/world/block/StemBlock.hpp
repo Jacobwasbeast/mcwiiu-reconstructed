@@ -25,7 +25,6 @@ public:
     static DirectionProperty* FACING;
 
     explicit StemBlock(Block* fruitType = NULL);
-    virtual ~StemBlock();
 
     virtual bool isValidBonemealTarget(Level* level, const BlockPos& pos, const BlockState* state,
                                        bool isClientSide);

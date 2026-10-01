@@ -13,7 +13,6 @@ class HayBlock : public RotatedPillarBlock
 {
 public:
     HayBlock();
-    virtual ~HayBlock();
 
     virtual void fallOn(Level* level, const BlockPos& pos, boost::shared_ptr<Entity> entity, float fallDistance);
     virtual TextureAtlasSprite* getTypeTexture(const BlockState* state);

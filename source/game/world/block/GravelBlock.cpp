@@ -78,6 +78,3 @@ unsigned int GravelBlock::GetInteractTooltip(const BlockTooltipDataHolder& toolt
     return Block::GetInteractTooltip(tooltipData);
 }
 
-GravelBlock::~GravelBlock()
-{
-}

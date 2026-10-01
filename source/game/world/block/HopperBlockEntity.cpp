@@ -497,7 +497,7 @@ void HopperBlockEntity::setItems(NonNullList<not_null_ptr<ItemInstance> > items)
 
 std::wstring HopperBlockEntity::getDisplayName()
 {
-    return getName();
+    return LockableContainerBlockEntity::getDisplayName();
 }
 
 unsigned long long HopperBlockEntity::GetType()

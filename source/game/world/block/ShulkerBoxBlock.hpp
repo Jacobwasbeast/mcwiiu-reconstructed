@@ -29,7 +29,6 @@ class ShulkerBoxBlock : public BaseEntityBlock
 {
 public:
     explicit ShulkerBoxBlock(const DyeColor* color);
-    virtual ~ShulkerBoxBlock();
     virtual boost::shared_ptr<BlockEntity> newBlockEntity(Level* level, int data);
     virtual bool isSolidRender(const BlockState* state) const;
     virtual bool isViewBlocking(const BlockState* state);

@@ -235,7 +235,7 @@ InteractionObject::NameData FurnaceBlockEntity::GetNetworkNameData()
 
 std::wstring FurnaceBlockEntity::getDisplayName()
 {
-    return getName();
+    return LockableContainerBlockEntity::getDisplayName();
 }
 
 arrayWithLength<int> FurnaceBlockEntity::getSlotsForFace(const Direction* face)

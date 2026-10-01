@@ -46,7 +46,6 @@ public:
     virtual TextureAtlasSprite* getTexture(LevelSource* levelSource, const BlockPos& pos,
                                             const Direction* direction, const BlockState* state);
     virtual void registerIcons(IconRegister* iconRegister);
-    virtual ~GrassBlock();
 
     static TextureAtlasSprite* getSideTextureOverlay();
 

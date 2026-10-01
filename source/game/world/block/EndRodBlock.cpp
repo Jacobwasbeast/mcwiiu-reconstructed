@@ -46,10 +46,6 @@ EndRodBlock::EndRodBlock()
     DerivedInit();
 }
 
-EndRodBlock::~EndRodBlock()
-{
-}
-
 void EndRodBlock::DerivedInit()
 {
     Block::DerivedInit();
@@ -168,5 +164,5 @@ BlockStateDefinition* EndRodBlock::createBlockStateDefinition()
 
 int EndRodBlock::getSpawnResourcesAuxValue(const BlockState* state)
 {
-    return state->getValue(DirectionalBlock::FACING_PROPERTY)->get3DDataValue();
+    return Direction::UP->get3DDataValue();
 }

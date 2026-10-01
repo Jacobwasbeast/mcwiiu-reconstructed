@@ -40,15 +40,10 @@ FurnaceBlock::FurnaceBlock(bool lit)
     registerDefaultState(mStateDefinition->any());
 }
 
-FurnaceBlock::~FurnaceBlock()
-{
-}
-
 boost::shared_ptr<BlockEntity> FurnaceBlock::newBlockEntity(Level*, int)
 {
     return boost::shared_ptr<BlockEntity>(new FurnaceBlockEntity());
 }
-
 
 void FurnaceBlock::blockStaticCtor()
 {

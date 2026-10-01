@@ -42,10 +42,6 @@ ChorusFlowerBlock::ChorusFlowerBlock()
     DerivedInit();
 }
 
-ChorusFlowerBlock::~ChorusFlowerBlock()
-{
-}
-
 const AABB* ChorusFlowerBlock::getUpShape() { return CHORUS_UP_SHAPE; }
 const AABB* ChorusFlowerBlock::getDownShape() { return CHORUS_DOWN_SHAPE; }
 const AABB* ChorusFlowerBlock::getSouthShape() { return CHORUS_SOUTH_SHAPE; }

@@ -52,7 +52,6 @@ public:
     static int DARK_DATA;
 
     PrismarineBlock();
-    virtual ~PrismarineBlock();
     static void blockStaticCtor();
     virtual const MaterialColor* getMapColor(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
     virtual const BlockState* getBlockState(int data);

@@ -18,7 +18,6 @@ public:
     static AbstractProperty<bool>* SUSPENDED;
 
     TripWireBlock();
-    virtual ~TripWireBlock();
 
     virtual const AABB* getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
     static bool shouldConnectTo(LevelSource* levelSource, const BlockPos& pos, const BlockState* state, const Direction* direction);

@@ -57,10 +57,6 @@ FireBlock::FireBlock()
     mFireIconAlt = NULL;
 }
 
-FireBlock::~FireBlock()
-{
-}
-
 int FireBlock::getFlameOdds(Block* block)
 {
     boost::unordered_map<Block*, int>::const_iterator it = mFlameOdds.find(block);

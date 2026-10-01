@@ -18,7 +18,6 @@ class PotatoBlock : public CropBlock
 public:
     PotatoBlock();
 
-    virtual ~PotatoBlock();
     virtual void spawnResources(Level* level, const BlockPos& pos, const BlockState* state, float chance, int lootBonus);
     virtual const AABB* getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
     virtual TextureAtlasSprite* getTexture(const Direction* direction, const BlockState* state);

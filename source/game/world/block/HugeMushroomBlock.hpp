@@ -56,7 +56,6 @@ public:
     };
 
     HugeMushroomBlock(Material* material, const MaterialColor* materialColor, Block* otherBlock);
-    virtual ~HugeMushroomBlock();
 
     static void blockStaticCtor();
     static EnumProperty<Variant*>* VARIANT;

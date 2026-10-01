@@ -56,7 +56,6 @@ public:
     static EnumProperty<Half*>* HALF;
     static EnumProperty<Shape*>* SHAPE;
     StairBlock(const BlockState* modelState);
-    virtual ~StairBlock();
     static void blockStaticCtor();
     virtual void addCollisionAABBs(const BlockState*, Level*, const BlockPos&, const AABB*,
                                    std::vector<AABB*>*, boost::shared_ptr<Entity>, bool);

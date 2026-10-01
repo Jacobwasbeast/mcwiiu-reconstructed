@@ -7,7 +7,6 @@ class WoodButtonBlock : public ButtonBlock
 {
 public:
     WoodButtonBlock();
-    virtual ~WoodButtonBlock();
     virtual void playOnSound(boost::shared_ptr<Player> player, Level* level, const BlockPos& pos);
     virtual void playOffSound(Level* level, const BlockPos& pos);
 };

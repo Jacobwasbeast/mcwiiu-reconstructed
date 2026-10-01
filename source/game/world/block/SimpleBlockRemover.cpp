@@ -4,10 +4,6 @@
 #include "game/world/block/Block.hpp"
 #include "game/world/block/Blocks.hpp"
 
-SimpleBlockRemover::~SimpleBlockRemover()
-{
-}
-
 bool SimpleBlockRemover::RemoveBlocks(int areaIndex, int maxBlocks)
 {
     Area& area = mAreas[areaIndex];

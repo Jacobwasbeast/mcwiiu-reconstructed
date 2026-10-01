@@ -27,10 +27,6 @@ MagmaBlock::MagmaBlock()
     setTicking(true);
 }
 
-MagmaBlock::~MagmaBlock()
-{
-}
-
 const MaterialColor* MagmaBlock::getMapColor(const BlockState*, LevelSource*, const BlockPos&)
 {
     return MaterialColor::NETHER;

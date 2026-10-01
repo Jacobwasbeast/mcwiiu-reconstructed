@@ -34,7 +34,6 @@ public:
     static AbstractProperty<bool>* HAS_BOTTLE_2;
 
     BrewingStandBlock();
-    virtual ~BrewingStandBlock();
 
     virtual boost::shared_ptr<BlockEntity> newBlockEntity(Level* level, int data);
     virtual std::wstring getName();
