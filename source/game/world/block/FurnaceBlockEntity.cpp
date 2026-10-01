@@ -22,6 +22,14 @@
 #include "game/world/block/Material.hpp"
 #include "game/world/generation/Player.hpp"
 
+static int furnaceUpSlots[] = {0};
+static int furnaceDownSlots[] = {2, 1};
+static int furnaceSideSlots[] = {1};
+
+arrayWithLength<int> FurnaceBlockEntity::SLOTS_FOR_UP(furnaceUpSlots, 1);
+arrayWithLength<int> FurnaceBlockEntity::SLOTS_FOR_DOWN(furnaceDownSlots, 2);
+arrayWithLength<int> FurnaceBlockEntity::SLOTS_FOR_SIDES(furnaceSideSlots, 1);
+
 FurnaceBlockEntity::FurnaceBlockEntity()
     : LockableContainerBlockEntity(), WorldlyContainer(),
       mItems(NonNullList<not_null_ptr<ItemInstance> >::withSize(3, ItemInstance::EMPTY)),
@@ -43,17 +51,20 @@ BlockEntity* FurnaceBlockEntity::create()
 
 std::wstring FurnaceBlockEntity::getName()
 {
-    return mName != NULL ? mName->get() : std::wstring();
+    if (hasCustomName()) return mName->get();
+    return std::wstring(L"");
 }
 
 std::wstring FurnaceBlockEntity::getCustomName()
 {
-    return mName != NULL ? mName->get() : std::wstring();
+    if (hasCustomName()) return mName->get();
+    return std::wstring(L"");
 }
 
 bool FurnaceBlockEntity::hasCustomName()
 {
-    return mName != NULL && mName->checkParentalFilter() != 0 && !mName->raw().empty();
+    if (!mName->checkParentalFilter()) return false;
+    return !mName->raw().empty();
 }
 
 unsigned int FurnaceBlockEntity::getContainerSize()
@@ -192,20 +203,39 @@ bool FurnaceBlockEntity::canPlaceItem(int slot, not_null_ptr<ItemInstance> item)
 
 int FurnaceBlockEntity::getContainerData(int id)
 {
-    if (id == 0) return mLitTime;
-    if (id == 1) return mLitDuration;
-    if (id == 2) return mCookingProgress;
-    if (id == 3) return mCookingTotalTime;
-    if (id == 4) return mCharcoalUsed ? 1 : 0;
+    switch (id)
+    {
+    case 0:
+        return mLitTime;
+    case 1:
+        return mLitDuration;
+    case 2:
+        return mCookingProgress;
+    case 3:
+        return mCookingTotalTime;
+    case 4:
+        return mCharcoalUsed ? 1 : 0;
+    }
     return 0;
 }
 
 void FurnaceBlockEntity::setContainerData(int id, int value)
 {
-    if (id == 0) mLitTime = value;
-    else if (id == 1) mLitDuration = value;
-    else if (id == 2) mCookingProgress = value;
-    else if (id == 3) mCookingTotalTime = value;
+    switch (id)
+    {
+    case 0:
+        mLitTime = value;
+        break;
+    case 1:
+        mLitDuration = value;
+        break;
+    case 2:
+        mCookingProgress = value;
+        break;
+    case 3:
+        mCookingTotalTime = value;
+        break;
+    }
 }
 
 int FurnaceBlockEntity::getContainerDataCount()
@@ -215,7 +245,7 @@ int FurnaceBlockEntity::getContainerDataCount()
 
 void FurnaceBlockEntity::clearContent()
 {
-    for (unsigned int i = 0; i < mItems.size(); ++i) mItems[i] = ItemInstance::EMPTY;
+    for (unsigned int i = 0; i < mItems.size(); ++i) mItems[i] = mItems.defaultValue;
 }
 
 AbstractContainerMenu* FurnaceBlockEntity::createMenu(boost::shared_ptr<Inventory> inventory, boost::shared_ptr<Player> player)
@@ -240,22 +270,9 @@ std::wstring FurnaceBlockEntity::getDisplayName()
 
 arrayWithLength<int> FurnaceBlockEntity::getSlotsForFace(const Direction* face)
 {
-    if (face == Direction::UP)
-    {
-        arrayWithLength<int> slots(1, true);
-        slots.data[0] = 0;
-        return slots;
-    }
-    if (face == Direction::DOWN)
-    {
-        arrayWithLength<int> slots(2, true);
-        slots.data[0] = 2;
-        slots.data[1] = 1;
-        return slots;
-    }
-    arrayWithLength<int> slots(1, true);
-    slots.data[0] = 1;
-    return slots;
+    if (face == Direction::DOWN) return SLOTS_FOR_DOWN;
+    if (face == Direction::UP) return SLOTS_FOR_UP;
+    return SLOTS_FOR_SIDES;
 }
 
 bool FurnaceBlockEntity::canPlaceItemThroughFace(int slot, not_null_ptr<ItemInstance> item, const Direction* face)
@@ -294,9 +311,9 @@ void FurnaceBlockEntity::load(CompoundTag* tag)
     mLitTime = tag->getShort(L"BurnTime");
     mCookingProgress = tag->getShort(L"CookTime");
     mCookingTotalTime = tag->getShort(L"CookTimeTotal");
-    mLitDuration = mLitTime;
-    if (!mItems[0]->isEmpty()) mLitDuration = mLitTime > getBurnDuration(mItems[0]) ? mLitTime : getBurnDuration(mItems[0]);
-    if (mName != NULL) mName->loadFromTag(tag);
+    int burnDuration = getBurnDuration(mItems[0]);
+    mLitDuration = mLitTime < burnDuration ? burnDuration : mLitTime;
+    mName->loadFromTag(tag);
     mCharcoalUsed = tag->getBoolean(L"CharcoalUsed");
 }
 
@@ -307,8 +324,8 @@ CompoundTag* FurnaceBlockEntity::save(CompoundTag* tag)
     tag->putShort(L"CookTime", (short)mCookingProgress);
     tag->putShort(L"CookTimeTotal", (short)mCookingTotalTime);
     ContainerHelper::saveAllItems(tag, mItems);
+    mName->saveToTag(tag);
     tag->putBoolean(L"CharcoalUsed", mCharcoalUsed);
-    if (mName != NULL) mName->saveToTag(tag);
     return tag;
 }
 

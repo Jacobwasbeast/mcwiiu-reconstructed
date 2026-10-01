@@ -16,6 +16,7 @@
 #include "game/item/NonNullList.hpp"
 #include "game/item/WorldlyContainer.hpp"
 #include "game/item/not_null_ptr.hpp"
+#include "game/world/biome/arrayWithLength.hpp"
 #include "game/world/block/LockableContainerBlockEntity.hpp"
 
 class AbstractContainerMenu;
@@ -74,7 +75,12 @@ public:
     bool wasCharcoalUsed();
 
 private:
+    static arrayWithLength<int> SLOTS_FOR_UP;
+    static arrayWithLength<int> SLOTS_FOR_DOWN;
+    static arrayWithLength<int> SLOTS_FOR_SIDES;
+
     NonNullList<not_null_ptr<ItemInstance> > mItems;
+    bool mCharcoalUsed;
     std::set<boost::shared_ptr<Player> > mOpeners;
     std::set<boost::shared_ptr<Player> > mOpenersThisTick;
     int mLitTime;
@@ -82,7 +88,6 @@ private:
     int mCookingProgress;
     int mCookingTotalTime;
     boost::shared_ptr<CensoredString> mName;
-    bool mCharcoalUsed;
 };
 
 #endif
