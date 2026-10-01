@@ -24,7 +24,11 @@ static const unsigned int sSectionTypeSizesTwoIndices[8] =
 
 unsigned short HierarchicalElementStorage::swapBytes(unsigned short value)
 {
+#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
     return (unsigned short)((value << 8) | (value >> 8));
+#else
+    return value;
+#endif
 }
 
 bool HierarchicalElementStorage::CanEncodeElementAs0Bit(unsigned short value)
