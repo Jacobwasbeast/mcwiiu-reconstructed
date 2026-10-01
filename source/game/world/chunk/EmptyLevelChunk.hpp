@@ -16,7 +16,6 @@ class EmptyLevelChunk : public LevelChunk
 {
 public:
     EmptyLevelChunk(Level* level, int x, int z);
-    virtual ~EmptyLevelChunk();
 
     virtual bool isAt(int x, int z);
     virtual unsigned char getHeightmap(int x, int z);
@@ -54,7 +53,7 @@ public:
                                  int width, int height, int depth, int offset, bool includeLight);
     virtual int setBlocksAndData(arrayWithLength<unsigned char> input, int x, int y, int z,
                                  int width, int height, int depth, int offset, bool includeLight);
-    virtual Random getRandom(long long seed);
+    virtual Random* getRandom(long long seed);
     virtual bool isEmpty();
     virtual void setBlock(const BlockPos& pos, const BlockState* state);
     virtual void getElementRange(arrayWithLength<unsigned short> elements, int start, int end);

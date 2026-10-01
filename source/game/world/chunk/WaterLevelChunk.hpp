@@ -21,7 +21,6 @@ class WaterLevelChunk : public LevelChunk
 {
 public:
     WaterLevelChunk(Level* level, ChunkPrimer* primer, int x, int z);
-    virtual ~WaterLevelChunk();
 
     virtual bool isAt(int x, int z);
     virtual void recalcBlockLights();
@@ -57,7 +56,7 @@ public:
     virtual bool shouldSave(bool force);
     virtual int setBlocksAndData(arrayWithLength<unsigned char> input, int x, int y, int z,
                                  int width, int height, int depth, int flags, bool extra);
-    virtual Random getRandom(long long seed);
+    virtual Random* getRandom(long long seed);
     virtual Biome* getBiome(const BlockPos& pos, BiomeSource* source);
     virtual void setFromRawData(arrayWithLength<unsigned char> data);
     virtual void reSyncLighting();

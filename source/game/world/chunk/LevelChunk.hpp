@@ -217,7 +217,7 @@ public:
     virtual int getBlocksAndData(arrayWithLength<unsigned char>* output, int x, int y, int z, int width, int height, int depth, int flags, bool extra);
     static void blockUpdatedCallback(int x, int y, int z, void* data, int value);
     virtual int setBlocksAndData(arrayWithLength<unsigned char> input, int x, int y, int z, int width, int height, int depth, int flags, bool extra);
-    virtual Random getRandom(long long seed);
+    virtual Random* getRandom(long long seed);
     virtual bool isEmpty();
     static void staticCtor();
     void postProcess();
@@ -247,6 +247,7 @@ public:
     virtual void compressData();
     void setChunkVersion(int version);
     void swapEntities(LevelChunk* chunk);
+    static bool touchedSky;
     static int PackBlockPos(const BlockPos& pos);
     static BlockPos UnpackBlockPos(short packed);
     static void CreateNewThreadStorage();

@@ -185,6 +185,7 @@ void Chunk::rebuild(unsigned int* count)
 
     Tesselator* tesselator = Tesselator::getInstance();
     BufferBuilder* builder = tesselator->getBuilder();
+    LevelChunk::touchedSky = false;
     int listBase = levelRenderer->mDisplayList + globalIndex * 3;
 
     static unsigned short cachedElements[65536];

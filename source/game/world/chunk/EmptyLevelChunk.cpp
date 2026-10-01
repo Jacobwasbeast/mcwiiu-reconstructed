@@ -16,10 +16,6 @@ EmptyLevelChunk::EmptyLevelChunk(Level* level, int x, int z)
     mChunkFlags = TERRAIN_POPULATED_ALL;
 }
 
-EmptyLevelChunk::~EmptyLevelChunk()
-{
-}
-
 bool EmptyLevelChunk::isAt(int x, int z)
 {
     return x == this->x && z == this->z;
@@ -173,14 +169,12 @@ int EmptyLevelChunk::setBlocksAndData(arrayWithLength<unsigned char>, int x, int
     return length;
 }
 
-Random EmptyLevelChunk::getRandom(long long seed)
+Random* EmptyLevelChunk::getRandom(long long seed)
 {
     long long levelSeed = getLevel()->getSeed();
-    long long chunkSeed = levelSeed + (long long)(x * x) * 0x4c1906LL +
-                          (long long)x * 0x5ac0dbLL +
-                          (long long)(z * z) * 0x4307a7LL +
-                          (long long)z * 0x5f24fLL;
-    return Random(chunkSeed ^ seed);
+    long long chunkSeed = levelSeed + (long long)(x * x * 0x4c1906) + (long long)(x * 0x5ac0db) +
+                          (long long)(z * z * 0x4307a7) + (long long)(z * 0x5f24f);
+    return new Random(chunkSeed ^ seed);
 }
 
 bool EmptyLevelChunk::isEmpty()

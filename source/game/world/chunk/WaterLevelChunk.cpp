@@ -7,23 +7,11 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/chunk/ChunkPrimer.hpp"
 
-static long long signedProduct32(int lhs, int rhs)
-{
-    unsigned int bits = static_cast<unsigned int>(lhs) * static_cast<unsigned int>(rhs);
-    return (bits & 0x80000000U) != 0
-        ? static_cast<long long>(bits) - 0x100000000LL
-        : static_cast<long long>(bits);
-}
-
 WaterLevelChunk::WaterLevelChunk(Level* level, ChunkPrimer* primer, int x, int z)
     : LevelChunk(level, primer, x, z)
 {
     mDontSave = true;
     mChunkFlags = TERRAIN_POPULATED_ALL;
-}
-
-WaterLevelChunk::~WaterLevelChunk()
-{
 }
 
 bool WaterLevelChunk::isAt(int x, int z)
@@ -164,14 +152,12 @@ int WaterLevelChunk::setBlocksAndData(arrayWithLength<unsigned char>, int x, int
     return result;
 }
 
-Random WaterLevelChunk::getRandom(long long seed)
+Random* WaterLevelChunk::getRandom(long long seed)
 {
     long long levelSeed = level->getSeed();
-    long long mixedSeed = levelSeed + signedProduct32(x, x) * 0x4c1906LL +
-                          signedProduct32(x, 0x5ac0db) +
-                          signedProduct32(z, z) * 0x4307a7LL +
-                          signedProduct32(z, 0x5f24f);
-    return Random(mixedSeed ^ seed);
+    long long mixedSeed = levelSeed + (long long)(x * x * 0x4c1906) + (long long)(x * 0x5ac0db) +
+                          (long long)(z * z * 0x4307a7) + (long long)(z * 0x5f24f);
+    return new Random(mixedSeed ^ seed);
 }
 
 Biome* WaterLevelChunk::getBiome(const BlockPos&, BiomeSource*)
