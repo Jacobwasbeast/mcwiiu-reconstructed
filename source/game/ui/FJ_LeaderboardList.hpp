@@ -45,7 +45,7 @@ public:
     void InitLeaderboard(int focusRank, int totalEntries, int numColumns);
     void SetColumnIcon(int column, int icon);
     void ResetLeaderboard();
-    void TouchHighlightEntry(unsigned int index);
+    void TouchHighlightEntry(int index);
     void SetTouchFocus(int x, int y, bool dragging);
     void FocusOnFirstEntry();
     void AddDataSet(bool update, int rank, int displayRank, const std::wstring& gamertag, bool singleValue,

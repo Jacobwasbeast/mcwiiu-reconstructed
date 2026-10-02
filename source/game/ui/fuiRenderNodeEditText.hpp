@@ -122,7 +122,7 @@ public:
     void setText(const std::wstring&);
     void appendText(const std::wstring&);
     void setHTMLText(const std::wstring&);
-    void setAutoSize(int);
+    void setAutoSize(TextFieldAutoSize);
     fuiRect getCharBoundaries(int);
     float getTextHeight() const { return m_textHeight; }
     std::wstring createWordWrappedString(std::wstring, fuiFontSet*, float, float);

@@ -58,9 +58,9 @@ public:
     virtual void ReInit();
     virtual void clearList();
 
-    bool CanTouchFocus(int x, int y);
+    unsigned int CanTouchFocus(int x, int y);
     void SetTouchFocus(int x, int y, bool focus);
-    bool CanTouchTrigger(int x, int y);
+    unsigned int CanTouchTrigger(int x, int y);
     void addElement(UIControl::eUIControlType type, int index);
     void clearElements();
     int getListIndex(int index);

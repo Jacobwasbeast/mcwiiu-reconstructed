@@ -1,4 +1,5 @@
 #include "game/ui/UIComponent_TutorialPopup.hpp"
+#include "game/minigame/Tutorial.hpp"
 #include "game/core/StringIds.hpp"
 
 #include <cwchar>
@@ -53,10 +54,9 @@ UIComponent_TutorialPopup::~UIComponent_TutorialPopup()
 
 void UIComponent_TutorialPopup::SetVisible(bool visible)
 {
-    if (m_layer != 0)
-        m_layer->showComponent(0, static_cast<EUIScene>(getSceneType()), visible);
+    m_layer->showComponent(0, EUIScene_TutorialPopup, visible);
     if (visible && m_showTitleTimer)
-        addTimer(0, 7000);
+        addTimer(0, gTutorialVisibleTime);
 }
 
 void UIComponent_TutorialPopup::setupIconHolder(EIcons icon)
@@ -350,7 +350,7 @@ void UIComponent_TutorialPopup::UpdateTutorialPopup()
 
 bool UIComponent_TutorialPopup::IsVisible()
 {
-    return m_layer != 0 && m_layer->isComponentVisible(static_cast<EUIScene>(getSceneType()));
+    return m_layer->isComponentVisible(EUIScene_TutorialPopup);
 }
 
 unsigned int UIComponent_TutorialPopup::mapElementsAndNames()

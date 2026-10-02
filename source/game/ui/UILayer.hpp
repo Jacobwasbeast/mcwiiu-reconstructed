@@ -151,6 +151,7 @@ private:
     friend class UIGroup;
     friend class UIScene_FullscreenProgress;
     friend class UIControl_Touch;
+    friend class UIControl_GridList;
 };
 
 #endif

@@ -326,11 +326,11 @@ void FJ_LeaderboardList::ResetLeaderboard()
     m_lastCachedRank = -1;
 }
 
-void FJ_LeaderboardList::TouchHighlightEntry(unsigned int index)
+void FJ_LeaderboardList::TouchHighlightEntry(int index)
 {
-    if (index < m_entries.size())
+    if (static_cast<unsigned int>(index) < m_entries.size())
     {
-        if (index != static_cast<unsigned int>(m_highlightEntry))
+        if (index != m_highlightEntry)
         {
             m_highlightEntry = index;
             getStage()->setFocus(m_entries[index]);

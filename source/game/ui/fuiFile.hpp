@@ -50,7 +50,7 @@ struct fuiFile
 
     fuiFile();
     ~fuiFile();
-    int addDataRegion(unsigned int count, int stride, unsigned char** cursor, void (*swap)(void*));
+    int addDataRegion(unsigned int count, unsigned int stride, unsigned char** cursor, void (*swap)(void*));
     unsigned int load(arrayWithLength<unsigned char> bytes, int fileIndex);
     unsigned int resolveReferences(fuiFile* other);
     void dumpUnresolvedReferences();

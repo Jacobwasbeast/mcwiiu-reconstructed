@@ -3,6 +3,7 @@
 #include "game/core/ConsoleUIController.hpp"
 #include "game/ui/FJ_FuiNode.hpp"
 #include "game/ui/FJ_List2D.hpp"
+#include "game/ui/UILayer.hpp"
 #include "game/ui/UIScene.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 
@@ -21,27 +22,26 @@ UIControl_GridList::~UIControl_GridList()
     }
 }
 
-bool UIControl_GridList::CanTouchFocus(int x, int y)
+unsigned int UIControl_GridList::CanTouchFocus(int x, int y)
 {
-    FJ_FuiNode* node = m_fuiRenderNode->getFuiNode();
-    if (node->isFJ_List2D())
-        return node->asFJ_List2D()->CanTouchFocus(x, y);
-    return false;
+    unsigned int result = 0;
+    if (m_fuiRenderNode->getFuiNode()->isFJ_List2D())
+        result = m_fuiRenderNode->getFuiNode()->asFJ_List2D()->CanTouchFocus(x, y);
+    return result;
 }
 
 void UIControl_GridList::SetTouchFocus(int x, int y, bool focus)
 {
-    FJ_FuiNode* node = m_fuiRenderNode->getFuiNode();
-    if (node->isFJ_List2D())
-        node->asFJ_List2D()->SetTouchFocus(x, y, focus);
+    if (m_fuiRenderNode->getFuiNode()->isFJ_List2D())
+        m_fuiRenderNode->getFuiNode()->asFJ_List2D()->SetTouchFocus(x, y, focus);
 }
 
-bool UIControl_GridList::CanTouchTrigger(int x, int y)
+unsigned int UIControl_GridList::CanTouchTrigger(int x, int y)
 {
-    FJ_FuiNode* node = m_fuiRenderNode->getFuiNode();
-    if (node->isFJ_List2D())
-        return node->asFJ_List2D()->CanTouchTrigger(x, y);
-    return false;
+    unsigned int result = 0;
+    if (m_fuiRenderNode->getFuiNode()->isFJ_List2D())
+        result = m_fuiRenderNode->getFuiNode()->asFJ_List2D()->CanTouchTrigger(x, y);
+    return result;
 }
 
 void UIControl_GridList::addElement(UIControl::eUIControlType type, int index)
@@ -83,18 +83,24 @@ void UIControl_GridList::setupControl(UIScene* scene, fuiRenderNode* node, const
 
 void UIControl_GridList::clearList()
 {
-    m_fuiRenderNode->getFuiNode()->asFJ_List2D()->removeAllItems();
+    static_cast<FJ_List2D*>(m_fuiRenderNode->getFuiNode())->removeAllItems();
     clearElements();
 }
 
 void UIControl_GridList::init(int controlId)
 {
     m_controlId = controlId;
-    FJ_List2D* list = m_fuiRenderNode->getFuiNode()->asFJ_List2D();
-    list->Init(controlId);
-    int sceneType = m_scene->getSceneType();
-    if (sceneType == 4 || (sceneType > 5 && sceneType < 8))
+    static_cast<FJ_List2D*>(m_fuiRenderNode->getFuiNode())->Init(controlId);
+    int layerId = m_scene->m_layer->m_layerId;
+    switch (layerId) {
+    case 4:
+    case 6:
+    case 7:
         gConsoleUIController.TouchBoxAdd(this, m_scene);
+        break;
+    default:
+        break;
+    }
 }
 
 void UIControl_GridList::ReInit()
@@ -102,7 +108,7 @@ void UIControl_GridList::ReInit()
     UIControl::ReInit();
     init(m_controlId);
     clearElements();
-    m_pendingUpdates.erase(m_pendingUpdates.begin(), m_pendingUpdates.end());
+    m_pendingUpdates.clear();
 }
 
 void UIControl_GridList::tick()
@@ -114,13 +120,13 @@ void UIControl_GridList::tick()
         delete *update;
         ++update;
     }
-    m_pendingUpdates.erase(m_pendingUpdates.begin(), m_pendingUpdates.end());
+    m_pendingUpdates.clear();
 }
 
 void UIControl_GridList::setCurrentSelection(int selection, bool immediate)
 {
     if (immediate) {
-        m_fuiRenderNode->getFuiNode()->asFJ_List2D()->HighlightItem(selection);
+        static_cast<FJ_List2D*>(m_fuiRenderNode->getFuiNode())->HighlightItem(selection);
         return;
     }
     m_pendingUpdates.push_back(new PendingSetCurrentSelection(this, selection));
@@ -129,7 +135,8 @@ void UIControl_GridList::setCurrentSelection(int selection, bool immediate)
 void UIControl_GridList::EnableItem(int item, bool enabled, bool immediate)
 {
     if (immediate) {
-        m_fuiRenderNode->getFuiNode()->asFJ_List2D()->EnableItem(getListIndex(item), enabled);
+        int listIndex = getListIndex(item);
+        static_cast<FJ_List2D*>(m_fuiRenderNode->getFuiNode())->EnableItem(listIndex, enabled);
         return;
     }
     m_pendingUpdates.push_back(new PendingSetEnable(this, item, enabled));

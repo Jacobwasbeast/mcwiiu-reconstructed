@@ -21,7 +21,7 @@ class UIScene_HorseInventoryMenu : public UIScene_AbstractContainerMenu,
     friend class UIControl_MinecraftHorse;
 
 public:
-    UIScene_HorseInventoryMenu(int type, void* data, UILayer* layer);
+    UIScene_HorseInventoryMenu(int player, void* data, UILayer* layer);
     virtual ~UIScene_HorseInventoryMenu();
 
     virtual bool IsSectionSlotList(IUIScene_AbstractContainerMenu::ESceneSection section);
@@ -53,8 +53,8 @@ public:
     virtual int getSceneType();
 
 private:
-    boost::shared_ptr<Container> m_container;
     boost::shared_ptr<Container> m_playerInventory;
+    boost::shared_ptr<Container> m_container;
     boost::shared_ptr<AbstractHorse> m_horse;
     UIControl_SlotList m_saddleSlot;
     UIControl_SlotList m_armorSlot;

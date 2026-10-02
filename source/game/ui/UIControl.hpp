@@ -10,6 +10,7 @@ class UIControl
 {
     friend class ConsoleUIController;
     friend class UIScene;
+    friend class UIScene_FullscreenProgress;
 
 public:
     enum eUIControlType

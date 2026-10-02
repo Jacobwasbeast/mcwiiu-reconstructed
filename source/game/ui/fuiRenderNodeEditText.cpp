@@ -1063,16 +1063,16 @@ void fuiRenderNodeEditText::setHTMLText(const std::wstring& text)
     }
 }
 
-void fuiRenderNodeEditText::setAutoSize(int autoSize)
+void fuiRenderNodeEditText::setAutoSize(TextFieldAutoSize autoSize)
 {
-    if (m_autoSize != static_cast<TextFieldAutoSize>(autoSize))
+    if (m_autoSize != autoSize)
     {
         if (m_textSet)
         {
             autoSizeBounds();
             m_dirty = true;
         }
-        m_autoSize = static_cast<TextFieldAutoSize>(autoSize);
+        m_autoSize = autoSize;
     }
 }
 

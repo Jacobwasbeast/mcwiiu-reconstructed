@@ -60,7 +60,7 @@ fuiFile::~fuiFile()
     delete[] data;
 }
 
-int fuiFile::addDataRegion(unsigned int count, int stride, unsigned char** cursor, void (*swap)(void*))
+int fuiFile::addDataRegion(unsigned int count, unsigned int stride, unsigned char** cursor, void (*swap)(void*))
 {
     int first = 0;
     if (count != 0)

@@ -1,5 +1,6 @@
 #include "game/ui/UIScene_GameModeScoreboardMenu.hpp"
 #include "game/core/StringIds.hpp"
+#include "game/core/StringConversion.hpp"
 
 #include <stdio.h>
 #include <wchar.h>
@@ -8,6 +9,7 @@
 #include "game/core/ClientMasterGameMode.hpp"
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/L10N.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/MG01ScoreboardLayout.hpp"
 #include "game/core/MG02ScoreboardLayout.hpp"
@@ -36,25 +38,31 @@
 #include "game/core/GameSettings.hpp"
 #include "game/core/PIXNamedEvents.hpp"
 
-std::wstring _toString(int value);
-
 UIScene_GameModeScoreboardMenu::UIScene_GameModeScoreboardMenu(int type, void* data, UILayer* layer)
-    : IUIScene_PlayerList(), UIScene(type, layer), m_statsPending(false), m_awardPanel(), m_mainPanel(), m_killBar(),
+    : IUIScene_PlayerList(), UIScene(type, layer), m_awardPanel(), m_mainPanel(), m_killBar(),
       m_playerTitleLabel(), m_stat1Label(), m_stat2Label(), m_stat3Label(), m_stat4Label(), m_stat5Label(),
-      m_killedByLabel(), m_gamertagLabel(), m_playerList()
+      m_killedByLabel(), m_gamertagLabel()
 {
+    m_statsPending = false;
     int* options = static_cast<int*>(data);
     initialiseMovie();
     m_scoreboardType = static_cast<EScoreboardType>(options[1]);
     delete options;
-    if (!CGameNetworkManager::sInstance.IsInPublicJoinableGame())
-        m_canKickPlayers = 1;
-    else
+    if (CGameNetworkManager::sInstance.IsInPublicJoinableGame())
+    {
         m_canKickPlayers = m_scoreboardType == EScoreboardType_Award;
-    m_canVoteToKick = 0;
+        m_canVoteToKick = 0;
+    }
+    else
+    {
+        m_canKickPlayers = 1;
+        m_canVoteToKick = 0;
+    }
     if (m_scoreboardType == EScoreboardType_Award && !GetScoreboard()->HasStats())
         m_scoreboardType = EScoreboardType_Scoreboard;
-    if (Minecraft::InMiniGame(eMiniGameId_Tumble, true))
+    if (Minecraft::InMiniGame(eMiniGameId_Battle, true))
+        m_scoreboardLayout = new MG01ScoreboardLayout(m_scoreboardType);
+    else if (Minecraft::InMiniGame(eMiniGameId_Tumble, true))
         m_scoreboardLayout = new MG02ScoreboardLayout();
     else if (Minecraft::InMiniGame(eMiniGameId_Glide, true))
         m_scoreboardLayout = new MG03ScoreboardLayout(m_scoreboardType);
@@ -75,9 +83,9 @@ UIScene_GameModeScoreboardMenu::~UIScene_GameModeScoreboardMenu()
 
 std::wstring UIScene_GameModeScoreboardMenu::getMoviePath()
 {
-    if (g_pApp->GetLocalPlayerCount() < 2)
-        return std::wstring(L"GameModeScoreboard");
-    return std::wstring(L"GameModeScoreboardSplit");
+    if (gApp.GetLocalPlayerCount() > 1)
+        return std::wstring(L"GameModeScoreboardSplit");
+    return std::wstring(L"GameModeScoreboard");
 }
 
 unsigned int UIScene_GameModeScoreboardMenu::mapElementsAndNames()
@@ -128,9 +136,9 @@ void UIScene_GameModeScoreboardMenu::registerTexture(int index)
         return;
     wchar_t path[64];
     swprintf(path, 64, L"Graphics\\GameModeGraphics\\%ls.png", IScoreboardLayout::getIcon(index));
-    if (g_pApp->hasArchiveFile(std::wstring(path), false))
+    if (gApp.hasArchiveFile(std::wstring(path), false))
     {
-        arrayWithLength<unsigned char> data = g_pApp->getArchiveFile(std::wstring(path), false);
+        arrayWithLength<unsigned char> data = gApp.getArchiveFile(std::wstring(path), false);
         if (data.length != 0 && data.data != 0)
         {
             registerSubstitutionTexture(std::wstring(IScoreboardLayout::getIcon(index)), data.data,
@@ -146,7 +154,10 @@ void UIScene_GameModeScoreboardMenu::UpdateStats(const StatsUID& uid)
     if (uid != empty)
     {
         GameMedal* medal = GetScoreboard()->GetMedal(uid);
-        m_stat1Label.setLabel(UIString(medal == 0 ? IDS_MG_NO_MEDAL : medal->GetName()), false, false);
+        if (medal == 0)
+            m_stat1Label.setLabel(UIString(IDS_MG_NO_MEDAL), false, false);
+        else
+            m_stat1Label.setLabel(UIString(medal->GetName()), false, false);
         m_stat2Label.setLabel(UIString(m_scoreboardLayout->getLabel2(uid)), false, false);
         m_stat3Label.setLabel(UIString(m_scoreboardLayout->getLabel3(uid)), false, false);
         m_stat4Label.setLabel(UIString(m_scoreboardLayout->getLabel4(uid)), false, false);
@@ -159,13 +170,13 @@ void UIScene_GameModeScoreboardMenu::UpdateStats(const StatsUID& uid)
     else
     {
         m_playerTitleLabel.init(UIString(IDS_MG_PLAYERS_TITLE));
-        m_stat1Label.setLabel(UIString(L"%"), false, false);
-        m_stat2Label.setLabel(UIString(L"%"), false, false);
-        m_stat3Label.setLabel(UIString(L"%"), false, false);
-        m_stat4Label.setLabel(UIString(L"%"), false, false);
-        m_stat5Label.setLabel(UIString(L"%"), false, false);
+        m_stat1Label.setLabel(UIString(L""), false, false);
+        m_stat2Label.setLabel(UIString(L""), false, false);
+        m_stat3Label.setLabel(UIString(L""), false, false);
+        m_stat4Label.setLabel(UIString(L""), false, false);
+        m_stat5Label.setLabel(UIString(L""), false, false);
         m_killedByLabel.setLabel(UIString(IDS_MG_KILLED_BY), false, false);
-        m_gamertagLabel.setLabel(UIString(L"%"), false, false);
+        m_gamertagLabel.setLabel(UIString(L""), false, false);
     }
 }
 
@@ -186,10 +197,10 @@ void UIScene_GameModeScoreboardMenu::InitialiseScoreboard(INetworkPlayer* player
     StatsUID uid = StatsUID::NETWORKPLAYER_SUID(player);
     m_scoreboardLayout->Init(m_playerId);
     if (m_scoreboardType == EScoreboardType_Scoreboard)
-        m_playerTitleLabel.init(UIString(IDS_PLAYERS_INVITE));
+        m_playerTitleLabel.init(UIString(L10N::GetString(IDS_PLAYERS_INVITE)));
     else
     {
-        m_playerTitleLabel.init(UIString(IDS_PLAYERS));
+        m_playerTitleLabel.init(UIString(L10N::GetString(IDS_PLAYERS)));
         registerTexture(3);
         registerTexture(0x74);
         registerTexture(0x75);
@@ -197,8 +208,8 @@ void UIScene_GameModeScoreboardMenu::InitialiseScoreboard(INetworkPlayer* player
         registerTexture(0x70);
         registerTexture(0x71);
         registerTexture(0x72);
-        m_killBar.init(UIString(L"%"), 0, 0, 100, 0);
-        m_killBar.setLabel(UIString(L"%"), false, false);
+        m_killBar.init(UIString(L""), 0, 0, 100, 0);
+        m_killBar.setLabel(UIString(L""), false, false);
         m_killBar.setProgress(100);
         UpdateStats(uid);
     }
@@ -214,40 +225,54 @@ void UIScene_GameModeScoreboardMenu::InitialiseScoreboard(INetworkPlayer* player
     {
         INetworkPlayer* networkPlayer = CGameNetworkManager::sInstance.GetPlayerBySmallId(
             m_scoreboardLayout->getSmallIDOfPlayerAt(index));
+        StatsUID playerUid = StatsUID::NETWORKPLAYER_SUID(networkPlayer);
         if (networkPlayer == 0)
             continue;
-        StatsUID playerUid = StatsUID::NETWORKPLAYER_SUID(networkPlayer);
+        ClientScoreboard* scoreboard = GetScoreboard();
         m_playerList.addItem(m_scoreboardLayout->getNameOfPlayerAt(index),
                              m_scoreboardLayout->getColorStateOfPlayerAt(index),
                              m_scoreboardLayout->getVoiceStatusOfPlayerAt(index), true);
-        int icon = 0x6e;
         if (m_scoreboardType == EScoreboardType_Scoreboard)
-            icon = m_scoreboardLayout->GetEndBarIcon(m_scoreboardLayout->GetPlayer(index));
+        {
+            int icon = m_scoreboardLayout->GetEndBarIcon(m_scoreboardLayout->GetPlayer(index));
+            m_playerList.SetSlotTextureName(index, m_columnCount - 1,
+                                            std::wstring(IScoreboardLayout::getIcon(icon)), true);
+        }
         else
         {
-            GameMedal* medal = GetScoreboard()->GetMedal(playerUid);
-            if (medal != 0 && medal->GetId() >= 0)
+            GameMedal* medal = scoreboard->GetMedal(playerUid);
+            int medalIcon;
+            if (medal != 0 && (medalIcon = medal->GetId() + 0xc) >= 0xc)
             {
-                icon = medal->GetId() + 0xc;
-                registerTexture(icon);
+                registerTexture(medalIcon);
+                m_playerList.SetSlotTextureName(index, m_columnCount - 1,
+                                                std::wstring(IScoreboardLayout::getIcon(medalIcon)), true);
+            }
+            else
+            {
+                m_playerList.SetSlotTextureName(index, m_columnCount - 1,
+                                                std::wstring(IScoreboardLayout::getIcon(0x6e)), true);
             }
         }
-        m_playerList.SetSlotTextureName(index, m_columnCount - 1,
-                                        std::wstring(IScoreboardLayout::getIcon(icon)), true);
-        std::wstring slots[7];
-        for (int slot = 0; slot < 7; ++slot)
-            slots[slot] = m_scoreboardLayout->GetRowLabel(slot, playerUid, m_scoreboardType);
-        m_playerList.setSlotsText(index, slots[0], slots[1], slots[2], slots[3], slots[4],
-                                  slots[5], slots[6], true);
+        m_playerList.setSlotsText(index,
+                                  m_scoreboardLayout->GetRowLabel(0, playerUid, m_scoreboardType),
+                                  m_scoreboardLayout->GetRowLabel(1, playerUid, m_scoreboardType),
+                                  m_scoreboardLayout->GetRowLabel(2, playerUid, m_scoreboardType),
+                                  m_scoreboardLayout->GetRowLabel(3, playerUid, m_scoreboardType),
+                                  m_scoreboardLayout->GetRowLabel(4, playerUid, m_scoreboardType),
+                                  m_scoreboardLayout->GetRowLabel(5, playerUid, m_scoreboardType),
+                                  m_scoreboardLayout->GetRowLabel(6, playerUid, m_scoreboardType), true);
         if (playerUid == uid)
             selectedPlayer = static_cast<int>(index);
     }
     m_playerList.setCurrentSelection(selectedPlayer, false, true);
-    m_localPlayerCanModerate = player != 0 && player->IsHost();
+    m_localPlayerCanModerate = 0;
+    if (player != 0)
+        m_localPlayerCanModerate = player->IsHost();
     updateTooltips();
     if (controlHasFocus(0))
         m_playerList.setCurrentSelection(static_cast<int>(getControlChildFocus()), false, true);
-    m_playerList.UpdateControl();
+    GetMainPanel()->UpdateControl();
     gConsoleUIController.TouchBoxRebuild(this);
 }
 
@@ -273,26 +298,27 @@ void UIScene_GameModeScoreboardMenu::tick()
     if (m_statsPending)
     {
         ClientScoreboard* scoreboard = GetScoreboard();
-        GameMedal* medal;
         if (!m_scoreboardLayout->showLifeSpanProgress())
         {
             int progress = 0;
             std::wstring details = m_scoreboardLayout->GetCustomProgressDetails(m_selectedUid, progress);
             wchar_t format[64];
             swprintf(format, 64, L"<font color=\"#%08x\"><p align=center>",
-                     g_pApp->GetHTMLColour(eMinecraftColour_HTMLColor_White));
-            m_killBar.setLabel(UIString(std::wstring(format) + details + L"</p>"), false, false);
+                     gApp.GetHTMLColour(eMinecraftColour_HTMLColor_White));
+            {
+                std::wstring html = std::wstring(format).append(details);
+                details = html + L"</p>";
+            }
+            m_killBar.setLabel(UIString(details), false, false);
             m_killBar.setProgress(progress);
-            medal = scoreboard->GetMedal(m_selectedUid);
         }
         else
         {
-            const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
-            unsigned int rounds = miniGame->GetRoundCount();
+            int rounds = Minecraft::GetInstance()->GetMiniGame()->GetRoundCount();
             int totalRoundLength = 0;
             int totalLifeSpan = 0;
             unsigned int roundsSurvived = 0;
-            for (unsigned int round = 0; round < rounds; ++round)
+            for (int round = 0; round < rounds; ++round)
             {
                 totalRoundLength += scoreboard->GetRoundLength(round);
                 totalLifeSpan += scoreboard->GetLifeSpan(m_selectedUid, round);
@@ -308,9 +334,14 @@ void UIScene_GameModeScoreboardMenu::tick()
             details += L"%";
             wchar_t format[64];
             swprintf(format, 64, L"<font color=\"#%08x\"><p align=center>",
-                     g_pApp->GetHTMLColour(eMinecraftColour_HTMLColor_White));
-            m_killBar.setLabel(UIString(std::wstring(format) + details + L"</p>"), false, false);
+                     gApp.GetHTMLColour(eMinecraftColour_HTMLColor_White));
+            {
+                std::wstring html = std::wstring(format).append(details);
+                details = html + L"</p>";
+            }
+            m_killBar.setLabel(UIString(details), false, false);
             m_killBar.setProgress(progress);
+            const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
             if (!miniGame->HasMultipleRounds() && miniGame->GetLivesPerRound() == 1)
             {
                 std::wstring killer = scoreboard->GetKiller(m_selectedUid, -1, -1);
@@ -320,11 +351,19 @@ void UIScene_GameModeScoreboardMenu::tick()
             {
                 SetHasPlayerBeenKilled(roundsSurvived != rounds);
             }
-            medal = scoreboard->GetMedal(m_selectedUid);
         }
-        int icon = medal == 0 || medal->GetId() < 0 ? 0x6e : medal->GetId() + 0xc;
-        SetStatIconTextureName(0, std::wstring(IScoreboardLayout::getIcon(icon)));
-        m_statsPending = false;
+        GameMedal* medal = scoreboard->GetMedal(m_selectedUid);
+        int icon;
+        if (medal == 0 || (icon = medal->GetId() + 0xc) < 0xc)
+        {
+            SetStatIconTextureName(0, std::wstring(IScoreboardLayout::getIcon(0x6e)));
+            m_statsPending = false;
+        }
+        else
+        {
+            SetStatIconTextureName(0, std::wstring(IScoreboardLayout::getIcon(icon)));
+            m_statsPending = false;
+        }
     }
 }
 
@@ -332,15 +371,17 @@ bool UIScene_GameModeScoreboardMenu::CanKickPlayer(INetworkPlayer* player)
 {
     if (player == 0)
         return false;
-    boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = GetPlayer();
+    boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = Minecraft::GetInstance()->mLocalPlayers[m_playerId];
     bool permitted = m_localPlayerCanModerate != 0 || localPlayer->isModerator();
-    INetworkPlayer* host = CGameNetworkManager::sInstance.GetHostPlayer();
-    bool protectedPlayer = player->IsLocal() || player->IsSameSystem(host);
+    bool protectedPlayer = player->IsLocal() || player->IsSameSystem(CGameNetworkManager::sInstance.GetHostPlayer());
     if (m_canKickPlayers != 0)
         return permitted && !protectedPlayer;
     if (m_canVoteToKick != 0)
-        return !protectedPlayer && Minecraft::GetInstance()->GetClientMasterGameMode()->GetKickVote(
-                                       m_playerId, player->GetSmallId()) == 0;
+    {
+        unsigned char smallId = player->GetSmallId();
+        int kickVote = Minecraft::GetInstance()->GetClientMasterGameMode()->GetKickVote(m_playerId, smallId);
+        return !protectedPlayer && kickVote == 0;
+    }
     return false;
 }
 
@@ -349,9 +390,10 @@ void UIScene_GameModeScoreboardMenu::updateTooltips()
     int partyTooltip = -1;
     _XPARTY_USER_LIST users;
     users.count = 0;
-    if (XPartyGetUserList(&users) != 0 && users.count > 1 &&
-        !CGameNetworkManager::sInstance.IsLocalGame())
+    if (XPartyGetUserList(&users) != 0 && users.count > 1)
         partyTooltip = static_cast<int>(IDS_TOOLTIPS_INVITE_PARTY);
+    if (CGameNetworkManager::sInstance.IsLocalGame())
+        partyTooltip = -1;
 
     int selected = static_cast<int>(m_playerList.getCurrentSelection());
     if (selected < 0 || selected >= m_scoreboardLayout->GetPlayerCount() ||
@@ -366,12 +408,18 @@ void UIScene_GameModeScoreboardMenu::updateTooltips()
     unsigned int index = static_cast<unsigned int>(selected);
     INetworkPlayer* player = CGameNetworkManager::sInstance.GetPlayerBySmallId(
         m_scoreboardLayout->getSmallIDOfPlayerAt(index));
-    int kickTooltip = CanKickPlayer(player) ? static_cast<int>(IDS_TOOLTIPS_KICK) : -1;
-    int playerTooltip = IDS_TOOLTIPS_VIEW_GAMERCARD;
+    int kickTooltip = -1;
+    if (CanKickPlayer(player))
+        kickTooltip = static_cast<int>(IDS_TOOLTIPS_KICK);
     if (player != 0 && player->IsLocal() && player->GetUserIndex() == m_playerId)
-        playerTooltip = static_cast<int>(IDS_TOOLTIPS_VIEW_GAMERPROFILE);
+    {
+        gConsoleUIController.SetTooltips(m_playerId, kickTooltip, IDS_TOOLTIPS_BACK, partyTooltip,
+                                         IDS_TOOLTIPS_VIEW_GAMERPROFILE, -1, -1, -1, -1, -1, -1, -1, -1,
+                                         -1, -1, -1, -1, false, false);
+        return;
+    }
     gConsoleUIController.SetTooltips(m_playerId, kickTooltip, IDS_TOOLTIPS_BACK, partyTooltip,
-                                     playerTooltip, -1, -1, -1, -1, -1, -1, -1, -1,
+                                     IDS_TOOLTIPS_VIEW_GAMERCARD, -1, -1, -1, -1, -1, -1, -1, -1,
                                      -1, -1, -1, -1, false, false);
 }
 
@@ -410,30 +458,31 @@ void UIScene_GameModeScoreboardMenu::handleInput(int playerId, int action, bool 
             CGameNetworkManager::sInstance.IsLocalGame();
         break;
     case EControllerActions_MenuY:
-        if (pressed && m_playerList.hasFocus() && m_playerList.getItemCount() > 0)
+    {
+        int selected = static_cast<int>(m_playerList.getCurrentSelection());
+        if (pressed && m_playerList.hasFocus() && m_playerList.getItemCount() > 0 && selected >= 0)
         {
-            int selected = static_cast<int>(m_playerList.getCurrentSelection());
-            if (selected >= 0 && selected < m_scoreboardLayout->GetPlayerCount())
+            if (selected < m_scoreboardLayout->GetPlayerCount())
             {
-                unsigned int index = static_cast<unsigned int>(selected);
                 INetworkPlayer* player = CGameNetworkManager::sInstance.GetPlayerBySmallId(
-                    m_scoreboardLayout->getSmallIDOfPlayerAt(index));
+                    m_scoreboardLayout->getSmallIDOfPlayerAt(static_cast<unsigned int>(selected)));
                 if (player != 0)
                     player->GetUID() != PlayerUID(0);
             }
         }
         break;
-    case EControllerActions_MenuUp:
-    case EControllerActions_MenuDown:
-    case EControllerActions_MenuOk:
-        sendInputToMovie(action, repeat, pressed, released);
-        break;
+    }
     case EControllerActions_MenuCancel:
         if (pressed && !repeat)
         {
             gConsoleUIController.PlayUISFX(SoundEvents::UI_BACK);
             navigateBack();
         }
+        break;
+    case EControllerActions_MenuUp:
+    case EControllerActions_MenuDown:
+    case EControllerActions_MenuOk:
+        sendInputToMovie(action, repeat, pressed, released);
         break;
     }
 }
@@ -462,38 +511,51 @@ void UIScene_GameModeScoreboardMenu::handleReload()
     m_scoreboardLayout->ClearPlayersInfo();
     m_playerList.init(0);
     setScoreboardType(m_scoreboardType);
-    const int textures[] = { 0, 1, 0x6e, 4, 6, 7, 5, 0x73, 0x6f };
-    for (unsigned int index = 0; index < sizeof(textures) / sizeof(textures[0]); ++index)
-        registerTexture(textures[index]);
+    registerTexture(0);
+    registerTexture(1);
+    registerTexture(0x6e);
+    registerTexture(4);
+    registerTexture(6);
+    registerTexture(7);
+    registerTexture(5);
+    registerTexture(0x73);
+    registerTexture(0x6f);
     m_columnCount = static_cast<int>(m_scoreboardLayout->getNumberOfColumns());
     initNumColumns(m_columnCount);
     INetworkPlayer* player = CGameNetworkManager::sInstance.GetLocalPlayerByUserIndex(m_playerId);
-    m_initialisePending = player == 0;
-    if (player != 0)
+    if (player == 0)
+        m_initialisePending = 1;
+    else
+    {
+        m_initialisePending = 0;
         InitialiseScoreboard(player);
+    }
 }
 
 void UIScene_GameModeScoreboardMenu::handlePress(int controlId, int childId)
 {
-    if (controlId != 0 || (!m_canKickPlayers && !m_canVoteToKick) || childId < 0 ||
-        childId >= m_scoreboardLayout->GetPlayerCount())
-        return;
-    unsigned int index = static_cast<unsigned int>(childId);
-    if (!m_scoreboardLayout->doesExist(index))
-        return;
-    INetworkPlayer* player = CGameNetworkManager::sInstance.GetPlayerBySmallId(
-        m_scoreboardLayout->getSmallIDOfPlayerAt(index));
-    if (!CanKickPlayer(player))
-        return;
-    unsigned char* smallId = new unsigned char(m_scoreboardLayout->getSmallIDOfPlayerAt(index));
-    int parameters[2] = { static_cast<int>(IDS_CONFIRM_OK), static_cast<int>(IDS_CONFIRM_CANCEL) };
-    int message = Minecraft::InMiniGame(eMiniGameId_Any, true)
-                      ? static_cast<int>(0x2cf43e54)
-                      : static_cast<int>(IDS_UNLOCK_KICK_PLAYER);
-    gConsoleUIController.RequestAlertMessage(
-        IDS_UNLOCK_KICK_PLAYER_TITLE, message, parameters, 2, m_playerId,
-        IUIScene_PlayerList::KickPlayerReturned,
-        smallId, 0, true);
+    if (controlId == 0 && (m_canKickPlayers || m_canVoteToKick) && childId >= 0 &&
+        childId < m_scoreboardLayout->GetPlayerCount())
+    {
+        if (m_scoreboardLayout->doesExist(static_cast<unsigned int>(childId)))
+        {
+            INetworkPlayer* player = CGameNetworkManager::sInstance.GetPlayerBySmallId(
+                m_scoreboardLayout->getSmallIDOfPlayerAt(static_cast<unsigned int>(childId)));
+            if (CanKickPlayer(player))
+            {
+                unsigned char* smallId = new unsigned char(0);
+                *smallId = m_scoreboardLayout->getSmallIDOfPlayerAt(static_cast<unsigned int>(childId));
+                int parameters[2] = { static_cast<int>(IDS_CONFIRM_OK), static_cast<int>(IDS_CONFIRM_CANCEL) };
+                int message = Minecraft::InMiniGame(eMiniGameId_Any, true)
+                                  ? static_cast<int>(IDS_UNLOCK_KICK_PLAYER_MINIGAMES)
+                                  : static_cast<int>(IDS_UNLOCK_KICK_PLAYER);
+                gConsoleUIController.RequestAlertMessage(
+                    IDS_UNLOCK_KICK_PLAYER_TITLE, message, parameters, 2, m_playerId,
+                    IUIScene_PlayerList::KickPlayerReturned,
+                    smallId, 0, true);
+            }
+        }
+    }
 }
 
 void UIScene_GameModeScoreboardMenu::handleFocusChange(int focus, int childFocus)
@@ -501,15 +563,14 @@ void UIScene_GameModeScoreboardMenu::handleFocusChange(int focus, int childFocus
     if (focus == 0)
         m_playerList.updateChildFocus(childFocus);
     updateTooltips();
-    if (m_scoreboardType == EScoreboardType_Award)
+    if (m_scoreboardType == EScoreboardType_Award && m_scoreboardLayout->GetPlayerCount() > 0)
     {
         int selected = static_cast<int>(m_playerList.getCurrentSelection());
-        unsigned int index = static_cast<unsigned int>(selected);
         if (selected >= 0 && selected < m_scoreboardLayout->GetPlayerCount() &&
-            m_scoreboardLayout->doesExist(index))
+            m_scoreboardLayout->doesExist(static_cast<unsigned int>(selected)))
         {
             INetworkPlayer* player = CGameNetworkManager::sInstance.GetPlayerBySmallId(
-                m_scoreboardLayout->getSmallIDOfPlayerAt(index));
+                m_scoreboardLayout->getSmallIDOfPlayerAt(static_cast<unsigned int>(selected)));
             if (player != 0)
                 UpdateStats(StatsUID::NETWORKPLAYER_SUID(player));
         }
@@ -545,7 +606,8 @@ PlayerInfo* UIScene_GameModeScoreboardMenu::GetPlayer(int index)
 
 bool UIScene_GameModeScoreboardMenu::RemovePlayer(unsigned char smallId)
 {
-    return m_scoreboardLayout->RemovePlayer(FindPlayer(smallId));
+    int index = FindPlayer(smallId);
+    return m_scoreboardLayout->RemovePlayer(index);
 }
 
 void UIScene_GameModeScoreboardMenu::AddPlayer(unsigned char smallId)
@@ -561,54 +623,77 @@ UIControl_ButtonList* UIScene_GameModeScoreboardMenu::GetPlayerList()
 void UIScene_GameModeScoreboardMenu::UpdatePlayer(int index, PlayerInfo* oldInfo, PlayerInfo* newInfo)
 {
     IUIScene_PlayerList::UpdatePlayer(index, oldInfo, newInfo);
-    bool changed = hasAPlayerChanged();
-    if (changed)
+    if (hasAPlayerChanged())
     {
-        INetworkPlayer* player = CGameNetworkManager::sInstance.GetPlayerBySmallId(newInfo->smallId);
         if (m_scoreboardType == EScoreboardType_Scoreboard)
         {
-            int icon = m_scoreboardLayout->GetEndBarIcon(newInfo);
-            m_playerList.SetSlotTextureName(index, m_columnCount - 1,
-                                            std::wstring(IScoreboardLayout::getIcon(icon)), true);
-            std::wstring slots[7];
-            if (player != 0)
+            m_playerList.SetSlotTextureName(
+                index, m_columnCount - 1,
+                std::wstring(IScoreboardLayout::getIcon(m_scoreboardLayout->GetEndBarIcon(newInfo))), true);
+            INetworkPlayer* player = CGameNetworkManager::sInstance.GetPlayerBySmallId(newInfo->smallId);
+            if (player == 0)
+            {
+                m_playerList.setSlotsText(index, std::wstring(L""), std::wstring(L""), std::wstring(L""),
+                                          std::wstring(L""), std::wstring(L""), std::wstring(L""),
+                                          std::wstring(L""), true);
+            }
+            else
             {
                 StatsUID uid = StatsUID::NETWORKPLAYER_SUID(player);
-                for (int slot = 0; slot < 7; ++slot)
-                    slots[slot] = m_scoreboardLayout->GetRowLabel(
-                        slot, uid, m_scoreboardType);
+                m_playerList.setSlotsText(index,
+                                          m_scoreboardLayout->GetRowLabel(0, uid, m_scoreboardType),
+                                          m_scoreboardLayout->GetRowLabel(1, uid, m_scoreboardType),
+                                          m_scoreboardLayout->GetRowLabel(2, uid, m_scoreboardType),
+                                          m_scoreboardLayout->GetRowLabel(3, uid, m_scoreboardType),
+                                          m_scoreboardLayout->GetRowLabel(4, uid, m_scoreboardType),
+                                          m_scoreboardLayout->GetRowLabel(5, uid, m_scoreboardType),
+                                          m_scoreboardLayout->GetRowLabel(6, uid, m_scoreboardType), true);
             }
-            m_playerList.setSlotsText(index, slots[0], slots[1], slots[2], slots[3],
-                                      slots[4], slots[5], slots[6], true);
         }
-        else if (player != 0)
+        else
         {
-            StatsUID uid = StatsUID::NETWORKPLAYER_SUID(player);
-            GameMedal* medal = GetScoreboard()->GetMedal(uid);
-            int icon = medal == 0 || medal->GetId() < 0 ? 0x6e : medal->GetId() + 0xc;
-            if (medal != 0 && medal->GetId() >= 0)
-                registerTexture(icon);
-            m_playerList.SetSlotTextureName(index, m_columnCount - 1,
-                                            std::wstring(IScoreboardLayout::getIcon(icon)), true);
-            std::wstring slots[7];
-            for (int slot = 0; slot < 7; ++slot)
-                slots[slot] = m_scoreboardLayout->GetRowLabel(
-                    slot, uid, m_scoreboardType);
-            m_playerList.setSlotsText(index, slots[0], slots[1], slots[2], slots[3],
-                                      slots[4], slots[5], slots[6], true);
+            ClientScoreboard* scoreboard =
+                Minecraft::GetInstance()->mLocalPlayers[m_playerId]->GetLevel()->GetClientScoreboard();
+            std::wstring iconName(L"");
+            INetworkPlayer* player = CGameNetworkManager::sInstance.GetPlayerBySmallId(newInfo->smallId);
+            if (player != 0)
+            {
+                GameMedal* medal = scoreboard->GetMedal(StatsUID::NETWORKPLAYER_SUID(player));
+                int medalIcon;
+                if (medal == 0 || (medalIcon = medal->GetId() + 0xc) < 0xc)
+                {
+                    iconName = IScoreboardLayout::getIcon(0x6e);
+                }
+                else
+                {
+                    registerTexture(medalIcon);
+                    iconName = IScoreboardLayout::getIcon(medalIcon);
+                }
+                m_playerList.SetSlotTextureName(index, m_columnCount - 1, iconName, true);
+                m_playerList.setSlotsText(
+                    index,
+                    m_scoreboardLayout->GetRowLabel(0, StatsUID::NETWORKPLAYER_SUID(player), m_scoreboardType),
+                    m_scoreboardLayout->GetRowLabel(1, StatsUID::NETWORKPLAYER_SUID(player), m_scoreboardType),
+                    m_scoreboardLayout->GetRowLabel(2, StatsUID::NETWORKPLAYER_SUID(player), m_scoreboardType),
+                    m_scoreboardLayout->GetRowLabel(3, StatsUID::NETWORKPLAYER_SUID(player), m_scoreboardType),
+                    m_scoreboardLayout->GetRowLabel(4, StatsUID::NETWORKPLAYER_SUID(player), m_scoreboardType),
+                    m_scoreboardLayout->GetRowLabel(5, StatsUID::NETWORKPLAYER_SUID(player), m_scoreboardType),
+                    m_scoreboardLayout->GetRowLabel(6, StatsUID::NETWORKPLAYER_SUID(player), m_scoreboardType),
+                    true);
+            }
         }
     }
-    if (newInfo->colour != oldInfo->colour || changed)
+    if (newInfo->colour != oldInfo->colour || hasAPlayerChanged())
     {
         oldInfo->colour = newInfo->colour;
         m_playerList.setPlayerIcon(index, newInfo->colour);
     }
-    if (newInfo->voiceStatus != oldInfo->voiceStatus || changed)
+    if (newInfo->voiceStatus != oldInfo->voiceStatus || hasAPlayerChanged())
     {
         oldInfo->voiceStatus = newInfo->voiceStatus;
         m_playerList.setVOIPIcon(index, newInfo->voiceStatus);
     }
-    m_scoreboardLayout->UpdatePlayer(index, oldInfo, newInfo, changed);
+    m_scoreboardLayout->UpdatePlayer(index, oldInfo, newInfo, hasAPlayerChanged());
 }
 
 int UIScene_GameModeScoreboardMenu::getSceneType()

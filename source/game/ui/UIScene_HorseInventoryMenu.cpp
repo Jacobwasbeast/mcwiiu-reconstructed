@@ -6,6 +6,7 @@
 
 #include "game/entity/mob/AbstractChestedHorse.hpp"
 #include "game/entity/mob/AbstractHorse.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/L10N.hpp"
 #include "game/core/Minecraft.hpp"
@@ -21,8 +22,6 @@
 #include "game/world/generation/Player.hpp"
 #include "game/ui/UILayer.hpp"
 
-extern CMinecraftApp* g_pApp;
-
 namespace
 {
 struct HorseMenuArgs
@@ -30,56 +29,65 @@ struct HorseMenuArgs
     boost::shared_ptr<Inventory> inventory;
     boost::shared_ptr<Container> container;
     boost::shared_ptr<AbstractHorse> horse;
-    int player;
-    bool splitscreen;
 };
 }
 
-UIScene_HorseInventoryMenu::UIScene_HorseInventoryMenu(int type, void* data, UILayer* layer)
-    : UIScene_AbstractContainerMenu(type, layer), m_container(),
-      m_playerInventory(), m_horse(), m_saddleSlot(), m_armorSlot(), m_donkeyInventoryList(),
-      m_horseLabel(), m_horseControl()
+UIScene_HorseInventoryMenu::UIScene_HorseInventoryMenu(int player, void* data, UILayer* layer)
+    : UIScene_AbstractContainerMenu(player, layer), m_playerInventory(), m_container(), m_horse(),
+      m_saddleSlot(), m_armorSlot(), m_donkeyInventoryList(), m_horseLabel(), m_horseControl()
 {
     initialiseMovie();
 
     HorseMenuArgs* args = static_cast<HorseMenuArgs*>(data);
-    m_playerId = args->player;
-    m_playerInventory = boost::dynamic_pointer_cast<Container>(args->inventory);
-    m_container = args->container;
     m_horse = args->horse;
-    const std::wstring containerName = m_container->getName();
-    if (containerName.empty())
+    if (!args->container->getName().empty())
     {
-        if (m_horse->GetType() == EntityType::LLAMA)
-            m_horseLabel.init(UIString(L10N::GetString(IDS_LLAMA)));
-        else if (m_horse->GetType() == EntityType::DONKEY)
-            m_horseLabel.init(UIString(L10N::GetString(IDS_DONKEY)));
-        else if (m_horse->GetType() == EntityType::MULE)
-            m_horseLabel.init(UIString(L10N::GetString(IDS_MULE)));
-        else if (m_horse->GetType() == EntityType::SKELETON_HORSE)
-            m_horseLabel.init(UIString(L10N::GetString(IDS_SKELETON_HORSE)));
-        else
-            m_horseLabel.init(UIString(L10N::GetString(0x2568bd7a)));
+        m_horseLabel.init(UIString(args->container->getName()));
     }
     else
     {
-        m_horseLabel.init(UIString(containerName));
+        const bool llama = m_horse->GetType() == EntityType::LLAMA;
+        if (llama)
+            m_horseLabel.init(UIString(L10N::GetString(IDS_LLAMA)));
+        else
+        {
+            const bool donkey = m_horse->GetType() == EntityType::DONKEY;
+            if (donkey)
+                m_horseLabel.init(UIString(L10N::GetString(IDS_DONKEY)));
+            else
+            {
+                const bool mule = m_horse->GetType() == EntityType::MULE;
+                if (mule)
+                    m_horseLabel.init(UIString(L10N::GetString(IDS_MULE)));
+                else
+                {
+                    const bool skeleton = m_horse->GetType() == EntityType::SKELETON_HORSE;
+                    if (skeleton)
+                        m_horseLabel.init(UIString(L10N::GetString(IDS_SKELETON_HORSE)));
+                    else
+                        m_horseLabel.init(UIString(L10N::GetString(IDS_CONTAINER_ANIMAL)));
+                }
+            }
+        }
     }
-    boost::shared_ptr<Player> player = Minecraft::GetInstance()->mLocalPlayers[m_playerId];
-    m_menu = new HorseInventoryMenu(
-        m_playerInventory, m_container, m_horse, player);
-
-    if (Minecraft::GetInstance()->mGameModes[m_playerId] != 0)
+    m_playerInventory = args->inventory;
+    Minecraft* minecraft = Minecraft::GetInstance();
+    if (minecraft->mGameModes[player] != 0)
     {
-        Tutorial* tutorial = Minecraft::GetInstance()->mGameModes[m_playerId]->getTutorial();
+        Tutorial* tutorial = Minecraft::GetInstance()->mGameModes[player]->getTutorial();
         if (tutorial != 0)
         {
             m_previousTutorialState = tutorial->currentState;
             tutorial->changeTutorialState(eTutorial_State_HorseMenu, this);
         }
     }
+    m_playerId = player;
+    m_menu = new HorseInventoryMenu(boost::dynamic_pointer_cast<Container>(args->inventory),
+                                    args->container, args->horse,
+                                    minecraft->mLocalPlayers[m_playerId]);
     setUp(false);
     delete args;
+    m_ignoreInput = false;
 }
 
 UIScene_HorseInventoryMenu::~UIScene_HorseInventoryMenu()
@@ -89,61 +97,95 @@ UIScene_HorseInventoryMenu::~UIScene_HorseInventoryMenu()
 bool UIScene_HorseInventoryMenu::IsSectionSlotList(
     IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    if (section >= IUIScene_AbstractContainerMenu::ESceneSection_HorseHotbar &&
-        section <= IUIScene_AbstractContainerMenu::ESceneSection_HorseInventory)
+    switch (section)
+    {
+    case IUIScene_AbstractContainerMenu::ESceneSection_HorseChest:
+    {
+        const bool slotList = (m_horse->GetType() & EntityType::ABSTRACT_CHESTED_HORSE) == EntityType::ABSTRACT_CHESTED_HORSE &&
+            boost::static_pointer_cast<AbstractChestedHorse>(m_horse)->hasChest();
+        return slotList;
+    }
+    case IUIScene_AbstractContainerMenu::ESceneSection_HorseArmor:
+        return m_horse->wearsArmor();
+    case IUIScene_AbstractContainerMenu::ESceneSection_HorseSaddle:
+        return m_horse->canBeSaddled();
+    case IUIScene_AbstractContainerMenu::ESceneSection_HorseHotbar:
+    case IUIScene_AbstractContainerMenu::ESceneSection_HorseInventory:
         return true;
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_HorseChest)
-        return m_horse && boost::static_pointer_cast<AbstractChestedHorse>(m_horse)->hasChest();
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_HorseArmor)
-        return m_horse && m_horse->wearsArmor();
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_HorseSaddle)
-        return m_horse && m_horse->isSaddled();
-    return false;
+    default:
+        return false;
+    }
 }
 
 unsigned int UIScene_HorseInventoryMenu::IsVisible(
     IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_HorseHotbar ||
-        section == IUIScene_AbstractContainerMenu::ESceneSection_HorseInventory)
+    switch (section)
+    {
+    case IUIScene_AbstractContainerMenu::ESceneSection_HorseChest:
+    {
+        const bool visible = (m_horse->GetType() & EntityType::ABSTRACT_CHESTED_HORSE) == EntityType::ABSTRACT_CHESTED_HORSE &&
+            boost::static_pointer_cast<AbstractChestedHorse>(m_horse)->hasChest();
+        return visible;
+    }
+    case IUIScene_AbstractContainerMenu::ESceneSection_HorseArmor:
+        return m_horse->wearsArmor();
+    case IUIScene_AbstractContainerMenu::ESceneSection_HorseSaddle:
+        return m_horse->canBeSaddled();
+    case IUIScene_AbstractContainerMenu::ESceneSection_HorseHotbar:
+    case IUIScene_AbstractContainerMenu::ESceneSection_HorseInventory:
         return 1;
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_HorseChest)
-        return (m_horse->GetType() & EntityType::ABSTRACT_CHESTED_HORSE) == EntityType::ABSTRACT_CHESTED_HORSE &&
-            boost::static_pointer_cast<AbstractChestedHorse>(m_horse)->hasChest() ? 1U : 0U;
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_HorseArmor)
-        return m_horse->wearsArmor() ? 1U : 0U;
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_HorseSaddle)
-        return m_horse->canBeSaddled() ? 1U : 0U;
-    return 0;
+    default:
+        return 0;
+    }
 }
 
 unsigned int UIScene_HorseInventoryMenu::getSectionColumns(
     IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_HorseHotbar ||
-        section == IUIScene_AbstractContainerMenu::ESceneSection_HorseInventory)
-        return 9;
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_HorseChest)
-        return m_horse ? static_cast<unsigned int>(boost::static_pointer_cast<AbstractChestedHorse>(m_horse)->getInventoryColumns()) : 0;
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_HorseArmor ||
-        section == IUIScene_AbstractContainerMenu::ESceneSection_HorseSaddle)
-        return 1;
-    return 0;
+    unsigned int columns = 0;
+    switch (section)
+    {
+    case IUIScene_AbstractContainerMenu::ESceneSection_HorseArmor:
+    case IUIScene_AbstractContainerMenu::ESceneSection_HorseSaddle:
+        columns = 1;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_HorseChest:
+        columns = boost::static_pointer_cast<AbstractChestedHorse>(m_horse)->getInventoryColumns();
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_HorseHotbar:
+    case IUIScene_AbstractContainerMenu::ESceneSection_HorseInventory:
+        columns = 9;
+        break;
+    default:
+        break;
+    }
+    return columns;
 }
 
 unsigned int UIScene_HorseInventoryMenu::getSectionRows(
     IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_HorseHotbar)
-        return 1;
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_HorseInventory)
-        return GetInventoryRows();
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_HorseChest)
-        return 3;
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_HorseArmor ||
-        section == IUIScene_AbstractContainerMenu::ESceneSection_HorseSaddle)
-        return 1;
-    return 0;
+    unsigned int rows = 0;
+    switch (section)
+    {
+    case IUIScene_AbstractContainerMenu::ESceneSection_HorseArmor:
+    case IUIScene_AbstractContainerMenu::ESceneSection_HorseSaddle:
+        rows = 1;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_HorseChest:
+        rows = 3;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_HorseInventory:
+        rows = GetInventoryRows();
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_HorseHotbar:
+        rows = 1;
+        break;
+    default:
+        break;
+    }
+    return rows;
 }
 
 unsigned int UIScene_HorseInventoryMenu::GetSectionAndSlotInDirection(
@@ -211,18 +253,30 @@ unsigned int UIScene_HorseInventoryMenu::GetSectionAndSlotInDirection(
 void UIScene_HorseInventoryMenu::GetPositionOfSection(
     IUIScene_AbstractContainerMenu::ESceneSection section, _UIVec2D* position)
 {
-    if (!position)
-        return;
-    UIControl* control = 0;
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_HorseHotbar) control = &m_hotbarList;
-    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_HorseInventory) control = &m_inventoryList;
-    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_HorseChest) control = &m_donkeyInventoryList;
-    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_HorseArmor) control = &m_armorSlot;
-    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_HorseSaddle) control = &m_saddleSlot;
-    if (control)
+    switch (section)
     {
-        position->x = static_cast<float>(control->getXPos());
-        position->y = static_cast<float>(control->getYPos());
+    case IUIScene_AbstractContainerMenu::ESceneSection_HorseHotbar:
+        position->x = static_cast<float>(m_hotbarList.getXPos());
+        position->y = static_cast<float>(m_hotbarList.getYPos());
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_HorseInventory:
+        position->x = static_cast<float>(m_inventoryList.getXPos());
+        position->y = static_cast<float>(m_inventoryList.getYPos());
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_HorseChest:
+        position->x = static_cast<float>(m_donkeyInventoryList.getXPos());
+        position->y = static_cast<float>(m_donkeyInventoryList.getYPos());
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_HorseArmor:
+        position->x = static_cast<float>(m_armorSlot.getXPos());
+        position->y = static_cast<float>(m_armorSlot.getYPos());
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_HorseSaddle:
+        position->x = static_cast<float>(m_saddleSlot.getXPos());
+        position->y = static_cast<float>(m_saddleSlot.getYPos());
+        break;
+    default:
+        break;
     }
 }
 
@@ -230,20 +284,47 @@ void UIScene_HorseInventoryMenu::GetItemScreenData(
     IUIScene_AbstractContainerMenu::ESceneSection section, int slot,
     _UIVec2D* position, _UIVec2D* size)
 {
-    UIControl* control = 0;
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_HorseHotbar) control = &m_hotbarList;
-    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_HorseInventory) control = &m_inventoryList;
-    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_HorseChest) control = &m_donkeyInventoryList;
-    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_HorseArmor) control = &m_armorSlot;
-    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_HorseSaddle) control = &m_saddleSlot;
-    const unsigned int columns = getSectionColumns(section);
-    const unsigned int rows = getSectionRows(section);
-    if (control && position && size && columns && rows)
+    float width;
+    float height;
+    switch (section)
     {
-        size->x = static_cast<float>(control->getWidth() / static_cast<float>(columns));
-        size->y = static_cast<float>(control->getHeight() / static_cast<float>(rows));
-        position->x = static_cast<float>(slot % static_cast<int>(columns)) * size->x;
-        position->y = static_cast<float>(slot / static_cast<int>(columns)) * size->y;
+    case IUIScene_AbstractContainerMenu::ESceneSection_HorseSaddle:
+        width = m_saddleSlot.getWidth();
+        height = m_saddleSlot.getHeight();
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_HorseArmor:
+        width = m_armorSlot.getWidth();
+        height = m_armorSlot.getHeight();
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_HorseChest:
+        width = m_donkeyInventoryList.getWidth();
+        height = m_donkeyInventoryList.getHeight();
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_HorseInventory:
+        width = m_inventoryList.getWidth();
+        height = m_inventoryList.getHeight();
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_HorseHotbar:
+        width = m_hotbarList.getWidth();
+        height = m_hotbarList.getHeight();
+        break;
+    default:
+        break;
+    }
+    if (IsSectionSlotList(section))
+    {
+        const int rows = getSectionRows(section);
+        const int columns = getSectionColumns(section);
+        size->y = height / rows;
+        size->x = width / columns;
+        position->x = (slot % columns) * size->x;
+        position->y = (slot / columns) * size->y;
+    }
+    else
+    {
+        GetPositionOfSection(section, position);
+        size->x = width;
+        size->y = height;
     }
 }
 
@@ -255,15 +336,19 @@ void UIScene_HorseInventoryMenu::handleSectionClick(
 int UIScene_HorseInventoryMenu::getSectionStartOffset(
     IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_HorseHotbar)
-        return m_horse ? m_horse->getInventorySize() + 27 : 27;
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_HorseInventory)
-        return m_horse ? m_horse->getInventorySize() : 0;
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_HorseChest)
-        return 2;
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_HorseArmor)
+    switch (section)
+    {
+    case IUIScene_AbstractContainerMenu::ESceneSection_HorseArmor:
         return 1;
-    return 0;
+    case IUIScene_AbstractContainerMenu::ESceneSection_HorseChest:
+        return 2;
+    case IUIScene_AbstractContainerMenu::ESceneSection_HorseInventory:
+        return m_horse->getInventorySize();
+    case IUIScene_AbstractContainerMenu::ESceneSection_HorseHotbar:
+        return m_horse->getInventorySize() + 27;
+    default:
+        return 0;
+    }
 }
 
 void UIScene_HorseInventoryMenu::setSectionSelectedSlot(
@@ -305,33 +390,31 @@ void UIScene_HorseInventoryMenu::SetInventoryType(int type)
 {
     fuiRenderNode* root = m_movie->getRootNode();
     FJ_HorseInventoryMenu* document = static_cast<FJ_HorseInventoryMenu*>(root->getFuiNode());
-    if (document)
-        document->SetInventoryType(type);
+    document->SetInventoryType(type);
 }
 
 void UIScene_HorseInventoryMenu::SetHasInventory(bool hasInventory)
 {
     fuiRenderNode* root = m_movie->getRootNode();
     FJ_HorseInventoryMenu* document = static_cast<FJ_HorseInventoryMenu*>(root->getFuiNode());
-    if (document)
-        document->SetHasInventory(hasInventory);
+    document->SetHasInventory(hasInventory);
 }
 
 void UIScene_HorseInventoryMenu::SetHasSaddle(bool hasSaddle)
 {
     fuiRenderNode* root = m_movie->getRootNode();
     FJ_HorseInventoryMenu* document = static_cast<FJ_HorseInventoryMenu*>(root->getFuiNode());
-    if (document)
-        document->SetCanHaveSaddle(hasSaddle);
+    document->SetCanHaveSaddle(hasSaddle);
 }
 
 void UIScene_HorseInventoryMenu::setUp(bool enabled)
 {
-    const bool hasChest = (m_horse->GetType() & EntityType::ABSTRACT_CHESTED_HORSE) == EntityType::ABSTRACT_CHESTED_HORSE &&
-        boost::static_pointer_cast<AbstractChestedHorse>(m_horse)->hasChest();
-    const int sectionCount = hasChest
-        ? boost::static_pointer_cast<AbstractChestedHorse>(m_horse)->getInventoryColumns() * 3 + 2
-        : 2;
+    int sectionCount = 2;
+    if ((m_horse->GetType() & EntityType::ABSTRACT_CHESTED_HORSE) == EntityType::ABSTRACT_CHESTED_HORSE &&
+        boost::static_pointer_cast<AbstractChestedHorse>(m_horse)->hasChest())
+    {
+        sectionCount = boost::static_pointer_cast<AbstractChestedHorse>(m_horse)->getInventoryColumns() * 3 + 2;
+    }
     Initialize(enabled, m_playerId,
                                  m_menu, true, sectionCount,
                                  IUIScene_AbstractContainerMenu::ESceneSection_HorseHotbar,
@@ -342,15 +425,12 @@ void UIScene_HorseInventoryMenu::setUp(bool enabled)
     }
     else
     {
-        int type = 0;
-        if (m_horse->GetType() == EntityType::LLAMA)
-            type = 2;
-        SetInventoryType(type);
+        const bool llama = m_horse->GetType() == EntityType::LLAMA;
+        SetInventoryType(llama ? 2 : 0);
         m_armorSlot.addSlots(1, 1);
     }
-    const bool hasInventory = (m_horse->GetType() & EntityType::ABSTRACT_CHESTED_HORSE) == EntityType::ABSTRACT_CHESTED_HORSE &&
-        boost::static_pointer_cast<AbstractChestedHorse>(m_horse)->hasChest();
-    if (hasInventory)
+    if ((m_horse->GetType() & EntityType::ABSTRACT_CHESTED_HORSE) == EntityType::ABSTRACT_CHESTED_HORSE &&
+        boost::static_pointer_cast<AbstractChestedHorse>(m_horse)->hasChest())
     {
         SetHasInventory(true);
         const int columns = boost::static_pointer_cast<AbstractChestedHorse>(m_horse)->getInventoryColumns();
@@ -369,24 +449,35 @@ void UIScene_HorseInventoryMenu::setUp(bool enabled)
 unsigned int UIScene_HorseInventoryMenu::mapElementsAndNames()
 {
     UIScene_AbstractContainerMenu::mapElementsAndNames();
+    m_movie->getRootNode();
     fuiRenderNode* panel = m_mainPanel.getFuiRenderNode();
-    m_saddleSlot.setupControl(this, panel, std::string("SlotSaddle"));
-    m_controls.push_back(&m_saddleSlot);
-    m_armorSlot.setupControl(this, panel, std::string("SlotArmor"));
-    m_controls.push_back(&m_armorSlot);
-    m_donkeyInventoryList.setupControl(this, panel, std::string("DonkeyInventoryList"));
-    m_controls.push_back(&m_donkeyInventoryList);
-    m_horseLabel.setupControl(this, panel, std::string("horseinventoryText"));
-    m_controls.push_back(&m_horseLabel);
-    m_horseControl.setupControl(this, panel, std::string("iggy_horse"));
-    m_controls.push_back(&m_horseControl);
+    {
+        m_saddleSlot.setupControl(this, panel, std::string("SlotSaddle"));
+        m_controls.push_back(&m_saddleSlot);
+    }
+    {
+        m_armorSlot.setupControl(this, panel, std::string("SlotArmor"));
+        m_controls.push_back(&m_armorSlot);
+    }
+    {
+        m_donkeyInventoryList.setupControl(this, panel, std::string("DonkeyInventoryList"));
+        m_controls.push_back(&m_donkeyInventoryList);
+    }
+    {
+        m_horseLabel.setupControl(this, panel, std::string("horseinventoryText"));
+        m_controls.push_back(&m_horseLabel);
+    }
+    {
+        m_horseControl.setupControl(this, panel, std::string("iggy_horse"));
+        m_controls.push_back(&m_horseControl);
+    }
     return 1;
 }
 
 std::wstring UIScene_HorseInventoryMenu::getMoviePath()
 {
-    return g_pApp->GetLocalPlayerCount() < 2 ? std::wstring(L"HorseInventoryMenu") :
-        std::wstring(L"HorseInventoryMenuSplit");
+    return gApp.GetLocalPlayerCount() > 1 ? std::wstring(L"HorseInventoryMenuSplit") :
+        std::wstring(L"HorseInventoryMenu");
 }
 
 void UIScene_HorseInventoryMenu::handleReload()
@@ -397,19 +488,32 @@ void UIScene_HorseInventoryMenu::handleReload()
 UIControl* UIScene_HorseInventoryMenu::getSection(
     IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_HorseHotbar)
-        return &m_hotbarList;
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_HorseInventory)
-        return &m_inventoryList;
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_HorseChest)
-        return (m_horse->GetType() & EntityType::ABSTRACT_CHESTED_HORSE) == EntityType::ABSTRACT_CHESTED_HORSE &&
-            boost::static_pointer_cast<AbstractChestedHorse>(m_horse)->hasChest()
-            ? &m_donkeyInventoryList : 0;
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_HorseArmor)
-        return m_horse->wearsArmor() ? &m_armorSlot : 0;
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_HorseSaddle)
-        return m_horse->canBeSaddled() ? &m_saddleSlot : 0;
-    return 0;
+    UIControl* control = 0;
+    switch (section)
+    {
+    case IUIScene_AbstractContainerMenu::ESceneSection_HorseSaddle:
+        if (m_horse->canBeSaddled())
+            control = &m_saddleSlot;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_HorseArmor:
+        if (m_horse->wearsArmor())
+            control = &m_armorSlot;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_HorseChest:
+        if ((m_horse->GetType() & EntityType::ABSTRACT_CHESTED_HORSE) == EntityType::ABSTRACT_CHESTED_HORSE &&
+            boost::static_pointer_cast<AbstractChestedHorse>(m_horse)->hasChest())
+            control = &m_donkeyInventoryList;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_HorseInventory:
+        control = &m_inventoryList;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_HorseHotbar:
+        control = &m_hotbarList;
+        break;
+    default:
+        break;
+    }
+    return control;
 }
 
 void UIScene_HorseInventoryMenu::customDraw(const char* name, fuiRect* rect)

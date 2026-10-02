@@ -84,7 +84,7 @@ void FJ_LeaderboardEntry::SetData(FJ_LeaderboardList::CLeaderboardEntry* pEntry)
         m_rankText->setText(L"");
     else
         m_rankText->setText(_toString(pEntry->rank));
-    m_rankText->setAutoSize(1);
+    m_rankText->setAutoSize(TextFieldAutoSizeLeft);
     m_rankText->setScaleX(scale / getScaleX());
     m_rankText->setScaleY(scale / getScaleY());
     m_rankText->setX(m_rankTextWidth * 0.5f - m_rankText->getWidth() * 0.5f);
@@ -93,7 +93,7 @@ void FJ_LeaderboardEntry::SetData(FJ_LeaderboardList::CLeaderboardEntry* pEntry)
         m_gamertagText->setText(L"");
     else
         m_gamertagText->setText(pEntry->gamertag);
-    m_gamertagText->setAutoSize(1);
+    m_gamertagText->setAutoSize(TextFieldAutoSizeLeft);
     m_gamertagText->setScaleX(scale / getScaleX());
     m_gamertagText->setScaleY(scale / getScaleY());
     m_gamertagText->setX(m_gamertagTextWidth * 0.5f - m_gamertagText->getWidth() * 0.5f);
@@ -103,7 +103,7 @@ void FJ_LeaderboardEntry::SetData(FJ_LeaderboardList::CLeaderboardEntry* pEntry)
         for (i = 0; i < 7; ++i)
             m_columnText[i]->setVisibility(false);
         m_columnText[0]->setText(pEntry->values[0]);
-        m_columnText[0]->setAutoSize(1);
+        m_columnText[0]->setAutoSize(TextFieldAutoSizeLeft);
         m_columnText[0]->setScaleX(scale / getScaleX());
         m_columnText[0]->setScaleY(scale / getScaleY());
         m_columnText[0]->setVisibility(true);
@@ -116,7 +116,7 @@ void FJ_LeaderboardEntry::SetData(FJ_LeaderboardList::CLeaderboardEntry* pEntry)
         else
         {
             m_columnText[i]->setText(pEntry->values[i]);
-            m_columnText[i]->setAutoSize(1);
+            m_columnText[i]->setAutoSize(TextFieldAutoSizeLeft);
             m_columnText[i]->setScaleX(scale / getScaleX());
             m_columnText[i]->setScaleY(scale / getScaleY());
             m_columnText[i]->setVisibility(true);

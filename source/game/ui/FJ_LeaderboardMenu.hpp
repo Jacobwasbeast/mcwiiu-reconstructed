@@ -15,7 +15,7 @@ public:
     static FJ_Document* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();
     virtual void ASConstructor();
-    static void _keyDownHandler(FJ_FuiNode* node, FJ_Event* event);
+    void _keyDownHandler(FJ_FuiNode* node, FJ_Event* event);
     virtual void keyDownHandler(FJ_Event* event);
     void SetPlatformButtons(int platform);
 };

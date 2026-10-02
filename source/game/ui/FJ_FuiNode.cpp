@@ -132,7 +132,7 @@ const char* FJ_FuiNode::getName()
 
 fuiRect FJ_FuiNode::getRect(FJ_FuiNode* pNode)
 {
-    return pNode->m_pRenderNode->getBounds();
+    return m_pRenderNode->getBounds();
 }
 
 int FJ_FuiNode::getTabIndex()

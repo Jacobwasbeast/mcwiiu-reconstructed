@@ -201,7 +201,7 @@ SelectWorldScreen::WorldSelectionList::WorldSelectionList(SelectWorldScreen* scr
 
 int SelectWorldScreen::WorldSelectionList::getNumberOfItems()
 {
-    return mScreen->mLevelList == NULL ? 0 : (int)mScreen->mLevelList->size();
+    return (int)mScreen->mLevelList->size();
 }
 
 void SelectWorldScreen::WorldSelectionList::selectItem(int index, bool doubleClick)
@@ -224,7 +224,7 @@ bool SelectWorldScreen::WorldSelectionList::isSelectedItem(int index)
 
 int SelectWorldScreen::WorldSelectionList::getMaxPosition()
 {
-    return getNumberOfItems() * 36;
+    return (int)mScreen->mLevelList->size() * 36;
 }
 
 void SelectWorldScreen::WorldSelectionList::renderBackground()
@@ -242,8 +242,8 @@ void SelectWorldScreen::WorldSelectionList::renderItem(int index, int x, int y, 
     FILETIME fileTime;
     SYSTEMTIME systemTime;
     long long lastPlayed = summary->getLastPlayed() * 10000;
-    fileTime.low = (unsigned long)lastPlayed;
-    fileTime.high = (unsigned long)(lastPlayed >> 32);
+    fileTime.dwLowDateTime = (unsigned int)lastPlayed;
+    fileTime.dwHighDateTime = (unsigned int)(lastPlayed >> 32);
     FileTimeToSystemTime(&fileTime, &systemTime);
     wchar_t date[20];
     swprintf(date, 20, L"%d/%d/%d %02d:%02d", systemTime.month, systemTime.day,

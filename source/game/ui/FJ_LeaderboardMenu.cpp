@@ -36,7 +36,7 @@ void FJ_LeaderboardMenu::ASConstructor()
 
 void FJ_LeaderboardMenu::_keyDownHandler(FJ_FuiNode* node, FJ_Event* event)
 {
-    node->asFJ_Document()->keyDownHandler(event);
+    static_cast<FJ_Document*>(node)->keyDownHandler(event);
 }
 
 void FJ_LeaderboardMenu::keyDownHandler(FJ_Event* event)

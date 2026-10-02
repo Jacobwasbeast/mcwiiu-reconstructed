@@ -28,6 +28,7 @@ class UIScene
     friend class ConsoleUIController;
     friend class UILayer;
     friend class UIControl_Touch;
+    friend class UIControl_GridList;
     friend class UIControl_EnchantmentButton;
 
 public:
