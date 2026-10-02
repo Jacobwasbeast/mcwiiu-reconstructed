@@ -14,15 +14,14 @@ HumanoidArmorLayer::HumanoidArmorLayer(LivingEntityRenderer* renderer)
 
 void HumanoidArmorLayer::createArmorModels()
 {
-    ModelDefinition definition;
-    mModelArmorInner = new HumanoidModel(definition, 0.5f, true);
-    mModelArmor = new HumanoidModel(definition, 1.0f, true);
+    mModelArmorInner = new HumanoidModel(ModelDefinition(), 0.5f, true);
+    mModelArmor = new HumanoidModel(ModelDefinition(), 1.0f, true);
 }
 
 void HumanoidArmorLayer::setPartVisibility(Model* model, const EquipmentSlot* slot)
 {
     HumanoidModel* humanoidModel = static_cast<HumanoidModel*>(model);
-    humanoidModel->setAllVisible(false);
+    hideAllArmor(model);
     switch (slot->getEIndex())
     {
     case EquipmentSlot::eIndex_Feet:
@@ -42,8 +41,6 @@ void HumanoidArmorLayer::setPartVisibility(Model* model, const EquipmentSlot* sl
     case EquipmentSlot::eIndex_Head:
         humanoidModel->mHead->mShow = true;
         humanoidModel->mHat->mShow = true;
-        break;
-    default:
         break;
     }
     humanoidModel->mArmourSlot = slot;

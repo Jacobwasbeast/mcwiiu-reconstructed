@@ -16,10 +16,6 @@ EndGatewayFeature::EndGatewayFeature(int portalNumber)
 {
 }
 
-EndGatewayFeature::~EndGatewayFeature()
-{
-}
-
 bool EndGatewayFeature::place(Level* level, Random& random, const BlockPos& origin)
 {
     MutableBlockPos position(0, 0, 0);

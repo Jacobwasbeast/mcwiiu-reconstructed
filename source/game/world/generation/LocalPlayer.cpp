@@ -806,7 +806,7 @@ void LocalPlayer::aiStep()
     Material* currentMaterial = mLevel->getBlockState(currentBlock)->getMaterial();
     Material* aboveMaterial = mLevel->getBlockState(aboveBlock)->getMaterial();
     Material* belowMaterial = mLevel->getBlockState(belowBlock)->getMaterial();
-    Vec3* viewVector = getViewVector(0.0f);
+    Vec3* viewVector = getViewVector(1.0f);
     const float viewAngle = std::acos(static_cast<float>(viewVector->x * viewVector->x +
                                                           viewVector->z * viewVector->z)) *
                             57.295776f;
@@ -888,23 +888,26 @@ void LocalPlayer::aiStep()
 
     const bool inWaterForInput = isInWater();
     const bool waterControlHeld = (mButtonsDown & 0x80) != 0;
-    if (inWaterForInput && waterControlHeld && mInput->mSwimming && !mOnGround)
+    if (inWaterForInput && waterControlHeld && mInput->mSwimming)
     {
-        goDownInWater();
+        if (!mOnGround)
+            goDownInWater();
     }
-    else if (inWaterForInput && !mInput->mSwimming && !mOnGround)
+    else if (inWaterForInput && !mOnGround)
     {
         mInput->mSwimming = false;
-        mInput->mDown = false;
+        mInput->mSneaking = false;
     }
+
+    const float creativeFlyVerticalSpeed = 0.57f;
 
     if (mAbilities.mFlying && isControlledCamera())
     {
         if ((mButtonsDown & 0x80) != 0)
-            mYd -= 0.15;
+            mYd -= creativeFlyVerticalSpeed;
         if (mInput->mJumping)
         {
-            mYd += 0.15;
+            mYd += creativeFlyVerticalSpeed;
             mNoJumpDelay = 0;
         }
 
@@ -929,7 +932,7 @@ void LocalPlayer::aiStep()
     }
     else
     {
-        mGlideDistance = 0.5699999928474426;
+        mGlideDistance = creativeFlyVerticalSpeed;
         mNoJumpDelay = 0;
     }
 

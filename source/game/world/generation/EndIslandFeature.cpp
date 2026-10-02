@@ -9,10 +9,6 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
 
-EndIslandFeature::~EndIslandFeature()
-{
-}
-
 bool EndIslandFeature::place(Level* level, Random& random, const BlockPos& origin)
 {
     float radius = (float)random.nextInt(3) + 4.0f;

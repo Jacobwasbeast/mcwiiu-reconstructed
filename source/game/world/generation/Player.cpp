@@ -1,6 +1,8 @@
 #include "game/world/generation/Player.hpp"
 #include "game/core/Minecart.hpp"
 #include "game/entity/mob/AbstractHorse.hpp"
+#include "game/core/Pig.hpp"
+#include "game/entity/mob/Horse.hpp"
 #include "game/entity/projectile/Arrow.hpp"
 #include "game/core/Difficulty.hpp"
 #include "game/server/ServerLevel.hpp"
@@ -2209,15 +2211,24 @@ void Player::rideTick()
     mCameraYaw = 0.0f;
     checkRidingStatistiscs(mX - x, mY - y, mZ - z);
 
-    bool ridingPig = isPassenger() && getVehicle()->GetType() == EntityType::PIG;
-    bool ridingHorse = !ridingPig && isPassenger() && getVehicle()->GetType() == EntityType::HORSE;
-    if (ridingPig || ridingHorse)
+    if (isPassenger() && getVehicle()->GetType() == EntityType::PIG)
     {
-        boost::shared_ptr<LivingEntity> mount = boost::static_pointer_cast<LivingEntity>(getVehicle());
-        mYBodyRot = mount->mYBodyRot;
-        if (mYBodyRot - mYBodyRotO < -180.0f)
+        boost::shared_ptr<Pig> pig = boost::static_pointer_cast<Pig>(getVehicle());
+        float bodyRot = pig->mYBodyRot;
+        mYBodyRot = bodyRot;
+        while (bodyRot - mYBodyRotO < -180.0f)
             mYBodyRotO -= 360.0f;
-        if (mYBodyRot - mYBodyRotO >= 180.0f)
+        while (bodyRot - mYBodyRotO >= 180.0f)
+            mYBodyRotO += 360.0f;
+    }
+    else if (isPassenger() && getVehicle()->GetType() == EntityType::HORSE)
+    {
+        boost::shared_ptr<Horse> horse = boost::static_pointer_cast<Horse>(getVehicle());
+        float bodyRot = horse->mYBodyRot;
+        mYBodyRot = bodyRot;
+        while (bodyRot - mYBodyRotO < -180.0f)
+            mYBodyRotO -= 360.0f;
+        while (bodyRot - mYBodyRotO >= 180.0f)
             mYBodyRotO += 360.0f;
     }
 }

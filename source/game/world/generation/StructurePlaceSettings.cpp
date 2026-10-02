@@ -17,26 +17,6 @@
 
 #include <stdint.h>
 
-static std::wstring mirrorName(Mirror* mirror)
-{
-    if (mirror == Mirror::LEFT_RIGHT)
-        return L"mirror_left_right";
-    if (mirror == Mirror::FRONT_BACK)
-        return L"mirror_front_back";
-    return L"no_mirror";
-}
-
-static std::wstring rotationName(Rotation* rotation)
-{
-    if (rotation == Rotation::CLOCKWISE_90)
-        return L"rotate_90";
-    if (rotation == Rotation::CLOCKWISE_180)
-        return L"rotate_180";
-    if (rotation == Rotation::COUNTERCLOCKWISE_90)
-        return L"rotate_270";
-    return L"rotate_0";
-}
-
 StructurePlaceSettings::StructurePlaceSettings()
 {
     mMirror = Mirror::NONE;
@@ -60,36 +40,40 @@ StructurePlaceSettings::~StructurePlaceSettings()
 
 void StructurePlaceSettings::read(DataInputStream* input)
 {
-    if (StructureFeatureIO::getVersion() > 2)
+    if (StructureFeatureIO::getVersion() < 3)
+        return;
+
+    mMirror = Mirror::VALUES[input->readInt()];
+    mRotation = Rotation::VALUES[input->readInt()];
+    mIgnoreEntities = input->readBoolean();
+    mIgnoreStructureBlocks = input->readBoolean();
+    mIntegrity = input->readFloat();
+    mSeed = input->readLong();
+
+    if (input->readBoolean())
     {
-        mMirror = Mirror::byName(input->readUTF());
-        mRotation = Rotation::byName(input->readUTF());
-        mIgnoreEntities = input->readBoolean();
-        mIgnoreStructureBlocks = input->readBoolean();
-        mIntegrity = input->readFloat();
-        mSeed = input->readLong();
+        if (mBoundingBox == NULL)
+            mBoundingBox = new BoundingBox();
+        mBoundingBox->read(input);
+    }
 
-        if (input->readBoolean())
-        {
-            if (mBoundingBox == NULL)
-                mBoundingBox = new BoundingBox();
-            mBoundingBox->read(input);
-        }
+    if (StructureFeatureIO::getVersion() < 4)
+        return;
 
-        if (StructureFeatureIO::getVersion() > 3)
-        {
-            mPlaceWaterBelowSeaLevel = input->readBoolean();
-            int count = input->readInt();
-            for (int i = 0; i < count; ++i)
-                addSwapAuxValue(input->readInt(), input->readInt());
-        }
+    mPlaceWaterBelowSeaLevel = input->readBoolean();
+    int count = input->readInt();
+    for (int i = 0; i < count; ++i)
+    {
+        int blockId = input->readInt();
+        int auxValue = input->readInt();
+        mSwapAuxValues[blockId] = auxValue;
     }
 }
 
 void StructurePlaceSettings::write(DataOutputStream* output)
 {
-    output->writeUTF(mirrorName(mMirror));
-    output->writeUTF(rotationName(mRotation));
+    output->writeInt(mMirror->getType());
+    output->writeInt(mRotation->getType());
     output->writeBoolean(mIgnoreEntities);
     output->writeBoolean(mIgnoreStructureBlocks);
     output->writeFloat(mIntegrity);
@@ -120,8 +104,8 @@ StructurePlaceSettings* StructurePlaceSettings::copy()
     settings->mIntegrity = mIntegrity;
     settings->mRandom = mRandom;
     settings->mSeed = mSeed;
-    settings->mSwapAuxValues = mSwapAuxValues;
     settings->mPlaceWaterBelowSeaLevel = mPlaceWaterBelowSeaLevel;
+    settings->mSwapAuxValues = mSwapAuxValues;
     return settings;
 }
 
@@ -152,17 +136,22 @@ Random* StructurePlaceSettings::getRandom(const BlockPos* position, bool& genera
     }
 
     generated = true;
-    if (mSeed < 0 && position != NULL)
+    if (mSeed < 0)
     {
-        uint32_t x = static_cast<uint32_t>(position->x);
-        uint32_t z = static_cast<uint32_t>(position->z);
-        uint32_t seed = x * x * 0x4c1906U + x * 0x5ac0dbU
-            + z * z * 0x4307a7U + z * 0x5f24fU;
-        int32_t signedSeed = static_cast<int32_t>(seed ^ 0x3ad8025fU);
-        return new Random(static_cast<long long>(signedSeed));
+        if (position != NULL)
+        {
+            uint32_t x = static_cast<uint32_t>(position->x);
+            uint32_t z = static_cast<uint32_t>(position->z);
+            uint32_t seed = x * x * 0x4c1906U + x * 0x5ac0dbU
+                + z * z * 0x4307a7U + z * 0x5f24fU;
+            int32_t signedSeed = static_cast<int32_t>(seed ^ 0x3ad8025fU);
+            return new Random(static_cast<long long>(signedSeed));
+        }
     }
-    if (mSeed != 0)
-        return new Random();
+    else if (mSeed != 0)
+    {
+        return new Random(mSeed);
+    }
     return new Random(System::processTimeInMilliSecs());
 }
 
@@ -172,13 +161,14 @@ Block* StructurePlaceSettings::getIgnoreBlock() { return mIgnoreBlock; }
 
 BoundingBox* StructurePlaceSettings::calculateBoundingBox(ChunkPos* chunkPos)
 {
+    BoundingBox* box = mBoundingBox;
     if (chunkPos != NULL)
     {
         delete mBoundingBox;
-        mBoundingBox = new BoundingBox(chunkPos->x * 16, 0, chunkPos->z * 16,
-                                       chunkPos->x * 16 + 15, 255, chunkPos->z * 16 + 15);
+        box = new BoundingBox(chunkPos->x * 16, 0, chunkPos->z * 16,
+                              chunkPos->x * 16 + 15, 255, chunkPos->z * 16 + 15);
     }
-    return mBoundingBox;
+    return box;
 }
 
 void StructurePlaceSettings::updateBoundingBoxFromChunkPos()
@@ -204,6 +194,19 @@ const BlockState* StructurePlaceSettings::getSwappedBlock(const BlockState* stat
 {
     Block* block = state->getBlock();
     int blockId = Block::getId(block);
+    bool isStrippedLog = block == Blocks::stripped_log_oak || block == Blocks::stripped_log_birch
+        || block == Blocks::stripped_log_acacia || block == Blocks::stripped_log_dark_oak
+        || block == Blocks::stripped_log_jungle || block == Blocks::stripped_log_spruce;
+    bool isStairs = blockId == BlockId::OAK_STAIRS || blockId == BlockId::STONE_STAIRS
+        || blockId == BlockId::BRICK_STAIRS || blockId == BlockId::STONE_BRICK_STAIRS
+        || blockId == BlockId::NETHER_BRICK_STAIRS || blockId == BlockId::SANDSTONE_STAIRS
+        || blockId == BlockId::SPRUCE_STAIRS || blockId == BlockId::BIRCH_STAIRS
+        || blockId == BlockId::JUNGLE_STAIRS || blockId == BlockId::QUARTZ_STAIRS
+        || blockId == BlockId::ACACIA_STAIRS || blockId == BlockId::DARK_OAK_STAIRS
+        || blockId == BlockId::RED_SANDSTONE_STAIRS || blockId == BlockId::PURPUR_STAIRS;
+    bool isTrapdoor = blockId == BlockId::TRAPDOOR
+        || (blockId >= BlockId::SPRUCE_TRAPDOOR && blockId <= BlockId::DARK_OAK_TRAPDOOR);
+
     boost::unordered_map<int, int>::const_iterator entry;
     int data;
     int key;
@@ -217,23 +220,11 @@ const BlockState* StructurePlaceSettings::getSwappedBlock(const BlockState* stat
         entry = mSwapAuxValues.find(key);
         if (entry == mSwapAuxValues.end())
             return state;
-        if (entry->second < 4)
-            return Blocks::log->getBlockState((data & 0xc) | entry->second);
-        return Blocks::log2->getBlockState((data & 0xc) | (entry->second - 4));
+        int replacement = mSwapAuxValues.at(key);
+        if (replacement < 4)
+            return Blocks::log->getBlockState((data & 0xc) | replacement);
+        return Blocks::log2->getBlockState((data & 0xc) | (replacement - 4));
     }
-
-    bool isStairs = blockId == BlockId::OAK_STAIRS || blockId == BlockId::STONE_STAIRS
-        || blockId == BlockId::BRICK_STAIRS || blockId == BlockId::STONE_BRICK_STAIRS
-        || blockId == BlockId::NETHER_BRICK_STAIRS || blockId == BlockId::SANDSTONE_STAIRS
-        || blockId == BlockId::SPRUCE_STAIRS || blockId == BlockId::BIRCH_STAIRS
-        || blockId == BlockId::JUNGLE_STAIRS || blockId == BlockId::QUARTZ_STAIRS
-        || blockId == BlockId::ACACIA_STAIRS || blockId == BlockId::DARK_OAK_STAIRS
-        || blockId == BlockId::RED_SANDSTONE_STAIRS || blockId == BlockId::PURPUR_STAIRS;
-    bool isTrapdoor = blockId == BlockId::TRAPDOOR
-        || (blockId >= BlockId::SPRUCE_TRAPDOOR && blockId <= BlockId::DARK_OAK_TRAPDOOR);
-    bool isStrippedLog = block == Blocks::stripped_log_oak || block == Blocks::stripped_log_spruce
-        || block == Blocks::stripped_log_birch || block == Blocks::stripped_log_jungle
-        || block == Blocks::stripped_log_acacia || block == Blocks::stripped_log_dark_oak;
 
     if (!isStairs && !block->mIsDoor && !block->mIsFence && !block->mIsFenceGate
         && !isTrapdoor && !isStrippedLog)
@@ -245,7 +236,7 @@ const BlockState* StructurePlaceSettings::getSwappedBlock(const BlockState* stat
             entry = mSwapAuxValues.find(key);
             if (entry == mSwapAuxValues.end())
                 return state;
-            return block->getBlockState((data & 8) | entry->second);
+            return block->getBlockState((data & 8) | mSwapAuxValues.at(key));
         }
         if (block != Blocks::planks)
             return state;
@@ -253,7 +244,7 @@ const BlockState* StructurePlaceSettings::getSwappedBlock(const BlockState* stat
         entry = mSwapAuxValues.find(key);
         if (entry == mSwapAuxValues.end())
             return state;
-        return block->getBlockState(entry->second);
+        return block->getBlockState(mSwapAuxValues.at(key));
     }
 
     if (blockId == BlockId::SPRUCE_STAIRS || blockId == BlockId::SPRUCE_FENCE_GATE
@@ -283,6 +274,7 @@ const BlockState* StructurePlaceSettings::getSwappedBlock(const BlockState* stat
     if (entry == mSwapAuxValues.end())
         return state;
 
+    int replacement = mSwapAuxValues.at(key);
     Block* door = Blocks::wooden_door;
     Block* fence = Blocks::fence;
     Block* fenceGate = Blocks::fence_gate;
@@ -290,7 +282,7 @@ const BlockState* StructurePlaceSettings::getSwappedBlock(const BlockState* stat
     Block* trapdoor = Blocks::trapdoor;
     Block* strippedLog = Blocks::stripped_log_oak;
 
-    if (entry->second == 1)
+    if (replacement == 1)
     {
         door = Blocks::spruce_door;
         fence = Blocks::spruce_fence;
@@ -299,7 +291,7 @@ const BlockState* StructurePlaceSettings::getSwappedBlock(const BlockState* stat
         trapdoor = Blocks::spruce_trapdoor;
         strippedLog = Blocks::stripped_log_spruce;
     }
-    else if (entry->second == 2)
+    else if (replacement == 2)
     {
         door = Blocks::birch_door;
         fence = Blocks::birch_fence;
@@ -308,7 +300,7 @@ const BlockState* StructurePlaceSettings::getSwappedBlock(const BlockState* stat
         trapdoor = Blocks::birch_trapdoor;
         strippedLog = Blocks::stripped_log_birch;
     }
-    else if (entry->second == 3)
+    else if (replacement == 3)
     {
         door = Blocks::jungle_door;
         fence = Blocks::jungle_fence;
@@ -317,7 +309,7 @@ const BlockState* StructurePlaceSettings::getSwappedBlock(const BlockState* stat
         trapdoor = Blocks::jungle_trapdoor;
         strippedLog = Blocks::stripped_log_jungle;
     }
-    else if (entry->second == 4)
+    else if (replacement == 4)
     {
         door = Blocks::acacia_door;
         fence = Blocks::acacia_fence;
@@ -326,7 +318,7 @@ const BlockState* StructurePlaceSettings::getSwappedBlock(const BlockState* stat
         trapdoor = Blocks::acacia_trapdoor;
         strippedLog = Blocks::stripped_log_acacia;
     }
-    else if (entry->second == 5)
+    else if (replacement == 5)
     {
         door = Blocks::dark_oak_door;
         fence = Blocks::dark_oak_fence;

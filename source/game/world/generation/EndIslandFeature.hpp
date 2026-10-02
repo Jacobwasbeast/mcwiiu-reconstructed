@@ -10,7 +10,6 @@ class Random;
 class EndIslandFeature : public Feature
 {
 public:
-    virtual ~EndIslandFeature();
     virtual bool place(Level* level, Random& random, const BlockPos& origin);
 };
 
