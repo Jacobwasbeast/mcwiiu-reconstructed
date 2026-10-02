@@ -2,6 +2,7 @@
 #define GAME_ENTITY_AI_MAKELOVEGOAL_HPP
 
 #include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
 #include <string>
 
 #include "game/entity/ai/Goal.hpp"
@@ -28,10 +29,10 @@ public:
 
 private:
     Villager* mVillager;
-    boost::shared_ptr<Villager> mPartner;
+    boost::weak_ptr<Villager> mPartner;
     Level* mLevel;
     int mRunningTicks;
-    boost::shared_ptr<Village> mVillage;
+    boost::weak_ptr<Village> mVillage;
 };
 
 #endif

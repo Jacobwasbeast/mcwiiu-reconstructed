@@ -58,7 +58,7 @@ void SwimMoveControl::tick()
     float speed = (float)(getSpeedModifier() * attributeSpeed);
     mMob->setSpeed(speed);
 
-    float pitch = (float)atan2(dy / distance, Mth::sqrt(horizontalSqr));
+    float pitch = (float)atan2(dy / distance, static_cast<double>(Mth::sqrt(horizontalSqr)));
     Vec3* rotation = Vec3::newTemp((double)(float)(pitch * -57.2957763671875f), (double)mMob->mYRot, 0.0);
     LookControl* lookControl = static_cast<LookControl*>(mMob->getLookControl());
     lookControl->setLookRotation(rotation, 5.0f, 10.0f);
