@@ -15,35 +15,14 @@ void UIControl_SlotList::addSlot(unsigned int slot)
     FJ_FuiNode* node = m_fuiRenderNode->getFuiNode();
     if (node == NULL)
         return;
-    FJ_SlotList* list = node->asFJ_SlotList();
-    if (list == NULL)
-        return;
+    FJ_SlotList* list = static_cast<FJ_SlotList*>(node);
     list->addSlot((int)slot, false, false);
 }
 
 void UIControl_SlotList::addSlots(unsigned int firstSlot, int count)
 {
-    if (firstSlot >= firstSlot + count)
-        return;
-    unsigned int slot = firstSlot;
-    int n = count;
-    while (n >= 8)
-    {
-        addSlot(slot++);
-        addSlot(slot++);
-        addSlot(slot++);
-        addSlot(slot++);
-        addSlot(slot++);
-        addSlot(slot++);
-        addSlot(slot++);
-        addSlot(slot++);
-        n -= 8;
-    }
-    while (n > 0)
-    {
-        addSlot(slot++);
-        --n;
-    }
+    for (unsigned int slot = firstSlot; slot < firstSlot + count; ++slot)
+        addSlot(slot);
 }
 
 void UIControl_SlotList::setSlotHighlighted(int slot, bool highlighted)
@@ -53,9 +32,7 @@ void UIControl_SlotList::setSlotHighlighted(int slot, bool highlighted)
     FJ_FuiNode* node = m_fuiRenderNode->getFuiNode();
     if (node == NULL)
         return;
-    FJ_SlotList* list = node->asFJ_SlotList();
-    if (list == NULL)
-        return;
+    FJ_SlotList* list = static_cast<FJ_SlotList*>(node);
     list->SetSlotHighlight(slot, highlighted);
 }
 
@@ -76,9 +53,7 @@ void UIControl_SlotList::showSlotRedBox(int slot, bool show)
     FJ_FuiNode* node = m_fuiRenderNode->getFuiNode();
     if (node == NULL)
         return;
-    FJ_SlotList* list = node->asFJ_SlotList();
-    if (list == NULL)
-        return;
+    FJ_SlotList* list = static_cast<FJ_SlotList*>(node);
     list->SetSlotRedBox(slot, show);
 }
 

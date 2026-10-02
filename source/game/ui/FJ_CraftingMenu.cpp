@@ -225,10 +225,10 @@ void FJ_CraftingMenu::InitCraftingMenu(int type)
         ingredientsLayoutSmall->setVisible(true);
         ingredientsLayout->decX((ingredientsLayout->getWidth() - ingredientsLayoutSmall->getWidth()) * 0.5f);
         craftingOutput->decX((ingredientsLayout->getWidth() - ingredientsLayoutSmall->getWidth()) * 0.5f);
-        craftingArrow->setX(-(craftingArrow->getWidth() * 0.5f -
-                              ((craftingOutput->getX() - (ingredientsLayoutSmall->getX() + ingredientsLayoutSmall->getWidth())) *
-                                   0.5f +
-                               (ingredientsLayoutSmall->getX() + ingredientsLayoutSmall->getWidth()))));
+        craftingArrow->setX((ingredientsLayoutSmall->getX() + ingredientsLayoutSmall->getWidth()) +
+                            (craftingOutput->getX() - (ingredientsLayoutSmall->getX() + ingredientsLayoutSmall->getWidth())) *
+                                0.5f -
+                            craftingArrow->getWidth() * 0.5f);
         itemName->setUseHtmlText(true);
     }
     else
@@ -472,6 +472,11 @@ void FJ_CraftingMenu::UpdateTabs(FJ_Event* event)
             tabOff->setVisible(true);
         }
     }
+}
+
+void FJ_CraftingMenu::_UpdateTabs(FJ_FuiNode* node, FJ_Event* event)
+{
+    static_cast<FJ_CraftingMenu*>(node)->UpdateTabs(event);
 }
 
 void FJ_CraftingMenu::SetActiveTab(int tab, int subtab)

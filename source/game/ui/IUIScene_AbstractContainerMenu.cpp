@@ -245,8 +245,9 @@ int IUIScene_AbstractContainerMenu::GetEmptyStackSpace(Slot* slot)
 
     int count = item->getCount();
     int maxStackSize = item->getMaxStackSize();
-    if (slot->getMaxStackSize() < maxStackSize)
-        maxStackSize = slot->getMaxStackSize();
+    int slotMaxStackSize = slot->getMaxStackSize();
+    if (slotMaxStackSize < maxStackSize)
+        maxStackSize = slotMaxStackSize;
     int space = maxStackSize - count;
     return space < 0 ? 0 : space;
 }
