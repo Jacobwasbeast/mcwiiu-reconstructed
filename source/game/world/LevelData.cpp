@@ -14,34 +14,60 @@ static const int HELL_LEVEL_MIN_SCALE = 3;
 static const int HELL_LEVEL_MAX_WIDTH = 18;
 
 LevelData::LevelData()
-    : mSeed(0), mGeneratorType(0), mGeneratorOptions(0), mXSpawn(0), mYSpawn(0), mZSpawn(0), mGameTime(0),
-      mDayTime(0), mLastPlayed(0), mSizeOnDisk(0), mLoadedPlayerTag(0), mLevelName(), mVersion(0),
-      mClearWeatherTime(0), mRaining(false), mRainTime(0), mThundering(false), mThunderTime(0), mGameType(0),
-      mGenerateMapFeatures(false), mHardcore(false), mAllowCommands(false), mInitialized(false),
-      mDifficulty(Difficulty::NORMAL), mDifficultyLocked(false), mCloudHeight(128), mUseNewSeaLevel(false),
-      mHasBeenInCreative(false), mSpawnBonusChest(false), mXZSize(0), mHellScale(0), mModernEnd(true),
-      mSpawnXStronghold(0), mSpawnYStronghold(0), mSpawnZStronghold(0), mHasStronghold(false),
-      mXStrongholdEndPortal(0), mZStrongholdEndPortal(0), mHasStrongholdEndPortal(false), mBiomeScale(0),
-      mBiomeCentreXChunk(0), mBiomeCentreZChunk(0), mGameRules()
 {
+    mSeed = 0;
+    mGeneratorType = 0;
+    mGeneratorOptions = 0;
+    mXSpawn = 0;
+    mYSpawn = 0;
+    mZSpawn = 0;
+    mGameTime = 0;
+    mDayTime = 0;
+    mLastPlayed = 0;
+    mSizeOnDisk = 0;
+    mLoadedPlayerTag = 0;
+    mLevelName = L"";
+    mVersion = 0;
+    mClearWeatherTime = 0;
+    mRaining = false;
+    mRainTime = 0;
+    mThundering = false;
+    mThunderTime = 0;
+    mGameType = 0;
+    mGenerateMapFeatures = false;
+    mHardcore = false;
+    mAllowCommands = false;
+    mInitialized = false;
+    mDifficulty = Difficulty::NORMAL;
+    mCloudHeight = 128;
+    mUseNewSeaLevel = false;
+    mHasBeenInCreative = false;
+    mSpawnBonusChest = false;
+    mXZSize = 0;
+    mHellScale = 0;
+    mModernEnd = true;
+    mSpawnXStronghold = 0;
+    mSpawnYStronghold = 0;
+    mSpawnZStronghold = 0;
+    mHasStronghold = false;
+    mXStrongholdEndPortal = 0;
+    mZStrongholdEndPortal = 0;
+    mHasStrongholdEndPortal = false;
+    mBiomeScale = 0;
+    mBiomeCentreXChunk = 0;
+    mBiomeCentreZChunk = 0;
 }
 
 LevelData::LevelData(CompoundTag* tag)
-    : mSeed(0), mGeneratorType(LevelType::DEFAULT), mGeneratorOptions(0), mXSpawn(0), mYSpawn(0), mZSpawn(0),
-      mGameTime(0), mDayTime(0), mLastPlayed(0), mSizeOnDisk(0), mLoadedPlayerTag(0), mLevelName(), mVersion(0),
-      mClearWeatherTime(0), mRaining(false), mRainTime(0), mThundering(false), mThunderTime(0), mGameType(0),
-      mGenerateMapFeatures(true), mHardcore(false), mAllowCommands(false), mInitialized(false), mDifficulty(0),
-      mDifficultyLocked(false), mCloudHeight(128), mUseNewSeaLevel(false), mHasBeenInCreative(false),
-      mSpawnBonusChest(false), mXZSize(0), mHellScale(0), mModernEnd(false), mSpawnXStronghold(0),
-      mSpawnYStronghold(0), mSpawnZStronghold(0), mHasStronghold(false), mXStrongholdEndPortal(0),
-      mZStrongholdEndPortal(0), mHasStrongholdEndPortal(false), mBiomeScale(0), mBiomeCentreXChunk(0),
-      mBiomeCentreZChunk(0), mGameRules()
 {
+    mGeneratorOptions = 0;
     mSeed = tag->getLong(L"RandomSeed");
+    mGeneratorType = LevelType::DEFAULT;
 
     if (tag->contains(L"generatorName", Tag::TAG_STRING))
     {
-        LevelType* generatorType = LevelType::getLevelType(tag->getString(L"generatorName"));
+        std::wstring generatorName = tag->getString(L"generatorName");
+        LevelType* generatorType = LevelType::getLevelType(generatorName);
         if (generatorType == 0)
         {
             mGeneratorType = LevelType::DEFAULT;
@@ -51,13 +77,14 @@ LevelData::LevelData(CompoundTag* tag)
             mGeneratorType = generatorType;
             if (mGeneratorType->hasReplacement())
             {
+                tag->contains(L"generatorVersion");
                 int generatorVersion = tag->getInt(L"generatorVersion");
                 mGeneratorType = mGeneratorType->getReplacementForVersion(generatorVersion);
             }
         }
 
         bool isFlat = false;
-        if (tag->contains(L"generatorOptions", Tag::TAG_BYTE_ARRAY) && mGeneratorType->getGeneratorName() == L"flat")
+        if (tag->contains(L"generatorOptions", Tag::TAG_BYTE_ARRAY) && generatorName == L"flat")
         {
             isFlat = true;
         }
@@ -83,13 +110,13 @@ LevelData::LevelData(CompoundTag* tag)
 
     mGameType = GameType::byId(tag->getInt(L"GameType"));
 
-    if (!tag->contains(L"MapFeatures", Tag::TAG_ANY_NUMERIC))
+    if (tag->contains(L"MapFeatures", Tag::TAG_ANY_NUMERIC))
     {
-        mGenerateMapFeatures = true;
+        mGenerateMapFeatures = tag->getBoolean(L"MapFeatures");
     }
     else
     {
-        mGenerateMapFeatures = tag->getBoolean(L"MapFeatures");
+        mGenerateMapFeatures = true;
     }
 
     mSpawnBonusChest = tag->getBoolean(L"spawnBonusChest");
@@ -98,13 +125,13 @@ LevelData::LevelData(CompoundTag* tag)
     mZSpawn = tag->getInt(L"SpawnZ");
     mGameTime = tag->getLong(L"Time");
 
-    if (!tag->contains(L"DayTime", Tag::TAG_ANY_NUMERIC))
+    if (tag->contains(L"DayTime", Tag::TAG_ANY_NUMERIC))
     {
-        mDayTime = mGameTime;
+        mDayTime = tag->getLong(L"DayTime");
     }
     else
     {
-        mDayTime = tag->getLong(L"DayTime");
+        mDayTime = mGameTime;
     }
 
     mLastPlayed = tag->getLong(L"LastPlayed");
@@ -118,22 +145,22 @@ LevelData::LevelData(CompoundTag* tag)
     mThundering = tag->getBoolean(L"thundering");
     mHardcore = tag->getBoolean(L"hardcore");
 
-    if (!tag->contains(L"initialized", Tag::TAG_ANY_NUMERIC))
-    {
-        mInitialized = true;
-    }
-    else
+    if (tag->contains(L"initialized", Tag::TAG_ANY_NUMERIC))
     {
         mInitialized = tag->getBoolean(L"initialized");
     }
-
-    if (!tag->contains(L"allowCommands", Tag::TAG_ANY_NUMERIC))
+    else
     {
-        mAllowCommands = (mGameType == GameType::CREATIVE);
+        mInitialized = true;
+    }
+
+    if (tag->contains(L"allowCommands", Tag::TAG_ANY_NUMERIC))
+    {
+        mAllowCommands = tag->getBoolean(L"allowCommands");
     }
     else
     {
-        mAllowCommands = tag->getBoolean(L"allowCommands");
+        mAllowCommands = (mGameType == GameType::CREATIVE);
     }
 
     if (tag->contains(L"Difficulty", Tag::TAG_ANY_NUMERIC))
@@ -159,97 +186,86 @@ LevelData::LevelData(CompoundTag* tag)
         delete keys;
     }
 
-    if (!tag->contains(L"cloudHeight"))
+    if (tag->contains(L"cloudHeight"))
     {
-        mCloudHeight = 128;
+        mCloudHeight = tag->getInt(L"cloudHeight");
     }
     else
     {
-        mCloudHeight = tag->getInt(L"cloudHeight");
+        mCloudHeight = 128;
     }
 
     mUseNewSeaLevel = tag->getBoolean(L"newSeaLevel");
     mHasBeenInCreative = tag->getBoolean(L"hasBeenInCreative");
     mHasStronghold = tag->getBoolean(L"hasStronghold");
 
-    bool hasEndPortal;
-    if (!mHasStronghold)
-    {
-        mSpawnYStronghold = 0;
-        mSpawnXStronghold = 0;
-        mSpawnZStronghold = 0;
-        mHasStrongholdEndPortal = tag->getBoolean(L"hasStrongholdEndPortal");
-        hasEndPortal = mHasStrongholdEndPortal;
-    }
-    else
+    if (mHasStronghold)
     {
         mSpawnXStronghold = tag->getInt(L"StrongholdX");
         mSpawnYStronghold = tag->getInt(L"StrongholdY");
         mSpawnZStronghold = tag->getInt(L"StrongholdZ");
-        mHasStrongholdEndPortal = tag->getBoolean(L"hasStrongholdEndPortal");
-        hasEndPortal = mHasStrongholdEndPortal;
-    }
-
-    bool hasModernEndTag;
-    if (!hasEndPortal)
-    {
-        mXStrongholdEndPortal = 0;
-        mZStrongholdEndPortal = 0;
-        mXZSize = tag->getInt(L"XZSize");
-        mHellScale = tag->getInt(L"HellScale");
-        hasModernEndTag = tag->contains(L"ModernEnd");
     }
     else
+    {
+        mSpawnYStronghold = 0;
+        mSpawnXStronghold = 0;
+        mSpawnZStronghold = 0;
+    }
+    mHasStrongholdEndPortal = tag->getBoolean(L"hasStrongholdEndPortal");
+
+    if (mHasStrongholdEndPortal)
     {
         mXStrongholdEndPortal = tag->getInt(L"StrongholdEndPortalX");
         mZStrongholdEndPortal = tag->getInt(L"StrongholdEndPortalZ");
-        mXZSize = tag->getInt(L"XZSize");
-        mHellScale = tag->getInt(L"HellScale");
-        hasModernEndTag = tag->contains(L"ModernEnd");
-    }
-
-    mModernEnd = false;
-    if (hasModernEndTag)
-    {
-        mModernEnd = tag->getBoolean(L"ModernEnd");
-    }
-
-    if (mXZSize > LEVEL_MAX_WIDTH)
-    {
-        mXZSize = LEVEL_MAX_WIDTH;
-    }
-    if (mXZSize < LEVEL_MIN_WIDTH)
-    {
-        mXZSize = LEVEL_MIN_WIDTH;
-    }
-    if (mHellScale > HELL_LEVEL_MAX_SCALE)
-    {
-        mHellScale = HELL_LEVEL_MAX_SCALE;
-    }
-    if (mHellScale < HELL_LEVEL_MIN_SCALE)
-    {
-        mHellScale = HELL_LEVEL_MIN_SCALE;
-    }
-    while (mXZSize / mHellScale > HELL_LEVEL_MAX_WIDTH && mHellScale < HELL_LEVEL_MAX_SCALE)
-    {
-        ++mHellScale;
-    }
-
-    if (!tag->contains(L"BiomeScale"))
-    {
-        mBiomeScale = 0;
-        mBiomeCentreXChunk = 0;
-        mBiomeCentreZChunk = 0;
-        mLoadedPlayerTag = 0;
     }
     else
+    {
+        mXStrongholdEndPortal = 0;
+        mZStrongholdEndPortal = 0;
+    }
+    mXZSize = tag->getInt(L"XZSize");
+    mHellScale = tag->getInt(L"HellScale");
+    mModernEnd = tag->contains(L"ModernEnd") && tag->getBoolean(L"ModernEnd");
+
+    int xzSize = mXZSize;
+    int hellScale = mHellScale;
+    if (xzSize > LEVEL_MAX_WIDTH)
+    {
+        xzSize = LEVEL_MAX_WIDTH;
+    }
+    if (xzSize < LEVEL_MIN_WIDTH)
+    {
+        xzSize = LEVEL_MIN_WIDTH;
+    }
+    if (hellScale > HELL_LEVEL_MAX_SCALE)
+    {
+        hellScale = HELL_LEVEL_MAX_SCALE;
+    }
+    if (hellScale < HELL_LEVEL_MIN_SCALE)
+    {
+        hellScale = HELL_LEVEL_MIN_SCALE;
+    }
+    mXZSize = xzSize;
+    while (xzSize / hellScale > HELL_LEVEL_MAX_WIDTH && hellScale < HELL_LEVEL_MAX_SCALE)
+    {
+        ++hellScale;
+    }
+    mHellScale = hellScale;
+
+    if (tag->contains(L"BiomeScale"))
     {
         mBiomeScale = tag->getInt(L"BiomeScale");
         if (mBiomeScale > 2) mBiomeScale = 0;
         mBiomeCentreXChunk = tag->getInt(L"BiomeCentreXChunk");
         mBiomeCentreZChunk = tag->getInt(L"BiomeCentreZChunk");
-        mLoadedPlayerTag = 0;
     }
+    else
+    {
+        mBiomeScale = 0;
+        mBiomeCentreXChunk = 0;
+        mBiomeCentreZChunk = 0;
+    }
+    mLoadedPlayerTag = 0;
 }
 
 LevelData::LevelData(LevelSettings* settings, const std::wstring& name)
@@ -301,24 +317,49 @@ LevelData::LevelData(LevelSettings* settings, const std::wstring& name)
 }
 
 LevelData::LevelData(LevelData* other)
-    : mSeed(other->mSeed), mGeneratorType(other->mGeneratorType), mGeneratorOptions(other->mGeneratorOptions),
-      mXSpawn(other->mXSpawn), mYSpawn(other->mYSpawn), mZSpawn(other->mZSpawn), mGameTime(other->mGameTime),
-      mDayTime(other->mDayTime), mLastPlayed(other->mLastPlayed), mSizeOnDisk(other->mSizeOnDisk),
-      mLoadedPlayerTag(other->mLoadedPlayerTag), mLevelName(other->mLevelName), mVersion(other->mVersion),
-      mClearWeatherTime(other->mClearWeatherTime), mRaining(other->mRaining), mRainTime(other->mRainTime),
-      mThundering(other->mThundering), mThunderTime(other->mThunderTime), mGameType(other->mGameType),
-      mGenerateMapFeatures(other->mGenerateMapFeatures), mHardcore(other->mHardcore),
-      mAllowCommands(other->mAllowCommands), mInitialized(other->mInitialized), mDifficulty(other->mDifficulty),
-      mDifficultyLocked(other->mDifficultyLocked), mCloudHeight(other->mCloudHeight),
-      mUseNewSeaLevel(other->mUseNewSeaLevel), mHasBeenInCreative(other->mHasBeenInCreative),
-      mSpawnBonusChest(other->mSpawnBonusChest), mXZSize(other->mXZSize), mHellScale(other->mHellScale),
-      mModernEnd(other->mModernEnd), mSpawnXStronghold(other->mSpawnXStronghold),
-      mSpawnYStronghold(other->mSpawnYStronghold), mSpawnZStronghold(other->mSpawnZStronghold),
-      mHasStronghold(other->mHasStronghold), mXStrongholdEndPortal(other->mXStrongholdEndPortal),
-      mZStrongholdEndPortal(other->mZStrongholdEndPortal), mHasStrongholdEndPortal(other->mHasStrongholdEndPortal),
-      mBiomeScale(other->mBiomeScale), mBiomeCentreXChunk(other->mBiomeCentreXChunk),
-      mBiomeCentreZChunk(other->mBiomeCentreZChunk), mGameRules()
 {
+    mSeed = other->mSeed;
+    mGeneratorType = other->mGeneratorType;
+    mGeneratorOptions = other->mGeneratorOptions;
+    mXSpawn = other->mXSpawn;
+    mYSpawn = other->mYSpawn;
+    mZSpawn = other->mZSpawn;
+    mGameTime = other->mGameTime;
+    mDayTime = other->mDayTime;
+    mLastPlayed = other->mLastPlayed;
+    mSizeOnDisk = other->mSizeOnDisk;
+    mLoadedPlayerTag = other->mLoadedPlayerTag;
+    mLevelName = other->mLevelName;
+    mVersion = other->mVersion;
+    mClearWeatherTime = other->mClearWeatherTime;
+    mRaining = other->mRaining;
+    mRainTime = other->mRainTime;
+    mThundering = other->mThundering;
+    mThunderTime = other->mThunderTime;
+    mGameType = other->mGameType;
+    mGenerateMapFeatures = other->mGenerateMapFeatures;
+    mHardcore = other->mHardcore;
+    mAllowCommands = other->mAllowCommands;
+    mInitialized = other->mInitialized;
+    mDifficulty = other->mDifficulty;
+    mDifficultyLocked = other->mDifficultyLocked;
+    mCloudHeight = other->mCloudHeight;
+    mUseNewSeaLevel = other->mUseNewSeaLevel;
+    mHasBeenInCreative = other->mHasBeenInCreative;
+    mSpawnBonusChest = other->mSpawnBonusChest;
+    mXZSize = other->mXZSize;
+    mHellScale = other->mHellScale;
+    mModernEnd = other->mModernEnd;
+    mSpawnXStronghold = other->mSpawnXStronghold;
+    mSpawnYStronghold = other->mSpawnYStronghold;
+    mSpawnZStronghold = other->mSpawnZStronghold;
+    mHasStronghold = other->mHasStronghold;
+    mXStrongholdEndPortal = other->mXStrongholdEndPortal;
+    mZStrongholdEndPortal = other->mZStrongholdEndPortal;
+    mHasStrongholdEndPortal = other->mHasStrongholdEndPortal;
+    mBiomeScale = other->mBiomeScale;
+    mBiomeCentreXChunk = other->mBiomeCentreXChunk;
+    mBiomeCentreZChunk = other->mBiomeCentreZChunk;
 }
 
 LevelData::~LevelData()
@@ -347,7 +388,7 @@ CompoundTag* LevelData::createTag(std::vector<boost::shared_ptr<Player> >* playe
 
 void LevelData::addWalkers(DataFixerUpper* fixer)
 {
-    fixer->addWalker(DataFixTypes::eDataFixTypes_Player,
+    fixer->addWalker(DataFixTypes::eDataFixTypes_Level,
                      new TagUpdateWalker(L"Player", 10, DataFixTypes::eDataFixTypes_Player));
 }
 
@@ -436,7 +477,7 @@ int LevelData::getZStrongholdEndPortal() { return mZStrongholdEndPortal; }
 long long LevelData::getGameTime() { return mGameTime; }
 long long LevelData::getDayTime() { return mDayTime; }
 long long LevelData::getSizeOnDisk() { return mSizeOnDisk; }
-CompoundTag* LevelData::getLoadedPlayerTag() { return mLoadedPlayerTag; }
+CompoundTag* LevelData::getLoadedPlayerTag() { return 0; }
 void LevelData::setSeed(long long value) { mSeed = value; }
 void LevelData::setXSpawn(int value) { mXSpawn = value; }
 void LevelData::setYSpawn(int value) { mYSpawn = value; }
@@ -452,7 +493,7 @@ void LevelData::setZStrongholdEndPortal(int value) { mZStrongholdEndPortal = val
 void LevelData::setGameTime(long long value) { mGameTime = value; }
 void LevelData::setDayTime(long long value) { mDayTime = value; }
 void LevelData::setSizeOnDisk(long long value) { mSizeOnDisk = value; }
-void LevelData::setLoadedPlayerTag(CompoundTag* tag) { mLoadedPlayerTag = tag; }
+void LevelData::setLoadedPlayerTag(CompoundTag* tag) {}
 void LevelData::setSpawn(const BlockPos& pos) { mXSpawn = pos.x; mYSpawn = pos.y; mZSpawn = pos.z; }
 std::wstring LevelData::getLevelName() { return mLevelName; }
 void LevelData::setLevelName(const std::wstring& name) { mLevelName = name; }
@@ -477,7 +518,7 @@ void LevelData::setGameType(const GameType* type)
 {
     mGameType = type;
     bool hasBeenInCreative = true;
-    if (!mHasBeenInCreative && type != GameType::CREATIVE && g_pApp->GetGameHostOption(eGameHostOption_CheatsEnabled) == 0)
+    if (!mHasBeenInCreative && type != GameType::CREATIVE && gApp.GetGameHostOption(eGameHostOption_CheatsEnabled) == 0)
     {
         hasBeenInCreative = false;
     }
@@ -517,7 +558,15 @@ CompoundTag* LevelData::getDimensionData(const DimensionType* dimension)
     if (it == mDimensionData.end()) return new CompoundTag();
     return it->second;
 }
-void LevelData::setDimensionData(const DimensionType* dimension, CompoundTag* tag) { mDimensionData[dimension] = tag; }
+void LevelData::setDimensionData(const DimensionType* dimension, CompoundTag* tag)
+{
+    CompoundTag* existing = mDimensionData[dimension];
+    if (existing != 0)
+    {
+        delete existing;
+    }
+    mDimensionData[dimension] = tag;
+}
 int LevelData::getXZSize() { return mXZSize; }
 int LevelData::getHellScale() { return mHellScale; }
 void LevelData::setModernEnd() { mModernEnd = true; }
