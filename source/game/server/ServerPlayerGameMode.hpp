@@ -104,7 +104,7 @@ private:
     GameRulesInstance* mGameRules;
     MasterGameMode* mMasterGameMode;
     int mUnknown4C;
-    unsigned long long mLayerTimeMs;
+    long long mLayerTimeMs;
     int mDeaths;
     int mLastCheckpoint;
 };
