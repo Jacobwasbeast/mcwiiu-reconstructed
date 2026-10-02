@@ -362,6 +362,8 @@ enum eTutorial_CompletionAction
     eTutorial_CompletionAction_CompleteStateExceptLastTask
 };
 
+extern unsigned int gTutorialVisibleTime;
+
 class Tutorial
 {
 public:

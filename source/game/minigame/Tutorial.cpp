@@ -46,11 +46,12 @@
 
 extern ConsoleUIController gConsoleUIController;
 
+unsigned int gTutorialVisibleTime = 7000;
+
 namespace
 {
     const unsigned int gTutorialStartDelay = 1500;
     unsigned int gTutorialHintRepeatTime = 14000;
-    unsigned int gTutorialVisibleTime = 7000;
     unsigned int gTutorialMinimumDisplayTime = 2000;
     unsigned int gTutorialMessageRepeatDelay = 13000;
     long long gTutorialDayTime = 8000;

@@ -205,7 +205,7 @@ void MiniGameMedals::staticCtor()
         ->addExtraCondition(new WinnerCondition())
         ->addExtraCondition(new PlayerCountCondition(2.0f, GameMedal::OPERATOR_AT_LEAST)));
     conditionMedal = new MultiConditionMedal(IDS_MG03_MEDAL_POINTS, 625, new TotalPointsCondition(1.0f, GameMedal::OPERATOR_AT_LEAST, true));
-    conditionMedal->addExtraCondition(new VariantCondition(1));
+    conditionMedal->addExtraCondition(new VariantCondition(eMiniGameVariantId_ScoreAttack));
     conditionMedal->addExtraCondition(new PlayerCountCondition(2.0f, GameMedal::OPERATOR_AT_LEAST));
     conditionMedal->SetCanMultiAward(true);
     glideMedals.addMedal(conditionMedal);
@@ -302,7 +302,7 @@ void MiniGameMedals::staticCtor()
         ->addExtraCondition(new PlayerCountCondition(2.0f, GameMedal::OPERATOR_AT_LEAST)));
     conditionMedal = new MultiConditionMedal(0x18A608DA, 625, new FastestTimeAndHightestScoreInARoundCondition());
     conditionMedal->addExtraCondition(new PlayerCountCondition(2.0f, GameMedal::OPERATOR_AT_LEAST));
-    conditionMedal->addExtraCondition(new VariantCondition(1));
+    conditionMedal->addExtraCondition(new VariantCondition(eMiniGameVariantId_ScoreAttack));
     conditionMedal->SetCanMultiAward(true);
     glideMedals.addMedal(conditionMedal);
     conditionMedal = new MultiConditionMedal(IDS_MG03_MEDAL_CLOSE, 3125, new WonByAmountCondition(1000.0f, GameMedal::OPERATOR_AT_MOST));
@@ -323,7 +323,7 @@ void MiniGameMedals::staticCtor()
         ->addExtraCondition(new PlayerCountCondition(2.0f, GameMedal::OPERATOR_AT_LEAST))
         ->addExtraCondition(new WinnerCondition()));
     glideMedals.addMedal((new MultiConditionMedal(0x8FDDCE64, 25, new NotFastestTimeButWonAnywayCondition()))
-        ->addExtraCondition(new VariantCondition(1)));
+        ->addExtraCondition(new VariantCondition(eMiniGameVariantId_ScoreAttack)));
     medal = new ConsolationMedal(IDS_MG03_MEDAL_CONSOLATION_1, 0.0f, 1, GameMedal::OPERATOR_AT_LEAST);
     medal->SetCanMultiAward(true);
     glideMedals.addMedal(medal);
