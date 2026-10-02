@@ -13,7 +13,7 @@ class ConsoleSaveFileOutputStream : public OutputStream
 public:
     ConsoleSaveFileOutputStream(ConsoleSaveFile* saveFile, const ConsoleSavePath& path);
     ConsoleSaveFileOutputStream(ConsoleSaveFile* saveFile, FileEntry* fileEntry);
-    virtual ~ConsoleSaveFileOutputStream();
+    virtual ~ConsoleSaveFileOutputStream() {}
 
     virtual void write(unsigned int value);
     virtual void write(arrayWithLength<unsigned char> data);

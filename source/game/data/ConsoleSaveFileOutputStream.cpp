@@ -17,10 +17,6 @@ ConsoleSaveFileOutputStream::ConsoleSaveFileOutputStream(ConsoleSaveFile* saveFi
     saveFile->setFilePointer(m_fileEntry, 0, NULL, 0);
 }
 
-ConsoleSaveFileOutputStream::~ConsoleSaveFileOutputStream()
-{
-}
-
 void ConsoleSaveFileOutputStream::write(unsigned int value)
 {
     unsigned char byte = (unsigned char)value;

@@ -15,10 +15,6 @@ ConsoleSaveFileInputStream::ConsoleSaveFileInputStream(ConsoleSaveFile* saveFile
     mSaveFile->setFilePointer(mFileEntry, 0, NULL, 0);
 }
 
-ConsoleSaveFileInputStream::~ConsoleSaveFileInputStream()
-{
-}
-
 int ConsoleSaveFileInputStream::read()
 {
     unsigned char value = 0;

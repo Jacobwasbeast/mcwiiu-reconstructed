@@ -11,7 +11,7 @@ class ConsoleSaveFileInputStream : public InputStream
 public:
     ConsoleSaveFileInputStream(ConsoleSaveFile* saveFile, const ConsoleSavePath& path);
     ConsoleSaveFileInputStream(ConsoleSaveFile* saveFile, FileEntry* fileEntry);
-    virtual ~ConsoleSaveFileInputStream();
+    virtual ~ConsoleSaveFileInputStream() {}
 
     virtual int read();
     virtual int read(arrayWithLength<unsigned char> data);
