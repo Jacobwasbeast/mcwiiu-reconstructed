@@ -189,7 +189,7 @@ public:
     bool isSpectator();
     bool isCreative();
     void resetLastActionTime();
-    void sendRemoveEntity(boost::shared_ptr<Entity>* entity);
+    void sendRemoveEntity(boost::shared_ptr<Entity> entity);
     void cancelRemoveEntity(boost::shared_ptr<Entity>* entity);
     void updateInvisibilityStatus();
     void processDimensionDelay();

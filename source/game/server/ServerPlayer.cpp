@@ -1922,13 +1922,12 @@ void ServerPlayer::resetLastActionTime()
     mLastActionTime = MinecraftServer::getCurrentTimeMillis();
 }
 
-void ServerPlayer::sendRemoveEntity(boost::shared_ptr<Entity>* entity)
+void ServerPlayer::sendRemoveEntity(boost::shared_ptr<Entity> entity)
 {
-    if (((*entity)->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
-    {
-        mConnection->send(boost::shared_ptr<Packet>(new ClientboundRemoveEntitiesPacket((*entity)->getId())));
-        mEntitiesToRemove.push_back((*entity)->getId());
-    }
+    if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+        mConnection->send(boost::shared_ptr<Packet>(new ClientboundRemoveEntitiesPacket(entity->getId())));
+    else
+        mEntitiesToRemove.push_back(entity->getId());
 }
 
 void ServerPlayer::cancelRemoveEntity(boost::shared_ptr<Entity>* entity)
