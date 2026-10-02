@@ -259,6 +259,7 @@
 #include "game/core/File.hpp"
 #include "platform/wiiu/CProfile.hpp"
 #include "platform/wiiu/WiiU_Runtime.hpp"
+#include <cfloat>
 #include <cmath>
 
 
@@ -268,26 +269,6 @@ namespace
 
 namespace
 {
-    Attribute* attributeById(eATTRIBUTE_ID id)
-    {
-        switch (id)
-        {
-        case eATTRIBUTE_ID_MaxHealth: return SharedMonsterAttributes::MAX_HEALTH;
-        case eATTRIBUTE_ID_FollowRange: return SharedMonsterAttributes::FOLLOW_RANGE;
-        case eATTRIBUTE_ID_KnockbackResistance: return SharedMonsterAttributes::KNOCKBACK_RESISTANCE;
-        case eATTRIBUTE_ID_MovementSpeed: return SharedMonsterAttributes::MOVEMENT_SPEED;
-        case eATTRIBUTE_ID_AttackDamage: return SharedMonsterAttributes::ATTACK_DAMAGE;
-        case eATTRIBUTE_ID_HorseJumpStrength: return SharedMonsterAttributes::ATTACK_DAMAGE;
-        case eATTRIBUTE_ID_ZombieSpawnReinforcements: return SharedMonsterAttributes::ATTACK_DAMAGE;
-        case eATTRIBUTE_ID_AttackSpeed: return SharedMonsterAttributes::ATTACK_SPEED;
-        case eATTRIBUTE_ID_Armor: return SharedMonsterAttributes::ARMOR;
-        case eATTRIBUTE_ID_ArmorToughness: return SharedMonsterAttributes::ARMOR_TOUGHNESS;
-        case eATTRIBUTE_ID_Luck: return SharedMonsterAttributes::LUCK;
-        case eATTRIBUTE_ID_FlyingSpeed: return SharedMonsterAttributes::FLYING_SPEED;
-        default: return NULL;
-        }
-    }
-
     bool blockEntityTypeMatches(BlockEntity* entity, unsigned long long blockEntityType)
     {
         return entity != NULL && entity->GetType() == blockEntityType;
@@ -698,44 +679,17 @@ void ClientPacketListener::handleLogin(boost::shared_ptr<ClientboundLoginPacket>
     telemetryManagerInstance->RecordMiniGameHostOptions(m_playerId,
         static_cast<EMiniGameId>(packet->mDifficulty));
 }
-boost::shared_ptr<Entity> ClientPacketListener::resolveEntity(int entityId)
-{
-    if (m_minecraft != 0)
-    {
-        for (int i = 0; i < 4; ++i)
-        {
-            boost::shared_ptr<MultiplayerLocalPlayer>& localPlayer = m_minecraft->mLocalPlayers[i];
-            if (localPlayer != 0 && localPlayer->getId() == entityId)
-            {
-                boost::shared_ptr<MultiplayerLocalPlayer>& current = m_minecraft->mLocalPlayers[m_playerId];
-                if (current == 0 || current->getId() != entityId)
-                    return boost::shared_ptr<Entity>();
-                return localPlayer;
-            }
-        }
-    }
-    if (m_level == 0)
-        return boost::shared_ptr<Entity>();
-    MultiPlayerLevel* level = dynamic_cast<MultiPlayerLevel*>(m_level);
-    if (level == 0)
-        return boost::shared_ptr<Entity>();
-    return level->getEntity(entityId);
-}
-
 boost::shared_ptr<Entity> ClientPacketListener::getEntity(int entityId)
 {
-    if (m_minecraft != 0)
+    for (int i = 0; i < 4; ++i)
     {
-        for (int i = 0; i < 4; ++i)
+        boost::shared_ptr<Entity> localPlayer = m_minecraft->mLocalPlayers[i];
+        if (localPlayer != 0 && localPlayer->getId() == entityId)
         {
-            boost::shared_ptr<Entity> localPlayer = m_minecraft->mLocalPlayers[i];
-            if (localPlayer != 0 && localPlayer->getId() == entityId)
-            {
-                boost::shared_ptr<MultiplayerLocalPlayer>& current = m_minecraft->mLocalPlayers[m_playerId];
-                if (current == 0 || current->getId() != entityId)
-                    return boost::shared_ptr<Entity>();
-                return current;
-            }
+            boost::shared_ptr<MultiplayerLocalPlayer>& current = m_minecraft->mLocalPlayers[m_playerId];
+            if (current == 0 || current->getId() != entityId)
+                return boost::shared_ptr<Entity>();
+            return current;
         }
     }
     if (m_level == 0)
@@ -1061,12 +1015,9 @@ void ClientPacketListener::handleAddPainting(boost::shared_ptr<ClientboundAddPai
 
 void ClientPacketListener::handleSetEntityMotion(boost::shared_ptr<ClientboundSetEntityMotionPacket> packet)
 {
-    if (packet == 0 || m_level == 0)
+    if (packet == 0)
         return;
-    MultiPlayerLevel* level = dynamic_cast<MultiPlayerLevel*>(m_level);
-    if (level == 0)
-        return;
-    boost::shared_ptr<Entity> entity = level->getEntity(packet->getId());
+    boost::shared_ptr<Entity> entity = getEntity(packet->getId());
     if (entity == 0)
         return;
     if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER
@@ -1081,19 +1032,16 @@ void ClientPacketListener::handleSetEntityData(boost::shared_ptr<ClientboundSetE
 {
     if (packet == 0)
         return;
-    boost::shared_ptr<Entity> entity = resolveEntity(packet->getId());
-    if (entity == 0 || !Entity::instanceof(entity, EntityType::PLAYER))
+    boost::shared_ptr<Entity> entity = getEntity(packet->getId());
+    if (entity == 0)
         return;
-    if (static_cast<int>(entity->GetType()) != packet->getEntityType())
-        return;
-    boost::shared_ptr<LivingEntity> living = boost::dynamic_pointer_cast<LivingEntity>(entity);
-    if (living == 0)
+    if (!Entity::instanceof(entity, EntityType::PLAYER) &&
+        static_cast<int>(entity->GetType()) != packet->getEntityType())
         return;
     std::vector<DataItem*>* unpacked = packet->getUnpackedData();
     if (unpacked != 0)
-        living->getEntityData()->assignValues(unpacked);
+        entity->getEntityData()->assignValues(unpacked);
 }
-
 
 void ClientPacketListener::send(boost::shared_ptr<Packet> packet)
 {
@@ -1261,12 +1209,9 @@ void ClientPacketListener::handleMoveEntity(boost::shared_ptr<ClientboundMoveEnt
 
 void ClientPacketListener::handleRotateMob(boost::shared_ptr<ClientboundRotateHeadPacket> packet)
 {
-    if (packet == 0 || m_level == 0)
+    if (packet == 0)
         return;
-    MultiPlayerLevel* level = dynamic_cast<MultiPlayerLevel*>(m_level);
-    if (level == 0)
-        return;
-    boost::shared_ptr<Entity> entity = level->getEntity(packet->getEntityId());
+    boost::shared_ptr<Entity> entity = getEntity(packet->getEntityId());
     if (entity != 0)
         entity->setYHeadRot(packet->getYHeadRot() * (360.0f / 256.0f));
 }
@@ -2542,17 +2487,15 @@ void ClientPacketListener::handleAnimate(boost::shared_ptr<ClientboundAnimatePac
 
 void ClientPacketListener::handleEntityActionAtPosition(boost::shared_ptr<ClientboundPlayerSleepPacket> packet)
 {
-    if (packet == 0 || m_level == 0)
-        return;
-    boost::shared_ptr<Player> player = packet->getPlayer(m_level);
-    if (player == 0)
-        return;
-    player->startSleepInBed(packet->getPos(), false);
-    if (m_minecraft == 0 || m_playerId < 0 || m_playerId >= 4)
-        return;
-    boost::shared_ptr<MultiplayerLocalPlayer>& local = m_minecraft->mLocalPlayers[m_playerId];
-    if (local != 0 && local.get() == player.get() && m_minecraft->mGameRenderer != 0)
-        m_minecraft->mGameRenderer->moveCameraToPlayer(1.0f);
+    boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(getEntity(packet->getPlayerId()));
+    if (player != 0)
+    {
+        player->startSleepInBed(packet->getPos(), false);
+        if (player == m_minecraft->mLocalPlayers[m_playerId])
+            telemetryManagerInstance->RecordEnemyKilledOrOvercome(m_playerId, static_cast<int>(player->mX),
+                static_cast<int>(player->mY), static_cast<int>(player->mZ), 0, 0, 0,
+                static_cast<ETelemetryChallenges>(19));
+    }
 }
 
 
@@ -3241,12 +3184,9 @@ void ClientPacketListener::handleContainerSetData(boost::shared_ptr<ClientboundC
 
 void ClientPacketListener::handleSetEquippedItem(boost::shared_ptr<ClientboundSetEquippedItemPacket> packet)
 {
-    if (packet == 0 || m_level == 0)
+    if (packet == 0)
         return;
-    MultiPlayerLevel* level = dynamic_cast<MultiPlayerLevel*>(m_level);
-    if (level == 0)
-        return;
-    boost::shared_ptr<Entity> entity = level->getEntity(packet->getEntity());
+    boost::shared_ptr<Entity> entity = getEntity(packet->getEntity());
     if (entity != 0)
         entity->setItemSlot(packet->getSlot(), packet->getItem());
 }
@@ -3466,7 +3406,7 @@ void ClientPacketListener::handleUpdateMobEffect(boost::shared_ptr<ClientboundUp
 {
     if (packet == 0)
         return;
-    boost::shared_ptr<Entity> entity = resolveEntity(static_cast<int>(packet->getEntityId()));
+    boost::shared_ptr<Entity> entity = getEntity(static_cast<int>(packet->getEntityId()));
     if (entity == 0 || !Entity::instanceof(entity, EntityType::LIVING_ENTITY))
         return;
     boost::shared_ptr<LivingEntity> living = boost::dynamic_pointer_cast<LivingEntity>(entity);
@@ -3475,11 +3415,11 @@ void ClientPacketListener::handleUpdateMobEffect(boost::shared_ptr<ClientboundUp
     MobEffect* effect = MobEffect::byId(packet->getEffectId());
     if (effect == 0)
         return;
-    living->addEffect(new MobEffectInstance(effect, packet->getEffectDurationTicks(),
-                                            packet->getEffectAmplifier(),
-                                            packet->isEffectAmbient() != 0,
-                                            packet->isEffectVisible() != 0),
-                      boost::shared_ptr<Entity>());
+    MobEffectInstance* instance = new MobEffectInstance(effect, packet->getEffectDurationTicks(),
+                                                        packet->getEffectAmplifier(), false,
+                                                        packet->isEffectVisible() != 0);
+    instance->setNoCounter(packet->isSuperLongDuration());
+    living->addEffect(instance, boost::shared_ptr<Entity>());
 }
 
 
@@ -3497,11 +3437,11 @@ void ClientPacketListener::handleChangeDifficulty(boost::shared_ptr<ClientboundC
 
 void ClientPacketListener::handleSetCamera(boost::shared_ptr<ClientboundSetCameraPacket> packet)
 {
-    if (packet == 0 || m_level == 0 || m_minecraft == 0)
+    if (packet == 0)
         return;
-    MultiPlayerLevel* level = dynamic_cast<MultiPlayerLevel*>(m_level);
-    if (level != 0)
-        m_minecraft->setCameraEntity(level->getEntity(packet->getCameraId()));
+    boost::shared_ptr<Entity> entity = getEntity(packet->getCameraId());
+    if (entity != 0)
+        m_minecraft->setCameraEntity(entity);
 }
 
 void ClientPacketListener::handleSetBorder(boost::shared_ptr<ClientboundSetBorderPacket> packet)
@@ -3520,15 +3460,11 @@ void ClientPacketListener::handleTabListCustomisation(boost::shared_ptr<Clientbo
 
 void ClientPacketListener::handleRemoveMobEffect(boost::shared_ptr<ClientboundRemoveMobEffectPacket> packet)
 {
-    if (packet == 0 || m_level == 0)
-        return;
     boost::shared_ptr<Entity> entity = packet->getEntity(m_level);
-    boost::shared_ptr<LivingEntity> living = boost::dynamic_pointer_cast<LivingEntity>(entity);
-    if (living == 0)
+    if (entity == 0 || !Entity::instanceof(entity, EntityType::LIVING_ENTITY))
         return;
-    MobEffect* effect = packet->getEffect();
-    if (effect != 0)
-        living->removeEffect(effect);
+    boost::shared_ptr<LivingEntity> living = boost::static_pointer_cast<LivingEntity>(entity);
+    living->removeEffect(packet->getEffect());
 }
 
 
@@ -3565,19 +3501,17 @@ void ClientPacketListener::handleKeepAlive(boost::shared_ptr<ClientboundKeepAliv
 
 void ClientPacketListener::handlePlayerAbilities(boost::shared_ptr<ClientboundPlayerAbilitiesPacket> packet)
 {
-    if (packet == 0 || m_minecraft == 0)
+    boost::shared_ptr<Entity> entity = getEntity(packet->getPlayerId());
+    if (entity == 0 || !Entity::instanceof(entity, EntityType::PLAYER))
         return;
-    const int playerId = packet->getPlayerId();
-    if (playerId < 0 || playerId >= 4 || m_minecraft->mLocalPlayers[playerId] == 0)
-        return;
-    MultiplayerLocalPlayer* player = m_minecraft->mLocalPlayers[playerId].get();
-    player->mAbilities.mInvulnerable = packet->isInvulnerable();
+    boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
     player->mAbilities.mFlying = packet->isFlying();
-    player->mAbilities.mMayfly = packet->canFly();
     player->mAbilities.mInstabuild = packet->canInstabuild();
-    player->mAbilities.mMayBuild = packet->canBuild();
+    player->mAbilities.mInvulnerable = packet->isInvulnerable();
+    player->mAbilities.mMayfly = packet->canFly();
     player->mAbilities.setFlyingSpeed(packet->getFlyingSpeed());
     player->mAbilities.setWalkingSpeed(packet->getWalkingSpeed());
+    player->mAbilities.mMayBuild = packet->canBuild();
 }
 
 void ClientPacketListener::handleSoundEvent(boost::shared_ptr<ClientboundSoundPacket> packet)
@@ -4044,39 +3978,36 @@ void ClientPacketListener::handleUpdateAttributes(boost::shared_ptr<ClientboundU
 {
     if (packet == 0)
         return;
-    boost::shared_ptr<Entity> entity = resolveEntity(packet->getEntityId());
-    if (entity == 0 || !Entity::instanceof(entity, EntityType::PLAYER))
+    boost::shared_ptr<Entity> entity = getEntity(packet->getEntityId());
+    if (entity == 0)
         return;
-    if (static_cast<int>(entity->GetType()) != packet->getEntityType())
+    if (!Entity::instanceof(entity, EntityType::PLAYER) &&
+        static_cast<int>(entity->GetType()) != packet->getEntityType())
         return;
     boost::shared_ptr<LivingEntity> living = boost::dynamic_pointer_cast<LivingEntity>(entity);
-    if (living == 0 || living->getAttributes() == 0)
-        return;
+    BaseAttributeMap* attributes = living->getAttributes();
     boost::unordered_set<ClientboundUpdateAttributesPacket::AttributeSnapshot*>* snapshots =
         packet->getValues();
-    if (snapshots == 0)
-        return;
     for (boost::unordered_set<ClientboundUpdateAttributesPacket::AttributeSnapshot*>::iterator it =
              snapshots->begin();
          it != snapshots->end();
          ++it)
     {
         ClientboundUpdateAttributesPacket::AttributeSnapshot* snapshot = *it;
-        if (snapshot == 0)
-            continue;
-        Attribute* attribute = attributeById(snapshot->getId());
-        if (attribute == 0)
-            continue;
-        AttributeInstance* instance = living->getAttributes()->getInstance(attribute);
+        AttributeInstance* instance = attributes->getInstance(snapshot->getId());
         if (instance == 0)
-            instance = living->getAttributes()->registerAttribute(attribute);
-        if (instance == 0)
-            continue;
+            instance = attributes->registerAttribute(
+                new RangedAttribute(0, snapshot->getId(), 0.0, DBL_MIN, DBL_MAX));
         instance->setBaseValue(snapshot->getBase());
         instance->removeModifiers();
         boost::unordered_set<AttributeModifier*>* modifiers = snapshot->getModifiers();
-        if (modifiers != 0)
-            instance->addModifiers(modifiers);
+        for (boost::unordered_set<AttributeModifier*>::iterator modifier = modifiers->begin();
+             modifier != modifiers->end();
+             ++modifier)
+        {
+            instance->addModifier(new AttributeModifier((*modifier)->getId(), (*modifier)->getAmount(),
+                                                        (*modifier)->getOperation()));
+        }
     }
 }
 
