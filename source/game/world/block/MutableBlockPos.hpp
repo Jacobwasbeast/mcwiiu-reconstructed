@@ -21,7 +21,7 @@ public:
         this->z = z;
     }
 
-    void set(const BlockPos& pos);
+    MutableBlockPos* set(const BlockPos& pos);
 
     MutableBlockPos* move(const Direction* direction, int steps);
     MutableBlockPos* move(const Direction* direction);

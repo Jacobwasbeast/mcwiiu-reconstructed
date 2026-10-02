@@ -1,6 +1,7 @@
 #ifndef GAME_WORLD_BLOCK_REDSANDSTONEBLOCK_HPP
 #define GAME_WORLD_BLOCK_REDSANDSTONEBLOCK_HPP
 
+#include "game/core/StringRepresentable.hpp"
 #include "game/world/block/Block.hpp"
 
 #include <string>
@@ -15,7 +16,7 @@ template <class T> class EnumProperty;
 class RedSandStoneBlock : public Block
 {
 public:
-    class Variant
+    class Variant : public StringRepresentable
     {
     public:
         static Variant* DEFAULT;
@@ -49,7 +50,9 @@ public:
     virtual void registerIcons(IconRegister* iconRegister);
 
 private:
-    TextureAtlasSprite* mTextures[5];
+    TextureAtlasSprite* mTextures[3];
+    TextureAtlasSprite* mTopTexture;
+    TextureAtlasSprite* mBottomTexture;
 };
 
 #endif

@@ -18,20 +18,25 @@ LookAtBlockHint::LookAtBlockHint(eTutorial_Hint hint, Tutorial* tutorial,
                                  int descriptionId, int auxValue, bool useState)
     : TutorialHint(hint, tutorial, -1, TutorialHint::HINT_LOOK_AT_BLOCK, true, true, -1),
       mStateCount(stateCount), mStates(new const BlockState*[stateCount]),
-      mStateIds(new Block*[stateCount]), mPropertyCount(propertyCount),
-      mPropertyValues(new const Property*[propertyCount]), mDescriptionId(descriptionId),
-      mAuxValue(auxValue), mUseState(useState)
+      mStateIds(new Block*[mStateCount])
 {
     unsigned int i;
     for (i = 0; i < mStateCount; ++i)
     {
         mStates[i] = states[i];
-        mStateIds[i] = states[i] == NULL ? NULL : states[i]->getBlock();
+        mStateIds[i] = states[i]->getBlock();
     }
-    for (i = 0; i < mPropertyCount; ++i)
+    mPropertyCount = propertyCount;
+    const Property** values = new const Property*[propertyCount];
+    mPropertyValues = values;
+    const unsigned int count = mPropertyCount;
+    for (unsigned int j = 0; j < count; ++j)
     {
-        mPropertyValues[i] = properties[i];
+        values[j] = properties[j];
     }
+    mDescriptionId = descriptionId;
+    mAuxValue = auxValue;
+    mUseState = useState;
 }
 
 LookAtBlockHint::~LookAtBlockHint()

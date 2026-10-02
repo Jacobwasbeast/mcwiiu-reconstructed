@@ -8,11 +8,6 @@ MutableBlockPos::MutableBlockPos()
 {
 }
 
-MutableBlockPos::MutableBlockPos(int x, int y, int z)
-    : BlockPos(x, y, z)
-{
-}
-
 MutableBlockPos::MutableBlockPos(const Vec3i& other)
     : BlockPos(other)
 {
@@ -33,11 +28,18 @@ void MutableBlockPos::setZ(int z)
     this->z = z;
 }
 
-void MutableBlockPos::set(const BlockPos& pos)
+MutableBlockPos::MutableBlockPos(int x, int y, int z)
+    : BlockPos(x, y, z)
+{
+}
+
+MutableBlockPos* MutableBlockPos::set(const BlockPos& pos)
 {
     x = pos.x;
     y = pos.y;
     z = pos.z;
+
+    return this;
 }
 
 void MutableBlockPos::addX(int dx)

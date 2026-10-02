@@ -8,6 +8,7 @@
 #include "game/client/audio/SoundSource.hpp"
 #include "game/client/render/ParticleType.hpp"
 #include "game/core/Boxed.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/Direction.hpp"
 #include "game/item/Item.hpp"
@@ -16,39 +17,18 @@
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/block/DirectionProperty.hpp"
 #include "game/world/block/Property.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
 static boost::unordered_map<Level*, std::deque<RedstoneTorchBlock::Toggle>*> sToggleLists;
 
-static const Direction* getTorchFacing(const BlockState* state)
-{
-    boost::unordered_map<const Property*, Boxed*>* values = state->getValues();
-    for (boost::unordered_map<const Property*, Boxed*>::const_iterator it = values->begin(); it != values->end(); ++it)
-        if (it->second != NULL && it->second->isA(typeid(const Direction*)))
-            return static_cast<TypedBoxed<const Direction*>*>(it->second)->getValue();
-    return Direction::UP;
-}
-
-static const BlockState* copyTorchState(const BlockState* source, const BlockState* target)
-{
-    boost::unordered_map<const Property*, Boxed*>* values = source->getValues();
-    const BlockState* result = target;
-    for (boost::unordered_map<const Property*, Boxed*>::const_iterator it = values->begin(); it != values->end(); ++it)
-        result = result->setBoxedValue(it->first, it->second);
-    return result;
-}
-
-RedstoneTorchBlock::Toggle::Toggle(const BlockPos& position, long long gameTime)
-    : pos(position), time(gameTime)
-{
-}
-
 RedstoneTorchBlock::RedstoneTorchBlock(bool lit)
-    : TorchBlock(), mLit(lit)
+    : TorchBlock()
 {
     ClearDerivedInit();
     DerivedInit();
+    mLit = lit;
     setTicking(true);
 }
 
@@ -57,24 +37,27 @@ void RedstoneTorchBlock::removeLevelReferences(Level* level)
     boost::unordered_map<Level*, std::deque<Toggle>*>::iterator it = sToggleLists.find(level);
     if (it != sToggleLists.end())
     {
-        delete it->second;
-        sToggleLists.erase(it);
+        delete sToggleLists[level];
+        sToggleLists.erase(level);
     }
 }
 
 bool RedstoneTorchBlock::isToggledTooFrequently(Level* level, const BlockPos& pos, bool addToggle)
 {
-    std::deque<Toggle>*& toggles = sToggleLists[level];
-    if (toggles == NULL)
-        toggles = new std::deque<Toggle>();
-    long long gameTime = level->getGameTime();
-    while (!toggles->empty() && gameTime - toggles->front().time >= 61)
-        toggles->pop_front();
+    if (sToggleLists.find(level) == sToggleLists.end())
+        sToggleLists[level] = new std::deque<Toggle>;
     if (addToggle)
-        toggles->push_back(Toggle(pos, gameTime));
+    {
+        long long gameTime = level->getGameTime();
+        Toggle toggle;
+        toggle.pos = pos;
+        toggle.time = gameTime;
+        sToggleLists[level]->push_back(toggle);
+    }
     int count = 0;
-    for (std::deque<Toggle>::const_iterator it = toggles->begin(); it != toggles->end(); ++it)
-        if (it->pos.equals(pos) && ++count > 7)
+    std::deque<Toggle>::const_iterator end = sToggleLists[level]->end();
+    for (std::deque<Toggle>::const_iterator it = sToggleLists[level]->begin(); it != end; ++it)
+        if (it->pos.equals(pos) && ++count >= 8)
             return true;
     return false;
 }
@@ -100,12 +83,12 @@ void RedstoneTorchBlock::onRemove(Level* level, const BlockPos& pos, const Block
 
 int RedstoneTorchBlock::getSignal(const BlockState* state, LevelSource*, const BlockPos&, const Direction* direction)
 {
-    return mLit && getTorchFacing(state) != direction ? 15 : 0;
+    return mLit && state->getValue(FACING) != direction ? 15 : 0;
 }
 
 bool RedstoneTorchBlock::hasNeighborSignal(Level* level, const BlockPos& pos, const BlockState* state)
 {
-    const Direction* direction = getTorchFacing(state)->getOpposite();
+    const Direction* direction = state->getValue(FACING)->getOpposite();
     return level->hasSignal(pos.relative(direction), direction);
 }
 
@@ -117,38 +100,34 @@ void RedstoneTorchBlock::tick(Level* level, const BlockPos& pos, const BlockStat
 {
     bool powered = hasNeighborSignal(level, pos, state);
 
-    boost::unordered_map<Level*, std::deque<Toggle>*>::iterator levelToggles = sToggleLists.find(level);
-    if (levelToggles != sToggleLists.end())
+    if (sToggleLists.find(level) != sToggleLists.end())
     {
-        std::deque<Toggle>* toggles = levelToggles->second;
-        while (!toggles->empty())
-        {
-            long long gameTime = level->getGameTime();
-            if (gameTime - toggles->front().time < 61) break;
+        std::deque<Toggle>* toggles = sToggleLists[level];
+        while (!toggles->empty() && level->getGameTime() - toggles->front().time >= 61)
             toggles->pop_front();
-        }
     }
 
-    int flags = g_pApp->GetGameHostOption(eGameHostOption_MiniGame) ? 0x25 : 3;
-    if (!mLit && !powered && !isToggledTooFrequently(level, pos, false))
-        level->setBlock(pos, copyTorchState(state, Blocks::redstone_torch->defaultBlockState()), flags, false);
-    else if (mLit && powered)
+    int flags = gApp.GetGameHostOption(eGameHostOption_MiniGame) ? 0x25 : 3;
+    if (!mLit)
     {
-        level->setBlock(pos, copyTorchState(state, Blocks::unlit_redstone_torch->defaultBlockState()), flags, false);
+        if (!powered && !isToggledTooFrequently(level, pos, false))
+            level->setBlock(pos, Blocks::redstone_torch->defaultBlockState()->setValue(FACING, state->getValue(FACING)), flags, false);
+    }
+    else if (powered)
+    {
+        level->setBlock(pos, Blocks::unlit_redstone_torch->defaultBlockState()->setValue(FACING, state->getValue(FACING)), flags, false);
         if (isToggledTooFrequently(level, pos, true))
         {
-            float firstPitchRandom = level->mRandom->nextFloat();
-            float secondPitchRandom = level->mRandom->nextFloat();
-            float pitch = (firstPitchRandom - secondPitchRandom) * 0.8f + 2.6f;
             boost::shared_ptr<Player> player;
             level->playSound(player, pos, SoundEvents::REDSTONE_TORCH_BURNOUT,
-                             SoundSource::eSoundSource_Blocks, 0.5f, pitch, 16.0f);
+                             SoundSource::eSoundSource_Blocks, 0.5f,
+                             (level->mRandom->nextFloat() - level->mRandom->nextFloat()) * 0.8f + 2.6f, 16.0f);
 
             for (int i = 0; i < 5; ++i)
             {
-                double x = pos.x + 0.2 + random->nextDouble() * 0.6;
-                double y = pos.y + 0.2 + random->nextDouble() * 0.6;
-                double z = pos.z + 0.2 + random->nextDouble() * 0.6;
+                double x = pos.x + random->nextDouble() * 0.6 + 0.2;
+                double y = pos.y + random->nextDouble() * 0.6 + 0.2;
+                double z = pos.z + random->nextDouble() * 0.6 + 0.2;
                 level->addParticle(PARTICLE_SMOKE, x, y, z, 0.0, 0.0, 0.0, arrayWithLength<int>());
             }
 
@@ -159,11 +138,8 @@ void RedstoneTorchBlock::tick(Level* level, const BlockPos& pos, const BlockStat
 
 void RedstoneTorchBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block*, const BlockPos&)
 {
-    if (hasNeighborSignal(level, pos, state) != mLit
-        && !level->isBlockToBeTickedAt(pos, this))
-    {
+    if (!checkDoPop(level, pos, state) && hasNeighborSignal(level, pos, state) == mLit)
         level->addToTickNextTick(pos, this, getTickDelay(level));
-    }
 }
 
 int RedstoneTorchBlock::getDirectSignal(const BlockState* state, LevelSource* levelSource, const BlockPos& pos, const Direction* direction)
@@ -188,12 +164,12 @@ void RedstoneTorchBlock::animateTick(const BlockState* state, Level* level, cons
     double x = pos.x + 0.5 + (random->nextDouble() - 0.5) * 0.2;
     double y = pos.y + 0.7 + (random->nextDouble() - 0.5) * 0.2;
     double z = pos.z + 0.5 + (random->nextDouble() - 0.5) * 0.2;
-    const Direction* facing = getTorchFacing(state);
+    const Direction* facing = state->getValue(FACING);
     if (facing->getAxis()->isHorizontal())
     {
-        Vec3i normal = facing->getOpposite()->getNormal();
-        x += 0.27 * normal.x;
-        z += 0.27 * normal.z;
+        const Direction* opposite = facing->getOpposite();
+        x += 0.27 * opposite->getStepX();
+        z += 0.27 * opposite->getStepZ();
         y += 0.22;
     }
     level->addParticle(PARTICLE_RED_DUST, x, y, z, 0.0, 0.0, 0.0, arrayWithLength<int>());

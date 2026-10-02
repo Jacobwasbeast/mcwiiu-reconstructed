@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 
+#include "game/core/StringRepresentable.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
 
@@ -21,7 +22,7 @@ class AbstractProperty;
 class BaseRailBlock : public Block
 {
 public:
-    class RailShape
+    class RailShape : public StringRepresentable
     {
     public:
         RailShape(int data, const std::wstring& name);

@@ -35,9 +35,11 @@
 #include "game/item/ItemId.hpp"
 
 EnumProperty<PlanksBlock::Variant*>* SaplingBlock::TYPE = NULL;
-static AbstractProperty<bool>* gSaplingStage = NULL;
+static AbstractProperty<bool>* gSaplingStage;
 static const AABB* SAPLING_SHAPE = AABB::newPermanent(0.09999999403953552, 0.0, 0.09999999403953552, 0.8999999761581421, 0.800000011920929, 0.8999999761581421);
 static const unsigned int SAPLING_DESCRIPTION_IDS[4] = { IDS_TILE_SAPLING_OAK, IDS_TILE_SAPLING_SPRUCE, IDS_TILE_SAPLING_BIRCH, IDS_TILE_SAPLING_JUNGLE };
+
+static const std::wstring SAPLING_ICON_NAMES[6] = { L"sapling", L"sapling_spruce", L"sapling_birch", L"sapling_jungle", L"sapling_acacia", L"sapling_roofed_oak" };
 
 class SaplingVariantPredicate : public Predicate<PlanksBlock::Variant*>
 {
@@ -59,7 +61,10 @@ bool SaplingBlock::isValidBonemealTarget(Level*, const BlockPos&, const BlockSta
 
 bool SaplingBlock::isBonemealSuccess(Level* level, Random*, const BlockPos&, const BlockState*)
 {
-    return ((GameMode*)Minecraft::GetInstance()->mGameMode)->isCreative() || (double)level->mRandom->nextFloat() < 0.45;
+    bool success = true;
+    if (!((GameMode*)Minecraft::GetInstance()->mGameMode)->isCreative())
+        success = (double)level->mRandom->nextFloat() < 0.45;
+    return success;
 }
 
 bool SaplingBlock::isSapling(Level* level, const BlockPos& pos, PlanksBlock::Variant* variant)
@@ -300,8 +305,7 @@ bool SaplingBlock::canContainLiquid(const BlockState*) const { return false; }
 
 BlockStateDefinition* SaplingBlock::createBlockStateDefinition()
 {
-    blockStaticCtor();
-    const Property* properties[] = { TYPE, gSaplingStage };
+    static const Property* properties[] = { TYPE, gSaplingStage };
     return new BlockStateDefinition(this, properties, 2);
 }
 
@@ -309,12 +313,8 @@ TextureAtlasSprite* SaplingBlock::getTexture(const Direction*, const BlockState*
 
 void SaplingBlock::registerIcons(IconRegister* iconRegister)
 {
-    mIcons[0] = iconRegister->registerIcon(L"sapling");
-    mIcons[1] = iconRegister->registerIcon(L"sapling_spruce");
-    mIcons[2] = iconRegister->registerIcon(L"sapling_birch");
-    mIcons[3] = iconRegister->registerIcon(L"sapling_jungle");
-    mIcons[4] = iconRegister->registerIcon(L"sapling_acacia");
-    mIcons[5] = iconRegister->registerIcon(L"sapling_roofed_oak");
+    for (int i = 0; i < 6; ++i)
+        mIcons[i] = iconRegister->registerIcon(SAPLING_ICON_NAMES[i]);
 }
 
 int SaplingBlock::getDescriptionId(int auxValue)

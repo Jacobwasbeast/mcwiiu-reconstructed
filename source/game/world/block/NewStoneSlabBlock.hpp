@@ -3,6 +3,7 @@
 
 #include <string>
 
+#include "game/core/StringRepresentable.hpp"
 #include "game/world/block/EnumProperty.hpp"
 #include "game/world/block/HalfSlabBlock.hpp"
 
@@ -19,7 +20,7 @@ class TextureAtlasSprite;
 class NewStoneSlabBlock : public HalfSlabBlock
 {
 public:
-    class Variant
+    class Variant : public StringRepresentable
     {
     public:
         Variant(int data, const std::wstring& name, int translationKey, const MaterialColor* materialColor);

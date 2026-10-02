@@ -1,6 +1,7 @@
 #ifndef GAME_WORLD_BLOCK_SANDSTONEBLOCK_HPP
 #define GAME_WORLD_BLOCK_SANDSTONEBLOCK_HPP
 
+#include "game/core/StringRepresentable.hpp"
 #include "game/world/block/Block.hpp"
 
 #include <string>
@@ -16,7 +17,7 @@ class TextureAtlasSprite;
 class SandStoneBlock : public Block
 {
 public:
-    class Variant
+    class Variant : public StringRepresentable
     {
     public:
         Variant(int data, const std::wstring& name, int translationKey);
@@ -50,7 +51,9 @@ public:
     virtual void registerIcons(IconRegister* iconRegister);
 
 private:
-    TextureAtlasSprite* mTextures[5];
+    TextureAtlasSprite* mTextures[3];
+    TextureAtlasSprite* mTopTexture;
+    TextureAtlasSprite* mBottomTexture;
 };
 
 #endif

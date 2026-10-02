@@ -104,12 +104,12 @@ bool BaseRailBlock::isRail(const Block* block)
 
 bool BaseRailBlock::isRail(Level* level, const BlockPos& pos)
 {
-    return level != NULL && isRail(level->getBlockState(pos));
+    return isRail(level->getBlock(pos));
 }
 
 bool BaseRailBlock::isRail(const BlockState* state)
 {
-    return state != NULL && isRail(state->getBlock());
+    return isRail(state->getBlock());
 }
 
 const AABB* BaseRailBlock::getClipAABB(const BlockState*, LevelSource*, const BlockPos&)
@@ -153,8 +153,12 @@ bool BaseRailBlock::mayPlace(Level* level, const BlockPos& pos)
 
 void BaseRailBlock::onPlace(Level* level, const BlockPos& pos, const BlockState* state)
 {
-    if (!level->mIsClientSide && mIsPowered)
-        updateDir(level, pos, state, true);
+    if (!level->mIsClientSide)
+    {
+        state = updateDir(level, pos, state, true);
+        if (mIsPowered)
+            state->neighborChanged(level, pos, this, pos);
+    }
 }
 
 void BaseRailBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos,
@@ -173,36 +177,26 @@ void BaseRailBlock::neighborChanged(const BlockState* state, Level* level, const
         unsupported = true;
     }
 
-    if (shape == RailShape::ASCENDING_EAST
-        && !level->getBlockState(pos.east())->isTopSolidBlocking()
-        && !Block::isExceptionForTopSolidBlocking(level->getBlockState(pos.east())->getBlock()))
+    if ((shape == RailShape::ASCENDING_EAST
+            && !level->getBlockState(pos.east())->isTopSolidBlocking()
+            && !Block::isExceptionForTopSolidBlocking(level->getBlockState(pos.east())->getBlock()))
+        || (shape == RailShape::ASCENDING_WEST
+            && !level->getBlockState(pos.west())->isTopSolidBlocking()
+            && !Block::isExceptionForTopSolidBlocking(level->getBlockState(pos.west())->getBlock()))
+        || (shape == RailShape::ASCENDING_NORTH
+            && !level->getBlockState(pos.north())->isTopSolidBlocking()
+            && !Block::isExceptionForTopSolidBlocking(level->getBlockState(pos.north())->getBlock()))
+        || (shape == RailShape::ASCENDING_SOUTH
+            && !level->getBlockState(pos.south())->isTopSolidBlocking()
+            && !Block::isExceptionForTopSolidBlocking(level->getBlockState(pos.south())->getBlock()))
+        || unsupported)
     {
-        unsupported = true;
-    }
-    else if (shape == RailShape::ASCENDING_WEST
-        && !level->getBlockState(pos.west())->isTopSolidBlocking()
-        && !Block::isExceptionForTopSolidBlocking(level->getBlockState(pos.west())->getBlock()))
-    {
-        unsupported = true;
-    }
-    else if (shape == RailShape::ASCENDING_NORTH
-        && !level->getBlockState(pos.north())->isTopSolidBlocking()
-        && !Block::isExceptionForTopSolidBlocking(level->getBlockState(pos.north())->getBlock()))
-    {
-        unsupported = true;
-    }
-    else if (shape == RailShape::ASCENDING_SOUTH
-        && !level->getBlockState(pos.south())->isTopSolidBlocking()
-        && !Block::isExceptionForTopSolidBlocking(level->getBlockState(pos.south())->getBlock()))
-    {
-        unsupported = true;
-    }
-
-    if (unsupported && !level->isEmptyBlock(pos))
-    {
-        spawnResources(level, pos, state, 0);
-        level->removeBlock(pos);
-        return;
+        if (!level->isEmptyBlock(pos))
+        {
+            spawnResources(level, pos, state, 0);
+            level->removeBlock(pos);
+            return;
+        }
     }
     updateState(state, level, pos, block);
 }
@@ -213,12 +207,12 @@ void BaseRailBlock::updateState(const BlockState*, Level*, const BlockPos&, Bloc
 
 const BlockState* BaseRailBlock::updateDir(Level* level, const BlockPos& pos, const BlockState* state, bool forceUpdate)
 {
-    if (level->mIsClientSide)
-        return state;
-    bool powered = level->hasNeighborSignal(pos);
-    Rail rail(level, pos, state);
-    rail.place(powered, forceUpdate);
-    return rail.getState();
+    if (!level->mIsClientSide)
+    {
+        bool powered = level->hasNeighborSignal(pos);
+        state = Rail(level, pos, state).place(powered, forceUpdate)->getState();
+    }
+    return state;
 }
 
 EPistonPushReaction BaseRailBlock::getPistonPushReaction(const BlockState*)
@@ -234,9 +228,8 @@ int BaseRailBlock::getRenderLayer()
 void BaseRailBlock::onRemove(Level* level, const BlockPos& pos, const BlockState* state)
 {
     Block::onRemove(level, pos, state);
-    TypedBoxed<RailShape*>* boxed = static_cast<TypedBoxed<RailShape*>*>(state->getBoxedValue(getShapeProperty()));
-    RailShape* shape = boxed->getValue();
-    if (shape != NULL && shape->isAscending())
+    RailShape* shape = state->getValue(getShapeProperty());
+    if (shape->isAscending())
         level->updateNeighborsAt(pos.above(), this, false);
     if (mIsPowered)
     {
@@ -251,12 +244,14 @@ EBlockRenderShape BaseRailBlock::getRenderShape(const BlockState*)
 }
 
 BaseRailBlock::Rail::Rail(Level* level, const BlockPos& pos, const BlockState* state)
-    : mLevel(level), mPos(pos), mBlock(state->getBlock()), mState(state), mPowered(false)
 {
-    TypedBoxed<RailShape*>* boxed = static_cast<TypedBoxed<RailShape*>*>(state->getBoxedValue(
-        static_cast<BaseRailBlock*>(mBlock)->getShapeProperty()));
+    mLevel = level;
+    mPos = pos;
+    mState = state;
+    mBlock = state->getBlock();
+    RailShape* shape = state->getValue(static_cast<BaseRailBlock*>(mBlock)->getShapeProperty());
     mPowered = static_cast<BaseRailBlock*>(mBlock)->mIsPowered;
-    updateConnections(boxed->getValue());
+    updateConnections(shape);
 }
 
 const BlockState* BaseRailBlock::Rail::getState()
@@ -313,26 +308,27 @@ void BaseRailBlock::Rail::updateConnections(RailShape* shape)
 
 BaseRailBlock::Rail* BaseRailBlock::Rail::getRail(const BlockPos& pos)
 {
-    const BlockState* state = mLevel->getBlockState(pos);
+    BlockPos railPos = pos;
+    const BlockState* state = mLevel->getBlockState(railPos);
     if (!BaseRailBlock::isRail(state))
     {
-        state = mLevel->getBlockState(pos.above());
+        railPos = pos.above();
+        state = mLevel->getBlockState(railPos);
         if (!BaseRailBlock::isRail(state))
         {
-            state = mLevel->getBlockState(pos.below());
+            railPos = pos.below();
+            state = mLevel->getBlockState(railPos);
             if (!BaseRailBlock::isRail(state))
                 return NULL;
-            return new Rail(mLevel, pos.below(), state);
         }
-        return new Rail(mLevel, pos.above(), state);
     }
-    return new Rail(mLevel, pos, state);
+    return new Rail(mLevel, railPos, state);
 }
 
 bool BaseRailBlock::Rail::hasConnection(const BlockPos& pos)
 {
     for (std::vector<BlockPos>::const_iterator it = mConnections.begin(); it != mConnections.end(); ++it)
-        if (it->x == pos.x && it->y == pos.y && it->z == pos.z)
+        if (it->x == pos.x && it->z == pos.z)
             return true;
     return false;
 }
@@ -423,8 +419,7 @@ void BaseRailBlock::Rail::connectTo(Rail* rail)
     if (shape == NULL)
         shape = RailShape::NORTH_SOUTH;
 
-    TypedBoxed<RailShape*> shapeValue(shape);
-    mState = mState->setBoxedValue(static_cast<BaseRailBlock*>(mBlock)->getShapeProperty(), &shapeValue);
+    mState = mState->setValue(static_cast<BaseRailBlock*>(mBlock)->getShapeProperty(), shape);
     mLevel->setBlock(mPos, mState, Block::UPDATE_ALL, false);
 }
 
@@ -507,8 +502,7 @@ BaseRailBlock::Rail* BaseRailBlock::Rail::place(bool powered, bool forceUpdate)
         shape = RailShape::NORTH_SOUTH;
 
     updateConnections(shape);
-    TypedBoxed<RailShape*> shapeValue(shape);
-    mState = mState->setBoxedValue(static_cast<BaseRailBlock*>(mBlock)->getShapeProperty(), &shapeValue);
+    mState = mState->setValue(static_cast<BaseRailBlock*>(mBlock)->getShapeProperty(), shape);
 
     if (forceUpdate || mLevel->getBlockState(mPos) != mState)
     {

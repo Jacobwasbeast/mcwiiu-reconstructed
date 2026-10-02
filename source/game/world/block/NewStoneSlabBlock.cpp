@@ -112,7 +112,7 @@ not_null_ptr<ItemInstance> NewStoneSlabBlock::getCloneItemInstance(Level* level,
 
 int NewStoneSlabBlock::getAuxName(int auxValue)
 {
-    return getDescriptionId(auxValue);
+    return Block::getDescriptionId(auxValue);
 }
 
 Property* NewStoneSlabBlock::getTypeProperty()
