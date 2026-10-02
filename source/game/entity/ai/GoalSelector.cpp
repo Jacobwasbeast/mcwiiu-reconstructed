@@ -110,8 +110,7 @@ bool GoalSelector::canContinueToUse(InternalGoal* goal)
 
 void GoalSelector::tick()
 {
-    ++mTickCount;
-    if (mTickCount % mNewGoalRate == 0)
+    if (mTickCount++ % mNewGoalRate == 0)
     {
         PIXBeginNamedEvent(0.0f, "Updating goals");
         std::vector<InternalGoal*>::iterator available;

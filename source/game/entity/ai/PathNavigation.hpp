@@ -60,7 +60,7 @@ public:
     PathFinder* getPathFinder();
     void setPathFinder(PathFinder* pathFinder);
     void setSpeedModifier(double speed);
-    double getMaxDist();
+    float getMaxDist();
     bool hasDelayedRecomputation();
     void recomputePath();
     Path* createPath(double x, double y, double z);

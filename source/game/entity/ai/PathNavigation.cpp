@@ -5,6 +5,7 @@
 #include "game/core/PathFinder.hpp"
 #include "game/core/Node.hpp"
 #include "game/core/Mth.hpp"
+#include "game/core/MemSect.hpp"
 #include "game/core/System.hpp"
 #include "game/core/AttributeInstance.hpp"
 #include "game/core/Region.hpp"
@@ -19,7 +20,7 @@
 #include <cmath>
 
 PathNavigation::PathNavigation(Mob* mob, Level* level)
-    : mPath(0), mMob(mob), mLevel(level), mSpeedModifier(1.0), mFollowRange(mob->getAttribute(SharedMonsterAttributes::FOLLOW_RANGE)), mTick(0), mLastStuckCheck(0), mLastStuckCheckPos(Vec3::newPermanent(0.0, 0.0, 0.0)), mLastTargetPos(Vec3::newPermanent(0.0, 0.0, 0.0)), mStuckTime(0), mLastStuckCheckTime(0), mTimeoutLimit(1.0), mIsRiverFollowing(false), mMaxDistanceToWaypoint(0.5f), mHasDelayedRecomputation(false), mLastRecomputeTime(0), mTargetPos(0), mPathFinder(0)
+    : mPath(0), mMob(mob), mLevel(level), mSpeedModifier(0.0), mFollowRange(mob->getAttribute(SharedMonsterAttributes::FOLLOW_RANGE)), mTick(0), mLastStuckCheck(0), mLastStuckCheckPos(Vec3::newPermanent(0.0, 0.0, 0.0)), mLastTargetPos(Vec3::newPermanent(0.0, 0.0, 0.0)), mStuckTime(0), mLastStuckCheckTime(0), mTimeoutLimit(0.0), mIsRiverFollowing(false), mMaxDistanceToWaypoint(0.5f), mHasDelayedRecomputation(false), mLastRecomputeTime(0), mTargetPos(0), mPathFinder(0)
 {
 }
 
@@ -46,61 +47,66 @@ void PathNavigation::stop()
 
 PathFinder* PathNavigation::getPathFinder() { return mPathFinder; }
 void PathNavigation::setSpeedModifier(double speed) { mSpeedModifier = speed; }
-double PathNavigation::getMaxDist()
+float PathNavigation::getMaxDist()
 {
-    return (double)(float)mFollowRange->getValue();
+    return (float)mFollowRange->getValue();
 }
 bool PathNavigation::hasDelayedRecomputation() { return mHasDelayedRecomputation; }
 
 void PathNavigation::recomputePath()
 {
-    if (mLevel->getGameTime() - mLastRecomputeTime < 21) mHasDelayedRecomputation = true;
-    else if (mTargetPos != 0)
+    if (mLevel->getGameTime() - mLastRecomputeTime > 20)
     {
-        delete mPath;
-        mPath = 0;
-        mPath = createPath(*mTargetPos);
-        mHasDelayedRecomputation = false;
-        mLastRecomputeTime = mLevel->getGameTime();
+        if (mTargetPos != 0)
+        {
+            delete mPath;
+            mPath = 0;
+            mPath = createPath(*mTargetPos);
+            mLastRecomputeTime = mLevel->getGameTime();
+            mHasDelayedRecomputation = false;
+        }
+    }
+    else
+    {
+        mHasDelayedRecomputation = true;
     }
 }
 
 Path* PathNavigation::createPath(double x, double y, double z)
 {
-    BlockPos pos(x, y, z);
-    return createPath(pos);
+    return createPath(BlockPos(x, y, z));
 }
 
 Path* PathNavigation::createPath(const BlockPos& pos)
 {
     if (!canUpdatePath()) return 0;
-    if (mPath != 0 && !mPath->isDone() && mTargetPos != 0 && pos.equals(*mTargetPos)) return mPath->clone();
+    if (mPath != 0 && !mPath->isDone() && pos.equals(mTargetPos)) return mPath->clone();
     delete mTargetPos;
     mTargetPos = new BlockPos(pos);
-    double maxDist = getMaxDist();
+    float maxDist = getMaxDist();
     BlockPos mobPos(mMob);
-    int radius = (int)(maxDist + 8.0);
+    int radius = (int)(maxDist + 8.0f);
     BlockPos min = mobPos.offset(-radius, -radius, -radius);
     BlockPos max = mobPos.offset(radius, radius, radius);
     Region region(mLevel, min, max, 0);
-    return mPathFinder->findPath(&region, mMob, *mTargetPos, (float)maxDist);
+    return mPathFinder->findPath(&region, mMob, *mTargetPos, maxDist);
 }
 
 Path* PathNavigation::createPath(boost::shared_ptr<Entity> entity)
 {
     if (!canUpdatePath()) return 0;
     BlockPos pos(entity);
-    if (mPath != 0 && !mPath->isDone() && mTargetPos != 0 && pos.equals(*mTargetPos)) return mPath->clone();
+    if (mPath != 0 && !mPath->isDone() && pos.equals(mTargetPos)) return mPath->clone();
     delete mTargetPos;
     mTargetPos = new BlockPos(pos);
-    double maxDist = getMaxDist();
+    float maxDist = getMaxDist();
     BlockPos mobPos(mMob);
     BlockPos center = mobPos.above();
-    int radius = (int)(maxDist + 16.0);
+    int radius = (int)(maxDist + 16.0f);
     BlockPos min = center.offset(-radius, -radius, -radius);
     BlockPos max = center.offset(radius, radius, radius);
     Region region(mLevel, min, max, 0);
-    return mPathFinder->findPath(&region, mMob, entity.get(), (float)maxDist);
+    return mPathFinder->findPath(&region, mMob, entity.get(), maxDist);
 }
 
 Path* PathNavigation::createDirectPath(const BlockPos& pos)
@@ -109,19 +115,21 @@ Path* PathNavigation::createDirectPath(const BlockPos& pos)
     if (mPath != 0 && !mPath->isDone() && pos.equals(mTargetPos)) return mPath->clone();
     delete mTargetPos;
     mTargetPos = new BlockPos(pos);
-    double maxDist = getMaxDist();
+    float maxDist = getMaxDist();
     BlockPos mobPos(mMob);
-    int radius = (int)(maxDist + 8.0);
+    int radius = (int)(maxDist + 8.0f);
     BlockPos min = mobPos.offset(-radius, -radius, -radius);
     BlockPos max = mobPos.offset(radius, radius, radius);
     Region region(mLevel, min, max, 0);
-    return mPathFinder->findDirectPath(&region, mMob, *mTargetPos, (float)maxDist);
+    return mPathFinder->findDirectPath(&region, mMob, *mTargetPos, maxDist);
 }
 
 bool PathNavigation::moveTo(double x, double y, double z, double speed)
 {
+    MemSect(53);
     Path* path = createPath(x, y, z);
-    return path != 0 && moveTo(path, speed);
+    MemSect(0);
+    return moveTo(path, speed);
 }
 
 bool PathNavigation::moveTo(boost::shared_ptr<Entity> entity, double speed)
@@ -132,21 +140,28 @@ bool PathNavigation::moveTo(boost::shared_ptr<Entity> entity, double speed)
 
 bool PathNavigation::moveTo(Path* path, double speed)
 {
-    if (path == 0) { stop(); return false; }
-    if ((mPath != 0 && mPath != path && mPath->isDone()) || !path->sameAs(mPath))
+    Path* oldPath = mPath;
+    if (path == 0)
     {
-        delete mPath;
+        delete oldPath;
+        mPath = 0;
+        return false;
+    }
+    if (!path->sameAs(oldPath))
+    {
+        delete oldPath;
         mPath = path;
     }
-    else if (path != mPath)
+    else if (path != oldPath)
     {
         delete path;
     }
     trimPath();
     if (mPath->getSize() <= 0) return false;
     mSpeedModifier = speed;
+    Vec3* pos = getTempMobPos();
     mLastStuckCheck = mTick;
-    mLastTargetPos->set(mPath->currentPos());
+    mLastStuckCheckPos->set(pos);
     return true;
 }
 
@@ -165,7 +180,8 @@ void PathNavigation::tick()
     }
     else
     {
-        if (mPath != 0 && mPath->getIndex() < mPath->getSize())
+        Path* path = mPath;
+        if (path != 0 && path->getIndex() < path->getSize())
         {
             Vec3* p = getTempMobPos();
             Vec3* next = mPath->getPos(mMob->shared_from_this(), mPath->getIndex());
@@ -182,7 +198,7 @@ void PathNavigation::tick()
         {
             BlockPos below = BlockPos(currentPos).below();
             const BlockState* blockState = mLevel->getBlockState(below);
-            const AABB* outline = blockState->getOutlineAABB(mLevel, below);
+            const AABB* outline = blockState->getShape(mLevel, below);
             Vec3* adjusted = currentPos->subtract(0.0, 1.0 - outline->mMaxY, 0.0);
             mMob->getMoveControl()->setWantedPosition(adjusted->x, adjusted->y, adjusted->z, mSpeedModifier);
         }
@@ -197,25 +213,25 @@ void PathNavigation::doStuckDetection(Vec3* pos)
         mLastStuckCheck = mTick;
         mLastStuckCheckPos->set(pos);
     }
-    if (mPath != 0 && !mPath->isDone())
+    Path* path = mPath;
+    if (path != 0 && !path->isDone())
     {
-        Vec3* current = mPath->currentPos();
+        Vec3* current = path->currentPos();
         if (!current->equals(mLastTargetPos))
         {
             mLastTargetPos->set(current);
             double distance = pos->distanceTo(mLastTargetPos);
-            double speed = mMob->getSpeed();
-            mTimeoutLimit = speed <= 0.0 ? 1.0 : distance / speed * 1000.0;
+            mTimeoutLimit = mMob->getSpeed() > 0.0f ? distance / mMob->getSpeed() * 1000.0 : 0.0;
         }
         else
         {
             mStuckTime += System::processTimeInMilliSecs() - mLastStuckCheckTime;
         }
-        if (mTimeoutLimit > 1.0 && (double)mStuckTime > mTimeoutLimit * 3.0)
+        if (mTimeoutLimit > 0.0 && (double)mStuckTime > mTimeoutLimit * 3.0)
         {
             mLastTargetPos->set(0.0, 0.0, 0.0);
             mStuckTime = 0;
-            mTimeoutLimit = 1.0;
+            mTimeoutLimit = 0.0;
             stop();
         }
         mLastStuckCheckTime = System::processTimeInMilliSecs();
@@ -224,36 +240,42 @@ void PathNavigation::doStuckDetection(Vec3* pos)
 
 void PathNavigation::updatePath()
 {
-    Mob* pathOwner = mMob;
-    if (Entity::instanceof(mMob->getVehicle(), EntityType::MOB)) pathOwner = static_cast<Mob*>(mMob->getVehicle().get());
-    PathNavigation* navigation = pathOwner->getNavigation();
+    Mob* pathOwner = Entity::instanceof(mMob->getVehicle(), EntityType::MOB) ? static_cast<Mob*>(mMob->getVehicle().get()) : mMob;
     Vec3* mobPos;
     PathNavigation* mover;
-    if (navigation == 0)
+    if (pathOwner->getNavigation() == 0)
     {
         mobPos = getTempMobPos();
         mover = this;
     }
     else
     {
-        mobPos = navigation->getTempMobPos();
-        mover = navigation;
+        mover = pathOwner->getNavigation();
+        mobPos = mover->getTempMobPos();
     }
     int size = mPath->getSize();
-    int stopIndex = size;
-    if (!pathOwner->canFly() && mPath != 0 && mPath->getIndex() < size)
+    bool canFly = pathOwner->canFly();
+    Path* path = mPath;
+    if (!canFly)
     {
-        int floorY = Mth::floor(mobPos->y);
-        int i;
-        for (i = mPath->getIndex(); i < size; ++i)
+        int i = path->getIndex();
+        if (path != 0 && i < path->getSize())
         {
-            Node* node = mPath->get(i);
-            if (node->y != floorY) { stopIndex = i; break; }
+            do
+            {
+                if (path->get(i)->y != Mth::floor(mobPos->y))
+                {
+                    size = i;
+                    break;
+                }
+                ++i;
+            }
+            while (i < path->getSize());
         }
     }
     float halfWidth = pathOwner->mBbWidth;
     mMaxDistanceToWaypoint = halfWidth <= 0.75f ? 0.75f - halfWidth * 0.5f : halfWidth * 0.5f;
-    Vec3* currentPos = mPath->currentPos();
+    Vec3* currentPos = path->currentPos();
     if ((double)Mth::abs((float)(pathOwner->mX - (currentPos->x + 0.5))) < (double)mMaxDistanceToWaypoint &&
         (double)Mth::abs((float)(pathOwner->mZ - (currentPos->z + 0.5))) < (double)mMaxDistanceToWaypoint &&
         Mth::abs(pathOwner->mY - currentPos->y) < 1.0)
@@ -262,7 +284,7 @@ void PathNavigation::updatePath()
     }
     int ceilWidth = (int)std::ceil(pathOwner->mBbWidth);
     int ceilHeight = (int)std::ceil(pathOwner->mBbHeight);
-    int index = stopIndex - 1;
+    int index = size - 1;
     while (mPath->getIndex() <= index)
     {
         if (mover->canMoveDirectly(mobPos, mPath->getPos(pathOwner->shared_from_this(), index), ceilWidth, ceilHeight, ceilWidth))
@@ -278,9 +300,8 @@ bool PathNavigation::isInLiquid() { return mMob->isInWaterOrBubble() || mMob->is
 void PathNavigation::trimPath()
 {
     if (mPath == 0) return;
-    int size = mPath->getSize();
-    int i;
-    for (i = 0; i < size; ++i)
+    int size;
+    for (int i = 0; i < (size = mPath->getSize()); ++i)
     {
         Node* node = mPath->get(i);
         Node* next = i + 1 < size ? mPath->get(i + 1) : 0;
