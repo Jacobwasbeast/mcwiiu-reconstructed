@@ -63,77 +63,77 @@ void LevelSettings::setLevelTypeOptions(SuperflatConfig* options)
     mLevelTypeOptions = options;
 }
 
-bool LevelSettings::hasStartingBonusItems() const
+bool LevelSettings::hasStartingBonusItems()
 {
     return mStartingBonusItems;
 }
 
-long long LevelSettings::getSeed() const
+long long LevelSettings::getSeed()
 {
     return mSeed;
 }
 
-const GameType* LevelSettings::getGameType() const
+const GameType* LevelSettings::getGameType()
 {
     return mGameType;
 }
 
-bool LevelSettings::isHardcore() const
+bool LevelSettings::isHardcore()
 {
     return mHardcore;
 }
 
-LevelType* LevelSettings::getLevelType() const
+LevelType* LevelSettings::getLevelType()
 {
     return mLevelType;
 }
 
-bool LevelSettings::getAllowCommands() const
+bool LevelSettings::getAllowCommands()
 {
     return mAllowCommands;
 }
 
-bool LevelSettings::isGenerateMapFeatures() const
+bool LevelSettings::isGenerateMapFeatures()
 {
     return mGenerateMapFeatures;
 }
 
-int LevelSettings::getCloudHeight() const
+int LevelSettings::getCloudHeight()
 {
     return mCloudHeight;
 }
 
-bool LevelSettings::useNewSeaLevel() const
+bool LevelSettings::useNewSeaLevel()
 {
     return mUseNewSeaLevel;
 }
 
-int LevelSettings::getXZSize() const
+int LevelSettings::getXZSize()
 {
     return mXZSize;
 }
 
-int LevelSettings::getHellScale() const
+int LevelSettings::getHellScale()
 {
     return mHellScale;
 }
 
-bool LevelSettings::getModernEnd() const
+bool LevelSettings::getModernEnd()
 {
     return mModernEnd;
 }
 
-unsigned char LevelSettings::getBiomeScale() const
+unsigned char LevelSettings::getBiomeScale()
 {
     return mBiomeScale;
 }
 
-int LevelSettings::getBiomeCentreXChunk() const
+int LevelSettings::getBiomeCentreXChunk()
 {
     return mBiomeCentreXChunk;
 }
 
-int LevelSettings::getBiomeCentreZChunk() const
+int LevelSettings::getBiomeCentreZChunk()
 {
     return mBiomeCentreZChunk;
 }
@@ -143,7 +143,7 @@ const GameType* LevelSettings::validateGameType(int gameType)
     return GameType::byId(gameType);
 }
 
-SuperflatConfig* LevelSettings::getLevelTypeOptions() const
+SuperflatConfig* LevelSettings::getLevelTypeOptions()
 {
     return mLevelTypeOptions;
 }
