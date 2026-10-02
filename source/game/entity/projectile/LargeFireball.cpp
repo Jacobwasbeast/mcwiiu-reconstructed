@@ -48,12 +48,13 @@ void LargeFireball::onHit(const HitResult* result)
 
     if (result->mEntity)
     {
-        boost::shared_ptr<DamageSource> damageSource = DamageSource::CreateFireball(
+        DamageSource* damageSource = DamageSource::CreateFireball(
             boost::static_pointer_cast<Fireball>(shared_from_this()), mOwner);
-        if (result->mEntity->hurt(damageSource.get(), 6.0f))
+        if (result->mEntity->hurt(damageSource, 6.0f))
         {
             result->mEntity->setSecondsOnFire(3);
         }
+        delete damageSource;
     }
 
     const bool mobGriefing = mLevel->getGameRules()->getBoolean(GameRules::RULE_MOBGRIEFING);

@@ -77,13 +77,14 @@ void SmallFireball::onHit(const HitResult* result)
             boost::static_pointer_cast<Fireball>(shared_from_this());
         boost::shared_ptr<Entity> owner =
             boost::static_pointer_cast<Entity>(mOwner);
-        boost::shared_ptr<DamageSource> damageSource =
+        DamageSource* damageSource =
             DamageSource::CreateFireball(fireball, owner);
-        if (result->mEntity->hurt(damageSource.get(), 5.0f))
+        if (result->mEntity->hurt(damageSource, 5.0f))
         {
             doEnchantDamageEffects(mOwner, result->mEntity);
             result->mEntity->setSecondsOnFire(5);
         }
+        delete damageSource;
     }
 
     remove();
