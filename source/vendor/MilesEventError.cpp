@@ -4,6 +4,7 @@
 
 MilesEventErrorCallback g_milesEventErrorCallback = 0;
 MilesEventErrorCallback g_milesAuditionErrorCallback = 0;
+MilesAuditionSoundEvictedCallback g_milesAuditionSoundEvictedCallback = 0;
 
 namespace {
 const char* const errorMessages[] = {
@@ -42,6 +43,13 @@ extern "C" void Audition_Error(long long context, const char* text)
 {
     if (g_milesAuditionErrorCallback)
         g_milesAuditionErrorCallback(context, text);
+}
+
+extern "C" void Audition_SoundEvicted(unsigned long long instanceId, unsigned long long eventId,
+                                      unsigned int policy)
+{
+    if (g_milesAuditionSoundEvictedCallback)
+        g_milesAuditionSoundEvictedCallback(instanceId, eventId, policy);
 }
 
 void ErrorHandler(ErrorType type, unsigned long long context, const char* text)

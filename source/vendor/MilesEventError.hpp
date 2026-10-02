@@ -11,11 +11,17 @@ enum ErrorType
 };
 
 typedef void (*MilesEventErrorCallback)(long long context, const char* text);
+typedef void (*MilesAuditionSoundEvictedCallback)(unsigned long long instanceId,
+                                                  unsigned long long eventId,
+                                                  unsigned int policy);
 extern MilesEventErrorCallback g_milesEventErrorCallback;
 extern MilesEventErrorCallback g_milesAuditionErrorCallback;
+extern MilesAuditionSoundEvictedCallback g_milesAuditionSoundEvictedCallback;
 extern "C" void MilesSetEventErrorCallback(MilesEventErrorCallback callback);
 extern "C" void MilesSetEventErrorCallbackInternal(MilesEventErrorCallback callback);
 extern "C" void Audition_Error(long long context, const char* text);
+extern "C" void Audition_SoundEvicted(unsigned long long instanceId, unsigned long long eventId,
+                                      unsigned int policy);
 void ErrorHandler(ErrorType type, unsigned long long context, const char* text);
 
 #endif

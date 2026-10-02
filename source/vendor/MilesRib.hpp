@@ -27,5 +27,6 @@ extern "C" int RIB_request_interface_entry(unsigned int uProvider, const char* p
 extern "C" unsigned int RIB_load_static_provider_library(RIB_MAIN_CALLBACK pMain, const char* pLibraryName);
 extern "C" void RIB_free_provider_library(unsigned int uProvider);
 extern "C" int RIB_enumerate_providers(const char* pInterfaceName, unsigned int* puIndex, unsigned int* puProvider);
+extern "C" unsigned int RIB_find_file_provider(const char* pInterfaceName, const char* pAttributeName, const char* pFileName);
 
 #endif

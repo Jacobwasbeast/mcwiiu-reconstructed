@@ -6,6 +6,7 @@ extern "C" void AIL_set_error(const char* pError);
 extern "C" void* AIL_mem_alloc_lock_info(int iSize, const char* pOwnerName, int iOwnerLine);
 extern "C" void AIL_mem_free_lock(void* pBlock);
 extern "C" void outresuhex(unsigned int uResult);
+extern "C" void outresint(int iResult);
 extern "C" int AIL_ms_count();
 
 extern int AIL_debug_enabled;

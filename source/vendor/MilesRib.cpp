@@ -5,6 +5,8 @@
 
 #include "vendor/MilesMem.hpp"
 
+extern "C" int AIL_stricmp(const char* pFirst, const char* pSecond);
+
 struct INTERFACE_DESCRIPTOR
 {
     unsigned int uProvider;
@@ -84,6 +86,9 @@ static const int RIB_ERROR = 1;
 static const int RIB_NOT_FOUND = 2;
 
 static const unsigned int RIB_ENTRY_NOT_FOUND = 0xFFFFFFFF;
+
+static const unsigned int RIB_FUNCTION = 0;
+static const unsigned int RIB_PROPERTY = 1;
 
 static const unsigned int RIB_INVALID_PROVIDER = 0xFFFFFFFF;
 
@@ -897,5 +902,100 @@ extern "C" int RIB_enumerate_providers(const char* pInterfaceName, unsigned int*
 
     *puIndex = RIB_ENUMERATE_FIRST;
     *puProvider = 0;
+    return 0;
+}
+
+extern "C" int match_suffix(char* pFilterList, char* pFileName)
+{
+    char* pSuffix;
+    size_t uLength;
+    int iDot;
+    int iSuffixLength;
+    int iPatternLength;
+
+    uLength = strlen(pFileName);
+    iDot = (int)uLength - 1;
+
+    while (iDot > 0 && pFileName[iDot] != '.')
+    {
+        iDot = iDot - 1;
+    }
+
+    pSuffix = pFileName + iDot;
+    iSuffixLength = (int)strlen(pSuffix);
+
+    for (;;)
+    {
+        pFilterList = pFilterList + strlen(pFilterList) + 1;
+        iPatternLength = (int)strlen(pFilterList);
+
+        if (iPatternLength == 0)
+        {
+            return 0;
+        }
+
+        if (iSuffixLength <= iPatternLength &&
+            AIL_stricmp(pFilterList + (iPatternLength - iSuffixLength), pSuffix) == 0)
+        {
+            return 1;
+        }
+
+        pFilterList = pFilterList + iPatternLength + 1;
+
+        if (*pFilterList == '\0')
+        {
+            return 0;
+        }
+    }
+}
+
+extern "C" unsigned int RIB_find_file_provider(const char* pInterfaceName,
+                                               const char* pAttributeName,
+                                               const char* pFileName)
+{
+    ILIST_ENTRY* pEntry;
+    RIB_PROVIDER_PROPERTY_CALLBACK pProperty;
+    char* pExtensions;
+    unsigned int uAttribute;
+    int iSet;
+
+    for (iSet = 0; iSet < RIB_INTERFACE_SET_COUNT; iSet++)
+    {
+        for (pEntry = RIB_interfaces.pSet[iSet]; pEntry != NULL; pEntry = pEntry->pSetNext)
+        {
+            if (pEntry->iIndex == -1 || pEntry->descriptor.uType != RIB_FUNCTION)
+            {
+                continue;
+            }
+
+            if (strcmp(pInterfaceName, pEntry->descriptor.pInterfaceName) != 0)
+            {
+                continue;
+            }
+
+            if (strcmp(pEntry->descriptor.pEntryName, RIB_PROVIDER_PROPERTY_ENTRY) != 0)
+            {
+                continue;
+            }
+
+            pProperty = (RIB_PROVIDER_PROPERTY_CALLBACK)pEntry->descriptor.pToken;
+
+            if (RIB_request_interface_entry(pEntry->descriptor.uProvider,
+                                            pEntry->descriptor.pInterfaceName, RIB_PROPERTY,
+                                            pAttributeName, &uAttribute) != 0)
+            {
+                continue;
+            }
+
+            pExtensions = "";
+            pProperty(uAttribute, &pExtensions, NULL, NULL);
+
+            if (match_suffix(pExtensions, const_cast<char*>(pFileName)) != 0)
+            {
+                return pEntry->descriptor.uProvider;
+            }
+        }
+    }
+
     return 0;
 }

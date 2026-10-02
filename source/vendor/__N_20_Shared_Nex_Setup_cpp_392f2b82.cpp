@@ -1,7 +1,7 @@
 #include "vendor/__N_20_Shared_Nex_Setup_cpp_392f2b82.hpp"
 #include "nn/nex/MemoryManager.hpp"
 
-extern "C" void checkPiaCoreToUse();
+void checkPiaCoreToUse();
 #include <coreinit/memdefaultheap.h>
 #include <coreinit/memexpheap.h>
 
