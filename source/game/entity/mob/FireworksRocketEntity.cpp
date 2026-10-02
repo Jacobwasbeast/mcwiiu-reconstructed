@@ -208,10 +208,10 @@ void FireworksRocketEntity::dealExplosionDamage()
     }
 
     boost::shared_ptr<LivingEntity> attached = mAttachedToEntity.lock();
-    boost::shared_ptr<DamageSource> explosionSource = DamageSource::CreateExplosion(attached);
+    DamageSource* explosionSource = DamageSource::CreateExplosion(attached);
     if (attached)
     {
-        attached->hurt(explosionSource.get(), power);
+        attached->hurt(explosionSource, power);
     }
 
     double radius = 5.0;
@@ -247,11 +247,12 @@ void FireworksRocketEntity::dealExplosionDamage()
             if (visible)
             {
                 double falloff = std::sqrt((radius - distanceTo(*it)) / radius);
-                living->hurt(explosionSource.get(), power * static_cast<float>(falloff));
+                living->hurt(explosionSource, power * static_cast<float>(falloff));
             }
         }
         delete entities;
     }
+    delete explosionSource;
 }
 
 void FireworksRocketEntity::tick()

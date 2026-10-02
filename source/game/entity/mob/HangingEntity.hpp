@@ -69,8 +69,11 @@ protected:
     int mTickCounter;
     BlockPos mPos;
     const Direction* mDirection;
+
+private:
+    static Predicate<boost::shared_ptr<Entity> >* HANGING_ENTITY_SELECTOR;
 };
 
-extern uint32_t gHangingEntityRenderCount;
+extern int gHangingEntityRenderCount;
 
 #endif

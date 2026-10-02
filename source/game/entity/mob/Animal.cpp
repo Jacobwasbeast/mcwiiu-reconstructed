@@ -200,11 +200,11 @@ bool Animal::hurt(const DamageSource* source, float damage)
     return LivingEntity::hurt(source, damage);
 }
 
-double Animal::getWalkTargetValue(const BlockPos& pos)
+float Animal::getWalkTargetValue(const BlockPos& pos)
 {
     if (mLevel->getBlockState(pos.below())->getBlock() == mSpawnableBlock)
     {
-        return 10.0;
+        return 10.0f;
     }
 
     return mLevel->getBrightness(pos) - 0.5f;

@@ -33,7 +33,7 @@ public:
     virtual bool doHurtTarget(boost::shared_ptr<Entity> target);
     virtual void aiStep();
     virtual bool checkSpawnRules();
-    virtual double getWalkTargetValue(const BlockPos& pos);
+    virtual float getWalkTargetValue(const BlockPos& pos);
     virtual bool isDarkEnoughToSpawn();
     virtual bool isPreventingPlayerRest(boost::shared_ptr<Player> player);
 };

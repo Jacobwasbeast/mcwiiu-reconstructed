@@ -42,7 +42,7 @@ public:
     void updateDespawnProtectedState();
     virtual void aiStep();
     virtual bool hurt(const DamageSource* source, float damage);
-    virtual double getWalkTargetValue(const BlockPos& pos);
+    virtual float getWalkTargetValue(const BlockPos& pos);
     virtual void addAdditonalSaveData(CompoundTag* tag);
     virtual double getRidingHeight();
     virtual void readAdditionalSaveData(CompoundTag* tag);

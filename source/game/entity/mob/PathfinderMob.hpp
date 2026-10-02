@@ -13,7 +13,7 @@ public:
     PathfinderMob(Level* level);
     virtual ~PathfinderMob();
 
-    virtual double getWalkTargetValue(const BlockPos& pos);
+    virtual float getWalkTargetValue(const BlockPos& pos);
     virtual bool checkSpawnRules();
     virtual bool isPathFinding();
     virtual bool isWithinRestriction();

@@ -690,8 +690,9 @@ void EnderDragon::onCrystalDestroyed(boost::shared_ptr<EnderCrystal> crystal, co
 
     if (crystal.get() == mNearestCrystal.get())
     {
-        boost::shared_ptr<DamageSource> explosion = DamageSource::CreateExplosion(player);
-        hurt(mHead, explosion.get(), 10.0f);
+        DamageSource* explosion = DamageSource::CreateExplosion(player);
+        hurt(mHead, explosion, 10.0f);
+        delete explosion;
     }
 
     if (mDragonFight != NULL && (mDragonFight->getCrystalsAlive() & 1) == 0)

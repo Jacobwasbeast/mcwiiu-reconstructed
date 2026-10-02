@@ -33,9 +33,9 @@ PathfinderMob::~PathfinderMob()
     delete mPath;
 }
 
-double PathfinderMob::getWalkTargetValue(const BlockPos&)
+float PathfinderMob::getWalkTargetValue(const BlockPos&)
 {
-    return 0.0;
+    return 0.0f;
 }
 
 bool PathfinderMob::checkSpawnRules()
@@ -46,7 +46,7 @@ bool PathfinderMob::checkSpawnRules()
     }
 
     BlockPos pos(mX, mY, mZ);
-    return getWalkTargetValue(pos) >= 0.0;
+    return getWalkTargetValue(pos) >= 0.0f;
 }
 
 bool PathfinderMob::isPathFinding()

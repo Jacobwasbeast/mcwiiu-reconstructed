@@ -121,11 +121,15 @@ void TheEndGatewayEntity::createExitPortal(const BlockPos& position)
     EndGatewayFeature(portalNumber).place(mLevel, random, position);
 
     boost::shared_ptr<BlockEntity> blockEntity = mLevel->getBlockEntity(position);
-    if (blockEntity != NULL && blockEntity->GetType() == BlockEntityType::THE_END_GATEWAY_ENTITY)
+    if (blockEntity != NULL)
     {
-        boost::shared_ptr<TheEndGatewayEntity> gateway = boost::static_pointer_cast<TheEndGatewayEntity>(blockEntity);
-        gateway->SetExitPortal(new BlockPos(getBlockPos()));
-        gateway->setChanged();
+        bool isGateway = blockEntity->GetType() == BlockEntityType::THE_END_GATEWAY_ENTITY;
+        if (isGateway)
+        {
+            boost::shared_ptr<TheEndGatewayEntity> gateway = boost::static_pointer_cast<TheEndGatewayEntity>(blockEntity);
+            gateway->SetExitPortal(new BlockPos(getBlockPos()));
+            gateway->setChanged();
+        }
     }
 }
 
@@ -134,8 +138,11 @@ void TheEndGatewayEntity::findExitPortal()
     int portalNumber = mLevel->getBlockState(getBlockPos())->getValue(EndGatewayBlock::PORTAL_NUMBER);
     Random random(mLevel->getSeed() + portalNumber);
     ChunkPos chunkPos(0, 0);
-    for (unsigned int attempt = 0; mExitPortal == NULL; ++attempt)
+    for (unsigned int attempt = 0;; ++attempt)
     {
+        if (mExitPortal != NULL)
+            break;
+
         if (attempt >= 1000)
         {
             SetExitPortal(new BlockPos(chunkPos.getMiddleBlockPosition(75)));
@@ -144,7 +151,7 @@ void TheEndGatewayEntity::findExitPortal()
             break;
         }
 
-        chunkPos = TheEndDimension::AREAS[portalNumber + 1];
+        chunkPos = TheEndDimension::AREAS[portalNumber];
         int xOffset = random.nextInt(2) + 3;
         if (!random.nextBoolean())
             xOffset = -xOffset;
@@ -183,14 +190,12 @@ void TheEndGatewayEntity::findExitPortal()
 
 BlockPos TheEndGatewayEntity::findExitPosition()
 {
-    if (mLevel == NULL || mExitPortal == NULL)
-        return BlockPos();
     return findTallestBlock(mLevel, *mExitPortal, 5, false).above();
 }
 
 void TheEndGatewayEntity::triggerCooldown()
 {
-    if (mLevel != NULL && !mLevel->mIsClientSide)
+    if (!mLevel->mIsClientSide)
     {
         mCooldown = 40;
         mLevel->blockEvent(getBlockPos(), getBlock(), 1, 0);
@@ -304,7 +309,11 @@ void TheEndGatewayEntity::tick()
         std::vector<boost::shared_ptr<Entity> >* entities = mLevel->getEntitiesOfClass(typeid(Entity), AABB::newTemp(getBlockPos()));
         for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != entities->end(); ++it)
         {
-            if ((*it)->GetType() == EntityType::ENDER_CRYSTAL || (*it)->GetType() == EntityType::ENDER_DRAGON)
+            bool isCrystal = (*it)->GetType() == EntityType::ENDER_CRYSTAL;
+            if (isCrystal)
+                continue;
+            bool isDragon = (*it)->GetType() == EntityType::ENDER_DRAGON;
+            if (isDragon)
                 continue;
             teleportEntity(*it);
             break;
@@ -320,31 +329,27 @@ void TheEndGatewayEntity::tick()
 
 float TheEndGatewayEntity::getSpawnPercent(float partialTick)
 {
-    return Mth::clamp((float)(((double)mAge + partialTick) / 200.0), 0.0F, 1.0F);
+    return Mth::clamp(((float)mAge + partialTick) / 200.0F, 0.0F, 1.0F);
 }
 
 double TheEndGatewayEntity::getCooldownPercent(float partialTick)
 {
-    return 1.0 - Mth::clamp((float)(((double)mCooldown - partialTick) / 40.0), 0.0F, 1.0F);
+    return 1.0F - Mth::clamp(((float)mCooldown - partialTick) / 40.0F, 0.0F, 1.0F);
 }
 
 boost::shared_ptr<Packet> TheEndGatewayEntity::getUpdatePacket()
 {
-    int dimension = mLevel->mDimension->getType()->getId();
-    CompoundTag* tag = getUpdateTag();
-    return boost::shared_ptr<Packet>(new ClientboundBlockEntityDataPacket(mPos, 8, dimension, tag));
+    return boost::shared_ptr<Packet>(new ClientboundBlockEntityDataPacket(mPos, 8, mLevel->mDimension->getType()->getId(), getUpdateTag()));
 }
 
 CompoundTag* TheEndGatewayEntity::getUpdateTag()
 {
-    CompoundTag* tag = new CompoundTag();
-    save(tag);
-    return tag;
+    return save(new CompoundTag());
 }
 
 bool TheEndGatewayEntity::triggerEvent(int id, int param)
 {
-    if (param == 1)
+    if (id == 1)
     {
         mCooldown = 40;
         return true;
@@ -361,7 +366,7 @@ void TheEndGatewayEntity::setChanged()
 
 bool TheEndGatewayEntity::shouldRenderFace(const Direction* direction)
 {
-    return getBlock()->shouldRenderFace(getBlock()->defaultBlockState(), mLevel, mPos, direction);
+    return getBlock()->defaultBlockState()->shouldRenderFace(mLevel, getBlockPos(), direction);
 }
 
 int TheEndGatewayEntity::getParticleAmount()

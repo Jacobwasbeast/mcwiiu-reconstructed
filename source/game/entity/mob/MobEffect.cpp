@@ -138,9 +138,10 @@ void MobEffect::applyInstantenousEffect(const boost::shared_ptr<Entity>& source,
         float amount = (float)std::floor(health * (double)(6 << amplifier) + 0.5);
         if (source)
         {
-            boost::shared_ptr<DamageSource> damage =
+            DamageSource* damage =
                 DamageSource::CreateIndirectMagic(source, indirectSource, DamageSource::INSTANT_DAMAGE);
-            entity->hurt(damage.get(), amount);
+            entity->hurt(damage, amount);
+            delete damage;
         }
         else
         {

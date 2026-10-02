@@ -132,7 +132,7 @@ bool Monster::doHurtTarget(boost::shared_ptr<Entity> target)
     return true;
 }
 
-double Monster::getWalkTargetValue(const BlockPos& pos)
+float Monster::getWalkTargetValue(const BlockPos& pos)
 {
     return 0.5f - mLevel->getBrightness(pos);
 }

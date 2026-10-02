@@ -9,6 +9,7 @@
 #include "game/core/Direction.hpp"
 #include "game/core/Mirror.hpp"
 #include "game/core/Mth.hpp"
+#include "game/core/PIXNamedEvents.hpp"
 #include "game/core/Rotation.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/entity/mob/EntityDamageSource.hpp"
@@ -20,18 +21,20 @@
 #include "game/world/block/MutableBlockPos.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/generation/Player.hpp"
-#include "game/core/CMinecraftApp.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 
-uint32_t gHangingEntityRenderCount = 0;
+int gHangingEntityRenderCount = 0;
+
+Predicate<boost::shared_ptr<Entity> >* HangingEntity::HANGING_ENTITY_SELECTOR = new HangingEntitySelector();
 
 HangingEntity::HangingEntity(Level* level)
-    : Entity(level, true), mTickCounter(0), mPos(), mDirection(NULL)
+    : Entity(level, true), mPos()
 {
     _init(level);
 }
 
 HangingEntity::HangingEntity(Level* level, const BlockPos& pos)
-    : Entity(level, true), mTickCounter(0), mPos(), mDirection(NULL)
+    : Entity(level, true), mPos()
 {
     _init(level);
     mPos = pos;
@@ -41,7 +44,7 @@ void HangingEntity::_init(Level* level)
 {
     mTickCounter = 0;
     mDirection = NULL;
-    mPos = BlockPos();
+    mPos = BlockPos::ZERO;
     setSize(0.5f, 0.5f);
 }
 
@@ -52,11 +55,8 @@ void HangingEntity::defineSynchedData()
 void HangingEntity::setDirection(const Direction* direction)
 {
     mDirection = direction;
-    if (direction != NULL)
-    {
-        mYRot = (float)direction->get2DDataValue() * 90.0f;
-        mYRotO = mYRot;
-    }
+    mYRot = (float)direction->get2DDataValue() * 90.0f;
+    mYRotO = mYRot;
     recalculateBoundingBox();
 }
 
@@ -85,68 +85,63 @@ void HangingEntity::recalculateBoundingBox()
     mY = y;
     mZ = z;
 
-    float halfWidth = (float)getWidth() * 0.03125f;
-    float halfHeight = (float)getHeight() * 0.03125f;
-    float halfDepth = 0.03125f;
+    float halfWidth = (float)getWidth();
+    float halfHeight = (float)getHeight();
+    float halfDepth = (float)getWidth();
     if (mDirection->getAxis() == Direction::Axis::Z)
-        setBoundingBox(AABB::newTemp(x - halfWidth, y - halfHeight, z - halfDepth,
-                                     x + halfWidth, y + halfHeight, z + halfDepth));
+        halfDepth = 1.0f;
     else
-        setBoundingBox(AABB::newTemp(x - halfDepth, y - halfHeight, z - halfWidth,
-                                     x + halfDepth, y + halfHeight, z + halfWidth));
+        halfWidth = 1.0f;
+    halfWidth *= 0.03125f;
+    halfHeight *= 0.03125f;
+    halfDepth *= 0.03125f;
+    setBoundingBox(AABB::newTemp(x - halfWidth, y - halfHeight, z - halfDepth,
+                                 x + halfWidth, y + halfHeight, z + halfDepth));
 }
 
 void HangingEntity::tick()
 {
+    PIXBeginNamedEvent(0.0f, "Hanging entity tick");
     mXo = mX;
     mYo = mY;
     mZo = mZ;
-    ++mTickCounter;
-    if (mTickCounter == 100)
+    if (mTickCounter++ == 100 && !mLevel->mIsClientSide)
     {
         mTickCounter = 0;
-        if ((mLevel == NULL || !mLevel->mIsClientSide) && !survives())
+        if (!mRemoved && !survives())
         {
             remove();
-            dropItem(shared_from_this());
+            dropItem(boost::shared_ptr<Entity>());
         }
     }
+    PIXEndNamedEvent();
 }
 
 bool HangingEntity::survives()
 {
-    if (mLevel == NULL || mDirection == NULL)
-        return false;
     if (!mLevel->getCollisionAABBs(shared_from_this(), mBoundingBox, false, false, false)->empty())
         return false;
 
     int width = getWidth() / 16;
+    width = width < 1 ? 1 : width;
     int height = getHeight() / 16;
-    if (width < 1)
-        width = 1;
-    if (height < 1)
-        height = 1;
-    const Direction* horizontal = mDirection->getCounterClockWise();
+    height = height < 1 ? 1 : height;
     BlockPos anchor = mPos.relative(mDirection->getOpposite());
-    MutableBlockPos check;
-    int xStart = -(width - 1) / 2;
-    int yStart = -(height - 1) / 2;
-    int y;
-    for (y = 0; y < height; ++y)
+    const Direction* horizontal = mDirection->getCounterClockWise();
+    MutableBlockPos check(0, 0, 0);
+    int xStart = -((width - 1) / 2);
+    int yStart = -((height - 1) / 2);
+    for (int x = 0; x < width; ++x)
     {
-        int x;
-        for (x = 0; x < width; ++x)
+        for (int y = 0; y < height; ++y)
         {
-            check.set(anchor);
-            check.move(horizontal, x + xStart);
-            check.move(Direction::UP, y + yStart);
+            check.set(anchor)->move(horizontal, x + xStart)->move(Direction::UP, y + yStart);
             const BlockState* state = mLevel->getBlockState(check);
             if (!state->getMaterial()->isSolid() && !DiodeBlock::isDiode(state))
                 return false;
         }
     }
-    HangingEntitySelector selector;
-    return mLevel->getEntities(shared_from_this(), mBoundingBox, &selector, NULL)->empty();
+    return mLevel->getEntities(shared_from_this(), mBoundingBox, HANGING_ENTITY_SELECTOR, NULL)->empty();
 }
 
 bool HangingEntity::isPickable()
@@ -177,12 +172,10 @@ bool HangingEntity::hurt(const DamageSource* source, float damage)
 {
     if (isInvulnerableTo(source))
         return false;
-    boost::shared_ptr<Entity> attacker = source == NULL ? boost::shared_ptr<Entity>() : source->getEntity();
-    if (attacker != NULL && (attacker->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
-    {
-        if (!boost::static_pointer_cast<Player>(attacker)->isAllowedToHurtEntity(shared_from_this()))
-            return false;
-    }
+    boost::shared_ptr<Entity> attacker = source->getEntity();
+    if (attacker != NULL && (attacker->GetType() & EntityType::PLAYER) == EntityType::PLAYER
+        && !boost::static_pointer_cast<Player>(attacker)->isAllowedToHurtEntity(shared_from_this()))
+        return false;
     if (!mRemoved && !mLevel->mIsClientSide)
     {
         remove();
@@ -194,10 +187,10 @@ bool HangingEntity::hurt(const DamageSource* source, float damage)
 
 void HangingEntity::move(MoverType type, double x, double y, double z, bool pushedByPiston)
 {
-    if ((x * x + y * y + z * z) > 0.0 && !mRemoved)
+    if (!mLevel->mIsClientSide && !mRemoved && x * x + y * y + z * z > 0.0)
     {
         remove();
-        dropItem(shared_from_this());
+        dropItem(boost::shared_ptr<Entity>());
     }
 }
 
@@ -212,10 +205,11 @@ void HangingEntity::push(double x, double y, double z)
 
 void HangingEntity::addAdditonalSaveData(CompoundTag* tag)
 {
-    tag->putByte(L"Facing", (unsigned char)(mDirection == NULL ? 0 : mDirection->get2DDataValue()));
-    tag->putInt(L"TileX", mPos.x);
-    tag->putInt(L"TileY", mPos.y);
-    tag->putInt(L"TileZ", mPos.z);
+    tag->putByte(L"Facing", (unsigned char)mDirection->get2DDataValue());
+    BlockPos pos = getPos();
+    tag->putInt(L"TileX", pos.x);
+    tag->putInt(L"TileY", pos.y);
+    tag->putInt(L"TileZ", pos.z);
 }
 
 void HangingEntity::readAdditionalSaveData(CompoundTag* tag)
@@ -301,7 +295,7 @@ void HangingEntity::thunderHit(const LightningBolt* lightningBolt)
 
 bool HangingEntity::shouldRender(double distanceSqr)
 {
-    if (gHangingEntityRenderCount < 100 / g_pApp->GetLocalPlayerCount())
+    if (gHangingEntityRenderCount < 100 / gApp.GetLocalPlayerCount())
         return Entity::shouldRender(distanceSqr);
     return false;
 }
