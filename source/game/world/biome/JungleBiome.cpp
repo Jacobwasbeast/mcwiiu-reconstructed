@@ -45,7 +45,7 @@ void JungleBiome::staticCtor()
 {
     TypedBoxed<PlanksBlock::Variant*> trunkVariant(PlanksBlock::Variant::JUNGLE);
     sJungleTrunkState =
-        Blocks::log->defaultBlockState()->setBoxedValue(OldLogBlock_VARIANT, &trunkVariant);
+        Blocks::log->defaultBlockState()->setBoxedValue(OldLogBlock::VARIANT, &trunkVariant);
 
     TypedBoxed<PlanksBlock::Variant*> jungleLeafVariant(PlanksBlock::Variant::JUNGLE);
     TypedBoxed<bool> jungleLeafDecayable(false);
