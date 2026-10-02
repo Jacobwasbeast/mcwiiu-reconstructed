@@ -270,8 +270,8 @@ void Mob::baseTick()
     ++mAmbientSoundTime;
     if (roll < soundTime)
     {
-        playAmbientSound();
         resetAmbientSoundTime();
+        playAmbientSound();
     }
 }
 
@@ -1016,7 +1016,7 @@ int Mob::getMaxFallDistance()
     if (!getTarget())
         return 3;
 
-    int fallDistance = (int)-(getMaxHealth() * 0.33f - getHealth());
+    int fallDistance = (int)(getHealth() - getMaxHealth() * 0.33f);
     int difficultyAdjustment = 12 - mLevel->getDifficulty()->getId() * 4;
     fallDistance -= difficultyAdjustment;
     if (fallDistance < 0)

@@ -537,7 +537,7 @@ void TrackedEntity::updatePlayer(EntityTracker* tracker, boost::shared_ptr<Serve
         return;
     mSeenBy.erase(it);
     mEntity->stopSeenByPlayer(player);
-    player->sendRemoveEntity(&mEntity);
+    player->sendRemoveEntity(mEntity);
 }
 
 void TrackedEntity::updatePlayers(EntityTracker* tracker, std::vector<boost::shared_ptr<Player> >* players)
@@ -880,7 +880,7 @@ void TrackedEntity::broadcastRemoved()
          it != mSeenBy.end(); ++it)
     {
         mEntity->stopSeenByPlayer(*it);
-        (*it)->sendRemoveEntity(&mEntity);
+        (*it)->sendRemoveEntity(mEntity);
     }
 }
 
@@ -906,7 +906,7 @@ void TrackedEntity::clear(boost::shared_ptr<ServerPlayer> player)
         return;
     mSeenBy.erase(it);
     mEntity->stopSeenByPlayer(player);
-    player->sendRemoveEntity(&mEntity);
+    player->sendRemoveEntity(mEntity);
 }
 
 boost::shared_ptr<Entity> TrackedEntity::getEntity()

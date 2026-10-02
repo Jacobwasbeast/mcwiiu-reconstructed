@@ -33,19 +33,16 @@ TamableAnimal::~TamableAnimal()
 
 std::wstring TamableAnimal::getOwnerUUID()
 {
-    return mEntityData->get(DATA_OWNER_UUID);
+    std::wstring uuid = mEntityData->get(DATA_OWNER_UUID);
+    return uuid;
 }
 
 boost::shared_ptr<LivingEntity> TamableAnimal::getOwner()
 {
-    if (!isTame())
-    {
+    std::wstring uuid = getOwnerUUID();
+    if (uuid.empty())
         return boost::shared_ptr<LivingEntity>();
-    }
-
-    boost::shared_ptr<Player> player = mLevel->getPlayerByUUID(getOwnerUUID());
-
-    return boost::static_pointer_cast<LivingEntity>(player);
+    return mLevel->getPlayerByUUID(uuid);
 }
 
 void TamableAnimal::staticCtor()
@@ -83,7 +80,11 @@ void TamableAnimal::addAdditonalSaveData(CompoundTag* tag)
 void TamableAnimal::readAdditionalSaveData(CompoundTag* tag)
 {
     Animal::readAdditionalSaveData(tag);
-    std::wstring ownerUuid = tag->getString(tag->contains(L"OwnerUUID") ? L"OwnerUUID" : L"Owner");
+    std::wstring ownerUuid = L"";
+    if (tag->contains(L"OwnerUUID"))
+        ownerUuid = tag->getString(L"OwnerUUID");
+    else
+        ownerUuid = tag->getString(L"Owner");
     if (!ownerUuid.empty())
     {
         setOwnerUUID(ownerUuid);
@@ -104,17 +105,22 @@ bool TamableAnimal::canBeLeashed(const boost::shared_ptr<Player>& player)
 
 void TamableAnimal::spawnTamingParticles(bool success)
 {
-    const ParticleType* particle = success ? PARTICLE_HEART : PARTICLE_SMOKE;
+    const ParticleType* particle = PARTICLE_HEART;
+    if (!success)
+        particle = PARTICLE_SMOKE;
 
     for (int i = 0; i < 7; ++i)
     {
+        double xa = mRandom->nextGaussian() * 0.02;
+        double ya = mRandom->nextGaussian() * 0.02;
+        double za = mRandom->nextGaussian() * 0.02;
         mLevel->addParticle(particle,
                             mX + mRandom->nextFloat() * mBbWidth * 2.0 - mBbWidth,
                             mY + 0.5 + mRandom->nextFloat() * mBbHeight,
                             mZ + mRandom->nextFloat() * mBbWidth * 2.0 - mBbWidth,
-                            mRandom->nextGaussian() * 0.02,
-                            mRandom->nextGaussian() * 0.02,
-                            mRandom->nextGaussian() * 0.02,
+                            xa,
+                            ya,
+                            za,
                             arrayWithLength<int>());
     }
 }
@@ -143,7 +149,10 @@ bool TamableAnimal::isTame()
 void TamableAnimal::setTame(bool tame)
 {
     unsigned char flags = mEntityData->get(DATA_FLAGS);
-    mEntityData->set(DATA_FLAGS, tame ? static_cast<unsigned char>(flags | 4) : static_cast<unsigned char>(flags & 251), true);
+    if (tame)
+        mEntityData->set(DATA_FLAGS, static_cast<unsigned char>(flags | 4), true);
+    else
+        mEntityData->set(DATA_FLAGS, static_cast<unsigned char>(flags & 251), true);
     reassessTameGoals();
 }
 
@@ -164,7 +173,10 @@ bool TamableAnimal::isSitting()
 void TamableAnimal::setSitting(bool sitting)
 {
     unsigned char flags = mEntityData->get(DATA_FLAGS);
-    mEntityData->set(DATA_FLAGS, sitting ? static_cast<unsigned char>(flags | 1) : static_cast<unsigned char>(flags & 254), true);
+    if (sitting)
+        mEntityData->set(DATA_FLAGS, static_cast<unsigned char>(flags | 1), true);
+    else
+        mEntityData->set(DATA_FLAGS, static_cast<unsigned char>(flags & 254), true);
 }
 
 void TamableAnimal::setOwnerUUID(const std::wstring& uuid)

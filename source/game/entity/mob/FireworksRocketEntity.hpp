@@ -31,7 +31,7 @@ public:
     virtual bool shouldRenderAtSqrDistance(double distanceSqr);
     virtual bool shouldRender(double x, double y, double z);
     virtual void lerpMotion(double xd, double yd, double zd);
-    double HandleDirectionalAcceleration(int direction, double acceleration);
+    double HandleDirectionalAcceleration(int direction, double velocity);
     void dealExplosionDamage();
     virtual void tick();
     void setExplosionColourToPipColour(CompoundTag* tag);

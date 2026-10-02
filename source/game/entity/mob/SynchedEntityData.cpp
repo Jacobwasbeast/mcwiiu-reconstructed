@@ -341,7 +341,7 @@ void SynchedEntityData::assignValue(DataItem_Impl<CompoundTag*>* target, DataIte
     }
     else
     {
-        target->setValue(source->getValue());
+        target->setValue(source->getValue()->copy());
     }
 
     mEntity->onSyncedDataUpdated(source->getAccessor());

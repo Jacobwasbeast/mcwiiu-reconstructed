@@ -3084,7 +3084,7 @@ void Entity::positionRider(const boost::shared_ptr<Entity>& passenger)
         return;
     }
 
-    passenger->setPos(mX, mY + getRidingHeight() + passenger->getRideHeight(), mZ);
+    passenger->setPos(mX, mY + getRideHeight() + passenger->getRidingHeight(), mZ);
 }
 
 void Entity::onPassengerTurned(boost::shared_ptr<Entity> passenger)

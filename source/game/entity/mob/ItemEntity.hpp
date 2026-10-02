@@ -60,7 +60,7 @@ public:
     void setExtendedLifetime();
     void makeFakeItem();
     virtual unsigned long long GetType();
-    int getAge();
+    int getAge() { return mAge; }
 private:
     int mAge;
     int mPickupDelay;

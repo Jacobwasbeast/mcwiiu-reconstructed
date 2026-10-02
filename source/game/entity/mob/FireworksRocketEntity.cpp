@@ -26,6 +26,7 @@
 #include "game/entity/mob/EntityDataSerializers.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/entity/mob/SynchedEntityData.hpp"
+#include "game/item/FireworksItem.hpp"
 #include "game/item/ItemDataWalker.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/minigame/MiniGameDef.hpp"
@@ -64,7 +65,7 @@ FireworksRocketEntity::FireworksRocketEntity(Level* level, const not_null_ptr<It
 }
 
 FireworksRocketEntity::FireworksRocketEntity(Level* level)
-    : Entity(level, true), mLife(0), mLifetime(0), mAttachedToEntity(), mHasDirectionalData(false), mDirectionalX(0), mDirectionalY(0), mDirectionalZ(0), mDirectionalInitialized(false), mOwner()
+    : Entity(level, true), mLife(0), mLifetime(0), mAttachedToEntity(), mHasDirectionalData(true), mDirectionalX(0), mDirectionalY(0), mDirectionalZ(0), mDirectionalInitialized(false), mOwner()
 {
     fjDerivedCtorCalls();
     setSize(0.25f, 0.25f);
@@ -153,35 +154,35 @@ void FireworksRocketEntity::lerpMotion(double xd, double yd, double zd)
     mZd = zd;
     if (mXRotO == 0.0f && mYRotO == 0.0f)
     {
-        mYRot = static_cast<float>(std::atan2(xd, zd) * 57.2957763671875);
-        mYRotO = mYRot;
         double horizontal = Mth::sqrt(xd * xd + zd * zd);
-        mXRot = static_cast<float>(std::atan2(yd, horizontal) * 57.2957763671875);
+        mYRot = static_cast<float>(std::atan2(xd, zd) * Mth::RAD_TO_DEG);
+        mYRotO = mYRot;
+        mXRot = static_cast<float>(std::atan2(yd, horizontal) * Mth::RAD_TO_DEG);
         mXRotO = mXRot;
     }
 }
 
-double FireworksRocketEntity::HandleDirectionalAcceleration(int direction, double acceleration)
+double FireworksRocketEntity::HandleDirectionalAcceleration(int direction, double velocity)
 {
-    if (acceleration == 1.0)
+    if (direction == 1)
     {
         if (mDirectionalInitialized)
         {
-            direction -= 0.95;
+            velocity -= 0.95;
             mDirectionalInitialized = false;
         }
-        return direction + 0.04;
+        return velocity + 0.04;
     }
-    if (acceleration == -1.0)
+    if (direction == -1)
     {
         if (mDirectionalInitialized)
         {
-            direction += 0.95;
+            velocity += 0.95;
             mDirectionalInitialized = false;
         }
-        return direction - 0.04;
+        return velocity - 0.04;
     }
-    return direction;
+    return velocity;
 }
 
 void FireworksRocketEntity::dealExplosionDamage()
@@ -191,13 +192,13 @@ void FireworksRocketEntity::dealExplosionDamage()
     {
         return;
     }
-    CompoundTag* fireworksTag = static_cast<CompoundTag*>(item->getTagElement(std::wstring(L"Fireworks")));
+    CompoundTag* fireworksTag = static_cast<CompoundTag*>(item->getTagElement(FireworksItem::TAG_FIREWORKS));
     if (fireworksTag == NULL)
     {
         return;
     }
-    ListTag* explosions = fireworksTag->getList(L"Explosions", Tag::TAG_COMPOUND);
-    float power = 5.0f;
+    ListTag* explosions = fireworksTag->getList(FireworksItem::TAG_EXPLOSIONS, Tag::TAG_COMPOUND);
+    float power = 0.0f;
     if (explosions != NULL && !explosions->isEmpty())
     {
         power = static_cast<float>(explosions->size()) * 2.0f + 5.0f;
@@ -208,7 +209,7 @@ void FireworksRocketEntity::dealExplosionDamage()
     }
 
     boost::shared_ptr<LivingEntity> attached = mAttachedToEntity.lock();
-    DamageSource* explosionSource = DamageSource::CreateExplosion(attached);
+    const DamageSource* explosionSource = DamageSource::FIREWORKS;
     if (attached)
     {
         attached->hurt(explosionSource, power);
@@ -252,7 +253,6 @@ void FireworksRocketEntity::dealExplosionDamage()
         }
         delete entities;
     }
-    delete explosionSource;
 }
 
 void FireworksRocketEntity::tick()
@@ -337,8 +337,8 @@ void FireworksRocketEntity::tick()
     }
 
     double horizontal = Mth::sqrt(facingX * facingX + facingZ * facingZ);
-    mYRot = (float)(atan2(facingX, facingZ) * 57.2957763671875f);
-    mXRot = (float)(atan2(facingY, horizontal) * 57.2957763671875f);
+    mYRot = (float)(atan2(facingX, facingZ) * Mth::RAD_TO_DEG);
+    mXRot = (float)(atan2(facingY, horizontal) * Mth::RAD_TO_DEG);
 
     while (mXRot - mXRotO < -180.0f)
     {
@@ -455,11 +455,7 @@ void FireworksRocketEntity::tick()
 
 void FireworksRocketEntity::setExplosionColourToPipColour(CompoundTag* tag)
 {
-    if (tag == NULL)
-    {
-        return;
-    }
-    ListTag* explosions = tag->getList(L"Explosions", Tag::TAG_COMPOUND);
+    ListTag* explosions = tag->getList(FireworksItem::TAG_EXPLOSIONS, Tag::TAG_COMPOUND);
     if (explosions == NULL)
     {
         return;
@@ -469,11 +465,25 @@ void FireworksRocketEntity::setExplosionColourToPipColour(CompoundTag* tag)
     {
         return;
     }
-    int colour = 0;
+    int colour;
+    if (mOwner != NULL)
+    {
+        int playerIndex = mOwner->mPlayerIndex;
+        colour = PlayerRenderer::getNametagColour(playerIndex);
+        if (playerIndex == 0)
+        {
+            colour = -1;
+        }
+    }
+    else
+    {
+        PlayerRenderer::getNametagColour(0);
+        colour = -1;
+    }
     arrayWithLength<int> colours;
     colours = arrayWithLength<int>(1, true);
     colours.data[0] = colour;
-    explosion->putIntArray(L"Colors", colours);
+    explosion->putIntArray(FireworksItem::TAG_E_COLORS, colours);
 }
 
 void FireworksRocketEntity::handleEntityEvent(unsigned char event, int data)
@@ -489,7 +499,7 @@ void FireworksRocketEntity::handleEntityEvent(unsigned char event, int data)
 
     if (!item->isEmpty())
     {
-        fireworksTag = static_cast<CompoundTag*>(item->getTagElement(std::wstring(L"Fireworks")));
+        fireworksTag = static_cast<CompoundTag*>(item->getTagElement(FireworksItem::TAG_FIREWORKS));
         if (fireworksTag != NULL
             && Minecraft::GetInstance()->GetMiniGame()->HasFeatureDirectionalFireworks())
         {
@@ -546,7 +556,7 @@ boost::shared_ptr<LivingEntity> FireworksRocketEntity::getOwner() const
 void FireworksRocketEntity::updateDeltaAfterMove(Block* block, double x, double y, double z, double& movedX, double& movedY, double& movedZ)
 {
     if (!Minecraft::GetInstance()->GetMiniGame()->HasFeatureDirectionalFireworks()
-        || !mHasDirectionalData)
+        || !mLevel->mIsClientSide)
     {
         Entity::updateDeltaAfterMove(block, x, y, z, movedX, movedY, movedZ);
     }

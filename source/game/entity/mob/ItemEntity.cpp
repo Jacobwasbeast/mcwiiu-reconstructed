@@ -86,6 +86,7 @@ void ItemEntity::_init(Level*, double x, double y, double z)
 void ItemEntity::setItem(not_null_ptr<ItemInstance> item)
 {
     getEntityData()->set(DATA_ITEM, item, true);
+    getEntityData()->markDirty(DATA_ITEM);
 }
 
 void ItemEntity::setDefaultPickUpDelay()
@@ -241,7 +242,7 @@ void ItemEntity::tick()
         float friction = 0.98f;
         if ((mVerticalCollision && mYd <= 0.0) || mOnGround)
         {
-            friction = 0.588f;
+            friction = 0.6f * 0.98f;
             Block* below = mLevel->getBlock(BlockPos(mX, mBoundingBox->mMinY - 1.0, mZ));
             if (below != Blocks::air)
                 friction = below->mFriction * 0.98f;
@@ -453,9 +454,4 @@ void ItemEntity::makeFakeItem()
 unsigned long long ItemEntity::GetType()
 {
     return EntityType::ITEM_ENTITY;
-}
-
-int ItemEntity::getAge()
-{
-    return mAge;
 }
