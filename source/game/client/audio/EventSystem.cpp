@@ -9,12 +9,12 @@
 struct SoundInstanceHandleStorage
 {
     unsigned char m_reserved[0x4c];
-    EventSystem::Handle m_handle;
+    Handle m_handle;
 };
 
 struct EventSystemVariable
 {
-    EventSystem::Handle m_parent;
+    Handle m_parent;
     unsigned char m_reserved0[8];
     union
     {
@@ -26,22 +26,8 @@ struct EventSystemVariable
     char m_name[1];
 };
 
-extern int AIL_stricmp(const char* first, const char* second);
 extern int AIL_find_marker_in_list(int markerList, const char* markerName, int* markerType);
 extern int strtoi(const char* value, const char** end);
-extern int Var_LookupWithContext(EventSystem* eventSystem,
-                                                                EventSystem::Handle* handle,
-                                                                const char* name,
-                                                                int flags,
-                                                                void* value);
-
-static EventSystemVariable* lookupVariable(const EventSystem::Handle& handle)
-{
-    Handle lookup;
-    lookup.index = handle.index;
-    lookup.generation = handle.generation;
-    return static_cast<EventSystemVariable*>(Handle_Get(lookup));
-}
 
 int strtoi(const char* value, const char** end)
 {
@@ -66,17 +52,15 @@ int strtoi(const char* value, const char** end)
     return result;
 }
 
-int Var_LookupWithContext(EventSystem* eventSystem,
-                                                         EventSystem::Handle* handle,
-                                                         const char* name,
-                                                         int flags,
-                                                         void* value)
+int Var_LookupWithContext(EventSystem* eventSystem, Handle handle, const char* name, int flags,
+                          void* value)
 {
-    EventSystem::Handle context = *handle;
+    Handle context = handle;
+
 
     for (;;)
     {
-        EventSystemVariable* variable = lookupVariable(context);
+        EventSystemVariable* variable = static_cast<EventSystemVariable*>(Handle_Get(context));
 
         while (variable != 0)
         {
@@ -109,7 +93,7 @@ int Var_LookupWithContext(EventSystem* eventSystem,
                 return 1;
             }
 
-            variable = lookupVariable(variable->m_parent);
+            variable = static_cast<EventSystemVariable*>(Handle_Get(variable->m_parent));
         }
 
         if (context.index == eventSystem->m_handle.index &&
@@ -123,12 +107,8 @@ int Var_LookupWithContext(EventSystem* eventSystem,
     }
 }
 
-int FindMarker(EventSystem* eventSystem,
-                                                          SoundInstance* soundInstance,
-                                                          int markerList,
-                                                          char* markerName,
-                                                          int* markerIndex,
-                                                          int* markerType)
+int FindMarker(EventSystem* eventSystem, SoundInstance* soundInstance, int markerList, char* markerName,
+               int* markerIndex, int* markerType)
 {
     if (AIL_stricmp(markerName, "SampleStart") == 0)
     {
@@ -161,7 +141,7 @@ int FindMarker(EventSystem* eventSystem,
     {
         *markerType = lookupType;
 
-        EventSystem::Handle handle;
+        Handle handle;
         if (soundInstance != 0)
         {
             handle = reinterpret_cast<const SoundInstanceHandleStorage*>(soundInstance)->m_handle;
@@ -171,9 +151,7 @@ int FindMarker(EventSystem* eventSystem,
             handle = eventSystem->m_handle;
         }
 
-        return Var_LookupWithContext(eventSystem, &handle,
-                                                                    markerName, 0,
-                                                                    markerIndex);
+        return Var_LookupWithContext(eventSystem, handle, markerName, 0, markerIndex);
     }
 
     ++markerName;
