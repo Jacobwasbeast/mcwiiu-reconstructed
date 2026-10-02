@@ -2452,10 +2452,6 @@ void LevelChunk::recalcMinAndMaxHeights()
     mMinHeight = minHeight;
     mMaxHeight = maxHeight;
 }
-LevelChunk::BlockEntityMap* LevelChunk::getBlockEntities()
-{
-    return &mBlockEntityMap;
-}
 void LevelChunk::setLastSaveHadEntities(bool value)
 {
     mLastSaveHadEntities = value;

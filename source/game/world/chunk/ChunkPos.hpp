@@ -20,8 +20,8 @@ public:
     ChunkPos(const BlockPos& pos);
     static long long asLong(int x, int z);
     std::size_t hashCode() const;
-    double distanceToSqr(boost::shared_ptr<Entity> entity) const;
-    double distanceToSqr(double x, double z) const;
+    double distanceToSqr(boost::shared_ptr<Entity> entity);
+    double distanceToSqr(double x, double z);
     int getMiddleBlockX();
     int getMiddleBlockZ();
     int getMinBlockX() const;

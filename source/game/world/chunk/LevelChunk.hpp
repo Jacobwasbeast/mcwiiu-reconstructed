@@ -240,7 +240,7 @@ public:
     Level* getLevel();
     arrayWithLength<unsigned char> getHeightmap();
     void recalcMinAndMaxHeights();
-    BlockEntityMap* getBlockEntities();
+    BlockEntityMap* getBlockEntities() { return &mBlockEntityMap; }
     void setLastSaveHadEntities(bool value);
     void setLastSaveTime(long long value);
     void setInhabitedTime(long long value);
