@@ -87,7 +87,7 @@ public:
     static bool isDurabilityDrainedArmor(AttributeModifier* modifier);
     static TextureAtlasSprite* getEmptyIcon(int slotIndex);
 
-    const EquipmentSlot* getSlot() { return mSlot; }
+    const EquipmentSlot* getSlot();
     const ArmorMaterial* getMaterial();
 
     bool hasCustomColor(not_null_ptr<ItemInstance> itemInstance);

@@ -232,6 +232,11 @@ int ArmorItem::getEnchantmentValue()
     return mMaterial->getEnchantmentValue();
 }
 
+const EquipmentSlot* ArmorItem::getSlot()
+{
+    return mSlot;
+}
+
 const ArmorItem::ArmorMaterial* ArmorItem::getMaterial()
 {
     return mMaterial;

@@ -29,7 +29,7 @@ public:
 
     static ResourceLocation getNamedIdFrom(not_null_ptr<ItemInstance> itemInstance);
     virtual std::wstring getName(not_null_ptr<ItemInstance> itemInstance);
-    static double getYOffset(Level* level, const BlockPos& pos);
+    double getYOffset(Level* level, const BlockPos& pos);
     static boost::shared_ptr<Entity> canSpawn(const ResourceLocation& entityType, Level* level, int* error);
     static boost::shared_ptr<Entity> getMob(Level* level, const ResourceLocation& entityType,
                                             double x, double y, double z, int* error,

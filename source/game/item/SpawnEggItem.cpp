@@ -85,7 +85,7 @@ double SpawnEggItem::getYOffset(Level* level, const BlockPos& pos)
     boost::shared_ptr<Entity> emptyEntity;
     std::vector<AABB*>* collisions =
         level->getCollisionAABBs(emptyEntity, box, false, false, false);
-    if (collisions != NULL && !collisions->empty())
+    if (!collisions->empty())
     {
         double maxY = box->mMinY;
         for (std::vector<AABB*>::iterator it = collisions->begin(); it != collisions->end(); ++it)
