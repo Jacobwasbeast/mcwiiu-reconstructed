@@ -61,6 +61,8 @@ DirectoryLevelStorage::~DirectoryLevelStorage()
     for (CachedSaveDataMap::iterator it = mCachedSaveData.begin(); it != mCachedSaveData.end(); ++it)
         delete it->second;
 
+    delete mUsedMappings.data;
+
     if (mStructureManager != NULL)
     {
         delete mStructureManager;
@@ -118,9 +120,10 @@ void DirectoryLevelStorage::save(boost::shared_ptr<Player> player)
 
 CompoundTag* DirectoryLevelStorage::loadPlayerDataTag(PlayerUID uid)
 {
-    ConsoleSavePath file(mPlayerDir + uid.toString() + L".dat");
+    ConsoleSavePath file(std::wstring(mPlayerDir) + uid.toString() + L".dat");
 
-    CachedSaveDataMap::iterator it = mCachedSaveData.find(file.getPath());
+    std::wstring path = file.getPath();
+    CachedSaveDataMap::iterator it = mCachedSaveData.find(path);
     if (it != mCachedSaveData.end())
     {
         ByteArrayOutputStream* bytes = it->second;
@@ -155,8 +158,8 @@ void DirectoryLevelStorage::deleteMapFilesForPlayer(PlayerUID uid)
     boost::unordered_map<long long, short>& mappings = it->second.mMappings;
     for (boost::unordered_map<long long, short>::iterator mapping = mappings.begin(); mapping != mappings.end(); ++mapping)
     {
-        std::wstring prefix = L"map_";
-        ConsoleSavePath file = getDataFile(prefix + _toString<short>(mapping->second));
+        std::wstring name = std::wstring(L"map_") + _toString<short>(mapping->second);
+        ConsoleSavePath file = getDataFile(name);
         if (mSaveFile->doesFileExist(file))
         {
             if (gStorage->GetSaveDisabled())
@@ -176,7 +179,7 @@ void DirectoryLevelStorage::clearOldPlayerFiles()
     if (gStorage->GetSaveDisabled())
         return;
 
-    std::vector<FileEntry*>* files = mSaveFile->getFilesWithPrefix(mPlayerDir);
+    std::vector<FileEntry*>* files = mSaveFile->getFilesWithPrefix(std::wstring(mPlayerDir));
     if (files == NULL)
         return;
 
@@ -187,7 +190,7 @@ void DirectoryLevelStorage::clearOldPlayerFiles()
         for (unsigned int i = MAX_PLAYER_DATA_SAVES; i < files->size(); ++i)
         {
             FileEntry* file = files->at(i);
-            std::wstring xuidString = replaceAll(replaceAll(file->m_fileName, mPlayerDir, L""), L".dat", L"");
+            std::wstring xuidString = replaceAll(replaceAll(file->m_fileName, std::wstring(mPlayerDir), L""), L".dat", L"");
             PlayerUID xuid(xuidString);
             deleteMapFilesForPlayer(xuid);
             mSaveFile->deleteFile(files->at(i));
@@ -202,24 +205,24 @@ void DirectoryLevelStorage::saveMapIdLookup()
         return;
 
     ConsoleSavePath file = getDataFile(L"largeMapDataMappings");
-    if (file.getPath().empty())
-        return;
-
-    FileEntry* entry = mSaveFile->createFile(file);
-    mSaveFile->setFilePointer(entry, 0, NULL, 0);
-
-    ByteArrayOutputStream bytes;
-    DataOutputStream output(&bytes);
-    output.writeInt(mPlayerMappings.size());
-    for (PlayerMappingsMap::iterator it = mPlayerMappings.begin(); it != mPlayerMappings.end(); ++it)
+    if (!file.getPath().empty())
     {
-        output.writePlayerUID(it->first);
-        it->second.writeMappings(&output);
-    }
-    output.write(mUsedMappings);
+        FileEntry* entry = mSaveFile->createFile(file);
+        mSaveFile->setFilePointer(entry, 0, NULL, 0);
 
-    unsigned int bytesWritten;
-    mSaveFile->writeFile(entry, bytes.mBuffer.data, bytes.mCount, &bytesWritten);
+        ByteArrayOutputStream bytes;
+        DataOutputStream output(&bytes);
+        output.writeInt(mPlayerMappings.size());
+        for (PlayerMappingsMap::iterator it = mPlayerMappings.begin(); it != mPlayerMappings.end(); ++it)
+        {
+            output.writePlayerUID(it->first);
+            it->second.writeMappings(&output);
+        }
+        output.write(mUsedMappings);
+
+        unsigned int bytesWritten;
+        mSaveFile->writeFile(entry, bytes.mBuffer.data, bytes.mCount, &bytesWritten);
+    }
 }
 
 void DirectoryLevelStorage::deleteMapFilesForPlayer(boost::shared_ptr<Player> player)
@@ -237,7 +240,8 @@ void DirectoryLevelStorage::saveAllCachedData()
     for (CachedSaveDataMap::iterator it = mCachedSaveData.begin(); it != mCachedSaveData.end(); ++it)
     {
         ByteArrayOutputStream* bytes = it->second;
-        ConsoleSaveFileOutputStream output(mSaveFile, ConsoleSavePath(it->first));
+        ConsoleSavePath file(it->first);
+        ConsoleSaveFileOutputStream output(mSaveFile, file);
         output.write(bytes->mBuffer, 0, bytes->mCount);
         delete bytes;
     }
@@ -245,8 +249,8 @@ void DirectoryLevelStorage::saveAllCachedData()
 
     for (std::vector<short>::iterator it = mMapFilesToDelete.begin(); it != mMapFilesToDelete.end(); ++it)
     {
-        std::wstring prefix = L"map_";
-        ConsoleSavePath file = getDataFile(prefix + _toString<short>(*it));
+        std::wstring name = std::wstring(L"map_") + _toString<short>(*it);
+        ConsoleSavePath file = getDataFile(name);
         if (mSaveFile->doesFileExist(file))
             mSaveFile->deleteFile(mSaveFile->createFile(file));
     }
@@ -325,8 +329,7 @@ LevelData* DirectoryLevelStorage::prepareLevel()
         mHasLoadedMapDataMappings = true;
     }
 
-    std::wstring levelFileName = L"level.dat";
-    ConsoleSavePath levelFile(levelFileName);
+    ConsoleSavePath levelFile(L"level.dat");
     if (mSaveFile->doesFileExist(levelFile))
     {
         LevelData* levelData = DirectoryLevelStorageSource::getLevelData(mSaveFile, levelFile, mFixer);
@@ -345,10 +348,16 @@ ChunkStorage* DirectoryLevelStorage::createChunkStorage(Dimension* dimension)
     if (dimension != NULL)
     {
         if (dynamic_cast<NetherDimension*>(dimension) != NULL)
-            return new OldChunkStorage(File(mFolder, NETHER_FOLDER), true);
+        {
+            File netherFolder(mFolder, NETHER_FOLDER);
+            return new OldChunkStorage(netherFolder, true);
+        }
 
         if (dynamic_cast<TheEndDimension*>(dimension) != NULL)
-            return new OldChunkStorage(File(mFolder, ENDER_FOLDER), true);
+        {
+            File enderFolder(mFolder, ENDER_FOLDER);
+            return new OldChunkStorage(enderFolder, true);
+        }
     }
     return new OldChunkStorage(mFolder, true);
 }
@@ -360,7 +369,8 @@ void DirectoryLevelStorage::saveLevelData(LevelData* levelData,
     CompoundTag* root = new CompoundTag();
     root->put(L"Data", dataTag);
 
-    ConsoleSaveFileOutputStream output(mSaveFile, ConsoleSavePath(L"level.dat"));
+    ConsoleSavePath file(L"level.dat");
+    ConsoleSaveFileOutputStream output(mSaveFile, file);
     NbtIo::writeCompressed(root, &output);
     delete root;
 }
@@ -371,7 +381,8 @@ void DirectoryLevelStorage::saveLevelData(LevelData* levelData)
     CompoundTag* root = new CompoundTag();
     root->put(L"Data", dataTag);
 
-    ConsoleSaveFileOutputStream output(mSaveFile, ConsoleSavePath(L"level.dat"));
+    ConsoleSavePath file(L"level.dat");
+    ConsoleSaveFileOutputStream output(mSaveFile, file);
     NbtIo::writeCompressed(root, &output);
     delete root;
 }
@@ -418,17 +429,20 @@ int DirectoryLevelStorage::getAuxValueForMap(PlayerUID uid, int dimension, int c
     {
         for (unsigned int i = 0; i < mUsedMappings.length; ++i)
         {
-            if (mUsedMappings.data[i] == 0xff)
-                continue;
+            if (mUsedMappings.data[i] < 0xff)
+            {
+                int bit;
+                for (bit = 0; bit < 8; ++bit)
+                {
+                    if ((mUsedMappings.data[i] & (1 << bit)) == 0)
+                        break;
+                }
 
-            int bit = 0;
-            while (bit < 8 && (mUsedMappings.data[i] & (1 << bit)) != 0)
-                ++bit;
-
-            id = i * 8 + bit;
-            mPlayerMappings[uid].addMapping(id, centreX, centreZ, dimension, scale);
-            mUsedMappings.data[i] |= 1 << bit;
-            break;
+                id = i * 8 + bit;
+                mPlayerMappings[uid].addMapping(id, centreX, centreZ, dimension, scale);
+                mUsedMappings.data[i] |= 1 << bit;
+                break;
+            }
         }
     }
     return id;
@@ -436,7 +450,7 @@ int DirectoryLevelStorage::getAuxValueForMap(PlayerUID uid, int dimension, int c
 
 void DirectoryLevelStorage::resetPlayerPositionsInDimension(int dimension)
 {
-    std::vector<FileEntry*>* files = mSaveFile->getFilesWithPrefix(mPlayerDir);
+    std::vector<FileEntry*>* files = mSaveFile->getFilesWithPrefix(std::wstring(mPlayerDir));
     if (files == NULL)
         return;
 
@@ -488,8 +502,11 @@ void DirectoryLevelStorage::PlayerMappings::writeMappings(DataOutputStream* outp
 
 void DirectoryLevelStorage::PlayerMappings::addMapping(int id, int centreX, int centreZ, int dimension, int scale)
 {
-    long long index = ((long long)(((centreZ & 0x1FFFFFFF) << 2) | ((centreX >> 27) & 3)) << 32) |
-                      (unsigned int)((centreX << 5) | ((scale & 7) << 2) | (dimension & 3));
+    long long index = ((long long)(((centreZ & COORDINATE_MASK) << COORDINATE_Z_SHIFT) |
+                                   ((centreX >> COORDINATE_X_CARRY_SHIFT) & COORDINATE_X_CARRY_MASK))
+                       << HIGH_WORD_SHIFT) |
+                      (unsigned int)((centreX << COORDINATE_X_SHIFT) | ((scale & SCALE_MASK) << SCALE_SHIFT) |
+                                     (dimension & DIMENSION_MASK));
     mMappings[index] = id;
 }
 
@@ -506,8 +523,9 @@ void DirectoryLevelStorage::PlayerMappings::readMappings(DataInputStream* input)
 
 bool DirectoryLevelStorage::PlayerMappings::getMapping(int& id, int centreX, int centreZ, int dimension, int scale)
 {
-    long long index = ((long long)(((centreZ & 0x1FFFFFFF) << 2) | ((centreX >> 27) & 3)) << 32) |
-                      (unsigned int)((centreX << 5) | ((scale & 7) << 2) | (dimension & 3));
+    long long index = ((long long)((centreZ & COORDINATE_MASK) << COORDINATE_Z_SHIFT) << HIGH_WORD_SHIFT) |
+                      ((long long)(centreX & COORDINATE_MASK) << COORDINATE_X_SHIFT) |
+                      (long long)((scale & SCALE_MASK) << SCALE_SHIFT) | (long long)(dimension & DIMENSION_MASK);
     boost::unordered_map<long long, short>::iterator it = mMappings.find(index);
     if (it == mMappings.end())
         return false;

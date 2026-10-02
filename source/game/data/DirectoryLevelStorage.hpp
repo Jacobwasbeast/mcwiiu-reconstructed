@@ -40,6 +40,19 @@ public:
         bool getMapping(int& id, int centreX, int centreZ, int dimension, int scale);
 
     private:
+        enum
+        {
+            COORDINATE_MASK = 0x1FFFFFFF,
+            COORDINATE_X_SHIFT = 5,
+            COORDINATE_X_CARRY_SHIFT = 27,
+            COORDINATE_X_CARRY_MASK = 3,
+            COORDINATE_Z_SHIFT = 2,
+            SCALE_MASK = 7,
+            SCALE_SHIFT = 2,
+            DIMENSION_MASK = 3,
+            HIGH_WORD_SHIFT = 32
+        };
+
         boost::unordered_map<long long, short> mMappings;
     };
 

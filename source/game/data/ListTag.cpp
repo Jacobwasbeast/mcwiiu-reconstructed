@@ -222,7 +222,7 @@ CompoundTag* ListTag::getCompound(int index) const
 
         if (tag->getId() == Tag::TAG_COMPOUND)
         {
-            return dynamic_cast<CompoundTag*>(tag);
+            return static_cast<CompoundTag*>(tag);
         }
     }
 
@@ -237,7 +237,7 @@ int ListTag::getInt(int index) const
 
         if (tag->getId() == Tag::TAG_INT)
         {
-            return dynamic_cast<NumericTag*>(tag)->getAsInt();
+            return static_cast<NumericTag*>(tag)->getAsInt();
         }
     }
 
@@ -252,7 +252,7 @@ arrayWithLength<int> ListTag::getIntArray(int index) const
 
         if (tag->getId() == Tag::TAG_INT_ARRAY)
         {
-            return dynamic_cast<IntArrayTag*>(tag)->getAsIntArray();
+            return static_cast<IntArrayTag*>(tag)->getAsIntArray();
         }
     }
 
@@ -267,7 +267,7 @@ double ListTag::getDouble(int index) const
 
         if (tag->getId() == Tag::TAG_DOUBLE)
         {
-            return dynamic_cast<NumericTag*>(tag)->getAsDouble();
+            return static_cast<NumericTag*>(tag)->getAsDouble();
         }
     }
 
@@ -282,7 +282,7 @@ float ListTag::getFloat(int index) const
 
         if (tag->getId() == Tag::TAG_FLOAT)
         {
-            return dynamic_cast<NumericTag*>(tag)->getAsFloat();
+            return static_cast<NumericTag*>(tag)->getAsFloat();
         }
     }
 

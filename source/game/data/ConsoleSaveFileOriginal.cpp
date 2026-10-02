@@ -9,11 +9,11 @@
 #include "game/core/Compression.hpp"
 #include "game/core/UnityClient6.hpp"
 #include "game/core/FileHeader.hpp"
+#include "game/core/PIXNamedEvents.hpp"
 #include "game/world/LevelGenerationOptions.hpp"
 
 #ifdef RECON_NATIVE
 #include "win32_memory.hpp"
-#include "game/core/PIXNamedEvents.hpp"
 #else
 void* VirtualAlloc(void* address, unsigned long size, unsigned int allocationType, unsigned int protect);
 int VirtualFree(void* address, unsigned long size, unsigned int freeType);
