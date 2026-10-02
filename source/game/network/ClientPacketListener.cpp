@@ -2575,7 +2575,7 @@ void ClientPacketListener::handlePreLogin(boost::shared_ptr<ClientboundPreLoginP
         {
             const int action = gApp.GetTMSAction(gProfile->GetPrimaryPad());
             if (action == 0)
-                gApp.SetTMSAction(gProfile->GetPrimaryPad(), 3);
+                gApp.SetTMSAction(gProfile->GetPrimaryPad(), static_cast<eTMSAction>(3));
         }
     }
 
