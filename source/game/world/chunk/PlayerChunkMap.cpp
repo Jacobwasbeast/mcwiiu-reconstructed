@@ -1,6 +1,7 @@
 #include "game/world/chunk/PlayerChunkMap.hpp"
 
 #include <algorithm>
+#include <limits.h>
 
 #include "game/core/Mth.hpp"
 #include "game/core/Minecraft.hpp"
@@ -16,6 +17,8 @@
 #include "game/world/generation/PlayerList.hpp"
 #include "game/network/INetworkPlayer.hpp"
 #include "game/minigame/EMiniGameId.hpp"
+#include "game/world/Dimension.hpp"
+#include "game/world/DimensionType.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/chunk/PlayerChunkContainer.hpp"
 
@@ -33,15 +36,10 @@ PlayerChunkMap::PlayerChunkMap(ServerLevel* level, int dimension, int viewDistan
 
 PlayerChunkMap::~PlayerChunkMap()
 {
-    ContainerMap::iterator it = mChunks.begin();
-    while (it != mChunks.end())
+    for (ContainerMap::iterator it = mChunks.begin(); it != mChunks.end(); ++it)
     {
         delete it->second;
-        ++it;
     }
-    mChunks.clear();
-    mChangedChunks.clear();
-    mAllChunks.clear();
 }
 
 void PlayerChunkMap::flagEntitiesToBeRemoved(unsigned int* count, bool* removed)
@@ -159,15 +157,12 @@ void PlayerChunkMap::setViewDistance(int distance)
 void PlayerChunkMap::tick()
 {
     long long gameTime = mLevel->getGameTime();
-    long long elapsedSinceUpdate = gameTime - mLastUpdate;
-    if (elapsedSinceUpdate < 0 || elapsedSinceUpdate > 8000)
+    if (gameTime - mLastUpdate > 8000)
     {
         mLastUpdate = gameTime;
-        ContainerVector::iterator inhabited = mAllChunks.begin();
-        while (inhabited != mAllChunks.end())
+        for (unsigned int i = 0; i < mAllChunks.size(); i++)
         {
-            (*inhabited)->updateInhabitedTime();
-            ++inhabited;
+            mAllChunks.at(i)->updateInhabitedTime();
         }
     }
 
@@ -194,42 +189,39 @@ void PlayerChunkMap::tick()
         mTicksUntilNextUpdate = 25;
 
     PIXBeginNamedEvent(0.0f, "PlayerChunkMap tickAddRequests");
-    long long budget = mTicksUntilNextUpdate;
-    while (budget > 0)
+    uint64_t tickStart = System::processTimeInMilliSecs();
+    while (mTicksUntilNextUpdate > 0)
     {
         uint64_t start = System::processTimeInMilliSecs();
 
-        boost::shared_ptr<ServerPlayer> bestPlayer;
-        bool haveBest = false;
+        int bestIndex = -1;
         long long bestWait = 0;
-        RequestVector::const_iterator request = mAddRequests.begin();
-        while (request != mAddRequests.end())
+        for (unsigned int i = 0; i < mPlayers.size(); i++)
         {
-            long long wait = tickAddRequests(request->player, false);
-            if (!haveBest || bestWait < wait)
+            long long wait = tickAddRequests(mPlayers[i], false);
+            if (bestWait < wait)
             {
+                bestIndex = i;
                 bestWait = wait;
-                bestPlayer = request->player;
-                haveBest = true;
             }
-            ++request;
         }
-        if (!haveBest)
+        if (bestIndex < 0)
             break;
 
-        tickAddRequests(bestPlayer, true);
+        tickAddRequests(mPlayers[bestIndex], true);
 
         uint64_t end = System::processTimeInMilliSecs();
-        budget -= static_cast<long long>(end - start);
-        mTicksUntilNextUpdate = static_cast<int32_t>(budget);
+        mTicksUntilNextUpdate -= static_cast<int>(end - start);
     }
+    uint64_t tickEnd = System::processTimeInMilliSecs();
+    if (mLevel->mDimension->getType() == DimensionType::OVERWORLD)
+        PIXAddNamedCounter(static_cast<float>(static_cast<long long>(tickEnd - tickStart)), "Tick add request");
     PIXEndNamedEvent();
 }
 
 long long PlayerChunkMap::getKeyForChunk(int x, int z)
 {
-    return (static_cast<long long>(static_cast<unsigned int>(x + 0x7fffffff)) << 32) |
-           static_cast<unsigned int>(z + 0x7fffffff);
+    return (static_cast<long long>(x) + INT_MAX) | ((static_cast<long long>(z) + INT_MAX) << 32);
 }
 
 PlayerChunkContainer* PlayerChunkMap::getChunkIfLoaded(int x, int z)
@@ -625,24 +617,21 @@ void PlayerChunkMap::removeOutsideAreaForAllPlayers(int minX, int minZ, int maxX
 
 void PlayerChunkMap::reloadAllPlayers(int minX, int minZ, int maxX, int maxZ)
 {
-    PlayerVector players(mPlayers);
+    PlayerVector players;
+    players.insert(players.end(), mPlayers.begin(), mPlayers.end());
 
     mShouldDropChunks = true;
-    PlayerVector::iterator it = players.begin();
-    while (it != players.end())
+    while (!mPlayers.empty())
     {
-        removeOutsideArea(*it, minX, minZ, maxX, maxZ);
-        ++it;
+        removeOutsideArea(mPlayers[0], minX, minZ, maxX, maxZ);
     }
     mShouldDropChunks = false;
 
     int oldRadius = mViewDistance;
     setRadius(3);
-    it = players.begin();
-    while (it != players.end())
+    for (PlayerVector::iterator it = players.begin(); it != players.end(); ++it)
     {
         add(*it);
-        ++it;
     }
     setRadius(oldRadius);
 }
