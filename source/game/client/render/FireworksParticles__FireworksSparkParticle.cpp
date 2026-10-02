@@ -14,7 +14,7 @@ FireworksParticles::FireworksSparkParticle::FireworksSparkParticle(
     yd = ya;
     zd = za;
     size *= 0.75f;
-    setAlpha(0.9900000095367432f);
+    alpha = 0.9900000095367432f;
     lifetime = random.nextInt(12) + 48;
     hasPhysics = false;
 }
@@ -40,9 +40,9 @@ void FireworksParticles::FireworksSparkParticle::render(
 {
     if (!flicker || age < lifetime / 3 || ((age + lifetime) / 3 & 1) == 0)
     {
-        float px = (float)((x - xo) * partialTicks + xo);
-        float py = (float)((y - yo) * partialTicks + yo);
-        float pz = (float)((z - zo) * partialTicks + zo);
+        float px = (float)((x - xo) * partialTicks + xo - xOff);
+        float py = (float)((y - yo) * partialTicks + yo - yOff);
+        float pz = (float)((z - zo) * partialTicks + zo - zOff);
 
         if (2.0f <= px * px + py * py + pz * pz)
         {
@@ -62,7 +62,14 @@ void FireworksParticles::FireworksSparkParticle::tick()
             level, x, y, z, 0.0, 0.0, 0.0, particleEngine);
         particle->Particle::setColor(rCol, gCol, bCol);
         particle->age = particle->lifetime / 2;
-        particle->setFlicker(flicker);
+        if (fading)
+        {
+            particle->fading = true;
+            particle->fadeRed = fadeRed;
+            particle->fadeGreen = fadeGreen;
+            particle->fadeBlue = fadeBlue;
+        }
+        particle->flicker = flicker;
         particleEngine->add(particle);
     }
 }

@@ -28,8 +28,6 @@
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/StainedGlassPaneBlock.hpp"
 
-static ResourceLocation ITEMS_LOCATION(TN_MISC_FOLIAGECOLOR);
-
 ItemEntityRenderer::ItemEntityRenderer(EntityRenderDispatcher* dispatcher, ItemRenderer* itemRenderer)
     : EntityRenderer(dispatcher), mRandom()
 {
@@ -56,10 +54,10 @@ void ItemEntityRenderer::renderItemBillboard(boost::shared_ptr<ItemEntity> entit
         sprite = mDispatcher->mTextures->getMissingIcon(missing->getItem()->getIconType());
     }
 
-    double u0 = sprite->getU0(false);
-    double u1 = sprite->getU1(false);
-    double v0 = sprite->getV0(false);
-    double v1 = sprite->getV1(false);
+    float u0 = sprite->getU0(false);
+    float u1 = sprite->getU1(false);
+    float v0 = sprite->getV0(false);
+    float v1 = sprite->getV1(false);
 
     if (!mDispatcher->mOptions->mFancyGraphics)
     {
@@ -77,10 +75,10 @@ void ItemEntityRenderer::renderItemBillboard(boost::shared_ptr<ItemEntity> entit
             GlStateManager::color4f(red, green, blue, 1.0F);
             builder->begin();
             builder->normal(0.0F, 1.0F, 0.0F);
-            builder->vertexUV(-0.5F, -0.25F, 0.0F, (float)u0, (float)v1);
-            builder->vertexUV(0.5F, -0.25F, 0.0F, (float)u1, (float)v1);
-            builder->vertexUV(0.5F, 0.75F, 0.0F, (float)u1, (float)v0);
-            builder->vertexUV(-0.5F, 0.75F, 0.0F, (float)u0, (float)v0);
+            builder->vertexUV(-0.5F, -0.25F, 0.0F, u0, v1);
+            builder->vertexUV(0.5F, -0.25F, 0.0F, u1, v1);
+            builder->vertexUV(0.5F, 0.75F, 0.0F, u1, v0);
+            builder->vertexUV(-0.5F, 0.75F, 0.0F, u0, v0);
             builder->end();
             GlStateManager::popMatrix();
         }
@@ -129,7 +127,7 @@ void ItemEntityRenderer::renderItemBillboard(boost::shared_ptr<ItemEntity> entit
             bindTexture(&BLOCKS_LOCATION);
             GlStateManager::color4f(red, green, blue, 1.0F);
             Minecraft::GetInstance()->getItemInHandRenderer()->renderItem3D(
-                tesselator, (float)u0, (float)v0, (float)u1, (float)v1,
+                tesselator, u0, v0, u1, v1,
                 sprite->getSourceWidth(), sprite->getSourceHeight(), 0.0625F,
                 ItemInHandRenderer::ITEM_RENDER_MODE_GUI);
         }
@@ -138,16 +136,16 @@ void ItemEntityRenderer::renderItemBillboard(boost::shared_ptr<ItemEntity> entit
             bindTexture(&BLOCKS_LOCATION);
             GlStateManager::color4f(red, green, blue, 1.0F);
             Minecraft::GetInstance()->getItemInHandRenderer()->renderItem3D(
-                tesselator, (float)u0, (float)v0, (float)u1, (float)v1,
+                tesselator, u0, v0, u1, v1,
                 sprite->getSourceWidth(), sprite->getSourceHeight(), 0.0625F,
                 ItemInHandRenderer::ITEM_RENDER_MODE_NONE);
         }
         else
         {
-            bindTexture(&ITEMS_LOCATION);
+            bindTexture(&ITEM_LOCATION);
             GlStateManager::color4f(red, green, blue, 1.0F);
             Minecraft::GetInstance()->getItemInHandRenderer()->renderItem3D(
-                tesselator, (float)u0, (float)v0, (float)u1, (float)v1,
+                tesselator, u0, v0, u1, v1,
                 sprite->getSourceWidth(), sprite->getSourceHeight(), 0.0625F,
                 ItemInHandRenderer::ITEM_RENDER_MODE_3D);
         }
@@ -289,7 +287,7 @@ void ItemEntityRenderer::render(boost::shared_ptr<Entity>& entity, double x, dou
         {
             GlStateManager::scalef(0.5F, 0.5F, 0.5F);
         }
-        bindTexture(&ITEMS_LOCATION);
+        bindTexture(&ITEM_LOCATION);
 
         for (int layer = 0; layer < 2; ++layer)
         {

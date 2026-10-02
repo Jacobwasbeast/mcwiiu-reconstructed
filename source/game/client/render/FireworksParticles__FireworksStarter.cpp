@@ -15,24 +15,28 @@
 #include "game/data/CompoundTag.hpp"
 #include "game/data/ListTag.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/item/FireworksItem.hpp"
 #include "game/util/Random.hpp"
 
 FireworksParticles::FireworksStarter::FireworksStarter(Level* level, double x, double y, double z,
                                    double xa, double ya, double za,
                                    ParticleEngine* particleEngine, CompoundTag* fireworks)
-    : Particle(level, x, y, z, xa, ya, za), life(0), particleEngine(particleEngine),
+    : Particle(level, x, y, z, 0.0, 0.0, 0.0), life(0), particleEngine(particleEngine),
       explosions(NULL), twinkle(false)
 {
+    xd = xa;
+    yd = ya;
+    zd = za;
     lifetime = 8;
     if (fireworks != NULL)
     {
-        explosions = fireworks->getList(L"Explosions", Tag::TAG_COMPOUND);
-        if (explosions != NULL && explosions->size() > 0)
+        explosions = fireworks->getList(FireworksItem::TAG_EXPLOSIONS, Tag::TAG_COMPOUND)->copy();
+        if (!explosions->isEmpty())
         {
             lifetime = explosions->size() * 2 - 1;
             for (int i = 0; i < explosions->size(); ++i)
             {
-                if (explosions->getCompound(i)->getBoolean(L"Flicker"))
+                if (explosions->getCompound(i)->getBoolean(FireworksItem::TAG_E_FLICKER))
                 {
                     twinkle = true;
                     lifetime += 15;
@@ -181,7 +185,7 @@ void FireworksParticles::FireworksStarter::tick()
         bool large = explosions->size() >= 3;
         for (int i = 0; !large && i < explosions->size(); ++i)
         {
-            if (explosions->getCompound(i)->getByte(L"Type") == 1)
+            if (explosions->getCompound(i)->getByte(FireworksItem::TAG_E_TYPE) == 1)
                 large = true;
         }
         const SoundEvent* blast;
@@ -196,11 +200,11 @@ void FireworksParticles::FireworksStarter::tick()
     if (life % 2 == 0 && explosions != NULL && life / 2 < explosions->size())
     {
         CompoundTag* explosion = explosions->getCompound(life / 2);
-        const int type = explosion->getByte(L"Type");
-        const bool trail = explosion->getBoolean(L"Trail");
-        const bool flicker = explosion->getBoolean(L"Flicker");
-        arrayWithLength<int> colors = explosion->getIntArray(L"Colors");
-        arrayWithLength<int> fadeColors = explosion->getIntArray(L"FadeColors");
+        const int type = explosion->getByte(FireworksItem::TAG_E_TYPE);
+        const bool trail = explosion->getBoolean(FireworksItem::TAG_E_TRAIL);
+        const bool flicker = explosion->getBoolean(FireworksItem::TAG_E_FLICKER);
+        arrayWithLength<int> colors = explosion->getIntArray(FireworksItem::TAG_E_COLORS);
+        arrayWithLength<int> fadeColors = explosion->getIntArray(FireworksItem::TAG_E_FADECOLORS);
         if (colors.length == 0)
         {
             colors = arrayWithLength<int>(1, true);

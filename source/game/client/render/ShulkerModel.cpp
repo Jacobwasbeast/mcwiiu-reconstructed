@@ -16,7 +16,7 @@
 #include "game/core/GlStateManager.hpp"
 
 ShulkerModel::ShulkerModel(const ModelDefinition& modelDefinition)
-    : mBase(NULL), mLid(NULL), mHead(NULL), mHeadSkin(NULL), mSkinnedParts()
+    : mSkinnedParts()
 {
     mTexWidth = 64;
     mTexHeight = 128;
@@ -26,6 +26,7 @@ ShulkerModel::ShulkerModel(const ModelDefinition& modelDefinition)
         mLid = new ModelPart(this);
         mBase = new ModelPart(this);
         mHead = new ModelPart(this);
+        mHeadSkin = NULL;
         mLid->texOffs(0, 0)->addBox(-8.0f, -16.0f, -8.0f, 16, 12, 16);
         mLid->setPos(0.0f, 24.0f, 0.0f);
         mBase->texOffs(0, 28)->addBox(-8.0f, -8.0f, -8.0f, 16, 8, 16);
@@ -47,15 +48,15 @@ ShulkerModel::ShulkerModel(const ModelDefinition& modelDefinition)
         BufferBuilder* builder = tesselator->getBuilder();
         builder->setVertexAndPixelShader(eMinecraftEntityMaterial_Shulker);
         compileSkinnedDrawlist();
-        mSkinnedParts.compile(0.125f);
+        mSkinnedParts.compile(0.0625f);
         builder->useDefaultShaders();
     }
 }
 
 ShulkerModel::~ShulkerModel()
 {
-    delete mBase;
     delete mLid;
+    delete mBase;
     delete mHead;
     delete mHeadSkin;
 }
@@ -125,19 +126,18 @@ void ShulkerModel::renderWhenInvisible(boost::shared_ptr<Entity>& entity, float 
 {
     if (mHasOverriddenParts)
     {
+        boost::shared_ptr<Shulker> shulker = boost::static_pointer_cast<Shulker>(entity);
+        const unsigned int colour = Minecraft::GetInstance()->getColourTable()->getColour(
+            shulker->getColor()->getShulkerColor());
+        GlStateManager::color3f((float)((colour >> 16) & 0xFF) / 255.0f, (float)((colour >> 8) & 0xFF) / 255.0f,
+                                (float)(colour & 0xFF) / 255.0f);
         mHeadSkin->render(scale, useDisplayList, false);
         mSkinnedParts.render();
+        GlStateManager::color3f(1.0f, 1.0f, 1.0f);
     }
-    else
-    {
-        render(entity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, useDisplayList);
-    }
-    GlStateManager::color3f(1.0f, 1.0f, 1.0f);
 }
 
 std::wstring ShulkerModel::getName()
 {
-    std::wstring result;
-    result.assign(L"shulker");
-    return result;
+    return L"shulker";
 }

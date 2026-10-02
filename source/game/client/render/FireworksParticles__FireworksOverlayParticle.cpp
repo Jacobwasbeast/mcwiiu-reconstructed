@@ -8,8 +8,8 @@
 FireworksParticles::FireworksOverlayParticle::FireworksOverlayParticle(Level* level, double x, double y, double z)
     : Particle(level, x, y, z)
 {
-    setAlpha(0.9900000095367432f);
-    setLifetime(4);
+    alpha = 0.9900000095367432f;
+    lifetime = 4;
 }
 
 FireworksParticles::FireworksOverlayParticle::~FireworksOverlayParticle()
@@ -41,18 +41,19 @@ void FireworksParticles::FireworksOverlayParticle::render(BufferBuilder* buffer,
         buffer->color(rCol, gCol, bCol, getAlpha());
         buffer->tex2(texture);
 
-        float x0 = py - xa * scale;
-        float y0 = px - ya * scale;
+        float x0 = px - xa * scale;
+        float y0 = py - ya * scale;
         float z0 = pz - za * scale;
         float x1 = xa2 * scale;
-        float y1 = za2 * scale;
+        float z1 = za2 * scale;
+        float yTop = py + ya * scale;
 
-        buffer->vertexUV(x0 - x1, y0, z0 - y1, 0.5f, 0.375f);
-        buffer->vertexUV(x0 + x1, y0 + 2.0f * ya * scale, z0 + y1, 0.5f, 0.125f);
-        x0 = py + xa * scale;
+        buffer->vertexUV(x0 - x1, y0, z0 - z1, 0.5f, 0.375f);
+        buffer->vertexUV(x0 + x1, yTop, z0 + z1, 0.5f, 0.125f);
+        x0 = px + xa * scale;
         z0 = pz + za * scale;
-        buffer->vertexUV(x0 + x1, y0 + 2.0f * ya * scale, z0 + y1, 0.25f, 0.125f);
-        buffer->vertexUV(x0 - x1, y0, z0 - y1, 0.25f, 0.375f);
+        buffer->vertexUV(x0 + x1, yTop, z0 + z1, 0.25f, 0.125f);
+        buffer->vertexUV(x0 - x1, y0, z0 - z1, 0.25f, 0.375f);
     }
 }
 

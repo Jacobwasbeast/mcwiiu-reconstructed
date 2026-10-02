@@ -16,7 +16,7 @@ public:
     virtual int getLightColor(float partialTicks);
     virtual float getBrightness(float partialTicks);
     void setBaseAirFriction(float friction);
-private:
+protected:
     int texture;
     int frameCount;
     float verticalSpeed;
