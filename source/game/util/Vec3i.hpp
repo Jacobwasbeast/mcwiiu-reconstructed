@@ -43,9 +43,4 @@ public:
     Vec3i relative(Direction::Axis* axis, int steps) const;
 };
 
-inline Vec3i Direction::getNormal() const
-{
-    return *normal;
-}
-
 #endif
