@@ -136,7 +136,7 @@ AABB* Shulker::ShulkerDefenseAttackGoal::getTargetSearchArea(double distance)
     const Direction* attachFace = static_cast<Shulker*>(mMob)->getAttachFace();
     if (attachFace->getAxis() == Direction::Axis::X)
         return mMob->mBoundingBox->grow(4.0, distance, distance);
-    if (attachFace->getAxis() == Direction::Axis::Y)
+    if (attachFace->getAxis() == Direction::Axis::Z)
         return mMob->mBoundingBox->grow(distance, distance, 4.0);
     return mMob->mBoundingBox->grow(distance, 4.0, distance);
 }
@@ -159,7 +159,7 @@ AABB* Shulker::ShulkerNearestAttackGoal::getTargetSearchArea(double distance)
     const Direction* attachFace = static_cast<Shulker*>(mMob)->getAttachFace();
     if (attachFace->getAxis() == Direction::Axis::X)
         return mMob->mBoundingBox->grow(4.0, distance, distance);
-    if (attachFace->getAxis() == Direction::Axis::Y)
+    if (attachFace->getAxis() == Direction::Axis::Z)
         return mMob->mBoundingBox->grow(distance, distance, 4.0);
     return mMob->mBoundingBox->grow(distance, 4.0, distance);
 }
@@ -584,7 +584,7 @@ void Shulker::aiStep()
 
 void Shulker::onSyncedDataUpdated(const EntityDataAccessor_Base* accessor)
 {
-    if (accessor == DATA_ATTACH_POSITION && mLevel->mIsClientSide && !isPassenger())
+    if (accessor->getId() == DATA_ATTACH_POSITION->getId() && mLevel->mIsClientSide && !isPassenger())
     {
         BlockPos* attachPos = getAttachPosition();
         if (attachPos != NULL)

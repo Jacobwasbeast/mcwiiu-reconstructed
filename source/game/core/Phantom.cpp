@@ -102,12 +102,15 @@ bool Phantom::checkSpawnRules()
 void Phantom::aiStep()
 {
     Monster::aiStep();
-    if (!mLevel->mIsClientSide && mLevel->isDay() && getBrightness() > 0.5f &&
-        mRandom->nextFloat() * 30.0f < (getBrightness() - 0.4f) * 2.0f)
+    if (!mLevel->mIsClientSide && mLevel->isDay())
     {
-        BlockPos pos(this);
-        if (mLevel->canSeeSky(pos))
-            setSecondsOnFire(8);
+        float brightness = getBrightness();
+        if (brightness > 0.5f && mRandom->nextFloat() * 30.0f < (brightness - 0.4f) * 2.0f)
+        {
+            BlockPos pos(this);
+            if (mLevel->canSeeSky(pos))
+                setSecondsOnFire(8);
+        }
     }
 }
 
@@ -131,7 +134,7 @@ void Phantom::registerAttributes()
 {
     Monster::registerAttributes();
     getAttribute(SharedMonsterAttributes::ATTACK_DAMAGE)->setBaseValue(6.0);
-    getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(1.8);
+    getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(1.8f);
     getAttribute(SharedMonsterAttributes::MAX_HEALTH)->setBaseValue(10.0);
     getAttribute(SharedMonsterAttributes::FOLLOW_RANGE)->setBaseValue(64.0);
 }

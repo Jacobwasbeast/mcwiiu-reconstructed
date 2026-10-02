@@ -91,7 +91,7 @@ void LootTable::shuffleAndSplitItems(std::vector<not_null_ptr<ItemInstance> >* i
         not_null_ptr<ItemInstance> item = splitItems[(unsigned int)index];
         splitItems.erase(splitItems.begin() + index);
 
-        int splitCount = Mth::nextInt(random, 1, (item->getCount() + 1) / 2);
+        int splitCount = Mth::nextInt(random, 1, item->getCount() / 2);
         not_null_ptr<ItemInstance> split = item->split(splitCount);
 
         if (item->getCount() == 0 || !random->nextBoolean())
