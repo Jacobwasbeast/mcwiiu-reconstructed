@@ -6,12 +6,6 @@
 
 #include <stdio.h>
 
-struct _FILETIME
-{
-    unsigned int dwLowDateTime;
-    unsigned int dwHighDateTime;
-};
-
 struct _WIN32_FIND_DATAA
 {
     unsigned int dwFileAttributes;

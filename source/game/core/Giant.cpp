@@ -38,9 +38,9 @@ void Giant::registerAttributes()
     getAttribute(SharedMonsterAttributes::ATTACK_DAMAGE)->setBaseValue(50.0);
 }
 
-double Giant::getWalkTargetValue(const BlockPos& pos)
+float Giant::getWalkTargetValue(const BlockPos& pos)
 {
-    return (double)((float)mLevel->getBrightness(pos) - 0.5f);
+    return (float)mLevel->getBrightness(pos) - 0.5f;
 }
 
 ResourceLocation* Giant::getDefaultLootTable()

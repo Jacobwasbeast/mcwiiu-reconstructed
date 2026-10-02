@@ -153,66 +153,66 @@ boost::unordered_map<ResourceLocation*, LootTable*> BuiltInLootTables::lootTable
 
 void BuiltInLootTables::staticLootTable_ABANDONED_MINESHAFT()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
     entries->push_back(new LootItem(Items::goldenApple, 20, 0, NULL, NULL, NULL));
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemDataFunction(NULL, RandomValueBounds(1)));
     entries->push_back(new LootItem(Items::goldenApple, 1, 0, functions, NULL, NULL));
     entries->push_back(new LootItem(Items::nameTag, 30, 0, NULL, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantRandomlyFunction(NULL, std::vector<Enchantment*>()));
     entries->push_back(new LootItem(Items::book, 10, 0, functions, NULL, NULL));
     entries->push_back(new LootItem(Items::ironPickaxe, 5, 0, NULL, NULL, NULL));
     entries->push_back(new EmptyLootItem(5, 0, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
-    entries = new std::vector<LootPoolEntry*>();
-    functions = new std::vector<LootItemFunction*>();
+    entries = new std::vector<LootPoolEntry*>;
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 5)));
     entries->push_back(new LootItem(Items::ironIngot, 10, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 3)));
     entries->push_back(new LootItem(Items::goldIngot, 5, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(4, 9)));
     entries->push_back(new LootItem(Items::redstone, 5, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemDataFunction(NULL, RandomValueBounds(4)));
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(4, 9)));
     entries->push_back(new LootItem(Items::dye, 5, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 2)));
     entries->push_back(new LootItem(Items::diamond, 3, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(3, 8)));
     entries->push_back(new LootItem(Items::coal, 10, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 3)));
     entries->push_back(new LootItem(Items::bread, 15, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(2, 4)));
     entries->push_back(new LootItem(Items::melonSeeds, 10, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(2, 4)));
     entries->push_back(new LootItem(Items::pumpkinSeeds, 10, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(2, 4)));
     entries->push_back(new LootItem(Items::beetrootSeeds, 10, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(2, 4), RandomValueBounds(0), NULL));
-    entries = new std::vector<LootPoolEntry*>();
-    functions = new std::vector<LootItemFunction*>();
+    entries = new std::vector<LootPoolEntry*>;
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(4, 8)));
     entries->push_back(new LootItem(Item::byBlock(Blocks::rail), 20, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 4)));
     entries->push_back(new LootItem(Item::byBlock(Blocks::golden_rail), 5, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 4)));
     entries->push_back(new LootItem(Item::byBlock(Blocks::detector_rail), 5, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 4)));
     entries->push_back(new LootItem(Item::byBlock(Blocks::activator_rail), 5, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 16)));
     entries->push_back(new LootItem(Item::byBlock(Blocks::torch), 15, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(3), RandomValueBounds(0), NULL));
@@ -221,21 +221,21 @@ void BuiltInLootTables::staticLootTable_ABANDONED_MINESHAFT()
 
 void BuiltInLootTables::staticLootTable_BURIEDTREASURE()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
     entries->push_back(new LootItem(Items::nautilusCore, 1, 0, NULL, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
-    entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 5)));
     entries->push_back(new LootItem(Items::prismarineCrystals, 5, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(3, 5)));
     entries->push_back(new LootItem(Items::ironIngot, 20, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 5)));
     entries->push_back(new LootItem(Items::goldIngot, 10, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 2)));
     entries->push_back(new LootItem(Item::byBlock(Blocks::tnt), 10, 0, functions, NULL, NULL));
     entries->push_back(new LootItem(Items::diamond, 15, 0, NULL, NULL, NULL));
@@ -246,19 +246,19 @@ void BuiltInLootTables::staticLootTable_BURIEDTREASURE()
     entries->push_back(new LootItem(Items::chainmailHelmet, 20, 0, NULL, NULL, NULL));
     entries->push_back(new LootItem(Items::chainmailLeggings, 20, 0, NULL, NULL, NULL));
     entries->push_back(new LootItem(Items::chainmailBoots, 20, 0, NULL, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 2)));
     entries->push_back(new LootItem(Items::writableBook, 5, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 3)));
     entries->push_back(new LootItem(Items::lead, 10, 0, functions, NULL, NULL));
     entries->push_back(new LootItem(Items::experienceBottle, 3, 0, NULL, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     CompoundTag* tag = new CompoundTag();
     tag->putString(PotionUtils::TAG_POTION, L"water_breathing");
     functions->push_back(new SetNBTFunction(NULL, tag));
     entries->push_back(new LootItem(Items::potion, 15, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     tag = new CompoundTag();
     tag->putString(PotionUtils::TAG_POTION, L"regeneration");
     functions->push_back(new SetNBTFunction(NULL, tag));
@@ -270,56 +270,56 @@ void BuiltInLootTables::staticLootTable_BURIEDTREASURE()
 
 void BuiltInLootTables::staticLootTable_DESERT_PYRAMID()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 3)));
     entries->push_back(new LootItem(Items::diamond, 5, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 5)));
     entries->push_back(new LootItem(Items::ironIngot, 15, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(2, 7)));
     entries->push_back(new LootItem(Items::goldIngot, 15, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 3)));
     entries->push_back(new LootItem(Items::emerald, 15, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(4, 6)));
     entries->push_back(new LootItem(Items::bone, 25, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 3)));
     entries->push_back(new LootItem(Items::spiderEye, 25, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(3, 7)));
     entries->push_back(new LootItem(Items::rottenFlesh, 25, 0, functions, NULL, NULL));
     entries->push_back(new LootItem(Items::saddle, 20, 0, NULL, NULL, NULL));
     entries->push_back(new LootItem(Items::ironHorseArmor, 15, 0, NULL, NULL, NULL));
     entries->push_back(new LootItem(Items::goldenHorseArmor, 10, 0, NULL, NULL, NULL));
     entries->push_back(new LootItem(Items::diamondHorseArmor, 5, 0, NULL, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantRandomlyFunction(NULL, std::vector<Enchantment*>()));
     entries->push_back(new LootItem(Items::book, 20, 0, functions, NULL, NULL));
     entries->push_back(new LootItem(Items::goldenApple, 20, 0, NULL, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemDataFunction(NULL, RandomValueBounds(1)));
     entries->push_back(new LootItem(Items::goldenApple, 2, 0, functions, NULL, NULL));
     entries->push_back(new EmptyLootItem(15, 0, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(2, 4), RandomValueBounds(0), NULL));
-    entries = new std::vector<LootPoolEntry*>();
-    functions = new std::vector<LootItemFunction*>();
+    entries = new std::vector<LootPoolEntry*>;
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 8)));
     entries->push_back(new LootItem(Items::bone, 10, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 8)));
     entries->push_back(new LootItem(Items::gunpowder, 10, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 8)));
     entries->push_back(new LootItem(Items::rottenFlesh, 10, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 8)));
     entries->push_back(new LootItem(Items::string, 10, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 8)));
     entries->push_back(new LootItem(Item::byBlock(Blocks::sand), 10, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(4), RandomValueBounds(0), NULL));
@@ -328,9 +328,9 @@ void BuiltInLootTables::staticLootTable_DESERT_PYRAMID()
 
 void BuiltInLootTables::staticLootTable_DISPENSER_TRAP()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(2, 7)));
     entries->push_back(new LootItem(Items::arrow, 30, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(2, 2), RandomValueBounds(0), NULL));
@@ -339,67 +339,67 @@ void BuiltInLootTables::staticLootTable_DISPENSER_TRAP()
 
 void BuiltInLootTables::staticLootTable_END_CITY_TREASURE()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(2, 7)));
     entries->push_back(new LootItem(Items::diamond, 5, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(4, 8)));
     entries->push_back(new LootItem(Items::ironIngot, 10, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(2, 7)));
     entries->push_back(new LootItem(Items::goldIngot, 15, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(2, 6)));
     entries->push_back(new LootItem(Items::emerald, 2, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 10)));
     entries->push_back(new LootItem(Items::beetrootSeeds, 5, 0, functions, NULL, NULL));
     entries->push_back(new LootItem(Items::saddle, 3, 0, NULL, NULL, NULL));
     entries->push_back(new LootItem(Items::ironHorseArmor, 1, 0, NULL, NULL, NULL));
     entries->push_back(new LootItem(Items::goldenHorseArmor, 1, 0, NULL, NULL, NULL));
     entries->push_back(new LootItem(Items::diamondHorseArmor, 1, 0, NULL, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantWithLevelsFunction(NULL, RandomValueBounds(20, 39), true));
     entries->push_back(new LootItem(Items::diamondSword, 3, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantWithLevelsFunction(NULL, RandomValueBounds(20, 39), true));
     entries->push_back(new LootItem(Items::diamondBoots, 3, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantWithLevelsFunction(NULL, RandomValueBounds(20, 39), true));
     entries->push_back(new LootItem(Items::diamondChestplate, 3, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantWithLevelsFunction(NULL, RandomValueBounds(20, 39), true));
     entries->push_back(new LootItem(Items::diamondLeggings, 3, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantWithLevelsFunction(NULL, RandomValueBounds(20, 39), true));
     entries->push_back(new LootItem(Items::diamondHelmet, 3, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantWithLevelsFunction(NULL, RandomValueBounds(20, 39), true));
     entries->push_back(new LootItem(Items::diamondPickaxe, 3, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantWithLevelsFunction(NULL, RandomValueBounds(20, 39), true));
     entries->push_back(new LootItem(Items::diamondShovel, 3, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantWithLevelsFunction(NULL, RandomValueBounds(20, 39), true));
     entries->push_back(new LootItem(Items::ironSword, 3, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantWithLevelsFunction(NULL, RandomValueBounds(20, 39), true));
     entries->push_back(new LootItem(Items::ironBoots, 3, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantWithLevelsFunction(NULL, RandomValueBounds(20, 39), true));
     entries->push_back(new LootItem(Items::ironChestplate, 3, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantWithLevelsFunction(NULL, RandomValueBounds(20, 39), true));
     entries->push_back(new LootItem(Items::ironLeggings, 3, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantWithLevelsFunction(NULL, RandomValueBounds(20, 39), true));
     entries->push_back(new LootItem(Items::ironHelmet, 3, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantWithLevelsFunction(NULL, RandomValueBounds(20, 39), true));
     entries->push_back(new LootItem(Items::ironPickaxe, 3, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantWithLevelsFunction(NULL, RandomValueBounds(20, 39), true));
     entries->push_back(new LootItem(Items::ironShovel, 3, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(2, 6), RandomValueBounds(0), NULL));
@@ -408,25 +408,25 @@ void BuiltInLootTables::staticLootTable_END_CITY_TREASURE()
 
 void BuiltInLootTables::staticLootTable_IGLOO_CHEST()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 3)));
     entries->push_back(new LootItem(Items::apple, 15, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 4)));
     entries->push_back(new LootItem(Items::coal, 15, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 3)));
     entries->push_back(new LootItem(Items::goldNugget, 10, 0, functions, NULL, NULL));
     entries->push_back(new LootItem(Items::stoneAxe, 2, 0, NULL, NULL, NULL));
     entries->push_back(new LootItem(Items::rottenFlesh, 10, 0, NULL, NULL, NULL));
     entries->push_back(new LootItem(Items::emerald, 1, 0, NULL, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(2, 3)));
     entries->push_back(new LootItem(Items::wheat, 10, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(2, 8), RandomValueBounds(0), NULL));
-    entries = new std::vector<LootPoolEntry*>();
+    entries = new std::vector<LootPoolEntry*>;
     entries->push_back(new LootItem(Items::goldenApple, 1, 0, NULL, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
     lootTables.insert(std::make_pair(&IGLOO_CHEST, new LootTable(pools)));
@@ -434,31 +434,31 @@ void BuiltInLootTables::staticLootTable_IGLOO_CHEST()
 
 void BuiltInLootTables::staticLootTable_JUNGLE_TEMPLE()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 3)));
     entries->push_back(new LootItem(Items::diamond, 15, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 5)));
     entries->push_back(new LootItem(Items::ironIngot, 50, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(2, 7)));
     entries->push_back(new LootItem(Items::goldIngot, 75, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 3)));
     entries->push_back(new LootItem(Items::emerald, 10, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(4, 6)));
     entries->push_back(new LootItem(Items::bone, 100, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(3, 7)));
     entries->push_back(new LootItem(Items::rottenFlesh, 80, 0, functions, NULL, NULL));
     entries->push_back(new LootItem(Items::saddle, 15, 0, NULL, NULL, NULL));
     entries->push_back(new LootItem(Items::ironHorseArmor, 5, 0, NULL, NULL, NULL));
     entries->push_back(new LootItem(Items::goldenHorseArmor, 5, 0, NULL, NULL, NULL));
     entries->push_back(new LootItem(Items::diamondHorseArmor, 5, 0, NULL, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantWithLevelsFunction(NULL, RandomValueBounds(30), true));
     entries->push_back(new LootItem(Items::book, 6, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(2, 6), RandomValueBounds(0), NULL));
@@ -467,9 +467,9 @@ void BuiltInLootTables::staticLootTable_JUNGLE_TEMPLE()
 
 void BuiltInLootTables::staticLootTable_JUNGLE_TEMPLE_DISPENSER()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(2, 7)));
     entries->push_back(new LootItem(Items::arrow, 30, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1, 2), RandomValueBounds(0), NULL));
@@ -478,30 +478,30 @@ void BuiltInLootTables::staticLootTable_JUNGLE_TEMPLE_DISPENSER()
 
 void BuiltInLootTables::staticLootTable_MONSTER_ROOM()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 5)));
     entries->push_back(new LootItem(Items::ironIngot, 10, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 4)));
     entries->push_back(new LootItem(Items::redstone, 10, 0, functions, NULL, NULL));
     entries->push_back(new LootItem(Items::bread, 10, 0, NULL, NULL, NULL));
     entries->push_back(new LootItem(Items::goldenApple, 10, 0, NULL, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 4)));
     entries->push_back(new LootItem(Items::wheat, 10, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 4)));
     entries->push_back(new LootItem(Items::gunpowder, 10, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 4)));
     entries->push_back(new LootItem(Items::string, 10, 0, functions, NULL, NULL));
     entries->push_back(new LootItem(Items::nameTag, 10, 0, NULL, NULL, NULL));
     entries->push_back(new LootItem(Items::bucket, 5, 0, NULL, NULL, NULL));
     entries->push_back(new LootItem(Items::ironHorseArmor, 5, 0, NULL, NULL, NULL));
     entries->push_back(new LootItem(Items::goldenHorseArmor, 2, 0, NULL, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantRandomlyFunction(NULL, std::vector<Enchantment*>()));
     entries->push_back(new LootItem(Items::book, 1, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
@@ -510,28 +510,28 @@ void BuiltInLootTables::staticLootTable_MONSTER_ROOM()
 
 void BuiltInLootTables::staticLootTable_NETHER_BRIDGE()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 3)));
     entries->push_back(new LootItem(Items::diamond, 5, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 5)));
     entries->push_back(new LootItem(Items::ironIngot, 5, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 3)));
     entries->push_back(new LootItem(Items::goldIngot, 15, 0, functions, NULL, NULL));
     entries->push_back(new LootItem(Items::goldenSword, 5, 0, NULL, NULL, NULL));
     entries->push_back(new LootItem(Items::goldenChestplate, 5, 0, NULL, NULL, NULL));
     entries->push_back(new LootItem(Items::flintAndSteel, 5, 0, NULL, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(3, 7)));
     entries->push_back(new LootItem(Items::netherWart, 5, 0, functions, NULL, NULL));
     entries->push_back(new LootItem(Items::saddle, 10, 0, NULL, NULL, NULL));
     entries->push_back(new LootItem(Items::goldenHorseArmor, 8, 0, NULL, NULL, NULL));
     entries->push_back(new LootItem(Items::ironHorseArmor, 5, 0, NULL, NULL, NULL));
     entries->push_back(new LootItem(Items::diamondHorseArmor, 3, 0, NULL, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(2, 4)));
     entries->push_back(new LootItem(Item::byBlock(Blocks::obsidian), 2, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(2, 4), RandomValueBounds(0), NULL));
@@ -540,23 +540,23 @@ void BuiltInLootTables::staticLootTable_NETHER_BRIDGE()
 
 void BuiltInLootTables::staticLootTable_SHIPWRECK()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new ExplorationMapFunction(NULL, L"BuriedTreasure"));
     entries->push_back(new LootItem(Items::map, 1, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
-    entries = new std::vector<LootPoolEntry*>();
+    entries = new std::vector<LootPoolEntry*>;
     entries->push_back(new LootItem(Items::compass, 1, 0, NULL, NULL, NULL));
     entries->push_back(new LootItem(Items::map, 1, 0, NULL, NULL, NULL));
     entries->push_back(new LootItem(Items::clock, 1, 0, NULL, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 10)));
     entries->push_back(new LootItem(Items::paper, 20, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 5)));
     entries->push_back(new LootItem(Items::feather, 10, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 5)));
     entries->push_back(new LootItem(Items::book, 5, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(3), RandomValueBounds(0), NULL));
@@ -565,48 +565,48 @@ void BuiltInLootTables::staticLootTable_SHIPWRECK()
 
 void BuiltInLootTables::staticLootTable_SHIPWRECKSUPPLY()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 12)));
     entries->push_back(new LootItem(Items::paper, 8, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(2, 6)));
     entries->push_back(new LootItem(Items::potato, 7, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(2, 6)));
     entries->push_back(new LootItem(Items::poisonousPotato, 7, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(4, 8)));
     entries->push_back(new LootItem(Items::carrot, 7, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(8, 21)));
     entries->push_back(new LootItem(Items::wheat, 7, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(2, 8)));
     entries->push_back(new LootItem(Items::coal, 6, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(5, 24)));
     entries->push_back(new LootItem(Items::rottenFlesh, 5, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 3)));
     entries->push_back(new LootItem(Item::byBlock(Blocks::pumpkin), 2, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 5)));
     entries->push_back(new LootItem(Items::gunpowder, 3, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 2)));
     entries->push_back(new LootItem(Item::byBlock(Blocks::tnt), 1, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantRandomlyFunction(NULL, std::vector<Enchantment*>()));
     entries->push_back(new LootItem(Items::leatherHelmet, 3, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantRandomlyFunction(NULL, std::vector<Enchantment*>()));
     entries->push_back(new LootItem(Items::leatherChestplate, 3, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantRandomlyFunction(NULL, std::vector<Enchantment*>()));
     entries->push_back(new LootItem(Items::leatherLeggings, 3, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantRandomlyFunction(NULL, std::vector<Enchantment*>()));
     entries->push_back(new LootItem(Items::leatherBoots, 3, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(3, 10), RandomValueBounds(0), NULL));
@@ -615,28 +615,28 @@ void BuiltInLootTables::staticLootTable_SHIPWRECKSUPPLY()
 
 void BuiltInLootTables::staticLootTable_SHIPWRECKTREASURE()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 5)));
     entries->push_back(new LootItem(Items::ironIngot, 90, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 5)));
     entries->push_back(new LootItem(Items::goldIngot, 10, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 5)));
     entries->push_back(new LootItem(Items::emerald, 40, 0, functions, NULL, NULL));
     entries->push_back(new LootItem(Items::diamond, 5, 0, NULL, NULL, NULL));
     entries->push_back(new LootItem(Items::experienceBottle, 5, 0, NULL, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(3, 6), RandomValueBounds(0), NULL));
-    entries = new std::vector<LootPoolEntry*>();
-    functions = new std::vector<LootItemFunction*>();
+    entries = new std::vector<LootPoolEntry*>;
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 10)));
     entries->push_back(new LootItem(Items::ironNugget, 50, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 10)));
     entries->push_back(new LootItem(Items::goldNugget, 10, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 10)));
     functions->push_back(new SetItemDataFunction(NULL, RandomValueBounds(4)));
     entries->push_back(new LootItem(Items::dye, 20, 0, functions, NULL, NULL));
@@ -646,11 +646,11 @@ void BuiltInLootTables::staticLootTable_SHIPWRECKTREASURE()
 
 void BuiltInLootTables::staticLootTable_SIMPLE_DUNGEON()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
     entries->push_back(new LootItem(Items::saddle, 20, 0, NULL, NULL, NULL));
     entries->push_back(new LootItem(Items::goldenApple, 15, 0, NULL, NULL, NULL));
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemDataFunction(NULL, RandomValueBounds(1)));
     entries->push_back(new LootItem(Items::goldenApple, 2, 0, functions, NULL, NULL));
     entries->push_back(new LootItem(Items::record13, 15, 0, NULL, NULL, NULL));
@@ -659,49 +659,49 @@ void BuiltInLootTables::staticLootTable_SIMPLE_DUNGEON()
     entries->push_back(new LootItem(Items::goldenHorseArmor, 10, 0, NULL, NULL, NULL));
     entries->push_back(new LootItem(Items::ironHorseArmor, 15, 0, NULL, NULL, NULL));
     entries->push_back(new LootItem(Items::diamondHorseArmor, 5, 0, NULL, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantRandomlyFunction(NULL, std::vector<Enchantment*>()));
     entries->push_back(new LootItem(Items::book, 10, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1, 3), RandomValueBounds(0), NULL));
-    entries = new std::vector<LootPoolEntry*>();
-    functions = new std::vector<LootItemFunction*>();
+    entries = new std::vector<LootPoolEntry*>;
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 4)));
     entries->push_back(new LootItem(Items::ironIngot, 10, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 4)));
     entries->push_back(new LootItem(Items::goldIngot, 5, 0, functions, NULL, NULL));
     entries->push_back(new LootItem(Items::bread, 20, 0, NULL, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 4)));
     entries->push_back(new LootItem(Items::wheat, 20, 0, functions, NULL, NULL));
     entries->push_back(new LootItem(Items::bucket, 10, 0, NULL, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 4)));
     entries->push_back(new LootItem(Items::redstone, 15, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 4)));
     entries->push_back(new LootItem(Items::coal, 15, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(2, 4)));
     entries->push_back(new LootItem(Items::melonSeeds, 10, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(2, 4)));
     entries->push_back(new LootItem(Items::pumpkinSeeds, 10, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(2, 4)));
     entries->push_back(new LootItem(Items::beetrootSeeds, 10, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1, 4), RandomValueBounds(0), NULL));
-    entries = new std::vector<LootPoolEntry*>();
-    functions = new std::vector<LootItemFunction*>();
+    entries = new std::vector<LootPoolEntry*>;
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 8)));
     entries->push_back(new LootItem(Items::bone, 10, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 8)));
     entries->push_back(new LootItem(Items::gunpowder, 10, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 8)));
     entries->push_back(new LootItem(Items::rottenFlesh, 10, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 8)));
     entries->push_back(new LootItem(Items::string, 10, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(3), RandomValueBounds(0), NULL));
@@ -710,60 +710,60 @@ void BuiltInLootTables::staticLootTable_SIMPLE_DUNGEON()
 
 void BuiltInLootTables::staticLootTable_SPAWN_BONUS_CHEST()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemDataFunction(NULL, RandomValueBounds(3)));
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 5)));
     entries->push_back(new LootItem(Item::byBlock(Blocks::sapling), 1, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
-    entries = new std::vector<LootPoolEntry*>();
-    functions = new std::vector<LootItemFunction*>();
+    entries = new std::vector<LootPoolEntry*>;
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 5)));
     entries->push_back(new LootItem(Items::melonSeeds, 1, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
-    entries = new std::vector<LootPoolEntry*>();
-    functions = new std::vector<LootItemFunction*>();
+    entries = new std::vector<LootPoolEntry*>;
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 5)));
     entries->push_back(new LootItem(Items::pumpkinSeeds, 1, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
-    entries = new std::vector<LootPoolEntry*>();
-    functions = new std::vector<LootItemFunction*>();
+    entries = new std::vector<LootPoolEntry*>;
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 5)));
     entries->push_back(new LootItem(Items::beetrootSeeds, 1, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
-    entries = new std::vector<LootPoolEntry*>();
+    entries = new std::vector<LootPoolEntry*>;
     entries->push_back(new LootItem(Items::stoneAxe, 1, 0, NULL, NULL, NULL));
     entries->push_back(new LootItem(Items::woodenAxe, 3, 0, NULL, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
-    entries = new std::vector<LootPoolEntry*>();
+    entries = new std::vector<LootPoolEntry*>;
     entries->push_back(new LootItem(Items::stonePickaxe, 1, 0, NULL, NULL, NULL));
     entries->push_back(new LootItem(Items::woodenPickaxe, 3, 0, NULL, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
-    entries = new std::vector<LootPoolEntry*>();
-    functions = new std::vector<LootItemFunction*>();
+    entries = new std::vector<LootPoolEntry*>;
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 2)));
     entries->push_back(new LootItem(Items::apple, 5, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 2)));
     entries->push_back(new LootItem(Items::bread, 3, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemDataFunction(NULL, RandomValueBounds(1)));
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 2)));
     entries->push_back(new LootItem(Items::fish, 3, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(3), RandomValueBounds(0), NULL));
-    entries = new std::vector<LootPoolEntry*>();
-    functions = new std::vector<LootItemFunction*>();
+    entries = new std::vector<LootPoolEntry*>;
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 8)));
     entries->push_back(new LootItem(Items::stick, 10, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 12)));
     entries->push_back(new LootItem(Item::byBlock(Blocks::planks), 10, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 3)));
     functions->push_back(new SetItemDataFunction(NULL, RandomValueBounds(0, 3)));
     entries->push_back(new LootItem(Item::byBlock(Blocks::log), 10, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 3)));
     functions->push_back(new SetItemDataFunction(NULL, RandomValueBounds(0, 1)));
     entries->push_back(new LootItem(Item::byBlock(Blocks::log2), 10, 0, functions, NULL, NULL));
@@ -773,28 +773,28 @@ void BuiltInLootTables::staticLootTable_SPAWN_BONUS_CHEST()
 
 void BuiltInLootTables::staticLootTable_STRONGHOLD_CORRIDOR()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
     entries->push_back(new LootItem(Items::enderPearl, 50, 0, NULL, NULL, NULL));
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 3)));
     entries->push_back(new LootItem(Items::emerald, 15, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 3)));
     entries->push_back(new LootItem(Items::diamond, 15, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 5)));
     entries->push_back(new LootItem(Items::ironIngot, 50, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 3)));
     entries->push_back(new LootItem(Items::goldIngot, 25, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(4, 9)));
     entries->push_back(new LootItem(Items::redstone, 25, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 3)));
     entries->push_back(new LootItem(Items::bread, 75, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 3)));
     entries->push_back(new LootItem(Items::apple, 75, 0, functions, NULL, NULL));
     entries->push_back(new LootItem(Items::ironPickaxe, 25, 0, NULL, NULL, NULL));
@@ -808,7 +808,7 @@ void BuiltInLootTables::staticLootTable_STRONGHOLD_CORRIDOR()
     entries->push_back(new LootItem(Items::ironHorseArmor, 5, 0, NULL, NULL, NULL));
     entries->push_back(new LootItem(Items::goldenHorseArmor, 5, 0, NULL, NULL, NULL));
     entries->push_back(new LootItem(Items::diamondHorseArmor, 5, 0, NULL, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantWithLevelsFunction(NULL, RandomValueBounds(30), true));
     entries->push_back(new LootItem(Items::book, 6, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(2, 3), RandomValueBounds(0), NULL));
@@ -817,31 +817,31 @@ void BuiltInLootTables::staticLootTable_STRONGHOLD_CORRIDOR()
 
 void BuiltInLootTables::staticLootTable_STRONGHOLD_CROSSING()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 5)));
     entries->push_back(new LootItem(Items::ironIngot, 50, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 3)));
     entries->push_back(new LootItem(Items::goldIngot, 25, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(4, 9)));
     entries->push_back(new LootItem(Items::redstone, 25, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(3, 8)));
     entries->push_back(new LootItem(Items::coal, 50, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 3)));
     entries->push_back(new LootItem(Items::bread, 75, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 3)));
     entries->push_back(new LootItem(Items::apple, 75, 0, functions, NULL, NULL));
     entries->push_back(new LootItem(Items::ironPickaxe, 5, 0, NULL, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantWithLevelsFunction(NULL, RandomValueBounds(30), true));
     entries->push_back(new LootItem(Items::book, 6, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 3)));
     functions->push_back(new SetItemDataFunction(NULL, RandomValueBounds(0)));
     entries->push_back(new LootItem(Items::dye, 75, 0, functions, NULL, NULL));
@@ -851,17 +851,17 @@ void BuiltInLootTables::staticLootTable_STRONGHOLD_CROSSING()
 
 void BuiltInLootTables::staticLootTable_STRONGHOLD_LIBRARY()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 3)));
     entries->push_back(new LootItem(Items::book, 100, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(2, 7)));
     entries->push_back(new LootItem(Items::paper, 100, 0, functions, NULL, NULL));
     entries->push_back(new LootItem(Items::map, 5, 0, NULL, NULL, NULL));
     entries->push_back(new LootItem(Items::compass, 5, 0, NULL, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantWithLevelsFunction(NULL, RandomValueBounds(30), true));
     entries->push_back(new LootItem(Items::book, 60, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(2, 10), RandomValueBounds(0), NULL));
@@ -870,30 +870,30 @@ void BuiltInLootTables::staticLootTable_STRONGHOLD_LIBRARY()
 
 void BuiltInLootTables::staticLootTable_UNDERWATER_RUIN_BIG()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 4)));
     entries->push_back(new LootItem(Items::coal, 10, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 3)));
     entries->push_back(new LootItem(Items::goldNugget, 10, 0, functions, NULL, NULL));
     entries->push_back(new LootItem(Items::emerald, 1, 0, NULL, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(2, 3)));
     entries->push_back(new LootItem(Items::wheat, 10, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(2, 8), RandomValueBounds(0), NULL));
-    entries = new std::vector<LootPoolEntry*>();
+    entries = new std::vector<LootPoolEntry*>;
     entries->push_back(new LootItem(Items::goldenApple, 1, 0, NULL, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantRandomlyFunction(NULL, std::vector<Enchantment*>()));
     entries->push_back(new LootItem(Items::book, 5, 0, functions, NULL, NULL));
     entries->push_back(new LootItem(Items::leatherChestplate, 1, 0, NULL, NULL, NULL));
     entries->push_back(new LootItem(Items::goldenHelmet, 1, 0, NULL, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantRandomlyFunction(NULL, std::vector<Enchantment*>()));
     entries->push_back(new LootItem(Items::fishingRod, 5, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new ExplorationMapFunction(NULL, L"BuriedTreasure"));
     entries->push_back(new LootItem(Items::map, 10, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
@@ -902,25 +902,25 @@ void BuiltInLootTables::staticLootTable_UNDERWATER_RUIN_BIG()
 
 void BuiltInLootTables::staticLootTable_UNDERWATER_RUIN_SMALL()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 4)));
     entries->push_back(new LootItem(Items::coal, 10, 0, functions, NULL, NULL));
     entries->push_back(new LootItem(Items::stoneAxe, 2, 0, NULL, NULL, NULL));
     entries->push_back(new LootItem(Items::rottenFlesh, 5, 0, NULL, NULL, NULL));
     entries->push_back(new LootItem(Items::emerald, 1, 0, NULL, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(2, 3)));
     entries->push_back(new LootItem(Items::wheat, 10, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(2, 8), RandomValueBounds(0), NULL));
-    entries = new std::vector<LootPoolEntry*>();
+    entries = new std::vector<LootPoolEntry*>;
     entries->push_back(new LootItem(Items::leatherChestplate, 1, 0, NULL, NULL, NULL));
     entries->push_back(new LootItem(Items::goldenHelmet, 1, 0, NULL, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantRandomlyFunction(NULL, std::vector<Enchantment*>()));
     entries->push_back(new LootItem(Items::fishingRod, 5, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new ExplorationMapFunction(NULL, L"BuriedTreasure"));
     entries->push_back(new LootItem(Items::map, 5, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
@@ -929,21 +929,21 @@ void BuiltInLootTables::staticLootTable_UNDERWATER_RUIN_SMALL()
 
 void BuiltInLootTables::staticLootTable_VILLAGE_BLACKSMITH()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 3)));
     entries->push_back(new LootItem(Items::diamond, 3, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 5)));
     entries->push_back(new LootItem(Items::ironIngot, 10, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 3)));
     entries->push_back(new LootItem(Items::goldIngot, 5, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 3)));
     entries->push_back(new LootItem(Items::bread, 15, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 3)));
     entries->push_back(new LootItem(Items::apple, 15, 0, functions, NULL, NULL));
     entries->push_back(new LootItem(Items::ironPickaxe, 5, 0, NULL, NULL, NULL));
@@ -952,10 +952,10 @@ void BuiltInLootTables::staticLootTable_VILLAGE_BLACKSMITH()
     entries->push_back(new LootItem(Items::ironHelmet, 5, 0, NULL, NULL, NULL));
     entries->push_back(new LootItem(Items::ironLeggings, 5, 0, NULL, NULL, NULL));
     entries->push_back(new LootItem(Items::ironBoots, 5, 0, NULL, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(3, 7)));
     entries->push_back(new LootItem(Item::byBlock(Blocks::obsidian), 5, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(3, 7)));
     entries->push_back(new LootItem(Item::byBlock(Blocks::sapling), 5, 0, functions, NULL, NULL));
     entries->push_back(new LootItem(Items::saddle, 3, 0, NULL, NULL, NULL));
@@ -968,24 +968,24 @@ void BuiltInLootTables::staticLootTable_VILLAGE_BLACKSMITH()
 
 void BuiltInLootTables::staticLootTable_VILLAGE_TWO_ROOM_HOUSE()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(5, 8)));
     entries->push_back(new LootItem(Items::potato, 10, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(4, 8)));
     entries->push_back(new LootItem(Items::carrot, 10, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(8, 12)));
     entries->push_back(new LootItem(Items::wheat, 15, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(2, 4)));
     entries->push_back(new LootItem(Items::wheatSeeds, 5, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(5, 8)));
     entries->push_back(new LootItem(Items::beetroot, 5, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1)));
     entries->push_back(new LootItem(Items::woodenHoe, 1, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(6, 8), RandomValueBounds(0), NULL));
@@ -994,11 +994,11 @@ void BuiltInLootTables::staticLootTable_VILLAGE_TWO_ROOM_HOUSE()
 
 void BuiltInLootTables::staticLootTable_WOODLAND_MANSION()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
     entries->push_back(new LootItem(Items::lead, 100, 0, NULL, NULL, NULL));
     entries->push_back(new LootItem(Items::goldenApple, 75, 0, NULL, NULL, NULL));
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemDataFunction(NULL, RandomValueBounds(1)));
     entries->push_back(new LootItem(Items::goldenApple, 10, 0, functions, NULL, NULL));
     entries->push_back(new LootItem(Items::record13, 75, 0, NULL, NULL, NULL));
@@ -1007,49 +1007,49 @@ void BuiltInLootTables::staticLootTable_WOODLAND_MANSION()
     entries->push_back(new LootItem(Items::chainmailChestplate, 50, 0, NULL, NULL, NULL));
     entries->push_back(new LootItem(Items::diamondHoe, 75, 0, NULL, NULL, NULL));
     entries->push_back(new LootItem(Items::diamondChestplate, 25, 0, NULL, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantRandomlyFunction(NULL, std::vector<Enchantment*>()));
     entries->push_back(new LootItem(Items::book, 60, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1, 3), RandomValueBounds(0), NULL));
-    entries = new std::vector<LootPoolEntry*>();
-    functions = new std::vector<LootItemFunction*>();
+    entries = new std::vector<LootPoolEntry*>;
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 4)));
     entries->push_back(new LootItem(Items::ironIngot, 50, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 4)));
     entries->push_back(new LootItem(Items::goldIngot, 25, 0, functions, NULL, NULL));
     entries->push_back(new LootItem(Items::bread, 100, 0, NULL, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 4)));
     entries->push_back(new LootItem(Items::wheat, 100, 0, functions, NULL, NULL));
     entries->push_back(new LootItem(Items::bucket, 50, 0, NULL, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 4)));
     entries->push_back(new LootItem(Items::redstone, 75, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 4)));
     entries->push_back(new LootItem(Items::coal, 75, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(2, 4)));
     entries->push_back(new LootItem(Items::melonSeeds, 50, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(2, 4)));
     entries->push_back(new LootItem(Items::pumpkinSeeds, 50, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(2, 4)));
     entries->push_back(new LootItem(Items::beetrootSeeds, 50, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1, 4), RandomValueBounds(0), NULL));
-    entries = new std::vector<LootPoolEntry*>();
-    functions = new std::vector<LootItemFunction*>();
+    entries = new std::vector<LootPoolEntry*>;
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 8)));
     entries->push_back(new LootItem(Items::bone, 50, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 8)));
     entries->push_back(new LootItem(Items::gunpowder, 50, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 8)));
     entries->push_back(new LootItem(Items::rottenFlesh, 50, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 8)));
     entries->push_back(new LootItem(Items::string, 50, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(3), RandomValueBounds(0), NULL));
@@ -1058,33 +1058,33 @@ void BuiltInLootTables::staticLootTable_WOODLAND_MANSION()
 
 void BuiltInLootTables::staticLootTable_ARMOR_SET_CHAIN()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    entries = new std::vector<LootPoolEntry*>();
-    entries = new std::vector<LootPoolEntry*>();
-    entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    entries = new std::vector<LootPoolEntry*>;
+    entries = new std::vector<LootPoolEntry*>;
+    entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantRandomEquipmentFunction(NULL, 0.25f));
     entries->push_back(new LootItem(Items::chainmailBoots, 1, 0, functions, NULL, NULL));
-    std::vector<LootItemCondition*>* conditions = new std::vector<LootItemCondition*>();
+    std::vector<LootItemCondition*>* conditions = new std::vector<LootItemCondition*>;
     conditions->push_back(new LootItemRandomDifficultyChanceCondition(0.0f, 0.5f, 0.5f, 0.6f));
-    pools = new std::vector<LootPool*>();
+    pools = new std::vector<LootPool*>;
     pools->push_back(new LootPool(entries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantRandomEquipmentFunction(NULL, 0.25f));
     entries->push_back(new LootItem(Items::chainmailLeggings, 1, 0, functions, NULL, new LootTableEntry(new LootTable(pools))));
-    conditions = new std::vector<LootItemCondition*>();
+    conditions = new std::vector<LootItemCondition*>;
     conditions->push_back(new LootItemRandomDifficultyChanceCondition(0.0f, 0.5f, 0.5f, 0.6f));
-    pools = new std::vector<LootPool*>();
+    pools = new std::vector<LootPool*>;
     pools->push_back(new LootPool(entries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantRandomEquipmentFunction(NULL, 0.25f));
     entries->push_back(new LootItem(Items::chainmailChestplate, 1, 0, functions, NULL, new LootTableEntry(new LootTable(pools))));
-    conditions = new std::vector<LootItemCondition*>();
+    conditions = new std::vector<LootItemCondition*>;
     conditions->push_back(new LootItemRandomDifficultyChanceCondition(0.0f, 0.5f, 0.5f, 0.6f));
-    pools = new std::vector<LootPool*>();
+    pools = new std::vector<LootPool*>;
     pools->push_back(new LootPool(entries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantRandomEquipmentFunction(NULL, 0.25f));
     entries->push_back(new LootItem(Items::chainmailHelmet, 1, 0, functions, NULL, new LootTableEntry(new LootTable(pools))));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
@@ -1093,33 +1093,33 @@ void BuiltInLootTables::staticLootTable_ARMOR_SET_CHAIN()
 
 void BuiltInLootTables::staticLootTable_ARMOR_SET_DIAMOND()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    entries = new std::vector<LootPoolEntry*>();
-    entries = new std::vector<LootPoolEntry*>();
-    entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    entries = new std::vector<LootPoolEntry*>;
+    entries = new std::vector<LootPoolEntry*>;
+    entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantRandomEquipmentFunction(NULL, 0.25f));
     entries->push_back(new LootItem(Items::diamondBoots, 1, 0, functions, NULL, NULL));
-    std::vector<LootItemCondition*>* conditions = new std::vector<LootItemCondition*>();
+    std::vector<LootItemCondition*>* conditions = new std::vector<LootItemCondition*>;
     conditions->push_back(new LootItemRandomDifficultyChanceCondition(0.0f, 0.5f, 0.5f, 0.6f));
-    pools = new std::vector<LootPool*>();
+    pools = new std::vector<LootPool*>;
     pools->push_back(new LootPool(entries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantRandomEquipmentFunction(NULL, 0.25f));
     entries->push_back(new LootItem(Items::diamondLeggings, 1, 0, functions, NULL, new LootTableEntry(new LootTable(pools))));
-    conditions = new std::vector<LootItemCondition*>();
+    conditions = new std::vector<LootItemCondition*>;
     conditions->push_back(new LootItemRandomDifficultyChanceCondition(0.0f, 0.5f, 0.5f, 0.6f));
-    pools = new std::vector<LootPool*>();
+    pools = new std::vector<LootPool*>;
     pools->push_back(new LootPool(entries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantRandomEquipmentFunction(NULL, 0.25f));
     entries->push_back(new LootItem(Items::diamondChestplate, 1, 0, functions, NULL, new LootTableEntry(new LootTable(pools))));
-    conditions = new std::vector<LootItemCondition*>();
+    conditions = new std::vector<LootItemCondition*>;
     conditions->push_back(new LootItemRandomDifficultyChanceCondition(0.0f, 0.5f, 0.5f, 0.6f));
-    pools = new std::vector<LootPool*>();
+    pools = new std::vector<LootPool*>;
     pools->push_back(new LootPool(entries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantRandomEquipmentFunction(NULL, 0.25f));
     entries->push_back(new LootItem(Items::diamondHelmet, 1, 0, functions, NULL, new LootTableEntry(new LootTable(pools))));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
@@ -1128,33 +1128,33 @@ void BuiltInLootTables::staticLootTable_ARMOR_SET_DIAMOND()
 
 void BuiltInLootTables::staticLootTable_ARMOR_SET_GOLD()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    entries = new std::vector<LootPoolEntry*>();
-    entries = new std::vector<LootPoolEntry*>();
-    entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    entries = new std::vector<LootPoolEntry*>;
+    entries = new std::vector<LootPoolEntry*>;
+    entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantRandomEquipmentFunction(NULL, 0.25f));
     entries->push_back(new LootItem(Items::goldenBoots, 1, 0, functions, NULL, NULL));
-    std::vector<LootItemCondition*>* conditions = new std::vector<LootItemCondition*>();
+    std::vector<LootItemCondition*>* conditions = new std::vector<LootItemCondition*>;
     conditions->push_back(new LootItemRandomDifficultyChanceCondition(0.0f, 0.5f, 0.5f, 0.6f));
-    pools = new std::vector<LootPool*>();
+    pools = new std::vector<LootPool*>;
     pools->push_back(new LootPool(entries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantRandomEquipmentFunction(NULL, 0.25f));
     entries->push_back(new LootItem(Items::goldenLeggings, 1, 0, functions, NULL, new LootTableEntry(new LootTable(pools))));
-    conditions = new std::vector<LootItemCondition*>();
+    conditions = new std::vector<LootItemCondition*>;
     conditions->push_back(new LootItemRandomDifficultyChanceCondition(0.0f, 0.5f, 0.5f, 0.6f));
-    pools = new std::vector<LootPool*>();
+    pools = new std::vector<LootPool*>;
     pools->push_back(new LootPool(entries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantRandomEquipmentFunction(NULL, 0.25f));
     entries->push_back(new LootItem(Items::goldenChestplate, 1, 0, functions, NULL, new LootTableEntry(new LootTable(pools))));
-    conditions = new std::vector<LootItemCondition*>();
+    conditions = new std::vector<LootItemCondition*>;
     conditions->push_back(new LootItemRandomDifficultyChanceCondition(0.0f, 0.5f, 0.5f, 0.6f));
-    pools = new std::vector<LootPool*>();
+    pools = new std::vector<LootPool*>;
     pools->push_back(new LootPool(entries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantRandomEquipmentFunction(NULL, 0.25f));
     entries->push_back(new LootItem(Items::goldenHelmet, 1, 0, functions, NULL, new LootTableEntry(new LootTable(pools))));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
@@ -1163,33 +1163,33 @@ void BuiltInLootTables::staticLootTable_ARMOR_SET_GOLD()
 
 void BuiltInLootTables::staticLootTable_ARMOR_SET_IRON()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    entries = new std::vector<LootPoolEntry*>();
-    entries = new std::vector<LootPoolEntry*>();
-    entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    entries = new std::vector<LootPoolEntry*>;
+    entries = new std::vector<LootPoolEntry*>;
+    entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantRandomEquipmentFunction(NULL, 0.25f));
     entries->push_back(new LootItem(Items::ironBoots, 1, 0, functions, NULL, NULL));
-    std::vector<LootItemCondition*>* conditions = new std::vector<LootItemCondition*>();
+    std::vector<LootItemCondition*>* conditions = new std::vector<LootItemCondition*>;
     conditions->push_back(new LootItemRandomDifficultyChanceCondition(0.0f, 0.5f, 0.5f, 0.6f));
-    pools = new std::vector<LootPool*>();
+    pools = new std::vector<LootPool*>;
     pools->push_back(new LootPool(entries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantRandomEquipmentFunction(NULL, 0.25f));
     entries->push_back(new LootItem(Items::ironLeggings, 1, 0, functions, NULL, new LootTableEntry(new LootTable(pools))));
-    conditions = new std::vector<LootItemCondition*>();
+    conditions = new std::vector<LootItemCondition*>;
     conditions->push_back(new LootItemRandomDifficultyChanceCondition(0.0f, 0.5f, 0.5f, 0.6f));
-    pools = new std::vector<LootPool*>();
+    pools = new std::vector<LootPool*>;
     pools->push_back(new LootPool(entries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantRandomEquipmentFunction(NULL, 0.25f));
     entries->push_back(new LootItem(Items::ironChestplate, 1, 0, functions, NULL, new LootTableEntry(new LootTable(pools))));
-    conditions = new std::vector<LootItemCondition*>();
+    conditions = new std::vector<LootItemCondition*>;
     conditions->push_back(new LootItemRandomDifficultyChanceCondition(0.0f, 0.5f, 0.5f, 0.6f));
-    pools = new std::vector<LootPool*>();
+    pools = new std::vector<LootPool*>;
     pools->push_back(new LootPool(entries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantRandomEquipmentFunction(NULL, 0.25f));
     entries->push_back(new LootItem(Items::ironHelmet, 1, 0, functions, NULL, new LootTableEntry(new LootTable(pools))));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
@@ -1198,33 +1198,33 @@ void BuiltInLootTables::staticLootTable_ARMOR_SET_IRON()
 
 void BuiltInLootTables::staticLootTable_ARMOR_SET_LEATHER()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    entries = new std::vector<LootPoolEntry*>();
-    entries = new std::vector<LootPoolEntry*>();
-    entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    entries = new std::vector<LootPoolEntry*>;
+    entries = new std::vector<LootPoolEntry*>;
+    entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantRandomEquipmentFunction(NULL, 0.25f));
     entries->push_back(new LootItem(Items::leatherBoots, 1, 0, functions, NULL, NULL));
-    std::vector<LootItemCondition*>* conditions = new std::vector<LootItemCondition*>();
+    std::vector<LootItemCondition*>* conditions = new std::vector<LootItemCondition*>;
     conditions->push_back(new LootItemRandomDifficultyChanceCondition(0.0f, 0.5f, 0.5f, 0.6f));
-    pools = new std::vector<LootPool*>();
+    pools = new std::vector<LootPool*>;
     pools->push_back(new LootPool(entries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantRandomEquipmentFunction(NULL, 0.25f));
     entries->push_back(new LootItem(Items::leatherLeggings, 1, 0, functions, NULL, new LootTableEntry(new LootTable(pools))));
-    conditions = new std::vector<LootItemCondition*>();
+    conditions = new std::vector<LootItemCondition*>;
     conditions->push_back(new LootItemRandomDifficultyChanceCondition(0.0f, 0.5f, 0.5f, 0.6f));
-    pools = new std::vector<LootPool*>();
+    pools = new std::vector<LootPool*>;
     pools->push_back(new LootPool(entries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantRandomEquipmentFunction(NULL, 0.25f));
     entries->push_back(new LootItem(Items::leatherChestplate, 1, 0, functions, NULL, new LootTableEntry(new LootTable(pools))));
-    conditions = new std::vector<LootItemCondition*>();
+    conditions = new std::vector<LootItemCondition*>;
     conditions->push_back(new LootItemRandomDifficultyChanceCondition(0.0f, 0.5f, 0.5f, 0.6f));
-    pools = new std::vector<LootPool*>();
+    pools = new std::vector<LootPool*>;
     pools->push_back(new LootPool(entries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantRandomEquipmentFunction(NULL, 0.25f));
     entries->push_back(new LootItem(Items::leatherHelmet, 1, 0, functions, NULL, new LootTableEntry(new LootTable(pools))));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
@@ -1243,16 +1243,16 @@ void BuiltInLootTables::staticLootTable_BAT()
 
 void BuiltInLootTables::staticLootTable_BLAZE()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(0, 1)));
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(0, 1), 0));
     entries->push_back(new LootItem(Items::blazeRod, 1, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(0, 2)));
     entries->push_back(new LootItem(Items::glowstoneDust, 1, 0, functions, NULL, NULL));
-    std::vector<LootItemCondition*>* conditions = new std::vector<LootItemCondition*>();
+    std::vector<LootItemCondition*>* conditions = new std::vector<LootItemCondition*>;
     conditions->push_back(new LootItemKilledByPlayerCondition(false));
     pools->push_back(new LootPool(entries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
     lootTables.insert(std::make_pair(&BLAZE, new LootTable(pools)));
@@ -1265,19 +1265,19 @@ void BuiltInLootTables::staticLootTable_BOAT()
 
 void BuiltInLootTables::staticLootTable_CAVE_SPIDER()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(0, 2)));
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(0, 1), 0));
     entries->push_back(new LootItem(Items::string, 1, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
-    entries = new std::vector<LootPoolEntry*>();
-    functions = new std::vector<LootItemFunction*>();
+    entries = new std::vector<LootPoolEntry*>;
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(0, 1)));
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(0, 1), 0));
     entries->push_back(new LootItem(Items::spiderEye, 1, 0, functions, NULL, NULL));
-    std::vector<LootItemCondition*>* conditions = new std::vector<LootItemCondition*>();
+    std::vector<LootItemCondition*>* conditions = new std::vector<LootItemCondition*>;
     conditions->push_back(new LootItemKilledByPlayerCondition(false));
     pools->push_back(new LootPool(entries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
     lootTables.insert(std::make_pair(&CAVE_SPIDER, new LootTable(pools)));
@@ -1285,7 +1285,7 @@ void BuiltInLootTables::staticLootTable_CAVE_SPIDER()
 
 void BuiltInLootTables::addSmeltItemWhenOnFireFunc(std::vector<LootItemFunction*>* functions)
 {
-    std::vector<LootItemCondition*>* conditions = new std::vector<LootItemCondition*>();
+    std::vector<LootItemCondition*>* conditions = new std::vector<LootItemCondition*>;
     std::vector<EntityProperty*> properties;
     properties.push_back(new EntityPropertyOnFire(true));
     conditions->push_back(new LootItemEntityPropertyCondition(properties, LootTableContext::THIS));
@@ -1294,15 +1294,15 @@ void BuiltInLootTables::addSmeltItemWhenOnFireFunc(std::vector<LootItemFunction*
 
 void BuiltInLootTables::staticLootTable_CHICKEN()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(0, 2)));
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(0, 1), 0));
     entries->push_back(new LootItem(Items::feather, 1, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
-    entries = new std::vector<LootPoolEntry*>();
-    functions = new std::vector<LootItemFunction*>();
+    entries = new std::vector<LootPoolEntry*>;
+    functions = new std::vector<LootItemFunction*>;
     addSmeltItemWhenOnFireFunc(functions);
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(0, 1), 0));
     entries->push_back(new LootItem(Items::chicken, 1, 0, functions, NULL, NULL));
@@ -1317,15 +1317,15 @@ void BuiltInLootTables::staticLootTable_CLOWNFISH()
 
 void BuiltInLootTables::staticLootTable_COW()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(0, 2)));
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(0, 1), 0));
     entries->push_back(new LootItem(Items::leather, 1, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
-    entries = new std::vector<LootPoolEntry*>();
-    functions = new std::vector<LootItemFunction*>();
+    entries = new std::vector<LootPoolEntry*>;
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 3)));
     addSmeltItemWhenOnFireFunc(functions);
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(0, 1), 0));
@@ -1336,9 +1336,9 @@ void BuiltInLootTables::staticLootTable_COW()
 
 void BuiltInLootTables::staticLootTable_CREEPER()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(0, 2)));
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(0, 1), 0));
     entries->push_back(new LootItem(Items::gunpowder, 1, 0, functions, NULL, NULL));
@@ -1348,9 +1348,9 @@ void BuiltInLootTables::staticLootTable_CREEPER()
 
 void BuiltInLootTables::staticLootTable_DOLPHIN()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(0, 1)));
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(0, 1), 0));
     addSmeltItemWhenOnFireFunc(functions);
@@ -1361,9 +1361,9 @@ void BuiltInLootTables::staticLootTable_DOLPHIN()
 
 void BuiltInLootTables::staticLootTable_DONKEY()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(0, 2)));
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(0, 1), 0));
     entries->push_back(new LootItem(Items::leather, 1, 0, functions, NULL, NULL));
@@ -1373,19 +1373,19 @@ void BuiltInLootTables::staticLootTable_DONKEY()
 
 void BuiltInLootTables::staticLootTable_DROWNED()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(0, 2)));
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(0, 1), 0));
     entries->push_back(new LootItem(Items::rottenFlesh, 1, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
-    entries = new std::vector<LootPoolEntry*>();
-    functions = new std::vector<LootItemFunction*>();
+    entries = new std::vector<LootPoolEntry*>;
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemDamageFunction(NULL, RandomValueBounds(0.2, 0.9)));
     entries->push_back(new LootItem(Items::trident, 5, 0, functions, NULL, NULL));
     entries->push_back(new LootItem(Items::goldIngot, 5, 0, NULL, NULL, NULL));
-    std::vector<LootItemCondition*>* conditions = new std::vector<LootItemCondition*>();
+    std::vector<LootItemCondition*>* conditions = new std::vector<LootItemCondition*>;
     conditions->push_back(new LootItemKilledByPlayerCondition(false));
     conditions->push_back(new LootItemRandomChanceWithLootingCondition(0.11f, 0.01f));
     pools->push_back(new LootPool(entries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
@@ -1394,15 +1394,15 @@ void BuiltInLootTables::staticLootTable_DROWNED()
 
 void BuiltInLootTables::staticLootTable_DROWNED_EQUIPMENT()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
     entries->push_back(new LootItem(Items::fishingRod, 5, 0, NULL, NULL, NULL));
-    std::vector<LootItemCondition*>* conditions = new std::vector<LootItemCondition*>();
+    std::vector<LootItemCondition*>* conditions = new std::vector<LootItemCondition*>;
     conditions->push_back(new LootItemRandomChanceWithLootingCondition(0.01f, 0.0f));
     pools->push_back(new LootPool(entries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
-    entries = new std::vector<LootPoolEntry*>();
+    entries = new std::vector<LootPoolEntry*>;
     entries->push_back(new LootItem(Items::nautilus, 5, 0, NULL, NULL, NULL));
-    conditions = new std::vector<LootItemCondition*>();
+    conditions = new std::vector<LootItemCondition*>;
     conditions->push_back(new LootItemRandomChanceWithLootingCondition(0.08f, 0.0f));
     pools->push_back(new LootPool(entries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
     lootTables.insert(std::make_pair(&DROWNED_EQUIPMENT, new LootTable(pools)));
@@ -1410,13 +1410,13 @@ void BuiltInLootTables::staticLootTable_DROWNED_EQUIPMENT()
 
 void BuiltInLootTables::staticLootTable_DROWNED_RANGED_EQUIPMENT()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
     entries->push_back(new LootItem(Items::trident, 5, 0, NULL, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
-    entries = new std::vector<LootPoolEntry*>();
+    entries = new std::vector<LootPoolEntry*>;
     entries->push_back(new LootItem(Items::nautilus, 5, 0, NULL, NULL, NULL));
-    std::vector<LootItemCondition*>* conditions = new std::vector<LootItemCondition*>();
+    std::vector<LootItemCondition*>* conditions = new std::vector<LootItemCondition*>;
     conditions->push_back(new LootItemRandomChanceWithLootingCondition(0.08f, 0.0f));
     pools->push_back(new LootPool(entries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
     lootTables.insert(std::make_pair(&DROWNED_RANGED_EQUIPMENT, new LootTable(pools)));
@@ -1424,32 +1424,32 @@ void BuiltInLootTables::staticLootTable_DROWNED_RANGED_EQUIPMENT()
 
 void BuiltInLootTables::staticLootTable_ELDER_GUARDIAN()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(0, 2)));
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(0, 1), 0));
     entries->push_back(new LootItem(Items::prismarineShard, 1, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
-    entries = new std::vector<LootPoolEntry*>();
-    functions = new std::vector<LootItemFunction*>();
+    entries = new std::vector<LootPoolEntry*>;
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(0, 1), 0));
     entries->push_back(new LootItem(Items::fish, 3, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(0, 1), 0));
     entries->push_back(new LootItem(Items::prismarineCrystals, 2, 0, functions, NULL, NULL));
     entries->push_back(new EmptyLootItem(1, 0, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
-    entries = new std::vector<LootPoolEntry*>();
-    functions = new std::vector<LootItemFunction*>();
+    entries = new std::vector<LootPoolEntry*>;
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemDataFunction(NULL, RandomValueBounds(1)));
     entries->push_back(new LootItem(Item::byBlock(Blocks::sponge), 1, 0, functions, NULL, NULL));
-    std::vector<LootItemCondition*>* conditions = new std::vector<LootItemCondition*>();
+    std::vector<LootItemCondition*>* conditions = new std::vector<LootItemCondition*>;
     conditions->push_back(new LootItemKilledByPlayerCondition(false));
     pools->push_back(new LootPool(entries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
-    entries = new std::vector<LootPoolEntry*>();
+    entries = new std::vector<LootPoolEntry*>;
     entries->push_back(new LootTableReference(FISH, 1, 0, NULL, NULL));
-    conditions = new std::vector<LootItemCondition*>();
+    conditions = new std::vector<LootItemCondition*>;
     conditions->push_back(new LootItemKilledByPlayerCondition(false));
     conditions->push_back(new LootItemRandomChanceWithLootingCondition(0.025f, 0.01f));
     pools->push_back(new LootPool(entries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
@@ -1458,9 +1458,9 @@ void BuiltInLootTables::staticLootTable_ELDER_GUARDIAN()
 
 void BuiltInLootTables::staticLootTable_ENDERMAN()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(0, 1)));
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(0, 1), 0));
     entries->push_back(new LootItem(Items::enderPearl, 1, 0, functions, NULL, NULL));
@@ -1480,15 +1480,15 @@ void BuiltInLootTables::staticLootTable_ENDER_DRAGON()
 
 void BuiltInLootTables::staticLootTable_ENTITY_FISH()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
     entries->push_back(new LootItem(Items::fish, 1, 0, NULL, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
-    entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(1, 2), 0));
     entries->push_back(new LootItem(Items::bone, 1, 0, functions, NULL, NULL));
-    std::vector<LootItemCondition*>* conditions = new std::vector<LootItemCondition*>();
+    std::vector<LootItemCondition*>* conditions = new std::vector<LootItemCondition*>;
     conditions->push_back(new LootItemRandomChanceWithLootingCondition(0.25f, 0.01f));
     pools->push_back(new LootPool(entries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
     lootTables.insert(std::make_pair(&ENTITY_FISH, new LootTable(pools)));
@@ -1496,15 +1496,15 @@ void BuiltInLootTables::staticLootTable_ENTITY_FISH()
 
 void BuiltInLootTables::staticLootTable_EVOCATION_ILLAGER()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(0, 1)));
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(0, 1), 0));
     entries->push_back(new LootItem(Items::emerald, 1, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
-    entries = new std::vector<LootPoolEntry*>();
-    functions = new std::vector<LootItemFunction*>();
+    entries = new std::vector<LootPoolEntry*>;
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 1)));
     entries->push_back(new LootItem(Items::totemOfUndying, 1, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
@@ -1513,15 +1513,15 @@ void BuiltInLootTables::staticLootTable_EVOCATION_ILLAGER()
 
 void BuiltInLootTables::staticLootTable_GHAST()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(0, 1)));
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(0, 1), 0));
     entries->push_back(new LootItem(Items::ghastTear, 1, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
-    entries = new std::vector<LootPoolEntry*>();
-    functions = new std::vector<LootItemFunction*>();
+    entries = new std::vector<LootPoolEntry*>;
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(0, 2)));
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(0, 1), 0));
     entries->push_back(new LootItem(Items::gunpowder, 1, 0, functions, NULL, NULL));
@@ -1536,25 +1536,25 @@ void BuiltInLootTables::staticLootTable_GIANT()
 
 void BuiltInLootTables::staticLootTable_GUARDIAN()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(0, 2)));
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(0, 1), 0));
     entries->push_back(new LootItem(Items::prismarineShard, 1, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
-    entries = new std::vector<LootPoolEntry*>();
-    functions = new std::vector<LootItemFunction*>();
+    entries = new std::vector<LootPoolEntry*>;
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(0, 1), 0));
     entries->push_back(new LootItem(Items::fish, 2, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(0, 1), 0));
     entries->push_back(new LootItem(Items::prismarineCrystals, 2, 0, functions, NULL, NULL));
     entries->push_back(new EmptyLootItem(1, 0, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
-    entries = new std::vector<LootPoolEntry*>();
+    entries = new std::vector<LootPoolEntry*>;
     entries->push_back(new LootTableReference(FISH, 1, 0, NULL, NULL));
-    std::vector<LootItemCondition*>* conditions = new std::vector<LootItemCondition*>();
+    std::vector<LootItemCondition*>* conditions = new std::vector<LootItemCondition*>;
     conditions->push_back(new LootItemKilledByPlayerCondition(false));
     conditions->push_back(new LootItemRandomChanceWithLootingCondition(0.025f, 0.01f));
     pools->push_back(new LootPool(entries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
@@ -1563,9 +1563,9 @@ void BuiltInLootTables::staticLootTable_GUARDIAN()
 
 void BuiltInLootTables::staticLootTable_HORSE()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(0, 2)));
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(0, 1), 0));
     entries->push_back(new LootItem(Items::leather, 1, 0, functions, NULL, NULL));
@@ -1575,18 +1575,18 @@ void BuiltInLootTables::staticLootTable_HORSE()
 
 void BuiltInLootTables::staticLootTable_HUSK()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(0, 2)));
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(0, 1), 0));
     entries->push_back(new LootItem(Items::rottenFlesh, 1, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
-    entries = new std::vector<LootPoolEntry*>();
+    entries = new std::vector<LootPoolEntry*>;
     entries->push_back(new LootItem(Items::ironIngot, 1, 0, NULL, NULL, NULL));
     entries->push_back(new LootItem(Items::carrot, 1, 0, NULL, NULL, NULL));
     entries->push_back(new LootItem(Items::potato, 1, 0, NULL, NULL, NULL));
-    std::vector<LootItemCondition*>* conditions = new std::vector<LootItemCondition*>();
+    std::vector<LootItemCondition*>* conditions = new std::vector<LootItemCondition*>;
     conditions->push_back(new LootItemKilledByPlayerCondition(false));
     conditions->push_back(new LootItemRandomChanceWithLootingCondition(0.025f, 0.01f));
     pools->push_back(new LootPool(entries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
@@ -1595,14 +1595,14 @@ void BuiltInLootTables::staticLootTable_HUSK()
 
 void BuiltInLootTables::staticLootTable_IRON_GOLEM()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(0, 2)));
     entries->push_back(new LootItem(Item::byBlock(Blocks::red_flower), 1, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
-    entries = new std::vector<LootPoolEntry*>();
-    functions = new std::vector<LootItemFunction*>();
+    entries = new std::vector<LootPoolEntry*>;
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(3, 5)));
     entries->push_back(new LootItem(Items::ironIngot, 1, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
@@ -1611,9 +1611,9 @@ void BuiltInLootTables::staticLootTable_IRON_GOLEM()
 
 void BuiltInLootTables::staticLootTable_LLAMA()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(0, 2)));
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(0, 1), 0));
     entries->push_back(new LootItem(Items::leather, 1, 0, functions, NULL, NULL));
@@ -1623,9 +1623,9 @@ void BuiltInLootTables::staticLootTable_LLAMA()
 
 void BuiltInLootTables::staticLootTable_MAGMA_CUBE()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(0, 1)));
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(0, 1), 0));
     entries->push_back(new LootItem(Items::magmaCream, 1, 0, functions, NULL, NULL));
@@ -1635,15 +1635,15 @@ void BuiltInLootTables::staticLootTable_MAGMA_CUBE()
 
 void BuiltInLootTables::staticLootTable_MOOSHROOM()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(0, 2)));
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(0, 1), 0));
     entries->push_back(new LootItem(Items::leather, 1, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
-    entries = new std::vector<LootPoolEntry*>();
-    functions = new std::vector<LootItemFunction*>();
+    entries = new std::vector<LootPoolEntry*>;
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 3)));
     addSmeltItemWhenOnFireFunc(functions);
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(0, 1), 0));
@@ -1654,9 +1654,9 @@ void BuiltInLootTables::staticLootTable_MOOSHROOM()
 
 void BuiltInLootTables::staticLootTable_MOOSHROOM_SHEAR()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetDataFromColorIndexFunction(NULL));
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 1)));
     entries->push_back(new LootItem(Item::byBlock(Blocks::red_mushroom), 1, 0, functions, NULL, NULL));
@@ -1666,9 +1666,9 @@ void BuiltInLootTables::staticLootTable_MOOSHROOM_SHEAR()
 
 void BuiltInLootTables::staticLootTable_MULE()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(0, 2)));
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(0, 1), 0));
     entries->push_back(new LootItem(Items::leather, 1, 0, functions, NULL, NULL));
@@ -1678,15 +1678,15 @@ void BuiltInLootTables::staticLootTable_MULE()
 
 void BuiltInLootTables::staticLootTable_MUSHROOM_COW()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(0, 2)));
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(0, 1), 0));
     entries->push_back(new LootItem(Items::leather, 1, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
-    entries = new std::vector<LootPoolEntry*>();
-    functions = new std::vector<LootItemFunction*>();
+    entries = new std::vector<LootPoolEntry*>;
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 3)));
     addSmeltItemWhenOnFireFunc(functions);
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(0, 1), 0));
@@ -1702,9 +1702,9 @@ void BuiltInLootTables::staticLootTable_OCELOT()
 
 void BuiltInLootTables::staticLootTable_PARROT()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 2)));
     entries->push_back(new LootItem(Items::feather, 1, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
@@ -1713,13 +1713,13 @@ void BuiltInLootTables::staticLootTable_PARROT()
 
 void BuiltInLootTables::staticLootTable_PHANTOM()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(0, 1)));
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(0, 1), 0));
     entries->push_back(new LootItem(Items::phantomMembrane, 1, 0, functions, NULL, NULL));
-    std::vector<LootItemCondition*>* conditions = new std::vector<LootItemCondition*>();
+    std::vector<LootItemCondition*>* conditions = new std::vector<LootItemCondition*>;
     conditions->push_back(new LootItemKilledByPlayerCondition(false));
     pools->push_back(new LootPool(entries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
     lootTables.insert(std::make_pair(&PHANTOM, new LootTable(pools)));
@@ -1727,9 +1727,9 @@ void BuiltInLootTables::staticLootTable_PHANTOM()
 
 void BuiltInLootTables::staticLootTable_PIG()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 3)));
     addSmeltItemWhenOnFireFunc(functions);
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(0, 1), 0));
@@ -1740,16 +1740,16 @@ void BuiltInLootTables::staticLootTable_PIG()
 
 void BuiltInLootTables::staticLootTable_PIG_SADDLED()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 3)));
     addSmeltItemWhenOnFireFunc(functions);
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(0, 1), 0));
     entries->push_back(new LootItem(Items::porkchop, 1, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
-    entries = new std::vector<LootPoolEntry*>();
-    functions = new std::vector<LootItemFunction*>();
+    entries = new std::vector<LootPoolEntry*>;
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 1)));
     entries->push_back(new LootItem(Items::saddle, 1, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
@@ -1758,15 +1758,15 @@ void BuiltInLootTables::staticLootTable_PIG_SADDLED()
 
 void BuiltInLootTables::staticLootTable_POLAR_BEAR()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(0, 2)));
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(0, 1), 0));
     entries->push_back(new LootItem(Items::fish, 3, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
-    entries = new std::vector<LootPoolEntry*>();
-    functions = new std::vector<LootItemFunction*>();
+    entries = new std::vector<LootPoolEntry*>;
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(0, 2)));
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(0, 1), 0));
     functions->push_back(new SetItemDataFunction(NULL, RandomValueBounds(1)));
@@ -1777,17 +1777,17 @@ void BuiltInLootTables::staticLootTable_POLAR_BEAR()
 
 void BuiltInLootTables::staticLootTable_PUFFERFISH()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemDataFunction(NULL, RandomValueBounds(3)));
     entries->push_back(new LootItem(Items::fish, 1, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
-    entries = new std::vector<LootPoolEntry*>();
-    functions = new std::vector<LootItemFunction*>();
+    entries = new std::vector<LootPoolEntry*>;
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(1, 2), 0));
     entries->push_back(new LootItem(Items::bone, 1, 0, functions, NULL, NULL));
-    std::vector<LootItemCondition*>* conditions = new std::vector<LootItemCondition*>();
+    std::vector<LootItemCondition*>* conditions = new std::vector<LootItemCondition*>;
     conditions->push_back(new LootItemRandomChanceWithLootingCondition(0.25f, 0.01f));
     pools->push_back(new LootPool(entries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
     lootTables.insert(std::make_pair(&PUFFERFISH, new LootTable(pools)));
@@ -1795,22 +1795,22 @@ void BuiltInLootTables::staticLootTable_PUFFERFISH()
 
 void BuiltInLootTables::staticLootTable_RABBIT()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(0, 1)));
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(0, 1), 0));
     entries->push_back(new LootItem(Items::rabbitHide, 1, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
-    entries = new std::vector<LootPoolEntry*>();
-    functions = new std::vector<LootItemFunction*>();
+    entries = new std::vector<LootPoolEntry*>;
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(0, 1)));
     addSmeltItemWhenOnFireFunc(functions);
     entries->push_back(new LootItem(Items::rabbit, 1, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
-    entries = new std::vector<LootPoolEntry*>();
+    entries = new std::vector<LootPoolEntry*>;
     entries->push_back(new LootItem(Items::rabbitFoot, 1, 0, NULL, NULL, NULL));
-    std::vector<LootItemCondition*>* conditions = new std::vector<LootItemCondition*>();
+    std::vector<LootItemCondition*>* conditions = new std::vector<LootItemCondition*>;
     conditions->push_back(new LootItemKilledByPlayerCondition(false));
     conditions->push_back(new LootItemRandomChanceWithLootingCondition(0.1f, 0.03f));
     pools->push_back(new LootPool(entries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
@@ -1819,18 +1819,18 @@ void BuiltInLootTables::staticLootTable_RABBIT()
 
 void BuiltInLootTables::staticLootTable_SALMON_LARGE()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemDataFunction(NULL, RandomValueBounds(1)));
     entries->push_back(new LootItem(Items::fish, 1, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
-    entries = new std::vector<LootPoolEntry*>();
-    functions = new std::vector<LootItemFunction*>();
+    entries = new std::vector<LootPoolEntry*>;
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 2)));
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(1, 2), 0));
     entries->push_back(new LootItem(Items::bone, 2, 0, functions, NULL, NULL));
-    std::vector<LootItemCondition*>* conditions = new std::vector<LootItemCondition*>();
+    std::vector<LootItemCondition*>* conditions = new std::vector<LootItemCondition*>;
     conditions->push_back(new LootItemRandomChanceWithLootingCondition(0.25f, 0.01f));
     pools->push_back(new LootPool(entries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
     lootTables.insert(std::make_pair(&SALMON_LARGE, new LootTable(pools)));
@@ -1838,17 +1838,17 @@ void BuiltInLootTables::staticLootTable_SALMON_LARGE()
 
 void BuiltInLootTables::staticLootTable_SALMON_NORMAL()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemDataFunction(NULL, RandomValueBounds(1)));
     entries->push_back(new LootItem(Items::fish, 1, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
-    entries = new std::vector<LootPoolEntry*>();
-    functions = new std::vector<LootItemFunction*>();
+    entries = new std::vector<LootPoolEntry*>;
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(1, 2), 0));
     entries->push_back(new LootItem(Items::bone, 1, 0, functions, NULL, NULL));
-    std::vector<LootItemCondition*>* conditions = new std::vector<LootItemCondition*>();
+    std::vector<LootItemCondition*>* conditions = new std::vector<LootItemCondition*>;
     conditions->push_back(new LootItemRandomChanceWithLootingCondition(0.25f, 0.01f));
     pools->push_back(new LootPool(entries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
     lootTables.insert(std::make_pair(&SALMON_NORMAL, new LootTable(pools)));
@@ -1856,9 +1856,9 @@ void BuiltInLootTables::staticLootTable_SALMON_NORMAL()
 
 void BuiltInLootTables::staticLootTable_SEA_TURTLE()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(0, 2)));
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(0, 1), 0));
     entries->push_back(new LootItem(Item::byBlock(Blocks::sea_grass), 3, 0, functions, NULL, NULL));
@@ -1868,14 +1868,14 @@ void BuiltInLootTables::staticLootTable_SEA_TURTLE()
 
 void BuiltInLootTables::staticLootTable_SHEEP()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetDataFromColorIndexFunction(NULL));
     entries->push_back(new LootItem(Item::byBlock(Blocks::wool), 1, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
-    entries = new std::vector<LootPoolEntry*>();
-    functions = new std::vector<LootItemFunction*>();
+    entries = new std::vector<LootPoolEntry*>;
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 2)));
     addSmeltItemWhenOnFireFunc(functions);
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(0, 1), 0));
@@ -1886,9 +1886,9 @@ void BuiltInLootTables::staticLootTable_SHEEP()
 
 void BuiltInLootTables::staticLootTable_SHEEP_SHEAR()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetDataFromColorIndexFunction(NULL));
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 3)));
     entries->push_back(new LootItem(Item::byBlock(Blocks::wool), 1, 0, functions, NULL, NULL));
@@ -1898,9 +1898,9 @@ void BuiltInLootTables::staticLootTable_SHEEP_SHEAR()
 
 void BuiltInLootTables::staticLootTable_SHEEP_SHEARED()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 2)));
     addSmeltItemWhenOnFireFunc(functions);
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(0, 1), 0));
@@ -1911,9 +1911,9 @@ void BuiltInLootTables::staticLootTable_SHEEP_SHEARED()
 
 void BuiltInLootTables::staticLootTable_SHULKER()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(0, 1)));
     entries->push_back(new LootItem(Items::shulkerShell, 1, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
@@ -1927,15 +1927,15 @@ void BuiltInLootTables::staticLootTable_SILVERFISH()
 
 void BuiltInLootTables::staticLootTable_SKELETON()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(0, 2)));
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(0, 1), 0));
     entries->push_back(new LootItem(Items::arrow, 1, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
-    entries = new std::vector<LootPoolEntry*>();
-    functions = new std::vector<LootItemFunction*>();
+    entries = new std::vector<LootPoolEntry*>;
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(0, 2)));
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(0, 1), 0));
     entries->push_back(new LootItem(Items::bone, 1, 0, functions, NULL, NULL));
@@ -1945,20 +1945,20 @@ void BuiltInLootTables::staticLootTable_SKELETON()
 
 void BuiltInLootTables::staticLootTable_SKELETON_GEAR()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(0, 1), 0));
     functions->push_back(new EnchantRandomEquipmentFunction(NULL, 0.1f));
     entries->push_back(new LootItem(Items::bow, 1, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
-    entries = new std::vector<LootPoolEntry*>();
+    entries = new std::vector<LootPoolEntry*>;
     entries->push_back(new LootTableReference(ARMOR_SET_LEATHER, 1, 0, NULL, NULL));
     entries->push_back(new LootTableReference(ARMOR_SET_GOLD, 1, 0, NULL, NULL));
     entries->push_back(new LootTableReference(ARMOR_SET_CHAIN, 1, 0, NULL, NULL));
     entries->push_back(new LootTableReference(ARMOR_SET_IRON, 1, 0, NULL, NULL));
     entries->push_back(new LootTableReference(ARMOR_SET_DIAMOND, 1, 0, NULL, NULL));
-    std::vector<LootItemCondition*>* conditions = new std::vector<LootItemCondition*>();
+    std::vector<LootItemCondition*>* conditions = new std::vector<LootItemCondition*>;
     conditions->push_back(new LootItemRandomDifficultyChanceCondition(0.0f, 0.0f, 1.0f, 1.0f));
     conditions->push_back(new LootItemRandomChanceWithSpecialModifierCondition(0.15f));
     pools->push_back(new LootPool(entries, conditions, RandomValueBounds(0), RandomValueBounds(0), new LootPoolTiers(2, 3, 0.095f)));
@@ -1967,9 +1967,9 @@ void BuiltInLootTables::staticLootTable_SKELETON_GEAR()
 
 void BuiltInLootTables::staticLootTable_SKELETON_HORSE()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(0, 2)));
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(0, 1), 0));
     entries->push_back(new LootItem(Items::bone, 1, 0, functions, NULL, NULL));
@@ -1979,9 +1979,9 @@ void BuiltInLootTables::staticLootTable_SKELETON_HORSE()
 
 void BuiltInLootTables::staticLootTable_SLIME()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(0, 2)));
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(0, 1), 0));
     entries->push_back(new LootItem(Items::slimeBall, 1, 0, functions, NULL, NULL));
@@ -1991,9 +1991,9 @@ void BuiltInLootTables::staticLootTable_SLIME()
 
 void BuiltInLootTables::staticLootTable_SNOWMAN()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(0, 15)));
     entries->push_back(new LootItem(Items::snowball, 1, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
@@ -2002,19 +2002,19 @@ void BuiltInLootTables::staticLootTable_SNOWMAN()
 
 void BuiltInLootTables::staticLootTable_SPIDER()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(0, 2)));
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(0, 1), 0));
     entries->push_back(new LootItem(Items::string, 1, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
-    entries = new std::vector<LootPoolEntry*>();
-    functions = new std::vector<LootItemFunction*>();
+    entries = new std::vector<LootPoolEntry*>;
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(0, 1)));
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(0, 1), 0));
     entries->push_back(new LootItem(Items::spiderEye, 1, 0, functions, NULL, NULL));
-    std::vector<LootItemCondition*>* conditions = new std::vector<LootItemCondition*>();
+    std::vector<LootItemCondition*>* conditions = new std::vector<LootItemCondition*>;
     conditions->push_back(new LootItemKilledByPlayerCondition(false));
     pools->push_back(new LootPool(entries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
     lootTables.insert(std::make_pair(&SPIDER, new LootTable(pools)));
@@ -2022,9 +2022,9 @@ void BuiltInLootTables::staticLootTable_SPIDER()
 
 void BuiltInLootTables::staticLootTable_SQUID()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(1, 3)));
     functions->push_back(new SetItemDataFunction(NULL, RandomValueBounds(0)));
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(0, 1), 0));
@@ -2035,28 +2035,28 @@ void BuiltInLootTables::staticLootTable_SQUID()
 
 void BuiltInLootTables::staticLootTable_STRAY()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(0, 2)));
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(0, 1), 0));
     entries->push_back(new LootItem(Items::arrow, 1, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
-    entries = new std::vector<LootPoolEntry*>();
-    functions = new std::vector<LootItemFunction*>();
+    entries = new std::vector<LootPoolEntry*>;
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(0, 2)));
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(0, 1), 0));
     entries->push_back(new LootItem(Items::bone, 1, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
-    entries = new std::vector<LootPoolEntry*>();
-    functions = new std::vector<LootItemFunction*>();
+    entries = new std::vector<LootPoolEntry*>;
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(0, 1)));
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(0, 1), 0));
     CompoundTag* tag = new CompoundTag();
     tag->putString(PotionUtils::TAG_POTION, L"long_slowness");
     functions->push_back(new SetNBTFunction(NULL, tag));
     entries->push_back(new LootItem(Items::tippedArrow, 1, 0, functions, NULL, NULL));
-    std::vector<LootItemCondition*>* conditions = new std::vector<LootItemCondition*>();
+    std::vector<LootItemCondition*>* conditions = new std::vector<LootItemCondition*>;
     conditions->push_back(new LootItemKilledByPlayerCondition(false));
     pools->push_back(new LootPool(entries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
     lootTables.insert(std::make_pair(&STRAY, new LootTable(pools)));
@@ -2064,17 +2064,17 @@ void BuiltInLootTables::staticLootTable_STRAY()
 
 void BuiltInLootTables::staticLootTable_TROPICALFISH()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemDataFunction(NULL, RandomValueBounds(2)));
     entries->push_back(new LootItem(Items::fish, 1, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
-    entries = new std::vector<LootPoolEntry*>();
-    functions = new std::vector<LootItemFunction*>();
+    entries = new std::vector<LootPoolEntry*>;
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(1, 2), 0));
     entries->push_back(new LootItem(Items::bone, 1, 0, functions, NULL, NULL));
-    std::vector<LootItemCondition*>* conditions = new std::vector<LootItemCondition*>();
+    std::vector<LootItemCondition*>* conditions = new std::vector<LootItemCondition*>;
     conditions->push_back(new LootItemRandomChanceWithLootingCondition(0.25f, 0.01f));
     pools->push_back(new LootPool(entries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
     lootTables.insert(std::make_pair(&TROPICALFISH, new LootTable(pools)));
@@ -2087,8 +2087,8 @@ void BuiltInLootTables::staticLootTable_VEX()
 
 void BuiltInLootTables::staticLootTable_VEX_GEAR()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
     entries->push_back(new LootItem(Items::ironSword, 1, 0, NULL, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
     lootTables.insert(std::make_pair(&VEX_GEAR, new LootTable(pools)));
@@ -2101,13 +2101,13 @@ void BuiltInLootTables::staticLootTable_VILLAGER()
 
 void BuiltInLootTables::staticLootTable_VINDICATION_ILLAGER()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(0, 1)));
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(0, 1), 0));
     entries->push_back(new LootItem(Items::emerald, 1, 0, functions, NULL, NULL));
-    std::vector<LootItemCondition*>* conditions = new std::vector<LootItemCondition*>();
+    std::vector<LootItemCondition*>* conditions = new std::vector<LootItemCondition*>;
     conditions->push_back(new LootItemKilledByPlayerCondition(false));
     pools->push_back(new LootPool(entries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
     lootTables.insert(std::make_pair(&VINDICATION_ILLAGER, new LootTable(pools)));
@@ -2115,9 +2115,9 @@ void BuiltInLootTables::staticLootTable_VINDICATION_ILLAGER()
 
 void BuiltInLootTables::staticLootTable_VINDICATOR_GEAR()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(0, 1), 0));
     functions->push_back(new EnchantRandomEquipmentFunction(NULL, 0.25f));
     entries->push_back(new LootItem(Items::ironAxe, 1, 0, functions, NULL, NULL));
@@ -2127,33 +2127,33 @@ void BuiltInLootTables::staticLootTable_VINDICATOR_GEAR()
 
 void BuiltInLootTables::staticLootTable_WITCH()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(0, 2)));
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(0, 1), 0));
     entries->push_back(new LootItem(Items::glowstoneDust, 1, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(0, 2)));
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(0, 1), 0));
     entries->push_back(new LootItem(Items::sugar, 1, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(0, 2)));
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(0, 1), 0));
     entries->push_back(new LootItem(Items::redstone, 1, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(0, 2)));
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(0, 1), 0));
     entries->push_back(new LootItem(Items::spiderEye, 1, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(0, 2)));
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(0, 1), 0));
     entries->push_back(new LootItem(Items::glassBottle, 1, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(0, 2)));
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(0, 1), 0));
     entries->push_back(new LootItem(Items::gunpowder, 1, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(0, 2)));
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(0, 1), 0));
     entries->push_back(new LootItem(Items::stick, 2, 0, functions, NULL, NULL));
@@ -2163,8 +2163,8 @@ void BuiltInLootTables::staticLootTable_WITCH()
 
 void BuiltInLootTables::staticLootTable_WITHER_BOSS()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
     entries->push_back(new LootItem(Items::netherStar, 1, 0, NULL, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
     lootTables.insert(std::make_pair(&WITHER_BOSS, new LootTable(pools)));
@@ -2172,24 +2172,24 @@ void BuiltInLootTables::staticLootTable_WITHER_BOSS()
 
 void BuiltInLootTables::staticLootTable_WITHER_SKELETON()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(0, 1)));
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(0, 1), 0));
     entries->push_back(new LootItem(Items::coal, 1, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
-    entries = new std::vector<LootPoolEntry*>();
-    functions = new std::vector<LootItemFunction*>();
+    entries = new std::vector<LootPoolEntry*>;
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(0, 2)));
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(0, 1), 0));
     entries->push_back(new LootItem(Items::bone, 1, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
-    entries = new std::vector<LootPoolEntry*>();
-    functions = new std::vector<LootItemFunction*>();
+    entries = new std::vector<LootPoolEntry*>;
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemDataFunction(NULL, RandomValueBounds(1)));
     entries->push_back(new LootItem(Items::skull, 1, 0, functions, NULL, NULL));
-    std::vector<LootItemCondition*>* conditions = new std::vector<LootItemCondition*>();
+    std::vector<LootItemCondition*>* conditions = new std::vector<LootItemCondition*>;
     conditions->push_back(new LootItemKilledByPlayerCondition(false));
     conditions->push_back(new LootItemRandomChanceWithLootingCondition(0.025f, 0.01f));
     pools->push_back(new LootPool(entries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
@@ -2198,8 +2198,8 @@ void BuiltInLootTables::staticLootTable_WITHER_SKELETON()
 
 void BuiltInLootTables::staticLootTable_WITHER_SKELETON_GEAR()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
     entries->push_back(new LootItem(Items::stoneSword, 1, 0, NULL, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
     lootTables.insert(std::make_pair(&WITHER_SKELETON_GEAR, new LootTable(pools)));
@@ -2212,18 +2212,18 @@ void BuiltInLootTables::staticLootTable_WOLF()
 
 void BuiltInLootTables::staticLootTable_ZOMBIE()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(0, 2)));
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(0, 1), 0));
     entries->push_back(new LootItem(Items::rottenFlesh, 1, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
-    entries = new std::vector<LootPoolEntry*>();
+    entries = new std::vector<LootPoolEntry*>;
     entries->push_back(new LootItem(Items::ironIngot, 1, 0, NULL, NULL, NULL));
     entries->push_back(new LootItem(Items::carrot, 1, 0, NULL, NULL, NULL));
     entries->push_back(new LootItem(Items::potato, 1, 0, NULL, NULL, NULL));
-    std::vector<LootItemCondition*>* conditions = new std::vector<LootItemCondition*>();
+    std::vector<LootItemCondition*>* conditions = new std::vector<LootItemCondition*>;
     conditions->push_back(new LootItemKilledByPlayerCondition(false));
     conditions->push_back(new LootItemRandomChanceWithLootingCondition(0.025f, 0.01f));
     pools->push_back(new LootPool(entries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
@@ -2232,26 +2232,26 @@ void BuiltInLootTables::staticLootTable_ZOMBIE()
 
 void BuiltInLootTables::staticLootTable_ZOMBIE_EQUIPMENT()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(0, 1), 0));
     functions->push_back(new EnchantRandomEquipmentFunction(NULL, 0.25f));
     entries->push_back(new LootItem(Items::ironSword, 1, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(0, 1), 0));
     functions->push_back(new EnchantRandomEquipmentFunction(NULL, 0.25f));
     entries->push_back(new LootItem(Items::ironShovel, 3, 0, functions, NULL, NULL));
-    std::vector<LootItemCondition*>* conditions = new std::vector<LootItemCondition*>();
+    std::vector<LootItemCondition*>* conditions = new std::vector<LootItemCondition*>;
     conditions->push_back(new LootItemRandomChanceWithSpecialModifierCondition(0.05f));
     pools->push_back(new LootPool(entries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
-    entries = new std::vector<LootPoolEntry*>();
+    entries = new std::vector<LootPoolEntry*>;
     entries->push_back(new LootTableReference(ARMOR_SET_LEATHER, 1, 0, NULL, NULL));
     entries->push_back(new LootTableReference(ARMOR_SET_GOLD, 1, 0, NULL, NULL));
     entries->push_back(new LootTableReference(ARMOR_SET_CHAIN, 1, 0, NULL, NULL));
     entries->push_back(new LootTableReference(ARMOR_SET_IRON, 1, 0, NULL, NULL));
     entries->push_back(new LootTableReference(ARMOR_SET_DIAMOND, 1, 0, NULL, NULL));
-    conditions = new std::vector<LootItemCondition*>();
+    conditions = new std::vector<LootItemCondition*>;
     conditions->push_back(new LootItemRandomDifficultyChanceCondition(0.0f, 0.0f, 1.0f, 1.0f));
     conditions->push_back(new LootItemRandomChanceWithSpecialModifierCondition(0.15f));
     pools->push_back(new LootPool(entries, conditions, RandomValueBounds(0), RandomValueBounds(0), new LootPoolTiers(2, 3, 0.095f)));
@@ -2260,9 +2260,9 @@ void BuiltInLootTables::staticLootTable_ZOMBIE_EQUIPMENT()
 
 void BuiltInLootTables::staticLootTable_ZOMBIE_HORSE()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(0, 2)));
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(0, 1), 0));
     entries->push_back(new LootItem(Items::rottenFlesh, 1, 0, functions, NULL, NULL));
@@ -2272,22 +2272,22 @@ void BuiltInLootTables::staticLootTable_ZOMBIE_HORSE()
 
 void BuiltInLootTables::staticLootTable_ZOMBIE_PIGMAN()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(0, 1)));
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(0, 1), 0));
     entries->push_back(new LootItem(Items::rottenFlesh, 1, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
-    entries = new std::vector<LootPoolEntry*>();
-    functions = new std::vector<LootItemFunction*>();
+    entries = new std::vector<LootPoolEntry*>;
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(0, 1)));
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(0, 1), 0));
     entries->push_back(new LootItem(Items::goldNugget, 1, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
-    entries = new std::vector<LootPoolEntry*>();
+    entries = new std::vector<LootPoolEntry*>;
     entries->push_back(new LootItem(Items::goldIngot, 1, 0, NULL, NULL, NULL));
-    std::vector<LootItemCondition*>* conditions = new std::vector<LootItemCondition*>();
+    std::vector<LootItemCondition*>* conditions = new std::vector<LootItemCondition*>;
     conditions->push_back(new LootItemKilledByPlayerCondition(false));
     conditions->push_back(new LootItemRandomChanceWithLootingCondition(0.025f, 0.01f));
     pools->push_back(new LootPool(entries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
@@ -2296,9 +2296,9 @@ void BuiltInLootTables::staticLootTable_ZOMBIE_PIGMAN()
 
 void BuiltInLootTables::staticLootTable_ZOMBIE_PIGMAN_GEAR()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(0, 1), 0));
     functions->push_back(new EnchantRandomEquipmentFunction(NULL, 0.25f));
     entries->push_back(new LootItem(Items::goldenSword, 1, 0, functions, NULL, NULL));
@@ -2308,18 +2308,18 @@ void BuiltInLootTables::staticLootTable_ZOMBIE_PIGMAN_GEAR()
 
 void BuiltInLootTables::staticLootTable_ZOMBIE_VILLAGER()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(0, 2)));
     functions->push_back(new LootingEnchantFunction(NULL, RandomValueBounds(0, 1), 0));
     entries->push_back(new LootItem(Items::rottenFlesh, 1, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
-    entries = new std::vector<LootPoolEntry*>();
+    entries = new std::vector<LootPoolEntry*>;
     entries->push_back(new LootItem(Items::ironIngot, 1, 0, NULL, NULL, NULL));
     entries->push_back(new LootItem(Items::carrot, 1, 0, NULL, NULL, NULL));
     entries->push_back(new LootItem(Items::potato, 1, 0, NULL, NULL, NULL));
-    std::vector<LootItemCondition*>* conditions = new std::vector<LootItemCondition*>();
+    std::vector<LootItemCondition*>* conditions = new std::vector<LootItemCondition*>;
     conditions->push_back(new LootItemKilledByPlayerCondition(false));
     conditions->push_back(new LootItemRandomChanceWithLootingCondition(0.025f, 0.01f));
     pools->push_back(new LootPool(entries, conditions, RandomValueBounds(1), RandomValueBounds(0), NULL));
@@ -2328,13 +2328,13 @@ void BuiltInLootTables::staticLootTable_ZOMBIE_VILLAGER()
 
 void BuiltInLootTables::staticLootTable_LOW_TIER_ITEMS()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
     entries->push_back(new LootItem(Items::leatherChestplate, 1, 0, NULL, NULL, NULL));
     entries->push_back(new LootItem(Items::ironChestplate, 1, 0, NULL, NULL, NULL));
     entries->push_back(new EmptyLootItem(5, 0, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
-    entries = new std::vector<LootPoolEntry*>();
+    entries = new std::vector<LootPoolEntry*>;
     entries->push_back(new LootItem(Items::leatherHelmet, 1, 0, NULL, NULL, NULL));
     entries->push_back(new LootItem(Items::ironHelmet, 1, 0, NULL, NULL, NULL));
     entries->push_back(new EmptyLootItem(5, 0, NULL, NULL));
@@ -2344,8 +2344,8 @@ void BuiltInLootTables::staticLootTable_LOW_TIER_ITEMS()
 
 void BuiltInLootTables::staticLootTable_FISHING()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
     entries->push_back(new LootTableReference(JUNK, 10, -2, NULL, NULL));
     entries->push_back(new LootTableReference(TREASURE, 5, 2, NULL, NULL));
     entries->push_back(new LootTableReference(FISH, 85, -1, NULL, NULL));
@@ -2355,16 +2355,16 @@ void BuiltInLootTables::staticLootTable_FISHING()
 
 void BuiltInLootTables::staticLootTable_FISH()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
     entries->push_back(new LootItem(Items::fish, 60, 0, NULL, NULL, NULL));
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemDataFunction(NULL, RandomValueBounds(1)));
     entries->push_back(new LootItem(Items::fish, 25, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemDataFunction(NULL, RandomValueBounds(2)));
     entries->push_back(new LootItem(Items::fish, 2, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemDataFunction(NULL, RandomValueBounds(3)));
     entries->push_back(new LootItem(Items::fish, 13, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));
@@ -2373,25 +2373,25 @@ void BuiltInLootTables::staticLootTable_FISH()
 
 void BuiltInLootTables::staticLootTable_JUNK()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemDamageFunction(NULL, RandomValueBounds(0, 0.9)));
     entries->push_back(new LootItem(Items::leatherBoots, 10, 0, functions, NULL, NULL));
     entries->push_back(new LootItem(Items::leather, 10, 0, NULL, NULL, NULL));
     entries->push_back(new LootItem(Items::bone, 10, 0, NULL, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     CompoundTag* tag = new CompoundTag();
     tag->putString(PotionUtils::TAG_POTION, L"water");
     functions->push_back(new SetNBTFunction(NULL, tag));
     entries->push_back(new LootItem(Items::potion, 10, 0, functions, NULL, NULL));
     entries->push_back(new LootItem(Items::string, 5, 0, NULL, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemDamageFunction(NULL, RandomValueBounds(0, 0.9)));
     entries->push_back(new LootItem(Items::fishingRod, 2, 0, functions, NULL, NULL));
     entries->push_back(new LootItem(Items::bowl, 10, 0, NULL, NULL, NULL));
     entries->push_back(new LootItem(Items::stick, 5, 0, NULL, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemDataFunction(NULL, RandomValueBounds(0)));
     functions->push_back(new SetItemCountFunction(NULL, RandomValueBounds(10)));
     entries->push_back(new LootItem(Items::dye, 1, 0, functions, NULL, NULL));
@@ -2403,21 +2403,21 @@ void BuiltInLootTables::staticLootTable_JUNK()
 
 void BuiltInLootTables::staticLootTable_TREASURE()
 {
-    std::vector<LootPool*>* pools = new std::vector<LootPool*>();
-    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>();
+    std::vector<LootPool*>* pools = new std::vector<LootPool*>;
+    std::vector<LootPoolEntry*>* entries = new std::vector<LootPoolEntry*>;
     entries->push_back(new LootItem(Items::nautilus, 5, 0, NULL, NULL, NULL));
     entries->push_back(new LootItem(Item::byBlock(Blocks::waterlily), 5, 0, NULL, NULL, NULL));
     entries->push_back(new LootItem(Items::nameTag, 5, 0, NULL, NULL, NULL));
     entries->push_back(new LootItem(Items::saddle, 5, 0, NULL, NULL, NULL));
-    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>();
+    std::vector<LootItemFunction*>* functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemDamageFunction(NULL, RandomValueBounds(0, 0.25)));
     functions->push_back(new EnchantWithLevelsFunction(NULL, RandomValueBounds(30), true));
     entries->push_back(new LootItem(Items::bow, 5, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new SetItemDamageFunction(NULL, RandomValueBounds(0, 0.25)));
     functions->push_back(new EnchantWithLevelsFunction(NULL, RandomValueBounds(30), true));
     entries->push_back(new LootItem(Items::fishingRod, 5, 0, functions, NULL, NULL));
-    functions = new std::vector<LootItemFunction*>();
+    functions = new std::vector<LootItemFunction*>;
     functions->push_back(new EnchantWithLevelsFunction(NULL, RandomValueBounds(30), true));
     entries->push_back(new LootItem(Items::book, 6, 0, functions, NULL, NULL));
     pools->push_back(new LootPool(entries, NULL, RandomValueBounds(1), RandomValueBounds(0), NULL));

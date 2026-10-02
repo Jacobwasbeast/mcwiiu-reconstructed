@@ -183,9 +183,9 @@ void ThrownTrident::onHitEntity(const HitResult* result)
     boost::shared_ptr<Entity> owner = mOwner
         ? boost::static_pointer_cast<Entity>(mOwner)
         : boost::static_pointer_cast<Entity>(trident);
-    boost::shared_ptr<DamageSource> source = DamageSource::CreateTrident(trident, owner);
+    DamageSource* source = DamageSource::CreateTrident(trident, owner);
     mDealtDamage = true;
-    if (entity->hurt(source.get(), damage))
+    if (entity->hurt(source, damage))
     {
         if ((entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
         {

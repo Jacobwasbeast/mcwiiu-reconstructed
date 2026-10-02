@@ -10,6 +10,7 @@
 #include "game/core/DamageSource.hpp"
 #include "game/core/HitResult.hpp"
 #include "game/core/Llama.hpp"
+#include "game/core/Mth.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/util/AABB.hpp"
 #include "game/util/Random.hpp"
@@ -48,11 +49,6 @@ LlamaSpit::LlamaSpit(Level* level, double x, double y, double z, double xd, doub
     mZd = zd;
 }
 
-LlamaSpit::~LlamaSpit()
-{
-    delete mOwnerTag;
-}
-
 void LlamaSpit::create(Level* level)
 {
     new LlamaSpit(level);
@@ -60,7 +56,6 @@ void LlamaSpit::create(Level* level)
 
 void LlamaSpit::_init()
 {
-    mLlamaOwner = boost::shared_ptr<Llama>();
     mOwnerTag = NULL;
 }
 
@@ -71,13 +66,16 @@ void LlamaSpit::shoot(double x, double y, double z, float velocity, float inaccu
     double gx = mRandom->nextGaussian();
     double gy = mRandom->nextGaussian();
     double gz = mRandom->nextGaussian();
-    mXd = (gx * spread * inaccuracy + x / length) * velocity;
-    mYd = (gy * spread * inaccuracy + y / length) * velocity;
-    mZd = (gz * spread * inaccuracy + z / length) * velocity;
-    double horizontal = std::sqrt(mXd * mXd + mZd * mZd);
-    mYRot = (float)(std::atan2(mXd, mZd) * 57.2957763671875);
+    double xd = (gx * spread * inaccuracy + x / length) * velocity;
+    double yd = (gy * spread * inaccuracy + y / length) * velocity;
+    double zd = (gz * spread * inaccuracy + z / length) * velocity;
+    mXd = xd;
+    mYd = yd;
+    mZd = zd;
+    double horizontal = std::sqrt(xd * xd + zd * zd);
+    mYRot = (float)(std::atan2(xd, zd) * Mth::RAD_TO_DEG);
+    mXRot = (float)(std::atan2(yd, horizontal) * Mth::RAD_TO_DEG);
     mYRotO = mYRot;
-    mXRot = (float)(std::atan2(mYd, horizontal) * 57.2957763671875);
     mXRotO = mXRot;
 }
 
@@ -107,12 +105,10 @@ bool LlamaSpit::onHit(const HitResult* result)
     boost::shared_ptr<Llama> owner = getOwner();
     if (result->mEntity && owner)
     {
-        boost::shared_ptr<Entity> ownerEntity;
-        boost::shared_ptr<LivingEntity> livingOwner;
-        boost::shared_ptr<DamageSource> source = DamageSource::CreateIndirectMagic(
-            ownerEntity, result->mEntity, NULL);
-        result->mEntity->hurt(source.get(), 1.0f);
-        result->mEntity->markHurt();
+        DamageSource* source = DamageSource::CreateIndirectMagic(
+            shared_from_this(), owner, DamageSource::FALL);
+        result->mEntity->hurt(source, 1.0f);
+        delete source;
     }
     if (!Entity::mLevel->mIsClientSide)
     {
@@ -123,54 +119,49 @@ bool LlamaSpit::onHit(const HitResult* result)
 
 void LlamaSpit::restoreOwnerFromSave()
 {
-    if (mOwnerTag == NULL || !mOwnerTag->contains(L"OwnerUUID"))
+    if (mOwnerTag != NULL && mOwnerTag->contains(L"OwnerUUID"))
     {
-        mOwnerTag = NULL;
-        return;
-    }
-
-    const std::wstring ownerUuid = mOwnerTag->getString(L"OwnerUUID");
-    AABB* searchBox = mBoundingBox->grow(15.0);
-    std::vector<boost::shared_ptr<Entity> >* entities =
-        Entity::mLevel->getEntitiesOfClass(typeid(Llama), searchBox);
-    for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin();
-         it != entities->end(); ++it)
-    {
-        boost::shared_ptr<Llama> llama = boost::static_pointer_cast<Llama>(*it);
-        if (llama->getStringUUID() == ownerUuid)
+        const std::wstring ownerUuid = mOwnerTag->getString(L"OwnerUUID");
+        AABB* searchBox = mBoundingBox->grow(15.0);
+        std::vector<boost::shared_ptr<Entity> >* entities =
+            Entity::mLevel->getEntitiesOfClass(typeid(Llama), searchBox);
+        for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin();
+             it != entities->end(); ++it)
         {
-            mLlamaOwner = llama;
-            break;
+            boost::shared_ptr<Llama> llama = boost::static_pointer_cast<Llama>(*it);
+            if (llama->getUUID() == ownerUuid)
+            {
+                mLlamaOwner = llama;
+                break;
+            }
         }
+        delete entities;
     }
-    delete entities;
     mOwnerTag = NULL;
 }
 
 boost::shared_ptr<Entity> LlamaSpit::getHitEntity(Vec3* from, Vec3* to)
 {
-    AABB* box = mBoundingBox->expand(to->x - from->x, to->y - from->y, to->z - from->z)->grow(1.0);
-    std::vector<boost::shared_ptr<Entity> > entities;
-    boost::shared_ptr<Entity> self = shared_from_this();
-    Entity::mLevel->getEntities(self, box, &entities);
-    double bestDistance = 1.0;
     boost::shared_ptr<Entity> hit;
-    for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities.begin(); it != entities.end(); ++it)
+    std::vector<boost::shared_ptr<Entity> >* entities = Entity::mLevel->getEntities(
+        shared_from_this(), mBoundingBox->expand(mXd, mYd, mZd)->grow(1.0), NULL);
+    double bestDistance = 0.0;
+    for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin();
+         it != entities->end(); ++it)
     {
         boost::shared_ptr<Entity> entity = *it;
-        if (entity.get() == this || !entity->isPickable())
+        bool isOwner = entity.get() == mLlamaOwner.lock().get();
+        if (!isOwner)
         {
-            continue;
-        }
-        AABB* entityBox = entity->mBoundingBox->grow(0.3);
-        HitResult* clip = entityBox->clip(from, to);
-        if (clip != NULL)
-        {
-            double distance = from->distanceToSqr(clip->mLocation);
-            if (distance < bestDistance)
+            HitResult* clip = entity->mBoundingBox->grow(0.3f)->clip(from, to);
+            if (clip != NULL)
             {
-                bestDistance = distance;
-                hit = entity;
+                double distance = from->distanceToSqr(clip->mLocation);
+                if (distance < bestDistance || bestDistance == 0.0)
+                {
+                    hit = entity;
+                    bestDistance = distance;
+                }
             }
         }
     }
@@ -211,27 +202,28 @@ void LlamaSpit::tick()
     mY += mYd;
     mZ += mZd;
     double horizontal = std::sqrt(mXd * mXd + mZd * mZd);
-    mYRot = (float)(std::atan2(mXd, mZd) * 57.2957763671875);
-    mXRot = (float)(std::atan2(mYd, horizontal) * 57.2957763671875);
+    mYRot = (float)(std::atan2(mXd, mZd) * Mth::RAD_TO_DEG);
+    float xRot = (float)(std::atan2(mYd, horizontal) * Mth::RAD_TO_DEG);
+    float yRot = mYRot;
 
-    while (mXRot - mXRotO < -180.0f)
+    while (xRot - mXRotO < -180.0f)
     {
         mXRotO -= 360.0f;
     }
-    while (mXRot - mXRotO >= 180.0f)
+    while (xRot - mXRotO >= 180.0f)
     {
         mXRotO += 360.0f;
     }
-    while (mYRot - mYRotO < -180.0f)
+    while (yRot - mYRotO < -180.0f)
     {
         mYRotO -= 360.0f;
     }
-    while (mYRot - mYRotO >= 180.0f)
+    while (yRot - mYRotO >= 180.0f)
     {
         mYRotO += 360.0f;
     }
-    mXRot = mXRotO + (mXRot - mXRotO) * 0.2f;
-    mYRot = mYRotO + (mYRot - mYRotO) * 0.2f;
+    mXRot = mXRotO + (xRot - mXRotO) * 0.2f;
+    mYRot = mYRotO + (yRot - mYRotO) * 0.2f;
 
     if (!Entity::mLevel->containsMaterial(mBoundingBox, Material::AIR))
     {
@@ -262,10 +254,11 @@ void LlamaSpit::lerpMotion(double xd, double yd, double zd)
     if (mXRotO == 0.0f && mYRotO == 0.0f)
     {
         double horizontal = std::sqrt(xd * xd + zd * zd);
-        mYRot = (float)(std::atan2(xd, zd) * 57.2957763671875);
+        mXRot = (float)(std::atan2(yd, horizontal) * Mth::RAD_TO_DEG);
+        mYRot = (float)(std::atan2(xd, zd) * Mth::RAD_TO_DEG);
         mYRotO = mYRot;
-        mXRot = (float)(std::atan2(yd, horizontal) * 57.2957763671875);
         mXRotO = mXRot;
+        moveTo(mX, mY, mZ, mYRot, mXRot);
     }
 }
 
@@ -277,7 +270,7 @@ void LlamaSpit::readAdditionalSaveData(CompoundTag* tag)
 {
     if (tag->contains(L"Owner", Tag::TAG_COMPOUND))
     {
-        mOwnerTag = tag->getCompound(L"Owner");
+        mOwnerTag = tag->getCompound(L"Owner")->copy();
     }
 }
 
@@ -287,7 +280,8 @@ void LlamaSpit::addAdditonalSaveData(CompoundTag* tag)
     if (owner)
     {
         CompoundTag* ownerTag = new CompoundTag();
-        tag->putString(L"OwnerUUID", L"");
+        std::wstring ownerUuid = owner->getUUID();
+        ownerTag->putString(L"OwnerUUID", ownerUuid);
         tag->put(L"Owner", ownerTag);
     }
 }

@@ -66,7 +66,7 @@ public:
     virtual bool isPushedByWater();
     virtual bool isWaterMob();
     virtual bool isFood(const not_null_ptr<ItemInstance>& itemInstance);
-    virtual double getWalkTargetValue(const BlockPos& pos);
+    virtual float getWalkTargetValue(const BlockPos& pos);
     virtual bool canBeLeashed(const boost::shared_ptr<Player>& player);
     virtual void thunderHit(const LightningBolt* lightning);
     virtual void die(const DamageSource* source);

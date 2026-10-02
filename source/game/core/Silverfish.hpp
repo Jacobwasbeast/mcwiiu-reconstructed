@@ -66,7 +66,7 @@ public:
     virtual Item* getDeathLoot();
     virtual void tick();
     virtual void setYBodyRot(float yBodyRot);
-    virtual double getWalkTargetValue(const BlockPos& pos);
+    virtual float getWalkTargetValue(const BlockPos& pos);
     virtual bool isDarkEnoughToSpawn();
     virtual bool checkSpawnRules();
     virtual EMobType getMobType();

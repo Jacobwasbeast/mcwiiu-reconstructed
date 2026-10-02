@@ -70,15 +70,13 @@ public:
     arrayWithLength<unsigned short> mExtraElements;
     arrayWithLength<unsigned char> mData;
     arrayWithLength<unsigned char> mExtraData;
-    bool mIncludeAir;
-    bool mIncludeMobs;
-    AABB* mCopyArea;
+    bool mCanUndo;
+    bool mMobs;
     AABB* mUndoArea;
-    int mCopyMinX;
-    int mCopyMinZ;
-    int mCopyMaxX;
     arrayWithLength<unsigned short> mUndoElements;
     arrayWithLength<unsigned short> mUndoExtraElements;
+    arrayWithLength<unsigned char> mUndoData;
+    arrayWithLength<unsigned char> mUndoExtraData;
     std::vector<std::pair<BlockPos*, CompoundTag*> > mUndoBlockEntities;
     std::vector<std::pair<Vec3*, CompoundTag*> > mUndoEntities;
     std::vector<DevSaveDataManager::NamedPositionOrVolume> mUndoNamedPositions;
@@ -88,12 +86,11 @@ public:
     AABB* mStoredCopyArea;
     AABB* mStoredUndoArea;
     bool mUndoReady;
-    int mPasteTicks;
-    int mPasteState;
+    ESchematicRotation mRotation;
+    ESchematicMirror mMirror;
     PasteData mPasteData;
     bool mHasCopy;
     bool mHasPaste;
-    bool mMobs;
     bool mReserved;
 
     ConsoleSchematicFile();

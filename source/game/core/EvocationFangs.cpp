@@ -98,8 +98,9 @@ void EvocationFangs::dealDamageTo(const boost::shared_ptr<LivingEntity>& target)
             if (!owner->isAlliedTo(targetEntity))
             {
                 boost::shared_ptr<Entity> direct = shared_from_this();
-                boost::shared_ptr<DamageSource> damage = DamageSource::CreateIndirectMagic(direct, ownerEntity, NULL);
-                target->hurt(damage.get(), 6.0f);
+                DamageSource* damage = DamageSource::CreateIndirectMagic(direct, ownerEntity, NULL);
+                target->hurt(damage, 6.0f);
+                delete damage;
             }
         }
     }

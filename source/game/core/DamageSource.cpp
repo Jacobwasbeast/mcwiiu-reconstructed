@@ -127,9 +127,9 @@ EntityDamageSource* DamageSource::CreateMobAttack(boost::shared_ptr<LivingEntity
 
 void DamageSource::setProjectile() { projectile = true; }
 
-boost::shared_ptr<DamageSource> DamageSource::CreateIndirectMobAttack(const boost::shared_ptr<Entity>& source, const boost::shared_ptr<LivingEntity>& target, bool projectileValue)
+DamageSource* DamageSource::CreateIndirectMobAttack(const boost::shared_ptr<Entity>& source, const boost::shared_ptr<LivingEntity>& target, bool projectileValue)
 {
-    boost::shared_ptr<DamageSource> result(new IndirectEntityDamageSource(ClientboundChatPacket::eChatPacketMessage_DeathMob, ClientboundChatPacket::eChatPacketMessage_DeathMob, source, target, 0));
+    DamageSource* result = new IndirectEntityDamageSource(ClientboundChatPacket::eChatPacketMessage_DeathMob, ClientboundChatPacket::eChatPacketMessage_DeathMob, source, target, 0);
     if (projectileValue) result->setProjectile();
     return result;
 }
@@ -150,24 +150,24 @@ DamageSource* DamageSource::CreateArrow(boost::shared_ptr<Arrow> arrow, boost::s
     return result;
 }
 
-boost::shared_ptr<DamageSource> DamageSource::CreateTrident(boost::shared_ptr<ThrownTrident> trident, boost::shared_ptr<Entity> owner)
+DamageSource* DamageSource::CreateTrident(boost::shared_ptr<ThrownTrident> trident, boost::shared_ptr<Entity> owner)
 {
     boost::shared_ptr<Entity> tridentEntity(trident, (Entity*)trident.get());
-    boost::shared_ptr<DamageSource> result(new IndirectEntityDamageSource(ClientboundChatPacket::eChatPacketMessage_DeathTrident, ClientboundChatPacket::eChatPacketMessage_DeathTridentItem, tridentEntity, owner, 0));
+    DamageSource* result = new IndirectEntityDamageSource(ClientboundChatPacket::eChatPacketMessage_DeathTrident, ClientboundChatPacket::eChatPacketMessage_DeathTridentItem, tridentEntity, owner, 0);
     result->setProjectile();
     return result;
 }
 
 void DamageSource::setIsFire() { fire = true; }
 
-boost::shared_ptr<DamageSource> DamageSource::CreateFireball(boost::shared_ptr<Fireball> fireball, boost::shared_ptr<Entity> owner)
+DamageSource* DamageSource::CreateFireball(boost::shared_ptr<Fireball> fireball, boost::shared_ptr<Entity> owner)
 {
     boost::shared_ptr<Entity> fireballEntity(fireball, (Entity*)fireball.get());
-    boost::shared_ptr<DamageSource> result;
+    DamageSource* result;
     if (owner)
-        result.reset(new IndirectEntityDamageSource(ClientboundChatPacket::eChatPacketMessage_DeathFireball, ClientboundChatPacket::eChatPacketMessage_DeathArrowItem, fireballEntity, owner, 0));
+        result = new IndirectEntityDamageSource(ClientboundChatPacket::eChatPacketMessage_DeathFireball, ClientboundChatPacket::eChatPacketMessage_DeathArrowItem, fireballEntity, owner, 0);
     else
-        result.reset(new IndirectEntityDamageSource(ClientboundChatPacket::eChatPacketMessage_DeathOnFire, ClientboundChatPacket::eChatPacketMessage_DeathOnFire, fireballEntity, fireballEntity, 0));
+        result = new IndirectEntityDamageSource(ClientboundChatPacket::eChatPacketMessage_DeathOnFire, ClientboundChatPacket::eChatPacketMessage_DeathOnFire, fireballEntity, fireballEntity, 0);
     result->setIsFire();
     result->setProjectile();
     return result;
@@ -183,18 +183,18 @@ DamageSource* DamageSource::CreateThrown(boost::shared_ptr<Entity> projectileEnt
 void DamageSource::setMagic() { magic = true; }
 void DamageSource::bypassArmor() { bypassArmorFlag = true; foodExhaustion = 0.0f; }
 
-boost::shared_ptr<DamageSource> DamageSource::CreateIndirectMagic(boost::shared_ptr<Entity> source, boost::shared_ptr<Entity> target, const DamageSource* baseSource)
+DamageSource* DamageSource::CreateIndirectMagic(boost::shared_ptr<Entity> source, boost::shared_ptr<Entity> target, const DamageSource* baseSource)
 {
     if (source->GetType() == EntityType::LLAMA_SPIT)
     {
-        boost::shared_ptr<DamageSource> result(new IndirectEntityDamageSource(ClientboundChatPacket::eChatPacketMessage_DeathPlayer, ClientboundChatPacket::eChatPacketMessage_DeathMobItem, source, target, baseSource));
+        DamageSource* result = new IndirectEntityDamageSource(ClientboundChatPacket::eChatPacketMessage_DeathPlayer, ClientboundChatPacket::eChatPacketMessage_DeathMobItem, source, target, baseSource);
         result->bypassArmor();
         result->setMagic();
         result->setProjectile();
         return result;
     }
 
-    boost::shared_ptr<DamageSource> result(new IndirectEntityDamageSource(ClientboundChatPacket::eChatPacketMessage_DeathIndirectMagic, ClientboundChatPacket::eChatPacketMessage_DeathIndirectMagicItem, source, target, baseSource));
+    DamageSource* result = new IndirectEntityDamageSource(ClientboundChatPacket::eChatPacketMessage_DeathIndirectMagic, ClientboundChatPacket::eChatPacketMessage_DeathIndirectMagicItem, source, target, baseSource);
     result->bypassArmor();
     result->setMagic();
     return result;
@@ -211,11 +211,11 @@ EntityDamageSource* DamageSource::CreateThorns(boost::shared_ptr<Entity> entity)
 void DamageSource::setExplosion() { explosion = true; }
 void DamageSource::setScalesWithDifficulty() { scalesDifficulty = true; }
 
-boost::shared_ptr<DamageSource> DamageSource::CreateExplosion(Explosion* explosionValue)
+DamageSource* DamageSource::CreateExplosion(Explosion* explosionValue)
 {
     if (explosionValue == 0 || !explosionValue->getSourceMob())
     {
-        boost::shared_ptr<DamageSource> result(new DamageSource(ClientboundChatPacket::eChatPacketMessage_DeathExplosion, ClientboundChatPacket::eChatPacketMessage_Text));
+        DamageSource* result = new DamageSource(ClientboundChatPacket::eChatPacketMessage_DeathExplosion, ClientboundChatPacket::eChatPacketMessage_Text);
         result->setExplosion();
         result->setScalesWithDifficulty();
         return result;
@@ -225,29 +225,29 @@ boost::shared_ptr<DamageSource> DamageSource::CreateExplosion(Explosion* explosi
     boost::shared_ptr<Entity> directSource = explosionValue->getDirectSource();
     if (directSource && directSource != sourceMob)
     {
-        boost::shared_ptr<EntityDamageSource> result(new IndirectEntityDamageSource(ClientboundChatPacket::eChatPacketMessage_DeathExplosionBy, ClientboundChatPacket::eChatPacketMessage_DeathExplosionBy, directSource, sourceMob, 0));
+        DamageSource* result = new IndirectEntityDamageSource(ClientboundChatPacket::eChatPacketMessage_DeathExplosionBy, ClientboundChatPacket::eChatPacketMessage_DeathExplosionBy, directSource, sourceMob, 0);
         result->setExplosion();
         result->setScalesWithDifficulty();
         return result;
     }
 
-    boost::shared_ptr<EntityDamageSource> result(new EntityDamageSource(ClientboundChatPacket::eChatPacketMessage_DeathExplosionBy, ClientboundChatPacket::eChatPacketMessage_DeathExplosionBy, sourceMob));
+    DamageSource* result = new EntityDamageSource(ClientboundChatPacket::eChatPacketMessage_DeathExplosionBy, ClientboundChatPacket::eChatPacketMessage_DeathExplosionBy, sourceMob);
     result->setExplosion();
     result->setScalesWithDifficulty();
     return result;
 }
 
-boost::shared_ptr<DamageSource> DamageSource::CreateExplosion(const boost::shared_ptr<LivingEntity>& entity)
+DamageSource* DamageSource::CreateExplosion(const boost::shared_ptr<LivingEntity>& entity)
 {
     if (!entity)
     {
-        boost::shared_ptr<DamageSource> result(new DamageSource(ClientboundChatPacket::eChatPacketMessage_DeathExplosion, ClientboundChatPacket::eChatPacketMessage_Text));
+        DamageSource* result = new DamageSource(ClientboundChatPacket::eChatPacketMessage_DeathExplosion, ClientboundChatPacket::eChatPacketMessage_Text);
         result->setExplosion();
         result->setScalesWithDifficulty();
         return result;
     }
 
-    boost::shared_ptr<DamageSource> result(new EntityDamageSource(ClientboundChatPacket::eChatPacketMessage_DeathExplosionBy, ClientboundChatPacket::eChatPacketMessage_DeathExplosionBy, entity));
+    DamageSource* result = new EntityDamageSource(ClientboundChatPacket::eChatPacketMessage_DeathExplosionBy, ClientboundChatPacket::eChatPacketMessage_DeathExplosionBy, entity);
     result->setExplosion();
     result->setScalesWithDifficulty();
     return result;

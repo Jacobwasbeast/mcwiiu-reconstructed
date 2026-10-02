@@ -20,7 +20,7 @@ public:
     bool isOnFire();
     float getBlockExplosionResistance(Explosion* explosion, Level* level, const BlockPos& pos);
     bool isPickable();
-    virtual bool isDangerous() const;
+    virtual bool isDangerous();
     virtual void setDangerous(bool dangerous);
     double getInertia();
     void onHit(const HitResult* result);

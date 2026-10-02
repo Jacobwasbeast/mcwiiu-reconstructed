@@ -46,7 +46,7 @@ void setAltMainOKToRun()
     s_altMainOKToRun = 1;
 }
 
-extern "C" void RegisterAwardsWithProfileManager()
+void RegisterAwardsWithProfileManager()
 {
     for (int i = 0; i < UIScene_AchievementsMenu::GetAchievementCount(); ++i)
     {
@@ -79,7 +79,7 @@ extern "C" void RegisterAwardsWithProfileManager()
         gProfile->RichPresenceRegisterContextString(0, activity, activityStrings[activity]);
 }
 
-extern "C" void ShutdownAndExit()
+void ShutdownAndExit()
 {
     ShutdownManager::MainThreadHandleShutdown();
     g_pApp->ExitGame();

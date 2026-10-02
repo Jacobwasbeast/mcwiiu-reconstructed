@@ -3,7 +3,10 @@
 
 #include "game/minigame/MultiConditionMedal.hpp"
 
-typedef unsigned int EMiniGameVariantId;
+enum EMiniGameVariantId
+{
+    eMiniGameVariantId_ScoreAttack = 1
+};
 
 class VariantCondition : public MultiConditionMedal::MultiCondition
 {

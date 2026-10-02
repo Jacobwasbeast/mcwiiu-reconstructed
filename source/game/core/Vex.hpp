@@ -44,9 +44,9 @@ public:
     boost::shared_ptr<Mob> getOwner();
     BlockPos* getBoundOrigin();
     void setBoundOrigin(BlockPos* origin);
-    bool getVexFlag(int flag) const;
+    bool getVexFlag(int flag);
     void setVexFlag(int flag, bool value);
-    bool isCharging() const;
+    bool isCharging();
     void setIsCharging(bool charging);
     void setOwner(const boost::shared_ptr<Mob>& owner);
     const SoundEvent* getAmbientSound();
@@ -107,7 +107,7 @@ public:
     };
 
 private:
-    boost::shared_ptr<Mob> owner;
+    boost::weak_ptr<Mob> owner;
     BlockPos* boundOrigin;
     bool hasLimitedLife;
     int limitedLife;

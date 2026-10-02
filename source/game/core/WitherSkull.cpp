@@ -54,7 +54,7 @@ float WitherSkull::getBlockExplosionResistance(Explosion* explosion, Level* leve
     return resistance;
 }
 bool WitherSkull::isPickable() { return isDangerous(); }
-bool WitherSkull::isDangerous() const { return mEntityData->get(DATA_DANGEROUS); }
+bool WitherSkull::isDangerous() { return mEntityData->get(DATA_DANGEROUS); }
 void WitherSkull::setDangerous(bool dangerous) { mEntityData->set(DATA_DANGEROUS, dangerous, true); }
 double WitherSkull::getInertia()
 {

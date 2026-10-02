@@ -412,10 +412,7 @@ void GlStateManager::getMatrix(int mode, FloatBuffer* buffer)
 
 void GlStateManager::multMatrix(FloatBuffer* buffer)
 {
-    float matrix[16];
-    arrayWithLength<float> values(matrix, 16);
-    buffer->get(&values);
-    gRenderer->MatrixMult(matrix);
+    gRenderer->MatrixMult(buffer->mBuffer);
 }
 
 void GlStateManager::multMatrix(Matrix4f* matrix)
@@ -440,17 +437,18 @@ void GlStateManager::disableLighting()
 
 void GlStateManager::enableLight(int light)
 {
-    lights[light - STATE_LIGHT0]->enable();
+    lights[(unsigned int)(light - STATE_LIGHT0)]->enable();
 }
 
 void GlStateManager::disableLight(int light)
 {
-    lights[light - STATE_LIGHT0]->disable();
+    lights[(unsigned int)(light - STATE_LIGHT0)]->disable();
 }
 
 void GlStateManager::light(int light, int parameter, FloatBuffer* buffer)
 {
     int index;
+    float* values = buffer->mBuffer;
 
     if (light == STATE_LIGHT0)
     {
@@ -467,22 +465,24 @@ void GlStateManager::light(int light, int parameter, FloatBuffer* buffer)
 
     if (parameter == 1)
     {
-        gRenderer->StateSetLightDirection(index, buffer->get(0), buffer->get(1), buffer->get(2));
+        gRenderer->StateSetLightDirection(index, values[0], values[1], values[2]);
     }
     else if (parameter == 3)
     {
-        gRenderer->StateSetLightColour(index, buffer->get(0), buffer->get(1), buffer->get(2));
+        gRenderer->StateSetLightColour(index, values[0], values[1], values[2]);
     }
 }
 
 void GlStateManager::lightModel(int parameter, FloatBuffer* buffer)
 {
+    float* values = buffer->mBuffer;
+
     if (parameter != 1)
     {
         return;
     }
 
-    gRenderer->StateSetLightAmbientColour(buffer->get(0), buffer->get(1), buffer->get(2));
+    gRenderer->StateSetLightAmbientColour(values[0], values[1], values[2]);
 }
 
 void GlStateManager::enableColorMaterial()
@@ -594,7 +594,8 @@ float GlStateManager::getFogEnd()
 
 void GlStateManager::glFog(int parameter, FloatBuffer* buffer)
 {
-    gRenderer->StateSetFogColour(buffer->get(0), buffer->get(1), buffer->get(2));
+    float* values = buffer->mBuffer;
+    gRenderer->StateSetFogColour(values[0], values[1], values[2]);
 }
 
 void GlStateManager::enableCull()
@@ -712,10 +713,11 @@ void GlStateManager::alphaFunc(int func, float ref)
 
 void GlStateManager::colorMask(bool red, bool green, bool blue, bool alpha)
 {
-    colorMaskState->red = red;
-    colorMaskState->green = green;
-    colorMaskState->blue = blue;
-    colorMaskState->alpha = alpha;
+    ColorMask* mask = colorMaskState;
+    mask->red = red;
+    mask->green = green;
+    mask->blue = blue;
+    mask->alpha = alpha;
     gRenderer->StateSetWriteEnable(red, green, blue, alpha);
 }
 
@@ -772,9 +774,6 @@ int GlStateManager::genTexture()
 
 void GlStateManager::deleteTexture(int texture)
 {
-    if (texture <= 0)
-        return;
-
     gRenderer->TextureFree(texture);
 
     for (int unit = 0; unit < MAX_TEXTURE_UNITS; ++unit)
@@ -798,9 +797,7 @@ void GlStateManager::deleteTextures(IntBuffer* buffer)
 {
     for (unsigned int index = 0; index < buffer->limit(); ++index)
     {
-        int tex = buffer->get(index);
-        if (tex > 0)
-            gRenderer->TextureFree(tex);
+        gRenderer->TextureFree(buffer->get(index));
     }
 }
 

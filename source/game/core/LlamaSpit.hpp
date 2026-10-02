@@ -20,7 +20,6 @@ public:
     LlamaSpit(Level* level, const boost::shared_ptr<Llama>& owner);
     LlamaSpit(Level* level);
     LlamaSpit(Level* level, double x, double y, double z, double xd, double yd, double zd);
-    virtual ~LlamaSpit();
 
     static void create(Level* level);
     void _init();

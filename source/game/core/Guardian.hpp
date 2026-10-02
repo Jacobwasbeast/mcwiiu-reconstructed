@@ -93,7 +93,7 @@ public:
     virtual const SoundEvent* getFlopSound();
     virtual bool makeStepSound();
     virtual double getEyeHeight();
-    virtual double getWalkTargetValue(const BlockPos& pos);
+    virtual float getWalkTargetValue(const BlockPos& pos);
     double getAttackAnimationScale(float partialTicks);
     virtual void aiStep();
     double getTailAnimation(float partialTicks);

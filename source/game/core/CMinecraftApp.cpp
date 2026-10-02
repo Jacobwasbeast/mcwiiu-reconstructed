@@ -859,14 +859,14 @@ void CMinecraftApp::ProfileReadErrorCallback(void* context)
     if (app != NULL)
         app->SetAction(gProfile->GetPrimaryPad(), eXuiAction_ProfileReadError, NULL);
 }
-uint32_t CMinecraftApp::DefaultOptionsCallback(void* context, C4JStorage::PROFILESETTINGS* settings, int profile)
+int CMinecraftApp::DefaultOptionsCallback(void* context, C4JStorage::PROFILESETTINGS* settings, int profile)
 {
     CMinecraftApp* app = static_cast<CMinecraftApp*>(context);
     if (app != NULL)
         app->SetAction(profile, eXuiAction_SetDefaultGameOptions, settings);
     return 0;
 }
-uint32_t CMinecraftApp::OptionsDataCallback(void* context, int profile, unsigned short size, C4JStorage::eOptionsCallback status)
+int CMinecraftApp::OptionsDataCallback(void* context, int profile, unsigned short size, C4JStorage::eOptionsCallback status)
 {
     return 0;
 }
@@ -1759,7 +1759,7 @@ int CMinecraftApp::GameModeTransitionComplete(void* context)
     }
     return 0;
 }
-void CMinecraftApp::SetTMSAction(int32_t player, uint32_t action)
+void CMinecraftApp::SetTMSAction(int32_t player, eTMSAction action)
 {
     mTMSActions[player] = action;
 }
@@ -1779,7 +1779,7 @@ uint8_t CMinecraftApp::DLCInstallProcessCompleted()
 {
     return mDLCInstallProcessCompleted;
 }
-std::wstring CMinecraftApp::getDLCFolderName(unsigned int dlcId)
+std::wstring CMinecraftApp::getDLCFolderName(EDLC_ID dlcId)
 {
     switch (dlcId)
     {
@@ -1868,7 +1868,7 @@ std::wstring CMinecraftApp::getRootPath(unsigned int contentType, bool create, b
 
         if (useDLCFolder)
         {
-            const std::wstring name = getDLCFolderName(contentType);
+            const std::wstring name = getDLCFolderName(static_cast<EDLC_ID>(contentType));
             if (contentType == 0x207 || contentType == 0x216 || contentType == 0x804 ||
                 (contentType >= 0x222 && contentType < 0x227) || contentType == 0x22c || contentType == 0x230 ||
                 contentType == 0x233)
@@ -4720,42 +4720,42 @@ void CMinecraftApp::HandleXuiActions()
         switch (GetTMSAction(pad))
         {
         case 1:
-            SetTMSAction(pad, 0);
+            SetTMSAction(pad, eTMSAction_Default);
             break;
         case 2:
         case 3:
-            SetTMSAction(pad, 6);
+            SetTMSAction(pad, static_cast<eTMSAction>(6));
             break;
         case 4:
         case 5:
-            SetTMSAction(pad, 0x13);
+            SetTMSAction(pad, static_cast<eTMSAction>(0x13));
             break;
         case 6:
-            SetTMSAction(pad, 8);
+            SetTMSAction(pad, static_cast<eTMSAction>(8));
             break;
         case 8:
-            SetTMSAction(pad, 10);
+            SetTMSAction(pad, static_cast<eTMSAction>(10));
             break;
         case 10:
-            SetTMSAction(pad, 0xc);
+            SetTMSAction(pad, static_cast<eTMSAction>(0xc));
             break;
         case 0xc:
-            SetTMSAction(pad, 0xe);
+            SetTMSAction(pad, static_cast<eTMSAction>(0xe));
             break;
         case 0xe:
-            SetTMSAction(pad, 0x10);
+            SetTMSAction(pad, static_cast<eTMSAction>(0x10));
             break;
         case 0x10:
-            SetTMSAction(pad, 1);
+            SetTMSAction(pad, static_cast<eTMSAction>(1));
             break;
         case 0x12:
-            SetTMSAction(pad, 0);
+            SetTMSAction(pad, eTMSAction_Default);
             break;
         case 0x13:
-            SetTMSAction(pad, 0x12);
+            SetTMSAction(pad, static_cast<eTMSAction>(0x12));
             break;
         case 0x14:
-            SetTMSAction(pad, 0x13);
+            SetTMSAction(pad, static_cast<eTMSAction>(0x13));
             break;
         default:
             break;

@@ -135,11 +135,11 @@ void Silverfish::setYBodyRot(float yBodyRot)
     LivingEntity::setYBodyRot(yBodyRot);
 }
 
-double Silverfish::getWalkTargetValue(const BlockPos& pos)
+float Silverfish::getWalkTargetValue(const BlockPos& pos)
 {
     if (mLevel->getBlockState(pos.below())->getBlock() == Blocks::stone)
     {
-        return 10.0;
+        return 10.0f;
     }
     return Monster::getWalkTargetValue(pos);
 }

@@ -114,7 +114,7 @@ private:
 
 extern CConsoleMinecraftApp theApp;
 
-extern "C" void RegisterAwardsWithProfileManager();
-extern "C" void ShutdownAndExit();
+void RegisterAwardsWithProfileManager();
+void ShutdownAndExit();
 
 #endif

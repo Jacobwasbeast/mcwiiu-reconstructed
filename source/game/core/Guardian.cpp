@@ -195,11 +195,11 @@ double Guardian::getEyeHeight()
     return mBbHeight * 0.5f;
 }
 
-double Guardian::getWalkTargetValue(const BlockPos& pos)
+float Guardian::getWalkTargetValue(const BlockPos& pos)
 {
     if (mLevel->getBlockState(pos)->getMaterial() == Material::WATER)
     {
-        return (double)(mLevel->getBrightness(pos) + 9.5f);
+        return mLevel->getBrightness(pos) + 9.5f;
     }
     return Monster::getWalkTargetValue(pos);
 }
@@ -524,12 +524,14 @@ void Guardian::GuardianAttackGoal::tick()
         {
             damage += 2.0f;
         }
-        boost::shared_ptr<DamageSource> indirectMagic =
-            DamageSource::CreateIndirectMagic(mGuardian->shared_from_this(), target, NULL);
+        DamageSource* indirectMagic =
+            DamageSource::CreateIndirectMagic(mGuardian->shared_from_this(), target, DamageSource::MAGIC);
         EntityDamageSource* mobAttack = DamageSource::CreateMobAttack(target);
-        target->hurt(indirectMagic.get(), damage);
+        target->hurt(indirectMagic, damage);
         double attackDamage = mGuardian->getAttribute(SharedMonsterAttributes::ATTACK_DAMAGE)->getValue();
         target->hurt(mobAttack, (float)attackDamage);
+        delete indirectMagic;
+        delete mobAttack;
         mGuardian->setTarget(boost::shared_ptr<LivingEntity>());
     }
 }

@@ -170,7 +170,7 @@ public:
     static void SetSecondaryActionMapping(unsigned char scheme, int action, unsigned char value);
     static void SetCustomisableControllerMapping(int profile, GameSettings* settings);
     void updateToLatestVersionFrom(unsigned short, int);
-    static uint32_t OldProfileVersionCallback(void*, unsigned char*, unsigned short, int);
+    static int OldProfileVersionCallback(void*, unsigned char*, unsigned short, int);
     static void SetDefaultControls(C4JStorage::PROFILESETTINGS*, int, bool);
     static void SetDefaultGameOptions(C4JStorage::PROFILESETTINGS*, int, bool);
     static void InitGameSettings();

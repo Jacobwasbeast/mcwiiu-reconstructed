@@ -183,8 +183,8 @@ void ShulkerBullet::onHit(const HitResult* result)
     }
     else
     {
-        boost::shared_ptr<DamageSource> damageSource = DamageSource::CreateIndirectMobAttack(shared_from_this(), mOwner, true);
-        if (result->mEntity->hurt(damageSource.get(), 4.0f))
+        DamageSource* damageSource = DamageSource::CreateIndirectMobAttack(shared_from_this(), mOwner, true);
+        if (result->mEntity->hurt(damageSource, 4.0f))
         {
             doEnchantDamageEffects(mOwner, result->mEntity);
             if ((result->mEntity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
@@ -193,6 +193,7 @@ void ShulkerBullet::onHit(const HitResult* result)
                 target->addEffect(new MobEffectInstance(MobEffects::LEVITATION, 200), shared_from_this());
             }
         }
+        delete damageSource;
     }
     remove();
 }

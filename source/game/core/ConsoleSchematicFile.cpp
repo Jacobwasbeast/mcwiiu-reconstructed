@@ -35,41 +35,89 @@
 static const int SCHEMATIC_WORLD_HEIGHT = 256;
 
 ConsoleSchematicFile::PasteData::PasteData()
-    : mLevel(NULL), mArea(NULL), mRotation(eSchematicRotation_0), mMirror(eSchematicMirror_None),
-      mMinChunkX(0), mMaxChunkX(0), mCurrentChunkX(0), mMinChunkZ(0), mMaxChunkZ(0), mCurrentChunkZ(0),
-      mWidth(0), mHeight(0), mDepth(0),
-      mElements(), mExtraElements(), mData(), mExtraData(), mBlockEntities(), mEntities(),
-      mNamedPositions(), mUpdatedNames(), mIncludeAir(false), mIncludeSpecial(false)
 {
 }
 
 ConsoleSchematicFile::ConsoleSchematicFile()
-    : mRefCount(1), mOrigin(0, 0, 0), mWidth(0), mHeight(0), mDepth(0), mIncludeAir(false), mIncludeMobs(false), mCopyArea(0), mUndoArea(0), mCopyMinX(0), mCopyMinZ(0), mCopyMaxX(0), mUndoWidth(0), mUndoHeight(0), mUndoDepth(0), mStoredCopyArea(0), mStoredUndoArea(0), mUndoReady(false), mPasteTicks(0), mPasteState(0), mHasCopy(false), mHasPaste(false), mMobs(false), mReserved(false)
+    : mOrigin(0, 0, 0)
 {
-    mPasteData.mLevel = 0;
+    mWidth = 0;
+    mHeight = 0;
+    mDepth = 0;
+    mElements.data = 0;
+    mExtraElements.data = 0;
+    mData.data = 0;
+    mExtraData.data = 0;
+    mCanUndo = false;
+    mMobs = false;
+    mUndoArea = 0;
+    mUndoElements.data = 0;
+    mUndoData.data = 0;
+    mUndoExtraData.data = 0;
+    mUndoWidth = 0;
+    mUndoHeight = 0;
+    mUndoDepth = 0;
+    mStoredCopyArea = 0;
+    mStoredUndoArea = 0;
+    mUndoReady = false;
+    mRotation = eSchematicRotation_0;
+    mMirror = eSchematicMirror_None;
+    mHasCopy = false;
+    mHasPaste = false;
+    mReserved = false;
+    mRefCount = 1;
     mPasteData.mArea = AABB::newPermanent(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+    mPasteData.mLevel = 0;
 }
 
 ConsoleSchematicFile::~ConsoleSchematicFile()
 {
     delete[] mElements.data;
+    mElements.data = 0;
+    mElements.length = 0;
     delete[] mExtraElements.data;
-    delete[] mData.data;
-    delete[] mExtraData.data;
-    delete mCopyArea;
-    delete mUndoArea;
-    delete[] mUndoElements.data;
-    delete[] mUndoExtraElements.data;
+    mExtraElements.data = 0;
+    mExtraElements.length = 0;
     delete mStoredCopyArea;
+    mStoredCopyArea = 0;
     delete mStoredUndoArea;
+    mStoredUndoArea = 0;
+    delete[] mData.data;
+    mData.data = 0;
+    mData.length = 0;
+    delete[] mExtraData.data;
+    mExtraData.data = 0;
+    mExtraData.length = 0;
+    delete[] mUndoData.data;
+    mUndoData.data = 0;
+    mUndoData.length = 0;
+    delete[] mUndoExtraData.data;
+    mUndoExtraData.data = 0;
+    mUndoExtraData.length = 0;
+    delete mUndoArea;
+    mUndoArea = 0;
+    delete[] mUndoElements.data;
+    mUndoElements.data = 0;
+    mUndoElements.length = 0;
+    delete mPasteData.mArea;
+    mPasteData.mArea = 0;
 }
 
 bool ConsoleSchematicFile::CanPasteBlock(unsigned short element, bool includeAir, bool includeSpecial)
 {
-    if (includeAir && element == 0) return true;
-    if (element == 0) return false;
-    if (includeSpecial) return true;
-    return (element >> 4) != 8 && (element >> 4) != 9;
+    bool canPaste = true;
+    if (!includeAir)
+    {
+        if (element == 0)
+        {
+            canPaste = false;
+        }
+    }
+    if (!includeSpecial)
+    {
+        return canPaste && (element >> 4) != 9 && (element >> 4) != 8;
+    }
+    return canPaste;
 }
 
 unsigned short ConsoleSchematicFile::rotateElementValue(unsigned short element, ESchematicRotation rotation)
@@ -279,19 +327,15 @@ void ConsoleSchematicFile::save(DataOutputStream* output)
     output->writeInt(mHeight);
     output->writeInt(mDepth);
 
-    unsigned int compressedSize = mElements.length * sizeof(unsigned short);
-    arrayWithLength<unsigned char> compressed(compressedSize, true);
-    Compression::getCompression()->CompressLZXRLE(compressed.data, &compressedSize, mElements.data, mElements.length * sizeof(unsigned short), 0);
-    compressed.length = compressedSize;
-    output->writeInt(compressedSize);
+    arrayWithLength<unsigned char> compressed(mElements.length, true);
+    Compression::getCompression()->CompressLZXRLE(compressed.data, &compressed.length, mElements.data, mElements.length, 0);
+    output->writeInt(compressed.length);
     output->write(compressed);
     delete[] compressed.data;
 
-    compressedSize = mExtraElements.length * sizeof(unsigned short);
-    arrayWithLength<unsigned char> extraCompressed(compressedSize, true);
-    Compression::getCompression()->CompressLZXRLE(extraCompressed.data, &compressedSize, mExtraElements.data, mExtraElements.length * sizeof(unsigned short), 0);
-    extraCompressed.length = compressedSize;
-    output->writeInt(compressedSize);
+    arrayWithLength<unsigned char> extraCompressed(mExtraElements.length, true);
+    Compression::getCompression()->CompressLZXRLE(extraCompressed.data, &extraCompressed.length, mElements.data, mElements.length, 0);
+    output->writeInt(extraCompressed.length);
     output->write(extraCompressed);
     delete[] extraCompressed.data;
     save_tags(output);
@@ -301,18 +345,18 @@ void ConsoleSchematicFile::save_tags(DataOutputStream* output)
 {
     CompoundTag* root = new CompoundTag();
     ListTag* blockEntities = new ListTag();
+    root->put(L"TileEntities", blockEntities);
     for (std::vector<std::pair<BlockPos*, CompoundTag*> >::iterator it = mBlockEntities.begin(); it != mBlockEntities.end(); ++it)
     {
         blockEntities->add(it->second->copy());
     }
-    root->put(L"TileEntities", blockEntities);
 
     ListTag* entities = new ListTag();
+    root->put(L"Entities", entities);
     for (std::vector<std::pair<Vec3*, CompoundTag*> >::iterator it = mEntities.begin(); it != mEntities.end(); ++it)
     {
         entities->add(it->second->copy());
     }
-    root->put(L"Entities", entities);
     NbtIo::write(root, output);
     delete root;
 }
@@ -343,7 +387,6 @@ void ConsoleSchematicFile::load(DataInputStream* input)
         mDepth = input->readInt();
         arrayWithLength<unsigned char> compressed(static_cast<unsigned int>(input->readInt()), true);
         input->read(compressed);
-        Compression* compressor = Compression::getCompression();
         if (version < 3)
         {
             unsigned int legacySize = calcFullDataSizeLegacy(mWidth, mHeight, mDepth);
@@ -360,17 +403,17 @@ void ConsoleSchematicFile::load(DataInputStream* input)
                 mData = arrayWithLength<unsigned char>(legacySize, true);
                 if (compression == 1)
                 {
-                    compressor->DecompressRLE(data.data, &data.length, compressed.data, compressed.length);
+                    Compression::getCompression()->DecompressRLE(data.data, &data.length, compressed.data, compressed.length);
                 }
                 else if (compression == 3)
                 {
-                    compressor->DecompressLZXRLE(data.data, &data.length, compressed.data, compressed.length);
+                    Compression::getCompression()->DecompressLZXRLE(data.data, &data.length, compressed.data, compressed.length);
                 }
                 else
                 {
-                    compressor->m_decompressionType = static_cast<Compression::ECompressionTypes>(compression);
-                    compressor->DecompressLZXRLE(data.data, &data.length, compressed.data, compressed.length);
-                    compressor->m_decompressionType = Compression::eCompressionTypes_Zlib;
+                    Compression::getCompression()->m_decompressionType = static_cast<Compression::ECompressionTypes>(compression);
+                    Compression::getCompression()->DecompressLZXRLE(data.data, &data.length, compressed.data, compressed.length);
+                    Compression::getCompression()->m_decompressionType = Compression::eCompressionTypes_Zlib;
                 }
                 delete[] compressed.data;
                 count = calculateFullElementSize(mWidth, mHeight, mDepth);
@@ -422,17 +465,17 @@ void ConsoleSchematicFile::load(DataInputStream* input)
                 mData = arrayWithLength<unsigned char>(count, true);
                 if (compression == 1)
                 {
-                    compressor->DecompressRLE(mElements.data, &mElements.length, compressed.data, compressed.length);
+                    Compression::getCompression()->DecompressRLE(mElements.data, &mElements.length, compressed.data, compressed.length);
                 }
                 else if (compression == 3)
                 {
-                    compressor->DecompressLZXRLE(mElements.data, &mElements.length, compressed.data, compressed.length);
+                    Compression::getCompression()->DecompressLZXRLE(mElements.data, &mElements.length, compressed.data, compressed.length);
                 }
                 else
                 {
-                    compressor->m_decompressionType = static_cast<Compression::ECompressionTypes>(compression);
-                    compressor->DecompressLZXRLE(mElements.data, &mElements.length, compressed.data, compressed.length);
-                    compressor->m_decompressionType = Compression::eCompressionTypes_Zlib;
+                    Compression::getCompression()->m_decompressionType = static_cast<Compression::ECompressionTypes>(compression);
+                    Compression::getCompression()->DecompressLZXRLE(mElements.data, &mElements.length, compressed.data, compressed.length);
+                    Compression::getCompression()->m_decompressionType = Compression::eCompressionTypes_Zlib;
                 }
                 mElements.length >>= 1;
                 delete[] compressed.data;
@@ -441,17 +484,17 @@ void ConsoleSchematicFile::load(DataInputStream* input)
                 mExtraElements = arrayWithLength<unsigned short>(count, true);
                 if (compression == 1)
                 {
-                    compressor->DecompressRLE(mExtraElements.data, &mExtraElements.length, extra.data, extra.length);
+                    Compression::getCompression()->DecompressRLE(mExtraElements.data, &mExtraElements.length, extra.data, extra.length);
                 }
                 else if (compression == 3)
                 {
-                    compressor->DecompressLZXRLE(mExtraElements.data, &mExtraElements.length, extra.data, extra.length);
+                    Compression::getCompression()->DecompressLZXRLE(mExtraElements.data, &mExtraElements.length, extra.data, extra.length);
                 }
                 else
                 {
-                    compressor->m_decompressionType = static_cast<Compression::ECompressionTypes>(compression);
-                    compressor->DecompressLZXRLE(mExtraElements.data, &mExtraElements.length, extra.data, extra.length);
-                    compressor->m_decompressionType = Compression::eCompressionTypes_Zlib;
+                    Compression::getCompression()->m_decompressionType = static_cast<Compression::ECompressionTypes>(compression);
+                    Compression::getCompression()->DecompressLZXRLE(mExtraElements.data, &mExtraElements.length, extra.data, extra.length);
+                    Compression::getCompression()->m_decompressionType = Compression::eCompressionTypes_Zlib;
                 }
                 mExtraElements.length >>= 1;
                 delete[] extra.data;
@@ -507,16 +550,14 @@ void ConsoleSchematicFile::load(DataInputStream* input)
                 int z = tag->getInt(L"Z");
                 if (!tag->contains(L"X2"))
                 {
-                    std::string name = convWstringToString(tag->getString(L"Name"));
-                    mNamedPositions.push_back(DevSaveDataManager::NamedPositionOrVolume(name, BlockPos(x, y, z)));
+                    mNamedPositions.push_back(DevSaveDataManager::NamedPositionOrVolume(convWstringToString(tag->getString(L"Name")), BlockPos(x, y, z)));
                 }
                 else
                 {
                     int x2 = tag->getInt(L"X2");
                     int y2 = tag->getInt(L"Y2");
                     int z2 = tag->getInt(L"Z2");
-                    std::string name = convWstringToString(tag->getString(L"Name"));
-                    mNamedPositions.push_back(DevSaveDataManager::NamedPositionOrVolume(name, BlockPos(x, y, z), BlockPos(x2, y2, z2)));
+                    mNamedPositions.push_back(DevSaveDataManager::NamedPositionOrVolume(convWstringToString(tag->getString(L"Name")), BlockPos(x, y, z), BlockPos(x2, y2, z2)));
                 }
             }
         }
@@ -1296,7 +1337,7 @@ void ConsoleSchematicFile::_applySchematicData(Level* level, AABB* area, ESchema
     mPasteData.mLevel = level;
     mPasteData.mArea->set(area);
     mPasteData.mRotation = rotate ? rotation : eSchematicRotation_0;
-    mPasteData.mMirror = rotate ? (ESchematicMirror)mPasteState : eSchematicMirror_None;
+    mPasteData.mMirror = rotate ? mMirror : eSchematicMirror_None;
     mPasteData.mMinChunkX = (int)std::floor(area->mMinX) >> 4;
     mPasteData.mMaxChunkX = (int)std::floor(area->mMaxX) >> 4;
     mPasteData.mCurrentChunkX = mPasteData.mMinChunkX;
@@ -1319,24 +1360,18 @@ void ConsoleSchematicFile::_applySchematicData(Level* level, AABB* area, ESchema
 }
 bool ConsoleSchematicFile::undoPrevious(Level* level)
 {
-    if (!mIncludeAir)
+    if (!mCanUndo)
     {
         return false;
     }
 
     Minecraft::GetInstance()->mGameRenderer->DisableUpdateThread(0);
 
-    int minX = (int)std::floor(mCopyArea->mMinX);
-    int maxX = (int)std::floor(mCopyArea->mMaxX);
-    int minY = (int)std::floor(mCopyArea->mMinY);
-    int maxY = (int)std::floor(mCopyArea->mMaxY);
-    int minZ = (int)std::floor(mCopyArea->mMinZ);
-    int maxZ = (int)std::floor(mCopyArea->mMaxZ);
-    for (int x = minX; x < maxX; ++x)
+    for (int x = (int)std::floor(mUndoArea->mMinX); x < (int)std::floor(mUndoArea->mMaxX); ++x)
     {
-        for (int y = minY; y < maxY; ++y)
+        for (int y = (int)std::floor(mUndoArea->mMinY); y < (int)std::floor(mUndoArea->mMaxY); ++y)
         {
-            for (int z = minZ; z < maxZ; ++z)
+            for (int z = (int)std::floor(mUndoArea->mMinZ); z < (int)std::floor(mUndoArea->mMaxZ); ++z)
             {
                 BlockPos pos(x, y, z);
                 level->getChunkAt(pos)->removeBlockEntity(pos);
@@ -1344,18 +1379,21 @@ bool ConsoleSchematicFile::undoPrevious(Level* level)
         }
     }
 
-    AABB* bounds = AABB::newTemp(mCopyArea->mMinX, mCopyArea->mMinY, mCopyArea->mMinZ, mCopyArea->mMaxX, mCopyArea->mMaxY, mCopyArea->mMaxZ);
-    std::vector<boost::shared_ptr<Entity> > entities;
-    level->getEntities(boost::shared_ptr<Entity>(), bounds, &entities);
+    AABB* bounds = AABB::newTemp(mUndoArea->mMinX, mUndoArea->mMinY, mUndoArea->mMinZ, mUndoArea->mMaxX, mUndoArea->mMaxY, mUndoArea->mMaxZ);
+    std::vector<boost::shared_ptr<Entity> > entities(*level->getEntities(boost::shared_ptr<Entity>(), bounds, NULL));
     for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities.begin(); it != entities.end(); ++it)
     {
-        level->removeEntity(*it);
+        boost::shared_ptr<Entity> entity = *it;
+        if ((entity->GetType() & EntityType::PLAYER) != EntityType::PLAYER)
+        {
+            level->removeEntity(entity);
+        }
     }
 
-    _applySchematicData(level, mCopyArea, eSchematicRotation_0, mUndoElements, mUndoExtraElements, mData, mExtraData, mUndoBlockEntities, mUndoEntities, mUndoNamedPositions, mUndoWidth, mUndoHeight, mUndoDepth, true, true, false);
+    _applySchematicData(level, mUndoArea, eSchematicRotation_0, mUndoElements, mUndoExtraElements, mUndoData, mUndoExtraData, mUndoBlockEntities, mUndoEntities, mNamedPositions, mUndoWidth, mUndoHeight, mUndoDepth, true, true, false);
 
     Minecraft::GetInstance()->mGameRenderer->EnableUpdateThread(0);
-    mIncludeAir = false;
+    mCanUndo = false;
     return true;
 }
 long long ConsoleSchematicFile::writeSchematicIntoArrays(int chunkX, int chunkY, int chunkZ, int x0, int y0, int z0, int x1, int y1, int z1, PasteData* paste, arrayWithLength<unsigned short> elements, arrayWithLength<unsigned short> extraElements, arrayWithLength<unsigned char> data, arrayWithLength<unsigned char> extraData)
@@ -1416,8 +1454,7 @@ void ConsoleSchematicFile::tick()
 
                         const Direction* direction =
                             HandleRotation(mPasteData.mLevel->getBlockState(pos)->getValue(property), mPasteData.mMirror, eSchematicRotation_0);
-                        TypedBoxed<const Direction*> boxed(direction);
-                        mPasteData.mLevel->setBlockAndUpdate(pos, mPasteData.mLevel->getBlockState(pos)->setBoxedValue(property, &boxed));
+                        mPasteData.mLevel->setBlockAndUpdate(pos, mPasteData.mLevel->getBlockState(pos)->setValue(property, direction));
                     }
                 }
             }
@@ -1429,23 +1466,26 @@ void ConsoleSchematicFile::tick()
     LevelChunk* chunk = mPasteData.mLevel->getChunk(mPasteData.mCurrentChunkX, mPasteData.mCurrentChunkZ);
     if (!chunk->isEmpty())
     {
-        double minX = mPasteData.mCurrentChunkX * 16.0;
-        double minZ = mPasteData.mCurrentChunkZ * 16.0;
-        AABB* chunkArea = AABB::newTemp(minX, 0.0, minZ, minX + 16.0, 255.0, minZ + 16.0);
+        int minX = chunk->x * 16;
+        int minZ = chunk->z * 16;
+        AABB* chunkArea = AABB::newTemp(minX, 0.0, minZ, minX + 16, 255.0, minZ + 16);
         applyBlocksAndData(chunk, &mPasteData);
         applyLighting(chunk, chunkArea, mPasteData.mArea, mPasteData.mRotation);
         applyBlockEntities(chunk, chunkArea, &mPasteData, mPasteData.mLevel);
 
-        int minY = (int)std::floor(mPasteData.mArea->mMinY);
-        int maxY = (int)std::floor(mPasteData.mArea->mMaxY);
-        for (int x = (int)minX; x < (int)minX + 16; ++x)
+        int chunkX = mPasteData.mCurrentChunkX;
+        int chunkZ = mPasteData.mCurrentChunkZ;
+        for (int x = chunkX * 16; x < (chunkX + 1) * 16; ++x)
         {
-            for (int y = minY; y <= maxY && y < SCHEMATIC_WORLD_HEIGHT; ++y)
+            for (int y = (int)std::floor(mPasteData.mArea->mMinY); y <= (int)std::floor(mPasteData.mArea->mMaxY); ++y)
             {
-                for (int z = (int)minZ; z < (int)minZ + 16; ++z)
+                if (y < SCHEMATIC_WORLD_HEIGHT)
                 {
-                    BlockPos pos(x, y, z);
-                    static_cast<ServerLevel*>(mPasteData.mLevel)->getChunkMap()->blockChanged(pos);
+                    for (int z = chunkZ * 16; z < (chunkZ + 1) * 16; ++z)
+                    {
+                        BlockPos pos(x, y, z);
+                        static_cast<ServerLevel*>(mPasteData.mLevel)->getChunkMap()->blockChanged(pos);
+                    }
                 }
             }
         }
@@ -1462,17 +1502,14 @@ void ConsoleSchematicFile::tick()
 std::vector<boost::shared_ptr<BlockEntity> >* ConsoleSchematicFile::getBlockEntitiesInRegion(LevelChunk* chunk, int x0, int y0, int z0, int x1, int y1, int z1)
 {
     std::vector<boost::shared_ptr<BlockEntity> >* result = new std::vector<boost::shared_ptr<BlockEntity> >();
-    if (chunk == 0)
-    {
-        return result;
-    }
     LevelChunk::BlockEntityMap* blockEntities = chunk->getBlockEntities();
     for (LevelChunk::BlockEntityMap::iterator it = blockEntities->begin(); it != blockEntities->end(); ++it)
     {
-        BlockPos pos = it->second->getBlockPos();
+        boost::shared_ptr<BlockEntity> blockEntity = it->second;
+        BlockPos pos = blockEntity->getBlockPos();
         if (pos.x >= x0 && pos.y >= y0 && pos.z >= z0 && pos.x < x1 && pos.y < y1 && pos.z < z1)
         {
-            result->push_back(it->second);
+            result->push_back(blockEntity);
         }
     }
     return result;
@@ -1550,9 +1587,10 @@ ListTag* ConsoleSchematicFile::getBlockEntitiesInRegionAsTag(Level* level, int x
     ListTag* result = new ListTag();
     std::vector<std::pair<BlockPos*, CompoundTag*> > values;
     getBlockEntitiesInRegion(level, x0, y0, z0, x1, y1, z1, values);
-    for (std::vector<std::pair<BlockPos*, CompoundTag*> >::iterator it = values.begin(); it != values.end(); ++it)
+    for (int i = 0; i < (int)values.size(); ++i)
     {
-        result->add(it->second);
+        std::pair<BlockPos*, CompoundTag*>& entry = values[i];
+        result->add(entry.second);
     }
     return result;
 }
@@ -1562,9 +1600,10 @@ ListTag* ConsoleSchematicFile::getEntitiesInRegionAsTag(Level* level, int x0, in
     ListTag* result = new ListTag();
     std::vector<std::pair<Vec3*, CompoundTag*> > values;
     getEntitiesInRegion(level, x0, y0, z0, x1, y1, z1, values);
-    for (std::vector<std::pair<Vec3*, CompoundTag*> >::iterator it = values.begin(); it != values.end(); ++it)
+    for (int i = 0; i < (int)values.size(); ++i)
     {
-        result->add(it->second);
+        std::pair<Vec3*, CompoundTag*>& entry = values[i];
+        result->add(entry.second);
     }
     return result;
 }
@@ -1578,71 +1617,89 @@ bool ConsoleSchematicFile::generateSchematicFile(DataOutputStream* output, Level
         return false;
     }
 
-    output->writeInt(3);
-    output->writeByte((unsigned char)compression);
-    output->writeInt(width);
-    output->writeInt(height);
-    output->writeInt(depth);
+    if (output != 0)
+    {
+        output->writeInt(3);
+        output->writeByte((unsigned char)compression);
+        output->writeInt(width);
+        output->writeInt(height);
+        output->writeInt(depth);
+    }
 
     unsigned int elementCount = calculateFullElementSize(width, height, depth);
     arrayWithLength<unsigned short> elements(elementCount, true);
     arrayWithLength<unsigned short> extraElements(elementCount, true);
     fillArraysFromLevel(level, x0, y0, z0, width, height, depth, &elements, &extraElements, 0, 0);
 
-    unsigned int byteCount = elementCount * sizeof(unsigned short);
-    arrayWithLength<unsigned char> compressed(byteCount, true);
-    unsigned int compressedSize = byteCount;
+    arrayWithLength<unsigned char> compressed(elements.length * 2, true);
     if (compression == Compression::eCompressionTypes_RLE)
-        Compression::getCompression()->CompressRLE(compressed.data, &compressedSize, elements.data, byteCount);
+        Compression::getCompression()->CompressRLE(compressed.data, &compressed.length, elements.data, elements.length * 2);
     else if (compression == Compression::eCompressionTypes_LZXRLE)
-        Compression::getCompression()->CompressLZXRLE(compressed.data, &compressedSize, elements.data, byteCount, 0);
+        Compression::getCompression()->CompressLZXRLE(compressed.data, &compressed.length, elements.data, elements.length * 2, 0);
     else
-        std::memcpy(compressed.data, elements.data, byteCount);
-    compressed.length = compressedSize;
-    output->writeInt(compressedSize);
-    output->write(compressed);
-
-    compressedSize = byteCount;
-    if (compression == Compression::eCompressionTypes_RLE)
-        Compression::getCompression()->CompressRLE(compressed.data, &compressedSize, extraElements.data, byteCount);
-    else if (compression == Compression::eCompressionTypes_LZXRLE)
-        Compression::getCompression()->CompressLZXRLE(compressed.data, &compressedSize, extraElements.data, byteCount, 0);
-    else
-        std::memcpy(compressed.data, extraElements.data, byteCount);
-    compressed.length = compressedSize;
-    output->writeInt(compressedSize);
-    output->write(compressed);
-
+        std::memcpy(compressed.data, elements.data, elements.length * 2);
+    if (output != 0)
+    {
+        output->writeInt(compressed.length);
+        output->write(compressed);
+    }
     delete[] compressed.data;
+
+    arrayWithLength<unsigned char> extraCompressed(extraElements.length * 2, true);
+    if (compression == Compression::eCompressionTypes_RLE)
+        Compression::getCompression()->CompressRLE(extraCompressed.data, &extraCompressed.length, extraElements.data, extraElements.length * 2);
+    else if (compression == Compression::eCompressionTypes_LZXRLE)
+        Compression::getCompression()->CompressLZXRLE(extraCompressed.data, &extraCompressed.length, extraElements.data, extraElements.length * 2, 0);
+    else
+        std::memcpy(extraCompressed.data, extraElements.data, extraElements.length * 2);
+    if (output != 0)
+    {
+        output->writeInt(extraCompressed.length);
+        output->write(extraCompressed);
+    }
+    delete[] extraCompressed.data;
+
     delete[] elements.data;
     delete[] extraElements.data;
 
     CompoundTag tags;
-    tags.put(L"TileEntities", getBlockEntitiesInRegionAsTag(level, x0, y0, z0, x1, y1, z1));
-    tags.put(L"Entities", getEntitiesInRegionAsTag(level, x0, y0, z0, x1, y1, z1));
-    NbtIo::write(&tags, output);
+    ListTag* blockEntities = getBlockEntitiesInRegionAsTag(level, x0, y0, z0, x0 + width, y0 + height, z0 + depth);
+    tags.put(L"TileEntities", blockEntities);
+    ListTag* entities = getEntitiesInRegionAsTag(level, x0, y0, z0, x0 + width, y0 + height, z0 + depth);
+    tags.put(L"Entities", entities);
+    if (output != 0)
+    {
+        NbtIo::write(&tags, output);
+    }
     return true;
 }
+
 void ConsoleSchematicFile::applySchematicFile(BlockTransaction* transaction)
 {
-    int xOffset = (mWidth - transaction->mSize.x) / 2;
-    int yOffset = mHeight - transaction->mSize.y;
-    int zOffset = (mDepth - transaction->mSize.z) / 2;
-    for (int x = 0; x < transaction->mSize.x; ++x)
+    int sizeX = transaction->mSize.x;
+    int sizeZ = transaction->mSize.z;
+    int sizeY = transaction->mSize.y;
+    int xOffset = (mWidth - sizeX) / 2;
+    int yOffset = mHeight - sizeY;
+    int zOffset = (mDepth - sizeZ) / 2;
+    for (int x = 0; x < sizeX; ++x)
     {
-        for (int z = 0; z < transaction->mSize.z; ++z)
+        for (int z = 0; z < sizeZ; ++z)
         {
-            for (int y = 0; y < transaction->mSize.y; ++y)
+            for (int y = 0; y < sizeY; ++y)
             {
                 int sx = x + xOffset;
                 int sy = y + yOffset;
                 int sz = z + zOffset;
-                unsigned short element = 0;
+                Vec3i position(x, y, z);
                 if (sx >= 0 && sx < mWidth && sy >= 0 && sy < mHeight && sz >= 0 && sz < mDepth)
                 {
-                    element = mElements.data[(sx * mDepth * mHeight) + (sz * mHeight) + sy];
+                    transaction->setElement(position, mElements.data[(sx * mDepth * mHeight) + (sz * mHeight) + sy]);
                 }
-                transaction->setElement(Vec3i(x, y, z), element);
+                else
+                {
+                    transaction->setElement(position, 0);
+                }
             }
         }
     }

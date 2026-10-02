@@ -19,21 +19,26 @@
 #include "game/entity/mob/SharedMonsterAttributes.hpp"
 #include "game/world/generation/LookAtPlayerGoal.hpp"
 #include "game/world/generation/Player.hpp"
+#include "game/core/Mth.hpp"
 #include "game/util/AABB.hpp"
 #include "game/util/Vec3.hpp"
 #include <cmath>
 
 static const EntityDataAccessor<unsigned char>* DATA_FLAGS = NULL;
+static const int FLAG_IS_CHARGING = 1;
 
 Vex::Vex(Level* level)
-    : Monster(level), owner(), boundOrigin(0), hasLimitedLife(false), limitedLife(0)
+    : Monster(level), owner()
 {
     fjDerivedCtorCalls();
-    mNoPhysics = true;
+    mFireImmune = true;
     delete mMoveControl;
     mMoveControl = new VexMoveControl(this);
     setSize(0.4f, 0.8f);
     mExperienceReward = 3;
+    boundOrigin = 0;
+    hasLimitedLife = false;
+    limitedLife = 0;
 }
 
 Vex::~Vex() { delete boundOrigin; }
@@ -94,7 +99,10 @@ void Vex::readAdditionalSaveData(CompoundTag* tag)
 {
     Mob::readAdditionalSaveData(tag);
     if (tag->contains(L"BoundX"))
-        setBoundOrigin(new BlockPos(tag->getInt(L"BoundX"), tag->getInt(L"BoundY"), tag->getInt(L"BoundZ")));
+    {
+        if (boundOrigin != 0) delete boundOrigin;
+        boundOrigin = new BlockPos(tag->getInt(L"BoundX"), tag->getInt(L"BoundY"), tag->getInt(L"BoundZ"));
+    }
     if (tag->contains(L"LifeTicks")) setLimitedLife(tag->getInt(L"LifeTicks"));
 }
 void Vex::addAdditonalSaveData(CompoundTag* tag)
@@ -108,25 +116,26 @@ void Vex::addAdditonalSaveData(CompoundTag* tag)
     }
     if (hasLimitedLife) tag->putInt(L"LifeTicks", limitedLife);
 }
-boost::shared_ptr<Mob> Vex::getOwner() { return owner; }
+boost::shared_ptr<Mob> Vex::getOwner() { return owner.lock(); }
 BlockPos* Vex::getBoundOrigin() { return boundOrigin; }
 void Vex::setBoundOrigin(BlockPos* origin)
 {
     delete boundOrigin;
     boundOrigin = origin;
 }
-bool Vex::getVexFlag(int flag) const
-{ return (mEntityData->get(DATA_FLAGS) & static_cast<unsigned char>(flag)) != 0; }
+bool Vex::getVexFlag(int flag)
+{ return (mEntityData->get(DATA_FLAGS) & flag) != 0; }
 void Vex::setVexFlag(int flag, bool value)
 {
-    const unsigned char bit = static_cast<unsigned char>(flag);
-    unsigned char flags = mEntityData->get(DATA_FLAGS);
-    flags = value ? static_cast<unsigned char>(flags | bit)
-                  : static_cast<unsigned char>(flags & static_cast<unsigned char>(~bit));
-    mEntityData->set(DATA_FLAGS, flags, true);
+    int flags = mEntityData->get(DATA_FLAGS);
+    if (value)
+        flags |= flag;
+    else
+        flags &= ~flag;
+    mEntityData->set(DATA_FLAGS, static_cast<unsigned char>(flags), true);
 }
-bool Vex::isCharging() const { return getVexFlag(0); }
-void Vex::setIsCharging(bool value) { setVexFlag(0, value); }
+bool Vex::isCharging() { return getVexFlag(FLAG_IS_CHARGING); }
+void Vex::setIsCharging(bool value) { setVexFlag(FLAG_IS_CHARGING, value); }
 void Vex::setOwner(const boost::shared_ptr<Mob>& owner)
 { this->owner = owner; }
 const SoundEvent* Vex::getAmbientSound() { return SoundEvents::VEX_AMBIENT; }
@@ -158,22 +167,20 @@ Vex::VexChargeAttackGoal::~VexChargeAttackGoal()
 }
 bool Vex::VexChargeAttackGoal::canUse()
 {
-    if (owner->getMoveControl()->hasWanted()) return false;
-    boost::shared_ptr<LivingEntity> target = owner->getTarget();
-    if (!target || owner->mRandom->nextInt(7) != 0) return false;
-    return owner->distanceToSqr(target) > 4.0;
+    if (owner->getTarget() != 0 && !owner->getMoveControl()->hasWanted() && owner->mRandom->nextInt(7) == 0)
+        return owner->distanceToSqr(owner->getTarget()) > 4.0;
+    return false;
 }
 bool Vex::VexChargeAttackGoal::canContinueToUse()
 {
-    if (!owner->getMoveControl()->hasWanted() || !owner->isCharging()) return false;
-    boost::shared_ptr<LivingEntity> target = owner->getTarget();
-    return target != 0 && target->isAlive();
+    return owner->getMoveControl()->hasWanted() && owner->isCharging() && owner->getTarget() != 0
+        && owner->getTarget()->isAlive();
 }
 void Vex::VexChargeAttackGoal::start()
 {
     boost::shared_ptr<LivingEntity> target = owner->getTarget();
     Vec3* eye = target->getEyePosition(1.0f);
-    owner->getMoveControl()->setWantedPosition(eye->x, eye->y, eye->z, 1.0);
+    owner->mMoveControl->setWantedPosition(eye->x, eye->y, eye->z, 1.0);
     owner->setIsCharging(true);
     owner->playSound(SoundEvents::VEX_CHARGE, 1.0f, 1.0f);
 }
@@ -182,17 +189,20 @@ void Vex::VexChargeAttackGoal::tick()
 {
     boost::shared_ptr<LivingEntity> target = owner->getTarget();
     const AABB* targetBox = target->mBoundingBox;
-    if (targetBox->intersects(owner->mBoundingBox->mMinX, owner->mBoundingBox->mMinY,
-                              owner->mBoundingBox->mMinZ, owner->mBoundingBox->mMaxX,
-                              owner->mBoundingBox->mMaxY, owner->mBoundingBox->mMaxZ))
+    if (owner->mBoundingBox->intersects(targetBox->mMinX, targetBox->mMinY, targetBox->mMinZ,
+                                        targetBox->mMaxX, targetBox->mMaxY, targetBox->mMaxZ))
     {
         owner->doHurtTarget(target);
         owner->setIsCharging(false);
     }
-    else if (owner->distanceToSqr(target) < 9.0)
+    else
     {
-        Vec3* eye = target->getEyePosition(1.0f);
-        owner->getMoveControl()->setWantedPosition(eye->x, eye->y, eye->z, 1.0);
+        const double distance = owner->distanceToSqr(target);
+        if (distance < 9.0)
+        {
+            Vec3* eye = target->getEyePosition(1.0f);
+            owner->mMoveControl->setWantedPosition(eye->x, eye->y, eye->z, 1.0);
+        }
     }
 }
 std::wstring Vex::VexChargeAttackGoal::getName() { return L"Vex Charging Attack"; }
@@ -206,15 +216,12 @@ bool Vex::VexCopyOwnerTargetGoal::canUse()
 {
     Vex* vex = static_cast<Vex*>(mMob);
     boost::shared_ptr<Mob> owner = vex->getOwner();
-    if (!owner) return false;
-    boost::shared_ptr<LivingEntity> target = owner->getTarget();
-    return target && canAttack(target, false);
+    return owner != 0 && owner->getTarget() != 0 && canAttack(owner->getTarget(), false);
 }
 void Vex::VexCopyOwnerTargetGoal::start()
 {
-    Vex* vex = static_cast<Vex*>(mMob);
-    boost::shared_ptr<Mob> owner = vex->getOwner();
-    vex->setTarget(owner->getTarget());
+    boost::shared_ptr<Mob> owner = static_cast<Vex*>(mMob)->getOwner();
+    static_cast<Vex*>(mMob)->setTarget(owner->getTarget());
     TargetGoal::start();
 }
 std::wstring Vex::VexCopyOwnerTargetGoal::getName() { return L"Vex Copy Owner Target"; }
@@ -226,36 +233,36 @@ Vex::VexMoveControl::~VexMoveControl()
 void Vex::VexMoveControl::tick()
 {
     Vex* vex = static_cast<Vex*>(mMob);
-    if (getOperation() != MOVE_TO) return;
-    const double dx = getWantedX() - vex->mX;
-    const double dy = getWantedY() - vex->mY;
-    const double dz = getWantedZ() - vex->mZ;
+    if (mOperation != MOVE_TO) return;
+    const double dx = mWantedX - vex->mX;
+    const double dy = mWantedY - vex->mY;
+    const double dz = mWantedZ - vex->mZ;
     const double distance = std::sqrt(dx * dx + dy * dy + dz * dz);
     if (distance < vex->mBoundingBox->getSize())
     {
-        setOperation(WAIT);
+        mOperation = WAIT;
         vex->mXd *= 0.5;
         vex->mYd *= 0.5;
         vex->mZd *= 0.5;
         return;
     }
-    vex->mXd += dx / distance * 0.05 * getSpeedModifier();
-    vex->mYd += dy / distance * 0.05 * getSpeedModifier();
-    vex->mZd += dz / distance * 0.05 * getSpeedModifier();
-    boost::shared_ptr<LivingEntity> target = vex->getTarget();
-    if (!target)
+    vex->mXd += dx / distance * 0.05 * mSpeedModifier;
+    vex->mYd += dy / distance * 0.05 * mSpeedModifier;
+    vex->mZd += dz / distance * 0.05 * mSpeedModifier;
+    if (!vex->getTarget())
     {
-        const float rotation = static_cast<float>(-std::atan2(vex->mXd, vex->mZd)
-                                                   * 57.2957763671875f);
+        const float rotation = -static_cast<float>(std::atan2(vex->mXd, vex->mZd)) * Mth::RAD_TO_DEG;
         vex->mYRot = rotation;
         vex->mYBodyRot = rotation;
-        return;
     }
-    const float rotation = static_cast<float>(-std::atan2(target->mX - vex->mX,
-                                                           target->mZ - vex->mZ)
-                                               * 57.2957763671875f);
-    vex->mYRot = rotation;
-    vex->mYBodyRot = rotation;
+    else
+    {
+        const double targetDx = vex->getTarget()->mX - vex->mX;
+        const double targetDz = vex->getTarget()->mZ - vex->mZ;
+        const float rotation = -static_cast<float>(std::atan2(targetDx, targetDz)) * Mth::RAD_TO_DEG;
+        vex->mYRot = rotation;
+        vex->mYBodyRot = rotation;
+    }
 }
 
 Vex::VexRandomMoveGoal::VexRandomMoveGoal(Vex* value) : Goal(), owner(value)
@@ -271,15 +278,16 @@ bool Vex::VexRandomMoveGoal::canContinueToUse() { return false; }
 void Vex::VexRandomMoveGoal::tick()
 {
     const BlockPos* origin = owner->getBoundOrigin();
-    BlockPos current = origin != 0 ? *origin : BlockPos(owner);
+    if (origin == 0) origin = new BlockPos(owner);
+    Random* random = owner->mRandom;
+    Level* level = owner->mLevel;
     for (int attempt = 0; attempt != 3; ++attempt)
     {
-        const BlockPos candidate = current.offset(owner->mRandom->nextInt(15) - 7,
-                                                   owner->mRandom->nextInt(11) - 5,
-                                                   owner->mRandom->nextInt(15) - 7);
-        if (!owner->mLevel->isEmptyBlock(candidate)) continue;
-        owner->getMoveControl()->setWantedPosition(candidate.x + 0.5, candidate.y + 0.5,
-                                                    candidate.z + 0.5, 0.25);
+        const BlockPos candidate = origin->offset(random->nextInt(15) - 7, random->nextInt(11) - 5,
+                                                  random->nextInt(15) - 7);
+        if (!level->isEmptyBlock(candidate)) continue;
+        owner->mMoveControl->setWantedPosition(candidate.x + 0.5, candidate.y + 0.5,
+                                               candidate.z + 0.5, 0.25);
         if (!owner->getTarget())
             owner->getLookControl()->setLookAt(candidate.x + 0.5, candidate.y + 0.5,
                                                candidate.z + 0.5, 180.0f, 20.0f);

@@ -14,6 +14,11 @@ TickNextTickData::TickNextTickData(const BlockPos& pos, Block* block)
     this->priorityTilt = 0;
 }
 
+Block* TickNextTickData::getBlock()
+{
+    return block;
+}
+
 bool TickNextTickData::equals(const TickNextTickData* other) const
 {
     if (other == NULL)

@@ -229,6 +229,11 @@ std::wstring Direction::getName() const
     return name;
 }
 
+Vec3i Direction::getNormal() const
+{
+    return *normal;
+}
+
 const Direction* Direction::getOpposite() const
 {
     return from3DDataValue(oppositeIndex);

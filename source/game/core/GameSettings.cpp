@@ -30,7 +30,7 @@ bool gFestiveEvent;
 bool gSeasonalEvent;
 extern CInput* g_pInput;
 
-extern "C" void DefineActions()
+void DefineActions()
 {
     static const unsigned char defaultMappings[3][25] =
     {
@@ -674,7 +674,7 @@ void GameSettings::updateToLatestVersionFrom(unsigned short version, int profile
     }
 }
 
-uint32_t GameSettings::OldProfileVersionCallback(void*, unsigned char* data, unsigned short version, int profile)
+int GameSettings::OldProfileVersionCallback(void*, unsigned char* data, unsigned short version, int profile)
 {
     if (version < 15)
     {

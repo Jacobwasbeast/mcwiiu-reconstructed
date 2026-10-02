@@ -344,7 +344,7 @@ bool Turtle::isFood(const not_null_ptr<ItemInstance>& itemInstance)
     return Item::getBlockId(itemInstance->getItem()) == BlockId::SEA_GRASS;
 }
 
-double Turtle::getWalkTargetValue(const BlockPos& pos)
+float Turtle::getWalkTargetValue(const BlockPos& pos)
 {
     if (mLevel->getBlockState(pos)->getMaterial() == Material::WATER) return 10.0f;
     return Animal::getWalkTargetValue(pos);
