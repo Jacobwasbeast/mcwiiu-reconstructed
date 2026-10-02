@@ -124,22 +124,17 @@ Item* ArmorItem::ArmorMaterial::getTierItem() const
         return Items::ironIngot;
     }
 
-    if (this == IRON)
-    {
-        return Items::ironIngot;
-    }
-
     if (this == GOLD)
     {
         return Items::goldIngot;
     }
 
-    if (this == DIAMOND)
+    if (this == IRON)
     {
-        return Items::diamond;
+        return Items::ironIngot;
     }
 
-    if (this == TURTLE)
+    if (this == DIAMOND)
     {
         return Items::diamond;
     }
@@ -218,7 +213,7 @@ ArmorItem::ArmorItem(const ArmorMaterial* material, int renderIndex, const Equip
     mRenderIndex = renderIndex;
     mMaterial = material;
     setMaxDamage(material->getHealthForSlot(slot));
-    setMaxStackSize(1);
+    mMaxStackSize = 1;
     mSlot = slot;
     DispenserBlock::DISPENSER_REGISTRY.add(this, new ArmorDispenseItemBehavior());
 }

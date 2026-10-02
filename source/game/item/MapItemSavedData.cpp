@@ -30,7 +30,7 @@ MapItemSavedData::MapItemSavedData(const std::wstring& id)
 
 MapItemSavedData::~MapItemSavedData()
 {
-    delete[] mColors.data;
+    delete mColors.data;
 }
 
 void MapItemSavedData::setOrigin(double x, double z, int scale)
@@ -42,7 +42,7 @@ void MapItemSavedData::setOrigin(double x, double z, int scale)
 
 boost::shared_ptr<MapItemSavedData::HoldingPlayer> MapItemSavedData::getHoldingPlayer(boost::shared_ptr<Player> player)
 {
-    boost::unordered_map<boost::shared_ptr<Player>, boost::shared_ptr<HoldingPlayer>, PlayerKeyHash, PlayerKeyEq>::iterator it = mCarriedBy.find(player);
+    boost::unordered_map<boost::shared_ptr<Player>, boost::shared_ptr<HoldingPlayer>, _PlayerKeyHash, _PlayerKeyEq>::iterator it = mCarriedBy.find(player);
     if (it != mCarriedBy.end()) return it->second;
     boost::shared_ptr<HoldingPlayer> holding(new HoldingPlayer(player, this));
     mCarriedBy[player] = holding;
@@ -283,7 +283,7 @@ std::vector<MapDecoration> MapItemSavedData::fjGetAllDecorations()
 
 boost::shared_ptr<ClientboundMapItemDataPacket> MapItemSavedData::getUpdatePacket(not_null_ptr<ItemInstance> item, Level*, boost::shared_ptr<Player> player)
 {
-    boost::unordered_map<boost::shared_ptr<Player>, boost::shared_ptr<HoldingPlayer>, PlayerKeyHash, PlayerKeyEq>::iterator it = mCarriedBy.find(player);
+    boost::unordered_map<boost::shared_ptr<Player>, boost::shared_ptr<HoldingPlayer>, _PlayerKeyHash, _PlayerKeyEq>::iterator it = mCarriedBy.find(player);
     if (it == mCarriedBy.end()) return boost::shared_ptr<ClientboundMapItemDataPacket>();
     return it->second->nextUpdatePacket(item);
 }
@@ -368,20 +368,22 @@ bool MapItemSavedData::fjIsCompletelyExplored() const
 
 void MapItemSavedData::fjRemoveDecorationByEntityId(int id)
 {
-    mDecorationsById.erase(id);
+    boost::unordered_map<int, MapDecoration>::iterator it = mDecorationsById.find(id);
+    if (it != mDecorationsById.end())
+    {
+        mDecorationsById.erase(it);
+    }
 }
 
 MapItemSavedData::HoldingPlayer::HoldingPlayer(boost::shared_ptr<Player> player, MapItemSavedData* data)
-    : mPlayer(player), mDirty(true), mMinX(0), mMinY(0), mMaxX(127), mMaxY(127), mTick(0), mStep(0),
-      mReserved0x30(false), mMapData(data)
+    : mPlayer(player), mDirty(true), mMinX(0), mMinY(0), mMaxX(127), mMaxY(127), mTick(0), mReserved0x20(0),
+      mReserved0x24(NULL), mReserved0x28(0), mStep(0), mReserved0x30(false), mMapData(data)
 {
-    mReserved0x20[0] = 0;
-    mReserved0x20[1] = 0;
-    mReserved0x20[2] = 0;
 }
 
 MapItemSavedData::HoldingPlayer::~HoldingPlayer()
 {
+    delete mReserved0x24;
 }
 
 void MapItemSavedData::HoldingPlayer::markDirty(int x, int y)

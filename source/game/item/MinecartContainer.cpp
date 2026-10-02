@@ -98,7 +98,8 @@ bool MinecartContainer::isEmpty()
 {
     for (unsigned int i = 0; i < mItems.size(); ++i)
     {
-        if (!mItems[i]->isEmpty())
+        not_null_ptr<ItemInstance> item = mItems[i];
+        if (!item->isEmpty())
         {
             return false;
         }
@@ -108,22 +109,19 @@ bool MinecartContainer::isEmpty()
 
 not_null_ptr<ItemInstance> MinecartContainer::getItem(unsigned int slot)
 {
-    boost::shared_ptr<Player> player;
-    unpackLootTable(player);
+    unpackLootTable(boost::shared_ptr<Player>());
     return mItems[slot];
 }
 
 not_null_ptr<ItemInstance> MinecartContainer::removeItem(unsigned int slot, int count)
 {
-    boost::shared_ptr<Player> player;
-    unpackLootTable(player);
+    unpackLootTable(boost::shared_ptr<Player>());
     return ContainerHelper::removeItem(mItems, slot, count);
 }
 
 not_null_ptr<ItemInstance> MinecartContainer::removeItemNoUpdate(int slot)
 {
-    boost::shared_ptr<Player> player;
-    unpackLootTable(player);
+    unpackLootTable(boost::shared_ptr<Player>());
     not_null_ptr<ItemInstance> item = mItems[slot];
     if (item->isEmpty())
     {
@@ -198,11 +196,10 @@ int MinecartContainer::getContainerDataCount()
 
 void MinecartContainer::clearContent()
 {
-    boost::shared_ptr<Player> player;
-    unpackLootTable(player);
+    unpackLootTable(boost::shared_ptr<Player>());
     for (unsigned int i = 0; i < mItems.size(); ++i)
     {
-        mItems[i] = ItemInstance::EMPTY;
+        mItems[i] = mItems.defaultValue;
     }
 }
 
@@ -246,9 +243,7 @@ void MinecartContainer::destroy(const DamageSource* source)
     Minecart::destroy(source);
     if (mLevel->getGameRules()->getBoolean(GameRules::RULE_DOENTITYDROPS))
     {
-        boost::shared_ptr<Entity> entity = shared_from_this();
-        boost::shared_ptr<MinecartContainer> minecart = boost::static_pointer_cast<MinecartContainer>(entity);
-        Containers::dropContents(mLevel, entity, boost::static_pointer_cast<Container>(minecart));
+        Containers::dropContents(mLevel, shared_from_this(), boost::static_pointer_cast<MinecartContainer>(shared_from_this()));
     }
 }
 
@@ -262,9 +257,7 @@ void MinecartContainer::remove()
 {
     if (mDropContentsWhenDead)
     {
-        boost::shared_ptr<Entity> entity = shared_from_this();
-        boost::shared_ptr<MinecartContainer> minecart = boost::static_pointer_cast<MinecartContainer>(entity);
-        Containers::dropContents(mLevel, entity, boost::static_pointer_cast<Container>(minecart));
+        Containers::dropContents(mLevel, shared_from_this(), boost::static_pointer_cast<MinecartContainer>(shared_from_this()));
     }
     Entity::remove();
 }
@@ -272,11 +265,7 @@ void MinecartContainer::remove()
 void MinecartContainer::addAdditonalSaveData(CompoundTag* tag)
 {
     Minecart::addAdditonalSaveData(tag);
-    if (mLootTable == NULL || StructureFeatureIO::getVersion() < 2)
-    {
-        ContainerHelper::saveAllItems(tag, mItems);
-    }
-    else
+    if (mLootTable != NULL && StructureFeatureIO::getVersion() >= 2)
     {
         tag->putString(L"LootTable", mLootTable->toString());
         if (mLootTableSeed != 0)
@@ -284,13 +273,18 @@ void MinecartContainer::addAdditonalSaveData(CompoundTag* tag)
             tag->putLong(L"LootTableSeed", mLootTableSeed);
         }
     }
+    else
+    {
+        ContainerHelper::saveAllItems(tag, mItems);
+    }
 }
 
 void MinecartContainer::readAdditionalSaveData(CompoundTag* tag)
 {
     Minecart::readAdditionalSaveData(tag);
+    delete[] mItems.items;
     mItems = NonNullList<not_null_ptr<ItemInstance> >::withSize(getContainerSize(), ItemInstance::EMPTY);
-    if (tag->contains(L"LootTable", Tag::TAG_STRING) && StructureFeatureIO::getVersion() > 1)
+    if (tag->contains(L"LootTable", Tag::TAG_STRING) && StructureFeatureIO::getVersion() >= 2)
     {
         mLootTable = new ResourceLocation(tag->getString(L"LootTable"));
         mLootTableSeed = tag->getLong(L"LootTableSeed");
@@ -311,7 +305,7 @@ bool MinecartContainer::interact(const boost::shared_ptr<Player>& player, Intera
     if (!mLevel->mIsClientSide)
     {
         boost::shared_ptr<MinecartContainer> minecart = boost::static_pointer_cast<MinecartContainer>(shared_from_this());
-        player->openContainer(boost::static_pointer_cast<Container>(minecart));
+        player->openContainer(minecart);
     }
     return true;
 }
@@ -321,9 +315,8 @@ void MinecartContainer::applyNaturalSlowdown()
     float slowdown = 0.98f;
     if (mLootTable == NULL)
     {
-        boost::shared_ptr<MinecartContainer> minecart = boost::static_pointer_cast<MinecartContainer>(shared_from_this());
-        int signal = AbstractContainerMenu::getRedstoneSignalFromContainer(
-            boost::static_pointer_cast<Container>(minecart));
+        boost::shared_ptr<Container> container = boost::static_pointer_cast<MinecartContainer>(shared_from_this());
+        int signal = AbstractContainerMenu::getRedstoneSignalFromContainer(container);
         slowdown += (15 - signal) * 0.001f;
     }
     mXd *= slowdown;

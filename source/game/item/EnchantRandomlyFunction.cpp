@@ -36,23 +36,23 @@ not_null_ptr<ItemInstance> EnchantRandomlyFunction::apply(const not_null_ptr<Ite
     {
         possibleEnchantments.clear();
 
-        const boost::unordered_map<ResourceLocation,
-                                   Enchantment*,
-                                   boost::hash<ResourceLocation>,
-                                   std::equal_to<ResourceLocation> >& registry =
-            Enchantment::enchantmentRegistry->keySet();
+        const boost::unordered_map<Enchantment*,
+                                   ResourceLocation,
+                                   boost::hash<Enchantment*>,
+                                   std::equal_to<Enchantment*> >& registry =
+            Enchantment::enchantmentRegistry->mInverseRegistry;
 
-        for (boost::unordered_map<ResourceLocation,
-                                  Enchantment*,
-                                  boost::hash<ResourceLocation>,
-                                  std::equal_to<ResourceLocation> >::const_iterator it = registry.begin();
+        for (boost::unordered_map<Enchantment*,
+                                  ResourceLocation,
+                                  boost::hash<Enchantment*>,
+                                  std::equal_to<Enchantment*> >::const_iterator it = registry.begin();
              it != registry.end();
              ++it)
         {
             if (result->getItem() == Items::book ||
-                (it->second != NULL && it->second->canEnchant(result)))
+                (it->first != NULL && it->first->canEnchant(result)))
             {
-                possibleEnchantments.push_back(it->second);
+                possibleEnchantments.push_back(it->first);
             }
         }
 

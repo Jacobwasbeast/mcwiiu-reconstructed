@@ -7,6 +7,7 @@
 #include "game/data/SavedData.hpp"
 #include "game/core/MapDecoration.hpp"
 #include "game/item/not_null_ptr.hpp"
+#include "game/ui/AbstractContainerMenu.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
 #include "game/network/ClientboundMapItemDataPacket.hpp"
 class BlockPos;
@@ -41,7 +42,9 @@ public:
         int mMaxX;
         int mMaxY;
         int mTick;
-        int mReserved0x20[3];
+        int mReserved0x20;
+        unsigned char* mReserved0x24;
+        int mReserved0x28;
         int mStep;
         bool mReserved0x30;
         MapItemSavedData* mMapData;
@@ -49,14 +52,6 @@ public:
 private:
     friend class ClientboundMapItemDataPacket;
 
-    struct PlayerKeyHash
-    {
-        std::size_t operator()(const boost::shared_ptr<Player>& player) const { return (std::size_t)player.get(); }
-    };
-    struct PlayerKeyEq
-    {
-        bool operator()(const boost::shared_ptr<Player>& left, const boost::shared_ptr<Player>& right) const { return left.get() == right.get(); }
-    };
 public:
     MapItemSavedData(const std::wstring& id);
     virtual ~MapItemSavedData();
@@ -89,7 +84,7 @@ public:
     arrayWithLength<unsigned char> mColors;
 private:
     std::vector<boost::shared_ptr<HoldingPlayer> > mHoldingPlayers;
-    boost::unordered_map<boost::shared_ptr<Player>, boost::shared_ptr<HoldingPlayer>, PlayerKeyHash, PlayerKeyEq> mCarriedBy;
+    boost::unordered_map<boost::shared_ptr<Player>, boost::shared_ptr<HoldingPlayer>, _PlayerKeyHash, _PlayerKeyEq> mCarriedBy;
     boost::unordered_map<int, MapDecoration> mDecorations;
     long long mLastUpdateTime;
     boost::unordered_map<int, MapDecoration> mDecorationsById;

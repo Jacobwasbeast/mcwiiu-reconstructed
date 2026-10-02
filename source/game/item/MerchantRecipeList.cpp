@@ -24,23 +24,14 @@ MerchantRecipeList::~MerchantRecipeList()
     {
         delete *it;
     }
-    std::vector<MerchantRecipe*>::clear();
 }
 
 void MerchantRecipeList::load(CompoundTag* tag)
 {
-    if (tag == NULL)
-    {
-        return;
-    }
     ListTag* recipes = tag->getList(L"Recipes", Tag::TAG_COMPOUND);
-    if (recipes == NULL)
-    {
-        return;
-    }
     for (int i = 0; i < recipes->size(); ++i)
     {
-        push_back(new MerchantRecipe(recipes->getCompound(i)));
+        std::vector<MerchantRecipe*>::push_back(new MerchantRecipe(recipes->getCompound(i)));
     }
 }
 
@@ -119,21 +110,22 @@ MerchantRecipe* MerchantRecipeList::getRecipeFor(not_null_ptr<ItemInstance> firs
 
 bool MerchantRecipeList::addIfNewOrBetter(MerchantRecipe* recipe)
 {
-    for (iterator it = std::vector<MerchantRecipe*>::begin(); it != std::vector<MerchantRecipe*>::end(); ++it)
+    for (unsigned int i = 0; i < std::vector<MerchantRecipe*>::size(); ++i)
     {
-        MerchantRecipe* current = *it;
-        if (current->isSame(recipe))
+        MerchantRecipe* recipe = std::vector<MerchantRecipe*>::at(i);
+        if (recipe->isSame(recipe))
         {
-            if (current->isSameSameButBetter(recipe))
+            bool replaced = false;
+            if (recipe->isSameSameButBetter(recipe))
             {
-                delete current;
-                *it = recipe;
-                return true;
+                delete (*this)[i];
+                (*this)[i] = recipe;
+                replaced = true;
             }
-            return false;
+            return replaced;
         }
     }
-    push_back(recipe);
+    std::vector<MerchantRecipe*>::push_back(recipe);
     return true;
 }
 
@@ -174,15 +166,14 @@ MerchantRecipe* MerchantRecipeList::getMatchingRecipeFor(not_null_ptr<ItemInstan
 void MerchantRecipeList::writeToStream(DataOutputStream* stream)
 {
     stream->writeByte(static_cast<unsigned char>(std::vector<MerchantRecipe*>::size()));
-    for (const_iterator it = std::vector<MerchantRecipe*>::begin(); it != std::vector<MerchantRecipe*>::end(); ++it)
+    for (unsigned int i = 0; i < std::vector<MerchantRecipe*>::size(); ++i)
     {
-        MerchantRecipe* recipe = *it;
+        MerchantRecipe* recipe = std::vector<MerchantRecipe*>::at(i);
         stream->writeItem(recipe->getBuyAItem());
         stream->writeItem(recipe->getSellItem());
         not_null_ptr<ItemInstance> buyB = recipe->getBuyBItem();
-        bool hasSecondary = !buyB->isEmpty();
-        stream->writeBoolean(hasSecondary);
-        if (hasSecondary)
+        stream->writeBoolean(!buyB->isEmpty());
+        if (!buyB->isEmpty())
         {
             stream->writeItem(buyB);
         }
@@ -200,12 +191,12 @@ void MerchantRecipeList::push_back(MerchantRecipe* recipe)
 MerchantRecipeList* MerchantRecipeList::createFromStream(DataInputStream* stream)
 {
     MerchantRecipeList* result = new MerchantRecipeList();
-    int count = stream->readUnsignedByte();
+    int count = stream->readByte();
     for (int i = 0; i < count; ++i)
     {
         not_null_ptr<ItemInstance> buyA = stream->readItem();
         not_null_ptr<ItemInstance> sell = stream->readItem();
-        not_null_ptr<ItemInstance> buyB;
+        not_null_ptr<ItemInstance> buyB = ItemInstance::EMPTY;
         if (stream->readBoolean())
         {
             buyB = stream->readItem();
@@ -226,16 +217,16 @@ MerchantRecipeList* MerchantRecipeList::createFromStream(DataInputStream* stream
 CompoundTag* MerchantRecipeList::createTag()
 {
     CompoundTag* tag = new CompoundTag();
-    ListTag* recipes = new ListTag(0);
-    for (const_iterator it = std::vector<MerchantRecipe*>::begin(); it != std::vector<MerchantRecipe*>::end(); ++it)
+    ListTag* recipes = new ListTag();
+    for (unsigned int i = 0; i < std::vector<MerchantRecipe*>::size(); ++i)
     {
-        recipes->add((*it)->createTag());
+        recipes->add(std::vector<MerchantRecipe*>::at(i)->createTag());
     }
     tag->put(L"Recipes", recipes);
     return tag;
 }
 
-MerchantRecipe*& MerchantRecipeList::at(unsigned int index)
+MerchantRecipe* MerchantRecipeList::at(unsigned int index)
 {
     return std::vector<MerchantRecipe*>::at(index);
 }

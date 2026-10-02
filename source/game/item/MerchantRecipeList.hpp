@@ -29,7 +29,7 @@ public:
     void push_back(MerchantRecipe* recipe);
     static MerchantRecipeList* createFromStream(DataInputStream* stream);
     CompoundTag* createTag();
-    MerchantRecipe*& at(unsigned int index);
+    MerchantRecipe* at(unsigned int index);
     iterator begin();
     iterator end();
     int size();

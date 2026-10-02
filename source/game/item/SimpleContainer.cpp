@@ -55,10 +55,6 @@ bool SimpleContainer::hasCustomName()
 
 std::wstring SimpleContainer::getDisplayName()
 {
-    if (hasCustomName())
-    {
-        return getCustomName();
-    }
     return getName();
 }
 
@@ -69,7 +65,7 @@ unsigned int SimpleContainer::getContainerSize()
 
 bool SimpleContainer::isEmpty()
 {
-    for (unsigned int i = 0; i < (unsigned int)mSize; ++i)
+    for (unsigned int i = 0; i < mItems.size(); ++i)
     {
         if (!mItems[i]->isEmpty())
         {
@@ -81,7 +77,7 @@ bool SimpleContainer::isEmpty()
 
 not_null_ptr<ItemInstance> SimpleContainer::getItem(unsigned int slot)
 {
-    if (slot >= (unsigned int)mSize)
+    if (slot >= mItems.size())
     {
         return ItemInstance::EMPTY;
     }
@@ -130,9 +126,9 @@ int SimpleContainer::getMaxStackSize()
 
 void SimpleContainer::setChanged()
 {
-    for (std::vector<net_minecraft_world::ContainerListener*>::iterator it = mListeners.begin(); it != mListeners.end(); ++it)
+    for (unsigned int i = 0; i < mListeners.size(); ++i)
     {
-        (*it)->containerChanged(this);
+        mListeners.at(i)->containerChanged(this);
     }
 }
 
@@ -170,9 +166,9 @@ int SimpleContainer::getContainerDataCount()
 
 void SimpleContainer::clearContent()
 {
-    for (unsigned int i = 0; i < (unsigned int)mSize; ++i)
+    for (unsigned int i = 0; i < mItems.size(); ++i)
     {
-        mItems[i] = ItemInstance::EMPTY;
+        mItems[i] = mItems.defaultValue;
     }
 }
 
@@ -183,13 +179,19 @@ void SimpleContainer::addListener(net_minecraft_world::ContainerListener* listen
 
 void SimpleContainer::removeListener(net_minecraft_world::ContainerListener* listener)
 {
-    for (std::vector<net_minecraft_world::ContainerListener*>::iterator it = mListeners.begin(); it != mListeners.end(); ++it)
+    std::vector<net_minecraft_world::ContainerListener*>::iterator it = mListeners.begin();
+    for (;;)
     {
+        if (it == mListeners.end())
+        {
+            break;
+        }
         if (*it == listener)
         {
             mListeners.erase(it);
-            return;
+            break;
         }
+        ++it;
     }
 }
 

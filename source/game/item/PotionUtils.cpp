@@ -41,7 +41,8 @@ not_null_ptr<ItemInstance> PotionUtils::setPotion(not_null_ptr<ItemInstance> ite
 
 Potion* PotionUtils::getPotion(CompoundTag* tag)
 {
-    return tag == NULL ? Potion::byId(0) : Potion::byName(tag->getString(TAG_POTION));
+    if (tag == NULL) return Potions::WATER;
+    return Potion::byName(tag->getString(TAG_POTION));
 }
 
 void PotionUtils::getCustomEffects(CompoundTag* tag, std::vector<MobEffectInstance*>* effects)
@@ -208,7 +209,7 @@ int PotionUtils::getColor(const not_null_ptr<ItemInstance>& item)
 {
     CompoundTag* tag = item->getTag();
     if (tag != NULL && tag->contains(L"CustomPotionColor", Tag::TAG_ANY_NUMERIC)) return tag->getInt(L"CustomPotionColor");
-    if (getPotion(item) == Potion::byId(0)) return 0xf800f8;
+    if (getPotion(item) == Potions::EMPTY) return 0xf800f8;
     std::vector<MobEffectInstance*>* effects = getMobEffects(item);
     int color = getColor(effects);
     delete effects;
@@ -217,7 +218,7 @@ int PotionUtils::getColor(const not_null_ptr<ItemInstance>& item)
 
 int PotionUtils::getColor(Potion* potion)
 {
-    if (potion == Potion::byId(0)) return 0xf800f8;
+    if (potion == Potions::EMPTY) return 0xf800f8;
     return getColor(&potion->getEffects());
 }
 

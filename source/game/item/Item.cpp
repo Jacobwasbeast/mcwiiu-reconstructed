@@ -22,6 +22,7 @@
 #include "game/entity/mob/MobEffects.hpp"
 #include "game/entity/projectile/ArrowItem.hpp"
 #include "game/entity/projectile/SpectralArrowItem.hpp"
+#include "game/entity/projectile/TippedArrowItem.hpp"
 #include "game/item/AirItem.hpp"
 #include "game/item/ArmorItem.hpp"
 #include "game/item/ArmorStandItem.hpp"
@@ -2104,7 +2105,7 @@ void Item::staticCtor()
         (new SpectralArrowItem())->setIconName(L"spectral_arrow")->setBaseItemTypeAndMaterial(24, 18)->setDescriptionId(IDS_ITEM_SPECTRAL_ARROW, IDS_DESC_ITEM_SPECTRAL_ARROW)->setAllowOffhand(true));
 
     registerItem(440, L"tipped_arrow",
-        (new ArrowItem())->setIconName(L"tipped_arrow_base")->setBaseItemTypeAndMaterial(24, 18)->setDescriptionId(IDS_ITEM_TIPPED_ARROW, IDS_DESC_ITEM_TIPPED_ARROW_GENERIC)->setAllowOffhand(true));
+        (new TippedArrowItem())->setIconName(L"tipped_arrow_base")->setBaseItemTypeAndMaterial(24, 18)->setDescriptionId(IDS_ITEM_TIPPED_ARROW, IDS_DESC_ITEM_TIPPED_ARROW_GENERIC)->setAllowOffhand(true));
 
     registerItem(441, L"lingering_potion",
         (new LingeringPotionItem())->setIconName(L"lingering_potion")->setDescriptionId(IDS_ITEM_LINGERING_POTION, IDS_DESC_ITEM_LINGERING_POTION));
