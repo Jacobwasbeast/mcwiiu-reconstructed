@@ -154,9 +154,9 @@ Player::Player(Level* level, const std::wstring& name) : LivingEntity(level), mA
     mLastCheckpointId = 0;
     mEndZoneEffectShown = 0;
     mRotOffs = 180.0f;
-    SetPowerupTicks(0, 0);
-    SetPowerupTicks(1, 0);
-    SetPowerupTicks(2, 0);
+    SetPowerupTicks(PowerupItems::eGlide_Timed_Powerup_ID_SlowFall, 0);
+    SetPowerupTicks(PowerupItems::eGlide_Timed_Powerup_ID_InvertControls, 0);
+    SetPowerupTicks(PowerupItems::eGlide_Timed_Powerup_ID_Invulnerable, 0);
     mShowOnMaps = gApp.GetGameHostOption(eGameHostOption_Gamertags) != 0;
     mIsGuest = false;
     setUUID(name);
@@ -612,7 +612,7 @@ void Player::Follow(bool follow)
     if (!follow) mPendingCameraId = -1;
 }
 
-double Player::getUnderwaterLightLevel()
+double Player::getUnderwaterLightLevel() const
 {
     return static_cast<double>(mField0x854);
 }
@@ -622,7 +622,7 @@ void Player::setUnderwaterLightLevel(float level)
     mField0x854 = level;
 }
 
-double Player::getUnderwaterVisionScale()
+double Player::getUnderwaterVisionScale() const
 {
     return static_cast<double>(mField0x858);
 }
@@ -999,7 +999,7 @@ void Player::AdvanceTimerAchievement(TimerAchievements achievement, int32_t tick
     mTimerAchievementTicks[achievement] += ticks;
 }
 
-void Player::SetPowerupTicks(int32_t powerup, int32_t ticks)
+void Player::SetPowerupTicks(PowerupItems::eGlide_Timed_Powerup_ID powerup, int32_t ticks)
 {
     mPowerupTicks[powerup] = ticks;
 }

@@ -249,7 +249,7 @@ public:
 
     std::wstring getDisplayName();
     bool isSendMessageEnabled();
-    void SetPowerupTicks(int32_t powerup, int32_t ticks);
+    void SetPowerupTicks(PowerupItems::eGlide_Timed_Powerup_ID powerup, int32_t ticks);
     bool isStarving();
     void tickArmor();
     static void staticCtor();
@@ -475,9 +475,9 @@ public:
     virtual void setCustomSkin(uint32_t skin);
     uint32_t CheckPowerup(PowerupItems::eGlide_Timed_Powerup_ID powerup);
     uint32_t CanRecordStats(Stat* stat, arrayWithLength<unsigned char> parameters);
-    double getUnderwaterLightLevel();
+    double getUnderwaterLightLevel() const;
     void setUnderwaterLightLevel(float level);
-    double getUnderwaterVisionScale();
+    double getUnderwaterVisionScale() const;
     void setUnderwaterVisionScale(float scale);
     void startSpinAttack();
     void stopSpinAttack();

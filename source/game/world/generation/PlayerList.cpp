@@ -1391,15 +1391,11 @@ int PlayerList::getPlayerCount()
 
 int PlayerList::getPlayerCount(ServerLevel* level)
 {
-    if (!level || !level->mDimension)
-        return 0;
-    const int dimension = level->mDimension->getType()->getId();
     int count = 0;
     for (std::vector<boost::shared_ptr<ServerPlayer> >::const_iterator it = mPlayers.begin();
          it != mPlayers.end(); ++it)
     {
-        BOOST_ASSERT(*it);
-        if (*it && (*it)->mDimension == dimension)
+        if ((*it)->mLevel == level)
             ++count;
     }
     return count;
@@ -1430,7 +1426,6 @@ bool PlayerList::isXuidBanned(PlayerUID uid)
 
 void PlayerList::resetAllChunkFlagsOutsideArea(int minX, int minZ, int maxX, int maxZ, int flags)
 {
-    for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator it = mPlayers.begin(); it != mPlayers.end(); ++it)
-        if (*it)
-            (*it)->resetChunkFlagsOutsideArea(minX, minZ, maxX, maxZ, flags);
+    for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator it = mPlayers.begin(); it < mPlayers.end(); ++it)
+        (*it)->resetChunkFlagsOutsideArea(minX, minZ, maxX, maxZ, flags);
 }
