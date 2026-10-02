@@ -9,13 +9,43 @@
 #include "game/core/HumanoidArm.hpp"
 #include "game/core/VindicationIllager.hpp"
 #include "game/util/ResourceLocation.hpp"
+#include "game/world/generation/ItemInHandLayer.hpp"
 
 static ResourceLocation vindicationIllagerLocation(TN_MOB_ILLAGER_VINDICATOR);
 
 VindicationIllagerRenderer::VindicationIllagerRenderer(EntityRenderDispatcher* dispatcher)
     : MobRenderer(dispatcher, new IllagerModel(0.0f, 0.0f, 64, 64, ModelDefinition()), 0.5f)
 {
-    addLayer(new VindicationIllagerRenderer_AnonymousItemInHandLayer(this));
+    class AnonymousItemInHandLayer : public ItemInHandLayer
+    {
+    public:
+        explicit AnonymousItemInHandLayer(VindicationIllagerRenderer* renderer)
+            : ItemInHandLayer(renderer)
+        {
+        }
+        virtual ~AnonymousItemInHandLayer()
+        {
+        }
+        virtual void render(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount,
+                            float partialTicks, float ageInTicks, float netHeadYaw, float headPitch, float scale,
+                            bool bUseDisplayList)
+        {
+            boost::shared_ptr<VindicationIllager> vindicationIllager =
+                boost::static_pointer_cast<VindicationIllager>(entity);
+            if (vindicationIllager->isAgressive())
+            {
+                ItemInHandLayer::render(entity, limbSwing, limbSwingAmount, partialTicks, ageInTicks, netHeadYaw,
+                                        headPitch, scale, bUseDisplayList);
+            }
+        }
+        virtual void translateToHand(const HumanoidArm* arm)
+        {
+            IllagerModel* model = static_cast<IllagerModel*>(mLivingEntityRenderer->getModel());
+            model->getArm(arm)->translateTo(0.0625f);
+        }
+    };
+
+    addLayer(new AnonymousItemInHandLayer(this));
 }
 
 VindicationIllagerRenderer::~VindicationIllagerRenderer()
@@ -41,35 +71,4 @@ void VindicationIllagerRenderer::scale(boost::shared_ptr<LivingEntity>& entity, 
 Model* VindicationIllagerRenderer::createModel(const ModelDefinition& definition)
 {
     return new IllagerModel(0.0f, 0.0f, 64, 64, definition);
-}
-
-VindicationIllagerRenderer::VindicationIllagerRenderer_AnonymousItemInHandLayer::
-    VindicationIllagerRenderer_AnonymousItemInHandLayer(VindicationIllagerRenderer* renderer)
-    : ItemInHandLayer(renderer)
-{
-}
-
-VindicationIllagerRenderer::VindicationIllagerRenderer_AnonymousItemInHandLayer::
-    ~VindicationIllagerRenderer_AnonymousItemInHandLayer()
-{
-}
-
-void VindicationIllagerRenderer::VindicationIllagerRenderer_AnonymousItemInHandLayer::render(
-    boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount, float partialTicks,
-    float ageInTicks, float netHeadYaw, float headPitch, float scale, bool bUseDisplayList)
-{
-    boost::shared_ptr<VindicationIllager> vindicationIllager =
-        boost::static_pointer_cast<VindicationIllager>(entity);
-    if (vindicationIllager->isAgressive())
-    {
-        ItemInHandLayer::render(entity, limbSwing, limbSwingAmount, partialTicks, ageInTicks, netHeadYaw,
-                                headPitch, scale, bUseDisplayList);
-    }
-}
-
-void VindicationIllagerRenderer::VindicationIllagerRenderer_AnonymousItemInHandLayer::translateToHand(
-    const HumanoidArm* arm)
-{
-    IllagerModel* model = static_cast<IllagerModel*>(mLivingEntityRenderer->getModel());
-    model->getArm(arm)->translateTo(0.0625f);
 }
