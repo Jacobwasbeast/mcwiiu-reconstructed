@@ -7,10 +7,10 @@
 #define ERROR_CANCELLED 1223
 #endif
 
-struct FILETIME
+struct _FILETIME
 {
-    unsigned long low;
-    unsigned long high;
+    unsigned int dwLowDateTime;
+    unsigned int dwHighDateTime;
 };
 
 struct MEMORYSTATUS
@@ -37,7 +37,7 @@ struct _MEMORYSTATUS
     unsigned long dwAvailVirtual;
 };
 
-struct SYSTEMTIME
+struct _SYSTEMTIME
 {
     unsigned short year;
     unsigned short month;
@@ -49,6 +49,9 @@ struct SYSTEMTIME
     unsigned short milliseconds;
 };
 
+typedef _FILETIME FILETIME;
+typedef _SYSTEMTIME SYSTEMTIME;
+
 unsigned int GetLastFileErrorCodeForViewer();
 unsigned int GetLastError();
 void GlobalMemoryStatus(MEMORYSTATUS* status);
@@ -59,6 +62,6 @@ void GetLocalTime(SYSTEMTIME* systemTime);
 unsigned int FileTimeToSystemTime(const FILETIME* fileTime, SYSTEMTIME* systemTime);
 
 FSClient* GetWiiUFileSystemClient();
-extern "C" void WiiUInitialise();
+void WiiUInitialise();
 
 #endif

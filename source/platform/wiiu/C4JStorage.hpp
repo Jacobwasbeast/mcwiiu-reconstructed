@@ -4,9 +4,11 @@
 #include <stdint.h>
 #include <string>
 #include <vector>
+#include <coreinit/filesystem.h>
 
-struct FSDirectoryEntry;
-typedef FSDirectoryEntry FSDirEntry;
+struct FSDirEntry : FSDirectoryEntry
+{
+};
 
 struct SAVE_INFO
 {
@@ -110,9 +112,9 @@ public:
 
     typedef int (*SavingMessageCallback)(void*, ESavingMessage, int);
     typedef void (*IncompleteSaveCallback)(void*, ESaveIncompleteType);
-    typedef unsigned int (*DefaultOptionsCallback)(void*, PROFILESETTINGS*, int);
-    typedef unsigned int (*OptionsDataCallback)(void*, int, unsigned short, eOptionsCallback);
-    typedef unsigned int (*OldProfileVersionCallback)(void*, unsigned char*, unsigned short, int);
+    typedef int (*DefaultOptionsCallback)(void*, PROFILESETTINGS*, int);
+    typedef int (*OptionsDataCallback)(void*, int, unsigned short, eOptionsCallback);
+    typedef int (*OldProfileVersionCallback)(void*, unsigned char*, unsigned short, int);
     typedef int (*GenericDataCallback)(void*, int, eGeneralData_Callback_Status, int);
     typedef int (*SaveCallback)(void*, bool);
     typedef int (*LoadCallback)(void*, bool, bool);
@@ -120,9 +122,9 @@ public:
     typedef int (*RenameCallback)(void*, bool, ESaveGameState);
     typedef int (*CopyCallback)(void*, bool, ESaveGameState);
     typedef bool (*CopyProgressCallback)(void*, int);
-    typedef bool (*DirectoryOpenCallback)(const char*, int*);
-    typedef bool (*DirectoryReadCallback)(int*, FSDirEntry*);
-    typedef bool (*DirectoryCloseCallback)(int*);
+    typedef int (*DirectoryOpenCallback)(const char*, int*);
+    typedef int (*DirectoryReadCallback)(int*, FSDirEntry*);
+    typedef int (*DirectoryCloseCallback)(int*);
     typedef int (*DLCOffersCallback)(void*, unsigned int, unsigned int, int);
     typedef int (*OffersCallback)(void*, int, unsigned int, unsigned int);
     typedef int (*InstalledDLCCallback)(void*, int, int);
@@ -130,7 +132,7 @@ public:
     typedef void (*DLCUpgradeCallback)(void*, bool);
 
     virtual void Tick() = 0;
-    virtual void Init(unsigned int, const wchar_t*, const char*, int, SavingMessageCallback, void*, bool*) = 0;
+    virtual void Init(unsigned int, const wchar_t*, const char*, int, SavingMessageCallback, void*, const char*, bool*) = 0;
     virtual void SetGameSaveFolderTitle(const wchar_t*) = 0;
     virtual void SetSaveCacheFolderTitle(const wchar_t*) = 0;
     virtual void SetOptionsFolderTitle(const wchar_t*) = 0;
@@ -188,7 +190,7 @@ public:
     virtual void SetSaveDeviceSelected(unsigned int device, bool selected);
     virtual int GetSaveDeviceSelected(unsigned int) = 0;
     virtual void ClearDLCOffers() = 0;
-    virtual int ReadTMSFile(int, eGlobalStorage, eTMS_FileType, wchar_t*, unsigned char**, unsigned int*, int (*)(void*, wchar_t*, int, bool, void*), void*, eTMS_FileType) = 0;
+    virtual int ReadTMSFile(int, eGlobalStorage, eTMS_FileType, wchar_t*, unsigned char**, unsigned int*, int (*)(void*, wchar_t*, int, bool, eTMS_FileType), void*, int) = 0;
     virtual int WriteTMSFile(int, eGlobalStorage, wchar_t*, unsigned char*, unsigned int) = 0;
     virtual int DeleteTMSFile(int, eGlobalStorage, wchar_t*) = 0;
     virtual int GetDLCOffers(int pad, DLCOffersCallback callback, void* context, unsigned int contentId) = 0;

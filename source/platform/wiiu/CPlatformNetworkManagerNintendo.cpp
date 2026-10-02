@@ -21,10 +21,10 @@
 #include "platform/wiiu/NQRNetworkManager_WiiU.hpp"
 #include "platform/wiiu/NQRNetworkPlayer.hpp"
 #include "platform/wiiu/NetworkPlayerNintendo.hpp"
+#include "platform/wiiu/WiiU_Runtime.hpp"
 
 #if defined(RECON_NATIVE)
 #include "network_manager.hpp"
-#include "platform/wiiu/WiiU_Runtime.hpp"
 #endif
 
 namespace nn

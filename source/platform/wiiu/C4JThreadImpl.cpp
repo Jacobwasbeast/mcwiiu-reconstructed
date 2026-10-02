@@ -118,7 +118,7 @@ static void ThreadDeallocatorAdapter(OSThread* thread, void* stack)
 extern "C" BOOL OSCreateThreadEvidence(OSThread*, int (*)(int, const char**), int, char*, void*, uint32_t, int32_t, OSThreadAttributes) __asm__("OSCreateThread");
 extern "C" OSThreadDeallocatorFn OSSetThreadDeallocatorEvidence(OSThread*, void (*)(OSThread*, void*)) __asm__("OSSetThreadDeallocator");
 
-uint32_t C4JThreadImpl::OSCreateThread4J(OSThread* thread, int (*entry)(int, void*), int argumentCount, void* argument, void* stack, unsigned int stackSize, unsigned int priority, unsigned short attributes)
+uint32_t C4JThreadImpl::OSCreateThread4J(OSThread* thread, int (*entry)(int, void*), int argumentCount, void* argument, void* stack, unsigned int stackSize, int priority, unsigned short attributes)
 {
     union
     {
@@ -149,7 +149,7 @@ int C4JThreadImpl::entryPoint(int, void* argument)
     {
         C4JEventImpl* completionEvent = thread->m_completionEvent;
         thread->m_completionEvent = NULL;
-        thread->m_running = 0;
+        thread->m_running = false;
         completionEvent->Set();
         delete completionEvent;
     }
@@ -159,7 +159,7 @@ int C4JThreadImpl::entryPoint(int, void* argument)
 }
 
 C4JThreadImpl::C4JThreadImpl(int (*entry)(void*), void* argument, const char* name, int stackSize)
-    : m_argument(argument), m_entry(entry), m_stackSize(stackSize), m_processor(-1), m_stack(NULL), m_running(0), m_started(0), m_exitCode(259), m_startTime(0), m_deleteOnExit(false), m_completionEvent(new C4JEventImpl(C4JEvent::Mode1)), m_priority(16), m_thread(NULL)
+    : m_argument(argument), m_entry(entry), m_stackSize(stackSize), m_processor(-1), m_stack(NULL), m_running(false), m_started(false), m_exitCode(259), m_startTime(0), m_deleteOnExit(false), m_completionEvent(new C4JEventImpl(C4JEvent::Mode1)), m_priority(16), m_thread(NULL)
 {
     if (m_stackSize == 0)
         m_stackSize = 0x20000;
@@ -183,7 +183,7 @@ C4JThreadImpl::C4JThreadImpl(int (*entry)(void*), void* argument, const char* na
 }
 
 C4JThreadImpl::C4JThreadImpl(const char* name)
-    : m_argument(NULL), m_entry(NULL), m_stackSize(0), m_processor(1), m_stack(NULL), m_running(1), m_started(1), m_exitCode(1), m_startTime(System::processTimeInMilliSecs()), m_deleteOnExit(false), m_completionEvent(NULL), m_priority(0), m_thread((OSThread*)OSGetCurrentThread())
+    : m_argument(NULL), m_entry(NULL), m_stackSize(0), m_processor(1), m_stack(NULL), m_running(true), m_started(true), m_exitCode(1), m_startTime(System::processTimeInMilliSecs()), m_deleteOnExit(false), m_completionEvent(NULL), m_priority(0), m_thread((OSThread*)OSGetCurrentThread())
 {
     sprintf(m_name, "(4J) %s", name);
     InitializeThreadMutexes();
@@ -213,13 +213,13 @@ C4JThreadImpl::~C4JThreadImpl()
 void C4JThreadImpl::Run()
 {
     m_startTime = System::processTimeInMilliSecs();
-    m_started = 1;
-    m_running = 1;
+    m_started = true;
+    m_running = true;
     OSResumeThread(m_thread);
 }
 
-uint8_t C4JThreadImpl::isRunning() { return m_running; }
-uint8_t C4JThreadImpl::hasStarted() { return m_started; }
+bool C4JThreadImpl::isRunning() { return m_running; }
+bool C4JThreadImpl::hasStarted() { return m_started; }
 
 void C4JThreadImpl::SetProcessor(int processor)
 {

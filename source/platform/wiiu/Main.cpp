@@ -48,15 +48,14 @@ extern "C" void OSInitMessageQueue(OSMessageQueue*, OSMessage*, int);
 extern "C" int ProcUIInitEx(int (*saveCallback)(void*), void* context);
 extern "C" int ProcUIRegisterCallback(int, unsigned int (*callback)(void*), void*, int);
 extern "C" int ProcUIProcessMessages(int);
-extern "C" void DefineActions();
-extern "C" void RegisterAwardsWithProfileManager();
-extern "C" void ReleaseCallback();
-extern "C" int SaveCallback(void*);
-extern "C" void ShutdownAndExit();
+void DefineActions();
+void RegisterAwardsWithProfileManager();
+extern "C" void ProcUIDrawDoneRelease();
+extern "C" void OSSavesDone_ReadyToRelease();
+void ShutdownAndExit();
 extern unsigned int CallbackAcquiredForeground(void*);
 extern unsigned int CallbackReleaseForeground(void*);
 extern unsigned int CallbackHomebuttonDenied(void*);
-extern bool ReadDir(int*, FSDirEntry*);
 extern int altMainThread(int, void*);
 
 extern CInput* g_pInput;
@@ -79,6 +78,26 @@ struct MainStaticInit
     }
 };
 MainStaticInit s_mainStaticInit;
+}
+
+int SaveCallback(void*)
+{
+    CConsoleMinecraftApp::RequestToBackground();
+    int ready = CConsoleMinecraftApp::ReadyToBackground();
+    while (ready == 0)
+    {
+        gStorage->Tick();
+        Sleep(10);
+        ready = CConsoleMinecraftApp::ReadyToBackground();
+    }
+    OSSavesDone_ReadyToRelease();
+    return 0;
+}
+
+void ReleaseCallback()
+{
+    CGameNetworkManager::sInstance.WiiU_ReleaseCallback();
+    ProcUIDrawDoneRelease();
 }
 
 unsigned int CallbackHomebuttonDenied(void*)
@@ -160,7 +179,7 @@ int main()
     if (gStorage != 0)
     {
         gStorage->Init(0, L10N::GetString(0xc0b26be6), "savegame.dat", 51000000,
-                       CConsoleMinecraftApp::DisplaySavingMessageWiiU, &gApp, &noSpaceForSaveQuota);
+                       CConsoleMinecraftApp::DisplaySavingMessageWiiU, &gApp, "", &noSpaceForSaveQuota);
         gApp.SetNoSpaceForSaveQuota(noSpaceForSaveQuota);
     }
     gProfile->LoadAllMiiData();

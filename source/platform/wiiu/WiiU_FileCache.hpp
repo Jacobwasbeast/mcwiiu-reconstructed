@@ -6,7 +6,11 @@
 
 int SetFilePointer(int file, long distanceToMove, int* distanceToMoveHigh, unsigned int moveMethod);
 int WriteFile(int file, const void* buffer, unsigned int bytesToWrite, unsigned int* bytesWritten, struct _OVERLAPPED* overlapped);
-void WiiUFileCacheInitialise();
+static const unsigned int FILE_CACHE_BUFFER_SIZE = 0x10000;
+
+extern unsigned char *s_writeBuffer;
+extern OSFastMutex s_writeMutex;
+extern OSFastMutex s_commandBlockMutex;
 
 class WiiU_FileCache
 {

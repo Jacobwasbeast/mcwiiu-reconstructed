@@ -15,9 +15,7 @@
 #include "platform/wiiu/SndMicDevice.hpp"
 #include "vendor/__N_22_chat_VoiceProtocol_cpp_bf22a0fe.hpp"
 
-extern "C" void checkPiaCoreToUse()
-{
-}
+void checkPiaCoreToUse();
 
 void AssertPiaError(nn::pia::Result& result)
 {

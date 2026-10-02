@@ -12,12 +12,11 @@
 #include <string.h>
 #include <coreinit/memdefaultheap.h>
 
-typedef FSDirectoryEntry FSDirEntry;
 static const unsigned int AOC_THREAD_STACK_SIZE = 0x10000;
 static const int AOC_THREAD_PRIORITY = 16;
 static const unsigned short AOC_THREAD_ATTRIBUTES = 12;
 
-bool ReadDir(int* piHandle, FSDirEntry* pDirEntry);
+int ReadDir(int* piHandle, FSDirEntry* pDirEntry);
 
 extern "C"
 {

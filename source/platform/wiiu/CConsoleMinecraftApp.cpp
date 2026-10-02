@@ -10,10 +10,12 @@
 
 #include <coreinit/messagequeue.h>
 #include <coreinit/thread.h>
+#include <cstddef>
+#include <cstdio>
 
 extern "C" int ProcUIProcessMessages(int count);
-extern "C" void ShutdownAndExit();
-extern "C" void ReleaseCallback();
+void ShutdownAndExit();
+void ReleaseCallback();
 
 extern CInput* g_pInput;
 extern Renderer* gRenderer;
@@ -116,3 +118,35 @@ int altMainThread(int, void*)
 
     return 0;
 }
+
+#if !defined(RECON_NATIVE)
+int _itoa_s(int value, char* buffer, unsigned int, int radix)
+{
+    int result;
+    if (radix == 10)
+    {
+        std::sprintf(buffer, "%d", value);
+        result = 0;
+    }
+    else if (radix == 16)
+    {
+        std::sprintf(buffer, "%x", value);
+        result = 0;
+    }
+    else
+    {
+        result = -1;
+    }
+    return result;
+}
+
+int _i64toa_s(long long value, char* buffer, unsigned int, int radix)
+{
+    if (radix == 10)
+    {
+        std::sprintf(buffer, "%lld", value);
+        return 0;
+    }
+    return -1;
+}
+#endif

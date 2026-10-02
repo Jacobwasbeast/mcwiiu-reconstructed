@@ -31,7 +31,6 @@ static bool s_sessionDisconnectPending;
 extern "C" int socket_lib_init();
 extern "C" int socket_lib_finish();
 extern "C" void OSFastMutex_Unlock(OSFastMutex* mutex);
-extern "C" void checkPiaCoreToUse();
 
 static bool s_socketLibraryInitialised;
 static bool s_localCommunicationInitialised;
@@ -53,6 +52,10 @@ int Net_FinaliseSocket()
         s_socketLibraryInitialised = false;
     }
     return 0;
+}
+
+void checkPiaCoreToUse()
+{
 }
 
 void Local_FinalizeLocalCommunication()

@@ -20,13 +20,13 @@ public:
     static bool isMainThread();
     static const char* getCurrentThreadName();
     static void threadDeallocator(void* thread, void* stack);
-    static uint32_t OSCreateThread4J(OSThread* thread, int (*entry)(int, void*), int argumentCount, void* argument, void* stack, unsigned int stackSize, unsigned int priority, unsigned short attributes);
+    static uint32_t OSCreateThread4J(OSThread* thread, int (*entry)(int, void*), int argumentCount, void* argument, void* stack, unsigned int stackSize, int priority, unsigned short attributes);
     static int entryPoint(int argumentCount, void* argument);
     static void Sleep(int milliseconds);
 
     virtual void Run();
-    virtual uint8_t isRunning();
-    virtual uint8_t hasStarted();
+    virtual bool isRunning();
+    virtual bool hasStarted();
     virtual void SetProcessor(int processor);
     virtual uint32_t GetProcessor();
     virtual void SetPriority(int priority);
@@ -43,8 +43,8 @@ private:
     char m_name[64];
     int m_processor;
     void* m_stack;
-    uint8_t m_running;
-    uint8_t m_started;
+    bool m_running;
+    bool m_started;
     uint32_t m_exitCode;
     uint64_t m_startTime;
     bool m_deleteOnExit;

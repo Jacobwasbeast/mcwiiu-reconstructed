@@ -42,7 +42,7 @@ public:
     ~CStorage();
 
     virtual void Tick();
-    virtual void Init(unsigned int, const wchar_t*, const char*, int, SavingMessageCallback, void*, bool*);
+    virtual void Init(unsigned int, const wchar_t*, const char*, int, SavingMessageCallback, void*, const char*, bool*);
     virtual void SetGameSaveFolderTitle(const wchar_t*);
     virtual void SetSaveCacheFolderTitle(const wchar_t*);
     virtual void SetOptionsFolderTitle(const wchar_t*);
@@ -100,7 +100,7 @@ public:
     virtual void SetSaveDeviceSelected(unsigned int, bool);
     virtual int GetSaveDeviceSelected(unsigned int);
     virtual void ClearDLCOffers();
-    virtual int ReadTMSFile(int, C4JStorage::eGlobalStorage, C4JStorage::eTMS_FileType, wchar_t*, unsigned char**, unsigned int*, int (*)(void*, wchar_t*, int, bool, void*), void*, C4JStorage::eTMS_FileType);
+    virtual int ReadTMSFile(int, C4JStorage::eGlobalStorage, C4JStorage::eTMS_FileType, wchar_t*, unsigned char**, unsigned int*, int (*)(void*, wchar_t*, int, bool, C4JStorage::eTMS_FileType), void*, int);
     virtual int WriteTMSFile(int, C4JStorage::eGlobalStorage, wchar_t*, unsigned char*, unsigned int);
     virtual int DeleteTMSFile(int, C4JStorage::eGlobalStorage, wchar_t*);
     virtual int GetDLCOffers(int pad, DLCOffersCallback callback, void* context, unsigned int contentId);
@@ -121,7 +121,7 @@ public:
     virtual int CheckForTrialUpgradeKey(DLCUpgradeCallback, void*);
 
     void DisplaySavingMessages();
-    void Init(SavingMessageCallback, void*);
+    void Init(SavingMessageCallback, void*, const char*);
     void MakeCRCTable();
     unsigned int UpdateCRC(unsigned int, unsigned char*, int);
     unsigned int CRC(unsigned char*, int);

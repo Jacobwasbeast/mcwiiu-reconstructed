@@ -1466,8 +1466,8 @@ Thread* ThreadMgr::getCurrentThread() const
     self->mLock.unlock();
     return result;
 }
-void ThreadMgr::waitDoneMultipleThread(const Thread** threads, int count) { for (int index = 0; index < count; ++index) const_cast<Thread*>(threads[index])->waitDone(); }
-void ThreadMgr::quitAndWaitDoneMultipleThread(Thread** threads, int count, bool jam) { for (int index = 0; index < count; ++index) threads[index]->quit(jam); for (int index = 0; index < count; ++index) threads[index]->waitDone(); }
+void ThreadMgr::waitDoneMultipleThread(Thread* const* threads, int count) { for (int index = 0; index < count; ++index) threads[index]->waitDone(); }
+void ThreadMgr::quitAndWaitDoneMultipleThread(Thread** threads, int count, bool jam) { for (int index = 0; index < count; ++index) threads[index]->quit(jam); waitDoneMultipleThread(threads, count); }
 
 PrintOutput::~PrintOutput() {}
 void PrintOutput::writeLineBreak() { write("\n", 1); }
@@ -1718,45 +1718,80 @@ T StringUtil::__N_18_peadStringUtil_cpp_6714fef4::parseDecimalFractionImpl_(cons
     return value;
 }
 
-typedef StringUtil::__N_18_peadStringUtil_cpp_6714fef4 StringUtilImpl;
+namespace StringUtilImpl = StringUtil::__N_18_peadStringUtil_cpp_6714fef4;
 typedef StringUtilImpl::FormatParser16 FormatParser16;
 typedef StringUtilImpl::OutBuffer16 OutBuffer16;
 
-FormatParser16::FormatParser16(va_list* args) : mArgs(args) { clear_(); }
-void FormatParser16::clear_() { mLeftJustify = mForceSign = mBlankSign = mAlternate = mZeroPad = false; mWidth = 0; mPrecision = -1; mSize = 0; }
+FormatParser16::FormatParser16(va_list args)
+{
+    mArgs[0] = args[0];
+    clear_();
+}
+void FormatParser16::clear_()
+{
+    mFlags = 0;
+    mWidth = 0;
+    mPrecision = 0;
+    mHasPrecision = false;
+    mSize = cSizeInt;
+}
 const wchar_t* FormatParser16::parseFlag_(const wchar_t* format)
 {
     for (;; ++format)
     {
-        if (*format == L'-') mLeftJustify = true;
-        else if (*format == L'+') mForceSign = true;
-        else if (*format == L' ') mBlankSign = true;
-        else if (*format == L'#') mAlternate = true;
-        else if (*format == L'0') mZeroPad = true;
+        if (*format == L'-') mFlags |= cFlagLeftJustify;
+        else if (*format == L'+') mFlags |= cFlagForceSign;
+        else if (*format == L' ') mFlags |= cFlagBlankSign;
+        else if (*format == L'#') mFlags |= cFlagAlternate;
+        else if (*format == L'0') mFlags |= cFlagZeroPad;
         else return format;
     }
 }
 const wchar_t* FormatParser16::parseWidth_(const wchar_t* format)
 {
-    mWidth = 0;
-    if (*format == L'*') { mWidth = va_arg(*mArgs, int); return format + 1; }
-    while (*format >= L'0' && *format <= L'9') mWidth = mWidth * 10 + *format++ - L'0';
+    if (*format == L'*')
+    {
+        mWidth = va_arg(mArgs, int);
+        return format + 1;
+    }
+    if (*format >= L'1' && *format <= L'9')
+    {
+        mWidth = *format++ - L'0';
+        while (*format >= L'0' && *format <= L'9') mWidth = mWidth * 10 + *format++ - L'0';
+    }
     return format;
 }
 const wchar_t* FormatParser16::parsePrecision_(const wchar_t* format)
 {
-    mPrecision = -1;
     if (*format != L'.') return format;
+    mHasPrecision = true;
     ++format;
-    mPrecision = 0;
-    if (*format == L'*') { mPrecision = va_arg(*mArgs, int); return format + 1; }
-    while (*format >= L'0' && *format <= L'9') mPrecision = mPrecision * 10 + *format++ - L'0';
+    if (*format == L'*')
+    {
+        mPrecision = va_arg(mArgs, int);
+        return format + 1;
+    }
+    if (*format >= L'0' && *format <= L'9')
+    {
+        mPrecision = *format++ - L'0';
+        while (*format >= L'0' && *format <= L'9') mPrecision = mPrecision * 10 + *format++ - L'0';
+    }
     return format;
 }
 const wchar_t* FormatParser16::parseSize_(const wchar_t* format)
 {
-    mSize = 0;
-    if (*format == L'h' || *format == L'l' || *format == L'L') { mSize = *format++; if (mSize == L'l' && *format == L'l') { mSize = L'L'; ++format; } }
+    if (*format == L'h')
+    {
+        ++format;
+        if (*format == L'h') { ++format; mSize = cSizeChar; }
+        else mSize = cSizeShort;
+    }
+    else if (*format == L'l')
+    {
+        ++format;
+        if (*format == L'l') { ++format; mSize = cSizeLongLong; }
+        else mSize = cSizeLong;
+    }
     return format;
 }
 
@@ -1772,7 +1807,7 @@ void FormatParser16::printIntegerInverseString_(OutBuffer16* output, unsigned in
 template <typename T>
 void FormatParser16::printIntegerInverseStringFromArg_(OutBuffer16* output, bool* negative, bool signedValue, unsigned int base, bool upper)
 {
-    T value = va_arg(*mArgs, T);
+    T value = va_arg(mArgs, T);
     if (signedValue && value < 0) { *negative = true; printIntegerInverseString_(output, base, upper, static_cast<unsigned long long>(-(long long)value)); }
     else printIntegerInverseString_(output, base, upper, static_cast<unsigned long long>(value));
 }
@@ -1782,7 +1817,7 @@ void FormatParser16::printStringCore_(OutBuffer16* output, const T* text)
 {
     if (!text) return;
     int count = 0;
-    while (*text && (mPrecision < 0 || count < mPrecision)) { appendWide(output, static_cast<wchar_t>(*text++)); ++count; }
+    while (*text && (!mHasPrecision || count < mPrecision)) { appendWide(output, static_cast<wchar_t>(*text++)); ++count; }
 }
 
 void FormatParser16::printInteger_(OutBuffer16* output, unsigned int base, bool signedValue, bool upper)
@@ -1790,19 +1825,19 @@ void FormatParser16::printInteger_(OutBuffer16* output, unsigned int base, bool 
     wchar_t text[96];
     wchar_t format[24];
     wchar_t type = base == 16 ? (upper ? L'X' : L'x') : base == 8 ? L'o' : L'd';
-    ::swprintf(format, 24, L"%%%s%s%s%s%s%d.%d%c", mLeftJustify ? L"-" : L"", mForceSign ? L"+" : mBlankSign ? L" " : L"", mAlternate ? L"#" : L"", mZeroPad ? L"0" : L"", mSize == L'L' ? L"ll" : mSize == L'l' ? L"l" : L"", mWidth, mPrecision < 0 ? 1 : mPrecision, type);
-    if (mSize == L'L') ::swprintf(text, 96, format, signedValue ? va_arg(*mArgs, long long) : static_cast<long long>(va_arg(*mArgs, unsigned long long)));
-    else ::swprintf(text, 96, format, signedValue ? va_arg(*mArgs, int) : static_cast<int>(va_arg(*mArgs, unsigned int)));
+    ::swprintf(format, 24, L"%%%s%s%s%s%s%d.%d%c", (mFlags & cFlagLeftJustify) ? L"-" : L"", (mFlags & cFlagForceSign) ? L"+" : (mFlags & cFlagBlankSign) ? L" " : L"", (mFlags & cFlagAlternate) ? L"#" : L"", (mFlags & cFlagZeroPad) ? L"0" : L"", mSize == cSizeLongLong ? L"ll" : mSize == cSizeLong ? L"l" : L"", mWidth, mHasPrecision ? mPrecision : 1, type);
+    if (mSize == cSizeLongLong) ::swprintf(text, 96, format, signedValue ? va_arg(mArgs, long long) : static_cast<long long>(va_arg(mArgs, unsigned long long)));
+    else ::swprintf(text, 96, format, signedValue ? va_arg(mArgs, int) : static_cast<int>(va_arg(mArgs, unsigned int)));
     printStringCore_(output, text);
 }
-void FormatParser16::printCharacter_(OutBuffer16* output) { appendWide(output, static_cast<wchar_t>(va_arg(*mArgs, int))); }
-void FormatParser16::printString_(OutBuffer16* output) { if (mSize == L'l') printStringCore_(output, va_arg(*mArgs, const wchar_t*)); else printStringCore_(output, va_arg(*mArgs, const char*)); }
+void FormatParser16::printCharacter_(OutBuffer16* output) { appendWide(output, static_cast<wchar_t>(va_arg(mArgs, int))); }
+void FormatParser16::printString_(OutBuffer16* output) { if (mSize == cSizeLong) printStringCore_(output, va_arg(mArgs, const wchar_t*)); else printStringCore_(output, va_arg(mArgs, const char*)); }
 void FormatParser16::printFloat_(OutBuffer16* output, wchar_t type, bool)
 {
     wchar_t text[128];
     wchar_t format[24];
-    ::swprintf(format, 24, L"%%%s%s%s%s%d.%d%c", mLeftJustify ? L"-" : L"", mForceSign ? L"+" : mBlankSign ? L" " : L"", mAlternate ? L"#" : L"", mZeroPad ? L"0" : L"", mWidth, mPrecision < 0 ? 6 : mPrecision, type);
-    ::swprintf(text, 128, format, va_arg(*mArgs, double));
+    ::swprintf(format, 24, L"%%%s%s%s%s%d.%d%c", (mFlags & cFlagLeftJustify) ? L"-" : L"", (mFlags & cFlagForceSign) ? L"+" : (mFlags & cFlagBlankSign) ? L" " : L"", (mFlags & cFlagAlternate) ? L"#" : L"", (mFlags & cFlagZeroPad) ? L"0" : L"", mWidth, mHasPrecision ? mPrecision : 6, type);
+    ::swprintf(text, 128, format, va_arg(mArgs, double));
     printStringCore_(output, text);
 }
 int FormatParser16::execute(OutBuffer16* output, const wchar_t* format)

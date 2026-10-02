@@ -3,7 +3,10 @@
 
 #include <stdint.h>
 
-bool CloseDir(int* directory);
+#include "platform/wiiu/C4JStorage.hpp"
+
+int ReadDir(int* directory, FSDirEntry* entry);
+int CloseDir(int* directory);
 void CloseHandle(int file);
 bool CreateDirectoryA(const char* pathName, void* securityAttributes);
 int CreateFileA(const char* fileName, unsigned int desiredAccess, unsigned int shareMode,

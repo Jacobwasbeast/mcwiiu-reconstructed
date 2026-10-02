@@ -1238,7 +1238,7 @@ public:
     void destroy();
     Thread* getCurrentThread() const;
     bool isMainThread() const;
-    static void waitDoneMultipleThread(const Thread**, int);
+    static void waitDoneMultipleThread(Thread* const*, int);
     static void quitAndWaitDoneMultipleThread(Thread**, int, bool);
     static void checkCurrentThreadStackOverFlow(const char*, int);
     static void checkCurrentThreadStackEndCorruption(const char*, int);
@@ -1391,9 +1391,8 @@ public:
     static void unregisterCallback(DelegateEvent<const PrintEventArg&>::Slot&);
 };
 
-class StringUtil
+namespace StringUtil
 {
-public:
     enum CardinalNumber
     {
         cDecimal = 0,
@@ -1406,47 +1405,46 @@ public:
         wchar_t from;
         wchar_t to;
     };
-    static bool tryParseU64(unsigned long long*, const SafeStringBase<char>&, CardinalNumber);
-    static bool tryParseS64(long long*, const SafeStringBase<char>&, CardinalNumber);
-    static bool tryParseU32(unsigned int*, const SafeStringBase<char>&, CardinalNumber);
-    static bool tryParseS32(int*, const SafeStringBase<char>&, CardinalNumber);
-    static bool tryParseU16(unsigned short*, const SafeStringBase<char>&, CardinalNumber);
-    static bool tryParseS16(short*, const SafeStringBase<char>&, CardinalNumber);
-    static bool tryParseU8(unsigned char*, const SafeStringBase<char>&, CardinalNumber);
-    static bool tryParseS8(signed char*, const SafeStringBase<char>&, CardinalNumber);
-    static int parseS32(const SafeStringBase<char>&, CardinalNumber);
-    static int vsw16printf(wchar_t*, unsigned int, const wchar_t*, va_list);
-    static int vsnprintf(char*, unsigned int, const char*, va_list);
-    static int convertUtf16ToSjis(char*, unsigned int, const wchar_t*, int);
-    static int convertUtf16ToUtf8(char*, unsigned int, const wchar_t*, int);
-    static int convertUtf8ToSjis(char*, unsigned int, const char*, int);
-    static int compareChar16Pair(const Char16Pair&, const wchar_t&);
-    static wchar_t replace(wchar_t, const Buffer<const Char16Pair>&);
-    static wchar_t toUpperCapital(wchar_t);
-    static void toUpperCapitalFirstCharactor(BufferedSafeStringBase<wchar_t>*);
-    static wchar_t toLowerCapital(wchar_t);
-    static void toLowerCapitalFirstCharactor(BufferedSafeStringBase<wchar_t>*);
-    static bool tryParseF32(float*, const SafeStringBase<char>&);
-    static bool tryParseF64(double*, const SafeStringBase<char>&);
-    static unsigned long long parseU64(const SafeStringBase<char>&, CardinalNumber);
-    static long long parseS64(const SafeStringBase<char>&, CardinalNumber);
-    static unsigned int parseU32(const SafeStringBase<char>&, CardinalNumber);
-    static unsigned short parseU16(const SafeStringBase<char>&, CardinalNumber);
-    static short parseS16(const SafeStringBase<char>&, CardinalNumber);
-    static unsigned char parseU8(const SafeStringBase<char>&, CardinalNumber);
-    static signed char parseS8(const SafeStringBase<char>&, CardinalNumber);
-    static float parseF32(const SafeStringBase<char>&);
-    static double parseF64(const SafeStringBase<char>&);
-    static void wcs16cpy(wchar_t*, unsigned int, const wchar_t*);
-    static int sw16printf(wchar_t*, unsigned int, const wchar_t*, ...);
-    static int snprintf(char*, unsigned int, const char*, ...);
-    static int convertSjisToUtf16(wchar_t*, unsigned int, const char*, int);
-    static int convertUtf8ToUtf16(wchar_t*, unsigned int, const char*, int);
-    static int convertSjisToUtf8(char*, unsigned int, const char*, int);
+    bool tryParseU64(unsigned long long*, const SafeStringBase<char>&, CardinalNumber);
+    bool tryParseS64(long long*, const SafeStringBase<char>&, CardinalNumber);
+    bool tryParseU32(unsigned int*, const SafeStringBase<char>&, CardinalNumber);
+    bool tryParseS32(int*, const SafeStringBase<char>&, CardinalNumber);
+    bool tryParseU16(unsigned short*, const SafeStringBase<char>&, CardinalNumber);
+    bool tryParseS16(short*, const SafeStringBase<char>&, CardinalNumber);
+    bool tryParseU8(unsigned char*, const SafeStringBase<char>&, CardinalNumber);
+    bool tryParseS8(signed char*, const SafeStringBase<char>&, CardinalNumber);
+    int parseS32(const SafeStringBase<char>&, CardinalNumber);
+    int vsw16printf(wchar_t*, unsigned int, const wchar_t*, va_list);
+    int vsnprintf(char*, unsigned int, const char*, va_list);
+    int convertUtf16ToSjis(char*, unsigned int, const wchar_t*, int);
+    int convertUtf16ToUtf8(char*, unsigned int, const wchar_t*, int);
+    int convertUtf8ToSjis(char*, unsigned int, const char*, int);
+    int compareChar16Pair(const Char16Pair&, const wchar_t&);
+    wchar_t replace(wchar_t, const Buffer<const Char16Pair>&);
+    wchar_t toUpperCapital(wchar_t);
+    void toUpperCapitalFirstCharactor(BufferedSafeStringBase<wchar_t>*);
+    wchar_t toLowerCapital(wchar_t);
+    void toLowerCapitalFirstCharactor(BufferedSafeStringBase<wchar_t>*);
+    bool tryParseF32(float*, const SafeStringBase<char>&);
+    bool tryParseF64(double*, const SafeStringBase<char>&);
+    unsigned long long parseU64(const SafeStringBase<char>&, CardinalNumber);
+    long long parseS64(const SafeStringBase<char>&, CardinalNumber);
+    unsigned int parseU32(const SafeStringBase<char>&, CardinalNumber);
+    unsigned short parseU16(const SafeStringBase<char>&, CardinalNumber);
+    short parseS16(const SafeStringBase<char>&, CardinalNumber);
+    unsigned char parseU8(const SafeStringBase<char>&, CardinalNumber);
+    signed char parseS8(const SafeStringBase<char>&, CardinalNumber);
+    float parseF32(const SafeStringBase<char>&);
+    double parseF64(const SafeStringBase<char>&);
+    void wcs16cpy(wchar_t*, unsigned int, const wchar_t*);
+    int sw16printf(wchar_t*, unsigned int, const wchar_t*, ...);
+    int snprintf(char*, unsigned int, const char*, ...);
+    int convertSjisToUtf16(wchar_t*, unsigned int, const char*, int);
+    int convertUtf8ToUtf16(wchar_t*, unsigned int, const char*, int);
+    int convertSjisToUtf8(char*, unsigned int, const char*, int);
 
-    class __N_18_peadStringUtil_cpp_6714fef4
+    namespace __N_18_peadStringUtil_cpp_6714fef4
     {
-    public:
         struct OutBuffer16
         {
             wchar_t* buffer;
@@ -1457,7 +1455,24 @@ public:
         class FormatParser16
         {
         public:
-            FormatParser16(va_list*);
+            enum Flag
+            {
+                cFlagLeftJustify = 1,
+                cFlagForceSign = 2,
+                cFlagZeroPad = 4,
+                cFlagBlankSign = 8,
+                cFlagAlternate = 16
+            };
+            enum Size
+            {
+                cSizeChar = 0,
+                cSizeShort = 1,
+                cSizeInt = 2,
+                cSizeLong = 3,
+                cSizeLongLong = 4
+            };
+
+            FormatParser16(va_list);
             void clear_();
             const wchar_t* parseFlag_(const wchar_t*);
             const wchar_t* parseWidth_(const wchar_t*);
@@ -1474,43 +1489,38 @@ public:
             template<typename T> void printStringCore_(OutBuffer16*, const T*);
 
         private:
-            va_list* mArgs;
-            bool mLeftJustify;
-            bool mForceSign;
-            bool mBlankSign;
-            bool mAlternate;
-            bool mZeroPad;
+            va_list mArgs;
+            unsigned int mFlags;
             int mWidth;
             int mPrecision;
-            wchar_t mSize;
+            bool mHasPrecision;
+            int mSize;
         };
 
-        static int checkAndConvertDecChar_(char);
-        static int checkAndConvertHexChar_(char);
-        static void tryParseSignImpl_(int*, SafeStringBase<char>::iterator&);
-        static bool tryParsePrefixImpl_(int*, SafeStringBase<char>::iterator&, const SafeStringBase<char>&);
-        template<typename T> static bool tryParseNumberImpl_(T*, SafeStringBase<char>::iterator&, int);
-        template<typename T> static bool tryParseDecImpl_(T*, SafeStringBase<char>::iterator&, int);
-        template<typename T> static bool tryParseImpl_(T*, const SafeStringBase<char>&, int);
+        int checkAndConvertDecChar_(char);
+        int checkAndConvertHexChar_(char);
+        void tryParseSignImpl_(int*, SafeStringBase<char>::iterator&);
+        bool tryParsePrefixImpl_(int*, SafeStringBase<char>::iterator&, const SafeStringBase<char>&);
+        template<typename T> bool tryParseNumberImpl_(T*, SafeStringBase<char>::iterator&, int);
+        template<typename T> bool tryParseDecImpl_(T*, SafeStringBase<char>::iterator&, int);
+        template<typename T> bool tryParseImpl_(T*, const SafeStringBase<char>&, int);
         template<typename T>
-        static void tryParseUnderDecimalPointImpl_(T*, SafeStringBase<char>::iterator&, T, T);
-        template<typename T> static bool tryParseDecimalFractionImpl_(T*, const SafeStringBase<char>&);
-        template<typename T> static T parseImpl_(const SafeStringBase<char>&, CardinalNumber);
-        template<typename T> static T parseDecimalFractionImpl_(const SafeStringBase<char>&);
-    };
-};
+        void tryParseUnderDecimalPointImpl_(T*, SafeStringBase<char>::iterator&, T, T);
+        template<typename T> bool tryParseDecimalFractionImpl_(T*, const SafeStringBase<char>&);
+        template<typename T> T parseImpl_(const SafeStringBase<char>&, CardinalNumber);
+        template<typename T> T parseDecimalFractionImpl_(const SafeStringBase<char>&);
+    }
+}
 
-class __N_16_peadCoreInfo_cpp_b178e7d4
+namespace __N_16_peadCoreInfo_cpp_b178e7d4
 {
-public:
-    static int countNumBits(unsigned int);
-};
+    int countNumBits(unsigned int);
+}
 
-class __N_24_peadTextStreamFormat_cpp_8d174ff4
+namespace __N_24_peadTextStreamFormat_cpp_8d174ff4
 {
-public:
-    static bool isSJISCode_(unsigned char);
-};
+    bool isSJISCode_(unsigned char);
+}
 
 namespace system
 {

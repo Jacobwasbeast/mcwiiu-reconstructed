@@ -77,7 +77,7 @@ public:
     virtual void SignOutUser(int) = 0;
     virtual void SetUserSigningIn(int, bool) = 0;
     virtual int DisplayOfflineProfile(OfflineProfileHandler, void*, int) = 0;
-    virtual void RequestConvertOfflineToGuestUI(OfflineProfileHandler, SignInUIHandler, void*, int) = 0;
+    virtual void RequestConvertOfflineToGuestUI(SignInUIHandler, void*, int) = 0;
     virtual void SetPrimaryPlayerChanged(bool) = 0;
     virtual int QuerySigninStatus() = 0;
     virtual void GetXUID(int, PlayerUID*, bool) = 0;
@@ -231,7 +231,7 @@ public:
     virtual void SignOutUser(int);
     virtual void SetUserSigningIn(int, bool);
     virtual int DisplayOfflineProfile(OfflineProfileHandler, void*, int);
-    virtual void RequestConvertOfflineToGuestUI(OfflineProfileHandler, SignInUIHandler, void*, int);
+    virtual void RequestConvertOfflineToGuestUI(SignInUIHandler, void*, int);
     virtual void SetPrimaryPlayerChanged(bool);
     virtual int QuerySigninStatus();
     virtual void GetXUID(int, PlayerUID*, bool);

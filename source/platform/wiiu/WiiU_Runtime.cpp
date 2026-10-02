@@ -39,18 +39,16 @@ static void stateChangeCallback(FSClient* client, FSVolumeState state, void*)
     }
 }
 
-extern "C" void WiiUInitialise()
+void WiiUInitialise()
 {
     FSInit();
     sFileSystemClient = static_cast<FSClient*>(std::malloc(0x1700));
-    if (sFileSystemClient != 0)
-    {
-        FSAddClient(sFileSystemClient, FS_ERROR_FLAG_NONE);
-        FSStateChangeParams notification = {stateChangeCallback, 0, 0};
-        FSSetStateChangeNotification(sFileSystemClient, &notification);
-        WiiUFileCacheInitialise();
-        altMainStop();
-    }
+    FSAddClient(sFileSystemClient, FS_ERROR_FLAG_NONE);
+    FSStateChangeParams notification = {stateChangeCallback, 0, 0};
+    FSSetStateChangeNotification(sFileSystemClient, &notification);
+    s_writeBuffer = static_cast<unsigned char*>(MEMAllocFromDefaultHeapEx(FILE_CACHE_BUFFER_SIZE, 64));
+    InitializeCriticalSection(&s_writeMutex);
+    InitializeCriticalSection(&s_commandBlockMutex);
 }
 
 unsigned int GetLastFileErrorCodeForViewer()

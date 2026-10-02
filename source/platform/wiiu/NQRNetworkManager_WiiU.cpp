@@ -48,7 +48,7 @@ static bool s_handlingBootInvite;
 
 bool NQRNetworkManager_WiiU::s_applicationConnected;
 
-extern "C" void checkPiaCoreToUse();
+void checkPiaCoreToUse();
 
 static nn::nex::DataStoreClientInterface* s_dataStoreClient;
 static nn::nex::MatchmakeExtensionClient* s_matchmakeClient;

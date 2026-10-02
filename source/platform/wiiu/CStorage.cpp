@@ -37,7 +37,6 @@ int MCP_GetSysProdSettings(int, void*);
 }
 extern "C" void MCP_Close(int);
 extern "C" void OSReport(const char*, ...);
-extern "C" void OSSavesDone_ReadyToRelease();
 extern void altMain();
 extern void altMainStop();
 
@@ -83,19 +82,6 @@ void stateChangeCallback(FSClient* client, FSVolumeState state, void*)
     }
     gRenderer->EndConditionalSurvey();
     altMainStop();
-}
-
-extern "C" int SaveCallback(void*)
-{
-    CConsoleMinecraftApp::RequestToBackground();
-    int ready = CConsoleMinecraftApp::ReadyToBackground();
-    while (ready == 0)
-    {
-        Sleep(10);
-        ready = CConsoleMinecraftApp::ReadyToBackground();
-    }
-    OSSavesDone_ReadyToRelease();
-    return 0;
 }
 
 int SCIGetContentPath(char* path, const char* content)
@@ -284,16 +270,16 @@ void CStorage::Tick()
     TickOptions();
     GenericDataTick();
 }
-void CStorage::Init(SavingMessageCallback callback, void* context)
+void CStorage::Init(SavingMessageCallback callback, void* context, const char*)
 {
     m_savingMessageCallback = callback;
     m_savingMessageContext = context;
 }
 void CStorage::Init(unsigned int device, const wchar_t* title, const char* prefix, int maxSaves,
-                    SavingMessageCallback callback, void* context, bool* exists)
+                    SavingMessageCallback callback, void* context, const char* extra, bool* exists)
 {
     InitSaveGame(device, title, prefix, maxSaves, exists);
-    Init(callback, context);
+    Init(callback, context, extra);
 }
 void CStorage::SetDefaultImages(unsigned char* icon, unsigned int iconSize, unsigned char* image,
                                 unsigned int imageSize, unsigned char* thumbnail, unsigned int thumbnailSize)
@@ -348,7 +334,7 @@ void CStorage::SetSaveDeviceSelected(unsigned int, bool) {}
 int CStorage::GetSaveDeviceSelected(unsigned int) { return 1; }
 void CStorage::ClearDLCOffers() {}
 int CStorage::ReadTMSFile(int, C4JStorage::eGlobalStorage, C4JStorage::eTMS_FileType, wchar_t*, unsigned char**,
-                          unsigned int*, int (*)(void*, wchar_t*, int, bool, void*), void*, C4JStorage::eTMS_FileType)
+                          unsigned int*, int (*)(void*, wchar_t*, int, bool, C4JStorage::eTMS_FileType), void*, int)
 {
     return 0;
 }

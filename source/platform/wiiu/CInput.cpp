@@ -1109,7 +1109,7 @@ void CInput::MapTouchInput(int pad, unsigned int mask)
 {
     joypads[pad].fakeValue = joypads[pad].fakeValue & 0xff3fc300u | mask;
 }
-double CInput::GetJoypadStick_LX(int pad, bool checkMenu)
+float CInput::GetJoypadStick_LX(int pad, bool checkMenu)
 {
     bool menuShown = false;
     if (pad < 4)
@@ -1123,7 +1123,7 @@ double CInput::GetJoypadStick_LX(int pad, bool checkMenu)
     }
     return 0.0;
 }
-double CInput::GetJoypadStick_LY(int pad, bool checkMenu)
+float CInput::GetJoypadStick_LY(int pad, bool checkMenu)
 {
     bool menuShown = false;
     if (pad < 4)
@@ -1137,7 +1137,7 @@ double CInput::GetJoypadStick_LY(int pad, bool checkMenu)
     }
     return 0.0;
 }
-double CInput::GetJoypadStick_RX(int pad, bool checkMenu)
+float CInput::GetJoypadStick_RX(int pad, bool checkMenu)
 {
     bool menuShown = false;
     if (pad < 4)
@@ -1151,7 +1151,7 @@ double CInput::GetJoypadStick_RX(int pad, bool checkMenu)
     }
     return 0.0;
 }
-double CInput::GetJoypadStick_RY(int pad, bool checkMenu)
+float CInput::GetJoypadStick_RY(int pad, bool checkMenu)
 {
     bool menuShown = false;
     if (pad < 4)
@@ -1327,22 +1327,22 @@ bool CInput::IsSet(int pad, unsigned char map)
     }
     return (joypads[mappedPad].rawValue & GetGameJoypadMaps(pad, map)) != 0;
 }
-double CInput::GetJoypadStick_Menu_LX(int pad)
+float CInput::GetJoypadStick_Menu_LX(int pad)
 {
     int mappedPad = pad;
     return RemapIpad(mappedPad) ? joypads[mappedPad].rightX : 0.0;
 }
-double CInput::GetJoypadStick_Menu_LY(int pad)
+float CInput::GetJoypadStick_Menu_LY(int pad)
 {
     int mappedPad = pad;
     return RemapIpad(mappedPad) ? joypads[mappedPad].rightY : 0.0;
 }
-double CInput::GetJoypadStick_Menu_RX(int pad)
+float CInput::GetJoypadStick_Menu_RX(int pad)
 {
     int mappedPad = pad;
     return RemapIpad(mappedPad) ? joypads[mappedPad].leftX : 0.0;
 }
-double CInput::GetJoypadStick_Menu_RY(int pad)
+float CInput::GetJoypadStick_Menu_RY(int pad)
 {
     int mappedPad = pad;
     return RemapIpad(mappedPad) ? joypads[mappedPad].leftY : 0.0;

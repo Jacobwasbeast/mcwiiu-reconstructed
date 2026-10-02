@@ -106,14 +106,14 @@ unsigned int cCommerceNintendoWiiU::LogIn()
 {
     if (nn::act::IsNetworkAccount())
     {
-        uint32_t result = nn::ac::Connect();
-        if (IsFailure(result))
+        NNResult connectResult = nn::ac::Connect();
+        if (IsFailure(connectResult.value))
         {
-            m_lastResult = result;
+            m_lastResult = connectResult.value;
             m_errorOccurred = true;
             return 0;
         }
-        result = nn::ec::Login();
+        uint32_t result = nn::ec::Login();
         if (!IsFailure(result))
         {
             result = nn::ec::SynchronizeAocRights();
@@ -140,12 +140,19 @@ unsigned int cCommerceNintendoWiiU::LogIn()
 
 void cCommerceNintendoWiiU::Init()
 {
-    if (!GetCommerceInitialised() && !IsFailure(nn::ac::Connect()) && NSSLInit() == 0)
+    if (!GetCommerceInitialised())
     {
-        curl_global_init(CURL_GLOBAL_ALL);
-        nn::act::Initialize();
-        nn::ec::Initialize(0x104);
-        SetCommerceInitialised(true);
+        NNResult connectResult = nn::ac::Connect();
+        if (!IsFailure(connectResult.value))
+        {
+            if (NSSLInit() == 0)
+            {
+                curl_global_init(CURL_GLOBAL_ALL);
+                nn::act::Initialize();
+                nn::ec::Initialize(0x104);
+                SetCommerceInitialised(true);
+            }
+        }
     }
 }
 
@@ -249,9 +256,10 @@ int cCommerceNintendoWiiU::GetShoppingCatalog_threadEntry(int, void* argument)
 void cCommerceNintendoWiiU::LaunchThread_GetShoppingCatalog()
 {
     char* stack = static_cast<char*>(MEMAllocFromDefaultHeap(s_catalogThreadStackSize));
-    if (C4JThreadImpl::OSCreateThread4J(&m_catalogThread, GetShoppingCatalog_threadEntry, 0, this,
-                                        stack + s_catalogThreadStackSize, s_catalogThreadStackSize, 0x10,
-                                        OS_THREAD_ATTRIB_AFFINITY_CPU2 | OS_THREAD_ATTRIB_DETACHED))
+    bool created = C4JThreadImpl::OSCreateThread4J(&m_catalogThread, GetShoppingCatalog_threadEntry, 0, this,
+                                                   stack + s_catalogThreadStackSize, s_catalogThreadStackSize, 0x10,
+                                                   OS_THREAD_ATTRIB_AFFINITY_CPU2 | OS_THREAD_ATTRIB_DETACHED);
+    if (created)
         OSResumeThread(&m_catalogThread);
 }
 
@@ -456,23 +464,25 @@ void cCommerceNintendoWiiU::GetShoppingCatalog()
         if (salesStatus != nn::ec::SalesStatus_2 && salesStatus != nn::ec::SalesStatus_3)
             continue;
 
-        nn::ec::DateTime releaseDate;
         uint32_t purchasable = item->CheckPurchasable();
-        if (!IsFailure(purchasable) || purchasable == s_resultStillPurchasable)
+        if (!IsFailure(purchasable))
         {
             m_catalogData[recordCount].canPurchase = true;
-            releaseDate = item->GetReleaseDate();
         }
         else if (purchasable == s_resultAlreadyOwned)
         {
             m_catalogData[recordCount].canPurchase = false;
-            releaseDate = item->GetReleaseDate();
+        }
+        else if (purchasable == s_resultStillPurchasable)
+        {
+            m_catalogData[recordCount].canPurchase = true;
         }
         else
         {
             continue;
         }
 
+        nn::ec::DateTime releaseDate = item->GetReleaseDate();
         if (salesStatus == nn::ec::SalesStatus_2)
         {
             nn::ec::DateTime serverTime;

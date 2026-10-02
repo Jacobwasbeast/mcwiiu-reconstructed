@@ -225,9 +225,10 @@ SndMicDevice::eSndMicResult SndMicDevice::InitializeMic()
 
     ringBuffer.uiNumSamples = MIC_RING_BUFFER_SAMPLES;
     ringBuffer.pSamples = m_pMicBuffer;
-    m_iMicHandle = MICInit(0, NULL, &ringBuffer, &iError);
+    int iMicHandle = MICInit(0, NULL, &ringBuffer, &iError);
+    m_iMicHandle = iMicHandle;
 
-    if (m_iMicHandle < 0)
+    if (iMicHandle < 0)
     {
         MEMFreeToDefaultHeap(m_pMicBuffer);
         m_pMicBuffer = NULL;
@@ -235,7 +236,7 @@ SndMicDevice::eSndMicResult SndMicDevice::InitializeMic()
     }
 
     m_eMicState = eSndMicState_MicInitialised;
-    MICSetState(m_iMicHandle, MIC_STATE_AGC, 1);
+    MICSetState(iMicHandle, MIC_STATE_AGC, 1);
 
     unsigned int uiMuted;
 
@@ -321,10 +322,13 @@ SndMicDevice::eSndMicResult SndMicDevice::StartMic()
 
         do
         {
-            OSSleepTicks(OSMillisecondsToTicks(3));
+            do
+            {
+                OSSleepTicks(OSMillisecondsToTicks(3));
+            }
+            while (MICGetState(m_iMicHandle, MIC_STATE_SAMPLERATE, &m_uiSampleRate) != 0);
         }
-        while (MICGetState(m_iMicHandle, MIC_STATE_SAMPLERATE, &m_uiSampleRate) != 0
-            || MICGetState(m_iMicHandle, MIC_STATE_GAIN_MAX, &m_uiGainMax) != 0
+        while (MICGetState(m_iMicHandle, MIC_STATE_GAIN_MAX, &m_uiGainMax) != 0
             || MICGetState(m_iMicHandle, MIC_STATE_GAIN_MIN, &m_uiGainMin) != 0
             || MICGetState(m_iMicHandle, MIC_STATE_GAIN_DEFAULT, &m_uiGainDefault) != 0
             || MICGetState(m_iMicHandle, MIC_STATE_GAIN, &m_uiGain) != 0);
@@ -378,10 +382,13 @@ SndMicDevice::eSndMicResult SndMicDevice::StartMic()
 
         do
         {
-            OSSleepTicks(OSMillisecondsToTicks(3));
+            do
+            {
+                OSSleepTicks(OSMillisecondsToTicks(3));
+            }
+            while (USBMICGetState(m_iUSBMicHandle, MIC_STATE_SAMPLERATE, &m_uiSampleRate) != 0);
         }
-        while (USBMICGetState(m_iUSBMicHandle, MIC_STATE_SAMPLERATE, &m_uiSampleRate) != 0
-            || USBMICGetState(m_iUSBMicHandle, MIC_STATE_GAIN_MAX, &m_uiGainMax) != 0
+        while (USBMICGetState(m_iUSBMicHandle, MIC_STATE_GAIN_MAX, &m_uiGainMax) != 0
             || USBMICGetState(m_iUSBMicHandle, MIC_STATE_GAIN_MIN, &m_uiGainMin) != 0
             || USBMICGetState(m_iUSBMicHandle, MIC_STATE_GAIN_DEFAULT, &m_uiGainDefault) != 0
             || USBMICGetState(m_iUSBMicHandle, MIC_STATE_GAIN, &m_uiGain) != 0);
@@ -459,13 +466,16 @@ SndMicDevice::eSndMicResult SndMicDevice::ReadMic(short* pBuffer, short sSamples
 
         for (int i = 0; i < sSamples; i++)
         {
-            pBuffer[i] = m_pMicBuffer[uiReadPosition];
-            uiReadPosition++;
+            unsigned int uiNextPosition = uiReadPosition + 1;
 
-            if (uiReadPosition > MIC_RING_BUFFER_SAMPLES - 1)
+            *pBuffer++ = m_pMicBuffer[uiReadPosition];
+
+            if (uiNextPosition >= MIC_RING_BUFFER_SAMPLES)
             {
-                uiReadPosition -= MIC_RING_BUFFER_SAMPLES;
+                uiNextPosition = uiReadPosition - (MIC_RING_BUFFER_SAMPLES - 1);
             }
+
+            uiReadPosition = uiNextPosition;
         }
 
         iResult = MICSetDataConsumed(m_iMicHandle, sSamples);
@@ -488,13 +498,16 @@ SndMicDevice::eSndMicResult SndMicDevice::ReadMic(short* pBuffer, short sSamples
 
         for (int i = 0; i < sSamples; i++)
         {
-            pBuffer[i] = m_pMicBuffer[uiReadPosition];
-            uiReadPosition++;
+            unsigned int uiNextPosition = uiReadPosition + 1;
 
-            if (uiReadPosition > MIC_RING_BUFFER_SAMPLES - 1)
+            *pBuffer++ = m_pMicBuffer[uiReadPosition];
+
+            if (uiNextPosition >= MIC_RING_BUFFER_SAMPLES)
             {
-                uiReadPosition -= MIC_RING_BUFFER_SAMPLES;
+                uiNextPosition = uiReadPosition - (MIC_RING_BUFFER_SAMPLES - 1);
             }
+
+            uiReadPosition = uiNextPosition;
         }
 
         iResult = USBMICSetDataConsumed(m_iUSBMicHandle, sSamples);
@@ -561,6 +574,7 @@ SndMicDevice::eSndMicResult SndMicDevice::InitializeSnd(const SND_PARAM* pParam)
         m_iFrameSamples = pParam->iFrameLengthMs * 32;
     }
 
+    m_pAxBuffer = NULL;
     m_pAxBuffer = (short*)MEMAllocFromDefaultHeapEx(AX_BUFFER_BYTES, 64);
 
     if (m_pAxBuffer == NULL)
@@ -570,6 +584,7 @@ SndMicDevice::eSndMicResult SndMicDevice::InitializeSnd(const SND_PARAM* pParam)
 
     memset(m_pAxBuffer, 0, AX_BUFFER_BYTES);
 
+    m_pSndBuffer = NULL;
     m_pSndBuffer = (short*)MEMAllocFromDefaultHeapEx(m_iFrameSamples * 6, 64);
 
     if (m_pSndBuffer == NULL)
@@ -579,6 +594,7 @@ SndMicDevice::eSndMicResult SndMicDevice::InitializeSnd(const SND_PARAM* pParam)
 
     memset(m_pSndBuffer, 0, m_iFrameSamples * 6);
 
+    m_pRefBufferLeft = NULL;
     m_pRefBufferLeft = (short*)MEMAllocFromDefaultHeapEx(m_iFrameSamples * 12, 64);
 
     if (m_pRefBufferLeft == NULL)
@@ -588,6 +604,7 @@ SndMicDevice::eSndMicResult SndMicDevice::InitializeSnd(const SND_PARAM* pParam)
 
     memset(m_pRefBufferLeft, 0, m_iFrameSamples * 12);
 
+    m_pRefBufferRight = NULL;
     m_pRefBufferRight = (short*)MEMAllocFromDefaultHeapEx(m_iFrameSamples * 12, 64);
 
     if (m_pRefBufferRight == NULL)
@@ -753,9 +770,8 @@ void SndMicDevice::InitializeMicSndCommon(SND_PARAM* pParam)
     }
 
     if (OSRunThread(m_pMicSndThread,
-                    [](int argc, const char** argv) {
-                        return MicSndFrameThread(argc, static_cast<void*>(argv));
-                    }, 0, reinterpret_cast<const char**>(this)) == 0)
+                    reinterpret_cast<OSThreadEntryPointFn>(MicSndFrameThread), 0,
+                    reinterpret_cast<const char**>(this)) == 0)
     {
         OSPanic(__FILE__, __LINE__, "Can't run micsnd thread\n");
     }

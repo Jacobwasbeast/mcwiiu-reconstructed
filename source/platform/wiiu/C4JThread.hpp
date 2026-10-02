@@ -8,8 +8,8 @@ class C4JThread
 public:
     virtual ~C4JThread() {}
     virtual void Run() = 0;
-    virtual uint8_t isRunning() = 0;
-    virtual uint8_t hasStarted() = 0;
+    virtual bool isRunning() = 0;
+    virtual bool hasStarted() = 0;
     virtual void SetProcessor(int processor) = 0;
     virtual uint32_t GetProcessor() = 0;
     virtual void SetPriority(int priority) = 0;

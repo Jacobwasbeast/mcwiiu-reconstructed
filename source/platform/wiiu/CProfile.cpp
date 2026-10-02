@@ -35,7 +35,7 @@ int SCIGetParentalAccountNetCommunicationOnGame(unsigned char*, unsigned char);
 extern "C" int _SCIReadSysConfig(const char*, unsigned int, unsigned int, void*);
 int VerifyCountryRange(unsigned int*);
 int SCIGetISOResource(char*, unsigned int, const char*);
-extern "C" void* allocAligned();
+void* allocAligned();
 void stateChangeCallback(FSClient*, FSVolumeState, void*);
 
 CProfile* gProfile;
@@ -310,12 +310,12 @@ bool CProfile::IsGuest(int quadrant)
     return mProfiles[quadrant].mii->mIsGuestMii;
 }
 
-int CProfile::RequestSignInUI(bool online, bool guest, bool subAccount, bool force, bool trial, SignInUIHandler handler, void* context, int quadrant)
+int CProfile::RequestSignInUI(bool online, bool guest, bool subAccount, bool trial, bool fromGame, SignInUIHandler handler, void* context, int quadrant)
 {
-    return RequestSignInUI(online, guest, subAccount, force, trial, false, handler, context, quadrant);
+    return RequestSignInUI(online, guest, subAccount, trial, false, fromGame, handler, context, quadrant);
 }
 
-int CProfile::RequestSignInUI(bool online, bool guest, bool subAccount, bool force, bool trial, bool fromGame, SignInUIHandler handler, void* context, int quadrant)
+int CProfile::RequestSignInUI(bool online, bool guest, bool subAccount, bool trial, bool force, bool fromGame, SignInUIHandler handler, void* context, int quadrant)
 {
     mRequestOnline = online;
     mRequestGuest = guest;
@@ -419,9 +419,9 @@ int CProfile::DisplayOfflineProfile(OfflineProfileHandler handler, void* context
     return 0;
 }
 
-void CProfile::RequestConvertOfflineToGuestUI(OfflineProfileHandler, SignInUIHandler handler, void* context, int quadrant)
+void CProfile::RequestConvertOfflineToGuestUI(SignInUIHandler handler, void* context, int quadrant)
 {
-    RequestSignInUI(false, true, false, false, false, true, handler, context, quadrant);
+    RequestSignInUI(false, false, false, false, true, true, handler, context, quadrant);
 }
 
 void CProfile::SetPrimaryPlayerChanged(bool changed)

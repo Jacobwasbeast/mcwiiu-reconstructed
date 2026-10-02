@@ -5,7 +5,7 @@ extern void setAltMainOKToRun();
 extern FSCmdBlock* GetCommandBlock();
 extern void waitForAltMainThreadToComplete();
 
-bool OpenDir(const char* path, int* directory)
+int OpenDir(const char* path, int* directory)
 {
     setAltMainOKToRun();
     FSCmdBlock* commandBlock = GetCommandBlock();

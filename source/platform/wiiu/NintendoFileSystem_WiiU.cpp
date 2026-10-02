@@ -67,7 +67,17 @@ bool CreateDirectoryA(const char* pathName, void* securityAttributes)
     return result == 0;
 }
 
-bool CloseDir(int* directory)
+int ReadDir(int* directory, FSDirEntry* entry)
+{
+    setAltMainOKToRun();
+    FSCmdBlock* commandBlock = GetCommandBlock();
+    FSStatus result = FSReadDir(GetWiiUFileSystemClient(), commandBlock,
+                                static_cast<FSDirectoryHandle>(*directory), entry, FS_ERROR_FLAG_NONE);
+    waitForAltMainThreadToComplete();
+    return result == 0;
+}
+
+int CloseDir(int* directory)
 {
     setAltMainOKToRun();
     FSCmdBlock* commandBlock = GetCommandBlock();
