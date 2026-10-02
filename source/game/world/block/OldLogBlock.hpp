@@ -31,7 +31,6 @@ public:
     virtual int getWoodType(const BlockState* state);
 };
 
-extern Property* OldLogBlock_VARIANT;
 
 bool oldlog_filter(PlanksBlock::Variant* value);
 

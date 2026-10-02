@@ -55,7 +55,7 @@ not_null_ptr<ItemInstance> RandomizableLockableContainerBlockEntity::removeItem(
         ContainerHelper::removeItem(getItems(), slot, static_cast<unsigned int>(count));
     if (!item->isEmpty())
     {
-        static_cast<Container*>(this)->setChanged();
+        setChanged();
     }
     return item;
 }
@@ -162,7 +162,7 @@ void RandomizableLockableContainerBlockEntity::unpackLootTable(const boost::shar
 
     LootTableContext context(luck, static_cast<ServerLevel*>(mLevel),
                              static_cast<LootTables*>(mLevel->getLootTables()),
-                             boost::shared_ptr<Entity>(), player, NULL);
+                             player, boost::shared_ptr<Player>(), NULL);
     lootTable->fill(this, random, context);
     delete random;
 }

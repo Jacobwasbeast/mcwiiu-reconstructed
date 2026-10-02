@@ -19,31 +19,31 @@ bool oldlog_filter(PlanksBlock::Variant* value)
 }
 
 EnumProperty<PlanksBlock::Variant*>* OldLogBlock::VARIANT = NULL;
-Property* OldLogBlock_VARIANT = NULL;
 
 void OldLogBlock::blockStaticCtor()
 {
-    boost::unordered_set<PlanksBlock::Variant*> values;
-    values.insert(PlanksBlock::Variant::OAK);
-    values.insert(PlanksBlock::Variant::SPRUCE);
-    values.insert(PlanksBlock::Variant::BIRCH);
-    values.insert(PlanksBlock::Variant::JUNGLE);
-    values.insert(PlanksBlock::Variant::ACACIA);
-    values.insert(PlanksBlock::Variant::DARK_OAK);
-    VARIANT = EnumProperty<PlanksBlock::Variant*>::create(
-        L"variant", typeid(PlanksBlock::Variant*), values,
-        new Predicates<PlanksBlock::Variant*>::FunctionPredicate(oldlog_filter));
-    OldLogBlock_VARIANT = VARIANT;
+    std::wstring name(L"variant");
+    Predicates<PlanksBlock::Variant*>::FunctionPredicate* filter =
+        new Predicates<PlanksBlock::Variant*>::FunctionPredicate(oldlog_filter);
+    EnumProperty<PlanksBlock::Variant*>* variant;
+    {
+        boost::unordered_set<PlanksBlock::Variant*> values;
+        values.insert(PlanksBlock::Variant::OAK);
+        values.insert(PlanksBlock::Variant::SPRUCE);
+        values.insert(PlanksBlock::Variant::BIRCH);
+        values.insert(PlanksBlock::Variant::JUNGLE);
+        values.insert(PlanksBlock::Variant::ACACIA);
+        values.insert(PlanksBlock::Variant::DARK_OAK);
+        variant = EnumProperty<PlanksBlock::Variant*>::create(name, typeid(PlanksBlock::Variant*), values, filter);
+    }
+    VARIANT = variant;
 }
 
 OldLogBlock::OldLogBlock()
     : LogBlock()
 {
     DerivedInit();
-    TypedBoxed<PlanksBlock::Variant*> variant(PlanksBlock::Variant::OAK);
-    const BlockState* state = mStateDefinition->any()->setBoxedValue(VARIANT, &variant);
-    TypedBoxed<LogAxis*> axis(Y);
-    registerDefaultState(state->setBoxedValue(AXIS, &axis));
+    registerDefaultState(mStateDefinition->any()->setValue(VARIANT, PlanksBlock::Variant::OAK)->setValue(AXIS, Y));
 }
 
 const MaterialColor* OldLogBlock::getMapColor(const BlockState* state, LevelSource*, const BlockPos&)
@@ -67,23 +67,18 @@ const MaterialColor* OldLogBlock::getMapColor(const BlockState* state, LevelSour
 
 const BlockState* OldLogBlock::getBlockState(int data)
 {
-    TypedBoxed<PlanksBlock::Variant*> variant(PlanksBlock::Variant::byData(data & 3));
-    const BlockState* state = defaultBlockState()->setBoxedValue(VARIANT, &variant);
-    LogAxis* axis = Y;
-    if ((data & 0xC) == 4)
+    const BlockState* state = defaultBlockState()->setValue(VARIANT, PlanksBlock::Variant::byData(data & 3));
+    switch (data & 0xC)
     {
-        axis = X;
+    case 0:
+        return state->setValue(AXIS, Y);
+    case 4:
+        return state->setValue(AXIS, X);
+    case 8:
+        return state->setValue(AXIS, Z);
+    default:
+        return state->setValue(AXIS, NONE);
     }
-    else if ((data & 0xC) == 8)
-    {
-        axis = Z;
-    }
-    else if ((data & 0xC) == 12)
-    {
-        axis = NONE;
-    }
-    TypedBoxed<LogAxis*> axisValue(axis);
-    return state->setBoxedValue(AXIS, &axisValue);
 }
 
 int OldLogBlock::convertBlockStateToLegacyData(const BlockState* state)

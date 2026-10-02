@@ -144,7 +144,7 @@ void FallingBlockEntity::tick()
 
     if (!isNoGravity())
     {
-        mYd -= 0.04;
+        mYd -= 0.04f;
     }
 
     move(eMoverType_Self, mXd, mYd, mZd, false);
@@ -194,8 +194,8 @@ void FallingBlockEntity::tick()
                 return;
             }
 
-            mXd *= 0.7;
-            mZd *= 0.7;
+            mXd *= 0.7f;
+            mZd *= 0.7f;
             mYd *= -0.5;
             if (landedOn->getBlock() != Blocks::piston_extension)
             {
@@ -256,9 +256,9 @@ void FallingBlockEntity::tick()
         }
     }
 
-    mXd *= 0.98;
-    mYd *= 0.98;
-    mZd *= 0.98;
+    mXd *= 0.98f;
+    mYd *= 0.98f;
+    mZd *= 0.98f;
     PIXEndNamedEvent();
 }
 

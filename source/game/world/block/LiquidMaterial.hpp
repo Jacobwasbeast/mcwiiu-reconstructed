@@ -8,7 +8,10 @@ class MaterialColor;
 class LiquidMaterial : public Material
 {
 public:
-    LiquidMaterial(const MaterialColor* color) : Material(color) {}
+    LiquidMaterial(const MaterialColor* color) : Material(color)
+    {
+        replaceable();
+    }
     virtual ~LiquidMaterial();
 
     virtual bool isLiquid();

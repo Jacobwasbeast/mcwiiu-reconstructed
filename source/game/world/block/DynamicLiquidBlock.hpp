@@ -17,13 +17,17 @@ class Random;
 class DynamicLiquidBlock : public LiquidBlock
 {
 public:
-    struct LiquidTickData
+    struct _LiquidTickData
     {
         Level* level;
         BlockPos pos;
         const BlockState* state;
         Random* random;
 
+        _LiquidTickData(Level* level, const BlockPos& pos, const BlockState* state, Random* random)
+            : level(level), pos(pos), state(state), random(random)
+        {
+        }
     };
 
     DynamicLiquidBlock(Material* material);
@@ -47,7 +51,7 @@ public:
     virtual bool mayReplaceWithPlace(LevelSource* levelSource, const BlockPos& pos);
 
 private:
-    std::deque<LiquidTickData> mTickQueue;
+    std::deque<_LiquidTickData> mTickQueue;
     bool mProcessingTicks;
     int mAdjacentSources;
 };

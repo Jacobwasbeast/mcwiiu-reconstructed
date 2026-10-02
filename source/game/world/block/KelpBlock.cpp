@@ -12,6 +12,7 @@
 #include "game/ui/BlockTooltipDataHolder.hpp"
 #include "game/util/AABB.hpp"
 #include "game/util/Random.hpp"
+#include "game/world/biome/Biome.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/LevelSource.hpp"
 #include "game/world/block/BlockPos.hpp"
@@ -186,7 +187,7 @@ void KelpBlock::tick(Level* level, const BlockPos& pos, const BlockState* state,
     }
 
     if (shouldGrow(level, pos) && !level->mIsClientSide && !canSurvive(level, pos, state))
-        level->blockUpdated(pos, this, true);
+        level->addToTickNextTick(pos, this, 1);
 }
 
 void KelpBlock::onPlace(Level* level, const BlockPos& pos, const BlockState*)
@@ -230,13 +231,12 @@ bool KelpBlock::mayPlace(Level* level, const BlockPos& pos)
 void KelpBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block*, const BlockPos&)
 {
     if (!level->mIsClientSide && !canSurvive(level, pos, state))
-        level->blockUpdated(pos, this, true);
+        level->addToTickNextTick(pos, this, 1);
 }
 
 int KelpBlock::getColor(LevelSource* levelSource, const BlockPos& pos)
 {
-    const BlockState* state = levelSource->getBlockState(pos);
-    return state->getMapColor(levelSource, pos)->calculateRGBColor(0);
+    return levelSource->getBiome(pos)->getGrassColor(pos);
 }
 
 bool KelpBlock::canSurvive(Level* level, const BlockPos& pos, const BlockState*)

@@ -19,9 +19,11 @@
 #include "game/world/block/TypedBoxed.hpp"
 
 DynamicLiquidBlock::DynamicLiquidBlock(Material* material)
-    : LiquidBlock(material), mTickQueue(), mProcessingTicks(false), mAdjacentSources(0)
+    : LiquidBlock(material), mTickQueue()
 {
     LiquidBlock::DerivedInit();
+    mProcessingTicks = false;
+    mAdjacentSources = 0;
 }
 
 DynamicLiquidBlock::~DynamicLiquidBlock()
@@ -30,8 +32,7 @@ DynamicLiquidBlock::~DynamicLiquidBlock()
 
 void DynamicLiquidBlock::setStatic(Level* level, const BlockPos& pos, bool extraLayer)
 {
-    unsigned short staticElement = static_cast<unsigned short>(LiquidBlock::getStaticLiquidElementId(
-        LiquidBlock::getLiquidElement(level, pos)));
+    unsigned short staticElement = LiquidBlock::getStaticLiquidElementId(LiquidBlock::getLiquidElement(level, pos));
     int blockId = extraLayer ? level->getExtraBlockId(pos.x, pos.y, pos.z) : level->getBlockId(pos.x, pos.y, pos.z);
     if (blockId != BlockId::FLOWING_WATER)
     {
@@ -51,7 +52,7 @@ int DynamicLiquidBlock::getHighest(Level* level, const BlockPos& pos, int curren
         {
             ++mAdjacentSources;
         }
-        else if (depth > 7)
+        else if (depth >= 8)
         {
             depth = 0;
         }
@@ -66,17 +67,28 @@ int DynamicLiquidBlock::getHighest(Level* level, const BlockPos& pos, int curren
 bool DynamicLiquidBlock::_isWaterBlocking(Level* level, const BlockPos& pos,
                                            const BlockPos& sourcePos, const Direction* direction)
 {
-    const BlockState* state = level->getBlockState(pos);
-    if (!state->isSolidRender()
-        && state->getBlock()->liquidCanFlowIntoFromDirection(level, pos, direction))
+    PIXBeginNamedEvent(0.0F, "isWaterBlocking");
+    Block* block = level->getBlock(pos);
+    PIXBeginNamedEvent(0.0F, "isWaterBlocking check 1");
+    if (!block->isWaterBlocking())
     {
-        const BlockState* sourceState = level->getBlockState(sourcePos);
-        if (sourceState->getBlock()->liquidCanFlowIntoFromDirection(level, sourcePos,
-                                                                      direction->getOpposite()))
+        PIXEndNamedEvent();
+        PIXBeginNamedEvent(0.0F, "isWaterBlocking check 2");
+        if (block->liquidCanFlowIntoFromDirection(level, pos, direction))
         {
-            return false;
+            PIXEndNamedEvent();
+            PIXBeginNamedEvent(0.0F, "isWaterBlocking check 3");
+            Block* sourceBlock = level->getBlock(sourcePos);
+            if (sourceBlock->liquidCanFlowIntoFromDirection(level, sourcePos, direction->getOpposite()))
+            {
+                PIXEndNamedEvent();
+                PIXEndNamedEvent();
+                return false;
+            }
         }
     }
+    PIXEndNamedEvent();
+    PIXEndNamedEvent();
     return true;
 }
 
@@ -97,8 +109,7 @@ bool DynamicLiquidBlock::_canSpreadTo(Level* level, const BlockPos& pos, const B
 
 void DynamicLiquidBlock::_spread(Level* level, const BlockPos& pos, int depth, bool extraLayer)
 {
-    unsigned short element = static_cast<unsigned short>((getCraftingMaterial() == Material::LAVA ? 10 : 8) << 4);
-    element = static_cast<unsigned short>(element | depth);
+    unsigned short element = static_cast<unsigned short>(depth | ((getCraftingMaterial() == Material::LAVA ? 10 : 8) << 4));
     LiquidBlock::setLiquidElement(level, pos, element, extraLayer, 3);
     level->addToTickNextTick(pos, this, getTickDelay(level));
 }
@@ -106,51 +117,71 @@ void DynamicLiquidBlock::_spread(Level* level, const BlockPos& pos, int depth, b
 void DynamicLiquidBlock::_trySpreadTo(Level* level, const BlockPos& pos, const BlockPos& sourcePos,
                                       const Direction* direction, int depth)
 {
-    if (!_canSpreadTo(level, pos, sourcePos, direction))
+    PIXBeginNamedEvent(0.0F, "Try spread to");
+    if (_canSpreadTo(level, pos, sourcePos, direction))
     {
-        return;
-    }
-    bool extraLayer = false;
-    Block* block = level->getBlock(pos);
-    if (block->mMaterial != Material::AIR)
-    {
-        extraLayer = true;
-        if (mMaterial == Material::LAVA)
+        bool extraLayer = false;
+        Block* block = level->getBlock(pos);
+        if (block->mMaterial != Material::AIR)
         {
-            fizz(level, pos);
-            _spread(level, pos, depth, false);
-            return;
+            extraLayer = true;
+            if (mMaterial == Material::LAVA)
+            {
+                fizz(level, pos);
+                _spread(level, pos, depth, false);
+                PIXEndNamedEvent();
+                return;
+            }
+            if (block->waterSpreadCausesSpawn())
+            {
+                extraLayer = false;
+                level->levelEvent(LevelEvent::PARTICLES_DESTROY_BLOCK, pos, Block::getIdWithData(level->getBlockState(pos)));
+                block->spawnResources(level, pos, level->getBlockState(pos), 0);
+            }
         }
-        if (block->waterSpreadCausesSpawn())
-        {
-            extraLayer = false;
-            level->levelEvent(LevelEvent::PARTICLES_DESTROY_BLOCK, pos, Block::getIdWithData(level->getBlockState(pos)));
-            block->spawnResources(level, pos, level->getBlockState(pos), 0);
-        }
+        _spread(level, pos, depth, extraLayer);
     }
-    _spread(level, pos, depth, extraLayer);
+    PIXEndNamedEvent();
 }
 
 int DynamicLiquidBlock::_getSlopeDistance(Level* level, const BlockPos& pos, int distance, int directionIndex)
 {
-    static const Direction* fromDirections[4] = {Direction::EAST, Direction::WEST, Direction::SOUTH, Direction::NORTH};
     PIXBeginNamedEvent(0.0F, "getSlopeDistance");
     int best = 1000;
+    MutableBlockPos next(pos);
     for (int index = 0; index < 4; ++index)
     {
-        if (index == (directionIndex ^ 1))
+        if (index == 0 && directionIndex == 1)
+            continue;
+        if (index == 1 && directionIndex == 0)
+            continue;
+        if (index == 2 && directionIndex == 3)
+            continue;
+        if (index == 3 && directionIndex == 2)
             continue;
 
-        MutableBlockPos next(pos);
+        next = MutableBlockPos(pos);
+        const Direction* fromDirection = Direction::NORTH;
         if (index == 0)
+        {
+            fromDirection = Direction::EAST;
             next.addX(-1);
+        }
         else if (index == 1)
+        {
+            fromDirection = Direction::WEST;
             next.addX(1);
+        }
         else if (index == 2)
+        {
+            fromDirection = Direction::SOUTH;
             next.addZ(-1);
-        else
+        }
+        else if (index == 3)
+        {
             next.addZ(1);
-        if (_isWaterBlocking(level, next, pos, fromDirections[index]))
+        }
+        if (_isWaterBlocking(level, next, pos, fromDirection))
             continue;
 
         const BlockState* state = level->getBlockState(next);
@@ -177,31 +208,44 @@ int DynamicLiquidBlock::_getSlopeDistance(Level* level, const BlockPos& pos, int
 
 void DynamicLiquidBlock::_getSpread(Level* level, const BlockPos& pos, bool (&spread)[4])
 {
-    static const Direction* fromDirections[4] = {Direction::EAST, Direction::WEST, Direction::SOUTH, Direction::NORTH};
     PIXBeginNamedEvent(0.0F, "Get Spread");
     int distances[4];
-    for (int index = 0; index < 4; ++index)
+    MutableBlockPos next(pos);
+    for (unsigned int index = 0; index < 4; ++index)
     {
         distances[index] = 1000;
-        MutableBlockPos next(pos);
+        next = MutableBlockPos(pos);
+        const Direction* fromDirection = Direction::NORTH;
         if (index == 0)
+        {
+            fromDirection = Direction::EAST;
             next.addX(-1);
+        }
         else if (index == 1)
+        {
+            fromDirection = Direction::WEST;
             next.addX(1);
+        }
         else if (index == 2)
+        {
+            fromDirection = Direction::SOUTH;
             next.addZ(-1);
+        }
         else
+        {
             next.addZ(1);
-        if (_isWaterBlocking(level, next, pos, fromDirections[index]))
+        }
+        if (_isWaterBlocking(level, next, pos, fromDirection))
             continue;
 
         int element = level->getElement(next.x, next.y, next.z);
         Block* block = level->getBlock(next);
         if (block->mMaterial != mMaterial || (element & 0xf) != 0)
         {
-            distances[index] = 0;
+            int slopeDistance = 0;
             if (_isWaterBlocking(level, next.below(), pos, Direction::UP))
-                distances[index] = _getSlopeDistance(level, next, 1, index);
+                slopeDistance = _getSlopeDistance(level, next, 1, index);
+            distances[index] = slopeDistance;
         }
     }
 
@@ -235,11 +279,13 @@ void DynamicLiquidBlock::maintick(Level* level, const BlockPos& pos, const Block
     bool placeStatic = false;
     if (depth < 1)
     {
-        placeStatic = true;
+        PIXBeginNamedEvent(0.0F, "Tick setStatic");
+        setStatic(level, pos, extraLayer);
+        PIXEndNamedEvent();
     }
     else
     {
-        PIXBeginNamedEvent(0.0F, "Tick depth > 0");
+        PIXBeginNamedEvent(0.0F, "Tick depth != 0");
         int highest = -100;
         mAdjacentSources = 0;
         arrayWithLength<const Direction*> directions = Direction::Plane::HORIZONTAL->iterator();
@@ -247,7 +293,7 @@ void DynamicLiquidBlock::maintick(Level* level, const BlockPos& pos, const Block
             highest = getHighest(level, pos.relative(directions.data[i]), highest);
 
         int newDepth = highest + dropOff;
-        if (newDepth > 7 || highest < 0)
+        if (newDepth >= 8 || highest < 0)
             newDepth = -1;
 
         int aboveDepth = getDepth(level, pos.above());
@@ -290,8 +336,11 @@ void DynamicLiquidBlock::maintick(Level* level, const BlockPos& pos, const Block
             }
             else
             {
-                TypedBoxed<int> levelValue(newDepth);
-                const BlockState* newState = state->setBoxedValue(LEVEL, &levelValue);
+                const BlockState* newState;
+                {
+                    TypedBoxed<int> levelValue(newDepth);
+                    newState = state->setBoxedValue(LEVEL, &levelValue);
+                }
                 if (mMaterial == Material::LAVA)
                 {
                     extraLayer = false;
@@ -310,13 +359,12 @@ void DynamicLiquidBlock::maintick(Level* level, const BlockPos& pos, const Block
             }
             PIXEndNamedEvent();
         }
-    }
-
-    if (placeStatic)
-    {
-        PIXBeginNamedEvent(0.0F, "Tick setStatic");
-        setStatic(level, pos, extraLayer);
-        PIXEndNamedEvent();
+        if (placeStatic)
+        {
+            PIXBeginNamedEvent(0.0F, "Tick setStatic");
+            setStatic(level, pos, extraLayer);
+            PIXEndNamedEvent();
+        }
     }
 
     PIXBeginNamedEvent(0.0F, "Check for flow and spread");
@@ -337,7 +385,10 @@ void DynamicLiquidBlock::maintick(Level* level, const BlockPos& pos, const Block
                 return;
             }
         }
-        _trySpreadTo(level, pos.below(), pos, Direction::UP, depth < 8 ? depth + 8 : depth);
+        if (depth < 8)
+            _trySpreadTo(level, pos.below(), pos, Direction::UP, depth + 8);
+        else
+            _trySpreadTo(level, pos.below(), pos, Direction::UP, depth);
         PIXEndNamedEvent();
     }
     else if (depth >= 0 && (depth == 0 || _isWaterBlocking(level, pos.below(), pos, Direction::UP)))
@@ -348,7 +399,7 @@ void DynamicLiquidBlock::maintick(Level* level, const BlockPos& pos, const Block
         int spreadDepth = depth + dropOff;
         if (depth >= 8)
             spreadDepth = 1;
-        if (spreadDepth <= 7)
+        if (spreadDepth < 8)
         {
             if (spread[0])
                 _trySpreadTo(level, pos.west(), pos, Direction::EAST, spreadDepth);
@@ -367,15 +418,11 @@ void DynamicLiquidBlock::maintick(Level* level, const BlockPos& pos, const Block
 void DynamicLiquidBlock::iterativetick(Level* level, const BlockPos& pos,
                                        const BlockState* state, Random* random)
 {
-    LiquidTickData first;
-    first.level = level;
-    first.pos = pos;
-    first.state = state;
-    first.random = random;
+    _LiquidTickData first(level, pos, state, random);
     mTickQueue.push_back(first);
     for (int count = 100; !mTickQueue.empty() && count > 0; --count)
     {
-        const LiquidTickData data = mTickQueue.front();
+        const _LiquidTickData data = mTickQueue.front();
         mTickQueue.pop_front();
         maintick(data.level, data.pos, data.state, data.random);
     }
@@ -401,11 +448,7 @@ void DynamicLiquidBlock::tick(Level* level, const BlockPos& pos, const BlockStat
     }
     if (Level::getInstaTick())
     {
-        LiquidTickData data;
-        data.level = level;
-        data.pos = pos;
-        data.state = state;
-        data.random = random;
+        _LiquidTickData data(level, pos, state, random);
         mTickQueue.push_back(data);
     }
     else
