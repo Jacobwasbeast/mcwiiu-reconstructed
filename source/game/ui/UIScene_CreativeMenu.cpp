@@ -538,42 +538,57 @@ void UIScene_CreativeMenu::handleAdditionalKeyPress(int key)
     }
 }
 
-int UIScene_CreativeMenu::getEmptyInventorySlot(not_null_ptr<ItemInstance> item, int& slot)
+bool UIScene_CreativeMenu::getEmptyInventorySlot(not_null_ptr<ItemInstance> item, int& slot)
 {
+    bool found = false;
     int menuSlot = 50;
     int relativeSlot = 0;
     for (int remaining = 9; remaining > 0; --remaining, ++menuSlot, ++relativeSlot)
     {
-        not_null_ptr<ItemInstance> slotItem = m_containerMenu->getSlot(menuSlot)->getItem();
+        not_null_ptr<ItemInstance> slotItem = m_menu->getSlot(menuSlot)->getItem();
         if (!slotItem->isEmpty() && slotItem->sameItemWithTags(item, 0) &&
             slotItem->getCount() + item->getCount() <= item->getMaxStackSize())
         {
             slot = relativeSlot;
-            return 1;
+            found = true;
+            break;
         }
     }
 
-    int groupsRemaining = 3;
-    menuSlot = 50;
-    int emptySlot = menuSlot;
-    while (true)
+    if (!found)
     {
-        emptySlot = menuSlot;
-        if (m_containerMenu->getSlot(emptySlot)->getItem()->isEmpty())
-            break;
-        emptySlot = menuSlot + 1;
-        if (m_containerMenu->getSlot(emptySlot)->getItem()->isEmpty())
-            break;
-        emptySlot = menuSlot + 2;
-        if (m_containerMenu->getSlot(emptySlot)->getItem()->isEmpty())
-            break;
-        groupsRemaining--;
-        menuSlot += 3;
-        if (groupsRemaining == 0)
-            return 0;
+        int groupsRemaining = 3;
+        menuSlot = 50;
+        int emptySlot = menuSlot;
+        while (true)
+        {
+            emptySlot = menuSlot;
+            if (m_menu->getSlot(emptySlot)->getItem()->isEmpty())
+            {
+                found = true;
+                break;
+            }
+            emptySlot = menuSlot + 1;
+            if (m_menu->getSlot(emptySlot)->getItem()->isEmpty())
+            {
+                found = true;
+                break;
+            }
+            emptySlot = menuSlot + 2;
+            if (m_menu->getSlot(emptySlot)->getItem()->isEmpty())
+            {
+                found = true;
+                break;
+            }
+            groupsRemaining--;
+            menuSlot += 3;
+            if (groupsRemaining == 0)
+                break;
+        }
+        if (found)
+            slot = emptySlot - 50;
     }
-    slot = emptySlot - 50;
-    return 1;
+    return found;
 }
 
 void UIScene_CreativeMenu::handleSlotListClicked(IUIScene_AbstractContainerMenu::ESceneSection section,

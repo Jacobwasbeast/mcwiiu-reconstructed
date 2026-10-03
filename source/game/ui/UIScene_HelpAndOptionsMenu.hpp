@@ -7,7 +7,7 @@
 class UIScene_HelpAndOptionsMenu : public UIScene
 {
 public:
-    UIScene_HelpAndOptionsMenu(int sceneType, void* sceneData, UILayer* layer);
+    UIScene_HelpAndOptionsMenu(int playerId, void* sceneData, UILayer* layer);
     virtual ~UIScene_HelpAndOptionsMenu();
     virtual unsigned int mapElementsAndNames();
     virtual void updateTooltips();
@@ -18,14 +18,7 @@ public:
     virtual void handlePress(int controlId, int childId);
     virtual int getSceneType();
 private:
-    UIControl_Button m_button1;
-    UIControl_Button m_button2;
-    UIControl_Button m_button3;
-    UIControl_Button m_button4;
-    UIControl_Button m_button5;
-    UIControl_Button m_button6;
-    UIControl_Button m_button7;
-    UIControl_Button m_buttonUpsell;
+    UIControl_Button m_buttons[8];
     bool m_unknownFlag;
 };
 

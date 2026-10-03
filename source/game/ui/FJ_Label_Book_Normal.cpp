@@ -1,9 +1,8 @@
 #include "game/ui/FJ_Label_Book_Normal.hpp"
 
 FJ_Label_Book_Normal::FJ_Label_Book_Normal(fuiRenderNode* renderNode)
-    : FJ_Label(renderNode)
+    : FJ_Label_Book(renderNode)
 {
-    m_multilineWrap = true;
 }
 
 FJ_Label_Book_Normal* FJ_Label_Book_Normal::Create(fuiRenderNode* renderNode)

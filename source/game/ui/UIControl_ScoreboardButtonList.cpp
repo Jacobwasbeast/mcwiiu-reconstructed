@@ -6,7 +6,7 @@
 
 UIControl_ScoreboardButtonList::PendingAddItem::PendingAddItem(
     UIControl_ScoreboardButtonList* list, int type, std::wstring label, int playerIcon, int voipIcon)
-    : UIControl_List::GenericPendingUpdate(type), m_list(list), m_label(label),
+    : UIControl_List::PendingUpdate<UIControl_ScoreboardButtonList>(list, type), m_label(label),
       m_playerIcon(playerIcon), m_voipIcon(voipIcon)
 {
 }
@@ -35,7 +35,7 @@ UIControl_ScoreboardButtonList::PendingSetSlotsText::PendingSetSlotsText(
     UIControl_ScoreboardButtonList* list, int item, std::wstring slot0, std::wstring slot1,
     std::wstring slot2, std::wstring slot3, std::wstring slot4, std::wstring slot5,
     std::wstring slot6)
-    : UIControl_List::GenericPendingUpdate(item), m_list(list), m_slot0(slot0),
+    : UIControl_List::PendingUpdate<UIControl_ScoreboardButtonList>(list, item), m_slot0(slot0),
       m_slot1(slot1), m_slot2(slot2), m_slot3(slot3), m_slot4(slot4), m_slot5(slot5), m_slot6(slot6)
 {
 }

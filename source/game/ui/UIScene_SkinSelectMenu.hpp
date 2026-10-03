@@ -16,7 +16,7 @@
 
 struct SKIN_BOX;
 
-class UIScene_SkinSelectMenu : public UIScene
+class UIScene_SkinSelectMenu : public UIScene, public IUIScene_DlcSelectMenu
 {
 public:
     enum ECharacter
@@ -79,7 +79,6 @@ public:
     unsigned int IsFavoriteSkin(int player, int skin);
 
 private:
-    IUIScene_DlcSelectMenu m_dlcScene;
     UIControl_PlayerSkinPreview m_characters[eCharacter_Count];
     UIControl_Label m_labelSkinName;
     UIControl_Label m_labelSkinOrigin;

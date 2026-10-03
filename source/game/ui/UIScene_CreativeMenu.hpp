@@ -137,7 +137,7 @@ public:
     void updateScrollCurrentPage(int page, int pageCount);
     void switchTab(ECreativeInventoryTabs tab);
     void ScrollBar(_UIVec2D position);
-    int getEmptyInventorySlot(not_null_ptr<ItemInstance> item, int& slot);
+    bool getEmptyInventorySlot(not_null_ptr<ItemInstance> item, int& slot);
     static void staticCtor();
     virtual unsigned int mapElementsAndNames();
     virtual std::wstring getMoviePath();

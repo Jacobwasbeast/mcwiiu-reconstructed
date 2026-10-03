@@ -42,7 +42,6 @@ private:
     UIControl_Button m_playButton;
     UIControl_TextInput m_worldNameInput;
     UIControl_BitmapIcon m_worldIcon;
-    bool m_keyboardActive;
 };
 
 #endif

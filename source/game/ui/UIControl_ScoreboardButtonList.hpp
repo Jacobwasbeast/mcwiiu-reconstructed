@@ -11,7 +11,7 @@ class fuiRenderNode;
 class UIControl_ScoreboardButtonList : public UIControl_ButtonList
 {
 public:
-    class PendingAddItem : public UIControl_List::GenericPendingUpdate
+    class PendingAddItem : public UIControl_List::PendingUpdate<UIControl_ScoreboardButtonList>
     {
     public:
         PendingAddItem(UIControl_ScoreboardButtonList* list, int type, std::wstring label,
@@ -20,18 +20,17 @@ public:
         virtual unsigned int OnTick();
 
     private:
-        UIControl_ScoreboardButtonList* m_list;
         std::wstring m_label;
         int m_playerIcon;
         int m_voipIcon;
     };
 
-    class PendingSetSlotTextureName : public UIControl_List::GenericPendingUpdate
+    class PendingSetSlotTextureName : public UIControl_List::PendingUpdate<UIControl_ScoreboardButtonList>
     {
     public:
         PendingSetSlotTextureName(UIControl_ScoreboardButtonList* list, int item, int slot,
                                   std::wstring textureName)
-            : UIControl_List::GenericPendingUpdate(item), m_list(list), m_slot(slot),
+            : UIControl_List::PendingUpdate<UIControl_ScoreboardButtonList>(list, item), m_slot(slot),
               m_textureName(textureName)
         {
         }
@@ -39,12 +38,11 @@ public:
         virtual unsigned int OnTick();
 
     private:
-        UIControl_ScoreboardButtonList* m_list;
         int m_slot;
         std::wstring m_textureName;
     };
 
-    class PendingSetSlotsText : public UIControl_List::GenericPendingUpdate
+    class PendingSetSlotsText : public UIControl_List::PendingUpdate<UIControl_ScoreboardButtonList>
     {
     public:
         PendingSetSlotsText(UIControl_ScoreboardButtonList* list, int item,
@@ -55,7 +53,6 @@ public:
         virtual unsigned int OnTick();
 
     private:
-        UIControl_ScoreboardButtonList* m_list;
         std::wstring m_slot0;
         std::wstring m_slot1;
         std::wstring m_slot2;

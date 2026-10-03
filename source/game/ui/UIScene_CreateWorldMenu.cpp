@@ -1,6 +1,7 @@
 #include "game/ui/UIScene_CreateWorldMenu.hpp"
 #include "game/core/StringIds.hpp"
 
+#include <cstring>
 #include <cwchar>
 
 #include "game/client/audio/SoundEvents.hpp"
@@ -20,8 +21,7 @@ extern ConsoleUIController gConsoleUIController;
 
 UIScene_CreateWorldMenu::UIScene_CreateWorldMenu(int sceneType, void* data, UILayer* layer)
     : IUIScene_StartGame(sceneType, data, layer, false), m_worldNameLabel(),
-      m_moreOptionsButton(), m_playButton(), m_worldNameInput(), m_worldIcon(),
-      m_keyboardActive(false)
+      m_moreOptionsButton(), m_playButton(), m_worldNameInput(), m_worldIcon()
 {
     initialiseMovie();
     m_worldName.assign(L10N::GetString(IDS_DEFAULT_WORLD_NAME));
@@ -36,12 +36,13 @@ UIScene_CreateWorldMenu::UIScene_CreateWorldMenu(int sceneType, void* data, UILa
     m_texturePackList.init(std::wstring(L10N::GetString(0xf6194eb1)), 4);
     m_texturePackName.init(UIString(L""));
     m_texturePackDescription.init(UIString(L""));
-    m_launchData.mNewWorld = true;
     m_difficulty = GameSettings::GetGameSettings(m_playerId, eGameSetting_Difficulty);
     wchar_t difficultyLabel[256];
     std::swprintf(difficultyLabel, 256, L"%ls: %ls", L10N::GetString(IDS_SLIDER_DIFFICULTY),
-                  L10N::GetString(Difficulty::byId(m_difficulty)->getKey()));
-    m_difficultySlider.init(UIString(difficultyLabel), 2, 0, 3, m_difficulty, false, 10, 1);
+                  L10N::GetString(Difficulty::byId(GameSettings::GetGameSettings(m_playerId, eGameSetting_Difficulty))->getKey()));
+    m_difficultySlider.init(UIString(difficultyLabel), 2, 0, 3,
+                            GameSettings::GetGameSettings(m_playerId, eGameSetting_Difficulty), false, 10, 1);
+    m_launchData.mNewWorld = true;
     bool initialChecked = m_launchData.mOnlineGame;
     m_onlineGameCheckBox.SetEnable(true);
     if (!gProfile->IsSignedInLive(m_playerId))
@@ -66,6 +67,7 @@ UIScene_CreateWorldMenu::~UIScene_CreateWorldMenu()
 unsigned int UIScene_CreateWorldMenu::mapElementsAndNames()
 {
     IUIScene_StartGame::mapElementsAndNames();
+    m_movie->getRootNode();
     fuiRenderNode* root = m_mainPanel.getFuiRenderNode();
     m_worldNameLabel.setupControl(this, root, std::string("WorldName"));
     m_controls.push_back(&m_worldNameLabel);
@@ -94,17 +96,13 @@ void UIScene_CreateWorldMenu::updateTooltips()
 
 void UIScene_CreateWorldMenu::updateComponents()
 {
-    if (m_layer != NULL)
-    {
-        m_layer->showComponent(m_playerId, EUIScene_Panorama, true);
-        m_layer->showComponent(m_playerId, EUIScene_Logo, false);
-    }
+    m_layer->showComponent(m_playerId, EUIScene_Panorama, true);
+    m_layer->showComponent(m_playerId, EUIScene_Logo, false);
 }
 
 void UIScene_CreateWorldMenu::handleDestroy()
 {
-    if (g_pInput != NULL)
-        g_pInput->DestroyKeyboard();
+    g_pInput->DestroyKeyboard();
 }
 
 void UIScene_CreateWorldMenu::tick()
@@ -125,15 +123,15 @@ std::wstring UIScene_CreateWorldMenu::getMoviePath()
 void UIScene_CreateWorldMenu::handleGainFocus(bool hadFocus)
 {
     if (hadFocus)
-        m_onlineGameCheckBox.setChecked(false);
+        m_onlineGameCheckBox.setChecked(m_launchData.mOnlineGame);
 }
 
 void UIScene_CreateWorldMenu::handleInput(int playerId, int action, bool repeat, bool pressed,
                                           bool released, bool& handled)
 {
-    if (m_keyboardActive)
+    if (m_actionPending)
         return;
-    gConsoleUIController.AnimateKeyPress(playerId, action, repeat, pressed, released);
+    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, pressed, released);
     switch (action)
     {
     case EControllerActions_MenuUp:
@@ -144,6 +142,18 @@ void UIScene_CreateWorldMenu::handleInput(int playerId, int action, bool repeat,
     case EControllerActions_MenuOtherStickDown:
     case EControllerActions_MenuOk:
         sendInputToMovie(action, repeat, pressed, released);
+        {
+            unsigned int checked = m_onlineGameCheckBox.IsChecked();
+            if (m_launchData.mOnlineGame != checked)
+            {
+                m_launchData.mOnlineGame = checked;
+                if (!checked)
+                {
+                    m_launchData.mAllowFriendsOfFriends = false;
+                    m_launchData.mInviteOnly = false;
+                }
+            }
+        }
         handled = true;
         break;
     case EControllerActions_MenuCancel:
@@ -159,45 +169,48 @@ void UIScene_CreateWorldMenu::handleInput(int playerId, int action, bool repeat,
 int UIScene_CreateWorldMenu::KeyboardCompleteWorldNameCallback(void* data, bool accepted)
 {
     UIScene_CreateWorldMenu* scene = static_cast<UIScene_CreateWorldMenu*>(data);
-    if (scene == NULL)
-        return 0;
-    scene->m_keyboardActive = false;
-    if (accepted && g_pInput != NULL)
+    scene->m_actionPending = false;
+    if (accepted)
     {
         wchar_t text[128];
-        g_pInput->GetText(text, 0x7f);
+        std::memset(text, 0, sizeof(text));
+        g_pInput->GetText(text, 127);
         if (text[0] != L'\0')
         {
             scene->m_worldNameInput.setLabel(UIString(text), false, false);
-            scene->m_worldName.assign(text);
+            scene->m_worldName.assign(text, std::wcslen(text));
         }
-        scene->SetEnablePlayGameButton(true);
+        scene->m_playButton.setEnable(scene->m_worldName.size() != 0, true);
     }
     return 0;
 }
 
 void UIScene_CreateWorldMenu::handlePress(int controlId, int childId)
 {
-    if (m_keyboardActive)
-        return;
-    gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
-    if (controlId == 0)
+    if (!m_actionPending)
     {
-        m_keyboardActive = true;
-        if (g_pInput != NULL && g_pInput->RequestKeyboard(L10N::GetString(IDS_CREATE_NEW_WORLD),
-                                                            m_worldName.c_str(), m_playerId, 0x19,
-                                                            KeyboardCompleteWorldNameCallback, this,
-                                                            C_4JInput::EKeyboardMode_0) != 0)
-            m_keyboardActive = false;
+        gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
+        switch (controlId)
+        {
+        case 0:
+            m_actionPending = true;
+            g_pInput->RequestKeyboard(L10N::GetString(IDS_CREATE_NEW_WORLD), m_worldNameInput.getLabel(),
+                                      0, 0x19, KeyboardCompleteWorldNameCallback, this,
+                                      C_4JInput::EKeyboardMode_0);
+            break;
+        case 3:
+            gConsoleUIController.NavigateToScene(m_playerId, EUIScene_LaunchMoreOptionsMenu,
+                                                 &m_launchData, EUILayer_Scene,
+                                                 EUIGroup_PlayerDefault);
+            break;
+        case 4:
+            UpdateCurrentTexturePack(childId);
+            break;
+        case 6:
+            StartSharedLaunchFlow();
+            break;
+        }
     }
-    else if (controlId == 3)
-        gConsoleUIController.NavigateToScene(m_playerId, EUIScene_LaunchMoreOptionsMenu,
-                                             &m_launchData, EUILayer_Scene,
-                                             EUIGroup_PlayerDefault);
-    else if (controlId == 4)
-        UpdateCurrentTexturePack(childId);
-    else if (controlId == 6)
-        StartSharedLaunchFlow();
 }
 
 void UIScene_CreateWorldMenu::handleCheckboxToggled(int, bool)

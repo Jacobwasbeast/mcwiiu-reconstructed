@@ -7,7 +7,7 @@
 
 UIControl_PlayerButtonList::PendingAddItem::PendingAddItem(
     UIControl_PlayerButtonList* list, int type, std::wstring label, int playerIcon, int voipIcon)
-    : UIControl_List::GenericPendingUpdate(type), m_list(list), m_label(label),
+    : UIControl_List::PendingUpdate<UIControl_PlayerButtonList>(list, type), m_label(label),
       m_playerIcon(playerIcon), m_voipIcon(voipIcon)
 {
 }

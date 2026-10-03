@@ -166,7 +166,7 @@ void FJ_LoadCreateJoinMenu::handlePress(FJ_Event* event)
     FJ_Button* button = event->m_pTarget->asFJ_Button();
     if (button != NULL)
     {
-        FJ_FuiNode* parent = button->getObjListParent();
+        FJ_FuiNode* parent = button->FJ_Base::getObjListParent();
         m_pCallbackScene->handlePress(parent->asFJ_List()->getId(), button->getId());
         button->setButtonPressed(false);
     }

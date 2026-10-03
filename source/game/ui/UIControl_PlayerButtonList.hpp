@@ -11,7 +11,7 @@ class fuiRenderNode;
 class UIControl_PlayerButtonList : public UIControl_ButtonList
 {
 public:
-    class PendingAddItem : public UIControl_List::GenericPendingUpdate
+    class PendingAddItem : public UIControl_List::PendingUpdate<UIControl_PlayerButtonList>
     {
     public:
         PendingAddItem(UIControl_PlayerButtonList* list, int type, std::wstring label,
@@ -20,7 +20,6 @@ public:
         virtual unsigned int OnTick();
 
     private:
-        UIControl_PlayerButtonList* m_list;
         std::wstring m_label;
         int m_playerIcon;
         int m_voipIcon;

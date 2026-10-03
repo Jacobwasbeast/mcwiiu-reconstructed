@@ -764,7 +764,7 @@ void fuiRenderNodeEditText::DrawRenderData(RenderStringStateData& state)
 {
     if (!state.shadow)
     {
-        gRenderer->StateSetAlphaFunc(4, 0.003921568859368563f);
+        gRenderer->StateSetAlphaFunc(4, 0.003921569f);
         gRenderer->StateSetAlphaTestEnable(true);
         if ((gFui->m_filterStack[gFui->m_filterDepth] & 2) != 0)
         {

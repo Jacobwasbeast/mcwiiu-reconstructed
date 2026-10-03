@@ -1,17 +1,16 @@
 #ifndef GAME_UI_FJ_LABEL_BOOK_SMALL_HPP
 #define GAME_UI_FJ_LABEL_BOOK_SMALL_HPP
 
-#include "game/ui/FJ_Label.hpp"
+#include "game/ui/FJ_Label_Book.hpp"
 
 class fuiRenderNode;
 
-class FJ_Label_Book_Small : public FJ_Label
+class FJ_Label_Book_Small : public FJ_Label_Book
 {
 public:
     FJ_Label_Book_Small(fuiRenderNode* pRenderNode)
-        : FJ_Label(pRenderNode)
+        : FJ_Label_Book(pRenderNode)
     {
-        m_multilineWrap = true;
     }
     static FJ_Label* Create(fuiRenderNode* pRenderNode);
     virtual unsigned int getType();

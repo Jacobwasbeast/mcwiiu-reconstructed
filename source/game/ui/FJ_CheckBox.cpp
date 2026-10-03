@@ -60,7 +60,8 @@ void FJ_CheckBox::SetCheckBox(bool checked)
 
 void FJ_CheckBox::ChangeState(int state)
 {
-    gotoAndStop(s_checkBoxStates[state][!m_enabled]);
+    std::string* row = s_checkBoxStates[state];
+    gotoAndStop(row[m_enabled ^ 1]);
     m_currentState = state;
 }
 
