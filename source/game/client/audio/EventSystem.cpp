@@ -107,7 +107,7 @@ int Var_LookupWithContext(EventSystem* eventSystem, Handle handle, const char* n
     }
 }
 
-int FindMarker(EventSystem* eventSystem, SoundInstance* soundInstance, int markerList, char* markerName,
+int FindMarker(EventSystem* eventSystem, SoundInstance* soundInstance, int markerList, const char* markerName,
                int* markerIndex, int* markerType)
 {
     if (AIL_stricmp(markerName, "SampleStart") == 0)

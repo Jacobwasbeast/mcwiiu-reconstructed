@@ -37,12 +37,6 @@ const int FADE_OUT_TICKS = 200;
 const int MINIGAME_MUSIC_DELAY = 60;
 const unsigned int SHORT_MUSIC_DELAY_TEXTURE_PACK_ID = 1036;
 
-float absDelta(float a, float b)
-{
-    const float delta = a - b;
-    return delta < 0.0f ? -delta : delta;
-}
-
 }
 
 char SoundEngine::m_szMusicPath[8] = "music/";
@@ -615,9 +609,9 @@ void SoundEngine::UpdateSound(void* userData, void* soundData, bool* is3D, int s
         if (!listener.valid)
             continue;
 
-        const float dx = absDelta(listener.x, info->x);
-        const float dy = absDelta(listener.y, info->y);
-        const float dz = absDelta(listener.z, info->z);
+        const float dx = fabsf(listener.x - info->x);
+        const float dy = fabsf(listener.y - info->y);
+        const float dz = fabsf(listener.z - info->z);
         const float distance = dx + dy + dz;
         if (distance < nearest)
         {

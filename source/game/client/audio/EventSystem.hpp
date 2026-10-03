@@ -15,7 +15,7 @@ class SoundInstance;
 int Var_LookupWithContext(EventSystem* eventSystem, Handle handle, const char* name, int flags,
                           void* value);
 
-int FindMarker(EventSystem* eventSystem, SoundInstance* soundInstance, int markerList, char* markerName,
+int FindMarker(EventSystem* eventSystem, SoundInstance* soundInstance, int markerList, const char* markerName,
                int* markerIndex, int* markerType);
 
 #endif
