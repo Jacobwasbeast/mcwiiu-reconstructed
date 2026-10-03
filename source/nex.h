@@ -89,17 +89,9 @@ StringStream& endl(StringStream& stream);
 StringStream& boolalpha(StringStream& stream);
 StringStream& noboolalpha(StringStream& stream);
 
-class BadEvents
-{
-public:
-    enum Event
-    {
-        SYSTEM_CHECK_FAILURE = 0
-    };
+}
+}
 
-    static void Signal(Event event);
-};
-}
-}
+#include "nn/nex/BadEvents.hpp"
 
 #endif
