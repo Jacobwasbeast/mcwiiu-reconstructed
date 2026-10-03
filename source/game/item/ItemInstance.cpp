@@ -48,23 +48,6 @@ static const wchar_t* TAG_LOC_NAME = L"LocName";
 #include "game/world/block/Blocks.hpp"
 not_null_ptr<ItemInstance> ItemInstance::EMPTY(new ItemInstance(static_cast<Item*>(NULL)));
 
-ItemInstance::ItemInstance()
-    : mCount(0),
-      mPopTime(0),
-      mItem(0),
-      mTag(0),
-      mEmptyCache(1),
-      mAuxValue(0),
-      mUnknown(0),
-      mFrame(),
-      mCensorshipInfo(),
-      mBreakBlock(0),
-      mCanBreak(0),
-      mPlaceBlock(0),
-      mCanPlace(0)
-{
-}
-
 ItemInstance::ItemInstance(Block* block)
     : mFrame(),
       mCensorshipInfo()

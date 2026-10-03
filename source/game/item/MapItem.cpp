@@ -46,11 +46,6 @@ MapItem::~MapItem()
 {
 }
 
-static std::wstring mapName(int mapId)
-{
-    return std::wstring(L"map_") + _toString(mapId);
-}
-
 not_null_ptr<ItemInstance> MapItem::setupNewMap(PlayerUID uid, Level* level, int dimension,
                                                 double x, double z, unsigned char scale,
                                                 bool trackingPosition, bool unlimitedTracking)
@@ -58,7 +53,7 @@ not_null_ptr<ItemInstance> MapItem::setupNewMap(PlayerUID uid, Level* level, int
     BlockPos pos((int)x, 0, (int)z);
     int mapId = level->getAuxValueForMap(uid, dimension, pos, (int)scale);
     not_null_ptr<ItemInstance> itemInstance(new ItemInstance(Items::filledMap, 1, mapId));
-    std::wstring name = mapName(itemInstance->getAuxValue());
+    std::wstring name = L"map_" + _toString(itemInstance->getAuxValue());
     boost::shared_ptr<MapItemSavedData> data = getSavedDataIfExists(itemInstance->getAuxValue(), level);
     if (!data)
     {
@@ -76,7 +71,7 @@ not_null_ptr<ItemInstance> MapItem::setupNewMap(PlayerUID uid, Level* level, int
 
 boost::shared_ptr<MapItemSavedData> MapItem::getSavedDataIfExists(int mapId, Level* level)
 {
-    std::wstring name = mapName(mapId);
+    std::wstring name = L"map_" + _toString(mapId);
     boost::shared_ptr<SavedData> saved = level->getSavedData(typeid(MapItemSavedData), name);
     return boost::static_pointer_cast<MapItemSavedData>(saved);
 }
@@ -84,7 +79,7 @@ boost::shared_ptr<MapItemSavedData> MapItem::getSavedDataIfExists(int mapId, Lev
 boost::shared_ptr<MapItemSavedData> MapItem::getSavedData(int mapId, Level* level)
 {
     MemSect(0x1f);
-    std::wstring name = mapName(mapId);
+    std::wstring name = L"map_" + _toString(mapId);
     MemSect(0);
     boost::shared_ptr<MapItemSavedData> data =
         boost::static_pointer_cast<MapItemSavedData>(level->getSavedData(typeid(MapItemSavedData), name));
@@ -491,7 +486,7 @@ void MapItem::scaleMap(not_null_ptr<ItemInstance> itemInstance, Level* level, in
     boost::shared_ptr<MapItemSavedData> oldData =
         static_cast<MapItem*>(Items::filledMap)->getSavedData(itemInstance, level);
     itemInstance->setAuxValue(level->getFreeAuxValueFor(L"map"));
-    std::wstring name = mapName(itemInstance->getAuxValue());
+    std::wstring name = L"map_" + _toString(itemInstance->getAuxValue());
     boost::shared_ptr<MapItemSavedData> data(new MapItemSavedData(name));
     if (oldData)
     {
@@ -510,7 +505,7 @@ void MapItem::enableMapTracking(not_null_ptr<ItemInstance> itemInstance, Level* 
     boost::shared_ptr<MapItemSavedData> oldData =
         static_cast<MapItem*>(Items::filledMap)->getSavedData(itemInstance, level);
     itemInstance->setAuxValue(level->getFreeAuxValueFor(L"map"));
-    std::wstring name = mapName(itemInstance->getAuxValue());
+    std::wstring name = L"map_" + _toString(itemInstance->getAuxValue());
     boost::shared_ptr<MapItemSavedData> data(new MapItemSavedData(name));
     if (oldData)
     {

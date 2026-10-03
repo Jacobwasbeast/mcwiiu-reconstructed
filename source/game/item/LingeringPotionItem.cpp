@@ -13,11 +13,6 @@
 #include "game/world/Level.hpp"
 #include "game/world/generation/Player.hpp"
 
-LingeringPotionItem::LingeringPotionItem()
-    : PotionItem()
-{
-}
-
 LingeringPotionItem::~LingeringPotionItem()
 {
 }

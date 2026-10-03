@@ -31,10 +31,10 @@ FishFoodItem::~FishFoodItem()
 {
 }
 
-FishFoodItem::Type::Type(int id, unsigned int name, int description,
-                         unsigned int cookedName, int cookedDescription,
-                         unsigned int nutrition, float saturation,
-                         unsigned int cookedNutrition, float cookedSaturation,
+FishFoodItem::Type::Type(int id, unsigned int name, unsigned int description,
+                         unsigned int cookedName, unsigned int cookedDescription,
+                         int nutrition, float saturation,
+                         int cookedNutrition, float cookedSaturation,
                          const std::wstring& icon,
                          const std::wstring& cookedIcon)
     : mId(id), mName(name), mCookedName(cookedName), mRawNutrition(nutrition),
@@ -45,8 +45,8 @@ FishFoodItem::Type::Type(int id, unsigned int name, int description,
 {
 }
 
-FishFoodItem::Type::Type(int id, unsigned int name, int description,
-                         unsigned int nutrition, float saturation,
+FishFoodItem::Type::Type(int id, unsigned int name, unsigned int description,
+                         int nutrition, float saturation,
                          const std::wstring& icon)
     : mId(id), mName(name), mCookedName(-1), mRawNutrition(nutrition),
       mRawSaturation(saturation), mCookedNutrition(0), mCookedSaturation(0.0f),

@@ -35,7 +35,7 @@ public:
     static bool isHotbarSlot(int slot);
     not_null_ptr<ItemInstance>& getSelected();
     static int getSelectionSize();
-    static bool isSameItem(not_null_ptr<ItemInstance> first, not_null_ptr<ItemInstance> second, bool ignoreTags);
+    bool isSameItem(not_null_ptr<ItemInstance> first, not_null_ptr<ItemInstance> second, bool ignoreTags);
     bool hasRemainingSpaceForItem(not_null_ptr<ItemInstance> first, not_null_ptr<ItemInstance> second, bool ignoreTags);
     int getFreeSlot();
     bool hasPickedItem();

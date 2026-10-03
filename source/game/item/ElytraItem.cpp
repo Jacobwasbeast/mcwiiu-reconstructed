@@ -13,23 +13,12 @@
 #include "game/world/block/ElytraItem_ItemPropertyFunction.hpp"
 #include "game/world/block/DispenserBlock.hpp"
 
-class ElytraItemPropertyFunction : public ElytraItem_ItemPropertyFunction
-{
-public:
-    virtual float call(not_null_ptr<ItemInstance> itemInstance,
-                       Level*,
-                       boost::shared_ptr<LivingEntity>)
-    {
-        return ElytraItem::isFlyEnabled(itemInstance) ? 0.25f : 1.0f;
-    }
-};
-
 ElytraItem::ElytraItem()
     : Item()
 {
     mMaxStackSize = 1;
     setMaxDamage(0x1B0);
-    addProperty(ResourceLocation(L"broken"), new ElytraItemPropertyFunction());
+    addProperty(ResourceLocation(L"broken"), new ElytraItem_ItemPropertyFunction());
     DispenserBlock::DISPENSER_REGISTRY.add(this, new ArmorDispenseItemBehavior());
 }
 

@@ -10,7 +10,6 @@ class ItemInstance;
 class ItemColor
 {
 public:
-    virtual ~ItemColor() {}
     virtual int getColor(const not_null_ptr<ItemInstance>& item, int layer) = 0;
 };
 

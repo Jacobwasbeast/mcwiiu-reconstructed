@@ -237,35 +237,9 @@ InteractionResult::EInteractionResult BucketItem::useOn(boost::shared_ptr<Player
                                         : InteractionResult::eInteractionResult_Fail;
 }
 
-namespace
+static bool isPickable_apply(boost::shared_ptr<Entity> entity)
 {
-bool isPickableBucketEntity_apply(boost::shared_ptr<Entity> entity)
-{
-    return isPickable_apply(entity);
-}
-
-Predicate<boost::shared_ptr<Entity> >* getBucketPickEntityPredicate()
-{
-    static Predicate<boost::shared_ptr<Entity> >* sPickPredicate = NULL;
-    if (sPickPredicate == NULL)
-    {
-        static Predicates<boost::shared_ptr<Entity> >::FunctionPredicate sIsPickablePredicate(
-            isPickableBucketEntity_apply);
-        static const Predicate<boost::shared_ptr<Entity> >* sPredicates[2] = {
-            Predicates<boost::shared_ptr<Entity> >::alwaysTrue, &sIsPickablePredicate};
-        sPickPredicate = new Predicates<boost::shared_ptr<Entity> >::ConnectivePredicate(
-            Predicates<boost::shared_ptr<Entity> >::ConnectivePredicate::eOperator_And, sPredicates, 2);
-    }
-    return sPickPredicate;
-}
-
-void deleteBucketHitResult(HitResult* hit)
-{
-    if (hit != NULL)
-    {
-        delete hit;
-    }
-}
+    return entity->isPickable();
 }
 
 HitResult* BucketItem::ScanForHitResultEntities(boost::shared_ptr<Player> player, Level* level, const HitResult* result)
@@ -273,158 +247,116 @@ HitResult* BucketItem::ScanForHitResultEntities(boost::shared_ptr<Player> player
     static const double kPickDistanceCompare = 3.0;
     static const double kCreativePickRange = 6.0;
     static const double kNoHitDistance = 0.0;
-    static const float kPartialTick = 1.0f;
 
+    HitResult* output = const_cast<HitResult*>(result);
     if (result == NULL)
     {
-        return NULL;
+        return output;
     }
 
-    MultiPlayerGameMode* gameMode = Minecraft::GetInstance()->mGameMode;
-    const double pickRange = gameMode->getPickRange();
-    Player* playerRaw = player.get();
-    const double eyeHeight = playerRaw->getEyeHeight();
-    Vec3* eyePosition = Vec3::newTemp(playerRaw->mX, playerRaw->mY + eyeHeight, playerRaw->mZ);
+    const double pickRange = Minecraft::GetInstance()->mGameMode->getPickRange();
+    Vec3* eyePosition = Vec3::newTemp(player->mX, player->mY + player->getEyeHeight(), player->mZ);
 
+    const bool farPickRange = Minecraft::GetInstance()->mGameMode->hasFarPickRange();
     double entityReach = kCreativePickRange;
-    double blockHitDistance = kPickDistanceCompare;
-    if (!gameMode->hasFarPickRange())
+    double blockHitDistance;
+    if (!farPickRange)
     {
-        blockHitDistance = eyePosition->distanceTo(result->mLocation);
+        blockHitDistance = result->mLocation->distanceTo(eyePosition);
         entityReach = pickRange;
     }
     else
     {
-        blockHitDistance = eyePosition->distanceTo(result->mLocation);
+        blockHitDistance = result->mLocation->distanceTo(eyePosition);
     }
 
-    Vec3* viewVector = playerRaw->getViewVector(kPartialTick);
-    AABB* searchBox = playerRaw->mBoundingBox->expand(viewVector->x * entityReach,
-                                                      viewVector->y * entityReach,
-                                                      viewVector->z * entityReach)
-                          ->grow(1.0);
+    Vec3* viewVector = player->getViewVector(1.0f);
+    Vec3* rayEnd = eyePosition->add(viewVector->x * entityReach,
+                                    viewVector->y * entityReach,
+                                    viewVector->z * entityReach);
+
+    boost::shared_ptr<Entity> pointedEntity;
+    Vec3* entityHitLocation = NULL;
+    double closestDistance = blockHitDistance;
+
+    static Predicate<boost::shared_ptr<Entity> >* sIsPickablePredicate =
+        new Predicates<boost::shared_ptr<Entity> >::FunctionPredicate(isPickable_apply);
+    const Predicate<boost::shared_ptr<Entity> >* predicates[2] = {
+        Predicates<boost::shared_ptr<Entity> >::alwaysTrue, sIsPickablePredicate};
+    static Predicate<boost::shared_ptr<Entity> >* sPickPredicate =
+        new Predicates<boost::shared_ptr<Entity> >::ConnectivePredicate(
+            Predicates<boost::shared_ptr<Entity> >::ConnectivePredicate::eOperator_And, predicates, 2);
+
+    AABB* searchBox = player->mBoundingBox->expand(viewVector->x * entityReach,
+                                                   viewVector->y * entityReach,
+                                                   viewVector->z * entityReach)
+                          ->grow(1.0, 1.0, 1.0);
 
     std::vector<boost::shared_ptr<Entity> >* entities =
-        level->getEntities(player, searchBox, getBucketPickEntityPredicate(), NULL);
-
-    Vec3* rayEnd = Vec3::newTemp(eyePosition->x + viewVector->x * entityReach,
-                                 eyePosition->y + viewVector->y * entityReach,
-                                 eyePosition->z + viewVector->z * entityReach);
-
-    Entity* closestEntity = NULL;
-    boost::shared_ptr<Entity> closestEntityShared;
-    HitResult* closestClipHit = NULL;
-    double closestDistance = kNoHitDistance;
+        level->getEntities(player, searchBox, sPickPredicate, NULL);
 
     for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin();
          it != entities->end(); ++it)
     {
         boost::shared_ptr<Entity> candidate = *it;
-        Entity* candidateRaw = candidate.get();
-        if (candidateRaw == NULL)
-        {
-            continue;
-        }
 
-        AABB* grownBox = candidateRaw->mBoundingBox->grow(candidateRaw->getPickRadius());
+        AABB* grownBox = candidate->mBoundingBox->grow(candidate->getPickRadius());
         HitResult* clipHit = grownBox->clip(eyePosition, rayEnd);
-        if (!grownBox->contains(eyePosition))
+        if (grownBox->contains(eyePosition))
         {
-            if (clipHit == NULL)
+            if (closestDistance >= kNoHitDistance)
             {
-                continue;
+                pointedEntity = candidate;
+                entityHitLocation = clipHit == NULL ? eyePosition : clipHit->mLocation;
+                closestDistance = kNoHitDistance;
             }
-
+        }
+        else if (clipHit != NULL)
+        {
             const double hitDistance = eyePosition->distanceTo(clipHit->mLocation);
             if (hitDistance < closestDistance || closestDistance == kNoHitDistance)
             {
-                if (candidateRaw->getId() == playerRaw->getId() && hitDistance != kNoHitDistance)
+                boost::shared_ptr<Entity> candidateRoot = candidate->getRootVehicle();
+                boost::shared_ptr<Entity> playerRoot = player->getRootVehicle();
+                if (candidateRoot.get() == playerRoot.get())
                 {
-                    delete clipHit;
-                    continue;
+                    if (closestDistance == kNoHitDistance)
+                    {
+                        pointedEntity = candidate;
+                        entityHitLocation = clipHit->mLocation;
+                    }
                 }
-
-                if (closestClipHit != NULL)
+                else
                 {
-                    delete closestClipHit;
+                    pointedEntity = candidate;
+                    entityHitLocation = clipHit->mLocation;
+                    closestDistance = hitDistance;
                 }
-                closestEntity = candidateRaw;
-                closestEntityShared = candidate;
-                closestClipHit = clipHit;
-                closestDistance = hitDistance;
-            }
-            else
-            {
-                delete clipHit;
             }
         }
-        else if (kNoHitDistance <= closestDistance)
-        {
-            if (candidateRaw->getId() == playerRaw->getId() && closestDistance != kNoHitDistance)
-            {
-                if (clipHit != NULL)
-                {
-                    delete clipHit;
-                }
-                continue;
-            }
-
-            if (clipHit != NULL)
-            {
-                delete clipHit;
-            }
-            if (closestClipHit != NULL)
-            {
-                delete closestClipHit;
-            }
-            closestEntity = candidateRaw;
-            closestEntityShared = candidate;
-            closestClipHit = new HitResult(Vec3::newTemp(eyePosition->x, eyePosition->y, eyePosition->z), NULL);
-            closestDistance = kNoHitDistance;
-        }
-        else if (clipHit != NULL)
+        if (clipHit != NULL)
         {
             delete clipHit;
         }
     }
 
-    HitResult* output = const_cast<HitResult*>(result);
-    if (closestEntity != NULL && closestClipHit != NULL)
+    if (pointedEntity.get() != NULL)
     {
-        Vec3* closestHitLocation = closestClipHit->mLocation;
-        if (gameMode->hasFarPickRange() || pickRange <= kPickDistanceCompare
-            || eyePosition->distanceTo(closestHitLocation) <= kPickDistanceCompare)
+        if (farPickRange || pickRange <= kPickDistanceCompare ||
+            eyePosition->distanceTo(entityHitLocation) <= kPickDistanceCompare)
         {
-            if (closestDistance < blockHitDistance)
+            if (closestDistance < blockHitDistance || output == NULL)
             {
-                deleteBucketHitResult(output);
-                closestClipHit->mLocation = NULL;
-                delete closestClipHit;
-                output = new HitResult(closestEntityShared, closestHitLocation);
-                closestClipHit = NULL;
-            }
-            else
-            {
-                deleteBucketHitResult(output);
-                closestClipHit->mLocation = NULL;
-                delete closestClipHit;
-                output = new HitResult(HitResult::MISS, closestHitLocation, NULL, BlockPos(closestHitLocation));
-                closestClipHit = NULL;
+                delete output;
+                output = new HitResult(pointedEntity, entityHitLocation);
             }
         }
         else
         {
-            deleteBucketHitResult(output);
-            closestClipHit->mLocation = NULL;
-            delete closestClipHit;
-            output = new HitResult(HitResult::MISS, closestHitLocation, NULL, BlockPos(closestHitLocation));
-            closestClipHit = NULL;
+            pointedEntity.reset();
+            delete output;
+            output = new HitResult(HitResult::MISS, entityHitLocation, NULL, BlockPos(entityHitLocation));
         }
-    }
-
-    if (closestClipHit != NULL)
-    {
-        delete closestClipHit;
     }
 
     return output;

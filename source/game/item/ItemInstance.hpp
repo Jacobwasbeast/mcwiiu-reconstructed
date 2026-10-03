@@ -41,7 +41,6 @@ class ItemInstance : public boost::enable_shared_from_this<ItemInstance>
     friend class ItemRenderer;
 
 public:
-    ItemInstance();
     explicit ItemInstance(Block* block);
     ItemInstance(Block* block, int count);
     ItemInstance(Block* block, int count, int auxValue);

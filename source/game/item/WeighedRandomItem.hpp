@@ -4,7 +4,7 @@
 class WeighedRandomItem
 {
 public:
-    WeighedRandomItem(int weight);
+    WeighedRandomItem(int weight) : weight(weight) {}
 
     virtual ~WeighedRandomItem() {}
 

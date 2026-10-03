@@ -12,11 +12,6 @@
 #include "game/world/Level.hpp"
 #include "game/world/generation/Player.hpp"
 
-SplashPotionItem::SplashPotionItem()
-    : PotionItem()
-{
-}
-
 SplashPotionItem::~SplashPotionItem()
 {
 }
