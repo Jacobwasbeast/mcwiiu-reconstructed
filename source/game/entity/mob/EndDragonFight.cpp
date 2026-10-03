@@ -167,11 +167,11 @@ void EndDragonFight::updateCrystalCount()
 
 void EndDragonFight::onCrystalDestroyed(boost::shared_ptr<EnderCrystal> crystal, const DamageSource* source)
 {
-    std::vector<boost::shared_ptr<EnderCrystal> >::iterator tracked = respawnCrystals.begin();
-    while (tracked != respawnCrystals.end() && *tracked != crystal)
-        ++tracked;
+    std::vector<boost::shared_ptr<EnderCrystal> >::iterator tracked =
+        std::find(respawnCrystals.begin(), respawnCrystals.end(), crystal);
 
-    if (respawnStage != NULL && tracked != respawnCrystals.end())
+    bool isTracked = tracked != respawnCrystals.end();
+    if (respawnStage != NULL && isTracked)
     {
         for (std::vector<boost::shared_ptr<EnderCrystal> >::iterator it = respawnCrystals.begin();
              it != respawnCrystals.end(); ++it)
@@ -313,18 +313,22 @@ void EndDragonFight::updatePlayers()
     }
     delete players;
 
-    std::vector<boost::shared_ptr<ServerPlayer> > departed = dragonEvent->getPlayers();
+    std::vector<boost::shared_ptr<ServerPlayer> >* departed = dragonEvent->getPlayers();
     for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator player = current.begin(); player != current.end();
          ++player)
     {
         std::vector<boost::shared_ptr<ServerPlayer> >::iterator found =
-            std::find(departed.begin(), departed.end(), *player);
-        if (found != departed.end())
-            departed.erase(found);
+            std::find(departed->begin(), departed->end(), *player);
+        if (found != departed->end())
+            departed->erase(found);
     }
-    for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator player = departed.begin(); player != departed.end();
+    for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator player = departed->begin(); player != departed->end();
          ++player)
-        dragonEvent->removePlayer(*player);
+    {
+        boost::shared_ptr<ServerPlayer> departedPlayer = *player;
+        dragonEvent->removePlayer(departedPlayer);
+    }
+    delete departed;
 }
 
 void EndDragonFight::ensureArenaLoaded()
@@ -350,7 +354,7 @@ void EndDragonFight::createNewDragon()
 
 void EndDragonFight::tick()
 {
-    std::vector<boost::shared_ptr<ServerPlayer> > players = dragonEvent->getPlayers();
+    std::vector<boost::shared_ptr<ServerPlayer> >* players = dragonEvent->getPlayers();
     dragonEvent->setVisible(!dragonKilled);
 
     if (++ticksSinceLastPlayerScan >= 20)
@@ -377,7 +381,7 @@ void EndDragonFight::tick()
         std::sort(gateways.begin(), gateways.end(), EndGatewaySorter());
     }
 
-    if (!players.empty())
+    if (!players->empty())
     {
         const double radius = level->mDimension->getXZSize() * 16.0 * 0.5;
         AABB* arena = AABB::newPermanent(-radius, 0.0, -radius, radius, level->getMaxBuildHeight(), radius);
@@ -455,6 +459,7 @@ void EndDragonFight::tick()
         }
         delete arena;
     }
+    delete players;
 }
 
 void EndDragonFight::setRespawnStage(DragonRespawnAnimation* stage)
@@ -465,12 +470,13 @@ void EndDragonFight::setRespawnStage(DragonRespawnAnimation* stage)
         dragonKilled = false;
         respawnStage = 0;
         createNewDragon();
-        std::vector<boost::shared_ptr<ServerPlayer> > players = dragonEvent->getPlayers();
+        std::vector<boost::shared_ptr<ServerPlayer> >* players = dragonEvent->getPlayers();
         std::vector<boost::shared_ptr<ServerPlayer> >::iterator player;
-        for (player = players.begin(); player != players.end(); ++player)
+        for (player = players->begin(); player != players->end(); ++player)
         {
             (*player)->awardStat(GenericStats::theEndAgain(), GenericStats::param_theEndAgain());
         }
+        delete players;
         return;
     }
     respawnStage = stage;
@@ -498,7 +504,7 @@ void EndDragonFight::spawnNewGateway()
 
 void EndDragonFight::setDragonKilled(boost::shared_ptr<EnderDragon> dragon)
 {
-    if (dragonUUID == dragon->getUUID())
+    if (dragon->getUUID() == dragonUUID)
     {
         dragonEvent->setPercent(0.0f);
         dragonEvent->setVisible(false);
@@ -519,7 +525,7 @@ void EndDragonFight::setDragonKilled(boost::shared_ptr<EnderDragon> dragon)
 
 void EndDragonFight::updateDragon(boost::shared_ptr<EnderDragon> dragon)
 {
-    if (dragonUUID == dragon->getUUID())
+    if (dragon->getUUID() == dragonUUID)
     {
         dragonEvent->setPercent(dragon->getHealth() / dragon->getMaxHealth());
         ticksSinceDragonSeen = 0;

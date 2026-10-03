@@ -11,7 +11,7 @@ public:
     {
     }
 
-    virtual ~GlobalEntity();
+    virtual ~GlobalEntity() {}
 };
 
 #endif

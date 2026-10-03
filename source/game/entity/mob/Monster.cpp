@@ -114,8 +114,8 @@ bool Monster::doHurtTarget(boost::shared_ptr<Entity> target)
     if (knockback > 0 && livingTarget)
     {
         livingTarget->knockback(boost::static_pointer_cast<Entity>(shared_from_this()), knockback * 0.5f,
-                                Mth::sin(mYRot * 0.01745329238474369f),
-                                -Mth::cos(mYRot * 0.01745329238474369f));
+                                Mth::sin(mYRot * 0.017453292f),
+                                -Mth::cos(mYRot * 0.017453292f));
         mXd *= 0.6;
         mZd *= 0.6;
     }

@@ -928,7 +928,7 @@ void Entity::baseTick()
 
     if (isSwimming())
     {
-        mSwimAmount += 0.10000000149011612f;
+        mSwimAmount += 0.1f;
 
         if (mSwimAmount > 1.0f)
         {
@@ -937,7 +937,7 @@ void Entity::baseTick()
     }
     else
     {
-        mSwimAmount -= 0.10000000149011612f;
+        mSwimAmount -= 0.1f;
 
         if (mSwimAmount < 0.0f)
         {
@@ -1714,12 +1714,12 @@ void Entity::playStepSound(const BlockPos& pos, Block* block)
         {
             const SoundType* snowType = above->getSoundType();
 
-            playSound(snowType->getStepSound(), snowType->getVolume() * 0.15000000596046448f,
+            playSound(snowType->getStepSound(), snowType->getVolume() * 0.15f,
                       snowType->getPitch());
         }
         else if (!block->defaultBlockState()->getMaterial()->isLiquid())
         {
-            playSound(soundType->getStepSound(), soundType->getVolume() * 0.15000000596046448f,
+            playSound(soundType->getStepSound(), soundType->getVolume() * 0.15f,
                       soundType->getPitch());
         }
     }
@@ -1731,7 +1731,7 @@ void Entity::playUnderwaterSound(const BlockPos& pos, Block* block)
 {
     boost::shared_ptr<Entity> source = (isVehicle() && getControllingPassenger()) ? getControllingPassenger() : shared_from_this();
 
-    float volume = source == shared_from_this() ? 0.550000011920929f : 0.6000000238418579f;
+    float volume = source == shared_from_this() ? 0.55f : 0.6f;
 
     float speed = (float)sqrt(source->mXd * source->mXd * 0.20000000298023224
                               + source->mYd * source->mYd
@@ -1745,7 +1745,7 @@ void Entity::playUnderwaterSound(const BlockPos& pos, Block* block)
     }
 
     playSound(getSwimSound(), amount,
-              (mRandom->nextFloat() - mRandom->nextFloat()) * 0.4000000059604645f + 1.0f);
+              (mRandom->nextFloat() - mRandom->nextFloat()) * 0.4f + 1.0f);
 }
 
 float Entity::playFlySound(float moveDist)
@@ -1988,7 +1988,7 @@ void Entity::doWaterSplashEffect()
         source = getControllingPassenger();
     }
 
-    float volume = source == shared_from_this() ? 0.20000000298023224f : 0.8999999761581421f;
+    float volume = source == shared_from_this() ? 0.2f : 0.9f;
 
     float speed = (float)sqrt(source->mXd * source->mXd * 0.2f
                               + source->mYd * source->mYd
@@ -2004,12 +2004,12 @@ void Entity::doWaterSplashEffect()
     if (speed < 0.25f)
     {
         playSound(getSwimSplashSound(), speed + 0.25f,
-                  (mRandom->nextFloat() - mRandom->nextFloat()) * 0.4000000059604645f + 1.0f);
+                  (mRandom->nextFloat() - mRandom->nextFloat()) * 0.4f + 1.0f);
     }
     else
     {
         playSound(getHeavySplashSound(), speed + 0.25f,
-                  (mRandom->nextFloat() - mRandom->nextFloat()) * 0.4000000059604645f + 1.0f);
+                  (mRandom->nextFloat() - mRandom->nextFloat()) * 0.4f + 1.0f);
     }
 
     MemSect(0);
@@ -2100,7 +2100,7 @@ bool Entity::isUnderLiquid(Material* material)
             double surface = (double)((float)(pos.y + 1)
                                       - (float)(LiquidBlock::getHeightFromData(
                                                     state->getBlock()->convertBlockStateToLegacyData(state))
-                                                - 0.1111111119389534f));
+                                                - 0.11111111f));
 
             bool inside = eyeY < surface;
 
@@ -2147,7 +2147,7 @@ bool Entity::isInLiquid(Material* material, Vec3* pos)
             double surface = (double)((float)(blockPos.y + 1)
                                       - (float)(LiquidBlock::getHeightFromData(
                                                     state->getBlock()->convertBlockStateToLegacyData(state))
-                                                - 0.1111111119389534f));
+                                                - 0.11111111f));
 
             bool inside = pos->y < surface;
 
@@ -2181,8 +2181,8 @@ void Entity::moveRelative(float x, float y, float z, float speed)
 
     float scale = speed / length;
 
-    float sin = Mth::sin(mYRot * 0.01745329238474369f);
-    float cos = Mth::cos(mYRot * 0.01745329238474369f);
+    float sin = Mth::sin(mYRot * 0.017453292f);
+    float cos = Mth::cos(mYRot * 0.017453292f);
 
     mXd += (double)(x * scale * cos - z * scale * sin);
     mYd += (double)(y * scale);
@@ -2432,8 +2432,8 @@ bool Entity::hurt(const DamageSource* source, float damage)
 
 Vec3* Entity::calculateViewVector(float xRot, float yRot)
 {
-    float yaw = -(yRot * 0.01745329238474369f) - 3.1415927410125732f;
-    float pitch = -(xRot * 0.01745329238474369f);
+    float yaw = -(yRot * 0.017453292f) - 3.1415927f;
+    float pitch = -(xRot * 0.017453292f);
 
     float cosYaw = Mth::cos(yaw);
     float sinYaw = Mth::sin(yaw);
@@ -2959,7 +2959,7 @@ bool Entity::isInWall()
     for (int i = 0; i < 8; i++)
     {
         int x = Mth::floor(mX + (double)(((float)(i % 2) - 0.5f) * width));
-        int y = Mth::floor(mY + (double)(((float)((i / 4) % 2) - 0.5f) * 0.10000000149011612f)
+        int y = Mth::floor(mY + (double)(((float)((i / 4) % 2) - 0.5f) * 0.1f)
                            + (double)eyeHeight);
         int z = Mth::floor(mZ + (double)(((float)((i / 2) % 2) - 0.5f) * width));
 
@@ -3601,7 +3601,7 @@ Vec3* Entity::getAttachPos(EEntityLocation location, float partialTicks)
         case ENTITY_LOCATION_CHEST_RIGHT:
             return getPos(partialTicks)->add(
                 Vec3::newTemp(0.0, getEyeHeight(), 0.0)
-                    ->yRot(-(getYHeadRot() * 0.01745329238474369f)));
+                    ->yRot(-(getYHeadRot() * 0.017453292f)));
 
         default:
             return getPos(partialTicks);
@@ -4156,7 +4156,7 @@ void Entity::setBoundingBox(AABB* boundingBox)
 
 double Entity::getEyeHeight()
 {
-    return (double)(mBbHeight * 0.8500000238418579f);
+    return (double)(mBbHeight * 0.85f);
 }
 
 void Entity::setOutsideWorldBorder(bool outsideWorldBorder)

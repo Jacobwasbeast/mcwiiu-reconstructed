@@ -359,34 +359,29 @@ void ItemEntity::playerTouch(boost::shared_ptr<Player> player)
 
     Item* itemType = item->getItem();
     int count = item->getCount();
-    if (mPickupDelay != 0)
-        return;
-
-    if (!mOwner.empty() && mAge < 5800 && player->getName() != mOwner)
-        return;
-
     bool replacedExisting = false;
-    if (!player->AutoEquip(item, item, replacedExisting) && !player->mInventory->add(item))
-        return;
-
-    if (itemType == Items::diamond)
+    if (mPickupDelay == 0 && !(!mOwner.empty() && 6000 - mAge > 200 && mOwner.compare(player->getName()) != 0)
+        && (player->AutoEquip(item, item, replacedExisting) || player->mInventory->add(item)))
     {
-        player->awardStat(GenericStats::diamonds(), GenericStats::param_diamonds());
-        if (!getThrower().empty())
+        if (itemType == Items::diamond)
         {
-            boost::shared_ptr<Player> thrower = mLevel->getPlayerByName(getThrower());
-            if (thrower && thrower != player)
-                thrower->awardStat(GenericStats::diamondsToYou(), GenericStats::param_diamondsToYou());
+            player->awardStat(GenericStats::diamonds(), GenericStats::param_diamonds());
+            if (!getThrower().empty())
+            {
+                boost::shared_ptr<Player> thrower = mLevel->getPlayerByName(getThrower());
+                if (thrower && thrower != player)
+                    thrower->awardStat(GenericStats::diamondsToYou(), GenericStats::param_diamondsToYou());
+            }
         }
-    }
-    if (itemType == Items::blazeRod)
-        player->awardStat(GenericStats::blazeRod(), GenericStats::param_blazeRod());
+        if (itemType == Items::blazeRod)
+            player->awardStat(GenericStats::blazeRod(), GenericStats::param_blazeRod());
 
-    player->take(shared_from_this(), count);
-    if (item->isEmpty())
-    {
-        remove();
-        item->setCount(count);
+        player->take(shared_from_this(), count);
+        if (item->isEmpty())
+        {
+            remove();
+            item->setCount(count);
+        }
     }
 }
 

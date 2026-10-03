@@ -30,13 +30,12 @@ public:
 
 private:
     Path* mPath;
-    int mPathTick;
-    void* mPathOwner;
-    bool mPathValid;
-    int mPathDistance;
+    boost::shared_ptr<Entity> mAttackTarget;
+    bool mHoldGround;
+    int mFleeTime;
     BlockPos mRestrictionCenter;
     float mRestrictionRadius;
-    float mWalkTargetValue;
+    float mRestrictedPathfindingMalus;
 };
 
 #endif

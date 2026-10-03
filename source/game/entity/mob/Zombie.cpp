@@ -471,7 +471,7 @@ void Zombie::positionRider(const boost::shared_ptr<Entity>& entity)
     if (RiderPositionOverrides::OverridePosition(shared_from_this(), entity))
         return;
 
-    float angle = mYRot * 0.01745329238474369f;
+    float angle = mYRot * 0.017453292f;
     double sin = Mth::sin(angle);
     double cos = Mth::cos(angle);
     entity->setPos(mX + 0.35 * sin, mY + 1.3, mZ - 0.35 * cos);

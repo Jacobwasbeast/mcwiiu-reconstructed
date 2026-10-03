@@ -42,7 +42,7 @@ void FlyingMob::travel(float xxa, float yya, float zza)
     }
     else
     {
-        float friction = 0.9100000262260437f;
+        float friction = 0.91f;
 
         if (mOnGround)
         {
@@ -54,7 +54,7 @@ void FlyingMob::travel(float xxa, float yya, float zza)
         float speed = 0.02f;
         if (mOnGround)
         {
-            speed = 0.1f * (0.16277135908603668f / (friction * friction * friction));
+            speed = 0.1f * (0.16277136f / (friction * friction * friction));
         }
 
         moveRelative(xxa, yya, zza, speed);
@@ -75,7 +75,7 @@ void FlyingMob::travel(float xxa, float yya, float zza)
         target = 1.0f;
     }
 
-    mAnimationSpeed = mAnimationSpeed + (target - mAnimationSpeed) * 0.4000000059604645f;
+    mAnimationSpeed = mAnimationSpeed + (target - mAnimationSpeed) * 0.4f;
     mAnimationPosition = mAnimationPosition + mAnimationSpeed;
 }
 

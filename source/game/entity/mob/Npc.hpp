@@ -5,8 +5,6 @@
 
 class Npc : public Creature
 {
-public:
-    virtual ~Npc() {}
 };
 
 #endif

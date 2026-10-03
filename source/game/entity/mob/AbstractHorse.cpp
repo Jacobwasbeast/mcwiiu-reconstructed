@@ -840,8 +840,8 @@ void AbstractHorse::travel(float x, float y, float z)
         mHasImpulse = true;
         if (forward > 0.0f)
         {
-            mXd += static_cast<double>(-0.4f * Mth::sin(mYRot * 0.01745329238474369f) * mJumpRidingScale);
-            mZd += static_cast<double>(0.4f * Mth::cos(mYRot * 0.01745329238474369f) * mJumpRidingScale);
+            mXd += static_cast<double>(-0.4f * Mth::sin(mYRot * 0.017453292f) * mJumpRidingScale);
+            mZd += static_cast<double>(0.4f * Mth::cos(mYRot * 0.017453292f) * mJumpRidingScale);
         }
         if ((rider->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
         {
@@ -1062,10 +1062,10 @@ void AbstractHorse::positionRider(const boost::shared_ptr<Entity>& passenger)
     if (mStandAnimO <= 0.0f)
         return;
 
-    const float sin = Mth::sin(mYBodyRot * 3.1415927410125732f / 180.0f);
-    const float cos = Mth::cos(mYBodyRot * 3.1415927410125732f / 180.0f);
+    const float sin = Mth::sin(mYBodyRot * 3.1415927f / 180.0f);
+    const float cos = Mth::cos(mYBodyRot * 3.1415927f / 180.0f);
     const float offset = 0.7f * mStandAnimO;
-    const float rise = 0.15000000596046448f * mStandAnimO;
+    const float rise = 0.15f * mStandAnimO;
 
     passenger->setPos(mX + static_cast<double>(offset * sin),
                       mY + getRideHeight() + passenger->getRidingHeight() + static_cast<double>(rise),

@@ -45,7 +45,7 @@ void NaturalMobSpawner::addChunkPos(int chunkX, int chunkZ)
 {
     if (chunkX < mMinChunk || chunkX > mMaxChunk || chunkZ < mMinChunk || chunkZ > mMaxChunk)
         return;
-    if (!mLevel->hasChunkAt(BlockPos(chunkX << 4, 0, chunkZ << 4)))
+    if (!mLevel->hasChunk(chunkX, chunkZ, true))
         return;
     insert(std::make_pair(ChunkPos(chunkX, chunkZ), false));
 }
@@ -54,7 +54,7 @@ void NaturalMobSpawner::addEdgeChunkPos(int chunkX, int chunkZ)
 {
     if (chunkX < mMinChunk || chunkX > mMaxChunk || chunkZ < mMinChunk || chunkZ > mMaxChunk)
         return;
-    if (!mLevel->hasChunkAt(BlockPos(chunkX << 4, 0, chunkZ << 4)))
+    if (!mLevel->hasChunk(chunkX, chunkZ, true))
         return;
     ChunkPos pos(chunkX, chunkZ);
     if (find(pos) == end())
@@ -63,9 +63,10 @@ void NaturalMobSpawner::addEdgeChunkPos(int chunkX, int chunkZ)
 
 BlockPos NaturalMobSpawner::getRandomPosWithin(Level* level, int chunkX, int chunkZ)
 {
+    LevelChunk* chunk = level->getChunk(chunkX, chunkZ);
     int x = (chunkX << 4) + level->mRandom->nextInt(16);
     int z = (chunkZ << 4) + level->mRandom->nextInt(16);
-    int height = Mth::roundUp(level->getHeightmap(x, z) + 1, 16);
+    int height = Mth::roundUp(chunk->getHeightmap(BlockPos(x, 0, z)) + 1, 16);
     if (height < 1)
         height = 256;
     return BlockPos(x, level->mRandom->nextInt(height), z);

@@ -30,7 +30,7 @@
 #include "game/world/generation/EndIslandFeature.hpp"
 
 TheEndGatewayEntity::TheEndGatewayEntity()
-    : BlockEntity(), mAge(0), mCooldown(0), mExitPortal(NULL), mExactTeleport(false)
+    : mAge(0), mCooldown(0), mExitPortal(NULL), mExactTeleport(false)
 {
 }
 

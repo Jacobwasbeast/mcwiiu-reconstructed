@@ -3,7 +3,7 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include "game/world/block/BlockEntity.hpp"
+#include "game/world/block/TheEndPortalBlockEntity.hpp"
 
 class Block;
 class BlockPos;
@@ -15,7 +15,7 @@ class LevelChunk;
 class Packet;
 class Vec3;
 
-class TheEndGatewayEntity : public BlockEntity
+class TheEndGatewayEntity : public TheEndPortalBlockEntity
 {
 public:
     TheEndGatewayEntity();

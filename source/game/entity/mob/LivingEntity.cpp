@@ -197,7 +197,7 @@ void LivingEntity::_init()
     mYBodyRotO = 0.0f;
     mYHeadRot = 0.0f;
     mYHeadRotO = 0.0f;
-    mFlyingSpeed = 0.019999999552965164f;
+    mFlyingSpeed = 0.02f;
     mGlideDistance = 0.0;
     mThermalLiftSpeed = 0.0;
     mThermalLerping = false;
@@ -1571,19 +1571,19 @@ void LivingEntity::breakItem(not_null_ptr<ItemInstance> itemInstance)
     if (!mLevel->mIsClientSide)
     {
         mLevel->playSound(boost::shared_ptr<Player>(), mX, mY, mZ, SoundEvents::ITEM_BREAK,
-                          getSoundSource(), 0.800000011920929f,
+                          getSoundSource(), 0.8f,
                           (float)(mLevel->mRandom->nextFloat() * 0.4000000059604645 + 0.800000011920929), 16.0f);
     }
 
     for (int i = 0; i < 5; ++i)
     {
         Vec3* velocity = Vec3::newTemp((mRandom->nextFloat() - 0.5) * 0.1, Math::random() * 0.1 + 0.1, 0.0);
-        velocity = velocity->xRot(-(mXRot * 0.01745329238474369f));
-        velocity = velocity->yRot(-(mYRot * 0.01745329238474369f));
+        velocity = velocity->xRot(-(mXRot * 0.017453292f));
+        velocity = velocity->yRot(-(mYRot * 0.017453292f));
 
         Vec3* offset = Vec3::newTemp((mRandom->nextFloat() - 0.5) * 0.3, -mRandom->nextFloat() * 0.6 - 0.3, 0.6);
-        offset = offset->xRot(-(mXRot * 0.01745329238474369f));
-        offset = offset->yRot(-(mYRot * 0.01745329238474369f));
+        offset = offset->xRot(-(mXRot * 0.017453292f));
+        offset = offset->yRot(-(mYRot * 0.017453292f));
         offset = offset->add(mX, mY + (double)getEyeHeight(), mZ);
 
         arrayWithLength<int> particleData(1, false);
@@ -1664,7 +1664,7 @@ void LivingEntity::knockback(boost::shared_ptr<Entity> attacker, float strength,
 
     if (Minecraft::GetInstance()->GetMiniGame()->HasFeatureReducedKnockback())
     {
-        strength = 0.10000000149011612f;
+        strength = 0.1f;
     }
 
     mXd = mXd * 0.5 - (x / horizontal) * (double)strength;
@@ -1896,15 +1896,15 @@ void LivingEntity::spawnEatParticles(const ItemInstance& itemInstance, int count
     for (int i = 0; i < count; ++i)
     {
         Vec3* velocity = Vec3::newTemp((mRandom->nextDouble() - 0.5) * 0.1, mRandom->nextDouble() * 0.1 + 0.1, 0.0);
-        velocity = velocity->xRot(-(mXRot * 0.01745329238474369f));
-        velocity = velocity->yRot(-(mYBodyRot * 0.01745329238474369f));
+        velocity = velocity->xRot(-(mXRot * 0.017453292f));
+        velocity = velocity->yRot(-(mYBodyRot * 0.017453292f));
         velocity->y = velocity->y + 0.05;
 
         double offsetX = (mRandom->nextDouble() - 0.5) * 0.3;
         double offsetY = -mRandom->nextDouble() * 0.6 - 0.3;
         Vec3* offset = Vec3::newTemp(offsetX, offsetY, 0.6);
-        offset = offset->xRot(-(mXRot * 0.01745329238474369f));
-        offset = offset->yRot(-(mYBodyRot * 0.01745329238474369f));
+        offset = offset->xRot(-(mXRot * 0.017453292f));
+        offset = offset->yRot(-(mYBodyRot * 0.017453292f));
         offset = offset->add(mX, mY + (double)getEyeHeight(), mZ);
 
         int itemId = Item::getId(itemInstance.getItem());
@@ -2033,7 +2033,7 @@ void LivingEntity::handleEntityEvent(unsigned char event, int data)
         if (deathSound != NULL)
         {
             playSound(deathSound, getSoundVolume(),
-                      (mRandom->nextFloat() - mRandom->nextFloat()) * 0.20000000298023224f + 1.0f);
+                      (mRandom->nextFloat() - mRandom->nextFloat()) * 0.2f + 1.0f);
         }
 
         MemSect(0);
@@ -2045,7 +2045,7 @@ void LivingEntity::handleEntityEvent(unsigned char event, int data)
 
     if (event == EntityEvent::SHIELD_DISABLED)
     {
-        playSound(SoundEvents::SHIELD_BREAK, 0.800000011920929f,
+        playSound(SoundEvents::SHIELD_BREAK, 0.8f,
                   (float)(mLevel->mRandom->nextFloat() * 0.4000000059604645 + 0.800000011920929));
         return;
     }
@@ -2065,7 +2065,7 @@ void LivingEntity::handleEntityEvent(unsigned char event, int data)
     if (event == EntityEvent::THORNED)
     {
         playSound(SoundEvents::ENCHANT_THORNS_HIT, getSoundVolume(),
-                  (mRandom->nextFloat() - mRandom->nextFloat()) * 0.20000000298023224f + 1.0f);
+                  (mRandom->nextFloat() - mRandom->nextFloat()) * 0.2f + 1.0f);
     }
     else if (event == EntityEvent::ATTACK_BLOCKED)
     {
@@ -2091,7 +2091,7 @@ void LivingEntity::handleEntityEvent(unsigned char event, int data)
     if (hurtSound != NULL)
     {
         playSound(hurtSound, getSoundVolume(),
-                  (mRandom->nextFloat() - mRandom->nextFloat()) * 0.20000000298023224f + 1.0f);
+                  (mRandom->nextFloat() - mRandom->nextFloat()) * 0.2f + 1.0f);
     }
 
     MemSect(0);
@@ -2224,10 +2224,10 @@ float LivingEntity::getVoicePitch()
 {
     if (isBaby())
     {
-        return (mRandom->nextFloat() - mRandom->nextFloat()) * 0.20000000298023224f + 1.5f;
+        return (mRandom->nextFloat() - mRandom->nextFloat()) * 0.2f + 1.5f;
     }
 
-    return (mRandom->nextFloat() - mRandom->nextFloat()) * 0.20000000298023224f + 1.0f;
+    return (mRandom->nextFloat() - mRandom->nextFloat()) * 0.2f + 1.0f;
 }
 
 bool LivingEntity::isImmobile()
@@ -2314,11 +2314,11 @@ void LivingEntity::findStandUpPosition(boost::shared_ptr<Entity> vehicle)
     }
     else
     {
-        angle = 1.5707963705062866f * (getMainArm() == HumanoidArm::LEFT ? -1.0f : 1.0f);
+        angle = 1.5707964f * (getMainArm() == HumanoidArm::LEFT ? -1.0f : 1.0f);
     }
 
-    double dirX = -(double)Mth::sin(-(mYRot * 0.01745329238474369f) - 3.1415927410125732f + angle);
-    double dirZ = -(double)Mth::cos(-(mYRot * 0.01745329238474369f) - 3.1415927410125732f + angle);
+    double dirX = -(double)Mth::sin(-(mYRot * 0.017453292f) - 3.1415927f + angle);
+    double dirZ = -(double)Mth::cos(-(mYRot * 0.017453292f) - 3.1415927f + angle);
     double scale = Mth::abs(dirX) - Mth::abs(dirZ) < 0.0 ? Mth::abs(dirZ) : Mth::abs(dirX);
 
     distance = distance / scale;
@@ -2346,7 +2346,7 @@ bool LivingEntity::shouldShowName()
 
 float LivingEntity::getJumpPower()
 {
-    return 0.41999998688697815f;
+    return 0.42f;
 }
 
 void LivingEntity::jumpFromGround()
@@ -2355,14 +2355,14 @@ void LivingEntity::jumpFromGround()
 
     if (hasEffect(MobEffects::JUMP))
     {
-        mYd = mYd + (double)((float)(getEffect(MobEffects::JUMP)->getAmplifier() + 1) * 0.10000000149011612f);
+        mYd = mYd + (double)((float)(getEffect(MobEffects::JUMP)->getAmplifier() + 1) * 0.1f);
     }
 
     if (isSprinting())
     {
-        float radians = mYRot * 0.01745329238474369f;
-        mXd = mXd - (double)(Mth::sin(radians) * 0.20000000298023224f);
-        mZd = mZd + (double)(Mth::cos(radians) * 0.20000000298023224f);
+        float radians = mYRot * 0.017453292f;
+        mXd = mXd - (double)(Mth::sin(radians) * 0.2f);
+        mZd = mZd + (double)(Mth::cos(radians) * 0.2f);
     }
 
     mHasImpulse = true;
@@ -2385,14 +2385,14 @@ void LivingEntity::jumpInLava()
 
 float LivingEntity::getWaterSlowDown()
 {
-    return 0.800000011920929f;
+    return 0.8f;
 }
 
 float LivingEntity::getFrictionForTravel()
 {
     MutableBlockPos pos(Mth::floor(mX), Mth::floor(mBoundingBox->mMinY - 1.0), Mth::floor(mZ));
 
-    float friction = 0.9100000262260437f;
+    float friction = 0.91f;
 
     if (!mOnGround)
     {
@@ -2665,7 +2665,7 @@ void LivingEntity::fallFlyingTravel(double& xd, double& yd, double& zd, Vec3* lo
         liftFactor = 1.0f;
     }
 
-    float pitch = xRot * 0.01745329238474369f;
+    float pitch = xRot * 0.017453292f;
     double lookLength = sqrt(lookAngle->x * lookAngle->x + lookAngle->z * lookAngle->z);
     horizontalSpeed = sqrt(xd * xd + zd * zd);
 
@@ -2755,7 +2755,7 @@ void LivingEntity::travel(float xxa, float yya, float zza)
             if (skeletonHorseWithPlayerPassenger)
             {
                 float friction = getFrictionForTravel();
-                float acceleration = 0.16277135908603668f / (friction * friction * friction);
+                float acceleration = 0.16277136f / (friction * friction * friction);
 
                 if (mOnGround)
                 {
@@ -2773,7 +2773,7 @@ void LivingEntity::travel(float xxa, float yya, float zza)
 
             if (depthStrider > 0.0f)
             {
-                waterSlowdown = waterSlowdown + (0.546000063419342f - waterSlowdown) * depthStrider / 3.0f;
+                waterSlowdown = waterSlowdown + (0.54600006f - waterSlowdown) * depthStrider / 3.0f;
                 moveSpeed = moveSpeed + (getSpeed() * 1.0f - moveSpeed) * depthStrider / 3.0f;
             }
 
@@ -2887,7 +2887,7 @@ void LivingEntity::travel(float xxa, float yya, float zza)
             MutableBlockPos groundPos(Mth::floor(mX), Mth::floor(mBoundingBox->mMinY - 1.0), Mth::floor(mZ));
 
             float friction = getFrictionForTravel();
-            float acceleration = 0.16277135908603668f / (friction * friction * friction);
+            float acceleration = 0.16277136f / (friction * friction * friction);
 
             PIXBeginNamedEvent(0.0f, "Update speed");
 
@@ -2919,8 +2919,8 @@ void LivingEntity::travel(float xxa, float yya, float zza)
 
             if (onLadder())
             {
-                mXd = (double)Mth::clamp((float)mXd, -0.15000000596046448f, 0.15000000596046448f);
-                mZd = (double)Mth::clamp((float)mZd, -0.15000000596046448f, 0.15000000596046448f);
+                mXd = (double)Mth::clamp((float)mXd, -0.15f, 0.15f);
+                mZd = (double)Mth::clamp((float)mZd, -0.15f, 0.15f);
                 mFallDistance = 0.0f;
 
                 if (mYd < -0.15)
@@ -3040,7 +3040,7 @@ void LivingEntity::updateModelAnimation()
         target = 1.0f;
     }
 
-    mAnimationSpeed = mAnimationSpeed + (target - mAnimationSpeed) * 0.4000000059604645f;
+    mAnimationSpeed = mAnimationSpeed + (target - mAnimationSpeed) * 0.4f;
     mAnimationPosition = mAnimationPosition + mAnimationSpeed;
 }
 
@@ -3472,11 +3472,11 @@ void LivingEntity::tick()
 
     mORun = mRun;
 
-    if (travelled > 0.0025000000745058060f)
+    if (travelled > 0.0025000002f)
     {
         travelled = sqrtf(travelled) * 3.0f;
 
-        float wanted = (float)atan2(dz, dx) * 57.2957763671875f - 90.0f;
+        float wanted = (float)atan2(dz, dx) * 57.295776f - 90.0f;
         float diff = Mth::abs(Mth::wrapDegrees(mYRot) - wanted);
 
         if (diff > 95.0f && diff < 265.0f)
@@ -3503,7 +3503,7 @@ void LivingEntity::tick()
         travelled = 0.0f;
     }
 
-    mRun = mRun + (travelled - mRun) * 0.30000001192092896f;
+    mRun = mRun + (travelled - mRun) * 0.3f;
 
     headTurn = tickHeadTurn(bodyRot, headTurn);
 
@@ -3563,7 +3563,7 @@ void LivingEntity::tick()
 
 float LivingEntity::tickHeadTurn(float yBodyRot, float headTurnDelta)
 {
-    mYBodyRot = mYBodyRot + Mth::wrapDegrees(yBodyRot - mYBodyRot) * 0.30000001192092896f;
+    mYBodyRot = mYBodyRot + Mth::wrapDegrees(yBodyRot - mYBodyRot) * 0.3f;
 
     float diff = Mth::wrapDegrees(mYRot - mYBodyRot);
     bool turnedAround = !(diff >= -90.0f && diff < 90.0f);
@@ -3584,7 +3584,7 @@ float LivingEntity::tickHeadTurn(float yBodyRot, float headTurnDelta)
 
     if (clamped * clamped > 2500.0f)
     {
-        mYBodyRot = mYBodyRot + clamped * 0.20000000298023224f;
+        mYBodyRot = mYBodyRot + clamped * 0.2f;
     }
 
     if (turnedAround)
@@ -3771,9 +3771,9 @@ void LivingEntity::aiStep()
     }
 
 
-    mXxa = mXxa * 0.9800000190734863f;
-    mZza = mZza * 0.9800000190734863f;
-    mYRota = mYRota * 0.8999999761581421f;
+    mXxa = mXxa * 0.98f;
+    mZza = mZza * 0.98f;
+    mYRota = mYRota * 0.9f;
 
     PIXBeginNamedEvent(0.0f, "travel");
     travel(mXxa, mYya, mZza);
@@ -4109,12 +4109,12 @@ void LivingEntity::spawnItemUseParticles(not_null_ptr<ItemInstance> itemInstance
     for (int i = 0; i < count; ++i)
     {
         Vec3* velocity = Vec3::newTemp((mRandom->nextFloat() - 0.5) * 0.1, Math::random() * 0.1 + 0.1, 0.0);
-        velocity = velocity->xRot(-(mXRot * 0.01745329238474369f));
-        velocity = velocity->yRot(-(mYRot * 0.01745329238474369f));
+        velocity = velocity->xRot(-(mXRot * 0.017453292f));
+        velocity = velocity->yRot(-(mYRot * 0.017453292f));
 
         Vec3* offset = Vec3::newTemp((mRandom->nextFloat() - 0.5) * 0.3, -mRandom->nextFloat() * 0.6 - 0.3, 0.6);
-        offset = offset->xRot(-(mXRot * 0.01745329238474369f));
-        offset = offset->yRot(-(mYRot * 0.01745329238474369f));
+        offset = offset->xRot(-(mXRot * 0.017453292f));
+        offset = offset->yRot(-(mYRot * 0.017453292f));
         offset = offset->add(mX, mY + (double)getEyeHeight(), mZ);
 
         if (itemInstance->isStackedByData())
@@ -4137,7 +4137,7 @@ void LivingEntity::spawnItemUseParticles(not_null_ptr<ItemInstance> itemInstance
     }
 
     playSound(SoundEvents::GENERIC_EAT, (float)(0.5 + 0.5 * (double)mRandom->nextInt(2)),
-              (mRandom->nextFloat() - mRandom->nextFloat()) * 0.20000000298023224f + 1.0f);
+              (mRandom->nextFloat() - mRandom->nextFloat()) * 0.2f + 1.0f);
 }
 
 void LivingEntity::completeUsingItem()
@@ -4283,9 +4283,9 @@ bool LivingEntity::randomTeleport(double x, double y, double z)
         {
             double progress = (double)i / 127.0;
 
-            float xd = (random->nextFloat() - 0.5f) * 0.20000000298023224f;
-            float yd = (random->nextFloat() - 0.5f) * 0.20000000298023224f;
-            float zd = (random->nextFloat() - 0.5f) * 0.20000000298023224f;
+            float xd = (random->nextFloat() - 0.5f) * 0.2f;
+            float yd = (random->nextFloat() - 0.5f) * 0.2f;
+            float zd = (random->nextFloat() - 0.5f) * 0.2f;
 
             double px = oldX + (mX - oldX) * progress + (random->nextDouble() - 0.5) * (double)mBbWidth * 2.0;
             double py = oldY + (mY - oldY) * progress + random->nextDouble() * (double)mBbHeight;

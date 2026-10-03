@@ -52,21 +52,25 @@ SynchedEntityData::~SynchedEntityData()
 
 int SynchedEntityData::defineIdInternal(unsigned long long entityType, unsigned long long parentEntityType)
 {
+    int id;
     boost::unordered_map<unsigned long long, int>::iterator it = sIdsByEntityType.find(entityType);
 
-    if (it != sIdsByEntityType.end())
+    if (it == sIdsByEntityType.end())
     {
-        return it->second + 1;
+        id = 0;
+        boost::unordered_map<unsigned long long, int>::iterator parent = sIdsByEntityType.find(parentEntityType);
+
+        if (parent != sIdsByEntityType.end())
+        {
+            id = parent->second + 1;
+        }
+    }
+    else
+    {
+        id = it->second + 1;
     }
 
-    boost::unordered_map<unsigned long long, int>::iterator parent = sIdsByEntityType.find(parentEntityType);
-
-    if (parent != sIdsByEntityType.end())
-    {
-        return parent->second + 1;
-    }
-
-    return 0;
+    return id;
 }
 
 bool SynchedEntityData::isDirty()
@@ -99,8 +103,10 @@ void SynchedEntityData::writeDataItem(DataOutputStream* output, DataItem_Impl<T>
 {
     const EntityDataAccessor<T>* accessor = item->getAccessor();
 
+    EntityDataSerializerEnum::EEntityDataSerializer serializerId = accessor->getSerializer()->getId();
+
     output->writeByte(accessor->getId());
-    output->writeByte(accessor->getSerializer()->getId());
+    output->writeByte(serializerId);
 
     EnterCriticalSection(&sSerializerLock);
     accessor->getSerializer()->write(output, item->getValue());
@@ -168,7 +174,9 @@ void SynchedEntityData::pack(std::vector<DataItem*>* items, DataOutputStream* ou
 {
     if (items != NULL)
     {
-        for (std::vector<DataItem*>::iterator it = items->begin(); it != items->end(); ++it)
+        std::vector<DataItem*>::iterator end = items->end();
+
+        for (std::vector<DataItem*>::iterator it = items->begin(); it != end; ++it)
         {
             writeDataItem(output, *it);
         }
@@ -313,7 +321,10 @@ std::vector<DataItem*>* SynchedEntityData::unpack(DataInputStream* input)
 template <class T>
 void SynchedEntityData::assignValue(DataItem_Impl<T>* target, DataItem_Impl<T>* source)
 {
-    target->setValue(source->getValue());
+    {
+        T value = source->getValue();
+        target->setValue(value);
+    }
     mEntity->onSyncedDataUpdated(source->getAccessor());
 }
 

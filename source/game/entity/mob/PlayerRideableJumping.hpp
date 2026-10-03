@@ -1,7 +1,9 @@
 #ifndef GAME_ENTITY_MOB_PLAYERRIDEABLEJUMPING_HPP
 #define GAME_ENTITY_MOB_PLAYERRIDEABLEJUMPING_HPP
 
-class PlayerRideableJumping
+#include "game/entity/mob/PlayerRideable.hpp"
+
+class PlayerRideableJumping : public PlayerRideable
 {
 public:
     virtual void onPlayerJump(int jump) = 0;

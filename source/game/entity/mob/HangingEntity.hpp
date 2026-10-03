@@ -21,6 +21,8 @@ template <class T> class not_null_ptr;
 class HangingEntity : public Entity
 {
     friend class TrackedEntity;
+    friend class ItemFrameRenderer;
+    friend class PaintingRenderer;
 
 public:
     class HangingEntitySelector : public Predicate<boost::shared_ptr<Entity> >
