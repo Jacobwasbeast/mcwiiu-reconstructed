@@ -23,8 +23,7 @@ unsigned int SplashPotionItem::getPotionType() const
 
 std::wstring SplashPotionItem::getName(not_null_ptr<ItemInstance> itemInstance)
 {
-    Potion* potion = PotionUtils::getPotion(itemInstance);
-    return potion->getName(Potion::SPLASH);
+    return PotionUtils::getPotion(itemInstance)->getName(Potion::SPLASH);
 }
 
 void SplashPotionItem::appendHoverText(not_null_ptr<ItemInstance> itemInstance,
@@ -40,15 +39,11 @@ InteractionResultHolder SplashPotionItem::use(Level* level, boost::shared_ptr<Pl
 {
     bool instabuild = player->mAbilities.mInstabuild;
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
-    not_null_ptr<ItemInstance> thrownItem;
+    not_null_ptr<ItemInstance> thrownItem = !instabuild
+        ? itemInstance->split(1) : itemInstance->copy();
     if (!instabuild)
     {
-        thrownItem = itemInstance->split(1);
         itemInstance->shrink(1);
-    }
-    else
-    {
-        thrownItem = itemInstance->copy();
     }
 
     if (!level->mIsClientSide)
@@ -68,11 +63,12 @@ InteractionResultHolder SplashPotionItem::use(Level* level, boost::shared_ptr<Pl
 
 unsigned int SplashPotionItem::GetUseTooltip(const ItemTooltipDataHolder& tooltipData)
 {
-    if (tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Fail)
+    unsigned int tooltip = IDS_NONE;
+    if (tooltipData.m_eInteractionResult != InteractionResult::eInteractionResult_Fail)
     {
-        return IDS_NONE;
+        tooltip = IDS_TOOLTIPS_THROW;
     }
-    return IDS_TOOLTIPS_THROW;
+    return tooltip;
 }
 
 int SplashPotionItem::getUseDuration(not_null_ptr<ItemInstance>)

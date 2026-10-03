@@ -32,19 +32,20 @@
 const int Inventory::INVENTORY_SIZE = 36;
 
 Inventory::Inventory(Player* player)
-    : m_items(NonNullList<not_null_ptr<ItemInstance> >::withSize(INVENTORY_SIZE, ItemInstance::EMPTY)),
-      m_armor(NonNullList<not_null_ptr<ItemInstance> >::withSize(4, ItemInstance::EMPTY)),
-      m_offhand(NonNullList<not_null_ptr<ItemInstance> >::withSize(1, ItemInstance::EMPTY)),
-      m_hasPickedItem(false),
-      m_selected(0),
-      m_player(player),
-      m_auxiliaryItem(ItemInstance::EMPTY),
-      m_carried(ItemInstance::EMPTY),
-      m_timesChanged(0)
+    : m_auxiliaryItem(ItemInstance::EMPTY),
+      m_carried(ItemInstance::EMPTY)
 {
+    m_items = NonNullList<not_null_ptr<ItemInstance> >::withSize(INVENTORY_SIZE, ItemInstance::EMPTY);
+    m_armor = NonNullList<not_null_ptr<ItemInstance> >::withSize(4, ItemInstance::EMPTY);
+    m_offhand = NonNullList<not_null_ptr<ItemInstance> >::withSize(1, ItemInstance::EMPTY);
     m_compartments[0] = m_items;
     m_compartments[1] = m_armor;
     m_compartments[2] = m_offhand;
+    m_hasPickedItem = false;
+    m_selected = 0;
+    m_carried = ItemInstance::EMPTY;
+    m_player = player;
+    m_timesChanged = 0;
 }
 
 Inventory::~Inventory()
@@ -136,11 +137,11 @@ bool Inventory::hasPickedItem()
 
 int Inventory::findSlotMatchingItem(not_null_ptr<ItemInstance> item, bool ignoreTags)
 {
-    for (unsigned int slot = 0; slot < m_items.size(); ++slot)
+    for (int slot = 0; slot < static_cast<int>(m_items.size()); ++slot)
     {
         if (!m_items[slot]->isEmpty() && isSameItem(item, m_items[slot], ignoreTags))
         {
-            return static_cast<int>(slot);
+            return slot;
         }
     }
     return -1;
@@ -205,16 +206,16 @@ void Inventory::setPickedItem(not_null_ptr<ItemInstance> item)
 
 int Inventory::findSlotMatchingUnusedItem(not_null_ptr<ItemInstance> item)
 {
-    for (unsigned int slot = 0; slot < m_items.size(); ++slot)
+    for (int slot = 0; slot < static_cast<int>(m_items.size()); ++slot)
     {
         not_null_ptr<ItemInstance> current = m_items[slot];
-        if (!current->isEmpty()
-            && isSameItem(item, current, true)
-            && !current->isDamaged()
+        if (!m_items[slot]->isEmpty()
+            && isSameItem(item, m_items[slot], true)
+            && !m_items[slot]->isDamaged()
             && !current->isEnchanted()
             && !current->hasCustomHoverName())
         {
-            return static_cast<int>(slot);
+            return slot;
         }
     }
     return -1;
@@ -222,7 +223,14 @@ int Inventory::findSlotMatchingUnusedItem(not_null_ptr<ItemInstance> item)
 
 void Inventory::swapPaint(int direction)
 {
-    direction = direction < 0 ? -1 : direction > 0 ? 1 : 0;
+    if (direction > 0)
+    {
+        direction = 1;
+    }
+    else if (direction < 0)
+    {
+        direction = -1;
+    }
     m_selected -= direction;
     while (m_selected < 0)
     {
@@ -240,9 +248,15 @@ int Inventory::clearInventory(Item* item, int auxValue, int count, CompoundTag* 
     for (unsigned int slot = 0; slot < getContainerSize(); ++slot)
     {
         not_null_ptr<ItemInstance> current = getItem(slot);
-        if (current->isEmpty()
-            || (item != NULL && current->getItem() != item)
-            || (auxValue >= 0 && current->getAuxValue() != auxValue))
+        if (current->isEmpty())
+        {
+            continue;
+        }
+        if (item != NULL && current->getItem() != item)
+        {
+            continue;
+        }
+        if (auxValue >= 0 && current->getAuxValue() != auxValue)
         {
             continue;
         }
@@ -251,22 +265,28 @@ int Inventory::clearInventory(Item* item, int auxValue, int count, CompoundTag* 
         removed += amount;
         if (count != 0)
         {
-            current->shrink(amount);
-            if (current->isEmpty())
+            m_items[slot]->shrink(amount);
+            if (m_items[slot]->isEmpty())
             {
                 setItem(slot, ItemInstance::EMPTY);
             }
-            if (removed >= count)
+            if (count > 0 && removed >= count)
             {
                 return removed;
             }
         }
     }
 
-    if (!m_carried->isEmpty()
-        && (item == NULL || m_carried->getItem() == item)
-        && (auxValue < 0 || m_carried->getAuxValue() == auxValue))
+    if (!m_carried->isEmpty())
     {
+        if (item == NULL && m_carried->getItem() != NULL)
+        {
+            return removed;
+        }
+        if (auxValue >= 0 && m_carried->getAuxValue() != auxValue)
+        {
+            return removed;
+        }
         int amount = count < 1 ? m_carried->getCount()
                                : std::min(m_carried->getCount(), count - removed);
         removed += amount;
@@ -292,11 +312,11 @@ int Inventory::getSlotWithRemainingSpace(not_null_ptr<ItemInstance> item)
     {
         return 40;
     }
-    for (unsigned int slot = 0; slot < m_items.size(); ++slot)
+    for (int slot = 0; slot < static_cast<int>(m_items.size()); ++slot)
     {
         if (hasRemainingSpaceForItem(m_items[slot], item, false))
         {
-            return static_cast<int>(slot);
+            return slot;
         }
     }
     return -1;
@@ -482,7 +502,7 @@ void Inventory::removeItem(not_null_ptr<ItemInstance> item)
 {
     for (int compartment = 0; compartment < 3; ++compartment)
     {
-        for (unsigned int slot = 0; slot < m_compartments[compartment].size(); ++slot)
+        for (int slot = 0; slot < static_cast<int>(m_compartments[compartment].size()); ++slot)
         {
             if (m_compartments[compartment][slot].get() == item.get())
             {
@@ -516,20 +536,22 @@ not_null_ptr<ItemInstance> Inventory::removeItemNoUpdate(int slot)
 
 void Inventory::setItem(unsigned int slot, not_null_ptr<ItemInstance> item)
 {
-    for (int compartment = 0; compartment < 3; ++compartment)
+    NonNullList<not_null_ptr<ItemInstance> > compartment;
+    for (int index = 0; index < 3; ++index)
     {
-        if (slot < m_compartments[compartment].size())
+        if (slot < m_compartments[index].size())
         {
-            if (compartment == 1 && !item->isEmpty() && m_player->GetType() == EntityType::LOCAL_PLAYER)
+            if (index == 1 && !item->isEmpty() && m_player->GetType() == EntityType::LOCAL_PLAYER)
             {
                 m_player->OnEquipArmor(item);
             }
-            m_compartments[compartment][slot] = item;
-            m_player->handleCollectItem(item);
-            return;
+            compartment = m_compartments[index];
+            break;
         }
-        slot -= m_compartments[compartment].size();
+        slot -= m_compartments[index].size();
     }
+    compartment[slot] = item;
+    m_player->handleCollectItem(item);
 }
 
 float Inventory::getDestroySpeed(const BlockState* block)
@@ -579,27 +601,40 @@ ListTag* Inventory::save(ListTag* tag)
 
 void Inventory::load(ListTag* tag)
 {
-    clearContent();
+    for (unsigned int slot = 0; slot < m_items.size(); ++slot)
+    {
+        m_items[slot] = m_items.defaultValue;
+    }
+    for (unsigned int slot = 0; slot < m_armor.size(); ++slot)
+    {
+        m_armor[slot] = m_armor.defaultValue;
+    }
+    for (unsigned int slot = 0; slot < m_offhand.size(); ++slot)
+    {
+        m_offhand[slot] = m_offhand.defaultValue;
+    }
     for (int index = 0; index < tag->size(); ++index)
     {
         CompoundTag* itemTag = tag->getCompound(index);
         unsigned int slot = itemTag->getByte(L"Slot");
         not_null_ptr<ItemInstance> item(new ItemInstance(itemTag));
-        if (item->isEmpty())
+        if (!item->isEmpty())
         {
-            continue;
-        }
-        if (slot < m_items.size())
-        {
-            m_items[slot] = item;
-        }
-        else if (slot >= 100 && slot < 100 + m_armor.size())
-        {
-            m_armor[slot - 100] = item;
-        }
-        else if (slot >= 150 && slot < 150 + m_offhand.size())
-        {
-            m_offhand[slot - 150] = item;
+            if (slot < m_items.size())
+            {
+                m_items[slot] = item;
+            }
+            else if (slot >= 100)
+            {
+                if (slot < 100 + m_armor.size())
+                {
+                    m_armor[slot - 100] = item;
+                }
+                else if (slot >= 150 && slot < 150 + m_offhand.size())
+                {
+                    m_offhand[slot - 150] = item;
+                }
+            }
         }
     }
 }
@@ -660,12 +695,16 @@ int Inventory::getMaxStackSize()
 
 bool Inventory::canDestroy(const BlockState* block)
 {
-    if (block->getBlock()->mMaterial->isAlwaysDestroyable())
+    if (block->getMaterial()->isAlwaysDestroyable())
     {
         return true;
     }
     not_null_ptr<ItemInstance> selected = getItem(m_selected);
-    return !selected->isEmpty() && selected->canDestroySpecial(block);
+    if (!selected->isEmpty())
+    {
+        return selected->canDestroySpecial(block);
+    }
+    return false;
 }
 
 not_null_ptr<ItemInstance> Inventory::getArmor(int slot)
@@ -736,18 +775,19 @@ void Inventory::setCarried(not_null_ptr<ItemInstance> item)
 
 not_null_ptr<ItemInstance> Inventory::getCarried()
 {
-    not_null_ptr<ItemInstance> carried = m_carried;
-    return carried;
+    return m_carried;
 }
 
 bool Inventory::stillValid(boost::shared_ptr<Player> player)
 {
-    if (m_player->mRemoved)
+    if (!m_player->mRemoved)
     {
-        return false;
+        if (player->distanceAsIfHitscanned(BlockPos(m_player->getPos(1.0f)), *player->mBoundingBox) <= 30.25f)
+        {
+            return true;
+        }
     }
-    BlockPos position(m_player->getPos(1.0f));
-    return player->distanceAsIfHitscanned(position, *player->mBoundingBox) <= 30.25;
+    return false;
 }
 
 void Inventory::startOpen(boost::shared_ptr<Player> player)
@@ -820,7 +860,7 @@ int Inventory::countMatches(not_null_ptr<ItemInstance> item)
     int count = 0;
     for (unsigned int slot = 0; slot < m_items.size(); ++slot)
     {
-        if (!m_items[slot]->isEmpty() && m_items[slot]->sameItem(item))
+        if (m_items[slot]->sameItem(item))
         {
             count += m_items[slot]->getCount();
         }

@@ -37,6 +37,7 @@
 #include "game/world/Level.hpp"
 #include "game/world/Dimension.hpp"
 #include "game/world/generation/Player.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/GameMode.hpp"
 #include "game/core/Minecraft.hpp"
@@ -46,9 +47,7 @@
 #include "game/world/generation/MultiPlayerLevel.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 
-int BucketItem::getSchoolName(int a, int b, int c, int d)
-{
-    static const unsigned int values[11][10] = {
+static const unsigned int values[11][10] = {
         { 1, 7, 1, 1, 0x32c4c9ab, 7, 7, 1, 0, 0xd50701c3 },
         { 7, 3, 0, 1, 0xcd035b9e, 0, 7, 0, 4, 0x47b1b097 },
         { 11, 7, 0, 1, 0x6ccc17a8, 1, 0, 0, 0, 0x9adcd29d },
@@ -60,20 +59,29 @@ int BucketItem::getSchoolName(int a, int b, int c, int d)
         { 14, 0, 1, 3, 0x38e1599f, 0, 4, 1, 0, 0xf9785bdf },
         { 14, 0, 0, 1, 0xc02e273a, 7, 0, 0, 1, 0x968e5c0c },
         { 4, 4, 1, 1, 0x395fe7d7, 0, 3, 9, 4, 0x0a5c6461 }
-    };
-    int i;
-    for (i = 0; i < 11; ++i)
+};
+
+int BucketItem::getSchoolName(int a, int b, int c, int d)
+{
+    const unsigned int (*row)[10] = values;
+    int remaining = 11;
+    while (true)
     {
-        if (values[i][0] == a && values[i][1] == b && values[i][2] == c && values[i][3] == d)
+        if ((*row)[0] == a && (*row)[1] == b && (*row)[2] == c && (*row)[3] == d)
         {
-            return static_cast<int>(values[i][4]);
+            return (*row)[4];
         }
-        if (values[i][5] == a && values[i][6] == b && values[i][7] == c && values[i][8] == d)
+        if ((*row)[5] == a && (*row)[6] == b && (*row)[7] == c && (*row)[8] == d)
         {
-            return static_cast<int>(values[i][9]);
+            return (*row)[9];
+        }
+        --remaining;
+        ++row;
+        if (remaining == 0)
+        {
+            return -1;
         }
     }
-    return -1;
 }
 
 BucketItem::BucketItem(BucketFillType fillType)
@@ -81,18 +89,25 @@ BucketItem::BucketItem(BucketFillType fillType)
 {
     mMaxStackSize = 1;
 
-    if (fillType == EMPTY || fillType == NONE)
+    switch (fillType)
     {
+    case EMPTY:
+    case NONE:
         mBlock = Blocks::air;
-    }
-    else if (fillType == LAVA)
-    {
+        break;
+    case LAVA:
         mBlock = Blocks::flowing_lava;
-    }
-    else if (fillType == MILK || fillType == FISH || fillType == SALMON || fillType == PUFFER
-             || fillType == TROPICAL || fillType == WATER)
-    {
+        break;
+    case MILK:
+    case FISH:
+    case SALMON:
+    case TROPICAL:
+    case PUFFER:
+    case WATER:
         mBlock = Blocks::flowing_water;
+        break;
+    default:
+        break;
     }
 }
 
@@ -102,32 +117,28 @@ BucketItem::~BucketItem()
 
 bool BucketItem::isFishBucket()
 {
-    return mFillType >= FISH && mFillType <= TROPICAL;
+    return mFillType >= FISH && mFillType <= PUFFER;
 }
 
 bool BucketItem::supportsEntityType(const unsigned long long& type, int& variant) const
 {
-    if (type == EntityType::FISH)
+    switch (static_cast<unsigned int>(type))
     {
+    case static_cast<unsigned int>(EntityType::FISH):
         variant = 2;
         return true;
-    }
-    if (type == EntityType::PUFFERFISH)
-    {
+    case static_cast<unsigned int>(EntityType::PUFFERFISH):
         variant = 5;
         return true;
-    }
-    if (type == EntityType::SALMON)
-    {
+    case static_cast<unsigned int>(EntityType::SALMON):
         variant = 3;
         return true;
-    }
-    if (type == EntityType::TROPICAL_FISH)
-    {
+    case static_cast<unsigned int>(EntityType::TROPICAL_FISH):
         variant = 4;
         return true;
+    default:
+        return false;
     }
-    return false;
 }
 
 void BucketItem::addBucketEntitySaveData(boost::shared_ptr<Entity> entity, not_null_ptr<ItemInstance> itemInstance)
@@ -136,18 +147,16 @@ void BucketItem::addBucketEntitySaveData(boost::shared_ptr<Entity> entity, not_n
     {
         return;
     }
-    std::wstring key(L"FishBucket");
     if (itemInstance->hasTag())
     {
-        itemInstance->getTag()->remove(key);
+        itemInstance->getTag()->remove(L"FishBucket");
     }
     CompoundTag* tag = new CompoundTag();
-    entity->save(tag);
-    std::wstring customName = entity->getCustomName();
-    if (!customName.empty())
+    entity->addAdditonalSaveData(tag);
+    if (!entity->getCustomName().empty())
     {
-        std::wstring customName2 = entity->getCustomName();
-        tag->putString(L"CustomName", customName2);
+        std::wstring customName = entity->getCustomName();
+        tag->putString(L"CustomName", customName);
         std::wstring ownerUUID = entity->getOwnerUUID();
         tag->putString(L"OwnerUUID", ownerUUID);
         bool restricted = entity->wasNamedByRestrictedPlayer();
@@ -155,7 +164,7 @@ void BucketItem::addBucketEntitySaveData(boost::shared_ptr<Entity> entity, not_n
         bool host = entity->wasNamedOnHost();
         tag->putBoolean(L"CreatedOnHost", host);
     }
-    itemInstance->addTagElement(key, tag);
+    itemInstance->addTagElement(L"FishBucket", tag);
 }
 
 not_null_ptr<ItemInstance> BucketItem::createResultItem(not_null_ptr<ItemInstance> itemInstance,
@@ -231,15 +240,30 @@ InteractionResult::EInteractionResult BucketItem::useOn(boost::shared_ptr<Player
                                                         InteractionHand::EInteractionHand hand, const Direction* direction,
                                                         float hitX, float hitY, float hitZ, bool simulate)
 {
+    InteractionResult::EInteractionResult result;
     if (!simulate)
-        return Item::useOn(player, level, pos, hand, direction, hitX, hitY, hitZ, simulate);
-    return TestUse(level, player, hand) ? InteractionResult::eInteractionResult_Success
-                                        : InteractionResult::eInteractionResult_Fail;
+    {
+        result = Item::useOn(player, level, pos, hand, direction, hitX, hitY, hitZ, simulate);
+    }
+    else
+    {
+        result = InteractionResult::eInteractionResult_Fail;
+        if (TestUse(level, player, hand))
+            return InteractionResult::eInteractionResult_Success;
+    }
+    return result;
 }
 
 static bool isPickable_apply(boost::shared_ptr<Entity> entity)
 {
-    return entity->isPickable();
+    bool pickable = true;
+    if (!entity->isPickable())
+    {
+        bool isItem = entity->GetType() == EntityType::ITEM_ENTITY;
+        if (!isItem)
+            pickable = false;
+    }
+    return pickable;
 }
 
 HitResult* BucketItem::ScanForHitResultEntities(boost::shared_ptr<Player> player, Level* level, const HitResult* result)
@@ -260,17 +284,23 @@ HitResult* BucketItem::ScanForHitResultEntities(boost::shared_ptr<Player> player
     const bool farPickRange = Minecraft::GetInstance()->mGameMode->hasFarPickRange();
     double entityReach = kCreativePickRange;
     double blockHitDistance;
+    bool limitedReach = false;
     if (!farPickRange)
     {
         blockHitDistance = result->mLocation->distanceTo(eyePosition);
         entityReach = pickRange;
+        if (pickRange > kPickDistanceCompare)
+        {
+            limitedReach = true;
+        }
     }
     else
     {
         blockHitDistance = result->mLocation->distanceTo(eyePosition);
     }
 
-    Vec3* viewVector = player->getViewVector(1.0f);
+    float unit = 1.0f;
+    Vec3* viewVector = player->getViewVector(unit);
     Vec3* rayEnd = eyePosition->add(viewVector->x * entityReach,
                                     viewVector->y * entityReach,
                                     viewVector->z * entityReach);
@@ -287,13 +317,11 @@ HitResult* BucketItem::ScanForHitResultEntities(boost::shared_ptr<Player> player
         new Predicates<boost::shared_ptr<Entity> >::ConnectivePredicate(
             Predicates<boost::shared_ptr<Entity> >::ConnectivePredicate::eOperator_And, predicates, 2);
 
-    AABB* searchBox = player->mBoundingBox->expand(viewVector->x * entityReach,
-                                                   viewVector->y * entityReach,
-                                                   viewVector->z * entityReach)
-                          ->grow(1.0, 1.0, 1.0);
-
-    std::vector<boost::shared_ptr<Entity> >* entities =
-        level->getEntities(player, searchBox, sPickPredicate, NULL);
+    std::vector<boost::shared_ptr<Entity> >* entities = level->getEntities(
+        player,
+        player->mBoundingBox->expand(viewVector->x * entityReach, viewVector->y * entityReach, viewVector->z * entityReach)
+            ->grow(unit, unit, unit),
+        sPickPredicate, NULL);
 
     for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin();
          it != entities->end(); ++it)
@@ -342,8 +370,7 @@ HitResult* BucketItem::ScanForHitResultEntities(boost::shared_ptr<Player> player
 
     if (pointedEntity.get() != NULL)
     {
-        if (farPickRange || pickRange <= kPickDistanceCompare ||
-            eyePosition->distanceTo(entityHitLocation) <= kPickDistanceCompare)
+        if (!limitedReach || eyePosition->distanceTo(entityHitLocation) <= kPickDistanceCompare)
         {
             if (closestDistance < blockHitDistance || output == NULL)
             {
@@ -366,9 +393,7 @@ HitResult* BucketItem::GetPlayerHitResult(boost::shared_ptr<Player> player, Leve
 {
     static const float kPartialTick = 1.0f;
 
-    MultiPlayerGameMode* gameMode = Minecraft::GetInstance()->mGameMode;
-    double pickRange = gameMode->getPickRange();
-    HitResult* result = player->pick(pickRange, kPartialTick);
+    HitResult* result = player->pick(Minecraft::GetInstance()->mGameMode->getPickRange(), kPartialTick);
     if (useLiquids || result == NULL || result->mType == HitResult::MISS)
     {
         result = Item::getPlayerPOVHitResult(level, player, useLiquids);
@@ -456,6 +481,11 @@ bool BucketItem::TestUse(Level* level, boost::shared_ptr<Player> player, Interac
             delete hitResult;
             return false;
         }
+        if (!player->GetGameMode()->MayPlace(placePos, mBlock))
+        {
+            delete hitResult;
+            return false;
+        }
         Block* placeBlock = level->getBlockState(placePos)->getBlock();
         if (level->isEmptyBlock(placePos) || !placeBlock->isWaterBlocking() || placeBlock == Blocks::flowing_water
             || placeBlock == Blocks::water || placeBlock == Blocks::flowing_lava || placeBlock == Blocks::lava)
@@ -495,22 +525,23 @@ bool BucketItem::TestUse(Level* level, boost::shared_ptr<Player> player, Interac
 
 bool BucketItem::isFishBucketNameCensored(const std::wstring& name, const std::wstring& owner, bool restricted, bool host)
 {
-    bool censored = !g_pApp->IsUUIDLocal(owner) &&
-                    (g_pApp->IsConsoleChatCensored() || restricted);
+    bool censored = !gApp.IsUUIDLocal(owner) && (gApp.IsConsoleChatCensored() || restricted);
     bool hidden = !host && censored;
-    return (!CGameNetworkManager::sInstance.IsHost() || !hidden) &&
-           (CGameNetworkManager::sInstance.IsHost() || !censored);
+    if ((!CGameNetworkManager::sInstance.IsHost() || !hidden) && (CGameNetworkManager::sInstance.IsHost() || !censored))
+    {
+        return false;
+    }
+    return true;
 }
 
 bool BucketItem::readBucketEntitySaveData(boost::shared_ptr<Entity> entity, not_null_ptr<ItemInstance> itemInstance)
 {
-    std::wstring key(L"FishBucket");
-    CompoundTag* tag = static_cast<CompoundTag*>(itemInstance->getTagElement(key));
+    CompoundTag* tag = static_cast<CompoundTag*>(itemInstance->getTagElement(L"FishBucket"));
     if (tag == NULL)
     {
         return false;
     }
-    entity->load(tag);
+    entity->readAdditionalSaveData(tag);
     if (tag->contains(L"CustomName"))
     {
         std::wstring customName = tag->getString(L"CustomName");
@@ -729,8 +760,8 @@ InteractionResultHolder BucketItem::use(Level* level, boost::shared_ptr<Player> 
         delete hitResult;
         if (player->mAbilities.mInstabuild)
             return InteractionResultHolder(InteractionResult::eInteractionResult_Success, itemInstance);
-        return InteractionResultHolder(InteractionResult::eInteractionResult_Success,
-                                       not_null_ptr<ItemInstance>(new ItemInstance(Items::bucket)));
+        boost::shared_ptr<ItemInstance> bucketItem(new ItemInstance(Items::bucket));
+        return InteractionResultHolder(InteractionResult::eInteractionResult_Success, bucketItem);
     }
 
     if (player->mayUseItemAt(pos.relative(direction), direction, itemInstance) != 1)
@@ -830,7 +861,7 @@ not_null_ptr<ItemInstance> BucketItem::finishUsingItem(not_null_ptr<ItemInstance
     {
         boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
         player->awardStat(gStats->get_itemsUsed(Item::VALIDgetId(this)),
-                          GenericStats::param_itemsUsed(player, itemInstance));
+                          GenericStats::param_itemsUsed(boost::static_pointer_cast<Player>(entity), itemInstance));
     }
     if (!itemInstance->isEmpty())
         return itemInstance;
@@ -853,15 +884,16 @@ unsigned int BucketItem::GetUseTooltip(const ItemTooltipDataHolder& tooltipData)
     {
         return IDS_TOOLTIPS_DRINK;
     }
-    if (!TestUse(tooltipData.m_pLevel, tooltipData.m_pPlayer, InteractionHand::eInteractionHand_MainHand))
+    bool canUse = TestUse(tooltipData.m_pLevel, tooltipData.m_pPlayer, InteractionHand::eInteractionHand_MainHand);
+    if (!canUse)
     {
         return IDS_NONE;
     }
-    if (isFishBucket())
+    if (!isFishBucket())
     {
-        return IDS_TOOLTIPS_EMPTY;
+        return IDS_TOOLTIPS_COLLECT;
     }
-    return IDS_TOOLTIPS_COLLECT;
+    return IDS_TOOLTIPS_EMPTY;
 }
 
 static const int TROPICAL_FISH_COLOR_NAMES[15] = {
@@ -897,7 +929,11 @@ std::wstring BucketItem::getName(not_null_ptr<ItemInstance> itemInstance)
     }
 
     if (fishBucket && !customName.empty() && !censored)
-        return replaceAll(L10N::GetString(static_cast<int>(IDS_DESC_BUCKET_CUSTOM_FISH)), L"{*CUSTOM_FISH*}", customName);
+    {
+        std::wstring result = L10N::GetString(static_cast<int>(IDS_DESC_BUCKET_CUSTOM_FISH));
+        result = replaceAll(result, L"{*CUSTOM_FISH*}", customName);
+        return result;
+    }
 
     if (mFillType != TROPICAL || tag == NULL)
         return Item::getName(itemInstance);
@@ -916,21 +952,26 @@ std::wstring BucketItem::getName(not_null_ptr<ItemInstance> itemInstance)
     int schoolName = getSchoolName(baseColor, patternColor, variant & 1, pattern);
     if (schoolName != -1)
     {
-        return replaceAll(L10N::GetString(static_cast<int>(IDS_DESC_BUCKET_CUSTOM_FISH)), L"{*CUSTOM_FISH*}",
-                          L10N::GetString(schoolName));
+        std::wstring result = L10N::GetString(static_cast<int>(IDS_DESC_BUCKET_CUSTOM_FISH));
+        result = replaceAll(result, L"{*CUSTOM_FISH*}", L10N::GetString(schoolName));
+        return result;
     }
 
     std::wstring baseName = L10N::GetString(TROPICAL_FISH_COLOR_NAMES[baseColor]);
     if (baseColor == patternColor)
     {
-        std::wstring fishName = replaceAll(L10N::GetString(TROPICAL_FISH_PATTERN_NAMES[pattern + patternOffset]),
-                                           L"{*COLOR_0*}", baseName);
-        return replaceAll(L10N::GetString(static_cast<int>(IDS_DESC_BUCKET_CUSTOM_FISH)), L"{*CUSTOM_FISH*}", fishName);
+        std::wstring fishName = L10N::GetString(TROPICAL_FISH_PATTERN_NAMES[pattern + patternOffset]);
+        fishName = replaceAll(fishName, L"{*COLOR_0*}", baseName);
+        std::wstring result = L10N::GetString(static_cast<int>(IDS_DESC_BUCKET_CUSTOM_FISH));
+        result = replaceAll(result, L"{*CUSTOM_FISH*}", fishName);
+        return result;
     }
 
     std::wstring patternName = L10N::GetString(TROPICAL_FISH_COLOR_NAMES[patternColor]);
     std::wstring fishName = L10N::GetString(TROPICAL_FISH_PATTERN_NAMES[pattern + patternOffset]);
     fishName = replaceAll(fishName, L"{*COLOR_0*}", baseName);
     fishName = replaceAll(fishName, L"{*COLOR_1*}", patternName);
-    return replaceAll(L10N::GetString(static_cast<int>(IDS_DESC_BUCKET_CUSTOM_FISH)), L"{*CUSTOM_FISH*}", fishName);
+    std::wstring result = L10N::GetString(static_cast<int>(IDS_DESC_BUCKET_CUSTOM_FISH));
+    result = replaceAll(result, L"{*CUSTOM_FISH*}", fishName);
+    return result;
 }

@@ -42,45 +42,45 @@ InteractionResult::EInteractionResult SnowItem::useOn(boost::shared_ptr<Player> 
         return InteractionResult::eInteractionResult_Fail;
     }
 
+    const BlockState* state = level->getBlockState(pos);
+    Block* block = state->getBlock();
     BlockPos placePos = pos;
-    Block* block = level->getBlockState(placePos)->getBlock();
-    if (direction != Direction::UP || block != getBlock())
+    bool placeable = true;
+    if (direction != Direction::UP || block != mBlock)
     {
-        if (!block->mayReplaceWithPlace(level, placePos))
+        if (!block->mayReplaceWithPlace(level, pos))
         {
-            placePos = placePos.relative(direction);
+            placePos = pos.relative(direction);
+            state = level->getBlockState(placePos);
+            block = state->getBlock();
         }
+        placeable = block == mBlock;
     }
 
-    const BlockState* state = level->getBlockState(placePos);
-    block = state->getBlock();
-
-    if (block == getBlock()
-        && state->getValue(SnowLayerBlock::LAYERS) < 8)
+    if (placeable)
     {
-        if (!simulate)
+        if (state->getValue(SnowLayerBlock::LAYERS) < 8)
         {
-            const BlockState* snowState = SnowLayerBlock::buildSnowBlock(level, placePos, 1, 1);
-            const AABB* shape = snowState->getClipAABB(level, placePos);
-            if (shape != NULL && level->isUnobstructed(shape->move(placePos))
-                && level->setBlock(placePos, snowState, Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false))
+            if (!simulate)
             {
-                const SoundType* soundType = getBlock()->getSoundType();
-                level->playSound(player, placePos, soundType->getPlaceSound(),
-                                 SoundSource::eSoundSource_Blocks,
-                                 (soundType->getVolume() + 1.0f) * 0.5f,
-                                 soundType->getPitch() * 0.8f, 16.0f);
-                itemInstance->shrink(1);
-                return InteractionResult::eInteractionResult_Success;
+                const BlockState* snowState = SnowLayerBlock::buildSnowBlock(level, placePos, 1, 1);
+                const AABB* shape = snowState->getClipAABB(level, placePos);
+                if (shape != NULL && level->isUnobstructed(shape->move(placePos))
+                    && level->setBlock(placePos, snowState, Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false))
+                {
+                    const SoundType* soundType = mBlock->getSoundType();
+                    level->playSound(player, placePos, soundType->getPlaceSound(),
+                                     SoundSource::eSoundSource_Blocks,
+                                     (soundType->getVolume() + 1.0f) * 0.5f,
+                                     soundType->getPitch() * 0.8f, 16.0f);
+                    itemInstance->shrink(1);
+                    return InteractionResult::eInteractionResult_Success;
+                }
             }
         }
-    }
-    else if (block == getBlock())
-    {
-        BlockPos abovePos = placePos.above();
-        if (player->mayUseItemAt(abovePos, direction, itemInstance))
+        else if (player->mayUseItemAt(pos.above(), direction, itemInstance))
         {
-            placePos = abovePos;
+            placePos = pos.above();
         }
     }
 

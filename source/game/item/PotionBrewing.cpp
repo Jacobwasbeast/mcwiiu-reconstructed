@@ -182,7 +182,7 @@ void PotionBrewing::StaticCtor()
     ItemInstancePredicate* glowstoneDust = new ItemInstancePredicate(Items::glowstoneDust);
     ItemInstancePredicate* magmaCream = new ItemInstancePredicate(Items::magmaCream);
     ItemInstancePredicate* sugar = new ItemInstancePredicate(Items::sugar);
-    ItemInstancePredicate* pufferfish = new ItemInstancePredicate(Items::fish, gPufferfishFoodType->getId());
+    ItemInstancePredicate* pufferfish = new ItemInstancePredicate(Items::fish, FishFoodItem::Type::PUFFERFISH->getId());
     ItemInstancePredicate* speckledMelon = new ItemInstancePredicate(Items::speckledMelon);
     ItemInstancePredicate* spiderEye = new ItemInstancePredicate(Items::spiderEye);
     ItemInstancePredicate* ghastTear = new ItemInstancePredicate(Items::ghastTear);

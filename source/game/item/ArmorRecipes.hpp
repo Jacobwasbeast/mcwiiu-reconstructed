@@ -11,11 +11,13 @@ class Recipes;
 class ArmorRecipes
 {
 public:
+    ArmorRecipes() { _init(); }
     void _init();
     void addRecipes(Recipes* recipes);
     static int GetArmorType(Item* item);
 
 private:
+    unsigned char mReserved[4];
     std::vector<Object*>* mLists;
 };
 

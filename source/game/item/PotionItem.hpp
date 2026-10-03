@@ -14,7 +14,7 @@ class PotionItem : public Item
 {
 public:
     PotionItem();
-    virtual ~PotionItem();
+    virtual ~PotionItem() {}
 
     virtual not_null_ptr<ItemInstance> getDefaultInstance();
     virtual not_null_ptr<ItemInstance> finishUsingItem(not_null_ptr<ItemInstance> itemInstance,

@@ -2,6 +2,7 @@
 #define GAME_ITEM_EFFECT_HPP
 
 #include <string>
+#include <vector>
 #include <stdint.h>
 #include <boost/unordered_map.hpp>
 
@@ -29,9 +30,12 @@ public:
     int getId();
 
 private:
-    std::wstring mName;
     boost::unordered_map<std::wstring, RenderTarget*> mSamplers;
+    std::vector<std::wstring> mSamplerNames;
+    std::vector<int> mSamplerLocations;
+    unsigned char mReservedA[32];
     boost::unordered_map<std::wstring, Uniform*> mUniforms;
+    unsigned char mReservedB[36];
     bool mDirty;
 };
 

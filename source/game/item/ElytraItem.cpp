@@ -67,12 +67,12 @@ bool ElytraItem::TestUse(Level*, boost::shared_ptr<Player>, InteractionHand::EIn
 
 unsigned int ElytraItem::GetUseTooltip(const ItemTooltipDataHolder& tooltipData)
 {
-    if (tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Fail)
+    if (tooltipData.m_eInteractionResult != InteractionResult::eInteractionResult_Fail)
     {
-        return IDS_NONE;
+        return IDS_TOOLTIPS_EQUIP;
     }
 
-    return IDS_TOOLTIPS_EQUIP;
+    return IDS_NONE;
 }
 
 void ElytraItem::registerIcons(IconRegister* iconRegister)

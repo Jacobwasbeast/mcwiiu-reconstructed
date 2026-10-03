@@ -278,7 +278,7 @@ void AreaEffectCloud::generateParticles()
         {
             for (int i = 0; i < 2; ++i)
             {
-                float angle = mRandom->nextFloat() * 6.2831854820251465f;
+                float angle = mRandom->nextFloat() * 6.2831855f;
                 float dist = std::sqrt(mRandom->nextFloat()) * 0.2f;
                 double dx = static_cast<double>(std::cos(angle) * dist);
                 double dz = static_cast<double>(std::sin(angle) * dist);
@@ -305,7 +305,7 @@ void AreaEffectCloud::generateParticles()
 
         for (int i = 0; i < count; ++i)
         {
-            float angle = mRandom->nextFloat() * 6.2831854820251465f;
+            float angle = mRandom->nextFloat() * 6.2831855f;
             float dist = std::sqrt(mRandom->nextFloat()) * radius;
             double dx = static_cast<double>(std::cos(angle) * dist);
             double dz = static_cast<double>(std::sin(angle) * dist);

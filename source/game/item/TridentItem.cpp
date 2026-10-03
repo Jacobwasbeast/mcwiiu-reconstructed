@@ -125,9 +125,9 @@ void TridentItem::releaseUsing(not_null_ptr<ItemInstance> itemInstance,
 
         float yRot = player->mYRot;
         float xRot = player->mXRot;
-        float dirX = -Mth::sin(yRot * 0.01745329238474369f) * Mth::cos(xRot * 0.01745329238474369f);
-        float dirY = -Mth::sin(xRot * 0.01745329238474369f);
-        float dirZ = Mth::cos(yRot * 0.01745329238474369f) * Mth::cos(xRot * 0.01745329238474369f);
+        float dirX = -Mth::sin(yRot * 0.017453292f) * Mth::cos(xRot * 0.017453292f);
+        float dirY = -Mth::sin(xRot * 0.017453292f);
+        float dirZ = Mth::cos(yRot * 0.017453292f) * Mth::cos(xRot * 0.017453292f);
         float length = Mth::sqrt(dirX * dirX + dirY * dirY + dirZ * dirZ);
         float speed = 3.0f * (1.0f + (float)riptide) * 0.25f / length;
 

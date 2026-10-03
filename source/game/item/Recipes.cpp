@@ -58,17 +58,13 @@ ArmorDyeRecipe* Recipes::mArmorDyeRecipe = NULL;
 Recipes::Recipes()
 {
     mToolRecipies = new ToolRecipies();
-    mToolRecipies->_init();
     mWeaponRecipies = new WeaponRecipies();
-    mWeaponRecipies->_init();
     mOreRecipies = new OreRecipies();
-    mOreRecipies->_init();
     mFoodRecipies = new FoodRecipies();
     mStructureRecipies = new StructureRecipies();
     mArmorRecipes = new ArmorRecipes();
-    mArmorRecipes->_init();
     mClothDyeRecipes = new ClothDyeRecipes();
-    mBannerRecipes = new BannerRecipes();
+    mBannerRecipes = new BannerRecipes;
     mShulkerBoxRecipes = new ShulkerBoxRecipes();
     mArmorDyeRecipe = new ArmorDyeRecipe();
     mRecipes[eRecipeCategory_Crafting].push_back(new MapCloningRecipe());
@@ -85,17 +81,17 @@ Recipes::Recipes()
     mRecipes[eRecipeCategory_Crafting].push_back(mShulkerBoxColoring);
 
     addShapedRecipe(new ItemInstance(Blocks::planks, 4, 0), L"sczg", L"#", L'#', new ItemInstance(Blocks::log, 1, 0), L'S');
-    addShapedRecipe(new ItemInstance(Blocks::planks, 4, PlanksBlock::Variant::byData(2)->getData()), L"sczg", L"#", L'#', new ItemInstance(Blocks::log, 1, PlanksBlock::Variant::byData(2)->getData()), L'S');
-    addShapedRecipe(new ItemInstance(Blocks::planks, 4, PlanksBlock::Variant::byData(1)->getData()), L"sczg", L"#", L'#', new ItemInstance(Blocks::log, 1, PlanksBlock::Variant::byData(1)->getData()), L'S');
-    addShapedRecipe(new ItemInstance(Blocks::planks, 4, PlanksBlock::Variant::byData(3)->getData()), L"sczg", L"#", L'#', new ItemInstance(Blocks::log, 1, PlanksBlock::Variant::byData(3)->getData()), L'S');
-    addShapedRecipe(new ItemInstance(Blocks::planks, 4, PlanksBlock::Variant::byData(4)->getData()), L"sczg", L"#", L'#', new ItemInstance(Blocks::log2, 1, PlanksBlock::Variant::byData(4)->getData() - 4), L'S');
-    addShapedRecipe(new ItemInstance(Blocks::planks, 4, PlanksBlock::Variant::byData(5)->getData()), L"sczg", L"#", L'#', new ItemInstance(Blocks::log2, 1, PlanksBlock::Variant::byData(5)->getData() - 4), L'S');
+    addShapedRecipe(new ItemInstance(Blocks::planks, 4, PlanksBlock::Variant::BIRCH->getData()), L"sczg", L"#", L'#', new ItemInstance(Blocks::log, 1, PlanksBlock::Variant::BIRCH->getData()), L'S');
+    addShapedRecipe(new ItemInstance(Blocks::planks, 4, PlanksBlock::Variant::SPRUCE->getData()), L"sczg", L"#", L'#', new ItemInstance(Blocks::log, 1, PlanksBlock::Variant::SPRUCE->getData()), L'S');
+    addShapedRecipe(new ItemInstance(Blocks::planks, 4, PlanksBlock::Variant::JUNGLE->getData()), L"sczg", L"#", L'#', new ItemInstance(Blocks::log, 1, PlanksBlock::Variant::JUNGLE->getData()), L'S');
+    addShapedRecipe(new ItemInstance(Blocks::planks, 4, PlanksBlock::Variant::ACACIA->getData()), L"sczg", L"#", L'#', new ItemInstance(Blocks::log2, 1, PlanksBlock::Variant::ACACIA->getData() - 4), L'S');
+    addShapedRecipe(new ItemInstance(Blocks::planks, 4, PlanksBlock::Variant::DARK_OAK->getData()), L"sczg", L"#", L'#', new ItemInstance(Blocks::log2, 1, PlanksBlock::Variant::DARK_OAK->getData() - 4), L'S');
     addShapedRecipe(new ItemInstance(Blocks::planks, 4, 0), L"sczg", L"#", L'#', new ItemInstance(Blocks::stripped_log_oak, 1, 0), L'S');
-    addShapedRecipe(new ItemInstance(Blocks::planks, 4, PlanksBlock::Variant::byData(2)->getData()), L"sczg", L"#", L'#', new ItemInstance(Blocks::stripped_log_birch, 1), L'S');
-    addShapedRecipe(new ItemInstance(Blocks::planks, 4, PlanksBlock::Variant::byData(1)->getData()), L"sczg", L"#", L'#', new ItemInstance(Blocks::stripped_log_spruce, 1), L'S');
-    addShapedRecipe(new ItemInstance(Blocks::planks, 4, PlanksBlock::Variant::byData(3)->getData()), L"sczg", L"#", L'#', new ItemInstance(Blocks::stripped_log_jungle, 1), L'S');
-    addShapedRecipe(new ItemInstance(Blocks::planks, 4, PlanksBlock::Variant::byData(4)->getData()), L"sczg", L"#", L'#', new ItemInstance(Blocks::stripped_log_acacia, 1), L'S');
-    addShapedRecipe(new ItemInstance(Blocks::planks, 4, PlanksBlock::Variant::byData(5)->getData()), L"sczg", L"#", L'#', new ItemInstance(Blocks::stripped_log_dark_oak, 1), L'S');
+    addShapedRecipe(new ItemInstance(Blocks::planks, 4, PlanksBlock::Variant::BIRCH->getData()), L"sczg", L"#", L'#', new ItemInstance(Blocks::stripped_log_birch, 1), L'S');
+    addShapedRecipe(new ItemInstance(Blocks::planks, 4, PlanksBlock::Variant::SPRUCE->getData()), L"sczg", L"#", L'#', new ItemInstance(Blocks::stripped_log_spruce, 1), L'S');
+    addShapedRecipe(new ItemInstance(Blocks::planks, 4, PlanksBlock::Variant::JUNGLE->getData()), L"sczg", L"#", L'#', new ItemInstance(Blocks::stripped_log_jungle, 1), L'S');
+    addShapedRecipe(new ItemInstance(Blocks::planks, 4, PlanksBlock::Variant::ACACIA->getData()), L"sczg", L"#", L'#', new ItemInstance(Blocks::stripped_log_acacia, 1), L'S');
+    addShapedRecipe(new ItemInstance(Blocks::planks, 4, PlanksBlock::Variant::DARK_OAK->getData()), L"sczg", L"#", L'#', new ItemInstance(Blocks::stripped_log_dark_oak, 1), L'S');
     addShapedRecipe(new ItemInstance(Items::stick, 4), L"ssctg", L"#", L"#", L'#', Blocks::planks, L'S');
     mToolRecipies->addRecipes(this);
     mFoodRecipies->addRecipes(this);
@@ -109,42 +105,42 @@ Recipes::Recipes()
     addShapedRecipe(new ItemInstance(Blocks::enchanting_table, 1), L"sssctcicig", L" B ", L"D#D", L"###", L'#', Blocks::obsidian, L'B', Items::book, L'D', Items::diamond, L'S');
     addShapedRecipe(new ItemInstance(Blocks::anvil, 1), L"sssctcig", L"III", L" i ", L"iii", L'I', Blocks::iron_block, L'i', Items::ironIngot, L'S');
     addShapedRecipe(new ItemInstance(Blocks::ladder, 3), L"ssscig", L"# #", L"###", L"# #", L'#', Items::stick, L'S');
-    addShapedRecipe(new ItemInstance(Blocks::fence, 3), L"ssciczg", L"W#W", L"W#W", L'#', Items::stick, L'W', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::byData(0)->getData()), L'S');
-    addShapedRecipe(new ItemInstance(Blocks::birch_fence, 3), L"ssciczg", L"W#W", L"W#W", L'#', Items::stick, L'W', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::byData(2)->getData()), L'S');
-    addShapedRecipe(new ItemInstance(Blocks::spruce_fence, 3), L"ssciczg", L"W#W", L"W#W", L'#', Items::stick, L'W', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::byData(1)->getData()), L'S');
-    addShapedRecipe(new ItemInstance(Blocks::jungle_fence, 3), L"ssciczg", L"W#W", L"W#W", L'#', Items::stick, L'W', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::byData(3)->getData()), L'S');
-    addShapedRecipe(new ItemInstance(Blocks::acacia_fence, 3), L"ssciczg", L"W#W", L"W#W", L'#', Items::stick, L'W', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::byData(4)->getData()), L'S');
-    addShapedRecipe(new ItemInstance(Blocks::dark_oak_fence, 3), L"ssciczg", L"W#W", L"W#W", L'#', Items::stick, L'W', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::byData(5)->getData()), L'S');
-    addShapedRecipe(new ItemInstance(Blocks::cobblestone_wall, 6, WallBlock::Variant::byData(0)->getData()), L"ssctg", L"###", L"###", L'#', Blocks::cobblestone, L'S');
-    addShapedRecipe(new ItemInstance(Blocks::cobblestone_wall, 6, WallBlock::Variant::byData(1)->getData()), L"ssctg", L"###", L"###", L'#', Blocks::mossy_cobblestone, L'S');
+    addShapedRecipe(new ItemInstance(Blocks::fence, 3), L"ssciczg", L"W#W", L"W#W", L'#', Items::stick, L'W', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::OAK->getData()), L'S');
+    addShapedRecipe(new ItemInstance(Blocks::birch_fence, 3), L"ssciczg", L"W#W", L"W#W", L'#', Items::stick, L'W', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::BIRCH->getData()), L'S');
+    addShapedRecipe(new ItemInstance(Blocks::spruce_fence, 3), L"ssciczg", L"W#W", L"W#W", L'#', Items::stick, L'W', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::SPRUCE->getData()), L'S');
+    addShapedRecipe(new ItemInstance(Blocks::jungle_fence, 3), L"ssciczg", L"W#W", L"W#W", L'#', Items::stick, L'W', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::JUNGLE->getData()), L'S');
+    addShapedRecipe(new ItemInstance(Blocks::acacia_fence, 3), L"ssciczg", L"W#W", L"W#W", L'#', Items::stick, L'W', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::ACACIA->getData()), L'S');
+    addShapedRecipe(new ItemInstance(Blocks::dark_oak_fence, 3), L"ssciczg", L"W#W", L"W#W", L'#', Items::stick, L'W', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::DARK_OAK->getData()), L'S');
+    addShapedRecipe(new ItemInstance(Blocks::cobblestone_wall, 6, WallBlock::Variant::COBBLESTONE->getData()), L"ssctg", L"###", L"###", L'#', Blocks::cobblestone, L'S');
+    addShapedRecipe(new ItemInstance(Blocks::cobblestone_wall, 6, WallBlock::Variant::MOSSY->getData()), L"ssctg", L"###", L"###", L'#', Blocks::mossy_cobblestone, L'S');
     addShapedRecipe(new ItemInstance(Blocks::nether_brick_fence, 6), L"ssctg", L"###", L"###", L'#', Blocks::nether_brick, L'S');
     addShapedRecipe(new ItemInstance(Blocks::iron_bars, 16), L"sscig", L"###", L"###", L'#', Items::ironIngot, L'S');
-    addShapedRecipe(new ItemInstance(Blocks::fence_gate, 1), L"ssciczg", L"#W#", L"#W#", L'#', Items::stick, L'W', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::byData(0)->getData()), L'S');
-    addShapedRecipe(new ItemInstance(Blocks::birch_fence_gate, 1), L"ssciczg", L"#W#", L"#W#", L'#', Items::stick, L'W', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::byData(2)->getData()), L'S');
-    addShapedRecipe(new ItemInstance(Blocks::spruce_fence_gate, 1), L"ssciczg", L"#W#", L"#W#", L'#', Items::stick, L'W', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::byData(1)->getData()), L'S');
-    addShapedRecipe(new ItemInstance(Blocks::jungle_fence_gate, 1), L"ssciczg", L"#W#", L"#W#", L'#', Items::stick, L'W', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::byData(3)->getData()), L'S');
-    addShapedRecipe(new ItemInstance(Blocks::acacia_fence_gate, 1), L"ssciczg", L"#W#", L"#W#", L'#', Items::stick, L'W', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::byData(4)->getData()), L'S');
-    addShapedRecipe(new ItemInstance(Blocks::dark_oak_fence_gate, 1), L"ssciczg", L"#W#", L"#W#", L'#', Items::stick, L'W', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::byData(5)->getData()), L'S');
-    addShapedRecipe(new ItemInstance(Items::woodenDoor, 3), L"sssczg", L"##", L"##", L"##", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::byData(0)->getData()), L'S');
-    addShapedRecipe(new ItemInstance(Items::birchDoor, 3), L"sssczg", L"##", L"##", L"##", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::byData(2)->getData()), L'S');
-    addShapedRecipe(new ItemInstance(Items::spruceDoor, 3), L"sssczg", L"##", L"##", L"##", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::byData(1)->getData()), L'S');
-    addShapedRecipe(new ItemInstance(Items::jungleDoor, 3), L"sssczg", L"##", L"##", L"##", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::byData(3)->getData()), L'S');
-    addShapedRecipe(new ItemInstance(Items::acaciaDoor, 3), L"sssczg", L"##", L"##", L"##", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::byData(4)->getData()), L'S');
-    addShapedRecipe(new ItemInstance(Items::darkOakDoor, 3), L"sssczg", L"##", L"##", L"##", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::byData(5)->getData()), L'S');
+    addShapedRecipe(new ItemInstance(Blocks::fence_gate, 1), L"ssciczg", L"#W#", L"#W#", L'#', Items::stick, L'W', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::OAK->getData()), L'S');
+    addShapedRecipe(new ItemInstance(Blocks::birch_fence_gate, 1), L"ssciczg", L"#W#", L"#W#", L'#', Items::stick, L'W', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::BIRCH->getData()), L'S');
+    addShapedRecipe(new ItemInstance(Blocks::spruce_fence_gate, 1), L"ssciczg", L"#W#", L"#W#", L'#', Items::stick, L'W', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::SPRUCE->getData()), L'S');
+    addShapedRecipe(new ItemInstance(Blocks::jungle_fence_gate, 1), L"ssciczg", L"#W#", L"#W#", L'#', Items::stick, L'W', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::JUNGLE->getData()), L'S');
+    addShapedRecipe(new ItemInstance(Blocks::acacia_fence_gate, 1), L"ssciczg", L"#W#", L"#W#", L'#', Items::stick, L'W', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::ACACIA->getData()), L'S');
+    addShapedRecipe(new ItemInstance(Blocks::dark_oak_fence_gate, 1), L"ssciczg", L"#W#", L"#W#", L'#', Items::stick, L'W', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::DARK_OAK->getData()), L'S');
+    addShapedRecipe(new ItemInstance(Items::woodenDoor, 3), L"sssczg", L"##", L"##", L"##", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::OAK->getData()), L'S');
+    addShapedRecipe(new ItemInstance(Items::birchDoor, 3), L"sssczg", L"##", L"##", L"##", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::BIRCH->getData()), L'S');
+    addShapedRecipe(new ItemInstance(Items::spruceDoor, 3), L"sssczg", L"##", L"##", L"##", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::SPRUCE->getData()), L'S');
+    addShapedRecipe(new ItemInstance(Items::jungleDoor, 3), L"sssczg", L"##", L"##", L"##", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::JUNGLE->getData()), L'S');
+    addShapedRecipe(new ItemInstance(Items::acaciaDoor, 3), L"sssczg", L"##", L"##", L"##", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::ACACIA->getData()), L'S');
+    addShapedRecipe(new ItemInstance(Items::darkOakDoor, 3), L"sssczg", L"##", L"##", L"##", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::DARK_OAK->getData()), L'S');
     addShapedRecipe(new ItemInstance(Items::ironDoor, 3), L"ssscig", L"##", L"##", L"##", L'#', Items::ironIngot, L'S');
-    addShapedRecipe(new ItemInstance(Blocks::trapdoor, 2), L"ssczg", L"###", L"###", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::byData(0)->getData()), L'S');
-    addShapedRecipe(new ItemInstance(Blocks::spruce_trapdoor, 2), L"ssczg", L"###", L"###", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::byData(1)->getData()), L'S');
-    addShapedRecipe(new ItemInstance(Blocks::birch_trapdoor, 2), L"ssczg", L"###", L"###", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::byData(2)->getData()), L'S');
-    addShapedRecipe(new ItemInstance(Blocks::jungle_trapdoor, 2), L"ssczg", L"###", L"###", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::byData(3)->getData()), L'S');
-    addShapedRecipe(new ItemInstance(Blocks::acacia_trapdoor, 2), L"ssczg", L"###", L"###", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::byData(4)->getData()), L'S');
-    addShapedRecipe(new ItemInstance(Blocks::dark_oak_trapdoor, 2), L"ssczg", L"###", L"###", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::byData(5)->getData()), L'S');
+    addShapedRecipe(new ItemInstance(Blocks::trapdoor, 2), L"ssczg", L"###", L"###", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::OAK->getData()), L'S');
+    addShapedRecipe(new ItemInstance(Blocks::spruce_trapdoor, 2), L"ssczg", L"###", L"###", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::SPRUCE->getData()), L'S');
+    addShapedRecipe(new ItemInstance(Blocks::birch_trapdoor, 2), L"ssczg", L"###", L"###", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::BIRCH->getData()), L'S');
+    addShapedRecipe(new ItemInstance(Blocks::jungle_trapdoor, 2), L"ssczg", L"###", L"###", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::JUNGLE->getData()), L'S');
+    addShapedRecipe(new ItemInstance(Blocks::acacia_trapdoor, 2), L"ssczg", L"###", L"###", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::ACACIA->getData()), L'S');
+    addShapedRecipe(new ItemInstance(Blocks::dark_oak_trapdoor, 2), L"ssczg", L"###", L"###", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::DARK_OAK->getData()), L'S');
     addShapedRecipe(new ItemInstance(Blocks::iron_trapdoor, 1), L"sscig", L"##", L"##", L'#', Items::ironIngot, L'S');
     addShapedRecipe(new ItemInstance(Blocks::oak_stairs, 4), L"sssczg", L"#  ", L"## ", L"###", L'#', new ItemInstance(Blocks::planks, 1, 0), L'S');
-    addShapedRecipe(new ItemInstance(Blocks::birch_stairs, 4), L"sssczg", L"#  ", L"## ", L"###", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::byData(2)->getData()), L'S');
-    addShapedRecipe(new ItemInstance(Blocks::spruce_stairs, 4), L"sssczg", L"#  ", L"## ", L"###", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::byData(1)->getData()), L'S');
-    addShapedRecipe(new ItemInstance(Blocks::jungle_stairs, 4), L"sssczg", L"#  ", L"## ", L"###", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::byData(3)->getData()), L'S');
-    addShapedRecipe(new ItemInstance(Blocks::acacia_stairs, 4), L"sssczg", L"#  ", L"## ", L"###", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::byData(4)->getData()), L'S');
-    addShapedRecipe(new ItemInstance(Blocks::dark_oak_stairs, 4), L"sssczg", L"#  ", L"## ", L"###", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::byData(5)->getData()), L'S');
+    addShapedRecipe(new ItemInstance(Blocks::birch_stairs, 4), L"sssczg", L"#  ", L"## ", L"###", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::BIRCH->getData()), L'S');
+    addShapedRecipe(new ItemInstance(Blocks::spruce_stairs, 4), L"sssczg", L"#  ", L"## ", L"###", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::SPRUCE->getData()), L'S');
+    addShapedRecipe(new ItemInstance(Blocks::jungle_stairs, 4), L"sssczg", L"#  ", L"## ", L"###", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::JUNGLE->getData()), L'S');
+    addShapedRecipe(new ItemInstance(Blocks::acacia_stairs, 4), L"sssczg", L"#  ", L"## ", L"###", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::ACACIA->getData()), L'S');
+    addShapedRecipe(new ItemInstance(Blocks::dark_oak_stairs, 4), L"sssczg", L"#  ", L"## ", L"###", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::DARK_OAK->getData()), L'S');
     addShapedRecipe(new ItemInstance(Blocks::stone_stairs, 4), L"sssctg", L"#  ", L"## ", L"###", L'#', Blocks::cobblestone, L'S');
     addShapedRecipe(new ItemInstance(Blocks::brick_stairs, 4), L"sssctg", L"#  ", L"## ", L"###", L'#', Blocks::brick_block, L'S');
     addShapedRecipe(new ItemInstance(Blocks::stone_brick_stairs, 4), L"sssctg", L"#  ", L"## ", L"###", L'#', Blocks::stonebrick, L'S');
@@ -154,9 +150,9 @@ Recipes::Recipes()
     addShapedRecipe(new ItemInstance(Blocks::quartz_stairs, 4), L"sssctg", L"#  ", L"## ", L"###", L'#', Blocks::quartz_block, L'S');
     addShapedRecipe(new ItemInstance(Blocks::purpur_stairs, 4, 0), L"sssctg", L"#  ", L"## ", L"###", L'#', Blocks::purpur_block, L'S');
     addShapedRecipe(new ItemInstance(Blocks::purpur_stairs, 4, 0), L"sssctg", L"#  ", L"## ", L"###", L'#', Blocks::purpur_pillar, L'S');
-    addShapedRecipe(new ItemInstance(Blocks::prismarine_stairs, 4, 0), L"sssczg", L"#  ", L"## ", L"###", L'#', new ItemInstance(Blocks::prismarine, 1, PrismarineBlock::Variant::byData(0)->getData()), L'S');
-    addShapedRecipe(new ItemInstance(Blocks::prismarine_bricks_stairs, 4, 0), L"sssczg", L"#  ", L"## ", L"###", L'#', new ItemInstance(Blocks::prismarine, 1, PrismarineBlock::Variant::byData(1)->getData()), L'S');
-    addShapedRecipe(new ItemInstance(Blocks::dark_prismarine_stairs, 4, 0), L"sssczg", L"#  ", L"## ", L"###", L'#', new ItemInstance(Blocks::prismarine, 1, PrismarineBlock::Variant::byData(2)->getData()), L'S');
+    addShapedRecipe(new ItemInstance(Blocks::prismarine_stairs, 4, 0), L"sssczg", L"#  ", L"## ", L"###", L'#', new ItemInstance(Blocks::prismarine, 1, PrismarineBlock::Variant::ROUGH->getData()), L'S');
+    addShapedRecipe(new ItemInstance(Blocks::prismarine_bricks_stairs, 4, 0), L"sssczg", L"#  ", L"## ", L"###", L'#', new ItemInstance(Blocks::prismarine, 1, PrismarineBlock::Variant::BRICKS->getData()), L'S');
+    addShapedRecipe(new ItemInstance(Blocks::dark_prismarine_stairs, 4, 0), L"sssczg", L"#  ", L"## ", L"###", L'#', new ItemInstance(Blocks::prismarine, 1, PrismarineBlock::Variant::DARK->getData()), L'S');
     mArmorRecipes->addRecipes(this);
     mClothDyeRecipes->addRecipes(this);
     addShapedRecipe(new ItemInstance(Blocks::snow, 1), L"sscig", L"##", L"##", L'#', Items::snowball, L'S');
@@ -165,25 +161,25 @@ Recipes::Recipes()
     addShapedRecipe(new ItemInstance(Blocks::brick_block, 1), L"sscig", L"##", L"##", L'#', Items::brick, L'S');
     addShapedRecipe(new ItemInstance(Blocks::wool, 1), L"sscig", L"##", L"##", L'#', Items::string, L'D');
     addShapedRecipe(new ItemInstance(Blocks::tnt, 1), L"ssscictg", L"X#X", L"#X#", L"X#X", L'X', Items::gunpowder, L'#', Blocks::sand, L'T');
-    addShapedRecipe(new ItemInstance(Blocks::stone_slab, 6, StoneSlabBlock::Variant::byData(3)->getData()), L"sctg", L"###", L'#', Blocks::cobblestone, L'S');
-    addShapedRecipe(new ItemInstance(Blocks::stone_slab, 6, StoneSlabBlock::Variant::byData(0)->getData()), L"sctg", L"###", L'#', Blocks::stone, L'S');
-    addShapedRecipe(new ItemInstance(Blocks::stone_slab, 6, StoneSlabBlock::Variant::byData(4)->getData()), L"sctg", L"###", L'#', Blocks::brick_block, L'S');
-    addShapedRecipe(new ItemInstance(Blocks::stone_slab, 6, StoneSlabBlock::Variant::byData(5)->getData()), L"sctg", L"###", L'#', Blocks::stonebrick, L'S');
-    addShapedRecipe(new ItemInstance(Blocks::stone_slab, 6, StoneSlabBlock::Variant::byData(6)->getData()), L"sctg", L"###", L'#', Blocks::nether_brick, L'S');
-    addShapedRecipe(new ItemInstance(Blocks::stone_slab, 6, StoneSlabBlock::Variant::byData(1)->getData()), L"sctg", L"###", L'#', Blocks::sandstone, L'S');
-    addShapedRecipe(new ItemInstance(Blocks::stone_slab2, 6, NewStoneSlabBlock::Variant::byData(0)->getData()), L"sctg", L"###", L'#', Blocks::red_sandstone, L'S');
-    addShapedRecipe(new ItemInstance(Blocks::stone_slab, 6, StoneSlabBlock::Variant::byData(7)->getData()), L"sctg", L"###", L'#', Blocks::quartz_block, L'S');
+    addShapedRecipe(new ItemInstance(Blocks::stone_slab, 6, StoneSlabBlock::Variant::COBBLESTONE->getData()), L"sctg", L"###", L'#', Blocks::cobblestone, L'S');
+    addShapedRecipe(new ItemInstance(Blocks::stone_slab, 6, StoneSlabBlock::Variant::STONE->getData()), L"sctg", L"###", L'#', Blocks::stone, L'S');
+    addShapedRecipe(new ItemInstance(Blocks::stone_slab, 6, StoneSlabBlock::Variant::BRICK->getData()), L"sctg", L"###", L'#', Blocks::brick_block, L'S');
+    addShapedRecipe(new ItemInstance(Blocks::stone_slab, 6, StoneSlabBlock::Variant::SMOOTHBRICK->getData()), L"sctg", L"###", L'#', Blocks::stonebrick, L'S');
+    addShapedRecipe(new ItemInstance(Blocks::stone_slab, 6, StoneSlabBlock::Variant::NETHERBRICK->getData()), L"sctg", L"###", L'#', Blocks::nether_brick, L'S');
+    addShapedRecipe(new ItemInstance(Blocks::stone_slab, 6, StoneSlabBlock::Variant::SAND->getData()), L"sctg", L"###", L'#', Blocks::sandstone, L'S');
+    addShapedRecipe(new ItemInstance(Blocks::stone_slab2, 6, NewStoneSlabBlock::Variant::RED_SANDSTONE->getData()), L"sctg", L"###", L'#', Blocks::red_sandstone, L'S');
+    addShapedRecipe(new ItemInstance(Blocks::stone_slab, 6, StoneSlabBlock::Variant::QUARTZ->getData()), L"sctg", L"###", L'#', Blocks::quartz_block, L'S');
     addShapedRecipe(new ItemInstance(Blocks::purpur_slab, 6, 0), L"sctg", L"###", L'#', Blocks::purpur_block, L'S');
     addShapedRecipe(new ItemInstance(Blocks::purpur_slab, 6, 0), L"sctg", L"###", L'#', Blocks::purpur_pillar, L'S');
-    addShapedRecipe(new ItemInstance(Blocks::prismarine_slab, 6, PrismarineBlock::Variant::byData(0)->getData()), L"sczg", L"###", L'#', new ItemInstance(Blocks::prismarine, 1, PrismarineBlock::Variant::byData(0)->getData()), L'S');
-    addShapedRecipe(new ItemInstance(Blocks::prismarine_slab, 6, PrismarineBlock::Variant::byData(1)->getData()), L"sczg", L"###", L'#', new ItemInstance(Blocks::prismarine, 1, PrismarineBlock::Variant::byData(1)->getData()), L'S');
-    addShapedRecipe(new ItemInstance(Blocks::prismarine_slab, 6, PrismarineBlock::Variant::byData(2)->getData()), L"sczg", L"###", L'#', new ItemInstance(Blocks::prismarine, 1, PrismarineBlock::Variant::byData(2)->getData()), L'S');
-    addShapedRecipe(new ItemInstance(Blocks::wooden_slab, 6, 0), L"sczg", L"###", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::byData(0)->getData()), L'S');
-    addShapedRecipe(new ItemInstance(Blocks::wooden_slab, 6, PlanksBlock::Variant::byData(2)->getData()), L"sczg", L"###", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::byData(2)->getData()), L'S');
-    addShapedRecipe(new ItemInstance(Blocks::wooden_slab, 6, PlanksBlock::Variant::byData(1)->getData()), L"sczg", L"###", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::byData(1)->getData()), L'S');
-    addShapedRecipe(new ItemInstance(Blocks::wooden_slab, 6, PlanksBlock::Variant::byData(3)->getData()), L"sczg", L"###", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::byData(3)->getData()), L'S');
-    addShapedRecipe(new ItemInstance(Blocks::wooden_slab, 6, PlanksBlock::Variant::byData(4)->getData()), L"sczg", L"###", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::byData(4)->getData()), L'S');
-    addShapedRecipe(new ItemInstance(Blocks::wooden_slab, 6, PlanksBlock::Variant::byData(5)->getData()), L"sczg", L"###", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::byData(5)->getData()), L'S');
+    addShapedRecipe(new ItemInstance(Blocks::prismarine_slab, 6, PrismarineBlock::Variant::ROUGH->getData()), L"sczg", L"###", L'#', new ItemInstance(Blocks::prismarine, 1, PrismarineBlock::Variant::ROUGH->getData()), L'S');
+    addShapedRecipe(new ItemInstance(Blocks::prismarine_slab, 6, PrismarineBlock::Variant::BRICKS->getData()), L"sczg", L"###", L'#', new ItemInstance(Blocks::prismarine, 1, PrismarineBlock::Variant::BRICKS->getData()), L'S');
+    addShapedRecipe(new ItemInstance(Blocks::prismarine_slab, 6, PrismarineBlock::Variant::DARK->getData()), L"sczg", L"###", L'#', new ItemInstance(Blocks::prismarine, 1, PrismarineBlock::Variant::DARK->getData()), L'S');
+    addShapedRecipe(new ItemInstance(Blocks::wooden_slab, 6, 0), L"sczg", L"###", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::OAK->getData()), L'S');
+    addShapedRecipe(new ItemInstance(Blocks::wooden_slab, 6, PlanksBlock::Variant::BIRCH->getData()), L"sczg", L"###", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::BIRCH->getData()), L'S');
+    addShapedRecipe(new ItemInstance(Blocks::wooden_slab, 6, PlanksBlock::Variant::SPRUCE->getData()), L"sczg", L"###", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::SPRUCE->getData()), L'S');
+    addShapedRecipe(new ItemInstance(Blocks::wooden_slab, 6, PlanksBlock::Variant::JUNGLE->getData()), L"sczg", L"###", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::JUNGLE->getData()), L'S');
+    addShapedRecipe(new ItemInstance(Blocks::wooden_slab, 6, PlanksBlock::Variant::ACACIA->getData()), L"sczg", L"###", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::ACACIA->getData()), L'S');
+    addShapedRecipe(new ItemInstance(Blocks::wooden_slab, 6, PlanksBlock::Variant::DARK_OAK->getData()), L"sczg", L"###", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::DARK_OAK->getData()), L'S');
     addShapedRecipe(new ItemInstance(Items::cake, 1), L"ssscicicicig", L"AAA", L"BEB", L"CCC", L'A', Items::milkBucket, L'B', Items::sugar, L'C', Items::wheat, L'E', Items::egg, L'F');
     addShapedRecipe(new ItemInstance(Items::sugar, 1), L"scig", L"#", L'#', Items::reeds, L'F');
     addShapedRecipe(new ItemInstance(Blocks::rail, 16), L"ssscicig", L"X X", L"X#X", L"X X", L'X', Items::ironIngot, L'#', Items::stick, L'V');
@@ -195,12 +191,12 @@ Recipes::Recipes()
     addShapedRecipe(new ItemInstance(Items::furnaceMinecart, 1), L"ssctcig", L"A", L"B", L'A', Blocks::furnace, L'B', Items::minecart, L'V');
     addShapedRecipe(new ItemInstance(Items::tntMinecart, 1), L"ssctcig", L"A", L"B", L'A', Blocks::tnt, L'B', Items::minecart, L'V');
     addShapedRecipe(new ItemInstance(Items::hopperMinecart, 1), L"ssctcig", L"A", L"B", L'A', Blocks::hopper, L'B', Items::minecart, L'V');
-    addShapedRecipe(new ItemInstance(Items::boat, 1), L"ssczcig", L"#X#", L"###", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::byData(0)->getData()), L'X', Items::woodenShovel, L'V');
-    addShapedRecipe(new ItemInstance(Items::spruceBoat, 1), L"ssczcig", L"#X#", L"###", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::byData(1)->getData()), L'X', Items::woodenShovel, L'V');
-    addShapedRecipe(new ItemInstance(Items::birchBoat, 1), L"ssczcig", L"#X#", L"###", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::byData(2)->getData()), L'X', Items::woodenShovel, L'V');
-    addShapedRecipe(new ItemInstance(Items::jungleBoat, 1), L"ssczcig", L"#X#", L"###", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::byData(3)->getData()), L'X', Items::woodenShovel, L'V');
-    addShapedRecipe(new ItemInstance(Items::acaciaBoat, 1), L"ssczcig", L"#X#", L"###", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::byData(4)->getData()), L'X', Items::woodenShovel, L'V');
-    addShapedRecipe(new ItemInstance(Items::darkOakBoat, 1), L"ssczcig", L"#X#", L"###", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::byData(5)->getData()), L'X', Items::woodenShovel, L'V');
+    addShapedRecipe(new ItemInstance(Items::boat, 1), L"ssczcig", L"#X#", L"###", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::OAK->getData()), L'X', Items::woodenShovel, L'V');
+    addShapedRecipe(new ItemInstance(Items::spruceBoat, 1), L"ssczcig", L"#X#", L"###", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::SPRUCE->getData()), L'X', Items::woodenShovel, L'V');
+    addShapedRecipe(new ItemInstance(Items::birchBoat, 1), L"ssczcig", L"#X#", L"###", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::BIRCH->getData()), L'X', Items::woodenShovel, L'V');
+    addShapedRecipe(new ItemInstance(Items::jungleBoat, 1), L"ssczcig", L"#X#", L"###", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::JUNGLE->getData()), L'X', Items::woodenShovel, L'V');
+    addShapedRecipe(new ItemInstance(Items::acaciaBoat, 1), L"ssczcig", L"#X#", L"###", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::ACACIA->getData()), L'X', Items::woodenShovel, L'V');
+    addShapedRecipe(new ItemInstance(Items::darkOakBoat, 1), L"ssczcig", L"#X#", L"###", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::DARK_OAK->getData()), L'X', Items::woodenShovel, L'V');
     addShapedRecipe(new ItemInstance(Items::fishingRod, 1), L"ssscicig", L"  #", L" #X", L"# X", L'#', Items::stick, L'X', Items::string, L'T');
     addShapedRecipe(new ItemInstance(Items::carrotOnAStick, 1), L"sscicig", L"# ", L" X", L'#', Items::fishingRod, L'X', Items::carrot, L'T');
     addShapelessRecipe(new ItemInstance(Items::flintAndSteel, 1), L"zzg", new ItemInstance(Items::ironIngot, 1), new ItemInstance(Items::flint, 1), L'T');
@@ -229,26 +225,26 @@ Recipes::Recipes()
     addShapelessRecipe(new ItemInstance(Items::enderEye, 1), L"iig", Items::enderPearl, Items::blazePowder, L'T');
     addShapelessRecipe(new ItemInstance(Items::fireCharge, 3), L"iiig", Items::gunpowder, Items::blazePowder, Items::coal, L'T');
     addShapelessRecipe(new ItemInstance(Items::fireCharge, 3), L"iizg", Items::gunpowder, Items::blazePowder, new ItemInstance(Items::coal, 1, 1), L'T');
-    addShapedRecipe(new ItemInstance(Items::armorStand, 1), L"sssciczg", L"III", L" I ", L"ICI", L'I', Items::stick, L'C', new ItemInstance(Blocks::stone_slab, 1, StoneSlabBlock::Variant::byData(0)->getData()), L'D');
+    addShapedRecipe(new ItemInstance(Items::armorStand, 1), L"sssciczg", L"III", L" I ", L"ICI", L'I', Items::stick, L'C', new ItemInstance(Blocks::stone_slab, 1, StoneSlabBlock::Variant::STONE->getData()), L'D');
     addShapedRecipe(new ItemInstance(Blocks::end_rod, 4), L"sscicig", L"/", L"#", L'/', Items::blazeRod, L'#', Items::chorusFruitPopped, L'D');
     addShapedRecipe(new ItemInstance(Blocks::bone_block, 1), L"sssczg", L"XXX", L"XXX", L"XXX", L'X', new ItemInstance(Items::dye, 1, DyeColor::WHITE->getItemData()), L'S');
     addShapedRecipe(new ItemInstance(Items::lead, 2), L"ssscicig", L"~~ ", L"~O ", L"  ~", L'~', Items::string, L'O', Items::slimeBall, L'T');
     addShapedRecipe(new ItemInstance(Items::compass, 1), L"ssscicig", L" # ", L"#X#", L" # ", L'#', Items::ironIngot, L'X', Items::redstone, L'T');
     addShapedRecipe(new ItemInstance(Items::map, 1), L"ssscicig", L"###", L"#X#", L"###", L'#', Items::paper, L'X', Items::compass, L'T');
     addShapedRecipe(new ItemInstance(Blocks::stone_button, 1), L"sczg", L"#", L'#', new ItemInstance(Blocks::stone, 1), L'M');
-    addShapedRecipe(new ItemInstance(Blocks::wooden_button, 1), L"sczg", L"#", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::byData(0)->getData()), L'M');
-    addShapedRecipe(new ItemInstance(Blocks::acacia_button, 1), L"sczg", L"#", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::byData(4)->getData()), L'M');
-    addShapedRecipe(new ItemInstance(Blocks::birch_button, 1), L"sczg", L"#", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::byData(2)->getData()), L'M');
-    addShapedRecipe(new ItemInstance(Blocks::dark_oak_button, 1), L"sczg", L"#", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::byData(5)->getData()), L'M');
-    addShapedRecipe(new ItemInstance(Blocks::jungle_button, 1), L"sczg", L"#", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::byData(3)->getData()), L'M');
-    addShapedRecipe(new ItemInstance(Blocks::spruce_button, 1), L"sczg", L"#", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::byData(1)->getData()), L'M');
-    addShapedRecipe(new ItemInstance(Blocks::wooden_pressure_plate, 1), L"sczg", L"##", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::byData(0)->getData()), L'M');
-    addShapedRecipe(new ItemInstance(Blocks::acacia_pressure_plate, 1), L"sczg", L"##", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::byData(4)->getData()), L'M');
-    addShapedRecipe(new ItemInstance(Blocks::birch_pressure_plate, 1), L"sczg", L"##", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::byData(2)->getData()), L'M');
-    addShapedRecipe(new ItemInstance(Blocks::dark_oak_pressure_plate, 1), L"sczg", L"##", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::byData(5)->getData()), L'M');
-    addShapedRecipe(new ItemInstance(Blocks::jungle_pressure_plate, 1), L"sczg", L"##", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::byData(3)->getData()), L'M');
-    addShapedRecipe(new ItemInstance(Blocks::spruce_pressure_plate, 1), L"sczg", L"##", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::byData(1)->getData()), L'M');
-    addShapedRecipe(new ItemInstance(Blocks::stone_pressure_plate, 1), L"sczg", L"##", L'#', new ItemInstance(Blocks::stone, 1, StoneBlock::Variant::byData(0)->getData()), L'M');
+    addShapedRecipe(new ItemInstance(Blocks::wooden_button, 1), L"sczg", L"#", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::OAK->getData()), L'M');
+    addShapedRecipe(new ItemInstance(Blocks::acacia_button, 1), L"sczg", L"#", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::ACACIA->getData()), L'M');
+    addShapedRecipe(new ItemInstance(Blocks::birch_button, 1), L"sczg", L"#", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::BIRCH->getData()), L'M');
+    addShapedRecipe(new ItemInstance(Blocks::dark_oak_button, 1), L"sczg", L"#", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::DARK_OAK->getData()), L'M');
+    addShapedRecipe(new ItemInstance(Blocks::jungle_button, 1), L"sczg", L"#", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::JUNGLE->getData()), L'M');
+    addShapedRecipe(new ItemInstance(Blocks::spruce_button, 1), L"sczg", L"#", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::SPRUCE->getData()), L'M');
+    addShapedRecipe(new ItemInstance(Blocks::wooden_pressure_plate, 1), L"sczg", L"##", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::OAK->getData()), L'M');
+    addShapedRecipe(new ItemInstance(Blocks::acacia_pressure_plate, 1), L"sczg", L"##", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::ACACIA->getData()), L'M');
+    addShapedRecipe(new ItemInstance(Blocks::birch_pressure_plate, 1), L"sczg", L"##", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::BIRCH->getData()), L'M');
+    addShapedRecipe(new ItemInstance(Blocks::dark_oak_pressure_plate, 1), L"sczg", L"##", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::DARK_OAK->getData()), L'M');
+    addShapedRecipe(new ItemInstance(Blocks::jungle_pressure_plate, 1), L"sczg", L"##", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::JUNGLE->getData()), L'M');
+    addShapedRecipe(new ItemInstance(Blocks::spruce_pressure_plate, 1), L"sczg", L"##", L'#', new ItemInstance(Blocks::planks, 1, PlanksBlock::Variant::SPRUCE->getData()), L'M');
+    addShapedRecipe(new ItemInstance(Blocks::stone_pressure_plate, 1), L"sczg", L"##", L'#', new ItemInstance(Blocks::stone, 1, StoneBlock::Variant::STONE->getData()), L'M');
     addShapedRecipe(new ItemInstance(Blocks::heavy_weighted_pressure_plate, 1), L"scig", L"##", L'#', Items::ironIngot, L'M');
     addShapedRecipe(new ItemInstance(Blocks::light_weighted_pressure_plate, 1), L"scig", L"##", L'#', Items::goldIngot, L'M');
     addShapedRecipe(new ItemInstance(Blocks::dispenser, 1), L"sssctcicig", L"###", L"#X#", L"#R#", L'#', Blocks::cobblestone, L'X', Items::bow, L'R', Items::redstone, L'M');
@@ -297,40 +293,38 @@ Recipes::Recipes()
 
 Recipe* Recipes::addShapedRecipe(ItemInstance* result, int category, va_list arguments)
 {
-    std::wstring pattern;
-    boost::unordered_map<wchar_t, ItemInstance*> ingredientMap;
-    const wchar_t* format = va_arg(arguments, const wchar_t*);
+    std::wstring pattern(L"");
+    std::wstring row;
     int width = 0;
     int height = 0;
     wchar_t ingredientKey = 0;
     int achievementId = -1;
     Recipe::_eGroupType group = Recipe::eGroupType_Miscellaneous;
-    Item* resultItem = result->getItem();
-    int itemId = Item::getId(resultItem);
+    int itemId = Item::getId(result->getItem());
     int baseItemType;
 
     if (static_cast<unsigned int>(itemId - 256) < 768)
     {
-        baseItemType = resultItem->getBaseItemType();
+        baseItemType = result->getItem()->getBaseItemType();
     }
     else
     {
-        baseItemType = Block::byItem(resultItem)->getBaseItemType();
+        baseItemType = Block::byItem(result->getItem())->getBaseItemType();
     }
 
+    boost::unordered_map<wchar_t, ItemInstance*> ingredientMap;
+    const wchar_t* format = va_arg(arguments, const wchar_t*);
     for (const wchar_t* type = format; *type != 0; ++type)
     {
         switch (*type)
         {
         case L'a':
         case L's':
-        {
-            const wchar_t* row = va_arg(arguments, const wchar_t*);
-            width = static_cast<int>(std::wcslen(row));
+            row = va_arg(arguments, const wchar_t*);
+            width = static_cast<int>(row.size());
             ++height;
             pattern.append(row);
             break;
-        }
         case L'b':
             baseItemType = va_arg(arguments, int);
             break;
@@ -372,12 +366,17 @@ Recipe* Recipes::addShapedRecipe(ItemInstance* result, int category, va_list arg
         case L'w':
         {
             std::wstring* rows = va_arg(arguments, std::wstring*);
-            while (!rows->empty())
+            while (true)
             {
-                width = static_cast<int>(rows->size());
-                ++height;
-                pattern.append(*rows);
+                row = *rows;
                 ++rows;
+                if (row.empty())
+                {
+                    break;
+                }
+                ++height;
+                pattern.append(row);
+                width = static_cast<int>(row.size());
             }
             break;
         }
@@ -425,22 +424,21 @@ Recipe* Recipes::addShapedRecipe(ItemInstance* result, int category, ...)
 void Recipes::addShapelessRecipe(ItemInstance* result, int category, va_list arguments)
 {
     std::vector<ItemInstance*>* ingredients = new std::vector<ItemInstance*>();
-    const wchar_t* format = va_arg(arguments, const wchar_t*);
     int achievementId = -1;
     Recipe::_eGroupType group = Recipe::eGroupType_Miscellaneous;
-    Item* resultItem = result->getItem();
-    int itemId = Item::getId(resultItem);
+    int itemId = Item::getId(result->getItem());
     int baseItemType;
 
     if (itemId < 256)
     {
-        baseItemType = Block::byItem(resultItem)->getBaseItemType();
+        baseItemType = Block::byItem(result->getItem())->getBaseItemType();
     }
     else
     {
-        baseItemType = resultItem->getBaseItemType();
+        baseItemType = result->getItem()->getBaseItemType();
     }
 
+    const wchar_t* format = va_arg(arguments, const wchar_t*);
     for (const wchar_t* type = format; *type != 0; ++type)
     {
         switch (*type)
@@ -514,11 +512,14 @@ void Recipes::buildRecipeIngredientsArray()
 {
     for (int category = 0; category < eRecipeCategory_Count; ++category)
     {
-        unsigned int recipeCount = static_cast<unsigned int>(mRecipes[category].size());
-        mRecipeIngredients[category] = new Recipe::INGREDIENTS_REQUIRED[recipeCount];
-        for (unsigned int recipeIndex = 0; recipeIndex < recipeCount; ++recipeIndex)
+        mRecipeIngredients[category] = new Recipe::INGREDIENTS_REQUIRED[mRecipes[category].size()];
+        int recipeIndex = 0;
+        std::vector<Recipe*>::iterator recipe = mRecipes[category].begin();
+        std::vector<Recipe*>::iterator recipesEnd = mRecipes[category].end();
+        for (; recipe != recipesEnd; ++recipe)
         {
-            mRecipes[category][recipeIndex]->recipeRequires(&mRecipeIngredients[category][recipeIndex]);
+            (*recipe)->recipeRequires(&mRecipeIngredients[category][recipeIndex]);
+            ++recipeIndex;
         }
     }
 }

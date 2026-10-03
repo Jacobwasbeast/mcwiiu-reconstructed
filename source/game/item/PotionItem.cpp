@@ -28,10 +28,6 @@ PotionItem::PotionItem()
     setMaxStackSize(1);
 }
 
-PotionItem::~PotionItem()
-{
-}
-
 uint32_t PotionItem::getPotionType() const
 {
     return 0;

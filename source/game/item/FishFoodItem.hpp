@@ -75,6 +75,5 @@ private:
 };
 
 extern FishFoodItem::Type* gFishFoodTypes[4];
-extern FishFoodItem::Type* gPufferfishFoodType;
 
 #endif

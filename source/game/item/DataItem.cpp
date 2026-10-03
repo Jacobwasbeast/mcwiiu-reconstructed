@@ -5,10 +5,6 @@ DataItem::DataItem()
 {
 }
 
-DataItem::~DataItem()
-{
-}
-
 EntityDataSerializerEnum::EEntityDataSerializer DataItem::getSerializerId()
 {
     return EntityDataSerializerEnum::NUM_ENTITY_DATA_SERIALIZERS;

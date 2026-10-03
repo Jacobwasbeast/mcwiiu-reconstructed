@@ -23,17 +23,18 @@ InteractionResultHolder EmptyMapItem::use(Level* level,
 {
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
 
-    MapItem::setupNewMap(player->mXuid, level, player->mDimension,
-                         player->mX, player->mZ, 3, true, false);
+    not_null_ptr<ItemInstance> map = MapItem::setupNewMap(player->mXuid, level, player->mDimension,
+                                                          player->mX, player->mZ, 3, true, false);
     itemInstance->shrink(1);
 
-    if (!itemInstance->isEmpty())
+    if (itemInstance->isEmpty())
     {
-        not_null_ptr<ItemInstance> itemCopy = itemInstance->copy();
-        if (!player->mInventory->add(itemCopy))
-        {
-            player->drop(itemCopy, false);
-        }
+        return InteractionResultHolder(InteractionResult::eInteractionResult_Success, map);
+    }
+
+    if (!player->mInventory->add(map->copy()))
+    {
+        player->drop(map, false);
     }
 
     player->awardStat(gStats->get_itemsUsed(VALIDgetId(this)),

@@ -162,16 +162,6 @@ bool MinecartContainer::stillValid(boost::shared_ptr<Player> player)
     return player->distanceAsIfHitscanned(position, *player->mBoundingBox) <= 30.25;
 }
 
-void MinecartContainer::startOpen(boost::shared_ptr<Player> player)
-{
-    (void)player;
-}
-
-void MinecartContainer::stopOpen(boost::shared_ptr<Player> player)
-{
-    (void)player;
-}
-
 bool MinecartContainer::canPlaceItem(int slot, not_null_ptr<ItemInstance> item)
 {
     return true;

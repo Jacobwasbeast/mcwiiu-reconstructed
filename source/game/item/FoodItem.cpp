@@ -30,10 +30,6 @@ FoodItem::FoodItem(int nutrition, bool isMeat)
     _init();
 }
 
-FoodItem::~FoodItem()
-{
-}
-
 void FoodItem::_init()
 {
     mIsFastFood = false;

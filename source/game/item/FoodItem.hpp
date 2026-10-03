@@ -20,7 +20,7 @@ class FoodItem : public Item
 public:
     FoodItem(int nutrition, float saturationModifier, bool isMeat);
     FoodItem(int nutrition, bool isMeat);
-    virtual ~FoodItem();
+    virtual ~FoodItem() {}
     void _init();
     virtual not_null_ptr<ItemInstance> finishUsingItem(not_null_ptr<ItemInstance> itemInstance, Level* level, boost::shared_ptr<LivingEntity> entity);
     virtual void addEatEffect(not_null_ptr<ItemInstance> itemInstance, Level* level, boost::shared_ptr<Player> player);

@@ -40,8 +40,8 @@ bool BoatItem::TestUse(Level* level, boost::shared_ptr<Player> player, Interacti
     Vec3* from = Vec3::newTemp(player->mXo + (player->mX - player->mXo),
                                player->mYo + (player->mY - player->mYo) + player->getEyeHeight(),
                                player->mZo + (player->mZ - player->mZo));
-    float yaw = -yRot * 0.01745329238474369f - 3.1415927410125732f;
-    float pitch = -xRot * 0.01745329238474369f;
+    float yaw = -yRot * 0.017453292f - 3.1415927f;
+    float pitch = -xRot * 0.017453292f;
     float yawCos = Mth::cos(yaw);
     float yawSin = Mth::sin(yaw);
     float pitchCos = -Mth::cos(pitch);
@@ -82,8 +82,8 @@ InteractionResultHolder BoatItem::use(Level* level,
     Vec3* from = Vec3::newTemp(player->mXo + (player->mX - player->mXo),
                                player->mYo + (player->mY - player->mYo) + player->getEyeHeight(),
                                player->mZo + (player->mZ - player->mZo));
-    float yaw = -yRot * 0.01745329238474369f - 3.1415927410125732f;
-    float pitch = -xRot * 0.01745329238474369f;
+    float yaw = -yRot * 0.017453292f - 3.1415927f;
+    float pitch = -xRot * 0.017453292f;
     float yawCos = Mth::cos(yaw);
     float yawSin = Mth::sin(yaw);
     float pitchCos = -Mth::cos(pitch);

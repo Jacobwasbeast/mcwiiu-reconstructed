@@ -24,8 +24,7 @@ unsigned int LingeringPotionItem::getPotionType() const
 
 std::wstring LingeringPotionItem::getName(not_null_ptr<ItemInstance> itemInstance)
 {
-    Potion* potion = PotionUtils::getPotion(itemInstance);
-    return potion->getName(Potion::LINGERING);
+    return PotionUtils::getPotion(itemInstance)->getName(Potion::LINGERING);
 }
 
 void LingeringPotionItem::appendHoverText(not_null_ptr<ItemInstance> itemInstance,
@@ -41,16 +40,8 @@ InteractionResultHolder LingeringPotionItem::use(Level* level,
                                                   InteractionHand::EInteractionHand hand)
 {
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
-    not_null_ptr<ItemInstance> thrownItem;
-
-    if (!player->mAbilities.mInstabuild)
-    {
-        thrownItem = itemInstance->split(1);
-    }
-    else
-    {
-        thrownItem = itemInstance->copy();
-    }
+    not_null_ptr<ItemInstance> thrownItem = !player->mAbilities.mInstabuild
+        ? itemInstance->split(1) : itemInstance->copy();
 
     level->playSound(boost::shared_ptr<Player>(),
                      player->mX,
@@ -77,11 +68,12 @@ InteractionResultHolder LingeringPotionItem::use(Level* level,
 
 unsigned int LingeringPotionItem::GetUseTooltip(const ItemTooltipDataHolder& tooltipData)
 {
-    if (tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Fail)
+    unsigned int tooltip = IDS_NONE;
+    if (tooltipData.m_eInteractionResult != InteractionResult::eInteractionResult_Fail)
     {
-        return IDS_NONE;
+        tooltip = IDS_TOOLTIPS_THROW;
     }
-    return IDS_TOOLTIPS_THROW;
+    return tooltip;
 }
 
 std::wstring LingeringPotionItem::getBottleTextureName()

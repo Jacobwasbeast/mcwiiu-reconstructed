@@ -7,7 +7,9 @@ class DataItem
 {
 public:
     DataItem();
-    virtual ~DataItem();
+    virtual ~DataItem()
+    {
+    }
 
     virtual DataItem* copy() const = 0;
     virtual EntityDataSerializerEnum::EEntityDataSerializer getSerializerId();

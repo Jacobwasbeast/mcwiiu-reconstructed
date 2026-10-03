@@ -5,6 +5,9 @@
 #include "game/core/DummyUniform.hpp"
 #include "game/core/Uniform.hpp"
 
+static Effect* sCurrentEffect = 0;
+static int sCurrentProgram = -1;
+static bool sLastCull = true;
 static DummyUniform* sDummyUniform = new DummyUniform();
 
 void Effect::destroy()
@@ -15,13 +18,14 @@ void Effect::destroy()
 
 void Effect::clear()
 {
-    unsigned int texture = 0;
-    for (boost::unordered_map<std::wstring, RenderTarget*>::iterator it = mSamplers.begin();
-         it != mSamplers.end(); ++it, ++texture)
+    sCurrentEffect = 0;
+    sCurrentProgram = -1;
+    sLastCull = true;
+    for (unsigned int i = 0; i < mSamplerLocations.size(); ++i)
     {
-        if (it->second != 0)
+        if (mSamplers[mSamplerNames[i]] != 0)
         {
-            GlStateManager::activeTexture(static_cast<int>(texture));
+            GlStateManager::activeTexture(i);
             GlStateManager::bindTexture(0);
         }
     }
@@ -50,14 +54,14 @@ Uniform* Effect::safeGetUniform(const std::wstring& name)
     Uniform* uniform = getUniform(name);
     if (uniform != 0)
         return uniform;
-    return sDummyUniform;
+    return reinterpret_cast<Uniform*>(&sDummyUniform);
 }
 
 void Effect::setSampler(std::wstring name, RenderTarget* target)
 {
     boost::unordered_map<std::wstring, RenderTarget*>::iterator it = mSamplers.find(name);
     if (it != mSamplers.end())
-        mSamplers.erase(it);
+        mSamplers.erase(name);
     mSamplers[name] = target;
     markDirty();
 }
