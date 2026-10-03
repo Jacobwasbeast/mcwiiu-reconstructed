@@ -6,5 +6,5 @@ float ElytraItem_ItemPropertyFunction::call(not_null_ptr<ItemInstance> itemInsta
                                             Level*,
                                             boost::shared_ptr<LivingEntity>)
 {
-    return ElytraItem::isFlyEnabled(itemInstance) ? 0.25f : 1.0f;
+    return ElytraItem::isFlyEnabled(itemInstance) ? 0.0f : 1.0f;
 }

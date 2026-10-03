@@ -8,20 +8,34 @@
 
 static OSFastMutex sDataItemLock;
 
-template <>
 DataItem_Impl<BlockPos*>::~DataItem_Impl()
 {
-    delete mValue;
+    BlockPos* old = mValue;
+    delete old;
 }
 
-template <>
+DataItem* DataItem_Impl<BlockPos*>::copy() const
+{
+    return new DataItem_Impl<BlockPos*>(mAccessor, mAccessor->getSerializer()->copy(mValue));
+}
+
+EntityDataSerializerEnum::EEntityDataSerializer DataItem_Impl<BlockPos*>::getSerializerId()
+{
+    return mAccessor->getSerializer()->getId();
+}
+
+int DataItem_Impl<BlockPos*>::getAccessorId()
+{
+    return mAccessor->getId();
+}
+
 void DataItem_Impl<BlockPos*>::setValue(BlockPos* value)
 {
-    delete mValue;
+    BlockPos* old = mValue;
+    delete old;
     mValue = value;
 }
 
-template <>
 bool DataItem_Impl<BlockPos*>::shouldUpdate(BlockPos* value)
 {
     if (mValue == NULL || value == NULL)
@@ -29,16 +43,30 @@ bool DataItem_Impl<BlockPos*>::shouldUpdate(BlockPos* value)
         return mValue != value;
     }
 
-    return !(mValue->x == value->z && mValue->y == value->y && mValue->z == value->z);
+    bool changed = mValue->x != value->z || mValue->y != value->y || mValue->z != value->z;
+    return changed;
 }
 
-template <>
 DataItem_Impl<CompoundTag*>::~DataItem_Impl()
 {
     delete mValue;
 }
 
-template <>
+DataItem* DataItem_Impl<CompoundTag*>::copy() const
+{
+    return new DataItem_Impl<CompoundTag*>(mAccessor, mAccessor->getSerializer()->copy(mValue));
+}
+
+EntityDataSerializerEnum::EEntityDataSerializer DataItem_Impl<CompoundTag*>::getSerializerId()
+{
+    return mAccessor->getSerializer()->getId();
+}
+
+int DataItem_Impl<CompoundTag*>::getAccessorId()
+{
+    return mAccessor->getId();
+}
+
 void DataItem_Impl<CompoundTag*>::setValue(CompoundTag* value)
 {
     EnterCriticalSection(&sDataItemLock);
@@ -49,27 +77,66 @@ void DataItem_Impl<CompoundTag*>::setValue(CompoundTag* value)
     LeaveCriticalSection(&sDataItemLock);
 }
 
-template <>
+DataItem_Impl<const Rotations*>::DataItem_Impl(const EntityDataAccessor<const Rotations*>* accessor, const Rotations* value)
+{
+    mAccessor = accessor;
+    mValue = value;
+}
+
 DataItem_Impl<const Rotations*>::~DataItem_Impl()
 {
     delete mValue;
 }
 
-template <>
 void DataItem_Impl<const Rotations*>::setValue(const Rotations* value)
 {
     EnterCriticalSection(&sDataItemLock);
 
     delete mValue;
 
-    if (value == NULL)
+    if (value != NULL)
     {
-        mValue = NULL;
+        mValue = new Rotations(*value);
+        LeaveCriticalSection(&sDataItemLock);
     }
     else
     {
-        mValue = new Rotations(*value);
+        mValue = NULL;
+        LeaveCriticalSection(&sDataItemLock);
+    }
+}
+
+const EntityDataAccessor<const Rotations*>* DataItem_Impl<const Rotations*>::getAccessor()
+{
+    return mAccessor;
+}
+
+const Rotations* DataItem_Impl<const Rotations*>::getValue()
+{
+    return mValue;
+}
+
+bool DataItem_Impl<const Rotations*>::shouldUpdate(const Rotations* value)
+{
+    if (mValue == NULL || value == NULL)
+    {
+        return mValue != value;
     }
 
-    LeaveCriticalSection(&sDataItemLock);
+    return !mValue->equals(value);
+}
+
+DataItem* DataItem_Impl<const Rotations*>::copy() const
+{
+    return new DataItem_Impl<const Rotations*>(mAccessor, mAccessor->getSerializer()->copy(mValue));
+}
+
+EntityDataSerializerEnum::EEntityDataSerializer DataItem_Impl<const Rotations*>::getSerializerId()
+{
+    return mAccessor->getSerializer()->getId();
+}
+
+int DataItem_Impl<const Rotations*>::getAccessorId()
+{
+    return mAccessor->getId();
 }

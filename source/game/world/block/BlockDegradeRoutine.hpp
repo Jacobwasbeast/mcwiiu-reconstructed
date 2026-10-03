@@ -60,7 +60,7 @@ private:
     ServerLevel* mLevel;
     DegradationSequenceRuleDefinition* mDefinition;
     std::deque<Info> mActions;
-    unsigned int mProgress;
+    int mProgress;
     arrayWithLength<BlockPos> mBlocks;
     long long mNextActionTime;
     Action mAction;

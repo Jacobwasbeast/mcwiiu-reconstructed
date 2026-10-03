@@ -59,6 +59,9 @@ public:
 
     static void blockStaticCtor();
     static EnumProperty<Variant*>* VARIANT;
+    static const std::wstring TEXTURE_STEM;
+    static const std::wstring TEXTURE_INSIDE;
+    static const std::wstring TEXTURE_TYPE[2];
 
     virtual int getResourceCount(Random* random);
     virtual const MaterialColor* getMapColor(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);

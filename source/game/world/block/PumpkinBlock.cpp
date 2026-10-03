@@ -39,30 +39,30 @@ static Predicate<const BlockState*>* sPumpkinsPredicate =
     new Predicates<const BlockState*>::FunctionPredicate(pumpkinsPredicate_apply);
 
 PumpkinBlock::PumpkinBlock()
-    : HorizontalDirectionalBlock(Material::VEGETABLE, MaterialColor::COLOR_ORANGE),
-      mTopIcon(NULL),
-      mFaceIcon(NULL),
-      mSnowGolemBasePattern(NULL),
-      mSnowGolemFullPattern(NULL),
-      mIronGolemBasePattern(NULL),
-      mIronGolemFullPattern(NULL)
+    : HorizontalDirectionalBlock(Material::VEGETABLE, MaterialColor::COLOR_ORANGE)
 {
     DerivedInit();
-    TypedBoxed<const Direction*> facing(Direction::SOUTH);
-    registerDefaultState(mStateDefinition->any()->setBoxedValue(HorizontalDirectionalBlock::FACING_PROPERTY, &facing));
+    mTopIcon = NULL;
+    mFaceIcon = NULL;
+    mSnowGolemBasePattern = NULL;
+    mSnowGolemFullPattern = NULL;
+    mIronGolemBasePattern = NULL;
+    mIronGolemFullPattern = NULL;
+    registerDefaultState(mStateDefinition->any()->setValue(HorizontalDirectionalBlock::FACING_PROPERTY, Direction::SOUTH));
     setTicking(true);
 }
 
-void PumpkinBlock::getOrCreateSnowGolemFull()
+BlockPattern* PumpkinBlock::getOrCreateSnowGolemFull()
 {
     if (mSnowGolemFullPattern == NULL)
     {
         static std::wstring rows[3] = { L"^", L"#", L"#" };
-        mSnowGolemFullPattern = BlockPatternBuilder::start()->aisle(rows)
-            ->where(L'^', BlockInWorld::hasState(sPumpkinsPredicate))
-            ->where(L'#', BlockInWorld::hasState(BlockStatePredicate::forBlock(Blocks::snow)))
-            ->build(NULL, NULL);
+        BlockPatternBuilder* builder = BlockPatternBuilder::start()->aisle(rows);
+        builder = builder->where(L'^', BlockInWorld::hasState(sPumpkinsPredicate));
+        builder = builder->where(L'#', BlockInWorld::hasState(BlockStatePredicate::forBlock(Blocks::snow)));
+        mSnowGolemFullPattern = builder->build(NULL, NULL);
     }
+    return mSnowGolemFullPattern;
 }
 
 void PumpkinBlock::fjAwardCraftedGolemStat(unsigned long long craftedEntity)
@@ -73,69 +73,67 @@ void PumpkinBlock::fjAwardCraftedGolemStat(unsigned long long craftedEntity)
                           GenericStats::param_craftedEntity(craftedEntity));
 }
 
-void PumpkinBlock::getOrCreateIronGolemFull()
+BlockPattern* PumpkinBlock::getOrCreateIronGolemFull()
 {
     if (mIronGolemFullPattern == NULL)
     {
         static std::wstring rows[3] = { L"~^~", L"###", L"~#~" };
-        mIronGolemFullPattern = BlockPatternBuilder::start()->aisle(rows)
-            ->where(L'^', BlockInWorld::hasState(sPumpkinsPredicate))
-            ->where(L'#', BlockInWorld::hasState(BlockStatePredicate::forBlock(Blocks::iron_block)))
-            ->where(L'~', BlockInWorld::hasState(BlockMaterialPredicate::forMaterial(Material::AIR)))
-            ->build(NULL, NULL);
+        BlockPatternBuilder* builder = BlockPatternBuilder::start()->aisle(rows);
+        builder = builder->where(L'^', BlockInWorld::hasState(sPumpkinsPredicate));
+        builder = builder->where(L'#', BlockInWorld::hasState(BlockStatePredicate::forBlock(Blocks::iron_block)));
+        mIronGolemFullPattern = builder->where(L'~', BlockInWorld::hasState(BlockMaterialPredicate::forMaterial(Material::AIR)))->build(NULL, NULL);
     }
+    return mIronGolemFullPattern;
 }
 
-void PumpkinBlock::getOrCreateSnowGolemBase()
+BlockPattern* PumpkinBlock::getOrCreateSnowGolemBase()
 {
     if (mSnowGolemBasePattern == NULL)
     {
         static std::wstring rows[3] = { L" ", L"#", L"#" };
-        mSnowGolemBasePattern = BlockPatternBuilder::start()->aisle(rows)
-            ->where(L'#', BlockInWorld::hasState(BlockStatePredicate::forBlock(Blocks::snow)))
-            ->build(NULL, NULL);
+        BlockPatternBuilder* builder = BlockPatternBuilder::start()->aisle(rows);
+        builder = builder->where(L'#', BlockInWorld::hasState(BlockStatePredicate::forBlock(Blocks::snow)));
+        mSnowGolemBasePattern = builder->build(NULL, NULL);
     }
+    return mSnowGolemBasePattern;
 }
 
-void PumpkinBlock::getOrCreateIronGolemBase()
+BlockPattern* PumpkinBlock::getOrCreateIronGolemBase()
 {
     if (mIronGolemBasePattern == NULL)
     {
         static std::wstring rows[3] = { L"~ ~", L"###", L"~#~" };
-        mIronGolemBasePattern = BlockPatternBuilder::start()->aisle(rows)
-            ->where(L'#', BlockInWorld::hasState(BlockStatePredicate::forBlock(Blocks::iron_block)))
-            ->where(L'~', BlockInWorld::hasState(BlockMaterialPredicate::forMaterial(Material::AIR)))
-            ->build(NULL, NULL);
+        BlockPatternBuilder* builder = BlockPatternBuilder::start()->aisle(rows);
+        builder = builder->where(L'#', BlockInWorld::hasState(BlockStatePredicate::forBlock(Blocks::iron_block)));
+        builder = builder->where(L'~', BlockInWorld::hasState(BlockMaterialPredicate::forMaterial(Material::AIR)));
+        mIronGolemBasePattern = builder->build(NULL, NULL);
     }
+    return mIronGolemBasePattern;
 }
 
 bool PumpkinBlock::canSpawnGolem(Level* level, const BlockPos& pos)
 {
-    getOrCreateSnowGolemBase();
-    if (mSnowGolemBasePattern->find(level, pos) != NULL)
-        return true;
-    getOrCreateIronGolemBase();
-    return mIronGolemBasePattern->find(level, pos) != NULL;
+    return getOrCreateSnowGolemBase()->find(level, pos) != NULL
+        || getOrCreateIronGolemBase()->find(level, pos) != NULL;
 }
 
 void PumpkinBlock::trySpawnGolem(Level* level, const BlockPos& pos)
 {
-    getOrCreateSnowGolemFull();
-    BlockPattern::BlockPatternMatch* snow = mSnowGolemFullPattern->find(level, pos);
+    BlockPattern::BlockPatternMatch* snow = getOrCreateSnowGolemFull()->find(level, pos);
     if (snow != NULL)
     {
         bool canCreate = level->canCreateMore(EntityType::SNOW_MAN, Level::eSpawnType_Egg);
 
-        for (int y = 0; y < snow->getHeight(); ++y)
+        for (int y = 0; y < static_cast<int>(getOrCreateSnowGolemFull()->getHeight()); ++y)
         {
             BlockInWorld* blockInWorld = snow->getBlock(0, y, 0);
-            BlockPos blockPos = blockInWorld->getPos();
             if (!canCreate)
             {
-                Block* block = blockInWorld->getState()->getBlock();
-                block->spawnResources(level, blockPos, level->getBlockState(blockPos), 0);
+                Block* block = snow->getBlock(0, y, 0)->getState()->getBlock();
+                block->spawnResources(level, snow->getBlock(0, y, 0)->getPos(),
+                                      level->getBlockState(snow->getBlock(0, y, 0)->getPos()), 0);
             }
-            level->setBlock(blockPos, Blocks::air->defaultBlockState(), Block::UPDATE_CLIENTS, false);
+            level->setBlock(blockInWorld->getPos(), Blocks::air->defaultBlockState(), Block::UPDATE_CLIENTS, false);
         }
 
         BlockPos spawnPos = snow->getBlock(0, 2, 0)->getPos();
@@ -157,29 +155,27 @@ void PumpkinBlock::trySpawnGolem(Level* level, const BlockPos& pos)
                                0.0, 0.0, 0.0, arrayWithLength<int>());
         }
 
-        for (int y = 0; y < snow->getHeight(); ++y)
+        for (int y = 0; y < static_cast<int>(getOrCreateSnowGolemFull()->getHeight()); ++y)
             level->blockUpdated(snow->getBlock(0, y, 0)->getPos(), Blocks::air, false);
         return;
     }
 
-    getOrCreateIronGolemFull();
-    BlockPattern::BlockPatternMatch* iron = mIronGolemFullPattern->find(level, pos);
+    BlockPattern::BlockPatternMatch* iron = getOrCreateIronGolemFull()->find(level, pos);
     if (iron != NULL)
     {
         bool canCreate = level->canCreateMore(EntityType::VILLAGER_GOLEM, Level::eSpawnType_Egg);
 
-        for (int x = 0; x < iron->getWidth(); ++x)
+        for (int x = 0; x < static_cast<int>(getOrCreateIronGolemFull()->getWidth()); ++x)
         {
-            for (int y = 0; y < iron->getHeight(); ++y)
+            for (int y = 0; y < static_cast<int>(getOrCreateIronGolemFull()->getHeight()); ++y)
             {
-                BlockInWorld* blockInWorld = iron->getBlock(x, y, 0);
-                BlockPos blockPos = blockInWorld->getPos();
                 if (!canCreate)
                 {
-                    Block* block = blockInWorld->getState()->getBlock();
-                    block->spawnResources(level, blockPos, level->getBlockState(blockPos), 0);
+                    Block* block = iron->getBlock(x, y, 0)->getState()->getBlock();
+                    block->spawnResources(level, iron->getBlock(x, y, 0)->getPos(),
+                                          level->getBlockState(iron->getBlock(x, y, 0)->getPos()), 0);
                 }
-                level->setBlock(blockPos, Blocks::air->defaultBlockState(), Block::UPDATE_CLIENTS, false);
+                level->setBlock(iron->getBlock(x, y, 0)->getPos(), Blocks::air->defaultBlockState(), Block::UPDATE_CLIENTS, false);
             }
         }
 
@@ -203,9 +199,9 @@ void PumpkinBlock::trySpawnGolem(Level* level, const BlockPos& pos)
                                0.0, 0.0, 0.0, arrayWithLength<int>());
         }
 
-        for (int x = 0; x < iron->getWidth(); ++x)
+        for (int x = 0; x < static_cast<int>(getOrCreateIronGolemFull()->getWidth()); ++x)
         {
-            for (int y = 0; y < iron->getHeight(); ++y)
+            for (int y = 0; y < static_cast<int>(getOrCreateIronGolemFull()->getHeight()); ++y)
                 level->blockUpdated(iron->getBlock(x, y, 0)->getPos(), Blocks::air, false);
         }
     }
@@ -221,15 +217,14 @@ bool PumpkinBlock::mayPlace(Level* level, const BlockPos& pos)
 {
     const BlockState* below = level->getBlockState(pos.below());
     const BlockState* current = level->getBlockState(pos);
-    if (!current->getMaterial()->isReplaceable() && current->getBlock() != Blocks::air)
-        return false;
-    return below->canProvideSupport(Direction::UP, BLOCK_SUPPORT_ANY);
+    return (current->getBlock()->mMaterial->isReplaceable() || level->getBlockState(pos)->getBlock() == Blocks::air)
+        && below->canProvideSupport(Direction::UP, BLOCK_SUPPORT_ANY);
 }
 
 const BlockState* PumpkinBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    TypedBoxed<const Direction*> facing(rotation->rotate(state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY)));
-    return state->setBoxedValue(HorizontalDirectionalBlock::FACING_PROPERTY, &facing);
+    DirectionProperty* property = HorizontalDirectionalBlock::FACING_PROPERTY;
+    return state->setValue(property, rotation->rotate(state->getValue(property)));
 }
 
 const BlockState* PumpkinBlock::mirror(const BlockState* state, Mirror* mirror)
@@ -239,14 +234,15 @@ const BlockState* PumpkinBlock::mirror(const BlockState* state, Mirror* mirror)
 
 const BlockState* PumpkinBlock::getStateForPlacement(Level*, const BlockPos&, const Direction*, float, float, float, int, boost::shared_ptr<LivingEntity> placer)
 {
-    TypedBoxed<const Direction*> facing(placer->getDirection()->getOpposite());
-    return defaultBlockState()->setBoxedValue(HorizontalDirectionalBlock::FACING_PROPERTY, &facing);
+    const BlockState* state = defaultBlockState();
+    DirectionProperty* property = HorizontalDirectionalBlock::FACING_PROPERTY;
+    return state->setValue(property, placer->getDirection()->getOpposite());
 }
 
 const BlockState* PumpkinBlock::getBlockState(int data)
 {
-    TypedBoxed<const Direction*> facing(Direction::from2DDataValue(data));
-    return defaultBlockState()->setBoxedValue(HorizontalDirectionalBlock::FACING_PROPERTY, &facing);
+    return defaultBlockState()->setValue(HorizontalDirectionalBlock::FACING_PROPERTY,
+                                         Direction::from2DDataValue(data));
 }
 
 int PumpkinBlock::convertBlockStateToLegacyData(const BlockState* state)
@@ -256,24 +252,27 @@ int PumpkinBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 BlockStateDefinition* PumpkinBlock::createBlockStateDefinition()
 {
-    const Property* properties[] = { HorizontalDirectionalBlock::FACING_PROPERTY };
+    static const Property* properties[] = { HorizontalDirectionalBlock::FACING_PROPERTY };
     return new BlockStateDefinition(this, properties, 1);
 }
 
 TextureAtlasSprite* PumpkinBlock::getTexture(const Direction* direction, const BlockState* state)
 {
-    if (direction == Direction::UP || direction == Direction::DOWN)
-        return mTopIcon;
-    if ((this == Blocks::carved_pumpkin || this == Blocks::lit_pumpkin)
-        && direction == state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY))
-        return mFaceIcon;
-    return mIcon;
+    const Direction* facing = state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY);
+    bool isFaceBlock = this == Blocks::lit_pumpkin || this == Blocks::carved_pumpkin;
+    if (direction != Direction::UP && direction != Direction::DOWN)
+    {
+        if (facing == direction && isFaceBlock)
+            return mFaceIcon;
+        return mIcon;
+    }
+    return mTopIcon;
 }
 
 void PumpkinBlock::registerIcons(IconRegister* iconRegister)
 {
-    std::wstring suffix = (this == Blocks::lit_pumpkin) ? L"on" : L"off";
-    mFaceIcon = iconRegister->registerIcon(getIconName() + L"_face_" + suffix);
+    bool isLit = this == Blocks::lit_pumpkin;
+    mFaceIcon = iconRegister->registerIcon(getIconName() + L"_face_" + (isLit ? L"on" : L"off"));
     mTopIcon = iconRegister->registerIcon(getIconName() + L"_top");
     mIcon = iconRegister->registerIcon(getIconName() + L"_side");
 }

@@ -3,6 +3,7 @@
 
 #include <string>
 
+#include "game/core/StringRepresentable.hpp"
 #include "game/world/block/HalfSlabBlock.hpp"
 
 class BlockState;
@@ -20,7 +21,7 @@ class TextureAtlasSprite;
 class StoneSlabBlock : public HalfSlabBlock
 {
 public:
-    class Variant
+    class Variant : public StringRepresentable
     {
     public:
         static Variant* STONE;

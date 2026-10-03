@@ -3,10 +3,6 @@
 
 #include "game/core/Direction.hpp"
 
-TheEndPortalBlockEntity::~TheEndPortalBlockEntity()
-{
-}
-
 BlockEntity* TheEndPortalBlockEntity::create()
 {
     return new TheEndPortalBlockEntity();

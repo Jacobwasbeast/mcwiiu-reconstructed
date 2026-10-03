@@ -3,6 +3,7 @@
 
 #include <string>
 
+#include "game/core/StringRepresentable.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/EnumProperty.hpp"
 
@@ -19,7 +20,7 @@ class TextureAtlasSprite;
 class WallBlock : public Block
 {
 public:
-    class Variant
+    class Variant : public StringRepresentable
     {
     public:
         static Variant* COBBLESTONE;

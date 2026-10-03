@@ -43,9 +43,7 @@ int sBeaconEffectCount = 0;
 }
 
 BeaconBlockEntity::BeaconBeamSection::BeaconBeamSection(arrayWithLength<float> color)
-    : mRed(color.length > 0 ? color.data[0] : 0.0F),
-      mGreen(color.length > 1 ? color.data[1] : 0.0F),
-      mBlue(color.length > 2 ? color.data[2] : 0.0F), mHeight(1)
+    : mRed(color.data[0]), mGreen(color.data[1]), mBlue(color.data[2]), mHeight(1)
 {
 }
 
@@ -159,13 +157,13 @@ not_null_ptr<ItemInstance> BeaconBlockEntity::removeItem(unsigned int slot, int 
 
 not_null_ptr<ItemInstance> BeaconBlockEntity::removeItemNoUpdate(int slot)
 {
-    if (slot != 0)
+    if (slot == 0)
     {
-        return ItemInstance::EMPTY;
+        not_null_ptr<ItemInstance> result = mItem;
+        mItem = ItemInstance::EMPTY;
+        return result;
     }
-    not_null_ptr<ItemInstance> result = mItem;
-    mItem = ItemInstance::EMPTY;
-    return result;
+    return ItemInstance::EMPTY;
 }
 
 void BeaconBlockEntity::setItem(unsigned int slot, not_null_ptr<ItemInstance> item)
@@ -173,11 +171,6 @@ void BeaconBlockEntity::setItem(unsigned int slot, not_null_ptr<ItemInstance> it
     if (slot == 0)
     {
         mItem = item;
-        if (mItem != NULL && mItem->getCount() > getMaxStackSize())
-        {
-            mItem->setCount(getMaxStackSize());
-        }
-        setChanged();
     }
 }
 
@@ -193,8 +186,15 @@ void BeaconBlockEntity::setChanged()
 
 bool BeaconBlockEntity::stillValid(boost::shared_ptr<Player> player)
 {
-    Entity* entity = (Entity*)player.get();
-    return entity->distanceAsIfHitscanned(mPos, *entity->mBoundingBox) <= 30.25;
+    if (mLevel->getBlockEntity(mPos) != shared_from_this())
+    {
+        return false;
+    }
+    if (player->distanceAsIfHitscanned(mPos, *player->mBoundingBox) <= 30.25F)
+    {
+        return true;
+    }
+    return false;
 }
 
 void BeaconBlockEntity::startOpen(boost::shared_ptr<Player> player)
@@ -267,10 +267,7 @@ void BeaconBlockEntity::clearContent()
 
 AbstractContainerMenu* BeaconBlockEntity::createMenu(boost::shared_ptr<Inventory> inventory, boost::shared_ptr<Player> player)
 {
-    (void)player;
-    boost::shared_ptr<Container> beacon = boost::dynamic_pointer_cast<Container>(shared_from_this());
-    boost::shared_ptr<Container> playerContainer = boost::static_pointer_cast<Container>(inventory);
-    return new BeaconMenu(playerContainer, beacon);
+    return new BeaconMenu(inventory, boost::dynamic_pointer_cast<BeaconBlockEntity>(shared_from_this()));
 }
 
 int BeaconBlockEntity::getTypeId(bool large)
@@ -290,17 +287,17 @@ arrayWithLength<int> BeaconBlockEntity::getSlotsForFace(const Direction* face)
 
 bool BeaconBlockEntity::canPlaceItemThroughFace(int slot, not_null_ptr<ItemInstance> item, const Direction* face)
 {
-    return canPlaceItem(slot, item);
+    return false;
 }
 
 bool BeaconBlockEntity::canTakeItemThroughFace(int slot, not_null_ptr<ItemInstance> item, const Direction* face)
 {
-    return slot == 0;
+    return false;
 }
 
 void BeaconBlockEntity::setCustomName(const std::wstring& name, const std::wstring& uuid, bool chatCensored, bool uuidLocal)
 {
-    if (mName != NULL) mName->set(name, uuid, chatCensored, uuidLocal);
+    mName->set(name, uuid, chatCensored, uuidLocal);
 }
 
 int BeaconBlockEntity::getBeamDirection()
@@ -339,9 +336,11 @@ bool BeaconBlockEntity::NeedsRebuild()
 {
     short colorCounts[16] = {0};
     short blockCount = 0;
+    int x = mPos.x;
+    int z = mPos.z;
     for (int y = mPos.y + 1; y < mLevel->getHeight(); ++y)
     {
-        BlockPos pos(mPos.x, y, mPos.z);
+        BlockPos pos(x, y, z);
         const BlockState* state = mLevel->getBlockState(pos);
         if (state->getBlock() == Blocks::air || state->getBlock() == Blocks::water)
             continue;
@@ -601,17 +600,15 @@ void BeaconBlockEntity::tick()
     int phase = mTickCount + random.nextInt(9001);
     if (phase % 80 == 0 && mActive)
     {
-        BlockPos soundPos = getBlockPos();
-        mLevel->playLocalSound(soundPos.x, getBlockPos().y, getBlockPos().z, SoundEvents::BEACON_AMBIENT,
+        mLevel->playLocalSound(getBlockPos().x, getBlockPos().y, getBlockPos().z, SoundEvents::BEACON_AMBIENT,
                                SoundSource::eSoundSource_Blocks, 0.5F, 1.0F, false, 16.0F);
     }
 
     if (wasActive != mActive)
     {
-        BlockPos soundPos = getBlockPos();
         const SoundEvent* sound = mActive ? SoundEvents::BEACON_ACTIVATE : SoundEvents::BEACON_DEACTIVATE;
-        mLevel->playLocalSound(soundPos.x, getBlockPos().y, getBlockPos().z, sound, SoundSource::eSoundSource_Blocks,
-                               1.0F, 1.0F, false, 16.0F);
+        mLevel->playLocalSound(getBlockPos().x, getBlockPos().y, getBlockPos().z, sound,
+                               SoundSource::eSoundSource_Blocks, 1.0F, 1.0F, false, 16.0F);
     }
 }
 
@@ -653,9 +650,8 @@ double BeaconBlockEntity::getAndUpdateClientSideScale()
 
 boost::shared_ptr<Packet> BeaconBlockEntity::getUpdatePacket()
 {
-    int dimension = mLevel->mDimension->getType()->getId();
-    CompoundTag* tag = getUpdateTag();
-    return boost::shared_ptr<Packet>(new ClientboundBlockEntityDataPacket(mPos, 3, dimension, tag));
+    return boost::shared_ptr<ClientboundBlockEntityDataPacket>(
+        new ClientboundBlockEntityDataPacket(mPos, 3, mLevel->mDimension->getType()->getId(), getUpdateTag()));
 }
 
 CompoundTag* BeaconBlockEntity::getUpdateTag()

@@ -4,6 +4,7 @@
 #include <typeinfo>
 #include <vector>
 
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/Mth.hpp"
 #include "game/entity/mob/Entity.hpp"
@@ -52,9 +53,8 @@ void BlockDegradeRoutine::Action_Wait(long long time, long long ticks)
     if (mActions.empty())
         return;
 
-    LayerCache* cache = mActions.front().cache;
     AABB* bounds = AABB::newTemp(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
-    bounds->set(cache->getCurrentBounds());
+    bounds->set(mActions.front().cache->getCurrentBounds());
     bounds->mMaxY += 2.0;
 
     std::vector<boost::shared_ptr<Entity> >* entities = mLevel->getEntitiesOfClass(typeid(Player), bounds);
@@ -63,7 +63,7 @@ void BlockDegradeRoutine::Action_Wait(long long time, long long ticks)
 
     if (entityCount != 0)
     {
-        setNextAction(&BlockDegradeRoutine::Action_Wait, ticks + 400);
+        setNextAction(&BlockDegradeRoutine::Action_Wait, time + 400);
         return;
     }
 
@@ -72,6 +72,9 @@ void BlockDegradeRoutine::Action_Wait(long long time, long long ticks)
     mActions.pop_front();
 
     {
+        AABB* area = currentCache->getCurrentBounds();
+        BlockPos from(area->mMinX, area->mMinY, area->mMinZ);
+        BlockPos to(area->mMaxX, area->mMaxY, area->mMaxZ);
         std::vector<BlockPos> positions;
         Iterator<BlockPos*>* it = currentCache->iterator();
         BlockPos* pos = it->next();
@@ -88,25 +91,26 @@ void BlockDegradeRoutine::Action_Wait(long long time, long long ticks)
     rule->ClearCaches();
 
     mProgress = 11;
-    setNextAction(&BlockDegradeRoutine::Action_Break, ticks + 500);
+    setNextAction(&BlockDegradeRoutine::Action_Break, time + 500);
 }
 
 void BlockDegradeRoutine::Action_Break(long long time, long long ticks)
 {
     if (mProgress < 10)
     {
-        Random random(time);
-        for (unsigned int i = 0; i < mBlocks.length; ++i)
+        Random random(0);
+        for (int i = 0; i < (int)mBlocks.length; ++i)
         {
-            int progress = Mth::clamp((int)mProgress + random.nextInt(5) - 1, 0, 9);
-            mLevel->destroyBlockProgress(-1 - (int)i, mBlocks.data[i], progress);
+            BlockPos& pos = mBlocks.data[i];
+            int progress = Mth::clamp(mProgress + random.nextInt(5) - 1, 0, 9);
+            mLevel->destroyBlockProgress(-1 - i, pos, progress);
         }
 
         ++mProgress;
         if (mProgress > 10)
             mProgress = 10;
 
-        setNextAction(&BlockDegradeRoutine::Action_Break, ticks + 400);
+        setNextAction(&BlockDegradeRoutine::Action_Break, time + 400);
         return;
     }
 
@@ -118,12 +122,12 @@ void BlockDegradeRoutine::Action_Break(long long time, long long ticks)
     }
 
     mProgress = 1;
-    setNextAction(&BlockDegradeRoutine::Action_Wait, ticks + 100);
+    setNextAction(&BlockDegradeRoutine::Action_Wait, time + 100);
 }
 
 BlockDegradeRoutine::LayerCache* BlockDegradeRoutine::getCacheFor(const std::wstring& name) const
 {
-    LevelRuleset* ruleset = g_pApp->getGameRuleDefinitions();
+    LevelRuleset* ruleset = gApp.getGameRuleDefinitions();
     if (ruleset == NULL)
         return NULL;
 
@@ -150,8 +154,9 @@ AABB* BlockDegradeRoutine::LayerCache::getCurrentBounds() const
 
 Iterator<BlockPos*>* BlockDegradeRoutine::LayerCache::iterator() const
 {
-    BlockPos from(mCurrentBounds->mMinX, mCurrentBounds->mMinY, mCurrentBounds->mMinZ);
-    BlockPos to(mCurrentBounds->mMaxX, mCurrentBounds->mMaxY, mCurrentBounds->mMaxZ);
+    AABB* area = getCurrentBounds();
+    BlockPos from(area->mMinX, area->mMinY, area->mMinZ);
+    BlockPos to(area->mMaxX, area->mMaxY, area->mMaxZ);
     return BlockPos::between(from, to);
 }
 
@@ -175,9 +180,11 @@ bool BlockDegradeRoutine::LayerCache::isBroken(const BlockPos& pos)
 
 bool BlockDegradeRoutine::LayerCache::inLayer(const BlockPos& pos)
 {
-    if (isBroken(pos))
-        return false;
-
-    Block* block = mLevel->getBlock(pos);
-    return mRule->containsBlock(Block::getId(block), pos);
+    bool inside = false;
+    if (!isBroken(pos))
+    {
+        if (mRule->containsBlock(Block::getId(mLevel->getBlock(pos)), pos))
+            inside = true;
+    }
+    return inside;
 }

@@ -77,7 +77,7 @@ FlowerPotBlock::Contents* FlowerPotBlock::Contents::FERN =
 FlowerPotBlock::Contents* FlowerPotBlock::Contents::CACTUS =
     new FlowerPotBlock::Contents(Contents::eContentsCactus, L"cactus");
 
-FlowerPotBlock::Contents* FlowerPotBlock::Contents::VALUES[FlowerPotBlock::Contents::eContents_Count] = {
+const FlowerPotBlock::Contents* FlowerPotBlock::Contents::VALUES[FlowerPotBlock::Contents::eContents_Count] = {
     FlowerPotBlock::Contents::EMPTY,
     FlowerPotBlock::Contents::POPPY,
     FlowerPotBlock::Contents::BLUE_ORCHID,
@@ -126,21 +126,35 @@ FlowerPotBlock::FlowerPotBlock()
     : BaseEntityBlock(Material::DECORATION)
 {
     DerivedInit();
-    TypedBoxed<const Contents*> contents(Contents::EMPTY);
-    TypedBoxed<int> legacyData(0);
-    registerDefaultState(mStateDefinition->any()->setBoxedValue(CONTENTS, &contents)->setBoxedValue(LEGACY_DATA, &legacyData));
+    const BlockState* state = mStateDefinition->any();
+    {
+        EnumProperty<const Contents*>* property = CONTENTS;
+        TypedBoxed<const Contents*> contents(Contents::EMPTY);
+        state = state->setBoxedValue(property, &contents);
+    }
+    {
+        AbstractProperty<int>* property = LEGACY_DATA;
+        TypedBoxed<int> legacyData(0);
+        state = state->setBoxedValue(property, &legacyData);
+    }
+    registerDefaultState(state);
     sendBlockData(15);
 }
 
 void FlowerPotBlock::blockStaticCtor()
 {
-    boost::unordered_set<const Contents*> values;
-    for (int i = 0; i < Contents::eContents_Count; ++i)
+    std::wstring name(L"contents");
+    EnumProperty<const Contents*>* property;
     {
-        values.insert(Contents::VALUES[i]);
+        boost::unordered_set<const Contents*> values;
+        for (int i = 0; i < Contents::eContents_Count; ++i)
+        {
+            values.insert(Contents::VALUES[i]);
+        }
+        property = EnumProperty<const Contents*>::create(name, typeid(Contents), values,
+                                                          Predicates<const Contents*>::alwaysTrue);
     }
-    CONTENTS = EnumProperty<const Contents*>::create(L"contents", typeid(Contents), values,
-                                                      Predicates<const Contents*>::alwaysTrue);
+    CONTENTS = property;
 }
 
 boost::shared_ptr<BlockEntity> FlowerPotBlock::newBlockEntity(Level* level, int data)
@@ -250,7 +264,12 @@ bool FlowerPotBlock::canBePotted(const not_null_ptr<ItemInstance>& item)
     {
         return true;
     }
-    return block == Blocks::tallgrass && item->getAuxValue() == TallGrassBlock::Variant::FERN->getData();
+    int auxValue = item->getAuxValue();
+    if (block == Blocks::tallgrass && auxValue == TallGrassBlock::Variant::FERN->getData())
+    {
+        return true;
+    }
+    return false;
 }
 
 bool FlowerPotBlock::use(Level* level, const BlockPos& pos, const BlockState* state,
@@ -329,10 +348,11 @@ void FlowerPotBlock::neighborChanged(const BlockState* state, Level* level, cons
 void FlowerPotBlock::onRemove(Level* level, const BlockPos& pos, const BlockState* state)
 {
     boost::shared_ptr<FlowerPotBlockEntity> entity = getFlowerPotEntity(level, pos);
-    if (entity != NULL && entity->getPlantItem() != NULL)
+    FlowerPotBlockEntity* pot = entity.get();
+    if (pot != NULL && pot->getPlantItem() != NULL)
     {
         Block::popResource(level, pos,
-            not_null_ptr<ItemInstance>(new ItemInstance(entity->getPlantItem(), 1, entity->getItemData())));
+            not_null_ptr<ItemInstance>(new ItemInstance(pot->getPlantItem(), 1, pot->getItemData())));
     }
     BaseEntityBlock::onRemove(level, pos, state);
 }

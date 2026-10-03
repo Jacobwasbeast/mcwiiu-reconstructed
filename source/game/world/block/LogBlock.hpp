@@ -34,6 +34,11 @@ public:
     class LogAxis : public StringRepresentable
     {
     public:
+        static LogAxis* X;
+        static LogAxis* Y;
+        static LogAxis* Z;
+        static LogAxis* NONE;
+
         LogAxis(const std::wstring& name);
 
         static LogAxis* fromAxis(Direction::Axis* axis);

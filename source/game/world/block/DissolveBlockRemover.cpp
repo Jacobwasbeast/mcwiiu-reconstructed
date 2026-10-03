@@ -40,7 +40,7 @@ bool DissolveBlockRemover::RemoveBlocks(int areaIndex, int maxBlocks)
                 {
                     BlockPos pos(x, y, z);
                     const BlockState* state = mLevel->getBlockState(pos);
-                    int colour = state->getMapColor(mLevel, pos)->calculateRGBColor(2);
+                    int colour = const_cast<BlockState*>(state)->getMapColor(mLevel, pos)->calculateRGBColor(2);
                     mLevel->setBlock(pos, Blocks::air->defaultBlockState(), Block::UPDATE_ALL, false);
                     CreateParticles(pos, colour);
                 }

@@ -25,38 +25,39 @@ bool leaf_variant_predicate(PlanksBlock::Variant* value);
 
 bool leaf_variant_predicate(PlanksBlock::Variant* value)
 {
-    return value->getData() > 3;
+    return value->getData() >= 4;
 }
 
 void NewLeafBlock::blockStaticCtor()
 {
-    boost::unordered_set<PlanksBlock::Variant*> values;
-    values.insert(PlanksBlock::Variant::byData(0));
-    values.insert(PlanksBlock::Variant::byData(1));
-    values.insert(PlanksBlock::Variant::byData(2));
-    values.insert(PlanksBlock::Variant::byData(3));
-    values.insert(PlanksBlock::Variant::byData(4));
-    values.insert(PlanksBlock::Variant::byData(5));
-    VARIANT = EnumProperty<PlanksBlock::Variant*>::create(
-        L"variant", typeid(PlanksBlock::Variant*), values,
-        new Predicates<PlanksBlock::Variant*>::FunctionPredicate(leaf_variant_predicate));
+    std::wstring name(L"variant");
+    Predicates<PlanksBlock::Variant*>::FunctionPredicate* filter =
+        new Predicates<PlanksBlock::Variant*>::FunctionPredicate(leaf_variant_predicate);
+    EnumProperty<PlanksBlock::Variant*>* variant;
+    {
+        boost::unordered_set<PlanksBlock::Variant*> values;
+        for (int i = 0; i < 6; ++i)
+        {
+            values.insert(PlanksBlock::Variant::BY_DATA[i]);
+        }
+        variant = EnumProperty<PlanksBlock::Variant*>::create(name, typeid(PlanksBlock::Variant), values, filter);
+    }
+    VARIANT = variant;
 }
 
 NewLeafBlock::NewLeafBlock()
     : LeafBlock()
 {
     DerivedInit();
-    TypedBoxed<PlanksBlock::Variant*> variant(PlanksBlock::Variant::byData(4));
-    const BlockState* state = mStateDefinition->any()->setBoxedValue(VARIANT, &variant);
-    TypedBoxed<bool> checkDecay(true);
-    state = state->setBoxedValue(CHECK_DECAY, &checkDecay);
-    TypedBoxed<bool> decayable(true);
-    registerDefaultState(state->setBoxedValue(DECAYABLE, &decayable));
+    registerDefaultState(mStateDefinition->any()
+                             ->setValue(VARIANT, PlanksBlock::Variant::ACACIA)
+                             ->setValue(CHECK_DECAY, true)
+                             ->setValue(DECAYABLE, true));
 }
 
 void NewLeafBlock::dropExtraLoot(Level* level, const BlockPos& pos, const BlockState* state, int lootBonus)
 {
-    if (state->getValue(VARIANT) != PlanksBlock::Variant::byData(5))
+    if (state->getValue(VARIANT) != PlanksBlock::Variant::DARK_OAK)
         return;
     if (level->mRandom->nextInt(lootBonus) != 0)
         return;
@@ -83,12 +84,9 @@ not_null_ptr<ItemInstance> NewLeafBlock::getSilkTouchItemInstance(const BlockSta
 const BlockState* NewLeafBlock::getBlockState(int data)
 {
     const BlockState* state = defaultBlockState();
-    TypedBoxed<PlanksBlock::Variant*> variant(PlanksBlock::Variant::byData((data & 3) + 4));
-    state = state->setBoxedValue(VARIANT, &variant);
-    TypedBoxed<bool> decayable(((data >> 2) & 1) == 0);
-    state = state->setBoxedValue(DECAYABLE, &decayable);
-    TypedBoxed<bool> checkDecay((data & 8) != 0);
-    return state->setBoxedValue(CHECK_DECAY, &checkDecay);
+    return state->setValue(VARIANT, getWoodVariantForData(data))
+        ->setValue(DECAYABLE, (data & 4) == 0)
+        ->setValue(CHECK_DECAY, (data & 8) != 0);
 }
 
 int NewLeafBlock::convertBlockStateToLegacyData(const BlockState* state)
@@ -108,7 +106,7 @@ PlanksBlock::Variant* NewLeafBlock::getWoodVariantForData(int data)
 
 BlockStateDefinition* NewLeafBlock::createBlockStateDefinition()
 {
-    const Property* properties[3] = { VARIANT, CHECK_DECAY, DECAYABLE };
+    static const Property* properties[3] = { VARIANT, CHECK_DECAY, DECAYABLE };
     return new BlockStateDefinition(this, properties, 3);
 }
 
@@ -116,16 +114,14 @@ void NewLeafBlock::playerDestroy(Level* level, boost::shared_ptr<Player> player,
                                  const BlockState* state, boost::shared_ptr<BlockEntity> blockEntity,
                                  not_null_ptr<ItemInstance> tool)
 {
-    if (!level->mIsClientSide && tool->getItem() == Items::shears)
+    if (level->mIsClientSide || tool->getItem() != Items::shears)
     {
-        player->awardStat(Stats::blockMinedStats.data[Block::getId(this)],
-                          GenericStats::param_blocksMined(state, 1));
-        Block::popResource(level, pos, not_null_ptr<ItemInstance>(new ItemInstance(Item::byBlock(this), 1,
-            state->getValue(VARIANT)->getData() - 4)));
+        Block::playerDestroy(level, player, pos, state, blockEntity, tool);
         return;
     }
-
-    Block::playerDestroy(level, player, pos, state, blockEntity, tool);
+    player->awardStat(gStats->get_blocksMined(Block::getId(this)), GenericStats::param_blocksMined(state, 1));
+    Block::popResource(level, pos, not_null_ptr<ItemInstance>(new ItemInstance(Item::byBlock(this), 1,
+        state->getValue(VARIANT)->getData() - 4)));
 }
 
 int NewLeafBlock::getWoodType(const BlockState* state)

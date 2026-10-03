@@ -309,11 +309,11 @@ bool BlockStateDefinition::BlockStateImpl::doesPropagate() const
 }
 
 const MaterialColor* BlockStateDefinition::BlockStateImpl::getMapColor(LevelSource* levelSource,
-                                                                      const BlockPos& pos) const
+                                                                      const BlockPos& pos)
 {
     if (mCachedMapColor == NULL)
     {
-        mCachedMapColor = mDefinition->getBlock()->getMapColor(this, levelSource, pos);
+        mCachedMapColor = mDefinition->mBlock->getMapColor(this, levelSource, pos);
     }
 
     return mCachedMapColor;

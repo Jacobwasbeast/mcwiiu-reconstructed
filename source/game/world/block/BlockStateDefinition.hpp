@@ -52,7 +52,7 @@ public:
         virtual bool isTranslucent() const;
         virtual bool isTransparent() const;
         virtual bool doesPropagate() const;
-        virtual const MaterialColor* getMapColor(LevelSource*, const BlockPos&) const;
+        virtual const MaterialColor* getMapColor(LevelSource*, const BlockPos&);
         virtual const BlockState* rotate(Rotation*) const;
         virtual const BlockState* mirror(Mirror*) const;
         virtual bool isCubeShaped() const;
@@ -90,7 +90,7 @@ public:
         Block* mBlock;
         BlockStateDefinition* mDefinition;
         unsigned short mData;
-        mutable const MaterialColor* mCachedMapColor;
+        const MaterialColor* mCachedMapColor;
     };
 
     explicit BlockStateDefinition(Block* block);

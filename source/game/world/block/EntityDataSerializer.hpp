@@ -43,7 +43,10 @@ public:
     virtual T copy(T value) const = 0;
     virtual EntityDataAccessor<T>* getOrCreateStoredAccessor(int id);
 
-    EntityDataSerializerEnum::EEntityDataSerializer getId() const;
+    EntityDataSerializerEnum::EEntityDataSerializer getId() const
+    {
+        return mId;
+    }
 
 private:
     boost::unordered_map<int, EntityDataAccessor<T>*> mAccessors;
@@ -64,12 +67,6 @@ EntityDataAccessor<T>* EntityDataSerializer<T>::getOrCreateStoredAccessor(int id
     mAccessors[id] = accessor;
 
     return accessor;
-}
-
-template <class T>
-EntityDataSerializerEnum::EEntityDataSerializer EntityDataSerializer<T>::getId() const
-{
-    return mId;
 }
 
 #endif

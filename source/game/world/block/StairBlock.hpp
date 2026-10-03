@@ -93,6 +93,7 @@ public:
     bool _neighboringBlockCheckForCreatingBarrierInDirection(LevelSource*, const BlockPos&, const BlockState*,
                                                              const Direction*) const;
     virtual bool liquidCanFlowIntoFromDirection(LevelSource*, const BlockPos&, const Direction*) const;
+    using Block::clip;
     virtual HitResult* clip(const BlockState*, Level*, const BlockPos&, Vec3*, Vec3*);
     virtual const BlockState* getBlockState(int);
     virtual int convertBlockStateToLegacyData(const BlockState*);

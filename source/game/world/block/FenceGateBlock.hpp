@@ -16,6 +16,12 @@ public:
     static AbstractProperty<bool>* OPEN;
     static AbstractProperty<bool>* POWERED;
     static AbstractProperty<bool>* IN_WALL;
+    static AABB* Z_AXIS_AABB;
+    static AABB* X_AXIS_AABB;
+    static AABB* Z_AXIS_IN_WALL_AABB;
+    static AABB* X_AXIS_IN_WALL_AABB;
+    static AABB* Z_AXIS_COLLISION_AABB;
+    static AABB* X_AXIS_COLLISION_AABB;
 
     virtual const AABB* getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
     virtual const BlockState* fillVirtualBlockStateProperties(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);

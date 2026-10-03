@@ -63,14 +63,11 @@ ComparatorBlock::ComparatorBlock(bool on) : DiodeBlock(on)
 {
     DerivedInit();
 
-    TypedBoxed<const Direction*> facing(Direction::NORTH);
-    TypedBoxed<bool> powered(false);
-    TypedBoxed<ComparatorMode*> mode(ComparatorMode::COMPARE);
-
-    registerDefaultState(mStateDefinition->any()
-                             ->setBoxedValue(HorizontalDirectionalBlock::FACING_PROPERTY, &facing)
-                             ->setBoxedValue(sPoweredProperty, &powered)
-                             ->setBoxedValue(MODE, &mode));
+    const BlockState* state = mStateDefinition->any();
+    state = state->setValue(HorizontalDirectionalBlock::FACING_PROPERTY, Direction::NORTH);
+    state = state->setValue(sPoweredProperty, false);
+    state = state->setValue(MODE, ComparatorMode::COMPARE);
+    registerDefaultState(state);
 
     mBlockEntity = true;
 }
@@ -299,13 +296,18 @@ bool ComparatorBlock::triggerEvent(const BlockState* state, Level* level, const 
 
 const BlockState* ComparatorBlock::getBlockState(int data)
 {
-    TypedBoxed<const Direction*> facing(Direction::from2DDataValue(data));
-    TypedBoxed<bool> powered((data & 8) != 0);
-    TypedBoxed<ComparatorMode*> mode((data & 4) ? ComparatorMode::SUBTRACT : ComparatorMode::COMPARE);
-    return defaultBlockState()
-        ->setBoxedValue(HorizontalDirectionalBlock::FACING_PROPERTY, &facing)
-        ->setBoxedValue(sPoweredProperty, &powered)
-        ->setBoxedValue(MODE, &mode);
+    const BlockState* state = defaultBlockState();
+    state = state->setValue(HorizontalDirectionalBlock::FACING_PROPERTY, Direction::from2DDataValue(data));
+    state = state->setValue(sPoweredProperty, (data & 8) != 0);
+    if ((data & 4) == 0)
+    {
+        state = state->setValue(MODE, ComparatorMode::COMPARE);
+    }
+    else
+    {
+        state = state->setValue(MODE, ComparatorMode::SUBTRACT);
+    }
+    return state;
 }
 
 int ComparatorBlock::convertBlockStateToLegacyData(const BlockState* state)
@@ -342,8 +344,11 @@ BlockStateDefinition* ComparatorBlock::createBlockStateDefinition()
 
 const BlockState* ComparatorBlock::getStateForPlacement(Level* level, const BlockPos& pos, const Direction* direction, float hitX, float hitY, float hitZ, int auxValue, boost::shared_ptr<LivingEntity> placer)
 {
-    TypedBoxed<ComparatorMode*> mode(ComparatorMode::COMPARE);
-    return DiodeBlock::getStateForPlacement(level, pos, direction, hitX, hitY, hitZ, auxValue, placer)->setBoxedValue(MODE, &mode);
+    const BlockState* state = defaultBlockState();
+    DirectionProperty* facing = HorizontalDirectionalBlock::FACING_PROPERTY;
+    state = state->setValue(facing, placer->getDirection()->getOpposite());
+    state = state->setValue(sPoweredProperty, false);
+    return state->setValue(MODE, ComparatorMode::COMPARE);
 }
 
 EBlockRenderShape ComparatorBlock::getRenderShape(const BlockState*)
@@ -363,7 +368,7 @@ TextureAtlasSprite* ComparatorBlock::getTexture(const Direction* direction, cons
         {
             return mIcon;
         }
-        return Blocks::stone_slab->getTexture(direction);
+        return Blocks::stone_slab->getTexture(Direction::UP);
     }
     if (state->getValue(sPoweredProperty))
     {

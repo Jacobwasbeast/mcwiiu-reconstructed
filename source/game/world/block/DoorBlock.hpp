@@ -101,10 +101,8 @@ public:
     static bool hasRightHingeFromData(int data);
 
     int mDoorData;
-    TextureAtlasSprite* mUpperIcon;
-    TextureAtlasSprite* mFlippedUpperIcon;
-    TextureAtlasSprite* mLowerIcon;
-    TextureAtlasSprite* mFlippedLowerIcon;
+    TextureAtlasSprite* mUpperIcons[2];
+    TextureAtlasSprite* mLowerIcons[2];
 };
 
 #endif

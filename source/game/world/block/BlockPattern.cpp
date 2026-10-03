@@ -1,5 +1,6 @@
 #include "game/world/block/BlockPattern.hpp"
 
+#include <algorithm>
 #include <vector>
 
 #include "game/core/Direction.hpp"
@@ -9,7 +10,7 @@
 #include "game/world/block/Iterator.hpp"
 
 BlockPattern::BlockPattern(array3DWithLength<Predicate<BlockInWorld*>*> pattern,
-                           const Direction* forward, const Direction* up)
+                           const Direction* up, const Direction* forward)
     : mPattern(pattern),
       mDepth(pattern.length),
       mHeight(pattern.data[0]->length),
@@ -92,48 +93,65 @@ BlockPattern::BlockPatternMatch* BlockPattern::matches(Level* level, const Block
 BlockPattern::BlockPatternMatch* BlockPattern::find(Level* level, const BlockPos& pos)
 {
     boost::shared_ptr<BlockLoadingCache> cache(createLevelCache(level, false));
-    unsigned int size = mDepth;
-    if (mHeight > size)
+    const int& longestSide = std::max(mWidth, mHeight);
+    int size = mDepth;
+    if (size < longestSide)
     {
-        size = mHeight;
-    }
-    if (mWidth > size)
-    {
-        size = mWidth;
+        size = longestSide;
     }
 
-    std::vector<const Direction*> ups;
-    std::vector<const Direction*> forwards;
-    if (mUp != NULL)
+    const Direction* upDirection = getUpRelativeToPattern();
+    std::vector<const Direction*>* ups = &Direction::VALUES;
+    if (upDirection != NULL)
     {
-        ups.push_back(mUp);
-    }
-    if (mForward != NULL)
-    {
-        forwards.push_back(mForward);
+        ups = new std::vector<const Direction*>();
+        ups->push_back(upDirection);
     }
 
-    BlockPos end = pos.offset(-(int)size + 1, -(int)size + 1, -(int)size + 1);
-    Iterator<BlockPos*>* positions = BlockPos::between(pos, end);
+    const Direction* forwardDirection = getForwardRelativeToPattern();
+    std::vector<const Direction*>* forwards = &Direction::VALUES;
+    if (forwardDirection != NULL)
+    {
+        forwards = new std::vector<const Direction*>();
+        forwards->push_back(forwardDirection);
+    }
+
+    Iterator<BlockPos*>* positions = BlockPos::between(pos, pos.offset(size - 1, size - 1, size - 1));
     while (positions->hasNext())
     {
-        BlockPos* candidate = positions->next();
-        for (std::vector<const Direction*>::iterator forward = forwards.begin();
-             forward != forwards.end(); ++forward)
+        BlockPos candidate = *positions->next();
+        for (std::vector<const Direction*>::iterator forward = forwards->begin();
+             forward != forwards->end(); ++forward)
         {
-            for (std::vector<const Direction*>::iterator up = ups.begin(); up != ups.end(); ++up)
+            for (std::vector<const Direction*>::iterator up = ups->begin(); up != ups->end(); ++up)
             {
                 if (*forward != *up && *forward != (*up)->getOpposite())
                 {
-                    BlockPatternMatch* match = matches(*candidate, *forward, *up, cache);
+                    BlockPatternMatch* match = matches(candidate, *forward, *up, cache);
                     if (match != NULL)
                     {
+                        if (upDirection != NULL)
+                        {
+                            delete ups;
+                        }
+                        if (forwardDirection != NULL)
+                        {
+                            delete forwards;
+                        }
                         delete positions;
                         return match;
                     }
                 }
             }
         }
+    }
+    if (upDirection != NULL)
+    {
+        delete ups;
+    }
+    if (forwardDirection != NULL)
+    {
+        delete forwards;
     }
     delete positions;
     return NULL;
@@ -156,13 +174,17 @@ BlockPattern::BlockLoadingCache::~BlockLoadingCache()
 BlockInWorld* BlockPattern::BlockLoadingCache::getUnchecked(const BlockPos& pos)
 {
     BlockCache::iterator it = mCache.find(pos);
+    BlockInWorld* block;
     if (it == mCache.end())
     {
-        BlockInWorld* block = new BlockInWorld(mLevel, pos, mLoadChunks);
+        block = new BlockInWorld(mLevel, pos, mLoadChunks);
         mCache[pos] = block;
-        return block;
     }
-    return it->second;
+    else
+    {
+        block = it->second;
+    }
+    return block;
 }
 
 BlockPattern::BlockPatternMatch::BlockPatternMatch(
@@ -180,6 +202,11 @@ BlockPattern::BlockPatternMatch::BlockPatternMatch(
 
 BlockPattern::BlockPatternMatch::~BlockPatternMatch()
 {
+}
+
+BlockInWorld* BlockPattern::BlockPatternMatch::getBlock(int x, int y, int z)
+{
+    return mCache->getUnchecked(BlockPattern::translateAndRotate(mFrontTopLeft, getForwards(), getUp(), x, y, z));
 }
 
 BlockPos BlockPattern::BlockPatternMatch::getFrontTopLeft()
@@ -205,9 +232,4 @@ int BlockPattern::BlockPatternMatch::getWidth()
 int BlockPattern::BlockPatternMatch::getHeight()
 {
     return mHeight;
-}
-
-BlockInWorld* BlockPattern::BlockPatternMatch::getBlock(int x, int y, int z)
-{
-    return mCache->getUnchecked(BlockPattern::translateAndRotate(mFrontTopLeft, mForwards, mUp, x, y, z));
 }

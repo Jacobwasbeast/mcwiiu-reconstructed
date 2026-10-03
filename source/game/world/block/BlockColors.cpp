@@ -337,7 +337,7 @@ int BlockColors::getColor(const BlockState* state, LevelSource* levelSource, con
         return color->getColor(state, NULL, NULL, 0);
     }
 
-    const MaterialColor* mapColor = state->getMapColor(levelSource, pos);
+    const MaterialColor* mapColor = const_cast<BlockState*>(state)->getMapColor(levelSource, pos);
 
     if (mapColor != NULL)
     {

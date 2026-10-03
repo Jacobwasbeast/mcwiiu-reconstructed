@@ -37,22 +37,24 @@ private:
 template <class T>
 unsigned int TypedBoxed<T>::hashOf() const
 {
-    return boost::hash_value(this->mValue);
+    T value = this->mValue;
+    return boost::hash_value(value);
 }
 
 template <class T>
 bool TypedBoxed<T>::operator==(const Boxed* other) const
 {
+    bool result = false;
     if (other->isA(this->mValueClass))
     {
         const TypedBoxed<T>* boxed = other->isA(typeid(T)) ? static_cast<const TypedBoxed<T>*>(other) : NULL;
         if (this->mValue == boxed->mValue)
         {
-            return true;
+            result = true;
         }
     }
 
-    return false;
+    return result;
 }
 
 template <class T>

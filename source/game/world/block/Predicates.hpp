@@ -12,7 +12,10 @@ public:
     class ConstantPredicate : public Predicate<T>
     {
     public:
-        ConstantPredicate(bool value);
+        ConstantPredicate(bool value)
+            : mValue(value)
+        {
+        }
 
         virtual bool apply(T input) const;
         virtual Predicate<T>* copy() const;
@@ -73,12 +76,6 @@ public:
 
 template <class T>
 Predicate<T>* Predicates<T>::alwaysTrue = new typename Predicates<T>::ConstantPredicate(true);
-
-template <class T>
-Predicates<T>::ConstantPredicate::ConstantPredicate(bool value)
-    : mValue(value)
-{
-}
 
 template <class T>
 bool Predicates<T>::ConstantPredicate::apply(T input) const

@@ -22,7 +22,7 @@ class BlockItem : public Item
 {
 public:
     explicit BlockItem(Block* block);
-    virtual ~BlockItem();
+    virtual ~BlockItem() {}
 
     virtual InteractionResult::EInteractionResult useOn(boost::shared_ptr<Player> player,
                                                         Level* level,

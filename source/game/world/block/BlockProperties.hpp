@@ -60,7 +60,7 @@ public:
     virtual bool isTranslucent() const = 0;
     virtual bool isTransparent() const = 0;
     virtual bool doesPropagate() const = 0;
-    virtual const MaterialColor* getMapColor(LevelSource* levelSource, const BlockPos& pos) const = 0;
+    virtual const MaterialColor* getMapColor(LevelSource* levelSource, const BlockPos& pos) = 0;
     virtual const BlockState* rotate(Rotation* rotation) const = 0;
     virtual const BlockState* mirror(Mirror* mirror) const = 0;
     virtual bool isCubeShaped() const = 0;

@@ -17,9 +17,9 @@
 #include "game/world/block/Predicates.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
-static PurpurSlabBlock::Variant* gPurpurSlabDefaultVariant = new PurpurSlabBlock::Variant(L"default");
-static PurpurSlabBlock::Variant* gPurpurSlabVariants[1] = { gPurpurSlabDefaultVariant };
-static EnumProperty<PurpurSlabBlock::Variant*>* gPurpurSlabVariantProperty = NULL;
+EnumProperty<PurpurSlabBlock::Variant*>* PurpurSlabBlock::VARIANT = NULL;
+PurpurSlabBlock::Variant* PurpurSlabBlock::Variant::DEFAULT = new PurpurSlabBlock::Variant(L"default");
+static PurpurSlabBlock::Variant* gPurpurSlabVariants[1] = { PurpurSlabBlock::Variant::DEFAULT };
 
 PurpurSlabBlock::Variant::Variant(std::wstring name)
     : mName(name)
@@ -40,7 +40,7 @@ void PurpurSlabBlock::blockStaticCtor()
 {
     boost::unordered_set<Variant*> values;
     values.insert(gPurpurSlabVariants[0]);
-    gPurpurSlabVariantProperty = EnumProperty<Variant*>::create(
+    VARIANT = EnumProperty<Variant*>::create(
         L"variant", typeid(Variant*), values, Predicates<Variant*>::alwaysTrue);
 }
 
@@ -58,8 +58,8 @@ void PurpurSlabBlock::DerivedInit()
         TypedBoxed<Half*> half(BOTTOM);
         state = state->setBoxedValue(TYPE, &half);
     }
-    TypedBoxed<Variant*> variant(gPurpurSlabDefaultVariant);
-    registerDefaultState(state->setBoxedValue(gPurpurSlabVariantProperty, &variant));
+    TypedBoxed<Variant*> variant(Variant::DEFAULT);
+    registerDefaultState(state->setBoxedValue(VARIANT, &variant));
 }
 
 Item* PurpurSlabBlock::getResource(const BlockState*, Random*, int)
@@ -74,8 +74,8 @@ not_null_ptr<ItemInstance> PurpurSlabBlock::getCloneItemInstance(Level*, const B
 
 const BlockState* PurpurSlabBlock::getBlockState(int data)
 {
-    TypedBoxed<Variant*> variant(gPurpurSlabDefaultVariant);
-    const BlockState* state = defaultBlockState()->setBoxedValue(gPurpurSlabVariantProperty, &variant);
+    TypedBoxed<Variant*> variant(Variant::DEFAULT);
+    const BlockState* state = defaultBlockState()->setBoxedValue(VARIANT, &variant);
     if (!isFullSize())
     {
         TypedBoxed<Half*> half((data & 8) == 0 ? BOTTOM : TOP);
@@ -86,11 +86,12 @@ const BlockState* PurpurSlabBlock::getBlockState(int data)
 
 int PurpurSlabBlock::convertBlockStateToLegacyData(const BlockState* state)
 {
+    int data = 0;
     if (!isFullSize() && state->getValue(HalfSlabBlock::TYPE) == HalfSlabBlock::TOP)
     {
-        return 8;
+        data = 8;
     }
-    return 0;
+    return data;
 }
 
 int PurpurSlabBlock::getAuxName(int)
@@ -100,22 +101,22 @@ int PurpurSlabBlock::getAuxName(int)
 
 Property* PurpurSlabBlock::getTypeProperty()
 {
-    return gPurpurSlabVariantProperty;
+    return VARIANT;
 }
 
 Boxed* PurpurSlabBlock::getTypeForItem(not_null_ptr<ItemInstance>)
 {
-    return new TypedBoxed<Variant*>(gPurpurSlabDefaultVariant);
+    return new TypedBoxed<Variant*>(Variant::DEFAULT);
 }
 
 BlockStateDefinition* PurpurSlabBlock::createBlockStateDefinition()
 {
     if (isFullSize())
     {
-        static const Property* properties[1] = { gPurpurSlabVariantProperty };
+        static const Property* properties[1] = { VARIANT };
         return new BlockStateDefinition(this, properties, 1);
     }
 
-    static const Property* properties[2] = { HalfSlabBlock::TYPE, gPurpurSlabVariantProperty };
+    static const Property* properties[2] = { HalfSlabBlock::TYPE, VARIANT };
     return new BlockStateDefinition(this, properties, 2);
 }

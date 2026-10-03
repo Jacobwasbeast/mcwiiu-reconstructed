@@ -40,6 +40,12 @@ public:
     static AbstractProperty<const Direction*>* FACING;
     static Half* TOP;
     static Half* BOTTOM;
+    static const AABB* EAST_OPEN_AABB;
+    static const AABB* WEST_OPEN_AABB;
+    static const AABB* SOUTH_OPEN_AABB;
+    static const AABB* NORTH_OPEN_AABB;
+    static const AABB* BOTTOM_AABB;
+    static const AABB* TOP_AABB;
 
     TrapDoorBlock(Material* material);
     TrapDoorBlock(Material* material, const MaterialColor* materialColor);

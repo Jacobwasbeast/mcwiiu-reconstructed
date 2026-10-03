@@ -1,5 +1,6 @@
 #include "game/world/block/HugeMushroomBlock.hpp"
 
+#include <cstring>
 #include <typeinfo>
 #include <boost/unordered_set.hpp>
 
@@ -61,13 +62,15 @@ HugeMushroomBlock::Variant* HugeMushroomBlock::Variant::VALUES[13] = {
     HugeMushroomBlock::Variant::ALL_STEM
 };
 EnumProperty<HugeMushroomBlock::Variant*>* HugeMushroomBlock::VARIANT = NULL;
+const std::wstring HugeMushroomBlock::TEXTURE_STEM = L"skin_stem";
+const std::wstring HugeMushroomBlock::TEXTURE_INSIDE = L"inside";
+const std::wstring HugeMushroomBlock::TEXTURE_TYPE[2] = { L"skin_brown", L"skin_red" };
 
 int getMushroomDataValue(HugeMushroomBlock::Variant* variant)
 {
-    TypedBoxed<HugeMushroomBlock::Variant*> value(variant);
     Block* block = Blocks::red_mushroom_block;
-    return block->convertBlockStateToLegacyData(
-        block->defaultBlockState()->setBoxedValue(HugeMushroomBlock::VARIANT, &value));
+    const BlockState* state = block->defaultBlockState()->setValue(HugeMushroomBlock::VARIANT, variant);
+    return block->convertBlockStateToLegacyData(state);
 }
 
 HugeMushroomBlock::Variant::Variant(int data, const std::wstring& name)
@@ -78,6 +81,11 @@ HugeMushroomBlock::Variant::Variant(int data, const std::wstring& name)
 int HugeMushroomBlock::Variant::getData()
 {
     return mData;
+}
+
+std::wstring HugeMushroomBlock::Variant::getName()
+{
+    return mName;
 }
 
 HugeMushroomBlock::Variant* HugeMushroomBlock::Variant::byData(int data)
@@ -110,24 +118,24 @@ template std::wstring _toString<HugeMushroomBlock::Variant>(HugeMushroomBlock::V
 
 void HugeMushroomBlock::blockStaticCtor()
 {
+    std::wstring name = L"variant";
     boost::unordered_set<Variant*> values;
     for (int i = 0; i < 13; ++i)
     {
         values.insert(Variant::VALUES[i]);
     }
     VARIANT = EnumProperty<Variant*>::create(
-        L"variant", typeid(Variant*), values, Predicates<Variant*>::alwaysTrue);
+        name, typeid(Variant*), values, Predicates<Variant*>::alwaysTrue);
 }
 
 HugeMushroomBlock::HugeMushroomBlock(Material* material, const MaterialColor* materialColor, Block* otherBlock)
-    : Block(material, materialColor), mOtherBlock(otherBlock), mIsOtherBlock(0), mStemTexture(NULL), mInsideTexture(NULL)
+    : Block(material, materialColor), mIsOtherBlock(0)
 {
     DerivedInit();
-    TypedBoxed<Variant*> value(Variant::ALL_OUTSIDE);
-    registerDefaultState(mStateDefinition->any()->setBoxedValue(VARIANT, &value));
+    registerDefaultState(mStateDefinition->any()->setValue(VARIANT, Variant::ALL_OUTSIDE));
     mIsOtherBlock = -1;
-    mTextures[0] = NULL;
-    mTextures[1] = NULL;
+    mOtherBlock = otherBlock;
+    memset(mTextures, 0, sizeof(mTextures));
 }
 
 int HugeMushroomBlock::getResourceCount(Random* random)
@@ -139,15 +147,15 @@ int HugeMushroomBlock::getResourceCount(Random* random)
 const MaterialColor* HugeMushroomBlock::getMapColor(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
 {
     int data = state->getValue(VARIANT)->getData();
-    if (data == 12)
-    {
-        return MaterialColor::COLOR_BROWN;
-    }
     if (data != 0 && data != 10)
     {
+        if (data == 12)
+        {
+            return MaterialColor::CLOTH;
+        }
         return Block::getMapColor(state, levelSource, pos);
     }
-    return MaterialColor::COLOR_RED;
+    return MaterialColor::SAND;
 }
 
 Item* HugeMushroomBlock::getResource(const BlockState*, Random*, int)
@@ -168,8 +176,7 @@ const BlockState* HugeMushroomBlock::getStateForPlacement(Level*, const BlockPos
 
 const BlockState* HugeMushroomBlock::getBlockState(int data)
 {
-    TypedBoxed<Variant*> value(Variant::byData(data));
-    return defaultBlockState()->setBoxedValue(VARIANT, &value);
+    return defaultBlockState()->setValue(VARIANT, Variant::byData(data));
 }
 
 int HugeMushroomBlock::convertBlockStateToLegacyData(const BlockState* state)
@@ -187,45 +194,21 @@ const BlockState* HugeMushroomBlock::rotate(const BlockState* state, Rotation* r
         case 10:
             break;
         case 1:
-        {
-            TypedBoxed<Variant*> value(Variant::SOUTH_EAST);
-            return state->setBoxedValue(VARIANT, &value);
-        }
+            return state->setValue(VARIANT, Variant::SOUTH_EAST);
         case 2:
-        {
-            TypedBoxed<Variant*> value(Variant::SOUTH);
-            return state->setBoxedValue(VARIANT, &value);
-        }
+            return state->setValue(VARIANT, Variant::SOUTH);
         case 3:
-        {
-            TypedBoxed<Variant*> value(Variant::SOUTH_WEST);
-            return state->setBoxedValue(VARIANT, &value);
-        }
+            return state->setValue(VARIANT, Variant::SOUTH_WEST);
         case 4:
-        {
-            TypedBoxed<Variant*> value(Variant::EAST);
-            return state->setBoxedValue(VARIANT, &value);
-        }
+            return state->setValue(VARIANT, Variant::EAST);
         case 6:
-        {
-            TypedBoxed<Variant*> value(Variant::WEST);
-            return state->setBoxedValue(VARIANT, &value);
-        }
+            return state->setValue(VARIANT, Variant::WEST);
         case 7:
-        {
-            TypedBoxed<Variant*> value(Variant::NORTH_EAST);
-            return state->setBoxedValue(VARIANT, &value);
-        }
+            return state->setValue(VARIANT, Variant::NORTH_EAST);
         case 8:
-        {
-            TypedBoxed<Variant*> value(Variant::NORTH);
-            return state->setBoxedValue(VARIANT, &value);
-        }
+            return state->setValue(VARIANT, Variant::NORTH);
         case 9:
-        {
-            TypedBoxed<Variant*> value(Variant::NORTH_WEST);
-            return state->setBoxedValue(VARIANT, &value);
-        }
+            return state->setValue(VARIANT, Variant::NORTH_WEST);
         default:
             return state;
         }
@@ -233,45 +216,21 @@ const BlockState* HugeMushroomBlock::rotate(const BlockState* state, Rotation* r
         switch (state->getValue(VARIANT)->getData())
         {
         case 1:
-        {
-            TypedBoxed<Variant*> value(Variant::SOUTH_WEST);
-            return state->setBoxedValue(VARIANT, &value);
-        }
+            return state->setValue(VARIANT, Variant::SOUTH_WEST);
         case 2:
-        {
-            TypedBoxed<Variant*> value(Variant::WEST);
-            return state->setBoxedValue(VARIANT, &value);
-        }
+            return state->setValue(VARIANT, Variant::WEST);
         case 3:
-        {
-            TypedBoxed<Variant*> value(Variant::NORTH_WEST);
-            return state->setBoxedValue(VARIANT, &value);
-        }
+            return state->setValue(VARIANT, Variant::NORTH_WEST);
         case 4:
-        {
-            TypedBoxed<Variant*> value(Variant::SOUTH);
-            return state->setBoxedValue(VARIANT, &value);
-        }
+            return state->setValue(VARIANT, Variant::SOUTH);
         case 6:
-        {
-            TypedBoxed<Variant*> value(Variant::NORTH);
-            return state->setBoxedValue(VARIANT, &value);
-        }
+            return state->setValue(VARIANT, Variant::NORTH);
         case 7:
-        {
-            TypedBoxed<Variant*> value(Variant::SOUTH_EAST);
-            return state->setBoxedValue(VARIANT, &value);
-        }
+            return state->setValue(VARIANT, Variant::SOUTH_EAST);
         case 8:
-        {
-            TypedBoxed<Variant*> value(Variant::EAST);
-            return state->setBoxedValue(VARIANT, &value);
-        }
+            return state->setValue(VARIANT, Variant::EAST);
         case 9:
-        {
-            TypedBoxed<Variant*> value(Variant::NORTH_EAST);
-            return state->setBoxedValue(VARIANT, &value);
-        }
+            return state->setValue(VARIANT, Variant::NORTH_EAST);
         default:
             return state;
         }
@@ -279,45 +238,21 @@ const BlockState* HugeMushroomBlock::rotate(const BlockState* state, Rotation* r
         switch (state->getValue(VARIANT)->getData())
         {
         case 1:
-        {
-            TypedBoxed<Variant*> value(Variant::NORTH_EAST);
-            return state->setBoxedValue(VARIANT, &value);
-        }
+            return state->setValue(VARIANT, Variant::NORTH_EAST);
         case 2:
-        {
-            TypedBoxed<Variant*> value(Variant::EAST);
-            return state->setBoxedValue(VARIANT, &value);
-        }
+            return state->setValue(VARIANT, Variant::EAST);
         case 3:
-        {
-            TypedBoxed<Variant*> value(Variant::SOUTH_EAST);
-            return state->setBoxedValue(VARIANT, &value);
-        }
+            return state->setValue(VARIANT, Variant::SOUTH_EAST);
         case 4:
-        {
-            TypedBoxed<Variant*> value(Variant::NORTH);
-            return state->setBoxedValue(VARIANT, &value);
-        }
+            return state->setValue(VARIANT, Variant::NORTH);
         case 6:
-        {
-            TypedBoxed<Variant*> value(Variant::SOUTH);
-            return state->setBoxedValue(VARIANT, &value);
-        }
+            return state->setValue(VARIANT, Variant::SOUTH);
         case 7:
-        {
-            TypedBoxed<Variant*> value(Variant::NORTH_WEST);
-            return state->setBoxedValue(VARIANT, &value);
-        }
+            return state->setValue(VARIANT, Variant::NORTH_WEST);
         case 8:
-        {
-            TypedBoxed<Variant*> value(Variant::WEST);
-            return state->setBoxedValue(VARIANT, &value);
-        }
+            return state->setValue(VARIANT, Variant::WEST);
         case 9:
-        {
-            TypedBoxed<Variant*> value(Variant::SOUTH_WEST);
-            return state->setBoxedValue(VARIANT, &value);
-        }
+            return state->setValue(VARIANT, Variant::SOUTH_WEST);
         default:
             return state;
         }
@@ -328,77 +263,42 @@ const BlockState* HugeMushroomBlock::rotate(const BlockState* state, Rotation* r
 
 const BlockState* HugeMushroomBlock::mirror(const BlockState* state, Mirror* mirror)
 {
+    Variant* variant = state->getValue(VARIANT);
     switch (mirror->getType())
     {
     case Mirror::eTYPE_LeftRight:
-        switch (state->getValue(VARIANT)->getData())
+        switch (variant->getData())
         {
         case 1:
-        {
-            TypedBoxed<Variant*> value(Variant::SOUTH_WEST);
-            return state->setBoxedValue(VARIANT, &value);
-        }
+            return state->setValue(VARIANT, Variant::SOUTH_WEST);
         case 2:
-        {
-            TypedBoxed<Variant*> value(Variant::SOUTH);
-            return state->setBoxedValue(VARIANT, &value);
-        }
+            return state->setValue(VARIANT, Variant::SOUTH);
         case 3:
-        {
-            TypedBoxed<Variant*> value(Variant::SOUTH_EAST);
-            return state->setBoxedValue(VARIANT, &value);
-        }
+            return state->setValue(VARIANT, Variant::SOUTH_EAST);
         case 7:
-        {
-            TypedBoxed<Variant*> value(Variant::NORTH_WEST);
-            return state->setBoxedValue(VARIANT, &value);
-        }
+            return state->setValue(VARIANT, Variant::NORTH_WEST);
         case 8:
-        {
-            TypedBoxed<Variant*> value(Variant::NORTH);
-            return state->setBoxedValue(VARIANT, &value);
-        }
+            return state->setValue(VARIANT, Variant::NORTH);
         case 9:
-        {
-            TypedBoxed<Variant*> value(Variant::NORTH_EAST);
-            return state->setBoxedValue(VARIANT, &value);
-        }
+            return state->setValue(VARIANT, Variant::NORTH_EAST);
         default:
             return Block::mirror(state, mirror);
         }
     case Mirror::eTYPE_FrontBack:
-        switch (state->getValue(VARIANT)->getData())
+        switch (variant->getData())
         {
         case 1:
-        {
-            TypedBoxed<Variant*> value(Variant::NORTH_EAST);
-            return state->setBoxedValue(VARIANT, &value);
-        }
+            return state->setValue(VARIANT, Variant::NORTH_EAST);
         case 3:
-        {
-            TypedBoxed<Variant*> value(Variant::NORTH_WEST);
-            return state->setBoxedValue(VARIANT, &value);
-        }
+            return state->setValue(VARIANT, Variant::NORTH_WEST);
         case 4:
-        {
-            TypedBoxed<Variant*> value(Variant::EAST);
-            return state->setBoxedValue(VARIANT, &value);
-        }
+            return state->setValue(VARIANT, Variant::EAST);
         case 6:
-        {
-            TypedBoxed<Variant*> value(Variant::WEST);
-            return state->setBoxedValue(VARIANT, &value);
-        }
+            return state->setValue(VARIANT, Variant::WEST);
         case 7:
-        {
-            TypedBoxed<Variant*> value(Variant::SOUTH_EAST);
-            return state->setBoxedValue(VARIANT, &value);
-        }
+            return state->setValue(VARIANT, Variant::SOUTH_EAST);
         case 9:
-        {
-            TypedBoxed<Variant*> value(Variant::SOUTH_WEST);
-            return state->setBoxedValue(VARIANT, &value);
-        }
+            return state->setValue(VARIANT, Variant::SOUTH_WEST);
         default:
             return Block::mirror(state, mirror);
         }
@@ -410,12 +310,12 @@ const BlockState* HugeMushroomBlock::mirror(const BlockState* state, Mirror* mir
 not_null_ptr<ItemInstance> HugeMushroomBlock::getSilkTouchItemInstance(const BlockState* state)
 {
     return not_null_ptr<ItemInstance>(new ItemInstance(Item::byBlock(this), 1,
-        state->getValue(VARIANT)->getData()));
+        Variant::ALL_OUTSIDE->getData()));
 }
 
 BlockStateDefinition* HugeMushroomBlock::createBlockStateDefinition()
 {
-    const Property* properties[] = { VARIANT };
+    static const Property* properties[] = { VARIANT };
     return new BlockStateDefinition(this, properties, 1);
 }
 
@@ -443,9 +343,8 @@ TextureAtlasSprite* HugeMushroomBlock::getTexture(const Direction* direction, co
 
 void HugeMushroomBlock::registerIcons(IconRegister* iconRegister)
 {
-    static const std::wstring skinNames[2] = { L"skin_brown", L"skin_red" };
     for (int i = 0; i < 2; ++i)
-        mTextures[i] = iconRegister->registerIcon(getIconName() + L"_" + skinNames[i]);
-    mInsideTexture = iconRegister->registerIcon(getIconName() + L"_" + L"inside");
-    mStemTexture = iconRegister->registerIcon(getIconName() + L"_" + L"skin_stem");
+        mTextures[i] = iconRegister->registerIcon(getIconName() + L"_" + TEXTURE_TYPE[i]);
+    mInsideTexture = iconRegister->registerIcon(getIconName() + L"_" + TEXTURE_INSIDE);
+    mStemTexture = iconRegister->registerIcon(getIconName() + L"_" + TEXTURE_STEM);
 }

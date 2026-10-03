@@ -3,6 +3,7 @@
 
 #include <string>
 
+#include "game/core/StringRepresentable.hpp"
 #include "game/world/block/HalfSlabBlock.hpp"
 
 class BlockPos;
@@ -14,18 +15,24 @@ class Random;
 class Property;
 class ItemInstance;
 
+template <class T> class EnumProperty;
+
 class PurpurSlabBlock : public HalfSlabBlock
 {
 public:
-    class Variant
+    class Variant : public StringRepresentable
     {
     public:
+        static Variant* DEFAULT;
+
         Variant(std::wstring name);
         virtual std::wstring toString() const;
         virtual std::wstring getSerializedName() const;
 
         std::wstring mName;
     };
+
+    static EnumProperty<Variant*>* VARIANT;
 
     PurpurSlabBlock();
     virtual const BlockState* getBlockState(int data);

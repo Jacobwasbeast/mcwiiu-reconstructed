@@ -3,6 +3,7 @@
 
 #include <string>
 
+#include "game/core/StringRepresentable.hpp"
 #include "game/world/block/Block.hpp"
 
 class AABB;
@@ -22,7 +23,7 @@ template <class T> class AbstractProperty;
 class PistonHeadBlock : public Block
 {
 public:
-    class PistonType
+    class PistonType : public StringRepresentable
     {
     public:
         PistonType(const std::wstring& name);

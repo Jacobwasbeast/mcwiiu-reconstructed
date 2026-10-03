@@ -23,13 +23,13 @@ class PumpkinBlock : public HorizontalDirectionalBlock
 public:
     PumpkinBlock();
 
-    void getOrCreateSnowGolemFull();
+    BlockPattern* getOrCreateSnowGolemFull();
     void fjAwardCraftedGolemStat(unsigned long long craftedEntity);
-    void getOrCreateIronGolemFull();
+    BlockPattern* getOrCreateIronGolemFull();
     void trySpawnGolem(Level* level, const BlockPos& pos);
     virtual void onPlace(Level* level, const BlockPos& pos, const BlockState* state);
-    void getOrCreateSnowGolemBase();
-    void getOrCreateIronGolemBase();
+    BlockPattern* getOrCreateSnowGolemBase();
+    BlockPattern* getOrCreateIronGolemBase();
     bool canSpawnGolem(Level* level, const BlockPos& pos);
     virtual bool mayPlace(Level* level, const BlockPos& pos);
     virtual const BlockState* rotate(const BlockState* state, Rotation* rotation);

@@ -20,6 +20,7 @@
 #include "game/world/block/MaterialColor.hpp"
 #include "game/world/block/Predicates.hpp"
 #include "game/world/block/TypedBoxed.hpp"
+#include "platform/wiiu/TLSStorageCafe.hpp"
 #include <typeinfo>
 #include <vector>
 #include <boost/unordered_set.hpp>
@@ -332,39 +333,32 @@ void StairBlock::tick(Level* level, const BlockPos& pos, const BlockState* state
 
 const arrayWithLength<const AABB*>* StairBlock::getShapes(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
 {
-    const arrayWithLength<const AABB*>* shapes = Block::getShapes(state, levelSource, pos);
-    const AABB** shapeData = const_cast<const AABB**>(shapes->data);
+    arrayWithLength<const AABB*>* shapes
+        = &static_cast<Block::ThreadStorage*>(TlsGetValue(THREAD_STORAGE_INDEX))->mShapes;
 
     if (state->getValue(HALF) == Half::TOP)
     {
-        shapeData[0] = gStairTopSlabAABB;
+        shapes->data[0] = gStairTopSlabAABB;
     }
     else
     {
-        shapeData[0] = gStairBottomSlabAABB;
+        shapes->data[0] = gStairBottomSlabAABB;
     }
 
     const Shape* shape = state->getValue(SHAPE);
 
     if (shape == gStairStraight || shape == gStairInnerLeft || shape == gStairInnerRight)
     {
-        shapeData[1] = getStepAABB(state);
+        shapes->data[1] = getStepAABB(state);
     }
     else
     {
-        shapeData[1] = NULL;
+        shapes->data[1] = NULL;
     }
 
-    if (shape == gStairStraight)
-    {
-        shapeData[2] = NULL;
-    }
-    else
-    {
-        shapeData[2] = getCornerAABB(state);
-    }
+    shapes->data[2] = shape == gStairStraight ? NULL : getCornerAABB(state);
 
-    return shapes;
+    return &static_cast<Block::ThreadStorage*>(TlsGetValue(THREAD_STORAGE_INDEX))->mShapes;
 }
 
 void StairBlock::onPlace(Level* level, const BlockPos& pos, const BlockState* state)
@@ -526,7 +520,7 @@ HitResult* StairBlock::clip(const BlockState* state, Level* level, const BlockPo
     {
         if (shapes->data[i] != NULL)
         {
-            hits.push_back(Block::clip(pos, from, to, shapes->data[i]));
+            hits.push_back(clip(pos, from, to, shapes->data[i]));
         }
     }
 
@@ -571,7 +565,12 @@ int StairBlock::convertBlockStateToLegacyData(const BlockState* state)
 bool StairBlock::isStairs(const BlockState* state)
 {
     Block* block = state->getBlock();
-    return block != NULL && dynamic_cast<StairBlock*>(block) != NULL;
+    if (block != NULL)
+    {
+        block = dynamic_cast<StairBlock*>(block);
+    }
+
+    return block != NULL;
 }
 
 bool StairBlock::canTakeShape(const BlockState* state, LevelSource* source, const BlockPos& pos, const Direction* direction)
@@ -638,10 +637,30 @@ const BlockState* StairBlock::fillVirtualBlockStateProperties(const BlockState* 
 
 bool StairBlock::isStairs(int data)
 {
-    return data == 0x35 || data == 0x43 || (data >= 0x6c && data <= 0x6d)
-        || data == 0x72 || data == 0x80 || (data >= 0x86 && data <= 0x88)
-        || data == 0x9c || (data >= 0xa3 && data <= 0xa4)
-        || data == 0xb4 || data == 0xcb;
+    bool stairs = true;
+    switch (data)
+    {
+    case 0x35:
+    case 0x43:
+    case 0x6c:
+    case 0x6d:
+    case 0x72:
+    case 0x80:
+    case 0x86:
+    case 0x87:
+    case 0x88:
+    case 0x9c:
+    case 0xa3:
+    case 0xa4:
+    case 0xb4:
+    case 0xcb:
+        break;
+    default:
+        stairs = false;
+        break;
+    }
+
+    return stairs;
 }
 
 const BlockState* StairBlock::rotate(const BlockState* state, Rotation* rotation)

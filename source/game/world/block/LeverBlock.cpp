@@ -211,7 +211,8 @@ int LeverBlock::getLeverFacing(const Direction* direction)
 {
     static const unsigned char values[6] = { 0, 5, 4, 3, 2, 1 };
     unsigned int value = direction->get3DDataValue();
-    return value < 6 ? values[value] : -1;
+    if (value > 5) return -1;
+    return values[value];
 }
 
 void LeverBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos,
@@ -219,8 +220,9 @@ void LeverBlock::neighborChanged(const BlockState* state, Level* level, const Bl
 {
     if (canSurvive(level, pos, state))
     {
-        const Direction* direction = state->getValue(FACING)->getDirection();
-        if (!canAttachTo(level, pos, direction))
+        LeverDirection* facing = state->getValue(FACING);
+        fromPos != pos.relative(facing->getDirection());
+        if (!canAttachTo(level, pos, facing->getDirection()))
         {
             spawnResources(level, pos, state, 0);
             level->removeBlock(pos);

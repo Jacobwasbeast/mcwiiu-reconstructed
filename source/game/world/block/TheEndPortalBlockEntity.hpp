@@ -10,7 +10,7 @@ class Direction;
 class TheEndPortalBlockEntity : public BlockEntity
 {
 public:
-    virtual ~TheEndPortalBlockEntity();
+    virtual ~TheEndPortalBlockEntity() {}
 
     static BlockEntity* create();
     virtual unsigned long long GetType();

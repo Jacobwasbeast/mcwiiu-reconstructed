@@ -12,7 +12,11 @@ template <class T>
 class DataItem_Impl : public DataItem
 {
 public:
-    DataItem_Impl(const EntityDataAccessor<T>* accessor, T value);
+    DataItem_Impl(const EntityDataAccessor<T>* accessor, T value)
+    {
+        mAccessor = accessor;
+        mValue = value;
+    }
     virtual ~DataItem_Impl();
 
     virtual DataItem* copy() const;
@@ -24,20 +28,19 @@ public:
     {
         return mValue;
     }
-    const EntityDataAccessor<T>* getAccessor();
-    bool shouldUpdate(T value);
+    const EntityDataAccessor<T>* getAccessor()
+    {
+        return mAccessor;
+    }
+    bool shouldUpdate(T value)
+    {
+        return value != getValue();
+    }
 
 private:
     const EntityDataAccessor<T>* mAccessor;
     T mValue;
 };
-
-template <class T>
-DataItem_Impl<T>::DataItem_Impl(const EntityDataAccessor<T>* accessor, T value)
-    : mAccessor(accessor)
-{
-    mValue = value;
-}
 
 template <class T>
 DataItem_Impl<T>::~DataItem_Impl()
@@ -68,40 +71,90 @@ void DataItem_Impl<T>::setValue(T value)
     mValue = value;
 }
 
-template <class T>
-const EntityDataAccessor<T>* DataItem_Impl<T>::getAccessor()
+template <>
+class DataItem_Impl<BlockPos*> : public DataItem
 {
-    return mAccessor;
-}
+public:
+    DataItem_Impl(const EntityDataAccessor<BlockPos*>* accessor, BlockPos* value)
+    {
+        mAccessor = accessor;
+        mValue = value;
+    }
+    virtual ~DataItem_Impl();
 
-template <class T>
-bool DataItem_Impl<T>::shouldUpdate(T value)
+    virtual DataItem* copy() const;
+    virtual EntityDataSerializerEnum::EEntityDataSerializer getSerializerId();
+    virtual int getAccessorId();
+    virtual void setValue(BlockPos* value);
+
+    BlockPos* getValue()
+    {
+        return mValue;
+    }
+    const EntityDataAccessor<BlockPos*>* getAccessor()
+    {
+        return mAccessor;
+    }
+    bool shouldUpdate(BlockPos* value);
+
+private:
+    const EntityDataAccessor<BlockPos*>* mAccessor;
+    BlockPos* mValue;
+};
+
+template <>
+class DataItem_Impl<CompoundTag*> : public DataItem
 {
-    return mValue != value;
-}
+public:
+    DataItem_Impl(const EntityDataAccessor<CompoundTag*>* accessor, CompoundTag* value)
+    {
+        mAccessor = accessor;
+        mValue = value;
+    }
+    virtual ~DataItem_Impl();
+
+    virtual DataItem* copy() const;
+    virtual EntityDataSerializerEnum::EEntityDataSerializer getSerializerId();
+    virtual int getAccessorId();
+    virtual void setValue(CompoundTag* value);
+
+    CompoundTag* getValue()
+    {
+        return mValue;
+    }
+    const EntityDataAccessor<CompoundTag*>* getAccessor()
+    {
+        return mAccessor;
+    }
+    bool shouldUpdate(CompoundTag* value)
+    {
+        return value != getValue();
+    }
+
+private:
+    const EntityDataAccessor<CompoundTag*>* mAccessor;
+    CompoundTag* mValue;
+};
 
 template <>
-DataItem_Impl<BlockPos*>::~DataItem_Impl();
+class DataItem_Impl<const Rotations*> : public DataItem
+{
+public:
+    DataItem_Impl(const EntityDataAccessor<const Rotations*>* accessor, const Rotations* value);
+    virtual ~DataItem_Impl();
 
-template <>
-void DataItem_Impl<BlockPos*>::setValue(BlockPos* value);
+    virtual DataItem* copy() const;
+    virtual EntityDataSerializerEnum::EEntityDataSerializer getSerializerId();
+    virtual int getAccessorId();
+    virtual void setValue(const Rotations* value);
 
-template <>
-bool DataItem_Impl<BlockPos*>::shouldUpdate(BlockPos* value);
+    const Rotations* getValue();
+    const EntityDataAccessor<const Rotations*>* getAccessor();
+    bool shouldUpdate(const Rotations* value);
 
-template <>
-DataItem_Impl<CompoundTag*>::~DataItem_Impl();
-
-template <>
-void DataItem_Impl<CompoundTag*>::setValue(CompoundTag* value);
-
-template <>
-DataItem_Impl<const Rotations*>::~DataItem_Impl();
-
-template <>
-void DataItem_Impl<const Rotations*>::setValue(const Rotations* value);
-
-template <>
-bool DataItem_Impl<const Rotations*>::shouldUpdate(const Rotations* value);
+private:
+    const EntityDataAccessor<const Rotations*>* mAccessor;
+    const Rotations* mValue;
+};
 
 #endif

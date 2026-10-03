@@ -18,6 +18,7 @@ class SnowLayerBlock : public FallingBlock
 {
 public:
     static AbstractProperty<int>* LAYERS;
+    static const AABB* SNOW_AABB[9];
 
     SnowLayerBlock();
     static const BlockState* buildSnowBlock(Level* level, const BlockPos& pos, int layers, int addLayers);

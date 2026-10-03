@@ -67,7 +67,7 @@ public:
     };
 
     BlockPattern(array3DWithLength<Predicate<BlockInWorld*>*> pattern,
-                 const Direction* forward, const Direction* up);
+                 const Direction* up, const Direction* forward);
 
     unsigned int getHeight();
     unsigned int getWidth();
@@ -90,9 +90,9 @@ public:
 
 private:
     array3DWithLength<Predicate<BlockInWorld*>*> mPattern;
-    unsigned int mDepth;
-    unsigned int mHeight;
-    unsigned int mWidth;
+    int mDepth;
+    int mHeight;
+    int mWidth;
     const Direction* mUp;
     const Direction* mForward;
 };

@@ -134,13 +134,17 @@ bool EnumProperty<T>::equals(const Property* other) const
 template <class T>
 int EnumProperty<T>::hashCode() const
 {
-    return AbstractProperty<T>::hashCode() * 31 + AbstractProperty<T>::hashBoxedSet(mPossibleValues);
+    return ((int)((std::size_t)this->mValueClass * 31U) + javaStringHashCode(this->mName)) * 31 + AbstractProperty<T>::hashBoxedSet(mPossibleValues);
 }
 
 template <class T>
 unsigned int EnumProperty<T>::getValueCount() const
 {
-    return mPossibleValues.size();
+    if (mPossibleValues.begin() == std::vector<Boxed*>::const_iterator())
+    {
+        return 0;
+    }
+    return mPossibleValues.end() - mPossibleValues.begin();
 }
 
 template <class T>
@@ -152,16 +156,11 @@ Boxed* EnumProperty<T>::getValueAtIndex(unsigned int index) const
 template <class T>
 unsigned int EnumProperty<T>::getIndexForValue(Boxed* value) const
 {
-    if (value == NULL || !value->isA(typeid(T)))
-    {
-        return 0;
-    }
-
     unsigned int index = 0;
 
     for (std::vector<Boxed*>::const_iterator it = mPossibleValues.begin(); it != mPossibleValues.end(); ++it)
     {
-        if (*it != NULL && (*value == *it))
+        if (*value == *it)
         {
             return index;
         }

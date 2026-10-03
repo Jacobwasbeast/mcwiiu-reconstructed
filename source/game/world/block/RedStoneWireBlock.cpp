@@ -184,7 +184,7 @@ RedStoneWireBlock::ConnectingSide* RedStoneWireBlock::getConnectingSide(LevelSou
         return RedStoneWireBlock::SIDE;
     }
     if (!neighbour->isSolidBlockingCubeAndNotSignalSource()
-        && shouldConnectTo(levelSource, neighbourPos.below()))
+        && shouldConnectTo(levelSource->getBlockState(neighbourPos.below())))
     {
         return RedStoneWireBlock::SIDE;
     }
@@ -195,7 +195,7 @@ RedStoneWireBlock::ConnectingSide* RedStoneWireBlock::getConnectingSide(LevelSou
         {
             return RedStoneWireBlock::NONE;
         }
-        if (shouldConnectTo(levelSource, neighbourPos.above()))
+        if (shouldConnectTo(levelSource->getBlockState(neighbourPos.above())))
         {
             return neighbour->isSolidBlockingCube() ? RedStoneWireBlock::UP : RedStoneWireBlock::SIDE;
         }
@@ -249,12 +249,13 @@ bool RedStoneWireBlock::canContainLiquid(const BlockState*) const
 
 int RedStoneWireBlock::checkTarget(Level* level, const BlockPos& pos, int strength)
 {
-    if (level->getBlockState(pos)->getBlock() != this)
+    int data;
+    if (level->getBlockState(pos)->getBlock() != this
+        || (data = level->getBlockData(pos.x, pos.y, pos.z)) <= strength)
     {
-        return strength;
+        data = strength;
     }
-    int data = level->getBlockData(pos.x, pos.y, pos.z);
-    return data > strength ? data : strength;
+    return data;
 }
 
 const BlockState* RedStoneWireBlock::updatePowerStrength(Level* level, const BlockPos& pos, const BlockPos& sourcePos, const BlockState* state)
@@ -597,8 +598,10 @@ int RedStoneWireBlock::getRenderLayer()
 
 const BlockState* RedStoneWireBlock::getBlockState(int data)
 {
+    const BlockState* state = defaultBlockState();
+    AbstractProperty<int>* property = POWER;
     TypedBoxed<int> power(data);
-    return defaultBlockState()->setBoxedValue(POWER, &power);
+    return state->setBoxedValue(property, &power);
 }
 
 int RedStoneWireBlock::convertBlockStateToLegacyData(const BlockState* state)

@@ -41,7 +41,7 @@ bool WaterLilyBlockItem::TestUse(Level* level, boost::shared_ptr<Player> player,
     }
 
     BlockPos pos = hitResult->getBlockPos();
-    if (!level->mayInteract(player, pos, getBlock())
+    if (level->mayInteract(player, pos, mBlock) != 1
         || player->mayUseItemAt(pos.relative(hitResult->mDirection), hitResult->mDirection, itemInstance) != 1)
     {
         delete hitResult;
@@ -68,7 +68,7 @@ InteractionResultHolder WaterLilyBlockItem::use(Level* level, boost::shared_ptr<
     if (hitResult->mType == HitResult::BLOCK)
     {
         BlockPos pos = hitResult->getBlockPos();
-        if (!level->mayInteract(player, pos, getBlock())
+        if (!level->mayInteract(player, pos, mBlock)
             || !player->mayUseItemAt(pos.relative(hitResult->mDirection), hitResult->mDirection, itemInstance))
         {
             delete hitResult;

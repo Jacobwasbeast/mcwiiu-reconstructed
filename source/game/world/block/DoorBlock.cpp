@@ -84,10 +84,10 @@ DoorBlock::DoorBlock(Material* material)
     TypedBoxed<DoorHalf*> half(LOWER);
     state = state->setBoxedValue(HALF, &half);
     registerDefaultState(state);
-    mUpperIcon = NULL;
-    mFlippedUpperIcon = NULL;
-    mLowerIcon = NULL;
-    mFlippedLowerIcon = NULL;
+    mUpperIcons[0] = NULL;
+    mUpperIcons[1] = NULL;
+    mLowerIcons[0] = NULL;
+    mLowerIcons[1] = NULL;
 }
 
 DoorBlock::~DoorBlock() {}
@@ -167,14 +167,13 @@ int DoorBlock::getOpenSound()
 }
 const MaterialColor* DoorBlock::getMapColor(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
 {
-    Block* block = state->getBlock();
-    if (block == Blocks::iron_door) return MaterialColor::METAL;
-    if (block == Blocks::wooden_door) return PlanksBlock::Variant::byData(0)->getMaterialColor();
-    if (block == Blocks::spruce_door) return PlanksBlock::Variant::byData(1)->getMaterialColor();
-    if (block == Blocks::birch_door) return PlanksBlock::Variant::byData(2)->getMaterialColor();
-    if (block == Blocks::jungle_door) return PlanksBlock::Variant::byData(3)->getMaterialColor();
-    if (block == Blocks::acacia_door) return PlanksBlock::Variant::byData(4)->getMaterialColor();
-    if (block == Blocks::dark_oak_door) return PlanksBlock::Variant::byData(5)->getMaterialColor();
+    if (state->getBlock() == Blocks::iron_door) return MaterialColor::METAL;
+    if (state->getBlock() == Blocks::wooden_door) return PlanksBlock::Variant::OAK->getMaterialColor();
+    if (state->getBlock() == Blocks::spruce_door) return PlanksBlock::Variant::SPRUCE->getMaterialColor();
+    if (state->getBlock() == Blocks::birch_door) return PlanksBlock::Variant::BIRCH->getMaterialColor();
+    if (state->getBlock() == Blocks::jungle_door) return PlanksBlock::Variant::JUNGLE->getMaterialColor();
+    if (state->getBlock() == Blocks::acacia_door) return PlanksBlock::Variant::ACACIA->getMaterialColor();
+    if (state->getBlock() == Blocks::dark_oak_door) return PlanksBlock::Variant::DARK_OAK->getMaterialColor();
     return Block::getMapColor(state, levelSource, pos);
 }
 bool DoorBlock::TestUse() { return this != Blocks::iron_door; }
@@ -188,7 +187,7 @@ bool DoorBlock::use(Level* level, const BlockPos& pos, const BlockState* state, 
         return false;
     }
     BlockPos lowerPos = state->getValue(HALF) == LOWER ? pos : pos.below();
-    if (!(pos == lowerPos)) state = level->getBlockState(lowerPos);
+    if (!pos.equals(lowerPos)) state = level->getBlockState(lowerPos);
     if (state->getBlock() != this) return false;
     const BlockState* changedState = state->cycle(OPEN);
     level->setBlock(lowerPos, changedState, Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false);
@@ -218,8 +217,7 @@ void DoorBlock::setOpen(Level* level, const BlockPos& pos, bool open)
 
 bool DoorBlock::CanSurvive(const BlockState* state)
 {
-    if (state->isTopSolidBlocking()) return true;
-    return !Block::isExceptionForTopSolidBlocking(state->getBlock());
+    return state->isTopSolidBlocking() || Block::isExceptionForTopSolidBlocking(state->getBlock());
 }
 void DoorBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block, const BlockPos& fromPos)
 {
@@ -322,25 +320,29 @@ const BlockState* DoorBlock::fillVirtualBlockStateProperties(const BlockState* s
 const BlockState* DoorBlock::getBlockState(int data)
 {
     const BlockState* state = defaultBlockState();
-    if (!isUpperFromData(data))
+    if ((data & 8) == 0)
     {
-        TypedBoxed<DoorHalf*> half(LOWER);
-        TypedBoxed<const Direction*> facing(getFacingFromData(data));
+        {
+            TypedBoxed<DoorHalf*> half(LOWER);
+            state = state->setBoxedValue(HALF, &half);
+        }
+        {
+            TypedBoxed<const Direction*> facing(Direction::from2DDataValue(data & 3)->getCounterClockWise());
+            state = state->setBoxedValue(FACING, &facing);
+        }
         TypedBoxed<bool> open((data & 4) != 0);
-        state = state->setBoxedValue(HALF, &half);
-        state = state->setBoxedValue(FACING, &facing);
-        state = state->setBoxedValue(OPEN, &open);
+        return state->setBoxedValue(OPEN, &open);
     }
-    else
     {
         TypedBoxed<DoorHalf*> half(UPPER);
-        TypedBoxed<HingeSide*> hinge((data & 1) != 0 ? RIGHT : LEFT);
-        TypedBoxed<bool> powered((data & 2) != 0);
         state = state->setBoxedValue(HALF, &half);
-        state = state->setBoxedValue(HINGE, &hinge);
-        state = state->setBoxedValue(POWERED, &powered);
     }
-    return state;
+    {
+        TypedBoxed<HingeSide*> hinge((data & 1) != 0 ? RIGHT : LEFT);
+        state = state->setBoxedValue(HINGE, &hinge);
+    }
+    TypedBoxed<bool> powered((data & 2) != 0);
+    return state->setBoxedValue(POWERED, &powered);
 }
 int DoorBlock::convertBlockStateToLegacyData(const BlockState* state)
 {
@@ -385,44 +387,45 @@ BlockStateDefinition* DoorBlock::createBlockStateDefinition() { const Property* 
 EBlockFaceShape DoorBlock::getBlockFaceShape(LevelSource*, const BlockState*, const BlockPos&, const Direction*) { return BLOCK_FACE_UNDEFINED; }
 bool DoorBlock::isDoor(Block* block)
 {
-    return block == Blocks::wooden_door || block == Blocks::spruce_door || block == Blocks::birch_door || block == Blocks::jungle_door || block == Blocks::acacia_door || block == Blocks::dark_oak_door;
+    return block == Blocks::wooden_door || block == Blocks::spruce_door || block == Blocks::jungle_door || block == Blocks::birch_door || block == Blocks::acacia_door || block == Blocks::dark_oak_door;
 }
-TextureAtlasSprite* DoorBlock::getTexture(const Direction*, const BlockState*) { return mLowerIcon; }
+TextureAtlasSprite* DoorBlock::getTexture(const Direction*, const BlockState*) { return mLowerIcons[0]; }
 TextureAtlasSprite* DoorBlock::getTexture(LevelSource* levelSource, const BlockPos& pos, const Direction* direction, const BlockState* state)
 {
-    if (direction == Direction::UP || direction == Direction::DOWN) return mLowerIcon;
+    if (direction == Direction::UP || direction == Direction::DOWN) return mLowerIcons[0];
     state = fillVirtualBlockStateProperties(state, levelSource, pos);
     const Direction* facing = state->getValue(FACING)->getClockWise();
     bool open = state->getValue(OPEN);
-    bool flip = false;
+    DoorHalf* half = state->getValue(HALF);
+    int flip = 0;
     if (!open)
     {
-        flip = (facing == Direction::SOUTH && direction == Direction::EAST) ||
-               (facing == Direction::WEST && direction == Direction::SOUTH) ||
-               (facing == Direction::NORTH && direction == Direction::WEST) ||
-               (facing == Direction::EAST && direction == Direction::NORTH);
-        if (state->getValue(HINGE) == RIGHT) flip = !flip;
+        if ((facing == Direction::SOUTH && direction == Direction::EAST) ||
+            (facing == Direction::WEST && direction == Direction::SOUTH) ||
+            (facing == Direction::NORTH && direction == Direction::WEST) ||
+            (facing == Direction::EAST && direction == Direction::NORTH))
+        {
+            flip = 1;
+        }
+        if (state->getValue(HINGE) == RIGHT) flip ^= 1;
     }
     else if ((facing == Direction::SOUTH && direction == Direction::NORTH) ||
              (facing == Direction::WEST && direction == Direction::EAST) ||
              (facing == Direction::NORTH && direction == Direction::SOUTH) ||
              (facing == Direction::EAST && direction == Direction::WEST))
     {
-        flip = !flip;
+        flip ^= 1;
     }
-    if (state->getValue(HALF) == UPPER)
-    {
-        return flip ? mFlippedUpperIcon : mUpperIcon;
-    }
-    return flip ? mFlippedLowerIcon : mLowerIcon;
+    if (half == UPPER) return mUpperIcons[flip];
+    return mLowerIcons[flip];
 }
 void DoorBlock::registerIcons(IconRegister* iconRegister)
 {
-    mUpperIcon = iconRegister->registerIcon(getIconName() + L"_upper");
-    mLowerIcon = iconRegister->registerIcon(getIconName() + L"_lower");
-    delete mFlippedUpperIcon;
-    mFlippedUpperIcon = new FlippedIcon(mUpperIcon, true, false);
-    delete mFlippedLowerIcon;
-    mFlippedLowerIcon = new FlippedIcon(mLowerIcon, true, false);
+    mUpperIcons[0] = iconRegister->registerIcon(getIconName() + L"_upper");
+    mLowerIcons[0] = iconRegister->registerIcon(getIconName() + L"_lower");
+    delete mUpperIcons[1];
+    mUpperIcons[1] = new FlippedIcon(mUpperIcons[0], true, false);
+    delete mLowerIcons[1];
+    mLowerIcons[1] = new FlippedIcon(mLowerIcons[0], true, false);
 }
 EBlockRenderShape DoorBlock::getRenderShape(const BlockState*) { return BLOCK_RENDER_DOOR; }

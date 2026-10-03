@@ -25,10 +25,6 @@ BlockItem::BlockItem(Block* block)
 {
 }
 
-BlockItem::~BlockItem()
-{
-}
-
 Block* BlockItem::getBlock()
 {
     return mBlock;

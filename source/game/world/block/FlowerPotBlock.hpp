@@ -83,7 +83,7 @@ public:
         static Contents* DEAD_BUSH;
         static Contents* FERN;
         static Contents* CACTUS;
-        static Contents* VALUES[eContents_Count];
+        static const Contents* VALUES[eContents_Count];
 
         std::wstring mName;
         EContents mContents;

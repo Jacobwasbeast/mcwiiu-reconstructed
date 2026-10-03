@@ -49,8 +49,8 @@ public:
 private:
     int mSuccessCount;
     bool mTrackOutput;
-    std::wstring mCommand;
     std::wstring mLastOutput;
+    std::wstring mCommand;
     std::wstring mName;
     CommandStats mCommandStats;
 };

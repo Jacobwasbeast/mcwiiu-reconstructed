@@ -49,10 +49,26 @@ std::wstring sVariantTextures[6][4] = {
 AbstractProperty<DoublePlantBlock::Variant*>* DoublePlantBlock::VARIANT = NULL;
 AbstractProperty<DoublePlantBlock::Half*>* DoublePlantBlock::HALF = NULL;
 AbstractProperty<const Direction*>* DoublePlantBlock::FACING = NULL;
-DoublePlantBlock::Variant* DoublePlantBlock::VARIANTS[6] = { NULL, NULL, NULL, NULL, NULL, NULL };
-DoublePlantBlock::Half* DoublePlantBlock::HALVES[2] = { NULL, NULL };
-DoublePlantBlock::Variant* gDoublePlantGrass = NULL;
-DoublePlantBlock::Variant* gDoublePlantFern = NULL;
+DoublePlantBlock::Variant* DoublePlantBlock::VARIANTS[6] = {
+    new DoublePlantBlock::Variant(0, L"sunflower", static_cast<int>(IDS_TILE_SUNFLOWER),
+                                  static_cast<int>(IDS_DESC_SUNFLOWER), sVariantTextures[0]),
+    new DoublePlantBlock::Variant(1, L"syringa", static_cast<int>(IDS_TILE_LILAC),
+                                  static_cast<int>(IDS_DESC_LILAC), sVariantTextures[1]),
+    new DoublePlantBlock::Variant(2, L"double_grass", static_cast<int>(IDS_TILE_TALL_GRASS_DOUBLE),
+                                  static_cast<int>(IDS_DESC_TALL_GRASS_DOUBLE), sVariantTextures[2]),
+    new DoublePlantBlock::Variant(3, L"double_fern", static_cast<int>(IDS_TILE_FERN_LARGE),
+                                  static_cast<int>(IDS_DESC_FERN_LARGE), sVariantTextures[3]),
+    new DoublePlantBlock::Variant(4, L"double_rose", static_cast<int>(IDS_TILE_ROSE_BUSH),
+                                  static_cast<int>(IDS_DESC_ROSE_BUSH), sVariantTextures[4]),
+    new DoublePlantBlock::Variant(5, L"paeonia", static_cast<int>(IDS_TILE_PEONY),
+                                  static_cast<int>(IDS_DESC_PEONY), sVariantTextures[5])
+};
+DoublePlantBlock::Half* DoublePlantBlock::HALVES[2] = {
+    new DoublePlantBlock::Half(DoublePlantBlock::Half::LOWER),
+    new DoublePlantBlock::Half(DoublePlantBlock::Half::UPPER)
+};
+DoublePlantBlock::Variant* gDoublePlantGrass = DoublePlantBlock::VARIANTS[2];
+DoublePlantBlock::Variant* gDoublePlantFern = DoublePlantBlock::VARIANTS[3];
 
 DoublePlantBlock::Half::Half(int id) : mId(id) {}
 std::wstring DoublePlantBlock::Half::toString() const { return getSerializedName(); }
@@ -81,11 +97,13 @@ int DoublePlantBlock::Variant::getDescriptionId() { return mDescriptionId; }
 DoublePlantBlock::DoublePlantBlock() : Bush(Material::REPLACEABLE_PLANT)
 {
     DerivedInit();
-    TypedBoxed<Variant*> variantBox(VARIANTS[0]);
-    TypedBoxed<Half*> halfBox(HALVES[Half::LOWER]);
-    TypedBoxed<const Direction*> facingBox(Direction::NORTH);
-    registerDefaultState(mStateDefinition->any()->setBoxedValue(VARIANT, &variantBox)->setBoxedValue(HALF, &halfBox)->setBoxedValue(FACING, &facingBox));
-    setDestroyTime(0.0f)->setSoundType(SoundType::GRASS);
+    const BlockState* state = mStateDefinition->any();
+    state = state->setValue(VARIANT, VARIANTS[0]);
+    state = state->setValue(HALF, HALVES[Half::LOWER]);
+    state = state->setValue(FACING, Direction::NORTH);
+    registerDefaultState(state);
+    setDestroyTime(0.0f);
+    setSoundType(SoundType::GRASS);
 }
 
 DoublePlantBlock::Variant* DoublePlantBlock::getType(LevelSource* levelSource, const BlockPos& pos,
@@ -105,52 +123,35 @@ void DoublePlantBlock::performBonemeal(Level* level, Random*, const BlockPos& po
 {
     popResource(level, pos, not_null_ptr<ItemInstance>(new ItemInstance(this, 1, getType(level, pos, state)->getData())));
 }
-DoublePlantBlock::Variant* DoublePlantBlock::Variant::SUNFLOWER = NULL;
-DoublePlantBlock::Variant* DoublePlantBlock::Variant::SYRINGA = NULL;
-DoublePlantBlock::Variant* DoublePlantBlock::Variant::GRASS = NULL;
-DoublePlantBlock::Variant* DoublePlantBlock::Variant::FERN = NULL;
-DoublePlantBlock::Variant* DoublePlantBlock::Variant::ROSE = NULL;
-DoublePlantBlock::Variant* DoublePlantBlock::Variant::PAEONIA = NULL;
+DoublePlantBlock::Variant* DoublePlantBlock::Variant::SUNFLOWER = DoublePlantBlock::VARIANTS[0];
+DoublePlantBlock::Variant* DoublePlantBlock::Variant::SYRINGA = DoublePlantBlock::VARIANTS[1];
+DoublePlantBlock::Variant* DoublePlantBlock::Variant::GRASS = DoublePlantBlock::VARIANTS[2];
+DoublePlantBlock::Variant* DoublePlantBlock::Variant::FERN = DoublePlantBlock::VARIANTS[3];
+DoublePlantBlock::Variant* DoublePlantBlock::Variant::ROSE = DoublePlantBlock::VARIANTS[4];
+DoublePlantBlock::Variant* DoublePlantBlock::Variant::PAEONIA = DoublePlantBlock::VARIANTS[5];
 
 void DoublePlantBlock::blockStaticCtor()
 {
-    if (HALVES[0] == NULL)
     {
-        HALVES[0] = new Half(Half::LOWER);
-        HALVES[1] = new Half(Half::UPPER);
-        VARIANTS[0] = new Variant(0, L"sunflower", static_cast<int>(IDS_TILE_SUNFLOWER),
-                                  static_cast<int>(IDS_DESC_SUNFLOWER), sVariantTextures[0]);
-        VARIANTS[1] = new Variant(1, L"syringa", static_cast<int>(IDS_TILE_LILAC),
-                                  static_cast<int>(IDS_DESC_LILAC), sVariantTextures[1]);
-        VARIANTS[2] = new Variant(2, L"double_grass", static_cast<int>(IDS_TILE_TALL_GRASS_DOUBLE),
-                                  static_cast<int>(IDS_DESC_TALL_GRASS_DOUBLE), sVariantTextures[2]);
-        VARIANTS[3] = new Variant(3, L"double_fern", static_cast<int>(IDS_TILE_FERN_LARGE),
-                                  static_cast<int>(IDS_DESC_FERN_LARGE), sVariantTextures[3]);
-        VARIANTS[4] = new Variant(4, L"double_rose", static_cast<int>(IDS_TILE_ROSE_BUSH),
-                                  static_cast<int>(IDS_DESC_ROSE_BUSH), sVariantTextures[4]);
-        VARIANTS[5] = new Variant(5, L"paeonia", static_cast<int>(IDS_TILE_PEONY),
-                                  static_cast<int>(IDS_DESC_PEONY), sVariantTextures[5]);
-        gDoublePlantGrass = VARIANTS[2];
-        gDoublePlantFern = VARIANTS[3];
-        Variant::SUNFLOWER = VARIANTS[0];
-        Variant::SYRINGA = VARIANTS[1];
-        Variant::GRASS = VARIANTS[2];
-        Variant::FERN = VARIANTS[3];
-        Variant::ROSE = VARIANTS[4];
-        Variant::PAEONIA = VARIANTS[5];
-
-        boost::unordered_set<Variant*> variants;
-        for (int i = 0; i < 6; ++i)
+        std::wstring name(L"variant");
+        EnumProperty<Variant*>* variantProperty;
         {
-            variants.insert(VARIANTS[i]);
+            boost::unordered_set<Variant*> variants;
+            for (int i = 0; i < 6; ++i)
+            {
+                variants.insert(VARIANTS[i]);
+            }
+            variantProperty = EnumProperty<Variant*>::create(name, typeid(Variant*), variants,
+                                                             Predicates<Variant*>::alwaysTrue);
         }
-        VARIANT = EnumProperty<Variant*>::create(L"variant", typeid(Variant*), variants,
-                                                 Predicates<Variant*>::alwaysTrue);
-
+        VARIANT = variantProperty;
+    }
+    {
+        std::wstring name(L"half");
         boost::unordered_set<Half*> halves;
         halves.insert(HALVES[0]);
         halves.insert(HALVES[1]);
-        HALF = EnumProperty<Half*>::create(L"half", typeid(Half*), halves,
+        HALF = EnumProperty<Half*>::create(name, typeid(Half*), halves,
                                            Predicates<Half*>::alwaysTrue);
     }
     FACING = HorizontalDirectionalBlock::FACING_PROPERTY;
@@ -239,8 +240,7 @@ void DoublePlantBlock::placeAt(Level* level, const BlockPos& pos, Variant* varia
 }
 void DoublePlantBlock::setPlacedBy(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<LivingEntity>, not_null_ptr<ItemInstance>)
 {
-    TypedBoxed<Half*> upper(HALVES[Half::UPPER]);
-    level->setBlock(pos.above(), state->setBoxedValue(HALF, &upper), Block::UPDATE_CLIENTS, false);
+    level->setBlock(pos.above(), defaultBlockState()->setValue(HALF, HALVES[Half::UPPER]), Block::UPDATE_CLIENTS, false);
 }
 int DoublePlantBlock::popGrassResources(Level* level, const BlockPos& pos, const BlockState* state,
                                         boost::shared_ptr<Player> player)

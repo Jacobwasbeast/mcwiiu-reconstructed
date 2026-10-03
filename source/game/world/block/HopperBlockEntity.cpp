@@ -95,8 +95,7 @@ AbstractContainerMenu* HopperBlockEntity::createMenu(boost::shared_ptr<Inventory
                                                        boost::shared_ptr<Player> player)
 {
     unpackLootTable(player);
-    boost::shared_ptr<Container> self = boost::dynamic_pointer_cast<Container>(shared_from_this());
-    return new HopperMenu(boost::static_pointer_cast<Container>(inventory), self, player);
+    return new HopperMenu(inventory, boost::static_pointer_cast<HopperBlockEntity>(shared_from_this()), player);
 }
 
 int HopperBlockEntity::getTypeId(bool)
@@ -252,21 +251,35 @@ bool HopperBlockEntity::isEmptyContainer(boost::shared_ptr<Container> container,
     return true;
 }
 
-bool HopperBlockEntity::canTakeItemFromContainer(Container* container, not_null_ptr<ItemInstance> item, int slot, const Direction*)
+bool HopperBlockEntity::canTakeItemFromContainer(Container* container, not_null_ptr<ItemInstance> item, int slot, const Direction* direction)
 {
-    return container != NULL && slot >= 0 && static_cast<unsigned int>(slot) < container->getContainerSize() &&
-           item.get() != NULL && !item->isEmpty();
+    if (dynamic_cast<WorldlyContainer*>(container) != NULL &&
+        !dynamic_cast<WorldlyContainer*>(container)->canTakeItemThroughFace(slot, item, direction))
+        return false;
+    return true;
 }
 
-bool HopperBlockEntity::canPlaceItemInContainer(Container* container, not_null_ptr<ItemInstance> item, int slot, const Direction*)
+bool HopperBlockEntity::canPlaceItemInContainer(Container* container, not_null_ptr<ItemInstance> item, int slot, const Direction* direction)
 {
-    return container != NULL && item.get() != NULL && !item->isEmpty() && container->canPlaceItem(slot, item);
+    if (!container->canPlaceItem(slot, item))
+        return false;
+    if (dynamic_cast<WorldlyContainer*>(container) != NULL &&
+        !dynamic_cast<WorldlyContainer*>(container)->canPlaceItemThroughFace(slot, item, direction))
+        return false;
+    return true;
 }
 
 bool HopperBlockEntity::canMergeItems(not_null_ptr<ItemInstance> first, not_null_ptr<ItemInstance> second)
 {
-    return first->getItem() == second->getItem() && first->getAuxValue() == second->getAuxValue() &&
-           first->getCount() < first->getMaxStackSize() && ItemInstance::tagMatches(first, second);
+    if (first->getItem() == second->getItem())
+    {
+        if (first->getAuxValue() == second->getAuxValue())
+        {
+            if (first->getCount() <= first->getMaxStackSize() && ItemInstance::tagMatches(first, second))
+                return true;
+        }
+    }
+    return false;
 }
 
 not_null_ptr<ItemInstance> HopperBlockEntity::tryMoveInItem(Container* source, Container* destination,
@@ -274,61 +287,63 @@ not_null_ptr<ItemInstance> HopperBlockEntity::tryMoveInItem(Container* source, C
                                                               const Direction* direction)
 {
     not_null_ptr<ItemInstance> existing = destination->getItem(slot);
-    if (!canPlaceItemInContainer(destination, item, slot, direction))
-        return item;
-    if (!existing->isEmpty())
+    if (canPlaceItemInContainer(destination, item, slot, direction))
     {
-        if (!canMergeItems(existing, item))
-            return item;
-        int amount = std::min(item->getMaxStackSize() - existing->getCount(), item->getCount());
-        if (amount == 0)
-            return item;
-        item->shrink(amount);
-        existing->grow(amount);
+        bool changed = false;
+        bool wasEmpty = destination->isEmpty();
+        if (existing->isEmpty())
+        {
+            destination->setItem(slot, item);
+            item = ItemInstance::EMPTY;
+            changed = true;
+        }
+        else if (canMergeItems(existing, item))
+        {
+            int space = item->getMaxStackSize() - existing->getCount();
+            int count = item->getCount();
+            int amount = count < space ? count : space;
+            item->shrink(amount);
+            existing->grow(amount);
+            changed = amount > 0;
+        }
+        if (changed)
+        {
+            HopperBlockEntity* destinationHopper = dynamic_cast<HopperBlockEntity*>(destination);
+            if (wasEmpty && destinationHopper != NULL && !destinationHopper->isOnCustomCooldown())
+            {
+                int reduction = 0;
+                if (source != NULL && dynamic_cast<HopperBlockEntity*>(source) != NULL)
+                    reduction = 1;
+                destinationHopper->setCooldown(8 - reduction);
+            }
+            destination->setChanged();
+        }
     }
-    else
-    {
-        destination->setItem(slot, item);
-        item = ItemInstance::EMPTY;
-    }
-    HopperBlockEntity* destinationHopper = dynamic_cast<HopperBlockEntity*>(destination);
-    if (destinationHopper != NULL && !destinationHopper->isOnCustomCooldown())
-    {
-        bool sourceIsHopper = dynamic_cast<HopperBlockEntity*>(source) != NULL;
-        destinationHopper->setCooldown(sourceIsHopper ? 7 : 8);
-    }
-    destination->setChanged();
     return item;
 }
 
 not_null_ptr<ItemInstance> HopperBlockEntity::addItem(Container* source, Container* destination,
                                                        not_null_ptr<ItemInstance> item, const Direction* direction)
 {
-    if (destination == NULL)
-        return item;
-    for (unsigned int i = 0; i < destination->getContainerSize(); ++i)
+    if (destination == NULL || dynamic_cast<WorldlyContainer*>(destination) == NULL || direction == NULL)
     {
-        if (!canPlaceItemInContainer(destination, item, i, direction))
-            continue;
-        not_null_ptr<ItemInstance> existing = destination->getItem(i);
-        if (existing->isEmpty())
+        int size = destination->getContainerSize();
+        for (int i = 0; i < size; ++i)
         {
-            destination->setItem(i, item);
-            destination->setChanged();
-            if (source != NULL)
-                source->setChanged();
-            return ItemInstance::EMPTY;
-        }
-        if (canMergeItems(existing, item))
-        {
-            int amount = std::min(item->getCount(), existing->getMaxStackSize() - existing->getCount());
-            existing->grow(amount);
-            item->shrink(amount);
-            destination->setChanged();
-            if (source != NULL)
-                source->setChanged();
             if (item->isEmpty())
-                return ItemInstance::EMPTY;
+                break;
+            item = tryMoveInItem(source, destination, item, i, direction);
+        }
+    }
+    else
+    {
+        WorldlyContainer* worldly = dynamic_cast<WorldlyContainer*>(destination);
+        arrayWithLength<int> slots = worldly->getSlotsForFace(direction);
+        for (unsigned int i = 0; i < slots.length; ++i)
+        {
+            if (item->isEmpty())
+                break;
+            item = tryMoveInItem(source, destination, item, slots.data[i], direction);
         }
     }
     return item;
@@ -337,65 +352,76 @@ not_null_ptr<ItemInstance> HopperBlockEntity::addItem(Container* source, Contain
 bool HopperBlockEntity::tryTakeInItemFromSlot(Hopper* hopper, Container* container, int slot, const Direction* direction)
 {
     not_null_ptr<ItemInstance> item = container->getItem(slot);
-    if (item->isEmpty() || !canTakeItemFromContainer(container, item, slot, direction))
+    if (!item->isEmpty() && canTakeItemFromContainer(container, item, slot, direction))
     {
-        return false;
+        not_null_ptr<ItemInstance> original = item->copy();
+        not_null_ptr<ItemInstance> remainder = addItem(container, hopper, container->removeItem(slot, 1), NULL);
+        if (remainder->isEmpty())
+        {
+            container->setChanged();
+            return true;
+        }
+        container->setItem(slot, original);
     }
-
-    not_null_ptr<ItemInstance> original = item->copy();
-    not_null_ptr<ItemInstance> remainder = addItem(container, hopper, container->removeItem(slot, 1), NULL);
-    if (remainder->isEmpty())
-    {
-        container->setChanged();
-        return true;
-    }
-    container->setItem(slot, original);
     return false;
 }
 
-bool HopperBlockEntity::addItem(Container*, Container* destination, const boost::shared_ptr<ItemEntity>& entity)
+bool HopperBlockEntity::addItem(Container* source, Container* destination, const boost::shared_ptr<ItemEntity>& entity)
 {
+    bool added = false;
     if (entity.get() == NULL)
         return false;
-    not_null_ptr<ItemInstance> remaining = addItem(NULL, destination, entity->getItem(), NULL);
-    entity->setItem(remaining);
-    return remaining->isEmpty();
+    not_null_ptr<ItemInstance> copy = entity->getItem()->copy();
+    not_null_ptr<ItemInstance> remaining = addItem(source, destination, copy, NULL);
+    if (remaining->isEmpty())
+    {
+        added = true;
+        entity->remove();
+    }
+    else
+    {
+        entity->setItem(remaining);
+    }
+    return added;
 }
 
 bool HopperBlockEntity::suckInItems(Hopper* hopper)
 {
     boost::shared_ptr<Container> source = getSourceContainer(hopper);
+    const Direction* direction = Direction::DOWN;
     if (!source)
     {
         std::vector<boost::shared_ptr<Entity> >* entities = getItemsAtAndAbove(
             hopper->getLevel(), hopper->getLevelX(), hopper->getLevelY(), hopper->getLevelZ());
         for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != entities->end(); ++it)
         {
-            boost::shared_ptr<ItemEntity> itemEntity = boost::dynamic_pointer_cast<ItemEntity>(*it);
-            if (addItem(NULL, dynamic_cast<Container*>(hopper), itemEntity))
+            if (addItem(NULL, hopper, boost::dynamic_pointer_cast<ItemEntity>(*it)))
             {
                 delete entities;
                 return true;
             }
         }
         delete entities;
-        return false;
-    }
-    if (isEmptyContainer(source, Direction::DOWN))
-        return false;
-    boost::shared_ptr<WorldlyContainer> worldly = boost::dynamic_pointer_cast<WorldlyContainer>(source);
-    if (worldly)
-    {
-        arrayWithLength<int> slots = worldly->getSlotsForFace(Direction::DOWN);
-        for (unsigned int i = 0; i < slots.length; ++i)
-            if (tryTakeInItemFromSlot(hopper, source.get(), slots.data[i], Direction::DOWN))
-                return true;
     }
     else
     {
-        for (unsigned int i = 0; i < source->getContainerSize(); ++i)
-            if (tryTakeInItemFromSlot(hopper, source.get(), i, Direction::DOWN))
-                return true;
+        if (isEmptyContainer(source, direction))
+            return false;
+        boost::shared_ptr<WorldlyContainer> worldly = boost::dynamic_pointer_cast<WorldlyContainer>(source);
+        if (!worldly)
+        {
+            int size = source->getContainerSize();
+            for (int i = 0; i < size; ++i)
+                if (tryTakeInItemFromSlot(hopper, source.get(), i, direction))
+                    return true;
+        }
+        else
+        {
+            arrayWithLength<int> slots = worldly->getSlotsForFace(direction);
+            for (unsigned int i = 0; i < slots.length; ++i)
+                if (tryTakeInItemFromSlot(hopper, source.get(), slots.data[i], direction))
+                    return true;
+        }
     }
     return false;
 }
@@ -456,18 +482,17 @@ bool HopperBlockEntity::ejectItems()
         return false;
     for (unsigned int i = 0; i < getContainerSize(); ++i)
     {
-        not_null_ptr<ItemInstance> item = getItem(i);
-        if (item->isEmpty())
-            continue;
-        not_null_ptr<ItemInstance> original = item->copy();
-        not_null_ptr<ItemInstance> extracted = removeItem(i, 1);
-        not_null_ptr<ItemInstance> remaining = addItem(this, destination.get(), extracted, face);
-        if (remaining->isEmpty())
+        if (!getItem(i)->isEmpty())
         {
-            destination->setChanged();
-            return true;
+            not_null_ptr<ItemInstance> original = getItem(i)->copy();
+            not_null_ptr<ItemInstance> remaining = addItem(this, destination.get(), removeItem(i, 1), face);
+            if (remaining->isEmpty())
+            {
+                destination->setChanged();
+                return true;
+            }
+            setItem(i, original);
         }
-        setItem(i, original);
     }
     return false;
 }
@@ -500,6 +525,7 @@ NonNullList<not_null_ptr<ItemInstance> > HopperBlockEntity::getItems()
 
 void HopperBlockEntity::setItems(NonNullList<not_null_ptr<ItemInstance> > items)
 {
+    delete[] mItems.items;
     mItems = items;
 }
 

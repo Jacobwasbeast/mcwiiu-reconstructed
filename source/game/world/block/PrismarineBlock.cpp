@@ -53,7 +53,7 @@ std::wstring PrismarineBlock::Variant::toString() const
 
 std::wstring PrismarineBlock::Variant::getSerializedName() const
 {
-    return mSerializedName;
+    return mName;
 }
 
 int PrismarineBlock::Variant::getData()
