@@ -35,8 +35,8 @@
 #include "vendor/_MapDataMappings_old.hpp"
 
 static const std::wstring PLAYER_DIR = L"players/";
-static const std::wstring NETHER_FOLDER = L"DIM-1";
-static const std::wstring ENDER_FOLDER = L"DIM1/";
+const std::wstring DirectoryLevelStorage::NETHER_FOLDER = L"DIM-1";
+const std::wstring DirectoryLevelStorage::ENDER_FOLDER = L"DIM1/";
 
 DirectoryLevelStorage::DirectoryLevelStorage(ConsoleSaveFile* saveFile, File folder,
                                              const std::wstring& levelId, bool createIfMissing,

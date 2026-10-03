@@ -112,7 +112,12 @@ private:
     bool mHasLoadedMapDataMappings;
     CachedSaveDataMap mCachedSaveData;
     std::vector<short> mMapFilesToDelete;
+
+protected:
     ConsoleSaveFile* mSaveFile;
+
+    static const std::wstring NETHER_FOLDER;
+    static const std::wstring ENDER_FOLDER;
 };
 
 #endif

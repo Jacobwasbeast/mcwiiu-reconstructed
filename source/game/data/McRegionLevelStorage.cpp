@@ -30,50 +30,50 @@ McRegionChunkStorage* McRegionLevelStorage::createChunkStorage(Dimension* dimens
     if (dimension != NULL && dynamic_cast<NetherDimension*>(dimension) != NULL)
     {
         if (gApp.GetResetNether() == 0)
-            return new McRegionChunkStorage(getSaveFile(), L"DIM-1", mFixer);
+            return new McRegionChunkStorage(mSaveFile, NETHER_FOLDER, mFixer);
 
-        std::vector<FileEntry*>* netherFiles = getSaveFile()->getFilesWithPrefix(L"DIM-1");
+        std::vector<FileEntry*>* netherFiles = mSaveFile->getFilesWithPrefix(NETHER_FOLDER);
         if (netherFiles != NULL)
         {
             std::vector<FileEntry*>::iterator it;
             for (it = netherFiles->begin(); it != netherFiles->end(); ++it)
-                getSaveFile()->deleteFile(*it);
+                mSaveFile->deleteFile(*it);
             delete netherFiles;
         }
-        std::vector<FileEntry*>* fortressFiles = getSaveFile()->getFilesWithPrefix(L"data/Fortress");
+        std::vector<FileEntry*>* fortressFiles = mSaveFile->getFilesWithPrefix(L"data/Fortress");
         if (fortressFiles != NULL)
         {
             std::vector<FileEntry*>::iterator it;
             for (it = fortressFiles->begin(); it != fortressFiles->end(); ++it)
-                getSaveFile()->deleteFile(*it);
+                mSaveFile->deleteFile(*it);
             delete fortressFiles;
         }
         resetNetherPlayerPositions();
-        return new McRegionChunkStorage(getSaveFile(), L"DIM-1", mFixer);
+        return new McRegionChunkStorage(mSaveFile, NETHER_FOLDER, mFixer);
     }
 
     if (dimension != NULL && dynamic_cast<TheEndDimension*>(dimension) != NULL)
     {
         if (gApp.GetResetEnd() == 0)
         {
-            short saveVersion = getSaveFile()->getSaveVersion();
-            if (saveVersion == 0 || saveVersion > 3)
-                return new McRegionChunkStorage(getSaveFile(), L"DIM1/", mFixer);
+            short saveVersion = mSaveFile->getSaveVersion();
+            if (saveVersion == 0 || saveVersion >= 4)
+                return new McRegionChunkStorage(mSaveFile, ENDER_FOLDER, mFixer);
         }
 
-        std::vector<FileEntry*>* endFiles = getSaveFile()->getFilesWithPrefix(L"DIM1/");
+        std::vector<FileEntry*>* endFiles = mSaveFile->getFilesWithPrefix(ENDER_FOLDER);
         if (endFiles != NULL)
         {
             std::vector<FileEntry*>::iterator it;
             for (it = endFiles->begin(); it != endFiles->end(); ++it)
-                getSaveFile()->deleteFile(*it);
+                mSaveFile->deleteFile(*it);
             delete endFiles;
         }
         resetEndPlayerPositions();
-        return new McRegionChunkStorage(getSaveFile(), L"DIM1/", mFixer);
+        return new McRegionChunkStorage(mSaveFile, ENDER_FOLDER, mFixer);
     }
 
-    return new McRegionChunkStorage(getSaveFile(), L"", mFixer);
+    return new McRegionChunkStorage(mSaveFile, L"", mFixer);
 }
 
 void McRegionLevelStorage::saveLevelData(LevelData* levelData,

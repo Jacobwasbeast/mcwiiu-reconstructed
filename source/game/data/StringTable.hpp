@@ -20,8 +20,6 @@ public:
         boost::unordered_map<int, std::wstring> stringsById;
         boost::unordered_map<std::wstring, std::wstring> strings;
         std::vector<std::wstring> orderedStrings;
-        int count;
-        _LanguageData() : count(0) {}
     };
 
     StringTable();
@@ -39,7 +37,7 @@ public:
     const wchar_t* getString(int id);
     unsigned int getRandomStringId(Random* random);
     std::vector<int> getRandomStringIds(int count, Random* random);
-    unsigned long long copyStringToTable(const std::wstring& key, StringTable* table);
+    void copyStringToTable(const std::wstring& key, StringTable* table);
     void write(DataOutputStream* stream);
     void Reset();
 
