@@ -14,10 +14,6 @@ BossEvent::BossEvent(const std::wstring& id, int nameId, const std::wstring& nam
 {
 }
 
-BossEvent::~BossEvent()
-{
-}
-
 std::wstring BossEvent::getId()
 {
     return id;

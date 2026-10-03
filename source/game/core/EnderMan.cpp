@@ -13,6 +13,7 @@
 
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/core/AttributeInstance.hpp"
+#include "game/core/AttributeModifier.hpp"
 #include "game/core/BuiltInLootTables.hpp"
 #include "game/core/GameRules.hpp"
 #include "game/core/HitResult.hpp"
@@ -45,6 +46,9 @@
 static const EntityDataAccessor<const BlockState*>* DATA_CARRIED_BLOCK = NULL;
 static const EntityDataAccessor<bool>* DATA_CREEPY = NULL;
 static boost::unordered_set<Block*> sCarriableBlocks;
+
+AttributeModifier* EnderMan::SPEED_MODIFIER_ATTACKING =
+    (new AttributeModifier(eMODIFIER_ID_EnderManAttackingSpeedBoost, 0.15f, 0))->setSerialize(false);
 
 EnderMan::EnderMan(Level* level) : Monster(level)
 {
@@ -103,15 +107,19 @@ void EnderMan::registerAttributes()
 void EnderMan::setTarget(boost::shared_ptr<LivingEntity> target)
 {
     Mob::setTarget(target);
+    AttributeInstance* speed = getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED);
     if (target)
     {
         mTargetChangeTime = mTickCount;
-        getEntityData()->set(DATA_CREEPY, true, true);
+        mEntityData->set(DATA_CREEPY, true, true);
+        if (!speed->hasModifier(SPEED_MODIFIER_ATTACKING))
+            speed->addModifier(new AttributeModifier(*SPEED_MODIFIER_ATTACKING));
     }
     else
     {
         mTargetChangeTime = 0;
-        getEntityData()->set(DATA_CREEPY, false, true);
+        mEntityData->set(DATA_CREEPY, false, true);
+        speed->removeModifier(SPEED_MODIFIER_ATTACKING);
     }
 }
 

@@ -139,13 +139,3 @@ std::wstring XmlObject::toString(int indent, bool formatted) const
     }
     return output;
 }
-
-const std::vector<XmlChild>& XmlObject::getChildrenRaw() const
-{
-    return m_children;
-}
-
-std::vector<std::pair<std::wstring, std::wstring> >& XmlObject::getAttrs()
-{
-    return m_attrs;
-}

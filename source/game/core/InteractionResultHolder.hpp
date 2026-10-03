@@ -9,7 +9,11 @@ class ItemInstance;
 class InteractionResultHolder
 {
 public:
-    InteractionResultHolder(InteractionResult::EInteractionResult result, const not_null_ptr<ItemInstance>& object);
+    InteractionResultHolder(InteractionResult::EInteractionResult result, const not_null_ptr<ItemInstance>& object)
+        : result(result)
+        , object(object)
+    {
+    }
 
     InteractionResult::EInteractionResult getResult() const { return result; }
     const not_null_ptr<ItemInstance>& getObject() const { return object; }

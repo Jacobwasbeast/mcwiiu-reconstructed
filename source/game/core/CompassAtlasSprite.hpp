@@ -19,8 +19,10 @@ public:
     virtual void freeFrameTextures();
     virtual unsigned int hasOwnData();
 
+    static CompassAtlasSprite* instance;
+
 private:
-    int mPlayerIndex;
+    unsigned int mPlayerIndex;
     CompassAtlasSprite* mParent;
     double mAngle;
     double mAngleDelta;

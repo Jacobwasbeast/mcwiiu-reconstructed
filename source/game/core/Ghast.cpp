@@ -173,7 +173,7 @@ void Ghast::GhastLookGoal::tick()
 {
     if (!mGhast->getTarget())
     {
-        mGhast->mYBodyRot = mGhast->mYRot = -(float)std::atan2(mGhast->mXd, mGhast->mZd) * 57.2957763671875f;
+        mGhast->mYBodyRot = mGhast->mYRot = -(float)std::atan2(mGhast->mXd, mGhast->mZd) * 57.295776f;
         return;
     }
 
@@ -181,7 +181,7 @@ void Ghast::GhastLookGoal::tick()
     double distance = 64.0;
     if (target->distanceToSqr(mGhast->shared_from_this()) < distance * distance)
     {
-        mGhast->mYBodyRot = mGhast->mYRot = -(float)std::atan2(target->mX - mGhast->mX, target->mZ - mGhast->mZ) * 57.2957763671875f;
+        mGhast->mYBodyRot = mGhast->mYRot = -(float)std::atan2(target->mX - mGhast->mX, target->mZ - mGhast->mZ) * 57.295776f;
     }
 }
 std::wstring Ghast::GhastLookGoal::getName() { return L"GhastLook"; }

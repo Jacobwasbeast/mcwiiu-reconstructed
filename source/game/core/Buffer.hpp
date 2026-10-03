@@ -12,7 +12,7 @@ public:
     void clear();
     void limit(unsigned int newLimit);
     unsigned int limit();
-    void position(unsigned int newPosition);
+    Buffer* position(unsigned int newPosition);
     unsigned int position();
     int remaining();
 

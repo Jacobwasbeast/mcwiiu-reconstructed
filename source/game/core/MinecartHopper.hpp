@@ -36,13 +36,16 @@ public:
     virtual void startOpen(boost::shared_ptr<Player> player);
     virtual void stopOpen(boost::shared_ptr<Player> player);
     virtual bool canPlaceItem(int slot, not_null_ptr<ItemInstance> item);
-    virtual AbstractContainerMenu* createMenu(boost::shared_ptr<Inventory> inventory,
-                                               boost::shared_ptr<Player> player);
-    virtual int getTypeId(bool large);
+    virtual bool isEnabled();
+    virtual void setEnabled(bool enabled);
     virtual Level* getLevel();
     virtual double getLevelX();
     virtual double getLevelY();
     virtual double getLevelZ();
+    virtual bool suckInItems();
+    virtual int getTypeId(bool large);
+    virtual AbstractContainerMenu* createMenu(boost::shared_ptr<Inventory> inventory,
+                                               boost::shared_ptr<Player> player);
 
     void _init();
     static void addDataWalkers(DataFixerUpper* fixer);
@@ -52,12 +55,9 @@ public:
     virtual bool interact(const boost::shared_ptr<Player>& player,
                           InteractionHand::EInteractionHand hand);
     virtual void activateMinecart(int x, int y, int z, bool powered);
-    virtual bool isEnabled();
-    virtual void setEnabled(bool enabled);
     void setCooldown(int cooldown);
-    virtual bool isOnCooldown();
+    bool isOnCooldown();
     virtual void tick();
-    virtual bool suckInItems();
     virtual void destroy(const DamageSource* source);
     virtual void addAdditonalSaveData(CompoundTag* tag);
     virtual void readAdditionalSaveData(CompoundTag* tag);

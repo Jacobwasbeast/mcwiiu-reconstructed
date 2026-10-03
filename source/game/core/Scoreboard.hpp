@@ -136,17 +136,17 @@ public:
         int mPotionId;
     };
 
-    class PlayerStats : public PlayerUID
+    class PlayerStats : public StatsUID
     {
     public:
-        struct _PerLife
-        {
-            std::wstring mKillerName;
-        };
-
         class _RoundStats
         {
         public:
+            struct _PerLife
+            {
+                std::wstring mKillerName;
+            };
+
             _RoundStats();
             _RoundStats(const _RoundStats& other);
 
@@ -196,6 +196,7 @@ public:
             std::wstring mLastVictimName;
         };
 
+        typedef _RoundStats::_PerLife _PerLife;
         typedef boost::unordered_map<int, _RoundStats> RoundStatsMap;
 
         enum eRecordIndex

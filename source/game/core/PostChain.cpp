@@ -23,11 +23,11 @@ void PostChain::updateOrthoMatrix()
     mOrthoMatrix->setIdentity();
     mOrthoMatrix->m[0] = 2.0f / static_cast<float>(mWidth);
     mOrthoMatrix->m[5] = 2.0f / static_cast<float>(-mHeight);
-    mOrthoMatrix->m[10] = -0.0020001998636871576f;
+    mOrthoMatrix->m[10] = -0.0020001999f;
     mOrthoMatrix->m[15] = 1.0f;
     mOrthoMatrix->m[3] = -1.0f;
     mOrthoMatrix->m[7] = 1.0f;
-    mOrthoMatrix->m[11] = -1.0001999139785767f;
+    mOrthoMatrix->m[11] = -1.0001999f;
 }
 
 void PostChain::destroy()

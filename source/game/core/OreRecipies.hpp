@@ -10,6 +10,7 @@ class Recipes;
 class OreRecipies
 {
 public:
+    OreRecipies() { _init(); }
     void _init();
     void addRecipes(Recipes* recipes);
 

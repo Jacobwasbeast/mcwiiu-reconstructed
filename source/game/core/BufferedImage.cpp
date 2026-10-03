@@ -10,33 +10,41 @@
 extern char* wstringtofilename(const std::wstring& value, char (&result)[256]);
 
 BufferedImage::BufferedImage(int width, int height, int mipLevels)
-    : m_width((unsigned int)width), m_height((unsigned int)height), m_mipmapDisabled(0)
 {
+    m_data[0] = (int*)std::malloc(height * width * sizeof(int));
+    std::memset(m_data[0], 0, height * width);
     int i;
-    for (i = 0; i < 10; ++i) m_data[i] = NULL;
-    const size_t pixelCount = (size_t)width * (size_t)height;
-    m_data[0] = (int*)std::malloc(pixelCount * sizeof(int));
-    if (m_data[0] != NULL) std::memset(m_data[0], 0, pixelCount * sizeof(int));
+    for (i = 1; i < 10; ++i) m_data[i] = NULL;
+    m_width = (unsigned int)width;
+    m_height = (unsigned int)height;
+    m_mipmapDisabled = 0;
 }
 
 BufferedImage::BufferedImage(const std::wstring& name, bool mipmapDisabled, bool useTitleUpdate, const std::wstring& path)
-    : m_width(0), m_height(0), m_mipmapDisabled(0)
 {
+    std::wstring baseName = name;
+    m_mipmapDisabled = 0;
     std::wstring base = path;
     if (base.empty())
     {
-        base = useTitleUpdate ? L"Common\\res\\TitleUpdate\\" : L"Common\\";
+        if (useTitleUpdate)
+        {
+            base = L"Common\\res\\TitleUpdate\\";
+        }
+        else
+        {
+            base = L"Common\\";
+        }
     }
 
     int i;
     for (i = 0; i < 10; ++i) m_data[i] = NULL;
-    m_mipmapDisabled = 0;
 
     const int levels = mipmapDisabled ? 1 : 10;
     int level;
     for (level = 0; level < levels; ++level)
     {
-        std::wstring suffix;
+        std::wstring suffix = L"";
         if (level != 0)
         {
             suffix = std::wstring(L"MipMapLevel") + _toString(level + 1);
@@ -45,11 +53,11 @@ BufferedImage::BufferedImage(const std::wstring& name, bool mipmapDisabled, bool
         std::wstring file;
         if (mipmapDisabled)
         {
-            file = base + L"res" + name;
+            file = base + L"res" + baseName.substr(0, baseName.length());
         }
         else
         {
-            file = base + L"res" + name.substr(0, name.length() - 4) + suffix + L".png";
+            file = base + L"res" + baseName.substr(0, baseName.length() - 4) + suffix + L".png";
         }
 
         char filename[256];
@@ -74,8 +82,8 @@ BufferedImage::BufferedImage(const std::wstring& name, bool mipmapDisabled, bool
 }
 
 BufferedImage::BufferedImage(DLCPack* pack, const std::wstring& name, bool mipmapDisabled)
-    : m_width(0), m_height(0), m_mipmapDisabled(0)
 {
+    std::wstring baseName = name;
     int i;
     for (i = 0; i < 10; ++i) m_data[i] = NULL;
 
@@ -83,7 +91,7 @@ BufferedImage::BufferedImage(DLCPack* pack, const std::wstring& name, bool mipma
     int level;
     for (level = 0; level < levels; ++level)
     {
-        std::wstring suffix;
+        std::wstring suffix = L"";
         if (level != 0)
         {
             suffix = std::wstring(L"MipMapLevel") + _toString(level + 1);
@@ -92,11 +100,11 @@ BufferedImage::BufferedImage(DLCPack* pack, const std::wstring& name, bool mipma
         std::wstring file;
         if (mipmapDisabled)
         {
-            file = L"res" + name;
+            file = L"res" + baseName.substr(0, baseName.length());
         }
         else
         {
-            file = L"res" + name + suffix;
+            file = L"res" + baseName + suffix;
         }
 
         if (!pack->doesPackContainFile(DLCManager::eDLCType_All, file, true, true))
@@ -139,7 +147,7 @@ BufferedImage::BufferedImage(DLCPack* pack, const std::wstring& name, bool mipma
 }
 
 BufferedImage::BufferedImage(unsigned char* data, unsigned int length)
-    : m_width(0), m_height(0), m_mipmapDisabled(0)
+    : m_mipmapDisabled(0)
 {
     int i;
     for (i = 0; i < 10; ++i) m_data[i] = NULL;
@@ -183,16 +191,25 @@ void BufferedImage::getRGB(int x, int y, int width, int height, arrayWithLength<
 }
 
 int* BufferedImage::getData() { return m_data[0]; }
-int* BufferedImage::getData(int mipLevel) { return mipLevel < 10 ? m_data[mipLevel] : NULL; }
+int* BufferedImage::getData(int mipLevel) { return m_data[mipLevel]; }
 void* BufferedImage::getGraphics() { return NULL; }
 
 BufferedImage* BufferedImage::getSubimage(int x, int y, int width, int height)
 {
     BufferedImage* image = new BufferedImage(width, height, 0);
-    arrayWithLength<int> pixels((unsigned int)width * (unsigned int)height, false);
+    arrayWithLength<int> pixels(image->m_data[0], width * height);
     getRGB(x, y, width, height, pixels, 0, width, 0);
-    if (image->m_data[0] != NULL && pixels.data != NULL)
-        std::memcpy(image->m_data[0], pixels.data, (size_t)width * (size_t)height * sizeof(int));
+    unsigned int level = 1;
+    while (getData(level) != NULL)
+    {
+        int levelWidth = width >> level;
+        int levelHeight = height >> level;
+        int levelCount = levelHeight * levelWidth;
+        arrayWithLength<int> levelPixels((int*)std::malloc(levelCount * sizeof(int)), levelCount);
+        image->m_data[level] = levelPixels.data;
+        getRGB(x >> level, y >> level, levelWidth, levelHeight, levelPixels, 0, levelWidth, level);
+        ++level;
+    }
     return image;
 }
 
@@ -200,15 +217,16 @@ unsigned char BufferedImage::isMipmapDisabled() { return m_mipmapDisabled; }
 
 void BufferedImage::preMultiplyAlpha()
 {
-    unsigned int count = m_width * m_height;
-    unsigned int i;
+    int count = (int)(m_width * m_height);
+    int* data = m_data[0];
+    int i;
     for (i = 0; i < count; ++i)
     {
-        unsigned int p = (unsigned int)m_data[0][i];
-        unsigned int a = (p >> 24) & 255u;
-        unsigned int r = (unsigned int)((((p >> 16) & 255u) * a) / 255u);
-        unsigned int g = (unsigned int)((((p >> 8) & 255u) * a) / 255u);
-        unsigned int b = (unsigned int)(((p & 255u) * a) / 255u);
-        m_data[0][i] = (int)((a << 24) | (r << 16) | (g << 8) | b);
+        unsigned int p = (unsigned int)data[i];
+        float a = (float)(int)(p >> 24);
+        float r = (float)(int)((p >> 16) & 255u);
+        float g = (float)(int)((p >> 8) & 255u);
+        float b = (float)(int)(p & 255u);
+        data[i] = ((int)((r * a) / 255.0f) << 16) | ((int)((g * a) / 255.0f) << 8) | (int)((b * a) / 255.0f) | (p & 0xff000000u);
     }
 }

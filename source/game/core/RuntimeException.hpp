@@ -6,7 +6,7 @@
 class RuntimeException : public std::exception
 {
 public:
-    ~RuntimeException();
+    ~RuntimeException() throw() {}
 };
 
 #endif

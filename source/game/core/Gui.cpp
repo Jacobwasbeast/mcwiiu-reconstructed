@@ -398,7 +398,7 @@ void Gui::render(float partialTick, bool hideGui, int width, int height)
                 GlStateManager::rotatef(-headPitch * 20.0f, 1.0f, 0.0f, 0.0f);
                 const float interpolatedBodyYaw = player->mYBodyRotO +
                                                   (player->mYBodyRot - player->mYBodyRotO);
-                GlStateManager::rotatef(interpolatedBodyYaw + 15.707963943481445f,
+                GlStateManager::rotatef(interpolatedBodyYaw + 15.707964f,
                                         0.0f, 1.0f, 0.0f);
                 GlStateManager::color4f(1.0f, 1.0f, 1.0f, 1.0f);
 

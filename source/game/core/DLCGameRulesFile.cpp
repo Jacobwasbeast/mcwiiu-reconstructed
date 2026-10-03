@@ -1,7 +1,7 @@
 #include "game/core/DLCGameRulesFile.hpp"
 
 DLCGameRulesFile::DLCGameRulesFile(const std::wstring& path)
-    : DLCFile(DLCManager::eDLCType_GameRules, path)
+    : DLCGameRules(DLCManager::eDLCType_GameRules, path)
     , m_pData(NULL)
     , m_dataSize(0)
     , m_bFree(false)

@@ -168,10 +168,10 @@ Socket::SocketOutputStream::~SocketOutputStream()
 {
 }
 
-void Socket::SocketOutputStream::writeWithFlags(arrayWithLength<unsigned char> buffer, unsigned int, unsigned int,
-                                                int)
+void Socket::SocketOutputStream::writeWithFlags(arrayWithLength<unsigned char> buffer, unsigned int offset,
+                                                unsigned int length, int)
 {
-    write(buffer);
+    write(buffer, offset, length);
 }
 
 Socket::SocketOutputStreamLocal::SocketOutputStreamLocal(int index)
@@ -241,7 +241,7 @@ void Socket::SocketOutputStreamNetwork::write(unsigned int value)
     arrayWithLength<unsigned char> buffer;
     buffer.data = &byte;
     buffer.length = 1;
-    writeWithFlags(buffer, 0, 1, 0);
+    write(buffer, 0, 1);
 }
 
 void Socket::SocketOutputStreamNetwork::write(arrayWithLength<unsigned char> buffer)
@@ -271,15 +271,16 @@ void Socket::SocketOutputStreamNetwork::writeWithFlags(arrayWithLength<unsigned 
         return;
     }
 
+    unsigned char* data = buffer.data;
     INetworkPlayer* host = CGameNetworkManager::sInstance.GetHostPlayer();
     INetworkPlayer* player;
     if (host == NULL || (player = mSocket->getPlayer()) == NULL)
         return;
 
     if (mIndex == 1)
-        host->SendData(player, buffer.data + offset, length, false, (flags & 1) != 0);
+        host->SendData(player, data + offset, length, false, (flags & 1) != 0);
     else
-        player->SendData(host, buffer.data + offset, length, false, (flags & 1) != 0);
+        player->SendData(host, data + offset, length, false, (flags & 1) != 0);
 }
 
 void Socket::SocketOutputStreamNetwork::close()
@@ -292,19 +293,22 @@ void Socket::SocketOutputStreamNetwork::flush()
 }
 
 Socket::Socket(bool response)
-    : mLocal(true), mNetwork(true)
 {
-    if (!response)
+    mLocal = true;
+    mNetwork = true;
+    if (response)
     {
-        mIndex = 0;
-        sConnection->NewIncomingSocket(new Socket(true));
+        mClosed[1] = false;
+        mClosed[0] = false;
+        mIndex = 1;
     }
     else
     {
-        mIndex = 1;
+        mIndex = 0;
+        sConnection->NewIncomingSocket(new Socket(true));
+        mClosed[0] = false;
+        mClosed[1] = false;
     }
-    mClosed[0] = false;
-    mClosed[1] = false;
     mOpen = true;
     mCloseEvent = NULL;
 
@@ -313,8 +317,9 @@ Socket::Socket(bool response)
 }
 
 Socket::Socket(INetworkPlayer* player, bool response, bool hostLocal)
-    : mLocal(false), mNetwork(hostLocal)
 {
+    mLocal = false;
+    mNetwork = hostLocal;
     InitializeCriticalSection(&mMutexes[0]);
     mInputStreams[0] = NULL;
     mOutputStreams[0] = NULL;
@@ -358,23 +363,17 @@ void Socket::Initialise(ServerConnection* connection)
 
     if (gLocalStreamsInitialised)
     {
-        if (TryEnterCriticalSection(&gLocalMutexes[0]))
+        for (int i = 0; i < 2; ++i)
         {
-            std::queue<unsigned char> empty;
-            std::swap(gLocalQueues[0], empty);
-            LeaveCriticalSection(&gLocalMutexes[0]);
+            if (TryEnterCriticalSection(&gLocalMutexes[i]))
+            {
+                std::queue<unsigned char> empty;
+                std::swap(gLocalQueues[i], empty);
+                LeaveCriticalSection(&gLocalMutexes[i]);
+            }
+            gLocalOutputStreams[i]->mOpen = true;
+            gLocalInputStreams[i]->mOpen = true;
         }
-        gLocalOutputStreams[0]->mOpen = true;
-        gLocalInputStreams[0]->mOpen = true;
-
-        if (TryEnterCriticalSection(&gLocalMutexes[1]))
-        {
-            std::queue<unsigned char> empty;
-            std::swap(gLocalQueues[1], empty);
-            LeaveCriticalSection(&gLocalMutexes[1]);
-        }
-        gLocalOutputStreams[1]->mOpen = true;
-        gLocalInputStreams[1]->mOpen = true;
         return;
     }
 
@@ -394,19 +393,22 @@ unsigned int Socket::getRemoteSocketAddress()
 
 void Socket::pushDataToQueue(const unsigned char* data, unsigned int length, bool fromHost)
 {
-    int queue = fromHost ? 0 : 1;
+    unsigned int queue = 0;
+    if (!fromHost)
+        queue = 1;
     if (queue != mIndex && !mNetwork)
         return;
 
     EnterCriticalSection(&mMutexes[queue]);
     for (unsigned int i = 0; i < length; ++i)
-        mQueues[queue].push(data[i]);
+        mQueues[queue].push(*data++);
     LeaveCriticalSection(&mMutexes[queue]);
 }
 
 void Socket::addIncomingSocket(Socket* socket)
 {
-    sConnection->NewIncomingSocket(socket);
+    if (sConnection != NULL)
+        sConnection->NewIncomingSocket(socket);
 }
 
 InputStream* Socket::getInputStream(bool host)
@@ -414,7 +416,11 @@ InputStream* Socket::getInputStream(bool host)
     if (mLocal)
         return gLocalInputStreams[mIndex];
     if (mNetwork)
-        return mInputStreams[host ? 1 : 0];
+    {
+        if (host)
+            return mInputStreams[1];
+        return mInputStreams[0];
+    }
     return mInputStreams[mIndex];
 }
 
@@ -431,12 +437,17 @@ OutputStream* Socket::getOutputStream(bool host)
     if (mLocal)
         return gLocalOutputStreams[1 - mIndex];
     if (mNetwork)
-        return mOutputStreams[host ? 1 : 0];
+    {
+        if (host)
+            return mOutputStreams[1];
+        return mOutputStreams[0];
+    }
     return mOutputStreams[mIndex];
 }
 
 bool Socket::close(bool host)
 {
+    bool result = false;
     if (!mNetwork)
     {
         mClosed[mIndex] = true;
@@ -455,11 +466,12 @@ bool Socket::close(bool host)
             mClosed[1] = true;
         }
         if (!otherClosed)
-            return false;
+            return result;
     }
 
+    result = true;
     if (mCloseEvent != NULL)
         mCloseEvent->Set();
     mOpen = false;
-    return true;
+    return result;
 }

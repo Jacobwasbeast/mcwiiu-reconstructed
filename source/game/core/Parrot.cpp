@@ -67,7 +67,7 @@ arrayWithLength<Item*> Parrot::TAME_FOOD;
 Predicate<boost::shared_ptr<Entity> >* Parrot::CAN_MIMIC = NULL;
 
 Parrot::Parrot(Level* level)
-    : ShoulderRidingEntity(level)
+    : ShoulderRidingEntity(level), mFlapping(1.0f)
 {
     fjDerivedCtorCalls();
     _init();
@@ -103,9 +103,9 @@ const SoundEvent* Parrot::getImitatedSound(unsigned long long type)
     return it == gImitatedSounds.end() ? SoundEvents::PARROT_AMBIENT : it->second;
 }
 
-double Parrot::getPitch(Random* random)
+float Parrot::getPitch(Random* random)
 {
-    return static_cast<double>((random->nextFloat() - random->nextFloat()) * 0.2f + 1.5f);
+    return (random->nextFloat() - random->nextFloat()) * 0.2f + 1.5f;
 }
 
 bool Parrot::imitateNearbyMobs(Level* level, Entity* entity)
@@ -123,7 +123,7 @@ bool Parrot::imitateNearbyMobs(Level* level, Entity* entity)
         {
             const SoundEvent* sound = getImitatedSound(mob->GetType());
             level->playSound(boost::shared_ptr<Player>(), entity->mX, entity->mY, entity->mZ, sound,
-                             entity->getSoundSource(), 0.7f, static_cast<float>(getPitch(level->mRandom)), 16.0f);
+                             entity->getSoundSource(), 0.7f, getPitch(level->mRandom), 16.0f);
             delete entities;
             return true;
         }
@@ -148,7 +148,7 @@ void Parrot::playAmbientSound(Level* level, boost::shared_ptr<Entity> entity)
         return;
     const SoundEvent* sound = getAmbient(level->mRandom);
     SoundSource::ESoundSource source = entity->getSoundSource();
-    float pitch = (float)getPitch(level->mRandom);
+    float pitch = getPitch(level->mRandom);
     level->playSound(boost::shared_ptr<Player>(), entity->mX, entity->mY, entity->mZ, sound, source, 1.0f, pitch,
                      16.0f);
 }
@@ -290,7 +290,16 @@ bool Parrot::isPartyParrot()
 bool Parrot::mobInteract(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand)
 {
     not_null_ptr<ItemInstance> item = player->getItemInHand(hand);
-    bool feedingTameFood = isTameFood(item);
+    Item* itemType = item->getItem();
+    bool feedingTameFood = false;
+    for (unsigned int i = 0; i < TAME_FOOD.length; ++i)
+    {
+        if (TAME_FOOD.data[i] == itemType)
+        {
+            feedingTameFood = true;
+            break;
+        }
+    }
 
     if (!isTame() && feedingTameFood)
     {
@@ -321,7 +330,7 @@ bool Parrot::mobInteract(const boost::shared_ptr<Player>& player, InteractionHan
         return true;
     }
 
-    if (item->getItem() == POISONOUS_FOOD)
+    if (itemType == POISONOUS_FOOD)
     {
         if (!player->mAbilities.mInstabuild)
             item->shrink(1);
@@ -334,18 +343,25 @@ bool Parrot::mobInteract(const boost::shared_ptr<Player>& player, InteractionHan
         return true;
     }
 
-    if (!mLevel->mIsClientSide && !isFlying() && isTame() && isOwnedBy(player))
+    bool owned = !mLevel->mIsClientSide && !isFlying() && isTame() && isOwnedBy(player);
+
+    if (owned)
     {
         bool renaming = false;
-        if (Item::getId(item->getItem()) == ItemId::NAME_TAG && !isPassenger() && item->hasCustomHoverName())
+        if (Item::getId(itemType) == ItemId::NAME_TAG && !isPassenger())
         {
-            if (!hasCustomName() || item->getHoverName() != getCustomName())
-                renaming = true;
+            if (item->hasCustomHoverName())
+            {
+                if (!hasCustomName() || !(item->getHoverName() == getCustomName()))
+                    renaming = true;
+            }
         }
 
-        if (!renaming && !isLeashedToPlayer(player)
-            && (item->isEmpty() || item->getItem() != Items::lead))
-            getSitGoal()->wantToSit(!isSitting());
+        if (!renaming && !isLeashedToPlayer(player))
+        {
+            if (item->isEmpty() || itemType != Items::lead)
+                mSitGoal->wantToSit(!isSitting());
+        }
     }
 
     return Animal::mobInteract(player, hand);
@@ -353,7 +369,7 @@ bool Parrot::mobInteract(const boost::shared_ptr<Player>& player, InteractionHan
 
 bool Parrot::isFood(const not_null_ptr<ItemInstance>& itemInstance)
 {
-    return isTameFood(itemInstance);
+    return false;
 }
 
 bool Parrot::checkSpawnRules()
@@ -391,26 +407,27 @@ unsigned int Parrot::GetInteractTooltip(const EntityTooltipDataHolder& holder)
     if (isLeashedToPlayer(holder.m_pPlayer))
         return IDS_TOOLTIPS_UNLEASH;
 
-    not_null_ptr<ItemInstance> item = holder.m_pItemInstance;
+    const not_null_ptr<ItemInstance>& item = holder.m_pItemInstance;
     if (item->getItem() == POISONOUS_FOOD)
         return IDS_NONE;
 
-    if (!isBaby())
+    if (!isPassenger())
     {
         if (Item::getId(item->getItem()) == ItemId::NAME_TAG)
         {
             if (item->hasCustomHoverName())
             {
-                if (!hasCustomName() || item->getHoverName() != getCustomName())
+                if (!hasCustomName() || !(item->getHoverName() == getCustomName()))
                     return IDS_TOOLTIPS_NAME;
             }
 
-            if (!isOwnedBy(holder.m_pPlayer))
-                return IDS_NONE;
-            if (isSitting())
-                return IDS_TOOLTIPS_FOLLOWME;
-            if (!isPassenger())
-                return IDS_TOOLTIPS_SIT;
+            if (isOwnedBy(holder.m_pPlayer))
+            {
+                if (isSitting())
+                    return IDS_TOOLTIPS_FOLLOWME;
+                if (!isFlying())
+                    return IDS_TOOLTIPS_SIT;
+            }
             return IDS_NONE;
         }
     }
@@ -425,12 +442,13 @@ unsigned int Parrot::GetInteractTooltip(const EntityTooltipDataHolder& holder)
     if (Item::getId(item->getItem()) == ItemId::LEAD && !isLeashed())
         return IDS_TOOLTIPS_LEASH;
 
-    if (!isOwnedBy(holder.m_pPlayer))
-        return IDS_NONE;
-    if (isSitting())
-        return IDS_TOOLTIPS_FOLLOWME;
-    if (!isPassenger())
-        return IDS_TOOLTIPS_SIT;
+    if (isOwnedBy(holder.m_pPlayer))
+    {
+        if (isSitting())
+            return IDS_TOOLTIPS_FOLLOWME;
+        if (!isFlying())
+            return IDS_TOOLTIPS_SIT;
+    }
     return IDS_NONE;
 }
 
@@ -445,7 +463,7 @@ bool Parrot::canMate(const boost::shared_ptr<Animal>&)
 
 boost::shared_ptr<AgableMob> Parrot::getBreedOffspring(boost::shared_ptr<AgableMob>)
 {
-    return boost::shared_ptr<AgableMob>(new Parrot(mLevel));
+    return boost::shared_ptr<AgableMob>();
 }
 
 bool Parrot::doHurtTarget(boost::shared_ptr<Entity> target)
@@ -491,7 +509,7 @@ bool Parrot::makeFlySound()
 
 float Parrot::getVoicePitch()
 {
-    return static_cast<float>(getPitch(mRandom));
+    return getPitch(mRandom);
 }
 
 SoundSource::ESoundSource Parrot::getSoundSource()
@@ -564,6 +582,7 @@ unsigned long long Parrot::GetType()
 
 bool Parrot::NotParrotPredicate::apply(boost::shared_ptr<Entity> entity) const
 {
-    return entity != NULL && Parrot::getImitatedSound(entity->GetType()) != NULL;
+    unsigned long long type = entity->GetType();
+    return entity != NULL && gImitatedSounds.find(type) != gImitatedSounds.end();
 }
 

@@ -28,7 +28,9 @@ public:
 
     BossEvent(const std::wstring& id, int nameId, const std::wstring& name,
               BossBarColor color, BossBarOverlay overlay);
-    virtual ~BossEvent();
+    virtual ~BossEvent()
+    {
+    }
 
     std::wstring getId();
 

@@ -4,7 +4,7 @@
 #include "game/core/Location.hpp"
 #include "game/core/Source.hpp"
 
-class LocatableSource : public Location, public Source
+class LocatableSource : public Source, public Location
 {
 public:
     virtual ~LocatableSource() {}

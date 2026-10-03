@@ -98,7 +98,7 @@ bool RiderPositionOverrides::OverridePosition(
             overridePosition.x,
             overridePosition.y + passenger->getRidingHeight(),
             overridePosition.z);
-        riderOffset->yRot(-(vehicle->mYRot * 0.01745329238474369f));
+        riderOffset->yRot(-(vehicle->mYRot * 0.017453292f));
 
         Vec3* vehiclePosition = Vec3::newTemp(
             vehicle->mX,
@@ -110,7 +110,7 @@ bool RiderPositionOverrides::OverridePosition(
         if ((vehicle->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
         {
             float bodyRotation =
-                boost::static_pointer_cast<LivingEntity>(vehicle)->mYBodyRot * 0.01745329238474369f;
+                boost::static_pointer_cast<LivingEntity>(vehicle)->mYBodyRot * 0.017453292f;
             cosine = Mth::cos(bodyRotation);
             sine = Mth::sin(bodyRotation);
         }

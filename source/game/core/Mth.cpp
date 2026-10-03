@@ -9,7 +9,7 @@
 
 const float Mth::PI = 3.1415927f;
 const float Mth::DEG_TO_RAD = 0.017453292f;
-const float Mth::RAD_TO_DEG = 57.2957763671875f;
+const float Mth::RAD_TO_DEG = 57.295776f;
 
 static const int ATAN_CACHE_SIZE = 40;
 

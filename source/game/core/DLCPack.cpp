@@ -34,11 +34,10 @@ bool pathCmp(DLCFile* file)
 
 DLCPack::DLCPack(const std::wstring& name, unsigned int licenseMask)
 {
-    m_name = name;
     m_dataPath = L"";
+    m_name = name;
     m_licenseMask = licenseMask;
     m_dlcMountIndex = 0xffffffffu;
-    m_dlcDeviceId = 0;
     m_purchaseOfferId = 0;
     m_isCorrupt = false;
     m_packId = 0;
@@ -53,7 +52,7 @@ DLCPack::~DLCPack()
     for (std::vector<DLCPack*>::iterator child = m_childPacks.begin(); child != m_childPacks.end(); ++child)
         delete *child;
 
-    unsigned int i;
+    int i;
     for (i = 0; i < DLCManager::eDLCType_NumTypes; ++i)
     {
         std::vector<DLCFile*>::iterator it;
@@ -61,53 +60,61 @@ DLCPack::~DLCPack()
             delete *it;
     }
 
+    m_creditIds.clear();
+
     if (m_data != NULL && m_parentPack == NULL)
         delete[] m_data;
 }
 
 DLCFile* DLCPack::getFile(DLCManager::EDLCType type, unsigned int index, bool searchParent, bool searchChildren)
 {
+    DLCFile* file = NULL;
     if (type == DLCManager::eDLCType_All)
     {
-        unsigned int i;
+        int i;
         for (i = 0; i < DLCManager::eDLCType_NumTypes; ++i)
         {
             DLCFile* result = getFile(static_cast<DLCManager::EDLCType>(i), index, true, true);
             if (result != NULL) return result;
         }
-        return 0;
     }
-    if (index < m_files[type].size() && m_files[type][index] != NULL)
-        return m_files[type][index];
-    if (searchParent && m_parentPack != NULL)
+    else
     {
-        DLCFile* result = m_parentPack->getFile(type, index, true, false);
-        if (result != NULL) return result;
-    }
-    if (searchChildren)
-    {
-        for (std::vector<DLCPack*>::iterator it = m_childPacks.begin(); it != m_childPacks.end(); ++it)
+        if (index < m_files[type].size())
+            file = m_files[type][index];
+        if (file == NULL)
         {
-            DLCFile* result = (*it)->getFile(type, index, false, true);
-            if (result != NULL) return result;
+            if (m_parentPack != NULL && searchParent)
+                file = m_parentPack->getFile(type, index, true, false);
+            if (file == NULL && searchChildren)
+            {
+                for (std::vector<DLCPack*>::iterator it = m_childPacks.begin(); it != m_childPacks.end(); ++it)
+                {
+                    file = (*it)->getFile(type, index, false, true);
+                    if (file != NULL) return file;
+                }
+            }
         }
     }
-    return 0;
+    return file;
 }
 
 int DLCPack::getDLCItemsCount(DLCManager::EDLCType type)
 {
+    int total;
     if (type == DLCManager::eDLCType_All)
     {
-        int total = 0;
+        total = 0;
         unsigned int i;
         for (i = 0; i < DLCManager::eDLCType_NumTypes; ++i)
             total += getDLCItemsCount(static_cast<DLCManager::EDLCType>(i));
-        return total;
     }
-    int total = static_cast<int>(m_files[type].size());
-    for (std::vector<DLCPack*>::iterator it = m_childPacks.begin(); it != m_childPacks.end(); ++it)
-        total += (*it)->getDLCItemsCount(type);
+    else
+    {
+        total = static_cast<int>(m_files[type].size());
+        for (std::vector<DLCPack*>::iterator it = m_childPacks.begin(); it != m_childPacks.end(); ++it)
+            total += (*it)->getDLCItemsCount(type);
+    }
     return total;
 }
 
@@ -129,7 +136,7 @@ DLCFile* DLCPack::getFile(DLCManager::EDLCType type, const std::wstring& name, b
     if (file != m_files[type].end() && *file != NULL)
         return *file;
 
-    if (searchParent && m_parentPack != NULL)
+    if (m_parentPack != NULL && searchParent)
     {
         DLCFile* result = m_parentPack->getFile(type, name, true, false);
         if (result != NULL) return result;
@@ -174,7 +181,7 @@ bool DLCPack::doesPackContainFile(DLCManager::EDLCType type, const std::wstring&
     if (file != m_files[type].end())
         return true;
 
-    if (searchParent && m_parentPack != NULL && m_parentPack->doesPackContainFile(type, name, true, false))
+    if (m_parentPack != NULL && searchParent && m_parentPack->doesPackContainFile(type, name, true, false))
         return true;
 
     if (searchChildren)
@@ -194,9 +201,16 @@ bool DLCPack::hasPurchasedPack()
     if (m_licenseMask == 0)
     {
         unsigned int packId = GetPackId();
-        if ((packId < 0x1009 && packId != 0x1001 && packId != 0x1007) ||
-            (packId > 0x100a && packId != 0x100f && (packId < 0x1014 || packId > 0x1015)))
-            return gApp.mDLCManager.IsDlcPackTemporarilyFree(packId);
+        if (packId < 0x1009)
+        {
+            if (packId != 0x1001 && packId != 0x1007)
+                return gApp.mDLCManager.IsDlcPackTemporarilyFree(packId);
+        }
+        else if (packId > 0x100a && packId != 0x100f)
+        {
+            if (packId < 0x1014 || packId > 0x1015)
+                return gApp.mDLCManager.IsDlcPackTemporarilyFree(packId);
+        }
     }
     return true;
 }
@@ -290,7 +304,8 @@ void DLCPack::addParameter(DLCManager::EDLCParameterType type, const std::wstrin
     {
         unsigned int packId = 0;
         std::wstringstream stream;
-        stream << std::dec << value.c_str();
+        stream.setf(std::ios_base::dec, std::ios_base::basefield);
+        stream << value.c_str();
         stream >> packId;
         SetPackId(packId);
     }
@@ -302,7 +317,8 @@ void DLCPack::addParameter(DLCManager::EDLCParameterType type, const std::wstrin
     {
         unsigned int version = 0;
         std::wstringstream stream;
-        stream << std::dec << value.c_str();
+        stream.setf(std::ios_base::dec, std::ios_base::basefield);
+        stream << value.c_str();
         stream >> version;
         SetPackVersion(version);
     }
@@ -312,17 +328,25 @@ void DLCPack::addParameter(DLCManager::EDLCParameterType type, const std::wstrin
     }
 }
 void DLCPack::setParentPack(DLCPack* parent) { m_parentPack = parent; }
-void DLCPack::addChildPack(DLCPack* child) { child->SetPackId((child->GetPackId() << 24) | m_packId); m_childPacks.push_back(child); child->setParentPack(this); child->m_name = m_name + child->m_name; }
+void DLCPack::addChildPack(DLCPack* child) { child->SetPackId((child->GetPackId() << 24) | m_packId); m_childPacks.push_back(child); child->setParentPack(this); child->m_name = m_name + child->getName(); }
 std::wstring DLCPack::getFullDataPath() { return m_dataPath; }
 DLCPack* DLCPack::GetParentPack() { return m_parentPack; }
-unsigned int DLCPack::GetParentPackId() { return m_parentPack->GetPackId(); }
+unsigned int DLCPack::GetParentPackId() { return m_parentPack->m_packId; }
 void DLCPack::SetDLCMountIndex(unsigned int index) { m_dlcMountIndex = index; }
 unsigned int DLCPack::GetDLCMountIndex()
 {
-    DLCPack* pack = this;
-    while (pack->m_parentPack != NULL)
-        pack = pack->m_parentPack;
-    return pack->m_dlcMountIndex;
+    DLCPack* pack = m_parentPack;
+    if (pack != NULL)
+    {
+        DLCPack* parent;
+        do
+        {
+            parent = pack;
+            pack = parent->m_parentPack;
+        } while (pack != NULL);
+        return parent->m_dlcMountIndex;
+    }
+    return m_dlcMountIndex;
 }
 void DLCPack::SetDLCDeviceID(int id) { m_dlcDeviceId = id; }
 std::vector<DLCPack*>& DLCPack::getChildPacks() { return m_childPacks; }
@@ -330,32 +354,47 @@ void DLCPack::AddCreditID(const std::wstring& value) { m_creditIds.push_back(val
 void DLCPack::AddCreditString(const std::wstring& value) { m_creditStrings.push_back(value); }
 void DLCPack::updateLicenseMask(unsigned int licenseMask)
 {
-    unsigned int packId = GetPackId();
-    if (packId == 0x208 || packId == 0x20a || packId == 0x405 || packId == 0x40a ||
-        packId == 0x803 || packId == 0x805 || packId == 0x806)
-        m_licenseMask = 1;
-    else
+    unsigned int packId = m_packId;
+    if (packId < 0x40a)
+    {
+        if (packId == 0x208 || packId == 0x20a || packId == 0x405)
+        {
+            m_licenseMask = 1;
+            return;
+        }
         m_licenseMask = licenseMask;
+        return;
+    }
+    if (packId == 0x40a || packId == 0x803 || (packId >= 0x805 && packId <= 0x806))
+    {
+        m_licenseMask = 1;
+        return;
+    }
+    m_licenseMask = licenseMask;
 }
 int DLCPack::getFileIndexAt(DLCManager::EDLCType type, const std::wstring& name, bool& found)
 {
     if (type == DLCManager::eDLCType_All)
         return 0;
     found = false;
-    int i;
-    for (i = 0; i < static_cast<int>(m_files[type].size()); ++i)
+    int index = 0;
+    for (std::vector<DLCFile*>::iterator file = m_files[type].begin(); file != m_files[type].end(); ++file)
     {
-        if (m_files[type][i]->getPath() == name)
+        if (name == (*file)->getPath())
         {
             found = true;
-            return i;
-        }
-    }
-    for (std::vector<DLCPack*>::iterator it = m_childPacks.begin(); it != m_childPacks.end(); ++it)
-    {
-        int index = (*it)->getFileIndexAt(type, name, found);
-        if (found)
             return index;
+        }
+        ++index;
+    }
+    if (!found)
+    {
+        for (std::vector<DLCPack*>::iterator child = m_childPacks.begin(); child != m_childPacks.end(); ++child)
+        {
+            int childIndex = (*child)->getFileIndexAt(type, name, found);
+            if (found)
+                return childIndex;
+        }
     }
     return 0;
 }

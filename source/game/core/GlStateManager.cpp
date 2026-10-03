@@ -380,12 +380,12 @@ void GlStateManager::scaled(double x, double y, double z)
 
 void GlStateManager::rotatef(float angle, float x, float y, float z)
 {
-    gRenderer->MatrixRotate(angle * 0.01745329238474369f, x, y, z);
+    gRenderer->MatrixRotate(angle * 0.017453292f, x, y, z);
 }
 
 void GlStateManager::rotated(double angle, double x, double y, double z)
 {
-    gRenderer->MatrixRotate((float)angle * 0.01745329238474369f, (float)x, (float)y, (float)z);
+    gRenderer->MatrixRotate((float)angle * 0.017453292f, (float)x, (float)y, (float)z);
 }
 
 void GlStateManager::perspective(float fieldOfView, float aspect, float nearDistance, float farDistance)

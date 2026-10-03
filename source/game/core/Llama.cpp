@@ -35,6 +35,7 @@
 #include "game/ui/EntityTooltipDataHolder.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/generation/Player.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/entity/mob/EntityEvent.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
@@ -54,11 +55,10 @@ Llama::LlamaDefendTargetGoal::~LlamaDefendTargetGoal() { }
 bool Llama::LlamaDefendTargetGoal::canUse()
 {
     boost::shared_ptr<LivingEntity> target = mTarget.lock();
-    if (NearestAttackableTargetGoal::canUse() && target != NULL && target->GetType() == EntityType::WOLF)
-    {
-        if (!boost::static_pointer_cast<Wolf>(target)->isTame())
-            return true;
-    }
+    if (NearestAttackableTargetGoal::canUse() && target != NULL && target->GetType() == EntityType::WOLF &&
+        !boost::static_pointer_cast<Wolf>(target)->isTame())
+        return true;
+    mMob->setTarget(boost::shared_ptr<LivingEntity>());
     return false;
 }
 double Llama::LlamaDefendTargetGoal::getFollowDistance() { return TargetGoal::getFollowDistance() * 0.25; }
@@ -71,10 +71,10 @@ Llama::LlamaHurtByTargetGoal::LlamaHurtByTargetGoal(Llama* llama)
 Llama::LlamaHurtByTargetGoal::~LlamaHurtByTargetGoal() { }
 bool Llama::LlamaHurtByTargetGoal::canContinueToUse()
 {
-    Llama* llama = static_cast<Llama*>(mMob);
-    if (llama->GetType() == EntityType::LLAMA && llama->mDidSpit)
+    const bool isLlama = mMob->GetType() == EntityType::LLAMA;
+    if (isLlama && static_cast<Llama*>(mMob)->mDidSpit)
     {
-        llama->setDidSpit(false);
+        static_cast<Llama*>(mMob)->setDidSpit(false);
         return false;
     }
 
@@ -220,7 +220,7 @@ void Llama::positionRider(const boost::shared_ptr<Entity>& passenger)
 
     if (!RiderPositionOverrides::OverridePosition(shared_from_this(), passenger))
     {
-        const float angle = mYBodyRot * 0.01745329238474369f;
+        const float angle = mYBodyRot * 0.017453292f;
         const float sin = Mth::sin(angle);
         const float cos = Mth::cos(angle);
         passenger->setPos(mX + 0.30000001192092896 * sin,
@@ -305,17 +305,15 @@ MobGroupData* Llama::finalizeMobSpawn(const DifficultyInstance& difficulty, MobG
 {
     MobGroupData* result = AbstractHorse::finalizeMobSpawn(difficulty, data, name);
     setRandomStrength();
-    LlamaGroupData* group = dynamic_cast<LlamaGroupData*>(result);
-    if (group == NULL)
+    if (dynamic_cast<LlamaGroupData*>(result) != NULL)
     {
-        int variant = getRandom()->nextInt(4);
-        group = new LlamaGroupData(variant);
-        result = group;
-        setVariant(variant);
+        setVariant(static_cast<LlamaGroupData*>(result)->mVariant);
     }
     else
     {
-        setVariant(group->mVariant);
+        int variant = mRandom->nextInt(4);
+        result = new LlamaGroupData(variant);
+        setVariant(variant);
     }
     return result;
 }
@@ -353,36 +351,33 @@ unsigned int Llama::GetInteractTooltip(const EntityTooltipDataHolder& tooltipDat
     if (!tooltipData.m_bAllowedToInteract)
         return IDS_NONE;
 
-    not_null_ptr<ItemInstance> item = tooltipData.m_pItemInstance;
-    unsigned int itemId = Item::getId(item->getItem());
+    unsigned int itemId = Item::getId(tooltipData.m_pItemInstance->getItem());
     bool food = itemId == BlockId::HAY_BLOCK || itemId == ItemId::WHEAT;
-    boost::shared_ptr<Player> player(tooltipData.m_pPlayer,
-                                     (Player*)tooltipData.m_pPlayer.get());
 
     if (itemId == ItemId::SPAWN_EGG)
     {
-        if (SpawnEggItem::fjGetType(item) == GetType())
+        if (SpawnEggItem::fjGetType(tooltipData.m_pItemInstance) == EntityType::LLAMA)
             return IDS_TOOLTIPS_PLACE;
-        if (isLeashedToPlayer(player))
+        if (isLeashedToPlayer(tooltipData.m_pPlayer))
             return IDS_TOOLTIPS_UNLEASH;
         return IDS_NONE;
     }
 
-    if (isLeashedToPlayer(player))
+    if (isLeashedToPlayer(tooltipData.m_pPlayer))
         return IDS_TOOLTIPS_UNLEASH;
 
     if (itemId == ItemId::LEAD)
     {
         if (!isLeashed())
             return IDS_TOOLTIPS_LEASH;
-        if (isTamed() && getPassengers()->empty())
+        if (getPassengers()->empty() && isTamed())
             return IDS_TOOLTIPS_MOUNT;
         return IDS_NONE;
     }
 
-    if (itemId == ItemId::NAME_TAG && (!player->isSneaking() || !isTamed()))
+    if (itemId == ItemId::NAME_TAG && (!tooltipData.m_pPlayer->isSneaking() || !isTamed()))
     {
-        if (item->hasCustomHoverName() && (!hasCustomName() || item->getHoverName() != getCustomName()))
+        if (tooltipData.m_pItemInstance->hasCustomHoverName() && (!hasCustomName() || !(tooltipData.m_pItemInstance->getHoverName() == getCustomName())))
             return IDS_TOOLTIPS_NAME;
         if (!isTamed() || !getPassengers()->empty())
             return IDS_NONE;
@@ -393,12 +388,12 @@ unsigned int Llama::GetInteractTooltip(const EntityTooltipDataHolder& tooltipDat
     {
         if (isTamed())
         {
-            if ((player->isSneaking() && (!isVehicle() || hasPassenger(player)) && isTamed())
+            if ((tooltipData.m_pPlayer->isSneaking() && (!isVehicle() || hasPassenger(tooltipData.m_pPlayer)) && isTamed())
                 || (itemId == ItemId::SADDLE && !isSaddled()))
                 return IDS_TOOLTIPS_OPEN;
             if (itemId == BlockId::CHEST && !hasChest())
                 return IDS_TOOLTIPS_ATTACH;
-            if (itemId == BlockId::HAY_BLOCK && !isInLove() && getPassengers()->empty() && !isBreedCoolingDown())
+            if (itemId == BlockId::HAY_BLOCK && !isInLove() && !isBaby() && getPassengers()->empty() && !isBreedCoolingDown())
                 return IDS_TOOLTIPS_LOVEMODE;
             if (food && getHealth() < getMaxHealth())
                 return IDS_TOOLTIPS_HEAL;
@@ -407,7 +402,7 @@ unsigned int Llama::GetInteractTooltip(const EntityTooltipDataHolder& tooltipDat
             return IDS_NONE;
         }
 
-        if (item->isEmpty() && getPassengers()->empty())
+        if (tooltipData.m_pItemInstance->isEmpty() && getPassengers()->empty())
             return IDS_TOOLTIPS_TAME;
     }
 
@@ -429,13 +424,10 @@ void Llama::setSwag(const DyeColor* color)
 
 void Llama::setSwagByItem(const not_null_ptr<ItemInstance>& item)
 {
-    if (item->isEmpty())
-    {
+    if (isArmor(item))
+        setSwag(DyeColor::byBlockData(item->getAuxValue()));
+    else
         setSwag(NULL);
-        return;
-    }
-
-    setSwag(DyeColor::byBlockData(item->getAuxValue()));
 }
 void Llama::updateEquipment()
 {
@@ -471,16 +463,13 @@ boost::shared_ptr<AgableMob> Llama::getBreedOffspring(boost::shared_ptr<AgableMo
     if (partnerStrength > maxStrength)
         maxStrength = partnerStrength;
 
-    int strength = getRandom()->nextInt(maxStrength);
+    int strength = mRandom->nextInt(maxStrength);
     int newStrength = strength + 1;
-    if (getRandom()->nextFloat() < 0.03f)
+    if (mRandom->nextFloat() < 0.03f)
         newStrength = strength + 2;
     baby->setStrength(newStrength);
 
-    if (getRandom()->nextBoolean())
-        baby->setVariant(getVariant());
-    else
-        baby->setVariant(llamaPartner->getVariant());
+    baby->setVariant(mRandom->nextBoolean() ? getVariant() : llamaPartner->getVariant());
 
     return baby;
 }

@@ -8,6 +8,7 @@
 #include "game/entity/ai/Goal.hpp"
 #include "game/entity/ai/NearestAttackableTargetGoal.hpp"
 
+class AttributeModifier;
 class Block;
 class BlockPos;
 class BlockState;
@@ -96,6 +97,7 @@ public:
     virtual ResourceLocation* getDefaultLootTable();
     virtual bool hurt(const DamageSource* source, float damage);
     static void create(Level* level);
+    static AttributeModifier* SPEED_MODIFIER_ATTACKING;
     virtual unsigned long long GetType();
 
 private:

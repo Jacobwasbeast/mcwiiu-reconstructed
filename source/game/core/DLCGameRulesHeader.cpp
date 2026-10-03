@@ -5,7 +5,7 @@
 
 
 DLCGameRulesHeader::DLCGameRulesHeader(const std::wstring& path)
-    : DLCFile(DLCManager::eDLCType_GameRulesHeader, path),
+    : DLCGameRules(DLCManager::eDLCType_GameRulesHeader, path),
       m_data(NULL),
       m_dataSize(0),
       m_ready(false),

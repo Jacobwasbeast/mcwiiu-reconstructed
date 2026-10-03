@@ -153,9 +153,9 @@ void Boat::defineSynchedData()
 
 AABB* Boat::getCollideAgainstBox(boost::shared_ptr<Entity> entity)
 {
-    if (!entity->isPushable(shared_from_this()))
-        return NULL;
-    return entity->mBoundingBox;
+    if (entity->isPushable(shared_from_this()))
+        return entity->mBoundingBox;
+    return NULL;
 }
 
 AABB* Boat::getCollideBox()
@@ -276,7 +276,8 @@ void Boat::onAboveBubbleCol(bool down)
 
 void Boat::push(boost::shared_ptr<Entity> entity)
 {
-    if (entity->GetType() == EntityType::BOAT)
+    const bool isBoat = entity->GetType() == EntityType::BOAT;
+    if (isBoat)
     {
         if (entity->mBoundingBox->mMinY < mBoundingBox->mMaxY)
             Entity::push(entity);
@@ -845,11 +846,13 @@ void Boat::positionRider(const boost::shared_ptr<Entity>& passenger)
 
     float offset = 0.0f;
     const float height = static_cast<float>((mRemoved ? 0.01f : getRideHeight()) + passenger->getRidingHeight());
-    std::vector<boost::weak_ptr<Entity> >* passengers = getPassengers();
-    if (passengers->size() > 1)
+    if (getPassengers()->size() > 1)
     {
-        offset = indexOf(*passengers, passenger) == 0 ? 0.2f : -0.6f;
-        if (Entity::instanceof(passenger, EntityType::ANIMAL))
+        if (indexOf(*getPassengers(), passenger) != 0)
+            offset = -0.6f;
+        else
+            offset = 0.2f;
+        if ((passenger->GetType() & EntityType::ANIMAL) == EntityType::ANIMAL)
             offset += 0.2f;
     }
 
@@ -859,11 +862,10 @@ void Boat::positionRider(const boost::shared_ptr<Entity>& passenger)
     passenger->setYHeadRot(passenger->getYHeadRot() + mDeltaRotation);
     clampRotation(passenger);
 
-    if (Entity::instanceof(passenger, EntityType::ANIMAL) && getPassengers()->size() > 1)
+    if ((passenger->GetType() & EntityType::ANIMAL) == EntityType::ANIMAL && getPassengers()->size() > 1)
     {
-        const float facing = passenger->getId() % 2 == 0 ? 90.0f : 270.0f;
-        boost::shared_ptr<Animal> animal = boost::static_pointer_cast<Animal>(passenger);
-        passenger->setYBodyRot(animal->mYBodyRot + facing);
+        const int facing = (passenger->getId() & 1) == 0 ? 90 : 270;
+        passenger->setYBodyRot(boost::static_pointer_cast<Animal>(passenger)->mYBodyRot + facing);
         passenger->setYHeadRot(passenger->getYHeadRot() + facing);
     }
 }

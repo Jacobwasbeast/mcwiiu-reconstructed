@@ -11,10 +11,13 @@
 #include "game/world/generation/MultiPlayerLevel.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 
+CompassAtlasSprite* CompassAtlasSprite::instance = NULL;
+
 CompassAtlasSprite::CompassAtlasSprite()
     : TextureAtlasSprite(L"compass", L"compass", 0.0f, 0.0f, 0.0f, 0.0f, 256.0f, 256.0f),
       mPlayerIndex(255), mParent(0), mAngle(0.0), mAngleDelta(0.0)
 {
+    instance = this;
 }
 
 CompassAtlasSprite::CompassAtlasSprite(int playerIndex, CompassAtlasSprite* parent)
@@ -25,7 +28,7 @@ CompassAtlasSprite::CompassAtlasSprite(int playerIndex, CompassAtlasSprite* pare
 
 void CompassAtlasSprite::updateFromPosition(Level* level, double x, double z, double yRot, bool noJitter, bool instant)
 {
-    const double pi = Mth::PI;
+    const double pi = 3.1415927f;
     double target = 0.0;
     if (level != NULL && !noJitter)
     {
@@ -54,27 +57,56 @@ void CompassAtlasSprite::updateFromPosition(Level* level, double x, double z, do
         {
             delta -= pi * 2.0;
         }
-        mAngleDelta = (Mth::clamp(delta, -1.0, 1.0) * 0.1 + mAngleDelta) * 0.8;
+        if (delta < -1.0)
+        {
+            delta = -1.0;
+        }
+        if (delta > 1.0)
+        {
+            delta = 1.0;
+        }
+        mAngleDelta = (delta * 0.1 + mAngleDelta) * 0.8;
         mAngle += mAngleDelta;
     }
 
-    CompassAtlasSprite* frameSource = mParent != NULL ? mParent : this;
-    unsigned int frameCount = frameSource->mFrames == NULL ? 0 : frameSource->mFrames->size();
-    int frame = static_cast<unsigned int>((mAngle / (pi * 2.0) + 1.0) * static_cast<double>(frameCount)) % frameCount;
-    if (frame != mFrame)
+    if (mParent == NULL)
     {
-        mFrame = frame;
-        frameSource->mSource->blit(mX, mY, frameSource->mFrames->at(frame), mRotated);
+        std::vector<Texture*>* frames = mFrames;
+        int frame = static_cast<int>((mAngle / (pi * 2.0) + 1.0) * static_cast<double>(static_cast<int>(frames->size()))) % frames->size();
+        while (frame < 0)
+        {
+            frame = (frame + static_cast<int>(frames->size())) % static_cast<int>(frames->size());
+        }
+        if (frame != mFrame)
+        {
+            mFrame = frame;
+            mSource->blit(mX, mY, frames->at(frame), mRotated);
+        }
+    }
+    else
+    {
+        std::vector<Texture*>* frames = mParent->mFrames;
+        int frame = static_cast<int>((mAngle / (pi * 2.0) + 1.0) * static_cast<double>(static_cast<int>(frames->size()))) % frames->size();
+        while (frame < 0)
+        {
+            frame = (frame + static_cast<int>(frames->size())) % static_cast<int>(frames->size());
+        }
+        if (frame != mFrame)
+        {
+            mFrame = frame;
+            mParent->mSource->blit(mX, mY, frames->at(frame), mRotated);
+        }
     }
 }
 
 void CompassAtlasSprite::cycleFrames()
 {
     Minecraft* minecraft = Minecraft::GetInstance();
-    if (mPlayerIndex < 4 && minecraft->mLevel != NULL && minecraft->mLocalPlayers[mPlayerIndex] != NULL)
+    if (mPlayerIndex < 4 && minecraft->mLevel != NULL && minecraft->mLocalPlayers[mPlayerIndex].get() != NULL)
     {
-        boost::shared_ptr<MultiplayerLocalPlayer> player = minecraft->mLocalPlayers[mPlayerIndex];
-        updateFromPosition(player->mLevel, player->mX, player->mZ, player->mYRot, false, false);
+        updateFromPosition(minecraft->mLocalPlayers[mPlayerIndex]->mLevel, minecraft->mLocalPlayers[mPlayerIndex]->mX,
+                           minecraft->mLocalPlayers[mPlayerIndex]->mZ, minecraft->mLocalPlayers[mPlayerIndex]->mYRot,
+                           false, false);
         return;
     }
     mFrame = 1;
@@ -83,12 +115,12 @@ void CompassAtlasSprite::cycleFrames()
 
 unsigned int CompassAtlasSprite::getSourceWidth() const
 {
-    return const_cast<CompassAtlasSprite*>(this)->getSource()->getWidth();
+    return mSource->getWidth();
 }
 
 unsigned int CompassAtlasSprite::getSourceHeight() const
 {
-    return const_cast<CompassAtlasSprite*>(this)->getSource()->getHeight();
+    return mSource->getHeight();
 }
 
 int CompassAtlasSprite::getFrames()

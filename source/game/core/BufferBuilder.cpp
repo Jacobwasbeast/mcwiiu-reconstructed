@@ -290,12 +290,12 @@ void BufferBuilder::tex2(int brightness)
 
 void BufferBuilder::normal(float x, float y, float z)
 {
-    int normalX = (int)(x * 127.0f);
-    int normalY = (int)(y * 127.0f);
-    int normalZ = (int)(z * 127.0f);
+    unsigned char normalX = (unsigned char)(x * 127.0f);
+    unsigned char normalY = (unsigned char)(y * 127.0f);
+    unsigned char normalZ = (unsigned char)(z * 127.0f);
 
     mHasNormal = true;
-    mNormal = (normalX & 0xFF) | ((normalY & 0xFF) << 8) | ((normalZ & 0xFF) << 16);
+    mNormal = normalX | (normalY << 8) | (normalZ << 16);
 }
 
 void BufferBuilder::boneIndex(int index)
@@ -460,8 +460,7 @@ void BufferBuilder::vertex(float x, float y, float z)
 
 void BufferBuilder::vertexDouble(double x, double y, double z)
 {
-    mBounds.addVert((float)x + mXOffset, (float)y + mYOffset, (float)z + mZOffset);
-    vertexNoBounds((float)x, (float)y, (float)z);
+    vertex((float)x, (float)y, (float)z);
 }
 
 void BufferBuilder::vertexUV(float x, float y, float z, float u, float v)
@@ -498,8 +497,6 @@ void BufferBuilder::blockRainQuad(float x0, float y0, float z0, float u0, float 
 
     int color0 = ((int)(red0 * 255.0f) << 24) | ((int)(green0 * 255.0f) << 16) | ((int)(blue0 * 255.0f) << 8) |
                  (int)(alpha0 * 255.0f);
-    int color1 = ((int)(red1 * 255.0f) << 24) | ((int)(green1 * 255.0f) << 16) | ((int)(blue1 * 255.0f) << 8) |
-                 (int)(alpha1 * 255.0f);
 
     mBounds.addVert(x0 + mXOffset, y0 + mYOffset, z0 + mZOffset);
     positions[0] = x0 + mXOffset;
@@ -518,6 +515,9 @@ void BufferBuilder::blockRainQuad(float x0, float y0, float z0, float u0, float 
     positions[12] = v1;
     vertexData[13] = color0;
     vertexData[15] = brightness;
+
+    int color1 = ((int)(red1 * 255.0f) << 24) | ((int)(green1 * 255.0f) << 16) | ((int)(blue1 * 255.0f) << 8) |
+                 (int)(alpha1 * 255.0f);
 
     mBounds.addVert(x2 + mXOffset, y2 + mYOffset, z2 + mZOffset);
     positions[16] = x2 + mXOffset;

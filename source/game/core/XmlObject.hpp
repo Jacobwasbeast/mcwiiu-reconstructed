@@ -36,8 +36,8 @@ public:
     std::vector<std::wstring> getAllValues(const std::wstring& name);
     std::vector<std::wstring> getValues(const std::wstring& name, const std::wstring& value);
     std::vector<XmlChild>& getChildren(const std::wstring& name);
-    const std::vector<XmlChild>& getChildrenRaw() const;
-    std::vector<std::pair<std::wstring, std::wstring> >& getAttrs();
+    const std::vector<XmlChild>& getChildrenRaw() const { return m_children; }
+    std::vector<std::pair<std::wstring, std::wstring> >& getAttrs() { return m_attrs; }
 
     std::wstring mName;
 

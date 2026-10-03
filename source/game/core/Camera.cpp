@@ -61,8 +61,8 @@ void Camera::prepare(boost::shared_ptr<Player> player, bool secondPass)
     }
 
     float side = (float)(secondPass ? -1 : 1);
-    float yaw = yRotation * 0.01745329238474369f;
-    float pitch = xRotation * 0.01745329238474369f;
+    float yaw = yRotation * 0.017453292f;
+    float pitch = xRotation * 0.017453292f;
 
     gCameraXOff = cosf(yaw) * side;
     gCameraZOff = sinf(yaw) * side;

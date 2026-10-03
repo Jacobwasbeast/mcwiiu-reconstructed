@@ -1,9 +1,11 @@
 #ifndef GAME_CORE_BODYCONTROL_HPP
 #define GAME_CORE_BODYCONTROL_HPP
 
+#include "game/entity/ai/Control.hpp"
+
 class LivingEntity;
 
-class BodyControl
+class BodyControl : public Control
 {
 public:
     BodyControl(LivingEntity* mob);

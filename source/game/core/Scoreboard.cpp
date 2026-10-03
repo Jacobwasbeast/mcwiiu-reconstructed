@@ -135,7 +135,7 @@ void Scoreboard::removePlayerFromTeam(PlayerUID uid, PlayerTeam* pTeam)
 
 std::vector<PlayerTeam*>* Scoreboard::getPlayerTeams()
 {
-    std::vector<PlayerTeam*>* pTeams = new std::vector<PlayerTeam*>();
+    std::vector<PlayerTeam*>* pTeams = new std::vector<PlayerTeam*>;
     pTeams->reserve(mTeamsByName.size());
 
     for (boost::unordered_map<std::wstring, PlayerTeam*>::iterator team = mTeamsByName.begin(); team != mTeamsByName.end(); ++team)
@@ -163,7 +163,8 @@ PlayerTeam* Scoreboard::getTeamByIndex(int index) const
 
 boost::shared_ptr<ServerPlayer> Scoreboard::getPlayer(PlayerUID uid)
 {
-    return gMinecraftServer->getPlayers()->getPlayer(uid);
+    boost::shared_ptr<ServerPlayer> player = gMinecraftServer->getPlayers()->getPlayer(uid);
+    return player;
 }
 
 void Scoreboard::onTeamAdded(PlayerTeam* pTeam)
@@ -184,36 +185,44 @@ void Scoreboard::syncTeamChanges(PlayerTeam* pTeam)
 
 Scoreboard::EDamageSource Scoreboard::GetDamageSource(const DamageSource* pSource)
 {
+    EDamageSource source;
+
     if (pSource->isExplosion())
-        return DAMAGE_SOURCE_EXPLOSION;
-    if (pSource->equals(DamageSource::IN_FIRE) || pSource->equals(DamageSource::ON_FIRE))
-        return DAMAGE_SOURCE_FIRE;
-    if (pSource->equals(DamageSource::LAVA))
-        return DAMAGE_SOURCE_LAVA;
-    if (pSource->equals(DamageSource::DROWN))
-        return DAMAGE_SOURCE_DROWN;
-    if (pSource->equals(DamageSource::STARVE))
-        return DAMAGE_SOURCE_STARVE;
-    if (pSource->equals(DamageSource::CACTUS))
-        return DAMAGE_SOURCE_CACTUS;
-    if (pSource->equals(DamageSource::FALL) || pSource->equals(DamageSource::OUT_OF_WORLD)
-        || pSource->equals(DamageSource::CREATIVE_PLAYER))
-        return DAMAGE_SOURCE_FALL;
-    if (pSource->equals(DamageSource::THORNS))
-        return DAMAGE_SOURCE_THORNS;
-    if (pSource == DamageSource::POISON)
-        return DAMAGE_SOURCE_POISON;
-    if (pSource == DamageSource::INSTANT_DAMAGE)
-        return DAMAGE_SOURCE_HARM;
-    if (pSource->equals(DamageSource::MAGIC))
-        return DAMAGE_SOURCE_MAGIC;
-    if (pSource->equals(DamageSource::ARROW))
-        return DAMAGE_SOURCE_ARROW;
-    if (pSource->equals(DamageSource::FLY_INTO_WALL))
-        return DAMAGE_SOURCE_FLY_INTO_WALL;
-    if (pSource->getEntity())
-        return DAMAGE_SOURCE_MELEE;
-    return DAMAGE_SOURCE_UNKNOWN;
+        source = DAMAGE_SOURCE_EXPLOSION;
+    else if (pSource->equals(DamageSource::IN_FIRE) || pSource->equals(DamageSource::ON_FIRE))
+        source = DAMAGE_SOURCE_FIRE;
+    else if (pSource->equals(DamageSource::LAVA))
+        source = DAMAGE_SOURCE_LAVA;
+    else if (pSource->equals(DamageSource::DROWN))
+        source = DAMAGE_SOURCE_DROWN;
+    else if (pSource->equals(DamageSource::STARVE))
+        source = DAMAGE_SOURCE_STARVE;
+    else if (pSource->equals(DamageSource::CACTUS))
+        source = DAMAGE_SOURCE_CACTUS;
+    else if (pSource->equals(DamageSource::FALL) || pSource->equals(DamageSource::OUT_OF_WORLD)
+             || pSource->equals(DamageSource::CREATIVE_PLAYER))
+        source = DAMAGE_SOURCE_FALL;
+    else if (pSource->equals(DamageSource::THORNS))
+        source = DAMAGE_SOURCE_THORNS;
+    else if (pSource == DamageSource::POISON)
+        source = DAMAGE_SOURCE_POISON;
+    else if (pSource == DamageSource::INSTANT_DAMAGE)
+        source = DAMAGE_SOURCE_HARM;
+    else if (pSource->equals(DamageSource::MAGIC))
+        source = DAMAGE_SOURCE_MAGIC;
+    else if (pSource->equals(DamageSource::ARROW))
+        source = DAMAGE_SOURCE_ARROW;
+    else if (pSource->equals(DamageSource::FLY_INTO_WALL))
+        source = DAMAGE_SOURCE_FLY_INTO_WALL;
+    else
+    {
+        source = DAMAGE_SOURCE_UNKNOWN;
+
+        if (pSource->getEntity())
+            source = DAMAGE_SOURCE_MELEE;
+    }
+
+    return source;
 }
 
 Potion* Scoreboard::GetPotionByDamageSource(EDamageSource damageSource)
@@ -267,28 +276,27 @@ Item* Scoreboard::Weapon::GetItem() const
 not_null_ptr<ItemInstance> Scoreboard::Weapon::GetItemInstance() const
 {
     Item* pItem = Item::byId(mItemId);
+    Potion* pPotion;
 
     if (pItem == NULL || dynamic_cast<PotionItem*>(pItem) == NULL || mPotionId < 0
-        || Potion::byId(mPotionId) == NULL)
+        || (pPotion = Potion::byId(mPotionId)) == NULL)
     {
         return not_null_ptr<ItemInstance>(new ItemInstance(pItem, 1));
     }
 
-    not_null_ptr<ItemInstance> instance(new ItemInstance(pItem));
-    return PotionUtils::setPotion(instance, Potion::byId(mPotionId));
+    return PotionUtils::setPotion(not_null_ptr<ItemInstance>(new ItemInstance(pItem)), pPotion);
 }
 
 Scoreboard::PlayerStats::PlayerStats()
-    : PlayerUID(0)
 {
-    setRecordSUID(StatsUID::EMPTY_SUID());
+    static_cast<StatsUID&>(*this) = StatsUID::EMPTY_SUID();
     mName = L"";
     mMedal = NULL;
     mRoundStats = RoundStatsMap();
 }
 
 Scoreboard::PlayerStats::PlayerStats(const PlayerStats& other)
-    : PlayerUID(other)
+    : StatsUID(other)
     , mName(other.mName)
     , mMedal(other.mMedal)
     , mFavouriteWeapon(other.mFavouriteWeapon)
@@ -299,12 +307,12 @@ Scoreboard::PlayerStats::PlayerStats(const PlayerStats& other)
 
 StatsUID Scoreboard::PlayerStats::getRecordSUID()
 {
-    return StatsUID(*this);
+    return *this;
 }
 
 void Scoreboard::PlayerStats::setRecordSUID(const StatsUID& suid)
 {
-    PlayerUID::operator=(suid);
+    StatsUID::operator=(suid);
 }
 
 std::wstring Scoreboard::PlayerStats::getRecord(eStringArgIndex index, int round, int life)
@@ -318,7 +326,7 @@ std::wstring Scoreboard::PlayerStats::getRecord(eStringArgIndex index, int round
 
     if (index == eStringArg_KillerName)
     {
-        if (!roundStats.mPerLife.empty() && (unsigned int)life < roundStats.mPerLife.size())
+        if ((unsigned int)life < roundStats.mPerLife.size())
         {
             return roundStats.mPerLife[life].mKillerName;
         }
@@ -355,23 +363,18 @@ float Scoreboard::PlayerStats::getRecord(eFloatArgIndex index, int round)
 {
     _RoundStats& roundStats = mRoundStats[round];
 
-    if (index == eFloatArg_DistanceTravelled)
+    switch (index)
     {
+    case eFloatArg_DistanceTravelled:
         return (float)roundStats.mDistanceTravelled;
-    }
 
-    if (index == eFloatArg_LongestShot)
-    {
+    case eFloatArg_LongestShot:
         return (float)roundStats.mLongestShot;
-    }
 
-    if (index < eFloatArg_BestTime)
-    {
+    case eFloatArg_FallDistance:
         return (float)roundStats.mFallDistance;
-    }
 
-    if (index == eFloatArg_BestTime)
-    {
+    case eFloatArg_BestTime:
         return (float)roundStats.mBestTime;
     }
 
@@ -518,13 +521,15 @@ void Scoreboard::PlayerStats::setRecord(eStringArgIndex index, int round, int li
 {
     _RoundStats& roundStats = mRoundStats[round];
 
-    if (index == eStringArg_PlayerName)
+    switch (index)
     {
+    case eStringArg_PlayerName:
         mName = value;
-    }
-    else if (index == eStringArg_KillerName)
-    {
+        break;
+
+    case eStringArg_KillerName:
         roundStats.mPerLife[life].mKillerName = value;
+        break;
     }
 }
 
@@ -532,17 +537,19 @@ void Scoreboard::PlayerStats::setRecord(eBoolArgIndex index, int round, bool val
 {
     _RoundStats& roundStats = mRoundStats[round];
 
-    if (index == eBoolArg_Active)
+    switch (index)
     {
+    case eBoolArg_Active:
         roundStats.mActive = value;
-    }
-    else if (index == eBoolArg_Finished)
-    {
+        break;
+
+    case eBoolArg_Finished:
         roundStats.mFinished = value;
-    }
-    else if (index == eBoolArg_Winner)
-    {
+        break;
+
+    case eBoolArg_Winner:
         roundStats.mWinner = value;
+        break;
     }
 }
 
@@ -550,21 +557,23 @@ void Scoreboard::PlayerStats::setRecord(eFloatArgIndex index, int round, float v
 {
     _RoundStats& roundStats = mRoundStats[round];
 
-    if (index == eFloatArg_DistanceTravelled)
+    switch (index)
     {
+    case eFloatArg_DistanceTravelled:
         roundStats.mDistanceTravelled = value;
-    }
-    else if (index == eFloatArg_LongestShot)
-    {
+        break;
+
+    case eFloatArg_LongestShot:
         roundStats.mLongestShot = value;
-    }
-    else if (index < eFloatArg_BestTime)
-    {
+        break;
+
+    case eFloatArg_FallDistance:
         roundStats.mFallDistance = value;
-    }
-    else if (index == eFloatArg_BestTime)
-    {
+        break;
+
+    case eFloatArg_BestTime:
         roundStats.mBestTime = value;
+        break;
     }
 }
 
@@ -815,13 +824,13 @@ void Scoreboard::PlayerStats::updateFromOtherStats(PlayerStats* pOther, int roun
 
         _RoundStats& roundStats = mRoundStats[round];
 
-        if (roundStats.mPerLife.empty() || roundStats.mPerLife.size() <= (unsigned int)life)
+        if (roundStats.mPerLife.size() <= (unsigned int)life)
         {
             int missing = (int)mRoundStats[round].mPerLife.size() - life + 1;
 
             for (int i = 0; i < missing; i++)
             {
-                mRoundStats[round].mPerLife.push_back(_PerLife());
+                mRoundStats[round].mPerLife.push_back(_RoundStats::_PerLife());
             }
         }
 
@@ -868,15 +877,15 @@ void Scoreboard::PlayerStats::readRecord(DataInputStream* pInput, int record, in
         return;
     }
 
-    _RoundStats& roundStats = mRoundStats[round];
+    std::vector<_RoundStats::_PerLife>& perLife = mRoundStats[round].mPerLife;
 
-    if (roundStats.mPerLife.empty() || roundStats.mPerLife.size() <= (unsigned int)life)
+    if (perLife.size() <= (unsigned int)life)
     {
         int missing = life - (int)mRoundStats[round].mPerLife.size() + 1;
 
         for (int i = 0; i < missing; i++)
         {
-            mRoundStats[round].mPerLife.push_back(_PerLife());
+            mRoundStats[round].mPerLife.push_back(_RoundStats::_PerLife());
         }
     }
 

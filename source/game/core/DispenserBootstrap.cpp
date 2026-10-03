@@ -5,6 +5,9 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include "game/client/audio/SoundEvents.hpp"
+#include "game/client/audio/SoundSource.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/Direction.hpp"
 #include "game/core/DyeColor.hpp"
@@ -143,11 +146,11 @@ void DispenserBootstrap::StaticCtor()
         }
         virtual double getUncertainty()
         {
-            return AbstractProjectileDispenseBehavior::getUncertainty() * 0.5;
+            return AbstractProjectileDispenseBehavior::getUncertainty() * 0.5F;
         }
         virtual double getPower()
         {
-            return AbstractProjectileDispenseBehavior::getPower() * 1.25;
+            return AbstractProjectileDispenseBehavior::getPower() * 1.25F;
         }
     };
     class ThrownPotionDispenseBehavior : public AbstractProjectileDispenseBehavior
@@ -162,11 +165,11 @@ void DispenserBootstrap::StaticCtor()
         }
         virtual double getUncertainty()
         {
-            return AbstractProjectileDispenseBehavior::getUncertainty() * 0.5;
+            return AbstractProjectileDispenseBehavior::getUncertainty() * 0.5F;
         }
         virtual double getPower()
         {
-            return AbstractProjectileDispenseBehavior::getPower() * 1.25;
+            return AbstractProjectileDispenseBehavior::getPower() * 1.25F;
         }
     };
     class PotionDispenseBehavior : public DispenseItemBehavior
@@ -219,9 +222,9 @@ void DispenserBootstrap::StaticCtor()
                         mob->setCustomName(item->getHoverName(), item->getOwnerUUID(), item->wasCreatedByRestrictedPlayer());
                     }
                 }
+                outcome = eOUTCOME_Success;
                 SpawnEggItem::updateCustomEntityTag(level, boost::shared_ptr<Player>(), item, entity);
                 item->shrink(1);
-                outcome = eOUTCOME_Success;
                 return item;
             }
             outcome = eOUTCOME_Failure;
@@ -249,9 +252,9 @@ void DispenserBootstrap::StaticCtor()
             boost::shared_ptr<FireworksRocketEntity> rocket(new FireworksRocketEntity(
                 level, x, y, z, direction->getStepX(), direction->getStepY(), direction->getStepZ(), item, true,
                 boost::shared_ptr<Player>()));
-            level->addEntity(rocket);
-            item->shrink(1);
+            source->getWorld()->addEntity(rocket);
             outcome = eOUTCOME_Success;
+            item->shrink(1);
             return item;
         }
         virtual void playSound(BlockSource* source, eOUTCOME outcome)
@@ -269,11 +272,12 @@ void DispenserBootstrap::StaticCtor()
         virtual not_null_ptr<ItemInstance> execute(BlockSource* source, not_null_ptr<ItemInstance> item, eOUTCOME& outcome)
         {
             Level* level = source->getWorld();
-            if (level->countInstanceOf(EntityType::SMALL_FIREBALL, false, NULL, NULL) >= 200)
+            if (static_cast<unsigned int>(level->countInstanceOf(EntityType::SMALL_FIREBALL, true, NULL, NULL)) >= 200)
             {
                 outcome = eOUTCOME_Failure;
                 return item;
             }
+            outcome = eOUTCOME_Success;
             const Direction* direction = source->getBlockState()->getValue(DispenserBlock::FACING);
             Position* position = DispenserBlock::getDispensePosition(source);
             double x = position->getX() + (double)((float)direction->getStepX() * 0.3f);
@@ -284,10 +288,8 @@ void DispenserBootstrap::StaticCtor()
             double xd = random->nextGaussian() * 0.05 + direction->getStepX();
             double yd = random->nextGaussian() * 0.05 + direction->getStepY();
             double zd = random->nextGaussian() * 0.05 + direction->getStepZ();
-            boost::shared_ptr<SmallFireball> fireball(new SmallFireball(level, x, y, z, xd, yd, zd));
-            level->addEntity(fireball);
+            level->addEntity(boost::shared_ptr<SmallFireball>(new SmallFireball(level, x, y, z, xd, yd, zd)));
             item->shrink(1);
-            outcome = eOUTCOME_Success;
             return item;
         }
         virtual void playSound(BlockSource* source, eOUTCOME outcome)
@@ -304,15 +306,18 @@ void DispenserBootstrap::StaticCtor()
         }
         virtual not_null_ptr<ItemInstance> execute(BlockSource* source, not_null_ptr<ItemInstance> item, eOUTCOME& outcome)
         {
-            Level* level = source->getWorld();
             const Direction* direction = source->getBlockState()->getValue(DispenserBlock::FACING);
+            BucketItem* bucket = static_cast<BucketItem*>(item->getItem());
             BlockPos position = source->getPos().relative(direction);
-            boost::shared_ptr<Player> player = level->getNearestPlayer(source->getX(), source->getY(), source->getZ(), 128.0, false, -1.0);
-            if (!static_cast<BucketItem*>(item->getItem())->emptyBucket(player, level, position, item))
-                return DefaultDispenseItemBehavior::dispense(source, item);
+            boost::shared_ptr<Player> player = source->getWorld()->getNearestPlayer(static_cast<double>(source->getPos().x), static_cast<double>(source->getPos().y), static_cast<double>(source->getPos().z), 128.0, false, -1.0);
+            if (!bucket->emptyBucket(player, source->getWorld(), position, item))
+                return mDefaultDispenseItemBehavior.dispense(source, item);
             outcome = eOUTCOME_Success;
             return not_null_ptr<ItemInstance>(new ItemInstance(Items::bucket));
         }
+
+    private:
+        DefaultDispenseItemBehavior mDefaultDispenseItemBehavior;
     };
     class EmptyBucketDispenseBehavior : public DefaultDispenseItemBehavior
     {
@@ -326,19 +331,36 @@ void DispenserBootstrap::StaticCtor()
             const Direction* direction = source->getBlockState()->getValue(DispenserBlock::FACING);
             BlockPos position = source->getPos().relative(direction);
             const BlockState* state = level->getBlockState(position);
-            Item* filled = NULL;
-            if (state->getMaterial() == Material::WATER && state->getValue(LiquidBlock::LEVEL) == 0) filled = Items::waterBucket;
-            else if (state->getMaterial() == Material::LAVA && state->getValue(LiquidBlock::LEVEL) == 0) filled = Items::lavaBucket;
+            Block* block = state->getBlock();
+            bool extraLayer = false;
+            if (!block->isLiquidBlock())
+            {
+                extraLayer = true;
+                state = level->getExtraBlockState(position);
+                block = state->getBlock();
+            }
+            Material* material = block->mMaterial;
+            Item* filled;
+            if (material == Material::WATER && block->isLiquidBlock() && state->getValue(LiquidBlock::LEVEL) == 0) filled = Items::waterBucket;
+            else if (material == Material::LAVA && block->isLiquidBlock() && state->getValue(LiquidBlock::LEVEL) == 0) filled = Items::lavaBucket;
             else return DefaultDispenseItemBehavior::execute(source, item, outcome);
-            level->setBlock(position, Blocks::air->defaultBlockState(), Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false);
+            if (extraLayer) level->setExtraBlock(position, Blocks::air->defaultBlockState(), Block::UPDATE_ALL, false);
+            else level->removeBlock(position);
             item->shrink(1);
-            not_null_ptr<ItemInstance> result(new ItemInstance(filled));
-            outcome = eOUTCOME_Success;
-            if (item->isEmpty()) return result;
-            boost::shared_ptr<DispenserBlockEntity> dispenser = boost::static_pointer_cast<DispenserBlockEntity>(source->getEntity());
-            if (dispenser->addItem(result) < 0) DefaultDispenseItemBehavior::dispense(source, result);
+            if (item->isEmpty()) return not_null_ptr<ItemInstance>(new ItemInstance(filled));
+            bool full;
+            {
+                boost::shared_ptr<BlockEntity> blockEntity = source->getEntity();
+                boost::shared_ptr<DispenserBlockEntity> dispenser = boost::static_pointer_cast<DispenserBlockEntity>(blockEntity);
+                full = dispenser->addItem(not_null_ptr<ItemInstance>(new ItemInstance(filled))) < 0;
+            }
+            if (!full) outcome = eOUTCOME_Success;
+            else mDefaultDispenseItemBehavior.dispense(source, not_null_ptr<ItemInstance>(new ItemInstance(filled)));
             return item;
         }
+
+    private:
+        DefaultDispenseItemBehavior mDefaultDispenseItemBehavior;
     };
     class FlintAndSteelDispenseBehavior : public OptionalDispenseItemBehavior
     {
@@ -349,8 +371,8 @@ void DispenserBootstrap::StaticCtor()
         virtual not_null_ptr<ItemInstance> execute(BlockSource* source, not_null_ptr<ItemInstance> item, eOUTCOME& outcome)
         {
             Level* level = source->getWorld();
-            const Direction* direction = source->getBlockState()->getValue(DispenserBlock::FACING);
-            BlockPos position = source->getPos().relative(direction);
+            outcome = eOUTCOME_Success;
+            BlockPos position = source->getPos().relative(source->getBlockState()->getValue(DispenserBlock::FACING));
             if (level->isEmptyBlock(position))
             {
                 level->setBlockAndUpdate(position, Blocks::fire->defaultBlockState());
@@ -358,9 +380,7 @@ void DispenserBootstrap::StaticCtor()
             }
             else if (level->getBlockState(position)->getBlock() == Blocks::tnt)
             {
-                TypedBoxed<bool> explode(true);
-                const BlockState* state = Blocks::tnt->defaultBlockState()->setBoxedValue(TntBlock::EXPLODE, &explode);
-                Blocks::tnt->onPlace(level, position, state);
+                Blocks::tnt->destroy(level, position, Blocks::tnt->defaultBlockState()->setValue(TntBlock::EXPLODE, true));
                 level->removeBlock(position);
             } else outcome = eOUTCOME_Failure;
             return item;
@@ -375,16 +395,19 @@ void DispenserBootstrap::StaticCtor()
         virtual not_null_ptr<ItemInstance> execute(BlockSource* source, not_null_ptr<ItemInstance> item, eOUTCOME& outcome)
         {
             outcome = eOUTCOME_Success;
-            if (DyeColor::byItemData(item->getAuxValue()) != DyeColor::WHITE)
-                return DefaultDispenseItemBehavior::execute(source, item, outcome);
-            Level* level = source->getWorld();
-            const Direction* direction = source->getBlockState()->getValue(DispenserBlock::FACING);
-            BlockPos position = source->getPos().relative(direction);
-            if (DyeItem::growCrop(item, level, position, false))
+            if (DyeColor::byItemData(item->getAuxValue()) == DyeColor::WHITE)
             {
-                if (!level->mIsClientSide) level->levelEvent(LevelEvent::PARTICLES_PLANT_GROWTH, position, 0);
-            } else outcome = eOUTCOME_Failure;
-            return item;
+                Level* level = source->getWorld();
+                const Direction* direction = source->getBlockState()->getValue(DispenserBlock::FACING);
+                BlockPos position = source->getPos().relative(direction);
+                if (DyeItem::growCrop(item, level, position, false))
+                {
+                    if (!level->mIsClientSide) level->levelEvent(LevelEvent::PARTICLES_PLANT_GROWTH, position, 0);
+                    outcome = eOUTCOME_Success;
+                } else outcome = eOUTCOME_Failure;
+                return item;
+            }
+            return DefaultDispenseItemBehavior::execute(source, item, outcome);
         }
     };
     class TntDispenseBehavior : public DefaultDispenseItemBehavior
@@ -396,17 +419,21 @@ void DispenserBootstrap::StaticCtor()
         virtual not_null_ptr<ItemInstance> execute(BlockSource* source, not_null_ptr<ItemInstance> item, eOUTCOME& outcome)
         {
             Level* level = source->getWorld();
-            if (!level->newPrimedTntAllowed() || !g_pApp->GetGameHostOption(eGameHostOption_TNT))
+            if (level->newPrimedTntAllowed() && gApp.GetGameHostOption(eGameHostOption_TNT))
+            {
+                const Direction* direction = source->getBlockState()->getValue(DispenserBlock::FACING);
+                BlockPos position = source->getPos().relative(direction);
+                boost::shared_ptr<PrimedTnt> tnt(new PrimedTnt(level, position.x + 0.5, position.y, position.z + 0.5, boost::shared_ptr<LivingEntity>()));
+                level->addEntity(tnt);
+                level->playSound(boost::shared_ptr<Player>(), tnt->mX, tnt->mY, tnt->mZ, SoundEvents::TNT_PRIMED,
+                                 SoundSource::eSoundSource_Blocks, 1.0f, 1.0f, 16.0f);
+                outcome = eOUTCOME_Success;
+                item->shrink(1);
+            }
+            else
             {
                 outcome = eOUTCOME_Failure;
-                return item;
             }
-            const Direction* direction = source->getBlockState()->getValue(DispenserBlock::FACING);
-            BlockPos position = source->getPos().relative(direction);
-            boost::shared_ptr<PrimedTnt> tnt(new PrimedTnt(level, position.x + 0.5, position.y, position.z + 0.5, boost::shared_ptr<LivingEntity>()));
-            level->addEntity(tnt);
-            item->shrink(1);
-            outcome = eOUTCOME_Success;
             return item;
         }
     };
@@ -426,10 +453,10 @@ void DispenserBootstrap::StaticCtor()
             {
                 if (!level->mIsClientSide)
                 {
-                    TypedBoxed<const Direction*> facing(Direction::UP);
-                    level->setBlock(position, block->defaultBlockState()->setBoxedValue(SkullBlock::FACING, &facing), Block::UPDATE_ALL, false);
+                    level->setBlock(position, block->defaultBlockState()->setValue(SkullBlock::FACING, Direction::UP), Block::UPDATE_ALL, false);
                     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(position);
-                    if (blockEntity != NULL && blockEntity->GetType() == BlockEntityType::SKULL)
+                    bool isSkull = blockEntity->GetType() == BlockEntityType::SKULL;
+                    if (isSkull)
                     {
                         boost::shared_ptr<SkullBlockEntity> skull = boost::static_pointer_cast<SkullBlockEntity>(blockEntity);
                         skull->setSkullType(item->getAuxValue(), L"");
@@ -466,15 +493,22 @@ void DispenserBootstrap::StaticCtor()
                     level->setBlock(position, block->defaultBlockState(), Block::UPDATE_ALL, false);
                 item->shrink(1);
             }
-            else if (ArmorItem::dispenseArmor(source, item, outcome)->isEmpty())
+            else
             {
-                DefaultDispenseItemBehavior::execute(source, item, outcome);
+                not_null_ptr<ItemInstance> armor = ArmorItem::dispenseArmor(source, item, outcome);
+                if (armor->isEmpty())
+                {
+                    DefaultDispenseItemBehavior::execute(source, item, outcome);
+                }
             }
             return item;
         }
         virtual void playSound(BlockSource* source, eOUTCOME outcome)
         {
-            source->getWorld()->levelEvent(outcome == eOUTCOME_Success ? LevelEvent::SOUND_DISPENSER_DISPENSE : LevelEvent::SOUND_DISPENSER_FAIL, source->getPos(), 0);
+            if (outcome == eOUTCOME_Success)
+                source->getWorld()->levelEvent(LevelEvent::SOUND_DISPENSER_DISPENSE, source->getPos(), 0);
+            else
+                source->getWorld()->levelEvent(LevelEvent::SOUND_DISPENSER_FAIL, source->getPos(), 0);
         }
     };
 
@@ -485,9 +519,8 @@ void DispenserBootstrap::StaticCtor()
     DispenserBlock::DISPENSER_REGISTRY.add(Items::egg, new EggDispenseBehavior());
     DispenserBlock::DISPENSER_REGISTRY.add(Items::snowball, new SnowballDispenseBehavior());
     DispenserBlock::DISPENSER_REGISTRY.add(Items::experienceBottle, new ExpBottleDispenseBehavior());
-    ThrownPotionDispenseBehavior* thrownPotion = new ThrownPotionDispenseBehavior();
-    DispenserBlock::DISPENSER_REGISTRY.add(Items::splashPotion, thrownPotion);
-    DispenserBlock::DISPENSER_REGISTRY.add(Items::lingeringPotion, thrownPotion);
+    DispenserBlock::DISPENSER_REGISTRY.add(Items::splashPotion, new ThrownPotionDispenseBehavior());
+    DispenserBlock::DISPENSER_REGISTRY.add(Items::lingeringPotion, new ThrownPotionDispenseBehavior());
     DispenserBlock::DISPENSER_REGISTRY.add(Items::potion, new PotionDispenseBehavior());
     DispenserBlock::DISPENSER_REGISTRY.add(Items::spawnEgg, new SpawnEggDispenseBehavior());
     DispenserBlock::DISPENSER_REGISTRY.add(Items::fireworks, new FireworksDispenseBehavior());
@@ -498,22 +531,20 @@ void DispenserBootstrap::StaticCtor()
     DispenserBlock::DISPENSER_REGISTRY.add(Items::jungleBoat, new BoatDispenseBehavior(Boat::JUNGLE));
     DispenserBlock::DISPENSER_REGISTRY.add(Items::darkOakBoat, new BoatDispenseBehavior(Boat::DARK_OAK));
     DispenserBlock::DISPENSER_REGISTRY.add(Items::acaciaBoat, new BoatDispenseBehavior(Boat::ACACIA));
-    FilledBucketDispenseBehavior* filled = new FilledBucketDispenseBehavior();
-    DispenserBlock::DISPENSER_REGISTRY.add(Items::waterBucket, filled);
-    DispenserBlock::DISPENSER_REGISTRY.add(Items::lavaBucket, filled);
-    DispenserBlock::DISPENSER_REGISTRY.add(Items::fishBucket, filled);
-    DispenserBlock::DISPENSER_REGISTRY.add(Items::salmonBucket, filled);
-    DispenserBlock::DISPENSER_REGISTRY.add(Items::tropicalBucket, filled);
-    DispenserBlock::DISPENSER_REGISTRY.add(Items::pufferBucket, filled);
+    DispenserBlock::DISPENSER_REGISTRY.add(Items::lavaBucket, new FilledBucketDispenseBehavior());
+    DispenserBlock::DISPENSER_REGISTRY.add(Items::waterBucket, new FilledBucketDispenseBehavior());
+    DispenserBlock::DISPENSER_REGISTRY.add(Items::fishBucket, new FilledBucketDispenseBehavior());
+    DispenserBlock::DISPENSER_REGISTRY.add(Items::pufferBucket, new FilledBucketDispenseBehavior());
+    DispenserBlock::DISPENSER_REGISTRY.add(Items::salmonBucket, new FilledBucketDispenseBehavior());
+    DispenserBlock::DISPENSER_REGISTRY.add(Items::tropicalBucket, new FilledBucketDispenseBehavior());
     DispenserBlock::DISPENSER_REGISTRY.add(Items::bucket, new EmptyBucketDispenseBehavior());
     DispenserBlock::DISPENSER_REGISTRY.add(Items::flintAndSteel, new FlintAndSteelDispenseBehavior());
     DispenserBlock::DISPENSER_REGISTRY.add(Items::dye, new DyeDispenseBehavior());
     DispenserBlock::DISPENSER_REGISTRY.add(Item::byBlock(Blocks::tnt), new TntDispenseBehavior());
     DispenserBlock::DISPENSER_REGISTRY.add(Items::skull, new SkullDispenseBehavior());
-    PumpkinDispenseBehavior* pumpkin = new PumpkinDispenseBehavior();
-    DispenserBlock::DISPENSER_REGISTRY.add(Item::byBlock(Blocks::pumpkin), pumpkin);
-    DispenserBlock::DISPENSER_REGISTRY.add(Item::byBlock(Blocks::carved_pumpkin), pumpkin);
-    DispenserBlock::DISPENSER_REGISTRY.add(Item::byBlock(Blocks::lit_pumpkin), pumpkin);
+    DispenserBlock::DISPENSER_REGISTRY.add(Item::byBlock(Blocks::pumpkin), new PumpkinDispenseBehavior());
+    DispenserBlock::DISPENSER_REGISTRY.add(Item::byBlock(Blocks::carved_pumpkin), new PumpkinDispenseBehavior());
+    DispenserBlock::DISPENSER_REGISTRY.add(Item::byBlock(Blocks::lit_pumpkin), new PumpkinDispenseBehavior());
     for (std::vector<const DyeColor*>::iterator it = DyeColor::COLORS.begin();
          it != DyeColor::COLORS.end(); ++it)
     {
@@ -532,25 +563,34 @@ DispenserBootstrap::BoatDispenseBehavior::~BoatDispenseBehavior()
 
 not_null_ptr<ItemInstance> DispenserBootstrap::BoatDispenseBehavior::execute(BlockSource* source, not_null_ptr<ItemInstance> item, eOUTCOME& outcome)
 {
-    Level* level = source->getWorld();
     const Direction* direction = source->getBlockState()->getValue(DispenserBlock::FACING);
-    double x = source->getX() + direction->getStepX() * 1.125;
-    double y = source->getY() + direction->getStepY() * 1.125;
-    double z = source->getZ() + direction->getStepZ() * 1.125;
+    Level* level = source->getWorld();
+    double x = source->getX() + direction->getStepX() * 1.125F;
+    double y = source->getY() + direction->getStepY() * 1.125F;
+    double z = source->getZ() + direction->getStepZ() * 1.125F;
     BlockPos position = source->getPos().relative(direction);
-    const BlockState* state = level->getBlockState(position);
+    Material* material = level->getBlockState(position)->getBlock()->mMaterial;
     double yOffset;
-    if (level->countInstanceOf(EntityType::BOAT, true, NULL, NULL) > 39)
-        return DefaultDispenseItemBehavior::dispense(source, item);
-    if (state->getMaterial() == Material::WATER) yOffset = 1.0;
-    else if (state->getMaterial() == Material::AIR && level->getBlockState(position.below())->getMaterial() == Material::WATER) yOffset = 0.0;
-    else return DefaultDispenseItemBehavior::dispense(source, item);
+    if (static_cast<unsigned int>(level->countInstanceOf(EntityType::BOAT, true, NULL, NULL)) >= 40)
+        return mDefaultDispenseItemBehavior.dispense(source, item);
+    if (material == Material::WATER)
+    {
+        yOffset = 1.0;
+    }
+    else if (material == Material::AIR && level->getBlockState(position.below())->getBlock()->mMaterial == Material::WATER)
+    {
+        yOffset = 0.0;
+    }
+    else
+    {
+        return mDefaultDispenseItemBehavior.dispense(source, item);
+    }
+    outcome = eOUTCOME_Success;
     boost::shared_ptr<Boat> boat(new Boat(level, x, y + yOffset, z));
     boat->setType(mType);
     boat->mYRot = (float)direction->getOpposite()->toYRot();
     level->addEntity(boat);
     item->shrink(1);
-    outcome = eOUTCOME_Success;
     return item;
 }
 
@@ -577,16 +617,21 @@ not_null_ptr<ItemInstance> DispenserBootstrap::ShulkerBoxDispenseBehavior::execu
     if (level->mayPlace(block, position, false, Direction::DOWN, boost::shared_ptr<Entity>()))
     {
         const Direction* facing = level->isEmptyBlock(position.below()) ? direction : Direction::UP;
-        TypedBoxed<const Direction*> boxedFacing(facing);
-        const BlockState* state = block->defaultBlockState()->setBoxedValue(DirectionalBlock::FACING, &boxedFacing);
+        const BlockState* state = block->defaultBlockState()->setValue(DirectionalBlock::FACING, facing);
         level->setBlockAndUpdate(position, state);
         boost::shared_ptr<BlockEntity> entity = level->getBlockEntity(position);
         not_null_ptr<ItemInstance> placed = item->split(1);
-        boost::shared_ptr<ShulkerBoxBlockEntity> box = boost::static_pointer_cast<ShulkerBoxBlockEntity>(entity);
-        if (placed->hasTag()) box->loadFromTag(placed->getTag()->getCompound(L"BlockEntityTag"));
+        if (placed->hasTag())
+        {
+            boost::shared_ptr<ShulkerBoxBlockEntity> box = boost::static_pointer_cast<ShulkerBoxBlockEntity>(entity);
+            box->loadFromTag(placed->getTag()->getCompound(L"BlockEntityTag"));
+        }
         if (placed->hasCustomHoverName())
+        {
+            boost::shared_ptr<ShulkerBoxBlockEntity> box = boost::static_pointer_cast<ShulkerBoxBlockEntity>(entity);
             box->setCustomName(placed->getHoverName(), placed->getOwnerUUID(), placed->wasCreatedByRestrictedPlayer(), placed->wasCreatedOnHost());
-        level->blockUpdated(position, state->getBlock(), false);
+        }
+        level->updateNeighbourForOutputSignal(position, state->getBlock());
     }
     return item;
 }

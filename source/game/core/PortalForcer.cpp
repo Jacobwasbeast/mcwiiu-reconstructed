@@ -24,13 +24,14 @@
 #include "game/server/ServerLevel.hpp"
 
 PortalForcer::PortalPosition::PortalPosition(const BlockPos& pos, long long updateTime)
-    : BlockPos(pos), lastUpdate(updateTime)
+    : BlockPos(pos.x, pos.y, pos.z), lastUpdate(updateTime)
 {
 }
 
 PortalForcer::PortalForcer(ServerLevel* newLevel)
-    : level(newLevel), random(new Random(newLevel->getSeed()))
 {
+    level = newLevel;
+    random = new Random(newLevel->getSeed());
 }
 
 PortalForcer::~PortalForcer()
@@ -46,24 +47,22 @@ PortalForcer::~PortalForcer()
 bool PortalForcer::HasCachedPortal(const ChunkPos& chunkPos, BlockPos& portalPos)
 {
     boost::unordered_map<ChunkPos, PortalPosition*, ChunkPosKeyHash, ChunkPosKeyEq>::iterator it = portalCache.find(chunkPos);
-    if (it == portalCache.end())
+    if (it != portalCache.end())
     {
-        return false;
-    }
+        PortalPosition* cached = it->second;
+        LevelChunk* chunk = level->getChunkLoadedOrUnloadedAt(cached->x, cached->z);
+        if (chunk == NULL || chunk->isEmpty() ||
+            chunk->getBlockId(cached->x & 15, cached->y, cached->z & 15) == BlockId::PORTAL)
+        {
+            portalPos = *cached;
+            cached->lastUpdate = level->getGameTime();
+            return true;
+        }
 
-    PortalPosition* cached = it->second;
-    LevelChunk* chunk = level->getChunkLoadedOrUnloadedAt(cached->x, cached->z);
-    if (chunk == NULL || chunk->isEmpty() ||
-        chunk->getBlockId(cached->x & 15, cached->y, cached->z & 15) == BlockId::PORTAL)
-    {
-        portalPos = *cached;
-        cached->lastUpdate = level->getGameTime();
-        return true;
+        portalPositions.erase(std::find(portalPositions.begin(), portalPositions.end(), chunkPos));
+        delete portalCache[chunkPos];
+        portalCache.erase(chunkPos);
     }
-
-    portalPositions.erase(std::find(portalPositions.begin(), portalPositions.end(), chunkPos));
-    delete cached;
-    portalCache.erase(it);
     return false;
 }
 
@@ -75,11 +74,12 @@ void PortalForcer::uncacheLeastUsedPortal()
     }
 
     std::vector<ChunkPos>::iterator least = portalPositions.begin();
-    long long leastTime = portalCache[*least]->lastUpdate;
+    long long leastTime = 0;
     for (std::vector<ChunkPos>::iterator pos = portalPositions.begin(); pos != portalPositions.end(); ++pos)
     {
-        long long updateTime = portalCache[*pos]->lastUpdate;
-        if (updateTime < leastTime)
+        ChunkPos key = *pos;
+        long long updateTime = portalCache[key]->lastUpdate;
+        if (updateTime < leastTime || pos == portalPositions.begin())
         {
             leastTime = updateTime;
             least = pos;
@@ -94,13 +94,32 @@ void PortalForcer::uncacheLeastUsedPortal()
 
 bool PortalForcer::findPortal(boost::shared_ptr<Entity> entity, float rotation, int chunkX, int chunkZ)
 {
-    ChunkPos chunkPos(chunkX, chunkZ);
-    Level* world = static_cast<Level*>(level);
-    BlockPos portalPos;
-    double bestDistance = -1.0;
-    if (!HasCachedPortal(chunkPos, portalPos))
+    int radius = 128;
+    if (level->mDimension->getType() == DimensionType::NETHER)
     {
-        int radius = world->mDimension->getType() == DimensionType::NETHER ? 48 : 128;
+        radius = 48;
+    }
+    BlockPos portalPos = BlockPos::ZERO;
+    ChunkPos chunkPos(chunkX, chunkZ);
+    double bestDistance = -1.0;
+    bool addToCache = true;
+    int bestX = 0;
+    int bestY = 0;
+    int bestZ = 0;
+    if (HasCachedPortal(chunkPos, portalPos))
+    {
+        bestDistance = 0.0;
+        addToCache = false;
+        bestX = portalPos.x;
+        bestY = portalPos.y;
+        bestZ = portalPos.z;
+    }
+    else
+    {
+        bestX = portalPos.x;
+        bestY = portalPos.y;
+        bestZ = portalPos.z;
+        BlockPos entityPos(entity);
         int originX = Mth::floor(entity->mX);
         int originY = Mth::floor(entity->mY);
         int originZ = Mth::floor(entity->mZ);
@@ -111,87 +130,96 @@ bool PortalForcer::findPortal(boost::shared_ptr<Entity> entity, float rotation, 
             for (int z = originZ - radius; z <= originZ + radius; ++z)
             {
                 double zDistance = (double)z + 0.5 - entity->mZ;
-                LevelChunk* chunk = world->getChunkLoadedOrUnloadedAt(x, z);
+                LevelChunk* chunk = level->getChunkLoadedOrUnloadedAt(x, z);
                 if (chunk == NULL || chunk->isEmpty())
                 {
                     continue;
                 }
 
-                for (int y = world->getHeight() - 1; y >= 0; --y)
+                int below;
+                for (int y = level->getHeight() - 1; y >= 0; y = below)
                 {
-                    if (chunk->getBlockId(x & 15, y, z & 15) != BlockId::PORTAL)
+                    below = y - 1;
+                    if (chunk->getBlockId(x & 15, y, z & 15) == BlockId::PORTAL)
                     {
-                        continue;
-                    }
-                    while (y > 0 && chunk->getBlockId(x & 15, y - 1, z & 15) == BlockId::PORTAL)
-                    {
-                        --y;
-                    }
-                    double yDistance = (double)y - entity->mY;
-                    double distance = xDistance * xDistance + yDistance * yDistance + zDistance * zDistance;
-                    if (bestDistance < 0.0 || distance < bestDistance)
-                    {
-                        bestDistance = distance;
-                        portalPos = BlockPos(x, y, z);
+                        while (chunk->getBlockId(x & 15, below, x & 15) == BlockId::PORTAL)
+                        {
+                            y = below;
+                            below = y - 1;
+                        }
+                        double yDistance = (double)y + 0.5 - (double)originY;
+                        double distance = yDistance * yDistance + xDistance * xDistance + zDistance * zDistance;
+                        if (bestDistance < 0.0 || distance < bestDistance)
+                        {
+                            bestDistance = distance;
+                            bestX = x;
+                            bestY = y;
+                            bestZ = z;
+                        }
                     }
                 }
             }
         }
+    }
 
-        if (bestDistance < 0.0)
-        {
-            return false;
-        }
+    if (bestDistance < 0.0)
+    {
+        return false;
+    }
 
-        if (portalCache.size() + 1 > 30)
+    portalPos = BlockPos(bestX, bestY, bestZ);
+    if (addToCache)
+    {
+        if (portalPositions.size() + 1 > 30)
         {
             uncacheLeastUsedPortal();
         }
-        PortalPosition* position = new PortalPosition(portalPos, world->getGameTime());
-        portalCache[chunkPos] = position;
+        PortalPosition*& cachedPortal = portalCache[chunkPos];
+        cachedPortal = new PortalPosition(portalPos, level->getGameTime());
         portalPositions.push_back(chunkPos);
     }
 
-    BlockPattern::BlockPatternMatch* portal = static_cast<PortalBlock*>(Blocks::portal)->getPortalShape(world, portalPos);
-    const Direction* forwards = portal->getForwards();
-    bool negative = forwards->getClockWise()->getAxisDirection() == Direction::AxisDirection::NEGATIVE;
-    BlockPos frontTopLeft = portal->getFrontTopLeft();
-    Vec3* entranceOffset = entity->getPortalEntranceOffset();
-    const Direction* entranceForwards = entity->getPortalEntranceForwards();
+    BlockPattern::BlockPatternMatch* portal = static_cast<PortalBlock*>(Blocks::portal)->getPortalShape(level, portalPos);
+    bool negative = portal->getForwards()->getClockWise()->getAxisDirection() == Direction::AxisDirection::NEGATIVE;
     double x = (double)portalPos.x + 0.5;
     double z = (double)portalPos.z + 0.5;
-    double horizontal = forwards->getAxis() == Direction::Axis::X
-                            ? (double)frontTopLeft.z
-                            : (double)frontTopLeft.x;
-    double y = (double)(frontTopLeft.y + 1) - entranceOffset->y * (double)portal->getHeight();
+    double horizontal;
+    if (portal->getForwards()->getAxis() == Direction::Axis::X)
+    {
+        horizontal = (double)portal->getFrontTopLeft().z;
+    }
+    else
+    {
+        horizontal = (double)portal->getFrontTopLeft().x;
+    }
+    double y = (double)(portal->getFrontTopLeft().y + 1) - entity->getPortalEntranceOffset()->y * (double)portal->getHeight();
     if (negative)
     {
         horizontal += 1.0;
     }
-    if (forwards->getAxis() == Direction::Axis::X)
+    if (portal->getForwards()->getAxis() == Direction::Axis::X)
     {
-        z = (0.5 - entranceOffset->x) * (double)portal->getWidth() *
-                (double)forwards->getClockWise()->getAxisDirection()->getStep() +
+        z = (1.0 - entity->getPortalEntranceOffset()->x) * (double)portal->getWidth() *
+                (double)portal->getForwards()->getClockWise()->getAxisDirection()->getStep() +
             horizontal;
     }
     else
     {
-        x = (0.5 - entranceOffset->x) * (double)portal->getWidth() *
-                (double)forwards->getClockWise()->getAxisDirection()->getStep() +
+        x = (1.0 - entity->getPortalEntranceOffset()->x) * (double)portal->getWidth() *
+                (double)portal->getForwards()->getClockWise()->getAxisDirection()->getStep() +
             horizontal;
     }
 
     double diagonal = 1.0;
     double xFromZ = 0.0;
     double zFromX = 0.0;
-    const Direction* destinationBack = forwards->getOpposite();
-    if (destinationBack != entranceForwards)
+    if (portal->getForwards()->getOpposite() != entity->getPortalEntranceForwards())
     {
-        if (destinationBack == entranceForwards->getOpposite())
+        if (portal->getForwards()->getOpposite() == entity->getPortalEntranceForwards()->getOpposite())
         {
             diagonal = -1.0;
         }
-        else if (destinationBack == entranceForwards->getClockWise())
+        else if (portal->getForwards()->getOpposite() == entity->getPortalEntranceForwards()->getClockWise())
         {
             diagonal = 0.0;
             xFromZ = -1.0;
@@ -209,8 +237,8 @@ bool PortalForcer::findPortal(boost::shared_ptr<Entity> entity, float rotation, 
     double oldZd = entity->mZd;
     entity->mXd = oldXd * diagonal + oldZd * xFromZ;
     entity->mZd = oldXd * zFromX + oldZd * diagonal;
-    entity->mYRot = rotation - (float)(entranceForwards->getOpposite()->get2DDataValue() * 90) +
-                    (float)(forwards->get2DDataValue() * 90);
+    entity->mYRot = rotation - (float)(entity->getPortalEntranceForwards()->getOpposite()->get2DDataValue() * 90) +
+                    (float)(portal->getForwards()->get2DDataValue() * 90);
 
     if (entity->GetType() == EntityType::SERVER_PLAYER)
     {
@@ -226,57 +254,69 @@ bool PortalForcer::findPortal(boost::shared_ptr<Entity> entity, float rotation, 
 
 bool PortalForcer::createPortal(boost::shared_ptr<Entity> entity)
 {
-    Level* world = static_cast<Level*>(level);
     int originX = Mth::floor(entity->mX);
     int originY = Mth::floor(entity->mY);
     int originZ = Mth::floor(entity->mZ);
-    int halfSize = (world->mDimension->getXZSize() << 4) >> 1;
+    int halfSize = (level->mDimension->getXZSize() << 4) >> 1;
     int limit = halfSize - 4;
-    if (originX - 48 < -limit)
+    int minimumX = originX - 48;
+    int maximumX;
+    if (minimumX < -limit)
     {
-        originX = -limit + 48;
+        originX = originX - (minimumX + limit);
+        minimumX = originX - 48;
+        maximumX = originX + 48;
     }
-    else if (originX + 48 >= limit)
+    else
     {
-        originX = limit - 48;
+        maximumX = originX + 48;
+        if (limit <= maximumX)
+        {
+            originX = limit - 48;
+            minimumX = originX - 48;
+            maximumX = originX + 48;
+        }
     }
     if (originZ - 48 < -limit)
     {
-        originZ = -limit + 48;
+        originZ = originZ - ((originZ - 48) + limit);
     }
-    else if (originZ + 48 >= limit)
+    else if (limit <= originZ + 48)
     {
         originZ = limit - 48;
     }
 
+    int orientation = random->nextInt(4);
     int bestX = originX;
     int bestY = originY;
     int bestZ = originZ;
     int bestOrientation = 0;
-    int orientation = random->nextInt(4);
     double bestDistance = -1.0;
-    int minimumX = originX - 48;
-    int maximumX = originX + 48;
-    int minimumZ = originZ - 48;
-    int maximumZ = originZ + 48;
 
     for (int x = minimumX; x <= maximumX; ++x)
     {
         double xDistance = (double)x + 0.5 - entity->mX;
-        for (int z = minimumZ; z <= maximumZ; ++z)
+        for (int z = originZ - 48; z <= originZ + 48; ++z)
         {
             double zDistance = (double)z + 0.5 - entity->mZ;
-            for (int y = world->getHeight() - 1; y >= 0; --y)
+            int y = level->getHeight() - 1;
+            while (y >= 0)
             {
-                BlockPos pos(x, y, z);
-                if (!world->isEmptyBlock(pos))
-                {
-                    continue;
-                }
-                while (y > 0 && world->isEmptyBlock(BlockPos(x, y - 1, z)))
+                if (!level->isEmptyBlock(BlockPos(x, y, z)))
                 {
                     --y;
+                    continue;
                 }
+                int lowest;
+                do
+                {
+                    lowest = y;
+                    --y;
+                    if (lowest < 1)
+                    {
+                        break;
+                    }
+                } while (level->isEmptyBlock(BlockPos(x, y, z)));
 
                 for (int attempt = 0; attempt < 4; ++attempt)
                 {
@@ -289,43 +329,50 @@ bool PortalForcer::createPortal(boost::shared_ptr<Entity> entity)
                         zDirection = -zDirection;
                     }
 
-                    bool clear = true;
-                    for (int depth = 0; depth < 3 && clear; ++depth)
+                    bool blocked = false;
+                    for (int depth = 0; depth < 3 && !blocked; ++depth)
                     {
-                        for (int width = 0; width < 4 && clear; ++width)
+                        for (int width = 0; width < 4 && !blocked; ++width)
                         {
                             int testX = x + (width - 1) * xDirection + depth * zDirection;
                             int testZ = z + (width - 1) * zDirection - depth * xDirection;
-                            if (testX < -limit || testX >= limit || testZ < -limit || testZ >= limit)
-                            {
-                                clear = false;
-                                break;
-                            }
                             for (int yOffset = -1; yOffset < 4; ++yOffset)
                             {
-                                const BlockState* state = world->getBlockState(BlockPos(testX, y + yOffset, testZ));
-                                if ((yOffset < 0 && !state->getMaterial()->isSolid()) ||
-                                    (yOffset >= 0 && !world->isEmptyBlock(BlockPos(testX, y + yOffset, testZ))))
+                                if (testX < -limit || testX >= limit || testZ < -limit || testZ >= limit)
                                 {
-                                    clear = false;
+                                    blocked = true;
+                                    break;
+                                }
+                                if (yOffset < 0)
+                                {
+                                    if (!level->getBlockState(BlockPos(testX, lowest + yOffset, testZ))->getMaterial()->isSolid())
+                                    {
+                                        blocked = true;
+                                        break;
+                                    }
+                                }
+                                else if (!level->isEmptyBlock(BlockPos(testX, lowest + yOffset, testZ)))
+                                {
+                                    blocked = true;
                                     break;
                                 }
                             }
                         }
                     }
-
-                    if (clear)
+                    if (blocked)
                     {
-                        double yDistance = (double)y - entity->mY;
-                        double distance = xDistance * xDistance + yDistance * yDistance + zDistance * zDistance;
-                        if (bestDistance < 0.0 || distance < bestDistance)
-                        {
-                            bestDistance = distance;
-                            bestX = x;
-                            bestY = y;
-                            bestZ = z;
-                            bestOrientation = candidateOrientation % 4;
-                        }
+                        break;
+                    }
+
+                    double yDistance = (double)lowest + 0.5 - entity->mY;
+                    double distance = yDistance * yDistance + xDistance * xDistance + zDistance * zDistance;
+                    if (bestDistance < 0.0 || distance < bestDistance)
+                    {
+                        bestDistance = distance;
+                        bestX = x;
+                        bestY = lowest;
+                        bestZ = z;
+                        bestOrientation = candidateOrientation % 4;
                     }
                 }
             }
@@ -337,58 +384,73 @@ bool PortalForcer::createPortal(boost::shared_ptr<Entity> entity)
         for (int x = minimumX; x <= maximumX; ++x)
         {
             double xDistance = (double)x + 0.5 - entity->mX;
-            for (int z = minimumZ; z <= maximumZ; ++z)
+            for (int z = originZ - 48; z <= originZ + 48; ++z)
             {
                 double zDistance = (double)z + 0.5 - entity->mZ;
-                for (int y = world->getHeight() - 1; y >= 0; --y)
+                int y = level->getHeight() - 1;
+                while (y >= 0)
                 {
-                    if (!world->isEmptyBlock(BlockPos(x, y, z)))
-                    {
-                        continue;
-                    }
-                    while (y > 0 && world->isEmptyBlock(BlockPos(x, y - 1, z)))
+                    if (!level->isEmptyBlock(BlockPos(x, y, z)))
                     {
                         --y;
+                        continue;
                     }
+                    int lowest;
+                    do
+                    {
+                        lowest = y;
+                        --y;
+                        if (lowest < 1)
+                        {
+                            break;
+                        }
+                    } while (level->isEmptyBlock(BlockPos(x, y, z)));
 
                     for (int attempt = 0; attempt < 2; ++attempt)
                     {
                         int xDirection = (orientation + attempt) % 2;
                         int zDirection = 1 - xDirection;
-                        bool clear = true;
-                        for (int width = 0; width < 4 && clear; ++width)
+                        bool blocked = false;
+                        for (int width = 0; width < 4 && !blocked; ++width)
                         {
                             int testX = x + (width - 1) * xDirection;
                             int testZ = z + (width - 1) * zDirection;
-                            if (testX < -limit || testX >= limit || testZ < -limit || testZ >= limit)
-                            {
-                                clear = false;
-                                break;
-                            }
                             for (int yOffset = -1; yOffset < 4; ++yOffset)
                             {
-                                const BlockState* state = world->getBlockState(BlockPos(testX, y + yOffset, testZ));
-                                if ((yOffset < 0 && !state->getMaterial()->isSolid()) ||
-                                    (yOffset >= 0 && !world->isEmptyBlock(BlockPos(testX, y + yOffset, testZ))))
+                                if (testX < -limit || testX >= limit || testZ < -limit || testZ >= limit)
                                 {
-                                    clear = false;
+                                    blocked = true;
+                                    break;
+                                }
+                                if (yOffset < 0)
+                                {
+                                    if (!level->getBlockState(BlockPos(testX, lowest + yOffset, testZ))->getBlock()->mMaterial->isSolid())
+                                    {
+                                        blocked = true;
+                                        break;
+                                    }
+                                }
+                                else if (!level->isEmptyBlock(BlockPos(testX, lowest + yOffset, testZ)))
+                                {
+                                    blocked = true;
                                     break;
                                 }
                             }
                         }
-
-                        if (clear)
+                        if (blocked)
                         {
-                            double yDistance = (double)y - entity->mY;
-                            double distance = xDistance * xDistance + yDistance * yDistance + zDistance * zDistance;
-                            if (bestDistance < 0.0 || distance < bestDistance)
-                            {
-                                bestDistance = distance;
-                                bestX = x;
-                                bestY = y;
-                                bestZ = z;
-                                bestOrientation = (orientation + attempt) % 2;
-                            }
+                            break;
+                        }
+
+                        double yDistance = (double)lowest + 0.5 - entity->mY;
+                        double distance = yDistance * yDistance + xDistance * xDistance + zDistance * zDistance;
+                        if (bestDistance < 0.0 || distance < bestDistance)
+                        {
+                            bestDistance = distance;
+                            bestX = x;
+                            bestY = lowest;
+                            bestZ = z;
+                            bestOrientation = (orientation + attempt) % 2;
                         }
                     }
                 }
@@ -406,17 +468,17 @@ bool PortalForcer::createPortal(boost::shared_ptr<Entity> entity)
 
     if (bestDistance < 0.0)
     {
-        bestY = Mth::clamp(bestY, 70, world->getHeight() - 10);
+        bestY = Mth::clamp(bestY, 70, level->getHeight() - 10);
         for (int depth = 0; depth < 3; ++depth)
         {
             for (int width = 0; width < 2; ++width)
             {
                 int x = bestX - zDirection + width * xDirection + depth * zDirection;
                 int z = bestZ + xDirection + width * zDirection - depth * xDirection;
-                world->setBlockAndUpdate(BlockPos(x, bestY - 1, z), Blocks::obsidian->defaultBlockState());
-                world->setBlockAndUpdate(BlockPos(x, bestY, z), Blocks::air->defaultBlockState());
-                world->setBlockAndUpdate(BlockPos(x, bestY + 1, z), Blocks::air->defaultBlockState());
-                world->setBlockAndUpdate(BlockPos(x, bestY + 2, z), Blocks::air->defaultBlockState());
+                level->setBlockAndUpdate(BlockPos(x, bestY - 1, z), Blocks::obsidian->defaultBlockState());
+                level->setBlockAndUpdate(BlockPos(x, bestY, z), Blocks::air->defaultBlockState());
+                level->setBlockAndUpdate(BlockPos(x, bestY + 1, z), Blocks::air->defaultBlockState());
+                level->setBlockAndUpdate(BlockPos(x, bestY + 2, z), Blocks::air->defaultBlockState());
             }
         }
     }
@@ -433,7 +495,7 @@ bool PortalForcer::createPortal(boost::shared_ptr<Entity> entity)
             for (int yOffset = -1; yOffset < 4; ++yOffset)
             {
                 bool frame = width == 0 || width == 3 || yOffset == -1 || yOffset == 3;
-                world->setBlock(BlockPos(x, bestY + yOffset, z),
+                level->setBlock(BlockPos(x, bestY + yOffset, z),
                                 frame ? Blocks::obsidian->defaultBlockState() : portalState, Block::UPDATE_CLIENTS, false);
             }
         }
@@ -444,7 +506,7 @@ bool PortalForcer::createPortal(boost::shared_ptr<Entity> entity)
             for (int yOffset = -1; yOffset < 4; ++yOffset)
             {
                 BlockPos pos(x, bestY + yOffset, z);
-                world->updateNeighborsAt(pos, world->getBlockState(pos)->getBlock(), false);
+                level->updateNeighborsAt(pos, level->getBlockState(pos)->getBlock(), false);
             }
         }
     }
@@ -485,8 +547,7 @@ void PortalForcer::force(boost::shared_ptr<Entity> entity, float rotation, int c
 
 bool PortalForcer::isBlocked(const BlockPos& pos)
 {
-    Level* world = static_cast<Level*>(level);
-    return !world->isEmptyBlock(pos) || !world->isEmptyBlock(pos.above());
+    return !static_cast<Level*>(level)->isEmptyBlock(pos) || !static_cast<Level*>(level)->isEmptyBlock(pos.above());
 }
 
 void PortalForcer::tick(long long gameTime)

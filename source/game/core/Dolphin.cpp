@@ -68,6 +68,7 @@ MobGroupData* Dolphin::finalizeMobSpawn(const DifficultyInstance& difficulty, Mo
 {
     setAirSupply(getMaxAirSupply());
     mTreasureTime = 400;
+    mXRot = 0.0f;
     return Mob::finalizeMobSpawn(difficulty, data, std::wstring(L""));
 }
 
@@ -81,7 +82,7 @@ void Dolphin::aiStep()
 {
     if (isMoving() && isInWater())
     {
-        mLevel->addParticle(PARTICLE_BUBBLE, false, mX + (mRandom->nextFloat() - 0.5f) * mBbWidth,
+        mLevel->addParticle(PARTICLE_BUBBLE, mX + (mRandom->nextFloat() - 0.5f) * mBbWidth,
                             mY + mRandom->nextFloat() * mBbHeight,
                             mZ + (mRandom->nextFloat() - 0.5f) * mBbWidth,
                             0.0, 0.0, 0.0, arrayWithLength<int>());
@@ -128,10 +129,12 @@ void Dolphin::tick()
 bool Dolphin::isPushedByWater() { return false; }
 bool Dolphin::isInSpawnableOcean()
 {
-    Biome* biome = mLevel->getBiome(BlockPos(shared_from_this()));
-    return biome == Biome::OCEAN || biome == Biome::DEEP_OCEAN || biome == Biome::COLD_OCEAN
+    Biome* biome = mLevel->getBiome(BlockPos(this));
+    if (biome == Biome::OCEAN || biome == Biome::DEEP_OCEAN || biome == Biome::COLD_OCEAN
         || biome == Biome::DEEP_COLD_OCEAN || biome == Biome::LUKEWARM_OCEAN || biome == Biome::DEEP_LUKEWARM_OCEAN
-        || biome == Biome::WARM_OCEAN || biome == Biome::DEEP_WARM_OCEAN;
+        || biome == Biome::WARM_OCEAN || biome == Biome::DEEP_WARM_OCEAN)
+        return true;
+    return false;
 }
 
 bool Dolphin::checkSpawnRules()
@@ -194,9 +197,16 @@ boost::shared_ptr<AgableMob> Dolphin::getBreedOffspring(boost::shared_ptr<Agable
 
 bool Dolphin::isItemABribingFish(not_null_ptr<ItemInstance> item)
 {
-    if (item->isEmpty() || item->getItem() != Items::fish) return false;
-    FishFoodItem::Type* type = FishFoodItem::Type::getByItem(item);
-    return type != NULL && (type->getId() == 0 || type->getId() == 1);
+    bool bribing = false;
+    if (!item->isEmpty())
+    {
+        if (item->getItem() == Items::fish)
+        {
+            FishFoodItem::Type* type = FishFoodItem::Type::getByItem(item);
+            if (type == FishFoodItem::Type::COD || type == FishFoodItem::Type::SALMON) bribing = true;
+        }
+    }
+    return bribing;
 }
 
 unsigned int Dolphin::GetInteractTooltip(const EntityTooltipDataHolder& tooltipData)
@@ -209,14 +219,12 @@ unsigned int Dolphin::GetInteractTooltip(const EntityTooltipDataHolder& tooltipD
 
 void Dolphin::addAdditonalSaveData(CompoundTag* tag)
 {
-    AgableMob::addAdditonalSaveData(tag);
-    tag->putBoolean(L"bribed", mTreasureGoal != NULL && mTreasureGoal->getBribed());
+    tag->putBoolean(L"bribed", mTreasureGoal->getBribed());
 }
 
 void Dolphin::readAdditionalSaveData(CompoundTag* tag)
 {
-    AgableMob::readAdditionalSaveData(tag);
-    if (tag->getBoolean(L"bribed") && mTreasureGoal != NULL) mTreasureGoal->setBribed();
+    if (tag->getBoolean(L"bribed")) mTreasureGoal->setBribed();
 }
 
 void Dolphin::registerGoals()

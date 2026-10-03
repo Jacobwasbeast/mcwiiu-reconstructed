@@ -21,7 +21,7 @@
 #include "game/world/generation/PlayerList.hpp"
 
 LightningBolt::LightningBolt(Level* level, double x, double y, double z, bool visualOnly)
-    : Entity(level, true)
+    : GlobalEntity(level)
     , mLife(0)
     , mSeed(0)
     , mFlashes(0)

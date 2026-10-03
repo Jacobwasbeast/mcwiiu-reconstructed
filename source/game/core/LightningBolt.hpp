@@ -4,12 +4,12 @@
 #include <vector>
 
 #include "game/client/audio/SoundSource.hpp"
-#include "game/entity/mob/Entity.hpp"
+#include "game/entity/mob/GlobalEntity.hpp"
 
 class CompoundTag;
 class Level;
 
-class LightningBolt : public Entity
+class LightningBolt : public GlobalEntity
 {
 public:
     LightningBolt(Level* level, double x, double y, double z, bool visualOnly);

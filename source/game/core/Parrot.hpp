@@ -51,7 +51,7 @@ public:
     static void create(Level* level);
     virtual bool isFlying();
     static const SoundEvent* getImitatedSound(unsigned long long type);
-    static double getPitch(Random* random);
+    static float getPitch(Random* random);
     static bool imitateNearbyMobs(Level* level, Entity* entity);
     static const SoundEvent* getAmbient(Random* random);
     static void playAmbientSound(Level* level, boost::shared_ptr<Entity> entity);

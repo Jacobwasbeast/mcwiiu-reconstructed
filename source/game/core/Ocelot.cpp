@@ -65,7 +65,7 @@ static const int OCELOT_SPAWN_EGG_AUX = 98;
 Ocelot::Ocelot(Level* level) : TamableAnimal(level), mAvoidPlayersGoal(NULL)
 {
     fjDerivedCtorCalls();
-    setSize(0.6000000238418579f, 0.800000011920929f);
+    setSize(0.6f, 0.8f);
 }
 
 Ocelot::~Ocelot()
@@ -134,11 +134,11 @@ void Ocelot::registerGoals()
     mGoalSelector.addGoal(3, mTemptGoal, false);
     mGoalSelector.addGoal(5, new FollowOwnerGoal(this, 1.0, 10.0f, 5.0f), true);
     mGoalSelector.addGoal(6, new OcelotSitOnBlockGoal(this, 0.8), true);
-    mGoalSelector.addGoal(7, new LeapAtTargetGoal(this, 0.30000001192092896f), true);
+    mGoalSelector.addGoal(7, new LeapAtTargetGoal(this, 0.3f), true);
     mGoalSelector.addGoal(8, new OcelotAttackGoal(this), true);
     mGoalSelector.addGoal(9, new BreedGoal(this, 0.8), true);
     mGoalSelector.addGoal(10, new WaterAvoidingRandomStrollGoal(this, 0.8,
-                                                                0.0010000000474974513f / 100.0f), true);
+                                                                0.001f / 100.0f), true);
     mGoalSelector.addGoal(11, new LookAtPlayerGoal(this, typeid(Player), 10.0f), true);
 
     mTargetSelector.addGoal(1, new NonTameRandomTargetGoal(this, typeid(Chicken), false, NULL, true), true);
@@ -241,7 +241,7 @@ const SoundEvent* Ocelot::getDeathSound()
 
 float Ocelot::getSoundVolume()
 {
-    return 0.4000000059604645f;
+    return 0.4f;
 }
 
 bool Ocelot::doHurtTarget(boost::shared_ptr<Entity> target)

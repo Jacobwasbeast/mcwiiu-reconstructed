@@ -37,7 +37,7 @@ public:
     virtual void aiStep();
     virtual void tick();
     virtual bool isPushedByWater();
-    virtual bool isInSpawnableOcean();
+    bool isInSpawnableOcean();
     virtual bool checkSpawnRules();
     virtual bool canBeLeashed(const boost::shared_ptr<Player>& player);
     virtual ResourceLocation* getDefaultLootTable();

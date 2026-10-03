@@ -28,7 +28,7 @@ EvocationFangs::EvocationFangs(Level* level, double x, double y, double z, float
     _init();
     mWarmupDelay = warmupDelay;
     setOwner(owner);
-    mYRot = yRot * 57.2957763671875f;
+    mYRot = yRot * 57.295776f;
     setPos(x, y, z);
 }
 

@@ -1,9 +1,9 @@
 #ifndef GAME_CORE_WINROUNDCOUNTCONDITION_HPP
 #define GAME_CORE_WINROUNDCOUNTCONDITION_HPP
 
-#include "game/minigame/GameMedal.hpp"
+#include "game/minigame/MultiConditionMedal.hpp"
 
-class WinRoundCountCondition : public GameMedal::Condition
+class WinRoundCountCondition : public MultiConditionMedal::MultiCondition
 {
 public:
     WinRoundCountCondition(float target, GameMedal::EOperator op, bool bestOnly);

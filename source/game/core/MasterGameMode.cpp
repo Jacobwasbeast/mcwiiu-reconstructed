@@ -2633,7 +2633,7 @@ void MasterGameMode::OnLevelLoad(ServerLevel* level)
     level->addListener(mBlockChangeListener);
 }
 
-ChunkHistory* MasterGameMode::GetChunkHistory() const
+IChunkHistory* MasterGameMode::GetChunkHistory() const
 {
     return mBlockChangeListener;
 }

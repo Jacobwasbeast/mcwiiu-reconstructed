@@ -16,6 +16,7 @@ class Entity;
 class Level;
 class MobGroupData;
 class SoundEvent;
+class Arrow;
 class TippableArrow;
 
 class IllusionIllager : public SpellcasterIllager, public RangedAttackMob
@@ -72,16 +73,16 @@ public:
     virtual int getArmPose();
     virtual unsigned long long GetType();
     arrayWithLength<Vec3*> getIllusionOffsets(float partialTick);
-    boost::shared_ptr<TippableArrow> getArrow(float distanceFactor);
+    boost::shared_ptr<Arrow> getArrow(float distanceFactor);
 private:
     int mIllusionLevel;
     Vec3* mDisguisedPosition;
-    Vec3* mDisguisedPositionO;
     Vec3* mDisguisedPosition2;
-    Vec3* mDisguisedPosition2O;
     Vec3* mDisguisedPosition3;
-    Vec3* mDisguisedPosition3O;
     Vec3* mDisguisedPosition4;
+    Vec3* mDisguisedPositionO;
+    Vec3* mDisguisedPosition2O;
+    Vec3* mDisguisedPosition3O;
     Vec3* mDisguisedPosition4O;
 };
 

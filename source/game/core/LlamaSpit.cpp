@@ -23,6 +23,9 @@ LlamaSpit::LlamaSpit(Level* level, const boost::shared_ptr<Llama>& owner)
     Entity::fjDerivedCtorCalls();
     _init();
     mLlamaOwner = owner;
+    double x = owner->mX - (owner->mBbWidth + 1.0f) * 0.5 * sinf(owner->mYBodyRot * Mth::DEG_TO_RAD);
+    setPos(x, owner->mY + owner->getEyeHeight() - 0.1f,
+        (owner->mBbWidth + 1.0f) * 0.5 * cosf(owner->mYBodyRot * Mth::DEG_TO_RAD) + owner->mZ);
     setSize(0.25f, 0.25f);
 }
 
@@ -82,16 +85,6 @@ void LlamaSpit::shoot(double x, double y, double z, float velocity, float inaccu
 void LlamaSpit::shootFromRotation(boost::shared_ptr<Entity> entity, float xRot, float yRot,
     float offset, float velocity, float inaccuracy)
 {
-    const double radians = 0.01745329238474369;
-    shoot(-std::sin(yRot * radians) * std::cos(xRot * radians),
-        -std::sin((xRot + offset) * radians),
-        std::cos(yRot * radians) * std::cos(xRot * radians), velocity, inaccuracy);
-    mXd += entity->mXd;
-    mZd += entity->mZd;
-    if (!entity->mOnGround)
-    {
-        mYd += entity->mYd;
-    }
 }
 
 boost::shared_ptr<Llama> LlamaSpit::getOwner()
@@ -119,23 +112,26 @@ bool LlamaSpit::onHit(const HitResult* result)
 
 void LlamaSpit::restoreOwnerFromSave()
 {
-    if (mOwnerTag != NULL && mOwnerTag->contains(L"OwnerUUID"))
+    if (mOwnerTag != NULL)
     {
-        const std::wstring ownerUuid = mOwnerTag->getString(L"OwnerUUID");
-        AABB* searchBox = mBoundingBox->grow(15.0);
-        std::vector<boost::shared_ptr<Entity> >* entities =
-            Entity::mLevel->getEntitiesOfClass(typeid(Llama), searchBox);
-        for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin();
-             it != entities->end(); ++it)
+        if (mOwnerTag->contains(L"OwnerUUID"))
         {
-            boost::shared_ptr<Llama> llama = boost::static_pointer_cast<Llama>(*it);
-            if (llama->getUUID() == ownerUuid)
+            const std::wstring ownerUuid = mOwnerTag->getString(L"OwnerUUID");
+            AABB* searchBox = mBoundingBox->grow(15.0);
+            std::vector<boost::shared_ptr<Entity> >* entities =
+                Entity::mLevel->getEntitiesOfClass(typeid(Llama), searchBox);
+            for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin();
+                 it != entities->end(); ++it)
             {
-                mLlamaOwner = llama;
-                break;
+                boost::shared_ptr<Llama> llama = boost::static_pointer_cast<Llama>(*it);
+                if (llama->getUUID() == ownerUuid)
+                {
+                    mLlamaOwner = llama;
+                    break;
+                }
             }
+            delete entities;
         }
-        delete entities;
     }
     mOwnerTag = NULL;
 }

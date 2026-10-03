@@ -36,24 +36,24 @@ const EntityDataAccessor<int>* Guardian::DATA_ID_ATTACK_TARGET = NULL;
 Guardian::Guardian(Level* level, bool createEntityData)
     : Monster(level), mCachedAttackTarget()
 {
+    if (createEntityData)
+    {
+        fjDerivedCtorCalls();
+    }
     mTailAnimation = 0.0f;
     mTailAnimationOld = 0.0f;
     mTailAnimationSpeed = 0.0f;
     mSpikesAnimation = 0.0f;
     mSpikesAnimationOld = 0.0f;
+    mCachedAttackTarget = boost::shared_ptr<LivingEntity>();
+    mExperienceReward = 10;
     mAttackTime = 0;
     mTouchedGround = false;
-    mRandomStrollGoal = NULL;
-    if (createEntityData)
-    {
-        fjDerivedCtorCalls();
-    }
-    mExperienceReward = 10;
     setSize(0.85f, 0.85f);
     delete mMoveControl;
     mMoveControl = new GuardianMoveControl(this);
     mTailAnimation = mRandom->nextFloat();
-    mTailAnimationOld = mTailAnimation;
+    mSpikesAnimationOld = mTailAnimation;
 }
 
 Guardian::~Guardian()
@@ -118,14 +118,12 @@ unsigned int Guardian::getAttackDuration()
 
 void Guardian::setActiveAttackTarget(int targetId)
 {
-    if (mEntityData != NULL && DATA_ID_ATTACK_TARGET != NULL)
-        mEntityData->set(DATA_ID_ATTACK_TARGET, targetId, true);
+    mEntityData->set(DATA_ID_ATTACK_TARGET, targetId, true);
 }
 
 bool Guardian::hasActiveAttackTarget()
 {
-    return mEntityData != NULL && DATA_ID_ATTACK_TARGET != NULL &&
-           mEntityData->get(DATA_ID_ATTACK_TARGET) != 0;
+    return mEntityData->get(DATA_ID_ATTACK_TARGET) != 0;
 }
 
 boost::shared_ptr<Entity> Guardian::getActiveAttackTarget()
@@ -153,10 +151,10 @@ boost::shared_ptr<Entity> Guardian::getActiveAttackTarget()
 void Guardian::onSyncedDataUpdated(const EntityDataAccessor_Base* accessor)
 {
     LivingEntity::onSyncedDataUpdated(accessor);
-    if (accessor == DATA_ID_ATTACK_TARGET)
+    if (accessor->getId() == DATA_ID_ATTACK_TARGET->getId())
     {
-        mCachedAttackTarget = boost::shared_ptr<LivingEntity>();
         mAttackTime = 0;
+        mCachedAttackTarget = boost::shared_ptr<LivingEntity>();
     }
 }
 
@@ -206,7 +204,7 @@ float Guardian::getWalkTargetValue(const BlockPos& pos)
 
 double Guardian::getAttackAnimationScale(float partialTicks)
 {
-    return (mAttackTime + partialTicks) / (float)getAttackDuration();
+    return (mAttackTime + partialTicks) / (float)(int)getAttackDuration();
 }
 
 void Guardian::aiStep()
@@ -382,15 +380,8 @@ bool Guardian::checkSpawnObstruction()
 
 bool Guardian::checkSpawnRules()
 {
-    if (mRandom->nextInt(20) != 0)
-    {
-        BlockPos pos(shared_from_this());
-        if (mLevel->canSeeSkyFromBelowWater(pos))
-        {
-            return false;
-        }
-    }
-    return Monster::checkSpawnRules();
+    return (mRandom->nextInt(20) == 0 || !mLevel->canSeeSkyFromBelowWater(BlockPos(shared_from_this()))) &&
+           Monster::checkSpawnRules();
 }
 
 bool Guardian::hurt(const DamageSource* source, float damage)
@@ -423,19 +414,21 @@ int Guardian::getMaxHeadXRot()
 
 void Guardian::travel(float xxa, float yya, float zza)
 {
-    if (!isEffectiveAi() || !isInWater())
+    if (isEffectiveAi() && isInWater())
+    {
+        moveRelative(xxa, yya, zza, 0.1f);
+        move(eMoverType_Self, mXd, mYd, mZd, false);
+        mXd *= 0.8999999761581421;
+        mYd *= 0.8999999761581421;
+        mZd *= 0.8999999761581421;
+        if (!isMoving() && getTarget() == NULL)
+        {
+            mYd -= 0.005;
+        }
+    }
+    else
     {
         LivingEntity::travel(xxa, yya, zza);
-        return;
-    }
-    moveRelative(xxa, yya, zza, 0.1f);
-    move(eMoverType_Self, mXd, mYd, mZd, false);
-    mXd *= 0.8999999761581421;
-    mYd *= 0.8999999761581421;
-    mZd *= 0.8999999761581421;
-    if (!isMoving() && getTarget() == NULL)
-    {
-        mYd -= 0.005;
     }
 }
 
@@ -452,7 +445,7 @@ unsigned long long Guardian::GetType()
 }
 
 Guardian::GuardianAttackGoal::GuardianAttackGoal(Guardian* guardian)
-    : mGuardian(guardian), mAttackTime(0), mElder(false), mUnused0(0), mUnused1(0), mUnused2(0)
+    : mGuardian(guardian), mElder(guardian->GetType() == EntityType::ELDER_GUARDIAN)
 {
     setRequiredControlFlags(3);
 }
@@ -469,16 +462,14 @@ bool Guardian::GuardianAttackGoal::canUse()
 
 bool Guardian::GuardianAttackGoal::canContinueToUse()
 {
-    boost::shared_ptr<LivingEntity> target = mGuardian->getTarget();
-    return Goal::canContinueToUse() && target != NULL && (mElder || mGuardian->distanceToSqr(target) > 9.0);
+    return Goal::canContinueToUse() && (mElder || mGuardian->distanceToSqr(mGuardian->getTarget()) > 9.0);
 }
 
 void Guardian::GuardianAttackGoal::start()
 {
     mAttackTime = -10;
     mGuardian->getNavigation()->stop();
-    boost::shared_ptr<LivingEntity> target = mGuardian->getTarget();
-    mGuardian->getLookControl()->setLookAt(target, 90.0f, 90.0f);
+    mGuardian->getLookControl()->setLookAt(mGuardian->getTarget(), 90.0f, 90.0f);
     mGuardian->mHasImpulse = true;
 }
 
@@ -486,52 +477,45 @@ void Guardian::GuardianAttackGoal::stop()
 {
     mGuardian->setActiveAttackTarget(0);
     mGuardian->setTarget(boost::shared_ptr<LivingEntity>());
-    if (mGuardian->mRandomStrollGoal != NULL)
-    {
-        static_cast<RandomStrollGoal*>(mGuardian->mRandomStrollGoal)->trigger();
-    }
+    mGuardian->mRandomStrollGoal->trigger();
 }
 
 void Guardian::GuardianAttackGoal::tick()
 {
     boost::shared_ptr<LivingEntity> target = mGuardian->getTarget();
-    if (target == NULL)
-    {
-        return;
-    }
     mGuardian->getNavigation()->stop();
     mGuardian->getLookControl()->setLookAt(target, 90.0f, 90.0f);
-    if (!mGuardian->canSee(target))
+    if (mGuardian->canSee(target))
     {
-        mGuardian->setTarget(boost::shared_ptr<LivingEntity>());
-        return;
-    }
-    ++mAttackTime;
-    if (mAttackTime == 0)
-    {
-        mGuardian->setActiveAttackTarget(target->getId());
-        mGuardian->mLevel->broadcastEntityEvent(mGuardian->shared_from_this(), EntityEvent::GUARDIAN_ATTACK_SOUND, 0);
-        return;
-    }
-    if (mAttackTime >= (int)mGuardian->getAttackDuration())
-    {
-        float damage = 1.0f;
-        if (mGuardian->mLevel->getDifficulty() == Difficulty::PEACEFUL)
+        ++mAttackTime;
+        if (mAttackTime == 0)
         {
-            damage = 3.0f;
+            mGuardian->setActiveAttackTarget(target->getId());
+            mGuardian->mLevel->broadcastEntityEvent(mGuardian->shared_from_this(), EntityEvent::GUARDIAN_ATTACK_SOUND, 0);
         }
-        if (mElder)
+        else if (mAttackTime >= (int)mGuardian->getAttackDuration())
         {
-            damage += 2.0f;
+            float damage = 1.0f;
+            if (mGuardian->mLevel->getDifficulty() == Difficulty::HARD)
+            {
+                damage = 3.0f;
+            }
+            if (mElder)
+            {
+                damage += 2.0f;
+            }
+            DamageSource* indirectMagic = DamageSource::CreateIndirectMagic(
+                mGuardian->shared_from_this(), mGuardian->shared_from_this(), DamageSource::MAGIC);
+            EntityDamageSource* mobAttack = DamageSource::CreateMobAttack(
+                boost::dynamic_pointer_cast<LivingEntity>(mGuardian->shared_from_this()));
+            target->hurt(indirectMagic, damage);
+            target->hurt(mobAttack, (float)mGuardian->getAttribute(SharedMonsterAttributes::ATTACK_DAMAGE)->getValue());
+            delete indirectMagic;
+            delete mobAttack;
         }
-        DamageSource* indirectMagic =
-            DamageSource::CreateIndirectMagic(mGuardian->shared_from_this(), target, DamageSource::MAGIC);
-        EntityDamageSource* mobAttack = DamageSource::CreateMobAttack(target);
-        target->hurt(indirectMagic, damage);
-        double attackDamage = mGuardian->getAttribute(SharedMonsterAttributes::ATTACK_DAMAGE)->getValue();
-        target->hurt(mobAttack, (float)attackDamage);
-        delete indirectMagic;
-        delete mobAttack;
+    }
+    else
+    {
         mGuardian->setTarget(boost::shared_ptr<LivingEntity>());
     }
 }
@@ -552,8 +536,7 @@ Guardian::GuardianAttackSelector::~GuardianAttackSelector()
 
 bool Guardian::GuardianAttackSelector::apply(boost::shared_ptr<Entity> entity) const
 {
-    unsigned long long type = entity->GetType();
-    if ((type & EntityType::PLAYER) == EntityType::PLAYER || type == EntityType::SQUID)
+    if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER || entity->GetType() == EntityType::SQUID)
     {
         return entity->distanceToSqr(mGuardian->shared_from_this()) > 9.0;
     }
@@ -573,28 +556,27 @@ void Guardian::GuardianMoveControl::tick()
 {
     if (mOperation == MOVE_TO && !mGuardian->getNavigation()->isDone())
     {
-        double dx = getWantedX() - mGuardian->mX;
-        double dy = getWantedY() - mGuardian->mY;
-        double dz = getWantedZ() - mGuardian->mZ;
-        double distance = std::sqrt(dz * dz + dx * dx + dy * dy);
+        double dx = mWantedX - mGuardian->mX;
+        double dy = mWantedY - mGuardian->mY;
+        double dz = mWantedZ - mGuardian->mZ;
+        double distance = std::sqrt(dx * dx + dy * dy + dz * dz);
         double angle = std::atan2(dz, dx);
         float newYRot = rotlerp(mGuardian->mYRot,
-            (float)(angle * 57.2957763671875f) - 90.0f, 30.0f);
+            (float)(angle * 57.295776f) - 90.0f, 30.0f);
         mGuardian->mYRot = newYRot;
         mGuardian->mYBodyRot = newYRot;
 
-        float speed = mGuardian->getSpeed();
         double attributeSpeed = mGuardian->getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->getValue();
-        mGuardian->setSpeed((float)((float)((float)(getSpeedModifier() * attributeSpeed) - speed) * 0.125f + speed));
+        float targetSpeed = (float)(mSpeedModifier * attributeSpeed);
+        mGuardian->setSpeed(mGuardian->getSpeed() + (targetSpeed - mGuardian->getSpeed()) * 0.125f);
 
-        int wiggle = mGuardian->mTickCount + mGuardian->getId();
-        double wag1 = std::sin((double)wiggle * 0.5) * 0.05;
-        float cosYRot = cosf((float)(mGuardian->mYRot * 57.2957763671875f));
-        float sinYRot = sinf((float)(mGuardian->mYRot * 57.2957763671875f));
+        double wag1 = std::sin((double)(mGuardian->mTickCount + mGuardian->getId()) * 0.5) * 0.05;
+        float cosYRot = cosf((float)(mGuardian->mYRot * 57.295776f));
+        float sinYRot = sinf((float)(mGuardian->mYRot * 57.295776f));
         mGuardian->mXd += wag1 * cosYRot;
         mGuardian->mZd += wag1 * sinYRot;
 
-        double wag2 = std::sin((double)wiggle * 0.75) * 0.05 * (sinYRot + cosYRot) * 0.25 + mGuardian->mYd;
+        double wag2 = std::sin((double)(mGuardian->mTickCount + mGuardian->getId()) * 0.75) * 0.05 * (sinYRot + cosYRot) * 0.25 + mGuardian->mYd;
         mGuardian->mYd = wag2;
         float speed2 = mGuardian->getSpeed();
         mGuardian->mYd = speed2 * (dy / distance) * 0.1 + wag2;
@@ -612,7 +594,7 @@ void Guardian::GuardianMoveControl::tick()
             wantedY = lookY;
             wantedZ = lookZ;
         }
-        lookControl->setLookAt(
+        mGuardian->getLookControl()->setLookAt(
             (lookX - wantedX) * 0.125 + wantedX,
             (lookY - wantedY) * 0.125 + wantedY,
             (lookZ - wantedZ) * 0.125 + wantedZ,

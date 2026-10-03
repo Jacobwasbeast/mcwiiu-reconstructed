@@ -284,7 +284,7 @@ void FillTool::tick()
                         {
                             weight = expf((float)(-(offsetX * offsetX + offsetZ * offsetZ)) /
                                           (float)((double)(float)(strength + strength) * strength));
-                            weight = weight / (float)((double)(float)(6.2831854820251465f * strength) * strength);
+                            weight = weight / (float)((double)(float)(6.2831855f * strength) * strength);
                         }
                         else
                         {

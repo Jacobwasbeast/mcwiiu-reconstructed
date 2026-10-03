@@ -31,7 +31,7 @@ class BlockRemover;
 class BlockChangeListener;
 class BlockDegradeRoutine;
 class CheckpointRuleDefinition;
-class ChunkHistory;
+class IChunkHistory;
 class Entity;
 class GameType;
 class KillboxRuleDefinition;
@@ -235,7 +235,7 @@ public:
     void PlayerFinishedLoadingLocally();
     static void ResetLobbyTimerAfterSuspend();
     void OnLevelLoad(ServerLevel* level);
-    ChunkHistory* GetChunkHistory() const;
+    IChunkHistory* GetChunkHistory() const;
     int GetRoundTime();
     int GetPostGameTime();
     int GetMaxKills();

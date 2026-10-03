@@ -3,9 +3,9 @@
 
 #include <string>
 
-#include "game/core/DLCFile.hpp"
+#include "game/core/DLCGameRules.hpp"
 
-class DLCGameRulesFile : public DLCFile
+class DLCGameRulesFile : public DLCGameRules
 {
 public:
     DLCGameRulesFile(const std::wstring& path);

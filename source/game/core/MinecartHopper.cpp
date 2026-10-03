@@ -8,10 +8,11 @@
 
 #include "game/core/DamageSource.hpp"
 #include "game/core/GameRules.hpp"
+#include "game/core/PIXNamedEvents.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/data/DataFixTypes.hpp"
 #include "game/data/DataFixerUpper.hpp"
-#include "game/entity/ai/AliveEntitySelector.hpp"
+#include "game/entity/ai/EntitySelector.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/ItemEntity.hpp"
 #include "game/item/Inventory.hpp"
@@ -89,12 +90,12 @@ bool MinecartHopper::stillValid(boost::shared_ptr<Player> player)
 
 void MinecartHopper::startOpen(boost::shared_ptr<Player> player)
 {
-    (void)player;
+    MinecartContainer::startOpen(player);
 }
 
 void MinecartHopper::stopOpen(boost::shared_ptr<Player> player)
 {
-    (void)player;
+    MinecartContainer::stopOpen(player);
 }
 
 bool MinecartHopper::canPlaceItem(int slot, not_null_ptr<ItemInstance> item)
@@ -105,10 +106,8 @@ bool MinecartHopper::canPlaceItem(int slot, not_null_ptr<ItemInstance> item)
 AbstractContainerMenu* MinecartHopper::createMenu(boost::shared_ptr<Inventory> inventory,
                                                    boost::shared_ptr<Player> player)
 {
-    boost::shared_ptr<MinecartHopper> hopper =
-        boost::static_pointer_cast<MinecartHopper>(shared_from_this());
-    boost::shared_ptr<Container> container = boost::static_pointer_cast<Container>(hopper);
-    return new HopperMenu(inventory, container, player);
+    return new HopperMenu(inventory,
+                          boost::static_pointer_cast<MinecartHopper>(shared_from_this()), player);
 }
 
 int MinecartHopper::getTypeId(bool large)
@@ -129,7 +128,7 @@ double MinecartHopper::getLevelX()
 
 double MinecartHopper::getLevelY()
 {
-    return mPosition.y + 0.5;
+    return mY + 0.5;
 }
 
 double MinecartHopper::getLevelZ()
@@ -172,9 +171,7 @@ bool MinecartHopper::interact(const boost::shared_ptr<Player>& player,
         return false;
     if (!mLevel->mIsClientSide)
     {
-        boost::shared_ptr<MinecartHopper> hopper =
-            boost::static_pointer_cast<MinecartHopper>(shared_from_this());
-        player->openContainer(boost::static_pointer_cast<Container>(hopper));
+        player->openContainer(boost::static_pointer_cast<MinecartHopper>(shared_from_this()));
     }
     return true;
 }
@@ -208,38 +205,39 @@ bool MinecartHopper::isOnCooldown()
 
 void MinecartHopper::tick()
 {
+    PIXBeginNamedEvent(0.0f, "Minecart hopper tick");
     Minecart::tick();
     if (!mLevel->mIsClientSide && isAlive() && isEnabled())
     {
         BlockPos position(shared_from_this());
-        if (position != mPosition)
-            setCooldown(0);
-        else
+        if (position == mPosition)
             --mCooldown;
+        else
+            setCooldown(0);
         if (!isOnCooldown())
         {
+            setCooldown(0);
             if (suckInItems())
                 setCooldown(4);
         }
     }
+    PIXEndNamedEvent();
 }
 
 bool MinecartHopper::suckInItems()
 {
     if (HopperBlockEntity::suckInItems(this))
         return true;
-    AliveEntitySelector selector;
     std::vector<boost::shared_ptr<Entity> >* entities =
         mLevel->getEntitiesOfClass(typeid(ItemEntity), mBoundingBox->grow(0.25, 0.0, 0.25),
-                                   &selector, false);
-    bool added = false;
+                                   EntitySelector::ENTITY_STILL_ALIVE, false);
     if (!entities->empty())
     {
         boost::shared_ptr<ItemEntity> item = boost::static_pointer_cast<ItemEntity>(entities->at(0));
-        added = HopperBlockEntity::addItem(NULL, this, item);
+        HopperBlockEntity::addItem(NULL, this, item);
     }
     delete entities;
-    return added;
+    return false;
 }
 
 void MinecartHopper::destroy(const DamageSource* source)

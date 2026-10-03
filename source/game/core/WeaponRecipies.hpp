@@ -10,6 +10,7 @@ class Recipes;
 class WeaponRecipies
 {
 public:
+    WeaponRecipies() { _init(); }
     void _init();
     void addRecipes(Recipes* recipes);
 

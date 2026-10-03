@@ -3,13 +3,13 @@
 
 #include <string>
 
-#include "game/core/DLCFile.hpp"
+#include "game/core/DLCGameRules.hpp"
 #include "game/core/GameRulesSource.hpp"
 
 class LevelGenerationOptions;
 class StringTable;
 
-class DLCGameRulesHeader : public DLCFile, public GameRulesSource
+class DLCGameRulesHeader : public DLCGameRules, public GameRulesSource
 {
 public:
     DLCGameRulesHeader(const std::wstring& path);

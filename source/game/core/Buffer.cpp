@@ -5,7 +5,6 @@ Buffer::Buffer(unsigned int capacity)
     mCapacity = capacity;
     mPosition = 0;
     mLimit = capacity;
-    mMark = 0;
     mIsWrapped = false;
 }
 
@@ -34,9 +33,10 @@ unsigned int Buffer::limit()
     return mLimit;
 }
 
-void Buffer::position(unsigned int newPosition)
+Buffer* Buffer::position(unsigned int newPosition)
 {
     mPosition = newPosition;
+    return this;
 }
 
 unsigned int Buffer::position()

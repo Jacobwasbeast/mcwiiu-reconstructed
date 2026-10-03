@@ -33,34 +33,23 @@
 extern SpellcasterIllager::IllagerSpell* gSpell4;
 extern SpellcasterIllager::IllagerSpell* gSpell5;
 
-static ResourceLocation ILLUSION_ILLAGER_LOOT_TABLE(L"minecraft", L"entities/illusion_illager");
-
 IllusionIllager::IllusionIllager(Level* level)
-    : SpellcasterIllager(level), RangedAttackMob(), mIllusionLevel(0),
-      mDisguisedPosition(Vec3::newPermanent(0.0, 0.0, 0.0)),
-      mDisguisedPositionO(Vec3::newPermanent(0.0, 0.0, 0.0)),
-      mDisguisedPosition2(Vec3::newPermanent(0.0, 0.0, 0.0)),
-      mDisguisedPosition2O(Vec3::newPermanent(0.0, 0.0, 0.0)),
-      mDisguisedPosition3(Vec3::newPermanent(0.0, 0.0, 0.0)),
-      mDisguisedPosition3O(Vec3::newPermanent(0.0, 0.0, 0.0)),
-      mDisguisedPosition4(Vec3::newPermanent(0.0, 0.0, 0.0)),
-      mDisguisedPosition4O(Vec3::newPermanent(0.0, 0.0, 0.0))
+    : SpellcasterIllager(level), RangedAttackMob()
 {
     fjDerivedCtorCalls();
     setSize(0.6f, 1.95f);
+    mExperienceReward = 5;
+    mDisguisedPosition = Vec3::newPermanent(0.0, 0.0, 0.0);
+    mDisguisedPositionO = Vec3::newPermanent(0.0, 0.0, 0.0);
+    mDisguisedPosition2 = Vec3::newPermanent(0.0, 0.0, 0.0);
+    mDisguisedPosition2O = Vec3::newPermanent(0.0, 0.0, 0.0);
+    mDisguisedPosition3 = Vec3::newPermanent(0.0, 0.0, 0.0);
+    mDisguisedPosition3O = Vec3::newPermanent(0.0, 0.0, 0.0);
+    mDisguisedPosition4 = Vec3::newPermanent(0.0, 0.0, 0.0);
+    mDisguisedPosition4O = Vec3::newPermanent(0.0, 0.0, 0.0);
 }
 
-IllusionIllager::~IllusionIllager()
-{
-    delete mDisguisedPosition;
-    delete mDisguisedPositionO;
-    delete mDisguisedPosition2;
-    delete mDisguisedPosition2O;
-    delete mDisguisedPosition3;
-    delete mDisguisedPosition3O;
-    delete mDisguisedPosition4;
-    delete mDisguisedPosition4O;
-}
+IllusionIllager::~IllusionIllager() {}
 
 void IllusionIllager::create(Level* level) { new IllusionIllager(level); }
 bool IllusionIllager::isAggressive() { return getIllagerFlag(1); }
@@ -100,11 +89,11 @@ void IllusionIllager::registerAttributes()
 MobGroupData* IllusionIllager::finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data, const std::wstring& dataString)
 {
     setItemSlot(EquipmentSlot::MAINHAND, not_null_ptr<ItemInstance>(new ItemInstance(Items::bow)));
-    return Mob::finalizeMobSpawn(difficulty, data, dataString);
+    return Mob::finalizeMobSpawn(difficulty, data, std::wstring(L""));
 }
 void IllusionIllager::defineSynchedData() { SpellcasterIllager::defineSynchedData(); }
-ResourceLocation* IllusionIllager::getDefaultLootTable() { return &ILLUSION_ILLAGER_LOOT_TABLE; }
-AABB* IllusionIllager::getBoundingBoxForCulling() { return Entity::getBoundingBoxForCulling()->grow(3.0, 0.0, 3.0); }
+ResourceLocation* IllusionIllager::getDefaultLootTable() { return NULL; }
+AABB* IllusionIllager::getBoundingBoxForCulling() { return mBoundingBox->grow(3.0, 0.0, 3.0); }
 
 void IllusionIllager::aiStep()
 {
@@ -126,33 +115,33 @@ void IllusionIllager::aiStep()
             double x;
             double y;
             double z;
-            roll = mRandom->nextInt(6) - 4;
-            y = roll > 0 ? (double)roll : 0.0;
-            z = (-6.0f + (float)mRandom->nextInt(13)) * 0.5;
-            x = (-6.0f + (float)mRandom->nextInt(13)) * 0.5;
             delete mDisguisedPosition;
-            mDisguisedPosition = mDisguisedPosition3;
-            mDisguisedPosition3 = Vec3::newPermanent(x, y, z);
+            mDisguisedPosition = mDisguisedPositionO;
             roll = mRandom->nextInt(6) - 4;
             y = roll > 0 ? (double)roll : 0.0;
             z = (-6.0f + (float)mRandom->nextInt(13)) * 0.5;
             x = (-6.0f + (float)mRandom->nextInt(13)) * 0.5;
-            delete mDisguisedPositionO;
-            mDisguisedPositionO = mDisguisedPosition3O;
-            mDisguisedPosition3O = Vec3::newPermanent(x, y, z);
-            roll = mRandom->nextInt(6) - 4;
-            y = roll > 0 ? (double)roll : 0.0;
-            z = (-6.0f + (float)mRandom->nextInt(13)) * 0.5;
-            x = (-6.0f + (float)mRandom->nextInt(13)) * 0.5;
+            mDisguisedPositionO = Vec3::newPermanent(x, y, z);
             delete mDisguisedPosition2;
-            mDisguisedPosition2 = mDisguisedPosition4;
-            mDisguisedPosition4 = Vec3::newPermanent(x, y, z);
+            mDisguisedPosition2 = mDisguisedPosition2O;
             roll = mRandom->nextInt(6) - 4;
             y = roll > 0 ? (double)roll : 0.0;
             z = (-6.0f + (float)mRandom->nextInt(13)) * 0.5;
             x = (-6.0f + (float)mRandom->nextInt(13)) * 0.5;
-            delete mDisguisedPosition2O;
-            mDisguisedPosition2O = mDisguisedPosition4O;
+            mDisguisedPosition2O = Vec3::newPermanent(x, y, z);
+            delete mDisguisedPosition3;
+            mDisguisedPosition3 = mDisguisedPosition3O;
+            roll = mRandom->nextInt(6) - 4;
+            y = roll > 0 ? (double)roll : 0.0;
+            z = (-6.0f + (float)mRandom->nextInt(13)) * 0.5;
+            x = (-6.0f + (float)mRandom->nextInt(13)) * 0.5;
+            mDisguisedPosition3O = Vec3::newPermanent(x, y, z);
+            delete mDisguisedPosition4;
+            mDisguisedPosition4 = mDisguisedPosition4O;
+            roll = mRandom->nextInt(6) - 4;
+            y = roll > 0 ? (double)roll : 0.0;
+            z = (-6.0f + (float)mRandom->nextInt(13)) * 0.5;
+            x = (-6.0f + (float)mRandom->nextInt(13)) * 0.5;
             mDisguisedPosition4O = Vec3::newPermanent(x, y, z);
 
             for (int i = 0; i < 16; ++i)
@@ -170,16 +159,16 @@ void IllusionIllager::aiStep()
         {
             mIllusionLevel = 3;
             delete mDisguisedPosition;
-            mDisguisedPosition = mDisguisedPosition3;
-            mDisguisedPosition3 = Vec3::newPermanent(0.0, 0.0, 0.0);
-            delete mDisguisedPositionO;
-            mDisguisedPositionO = mDisguisedPosition3O;
-            mDisguisedPosition3O = Vec3::newPermanent(0.0, 0.0, 0.0);
+            mDisguisedPosition = mDisguisedPositionO;
+            mDisguisedPositionO = Vec3::newPermanent(0.0, 0.0, 0.0);
             delete mDisguisedPosition2;
-            mDisguisedPosition2 = mDisguisedPosition4;
-            mDisguisedPosition4 = Vec3::newPermanent(0.0, 0.0, 0.0);
-            delete mDisguisedPosition2O;
-            mDisguisedPosition2O = mDisguisedPosition4O;
+            mDisguisedPosition2 = mDisguisedPosition2O;
+            mDisguisedPosition2O = Vec3::newPermanent(0.0, 0.0, 0.0);
+            delete mDisguisedPosition3;
+            mDisguisedPosition3 = mDisguisedPosition3O;
+            mDisguisedPosition3O = Vec3::newPermanent(0.0, 0.0, 0.0);
+            delete mDisguisedPosition4;
+            mDisguisedPosition4 = mDisguisedPosition4O;
             mDisguisedPosition4O = Vec3::newPermanent(0.0, 0.0, 0.0);
         }
         else
@@ -193,8 +182,9 @@ bool IllusionIllager::isAlliedTo(boost::shared_ptr<Entity> entity)
 {
     if (Entity::isAlliedTo(entity))
         return true;
-    if ((entity->GetType() & EntityType::LIVING_ENTITY) != EntityType::LIVING_ENTITY
-        || boost::static_pointer_cast<LivingEntity>(entity)->getMobType() != MOB_TYPE_ILLAGER)
+    int illager = (entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY
+        && boost::static_pointer_cast<LivingEntity>(entity)->getMobType() == MOB_TYPE_ILLAGER;
+    if (!illager)
         return false;
     return getTeam() == NULL && entity->getTeam() == NULL;
 }
@@ -210,24 +200,25 @@ arrayWithLength<Vec3*> IllusionIllager::getIllusionOffsets(float partialTick)
     arrayWithLength<Vec3*> offsets(4, true);
     if (mIllusionLevel < 1)
     {
-        offsets.data[0] = Vec3::newTemp(mDisguisedPosition2O);
-        offsets.data[1] = Vec3::newTemp(mDisguisedPosition3O);
-        offsets.data[2] = Vec3::newTemp(mDisguisedPosition4O);
-        offsets.data[3] = Vec3::newTemp(mDisguisedPositionO);
+        offsets.data[0] = Vec3::newTemp(mDisguisedPositionO);
+        offsets.data[1] = Vec3::newTemp(mDisguisedPosition2O);
+        offsets.data[2] = Vec3::newTemp(mDisguisedPosition3O);
+        offsets.data[3] = Vec3::newTemp(mDisguisedPosition4O);
         return offsets;
     }
-    double factor = std::pow((static_cast<double>(mIllusionLevel) - partialTick) / 3.0, 0.25);
+    double factor = std::pow(static_cast<double>((mIllusionLevel - partialTick) / 3.0f), 0.25);
     double inverse = 1.0 - factor;
-    offsets.data[0] = mDisguisedPosition2O->scale(inverse)->add(mDisguisedPosition->scale(factor));
-    offsets.data[1] = mDisguisedPosition->scale(factor)->add(mDisguisedPosition3O->scale(inverse));
-    offsets.data[2] = mDisguisedPosition2->scale(factor)->add(mDisguisedPosition4O->scale(inverse));
-    offsets.data[3] = mDisguisedPosition3->scale(factor)->add(mDisguisedPositionO->scale(inverse));
+    Vec3* previous = mDisguisedPositionO->scale(inverse);
+    offsets.data[0] = previous->add(mDisguisedPosition->scale(factor));
+    offsets.data[1] = mDisguisedPosition2O->scale(inverse)->add(mDisguisedPosition2->scale(factor));
+    offsets.data[2] = mDisguisedPosition3O->scale(inverse)->add(mDisguisedPosition3->scale(factor));
+    offsets.data[3] = mDisguisedPosition4O->scale(inverse)->add(mDisguisedPosition4->scale(factor));
     return offsets;
 }
 
 void IllusionIllager::performRangedAttack(boost::shared_ptr<LivingEntity> target, float distanceFactor)
 {
-    boost::shared_ptr<TippableArrow> arrow = getArrow(distanceFactor);
+    boost::shared_ptr<Arrow> arrow = getArrow(distanceFactor);
     double dx = target->mX - mX;
     double dy = target->mBoundingBox->mMinY + target->mBbHeight / 3.0f - arrow->mY;
     double dz = target->mZ - mZ;
@@ -237,7 +228,7 @@ void IllusionIllager::performRangedAttack(boost::shared_ptr<LivingEntity> target
     mLevel->addEntity(arrow);
 }
 
-boost::shared_ptr<TippableArrow> IllusionIllager::getArrow(float distanceFactor)
+boost::shared_ptr<Arrow> IllusionIllager::getArrow(float distanceFactor)
 {
     boost::shared_ptr<LivingEntity> owner = boost::static_pointer_cast<LivingEntity>(shared_from_this());
     boost::shared_ptr<TippableArrow> arrow(new TippableArrow(mLevel, owner));
@@ -250,12 +241,16 @@ IllusionIllager::IllusionistBlindnessSpellGoal::IllusionistBlindnessSpellGoal(Il
 IllusionIllager::IllusionistBlindnessSpellGoal::~IllusionistBlindnessSpellGoal() {}
 bool IllusionIllager::IllusionistBlindnessSpellGoal::canUse()
 {
-    boost::shared_ptr<LivingEntity> target = mSpellcaster->getTarget();
-    if (!SpellcasterUseSpellGoal::canUse() || !target || target->getId() == mTargetId)
+    if (!SpellcasterUseSpellGoal::canUse())
         return false;
-    BlockPos pos(mSpellcaster);
-    return mSpellcaster->mLevel->getCurrentDifficultyAt(pos).isHarderThan(
-        static_cast<float>(Difficulty::HARD->getId()));
+    if (mSpellcaster->getTarget().get() == NULL)
+        return false;
+    if (mSpellcaster->getTarget()->getId() == mTargetId)
+        return false;
+    if (!mSpellcaster->mLevel->getCurrentDifficultyAt(BlockPos(mSpellcaster)).isHarderThan(
+            static_cast<float>(Difficulty::NORMAL->getId())))
+        return false;
+    return true;
 }
 void IllusionIllager::IllusionistBlindnessSpellGoal::start()
 {
@@ -265,8 +260,7 @@ void IllusionIllager::IllusionistBlindnessSpellGoal::start()
 void IllusionIllager::IllusionistBlindnessSpellGoal::performSpellCasting()
 {
     boost::shared_ptr<LivingEntity> target = mSpellcaster->getTarget();
-    if (target)
-        target->addEffect(new MobEffectInstance(MobEffects::BLINDNESS, 400), boost::shared_ptr<Entity>());
+    target->addEffect(new MobEffectInstance(MobEffects::BLINDNESS, 400), boost::shared_ptr<Entity>());
 }
 int IllusionIllager::IllusionistBlindnessSpellGoal::getCastingTime() { return 20; }
 int IllusionIllager::IllusionistBlindnessSpellGoal::getCastingInterval() { return 180; }
@@ -279,7 +273,9 @@ IllusionIllager::IllusionistMirrorSpellGoal::IllusionistMirrorSpellGoal(Illusion
 IllusionIllager::IllusionistMirrorSpellGoal::~IllusionistMirrorSpellGoal() {}
 bool IllusionIllager::IllusionistMirrorSpellGoal::canUse()
 {
-    return SpellcasterUseSpellGoal::canUse() && !mSpellcaster->hasEffect(MobEffects::INVISIBILITY);
+    if (SpellcasterUseSpellGoal::canUse() && !mSpellcaster->hasEffect(MobEffects::INVISIBILITY))
+        return true;
+    return false;
 }
 void IllusionIllager::IllusionistMirrorSpellGoal::performSpellCasting()
 {

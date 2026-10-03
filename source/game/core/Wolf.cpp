@@ -59,7 +59,7 @@ static Predicate<boost::shared_ptr<Entity> >* PREY_SELECTOR = new PreySelector()
 static const int WOLF_SPAWN_EGG_AUX = 95;
 static const int WOLF_ANGRY_FLAG = 2;
 static const int WOLF_COLLAR_COLOR_MASK = 15;
-static const float WOLF_PI = 3.14159265358979323846f;
+static const float WOLF_PI = 3.1415927f;
 
 const EntityDataAccessor<float>* Wolf::DATA_HEALTH_ID = NULL;
 const EntityDataAccessor<bool>* Wolf::DATA_INTERESTED = NULL;

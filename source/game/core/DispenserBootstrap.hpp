@@ -28,6 +28,7 @@ public:
 
     private:
         Boat::Type mType;
+        DefaultDispenseItemBehavior mDefaultDispenseItemBehavior;
     };
 
     class ShulkerBoxDispenseBehavior : public OptionalDispenseItemBehavior

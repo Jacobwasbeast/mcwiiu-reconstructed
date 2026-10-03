@@ -100,8 +100,8 @@ void EyeOfEnderSignal::tick()
     mZ += mZd;
 
     double horizontal = sqrt(mXd * mXd + mZd * mZd);
-    mYRot = (float)(atan2(mXd, mZd) * 57.2957763671875f);
-    mXRot = (float)(atan2(mYd, horizontal) * 57.2957763671875f);
+    mYRot = (float)(atan2(mXd, mZd) * 57.295776f);
+    mXRot = (float)(atan2(mYd, horizontal) * 57.295776f);
 
     while (mXRot - mXRotO < -180.0f)
     {

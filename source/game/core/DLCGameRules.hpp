@@ -8,8 +8,8 @@
 class DLCGameRules : public DLCFile
 {
 public:
-    DLCGameRules(const std::wstring& path) : DLCFile(DLCManager::eDLCType_GameRules, path) {}
-    virtual ~DLCGameRules();
+    DLCGameRules(DLCManager::EDLCType type, const std::wstring& path) : DLCFile(type, path) {}
+    virtual ~DLCGameRules() {}
 };
 
 #endif

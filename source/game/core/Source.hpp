@@ -3,8 +3,6 @@
 
 class Source
 {
-public:
-    virtual ~Source() {}
 };
 
 #endif
