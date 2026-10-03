@@ -1233,12 +1233,12 @@ void BuiltInLootTables::staticLootTable_ARMOR_SET_LEATHER()
 
 void BuiltInLootTables::staticLootTable_ARMOR_STAND()
 {
-    lootTables.insert(std::make_pair(&ARMOR_STAND, LootTable::getEmpty()));
+    lootTables.insert(std::make_pair(&ARMOR_STAND, LootTable::EMPTY_LOOT_TABLE));
 }
 
 void BuiltInLootTables::staticLootTable_BAT()
 {
-    lootTables.insert(std::make_pair(&BAT, LootTable::getEmpty()));
+    lootTables.insert(std::make_pair(&BAT, LootTable::EMPTY_LOOT_TABLE));
 }
 
 void BuiltInLootTables::staticLootTable_BLAZE()
@@ -1260,7 +1260,7 @@ void BuiltInLootTables::staticLootTable_BLAZE()
 
 void BuiltInLootTables::staticLootTable_BOAT()
 {
-    lootTables.insert(std::make_pair(&BOAT, LootTable::getEmpty()));
+    lootTables.insert(std::make_pair(&BOAT, LootTable::EMPTY_LOOT_TABLE));
 }
 
 void BuiltInLootTables::staticLootTable_CAVE_SPIDER()
@@ -1312,7 +1312,7 @@ void BuiltInLootTables::staticLootTable_CHICKEN()
 
 void BuiltInLootTables::staticLootTable_CLOWNFISH()
 {
-    lootTables.insert(std::make_pair(&CLOWNFISH, LootTable::getEmpty()));
+    lootTables.insert(std::make_pair(&CLOWNFISH, LootTable::EMPTY_LOOT_TABLE));
 }
 
 void BuiltInLootTables::staticLootTable_COW()
@@ -1470,12 +1470,12 @@ void BuiltInLootTables::staticLootTable_ENDERMAN()
 
 void BuiltInLootTables::staticLootTable_ENDERMITE()
 {
-    lootTables.insert(std::make_pair(&ENDERMITE, LootTable::getEmpty()));
+    lootTables.insert(std::make_pair(&ENDERMITE, LootTable::EMPTY_LOOT_TABLE));
 }
 
 void BuiltInLootTables::staticLootTable_ENDER_DRAGON()
 {
-    lootTables.insert(std::make_pair(&ENDER_DRAGON, LootTable::getEmpty()));
+    lootTables.insert(std::make_pair(&ENDER_DRAGON, LootTable::EMPTY_LOOT_TABLE));
 }
 
 void BuiltInLootTables::staticLootTable_ENTITY_FISH()
@@ -1531,7 +1531,7 @@ void BuiltInLootTables::staticLootTable_GHAST()
 
 void BuiltInLootTables::staticLootTable_GIANT()
 {
-    lootTables.insert(std::make_pair(&GIANT, LootTable::getEmpty()));
+    lootTables.insert(std::make_pair(&GIANT, LootTable::EMPTY_LOOT_TABLE));
 }
 
 void BuiltInLootTables::staticLootTable_GUARDIAN()
@@ -1697,7 +1697,7 @@ void BuiltInLootTables::staticLootTable_MUSHROOM_COW()
 
 void BuiltInLootTables::staticLootTable_OCELOT()
 {
-    lootTables.insert(std::make_pair(&OCELOT, LootTable::getEmpty()));
+    lootTables.insert(std::make_pair(&OCELOT, LootTable::EMPTY_LOOT_TABLE));
 }
 
 void BuiltInLootTables::staticLootTable_PARROT()
@@ -1922,7 +1922,7 @@ void BuiltInLootTables::staticLootTable_SHULKER()
 
 void BuiltInLootTables::staticLootTable_SILVERFISH()
 {
-    lootTables.insert(std::make_pair(&SILVERFISH, LootTable::getEmpty()));
+    lootTables.insert(std::make_pair(&SILVERFISH, LootTable::EMPTY_LOOT_TABLE));
 }
 
 void BuiltInLootTables::staticLootTable_SKELETON()
@@ -2082,7 +2082,7 @@ void BuiltInLootTables::staticLootTable_TROPICALFISH()
 
 void BuiltInLootTables::staticLootTable_VEX()
 {
-    lootTables.insert(std::make_pair(&VEX, LootTable::getEmpty()));
+    lootTables.insert(std::make_pair(&VEX, LootTable::EMPTY_LOOT_TABLE));
 }
 
 void BuiltInLootTables::staticLootTable_VEX_GEAR()
@@ -2096,7 +2096,7 @@ void BuiltInLootTables::staticLootTable_VEX_GEAR()
 
 void BuiltInLootTables::staticLootTable_VILLAGER()
 {
-    lootTables.insert(std::make_pair(&VILLAGER, LootTable::getEmpty()));
+    lootTables.insert(std::make_pair(&VILLAGER, LootTable::EMPTY_LOOT_TABLE));
 }
 
 void BuiltInLootTables::staticLootTable_VINDICATION_ILLAGER()
@@ -2207,7 +2207,7 @@ void BuiltInLootTables::staticLootTable_WITHER_SKELETON_GEAR()
 
 void BuiltInLootTables::staticLootTable_WOLF()
 {
-    lootTables.insert(std::make_pair(&WOLF, LootTable::getEmpty()));
+    lootTables.insert(std::make_pair(&WOLF, LootTable::EMPTY_LOOT_TABLE));
 }
 
 void BuiltInLootTables::staticLootTable_ZOMBIE()

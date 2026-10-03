@@ -2,23 +2,27 @@
 
 #include <time.h>
 
-int IsLeapYear(int year)
+extern "C" int IsLeapYear(int year)
 {
-    return (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)) ? 1 : 0;
+    if ((year & 3) == 0 && year != year / 100 * 100)
+        return 1;
+    if (year == year / 400 * 400)
+        return 1;
+    return 0;
 }
 
-int GetYearDays(int year, int month)
-{
-    static const int days[2][4] =
-    {
-        { 0, 31, 59, 90 },
-        { 0, 31, 60, 91 }
-    };
+static int s_normalYearDays[4] = { 0, 31, 59, 90 };
+static int s_leapYearDays[4] = { 0, 31, 60, 91 };
 
-    return days[IsLeapYear(year) != 0][month];
+extern "C" int GetYearDays(int year, int month)
+{
+    int* days = s_normalYearDays;
+    if (IsLeapYear(year) != 0)
+        days = s_leapYearDays;
+    return days[month];
 }
 
-int GetLeapDays(int year)
+extern "C" int GetLeapDays(int year)
 {
     return (year + 3) / 4 - (year - 1) / 100 + (year - 1) / 400;
 }

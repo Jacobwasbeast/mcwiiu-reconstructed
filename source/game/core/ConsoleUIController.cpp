@@ -145,27 +145,6 @@ EUIGroup ConsoleUIController::GetGroup(int playerId)
     return EUIGroup_Fullscreen;
 }
 
-UIGroup* ConsoleUIController::group(EUIGroup groupId)
-{
-    return m_groups[groupId];
-}
-
-UIGroup* ConsoleUIController::groupForPlayer(int playerId, bool forceGlobal)
-{
-    if (forceGlobal || !gApp.GetGameStarted())
-        return m_groups[EUIGroup_Fullscreen];
-    return m_groups[GetGroup(playerId)];
-}
-
-UIScene* ConsoleUIController::playerComponent(unsigned int playerId, EUIScene scene)
-{
-    int groupId = EUIGroup_Fullscreen;
-    if (gApp.GetGameStarted())
-        groupId = GetGroup((int)playerId);
-    UIGroup* playerGroup = m_groups[groupId];
-    return playerGroup == 0 ? 0 : playerGroup->FindScene(scene);
-}
-
 void ConsoleUIController::preInit(int width, int height)
 {
     m_initialized = true;

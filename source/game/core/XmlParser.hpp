@@ -27,8 +27,8 @@ public:
         eFileFormatAuto = 0,
         eFileFormatAnsi = 1,
         eFileFormatUtf8 = 2,
-        eFileFormatUtf16LittleEndian = 3,
-        eFileFormatUtf16BigEndian = 4
+        eFileFormatUtf16BigEndian = 3,
+        eFileFormatUtf16LittleEndian = 4
     };
 
     XmlParser(unsigned char* data, unsigned int length);
@@ -57,7 +57,7 @@ public:
 
 private:
     std::wstring m_sourceName;
-    eFileFormat m_fileFormat;
+    unsigned int m_fileFormat;
     unsigned char* m_xmlSrc;
     unsigned int m_xmlSrcLength;
     rapidxml::xml_document<char> m_document;

@@ -6,8 +6,6 @@
 class LayerSize
 {
 public:
-    virtual ~LayerSize() {}
-
     virtual int GetLayerSize(Random& random, double blend) const = 0;
 };
 

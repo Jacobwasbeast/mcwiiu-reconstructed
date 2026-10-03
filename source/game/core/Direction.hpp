@@ -182,8 +182,6 @@ private:
     int stepZ;
 };
 
-bool isNotUp(const Direction* direction);
-
 #include "game/util/Vec3i.hpp"
 
 #endif

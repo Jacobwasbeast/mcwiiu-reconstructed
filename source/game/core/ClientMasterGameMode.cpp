@@ -60,16 +60,6 @@ int WaitForNextState(void* context)
     return 0;
 }
 
-ClientMasterGameMode::MapSelectInfo::MapSelectInfo()
-    : uniqueId(0), name(), texturePackId(0)
-{
-}
-
-ClientMasterGameMode::MapSelectInfo::MapSelectInfo(const MapSelectInfo& other)
-    : uniqueId(other.uniqueId), name(other.name), texturePackId(other.texturePackId)
-{
-}
-
 ClientMasterGameMode::ClientMasterGameMode()
     : CommonMasterGameMode(),
       mNewLevelDataPending(false),
@@ -395,7 +385,7 @@ void ClientMasterGameMode::AddMapToPlaylist(int uniqueId, const std::wstring& na
 {
     MapSelectInfo info;
     info.uniqueId = uniqueId;
-    info.name = name;
+    info.name.assign(name);
     info.texturePackId = texturePackId;
     mPlaylist.push_back(info);
 }

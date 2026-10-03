@@ -5,13 +5,7 @@
 
 static const int HASH_SIZE = 1024;
 static const int GROW_SIZE = 512;
-
-static unsigned int hashChunkPos(const ChunkPos& pos)
-{
-    static const int COORD_MASK = 31;
-
-    return (unsigned int)(((pos.z & COORD_MASK) << 5) | (pos.x & COORD_MASK));
-}
+static const int COORD_MASK = 31;
 
 CustomSet::CustomSet()
 {
@@ -56,7 +50,7 @@ ChunkPos CustomSet::get(int index)
 
 CustomSet::Node* CustomSet::find(const ChunkPos& pos)
 {
-    unsigned int hash = hashChunkPos(pos);
+    unsigned int hash = ((pos.z & COORD_MASK) << 5) | (pos.x & COORD_MASK);
 
     Node* node = mBuckets[hash & (mBucketCount - 1)];
 
@@ -114,7 +108,7 @@ void CustomSet::insert(const ChunkPos& pos)
 
     mCount++;
 
-    unsigned int hash = hashChunkPos(pos);
+    unsigned int hash = ((pos.z & COORD_MASK) << 5) | (pos.x & COORD_MASK);
     unsigned int index = hash & (mBucketCount - 1);
 
     node->mHash = hash;

@@ -165,16 +165,20 @@ BufferedImage::~BufferedImage()
 unsigned int BufferedImage::getWidth() { return m_width; }
 unsigned int BufferedImage::getHeight() { return m_height; }
 
-void BufferedImage::getRGB(int x, int y, unsigned int width, int height, arrayWithLength<int> rgbArray, int offset, int scansize, unsigned int mipLevel)
+void BufferedImage::getRGB(int x, int y, int width, int height, arrayWithLength<int> rgbArray, int offset, int scansize, int mipLevel)
 {
-    if (mipLevel >= 10) return;
     int sourceWidth = (int)(m_width >> mipLevel);
     int* source = m_data[mipLevel];
-    if (source == NULL || rgbArray.data == NULL) return;
+    int* destination = rgbArray.data;
     int row;
     for (row = 0; row < height; ++row)
     {
-        std::memcpy(rgbArray.data + offset + row * scansize, source + (y + row) * sourceWidth + x, width * sizeof(int));
+        int column;
+        for (column = 0; column < width; ++column)
+        {
+            destination[offset + column] = source[x + column + (y + row) * sourceWidth];
+        }
+        offset += scansize;
     }
 }
 
@@ -186,7 +190,7 @@ BufferedImage* BufferedImage::getSubimage(int x, int y, int width, int height)
 {
     BufferedImage* image = new BufferedImage(width, height, 0);
     arrayWithLength<int> pixels((unsigned int)width * (unsigned int)height, false);
-    getRGB(x, y, (unsigned int)width, height, pixels, 0, width, 0);
+    getRGB(x, y, width, height, pixels, 0, width, 0);
     if (image->m_data[0] != NULL && pixels.data != NULL)
         std::memcpy(image->m_data[0], pixels.data, (size_t)width * (size_t)height * sizeof(int));
     return image;

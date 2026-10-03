@@ -16,7 +16,10 @@ class Voteable
 public:
     struct KeyHasher
     {
-        std::size_t operator()(const std::pair<int, int>& key) const;
+        std::size_t operator()(const std::pair<int, int>& key) const
+        {
+            return static_cast<std::size_t>(key.first ^ key.second);
+        }
     };
 
     Voteable(int voteableId, bool isServer, bool oneVotePerPlayer);
@@ -33,7 +36,7 @@ public:
     void setVoteAndSync(int playerId, int voteableId, char vote);
     void setIncludedVotesAndSync(int playerId, char vote);
     void setIncludedVotesAndSync(int playerId, int voteableId, char vote);
-    void syncAllVotesToPlayer(const boost::shared_ptr<ServerPlayer>& player);
+    void syncAllVotesToPlayer(boost::shared_ptr<ServerPlayer> player);
     void clearVotes();
     void setVote(int, char);
     void setVoteAndSync(int, char);

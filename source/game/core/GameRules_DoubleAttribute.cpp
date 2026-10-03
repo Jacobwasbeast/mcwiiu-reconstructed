@@ -50,7 +50,7 @@ void GameRules_DoubleAttribute::save(ConsoleGameRules::EGameRuleAttr attribute, 
 
 void GameRules_DoubleAttribute::writeAsXml(ConsoleGameRules::EGameRuleAttr attribute, std::string& xml)
 {
-    xml.append(formatstr(" %ls=\"%.1f\"", IGameRuleAttribute::attributeName(attribute), *mValue));
+    xml.append(formatstr(" %ls=\"%.1f\"", gRuleAttributeNames[attribute], *mValue));
 }
 
 void GameRules_DoubleAttribute::setMin(double min)

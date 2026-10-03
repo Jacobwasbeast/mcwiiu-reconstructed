@@ -8,7 +8,8 @@ public:
     static int GetMonth();
 };
 
-int GetYearDays(int year, int month);
-int GetLeapDays(int year);
+extern "C" int IsLeapYear(int year);
+extern "C" int GetYearDays(int year, int month);
+extern "C" int GetLeapDays(int year);
 
 #endif

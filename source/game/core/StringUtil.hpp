@@ -4,5 +4,6 @@
 #include <string>
 
 void findAndReplace(std::wstring& value, std::wstring search, std::wstring replacement);
+std::wstring escape(std::wstring text);
 
 #endif

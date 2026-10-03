@@ -5,6 +5,8 @@
 
 #include <string>
 
+extern const wchar_t* gRuleAttributeNames[];
+
 class IGameRuleAttribute
 {
 public:
@@ -16,7 +18,6 @@ public:
     virtual void writeAsXml(ConsoleGameRules::EGameRuleAttr attribute, std::string& xml) = 0;
 
     static int attributeIdFromName(const std::wstring& name);
-    static const wchar_t* attributeName(ConsoleGameRules::EGameRuleAttr attribute);
 
     void setOptional(bool optional);
     bool isOptional();

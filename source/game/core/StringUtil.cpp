@@ -9,3 +9,12 @@ void findAndReplace(std::wstring& value, std::wstring search, std::wstring repla
         ++position;
     }
 }
+
+std::wstring escape(std::wstring text)
+{
+    std::wstring escaped = text;
+    findAndReplace(escaped, L"&", L"&amp;");
+    findAndReplace(escaped, L"<", L"&lt;");
+    findAndReplace(escaped, L">", L"&gt;");
+    return escaped;
+}

@@ -73,39 +73,6 @@ const int MOUNTAIN_TOP_LAYER = 0;
 const int WILL_LIKE_NO_OTHER_LAYER = 2;
 const unsigned int MEDAL_POOL_CAPACITY = 65;
 const int NO_VOTE = -1;
-
-bool DeathMessageNamesKiller(ClientboundChatPacket::EChatPacketMessage message)
-{
-    switch (message)
-    {
-    case ClientboundChatPacket::eChatPacketMessage_DeathThrown:
-    case ClientboundChatPacket::eChatPacketMessage_DeathIndirectMagic:
-    case ClientboundChatPacket::eChatPacketMessage_DeathThorns:
-    case ClientboundChatPacket::eChatPacketMessage_DeathFellDoomedBy:
-    case ClientboundChatPacket::eChatPacketMessage_DeathFellDoomedByItem:
-    case ClientboundChatPacket::eChatPacketMessage_DeathInFireFighting:
-    case ClientboundChatPacket::eChatPacketMessage_DeathOnFireFighting:
-    case ClientboundChatPacket::eChatPacketMessage_DeathLavaEscaping:
-    case ClientboundChatPacket::eChatPacketMessage_DeathDrownEscaping:
-    case ClientboundChatPacket::eChatPacketMessage_DeathCactusEscaping:
-    case ClientboundChatPacket::eChatPacketMessage_DeathExplosionBy:
-    case ClientboundChatPacket::eChatPacketMessage_DeathMobItem:
-    case ClientboundChatPacket::eChatPacketMessage_DeathArrowItem:
-    case ClientboundChatPacket::eChatPacketMessage_DeathFireballItem:
-    case ClientboundChatPacket::eChatPacketMessage_DeathThrownItem:
-    case ClientboundChatPacket::eChatPacketMessage_DeathHotFloorEscaping:
-    case ClientboundChatPacket::eChatPacketMessage_DeathTridentItem:
-    case ClientboundChatPacket::eChatPacketMessage_DeathIndirectMagicItem:
-        return true;
-    default:
-        return false;
-    }
-}
-
-int ElapsedWholeSeconds(long long since)
-{
-    return static_cast<int>(std::floor(static_cast<double>(System::processTimeInMilliSecs() - since)) / MILLISECONDS_PER_SECOND_EXACT);
-}
 }
 
 GameStats::GameStats()
@@ -579,7 +546,7 @@ void GameStats::CalculateStats(const std::vector<boost::shared_ptr<ServerPlayer>
 
     if (Minecraft::InMiniGame(eMiniGameId_Build, true))
     {
-        const int roundSeconds = ElapsedWholeSeconds(mRoundStartTime);
+        const int roundSeconds = static_cast<int>(std::floor(static_cast<double>(System::processTimeInMilliSecs() - mRoundStartTime)) / MILLISECONDS_PER_SECOND_EXACT);
         for (std::vector<boost::shared_ptr<ServerPlayer> >::const_iterator it = players->begin(); it != players->end(); ++it)
             GetPlayerStats((*it)->getSUID())->getRoundStats(mCurrentRound)->mLifeSpan = roundSeconds;
     }
@@ -876,9 +843,35 @@ void GameStats::RecordDamage(boost::shared_ptr<Entity> entity, CombatEntry* entr
         fallCount = static_cast<unsigned short>(attacker->mFallCount);
     }
 
-    if (deathMessage != NULL && DeathMessageNamesKiller(deathMessage->getMessage()) && deathMessage->getFirstInt() == EntityType::SERVER_PLAYER
-        && deathMessage->strings.size() > 1)
-        attacker = (gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers)->getPlayerByName(deathMessage->strings[1]);
+    if (deathMessage != NULL)
+    {
+        switch (deathMessage->getMessage())
+        {
+        case ClientboundChatPacket::eChatPacketMessage_DeathThrown:
+        case ClientboundChatPacket::eChatPacketMessage_DeathIndirectMagic:
+        case ClientboundChatPacket::eChatPacketMessage_DeathThorns:
+        case ClientboundChatPacket::eChatPacketMessage_DeathFellDoomedBy:
+        case ClientboundChatPacket::eChatPacketMessage_DeathFellDoomedByItem:
+        case ClientboundChatPacket::eChatPacketMessage_DeathInFireFighting:
+        case ClientboundChatPacket::eChatPacketMessage_DeathOnFireFighting:
+        case ClientboundChatPacket::eChatPacketMessage_DeathLavaEscaping:
+        case ClientboundChatPacket::eChatPacketMessage_DeathDrownEscaping:
+        case ClientboundChatPacket::eChatPacketMessage_DeathCactusEscaping:
+        case ClientboundChatPacket::eChatPacketMessage_DeathExplosionBy:
+        case ClientboundChatPacket::eChatPacketMessage_DeathMobItem:
+        case ClientboundChatPacket::eChatPacketMessage_DeathArrowItem:
+        case ClientboundChatPacket::eChatPacketMessage_DeathFireballItem:
+        case ClientboundChatPacket::eChatPacketMessage_DeathThrownItem:
+        case ClientboundChatPacket::eChatPacketMessage_DeathHotFloorEscaping:
+        case ClientboundChatPacket::eChatPacketMessage_DeathTridentItem:
+        case ClientboundChatPacket::eChatPacketMessage_DeathIndirectMagicItem:
+            if (deathMessage->getFirstInt() == EntityType::SERVER_PLAYER && deathMessage->strings.size() > 1)
+                attacker = (gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers)->getPlayerByName(deathMessage->strings[1]);
+            break;
+        default:
+            break;
+        }
+    }
 
     DamageEvent event;
     event.mVictim = StatsUID::EMPTY_SUID();
@@ -978,7 +971,8 @@ void GameStats::RecordDeath(boost::shared_ptr<Entity> entity)
     if (CommonMasterGameMode::GetMiniGame()->GetId() != eMiniGameId_Glide
         && CommonMasterGameMode::GetMiniGame()->GetLivesPerRound() == mRoundDeathCount)
         stats->getRoundStats(mCurrentRound)->mLifeSpan =
-            ElapsedWholeSeconds(mRoundStartTime) - mRoundDeathCount * DEATH_TIME_PENALTY_SECONDS;
+            static_cast<int>(std::floor(static_cast<double>(System::processTimeInMilliSecs() - mRoundStartTime)) / MILLISECONDS_PER_SECOND_EXACT)
+            - mRoundDeathCount * DEATH_TIME_PENALTY_SECONDS;
 
     ++stats->getRoundStats(mCurrentRound)->mDeaths;
 

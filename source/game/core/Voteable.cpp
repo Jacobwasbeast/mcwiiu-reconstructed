@@ -15,13 +15,6 @@
 #include "game/util/Random.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 
-std::size_t Voteable::KeyHasher::operator()(const std::pair<int, int>& key) const
-{
-    const std::size_t first = static_cast<std::size_t>(static_cast<unsigned int>(key.first));
-    const std::size_t second = static_cast<std::size_t>(static_cast<unsigned int>(key.second));
-    return first ^ (second + static_cast<std::size_t>(0x9e3779b9u) + (first << 6) + (first >> 2));
-}
-
 Voteable::Voteable(int voteableId, bool isServer, bool oneVotePerPlayer)
     : mVoteableId(voteableId), mIsServer(isServer), mOneVotePerPlayer(oneVotePerPlayer), mVotes()
 {
@@ -144,11 +137,11 @@ void Voteable::setIncludedVotesAndSync(int playerId, int voteableId, char vote)
     for (std::vector<std::pair<int, int> >::const_iterator it = keys.begin(); it != keys.end(); ++it) setVoteAndSync(it->first, it->second, vote);
 }
 
-void Voteable::syncAllVotesToPlayer(const boost::shared_ptr<ServerPlayer>& player)
+void Voteable::syncAllVotesToPlayer(boost::shared_ptr<ServerPlayer> player)
 {
     if (!mIsServer) return;
     for (boost::unordered_map<std::pair<int, int>, char, KeyHasher>::const_iterator it = mVotes.begin(); it != mVotes.end(); ++it) {
-        player->mConnection->send(boost::make_shared<VotePacket>(mVoteableId, it->second, it->first.first, it->first.second));
+        player->mConnection->send(boost::shared_ptr<VotePacket>(new VotePacket(mVoteableId, it->second, it->first.first, it->first.second)));
     }
 }
 

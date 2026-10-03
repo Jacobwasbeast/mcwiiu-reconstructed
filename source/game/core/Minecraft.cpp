@@ -1218,7 +1218,7 @@ bool Minecraft::setLocalPlayerIdx(int playerIdx)
     mGameMode = mGameModes[playerIdx];
     mPlayer = mLocalPlayers[playerIdx];
     mCameraEntity = mLocalPlayers[playerIdx]->GetCamera();
-    mGameRenderer->setItemInHandRenderer(mLocalItemInHandRenderers[playerIdx]);
+    mGameRenderer->mItemInHandRenderer = mLocalItemInHandRenderers[playerIdx];
     mLevel = getLevel(mLocalPlayers[playerIdx]->mDimension);
     mParticleEngine->setLevel(mLevel);
     return true;

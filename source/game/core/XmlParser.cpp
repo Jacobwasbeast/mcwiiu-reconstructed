@@ -18,55 +18,45 @@ unsigned int XmlParser::compare(char* first, char* second, unsigned int length)
     return 1;
 }
 
+static std::string gUtf8ByteOrderMark("ï»¿");
+static std::string gUtf16BigEndianByteOrderMark("þÿ");
+static std::string gUtf16LittleEndianByteOrderMark("ÿþ");
+
 unsigned int XmlParser::detectFileFormat(void* data)
 {
-    static char utf8Marker[] = { (char)0xef, (char)0xbb, (char)0xbf };
-    static char littleEndianMarker[] = { (char)0xff, (char)0xfe };
-    static char bigEndianMarker[] = { (char)0xfe, (char)0xff };
     char* bytes = (char*)data;
-    if (compare(bytes, utf8Marker, 3) == 0)
+    if (compare(bytes, (char*)gUtf8ByteOrderMark.c_str(), gUtf8ByteOrderMark.size()) == 0)
     {
-        if (compare(bytes, littleEndianMarker, 2) != 0)
-            return 3;
-        if (compare(bytes, bigEndianMarker, 2) != 0)
-            return 4;
+        if (compare(bytes, (char*)gUtf16BigEndianByteOrderMark.c_str(), gUtf16BigEndianByteOrderMark.size()) != 0)
+            return eFileFormatUtf16BigEndian;
+        if (compare(bytes, (char*)gUtf16LittleEndianByteOrderMark.c_str(), gUtf16LittleEndianByteOrderMark.size()) != 0)
+            return eFileFormatUtf16LittleEndian;
     }
-    return 2;
+    return eFileFormatUtf8;
 }
 
 void XmlParser::_set_file_format(eFileFormat format)
 {
     if (format == eFileFormatAuto)
-        m_fileFormat = (eFileFormat)detectFileFormat(m_xmlSrc);
+        m_fileFormat = detectFileFormat(m_xmlSrc);
 }
 
 void XmlParser::_parse()
 {
-    if (m_fileFormat == eFileFormatAnsi || m_fileFormat == eFileFormatUtf8)
-    {
-        char* source = (char*)m_xmlSrc;
-        m_document.remove_all_nodes();
-        m_document.remove_all_attributes();
-        if (source[0] == (char)0xef && source[1] == (char)0xbb && source[2] == (char)0xbf)
-            source += 3;
-        m_document.parse<0>(source);
-    }
-    else if (m_fileFormat == eFileFormatUtf16LittleEndian || m_fileFormat == eFileFormatUtf16BigEndian)
-    {
-        wchar_t* source = (wchar_t*)(m_xmlSrc + 2);
-        m_wideDocument.remove_all_nodes();
-        m_wideDocument.remove_all_attributes();
-        if (source[0] == (wchar_t)0xfeff)
-            ++source;
-        m_wideDocument.parse<16>(source);
-    }
+    if (m_fileFormat == eFileFormatAuto)
+        return;
+    if (m_fileFormat <= eFileFormatUtf8)
+        m_document.parse<0>((char*)m_xmlSrc);
+    else if (m_fileFormat <= eFileFormatUtf16LittleEndian)
+        m_wideDocument.parse<16>((wchar_t*)(m_xmlSrc + 2));
 }
 
 XmlParser::XmlParser(unsigned char* data, unsigned int length)
     : m_sourceName(L"[FROM BYTEARRAY]")
 {
     m_xmlSrcLength = length + 2;
-    m_xmlSrc = new unsigned char[m_xmlSrcLength]();
+    m_xmlSrc = new unsigned char[m_xmlSrcLength];
+    std::memset(m_xmlSrc, 0, m_xmlSrcLength);
     std::memcpy(m_xmlSrc, data, length);
     _set_file_format(eFileFormatAuto);
     _parse();
@@ -75,8 +65,6 @@ XmlParser::XmlParser(unsigned char* data, unsigned int length)
 XmlParser::~XmlParser()
 {
     delete[] m_xmlSrc;
-    m_wideDocument.clear();
-    m_document.clear();
 }
 
 std::wstring XmlParser::cnv2Wstr(const char* text)
@@ -90,7 +78,7 @@ std::wstring XmlParser::cnv2Wstr(const char* text)
 
 XmlChild XmlParser::_getXml(rapidxml::xml_node<char>* node)
 {
-    if (node->type() == rapidxml::node_document || node->type() == rapidxml::node_element)
+    if (node->type() == rapidxml::node_element || node->type() == rapidxml::node_document)
     {
         const char* name = node->name() == NULL ? "" : node->name();
         XmlObject* object = new XmlObject(cnv2Wstr(name));
@@ -106,12 +94,14 @@ XmlChild XmlParser::_getXml(rapidxml::xml_node<char>* node)
             object->addChildRaw(_getXml(child));
         return XmlChild(object);
     }
-    return XmlChild(cnv2Wstr(node->value() == NULL ? "" : node->value()), node->type() == rapidxml::node_data);
+    if (node->type() == rapidxml::node_data || node->type() == rapidxml::node_cdata)
+        return XmlChild(cnv2Wstr(node->value() == NULL ? "" : node->value()), node->type() == rapidxml::node_data);
+    return XmlChild((XmlObject*)NULL);
 }
 
 XmlChild XmlParser::_getXml(rapidxml::xml_node<wchar_t>* node)
 {
-    if (node->type() == rapidxml::node_document || node->type() == rapidxml::node_element)
+    if (node->type() == rapidxml::node_element || node->type() == rapidxml::node_document)
     {
         const wchar_t* name = node->name() == NULL ? L"" : node->name();
         XmlObject* object = new XmlObject(std::wstring(name));
@@ -127,7 +117,9 @@ XmlChild XmlParser::_getXml(rapidxml::xml_node<wchar_t>* node)
             object->addChildRaw(_getXml(child));
         return XmlChild(object);
     }
-    return XmlChild(std::wstring(node->value() == NULL ? L"" : node->value()));
+    if (node->type() == rapidxml::node_data || node->type() == rapidxml::node_cdata)
+        return XmlChild(std::wstring(node->value() == NULL ? L"" : node->value()));
+    return XmlChild();
 }
 
 XmlObject* XmlParser::getXml()
@@ -135,9 +127,9 @@ XmlObject* XmlParser::getXml()
     XmlObject* object = new XmlObject(L"__ROOT__");
     if (m_fileFormat != eFileFormatAuto)
     {
-        if (m_fileFormat < eFileFormatUtf16LittleEndian)
+        if (m_fileFormat <= eFileFormatUtf8)
             object->addChildRaw(_getXml(m_document.first_node()));
-        else if (m_fileFormat < 5)
+        else if (m_fileFormat <= eFileFormatUtf16LittleEndian)
             object->addChildRaw(_getXml(m_wideDocument.first_node()));
     }
     return object;
@@ -151,11 +143,14 @@ XmlObject* XmlParser::readXml(unsigned char* data, unsigned int length)
 
 void XmlParser::writeXml(DataOutputStream* stream, XmlObject* object, bool formatted)
 {
-    char* data = NULL;
-    unsigned int length = 0;
+    char* data = (char*)gUtf8ByteOrderMark.c_str();
+    unsigned int length = gUtf8ByteOrderMark.size();
+    arrayWithLength<unsigned char> output;
+    output.data = (unsigned char*)data;
+    output.length = length;
+    stream->write(output);
     toUtf8(std::wstring(L""), &data, length);
     --length;
-    arrayWithLength<unsigned char> output;
     output.data = (unsigned char*)data;
     output.length = length;
     stream->write(output);

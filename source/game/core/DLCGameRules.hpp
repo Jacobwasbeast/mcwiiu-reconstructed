@@ -8,7 +8,7 @@
 class DLCGameRules : public DLCFile
 {
 public:
-    DLCGameRules(const std::wstring& path);
+    DLCGameRules(const std::wstring& path) : DLCFile(DLCManager::eDLCType_GameRules, path) {}
     virtual ~DLCGameRules();
 };
 

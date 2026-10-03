@@ -5,22 +5,7 @@
 #include <iomanip>
 #include <sstream>
 
-namespace
-{
-    void appendCodePoint(std::wstring& result, unsigned int codePoint)
-    {
-        if (sizeof(wchar_t) == 2 && codePoint > 0xffff)
-        {
-            codePoint -= 0x10000;
-            result.push_back(static_cast<wchar_t>(0xd800 + (codePoint >> 10)));
-            result.push_back(static_cast<wchar_t>(0xdc00 + (codePoint & 0x3ff)));
-        }
-        else
-        {
-            result.push_back(static_cast<wchar_t>(codePoint));
-        }
-    }
-}
+#include "nn/nex/StringConversion.hpp"
 
 std::wstring char16towstring(wchar_t* text)
 {
@@ -65,53 +50,18 @@ std::wstring convStringToWstring(wchar_t* text)
 
 std::wstring convStringToWstring(const std::string& text)
 {
-    return convUtf8ToWstring(text.c_str());
+    const unsigned int length = static_cast<unsigned int>(text.size());
+    wchar_t* buffer = new wchar_t[length + 1];
+    nn::nex::StringConversion::Utf8ToWideChar(text.c_str(), buffer, length + 1);
+    std::wstring result;
+    result.assign(buffer, std::wcslen(buffer));
+    delete[] buffer;
+    return result;
 }
 
 std::wstring convUtf8ToWstring(const char* text)
 {
-    std::wstring result;
-    if (text == NULL)
-        return result;
-
-    const unsigned char* current = reinterpret_cast<const unsigned char*>(text);
-    while (*current != 0)
-    {
-        unsigned int codePoint;
-        unsigned int length;
-        if (*current < 0x80)
-        {
-            codePoint = *current;
-            length = 1;
-        }
-        else if ((*current & 0xe0) == 0xc0 && (current[1] & 0xc0) == 0x80)
-        {
-            codePoint = (*current & 0x1f) << 6 | (current[1] & 0x3f);
-            length = 2;
-        }
-        else if ((*current & 0xf0) == 0xe0 && (current[1] & 0xc0) == 0x80 &&
-                 (current[2] & 0xc0) == 0x80)
-        {
-            codePoint = (*current & 0x0f) << 12 | (current[1] & 0x3f) << 6 |
-                        (current[2] & 0x3f);
-            length = 3;
-        }
-        else if ((*current & 0xf8) == 0xf0 && (current[1] & 0xc0) == 0x80 &&
-                 (current[2] & 0xc0) == 0x80 && (current[3] & 0xc0) == 0x80)
-        {
-            codePoint = (*current & 0x07) << 18 | (current[1] & 0x3f) << 12 |
-                        (current[2] & 0x3f) << 6 | (current[3] & 0x3f);
-            length = 4;
-        }
-        else
-        {
-            codePoint = 0xfffd;
-            length = 1;
-        }
-        appendCodePoint(result, codePoint);
-        current += length;
-    }
-    return result;
+    return convStringToWstring(std::string(text));
 }
 
 std::string convWstringToString(const std::wstring& text)
@@ -151,16 +101,6 @@ std::wstring _toString(T value)
     std::wostringstream stream;
     stream << value;
     return stream.str();
-}
-
-std::wstring _toString(int value)
-{
-    return _toString<int>(value);
-}
-
-std::wstring _toString(float value)
-{
-    return _toString<float>(value);
 }
 
 template <typename T>

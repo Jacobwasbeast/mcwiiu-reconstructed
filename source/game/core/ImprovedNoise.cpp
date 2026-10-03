@@ -34,40 +34,9 @@ struct ImprovedNoiseYSample
     int index;
 };
 
-static int floorDouble(double value)
-{
-    int truncated = (int)value;
-
-    if (value < (double)truncated)
-    {
-        return truncated - 1;
-    }
-
-    return truncated;
-}
-
-static double fade(double t)
-{
-    return t * t * t * (t * (t * 6.0 - 15.0) + 10.0);
-}
-
-static double lerp(double t, double from, double to)
+static inline double lerp(double t, double from, double to)
 {
     return from + t * (to - from);
-}
-
-static double grad(int hash, double x, double y, double z)
-{
-    int i = hash & 15;
-
-    return gradX[i] * x + gradY[i] * y + gradZ[i] * z;
-}
-
-static double grad2(int hash, double x, double z)
-{
-    int i = hash & 15;
-
-    return grad2X[i] * x + grad2Z[i] * z;
 }
 
 ImprovedNoise::ImprovedNoise(Random* random)
@@ -110,9 +79,26 @@ double ImprovedNoise::noise(double x, double y, double z)
     double yin = y + yo;
     double zin = z + zo;
 
-    int xFloor = floorDouble(xin);
-    int yFloor = floorDouble(yin);
-    int zFloor = floorDouble(zin);
+    int xFloor = (int)xin;
+
+    if (xin < (double)xFloor)
+    {
+        xFloor--;
+    }
+
+    int yFloor = (int)yin;
+
+    if (yin < (double)yFloor)
+    {
+        yFloor--;
+    }
+
+    int zFloor = (int)zin;
+
+    if (zin < (double)zFloor)
+    {
+        zFloor--;
+    }
 
     xin -= (double)xFloor;
     yin -= (double)yFloor;
@@ -122,9 +108,9 @@ double ImprovedNoise::noise(double x, double y, double z)
     int Y = yFloor & 255;
     int Z = zFloor & 255;
 
-    double u = fade(xin);
-    double v = fade(yin);
-    double w = fade(zin);
+    double u = xin * xin * xin * (xin * (xin * 6.0 - 15.0) + 10.0);
+    double v = yin * yin * yin * (yin * (yin * 6.0 - 15.0) + 10.0);
+    double w = zin * zin * zin * (zin * (zin * 6.0 - 15.0) + 10.0);
 
     int A = p[X] + Y;
     int AA = p[A] + Z;
@@ -133,13 +119,26 @@ double ImprovedNoise::noise(double x, double y, double z)
     int BA = p[B] + Z;
     int BB = p[B + 1] + Z;
 
+    int g000Hash = p[AA] & 15;
+    double g000 = gradX[g000Hash] * xin + gradY[g000Hash] * yin + gradZ[g000Hash] * zin;
+    int g100Hash = p[BA] & 15;
+    double g100 = gradX[g100Hash] * (xin - 1.0) + gradY[g100Hash] * yin + gradZ[g100Hash] * zin;
+    int g010Hash = p[AB] & 15;
+    double g010 = gradX[g010Hash] * xin + gradY[g010Hash] * (yin - 1.0) + gradZ[g010Hash] * zin;
+    int g110Hash = p[BB] & 15;
+    double g110 = gradX[g110Hash] * (xin - 1.0) + gradY[g110Hash] * (yin - 1.0) + gradZ[g110Hash] * zin;
+    int g001Hash = p[AA + 1] & 15;
+    double g001 = gradX[g001Hash] * xin + gradY[g001Hash] * yin + gradZ[g001Hash] * (zin - 1.0);
+    int g101Hash = p[BA + 1] & 15;
+    double g101 = gradX[g101Hash] * (xin - 1.0) + gradY[g101Hash] * yin + gradZ[g101Hash] * (zin - 1.0);
+    int g011Hash = p[AB + 1] & 15;
+    double g011 = gradX[g011Hash] * xin + gradY[g011Hash] * (yin - 1.0) + gradZ[g011Hash] * (zin - 1.0);
+    int g111Hash = p[BB + 1] & 15;
+    double g111 = gradX[g111Hash] * (xin - 1.0) + gradY[g111Hash] * (yin - 1.0) + gradZ[g111Hash] * (zin - 1.0);
+
     return lerp(w,
-                lerp(v,
-                     lerp(u, grad(p[AA], xin, yin, zin), grad(p[BA], xin - 1.0, yin, zin)),
-                     lerp(u, grad(p[AB], xin, yin - 1.0, zin), grad(p[BB], xin - 1.0, yin - 1.0, zin))),
-                lerp(v,
-                     lerp(u, grad(p[AA + 1], xin, yin, zin - 1.0), grad(p[BA + 1], xin - 1.0, yin, zin - 1.0)),
-                     lerp(u, grad(p[AB + 1], xin, yin - 1.0, zin - 1.0), grad(p[BB + 1], xin - 1.0, yin - 1.0, zin - 1.0))));
+                lerp(v, lerp(u, g000, g100), lerp(u, g010, g110)),
+                lerp(v, lerp(u, g001, g101), lerp(u, g011, g111)));
 }
 
 double ImprovedNoise::getValue(double x, double y)
@@ -162,10 +161,15 @@ void ImprovedNoise::add(arrayWithLength<double> values, double x, double y, doub
     {
         for (int xi = 0; xi < xSize; ++xi)
         {
-            int xFloor = floorDouble(xin);
-            double xFrac = xin - (double)xFloor;
+            int xFloor = (int)xin;
+
+            if (xin < (double)xFloor)
+            {
+                xFloor--;
+            }
+
             int X = xFloor & 255;
-            double xFade = fade(xFrac);
+            double xFade = xin * xin * xin * (xin * (xin * 6.0 - 15.0) + 10.0);
             double zin = z + zo;
 
             int A = p[p[X]];
@@ -173,23 +177,38 @@ void ImprovedNoise::add(arrayWithLength<double> values, double x, double y, doub
 
             for (int zi = 0; zi < zSize; ++zi)
             {
-                int zFloor = floorDouble(zin);
-                double zFrac = zin - (double)zFloor;
+                int zFloor = (int)zin;
+
+                if (zin < (double)zFloor)
+                {
+                    zFloor--;
+                }
+
                 int Z = zFloor & 255;
-                double zFade = fade(zFrac);
+                double zFade = zin * zin * zin * (zin * (zin * 6.0 - 15.0) + 10.0);
 
                 int AA = A + Z;
                 int BA = B + Z;
 
-                double lerpZ0 = lerp(xFade, grad2(p[AA], xFrac, zFrac), grad(p[BA], xFrac - 1.0, 0.0, zFrac));
-                double lerpZ1 = lerp(xFade, grad(p[AA + 1], xFrac, 0.0, zFrac - 1.0), grad(p[BA + 1], xFrac - 1.0, 0.0, zFrac - 1.0));
+                int g00Hash = p[AA] & 15;
+                double g00 = grad2X[g00Hash] * xin + grad2Z[g00Hash] * zin;
+                int g10Hash = p[BA] & 15;
+                double g10 = gradX[g10Hash] * (xin - 1.0) + gradY[g10Hash] * 0.0 + gradZ[g10Hash] * zin;
+                int g01Hash = p[AA + 1] & 15;
+                double g01 = gradX[g01Hash] * xin + gradY[g01Hash] * 0.0 + gradZ[g01Hash] * (zin - 1.0);
+                int g11Hash = p[BA + 1] & 15;
+                double g11 = gradX[g11Hash] * (xin - 1.0) + gradY[g11Hash] * 0.0 + gradZ[g11Hash] * (zin - 1.0);
 
-                values.data[index++] += lerp(zFade, lerpZ0, lerpZ1) * invNoiseScale;
+                double lerpZ0 = lerp(xFade, g00, g10);
+                double lerpZ1 = lerp(xFade, g01, g11);
 
-                zin += zScale;
+                int outIndex = index++;
+                values.data[outIndex] += lerp(zFade, lerpZ0, lerpZ1) * invNoiseScale;
+
+                zin = zin + (double)zFloor + zScale;
             }
 
-            xin += xScale;
+            xin = xin + (double)xFloor + xScale;
         }
     }
     else
@@ -206,76 +225,152 @@ void ImprovedNoise::add(arrayWithLength<double> values, double x, double y, doub
 
         for (int xi = 0; xi < xSize; ++xi)
         {
-            int xFloor = floorDouble(xin);
-            double xFrac = xin - (double)xFloor;
+            int xFloor = (int)xin;
+
+            if (xin < (double)xFloor)
+            {
+                xFloor--;
+            }
+
+            xin -= (double)xFloor;
             int X = xFloor & 255;
-            double xFade = fade(xFrac);
+            double xFade = xin * xin * xin * (xin * (xin * 6.0 - 15.0) + 10.0);
             double zin = z + zo;
 
             for (int zi = 0; zi < zSize; ++zi)
             {
-                int zFloor = floorDouble(zin);
-                double zFrac = zin - (double)zFloor;
-                int Z = zFloor & 255;
-                double zFade = fade(zFrac);
-                double yin = y + yo;
+                int zFloor = (int)zin;
 
-                for (int yi = 0; yi < ySize; ++yi)
+                if (zin < (double)zFloor)
                 {
-                    double yFrac;
-                    double yFade;
-                    int Y;
+                    zFloor--;
+                }
 
-                    if (fillYSamples)
+                zin -= (double)zFloor;
+                int Z = zFloor & 255;
+                double zFade = zin * zin * zin * (zin * (zin * 6.0 - 15.0) + 10.0);
+
+                if (fillYSamples)
+                {
+                    fillYSamples = false;
+
+                    double yin = y + yo;
+
+                    for (int yi = 0; yi < ySize; ++yi)
                     {
-                        int yFloor = floorDouble(yin);
+                        int yFloor = (int)yin;
 
-                        yFrac = yin - (double)yFloor;
-                        Y = yFloor & 255;
-                        yFade = fade(yFrac);
+                        if (yin < (double)yFloor)
+                        {
+                            yFloor--;
+                        }
+
+                        yin -= (double)yFloor;
+                        int Y = yFloor & 255;
+                        double yFrac = yin;
+                        double yFade = yFrac * yFrac * yFrac * (yFrac * (yFrac * 6.0 - 15.0) + 10.0);
 
                         ySamples[yi].frac = yFrac;
                         ySamples[yi].fade = yFade;
                         ySamples[yi].index = Y;
 
-                        yin += yScale;
+                        if (yi == 0 || Y != lastY)
+                        {
+                            int A = p[X] + Y;
+                            int AA = p[A] + Z;
+                            int AB = p[A + 1] + Z;
+                            int B = p[X + 1] + Y;
+                            int BA = p[B] + Z;
+                            int BB = p[B + 1] + Z;
+
+                            int g000Hash = p[AA] & 15;
+                            double g000 = gradX[g000Hash] * xin + gradY[g000Hash] * yFrac + gradZ[g000Hash] * zin;
+                            int g100Hash = p[BA] & 15;
+                            double g100 = gradX[g100Hash] * (xin - 1.0) + gradY[g100Hash] * yFrac + gradZ[g100Hash] * zin;
+                            int g010Hash = p[AB] & 15;
+                            double g010 = gradX[g010Hash] * xin + gradY[g010Hash] * (yFrac - 1.0) + gradZ[g010Hash] * zin;
+                            int g110Hash = p[BB] & 15;
+                            double g110 = gradX[g110Hash] * (xin - 1.0) + gradY[g110Hash] * (yFrac - 1.0) + gradZ[g110Hash] * zin;
+                            int g001Hash = p[AA + 1] & 15;
+                            double g001 = gradX[g001Hash] * xin + gradY[g001Hash] * yFrac + gradZ[g001Hash] * (zin - 1.0);
+                            int g101Hash = p[BA + 1] & 15;
+                            double g101 = gradX[g101Hash] * (xin - 1.0) + gradY[g101Hash] * yFrac + gradZ[g101Hash] * (zin - 1.0);
+                            int g011Hash = p[AB + 1] & 15;
+                            double g011 = gradX[g011Hash] * xin + gradY[g011Hash] * (yFrac - 1.0) + gradZ[g011Hash] * (zin - 1.0);
+                            int g111Hash = p[BB + 1] & 15;
+                            double g111 = gradX[g111Hash] * (xin - 1.0) + gradY[g111Hash] * (yFrac - 1.0) + gradZ[g111Hash] * (zin - 1.0);
+
+                            lerpY0Z0 = lerp(xFade, g000, g100);
+                            lerpY1Z0 = lerp(xFade, g010, g110);
+                            lerpY0Z1 = lerp(xFade, g001, g101);
+                            lerpY1Z1 = lerp(xFade, g011, g111);
+
+                            lastY = Y;
+                        }
+
+                        double lerpZ0 = lerp(yFade, lerpY0Z0, lerpY1Z0);
+                        double lerpZ1 = lerp(yFade, lerpY0Z1, lerpY1Z1);
+
+                        int outIndex = index++;
+                        values.data[outIndex] += lerp(zFade, lerpZ0, lerpZ1) * invNoiseScale;
+
+                        yin = yin + (double)yFloor + yScale;
                     }
-                    else
+                }
+                else
+                {
+                    for (int yi = 0; yi < ySize; ++yi)
                     {
-                        yFrac = ySamples[yi].frac;
-                        yFade = ySamples[yi].fade;
-                        Y = ySamples[yi].index;
+                        double yFrac = ySamples[yi].frac;
+                        double yFade = ySamples[yi].fade;
+                        int Y = ySamples[yi].index;
+
+                        if (yi == 0 || Y != lastY)
+                        {
+                            int A = p[X] + Y;
+                            int AA = p[A] + Z;
+                            int AB = p[A + 1] + Z;
+                            int B = p[X + 1] + Y;
+                            int BA = p[B] + Z;
+                            int BB = p[B + 1] + Z;
+
+                            int g000Hash = p[AA] & 15;
+                            double g000 = gradX[g000Hash] * xin + gradY[g000Hash] * yFrac + gradZ[g000Hash] * zin;
+                            int g100Hash = p[BA] & 15;
+                            double g100 = gradX[g100Hash] * (xin - 1.0) + gradY[g100Hash] * yFrac + gradZ[g100Hash] * zin;
+                            int g010Hash = p[AB] & 15;
+                            double g010 = gradX[g010Hash] * xin + gradY[g010Hash] * (yFrac - 1.0) + gradZ[g010Hash] * zin;
+                            int g110Hash = p[BB] & 15;
+                            double g110 = gradX[g110Hash] * (xin - 1.0) + gradY[g110Hash] * (yFrac - 1.0) + gradZ[g110Hash] * zin;
+                            int g001Hash = p[AA + 1] & 15;
+                            double g001 = gradX[g001Hash] * xin + gradY[g001Hash] * yFrac + gradZ[g001Hash] * (zin - 1.0);
+                            int g101Hash = p[BA + 1] & 15;
+                            double g101 = gradX[g101Hash] * (xin - 1.0) + gradY[g101Hash] * yFrac + gradZ[g101Hash] * (zin - 1.0);
+                            int g011Hash = p[AB + 1] & 15;
+                            double g011 = gradX[g011Hash] * xin + gradY[g011Hash] * (yFrac - 1.0) + gradZ[g011Hash] * (zin - 1.0);
+                            int g111Hash = p[BB + 1] & 15;
+                            double g111 = gradX[g111Hash] * (xin - 1.0) + gradY[g111Hash] * (yFrac - 1.0) + gradZ[g111Hash] * (zin - 1.0);
+
+                            lerpY0Z0 = lerp(xFade, g000, g100);
+                            lerpY1Z0 = lerp(xFade, g010, g110);
+                            lerpY0Z1 = lerp(xFade, g001, g101);
+                            lerpY1Z1 = lerp(xFade, g011, g111);
+
+                            lastY = Y;
+                        }
+
+                        double lerpZ0 = lerp(yFade, lerpY0Z0, lerpY1Z0);
+                        double lerpZ1 = lerp(yFade, lerpY0Z1, lerpY1Z1);
+
+                        int outIndex = index++;
+                        values.data[outIndex] += lerp(zFade, lerpZ0, lerpZ1) * invNoiseScale;
                     }
-
-                    if (yi == 0 || Y != lastY)
-                    {
-                        int A = p[X] + Y;
-                        int AA = p[A] + Z;
-                        int AB = p[A + 1] + Z;
-                        int B = p[X + 1] + Y;
-                        int BA = p[B] + Z;
-                        int BB = p[B + 1] + Z;
-
-                        lerpY0Z0 = lerp(xFade, grad(p[AA], xFrac, yFrac, zFrac), grad(p[BA], xFrac - 1.0, yFrac, zFrac));
-                        lerpY1Z0 = lerp(xFade, grad(p[AB], xFrac, yFrac - 1.0, zFrac), grad(p[BB], xFrac - 1.0, yFrac - 1.0, zFrac));
-                        lerpY0Z1 = lerp(xFade, grad(p[AA + 1], xFrac, yFrac, zFrac - 1.0), grad(p[BA + 1], xFrac - 1.0, yFrac, zFrac - 1.0));
-                        lerpY1Z1 = lerp(xFade, grad(p[AB + 1], xFrac, yFrac - 1.0, zFrac - 1.0), grad(p[BB + 1], xFrac - 1.0, yFrac - 1.0, zFrac - 1.0));
-
-                        lastY = Y;
-                    }
-
-                    double lerpZ0 = lerp(yFade, lerpY0Z0, lerpY1Z0);
-                    double lerpZ1 = lerp(yFade, lerpY0Z1, lerpY1Z1);
-
-                    values.data[index++] += lerp(zFade, lerpZ0, lerpZ1) * invNoiseScale;
                 }
 
-                fillYSamples = false;
-
-                zin += zScale;
+                zin = zin + (double)zFloor + zScale;
             }
 
-            xin += xScale;
+            xin = xin + (double)xFloor + xScale;
         }
     }
 }

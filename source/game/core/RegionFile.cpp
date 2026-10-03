@@ -15,7 +15,6 @@ static const int SECTOR_BYTES = 0x1000;
 static const int SECTOR_INTS = SECTOR_BYTES / 4;
 static const int CHUNK_HEADER_SIZE = 8;
 static const int MAX_SECTORS_PER_CHUNK = 0x100;
-static const int THREAD_STORAGE_SIZE = 0x10000;
 static const unsigned int CHUNK_RLE_FLAG = 0x80000000U;
 static const unsigned int CHUNK_COMPRESSED_FLAG = 0x40000000U;
 static const unsigned int CHUNK_LENGTH_MASK = 0x3fffffffU;
@@ -475,11 +474,6 @@ void RegionFile::ReleaseThreadStorage()
         delete[] storage;
         TlsSetValue(sThreadStorageIndex, NULL);
     }
-}
-
-RegionFile::ChunkBuffer::ChunkBuffer(int x, RegionFile* region, int z, bool compressed)
-    : ByteArrayOutputStream(THREAD_STORAGE_SIZE), mRegion(region), mX(x), mZ(z), mCompressed(compressed)
-{
 }
 
 RegionFile::ChunkBuffer::~ChunkBuffer()

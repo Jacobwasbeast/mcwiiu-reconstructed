@@ -14,51 +14,6 @@
 extern CProfile* gProfile;
 extern CStorage* gStorage;
 
-namespace
-{
-    void putValues(boost::unordered_map<unsigned int, unsigned int>& values, unsigned int a, unsigned int b,
-                   unsigned int c, unsigned int d)
-    {
-        values[0] = a;
-        values[1] = b;
-        values[2] = c;
-        values[3] = d;
-    }
-
-    void copyValues(const boost::unordered_map<unsigned int, unsigned int>& values, unsigned char* destination,
-                    bool large)
-    {
-        if (large)
-        {
-            unsigned int i;
-            for (i = 0; i < 4; ++i)
-            {
-                unsigned int value = 0;
-                boost::unordered_map<unsigned int, unsigned int>::const_iterator it = values.find(i);
-                if (it != values.end())
-                {
-                    value = it->second;
-                }
-                std::memcpy(destination + i * 4, &value, sizeof(value));
-            }
-        }
-        else
-        {
-            unsigned int i;
-            for (i = 0; i < 4; ++i)
-            {
-                unsigned short value = 0;
-                boost::unordered_map<unsigned int, unsigned int>::const_iterator it = values.find(i);
-                if (it != values.end())
-                {
-                    value = static_cast<unsigned short>(it->second);
-                }
-                std::memcpy(destination + i * 2, &value, sizeof(value));
-            }
-        }
-    }
-}
-
 boost::unordered_map<Stat*, boost::unordered_map<unsigned int, StatsCounter::LEADERBOARD_FLAG> > StatsCounter::statBoards;
 
 StatsCounter::StatsCounter()
@@ -278,7 +233,10 @@ unsigned long long StatsCounter::award(Stat* stat, ESubTypes subtype, unsigned i
     if (statIt == end())
     {
         boost::unordered_map<unsigned int, unsigned int> values;
-        putValues(values, 0, 0, 0, 0);
+        values[0] = 0;
+        values[1] = 0;
+        values[2] = 0;
+        values[3] = 0;
         values[static_cast<unsigned int>(subtype)] = amount;
         (*this)[stat] = values;
     }
@@ -356,7 +314,7 @@ unsigned long long StatsCounter::save(int profile, bool force, unsigned char* da
         for (it = Stat::stats->begin(); it != Stat::stats->end(); ++it)
         {
             Stat* stat = *it;
-            boost::unordered_map<Stat*, boost::unordered_map<unsigned int, unsigned int> >::const_iterator statIt = find(stat);
+            boost::unordered_map<Stat*, boost::unordered_map<unsigned int, unsigned int> >::iterator statIt = find(stat);
 
             if (stat->isAchievement())
             {
@@ -403,7 +361,20 @@ unsigned long long StatsCounter::save(int profile, bool force, unsigned char* da
                 bool large = isLargeStat(stat) != 0;
                 if (statIt != end())
                 {
-                    copyValues(statIt->second, cursor, large);
+                    unsigned int i;
+                    for (i = 0; i < 4; ++i)
+                    {
+                        if (large)
+                        {
+                            unsigned int value = statIt->second[i];
+                            std::memcpy(cursor + i * sizeof(value), &value, sizeof(value));
+                        }
+                        else
+                        {
+                            unsigned short value = static_cast<unsigned short>(statIt->second[i]);
+                            std::memcpy(cursor + i * sizeof(value), &value, sizeof(value));
+                        }
+                    }
                 }
                 cursor += large ? 16 : 8;
             }
@@ -457,35 +428,97 @@ void StatsCounter::tick(int profile)
 
 void StatsCounter::parse(void* data)
 {
-    if (data == NULL || Stat::stats == NULL)
-    {
-        return;
-    }
-    clear();
-    unsigned char* cursor = static_cast<unsigned char*>(data) + 0xdd;
+    unsigned char* bytes = static_cast<unsigned char*>(data);
+    unsigned char* cursor = bytes + 0xdd;
+    unsigned int woolIndex = 0;
+    unsigned int biomeIndex = 0;
+    unsigned int armourIndex = 0;
+    boost::unordered_map<unsigned int, unsigned int> values;
     std::vector<Stat*>::const_iterator it;
     for (it = Stat::stats->begin(); it != Stat::stats->end(); ++it)
     {
-        boost::unordered_map<unsigned int, unsigned int> values;
-        if (isLargeStat(*it))
+        Stat* stat = *it;
+        if (stat->isAchievement())
+        {
+            continue;
+        }
+        else if (stat->isWoolStat())
+        {
+            unsigned long long woolBits;
+            std::memcpy(&woolBits, bytes + 0xcc, sizeof(woolBits));
+            if (woolBits != 0)
+            {
+                values[0] = 0;
+                values[0] |= static_cast<unsigned int>((woolBits >> woolIndex) & 1);
+                values[1] = 0;
+                values[2] = 0;
+                values[3] = 0;
+                insert(std::make_pair(stat, values));
+            }
+            ++woolIndex;
+        }
+        else if (stat->isBiomeStat())
+        {
+            unsigned long long biomeBits;
+            std::memcpy(&biomeBits, bytes + 0xd4, sizeof(biomeBits));
+            if (biomeBits != 0)
+            {
+                values[0] = 0;
+                values[0] |= static_cast<unsigned int>((biomeBits >> biomeIndex) & 1);
+                values[1] = 0;
+                values[2] = 0;
+                values[3] = 0;
+                insert(std::make_pair(stat, values));
+            }
+            ++biomeIndex;
+        }
+        else if (stat->isArmourStat())
+        {
+            signed char armourBits = static_cast<signed char>(bytes[0xdc]);
+            if (armourBits != 0)
+            {
+                values[0] = 0;
+                values[0] |= (armourBits >> armourIndex) & 1;
+                values[1] = 0;
+                values[2] = 0;
+                values[3] = 0;
+                insert(std::make_pair(stat, values));
+            }
+            ++armourIndex;
+        }
+        else if (isLargeStat(stat))
         {
             unsigned int a, b, c, d;
-            std::memcpy(&a, cursor, 4); std::memcpy(&b, cursor + 4, 4);
-            std::memcpy(&c, cursor + 8, 4); std::memcpy(&d, cursor + 12, 4);
-            putValues(values, a, b, c, d);
+            std::memcpy(&a, cursor, 4);
+            std::memcpy(&b, cursor + 4, 4);
+            std::memcpy(&c, cursor + 8, 4);
+            std::memcpy(&d, cursor + 12, 4);
+            if (a != 0 || b != 0 || c != 0 || d != 0)
+            {
+                values[0] = a;
+                values[1] = b;
+                values[2] = c;
+                values[3] = d;
+                insert(std::make_pair(stat, values));
+            }
             cursor += 16;
         }
         else
         {
             unsigned short a, b, c, d;
-            std::memcpy(&a, cursor, 2); std::memcpy(&b, cursor + 2, 2);
-            std::memcpy(&c, cursor + 4, 2); std::memcpy(&d, cursor + 6, 2);
-            putValues(values, a, b, c, d);
+            std::memcpy(&a, cursor, 2);
+            std::memcpy(&b, cursor + 2, 2);
+            std::memcpy(&c, cursor + 4, 2);
+            std::memcpy(&d, cursor + 6, 2);
+            if (a != 0 || b != 0 || c != 0 || d != 0)
+            {
+                values[0] = a;
+                values[1] = b;
+                values[2] = c;
+                values[3] = d;
+                insert(std::make_pair(stat, values));
+            }
             cursor += 8;
-        }
-        if (values[0] != 0 || values[1] != 0 || values[2] != 0 || values[3] != 0)
-        {
-            (*this)[*it] = values;
         }
     }
 }
@@ -493,6 +526,7 @@ void StatsCounter::parse(void* data)
 void StatsCounter::parseOld(unsigned short, void* data)
 {
     unsigned char* cursor = static_cast<unsigned char*>(data) + 0xcc;
+    boost::unordered_map<unsigned int, unsigned int> values;
     std::vector<Stat*>::const_iterator it;
     for (it = Stat::stats->begin(); it != Stat::stats->end(); ++it)
     {
@@ -508,8 +542,10 @@ void StatsCounter::parseOld(unsigned short, void* data)
                 std::memcpy(&d, cursor + 12, 4);
                 if (a != 0 || b != 0 || c != 0 || d != 0)
                 {
-                    boost::unordered_map<unsigned int, unsigned int> values;
-                    putValues(values, a, b, c, d);
+                    values[0] = a;
+                    values[1] = b;
+                    values[2] = c;
+                    values[3] = d;
                     insert(std::make_pair(stat, values));
                 }
                 cursor += 16;
@@ -523,8 +559,10 @@ void StatsCounter::parseOld(unsigned short, void* data)
                 std::memcpy(&d, cursor + 6, 2);
                 if (a != 0 || b != 0 || c != 0 || d != 0)
                 {
-                    boost::unordered_map<unsigned int, unsigned int> values;
-                    putValues(values, a, b, c, d);
+                    values[0] = a;
+                    values[1] = b;
+                    values[2] = c;
+                    values[3] = d;
                     insert(std::make_pair(stat, values));
                 }
                 cursor += 8;
@@ -536,8 +574,10 @@ void StatsCounter::parseOld(unsigned short, void* data)
             std::memcpy(&a, cursor, 2);
             if (a != 0)
             {
-                boost::unordered_map<unsigned int, unsigned int> values;
-                putValues(values, a, 0, 0, 0);
+                values[0] = a;
+                values[1] = 0;
+                values[2] = 0;
+                values[3] = 0;
                 insert(std::make_pair(stat, values));
             }
             cursor += 2;

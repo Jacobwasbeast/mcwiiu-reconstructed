@@ -2,12 +2,7 @@
 #include "game/core/ImprovedNoise.hpp"
 #include "game/util/Random.hpp"
 #include "game/core/MemSect.hpp"
-static int perlinFloor(double value)
-{
-    int result = (int)value;
-    if (value < (double)result) --result;
-    return result;
-}
+#include "game/core/Mth.hpp"
 PerlinNoise::PerlinNoise(int levels)
 {
     Random random(0);
@@ -73,12 +68,12 @@ arrayWithLength<double> PerlinNoise::getRegion(arrayWithLength<double> values, i
         double xin = (double)x * frequency * xScale;
         double yin = (double)y * frequency * yScale;
         double zin = (double)z * frequency * zScale;
-        int xFloor = perlinFloor(xin);
-        int zFloor = perlinFloor(zin);
+        long long xFloor = Mth::lfloor(xin);
+        long long zFloor = Mth::lfloor(zin);
         xin -= (double)xFloor;
         zin -= (double)zFloor;
-        xFloor %= 16777216;
-        zFloor %= 16777216;
+        xFloor %= 16777216LL;
+        zFloor %= 16777216LL;
         xin += (double)xFloor;
         zin += (double)zFloor;
         noiseLevels[i]->add(values, xin, yin, zin, xSize, ySize, zSize,

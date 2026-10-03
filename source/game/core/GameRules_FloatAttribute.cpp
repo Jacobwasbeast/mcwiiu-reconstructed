@@ -50,7 +50,7 @@ void GameRules_FloatAttribute::save(ConsoleGameRules::EGameRuleAttr attribute, G
 
 void GameRules_FloatAttribute::writeAsXml(ConsoleGameRules::EGameRuleAttr attribute, std::string& xml)
 {
-    xml.append(formatstr(" %ls=\"%.1f\"", IGameRuleAttribute::attributeName(attribute), *mValue));
+    xml.append(formatstr(" %ls=\"%.1f\"", gRuleAttributeNames[attribute], *mValue));
 }
 
 void GameRules_FloatAttribute::setMin(float min)

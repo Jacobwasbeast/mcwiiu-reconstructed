@@ -13,7 +13,7 @@ public:
     virtual double getDefaultValue();
     virtual bool isClientSyncable();
     virtual Attribute* getParentAttribute();
-    virtual void setSyncable(bool syncable);
+    virtual BaseAttribute* setSyncable(bool syncable);
 
     bool equals(Attribute* other);
 

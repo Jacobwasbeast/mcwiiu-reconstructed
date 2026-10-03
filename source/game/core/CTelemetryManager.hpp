@@ -136,7 +136,11 @@ struct TelemetryDamageSource
 class CTelemetryManager
 {
 public:
-    CTelemetryManager();
+    CTelemetryManager()
+        : mUnknown0(0), mInitialiseTime(0.0f), mLevelStarted(false), mLevelStartTime(),
+          mMultiplayerInstanceId(0), mLevelInstanceId(0)
+    {
+    }
     virtual ~CTelemetryManager();
 
     virtual unsigned int Init();

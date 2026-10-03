@@ -282,9 +282,6 @@ public:
     void logDebugString(const std::string& text);
 
 private:
-    UIGroup* groupForPlayer(int playerId, bool forceGlobal);
-    UIGroup* group(EUIGroup groupId);
-    UIScene* playerComponent(unsigned int playerId, EUIScene scene);
 
     UIScene* m_debugConsole;
     int m_layoutWord;

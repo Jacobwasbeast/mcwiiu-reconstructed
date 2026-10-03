@@ -104,13 +104,6 @@ CombatTracker::eLOCATION CombatTracker::getFallLocation(CombatEntry* entry)
     return entry != 0 ? entry->getLocation() : eLOCATION_NONE;
 }
 
-static not_null_ptr<ItemInstance> getAttackerItem(const boost::shared_ptr<Entity>& attacker)
-{
-    if (eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, attacker->GetType()))
-        return boost::static_pointer_cast<LivingEntity>(attacker)->getMainHandItem();
-    return ItemInstance::EMPTY;
-}
-
 boost::shared_ptr<ClientboundChatPacket> CombatTracker::getDeathMessagePacket()
 {
     if (mEntries.empty())
@@ -170,7 +163,9 @@ boost::shared_ptr<ClientboundChatPacket> CombatTracker::getDeathMessagePacket()
             return boost::shared_ptr<ClientboundChatPacket>(new ClientboundChatPacket(
                 mMob->getNetworkName(), ClientboundChatPacket::eChatPacketMessage_DeathFellDoomed, -1));
 
-        not_null_ptr<ItemInstance> item = getAttackerItem(killer);
+        not_null_ptr<ItemInstance> item = eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, killer->GetType())
+            ? boost::static_pointer_cast<LivingEntity>(killer)->getMainHandItem()
+            : ItemInstance::EMPTY;
         if (!item->isEmpty() && item->hasCustomHoverName())
             return boost::shared_ptr<ClientboundChatPacket>(new ClientboundChatPacket(
                 mMob->getNetworkName(), ClientboundChatPacket::eChatPacketMessage_DeathFellFinishedItem, killer,
@@ -180,7 +175,9 @@ boost::shared_ptr<ClientboundChatPacket> CombatTracker::getDeathMessagePacket()
             killer->getNetworkName()));
     }
 
-    not_null_ptr<ItemInstance> item = getAttackerItem(knockoffAttacker);
+    not_null_ptr<ItemInstance> item = eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, knockoffAttacker->GetType())
+        ? boost::static_pointer_cast<LivingEntity>(knockoffAttacker)->getMainHandItem()
+        : ItemInstance::EMPTY;
     if (!item->isEmpty() && item->hasCustomHoverName())
         return boost::shared_ptr<ClientboundChatPacket>(new ClientboundChatPacket(
             mMob->getNetworkName(), ClientboundChatPacket::eChatPacketMessage_DeathFellDoomedByItem, knockoffAttacker,

@@ -16,5 +16,5 @@ LootTable* LootTables::get(ResourceLocation* location)
         return found->second;
     }
 
-    return LootTable::getEmpty();
+    return LootTable::EMPTY_LOOT_TABLE;
 }

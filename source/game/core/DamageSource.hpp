@@ -46,7 +46,7 @@ public:
     static const DamageSource* INSTANT_DAMAGE;
     static const DamageSource* DRY_OUT;
 
-    DamageSource(ClientboundChatPacket::EChatPacketMessage message, ClientboundChatPacket::EChatPacketMessage deathMessage);
+    DamageSource(ClientboundChatPacket::EChatPacketMessage message, ClientboundChatPacket::EChatPacketMessage deathMessage = ClientboundChatPacket::eChatPacketMessage_Text);
     DamageSource(const DamageSource& source);
     virtual ~DamageSource() {}
     bool equals(const DamageSource* source) const;
@@ -57,14 +57,14 @@ public:
     void setIsFireProjectile();
     static DamageSource* CreateArrow(boost::shared_ptr<Arrow> arrow, boost::shared_ptr<Entity> owner, bool fire);
     static DamageSource* CreateTrident(boost::shared_ptr<ThrownTrident> trident, boost::shared_ptr<Entity> owner);
-    void setIsFire();
+    DamageSource* setIsFire();
     static DamageSource* CreateFireball(boost::shared_ptr<Fireball> fireball, boost::shared_ptr<Entity> owner);
     static DamageSource* CreateThrown(boost::shared_ptr<Entity> projectile, boost::shared_ptr<Entity> owner);
-    void setMagic();
-    void bypassArmor();
+    DamageSource* setMagic();
+    DamageSource* bypassArmor();
     static DamageSource* CreateIndirectMagic(boost::shared_ptr<Entity> source, boost::shared_ptr<Entity> target, const DamageSource* baseSource);
     static EntityDamageSource* CreateThorns(boost::shared_ptr<Entity> entity);
-    void setExplosion();
+    DamageSource* setExplosion();
     void setScalesWithDifficulty();
     static DamageSource* CreateExplosion(Explosion* explosion);
     static DamageSource* CreateExplosion(const boost::shared_ptr<LivingEntity>& entity);
@@ -88,9 +88,9 @@ public:
     virtual Vec3* getSourcePosition() const;
     virtual const DamageSource* GetBaseDamageSource() const;
     virtual DamageSource* copy() const;
-    void bypassInvul();
-    void bypassGraceInvul();
-    void bypassMagic();
+    DamageSource* bypassInvul();
+    DamageSource* bypassGraceInvul();
+    DamageSource* bypassMagic();
 
 protected:
     ClientboundChatPacket::EChatPacketMessage message;

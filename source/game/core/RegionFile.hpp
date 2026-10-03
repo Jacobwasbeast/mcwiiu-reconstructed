@@ -6,13 +6,18 @@
 #include "game/core/DataOutputStream.hpp"
 #include "game/core/File.hpp"
 #include "game/data/ConsoleSaveFile.hpp"
+static const int THREAD_STORAGE_SIZE = 0x10000;
+
 class RegionFile
 {
 public:
     class ChunkBuffer : public ByteArrayOutputStream
     {
     public:
-        ChunkBuffer(int x, RegionFile* region, int z, bool compressed);
+        ChunkBuffer(int x, RegionFile* region, int z, bool compressed)
+            : ByteArrayOutputStream(THREAD_STORAGE_SIZE), mRegion(region), mX(x), mZ(z), mCompressed(compressed)
+        {
+        }
         virtual ~ChunkBuffer();
         virtual void close();
 

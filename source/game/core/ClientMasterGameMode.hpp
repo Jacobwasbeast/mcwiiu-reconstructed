@@ -32,8 +32,6 @@ public:
     class MapSelectInfo
     {
     public:
-        MapSelectInfo();
-        MapSelectInfo(const MapSelectInfo& other);
         int uniqueId;
         std::wstring name;
         int texturePackId;

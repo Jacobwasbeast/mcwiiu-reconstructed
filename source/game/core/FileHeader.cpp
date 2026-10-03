@@ -20,11 +20,6 @@ static const unsigned int FILE_ENTRY_DATA_SIZE_V1 = 136;
 static const short CURRENT_SAVE_VERSION = 11;
 static const short MAX_SUPPORTED_SAVE_VERSION = 12;
 
-ByteOrder FileHeader::getNativeEndian()
-{
-    return eByteOrder_BigEndian;
-}
-
 FileHeader::FileHeader()
 {
     m_savePlatform = eSavePlatform_WIIU;
@@ -188,19 +183,19 @@ void FileHeader::ReadHeader(void* pData, ESavePlatform platform)
     short* pVersions = (short*)(pOffsets + 2);
 
     unsigned int indexOffset = pOffsets[0];
-    if (m_saveEndian != getNativeEndian())
+    if (m_saveEndian != eByteOrder_BigEndian)
         System::ReverseULONG(&indexOffset);
 
     unsigned int fileCount = pOffsets[1];
-    if (m_saveEndian != getNativeEndian())
+    if (m_saveEndian != eByteOrder_BigEndian)
         System::ReverseULONG(&fileCount);
 
     m_originalSaveVersion = pVersions[0];
-    if (m_saveEndian != getNativeEndian())
+    if (m_saveEndian != eByteOrder_BigEndian)
         System::ReverseSHORT(&m_originalSaveVersion);
 
     m_saveVersion = pVersions[1];
-    if (m_saveEndian != getNativeEndian())
+    if (m_saveEndian != eByteOrder_BigEndian)
         System::ReverseSHORT(&m_saveVersion);
 
     unsigned char* pEntryData = (unsigned char*)pData + indexOffset;
@@ -234,7 +229,7 @@ void FileHeader::ReadHeader(void* pData, ESavePlatform platform)
 
             memcpy(pEntry, pEntryData, FILE_ENTRY_DATA_SIZE);
 
-            if (m_saveEndian != getNativeEndian())
+            if (m_saveEndian != eByteOrder_BigEndian)
             {
                 System::ReverseCHAR16A(pEntry->m_name, 64);
                 System::ReverseULONG(&pEntry->m_fileSize);

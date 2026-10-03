@@ -35,5 +35,5 @@ void GameRules_UnsignedCharAttribute::save(ConsoleGameRules::EGameRuleAttr attri
 
 void GameRules_UnsignedCharAttribute::writeAsXml(ConsoleGameRules::EGameRuleAttr attribute, std::string& xml)
 {
-    xml.append(formatstr(" %ls=\"%d\"", IGameRuleAttribute::attributeName(attribute), *mValue));
+    xml.append(formatstr(" %ls=\"%d\"", gRuleAttributeNames[attribute], *mValue));
 }

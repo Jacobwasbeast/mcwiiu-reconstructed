@@ -25,7 +25,7 @@ public:
     XmlValue operator[](const std::wstring& name) const;
     virtual std::wstring asString() const;
     virtual bool isString() const;
-    virtual std::wstring toString(int indent, bool formatted) const;
+    std::wstring toString(int indent, bool formatted) const;
     void addChild(XmlObject* child);
     const std::wstring& getAttr(const std::wstring& name) const;
     std::wstring getText() const;

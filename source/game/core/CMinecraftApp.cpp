@@ -217,59 +217,8 @@ struct InviteJoinData
 
 bool sRetryDisconnectAction = false;
 
-FullscreenProgressState* NewFullscreenProgressState(bool showTip, int closeMode, int playerId)
-{
-    FullscreenProgressState* state = new FullscreenProgressState();
-    state->showConfirmation = false;
-    state->reservedFlag1 = true;
-    state->reservedFlag2 = true;
-    state->showTip = showTip;
-    state->closeMode = closeMode;
-    state->playerId = playerId;
-    state->backScene = EUIScene_None;
-    return state;
 }
 
-int DisconnectMessageForReason(unsigned int reason)
-{
-    switch (reason)
-    {
-    case 7: return 0xad3e1729;
-    case 8: return 0xf3a95051;
-    case 0xe: return 0xb59cada7;
-    case 0xf: return 0xce44990b;
-    case 0x14: return 0xfb7f0496;
-    case 0x15: return 0x4d669d55;
-    default: return IDS_DISCONNECTED;
-    }
-}
-
-bool IsLicenseExemptTexturePack(const std::wstring& folderName)
-{
-    static const wchar_t* kNames[] = {
-        L"Battle & Beasts", L"Battle & Beasts 2", L"Festive", L"Fantasy Texture Pack",
-        L"City Texture Pack", L"Natural Texture Pack", L"Mario"
-    };
-    for (int i = 0; i < 7; ++i)
-    {
-        if (folderName == kNames[i])
-            return true;
-    }
-    return false;
-}
-}
-
-static PlayerUID GetTutorialPlayerUid(const Player* player)
-{
-    if (player == NULL)
-        return PlayerUID(0);
-    const char* base = reinterpret_cast<const char*>(player);
-    PlayerUID primary;
-    PlayerUID alternate;
-    std::memcpy(&primary, base + 0x784, sizeof(PlayerUID));
-    std::memcpy(&alternate, base + 0x798, sizeof(PlayerUID));
-    return primary != PlayerUID(0) ? primary : alternate;
-}
 static TIPSTRUCT sGeneralTips[] = {
     {0, IDS_TIPS_GAMETIP_1}, {0, IDS_TIPS_GAMETIP_2}, {0, IDS_TIPS_GAMETIP_3},
     {0, IDS_TIPS_GAMETIP_4}, {0, IDS_TIPS_GAMETIP_6}, {0, IDS_TIPS_GAMETIP_7},
@@ -1100,8 +1049,17 @@ int CMinecraftApp::SignoutExitWorldThreadProc(void* context)
         if (context == NULL)
             goto waitForSessionEnd;
 
+        int message = IDS_DISCONNECTED;
+        switch (g_pApp->GetDisconnectReason())
+        {
+        case 8: message = IDS_DISCONNECTED_KICKED; break;
+        case 0xe: message = IDS_DISCONNECTED_SERVER_OLD; break;
+        case 0xf: message = IDS_DISCONNECTED_CLIENT_OLD; break;
+        case 0x14: message = 0xfb7f0496; break;
+        case 0x15: message = 0x4d669d55; break;
+        }
         if (minecraft->mGui != NULL)
-            minecraft->mGui->displayClientMessage(DisconnectMessageForReason(g_pApp->GetDisconnectReason()), 0);
+            minecraft->mGui->displayClientMessage(message, 0);
 
         if (!CGameNetworkManager::sInstance.IsInSession())
             goto waitForSessionEnd;
@@ -1122,8 +1080,18 @@ int CMinecraftApp::SignoutExitWorldThreadProc(void* context)
         }
         else
         {
+            int message = IDS_DISCONNECTED;
+            switch (g_pApp->GetDisconnectReason())
+            {
+            case 7: message = IDS_DISCONNECTED_FLYING; break;
+            case 8: message = IDS_DISCONNECTED_KICKED; break;
+            case 0xe: message = IDS_DISCONNECTED_SERVER_OLD; break;
+            case 0xf: message = IDS_DISCONNECTED_CLIENT_OLD; break;
+            case 0x14: message = 0xfb7f0496; break;
+            case 0x15: message = 0x4d669d55; break;
+            }
             if (minecraft->mGui != NULL)
-                minecraft->mGui->displayClientMessage(DisconnectMessageForReason(g_pApp->GetDisconnectReason()), 0);
+                minecraft->mGui->displayClientMessage(message, 0);
 
             boost::shared_ptr<MultiplayerLocalPlayer>& firstPlayer = minecraft->mLocalPlayers[0];
             if (firstPlayer)
@@ -1305,7 +1273,10 @@ void CMinecraftApp::SetTutorialMode(bool tutorial, const boost::shared_ptr<Playe
         mTutorialModes[PlayerUID(0)] = tutorial;
         return;
     }
-    mTutorialModes[GetTutorialPlayerUid(player.get())] = tutorial;
+    Player* tutorialPlayer = player.get();
+    PlayerUID onlineXuid = tutorialPlayer->mOnlineXuid;
+    PlayerUID uid = onlineXuid != PlayerUID(0) ? onlineXuid : tutorialPlayer->mXuid;
+    mTutorialModes[uid] = tutorial;
 }
 eXuiAction CMinecraftApp::GetXuiAction(int player)
 {
@@ -1923,24 +1894,23 @@ void CMinecraftApp::HandleDLC(DLCPack* pack)
 }
 int CMinecraftApp::DLCMountedCallback(void* context, int result, unsigned int contentType, unsigned int index)
 {
-    CMinecraftApp* app = static_cast<CMinecraftApp*>(context);
     if (contentType != 0)
     {
-        ++app->mDLCManager.m_numCorruptPacks;
-        ++app->mDLCInstallIndex;
-        app->MountNextDLC(result);
+        ++gApp.mDLCManager.m_numCorruptPacks;
+        ++gApp.mDLCInstallIndex;
+        gApp.MountNextDLC(result);
         return 0;
     }
 
-    CONTENT_DATA content = *reinterpret_cast<CONTENT_DATA*>(gStorage->GetDLC(app->mDLCInstallIndex));
+    CONTENT_DATA content = *reinterpret_cast<CONTENT_DATA*>(gStorage->GetDLC(gApp.mDLCInstallIndex));
     const std::wstring folderName = convStringToWstring(std::string(content.name));
-    DLCPack* existingPack = app->mDLCManager.getPack(folderName);
-    cNintendoDLCInfo* dlcInfo = static_cast<CConsoleMinecraftApp*>(app)->GetDLCInfoInstance();
+    DLCPack* existingPack = gApp.mDLCManager.getPack(folderName);
+    cNintendoDLCInfo* dlcInfo = static_cast<CConsoleMinecraftApp*>(&gApp)->GetDLCInfoInstance();
 
     if (existingPack != NULL && !existingPack->IsCorrupt())
     {
         const unsigned int licenseMask = dlcInfo->GetDLCPurchased(content.name);
-        existingPack->SetDLCMountIndex(app->mDLCInstallIndex);
+        existingPack->SetDLCMountIndex(gApp.mDLCInstallIndex);
         existingPack->SetDLCDeviceID(content.state);
         existingPack->updateLicenseMask(licenseMask);
         gStorage->UnmountInstalledDLC(NULL);
@@ -1948,22 +1918,34 @@ int CMinecraftApp::DLCMountedCallback(void* context, int result, unsigned int co
     else
     {
         if (existingPack != NULL)
-            app->mDLCManager.removePack(existingPack);
+            gApp.mDLCManager.removePack(existingPack);
 
         unsigned int licenseMask = dlcInfo->GetDLCPurchased(content.name);
-        if (IsLicenseExemptTexturePack(folderName))
+        if (std::wstring(L"Battle & Beasts") == folderName)
+            licenseMask = 1U;
+        if (std::wstring(L"Battle & Beasts 2") == folderName)
+            licenseMask = 1U;
+        if (std::wstring(L"Festive") == folderName)
+            licenseMask = 1U;
+        if (std::wstring(L"Fantasy Texture Pack") == folderName)
+            licenseMask = 1U;
+        if (std::wstring(L"City Texture Pack") == folderName)
+            licenseMask = 1U;
+        if (std::wstring(L"Natural Texture Pack") == folderName)
+            licenseMask = 1U;
+        if (std::wstring(L"Mario") == folderName)
             licenseMask = 1U;
 
         DLCPack* pack = new DLCPack(folderName, licenseMask);
-        pack->SetDLCMountIndex(app->mDLCInstallIndex);
+        pack->SetDLCMountIndex(gApp.mDLCInstallIndex);
         pack->SetDLCDeviceID(content.state);
-        app->mDLCManager.addPack(pack);
-        app->HandleDLC(pack);
+        gApp.mDLCManager.addPack(pack);
+        gApp.HandleDLC(pack);
         gStorage->UnmountInstalledDLC(NULL);
     }
 
-    ++app->mDLCInstallIndex;
-    app->MountNextDLC(result);
+    ++gApp.mDLCInstallIndex;
+    gApp.MountNextDLC(result);
     return 0;
 }
 void CMinecraftApp::MountNextDLC(int32_t pad)
@@ -2478,7 +2460,9 @@ uint8_t CMinecraftApp::GetTutorialMode(const boost::shared_ptr<Player>& player)
     uint8_t tutorial;
     if (player)
     {
-        PlayerUID uid = GetTutorialPlayerUid(player.get());
+        Player* tutorialPlayer = player.get();
+        PlayerUID onlineXuid = tutorialPlayer->mOnlineXuid;
+        PlayerUID uid = onlineXuid != PlayerUID(0) ? onlineXuid : tutorialPlayer->mXuid;
         if (mTutorialModes.find(uid) != mTutorialModes.end())
         {
             tutorial = mTutorialModes[uid];
@@ -3267,13 +3251,6 @@ void CMinecraftApp::CurrentImageTextData(PngTagData* data)
     data->flags |= PngTagData::eFlag_TexturePack;
     data->texturePack = Minecraft::GetInstance()->getCurrentTexturePackId();
 }
-static bool ParseImageTextHexValue(const char* text, unsigned int* value)
-{
-    std::istringstream stream(text);
-    stream >> std::hex >> *value;
-    return !stream.fail();
-}
-
 void CMinecraftApp::ParseImageTextData(const unsigned char* image, unsigned int size, PngTagData* data)
 {
     std::memset(data, 0, sizeof(PngTagData));
@@ -3326,7 +3303,11 @@ void CMinecraftApp::ParseImageTextData(const unsigned char* image, unsigned int 
                 valueText[valueLength++] = *cursor++;
             }
             data->flags |= PngTagData::eFlag_HostOptions;
-            ParseImageTextHexValue(valueText, &data->hostOptions);
+            unsigned int parsedValue = 0;
+            std::stringstream valueStream;
+            valueStream << valueText;
+            valueStream >> std::hex >> parsedValue;
+            data->hostOptions = parsedValue;
             if (cursor < end)
                 ++cursor;
         }
@@ -3340,7 +3321,11 @@ void CMinecraftApp::ParseImageTextData(const unsigned char* image, unsigned int 
                 valueText[valueLength++] = *cursor++;
             }
             data->flags |= PngTagData::eFlag_TexturePack;
-            ParseImageTextHexValue(valueText, &data->texturePack);
+            unsigned int parsedValue = 0;
+            std::stringstream valueStream;
+            valueStream << valueText;
+            valueStream >> std::hex >> parsedValue;
+            data->texturePack = parsedValue;
             if (cursor < end)
                 ++cursor;
         }
@@ -3354,7 +3339,11 @@ void CMinecraftApp::ParseImageTextData(const unsigned char* image, unsigned int 
                 valueText[valueLength++] = *cursor++;
             }
             data->flags |= PngTagData::eFlag_ExtraData;
-            ParseImageTextHexValue(valueText, &data->extraData);
+            unsigned int parsedValue = 0;
+            std::stringstream valueStream;
+            valueStream << valueText;
+            valueStream >> std::hex >> parsedValue;
+            data->extraData = parsedValue;
             if (cursor < end)
                 ++cursor;
         }
@@ -3398,7 +3387,11 @@ void CMinecraftApp::ParseImageTextData(const unsigned char* image, unsigned int 
                 valueText[valueLength++] = *cursor++;
             }
             data->flags |= PngTagData::eFlag_NumLoads;
-            ParseImageTextHexValue(valueText, &data->numLoads);
+            unsigned int parsedValue = 0;
+            std::stringstream valueStream;
+            valueStream << valueText;
+            valueStream >> std::hex >> parsedValue;
+            data->numLoads = parsedValue;
             if (cursor < end)
                 ++cursor;
         }
@@ -4105,7 +4098,14 @@ void CMinecraftApp::HandleXuiActions()
             params->m_threadParam = NULL;
             params->m_threadProc = &UIScene_PauseMenu::SaveWorldThreadProc;
             params->m_waitForThreadToDelete = true;
-            FullscreenProgressState* state = NewFullscreenProgressState(true, 6, gProfile->GetPrimaryPad());
+            FullscreenProgressState* state = new FullscreenProgressState;
+            state->showConfirmation = false;
+            state->reservedFlag1 = true;
+            state->reservedFlag2 = true;
+            state->showTip = true;
+            state->closeMode = 6;
+            state->playerId = gProfile->GetPrimaryPad();
+            state->backScene = EUIScene_None;
             state->backScene = gConsoleUIController.IsSceneInStack(gProfile->GetPrimaryPad(), EUIScene_EndPoem)
                 ? EUIScene_EndPoem
                 : EUIScene_PauseMenu;
@@ -4201,7 +4201,15 @@ void CMinecraftApp::HandleXuiActions()
             _LoadingInputParams* params = new _LoadingInputParams();
             params->m_threadParam = param;
             params->m_threadProc = &UIScene_PauseMenu::ExitWorldThreadProc;
-            params->m_completionData = NewFullscreenProgressState(param == NULL, 4, 0);
+            FullscreenProgressState* completionData = new FullscreenProgressState;
+            completionData->showConfirmation = false;
+            completionData->reservedFlag1 = true;
+            completionData->reservedFlag2 = true;
+            completionData->showTip = param == NULL;
+            completionData->closeMode = 4;
+            completionData->playerId = 0;
+            completionData->backScene = EUIScene_None;
+            params->m_completionData = completionData;
             gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), EUIScene_FullscreenProgress, params,
                                                  EUILayer_Scene, EUIGroup_PlayerDefault);
             break;
@@ -4221,7 +4229,15 @@ void CMinecraftApp::HandleXuiActions()
             _LoadingInputParams* params = new _LoadingInputParams();
             params->m_threadParam = param;
             params->m_threadProc = &UIScene_PauseMenu::ExitWorldThreadProc;
-            params->m_completionData = NewFullscreenProgressState(true, 4, 0);
+            FullscreenProgressState* completionData = new FullscreenProgressState;
+            completionData->showConfirmation = false;
+            completionData->reservedFlag1 = true;
+            completionData->reservedFlag2 = true;
+            completionData->showTip = true;
+            completionData->closeMode = 4;
+            completionData->playerId = 0;
+            completionData->backScene = EUIScene_None;
+            params->m_completionData = completionData;
             gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), EUIScene_FullscreenProgress, params,
                                                  EUILayer_Scene, EUIGroup_PlayerDefault);
             break;
@@ -4430,7 +4446,15 @@ void CMinecraftApp::HandleXuiActions()
                     minecraft->playerLeftTutorial(player);
                 _LoadingInputParams* params = new _LoadingInputParams();
                 params->m_threadProc = &SignoutExitWorldThreadProc;
-                params->m_completionData = NewFullscreenProgressState(true, 4, 0);
+                FullscreenProgressState* completionData = new FullscreenProgressState;
+                completionData->showConfirmation = false;
+                completionData->reservedFlag1 = true;
+                completionData->reservedFlag2 = true;
+                completionData->showTip = true;
+                completionData->closeMode = 4;
+                completionData->playerId = 0;
+                completionData->backScene = EUIScene_None;
+                params->m_completionData = completionData;
                 gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), EUIScene_FullscreenProgress, params,
                                                      EUILayer_Scene, EUIGroup_PlayerDefault);
             }
@@ -4493,7 +4517,15 @@ void CMinecraftApp::HandleXuiActions()
             _LoadingInputParams* params = new _LoadingInputParams();
             params->m_threadParam = &CGameNetworkManager::sInstance.m_pendingInviteUserIndex;
             params->m_threadProc = &CGameNetworkManager::ExitAndJoinFromInviteThreadProc;
-            params->m_completionData = NewFullscreenProgressState(true, 0, 0);
+            FullscreenProgressState* completionData = new FullscreenProgressState;
+            completionData->showConfirmation = false;
+            completionData->reservedFlag1 = true;
+            completionData->reservedFlag2 = true;
+            completionData->showTip = true;
+            completionData->closeMode = 0;
+            completionData->playerId = 0;
+            completionData->backScene = EUIScene_None;
+            params->m_completionData = completionData;
             gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), EUIScene_FullscreenProgress, params,
                                                  EUILayer_Scene, EUIGroup_PlayerDefault);
             break;
@@ -4550,7 +4582,14 @@ void CMinecraftApp::HandleXuiActions()
             _LoadingInputParams* params = new _LoadingInputParams();
             params->m_threadProc = &CGameNetworkManager::ChangeSessionTypeThreadProc;
             params->m_threadParam = NULL;
-            FullscreenProgressState* state = NewFullscreenProgressState(true, 3, 0);
+            FullscreenProgressState* state = new FullscreenProgressState;
+            state->showConfirmation = false;
+            state->reservedFlag1 = true;
+            state->reservedFlag2 = true;
+            state->showTip = true;
+            state->closeMode = 3;
+            state->playerId = 0;
+            state->backScene = EUIScene_None;
             state->showConfirmation = true;
             if (gConsoleUIController.IsSceneInStack(gProfile->GetPrimaryPad(), EUIScene_EndPoem))
             {
@@ -4582,7 +4621,14 @@ void CMinecraftApp::HandleXuiActions()
             _LoadingInputParams* params = new _LoadingInputParams();
             params->m_threadProc = &RemoteSaveThreadProc;
             params->m_threadParam = NULL;
-            FullscreenProgressState* state = NewFullscreenProgressState(true, 1, 0);
+            FullscreenProgressState* state = new FullscreenProgressState;
+            state->showConfirmation = false;
+            state->reservedFlag1 = true;
+            state->reservedFlag2 = true;
+            state->showTip = true;
+            state->closeMode = 1;
+            state->playerId = 0;
+            state->backScene = EUIScene_None;
             if (!gConsoleUIController.IsSceneInStack(gProfile->GetPrimaryPad(), EUIScene_ConnectingProgress))
             {
                 if (!gConsoleUIController.IsSceneInStack(gProfile->GetPrimaryPad(), EUIScene_EndPoem))
@@ -4632,7 +4678,15 @@ void CMinecraftApp::HandleXuiActions()
             _LoadingInputParams* params = new _LoadingInputParams();
             params->m_threadProc = &UIScene_PauseMenu::SaveWorldThreadProc;
             params->m_threadParam = reinterpret_cast<void*>(1);
-            params->m_completionData = NewFullscreenProgressState(true, 5, gProfile->GetPrimaryPad());
+            FullscreenProgressState* completionData = new FullscreenProgressState;
+            completionData->showConfirmation = false;
+            completionData->reservedFlag1 = true;
+            completionData->reservedFlag2 = true;
+            completionData->showTip = true;
+            completionData->closeMode = 5;
+            completionData->playerId = gProfile->GetPrimaryPad();
+            completionData->backScene = EUIScene_None;
+            params->m_completionData = completionData;
             gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), EUIScene_FullscreenProgress, params,
                                                  EUILayer_Fullscreen, EUIGroup_Fullscreen);
             break;
@@ -4703,7 +4757,15 @@ void CMinecraftApp::HandleXuiActions()
             params->m_threadParam = param;
             params->m_threadProc = &GameModeTransitionThreadProc;
             params->m_miniGameId = Minecraft::GetInstance()->GetMiniGame()->GetId();
-            params->m_completionData = NewFullscreenProgressState(true, 3, gProfile->GetPrimaryPad());
+            FullscreenProgressState* completionData = new FullscreenProgressState;
+            completionData->showConfirmation = false;
+            completionData->reservedFlag1 = true;
+            completionData->reservedFlag2 = true;
+            completionData->showTip = true;
+            completionData->closeMode = 3;
+            completionData->playerId = gProfile->GetPrimaryPad();
+            completionData->backScene = EUIScene_None;
+            params->m_completionData = completionData;
             params->m_completeFunc = &GameModeTransitionComplete;
             params->m_completeFuncParam = reinterpret_cast<void*>(static_cast<intptr_t>(static_cast<GameModeTransitionParams*>(param)->mReturningToLobby));
             gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), EUIScene_FullscreenProgress, params,

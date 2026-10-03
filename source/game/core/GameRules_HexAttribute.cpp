@@ -41,5 +41,5 @@ void GameRules_HexAttribute::save(ConsoleGameRules::EGameRuleAttr attribute, Gam
 
 void GameRules_HexAttribute::writeAsXml(ConsoleGameRules::EGameRuleAttr attribute, std::string& xml)
 {
-    xml.append(formatstr(" %ls=\"%x\"", IGameRuleAttribute::attributeName(attribute), *mValue));
+    xml.append(formatstr(" %ls=\"%x\"", gRuleAttributeNames[attribute], *mValue));
 }

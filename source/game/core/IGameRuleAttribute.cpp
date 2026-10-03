@@ -2,7 +2,7 @@
 
 #include <cwchar>
 
-static const wchar_t* sAttributeNames[] =
+const wchar_t* gRuleAttributeNames[] =
 {
     L"descriptionName",
     L"promptName",
@@ -107,7 +107,7 @@ int IGameRuleAttribute::attributeIdFromName(const std::wstring& name)
 {
     int remaining = 13;
     int id = 0;
-    const wchar_t** names = sAttributeNames;
+    const wchar_t** names = gRuleAttributeNames;
 
     do
     {
@@ -167,11 +167,6 @@ int IGameRuleAttribute::attributeIdFromName(const std::wstring& name)
     while (remaining != 0);
 
     return -1;
-}
-
-const wchar_t* IGameRuleAttribute::attributeName(ConsoleGameRules::EGameRuleAttr attribute)
-{
-    return sAttributeNames[attribute];
 }
 
 void IGameRuleAttribute::setOptional(bool optional)

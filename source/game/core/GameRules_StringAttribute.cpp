@@ -29,5 +29,5 @@ void GameRules_StringAttribute::save(ConsoleGameRules::EGameRuleAttr attribute, 
 
 void GameRules_StringAttribute::writeAsXml(ConsoleGameRules::EGameRuleAttr attribute, std::string& xml)
 {
-    xml.append(formatstr(" %ls=\"%ls\"", IGameRuleAttribute::attributeName(attribute), mValue->c_str()));
+    xml.append(formatstr(" %ls=\"%ls\"", gRuleAttributeNames[attribute], mValue->c_str()));
 }

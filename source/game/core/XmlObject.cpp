@@ -2,38 +2,12 @@
 
 #include "game/core/XmlChild.hpp"
 #include "game/core/XmlValue.hpp"
+#include "game/core/StringUtil.hpp"
 #include "game/core/StringUtils.hpp"
 
 #include <stdexcept>
 
 XmlObject gXmlObjectNull(L"");
-
-namespace
-{
-std::wstring escapeXml(const std::wstring& text)
-{
-    std::wstring escaped;
-    for (std::wstring::const_iterator character = text.begin(); character != text.end(); ++character)
-    {
-        switch (*character)
-        {
-        case L'&': escaped += L"&amp;"; break;
-        case L'<': escaped += L"&lt;"; break;
-        case L'>': escaped += L"&gt;"; break;
-        case L'"': escaped += L"&quot;"; break;
-        case L'\'': escaped += L"&apos;"; break;
-        default: escaped += *character; break;
-        }
-    }
-    return escaped;
-}
-
-void appendIndent(std::wstring& output, int indent)
-{
-    for (int level = 0; level < indent; ++level)
-        output += L"\t";
-}
-}
 
 XmlObject::XmlObject(const std::wstring& name)
     : mName(name)
@@ -115,12 +89,7 @@ bool XmlObject::isString() const
 
 std::wstring XmlObject::toString(int indent, bool formatted) const
 {
-    std::wstring output;
-    if (indent >= 0)
-    {
-        output.reserve(static_cast<std::size_t>(indent));
-        appendIndent(output, indent);
-    }
+    std::wstring output(indent, L'\t');
     output += L"<";
     output += mName;
     for (std::vector<std::pair<std::wstring, std::wstring> >::const_iterator attribute = m_attrs.begin(); attribute != m_attrs.end(); ++attribute)
@@ -132,38 +101,42 @@ std::wstring XmlObject::toString(int indent, bool formatted) const
         output += L"\"";
     }
     if (m_children.empty())
-        return output + L"/>\n";
-    output += L">";
-    for (std::vector<XmlChild>::const_iterator item = m_children.begin(); item != m_children.end(); ++item)
     {
-        if (item->m_type == 0)
-        {
-            const std::wstring text = item->txt();
-            const std::wstring escaped = escapeXml(text);
-            output += escaped;
-        }
-        else if (item->m_type == 2)
-        {
-            if (!formatted)
-                output += L"<![CDATA[";
-            const std::wstring text = item->txt();
-            const std::wstring escaped = escapeXml(text);
-            output += escaped;
-            if (!formatted)
-                output += L"]]>";
-        }
-        else
-        {
-            output += L"\n";
-            output += item->xml()->toString(indent + 1, false);
-            output += L"\n";
-        }
+        output += L"/>\n";
     }
-    output += L"</";
-    output += mName;
-    output += L">";
-    if (m_children.back().m_type == 1)
-        appendIndent(output, indent);
+    else
+    {
+        output += L">";
+        for (std::vector<XmlChild>::const_iterator item = m_children.begin(); item != m_children.end(); ++item)
+        {
+            if (item->m_type == 0 || item->m_type == 2)
+            {
+                if (!formatted && item->m_type == 2)
+                {
+                    output += L"<![CDATA[";
+                    output += escape(item->txt());
+                    output += L"]]>";
+                }
+                else
+                {
+                    output += escape(item->txt());
+                }
+            }
+            else
+            {
+                output += L"\n";
+                output += item->xml()->toString(indent + 1, false);
+                output += L"\n";
+            }
+        }
+        if (m_children.back().m_type == 1)
+            output += std::wstring(indent, L'\t');
+        output += L"</";
+        output += mName;
+        output += L">";
+        if (m_children.back().m_type == 1)
+            output += std::wstring(indent, L'\t');
+    }
     return output;
 }
 

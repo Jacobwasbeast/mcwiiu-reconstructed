@@ -9,12 +9,6 @@
 #include "game/world/Level.hpp"
 #include "game/world/LevelData.hpp"
 
-CTelemetryManager::CTelemetryManager()
-    : mUnknown0(0), mInitialiseTime(0.0f), mLevelStarted(false), mLevelStartTime(),
-      mMultiplayerInstanceId(0), mLevelInstanceId(0)
-{
-}
-
 CTelemetryManager::~CTelemetryManager()
 {
 }

@@ -47,17 +47,19 @@ ShulkerBullet::ShulkerBullet(Level* level, double x, double y, double z,
     mZd = zd;
 }
 
-ShulkerBullet::ShulkerBullet(Level* level, const boost::shared_ptr<LivingEntity>& owner,
-                             const boost::shared_ptr<Entity>& target,
+ShulkerBullet::ShulkerBullet(Level* level, boost::shared_ptr<LivingEntity> owner,
+                             boost::shared_ptr<Entity> target,
                              const Direction::Axis* axis)
-    : Entity(level, true), mOwner(owner), mTarget(target), mMoveDirection(NULL), mSteps(0),
+    : Entity(level, true), mOwner(), mTarget(), mMoveDirection(NULL), mSteps(0),
       mPowerX(0.0), mPowerY(0.0), mPowerZ(0.0), mOwnerUniqueId(), mOwnerPos(),
       mTargetUniqueId(), mTargetPos()
 {
     init();
-    BlockPos pos(owner.get());
+    mOwner = owner;
+    BlockPos pos(boost::static_pointer_cast<Entity>(owner));
     moveTo(pos.x + 0.5, pos.y + 0.5, pos.z + 0.5, mYRot, mXRot);
-    mMoveDirection = Direction::getRandomDirection(*mRandom);
+    mTarget = target;
+    mMoveDirection = Direction::UP;
     selectNextMoveDirection(axis);
 }
 

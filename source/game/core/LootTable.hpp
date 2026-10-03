@@ -14,7 +14,7 @@ class Random;
 class LootTable
 {
 public:
-    static LootTable* getEmpty();
+    static LootTable* EMPTY_LOOT_TABLE;
 
     LootTable(std::vector<LootPool*>* pools);
     LootTable();

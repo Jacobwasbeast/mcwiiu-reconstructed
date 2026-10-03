@@ -23,9 +23,10 @@ bool BaseAttribute::isClientSyncable()
     return this->syncable;
 }
 
-void BaseAttribute::setSyncable(bool syncable)
+BaseAttribute* BaseAttribute::setSyncable(bool syncable)
 {
     this->syncable = syncable;
+    return this;
 }
 
 Attribute* BaseAttribute::getParentAttribute()

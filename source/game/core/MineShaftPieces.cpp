@@ -95,109 +95,38 @@ MineShaftPieces::MineShaftCorridor::~MineShaftCorridor()
 {
 }
 
-namespace
-{
-    void setMineShaftCorridorBox(BoundingBox* box, int x, int y, int z, int length,
-                                 const Direction* direction)
-    {
-        box->y0 = y;
-        box->y1 = y + 2;
-        int dir = direction->get3DDataValue();
-        if (dir < 3)
-        {
-            box->x0 = x;
-            box->x1 = x + 2;
-            box->z0 = (z + 1) - length;
-            box->z1 = z;
-        }
-        else if (dir == 3)
-        {
-            box->x0 = x;
-            box->x1 = x + 2;
-            box->z0 = z;
-            box->z1 = z + length - 1;
-        }
-        else if (dir < 5)
-        {
-            box->x0 = (x + 1) - length;
-            box->x1 = x;
-            box->z0 = z;
-            box->z1 = z + 2;
-        }
-        else if (dir == 5)
-        {
-            box->x0 = x;
-            box->x1 = x + length - 1;
-            box->z0 = z;
-            box->z1 = z + 2;
-        }
-        else
-        {
-            box->x0 = x;
-            box->x1 = x + 2;
-            box->z0 = (z + 1) - length;
-            box->z1 = z;
-        }
-    }
-}
-
 BoundingBox* MineShaftPieces::MineShaftCorridor::findCorridorSize(std::vector<StructurePiece*>* pieces,
                                                                    Random& random, int x, int y, int z,
                                                                    const Direction* direction)
 {
     BoundingBox* box = new BoundingBox(x, y, z, x, y + 2, z);
-    int sections = random.nextInt(3) + 2;
-    if (sections <= 0)
+    int pieceLength = random.nextInt(3) + 2;
+    while (pieceLength > 0)
     {
-        delete box;
-        return NULL;
-    }
-
-    int quarterSections = sections >> 2;
-    int remainingSections = sections;
-    if (quarterSections != 0)
-    {
-        int corridorLength = sections * 5;
-        int lengthOffset = corridorLength - 15;
-        int lengthOffset2 = corridorLength - 10;
-        int lengthOffset3 = corridorLength - 5;
-        do
+        int blockLength = pieceLength * 5;
+        switch (direction->get3DDataValue())
         {
-            setMineShaftCorridorBox(box, x, y, z, corridorLength, direction);
-            if (StructurePiece::findCollisionPiece(pieces, box) == NULL)
-                return box;
-            setMineShaftCorridorBox(box, x, y, z, lengthOffset3, direction);
-            if (StructurePiece::findCollisionPiece(pieces, box) == NULL)
-                return box;
-            setMineShaftCorridorBox(box, x, y, z, lengthOffset2, direction);
-            if (StructurePiece::findCollisionPiece(pieces, box) == NULL)
-                return box;
-            setMineShaftCorridorBox(box, x, y, z, lengthOffset, direction);
-            if (StructurePiece::findCollisionPiece(pieces, box) == NULL)
-                return box;
-            lengthOffset -= 20;
-            lengthOffset2 -= 20;
-            lengthOffset3 -= 20;
-            corridorLength -= 20;
-            --quarterSections;
-            remainingSections -= 4;
+        case 3:
+            box->x1 = x + 2;
+            box->z1 = z + blockLength - 1;
+            break;
+        case 4:
+            box->x0 = (x + 1) - blockLength;
+            box->z1 = z + 2;
+            break;
+        case 5:
+            box->x1 = x + blockLength - 1;
+            box->z1 = z + 2;
+            break;
+        default:
+            box->z0 = (z + 1) - blockLength;
+            box->x1 = x + 2;
+            break;
         }
-        while (quarterSections != 0);
-    }
 
-    sections &= 3;
-    if (sections != 0)
-    {
-        int corridorLength = remainingSections * 5;
-        do
-        {
-            setMineShaftCorridorBox(box, x, y, z, corridorLength, direction);
-            if (StructurePiece::findCollisionPiece(pieces, box) == NULL)
-                return box;
-            --sections;
-            corridorLength -= 5;
-        }
-        while (sections != 0);
+        if (StructurePiece::findCollisionPiece(pieces, box) == NULL)
+            return box;
+        --pieceLength;
     }
 
     delete box;

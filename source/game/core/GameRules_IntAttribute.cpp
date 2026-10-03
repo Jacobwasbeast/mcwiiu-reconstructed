@@ -50,7 +50,7 @@ void GameRules_IntAttribute::save(ConsoleGameRules::EGameRuleAttr attribute, Gam
 
 void GameRules_IntAttribute::writeAsXml(ConsoleGameRules::EGameRuleAttr attribute, std::string& xml)
 {
-    xml.append(formatstr(" %ls=\"%d\"", IGameRuleAttribute::attributeName(attribute), *mValue));
+    xml.append(formatstr(" %ls=\"%d\"", gRuleAttributeNames[attribute], *mValue));
 }
 
 void GameRules_IntAttribute::setMin(int min)
