@@ -91,7 +91,7 @@ public:
     virtual void playUI(const SoundEvent*, float, float);
     void updateMusicVolume(float);
     static int OpenStreamThreadProc(void*);
-    double getDistanceScaler(AudioInfo*);
+    float getDistanceScaler(AudioInfo*);
     static void UpdateSound(void*, void*, bool*, int, float*, float*, float*, float*);
     static void ConfigureSound(void*, void*, bool*, float*, float*, float*, float*, float*, float*);
     void playMusicUpdate();

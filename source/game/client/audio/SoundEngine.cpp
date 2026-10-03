@@ -162,7 +162,7 @@ SoundEngine::SoundEngine()
     m_streamingAudioInfo.y = 0.0f;
     m_streamingAudioInfo.x = 0.0f;
     m_streamingAudioInfo.z = 0.0f;
-    std::memset(&m_listeners[0], 0, sizeof(ListenerInfo));
+    std::memset(m_listeners, 0, sizeof(m_listeners));
     m_platformSoundEngine = new PlatformSoundEngineImpl();
 }
 
@@ -180,7 +180,8 @@ void SoundEngine::BuildTrackList(int first, int last, bool keepFirstTrack)
     for (int track = first; track <= last; ++track)
     {
         m_trackPlayed[track] = 0;
-        m_tracks[track].sortKey = m_random->nextInt(100000);
+        const int sortKey = m_random->nextInt(100000);
+        m_tracks[track].sortKey = sortKey;
         m_tracks[track].trackIndex = track;
     }
 
@@ -349,8 +350,9 @@ void SoundEngine::play(const SoundEvent* sound, float x, float y, float z, float
         return;
 
     char eventName[272];
+    std::wstring soundName = sound->getName();
     std::strcpy(eventName, "Minecraft/");
-    std::strcat(eventName, ConvertSoundPathToName(sound->getName(), false));
+    std::strcat(eventName, ConvertSoundPathToName(soundName, false));
 
     AudioInfo info;
     info.is3D = true;
@@ -505,15 +507,10 @@ void SoundEngine::playUI(const SoundEvent* sound, float volume, float pitch)
     char eventName[272];
     std::wstring soundName;
     if (sound->isSFX())
-    {
         std::strcpy(eventName, "Minecraft/UI/");
-        soundName = sound->getName();
-    }
     else
-    {
         std::strcpy(eventName, "Minecraft/");
-        soundName = sound->getName();
-    }
+    soundName = sound->getName();
     std::strcat(eventName, ConvertSoundPathToName(soundName, false));
 
     AudioInfo info;
@@ -542,9 +539,9 @@ int SoundEngine::OpenStreamThreadProc(void* param)
     return -1;
 }
 
-double SoundEngine::getDistanceScaler(AudioInfo* info)
+float SoundEngine::getDistanceScaler(AudioInfo* info)
 {
-    double scaler = info->soundEvent->getDistanceScalar();
+    float scaler = info->soundEvent->getDistanceScalar();
     if (info->volume == 10000.0f)
         scaler = 10000.0f;
     return scaler;
@@ -554,8 +551,10 @@ void SoundEngine::UpdateSound(void* userData, void* soundData, bool* is3D, int s
                               float* z, float* volume)
 {
     SoundEngine* engine = static_cast<SoundEngine*>(userData);
-    const bool isSound = soundData != NULL;
-    AudioInfo* info = isSound ? static_cast<AudioInfo*>(soundData) : &engine->m_streamingAudioInfo;
+    AudioInfo* info = static_cast<AudioInfo*>(soundData);
+    const bool isStream = info == NULL;
+    if (isStream)
+        info = &engine->m_streamingAudioInfo;
 
     SoundInstance* instance = info->instance;
     if (instance != NULL)
@@ -582,7 +581,7 @@ void SoundEngine::UpdateSound(void* userData, void* soundData, bool* is3D, int s
     if (info->volume > 1.0f)
         info->volume = 1.0f;
 
-    if (isSound)
+    if (!isStream)
         *volume = info->volume * engine->getMasterSoundEffectVolume();
     else
         *volume = info->volume * engine->getMasterMusicVolume();
@@ -591,40 +590,41 @@ void SoundEngine::UpdateSound(void* userData, void* soundData, bool* is3D, int s
     if (!info->is3D)
         return;
 
-    if (engine->m_validListenerCount < 2)
+    if (engine->m_validListenerCount > 1)
+    {
+        float nearest = 10000.0f;
+        float nearestX = 0.0f;
+        float nearestY = 0.0f;
+        float nearestZ = 0.0f;
+        for (int i = 0; i < MAX_LISTENERS; ++i)
+        {
+            const ListenerInfo& listener = engine->m_listeners[i];
+            if (!listener.valid)
+                continue;
+
+            const float dx = fabsf(listener.x - info->x);
+            const float dy = fabsf(listener.y - info->y);
+            const float dz = fabsf(listener.z - info->z);
+            const float distance = dx + dy + dz;
+            if (distance < nearest)
+            {
+                nearest = distance;
+                nearestX = dx;
+                nearestY = dy;
+                nearestZ = dz;
+            }
+        }
+
+        *x = 0.0f;
+        *y = 0.0f;
+        *z = sqrtf(nearestZ * nearestZ + nearestX * nearestX + nearestY * nearestY);
+    }
+    else
     {
         *x = info->x;
         *y = info->y;
         *z = -info->z;
-        return;
     }
-
-    float nearest = 10000.0f;
-    float nearestX = 0.0f;
-    float nearestY = 0.0f;
-    float nearestZ = 0.0f;
-    for (int i = 0; i < MAX_LISTENERS; ++i)
-    {
-        const ListenerInfo& listener = engine->m_listeners[i];
-        if (!listener.valid)
-            continue;
-
-        const float dx = fabsf(listener.x - info->x);
-        const float dy = fabsf(listener.y - info->y);
-        const float dz = fabsf(listener.z - info->z);
-        const float distance = dx + dy + dz;
-        if (distance < nearest)
-        {
-            nearest = distance;
-            nearestX = dx;
-            nearestY = dy;
-            nearestZ = dz;
-        }
-    }
-
-    *x = 0.0f;
-    *y = 0.0f;
-    *z = sqrtf(nearestZ * nearestZ + nearestX * nearestX + nearestY * nearestY);
 }
 
 void SoundEngine::ConfigureSound(void* userData, void* soundData, bool* is3D, float* minDistance, float* pitch,
@@ -641,7 +641,7 @@ void SoundEngine::ConfigureSound(void* userData, void* soundData, bool* is3D, fl
     }
 
     AudioInfo* info = static_cast<AudioInfo*>(soundData);
-    *minDistance = static_cast<float>(engine->getDistanceScaler(info));
+    *minDistance = engine->getDistanceScaler(info);
     if (!info->isUI)
     {
         *pitch = info->pitch;
@@ -1135,23 +1135,22 @@ void SoundEngine::tick(boost::shared_ptr<Mob>* mobs, float partialTicks)
     {
         for (int i = 0; i < MAX_LISTENERS; ++i)
         {
-            ListenerInfo& listener = m_listeners[i];
             if (mobs[i] == NULL)
             {
-                listener.valid = false;
+                m_listeners[i].valid = false;
                 continue;
             }
 
-            listener.valid = true;
-            listener.x = static_cast<float>((mobs[i]->mX - mobs[i]->mXo) * partialTicks + mobs[i]->mXo);
-            listener.y = static_cast<float>((mobs[i]->mY - mobs[i]->mYo) * partialTicks + mobs[i]->mYo);
-            listener.z = static_cast<float>((mobs[i]->mZ - mobs[i]->mZo) * partialTicks + mobs[i]->mZo);
+            m_listeners[i].valid = true;
+            m_listeners[i].x = static_cast<float>((mobs[i]->mX - mobs[i]->mXo) * partialTicks + mobs[i]->mXo);
+            m_listeners[i].y = static_cast<float>((mobs[i]->mY - mobs[i]->mYo) * partialTicks + mobs[i]->mYo);
+            m_listeners[i].z = static_cast<float>((mobs[i]->mZ - mobs[i]->mZo) * partialTicks + mobs[i]->mZo);
 
             const float yRot = (mobs[i]->mYRot - mobs[i]->mYRotO) * partialTicks + mobs[i]->mYRotO;
             const float angle = -yRot * 0.017453292f - 3.1415927f;
-            listener.forwardX = sinf(angle);
-            listener.forwardY = 0.0f;
-            listener.forwardZ = cosf(angle);
+            m_listeners[i].forwardX = sinf(angle);
+            m_listeners[i].forwardY = 0.0f;
+            m_listeners[i].forwardZ = cosf(angle);
             ++validListeners;
         }
 
