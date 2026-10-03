@@ -50,23 +50,6 @@
 static const EntityDataAccessor<int>* DATA_DRAGON_PHASE = NULL;
 static double SITTING_TARGET_RANGE = 20.0;
 
-namespace
-{
-
-bool isSittingAction(unsigned int action)
-{
-    return action == EnderDragon::ACTION_SITTING_FLAMING
-        || action == EnderDragon::ACTION_SITTING_SCANNING
-        || action == EnderDragon::ACTION_SITTING_ATTACKING;
-}
-
-float randomSign(Random* random)
-{
-    return random->nextBoolean() ? 1.0f : -1.0f;
-}
-
-} // namespace
-
 EnderDragon::EnderDragon(Level* level)
     : Mob(level)
 {
@@ -618,7 +601,8 @@ bool EnderDragon::hurt(boost::shared_ptr<MultiEntityMobPart> part, const DamageS
     {
         const float healthBefore = getHealth();
         reallyHurt(source, amount);
-        if (getHealth() <= 0.0f && !isSittingAction(getSynchedAction()))
+        if (getHealth() <= 0.0f && getSynchedAction() != ACTION_SITTING_FLAMING
+            && getSynchedAction() != ACTION_SITTING_SCANNING && getSynchedAction() != ACTION_SITTING_ATTACKING)
         {
             setHealth(1.0f);
             if (setSynchedAction(ACTION_LANDING_APPROACH, false))
@@ -632,7 +616,8 @@ bool EnderDragon::hurt(boost::shared_ptr<MultiEntityMobPart> part, const DamageS
             }
         }
 
-        if (isSittingAction(getSynchedAction()))
+        if (getSynchedAction() == ACTION_SITTING_FLAMING || getSynchedAction() == ACTION_SITTING_SCANNING
+            || getSynchedAction() == ACTION_SITTING_ATTACKING)
         {
             mSittingDamageReceived += static_cast<int>(healthBefore) - static_cast<int>(getHealth());
             if (static_cast<float>(mSittingDamageReceived) > getMaxHealth() * 0.25f)
@@ -947,7 +932,8 @@ void EnderDragon::aiStep()
                                    0.8f + mRandom->nextFloat() * 0.3f, false, 100.0f);
         }
 
-        if (!isSittingAction(getSynchedAction()) && --mGrowlTime < 0)
+        if (getSynchedAction() != ACTION_SITTING_FLAMING && getSynchedAction() != ACTION_SITTING_SCANNING
+            && getSynchedAction() != ACTION_SITTING_ATTACKING && --mGrowlTime < 0)
         {
             const SoundSource::ESoundSource soundSource = getSoundSource();
             mLevel->playLocalSound(mX, mY, mZ, SoundEvents::ENDERDRAGON_GROWL, soundSource, 0.5f,
@@ -970,7 +956,8 @@ void EnderDragon::aiStep()
     checkCrystals();
     float flapSpeed = static_cast<float>(0.2f / (std::sqrt(mXd * mXd + mZd * mZd) * 10.0 + 1.0));
     flapSpeed *= static_cast<float>(std::pow(2.0, mYd));
-    if (isSittingAction(getSynchedAction()))
+    if (getSynchedAction() == ACTION_SITTING_FLAMING || getSynchedAction() == ACTION_SITTING_SCANNING
+        || getSynchedAction() == ACTION_SITTING_ATTACKING)
         mFlapTime += 0.1f;
     else if (mInWall)
         mFlapTime += flapSpeed * 0.5f;
@@ -1025,12 +1012,9 @@ void EnderDragon::aiStep()
                     double x = mHead->mX;
                     double y = mHead->mBoundingBox->mMinY + mHead->mBbHeight * 0.5f;
                     double z = mHead->mZ;
-                    float sign = randomSign(random);
-                    x += sign * random->nextFloat() * 0.5f;
-                    sign = randomSign(random);
-                    y += sign * random->nextFloat() * 0.5f;
-                    sign = randomSign(random);
-                    z += sign * random->nextFloat() * 0.5f;
+                    x += (random->nextBoolean() ? 1 : -1) * random->nextFloat() * 0.5f;
+                    y += (random->nextBoolean() ? 1 : -1) * random->nextFloat() * 0.5f;
+                    z += (random->nextBoolean() ? 1 : -1) * random->nextFloat() * 0.5f;
                     mLevel->addParticle(PARTICLE_DRAGON_BREATH, x, y, z, mXd - look->x * 0.08, mYd - look->y * 0.3,
                                         mZd - look->z * 0.08, arrayWithLength<int>());
                 }
@@ -1041,12 +1025,9 @@ void EnderDragon::aiStep()
                         double x = mHead->mX;
                         double y = mHead->mBoundingBox->mMinY + mHead->mBbHeight * 0.5f;
                         double z = mHead->mZ;
-                        float sign = randomSign(random);
-                        x += sign * random->nextFloat() * 0.5f;
-                        sign = randomSign(random);
-                        y += sign * random->nextFloat() * 0.5f;
-                        sign = randomSign(random);
-                        z += sign * random->nextFloat() * 0.5f;
+                        x += (random->nextBoolean() ? 1 : -1) * random->nextFloat() * 0.5f;
+                        y += (random->nextBoolean() ? 1 : -1) * random->nextFloat() * 0.5f;
+                        z += (random->nextBoolean() ? 1 : -1) * random->nextFloat() * 0.5f;
                         mLevel->addParticle(PARTICLE_DRAGON_BREATH, x, y, z, -(look->x * 0.08 * j), -(look->y * 0.6),
                                             -(look->z * 0.08 * j), arrayWithLength<int>());
                     }
@@ -1539,7 +1520,8 @@ double EnderDragon::getHeadPartYOffset(int part, arrayWithLength<double> first, 
             scale = 1.0;
         result = static_cast<double>(part) / scale;
     }
-    else if (isSittingAction(getSynchedAction()))
+    else if (getSynchedAction() == ACTION_SITTING_FLAMING || getSynchedAction() == ACTION_SITTING_SCANNING
+             || getSynchedAction() == ACTION_SITTING_ATTACKING)
     {
         result = static_cast<double>(part);
     }

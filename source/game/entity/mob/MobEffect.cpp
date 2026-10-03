@@ -275,13 +275,6 @@ std::wstring MobEffect::formatDuration(MobEffectInstance* effect, float duration
     return std::wstring(buffer);
 }
 
-static void registerMobEffect(const wchar_t* name, MobEffect* effect)
-{
-    ++effectCount;
-    MobEffect::mobEffectRegistry->registerMapping(effectCount,
-                                                 ResourceLocation(L"minecraft", name), effect);
-}
-
 void MobEffect::staticCtor()
 {
     effectCount = 0;
@@ -292,14 +285,14 @@ void MobEffect::staticCtor()
     effect->addAttributeModifier(SharedMonsterAttributes::MOVEMENT_SPEED, eMODIFIER_ID_PotionMoveSpeed,
                                  0.20000000298023224, 2);
     effect->setBeneficial();
-    registerMobEffect(L"speed", effect);
+    mobEffectRegistry->registerMapping(++effectCount, ResourceLocation(L"minecraft", L"speed"), effect);
 
     effect = new MobEffect(true, eMinecraftColour_Effect_MovementSlowDown);
     effect->setDescriptionId(IDS_EFFECT_MOVESLOWDOWN);
     effect->setIcon(EMobEffectIcon_Slowness);
     effect->addAttributeModifier(SharedMonsterAttributes::MOVEMENT_SPEED, eMODIFIER_ID_PotionMoveSlowdown,
                                  -0.15000000596046448, 2);
-    registerMobEffect(L"slowness", effect);
+    mobEffectRegistry->registerMapping(++effectCount, ResourceLocation(L"minecraft", L"slowness"), effect);
 
     effect = new MobEffect(false, eMinecraftColour_Effect_DigSpeed);
     effect->setDescriptionId(IDS_EFFECT_DIGSPEED);
@@ -308,160 +301,160 @@ void MobEffect::staticCtor()
     effect->setBeneficial();
     effect->addAttributeModifier(SharedMonsterAttributes::ATTACK_SPEED, eMODIFIER_ID_PotionDigSpeed,
                                  0.10000000149011612, 2);
-    registerMobEffect(L"haste", effect);
+    mobEffectRegistry->registerMapping(++effectCount, ResourceLocation(L"minecraft", L"haste"), effect);
 
     effect = new MobEffect(true, eMinecraftColour_Effect_DigSlowdown);
     effect->setDescriptionId(IDS_EFFECT_DIGSLOWDOWN);
     effect->setIcon(EMobEffectIcon_MiningFatigue);
     effect->addAttributeModifier(SharedMonsterAttributes::ATTACK_SPEED, eMODIFIER_ID_PotionDigSpeed,
                                  -0.10000000149011612, 2);
-    registerMobEffect(L"mining_fatigue", effect);
+    mobEffectRegistry->registerMapping(++effectCount, ResourceLocation(L"minecraft", L"mining_fatigue"), effect);
 
     effect = new AttackDamageMobEffect(false, eMinecraftColour_Effect_DamageBoost, 3.0);
     effect->setDescriptionId(IDS_EFFECT_DAMAGEBOOST);
     effect->setIcon(EMobEffectIcon_Strength);
     effect->addAttributeModifier(SharedMonsterAttributes::ATTACK_DAMAGE, eMODIFIER_ID_PotionDamageBoost, 0.0, 0);
     effect->setBeneficial();
-    registerMobEffect(L"strength", effect);
+    mobEffectRegistry->registerMapping(++effectCount, ResourceLocation(L"minecraft", L"strength"), effect);
 
     effect = new InstantenousMobEffect(false, eMinecraftColour_Effect_Heal);
     effect->setDescriptionId(IDS_EFFECT_HEAL);
     effect->setBeneficial();
-    registerMobEffect(L"instant_health", effect);
+    mobEffectRegistry->registerMapping(++effectCount, ResourceLocation(L"minecraft", L"instant_health"), effect);
 
     effect = new InstantenousMobEffect(true, eMinecraftColour_Effect_Harm);
     effect->setDescriptionId(IDS_EFFECT_HARM);
     effect->setBeneficial();
-    registerMobEffect(L"instant_damage", effect);
+    mobEffectRegistry->registerMapping(++effectCount, ResourceLocation(L"minecraft", L"instant_damage"), effect);
 
     effect = new MobEffect(false, eMinecraftColour_Effect_Jump);
     effect->setDescriptionId(IDS_EFFECT_JUMP);
     effect->setIcon(EMobEffectIcon_JumpBoost);
     effect->setBeneficial();
-    registerMobEffect(L"jump_boost", effect);
+    mobEffectRegistry->registerMapping(++effectCount, ResourceLocation(L"minecraft", L"jump_boost"), effect);
 
     effect = new MobEffect(true, eMinecraftColour_Effect_Confusion);
     effect->setDescriptionId(IDS_EFFECT_CONFUSION);
     effect->setDurationModifier(0.25);
     effect->setIcon(EMobEffectIcon_Nausea);
-    registerMobEffect(L"nausea", effect);
+    mobEffectRegistry->registerMapping(++effectCount, ResourceLocation(L"minecraft", L"nausea"), effect);
 
     effect = new MobEffect(false, eMinecraftColour_Effect_Regeneration);
     effect->setDescriptionId(IDS_EFFECT_REGENERATION);
     effect->setDurationModifier(0.25);
     effect->setIcon(EMobEffectIcon_Regeneration);
     effect->setBeneficial();
-    registerMobEffect(L"regeneration", effect);
+    mobEffectRegistry->registerMapping(++effectCount, ResourceLocation(L"minecraft", L"regeneration"), effect);
 
     effect = new MobEffect(false, eMinecraftColour_Effect_DamageResistance);
     effect->setDescriptionId(IDS_EFFECT_RESISTANCE);
     effect->setIcon(EMobEffectIcon_Resistance);
     effect->setBeneficial();
-    registerMobEffect(L"resistance", effect);
+    mobEffectRegistry->registerMapping(++effectCount, ResourceLocation(L"minecraft", L"resistance"), effect);
 
     effect = new MobEffect(false, eMinecraftColour_Effect_FireResistance);
     effect->setDescriptionId(IDS_EFFECT_FIRERESISTANCE);
     effect->setIcon(EMobEffectIcon_FireResistance);
     effect->setBeneficial();
-    registerMobEffect(L"fire_resistance", effect);
+    mobEffectRegistry->registerMapping(++effectCount, ResourceLocation(L"minecraft", L"fire_resistance"), effect);
 
     effect = new MobEffect(false, eMinecraftColour_Effect_WaterBreathing);
     effect->setDescriptionId(IDS_EFFECT_WATERBREATHING);
     effect->setIcon(EMobEffectIcon_WaterBreathing);
     effect->setBeneficial();
-    registerMobEffect(L"water_breathing", effect);
+    mobEffectRegistry->registerMapping(++effectCount, ResourceLocation(L"minecraft", L"water_breathing"), effect);
 
     effect = new MobEffect(false, eMinecraftColour_Effect_Invisiblity);
     effect->setDescriptionId(IDS_EFFECT_INVISIBILITY);
     effect->setIcon(EMobEffectIcon_Invisibility);
     effect->setBeneficial();
-    registerMobEffect(L"invisibility", effect);
+    mobEffectRegistry->registerMapping(++effectCount, ResourceLocation(L"minecraft", L"invisibility"), effect);
 
     effect = new MobEffect(true, eMinecraftColour_Effect_Blindness);
     effect->setDescriptionId(IDS_EFFECT_BLINDNESS);
     effect->setDurationModifier(0.25);
     effect->setIcon(EMobEffectIcon_Blindness);
-    registerMobEffect(L"blindness", effect);
+    mobEffectRegistry->registerMapping(++effectCount, ResourceLocation(L"minecraft", L"blindness"), effect);
 
     effect = new MobEffect(false, eMinecraftColour_Effect_NightVision);
     effect->setDescriptionId(IDS_EFFECT_NIGHTVISION);
     effect->setIcon(EMobEffectIcon_NightVision);
     effect->setBeneficial();
-    registerMobEffect(L"night_vision", effect);
+    mobEffectRegistry->registerMapping(++effectCount, ResourceLocation(L"minecraft", L"night_vision"), effect);
 
     effect = new MobEffect(true, eMinecraftColour_Effect_Hunger);
     effect->setDescriptionId(IDS_EFFECT_HUNGER);
     effect->setIcon(EMobEffectIcon_Hunger);
-    registerMobEffect(L"hunger", effect);
+    mobEffectRegistry->registerMapping(++effectCount, ResourceLocation(L"minecraft", L"hunger"), effect);
 
     effect = new AttackDamageMobEffect(true, eMinecraftColour_Effect_Weakness, -4.0);
     effect->setDescriptionId(IDS_EFFECT_WEAKNESS);
     effect->setIcon(EMobEffectIcon_Weakness);
     effect->addAttributeModifier(SharedMonsterAttributes::ATTACK_DAMAGE, eMODIFIER_ID_PotionWeakness, 0.0, 0);
-    registerMobEffect(L"weakness", effect);
+    mobEffectRegistry->registerMapping(++effectCount, ResourceLocation(L"minecraft", L"weakness"), effect);
 
     effect = new MobEffect(true, eMinecraftColour_Effect_Poison);
     effect->setDescriptionId(IDS_EFFECT_POISON);
     effect->setDurationModifier(0.25);
     effect->setIcon(EMobEffectIcon_Poison);
-    registerMobEffect(L"poison", effect);
+    mobEffectRegistry->registerMapping(++effectCount, ResourceLocation(L"minecraft", L"poison"), effect);
 
     effect = new MobEffect(true, eMinecraftColour_Effect_Wither);
     effect->setDescriptionId(IDS_EFFECT_WITHER);
     effect->setIcon(EMobEffectIcon_Wither);
     effect->setDurationModifier(0.25);
-    registerMobEffect(L"wither", effect);
+    mobEffectRegistry->registerMapping(++effectCount, ResourceLocation(L"minecraft", L"wither"), effect);
 
     effect = new HealthBoostMobEffect(false, eMinecraftColour_Effect_HealthBoost);
     effect->setDescriptionId(IDS_EFFECT_HEALTHBOOST);
     effect->setIcon(EMobEffectIcon_HealthBoost);
     effect->addAttributeModifier(SharedMonsterAttributes::MAX_HEALTH, eMODIFIER_ID_PotionHealthBoost, 4.0, 0);
     effect->setBeneficial();
-    registerMobEffect(L"health_boost", effect);
+    mobEffectRegistry->registerMapping(++effectCount, ResourceLocation(L"minecraft", L"health_boost"), effect);
 
     effect = new AbsoptionMobEffect(false, eMinecraftColour_Effect_Absorption);
     effect->setDescriptionId(IDS_EFFECT_ABSORPTION);
     effect->setIcon(EMobEffectIcon_Absorption);
     effect->setBeneficial();
-    registerMobEffect(L"absorption", effect);
+    mobEffectRegistry->registerMapping(++effectCount, ResourceLocation(L"minecraft", L"absorption"), effect);
 
     effect = new InstantenousMobEffect(false, eMinecraftColour_Effect_Saturation);
     effect->setDescriptionId(IDS_EFFECT_SATURATION);
     effect->setBeneficial();
-    registerMobEffect(L"saturation", effect);
+    mobEffectRegistry->registerMapping(++effectCount, ResourceLocation(L"minecraft", L"saturation"), effect);
 
     effect = new MobEffect(false, eMinecraftColour_Effect_Glowing);
     effect->setDescriptionId(IDS_EFFECT_GLOWING);
     effect->setIcon(EMobEffectIcon_Glowing);
-    registerMobEffect(L"glowing", effect);
+    mobEffectRegistry->registerMapping(++effectCount, ResourceLocation(L"minecraft", L"glowing"), effect);
 
     effect = new MobEffect(true, eMinecraftColour_Effect_Levitation);
     effect->setDescriptionId(IDS_EFFECT_LEVITATION);
     effect->setIcon(EMobEffectIcon_Levitation);
-    registerMobEffect(L"levitation", effect);
+    mobEffectRegistry->registerMapping(++effectCount, ResourceLocation(L"minecraft", L"levitation"), effect);
 
     effect = new MobEffect(false, eMinecraftColour_Effect_Luck);
     effect->setDescriptionId(IDS_EFFECT_LUCK);
     effect->setIcon(EMobEffectIcon_Luck);
     effect->setBeneficial();
     effect->addAttributeModifier(SharedMonsterAttributes::LUCK, eMODIFIER_ID_PotionLuck, 1.0, 0);
-    registerMobEffect(L"luck", effect);
+    mobEffectRegistry->registerMapping(++effectCount, ResourceLocation(L"minecraft", L"luck"), effect);
 
     effect = new MobEffect(true, eMinecraftColour_Effect_BadLuck);
     effect->setDescriptionId(IDS_EFFECT_UNLUCK);
     effect->setIcon(EMobEffectIcon_Unluck);
     effect->addAttributeModifier(SharedMonsterAttributes::LUCK, eMODIFIER_ID_PotionLuck, -1.0, 0);
-    registerMobEffect(L"unluck", effect);
+    mobEffectRegistry->registerMapping(++effectCount, ResourceLocation(L"minecraft", L"unluck"), effect);
 
     effect = new MobEffect(false, eMinecraftColour_Effect_ConduitPower);
     effect->setDescriptionId(IDS_EFFECT_CONDUITPOWER);
     effect->setIcon(EMobEffectIcon_ConduitPower);
     effect->setBeneficial();
-    registerMobEffect(L"conduit_power", effect);
+    mobEffectRegistry->registerMapping(++effectCount, ResourceLocation(L"minecraft", L"conduit_power"), effect);
 
     effect = new MobEffect(false, eMinecraftColour_Effect_SlowFall);
     effect->setDescriptionId(IDS_EFFECT_SLOWFALLING);
     effect->setIcon(EMobEffectIcon_SlowFalling);
     effect->setBeneficial();
-    registerMobEffect(L"slow_falling", effect);
+    mobEffectRegistry->registerMapping(++effectCount, ResourceLocation(L"minecraft", L"slow_falling"), effect);
 }

@@ -1,31 +1,11 @@
 #include "game/entity/mob/SkeletonType.hpp"
+#include "game/core/BuiltInLootTables.hpp"
 #include "game/core/StringIds.hpp"
 #include "game/client/audio/SoundEvents.hpp"
 
-namespace
-{
-    SkeletonType* skeletonTypeById(int id)
-    {
-        static ResourceLocation skeletonLootTable;
-        static ResourceLocation witherSkeletonLootTable;
-        static ResourceLocation strayLootTable;
-        static SkeletonType skeleton(0, IDS_SKELETON, &skeletonLootTable);
-        static SkeletonType witherSkeleton(1, (int)IDS_WITHER, &witherSkeletonLootTable);
-        static SkeletonType stray(2, IDS_SKELETON, &strayLootTable);
-
-        switch (id)
-        {
-        case 0:
-            return &skeleton;
-        case 1:
-            return &witherSkeleton;
-        case 2:
-            return &stray;
-        default:
-            return NULL;
-        }
-    }
-}
+SkeletonType SkeletonType::SKELETON(0, IDS_SKELETON, &BuiltInLootTables::SKELETON);
+SkeletonType SkeletonType::WITHER_SKELETON(1, IDS_WITHER, &BuiltInLootTables::WITHER_SKELETON);
+SkeletonType SkeletonType::STRAY(2, IDS_SKELETON, &BuiltInLootTables::STRAY);
 
 SkeletonType::SkeletonType(int id, int name, ResourceLocation* defaultLootTable)
     : id(id),
@@ -41,7 +21,15 @@ int SkeletonType::getId() const
 
 SkeletonType* SkeletonType::byId(int id)
 {
-    return skeletonTypeById(id);
+    switch (id)
+    {
+    case 1:
+        return &WITHER_SKELETON;
+    case 2:
+        return &STRAY;
+    default:
+        return &SKELETON;
+    }
 }
 
 int SkeletonType::getName() const

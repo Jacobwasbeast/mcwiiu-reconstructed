@@ -71,7 +71,6 @@ class Entity;
 
 int indexOf(const std::vector<boost::weak_ptr<Entity> >& entities,
             const boost::shared_ptr<Entity>& entity);
-bool isPickable_apply(const boost::shared_ptr<Entity>& entity);
 
 class Entity : public boost::enable_shared_from_this<Entity>, public CommandSender
 {

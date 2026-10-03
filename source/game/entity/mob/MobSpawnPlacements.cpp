@@ -3,10 +3,7 @@
 
 #include <boost/unordered_map.hpp>
 
-namespace
-{
-
-boost::unordered_map<unsigned long long, Mob::SpawnPlacementType> placementTypeCtor()
+static boost::unordered_map<unsigned long long, Mob::SpawnPlacementType> placementTypeCtor()
 {
     boost::unordered_map<unsigned long long, Mob::SpawnPlacementType> placements;
 
@@ -60,8 +57,6 @@ boost::unordered_map<unsigned long long, Mob::SpawnPlacementType> placementTypeC
     placements[EntityType::DOLPHIN] = Mob::SPAWN_PLACEMENT_TYPE_IN_OPEN_WATER;
 
     return placements;
-}
-
 }
 
 static boost::unordered_map<unsigned long long, Mob::SpawnPlacementType> placementType =

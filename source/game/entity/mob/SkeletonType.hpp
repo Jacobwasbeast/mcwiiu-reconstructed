@@ -8,6 +8,10 @@ class SoundEvent;
 class SkeletonType
 {
 public:
+    static SkeletonType SKELETON;
+    static SkeletonType WITHER_SKELETON;
+    static SkeletonType STRAY;
+
     SkeletonType(int id, int name, ResourceLocation* defaultLootTable);
 
     int getId() const;

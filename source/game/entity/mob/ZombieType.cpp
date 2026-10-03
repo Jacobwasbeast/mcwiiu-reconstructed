@@ -1,24 +1,10 @@
 #include "game/entity/mob/ZombieType.hpp"
 #include "game/client/audio/SoundEvents.hpp"
 
-namespace
-{
-    ZombieType* zombieTypeById(int id)
-    {
-        static ZombieType normal(0, 0, false);
-        static ZombieType villager(1, 1, true);
-        static ZombieType husk(2, 2, false);
-        static ZombieType drowned(3, 3, false);
-        switch (id)
-        {
-        case 0: return &normal;
-        case 1: return &villager;
-        case 2: return &husk;
-        case 3: return &drowned;
-        default: return 0;
-        }
-    }
-}
+static ZombieType normalZombieType(0, 0, false);
+static ZombieType villagerZombieType(1, 1, true);
+static ZombieType huskZombieType(2, 2, false);
+static ZombieType drownedZombieType(3, 3, false);
 
 ZombieType::ZombieType(int id, int name, bool villagerZombie)
     : id(id), villagerZombie(villagerZombie), name(name)
@@ -44,14 +30,21 @@ int ZombieType::getVillagerProfession() const
 
 ZombieType* ZombieType::byId(int id)
 {
-    return zombieTypeById(id);
+    switch (id)
+    {
+    case 0: return &normalZombieType;
+    case 1: return &villagerZombieType;
+    case 2: return &huskZombieType;
+    case 3: return &drownedZombieType;
+    default: return 0;
+    }
 }
 
 ZombieType* ZombieType::byVillagerProffesion(int profession)
 {
     if (profession < 0 || profession > 5)
         return 0;
-    return zombieTypeById(1);
+    return &villagerZombieType;
 }
 
 int ZombieType::getName() const

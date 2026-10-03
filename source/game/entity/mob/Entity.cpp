@@ -128,16 +128,6 @@ int indexOf(const std::vector<boost::weak_ptr<Entity> >& entities,
     return -1;
 }
 
-bool isPickable_apply(const boost::shared_ptr<Entity>& entity)
-{
-    if (entity->isPickable())
-    {
-        return true;
-    }
-
-    return entity->GetType() == EntityType::ITEM_ENTITY;
-}
-
 void Entity::staticCtor()
 {
     DATA_SHARED_FLAGS_ID = SynchedEntityData::defineId(EntityType::ENTITY, EntityType::ENTITY, EntityDataSerializers::INT);
@@ -518,10 +508,6 @@ Entity::~Entity()
 
     delete mLeashInfoTag;
     mLeashInfoTag = NULL;
-}
-
-void Entity::defineSynchedData()
-{
 }
 
 void Entity::fjDerivedCtorCalls()

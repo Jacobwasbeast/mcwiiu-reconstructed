@@ -524,7 +524,7 @@ void TrackedEntity::updatePlayer(EntityTracker* tracker, boost::shared_ptr<Serve
         }
 
         mEntity->startSeenByPlayer(player);
-        player->cancelRemoveEntity(&mEntity);
+        player->cancelRemoveEntity(mEntity);
         return;
     }
 

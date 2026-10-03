@@ -7,35 +7,26 @@
 
 #include "game/core/RangedAttribute.hpp"
 
-namespace
-{
-    Attribute* makeSyncable(RangedAttribute* attribute)
-    {
-        attribute->setSyncable(true);
-        return attribute;
-    }
-}
-
 Attribute* SharedMonsterAttributes::MAX_HEALTH =
-    makeSyncable(new RangedAttribute(NULL, eATTRIBUTE_ID_MaxHealth, 20.0, 0.0, 2014.0));
+    (new RangedAttribute(NULL, eATTRIBUTE_ID_MaxHealth, 20.0, 0.0, 2014.0))->setSyncable(true);
 Attribute* SharedMonsterAttributes::FOLLOW_RANGE =
     new RangedAttribute(NULL, eATTRIBUTE_ID_FollowRange, 32.0, 0.0, 2048.0);
 Attribute* SharedMonsterAttributes::KNOCKBACK_RESISTANCE =
     new RangedAttribute(NULL, eATTRIBUTE_ID_KnockbackResistance, 0.0, 0.0, 1.0);
 Attribute* SharedMonsterAttributes::MOVEMENT_SPEED =
-    makeSyncable(new RangedAttribute(NULL, eATTRIBUTE_ID_MovementSpeed, 0.7f, 0.0, 1024.0));
+    (new RangedAttribute(NULL, eATTRIBUTE_ID_MovementSpeed, 0.7f, 0.0, 1024.0))->setSyncable(true);
 Attribute* SharedMonsterAttributes::FLYING_SPEED =
-    makeSyncable(new RangedAttribute(NULL, eATTRIBUTE_ID_FlyingSpeed, 0.4f, 0.0, 1024.0));
+    (new RangedAttribute(NULL, eATTRIBUTE_ID_FlyingSpeed, 0.4f, 0.0, 1024.0))->setSyncable(true);
 Attribute* SharedMonsterAttributes::ATTACK_DAMAGE =
     new RangedAttribute(NULL, eATTRIBUTE_ID_AttackDamage, 2.0, 0.0, 1024.0);
 Attribute* SharedMonsterAttributes::ATTACK_SPEED =
-    makeSyncable(new RangedAttribute(NULL, eATTRIBUTE_ID_AttackSpeed, 4.0, 0.0, 1024.0));
+    (new RangedAttribute(NULL, eATTRIBUTE_ID_AttackSpeed, 4.0, 0.0, 1024.0))->setSyncable(true);
 Attribute* SharedMonsterAttributes::ARMOR =
-    makeSyncable(new RangedAttribute(NULL, eATTRIBUTE_ID_Armor, 0.0, 0.0, 30.0));
+    (new RangedAttribute(NULL, eATTRIBUTE_ID_Armor, 0.0, 0.0, 30.0))->setSyncable(true);
 Attribute* SharedMonsterAttributes::ARMOR_TOUGHNESS =
-    makeSyncable(new RangedAttribute(NULL, eATTRIBUTE_ID_ArmorToughness, 0.0, 0.0, 20.0));
+    (new RangedAttribute(NULL, eATTRIBUTE_ID_ArmorToughness, 0.0, 0.0, 20.0))->setSyncable(true);
 Attribute* SharedMonsterAttributes::LUCK =
-    makeSyncable(new RangedAttribute(NULL, eATTRIBUTE_ID_Luck, 0.0, -1024.0, 1024.0));
+    (new RangedAttribute(NULL, eATTRIBUTE_ID_Luck, 0.0, -1024.0, 1024.0))->setSyncable(true);
 
 CompoundTag* SharedMonsterAttributes::saveAttributeModifier(AttributeModifier* modifier)
 {

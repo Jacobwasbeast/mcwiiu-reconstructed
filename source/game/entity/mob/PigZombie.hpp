@@ -29,6 +29,8 @@ public:
                                 boost::shared_ptr<LivingEntity> target);
     };
 
+    static AttributeModifier* SPEED_MODIFIER_ATTACKING;
+
     PigZombie(Level* level);
 
     static void create(Level* level);

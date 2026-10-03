@@ -63,19 +63,13 @@ namespace
 
 namespace
 {
-    Attribute* makeSyncable(RangedAttribute* attribute)
-    {
-        attribute->setSyncable(true);
-        return attribute;
-    }
-
     const Predicate<boost::shared_ptr<Entity> >* PARENT_HORSE_SELECTOR = new ParentHorseSelector();
 }
 
 const EntityDataAccessor<unsigned char>* AbstractHorse::DATA_FLAGS = NULL;
 const EntityDataAccessor<std::wstring>* AbstractHorse::DATA_OWNER_UUID = NULL;
 Attribute* AbstractHorse::JUMP_STRENGTH =
-    makeSyncable(new RangedAttribute(NULL, eATTRIBUTE_ID_HorseJumpStrength, 0.7, 0.0, 2.0));
+    (new RangedAttribute(NULL, eATTRIBUTE_ID_HorseJumpStrength, 0.7, 0.0, 2.0))->setSyncable(true);
 
 AbstractHorse::AbstractHorse(Level* level)
     : Animal(level)

@@ -21,11 +21,8 @@
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
 
-namespace
-{
-    AttributeModifier gPigZombieAttackingSpeedBoost(
-        eMODIFIER_ID_PigZombieAttackingSpeedBoost, 0.05, 0);
-}
+AttributeModifier* PigZombie::SPEED_MODIFIER_ATTACKING =
+    (new AttributeModifier(eMODIFIER_ID_PigZombieAttackingSpeedBoost, 0.05, 0))->setSerialize(false);
 
 PigZombie::PigZombie(Level* level)
     : Zombie(level, false), mRemainingPersistentAngerTime(0), mAngerSoundDelay(0)
@@ -60,7 +57,7 @@ void PigZombie::registerAttributes()
 {
     Zombie::registerAttributes();
     getAttribute(Zombie::SPAWN_REINFORCEMENTS_CHANCE)->setBaseValue(0.0);
-    getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(0.23);
+    getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(0.23f);
     getAttribute(SharedMonsterAttributes::ATTACK_DAMAGE)->setBaseValue(5.0);
 }
 
@@ -74,13 +71,13 @@ void PigZombie::customServerAiStep()
     AttributeInstance* speed = getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED);
     if (!isAngry())
     {
-        if (speed->getModifier(eMODIFIER_ID_PigZombieAttackingSpeedBoost) != NULL)
-            speed->removeModifier(eMODIFIER_ID_PigZombieAttackingSpeedBoost);
+        if (speed->hasModifier(SPEED_MODIFIER_ATTACKING))
+            speed->removeModifier(SPEED_MODIFIER_ATTACKING);
     }
     else
     {
-        if (!isBaby() && speed->getModifier(eMODIFIER_ID_PigZombieAttackingSpeedBoost) == NULL)
-            speed->addModifier(new AttributeModifier(gPigZombieAttackingSpeedBoost));
+        if (!isBaby() && !speed->hasModifier(SPEED_MODIFIER_ATTACKING))
+            speed->addModifier(new AttributeModifier(*SPEED_MODIFIER_ATTACKING));
         --mRemainingPersistentAngerTime;
     }
 
