@@ -11,18 +11,11 @@
 
 bool FJ_CheckBox::s_keyDown = false;
 
-static std::string s_checkBoxStates[4] =
+static std::string s_checkBoxStates[2][2] =
 {
-    std::string("Active_Selected"),
-    std::string("Inactive_Selected"),
-    std::string("Active_Unselected"),
-    std::string("Inactive_Unselected")
+    {std::string("Active_Selected"), std::string("Inactive_Selected")},
+    {std::string("Active_Unselected"), std::string("Inactive_Unselected")}
 };
-
-static const std::string& checkBoxStateLabel(bool enabled, int state)
-{
-    return s_checkBoxStates[state * 2 + (enabled ? 0 : 1)];
-}
 
 FJ_CheckBox::FJ_CheckBox(fuiRenderNode* renderNode)
     : FJ_Base(renderNode)
@@ -67,7 +60,7 @@ void FJ_CheckBox::SetCheckBox(bool checked)
 
 void FJ_CheckBox::ChangeState(int state)
 {
-    gotoAndStop(checkBoxStateLabel(m_enabled, state));
+    gotoAndStop(s_checkBoxStates[state][!m_enabled]);
     m_currentState = state;
 }
 
@@ -104,8 +97,7 @@ int FJ_CheckBox::getOldWidth()
 
 void FJ_CheckBox::focusInHandler(FJ_Event*)
 {
-    gotoAndStop(checkBoxStateLabel(m_enabled, 0));
-    m_currentState = 0;
+    ChangeState(0);
 }
 
 void FJ_CheckBox::_focusInHandler(FJ_FuiNode* node, FJ_Event* event)
@@ -115,8 +107,7 @@ void FJ_CheckBox::_focusInHandler(FJ_FuiNode* node, FJ_Event* event)
 
 void FJ_CheckBox::focusOutHandler(FJ_Event*)
 {
-    gotoAndStop(checkBoxStateLabel(m_enabled, 1));
-    m_currentState = 1;
+    ChangeState(1);
 }
 
 void FJ_CheckBox::_focusOutHandler(FJ_FuiNode* node, FJ_Event* event)

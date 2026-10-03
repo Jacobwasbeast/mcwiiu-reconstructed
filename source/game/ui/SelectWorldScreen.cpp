@@ -14,8 +14,7 @@
 #include "game/world/LevelSummary.hpp"
 #include "platform/wiiu/WiiU_Runtime.hpp"
 
-std::wstring _toString(int value);
-std::wstring _toString(float value);
+template <typename T> std::wstring _toString(T value);
 
 SelectWorldScreen::SelectWorldScreen(Screen* parent)
     : Screen(), mParent(parent), mTitle(L"Select world"), mSelecting(false), mSelectedWorld(0),

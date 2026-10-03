@@ -9,16 +9,6 @@
 #include "game/ui/OptionsScreen.hpp"
 #include "game/ui/SelectWorldScreen.hpp"
 
-Screen* createOptionsScreen(TitleScreen* parent, void* options)
-{
-    return new OptionsScreen(parent, static_cast<Options*>(options));
-}
-
-Screen* createSelectWorldScreen(TitleScreen* parent)
-{
-    return new SelectWorldScreen(parent);
-}
-
 TitleScreen::TitleScreen()
     : mLogoWidth(256.0f), mTitle(), mMultiplayerButton(NULL)
 {
@@ -79,12 +69,12 @@ void TitleScreen::buttonClicked(Button* button)
 {
     if (button->mId == 0)
     {
-        mMinecraft->setScreen(createOptionsScreen(this, mMinecraft->mOptions));
+        mMinecraft->setScreen(new OptionsScreen(this, mMinecraft->mOptions));
     }
 
     if (button->mId == 1)
     {
-        mMinecraft->setScreen(createSelectWorldScreen(this));
+        mMinecraft->setScreen(new SelectWorldScreen(this));
     }
 
     if (button->mId == 2)

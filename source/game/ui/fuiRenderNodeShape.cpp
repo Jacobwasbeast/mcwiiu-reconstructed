@@ -97,8 +97,9 @@ void fuiRenderNodeShape::render(fuiRect* bounds, fuiMatrix* matrix)
                                                       -component->bitmapMatrix.translateX / width,
                                                       -component->bitmapMatrix.translateY / height);
                 }
-                gRenderer->TextureSetParam(2, getCurrentFilterFlags() & 1);
-                setRendererColour();
+                gRenderer->TextureSetParam(2, gFui->m_filterStack[gFui->m_filterDepth] & 1);
+                gRenderer->StateSetColour(gFui->m_colorStack[gFui->m_colorDepth].redMultiply, gFui->m_colorStack[gFui->m_colorDepth].greenMultiply, gFui->m_colorStack[gFui->m_colorDepth].blueMultiply, gFui->m_colorStack[gFui->m_colorDepth].alphaMultiply);
+                gRenderer->StateSetColourAdd(gFui->m_colorStack[gFui->m_colorDepth].redAdd, gFui->m_colorStack[gFui->m_colorDepth].greenAdd, gFui->m_colorStack[gFui->m_colorDepth].blueAdd, gFui->m_colorStack[gFui->m_colorDepth].alphaAdd);
             }
             if (bounds != NULL)
             {

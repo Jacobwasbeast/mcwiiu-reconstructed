@@ -8,7 +8,11 @@ class fuiRenderNode;
 class FJ_Label_Book_Small : public FJ_Label
 {
 public:
-    explicit FJ_Label_Book_Small(fuiRenderNode* pRenderNode);
+    FJ_Label_Book_Small(fuiRenderNode* pRenderNode)
+        : FJ_Label(pRenderNode)
+    {
+        m_multilineWrap = true;
+    }
     static FJ_Label* Create(fuiRenderNode* pRenderNode);
     virtual unsigned int getType();
 };

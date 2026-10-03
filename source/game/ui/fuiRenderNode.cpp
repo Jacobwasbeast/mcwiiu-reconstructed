@@ -12,26 +12,6 @@
 
 static unsigned int g_fuiOldScissor[4] = {0, 0, 0, 0};
 
-static void setRendererMatrix(float* result, const fuiMatrix& matrix)
-{
-    result[0] = matrix.scaleX;
-    result[1] = matrix.rotateSkew0;
-    result[2] = 0.0f;
-    result[3] = 0.0f;
-    result[4] = matrix.rotateSkew1;
-    result[5] = matrix.scaleY;
-    result[6] = 0.0f;
-    result[7] = 0.0f;
-    result[8] = 0.0f;
-    result[9] = 0.0f;
-    result[10] = 1.0f;
-    result[11] = 0.0f;
-    result[12] = matrix.translateX;
-    result[13] = matrix.translateY;
-    result[14] = 0.0f;
-    result[15] = 1.0f;
-}
-
 fuiRenderNode::fuiRenderNode(fuiRenderNode* stage, fuiRenderNode* parent, fuiObject* object, unsigned int symbolIndex, eFuiObjectType type, unsigned char renderFlags, fuiRGBA* color, unsigned char visible, bool ctorEnabled, fuiFile* file)
 {
     m_stage = (fuiRenderNodeStage*)stage;
@@ -122,8 +102,12 @@ void fuiRenderNode::pushMatrix(fuiMatrix& matrix)
 {
     ++gFui->m_matrixDepth;
     fuiMatrix::mul(matrix, gFui->m_matrixStack[gFui->m_matrixDepth - 1], gFui->m_matrixStack[gFui->m_matrixDepth]);
-    float rendererMatrix[16];
-    setRendererMatrix(rendererMatrix, matrix);
+    float rendererMatrix[16] = {
+        matrix.scaleX, matrix.rotateSkew0, 0.0f, 0.0f,
+        matrix.rotateSkew1, matrix.scaleY, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        matrix.translateX, matrix.translateY, 0.0f, 1.0f
+    };
     gRenderer->MatrixPush();
     gRenderer->MatrixMult(rendererMatrix);
 }
@@ -183,16 +167,6 @@ void fuiRenderNode::setAlpha(float alpha)
 float fuiRenderNode::getAlpha()
 {
     return m_alpha;
-}
-
-unsigned int fuiRenderNode::getColor() const
-{
-    return m_color;
-}
-
-void fuiRenderNode::setColor(unsigned int color)
-{
-    m_color = color;
 }
 
 fuiRenderNode* fuiRenderNode::asTimeline()
@@ -344,18 +318,6 @@ void fuiRenderNode::pushFilterFlags()
 void fuiRenderNode::popFilterFlags()
 {
     --gFui->m_filterDepth;
-}
-
-void fuiRenderNode::setRendererColour()
-{
-    const fui::ColorState& colour = gFui->m_colorStack[gFui->m_colorDepth];
-    gRenderer->StateSetColour(colour.redMultiply, colour.greenMultiply, colour.blueMultiply, colour.alphaMultiply);
-    gRenderer->StateSetColourAdd(colour.redAdd, colour.greenAdd, colour.blueAdd, colour.alphaAdd);
-}
-
-unsigned char fuiRenderNode::getCurrentFilterFlags()
-{
-    return gFui->m_filterStack[gFui->m_filterDepth];
 }
 
 fuiRenderNodeEditText* fuiRenderNode::asEditText()

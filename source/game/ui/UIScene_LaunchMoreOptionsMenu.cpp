@@ -31,28 +31,6 @@ extern ConsoleUIController gConsoleUIController;
 
 static float arenaSizeTable[] = { 0.5f, 0.625f, 0.75f, 0.875f, 1.0f, 1.0f, 1.25f, 1.5f, 1.75f, 2.0f };
 
-static std::wstring makeValueLabel(int labelId, int value)
-{
-    wchar_t text[256];
-    std::swprintf(text, 256, L"%ls: %d", L10N::GetString(labelId), value);
-    return std::wstring(text);
-}
-
-static std::wstring makeTextLabel(int labelId, int valueId)
-{
-    wchar_t text[256];
-    std::swprintf(text, 256, L"%ls: %ls", L10N::GetString(labelId), L10N::GetString(valueId));
-    return std::wstring(text);
-}
-
-static std::wstring makeArenaSizeLabel(int value)
-{
-    wchar_t text[256];
-    std::wstring display = _toString<float>(arenaSizeTable[value + 4]);
-    std::swprintf(text, 256, L"%ls: x%ls", L10N::GetString(IDS_MG02_LAYER_SCALE), display.c_str());
-    return std::wstring(text);
-}
-
 UIScene_LaunchMoreOptionsMenu::UIScene_LaunchMoreOptionsMenu(int sceneType, void* data, UILayer* layer)
     : UIScene(sceneType, layer), m_worldSize(), m_worldType(), m_gameMode(), m_lootSet(),
       m_foodBalance(), m_mapSize(), m_roundLength(), m_worldTab(), m_gameTab(), m_unmappedControlA(),
@@ -753,6 +731,7 @@ void UIScene_LaunchMoreOptionsMenu::handlePress(int controlId, int childId)
 void UIScene_LaunchMoreOptionsMenu::handleSliderElementMove(int, int second, int value)
 {
     gConsoleUIController.PlayUISFX(SoundEvents::UI_SCROLL);
+    wchar_t text[256];
     switch (second)
     {
     case 0x18:
@@ -816,18 +795,19 @@ void UIScene_LaunchMoreOptionsMenu::handleSliderElementMove(int, int second, int
     {
         const int lives = m_gameOptionsList.GetSliderValue(0x22);
         m_initData->mPlayerSettings.mLivesPerRound = static_cast<unsigned int>(lives);
-        const std::wstring label = lives == 0
-            ? makeTextLabel(IDS_MG_LIVES_PER_ROUND, IDS_MG_INFINITE)
-            : makeValueLabel(IDS_MG_LIVES_PER_ROUND, lives);
-        m_gameOptionsList.SetItemLabel(0x22, UIString(label), false);
+        if (lives == 0)
+            swprintf(text, 256, L"%ls: %ls", L10N::GetString(IDS_MG_LIVES_PER_ROUND), L10N::GetString(IDS_MG_INFINITE));
+        else
+            swprintf(text, 256, L"%ls: %d", L10N::GetString(IDS_MG_LIVES_PER_ROUND), lives);
+        m_gameOptionsList.SetItemLabel(0x22, UIString(text), false);
         UpdateDescriptionText();
         m_initData->mSettingsChanged = true;
         return;
     }
     case 0x23:
         m_initData->mPlayerSettings.mRoundCount = m_gameOptionsList.GetSliderValue(0x23);
-        m_gameOptionsList.SetItemLabel(
-            0x23, UIString(makeValueLabel(0x9ad3440e, m_initData->mPlayerSettings.mRoundCount)), false);
+        swprintf(text, 256, L"%ls: %d", L10N::GetString(0x9ad3440e), m_initData->mPlayerSettings.mRoundCount);
+        m_gameOptionsList.SetItemLabel(0x23, UIString(text), false);
         UpdateDescriptionText();
         m_initData->mSettingsChanged = true;
         return;
@@ -854,12 +834,15 @@ void UIScene_LaunchMoreOptionsMenu::handleSliderElementMove(int, int second, int
         if (arenaSize == 0)
         {
             m_initData->mPlayerSettings.mArenaSizeMultiplier = maybe<float>();
-            m_gameOptionsList.SetItemLabel(0x2b, UIString(makeTextLabel(IDS_MG02_LAYER_SCALE, IDS_MG_AUTO)), false);
+            swprintf(text, 256, L"%ls: %ls", L10N::GetString(IDS_MG02_LAYER_SCALE), L10N::GetString(IDS_MG_AUTO));
+            m_gameOptionsList.SetItemLabel(0x2b, UIString(text), false);
         }
         else
         {
             m_initData->mPlayerSettings.mArenaSizeMultiplier = maybe<float>(arenaSizeTable[arenaSize - 1]);
-            m_gameOptionsList.SetItemLabel(0x2b, UIString(makeArenaSizeLabel(arenaSize)), false);
+            std::wstring display = _toString<float>(arenaSizeTable[arenaSize + 4]);
+            swprintf(text, 256, L"%ls: x%ls", L10N::GetString(IDS_MG02_LAYER_SCALE), display.c_str());
+            m_gameOptionsList.SetItemLabel(0x2b, UIString(text), false);
         }
         UpdateDescriptionText();
         m_initData->mSettingsChanged = true;
@@ -871,12 +854,14 @@ void UIScene_LaunchMoreOptionsMenu::handleSliderElementMove(int, int second, int
         if (layerCount == 0)
         {
             m_initData->mPlayerSettings.mLayerCount = maybe<unsigned int>();
-            m_gameOptionsList.SetItemLabel(0x2c, UIString(makeTextLabel(IDS_MG02_LAYER_COUNT, IDS_MG_AUTO)), false);
+            swprintf(text, 256, L"%ls: %ls", L10N::GetString(IDS_MG02_LAYER_COUNT), L10N::GetString(IDS_MG_AUTO));
+            m_gameOptionsList.SetItemLabel(0x2c, UIString(text), false);
         }
         else
         {
             m_initData->mPlayerSettings.mLayerCount = maybe<unsigned int>(static_cast<unsigned int>(layerCount));
-            m_gameOptionsList.SetItemLabel(0x2c, UIString(makeValueLabel(IDS_MG02_LAYER_COUNT, layerCount)), false);
+            swprintf(text, 256, L"%ls: %d", L10N::GetString(IDS_MG02_LAYER_COUNT), layerCount);
+            m_gameOptionsList.SetItemLabel(0x2c, UIString(text), false);
         }
         UpdateDescriptionText();
         break;

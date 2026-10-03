@@ -49,11 +49,6 @@ FJ_Button::FJ_Button(fuiRenderNode* renderNode)
     addEventListener(eFJEventType_KeyUp, this, _keyUpHandler, false);
 }
 
-FJ_FuiNode* FJ_Button::getObjListParent()
-{
-    return m_objListParent;
-}
-
 void FJ_Button::setButtonPressed(bool pressed) { m_buttonPressed = pressed; }
 
 void FJ_Button::ChangeState(int state)

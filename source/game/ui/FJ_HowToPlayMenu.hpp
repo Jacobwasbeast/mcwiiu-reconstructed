@@ -9,7 +9,10 @@ class fuiRenderNode;
 class FJ_HowToPlayMenu : public FJ_Document
 {
 public:
-    explicit FJ_HowToPlayMenu(fuiRenderNode* renderNode);
+    explicit FJ_HowToPlayMenu(fuiRenderNode* renderNode)
+        : FJ_Document(renderNode)
+    {
+    }
     virtual void handlePress(FJ_Event* event);
     static FJ_Document* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();

@@ -24,11 +24,11 @@ struct AchievementInfo
 class UIScene_AchievementsMenu : public UIScene
 {
 public:
+    enum { DISPLAY_COUNT = 93 };
+    static const int sDisplayList[DISPLAY_COUNT];
     UIScene_AchievementsMenu(int type, void* data, UILayer* layer);
     virtual ~UIScene_AchievementsMenu();
     static int GetInfo(int achievement);
-    static int GetAchievementId(int index);
-    static int GetAchievementCount();
     void registerTexture(int achievement);
     virtual void updateTooltips();
     void SetAchievementDescription(std::vector<HtmlString>* lines);

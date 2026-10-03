@@ -31,6 +31,7 @@ public:
     friend class FJ_HtmlTextPanel;
     friend class FJ_HtmlTextPanelLarge;
     friend class FJ_LabelOutline;
+    friend class FJ_LeaderboardEntry;
 
     struct HtmlImageDrawData
     {

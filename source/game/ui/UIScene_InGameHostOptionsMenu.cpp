@@ -34,16 +34,6 @@
 extern ConsoleUIController gConsoleUIController;
 extern CMinecraftApp* g_pApp;
 
-static void addHostCheckbox(UIControl_MultiList* list, int stringId, int id, bool checked)
-{
-    list->AddNewCheckbox(std::wstring(L10N::GetString(stringId)), id, checked);
-}
-
-static void addHostButton(UIControl_MultiList* list, int stringId, int id)
-{
-    list->AddNewButton(std::wstring(L10N::GetString(stringId)), id, true);
-}
-
 UIScene_InGameHostOptionsMenu::UIScene_InGameHostOptionsMenu(int sceneType, void*, UILayer* layer)
     : UIScene(sceneType, layer), m_hostOptions()
 {
@@ -62,16 +52,16 @@ unsigned int UIScene_InGameHostOptionsMenu::getWeatherId(int weatherState)
 
 void UIScene_InGameHostOptionsMenu::Init()
 {
-    addHostCheckbox(&m_hostOptions, IDS_FIRE_SPREADS, 0, g_pApp->GetGameHostOption(eGameHostOption_FireSpreads) != 0);
-    addHostCheckbox(&m_hostOptions, IDS_TNT_EXPLODES, 1, g_pApp->GetGameHostOption(eGameHostOption_TNT) != 0);
+    m_hostOptions.AddNewCheckbox(std::wstring(L10N::GetString(IDS_FIRE_SPREADS)), 0, g_pApp->GetGameHostOption(eGameHostOption_FireSpreads) != 0);
+    m_hostOptions.AddNewCheckbox(std::wstring(L10N::GetString(IDS_TNT_EXPLODES)), 1, g_pApp->GetGameHostOption(eGameHostOption_TNT) != 0);
     if (g_pApp->GetGameHostOption(eGameHostOption_CheatsEnabled) != 0)
     {
-        addHostCheckbox(&m_hostOptions, IDS_DAYLIGHT_CYCLE, 2, g_pApp->GetGameHostOption(eGameHostOption_DoDaylightCycle) != 0);
-        addHostCheckbox(&m_hostOptions, IDS_KEEP_INVENTORY, 3, g_pApp->GetGameHostOption(eGameHostOption_KeepInventory) != 0);
-        addHostCheckbox(&m_hostOptions, IDS_MOB_SPAWNING, 4, g_pApp->GetGameHostOption(eGameHostOption_DoMobSpawning) != 0);
-        addHostCheckbox(&m_hostOptions, IDS_MOB_GRIEFING, 5, g_pApp->GetGameHostOption(eGameHostOption_MobGriefing) != 0);
-        addHostButton(&m_hostOptions, 0xd554d957, 0xc);
-        addHostButton(&m_hostOptions, 0xc0d12a27, 0xd);
+        m_hostOptions.AddNewCheckbox(std::wstring(L10N::GetString(IDS_DAYLIGHT_CYCLE)), 2, g_pApp->GetGameHostOption(eGameHostOption_DoDaylightCycle) != 0);
+        m_hostOptions.AddNewCheckbox(std::wstring(L10N::GetString(IDS_KEEP_INVENTORY)), 3, g_pApp->GetGameHostOption(eGameHostOption_KeepInventory) != 0);
+        m_hostOptions.AddNewCheckbox(std::wstring(L10N::GetString(IDS_MOB_SPAWNING)), 4, g_pApp->GetGameHostOption(eGameHostOption_DoMobSpawning) != 0);
+        m_hostOptions.AddNewCheckbox(std::wstring(L10N::GetString(IDS_MOB_GRIEFING)), 5, g_pApp->GetGameHostOption(eGameHostOption_MobGriefing) != 0);
+        m_hostOptions.AddNewButton(std::wstring(L10N::GetString(0xd554d957)), 0xc, true);
+        m_hostOptions.AddNewButton(std::wstring(L10N::GetString(0xc0d12a27)), 0xd, true);
 
         const Difficulty* difficulty = Difficulty::byId(g_pApp->GetGameHostOption(eGameHostOption_Difficulty));
         wchar_t difficultyLabel[256];
@@ -84,7 +74,7 @@ void UIScene_InGameHostOptionsMenu::Init()
         m_hostOptions.AddNewSlider(std::wstring(L10N::GetString(gameType->getSliderLabel())), 0x10, 0,
                                    GameType::ADVENTURE->getId(), g_pApp->GetGameHostOption(eGameHostOption_GameType),
                                    false, 7, 3);
-        addHostButton(&m_hostOptions, IDS_SET_WORLD_SPAWN, 0xe);
+        m_hostOptions.AddNewButton(std::wstring(L10N::GetString(IDS_SET_WORLD_SPAWN)), 0xe, true);
 
         Level* level = Minecraft::GetInstance()->getLevel(0);
         if (level != 0)
@@ -94,11 +84,11 @@ void UIScene_InGameHostOptionsMenu::Init()
             m_hostOptions.AddNewSlider(std::wstring(L10N::GetString(getWeatherId(level->getWeatherState()))),
                                        0x11, 0, 2, level->getWeatherState(), false, 7, 3);
         }
-        addHostCheckbox(&m_hostOptions, IDS_WEATHER_CYCLE, 9, g_pApp->GetGameHostOption(eGameHostOption_DoWeatherCycle) != 0);
+        m_hostOptions.AddNewCheckbox(std::wstring(L10N::GetString(IDS_WEATHER_CYCLE)), 9, g_pApp->GetGameHostOption(eGameHostOption_DoWeatherCycle) != 0);
     }
-    addHostCheckbox(&m_hostOptions, IDS_MOB_LOOT, 6, g_pApp->GetGameHostOption(eGameHostOption_DoMobLoot) != 0);
-    addHostCheckbox(&m_hostOptions, IDS_TILE_DROPS, 7, g_pApp->GetGameHostOption(eGameHostOption_DoTileDrops) != 0);
-    addHostCheckbox(&m_hostOptions, 0x6f7d8591, 8, g_pApp->GetGameHostOption(eGameHostOption_NaturalRegeneration) != 0);
+    m_hostOptions.AddNewCheckbox(std::wstring(L10N::GetString(IDS_MOB_LOOT)), 6, g_pApp->GetGameHostOption(eGameHostOption_DoMobLoot) != 0);
+    m_hostOptions.AddNewCheckbox(std::wstring(L10N::GetString(IDS_TILE_DROPS)), 7, g_pApp->GetGameHostOption(eGameHostOption_DoTileDrops) != 0);
+    m_hostOptions.AddNewCheckbox(std::wstring(L10N::GetString(0x6f7d8591)), 8, g_pApp->GetGameHostOption(eGameHostOption_NaturalRegeneration) != 0);
 
     Level* level = Minecraft::GetInstance()->getLevel(0);
     bool hasMultiplePlayers = false;
@@ -113,8 +103,8 @@ void UIScene_InGameHostOptionsMenu::Init()
                                        Player::ePlayerGamePrivilege_CanTeleport) != 0 &&
         hasMultiplePlayers)
     {
-        addHostButton(&m_hostOptions, IDS_TELEPORT_TO_PLAYER, 0xa);
-        addHostButton(&m_hostOptions, IDS_TELEPORT_TO_ME, 0xb);
+        m_hostOptions.AddNewButton(std::wstring(L10N::GetString(IDS_TELEPORT_TO_PLAYER)), 0xa, true);
+        m_hostOptions.AddNewButton(std::wstring(L10N::GetString(IDS_TELEPORT_TO_ME)), 0xb, true);
     }
     if (m_movie != 0)
     {

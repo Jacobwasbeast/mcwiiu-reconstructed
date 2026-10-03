@@ -1,10 +1,5 @@
 #include "game/ui/FJ_Label_OutlineTitle.hpp"
 
-FJ_Label_OutlineTitle::FJ_Label_OutlineTitle(fuiRenderNode* renderNode)
-    : FJ_LabelOutline(renderNode)
-{
-}
-
 FJ_Label_OutlineTitle::~FJ_Label_OutlineTitle()
 {
 }

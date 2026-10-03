@@ -135,7 +135,7 @@ public:
     unsigned int getControlFocus();
     void setOpacity(float opacity);
     void setVisible(bool visible);
-    bool isVisible();
+    bool isVisible() { return m_visible; }
     bool hasTimer(int timerId);
     bool canCacheSWF();
     void slideLeft();

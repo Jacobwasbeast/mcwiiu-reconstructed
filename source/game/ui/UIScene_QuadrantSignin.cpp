@@ -23,11 +23,6 @@ struct AvatarRequest
     UIScene_QuadrantSignin* scene;
     int quadrant;
 };
-
-FJ_QuadrantSignin* GetQuadrantDocument(fuiRenderNode* root)
-{
-    return static_cast<FJ_QuadrantSignin*>(root->getFuiNode()->asFJ_Document());
-}
 }
 
 UIScene_QuadrantSignin::UIScene_QuadrantSignin(int playerId, void* data, UILayer* layer)
@@ -39,7 +34,7 @@ UIScene_QuadrantSignin::UIScene_QuadrantSignin(int playerId, void* data, UILayer
     _initQuadrants();
     if (g_pInput->IsCircleCrossSwapped())
     {
-        GetQuadrantDocument(m_movie->getRootNode())->SetABSwap(true);
+        static_cast<FJ_QuadrantSignin*>(m_movie->getRootNode()->getFuiNode())->SetABSwap(true);
         gApp.SetDRCIconEnabled(false);
         layer->addComponent(playerId, EUIScene_MenuBackground, NULL);
     }
@@ -130,11 +125,11 @@ void UIScene_QuadrantSignin::setControllerState(int controller, EControllerStatu
     m_controllerStates[controller] = status;
     if (g_pInput->IsPadDRCController(controller))
     {
-        GetQuadrantDocument(m_movie->getRootNode())->SetControllerStatus(controller, status, 0);
+        static_cast<FJ_QuadrantSignin*>(m_movie->getRootNode()->getFuiNode())->SetControllerStatus(controller, status, 0);
         return;
     }
     int controllerType = g_pInput->IsPadClassicController(controller) ? 2 : 1;
-    GetQuadrantDocument(m_movie->getRootNode())->SetControllerStatus(controller, status, controllerType);
+    static_cast<FJ_QuadrantSignin*>(m_movie->getRootNode()->getFuiNode())->SetControllerStatus(controller, status, controllerType);
 }
 
 void UIScene_QuadrantSignin::_initQuadrants()

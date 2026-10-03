@@ -1,10 +1,5 @@
 #include "game/ui/FJ_Label_White_Small_Centered.hpp"
 
-FJ_Label_White_Small_Centered::FJ_Label_White_Small_Centered(fuiRenderNode* pRenderNode)
-    : FJ_Label(pRenderNode)
-{
-}
-
 FJ_Label* FJ_Label_White_Small_Centered::Create(fuiRenderNode* pRenderNode)
 {
     return new FJ_Label_White_Small_Centered(pRenderNode);

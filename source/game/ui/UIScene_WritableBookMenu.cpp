@@ -30,7 +30,7 @@
 #include "game/core/StringUtils.hpp"
 #include "game/core/XLanguage.hpp"
 
-extern std::wstring _toString(int value);
+template <typename T> std::wstring _toString(T value);
 extern ConsoleUIController gConsoleUIController;
 extern CProfile* gProfile;
 

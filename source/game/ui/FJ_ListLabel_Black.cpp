@@ -2,11 +2,6 @@
 
 #include "game/ui/fuiRenderNode.hpp"
 
-FJ_ListLabel_Black::FJ_ListLabel_Black(fuiRenderNode* renderNode)
-    : FJ_Label(renderNode)
-{
-}
-
 FJ_Label* FJ_ListLabel_Black::Create(fuiRenderNode* renderNode)
 {
     return new FJ_ListLabel_Black(renderNode);

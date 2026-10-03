@@ -126,14 +126,15 @@ float fuiBitmapFont::renderGlyph(unsigned short codepoint, float x, float y, flo
 
 float fuiBitmapFont::getRenderedGlyphWidth(unsigned short codepoint, float fontSize)
 {
-    CFontData* fontData = getFontData();
-    const unsigned short glyphId = fontData->getGlyphId(codepoint);
-    return static_cast<float>(fontData->getWidth(glyphId)) * getGlyphScale(fontSize);
+    const unsigned short glyphId = getFontData()->getGlyphId(codepoint);
+    const float glyphScale = getGlyphScale(fontSize);
+    return static_cast<float>(static_cast<int>(getFontData()->getWidth(glyphId))) * glyphScale;
 }
 
 float fuiBitmapFont::getRenderedGlyphHeight(unsigned short codepoint, float fontSize)
 {
-    return static_cast<float>(getFontData()->getFontData().glyphHeight) * getGlyphScale(fontSize) - 2.0f;
+    const float glyphScale = getGlyphScale(fontSize);
+    return static_cast<float>(getFontData()->getFontData().glyphHeight) * glyphScale - 2.0f;
 }
 
 bool fuiBitmapFont::isBitmapFont()

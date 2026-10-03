@@ -8,7 +8,10 @@ class fuiRenderNode;
 class FJ_Label_Black_VerySmall_Centered : public FJ_Label
 {
 public:
-    FJ_Label_Black_VerySmall_Centered(fuiRenderNode* pRenderNode);
+    FJ_Label_Black_VerySmall_Centered(fuiRenderNode* pRenderNode)
+        : FJ_Label(pRenderNode)
+    {
+    }
     static FJ_Label* Create(fuiRenderNode* pRenderNode);
     virtual unsigned int getType();
 };

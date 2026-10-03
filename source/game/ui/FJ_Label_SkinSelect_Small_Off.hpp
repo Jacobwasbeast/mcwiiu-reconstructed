@@ -8,7 +8,10 @@ class fuiRenderNode;
 class FJ_Label_SkinSelect_Small_Off : public FJ_Label
 {
 public:
-    explicit FJ_Label_SkinSelect_Small_Off(fuiRenderNode* renderNode);
+    FJ_Label_SkinSelect_Small_Off(fuiRenderNode* renderNode)
+        : FJ_Label(renderNode)
+    {
+    }
 
     static FJ_Label* Create(fuiRenderNode* renderNode);
 

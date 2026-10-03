@@ -2,11 +2,6 @@
 
 #include "game/ui/fuiRenderNode.hpp"
 
-FJ_Label_SkinSelectCenter_Small_Off::FJ_Label_SkinSelectCenter_Small_Off(fuiRenderNode* renderNode)
-    : FJ_Label(renderNode)
-{
-}
-
 FJ_Label* FJ_Label_SkinSelectCenter_Small_Off::Create(fuiRenderNode* renderNode)
 {
     return new FJ_Label_SkinSelectCenter_Small_Off(renderNode);

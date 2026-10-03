@@ -6,7 +6,7 @@
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/ui/fuiRenderNodeEditText.hpp"
 
-std::wstring _toString(int value);
+template <typename T> std::wstring _toString(T value);
 
 FJ_MobEffect::FJ_MobEffect(fuiRenderNode* pRenderNode)
     : FJ_FuiNode(pRenderNode)

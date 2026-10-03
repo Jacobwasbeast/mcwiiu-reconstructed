@@ -6,11 +6,6 @@
 #include "game/ui/UIScene.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 
-FJ_HowToPlayMenu::FJ_HowToPlayMenu(fuiRenderNode* renderNode)
-    : FJ_Document(renderNode)
-{
-}
-
 void FJ_HowToPlayMenu::handlePress(FJ_Event* event)
 {
     FJ_MenuButton* button = event->m_pTarget->asFJ_MenuButton();

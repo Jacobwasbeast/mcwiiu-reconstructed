@@ -1,10 +1,5 @@
 #include "game/ui/FJ_Label_Black_Small_Centered_HUD.hpp"
 
-FJ_Label_Black_Small_Centered_HUD::FJ_Label_Black_Small_Centered_HUD(fuiRenderNode* pRenderNode)
-    : FJ_Label(pRenderNode)
-{
-}
-
 FJ_Label* FJ_Label_Black_Small_Centered_HUD::Create(fuiRenderNode* pRenderNode)
 {
     return new FJ_Label_Black_Small_Centered_HUD(pRenderNode);

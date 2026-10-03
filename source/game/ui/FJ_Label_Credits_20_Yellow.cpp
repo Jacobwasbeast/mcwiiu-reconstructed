@@ -1,10 +1,5 @@
 #include "game/ui/FJ_Label_Credits_20_Yellow.hpp"
 
-FJ_Label_Credits_20_Yellow::FJ_Label_Credits_20_Yellow(fuiRenderNode* renderNode)
-    : FJ_LabelOutline(renderNode)
-{
-}
-
 FJ_Label_Credits_20_Yellow::~FJ_Label_Credits_20_Yellow()
 {
 }

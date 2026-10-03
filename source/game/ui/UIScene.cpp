@@ -727,11 +727,6 @@ void UIScene::setVisible(bool visible)
     m_visible = visible;
 }
 
-bool UIScene::isVisible()
-{
-    return m_visible;
-}
-
 bool UIScene::hasTimer(int timerId)
 {
     boost::unordered_map<int, _TimerInfo>::iterator found = m_timers.find(timerId);

@@ -38,29 +38,6 @@ void PauseScreen::init()
                                   98, 20, I18n::get(L"gui.stats")));
 }
 
-void PauseScreen::buttonClicked(Button* button)
-{
-    if (button->mId == 0)
-    {
-        mMinecraft->setScreen(new OptionsScreen(this, mMinecraft->mOptions));
-    }
-
-    if (button->mId == 1)
-    {
-        if (mMinecraft->isClientSide())
-        {
-            mMinecraft->mLevel->disconnect(true);
-        }
-        mMinecraft->setLevel(NULL, -1, boost::shared_ptr<Player>(), true, false);
-        mMinecraft->setScreen(new TitleScreen());
-    }
-
-    if (button->mId == 4)
-    {
-        mMinecraft->setScreen(NULL);
-    }
-}
-
 void PauseScreen::buttonClicked(Button button)
 {
     if (button.mId == 0)

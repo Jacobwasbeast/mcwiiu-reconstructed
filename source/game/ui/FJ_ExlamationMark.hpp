@@ -8,7 +8,10 @@ class fuiRenderNode;
 class FJ_ExlamationMark : public FJ_FuiNode
 {
 public:
-    FJ_ExlamationMark(fuiRenderNode* pRenderNode);
+    FJ_ExlamationMark(fuiRenderNode* pRenderNode)
+        : FJ_FuiNode(pRenderNode)
+    {
+    }
 
     static FJ_FuiNode* Create(fuiRenderNode* pRenderNode);
 

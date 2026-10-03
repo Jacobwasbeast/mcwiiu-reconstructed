@@ -160,9 +160,9 @@ unsigned int FJ_LeaderboardEntry::getType()
 void FJ_LeaderboardEntry::UpdateHighlightColours()
 {
     FJ_FuiNode* style = getChildByName("StyleContainer")->getChildAt(0)->asMovieClip();
-    unsigned int color = style->getRenderNodeChildAt(0)->asEditText()->getColor();
-    m_rankText->setColor(color);
-    m_gamertagText->setColor(color);
+    unsigned int color = style->getRenderNodeChildAt(0)->asEditText()->m_colour;
+    m_rankText->m_colour = color;
+    m_gamertagText->m_colour = color;
     for (int i = 0; i < 7; ++i)
-        m_columnText[i]->setColor(color);
+        m_columnText[i]->m_colour = color;
 }

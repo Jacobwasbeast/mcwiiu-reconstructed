@@ -8,7 +8,10 @@ class fuiRenderNode;
 class FJ_Label_DragonHealthBig : public FJ_Label
 {
 public:
-    explicit FJ_Label_DragonHealthBig(fuiRenderNode* renderNode);
+    FJ_Label_DragonHealthBig(fuiRenderNode* renderNode)
+        : FJ_Label(renderNode)
+    {
+    }
     static FJ_Label* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();
 };

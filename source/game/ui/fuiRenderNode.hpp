@@ -76,8 +76,6 @@ public:
     bool isVisible();
     void setAlpha(float);
     float getAlpha();
-    unsigned int getColor() const;
-    void setColor(unsigned int color);
     fuiRenderNode* asTimeline();
     void progogateBounds();
     const char* getName() { return m_name; }
@@ -99,8 +97,6 @@ public:
     void popColor();
     void pushFilterFlags();
     void popFilterFlags();
-    void setRendererColour();
-    unsigned char getCurrentFilterFlags();
     fuiRenderNodeEditText* asEditText();
     fuiRect getGlobalBounds() const;
     void setGlobalBounds(const fuiRect&);

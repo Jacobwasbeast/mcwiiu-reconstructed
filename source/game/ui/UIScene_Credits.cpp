@@ -572,23 +572,6 @@ const SCreditTextItemDef CREDIT_TEXT[] = {
     {L"Uses Miles Sound System.", IDS_NONE, IDS_NONE, UIScene_Credits::ECreditTextTypes_Text},
     {L"Copyright (C) 1991-2014 by RAD Game Tools, Inc.", IDS_NONE, IDS_NONE, UIScene_Credits::ECreditTextTypes_Text},
 };
-
-StringTable* getCreditStringTable(DLCPack* pack)
-{
-    if (pack->doesPackContainFile(DLCManager::eDLCType_Localisation, L"localisation.loc", true, true))
-    {
-        DLCLocalisationFile* file = static_cast<DLCLocalisationFile*>(
-            pack->getFile(DLCManager::eDLCType_Localisation, L"localisation.loc", true, true));
-        return file->getStringTable();
-    }
-    if (pack->doesPackContainFile(DLCManager::eDLCType_Localisation, L"languages.loc", true, true))
-    {
-        DLCLocalisationFile* file = static_cast<DLCLocalisationFile*>(
-            pack->getFile(DLCManager::eDLCType_Localisation, L"languages.loc", true, true));
-        return file->getStringTable();
-    }
-    return NULL;
-}
 }
 
 UIScene_Credits::UIScene_Credits(int type, void*, UILayer* layer)
@@ -603,9 +586,22 @@ UIScene_Credits::UIScene_Credits(int type, void*, UILayer* layer)
         DLCPack* pack = gApp.mDLCManager.getPack(packIndex, DLCManager::eDLCType_All);
         if (!pack->m_creditIds.empty())
         {
-            StringTable* stringTable = getCreditStringTable(pack);
-            if (stringTable != NULL)
+            if (pack->doesPackContainFile(DLCManager::eDLCType_Localisation, L"localisation.loc", true, true))
             {
+                DLCLocalisationFile* file = static_cast<DLCLocalisationFile*>(
+                    pack->getFile(DLCManager::eDLCType_Localisation, L"localisation.loc", true, true));
+                StringTable* stringTable = file->getStringTable();
+                for (std::vector<std::wstring>::iterator it = pack->m_creditIds.begin();
+                     it != pack->m_creditIds.end(); ++it)
+                {
+                    addCreditLine(stringTable->getString(*it));
+                }
+            }
+            else if (pack->doesPackContainFile(DLCManager::eDLCType_Localisation, L"languages.loc", true, true))
+            {
+                DLCLocalisationFile* file = static_cast<DLCLocalisationFile*>(
+                    pack->getFile(DLCManager::eDLCType_Localisation, L"languages.loc", true, true));
+                StringTable* stringTable = file->getStringTable();
                 for (std::vector<std::wstring>::iterator it = pack->m_creditIds.begin();
                      it != pack->m_creditIds.end(); ++it)
                 {
@@ -624,9 +620,22 @@ UIScene_Credits::UIScene_Credits(int type, void*, UILayer* layer)
         {
             if (!(*child)->m_creditIds.empty())
             {
-                StringTable* stringTable = getCreditStringTable(pack);
-                if (stringTable != NULL)
+                if (pack->doesPackContainFile(DLCManager::eDLCType_Localisation, L"localisation.loc", true, true))
                 {
+                    DLCLocalisationFile* file = static_cast<DLCLocalisationFile*>(
+                        pack->getFile(DLCManager::eDLCType_Localisation, L"localisation.loc", true, true));
+                    StringTable* stringTable = file->getStringTable();
+                    for (std::vector<std::wstring>::iterator it = (*child)->m_creditIds.begin();
+                         it != (*child)->m_creditIds.end(); ++it)
+                    {
+                        addCreditLine(stringTable->getString(*it));
+                    }
+                }
+                else if (pack->doesPackContainFile(DLCManager::eDLCType_Localisation, L"languages.loc", true, true))
+                {
+                    DLCLocalisationFile* file = static_cast<DLCLocalisationFile*>(
+                        pack->getFile(DLCManager::eDLCType_Localisation, L"languages.loc", true, true));
+                    StringTable* stringTable = file->getStringTable();
                     for (std::vector<std::wstring>::iterator it = (*child)->m_creditIds.begin();
                          it != (*child)->m_creditIds.end(); ++it)
                     {

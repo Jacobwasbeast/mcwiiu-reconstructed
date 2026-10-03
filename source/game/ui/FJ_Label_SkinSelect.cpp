@@ -2,11 +2,6 @@
 
 #include "game/ui/fuiRenderNode.hpp"
 
-FJ_Label_SkinSelect::FJ_Label_SkinSelect(fuiRenderNode* renderNode)
-    : FJ_Label(renderNode)
-{
-}
-
 FJ_Label* FJ_Label_SkinSelect::Create(fuiRenderNode* renderNode)
 {
     return new FJ_Label_SkinSelect(renderNode);

@@ -2,11 +2,6 @@
 
 #include "game/ui/fuiRenderNode.hpp"
 
-FJ_Label_OutlineLevel_Small::FJ_Label_OutlineLevel_Small(fuiRenderNode* renderNode)
-    : FJ_LabelOutline(renderNode)
-{
-}
-
 FJ_Label_OutlineLevel_Small::~FJ_Label_OutlineLevel_Small()
 {
 }

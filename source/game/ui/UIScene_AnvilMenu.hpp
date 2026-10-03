@@ -13,6 +13,7 @@
 #include "game/item/not_null_ptr.hpp"
 #include "game/network/net_minecraft_world_inventory__ContainerListener.hpp"
 #include "game/core/TickAction.hpp"
+#include "game/ui/MethodAction.hpp"
 
 class AbstractContainerMenu;
 class AnvilMenu;
@@ -24,18 +25,6 @@ class UILayer;
 class UIScene_AnvilMenu : public UIScene_AbstractContainerMenu,
                           public net_minecraft_world_inventory::ContainerListener
 {
-    class NameUpdateAction : public TickAction
-    {
-    public:
-        typedef void (UIScene_AnvilMenu::*Func)();
-        NameUpdateAction(UIScene_AnvilMenu* scene, Func function) : m_scene(scene), m_function(function) {}
-        virtual void Execute() { (m_scene->*m_function)(); }
-
-    private:
-        UIScene_AnvilMenu* m_scene;
-        Func m_function;
-    };
-
 public:
     struct PendingNameInfo
     {
@@ -91,7 +80,7 @@ private:
     boost::shared_ptr<Inventory> m_inventory;
     AnvilMenu* m_anvilMenu;
     boost::shared_ptr<CensoredString> m_itemName;
-    NameUpdateAction m_nameUpdateAction;
+    MethodAction<UIScene_AnvilMenu> m_nameUpdateAction;
     bool m_crossVisible;
     UIControl_SlotList m_ingredientSlot;
     UIControl_SlotList m_ingredientSlot2;

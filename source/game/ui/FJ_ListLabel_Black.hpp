@@ -8,7 +8,10 @@ class fuiRenderNode;
 class FJ_ListLabel_Black : public FJ_Label
 {
 public:
-    explicit FJ_ListLabel_Black(fuiRenderNode* renderNode);
+    FJ_ListLabel_Black(fuiRenderNode* renderNode)
+        : FJ_Label(renderNode)
+    {
+    }
 
     static FJ_Label* Create(fuiRenderNode* renderNode);
 

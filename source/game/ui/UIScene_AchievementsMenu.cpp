@@ -16,7 +16,7 @@
 #include "platform/wiiu/CProfile.hpp"
 #include "game/core/GameSettings.hpp"
 
-static const int s_achievementDisplayList[93] = {
+const int UIScene_AchievementsMenu::sDisplayList[UIScene_AchievementsMenu::DISPLAY_COUNT] = {
     0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
     10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
     22, 23, 24, 26, 27, 29, 30, 31, 32, 33,
@@ -136,18 +136,6 @@ int UIScene_AchievementsMenu::GetInfo(int achievement)
     return (int)(uintptr_t)&s_achievementInfo[achievement];
 }
 
-int UIScene_AchievementsMenu::GetAchievementId(int index)
-{
-    if (index < 0 || index >= 93)
-        return 0;
-    return s_achievementDisplayList[index];
-}
-
-int UIScene_AchievementsMenu::GetAchievementCount()
-{
-    return 93;
-}
-
 void UIScene_AchievementsMenu::registerTexture(int achievement)
 {
     if (achievement < 0 || achievement >= 97)
@@ -178,8 +166,8 @@ UIScene_AchievementsMenu::UIScene_AchievementsMenu(int type, void* data, UILayer
     m_achievementsList.init(0);
     int selectedAchievement = (int)(uintptr_t)data;
     int selectedIndex = 0;
-    for (int i = 0; i < 93; ++i) {
-        int id = s_achievementDisplayList[i];
+    for (int i = 0; i < DISPLAY_COUNT; ++i) {
+        int id = sDisplayList[i];
         if (selectedAchievement == id) {
             selectedIndex = i;
         }
@@ -187,8 +175,8 @@ UIScene_AchievementsMenu::UIScene_AchievementsMenu(int type, void* data, UILayer
     }
     m_titleLabel.init(UIString(IDS_ACHIEVEMENTS));
     m_achievementName.init(UIString(L""));
-    for (int i = 0; i < 93; ++i) {
-        int id = s_achievementDisplayList[i];
+    for (int i = 0; i < DISPLAY_COUNT; ++i) {
+        int id = sDisplayList[i];
         const AchievementInfo* info = &s_achievementInfo[id];
         m_achievementsList.AddNewItem(i, info->icon);
         bool awardSet = gProfile != NULL && gProfile->IsAwardsFlagSet(m_playerId, info->id);
@@ -220,9 +208,9 @@ void UIScene_AchievementsMenu::SetAchievementDescription(std::vector<HtmlString>
 
 void UIScene_AchievementsMenu::UpdateAchievementDetails()
 {
-    if (m_achievementIndex < 0 || m_achievementIndex >= 93)
+    if (m_achievementIndex < 0 || m_achievementIndex >= DISPLAY_COUNT)
         return;
-    int achievementId = s_achievementDisplayList[m_achievementIndex];
+    int achievementId = sDisplayList[m_achievementIndex];
     const AchievementInfo* info = &s_achievementInfo[achievementId];
     m_achievementName.setLabel(UIString(L10N::GetString(info->title)), false, false);
     std::vector<HtmlString> lines;
@@ -307,14 +295,14 @@ UIControl* UIScene_AchievementsMenu::GetMainPanel()
 void UIScene_AchievementsMenu::handleReload()
 {
     m_achievementsList.init(0);
-    for (int i = 0; i < 93; ++i) {
-        int id = s_achievementDisplayList[i];
+    for (int i = 0; i < DISPLAY_COUNT; ++i) {
+        int id = sDisplayList[i];
         registerTexture(id);
     }
     m_titleLabel.init(UIString(IDS_ACHIEVEMENTS));
     m_achievementName.init(UIString(L""));
-    for (int i = 0; i < 93; ++i) {
-        int id = s_achievementDisplayList[i];
+    for (int i = 0; i < DISPLAY_COUNT; ++i) {
+        int id = sDisplayList[i];
         const AchievementInfo* info = &s_achievementInfo[id];
         m_achievementsList.AddNewItem(i, info->icon);
         bool awardSet = gProfile != NULL && gProfile->IsAwardsFlagSet(m_playerId, info->id);

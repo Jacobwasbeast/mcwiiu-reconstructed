@@ -36,10 +36,6 @@ public:
     virtual bool isGlyphLoaded(int codepoint, float fontSize) = 0;
     virtual bool hasGlyph(int codepoint) = 0;
 
-    virtual ~fuiFontSet()
-    {
-    }
-
     std::string m_name;
 };
 

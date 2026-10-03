@@ -2,11 +2,6 @@
 
 #include "game/ui/fuiRenderNode.hpp"
 
-FJ_Label_Grey::FJ_Label_Grey(fuiRenderNode* renderNode)
-    : FJ_Label(renderNode)
-{
-}
-
 FJ_Label* FJ_Label_Grey::Create(fuiRenderNode* pRenderNode)
 {
     return new FJ_Label_Grey(pRenderNode);

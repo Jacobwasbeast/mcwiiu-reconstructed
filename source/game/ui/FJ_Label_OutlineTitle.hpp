@@ -8,7 +8,11 @@ class fuiRenderNode;
 class FJ_Label_OutlineTitle : public FJ_LabelOutline
 {
 public:
-    FJ_Label_OutlineTitle(fuiRenderNode* renderNode);
+    FJ_Label_OutlineTitle(fuiRenderNode* renderNode)
+        : FJ_LabelOutline(renderNode)
+    {
+    }
+
     virtual ~FJ_Label_OutlineTitle();
     static FJ_LabelOutline* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();

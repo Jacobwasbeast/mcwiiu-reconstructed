@@ -1,10 +1,5 @@
 #include "game/ui/FJ_Label_DragonHealthVerySmall.hpp"
 
-FJ_Label_DragonHealthVerySmall::FJ_Label_DragonHealthVerySmall(fuiRenderNode* renderNode)
-    : FJ_Label(renderNode)
-{
-}
-
 FJ_Label* FJ_Label_DragonHealthVerySmall::Create(fuiRenderNode* renderNode)
 {
     return new FJ_Label_DragonHealthVerySmall(renderNode);

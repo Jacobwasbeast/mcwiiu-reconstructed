@@ -431,16 +431,19 @@ void fui::installTrueTypeFont(int fontIndex, const void** data, const char* name
 }
 void fui::uninstallTrueTypeFont(const char* name)
 {
-    unsigned int i;
-    for (i = 0; i < m_fonts.size(); ++i)
+    int i;
+    for (i = 0; static_cast<unsigned int>(i) < m_fonts.size(); ++i)
     {
-        fuiFontSet* font = m_fonts[i];
-        if (font->m_name == name)
+        if (m_fonts[i]->m_name == name)
         {
-            if (!font->isBitmapFont())
+            if (i >= 0)
             {
-                delete font;
-                m_fonts.erase(m_fonts.begin() + i);
+                fuiFontSet* font = m_fonts[i];
+                if (!font->isBitmapFont())
+                {
+                    delete static_cast<fuiTTFFontSet*>(font);
+                    m_fonts.erase(m_fonts.begin() + i);
+                }
             }
             return;
         }

@@ -2,6 +2,7 @@
 
 #include "game/client/render/C4JRender.hpp"
 #include "game/client/render/Renderer.hpp"
+#include "game/ui/fui.hpp"
 #include "game/ui/fuiBitmap.hpp"
 #include "game/ui/fuiFile.hpp"
 
@@ -60,7 +61,7 @@ void fuiRenderNodeBitmap::render(fuiRect* bounds, fuiMatrix* matrix)
             width, height
         };
 
-        if ((getCurrentFilterFlags() & 1) == 0)
+        if ((gFui->m_filterStack[gFui->m_filterDepth] & 1) == 0)
         {
             gRenderer->TextureSetParam(1, 0);
             gRenderer->TextureSetParam(2, 0);
@@ -70,7 +71,8 @@ void fuiRenderNodeBitmap::render(fuiRect* bounds, fuiMatrix* matrix)
             gRenderer->TextureSetParam(1, 1);
             gRenderer->TextureSetParam(2, 1);
         }
-        setRendererColour();
+        gRenderer->StateSetColour(gFui->m_colorStack[gFui->m_colorDepth].redMultiply, gFui->m_colorStack[gFui->m_colorDepth].greenMultiply, gFui->m_colorStack[gFui->m_colorDepth].blueMultiply, gFui->m_colorStack[gFui->m_colorDepth].alphaMultiply);
+        gRenderer->StateSetColourAdd(gFui->m_colorStack[gFui->m_colorDepth].redAdd, gFui->m_colorStack[gFui->m_colorDepth].greenAdd, gFui->m_colorStack[gFui->m_colorDepth].blueAdd, gFui->m_colorStack[gFui->m_colorDepth].alphaAdd);
         gRenderer->DrawVertices(C4JRender::ePrimitiveType_Triangles, 6, vertices,
                                 C4JRender::eVertexType_UI, C4JRender::ePixelShaderType_UIColourAdd, NULL);
     }
