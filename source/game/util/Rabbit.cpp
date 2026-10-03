@@ -408,7 +408,7 @@ int Rabbit::getRabbitType()
 
 void Rabbit::facePoint(double x, double z)
 {
-    mYRot = static_cast<float>((std::atan2(z - mZ, x - mX) * 180.0) / static_cast<double>(3.1415927410125732f))
+    mYRot = static_cast<float>((std::atan2(z - mZ, x - mX) * 180.0) / static_cast<double>(3.1415927f))
         - 90.0f;
 }
 
