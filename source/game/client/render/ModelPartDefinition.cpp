@@ -56,7 +56,7 @@ void ModelPartDefinition::SetupModelPart(ModelPart* part, ModelPart* parent, flo
 
 void ModelPartDefinition::readModelPart(DataInputStream* input, int hasCubeRotation)
 {
-    const float degreesToRadians = 0.01745329238474369f;
+    const float degreesToRadians = 0.017453292f;
     mX = input->readFloat();
     mY = input->readFloat();
     mZ = input->readFloat();

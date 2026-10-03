@@ -31,11 +31,9 @@ DefaultTexturePack::~DefaultTexturePack()
 
 void DefaultTexturePack::loadIcon()
 {
-    std::wstring fileName = L"Graphics\\TexturePackIcon.png";
-
-    if (gApp.hasArchiveFile(fileName, false))
+    if (gApp.hasArchiveFile(std::wstring(L"Graphics\\TexturePackIcon.png"), false))
     {
-        arrayWithLength<unsigned char> iconData = gApp.getArchiveFile(fileName, false);
+        arrayWithLength<unsigned char> iconData = gApp.getArchiveFile(std::wstring(L"Graphics\\TexturePackIcon.png"), false);
         m_pIconData = iconData.data;
         m_iconSize = iconData.length;
     }
@@ -48,14 +46,14 @@ void DefaultTexturePack::loadName()
 
 void DefaultTexturePack::loadDescription()
 {
-    m_desc1 = L10N::GetString(IDS_DEFAULT_TEXTUREPACK);
+    m_desc1 = L"LOCALISE ME: The default look of Minecraft";
 }
 
 void DefaultTexturePack::loadCustomModels()
 {
     m_customModels.clear();
 
-    File file(getPath(true, NULL) + L"res/models.bin");
+    File file(TexturePack::getPath(true, NULL).append(L"res/models.bin"));
 
     if (!file.exists())
     {
@@ -63,7 +61,7 @@ void DefaultTexturePack::loadCustomModels()
         OSReport("[native] optional default texture-pack models.bin unavailable; continuing without custom models\n");
         return;
 #else
-        gApp.FatalLoadError(L"<AbstractTexturePack@%d> Failed to load default colours table", 191);
+        gApp.FatalLoadError(L"<AbstractTexturePack@%d> Failed to load default models", 191);
 #endif
     }
     else
@@ -117,9 +115,9 @@ std::wstring DefaultTexturePack::getDesc1()
 
 InputStream* DefaultTexturePack::getResourceImplementation(const std::wstring& fileName)
 {
-    std::wstring resourcePath = L"Common\\res\\TitleUpdate\\res";
-    resourcePath += fileName;
-    return InputStream::getResourceAsStream(resourcePath);
+    std::wstring resourceRoot = L"";
+    resourceRoot = L"Common\\res\\TitleUpdate\\res";
+    return InputStream::getResourceAsStream(resourceRoot + fileName);
 }
 
 void DefaultTexturePack::loadUI()

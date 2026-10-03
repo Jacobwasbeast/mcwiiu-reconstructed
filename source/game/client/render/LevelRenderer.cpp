@@ -2342,7 +2342,7 @@ void LevelRenderer::renderHit(boost::shared_ptr<Player> player, const HitResult*
     GlStateManager::blendFunc(4, 1);
 
     float phase = sinf((float)((double)Minecraft::currentTimeMillis() / 100.0));
-    GlStateManager::color4f(1.0f, 1.0f, 1.0f, (phase * 0.20000000298023224f + 0.4000000059604645f) * 0.5f);
+    GlStateManager::color4f(1.0f, 1.0f, 1.0f, (phase * 0.2f + 0.4f) * 0.5f);
 
     if (pass != 0)
     {
@@ -2351,10 +2351,10 @@ void LevelRenderer::renderHit(boost::shared_ptr<Player> player, const HitResult*
             GlStateManager::blendFunc(4, 5);
 
             float phase1 = sinf((float)((double)Minecraft::currentTimeMillis() / 100.0));
-            float rgb = phase1 * 0.20000000298023224f + 0.800000011920929f;
+            float rgb = phase1 * 0.2f + 0.8f;
 
             float phase2 = sinf((float)((double)Minecraft::currentTimeMillis() / 200.0));
-            float alpha = phase2 * 0.20000000298023224f + 0.5f;
+            float alpha = phase2 * 0.2f + 0.5f;
 
             GlStateManager::color4f(rgb, rgb, rgb, alpha);
             mTextures->bindTexture(&sHitOverlayLocation);
@@ -2466,7 +2466,7 @@ void LevelRenderer::renderHitOutline(boost::shared_ptr<Player> player, const Hit
     {
         GlStateManager::enableBlend();
         GlStateManager::blendFunc(4, 5);
-        GlStateManager::color4f(0.0f, 0.0f, 0.0f, 0.4000000059604645f);
+        GlStateManager::color4f(0.0f, 0.0f, 0.0f, 0.4f);
         GlStateManager::lineWidth(2.0f);
         GlStateManager::disableTexture();
         GlStateManager::depthMask(false);

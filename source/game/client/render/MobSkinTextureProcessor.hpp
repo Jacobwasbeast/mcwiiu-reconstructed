@@ -3,12 +3,14 @@
 
 #include <stdint.h>
 
+#include "game/client/render/HttpTextureProcessor.hpp"
+
 class BufferedImage;
 
-class MobSkinTextureProcessor
+class MobSkinTextureProcessor : public HttpTextureProcessor
 {
 public:
-    uint32_t process(BufferedImage* image);
+    virtual BufferedImage* process(BufferedImage* image);
     uint32_t hasAlphaPixels(int x0, int y0, int x1, int y1);
     void setForceAlpha(int x0, int y0, int x1, int y1);
     void setNoAlpha(int x0, int y0, int x1, int y1);

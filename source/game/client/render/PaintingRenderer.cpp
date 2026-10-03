@@ -2,10 +2,12 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include "game/client/render/EntityRenderDispatcher.hpp"
 #include "game/client/render/Tesselator.hpp"
 #include "game/core/BufferBuilder.hpp"
 #include "game/core/Direction.hpp"
 #include "game/core/GlStateManager.hpp"
+#include "game/core/Mth.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/core/Painting.hpp"
 #include "game/util/Random.hpp"
@@ -22,93 +24,90 @@ PaintingRenderer::PaintingRenderer(EntityRenderDispatcher* dispatcher)
 
 PaintingRenderer::~PaintingRenderer()
 {
-    delete mRandom;
 }
 
 void PaintingRenderer::setBrightness(boost::shared_ptr<Painting> painting, float x, float z)
 {
-    Painting* value = painting.get();
+    int lightX = Mth::floor(painting->mX);
+    int lightY = Mth::floor(painting->mY + (double)(z * 0.0625F));
+    int lightZ = Mth::floor(painting->mZ);
 
-    int lightX = (int)value->mX;
-    int lightY = (int)(value->mY + (double)(z * 0.0625F));
-    int lightZ = (int)value->mZ;
-
-    const Direction* direction = value->getDirection();
+    const Direction* direction = painting->mDirection;
     if (direction == Direction::NORTH)
-        lightX = (int)(value->mX + (double)(x * 0.0625F));
+        lightX = Mth::floor(painting->mX + (double)(x * 0.0625F));
     if (direction == Direction::WEST)
-        lightZ = (int)(value->mZ - (double)(x * 0.0625F));
+        lightZ = Mth::floor(painting->mZ - (double)(x * 0.0625F));
     if (direction == Direction::SOUTH)
-        lightX = (int)(value->mX - (double)(x * 0.0625F));
+        lightX = Mth::floor(painting->mX - (double)(x * 0.0625F));
     if (direction == Direction::EAST)
-        lightZ = (int)(value->mZ + (double)(x * 0.0625F));
+        lightZ = Mth::floor(painting->mZ + (double)(x * 0.0625F));
 
     BlockPos pos(lightX, lightY, lightZ);
-    Level* level = value->getCommandSenderWorld();
-    int light = level->getLightColor(pos, 0, -1);
-    GlStateManager::multiTexCoord2f((float)(light & 65535), (float)((unsigned int)light >> 16));
+    int light = mDispatcher->mLevel->getLightColor(pos, 0, -1);
+    GlStateManager::multiTexCoord2f((float)(light % 65536), (float)(light / 65536));
     GlStateManager::color3f(1.0F, 1.0F, 1.0F);
 }
 
-void PaintingRenderer::renderPainting(boost::shared_ptr<Painting> painting, int width, int height,
-                                      int offsetX, int offsetY)
+void PaintingRenderer::renderPainting(boost::shared_ptr<Painting> painting, int width, int height, int offsetX, int offsetY)
 {
-    const float tileSize = 0.0625F;
-    const float halfWidth = (float)width * -0.5F;
-    const float halfHeight = (float)height * -0.5F;
+    const float xStart = -width * 0.5F;
+    const float yStart = -height * 0.5F;
     const float depth = 0.5F;
-    const int columns = (width + 15) / 16;
-    const int rows = (height + 15) / 16;
-    int column;
-    int row;
+    const float backU0 = 0.75F;
+    const float backU1 = 0.8125F;
+    const float backV0 = 0.0F;
+    const float backV1 = 0.0625F;
+    const float edgeV = 0.001953125F;
+    const float sideU = 0.751953125F;
 
-    for (column = 0; column < columns; ++column)
+    for (int xs = 0; xs < width / 16; ++xs)
     {
-        for (row = 0; row < rows; ++row)
+        for (int ys = 0; ys < height / 16; ++ys)
         {
-            const float left = halfWidth + (float)(column * 16);
-            const float right = left + 16.0F;
-            const float top = halfHeight + (float)(row * 16);
-            const float bottom = top + 16.0F;
-            const float u0 = (float)(offsetX + width - column * 16) * tileSize;
-            const float u1 = (float)(offsetX + width - (column + 1) * 16) * tileSize;
-            const float v0 = (float)(offsetY + height - row * 16) * tileSize;
-            const float v1 = (float)(offsetY + height - (row + 1) * 16) * tileSize;
+            float x0 = xStart + (float)((xs + 1) * 16);
+            float x1 = xStart + (float)(xs * 16);
+            float y0 = yStart + (float)((ys + 1) * 16);
+            float y1 = yStart + (float)(ys * 16);
 
-            setBrightness(painting, (left + right) * 0.5F, (top + bottom) * 0.5F);
+            float u0 = (float)(offsetX + width - xs * 16) * 0.00390625F;
+            float u1 = (float)(offsetX + width - (xs + 1) * 16) * 0.00390625F;
+
+            setBrightness(painting, (x0 + x1) * 0.5F, (y0 + y1) * 0.5F);
+            float v0 = (float)(offsetY + height - ys * 16) * 0.00390625F;
+            float v1 = (float)(offsetY + height - (ys + 1) * 16) * 0.00390625F;
             BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
             builder->begin();
             builder->normal(0.0F, 0.0F, -1.0F);
-            builder->vertexUV(right, bottom, -depth, u1, v0);
-            builder->vertexUV(left, bottom, -depth, u0, v0);
-            builder->vertexUV(left, top, -depth, u0, v1);
-            builder->vertexUV(right, top, -depth, u1, v1);
+            builder->vertexUV(x0, y1, -depth, u1, v0);
+            builder->vertexUV(x1, y1, -depth, u0, v0);
+            builder->vertexUV(x1, y0, -depth, u0, v1);
+            builder->vertexUV(x0, y0, -depth, u1, v1);
             builder->normal(0.0F, 0.0F, 1.0F);
-            builder->vertexUV(left, top, depth, 0.0F, 0.0F);
-            builder->vertexUV(right, top, depth, 1.0F, 0.0F);
-            builder->vertexUV(right, bottom, depth, 1.0F, 1.0F);
-            builder->vertexUV(left, bottom, depth, 0.0F, 1.0F);
-            builder->normal(-1.0F, 0.0F, 0.0F);
-            builder->vertexUV(left, bottom, -depth, 0.0F, 1.0F);
-            builder->vertexUV(left, bottom, depth, 1.0F, 1.0F);
-            builder->vertexUV(left, top, depth, 1.0F, 0.0F);
-            builder->vertexUV(left, top, -depth, 0.0F, 0.0F);
-            builder->normal(1.0F, 0.0F, 0.0F);
-            builder->vertexUV(right, top, -depth, 0.0F, 0.0F);
-            builder->vertexUV(right, top, depth, 1.0F, 0.0F);
-            builder->vertexUV(right, bottom, depth, 1.0F, 1.0F);
-            builder->vertexUV(right, bottom, -depth, 0.0F, 1.0F);
+            builder->vertexUV(x0, y0, depth, backU0, backV0);
+            builder->vertexUV(x1, y0, depth, backU1, backV0);
+            builder->vertexUV(x1, y1, depth, backU1, backV1);
+            builder->vertexUV(x0, y1, depth, backU0, backV1);
             builder->normal(0.0F, 1.0F, 0.0F);
-            builder->vertexUV(left, top, -depth, 0.0F, 0.0F);
-            builder->vertexUV(right, top, -depth, 1.0F, 0.0F);
-            builder->vertexUV(right, top, depth, 1.0F, 1.0F);
-            builder->vertexUV(left, top, depth, 0.0F, 1.0F);
+            builder->vertexUV(x0, y0, -depth, backU0, edgeV);
+            builder->vertexUV(x1, y0, -depth, backU1, edgeV);
+            builder->vertexUV(x1, y0, depth, backU1, edgeV);
+            builder->vertexUV(x0, y0, depth, backU0, edgeV);
             builder->normal(0.0F, -1.0F, 0.0F);
-            builder->vertexUV(left, bottom, depth, 0.0F, 0.0F);
-            builder->vertexUV(right, bottom, depth, 1.0F, 0.0F);
-            builder->vertexUV(right, bottom, -depth, 1.0F, 1.0F);
-            builder->vertexUV(left, bottom, -depth, 0.0F, 1.0F);
-            Tesselator::getInstance()->end();
+            builder->vertexUV(x0, y1, depth, backU0, edgeV);
+            builder->vertexUV(x1, y1, depth, backU1, edgeV);
+            builder->vertexUV(x1, y1, -depth, backU1, edgeV);
+            builder->vertexUV(x0, y1, -depth, backU0, edgeV);
+            builder->normal(-1.0F, 0.0F, 0.0F);
+            builder->vertexUV(x0, y0, depth, sideU, backV0);
+            builder->vertexUV(x0, y1, depth, sideU, backV1);
+            builder->vertexUV(x0, y1, -depth, sideU, backV1);
+            builder->vertexUV(x0, y0, -depth, sideU, backV0);
+            builder->normal(1.0F, 0.0F, 0.0F);
+            builder->vertexUV(x1, y0, -depth, sideU, backV0);
+            builder->vertexUV(x1, y1, -depth, sideU, backV1);
+            builder->vertexUV(x1, y1, depth, sideU, backV1);
+            builder->vertexUV(x1, y0, depth, sideU, backV0);
+            builder->end();
         }
     }
 }
@@ -124,14 +123,14 @@ void PaintingRenderer::render(boost::shared_ptr<Entity>& entity, double x, doubl
     GlStateManager::rotatef(180.0F - yaw, 0.0F, 1.0F, 0.0F);
     GlStateManager::enableRescaleNormal();
     bindTexture(entity);
-    Painting* value = painting.get();
+    Painting::Motive* motive = painting->motive;
     GlStateManager::scalef(0.0625F, 0.0625F, 0.0625F);
     if (mSolidRender)
     {
         GlStateManager::enableColorMaterial();
         GlStateManager::setupSolidRenderingTextureCombine((int)getTeamColor(entity));
     }
-    renderPainting(painting, value->getWidth(), value->getHeight(), value->getWidth(), value->getHeight());
+    renderPainting(painting, motive->width, motive->height, motive->textureX, motive->textureY);
     if (mSolidRender)
     {
         GlStateManager::tearDownSolidRenderingTextureCombine();

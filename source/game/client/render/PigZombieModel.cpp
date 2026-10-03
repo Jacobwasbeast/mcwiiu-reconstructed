@@ -72,12 +72,12 @@ void PigZombieModel::init(const ModelDefinition& definition, float scale, bool a
 
         mRightLeg = createModelPart(true, 0, 16);
         mRightLeg->addHumanoidBox(-2.0f, 0.0f, -2.0f, 4, 12, 4, scale);
-        mRightLeg->setPos(-1.899999976158142f, 12.0f, 0.0f);
+        mRightLeg->setPos(-1.9f, 12.0f, 0.0f);
 
         mLeftLeg = createModelPart(true, 0, 16);
         mLeftLeg->mMirror = true;
         mLeftLeg->addHumanoidBox(-2.0f, 0.0f, -2.0f, 4, 12, 4, scale);
-        mLeftLeg->setPos(1.899999976158142f, 12.0f, 0.0f);
+        mLeftLeg->setPos(1.9f, 12.0f, 0.0f);
     }
 
     if (mRightItem == NULL)
@@ -116,15 +116,15 @@ void PigZombieModel::setupAnim(float limbSwing, float limbSwingAmount, float age
         }
     }
 
-    float attackSwing = Mth::sin(mAttackTime * 3.1415927410125732f);
-    float attackEase = Mth::sin((1.0f - (1.0f - mAttackTime) * (1.0f - mAttackTime)) * 3.1415927410125732f);
+    float attackSwing = Mth::sin(mAttackTime * 3.1415927f);
+    float attackEase = Mth::sin((1.0f - (1.0f - mAttackTime) * (1.0f - mAttackTime)) * 3.1415927f);
 
     mRightArm->mZRot = 0.0f;
     mLeftArm->mZRot = 0.0f;
-    mRightArm->mYRot = -(0.10000000149011612f - attackSwing * 0.6000000238418579f);
-    mLeftArm->mYRot = 0.10000000149011612f - attackSwing * 0.6000000238418579f;
+    mRightArm->mYRot = -(0.1f - attackSwing * 0.6f);
+    mLeftArm->mYRot = 0.1f - attackSwing * 0.6f;
 
-    float armRaise = -3.1415927410125732f / (angry ? 1.5f : 2.25f);
+    float armRaise = -3.1415927f / (angry ? 1.5f : 2.25f);
 
     if (mRightArmPose != eArmPose_ThrowSpear)
     {
@@ -133,12 +133,12 @@ void PigZombieModel::setupAnim(float limbSwing, float limbSwingAmount, float age
 
     mLeftArm->mXRot = armRaise;
 
-    mRightArm->mXRot += attackSwing * 1.2000000476837158f - attackEase * 0.4000000059604645f;
-    mLeftArm->mXRot += attackSwing * 1.2000000476837158f - attackEase * 0.4000000059604645f;
+    mRightArm->mXRot += attackSwing * 1.2f - attackEase * 0.4f;
+    mLeftArm->mXRot += attackSwing * 1.2f - attackEase * 0.4f;
 
-    mRightArm->mZRot += Mth::cos(ageInTicks * 0.09000000357627869f) * 0.05000000074505806f + 0.05000000074505806f;
-    mLeftArm->mZRot -= Mth::cos(ageInTicks * 0.09000000357627869f) * 0.05000000074505806f + 0.05000000074505806f;
-    mRightArm->mXRot += Mth::sin(ageInTicks * 0.06700000166893005f) * 0.05000000074505806f;
-    mLeftArm->mXRot -= Mth::sin(ageInTicks * 0.06700000166893005f) * 0.05000000074505806f;
+    mRightArm->mZRot += Mth::cos(ageInTicks * 0.09f) * 0.05f + 0.05f;
+    mLeftArm->mZRot -= Mth::cos(ageInTicks * 0.09f) * 0.05f + 0.05f;
+    mRightArm->mXRot += Mth::sin(ageInTicks * 0.067f) * 0.05f;
+    mLeftArm->mXRot -= Mth::sin(ageInTicks * 0.067f) * 0.05f;
 }
 

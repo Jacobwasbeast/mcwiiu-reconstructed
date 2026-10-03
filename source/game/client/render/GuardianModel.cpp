@@ -114,8 +114,8 @@ void GuardianModel::setupAnim(float limbSwing, float limbSwingAmount, float ageI
 
     float partialTicks = ageInTicks - (float)guardian->mTickCount;
 
-    mHead->mYRot = netHeadYaw * 0.01745329238474369f;
-    mHead->mXRot = headPitch * 0.01745329238474369f;
+    mHead->mYRot = netHeadYaw * 0.017453292f;
+    mHead->mXRot = headPitch * 0.017453292f;
 
     float spikeXRot[12] = { 1.75f, 0.25f, 0.0f, 0.0f, 0.5f, 0.5f, 0.5f, 0.5f, 1.25f, 0.75f, 0.0f, 0.0f };
     float spikeYRot[12] = { 0.0f, 0.0f, 0.0f, 0.0f, 0.25f, 1.75f, 1.25f, 0.75f, 0.0f, 0.0f, 0.0f, 0.0f };

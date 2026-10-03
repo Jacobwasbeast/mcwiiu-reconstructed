@@ -801,7 +801,7 @@ void GameRenderer::tick(bool tickWorld)
 
 static bool isPickable_apply(boost::shared_ptr<Entity> entity)
 {
-    return entity->isPickable();
+    return entity->isPickable() || entity->GetType() == EntityType::ITEM_ENTITY;
 }
 
 void GameRenderer::pick(float partialTick)
@@ -1038,7 +1038,7 @@ void GameRenderer::bobHurt(float partialTick)
     static const float kNauseaDiv = 8000.0f;
     static const float kNauseaAdd = 200.0f;
     static const float kHurtBobScale = 14.0f;
-    static const float kPi = 3.1415927410125732f;
+    static const float kPi = 3.1415927f;
 
     boost::shared_ptr<Entity> cameraEntity = getCamera();
     if ((cameraEntity->GetType() & EntityType::LIVING_ENTITY) != EntityType::LIVING_ENTITY)
@@ -1078,7 +1078,7 @@ void GameRenderer::bobView(float partialTick)
     static const float kHalf = 0.5f;
     static const float kWalkScale = 3.0f;
     static const float kRollScale = 5.0f;
-    static const float kPi = 3.1415927410125732f;
+    static const float kPi = 3.1415927f;
     static const float kRollOffset = 0.2f;
 
     if ((getCamera()->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
@@ -1121,13 +1121,13 @@ void GameRenderer::moveCameraToPlayer(float partialTick)
     static const float kZero = 0.0f;
     static const float kOne = 1.0f;
     static const float kNegOne = -1.0f;
-    static const float kDegToRad = 0.01745329238474369f;
+    static const float kDegToRad = 0.017453292f;
     static const float k180 = 180.0f;
     static const float kFirstPersonNudge = 0.05f;
-    static const float kSleepingYOffset = 0.30000001192092896f;
+    static const float kSleepingYOffset = 0.3f;
     static const float kSleepingHeightAdd = 1.0f;
     static const float kBedFacingRotation = 90.0f;
-    static const float kCollisionProbe = 0.10000000149011612f;
+    static const float kCollisionProbe = 0.1f;
     static const float kFallFlightYawScale = 0.5f;
     static const float kFallFlightAlignmentScale = 0.25f;
 
@@ -1355,9 +1355,9 @@ void GameRenderer::moveCameraToPlayer(float partialTick)
 
 void GameRenderer::getFovAndAspect(float& fov, float& aspect, float partialTick, bool useSmoothing)
 {
-    static const float kSplitFovScale = 0.699999988079071f;
+    static const float kSplitFovScale = 0.7f;
     static const float kQuadAspectScale = 0.5f;
-    static const float kQuadFovScale = 1.100000023841858f;
+    static const float kQuadFovScale = 1.1f;
 
     aspect = static_cast<float>(mMinecraft->mWidth)
              / static_cast<float>(mMinecraft->mHeight);
@@ -1383,10 +1383,10 @@ void GameRenderer::setupCamera(float partialTick, int eyeIndex)
     static const float kZero = 0.0f;
     static const float kOne = 1.0f;
     static const float kDefaultFog = 256.0f;
-    static const float kProjectionEyeOffset = 0.07000000029802322f;
-    static const float kModelEyeOffset = 0.10000000149011612f;
-    static const float kNearPlane = 0.05000000074505806f;
-    static const float kSpectatorZoomScale = 0.03999999910593033f;
+    static const float kProjectionEyeOffset = 0.07f;
+    static const float kModelEyeOffset = 0.1f;
+    static const float kNearPlane = 0.05f;
+    static const float kSpectatorZoomScale = 0.04f;
     static const float kSpectatorZoomDenom = 5.0f;
     static const float kRotate90 = 90.0f;
     static const float kRotateMinus90 = -90.0f;
@@ -1509,9 +1509,9 @@ void GameRenderer::renderItemInHand(float partialTick, int eyeIndex)
 {
     static const float kZero = 0.0f;
     static const float kOne = 1.0f;
-    static const float kProjectionEyeOffset = 0.07000000029802322f;
-    static const float kModelEyeOffset = 0.10000000149011612f;
-    static const float kNearPlane = 0.05000000074505806f;
+    static const float kProjectionEyeOffset = 0.07f;
+    static const float kModelEyeOffset = 0.1f;
+    static const float kNearPlane = 0.05f;
 
     const unsigned int thirdPerson = getCameraThirdPerson();
     if (mPanoramicMode)
@@ -1656,13 +1656,13 @@ double GameRenderer::getNightVisionScale(boost::shared_ptr<LivingEntity> living,
 double GameRenderer::getUnderWaterVisionScale(const boost::shared_ptr<Player>& player,
                                              float partialTick)
 {
-    static const float kMinSkyDarken = 0.13333334028720856f;
+    static const float kMinSkyDarken = 0.13333334f;
     static const float kMinBrightness = 2.0f;
-    static const float kLightWeight = 0.8999999761581421f;
-    static const float kBrightnessWeight = 0.10000000149011612f;
+    static const float kLightWeight = 0.9f;
+    static const float kBrightnessWeight = 0.1f;
     static const float kBrightnessDivisor = 15.0f;
-    static const float kPowBase = 0.4000000059604645f;
-    static const float kPowExp = 0.20000000298023224f;
+    static const float kPowBase = 0.4f;
+    static const float kPowExp = 0.2f;
     static const float kOne = 1.0f;
 
     const float blend = powf(kPowBase, kPowExp);
@@ -1699,22 +1699,22 @@ void GameRenderer::updateLightTexture(float partialTick)
     static const float kZero = 0.0f;
     static const float kOne = 1.0f;
     static const float kLightmapGamma = 0.0f;
-    static const float kGreyBoost = 0.699999988079071f;
-    static const float kLightBase = 0.029999999329447746f;
-    static const float kLightScale = 0.9599999785423279f;
+    static const float kGreyBoost = 0.7f;
+    static const float kLightBase = 0.03f;
+    static const float kLightScale = 0.96f;
     static const float k255 = 255.0f;
-    static const float kSkyDarkenScale = 0.949999988079071f;
-    static const float kSkyDarkenAdd = 0.05000000074505806f;
-    static const float kSecondarySkyScale = 0.6499999761581421f;
-    static const float kSecondarySkyAdd = 0.3499999940395355f;
-    static const float kGammaSlope = 0.10000000149011612f;
+    static const float kSkyDarkenScale = 0.95f;
+    static const float kSkyDarkenAdd = 0.05f;
+    static const float kSecondarySkyScale = 0.65f;
+    static const float kSecondarySkyAdd = 0.35f;
+    static const float kGammaSlope = 0.1f;
     static const float kGammaBase = 1.5f;
-    static const float kWaterMixA = 0.4000000059604645f;
-    static const float kWaterMixC = 0.6000000238418579f;
+    static const float kWaterMixA = 0.4f;
+    static const float kWaterMixC = 0.6f;
     static const float kNetherRed = 0.75f;
     static const float kNetherGreen = 0.25f;
-    static const float kNetherBlueScale = 0.2800000011920929f;
-    static const float kNetherBlueAdd = 0.2199999988079071f;
+    static const float kNetherBlueScale = 0.28f;
+    static const float kNetherBlueAdd = 0.22f;
 
     if (!mLightTextureDirty || mMinecraft->mLevel == NULL)
         return;
@@ -1959,7 +1959,7 @@ double GameRenderer::modifyFogDistance(const BlockPos& pos, float distance, floa
     static const float kZero = 0.0f;
     static const float kFarDistance = 40.0f;
     static const float kNearFactor = 1.0f;
-    static const float kFarFactor = 0.3333333432674408f;
+    static const float kFarFactor = 0.33333334f;
 
     const float deltaY = distance - static_cast<float>(pos.y);
     if (kZero <= deltaY)
@@ -2229,10 +2229,10 @@ void GameRenderer::setupFog(int, float partialTick)
 {
     static const float kOne = 1.0f;
     static const float kFogStartScale = 0.25f;
-    static const float kFogStartTightScale = 0.05000000074505806f;
+    static const float kFogStartTightScale = 0.05f;
     static const float kFogEndCap = 192.0f;
     static const float kFogEndScale = 0.5f;
-    static const float kExpFogDensity = 0.10000000149011612f;
+    static const float kExpFogDensity = 0.1f;
     static const float kLavaFogDensity = 2.0f;
     static const float kBlindnessFogEnd = 5.0f;
     static const float kBlindnessInterpRange = 20.0f;
@@ -2651,7 +2651,7 @@ void GameRenderer::renderGhost(float partialTick, boost::shared_ptr<Entity> enti
     static const float kNegOne = -1.0f;
     static const float kPowBase = 1.5f;
     static const float kColourDivisor = 255.0f;
-    static const float kPolygonOffset = -0.30000001192092896f;
+    static const float kPolygonOffset = -0.3f;
 
     ColourTable* colourTable = mMinecraft->getColourTable();
     const int startColour = colourTable->getColour(eMinecraftColour_Glide_Ghost_Slow);
@@ -3192,7 +3192,7 @@ void GameRenderer::renderEyePass(int eyeIndex, float partialTick, long long, boo
     mMinecraft->mLevelRenderer->render(cameraEntity, 0, partialTick, sortTransparent);
     InfoBarManager::EndTimingCategory(InfoBarManager::eTimingCagegory_Terrain);
 
-    GlStateManager::alphaFunc(4, 0.009999999776482582f);
+    GlStateManager::alphaFunc(4, 0.01f);
 
     if (mDebugView == 0)
     {
@@ -3362,7 +3362,7 @@ void GameRenderer::setupGuiScreen(int guiScale)
 
 void GameRenderer::renderItemActivationAnimation(int width, int height, float partialTick)
 {
-    static const float kPi = 3.1415927410125732f;
+    static const float kPi = 3.1415927f;
 
     const int playerIndex = mMinecraft->mPlayer->mUserIndex;
     if (mItemActivationItems[playerIndex]->isEmpty() || mItemActivationTicks[playerIndex] <= 0)
@@ -3408,7 +3408,7 @@ void GameRenderer::renderItemActivationAnimation(int width, int height, float pa
 
 void GameRenderer::render(float partialTick, long long frameNanoTime, bool refreshLightTexture)
 {
-    static const float kAlphaRef = 0.009999999776482582f;
+    static const float kAlphaRef = 0.01f;
     static const int kMinFps = 60;
     static const int kNanoPerSecond = 1000000000;
 

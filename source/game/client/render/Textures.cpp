@@ -1,6 +1,7 @@
 #include "game/client/render/Textures.hpp"
 
 #include <cstring>
+#include <cwchar>
 #include <vector>
 
 #include "game/core/BufferedImage.hpp"
@@ -11,9 +12,11 @@
 #include "game/core/GrassColor.hpp"
 #include "game/core/MemoryTracker.hpp"
 #include "game/core/MemSect.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/client/render/MemTextureProcessor.hpp"
 #include "game/client/render/MemTexture.hpp"
+#include "game/client/render/MobSkinMemTextureProcessor.hpp"
 #include "game/client/render/Renderer.hpp"
 #include "game/client/render/Texture.hpp"
 #include "game/util/ResourceLocation.hpp"
@@ -29,27 +32,9 @@ ResourceLocation ITEM_LOCATION(TN_ITEM_ATLAS);
 static C4JRender::eTextureFormat sTextureFormat = C4JRender::eTextureFormat_RGBA8;
 static bool sTextureMipmap = true;
 
-namespace
-{
-struct MemTextureFields
-{
-    BufferedImage* m_image;
-    int m_referenceCount;
-    int m_textureId;
-    bool m_loaded;
-    int m_textureFormat;
-    bool m_textureReady;
-};
-
-MemTextureFields& memTextureFields(MemTexture* texture)
-{
-    return *reinterpret_cast<MemTextureFields*>(texture);
-}
-}
-
 Textures::Textures(TexturePackRepository* texturePackRepository, Options* options)
     : mOptions(options), mTexturePackRepository(texturePackRepository), mMissingImage(NULL),
-      mBlocks(NULL), mItems(NULL), mLastBoundId(-1), mTextureFormat(false),
+      mBlocks(NULL), mItems(NULL), mLastBoundId(-1),
       mReloading(false), mLoaded(false)
 {
     InitializeCriticalSection(&mMutex);
@@ -61,29 +46,71 @@ Textures::Textures(TexturePackRepository* texturePackRepository, Options* option
 
 bool Textures::IsTUImage(_TEXTURE_NAME textureName, const std::wstring& name)
 {
-    static const int textureIds[] = {
-        47, 51, 52, 32, 16, 57, 58, 59, 62, 63, 64, 65,
-        66, 67, 71, 72, 73, 75, 74, 70, 240, 241, 14, 82,
-        56, 4, 27, 83, 20, 84, 85, 86, 87, 88, 89, 90,
-        91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102,
-        103, 104, 105, 106, 107, 108, 109, 110, 111, 37, 112, 113,
-        114, 115, 116, 117, 118, 119, 120, 122, 121, 124, 125, 126,
-        127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138,
-        139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150,
-        151, 152, 153, 154, 34, 155, 156, 157, 158, 159, 160, 161,
-        162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173,
-        174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185,
-        186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197,
-        198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209,
-        210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221,
-        222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233,
-        234, 235, 236, 237, 238, 239,
+    static _TEXTURE_NAME textureIds[] = {
+        TN_ARMOR_POWER, TN_MOB_ENDERMAN_EYES, TN_MISC_EXPLOSION, TN_MOB_ZOMBIE, TN_MISC_FOOTPRINT,
+        TN_MOB_REDCOW, TN_MOB_SNOWMAN, TN_MOB_ENDERDRAGON_ENDER, TN_MOB_VILLAGER_VILLAGER,
+        TN_MOB_VILLAGER_FARMER, TN_MOB_VILLAGER_LIBRARIAN, TN_MOB_VILLAGER_PRIEST,
+        TN_MOB_VILLAGER_SMITH, TN_MOB_VILLAGER_BUTCHER, TN_MOB_ENDERDRAGON_ENDER_EYES,
+        TN_BLUR_MISC_GLINT, TN_ITEM_BOOK, TN_MISC_PARTICLEFIELD, TN_MISC_TUNNEL,
+        TN_MOB_ENDERDRAGON_BEAM, TN_ITEM_ATLAS, TN_BLOCK_ATLAS, TN_MISC_MAPICONS,
+        TN_MOB_SKELETON_WITHER, TN_ITEM_ENDERCHEST, TN_ART_KZ, TN_MOB_WOLF_TAME,
+        TN_MOB_WOLF_COLLAR, TN_PARTICLES, TN_MOB_ZOMBIE_VILLAGER_ZOMBIE_VILLAGER,
+        TN_ITEM_LEAD_KNOT, TN_MISC_BEACON_BEAM, TN_MOB_BAT, TN_MOB_HORSE_DONKEY,
+        TN_MOB_HORSE_HORSE_BLACK, TN_MOB_HORSE_HORSE_BROWN, TN_MOB_HORSE_HORSE_CHESTNUT,
+        TN_MOB_HORSE_HORSE_CREAMY, TN_MOB_HORSE_HORSE_DARKBROWN, TN_MOB_HORSE_HORSE_GRAY,
+        TN_MOB_HORSE_HORSE_MARKINGS_BLACKDOTS, TN_MOB_HORSE_HORSE_MARKINGS_WHITE,
+        TN_MOB_HORSE_HORSE_MARKINGS_WHITEDOTS, TN_MOB_HORSE_HORSE_MARKINGS_WHITEFIELD,
+        TN_MOB_HORSE_HORSE_SKELETON, TN_MOB_HORSE_HORSE_WHITE, TN_MOB_HORSE_HORSE_ZOMBIE,
+        TN_MOB_HORSE_MULE, TN_MOB_HORSE_ARMOR_HORSE_ARMOR_DIAMOND,
+        TN_MOB_HORSE_ARMOR_HORSE_ARMOR_GOLD, TN_MOB_HORSE_ARMOR_HORSE_ARMOR_IRON, TN_MOB_WITCH,
+        TN_MOB_WITHER_WITHER, TN_MOB_WITHER_WITHER_ARMOR, TN_MOB_WITHER_WITHER_INVULNERABLE,
+        TN_ITEM_TRAPPED, TN_ITEM_TRAPPED_DOUBLE, TN_MOB_STEVE, TN_MOB_ALEX, TN_MOB_ALEX1,
+        TN_MOB_ALEX2, TN_MOB_ALEX3, TN_MOB_ALEX4, TN_MOB_ALEX5, TN_MOB_ALEX6, TN_MOB_ALEX7,
+        TN_MISC_ADDITIONALMAPICONS, TN_FONT_DEFAULT, TN_ITEM_ARMORSTAND_WOOD, TN_MOB_ENDERMITE,
+        TN_MOB_GUARDIAN, TN_MOB_GUARDIAN_ELDER, TN_MOB_GUARDIAN_BEAM, TN_MOB_RABBIT_BROWN,
+        TN_MOB_RABBIT_WHITE, TN_MOB_RABBIT_BLACK, TN_MOB_RABBIT_GOLD, TN_MOB_RABBIT_SALT,
+        TN_MOB_RABBIT_WHITE_SPLOTCHED, TN_MOB_RABBIT_TOAST, TN_MOB_RABBIT_CAERBANNOG,
+        TN_TEXTURES_DESTROY_STAGE_0, TN_TEXTURES_DESTROY_STAGE_1, TN_TEXTURES_DESTROY_STAGE_2,
+        TN_TEXTURES_DESTROY_STAGE_3, TN_TEXTURES_DESTROY_STAGE_4, TN_TEXTURES_DESTROY_STAGE_5,
+        TN_TEXTURES_DESTROY_STAGE_6, TN_TEXTURES_DESTROY_STAGE_7, TN_TEXTURES_DESTROY_STAGE_8,
+        TN_TEXTURES_DESTROY_STAGE_9, TN_ITEM_BANNER_BANNER_BASE, TN_ITEM_BANNER_BANNER_ATLAS,
+        TN_MOB_BEAR_POLARBEAR, TN_ITEM_BOAT_BOAT_OAK, TN_ITEM_BOAT_BOAT_SPRUCE,
+        TN_ITEM_BOAT_BOAT_BIRCH, TN_ITEM_BOAT_BOAT_JUNGLE, TN_ITEM_BOAT_BOAT_ACACIA,
+        TN_ITEM_BOAT_BOAT_DARKOAK, TN_MOB_SKELETON, TN_MOB_SKELETON_STRAY,
+        TN_MOB_SKELETON_STRAY_OVERLAY, TN_MOB_ZOMBIE_VILLAGER_ZOMBIE_FARMER,
+        TN_MOB_ZOMBIE_VILLAGER_ZOMBIE_LIBRARIAN, TN_MOB_ZOMBIE_VILLAGER_ZOMBIE_PRIEST,
+        TN_MOB_ZOMBIE_VILLAGER_ZOMBIE_SMITH, TN_MOB_ZOMBIE_VILLAGER_ZOMBIE_BUTCHER,
+        TN_MOB_ZOMBIE_HUSK, TN_MOB_ENDERDRAGON_DRAGON_FIREBALL, TN_MOB_SHULKER_ENDERGOLEM,
+        TN_MOB_SHULKER_SPARK, TN_ITEM_SPECTRAL_ARROW, TN_ITEM_TIPPED_ARROW, TN_ITEM_ELYTRA,
+        TN_MOB_DEVSTEVE, TN_MOB_DEVALEX, TN_ENVIRONMENT_THERMAL_1, TN_ENVIRONMENT_THERMAL_2,
+        TN_ENVIRONMENT_BOOSTARROW, TN_MOB_GLIDE_GHOST, TN_MOB_LLAMA_DECOR_DECOR_WHITE,
+        TN_MOB_LLAMA_DECOR_DECOR_ORANGE, TN_MOB_LLAMA_DECOR_DECOR_MAGENTA,
+        TN_MOB_LLAMA_DECOR_DECOR_LIGHT_BLUE, TN_MOB_LLAMA_DECOR_DECOR_YELLOW,
+        TN_MOB_LLAMA_DECOR_DECOR_LIME, TN_MOB_LLAMA_DECOR_DECOR_PINK,
+        TN_MOB_LLAMA_DECOR_DECOR_GRAY, TN_MOB_LLAMA_DECOR_DECOR_SILVER,
+        TN_MOB_LLAMA_DECOR_DECOR_CYAN, TN_MOB_LLAMA_DECOR_DECOR_PURPLE,
+        TN_MOB_LLAMA_DECOR_DECOR_BLUE, TN_MOB_LLAMA_DECOR_DECOR_BROWN,
+        TN_MOB_LLAMA_DECOR_DECOR_GREEN, TN_MOB_LLAMA_DECOR_DECOR_RED,
+        TN_MOB_LLAMA_DECOR_DECOR_BLACK, TN_MOB_LLAMA_LLAMA_CREAMY, TN_MOB_LLAMA_LLAMA_WHITE,
+        TN_MOB_LLAMA_LLAMA_BROWN, TN_MOB_LLAMA_LLAMA_GRAY, TN_MOB_LLAMA_SPIT,
+        TN_MOB_ILLAGER_EVOKER, TN_MOB_ILLAGER_FANGS, TN_MOB_ILLAGER_VINDICATOR, TN_MOB_ILLAGER_VEX,
+        TN_MOB_ILLAGER_VEX_CHARGING, TN_MOB_ILLAGER_ILLUSIONIST, TN_MOB_PARROT_PARROT_RED_BLUE,
+        TN_MOB_PARROT_PARROT_BLUE, TN_MOB_PARROT_PARROT_GREEN, TN_MOB_PARROT_PARROT_YELLOW_BLUE,
+        TN_MOB_PARROT_PARROT_GREY, TN_ITEM_BED, TN_ITEM_FIREWORK,
+        TN_MOB_HORSE_ARMOR_HORSE_ARMOR_LEATHER_1, TN_MOB_HORSE_ARMOR_HORSE_ARMOR_LEATHER_1_B,
+        TN_MOB_FISH_COD, TN_MOB_FISH_PUFFERFISH, TN_MOB_FISH_SALMON, TN_MOB_FISH_TROPICAL_A,
+        TN_MOB_FISH_TROPICAL_A_PATTERN_1, TN_MOB_FISH_TROPICAL_A_PATTERN_2,
+        TN_MOB_FISH_TROPICAL_A_PATTERN_3, TN_MOB_FISH_TROPICAL_A_PATTERN_4,
+        TN_MOB_FISH_TROPICAL_A_PATTERN_5, TN_MOB_FISH_TROPICAL_A_PATTERN_6, TN_MOB_FISH_TROPICAL_B,
+        TN_MOB_FISH_TROPICAL_B_PATTERN_1, TN_MOB_FISH_TROPICAL_B_PATTERN_2,
+        TN_MOB_FISH_TROPICAL_B_PATTERN_3, TN_MOB_FISH_TROPICAL_B_PATTERN_4,
+        TN_MOB_FISH_TROPICAL_B_PATTERN_5, TN_MOB_FISH_TROPICAL_B_PATTERN_6, TN_MOB_SEA_TURTLE,
+        TN_MOB_DOLPHIN, TN_ITEM_TRIDENT, TN_MOB_ZOMBIE_DROWNED, TN_ITEM_TRIDENT_RIPTIDE,
+        TN_ITEM_CONDUIT_CONDUIT_BASE, TN_ITEM_CONDUIT_CONDUIT_CAGE,
+        TN_ITEM_CONDUIT_CONDUIT_WIND_HORIZONTAL, TN_ITEM_CONDUIT_CONDUIT_WIND_VERTICAL,
+        TN_ITEM_CONDUIT_CONDUIT_CLOSED, TN_ITEM_CONDUIT_CONDUIT_OPEN, TN_MOB_PHANTOM, TN_UNINDEXED,
     };
-    for (unsigned int i = 0; i < sizeof(textureIds) / sizeof(textureIds[0]); ++i)
-    {
-        if (static_cast<int>(textureName) == textureIds[i]) return true;
-    }
-    static const wchar_t* const textureNames[] = {
+    static const wchar_t* textureNames[] = {
         L"font/Default",
         L"font/Mojangles_7",
         L"font/Mojangles_11",
@@ -92,29 +119,42 @@ bool Textures::IsTUImage(_TEXTURE_NAME textureName, const std::wstring& name)
         L"armor/cloth_2",
         L"armor/cloth_2_b",
         L"armor/turtle_1",
+        NULL,
     };
-    for (unsigned int i = 0; i < sizeof(textureNames) / sizeof(textureNames[0]); ++i)
+    if (textureName < TN_UNINDEXED)
     {
-        if (name == textureNames[i]) return true;
+        for (_TEXTURE_NAME* entry = textureIds; *entry < TN_UNINDEXED; ++entry)
+        {
+            if (textureName == *entry) return true;
+        }
+    }
+    for (const wchar_t** entry = textureNames; *entry != NULL; ++entry)
+    {
+        if (name == *entry) return true;
     }
     return false;
 }
 
 bool Textures::IsOriginalImage(_TEXTURE_NAME textureName, const std::wstring& name)
 {
-    static const int textureIds[] = {
-        38, 39, 40, 41, 42, 43, 44, 13, 0, 1,
+    static _TEXTURE_NAME textureIds[] = {
+        TN_MOB_CHAR1, TN_MOB_CHAR2, TN_MOB_CHAR3, TN_MOB_CHAR4, TN_MOB_CHAR5, TN_MOB_CHAR6,
+        TN_MOB_CHAR7, TN_MISC_MAPBG, TN_MISC_GRASSCOLOR, TN_MISC_FOLIAGECOLOR, TN_UNINDEXED,
     };
-    for (unsigned int i = 0; i < sizeof(textureIds) / sizeof(textureIds[0]); ++i)
-    {
-        if (static_cast<int>(textureName) == textureIds[i]) return true;
-    }
-    static const wchar_t* const textureNames[] = {
+    static const wchar_t* textureNames[] = {
         L"misc/watercolor.png",
+        NULL,
     };
-    for (unsigned int i = 0; i < sizeof(textureNames) / sizeof(textureNames[0]); ++i)
+    if (textureName < TN_UNINDEXED)
     {
-        if (name == textureNames[i]) return true;
+        for (_TEXTURE_NAME* entry = textureIds; *entry < TN_UNINDEXED; ++entry)
+        {
+            if (textureName == *entry) return true;
+        }
+    }
+    for (const wchar_t** entry = textureNames; *entry != NULL; ++entry)
+    {
+        if (name == *entry) return true;
     }
     return false;
 }
@@ -155,21 +195,7 @@ BufferedImage* Textures::readImage(_TEXTURE_NAME textureName, const std::wstring
 
 void Textures::setTextureFormat(const std::wstring& name)
 {
-    mTextureFormat = false;
-    sTextureMipmap = true;
-    if (name == L"environment/clouds" || name == L"%clamp%misc/shadow" ||
-        name == L"%blur%misc/pumpkinblur" || name == L"gui/icons" ||
-        name == L"gui/gui" || name == L"misc/footprint" ||
-        name == L"mob/shulker/endergolem" || name == L"item/bed" ||
-        name == L"font/Default")
-    {
-        sTextureMipmap = false;
-    }
-    if (name.size() >= 6 && name.compare(0, 6, L"armor/") == 0 &&
-        name != L"armor/power")
-    {
-        sTextureMipmap = false;
-    }
+    sTextureFormat = C4JRender::eTextureFormat_RGBA8;
 }
 
 arrayWithLength<int> Textures::anaglyph(arrayWithLength<int> pixels)
@@ -179,14 +205,16 @@ arrayWithLength<int> Textures::anaglyph(arrayWithLength<int> pixels)
     for (i = 0; i < pixels.length; ++i)
     {
         unsigned int value = (unsigned int)pixels.data[i];
-        unsigned int red = (value >> 16) & 255;
-        unsigned int green = (value >> 8) & 255;
-        unsigned int blue = value & 255;
-        result.data[i] = (int)((value & 0xff000000u) |
-            (((red * 30 + green * 59 + blue * 11) / 100) << 16) |
-            (((red * 30 + green * 70) / 100) << 8) |
-            ((red * 30 + blue * 70) / 100));
+        int alpha = (int)((value >> 24) & 255);
+        int red = (int)((value >> 16) & 255);
+        int green = (int)((value >> 8) & 255);
+        int blue = (int)(value & 255);
+        int newRed = (red * 30 + green * 59 + blue * 11) / 100;
+        int newGreen = (red * 30 + green * 70) / 100;
+        int newBlue = (red * 30 + blue * 70) / 100;
+        result.data[i] = (alpha << 24) | (newRed << 16) | (newGreen << 8) | newBlue;
     }
+    delete[] pixels.data;
     return result;
 }
 
@@ -232,8 +260,7 @@ void Textures::loadTexture(BufferedImage* image, int texture, bool blur, bool cl
     ByteBuffer* buffer = MemoryTracker::createByteBuffer((int)byteCount);
     buffer->clear();
     buffer->put(bytes);
-    buffer->position(0);
-    buffer->limit(byteCount);
+    buffer->position(0)->limit(byteCount);
     delete[] pixels.data;
     delete[] bytes.data;
     int levels = 1;
@@ -313,28 +340,46 @@ void Textures::loadTexture(BufferedImage* image, int texture, bool blur, bool cl
 
 int Textures::loadTexture(_TEXTURE_NAME textureName, const std::wstring& name)
 {
-    iterator found = find(name);
-    if (found != end()) return found->second;
+    bool loaded = find(name) != end();
+    int texture = (*this)[name];
+    if (loaded) return texture;
+    std::wstring workingName = name;
+    if (name == L"environment/clouds" || name == L"%clamp%misc/shadow" ||
+        name == L"%blur%misc/pumpkinblur" || name == L"%clamp%misc/shadow" ||
+        name == L"gui/icons" || name == L"gui/gui" || name == L"misc/footprint" ||
+        name == L"mob/shulker/endergolem" || name == L"item/bed" ||
+        name == L"font/Default")
+    {
+        sTextureMipmap = false;
+    }
+    if (wcsncmp(name.c_str(), L"armor/", 6) == 0 && name != L"armor/power")
+    {
+        sTextureMipmap = false;
+    }
     setTextureFormat(name);
-    int texture = MemoryTracker::genTextures();
-    bool blur = name.compare(0, 6, L"%blur%") == 0;
-    std::wstring workingName = blur ? name.substr(6) : name;
-    bool clamp = name.compare(0, 7, L"%clamp%") == 0;
+    texture = MemoryTracker::genTextures();
+    std::wstring tag = L"%blur%";
+    bool blur = name.substr(0, tag.length()) == tag;
+    if (blur) workingName = name.substr(6);
+    tag = L"%clamp%";
+    bool clamp = name.substr(0, tag.length()) == tag;
     if (clamp) workingName = name.substr(7);
     BufferedImage* image = readImage(textureName, workingName);
     if (image->isMipmapDisabled()) sTextureMipmap = false;
-    if (image->getHeight() > 0 && image->getWidth() > 0)
+    if ((int)image->getHeight() > 0 && (int)image->getWidth() > 0)
     {
         loadTexture(image, texture, blur, clamp);
     }
     delete image;
     (*this)[name] = texture;
+    sTextureFormat = C4JRender::eTextureFormat_RGBA8;
+    sTextureMipmap = true;
     return texture;
 }
 
 void Textures::loadIndexedTextures()
 {
-    static const wchar_t* const textureNames[] = {
+    static const wchar_t* textureNames[] = {
         L"misc/grasscolor",
         L"misc/foliagecolor",
         L"%blur%misc/pumpkinblur",
@@ -584,7 +629,9 @@ void Textures::loadIndexedTextures()
 
 arrayWithLength<int> Textures::loadTexturePixels(BufferedImage* image, arrayWithLength<int> pixels)
 {
-    image->getRGB(0, 0, image->getWidth(), (int)image->getHeight(), pixels, 0, (int)image->getWidth(), 0);
+    int width = (int)image->getWidth();
+    int height = (int)image->getHeight();
+    image->getRGB(0, 0, width, height, pixels, 0, width, 0);
     return pixels;
 }
 
@@ -649,8 +696,13 @@ void Textures::bindTextureLayers(const ResourceLocation* location)
 
 ResourceLocation* Textures::getTextureLocation(int textureName)
 {
-    if (textureName == 0) return &BLOCKS_LOCATION;
-    if (textureName == 1) return &ITEM_LOCATION;
+    switch (textureName)
+    {
+    case 0:
+        return &BLOCKS_LOCATION;
+    case 1:
+        return &ITEM_LOCATION;
+    }
     return NULL;
 }
 
@@ -686,27 +738,48 @@ int Textures::getTexture(BufferedImage* image, C4JRender::eTextureFormat format,
 void Textures::replaceTexture(arrayWithLength<int> pixels, int width, int height, int texture)
 {
     bind(texture);
-    if (mOptions != NULL) pixels = anaglyph(pixels);
-    ByteBuffer* buffer = MemoryTracker::createByteBuffer(width * height * 4);
-    arrayWithLength<unsigned char> bytes((unsigned int)(width * height * 4), true);
-    unsigned int i;
-    for (i = 0; i < pixels.length && i * 4 + 3 < bytes.length; ++i)
+    GlStateManager::texParameteri(1, 0);
+    GlStateManager::texParameteri(2, 0);
+    GlStateManager::texParameteri(3, 1);
+    GlStateManager::texParameteri(4, 1);
+    if (mOptions != NULL && mOptions->mAnaglyph3d)
+    {
+        pixels = anaglyph(pixels);
+    }
+    unsigned int byteCount = (unsigned int)(width * height * 4);
+    arrayWithLength<unsigned char> bytes(byteCount, true);
+    for (unsigned int i = 0; i < pixels.length; ++i)
     {
         unsigned int value = (unsigned int)pixels.data[i];
-        bytes.data[i * 4] = (unsigned char)(value >> 16);
-        bytes.data[i * 4 + 1] = (unsigned char)(value >> 8);
-        bytes.data[i * 4 + 2] = (unsigned char)value;
-        bytes.data[i * 4 + 3] = (unsigned char)(value >> 24);
+        int alpha = (int)((value >> 24) & 255);
+        int red = (int)((value >> 16) & 255);
+        int green = (int)((value >> 8) & 255);
+        int blue = (int)(value & 255);
+        if (mOptions != NULL && mOptions->mAnaglyph3d)
+        {
+            int newRed = (red * 30 + green * 59 + blue * 11) / 100;
+            int newGreen = (red * 30 + green * 70) / 100;
+            int newBlue = (red * 30 + blue * 70) / 100;
+            red = newRed;
+            green = newGreen;
+            blue = newBlue;
+        }
+        bytes.data[i * 4] = (unsigned char)red;
+        bytes.data[i * 4 + 1] = (unsigned char)green;
+        bytes.data[i * 4 + 2] = (unsigned char)blue;
+        bytes.data[i * 4 + 3] = (unsigned char)alpha;
     }
+    ByteBuffer* buffer = MemoryTracker::createByteBuffer((int)byteCount);
     buffer->put(bytes);
-    buffer->position(0);
-    buffer->limit(bytes.length);
-    GlStateManager::texImage2D(0, 0, 0, width, height, 0, 0, 0, buffer);
+    buffer->position(0)->limit(byteCount);
+    delete[] bytes.data;
+    gRenderer->TextureDataUpdate(0, 0, width, height, buffer->getBuffer(), 0);
+    delete buffer;
 }
 
 void Textures::replaceTextureDirect(arrayWithLength<int> pixels, int width, int height, int texture)
 {
-    bind(texture);
+    GlStateManager::bindTexture(texture);
     GlStateManager::texParameteri(1, 0);
     GlStateManager::texParameteri(2, 0);
     GlStateManager::texParameteri(3, 1);
@@ -727,12 +800,12 @@ void Textures::replaceTextureDirect(arrayWithLength<int> pixels, int width, int 
 
 void Textures::replaceTextureDirect(arrayWithLength<short> pixels, int width, int height, int texture)
 {
-    bind(texture);
+    GlStateManager::bindTexture(texture);
     GlStateManager::texParameteri(1, 0);
     GlStateManager::texParameteri(2, 0);
     GlStateManager::texParameteri(3, 1);
     GlStateManager::texParameteri(4, 1);
-    GlStateManager::texImage2D(0, 0, 0, width, height, 0, 0, 0, NULL);
+    gRenderer->TextureDataUpdate(0, 0, width, height, pixels.data, 0);
 }
 
 void Textures::releaseTexture(int texture)
@@ -743,25 +816,32 @@ void Textures::releaseTexture(int texture)
 
 int Textures::addMemTexture(const std::wstring& name, MemTextureProcessor* processor)
 {
+    MemTexture* texture = NULL;
     EnterCriticalSection(&mMutex);
     boost::unordered_map<std::wstring, MemTexture*>::iterator found = mMemTextures.find(name);
-    if (found != mMemTextures.end() && found->second != NULL)
+    if (found == mMemTextures.end() || (texture = found->second) == NULL)
     {
-        LeaveCriticalSection(&mMutex);
-        return (int)found->second;
+        unsigned char* data = NULL;
+        unsigned int size = 0;
+        gApp.GetMemFileDetails(name, &data, &size);
+        if (size == 0)
+        {
+            mMemTextures[name] = NULL;
+            LeaveCriticalSection(&mMutex);
+        }
+        else
+        {
+            texture = new MemTexture(name, data, size, processor);
+            mMemTextures[name] = texture;
+            LeaveCriticalSection(&mMutex);
+        }
     }
-    unsigned char* data = NULL;
-    unsigned int size = 0;
-    g_pApp->GetMemFileDetails(name, &data, &size);
-    if (size == 0)
+    else
     {
-        mMemTextures[name] = NULL;
+        texture->m_referenceCount = texture->m_referenceCount + 1;
         LeaveCriticalSection(&mMutex);
-        return 0;
     }
-    MemTexture* texture = new MemTexture(name, data, size, processor);
-    mMemTextures[name] = texture;
-    LeaveCriticalSection(&mMutex);
+    delete processor;
     return (int)texture;
 }
 
@@ -774,14 +854,14 @@ int Textures::loadMemTexture(const std::wstring& name, const std::wstring& path)
     LeaveCriticalSection(&mMutex);
     if (texture == NULL)
     {
-        if (!g_pApp->IsFileInMemoryTextures(name))
+        if (!gApp.IsFileInMemoryTextures(name))
         {
             return path.empty() ? -1 : loadTexture(TN_UNINDEXED, path);
         }
-        texture = (MemTexture*)addMemTexture(name, NULL);
+        texture = (MemTexture*)addMemTexture(name, new MobSkinMemTextureProcessor());
         if (texture == NULL) return path.empty() ? -1 : loadTexture(TN_UNINDEXED, path);
     }
-    MemTextureFields& fields = memTextureFields(texture);
+    MemTexture& fields = *texture;
     fields.m_textureFormat = 0;
     int result;
     if (fields.m_image == NULL || fields.m_loaded)
@@ -790,7 +870,7 @@ int Textures::loadMemTexture(const std::wstring& name, const std::wstring& path)
     }
     else
     {
-        if (name == L"dlcskin" || name == L"dlccape") sTextureMipmap = false;
+        if (name.substr(0, 7) == L"dlcskin" || name.substr(0, 7) == L"dlccape") sTextureMipmap = false;
         if (fields.m_textureId < 0)
         {
             result = getTexture(fields.m_image, C4JRender::eTextureFormat_RGBA8, sTextureMipmap);
@@ -819,11 +899,11 @@ int Textures::loadMemTexture(const std::wstring& name, int texture)
     LeaveCriticalSection(&mMutex);
     if (memTex == NULL)
     {
-        if (!g_pApp->IsFileInMemoryTextures(name)) return loadTexture(texture);
-        memTex = (MemTexture*)addMemTexture(name, NULL);
+        if (!gApp.IsFileInMemoryTextures(name)) return loadTexture(texture);
+        memTex = (MemTexture*)addMemTexture(name, new MobSkinMemTextureProcessor());
         if (memTex == NULL) return loadTexture(texture);
     }
-    MemTextureFields& fields = memTextureFields(memTex);
+    MemTexture& fields = *memTex;
     fields.m_textureFormat = 0;
     int result;
     if (fields.m_image == NULL || fields.m_loaded)
@@ -832,7 +912,7 @@ int Textures::loadMemTexture(const std::wstring& name, int texture)
     }
     else
     {
-        if (name == L"dlcskin" || name == L"dlccape") sTextureMipmap = false;
+        if (name.substr(0, 7) == L"dlcskin" || name.substr(0, 7) == L"dlccape") sTextureMipmap = false;
         if (fields.m_textureId < 0)
         {
             result = getTexture(fields.m_image, C4JRender::eTextureFormat_RGBA8, sTextureMipmap);
@@ -865,7 +945,7 @@ void Textures::removeMemTexture(const std::wstring& name)
         }
         else
         {
-            MemTextureFields& fields = memTextureFields(texture);
+            MemTexture& fields = *texture;
             fields.m_referenceCount = fields.m_referenceCount - 1;
             if (fields.m_referenceCount == 0)
             {
@@ -885,14 +965,11 @@ void Textures::tick(bool force, bool unused, bool reload)
     if (unused != mReloading)
     {
         mReloading = unused;
-        if (!mMemTextures.empty())
+        for (it = mMemTextures.begin(); it != mMemTextures.end(); ++it)
         {
-            for (it = mMemTextures.begin(); it != mMemTextures.end(); ++it)
+            if (it->second != NULL)
             {
-                if (it->second != NULL)
-                {
-                    memTextureFields(it->second).m_textureReady = mReloading;
-                }
+                it->second->m_textureReady = mReloading;
             }
         }
     }
@@ -910,52 +987,44 @@ void Textures::tick(bool force, bool unused, bool reload)
     }
 
     EnterCriticalSection(&mMutex);
-    if (mMemTextures.empty())
+    it = mMemTextures.begin();
+    while (it != mMemTextures.end())
     {
-        LeaveCriticalSection(&mMutex);
-    }
-    else
-    {
-        it = mMemTextures.begin();
-        while (it != mMemTextures.end())
+        MemTexture* texture = it->second;
+        if (texture != NULL && !texture->m_textureReady && ++texture->m_textureFormat > 20)
         {
-            MemTexture* texture = it->second;
-            for (;;)
-            {
-                if (texture == NULL) break;
-                MemTextureFields& fields = memTextureFields(texture);
-                if (fields.m_textureReady) break;
-                fields.m_textureFormat = fields.m_textureFormat + 1;
-                if (fields.m_textureFormat <= 20) break;
-                if (fields.m_textureId >= 0) releaseTexture(fields.m_textureId);
-                delete texture;
-                it = mMemTextures.erase(it);
-                if (it == mMemTextures.end()) goto leave_mutex;
-                texture = it->second;
-            }
+            if (texture->m_textureId >= 0)
+                releaseTexture(texture->m_textureId);
+            delete texture;
+            it = mMemTextures.erase(it);
+        }
+        else
+        {
             ++it;
         }
-leave_mutex:
-        LeaveCriticalSection(&mMutex);
     }
-
+    LeaveCriticalSection(&mMutex);
     MemSect(0);
 }
 
 void Textures::freeStitch()
 {
-    if (mBlocks != NULL) mBlocks->freeStitch();
-    if (mItems != NULL) mItems->freeStitch();
+    mBlocks->freeStitch();
+    mItems->freeStitch();
 }
 
 void Textures::stitch()
 {
-    if (mBlocks != NULL) mBlocks->stitch();
-    if (mItems != NULL) mItems->stitch();
+    mBlocks->stitch();
+    mItems->stitch();
 }
 
 void Textures::reloadAll()
 {
+    for (iterator it = begin(); it != end(); ++it)
+    {
+        releaseTexture(it->second);
+    }
     clear();
     mTextureImages.clear();
     freeStitch();
@@ -964,15 +1033,11 @@ void Textures::reloadAll()
     GrassColor::init(loadTexturePixels(TN_MISC_GRASSCOLOR, L"misc/grasscolor"));
     FoliageColor::init(loadTexturePixels(TN_MISC_FOLIAGECOLOR, L"misc/foliagecolor"));
     stitch();
-    if (mTexturePackRepository != NULL) mTexturePackRepository->clearInvalidTexturePacks();
+    mTexturePackRepository->clearInvalidTexturePacks();
 }
 
 TextureAtlasSprite* Textures::getMissingIcon(int atlas)
 {
-    if (atlas != 0)
-    {
-        if (mItems != NULL) return mItems->getMissingIcon();
-    }
-    else if (mBlocks != NULL) return mBlocks->getMissingIcon();
-    return NULL;
+    if (atlas != 0) return mItems->getMissingIcon();
+    return mBlocks->getMissingIcon();
 }

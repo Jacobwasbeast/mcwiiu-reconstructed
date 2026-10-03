@@ -505,7 +505,7 @@ void LivingEntityRenderer::renderName(boost::shared_ptr<Entity>& entity, double 
         Minecraft::GetInstance()->mOptions->mHideGui)
         return;
 
-    GlStateManager::alphaFunc(4, 0.009999999776482582f);
+    GlStateManager::alphaFunc(4, 0.01f);
     renderNameTags(entity, x, y, z, name, distanceSqr, 0xFF000000);
 }
 

@@ -164,6 +164,7 @@ private:
     friend class Minecraft;
     friend class Chunk;
     friend class MultiPlayerGameMode;
+    friend class ItemFrameRenderer;
 
     int mDebugRenderTick;
     ChunkBlockEntityMap mBlockEntities;

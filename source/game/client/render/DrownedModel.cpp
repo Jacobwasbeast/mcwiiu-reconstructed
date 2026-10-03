@@ -165,15 +165,15 @@ void DrownedModel::setupAnim(float limbSwing, float limbSwingAmount, float ageIn
 
     float swimAmount = (float)swimming;
 
-    float swing = Mth::sin(mAttackTime * 3.1415927410125732f);
-    float swingBack = Mth::sin((1.0f - (1.0f - mAttackTime) * (1.0f - mAttackTime)) * 3.1415927410125732f);
+    float swing = Mth::sin(mAttackTime * 3.1415927f);
+    float swingBack = Mth::sin((1.0f - (1.0f - mAttackTime) * (1.0f - mAttackTime)) * 3.1415927f);
 
     if (swimAmount > 0.0f)
     {
         mRightArm->mYRot = Mth::Lerp(mRightArm->mYRot, 0.25f, swimAmount);
         mLeftArm->mYRot = Mth::Lerp(mLeftArm->mYRot, 0.25f, swimAmount);
-        mRightArm->mXRot = Mth::Lerp(mRightArm->mXRot, -3.1415927410125732f, swimAmount);
-        mLeftArm->mXRot = Mth::Lerp(mLeftArm->mXRot, -3.1415927410125732f, swimAmount);
+        mRightArm->mXRot = Mth::Lerp(mRightArm->mXRot, -3.1415927f, swimAmount);
+        mLeftArm->mXRot = Mth::Lerp(mLeftArm->mXRot, -3.1415927f, swimAmount);
         mRightArm->mZRot = Mth::Lerp(mRightArm->mZRot, -0.25f, swimAmount);
         mLeftArm->mZRot = Mth::Lerp(mLeftArm->mZRot, 0.25f, swimAmount);
 

@@ -396,7 +396,7 @@ void ParticleEngine::render(boost::shared_ptr<Entity>& entity, float partialTick
     {
         GlStateManager::enableBlend();
         GlStateManager::blendFunc(4, 5);
-        GlStateManager::alphaFunc(4, 0.003921568859368563f);
+        GlStateManager::alphaFunc(4, 0.003921569f);
     }
 
     for (int textureType = 0; textureType < 5; ++textureType)
@@ -448,12 +448,12 @@ void ParticleEngine::render(boost::shared_ptr<Entity>& entity, float partialTick
 
     GlStateManager::disableBlend();
     GlStateManager::depthMask(true);
-    GlStateManager::alphaFunc(4, 0.10000000149011612f);
+    GlStateManager::alphaFunc(4, 0.1f);
 }
 
 void ParticleEngine::renderLit(boost::shared_ptr<Entity> entity, float partialTick, int layer)
 {
-    const float degToRad = 0.01745329238474369f;
+    const float degToRad = 0.017453292f;
     const float yaw = entity->mYRot * degToRad;
     const float pitch = entity->mXRot * degToRad;
     const float cosYaw = Mth::cos(yaw);
@@ -482,7 +482,7 @@ void ParticleEngine::renderLit(boost::shared_ptr<Entity> entity, float partialTi
     {
         GlStateManager::enableBlend();
         GlStateManager::blendFunc(4, 5);
-        GlStateManager::alphaFunc(4, 0.003921568859368563f);
+        GlStateManager::alphaFunc(4, 0.003921569f);
     }
 
     GlStateManager::color4f(1.0f, 1.0f, 1.0f, 1.0f);
@@ -500,7 +500,7 @@ void ParticleEngine::renderLit(boost::shared_ptr<Entity> entity, float partialTi
         }
         GlStateManager::disableBlend();
         GlStateManager::depthMask(true);
-        GlStateManager::alphaFunc(4, 0.10000000149011612f);
+        GlStateManager::alphaFunc(4, 0.1f);
     }
 }
 

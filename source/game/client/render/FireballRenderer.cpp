@@ -8,8 +8,11 @@
 #include "game/client/render/Textures.hpp"
 #include "game/core/BufferBuilder.hpp"
 #include "game/core/GlStateManager.hpp"
+#include "game/core/EntityType.hpp"
+#include "game/core/MemSect.hpp"
 #include "game/core/Options.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/entity/projectile/Fireball.hpp"
 #include "game/item/Item.hpp"
 #include "game/item/Items.hpp"
 #include "game/util/AABB.hpp"
@@ -30,28 +33,30 @@ FireballRenderer::~FireballRenderer() {
 void FireballRenderer::render(boost::shared_ptr<Entity>& entity, double x,
                               double y, double z, float yaw,
                               float partialTick) {
-    TextureAtlasSprite* sprite = Items::fireCharge->getIcon(0);
+    boost::shared_ptr<Fireball> fireball = boost::static_pointer_cast<Fireball>(entity);
 
     GlStateManager::pushMatrix();
-    mDispatcher->mTextures->bindTexture(mDispatcher->mTextures->getTextureLocation(1));
+    MemSect(0x1f);
+    bindTexture(entity);
+    MemSect(0);
     GlStateManager::translatef((float)x, (float)y, (float)z);
     GlStateManager::enableRescaleNormal();
     GlStateManager::scalef(mScale, mScale, mScale);
 
+    TextureAtlasSprite* sprite = Items::fireCharge->getIcon(fireball->GetType() == EntityType::DRAGON_FIREBALL);
+
     Tesselator* tesselator = Tesselator::getInstance();
     BufferBuilder* builder = tesselator->getBuilder();
-    GlStateManager::rotatef(180.0F - mDispatcher->mCameraYRot, 0.0F, 1.0F, 0.0F);
-    if (mDispatcher->mOptions->mThirdPersonView == 2)
-        GlStateManager::rotatef(mDispatcher->mCameraXRot, 1.0F, 0.0F, 0.0F);
-    else
-        GlStateManager::rotatef(-mDispatcher->mCameraXRot, 1.0F, 0.0F, 0.0F);
-    if (mSolidRender)
-        GlStateManager::enableColorMaterial();
-
     const float u0 = (float)sprite->getU0(false);
     const float u1 = (float)sprite->getU1(false);
     const float v0 = (float)sprite->getV0(false);
     const float v1 = (float)sprite->getV1(false);
+    GlStateManager::rotatef(180.0F - mDispatcher->mCameraYRot, 0.0F, 1.0F, 0.0F);
+    const float pitchDirection = mDispatcher->mOptions->mThirdPersonView == 2 ? -1.0F : 1.0F;
+    GlStateManager::rotatef(-(pitchDirection * mDispatcher->mCameraXRot), 1.0F, 0.0F, 0.0F);
+    if (mSolidRender)
+        GlStateManager::enableColorMaterial();
+
     builder->begin();
     builder->normal(0.0F, 1.0F, 0.0F);
     builder->vertexUV(-0.5F, -0.25F, 0.0F, u0, v1);
@@ -75,20 +80,22 @@ void FireballRenderer::renderFlame(boost::shared_ptr<Entity>& entity, double x,
     GlStateManager::translatef((float)x, (float)y, (float)z);
     const float scale = entity->mBbWidth * 1.4F;
     GlStateManager::scalef(scale, scale, scale);
-    mDispatcher->mTextures->bindTexture(mDispatcher->mTextures->getTextureLocation(0));
+    MemSect(0x1f);
+    bindTexture(&BLOCKS_LOCATION);
+    MemSect(0);
     Tesselator* tesselator = Tesselator::getInstance();
     BufferBuilder* builder = tesselator->getBuilder();
     const float height = (float)(entity->mY - entity->mBoundingBox->mMinY);
     GlStateManager::rotatef(180.0F - mDispatcher->mCameraYRot, 0.0F, 1.0F, 0.0F);
-    GlStateManager::rotatef(-entity->mXRot, 1.0F, 0.0F, 0.0F);
+    GlStateManager::rotatef(-mDispatcher->mCameraXRot, 1.0F, 0.0F, 0.0F);
     GlStateManager::translatef(0.0F, 0.0F, 0.1F);
     GlStateManager::color4f(1.0F, 1.0F, 1.0F, 1.0F);
-    const float u0 = (float)sprite->getU0(false);
-    const float u1 = (float)sprite->getU1(false);
-    const float v0 = (float)sprite->getV0(false);
-    const float v1 = (float)sprite->getV1(false);
     builder->begin();
     builder->normal(0.0F, 1.0F, 0.0F);
+    const float u0 = (float)sprite->getU0(false);
+    const float v0 = (float)sprite->getV0(false);
+    const float u1 = (float)sprite->getU1(false);
+    const float v1 = (float)sprite->getV1(false);
     builder->vertexUV(-0.5F, -height, 0.0F, u0, v1);
     builder->vertexUV(0.5F, -height, 0.0F, u1, v1);
     builder->vertexUV(0.5F, 1.4F - height, 0.0F, u1, v0);

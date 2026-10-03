@@ -99,17 +99,17 @@ void ChickenModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, fl
 
 void ChickenModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
 {
-    mHead->mXRot = headPitch * 0.01745329238474369f;
-    mHead->mYRot = netHeadYaw * 0.01745329238474369f;
+    mHead->mXRot = headPitch * 0.017453292f;
+    mHead->mYRot = netHeadYaw * 0.017453292f;
     mBeak->mXRot = mHead->mXRot;
     mBeak->mYRot = mHead->mYRot;
     mComb->mXRot = mHead->mXRot;
     mComb->mYRot = mHead->mYRot;
-    mBody->mXRot = 90.0f * 0.01745329238474369f;
+    mBody->mXRot = 90.0f * 0.017453292f;
 
-    float swing = limbSwing * 0.6661999821662903f;
-    mLeg0->mXRot = Mth::cos(swing) * 1.399999976158142f * limbSwingAmount;
-    mLeg1->mXRot = Mth::cos(swing + 3.1415927410125732f) * 1.399999976158142f * limbSwingAmount;
+    float swing = limbSwing * 0.6662f;
+    mLeg0->mXRot = Mth::cos(swing) * 1.4f * limbSwingAmount;
+    mLeg1->mXRot = Mth::cos(swing + 3.1415927f) * 1.4f * limbSwingAmount;
     mWing0->mZRot = ageInTicks;
     mWing1->mZRot = -ageInTicks;
 }

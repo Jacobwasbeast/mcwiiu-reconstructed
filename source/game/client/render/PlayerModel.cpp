@@ -85,19 +85,19 @@ PlayerModel::PlayerModel(float scale, bool slimArms, bool is64x64)
 
         mLeftLeg = new ModelPart(this, 16, 48);
         mLeftLeg->addBox(-2.0f, 0.0f, -2.0f, 4, 12, 4, scale);
-        mLeftLeg->setPos(1.899999976158142f, 12.0f, 0.0f);
+        mLeftLeg->setPos(1.9f, 12.0f, 0.0f);
 
         mRightLeg = new ModelPart(this, 0, 16);
         mRightLeg->addBox(-2.0f, 0.0f, -2.0f, 4, 12, 4, scale);
-        mRightLeg->setPos(-1.899999976158142f, 12.0f, 0.0f);
+        mRightLeg->setPos(-1.9f, 12.0f, 0.0f);
 
         mLeftPants = new ModelPart(this, 0, 48);
         mLeftPants->addBox(-2.0f, 0.0f, -2.0f, 4, 12, 4, scale + 0.25f);
-        mLeftPants->setPos(1.899999976158142f, 12.0f, 0.0f);
+        mLeftPants->setPos(1.9f, 12.0f, 0.0f);
 
         mRightPants = new ModelPart(this, 0, 32);
         mRightPants->addBox(-2.0f, 0.0f, -2.0f, 4, 12, 4, scale + 0.25f);
-        mRightPants->setPos(-1.899999976158142f, 12.0f, 0.0f);
+        mRightPants->setPos(-1.9f, 12.0f, 0.0f);
 
         mJacket = new ModelPart(this, 16, 32);
         mJacket->addBox(-4.0f, 0.0f, -2.0f, 8, 12, 4, scale + 0.25f);
@@ -144,7 +144,7 @@ void PlayerModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, flo
 
                 if (entity && entity->isSneaking() && !fallFlying)
                 {
-                    GlStateManager::translatef(0.0f, 0.20000000298023224f, 0.0f);
+                    GlStateManager::translatef(0.0f, 0.2f, 0.0f);
                 }
             }
 

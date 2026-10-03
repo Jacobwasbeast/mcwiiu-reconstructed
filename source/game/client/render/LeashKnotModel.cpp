@@ -34,6 +34,6 @@ void LeashKnotModel::setupAnim(float limbSwing, float limbSwingAmount, float age
 {
     Model::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, _SkinAdjustments());
 
-    mKnot->mYRot = netHeadYaw * 0.01745329238474369f;
-    mKnot->mXRot = headPitch * 0.01745329238474369f;
+    mKnot->mYRot = netHeadYaw * 0.017453292f;
+    mKnot->mXRot = headPitch * 0.017453292f;
 }

@@ -51,11 +51,18 @@ static ResourceLocation MAP_BACKGROUND_LOCATION(TN_MISC_MAPBG);
 }
 
 ItemInHandRenderer::ItemInHandRenderer(Minecraft* minecraft)
-    : mMinecraft(minecraft), mMainHandItem(ItemInstance::EMPTY), mOffHandItem(ItemInstance::EMPTY),
-      mMainHandHeight(0.0f), mOffHandHeight(0.0f),
-      mMainHandHeightOld(0.0f), mOffHandHeightOld(0.0f),
-      mEntityRenderDispatcher(minecraft->getEntityRenderDispatcher()), mItemRenderer(minecraft->getItemRenderer()), mListId(-1)
 {
+    mMainHandItem = ItemInstance::EMPTY;
+    mOffHandItem = ItemInstance::EMPTY;
+    mMainHandHeight = 0.0f;
+    mOffHandHeight = 0.0f;
+    mMainHandHeightOld = 0.0f;
+    mOffHandHeightOld = 0.0f;
+    mListId = -1;
+    mMinecraft = minecraft;
+    mEntityRenderDispatcher = minecraft->getEntityRenderDispatcher();
+    mItemRenderer = minecraft->getItemRenderer();
+
     if (sItemRenderDisplayLists[0] == -1)
     {
         sItemRenderDisplayLists[0] = MemoryTracker::genLists(1);
@@ -65,10 +72,10 @@ ItemInHandRenderer::ItemInHandRenderer(Minecraft* minecraft)
         for (int row = 0; row < 16; ++row)
         {
             float y0 = static_cast<float>(row) * 0.0625f;
-            float v = static_cast<float>(15 - row) / 272.0f + 0.0018382353f;
             for (int column = 0; column < 16; ++column)
             {
-                float y1 = y0 + 0.0625f;
+                float y1 = 0.0625f + y0;
+                float v = 0.0018382353f + static_cast<float>(15 - row) / 272.0f;
                 float x0 = static_cast<float>(column) * 0.0625f;
                 float u = static_cast<float>(15 - column) * 0.00390625f + 0.001953125f;
                 float x1 = x0 + 0.0625f;
@@ -209,10 +216,10 @@ ItemInHandRenderer::ItemInHandRenderer(Minecraft* minecraft)
         for (int row = 0; row < 16; ++row)
         {
             float y0 = static_cast<float>(row) * 0.0625f;
-            float v = static_cast<float>(15 - row) / 544.0f + 0.00091911765f;
             for (int column = 0; column < 16; ++column)
             {
-                float y1 = y0 + 0.0625f;
+                float y1 = 0.0625f + y0;
+                float v = 0.00091911765f + static_cast<float>(15 - row) / 544.0f;
                 float x0 = static_cast<float>(column) * 0.0625f;
                 float u = static_cast<float>(15 - column) * 0.00390625f + 0.001953125f;
                 float x1 = x0 + 0.0625f;
@@ -279,10 +286,10 @@ ItemInHandRenderer::ItemInHandRenderer(Minecraft* minecraft)
         builder->vertexUV(1.0f, 0.0f, 0.0f, 0.00390625f, 0.029411765f);
         builder->vertexUV(1.0f, 0.0f, -0.0625f, 0.00390625f, 0.029411765f);
         builder->normal(0.0f, 1.0f, 0.0f);
-        builder->vertexUV(1.0f, 0.0f, 0.0f, 0.0f, 0.027573530f);
+        builder->vertexUV(1.0f, 0.0f, 0.0f, 0.0f, 0.02757353f);
         builder->vertexUV(0.0f, 0.0f, 0.0f, 0.0625f, 0.029411765f);
         builder->vertexUV(0.0f, 0.0f, -0.0625f, 0.0625f, 0.029411765f);
-        builder->vertexUV(1.0f, 0.0f, -0.0625f, 0.0f, 0.027573530f);
+        builder->vertexUV(1.0f, 0.0f, -0.0625f, 0.0f, 0.02757353f);
         builder->normal(0.0f, -1.0f, 0.0f);
         builder->vertexUV(1.0f, 1.0f, -0.0625f, 0.0f, 0.0f);
         builder->vertexUV(0.0f, 1.0f, -0.0625f, 0.0625f, 0.0018382353f);
@@ -385,10 +392,10 @@ void ItemInHandRenderer::setLightValue(boost::shared_ptr<AbstractClientPlayer> p
 
 void ItemInHandRenderer::setPlayerBob(boost::shared_ptr<LocalPlayer> player, float partialTick)
 {
-    float xRot = player->mXRotO + (player->mXRot - player->mXRotO) * partialTick;
-    float yRot = player->mYRotO + (player->mYRot - player->mYRotO) * partialTick;
     float bobX = player->mViewXRotO + (player->mViewXRot - player->mViewXRotO) * partialTick;
     float bobY = player->mViewYRotO + (player->mViewYRot - player->mViewYRotO) * partialTick;
+    float xRot = player->mXRotO + (player->mXRot - player->mXRotO) * partialTick;
+    float yRot = player->mYRotO + (player->mYRot - player->mYRotO) * partialTick;
     GlStateManager::rotatef((xRot - bobX) * 0.1f, 1.0f, 0.0f, 0.0f);
     GlStateManager::rotatef((yRot - bobY) * 0.1f, 0.0f, 1.0f, 0.0f);
 }
@@ -440,17 +447,17 @@ void ItemInHandRenderer::renderMapHands()
 
 void ItemInHandRenderer::renderPlayerArm(float equip, float swing, const HumanoidArm* arm)
 {
-    bool left = arm == HumanoidArm::LEFT;
-    float side = left ? -1.0f : 1.0f;
+    bool right = arm != HumanoidArm::LEFT;
+    float side = right ? 1.0f : -1.0f;
     float swingRoot = std::sqrt(swing);
     float swingSin = std::sin(swingRoot * 3.1415927f);
-    float swingBob = -0.30000001192092896f * swingSin;
+    float swingBob = -0.3f * swingSin;
     float swingSin2 = std::sin(swingRoot * 3.1415927f + swingRoot * 3.1415927f);
-    float swingDrop = 0.4000000059604645f * swingSin2;
+    float swingDrop = 0.4f * swingSin2;
     float swingRoll = std::sin(swing * 3.1415927f);
-    GlStateManager::translatef(side * (swingBob + 0.64000004529953f),
-                               equip * -0.6000000238418579f + (swingDrop + -0.6000000238418579f),
-                               -0.4000000059604645f * swingRoll - 0.7199999690055847f);
+    GlStateManager::translatef(side * (swingBob + 0.64000005f),
+                               equip * -0.6f + (swingDrop + -0.6f),
+                               -0.4f * swingRoll - 0.71999997f);
     GlStateManager::rotatef(side * 45.0f, 0.0f, 1.0f, 0.0f);
     float swingSquaredSin = std::sin(swing * swing * 3.1415927f);
     float swingRootSin = std::sin(swingRoot * 3.1415927f);
@@ -461,21 +468,21 @@ void ItemInHandRenderer::renderPlayerArm(float equip, float swing, const Humanoi
                                                         mMinecraft->mPlayer->getTexture());
     GlStateManager::bindTexture(texture);
     mMinecraft->mTextures->clearLastBoundId();
-    GlStateManager::translatef(-side, 3.5999999046325684f, 3.5f);
+    GlStateManager::translatef(-side, 3.6f, 3.5f);
     GlStateManager::rotatef(side * 120.0f, 0.0f, 0.0f, 1.0f);
     GlStateManager::rotatef(200.0f, 1.0f, 0.0f, 0.0f);
     GlStateManager::rotatef(side * -135.0f, 0.0f, 1.0f, 0.0f);
-    GlStateManager::translatef(side * 5.599999904632568f, 0.0f, 0.0f);
+    GlStateManager::translatef(side * 5.6f, 0.0f, 0.0f);
     PlayerRenderer* renderer =
         static_cast<PlayerRenderer*>(mEntityRenderDispatcher->getRenderer(mMinecraft->mPlayer));
     GlStateManager::disableCull();
-    if (left)
+    if (right)
     {
-        renderer->renderLeftHand(player);
+        renderer->renderRightHand(player);
     }
     else
     {
-        renderer->renderRightHand(player);
+        renderer->renderLeftHand(player);
     }
     GlStateManager::enableCull();
 }
@@ -484,7 +491,7 @@ void ItemInHandRenderer::renderMap(not_null_ptr<ItemInstance> item, int hand)
 {
     GlStateManager::rotatef(180.0f, 0.0f, 1.0f, 0.0f);
     GlStateManager::rotatef(180.0f, 0.0f, 0.0f, 1.0f);
-    GlStateManager::scalef(0.3799999952316284f, 0.3799999952316284f, 0.3799999952316284f);
+    GlStateManager::scalef(0.38f, 0.38f, 0.38f);
     GlStateManager::disableLighting();
     mMinecraft->mTextures->bindTexture(&MAP_BACKGROUND_LOCATION);
     BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
@@ -518,14 +525,14 @@ void ItemInHandRenderer::renderOneHandedMap(float equip, const HumanoidArm* arm,
         GlStateManager::popMatrix();
     }
     GlStateManager::pushMatrix();
-    GlStateManager::translatef(side * 0.5099999904632568f, equip * -1.2000000476837158f + -0.07999999821186066f,
+    GlStateManager::translatef(side * 0.51f, equip * -1.2f + -0.08f,
                                 -0.75f);
     float swingRoot = Mth::sqrt(swing);
     float swingSin = Mth::sin(swingRoot * 3.1415927f);
-    float swingSin2 = Mth::sin(swingRoot * 6.2831854820251465f);
+    float swingSin2 = Mth::sin(swingRoot * 6.2831855f);
     float swingRoll = Mth::sin(swing * 3.1415927f);
-    GlStateManager::translatef(side * (-0.5f * swingSin), -(0.30000001192092896f * swingSin - 0.4000000059604645f * swingSin2),
-                               -0.30000001192092896f * swingRoll);
+    GlStateManager::translatef(side * (-0.5f * swingSin), -(0.3f * swingSin - 0.4f * swingSin2),
+                               -0.3f * swingRoll);
     GlStateManager::rotatef(-45.0f * swingSin, 1.0f, 0.0f, 0.0f);
     GlStateManager::rotatef(side * swingSin * -30.0f, 0.0f, 1.0f, 0.0f);
     renderMap(item, arm == HumanoidArm::RIGHT ? 0 : 1);
@@ -537,12 +544,12 @@ void ItemInHandRenderer::renderTwoHandedMap(float pitch, float equipProgress, fl
     float swingRoot = Mth::sqrt(swingProgress);
     float swing = Mth::sin(swingProgress * 3.1415927f);
     float swingRootSin = Mth::sin(swingRoot * 3.1415927f);
-    GlStateManager::translatef(0.0f, swing * 0.085f, swingRootSin * -0.17f);
+    GlStateManager::translatef(0.0f, -(swing * -0.17f * 0.5f), swingRootSin * -0.17f);
     float mapTilt = calculateMapTilt(pitch);
-    GlStateManager::translatef(0.0f, mapTilt * -0.5f + equipProgress * -1.2f + 0.1f, -0.72f);
+    GlStateManager::translatef(0.0f, mapTilt * -0.5f + (equipProgress * -1.2f + 0.1f), -0.72f);
     GlStateManager::rotatef(mapTilt * -85.0f, 1.0f, 0.0f, 0.0f);
     renderMapHands();
-    GlStateManager::rotatef(swingRootSin * 20.0f, 1.0f, 0.0f, 0.0f);
+    GlStateManager::rotatef(Mth::sin(swingRoot * 3.1415927f) * 20.0f, 1.0f, 0.0f, 0.0f);
     GlStateManager::scalef(1.75f, 1.75f, 1.75f);
     renderMap(mMainHandItem, 0);
 }
@@ -551,12 +558,9 @@ void ItemInHandRenderer::applyEatTransform(float partialTick, const HumanoidArm*
 {
     float remainingTicks = (float)mMinecraft->mPlayer->getUseItemRemainingTicks() - partialTick + 1.0f;
     float useProgress = remainingTicks / (float)item->getUseDuration();
-    float bob = 0.0f;
-    if (useProgress < 0.8f)
-    {
-        bob = std::fabs(Mth::cos(remainingTicks * 0.25f * 3.1415927f) * 0.1f);
-    }
-    GlStateManager::translatef(0.0f, bob, 0.0f);
+    float wobble = Mth::cos(remainingTicks * 0.25f * 3.1415927f);
+    float bob = std::fabs(wobble * 0.1f);
+    GlStateManager::translatef(0.0f, useProgress < 0.8f ? bob : 0.0f, 0.0f);
     float pull = 1.0f - std::pow(useProgress, 27.0f);
     int side = arm == HumanoidArm::RIGHT ? 1 : -1;
     GlStateManager::translatef(pull * 0.6f * (float)side, pull * -0.5f, pull * 0.0f);
@@ -656,10 +660,9 @@ void ItemInHandRenderer::renderArmWithItem(boost::shared_ptr<LocalPlayer> player
         case UseAnim_block:
         {
             applyItemArmTransform(arm, equipProgress);
-            Item* blockingItem = item->getItem();
-            if (blockingItem == Items::woodenSword || blockingItem == Items::stoneSword
-                || blockingItem == Items::ironSword || blockingItem == Items::goldenSword
-                || blockingItem == Items::diamondSword)
+            if (item->getItem() == Items::woodenSword || item->getItem() == Items::stoneSword
+                || item->getItem() == Items::ironSword || item->getItem() == Items::goldenSword
+                || item->getItem() == Items::diamondSword)
             {
                 GlStateManager::translatef((float)side * -0.2f, 0.08f, 0.0f);
                 GlStateManager::rotatef(-80.0f, 1.0f, 0.0f, 0.0f);
@@ -715,7 +718,7 @@ void ItemInHandRenderer::renderArmWithItem(boost::shared_ptr<LocalPlayer> player
             break;
         }
     }
-    else if (player->isHandsBusy())
+    else if (player->getDamageNearbyMobs())
     {
         applyItemArmTransform(arm, equipProgress);
         GlStateManager::translatef(0.25f, 1.0f, -0.5f);
@@ -747,25 +750,26 @@ void ItemInHandRenderer::render(float partialTick)
 {
     boost::shared_ptr<LocalPlayer> player = mMinecraft->mPlayer;
     float attackProgress = player->getAttackAnim(partialTick);
-    float mainHandHeight =
-        mMainHandHeightOld + (mMainHandHeight - mMainHandHeightOld) * partialTick;
-    float offHandHeight = mOffHandHeightOld + (mOffHandHeight - mOffHandHeightOld) * partialTick;
+    InteractionHand::EInteractionHand swingingArm = player->mSwingingArm == InteractionHand::eInteractionHand_MainHand
+                                                         ? InteractionHand::eInteractionHand_MainHand
+                                                         : player->mSwingingArm;
+    float yawDelta = player->mYRot - player->mYRotO;
+    float yaw = yawDelta * partialTick + player->mYRotO;
+    float pitchDelta = player->mXRot - player->mXRotO;
+    float pitch = pitchDelta * partialTick + player->mXRotO;
     bool renderMainHand = true;
     bool renderOffHand = true;
     if (player->isUsingItem())
     {
         not_null_ptr<ItemInstance> useItem = player->getUseItem();
-        if (!useItem->isEmpty() && useItem->getItem() == Items::bow)
+        if (useItem->getItem() == Items::bow)
         {
             InteractionHand::EInteractionHand usedHand = player->getUsedItemHand();
-            renderMainHand = usedHand == InteractionHand::eInteractionHand_MainHand;
-            renderOffHand = usedHand != InteractionHand::eInteractionHand_MainHand;
+            bool usedMainHand = usedHand == InteractionHand::eInteractionHand_MainHand;
+            renderMainHand = usedMainHand;
+            renderOffHand = !usedMainHand;
         }
     }
-    float pitchDelta = player->mXRot - player->mXRotO;
-    float pitch = pitchDelta * partialTick + player->mXRotO;
-    float yawDelta = player->mYRot - player->mYRotO;
-    float yaw = yawDelta * partialTick + player->mYRotO;
     enableLight(pitch, yaw);
     setLightValue(player);
     setPlayerBob(player, partialTick);
@@ -785,8 +789,10 @@ void ItemInHandRenderer::render(float partialTick)
         {
             GlStateManager::color4f(white, white, white, white);
         }
+        float mainHandHeight =
+            mMainHandHeightOld + (mMainHandHeight - mMainHandHeightOld) * partialTick;
         float mainEquip = 1.0f - mainHandHeight;
-        float mainSwing = player->mSwingingArm == InteractionHand::eInteractionHand_MainHand
+        float mainSwing = swingingArm == InteractionHand::eInteractionHand_MainHand
                               ? attackProgress
                               : 0.0f;
         renderArmWithItem(player, partialTick, pitch, InteractionHand::eInteractionHand_MainHand, mainSwing,
@@ -805,8 +811,9 @@ void ItemInHandRenderer::render(float partialTick)
         {
             GlStateManager::color4f(white, white, white, white);
         }
+        float offHandHeight = mOffHandHeightOld + (mOffHandHeight - mOffHandHeightOld) * partialTick;
         float offEquip = 1.0f - offHandHeight;
-        float offSwing = player->mSwingingArm == InteractionHand::eInteractionHand_OffHand
+        float offSwing = swingingArm == InteractionHand::eInteractionHand_OffHand
                              ? attackProgress
                              : 0.0f;
         renderArmWithItem(player, partialTick, pitch, InteractionHand::eInteractionHand_OffHand, offSwing,
@@ -823,14 +830,14 @@ void ItemInHandRenderer::renderTex(TextureAtlasSprite* sprite)
     GlStateManager::color4f(0.1f, 0.1f, 0.1f, 0.5f);
     GlStateManager::pushMatrix();
     float u0 = (float)sprite->getU0(false);
-    float v0 = (float)sprite->getV0(false);
     float u1 = (float)sprite->getU1(false);
+    float v0 = (float)sprite->getV0(false);
     float v1 = (float)sprite->getV1(false);
     builder->begin();
-    builder->vertexUV(-1.0f, -1.0f, -0.5f, u0, v1);
-    builder->vertexUV(1.0f, -1.0f, -0.5f, u1, v1);
-    builder->vertexUV(1.0f, 1.0f, -0.5f, u1, v0);
-    builder->vertexUV(-1.0f, 1.0f, -0.5f, u0, v0);
+    builder->vertexUV(-1.0f, -1.0f, -0.5f, u1, v1);
+    builder->vertexUV(1.0f, -1.0f, -0.5f, u0, v1);
+    builder->vertexUV(1.0f, 1.0f, -0.5f, u0, v0);
+    builder->vertexUV(-1.0f, 1.0f, -0.5f, u1, v0);
     builder->end();
     GlStateManager::popMatrix();
     GlStateManager::color4f(1.0f, 1.0f, 1.0f, 1.0f);
@@ -838,26 +845,22 @@ void ItemInHandRenderer::renderTex(TextureAtlasSprite* sprite)
 
 void ItemInHandRenderer::renderWater(float)
 {
-    Textures* textures = mMinecraft->mTextures;
-    textures->bindTexture(&WATER_OVERLAY_LOCATION);
+    mMinecraft->mTextures->bindTexture(&WATER_OVERLAY_LOCATION);
     Tesselator* tesselator = Tesselator::getInstance();
     BufferBuilder* builder = tesselator->getBuilder();
-    boost::shared_ptr<LocalPlayer> player = mMinecraft->mPlayer;
-    float vision = (float)player->getUnderwaterVisionScale();
-    GlStateManager::color4f(vision, vision, vision, 0.1f);
+    float brightness = mMinecraft->mPlayer->getBrightness();
+    GlStateManager::color4f(brightness, brightness, brightness, 0.1f);
     GlStateManager::enableBlend();
     GlStateManager::blendFunc(4, 1);
     GlStateManager::blendFuncSeparate(4, 5, 1, 0);
     GlStateManager::pushMatrix();
-    float xRot = player->mXRot * 0.015625f;
-    float yRot = player->mYRot * 0.015625f;
-    float x0 = 4.0f + yRot;
-    float y0 = 4.0f + xRot;
+    float u = -(mMinecraft->mPlayer->mYRot * 0.015625f);
+    float v = mMinecraft->mPlayer->mXRot * 0.015625f;
     builder->begin();
-    builder->vertexUV(-1.0f, -1.0f, -0.5f, -xRot - 4.0f, y0);
-    builder->vertexUV(1.0f, -1.0f, -0.5f, -xRot, y0);
-    builder->vertexUV(1.0f, 1.0f, -0.5f, -xRot, x0);
-    builder->vertexUV(-1.0f, 1.0f, -0.5f, -xRot - 4.0f, x0);
+    builder->vertexUV(-1.0f, -1.0f, -0.5f, 4.0f + u, 4.0f + v);
+    builder->vertexUV(1.0f, -1.0f, -0.5f, u, 4.0f + v);
+    builder->vertexUV(1.0f, 1.0f, -0.5f, u, v);
+    builder->vertexUV(-1.0f, 1.0f, -0.5f, 4.0f + u, v);
     tesselator->end();
     GlStateManager::popMatrix();
     GlStateManager::color4f(1.0f, 1.0f, 1.0f, 1.0f);
@@ -878,31 +881,36 @@ void ItemInHandRenderer::renderFire()
     GlStateManager::depthMask(false);
     GlStateManager::enableBlend();
     GlStateManager::blendFunc(4, 5);
-    FireBlock* fire = static_cast<FireBlock*>(Blocks::fire);
-    TextureAtlasSprite* sprite = fire->getTextureLayer(1);
-    mMinecraft->mTextures->bindTexture(&BLOCKS_LOCATION);
-    float u0 = (float)sprite->getU0(true);
-    float v0 = (float)sprite->getV0(true);
-    float u1 = (float)sprite->getU1(true);
-    float v1 = (float)sprite->getV1(true);
     GlStateManager::pushMatrix();
+    TextureAtlasSprite* spriteA = static_cast<FireBlock*>(Blocks::fire)->getTextureLayer(1);
+    mMinecraft->mTextures->bindTexture(&BLOCKS_LOCATION);
+    float u0A = (float)spriteA->getU0(true);
+    float u1A = (float)spriteA->getU1(true);
+    float v0A = (float)spriteA->getV0(true);
+    float v1A = (float)spriteA->getV1(true);
     GlStateManager::translatef(0.24f, -0.3f, 0.0f);
     GlStateManager::rotatef(-10.0f, 0.0f, 1.0f, 0.0f);
     builder->begin();
-    builder->vertexUV(-0.5f, -0.5f, -0.5f, u1, v1);
-    builder->vertexUV(0.5f, -0.5f, -0.5f, u0, v1);
-    builder->vertexUV(0.5f, 0.5f, -0.5f, u0, v0);
-    builder->vertexUV(-0.5f, 0.5f, -0.5f, u1, v0);
+    builder->vertexUV(-0.5f, -0.5f, -0.5f, u1A, v1A);
+    builder->vertexUV(0.5f, -0.5f, -0.5f, u0A, v1A);
+    builder->vertexUV(0.5f, 0.5f, -0.5f, u0A, v0A);
+    builder->vertexUV(-0.5f, 0.5f, -0.5f, u1A, v0A);
     builder->end();
     GlStateManager::popMatrix();
     GlStateManager::pushMatrix();
+    TextureAtlasSprite* spriteB = static_cast<FireBlock*>(Blocks::fire)->getTextureLayer(1);
+    mMinecraft->mTextures->bindTexture(&BLOCKS_LOCATION);
+    float u0B = (float)spriteB->getU0(true);
+    float u1B = (float)spriteB->getU1(true);
+    float v0B = (float)spriteB->getV0(true);
+    float v1B = (float)spriteB->getV1(true);
     GlStateManager::translatef(-0.24f, -0.3f, 0.0f);
     GlStateManager::rotatef(10.0f, 0.0f, 1.0f, 0.0f);
     builder->begin();
-    builder->vertexUV(-0.5f, -0.5f, -0.5f, u1, v1);
-    builder->vertexUV(0.5f, -0.5f, -0.5f, u0, v1);
-    builder->vertexUV(0.5f, 0.5f, -0.5f, u0, v0);
-    builder->vertexUV(-0.5f, 0.5f, -0.5f, u1, v0);
+    builder->vertexUV(-0.5f, -0.5f, -0.5f, u1B, v1B);
+    builder->vertexUV(0.5f, -0.5f, -0.5f, u0B, v1B);
+    builder->vertexUV(0.5f, 0.5f, -0.5f, u0B, v0B);
+    builder->vertexUV(-0.5f, 0.5f, -0.5f, u1B, v0B);
     builder->end();
     GlStateManager::popMatrix();
     GlStateManager::color4f(1.0f, 1.0f, 1.0f, 1.0f);
@@ -975,8 +983,8 @@ void ItemInHandRenderer::tick()
     if (!player->isHandsBusy())
     {
         bool bothMaps = mMainHandItem->getItem() == Items::filledMap && mainHandItem->getItem() == Items::filledMap;
-        int aux = mMainHandItem->getAuxValue();
-        bool specialMapAux = aux == 0xFF || aux == 0xFE || aux == 0xFD;
+        bool specialMapAux = mMainHandItem->getAuxValue() == 255 || mMainHandItem->getAuxValue() == 254
+                             || mMainHandItem->getAuxValue() == 253;
         if (bothMaps && specialMapAux)
         {
             CalculateNewHandHeights(false);
@@ -993,7 +1001,7 @@ void ItemInHandRenderer::tick()
         mMainHandHeight = Mth::clamp(mMainHandHeight - 0.4f, 0.0f, 1.0f);
         mOffHandHeight = Mth::clamp(mOffHandHeight - 0.4f, 0.0f, 1.0f);
     }
-    if (mMainHandHeight <= 0.1f)
+    if (mMainHandHeight < 0.1f)
     {
         mMainHandItem = mainHandItem;
     }

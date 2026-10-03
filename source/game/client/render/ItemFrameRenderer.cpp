@@ -8,6 +8,7 @@
 #include "game/client/render/BlockRenderer.hpp"
 #include "game/client/render/EntityRenderDispatcher.hpp"
 #include "game/client/render/GameRenderer.hpp"
+#include "game/client/render/LevelRenderer.hpp"
 #include "game/client/render/ItemRenderer.hpp"
 #include "game/client/render/MapRenderer.hpp"
 #include "game/client/render/Tesselator.hpp"
@@ -18,6 +19,7 @@
 #include "game/core/MemoryTracker.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/entity/mob/HangingEntity.hpp"
 #include "game/item/ItemFrame.hpp"
 #include "game/item/Item.hpp"
 #include "game/item/ItemInstance.hpp"
@@ -65,9 +67,9 @@ void ItemFrameRenderer::drawBlockFrame(const boost::shared_ptr<ItemFrame>& itemF
         BufferBuilder* builder = tesselator->getBuilder();
         builder->begin();
         GlStateManager::newList(mBlockFrameDisplayList, 0);
-        TypedBoxed<PlanksBlock::Variant*> variant(PlanksBlock::Variant::BIRCH);
-        const BlockState* state = Blocks::planks->defaultBlockState()->setBoxedValue(PlanksBlock::VARIANT, &variant);
-        BlockRenderer* renderer = mMinecraft->getBlockRenderer()->getBlockRenderer();
+        const BlockState* state =
+            Blocks::planks->defaultBlockState()->setValue(PlanksBlock::VARIANT, PlanksBlock::Variant::BIRCH);
+        BlockRenderer* renderer = Minecraft::GetInstance()->mLevelRenderer->mBlockRenderers[0];
         renderer->setFixedShape(0.0625f, 0.0625f, 0.9375625f, 0.9375f, 0.9375f, 1.0f);
         renderer->setFixedTexture(mFrameIcon);
         renderer->renderBlock(state, 1.0f, 1.0f, false, false);
@@ -96,14 +98,18 @@ void ItemFrameRenderer::drawFrame(const boost::shared_ptr<ItemFrame>& itemFrame)
     mDispatcher->mTextures->bindTexture(&BLOCKS_LOCATION);
     if (mFrameDisplayList == -1)
     {
+        LevelRenderer* levelRenderer = Minecraft::GetInstance()->mLevelRenderer;
+        BlockRenderer* renderer = levelRenderer->mBlockRenderers[0];
+        if (renderer == NULL && (renderer = levelRenderer->mBlockRenderers[1]) == NULL &&
+            (renderer = levelRenderer->mBlockRenderers[2]) == NULL)
+            renderer = levelRenderer->mBlockRenderers[3];
         mFrameDisplayList = MemoryTracker::genLists(1);
         Tesselator* tesselator = Tesselator::getInstance();
         BufferBuilder* builder = tesselator->getBuilder();
         builder->begin();
         GlStateManager::newList(mFrameDisplayList, 0);
-        TypedBoxed<PlanksBlock::Variant*> variant(PlanksBlock::Variant::BIRCH);
-        const BlockState* state = Blocks::planks->defaultBlockState()->setBoxedValue(PlanksBlock::VARIANT, &variant);
-        BlockRenderer* renderer = mMinecraft->getBlockRenderer()->getBlockRenderer();
+        const BlockState* state =
+            Blocks::planks->defaultBlockState()->setValue(PlanksBlock::VARIANT, PlanksBlock::Variant::BIRCH);
         renderer->setFixedShape(0.1875f, 0.1875f, 0.96875f, 0.8125f, 0.8125f, 1.0f);
         renderer->setFixedTexture(mFrameIcon);
         renderer->renderBlock(state, 1.0f, 1.0f, false, false);
@@ -133,10 +139,15 @@ void ItemFrameRenderer::drawItem(const boost::shared_ptr<ItemFrame>& itemFrame)
         return;
     GlStateManager::pushMatrix();
     GlStateManager::disableLighting();
-    if (item->getItem() == Items::filledMap)
+    const bool isMap = item->getItem() == Items::filledMap;
+    int rotation;
+    if (isMap)
+        rotation = itemFrame->getRotation() % 4 * 2;
+    else
+        rotation = itemFrame->getRotation();
+    GlStateManager::rotatef(static_cast<float>(rotation) * 360.0f / 8.0f, 0.0f, 0.0f, 1.0f);
+    if (isMap)
     {
-        const int rotation = itemFrame->getRotation() % 4 * 2;
-        GlStateManager::rotatef(static_cast<float>(rotation) * 360.0f / 8.0f, 0.0f, 0.0f, 1.0f);
         mDispatcher->mTextures->bindTexture(&MAP_BACKGROUND_LOCATION);
         GlStateManager::rotatef(180.0f, 0.0f, 0.0f, 1.0f);
         GlStateManager::scalef(0.0078125f, 0.0078125f, 0.0078125f);
@@ -148,7 +159,6 @@ void ItemFrameRenderer::drawItem(const boost::shared_ptr<ItemFrame>& itemFrame)
     }
     else
     {
-        GlStateManager::rotatef(static_cast<float>(itemFrame->getRotation()) * 360.0f / 8.0f, 0.0f, 0.0f, 1.0f);
         GlStateManager::scalef(0.5f, 0.5f, 0.5f);
         mItemRenderer->renderStatic(item, boost::shared_ptr<LivingEntity>(), ItemTransforms::FIXED, 1.0f, false, NULL);
     }
@@ -161,11 +171,12 @@ void ItemFrameRenderer::render(boost::shared_ptr<Entity>& entity, double x, doub
     ++gHangingEntityRenderCount;
     PIXBeginNamedEvent(0.0f, "ItemFrameRenderer");
     boost::shared_ptr<ItemFrame> itemFrame = boost::static_pointer_cast<ItemFrame>(entity);
-    BlockPos pos = itemFrame->getPos();
     GlStateManager::pushMatrix();
-    GlStateManager::translated((double)pos.x - itemFrame->mX + x + 0.5,
-                               (double)pos.y - itemFrame->mY + y + 0.5,
-                               (double)pos.z - itemFrame->mZ + z + 0.5);
+    BlockPos pos = itemFrame->getPos();
+    double dx = (double)pos.x - itemFrame->mX + x + 0.5;
+    double dy = (double)pos.y - itemFrame->mY + y + 0.5;
+    double dz = (double)pos.z - itemFrame->mZ + z + 0.5;
+    GlStateManager::translated(dx, dy, dz);
     GlStateManager::rotatef(180.0f - itemFrame->mYRot, 0.0f, 1.0f, 0.0f);
     GlStateManager::pushMatrix();
     GlStateManager::translatef(-0.5f, -0.5f, -0.5f);
@@ -174,8 +185,7 @@ void ItemFrameRenderer::render(boost::shared_ptr<Entity>& entity, double x, doub
         GlStateManager::enableColorMaterial();
         GlStateManager::setupSolidRenderingTextureCombine((int)getTeamColor(entity));
     }
-    not_null_ptr<ItemInstance> item = itemFrame->getItem();
-    if (item->getItem() == Items::filledMap)
+    if (itemFrame->getItem()->getItem() == Items::filledMap)
         drawBlockFrame(itemFrame);
     else
         drawFrame(itemFrame);
@@ -188,7 +198,7 @@ void ItemFrameRenderer::render(boost::shared_ptr<Entity>& entity, double x, doub
     GlStateManager::translatef(0.0f, 0.0f, 0.4375f);
     drawItem(itemFrame);
     GlStateManager::popMatrix();
-    const Direction* direction = itemFrame->getDirection();
+    const Direction* direction = itemFrame->mDirection;
     renderName(entity, x + static_cast<float>(direction->getStepX()) * 0.3f, y - 0.25,
                z + static_cast<float>(direction->getStepZ()) * 0.3f);
     PIXEndNamedEvent();
@@ -197,13 +207,11 @@ void ItemFrameRenderer::render(boost::shared_ptr<Entity>& entity, double x, doub
 void ItemFrameRenderer::renderName(boost::shared_ptr<Entity>& entity, double x, double y, double z)
 {
     boost::shared_ptr<ItemFrame> itemFrame = boost::static_pointer_cast<ItemFrame>(entity);
-    if (!Minecraft::renderNames())
-        return;
-    not_null_ptr<ItemInstance> item = itemFrame->getItem();
-    if (item->isEmpty() || !item->hasCustomHoverName() || mDispatcher->mPlayer.get() != itemFrame.get())
+    if (!(Minecraft::renderNames() && !itemFrame->getItem()->isEmpty() &&
+          itemFrame->getItem()->hasCustomHoverName() && mDispatcher->mPlayer.get() == itemFrame.get()))
         return;
     double distance = itemFrame->distanceToSqr(mDispatcher->mCamera);
     float maxDistance = itemFrame->isSneaking() ? 32.0f : 64.0f;
     if (distance < (double)(maxDistance * maxDistance))
-        renderNameTag(entity, item->getHoverName(), x, y, z, 64, 0xff000000);
+        renderNameTag(entity, itemFrame->getItem()->getHoverName(), x, y, z, 64, 0xff000000);
 }

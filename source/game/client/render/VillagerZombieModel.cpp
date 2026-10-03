@@ -94,15 +94,15 @@ void VillagerZombieModel::setupAnim(float limbSwing, float limbSwingAmount, floa
     HumanoidModel::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, defaultSkinAdjustments);
 
     boost::shared_ptr<Zombie> zombie = boost::static_pointer_cast<Zombie>(entity);
-    float swing = Mth::sin(mAttackTime * 3.1415927410125732f);
-    float swingBack = Mth::sin((1.0f - (1.0f - mAttackTime) * (1.0f - mAttackTime)) * 3.1415927410125732f);
+    float swing = Mth::sin(mAttackTime * 3.1415927f);
+    float swingBack = Mth::sin((1.0f - (1.0f - mAttackTime) * (1.0f - mAttackTime)) * 3.1415927f);
 
     mRightArm->mZRot = 0.0f;
     mLeftArm->mZRot = 0.0f;
     mRightArm->mYRot = -(0.1f - swing * 0.6f);
     mLeftArm->mYRot = 0.1f - swing * 0.6f;
 
-    float armXRot = -3.1415927410125732f / (zombie->isAggressive() ? 1.5f : 2.25f);
+    float armXRot = -3.1415927f / (zombie->isAggressive() ? 1.5f : 2.25f);
     mRightArm->mXRot = armXRot;
     mLeftArm->mXRot = armXRot;
     mRightArm->mXRot += swing * 1.2f - swingBack * 0.4f;

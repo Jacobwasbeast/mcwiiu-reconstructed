@@ -212,7 +212,7 @@ void PhantomModel::setupAnim(float limbSwing, float limbSwingAmount, float ageIn
                              float headPitch, float scale, boost::shared_ptr<Entity> entity,
                              _SkinAdjustments skinAdjustments)
 {
-    const float radians = 0.01745329238474369f;
+    const float radians = 0.017453292f;
     const float angle = (entity->getId() * 3.0f + ageInTicks) * 0.13f;
 
     mPhantomParts[1]->mZRot = (Mth::cos(angle) * 16.0f + 16.0f) * radians;

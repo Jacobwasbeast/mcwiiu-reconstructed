@@ -73,8 +73,8 @@ void TextureTheme::Apply(Random&, BlockTransaction* transaction, int&, int&) con
 {
     const int width = transaction->mSize.x;
     const int depth = transaction->mSize.z;
-    unsigned int size = width > depth ? width : depth;
-    BufferedImage* image = mAssets.getAssetForSize(size);
+    unsigned int size = width < depth ? depth : width;
+    BufferedImage* image = getAssetForSize(size);
     int xOffset = ((int)image->getWidth() - width) / 2;
     int zOffset = ((int)image->getHeight() - depth) / 2;
     for (int x = 0; x < width; ++x)

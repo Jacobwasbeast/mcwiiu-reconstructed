@@ -3,7 +3,18 @@
 
 class ResourceManager;
 
-class AbstractTexture
+class TextureObject
+{
+public:
+    virtual void setFilter(bool blur, bool mipmap) = 0;
+    virtual void pushFilter(bool blur, bool mipmap) = 0;
+    virtual void popFilter() = 0;
+    virtual void load(ResourceManager* resourceManager) = 0;
+    virtual int getId() = 0;
+    virtual void releaseId() = 0;
+};
+
+class AbstractTexture : public TextureObject
 {
 public:
     AbstractTexture();

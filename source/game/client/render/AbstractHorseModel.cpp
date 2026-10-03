@@ -13,7 +13,7 @@
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/util/Math.hpp"
 
-static const float DEGREES_TO_RADIANS = 0.01745329238474369f;
+static const float DEGREES_TO_RADIANS = 0.017453292f;
 static const float EATING_HEAD_X_ROT = 110.0f * DEGREES_TO_RADIANS;
 
 AbstractHorseModel::AbstractHorseModel(bool horse, const ModelDefinition& modelDefinition)
@@ -34,22 +34,22 @@ AbstractHorseModel::AbstractHorseModel(bool horse, const ModelDefinition& modelD
         mEar1 = new ModelPartSkin(this, L"Ear1", modelDefinition, mHead, 0.0f, NULL);
         mEar1->mXRot = 0.0f;
         mEar1->mYRot = 0.0f;
-        mEar1->mZRot = 0.0872664675116539f;
+        mEar1->mZRot = 0.08726647f;
 
         mEar2 = new ModelPartSkin(this, L"Ear2", modelDefinition, mHead, 0.0f, NULL);
         mEar2->mXRot = 0.0f;
         mEar2->mYRot = 0.0f;
-        mEar2->mZRot = -0.0872664675116539f;
+        mEar2->mZRot = -0.08726647f;
 
         mMuleEarL = new ModelPartSkin(this, L"MuleEarL", modelDefinition, mHead, 0.0f, NULL);
         mMuleEarL->mXRot = 0.0f;
         mMuleEarL->mYRot = 0.0f;
-        mMuleEarL->mZRot = 0.2617993950843811f;
+        mMuleEarL->mZRot = 0.2617994f;
 
         mMuleEarR = new ModelPartSkin(this, L"MuleEarR", modelDefinition, mHead, 0.0f, NULL);
         mMuleEarR->mXRot = 0.0f;
         mMuleEarR->mYRot = 0.0f;
-        mMuleEarR->mZRot = -0.2617993950843811f;
+        mMuleEarR->mZRot = -0.2617994f;
 
         mLeg1A = new ModelPartSkin(this, L"Leg1A", modelDefinition, NULL, 0.0f, NULL);
         mLeg2A = new ModelPartSkin(this, L"Leg2A", modelDefinition, NULL, 0.0f, NULL);
@@ -104,7 +104,7 @@ AbstractHorseModel::AbstractHorseModel(bool horse, const ModelDefinition& modelD
         mNeck = new ModelPartSkin(this, 0, 35, NULL);
         mNeck->setPos(0.0f, 7.0f, -8.0f);
         mNeck->addBox(-2.0f, -11.0f, -3.0f, 4, 12, 7);
-        mNeck->mXRot = 0.5235987901687622f;
+        mNeck->mXRot = 0.5235988f;
 
         mHead = new ModelPartSkin(this, 0, 13, NULL);
         mHead->setPos(0.0f, -11.0f, -3.0f);
@@ -113,32 +113,32 @@ AbstractHorseModel::AbstractHorseModel(bool horse, const ModelDefinition& modelD
         mMane = new ModelPartSkin(this, 56, 36, NULL);
         mMane->setPos(0.0f, 7.0f, -8.0f);
         mMane->addBox(-1.0f, -16.0f, 4.0f, 2, 16, 2);
-        mMane->mXRot = 0.5235987901687622f;
+        mMane->mXRot = 0.5235988f;
 
         mUMouth = new ModelPartSkin(this, 0, 25, NULL);
         mUMouth->setPos(0.0f, 0.0f, 0.0f);
         mUMouth->addBox(-2.0f, -5.0f, -5.0f, 4, 5, 5);
-        mUMouth->mXRot = 0.5235987901687622f;
+        mUMouth->mXRot = 0.5235988f;
 
         mEar1 = new ModelPartSkin(this, 19, 16, NULL);
         mEar1->setPos(0.0f, 11.0f, 3.0f);
         mEar1->addBox(-0.5f, -18.0f, 2.9f, 2, 3, 1);
-        mEar1->mZRot = 0.0872664675116539f;
+        mEar1->mZRot = 0.08726647f;
 
         mEar2 = new ModelPartSkin(this, 19, 16, NULL);
         mEar2->setPos(0.0f, 11.0f, 3.0f);
         mEar2->addBox(-1.5f, -18.0f, 2.9f, 2, 3, 1);
-        mEar2->mZRot = -0.0872664675116539f;
+        mEar2->mZRot = -0.08726647f;
 
         mMuleEarL = new ModelPartSkin(this, 0, 12, NULL);
         mMuleEarL->setPos(0.0f, 11.0f, 3.0f);
         mMuleEarL->addBox(-3.0f, -22.0f, 2.9f, 2, 7, 1);
-        mMuleEarL->mZRot = 0.2617993950843811f;
+        mMuleEarL->mZRot = 0.2617994f;
 
         mMuleEarR = new ModelPartSkin(this, 0, 12, NULL);
         mMuleEarR->setPos(0.0f, 11.0f, 3.0f);
         mMuleEarR->addBox(1.0f, -22.0f, 2.9f, 2, 7, 1);
-        mMuleEarR->mZRot = -0.2617993950843811f;
+        mMuleEarR->mZRot = -0.2617994f;
 
         mLeg1A = new ModelPartSkin(this, 48, 21, NULL);
         mLeg1A->mMirror = true;
@@ -161,7 +161,7 @@ AbstractHorseModel::AbstractHorseModel(bool horse, const ModelDefinition& modelD
         mTailA = new ModelPartSkin(this, 42, 36, NULL);
         mTailA->setPos(0.0f, -7.0f, 2.0f);
         mTailA->addBox(-1.5f, 0.0f, -2.0f, 3, 14, 4);
-        mTailA->mXRot = 0.5235987901687622f;
+        mTailA->mXRot = 0.5235988f;
 
         mSaddle = new ModelPartSkin(this, 26, 0, NULL);
         mSaddle->setPos(0.0f, -9.0f, -7.0f);
@@ -178,12 +178,12 @@ AbstractHorseModel::AbstractHorseModel(bool horse, const ModelDefinition& modelD
         mSaddleMouthLine = new ModelPartSkin(this, 32, 2, NULL);
         mSaddleMouthLine->setPos(0.0f, 7.0f, -8.0f);
         mSaddleMouthLine->addBox(3.1f, -10.0f, -11.5f, 0, 3, 16);
-        mSaddleMouthLine->mXRot = 1.5707963705062866f;
+        mSaddleMouthLine->mXRot = 1.5707964f;
 
         mSaddleMouthLineR = new ModelPartSkin(this, 32, 2, NULL);
         mSaddleMouthLineR->setPos(0.0f, 7.0f, -8.0f);
         mSaddleMouthLineR->addBox(-3.1f, -10.0f, -11.5f, 0, 3, 16);
-        mSaddleMouthLineR->mXRot = 1.5707963705062866f;
+        mSaddleMouthLineR->mXRot = 1.5707964f;
 
         mHeadSaddle = new ModelPartSkin(this, 19, 0, NULL);
         mHeadSaddle->setPos(0.0f, 11.0f, 3.0f);
@@ -193,12 +193,12 @@ AbstractHorseModel::AbstractHorseModel(bool horse, const ModelDefinition& modelD
         mBag1 = new ModelPartSkin(this, 26, 21, NULL);
         mBag1->setPos(-5.0f, 3.0f, 11.0f);
         mBag1->addBox(-9.0f, 0.0f, 0.0f, 8, 8, 3);
-        mBag1->mYRot = -1.5707963705062866f;
+        mBag1->mYRot = -1.5707964f;
 
         mBag2 = new ModelPartSkin(this, 26, 21, NULL);
         mBag2->setPos(5.0f, 3.0f, 11.0f);
         mBag2->addBox(1.0f, 0.0f, 0.0f, 8, 8, 3);
-        mBag2->mYRot = 1.5707963705062866f;
+        mBag2->mYRot = 1.5707964f;
 
         mNeck->addChild(mHead);
         mHead->addChild(mUMouth);
@@ -282,14 +282,14 @@ void AbstractHorseModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity
 
     float legSwing = legCos * 0.8f * limbSwingAmount;
 
-    mNeck->mXRot = headPitch + 0.5235987901687622f;
+    mNeck->mXRot = headPitch + 0.5235988f;
     mNeck->mYRot = netHeadYaw * DEGREES_TO_RADIANS;
 
     float bob = Mth::sin(ageInTicks);
     float notAnim = 1.0f - std::max(standAnim, eatAnim);
 
     mNeck->mXRot = notAnim * (mouthAnim * bob * 0.05f + mNeck->mXRot)
-        + (standAnim * (headPitch + 0.2617993950843811f) + eatAnim * (bob * 0.05f + EATING_HEAD_X_ROT));
+        + (standAnim * (headPitch + 0.2617994f) + eatAnim * (bob * 0.05f + EATING_HEAD_X_ROT));
     mNeck->mYRot = standAnim * netHeadYaw * DEGREES_TO_RADIANS + notAnim * mNeck->mYRot;
     mNeck->mY = notAnim * mNeck->mY + (standAnim * -4.0f + eatAnim * 8.0f);
     mNeck->mZ = notAnim * mNeck->mZ + (eatAnim * -10.0f - standAnim);
@@ -304,7 +304,7 @@ void AbstractHorseModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity
     mMane->mXRot = mNeck->mXRot;
     mMane->mYRot = mNeck->mYRot;
 
-    mUMouth->mXRot = -(mouthAnim * 0.09424778074026108f);
+    mUMouth->mXRot = -(mouthAnim * 0.09424778f);
     mUMouth->mYRot = 0.0f;
 
     float bagXRot = legSwing / 5.0f;

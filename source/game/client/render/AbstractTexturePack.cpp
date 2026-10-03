@@ -43,10 +43,6 @@ AbstractTexturePack::AbstractTexturePack(unsigned int id,
 {
 }
 
-AbstractTexturePack::~AbstractTexturePack()
-{
-}
-
 void AbstractTexturePack::unload(Textures* pTextures)
 {
     if (m_pIconImage == NULL)
@@ -278,9 +274,11 @@ const void* AbstractTexturePack::getPackIcon(unsigned int& size)
     if (m_iconSize == 0 || m_pIconData == NULL)
         loadIcon();
 
-    size = m_iconSize;
+    const void* pData = m_pIconData;
+    unsigned int dataSize = m_iconSize;
+    size = dataSize;
 
-    return m_pIconData;
+    return pData;
 }
 
 const void* AbstractTexturePack::getPackComparison(unsigned int& size)
@@ -288,9 +286,11 @@ const void* AbstractTexturePack::getPackComparison(unsigned int& size)
     if (m_comparisonSize == 0 || m_pComparisonData == NULL)
         loadComparison();
 
-    size = m_comparisonSize;
+    const void* pData = m_pComparisonData;
+    unsigned int dataSize = m_comparisonSize;
+    size = dataSize;
 
-    return m_pComparisonData;
+    return pData;
 }
 
 unsigned int AbstractTexturePack::getDLCParentPackId()

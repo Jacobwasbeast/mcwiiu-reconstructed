@@ -28,6 +28,6 @@ void ShulkerBulletModel::setupAnim(float limbSwing, float limbSwingAmount, float
 {
     Model::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, skinAdjustments);
 
-    mBase->mYRot = netHeadYaw * 0.01745329238474369f;
-    mBase->mXRot = headPitch * 0.01745329238474369f;
+    mBase->mYRot = netHeadYaw * 0.017453292f;
+    mBase->mXRot = headPitch * 0.017453292f;
 }

@@ -5,9 +5,12 @@
 
 class BufferedImage;
 class MemTextureProcessor;
+class Textures;
 
 class MemTexture
 {
+    friend class Textures;
+
 private:
     BufferedImage* m_image;
     int m_referenceCount;

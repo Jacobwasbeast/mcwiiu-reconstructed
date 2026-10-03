@@ -20,7 +20,17 @@ public:
                         File* pFile,
                         const std::wstring& packName,
                         TexturePack* pParentPack);
-    virtual ~AbstractTexturePack();
+
+    virtual void loadIcon();
+    virtual void loadComparison();
+    virtual void loadDescription();
+    virtual void loadName();
+    virtual InputStream* getResourceImplementation(const std::wstring& fileName) = 0;
+    virtual bool hasFile(const std::wstring& fileName) = 0;
+    virtual std::wstring getWorldName();
+    virtual std::wstring getAnimationString(const std::wstring& fileName,
+                                            const std::wstring& animationName,
+                                            const std::wstring& defaultString);
 
     virtual void unload(Textures* pTextures);
     virtual void load(Textures* pTextures);
@@ -55,17 +65,6 @@ public:
     virtual ArchiveFile* getArchiveFile();
     virtual bool HasCustomModel(const std::wstring& modelName);
     virtual ModelDefinition* GetCustomModel(const std::wstring& modelName);
-
-    virtual void loadIcon();
-    virtual void loadComparison();
-    virtual void loadDescription();
-    virtual void loadName();
-    virtual InputStream* getResourceImplementation(const std::wstring& fileName) = 0;
-    virtual bool hasFile(const std::wstring& fileName) = 0;
-    virtual std::wstring getWorldName();
-    virtual std::wstring getAnimationString(const std::wstring& fileName,
-                                            const std::wstring& animationName,
-                                            const std::wstring& defaultString);
 
     void loadDefaultUI();
     void loadDefaultColourTable();

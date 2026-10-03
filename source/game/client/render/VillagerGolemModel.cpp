@@ -99,8 +99,8 @@ float VillagerGolemModel::triangleWave(float time, float period)
 
 void VillagerGolemModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
 {
-    mHead->mYRot = netHeadYaw / 57.2957763671875f;
-    mHead->mXRot = headPitch / 57.2957763671875f;
+    mHead->mYRot = netHeadYaw / 57.295776f;
+    mHead->mXRot = headPitch / 57.295776f;
 
     mLeg0->mXRot = -1.5f * triangleWave(limbSwing, 13.0f) * limbSwingAmount;
     mLeg1->mXRot = 1.5f * triangleWave(limbSwing, 13.0f) * limbSwingAmount;

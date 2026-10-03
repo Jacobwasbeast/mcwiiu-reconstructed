@@ -15,6 +15,7 @@
 #include "game/core/BufferBuilder.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/Culler.hpp"
+#include "game/core/MemSect.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/core/Options.hpp"
@@ -173,21 +174,22 @@ const ResourceLocation* EntityRenderer::getTextureLocation(boost::shared_ptr<Ent
 void EntityRenderer::renderFlame(boost::shared_ptr<Entity>& entity, double x, double y, double z, float)
 {
     GlStateManager::disableLighting();
-    FireBlock* fire = static_cast<FireBlock*>(Blocks::fire);
-    TextureAtlasSprite* fire0 = fire->getTextureLayer(0);
-    TextureAtlasSprite* fire1 = fire->getTextureLayer(1);
+    TextureAtlasSprite* fire0 = static_cast<FireBlock*>(Blocks::fire)->getTextureLayer(0);
+    TextureAtlasSprite* fire1 = static_cast<FireBlock*>(Blocks::fire)->getTextureLayer(1);
     GlStateManager::pushMatrix();
     GlStateManager::translatef((float)x, (float)y, (float)z);
     float scale = entity->mBbWidth * 1.4F;
     GlStateManager::scalef(scale, scale, scale);
-    bindTexture(mDispatcher->mTextures->getTextureLocation(0));
+    MemSect(0x1f);
+    bindTexture(&BLOCKS_LOCATION);
+    MemSect(0);
 
     BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
     float halfWidth = 0.5F;
     float height = entity->mBbHeight / scale;
     float yOffset = (float)(entity->mY - entity->mBoundingBox->mMinY);
     GlStateManager::rotatef(-mDispatcher->mCameraYRot, 0.0F, 1.0F, 0.0F);
-    GlStateManager::translatef(0.0F, 0.0F, (float)std::floor(height) * 0.02F - 0.3F);
+    GlStateManager::translatef(0.0F, 0.0F, (float)(int)height * 0.02F - 0.3F);
     GlStateManager::color4f(1.0F, 1.0F, 1.0F, 1.0F);
 
     float depth = 0.0F;

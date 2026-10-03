@@ -35,15 +35,15 @@ void ZombieModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInT
         aggressive = zombie->isAggressive();
     }
 
-    float attackSwing = Mth::sin(mAttackTime * 3.1415927410125732f);
-    float attackSwingBack = Mth::sin((1.0f - (1.0f - mAttackTime) * (1.0f - mAttackTime)) * 3.1415927410125732f);
+    float attackSwing = Mth::sin(mAttackTime * 3.1415927f);
+    float attackSwingBack = Mth::sin((1.0f - (1.0f - mAttackTime) * (1.0f - mAttackTime)) * 3.1415927f);
 
     mRightArm->mZRot = 0.0f;
     mLeftArm->mZRot = 0.0f;
     mRightArm->mYRot = -(0.1f - attackSwing * 0.6f);
     mLeftArm->mYRot = 0.1f - attackSwing * 0.6f;
 
-    float armXRot = -3.1415927410125732f / (aggressive ? 1.5f : 2.25f);
+    float armXRot = -3.1415927f / (aggressive ? 1.5f : 2.25f);
 
     if (mRightArmPose != eArmPose_ThrowSpear)
     {

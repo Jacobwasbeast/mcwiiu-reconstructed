@@ -1,7 +1,6 @@
 #include "game/client/render/MobSkinTextureProcessor.hpp"
 
-uint32_t MobSkinTextureProcessor::process(BufferedImage* image)
+BufferedImage* MobSkinTextureProcessor::process(BufferedImage*)
 {
-    (void)image;
     return 0;
 }

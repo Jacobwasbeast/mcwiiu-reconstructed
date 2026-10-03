@@ -65,10 +65,10 @@ void SnowManModel::setupAnim(float limbSwing, float limbSwingAmount, float ageIn
 {
     Model::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, _SkinAdjustments());
 
-    mHead->mYRot = netHeadYaw * 0.01745329238474369f;
-    mHead->mXRot = headPitch * 0.01745329238474369f;
+    mHead->mYRot = netHeadYaw * 0.017453292f;
+    mHead->mXRot = headPitch * 0.017453292f;
 
-    mPiece1->mYRot = netHeadYaw * 0.01745329238474369f * 0.25f;
+    mPiece1->mYRot = netHeadYaw * 0.017453292f * 0.25f;
 
     float sinBody = Mth::sin(mPiece1->mYRot);
     float cosBody = Mth::cos(mPiece1->mYRot);

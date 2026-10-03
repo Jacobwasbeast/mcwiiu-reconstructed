@@ -88,13 +88,13 @@ void VillagerModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, f
 
 void VillagerModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
 {
-    mHead->mXRot = headPitch * 0.01745329238474369f;
-    mHead->mYRot = netHeadYaw * 0.01745329238474369f;
+    mHead->mXRot = headPitch * 0.017453292f;
+    mHead->mYRot = netHeadYaw * 0.017453292f;
     mArms->mY = 3.0f;
     mArms->mXRot = -0.75f;
     mArms->mZ = -1.0f;
-    mLeg0->mXRot = Mth::cos(limbSwing * 0.6661999821662903f) * 1.4f * limbSwingAmount * 0.5f;
-    mLeg1->mXRot = Mth::cos(limbSwing * 0.6661999821662903f + 3.1415927410125732f) * 1.4f * limbSwingAmount * 0.5f;
+    mLeg0->mXRot = Mth::cos(limbSwing * 0.6662f) * 1.4f * limbSwingAmount * 0.5f;
+    mLeg1->mXRot = Mth::cos(limbSwing * 0.6662f + 3.1415927f) * 1.4f * limbSwingAmount * 0.5f;
     mLeg0->mYRot = 0.0f;
     mLeg1->mYRot = 0.0f;
 }

@@ -53,31 +53,31 @@ RabbitModel::RabbitModel(const ModelDefinition& modelDefinition)
         mHaunchLeft->addBox(-1.0f, 0.0f, 0.0f, 2, 4, 5);
         mHaunchLeft->setPos(3.0f, 17.5f, 3.7f);
         mHaunchLeft->mMirror = true;
-        setRotation(mHaunchLeft, -20.0f * 0.0174532924f, 0.0f, 0.0f);
+        setRotation(mHaunchLeft, -20.0f * Mth::DEG_TO_RAD, 0.0f, 0.0f);
 
         mHaunchRight = new ModelPartSkin(this, 16, 15, NULL);
         mHaunchRight->addBox(-1.0f, 0.0f, 0.0f, 2, 4, 5);
         mHaunchRight->setPos(-3.0f, 17.5f, 3.7f);
         mHaunchRight->mMirror = true;
-        setRotation(mHaunchRight, -20.0f * 0.0174532924f, 0.0f, 0.0f);
+        setRotation(mHaunchRight, -20.0f * Mth::DEG_TO_RAD, 0.0f, 0.0f);
 
         mBody = new ModelPartSkin(this, 0, 0, NULL);
         mBody->addBox(-3.0f, -2.0f, -10.0f, 6, 5, 10);
         mBody->setPos(0.0f, 19.0f, 8.0f);
         mBody->mMirror = true;
-        setRotation(mBody, -20.0f * 0.0174532924f, 0.0f, 0.0f);
+        setRotation(mBody, -20.0f * Mth::DEG_TO_RAD, 0.0f, 0.0f);
 
         mFrontLegLeft = new ModelPartSkin(this, 8, 15, NULL);
         mFrontLegLeft->addBox(-1.0f, 0.0f, -1.0f, 2, 7, 2);
         mFrontLegLeft->setPos(3.0f, 17.0f, -1.0f);
         mFrontLegLeft->mMirror = true;
-        setRotation(mFrontLegLeft, -10.0f * 0.0174532924f, 0.0f, 0.0f);
+        setRotation(mFrontLegLeft, -10.0f * Mth::DEG_TO_RAD, 0.0f, 0.0f);
 
         mFrontLegRight = new ModelPartSkin(this, 0, 15, NULL);
         mFrontLegRight->addBox(-1.0f, 0.0f, -1.0f, 2, 7, 2);
         mFrontLegRight->setPos(-3.0f, 17.0f, -1.0f);
         mFrontLegRight->mMirror = true;
-        setRotation(mFrontLegRight, -10.0f * 0.0174532924f, 0.0f, 0.0f);
+        setRotation(mFrontLegRight, -10.0f * Mth::DEG_TO_RAD, 0.0f, 0.0f);
 
         mHead = new ModelPartSkin(this, 32, 0, NULL);
         mHead->addBox(-2.5f, -4.0f, -5.0f, 5, 4, 5);
@@ -89,13 +89,13 @@ RabbitModel::RabbitModel(const ModelDefinition& modelDefinition)
         mEarRight->addBox(-2.5f, -9.0f, -1.0f, 2, 5, 1);
         mEarRight->setPos(0.0f, 16.0f, -1.0f);
         mEarRight->mMirror = true;
-        setRotation(mEarRight, 0.0f, -15.0f * 0.0174532924f, 0.0f);
+        setRotation(mEarRight, 0.0f, -15.0f * Mth::DEG_TO_RAD, 0.0f);
 
         mEarLeft = new ModelPartSkin(this, 58, 0, NULL);
         mEarLeft->addBox(0.5f, -9.0f, -1.0f, 2, 5, 1);
         mEarLeft->setPos(0.0f, 16.0f, -1.0f);
         mEarLeft->mMirror = true;
-        setRotation(mEarLeft, 0.0f, 15.0f * 0.0174532924f, 0.0f);
+        setRotation(mEarLeft, 0.0f, 15.0f * Mth::DEG_TO_RAD, 0.0f);
 
         mTail = new ModelPartSkin(this, 52, 6, NULL);
         mTail->addBox(-1.5f, -1.5f, 0.0f, 3, 3, 2);
@@ -145,6 +145,7 @@ void RabbitModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, flo
         mEarRight->render(scale, useDisplayList, false);
         mEarLeft->render(scale, useDisplayList, false);
         mTail->render(scale, useDisplayList, false);
+        mNose->render(scale, useDisplayList, false);
         GlStateManager::popMatrix();
         callSkinnedDrawlist();
     }
@@ -154,8 +155,9 @@ void RabbitModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, flo
         GlStateManager::scalef(0.56666666f, 0.56666666f, 0.56666666f);
         GlStateManager::translatef(0.0f, 22.0f * scale, 2.0f * scale);
         mHead->render(scale, useDisplayList, false);
-        mEarRight->render(scale, useDisplayList, false);
         mEarLeft->render(scale, useDisplayList, false);
+        mEarRight->render(scale, useDisplayList, false);
+        mNose->render(scale, useDisplayList, false);
         GlStateManager::popMatrix();
 
         GlStateManager::pushMatrix();
@@ -176,45 +178,45 @@ void RabbitModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, flo
 
 void RabbitModel::render(RabbitModel* model, float scale, bool useDisplayList)
 {
-    model->callSkinnedDrawlist();
-    model->mRearFootLeft->render(scale, useDisplayList, false);
-    model->mRearFootRight->render(scale, useDisplayList, false);
-    model->mHaunchLeft->render(scale, useDisplayList, false);
-    model->mHaunchRight->render(scale, useDisplayList, false);
-    model->mBody->render(scale, useDisplayList, false);
-    model->mFrontLegLeft->render(scale, useDisplayList, false);
-    model->mFrontLegRight->render(scale, useDisplayList, false);
-    model->mHead->render(scale, useDisplayList, false);
-    model->mEarRight->render(scale, useDisplayList, false);
-    model->mEarLeft->render(scale, useDisplayList, false);
-    model->mTail->render(scale, useDisplayList, false);
-    model->mNose->render(scale, useDisplayList, false);
+    mRearFootLeft->render(scale, useDisplayList, false);
+    mRearFootRight->render(scale, useDisplayList, false);
+    mHaunchLeft->render(scale, useDisplayList, false);
+    mHaunchRight->render(scale, useDisplayList, false);
+    mBody->render(scale, useDisplayList, false);
+    mFrontLegLeft->render(scale, useDisplayList, false);
+    mFrontLegRight->render(scale, useDisplayList, false);
+    mHead->render(scale, useDisplayList, false);
+    mEarRight->render(scale, useDisplayList, false);
+    mEarLeft->render(scale, useDisplayList, false);
+    mTail->render(scale, useDisplayList, false);
+    mNose->render(scale, useDisplayList, false);
+    callSkinnedDrawlist();
 }
 
 void RabbitModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch,
                             float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
 {
+    float partialTick = ageInTicks - (float)entity->mTickCount;
     boost::shared_ptr<Rabbit> rabbit = boost::dynamic_pointer_cast<Rabbit>(entity);
-    float jump = Mth::sin(rabbit->getJumpCompletion(ageInTicks - (float)rabbit->mTickCount) * 3.1415927f);
+
+    mEarRight->mXRot = headPitch * Mth::DEG_TO_RAD;
+    mEarLeft->mXRot = headPitch * Mth::DEG_TO_RAD;
+    mHead->mXRot = headPitch * Mth::DEG_TO_RAD;
+    mNose->mXRot = headPitch * Mth::DEG_TO_RAD;
+
+    mNose->mYRot = netHeadYaw * Mth::DEG_TO_RAD;
+    mHead->mYRot = netHeadYaw * Mth::DEG_TO_RAD;
+    mEarRight->mYRot = mNose->mYRot - 15.0f * Mth::DEG_TO_RAD;
+    mEarLeft->mYRot = mNose->mYRot + 15.0f * Mth::DEG_TO_RAD;
+
+    float jump = Mth::sin(rabbit->getJumpCompletion(partialTick) * Mth::PI);
     mJumpRotation = jump;
-
-    mEarRight->mXRot = headPitch * 0.0174532924f;
-    mEarLeft->mXRot = headPitch * 0.0174532924f;
-    mHead->mXRot = headPitch * 0.0174532924f;
-    mNose->mXRot = headPitch * 0.0174532924f;
-
-    mNose->mYRot = netHeadYaw * 0.0174532924f;
-    mHead->mYRot = netHeadYaw * 0.0174532924f;
-    mEarRight->mYRot = mNose->mYRot - 15.0f * 0.0174532924f;
-    mEarLeft->mYRot = mNose->mYRot + 15.0f * 0.0174532924f;
-
-    mRearFootLeft->mXRot = jump * 50.0f * 0.0174532924f;
-    mRearFootRight->mXRot = jump * 50.0f * 0.0174532924f;
-    mHaunchLeft->mXRot = (jump * 50.0f - 21.0f) * 0.0174532924f;
-    mHaunchRight->mXRot = (jump * 50.0f - 21.0f) * 0.0174532924f;
-    mJumpRotation = jump;
-    mFrontLegLeft->mXRot = (jump * -40.0f - 11.0f) * 0.0174532924f;
-    mFrontLegRight->mXRot = (jump * -40.0f - 11.0f) * 0.0174532924f;
+    mRearFootLeft->mXRot = jump * 50.0f * Mth::DEG_TO_RAD;
+    mRearFootRight->mXRot = jump * 50.0f * Mth::DEG_TO_RAD;
+    mHaunchLeft->mXRot = (jump * 50.0f - 21.0f) * Mth::DEG_TO_RAD;
+    mHaunchRight->mXRot = (jump * 50.0f - 21.0f) * Mth::DEG_TO_RAD;
+    mFrontLegLeft->mXRot = (jump * -40.0f - 11.0f) * Mth::DEG_TO_RAD;
+    mFrontLegRight->mXRot = (jump * -40.0f - 11.0f) * Mth::DEG_TO_RAD;
 }
 
 void RabbitModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount,
@@ -222,12 +224,10 @@ void RabbitModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float
 {
     Model::prepareMobModel(entity, limbSwing, limbSwingAmount, partialTicks);
     boost::shared_ptr<Rabbit> rabbit = boost::dynamic_pointer_cast<Rabbit>(entity);
-    mJumpRotation = Mth::sin(rabbit->getJumpCompletion(partialTicks) * 3.1415927f);
+    mJumpRotation = Mth::sin(rabbit->getJumpCompletion(partialTicks) * Mth::PI);
 }
 
 std::wstring RabbitModel::getName()
 {
-    std::wstring result;
-    result.assign(L"rabbit");
-    return result;
+    return L"rabbit";
 }

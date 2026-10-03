@@ -128,13 +128,13 @@ void QuadrupedModel::setupAnim(float limbSwing, float limbSwingAmount, float age
                                float netHeadYaw, float headPitch, float scale,
                                boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
 {
-    mHead->mYRot = netHeadYaw * 0.01745329238474369f;
-    mHead->mXRot = headPitch * 0.01745329238474369f;
-    mBody->mXRot = 90.0f * 0.01745329238474369f;
+    mHead->mYRot = netHeadYaw * 0.017453292f;
+    mHead->mXRot = headPitch * 0.017453292f;
+    mBody->mXRot = 90.0f * 0.017453292f;
 
     mLeg0->mXRot = Mth::cos(limbSwing * 0.6662f) * 1.4f * limbSwingAmount;
-    mLeg1->mXRot = Mth::cos(limbSwing * 0.6662f + 3.1415927410125732f) * 1.4f * limbSwingAmount;
-    mLeg2->mXRot = Mth::cos(limbSwing * 0.6662f + 3.1415927410125732f) * 1.4f * limbSwingAmount;
+    mLeg1->mXRot = Mth::cos(limbSwing * 0.6662f + 3.1415927f) * 1.4f * limbSwingAmount;
+    mLeg2->mXRot = Mth::cos(limbSwing * 0.6662f + 3.1415927f) * 1.4f * limbSwingAmount;
     mLeg3->mXRot = Mth::cos(limbSwing * 0.6662f) * 1.4f * limbSwingAmount;
 }
 

@@ -4550,7 +4550,7 @@ bool BlockRenderer::tesselateTorchInWorld(const BlockState* state, const BlockPo
     const float x = (float)pos.x;
     const float y = (float)pos.y;
     const float z = (float)pos.z;
-    const float offset = 0.09999999403953552f;
+    const float offset = 0.099999994f;
     if (facing == Direction::EAST)
         tesselateTorch(state, x - offset, y + 0.2f, z, -0.4f, 0.0f);
     else if (facing == Direction::WEST)
@@ -7542,7 +7542,7 @@ bool BlockRenderer::tesselateBrewingStandInWorld(const BlockState* state, const 
 
     const double vTop = texture->getV0(true);
     const double vBottom = texture->getV1(true);
-    const float pi = 3.1415927410125732f;
+    const float pi = 3.1415927f;
     AbstractProperty<bool>* const bottleProperties[3] =
     {
         BrewingStandBlock::HAS_BOTTLE_0,

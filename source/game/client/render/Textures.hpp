@@ -84,7 +84,6 @@ private:
     TextureAtlas* mBlocks;
     TextureAtlas* mItems;
     int mLastBoundId;
-    bool mTextureFormat;
     bool mReloading;
     bool mLoaded;
 };

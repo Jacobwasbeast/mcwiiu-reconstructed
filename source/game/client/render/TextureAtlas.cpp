@@ -43,7 +43,7 @@ TextureAtlasSprite* TextureAtlas::addIcon(bool singleImage, int x, int y,
                                            const std::wstring& name)
 {
     const float scale = 0.0625f;
-    const float vScale = singleImage ? 0.0294117648f : 0.0588235296f;
+    const float vScale = singleImage ? 0.029411765f : 0.05882353f;
     const float vOffset = singleImage ? 544.0f : 272.0f;
     TextureAtlasSprite* sprite = new TextureAtlasSprite(
         name, name, scale * static_cast<float>(y),
@@ -59,7 +59,7 @@ TextureAtlasSprite* TextureAtlas::addIconWithName(bool singleImage, int x,
                                                    const std::wstring& spriteName)
 {
     const float scale = 0.0625f;
-    const float vScale = singleImage ? 0.0294117648f : 0.0588235296f;
+    const float vScale = singleImage ? 0.029411765f : 0.05882353f;
     const float vOffset = singleImage ? 544.0f : 272.0f;
     TextureAtlasSprite* sprite = new TextureAtlasSprite(
         name, spriteName, scale * static_cast<float>(y),
@@ -73,7 +73,7 @@ void TextureAtlas::addIconSize(bool singleImage, int x, int y,
                                const std::wstring& name, int width, int height)
 {
     const float scale = 0.0625f;
-    const float vScale = singleImage ? 0.0294117648f : 0.0588235296f;
+    const float vScale = singleImage ? 0.029411765f : 0.05882353f;
     const float vOffset = singleImage ? 544.0f : 272.0f;
     mSprites[name] = new TextureAtlasSprite(
         name, name, scale * static_cast<float>(y),

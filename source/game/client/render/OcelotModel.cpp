@@ -195,7 +195,7 @@ void OcelotModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float
     mBackLegR->mZ = 0.0f;
     mBackLegL->mY = 0.0f;
     mBackLegL->mZ = 0.0f;
-    mTail1->mXRot = 0.8999999761581421f;
+    mTail1->mXRot = 0.9f;
     mBody->mXRot = 0.0f;
 
     if (ocelot->isSneaking())
@@ -205,16 +205,16 @@ void OcelotModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float
         mTail1->mY += 1.0f;
         mTail2->mY += -4.0f;
         mTail2->mZ += 2.0f;
-        mTail1->mXRot = 1.5707963705062866f;
-        mTail2->mXRot = 1.5707963705062866f;
+        mTail1->mXRot = 1.5707964f;
+        mTail2->mXRot = 1.5707964f;
         mPose = 0;
     }
     else if (ocelot->isSprinting())
     {
         mTail2->mY = mTail1->mY;
         mTail2->mZ += 2.0f;
-        mTail1->mXRot = 1.5707963705062866f;
-        mTail2->mXRot = 1.5707963705062866f;
+        mTail1->mXRot = 1.5707964f;
+        mTail2->mXRot = 1.5707964f;
         mPose = 2;
     }
     else
@@ -223,26 +223,26 @@ void OcelotModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float
         if (ocelot->isSitting())
         {
             mBody->mY += -4.0f;
-            mBody->mXRot = -45.0f * 0.01745329238474369f;
+            mBody->mXRot = -45.0f * 0.017453292f;
             mBody->mZ += 5.0f;
-            mHead->mY += -3.299999952316284f;
+            mHead->mY += -3.3f;
             mHead->mZ += 1.0f;
             mTail1->mY += 8.0f;
             mTail1->mZ += -2.0f;
-            mTail1->mXRot = 1.72787606716156f;
+            mTail1->mXRot = 1.7278761f;
             mTail2->mY += 2.0f;
-            mTail2->mZ += -0.800000011920929f;
-            mTail2->mXRot = 2.670353889465332f;
-            mFrontLegL->mXRot = -0.15707963705062866f;
+            mTail2->mZ += -0.8f;
+            mTail2->mXRot = 2.670354f;
+            mFrontLegL->mXRot = -0.15707964f;
             mFrontLegL->mY = 2.0f;
             mFrontLegL->mZ = -7.0f;
-            mFrontLegR->mXRot = -0.15707963705062866f;
+            mFrontLegR->mXRot = -0.15707964f;
             mFrontLegR->mY = 2.0f;
             mFrontLegR->mZ = -7.0f;
-            mBackLegL->mXRot = -1.5707963705062866f;
+            mBackLegL->mXRot = -1.5707964f;
             mBackLegL->mY = 3.0f;
             mBackLegL->mZ = -4.0f;
-            mBackLegR->mXRot = -1.5707963705062866f;
+            mBackLegR->mXRot = -1.5707964f;
             mBackLegR->mY = 3.0f;
             mBackLegR->mZ = -4.0f;
             mPose = 3;

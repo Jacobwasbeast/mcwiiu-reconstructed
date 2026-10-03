@@ -74,20 +74,23 @@ DLCTexturePack::DLCTexturePack(unsigned int id, DLCPack* pack, TexturePack* pare
     : AbstractTexturePack(id, NULL, pack->getName(), parentPack)
     , m_dlcPack(pack)
     , m_loadedPack(NULL)
-    , m_stringTable(NULL)
     , m_uiLoaded(false)
     , m_loadingData(false)
     , m_hasData(false)
     , m_hasValidData(false)
-    , m_colourTableLoaded(true)
-    , m_materialTableLoaded(true)
     , m_archiveFile(NULL)
 {
     if (gApp.getLevelGenerationOptions() != NULL)
         gApp.getLevelGenerationOptions()->setLoadedData();
 
-    if (pack->doesPackContainFile(DLCManager::eDLCType_Localisation, L"languages.loc", true, true))
-        m_stringTable = static_cast<DLCLocalisationFile*>(pack->getFile(DLCManager::eDLCType_Localisation, L"languages.loc", true, true))->getStringTable();
+    m_stringTable = NULL;
+    m_colourTableLoaded = true;
+    m_materialTableLoaded = true;
+    if (m_dlcPack->doesPackContainFile(DLCManager::eDLCType_Localisation, L"languages.loc", true, true))
+    {
+        DLCFile* file = m_dlcPack->getFile(DLCManager::eDLCType_Localisation, L"languages.loc", true, true);
+        m_stringTable = static_cast<DLCLocalisationFile*>(file)->getStringTable();
+    }
 
     loadIcon();
     loadName();
@@ -146,7 +149,10 @@ InputStream* DLCTexturePack::getResourceImplementation(const std::wstring& fileN
 
 bool DLCTexturePack::hasFile(const std::wstring& fileName)
 {
-    return m_loadedPack != NULL && m_loadedPack->doesPackContainFile(DLCManager::eDLCType_Texture, fileName, true, true);
+    bool found = false;
+    if (m_loadedPack != NULL)
+        found = m_loadedPack->doesPackContainFile(DLCManager::eDLCType_Texture, fileName, true, true);
+    return found;
 }
 
 bool DLCTexturePack::isTerrainUpdateCompatible()
@@ -212,7 +218,12 @@ void DLCTexturePack::loadColourTable()
         AbstractTexturePack::loadDefaultColourTable();
         m_colourTableLoaded = true;
     }
-    AbstractTexturePack::loadDefaultHTMLColourTable();
+    if (gApp.hasArchiveFile(L"HTMLColours.col", false))
+    {
+        arrayWithLength<unsigned char> colourData = gApp.getArchiveFile(L"HTMLColours.col", false);
+        m_pColourTable->loadColoursFromData(colourData.data, colourData.length);
+        delete[] colourData.data;
+    }
 }
 
 void DLCTexturePack::loadStructureManager()

@@ -103,8 +103,8 @@ void BatModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTick
 
     if (bat && bat->isResting())
     {
-        mHead->mXRot = headPitch * 0.01745329238474369f;
-        mHead->mYRot = 3.1415927f - netHeadYaw * 0.01745329238474369f;
+        mHead->mXRot = headPitch * 0.017453292f;
+        mHead->mYRot = 3.1415927f - netHeadYaw * 0.017453292f;
         mHead->mZRot = 3.1415927f;
         mHead->setPos(0.0f, -2.0f, 0.0f);
 
@@ -123,8 +123,8 @@ void BatModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTick
     }
     else
     {
-        mHead->mXRot = headPitch * 0.01745329238474369f;
-        mHead->mYRot = netHeadYaw * 0.01745329238474369f;
+        mHead->mXRot = headPitch * 0.017453292f;
+        mHead->mYRot = netHeadYaw * 0.017453292f;
         mHead->mZRot = 0.0f;
         mHead->setPos(0.0f, 0.0f, 0.0f);
 

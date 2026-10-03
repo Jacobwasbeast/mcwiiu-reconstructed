@@ -68,14 +68,14 @@ SFontData g_mojangles7FontData =
 {
     "Mojangles7", L"/font/Mojangles_7.png", 460, g_glyphUnicodes,
     190, 264, 23, 20, 8, 13,
-    0.538461566f, 0.615384638f, 0.100000001f, 5
+    0.53846157f, 0.61538464f, 0.1f, 5
 };
 
 SFontData g_mojangles11FontData =
 {
     "Mojangles11", L"/font/Mojangles_11.png", 460, g_glyphUnicodes,
     305, 348, 23, 20, 13, 17,
-    0.647058845f, 0.352941185f, 0.0769230798f, 7
+    0.64705884f, 0.3529412f, 0.07692308f, 7
 };
 
  CFontData::CFontData()

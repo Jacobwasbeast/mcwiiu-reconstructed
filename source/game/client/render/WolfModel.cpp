@@ -113,12 +113,12 @@ void WolfModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float l
     if (wolf->isAngry())
         mTail->mYRot = 0.0f;
     else
-        mTail->mYRot = Mth::cos(limbSwing * 0.6661999821662903f) * 1.399999976158142f * limbSwingAmount;
+        mTail->mYRot = Mth::cos(limbSwing * 0.6662f) * 1.4f * limbSwingAmount;
 
     if (!wolf->isSitting())
     {
         mBody->setPos(0.0f, 14.0f, 2.0f);
-        mBody->mXRot = 90.0f * 0.01745329238474369f;
+        mBody->mXRot = 90.0f * 0.017453292f;
         upperBody->setPos(-1.0f, 14.0f, -3.0f);
         upperBody->mXRot = mBody->mXRot;
         mTail->setPos(-1.0f, 12.0f, 8.0f);
@@ -127,35 +127,35 @@ void WolfModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float l
         mLeg3->setPos(-2.5f, 16.0f, -4.0f);
         mLeg4->setPos(0.5f, 16.0f, -4.0f);
 
-        float f = limbSwing * 0.6661999821662903f;
-        mLeg1->mXRot = Mth::cos(f) * 1.399999976158142f * limbSwingAmount;
-        mLeg2->mXRot = Mth::cos(f + 3.1415927410125732f) * 1.399999976158142f * limbSwingAmount;
-        mLeg3->mXRot = Mth::cos(f + 3.1415927410125732f) * 1.399999976158142f * limbSwingAmount;
-        mLeg4->mXRot = Mth::cos(f) * 1.399999976158142f * limbSwingAmount;
+        float f = limbSwing * 0.6662f;
+        mLeg1->mXRot = Mth::cos(f) * 1.4f * limbSwingAmount;
+        mLeg2->mXRot = Mth::cos(f + 3.1415927f) * 1.4f * limbSwingAmount;
+        mLeg3->mXRot = Mth::cos(f + 3.1415927f) * 1.4f * limbSwingAmount;
+        mLeg4->mXRot = Mth::cos(f) * 1.4f * limbSwingAmount;
     }
     else
     {
         upperBody->setPos(-1.0f, 16.0f, -3.0f);
-        upperBody->mXRot = 1.2566370964050293f;
+        upperBody->mXRot = 1.2566371f;
         upperBody->mYRot = 0.0f;
         mBody->setPos(0.0f, 18.0f, 0.0f);
-        mBody->mXRot = 0.7853981852531433f;
+        mBody->mXRot = 0.7853982f;
         mTail->setPos(-1.0f, 21.0f, 6.0f);
         mLeg1->setPos(-2.5f, 22.0f, 2.0f);
-        mLeg1->mXRot = 4.71238899230957f;
+        mLeg1->mXRot = 4.712389f;
         mLeg2->setPos(0.5f, 22.0f, 2.0f);
-        mLeg2->mXRot = 4.71238899230957f;
+        mLeg2->mXRot = 4.712389f;
         mLeg3->setPos(-2.49f, 17.0f, -4.0f);
-        mLeg3->mXRot = 5.811946868896484f;
-        mLeg4->setPos(0.5099999904632568f, 17.0f, -4.0f);
-        mLeg4->mXRot = 5.811946868896484f;
+        mLeg3->mXRot = 5.811947f;
+        mLeg4->setPos(0.51f, 17.0f, -4.0f);
+        mLeg4->mXRot = 5.811947f;
     }
 
     mHead->mZRot = (float)(wolf->getHeadRollAngle(partialTicks)
                          + wolf->getBodyRollAngle(partialTicks, 0.0f));
-    upperBody->mZRot = (float)wolf->getBodyRollAngle(partialTicks, -0.07999999821186066f);
-    mBody->mZRot = (float)wolf->getBodyRollAngle(partialTicks, -0.1599999964237213f);
-    mTail->mZRot = (float)wolf->getBodyRollAngle(partialTicks, -0.20000000298023224f);
+    upperBody->mZRot = (float)wolf->getBodyRollAngle(partialTicks, -0.08f);
+    mBody->mZRot = (float)wolf->getBodyRollAngle(partialTicks, -0.16f);
+    mTail->mZRot = (float)wolf->getBodyRollAngle(partialTicks, -0.2f);
 }
 void WolfModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw,
                           float headPitch, float scale, boost::shared_ptr<Entity> entity,

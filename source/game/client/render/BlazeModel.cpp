@@ -104,7 +104,7 @@ void BlazeModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTi
         angle += 1.5707964f;
     }
 
-    mHead->mYRot = netHeadYaw * 0.01745329238474369f;
-    mHead->mXRot = headPitch * 0.01745329238474369f;
+    mHead->mYRot = netHeadYaw * 0.017453292f;
+    mHead->mXRot = headPitch * 0.017453292f;
 }
 

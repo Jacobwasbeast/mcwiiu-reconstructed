@@ -124,10 +124,10 @@ void SpiderModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInT
                             float netHeadYaw, float headPitch, float scale,
                             boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
 {
-    const float radians = 0.01745329238474369f;
+    const float radians = 0.017453292f;
     mSpiderParts[0]->mYRot = netHeadYaw * radians;
     mSpiderParts[0]->mXRot = headPitch * radians;
-    const float quarterPi = 0.785398185f;
+    const float quarterPi = 0.7853982f;
     const float middleRoll = 0.58119464f;
     const float eighthPi = 0.39269909f;
     mSpiderParts[3]->mZRot = -quarterPi;
@@ -148,11 +148,11 @@ void SpiderModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInT
     mSpiderParts[10]->mYRot = quarterPi;
     const float swing = limbSwing * 0.6662f;
     const float yaw0 = -(Mth::cos(swing * 2.0f + 0.0f) * 0.4f) * limbSwingAmount;
-    const float yaw1 = -(Mth::cos(swing * 2.0f + 3.141592741f) * 0.4f) * limbSwingAmount;
+    const float yaw1 = -(Mth::cos(swing * 2.0f + 3.1415927f) * 0.4f) * limbSwingAmount;
     const float yaw2 = -(Mth::cos(swing * 2.0f + 1.57079637f) * 0.4f) * limbSwingAmount;
     const float yaw3 = -(Mth::cos(swing * 2.0f + 4.71238899f) * 0.4f) * limbSwingAmount;
     const float roll0 = std::fabs(Mth::sin(swing + 0.0f) * 0.4f) * limbSwingAmount;
-    const float roll1 = std::fabs(Mth::sin(swing + 3.141592741f) * 0.4f) * limbSwingAmount;
+    const float roll1 = std::fabs(Mth::sin(swing + 3.1415927f) * 0.4f) * limbSwingAmount;
     const float roll2 = std::fabs(Mth::sin(swing + 1.57079637f) * 0.4f) * limbSwingAmount;
     const float roll3 = std::fabs(Mth::sin(swing + 4.71238899f) * 0.4f) * limbSwingAmount;
     mSpiderParts[3]->mYRot += yaw0;

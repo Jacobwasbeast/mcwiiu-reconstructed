@@ -14,7 +14,7 @@ FireworksParticles::FireworksSparkParticle::FireworksSparkParticle(
     yd = ya;
     zd = za;
     size *= 0.75f;
-    alpha = 0.9900000095367432f;
+    alpha = 0.99f;
     lifetime = random.nextInt(12) + 48;
     hasPhysics = false;
 }

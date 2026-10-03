@@ -88,7 +88,7 @@ void ArmorStandModel::setupAnim(float limbSwing, float limbSwingAmount, float ag
         mLeftArm->mShow = armorStand->isShowArms();
         mArmorStandBase->mShow = !armorStand->isNoBasePlate();
 
-        const float degreesToRadians = 0.01745329238474369f;
+        const float degreesToRadians = 0.017453292f;
         mArmorStandBody->mXRot = (float)armorStand->getBodyPose()->x * degreesToRadians;
         mArmorStandBody->mYRot = (float)armorStand->getBodyPose()->y * degreesToRadians;
         mArmorStandBody->mZRot = (float)armorStand->getBodyPose()->z * degreesToRadians;

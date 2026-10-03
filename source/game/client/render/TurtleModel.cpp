@@ -92,7 +92,7 @@ void TurtleModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, flo
     }
     else
     {
-        GlStateManager::scalef(0.1666666716337204f, 0.1666666716337204f, 0.1666666716337204f);
+        GlStateManager::scalef(0.16666667f, 0.16666667f, 0.16666667f);
         GlStateManager::translatef(0.0f, 120.0f * scale, 0.0f);
         mHead->render(scale, useDisplayList, false);
         mBody->render(scale, useDisplayList, false);

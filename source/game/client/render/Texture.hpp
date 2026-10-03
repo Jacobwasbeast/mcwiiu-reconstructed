@@ -24,9 +24,9 @@ public:
     void transferFromImage(BufferedImage* image);
     void _init(const std::wstring& name, int type, int width, int height, int depth, int wrap,
                int format, int minFilter, int magFilter, BufferedImage* image, bool mipmap);
-    unsigned int getData(unsigned int mipLevel);
-    unsigned int getHeight();
-    unsigned int getWidth();
+    ByteBuffer* getData(unsigned int mipLevel);
+    int getHeight();
+    int getWidth();
     void blit(int x, int y, Texture* texture, bool flip);
     unsigned int getManagerId();
     unsigned int getGlId();
@@ -61,7 +61,7 @@ private:
     bool m_valid;
     bool m_immediateUpdate;
     bool m_updated;
-    unsigned int m_mipLevels;
+    int m_mipLevels;
     ByteBuffer* m_data[10];
     bool m_gpuAllocated;
 };

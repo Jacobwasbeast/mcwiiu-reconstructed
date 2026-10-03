@@ -8,7 +8,7 @@
 FireworksParticles::FireworksOverlayParticle::FireworksOverlayParticle(Level* level, double x, double y, double z)
     : Particle(level, x, y, z)
 {
-    alpha = 0.9900000095367432f;
+    alpha = 0.99f;
     lifetime = 4;
 }
 
@@ -27,9 +27,9 @@ void FireworksParticles::FireworksOverlayParticle::render(BufferBuilder* buffer,
 {
     (void)camera;
     float phase = (age + partialTicks - 1.0f) * 0.25f;
-    float sine = (float)std::sin(phase * 3.1415927410125732f);
-    float scale = 7.099999904632568f * sine;
-    setAlpha(0.6000000238418579f - phase * 0.5f);
+    float sine = (float)std::sin(phase * 3.1415927f);
+    float scale = 7.1f * sine;
+    setAlpha(0.6f - phase * 0.5f);
 
     float px = (float)((x - xo) * partialTicks + xo - xOff);
     float py = (float)((y - yo) * partialTicks + yo - yOff);

@@ -19,8 +19,8 @@ CreeperHeadModel::CreeperHeadModel(float delta, const ModelDefinition& modelDefi
 
 void CreeperHeadModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)
 {
-    mHead->mYRot = netHeadYaw * 0.01745329238474369f;
-    mHead->mXRot = headPitch * 0.01745329238474369f;
+    mHead->mYRot = netHeadYaw * 0.017453292f;
+    mHead->mXRot = headPitch * 0.017453292f;
     mHead->render(scale, useDisplayList, false);
 
     callSkinnedDrawlist();

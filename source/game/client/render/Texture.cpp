@@ -26,8 +26,11 @@ Texture::~Texture()
     m_rect = NULL;
     for (int i = 0; i < 10; ++i)
     {
-        delete m_data[i];
-        m_data[i] = NULL;
+        if (m_data[i] != NULL)
+        {
+            delete m_data[i];
+            m_data[i] = NULL;
+        }
     }
     if ((int)m_glId >= 0)
         GlStateManager::deleteTexture((int)m_glId);
@@ -52,15 +55,20 @@ void Texture::_init(const std::wstring& name, int type, int width, int height, i
     m_rect = new Rect2i(0, 0, width, height);
     m_target = 1;
     m_mipmap = mipmap || (minFilter != 0 && minFilter != 1) || (magFilter != 0 && magFilter != 1);
-    m_mipLevels = 1;
+    int mipLevels = 1;
     if (m_mipmap)
     {
-        unsigned int widthLevels = 1;
-        unsigned int heightLevels = 1;
+        int widthLevels = 1;
+        int heightLevels = 1;
         while ((8 << widthLevels) < width) ++widthLevels;
         while ((8 << heightLevels) < height) ++heightLevels;
-        m_mipLevels = std::min(5u, std::min(widthLevels, heightLevels));
+        if (heightLevels < widthLevels)
+            widthLevels = heightLevels;
+        if (5 < widthLevels)
+            widthLevels = 5;
+        mipLevels = widthLevels;
     }
+    m_mipLevels = mipLevels;
     if (type == 2)
     {
         m_glId = (unsigned int)-1;
@@ -81,7 +89,48 @@ void Texture::_init(const std::wstring& name, int type, int width, int height, i
                     int format, int minFilter, int magFilter, BufferedImage* image, bool mipmap)
 {
     _init(name, type, width, height, depth, wrap, format, minFilter, magFilter, mipmap);
-    if (image != NULL)
+    if (image == NULL)
+    {
+        if (width != -1 && height != -1)
+        {
+            unsigned int levelCount = width * height * depth;
+            unsigned int size = levelCount * 4;
+            arrayWithLength<unsigned char> bytes(size, true);
+            for (unsigned int i = 0; i < size; ++i)
+                bytes.data[i] = 0;
+            m_data[0] = ByteBuffer::allocateDirect(size);
+            m_data[0]->clear();
+            m_data[0]->put(bytes);
+            m_data[0]->position(0)->limit(size);
+            delete[] bytes.data;
+            if (m_mipmap)
+            {
+                m_mipLevels = 5;
+                for (int level = 1; level < m_mipLevels; ++level)
+                {
+                    unsigned int mipCount = (width >> level) * (height >> level) * depth;
+                    unsigned int mipSize = mipCount * 4;
+                    arrayWithLength<unsigned char> mipBytes(mipSize, true);
+                    for (unsigned int i = 0; i < mipSize; ++i)
+                        mipBytes.data[i] = 0;
+                    m_data[level] = ByteBuffer::allocateDirect(mipSize);
+                    m_data[level]->clear();
+                    m_data[level]->put(mipBytes);
+                    m_data[level]->position(0)->limit(mipSize);
+                    delete[] mipBytes.data;
+                }
+            }
+            if (m_immediateUpdate)
+                updateOnGPU();
+            else
+                m_updated = false;
+        }
+        else
+        {
+            m_valid = false;
+        }
+    }
+    else
     {
         m_valid = true;
         transferFromImage(image);
@@ -90,47 +139,34 @@ void Texture::_init(const std::wstring& name, int type, int width, int height, i
             updateOnGPU();
             m_immediateUpdate = false;
         }
-        return;
     }
-    if (width != -1 && height != -1)
-    {
-        if (m_mipmap) m_mipLevels = 5;
-        for (unsigned int level = 0; level < m_mipLevels; ++level)
-        {
-            const unsigned int size = (width >> level) * (height >> level) * depth * 4;
-            arrayWithLength<unsigned char> bytes(size, false);
-            std::memset(bytes.data, 0, size);
-            m_data[level] = ByteBuffer::allocateDirect(size);
-            m_data[level]->clear();
-            m_data[level]->put(bytes);
-            m_data[level]->position(0);
-            m_data[level]->limit(size);
-            delete[] bytes.data;
-        }
-        if (m_immediateUpdate)
-            updateOnGPU();
-        else
-            m_updated = false;
-        return;
-    }
-    m_valid = false;
 }
 
 unsigned int Texture::crispBlend(int first, int second)
 {
-    unsigned int firstColor = (unsigned int)first, secondColor = (unsigned int)second;
-    unsigned int alpha1 = (firstColor >> 24) & 255, alpha2 = (secondColor >> 24) & 255;
-    if (alpha1 + alpha2 < 255)
-        return (((((firstColor >> 16) & 255) + ((secondColor >> 16) & 255)) / 2) << 16) |
-               (((((firstColor >> 8) & 255) + ((secondColor >> 8) & 255)) / 2) << 8) |
-               (((firstColor & 255) + (secondColor & 255)) / 2);
-    if (alpha2 < alpha1)
-        return 0xff000000u | (((((firstColor >> 16) & 255) * 255 + ((secondColor >> 16) & 255)) / 256) << 16) |
-               (((((firstColor >> 8) & 255) * 255 + ((secondColor >> 8) & 255)) / 256) << 8) |
-               (((firstColor & 255) * 255 + (secondColor & 255)) / 256);
-    return 0xff000000u | (((((firstColor >> 16) & 255) + ((secondColor >> 16) & 255) * 255) / 256) << 16) |
-           (((((firstColor >> 8) & 255) + ((secondColor >> 8) & 255) * 255) / 256) << 8) |
-           (((firstColor & 255) + (secondColor & 255) * 255) / 256);
+    int firstWeight = (unsigned int)first >> 24;
+    int secondWeight = (unsigned int)second >> 24;
+    int alpha = 255;
+    if (firstWeight + secondWeight < 255)
+    {
+        alpha = 0;
+        firstWeight = 1;
+        secondWeight = 1;
+    }
+    else if (secondWeight < firstWeight)
+    {
+        firstWeight = 255;
+        secondWeight = 1;
+    }
+    else
+    {
+        firstWeight = 1;
+        secondWeight = 255;
+    }
+    int red = ((first >> 16 & 255) * firstWeight + (second >> 16 & 255) * secondWeight) / (firstWeight + secondWeight);
+    int green = ((first >> 8 & 255) * firstWeight + (second >> 8 & 255) * secondWeight) / (firstWeight + secondWeight);
+    int blue = ((first & 255) * firstWeight + (second & 255) * secondWeight) / (firstWeight + secondWeight);
+    return (alpha << 24) | (red << 16) | (green << 8) | blue;
 }
 
 void Texture::transferFromImage(BufferedImage* image)
@@ -270,7 +306,7 @@ void Texture::transferFromImage(BufferedImage* image)
 
 void Texture::updateOnGPU()
 {
-    unsigned int level;
+    int level;
 
     m_data[0]->flip();
     if (m_mipmap && m_mipLevels > 1) {
@@ -281,11 +317,11 @@ void Texture::updateOnGPU()
         }
     }
     if (!m_gpuAllocated) {
-        gRenderer->TextureSetTextureLevels((int)m_mipLevels);
+        gRenderer->TextureSetTextureLevels(m_mipLevels);
         gRenderer->TextureData(m_width, m_height, m_data[0]->getBuffer(), 0, C4JRender::eTextureFormat_RGBA8);
         if (m_mipmap && m_mipLevels > 1) {
             for (level = 1; level < m_mipLevels; ++level) {
-                gRenderer->TextureData(m_width >> level, m_height >> level, m_data[level]->getBuffer(), (int)level,
+                gRenderer->TextureData(m_width >> level, m_height >> level, m_data[level]->getBuffer(), level,
                                        C4JRender::eTextureFormat_RGBA8);
             }
         }
@@ -296,45 +332,49 @@ void Texture::updateOnGPU()
         if (m_mipmap && gRenderer->TextureGetTextureLevels() > 1 && m_mipLevels > 1) {
             for (level = 1; level < m_mipLevels; ++level) {
                 gRenderer->TextureDataUpdate(0, 0, m_width >> level, m_height >> level, m_data[level]->getBuffer(),
-                                             (int)level);
+                                             level);
             }
         }
         m_updated = true;
     }
 }
 
-unsigned int Texture::getData(unsigned int mipLevel) { return (unsigned int)m_data[mipLevel]; }
-unsigned int Texture::getHeight() { return (unsigned int)m_height; }
-unsigned int Texture::getWidth() { return (unsigned int)m_width; }
+ByteBuffer* Texture::getData(unsigned int mipLevel) { return m_data[mipLevel]; }
+int Texture::getHeight() { return m_height; }
+int Texture::getWidth() { return m_width; }
 unsigned int Texture::getManagerId() { return m_managerId; }
 unsigned int Texture::getGlId() { return m_glId; }
 
 void Texture::blit(int x, int y, Texture* texture, bool flip)
 {
-    if (texture == NULL)
-        return;
-
-    unsigned int level;
-    for (level = 0; level < m_mipLevels; ++level)
+    for (int level = 0; level < m_mipLevels; ++level)
     {
-        ByteBuffer* sourceData = texture->m_data[level];
-        ByteBuffer* destinationData = m_data[level];
-        if (sourceData == NULL || destinationData == NULL)
+        ByteBuffer* sourceData = texture->getData(level);
+        if (sourceData == NULL)
             break;
 
-        const unsigned int sourceWidth = texture->getWidth() >> level;
-        const unsigned int sourceHeight = texture->getHeight() >> level;
-        const unsigned int destinationWidth = (unsigned int)m_width >> level;
-        const int destinationX = x >> level;
         const int destinationY = y >> level;
-        unsigned char* source = sourceData->getBuffer();
-        unsigned char* destination = destinationData->getBuffer();
-        unsigned int row;
-        for (row = 0; row < sourceHeight; ++row)
+        const int destinationX = x >> level;
+        const int destinationWidth = m_width >> level;
+        const int sourceHeight = texture->getHeight() >> level;
+        const unsigned int sourceWidth = texture->getWidth() >> level;
+        int* source = reinterpret_cast<int*>(sourceData->getBuffer());
+        int* destination = reinterpret_cast<int*>(m_data[level]->getBuffer());
+        for (int row = 0; row < sourceHeight; ++row)
         {
-            const unsigned int sourceRow = flip ? sourceHeight - row - 1 : row;
-            std::memcpy(destination + ((destinationY + row) * destinationWidth + destinationX) * 4,
-                        source + (sourceRow * sourceWidth) * 4, sourceWidth * 4);
+            if (!flip)
+            {
+                std::memcpy(destination + (destinationY + row) * destinationWidth + destinationX,
+                            source + row * sourceWidth, sourceWidth * 4);
+            }
+            else
+            {
+                for (int column = 0; column < (int)sourceWidth; ++column)
+                {
+                    destination[destinationX + destinationY + (sourceHeight - row) + column * destinationWidth] =
+                        source[row * sourceWidth + column];
+                }
+            }
         }
     }
 

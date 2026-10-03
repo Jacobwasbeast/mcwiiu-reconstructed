@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <string>
 
+#include <boost/enable_shared_from_this.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
 
@@ -17,7 +18,7 @@ class Level;
 class TextureAtlasSprite;
 class Vec3;
 
-class Particle
+class Particle : public boost::enable_shared_from_this<Particle>
 {
 public:
     Particle(Level* level, double x, double y, double z, double xa, double ya, double za);
@@ -64,7 +65,6 @@ public:
     static double yOff;
     static double zOff;
 
-    boost::weak_ptr<Entity> attachedEntity;
     Level* level;
     double xo;
     double yo;

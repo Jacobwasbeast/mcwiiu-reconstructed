@@ -35,20 +35,20 @@ WitchModel::WitchModel(float scale, const ModelDefinition& modelDefinition)
         mHat2->setTexSize(64, 128);
         mHat2->setPos(1.75f, -4.0f, 2.0f);
         mHat2->texOffs(0, 76)->addBox(0.0f, 0.0f, 0.0f, 7, 4, 7);
-        mHat2->mXRot = -3.0f * 0.01745329238474369f;
-        mHat2->mZRot = 1.5f * 0.01745329238474369f;
+        mHat2->mXRot = -3.0f * 0.017453292f;
+        mHat2->mZRot = 1.5f * 0.017453292f;
         mHat3 = new ModelPartSkin(this);
         mHat3->setTexSize(64, 128);
         mHat3->setPos(1.75f, -4.0f, 2.0f);
         mHat3->texOffs(0, 87)->addBox(0.0f, 0.0f, 0.0f, 4, 4, 4);
-        mHat3->mXRot = -6.0f * 0.01745329238474369f;
-        mHat3->mZRot = 3.0f * 0.01745329238474369f;
+        mHat3->mXRot = -6.0f * 0.017453292f;
+        mHat3->mZRot = 3.0f * 0.017453292f;
         mHat4 = new ModelPartSkin(this);
         mHat4->setTexSize(64, 128);
         mHat4->setPos(1.75f, -2.0f, 2.0f);
         mHat4->texOffs(0, 95)->addBox(0.0f, 0.0f, 0.0f, 1, 2, 1, 0.25f);
-        mHat4->mXRot = -12.0f * 0.01745329238474369f;
-        mHat4->mZRot = 6.0f * 0.01745329238474369f;
+        mHat4->mXRot = -12.0f * 0.017453292f;
+        mHat4->mZRot = 6.0f * 0.017453292f;
         mNose->addChild(mWitchNose);
         mHead->addChild(mHat);
         mHat->addChild(mHat2);
@@ -65,9 +65,9 @@ void WitchModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTi
     mNose->mYOffset = 0.0f;
     mNose->mZOffset = 0.0f;
     float rate = 0.01f * (float)(entity->getId() % 10);
-    mNose->mXRot = std::sin((float)entity->mTickCount * rate) * 4.5f * 0.01745329238474369f;
+    mNose->mXRot = std::sin((float)entity->mTickCount * rate) * 4.5f * 0.017453292f;
     mNose->mYRot = 0.0f;
-    mNose->mZRot = std::cos((float)entity->mTickCount * rate) * 2.5f * 0.01745329238474369f;
+    mNose->mZRot = std::cos((float)entity->mTickCount * rate) * 2.5f * 0.017453292f;
     if (mHoldingItem)
     {
         mNose->mXRot = -0.9f;

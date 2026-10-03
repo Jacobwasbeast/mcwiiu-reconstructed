@@ -128,7 +128,7 @@ void BoatRenderer::renderLeash(boost::shared_ptr<Boat>& boat, double x, double y
     GlStateManager::color4f(1.0F, 1.0F, 1.0F, 1.0F);
     y -= boat->mBbHeight;
     BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
-    const double radians = (double)0.01745329238474369F;
+    const double radians = (double)0.017453292F;
     double holderYaw = lerp(holder->mYRotO, holder->mYRot, partialTick * 0.5F) * radians;
     double holderPitch = lerp(holder->mXRotO, holder->mXRot, partialTick * 0.5F) * radians;
     double cosYaw = std::cos(holderYaw);
