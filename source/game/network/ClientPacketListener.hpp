@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 #include <boost/shared_ptr.hpp>
-#include "game/network/PacketListener.hpp"
+#include "game/network/ClientGamePacketListener.hpp"
 #include "game/core/Socket.hpp"
 #include "game/core/CriticalSection.hpp"
 #include "game/util/Random.hpp"
@@ -107,7 +107,7 @@ class VotePacket;
 class MultiplayerLocalPlayer;
 class Entity;
 class Packet;
-class ClientPacketListener : public PacketListener
+class ClientPacketListener : public ClientGamePacketListener
 {
 public:
     class DeferredEntityLinkPacket

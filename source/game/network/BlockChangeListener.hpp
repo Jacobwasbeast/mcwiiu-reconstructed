@@ -4,7 +4,7 @@
 #include <vector>
 #include <boost/unordered_map.hpp>
 
-#include "game/network/ChunkHistory.hpp"
+#include "game/network/IChunkHistory.hpp"
 #include "game/network/LevelListener.hpp"
 
 class BlockPos;
@@ -15,7 +15,7 @@ class SoundEvent;
 class Entity;
 class Player;
 
-class BlockChangeListener : public LevelListener, public ChunkHistory
+class BlockChangeListener : public LevelListener, public IChunkHistory
 {
 public:
     class Chunk

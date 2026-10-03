@@ -6,16 +6,16 @@
 #include "game/network/PacketListener.hpp"
 
 ClientboundSetEquippedItemPacket::ClientboundSetEquippedItemPacket()
-    : m_entity(0), m_item(), m_slot(0)
+    : m_item(), m_entity(0), m_slot(0)
 {
+    m_item = ItemInstance::EMPTY;
 }
 
 ClientboundSetEquippedItemPacket::ClientboundSetEquippedItemPacket(int entity, const EquipmentSlot* slot,
                                                                    not_null_ptr<ItemInstance> item)
-    : m_entity(entity), m_item(item), m_slot(slot)
+    : m_item(), m_entity(entity), m_slot(slot)
 {
-    if (!m_item->isEmpty())
-        m_item = m_item->copy();
+    m_item = item->isEmpty() ? ItemInstance::EMPTY : item->copy();
 }
 
 ClientboundSetEquippedItemPacket::~ClientboundSetEquippedItemPacket()
@@ -55,7 +55,7 @@ bool ClientboundSetEquippedItemPacket::isInvalidatedBy(boost::shared_ptr<Packet>
 {
     boost::shared_ptr<ClientboundSetEquippedItemPacket> other =
         boost::dynamic_pointer_cast<ClientboundSetEquippedItemPacket>(packet);
-    return other && other->m_entity == m_entity && other->m_slot == m_slot;
+    return other->m_entity == m_entity && other->m_slot == m_slot;
 }
 
 not_null_ptr<ItemInstance> ClientboundSetEquippedItemPacket::getItem()

@@ -31,17 +31,7 @@ class ServerboundSwingPacket;
 class ServerboundTeleportToEntityPacket;
 class ServerboundUseItemPacket;
 
-class ConsoleListener
-{
-public:
-    virtual ~ConsoleListener() {}
-
-    virtual void info(const std::wstring& message) = 0;
-    virtual void warn(const std::wstring& message) = 0;
-    virtual std::wstring getConsoleName() = 0;
-};
-
-class ServerGamePacketListener : public PacketListener, public ConsoleListener
+class ServerGamePacketListener : public PacketListener
 {
 public:
     virtual ~ServerGamePacketListener() {}

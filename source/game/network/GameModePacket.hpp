@@ -192,7 +192,7 @@ public:
     public:
         PlayerData();
         PlayerData(std::wstring playerName);
-        virtual ~PlayerData();
+        virtual ~PlayerData() {}
         virtual void ReadPacket(boost::shared_ptr<GameModePacket> packet);
         virtual void WritePacket(boost::shared_ptr<GameModePacket> packet) const;
 
@@ -202,7 +202,7 @@ public:
     class SendTeamInviteData : public PlayerData
     {
     public:
-        virtual ~SendTeamInviteData();
+        virtual ~SendTeamInviteData() {}
     };
 
     class SetCameraData : public Data
@@ -355,7 +355,7 @@ public:
         RoundStartGameModeData();
         RoundStartGameModeData(const std::wstring& roundId,
                                const std::wstring& subRoundId);
-        virtual ~RoundStartGameModeData();
+        virtual ~RoundStartGameModeData() {}
         virtual void ReadPacket(boost::shared_ptr<GameModePacket> packet);
         virtual void WritePacket(boost::shared_ptr<GameModePacket> packet) const;
         std::wstring GetRoundId() const;

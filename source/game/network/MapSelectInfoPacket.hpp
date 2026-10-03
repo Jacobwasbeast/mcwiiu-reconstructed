@@ -33,10 +33,10 @@ public:
 
 private:
     friend class ClientPacketListener;
-    unsigned char* mData;
-    unsigned int mLength;
     bool mOwnsData;
     unsigned int mSize;
+    unsigned char* mData;
+    unsigned int mLength;
 };
 
 #endif

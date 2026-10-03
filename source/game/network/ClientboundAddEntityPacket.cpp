@@ -14,7 +14,7 @@ ClientboundAddEntityPacket::ClientboundAddEntityPacket()
 
 ClientboundAddEntityPacket::ClientboundAddEntityPacket(boost::shared_ptr<Entity> entity, int type, int data)
 {
-    _init(entity, type, data, 0, 0, 0,
+    _init(entity, type, data, (int)entity->mXp, (int)entity->mYp, (int)entity->mZp,
           (int)std::floor(entity->mXRot * 256.0f / 360.0f),
           (int)std::floor(entity->mYRot * 256.0f / 360.0f));
 }
@@ -52,9 +52,24 @@ void ClientboundAddEntityPacket::_init(boost::shared_ptr<Entity> entity, int typ
     mData = data;
     mYRot = (unsigned char)yRot;
     mXRot = (unsigned char)xRot;
-    mXa = (int)((std::max(-4.0, std::min(4.0, entity->mXd)) + 4.0) * 65535.0 / 8.0 - 32768.0);
-    mYa = (int)((std::max(-4.0, std::min(4.0, entity->mYd)) + 4.0) * 65535.0 / 8.0 - 32768.0);
-    mZa = (int)((std::max(-4.0, std::min(4.0, entity->mZd)) + 4.0) * 65535.0 / 8.0 - 32768.0);
+    double xd = entity->mXd;
+    if (xd < -4.0)
+        xd = -4.0;
+    else if (xd > 4.0)
+        xd = 4.0;
+    mXa = (int)((xd - -4.0) * 0.125 * 65535.0 + -32768.0);
+    double yd = entity->mYd;
+    if (yd < -4.0)
+        yd = -4.0;
+    else if (yd > 4.0)
+        yd = 4.0;
+    mYa = (int)((yd - -4.0) * 0.125 * 65535.0 + -32768.0);
+    double zd = entity->mZd;
+    if (zd < -4.0)
+        zd = -4.0;
+    else if (zd > 4.0)
+        zd = 4.0;
+    mZa = (int)((zd - -4.0) * 0.125 * 65535.0 + -32768.0);
 }
 
 void ClientboundAddEntityPacket::read(DataInputStream* input)
@@ -108,7 +123,10 @@ void ClientboundAddEntityPacket::handle(PacketListener* listener)
 
 int ClientboundAddEntityPacket::getEstimatedSize()
 {
-    return mData + 11 < 0 ? 0 : 6;
+    int size = 0;
+    if (mData + 11 >= 0)
+        size = 6;
+    return size;
 }
 
 int ClientboundAddEntityPacket::getPacketId()
@@ -143,20 +161,32 @@ int ClientboundAddEntityPacket::getZ()
 
 double ClientboundAddEntityPacket::getXa()
 {
-    int value = mXa < -32768 ? -32768 : mXa > 32767 ? 32767 : mXa;
-    return ((double)value + 32768.0) / 65535.0 * 8.0 - 4.0;
+    double value = mXa;
+    if (value < -32768.0)
+        value = -32768.0;
+    else if (value > 32767.0)
+        value = 32767.0;
+    return (value - -32768.0) / 65535.0 * 8.0 + -4.0;
 }
 
 double ClientboundAddEntityPacket::getYa()
 {
-    int value = mYa < -32768 ? -32768 : mYa > 32767 ? 32767 : mYa;
-    return ((double)value + 32768.0) / 65535.0 * 8.0 - 4.0;
+    double value = mYa;
+    if (value < -32768.0)
+        value = -32768.0;
+    else if (value > 32767.0)
+        value = 32767.0;
+    return (value - -32768.0) / 65535.0 * 8.0 + -4.0;
 }
 
 double ClientboundAddEntityPacket::getZa()
 {
-    int value = mZa < -32768 ? -32768 : mZa > 32767 ? 32767 : mZa;
-    return ((double)value + 32768.0) / 65535.0 * 8.0 - 4.0;
+    double value = mZa;
+    if (value < -32768.0)
+        value = -32768.0;
+    else if (value > 32767.0)
+        value = 32767.0;
+    return (value - -32768.0) / 65535.0 * 8.0 + -4.0;
 }
 
 unsigned char ClientboundAddEntityPacket::getxRot()

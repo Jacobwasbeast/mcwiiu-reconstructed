@@ -1,35 +1,47 @@
 #include "game/network/ClientboundPreLoginPacket.hpp"
 
+#include <string.h>
+
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/DataInputStream.hpp"
 #include "game/core/DataOutputStream.hpp"
 #include "game/network/PacketListener.hpp"
 #include "game/world/generation/PlayerUID.hpp"
 
-extern CMinecraftApp* g_pApp;
-
 ClientboundPreLoginPacket::ClientboundPreLoginPacket()
-    : mPlayers(0), mPlayerCount(0), mGameMode(0), mSeed(0),
-      mHostPlayer(0), mDifficulty(0), mGameType(0), mProtocolVersion(0), mHardcore(false),
-      mMiniGameId(EMiniGameId(7)), mName(L""), mMaxPlayers(0)
 {
-    unsigned int index;
-    for (index = 0; index < 14; ++index)
-        mUniqueMapName[index] = 0;
+    mName = L"";
+    mPlayers = 0;
+    mGameMode = 0;
+    mSeed = 0;
+    mPlayerCount = 0;
+    memset(mUniqueMapName, 0, 14);
+    mHostPlayer = 0;
+    mHardcore = false;
+    mMiniGameId = eMiniGameId_Any;
+    mDifficulty = 0;
+    mProtocolVersion = 0;
+    mGameType = 0;
 }
 
 ClientboundPreLoginPacket::ClientboundPreLoginPacket(std::wstring name, PlayerUID* players,
     unsigned int playerCount, unsigned char gameMode, unsigned int seed, char* uniqueMapName,
     unsigned int hostPlayer, unsigned int maxPlayers, unsigned char difficulty, unsigned int gameType,
     bool hardcore, EMiniGameId miniGameId)
-    : mPlayers(players), mPlayerCount(playerCount), mGameMode(gameMode), mSeed(seed),
-      mHostPlayer(hostPlayer), mDifficulty(difficulty),
-      mGameType(gameType), mProtocolVersion(0), mHardcore(hardcore), mMiniGameId(miniGameId), mName(name),
-      mMaxPlayers(static_cast<unsigned char>(maxPlayers))
 {
-    unsigned int index;
-    for (index = 0; index < 14; ++index)
-        mUniqueMapName[index] = uniqueMapName[index];
+    mName = name;
+    mPlayers = players;
+    mGameMode = gameMode;
+    mPlayerCount = playerCount;
+    mSeed = seed;
+    memcpy(mUniqueMapName, uniqueMapName, 14);
+    mProtocolVersion = 0;
+    mDifficulty = difficulty;
+    mHardcore = hardcore;
+    mMiniGameId = miniGameId;
+    mHostPlayer = hostPlayer;
+    mGameType = gameType;
 }
 
 ClientboundPreLoginPacket::~ClientboundPreLoginPacket()
@@ -59,7 +71,7 @@ void ClientboundPreLoginPacket::read(DataInputStream* input)
     mGameType = input->readInt();
     mHardcore = input->readBoolean();
     mMiniGameId = static_cast<EMiniGameId>(input->readInt());
-    g_pApp->SetUniqueMapName(mUniqueMapName);
+    gApp.SetUniqueMapName(mUniqueMapName);
 }
 
 void ClientboundPreLoginPacket::write(DataOutputStream* output)

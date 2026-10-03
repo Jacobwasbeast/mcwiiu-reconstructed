@@ -31,8 +31,8 @@ public:
     static boost::shared_ptr<Packet> create();
 
 private:
-    int m_entity;
     not_null_ptr<ItemInstance> m_item;
+    int m_entity;
     const EquipmentSlot* m_slot;
 };
 

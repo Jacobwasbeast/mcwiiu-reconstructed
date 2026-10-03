@@ -41,6 +41,7 @@
 #include "game/entity/mob/MobEffects.hpp"
 #include "game/core/Boat.hpp"
 #include "game/core/ByteArrayInputStream.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/DataInputStream.hpp"
 #include "game/core/DLCSkinFile.hpp"
@@ -389,7 +390,7 @@ void ServerGamePacketListenerImpl::handleMoveVehicle(boost::shared_ptr<Serverbou
         return;
     }
 
-    bool wasFree = level->getCollisionAABBs(vehicle, vehicle->mBoundingBox->shrink(0.0625), false, false, false)->empty();
+    int oldCollisions = level->getCollisionAABBs(vehicle, vehicle->mBoundingBox->shrink(0.0625), false, false, false)->size();
     dx = x - mVehicleLastGoodX;
     dy = y - mVehicleLastGoodY - 1.0E-6;
     dz = z - mVehicleLastGoodZ;
@@ -401,17 +402,16 @@ void ServerGamePacketListenerImpl::handleMoveVehicle(boost::shared_ptr<Serverbou
     if (dy > -0.5 || dy < 0.5)
         dy = 0.0;
     dz = z - vehicle->mZ;
-    bool movedWrongly = dx * dx + dy * dy + dz * dz > 0.0625;
     vehicle->absMoveTo(x, y, z, yRot, xRot);
-    bool isFree = level->getCollisionAABBs(vehicle, vehicle->mBoundingBox->shrink(0.0625), false, false, false)->empty();
-    if (wasFree && (movedWrongly || !isFree))
+    int newCollisions = level->getCollisionAABBs(vehicle, vehicle->mBoundingBox->shrink(0.0625), false, false, false)->size();
+    if (oldCollisions == 0 && (dx * dx + dy * dy + dz * dz > 0.0625 || newCollisions != 0))
     {
         vehicle->absMoveTo(oldX, oldY, oldZ, yRot, xRot);
         mConnection->send(boost::shared_ptr<Packet>(new ClientboundMoveVehiclePacket(vehicle)));
         return;
     }
 
-    PlayerList* players = gMinecraftServer != NULL ? gMinecraftServer->getPlayers() : NULL;
+    PlayerList* players = gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers;
     players->move(mPlayer);
     mPlayer->checkMovementStatistiscs(mPlayer->mX - oldX, mPlayer->mY - oldY, mPlayer->mZ - oldZ);
     mClientVehicleIsFloating = movedY >= -0.03125 && !mServer->isFlightAllowed()
@@ -462,7 +462,7 @@ void ServerGamePacketListenerImpl::handleMovePlayer(boost::shared_ptr<Serverboun
     {
         mPlayer->absMoveTo(mPlayer->mX, mPlayer->mY, mPlayer->mZ, packet->getYRot(mPlayer->mYRot),
                            packet->getXRot(mPlayer->mXRot));
-        PlayerList* players = gMinecraftServer != NULL ? gMinecraftServer->getPlayers() : NULL;
+        PlayerList* players = gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers;
         players->move(mPlayer);
         return;
     }
@@ -484,8 +484,8 @@ void ServerGamePacketListenerImpl::handleMovePlayer(boost::shared_ptr<Serverboun
         teleport(mPlayer->mX, mPlayer->mZ, mPlayer->mZ, packet->getYRot(mPlayer->mYRot),
                  packet->getXRot(mPlayer->mXRot), true, true);
 
-    ++mReceivedMovePacketCount;
-    bool missedMovePackets = mReceivedMovePacketCount - mKnownMovePacketCount > 1;
+    int knownMovePacketCount = mKnownMovePacketCount;
+    int missedMovePackets = ++mReceivedMovePacketCount - knownMovePacketCount;
 
     dx = x - mLastGoodX;
     dy = y - mLastGoodY;
@@ -506,14 +506,14 @@ void ServerGamePacketListenerImpl::handleMovePlayer(boost::shared_ptr<Serverboun
                       && !level->containsAnyBlocks(mPlayer->mBoundingBox->grow(0.0625)->expand(0.0, -0.55, 0.0));
     mPlayer->mOnGround = packet->isOnGround();
 
-    PlayerList* players = gMinecraftServer != NULL ? gMinecraftServer->getPlayers() : NULL;
+    PlayerList* players = gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers;
     players->move(mPlayer);
     mPlayer->doCheckFallDamage(mPlayer->mY - fallStartY, packet->isOnGround());
     mLastGoodX = mPlayer->mX;
     mLastGoodY = mPlayer->mY;
     mLastGoodZ = mPlayer->mZ;
 
-    if (missedMovePackets && Minecraft::GetInstance()->GetMiniGame()->HasFeatureCheckpoints())
+    if (missedMovePackets > 1 && Minecraft::GetInstance()->GetMiniGame()->HasFeatureCheckpoints())
     {
         MasterGameMode* masterGameMode = mServer->mMasterGameMode;
         double minX = std::min(startX, mPlayer->mX);
@@ -629,26 +629,27 @@ void ServerGamePacketListenerImpl::handleTeleportToEntityPacket(
     if (!mPlayer->isSpectator())
         return;
 
-    for (unsigned int i = 0; i < mServer->mLevels.length; ++i)
+    boost::shared_ptr<Entity> target;
+    for (ServerLevel** it = mServer->mLevels.data; it != mServer->mLevels.data + mServer->mLevels.length; ++it)
     {
-        ServerLevel* targetLevel = mServer->mLevels.data[i];
-        if (targetLevel == 0)
+        if (*it == 0)
             continue;
 
-        boost::shared_ptr<Entity> target = packet->getEntity(targetLevel);
+        target = packet->getEntity(*it);
         if (!target)
             continue;
 
         mPlayer->SetCamera(mPlayer);
         mPlayer->stopRiding();
 
-        if (target->mDimension == mPlayer->mDimension)
+        if (target->mLevel == mPlayer->mLevel)
         {
             mPlayer->teleportTo(target->mX, target->mY, target->mZ);
             return;
         }
 
         ServerLevel* oldLevel = mPlayer->getLevel();
+        ServerLevel* targetLevel = static_cast<ServerLevel*>(target->mLevel);
         mPlayer->mDimension = target->mDimension;
         LevelData* oldLevelData = oldLevel->getLevelData();
         int seaLevel = targetLevel->useNewSeaLevel() ? targetLevel->getSeaLevel() : -1;
@@ -684,11 +685,11 @@ void ServerGamePacketListenerImpl::handleTeleportToEntityPacket(
         }
 
         mPlayer->setLevel(targetLevel);
-        mServer->getPlayers()->changeDimension(mPlayer, oldLevel);
+        (gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers)->changeDimension(mPlayer, oldLevel);
         mPlayer->teleportTo(target->mX, target->mY, target->mZ);
         mPlayer->mGameMode->setLevel(targetLevel);
-        mServer->getPlayers()->sendLevelInfo(mPlayer, targetLevel);
-        mServer->getPlayers()->sendAllPlayerInfo(mPlayer);
+        (gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers)->sendLevelInfo(mPlayer, targetLevel);
+        (gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers)->sendAllPlayerInfo(mPlayer);
         return;
     }
 }
@@ -817,13 +818,13 @@ void ServerGamePacketListenerImpl::handleClientCommand(boost::shared_ptr<Serverb
 
     if (mPlayer->mRespawnState)
     {
-        PlayerList* players = gMinecraftServer != NULL ? gMinecraftServer->getPlayers() : NULL;
+        PlayerList* players = gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers;
         mPlayer = players->respawn(mPlayer, mPlayer->mWonGame ? 0 : mPlayer->mDimension, true);
         mPlayer->mRespawnState = false;
     }
     else if (mPlayer->mChangedDimension || mPlayer->getHealth() <= 0.0f)
     {
-        PlayerList* players = gMinecraftServer != NULL ? gMinecraftServer->getPlayers() : NULL;
+        PlayerList* players = gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers;
         mPlayer = players->respawn(mPlayer, 0, false);
     }
 }
@@ -1336,52 +1337,52 @@ void ServerGamePacketListenerImpl::handleTexture(boost::shared_ptr<TexturePacket
 {
     if (packet->length != 0)
     {
-        g_pApp->AddMemoryTextureFile(packet->textureName, packet->data, packet->length);
-        mServer->getConnection()->handleTextureReceived(packet->textureName);
+        gApp.AddMemoryTextureFile(packet->textureName, packet->data, packet->length);
+        mServer->mConnection->handleTextureReceived(packet->textureName);
         return;
     }
 
     unsigned char* data = 0;
     unsigned int length = 0;
-    g_pApp->GetMemFileDetails(packet->textureName, &data, &length);
+    gApp.GetMemFileDetails(packet->textureName, &data, &length);
     if (length == 0)
         mNames.push_back(packet->textureName);
     else
-        send(boost::shared_ptr<Packet>(new TexturePacket(packet->textureName, data, length)));
+        send(boost::shared_ptr<TexturePacket>(new TexturePacket(packet->textureName, data, length)));
 }
 void ServerGamePacketListenerImpl::handleTextureAndGeometry(boost::shared_ptr<TextureAndGeometryPacket> packet)
 {
     if (packet->length != 0)
     {
-        g_pApp->AddMemoryTextureFile(packet->textureName, packet->data, packet->length);
-        if (packet->additionalBoxes != 0)
-            g_pApp->SetAdditionalSkinBoxes(packet->geometryId, packet->additionalBoxes,
+        gApp.AddMemoryTextureFile(packet->textureName, packet->data, packet->length);
+        if (packet->additionalBoxCount != 0)
+            gApp.SetAdditionalSkinBoxes(packet->geometryId, packet->additionalBoxes,
                                            packet->additionalBoxCount, packet->skinAdjustments);
-        g_pApp->SetSkinAdjustments(packet->geometryId, packet->skinAdjustments);
+        gApp.SetSkinAdjustments(packet->geometryId, packet->skinAdjustments);
         mPlayer->setCustomSkin(packet->geometryId);
-        mServer->getConnection()->handleTextureAndGeometryReceived(packet->textureName);
+        mServer->mConnection->handleTextureAndGeometryReceived(packet->textureName);
         return;
     }
 
     unsigned char* data = 0;
     unsigned int length = 0;
-    g_pApp->GetMemFileDetails(packet->textureName, &data, &length);
+    gApp.GetMemFileDetails(packet->textureName, &data, &length);
     DLCSkinFile* skinFile = static_cast<DLCSkinFile*>(
-        g_pApp->mDLCManager.getSkinFile(packet->textureName));
+        gApp.mDLCManager.getSkinFile(packet->textureName));
     if (length == 0)
     {
         mNames.push_back(packet->textureName);
     }
     else if (skinFile == 0)
     {
-        std::vector<SKIN_BOX*>* boxes = g_pApp->GetAdditionalSkinBoxes(packet->geometryId);
-        _SkinAdjustments adjustments = g_pApp->GetSkinAdjustments(packet->geometryId);
-        send(boost::shared_ptr<Packet>(new TextureAndGeometryPacket(
+        std::vector<SKIN_BOX*>* boxes = gApp.GetAdditionalSkinBoxes(packet->geometryId);
+        _SkinAdjustments adjustments = gApp.GetSkinAdjustments(packet->geometryId);
+        send(boost::shared_ptr<TextureAndGeometryPacket>(new TextureAndGeometryPacket(
             packet->textureName, data, length, boxes, adjustments)));
     }
     else
     {
-        send(boost::shared_ptr<Packet>(new TextureAndGeometryPacket(
+        send(boost::shared_ptr<TextureAndGeometryPacket>(new TextureAndGeometryPacket(
             packet->textureName, data, length, skinFile)));
     }
 }
@@ -1392,18 +1393,17 @@ void ServerGamePacketListenerImpl::handleTextureChange(boost::shared_ptr<Texture
     else if (packet->mChangeType == TextureChangePacket::eTextureChangeType_Cape)
         mPlayer->setCustomCape(Player::getCapeIdFromPath(packet->mTextureName));
 
-    bool requestTexture = !packet->mTextureName.empty() &&
-        packet->mTextureName.compare(0, 3, L"def") != 0 &&
-        !g_pApp->IsFileInMemoryTextures(packet->mTextureName);
-    if (requestTexture)
+    if (!packet->mTextureName.empty() &&
+        packet->mTextureName.substr(0, 3).compare(L"def") != 0 &&
+        !gApp.IsFileInMemoryTextures(packet->mTextureName))
     {
-        if (mServer->getConnection()->addPendingTextureRequest(packet->mTextureName))
+        if (mServer->mConnection->addPendingTextureRequest(packet->mTextureName))
             send(boost::shared_ptr<Packet>(new TexturePacket(packet->mTextureName, 0, 0)));
     }
     else if (!packet->mTextureName.empty() &&
-             g_pApp->IsFileInMemoryTextures(packet->mTextureName))
+             gApp.IsFileInMemoryTextures(packet->mTextureName))
     {
-        g_pApp->AddMemoryTextureFile(packet->mTextureName, 0, 0);
+        gApp.AddMemoryTextureFile(packet->mTextureName, 0, 0);
     }
 
     boost::shared_ptr<Entity> player = mPlayer;
@@ -1417,18 +1417,18 @@ void ServerGamePacketListenerImpl::handleTextureAndGeometryChange(boost::shared_
     mPlayer->setCustomSkin(CMinecraftApp::getSkinIdFromPath(packet->geometryName));
 
     bool requestGeometry = !packet->geometryName.empty() &&
-        packet->geometryName.compare(0, 3, L"def") != 0 &&
-        !g_pApp->IsFileInMemoryTextures(packet->geometryName);
+        packet->geometryName.substr(0, 3).compare(L"def") != 0 &&
+        !gApp.IsFileInMemoryTextures(packet->geometryName);
     if (requestGeometry)
     {
-        if (mServer->getConnection()->addPendingTextureRequest(packet->geometryName))
-            send(boost::shared_ptr<Packet>(new TextureAndGeometryPacket(
+        if (mServer->mConnection->addPendingTextureRequest(packet->geometryName))
+            send(boost::shared_ptr<TextureAndGeometryPacket>(new TextureAndGeometryPacket(
                 packet->geometryName, 0, 0)));
     }
     else if (!packet->geometryName.empty() &&
-             g_pApp->IsFileInMemoryTextures(packet->geometryName))
+             gApp.IsFileInMemoryTextures(packet->geometryName))
     {
-        g_pApp->AddMemoryTextureFile(packet->geometryName, 0, 0);
+        gApp.AddMemoryTextureFile(packet->geometryName, 0, 0);
         mPlayer->setCustomSkin(packet->geometryId);
     }
 
@@ -1470,8 +1470,7 @@ void ServerGamePacketListenerImpl::handleKickPlayer(boost::shared_ptr<KickPlayer
 }
 void ServerGamePacketListenerImpl::handleGameCommand(boost::shared_ptr<GameCommandPacket> packet)
 {
-    boost::shared_ptr<CommandSender> sender = boost::static_pointer_cast<CommandSender>(mPlayer);
-    mServer->getCommandDispatcher()->performCommand(sender, packet->command, packet->data);
+    gMinecraftServer->getCommandDispatcher()->performCommand(mPlayer, packet->command, packet->data);
 }
 
 void ServerGamePacketListenerImpl::handleVote(boost::shared_ptr<VotePacket> packet)
@@ -1519,7 +1518,7 @@ void ServerGamePacketListenerImpl::handleGameMode(boost::shared_ptr<GameModePack
 void ServerGamePacketListenerImpl::handleClientboundSetPlayerTeamPacket(boost::shared_ptr<ClientboundSetPlayerTeamPacket> packet) {}
 void ServerGamePacketListenerImpl::handleSoundEvent(boost::shared_ptr<ClientboundSoundPacket> packet)
 {
-    mServer->getPlayers()->broadcast(mPlayer, packet->getX(), packet->getY(), packet->getZ(),
+    (gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers)->broadcast(mPlayer, packet->getX(), packet->getY(), packet->getZ(),
                                      30.0, mPlayer->mDimension, packet);
 }
 
@@ -1529,14 +1528,20 @@ void ServerGamePacketListenerImpl::onDisconnect(
     EnterCriticalSection(&mDisconnectMutex);
     if (!mDisconnected)
     {
-        ClientboundChatPacket::EChatPacketMessage message = mUseAltLeaveMessage
-            ? ClientboundChatPacket::eChatPacketMessage_PlayerKicked
-            : ClientboundChatPacket::eChatPacketMessage_PlayerLeft;
-        PlayerList* players = gMinecraftServer != NULL ? gMinecraftServer->getPlayers() : NULL;
-        players->broadcastAll(
-            boost::shared_ptr<Packet>(new ClientboundChatPacket(mPlayer->getName(), message, -1)));
+        if (!mUseAltLeaveMessage)
+        {
+            PlayerList* players = gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers;
+            players->broadcastAll(boost::shared_ptr<ClientboundChatPacket>(new ClientboundChatPacket(
+                mPlayer->getName(), ClientboundChatPacket::eChatPacketMessage_PlayerLeft, -1)));
+        }
+        else
+        {
+            PlayerList* players = gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers;
+            players->broadcastAll(boost::shared_ptr<ClientboundChatPacket>(new ClientboundChatPacket(
+                mPlayer->getName(), ClientboundChatPacket::eChatPacketMessage_PlayerKicked, -1)));
+        }
         mPlayer->disconnect();
-        players = gMinecraftServer != NULL ? gMinecraftServer->getPlayers() : NULL;
+        PlayerList* players = gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers;
         players->remove(mPlayer);
         mDisconnected = true;
     }
@@ -1612,12 +1617,12 @@ void ServerGamePacketListenerImpl::handleTextureAndGeometryReceived(const std::w
     {
         std::vector<SKIN_BOX*>* boxes = g_pApp->GetAdditionalSkinBoxes(skinId);
         _SkinAdjustments adjustments = g_pApp->GetSkinAdjustments(skinId);
-        send(boost::shared_ptr<Packet>(new TextureAndGeometryPacket(
+        send(boost::shared_ptr<TextureAndGeometryPacket>(new TextureAndGeometryPacket(
             name, data, length, boxes, adjustments)));
     }
     else
     {
-        send(boost::shared_ptr<Packet>(new TextureAndGeometryPacket(name, data, length, skinFile)));
+        send(boost::shared_ptr<TextureAndGeometryPacket>(new TextureAndGeometryPacket(name, data, length, skinFile)));
     }
     mNames.erase(request);
 }
@@ -1643,12 +1648,12 @@ Connection* ServerGamePacketListenerImpl::getConnection()
 
 INetworkPlayer* getNetworkPlayerFromIndex(int index)
 {
-    PlayerList* playerList = gMinecraftServer != 0 ? gMinecraftServer->getPlayers() : 0;
+    PlayerList* playerList = gMinecraftServer == 0 ? 0 : gMinecraftServer->mPlayers;
     std::vector<boost::shared_ptr<ServerPlayer> >* players = playerList->getPlayers();
     std::vector<boost::shared_ptr<ServerPlayer> >::iterator it = players->begin();
     while (it != players->end())
     {
-        boost::shared_ptr<ServerPlayer> player = *it;
+        boost::shared_ptr<ServerPlayer>& player = *it;
         if (player->mPlayerIndex == index)
             return player->mConnection->getNetworkPlayer();
         ++it;

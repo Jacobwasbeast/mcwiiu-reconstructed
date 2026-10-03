@@ -11,6 +11,7 @@
 #include <boost/unordered_set.hpp>
 
 #include "game/core/CriticalSection.hpp"
+#include "game/core/ConsoleInputSource.hpp"
 #include "game/network/ServerGamePacketListener.hpp"
 #include "game/network/Connection.hpp"
 #include "game/network/DisconnectPacket.hpp"
@@ -67,7 +68,7 @@ class ClientboundSoundPacket;
 class ClientboundPlayerPositionPacket;
 class Vec3;
 
-class ServerGamePacketListenerImpl : public ServerGamePacketListener
+class ServerGamePacketListenerImpl : public ServerGamePacketListener, public ConsoleInputSource
 {
 public:
     ServerGamePacketListenerImpl(MinecraftServer* server, Connection* connection,

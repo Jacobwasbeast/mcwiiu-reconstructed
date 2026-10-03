@@ -34,6 +34,7 @@ public:
 
 private:
     friend class PlayerList;
+    friend class ServerConnection;
     Connection* m_connection;
     bool m_disconnected;
     MinecraftServer* m_server;

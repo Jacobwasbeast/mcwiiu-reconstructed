@@ -5,13 +5,24 @@
 #include "game/network/PacketListener.hpp"
 
 MapSelectInfoPacket::MapSelectInfoPacket()
-    : mData(NULL), mLength(0), mOwnsData(false), mSize(0)
+    : mOwnsData(false), mSize(0), mData(NULL), mLength(0)
 {
 }
 
 MapSelectInfoPacket::MapSelectInfoPacket(arrayWithLength<unsigned char> data, bool ownsData)
-    : mData(data.data), mLength(data.length), mOwnsData(ownsData), mSize(data.length)
+    : mData(NULL), mLength(0)
 {
+    mOwnsData = ownsData;
+    mData = data.data;
+    mLength = data.length;
+    if (mData == NULL)
+    {
+        mSize = 0;
+    }
+    else
+    {
+        mSize = data.length;
+    }
 }
 
 MapSelectInfoPacket::~MapSelectInfoPacket()
@@ -22,17 +33,14 @@ MapSelectInfoPacket::~MapSelectInfoPacket()
 
 void MapSelectInfoPacket::read(DataInputStream* input)
 {
-    unsigned int length = static_cast<unsigned int>(input->readShort());
-    mSize = length;
-    if (length - 1 < 0x7ffe)
+    mSize = static_cast<unsigned int>(input->readShort());
+    if (mSize - 1 < 0x7ffe)
     {
         if (mData != NULL)
             delete[] mData;
-        mData = new unsigned char[length]();
-        mLength = length;
-        arrayWithLength<unsigned char> data;
-        data.data = mData;
-        data.length = mLength;
+        arrayWithLength<unsigned char> data(mSize, true);
+        mData = data.data;
+        mLength = data.length;
         input->readBytes(data);
     }
 }

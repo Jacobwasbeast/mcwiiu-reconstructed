@@ -5,7 +5,8 @@
 #include "game/network/ServerGamePacketListenerImpl.hpp"
 #include "game/server/MinecraftServer.hpp"
 #include "game/server/ServerPlayer.hpp"
-#include <cwchar>
+#include <algorithm>
+#include "game/core/StringConversion.hpp"
 
 ServerConnection::ServerConnection(MinecraftServer* server)
 {
@@ -39,36 +40,28 @@ void ServerConnection::addServerGamePacketListenerImpl(boost::shared_ptr<ServerG
 
 void ServerConnection::handleTextureReceived(const std::wstring& request)
 {
-    std::vector<std::wstring>::iterator requestIterator;
-    for (requestIterator = mPendingTextureRequests.begin();
-         requestIterator != mPendingTextureRequests.end(); ++requestIterator) {
-        if (*requestIterator == request) {
-            mPendingTextureRequests.erase(requestIterator);
-            break;
-        }
+    std::vector<std::wstring>::iterator requestIterator =
+        std::find(mPendingTextureRequests.begin(), mPendingTextureRequests.end(), request);
+    if (requestIterator != mPendingTextureRequests.end()) {
+        mPendingTextureRequests.erase(requestIterator);
     }
-    std::vector<boost::shared_ptr<ServerGamePacketListenerImpl> >::iterator listenerIterator;
-    for (listenerIterator = mPlayers.begin(); listenerIterator != mPlayers.end(); ++listenerIterator) {
-        if (*listenerIterator && !(*listenerIterator)->isServerPacketListener()) {
-            (*listenerIterator)->handleTextureReceived(request);
+    for (unsigned int playerIndex = 0; playerIndex < mPlayers.size(); ++playerIndex) {
+        if (!mPlayers[playerIndex]->mDisconnected) {
+            mPlayers[playerIndex]->handleTextureReceived(request);
         }
     }
 }
 
 void ServerConnection::handleTextureAndGeometryReceived(const std::wstring& request)
 {
-    std::vector<std::wstring>::iterator requestIterator;
-    for (requestIterator = mPendingTextureRequests.begin();
-         requestIterator != mPendingTextureRequests.end(); ++requestIterator) {
-        if (*requestIterator == request) {
-            mPendingTextureRequests.erase(requestIterator);
-            break;
-        }
+    std::vector<std::wstring>::iterator requestIterator =
+        std::find(mPendingTextureRequests.begin(), mPendingTextureRequests.end(), request);
+    if (requestIterator != mPendingTextureRequests.end()) {
+        mPendingTextureRequests.erase(requestIterator);
     }
-    std::vector<boost::shared_ptr<ServerGamePacketListenerImpl> >::iterator listenerIterator;
-    for (listenerIterator = mPlayers.begin(); listenerIterator != mPlayers.end(); ++listenerIterator) {
-        if (*listenerIterator && !(*listenerIterator)->isServerPacketListener()) {
-            (*listenerIterator)->handleTextureAndGeometryReceived(request);
+    for (unsigned int playerIndex = 0; playerIndex < mPlayers.size(); ++playerIndex) {
+        if (!mPlayers[playerIndex]->mDisconnected) {
+            mPlayers[playerIndex]->handleTextureAndGeometryReceived(request);
         }
     }
 }
@@ -83,70 +76,64 @@ void ServerConnection::handleConnection(boost::shared_ptr<ServerConnectionListen
 void ServerConnection::NewIncomingSocket(Socket* socket)
 {
     ++mConnectionCount;
-    std::wstring name(L"Connection #");
-    wchar_t buffer[32];
-    std::swprintf(buffer, 32, L"%d", mConnectionCount);
-    name.append(buffer);
     boost::shared_ptr<ServerConnectionListener> listener(
-        new ServerConnectionListener(mServer, socket, name));
+        new ServerConnectionListener(mServer, socket, L"Connection #" + _toString<int>(mConnectionCount)));
     handleConnection(listener);
 }
 
 void ServerConnection::stop()
 {
     EnterCriticalSection(&mCriticalSection);
-    std::vector<boost::shared_ptr<ServerConnectionListener> >::iterator listenerIterator;
-    for (listenerIterator = mListeners.begin(); listenerIterator != mListeners.end(); ++listenerIterator) {
-        if (*listenerIterator) {
-            (*listenerIterator)->disconnect(DisconnectPacket::eDisconnectReason_ConnectionClosed);
-        }
+    for (unsigned int listenerIndex = 0; listenerIndex < mListeners.size(); ++listenerIndex) {
+        boost::shared_ptr<ServerConnectionListener> listener = mListeners[listenerIndex];
+        listener->m_connection->close(DisconnectPacket::eDisconnectReason_ConnectionClosed);
     }
     LeaveCriticalSection(&mCriticalSection);
 
-    std::vector<boost::shared_ptr<ServerGamePacketListenerImpl> >::iterator playerIterator;
-    for (playerIterator = mPlayers.begin(); playerIterator != mPlayers.end(); ++playerIterator) {
-        if (*playerIterator) {
-            Connection* connection = (*playerIterator)->getConnection();
-            if (connection) {
-                connection->close(DisconnectPacket::eDisconnectReason_ConnectionClosed);
-            }
-        }
+    for (unsigned int playerIndex = 0; playerIndex < mPlayers.size(); ++playerIndex) {
+        boost::shared_ptr<ServerGamePacketListenerImpl> player = mPlayers[playerIndex];
+        player->mConnection->close(DisconnectPacket::eDisconnectReason_ConnectionClosed);
     }
 }
 
 void ServerConnection::tick()
 {
-    std::vector<boost::shared_ptr<ServerConnectionListener> > listeners;
-    EnterCriticalSection(&mCriticalSection);
-    listeners = mListeners;
-    LeaveCriticalSection(&mCriticalSection);
+    {
+        EnterCriticalSection(&mCriticalSection);
+        std::vector<boost::shared_ptr<ServerConnectionListener> > listeners(mListeners);
+        LeaveCriticalSection(&mCriticalSection);
 
-    std::vector<boost::shared_ptr<ServerConnectionListener> >::iterator listenerIterator;
-    for (listenerIterator = listeners.begin(); listenerIterator != listeners.end(); ++listenerIterator) {
-        (*listenerIterator)->tick();
+        for (unsigned int listenerIndex = 0; listenerIndex < listeners.size(); ++listenerIndex) {
+            boost::shared_ptr<ServerConnectionListener> listener = listeners[listenerIndex];
+            listener->tick();
+            if (listener->m_connection) {
+                listener->m_connection->flush();
+            }
+        }
     }
 
     EnterCriticalSection(&mCriticalSection);
-    listenerIterator = mListeners.begin();
-    while (listenerIterator != mListeners.end()) {
-        if ((*listenerIterator)->isDisconnected()) {
-            listenerIterator = mListeners.erase(listenerIterator);
-        } else {
-            ++listenerIterator;
+    for (unsigned int listenerIndex = 0; listenerIndex < mListeners.size(); ++listenerIndex) {
+        if (mListeners[listenerIndex]->m_disconnected) {
+            mListeners.erase(mListeners.begin() + listenerIndex);
+            --listenerIndex;
         }
     }
     LeaveCriticalSection(&mCriticalSection);
 
-    std::vector<boost::shared_ptr<ServerGamePacketListenerImpl> >::iterator playerIterator;
-    for (playerIterator = mPlayers.begin(); playerIterator != mPlayers.end(); ++playerIterator) {
-        boost::shared_ptr<ServerPlayer> player = (*playerIterator)->mPlayer;
+    for (unsigned int playerIndex = 0; playerIndex < mPlayers.size(); ++playerIndex) {
+        boost::shared_ptr<ServerGamePacketListenerImpl> listener = mPlayers[playerIndex];
+        boost::shared_ptr<ServerPlayer> player = listener->mPlayer;
         if (player && player->mConnection) {
             player->updateFrameTick();
             player->doChunkSendingTick(false, false);
         }
-        (*playerIterator)->tick();
-        Connection* connection = (*playerIterator)->getConnection();
-        connection->flush();
+        listener->tick();
+        if (listener->mDisconnected) {
+            mPlayers.erase(mPlayers.begin() + playerIndex);
+            --playerIndex;
+        }
+        listener->mConnection->flush();
     }
 }
 

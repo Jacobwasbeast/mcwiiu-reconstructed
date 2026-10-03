@@ -6,6 +6,7 @@
 #include "game/network/Packet.hpp"
 #include "game/world/block/BlockPos.hpp"
 
+class ClientPacketListener;
 class DataInputStream;
 class DataOutputStream;
 class PacketListener;
@@ -13,6 +14,8 @@ class PacketListener;
 class ClientboundSetSpawnPositionPacket : public Packet, public boost::enable_shared_from_this<ClientboundSetSpawnPositionPacket>
 {
 public:
+    friend class ClientPacketListener;
+
     ClientboundSetSpawnPositionPacket();
     ClientboundSetSpawnPositionPacket(int x, int y, int z);
     ClientboundSetSpawnPositionPacket(const BlockPos& pos);

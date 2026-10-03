@@ -1,9 +1,9 @@
-#ifndef GAME_NETWORK_CHUNKHISTORY_HPP
-#define GAME_NETWORK_CHUNKHISTORY_HPP
+#ifndef GAME_NETWORK_ICHUNKHISTORY_HPP
+#define GAME_NETWORK_ICHUNKHISTORY_HPP
 
 #include <vector>
 
-class ChunkHistory
+class IChunkHistory
 {
 public:
     virtual std::vector<short>* GetChangesForChunk(int x, int z) const = 0;

@@ -184,13 +184,13 @@ void GameModePacket::LockPlayerLocation::WritePacket(boost::shared_ptr<GameModeP
 }
 
 GameModePacket::ChestRefill::ChestRefill()
-    : positions()
 {
+    positions = std::vector<BlockPos>();
 }
 
 GameModePacket::ChestRefill::ChestRefill(std::vector<BlockPos> positions)
-    : positions(positions)
 {
+    this->positions = positions;
 }
 
 void GameModePacket::ChestRefill::ReadPacket(boost::shared_ptr<GameModePacket> packet)
@@ -227,10 +227,6 @@ GameModePacket::PlayerData::PlayerData(std::wstring playerName)
 {
 }
 
-GameModePacket::PlayerData::~PlayerData()
-{
-}
-
 void GameModePacket::PlayerData::ReadPacket(boost::shared_ptr<GameModePacket> packet)
 {
     playerName = packet->strings[0];
@@ -239,10 +235,6 @@ void GameModePacket::PlayerData::ReadPacket(boost::shared_ptr<GameModePacket> pa
 void GameModePacket::PlayerData::WritePacket(boost::shared_ptr<GameModePacket> packet) const
 {
     packet->strings.push_back(playerName);
-}
-
-GameModePacket::SendTeamInviteData::~SendTeamInviteData()
-{
 }
 
 void GameModePacket::SetCameraData::ReadPacket(boost::shared_ptr<GameModePacket> packet)
@@ -504,17 +496,13 @@ void GameModePacket::UpdateThemeIdData::WritePacket(boost::shared_ptr<GameModePa
 }
 
 GameModePacket::RoundStartGameModeData::RoundStartGameModeData()
-    : roundId(), subRoundId()
+    : roundId(L""), subRoundId(L"")
 {
 }
 
 GameModePacket::RoundStartGameModeData::RoundStartGameModeData(
     const std::wstring& roundId, const std::wstring& subRoundId)
     : roundId(roundId), subRoundId(subRoundId)
-{
-}
-
-GameModePacket::RoundStartGameModeData::~RoundStartGameModeData()
 {
 }
 

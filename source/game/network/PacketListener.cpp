@@ -124,18 +124,9 @@
 #include "game/network/VotePacket.hpp"
 #include "game/network/XZPacket.hpp"
 
-template <typename T>
-static void dispatchUnhandled(PacketListener* listener, const boost::shared_ptr<T>& packet)
-{
-    boost::shared_ptr<Packet> base(packet);
-    listener->onUnhandledPacket(base);
-}
-
 void PacketListener::onUnhandledPacket(boost::shared_ptr<Packet> packet)
 {
 }
-
-#define onUnhandledPacket(packet) dispatchUnhandled(this, packet)
 
 void PacketListener::onDisconnect(DisconnectPacket::eDisconnectReason reason, void* userData)
 {
