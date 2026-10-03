@@ -51,11 +51,6 @@ void MinecartCommandBlock::addAdditonalSaveData(CompoundTag* tag)
     mCommandBlock->save(tag);
 }
 
-unsigned long long MinecartCommandBlock::GetType()
-{
-    return EntityType::MINECART_COMMAND_BLOCK;
-}
-
 const Minecart::Type* MinecartCommandBlock::getType()
 {
     return Minecart::Type::COMMAND_BLOCK;

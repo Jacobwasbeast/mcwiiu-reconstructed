@@ -8,11 +8,6 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/Iterator.hpp"
 
-unsigned int hash_value(const BlockPos& pos)
-{
-    return static_cast<unsigned int>(pos.hashCode());
-}
-
 BlockPattern::BlockPattern(array3DWithLength<Predicate<BlockInWorld*>*> pattern,
                            const Direction* forward, const Direction* up)
     : mPattern(pattern),

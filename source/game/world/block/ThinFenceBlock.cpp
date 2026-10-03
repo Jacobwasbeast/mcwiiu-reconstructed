@@ -25,23 +25,27 @@ AbstractProperty<bool>* THIN_FENCE_EAST = static_cast<AbstractProperty<bool>*>(B
 AbstractProperty<bool>* THIN_FENCE_SOUTH = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"south"));
 AbstractProperty<bool>* THIN_FENCE_WEST = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"west"));
 
-static const AABB* thinFenceShape(int index)
-{
-    double minX = (index & 2) ? 0.0 : 0.375;
-    double maxX = (index & 8) ? 1.0 : 0.625;
-    double minZ = (index & 4) ? 0.0 : 0.375;
-    double maxZ = (index & 1) ? 1.0 : 0.625;
-    return AABB::newPermanent(minX, 0.0, minZ, maxX, 1.0, maxZ);
-}
+static const double THIN_FENCE_POST_MIN = 0.375;
+static const double THIN_FENCE_POST_MAX = 0.625;
 
-static const AABB* thinFenceShapes[16];
-
-static const AABB* getThinFenceShape(int index)
-{
-    if (thinFenceShapes[index] == NULL)
-        thinFenceShapes[index] = thinFenceShape(index);
-    return thinFenceShapes[index];
-}
+static const AABB* thinFenceShapes[16] = {
+    AABB::newPermanent(THIN_FENCE_POST_MIN, 0.0, THIN_FENCE_POST_MIN, THIN_FENCE_POST_MAX, 1.0, THIN_FENCE_POST_MAX),
+    AABB::newPermanent(THIN_FENCE_POST_MIN, 0.0, THIN_FENCE_POST_MIN, THIN_FENCE_POST_MAX, 1.0, 1.0),
+    AABB::newPermanent(0.0, 0.0, THIN_FENCE_POST_MIN, THIN_FENCE_POST_MAX, 1.0, THIN_FENCE_POST_MAX),
+    AABB::newPermanent(0.0, 0.0, THIN_FENCE_POST_MIN, THIN_FENCE_POST_MAX, 1.0, 1.0),
+    AABB::newPermanent(THIN_FENCE_POST_MIN, 0.0, 0.0, THIN_FENCE_POST_MAX, 1.0, THIN_FENCE_POST_MAX),
+    AABB::newPermanent(THIN_FENCE_POST_MIN, 0.0, 0.0, THIN_FENCE_POST_MAX, 1.0, 1.0),
+    AABB::newPermanent(0.0, 0.0, 0.0, THIN_FENCE_POST_MAX, 1.0, THIN_FENCE_POST_MAX),
+    AABB::newPermanent(0.0, 0.0, 0.0, THIN_FENCE_POST_MAX, 1.0, 1.0),
+    AABB::newPermanent(THIN_FENCE_POST_MIN, 0.0, THIN_FENCE_POST_MIN, 1.0, 1.0, THIN_FENCE_POST_MAX),
+    AABB::newPermanent(THIN_FENCE_POST_MIN, 0.0, THIN_FENCE_POST_MIN, 1.0, 1.0, 1.0),
+    AABB::newPermanent(0.0, 0.0, THIN_FENCE_POST_MIN, 1.0, 1.0, THIN_FENCE_POST_MAX),
+    AABB::newPermanent(0.0, 0.0, THIN_FENCE_POST_MIN, 1.0, 1.0, 1.0),
+    AABB::newPermanent(THIN_FENCE_POST_MIN, 0.0, 0.0, 1.0, 1.0, THIN_FENCE_POST_MAX),
+    AABB::newPermanent(THIN_FENCE_POST_MIN, 0.0, 0.0, 1.0, 1.0, 1.0),
+    AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 1.0, THIN_FENCE_POST_MAX),
+    AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 1.0, 1.0)
+};
 
 ThinFenceBlock::ThinFenceBlock(const std::wstring& name, const std::wstring& edgeTexture, Material* material, bool extraBlock)
     : Block(material), mDropsOnBreak(extraBlock), mEdgeTexture(edgeTexture), mName(name), mEdgeTextureId(0)
@@ -91,8 +95,8 @@ int ThinFenceBlock::getAABBIndex(const BlockState* state)
 
 const AABB* ThinFenceBlock::getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
 {
-    const BlockState* actual = levelSource == NULL ? state : fillVirtualBlockStateProperties(state, levelSource, pos);
-    return getThinFenceShape(getAABBIndex(actual));
+    const BlockState* actual = fillVirtualBlockStateProperties(state, levelSource, pos);
+    return thinFenceShapes[getAABBIndex(actual)];
 }
 
 bool ThinFenceBlock::isExceptionBlockForAttachingPlusPiston(Block* block)

@@ -72,12 +72,12 @@ void GameRules_BlockStateAttribute::writeAsXml(ConsoleGameRules::EGameRuleAttr a
 {
     if (*mValue == NULL)
     {
-        xml.append(formatstr(" %ls=\"Leave\"", IGameRuleAttribute::attributeName(attribute)));
+        xml.append(formatstr(" %ls=\"Leave\"", gRuleAttributeNames[attribute]));
     }
     else
     {
         Block* block = (*mValue)->getBlock();
 
-        xml.append(formatstr(" %ls=\"%i:%i\"", IGameRuleAttribute::attributeName(attribute), Block::getId(block), block->getSpawnResourcesAuxValue(*mValue)));
+        xml.append(formatstr(" %ls=\"%i:%i\"", gRuleAttributeNames[attribute], Block::getId(block), block->getSpawnResourcesAuxValue(*mValue)));
     }
 }

@@ -87,7 +87,6 @@ public:
     ShulkerBoxBlockEntity& operator=(const ShulkerBoxBlockEntity& other);
 
 private:
-    static arrayWithLength<int> createSlots();
     static arrayWithLength<int> SLOTS;
 
     NonNullList<not_null_ptr<ItemInstance> > mItems;

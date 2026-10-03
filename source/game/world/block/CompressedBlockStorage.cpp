@@ -17,20 +17,6 @@ static XLockFreeStack<unsigned char> sPendingDeletes[3];
 static OSFastMutex sCompressLock;
 static int sAllocatedBytes;
 
-namespace
-{
-    void destroyPendingDeleteStacks(XLockFreeStack<unsigned char>* stacks, int count)
-    {
-        for (int i = 0; i < count; ++i)
-            stacks[i].~XLockFreeStack();
-    }
-}
-
-void __T11()
-{
-    destroyPendingDeleteStacks(sPendingDeletes, 3);
-}
-
 CompressedBlockStorage::CompressedBlockStorage()
 {
     mData = NULL;

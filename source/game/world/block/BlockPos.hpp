@@ -12,8 +12,6 @@ class Rotation;
 class Vec3;
 class BlockPos;
 
-unsigned int hash_value(const BlockPos& pos);
-
 template <class T> class Iterator;
 
 class BlockPos : public Vec3i
@@ -87,5 +85,10 @@ private:
     static const int Y_OFFSET;
     static const int X_OFFSET;
 };
+
+inline unsigned int hash_value(const BlockPos& pos)
+{
+    return static_cast<unsigned int>(pos.hashCode());
+}
 
 #endif

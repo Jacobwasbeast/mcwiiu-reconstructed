@@ -41,7 +41,6 @@ public:
         static ComparatorMode* SUBTRACT;
 
         explicit ComparatorMode(const std::wstring& name);
-        virtual ~ComparatorMode();
         virtual std::wstring toString() const;
         virtual std::wstring getSerializedName() const;
 

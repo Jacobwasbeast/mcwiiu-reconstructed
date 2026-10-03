@@ -25,8 +25,6 @@ class AbstractProperty;
 class BlockState : public BlockProperties, public BlockBehaviours
 {
 public:
-    ~BlockState();
-
     virtual const std::vector<const Property*>& getProperties() const = 0;
     virtual bool hasProperty(const Property* property) const = 0;
     virtual Boxed* getBoxedValue(const Property* property) const = 0;

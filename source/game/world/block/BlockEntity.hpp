@@ -61,7 +61,7 @@ public:
     void operator=(const BlockEntity& other);
 
     static void staticCtor();
-    static void Register(int id, Creator creator, unsigned long long type, const std::wstring& name);
+    static void Register(int id, Creator creator, unsigned long long type, std::wstring name);
     static ResourceLocation getKey(unsigned long long type);
     static boost::shared_ptr<BlockEntity> loadStatic(Level* level, CompoundTag* tag);
 

@@ -3,11 +3,6 @@
 
 #include "game/data/CompoundTag.hpp"
 
-ComparatorBlockEntity::ComparatorBlockEntity()
-    : BlockEntity(), mOutputSignal(0)
-{
-}
-
 ComparatorBlockEntity::~ComparatorBlockEntity()
 {
 }

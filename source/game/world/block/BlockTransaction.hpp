@@ -13,7 +13,10 @@ class Level;
 class BlockTransaction
 {
 public:
-    typedef unsigned short Element;
+    struct Element
+    {
+        unsigned short value;
+    };
 
     Vec3i mSize;
     unsigned int mElementCount;

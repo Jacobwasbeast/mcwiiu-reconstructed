@@ -38,5 +38,5 @@ void GameRules_BlockAttribute::save(ConsoleGameRules::EGameRuleAttr attribute, G
 
 void GameRules_BlockAttribute::writeAsXml(ConsoleGameRules::EGameRuleAttr attribute, std::string& xml)
 {
-    xml.append(formatstr(" %ls=\"%ls\"", IGameRuleAttribute::attributeName(attribute), _toString<Block*>(*mValue).c_str()));
+    xml.append(formatstr(" %ls=\"%ls\"", gRuleAttributeNames[attribute], _toString<Block*>(*mValue).c_str()));
 }

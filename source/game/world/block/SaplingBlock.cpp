@@ -23,6 +23,7 @@
 #include "game/world/block/OldLeafBlock.hpp"
 #include "game/world/block/OldLogBlock.hpp"
 #include "game/world/block/PlanksBlock.hpp"
+#include "game/world/block/Predicates.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 #include "game/world/generation/BigTreeFeature.hpp"
 #include "game/world/generation/BirchFeature.hpp"
@@ -40,12 +41,6 @@ static const AABB* SAPLING_SHAPE = AABB::newPermanent(0.09999999403953552, 0.0, 
 static const unsigned int SAPLING_DESCRIPTION_IDS[4] = { IDS_TILE_SAPLING_OAK, IDS_TILE_SAPLING_SPRUCE, IDS_TILE_SAPLING_BIRCH, IDS_TILE_SAPLING_JUNGLE };
 
 static const std::wstring SAPLING_ICON_NAMES[6] = { L"sapling", L"sapling_spruce", L"sapling_birch", L"sapling_jungle", L"sapling_acacia", L"sapling_roofed_oak" };
-
-class SaplingVariantPredicate : public Predicate<PlanksBlock::Variant*>
-{
-public:
-    virtual bool apply(PlanksBlock::Variant* value) const { return value != NULL; }
-};
 
 SaplingBlock::SaplingBlock()
 {
@@ -261,8 +256,7 @@ void SaplingBlock::blockStaticCtor()
     if (TYPE != NULL) return;
     boost::unordered_set<PlanksBlock::Variant*> values;
     for (int i = 0; i < 6; ++i) values.insert(PlanksBlock::Variant::byData(i));
-    SaplingVariantPredicate predicate;
-    TYPE = EnumProperty<PlanksBlock::Variant*>::create(L"type", typeid(PlanksBlock::Variant), values, &predicate);
+    TYPE = EnumProperty<PlanksBlock::Variant*>::create(L"type", typeid(PlanksBlock::Variant), values, Predicates<PlanksBlock::Variant*>::alwaysTrue);
     gSaplingStage = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"stage"));
 }
 

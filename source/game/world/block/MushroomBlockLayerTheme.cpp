@@ -15,15 +15,6 @@ MushroomBlockLayerTheme::MushroomBlockLayerTheme(HugeMushroomBlock* block)
 {
 }
 
-static int neighbourSurface(BlockTransaction* transaction, int x, int z, const Direction* direction)
-{
-    int neighbourX = x + direction->getStepX();
-    int neighbourZ = z + direction->getStepZ();
-    if (neighbourX < 0 || neighbourX >= transaction->mSize.x || neighbourZ < 0 || neighbourZ >= transaction->mSize.z)
-        return -1;
-    return RandomPatchesLayerTheme::HighestSolidBlock(transaction, neighbourX, neighbourZ);
-}
-
 void MushroomBlockLayerTheme::Apply(Random&, BlockTransaction* transaction, int&, int&) const
 {
     for (int x = 0; x < transaction->mSize.x; ++x)
@@ -34,10 +25,15 @@ void MushroomBlockLayerTheme::Apply(Random&, BlockTransaction* transaction, int&
             if (surfaceY == -1)
                 continue;
 
-            int north = neighbourSurface(transaction, x, z, Direction::NORTH);
-            int east = neighbourSurface(transaction, x, z, Direction::EAST);
-            int south = neighbourSurface(transaction, x, z, Direction::SOUTH);
-            int west = neighbourSurface(transaction, x, z, Direction::WEST);
+            const Direction* directions[4] = { Direction::NORTH, Direction::EAST, Direction::SOUTH, Direction::WEST };
+            int neighbourSurfaces[4] = { -1, -1, -1, -1 };
+            for (int i = 0; i < 4; ++i)
+            {
+                int neighbourX = directions[i]->getStepX() + x;
+                int neighbourZ = directions[i]->getStepZ() + z;
+                if (neighbourX >= 0 && neighbourX < transaction->mSize.x && neighbourZ >= 0 && neighbourZ < transaction->mSize.z)
+                    neighbourSurfaces[i] = RandomPatchesLayerTheme::HighestSolidBlock(transaction, neighbourX, neighbourZ);
+            }
 
             for (int y = 0; y < transaction->mSize.y; ++y)
             {
@@ -45,8 +41,8 @@ void MushroomBlockLayerTheme::Apply(Random&, BlockTransaction* transaction, int&
                 if (transaction->getBlock(position) <= 0)
                     continue;
 
-                int exposed = (north < surfaceY ? 1 : 0) | (east < surfaceY ? 2 : 0) |
-                              (south < surfaceY ? 4 : 0) | (west < surfaceY ? 8 : 0);
+                int exposed = (neighbourSurfaces[0] < surfaceY ? 1 : 0) | (neighbourSurfaces[1] < surfaceY ? 2 : 0) |
+                              (neighbourSurfaces[2] < surfaceY ? 4 : 0) | (neighbourSurfaces[3] < surfaceY ? 8 : 0);
                 HugeMushroomBlock::Variant* variant;
                 switch (exposed)
                 {

@@ -4,11 +4,6 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/generation/StructurePlaceSettings.hpp"
 
-BlockRotProcessor::BlockRotProcessor(StructurePlaceSettings* settings, const BlockPos& position)
-    : mIntegrity(settings->getIntegrity()), mRandom(settings->getRandom(&position, mOwnsRandom))
-{
-}
-
 BlockRotProcessor::~BlockRotProcessor()
 {
     if (mOwnsRandom)

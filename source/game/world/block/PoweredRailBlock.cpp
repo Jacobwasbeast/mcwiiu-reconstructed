@@ -18,15 +18,6 @@
 EnumProperty<BaseRailBlock::RailShape*>* PoweredRailBlock::SHAPE = NULL;
 BooleanProperty* PoweredRailBlock::POWERED = static_cast<BooleanProperty*>(BooleanProperty::create(L"powered"));
 
-static const BlockState* poweredRailState(const BlockState* state, const Property* property,
-                                          BaseRailBlock::RailShape* shape, bool powered)
-{
-    TypedBoxed<BaseRailBlock::RailShape*> shapeValue(shape);
-    const BlockState* result = state->setBoxedValue(property, &shapeValue);
-    TypedBoxed<bool> poweredValue(powered);
-    return result->setBoxedValue(PoweredRailBlock::POWERED, &poweredValue);
-}
-
 void PoweredRailBlock::blockStaticCtor()
 {
     boost::unordered_set<BaseRailBlock::RailShape*> values;
@@ -176,8 +167,13 @@ const AbstractProperty<BaseRailBlock::RailShape*>* PoweredRailBlock::getShapePro
 
 const BlockState* PoweredRailBlock::getBlockState(int data)
 {
-    return poweredRailState(defaultBlockState(), PoweredRailBlock::SHAPE,
-                            BaseRailBlock::RailShape::byData(data & 7), (data & 8) != 0);
+    const BlockState* state = defaultBlockState();
+    {
+        TypedBoxed<BaseRailBlock::RailShape*> shapeValue(BaseRailBlock::RailShape::byData(data & 7));
+        state = state->setBoxedValue(PoweredRailBlock::SHAPE, &shapeValue);
+    }
+    TypedBoxed<bool> poweredValue((data & 8) != 0);
+    return state->setBoxedValue(PoweredRailBlock::POWERED, &poweredValue);
 }
 
 int PoweredRailBlock::convertBlockStateToLegacyData(const BlockState* state)

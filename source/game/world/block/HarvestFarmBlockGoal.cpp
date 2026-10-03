@@ -12,12 +12,6 @@
 #include "game/world/block/CropBlock.hpp"
 #include "game/world/generation/Villager.hpp"
 
-static bool isCropBlock(Block* block)
-{
-    return block == Blocks::wheat || block == Blocks::carrots ||
-           block == Blocks::potatoes || block == Blocks::beetroots;
-}
-
 HarvestFarmBlockGoal::HarvestFarmBlockGoal(Villager* villager,
                                            double speedModifier)
     : MoveToBlockGoal(villager, speedModifier, 16, 1, 1.0),
@@ -99,9 +93,9 @@ void HarvestFarmBlockGoal::tick()
     Level* level = mVillager->getLevel();
     BlockPos above = mBlockPos.above();
     const BlockState* state = level->getBlockState(above);
-    Block* block = state->getBlock();
+    CropBlock* crop = dynamic_cast<CropBlock*>(state->getBlock());
 
-    if (mTargetType == 0 && isCropBlock(block) && static_cast<CropBlock*>(block)->isMaxAge(state))
+    if (mTargetType == 0 && crop != NULL && crop->isMaxAge(state))
     {
         level->destroyBlock(above, true);
         mTargetType = -1;
@@ -166,15 +160,15 @@ bool HarvestFarmBlockGoal::isValidTarget(Level* level, const BlockPos& pos)
 
     BlockPos above = pos.above();
     const BlockState* aboveState = level->getBlockState(above);
-    Block* aboveBlock = aboveState->getBlock();
+    CropBlock* aboveCrop = dynamic_cast<CropBlock*>(aboveState->getBlock());
     if (mHasFarmSeeds && aboveState->getMaterial() == Material::AIR)
     {
         mTargetType = 1;
         return true;
     }
-    if (mWantsMoreFood && isCropBlock(aboveBlock) &&
+    if (mWantsMoreFood && aboveCrop != NULL &&
         (mTargetType == 0 || mTargetType == -1) &&
-        static_cast<CropBlock*>(aboveBlock)->isMaxAge(aboveState))
+        aboveCrop->isMaxAge(aboveState))
     {
         mTargetType = 0;
         return true;

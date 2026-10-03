@@ -62,10 +62,6 @@ StairBlock::Half::Half(const std::wstring& name)
 {
 }
 
-StairBlock::Half::~Half()
-{
-}
-
 std::wstring StairBlock::Half::toString() const
 {
     return mName;
@@ -78,10 +74,6 @@ std::wstring StairBlock::Half::getSerializedName() const
 
 StairBlock::Shape::Shape(const std::wstring& name, int id)
     : mName(name), mId(id)
-{
-}
-
-StairBlock::Shape::~Shape()
 {
 }
 

@@ -1,16 +1,19 @@
 #ifndef GAME_WORLD_BLOCK_BLOCKROTPROCESSOR_HPP
 #define GAME_WORLD_BLOCK_BLOCKROTPROCESSOR_HPP
 
+#include "game/world/generation/StructurePlaceSettings.hpp"
 #include "game/world/generation/StructureProcessor.hpp"
 
 class BlockPos;
 class Random;
-class StructurePlaceSettings;
 
 class BlockRotProcessor : public StructureProcessor
 {
 public:
-    BlockRotProcessor(StructurePlaceSettings* settings, const BlockPos& position);
+    BlockRotProcessor(StructurePlaceSettings* settings, const BlockPos& position)
+        : mIntegrity(settings->getIntegrity()), mRandom(settings->getRandom(&position, mOwnsRandom))
+    {
+    }
     virtual ~BlockRotProcessor();
 
     virtual StructureTemplate::StructureBlockInfo* processBlock(Level* level,

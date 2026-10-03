@@ -36,8 +36,8 @@
 
 #include <typeinfo>
 
-BedBlock::Part gBedHead(0, L"head");
-static BedBlock::Part gBedFoot(1, L"foot");
+BedBlock::Part& gBedHead = *new BedBlock::Part(0, L"head");
+static BedBlock::Part& gBedFoot = *new BedBlock::Part(1, L"foot");
 static const AABB* gBedShape = AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.5625, 1.0);
 
 AbstractProperty<const BedBlock::Part*>* BedBlock::PART = NULL;

@@ -280,7 +280,7 @@ void BlockEntity::staticCtor()
     Register(27, ConduitBlockEntity::create, BlockEntityType::CONDUIT, L"conduit");
 }
 
-void BlockEntity::Register(int id, Creator creator, unsigned long long type, const std::wstring& name)
+void BlockEntity::Register(int id, Creator creator, unsigned long long type, std::wstring name)
 {
     ResourceLocation location(name);
     gCreators.insert(CreatorMap::value_type(location.toString(), creator));

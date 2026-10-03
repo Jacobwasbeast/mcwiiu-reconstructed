@@ -14,16 +14,13 @@
 #include "game/world/block/Predicates.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
-static SandStoneBlock::Variant gSandStoneVariant0(0, L"sandstone", 0);
-static SandStoneBlock::Variant gSandStoneVariant1(1, L"chiseled_sandstone", 1);
-static SandStoneBlock::Variant gSandStoneVariant2(2, L"smooth_sandstone", 2);
-static SandStoneBlock::Variant* gSandStoneVariants[3] = {
-    &gSandStoneVariant0, &gSandStoneVariant1, &gSandStoneVariant2
-};
 AbstractProperty<SandStoneBlock::Variant*>* SandStoneBlock::TYPE = NULL;
-SandStoneBlock::Variant* SandStoneBlock::SANDSTONE = &gSandStoneVariant0;
-SandStoneBlock::Variant* SandStoneBlock::CHISELED = &gSandStoneVariant1;
-SandStoneBlock::Variant* SandStoneBlock::SMOOTH = &gSandStoneVariant2;
+SandStoneBlock::Variant* SandStoneBlock::SANDSTONE = new SandStoneBlock::Variant(0, L"sandstone", 0);
+SandStoneBlock::Variant* SandStoneBlock::CHISELED = new SandStoneBlock::Variant(1, L"chiseled_sandstone", 1);
+SandStoneBlock::Variant* SandStoneBlock::SMOOTH = new SandStoneBlock::Variant(2, L"smooth_sandstone", 2);
+static SandStoneBlock::Variant* gSandStoneVariants[3] = {
+    SandStoneBlock::SANDSTONE, SandStoneBlock::CHISELED, SandStoneBlock::SMOOTH
+};
 static const MaterialColor* gSandStoneMapColor = NULL;
 
 static Predicate<SandStoneBlock::Variant*>* gSandStoneTypePredicate =

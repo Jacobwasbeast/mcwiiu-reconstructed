@@ -36,7 +36,6 @@ public:
         static Half* BOTTOM;
 
         Half(const std::wstring& name);
-        virtual ~Half();
         virtual std::wstring toString() const;
         virtual std::wstring getSerializedName() const;
         std::wstring mName;
@@ -45,7 +44,6 @@ public:
     {
     public:
         Shape(const std::wstring& name, int id);
-        virtual ~Shape();
         int getId() const;
         virtual std::wstring toString() const;
         virtual std::wstring getSerializedName() const;

@@ -52,7 +52,7 @@ bool BlockTransaction::inBounds(const Vec3i& position) const
 
 bool BlockTransaction::shouldWrite(const Vec3i& position)
 {
-    return *at(position) != 0;
+    return at(position)->value != 0;
 }
 
 std::deque<ChunkPos>* BlockTransaction::getAffectedChunks(Level*, const Vec3i& position)
@@ -75,13 +75,13 @@ std::deque<ChunkPos>* BlockTransaction::getAffectedChunks(Level*, const Vec3i& p
 
 void BlockTransaction::setBlock(const Vec3i& position, int block, int data)
 {
-    *at(position) = (unsigned short)((block << 4) | data);
+    at(position)->value = (unsigned short)((block << 4) | data);
     if (block != 0) updateMinMax(position);
 }
 
 void BlockTransaction::setElement(const Vec3i& position, unsigned short element)
 {
-    *at(position) = element;
+    at(position)->value = element;
     if (element != 0) updateMinMax(position);
 }
 
@@ -93,12 +93,12 @@ void BlockTransaction::setBlock(const Vec3i& position, const BlockState* state)
 
 int BlockTransaction::getBlock(const Vec3i& position) const
 {
-    return (int)(*at(position) >> 4);
+    return (int)(at(position)->value >> 4);
 }
 
 unsigned short BlockTransaction::getData(const Vec3i& position) const
 {
-    return *at(position) & 0xf;
+    return at(position)->value & 0xf;
 }
 
 bool BlockTransaction::isEmpty(const Vec3i& position) const

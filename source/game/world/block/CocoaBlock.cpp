@@ -38,12 +38,6 @@ namespace
     };
 }
 
-void __T7()
-{
-    for (int i = 0; i < 3; ++i)
-        gCocoaIconNames[i].~basic_string();
-}
-
 AbstractProperty<int>* CocoaBlock::AGE = static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"age", 0, 2));
 
 static const AABB* COCOA_EAST_SHAPES[3] =

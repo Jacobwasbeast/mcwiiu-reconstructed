@@ -50,7 +50,6 @@ static ComparatorBlock::ComparatorMode* sModes[2] = { ComparatorBlock::Comparato
                                                       ComparatorBlock::ComparatorMode::SUBTRACT };
 
 ComparatorBlock::ComparatorMode::ComparatorMode(const std::wstring& name) : mName(name) {}
-ComparatorBlock::ComparatorMode::~ComparatorMode() {}
 std::wstring ComparatorBlock::ComparatorMode::toString() const { return mName; }
 std::wstring ComparatorBlock::ComparatorMode::getSerializedName() const { return mName; }
 
