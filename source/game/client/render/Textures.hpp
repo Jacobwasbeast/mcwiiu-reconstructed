@@ -50,7 +50,7 @@ public:
     ResourceLocation* getTextureLocation(boost::shared_ptr<Entity>& entity);
     void clearLastBoundId();
     void loadTexture(BufferedImage* image, int texture);
-    int getTexture(BufferedImage* image, C4JRender::eTextureFormat format, bool blur);
+    int getTexture(BufferedImage* image, C4JRender::eTextureFormat format, bool mipmap);
     void replaceTexture(arrayWithLength<int> pixels, int width, int height, int texture);
     void replaceTextureDirect(arrayWithLength<int> pixels, int width, int height, int texture);
     void replaceTextureDirect(arrayWithLength<short> pixels, int width, int height, int texture);

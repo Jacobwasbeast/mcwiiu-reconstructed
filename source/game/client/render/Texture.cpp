@@ -8,103 +8,6 @@
 #include <cstring>
 #include <algorithm>
 
-namespace {
-
-void texturePackedByteOrder(int target, unsigned int order[4])
-{
-    order[0] = 3;
-    if (target == 1)
-    {
-        order[1] = 2;
-        order[2] = 1;
-        order[3] = 0;
-    }
-    else
-    {
-        order[1] = 0;
-        order[2] = 1;
-        order[3] = 2;
-    }
-}
-
-void texturePackArgbPixels(const int* pixels, unsigned int count, const unsigned int order[4], unsigned char* bytes)
-{
-    unsigned int i;
-    for (i = 0; i < count; ++i)
-    {
-        unsigned int argb = (unsigned int)pixels[i];
-        bytes[i * 4 + order[0]] = (unsigned char)(argb >> 24);
-        bytes[i * 4 + order[1]] = (unsigned char)(argb >> 16);
-        bytes[i * 4 + order[2]] = (unsigned char)(argb >> 8);
-        bytes[i * 4 + order[3]] = (unsigned char)argb;
-    }
-}
-
-unsigned int textureAverageChannel(unsigned char a, unsigned char b, unsigned char c, unsigned char d)
-{
-    return (unsigned int)(((unsigned int)a + b + c + d) >> 2);
-}
-
-unsigned int texturePackedArgb(const unsigned char* pixel, const unsigned int order[4])
-{
-    return ((unsigned int)pixel[order[0]] << 24) | ((unsigned int)pixel[0] << 16) |
-           ((unsigned int)pixel[1] << 8) | (unsigned int)pixel[2];
-}
-
-void textureGenerateMipLevel(ByteBuffer* previous, unsigned int previousWidth, unsigned char* levelBytes,
-                              unsigned int levelWidth, unsigned int levelHeight, const unsigned int order[4])
-{
-    unsigned char* previousBuffer = previous->getBuffer();
-    unsigned int y;
-    for (y = 0; y < levelHeight; ++y)
-    {
-        unsigned int x;
-        for (x = 0; x < levelWidth; ++x)
-        {
-            const unsigned int topLeft = ((y * 2) * previousWidth + x * 2) * 4;
-            const unsigned int topRight = topLeft + 4;
-            const unsigned int bottomLeft = topLeft + previousWidth * 4;
-            const unsigned int bottomRight = bottomLeft + 4;
-            const unsigned char* pTopLeft = previousBuffer + topLeft;
-            const unsigned char* pTopRight = previousBuffer + topRight;
-            const unsigned char* pBottomLeft = previousBuffer + bottomLeft;
-            const unsigned char* pBottomRight = previousBuffer + bottomRight;
-            const unsigned char alphaTopLeft = pTopLeft[order[0]];
-            const unsigned char alphaTopRight = pTopRight[order[0]];
-            const unsigned char alphaBottomLeft = pBottomLeft[order[0]];
-            const unsigned char alphaBottomRight = pBottomRight[order[0]];
-            const unsigned int dst = (y * levelWidth + x) * 4;
-            const bool uniform = (alphaTopLeft == 0 || alphaTopLeft == 0xff) &&
-                                  (alphaTopRight == 0 || alphaTopRight == 0xff) &&
-                                  (alphaBottomLeft == 0 || alphaBottomLeft == 0xff) &&
-                                  (alphaBottomRight == 0 || alphaBottomRight == 0xff);
-            if (uniform)
-            {
-                levelBytes[dst + order[0]] = (unsigned char)textureAverageChannel(alphaTopLeft, alphaTopRight, alphaBottomLeft, alphaBottomRight);
-                levelBytes[dst + order[1]] = (unsigned char)textureAverageChannel(pTopLeft[0], pTopRight[0], pBottomLeft[0], pBottomRight[0]);
-                levelBytes[dst + order[2]] = (unsigned char)textureAverageChannel(pTopLeft[1], pTopRight[1], pBottomLeft[1], pBottomRight[1]);
-                levelBytes[dst + order[3]] = (unsigned char)textureAverageChannel(pTopLeft[2], pTopRight[2], pBottomLeft[2], pBottomRight[2]);
-            }
-            else
-            {
-                const unsigned int argbTopLeft = texturePackedArgb(pTopLeft, order);
-                const unsigned int argbTopRight = texturePackedArgb(pTopRight, order);
-                const unsigned int argbBottomLeft = texturePackedArgb(pBottomLeft, order);
-                const unsigned int argbBottomRight = texturePackedArgb(pBottomRight, order);
-                const unsigned int top = Texture::crispBlend((int)argbTopLeft, (int)argbTopRight);
-                const unsigned int bottom = Texture::crispBlend((int)argbBottomLeft, (int)argbBottomRight);
-                const unsigned int blended = Texture::crispBlend((int)top, (int)bottom);
-                levelBytes[dst + order[0]] = (unsigned char)(blended >> 24);
-                levelBytes[dst + order[1]] = (unsigned char)(blended >> 16);
-                levelBytes[dst + order[2]] = (unsigned char)(blended >> 8);
-                levelBytes[dst + order[3]] = (unsigned char)blended;
-            }
-        }
-    }
-}
-
-}
-
 Texture::Texture(const std::wstring& name, int type, int width, int height, int wrap, int format,
                  int minFilter, int magFilter, BufferedImage* image, bool mipmap)
 {
@@ -232,50 +135,115 @@ unsigned int Texture::crispBlend(int first, int second)
 
 void Texture::transferFromImage(BufferedImage* image)
 {
-    unsigned int imageWidth = image->getWidth();
-    unsigned int imageHeight = image->getHeight();
-    if (imageWidth > (unsigned int)m_width || imageHeight > (unsigned int)m_height) return;
+    int imageWidth = (int)image->getWidth();
+    int imageHeight = (int)image->getHeight();
+    if (imageWidth > m_width || imageHeight > m_height) return;
 
-    unsigned int order[4];
-    texturePackedByteOrder(m_format, order);
+    int byteOrders[2][4] = { { 3, 0, 1, 2 }, { 3, 2, 1, 0 } };
+    int* order = byteOrders[0];
+    if (m_format == 1) order = byteOrders[1];
 
-    unsigned int count = (unsigned int)(m_width * m_height);
-    arrayWithLength<int> pixels(count, false);
-    image->getRGB(0, 0, (unsigned int)m_width, m_height, pixels, 0, (int)imageWidth, 0);
+    arrayWithLength<int> pixels(m_width * m_height, true);
+    image->getRGB(0, 0, m_width, m_height, pixels, 0, imageWidth, 0);
 
-    arrayWithLength<unsigned char> bytes(count * 4, false);
-    texturePackArgbPixels(pixels.data, count, order, bytes.data);
+    unsigned int byteCount = m_width * m_height * 4;
+    arrayWithLength<unsigned char> bytes(byteCount, true);
+    for (int y = 0; y < m_height; ++y)
+    {
+        for (int x = 0; x < m_width; ++x)
+        {
+            int index = (y * m_width + x) * 4;
+            bytes.data[index + order[0]] = (unsigned char)((unsigned int)pixels.data[y * m_width + x] >> 24);
+            bytes.data[index + order[1]] = (unsigned char)((unsigned int)pixels.data[y * m_width + x] >> 16);
+            bytes.data[index + order[2]] = (unsigned char)((unsigned int)pixels.data[y * m_width + x] >> 8);
+            bytes.data[index + order[3]] = (unsigned char)pixels.data[y * m_width + x];
+        }
+    }
 
-    int i;
-    for (i = 0; i < 10; ++i) { delete m_data[i]; m_data[i] = NULL; }
+    for (int i = 0; i < 10; ++i)
+    {
+        if (m_data[i] != NULL)
+        {
+            delete m_data[i];
+            m_data[i] = NULL;
+        }
+    }
 
     MemSect(0x33);
-    m_data[0] = ByteBuffer::allocateDirect((int)(count * 4));
+    m_data[0] = ByteBuffer::allocateDirect((int)byteCount);
     MemSect(0);
     m_data[0]->clear();
     m_data[0]->put(bytes);
-    m_data[0]->limit(count * 4);
+    m_data[0]->limit(byteCount);
     delete[] bytes.data;
 
     if (m_mipmap || image->getData(1) != NULL)
     {
         m_mipmap = true;
-        unsigned int level;
-        for (level = 1; level <= 4; ++level)
+        for (unsigned int level = 1; level < 5; ++level)
         {
-            unsigned int levelWidth = (unsigned int)m_width >> level;
-            unsigned int levelHeight = (unsigned int)m_height >> level;
+            int levelWidth = m_width >> level;
+            int levelHeight = m_height >> level;
             unsigned int levelCount = levelWidth * levelHeight;
-            arrayWithLength<unsigned char> levelBytes(levelCount * 4, false);
-            int* providedData = image->getData((int)level);
-            if (providedData == NULL)
+            arrayWithLength<unsigned char> levelBytes(levelCount * 4, true);
+            int* levelPixels = new int[levelCount];
+            if (image->getData(level) == NULL)
             {
-                unsigned int previousWidth = (unsigned int)m_width >> (level - 1);
-                textureGenerateMipLevel(m_data[level - 1], previousWidth, levelBytes.data, levelWidth, levelHeight, order);
+                int previousWidth = m_width >> (level - 1);
+                for (int x = 0; x < levelWidth; ++x)
+                {
+                    for (int y = 0; y < levelHeight; ++y)
+                    {
+                        unsigned int topLeft = m_data[level - 1]->getInt((y * 2 * previousWidth + x * 2) * 4);
+                        unsigned int topRight = m_data[level - 1]->getInt((y * 2 * previousWidth + x * 2 + 1) * 4);
+                        unsigned int bottomRight = m_data[level - 1]->getInt(((y * 2 + 1) * previousWidth + x * 2 + 1) * 4);
+                        unsigned int bottomLeft = m_data[level - 1]->getInt(((y * 2 + 1) * previousWidth + x * 2) * 4);
+                        topLeft = (topLeft << 24) | (topLeft >> 8);
+                        topRight = (topRight << 24) | (topRight >> 8);
+                        bottomRight = (bottomRight << 24) | (bottomRight >> 8);
+                        bottomLeft = (bottomLeft << 24) | (bottomLeft >> 8);
+                        unsigned int packed;
+                        if (((topLeft & 0xff000000u) == 0xff000000u || (topLeft & 0xff000000u) == 0) &&
+                            ((topRight & 0xff000000u) == 0xff000000u || (topRight & 0xff000000u) == 0) &&
+                            ((bottomRight & 0xff000000u) == 0xff000000u || (bottomRight & 0xff000000u) == 0) &&
+                            ((bottomLeft & 0xff000000u) == 0xff000000u || (bottomLeft & 0xff000000u) == 0))
+                        {
+                            unsigned int bottom = crispBlend((int)bottomRight, (int)bottomLeft);
+                            unsigned int top = crispBlend((int)topLeft, (int)topRight);
+                            packed = crispBlend((int)top, (int)bottom);
+                        }
+                        else
+                        {
+                            int alpha = (int)((topLeft >> 24) + (topRight >> 24) + (bottomRight >> 24) + (bottomLeft >> 24)) >> 2;
+                            int red = (int)(((topLeft >> 16) & 0xff) + ((topRight >> 16) & 0xff) +
+                                            ((bottomRight >> 16) & 0xff) + ((bottomLeft >> 16) & 0xff)) >> 2;
+                            int green = (int)(((topLeft >> 8) & 0xff) + ((topRight >> 8) & 0xff) +
+                                              ((bottomRight >> 8) & 0xff) + ((bottomLeft >> 8) & 0xff)) >> 2;
+                            int blue = (int)((topLeft & 0xff) + (topRight & 0xff) + (bottomRight & 0xff) + (bottomLeft & 0xff)) >> 2;
+                            packed = (unsigned int)((alpha << 24) | (red << 16) | (green << 8) | blue);
+                        }
+                        int destination = (y * levelWidth + x) * 4;
+                        levelBytes.data[destination + order[0]] = (unsigned char)(packed >> 24);
+                        levelBytes.data[destination + order[1]] = (unsigned char)(packed >> 16);
+                        levelBytes.data[destination + order[2]] = (unsigned char)(packed >> 8);
+                        levelBytes.data[destination + order[3]] = (unsigned char)packed;
+                    }
+                }
             }
             else
             {
-                texturePackArgbPixels(providedData, levelCount, order, levelBytes.data);
+                memcpy(levelPixels, image->getData(level), levelCount * 4);
+                for (int y = 0; y < levelHeight; ++y)
+                {
+                    for (int x = 0; x < levelWidth; ++x)
+                    {
+                        int destination = (y * levelWidth + x) * 4;
+                        levelBytes.data[destination + order[0]] = (unsigned char)((unsigned int)levelPixels[y * levelWidth + x] >> 24);
+                        levelBytes.data[destination + order[1]] = (unsigned char)((unsigned int)levelPixels[y * levelWidth + x] >> 16);
+                        levelBytes.data[destination + order[2]] = (unsigned char)((unsigned int)levelPixels[y * levelWidth + x] >> 8);
+                        levelBytes.data[destination + order[3]] = (unsigned char)levelPixels[y * levelWidth + x];
+                    }
+                }
             }
             MemSect(0x33);
             m_data[level] = ByteBuffer::allocateDirect((int)(levelCount * 4));
@@ -284,6 +252,7 @@ void Texture::transferFromImage(BufferedImage* image)
             m_data[level]->put(levelBytes);
             m_data[level]->limit(levelCount * 4);
             delete[] levelBytes.data;
+            delete[] levelPixels;
         }
     }
 

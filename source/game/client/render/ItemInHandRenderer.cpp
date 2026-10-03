@@ -48,20 +48,6 @@ int sItemRenderDisplayLists[5] = {-1, -1, -1, -1, -1};
 static ResourceLocation WATER_OVERLAY_LOCATION(TN_MISC_WATER);
 static ResourceLocation MAP_BACKGROUND_LOCATION(TN_MISC_MAPBG);
 
-PlayerRenderer* getPlayerRenderer(EntityRenderDispatcher* dispatcher, boost::shared_ptr<LocalPlayer> player)
-{
-    boost::shared_ptr<Entity> entity = player;
-    return static_cast<PlayerRenderer*>(dispatcher->getRenderer(entity));
-}
-
-void bindPlayerSkin(Textures* textures, boost::shared_ptr<LocalPlayer> player)
-{
-    int skinIndex = player->getTexture();
-    int texture = textures->loadMemTexture(player->mSkinLocation, skinIndex);
-    GlStateManager::bindTexture(texture);
-    textures->clearLastBoundId();
-}
-
 }
 
 ItemInHandRenderer::ItemInHandRenderer(Minecraft* minecraft)
@@ -415,25 +401,25 @@ float ItemInHandRenderer::calculateMapTilt(float xRot)
 
 void ItemInHandRenderer::renderMapHand(const HumanoidArm* arm)
 {
-    boost::shared_ptr<LocalPlayer> player = mMinecraft->mPlayer;
-    bindPlayerSkin(mMinecraft->mTextures, player);
-    PlayerRenderer* renderer = getPlayerRenderer(mEntityRenderDispatcher, player);
+    int texture = mMinecraft->mTextures->loadMemTexture(mMinecraft->mPlayer->mSkinLocation,
+                                                        mMinecraft->mPlayer->getTexture());
+    GlStateManager::bindTexture(texture);
+    mMinecraft->mTextures->clearLastBoundId();
+    PlayerRenderer* renderer =
+        static_cast<PlayerRenderer*>(mEntityRenderDispatcher->getRenderer(mMinecraft->mPlayer));
     GlStateManager::pushMatrix();
+    float side = arm == HumanoidArm::RIGHT ? 1.0f : -1.0f;
+    GlStateManager::rotatef(92.0f, 0.0f, 1.0f, 0.0f);
+    GlStateManager::rotatef(45.0f, 1.0f, 0.0f, 0.0f);
+    GlStateManager::rotatef(side * -41.0f, 0.0f, 0.0f, 1.0f);
+    GlStateManager::translatef(side * 0.2f, -1.0f, 0.45f);
     if (arm == HumanoidArm::RIGHT)
     {
-        GlStateManager::rotatef(92.0f, 0.0f, 1.0f, 0.0f);
-        GlStateManager::rotatef(45.0f, 1.0f, 0.0f, 0.0f);
-        GlStateManager::rotatef(-41.0f, 0.0f, 0.0f, 1.0f);
-        GlStateManager::translatef(0.20000000298023224f, -1.0f, 0.44999998807907104f);
-        renderer->renderRightHand(player);
+        renderer->renderRightHand(mMinecraft->mPlayer);
     }
     else
     {
-        GlStateManager::rotatef(92.0f, 0.0f, 1.0f, 0.0f);
-        GlStateManager::rotatef(45.0f, 1.0f, 0.0f, 0.0f);
-        GlStateManager::rotatef(41.0f, 0.0f, 0.0f, 1.0f);
-        GlStateManager::translatef(-0.20000000298023224f, -1.0f, 0.44999998807907104f);
-        renderer->renderLeftHand(player);
+        renderer->renderLeftHand(mMinecraft->mPlayer);
     }
     GlStateManager::popMatrix();
 }
@@ -454,7 +440,8 @@ void ItemInHandRenderer::renderMapHands()
 
 void ItemInHandRenderer::renderPlayerArm(float equip, float swing, const HumanoidArm* arm)
 {
-    float side = arm == HumanoidArm::LEFT ? -1.0f : 1.0f;
+    bool left = arm == HumanoidArm::LEFT;
+    float side = left ? -1.0f : 1.0f;
     float swingRoot = std::sqrt(swing);
     float swingSin = std::sin(swingRoot * 3.1415927f);
     float swingBob = -0.30000001192092896f * swingSin;
@@ -462,22 +449,27 @@ void ItemInHandRenderer::renderPlayerArm(float equip, float swing, const Humanoi
     float swingDrop = 0.4000000059604645f * swingSin2;
     float swingRoll = std::sin(swing * 3.1415927f);
     GlStateManager::translatef(side * (swingBob + 0.64000004529953f),
-                               equip * -0.6000000238418579f + swingDrop - 0.6000000238418579f,
+                               equip * -0.6000000238418579f + (swingDrop + -0.6000000238418579f),
                                -0.4000000059604645f * swingRoll - 0.7199999690055847f);
     GlStateManager::rotatef(side * 45.0f, 0.0f, 1.0f, 0.0f);
+    float swingSquaredSin = std::sin(swing * swing * 3.1415927f);
     float swingRootSin = std::sin(swingRoot * 3.1415927f);
     GlStateManager::rotatef(side * swingRootSin * 70.0f, 0.0f, 1.0f, 0.0f);
-    GlStateManager::rotatef(side * std::sin(swing * swing * 3.1415927f) * -20.0f, 0.0f, 0.0f, 1.0f);
+    GlStateManager::rotatef(side * swingSquaredSin * -20.0f, 0.0f, 0.0f, 1.0f);
     boost::shared_ptr<LocalPlayer> player = mMinecraft->mPlayer;
-    bindPlayerSkin(mMinecraft->mTextures, player);
+    int texture = mMinecraft->mTextures->loadMemTexture(mMinecraft->mPlayer->mSkinLocation,
+                                                        mMinecraft->mPlayer->getTexture());
+    GlStateManager::bindTexture(texture);
+    mMinecraft->mTextures->clearLastBoundId();
     GlStateManager::translatef(-side, 3.5999999046325684f, 3.5f);
     GlStateManager::rotatef(side * 120.0f, 0.0f, 0.0f, 1.0f);
     GlStateManager::rotatef(200.0f, 1.0f, 0.0f, 0.0f);
     GlStateManager::rotatef(side * -135.0f, 0.0f, 1.0f, 0.0f);
     GlStateManager::translatef(side * 5.599999904632568f, 0.0f, 0.0f);
-    PlayerRenderer* renderer = getPlayerRenderer(mEntityRenderDispatcher, player);
+    PlayerRenderer* renderer =
+        static_cast<PlayerRenderer*>(mEntityRenderDispatcher->getRenderer(mMinecraft->mPlayer));
     GlStateManager::disableCull();
-    if (arm == HumanoidArm::LEFT)
+    if (left)
     {
         renderer->renderLeftHand(player);
     }
@@ -514,12 +506,11 @@ void ItemInHandRenderer::renderMap(not_null_ptr<ItemInstance> item, int hand)
 }
 
 void ItemInHandRenderer::renderOneHandedMap(float equip, const HumanoidArm* arm, float swing,
-                                            const not_null_ptr<ItemInstance>& item)
+                                            not_null_ptr<ItemInstance> item)
 {
     float side = arm == HumanoidArm::RIGHT ? 1.0f : -1.0f;
-    GlStateManager::translatef(side * 0.125f, -0.05999999865889549f, 0.0f);
-    boost::shared_ptr<LocalPlayer> player = mMinecraft->mPlayer;
-    if (!player->isInvisible())
+    GlStateManager::translatef(side * 0.125f, -0.125f, 0.0f);
+    if (!mMinecraft->mPlayer->isInvisible())
     {
         GlStateManager::pushMatrix();
         GlStateManager::rotatef(side * 10.0f, 0.0f, 0.0f, 1.0f);

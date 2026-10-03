@@ -799,35 +799,9 @@ void GameRenderer::tick(bool tickWorld)
     }
 }
 
-namespace
-{
-bool isPickableEntity_apply(boost::shared_ptr<Entity> entity)
+static bool isPickable_apply(boost::shared_ptr<Entity> entity)
 {
     return entity->isPickable();
-}
-
-Predicate<boost::shared_ptr<Entity> >* getPickEntityPredicate()
-{
-    static Predicate<boost::shared_ptr<Entity> >* sPickPredicate = NULL;
-    if (sPickPredicate == NULL)
-    {
-        static Predicates<boost::shared_ptr<Entity> >::FunctionPredicate sIsPickablePredicate(
-            isPickableEntity_apply);
-        static const Predicate<boost::shared_ptr<Entity> >* sPredicates[2] = {
-            Predicates<boost::shared_ptr<Entity> >::alwaysTrue, &sIsPickablePredicate};
-        sPickPredicate = new Predicates<boost::shared_ptr<Entity> >::ConnectivePredicate(
-            Predicates<boost::shared_ptr<Entity> >::ConnectivePredicate::eOperator_And, sPredicates, 2);
-    }
-    return sPickPredicate;
-}
-
-void deleteHitResult(HitResult* hit)
-{
-    if (hit != NULL)
-    {
-        delete hit;
-    }
-}
 }
 
 void GameRenderer::pick(float partialTick)
@@ -851,12 +825,11 @@ void GameRenderer::pick(float partialTick)
     boost::shared_ptr<Entity>& pointedEntity = mPointedEntity;
     boost::shared_ptr<Entity>& minecraftPointedEntityShared = mMinecraft->mSpectateEntity;
 
-    pointedEntity.reset();
     minecraftPointedEntityShared.reset();
 
     const double pickRange = mMinecraft->mGameMode->getPickRange();
 
-    deleteHitResult(mMinecraft->mHitResult);
+    delete mMinecraft->mHitResult;
     mMinecraft->mHitResult = NULL;
 
     MemSect(0x1f);
@@ -886,13 +859,12 @@ void GameRenderer::pick(float partialTick)
             adjustedZ < static_cast<int>(bounds->mMinZ) + 1 ||
             static_cast<int>(bounds->mMaxZ) - 2 < adjustedZ)
         {
-            deleteHitResult(mMinecraft->mHitResult);
+            delete mMinecraft->mHitResult;
             mMinecraft->mHitResult = NULL;
         }
     }
 
-    boost::shared_ptr<Entity> cameraEntity = mMinecraft->getCameraEntity();
-    Entity* cameraRaw = cameraEntity.get();
+    Entity* cameraRaw = camera.get();
     Vec3* eyePosition = cameraRaw->getEyePosition(partialTick);
 
     const bool beyondSurvivalReach = pickRange > kPickDistanceCompare;
@@ -912,7 +884,14 @@ void GameRenderer::pick(float partialTick)
 
     pointedEntity.reset();
 
-    const Predicate<boost::shared_ptr<Entity> >* entityPredicate = getPickEntityPredicate();
+    static Predicate<boost::shared_ptr<Entity> >* sIsPickablePredicate =
+        new Predicates<boost::shared_ptr<Entity> >::FunctionPredicate(isPickable_apply);
+    const Predicate<boost::shared_ptr<Entity> >* predicates[2] = {
+        Predicates<boost::shared_ptr<Entity> >::alwaysTrue, sIsPickablePredicate};
+    static Predicate<boost::shared_ptr<Entity> >* sPickPredicate =
+        new Predicates<boost::shared_ptr<Entity> >::ConnectivePredicate(
+            Predicates<boost::shared_ptr<Entity> >::ConnectivePredicate::eOperator_And, predicates, 2);
+    const Predicate<boost::shared_ptr<Entity> >* entityPredicate = sPickPredicate;
     if (mMinecraft->mOptions->mRenderDebug != 0)
     {
         entityPredicate = NULL;
@@ -926,10 +905,10 @@ void GameRenderer::pick(float partialTick)
     AABB* searchBox = cameraRaw->mBoundingBox->expand(viewVector->x * entityReach,
                                                       viewVector->y * entityReach,
                                                       viewVector->z * entityReach)
-                          ->grow(1.0);
+                          ->grow(1.0, 1.0, 1.0);
 
     std::vector<boost::shared_ptr<Entity> >* entities =
-        level->getEntities(cameraEntity, searchBox, entityPredicate, NULL);
+        level->getEntities(camera, searchBox, entityPredicate, NULL);
 
     Vec3* entityHitLocation = NULL;
     double closestDistance = blockHitDistance;
@@ -989,7 +968,7 @@ void GameRenderer::pick(float partialTick)
         eyePosition->distanceTo(entityHitLocation) > kPickDistanceCompare)
     {
         pointedEntity.reset();
-        deleteHitResult(mMinecraft->mHitResult);
+        delete mMinecraft->mHitResult;
         mMinecraft->mHitResult =
             new HitResult(HitResult::MISS, entityHitLocation, NULL, BlockPos(entityHitLocation));
         return;
@@ -997,7 +976,7 @@ void GameRenderer::pick(float partialTick)
 
     if (closestDistance < blockHitDistance || mMinecraft->mHitResult == NULL)
     {
-        deleteHitResult(mMinecraft->mHitResult);
+        delete mMinecraft->mHitResult;
         mMinecraft->mHitResult = new HitResult(pointedEntity, entityHitLocation);
 
         const unsigned long long entityType = pointedEntity->GetType();
@@ -3531,11 +3510,6 @@ void GameRenderer::resetData()
 MapRenderer* GameRenderer::getMapRenderer()
 {
     return mMapRenderer;
-}
-
-void GameRenderer::setItemInHandRenderer(ItemInHandRenderer* renderer)
-{
-    mItemInHandRenderer = renderer;
 }
 
 void GameRenderer::AddForDelete(SparseLightStorage* storage)

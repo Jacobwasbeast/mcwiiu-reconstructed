@@ -110,7 +110,6 @@ public:
     int shouldRenderBlockOutline();
     void resetData();
     MapRenderer* getMapRenderer();
-    void setItemInHandRenderer(ItemInHandRenderer* renderer);
     static void AddForDelete(SparseLightStorage*);
     static void AddForDelete(LevelChunk*);
     static void AddForDelete(ElementStorage*);
@@ -147,7 +146,11 @@ private:
     ResourceManager* mResourceManager;
     Random mRandom;
     float mFogDistance;
+
+public:
     ItemInHandRenderer* mItemInHandRenderer;
+
+private:
     MapRenderer* mMapRenderer;
     int mTickCount;
     boost::shared_ptr<Entity> mPointedEntity;

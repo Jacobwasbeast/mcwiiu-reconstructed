@@ -3,6 +3,7 @@
 
 #include "game/client/render/BlockEntityRenderer.hpp"
 #include "game/client/render/ChestModel.hpp"
+#include "game/client/render/ModelDefinition.hpp"
 
 #include <boost/shared_ptr.hpp>
 
@@ -11,7 +12,7 @@ class BlockEntity;
 class EnderChestRenderer : public BlockEntityRenderer
 {
 public:
-    EnderChestRenderer();
+    EnderChestRenderer() : mChestModel(ModelDefinition()) {}
 
     virtual void render(boost::shared_ptr<BlockEntity> blockEntity, double x, double y, double z,
                         float a, int breakProgress, bool bTranslucent, float alpha,

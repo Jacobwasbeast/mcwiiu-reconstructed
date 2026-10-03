@@ -9,18 +9,13 @@
 
 static OSFastMutex sProgressRendererMutex;
 
-ProgressRenderer::TextField::TextField()
-    : active(false), id(-1), text()
-{
-}
-
 ProgressRenderer::TextField::TextField(const TextField& other)
     : active(other.active), id(other.id), text(other.text)
 {
 }
 
 ProgressRenderer::ProgressRenderer(Minecraft* minecraft)
-    : mStatus(), mMinecraft(minecraft), mTitle(), mStartTime(0), mNoAbort(false)
+    : mStatus(false, -1, std::wstring(L"")), mMinecraft(minecraft), mTitle(false, -1, std::wstring(L"")), mStartTime(0), mNoAbort(false)
 {
     mStartTime = static_cast<unsigned long long>(System::processTimeInMilliSecs());
 }
@@ -59,41 +54,25 @@ void ProgressRenderer::internalProgressStart(const TextField& field)
 void ProgressRenderer::progressStart(int id)
 {
     mNoAbort = false;
-    TextField field;
-    field.active = true;
-    field.id = id;
-    field.text = L10N::GetString(id);
-    internalProgressStart(field);
+    internalProgressStart(TextField(true, id, std::wstring(L10N::GetString(id))));
 }
 
 void ProgressRenderer::progressStartNoAbort(int id)
 {
     mNoAbort = true;
-    TextField field;
-    field.active = true;
-    field.id = id;
-    field.text = L10N::GetString(id);
-    internalProgressStart(field);
+    internalProgressStart(TextField(true, id, std::wstring(L10N::GetString(id))));
 }
 
 void ProgressRenderer::progressStartNoAbort(const std::wstring& text)
 {
     mNoAbort = true;
-    TextField field;
-    field.active = false;
-    field.id = -1;
-    field.text = text;
-    internalProgressStart(field);
+    internalProgressStart(TextField(false, -1, text));
 }
 
 void ProgressRenderer::progressStart(const std::wstring& text)
 {
     mNoAbort = false;
-    TextField field;
-    field.active = false;
-    field.id = -1;
-    field.text = text;
-    internalProgressStart(field);
+    internalProgressStart(TextField(false, -1, text));
 }
 
 void ProgressRenderer::progressStage(int id)

@@ -9,12 +9,6 @@
 #include <boost/shared_ptr.hpp>
 #include <cstring>
 
-static long long getLightningBoltSeed(const boost::shared_ptr<Entity>& entity)
-{
-    const LightningBolt* lightningBolt = static_cast<const LightningBolt*>(entity.get());
-    return lightningBolt->mSeed;
-}
-
 LightningBoltRenderer::LightningBoltRenderer(EntityRenderDispatcher* dispatcher)
     : EntityRenderer(dispatcher)
 {
@@ -27,6 +21,7 @@ LightningBoltRenderer::~LightningBoltRenderer()
 void LightningBoltRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
                                    float yaw, float partialTick)
 {
+    boost::shared_ptr<LightningBolt> lightningBolt = boost::static_pointer_cast<LightningBolt>(entity);
     Tesselator* tesselator = Tesselator::getInstance();
     BufferBuilder* builder = tesselator->getBuilder();
 
@@ -35,7 +30,7 @@ void LightningBoltRenderer::render(boost::shared_ptr<Entity>& entity, double x, 
     GlStateManager::enableBlend();
     GlStateManager::blendFunc(4, 1);
 
-    Random random(getLightningBoltSeed(entity));
+    Random random(lightningBolt->mSeed);
     double xOffsets[8];
     double zOffsets[8];
     double xOffset = 0.0;

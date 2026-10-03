@@ -26,6 +26,7 @@
 static int sIndexedTextures[256];
 ResourceLocation BLOCKS_LOCATION(TN_BLOCK_ATLAS);
 ResourceLocation ITEM_LOCATION(TN_ITEM_ATLAS);
+static C4JRender::eTextureFormat sTextureFormat = C4JRender::eTextureFormat_RGBA8;
 static bool sTextureMipmap = true;
 
 namespace
@@ -43,29 +44,6 @@ struct MemTextureFields
 MemTextureFields& memTextureFields(MemTexture* texture)
 {
     return *reinterpret_cast<MemTextureFields*>(texture);
-}
-
-unsigned int rotateChannelsRight(unsigned int value)
-{
-    return (value >> 8) | (value << 24);
-}
-
-unsigned int rotateChannelsLeft(unsigned int value)
-{
-    return (value << 8) | (value >> 24);
-}
-
-int mipLevelsFor(int dimension)
-{
-    int levels = 1;
-    if (dimension > 16)
-    {
-        do
-        {
-            ++levels;
-        } while ((8 << levels) < dimension);
-    }
-    return levels;
 }
 }
 
@@ -223,8 +201,16 @@ void Textures::loadTexture(BufferedImage* image, int texture, bool blur, bool cl
         GlStateManager::texParameteri(1, 1);
         GlStateManager::texParameteri(2, 1);
     }
-    GlStateManager::texParameteri(3, clamp ? 0 : 1);
-    GlStateManager::texParameteri(4, clamp ? 0 : 1);
+    if (clamp)
+    {
+        GlStateManager::texParameteri(3, 0);
+        GlStateManager::texParameteri(4, 0);
+    }
+    else
+    {
+        GlStateManager::texParameteri(3, 1);
+        GlStateManager::texParameteri(4, 1);
+    }
     int width = (int)image->getWidth();
     int height = (int)image->getHeight();
     arrayWithLength<int> pixels((unsigned int)(width * height), true);
@@ -233,11 +219,9 @@ void Textures::loadTexture(BufferedImage* image, int texture, bool blur, bool cl
     {
         pixels = anaglyph(pixels);
     }
-    ByteBuffer* buffer = MemoryTracker::createByteBuffer((int)(pixels.length * 4));
-    buffer->clear();
-    arrayWithLength<unsigned char> bytes((unsigned int)(pixels.length * 4), true);
-    unsigned int i;
-    for (i = 0; i < pixels.length && i * 4 + 3 < bytes.length; ++i)
+    unsigned int byteCount = (unsigned int)(width * height) * 4;
+    arrayWithLength<unsigned char> bytes(byteCount, true);
+    for (unsigned int i = 0; i < pixels.length; ++i)
     {
         unsigned int value = (unsigned int)pixels.data[i];
         bytes.data[i * 4] = (unsigned char)(value >> 16);
@@ -245,87 +229,84 @@ void Textures::loadTexture(BufferedImage* image, int texture, bool blur, bool cl
         bytes.data[i * 4 + 2] = (unsigned char)value;
         bytes.data[i * 4 + 3] = (unsigned char)(value >> 24);
     }
+    ByteBuffer* buffer = MemoryTracker::createByteBuffer((int)byteCount);
+    buffer->clear();
     buffer->put(bytes);
     buffer->position(0);
-    buffer->limit(bytes.length);
+    buffer->limit(byteCount);
+    delete[] pixels.data;
+    delete[] bytes.data;
     int levels = 1;
     if (sTextureMipmap)
     {
-        int levelsW = mipLevelsFor(width);
-        int levelsH = mipLevelsFor(height);
-        levels = levelsH < levelsW ? levelsH : levelsW;
+        int widthLevels = 1;
+        int heightLevels = 1;
+        if (width > 16)
+        {
+            do
+            {
+                ++widthLevels;
+            } while ((8 << widthLevels) < width);
+        }
+        if (height > 16)
+        {
+            do
+            {
+                ++heightLevels;
+            } while ((8 << heightLevels) < height);
+        }
+        levels = heightLevels < widthLevels ? heightLevels : widthLevels;
         if (levels > 5) levels = 5;
+        gRenderer->TextureSetTextureLevels(levels);
     }
-    GlStateManager::texImage2D(0, 0, 0, width, height, 0, 0, 0, buffer);
+    gRenderer->TextureData(width, height, buffer->getBuffer(), 0, sTextureFormat);
     if (sTextureMipmap)
     {
-        int* sourceData = pixels.data;
-        int sourceWidth = width;
-        bool ownsSourceData = false;
-        int level;
-        for (level = 1; level < levels; ++level)
+        for (int level = 1; level < levels; ++level)
         {
-            int mipWidth = width >> level;
-            int mipHeight = height >> level;
-            unsigned int mipCount = (unsigned int)(mipWidth * mipHeight);
-            arrayWithLength<int> mip(mipCount, true);
-            int* precomputed = image->getData(level);
-            if (precomputed != NULL)
+            int previousWidth = width >> (level - 1);
+            int levelWidth = width >> level;
+            int levelHeight = height >> level;
+            unsigned int levelCount = levelWidth * levelHeight;
+            unsigned int* levelPixels = new unsigned int[levelCount];
+            if (image->getData(level) == NULL)
             {
-                memcpy(mip.data, precomputed, mipCount * 4);
-                unsigned int j;
-                for (j = 0; j < mipCount; ++j)
+                for (int x = 0; x < levelWidth; ++x)
                 {
-                    mip.data[j] = (int)rotateChannelsLeft((unsigned int)mip.data[j]);
+                    for (int y = 0; y < levelHeight; ++y)
+                    {
+                        unsigned int topLeft = buffer->getInt((y * 2 * previousWidth + x * 2) * 4);
+                        unsigned int topRight = buffer->getInt((y * 2 * previousWidth + x * 2 + 1) * 4);
+                        unsigned int bottomRight = buffer->getInt(((y * 2 + 1) * previousWidth + x * 2 + 1) * 4);
+                        unsigned int bottomLeft = buffer->getInt(((y * 2 + 1) * previousWidth + x * 2) * 4);
+                        unsigned int bottom = Texture::crispBlend((int)((bottomRight << 24) | (bottomRight >> 8)),
+                                                                  (int)((bottomLeft << 24) | (bottomLeft >> 8)));
+                        unsigned int top = Texture::crispBlend((int)((topLeft << 24) | (topLeft >> 8)),
+                                                               (int)((topRight << 24) | (topRight >> 8)));
+                        unsigned int blended = Texture::crispBlend((int)top, (int)bottom);
+                        levelPixels[y * levelWidth + x] = (blended << 8) | (blended >> 24);
+                    }
                 }
             }
             else
             {
-                int row, col;
-                for (row = 0; row < mipHeight; ++row)
+                memcpy(levelPixels, image->getData(level), levelCount * 4);
+                for (unsigned int i = 0; i < levelCount; ++i)
                 {
-                    for (col = 0; col < mipWidth; ++col)
-                    {
-                        int r0 = (row * 2) * sourceWidth;
-                        int r1 = (row * 2 + 1) * sourceWidth;
-                        int c0 = col * 2;
-                        int c1 = col * 2 + 1;
-                        unsigned int a = rotateChannelsRight((unsigned int)sourceData[r0 + c0]);
-                        unsigned int b = rotateChannelsRight((unsigned int)sourceData[r0 + c1]);
-                        unsigned int c = rotateChannelsRight((unsigned int)sourceData[r1 + c0]);
-                        unsigned int d = rotateChannelsRight((unsigned int)sourceData[r1 + c1]);
-                        unsigned int top = Texture::crispBlend((int)a, (int)b);
-                        unsigned int bottom = Texture::crispBlend((int)c, (int)d);
-                        unsigned int blended = Texture::crispBlend((int)top, (int)bottom);
-                        mip.data[row * mipWidth + col] = (int)rotateChannelsLeft(blended);
-                    }
+                    levelPixels[i] = (levelPixels[i] << 8) | (levelPixels[i] >> 24);
                 }
             }
-            ByteBuffer* mipBuffer = MemoryTracker::createByteBuffer((int)(mipCount * 4));
-            mipBuffer->clear();
-            arrayWithLength<unsigned char> mipBytes(mipCount * 4, true);
-            unsigned int k;
-            for (k = 0; k < mipCount; ++k)
+            for (int x = 0; x < levelWidth; ++x)
             {
-                unsigned int value = (unsigned int)mip.data[k];
-                mipBytes.data[k * 4] = (unsigned char)(value >> 16);
-                mipBytes.data[k * 4 + 1] = (unsigned char)(value >> 8);
-                mipBytes.data[k * 4 + 2] = (unsigned char)value;
-                mipBytes.data[k * 4 + 3] = (unsigned char)(value >> 24);
+                for (int y = 0; y < levelHeight; ++y)
+                {
+                    buffer->putInt((y * levelWidth + x) * 4, (int)levelPixels[y * levelWidth + x]);
+                }
             }
-            mipBuffer->put(mipBytes);
-            mipBuffer->position(0);
-            mipBuffer->limit(mipBytes.length);
-            GlStateManager::texImage2D(0, level, 0, mipWidth, mipHeight, 0, 0, 0, mipBuffer);
-            delete mipBuffer;
-            if (ownsSourceData) delete[] sourceData;
-            sourceData = mip.data;
-            sourceWidth = mipWidth;
-            ownsSourceData = true;
+            delete[] levelPixels;
+            gRenderer->TextureData(levelWidth, levelHeight, buffer->getBuffer(), level, sTextureFormat);
         }
-        if (ownsSourceData) delete[] sourceData;
     }
-    delete[] pixels.data;
     delete buffer;
     MemSect(0);
 }
@@ -690,11 +671,14 @@ void Textures::loadTexture(BufferedImage* image, int texture)
     loadTexture(image, texture, false, false);
 }
 
-int Textures::getTexture(BufferedImage* image, C4JRender::eTextureFormat format, bool blur)
+int Textures::getTexture(BufferedImage* image, C4JRender::eTextureFormat format, bool mipmap)
 {
     int texture = MemoryTracker::genTextures();
-    sTextureMipmap = blur;
-    loadTexture(image, texture, blur, false);
+    sTextureFormat = format;
+    sTextureMipmap = mipmap;
+    loadTexture(image, texture);
+    sTextureFormat = C4JRender::eTextureFormat_RGBA8;
+    sTextureMipmap = true;
     mTextureImages[texture] = image;
     return texture;
 }

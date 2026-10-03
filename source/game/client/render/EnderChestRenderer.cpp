@@ -11,11 +11,6 @@
 
 static ResourceLocation ENDER_CHEST_LOCATION(TN_ITEM_ENDERCHEST);
 
-EnderChestRenderer::EnderChestRenderer()
-    : mChestModel(ModelDefinition())
-{
-}
-
 void EnderChestRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x, double y, double z,
                                 float a, int breakProgress, bool bTranslucent, float alpha,
                                 bool bUseDisplayList)

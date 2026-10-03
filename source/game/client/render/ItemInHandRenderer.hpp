@@ -43,7 +43,7 @@ public:
     void renderMapHands();
     void renderPlayerArm(float, float, const HumanoidArm*);
     void renderMap(not_null_ptr<ItemInstance>, int);
-    void renderOneHandedMap(float, const HumanoidArm*, float, const not_null_ptr<ItemInstance>&);
+    void renderOneHandedMap(float, const HumanoidArm*, float, not_null_ptr<ItemInstance>);
     void renderTwoHandedMap(float, float, float);
     void applyItemAttackTransform(float);
     void applyEatTransform(float, const HumanoidArm*, not_null_ptr<ItemInstance>);

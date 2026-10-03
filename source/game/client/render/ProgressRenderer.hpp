@@ -13,7 +13,10 @@ public:
     class TextField
     {
     public:
-        TextField();
+        TextField(bool active, int id, const std::wstring& text)
+            : active(active), id(id), text(text)
+        {
+        }
         TextField(const TextField& other);
 
         bool active;

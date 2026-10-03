@@ -94,139 +94,6 @@ static float WALL_POST_HALF_WIDTH = 0.25f;
 static double WALL_POST_HEIGHT = 1.0;
 static float PISTON_PLATFORM_THICKNESS = 0.25f;
 
-static void prepareFaceUV(TextureAtlasSprite* texture, int face, int rotation, int transform,
-                          float minX, float maxX, float minY, float maxY, float minZ, float maxZ,
-                          float u0, float v0, float u1, float v1, float* faceU, float* faceV)
-{
-    float minU = face == 4 || face == 5 ? minZ : minX;
-    float maxU = face == 4 || face == 5 ? maxZ : maxX;
-    float minV = face == 0 || face == 1 ? minZ : minY;
-    float maxV = face == 0 || face == 1 ? maxZ : maxY;
-    if (minU < 0.0f || maxU > 1.0f)
-    {
-        u0 = (float)texture->getU0(true);
-        u1 = (float)texture->getU1(true);
-    }
-    if (minV < 0.0f || maxV > 1.0f)
-    {
-        v0 = (float)texture->getV0(true);
-        v1 = (float)texture->getV1(true);
-    }
-    if (rotation >= 1 && rotation <= 3)
-    {
-        float a, b, c, d;
-        if (face == 0 || face == 1)
-        {
-            if (rotation == (face == 0 ? 1 : 2))
-            {
-                a = 16.0f - maxZ * 16.0f; b = 16.0f - minZ * 16.0f;
-                c = minX * 16.0f; d = maxX * 16.0f;
-            }
-            else if (rotation == (face == 0 ? 2 : 1))
-            {
-                a = minZ * 16.0f; b = maxZ * 16.0f;
-                c = 16.0f - maxX * 16.0f; d = 16.0f - minX * 16.0f;
-            }
-            else
-            {
-                a = 16.0f - minX * 16.0f; b = 16.0f - maxX * 16.0f;
-                c = 16.0f - minZ * 16.0f; d = 16.0f - maxZ * 16.0f;
-            }
-        }
-        else if (face == 2 || face == 3)
-        {
-            if (rotation == (face == 2 ? 1 : 2))
-            {
-                a = 16.0f - maxY * 16.0f; b = 16.0f - minY * 16.0f;
-                c = minX * 16.0f; d = maxX * 16.0f;
-            }
-            else if (rotation == (face == 2 ? 2 : 1))
-            {
-                a = minY * 16.0f; b = maxY * 16.0f;
-                c = face == 2 ? 16.0f - minX * 16.0f : 16.0f - maxX * 16.0f;
-                d = face == 2 ? 16.0f - maxX * 16.0f : 16.0f - minX * 16.0f;
-            }
-            else
-            {
-                a = 16.0f - minX * 16.0f; b = 16.0f - maxX * 16.0f;
-                c = maxY * 16.0f; d = minY * 16.0f;
-            }
-        }
-        else
-        {
-            if (rotation == (face == 4 ? 1 : 2))
-            {
-                a = minY * 16.0f; b = maxY * 16.0f;
-                c = face == 4 ? 16.0f - maxZ * 16.0f : 16.0f - minZ * 16.0f;
-                d = face == 4 ? 16.0f - minZ * 16.0f : 16.0f - maxZ * 16.0f;
-            }
-            else if (rotation == (face == 4 ? 2 : 1))
-            {
-                a = 16.0f - maxY * 16.0f; b = 16.0f - minY * 16.0f;
-                c = face == 4 ? minZ * 16.0f : maxZ * 16.0f;
-                d = face == 4 ? maxZ * 16.0f : minZ * 16.0f;
-            }
-            else
-            {
-                a = 16.0f - minZ * 16.0f; b = 16.0f - maxZ * 16.0f;
-                c = maxY * 16.0f; d = minY * 16.0f;
-            }
-        }
-        u0 = (float)texture->getU(a); u1 = (float)texture->getU(b);
-        v0 = (float)texture->getV(c); v1 = (float)texture->getV(d);
-        texture->adjustUVs(u0, u1, v0, v1);
-    }
-    if (transform == 1 || transform == 3)
-    {
-        float value = v0; v0 = v1; v1 = value;
-    }
-    if (transform == 2 || transform == 3)
-    {
-        float value = u0; u0 = u1; u1 = value;
-    }
-
-    if (face == 0)
-    {
-        faceU[0] = u0; faceU[1] = u0; faceU[2] = u1; faceU[3] = u1;
-        faceV[0] = v1; faceV[1] = v0; faceV[2] = v0; faceV[3] = v1;
-    }
-    else if (face == 1)
-    {
-        faceU[0] = u1; faceU[1] = u1; faceU[2] = u0; faceU[3] = u0;
-        faceV[0] = v1; faceV[1] = v0; faceV[2] = v0; faceV[3] = v1;
-    }
-    else if (face == 2 || face == 4)
-    {
-        faceU[0] = u1; faceU[1] = u0; faceU[2] = u0; faceU[3] = u1;
-        faceV[0] = v0; faceV[1] = v0; faceV[2] = v1; faceV[3] = v1;
-    }
-    else if (face == 3)
-    {
-        faceU[0] = u0; faceU[1] = u0; faceU[2] = u1; faceU[3] = u1;
-        faceV[0] = v0; faceV[1] = v1; faceV[2] = v1; faceV[3] = v0;
-    }
-    else
-    {
-        faceU[0] = u0; faceU[1] = u1; faceU[2] = u1; faceU[3] = u0;
-        faceV[0] = v1; faceV[1] = v1; faceV[2] = v0; faceV[3] = v0;
-    }
-    int shift = 0;
-    if (rotation == 1 || rotation == 4)
-        shift = face == 2 || face == 5 ? 3 : 1;
-    else if (rotation == 2 || rotation == 5)
-        shift = face == 2 || face == 5 ? 1 : 3;
-    if (shift != 0)
-    {
-        float oldU[4] = {faceU[0], faceU[1], faceU[2], faceU[3]};
-        float oldV[4] = {faceV[0], faceV[1], faceV[2], faceV[3]};
-        for (int i = 0; i < 4; ++i)
-        {
-            faceU[i] = oldU[(i + shift) & 3];
-            faceV[i] = oldV[(i + shift) & 3];
-        }
-    }
-}
-
 BlockRenderer::BlockRenderer(BlockColors* blockColors)
     : mBlockColors(blockColors), mLevelSource(NULL), mBrightnessCache()
 {
@@ -1134,20 +1001,107 @@ void BlockRenderer::renderSouth(const BlockState* state, double x, double y, dou
 void BlockRenderer::renderSouth(const BlockState*, double x, double y, double z, TextureAtlasSprite* texture, float u0, float v0, float u1, float v1)
 {
     BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
-    float faceU[4], faceV[4];
-    prepareFaceUV(texture, 3, mFaceRotation1, mFaceTransform1, mMinX, mMaxX, mMinY, mMaxY,
-                  mMinZ, mMaxZ, u0, v0, u1, v1, faceU, faceV);
+    if (mFlipTexture)
+    {
+        float swapped = u0;
+        u0 = u1;
+        u1 = swapped;
+    }
+    if (mMinX < 0.0f || mMaxX > 1.0f)
+    {
+        u0 = (float)texture->getU0(true);
+        u1 = (float)texture->getU1(true);
+    }
+    if (mMinY < 0.0f || mMaxY > 1.0f)
+    {
+        v0 = (float)texture->getV0(true);
+        v1 = (float)texture->getV1(true);
+    }
+    if (mFaceRotation1 == 1)
+    {
+        u0 = (float)texture->getU(mMinY * 16.0f);
+        v1 = (float)texture->getV(16.0f - mMinX * 16.0f);
+        u1 = (float)texture->getU(mMaxY * 16.0f);
+        v0 = (float)texture->getV(16.0f - mMaxX * 16.0f);
+        texture->adjustUVs(u0, u1, v0, v1);
+    }
+    else if (mFaceRotation1 == 2)
+    {
+        u0 = (float)texture->getU(16.0f - mMaxY * 16.0f);
+        v0 = (float)texture->getV(mMinX * 16.0f);
+        u1 = (float)texture->getU(16.0f - mMinY * 16.0f);
+        v1 = (float)texture->getV(mMaxX * 16.0f);
+        texture->adjustUVs(u0, u1, v0, v1);
+    }
+    else if (mFaceRotation1 == 3)
+    {
+        u0 = (float)texture->getU(16.0f - mMinX * 16.0f);
+        u1 = (float)texture->getU(16.0f - mMaxX * 16.0f);
+        v0 = (float)texture->getV(mMaxY * 16.0f);
+        v1 = (float)texture->getV(mMinY * 16.0f);
+        texture->adjustUVs(u0, u1, v0, v1);
+    }
+    if (mFaceTransform1 == 3)
+    {
+        float swapped = u0;
+        u0 = u1;
+        u1 = swapped;
+        swapped = v0;
+        v0 = v1;
+        v1 = swapped;
+    }
+    else if (mFaceTransform1 == 2)
+    {
+        float swapped = u0;
+        u0 = u1;
+        u1 = swapped;
+    }
+    else if (mFaceTransform1 == 1)
+    {
+        float swapped = v0;
+        v0 = v1;
+        v1 = swapped;
+    }
+    float faceU[4];
+    float faceV[4];
+    if (mFaceRotation1 == 1 || mFaceRotation1 == 4)
+    {
+        faceU[0] = u0;
+        faceV[0] = v1;
+        faceU[1] = u1;
+        faceV[1] = v1;
+        faceU[2] = u1;
+        faceV[2] = v0;
+        faceU[3] = u0;
+        faceV[3] = v0;
+    }
+    else if (mFaceRotation1 == 2 || mFaceRotation1 == 5)
+    {
+        faceU[0] = u1;
+        faceV[0] = v0;
+        faceU[1] = u0;
+        faceV[1] = v0;
+        faceU[2] = u0;
+        faceV[2] = v1;
+        faceU[3] = u1;
+        faceV[3] = v1;
+    }
+    else
+    {
+        faceU[0] = u0;
+        faceV[0] = v0;
+        faceU[1] = u0;
+        faceV[1] = v1;
+        faceU[2] = u1;
+        faceV[2] = v1;
+        faceU[3] = u1;
+        faceV[3] = v0;
+    }
     float x0 = (float)(x + mMinX);
     float x1 = (float)(x + mMaxX);
     float y0 = (float)(y + mMinY);
     float y1 = (float)(y + mMaxY);
     float zz = (float)(z + mMaxZ);
-    if (mRenderFromInside)
-    {
-        float value = x0;
-        x0 = x1;
-        x1 = value;
-    }
     builder->bucket(4);
     if (!mEnableAO)
     {
@@ -1186,20 +1140,107 @@ void BlockRenderer::renderWest(const BlockState* state, double x, double y, doub
 void BlockRenderer::renderWest(const BlockState*, double x, double y, double z, TextureAtlasSprite* texture, float u0, float v0, float u1, float v1)
 {
     BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
-    float faceU[4], faceV[4];
-    prepareFaceUV(texture, 4, mFaceRotation3, mFaceTransform3, mMinX, mMaxX, mMinY, mMaxY,
-                  mMinZ, mMaxZ, u0, v0, u1, v1, faceU, faceV);
+    if (mFlipTexture)
+    {
+        float swapped = u0;
+        u0 = u1;
+        u1 = swapped;
+    }
+    if (mMinZ < 0.0f || mMaxZ > 1.0f)
+    {
+        u0 = (float)texture->getU0(true);
+        u1 = (float)texture->getU1(true);
+    }
+    if (mMinY < 0.0f || mMaxY > 1.0f)
+    {
+        v0 = (float)texture->getV0(true);
+        v1 = (float)texture->getV1(true);
+    }
+    if (mFaceRotation3 == 1)
+    {
+        u0 = (float)texture->getU(mMinY * 16.0f);
+        v0 = (float)texture->getV(16.0f - mMaxZ * 16.0f);
+        u1 = (float)texture->getU(mMaxY * 16.0f);
+        v1 = (float)texture->getV(16.0f - mMinZ * 16.0f);
+        texture->adjustUVs(u0, u1, v0, v1);
+    }
+    else if (mFaceRotation3 == 2)
+    {
+        u0 = (float)texture->getU(16.0f - mMaxY * 16.0f);
+        v0 = (float)texture->getV(mMinZ * 16.0f);
+        u1 = (float)texture->getU(16.0f - mMinY * 16.0f);
+        v1 = (float)texture->getV(mMaxZ * 16.0f);
+        texture->adjustUVs(u0, u1, v0, v1);
+    }
+    else if (mFaceRotation3 == 3)
+    {
+        u0 = (float)texture->getU(16.0f - mMinZ * 16.0f);
+        u1 = (float)texture->getU(16.0f - mMaxZ * 16.0f);
+        v0 = (float)texture->getV(mMaxY * 16.0f);
+        v1 = (float)texture->getV(mMinY * 16.0f);
+        texture->adjustUVs(u0, u1, v0, v1);
+    }
+    if (mFaceTransform3 == 3)
+    {
+        float swapped = u0;
+        u0 = u1;
+        u1 = swapped;
+        swapped = v0;
+        v0 = v1;
+        v1 = swapped;
+    }
+    else if (mFaceTransform3 == 2)
+    {
+        float swapped = u0;
+        u0 = u1;
+        u1 = swapped;
+    }
+    else if (mFaceTransform3 == 1)
+    {
+        float swapped = v0;
+        v0 = v1;
+        v1 = swapped;
+    }
+    float faceU[4];
+    float faceV[4];
+    if (mFaceRotation3 == 1 || mFaceRotation3 == 4)
+    {
+        faceU[0] = u0;
+        faceV[0] = v0;
+        faceU[1] = u0;
+        faceV[1] = v1;
+        faceU[2] = u1;
+        faceV[2] = v1;
+        faceU[3] = u1;
+        faceV[3] = v0;
+    }
+    else if (mFaceRotation3 == 2 || mFaceRotation3 == 5)
+    {
+        faceU[0] = u1;
+        faceV[0] = v1;
+        faceU[1] = u1;
+        faceV[1] = v0;
+        faceU[2] = u0;
+        faceV[2] = v0;
+        faceU[3] = u0;
+        faceV[3] = v1;
+    }
+    else
+    {
+        faceU[0] = u1;
+        faceV[0] = v0;
+        faceU[1] = u0;
+        faceV[1] = v0;
+        faceU[2] = u0;
+        faceV[2] = v1;
+        faceU[3] = u1;
+        faceV[3] = v1;
+    }
     float xx = (float)(x + mMinX);
     float y0 = (float)(y + mMinY);
     float y1 = (float)(y + mMaxY);
     float z0 = (float)(z + mMinZ);
     float z1 = (float)(z + mMaxZ);
-    if (mRenderFromInside)
-    {
-        float value = z0;
-        z0 = z1;
-        z1 = value;
-    }
     builder->bucket(5);
     if (!mEnableAO)
     {
