@@ -135,8 +135,8 @@ void ProjectileUtil::rotateTowardsMovement(const boost::shared_ptr<Entity>& enti
 
     double horizontalDistance = ::sqrt(xd * xd + zd * zd);
 
-    entity->mYRot = (float)(::atan2(zd, xd) * 57.2957763671875f) + 90.0f;
-    entity->mXRot = (float)(::atan2(horizontalDistance, yd) * 57.2957763671875f) - 90.0f;
+    entity->mYRot = (float)(::atan2(zd, xd) * 57.295776f) + 90.0f;
+    entity->mXRot = (float)(::atan2(horizontalDistance, yd) * 57.295776f) - 90.0f;
 
     while (entity->mXRot - entity->mXRotO < -180.0f)
     {

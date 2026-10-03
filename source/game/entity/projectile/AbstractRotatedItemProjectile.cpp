@@ -36,9 +36,9 @@ static Predicate<boost::shared_ptr<Entity> >* sArrowTargetsPredicates =
 
 void fjSanitisePosAndVel(Entity* entity)
 {
-    entity->mX = std::floor(entity->mX * 32.0) * 0.03125;
-    entity->mY = std::floor(entity->mY * 32.0) * 0.03125;
-    entity->mZ = std::floor(entity->mZ * 32.0) * 0.03125;
+    entity->mX = static_cast<int>(std::floor(entity->mX * 32.0)) * 0.03125;
+    entity->mY = static_cast<int>(std::floor(entity->mY * 32.0)) * 0.03125;
+    entity->mZ = static_cast<int>(std::floor(entity->mZ * 32.0)) * 0.03125;
 
     entity->mXd = static_cast<int>(Mth::clamp(entity->mXd, -3.9, 3.9) * 8000.0) / 8000.0;
     entity->mYd = static_cast<int>(Mth::clamp(entity->mYd, -3.9, 3.9) * 8000.0) / 8000.0;
@@ -111,7 +111,7 @@ void AbstractRotatedItemProjectile::shoot(double x, double y, double z, float ve
     float inaccuracy)
 {
     double length = Mth::sqrt(x * x + y * y + z * z);
-    double spread = 0.007499999832361937;
+    double spread = 0.0075;
     x = (x / length + mRandom->nextGaussian() * spread * inaccuracy) * velocity;
     y = (y / length + mRandom->nextGaussian() * spread * inaccuracy) * velocity;
     z = (z / length + mRandom->nextGaussian() * spread * inaccuracy) * velocity;
@@ -119,10 +119,10 @@ void AbstractRotatedItemProjectile::shoot(double x, double y, double z, float ve
     mYd = y;
     mZd = z;
     double horizontal = std::sqrt(x * x + z * z);
-    mYRot = static_cast<float>(std::atan2(x, z)) * 57.2957763671875f;
-    mYRotO = mYRot;
+    mYRot = static_cast<float>(std::atan2(x, z)) * Mth::RAD_TO_DEG;
+    mXRot = static_cast<float>(std::atan2(y, horizontal)) * Mth::RAD_TO_DEG;
     mLife = 0;
-    mXRot = static_cast<float>(std::atan2(y, horizontal)) * 57.2957763671875f;
+    mYRotO = mYRot;
     mXRotO = mXRot;
     fjSanitisePosAndVel(this);
 }
@@ -130,10 +130,10 @@ void AbstractRotatedItemProjectile::shoot(double x, double y, double z, float ve
 void AbstractRotatedItemProjectile::shootFromRotation(boost::shared_ptr<Entity> entity, float xRot,
     float yRot, float offset, float velocity, float inaccuracy)
 {
-    const float radians = 0.01745329238474369f;
-    double x = -Mth::sin(yRot * radians) * Mth::cos(xRot * radians);
-    double y = -Mth::sin(xRot * radians);
-    double z = Mth::cos(yRot * radians) * Mth::cos(xRot * radians);
+    const float radians = 0.017453292f;
+    double x = -(sinf(yRot * radians) * cosf(xRot * radians));
+    double y = -sinf(xRot * radians);
+    double z = cosf(yRot * radians) * cosf(xRot * radians);
     shoot(x, y, z, velocity, inaccuracy);
     mXd += entity->mXd;
     mZd += entity->mZd;
@@ -145,8 +145,10 @@ void AbstractRotatedItemProjectile::shootFromRotation(boost::shared_ptr<Entity> 
 void AbstractRotatedItemProjectile::setFlag(int flag, bool value)
 {
     unsigned char flags = mEntityData->get(DATA_FLAGS);
-    mEntityData->set(DATA_FLAGS,
-        static_cast<unsigned char>(value ? flags | flag : flags & ~flag), true);
+    if (value)
+        mEntityData->set(DATA_FLAGS, static_cast<unsigned char>(flags | flag), true);
+    else
+        mEntityData->set(DATA_FLAGS, static_cast<unsigned char>(flags & ~flag), true);
 }
 
 void AbstractRotatedItemProjectile::setCritArrow(bool critical)
@@ -156,7 +158,8 @@ void AbstractRotatedItemProjectile::setCritArrow(bool critical)
 
 bool AbstractRotatedItemProjectile::onHit(const HitResult* result)
 {
-    if (result->mType == HitResult::BLOCK)
+    boost::shared_ptr<Entity> hitEntity = result->mEntity;
+    if (hitEntity == NULL)
     {
         BlockPos pos = result->getBlockPos();
         mXTile = pos.x;
@@ -171,23 +174,26 @@ bool AbstractRotatedItemProjectile::onHit(const HitResult* result)
         double length = std::sqrt(mXd * mXd + mYd * mYd + mZd * mZd);
         if (length != 0.0)
         {
-            mX -= mXd / length * 0.05;
-            mY -= mYd / length * 0.05;
-            mZ -= mZd / length * 0.05;
+            double offsetX = mXd / length;
+            if (offsetX == offsetX)
+                mX -= offsetX * 0.05;
+            double offsetY = mYd / length;
+            if (offsetY == offsetY)
+                mY -= offsetY * 0.05;
+            double offsetZ = mZd / length;
+            if (offsetZ == offsetZ)
+                mZ -= offsetZ * 0.05;
         }
-        playSound(getOnHitSound(), 1.0f,
-            1.2f / (mRandom->nextFloat() * 0.2f + 0.9f));
+        playSound(getOnHitSound(), 1.0f, 1.2f / (mRandom->nextFloat() * 0.2f + 0.9f));
         mInGround = true;
         mShake = 7;
         setCritArrow(false);
         if (state->getMaterial() == Material::AIR)
             return false;
         mInTile->entityInside(mLevel, pos, state, shared_from_this());
+        return true;
     }
-    else
-    {
-        onHitEntity(result);
-    }
+    onHitEntity(result);
     return true;
 }
 
@@ -211,7 +217,6 @@ boost::shared_ptr<Entity> AbstractRotatedItemProjectile::findHitEntity(Vec3* fro
         if (hit != NULL)
         {
             double distance = from->distanceToSqr(hit->mLocation);
-            delete hit;
             if (distance < nearestDistance || nearestDistance == 0.0)
             {
                 hitEntity = entity;
@@ -245,7 +250,8 @@ bool AbstractRotatedItemProjectile::canChangeDimensions()
 
 bool AbstractRotatedItemProjectile::shouldRenderAtSqrDistance(double distanceSqr)
 {
-    double distance = mBoundingBox->getSize() * 10.0 * 64.0 * getViewScale();
+    double distance = mBoundingBox->getSize() * 10.0;
+    distance = distance * 64.0 * getViewScale();
     return distanceSqr < distance * distance;
 }
 
@@ -266,10 +272,10 @@ void AbstractRotatedItemProjectile::tick()
     Entity::tick();
     if (mXRotO == 0.0f && mYRotO == 0.0f)
     {
-        double horizontal = Mth::sqrt(mXd * mXd + mZd * mZd);
-        mYRot = static_cast<float>(std::atan2(mXd, mZd)) * 57.2957763671875f;
+        float horizontal = Mth::sqrt(mXd * mXd + mZd * mZd);
+        mYRot = static_cast<float>(std::atan2(mXd, mZd)) * Mth::RAD_TO_DEG;
+        mXRot = atan2f(static_cast<float>(mYd), horizontal) * Mth::RAD_TO_DEG;
         mYRotO = mYRot;
-        mXRot = atan2f(static_cast<float>(mYd), static_cast<float>(horizontal)) * 57.2957763671875f;
         mXRotO = mXRot;
     }
 
@@ -293,9 +299,9 @@ void AbstractRotatedItemProjectile::tick()
             && !mLevel->hasBlockCubes(mBoundingBox->grow(0.05)))
         {
             mInGround = false;
-            mXd *= mRandom->nextDouble() * 0.2;
-            mYd *= mRandom->nextDouble() * 0.2;
-            mZd *= mRandom->nextDouble() * 0.2;
+            mXd = mXd * mRandom->nextDouble() * 0.2;
+            mYd = mYd * mRandom->nextDouble() * 0.2;
+            mZd = mZd * mRandom->nextDouble() * 0.2;
             mLife = 0;
             mFlightTime = 0;
             ++mInGroundTime;
@@ -313,7 +319,8 @@ void AbstractRotatedItemProjectile::tick()
     HitResult* hitResult = mLevel->clip(from, to, false, true, false, false, NULL, false);
     from = Vec3::newTemp(mX, mY, mZ);
     to = hitResult == NULL ? Vec3::newTemp(mX + mXd, mY + mYd, mZ + mZd)
-                           : Vec3::newTemp(hitResult->mLocation);
+                           : Vec3::newTemp(hitResult->mLocation->x, hitResult->mLocation->y,
+                                                 hitResult->mLocation->z);
 
     boost::shared_ptr<Entity> hitEntity = findHitEntity(from, to);
     if (hitEntity)
@@ -323,12 +330,11 @@ void AbstractRotatedItemProjectile::tick()
     }
 
     if (hitResult != NULL && hitResult->mType == HitResult::ENTITY
-        && (hitResult->mEntity->GetType() & EntityType::PLAYER) == EntityType::PLAYER
-        && mOwner && (mOwner->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+        && (hitResult->mEntity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
     {
         boost::shared_ptr<Player> hitPlayer = boost::static_pointer_cast<Player>(hitResult->mEntity);
-        boost::shared_ptr<Player> ownerPlayer = boost::static_pointer_cast<Player>(mOwner);
-        if (!ownerPlayer->canHarmPlayer(hitPlayer))
+        if (mOwner && (mOwner->GetType() & EntityType::PLAYER) == EntityType::PLAYER
+            && !boost::static_pointer_cast<Player>(mOwner)->canHarmPlayer(hitPlayer))
         {
             delete hitResult;
             hitResult = NULL;
@@ -338,40 +344,41 @@ void AbstractRotatedItemProjectile::tick()
     if (hitResult != NULL)
     {
         if (!isNoPhysics())
+        {
             onHit(hitResult);
-        delete hitResult;
+            delete hitResult;
+        }
     }
 
     if (isCritArrow())
     {
         for (int i = 0; i < 4; ++i)
         {
-            double offset = i * 0.25;
-            mLevel->addParticle(PARTICLE_CRIT, mX + mXd * offset, mY + mYd * offset,
-                mZ + mZd * offset, -mXd, 0.2 - mYd, -mZd, arrayWithLength<int>());
+            mLevel->addParticle(PARTICLE_CRIT, mX + mXd * i / 4.0, mY + mYd * i / 4.0,
+                mZ + mZd * i / 4.0, -mXd, 0.2 - mYd, -mZd, arrayWithLength<int>());
         }
     }
 
     mX += mXd;
     mY += mYd;
     mZ += mZd;
-    double horizontal = Mth::sqrt(mXd * mXd + mZd * mZd);
+    float horizontal = Mth::sqrt(mXd * mXd + mZd * mZd);
     if (isNoPhysics())
-        mYRot = static_cast<float>(std::atan2(-mXd, -mZd)) * 57.2957763671875f;
+        mYRot = static_cast<float>(std::atan2(-mXd, -mZd)) * Mth::RAD_TO_DEG;
     else
-        mYRot = static_cast<float>(std::atan2(mXd, mZd)) * 57.2957763671875f;
-    mXRot = atan2f(static_cast<float>(mYd), static_cast<float>(horizontal)) * 57.2957763671875f;
+        mYRot = static_cast<float>(std::atan2(mXd, mZd)) * Mth::RAD_TO_DEG;
+    float xRot = atan2f(static_cast<float>(mYd), horizontal) * Mth::RAD_TO_DEG;
 
-    while (mXRot - mXRotO < -180.0f)
+    while (xRot - mXRotO < -180.0f)
         mXRotO -= 360.0f;
-    while (mXRot - mXRotO >= 180.0f)
+    while (xRot - mXRotO >= 180.0f)
         mXRotO += 360.0f;
     while (mYRot - mYRotO < -180.0f)
         mYRotO -= 360.0f;
     while (mYRot - mYRotO >= 180.0f)
         mYRotO += 360.0f;
 
-    mXRot = mXRotO + (mXRot - mXRotO) * 0.2f;
+    mXRot = mXRotO + (xRot - mXRotO) * 0.2f;
     mYRot = mYRotO + (mYRot - mYRotO) * 0.2f;
     double inertia = 0.9900000095367432;
     if (isInWater())
@@ -398,7 +405,7 @@ void AbstractRotatedItemProjectile::tick()
         double z = mZ;
         mLevel->clampWithinLevelBounds(x, z, 0.0);
         mLevel->clampWithinLevelHeight(y, mBbHeight);
-        if (x != mX || y != mY || z != mZ)
+        if (x != mX || z != mZ || y != mY)
         {
             setPos(x, y, z);
             mInGround = true;
@@ -420,9 +427,9 @@ void AbstractRotatedItemProjectile::lerpMotion(double xd, double yd, double zd)
     mZd = zd;
     if (mXRotO == 0.0f && mYRotO == 0.0f)
     {
-        double horizontal = Mth::sqrt(xd * xd + zd * zd);
-        mXRot = atan2f(static_cast<float>(yd), static_cast<float>(horizontal)) * 57.2957763671875f;
-        mYRot = static_cast<float>(std::atan2(xd, zd)) * 57.2957763671875f;
+        float horizontal = Mth::sqrt(xd * xd + zd * zd);
+        mXRot = atan2f(static_cast<float>(yd), horizontal) * Mth::RAD_TO_DEG;
+        mYRot = static_cast<float>(std::atan2(xd, zd)) * Mth::RAD_TO_DEG;
         mXRotO = mXRot;
         mYRotO = mYRot;
         moveTo(mX, mY, mZ, mYRot, mXRot);
@@ -481,14 +488,11 @@ void AbstractRotatedItemProjectile::playerTouch(boost::shared_ptr<Player> player
 {
     if (!mLevel->mIsClientSide && (mInGround || isNoPhysics()) && mShake < 1)
     {
-        ePickup pickup = mPickup;
-        bool canPickup = true;
-        if (pickup != ePickup_Allowed && pickup != ePickup_CreativeOnly)
-            canPickup = isNoPhysics() && mOwner.get() == player.get();
-        if (pickup == ePickup_Allowed)
+        bool canPickup = mPickup == ePickup_Allowed || mPickup == ePickup_CreativeOnly
+            || (isNoPhysics() && mOwner.get() == player.get());
+        if (mPickup == ePickup_Allowed)
         {
-            not_null_ptr<ItemInstance> item = getPickupItem();
-            if (!player->mInventory->add(item))
+            if (!player->mInventory->add(getPickupItem()))
                 spawnAtLocation(getPickupItem(), 1.0f);
         }
         if (canPickup)

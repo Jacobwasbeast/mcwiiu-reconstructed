@@ -5,7 +5,7 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include "game/item/Item.hpp"
+#include "game/entity/projectile/ArrowItem.hpp"
 #include "game/item/not_null_ptr.hpp"
 
 class Arrow;
@@ -17,7 +17,7 @@ class LivingEntity;
 class Player;
 class TextureAtlasSprite;
 
-class TippedArrowItem : public Item
+class TippedArrowItem : public ArrowItem
 {
 public:
     virtual ~TippedArrowItem();

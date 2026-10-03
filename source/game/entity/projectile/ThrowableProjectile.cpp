@@ -76,7 +76,7 @@ void ThrowableProjectile::shootFromRotation(boost::shared_ptr<Entity> entity, fl
         offset = (float)miniGame->getThrowAngle(type, offset);
     }
 
-    const float radians = 0.01745329238474369f;
+    const float radians = 0.017453292f;
     double x = -Mth::sin(yRot * radians) * Mth::cos(xRot * radians);
     double y = -Mth::sin((xRot + offset) * radians);
     double z = Mth::cos(yRot * radians) * Mth::cos(xRot * radians);

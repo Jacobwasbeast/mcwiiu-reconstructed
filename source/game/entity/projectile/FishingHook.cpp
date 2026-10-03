@@ -165,10 +165,10 @@ void FishingHook::shoot()
 {
     float xRot = Mth::clamp(mOwner->mXRotO + (mOwner->mXRot - mOwner->mXRotO), -89.9f, 89.9f);
     float yRot = mOwner->mYRotO + (mOwner->mYRot - mOwner->mYRotO);
-    float cosYRot = Mth::cos(-yRot * 0.01745329238474369f - 3.1415927410125732f);
-    float sinYRot = Mth::sin(-yRot * 0.01745329238474369f - 3.1415927410125732f);
-    float negCosXRot = -Mth::cos(-xRot * 0.01745329238474369f);
-    float sinXRot = Mth::sin(-xRot * 0.01745329238474369f);
+    float cosYRot = Mth::cos(-yRot * 0.017453292f - 3.1415927f);
+    float sinYRot = Mth::sin(-yRot * 0.017453292f - 3.1415927f);
+    float negCosXRot = -Mth::cos(-xRot * 0.017453292f);
+    float sinXRot = Mth::sin(-xRot * 0.017453292f);
 
     double x = mOwner->mXo + (mOwner->mX - mOwner->mXo) - (double)sinYRot * 0.3;
     double y = mOwner->mYo + (mOwner->mY - mOwner->mYo) + mOwner->getEyeHeight();
@@ -286,8 +286,8 @@ void FishingHook::updateRotation()
         mYRotO += 360.0f;
     }
 
-    mXRot = mXRotO + (xRot - mXRotO) * 0.20000000298023224f;
-    mYRot = mYRotO + (mYRot - mYRotO) * 0.20000000298023224f;
+    mXRot = mXRotO + (xRot - mXRotO) * 0.2f;
+    mYRot = mYRotO + (mYRot - mYRotO) * 0.2f;
 }
 
 void FishingHook::setHookedEntity()
@@ -406,7 +406,7 @@ void FishingHook::catchingFish(const BlockPos& pos)
         if (mTicksCatchableDelay > 0)
         {
             mFishAngle = (float)mRandom->nextGaussian() * 4.0f + mFishAngle;
-            float angle = mFishAngle * 0.01745329238474369f;
+            float angle = mFishAngle * 0.017453292f;
             float sinAngle = sinf(angle);
             float cosAngle = cosf(angle);
             double x = mX + (double)(sinAngle * (float)mTicksCatchableDelay) * 0.1;
@@ -416,7 +416,7 @@ void FishingHook::catchingFish(const BlockPos& pos)
 
             if (block == Blocks::water || block == Blocks::flowing_water)
             {
-                if (mRandom->nextFloat() < 0.15000000596046448f)
+                if (mRandom->nextFloat() < 0.15f)
                 {
                     serverLevel->sendParticles(PARTICLE_BUBBLE,
                                                x, y - 0.10000000149011612, z,
@@ -463,24 +463,24 @@ void FishingHook::catchingFish(const BlockPos& pos)
         mTicksCaughtDelay -= speedBonus;
 
         float caughtDelay = (float)mTicksCaughtDelay;
-        float chance = 0.15000000596046448f;
+        float chance = 0.15f;
 
         if (caughtDelay < 20.0f)
         {
-            chance = (20.0f - caughtDelay) * 0.05000000074505806f + chance;
+            chance = (20.0f - caughtDelay) * 0.05f + chance;
         }
         else if (mTicksCaughtDelay < 40)
         {
-            chance = (40.0f - caughtDelay) * 0.019999999552965164f + chance;
+            chance = (40.0f - caughtDelay) * 0.02f + chance;
         }
         else if (mTicksCaughtDelay < 60)
         {
-            chance = (60.0f - caughtDelay) * 0.009999999776482582f + chance;
+            chance = (60.0f - caughtDelay) * 0.01f + chance;
         }
 
         if (mRandom->nextFloat() < chance)
         {
-            float angle = Mth::nextFloat(mRandom, 0.0f, 360.0f) * 0.01745329238474369f;
+            float angle = Mth::nextFloat(mRandom, 0.0f, 360.0f) * 0.017453292f;
             float distance = Mth::nextFloat(mRandom, 25.0f, 60.0f);
             double x = mX + (double)(Mth::sin(angle) * distance * 0.1f);
             double y = std::floor(mBoundingBox->mMinY) + 1.0;
