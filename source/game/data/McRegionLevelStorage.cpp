@@ -12,18 +12,6 @@
 #include "game/world/chunk/McRegionChunkStorage.hpp"
 #include "game/core/MemSect.hpp"
 
-static void clearFiles(ConsoleSaveFile* saveFile, const std::wstring& prefix)
-{
-    std::vector<FileEntry*>* files = saveFile->getFilesWithPrefix(prefix);
-    if (files != NULL)
-    {
-        std::vector<FileEntry*>::iterator it;
-        for (it = files->begin(); it != files->end(); ++it)
-            saveFile->deleteFile(*it);
-        delete files;
-    }
-}
-
 McRegionLevelStorage::McRegionLevelStorage(ConsoleSaveFile* saveFile, File folder,
                                            const std::wstring& levelId, bool createIfMissing,
                                            DataFixerUpper* fixer)
@@ -44,8 +32,22 @@ McRegionChunkStorage* McRegionLevelStorage::createChunkStorage(Dimension* dimens
         if (gApp.GetResetNether() == 0)
             return new McRegionChunkStorage(getSaveFile(), L"DIM-1", mFixer);
 
-        clearFiles(getSaveFile(), L"DIM-1");
-        clearFiles(getSaveFile(), L"data/Fortress");
+        std::vector<FileEntry*>* netherFiles = getSaveFile()->getFilesWithPrefix(L"DIM-1");
+        if (netherFiles != NULL)
+        {
+            std::vector<FileEntry*>::iterator it;
+            for (it = netherFiles->begin(); it != netherFiles->end(); ++it)
+                getSaveFile()->deleteFile(*it);
+            delete netherFiles;
+        }
+        std::vector<FileEntry*>* fortressFiles = getSaveFile()->getFilesWithPrefix(L"data/Fortress");
+        if (fortressFiles != NULL)
+        {
+            std::vector<FileEntry*>::iterator it;
+            for (it = fortressFiles->begin(); it != fortressFiles->end(); ++it)
+                getSaveFile()->deleteFile(*it);
+            delete fortressFiles;
+        }
         resetNetherPlayerPositions();
         return new McRegionChunkStorage(getSaveFile(), L"DIM-1", mFixer);
     }
@@ -59,7 +61,14 @@ McRegionChunkStorage* McRegionLevelStorage::createChunkStorage(Dimension* dimens
                 return new McRegionChunkStorage(getSaveFile(), L"DIM1/", mFixer);
         }
 
-        clearFiles(getSaveFile(), L"DIM1/");
+        std::vector<FileEntry*>* endFiles = getSaveFile()->getFilesWithPrefix(L"DIM1/");
+        if (endFiles != NULL)
+        {
+            std::vector<FileEntry*>::iterator it;
+            for (it = endFiles->begin(); it != endFiles->end(); ++it)
+                getSaveFile()->deleteFile(*it);
+            delete endFiles;
+        }
         resetEndPlayerPositions();
         return new McRegionChunkStorage(getSaveFile(), L"DIM1/", mFixer);
     }

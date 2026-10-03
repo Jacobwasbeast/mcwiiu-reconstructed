@@ -44,10 +44,6 @@ public:
         void setDataOffset(int plane, unsigned short offset);
         unsigned short getDataOffset(int plane);
         unsigned int getData(int plane, char (&values)[256]);
-
-    private:
-        unsigned char* planeBytes(int plane);
-        const unsigned char* planeBytes(int plane) const;
     };
 
     SparseDataStorage();

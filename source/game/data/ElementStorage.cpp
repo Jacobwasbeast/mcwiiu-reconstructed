@@ -16,11 +16,6 @@ static unsigned int sRenderThreadStorageCount = 0;
 static OSFastMutex sElementLocks[128];
 static OSFastMutex sThreadCountLock;
 
-ElementStorage::ThreadStorage::ThreadStorage()
-    : mThreadId(0), mReadLocks(0), mHasTempData(false), mBlockReadLock(false), mDataLock(false), mTempData(0)
-{
-}
-
 ElementStorage::ElementStorage(bool threaded)
     : HierarchicalElementStorage(), mFrameLastUpdated(0), mCriticalSectionIndex(getCriticalSectionIndex(threaded))
 {

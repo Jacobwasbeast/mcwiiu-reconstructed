@@ -198,18 +198,6 @@ public:
 protected:
     struct Partials
     {
-        Partials(ConsoleGameRules::EGameRuleType type, int depth)
-            : mDepth(depth),
-              mType(type),
-              mAttributeCount(0),
-              mAttributesSaved(0),
-              mChildCount(0),
-              mChildrenFinished(0),
-              mAttributesStarted(false),
-              mChildrenStarted(false)
-        {
-        }
-
         int mDepth;
         ConsoleGameRules::EGameRuleType mType;
         int mAttributeCount;

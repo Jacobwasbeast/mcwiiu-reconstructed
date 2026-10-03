@@ -15,7 +15,6 @@ public:
     class ThreadStorage
     {
     public:
-        ThreadStorage();
         unsigned int mThreadId;
         unsigned int mReadLocks;
         bool mHasTempData;

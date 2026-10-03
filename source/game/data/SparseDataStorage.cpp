@@ -86,93 +86,69 @@ unsigned char SparseDataStorage::Array256_2Bit::get(unsigned char index)
     return palette[(indices[index >> 2] >> ((index & 3) << 1)) & 3];
 }
 
+static const unsigned int PLANE_OFFSET_MASK = 0x3fff;
+static const unsigned int PLANE_TYPE_SHIFT = 14;
+
 void SparseDataStorage::PlaneOffsets::initPlane(int plane, void* data)
 {
     unsigned short old = offsets[plane];
-    unsigned int type = old >> 14;
+    unsigned short type = old >> PLANE_TYPE_SHIFT & 3;
     if (type)
     {
         unsigned char* address = static_cast<unsigned char*>(data);
-        offsets[plane] = static_cast<unsigned short>((((address - payload + 0x100) >> 2) & 0x3fff) | (old & 0xc000));
+        offsets[plane] = static_cast<unsigned short>((((address - reinterpret_cast<unsigned char*>(this)) >> 2) & PLANE_OFFSET_MASK) | (old & 0xc000));
     }
     if (type == 1)
-    {
-        Array256_1Bit values;
-        memcpy(&values, planeBytes(plane), sizeof values);
-        values.init();
-        memcpy(planeBytes(plane), &values, sizeof values);
-    }
+        reinterpret_cast<Array256_1Bit*>(reinterpret_cast<unsigned char*>(this) + (offsets[plane] & PLANE_OFFSET_MASK) * 4)->init();
     else if (type == 2)
-    {
-        Array256_2Bit values;
-        memcpy(&values, planeBytes(plane), sizeof values);
-        values.init();
-        memcpy(planeBytes(plane), &values, sizeof values);
-    }
-}
-
-unsigned char* SparseDataStorage::PlaneOffsets::planeBytes(int plane)
-{
-    return payload + ((offsets[plane] & 0x3fff) - 0x40) * 4;
-}
-
-const unsigned char* SparseDataStorage::PlaneOffsets::planeBytes(int plane) const
-{
-    return payload + ((offsets[plane] & 0x3fff) - 0x40) * 4;
+        reinterpret_cast<Array256_2Bit*>(reinterpret_cast<unsigned char*>(this) + (offsets[plane] & PLANE_OFFSET_MASK) * 4)->init();
 }
 
 unsigned int SparseDataStorage::PlaneOffsets::setData(int plane, int index, int value)
 {
-    unsigned short entry = offsets[plane]; unsigned int type = entry >> 14;
-    if (!type) return value == (entry & 0x3fff);
-    if (type == 1)
+    unsigned short entry = offsets[plane];
+    unsigned short type = entry >> PLANE_TYPE_SHIFT & 3;
+    if (type == 0)
     {
-        Array256_1Bit values;
-        memcpy(&values, planeBytes(plane), sizeof values);
-        unsigned int changed = values.set(static_cast<unsigned char>(index), static_cast<unsigned char>(value));
-        memcpy(planeBytes(plane), &values, sizeof values);
-        return changed;
+        if (value != (entry & PLANE_OFFSET_MASK))
+            return 0;
     }
-    if (type == 2)
+    else
     {
-        Array256_2Bit values;
-        memcpy(&values, planeBytes(plane), sizeof values);
-        unsigned int changed = values.set(static_cast<unsigned char>(index), static_cast<unsigned char>(value));
-        memcpy(planeBytes(plane), &values, sizeof values);
-        return changed;
-    }
-    if (type == 3)
-    {
+        if (type == 1)
+            return reinterpret_cast<Array256_1Bit*>(reinterpret_cast<unsigned char*>(this) + (entry & PLANE_OFFSET_MASK) * 4)->set(static_cast<unsigned char>(index), static_cast<unsigned char>(value));
+        if (type < 3)
+            return reinterpret_cast<Array256_2Bit*>(reinterpret_cast<unsigned char*>(this) + (entry & PLANE_OFFSET_MASK) * 4)->set(static_cast<unsigned char>(index), static_cast<unsigned char>(value));
+        if (type != 3)
+            return 0;
         const unsigned char position = static_cast<unsigned char>(index);
         const unsigned int shift = (position & 1) * 4;
-        unsigned char& packed = planeBytes(plane)[position >> 1];
+        unsigned char& packed = (reinterpret_cast<unsigned char*>(this) + (entry & PLANE_OFFSET_MASK) * 4)[position >> 1];
         packed = static_cast<unsigned char>((packed & ~(15u << shift)) |
                                             (static_cast<unsigned int>(value) << shift));
-        return 1;
     }
-    return 0;
+    return 1;
 }
 
 unsigned char SparseDataStorage::PlaneOffsets::getDataSizeFromType(int type) { return type == 1 ? 0x24 : type == 2 ? 0x44 : type == 3 ? 0x80 : 0; }
 unsigned char SparseDataStorage::PlaneOffsets::getDataSize(int plane) { return getDataSizeFromType(offsets[plane] >> 14); }
 unsigned int SparseDataStorage::PlaneOffsets::getData(int plane, int index)
 {
-    unsigned short entry = offsets[plane]; unsigned int type = entry >> 14;
-    if (!type) return entry & 0x3fff;
-    if (type == 1)
+    unsigned short entry = offsets[plane];
+    unsigned short type = entry >> PLANE_TYPE_SHIFT & 3;
+    unsigned int result = 0;
+    if (type == 0)
+        result = entry & PLANE_OFFSET_MASK;
+    else if (type == 1)
+        result = reinterpret_cast<Array256_1Bit*>(reinterpret_cast<unsigned char*>(this) + (entry & PLANE_OFFSET_MASK) * 4)->get(static_cast<unsigned char>(index));
+    else if (type < 3)
+        result = reinterpret_cast<Array256_2Bit*>(reinterpret_cast<unsigned char*>(this) + (entry & PLANE_OFFSET_MASK) * 4)->get(static_cast<unsigned char>(index));
+    else if (type == 3)
     {
-        Array256_1Bit values;
-        memcpy(&values, planeBytes(plane), sizeof values);
-        return values.get(static_cast<unsigned char>(index));
+        unsigned char position = static_cast<unsigned char>(index);
+        result = ((reinterpret_cast<unsigned char*>(this) + (entry & PLANE_OFFSET_MASK) * 4)[position >> 1] >> ((position & 1) << 2)) & 15;
     }
-    if (type == 2)
-    {
-        Array256_2Bit values;
-        memcpy(&values, planeBytes(plane), sizeof values);
-        return values.get(static_cast<unsigned char>(index));
-    }
-    unsigned char position = (unsigned char)index;
-    return (planeBytes(plane)[position >> 1] >> ((position & 1) << 2)) & 15;
+    return result;
 }
 
 unsigned int SparseDataStorage::PlaneOffsets::getValuesInPlane(int plane, char (&values)[16])

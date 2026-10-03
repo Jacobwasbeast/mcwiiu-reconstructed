@@ -2,7 +2,8 @@
 
 void GameRuleSaveInterface::startTag(ConsoleGameRules::EGameRuleType type)
 {
-    mPartials.push_back(Partials(type, mPartials.size()));
+    Partials partial = { mPartials.size(), type, 0, 0, 0, 0, false, false };
+    mPartials.push_back(partial);
 }
 
 void GameRuleSaveInterface::startAttributes(int attributeCount)

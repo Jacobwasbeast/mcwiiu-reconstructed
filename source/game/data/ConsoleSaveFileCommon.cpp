@@ -251,11 +251,11 @@ short ConsoleSaveFileCommon::getOriginalSaveVersion() { return mFileHeader.m_ori
 void ConsoleSaveFileCommon::LockSaveAccess() { EnterCriticalSection(&mSaveAccessMutex); }
 void ConsoleSaveFileCommon::ReleaseSaveAccess() { LeaveCriticalSection(&mSaveAccessMutex); }
 ESavePlatform ConsoleSaveFileCommon::getSavePlatform() { return mFileHeader.m_savePlatform; }
-bool ConsoleSaveFileCommon::isSaveEndianDifferent() { return mFileHeader.m_saveEndian != getLocalEndian(); }
+bool ConsoleSaveFileCommon::isSaveEndianDifferent() { return mFileHeader.m_saveEndian != eByteOrder_BigEndian; }
 void ConsoleSaveFileCommon::setLocalPlatform() { mFileHeader.m_saveEndian = eByteOrder_BigEndian; mFileHeader.m_savePlatform = eSavePlatform_WIIU; }
 void ConsoleSaveFileCommon::setPlatform(ESavePlatform platform) { mFileHeader.m_savePlatform = platform; }
 ByteOrder ConsoleSaveFileCommon::getSaveEndian() { return mFileHeader.m_saveEndian; }
-ByteOrder ConsoleSaveFileCommon::getLocalEndian() { return FileHeader::getNativeEndian(); }
+ByteOrder ConsoleSaveFileCommon::getLocalEndian() { return eByteOrder_BigEndian; }
 void ConsoleSaveFileCommon::setEndian(ByteOrder endian) { mFileHeader.m_saveEndian = endian; }
 bool ConsoleSaveFileCommon::isLocalEndianDifferent(ESavePlatform platform) { return getLocalEndian() != FileHeader::getEndian(platform); }
 
