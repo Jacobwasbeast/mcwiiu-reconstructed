@@ -20,6 +20,6 @@ struct BcfStream
     uint32_t bufferCapacity;
 };
 
-void FindFrameBoundary(BcfStream* stream);
+void FindFrameBoundary(int streamAddress);
 
 #endif

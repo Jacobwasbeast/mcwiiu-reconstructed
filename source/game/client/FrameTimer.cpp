@@ -2,8 +2,10 @@
 
 #include <cstring>
 
-void FindFrameBoundary(BcfStream* stream)
+void FindFrameBoundary(int streamAddress)
 {
+    BcfStream* stream = reinterpret_cast<BcfStream*>(static_cast<intptr_t>(streamAddress));
+
     if (stream->pendingBytes != 0)
     {
         std::memmove(stream->buffer,
