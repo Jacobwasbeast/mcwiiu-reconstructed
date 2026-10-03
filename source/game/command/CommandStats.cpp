@@ -1,28 +1,6 @@
 #include "game/command/CommandStats.hpp"
 #include "game/data/CompoundTag.hpp"
 
-namespace
-{
-    std::wstring gCommandStatsStrings0[5];
-    std::wstring gCommandStatsStrings1[5];
-
-    void destroyCommandStatsStrings(std::wstring* strings, int count)
-    {
-        for (int i = 0; i < count; ++i)
-            strings[i].~basic_string();
-    }
-}
-
-void __T8()
-{
-    destroyCommandStatsStrings(gCommandStatsStrings0, 5);
-}
-
-void __T9()
-{
-    destroyCommandStatsStrings(gCommandStatsStrings1, 5);
-}
-
 CommandStats::CommandStats() : m_objectiveNames(0), m_entityNames(0) {}
 CommandStats::~CommandStats() {}
 
