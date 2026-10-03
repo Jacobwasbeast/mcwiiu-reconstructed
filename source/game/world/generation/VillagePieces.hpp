@@ -59,7 +59,6 @@ public:
     {
     public:
         PieceWeight(EPieceClass, int, int);
-        PieceWeight();
         bool doPlace(int);
         bool isValid();
         EPieceClass pieceClass;

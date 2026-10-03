@@ -19,6 +19,7 @@
 #include "game/core/Settings.hpp"
 #include "game/core/Socket.hpp"
 #include "game/core/MasterGameMode.hpp"
+#include "game/core/Mth.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/core/PortalForcer.hpp"
 #include "game/server/ServerChunkCache.hpp"
@@ -76,75 +77,6 @@
 #include "game/server/MinecraftServer.hpp"
 
 class MobEffectInstance;
-
-namespace
-{
-double snapHorizontal(double value)
-{
-    const double margin = 0.5;
-    if (value >= 0.0)
-        return floor(value + margin);
-    return ceil(value - margin);
-}
-
-double snapVertical(double value, bool hasCeiling)
-{
-    return hasCeiling ? floor(value) : ceil(value);
-}
-
-bool hasSpawnCollisions(Level* level, boost::shared_ptr<ServerPlayer> player)
-{
-    if (!level || !player || !player->mBoundingBox)
-        return false;
-    std::vector<AABB*>* boxes =
-        level->getCollisionAABBs(player, player->mBoundingBox, false, false, false);
-    return boxes != NULL && !boxes->empty();
-}
-
-void resolveSpawnCollisions(Level* level, boost::shared_ptr<ServerPlayer> player)
-{
-    if (!level || !player)
-        return;
-    const double maxY = 512.0;
-    const double collisionHeight = 1.0;
-    const double x = player->mX;
-    const double z = player->mZ;
-    while (hasSpawnCollisions(level, player) && player->mY < maxY)
-    {
-        player->moveTo(x, player->mY + collisionHeight, z,
-                       player->mYRot, player->mXRot);
-    }
-}
-
-void relocateInvalidDimensionSpawn(PlayerList* playerList, boost::shared_ptr<ServerPlayer> player,
-                                   bool forced)
-{
-    if (!playerList || !player || !playerList->getServer())
-        return;
-    ServerLevel* overworld = playerList->getServer()->getLevel(0);
-    if (!overworld)
-        return;
-    if (player->mGameMode)
-        player->mGameMode->setLevel(overworld);
-    player->mDimension = 0;
-    BlockPos spawn = overworld->getSharedSpawnPos();
-    player->moveTo(spawn.x + 0.5, spawn.y, spawn.z + 0.5, player->mYRot, player->mXRot);
-    BlockPos* respawnPos = player->getRespawnPosition();
-    if (respawnPos != NULL)
-    {
-        BlockPos* validPos =
-            Player::checkBedValidRespawnPosition(overworld, *respawnPos, forced);
-        if (validPos != NULL)
-        {
-            player->moveTo(validPos->x + 0.5, validPos->y, validPos->z + 0.5,
-                           player->mYRot, player->mXRot);
-            player->setRespawnPosition(validPos, forced);
-            delete validPos;
-        }
-    }
-    resolveSpawnCollisions(overworld, player);
-}
-}
 
 PlayerList::PlayerList(MinecraftServer* server, MasterGameMode* gameMode)
     : mServer(server), mGameMode(gameMode), mPlayerIO(NULL), mUnknownState(false), mOverrideGameMode(NULL),
@@ -349,32 +281,86 @@ CompoundTag* PlayerList::load(boost::shared_ptr<ServerPlayer> player)
 
 void PlayerList::validatePlayerSpawnPosition(boost::shared_ptr<ServerPlayer> player)
 {
-    BOOST_ASSERT(player);
-    if (!player || !mServer)
-        return;
+    const double maxSpawnY = 512.0;
+    const double maxNetherSpawnY = 125.0;
+    const double halfBlock = 0.5;
+    const double blockHeight = 1.0;
+    const double respawnYOffset = 0.1;
+
     const bool forced = player->isRespawnForced() != 0;
     ServerLevel* level = mServer->getLevel(player->mDimension);
-    if (!level || !level->mDimension)
-        return;
-    const bool hasCeiling = level->mDimension->isHasCeiling() != 0;
-    const double x = snapHorizontal(player->mX);
-    const double y = snapVertical(player->mY, hasCeiling);
-    const double z = snapHorizontal(player->mZ);
-    const bool collidedAtStart = hasSpawnCollisions(level, player);
+
+    double x;
+    if (player->mX >= 0.0)
+        x = Mth::floor(player->mX) + halfBlock;
+    else
+        x = Mth::ceil((float)player->mX) - halfBlock;
+
+    double y;
+    if (level->mDimension->isHasCeiling())
+        y = floor(player->mY);
+    else
+        y = ceil(player->mY);
+
+    double z;
+    if (player->mZ >= 0.0)
+        z = Mth::floor(player->mZ) + halfBlock;
+    else
+        z = Mth::ceil((float)player->mZ) - halfBlock;
+
+    const int startCollisions =
+        level->getCollisionAABBs(player, player->mBoundingBox, false, false, false)->size();
+
     const double originalX = player->mX;
     const double originalY = player->mY;
     const double originalZ = player->mZ;
-    player->moveTo(x, y, z, player->mYRot, player->mXRot);
-    if (collidedAtStart)
-        resolveSpawnCollisions(level, player);
-    else if (hasSpawnCollisions(level, player))
-        player->moveTo(originalX, originalY, originalZ, player->mYRot, player->mXRot);
-    const int dimensionId = level->mDimension->getType()->getId();
-    const int netherId = DimensionType::NETHER->getId();
-    const int endId = DimensionType::THE_END->getId();
-    if ((dimensionId == netherId && player->mY > 125.0)
-        || (dimensionId == endId && player->mY == std::numeric_limits<double>::max()))
-        relocateInvalidDimensionSpawn(this, player, forced);
+    player->setPos(x, y, z);
+
+    if (startCollisions == 0)
+    {
+        while (!level->getCollisionAABBs(player, player->mBoundingBox, false, false, false)->empty()
+               && player->mY < maxSpawnY)
+            player->setPos(originalX, originalY, originalZ);
+    }
+    else
+    {
+        while (!level->getCollisionAABBs(player, player->mBoundingBox, false, false, false)->empty()
+               && player->mY < maxSpawnY)
+            player->setPos(player->mX, player->mY + blockHeight, player->mZ);
+    }
+
+    if ((level->mDimension->getType() == DimensionType::NETHER && player->mY > maxNetherSpawnY)
+        || (level->mDimension->getType() == DimensionType::THE_END
+            && player->mY == std::numeric_limits<double>::max()))
+    {
+        player->setLevel(mServer->getLevel(0));
+        player->mGameMode->setLevel(mServer->getLevel(0));
+        player->mDimension = 0;
+        ServerLevel* overworld = mServer->getLevel(player->mDimension);
+        BlockPos spawn = overworld->getSharedSpawnPos();
+        player->setPos(spawn.x, spawn.y, spawn.z);
+
+        BlockPos* respawnPos = player->getRespawnPosition();
+        if (respawnPos != NULL)
+        {
+            BlockPos* validPos = Player::checkBedValidRespawnPosition(
+                mServer->getLevel(player->mDimension), *respawnPos, forced);
+            if (validPos != NULL)
+            {
+                player->moveTo(validPos->x + halfBlock, validPos->y + respawnYOffset,
+                               validPos->z + halfBlock, 0.0f, 0.0f);
+                player->setRespawnPosition(new BlockPos(*respawnPos), forced);
+            }
+            delete validPos;
+        }
+
+        while (!overworld->getCollisionAABBs(player, player->mBoundingBox, false, false, false)->empty())
+            player->setPos(player->mX, player->mY + blockHeight, player->mZ);
+    }
+    else
+    {
+        level->mDimension->getType();
+    }
 }
 
 void PlayerList::updatePlayerGameMode(boost::shared_ptr<ServerPlayer> oldPlayer,

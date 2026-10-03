@@ -1107,9 +1107,8 @@ void Player::setItemSlot(const EquipmentSlot* slot, not_null_ptr<ItemInstance> i
     mInventory->setItem(index, item);
 }
 
-uint32_t Player::addItem(not_null_ptr<ItemInstance> item)
+uint32_t Player::addItem(const not_null_ptr<ItemInstance>& item)
 {
-    if (!mInventory) return 0;
     playEquipSound(item);
     return mInventory->add(item);
 }

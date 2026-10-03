@@ -11,7 +11,7 @@
 
 Block* getColour(unsigned char colour);
 
-TerracottaLayerTheme::TerracottaLayerTheme(const TerracottaLayerThemePattern& pattern,
+TerracottaLayerTheme::TerracottaLayerTheme(const Pattern& pattern,
                                            TerracottaLayerThemeFunction function)
     : mSize(pattern.size), mFunction(function)
 {

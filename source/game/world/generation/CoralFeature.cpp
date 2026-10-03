@@ -13,7 +13,6 @@
 #include "game/world/block/TypedBoxed.hpp"
 
 
-CoralFeature::CoralFeature() : Feature(false) {}
 CoralFeature::~CoralFeature() {}
 
 const Direction* CoralFeature::_randomDirectionExcept(Random& random, const Direction* except)

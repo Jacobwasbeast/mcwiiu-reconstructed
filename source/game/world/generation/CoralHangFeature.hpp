@@ -11,7 +11,7 @@ class Random;
 class CoralHangFeature : public Feature
 {
 public:
-    CoralHangFeature();
+    CoralHangFeature() : Feature(false) {}
     virtual ~CoralHangFeature();
 
     bool canPlaceHangOn(Level* level, const BlockPos& pos);

@@ -223,14 +223,6 @@ VillagePieces::PieceWeight::PieceWeight(EPieceClass kind, int chance, int maximu
 {
 }
 
-VillagePieces::PieceWeight::PieceWeight()
-    : pieceClass(ePieceClass_StraightRoad),
-      weight(0),
-      placeCount(0),
-      maxPlaceCount(0)
-{
-}
-
 bool VillagePieces::PieceWeight::doPlace(int depth)
 {
     return maxPlaceCount == 0 || placeCount < maxPlaceCount;

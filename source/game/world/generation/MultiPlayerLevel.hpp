@@ -100,8 +100,7 @@ public:
     virtual Scoreboard* GetScoreboard();
     void DropChunksOutsideArea(int minX, int minZ, int maxX, int maxZ, bool force);
     void StopReloadChunk(int x, int z);
-    void MustQueueBlockEntityDataPackets();
-    bool shouldQueueBlockEntityDataPackets();
+    bool MustQueueBlockEntityDataPackets();
     void QueueBlockEntityDataPacket(const boost::shared_ptr<ClientboundBlockEntityDataPacket>& packet);
     void BlockUntilSafeToChangeSaveData(bool block);
     void tickAllConnections();

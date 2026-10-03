@@ -12,11 +12,6 @@
 #include "game/world/block/TypedBoxed.hpp"
 
 
-CoralHangFeature::CoralHangFeature()
-    : Feature(false)
-{
-}
-
 CoralHangFeature::~CoralHangFeature()
 {
 }

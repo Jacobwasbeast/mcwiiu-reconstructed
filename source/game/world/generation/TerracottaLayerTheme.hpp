@@ -11,16 +11,16 @@ class Direction;
 
 typedef unsigned char (*TerracottaLayerThemeFunction)(int, int);
 
-struct TerracottaLayerThemePattern
-{
-    int size;
-    const Direction* values[16];
-};
-
 class TerracottaLayerTheme : public LayerTheme
 {
 public:
-    TerracottaLayerTheme(const TerracottaLayerThemePattern& pattern, TerracottaLayerThemeFunction function);
+    struct Pattern
+    {
+        int size;
+        const Direction* values[16];
+    };
+
+    TerracottaLayerTheme(const Pattern& pattern, TerracottaLayerThemeFunction function);
 
     static unsigned int CONCENTRIC_RINGS(int x, int z);
     static unsigned int OFFSET_RINGS(int x, int z);

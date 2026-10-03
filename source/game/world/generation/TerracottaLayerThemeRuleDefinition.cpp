@@ -4,9 +4,9 @@
 
 TerracottaLayerThemeFunction getColourFunc(const std::wstring& function);
 
-TerracottaLayerThemePattern getPattern(const std::wstring& pattern)
+TerracottaLayerTheme::Pattern getPattern(const std::wstring& pattern)
 {
-    TerracottaLayerThemePattern result;
+    TerracottaLayerTheme::Pattern result;
     Random random;
     const Direction* directions[4] = {Direction::NORTH, Direction::SOUTH,
                                       Direction::EAST, Direction::WEST};
@@ -79,7 +79,7 @@ ConsoleGameRules::EGameRuleType TerracottaLayerThemeRuleDefinition::getActionTyp
 
 LayerTheme* TerracottaLayerThemeRuleDefinition::Generate() const
 {
-    TerracottaLayerThemePattern pattern = getPattern(mPattern);
+    TerracottaLayerTheme::Pattern pattern = getPattern(mPattern);
     TerracottaLayerThemeFunction function = getColourFunc(mColourFunction);
     return new TerracottaLayerTheme(pattern, function);
 }

@@ -12,7 +12,7 @@ class Random;
 class CoralFeature : public Feature
 {
 public:
-    CoralFeature();
+    CoralFeature() : Feature(false) {}
     virtual ~CoralFeature();
     const Direction* _randomDirectionExcept(Random&, const Direction*);
     const Direction* _randomDirectionExcept(Random&, const Direction*, const Direction*);

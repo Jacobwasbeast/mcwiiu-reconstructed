@@ -764,14 +764,9 @@ void MultiPlayerLevel::StopReloadChunk(int x, int z)
     mClientChunkCache->unqueueForReLoad(x, z);
 }
 
-void MultiPlayerLevel::MustQueueBlockEntityDataPackets()
+bool MultiPlayerLevel::MustQueueBlockEntityDataPackets()
 {
-    mClientChunkCache->mustQueueBlockEntityDataPackets();
-}
-
-bool MultiPlayerLevel::shouldQueueBlockEntityDataPackets()
-{
-    return mClientChunkCache != 0 && mClientChunkCache->mustQueueBlockEntityDataPackets();
+    return mClientChunkCache->mustQueueBlockEntityDataPackets();
 }
 
 void MultiPlayerLevel::QueueBlockEntityDataPacket(

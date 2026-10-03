@@ -404,7 +404,7 @@ public:
     boost::shared_ptr<PlayerEnderChestContainer> getEnderChestInventory();
     not_null_ptr<ItemInstance> getItemSlot(const EquipmentSlot* slot);
     void setItemSlot(const EquipmentSlot* slot, not_null_ptr<ItemInstance> item);
-    uint32_t addItem(not_null_ptr<ItemInstance> item);
+    uint32_t addItem(const not_null_ptr<ItemInstance>& item);
     NonNullList<not_null_ptr<ItemInstance> > getHandSlots();
     NonNullList<not_null_ptr<ItemInstance> > getArmorSlots();
     uint32_t setEntityOnShoulder(CompoundTag* tag);

@@ -1443,7 +1443,7 @@ unsigned int LocalPlayer::pickBlock(bool select)
         return 0;
 
     HitResult* hitResult = minecraft->mHitResult;
-    not_null_ptr<ItemInstance> pickedItem(new ItemInstance());
+    not_null_ptr<ItemInstance> pickedItem;
     boost::shared_ptr<BlockEntity> blockEntity;
 
     if (hitResult->mType == HitResult::BLOCK)
