@@ -1930,13 +1930,16 @@ void ServerPlayer::sendRemoveEntity(boost::shared_ptr<Entity> entity)
         mEntitiesToRemove.push_back(entity->getId());
 }
 
-void ServerPlayer::cancelRemoveEntity(boost::shared_ptr<Entity>* entity)
+void ServerPlayer::cancelRemoveEntity(boost::shared_ptr<Entity> entity)
 {
-    if (entity == NULL || !*entity)
-        return;
-    const int32_t id = (*entity)->getId();
     std::vector<int32_t>::iterator it = mEntitiesToRemove.begin();
-    for (; it != mEntitiesToRemove.end() && *it != id; ++it) {}
+    std::vector<int32_t>::iterator end = mEntitiesToRemove.end();
+    const int32_t id = entity->getId();
+    for (; it != end; ++it)
+    {
+        if (*it == id)
+            break;
+    }
     if (it != mEntitiesToRemove.end())
         mEntitiesToRemove.erase(it);
 }
