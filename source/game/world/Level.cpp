@@ -2911,7 +2911,7 @@ float Level::getMoonBrightness()
 
 float Level::getSunAngle(float partialTick)
 {
-    return getTimeOfDay(partialTick) * 6.28318530717958647692f;
+    return getTimeOfDay(partialTick) * 6.2831855f;
 }
 
 Vec3* Level::getCloudColor(float partialTick)

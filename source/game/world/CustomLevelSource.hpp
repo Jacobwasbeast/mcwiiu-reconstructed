@@ -39,13 +39,17 @@ public:
     bool isWater(const BlockPos& pos);
 
 private:
+    unsigned char mReservedBeforeFlag[56];
     bool mGenerateStructures;
+    unsigned char mReservedBeforeFeatures[31];
     StructureFeature* mStronghold;
     StructureFeature* mVillage;
     StructureFeature* mMineshaft;
     StructureFeature* mTemple;
+    unsigned char mReservedBeforeMonument[12];
     StructureFeature* mMonument;
     StructureFeature* mMansion;
+    unsigned char mReservedBeforeShipwreck[4];
     StructureFeature* mShipwreck;
     StructureFeature* mOceanRuin;
 };
