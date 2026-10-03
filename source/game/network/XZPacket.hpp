@@ -25,11 +25,8 @@ public:
     virtual int getEstimatedSize();
     virtual int getPacketId();
 
-    char getMode();
-    int getX();
-    int getZ();
+    static const int STRONGHOLD;
 
-private:
     char mMode;
     int mX;
     int mZ;

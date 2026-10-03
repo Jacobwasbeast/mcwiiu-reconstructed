@@ -30,12 +30,11 @@ public:
     double getX();
     double getY();
     double getZ();
-    double getPower();
+    float getPower();
     std::vector<BlockPos, std::allocator<BlockPos> >* getToBlow();
     double getKnockbackX();
     double getKnockbackY();
     double getKnockbackZ();
-    bool isKnockbackOnly();
 
     static boost::shared_ptr<Packet> create();
 
@@ -45,7 +44,10 @@ private:
     double z;
     float power;
     std::vector<BlockPos, std::allocator<BlockPos> > toBlow;
+public:
     bool knockbackOnly;
+
+private:
     float knockbackX;
     float knockbackY;
     float knockbackZ;

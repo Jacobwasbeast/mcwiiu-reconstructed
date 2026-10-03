@@ -34,7 +34,7 @@ bool MoveEntityPacketSmall::isOnGround() const { return mOnGround; }
 boost::shared_ptr<Packet> MoveEntityPacketSmall::create() { return boost::shared_ptr<Packet>(new MoveEntityPacketSmall()); }
 
 MoveEntityPacketSmall::Pos::Pos() : MoveEntityPacketSmall() {}
-MoveEntityPacketSmall::Pos::Pos(int entityId, signed char xa, signed char ya, signed char za, bool onGround) : MoveEntityPacketSmall(entityId) { mXa = xa; mYa = ya; mZa = za; mOnGround = onGround; }
+MoveEntityPacketSmall::Pos::Pos(int entityId, char xa, char ya, char za, bool onGround) : MoveEntityPacketSmall(entityId) { mXa = xa; mYa = ya; mZa = za; mOnGround = onGround; }
 MoveEntityPacketSmall::Pos::~Pos() {}
 int MoveEntityPacketSmall::Pos::getPacketId() { return 163; }
 void MoveEntityPacketSmall::Pos::read(DataInputStream* input)
@@ -59,8 +59,8 @@ int MoveEntityPacketSmall::Pos::getEstimatedSize() { return 4; }
 boost::shared_ptr<Packet> MoveEntityPacketSmall::Pos::create() { return boost::shared_ptr<Packet>(new Pos()); }
 
 MoveEntityPacketSmall::PosRot::PosRot() : MoveEntityPacketSmall() { mHasRot = 1; }
-MoveEntityPacketSmall::PosRot::PosRot(int entityId, signed char xa, signed char ya, signed char za,
-                                      signed char yRot, signed char xRot, bool onGround)
+MoveEntityPacketSmall::PosRot::PosRot(int entityId, char xa, char ya, char za,
+                                      char yRot, char xRot, bool onGround)
     : MoveEntityPacketSmall(entityId)
 {
     mXa = xa;
@@ -101,7 +101,7 @@ int MoveEntityPacketSmall::PosRot::getEstimatedSize() { return 5; }
 boost::shared_ptr<Packet> MoveEntityPacketSmall::PosRot::create() { return boost::shared_ptr<Packet>(new PosRot()); }
 
 MoveEntityPacketSmall::Rot::Rot() : MoveEntityPacketSmall() { mHasRot = 1; }
-MoveEntityPacketSmall::Rot::Rot(int entityId, signed char yRot, signed char xRot, bool onGround) : MoveEntityPacketSmall(entityId) { myRot = yRot; mOnGround = onGround; mxRot = xRot; mHasRot = 1; }
+MoveEntityPacketSmall::Rot::Rot(int entityId, char yRot, char xRot, bool onGround) : MoveEntityPacketSmall(entityId) { myRot = yRot; mOnGround = onGround; mxRot = xRot; mHasRot = 1; }
 MoveEntityPacketSmall::Rot::~Rot() {}
 int MoveEntityPacketSmall::Rot::getPacketId() { return 164; }
 void MoveEntityPacketSmall::Rot::read(DataInputStream* input)

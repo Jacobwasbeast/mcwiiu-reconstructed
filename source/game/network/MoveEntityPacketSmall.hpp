@@ -54,7 +54,7 @@ class MoveEntityPacketSmall::Pos : public MoveEntityPacketSmall
 {
 public:
     Pos();
-    Pos(int entityId, signed char xa, signed char ya, signed char za, bool onGround);
+    Pos(int entityId, char xa, char ya, char za, bool onGround);
     virtual ~Pos();
     virtual int getPacketId();
     virtual void read(DataInputStream* input);
@@ -66,7 +66,7 @@ class MoveEntityPacketSmall::PosRot : public MoveEntityPacketSmall
 {
 public:
     PosRot();
-    PosRot(int entityId, signed char xa, signed char ya, signed char za, signed char yRot, signed char xRot,
+    PosRot(int entityId, char xa, char ya, char za, char yRot, char xRot,
            bool onGround);
     virtual ~PosRot();
     virtual int getPacketId();
@@ -79,7 +79,7 @@ class MoveEntityPacketSmall::Rot : public MoveEntityPacketSmall
 {
 public:
     Rot();
-    Rot(int entityId, signed char yRot, signed char xRot, bool onGround);
+    Rot(int entityId, char yRot, char xRot, bool onGround);
     virtual ~Rot();
     virtual int getPacketId();
     virtual void read(DataInputStream* input);

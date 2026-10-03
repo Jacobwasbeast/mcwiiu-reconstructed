@@ -269,11 +269,6 @@ namespace
 
 namespace
 {
-    bool blockEntityTypeMatches(BlockEntity* entity, unsigned long long blockEntityType)
-    {
-        return entity != NULL && entity->GetType() == blockEntityType;
-    }
-
     void replaceFirst(std::wstring& value, const std::wstring& key, const std::wstring& replacement)
     {
         const std::wstring::size_type pos = value.find(key);
@@ -338,7 +333,7 @@ void ClientPacketListener::handleBlockEntityDataInternal(
 
     if (type == 0xc)
     {
-        if (blockEntityTypeMatches(blockEntity.get(), BlockEntityType::CAULDRON))
+        if (blockEntity->GetType() == BlockEntityType::CAULDRON)
         {
             boost::shared_ptr<CauldronBlockEntity> cauldron =
                 boost::static_pointer_cast<CauldronBlockEntity>(blockEntity);
@@ -349,7 +344,7 @@ void ClientPacketListener::handleBlockEntityDataInternal(
 
     if (type == 0xd)
     {
-        if (blockEntityTypeMatches(blockEntity.get(), BlockEntityType::CONDUIT))
+        if (blockEntity->GetType() == BlockEntityType::CONDUIT)
         {
             boost::shared_ptr<ConduitBlockEntity> conduit =
                 boost::static_pointer_cast<ConduitBlockEntity>(blockEntity);
@@ -364,34 +359,34 @@ void ClientPacketListener::handleBlockEntityDataInternal(
     case 0:
         break;
     case 1:
-        loadTag = blockEntityTypeMatches(blockEntity.get(), BlockEntityType::MOB_SPAWNER);
+        loadTag = blockEntity->GetType() == BlockEntityType::MOB_SPAWNER;
         break;
     case 2:
-        loadTag = blockEntityTypeMatches(blockEntity.get(), BlockEntityType::COMMAND);
+        loadTag = blockEntity->GetType() == BlockEntityType::COMMAND;
         break;
     case 3:
-        loadTag = blockEntityTypeMatches(blockEntity.get(), BlockEntityType::BEACON);
+        loadTag = blockEntity->GetType() == BlockEntityType::BEACON;
         break;
     case 4:
-        loadTag = blockEntityTypeMatches(blockEntity.get(), BlockEntityType::SKULL);
+        loadTag = blockEntity->GetType() == BlockEntityType::SKULL;
         break;
     case 5:
-        loadTag = blockEntityTypeMatches(blockEntity.get(), BlockEntityType::FLOWER_POT);
+        loadTag = blockEntity->GetType() == BlockEntityType::FLOWER_POT;
         break;
     case 6:
-        loadTag = blockEntityTypeMatches(blockEntity.get(), BlockEntityType::BANNER);
+        loadTag = blockEntity->GetType() == BlockEntityType::BANNER;
         break;
     case 8:
-        loadTag = blockEntityTypeMatches(blockEntity.get(), BlockEntityType::THE_END_GATEWAY_ENTITY);
+        loadTag = blockEntity->GetType() == BlockEntityType::THE_END_GATEWAY_ENTITY;
         break;
     case 9:
-        loadTag = blockEntityTypeMatches(blockEntity.get(), BlockEntityType::SIGN);
+        loadTag = blockEntity->GetType() == BlockEntityType::SIGN;
         break;
     case 10:
-        loadTag = blockEntityTypeMatches(blockEntity.get(), BlockEntityType::SHULKER_BOX);
+        loadTag = blockEntity->GetType() == BlockEntityType::SHULKER_BOX;
         break;
     case 11:
-        loadTag = blockEntityTypeMatches(blockEntity.get(), BlockEntityType::BED);
+        loadTag = blockEntity->GetType() == BlockEntityType::BED;
         break;
     default:
         break;
@@ -2956,22 +2951,22 @@ void ClientPacketListener::handleRespawn(boost::shared_ptr<ClientboundRespawnPac
 
 void ClientPacketListener::handleExplosion(boost::shared_ptr<ClientboundExplodePacket> packet)
 {
-    if (packet == 0 || m_minecraft == 0 || m_playerId < 0 || m_playerId >= 4)
-        return;
-    boost::shared_ptr<MultiplayerLocalPlayer>& player = m_minecraft->mLocalPlayers[m_playerId];
-    if (!packet->isKnockbackOnly() && m_level != 0 && player != 0)
+    if (!packet->knockbackOnly)
     {
-        std::vector<BlockPos>* toBlow = packet->getToBlow();
-        Explosion explosion(m_level, player, packet->getX(), packet->getY(), packet->getZ(),
-                            static_cast<float>(packet->getPower()), toBlow, 0.0f);
-        explosion.finalizeExplosion(true, toBlow);
+        PIXBeginNamedEvent(0.0f, "Handling explosion");
+        Explosion explosion(m_minecraft->mLevel, boost::shared_ptr<Entity>(), packet->getX(), packet->getY(),
+                            packet->getZ(), packet->getPower(), packet->getToBlow(), -1.0f);
+        PIXBeginNamedEvent(0.0f, "Finalizing");
+        MultiPlayerLevel* level = m_minecraft->mLevel;
+        level->mAnimateTickReady = false;
+        explosion.finalizeExplosion(true, packet->getToBlow());
+        level->mAnimateTickReady = true;
+        PIXEndNamedEvent();
+        PIXEndNamedEvent();
     }
-    if (player != 0)
-    {
-        player->mXd += packet->getKnockbackX();
-        player->mYd += packet->getKnockbackY();
-        player->mZd += packet->getKnockbackZ();
-    }
+    m_minecraft->mLocalPlayers[m_playerId]->mXd += packet->getKnockbackX();
+    m_minecraft->mLocalPlayers[m_playerId]->mYd += packet->getKnockbackY();
+    m_minecraft->mLocalPlayers[m_playerId]->mZd += packet->getKnockbackZ();
 }
 
 
@@ -3161,15 +3156,27 @@ void ClientPacketListener::handleOpenSignEditor(boost::shared_ptr<ClientboundOpe
 
 void ClientPacketListener::handleBlockEntityData(boost::shared_ptr<ClientboundBlockEntityDataPacket> packet)
 {
-    if (packet == 0 || m_minecraft == 0)
+    MultiPlayerLevel* level;
+    switch (packet->getDimension())
+    {
+    case -1:
+        level = m_minecraft->mLevels[1];
+        break;
+    case 0:
+        level = m_minecraft->mLevels[0];
+        break;
+    case 1:
+        level = m_minecraft->mLevels[2];
+        break;
+    default:
         return;
-    MultiPlayerLevel* level = m_minecraft->getLevel(packet->getDimension());
-    if (level == 0)
-        return;
-    if (level->shouldQueueBlockEntityDataPackets())
+    }
+    if (level != 0 && level->MustQueueBlockEntityDataPackets())
+    {
         level->QueueBlockEntityDataPacket(packet);
-    else
-        handleBlockEntityDataInternal(packet, level);
+        return;
+    }
+    handleBlockEntityDataInternal(packet, level);
 }
 
 
@@ -3815,15 +3822,12 @@ void ClientPacketListener::handleUpdateGameRuleProgressPacket(boost::shared_ptr<
 
 void ClientPacketListener::handleXZ(boost::shared_ptr<XZPacket> packet)
 {
-    if (packet == 0 || m_minecraft == 0 || m_minecraft->mLevel == 0)
-        return;
-    if (packet->getMode() != 6)
-        return;
-    LevelData* levelData = m_minecraft->mLevel->getLevelData();
-    if (levelData == 0)
-        return;
-    levelData->setXSpawn(packet->getX());
-    levelData->setZSpawn(packet->getZ());
+    if (packet->mMode == XZPacket::STRONGHOLD)
+    {
+        m_minecraft->mLevels[0]->getLevelData()->setXStronghold(packet->mX);
+        m_minecraft->mLevels[0]->getLevelData()->setZStronghold(packet->mZ);
+        m_minecraft->mLevels[0]->getLevelData()->setHasStronghold();
+    }
 }
 
 

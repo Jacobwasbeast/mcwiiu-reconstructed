@@ -156,6 +156,5 @@ public:
                                      boost::shared_ptr<ClientboundPreLoginPacket> pPreLoginPacket,
                                      int iTitleVersion, int& iCanPlayCount, int& iCannotPlayCount,
                                      int& iBlockedCount, int& iUnknownCount) = 0;
-    virtual ~CPlatformNetworkManager() {}
 };
 #endif

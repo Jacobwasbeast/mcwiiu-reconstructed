@@ -110,7 +110,7 @@ double ClientboundExplodePacket::getZ()
     return z;
 }
 
-double ClientboundExplodePacket::getPower()
+float ClientboundExplodePacket::getPower()
 {
     return power;
 }
@@ -133,11 +133,6 @@ double ClientboundExplodePacket::getKnockbackY()
 double ClientboundExplodePacket::getKnockbackZ()
 {
     return knockbackZ;
-}
-
-bool ClientboundExplodePacket::isKnockbackOnly()
-{
-    return knockbackOnly;
 }
 
 int ClientboundExplodePacket::getPacketId()

@@ -1122,14 +1122,6 @@ void ServerGamePacketListenerImpl::handlePlayerAbilities(boost::shared_ptr<Serve
     mPlayer->mAbilities.mFlying = packet->isFlying() &&
         (mPlayer->mAbilities.mMayfly || mPlayer->isAllowedToFly());
 }
-static void releaseStreamBuffer(ByteArrayInputStream& bytes)
-{
-    bytes.mBuffer.data = NULL;
-    bytes.mBuffer.length = 0;
-    bytes.mCount = 0;
-    bytes.mMark = 0;
-    bytes.mPosition = 0;
-}
 
 void ServerGamePacketListenerImpl::handleCustomPayload(boost::shared_ptr<ServerboundCustomPayloadPacket> packet)
 {
@@ -1140,7 +1132,11 @@ void ServerGamePacketListenerImpl::handleCustomPayload(boost::shared_ptr<Serverb
         DataInputStream input(&bytes);
         not_null_ptr<ItemInstance> book = input.readItem();
         input.close();
-        releaseStreamBuffer(bytes);
+        bytes.mBuffer.data = NULL;
+        bytes.mBuffer.length = 0;
+        bytes.mCount = 0;
+        bytes.mMark = 0;
+        bytes.mPosition = 0;
         if (book->isEmpty() || !WritableBookItem::makeSureTagIsValid(book->getTag()))
             return;
         not_null_ptr<ItemInstance> held = mPlayer->getMainHandItem();
@@ -1163,7 +1159,11 @@ void ServerGamePacketListenerImpl::handleCustomPayload(boost::shared_ptr<Serverb
         DataInputStream input(&bytes);
         not_null_ptr<ItemInstance> book = input.readItem();
         input.close();
-        releaseStreamBuffer(bytes);
+        bytes.mBuffer.data = NULL;
+        bytes.mBuffer.length = 0;
+        bytes.mCount = 0;
+        bytes.mMark = 0;
+        bytes.mPosition = 0;
         if (book->isEmpty() || !WrittenBookItem::makeSureTagIsValid(book->getTag()))
             return;
         not_null_ptr<ItemInstance> held = mPlayer->getMainHandItem();
@@ -1193,7 +1193,11 @@ void ServerGamePacketListenerImpl::handleCustomPayload(boost::shared_ptr<Serverb
         AbstractContainerMenu* menu = mPlayer->mContainerMenu;
         if (menu != NULL && dynamic_cast<MerchantMenu*>(menu) != NULL)
             static_cast<MerchantMenu*>(menu)->setSelectionHint(selection);
-        releaseStreamBuffer(bytes);
+        bytes.mBuffer.data = NULL;
+        bytes.mBuffer.length = 0;
+        bytes.mCount = 0;
+        bytes.mMark = 0;
+        bytes.mPosition = 0;
         return;
     }
 
@@ -1219,7 +1223,11 @@ void ServerGamePacketListenerImpl::handleCustomPayload(boost::shared_ptr<Serverb
             beacon->setContainerData(2, secondary);
             beacon->setChanged();
         }
-        releaseStreamBuffer(bytes);
+        bytes.mBuffer.data = NULL;
+        bytes.mBuffer.length = 0;
+        bytes.mCount = 0;
+        bytes.mMark = 0;
+        bytes.mPosition = 0;
         return;
     }
 
@@ -1241,7 +1249,11 @@ void ServerGamePacketListenerImpl::handleCustomPayload(boost::shared_ptr<Serverb
         not_null_ptr<ItemInstance> item = input.readItem();
         mPlayer->mInventory->setPickedItem(item);
         input.close();
-        releaseStreamBuffer(bytes);
+        bytes.mBuffer.data = NULL;
+        bytes.mBuffer.length = 0;
+        bytes.mCount = 0;
+        bytes.mMark = 0;
+        bytes.mPosition = 0;
     }
 }
 void ServerGamePacketListenerImpl::handleCraftItem(boost::shared_ptr<CraftItemPacket> packet)

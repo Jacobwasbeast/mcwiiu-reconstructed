@@ -4,6 +4,8 @@
 #include "game/core/DataOutputStream.hpp"
 #include "game/network/PacketListener.hpp"
 
+const int XZPacket::STRONGHOLD = 0;
+
 XZPacket::XZPacket()
     : mMode(0), mX(0), mZ(0)
 {
@@ -51,7 +53,3 @@ int XZPacket::getPacketId()
 {
     return 166;
 }
-
-char XZPacket::getMode() { return mMode; }
-int XZPacket::getX() { return mX; }
-int XZPacket::getZ() { return mZ; }

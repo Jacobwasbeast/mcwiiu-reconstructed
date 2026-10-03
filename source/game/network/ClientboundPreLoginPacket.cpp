@@ -1,8 +1,5 @@
 #include "game/network/ClientboundPreLoginPacket.hpp"
 
-#include <memory>
-#include <new>
-
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/DataInputStream.hpp"
 #include "game/core/DataOutputStream.hpp"
@@ -10,14 +7,6 @@
 #include "game/world/generation/PlayerUID.hpp"
 
 extern CMinecraftApp* g_pApp;
-
-namespace
-{
-    static void constructPlayerUID(PlayerUID* destination)
-    {
-        new (destination) PlayerUID(0);
-    }
-}
 
 ClientboundPreLoginPacket::ClientboundPreLoginPacket()
     : mPlayers(0), mPlayerCount(0), mGameMode(0), mSeed(0),
@@ -46,39 +35,20 @@ ClientboundPreLoginPacket::ClientboundPreLoginPacket(std::wstring name, PlayerUI
 ClientboundPreLoginPacket::~ClientboundPreLoginPacket()
 {
     if (mPlayers != 0)
-    {
-        std::allocator<PlayerUID> allocator;
-        unsigned int index;
-        for (index = 0; index < mPlayerCount; ++index)
-            allocator.destroy(mPlayers + index);
-        allocator.deallocate(mPlayers, mPlayerCount);
-    }
+        delete[] mPlayers;
 }
 
 void ClientboundPreLoginPacket::read(DataInputStream* input)
 {
     unsigned int index;
-    const unsigned int oldPlayerCount = mPlayerCount;
     mProtocolVersion = input->readShort();
     mName = Packet::readUtf(input, 32);
     mGameMode = input->readByte();
     mSeed = input->readInt();
     mPlayerCount = static_cast<unsigned int>(input->readByte());
-    if (mPlayers != 0)
-    {
-        std::allocator<PlayerUID> allocator;
-        unsigned int oldIndex;
-        for (oldIndex = 0; oldIndex < oldPlayerCount; ++oldIndex)
-            allocator.destroy(mPlayers + oldIndex);
-        allocator.deallocate(mPlayers, oldPlayerCount);
-    }
-    mPlayers = 0;
     if (mPlayerCount != 0)
     {
-        std::allocator<PlayerUID> allocator;
-        mPlayers = allocator.allocate(mPlayerCount);
-        for (index = 0; index < mPlayerCount; ++index)
-            constructPlayerUID(mPlayers + index);
+        mPlayers = new PlayerUID[mPlayerCount];
         for (index = 0; index < mPlayerCount; ++index)
             mPlayers[index] = input->readPlayerUID();
     }
