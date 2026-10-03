@@ -336,10 +336,6 @@ Biome::EBiomeBaseClass MesaBiome::getBaseClass()
     return eBiomeBaseClass_Mesa;
 }
 
-MesaBiome::MesaDecorator::MesaDecorator() : BiomeDecorator()
-{
-}
-
 MesaBiome::MesaDecorator::~MesaDecorator()
 {
 }
