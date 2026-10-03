@@ -11,17 +11,17 @@ static const char PROVIDER_PROPERTY_ENTRY[] = "PROVIDER_property";
 static const char OUT_OF_MEMORY_ERROR[] = "Out of memory.";
 static const unsigned int RIB_FUNCTION = 0;
 
-void outresfloat()
+extern "C" void outresfloat()
 {
     AIL_debug_log("!-Result = %f");
 }
 
-void outresint64(uint32_t low, uint32_t high)
+extern "C" void outresint64(uint32_t low, uint32_t high)
 {
     AIL_debug_log("!-Result = %llu", high, low, high);
 }
 
-void outresuint(uint32_t value)
+extern "C" void outresuint(uint32_t value)
 {
     AIL_debug_log("!-Result = %ld", value);
 }

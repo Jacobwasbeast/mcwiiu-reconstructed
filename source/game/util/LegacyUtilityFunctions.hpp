@@ -3,9 +3,9 @@
 
 #include <stdint.h>
 
-void outresfloat();
-void outresint64(uint32_t low, uint32_t high);
-void outresuint(uint32_t value);
+extern "C" void outresfloat();
+extern "C" void outresint64(uint32_t low, uint32_t high);
+extern "C" void outresuint(uint32_t value);
 int32_t ourtoupper(char value);
 int OnlyNum(const char* value);
 extern "C" unsigned int find_ASI_provider(const char* attributeName, const char* fileName);
