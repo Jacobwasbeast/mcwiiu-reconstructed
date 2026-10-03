@@ -9,6 +9,7 @@
 #include "game/core/MapDecoration.hpp"
 #include "game/core/Merchant.hpp"
 #include "game/entity/mob/AgableMob.hpp"
+#include "game/entity/mob/Npc.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/not_null_ptr.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
@@ -36,7 +37,7 @@ class Village;
 
 template <class T> class EntityDataAccessor;
 
-class Villager : public AgableMob, public Merchant
+class Villager : public AgableMob, public Npc, public Merchant
 {
 public:
     class PriceRange

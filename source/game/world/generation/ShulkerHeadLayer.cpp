@@ -61,8 +61,8 @@ void ShulkerHeadLayer::render(boost::shared_ptr<LivingEntity>& entity, float lim
     }
 
     ShulkerModel* model = static_cast<ShulkerModel*>(mRenderer->getModel());
-    model->mHead->mYRot = netHeadYaw * 0.01745329238474369f;
-    model->mHead->mXRot = headPitch * 0.01745329238474369f;
+    model->mHead->mYRot = netHeadYaw * 0.017453292f;
+    model->mHead->mXRot = headPitch * 0.017453292f;
     mRenderer->bindTexture(&SHULKER_LOCATION);
     model->mHead->render(scale, bUseDisplayList, false);
 

@@ -6,7 +6,7 @@
 class ConsoleGenerateStructureAction : public GameRuleDefinition
 {
 public:
-    virtual ~ConsoleGenerateStructureAction();
+    virtual ~ConsoleGenerateStructureAction() {}
 };
 
 #endif

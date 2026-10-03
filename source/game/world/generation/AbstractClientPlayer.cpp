@@ -13,9 +13,9 @@
 
 AbstractClientPlayer::AbstractClientPlayer(Level* level, const std::wstring& name)
     : Player(level, name),
-      mElytraRotX(15.0f * 0.01745329238474369f),
+      mElytraRotX(15.0f * 0.017453292f),
       mElytraRotY(0.0f),
-      mElytraRotZ(-15.0f * 0.01745329238474369f)
+      mElytraRotZ(-15.0f * 0.017453292f)
 {
     mField0x738 = new ItemCooldowns();
 }

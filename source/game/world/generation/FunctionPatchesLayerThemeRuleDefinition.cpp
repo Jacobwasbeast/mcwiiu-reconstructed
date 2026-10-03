@@ -11,6 +11,15 @@ std::wstring _toString(T value);
 template <typename T>
 T _fromString(const std::wstring& value);
 
+static const std::wstring sFunctionNames[5] =
+{
+    L"grass",
+    L"hellfire",
+    L"snowlayer",
+    L"tnt",
+    L"carpet"
+};
+
 static const FunctionPatchesLayerTheme::BlockFunction sFunctions[] =
 {
     FunctionPatchesLayerTheme::GRASS_PATCHES,
@@ -48,27 +57,27 @@ void FunctionPatchesLayerThemeRuleDefinition::addAttribute(const std::wstring& n
 {
     if (name.compare(L"func") == 0)
     {
-        if (value.compare(L"grass") == 0)
+        if (sFunctionNames[0].compare(value) == 0)
         {
             mFunction = 0;
         }
 
-        if (value.compare(L"hellfire") == 0)
+        if (sFunctionNames[1].compare(value) == 0)
         {
             mFunction = 1;
         }
 
-        if (value.compare(L"snowlayer") == 0)
+        if (sFunctionNames[2].compare(value) == 0)
         {
             mFunction = 2;
         }
 
-        if (value.compare(L"tnt") == 0)
+        if (sFunctionNames[3].compare(value) == 0)
         {
             mFunction = 3;
         }
 
-        if (value.compare(L"carpet") == 0)
+        if (sFunctionNames[4].compare(value) == 0)
         {
             mFunction = 4;
         }
@@ -85,5 +94,5 @@ void FunctionPatchesLayerThemeRuleDefinition::addAttribute(const std::wstring& n
 
 LayerTheme* FunctionPatchesLayerThemeRuleDefinition::Generate() const
 {
-    return new FunctionPatchesLayerTheme(0, mNoiseScale, sFunctions[mFunction]);
+    return new FunctionPatchesLayerTheme(5, mNoiseScale, sFunctions[mFunction]);
 }

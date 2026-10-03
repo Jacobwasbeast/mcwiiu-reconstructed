@@ -45,7 +45,7 @@ public:
     virtual std::wstring getFeatureName();
     virtual BlockPos* getNearestGeneratedFeature(Level* level, const BlockPos& pos,
                                                   bool skipExistingChunks);
-    static bool fjIsFeatureChunk(BiomeSource* biomeSource, long long seed, int sizeInChunks,
+    static char fjIsFeatureChunk(BiomeSource* biomeSource, long long seed, int sizeInChunks,
                                  int chunkX, int chunkZ);
     virtual StructureStart* createStructureStart(int chunkX, int chunkZ);
     virtual bool isFeatureChunk(int chunkX, int chunkZ, bool flatWorld);

@@ -1303,16 +1303,16 @@ float Player::getDestroySpeed(const BlockState* state)
         if (digSpeedAmplifier < conduitAmplifier + 1) digSpeedAmplifier = conduitAmplifier + 1;
     }
     if (digSpeedAmplifier > 0) {
-        speed *= static_cast<float>(digSpeedAmplifier + 1) * 0.20000000298023224f + 1.0f;
+        speed *= static_cast<float>(digSpeedAmplifier + 1) * 0.2f + 1.0f;
     }
 
     if (hasEffect(MobEffects::DIG_SLOWDOWN)) {
         int amplifier = getEffect(MobEffects::DIG_SLOWDOWN)->getAmplifier();
         float multiplier;
-        if (amplifier == 0) multiplier = 0.30000001192092896f;
-        else if (amplifier == 1) multiplier = 0.09000000357627869f;
-        else if (amplifier == 2) multiplier = 0.0027000000700354576f;
-        else multiplier = 0.0008100000559352338f;
+        if (amplifier == 0) multiplier = 0.3f;
+        else if (amplifier == 1) multiplier = 0.09f;
+        else if (amplifier == 2) multiplier = 0.0027f;
+        else multiplier = 0.00081000006f;
         speed *= multiplier;
     }
 
@@ -2435,20 +2435,20 @@ boost::shared_ptr<ItemEntity> Player::drop(not_null_ptr<ItemInstance> item, bool
     }
 
     if (!randomThrow) {
-        float yaw = mYRot * 0.01745329238474369f;
-        float pitch = mXRot * 0.01745329238474369f;
+        float yaw = mYRot * 0.017453292f;
+        float pitch = mXRot * 0.017453292f;
         dropped->mXd = -static_cast<double>(sinf(yaw) * cosf(pitch)) * 0.30000001192092896;
         dropped->mZd = static_cast<double>(cosf(yaw) * cosf(pitch)) * 0.30000001192092896;
         dropped->mYd = -static_cast<double>(sinf(pitch)) * 0.30000001192092896 + 0.10000000149011612;
 
-        float randAngle = mRandom->nextFloat() * 6.2831854820251465f;
-        float randRadius = 0.019999999552965164f * mRandom->nextFloat();
+        float randAngle = mRandom->nextFloat() * 6.2831855f;
+        float randRadius = 0.02f * mRandom->nextFloat();
         dropped->mXd = dropped->mXd + static_cast<double>(cosf(randAngle) * randRadius);
-        dropped->mZd = dropped->mZd + static_cast<double>((mRandom->nextFloat() - mRandom->nextFloat()) * 0.10000000149011612f);
+        dropped->mZd = dropped->mZd + static_cast<double>((mRandom->nextFloat() - mRandom->nextFloat()) * 0.1f);
         dropped->mYd = dropped->mYd + static_cast<double>(sinf(randAngle) * randRadius);
     } else {
         float speed = mRandom->nextFloat() * 0.5f;
-        float angle = mRandom->nextFloat() * 6.2831854820251465f;
+        float angle = mRandom->nextFloat() * 6.2831855f;
         dropped->mXd = -static_cast<double>(sinf(angle) * speed);
         dropped->mZd = static_cast<double>(cosf(angle) * speed);
         dropped->mYd = 0.20000000298023224;
@@ -2479,7 +2479,7 @@ not_null_ptr<ItemInstance> Player::reallyDrop(boost::shared_ptr<ItemEntity> item
     mLevel->addEntity(item);
     mLevel->playSound(boost::shared_ptr<Player>(), mX, mY, mZ,
         SoundEvents::ITEM_COLLECT, SoundSource::eSoundSource_Players,
-        0.30000001192092896f, 1.0f, 0.0f);
+        0.3f, 1.0f, 0.0f);
     return item->getItem();
 }
 

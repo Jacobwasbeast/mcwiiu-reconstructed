@@ -10,6 +10,12 @@ std::wstring toString(T value);
 template<typename T>
 T fromString(const std::wstring& text);
 
+static const std::wstring CURVE_NAMES[2] =
+{
+    L"Dome",
+    L"Bowl"
+};
+
 CurvedLayerFillRuleDefinition::CurvedLayerFillRuleDefinition()
     : mCurve(0)
     , mOffset(4)
@@ -24,15 +30,8 @@ CurvedLayerFillRuleDefinition::~CurvedLayerFillRuleDefinition()
 void CurvedLayerFillRuleDefinition::writeAttributes(GameRuleSaveInterface* saveInterface,
                                                      unsigned int extraAttributeCount)
 {
-    static const std::wstring curveNames[3] =
-    {
-        L"Dome",
-        L"Bowl",
-        L"Dome"
-    };
-
     GameRuleDefinition::writeAttributes(saveInterface, extraAttributeCount + 3);
-    saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_type, curveNames[mCurve + 1]);
+    saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_type, CURVE_NAMES[mCurve]);
     saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_dY, toString(mOffset));
     saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_thickness, toString(mThickness));
 }
@@ -42,12 +41,12 @@ void CurvedLayerFillRuleDefinition::addAttribute(const std::wstring& name, const
     if (name.compare(L"type") == 0)
     {
         mCurve = -1;
-        if (value.compare(L"Dome") != 0)
+        if (CURVE_NAMES[0].compare(value) != 0)
         {
             mCurve = 0;
         }
 
-        if (value.compare(L"Bowl") != 0)
+        if (CURVE_NAMES[1].compare(value) != 0)
         {
             mCurve = 1;
         }

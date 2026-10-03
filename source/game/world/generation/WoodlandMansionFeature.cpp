@@ -113,7 +113,7 @@ bool WoodlandMansionFeature::isFeatureChunk(int chunkX, int chunkZ, bool flatWor
     return result;
 }
 
-bool WoodlandMansionFeature::fjIsFeatureChunk(BiomeSource*, long long, int, int, int)
+char WoodlandMansionFeature::fjIsFeatureChunk(BiomeSource*, long long, int, int, int)
 {
     return false;
 }

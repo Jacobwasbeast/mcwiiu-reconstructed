@@ -145,35 +145,21 @@ InteractionResult::EInteractionResult MultiPlayerGameMode::_useItemOn(boost::sha
     if (!isSpectator())
     {
         const BlockState* state = level->getBlockState(pos);
-        bool tryBlock = true;
-        if (player->isSneaking())
-        {
-            not_null_ptr<ItemInstance> mainHandItem = player->getMainHandItem();
-            if (!mainHandItem->isEmpty())
-            {
-                tryBlock = false;
-            }
-            else
-            {
-                not_null_ptr<ItemInstance> offhandItem = player->getOffhandItem();
-                if (!offhandItem->isEmpty())
-                    tryBlock = false;
-            }
-        }
+        bool tryBlock = !(player->isSneaking()
+                          && (!player->getMainHandItem()->isEmpty() || !player->getOffhandItem()->isEmpty()));
 
         if (tryBlock && player->isAllowedToUse(state->getBlock()))
         {
             if (simulate)
             {
-                Block* block = state->getBlock();
-                if (block == Blocks::jukebox || block == Blocks::bed)
+                if (state->getBlock() == Blocks::jukebox || state->getBlock() == Blocks::bed)
                 {
-                    if (block->TestUse(level, pos, state, player))
+                    if (state->getBlock()->TestUse(level, pos, state, player))
                         return InteractionResult::eInteractionResult_Success;
                     if (state->getBlock() == Blocks::bed)
                         return InteractionResult::eInteractionResult_Fail;
                 }
-                else if (block->TestUse())
+                else if (state->getBlock()->TestUse())
                 {
                     return InteractionResult::eInteractionResult_Success;
                 }
@@ -235,9 +221,13 @@ InteractionResult::EInteractionResult MultiPlayerGameMode::_useItemOn(boost::sha
 
 bool MultiPlayerGameMode::GetTutorialsEnabled()
 {
+    bool enabled = true;
     if (Minecraft::InMiniGame(eMiniGameId_Any, true))
-        return GetMiniGame()->GetTutorialsEnabled();
-    return true;
+    {
+        if (!GetMiniGame()->GetTutorialsEnabled())
+            enabled = false;
+    }
+    return enabled;
 }
 InteractionResult::EInteractionResult MultiPlayerGameMode::useItemOn(
     boost::shared_ptr<Player> player, Level* level, const BlockPos& pos, const Direction* direction,
@@ -309,7 +299,7 @@ InteractionResult::EInteractionResult MultiPlayerGameMode::interactAt(
     Vec3* relative = Vec3::newTemp(hit->mLocation->x - entity->mX, hit->mLocation->y - entity->mY,
                                     hit->mLocation->z - entity->mZ);
     mConnection->send(boost::shared_ptr<Packet>(new ServerboundInteractPacket(entity, hand, relative)));
-    if (!isSpectator())
+    if (mGameType != GameType::SPECTATOR)
         return static_cast<InteractionResult::EInteractionResult>(entity->interactAt(player, relative, hand));
     return InteractionResult::eInteractionResult_Pass;
 }
@@ -533,15 +523,8 @@ void MultiPlayerGameMode::releaseUsingItem(boost::shared_ptr<Player> player)
 }
 bool MultiPlayerGameMode::isServerControlledInventory()
 {
-    bool result = false;
-    if (mMinecraft->mPlayer->isPassenger())
-    {
-        boost::shared_ptr<Entity> vehicle = mMinecraft->mPlayer->getVehicle();
-        unsigned long long type = vehicle->GetType();
-        if ((type & EntityType::ABSTRACT_HORSE) == EntityType::ABSTRACT_HORSE)
-            result = true;
-    }
-    return result;
+    return mMinecraft->mPlayer->isPassenger()
+        && (mMinecraft->mPlayer->getVehicle()->GetType() & EntityType::ABSTRACT_HORSE) == EntityType::ABSTRACT_HORSE;
 }
 boost::shared_ptr<MultiplayerLocalPlayer> MultiPlayerGameMode::GetLocalPlayer()
 {
@@ -783,7 +766,14 @@ bool MultiPlayerGameMode::_destroyBlock(const BlockPos& pos)
 
     return handled;
 }
-double MultiPlayerGameMode::getPickRange() { return isCreative() ? 5.0 : 4.5; }
+double MultiPlayerGameMode::getPickRange()
+{
+    float creativeRange = 5.0f;
+    float survivalRange = 4.5f;
+    if (isCreative())
+        return creativeRange;
+    return survivalRange;
+}
 boost::shared_ptr<ItemInstance> MultiPlayerGameMode::handleTakeAllInvenetory(
     int containerId, int button, int start, int count, boost::shared_ptr<Player> player)
 {
@@ -804,8 +794,6 @@ boost::shared_ptr<ItemInstance> MultiPlayerGameMode::handleInventoryMouseClick(
 }
 void MultiPlayerGameMode::handleInventoryButtonClick(int containerId, int button)
 {
-    if (!mConnection)
-        return;
     mConnection->send(boost::shared_ptr<Packet>(
         new ServerboundContainerButtonClickPacket(containerId, button)));
 }
@@ -893,24 +881,29 @@ std::vector<TeamInvite*>::iterator MultiPlayerGameMode::FindTeamInviteFrom(std::
 {
     std::vector<TeamInvite*>::iterator it = mTeamInvites.begin();
     for (; it != mTeamInvites.end(); ++it)
-        if (*it != 0 && (*it)->m_sFromPlayerName == playerName) break;
+        if ((*it)->m_sFromPlayerName == playerName) break;
     return it;
 }
 
-bool MultiPlayerGameMode::IsTeamInvite(std::wstring playerName) { return FindTeamInviteFrom(playerName) != mTeamInvites.end(); }
+bool MultiPlayerGameMode::IsTeamInvite(std::wstring playerName)
+{
+    if (GetPlayer()->getNetworkName() == playerName)
+        return false;
+    return FindTeamInviteFrom(playerName) != mTeamInvites.end();
+}
 void MultiPlayerGameMode::SendTeamInvite(std::wstring playerName)
 {
-    if (isSpectator() || !mConnection)
+    if (isSpectator())
         return;
-    GameModePacket::SendTeamInviteData data;
-    data.playerName = playerName;
-        mConnection->send(GameModePacket::Create(GameModePacket::eMessage_SendTeamInvite, data));
+    std::wstring name = playerName;
+    GameModePacket::PlayerData data(name);
+    GetLocalPlayer()->mPacketListener->send(GameModePacket::Create(GameModePacket::eMessage_SendTeamInvite, data));
 }
 std::vector<TeamInvite*>::iterator MultiPlayerGameMode::FindTeamInviteTo(std::wstring playerName)
 {
     std::vector<TeamInvite*>::iterator it = mTeamInvites.begin();
     for (; it != mTeamInvites.end(); ++it)
-        if (*it != 0 && (*it)->m_sToPlayerName == playerName) break;
+        if ((*it)->m_sToPlayerName == playerName) break;
     return it;
 }
 bool MultiPlayerGameMode::CanSendInvite(std::wstring playerName, PlayerUID playerUid)
@@ -919,14 +912,13 @@ bool MultiPlayerGameMode::CanSendInvite(std::wstring playerName, PlayerUID playe
         return false;
 
     Scoreboard* scoreboard = Minecraft::GetInstance()->mLevel->GetScoreboard();
-    boost::shared_ptr<Player> player = GetPlayer();
-    PlayerTeam* myTeam = scoreboard->getPlayersTeam(player->getSUID());
+    PlayerTeam* myTeam = scoreboard->getPlayersTeam(GetPlayer()->getXuid());
     PlayerTeam* theirTeam = scoreboard->getPlayersTeam(playerUid);
 
-    if (myTeam != 0 && theirTeam != 0 && myTeam->getPlayerCount() < 2)
+    if (myTeam != 0 && theirTeam != 0 && myTeam->getPlayerCount() <= 1)
     {
-        boost::shared_ptr<Player> self = GetPlayer();
-        if (!(self->getSUID() == playerUid) && myTeam != theirTeam)
+        bool sameUid = GetPlayer()->getXuid() == playerUid;
+        if (!sameUid && myTeam != theirTeam)
             return FindTeamInviteTo(playerName) == mTeamInvites.end();
     }
     return false;
@@ -937,23 +929,21 @@ bool MultiPlayerGameMode::CanLeaveTeam(PlayerUID uid)
         return false;
 
     Scoreboard* scoreboard = Minecraft::GetInstance()->mLevel->GetScoreboard();
-    PlayerTeam* ownTeam = scoreboard->getPlayersTeam(GetPlayer()->mXuid);
+    PlayerTeam* ownTeam = scoreboard->getPlayersTeam(GetPlayer()->getXuid());
     PlayerTeam* otherTeam = scoreboard->getPlayersTeam(uid);
     if (ownTeam == NULL || otherTeam == NULL)
         return false;
-    if (GetPlayer()->mXuid == uid)
+    if (GetPlayer()->getXuid() == uid)
         return false;
     return ownTeam == otherTeam;
 }
 void MultiPlayerGameMode::AcceptTeamInvite(std::wstring playerName)
 {
-    if (!mConnection)
-        return;
     std::vector<TeamInvite*>::iterator it = FindTeamInviteFrom(playerName);
-    if (it == mTeamInvites.end() || *it == NULL)
+    if (it == mTeamInvites.end())
         return;
     GameModePacket::TeamIDData data((*it)->m_uTeamID);
-    mConnection->send(GameModePacket::Create(GameModePacket::eMessage_AcceptTeamInvite, data));
+    GetLocalPlayer()->mPacketListener->send(GameModePacket::Create(GameModePacket::eMessage_AcceptTeamInvite, data));
 }
 
 void MultiPlayerGameMode::LeaveTeam()
@@ -962,7 +952,7 @@ void MultiPlayerGameMode::LeaveTeam()
         return;
 
     Scoreboard* scoreboard = Minecraft::GetInstance()->mLevel->GetScoreboard();
-    PlayerTeam* team = scoreboard->getPlayersTeam(GetPlayer()->mXuid);
+    PlayerTeam* team = scoreboard->getPlayersTeam(GetPlayer()->getXuid());
     if (team != 0)
     {
         GameModePacket::EmptyData data;

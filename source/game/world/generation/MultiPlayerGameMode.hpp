@@ -92,7 +92,7 @@ public:
     virtual const GameType* GetGameType();
 
     void setLocalMode(const GameType* gameType);
-    virtual InteractionResult::EInteractionResult _useItemOn(boost::shared_ptr<Player> player, Level* level,
+    InteractionResult::EInteractionResult _useItemOn(boost::shared_ptr<Player> player, Level* level,
                                                       const BlockPos& pos, const Direction* direction,
                                                       Vec3* hit, InteractionHand::EInteractionHand hand,
                                                       bool simulate, bool* used);

@@ -21,14 +21,22 @@ EntityRidingShoulderLayer::DataContainer::DataContainer(std::wstring name,
                                                         Model* model,
                                                         ResourceLocation texture,
                                                         unsigned long long entityType)
-    : mName(name), mRenderer(renderer), mModel(model), mTexture(texture), mEntityType(entityType)
 {
+    mName = name;
+    mRenderer = renderer;
+    mModel = model;
+    mTexture = texture;
+    mEntityType = entityType;
 }
 
 EntityRidingShoulderLayer::EntityRidingShoulderLayer(EntityRenderDispatcher* dispatcher)
-    : mDispatcher(dispatcher), mLeftModel(NULL), mLeftEntityType(0), mRightModel(NULL),
-      mRightEntityType(0), mParrotRenderer(new ParrotRenderer(dispatcher))
 {
+    mLeftModel = NULL;
+    mLeftEntityType = 0;
+    mRightModel = NULL;
+    mRightEntityType = 0;
+    mDispatcher = dispatcher;
+    mParrotRenderer = new ParrotRenderer(dispatcher);
 }
 
 EntityRidingShoulderLayer::~EntityRidingShoulderLayer()
@@ -36,18 +44,20 @@ EntityRidingShoulderLayer::~EntityRidingShoulderLayer()
     delete mParrotRenderer;
 }
 
-void EntityRidingShoulderLayer::renderShoulder(boost::shared_ptr<LivingEntity>& entity,
-                                               std::wstring name, CompoundTag* tag,
-                                               LivingEntityRenderer* renderer, Model* model,
-                                               ResourceLocation texture,
-                                               unsigned long long entityType,
-                                               float limbSwing, float limbSwingAmount,
-                                               float partialTicks, float ageInTicks,
-                                               float netHeadYaw, float headPitch, float scale,
-                                               bool left, bool useDisplayList)
+EntityRidingShoulderLayer::DataContainer EntityRidingShoulderLayer::renderShoulder(
+    boost::shared_ptr<LivingEntity>& entity, std::wstring name, CompoundTag* tag,
+    LivingEntityRenderer* renderer, Model* model, ResourceLocation texture,
+    unsigned long long entityType, float limbSwing, float limbSwingAmount, float partialTicks,
+    float ageInTicks, float netHeadYaw, float headPitch, float scale, bool left,
+    bool useDisplayList)
 {
-    if (name.empty() || name.compare(0, name.size(), tag->getString(std::wstring(L"UUID")).c_str(),
-                                     tag->getString(std::wstring(L"UUID")).size()) != 0)
+    bool changed = true;
+    if (!name.empty() && name.compare(tag->getString(std::wstring(L"UUID"))) == 0)
+    {
+        changed = false;
+    }
+
+    if (changed)
     {
         name = tag->getString(std::wstring(L"UUID"));
         entityType = EntityIO::byString(tag->getString(std::wstring(L"id")));
@@ -58,15 +68,30 @@ void EntityRidingShoulderLayer::renderShoulder(boost::shared_ptr<LivingEntity>& 
         }
     }
 
+    Model* shoulderModel = renderer->getModel();
     renderer->bindTexture(&texture);
     GlStateManager::pushMatrix();
-    GlStateManager::translatef(left ? 0.4f : -0.4f, entity->isSneaking() ? -1.3f : -1.5f, 0.0f);
-
-    renderer->renderModel(entity, limbSwing, limbSwingAmount, partialTicks, ageInTicks,
-                          netHeadYaw, headPitch);
-    renderer->renderLayers(entity, limbSwing, limbSwingAmount, partialTicks, ageInTicks,
-                           netHeadYaw, headPitch, scale, useDisplayList);
+    float offsetY = entity->isSneaking() ? -1.3f : -1.5f;
+    if (left)
+    {
+        GlStateManager::translatef(0.4f, offsetY, 0.0f);
+    }
+    else
+    {
+        GlStateManager::translatef(-0.4f, offsetY, 0.0f);
+    }
+    if (entityType == EntityType::PARROT)
+    {
+        ageInTicks = 0.0f;
+    }
+    shoulderModel->prepareMobModel(entity, limbSwing, limbSwingAmount, partialTicks);
+    shoulderModel->setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch,
+                             scale, entity, _SkinAdjustments());
+    boost::shared_ptr<Entity> shoulderEntity = entity;
+    shoulderModel->render(shoulderEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch,
+                          scale, useDisplayList);
     GlStateManager::popMatrix();
+    return DataContainer(name, renderer, shoulderModel, texture, entityType);
 }
 
 void EntityRidingShoulderLayer::render(boost::shared_ptr<LivingEntity>& entity,
@@ -87,17 +112,30 @@ void EntityRidingShoulderLayer::render(boost::shared_ptr<LivingEntity>& entity,
     CompoundTag* leftTag = player->getShoulderEntityLeft();
     if (!leftTag->isEmpty())
     {
-        renderShoulder(entity, mLeftName, leftTag, mLeftRenderer, mLeftModel, mLeftTexture,
-                       mLeftEntityType, limbSwing, limbSwingAmount, partialTicks, ageInTicks,
-                       netHeadYaw, headPitch, scale, true, useDisplayList);
+        DataContainer left = renderShoulder(entity, mLeftName, leftTag, mLeftRenderer, mLeftModel,
+                                            mLeftTexture, mLeftEntityType, limbSwing,
+                                            limbSwingAmount, partialTicks, ageInTicks,
+                                            netHeadYaw, headPitch, scale, true, useDisplayList);
+        mLeftName = left.mName;
+        mLeftRenderer = left.mRenderer;
+        mLeftTexture = left.mTexture;
+        mLeftEntityType = left.mEntityType;
+        mLeftModel = left.mModel;
     }
 
     CompoundTag* rightTag = player->getShoulderEntityRight();
     if (!rightTag->isEmpty())
     {
-        renderShoulder(entity, mRightName, rightTag, mRightRenderer, mRightModel, mRightTexture,
-                       mRightEntityType, limbSwing, limbSwingAmount, partialTicks, ageInTicks,
-                       netHeadYaw, headPitch, scale, false, useDisplayList);
+        DataContainer right = renderShoulder(entity, mRightName, rightTag, mRightRenderer,
+                                             mRightModel, mRightTexture, mRightEntityType,
+                                             limbSwing, limbSwingAmount, partialTicks,
+                                             ageInTicks, netHeadYaw, headPitch, scale, false,
+                                             useDisplayList);
+        mRightName = right.mName;
+        mRightRenderer = right.mRenderer;
+        mRightTexture = right.mTexture;
+        mRightEntityType = right.mEntityType;
+        mRightModel = right.mModel;
     }
 
     GlStateManager::disableRescaleNormal();

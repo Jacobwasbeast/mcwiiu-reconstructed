@@ -694,7 +694,7 @@ void LocalPlayer::aiStep()
             confusionIsLong = confusion->getDuration() > 60;
         }
         if (confusionIsLong)
-            mPortalEffectIntensity = std::min(mPortalEffectIntensity + 0.0066666668f, 1.0f);
+            mPortalEffectIntensity = std::min(mPortalEffectIntensity + 0.006666667f, 1.0f);
         else
             mPortalEffectIntensity = std::max(mPortalEffectIntensity - 0.05f, 0.0f);
     }
@@ -914,13 +914,13 @@ void LocalPlayer::aiStep()
         const float yawQuadrant = std::floor(mYRot / 90.0f + 0.5f);
         if ((mFlyButtons[0] & 0x800) != 0)
         {
-            const float radians = yawQuadrant * 90.0f * 3.1415927410125732f / 180.0f;
+            const float radians = yawQuadrant * 90.0f * 3.1415927f / 180.0f;
             mXd = -0.15 * std::cos(radians);
             mZd = -0.15 * std::sin(radians);
         }
         else if ((mFlyButtons[0] & 0x400) != 0)
         {
-            const float radians = yawQuadrant * 90.0f * 3.1415927410125732f / 180.0f;
+            const float radians = yawQuadrant * 90.0f * 3.1415927f / 180.0f;
             mXd = 0.15 * std::cos(radians);
             mZd = 0.15 * std::sin(radians);
         }
@@ -1065,7 +1065,7 @@ void LocalPlayer::aiStep()
             const double sign = (0.0 < cross) - (cross < 0.0);
             mFallFlyingAlignment = static_cast<float>(aligned);
             const float signedAngle = static_cast<float>(sign * std::acos(cosine));
-            mFallFlyYaw = signedAngle * 180.0f / 3.141592741f;
+            mFallFlyYaw = signedAngle * 180.0f / 3.1415927f;
         }
         else
         {

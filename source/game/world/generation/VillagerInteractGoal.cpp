@@ -88,8 +88,8 @@ void VillagerInteractGoal::tick()
             mVillager->mZ,
             itemToThrow));
 
-        const float pitch = mVillager->mXRot * 0.01745329238474369f;
-        const float yaw = mVillager->mYHeadRot * 0.01745329238474369f;
+        const float pitch = mVillager->mXRot * 0.017453292f;
+        const float yaw = mVillager->mYHeadRot * 0.017453292f;
         entity->mXd = -Mth::sin(yaw) * Mth::cos(pitch) * 0.3f;
         entity->mYd = -Mth::sin(pitch) * 0.3f + 0.1f;
         entity->mZd = Mth::cos(yaw) * Mth::cos(pitch) * 0.3f;

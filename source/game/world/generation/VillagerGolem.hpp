@@ -43,7 +43,7 @@ public:
     virtual void readAdditionalSaveData(CompoundTag* tag);
     virtual bool doHurtTarget(boost::shared_ptr<Entity> entity);
     virtual void handleEntityEvent(unsigned char event, int data);
-    boost::shared_ptr<Village> getVillage();
+    boost::shared_ptr<Village> getVillage() { return mVillage.lock(); }
     unsigned int getAttackAnimationTick();
     void offerFlower(bool offer);
     virtual const SoundEvent* getHurtSound(const DamageSource* source);

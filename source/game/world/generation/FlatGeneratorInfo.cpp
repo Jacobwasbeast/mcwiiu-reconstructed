@@ -228,21 +228,21 @@ void FlatGeneratorInfo::remLayer(int index)
 
 void FlatGeneratorInfo::getLayers(int* ids, int* data) const
 {
-    for (int height = 0; height < 256; height += 4)
+    for (int height = 0; height < 256; height += 4, ids += 4, data += 4)
     {
-        for (int offset = 0; offset < 4 && height + offset < 256; ++offset)
+        for (int offset = 0; offset < 4; ++offset)
         {
             int index = getLayerIndexAtHeight(height + offset);
             if (index < 0)
             {
-                ids[height + offset] = 0;
-                data[height + offset] = 0;
+                data[offset] = 0;
+                ids[offset] = 0;
             }
             else
             {
                 FlatLayerInfo layer = getLayer(index);
-                ids[height + offset] = layer.getId();
-                data[height + offset] = layer.getData();
+                ids[offset] = Block::getId(layer.getBlock());
+                data[offset] = layer.getData();
             }
         }
     }
@@ -331,16 +331,34 @@ std::wstring FlatGeneratorInfo::generateDescription()
 
 void FlatGeneratorInfo::reduceLayers()
 {
-    for (int i = 1; i < numLayers();)
+    std::vector<FlatLayerInfo>& layers = core()->layers;
+    if (layers.size() > 1)
     {
-        if (core()->layers[i - 1].getId() == core()->layers[i].getId() && core()->layers[i - 1].getData() == core()->layers[i].getData())
+        std::vector<FlatLayerInfo>::iterator previous = layers.begin() + 1;
+        std::vector<FlatLayerInfo>::iterator current = layers.begin() + 2;
+        if (current != layers.end())
         {
-            core()->layers[i - 1].setHeight(core()->layers[i - 1].getHeight() + core()->layers[i].getHeight());
-            core()->layers.erase(core()->layers.begin() + i);
+            while (current != layers.end())
+            {
+                if (previous->getId() == current->getId() && previous->getData() == current->getData())
+                {
+                    previous->setHeight(previous->getHeight() + current->getHeight());
+                    current = layers.erase(current);
+                }
+                else
+                {
+                    previous = current;
+                    ++current;
+                }
+            }
+            core();
         }
-        else
-            ++i;
     }
-    while (numLayers() > 1 && core()->layers.back().getId() == 0) core()->layers.pop_back();
     core()->updateLayers();
+    for (int index = (int)layers.size() - 1; index > 0; --index)
+    {
+        if (getLayer(index).getId() != 0)
+            break;
+        remLayer(index);
+    }
 }

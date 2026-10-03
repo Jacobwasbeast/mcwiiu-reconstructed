@@ -45,7 +45,7 @@ public:
     static void staticCtor();
     virtual std::wstring getFeatureName();
     virtual bool isFeatureChunk(int chunkX, int chunkZ, bool flatWorld);
-    static bool fjIsFeatureChunk(BiomeSource* biomeSource, long long seed, int sizeInChunks,
+    static char fjIsFeatureChunk(BiomeSource* biomeSource, long long seed, int sizeInChunks,
                                  int chunkX, int chunkZ);
     virtual BlockPos* getNearestGeneratedFeature(Level* level, const BlockPos& pos,
                                                   bool skipExistingChunks);

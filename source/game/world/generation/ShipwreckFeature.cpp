@@ -2,6 +2,7 @@
 
 #include <vector>
 
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/Direction.hpp"
 #include "game/core/ShipwreckPiece.hpp"
@@ -25,7 +26,7 @@ std::vector<Biome*>* ShipwreckFeature::GetSpawnBiomes()
 {
     if (gShipwreckSpawnBiomes == NULL)
     {
-        gShipwreckSpawnBiomes = new std::vector<Biome*>();
+        gShipwreckSpawnBiomes = new std::vector<Biome*>;
         gShipwreckSpawnBiomes->reserve(12);
         gShipwreckSpawnBiomes->push_back(Biome::BEACH);
         gShipwreckSpawnBiomes->push_back(Biome::COLD_BEACH);
@@ -47,7 +48,7 @@ std::vector<Biome*>* ShipwreckFeature::GetAllowedBiomes()
 {
     if (gShipwreckAllowedBiomes == NULL)
     {
-        gShipwreckAllowedBiomes = new std::vector<Biome*>();
+        gShipwreckAllowedBiomes = new std::vector<Biome*>;
         gShipwreckAllowedBiomes->reserve(12);
         gShipwreckAllowedBiomes->push_back(Biome::BEACH);
         gShipwreckAllowedBiomes->push_back(Biome::COLD_BEACH);
@@ -89,9 +90,15 @@ ShipwreckFeature::ShipwreckFeature(GenericOverworldLevelSource* source,
     : StructureFeature(), mSource(source), mOceanMonument(monument)
 {
     FlatGeneratorInfo info(config);
-    mSeparation = info.getShipwreckSeparation() < 5 ? 5 : info.getShipwreckSeparation();
-    mSpacing = info.getShipwreckSpacing() > mSeparation + 1
-                   ? info.getShipwreckSpacing() : mSeparation + 1;
+    int separation = info.getShipwreckSeparation();
+    if (separation < 5)
+        separation = 5;
+    mSeparation = separation;
+    int spacing = info.getShipwreckSpacing();
+    int minimumSpacing = separation + 1;
+    if (minimumSpacing < spacing)
+        minimumSpacing = spacing;
+    mSpacing = minimumSpacing;
     mFeatureChunk = FjIsFeatureChunk(GetFJBiomeRequirements(), 20, mSpacing, mSeparation);
     mReducedFeatureChunk = FjIsFeatureChunk::CreateReduced(mFeatureChunk);
 }
@@ -109,7 +116,7 @@ BlockPos* ShipwreckFeature::getNearestGeneratedFeature(Level* sourceLevel, const
         sourceLevel, this, pos, 10, 5, 0xdb1471, true, 100, skipExistingChunks);
 }
 
-bool ShipwreckFeature::fjIsFeatureChunk(BiomeSource*, long long, int, int, int)
+char ShipwreckFeature::fjIsFeatureChunk(BiomeSource*, long long, int, int, int)
 {
     return false;
 }
@@ -127,19 +134,20 @@ bool ShipwreckFeature::isFeatureChunk(int chunkX, int chunkZ, bool flatWorld)
     FjIsFeatureChunk* featureChunk = FjIsFeatureChunk::UseReducedSpacing(sizeInChunks, flatWorld)
                                          ? &mReducedFeatureChunk : &mFeatureChunk;
     ChunkPos centerChunk = featureChunk->getCenterChunk(chunkX, chunkZ);
-    Random& chunkRandom = *level->getRandomFor(centerChunk.x, centerChunk.z, 0xdb1471);
-    bool result = featureChunk->isFeatureChunk(chunkRandom, level->getBiomeSource(),
-                                               sizeInChunks, chunkX, chunkZ);
+    bool result = featureChunk->isFeatureChunk(
+        *level->getRandomFor(centerChunk.x, centerChunk.z, 0xdb1471), level->getBiomeSource(),
+        sizeInChunks, chunkX, chunkZ);
     result = canPlaceFeatureInChunk(result, eFeatureType_Shipwreck, chunkX, chunkZ);
     if (result && mOceanMonument != NULL)
     {
-        for (int x = chunkX - 5; x < chunkX + 5; ++x)
-            for (int z = chunkZ - 5; z < chunkZ + 5; ++z)
+        ChunkPos chunk(chunkX, chunkZ);
+        for (int x = chunk.x - 5; x < chunk.x + 5; ++x)
+            for (int z = chunk.z - 5; z < chunk.z + 5; ++z)
                 if (mOceanMonument->isFeatureChunk(x, z, flatWorld))
                     return false;
     }
     if (result)
-        g_pApp->AddTerrainFeaturePosition((_eTerrainFeatureType)11, chunkX, chunkZ);
+        gApp.AddTerrainFeaturePosition((_eTerrainFeatureType)11, chunkX, chunkZ);
     return result;
 }
 
@@ -147,7 +155,7 @@ void ShipwreckFeature::ShipwreckStart::create(Level* level, GenericOverworldLeve
                                                 Random& random, int chunkX, int chunkZ)
 {
     const Direction* direction = Direction::SOUTH;
-    LevelGenerationOptions* options = g_pApp->getLevelGenerationOptions();
+    LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
     if (options != NULL)
     {
         const Direction* featureDirection = NULL;
@@ -168,7 +176,7 @@ ShipwreckFeature::ShipwreckStart::ShipwreckStart(Level* level, GenericOverworldL
 }
 
 ShipwreckFeature::ShipwreckStart::ShipwreckStart()
-    : StructureStart()
+    : StructureStart(0, 0)
 {
 }
 

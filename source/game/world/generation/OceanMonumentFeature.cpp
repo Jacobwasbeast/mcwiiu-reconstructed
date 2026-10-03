@@ -103,7 +103,7 @@ bool OceanMonumentFeature::isFeatureChunk(int chunkX, int chunkZ, bool flatWorld
     return result;
 }
 
-bool OceanMonumentFeature::fjIsFeatureChunk(BiomeSource*, long long, int, int, int)
+char OceanMonumentFeature::fjIsFeatureChunk(BiomeSource*, long long, int, int, int)
 {
     return false;
 }

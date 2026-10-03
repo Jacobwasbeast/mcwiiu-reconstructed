@@ -42,12 +42,12 @@ public:
     virtual bool colorsOnDamage();
     virtual void setupForTexturePack(TexturePack* texturePack);
 
-    void renderShoulder(boost::shared_ptr<LivingEntity>& entity, std::wstring name,
-                        CompoundTag* tag, LivingEntityRenderer* renderer, Model* model,
-                        ResourceLocation texture, unsigned long long entityType,
-                        float limbSwing, float limbSwingAmount, float partialTicks,
-                        float ageInTicks, float netHeadYaw, float headPitch, float scale,
-                        bool left, bool useDisplayList);
+    DataContainer renderShoulder(boost::shared_ptr<LivingEntity>& entity, std::wstring name,
+                                 CompoundTag* tag, LivingEntityRenderer* renderer, Model* model,
+                                 ResourceLocation texture, unsigned long long entityType,
+                                 float limbSwing, float limbSwingAmount, float partialTicks,
+                                 float ageInTicks, float netHeadYaw, float headPitch,
+                                 float scale, bool left, bool useDisplayList);
 
 private:
     EntityRenderDispatcher* mDispatcher;

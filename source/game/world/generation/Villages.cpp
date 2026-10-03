@@ -12,14 +12,20 @@
 #include "game/world/block/Material.hpp"
 #include "game/world/generation/Village.hpp"
 
+static const std::wstring VILLAGES_FILE_ID = L"villages";
+
 Villages::Villages(const std::wstring& id)
-    : SavedData(id), mLevel(NULL), mTick(0)
+    : SavedData(id)
 {
+    mLevel = NULL;
+    mTick = 0;
 }
 
 Villages::Villages(Level* level)
-    : SavedData(L"villages"), mLevel(level), mTick(0)
+    : SavedData(VILLAGES_FILE_ID)
 {
+    mLevel = level;
+    mTick = 0;
 }
 
 Villages::~Villages()
@@ -29,9 +35,11 @@ Villages::~Villages()
 void Villages::setLevel(Level* level)
 {
     mLevel = level;
-    std::vector<boost::shared_ptr<Village> >::iterator it;
-    for (it = mVillages.begin(); it != mVillages.end(); ++it)
-        (*it)->setLevel(level);
+    for (std::vector<boost::shared_ptr<Village> >::iterator it = mVillages.begin(); it != mVillages.end(); ++it)
+    {
+        boost::shared_ptr<Village> village = *it;
+        village->setLevel(level);
+    }
 }
 
 bool Villages::hasQuery(const BlockPos& pos)
@@ -45,7 +53,7 @@ bool Villages::hasQuery(const BlockPos& pos)
 
 void Villages::queryUpdateAround(const BlockPos& pos)
 {
-    if (mToUpdate.size() < 65 && !hasQuery(pos))
+    if (mToUpdate.size() <= 64 && !hasQuery(pos))
         mToUpdate.push_back(pos);
 }
 
@@ -67,7 +75,9 @@ void Villages::removeVillages()
 bool Villages::isDoor(const BlockPos& pos)
 {
     const BlockState* state = mLevel->getBlockState(pos);
-    return DoorBlock::isDoor(state->getBlock()) && state->getMaterial() == Material::WOOD;
+    if (DoorBlock::isDoor(state->getBlock()))
+        return state->getMaterial() == Material::WOOD;
+    return false;
 }
 
 boost::shared_ptr<DoorInfo> Villages::getDoorInfo(const BlockPos& pos)
@@ -95,9 +105,15 @@ int Villages::skyVisibleBlockCount(const BlockPos& pos, const Direction* directi
 {
     int visible = 0;
     int i;
-    for (i = 1; i <= 4 && visible < count; ++i)
+    for (i = 1; i <= 4; ++i)
+    {
         if (mLevel->canSeeSky(pos.relative(direction, i)))
+        {
             ++visible;
+            if (visible >= count)
+                break;
+        }
+    }
     return visible;
 }
 
@@ -107,13 +123,10 @@ void Villages::createDoorInfo(const BlockPos& pos)
     const Direction* opposite = facing->getOpposite();
     int front = skyVisibleBlockCount(pos, facing, 5);
     int back = skyVisibleBlockCount(pos, opposite, front + 1);
-    boost::shared_ptr<DoorInfo> info;
-    if (back < front)
-        info.reset(new DoorInfo(pos, opposite, mTick));
-    else if (back > front)
-        info.reset(new DoorInfo(pos, facing, mTick));
-    if (info)
-        mDoorInfos.push_back(info);
+    if (back > front)
+        mDoorInfos.push_back(boost::shared_ptr<DoorInfo>(new DoorInfo(pos, facing, mTick)));
+    else if (back < front)
+        mDoorInfos.push_back(boost::shared_ptr<DoorInfo>(new DoorInfo(pos, opposite, mTick)));
 }
 
 void Villages::addDoorInfos(const BlockPos& pos)
@@ -194,9 +207,11 @@ void Villages::cluster()
 void Villages::tick()
 {
     ++mTick;
-    std::vector<boost::shared_ptr<Village> >::iterator it;
-    for (it = mVillages.begin(); it != mVillages.end(); ++it)
-        (*it)->tick(mTick);
+    for (std::vector<boost::shared_ptr<Village> >::iterator it = mVillages.begin(); it != mVillages.end(); ++it)
+    {
+        boost::shared_ptr<Village> village = *it;
+        village->tick(mTick);
+    }
     removeVillages();
     processNextQuery();
     cluster();
@@ -239,5 +254,5 @@ CompoundTag* Villages::save(CompoundTag* tag)
 
 std::wstring Villages::getFileId(Dimension* dimension)
 {
-    return std::wstring(L"villages") + dimension->getType()->getFileSuffix();
+    return VILLAGES_FILE_ID + dimension->getType()->getFileSuffix();
 }

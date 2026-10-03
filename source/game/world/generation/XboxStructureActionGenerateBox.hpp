@@ -3,14 +3,14 @@
 
 #include <stdint.h>
 
-#include "game/minigame/GameRuleDefinition.hpp"
+#include "game/world/generation/ConsoleGenerateStructureAction.hpp"
 
 class Block;
 class BoundingBox;
 class Level;
 class StructurePiece;
 
-class XboxStructureActionGenerateBox : public GameRuleDefinition
+class XboxStructureActionGenerateBox : public ConsoleGenerateStructureAction
 {
 public:
     XboxStructureActionGenerateBox();

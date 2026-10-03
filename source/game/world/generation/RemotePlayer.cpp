@@ -49,7 +49,7 @@ void RemotePlayer::tick()
     if (targetSpeed > 1.0f)
         targetSpeed = 1.0f;
     mAnimationSpeed = mAnimationSpeed
-        + (targetSpeed - mAnimationSpeed) * 0.4000000059604645f;
+        + (targetSpeed - mAnimationSpeed) * 0.4f;
     mAnimationPosition = mAnimationPosition + mAnimationSpeed;
 }
 

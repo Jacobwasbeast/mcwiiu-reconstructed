@@ -57,7 +57,7 @@ public:
     virtual bool isFeatureChunk(int chunkX, int chunkZ, bool flatWorld);
     virtual StructureStart* createStructureStart(int chunkX, int chunkZ);
 
-    static bool fjIsFeatureChunk(BiomeSource* biomeSource, long long seed, int sizeInChunks,
+    static char fjIsFeatureChunk(BiomeSource* biomeSource, long long seed, int sizeInChunks,
                                  int chunkX, int chunkZ);
     std::vector<Biome::MobSpawnerData*>* getEnemies();
 
