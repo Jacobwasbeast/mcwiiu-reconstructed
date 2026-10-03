@@ -3,12 +3,13 @@
 #include "game/core/GameModeOptions.hpp"
 #include "game/minigame/MiniGameDef.hpp"
 #include "game/world/generation/PlayerUID.hpp"
+#include "platform/wiiu/CProfile.hpp"
 
-PlayerUID getPlayerUID(int playerIndex, bool includeOffline);
+extern CProfile* gProfile;
 
 MiniGameOptionCache gMiniGameOptionCache;
 
-unsigned int MiniGameOptionCacheKeyHasher::operator()(const std::pair<PlayerUID, EMiniGameId>& key) const
+unsigned int MiniGameOptionCache::KeyHasher::operator()(const std::pair<PlayerUID, EMiniGameId>& key) const
 {
     return hash_value(key.first) ^ static_cast<unsigned int>(key.second);
 }
@@ -23,16 +24,18 @@ MiniGameOptionCache::~MiniGameOptionCache()
 
 void MiniGameOptionCache::updateCachedOptions(int playerIndex, EMiniGameId miniGameId, const MiniGamePlayerSettings& options)
 {
-    PlayerUID playerUid = getPlayerUID(playerIndex, true);
-    (*this)[std::make_pair(playerUid, miniGameId)] = options;
+    PlayerUID playerUid(0);
+    gProfile->GetXUID(playerIndex, &playerUid, true);
+    mOptions[std::make_pair(playerUid, miniGameId)] = options;
 }
 
 MiniGamePlayerSettings& MiniGameOptionCache::getPreviousOptions(int playerIndex, EMiniGameId miniGameId)
 {
-    PlayerUID playerUid = getPlayerUID(playerIndex, true);
+    PlayerUID playerUid(0);
+    gProfile->GetXUID(playerIndex, &playerUid, true);
     std::pair<PlayerUID, EMiniGameId> key(playerUid, miniGameId);
-    iterator it = find(key);
-    if (it == end())
+    OptionMap::iterator it = mOptions.find(key);
+    if (it == mOptions.end())
     {
         MiniGameDef* miniGame = MiniGameDef::GetCustomGameModeById(miniGameId, true);
         MiniGamePlayerSettings options = miniGame->GetDefaultPlayerSettings();
@@ -40,8 +43,8 @@ MiniGamePlayerSettings& MiniGameOptionCache::getPreviousOptions(int playerIndex,
         {
             options.mHostOptions.Set(eCustomGameModeHostOption_SpectateMode, 0);
         }
-        (*this)[key] = options;
-        it = find(key);
+        mOptions[key] = options;
+        it = mOptions.find(key);
     }
     return it->second;
 }

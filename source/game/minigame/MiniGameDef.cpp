@@ -261,26 +261,6 @@ MiniGameDef::BlockData::BlockData()
 {
 }
 
-MiniGameDef::ChestItemsInfo::ChestItemsInfo(const ChestItemsInfo& other)
-    : mItem(other.mItem), mMinStackCount(other.mMinStackCount), mMaxStackCount(other.mMaxStackCount)
-    , mMinCount(other.mMinCount), mMaxCount(other.mMaxCount), mPlayersForMin(other.mPlayersForMin)
-    , mWeight(other.mWeight), mKpScore(other.mKpScore)
-{
-}
-
-MiniGameDef::ChestItemsInfo& MiniGameDef::ChestItemsInfo::operator=(const ChestItemsInfo& other)
-{
-    mItem = other.mItem;
-    mMinStackCount = other.mMinStackCount;
-    mMaxStackCount = other.mMaxStackCount;
-    mMinCount = other.mMinCount;
-    mMaxCount = other.mMaxCount;
-    mPlayersForMin = other.mPlayersForMin;
-    mWeight = other.mWeight;
-    mKpScore = other.mKpScore;
-    return *this;
-}
-
 MiniGameDef::ChestRefill::ChestRefill()
     : mCentralRefillChance(), mOuterRefillChance(), mHVRefillChance(), mNumberOfChestsToRefill()
     , mMinPlayerDistanceToEffectChance(), mMaxPlayerDistanceToEffectChance(), mCentralLootGroup(), mOuterLootGroup()

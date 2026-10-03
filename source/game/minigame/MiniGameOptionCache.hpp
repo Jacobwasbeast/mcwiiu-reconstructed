@@ -8,22 +8,25 @@
 #include "game/world/generation/MiniGamePlayerSettings.hpp"
 #include "game/world/generation/PlayerUID.hpp"
 
-class MiniGameOptionCacheKeyHasher
+class MiniGameOptionCache
 {
 public:
-    unsigned int operator()(const std::pair<PlayerUID, EMiniGameId>& key) const;
-};
-
-class MiniGameOptionCache : public boost::unordered_map<std::pair<PlayerUID, EMiniGameId>, MiniGamePlayerSettings, MiniGameOptionCacheKeyHasher>
-{
-public:
-    typedef MiniGameOptionCacheKeyHasher KeyHasher;
+    class KeyHasher
+    {
+    public:
+        unsigned int operator()(const std::pair<PlayerUID, EMiniGameId>& key) const;
+    };
 
     MiniGameOptionCache();
     ~MiniGameOptionCache();
 
     void updateCachedOptions(int playerIndex, EMiniGameId miniGameId, const MiniGamePlayerSettings& options);
     MiniGamePlayerSettings& getPreviousOptions(int playerIndex, EMiniGameId miniGameId);
+
+private:
+    typedef boost::unordered_map<std::pair<PlayerUID, EMiniGameId>, MiniGamePlayerSettings, KeyHasher> OptionMap;
+
+    OptionMap mOptions;
 };
 
 #endif

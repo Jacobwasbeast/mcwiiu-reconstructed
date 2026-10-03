@@ -92,13 +92,6 @@ public:
         int mPlayersForMin;
         int mWeight;
         int mKpScore;
-        ChestItemsInfo()
-            : mItem(), mMinStackCount(0), mMaxStackCount(0), mMinCount(0), mMaxCount(0), mPlayersForMin(0), mWeight(0)
-            , mKpScore(0)
-        {
-        }
-        ChestItemsInfo(const ChestItemsInfo& other);
-        ChestItemsInfo& operator=(const ChestItemsInfo& other);
     };
     struct ChestKitInfo
     {
