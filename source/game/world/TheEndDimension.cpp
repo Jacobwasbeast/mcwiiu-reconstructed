@@ -28,9 +28,7 @@ static bool gTheEndLegacySpawnPosInitialized = false;
 static BlockPos gTheEndSpawnPos(0, 0, 0);
 static BlockPos gTheEndLegacySpawnPos(0, 0, 0);
 
-int aaDistance(int x, int z, ChunkPos* pos);
-
-int aaDistance(int x, int z, ChunkPos* pos)
+int aaDistance(int x, int z, const ChunkPos* pos)
 {
     const int xDistance = Mth::abs(x - pos->x);
     const int zDistance = Mth::abs(z - pos->z);

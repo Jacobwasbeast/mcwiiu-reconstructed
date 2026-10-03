@@ -5602,7 +5602,7 @@ LevelChunk* Level::getCacheChunkDirect(int x, int z)
 bool Level::isChunkPostPostProcessed(int x, int z)
 {
     LevelChunk* chunk = getChunkSource()->getChunkIfLoaded(x, z);
-    if (chunk == NULL || chunk->isInvalid())
+    if (chunk == NULL || chunk->mInvalid)
     {
         return false;
     }
