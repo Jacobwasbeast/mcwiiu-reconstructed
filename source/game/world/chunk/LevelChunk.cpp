@@ -591,18 +591,6 @@ void LevelChunk::SetInvalid(bool invalid)
         mUnloaded = true;
     }
 }
-bool LevelChunk::isInvalid() const
-{
-    return mInvalid;
-}
-void LevelChunk::getEntityReadLock()
-{
-    EnterCriticalSection(&m_csEntities);
-}
-void LevelChunk::releaseEntityReadLock()
-{
-    LeaveCriticalSection(&m_csEntities);
-}
 bool LevelChunk::hasLightingBeenDropped()
 {
     return mLightingDropped;

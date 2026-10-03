@@ -32,11 +32,6 @@
 
 extern LevelRenderer* gLevelRenderer;
 
-static LevelRenderer* chunkLevelRenderer()
-{
-    return gLevelRenderer;
-}
-
 Chunk::Chunk(Level* level, ChunkBlockEntityMap& blockEntities, OSFastMutex& mutex, int x, int z, int dimension, ClipChunk* clipChunk)
     : mLevel(level), mX(0), mZ(0), mDimension(0), mDirty(0), mEmpty(0), mRenderable(0),
       mMinX(0), mMinZ(0), mMinDimension(0), mMaxX(0), mMaxZ(0), mMaxDimension(0),
@@ -67,7 +62,7 @@ void Chunk::reset()
 {
     if (mNonStack)
     {
-        LevelRenderer* renderer = chunkLevelRenderer();
+        LevelRenderer* renderer = gLevelRenderer;
         if (renderer != NULL)
         {
             EnterCriticalSection(&renderer->mChunkMutex);
@@ -123,7 +118,7 @@ void Chunk::setPos(int x, int z, int dimension)
         mClipChunk->mMaxY = (float)(mBoundingBox->mMaxY + z);
         mClipChunk->mMaxZ = (float)(mBoundingBox->mMaxZ + dimension);
         mNonStack = true;
-        LevelRenderer* renderer = chunkLevelRenderer();
+        LevelRenderer* renderer = gLevelRenderer;
         if (renderer != NULL)
         {
             EnterCriticalSection(&renderer->mChunkMutex);
@@ -178,7 +173,7 @@ void Chunk::makeCopyForRebuild(Chunk* source)
 
 void Chunk::rebuild(unsigned int* count)
 {
-    LevelRenderer* levelRenderer = chunkLevelRenderer();
+    LevelRenderer* levelRenderer = gLevelRenderer;
     int globalIndex = LevelRenderer::getGlobalIndexForChunk(mX, mZ, mDimension, mLevel);
     if (globalIndex < 0)
         return;
@@ -436,7 +431,7 @@ unsigned long long Chunk::cull(Culler* culler)
 
 void Chunk::clearDirty()
 {
-    LevelRenderer* renderer = chunkLevelRenderer();
+    LevelRenderer* renderer = gLevelRenderer;
     if (renderer != NULL)
         renderer->clearGlobalChunkFlag(mX, mZ, mDimension, mLevel, 2, 0);
 }

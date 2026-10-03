@@ -38,7 +38,6 @@ class Direction;
 class OldChunkStorage;
 class ServerChunkCache;
 
-unsigned int hash_value(const BlockPos& pos);
 
 class LevelChunk
 {
@@ -46,6 +45,7 @@ public:
     friend class OldChunkStorage;
     friend class ServerChunkCache;
     friend class ClientChunkCache;
+    friend class Level;
 
     typedef boost::unordered_map<BlockPos, boost::shared_ptr<BlockEntity>, boost::hash<const BlockPos>, std::equal_to<const BlockPos> > BlockEntityMap;
     enum EntityCreationType { IMMEDIATE, QUEUED, NO_CREATE };
@@ -148,9 +148,6 @@ public:
     virtual bool reSyncLightingNearby();
     virtual void dropLighting();
     void SetInvalid(bool invalid);
-    bool isInvalid() const;
-    static void getEntityReadLock();
-    static void releaseEntityReadLock();
     bool hasLightingBeenDropped();
     virtual void init(Level* level, int x, int z);
     virtual ~LevelChunk();
