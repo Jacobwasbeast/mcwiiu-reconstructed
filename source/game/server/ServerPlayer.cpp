@@ -87,7 +87,7 @@
 #include "game/data/DataFixTypes.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/core/MasterGameMode.hpp"
-#include "game/network/ChunkHistory.hpp"
+#include "game/network/IChunkHistory.hpp"
 #include "game/network/BlockRegionUpdatePacket.hpp"
 #include "game/network/CGameNetworkManager.hpp"
 #include "game/network/Connection.hpp"

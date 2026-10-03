@@ -32,9 +32,11 @@ void ServerBossEvent::broadcast(ClientboundBossEventPacket::Operation operation)
     std::map<boost::shared_ptr<ServerPlayer>, int>::iterator it;
     for (it = players.begin(); it != players.end(); ++it)
     {
-        if (it->first->mConnection != 0)
+        boost::shared_ptr<ServerPlayer> player = it->first;
+        if (player->mConnection != 0)
         {
-            it->first->mConnection->send(packet);
+            ServerGamePacketListenerImpl* connection = player->mConnection.operator->();
+            connection->send(packet);
         }
     }
 }
@@ -98,7 +100,7 @@ BossEvent* ServerBossEvent::setCreateWorldFog(bool createWorldFog)
 
 void ServerBossEvent::setName(const std::wstring& name)
 {
-    if (name != this->name)
+    if (name.compare(this->name) != 0)
     {
         BossEvent::setName(name);
         broadcast(ClientboundBossEventPacket::UPDATE_NAME);
@@ -107,40 +109,38 @@ void ServerBossEvent::setName(const std::wstring& name)
 
 void ServerBossEvent::addPlayer(boost::shared_ptr<ServerPlayer> player, int party)
 {
-    std::pair<std::map<boost::shared_ptr<ServerPlayer>, int>::iterator, bool> result =
-        players.insert(std::make_pair(player, party));
-    if (!result.second)
+    bool existed = players.count(player) != 0;
+    players[player] = party;
+    if (!existed && visible && player->mConnection != 0)
     {
-        result.first->second = party;
-    }
-    else if (visible && player->mConnection != 0)
-    {
+        ServerGamePacketListenerImpl* connection = player->mConnection.operator->();
         boost::shared_ptr<Packet> packet(
             new ClientboundBossEventPacket(ClientboundBossEventPacket::ADD, this));
-        player->mConnection->send(packet);
+        connection->send(packet);
     }
 }
 
 void ServerBossEvent::removePlayer(boost::shared_ptr<ServerPlayer> player)
 {
-    std::map<boost::shared_ptr<ServerPlayer>, int>::iterator it = players.find(player);
-    if (it != players.end())
+    if (players.count(player) != 0)
     {
-        players.erase(it);
+        players.erase(player);
         if (visible && player->mConnection != 0)
         {
+            ServerGamePacketListenerImpl* connection = player->mConnection.operator->();
             boost::shared_ptr<Packet> packet(
                 new ClientboundBossEventPacket(ClientboundBossEventPacket::REMOVE, this));
-            player->mConnection->send(packet);
+            connection->send(packet);
         }
     }
 }
 
 void ServerBossEvent::removeAllPlayers()
 {
-    while (!players.empty())
+    while (players.size() != 0)
     {
-        removePlayer(players.begin()->first);
+        boost::shared_ptr<ServerPlayer> player = players.begin()->first;
+        removePlayer(player);
     }
 }
 
@@ -154,23 +154,25 @@ void ServerBossEvent::setVisible(bool visible)
             visible ? ClientboundBossEventPacket::ADD : ClientboundBossEventPacket::REMOVE;
         for (it = players.begin(); it != players.end(); ++it)
         {
-            if (it->first->mConnection != 0)
+            boost::shared_ptr<ServerPlayer> player = it->first;
+            if (player->mConnection != 0)
             {
+                ServerGamePacketListenerImpl* connection = player->mConnection.operator->();
                 boost::shared_ptr<Packet> packet(
                     new ClientboundBossEventPacket(operation, this));
-                it->first->mConnection->send(packet);
+                connection->send(packet);
             }
         }
     }
 }
 
-std::vector<boost::shared_ptr<ServerPlayer> > ServerBossEvent::getPlayers()
+std::vector<boost::shared_ptr<ServerPlayer> >* ServerBossEvent::getPlayers()
 {
-    std::vector<boost::shared_ptr<ServerPlayer> > result;
+    std::vector<boost::shared_ptr<ServerPlayer> >* result = new std::vector<boost::shared_ptr<ServerPlayer> >();
     std::map<boost::shared_ptr<ServerPlayer>, int>::iterator it;
     for (it = players.begin(); it != players.end(); ++it)
     {
-        result.push_back(it->first);
+        result->push_back(it->first);
     }
     return result;
 }

@@ -33,7 +33,7 @@ public:
     void removePlayer(boost::shared_ptr<ServerPlayer> player);
     void removeAllPlayers();
     void setVisible(bool visible);
-    std::vector<boost::shared_ptr<ServerPlayer> > getPlayers();
+    std::vector<boost::shared_ptr<ServerPlayer> >* getPlayers();
     std::map<boost::shared_ptr<ServerPlayer>, int>& getPartyPlayers();
     bool isVisible();
 
