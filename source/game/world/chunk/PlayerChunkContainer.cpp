@@ -26,13 +26,28 @@
 #include "game/world/generation/PlayerList.hpp"
 
 PlayerChunkContainer::PlayerChunkContainer(PlayerChunkMap* map, int x, int z)
-    : mMap(map), mPlayers(), mPos(x, z), mBlockChanges(new unsigned short[64]()),
-      mBlockChangesCapacity(64), mChunk(NULL), mBlockChangesCount(0),
-      mMinX(0), mMaxX(0), mMinY(0), mMaxY(0), mMinZ(0), mMaxZ(0),
-      mUpdateCounter(0), mPrioritiseBlockChanges(false),
-      mLastUpdate(0), mHasSentToPlayers(false)
+    : mPos(x, z), mBlockChanges(NULL), mBlockChangesCapacity(0), mBlockChangesCount(0)
 {
-    mChunk = mMap->getLevel()->getChunkSource()->getOrCreateChunk(x, z, false);
+    mMap = map;
+    unsigned short* changes = new unsigned short[64];
+    for (int i = 0; i < 64; ++i)
+    {
+        changes[i] = 0;
+    }
+    mChunk = NULL;
+    mMinX = 0;
+    mMaxX = 0;
+    mMinY = 0;
+    mMaxY = 0;
+    mMinZ = 0;
+    mMaxZ = 0;
+    mUpdateCounter = 0;
+    mPrioritiseBlockChanges = false;
+    mLastUpdate = 0;
+    mHasSentToPlayers = false;
+    mBlockChanges = changes;
+    mBlockChangesCapacity = 64;
+    mChunk = static_cast<ServerLevel*>(map->getLevel())->getChunkSource()->getOrCreateChunk(x, z, false);
 }
 
 PlayerChunkContainer::~PlayerChunkContainer()
@@ -406,15 +421,14 @@ double PlayerChunkContainer::getDistanceSqrToClosestPlayer()
 
 bool PlayerChunkContainer::updatePlayerReference(boost::shared_ptr<ServerPlayer> player)
 {
-    std::vector<boost::shared_ptr<ServerPlayer> >::iterator it = mPlayers.begin();
-    while (it != mPlayers.end())
+    for (unsigned int i = 0; i < mPlayers.size(); ++i)
     {
-        if (*it && player && (*it)->getSUID() == player->getSUID())
+        boost::shared_ptr<ServerPlayer> existing = mPlayers[i];
+        if (existing->getXuid() == player->getXuid())
         {
-            *it = player;
+            mPlayers[i] = player;
             return true;
         }
-        ++it;
     }
     return false;
 }
