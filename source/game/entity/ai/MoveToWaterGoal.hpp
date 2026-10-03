@@ -26,7 +26,7 @@ public:
 
 private:
     double mSpeedModifierSquared;
-    Entity* mEntity;
+    PathfinderMob* mEntity;
 };
 
 #endif

@@ -32,8 +32,8 @@ void DolphinLookControl::tick()
         double z = mWantedZ - mMob->mZ;
         double y = mWantedY - (mMob->mY + mMob->getEyeHeight());
         double horizontalDistance = Mth::sqrt(x * x + z * z);
-        float wantedYRot = (float)::atan2(z, x) * 57.2957763671875f + -70.0f;
-        float wantedXRot = -((float)::atan2(y, horizontalDistance) * 57.2957763671875f - 10.0f);
+        float wantedYRot = (float)::atan2(z, x) * 57.295776f + -70.0f;
+        float wantedXRot = -((float)::atan2(y, horizontalDistance) * 57.295776f - 10.0f);
         mMob->mXRot = rotlerp(mMob->mXRot, wantedXRot, mXMax);
         mMob->mYHeadRot = rotlerp(mMob->mYHeadRot, wantedYRot, mYMax);
     }

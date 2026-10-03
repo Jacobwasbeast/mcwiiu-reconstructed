@@ -194,7 +194,7 @@ void RiverFollowingGoal::tick()
     {
         mSteerDirection = mSteerDirection->normalize()->multiply(mSpeed);
         float rotation = (float)std::atan2(mSteerDirection->x, mSteerDirection->z);
-        mMob->mYRot = Mth::clampRotateDegrees(mMob->mYRot, -rotation * 57.2957763671875f, 45.0f);
+        mMob->mYRot = Mth::clampRotateDegrees(mMob->mYRot, -rotation * 57.295776f, 45.0f);
         if (mMob->isUnderLiquid(Material::WATER))
             mMob->mYd = 0.0;
 

@@ -92,7 +92,7 @@ void CircleAroundAnchorGoal::selectNext()
         }
     }
 
-    mAngle += mDirection * 30.0f * 0.01745329238474369f;
+    mAngle += mDirection * 30.0f * 0.017453292f;
     Vec3* wanted = mAnchor->add((double)(mCurrentDistance * Mth::cos(mAngle)),
                                 (double)mCurrentHeight,
                                 (double)(mCurrentDistance * Mth::sin(mAngle)));

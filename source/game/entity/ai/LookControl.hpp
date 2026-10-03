@@ -1,13 +1,15 @@
 #ifndef GAME_ENTITY_AI_LOOKCONTROL_HPP
 #define GAME_ENTITY_AI_LOOKCONTROL_HPP
 
+#include "game/entity/ai/Control.hpp"
+
 #include <boost/shared_ptr.hpp>
 
 class Entity;
 class Mob;
 class Vec3;
 
-class LookControl
+class LookControl : public Control
 {
 public:
     explicit LookControl(Mob* mob);

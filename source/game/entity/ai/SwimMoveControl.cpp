@@ -49,7 +49,7 @@ void SwimMoveControl::tick()
     float wantedYRot = 0.0f;
     if (horizontalSqr > 0.10000000149011612)
     {
-        wantedYRot = (float)(atan2(dz, dx) * 57.2957763671875f) - 90.0f;
+        wantedYRot = (float)(atan2(dz, dx) * 57.295776f) - 90.0f;
     }
     mMob->mYRot = Mth::clampRotateDegrees(mMob->mYRot, wantedYRot, 30.0f);
     mMob->mYBodyRot = mMob->mYRot;
@@ -59,7 +59,7 @@ void SwimMoveControl::tick()
     mMob->setSpeed(speed);
 
     float pitch = (float)atan2(dy / distance, static_cast<double>(Mth::sqrt(horizontalSqr)));
-    Vec3* rotation = Vec3::newTemp((double)(float)(pitch * -57.2957763671875f), (double)mMob->mYRot, 0.0);
+    Vec3* rotation = Vec3::newTemp((double)(float)(pitch * -57.295776f), (double)mMob->mYRot, 0.0);
     LookControl* lookControl = static_cast<LookControl*>(mMob->getLookControl());
     lookControl->setLookRotation(rotation, 5.0f, 10.0f);
 

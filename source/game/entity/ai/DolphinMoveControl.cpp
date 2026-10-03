@@ -55,7 +55,7 @@ void DolphinMoveControl::tick()
             float wantedXRot = Mth::wrapDegrees(-(float)(atan2(dy, horizontal) * 57.2957763671875));
             wantedXRot = Mth::clamp(wantedXRot, -mMaxYRotChange, mMaxYRotChange);
             mMob->mXRot = rotlerp(mMob->mXRot, wantedXRot, 5.0f);
-            mMob->setZza(Mth::cos(mMob->mXRot * 0.01745329238474369f) * speed);
+            mMob->setZza(Mth::cos(mMob->mXRot * 0.017453292f) * speed);
             mMob->setYya((float)dy * speed);
         }
         else

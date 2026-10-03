@@ -48,7 +48,7 @@ void GlideMoveControl::tick()
     double horizontalLength = Mth::sqrt(dx * dx + dz * dz);
     double distance = Mth::sqrt(dy * dy + dx * dx + dz * dz);
     float oldYRot = mob->mYRot;
-    float wantedYRot = Mth::wrapDegrees((float)atan2(dz, dx) * 57.2957763671875f);
+    float wantedYRot = Mth::wrapDegrees((float)atan2(dz, dx) * 57.295776f);
     float yRot = Mth::approachDegrees(Mth::wrapDegrees(mob->mYRot + 90.0f), wantedYRot, 4.0f) - 90.0f;
     mob->mYBodyRot = yRot;
     mob->mYRot = yRot;
@@ -69,8 +69,8 @@ void GlideMoveControl::tick()
     lookControl->setLookRotation(Vec3::newTemp((double)wantedXRot, (double)mob->mYRot, 0.0),
                                   60.0f, 20.0f);
 
-    float yawRadians = (mob->mYRot + 90.0f) * 0.01745329238474369f;
-    float pitchRadians = wantedXRot * 0.01745329238474369f;
+    float yawRadians = (mob->mYRot + 90.0f) * 0.017453292f;
+    float pitchRadians = wantedXRot * 0.017453292f;
     float cosYaw = cosf(yawRadians);
     float sinYaw = sinf(yawRadians);
     float sinPitch = sinf(pitchRadians);

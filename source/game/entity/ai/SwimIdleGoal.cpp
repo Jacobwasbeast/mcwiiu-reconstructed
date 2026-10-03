@@ -85,7 +85,7 @@ void SwimIdleGoal::tick()
         const float angle =
             (static_cast<float>(mMob->mTickCount) + phase) * waterAnimal->mSwimFrequency;
         const float swim = Mth::sin(angle) * waterAnimal->mSwimAmplitude;
-        const float yaw = mMob->mYRot * 0.01745329238474369f;
+        const float yaw = mMob->mYRot * 0.017453292f;
         const float cosYaw = Mth::cos(yaw);
         const float sinYaw = Mth::sin(yaw);
 

@@ -1,9 +1,11 @@
 #ifndef GAME_ENTITY_AI_MOVECONTROL_HPP
 #define GAME_ENTITY_AI_MOVECONTROL_HPP
 
+#include "game/entity/ai/Control.hpp"
+
 class Mob;
 
-class MoveControl
+class MoveControl : public Control
 {
 public:
     enum Operation

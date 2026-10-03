@@ -3,6 +3,7 @@
 
 #include <boost/unordered_set.hpp>
 
+#include "game/core/Mth.hpp"
 #include "game/core/Node.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/Mob.hpp"
@@ -37,8 +38,7 @@ const BlockPathTypes* FlyNodeEvaluator::getBlockPathType(Mob* mob, int x, int y,
 
 const BlockPathTypes* FlyNodeEvaluator::getBlockPathType(Mob* mob, const BlockPos& pos)
 {
-    return getBlockPathType(mLevelSource, pos.x, pos.y, pos.z, mob, mEntityWidth, mEntityHeight, mEntityDepth,
-                            isCanOpenDoors(), isCanPassDoors());
+    return getBlockPathType(mob, pos.x, pos.y, pos.z);
 }
 
 Node* FlyNodeEvaluator::getStart()
@@ -47,10 +47,8 @@ Node* FlyNodeEvaluator::getStart()
     if (isCanFloat() && mMob->isInWater())
     {
         y = static_cast<int>(mMob->mBoundingBox->mMinY);
-        int x = static_cast<int>(mMob->mX);
-        int z = static_cast<int>(mMob->mZ);
-        if (mMob->mX < static_cast<double>(x)) --x;
-        if (mMob->mZ < static_cast<double>(z)) --z;
+        int x = Mth::floor(mMob->mX);
+        int z = Mth::floor(mMob->mZ);
 
         int blockId = mLevelSource->getBlockId(x, y, z);
         while (blockId == BlockId::FLOWING_WATER || blockId == BlockId::WATER)
@@ -61,8 +59,7 @@ Node* FlyNodeEvaluator::getStart()
     }
     else
     {
-        y = static_cast<int>(mMob->mBoundingBox->mMinY + 0.5);
-        if (mMob->mBoundingBox->mMinY + 0.5 < static_cast<double>(y)) --y;
+        y = Mth::floor(mMob->mBoundingBox->mMinY + 0.5);
     }
 
     BlockPos start(mMob);
@@ -194,7 +191,10 @@ Node* FlyNodeEvaluator::getNode(int x, int y, int z)
         node = NodeEvaluator::getNode(x, y, z);
         float cost = node->costMalus < malus ? malus : node->costMalus;
         node->type = type;
-        node->costMalus = type == BlockPathTypes::WALKABLE ? cost + 1.0f : cost;
+        if (type == BlockPathTypes::WALKABLE)
+            node->costMalus = cost + 1.0f;
+        else
+            node->costMalus = cost;
     }
     return node;
 }
@@ -208,18 +208,18 @@ const BlockPathTypes* FlyNodeEvaluator::getBlockPathType(LevelSource* levelSourc
     const BlockPathTypes* result = getBlockPathTypes(levelSource, x, y, z, sizeX, sizeY, sizeZ,
                                                      canOpenDoors, canPassDoors, pathTypeFlags,
                                                      BlockPathTypes::BLOCKED);
-    if ((pathTypeFlags & 1 << BlockPathTypes::FENCE->ordinal()) != 0)
+    if ((pathTypeFlags & 1 << BlockPathTypes::FENCE->id) != 0)
         return BlockPathTypes::FENCE;
 
     const BlockPathTypes* best = BlockPathTypes::BLOCKED;
     for (int i = 0; i < static_cast<int>(sizeof(BlockPathTypes::VALUES) / sizeof(BlockPathTypes::VALUES[0])); ++i)
     {
         const BlockPathTypes* type = BlockPathTypes::VALUES[i];
-        if ((pathTypeFlags & 1 << type->ordinal()) != 0)
+        if ((pathTypeFlags & 1 << type->id) != 0)
         {
             if (mob->getPathfindingMalus(type) < 0.0f)
                 return type;
-            if (mob->getPathfindingMalus(best) <= mob->getPathfindingMalus(type))
+            if (mob->getPathfindingMalus(type) >= mob->getPathfindingMalus(best))
                 best = type;
         }
     }
@@ -234,8 +234,7 @@ const BlockPathTypes* FlyNodeEvaluator::getBlockPathType(LevelSource* levelSourc
     const BlockPathTypes* result = WalkNodeEvaluator::getBlockPathTypeRaw(levelSource, x, y, z);
     if (result == BlockPathTypes::OPEN && y > 0)
     {
-        BlockPos below(x, y - 1, z);
-        Block* block = levelSource->getBlock(below);
+        Block* block = levelSource->getBlock(BlockPos(x, y - 1, z));
         const BlockPathTypes* belowType = WalkNodeEvaluator::getBlockPathTypeRaw(levelSource, x, y - 1, z);
         result = belowType == BlockPathTypes::DAMAGE_FIRE || block == Blocks::magma ||
                  belowType == BlockPathTypes::LAVA
