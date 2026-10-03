@@ -3,12 +3,12 @@
 
 #include <vector>
 
-#include "game/minigame/GameMedal.hpp"
+#include "game/minigame/DamageDealtMedal.hpp"
 
 class DamageEvent;
 class Item;
 
-class WeaponMedal : public GameMedal
+class WeaponMedal : public DamageDealtMedal
 {
 public:
     WeaponMedal(int name, float target, unsigned int weight, Item* item);

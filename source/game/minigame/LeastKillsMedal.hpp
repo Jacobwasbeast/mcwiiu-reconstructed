@@ -1,15 +1,15 @@
 #ifndef GAME_MINIGAME_LEASTKILLSMEDAL_HPP
 #define GAME_MINIGAME_LEASTKILLSMEDAL_HPP
 
-#include "game/minigame/GameMedal.hpp"
+#include "game/minigame/MostKillsMedal.hpp"
 
 class PlayerStats;
 
-class LeastKillsMedal : public GameMedal
+class LeastKillsMedal : public MostKillsMedal
 {
 public:
     LeastKillsMedal(int name, float target, unsigned int weight, GameMedal::EOperator op, bool bestOnly, bool canMultiAward)
-        : GameMedal(name, target, weight, op, bestOnly, canMultiAward)
+        : MostKillsMedal(name, target, weight, op, bestOnly, canMultiAward)
     {
     }
 

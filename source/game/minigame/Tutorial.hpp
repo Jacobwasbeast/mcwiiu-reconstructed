@@ -426,25 +426,25 @@ public:
     virtual void changeTutorialState(eTutorial_State state, UIScene* scene);
     void setMessage(const std::wstring& message, int displayTime, int priority);
     void showTutorialPopup(bool show);
-    unsigned int useItemOn(Level* level, not_null_ptr<class ItemInstance> item,
+    void useItemOn(Level* level, not_null_ptr<class ItemInstance> item,
                            const BlockPos& pos, bool cancelled);
-    unsigned int useItemOn(not_null_ptr<class ItemInstance> item, bool cancelled);
-    unsigned int completeUsingItem(not_null_ptr<class ItemInstance> item);
-    unsigned int startDestroyBlock(not_null_ptr<class ItemInstance> item, const BlockState* state);
+    void useItemOn(not_null_ptr<class ItemInstance> item, bool cancelled);
+    void completeUsingItem(not_null_ptr<class ItemInstance> item);
+    void startDestroyBlock(not_null_ptr<class ItemInstance> item, const BlockState* state);
     unsigned int destroyBlock(Block* block);
     unsigned int attack(boost::shared_ptr<Player> player, boost::shared_ptr<Entity> entity);
     unsigned int itemDamaged(not_null_ptr<class ItemInstance> item);
     void handleUIInput(int input);
     void createItemSelected(not_null_ptr<class ItemInstance> item, bool selected);
-    unsigned int onCrafted(not_null_ptr<class ItemInstance> item);
-    unsigned int onEquip(not_null_ptr<class ItemInstance> item);
-    unsigned int onTakeFromAnvil(not_null_ptr<class ItemInstance> item);
-    unsigned int onTake(not_null_ptr<class ItemInstance> item, unsigned int itemCount,
+    void onCrafted(not_null_ptr<class ItemInstance> item);
+    void onEquip(not_null_ptr<class ItemInstance> item);
+    void onTakeFromAnvil(not_null_ptr<class ItemInstance> item);
+    void onTake(not_null_ptr<class ItemInstance> item, unsigned int itemCount,
                         unsigned int exactCount);
     unsigned int onSelectedItemChanged(not_null_ptr<class ItemInstance> item);
     void onLookAt(const BlockState* state);
     void onLookAtSkull(Level* level, const BlockPos& pos, const BlockState* state);
-    unsigned int onLookAtEntity(boost::shared_ptr<Entity> entity);
+    void onLookAtEntity(boost::shared_ptr<Entity> entity);
     unsigned int onRideEntity(boost::shared_ptr<Entity> entity);
     void onEffectChanged(MobEffect* effect, bool added);
     void onGameModeChange(eTutorial_GameMode gameMode);

@@ -978,36 +978,39 @@ int Tutorial::setMessage(TutorialHint* hint, PopupMessageDetails* details)
         eligible = false;
     }
     unsigned int now = GetTickCount();
-    if (details == NULL)
+    int result = 0;
+    if (details != NULL)
     {
-        return 0;
-    }
-    if (!details->allowFade && !eligible)
-    {
-        return 0;
-    }
-    if (details->isItem)
-    {
-        if (!popupPending)
+        if (details->allowFade || eligible)
         {
-            if (now - static_cast<unsigned int>(visibleTime) <= gTutorialMinimumDisplayTime)
+            bool delayed = false;
+            if (details->isItem)
             {
-                return 0;
+                if (!popupPending)
+                {
+                    if (now - static_cast<unsigned int>(visibleTime) <= gTutorialMinimumDisplayTime)
+                    {
+                        delayed = true;
+                    }
+                }
+                else if (now - static_cast<unsigned int>(messageTime) <= gTutorialHintRepeatTime)
+                {
+                    delayed = true;
+                }
             }
-        }
-        else if (now - static_cast<unsigned int>(messageTime) <= gTutorialHintRepeatTime)
-        {
-            return 0;
-        }
-    }
-    int result = static_cast<int>(setMessage(details));
-    if (result != 0)
-    {
-        messageTime = static_cast<int>(now);
-        popupPending = true;
-        if (hint != NULL)
-        {
-            setHintCompleted(hint);
+            if (!delayed)
+            {
+                result = static_cast<int>(setMessage(details));
+                if (result != 0)
+                {
+                    messageTime = static_cast<int>(now);
+                    popupPending = true;
+                    if (hint != NULL)
+                    {
+                        setHintCompleted(hint);
+                    }
+                }
+            }
         }
     }
     return result;
@@ -1389,7 +1392,7 @@ void Tutorial::setMessage(const std::wstring& messageValue, int displayTimeValue
                           int priorityValue)
 {
     PopupMessageDetails* details = new PopupMessageDetails();
-    details->message = messageValue;
+    details->title.assign(messageValue);
     details->displayTime = displayTimeValue;
     details->priority = priorityValue;
     details->allowFade = true;
@@ -1412,69 +1415,63 @@ void Tutorial::showTutorialPopup(bool show)
     }
 }
 
-unsigned int Tutorial::useItemOn(Level* level, not_null_ptr<ItemInstance> item,
-                                  const BlockPos& pos, bool cancelled)
+void Tutorial::useItemOn(Level* level, not_null_ptr<ItemInstance> item, const BlockPos& pos,
+                         bool cancelled)
 {
-    if (cancelled)
+    std::vector<TutorialTask*>::iterator it = stateTasks[currentState].begin();
+    while (it < stateTasks[currentState].end())
     {
-        return 0xffffffffU;
+        (*it)->useItemOn(level, item, pos, cancelled);
+        ++it;
     }
-    return useItemOn(item, cancelled);
 }
 
-unsigned int Tutorial::useItemOn(not_null_ptr<ItemInstance> item, bool cancelled)
+void Tutorial::useItemOn(not_null_ptr<ItemInstance> item, bool cancelled)
 {
-    if (cancelled)
+    std::vector<TutorialTask*>::iterator it = stateTasks[currentState].begin();
+    while (it < stateTasks[currentState].end())
     {
-        return 0xffffffffU;
+        (*it)->useItem(item, cancelled);
+        ++it;
     }
-    return 0;
 }
 
-unsigned int Tutorial::completeUsingItem(not_null_ptr<ItemInstance> item)
+void Tutorial::completeUsingItem(not_null_ptr<ItemInstance> item)
 {
-    if (item.get() == NULL)
-        return 0;
-    bool handled = false;
-    TutorialTask* activeTask = NULL;
-    if (currentState >= 0 && currentState < static_cast<int>(tasks.size()))
+    std::vector<TutorialTask*>::iterator it = stateTasks[currentState].begin();
+    while (it < stateTasks[currentState].end())
     {
-        activeTask = tasks[currentState];
-        if (activeTask != NULL)
-        {
-            activeTask->completeUsingItem(item);
-            handled = true;
-        }
+        (*it)->completeUsingItem(item);
+        ++it;
     }
-    for (std::vector<TutorialTask*>::iterator it = tasks.begin(); it != tasks.end(); ++it)
+    if (currentState != eTutorial_State_Gameplay)
     {
-        if (*it != NULL && *it != activeTask)
+        std::vector<TutorialTask*>::iterator it = stateTasks[eTutorial_State_Gameplay].begin();
+        while (it < stateTasks[eTutorial_State_Gameplay].end())
         {
             (*it)->completeUsingItem(item);
-            handled = true;
+            ++it;
         }
     }
-    return handled ? 1U : 0U;
 }
 
-unsigned int Tutorial::startDestroyBlock(not_null_ptr<ItemInstance> item, const BlockState* state)
+void Tutorial::startDestroyBlock(not_null_ptr<ItemInstance> item, const BlockState* state)
 {
-    for (std::vector<TutorialHint*>::iterator it = stateHints[currentState].begin();
-         it != stateHints[currentState].end(); ++it)
+    int result;
+    std::vector<TutorialHint*>::iterator it = stateHints[currentState].begin();
+    while (it < stateHints[currentState].end())
     {
         TutorialHint* hint = *it;
-        if (hint == NULL)
-            continue;
-        int result = hint->startDestroyBlock(item, state);
+        result = hint->startDestroyBlock(item, state);
         if (result != -1)
         {
             PopupMessageDetails* details = new PopupMessageDetails();
             details->titleId = result;
             setMessage(hint, details);
-            return 0;
+            return;
         }
+        ++it;
     }
-    return 0xffffffffU;
 }
 
 unsigned int Tutorial::destroyBlock(Block* block)
@@ -1545,12 +1542,10 @@ void Tutorial::handleUIInput(int input)
 
 void Tutorial::createItemSelected(not_null_ptr<ItemInstance> item, bool selected)
 {
-    for (std::vector<TutorialHint*>::iterator it = stateHints[currentState].begin();
-         it != stateHints[currentState].end(); ++it)
+    std::vector<TutorialHint*>::iterator it = stateHints[currentState].begin();
+    while (it < stateHints[currentState].end())
     {
         TutorialHint* hint = *it;
-        if (hint == NULL)
-            continue;
         int result = hint->createItemSelected(item, selected);
         if (result != -1)
         {
@@ -1559,79 +1554,71 @@ void Tutorial::createItemSelected(not_null_ptr<ItemInstance> item, bool selected
             setMessage(hint, details);
             return;
         }
+        ++it;
     }
 }
 
-unsigned int Tutorial::onCrafted(not_null_ptr<ItemInstance> item)
+void Tutorial::onCrafted(not_null_ptr<ItemInstance> item)
 {
     for (int state = 0; state < eTutorial_State_Max; ++state)
     {
-        for (std::vector<TutorialTask*>::iterator it = stateTasks[state].begin();
-             it != stateTasks[state].end(); ++it)
+        std::vector<TutorialTask*>::iterator it = stateTasks[state].begin();
+        while (it < stateTasks[state].end())
         {
-            if (*it != NULL)
-                (*it)->onCrafted(item);
+            (*it)->onCrafted(item);
+            ++it;
         }
     }
-    return 0xffffffffU;
 }
 
-unsigned int Tutorial::onEquip(not_null_ptr<ItemInstance> item)
+void Tutorial::onEquip(not_null_ptr<ItemInstance> item)
 {
     for (int state = 0; state < eTutorial_State_Max; ++state)
     {
-        for (std::vector<TutorialTask*>::iterator it = stateTasks[state].begin();
-             it != stateTasks[state].end(); ++it)
+        std::vector<TutorialTask*>::iterator it = stateTasks[state].begin();
+        while (it < stateTasks[state].end())
         {
-            if (*it != NULL)
-                (*it)->onEquip(item);
+            (*it)->onEquip(item);
+            ++it;
         }
     }
-    return 0xffffffffU;
 }
 
-unsigned int Tutorial::onTakeFromAnvil(not_null_ptr<ItemInstance> item)
+void Tutorial::onTakeFromAnvil(not_null_ptr<ItemInstance> item)
 {
     for (int state = 0; state < eTutorial_State_Max; ++state)
     {
-        for (std::vector<TutorialTask*>::iterator it = stateTasks[state].begin();
-             it != stateTasks[state].end(); ++it)
+        std::vector<TutorialTask*>::iterator it = stateTasks[state].begin();
+        while (it < stateTasks[state].end())
         {
-            if (*it != NULL)
-                (*it)->onTakeFromAnvil(item);
+            (*it)->onTakeFromAnvil(item);
+            ++it;
         }
     }
-    return 0xffffffffU;
 }
 
-unsigned int Tutorial::onTake(not_null_ptr<ItemInstance> item, unsigned int itemCount,
-                               unsigned int exactCount)
+void Tutorial::onTake(not_null_ptr<ItemInstance> item, unsigned int itemCount,
+                      unsigned int exactCount)
 {
     if (!popupPending)
     {
-        for (std::vector<TutorialHint*>::iterator it = stateHints[currentState].begin();
-             it != stateHints[currentState].end(); ++it)
+        std::vector<TutorialHint*>::iterator it = stateHints[currentState].begin();
+        while (it < stateHints[currentState].end())
         {
-            if (*it != NULL && (*it)->onTake(item) != 0)
+            if ((*it)->onTake(item) != 0)
                 break;
+            ++it;
         }
     }
-    for (int state = 0; state < 22; ++state)
+    for (int state = 0; state < eTutorial_State_Max; ++state)
     {
-        for (std::vector<TutorialTask*>::iterator it = stateTasks[state].begin();
-             it != stateTasks[state].end(); ++it)
+        std::vector<TutorialTask*>::iterator it = stateTasks[state].begin();
+        while (it < stateTasks[state].end())
         {
-            if (*it != NULL)
-                (*it)->onTake(item, itemCount, exactCount);
-        }
-        for (std::vector<TutorialHint*>::iterator it = stateHints[state].begin();
-             it != stateHints[state].end(); ++it)
-        {
-            if (*it != NULL)
-                (*it)->onTake(item);
+            (*it)->onTake(item, itemCount, exactCount);
+            ++it;
         }
     }
-    return 0xffffffffU;
 }
 
 unsigned int Tutorial::onSelectedItemChanged(not_null_ptr<ItemInstance> item)
@@ -1690,42 +1677,38 @@ void Tutorial::onLookAtSkull(Level* level, const BlockPos& pos, const BlockState
     }
 }
 
-unsigned int Tutorial::onLookAtEntity(boost::shared_ptr<Entity> entity)
+void Tutorial::onLookAtEntity(boost::shared_ptr<Entity> entity)
 {
     if (!popupPending)
     {
-        bool hintHandled = false;
-        for (std::vector<TutorialHint*>::iterator it = stateHints[currentState].begin();
-             it != stateHints[currentState].end(); ++it)
+        std::vector<TutorialHint*>::iterator hintIt = stateHints[currentState].begin();
+        while (hintIt < stateHints[currentState].end())
         {
-            if (*it != NULL && (*it)->onLookAtEntity(entity) != 0)
-            {
-                hintHandled = true;
+            if ((*hintIt)->onLookAtEntity(entity) != 0)
                 break;
-            }
+            ++hintIt;
         }
-        if (!hintHandled && currentState == eTutorial_State_Gameplay && entity.get() != NULL)
+        if (currentState == eTutorial_State_Gameplay)
         {
             unsigned long long entityType = entity->GetType();
             if ((entityType & EntityType::ABSTRACT_HORSE) == EntityType::ABSTRACT_HORSE
-                && entityType != EntityType::SKELETON_HORSE
-                && entityType != EntityType::ZOMBIE_HORSE
+                && entity->GetType() != EntityType::SKELETON_HORSE
+                && entity->GetType() != EntityType::ZOMBIE_HORSE
                 && (!enabled || completed))
             {
                 boost::shared_ptr<AbstractHorse> horse =
                     boost::static_pointer_cast<AbstractHorse>(entity);
-                if (!horse->isBaby())
+                if (horse->isBaby() != 1)
                     changeTutorialState(eTutorial_State_Horse, NULL);
             }
         }
-        for (std::vector<TutorialTask*>::iterator it = stateTasks[currentState].begin();
-             it != stateTasks[currentState].end(); ++it)
+        std::vector<TutorialTask*>::iterator taskIt = stateTasks[currentState].begin();
+        while (taskIt != stateTasks[currentState].end())
         {
-            if (*it != NULL)
-                (*it)->onLookAtEntity(entity);
+            (*taskIt)->onLookAtEntity(entity);
+            ++taskIt;
         }
     }
-    return 0xffffffffU;
 }
 
 unsigned int Tutorial::onRideEntity(boost::shared_ptr<Entity> entity)
