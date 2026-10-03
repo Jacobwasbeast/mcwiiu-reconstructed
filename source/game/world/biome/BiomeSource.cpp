@@ -218,27 +218,34 @@ bool BiomeSource::getIsMatch(arrayWithLength<int> biomeIndices, float* biomeFrac
 
     for (int i = 0; i < NUM_BIOME_GROUPS; i++)
     {
-        if (i == 6)
-        {
-            if (groupFracs[i] > 0.1f)
-            {
-                return false;
-            }
-        }
-        else if (i == 7)
+        if (i == 7)
         {
             if (groupFracs[i] < 0.001f)
             {
                 return false;
             }
         }
-        else
+        else if (i == 5)
         {
-            if (i == 5 && groupFracs[i] > 0.25f)
+            if (groupFracs[i] > 0.25f)
             {
                 return false;
             }
 
+            if (groupFracs[i] < 0.01f)
+            {
+                return false;
+            }
+        }
+        else if (i == 6)
+        {
+            if (groupFracs[i] > 0.1f)
+            {
+                return false;
+            }
+        }
+        else
+        {
             if (groupFracs[i] < 0.01f)
             {
                 return false;
@@ -331,14 +338,7 @@ Biome* BiomeSource::getBiome(const BlockPos& pos)
 
 Biome* BiomeSource::getBiome(const BlockPos& pos, Biome* fallback)
 {
-    Biome* biome = mBiomeCache->getBlockAt(pos.x, pos.z)->getBiome(pos.x, pos.z);
-
-    if (biome != NULL)
-    {
-        return biome;
-    }
-
-    return fallback;
+    return mBiomeCache->getBiome(pos.x, pos.z, fallback);
 }
 
 float BiomeSource::scaleTemp(float temperature, int height) const
@@ -373,9 +373,12 @@ void BiomeSource::getRawBiomeIndices(arrayWithLength<int>& biomeIndices, int x, 
 
     arrayWithLength<int> area = mRawBiomeLayer->getArea(x, z, width, height);
 
-    for (int i = 0; i < width * height; i++)
+    int count = width * height;
+    int* destination = biomeIndices.data;
+
+    for (int i = 0; i < count; i++)
     {
-        biomeIndices.data[i] = area.data[i];
+        destination[i] = area.data[i];
     }
 }
 
@@ -641,7 +644,7 @@ void BiomeSource::LayerOverrideSettings::SetWidthInChunksToDisplay(int widthInCh
     mWidthInChunksToDisplay = widthInChunks;
     mImageWidth = widthInChunks * 16;
     mBiomeSectionCount = mBiomeSectionCount + extraSections;
-    mHalfImageWidth = mImageWidth >> 1;
+    mHalfImageWidth = mImageWidth / 2;
     mBiomeSectionWidth = mImageWidth / mBiomeSectionCount;
     mChunksPerScroll = widthInChunks / 8;
     mHalfBiomeSectionWidth = mBiomeSectionWidth / 2;
@@ -703,9 +706,11 @@ void BiomeSource::LayerOverrideSettings::GenerateNewSeed()
     mZoomedCentreZ = 0;
     mGenerationScale = eBiomeGenerationScale_Small;
 
+    int biomeCount = mImageWidth * mImageWidth;
+
     EnterCriticalSection(&mBiomesCriticalSection);
 
-    memset(mBiomes.data, 0, mImageWidth * mImageWidth * sizeof(Biome*));
+    memset(mBiomes.data, 0, biomeCount << 2);
 
     LeaveCriticalSection(&mBiomesCriticalSection);
 
@@ -859,22 +864,26 @@ void BiomeSource::LayerOverrideSettings::RegenerateUp(arrayWithLength<unsigned c
     }
 
     int scaledRows = scale * rows;
-    int shiftCount = mImageWidth * scaledRows * 16;
-    int keptCount = mImageWidth * (mImageWidth - scaledRows * 16);
+    int shiftRows = scaledRows * 16;
+    int shiftCount = mImageWidth * shiftRows;
+    int keptCount = mImageWidth * (mImageWidth - shiftRows);
 
     mCentreZChunk -= rows;
 
     EnterCriticalSection(&mBiomesCriticalSection);
 
     memmove(mBiomes.data + shiftCount, mBiomes.data, keptCount * sizeof(Biome*));
-    memset(mBiomes.data, 0, shiftCount * sizeof(Biome*));
+    memset(mBiomes.data, 0, shiftCount << 2);
 
     LeaveCriticalSection(&mBiomesCriticalSection);
 
     mLastGeneratedSection = -1;
 
-    memmove(pixels.data + shiftCount * 4, pixels.data, keptCount * 4);
-    memset(pixels.data, 0, shiftCount * 4);
+    int pixelWidth = mImageWidth;
+    int pixelShift = pixelWidth * shiftRows;
+
+    memmove(pixels.data + shiftCount * 4, pixels.data, pixelWidth * (pixelWidth - shiftRows) * 4);
+    memset(pixels.data, 0, pixelShift << 2);
 
     mLastGeneratedSection = -1;
     mFullyGenerated = false;
@@ -892,8 +901,9 @@ void BiomeSource::LayerOverrideSettings::RegenerateDown(arrayWithLength<unsigned
     }
 
     int scaledRows = scale * rows;
-    int shiftCount = mImageWidth * scaledRows * 16;
-    int keptCount = mImageWidth * (mImageWidth - scaledRows * 16);
+    int shiftRows = scaledRows * 16;
+    int shiftCount = mImageWidth * shiftRows;
+    int keptCount = mImageWidth * (mImageWidth - shiftRows);
     int clearedStart = mImageWidth * mImageWidth - shiftCount;
 
     mCentreZChunk += rows;
@@ -901,14 +911,17 @@ void BiomeSource::LayerOverrideSettings::RegenerateDown(arrayWithLength<unsigned
     EnterCriticalSection(&mBiomesCriticalSection);
 
     memmove(mBiomes.data, mBiomes.data + shiftCount, keptCount * sizeof(Biome*));
-    memset(mBiomes.data + clearedStart, 0, shiftCount * sizeof(Biome*));
+    memset(mBiomes.data + clearedStart, 0, shiftCount << 2);
 
     LeaveCriticalSection(&mBiomesCriticalSection);
 
     mLastGeneratedSection = -1;
 
-    memmove(pixels.data, pixels.data + shiftCount * 4, keptCount * 4);
-    memset(pixels.data + clearedStart * 4, 0, shiftCount * 4);
+    int pixelWidth = mImageWidth;
+    int pixelShift = pixelWidth * shiftRows;
+
+    memmove(pixels.data, pixels.data + shiftCount * 4, pixelWidth * (pixelWidth - shiftRows) * 4);
+    memset(pixels.data + clearedStart * 4, 0, pixelShift << 2);
 
     mLastGeneratedSection = -1;
     mFullyGenerated = false;
@@ -931,6 +944,8 @@ void BiomeSource::LayerOverrideSettings::RegenerateLeft(arrayWithLength<unsigned
 
     mCentreXChunk -= columns;
 
+    mLastGeneratedSection = -1;
+
     for (int z = 0; z < mImageWidth; z++)
     {
         int destination = getBiomeIndex(shiftCount, z);
@@ -939,14 +954,12 @@ void BiomeSource::LayerOverrideSettings::RegenerateLeft(arrayWithLength<unsigned
         EnterCriticalSection(&mBiomesCriticalSection);
 
         memmove(mBiomes.data + destination, mBiomes.data + source, keptCount * sizeof(Biome*));
-        memset(mBiomes.data + source, 0, shiftCount * sizeof(Biome*));
+        memset(mBiomes.data + source, 0, scaledColumns << 6);
 
         LeaveCriticalSection(&mBiomesCriticalSection);
 
-        mLastGeneratedSection = -1;
-
         memmove(pixels.data + destination * 4, pixels.data + source * 4, keptCount * 4);
-        memset(pixels.data + source * 4, 0, shiftCount * 4);
+        memset(pixels.data + source * 4, 0, scaledColumns << 6);
     }
 
     mLastGeneratedSection = -1;
@@ -970,6 +983,8 @@ void BiomeSource::LayerOverrideSettings::RegenerateRight(arrayWithLength<unsigne
 
     mCentreXChunk += columns;
 
+    mLastGeneratedSection = -1;
+
     for (int z = 0; z < mImageWidth; z++)
     {
         int destination = z * mImageWidth;
@@ -979,14 +994,12 @@ void BiomeSource::LayerOverrideSettings::RegenerateRight(arrayWithLength<unsigne
         EnterCriticalSection(&mBiomesCriticalSection);
 
         memmove(mBiomes.data + destination, mBiomes.data + source, keptCount * sizeof(Biome*));
-        memset(mBiomes.data + cleared, 0, shiftCount * sizeof(Biome*));
+        memset(mBiomes.data + cleared, 0, scaledColumns << 6);
 
         LeaveCriticalSection(&mBiomesCriticalSection);
 
-        mLastGeneratedSection = -1;
-
         memmove(pixels.data + destination * 4, pixels.data + source * 4, keptCount * 4);
-        memset(pixels.data + cleared * 4, 0, shiftCount * 4);
+        memset(pixels.data + cleared * 4, 0, scaledColumns << 6);
     }
 
     mLastGeneratedSection = -1;
@@ -1033,14 +1046,18 @@ bool BiomeSource::LayerOverrideSettings::CheckWithinBounds(int& value, int delta
     int limit = (int)pow(2.0, (double)mZoomLevel + 1.0) - 2;
     int moved = value + delta;
 
+    bool withinBounds = true;
+
     if (moved > limit || moved < -limit)
     {
-        return false;
+        withinBounds = false;
+    }
+    else
+    {
+        value = moved;
     }
 
-    value = moved;
-
-    return true;
+    return withinBounds;
 }
 
 void BiomeSource::LayerOverrideSettings::SetZoomedDisplay(int x, int z)
@@ -1575,11 +1592,11 @@ void BiomeSource::LayerOverrideSettings::UpdateBiomeMapPixelsInRegion(unsigned i
                                                                      bool& missingBiomes,
                                                                      bool wholeMap)
 {
-    unsigned int scale = 1;
+    int scale = 1;
 
     if (!wholeMap)
     {
-        scale = (unsigned int)pow(2.0, (double)mZoomLevel);
+        scale = (int)pow(2.0, (double)mZoomLevel);
     }
 
     int centreX = 0;
@@ -1593,7 +1610,7 @@ void BiomeSource::LayerOverrideSettings::UpdateBiomeMapPixelsInRegion(unsigned i
         centreX = (mHalfImageWidth * mZoomedCentreX) / zoomScale;
     }
 
-    int border = mHalfImageWidth - mHalfImageWidth / (int)scale;
+    int border = mHalfImageWidth - mHalfImageWidth / scale;
 
     int startZ = (int)(z / scale) + border + centreZ;
     int startX = (int)(x / scale) + border + centreX;
@@ -1606,9 +1623,9 @@ void BiomeSource::LayerOverrideSettings::UpdateBiomeMapPixelsInRegion(unsigned i
 
     for (int biomeZ = startZ; biomeZ < endZ; biomeZ++)
     {
-        for (unsigned int row = 0; row < scale; row++)
+        for (int row = 0; row < scale; row++)
         {
-            unsigned int* destination = biomeMapPixels + ((pixelZ + row) * mImageWidth + x);
+            unsigned int* destination = biomeMapPixels + (mImageWidth * (pixelZ + row) + x);
 
             for (int biomeX = startX; biomeX < endX; biomeX++)
             {
@@ -1637,7 +1654,7 @@ void BiomeSource::LayerOverrideSettings::UpdateBiomeMapPixelsInRegion(unsigned i
                         colour = (colour >> 16 & 0xFF) | (colour >> 8 & 0xFF) << 8 | (colour & 0xFF) << 16;
                     }
 
-                    for (unsigned int column = 0; column < scale; column++)
+                    for (int column = 0; column < scale; column++)
                     {
                         *destination = colour | 0xFF000000;
 
