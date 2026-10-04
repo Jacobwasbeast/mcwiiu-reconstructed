@@ -65,10 +65,10 @@ public:
     virtual void save(boost::shared_ptr<Player> player);
     CompoundTag* loadPlayerDataTag(PlayerUID uid);
     virtual CompoundTag* load(boost::shared_ptr<Player> player);
-    void deleteMapFilesForPlayer(PlayerUID uid);
     virtual void clearOldPlayerFiles();
     virtual void saveMapIdLookup();
     virtual void deleteMapFilesForPlayer(boost::shared_ptr<Player> player);
+    void deleteMapFilesForPlayer(PlayerUID uid);
     virtual void saveAllCachedData();
 
     virtual void flushSaveFile(bool force);

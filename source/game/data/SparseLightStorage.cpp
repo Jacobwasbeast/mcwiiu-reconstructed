@@ -20,6 +20,9 @@ static const int COLUMN_BYTES = 64;
 static const unsigned int PLANE_ALL_DARK = 0x80;
 static const unsigned int PLANE_ALL_BRIGHT = 0x81;
 static const int PENDING_DELETE_LIST_COUNT = 3;
+static const int PLANE_INDEX_SHIFT = 7;
+static const int PLANE_COUNT_SHIFT = 48;
+static const long long PLANE_COUNT_MASK = 0xffff000000000000LL;
 
 static int sAllocatedBytes = 0;
 
@@ -44,7 +47,7 @@ SparseLightStorage::SparseLightStorage(bool allBright)
 
     XMemSet(newData + PLANE_COUNT, 0, planeCount * PLANE_BYTES);
 
-    mDataAndCount = ((long long)planeCount << 32) | (unsigned int)newData;
+    mDataAndCount = ((long long)planeCount << PLANE_COUNT_SHIFT) | (unsigned int)newData;
 }
 
 SparseLightStorage::SparseLightStorage(bool allBright, bool compressed)
@@ -63,7 +66,7 @@ SparseLightStorage::SparseLightStorage(bool allBright, bool compressed)
 
 int SparseLightStorage::getDataSize(long long dataAndCount)
 {
-    return (int)(dataAndCount >> 32) * PLANE_BYTES + PLANE_BYTES;
+    return (int)((unsigned long long)dataAndCount >> PLANE_COUNT_SHIFT) * PLANE_BYTES + PLANE_BYTES;
 }
 
 SparseLightStorage::SparseLightStorage(SparseLightStorage* other)
@@ -77,7 +80,7 @@ SparseLightStorage::SparseLightStorage(SparseLightStorage* other)
 
     sAllocatedBytes += size;
 
-    mDataAndCount = (otherDataAndCount & 0xffffffff00000000LL) | (unsigned int)newData;
+    mDataAndCount = (otherDataAndCount & PLANE_COUNT_MASK) | (unsigned int)newData;
 
     XMemCpy(newData, sourceData, size);
 }
@@ -121,16 +124,13 @@ void SparseLightStorage::setData(arrayWithLength<unsigned char> data, unsigned i
 
     for (int plane = 0; plane < PLANE_COUNT; plane++)
     {
-        const unsigned char* column = data.data + offset + plane / 2;
-
-        int shift = (plane & 1) * 4;
-
         bool allDark = true;
         bool allBright = true;
 
         for (int i = 0; i < PLANE_VALUES; i++)
         {
-            int value = (column[i * COLUMN_BYTES] >> shift) & 0xf;
+            int position = (i << PLANE_INDEX_SHIFT) | plane;
+            int value = (data.data[(position >> 1) + offset] >> ((position & 1) << 2)) & 0xf;
 
             if (value == 0)
             {
@@ -151,14 +151,17 @@ void SparseLightStorage::setData(arrayWithLength<unsigned char> data, unsigned i
         {
             planeIndices[plane] = (unsigned char)PLANE_ALL_DARK;
         }
-        else if (allBright)
-        {
-            planeIndices[plane] = (unsigned char)PLANE_ALL_BRIGHT;
-        }
         else
         {
-            planeIndices[plane] = (unsigned char)planeCount;
-            planeCount++;
+            unsigned char planeIndex = (unsigned char)PLANE_ALL_BRIGHT;
+
+            if (!allBright)
+            {
+                planeIndex = (unsigned char)planeCount;
+                planeCount++;
+            }
+
+            planeIndices[plane] = planeIndex;
         }
     }
 
@@ -176,21 +179,23 @@ void SparseLightStorage::setData(arrayWithLength<unsigned char> data, unsigned i
     {
         if (newData[plane] < PLANE_ALL_DARK)
         {
-            const unsigned char* column = data.data + offset + plane / 2;
+            const unsigned char* column = data.data + offset + (plane >> 1);
 
             int shift = (plane & 1) * 4;
 
             for (int i = 0; i < PLANE_VALUES; i += 2)
             {
-                *target = (unsigned char)((column[i * COLUMN_BYTES] >> shift) & 0xf);
-                *target |= (unsigned char)(((column[(i + 1) * COLUMN_BYTES] >> shift) & 0xf) << 4);
+                *target = (unsigned char)((*column >> shift) & 0xf);
+                column += COLUMN_BYTES;
+                *target |= (unsigned char)(((*column >> shift) & 0xf) << 4);
+                column += COLUMN_BYTES;
 
                 target++;
             }
         }
     }
 
-    updateDataAndCount(((long long)planeCount << 32) | (unsigned int)newData);
+    updateDataAndCount(((long long)planeCount << PLANE_COUNT_SHIFT) | (unsigned int)newData);
 }
 
 void SparseLightStorage::getPlaneIndicesAndData(unsigned char** planeIndices, unsigned char** planeData)
@@ -216,29 +221,32 @@ void SparseLightStorage::getData(arrayWithLength<unsigned char> data, unsigned i
     {
         unsigned int index = planeIndices[plane];
 
-        if (index == PLANE_ALL_DARK)
+        if (index != PLANE_ALL_DARK)
         {
-            continue;
-        }
+            int shift = (plane & 1) * 4;
 
-        int shift = (plane & 1) * 4;
+            unsigned char* column = destination + (plane >> 1);
 
-        unsigned char* column = destination + plane / 2;
-
-        if (index == PLANE_ALL_BRIGHT)
-        {
-            for (int i = 0; i < PLANE_VALUES; i++)
+            if (index == PLANE_ALL_BRIGHT)
             {
-                column[i * COLUMN_BYTES] |= (unsigned char)(0xf << shift);
+                for (int i = 0; i < PLANE_VALUES; i++)
+                {
+                    column[i * COLUMN_BYTES] |= (unsigned char)(0xf << shift);
+                }
             }
-        }
-        else
-        {
-            const unsigned char* source = planeData + index * PLANE_BYTES;
-
-            for (int i = 0; i < PLANE_VALUES; i++)
+            else
             {
-                column[i * COLUMN_BYTES] |= (unsigned char)((((source[i / 2] >> ((i & 1) * 4)) & 0xf) << shift));
+                const unsigned char* source = planeData + index * PLANE_BYTES;
+
+                for (int i = 0; i < PLANE_VALUES; i += 2)
+                {
+                    *column |= (unsigned char)((*source & 0xf) << shift);
+                    column += COLUMN_BYTES;
+                    *column |= (unsigned char)(((*source >> 4) & 0xf) << shift);
+                    column += COLUMN_BYTES;
+
+                    source++;
+                }
             }
         }
     }
@@ -274,7 +282,7 @@ void SparseLightStorage::addNewPlane(std::vector<int>& planes)
     {
         long long lastDataAndCount = mDataAndCount;
         unsigned char* oldData = (unsigned char*)(unsigned int)lastDataAndCount;
-        unsigned int oldPlaneCount = (unsigned int)(lastDataAndCount >> 32);
+        unsigned int oldPlaneCount = (unsigned int)((unsigned long long)lastDataAndCount >> PLANE_COUNT_SHIFT);
         int oldSize = getDataSize(lastDataAndCount);
 
         unsigned int planeCount = oldPlaneCount;
@@ -302,21 +310,28 @@ void SparseLightStorage::addNewPlane(std::vector<int>& planes)
 
         XMemCpy(newData, oldData, oldPlaneCount * PLANE_BYTES + PLANE_BYTES);
 
+        unsigned char* newPlaneData = newData + PLANE_COUNT;
         unsigned char nextPlane = (unsigned char)oldPlaneCount;
 
         for (std::vector<int>::iterator plane = planes.begin(); plane != planes.end(); ++plane)
         {
-            if (oldData[*plane] == PLANE_ALL_DARK)
-            {
-                XMemSet(newData + PLANE_COUNT + nextPlane * PLANE_BYTES, 0, PLANE_BYTES);
+            int fill = 0;
 
-                newData[*plane] = nextPlane;
-
-                nextPlane++;
-            }
-            else if (oldData[*plane] == PLANE_ALL_BRIGHT)
+            if (oldData[*plane] >= PLANE_ALL_DARK)
             {
-                XMemSet(newData + PLANE_COUNT + nextPlane * PLANE_BYTES, 0xff, PLANE_BYTES);
+                if (oldData[*plane] <= PLANE_ALL_DARK)
+                {
+                    XMemSet(newPlaneData + nextPlane * PLANE_BYTES, 0, PLANE_BYTES);
+                }
+                else
+                {
+                    if (oldData[*plane] == PLANE_ALL_BRIGHT)
+                    {
+                        fill = 0xff;
+                    }
+
+                    XMemSet(newPlaneData + nextPlane * PLANE_BYTES, fill, PLANE_BYTES);
+                }
 
                 newData[*plane] = nextPlane;
 
@@ -324,7 +339,7 @@ void SparseLightStorage::addNewPlane(std::vector<int>& planes)
             }
         }
 
-        long long newDataAndCount = ((long long)planeCount << 32) | (unsigned int)newData;
+        long long newDataAndCount = ((long long)planeCount << PLANE_COUNT_SHIFT) | (unsigned int)newData;
         if (InterlockedCompareExchangeRelease64(&mDataAndCount, newDataAndCount, lastDataAndCount) == lastDataAndCount)
         {
             queueForDelete(oldData, oldSize);
@@ -358,11 +373,13 @@ void SparseLightStorage::set(int x, int y, int z, int value)
             return;
         }
 
-        std::vector<int> planes;
+        {
+            std::vector<int> planes;
 
-        planes.push_back(y);
+            planes.push_back(y);
 
-        addNewPlane(planes);
+            addNewPlane(planes);
+        }
 
         getPlaneIndicesAndData(&planeIndices, &planeData);
 
@@ -397,17 +414,22 @@ int SparseLightStorage::setDataRegion(arrayWithLength<unsigned char> data, int x
 
     y0 = y0 & ~1;
 
-    std::vector<int> planes;
-
-    planes.reserve(planePairs * 2);
-
-    for (int i = 0; i < planePairs; i++)
     {
-        planes.push_back(y0 + i * 2);
-        planes.push_back(y0 + i * 2 + 1);
-    }
+        std::vector<int> planes;
 
-    addNewPlane(planes);
+        planes.reserve(planePairs * 2);
+
+        for (int i = 0; i < planePairs; i++)
+        {
+            int lowPlane = y0 + i * 2;
+            int highPlane = y0 + i * 2 + 1;
+
+            planes.push_back(lowPlane);
+            planes.push_back(highPlane);
+        }
+
+        addNewPlane(planes);
+    }
 
     unsigned char* source = data.data + offset;
     unsigned char* current = source;
@@ -419,7 +441,7 @@ int SparseLightStorage::setDataRegion(arrayWithLength<unsigned char> data, int x
             for (int i = 0; i < planePairs; i++)
             {
                 set(x, y0 + i * 2, z, *current & 0xf);
-                set(x, y0 + i * 2 + 1, z, *current >> 4);
+                set(x, y0 + i * 2 + 1, z, (*current >> 4) & 0xf);
 
                 current++;
             }
@@ -434,23 +456,20 @@ int SparseLightStorage::getDataRegion(arrayWithLength<unsigned char> data, int x
     unsigned char* destination = data.data + offset;
     unsigned char* current = destination;
 
-    if (x0 < x1)
+    int planePairs = (y1 - y0) / 2;
+
+    y0 = y0 & ~1;
+
+    for (int x = x0; x < x1; x++)
     {
-        int planePairs = (y1 - y0) / 2;
-
-        y0 = y0 & ~1;
-
-        for (int x = x0; x < x1; x++)
+        for (int z = z0; z < z1; z++)
         {
-            for (int z = z0; z < z1; z++)
+            for (int i = 0; i < planePairs; i++)
             {
-                for (int i = 0; i < planePairs; i++)
-                {
-                    *current = (unsigned char)get(x, y0 + i * 2, z);
-                    *current |= (unsigned char)(get(x, y0 + i * 2 + 1, z) << 4);
+                *current = (unsigned char)get(x, y0 + i * 2, z);
+                *current |= (unsigned char)(get(x, y0 + i * 2 + 1, z) << 4);
 
-                    current++;
-                }
+                current++;
             }
         }
     }
@@ -466,7 +485,7 @@ unsigned int SparseLightStorage::compress()
 {
     long long lastDataAndCount = mDataAndCount;
     unsigned char* oldData = (unsigned char*)(unsigned int)lastDataAndCount;
-    unsigned int oldPlaneCount = (unsigned int)(lastDataAndCount >> 32);
+    unsigned int oldPlaneCount = (unsigned int)((unsigned long long)lastDataAndCount >> PLANE_COUNT_SHIFT);
     int oldSize = getDataSize(lastDataAndCount);
 
     const unsigned char* oldPlaneData = oldData + PLANE_COUNT;
@@ -478,37 +497,31 @@ unsigned int SparseLightStorage::compress()
 
     for (int plane = 0; plane < PLANE_COUNT; plane++)
     {
-        unsigned int index = oldData[plane];
-
-        if (index == PLANE_ALL_DARK)
+        if (oldData[plane] == PLANE_ALL_DARK)
         {
             planeIndices[plane] = (unsigned char)PLANE_ALL_DARK;
         }
-        else if (index == PLANE_ALL_BRIGHT)
+        else if (oldData[plane] == PLANE_ALL_BRIGHT)
         {
             planeIndices[plane] = (unsigned char)PLANE_ALL_BRIGHT;
         }
         else
         {
-            const char* values = (const char*)(oldPlaneData + index * PLANE_BYTES);
+            const unsigned char* values = (const unsigned char*)(oldPlaneData + oldData[plane] * PLANE_BYTES);
 
             bool allDark = true;
             bool allBright = true;
 
-            for (int i = 0; i < PLANE_BYTES; i++)
+            for (const unsigned char* value = values; value != values + PLANE_BYTES; value++)
             {
-                if (values[i] == 0)
-                {
-                    allBright = false;
-                }
-                else
+                if (*value != 0)
                 {
                     allDark = false;
+                }
 
-                    if (values[i] != -1)
-                    {
-                        allBright = false;
-                    }
+                if (*value != 0xff)
+                {
+                    allBright = false;
                 }
             }
 
@@ -555,7 +568,7 @@ unsigned int SparseLightStorage::compress()
         }
     }
 
-    long long newDataAndCount = ((long long)planeCount << 32) | (unsigned int)newData;
+    long long newDataAndCount = ((long long)planeCount << PLANE_COUNT_SHIFT) | (unsigned int)newData;
     if (InterlockedCompareExchangeRelease64(&mDataAndCount, newDataAndCount, lastDataAndCount) != lastDataAndCount)
     {
         queueForDelete(newData, size);
@@ -568,7 +581,7 @@ unsigned int SparseLightStorage::compress()
 
 bool SparseLightStorage::isCompressed()
 {
-    return (int)(mDataAndCount >> 32) < PLANE_COUNT - 1;
+    return (int)((unsigned long long)mDataAndCount >> PLANE_COUNT_SHIFT) < PLANE_COUNT - 1;
 }
 
 int SparseLightStorage::getAllocatedBytes()
@@ -584,7 +597,7 @@ unsigned int SparseLightStorage::getRawDataMaxBytes()
 unsigned int SparseLightStorage::getRawData(unsigned char* buffer)
 {
     long long dataAndCount = mDataAndCount;
-    unsigned int size = getDataSize(dataAndCount);
+    unsigned int size = (unsigned int)((unsigned long long)dataAndCount >> PLANE_COUNT_SHIFT) * PLANE_BYTES + PLANE_BYTES;
 
     memcpy(buffer, (unsigned char*)(unsigned int)dataAndCount, size);
 
@@ -599,7 +612,7 @@ void SparseLightStorage::setFromRawData(unsigned char* rawData, unsigned int siz
 
     memcpy(newData, rawData, size);
 
-    updateDataAndCount(((long long)((size - PLANE_BYTES) / PLANE_BYTES) << 32) | (unsigned int)newData);
+    updateDataAndCount(((long long)((size - PLANE_BYTES) / PLANE_BYTES) << PLANE_COUNT_SHIFT) | (unsigned int)newData);
 }
 
 void SparseLightStorage::tick()
@@ -621,13 +634,14 @@ void SparseLightStorage::tick()
 
 void SparseLightStorage::write(DataOutputStream* out)
 {
-    long long dataAndCount = mDataAndCount;
-    out->writeInt((int)(dataAndCount >> 32));
+    unsigned int planeCount = (unsigned int)((unsigned long long)mDataAndCount >> PLANE_COUNT_SHIFT);
+
+    out->writeInt(planeCount);
 
     arrayWithLength<unsigned char> data;
 
-    data.data = (unsigned char*)(unsigned int)dataAndCount;
-    data.length = getDataSize(dataAndCount);
+    data.data = (unsigned char*)(unsigned int)mDataAndCount;
+    data.length = planeCount * PLANE_BYTES + PLANE_BYTES;
 
     out->write(data);
 }
@@ -638,7 +652,7 @@ void SparseLightStorage::read(DataInputStream* in, unsigned char* buffer)
 
     if (rawData == NULL)
     {
-        rawData = (unsigned char*)malloc(getRawDataMaxBytes());
+        rawData = (unsigned char*)malloc(PLANE_COUNT * PLANE_BYTES + PLANE_BYTES);
     }
 
     arrayWithLength<unsigned char> raw;
@@ -668,7 +682,7 @@ void SparseLightStorage::read(DataInputStream* in, unsigned char* buffer)
         }
         else
         {
-            const char* values = (const char*)(rawPlaneData + index * PLANE_BYTES);
+            const unsigned char* values = (const unsigned char*)(rawPlaneData + index * PLANE_BYTES);
 
             bool allDark = true;
             bool allBright = true;
@@ -683,7 +697,7 @@ void SparseLightStorage::read(DataInputStream* in, unsigned char* buffer)
                 {
                     allDark = false;
 
-                    if (values[i] != -1)
+                    if (values[i] != 0xff)
                     {
                         allBright = false;
                     }
@@ -726,7 +740,7 @@ void SparseLightStorage::read(DataInputStream* in, unsigned char* buffer)
         }
     }
 
-    updateDataAndCount(((long long)planeCount << 32) | (unsigned int)newData);
+    updateDataAndCount(((long long)planeCount << PLANE_COUNT_SHIFT) | (unsigned int)newData);
 
     if (buffer == NULL)
     {

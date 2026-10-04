@@ -45,10 +45,10 @@ DirectoryLevelStorage::DirectoryLevelStorage(ConsoleSaveFile* saveFile, File fol
       mPlayerDir(PLAYER_DIR),
       mDataDir(L"data/"),
       mSessionId(System::processTimeInMilliSecs()),
-      mLevelId(levelId),
-      mHasLoadedMapDataMappings(false)
+      mLevelId(levelId)
 {
     mFixer = fixer;
+    mHasLoadedMapDataMappings = false;
     mSaveFile = saveFile;
     mUsedMappings = arrayWithLength<unsigned char>(32, true);
     mStructureManager = createIfMissing ? new StructureManager(fixer) : NULL;
@@ -93,7 +93,7 @@ void DirectoryLevelStorage::save(boost::shared_ptr<Player> player)
         CompoundTag* tag = new CompoundTag();
         player->saveWithoutId(tag);
 
-        ConsoleSavePath file(mPlayerDir + player->mXuid.toString() + L".dat");
+        ConsoleSavePath file(std::wstring(mPlayerDir) + player->getXuid().toString() + L".dat");
         if (!gStorage->GetSaveDisabled())
         {
             ConsoleSaveFileOutputStream output(mSaveFile, file);
@@ -403,7 +403,7 @@ File DirectoryLevelStorage::getFolder()
 
 ConsoleSavePath DirectoryLevelStorage::getDataFile(const std::wstring& name)
 {
-    return ConsoleSavePath(mDataDir + name + L".dat");
+    return ConsoleSavePath(std::wstring(mDataDir) + name + L".dat");
 }
 
 std::wstring DirectoryLevelStorage::getLevelId()

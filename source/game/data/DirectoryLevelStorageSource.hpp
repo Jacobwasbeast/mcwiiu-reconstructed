@@ -22,7 +22,7 @@ class DirectoryLevelStorageSource : public LevelStorageSource
 {
 public:
     DirectoryLevelStorageSource(File file, DataFixerUpper* fixer);
-    virtual ~DirectoryLevelStorageSource();
+    virtual ~DirectoryLevelStorageSource() {}
 
     static LevelData* getLevelData(ConsoleSaveFile* saveFile, const ConsoleSavePath& path, DataFixerUpper* fixer);
 

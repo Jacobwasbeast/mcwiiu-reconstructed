@@ -45,7 +45,21 @@ bool StringTag::equals(Tag* other)
         return false;
     }
 
-    return mData == ((StringTag*)other)->mData;
+    StringTag* tag = (StringTag*)other;
+    bool same = true;
+    if (mData.empty())
+    {
+        if (!tag->mData.empty())
+        {
+            same = false;
+        }
+    }
+    else if (mData.compare(tag->mData) != 0)
+    {
+        same = false;
+    }
+
+    return same;
 }
 
 StringTag* StringTag::copy()

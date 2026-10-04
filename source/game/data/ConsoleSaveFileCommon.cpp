@@ -2,6 +2,7 @@
 
 #include <cstring>
 
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/Compression.hpp"
 #include "game/core/DataInputStream.hpp"
@@ -14,10 +15,13 @@
 #include "game/core/XMem.hpp"
 #include "game/core/PIXNamedEvents.hpp"
 
+static const unsigned int SAVE_PAGE_SIZE = 0x1000;
+
 ConsoleSaveFileCommon::ConsoleSaveFileCommon()
-    : mFileHeader(), mFilename(L"Growing file")
+    : mFileHeader()
 {
     InitializeCriticalSectionAndSpinCount(&mSaveAccessMutex, 0x1400);
+    mFilename = L"Growing file";
 }
 
 ConsoleSaveFileCommon::~ConsoleSaveFileCommon()
@@ -35,14 +39,18 @@ void ConsoleSaveFileCommon::_initSaveFromData(const std::wstring& filename, unsi
         return;
     }
 
-    void* saveData = data;
     if (data == NULL)
     {
-        gStorage->GetSaveData(mData, &dataSize);
-        saveData = mData;
+        unsigned int savedSize;
+        gStorage->GetSaveData(mData, &savedSize);
+        dataSize = savedSize;
     }
     else
         std::memcpy(mData, data, dataSize);
+
+    void* saveData = data;
+    if (saveData == NULL)
+        saveData = mData;
 
     unsigned int* compressedHeader = static_cast<unsigned int*>(saveData);
     if (compressedHeader[0] == 0)
@@ -53,8 +61,8 @@ void ConsoleSaveFileCommon::_initSaveFromData(const std::wstring& filename, unsi
 
         if (uncompressedSize == 0)
         {
-            std::memset(saveData, 0, dataSize);
-            mFileHeader.WriteHeader(saveData);
+            std::memset(compressedHeader, 0, dataSize);
+            mFileHeader.WriteHeader(compressedHeader);
             mFileHeader.ReadHeader(mData, platform);
             return;
         }
@@ -68,10 +76,9 @@ void ConsoleSaveFileCommon::_initSaveFromData(const std::wstring& filename, unsi
         }
         else
         {
-            Compression* compression = Compression::getCompression();
-            compression->SetDecompressionType(platform);
-            int result = compression->Decompress(uncompressedData, &uncompressedSize, compressedHeader + 2, dataSize - 8);
-            compression->SetDecompressionType(eSavePlatform_WIIU);
+            Compression::getCompression()->SetDecompressionType(platform);
+            int result = Compression::getCompression()->Decompress(uncompressedData, &uncompressedSize, compressedHeader + 2, dataSize - 8);
+            Compression::getCompression()->SetDecompressionType(eSavePlatform_WIIU);
             if (result == 0)
                 std::memcpy(mData, uncompressedData, uncompressedSize);
             else
@@ -91,18 +98,22 @@ void ConsoleSaveFileCommon::_deleteFile(FileEntry* entry)
     if (entry == NULL)
         return;
     LockSaveAccess();
-    unsigned char buffer[0x1000];
-    unsigned int destination = entry->m_startOffset;
-    unsigned int source = destination + entry->m_fileSize;
-    unsigned int end = mFileHeader.GetStartOfNextData();
-    while (source < end)
+    unsigned char buffer[SAVE_PAGE_SIZE];
+    unsigned char* destination = static_cast<unsigned char*>(mData) + entry->m_startOffset;
+    unsigned char* source = destination + entry->m_fileSize;
+    unsigned char* end = static_cast<unsigned char*>(mData) + mFileHeader.GetStartOfNextData();
+    for (;;)
     {
-        unsigned int count = end - source;
-        if (count > sizeof(buffer))
-            count = sizeof(buffer);
-        std::memcpy(buffer, static_cast<unsigned char*>(mData) + source, count);
-        std::memcpy(static_cast<unsigned char*>(mData) + destination, buffer, count);
+        unsigned int count = SAVE_PAGE_SIZE;
+        if (end < source + SAVE_PAGE_SIZE)
+        {
+            count = static_cast<unsigned int>(end - source);
+            if (count == 0)
+                break;
+        }
+        std::memcpy(buffer, source, count);
         source += count;
+        std::memcpy(destination, buffer, count);
         destination += count;
     }
     mFileHeader.RemoveFile(entry);
@@ -112,42 +123,48 @@ void ConsoleSaveFileCommon::_deleteFile(FileEntry* entry)
 
 void ConsoleSaveFileCommon::MoveDataBeyond(FileEntry* entry, unsigned int size)
 {
-    unsigned int fileSize = mFileHeader.GetFileSize();
-    ReAlloc(fileSize + size);
+    ReAlloc(mFileHeader.GetFileSize() + size);
     unsigned char* dataStart = static_cast<unsigned char*>(mData) + entry->m_startOffset + entry->m_fileSize;
     unsigned char* source = static_cast<unsigned char*>(mData) + mFileHeader.GetStartOfNextData();
+    unsigned char* destination = source + size;
+    unsigned char* destinationEnd = destination;
 
     if ((size & 0xfff) == 0)
     {
         if (size != 0)
         {
-            while (dataStart < source)
+            unsigned int lowPage = reinterpret_cast<unsigned int>(dataStart) & 0xfffff000;
+            unsigned int highPage = reinterpret_cast<unsigned int>(source - 1) & 0xfffff000;
+            unsigned int page;
+            for (page = highPage; page >= lowPage; page -= SAVE_PAGE_SIZE)
             {
-                unsigned int count = static_cast<unsigned int>(source - dataStart);
-                if (count > 0x1000)
-                    count = 0x1000;
-                source -= count;
-                XMemCpy(source + size, source, count);
+                unsigned char* from = reinterpret_cast<unsigned char*>(page);
+                if (from < dataStart)
+                    from = dataStart;
+                unsigned char* to = reinterpret_cast<unsigned char*>(page + SAVE_PAGE_SIZE);
+                if (source < to)
+                    to = source;
+                XMemCpy(from + size, from, static_cast<unsigned int>(to - from));
             }
         }
     }
     else
     {
-        static unsigned char moveBuffer[0x1000];
-        static unsigned char previousBuffer[0x1000];
-        unsigned char* destination = source + size;
+        static unsigned char moveBuffer[SAVE_PAGE_SIZE];
+        static unsigned char previousBuffer[SAVE_PAGE_SIZE];
         unsigned int previousCount = 0;
         unsigned int count;
         do
         {
             std::memcpy(previousBuffer, moveBuffer, previousCount);
-            count = static_cast<unsigned int>(source - dataStart);
-            if (count > 0x1000)
-                count = 0x1000;
+            count = SAVE_PAGE_SIZE;
+            if (source - SAVE_PAGE_SIZE < dataStart)
+                count = static_cast<unsigned int>(source - dataStart);
             source -= count;
             std::memcpy(moveBuffer, source, count);
             destination -= previousCount;
-            std::memcpy(destination, previousBuffer, previousCount);
+            if (destination + previousCount <= destinationEnd)
+                std::memcpy(destination, previousBuffer, previousCount);
             previousCount = count;
         }
         while (count != 0);
@@ -170,21 +187,12 @@ void ConsoleSaveFileCommon::PrepareForWrite(FileEntry* entry, unsigned int size)
 
 bool ConsoleSaveFileCommon::_writeFile(FileEntry* entry, const void* buffer, unsigned int size, unsigned int* written)
 {
-    if (mData == NULL || entry == NULL)
+    if (mData == NULL)
         return false;
     LockSaveAccess();
     PrepareForWrite(entry, size);
-    if (size != 0)
-    {
-        if (buffer == NULL)
-        {
-            ReleaseSaveAccess();
-            return false;
-        }
-        std::memcpy(static_cast<unsigned char*>(mData) + entry->m_filePointer, buffer, size);
-    }
-    if (written != NULL)
-        *written = size;
+    std::memcpy(static_cast<unsigned char*>(mData) + entry->m_filePointer, buffer, size);
+    *written = size;
     entry->m_filePointer += size;
     entry->m_timestamp = System::currentRealTimeMillis();
     ReleaseSaveAccess();
@@ -210,10 +218,11 @@ bool ConsoleSaveFileCommon::_readFile(FileEntry* entry, void* buffer, unsigned i
     if (mData == NULL)
         return false;
     LockSaveAccess();
+    unsigned int filePointer = entry->m_filePointer;
     unsigned int end = entry->m_startOffset + entry->m_fileSize;
-    if (entry->m_filePointer + size > end)
-        size = end - entry->m_filePointer;
-    std::memcpy(buffer, static_cast<unsigned char*>(mData) + entry->m_filePointer, size);
+    if (end < filePointer + size)
+        size = end - filePointer;
+    std::memcpy(buffer, static_cast<unsigned char*>(mData) + filePointer, size);
     *read = size;
     entry->m_filePointer += size;
     ReleaseSaveAccess();
@@ -282,7 +291,7 @@ void ConsoleSaveFileCommon::ConvertRegionFile(File regionFile)
                 output->close();
                 output->deleteChildStream();
                 delete output;
-                delete[] data.data;
+                delete data.data;
             }
         }
     }
@@ -294,18 +303,14 @@ void ConsoleSaveFileCommon::ConvertToLocalPlatform()
     if (getSavePlatform() == eSavePlatform_WIIU)
         return;
     std::vector<FileEntry*>* files = getFilesWithPrefix(L"");
-    if (files != NULL)
+    std::vector<FileEntry*>::iterator it;
+    for (it = files->begin(); it < files->end(); ++it)
     {
-        std::vector<FileEntry*>::iterator it;
-        for (it = files->begin(); it != files->end(); ++it)
-        {
-            FileEntry* entry = *it;
-            if (entry->m_fileName.compare(entry->m_fileName.size() - 4, 4, L".mcr") == 0)
-            {
-                File file(entry->m_fileName);
-                ConvertRegionFile(file);
-            }
-        }
+        FileEntry* entry = *it;
+        std::wstring name = entry->m_fileName;
+        std::wstring extension = L".mcr";
+        if (name.compare(name.size() - extension.size(), extension.size(), extension) == 0)
+            ConvertRegionFile(File(entry->m_fileName));
     }
     setLocalPlatform();
 }
@@ -314,20 +319,20 @@ unsigned int ConsoleSaveFileCommon::fjGetSaveThumbnailData(unsigned char* data, 
 {
     std::memset(data, 0, size);
     CMinecraftApp::PngTagData imageData;
-    g_pApp->CurrentImageTextData(&imageData);
+    gApp.CurrentImageTextData(&imageData);
     if ((imageData.flags & CMinecraftApp::PngTagData::eFlag_NumLoads) == 0)
     {
         imageData.numLoads = 0;
         imageData.flags |= CMinecraftApp::PngTagData::eFlag_NumLoads;
     }
     imageData.flags |= CMinecraftApp::PngTagData::eFlag_ExtraData;
-    g_pApp->SetExtraGameData(imageData.extraData, eGameExtraData_SaveBuild, EXTRA_DATA_SAVE_BUILD);
-    g_pApp->SetExtraGameData(imageData.extraData, eGameExtraData_SaveVersion, EXTRA_DATA_SAVE_VERSION);
+    gApp.SetExtraGameData(imageData.extraData, eGameExtraData_SaveBuild, EXTRA_DATA_SAVE_BUILD);
+    gApp.SetExtraGameData(imageData.extraData, eGameExtraData_SaveVersion, EXTRA_DATA_SAVE_VERSION);
 
-    unsigned int imageDataSize = g_pApp->CreateImageTextData(data, &imageData);
+    unsigned int imageDataSize = gApp.CreateImageTextData(data, &imageData);
 
     CMinecraftApp::PngTagData parsedData;
-    g_pApp->ParseImageTextData(data, imageDataSize, &parsedData);
+    gApp.ParseImageTextData(data, imageDataSize, &parsedData);
     return imageDataSize;
 }
 

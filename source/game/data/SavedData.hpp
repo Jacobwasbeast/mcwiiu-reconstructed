@@ -11,7 +11,7 @@ class SavedData : public boost::enable_shared_from_this<SavedData>
 {
 public:
     SavedData(const std::wstring& id);
-    virtual ~SavedData();
+    virtual ~SavedData() {}
 
     virtual void load(CompoundTag* tag) = 0;
     virtual CompoundTag* save(CompoundTag* tag) = 0;

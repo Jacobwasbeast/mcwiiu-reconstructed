@@ -14,7 +14,7 @@ public:
     {
     public:
         unsigned char indices[32];
-        unsigned char palette[4];
+        char palette[4];
         void init();
         unsigned int set(unsigned char index, unsigned char value);
         unsigned char get(unsigned char index);
@@ -24,7 +24,7 @@ public:
     {
     public:
         unsigned char indices[64];
-        unsigned char palette[4];
+        char palette[4];
         void init();
         unsigned int set(unsigned char index, unsigned char value);
         unsigned char get(unsigned char index);
@@ -81,11 +81,13 @@ private:
         long long bits;
         struct
         {
-            unsigned int size;
+            unsigned int sizeAndCount;
             PlaneOffsets* offsets;
         } value;
     };
     DataAndCountValue dataAndCount;
+
+    static const unsigned int DATA_SIZE_SHIFT = 16;
 };
 
 #endif

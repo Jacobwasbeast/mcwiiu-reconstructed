@@ -18,11 +18,7 @@
 void* VirtualAlloc(void* address, unsigned long size, unsigned int allocationType, unsigned int protect);
 int VirtualFree(void* address, unsigned long size, unsigned int freeType);
 #endif
-#if defined(__POWERPC__) || defined(__powerpc__) || defined(__PPC__)
-void __debugbreak()
-{
-}
-#endif
+void __debugbreak();
 
 static void* s_saveData;
 static unsigned int s_saveDataSize;
@@ -38,7 +34,7 @@ ConsoleSaveFileOriginal::ConsoleSaveFileOriginal(const std::wstring& filename, v
 
     bool deleteBaseSaveData = false;
     unsigned int saveDataSize = dataSize;
-    LevelGenerationOptions* options = g_pApp->getLevelGenerationOptions();
+    LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
     if (data == NULL)
     {
         if (options != NULL && options->requiresBaseSave() &&
@@ -73,12 +69,12 @@ int ConsoleSaveFileOriginal::SaveSaveDataCallback(void*, bool)
 
 void ConsoleSaveFileOriginal::refreshFromLevelgen()
 {
-    LevelGenerationOptions* options = g_pApp->getLevelGenerationOptions();
+    LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
     if (options != NULL && options->requiresBaseSave())
     {
         unsigned int dataSize = 0;
         void* data = options->getBaseSaveData(dataSize);
-        if (data != NULL)
+        if (data != NULL && dataSize != 0)
         {
             VirtualFree(s_saveData, 0x4000000, 0x4000);
             s_saveDataSize = 0;
@@ -112,7 +108,6 @@ FileEntry* ConsoleSaveFileOriginal::createFile(const ConsoleSavePath& path)
     LockSaveAccess();
     FileEntry* entry = mFileHeader.AddFile(path.getPath(), 0);
     ReAlloc(mFileHeader.GetFileSize());
-    finalizeWrite();
     ReleaseSaveAccess();
     return entry;
 }
@@ -125,9 +120,10 @@ void ConsoleSaveFileOriginal::deleteFile(FileEntry* entry)
 void ConsoleSaveFileOriginal::setFilePointer(FileEntry* entry, long distanceToMove, int*, unsigned int moveMethod)
 {
     LockSaveAccess();
-    entry->m_filePointer = entry->m_startOffset + distanceToMove;
+    long position = entry->m_startOffset + distanceToMove;
     if (moveMethod == 2)
-        entry->m_filePointer += entry->m_fileSize;
+        position += entry->m_fileSize;
+    entry->m_filePointer = position;
     ReleaseSaveAccess();
 }
 
@@ -151,22 +147,22 @@ void ConsoleSaveFileOriginal::Flush(bool, bool)
 {
     LockSaveAccess();
     finalizeWrite();
+    _LARGE_INTEGER frequency;
+    _LARGE_INTEGER start;
+    _LARGE_INTEGER end;
+    QueryPerformanceFrequency(&frequency);
     unsigned int fileSize = mFileHeader.GetFileSize();
     unsigned int compressedSize = fileSize + 8;
     unsigned char* compressedData = static_cast<unsigned char*>(
         gStorage->AllocateSaveData(compressedSize));
-    Compression* compression = Compression::getCompression();
 
     if (compressedData == NULL)
     {
         PIXBeginNamedEvent(0.0f, "Pre-calc save compression");
-        _LARGE_INTEGER frequency;
-        _LARGE_INTEGER counter;
-        QueryPerformanceFrequency(&frequency);
-        QueryPerformanceCounter(&counter);
+        QueryPerformanceCounter(&start);
         compressedSize = 0;
-        compression->Compress(NULL, &compressedSize, mData, fileSize);
-        QueryPerformanceCounter(&counter);
+        Compression::getCompression()->Compress(NULL, &compressedSize, mData, fileSize);
+        QueryPerformanceCounter(&end);
         PIXEndNamedEvent();
         compressedSize += 8;
         compressedData = static_cast<unsigned char*>(
@@ -176,12 +172,9 @@ void ConsoleSaveFileOriginal::Flush(bool, bool)
     if (compressedData != NULL)
     {
         PIXBeginNamedEvent(0.0f, "Actual save compression");
-        _LARGE_INTEGER frequency;
-        _LARGE_INTEGER counter;
-        QueryPerformanceFrequency(&frequency);
-        QueryPerformanceCounter(&counter);
-        compression->Compress(compressedData + 8, &compressedSize, mData, fileSize);
-        QueryPerformanceCounter(&counter);
+        QueryPerformanceCounter(&start);
+        Compression::getCompression()->Compress(compressedData + 8, &compressedSize, mData, fileSize);
+        QueryPerformanceCounter(&end);
         PIXEndNamedEvent();
 
         unsigned int zero = 0;
@@ -191,7 +184,7 @@ void ConsoleSaveFileOriginal::Flush(bool, bool)
 
         unsigned char* image = NULL;
         unsigned int imageSize = 0;
-        g_pApp->GetSaveThumbnail(&image, &imageSize);
+        gApp.GetSaveThumbnail(&image, &imageSize);
         unsigned char thumbnail[0x200];
         unsigned int thumbnailSize = fjGetSaveThumbnailData(thumbnail, sizeof(thumbnail));
         int saveUniqueNumber = 0;
@@ -216,3 +209,8 @@ unsigned char* ConsoleSaveFileOriginal::getWritePointer(FileEntry* entry)
     return static_cast<unsigned char*>(mData) + entry->m_filePointer;
 }
 
+#if defined(__POWERPC__) || defined(__powerpc__) || defined(__PPC__)
+void __debugbreak()
+{
+}
+#endif

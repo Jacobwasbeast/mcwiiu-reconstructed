@@ -5,10 +5,10 @@
 #include "game/core/FileEntry.hpp"
 
 ConsoleSaveFileOutputStream::ConsoleSaveFileOutputStream(ConsoleSaveFile* saveFile, const ConsoleSavePath& path)
-    : m_saveFile(saveFile), m_fileEntry(NULL)
+    : m_saveFile(saveFile)
 {
     m_fileEntry = saveFile->createFile(path);
-    saveFile->setFilePointer(m_fileEntry, 0, NULL, 0);
+    m_saveFile->setFilePointer(m_fileEntry, 0, NULL, 0);
 }
 
 ConsoleSaveFileOutputStream::ConsoleSaveFileOutputStream(ConsoleSaveFile* saveFile, FileEntry* fileEntry)
@@ -20,19 +20,19 @@ ConsoleSaveFileOutputStream::ConsoleSaveFileOutputStream(ConsoleSaveFile* saveFi
 void ConsoleSaveFileOutputStream::write(unsigned int value)
 {
     unsigned char byte = (unsigned char)value;
-    unsigned int bytesWritten = 0;
+    unsigned int bytesWritten;
     m_saveFile->writeFile(m_fileEntry, &byte, 1, &bytesWritten);
 }
 
 void ConsoleSaveFileOutputStream::write(arrayWithLength<unsigned char> data)
 {
-    unsigned int bytesWritten = 0;
-    m_saveFile->writeFile(m_fileEntry, data.data, data.length, &bytesWritten);
+    unsigned int bytesWritten;
+    m_saveFile->writeFile(m_fileEntry, &data, data.length, &bytesWritten);
 }
 
 void ConsoleSaveFileOutputStream::write(arrayWithLength<unsigned char> data, unsigned int offset, unsigned int length)
 {
-    unsigned int bytesWritten = 0;
+    unsigned int bytesWritten;
     m_saveFile->writeFile(m_fileEntry, data.data + offset, length, &bytesWritten);
 }
 

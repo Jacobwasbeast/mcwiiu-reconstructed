@@ -6,10 +6,6 @@ SavedData::SavedData(const std::wstring& id)
 {
 }
 
-SavedData::~SavedData()
-{
-}
-
 void SavedData::setDirty(bool dirty)
 {
     this->dirty = dirty;

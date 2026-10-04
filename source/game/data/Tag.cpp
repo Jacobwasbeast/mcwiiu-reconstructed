@@ -19,7 +19,7 @@
 
 static const int NUM_TAG_TYPES = 12;
 
-static const wchar_t* const TAG_TYPE_NAMES[NUM_TAG_TYPES + 1] =
+static const wchar_t* TAG_TYPE_NAMES[NUM_TAG_TYPES + 1] =
 {
     L"TAG_End",
     L"TAG_Byte",
@@ -118,12 +118,12 @@ Tag* Tag::newTag(unsigned char id)
 
 bool Tag::equals(Tag* other)
 {
-    if (other == NULL)
+    if (other != NULL && getId() == other->getId())
     {
-        return false;
+        return true;
     }
 
-    return getId() == other->getId();
+    return false;
 }
 
 void Tag::stripEmptyChildren()

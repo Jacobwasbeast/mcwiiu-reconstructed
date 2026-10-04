@@ -2,6 +2,7 @@
 
 #include "game/core/DataInput.hpp"
 #include "game/core/DataOutput.hpp"
+#include "game/core/System.hpp"
 #include <cstring>
 #include <cwchar>
 
@@ -67,21 +68,25 @@ bool ByteArrayTag::equals(Tag* other)
     }
 
     ByteArrayTag* otherArray = static_cast<ByteArrayTag*>(other);
+    bool same = true;
     if (mData.data == NULL)
     {
-        return otherArray->mData.data == NULL;
+        if (otherArray->mData.data != NULL)
+        {
+            same = false;
+        }
     }
-    if (mData.length != otherArray->mData.length)
+    else if (mData.length != otherArray->mData.length || std::memcmp(mData.data, otherArray->mData.data, mData.length) != 0)
     {
-        return false;
+        same = false;
     }
-    return std::memcmp(mData.data, otherArray->mData.data, mData.length) == 0;
+    return same;
 }
 
 ByteArrayTag* ByteArrayTag::copy()
 {
     arrayWithLength<unsigned char> copiedData(mData.length, true);
-    std::memcpy(copiedData.data, mData.data, mData.length);
+    System::arraycopy(mData, 0, &copiedData, 0, mData.length);
     return new ByteArrayTag(copiedData, true);
 }
 

@@ -20,8 +20,8 @@ void deleteElements(const std::vector<T*, std::allocator<T*> >& elements);
 template <class T>
 void deleteElements(const std::vector<T*, std::allocator<T*> >& elements)
 {
-    for (typename std::vector<T*, std::allocator<T*> >::const_iterator it = elements.begin();
-         it != elements.end(); ++it)
+    for (typename std::vector<T*, std::allocator<T*> >::const_iterator it = elements.begin(),
+         end = elements.end(); it != end; ++it)
     {
         delete *it;
     }
@@ -51,7 +51,7 @@ void ListTag::write(DataOutput* output)
     output->writeByte(mType);
     output->writeInt(mList.size());
 
-    for (std::vector<Tag*>::iterator it = mList.begin(); it != mList.end(); ++it)
+    for (std::vector<Tag*>::iterator it = mList.begin(), end = mList.end(); it != end; ++it)
     {
         (*it)->write(output);
     }
@@ -195,11 +195,9 @@ void ListTag::stripEmptyChildren()
 
     while (it != mList.end())
     {
-        Tag* tag = *it;
-
-        if (tag->isEmpty())
+        if ((*it)->isEmpty())
         {
-            delete tag;
+            delete *it;
             it = mList.erase(it);
         }
         else
@@ -291,28 +289,28 @@ float ListTag::getFloat(int index) const
 
 std::wstring ListTag::getString(int index) const
 {
-    if (index >= 0 && index < mList.size())
+    if (index < 0 || index >= mList.size())
     {
-        Tag* tag = mList.at(index);
+        return L"";
+    }
 
-        if (tag->getId() != Tag::TAG_STRING)
-        {
-            return tag->toString();
-        }
+    Tag* tag = mList.at(index);
 
+    if (tag->getId() == Tag::TAG_STRING)
+    {
         return tag->getAsString();
     }
 
-    return L"";
+    return tag->toString();
 }
 
 ListTag* ListTag::copy()
 {
-    ListTag* list = new ListTag(0);
+    ListTag* list = new ListTag();
 
     list->mType = mType;
 
-    for (std::vector<Tag*>::iterator it = mList.begin(); it != mList.end(); ++it)
+    for (std::vector<Tag*>::iterator it = mList.begin(), end = mList.end(); it != end; ++it)
     {
         Tag* tag = (*it)->copy();
         list->mList.push_back(tag);
@@ -323,32 +321,44 @@ ListTag* ListTag::copy()
 
 bool ListTag::equals(Tag* other)
 {
-    if (!Tag::equals(other))
+    if (Tag::equals(other))
     {
-        return false;
-    }
+        ListTag* list = (ListTag*)other;
 
-    ListTag* list = (ListTag*)other;
-
-    if (mType != list->mType)
-    {
-        return false;
-    }
-
-    if (mList.size() != list->mList.size())
-    {
-        return false;
-    }
-
-    for (std::vector<Tag*>::const_iterator it = mList.begin(), other_it = list->mList.begin(); it != mList.end(); ++it, ++other_it)
-    {
-        if (!(*it)->equals(*other_it))
+        if (mType == list->mType)
         {
-            return false;
+            bool equal = false;
+
+            if (mList.size() == list->mList.size())
+            {
+                equal = true;
+
+                for (std::vector<Tag*>::iterator it = mList.begin(), end = mList.end(); it != end; ++it)
+                {
+                    bool found = false;
+
+                    for (std::vector<Tag*>::iterator otherIt = list->mList.begin(); otherIt != list->mList.end(); ++otherIt)
+                    {
+                        if ((*it)->equals(*otherIt))
+                        {
+                            found = true;
+                            break;
+                        }
+                    }
+
+                    if (!found)
+                    {
+                        equal = false;
+                        break;
+                    }
+                }
+            }
+
+            return equal;
         }
     }
 
-    return true;
+    return false;
 }
 
 unsigned char ListTag::getType()

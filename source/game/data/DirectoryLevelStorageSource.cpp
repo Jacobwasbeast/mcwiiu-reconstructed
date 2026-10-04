@@ -15,10 +15,6 @@ DirectoryLevelStorageSource::DirectoryLevelStorageSource(File file, DataFixerUpp
 {
 }
 
-DirectoryLevelStorageSource::~DirectoryLevelStorageSource()
-{
-}
-
 LevelData* DirectoryLevelStorageSource::getLevelData(ConsoleSaveFile* saveFile, const ConsoleSavePath& path, DataFixerUpper* fixer)
 {
     ConsoleSaveFileInputStream input(saveFile, path);

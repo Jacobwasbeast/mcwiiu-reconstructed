@@ -16,7 +16,7 @@ public:
     {
     public:
         unsigned int mThreadId;
-        unsigned int mReadLocks;
+        int mReadLocks;
         bool mHasTempData;
         bool mBlockReadLock;
         bool mDataLock;

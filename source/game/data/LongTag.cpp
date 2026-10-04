@@ -50,7 +50,9 @@ bool LongTag::equals(Tag* other)
         return false;
     }
 
-    return mValue == ((LongTag*)other)->mValue;
+    LongTag* otherTag = (LongTag*)other;
+
+    return mValue == otherTag->mValue;
 }
 
 LongTag* LongTag::copy()
@@ -70,12 +72,12 @@ int LongTag::getAsInt()
 
 short LongTag::getAsShort()
 {
-    return (short)mValue;
+    return (short)(mValue & 0xffff);
 }
 
 unsigned char LongTag::getAsByte()
 {
-    return (unsigned char)mValue;
+    return (unsigned char)(mValue & 0xff);
 }
 
 double LongTag::getAsDouble()

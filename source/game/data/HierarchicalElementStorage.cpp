@@ -58,7 +58,7 @@ unsigned int HierarchicalElementStorage::GetElementIndexFromChunkXYZ(unsigned in
 
 unsigned int HierarchicalElementStorage::GetSectionIDFromXYZ(int x, int y, int z)
 {
-    return (((unsigned int)y & 0xFC) << 24) | (((unsigned int)x & 0x3FFC) << 10) | (((unsigned int)z >> 2) & 0xFFF);
+    return (((unsigned int)y & 0xFC) << 24) | (((unsigned int)x & 0x3FFC) << 10) | (((unsigned int)z & 0x3FFC) >> 2);
 }
 
 void* HierarchicalElementStorage::allocData(unsigned int bytes)

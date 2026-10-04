@@ -20,13 +20,9 @@
 void __debugbreak();
 
 SavedDataStorage::SavedDataStorage(LevelStorage* levelStorage)
-    : mLevelStorage(levelStorage)
 {
+    mLevelStorage = levelStorage;
     loadAuxValues();
-}
-
-SavedDataStorage::~SavedDataStorage()
-{
 }
 
 void SavedDataStorage::loadAuxValues()
@@ -95,7 +91,7 @@ boost::shared_ptr<SavedData> SavedDataStorage::get(const std::type_info& type, c
     }
     if (savedData)
     {
-        mSavedData.insert(std::make_pair(id, savedData));
+        mSavedData.insert(std::pair<const std::wstring, boost::shared_ptr<SavedData> >(id, savedData));
         mAllSavedData.push_back(savedData);
     }
     return savedData;
@@ -116,7 +112,7 @@ void SavedDataStorage::set(const std::wstring& id, boost::shared_ptr<SavedData> 
             }
             mSavedData.erase(it);
         }
-        mSavedData.insert(std::make_pair(id, data));
+        mSavedData.insert(std::pair<const std::wstring, boost::shared_ptr<SavedData> >(id, data));
         mAllSavedData.push_back(data);
     }
 }
@@ -163,12 +159,14 @@ int SavedDataStorage::getFreeAuxValueFor(const std::wstring& id)
     if (mLevelStorage != NULL)
     {
         ConsoleSavePath dataFile = mLevelStorage->getDataFile(L"idcounts");
-        if (dataFile.getPath().length() != 0)
+        bool hasDataFile = dataFile.getPath().length() != 0;
+        if (hasDataFile)
         {
             CompoundTag* tag = new CompoundTag();
             for (boost::unordered_map<std::wstring, short>::iterator counts = mAuxValues.begin(); counts != mAuxValues.end(); ++counts)
             {
-                tag->putShort(counts->first.c_str(), counts->second);
+                short count = counts->second;
+                tag->putShort(counts->first.c_str(), count);
             }
             ConsoleSaveFileOutputStream saveFileStream(mLevelStorage->getSaveFile(), dataFile);
             DataOutputStream stream(&saveFileStream);

@@ -11,6 +11,8 @@
 #include "game/data/ConsoleSavePath.hpp"
 #include "game/network/ProgressListener.hpp"
 
+static const std::wstring PLAYER_DIR = L"players/";
+
 void ConsoleSaveFileConverter::ProcessSimpleFile(ConsoleSaveFile* saveFileIn, FileEntry* entryIn, ConsoleSaveFile* saveFileOut, FileEntry* entryOut)
 {
     unsigned int bytesRead = 0;
@@ -71,17 +73,19 @@ void ConsoleSaveFileConverter::ConvertSave(ConsoleSaveFile* saveFileIn, ConsoleS
 
     ProcessSimpleFile(saveFileIn, pLevelDatIn, saveFileOut, pLevelDatOut);
 
-    ConsoleSavePath gameRulesPath(L"requiredGameRules.grf");
-
-    if (saveFileIn->doesFileExist(gameRulesPath))
     {
-        FileEntry* pGameRulesIn = saveFileIn->createFile(gameRulesPath);
-        FileEntry* pGameRulesOut = saveFileOut->createFile(gameRulesPath);
+        ConsoleSavePath gameRulesPath(L"requiredGameRules.grf");
 
-        ProcessSimpleFile(saveFileIn, pGameRulesIn, saveFileOut, pGameRulesOut);
+        if (saveFileIn->doesFileExist(gameRulesPath))
+        {
+            FileEntry* pGameRulesIn = saveFileIn->createFile(gameRulesPath);
+            FileEntry* pGameRulesOut = saveFileOut->createFile(gameRulesPath);
+
+            ProcessSimpleFile(saveFileIn, pGameRulesIn, saveFileOut, pGameRulesOut);
+        }
     }
 
-    std::vector<FileEntry*>* pPlayerFiles = saveFileIn->getFilesWithPrefix(L"players/");
+    std::vector<FileEntry*>* pPlayerFiles = saveFileIn->getFilesWithPrefix(std::wstring(PLAYER_DIR));
 
     if (pPlayerFiles != NULL)
     {
@@ -103,7 +107,7 @@ void ConsoleSaveFileConverter::ConvertSave(ConsoleSaveFile* saveFileIn, ConsoleS
 
     std::vector<FileEntry*>* pAllFiles = saveFileIn->getFilesWithPrefix(L"");
 
-    for (std::vector<FileEntry*>::iterator it = pAllFiles->begin(); it != pAllFiles->end(); ++it)
+    for (std::vector<FileEntry*>::iterator it = pAllFiles->begin(); it < pAllFiles->end(); ++it)
     {
         FileEntry* pEntry = *it;
 

@@ -81,7 +81,8 @@ void McRegionLevelStorageSource::eraseFolders(std::vector<File*>* folders, int c
                                               int total, ProgressListener* progressListener)
 {
     std::vector<File*>::iterator it;
-    for (it = folders->begin(); it != folders->end(); ++it)
+    std::vector<File*>::iterator end = folders->end();
+    for (it = folders->begin(); it != end; ++it)
     {
         File* folder = *it;
         deleteRecursive(folder->listFiles());

@@ -21,7 +21,8 @@ DataFixerUpper::~DataFixerUpper()
         std::vector<DataFix*>* fixes = fixEntry->second;
         if (!fixes->empty())
         {
-            for (std::vector<DataFix*>::iterator fix = fixes->begin(); fix != fixes->end(); ++fix)
+            std::vector<DataFix*>::iterator end = fixes->end();
+            for (std::vector<DataFix*>::iterator fix = fixes->begin(); fix != end; ++fix)
             {
                 delete *fix;
             }
@@ -34,7 +35,8 @@ DataFixerUpper::~DataFixerUpper()
         std::vector<DataWalker*>* walkers = walkerEntry->second;
         if (!walkers->empty())
         {
-            for (std::vector<DataWalker*>::iterator walker = walkers->begin(); walker != walkers->end(); ++walker)
+            std::vector<DataWalker*>::iterator end = walkers->end();
+            for (std::vector<DataWalker*>::iterator walker = walkers->begin(); walker != end; ++walker)
             {
                 delete *walker;
             }
@@ -49,7 +51,7 @@ CompoundTag* DataFixerUpper::updateData(DataFixTypes::EDataFixTypes type, Compou
     if (tag->contains(DATA_VERSION_TAG, Tag::TAG_ANY_NUMERIC))
     {
         version = tag->getInt(DATA_VERSION_TAG);
-        if (version > 921)
+        if (version >= 922)
         {
             return tag;
         }
@@ -75,7 +77,8 @@ CompoundTag* DataFixerUpper::applyFixes(DataFixTypes::EDataFixTypes type, Compou
         std::vector<DataFix*>* fixes = mFixes[type];
         if (!fixes->empty())
         {
-            for (std::vector<DataFix*>::iterator fix = fixes->begin(); fix != fixes->end(); ++fix)
+            std::vector<DataFix*>::iterator end = fixes->end();
+            for (std::vector<DataFix*>::iterator fix = fixes->begin(); fix != end; ++fix)
             {
                 if (version < (*fix)->getVersion())
                 {
@@ -96,7 +99,8 @@ CompoundTag* DataFixerUpper::applyWalkers(DataFixTypes::EDataFixTypes type, Comp
         std::vector<DataWalker*>* walkers = walkerEntry->second;
         if (!walkers->empty())
         {
-            for (std::vector<DataWalker*>::iterator walker = walkers->begin(); walker != walkers->end(); ++walker)
+            std::vector<DataWalker*>::iterator end = walkers->end();
+            for (std::vector<DataWalker*>::iterator walker = walkers->begin(); walker != end; ++walker)
             {
                 tag = (*walker)->walk(this, tag, version);
             }
@@ -155,7 +159,8 @@ void DataFixerUpper::addFixer(DataFixTypes::EDataFixTypes type, DataFix* fix)
         return;
     }
 
-    for (std::vector<DataFix*>::iterator existing = fixes->begin(); existing != fixes->end(); ++existing)
+    std::vector<DataFix*>::iterator end = fixes->end();
+    for (std::vector<DataFix*>::iterator existing = fixes->begin(); existing != end; ++existing)
     {
         if (version < (*existing)->getVersion())
         {

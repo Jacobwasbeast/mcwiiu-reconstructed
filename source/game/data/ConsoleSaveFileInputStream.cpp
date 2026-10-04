@@ -2,7 +2,7 @@
 
 ConsoleSaveFileInputStream::ConsoleSaveFileInputStream(ConsoleSaveFile* saveFile,
                                                        const ConsoleSavePath& path)
-    : mSaveFile(saveFile), mFileEntry(NULL)
+    : mSaveFile(saveFile)
 {
     mFileEntry = mSaveFile->createFile(path);
     mSaveFile->setFilePointer(mFileEntry, 0, NULL, 0);
@@ -32,24 +32,24 @@ int ConsoleSaveFileInputStream::read(arrayWithLength<unsigned char> data)
 {
     unsigned int bytesRead;
 
-    if (mSaveFile->readFile(mFileEntry, data.data, data.length, &bytesRead) && bytesRead != 0)
+    if (!mSaveFile->readFile(mFileEntry, &data, data.length, &bytesRead) || bytesRead == 0)
     {
-        return bytesRead;
+        return -1;
     }
 
-    return -1;
+    return bytesRead;
 }
 
 int ConsoleSaveFileInputStream::read(arrayWithLength<unsigned char> data, unsigned int offset, unsigned int length)
 {
     unsigned int bytesRead;
 
-    if (mSaveFile->readFile(mFileEntry, data.data + offset, length, &bytesRead) && bytesRead != 0)
+    if (!mSaveFile->readFile(mFileEntry, data.data + offset, length, &bytesRead) || bytesRead == 0)
     {
-        return bytesRead;
+        return -1;
     }
 
-    return -1;
+    return bytesRead;
 }
 
 void ConsoleSaveFileInputStream::close()

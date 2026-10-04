@@ -1,3 +1,4 @@
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/data/ConsoleSaveFileReadOnly.hpp"
 
 #include <cstring>
@@ -26,19 +27,12 @@ ConsoleSaveFileReadOnly::ConsoleSaveFileReadOnly(const std::wstring& filename, v
 
     bool deleteBaseSaveData = false;
     unsigned int saveDataSize = dataSize;
-    LevelGenerationOptions* options = g_pApp->getLevelGenerationOptions();
-    if (data == NULL)
-    {
-        if (options != NULL && options->requiresBaseSave() &&
-            (data = options->getBaseSaveData(saveDataSize)) != NULL && saveDataSize != 0)
-            deleteBaseSaveData = true;
-        else
-            saveDataSize = gStorage->GetSaveSize();
-    }
-    else if (saveDataSize == 0)
-    {
+    LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
+    if (data == NULL && options != NULL && options->requiresBaseSave() &&
+        (data = options->getBaseSaveData(saveDataSize)) != NULL && saveDataSize != 0)
+        deleteBaseSaveData = true;
+    else if (data == NULL || saveDataSize == 0)
         saveDataSize = gStorage->GetSaveSize();
-    }
 
     if (resetData)
         saveDataSize = 0;
@@ -56,7 +50,7 @@ ConsoleSaveFileReadOnly::~ConsoleSaveFileReadOnly()
 
 void ConsoleSaveFileReadOnly::refreshFromLevelgen()
 {
-    LevelGenerationOptions* options = g_pApp->getLevelGenerationOptions();
+    LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
     unsigned int saveDataSize = 0;
     void* saveData;
 
@@ -67,11 +61,10 @@ void ConsoleSaveFileReadOnly::refreshFromLevelgen()
     if (saveData == NULL || saveDataSize == 0)
         return;
 
-    ESavePlatform platform = mFileHeader.m_savePlatform;
     VirtualFree(sSaveData, 0x4000000, 0x4000);
     sSaveDataPages = 0;
     mFileHeader.Reset();
-    _initSaveFromData(mFilename, saveDataSize, saveData, platform);
+    _initSaveFromData(mFilename, saveDataSize, saveData, mFileHeader.m_savePlatform);
     options->deleteBaseSaveData();
 }
 
@@ -86,16 +79,13 @@ void ConsoleSaveFileReadOnly::AllocInitialQuota(unsigned int size)
 
 void ConsoleSaveFileReadOnly::ReAlloc(unsigned int size)
 {
-    unsigned int pages = sSaveDataPages;
-
     if ((sSaveDataPages << 16) < size)
     {
-        pages = (size + 0xffff) >> 16;
+        unsigned int pages = (size + 0xffff) >> 16;
         if (VirtualAlloc(sSaveData, (size + 0xffff) & 0xffff0000, 0x1000, 4) == NULL)
             __debugbreak();
+        sSaveDataPages = pages;
     }
-
-    sSaveDataPages = pages;
 }
 
 FileEntry* ConsoleSaveFileReadOnly::createFile(const ConsoleSavePath& path)

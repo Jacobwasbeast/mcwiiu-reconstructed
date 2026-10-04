@@ -73,13 +73,11 @@ void CompoundTag::load(DataInput* input, int depth)
     deleteElements(mTags);
     mTags.clear();
 
-    unsigned char type = readNamedTagType(input);
-
-    while (type != 0)
+    for (unsigned char type = readNamedTagType(input); type != 0; type = readNamedTagType(input))
     {
         std::wstring name = readNamedTagName(input);
-        mTags[name] = readNamedTagData(type, name, input, depth + 1);
-        type = readNamedTagType(input);
+        Tag* tag = readNamedTagData(type, name, input, depth + 1);
+        mTags[name] = tag;
     }
 }
 
@@ -216,12 +214,12 @@ bool CompoundTag::contains(const std::wstring& name, int type)
         return true;
     }
 
-    if (type != 99)
+    if (type != Tag::TAG_ANY_NUMERIC)
     {
         return false;
     }
 
-    return tagType >= 1 && tagType <= 6;
+    return tagType >= Tag::TAG_BYTE && tagType <= Tag::TAG_DOUBLE;
 }
 
 bool CompoundTag::contains(const std::wstring& name)
@@ -375,12 +373,12 @@ double CompoundTag::getDouble(const std::wstring& name)
 
 std::wstring CompoundTag::getString(const std::wstring& name)
 {
-    if (!contains(name, Tag::TAG_STRING))
+    if (contains(name, Tag::TAG_STRING))
     {
-        return L"";
+        return mTags[name]->getAsString();
     }
 
-    return mTags[name]->getAsString();
+    return L"";
 }
 
 arrayWithLength<unsigned char> CompoundTag::getByteArray(const std::wstring& name)
@@ -405,24 +403,26 @@ arrayWithLength<int> CompoundTag::getIntArray(const std::wstring& name)
 
 CompoundTag* CompoundTag::getCompound(const std::wstring& name)
 {
-    if (!contains(name, Tag::TAG_COMPOUND))
+    if (contains(name, Tag::TAG_COMPOUND))
     {
-        return new CompoundTag();
+        return (CompoundTag*)mTags[name];
     }
 
-    return (CompoundTag*)mTags[name];
+    return new CompoundTag();
 }
 
 ListTag* CompoundTag::getList(const std::wstring& name, int type)
 {
-    if (getTagType(name) == Tag::TAG_LIST)
+    if (getTagType(name) != Tag::TAG_LIST)
     {
-        ListTag* list = (ListTag*)mTags[name];
+        return new ListTag();
+    }
 
-        if (list->isEmpty() || list->getType() == type)
-        {
-            return list;
-        }
+    ListTag* list = (ListTag*)mTags[name];
+
+    if (list->isEmpty() || list->getType() == type)
+    {
+        return list;
     }
 
     return new ListTag();
@@ -445,14 +445,16 @@ CompoundTag* CompoundTag::fjSafeGetCompoundTag(const std::wstring& name)
 
 ListTag* CompoundTag::fjSafeGetListTag(const std::wstring& name, int type) const
 {
-    if (getTagType(name) == Tag::TAG_LIST)
+    if (getTagType(name) != Tag::TAG_LIST)
     {
-        ListTag* list = (ListTag*)mTags.at(name);
+        return &sEmptyListTag;
+    }
 
-        if (list->isEmpty() || list->getType() == type)
-        {
-            return list;
-        }
+    ListTag* list = (ListTag*)mTags.at(name);
+
+    if (list->isEmpty() || list->getType() == type)
+    {
+        return list;
     }
 
     return &sEmptyListTag;
