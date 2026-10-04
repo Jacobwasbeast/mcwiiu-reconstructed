@@ -11,7 +11,7 @@ class DamageSource;
 class DifficultyInstance;
 class Level;
 class MobGroupData;
-class TippableArrow;
+class Arrow;
 class WitherBoss;
 
 class WitherSkeleton : public AbstractSkeleton
@@ -26,7 +26,7 @@ public:
     virtual void registerGoals();
     virtual MobGroupData* finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data,
                                             const std::wstring& dataString);
-    virtual double getEyeHeight();
+    virtual float getEyeHeight();
     virtual bool doHurtTarget(boost::shared_ptr<Entity> target);
     void setWitherParent(const boost::shared_ptr<WitherBoss>& parent);
     boost::shared_ptr<WitherBoss> getWitherParent();
@@ -39,7 +39,7 @@ public:
     virtual const SoundEvent* getDeathSound();
     virtual const SoundEvent* getStepSound();
     virtual void populateDefaultEquipmentEnchantments(const DifficultyInstance& difficulty);
-    boost::shared_ptr<TippableArrow> getArrow(float distanceFactor);
+    boost::shared_ptr<Arrow> getArrow(float distanceFactor);
     virtual unsigned long long GetType();
 
 private:

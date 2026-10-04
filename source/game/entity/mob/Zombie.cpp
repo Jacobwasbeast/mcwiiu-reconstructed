@@ -204,10 +204,9 @@ bool Zombie::isJockey()
 
 int Zombie::getExperienceReward(boost::shared_ptr<Player> player)
 {
-    int reward = Monster::getExperienceReward(player);
     if (isBaby())
-        reward = (int)((float)reward * 2.5f);
-    return reward;
+        mExperienceReward = (int)((float)mExperienceReward * 2.5f);
+    return Mob::getExperienceReward(player);
 }
 
 void Zombie::setBaby(bool baby)
@@ -226,37 +225,45 @@ void Zombie::setBaby(bool baby)
 void Zombie::onSyncedDataUpdated(const EntityDataAccessor_Base* accessor)
 {
     if (accessor->getId() == gZombieBabyId->getId())
-        internalSetSize(isBaby() ? 0.5f : 1.0f);
+    {
+        float scale = isBaby() ? 0.5f : 1.0f;
+        internalSetSize(scale);
+    }
     LivingEntity::onSyncedDataUpdated(accessor);
 }
 
 void Zombie::aiStep()
 {
-    if (!mLevel->mIsClientSide && mLevel->isDay() && isSunSensitive() && getBrightness() > 0.5f &&
-        mRandom->nextFloat() * 30.0f < (getBrightness() - 0.4f) * 2.0f)
+    if (mLevel->isDay() && !mLevel->mIsClientSide && isSunSensitive())
     {
-        BlockPos pos(mX, mY + getEyeHeight(), mZ);
-        if (mLevel->canSeeSky(pos))
+        float brightness = getBrightness();
+        if (brightness > 0.5f && mRandom->nextFloat() * 30.0f < (brightness - 0.4f) * 2.0f)
         {
-            not_null_ptr<ItemInstance> helmet = getItemSlot(EquipmentSlot::HEAD);
-            if (helmet->isEmpty())
-                setSecondsOnFire(8);
-            else if (helmet->isDamageableItem())
+            if (mLevel->canSeeSky(BlockPos(mX, mY + getEyeHeight(), mZ)))
             {
-                helmet->setAuxValue(helmet->getDamageValue() + mRandom->nextInt(2));
-                if (helmet->getDamageValue() >= helmet->getMaxDamage())
+                not_null_ptr<ItemInstance> helmet = getItemSlot(EquipmentSlot::HEAD);
+                if (!helmet->isEmpty())
                 {
-                    breakItem(helmet);
-                    setItemSlot(EquipmentSlot::HEAD, ItemInstance::EMPTY);
+                    if (helmet->isDamageableItem())
+                    {
+                        helmet->setAuxValue(helmet->getDamageValue() + mRandom->nextInt(2));
+                        if (helmet->getDamageValue() >= helmet->getMaxDamage())
+                        {
+                            breakItem(helmet);
+                            setItemSlot(EquipmentSlot::HEAD, ItemInstance::EMPTY);
+                        }
+                    }
+                }
+                else
+                {
+                    setSecondsOnFire(8);
                 }
             }
         }
     }
     Monster::aiStep();
-    if (isBaby())
-        internalSetSize(0.5f);
-    else
-        internalSetSize(1.0f);
+    float scale = isBaby() ? 0.5f : 1.0f;
+    internalSetSize(scale);
 }
 
 bool Zombie::hurt(const DamageSource* source, float damage)
@@ -265,15 +272,11 @@ bool Zombie::hurt(const DamageSource* source, float damage)
         return false;
 
     boost::shared_ptr<LivingEntity> attacker = getTarget();
-    if (!attacker)
-    {
-        boost::shared_ptr<Entity> entity = source->getEntity();
-        if (Entity::instanceof(entity, EntityType::LIVING_ENTITY))
-            attacker = boost::static_pointer_cast<LivingEntity>(entity);
-    }
+    if (!attacker && Entity::instanceof(source->getEntity(), EntityType::LIVING_ENTITY))
+        attacker = boost::static_pointer_cast<LivingEntity>(source->getEntity());
 
-    if (attacker && mLevel->getDifficulty() == Difficulty::NORMAL
-        && mRandom->nextFloat() < (float)getAttribute(SPAWN_REINFORCEMENTS_CHANCE)->getValue()
+    if (attacker && mLevel->getDifficulty() == Difficulty::HARD
+        && mRandom->nextFloat() < getAttribute(SPAWN_REINFORCEMENTS_CHANCE)->getValue()
         && mLevel->getGameRules()->getBoolean(GameRules::RULE_DOMOBSPAWNING))
     {
         int blockX = Mth::floor(mX);
@@ -283,43 +286,27 @@ bool Zombie::hurt(const DamageSource* source, float damage)
         boost::shared_ptr<Zombie> reinforcement(new Zombie(mLevel));
         for (int attempt = 0; attempt < 50; ++attempt)
         {
-            int offsetX = Mth::nextInt(mRandom, 7, 40) * Mth::nextInt(mRandom, -1, 1);
-            int offsetY = Mth::nextInt(mRandom, 7, 40) * Mth::nextInt(mRandom, -1, 1);
-            int offsetZ = Mth::nextInt(mRandom, 7, 40) * Mth::nextInt(mRandom, -1, 1);
-            int spawnX = blockX + offsetX;
-            int spawnY = blockY + offsetY;
-            int spawnZ = blockZ + offsetZ;
-            BlockPos groundPos(spawnX, spawnY - 1, spawnZ);
-            BlockPos spawnPos(spawnX, spawnY, spawnZ);
-            if (!mLevel->getBlockState(groundPos)->isTopSolidBlocking())
-                continue;
-            if (mLevel->getRawBrightness(spawnPos) > 9)
-                continue;
-            reinforcement->setPos((double)spawnX, (double)spawnY, (double)spawnZ);
-            if (mLevel->hasNearPlayer((double)spawnX, (double)spawnY, (double)spawnZ, 7.0))
-                continue;
-            if (!mLevel->isUnobstructed(reinforcement->mBoundingBox, reinforcement))
-                continue;
-            std::vector<AABB*>* collisions =
-                mLevel->getCollisionAABBs(reinforcement, reinforcement->mBoundingBox, false, false, false);
-            bool noCollisions = collisions->empty();
-            delete collisions;
-            if (!noCollisions)
-                continue;
-            if (mLevel->containsAnyLiquid(reinforcement->mBoundingBox))
-                continue;
-
-            mLevel->addEntity(reinforcement);
-            reinforcement->setTarget(attacker);
-            reinforcement->finalizeMobSpawn(
-                mLevel->getCurrentDifficultyAt(BlockPos(reinforcement)), NULL, std::wstring());
-            AttributeInstance* spawnChance =
-                getAttribute(SPAWN_REINFORCEMENTS_CHANCE);
-            AttributeInstance* reinforcementSpawnChance =
-                reinforcement->getAttribute(SPAWN_REINFORCEMENTS_CHANCE);
-            spawnChance->addModifier(new AttributeModifier(-0.05, 0));
-            reinforcementSpawnChance->addModifier(new AttributeModifier(-0.05, 0));
-            break;
+            int spawnX = blockX + Mth::nextInt(mRandom, 7, 40) * Mth::nextInt(mRandom, -1, 1);
+            int spawnY = blockY + Mth::nextInt(mRandom, 7, 40) * Mth::nextInt(mRandom, -1, 1);
+            int spawnZ = blockZ + Mth::nextInt(mRandom, 7, 40) * Mth::nextInt(mRandom, -1, 1);
+            if (mLevel->getBlockState(BlockPos(spawnX, spawnY - 1, spawnZ))->isTopSolidBlocking()
+                && mLevel->getRawBrightness(BlockPos(spawnX, spawnY, spawnZ)) < 10)
+            {
+                reinforcement->setPos((double)spawnX, (double)spawnY, (double)spawnZ);
+                if (!mLevel->hasNearPlayer((double)spawnX, (double)spawnY, (double)spawnZ, 7.0)
+                    && mLevel->isUnobstructed(reinforcement->mBoundingBox, reinforcement)
+                    && mLevel->getCollisionAABBs(reinforcement, reinforcement->mBoundingBox, false, false, false)->empty()
+                    && !mLevel->containsAnyLiquid(reinforcement->mBoundingBox))
+                {
+                    mLevel->addEntity(reinforcement);
+                    reinforcement->setTarget(attacker);
+                    reinforcement->finalizeMobSpawn(
+                        mLevel->getCurrentDifficultyAt(BlockPos(reinforcement)), NULL, std::wstring(L""));
+                    getAttribute(SPAWN_REINFORCEMENTS_CHANCE)->addModifier(new AttributeModifier(-0.05f, 0));
+                    reinforcement->getAttribute(SPAWN_REINFORCEMENTS_CHANCE)->addModifier(new AttributeModifier(-0.05f, 0));
+                    break;
+                }
+            }
         }
     }
 
@@ -332,7 +319,8 @@ bool Zombie::doHurtTarget(boost::shared_ptr<Entity> target)
     if (hurt)
     {
         float difficulty = mLevel->getCurrentDifficultyAt(BlockPos(this)).getEffectiveDifficulty();
-        if (getMainHandItem()->isEmpty() && isOnFire() && mRandom->nextFloat() < difficulty * 0.3f)
+        bool emptyHand = getMainHandItem()->isEmpty();
+        if (emptyHand && isOnFire() && mRandom->nextFloat() < difficulty * 0.3f)
         {
             target->setSecondsOnFire((int)difficulty << 1);
         }
@@ -433,9 +421,8 @@ void Zombie::killed(boost::shared_ptr<LivingEntity> entity)
             zombieVillager->copyPosition(villager);
             mLevel->removeEntity(villager);
 
-            DifficultyInstance difficulty = mLevel->getCurrentDifficultyAt(BlockPos(villager));
-            ZombieGroupData* group = new ZombieGroupData(false, false, true);
-            zombieVillager->finalizeMobSpawn(difficulty, group, std::wstring());
+            zombieVillager->finalizeMobSpawn(mLevel->getCurrentDifficultyAt(BlockPos(villager)),
+                                             new ZombieGroupData(false, false, true), std::wstring(L""));
 
             zombieVillager->setProfession(villager->getProfession());
             zombieVillager->setBaby(villager->isBaby());
@@ -453,7 +440,7 @@ void Zombie::killed(boost::shared_ptr<LivingEntity> entity)
     }
 }
 
-double Zombie::getEyeHeight()
+float Zombie::getEyeHeight()
 {
     float height = 1.62f;
     if (isBaby())
@@ -471,9 +458,8 @@ void Zombie::positionRider(const boost::shared_ptr<Entity>& entity)
     if (RiderPositionOverrides::OverridePosition(shared_from_this(), entity))
         return;
 
-    float angle = mYRot * 0.017453292f;
-    double sin = Mth::sin(angle);
-    double cos = Mth::cos(angle);
+    double sin = Mth::sin(mYBodyRot * 0.017453292f);
+    double cos = Mth::cos(mYBodyRot * 0.017453292f);
     entity->setPos(mX + 0.35 * sin, mY + 1.3, mZ - 0.35 * cos);
 }
 
@@ -492,7 +478,7 @@ bool Zombie::canHoldItem(not_null_ptr<ItemInstance> item)
 MobGroupData* Zombie::finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data,
                                        const std::wstring& dataString)
 {
-    data = Mob::finalizeMobSpawn(difficulty, data, std::wstring());
+    data = Mob::finalizeMobSpawn(difficulty, data, std::wstring(L""));
 
     const float specialMultiplier = difficulty.getSpecialMultiplier();
     setCanPickUpLoot(mRandom->nextFloat() < 0.55f * specialMultiplier);
@@ -505,9 +491,9 @@ MobGroupData* Zombie::finalizeMobSpawn(const DifficultyInstance& difficulty, Mob
         data = new ZombieGroupData(isBaby, isJockey, random->rollPercentageChance(5));
     }
 
-    ZombieGroupData* groupData = dynamic_cast<ZombieGroupData*>(data);
-    if (groupData != NULL)
+    if (dynamic_cast<ZombieGroupData*>(data) != NULL)
     {
+        ZombieGroupData* groupData = static_cast<ZombieGroupData*>(data);
         if (groupData->mIsBaby)
             setBaby(true);
         if (groupData->mIsJockey)
@@ -518,10 +504,11 @@ MobGroupData* Zombie::finalizeMobSpawn(const DifficultyInstance& difficulty, Mob
     populateDefaultEquipmentSlots(difficulty);
     populateDefaultEquipmentEnchantments(difficulty);
 
-    if (getItemSlot(EquipmentSlot::HEAD)->isEmpty() && IS_HALLOWEEN && mRandom->nextFloat() < 0.25f)
+    bool emptyHead = getItemSlot(EquipmentSlot::HEAD)->isEmpty();
+    if (emptyHead && IS_HALLOWEEN && mRandom->nextFloat() < 0.25f)
     {
         setItemSlot(EquipmentSlot::HEAD, not_null_ptr<ItemInstance>(new ItemInstance(
-                                             mRandom->nextFloat() < 0.1f ? Blocks::lit_pumpkin : Blocks::carved_pumpkin)));
+                                             mRandom->nextFloat() >= 0.1f ? Blocks::carved_pumpkin : Blocks::lit_pumpkin)));
         mArmorDropChances[EquipmentSlot::HEAD->getIndex()] = 0.0f;
     }
 
@@ -611,25 +598,25 @@ double Zombie::getRidingHeight()
 void Zombie::die(const DamageSource* source)
 {
     LivingEntity::die(source);
-
-    boost::shared_ptr<Entity> entity = source->getEntity();
-    if (!entity || entity->GetType() != EntityType::CREEPER)
-        return;
-
-    boost::shared_ptr<Creeper> creeper = boost::static_pointer_cast<Creeper>(entity);
-    if (!creeper->isPowered() || !creeper->canDropMobsSkull())
-        return;
-
-    creeper->increaseDroppedSkulls();
-    not_null_ptr<ItemInstance> skull = getSkull();
-    if (!skull->isEmpty())
-        spawnAtLocation(skull, 0.0f);
+    if (source->getEntity() != NULL && source->getEntity()->GetType() == EntityType::CREEPER)
+    {
+        boost::shared_ptr<Creeper> creeper = boost::static_pointer_cast<Creeper>(source->getEntity());
+        if (creeper->isPowered() && creeper->canDropMobsSkull())
+        {
+            creeper->increaseDroppedSkulls();
+            if (!getSkull()->isEmpty())
+                spawnAtLocation(getSkull(), 0.0f);
+        }
+    }
 }
 
 bool Zombie::startRiding(boost::shared_ptr<Entity> vehicle, bool force)
 {
     bool riding = Mob::startRiding(vehicle, force);
-    if (isBaby() && force && vehicle->GetType() == EntityType::CHICKEN)
+    bool chicken = false;
+    if (isBaby() && force)
+        chicken = vehicle->GetType() == EntityType::CHICKEN;
+    if (chicken)
         mIsJockey = true;
     return riding;
 }
@@ -641,15 +628,13 @@ void Zombie::finishConversion()
 
     if (isBaby())
     {
-        ZombieGroupData* group = new ZombieGroupData(true, isJockey(), false);
-        DifficultyInstance difficulty = mLevel->getCurrentDifficultyAt(BlockPos(drowned));
-        drowned->finalizeMobSpawn(difficulty, group, std::wstring());
+        drowned->finalizeMobSpawn(mLevel->getCurrentDifficultyAt(BlockPos(drowned)),
+                                  new ZombieGroupData(true, mIsJockey, false), std::wstring(L""));
     }
     else
     {
-        ZombieGroupData* group = new ZombieGroupData(false, false, false);
-        DifficultyInstance difficulty = mLevel->getCurrentDifficultyAt(BlockPos(drowned));
-        drowned->finalizeMobSpawn(difficulty, group, std::wstring());
+        drowned->finalizeMobSpawn(mLevel->getCurrentDifficultyAt(BlockPos(drowned)),
+                                  new ZombieGroupData(false, false, false), std::wstring(L""));
     }
 
     playSound(SoundEvents::DROWNED_CONVERTED, 1.0f, 1.0f);

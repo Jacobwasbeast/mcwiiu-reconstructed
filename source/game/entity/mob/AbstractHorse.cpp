@@ -138,7 +138,7 @@ void AbstractHorse::stand()
 
 void AbstractHorse::onPlayerJump(int jump)
 {
-    if (!isSaddled() && GetType() != EntityType::SKELETON_HORSE)
+    if (!isSaddled() && !eTYPE_DERIVED_FROM(EntityType::SKELETON_HORSE, GetType()))
         return;
     if (jump < 0)
     {
@@ -157,14 +157,17 @@ void AbstractHorse::onPlayerJump(int jump)
     mJumpRidingScale = 0.4f * (float)jump / 90.0f + 0.4f;
 }
 
-bool AbstractHorse::canJump() { return isSaddled() || GetType() == EntityType::SKELETON_HORSE; }
+bool AbstractHorse::canJump()
+{
+    return isSaddled() || eTYPE_DERIVED_FROM(EntityType::SKELETON_HORSE, GetType());
+}
 double AbstractHorse::getJumpRidingScale() { return mJumpRidingScale; }
 void AbstractHorse::setJumpRidingScale(float scale) { mJumpRidingScale = scale; }
 
 void AbstractHorse::handleStartJump(int)
 {
     boost::shared_ptr<Entity> passenger = getControllingPassenger();
-    if ((passenger->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+    if (eTYPE_DERIVED_FROM(EntityType::PLAYER, passenger->GetType()))
     {
         mLevel->playSound(boost::static_pointer_cast<Player>(passenger), BlockPos(mX, mY, mZ),
                           getJumpSound(), SoundSource::eSoundSource_Players, 0.4f, 1.0f, 16.0f);
@@ -314,7 +317,7 @@ bool AbstractHorse::hurt(const DamageSource* source, float damage)
 
 bool AbstractHorse::isPushable(boost::shared_ptr<Entity> entity)
 {
-    return !isVehicle() || entity->GetType() == EntityType::BOAT;
+    return !isVehicle() || eTYPE_DERIVED_FROM(EntityType::BOAT, entity->GetType());
 }
 
 void AbstractHorse::openMouth()
@@ -367,7 +370,7 @@ void AbstractHorse::causeFallDamage(float fallDistance, float damageMultiplier)
     if (block->mMaterial == Material::AIR || isSilent())
         return;
 
-    const SoundType* soundType = block->getSoundType();
+    const SoundType* soundType = block->mSoundType;
     mLevel->playSound(boost::shared_ptr<Player>(), mX, mY, mZ, soundType->getStepSound(),
                       getSoundSource(), soundType->getVolume() * 0.5f,
                       soundType->getPitch() * 0.75f, 16.0f);
@@ -376,7 +379,8 @@ void AbstractHorse::causeFallDamage(float fallDistance, float damageMultiplier)
 bool AbstractHorse::mobInteract(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand)
 {
     not_null_ptr<ItemInstance> item = player->getItemInHand(hand);
-    if (!item->isEmpty() && handleEating(player, item))
+    bool nonEmpty = !item->isEmpty();
+    if (nonEmpty && handleEating(player, item))
     {
         if (!player->mAbilities.mInstabuild)
             item->shrink(1);
@@ -415,11 +419,8 @@ void AbstractHorse::updateEquipment()
 {
     if (mLevel->mIsClientSide)
         return;
-    bool saddled = false;
     not_null_ptr<ItemInstance> saddle = mInventory->getItem(0);
-    if (!saddle->isEmpty() && canBeSaddled())
-        saddled = true;
-    setSaddled(saddled);
+    setSaddled(!saddle->isEmpty() && canBeSaddled());
 }
 
 boost::shared_ptr<AbstractHorse> AbstractHorse::getClosestMommy(const boost::shared_ptr<Entity>& entity,
@@ -468,13 +469,10 @@ void AbstractHorse::playStepSound(const BlockPos& pos, Block* block)
     if (isVehicle() && mCanGallop)
     {
         ++mGallopSoundCounter;
-        if (mGallopSoundCounter < 6)
-        {
-            playSound(SoundEvents::HORSE_STEP_WOOD, soundType->getVolume() * 0.4f, soundType->getPitch());
-            return;
-        }
-        if (mGallopSoundCounter % 3 == 0)
+        if (mGallopSoundCounter > 5 && mGallopSoundCounter % 3 == 0)
             playGallopSound(soundType);
+        else if (mGallopSoundCounter <= 5)
+            playSound(SoundEvents::HORSE_STEP_WOOD, soundType->getVolume() * 0.4f, soundType->getPitch());
         return;
     }
 
@@ -517,7 +515,7 @@ void AbstractHorse::openInventory(const boost::shared_ptr<Player>& player)
 
 int AbstractHorse::CheckAndSetInLove(boost::shared_ptr<Player> player)
 {
-    if (GetType() == EntityType::MULE || isBaby() || getInLoveValue() >= 1)
+    if (eTYPE_DERIVED_FROM(EntityType::MULE, GetType()) || isBaby() || getInLoveValue() >= 1)
         return 0;
 
     if (mLevel->canCreateMore(GetType(), Level::eSpawnType_Breed))
@@ -774,7 +772,7 @@ void AbstractHorse::makeMad()
 {
     stand();
     const SoundEvent* sound = getAngrySound();
-    const unsigned long long now = System::processTimeInMilliSecs();
+    const long long now = System::processTimeInMilliSecs();
     if (sound != NULL && mLastAngrySoundTime + 1000 < now)
     {
         mLastAngrySoundTime = now;
@@ -787,7 +785,7 @@ bool AbstractHorse::tameWithName(const boost::shared_ptr<Player>& player)
     setOwnerUUID(player->getUUID());
     setTamed(true);
     mLevel->broadcastEntityEvent(shared_from_this(), EntityEvent::TAMING_SUCCEEDED, 0);
-    if (player->GetType() == EntityType::SERVER_PLAYER)
+    if (eTYPE_DERIVED_FROM(EntityType::SERVER_PLAYER, player->GetType()))
     {
         player->awardStat(gStats->get_tamedEntity(EntityType::HORSE),
                           GenericStats::param_tamedEntity(EntityType::HORSE));
@@ -798,7 +796,7 @@ bool AbstractHorse::tameWithName(const boost::shared_ptr<Player>& player)
 void AbstractHorse::travel(float x, float y, float z)
 {
     if (!isVehicle() || !canBeControlledByRider()
-        || (!isSaddled() && GetType() != EntityType::SKELETON_HORSE))
+        || (!isSaddled() && !eTYPE_DERIVED_FROM(EntityType::SKELETON_HORSE, GetType())))
     {
         mFlyingSpeed = 0.02f;
         LivingEntity::travel(x, y, z);
@@ -1003,22 +1001,21 @@ void AbstractHorse::setOffspringAttributes(const boost::shared_ptr<AgableMob>& o
 
 bool AbstractHorse::canBeControlledByRider()
 {
-    if ((!isTamed() || !isSaddled()) && GetType() != EntityType::SKELETON_HORSE)
-        return false;
-    return Entity::instanceof(getControllingPassenger(), EntityType::LIVING_ENTITY);
+    return ((isTamed() && isSaddled()) || eTYPE_DERIVED_FROM(EntityType::SKELETON_HORSE, GetType()))
+        && Entity::instanceof(getControllingPassenger(), EntityType::LIVING_ENTITY);
 }
 
-double AbstractHorse::getEatAnim(float partialTick) const
+float AbstractHorse::getEatAnim(float partialTick) const
 {
     return (mEatAnim - mEatAnimO) * partialTick + mEatAnimO;
 }
 
-double AbstractHorse::getStandAnim(float partialTick) const
+float AbstractHorse::getStandAnim(float partialTick) const
 {
     return (mStandAnim - mStandAnimO) * partialTick + mStandAnimO;
 }
 
-double AbstractHorse::getMouthAnim(float partialTick) const
+float AbstractHorse::getMouthAnim(float partialTick) const
 {
     return (mMouthAnim - mMouthAnimO) * partialTick + mMouthAnimO;
 }
@@ -1076,7 +1073,7 @@ void AbstractHorse::positionRider(const boost::shared_ptr<Entity>& passenger)
 }
 
 bool AbstractHorse::onLadder() { return false; }
-double AbstractHorse::getEyeHeight() { return mBbHeight; }
+float AbstractHorse::getEyeHeight() { return mBbHeight; }
 bool AbstractHorse::wearsArmor() { return false; }
 bool AbstractHorse::isArmor(const not_null_ptr<ItemInstance>&) { return false; }
 

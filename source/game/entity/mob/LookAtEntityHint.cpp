@@ -23,101 +23,99 @@ LookAtEntityHint::~LookAtEntityHint()
 boost::shared_ptr<ItemInstance> LookAtEntityHint::GetEntityAsItem(boost::shared_ptr<Entity> entity)
 {
     unsigned long long type = entity->GetType();
-    Item* item = NULL;
 
     if (type == EntityType::ENDER_CRYSTAL)
     {
-        item = Items::endCrystal;
+        return boost::shared_ptr<ItemInstance>(new ItemInstance(Items::endCrystal));
     }
-    else if (type == EntityType::ARMOR_STAND)
+    if (type == EntityType::ARMOR_STAND)
     {
-        item = Items::armorStand;
+        return boost::shared_ptr<ItemInstance>(new ItemInstance(Items::armorStand));
     }
-    else if (type == EntityType::BOAT)
+    if (type == EntityType::BOAT)
     {
-        item = boost::static_pointer_cast<Boat>(entity)->getDropItem();
+        boost::shared_ptr<Boat> boat = boost::static_pointer_cast<Boat>(entity);
+        Item* dropItem = boat->getDropItem();
+        return boost::shared_ptr<ItemInstance>(new ItemInstance(dropItem));
     }
-    else if (type == EntityType::MINECART_TNT)
+    if (type == EntityType::MINECART_TNT)
     {
-        item = Items::tntMinecart;
+        return boost::shared_ptr<ItemInstance>(new ItemInstance(Items::tntMinecart));
     }
-    else if (type == EntityType::MINECART_HOPPER)
+    if (type == EntityType::MINECART_HOPPER)
     {
-        item = Items::hopperMinecart;
+        return boost::shared_ptr<ItemInstance>(new ItemInstance(Items::hopperMinecart));
     }
-    else if (type == EntityType::MINECART_FURNACE)
+    if (type == EntityType::MINECART_FURNACE)
     {
-        item = Items::furnaceMinecart;
+        return boost::shared_ptr<ItemInstance>(new ItemInstance(Items::furnaceMinecart));
     }
-    else if (type == EntityType::MINECART_CHEST)
+    if (type == EntityType::MINECART_CHEST)
     {
-        item = Items::chestMinecart;
+        return boost::shared_ptr<ItemInstance>(new ItemInstance(Items::chestMinecart));
     }
-    else if (type == EntityType::MINECART_RIDEABLE)
+    if (type == EntityType::MINECART_RIDEABLE)
     {
-        item = Items::minecart;
+        return boost::shared_ptr<ItemInstance>(new ItemInstance(Items::minecart));
     }
-    else if (type == EntityType::LEASH_FENCE_KNOT_ENTITY)
+    if (type == EntityType::LEASH_FENCE_KNOT_ENTITY)
     {
-        item = Items::lead;
+        return boost::shared_ptr<ItemInstance>(new ItemInstance(Items::lead));
     }
-    else if (type == EntityType::ITEM_FRAME)
+    if (type == EntityType::ITEM_FRAME)
     {
-        item = Items::itemFrame;
+        return boost::shared_ptr<ItemInstance>(new ItemInstance(Items::itemFrame));
     }
-    else if (type == EntityType::PAINTING)
+    if (type == EntityType::PAINTING)
     {
-        item = Items::painting;
-    }
-    else
-    {
-        return boost::shared_ptr<ItemInstance>();
+        return boost::shared_ptr<ItemInstance>(new ItemInstance(Items::painting));
     }
 
-    return boost::shared_ptr<ItemInstance>(new ItemInstance(item));
+    return ItemInstance::EMPTY;
 }
 
 unsigned int LookAtEntityHint::onLookAtEntity(boost::shared_ptr<Entity> entity)
 {
-    if (entity->GetType() != entityType)
+    bool matches = false;
+    if (entityType == entity->GetType())
     {
-        return 0;
+        if (entityPredicate == NULL || entityPredicate(entity))
+        {
+            matches = true;
+        }
     }
 
-    if (entityPredicate != NULL && !entityPredicate(entity))
+    if (matches)
     {
-        return 0;
-    }
+        Tutorial::PopupMessageDetails* details = new Tutorial::PopupMessageDetails();
+        unsigned long long type = entity->GetType();
+        if ((type & EntityType::HANGING_ENTITY) != EntityType::HANGING_ENTITY &&
+            (type & EntityType::MINECART) != EntityType::MINECART &&
+            entity->GetType() != EntityType::BOAT &&
+            entity->GetType() != EntityType::ARMOR_STAND &&
+            entity->GetType() != EntityType::ENDER_CRYSTAL)
+        {
+            details->titleId = descriptionId;
+            details->promptId = entityId;
+            details->isItem = true;
+            return tutorial->setMessage(this, details);
+        }
 
-    Tutorial::PopupMessageDetails* details = new Tutorial::PopupMessageDetails();
-    details->messageId = descriptionId;
-    details->itemId = entityId;
-    details->isItem = true;
-
-    unsigned long long type = entity->GetType();
-    if ((type & EntityType::HANGING_ENTITY) != EntityType::HANGING_ENTITY &&
-        (type & EntityType::MINECART) != EntityType::MINECART &&
-        type != EntityType::BOAT && type != EntityType::ARMOR_STAND &&
-        type != EntityType::ENDER_CRYSTAL)
-    {
-        return tutorial->setMessage(this, details);
+        boost::shared_ptr<ItemInstance> item = GetEntityAsItem(entity);
+        if (!item->isEmpty())
+        {
+            details->titleId = item->getUseDescriptionId();
+            if (item->getItem() != NULL)
+            {
+                details->itemDescription = item->getHoverName();
+            }
+            details->itemDescriptionId = item->getDescriptionId(-1);
+            details->itemInstance = item;
+            details->itemId = Item::VALIDgetId(item->getItem());
+            details->itemAuxValue = item->getAuxValue();
+            details->isItem = true;
+            return tutorial->setMessage(this, details);
+        }
     }
-
-    boost::shared_ptr<ItemInstance> item = GetEntityAsItem(entity);
-    if (item->isEmpty())
-    {
-        return 0;
-    }
-
-    details->messageId = item->getUseDescriptionId();
-    if (item->getItem() != NULL)
-    {
-        details->itemDescription = item->getHoverName();
-    }
-    details->itemDescriptionId = item->getDescriptionId(-1);
-    details->itemInstance = item;
-    details->itemId = Item::VALIDgetId(item->getItem());
-    details->itemAuxValue = item->getAuxValue();
-    details->isItem = true;
-    return tutorial->setMessage(this, details);
+    return 0;
 }

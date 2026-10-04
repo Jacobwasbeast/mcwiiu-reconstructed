@@ -100,7 +100,7 @@ void TamableAnimal::readAdditionalSaveData(CompoundTag* tag)
 
 bool TamableAnimal::canBeLeashed(const boost::shared_ptr<Player>& player)
 {
-    return isTame() && isOwnedBy(boost::static_pointer_cast<LivingEntity>(player));
+    return isTame() && isOwnedBy(player);
 }
 
 void TamableAnimal::spawnTamingParticles(bool success)
@@ -192,7 +192,7 @@ void TamableAnimal::tame(boost::shared_ptr<Player> player)
 
 bool TamableAnimal::isOwnedBy(boost::shared_ptr<LivingEntity> entity)
 {
-    return entity != NULL && entity == getOwner();
+    return entity == getOwner();
 }
 
 SitGoal* TamableAnimal::getSitGoal()
@@ -219,14 +219,20 @@ Team* TamableAnimal::getTeam()
 
 bool TamableAnimal::isAlliedTo(boost::shared_ptr<Entity> entity)
 {
-    boost::shared_ptr<LivingEntity> owner = getOwner();
-
-    if (owner != NULL && owner->is(entity))
+    if (isTame())
     {
-        return true;
+        boost::shared_ptr<LivingEntity> owner = getOwner();
+        if (entity == owner)
+        {
+            return true;
+        }
+        if (owner != NULL)
+        {
+            return owner->isAlliedTo(entity);
+        }
     }
 
-    return owner != NULL ? owner->isAlliedTo(entity) : Entity::isAlliedTo(entity);
+    return Entity::isAlliedTo(entity);
 }
 
 void TamableAnimal::die(const DamageSource* source)
@@ -241,8 +247,9 @@ void TamableAnimal::die(const DamageSource* source)
     LivingEntity::die(source);
 }
 
-bool TamableAnimal::interactAt(const boost::shared_ptr<Player>& player, Vec3* pos,
-                               InteractionHand::EInteractionHand hand)
+InteractionResult::EInteractionResult TamableAnimal::interactAt(
+    const boost::shared_ptr<Player>& player, Vec3* pos, InteractionHand::EInteractionHand hand)
 {
-    return !isTame();
+    return isTame() ? InteractionResult::eInteractionResult_Success
+                    : InteractionResult::eInteractionResult_Pass;
 }

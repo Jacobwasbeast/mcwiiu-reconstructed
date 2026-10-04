@@ -29,20 +29,19 @@ EntityTickCache::EntityTickCache()
     mBlockStates = NULL;
     mLastFrameUpdated = 0;
     mCacheChanged = true;
-    mLevel = NULL;
 }
 
 EntityTickCache::~EntityTickCache()
 {
-    delete[] mElements;
-    delete[] mBlockStates;
+    delete mElements;
+    delete mBlockStates;
 }
 
 int EntityTickCache::getIndexInCache(int x, int y, int z) const
 {
     int depth = mMaxZ - mMinZ + 1;
 
-    return (x - mMinX) * (mMaxY - mMinY + 1) * depth + (y - mMinY) * depth + (z - mMinZ);
+    return (x - mMinX) * ((mMaxY - mMinY + 1) * depth) + (y - mMinY) * depth + (z - mMinZ);
 }
 
 void EntityTickCache::blockChanged(const BlockPos& pos)
@@ -56,7 +55,9 @@ void EntityTickCache::blockChanged(const BlockPos& pos)
         int index = getIndexInCache(x, y, z);
         unsigned short element = mLevel->getElement(x, y, z);
 
-        mBlockStates[index] = Block::getStateByElementId(element);
+        const BlockState* state = Block::getStateByElementId(element);
+
+        mBlockStates[index] = state;
         mElements[index] = element;
     }
 }
@@ -145,10 +146,10 @@ void EntityTickCache::clearCache()
     mMaxY = 0;
     mMaxZ = 0;
 
-    delete[] mBlockStates;
+    delete mBlockStates;
     mBlockStates = NULL;
 
-    delete[] mElements;
+    delete mElements;
     mElements = NULL;
 }
 
@@ -234,9 +235,13 @@ void EntityTickCache::buildCache(Level* level, int minX, int minY, int minZ, int
 
     bool chunksChanged = false;
 
-    for (int chunkX = mMinX >> 4; chunkX <= mMaxX >> 4; ++chunkX)
+    int maxCachedX = mMaxX;
+    int minChunkZ = mMinZ >> 4;
+    int maxChunkZ = mMaxZ >> 4;
+
+    for (int chunkX = mMinX >> 4; chunkX <= maxCachedX >> 4; ++chunkX)
     {
-        for (int chunkZ = mMinZ >> 4; chunkZ <= mMaxZ >> 4; ++chunkZ)
+        for (int chunkZ = minChunkZ; chunkZ <= maxChunkZ; ++chunkZ)
         {
             if (level->getChunk(chunkX, chunkZ)->getElementFrameLastUpdated() >= mLastFrameUpdated)
             {
@@ -253,16 +258,18 @@ void EntityTickCache::buildCache(Level* level, int minX, int minY, int minZ, int
         boundsChanged = false;
     }
 
-    mCacheChanged = chunksChanged || boundsChanged;
-
-    if (!mCacheChanged)
+    if (!chunksChanged && !boundsChanged)
     {
+        mCacheChanged = false;
+
         return;
     }
 
-    int size = (newMaxX - newMinX + 1) * (newMaxY - newMinY + 1) * (newMaxZ - newMinZ + 1);
+    unsigned int size = (newMaxX - newMinX + 1) * (newMaxY - newMinY + 1) * (newMaxZ - newMinZ + 1);
 
-    if (size > 1024)
+    mCacheChanged = true;
+
+    if (size >= 1025)
     {
         clearCache();
 
@@ -272,7 +279,7 @@ void EntityTickCache::buildCache(Level* level, int minX, int minY, int minZ, int
     unsigned short* elements = NULL;
     const BlockState** blockStates = NULL;
 
-    if (size > 0)
+    if ((int)size > 0)
     {
         elements = new unsigned short[size];
         blockStates = new const BlockState*[size];
@@ -288,13 +295,14 @@ void EntityTickCache::buildCache(Level* level, int minX, int minY, int minZ, int
             {
                 if (chunksChanged)
                 {
-                    elements[index] = 0xFFFF;
                     blockStates[index] = NULL;
+                    elements[index] = 0xFFFF;
                 }
                 else
                 {
-                    elements[index] = getElement(x, y, z);
+                    unsigned short element = getElement(x, y, z);
                     blockStates[index] = getBlockState(x, y, z);
+                    elements[index] = element;
                 }
 
                 ++index;
@@ -323,10 +331,18 @@ void EntityTickCache::buildCache(Level* level, int minX, int minY, int minZ, int
     mLastCenterY = centerY;
     mLastCenterZ = centerZ;
 
-    delete[] mElements;
+    if (mElements != NULL)
+    {
+        delete mElements;
+    }
+
     mElements = elements;
 
-    delete[] mBlockStates;
+    if (mBlockStates != NULL)
+    {
+        delete mBlockStates;
+    }
+
     mBlockStates = blockStates;
 
     mLastFrameUpdated = gRenderer->GetFramesSinceBoot();

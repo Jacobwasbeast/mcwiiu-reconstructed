@@ -41,27 +41,31 @@ const EntityDataAccessor<not_null_ptr<ItemInstance> >* FireworksRocketEntity::DA
 const EntityDataAccessor<int>* FireworksRocketEntity::DATA_ATTACHED_TO_ENTITY = NULL;
 
 FireworksRocketEntity::FireworksRocketEntity(Level* level, const boost::shared_ptr<Player>& player, const not_null_ptr<ItemInstance>& item)
-    : Entity(level, true), mLife(0), mLifetime(0), mAttachedToEntity(), mHasDirectionalData(false), mDirectionalX(0), mDirectionalY(0), mDirectionalZ(0), mDirectionalInitialized(false), mOwner(player)
+    : Entity(level, true), mAttachedToEntity(), mOwner()
 {
-    _init(mX, mY, mZ, item);
+    _init(player->mX, player->mY + player->getEyeHeight(), player->mZ, item);
     mHasDirectionalData = true;
+    Vec3* look = player->getLookAngle();
+    mXd = look->x;
+    mYd = look->y;
+    mZd = look->z;
+    mOwner = player;
 }
 
 FireworksRocketEntity::FireworksRocketEntity(Level* level, double x, double y, double z, not_null_ptr<ItemInstance> item)
-    : Entity(level, true), mLife(0), mLifetime(0), mAttachedToEntity(), mHasDirectionalData(false), mDirectionalX(0), mDirectionalY(0), mDirectionalZ(0), mDirectionalInitialized(false), mOwner()
+    : Entity(level, true), mAttachedToEntity(), mOwner()
 {
     _init(x, y, z, item);
+    mOwner.reset();
 }
 
 FireworksRocketEntity::FireworksRocketEntity(Level* level, const not_null_ptr<ItemInstance>& item, const boost::shared_ptr<LivingEntity>& entity)
-    : Entity(level, true), mLife(0), mLifetime(0), mAttachedToEntity(entity), mHasDirectionalData(false), mDirectionalX(0), mDirectionalY(0), mDirectionalZ(0), mDirectionalInitialized(false), mOwner()
+    : Entity(level, true), mAttachedToEntity(), mOwner()
 {
-    if (entity)
-    {
-        Entity* attachedEntity = (Entity*)entity.get();
-        _init(attachedEntity->mX, attachedEntity->mY, attachedEntity->mZ, item);
-        mEntityData->set(DATA_ATTACHED_TO_ENTITY, attachedEntity->getId(), true);
-    }
+    _init(entity->mX, entity->mY, entity->mZ, item);
+    mEntityData->set(DATA_ATTACHED_TO_ENTITY, entity->getId(), true);
+    mAttachedToEntity = entity;
+    mOwner.reset();
 }
 
 FireworksRocketEntity::FireworksRocketEntity(Level* level)
@@ -113,6 +117,7 @@ void FireworksRocketEntity::_init(double x, double y, double z, const not_null_p
     mZd = mRandom->nextGaussian() * 0.001;
     mYd = 0.05;
     mDirectionalX = 0;
+    mDirectionalY = 0;
     mDirectionalZ = 0;
 
     mLifetime = 40;

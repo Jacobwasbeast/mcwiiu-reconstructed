@@ -14,6 +14,7 @@
 #include "game/command/CommandStats.hpp"
 #include "game/client/audio/SoundSource.hpp"
 #include "game/core/InteractionHand.hpp"
+#include "game/core/InteractionResult.hpp"
 #include "game/entity/mob/EntityCategory.hpp"
 #include "game/entity/mob/EntityTickCache.hpp"
 #include "game/entity/mob/MoverType.hpp"
@@ -180,7 +181,7 @@ public:
     virtual void readAdditionalSaveData(CompoundTag* tag) = 0;
     virtual void addAdditonalSaveData(CompoundTag* tag) = 0;
     virtual void readAdditionContructionTag(CompoundTag* tag) {}
-    virtual CompoundTag* getAdditionContructionTag() { return NULL; }
+    virtual CompoundTag* getAdditionContructionTag();
     virtual boost::shared_ptr<ItemEntity> spawnAtLocation(Item* item, int count);
     virtual boost::shared_ptr<ItemEntity> spawnAtLocation(Item* item, int count, float yOffset);
     virtual boost::shared_ptr<ItemEntity> spawnAtLocation(not_null_ptr<ItemInstance> itemInstance, float yOffset);
@@ -298,7 +299,7 @@ public:
     virtual bool broadcastToPlayer(boost::shared_ptr<ServerPlayer> player);
     virtual AABB* getBoundingBoxForCulling();
     virtual void setBoundingBox(AABB* boundingBox);
-    virtual double getEyeHeight();
+    virtual float getEyeHeight();
     virtual bool setSlot(int slot, const not_null_ptr<ItemInstance>& itemInstance);
     virtual void sendMessage(ClientboundChatPacket::EChatPacketMessage message, int* intParams, unsigned int numIntParams, std::wstring* stringParams, unsigned int numStringParams);
     virtual bool hasPermission(EGameCommand command);
@@ -309,7 +310,8 @@ public:
     virtual bool isSendMessageEnabled();
     virtual void setCommandStats(CommandStats::CommandStatType statType, int value);
     virtual MinecraftServer* getServer();
-    virtual bool interactAt(const boost::shared_ptr<Player>& player, Vec3* pos, InteractionHand::EInteractionHand hand);
+    virtual InteractionResult::EInteractionResult interactAt(const boost::shared_ptr<Player>& player, Vec3* pos,
+                                                             InteractionHand::EInteractionHand hand);
     virtual bool ignoreExplosion();
     virtual void startSeenByPlayer(boost::shared_ptr<ServerPlayer> player);
     virtual void stopSeenByPlayer(boost::shared_ptr<ServerPlayer> player);
@@ -473,20 +475,19 @@ public:
     EntityTickCache mTickCache;
     std::vector<AABB> mCollisionCache;
     AABB* mWaterCheckBox;
-    bool mCollisionCacheValid;
     bool mFireCacheResult;
     int mFireCacheMinX;
-    int mFireCacheMinY;
-    int mFireCacheMinZ;
     int mFireCacheMaxX;
+    int mFireCacheMinY;
     int mFireCacheMaxY;
+    int mFireCacheMinZ;
     int mFireCacheMaxZ;
     bool mLavaCacheResult;
     int mLavaCacheMinX;
-    int mLavaCacheMinY;
-    int mLavaCacheMinZ;
     int mLavaCacheMaxX;
+    int mLavaCacheMinY;
     int mLavaCacheMaxY;
+    int mLavaCacheMinZ;
     int mLavaCacheMaxZ;
     bool mInWallCacheResult;
     double mInWallCacheX;

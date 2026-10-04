@@ -24,6 +24,7 @@
 #include "game/entity/mob/MobEffectInstance.hpp"
 #include "game/entity/mob/SynchedEntityData.hpp"
 #include "game/entity/projectile/Arrow.hpp"
+#include "game/entity/projectile/SpectralArrow.hpp"
 #include "game/entity/projectile/Fireball.hpp"
 #include "game/entity/projectile/FishingHook.hpp"
 #include "game/item/AreaEffectCloud.hpp"
@@ -76,14 +77,31 @@ static int sRotPacketCount = 0;
 
 TrackedEntity::TrackedEntity(boost::shared_ptr<Entity> entity, int range, int maxRange, int updateInterval,
                              bool trackDelta)
-    : mEntity(entity), mRange(range), mMaxRange(maxRange), mUpdateInterval(updateInterval),
-      mXp(Mth::floor(entity->mX * 32.0)), mYp(Mth::floor(entity->mY * 32.0)), mZp(Mth::floor(entity->mZ * 32.0)),
-      mYRotp(Mth::floor(entity->mYRot * 256.0f / 360.0f)), mXRotp(Mth::floor(entity->mXRot * 256.0f / 360.0f)),
-      mYHeadRotp(Mth::floor(entity->getYHeadRot() * 256.0f / 360.0f)), mXap(0.0), mYap(0.0), mZap(0.0),
-      mTickCount(0), mXpu(entity->mX), mYpu(entity->mY), mZpu(entity->mZ), mUpdatedPlayerVisibility(false),
-      mTrackDelta(trackDelta), mTeleportDelay(0), mLastPassengers(), mWasRiding(false),
-      mWasOnGround(entity->mOnGround), mPlayerEntitiesUpdated(false), mSeenBy()
+    : mEntity(), mLastPassengers(), mSeenBy()
 {
+    mUpdatedPlayerVisibility = false;
+    mPlayerEntitiesUpdated = false;
+    mWasRiding = false;
+    mTickCount = 0;
+    mTeleportDelay = 0;
+    mXap = 0.0;
+    mYap = 0.0;
+    mZap = 0.0;
+    mEntity = entity;
+    mRange = range;
+    mTrackDelta = trackDelta;
+    mMaxRange = maxRange;
+    mUpdateInterval = updateInterval;
+    mXp = Mth::floor(entity->mX * 32.0);
+    mYp = Mth::floor(entity->mY * 32.0);
+    mZp = Mth::floor(entity->mZ * 32.0);
+    mXpu = entity->mX;
+    mYpu = entity->mY;
+    mZpu = entity->mZ;
+    mYRotp = Mth::floor(entity->mYRot * 256.0f / 360.0f);
+    mXRotp = Mth::floor(entity->mXRot * 256.0f / 360.0f);
+    mYHeadRotp = Mth::floor(entity->getYHeadRot() * 256.0f / 360.0f);
+    mWasOnGround = entity->mOnGround;
 }
 
 bool TrackedEntity::canBySeenBy(boost::shared_ptr<ServerPlayer> player)
@@ -105,7 +123,9 @@ int TrackedEntity::isVisibleTo(EntityTracker* tracker, const boost::shared_ptr<S
         zd = player->mZ - mZp / 32;
     }
 
-    int range = mRange < mMaxRange ? mRange : mMaxRange;
+    int range = mMaxRange;
+    if (mRange < mMaxRange)
+        range = mRange;
     if (range > 4)
         range -= player->getPlayerViewDistanceModifier();
 
@@ -148,8 +168,8 @@ int TrackedEntity::isVisibleTo(EntityTracker* tracker, const boost::shared_ptr<S
                 double otherXd = other->mX - mXpu;
                 double otherZd = other->mZ - mZpu;
                 bool otherInRange = -range <= otherXd && otherXd <= range && -range <= otherZd && otherZd <= range;
-                inRange = inRange || otherInRange;
-                canSee = canSee || canBySeenBy(other);
+                inRange = inRange | otherInRange;
+                canSee = canSee | canBySeenBy(other);
             }
         }
     }
@@ -168,9 +188,13 @@ int TrackedEntity::isVisibleTo(EntityTracker* tracker, const boost::shared_ptr<S
             inLevel = true;
     }
 
-    if (!inRange)
-        return 0;
-    return inLevel ? 2 : 1;
+    if (inRange)
+    {
+        if (inLevel)
+            return 2;
+        return 1;
+    }
+    return 0;
 }
 
 boost::shared_ptr<Packet> TrackedEntity::getAddEntityPacket()
@@ -194,7 +218,7 @@ boost::shared_ptr<Packet> TrackedEntity::getAddEntityPacket()
     {
         mYHeadRotp = Mth::floor(mEntity->getYHeadRot() * 256.0f / 360.0f);
         return boost::shared_ptr<Packet>(new ClientboundAddMobPacket(
-            boost::static_pointer_cast<LivingEntity>(mEntity), mYRotp, mXRotp, mXp, mYp, mZp, mYHeadRotp,
+            boost::static_pointer_cast<Mob>(mEntity), mYRotp, mXRotp, mXp, mYp, mZp, mYHeadRotp,
             mEntity->getAdditionContructionTag()));
     }
 
@@ -240,7 +264,7 @@ boost::shared_ptr<Packet> TrackedEntity::getAddEntityPacket()
 
     if (eTYPE_DERIVED_FROM(EntityType::SPECTRAL_ARROW, mEntity->GetType()))
     {
-        boost::shared_ptr<Entity> owner = boost::static_pointer_cast<Arrow>(mEntity)->mOwner;
+        boost::shared_ptr<Entity> owner = boost::static_pointer_cast<SpectralArrow>(mEntity)->mOwner;
         int ownerId = owner != NULL ? owner->getId() : mEntity->getId();
         return boost::shared_ptr<Packet>(
             new ClientboundAddEntityPacket(mEntity, 0x5b, ownerId + 1, mYRotp, mXRotp, mXp, mYp, mZp));
@@ -389,13 +413,13 @@ boost::shared_ptr<Packet> TrackedEntity::getAddEntityPacket()
 
 bool TrackedEntity::ShouldSendEntityDataOnContruction(boost::shared_ptr<Entity> entity)
 {
-    if (entity->GetType() == EntityType::THROWN_POTION
-        && Minecraft::GetInstance()->GetMiniGame()->HasFeatureSplashLevitatePotions())
+    const bool isPotion = entity->GetType() == EntityType::THROWN_POTION;
+    if (isPotion && Minecraft::GetInstance()->GetMiniGame()->HasFeatureSplashLevitatePotions())
     {
         return false;
     }
-    if (entity->GetType() == EntityType::FIREWORKS_ROCKET_ENTITY
-        && Minecraft::GetInstance()->GetMiniGame()->HasFeatureDirectionalFireworks())
+    const bool isFireworks = entity->GetType() == EntityType::FIREWORKS_ROCKET_ENTITY;
+    if (isFireworks && Minecraft::GetInstance()->GetMiniGame()->HasFeatureDirectionalFireworks())
     {
         return false;
     }
@@ -409,9 +433,10 @@ void TrackedEntity::updatePlayer(EntityTracker* tracker, boost::shared_ptr<Serve
 
     bool canReceiveAll = gMinecraftServer->getPlayers()->canReceiveAllPackets(player);
     int visible = isVisibleTo(tracker, player, false, !canReceiveAll);
-    bool seen = mSeenBy.find(player) != mSeenBy.end();
+    bool notSeen = mSeenBy.find(player) == mSeenBy.end();
+    bool forcedLoading = mEntity->mForcedLoading;
 
-    if (visible == 2 && (!seen || mEntity->mForcedLoading))
+    if (visible == 2 && (notSeen | forcedLoading))
     {
         mSeenBy.insert(player);
         boost::shared_ptr<Packet> packet = getAddEntityPacket();
@@ -531,7 +556,7 @@ void TrackedEntity::updatePlayer(EntityTracker* tracker, boost::shared_ptr<Serve
     if (visible != 0)
         return;
 
-    boost::unordered_set<boost::shared_ptr<ServerPlayer>, boost::hash<boost::shared_ptr<ServerPlayer> > >::iterator it =
+    boost::unordered_set<boost::shared_ptr<ServerPlayer>, _PlayerKeyHash, _PlayerKeyEq>::iterator it =
         mSeenBy.find(player);
     if (it == mSeenBy.end())
         return;
@@ -548,55 +573,55 @@ void TrackedEntity::updatePlayers(EntityTracker* tracker, std::vector<boost::sha
 
 void TrackedEntity::broadcast(boost::shared_ptr<Packet> packet)
 {
-    if (!Packet::canSendToAnyClient(packet))
+    if (Packet::canSendToAnyClient(packet))
     {
-        for (boost::unordered_set<boost::shared_ptr<ServerPlayer>, boost::hash<boost::shared_ptr<ServerPlayer> > >::iterator
+        std::vector<boost::shared_ptr<ServerPlayer> > sentTo;
+        for (boost::unordered_set<boost::shared_ptr<ServerPlayer>, _PlayerKeyHash, _PlayerKeyEq>::iterator
+                 it = mSeenBy.begin();
+             it != mSeenBy.end(); ++it)
+        {
+            boost::shared_ptr<ServerPlayer> player = *it;
+            bool dontSend = false;
+            if (!sentTo.empty())
+            {
+                INetworkPlayer* networkPlayer = player->mConnection->getNetworkPlayer();
+                if (networkPlayer != NULL)
+                {
+                    for (unsigned int i = 0; i < sentTo.size(); ++i)
+                    {
+                        boost::shared_ptr<ServerPlayer> sent = sentTo[i];
+                        INetworkPlayer* sentNetworkPlayer = sent->mConnection->getNetworkPlayer();
+                        if (sentNetworkPlayer != NULL && networkPlayer->IsSameSystem(sentNetworkPlayer))
+                            dontSend = true;
+                    }
+                }
+            }
+            if (!dontSend)
+            {
+                (*it)->mConnection->send(packet);
+                sentTo.push_back(player);
+            }
+        }
+    }
+    else
+    {
+        for (boost::unordered_set<boost::shared_ptr<ServerPlayer>, _PlayerKeyHash, _PlayerKeyEq>::iterator
                  it = mSeenBy.begin();
              it != mSeenBy.end(); ++it)
         {
             (*it)->mConnection->send(packet);
-        }
-        return;
-    }
-
-    std::vector<boost::shared_ptr<ServerPlayer> > sentTo;
-    for (boost::unordered_set<boost::shared_ptr<ServerPlayer>, boost::hash<boost::shared_ptr<ServerPlayer> > >::iterator
-             it = mSeenBy.begin();
-         it != mSeenBy.end(); ++it)
-    {
-        boost::shared_ptr<ServerPlayer> player = *it;
-        bool dontSend = false;
-        if (!sentTo.empty())
-        {
-            INetworkPlayer* networkPlayer = player->mConnection->getNetworkPlayer();
-            if (networkPlayer != NULL)
-            {
-                for (unsigned int i = 0; i < sentTo.size(); ++i)
-                {
-                    boost::shared_ptr<ServerPlayer> sent = sentTo[i];
-                    INetworkPlayer* sentNetworkPlayer = sent->mConnection->getNetworkPlayer();
-                    if (sentNetworkPlayer != NULL && networkPlayer->IsSameSystem(sentNetworkPlayer))
-                        dontSend = true;
-                }
-            }
-        }
-        if (!dontSend)
-        {
-            player->mConnection->send(packet);
-            sentTo.push_back(player);
         }
     }
 }
 
 void TrackedEntity::broadcastAndSend(boost::shared_ptr<Packet> packet)
 {
+    std::vector<boost::shared_ptr<ServerPlayer> > sentTo;
     broadcast(packet);
-    if (mEntity->GetType() == EntityType::SERVER_PLAYER)
-    {
-        boost::shared_ptr<ServerPlayer> player = boost::static_pointer_cast<ServerPlayer>(mEntity);
-        if (player != NULL && player->mConnection != NULL)
-            player->mConnection->send(packet);
-    }
+    const bool isServerPlayer = mEntity->GetType() == EntityType::SERVER_PLAYER;
+    boost::shared_ptr<ServerPlayer> player = isServerPlayer ? boost::static_pointer_cast<ServerPlayer>(mEntity) : boost::shared_ptr<ServerPlayer>();
+    if (player != NULL && player->mConnection != NULL)
+        player->mConnection->send(packet);
 }
 
 void TrackedEntity::sendDirtyEntityData()
@@ -608,7 +633,8 @@ void TrackedEntity::sendDirtyEntityData()
             mEntity->getId(), static_cast<int>(mEntity->GetType()), entityData, false)));
     }
 
-    if ((mEntity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+    const bool isLiving = (mEntity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY;
+    if (isLiving)
     {
         boost::shared_ptr<LivingEntity> living = boost::static_pointer_cast<LivingEntity>(mEntity);
         ModifiableAttributeMap::AttributeInstanceSet* attributes =
@@ -875,7 +901,7 @@ void TrackedEntity::tick(EntityTracker* tracker, std::vector<boost::shared_ptr<P
 
 void TrackedEntity::broadcastRemoved()
 {
-    for (boost::unordered_set<boost::shared_ptr<ServerPlayer>, boost::hash<boost::shared_ptr<ServerPlayer> > >::iterator
+    for (boost::unordered_set<boost::shared_ptr<ServerPlayer>, _PlayerKeyHash, _PlayerKeyEq>::iterator
              it = mSeenBy.begin();
          it != mSeenBy.end(); ++it)
     {
@@ -886,7 +912,7 @@ void TrackedEntity::broadcastRemoved()
 
 void TrackedEntity::removePlayer(EntityTracker* tracker, boost::shared_ptr<ServerPlayer> player)
 {
-    boost::unordered_set<boost::shared_ptr<ServerPlayer>, boost::hash<boost::shared_ptr<ServerPlayer> > >::iterator it =
+    boost::unordered_set<boost::shared_ptr<ServerPlayer>, _PlayerKeyHash, _PlayerKeyEq>::iterator it =
         mSeenBy.find(player);
     if (it == mSeenBy.end())
         return;
@@ -900,7 +926,7 @@ void TrackedEntity::removePlayer(EntityTracker* tracker, boost::shared_ptr<Serve
 
 void TrackedEntity::clear(boost::shared_ptr<ServerPlayer> player)
 {
-    boost::unordered_set<boost::shared_ptr<ServerPlayer>, boost::hash<boost::shared_ptr<ServerPlayer> > >::iterator it =
+    boost::unordered_set<boost::shared_ptr<ServerPlayer>, _PlayerKeyHash, _PlayerKeyEq>::iterator it =
         mSeenBy.find(player);
     if (it == mSeenBy.end())
         return;

@@ -9,7 +9,7 @@ class DamageSource;
 class DataFixerUpper;
 class Level;
 class SoundEvent;
-class TippableArrow;
+class Arrow;
 
 class Skeleton : public AbstractSkeleton
 {
@@ -26,7 +26,7 @@ public:
     virtual const SoundEvent* getDeathSound();
     virtual const SoundEvent* getStepSound();
     virtual void die(const DamageSource* source);
-    virtual boost::shared_ptr<TippableArrow> getArrow(float distanceFactor);
+    virtual boost::shared_ptr<Arrow> getArrow(float distanceFactor);
     virtual unsigned long long GetType();
 };
 

@@ -23,7 +23,7 @@ public:
     virtual bool interact(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand);
     virtual unsigned int GetInteractTooltip(const EntityTooltipDataHolder& tooltipData);
     virtual unsigned int GetHitTooltip(const EntityTooltipDataHolder& tooltipData);
-    virtual double getEyeHeight();
+    virtual float getEyeHeight();
     virtual void setDirection(const Direction* direction);
     virtual void recalculateBoundingBox();
     virtual bool survives();

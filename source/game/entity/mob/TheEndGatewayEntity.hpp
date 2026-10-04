@@ -38,7 +38,7 @@ public:
     virtual void tick();
     bool isSpawning();
     float getSpawnPercent(float partialTick);
-    double getCooldownPercent(float partialTick);
+    float getCooldownPercent(float partialTick);
     virtual boost::shared_ptr<Packet> getUpdatePacket();
     virtual CompoundTag* getUpdateTag();
     virtual bool triggerEvent(int id, int param);

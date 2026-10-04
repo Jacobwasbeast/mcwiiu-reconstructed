@@ -17,6 +17,7 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/DiodeBlock.hpp"
+#include "game/world/block/Material.hpp"
 #include "game/item/Items.hpp"
 
 HangingEntityItem::HangingEntityItem(unsigned long long entityType)
@@ -54,16 +55,14 @@ InteractionResult::EInteractionResult HangingEntityItem::useOn(
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
     BlockPos placePos = pos.relative(direction);
 
-    if (direction == Direction::UP || direction == Direction::DOWN)
-        return InteractionResult::eInteractionResult_Fail;
-
-    if (!player->mayUseItemAt(placePos, direction, itemInstance))
+    if (direction == Direction::DOWN || direction == Direction::UP ||
+        !player->mayUseItemAt(placePos, direction, itemInstance))
         return InteractionResult::eInteractionResult_Fail;
 
     if (simulate)
     {
         const BlockState* state = level->getBlockState(pos);
-        if (state == NULL || (!state->isSolid() && !DiodeBlock::isDiode(state)))
+        if (!state->getMaterial()->isSolid() && !DiodeBlock::isDiode(state))
             return InteractionResult::eInteractionResult_Fail;
         return InteractionResult::eInteractionResult_Success;
     }
@@ -88,7 +87,7 @@ InteractionResult::EInteractionResult HangingEntityItem::useOn(
             block = Block::byItem(Items::itemFrame);
         if (block != NULL)
         {
-            player->awardStat(Stats::blockPlacedStats.data[Block::getId(block)],
+            player->awardStat(gStats->get_blocksPlaced(Block::getId(block)),
                               GenericStats::param_blocksPlaced(
                                   block->getBlockState(itemInstance->getAuxValue()), 1));
         }

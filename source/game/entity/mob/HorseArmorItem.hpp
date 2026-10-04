@@ -16,7 +16,7 @@ class HorseArmorItem : public Item
 public:
     static const int DEFAULT_LEATHER_COLOR = 0xA06540;
 
-    HorseArmorItem(int tier, int protection, int itemId, const wchar_t* hash);
+    HorseArmorItem(int tier, int protection, int texture, const wchar_t* hash);
     HorseArmorItem(int tier, int protection, const int* textures, int textureCount, const wchar_t* hash);
     HorseArmorItem(int tier, int protection);
     virtual ~HorseArmorItem();

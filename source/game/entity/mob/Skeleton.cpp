@@ -85,12 +85,12 @@ void Skeleton::die(const DamageSource* source)
     }
 }
 
-boost::shared_ptr<TippableArrow> Skeleton::getArrow(float distanceFactor)
+boost::shared_ptr<Arrow> Skeleton::getArrow(float distanceFactor)
 {
     not_null_ptr<ItemInstance> item = getItemSlot(EquipmentSlot::OFFHAND);
-    boost::shared_ptr<TippableArrow> arrow = AbstractSkeleton::getArrow(distanceFactor);
+    boost::shared_ptr<Arrow> arrow = AbstractSkeleton::getArrow(distanceFactor);
     if (item->getItem() == Items::tippedArrow && arrow->GetType() == EntityType::TIPPABLE_ARROW)
-        arrow->setEffectsFromItem(item);
+        boost::static_pointer_cast<TippableArrow>(arrow)->setEffectsFromItem(item);
     return arrow;
 }
 

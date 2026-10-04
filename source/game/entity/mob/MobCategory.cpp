@@ -71,7 +71,7 @@ MobCategory::MobCategory(int maxInstancesPerChunk, Material* spawnPositionMateri
 
     for (int i = 0; i < NUM_MOB_CATEGORIES; i++)
     {
-        if (SPAWN_LIMITS[i].entityType == enumBaseClass)
+        if (enumBaseClass == SPAWN_LIMITS[i].entityType)
         {
             this->maxInstancesPerLevel = SPAWN_LIMITS[i].maxInstancesPerLevel;
             this->maxInstancesPerLevelWithBreeding = this->maxInstancesPerLevel + SPAWN_LIMITS[i].extraInstancesForBreeding;

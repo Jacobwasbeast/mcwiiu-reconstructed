@@ -11,6 +11,7 @@
 #include "game/entity/ai/GoalSelector.hpp"
 #include "game/entity/ai/SinkInWaterRandomStrollGoal.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/world/generation/Player.hpp"
 #include "game/entity/mob/SharedMonsterAttributes.hpp"
 #include "game/core/InteractionHand.hpp"
@@ -58,7 +59,7 @@ void SkeletonHorse::registerAttributes()
 {
     AbstractHorse::registerAttributes();
     getAttribute(SharedMonsterAttributes::MAX_HEALTH)->setBaseValue(15.0);
-    getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(0.2);
+    getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(0.2f);
     getAttribute(JUMP_STRENGTH)->setBaseValue(generateRandomJumpStrength());
 }
 
@@ -95,10 +96,8 @@ void SkeletonHorse::playUnderwaterSound(const BlockPos& pos, Block* block)
 
 void SkeletonHorse::playGallopSound(const SoundType* sound)
 {
-    if (isInWater())
-        playSound(SoundEvents::SKELETON_HORSE_GALLOP_WATER, sound->getVolume() * 0.15f, sound->getPitch());
-    else
-        playSound(SoundEvents::HORSE_GALLOP, sound->getVolume() * 0.15f, sound->getPitch());
+    playSound(isInWater() ? SoundEvents::SKELETON_HORSE_GALLOP_WATER : SoundEvents::HORSE_GALLOP,
+              sound->getVolume() * 0.15f, sound->getPitch());
 }
 
 const SoundEvent* SkeletonHorse::getJumpSound()
@@ -141,7 +140,8 @@ ResourceLocation* SkeletonHorse::getDefaultLootTable()
 
 boost::shared_ptr<AgableMob> SkeletonHorse::getBreedOffspring(boost::shared_ptr<AgableMob>)
 {
-    return boost::shared_ptr<AgableMob>(new SkeletonHorse(mLevel));
+    boost::shared_ptr<SkeletonHorse> offspring(new SkeletonHorse(mLevel));
+    return offspring;
 }
 
 bool SkeletonHorse::isTamed()
@@ -159,8 +159,7 @@ void SkeletonHorse::aiStep()
     AbstractHorse::aiStep();
     if (isTrap())
     {
-        ++mTrapTime;
-        if (mTrapTime > 17999)
+        if (mTrapTime++ >= 18000)
         {
             remove();
         }
@@ -235,48 +234,47 @@ bool SkeletonHorse::mobInteract(const boost::shared_ptr<Player>& player,
 
 unsigned int SkeletonHorse::GetInteractTooltip(const EntityTooltipDataHolder& tooltipData)
 {
-    not_null_ptr<ItemInstance> item = tooltipData.m_pItemInstance;
-    unsigned int itemId = Item::getId(item->getItem());
+    unsigned int itemId = Item::getId(tooltipData.m_pItemInstance->getItem());
     if (!tooltipData.m_bAllowedToInteract)
         return IDS_NONE;
 
-    boost::shared_ptr<Player> player(tooltipData.m_pPlayer,
-                                     (Player*)tooltipData.m_pPlayer.get());
-
     if (hasPassenger(EntityType::SKELETON))
     {
-        if (isLeashedToPlayer(player))
+        if (!tooltipData.m_bAllowedToInteract)
+            return IDS_NONE;
+        if (isLeashedToPlayer(tooltipData.m_pPlayer))
             return IDS_TOOLTIPS_UNLEASH;
         if (itemId != ItemId::LEAD)
             return IDS_NONE;
         return isLeashed() ? IDS_NONE : IDS_TOOLTIPS_LEASH;
     }
 
-    bool horseArmor = itemId >= 417 && itemId <= 419 || itemId == ItemId::LEATHER_HORSE_ARMOR;
+    bool horseArmor = itemId >= ItemId::IRON_HORSE_ARMOR
+                      && (itemId <= ItemId::DIAMOND_HORSE_ARMOR || itemId == ItemId::LEATHER_HORSE_ARMOR);
 
     if (itemId == ItemId::SPAWN_EGG)
     {
-        if (SpawnEggItem::fjGetType(item) == EntityType::SKELETON_HORSE)
+        if (SpawnEggItem::fjGetType(tooltipData.m_pItemInstance) == EntityType::SKELETON_HORSE)
             return IDS_TOOLTIPS_PLACE;
-        if (isLeashedToPlayer(player))
+        if (isLeashedToPlayer(tooltipData.m_pPlayer))
             return IDS_TOOLTIPS_UNLEASH;
         return IDS_NONE;
     }
 
-    if (isLeashedToPlayer(player))
+    if (isLeashedToPlayer(tooltipData.m_pPlayer))
         return IDS_TOOLTIPS_UNLEASH;
 
     if (itemId == ItemId::LEAD)
         return isLeashed() ? IDS_NONE : IDS_TOOLTIPS_LEASH;
 
     if (itemId == ItemId::NAME_TAG
-        && !(player->isSneaking() && isTamed() && !hasPassenger(EntityType::SKELETON)))
+        && !(tooltipData.m_pPlayer->isSneaking() && isTamed() && !hasPassenger(EntityType::SKELETON)))
     {
-        if (item->hasCustomHoverName())
+        if (tooltipData.m_pItemInstance->hasCustomHoverName())
         {
-            if (hasCustomName() && item->getHoverName() == getCustomName())
-                return IDS_NONE;
-            return IDS_TOOLTIPS_NAME;
+            if (!hasCustomName() || tooltipData.m_pItemInstance->getHoverName().compare(getCustomName()) != 0)
+                return IDS_TOOLTIPS_NAME;
+            return IDS_NONE;
         }
         if (!isTamed())
             return IDS_NONE;
@@ -288,23 +286,15 @@ unsigned int SkeletonHorse::GetInteractTooltip(const EntityTooltipDataHolder& to
 
     if (!isTamed())
     {
-        if (!item->isEmpty() || isVehicle() || !getPassengers()->empty())
+        if (!tooltipData.m_pItemInstance->isEmpty() || isVehicle() || !getPassengers()->empty())
             return IDS_NONE;
         return IDS_TOOLTIPS_TAME;
     }
 
-    bool openInventory = false;
-    if (!hasPassenger(EntityType::SKELETON))
-    {
-        if (player->isSneaking() && (!isVehicle() || hasPassenger(player)) && isTamed())
-            openInventory = true;
-        else if (itemId == ItemId::SADDLE && !isSaddled())
-            openInventory = true;
-        else if (wearsArmor() && horseArmor)
-            openInventory = true;
-    }
-
-    if (openInventory)
+    if (!hasPassenger(EntityType::SKELETON)
+        && (tooltipData.m_pPlayer->isSneaking() && (!isVehicle() || hasPassenger(tooltipData.m_pPlayer)) && isTamed()
+            || itemId == ItemId::SADDLE && !isSaddled()
+            || wearsArmor() && horseArmor))
         return IDS_TOOLTIPS_OPEN;
 
     if (getPassengers()->empty())

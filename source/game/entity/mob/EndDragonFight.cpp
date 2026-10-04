@@ -293,7 +293,8 @@ bool EndDragonFight::hasExitPortal()
             LevelChunk::BlockEntityMap* blockEntities = level->getChunk(chunkX, chunkZ)->getBlockEntities();
             for (LevelChunk::BlockEntityMap::iterator it = blockEntities->begin(); it != blockEntities->end(); ++it)
             {
-                if ((it->second->GetType() & BlockEntityType::THE_END_PORTAL) == BlockEntityType::THE_END_PORTAL)
+                boost::shared_ptr<BlockEntity> blockEntity = it->second;
+                if ((blockEntity->GetType() & BlockEntityType::THE_END_PORTAL) == BlockEntityType::THE_END_PORTAL)
                     return true;
             }
         }

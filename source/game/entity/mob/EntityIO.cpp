@@ -103,14 +103,13 @@
 
 namespace
 {
-    typedef MappedRegistry<ResourceLocation, unsigned long long> EntityRegistry;
     typedef boost::unordered_map<unsigned long long, EntityIO::Creator> Creators;
 
     ResourceLocation sLightningBolt(std::wstring(L"LightningBolt"));
     ResourceLocation sPlayer(std::wstring(L"Player"));
-    EntityRegistry sRegistry;
 }
 
+EntityIO::EntityRegistry EntityIO::sRegistry;
 EntityIO::SpawnInfo EntityIO::sSpawnInfo;
 
 namespace
@@ -270,7 +269,7 @@ bool EntityIO::isEntityOfType(boost::shared_ptr<Entity> entity, const ResourceLo
     {
         return sPlayer.equals(&location);
     }
-    if (entity->GetType() == EntityType::LIGHTNING_BOLT)
+    if (eTYPE_DERIVED_FROM(EntityType::LIGHTNING_BOLT, entity->GetType()))
     {
         return sLightningBolt.equals(&location);
     }
@@ -279,13 +278,14 @@ bool EntityIO::isEntityOfType(boost::shared_ptr<Entity> entity, const ResourceLo
 
 int EntityIO::getNameDisplayId(const std::wstring& name)
 {
+    int id = -1;
     ResourceLocation location(name);
     SpawnInfo::const_iterator it = sSpawnInfo.find(location);
-    if (it == sSpawnInfo.end())
+    if (it != sSpawnInfo.end())
     {
-        return -1;
+        id = it->second->id;
     }
-    return it->second->id;
+    return id;
 }
 
 int EntityIO::eTypeToIoid(unsigned long long entityType)
@@ -300,28 +300,25 @@ EntityIO::SpawnableMobInfo EntityIO::addSpawnInfo(int id, std::wstring name,
 {
     ResourceLocation location(name);
     SpawnableMobInfo* info = new SpawnableMobInfo(id, location, colour, secondaryColour, icon);
-    SpawnInfo::iterator old = sSpawnInfo.find(location);
-    if (old != sSpawnInfo.end())
-    {
-        delete old->second;
-    }
     sSpawnInfo[location] = info;
-    return *info;
+    return *sSpawnInfo[location];
 }
 
 void EntityIO::Register(Creator creator, int id, const std::wstring& name,
                         unsigned long long entityType,
                         const std::wstring& translationName)
 {
+    sCreators.find(entityType);
+    sRegistry.getId(entityType);
     ResourceLocation location(name);
     sRegistry.registerMapping(id, location, entityType);
     sEntityTypes.insert(location);
-    while ((int)sTranslationNames.size() <= id)
+    while (sTranslationNames.size() <= static_cast<unsigned int>(id))
     {
         sTranslationNames.push_back(std::wstring(L""));
     }
     sTranslationNames.at(id) = translationName;
-    sCreators[entityType] = creator;
+    sCreators.insert(std::make_pair(entityType, creator));
 }
 
 void EntityIO::bootStrap()

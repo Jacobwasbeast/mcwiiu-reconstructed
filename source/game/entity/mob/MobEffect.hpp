@@ -84,7 +84,7 @@ public:
     virtual eMinecraftColour getColor() const;
     virtual MobEffect* addAttributeModifier(Attribute* attribute, eMODIFIER_ID id,
                                              double amount, int operation);
-    virtual void getAttributeModifiers();
+    virtual boost::unordered_map<Attribute*, AttributeModifier*>* getAttributeModifiers();
     virtual void removeAttributeModifiers(const boost::shared_ptr<LivingEntity>& entity,
                                           BaseAttributeMap* attributes, int amplifier);
     virtual void addAttributeModifiers(const boost::shared_ptr<LivingEntity>& entity,

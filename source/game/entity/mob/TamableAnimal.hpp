@@ -47,8 +47,9 @@ public:
     virtual Team* getTeam();
     virtual bool isAlliedTo(boost::shared_ptr<Entity> entity);
     virtual void die(const DamageSource* source);
-    virtual bool interactAt(const boost::shared_ptr<Player>& player, Vec3* pos,
-                            InteractionHand::EInteractionHand hand);
+    virtual InteractionResult::EInteractionResult interactAt(const boost::shared_ptr<Player>& player,
+                                                             Vec3* pos,
+                                                             InteractionHand::EInteractionHand hand);
 
 protected:
     SitGoal* mSitGoal;

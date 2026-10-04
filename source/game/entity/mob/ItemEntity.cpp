@@ -33,20 +33,20 @@
 const EntityDataAccessor<not_null_ptr<ItemInstance> >* ItemEntity::DATA_ITEM = NULL;
 
 ItemEntity::ItemEntity(Level* level, double x, double y, double z, not_null_ptr<ItemInstance> item)
-    : Entity(level, true), mAge(0), mPickupDelay(0), mHealth(5), mThrower(), mOwner(), mBobOffs(0.0f)
+    : Entity(level, true), mThrower(), mOwner()
 {
     _init(level, x, y, z);
     setItem(item);
 }
 
 ItemEntity::ItemEntity(Level* level, double x, double y, double z)
-    : Entity(level, true), mAge(0), mPickupDelay(0), mHealth(5), mThrower(), mOwner(), mBobOffs(0.0f)
+    : Entity(level, true), mThrower(), mOwner()
 {
     _init(level, x, y, z);
 }
 
 ItemEntity::ItemEntity(Level* level)
-    : Entity(level, true), mAge(0), mPickupDelay(0), mHealth(5), mThrower(), mOwner(), mBobOffs(0.0f)
+    : Entity(level, true), mThrower(), mOwner()
 {
     _init();
     setItem(ItemInstance::EMPTY);
@@ -166,9 +166,7 @@ bool ItemEntity::merge(boost::shared_ptr<ItemEntity> entity)
 
 void ItemEntity::mergeWithNeighbours()
 {
-    if (mLevel == NULL || mBoundingBox == NULL)
-        return;
-    std::vector<boost::shared_ptr<Entity> >* entities = mLevel->getEntitiesOfClass(typeid(ItemEntity), mBoundingBox->grow(0.5, 0.0, 0.5));
+    std::vector<boost::shared_ptr<Entity> >* entities = mLevel->getEntitiesOfClass(typeid(*this), mBoundingBox->grow(0.5, 0.0, 0.5));
     std::vector<boost::shared_ptr<Entity> >::iterator it;
     for (it = entities->begin(); it != entities->end(); ++it)
     {
@@ -220,14 +218,14 @@ void ItemEntity::tick()
         setNoGravity(false);
     }
 
+    if (!mLevel->mIsClientSide && mAge % 25 == 0)
+        mergeWithNeighbours();
     if (mLevel->mIsClientSide)
     {
         mNoPhysics = false;
     }
     else
     {
-        if (mAge % 25 == 0)
-            mergeWithNeighbours();
         mNoPhysics = checkInBlock(mX, (mBoundingBox->mMinY + mBoundingBox->mMaxY) * 0.5, mZ);
     }
 
@@ -256,7 +254,7 @@ void ItemEntity::tick()
     updateInWaterState();
     bool clientSide = mLevel->mIsClientSide;
     if (!clientSide &&
-        (mZd - oldZd) * (mZd - oldZd) + (mXd - oldXd) * (mXd - oldXd) + (mYd - oldYd) * (mYd - oldYd) > 0.01)
+        (mXd - oldXd) * (mXd - oldXd) + (mYd - oldYd) * (mYd - oldYd) + (mZd - oldZd) * (mZd - oldZd) > 0.01)
     {
         mHasImpulse = true;
     }

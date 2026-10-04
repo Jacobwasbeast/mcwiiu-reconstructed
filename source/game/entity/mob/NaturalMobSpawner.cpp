@@ -36,7 +36,7 @@
 NaturalMobSpawner::NaturalMobSpawner(int chunkRadius, ServerLevel* level)
     : mLastSpawnTime(0), mMinChunk(0), mMaxChunk(0), mLevel(level)
 {
-    int radius = (chunkRadius >> 1) + ((chunkRadius < 0 && (chunkRadius & 1) != 0) ? 1 : 0);
+    int radius = chunkRadius / 2;
     mMinChunk = -radius;
     mMaxChunk = radius - 1;
 }
@@ -58,7 +58,7 @@ void NaturalMobSpawner::addEdgeChunkPos(int chunkX, int chunkZ)
         return;
     ChunkPos pos(chunkX, chunkZ);
     if (find(pos) == end())
-        insert(std::make_pair(pos, true));
+        insert(std::pair<ChunkPos, bool>(pos, true));
 }
 
 BlockPos NaturalMobSpawner::getRandomPosWithin(Level* level, int chunkX, int chunkZ)
@@ -74,14 +74,18 @@ BlockPos NaturalMobSpawner::getRandomPosWithin(Level* level, int chunkX, int chu
 
 bool NaturalMobSpawner::isValidEmptyUnderWaterSpawnBlock(const BlockState* state)
 {
-    return !state->isSolidBlockingCube() && !state->isSignalSource() && state->getMaterial()->isLiquid()
-        && !BaseRailBlock::isRail(state);
+    if (!state->isSolidBlockingCube() && !state->isSignalSource() && state->getMaterial()->isLiquid()
+        && !BaseRailBlock::isRail(state))
+        return true;
+    return false;
 }
 
 bool NaturalMobSpawner::isValidEmptySpawnBlock(const BlockState* state)
 {
-    return !state->isSolidBlockingCube() && !state->isSignalSource() && !state->getMaterial()->isLiquid()
-        && !BaseRailBlock::isRail(state);
+    if (!state->isSolidBlockingCube() && !state->isSignalSource() && !state->getMaterial()->isLiquid()
+        && !BaseRailBlock::isRail(state))
+        return true;
+    return false;
 }
 
 bool NaturalMobSpawner::isSpawnPositionOk(Mob::SpawnPlacementType placementType, Level* level, const BlockPos& pos,
@@ -105,25 +109,25 @@ bool NaturalMobSpawner::isSpawnPositionOk(Mob::SpawnPlacementType placementType,
         for (int depth = 0; pos.y - depth >= 0 && depth < 5; ++depth)
         {
             column.set(pos.x, pos.y - depth, pos.z);
-            if (level->getBlock(column) != NULL)
+            if (level->getBlock(column)->mMaterial->isLiquid())
                 ++blocksBelow;
         }
 
         bool surrounded = false;
-        if (blocksBelow == 5 && level->getBlockState(pos.offset(5, 0, 0))->getMaterial() != NULL
-            && level->getBlockState(pos.offset(-5, 0, 0))->getMaterial() != NULL
-            && level->getBlockState(pos.offset(0, 0, 5))->getMaterial() != NULL
-            && level->getBlockState(pos.offset(0, 0, -5))->getMaterial() != NULL)
+        if (blocksBelow == 5 && level->getBlockState(pos.offset(5, 0, 0))->getMaterial()->isLiquid()
+            && level->getBlockState(pos.offset(-5, 0, 0))->getMaterial()->isLiquid()
+            && level->getBlockState(pos.offset(0, 0, 5))->getMaterial()->isLiquid()
+            && level->getBlockState(pos.offset(0, 0, -5))->getMaterial()->isLiquid())
             surrounded = true;
 
-        return state->getMaterial() != NULL && surrounded
+        return state->getMaterial()->isLiquid() && surrounded
             && !level->getBlockState(pos.above())->isSolidBlockingCubeAndNotSignalSource();
     }
 
     if (placementType == Mob::SPAWN_PLACEMENT_TYPE_ON_WATER_FLOOR)
     {
         BlockPos below = pos.below();
-        if (!level->getBlockState(below)->isTopSolidBlocking() && level->getBlock(pos) != NULL)
+        if (!level->getBlockState(below)->isTopSolidBlocking() && level->getBlock(pos)->mMaterial->isLiquid())
             return false;
         Block* floor = level->getBlock(below);
         bool validFloor = floor != Blocks::bedrock && floor != Blocks::barrier;
@@ -237,7 +241,7 @@ unsigned int NaturalMobSpawner::tick(ServerLevel* level, bool spawnEnemies, bool
             packSize = 1;
             groupCount = 1;
         }
-        PIXBeginNamedEvent(0.0f, "Poll %d ch %d dd %d ll %d cat %d", chunkCount, groupCount, packSize,
+        PIXBeginNamedEvent(0.0f, "Poll %d ch, dd %d ll %d, cat %d", chunkCount, groupCount, packSize,
                            categoryIndex);
 
         bool categoryFull = false;
@@ -351,35 +355,38 @@ unsigned int NaturalMobSpawner::tick(ServerLevel* level, bool spawnEnemies, bool
                     if (mob->checkSpawnRules() && mob->checkSpawnObstruction())
                     {
                         mob->checkDespawn();
-                        if (mob->mRemoved)
+                        if (!mob->mRemoved)
                         {
-                            mob->mRemoved = false;
-                        }
-                        mMobCache.removeFromCache(mob);
-                        mob->setDespawnProtected();
-                        groupData = mob->finalizeMobSpawn(
-                            level->getCurrentDifficultyAt(BlockPos(boost::static_pointer_cast<Entity>(mob))),
-                            groupData, L"");
-                        groupDatas.insert(groupData);
-                        if (mob->checkSpawnObstruction())
-                        {
-                            level->addEntity(mob);
-                            ++instanceCount;
-                            ++clusterSize;
+                            mMobCache.removeFromCache(mob);
+                            mob->setDespawnProtected();
+                            groupData = mob->finalizeMobSpawn(
+                                level->getCurrentDifficultyAt(BlockPos(mob)),
+                                groupData, L"");
+                            groupDatas.insert(groupData);
+                            if (mob->checkSpawnObstruction())
+                            {
+                                level->addEntity(mob);
+                                ++instanceCount;
+                                ++clusterSize;
+                            }
+                            else
+                            {
+                                mob->remove();
+                            }
+                            if (instanceCount >= category->getMaxInstancesPerLevel())
+                            {
+                                categoryFull = true;
+                                break;
+                            }
+                            if (clusterSize >= mob->getMaxSpawnClusterSize())
+                            {
+                                chunkDone = true;
+                                break;
+                            }
                         }
                         else
                         {
-                            mob->remove();
-                        }
-                        if (instanceCount >= category->getMaxInstancesPerLevel())
-                        {
-                            categoryFull = true;
-                            break;
-                        }
-                        if (clusterSize >= mob->getMaxSpawnClusterSize())
-                        {
-                            chunkDone = true;
-                            break;
+                            mob->mRemoved = false;
                         }
                     }
                     spawned += clusterSize;
@@ -387,6 +394,8 @@ unsigned int NaturalMobSpawner::tick(ServerLevel* level, bool spawnEnemies, bool
             }
         }
 
+        if (categoryFull)
+            continue;
         PIXEndNamedEvent();
     }
 

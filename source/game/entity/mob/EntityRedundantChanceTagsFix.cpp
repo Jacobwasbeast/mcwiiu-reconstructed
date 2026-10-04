@@ -24,6 +24,7 @@ CompoundTag* EntityRedundantChanceTagsFix::fix(CompoundTag* tag)
             handDropChances->getFloat(0) == 0.0f &&
             handDropChances->getFloat(1) == 0.0f)
         {
+            delete tag->get(L"HandDropChances");
             tag->remove(L"HandDropChances");
         }
     }
@@ -38,6 +39,7 @@ CompoundTag* EntityRedundantChanceTagsFix::fix(CompoundTag* tag)
             armorDropChances->getFloat(2) == 0.0f &&
             armorDropChances->getFloat(3) == 0.0f)
         {
+            delete tag->get(L"ArmorDropChances");
             tag->remove(L"ArmorDropChances");
         }
     }

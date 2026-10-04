@@ -133,7 +133,7 @@ bool MobEffectInstance::tick(const boost::shared_ptr<LivingEntity>& entity)
         }
         tickDownDuration();
     }
-    return duration == 0;
+    return duration > 0;
 }
 
 int MobEffectInstance::getDescriptionId()
@@ -143,20 +143,31 @@ int MobEffectInstance::getDescriptionId()
 
 bool MobEffectInstance::compareTo(const MobEffectInstance* other) const
 {
+    bool equal = false;
     if (getDuration() > 0x7d93 && other->getDuration() > 0x7d93)
     {
         if (isAmbient() != other->isAmbient())
         {
             return false;
         }
-        return getEffect()->getColor() == other->getEffect()->getColor();
+        if (getEffect()->getColor() == other->getEffect()->getColor())
+        {
+            equal = true;
+        }
+        return equal;
     }
-    if (isAmbient() != other->isAmbient())
+    bool ambient = isAmbient();
+    if (ambient == other->isAmbient())
     {
-        return false;
+        if (getDuration() == other->getDuration())
+        {
+            if (getEffect()->getColor() == other->getEffect()->getColor())
+            {
+                equal = true;
+            }
+        }
     }
-    return getDuration() == other->getDuration() &&
-           getEffect()->getColor() == other->getEffect()->getColor();
+    return equal;
 }
 
 CompoundTag* MobEffectInstance::save(CompoundTag* tag)

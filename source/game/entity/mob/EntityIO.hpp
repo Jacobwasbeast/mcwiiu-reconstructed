@@ -10,6 +10,7 @@
 #include "game/core/ColourTable.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/util/ResourceLocation.hpp"
+#include "game/world/block/MappedRegistry.hpp"
 
 class CompoundTag;
 class Level;
@@ -40,6 +41,8 @@ public:
 
     typedef Entity* (*Creator)(Level*);
     typedef boost::unordered_map<ResourceLocation, SpawnableMobInfo*> SpawnInfo;
+    typedef MappedRegistry<ResourceLocation, unsigned long long> EntityRegistry;
+    static EntityRegistry sRegistry;
     static SpawnInfo sSpawnInfo;
     static ResourceLocation getKey(unsigned long long entityType);
     static boost::shared_ptr<Entity> newEntity(unsigned long long entityType, Level* level);

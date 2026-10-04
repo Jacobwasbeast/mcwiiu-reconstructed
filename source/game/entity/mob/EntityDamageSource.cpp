@@ -3,6 +3,8 @@
 
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
+#include "game/entity/mob/Mob.hpp"
+#include "game/world/generation/Player.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/network/ClientboundChatPacket.hpp"
 #include "game/util/Vec3.hpp"
@@ -10,8 +12,10 @@
 EntityDamageSource::EntityDamageSource(ClientboundChatPacket::EChatPacketMessage messageValue,
                                        ClientboundChatPacket::EChatPacketMessage deathMessageValue,
                                        boost::shared_ptr<Entity> entityValue)
-    : DamageSource(messageValue, deathMessageValue), entity(entityValue), thorns(false)
+    : DamageSource(messageValue, deathMessageValue)
 {
+    entity = entityValue;
+    thorns = false;
 }
 
 bool EntityDamageSource::isThorns() const
@@ -26,32 +30,31 @@ boost::shared_ptr<Entity> EntityDamageSource::getEntity() const
 
 boost::shared_ptr<ClientboundChatPacket> EntityDamageSource::getDeathMessagePacket(boost::shared_ptr<LivingEntity> victim) const
 {
-    not_null_ptr<ItemInstance> item = ItemInstance::EMPTY;
-    std::wstring attackerName;
+    not_null_ptr<ItemInstance> item = (entity != NULL && eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, entity.get()->GetType()))
+        ? boost::static_pointer_cast<LivingEntity>(entity)->getMainHandItem()
+        : ItemInstance::EMPTY;
+    std::wstring attackerName = L"";
 
-    if (entity)
+    if (eTYPE_DERIVED_FROM(EntityType::SERVER_PLAYER, entity->GetType()))
     {
-        unsigned long long type = entity->GetType();
-        if ((type & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
-            item = boost::static_pointer_cast<LivingEntity>(entity)->getMainHandItem();
-
-        if (type == EntityType::SERVER_PLAYER)
-            attackerName = entity->getDisplayName();
-        else if ((type & EntityType::MOB) == EntityType::MOB && entity->hasCustomName())
-            attackerName = entity->getCustomName();
+        attackerName = boost::static_pointer_cast<Player>(entity)->getDisplayName();
+    }
+    else if ((entity->GetType() & EntityType::MOB) == EntityType::MOB)
+    {
+        boost::shared_ptr<Mob> mob = boost::static_pointer_cast<Mob>(entity);
+        if (mob->hasCustomName())
+            attackerName = mob->getCustomName();
     }
 
-    std::wstring victimName = victim->getNetworkName();
     if (item->hasCustomHoverName())
-        return boost::shared_ptr<ClientboundChatPacket>(new ClientboundChatPacket(victimName, deathMessage, entity, attackerName, item->getHoverName()));
-    return boost::shared_ptr<ClientboundChatPacket>(new ClientboundChatPacket(victimName, message, entity, attackerName));
+        return boost::shared_ptr<ClientboundChatPacket>(new ClientboundChatPacket(victim->getNetworkName(), deathMessage, entity, attackerName, item->getHoverName()));
+    return boost::shared_ptr<ClientboundChatPacket>(new ClientboundChatPacket(victim->getNetworkName(), message, entity, attackerName));
 }
 
 bool EntityDamageSource::scalesWithDifficulty() const
 {
-    if (entity && (entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
-        return (entity->GetType() & EntityType::PLAYER) != EntityType::PLAYER;
-    return false;
+    return entity && (entity.get()->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY
+        && (entity->GetType() & EntityType::PLAYER) != EntityType::PLAYER;
 }
 
 Vec3* EntityDamageSource::getSourcePosition() const
@@ -64,7 +67,8 @@ DamageSource* EntityDamageSource::copy() const
     return new EntityDamageSource(*this);
 }
 
-void EntityDamageSource::setThorns()
+EntityDamageSource* EntityDamageSource::setThorns()
 {
     thorns = true;
+    return this;
 }

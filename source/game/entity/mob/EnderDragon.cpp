@@ -584,20 +584,15 @@ bool EnderDragon::hurt(boost::shared_ptr<MultiEntityMobPart> part, const DamageS
 {
     if (part.get() != mHead.get())
     {
-        float bonus = 1.0f;
-        if (amount - 1.0f < 0.0f)
-            bonus = amount;
+        float bonus = amount - 1.0f < 0.0f ? amount : 1.0f;
         amount = amount * 0.25f + bonus;
     }
     if (amount < 0.01f)
         return false;
 
-    bool damaged = true;
-    boost::shared_ptr<Entity> attacker = source->getEntity();
-    if (attacker == NULL || (source->getEntity()->GetType() & EntityType::PLAYER) != EntityType::PLAYER)
-        damaged = source->isExplosion();
-
-    if (damaged)
+    if ((source->getEntity() != NULL
+         && (source->getEntity()->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+        || source->isExplosion())
     {
         const float healthBefore = getHealth();
         reallyHurt(source, amount);
@@ -692,11 +687,13 @@ void EnderDragon::onCrystalDestroyed(boost::shared_ptr<EnderCrystal> crystal, co
             mActionTicks = 1;
         }
         else if (source->getEntity() != NULL
-                 && (source->getEntity()->GetType() & EntityType::PLAYER) == EntityType::PLAYER
-                 && setSynchedAction(ACTION_STRAFE_PLAYER, false))
+                 && (source->getEntity()->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
         {
-            mAttackTarget = boost::dynamic_pointer_cast<Player>(source->getEntity());
-            strafeAttackTarget();
+            if (setSynchedAction(ACTION_STRAFE_PLAYER, false))
+            {
+                mAttackTarget = boost::dynamic_pointer_cast<Player>(source->getEntity());
+                strafeAttackTarget();
+            }
         }
     }
 }
@@ -704,20 +701,20 @@ void EnderDragon::onCrystalDestroyed(boost::shared_ptr<EnderCrystal> crystal, co
 void EnderDragon::_init()
 {
     fjDerivedCtorCalls();
-    mYTarget = 0.0;
-    mAttackTarget.reset();
-    mNewTarget = false;
-    mZTarget = 0.0;
     mXTarget = 0.0;
-    mInWall = false;
+    mYTarget = 0.0;
+    mZTarget = 0.0;
+    mPosPointer = -1;
     mOldFlapTime = 0.0f;
     mFlapTime = 0.0f;
-    mPosPointer = -1;
-    mNearestCrystal.reset();
+    mInWall = false;
+    mNewTarget = false;
+    mAttackTarget.reset();
     mDeathTime = 0;
+    mNearestCrystal.reset();
     mFireballCharge = 0;
-    mClockwise = true;
     mUnusedFloat = 0.0f;
+    mClockwise = true;
     setSynchedAction(ACTION_HOLDING_PATTERN, false);
     mFlameCount = 0;
     mClientLerpReset = 0.0;
@@ -772,7 +769,7 @@ void EnderDragon::getLatencyPos(arrayWithLength<double> positions, int index, fl
     positions.data[2] = current[2] + (previous[2] - current[2]) * inverse;
 }
 
-double EnderDragon::getTilt(float partialTicks)
+float EnderDragon::getTilt(float partialTicks)
 {
     double current[3];
     double past[3];
@@ -811,7 +808,7 @@ void EnderDragon::checkCrystals()
     {
         if (mNearestCrystal->mRemoved)
         {
-            mNearestCrystal.reset();
+            mNearestCrystal = boost::shared_ptr<EnderCrystal>();
         }
         else if (mTickCount % 10 == 0 && getHealth() < getMaxHealth())
         {
@@ -1271,7 +1268,7 @@ void EnderDragon::aiStep()
     for (unsigned int i = 0; i < mSubEntities.size(); ++i)
         oldPositions.push_back(Vec3::newTemp(mSubEntities[i]->mX, mSubEntities[i]->mY, mSubEntities[i]->mZ));
 
-    const float tilt = static_cast<float>(getTilt(1.0f)) / 180.0f * Mth::PI;
+    const float tilt = getTilt(1.0f) / 180.0f * Mth::PI;
     const float cosTilt = std::cos(tilt);
     const float sinTilt = std::sin(tilt);
     const float yRotRadians = mYRot * Mth::PI / 180.0f;
@@ -1430,8 +1427,7 @@ void EnderDragon::dropExperience(int experience)
     {
         const int orbValue = ExperienceOrb::getExperienceValue(experience);
         experience -= orbValue;
-        boost::shared_ptr<ExperienceOrb> orb(new ExperienceOrb(mLevel, mX, mY, mZ, orbValue));
-        mLevel->addEntity(orb);
+        mLevel->addEntity(boost::shared_ptr<ExperienceOrb>(new ExperienceOrb(mLevel, mX, mY, mZ, orbValue)));
     }
 }
 

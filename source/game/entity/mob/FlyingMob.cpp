@@ -46,18 +46,27 @@ void FlyingMob::travel(float xxa, float yya, float zza)
 
         if (mOnGround)
         {
-            BlockPos pos(Mth::floor(mX), Mth::floor(mBoundingBox->mMinY - 1.0),
-                         Mth::floor(mZ));
-            friction = mLevel->getBlockState(mTickCache, pos)->getBlock()->mFriction * friction;
+            friction = mLevel->getBlockState(BlockPos(Mth::floor(mX), Mth::floor(mBoundingBox->mMinY) - 1, Mth::floor(mZ)))->getBlock()->mFriction * 0.91f;
         }
 
-        float speed = 0.02f;
+        float friction3 = 0.16277136f / (friction * friction * friction);
+
         if (mOnGround)
         {
-            speed = 0.1f * (0.16277136f / (friction * friction * friction));
+            moveRelative(xxa, yya, zza, 0.1f * friction3);
+        }
+        else
+        {
+            moveRelative(xxa, yya, zza, 0.02f);
         }
 
-        moveRelative(xxa, yya, zza, speed);
+        friction = 0.91f;
+
+        if (mOnGround)
+        {
+            friction = mLevel->getBlockState(BlockPos(Mth::floor(mX), Mth::floor(mBoundingBox->mMinY) - 1, Mth::floor(mZ)))->getBlock()->mFriction * 0.91f;
+        }
+
         move(eMoverType_Self, mXd, mYd, mZd, false);
         mXd *= friction;
         mYd *= friction;
@@ -66,9 +75,8 @@ void FlyingMob::travel(float xxa, float yya, float zza)
     }
 
     double dx = mX - mXo;
-    double dy = mY - mYo;
     double dz = mZ - mZo;
-    float target = (float)(sqrt(dx * dx + dy * dy + dz * dz) * 4.0);
+    float target = (float)sqrt(dx * dx + dz * dz) * 4.0f;
 
     if (target > 1.0f)
     {

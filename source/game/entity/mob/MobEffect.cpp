@@ -1,5 +1,6 @@
 #include "game/entity/mob/MobEffect.hpp"
 #include "game/core/StringIds.hpp"
+#include "game/core/EntityType.hpp"
 
 #include <cmath>
 #include <cwchar>
@@ -21,6 +22,7 @@
 #include "game/entity/mob/SharedMonsterAttributes.hpp"
 #include "game/world/generation/Player.hpp"
 #include "game/util/ResourceLocation.hpp"
+#include "game/world/Level.hpp"
 
 MappedRegistry<ResourceLocation, MobEffect*>* MobEffect::mobEffectRegistry =
     new MappedRegistry<ResourceLocation, MobEffect*>();
@@ -90,35 +92,29 @@ void MobEffect::applyEffectTick(const boost::shared_ptr<LivingEntity>& entity, i
     {
         entity->hurt(DamageSource::WITHER, 1.0f);
     }
-    else if (this == MobEffects::HUNGER)
+    else if (this == MobEffects::HUNGER && (entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
     {
         boost::shared_ptr<Player> player = boost::dynamic_pointer_cast<Player>(entity);
-        if (player)
-        {
-            player->causeFoodExhaustion((float)(FoodConstants::ExhaustionMine() * (amplifier + 1)));
-        }
+        player->causeFoodExhaustion(FoodConstants::ExhaustionMine() * (float)(amplifier + 1));
     }
-    else if (this == MobEffects::SATURATION)
+    else if (this == MobEffects::SATURATION && (entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
     {
-        boost::shared_ptr<Player> player = boost::dynamic_pointer_cast<Player>(entity);
-        if (player)
+        if (!entity->mLevel->mIsClientSide)
         {
+            boost::shared_ptr<Player> player = boost::dynamic_pointer_cast<Player>(entity);
             player->getFoodData()->eat(amplifier + 1, 1.0f);
         }
     }
-    else
+    else if ((this == MobEffects::HEAL && !entity->isInvertedHealAndHarm()) ||
+             (this == MobEffects::HARM && entity->isInvertedHealAndHarm()))
     {
-        bool inverted = entity->isInvertedHealAndHarm();
-        if ((this == MobEffects::HEAL && !inverted) ||
-            (this == MobEffects::HARM && inverted))
-        {
-            entity->heal((float)(4 << amplifier));
-        }
-        else if ((this == MobEffects::HARM && !inverted) ||
-                 (this == MobEffects::HEAL && inverted))
-        {
-            entity->hurt(DamageSource::INSTANT_DAMAGE, (float)(6 << amplifier));
-        }
+        int amount = 4 << amplifier;
+        entity->heal((float)(amount < 0 ? 0 : amount));
+    }
+    else if ((this == MobEffects::HARM && !entity->isInvertedHealAndHarm()) ||
+             (this == MobEffects::HEAL && entity->isInvertedHealAndHarm()))
+    {
+        entity->hurt(DamageSource::INSTANT_DAMAGE, (float)(6 << amplifier));
     }
 }
 
@@ -127,15 +123,15 @@ void MobEffect::applyInstantenousEffect(const boost::shared_ptr<Entity>& source,
                                         const boost::shared_ptr<LivingEntity>& entity,
                                         int amplifier, double health)
 {
-    bool inverted = entity->isInvertedHealAndHarm();
-    if ((this == MobEffects::HEAL && !inverted) || (this == MobEffects::HARM && inverted))
+    if ((this == MobEffects::HEAL && !entity->isInvertedHealAndHarm()) ||
+        (this == MobEffects::HARM && entity->isInvertedHealAndHarm()))
     {
-        entity->heal((float)std::floor(health * (double)(4 << amplifier) + 0.5));
+        entity->heal((float)(health * (double)(4 << amplifier) + 0.5));
     }
-    else if ((this == MobEffects::HARM && !inverted) ||
-             (this == MobEffects::HEAL && inverted))
+    else if ((this == MobEffects::HARM && !entity->isInvertedHealAndHarm()) ||
+             (this == MobEffects::HEAL && entity->isInvertedHealAndHarm()))
     {
-        float amount = (float)std::floor(health * (double)(6 << amplifier) + 0.5);
+        float amount = (float)(health * (double)(6 << amplifier) + 0.5);
         if (source)
         {
             DamageSource* damage =
@@ -223,8 +219,9 @@ MobEffect* MobEffect::addAttributeModifier(Attribute* attribute, eMODIFIER_ID id
     return this;
 }
 
-void MobEffect::getAttributeModifiers()
+boost::unordered_map<Attribute*, AttributeModifier*>* MobEffect::getAttributeModifiers()
 {
+    return this;
 }
 
 void MobEffect::removeAttributeModifiers(const boost::shared_ptr<LivingEntity>&,

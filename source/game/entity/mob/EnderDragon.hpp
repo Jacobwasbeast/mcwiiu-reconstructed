@@ -77,7 +77,7 @@ public:
     virtual void defineSynchedData();
     bool canRide(boost::shared_ptr<Entity> entity);
     void getLatencyPos(arrayWithLength<double> positions, int index, float partialTicks);
-    double getTilt(float partialTicks);
+    float getTilt(float partialTicks);
     double getHeadYOffset(float partialTicks);
     double rotWrap(double angle);
     void checkCrystals();

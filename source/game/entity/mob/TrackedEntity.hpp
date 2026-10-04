@@ -9,6 +9,7 @@
 #include <boost/weak_ptr.hpp>
 
 #include "game/entity/mob/Entity.hpp"
+#include "game/ui/AbstractContainerMenu.hpp"
 
 class EntityTracker;
 class Packet;
@@ -62,7 +63,7 @@ public:
     bool mWasRiding;
     bool mWasOnGround;
     bool mPlayerEntitiesUpdated;
-    boost::unordered_set<boost::shared_ptr<ServerPlayer>, boost::hash<boost::shared_ptr<ServerPlayer> > > mSeenBy;
+    boost::unordered_set<boost::shared_ptr<ServerPlayer>, _PlayerKeyHash, _PlayerKeyEq> mSeenBy;
 };
 
 #endif

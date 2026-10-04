@@ -1,6 +1,7 @@
 #include "game/entity/mob/ShoulderRidingEntity.hpp"
 
 #include "game/data/CompoundTag.hpp"
+#include "game/world/Level.hpp"
 #include "game/world/generation/Player.hpp"
 
 ShoulderRidingEntity::ShoulderRidingEntity(Level* level)
@@ -19,7 +20,7 @@ bool ShoulderRidingEntity::setEntityOnShoulder(boost::shared_ptr<Player> player)
         return false;
     }
 
-    remove();
+    mLevel->removeEntity(shared_from_this());
     return true;
 }
 

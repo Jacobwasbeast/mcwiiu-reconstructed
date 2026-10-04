@@ -47,7 +47,6 @@ protected:
     int mForcedAgeTimer;
     float mBaseWidth;
     float mBaseHeight;
-    unsigned int mUninitialized;
 
     static const EntityDataAccessor<bool>* DATA_BABY_ID;
     static const EntityDataAccessor<bool>* DATA_BABY_ID_2;

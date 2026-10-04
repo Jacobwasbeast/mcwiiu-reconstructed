@@ -16,7 +16,7 @@ class DifficultyInstance;
 class EquipmentSlot;
 class Level;
 class MobGroupData;
-class TippableArrow;
+class Arrow;
 class RangedBowAttackGoal;
 class ItemInstance;
 class SoundEvent;
@@ -37,7 +37,9 @@ public:
     AbstractSkeleton(Level* level);
     virtual ~AbstractSkeleton();
 
+    virtual const SoundEvent* getStepSound() = 0;
     virtual void performRangedAttack(boost::shared_ptr<LivingEntity> target, float distanceFactor);
+    virtual boost::shared_ptr<Arrow> getArrow(float distanceFactor);
     virtual bool isAggressive();
     virtual void setAggressive(bool aggressive);
     static void staticCtor();
@@ -47,7 +49,6 @@ public:
     virtual void registerAttributes();
     virtual void defineSynchedData();
     virtual void playStepSound(const BlockPos& pos, Block* block);
-    virtual const SoundEvent* getStepSound() = 0;
     virtual EMobType getMobType();
     virtual void aiStep();
     virtual void rideTick();
@@ -55,10 +56,9 @@ public:
     virtual void populateDefaultEquipmentSlots(const DifficultyInstance& difficulty);
     virtual MobGroupData* finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data,
                                             const std::wstring& dataString);
-    virtual boost::shared_ptr<TippableArrow> getArrow(float distanceFactor);
     virtual void readAdditionalSaveData(CompoundTag* tag);
     virtual void setItemSlot(const EquipmentSlot* slot, not_null_ptr<ItemInstance> itemInstance);
-    virtual double getEyeHeight();
+    virtual float getEyeHeight();
     virtual double getRidingHeight();
     virtual bool breathesWater();
     virtual unsigned long long GetType();

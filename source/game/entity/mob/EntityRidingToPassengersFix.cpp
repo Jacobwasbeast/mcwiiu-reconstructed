@@ -22,7 +22,7 @@ CompoundTag* EntityRidingToPassengersFix::extractVehicle(CompoundTag* tag)
 
 void EntityRidingToPassengersFix::addPassengerToVehicle(CompoundTag* passenger, CompoundTag* vehicle)
 {
-    ListTag* passengers = new ListTag(0);
+    ListTag* passengers = new ListTag();
     passengers->add(passenger);
     vehicle->put(L"Passengers", passengers);
 }

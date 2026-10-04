@@ -54,9 +54,9 @@ void Monster::tick()
     Mob::tick();
     if (!mLevel->mIsClientSide)
     {
-        if (mLevel->getDifficulty() == Difficulty::PEACEFUL ||
-            Minecraft::GetInstance()->isTutorial() ||
-            !gMinecraftServer->mSettings->getBoolean(eServerSetting_SpawnMonsters, true))
+        if (mLevel->getDifficulty() == Difficulty::PEACEFUL || Minecraft::GetInstance()->isTutorial())
+            remove();
+        else if (!gMinecraftServer->mSettings->getBoolean(eServerSetting_SpawnMonsters, true))
             remove();
     }
     PIXEndNamedEvent();
@@ -97,39 +97,41 @@ const SoundEvent* Monster::getFallDamageSound(int distance)
 bool Monster::doHurtTarget(boost::shared_ptr<Entity> target)
 {
     boost::shared_ptr<LivingEntity> attacker = boost::static_pointer_cast<LivingEntity>(shared_from_this());
-    boost::shared_ptr<LivingEntity> livingTarget;
     float damage = (float)getAttribute(SharedMonsterAttributes::ATTACK_DAMAGE)->getValue();
     int knockback = 0;
     if ((target->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
     {
-        livingTarget = boost::static_pointer_cast<LivingEntity>(target);
-        damage += (float)EnchantmentHelper::getDamageBonus(getMainHandItem(), livingTarget);
+        boost::shared_ptr<LivingEntity> livingTarget = boost::static_pointer_cast<LivingEntity>(target);
+        damage += EnchantmentHelper::getDamageBonus(getMainHandItem(), livingTarget);
         knockback = EnchantmentHelper::getKnockbackBonus(attacker, livingTarget);
     }
     EntityDamageSource* source = DamageSource::CreateMobAttack(attacker);
     bool hurtTarget = target->hurt(source, damage);
     delete source;
-    if (!hurtTarget)
-        return false;
-    if (knockback > 0 && livingTarget)
+    if (hurtTarget)
     {
-        livingTarget->knockback(boost::static_pointer_cast<Entity>(shared_from_this()), knockback * 0.5f,
-                                Mth::sin(mYRot * 0.017453292f),
-                                -Mth::cos(mYRot * 0.017453292f));
-        mXd *= 0.6;
-        mZd *= 0.6;
+        if (knockback > 0 && (target->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+        {
+            {
+                boost::shared_ptr<LivingEntity> livingTarget = boost::static_pointer_cast<LivingEntity>(target);
+                livingTarget->knockback(attacker, knockback * 0.5f, Mth::sin(mYRot * 0.017453292f),
+                                        -Mth::cos(mYRot * 0.017453292f));
+            }
+            mXd *= 0.6;
+            mZd *= 0.6;
+        }
+        int fireAspect = EnchantmentHelper::getFireAspect(attacker);
+        if (fireAspect > 0)
+            target->setSecondsOnFire(fireAspect * 4);
+        if ((target->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+        {
+            boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(target);
+            not_null_ptr<ItemInstance> mainHandItem = getMainHandItem();
+            not_null_ptr<ItemInstance> useItem = player->isUsingItem() ? player->getUseItem() : ItemInstance::EMPTY;
+        }
+        doEnchantDamageEffects(attacker, target);
     }
-    int fireAspect = EnchantmentHelper::getFireAspect(attacker);
-    if (fireAspect > 0)
-        target->setSecondsOnFire(fireAspect * 4);
-    if ((target->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
-    {
-        boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(target);
-        not_null_ptr<ItemInstance> mainHandItem = getMainHandItem();
-        not_null_ptr<ItemInstance> useItem = player->isUsingItem() ? player->getUseItem() : ItemInstance::EMPTY;
-    }
-    doEnchantDamageEffects(attacker, target);
-    return true;
+    return hurtTarget;
 }
 
 float Monster::getWalkTargetValue(const BlockPos& pos)
@@ -143,7 +145,8 @@ bool Monster::isDarkEnoughToSpawn()
     if (mBoundingBox->mMinY < (double)y)
         --y;
     BlockPos pos(mX, (double)y, mZ);
-    if (mRandom->nextInt(32) < mLevel->getBrightness(LightLayer::SKY, pos))
+    int skyBrightness = mLevel->getBrightness(LightLayer::SKY, pos);
+    if (mRandom->nextInt(32) < skyBrightness)
         return false;
     int brightness = mLevel->getRawBrightness(pos);
     if (mLevel->isThundering())

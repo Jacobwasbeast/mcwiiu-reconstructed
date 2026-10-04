@@ -12,6 +12,7 @@
 #include "game/util/Random.hpp"
 #include "game/util/Vec3.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Material.hpp"
@@ -32,15 +33,16 @@ bool WaterAnimal::isWaterMob()
 bool WaterAnimal::checkSpawnRules()
 {
     BlockPos position(getPos(0.0f));
-    while (mLevel->getBlockState(position.above())->getMaterial() == Material::WATER)
+    while (mLevel->getLiquidBlock(position.above())->mMaterial == Material::WATER)
     {
         MutableBlockPos above(position.above());
         position = above;
     }
 
     int y = position.y - mRandom->nextInt(1, 5);
-    MutableBlockPos spawnPosition(position);
-    spawnPosition.setY(std::max(static_cast<int>(getPos(0.0f)->y), y));
+    MutableBlockPos& spawnPosition = static_cast<MutableBlockPos&>(position);
+    int currentY = static_cast<int>(getPos(0.0f)->y);
+    spawnPosition.setY(currentY < y ? y : currentY);
     setPos(spawnPosition.x, spawnPosition.y, spawnPosition.z);
 
     return !mLevel->containsAnysolidBlocking(mBoundingBox)
@@ -96,11 +98,7 @@ void WaterAnimal::baseTick()
 {
     int airSupply = getAirSupply();
     Mob::baseTick();
-    if (!isAlive() || isInWaterOrBubble())
-    {
-        setAirSupply(300);
-    }
-    else
+    if (isAlive() && !isInWaterOrBubble())
     {
         setAirSupply(airSupply - 1);
         if (getAirSupply() == -20)
@@ -108,6 +106,10 @@ void WaterAnimal::baseTick()
             setAirSupply(0);
             hurt(DamageSource::DROWN, 2.0f);
         }
+    }
+    else
+    {
+        setAirSupply(300);
     }
 }
 

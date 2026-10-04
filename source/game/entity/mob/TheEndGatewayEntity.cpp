@@ -209,59 +209,51 @@ void TheEndGatewayEntity::teleportEntity(boost::shared_ptr<Entity> entity)
         return;
     if (isCoolingDown())
         return;
-    if (entity->GetType() == EntityType::THROWN_ENDERPEARL)
+    bool isPearl = entity->GetType() == EntityType::THROWN_ENDERPEARL;
+    if (isPearl && boost::static_pointer_cast<ThrownEnderpearl>(entity)->getOwner() != NULL)
     {
-        boost::shared_ptr<ThrownEnderpearl> pearl = boost::static_pointer_cast<ThrownEnderpearl>(entity);
-        boost::shared_ptr<LivingEntity> owner = pearl->getOwner();
-        if (owner.get() != NULL)
-        {
-            teleportEntity(owner);
-            entity->remove();
-        }
+        teleportEntity(boost::static_pointer_cast<ThrownEnderpearl>(entity)->getOwner());
+        entity->remove();
         return;
     }
     mCooldown = 100;
-    if (mExitPortal == NULL)
-    {
+    if (mExitPortal == NULL && mLevel->mDimension->getType() == DimensionType::THE_END)
         findExitPortal();
-        if (mExitPortal == NULL)
+    if (mExitPortal != NULL)
+    {
+        if (entity->isPassenger())
         {
-            triggerCooldown();
-            return;
+            entity->stopRidingBeforeTeleport();
         }
-    }
-    if (entity->isPassenger())
-    {
-        entity->stopRidingBeforeTeleport();
-    }
-    else if (entity->isVehicle())
-    {
-        std::vector<boost::weak_ptr<Entity> >* passengers = entity->getPassengers();
-        while (!passengers->empty())
+        else if (entity->isVehicle())
         {
-            boost::shared_ptr<Entity> passenger = passengers->front().lock();
-            passenger->stopRiding();
+            std::vector<boost::weak_ptr<Entity> >* passengers = entity->getPassengers();
+            while (!passengers->empty())
+            {
+                boost::shared_ptr<Entity> passenger = passengers->front().lock();
+                passenger->stopRiding();
+            }
         }
-    }
-    mLevel->getChunkSource()->getOrCreateChunk(mExitPortal->x >> 4, mExitPortal->z >> 4, false);
-    BlockPos target;
-    if (mExactTeleport)
-    {
-        target = *mExitPortal;
-    }
-    else
-    {
-        target = findExitPosition();
-        if (target.equals(*mExitPortal) || target.equals(mExitPortal->above()))
+        mLevel->getChunkSource()->getOrCreateChunk(mExitPortal->x >> 4, mExitPortal->z >> 4, false);
+        BlockPos target;
+        if (mExactTeleport)
         {
-            mLevel->setBlockAndUpdate(mExitPortal->offset(0, 1, 0), Blocks::bedrock->defaultBlockState());
-            mLevel->setBlockAndUpdate(mExitPortal->offset(0, 2, 0), Blocks::bedrock->defaultBlockState());
-            mLevel->setBlockAndUpdate(mExitPortal->offset(0, 3, 0), Blocks::air->defaultBlockState());
-            mLevel->setBlockAndUpdate(mExitPortal->offset(0, 4, 0), Blocks::air->defaultBlockState());
-            target = mExitPortal->offset(0, 3, 0);
+            target = *mExitPortal;
         }
+        else
+        {
+            target = findExitPosition();
+            if (target.equals(*mExitPortal) || target.equals(mExitPortal->above()))
+            {
+                mLevel->setBlockAndUpdate(mExitPortal->offset(0, 1, 0), Blocks::bedrock->defaultBlockState());
+                mLevel->setBlockAndUpdate(mExitPortal->offset(0, 2, 0), Blocks::bedrock->defaultBlockState());
+                mLevel->setBlockAndUpdate(mExitPortal->offset(0, 3, 0), Blocks::air->defaultBlockState());
+                mLevel->setBlockAndUpdate(mExitPortal->offset(0, 4, 0), Blocks::air->defaultBlockState());
+                target = mExitPortal->offset(0, 3, 0);
+            }
+        }
+        entity->teleportTo((double)target.x, (double)target.y, (double)target.z);
     }
-    entity->teleportTo((double)target.x, (double)target.y, (double)target.z);
     triggerCooldown();
 }
 
@@ -332,7 +324,7 @@ float TheEndGatewayEntity::getSpawnPercent(float partialTick)
     return Mth::clamp(((float)mAge + partialTick) / 200.0F, 0.0F, 1.0F);
 }
 
-double TheEndGatewayEntity::getCooldownPercent(float partialTick)
+float TheEndGatewayEntity::getCooldownPercent(float partialTick)
 {
     return 1.0F - Mth::clamp(((float)mCooldown - partialTick) / 40.0F, 0.0F, 1.0F);
 }

@@ -126,14 +126,14 @@ public:
     double generateRandomSpeed();
     void setOffspringAttributes(const boost::shared_ptr<AgableMob>& other, const boost::shared_ptr<AbstractHorse>& offspring);
     virtual bool canBeControlledByRider();
-    double getEatAnim(float partialTick) const;
-    double getStandAnim(float partialTick) const;
-    double getMouthAnim(float partialTick) const;
+    float getEatAnim(float partialTick) const;
+    float getStandAnim(float partialTick) const;
+    float getMouthAnim(float partialTick) const;
     void spawnTamingParticles(bool success);
     virtual void handleEntityEvent(unsigned char event, int data);
     virtual void positionRider(const boost::shared_ptr<Entity>& passenger);
     virtual bool onLadder();
-    virtual double getEyeHeight();
+    virtual float getEyeHeight();
     virtual bool setSlot(int slot, const not_null_ptr<ItemInstance>& item);
     virtual boost::shared_ptr<Entity> getControllingPassenger();
     virtual MobGroupData* finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data, const std::wstring& name);
@@ -150,7 +150,7 @@ protected:
     int mStandCounter;
     int mTailCounter;
     int mSprintCounter;
-    unsigned long long mLastAngrySoundTime;
+    long long mLastAngrySoundTime;
     bool mJumping;
     boost::shared_ptr<SimpleContainer> mInventory;
     int mTemper;

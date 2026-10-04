@@ -13,6 +13,7 @@
 #include "game/item/Item.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/SpawnEggItem.hpp"
+#include "game/entity/mob/EntityIO.hpp"
 #include "game/ui/EntityTooltipDataHolder.hpp"
 #include "game/util/Random.hpp"
 #include "game/util/ResourceLocation.hpp"
@@ -28,15 +29,15 @@ const EntityDataAccessor<bool>* AgableMob::DATA_BABY_ID_2 = NULL;
 
 AgableMob::AgableMob(Level* level)
     : PathfinderMob(level), mAge(0), mForcedAge(0), mForcedAgeTimer(0),
-      mBaseWidth(-1.0f), mBaseHeight(0.0f), mUninitialized(0)
+      mBaseWidth(-1.0f), mBaseHeight(0.0f)
 {
 }
 
 void AgableMob::staticCtor()
 {
-    DATA_BABY_ID = SynchedEntityData::defineId(EntityType::AGABLE_MOB, EntityType::MOB,
+    DATA_BABY_ID = SynchedEntityData::defineId(EntityType::AGABLE_MOB, EntityType::PATHFINDER_MOB,
                                                EntityDataSerializers::BOOLEAN);
-    DATA_BABY_ID_2 = SynchedEntityData::defineId(EntityType::AGABLE_MOB, EntityType::MOB,
+    DATA_BABY_ID_2 = SynchedEntityData::defineId(EntityType::AGABLE_MOB, EntityType::PATHFINDER_MOB,
                                                  EntityDataSerializers::BOOLEAN);
 }
 
@@ -46,7 +47,7 @@ bool AgableMob::mobInteract(const boost::shared_ptr<Player>& player, Interaction
     if (itemInstance->getItem() != Items::spawnEgg || mLevel->mIsClientSide)
         return false;
 
-    const unsigned long long type = SpawnEggItem::fjGetType(itemInstance);
+    const unsigned long long type = EntityIO::sRegistry.get(SpawnEggItem::getNamedIdFrom(itemInstance));
     if (type == 0 || (type & EntityType::AGABLE_MOB) != EntityType::AGABLE_MOB || GetType() != type)
         return false;
 
@@ -79,9 +80,11 @@ bool AgableMob::mobInteract(const boost::shared_ptr<Player>& player, Interaction
 
 bool AgableMob::holdingSpawnEggOfClass(const not_null_ptr<ItemInstance>& itemInstance, unsigned long long type)
 {
-    Item* item = itemInstance->getItem();
-    unsigned long long eggType = SpawnEggItem::fjGetType(itemInstance);
-    return item == Items::spawnEgg && type == eggType;
+    if (itemInstance->getItem() != Items::spawnEgg)
+    {
+        return false;
+    }
+    return type == EntityIO::sRegistry.get(SpawnEggItem::getNamedIdFrom(itemInstance));
 }
 
 void AgableMob::defineSynchedData()
@@ -176,7 +179,22 @@ void AgableMob::onSyncedDataUpdated(const EntityDataAccessor_Base* accessor)
 void AgableMob::aiStep()
 {
     Mob::aiStep();
-    if (!mLevel->mIsClientSide)
+    if (mLevel->mIsClientSide)
+    {
+        if (mForcedAgeTimer > 0)
+        {
+            if ((mForcedAgeTimer & 3) == 0)
+            {
+                mLevel->addParticle(PARTICLE_HAPPY_VILLAGER,
+                                    mX + (mRandom->nextFloat() * mBbWidth * 2.0f) - mBbWidth,
+                                    mY + 0.5 + mRandom->nextFloat() * mBbHeight,
+                                    mZ + (mRandom->nextFloat() * mBbWidth * 2.0f) - mBbWidth,
+                                    0.0, 0.0, 0.0, arrayWithLength<int>());
+            }
+            --mForcedAgeTimer;
+        }
+    }
+    else
     {
         int age = getAge();
         if (age < 0)
@@ -191,18 +209,6 @@ void AgableMob::aiStep()
         {
             setAge(age - 1);
         }
-    }
-    else if (mForcedAgeTimer > 0)
-    {
-        if ((mForcedAgeTimer & 3) == 0)
-        {
-            mLevel->addParticle(PARTICLE_HAPPY_VILLAGER,
-                                mX + (mRandom->nextFloat() * mBbWidth * 2.0f) - mBbWidth,
-                                mY + 0.5 + mRandom->nextFloat() * mBbHeight,
-                                mZ + (mRandom->nextFloat() * mBbWidth * 2.0f) - mBbWidth,
-                                0.0, 0.0, 0.0, arrayWithLength<int>());
-        }
-        --mForcedAgeTimer;
     }
 }
 
@@ -237,10 +243,10 @@ void AgableMob::updateSize(bool baby)
 
 void AgableMob::setSize(float width, float height)
 {
-    float oldWidth = mBaseWidth;
-    mBaseHeight = height;
+    bool hadWidth = mBaseWidth > 0.0f;
     mBaseWidth = width;
-    if (oldWidth <= 0.0f)
+    mBaseHeight = height;
+    if (!hadWidth)
     {
         internalSetSize(1.0f);
     }

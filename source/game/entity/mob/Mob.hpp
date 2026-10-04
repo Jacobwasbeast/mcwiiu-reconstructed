@@ -58,6 +58,7 @@ public:
     virtual void readAdditionalSaveData(CompoundTag* tag);
     virtual void addAdditonalSaveData(CompoundTag* tag);
     virtual bool interact(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand);
+    using Entity::startRiding;
     virtual bool startRiding(boost::shared_ptr<Entity> entity, bool force);
     virtual void dropEquipment(bool hitByPlayer, int lootingLevel);
     virtual void dropAllDeathLoot(bool hitByPlayer, int lootingLevel, const DamageSource* source);

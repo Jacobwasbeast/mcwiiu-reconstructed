@@ -17,21 +17,27 @@
 #include "game/world/chunk/OldChunkStorage.hpp"
 
 BaseMobSpawner::BaseMobSpawner()
-    : mDelay(20), mSpawnPotentials(), mNextSpawnData(new SpawnData()), mSpin(0.0), moSpin(0.0),
-      mMinSpawnDelay(200), mMaxSpawnDelay(800), mSpawnCount(4), mDisplayEntity(),
-      mMaxNearbyEntities(6), mRequiredPlayerRange(16), mSpawnRange(4)
 {
+    mDelay = 20;
+    mNextSpawnData = new SpawnData();
+    mSpin = 0.0;
+    moSpin = 0.0;
+    mMinSpawnDelay = 200;
+    mMaxSpawnDelay = 800;
+    mSpawnCount = 4;
+    mDisplayEntity.reset();
+    mMaxNearbyEntities = 6;
+    mRequiredPlayerRange = 16;
+    mSpawnRange = 4;
 }
 
 BaseMobSpawner::~BaseMobSpawner()
 {
-    std::vector<SpawnData*>::iterator it = mSpawnPotentials.begin();
-    for (; it != mSpawnPotentials.end(); ++it)
-    {
-        if (*it != mNextSpawnData)
-            delete *it;
-    }
-    delete mNextSpawnData;
+    std::vector<SpawnData*>::iterator found = std::find(mSpawnPotentials.begin(), mSpawnPotentials.end(), mNextSpawnData);
+    if (found == mSpawnPotentials.end())
+        delete mNextSpawnData;
+    for (std::vector<SpawnData*>::iterator it = mSpawnPotentials.begin(); it != mSpawnPotentials.end(); ++it)
+        delete *it;
 }
 
 ResourceLocation BaseMobSpawner::getEntityId()
@@ -47,17 +53,16 @@ void BaseMobSpawner::setEntityId(const ResourceLocation& entityId)
 
 bool BaseMobSpawner::isNearPlayer()
 {
-    Level* level = getLevel();
-    if (level == NULL)
-        return false;
     BlockPos pos = getPos();
-    return level->hasNearPlayer(pos.x + 0.5, pos.y + 0.5, pos.z + 0.5,
+    return getLevel()->hasNearPlayer(pos.x + 0.5, pos.y + 0.5, pos.z + 0.5,
                                 static_cast<double>(mRequiredPlayerRange));
 }
 
 bool BaseMobSpawner::hasMob()
 {
-    return EntityIO::isValidEntityType(getEntityId());
+    CompoundTag* tag = mNextSpawnData->getTag();
+    ResourceLocation entityId(tag->getString(L"id"));
+    return EntityIO::isValidEntityType(entityId);
 }
 
 void BaseMobSpawner::tick()
@@ -108,27 +113,26 @@ void BaseMobSpawner::tick()
 
         AABB* box = AABB::newTemp(origin.x, origin.y, origin.z, origin.x + 1, origin.y + 1, origin.z + 1)
                         ->grow(mSpawnRange, mSpawnRange, mSpawnRange);
-        std::vector<boost::shared_ptr<Entity> >* entities = level->getEntitiesOfClass(typeid(*entity), box);
+        std::vector<boost::shared_ptr<Entity> >* entities = level->getEntitiesOfClass(typeid(*entity.get()), box);
         int nearby = static_cast<int>(entities->size());
         delete entities;
-        if (nearby >= mMaxNearbyEntities || !level->canCreateMore(entity->GetType(), Level::eSpawnType_Egg))
+        if (nearby >= mMaxNearbyEntities || !getLevel()->canCreateMore(entity->GetType(), Level::eSpawnType_Egg))
         {
             broadcastEvent(2);
             delay();
             return;
         }
 
-        boost::shared_ptr<Mob> mob;
-        if ((entity->GetType() & EntityType::MOB) == EntityType::MOB)
-            mob = boost::static_pointer_cast<Mob>(entity);
+        boost::shared_ptr<Mob> mob = (entity->GetType() & EntityType::MOB) == EntityType::MOB
+            ? boost::static_pointer_cast<Mob>(entity) : boost::shared_ptr<Mob>();
         entity->moveTo(entity->mX, entity->mY, entity->mZ, level->mRandom->nextFloat() * 360.0f, 0.0f);
         if (mob == NULL || (mob->checkSpawnRules() && mob->checkSpawnObstruction()))
         {
             if (mNextSpawnData->getTag()->size() == 1 && mNextSpawnData->getTag()->contains(L"id", Tag::TAG_STRING)
                 && (entity->GetType() & EntityType::MOB) == EntityType::MOB)
             {
-                DifficultyInstance difficulty = level->getCurrentDifficultyAt(BlockPos(entity));
-                boost::static_pointer_cast<Mob>(entity)->finalizeMobSpawn(difficulty, NULL, std::wstring());
+                boost::shared_ptr<Mob> spawnedMob = boost::static_pointer_cast<Mob>(entity);
+                spawnedMob->finalizeMobSpawn(level->getCurrentDifficultyAt(BlockPos(entity)), NULL, std::wstring());
             }
             OldChunkStorage::addEntityToWorld(entity, level);
             level->levelEvent(LevelEvent::PARTICLES_MOBBLOCK_SPAWN, origin, 0);
@@ -144,12 +148,15 @@ void BaseMobSpawner::tick()
 
 void BaseMobSpawner::delay()
 {
-    Random* random = getLevel()->mRandom;
-    mDelay = mMinSpawnDelay;
+    int nextDelay = mMinSpawnDelay;
     if (mMinSpawnDelay < mMaxSpawnDelay)
-        mDelay += random->nextInt(mMaxSpawnDelay - mMinSpawnDelay);
+        nextDelay += getLevel()->mRandom->nextInt(mMaxSpawnDelay - mMinSpawnDelay);
+    mDelay = nextDelay;
     if (!mSpawnPotentials.empty())
-        setNextSpawnData(static_cast<SpawnData*>(WeighedRandom::getRandomItem(random, mSpawnPotentials.begin(), mSpawnPotentials.end())));
+    {
+        SpawnData* data = static_cast<SpawnData*>(WeighedRandom::getRandomItem(getLevel()->mRandom, reinterpret_cast<std::vector<WeighedRandomItem*>*>(&mSpawnPotentials)));
+        setNextSpawnData(data);
+    }
     broadcastEvent(1);
 }
 
@@ -169,7 +176,7 @@ void BaseMobSpawner::load(CompoundTag* tag)
     }
     else if (!mSpawnPotentials.empty())
     {
-        setNextSpawnData(static_cast<SpawnData*>(WeighedRandom::getRandomItem(getLevel()->mRandom, mSpawnPotentials.begin(), mSpawnPotentials.end())));
+        setNextSpawnData(static_cast<SpawnData*>(WeighedRandom::getRandomItem(getLevel()->mRandom, reinterpret_cast<std::vector<WeighedRandomItem*>*>(&mSpawnPotentials))));
     }
     for (std::vector<SpawnData*>::iterator it = mSpawnPotentials.begin(); it != mSpawnPotentials.end(); ++it)
     {
@@ -193,9 +200,7 @@ void BaseMobSpawner::load(CompoundTag* tag)
     if (tag->contains(L"SpawnRange", Tag::TAG_ANY_NUMERIC))
         mSpawnRange = tag->getShort(L"SpawnRange");
     if (getLevel() != NULL)
-    {
-        mDisplayEntity.reset();
-    }
+        mDisplayEntity = boost::shared_ptr<Entity>();
 }
 
 CompoundTag* BaseMobSpawner::save(CompoundTag* tag)
@@ -250,7 +255,8 @@ int BaseMobSpawner::onEventTriggered(int event)
                 double xd = random.nextGaussian() * 0.02;
                 double yd = random.nextGaussian() * 0.02;
                 double zd = random.nextGaussian() * 0.02;
-                getLevel()->addParticle(PARTICLE_EXPLODE, x, y, z, xd, yd, zd, arrayWithLength<int>());
+                arrayWithLength<int> particleData;
+                getLevel()->addParticle(PARTICLE_EXPLODE, x, y, z, xd, yd, zd, particleData);
             }
         }
         return 1;

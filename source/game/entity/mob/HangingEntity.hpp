@@ -22,6 +22,7 @@ class HangingEntity : public Entity
 {
     friend class TrackedEntity;
     friend class ItemFrameRenderer;
+    friend class ClientboundAddPaintingPacket;
     friend class PaintingRenderer;
 
 public:

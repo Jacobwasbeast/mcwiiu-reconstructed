@@ -8,6 +8,7 @@
 #include "game/item/not_null_ptr.hpp"
 #include "game/core/InteractionHand.hpp"
 #include "game/entity/mob/Creature.hpp"
+#include "game/server/ServerPlayer.hpp"
 
 class Block;
 class BlockPos;
@@ -56,7 +57,7 @@ public:
     bool AgeUpBaby(const boost::shared_ptr<Player>& player, not_null_ptr<ItemInstance> itemInstance);
     virtual bool mobInteract(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand);
     virtual void setInLove(boost::shared_ptr<Player> player);
-    boost::shared_ptr<Player> getLoveCause();
+    boost::shared_ptr<ServerPlayer> getLoveCause();
     bool isInLove();
     void resetLove();
     virtual bool canMate(const boost::shared_ptr<Animal>& other);

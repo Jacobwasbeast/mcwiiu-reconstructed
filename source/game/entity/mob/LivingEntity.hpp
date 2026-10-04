@@ -173,6 +173,8 @@ public:
     virtual not_null_ptr<ItemInstance> getItemInHand(InteractionHand::EInteractionHand hand);
     virtual void setItemInHand(InteractionHand::EInteractionHand hand, not_null_ptr<ItemInstance> itemInstance);
     virtual bool hasItemInSlot(const EquipmentSlot* slot);
+    virtual NonNullList<not_null_ptr<ItemInstance> > getArmorSlots() = 0;
+    virtual void setItemSlot(const EquipmentSlot* slot, not_null_ptr<ItemInstance> itemInstance) = 0;
     virtual not_null_ptr<ItemInstance> getItemSlot(const EquipmentSlot* slot) = 0;
     virtual TextureAtlasSprite* getItemInHandIcon(not_null_ptr<ItemInstance> itemInstance, int frame);
     virtual float getSoundVolume();

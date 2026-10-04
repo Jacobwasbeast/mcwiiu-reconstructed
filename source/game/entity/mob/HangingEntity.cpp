@@ -151,13 +151,10 @@ bool HangingEntity::isPickable()
 
 bool HangingEntity::skipAttackInteraction(boost::shared_ptr<Entity> entity)
 {
-    if (entity == NULL)
-        return false;
     if ((entity->GetType() & EntityType::PLAYER) != EntityType::PLAYER)
         return false;
 
-    boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
-    EntityDamageSource* source = DamageSource::CreatePlayerAttack(player);
+    EntityDamageSource* source = DamageSource::CreatePlayerAttack(boost::static_pointer_cast<Player>(entity));
     bool skipped = hurt(source, 0.0f);
     delete source;
     return skipped;
@@ -220,11 +217,10 @@ void HangingEntity::readAdditionalSaveData(CompoundTag* tag)
 
 boost::shared_ptr<ItemEntity> HangingEntity::spawnAtLocation(not_null_ptr<ItemInstance> itemInstance, float yOffset)
 {
-    Vec3i normal = mDirection->getNormal();
     boost::shared_ptr<ItemEntity> item(new ItemEntity(mLevel,
-        mX + (double)((float)normal.x * 0.15f),
+        mX + (double)((float)mDirection->getStepX() * 0.15f),
         mY + static_cast<double>(yOffset),
-        mZ + (double)((float)normal.z * 0.15f),
+        mZ + (double)((float)mDirection->getStepZ() * 0.15f),
         itemInstance));
     item->setDefaultPickUpDelay();
     mLevel->addEntity(item);

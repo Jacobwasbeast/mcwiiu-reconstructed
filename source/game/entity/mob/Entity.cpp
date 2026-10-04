@@ -349,7 +349,6 @@ Entity::Entity(Level* level, bool createEntityData)
 
     mCategories = 0;
     mWaterCheckBox = AABB::newPermanent(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
-    mCollisionCacheValid = false;
     mFireCacheMinX = 0;
     mFireCacheMinY = 0;
     mFireCacheMinZ = 0;
@@ -1284,14 +1283,14 @@ void Entity::move(MoverType type, double x, double y, double z, bool pushedByPis
     int chunkX = Mth::absFloor(mX * 0.0625);
     int chunkZ = Mth::absFloor(mZ * 0.0625);
 
-    bool spectator = false;
+    bool sleeping = false;
 
     if ((GetType() & EntityType::PLAYER) == EntityType::PLAYER)
     {
-        spectator = boost::static_pointer_cast<Player>(shared_from_this())->isSpectator();
+        sleeping = boost::static_pointer_cast<Player>(shared_from_this())->isSleeping();
     }
 
-    if (!spectator)
+    if (!sleeping)
     {
         if (y != 0.0 && (!mLevel->mIsClientSide || mLevel->reallyHasChunk(chunkX, chunkZ)))
         {
@@ -1507,7 +1506,7 @@ void Entity::move(MoverType type, double x, double y, double z, bool pushedByPis
     mCollision = mHorizontalCollision || mVerticalCollision;
 
     if ((GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY && mCollision
-        && !g_pApp->IsAppPaused())
+        && !gApp.IsAppPaused())
     {
         boost::shared_ptr<LivingEntity> living =
             boost::static_pointer_cast<LivingEntity>(shared_from_this());
@@ -1667,7 +1666,7 @@ void Entity::checkInsideBlocks()
                 BlockPos pos(x, y, z);
                 const BlockState* state = mLevel->getBlockState(mTickCache, pos);
 
-                if (inMiniGame && !g_pApp->ShouldCollideWith(state->getBlock()))
+                if (inMiniGame && !gApp.ShouldCollideWith(state->getBlock()))
                 {
                     continue;
                 }
@@ -2316,7 +2315,7 @@ double Entity::distanceAsIfHitscanned(const BlockPos& pos, const AABB& box) cons
     Vec3* center = Vec3::newTemp((double)pos.x + 0.5, (double)pos.y + 0.5, (double)pos.z + 0.5);
 
     double distanceSqr = center->distanceToSqr(box.getCenter());
-    double radius = (box.mMaxX - box.mMinX) * 0.5 + (box.mMaxY - box.mMinY) * 0.5 + 1.8;
+    double radius = (box.mMaxY - box.mMinY) * 0.5 + ((box.mMaxX - box.mMinX) * 0.5 + 1.8);
 
     return distanceSqr - radius * radius;
 }
@@ -2949,19 +2948,16 @@ bool Entity::isInWall()
     mInWallCacheYRot = mYRot;
     mInWallCacheXRot = mXRot;
 
-    float width = mBbWidth * 0.8f;
-    double eyeHeight = getEyeHeight();
-
     BlockPos lastPos((int)0x80000000, (int)0x80000000, (int)0x80000000);
 
-    bool inMiniGame = Minecraft::InMiniGame(eMiniGameId_Any, true);
+    double eyeHeight = getEyeHeight();
 
     for (int i = 0; i < 8; i++)
     {
-        int x = Mth::floor(mX + (double)(((float)(i % 2) - 0.5f) * width));
-        int y = Mth::floor(mY + (double)(((float)((i / 4) % 2) - 0.5f) * 0.1f)
+        int x = Mth::floor(mX + (double)(((float)((i / 2) % 2) - 0.5f) * mBbWidth * 0.8f));
+        int y = Mth::floor(mY + (double)(((float)(i % 2) - 0.5f) * 0.1f)
                            + (double)eyeHeight);
-        int z = Mth::floor(mZ + (double)(((float)((i / 2) % 2) - 0.5f) * width));
+        int z = Mth::floor(mZ + (double)(((float)((i / 4) % 2) - 0.5f) * mBbWidth * 0.8f));
 
         BlockPos pos(x, y, z);
 
@@ -2972,10 +2968,10 @@ bool Entity::isInWall()
 
         lastPos = pos;
 
-        Block* block = mLevel->getBlockState(mTickCache, pos)->getBlock();
+        const BlockState* state = mLevel->getBlockState(mTickCache, pos);
 
-        if (block->isViewBlocking(mLevel->getBlockState(mTickCache, pos))
-            && (!inMiniGame || g_pApp->ShouldCollideWith(block)))
+        if (state->isViewBlocking()
+            && (!Minecraft::InMiniGame(eMiniGameId_Any, true) || gApp.ShouldCollideWith(state->getBlock())))
         {
             mInWallCacheResult = true;
             return true;
@@ -3274,7 +3270,7 @@ void Entity::removePassenger(boost::shared_ptr<Entity> passenger)
 
 bool Entity::canAddPassenger(boost::shared_ptr<Entity> passenger)
 {
-    return mPassengers.empty();
+    return getPassengers()->empty();
 }
 
 void Entity::lerpTo(double x, double y, double z, float yRot, float xRot, int steps, bool teleport)
@@ -4032,7 +4028,7 @@ void Entity::setCustomName(const std::wstring& customName, const std::wstring& o
                            bool namedByRestrictedPlayer)
 {
     bool createdOnHost = CGameNetworkManager::sInstance.IsHost()
-        && g_pApp->IsUUIDLocal(ownerUUID) != 0;
+        && gApp.IsUUIDLocal(ownerUUID) != 0;
 
     mEntityData->set(DATA_CREATED_ON_HOST, createdOnHost, true);
     mEntityData->set(DATA_NAMED_BY_RESTRICTED_PLAYER, namedByRestrictedPlayer, true);
@@ -4154,7 +4150,7 @@ void Entity::setBoundingBox(AABB* boundingBox)
     mBoundingBox->set(boundingBox);
 }
 
-double Entity::getEyeHeight()
+float Entity::getEyeHeight()
 {
     return (double)(mBbHeight * 0.85f);
 }
@@ -4169,10 +4165,11 @@ bool Entity::setSlot(int slot, const not_null_ptr<ItemInstance>& itemInstance)
     return false;
 }
 
-bool Entity::interactAt(const boost::shared_ptr<Player>& player, Vec3* pos,
-                        InteractionHand::EInteractionHand hand)
+InteractionResult::EInteractionResult Entity::interactAt(const boost::shared_ptr<Player>& player,
+                                                         Vec3* pos,
+                                                         InteractionHand::EInteractionHand hand)
 {
-    return true;
+    return InteractionResult::eInteractionResult_Pass;
 }
 
 bool Entity::ignoreExplosion()
@@ -4264,8 +4261,10 @@ boost::shared_ptr<Entity> Entity::getControllingPassenger()
 
 bool Entity::hasPassenger(boost::shared_ptr<Entity> passenger)
 {
-    for (std::vector<boost::weak_ptr<Entity> >::iterator it = mPassengers.begin();
-         it != mPassengers.end(); ++it)
+    std::vector<boost::weak_ptr<Entity> >* passengers = getPassengers();
+
+    for (std::vector<boost::weak_ptr<Entity> >::iterator it = passengers->begin();
+         it != passengers->end(); ++it)
     {
         boost::shared_ptr<Entity> rider = it->lock();
 
@@ -4384,8 +4383,10 @@ bool Entity::isPassengerOfSameVehicle(boost::shared_ptr<Entity> entity)
 
 bool Entity::hasIndirectPassenger(boost::shared_ptr<Entity> passenger)
 {
-    for (std::vector<boost::weak_ptr<Entity> >::iterator it = mPassengers.begin();
-         it != mPassengers.end(); ++it)
+    std::vector<boost::weak_ptr<Entity> >* passengers = getPassengers();
+
+    for (std::vector<boost::weak_ptr<Entity> >::iterator it = passengers->begin();
+         it != passengers->end(); ++it)
     {
         boost::shared_ptr<Entity> rider = it->lock();
 
@@ -4607,7 +4608,7 @@ boost::shared_ptr<Entity> Entity::getLeashHolder()
 
 bool Entity::isLeashedToPlayer(const boost::shared_ptr<Player>& player)
 {
-    return mLeashed && getLeashHolder() == player;
+    return isLeashed() && getLeashHolder() == player;
 }
 
 void Entity::setLeashedTo(boost::shared_ptr<Entity> leashHolder, bool broadcast)
@@ -4688,4 +4689,9 @@ void Entity::restoreLeashFromSave()
     }
 
     mLeashInfoTag = NULL;
+}
+
+CompoundTag* Entity::getAdditionContructionTag()
+{
+    return NULL;
 }

@@ -28,7 +28,7 @@ WitherSkeleton::WitherSkeleton(Level* level)
 {
     fjDerivedCtorCalls();
     setSize(0.7f, 2.4f);
-    mBlocksBuilding = true;
+    mFireImmune = true;
 }
 
 WitherSkeleton::~WitherSkeleton()
@@ -53,15 +53,16 @@ void WitherSkeleton::registerGoals()
 MobGroupData* WitherSkeleton::finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data,
                                                 const std::wstring& dataString)
 {
-    MobGroupData* result = AbstractSkeleton::finalizeMobSpawn(difficulty, data, std::wstring());
+    MobGroupData* result = AbstractSkeleton::finalizeMobSpawn(difficulty, data, std::wstring(L""));
     getAttribute(SharedMonsterAttributes::ATTACK_DAMAGE)->setBaseValue(4.0);
     reassessWeaponGoal();
     return result;
 }
 
-double WitherSkeleton::getEyeHeight()
+float WitherSkeleton::getEyeHeight()
 {
-    return 2.1f;
+    float eyeHeight = 2.1f;
+    return eyeHeight;
 }
 
 bool WitherSkeleton::doHurtTarget(boost::shared_ptr<Entity> target)
@@ -69,7 +70,7 @@ bool WitherSkeleton::doHurtTarget(boost::shared_ptr<Entity> target)
     if (!Monster::doHurtTarget(target))
         return false;
 
-    if (target && (target->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+    if ((target->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
     {
         boost::shared_ptr<LivingEntity> living = boost::static_pointer_cast<LivingEntity>(target);
         living->addEffect(new MobEffectInstance(MobEffects::WITHER, 200),
@@ -92,28 +93,22 @@ void WitherSkeleton::die(const DamageSource* source)
 {
     AbstractSkeleton::die(source);
 
-    if (source == NULL)
+    if (!(source->getEntity() != NULL && source->getEntity()->GetType() == EntityType::CREEPER))
         return;
 
-    boost::shared_ptr<Entity> entity = source->getEntity();
-    if (!entity || entity->GetType() != EntityType::CREEPER)
-        return;
-
-    boost::shared_ptr<Creeper> creeper = boost::static_pointer_cast<Creeper>(entity);
-    if (!creeper->isPowered() || !creeper->canDropMobsSkull())
-        return;
-
-    creeper->increaseDroppedSkulls();
-    spawnAtLocation(not_null_ptr<ItemInstance>(new ItemInstance(Items::skull, 1, 1)), 0.0f);
+    boost::shared_ptr<Creeper> creeper = boost::static_pointer_cast<Creeper>(source->getEntity());
+    if (creeper->isPowered() && creeper->canDropMobsSkull())
+    {
+        creeper->increaseDroppedSkulls();
+        spawnAtLocation(not_null_ptr<ItemInstance>(new ItemInstance(Items::skull, 1, 1)), 0.0f);
+    }
 }
 
 void WitherSkeleton::tick()
 {
     AbstractSkeleton::tick();
 
-    boost::shared_ptr<LivingEntity> target = getTarget();
-    boost::shared_ptr<WitherBoss> parent = mWitherParent.lock();
-    if (target && parent && target.get() == parent.get())
+    if (getTarget() && getTarget() == mWitherParent.lock())
     {
         setLastHurtByMob(boost::shared_ptr<LivingEntity>());
         setTarget(boost::shared_ptr<LivingEntity>());
@@ -154,11 +149,10 @@ void WitherSkeleton::populateDefaultEquipmentEnchantments(const DifficultyInstan
 {
 }
 
-boost::shared_ptr<TippableArrow> WitherSkeleton::getArrow(float distanceFactor)
+boost::shared_ptr<Arrow> WitherSkeleton::getArrow(float distanceFactor)
 {
-    boost::shared_ptr<TippableArrow> arrow = AbstractSkeleton::getArrow(distanceFactor);
-    if (arrow)
-        arrow->setSecondsOnFire(100);
+    boost::shared_ptr<Arrow> arrow = AbstractSkeleton::getArrow(distanceFactor);
+    arrow->setSecondsOnFire(100);
     return arrow;
 }
 

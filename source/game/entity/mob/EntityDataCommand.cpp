@@ -34,5 +34,5 @@ boost::shared_ptr<GameCommandPacket> EntityDataCommand::preparePacket(unsigned c
     DataOutputStream stream(&byteStream);
     static_cast<void>(stream);
     return boost::shared_ptr<GameCommandPacket>(
-        new GameCommandPacket(eGameCommand_EntityData, arrayWithLength<unsigned char>()));
+        new GameCommandPacket());
 }

@@ -80,7 +80,7 @@ public:
     virtual void addAdditonalSaveData(CompoundTag* tag);
     virtual void readAdditionalSaveData(CompoundTag* tag);
     virtual void killed(boost::shared_ptr<LivingEntity> entity);
-    virtual double getEyeHeight();
+    virtual float getEyeHeight();
     virtual void positionRider(const boost::shared_ptr<Entity>& entity);
     virtual bool breathesWater();
     virtual bool canHoldItem(not_null_ptr<ItemInstance> item);

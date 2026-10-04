@@ -645,7 +645,7 @@ void Mob::dropAllDeathLoot(bool hitByPlayer, int lootingLevel, const DamageSourc
     if (hitByPlayer && mLastHurtByPlayer)
     {
         builder->mKillerEntity = mLastHurtByPlayer;
-        builder->mLuck = (float)mLastHurtByPlayer->getLuck();
+        builder->mLuck = mLastHurtByPlayer->getLuck();
     }
 
     Random seededRandom(mLootTableSeed);
@@ -1271,15 +1271,29 @@ bool Mob::interact(const boost::shared_ptr<Player>& player, InteractionHand::EIn
     not_null_ptr<ItemInstance> heldItem = player->getItemInHand(hand);
     Item* heldItemType = heldItem->getItem();
 
-    if (heldItemType == Items::lead && canBeLeashed(player) && player->isAllowedToAttackAnimals())
+    if (heldItemType == Items::lead)
     {
-        setLeashedTo(player, true);
-        heldItem->shrink(1);
-        return true;
+        if (!mLevel->mIsClientSide && isLeashedToPlayer(player))
+        {
+            dropLeash(true, !player->mAbilities.mInstabuild);
+            return true;
+        }
+        if (canBeLeashed(player) && player->isAllowedToAttackAnimals())
+        {
+            setLeashedTo(player, true);
+            heldItem->shrink(1);
+            return true;
+        }
     }
 
     if (mobInteract(player, hand))
         return true;
+
+    if (!mLevel->mIsClientSide && isLeashedToPlayer(player))
+    {
+        dropLeash(true, !player->mAbilities.mInstabuild);
+        return true;
+    }
 
     return Entity::interact(player, hand);
 }
@@ -1298,9 +1312,7 @@ void Mob::underwaterEjectRider()
 
 bool Mob::canBeLeashed(const boost::shared_ptr<Player>&)
 {
-    if (isLeashed())
-        return false;
-    return (GetType() & EntityType::ENEMY) == 0;
+    return !isLeashed() && (shared_from_this()->GetType() & EntityType::ENEMY) != EntityType::ENEMY;
 }
 
 bool Mob::startRiding(boost::shared_ptr<Entity> entity, bool force)

@@ -40,7 +40,7 @@ public:
     virtual void addAdditonalSaveData(CompoundTag* tag);
     virtual void readAdditionalSaveData(CompoundTag* tag);
     virtual bool isAttackable();
-    virtual boost::shared_ptr<LivingEntity> getOwner() const;
+    boost::shared_ptr<LivingEntity> getOwner() const;
     virtual void updateDeltaAfterMove(Block* block, double x, double y, double z, double& movedX, double& movedY, double& movedZ);
     virtual void defineSynchedData();
     static void create(Level* level);

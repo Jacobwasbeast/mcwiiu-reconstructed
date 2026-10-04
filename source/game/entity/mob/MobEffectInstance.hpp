@@ -13,6 +13,9 @@ class LivingEntity;
 
 class MobEffectInstance
 {
+    friend class Potion;
+    friend class ThrownPotion;
+
 public:
     MobEffectInstance(MobEffect* effect);
     MobEffectInstance(MobEffect* effect, int duration);

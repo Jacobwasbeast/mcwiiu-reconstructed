@@ -40,8 +40,8 @@ void AbstractChestedHorse::registerAttributes()
 {
     AbstractHorse::registerAttributes();
     getAttribute(SharedMonsterAttributes::MAX_HEALTH)->setBaseValue(generateRandomMaxHealth());
-    getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(0.175);
-    getAttributes()->getInstance(eATTRIBUTE_ID_HorseJumpStrength)->setBaseValue(0.5);
+    getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(0.175f);
+    getAttribute(JUMP_STRENGTH)->setBaseValue(0.5);
 }
 
 bool AbstractChestedHorse::hasChest()
@@ -74,7 +74,7 @@ void AbstractChestedHorse::die(const DamageSource* source)
     AbstractHorse::die(source);
     if (hasChest())
     {
-        if (mLevel == NULL || !mLevel->mIsClientSide)
+        if (!mLevel->mIsClientSide)
         {
             spawnAtLocation(Item::byBlock(Blocks::chest), 1);
         }
@@ -100,8 +100,8 @@ void AbstractChestedHorse::addAdditonalSaveData(CompoundTag* tag)
     tag->putBoolean(L"ChestedHorse", hasChest());
     if (hasChest())
     {
-        ListTag* items = new ListTag(0);
-        for (int slot = 2; slot < getInventorySize(); ++slot)
+        ListTag* items = new ListTag();
+        for (int slot = 2; slot < mInventory->getContainerSize(); ++slot)
         {
             not_null_ptr<ItemInstance> item = mInventory->getItem((unsigned int)slot);
             if (!item->isEmpty())
@@ -127,8 +127,8 @@ void AbstractChestedHorse::readAdditionalSaveData(CompoundTag* tag)
         for (int i = 0; i < items->size(); ++i)
         {
             CompoundTag* itemTag = items->getCompound(i);
-            int slot = itemTag->getByte(L"Slot");
-            if (slot > 1 && slot < getInventorySize())
+            unsigned int slot = itemTag->getByte(L"Slot");
+            if (slot > 1 && slot < (unsigned int)mInventory->getContainerSize())
             {
                 mInventory->setItem((unsigned int)slot,
                                     not_null_ptr<ItemInstance>(new ItemInstance(itemTag)));
@@ -231,7 +231,7 @@ bool AbstractChestedHorse::mobInteract(const boost::shared_ptr<Player>& player, 
 void AbstractChestedHorse::playChestEquipsSound()
 {
     playSound(SoundEvents::DONKEY_CHEST, 1.0f,
-              1.0f + (getRandom()->nextFloat() - getRandom()->nextFloat()) * 0.2f);
+              1.0f + (mRandom->nextFloat() - mRandom->nextFloat()) * 0.2f);
 }
 
 int AbstractChestedHorse::getInventoryColumns()

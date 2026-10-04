@@ -16,6 +16,7 @@
 #include "game/item/Items.hpp"
 #include "game/item/SpawnEggItem.hpp"
 #include "game/ui/EntityTooltipDataHolder.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/world/generation/Player.hpp"
 #include "game/item/ItemId.hpp"
 
@@ -43,8 +44,8 @@ void ZombieHorse::registerAttributes()
 {
     AbstractHorse::registerAttributes();
     getAttribute(SharedMonsterAttributes::MAX_HEALTH)->setBaseValue(15.0);
-    getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(0.2);
-    getAttributes()->getInstance(eATTRIBUTE_ID_HorseJumpStrength)->setBaseValue(generateRandomJumpStrength());
+    getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(0.2f);
+    getAttribute(JUMP_STRENGTH)->setBaseValue(generateRandomJumpStrength());
 }
 
 void ZombieHorse::registerGoals()
@@ -62,7 +63,8 @@ EMobType ZombieHorse::getMobType()
 
 boost::shared_ptr<AgableMob> ZombieHorse::getBreedOffspring(boost::shared_ptr<AgableMob>)
 {
-    return boost::shared_ptr<AgableMob>(new ZombieHorse(mLevel));
+    boost::shared_ptr<ZombieHorse> horse(new ZombieHorse(mLevel));
+    return horse;
 }
 
 const SoundEvent* ZombieHorse::getAmbientSound()
@@ -92,7 +94,8 @@ bool ZombieHorse::mobInteract(const boost::shared_ptr<Player>& player,
                               InteractionHand::EInteractionHand hand)
 {
     not_null_ptr<ItemInstance> item = player->getItemInHand(hand);
-    if (!item->isEmpty() && item->getItem() == Items::spawnEgg)
+    bool notEmpty = !item->isEmpty();
+    if (notEmpty && item->getItem() == Items::spawnEgg)
         return AbstractHorse::mobInteract(player, hand);
     if (!isTamed())
         return false;
@@ -102,7 +105,7 @@ bool ZombieHorse::mobInteract(const boost::shared_ptr<Player>& player,
     {
         if (isVehicle())
             return AbstractHorse::mobInteract(player, hand);
-        if (!item->isEmpty())
+        if (notEmpty)
         {
             if (!isSaddled() && item->getItem() == Items::saddle)
             {
@@ -115,11 +118,9 @@ bool ZombieHorse::mobInteract(const boost::shared_ptr<Player>& player,
                 return true;
         }
         doPlayerRide(player);
+        return true;
     }
-    else
-    {
-        openInventory(player);
-    }
+    openInventory(player);
     return true;
 }
 
@@ -127,48 +128,52 @@ unsigned int ZombieHorse::GetInteractTooltip(const EntityTooltipDataHolder& tool
 {
     if (tooltipData.m_bAllowedToInteract)
     {
-        not_null_ptr<ItemInstance> item = tooltipData.m_pItemInstance;
-        unsigned int itemId = Item::getId(item->getItem());
-        bool horseArmor = itemId >= 417 && itemId <= 419 || itemId == ItemId::LEATHER_HORSE_ARMOR;
-        boost::shared_ptr<Player> player(tooltipData.m_pPlayer,
-                                         (Player*)tooltipData.m_pPlayer.get());
+        unsigned int itemId = Item::getId(tooltipData.m_pItemInstance->getItem());
+        bool horseArmor = itemId >= ItemId::IRON_HORSE_ARMOR
+                          && (itemId <= ItemId::DIAMOND_HORSE_ARMOR || itemId == ItemId::LEATHER_HORSE_ARMOR);
 
         if (itemId == ItemId::SPAWN_EGG)
         {
-            if (SpawnEggItem::fjGetType(item) == EntityType::ZOMBIE_HORSE)
+            if (SpawnEggItem::fjGetType(tooltipData.m_pItemInstance) == EntityType::ZOMBIE_HORSE)
                 return IDS_TOOLTIPS_PLACE;
-            if (isLeashedToPlayer(player))
+            if (isLeashedToPlayer(tooltipData.m_pPlayer))
                 return IDS_TOOLTIPS_UNLEASH;
-            return IDS_NONE;
         }
-        if (isLeashedToPlayer(player))
-            return IDS_TOOLTIPS_UNLEASH;
-        if (itemId == ItemId::LEAD)
+        else
         {
-            if (!isLeashed())
-                return IDS_TOOLTIPS_LEASH;
-            return IDS_NONE;
-        }
-        else if (itemId == ItemId::NAME_TAG)
-        {
-            if (!player->isSneaking() || !isTamed())
+            if (isLeashedToPlayer(tooltipData.m_pPlayer))
+                return IDS_TOOLTIPS_UNLEASH;
+            if (itemId == ItemId::LEAD)
             {
-                if (!item->hasCustomHoverName())
-                    return IDS_NONE;
-                if (hasCustomName() && item->getHoverName() == getCustomName())
-                    return IDS_NONE;
-                return IDS_TOOLTIPS_NAME;
+                if (!isLeashed())
+                    return IDS_TOOLTIPS_LEASH;
             }
-        }
+            else
+            {
+                if (itemId == ItemId::NAME_TAG
+                    && !(tooltipData.m_pPlayer->isSneaking() && isTamed()))
+                {
+                    if (!tooltipData.m_pItemInstance->hasCustomHoverName())
+                        return IDS_NONE;
+                    bool differs = true;
+                    if (hasCustomName()
+                        && tooltipData.m_pItemInstance->getHoverName().compare(getCustomName()) == 0)
+                        differs = false;
+                    if (!differs)
+                        return IDS_NONE;
+                    return IDS_TOOLTIPS_NAME;
+                }
 
-        if (isTamed())
-        {
-            if (player->isSneaking()
-                || itemId == ItemId::SADDLE && !isSaddled()
-                || wearsArmor() && horseArmor)
-                return IDS_TOOLTIPS_OPEN;
-            if (getPassengers()->empty())
-                return IDS_TOOLTIPS_MOUNT;
+                if (isTamed())
+                {
+                    if (tooltipData.m_pPlayer->isSneaking()
+                        || itemId == ItemId::SADDLE && !isSaddled()
+                        || wearsArmor() && horseArmor)
+                        return IDS_TOOLTIPS_OPEN;
+                    if (getPassengers()->empty())
+                        return IDS_TOOLTIPS_MOUNT;
+                }
+            }
         }
     }
     return IDS_NONE;

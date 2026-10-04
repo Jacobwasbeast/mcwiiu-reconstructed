@@ -6,27 +6,38 @@
 #include "game/data/CompoundTag.hpp"
 #include "game/item/ItemInstance.hpp"
 
-static const wchar_t* HORSE_ARMOR_COLOR = L"customColor";
+static const std::wstring HORSE_ARMOR_COLOR = L"customColor";
+static const std::wstring HORSE_ARMOR_BASE_ICON = L"leather_horse_armor_base";
 
-HorseArmorItem::HorseArmorItem(int tier, int protection, int itemId, const wchar_t* hash)
-    : Item(), mArmorIcon(NULL), mTier(tier), mTextures(), mHash(hash == NULL ? L"" : hash), mProtection(protection)
+HorseArmorItem::HorseArmorItem(int tier, int protection, int texture, const wchar_t* hash)
+    : Item(), mTier(tier), mProtection(protection)
 {
-    setBaseItemTypeAndMaterial(itemId, 0);
+    mTextures.push_back(texture);
+    mHash.assign(hash);
+    mArmorIcon = NULL;
+    mIcon = NULL;
 }
 
 HorseArmorItem::HorseArmorItem(int tier, int protection, const int* textures, int textureCount, const wchar_t* hash)
-    : Item(), mArmorIcon(NULL), mTier(tier), mTextures(), mHash(hash == NULL ? L"" : hash), mProtection(protection)
+    : Item(), mTier(tier), mProtection(protection)
 {
     int i;
     for (i = 0; i < textureCount; ++i)
     {
         mTextures.push_back(textures[i]);
     }
+    mHash.assign(hash);
+    mArmorIcon = NULL;
+    mIcon = NULL;
 }
 
 HorseArmorItem::HorseArmorItem(int tier, int protection)
-    : Item(), mArmorIcon(NULL), mTier(tier), mTextures(1, -1), mHash(L""), mProtection(protection)
+    : Item(), mTier(tier), mProtection(protection)
 {
+    mTextures.push_back(-1);
+    mHash.assign(L"");
+    mArmorIcon = NULL;
+    mIcon = NULL;
 }
 
 HorseArmorItem::~HorseArmorItem()
@@ -76,7 +87,7 @@ TextureAtlasSprite* HorseArmorItem::getIcon(int auxValue)
 
 TextureAtlasSprite* HorseArmorItem::getLayerIcon(int auxValue, int layer, not_null_ptr<ItemInstance> itemInstance)
 {
-    if (mTier == 1 && layer == 0 && mArmorIcon != NULL)
+    if (getTier() == 1 && layer == 0)
     {
         return mArmorIcon;
     }
@@ -90,16 +101,20 @@ bool HorseArmorItem::hasMultipleSpriteLayers()
 
 void HorseArmorItem::registerIcons(IconRegister* iconRegister)
 {
-    Item::registerIcons(iconRegister);
-    if (mTier == 1)
+    mIcon = iconRegister->registerIcon(getIconName());
+    if (getTier() == 1)
     {
-        mArmorIcon = iconRegister->registerIcon(L"leather_horse_armor_base");
+        mArmorIcon = iconRegister->registerIcon(HORSE_ARMOR_BASE_ICON);
     }
 }
 
 bool HorseArmorItem::hasCustomColor(const not_null_ptr<ItemInstance>& itemInstance)
 {
-    return itemInstance->hasTag() && itemInstance->getTag()->contains(HORSE_ARMOR_COLOR);
+    if (itemInstance->hasTag())
+    {
+        return itemInstance->getTag()->contains(HORSE_ARMOR_COLOR);
+    }
+    return false;
 }
 
 int HorseArmorItem::getDyedColor(not_null_ptr<ItemInstance> itemInstance) const
@@ -108,9 +123,13 @@ int HorseArmorItem::getDyedColor(not_null_ptr<ItemInstance> itemInstance) const
     {
         return Color(255, 255, 255).getRGB();
     }
-    if (itemInstance->hasTag() && itemInstance->getTag()->contains(HORSE_ARMOR_COLOR))
+    if (itemInstance->hasTag())
     {
-        return itemInstance->getTag()->getInt(HORSE_ARMOR_COLOR);
+        CompoundTag* tag = itemInstance->getTag();
+        if (tag->contains(HORSE_ARMOR_COLOR))
+        {
+            return tag->getInt(HORSE_ARMOR_COLOR);
+        }
     }
     return DEFAULT_LEATHER_COLOR;
 }

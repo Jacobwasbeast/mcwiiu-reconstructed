@@ -26,23 +26,21 @@ int EntityMinecartIdentifiersFix::getVersion()
 
 CompoundTag* EntityMinecartIdentifiersFix::fix(CompoundTag* tag)
 {
-    if (!CheckID(tag, L"Minecart"))
+    if (CheckID(tag, L"Minecart"))
     {
-        return tag;
+        std::wstring id = L"MinecartRideable";
+
+        int type = tag->getInt(L"Type");
+
+        if (type >= 0 && static_cast<std::wstring::size_type>(type) < MINECART_IDS[0].size())
+        {
+            id = MINECART_IDS[type];
+        }
+
+        tag->putString(L"id", id);
+
+        tag->remove(L"Type");
     }
-
-    std::wstring id = L"MinecartRideable";
-
-    int type = tag->getInt(L"Type");
-
-    if (type >= 0 && type < static_cast<int>(sizeof(MINECART_IDS) / sizeof(MINECART_IDS[0])))
-    {
-        id = MINECART_IDS[type];
-    }
-
-    tag->putString(L"id", id);
-
-    tag->remove(L"Type");
 
     return tag;
 }

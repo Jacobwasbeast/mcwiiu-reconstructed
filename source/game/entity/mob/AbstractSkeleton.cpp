@@ -44,11 +44,11 @@ const EntityDataAccessor<bool>* AbstractSkeleton::DATA_ID_ATTACKING = NULL;
 
 AbstractSkeleton::AbstractSkeleton(Level* level)
     : Monster(level), mMeleeGoal(new SkeleteMeleeAttackGoal(this)),
-      mBowGoal(new RangedBowAttackGoal(this, 1.0, 20, 15.0f)),
-      mReassessWeaponGoal(true), mInWater(false)
+      mBowGoal(new RangedBowAttackGoal(this, 1.0, 20, 15.0f))
 {
     setSize(0.6f, 1.99f);
-    mBlocksBuilding = true;
+    mReassessWeaponGoal = true;
+    mInWater = false;
     mCategories |= EntityCategory::eEntityCategory_Undead | EntityCategory::eEntityCategory_Humanoid | EntityCategory::eEntityCategory_Monster;
 }
 
@@ -60,21 +60,16 @@ AbstractSkeleton::~AbstractSkeleton()
 
 void AbstractSkeleton::performRangedAttack(boost::shared_ptr<LivingEntity> target, float distanceFactor)
 {
-    boost::shared_ptr<TippableArrow> arrow = getArrow(distanceFactor);
-    Entity* targetEntity = target.get();
-    const double dx = targetEntity->mX - mX;
-    const double dz = targetEntity->mZ - mZ;
+    boost::shared_ptr<Arrow> arrow = getArrow(distanceFactor);
+    const double dx = target->mX - mX;
+    const double targetY = target->mBoundingBox->mMinY + target->mBbHeight / 3.0f - arrow->mY;
+    const double dz = target->mZ - mZ;
     const double horizontalDistance = std::sqrt(dx * dx + dz * dz);
-    const double targetY = targetEntity->mBoundingBox->mMinY
-        + static_cast<double>(targetEntity->mBbHeight) / 3.0;
-    const double dy = targetY - arrow->mY;
-    const float inaccuracy = 14.0f
-        - static_cast<float>(mLevel->getDifficulty()->getId()) * 4.0f;
 
-    arrow->shoot(dx, dy + horizontalDistance * 0.2, dz, 1.6f, inaccuracy);
-    mLevel->addEntity(boost::static_pointer_cast<Entity>(arrow));
-
+    arrow->shoot(dx, targetY + horizontalDistance * 0.2f, dz, 1.6f,
+                 -(static_cast<float>(mLevel->getDifficulty()->getId()) * 4.0f - 14.0f));
     playSound(SoundEvents::SKELETON_SHOOT, 1.0f, 1.0f / (getRandom()->nextFloat() * 0.4f + 0.8f));
+    mLevel->addEntity(arrow);
 }
 
 bool AbstractSkeleton::isAggressive()
@@ -175,10 +170,9 @@ void AbstractSkeleton::aiStep()
     if (!mLevel->mIsClientSide && mLevel->isDay())
     {
         float brightness = getBrightness();
-        boost::shared_ptr<Entity> vehicle = getVehicle();
-        BlockPos pos(mX, (double)Math::round(mY), mZ);
-        if (Entity::instanceof(vehicle, EntityType::BOAT))
-            pos = pos.above();
+        BlockPos pos = Entity::instanceof(getVehicle(), EntityType::BOAT)
+            ? BlockPos(mX, (double)Math::round(mY), mZ).above()
+            : BlockPos(mX, (double)Math::round(mY), mZ);
 
         if (brightness > 0.5f
             && mRandom->nextFloat() * 30.0f < (brightness - 0.4f) + (brightness - 0.4f)
@@ -204,7 +198,12 @@ void AbstractSkeleton::aiStep()
         }
     }
     bool inWater = isUnderLiquid(Material::WATER);
-    if (inWater != mInWater)
+    if (!mInWater)
+    {
+        if (inWater)
+            mReassessWeaponGoal = true;
+    }
+    else if (!inWater)
         mReassessWeaponGoal = true;
     mInWater = inWater;
     Monster::aiStep();
@@ -225,27 +224,18 @@ void AbstractSkeleton::die(const DamageSource* source)
 {
     LivingEntity::die(source);
 
-    boost::shared_ptr<Entity> directEntity = source->getDirectEntity();
-    if (!directEntity)
-        return;
-
-    boost::shared_ptr<Entity> entity = source->getEntity();
-    if (!entity)
-        return;
-
-    if ((directEntity->GetType() & EntityType::ARROW) != EntityType::ARROW)
-        return;
-
-    if ((entity->GetType() & EntityType::PLAYER) != EntityType::PLAYER)
-        return;
-
-    boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
-    const double dx = player->mX - mX;
-    const double dz = player->mZ - mZ;
-    if (dx * dx + dz * dz < 2500.0)
-        return;
-
-    player->awardStat(GenericStats::snipeSkeleton(), GenericStats::param_snipeSkeleton());
+    if (source->getDirectEntity() && source->getEntity())
+    {
+        if ((source->getDirectEntity()->GetType() & EntityType::ARROW) == EntityType::ARROW
+            && (source->getEntity()->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+        {
+            boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(source->getEntity());
+            const double dx = player->mX - mX;
+            const double dz = player->mZ - mZ;
+            if (dx * dx + dz * dz >= 2500.0)
+                player->awardStat(GenericStats::snipeSkeleton(), GenericStats::param_snipeSkeleton());
+        }
+    }
 }
 
 void AbstractSkeleton::populateDefaultEquipmentSlots(const DifficultyInstance& difficulty)
@@ -256,13 +246,14 @@ void AbstractSkeleton::populateDefaultEquipmentSlots(const DifficultyInstance& d
 MobGroupData* AbstractSkeleton::finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data,
                                                   const std::wstring& dataString)
 {
-    data = Mob::finalizeMobSpawn(difficulty, data, dataString);
+    data = Mob::finalizeMobSpawn(difficulty, data, std::wstring(L""));
     populateDefaultEquipmentSlots(difficulty);
     populateDefaultEquipmentEnchantments(difficulty);
     mReassessWeaponGoal = true;
     setCanPickUpLoot(mRandom->nextFloat() < 0.55f * difficulty.getSpecialMultiplier());
 
-    if (getItemSlot(EquipmentSlot::HEAD)->isEmpty() && IS_HALLOWEEN && mRandom->nextFloat() < 0.25f)
+    bool hasNoHelmet = getItemSlot(EquipmentSlot::HEAD) == ItemInstance::EMPTY;
+    if (hasNoHelmet && IS_HALLOWEEN && mRandom->nextFloat() < 0.25f)
     {
         setItemSlot(EquipmentSlot::HEAD, not_null_ptr<ItemInstance>(new ItemInstance(
                                              mRandom->nextFloat() < 0.1f ? Blocks::lit_pumpkin : Blocks::carved_pumpkin)));
@@ -271,11 +262,10 @@ MobGroupData* AbstractSkeleton::finalizeMobSpawn(const DifficultyInstance& diffi
     return data;
 }
 
-boost::shared_ptr<TippableArrow> AbstractSkeleton::getArrow(float distanceFactor)
+boost::shared_ptr<Arrow> AbstractSkeleton::getArrow(float distanceFactor)
 {
-    boost::shared_ptr<LivingEntity> owner = boost::static_pointer_cast<LivingEntity>(shared_from_this());
-    boost::shared_ptr<TippableArrow> arrow(new TippableArrow(mLevel, owner));
-    arrow->setEnchantmentEffectsFromEntity(owner, distanceFactor);
+    boost::shared_ptr<TippableArrow> arrow(new TippableArrow(mLevel, boost::static_pointer_cast<LivingEntity>(shared_from_this())));
+    arrow->setEnchantmentEffectsFromEntity(boost::static_pointer_cast<LivingEntity>(shared_from_this()), distanceFactor);
     return arrow;
 }
 
@@ -288,13 +278,14 @@ void AbstractSkeleton::readAdditionalSaveData(CompoundTag* tag)
 void AbstractSkeleton::setItemSlot(const EquipmentSlot* slot, not_null_ptr<ItemInstance> itemInstance)
 {
     Mob::setItemSlot(slot, itemInstance);
-    if (slot == EquipmentSlot::MAINHAND)
+    if (!mLevel->mIsClientSide && slot == EquipmentSlot::MAINHAND)
         mReassessWeaponGoal = true;
 }
 
-double AbstractSkeleton::getEyeHeight()
+float AbstractSkeleton::getEyeHeight()
 {
-    return 1.62f;
+    float height = 1.62f;
+    return height;
 }
 
 double AbstractSkeleton::getRidingHeight()

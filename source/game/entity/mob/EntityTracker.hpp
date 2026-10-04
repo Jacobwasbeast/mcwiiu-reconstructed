@@ -7,6 +7,7 @@
 #include <boost/unordered_set.hpp>
 
 #include "game/entity/mob/Entity.hpp"
+#include "game/world/chunk/Chunk.hpp"
 
 class LevelChunk;
 class Packet;
@@ -41,7 +42,7 @@ public:
 private:
     ServerLevel* mLevel;
     boost::unordered_set<boost::shared_ptr<TrackedEntity>, boost::hash<boost::shared_ptr<TrackedEntity> > > mTrackedEntities;
-    boost::unordered_map<int, boost::shared_ptr<TrackedEntity> > mEntityMap;
+    boost::unordered_map<int, boost::shared_ptr<TrackedEntity>, IntKeyHash2, IntKeyEq> mEntityMap;
     int mMaxRange;
 };
 

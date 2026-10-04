@@ -18,12 +18,7 @@ CompoundTag* EntityElderGuardianSplitFix::fix(CompoundTag* tag)
             tag->putString(L"id", L"ElderGuardian");
         }
 
-        Tag* elder = tag->get(L"Elder");
-
-        if (elder != NULL)
-        {
-            delete elder;
-        }
+        delete tag->get(L"Elder");
 
         tag->remove(L"Elder");
     }

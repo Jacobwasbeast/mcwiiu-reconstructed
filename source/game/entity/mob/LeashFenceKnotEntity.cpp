@@ -37,9 +37,11 @@ LeashFenceKnotEntity::LeashFenceKnotEntity(Level* level, const BlockPos& pos)
 {
     _init();
     setPos((double)pos.x + 0.5, (double)pos.y + 0.5, (double)pos.z + 0.5);
-    setBoundingBox(AABB::newPermanent(mX - 0.1875, mY - 0.25 + 0.125,
+    double halfHeight = 0.25;
+    double yOffset = 0.125;
+    setBoundingBox(AABB::newPermanent(mX - 0.1875, mY - halfHeight + yOffset,
                                       mZ - 0.1875, mX + 0.1875,
-                                      mY + 0.25 + 0.125, mZ + 0.1875));
+                                      mY + halfHeight + yOffset, mZ + 0.1875));
 }
 
 void LeashFenceKnotEntity::create(Level* level)
@@ -84,9 +86,9 @@ int LeashFenceKnotEntity::getHeight()
     return 9;
 }
 
-double LeashFenceKnotEntity::getEyeHeight()
+float LeashFenceKnotEntity::getEyeHeight()
 {
-    return -0.0625;
+    return -0.0625f;
 }
 
 bool LeashFenceKnotEntity::shouldRenderAtSqrDistance(double distanceSqr)
@@ -123,21 +125,22 @@ bool LeashFenceKnotEntity::interact(const boost::shared_ptr<Player>& player,
     if (mLevel->mIsClientSide)
         return true;
 
-    AABB* bounds = AABB::newTemp(mX - 7.0, mY - 7.0, mZ - 7.0,
-                                 mX + 7.0, mY + 7.0, mZ + 7.0);
     std::vector<boost::shared_ptr<Entity> >* entities =
-        mLevel->getEntitiesOfClass(typeid(Mob), bounds);
+        mLevel->getEntitiesOfClass(typeid(Mob), AABB::newTemp(mX - 7.0, mY - 7.0, mZ - 7.0,
+                                                              mX + 7.0, mY + 7.0, mZ + 7.0));
     std::vector<boost::shared_ptr<Entity> >* boats =
-        mLevel->getEntitiesOfClass(typeid(Boat), bounds);
+        mLevel->getEntitiesOfClass(typeid(Boat), AABB::newTemp(mX - 7.0, mY - 7.0, mZ - 7.0,
+                                                               mX + 7.0, mY + 7.0, mZ + 7.0));
     entities->insert(entities->end(), boats->begin(), boats->end());
 
     bool changed = false;
     for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin();
          it != entities->end(); ++it)
     {
-        if ((*it)->isLeashedToPlayer(player))
+        boost::shared_ptr<Entity> entity = *it;
+        if (entity->isLeashedToPlayer(player))
         {
-            (*it)->setLeashedTo(shared_from_this(), true);
+            entity->setLeashedTo(shared_from_this(), true);
             changed = true;
         }
     }
@@ -150,8 +153,9 @@ bool LeashFenceKnotEntity::interact(const boost::shared_ptr<Player>& player,
             for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin();
                  it != entities->end(); ++it)
             {
-                if ((*it)->isLeashed() && (*it)->getLeashHolder() == shared_from_this())
-                    (*it)->dropLeash(true, false);
+                boost::shared_ptr<Entity> entity = *it;
+                if (entity->isLeashed() && entity->getLeashHolder() == shared_from_this())
+                    entity->dropLeash(true, false);
             }
         }
     }
@@ -182,29 +186,28 @@ boost::shared_ptr<LeashFenceKnotEntity> LeashFenceKnotEntity::findKnotAt(Level* 
                                  (double)pos.y + 1.0, (double)pos.z + 1.0);
     std::vector<boost::shared_ptr<Entity> >* entities =
         level->getEntitiesOfClass(typeid(LeashFenceKnotEntity), bounds);
-    for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin();
-         it != entities->end(); ++it)
+    if (entities != NULL)
     {
-        boost::shared_ptr<LeashFenceKnotEntity> knot =
-            boost::dynamic_pointer_cast<LeashFenceKnotEntity>(*it);
-        if (knot && knot->getPos().equals(pos))
+        for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin();
+             it != entities->end(); ++it)
         {
-            delete entities;
-            return knot;
+            boost::shared_ptr<LeashFenceKnotEntity> knot =
+                boost::dynamic_pointer_cast<LeashFenceKnotEntity>(*it);
+            if (knot->getPos().equals(pos))
+            {
+                delete entities;
+                return knot;
+            }
         }
+        delete entities;
     }
-    delete entities;
     return boost::shared_ptr<LeashFenceKnotEntity>();
 }
 
 unsigned int LeashFenceKnotEntity::GetInteractTooltip(const EntityTooltipDataHolder& tooltipData)
 {
-    bool bound = false;
-    if (Item::getId(tooltipData.m_pItemInstance->getItem()) == ItemId::LEAD)
-    {
-        boost::shared_ptr<Player> player = tooltipData.m_pPlayer;
-        bound = LeadItem::bindPlayerMobsTest(player, mLevel, BlockPos(shared_from_this()));
-    }
+    int bound = Item::getId(tooltipData.m_pItemInstance->getItem()) == ItemId::LEAD
+        && LeadItem::bindPlayerMobsTest(tooltipData.m_pPlayer, mLevel, BlockPos(tooltipData.m_pPlayer));
     return bound ? IDS_TOOLTIPS_ATTACH : IDS_TOOLTIPS_UNLEASH;
 }
 

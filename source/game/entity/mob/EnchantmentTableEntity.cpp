@@ -11,9 +11,9 @@
 #include "game/world/Level.hpp"
 
 EnchantmentTableEntity::EnchantmentTableEntity()
-    : BlockEntity(), InteractionObject(), mRandom(new Random()),
-      mCustomName(new CensoredString())
+    : BlockEntity(), InteractionObject()
 {
+    mRandom = new Random();
     mTime = 0;
     mFlip = 0.0F;
     mFlipOld = 0.0F;
@@ -24,6 +24,7 @@ EnchantmentTableEntity::EnchantmentTableEntity()
     mRot = 0.0F;
     mRotOld = 0.0F;
     mRotTarget = 0.0F;
+    mCustomName = boost::shared_ptr<CensoredString>(new CensoredString());
 }
 
 EnchantmentTableEntity::~EnchantmentTableEntity()
@@ -40,25 +41,26 @@ std::wstring EnchantmentTableEntity::getName()
 {
     if (hasCustomName())
         return mCustomName->get();
-    return std::wstring();
+    return std::wstring(L"");
 }
 
 std::wstring EnchantmentTableEntity::getCustomName()
 {
     if (hasCustomName())
         return mCustomName->get();
-    return std::wstring();
+    return std::wstring(L"");
 }
 
 bool EnchantmentTableEntity::hasCustomName()
 {
-    return mCustomName->checkParentalFilter() != 0 && !mCustomName->raw().empty();
+    if (mCustomName->checkParentalFilter() == 0)
+        return false;
+    return !mCustomName->raw().empty();
 }
 
 std::wstring EnchantmentTableEntity::getDisplayName()
 {
-    if (hasCustomName())
-        return getCustomName();
+    hasCustomName();
     return getName();
 }
 
@@ -152,6 +154,7 @@ void EnchantmentTableEntity::tick()
 boost::shared_ptr<BlockEntity> EnchantmentTableEntity::clone()
 {
     boost::shared_ptr<EnchantmentTableEntity> copy(new EnchantmentTableEntity());
+    BlockEntity::clone(copy);
     copy->mTime = mTime;
     copy->mFlip = mFlip;
     copy->mFlipOld = mFlipOld;
@@ -162,8 +165,7 @@ boost::shared_ptr<BlockEntity> EnchantmentTableEntity::clone()
     copy->mRot = mRot;
     copy->mRotOld = mRotOld;
     copy->mRotTarget = mRotTarget;
-    copy->mCustomName->set(mCustomName->raw(), mCustomName->getUUID(), mCustomName->isChatCensored(), mCustomName->isUUIDLocal());
-    BlockEntity::clone(copy);
+    copy->mCustomName->set(mCustomName->raw(), std::wstring(mCustomName->getUUID()), mCustomName->isChatCensored(), mCustomName->isUUIDLocal());
     return copy;
 }
 

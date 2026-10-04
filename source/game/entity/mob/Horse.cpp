@@ -103,16 +103,15 @@ void Horse::addAdditonalSaveData(CompoundTag* tag)
 {
     AbstractHorse::addAdditonalSaveData(tag);
     tag->putInt(L"Variant", getVariant());
-    not_null_ptr<ItemInstance> armor = mInventory->getItem(1);
-    if (!armor->isEmpty())
+    if (!mInventory->getItem(1)->isEmpty())
     {
-        tag->put(L"ArmorItem", armor->save(new CompoundTag()));
+        tag->put(L"ArmorItem", mInventory->getItem(1)->save(new CompoundTag()));
     }
 }
 
 void Horse::clearLayeredTextureInfo()
 {
-    mLayeredTextureHashName.clear();
+    mLayeredTextureHashName.erase(mLayeredTextureHashName.begin(), mLayeredTextureHashName.end());
 }
 
 void Horse::setVariant(int variant)
@@ -150,7 +149,8 @@ void Horse::rebuildLayeredTextureInfo()
     mLayeredTextureLayers.data[0] = VARIANT_TEXTURES[colour];
     mLayeredTextureLayers.data[1] = MARKING_TEXTURES[markings];
     int layerCount = mLayeredTextureLayers.data[1] == -1 ? 1 : 2;
-    for (int i = 0; i < armor->getTextureCount(); ++i)
+    int armorTextureCount = armor->getTextureCount();
+    for (int i = 0; i < armorTextureCount; ++i)
         mLayeredTextureLayers.data[layerCount + i] = armor->getTexture(i);
 
     mLayeredTextureHashName = L"horse/" + VARIANT_HASHES[colour] + MARKING_HASHES[markings] + armor->getHash();
@@ -194,7 +194,7 @@ void Horse::setArmorType(const not_null_ptr<ItemInstance>& item)
     if (HorseArmorItem::isHorseArmor(item->getItem()))
         armor = static_cast<HorseArmorItem*>(item->getItem());
 
-    getEntityData()->set(DATA_ARMOR, item, true);
+    mEntityData->set(DATA_ARMOR, item, true);
     clearLayeredTextureInfo();
 
     if (!mLevel->mIsClientSide)
@@ -219,7 +219,7 @@ void Horse::updateEquipment()
 void Horse::onSyncedDataUpdated(const EntityDataAccessor_Base* accessor)
 {
     AgableMob::onSyncedDataUpdated(accessor);
-    if (DATA_ARMOR == accessor)
+    if (accessor->getId() == DATA_ARMOR->getId())
         clearLayeredTextureInfo();
 }
 
@@ -259,7 +259,8 @@ ResourceLocation* Horse::getDefaultLootTable() { return &BuiltInLootTables::HORS
 bool Horse::mobInteract(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand)
 {
     not_null_ptr<ItemInstance> item = player->getItemInHand(hand);
-    if (!item->isEmpty() && item->getItem() == Items::spawnEgg)
+    bool holdingItem = !item->isEmpty();
+    if (holdingItem && item->getItem() == Items::spawnEgg)
         return AbstractHorse::mobInteract(player, hand);
     if (isLeashedToPlayer(player))
         return false;
@@ -273,7 +274,7 @@ bool Horse::mobInteract(const boost::shared_ptr<Player>& player, InteractionHand
         if (isVehicle())
             return AbstractHorse::mobInteract(player, hand);
     }
-    if (!item->isEmpty())
+    if (holdingItem)
     {
         if (handleEating(player, item))
         {
@@ -287,11 +288,12 @@ bool Horse::mobInteract(const boost::shared_ptr<Player>& player, InteractionHand
             return true;
         if (!isTamed())
         {
-            doPlayerRide(player);
+            makeMad();
             return true;
         }
-        if (HorseArmorItem::isHorseArmor(item->getItem())
-            || (!isBaby() && !isSaddled() && item->getItem() == Items::saddle))
+        bool isHorseArmorItem = HorseArmorItem::isHorseArmor(item->getItem());
+        bool isSaddleItem = !isBaby() && !isSaddled() && item->getItem() == Items::saddle;
+        if (isHorseArmorItem || isSaddleItem)
         {
             openInventory(player);
             return true;
@@ -382,36 +384,36 @@ bool Horse::HideUseTooltips() { return true; }
 
 bool Horse::canMate(const boost::shared_ptr<Animal>& other)
 {
-    if (other.get() == this)
+    if (other == shared_from_this())
     {
         return false;
     }
-    unsigned long long otherType = other->GetType();
-    if (otherType != EntityType::DONKEY && otherType != EntityType::HORSE)
+    bool isDonkey = other->GetType() == EntityType::DONKEY;
+    if (!isDonkey)
     {
-        return false;
+        bool isHorse = other->GetType() == EntityType::HORSE;
+        if (!isHorse)
+        {
+            return false;
+        }
     }
-    if (!canParent())
-    {
-        return false;
-    }
-    boost::shared_ptr<AbstractHorse> otherHorse = boost::static_pointer_cast<AbstractHorse>(other);
-    return otherHorse->canParent();
+    return canParent() && boost::static_pointer_cast<AbstractHorse>(other)->canParent();
 }
 
 boost::shared_ptr<AgableMob> Horse::getBreedOffspring(boost::shared_ptr<AgableMob> partner)
 {
     boost::shared_ptr<AbstractHorse> child;
-    if (partner->GetType() == EntityType::DONKEY)
+    bool partnerIsDonkey = partner->GetType() == EntityType::DONKEY;
+    if (partnerIsDonkey)
     {
-        child = boost::shared_ptr<AbstractHorse>(new Mule(mLevel));
+        child = boost::shared_ptr<Mule>(new Mule(mLevel));
     }
     else
     {
         boost::shared_ptr<Horse> partnerHorse = boost::static_pointer_cast<Horse>(partner);
-        boost::shared_ptr<Horse> horseChild(new Horse(mLevel));
+        child = boost::shared_ptr<Horse>(new Horse(mLevel));
         int colour;
-        int roll = getRandom()->nextInt(9);
+        int roll = mRandom->nextInt(9);
         if (roll < 4)
         {
             colour = getVariant() & 0xff;
@@ -422,9 +424,9 @@ boost::shared_ptr<AgableMob> Horse::getBreedOffspring(boost::shared_ptr<AgableMo
         }
         else
         {
-            colour = getRandom()->nextInt(7);
+            colour = mRandom->nextInt(7);
         }
-        int markingRoll = getRandom()->nextInt(5);
+        int markingRoll = mRandom->nextInt(5);
         if (markingRoll < 2)
         {
             colour |= getVariant() & 0xff00;
@@ -435,13 +437,12 @@ boost::shared_ptr<AgableMob> Horse::getBreedOffspring(boost::shared_ptr<AgableMo
         }
         else
         {
-            colour |= (getRandom()->nextInt(5) & 0xff) << 8;
+            colour |= (mRandom->nextInt(5) & 0xff) << 8;
         }
-        horseChild->setVariant(colour);
-        child = boost::static_pointer_cast<AbstractHorse>(horseChild);
+        boost::static_pointer_cast<Horse>(child)->setVariant(colour);
     }
     setOffspringAttributes(partner, child);
-    return boost::static_pointer_cast<AgableMob>(child);
+    return child;
 }
 
 bool Horse::wearsArmor() { return true; }
@@ -454,13 +455,17 @@ bool Horse::isArmor(const not_null_ptr<ItemInstance>& item)
 MobGroupData* Horse::finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data, const std::wstring& name)
 {
     MobGroupData* result = AbstractHorse::finalizeMobSpawn(difficulty, data, name);
-    HorseGroupData* group = dynamic_cast<HorseGroupData*>(result);
-    if (group == NULL)
+    int variant;
+    if (result != NULL && dynamic_cast<HorseGroupData*>(result) != NULL)
     {
-        group = new HorseGroupData(getRandom()->nextInt(7));
-        result = group;
+        variant = static_cast<HorseGroupData*>(result)->mVariant;
     }
-    setVariant(group->mVariant | (getRandom()->nextInt(5) << 8));
+    else
+    {
+        variant = mRandom->nextInt(7);
+        result = new HorseGroupData(variant);
+    }
+    setVariant(variant | (mRandom->nextInt(5) << 8));
     return result;
 }
 

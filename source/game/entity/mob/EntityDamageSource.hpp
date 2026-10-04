@@ -20,7 +20,7 @@ public:
     virtual bool scalesWithDifficulty() const;
     virtual Vec3* getSourcePosition() const;
     virtual DamageSource* copy() const;
-    void setThorns();
+    EntityDamageSource* setThorns();
 
 protected:
     boost::shared_ptr<Entity> entity;

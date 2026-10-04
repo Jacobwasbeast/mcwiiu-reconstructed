@@ -8,6 +8,7 @@
 #include "game/util/Vec3.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
+#include "game/world/block/Block.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/MutableBlockPos.hpp"
 #include "game/world/block/Material.hpp"
@@ -24,17 +25,15 @@ bool AgableWaterAnimal::isWaterMob()
 
 bool AgableWaterAnimal::checkSpawnRules()
 {
-    BlockPos position(getPos(0.0f));
-    while (mLevel->getBlockState(position.above())->getMaterial() == Material::WATER)
+    MutableBlockPos position(BlockPos(getPos(0.0f)));
+    while (mLevel->getLiquidBlock(position.above())->mMaterial == Material::WATER)
     {
-        MutableBlockPos above(position.above());
-        position = above;
+        position = MutableBlockPos(position.above());
     }
 
     int y = position.y - mRandom->nextInt(1, 5);
-    MutableBlockPos spawnPosition(position);
-    spawnPosition.setY(std::max(static_cast<int>(getPos(0.0f)->y), y));
-    setPos(spawnPosition.x, spawnPosition.y, spawnPosition.z);
+    position.setY(std::max(static_cast<int>(getPos(0.0f)->y), y));
+    setPos(position.x, position.y, position.z);
 
     return !mLevel->containsAnysolidBlocking(mBoundingBox)
         && mLevel->containsMaterial(mBoundingBox, Material::WATER);
@@ -68,8 +67,8 @@ void AgableWaterAnimal::aiStep()
         mYd += 0.5;
         mXd += (double)((mRandom->nextFloat() * 2.0f - 1.0f) * 0.2f);
         mZd += (double)((mRandom->nextFloat() * 2.0f - 1.0f) * 0.2f);
-        mOnGround = false;
         mYRot = mRandom->nextFloat() * 360.0f;
+        mOnGround = false;
     }
 }
 
