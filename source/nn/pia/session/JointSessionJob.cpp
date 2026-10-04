@@ -2,20 +2,38 @@
 
 #include "nn/pia/HeapManager.hpp"
 #include "nn/pia/Transport.hpp"
+#include "nn/pia/common/Scheduler.hpp"
+#include "nn/pia/common/SessionBeginMonitoringContent.hpp"
+#include "nn/pia/common/TimeSpan.hpp"
+#include "nn/pia/session/StationIdStatusTable.hpp"
 #include "platform/wiiu/pead.hpp"
 
 #include <string.h>
 
 namespace nn { namespace pia { namespace session {
 
+namespace
+{
+enum
+{
+    cDisconnectStatusDisconnectedSession = 2,
+    cDisconnectStatusDisconnectedNetwork = 3,
+    cDisconnectStatus4 = 4,
+    cDisconnectStatus5 = 5,
+    cDisconnectStatus6 = 6,
+    cDisconnectReasonSession = 6,
+    cDisconnectReasonNetwork = 8
+};
+}
+
 JointSessionJob::JointSessionJob()
     : common::StepSequenceJob(), m_callerContext(0), m_callContext(),
-      m_processType(0), m_field5c(0), m_companionStationIdList(),
+      m_processType(Session::cProcessTypeNone), m_field5c(0), m_companionStationIdList(),
       m_companionStationIdFreeList(), m_stationIdNodeOffset(0),
       m_stationIdNodes(0), m_stationIdNodeNum(0), m_field98(0), m_field9c(0),
       m_field9d(0), m_leaveStationIdAccepted(false), m_fielda0(0),
       m_fielda2(0), m_fielda3(0), m_fielda4(0), m_fieldb0(0), m_fieldb4(0),
-      m_fieldb8(0), m_fieldbc(0), m_fieldc0(0), m_fieldc4(0)
+      m_startTime(), m_fieldc0(0), m_fieldc4(0)
 {
     JointSessionJob::InitializeImpl();
 }
@@ -125,7 +143,7 @@ void JointSessionJob::Cleanup()
 
     m_field5c = 0;
     m_fielda4 = 0;
-    m_processType = 0;
+    m_processType = Session::cProcessTypeNone;
     m_field9d = 0;
     m_field60 = 0;
     m_sessionDisconnectDetected = false;
@@ -164,12 +182,38 @@ bool JointSessionJob::AcceptLeaveStationId(unsigned long long stationId)
 
 bool JointSessionJob::IsMigrateSessionToJointSession() const
 {
-    return m_processType - 6 < 3;
+    return m_processType >= Session::cProcessTypeCreateJointSession &&
+           m_processType <= Session::cProcessTypeJoinRandomJointSession;
 }
 
 bool JointSessionJob::IsMigrateJointSessionToSession() const
 {
-    return m_processType == 9 || m_processType == 10;
+    return m_processType == Session::cProcessTypeDestroyJointSession ||
+           m_processType == Session::cProcessTypeLeaveJointSession;
+}
+
+void JointSessionJob::ClearProcessTypeAndNoticeFailureEvent()
+{
+    const unsigned int disconnectStatus = g_piaSession->m_disconnectStatus;
+    if (disconnectStatus == cDisconnectStatusDisconnectedNetwork ||
+        disconnectStatus == cDisconnectStatus4 || disconnectStatus == cDisconnectStatus5 ||
+        disconnectStatus == cDisconnectStatus6)
+    {
+        g_piaSession->m_sessionDisconnectReason = cDisconnectReasonNetwork;
+    }
+    else
+    {
+        g_piaSession->m_disconnectStatus = cDisconnectStatusDisconnectedSession;
+        g_piaSession->m_sessionDisconnectReason = cDisconnectReasonSession;
+    }
+    g_piaSession->m_stationIdStatusTable->ClearDisconnectedStationId();
+    g_piaSession->CallSessionEventCallback(Session::cEventTypeUnknown15, 0);
+    m_processType = Session::cProcessTypeNone;
+    const int elapsedMsec = static_cast<int>(
+        static_cast<long long>(common::g_piaJobScheduler->m_dispatchTime.m_tick - m_startTime.m_tick) /
+        common::TimeSpan::GetTicksPerMSec().m_tick);
+    common::g_sessionBeginMonitoringContent.m_joinProcessingTime = elapsedMsec;
+    common::g_sessionBeginMonitoringContent.m_metric131 = m_fieldc8;
 }
 
 }}}

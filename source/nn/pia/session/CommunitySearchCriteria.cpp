@@ -13,7 +13,7 @@ Result CommunitySearchCriteria::SetResultRange(unsigned int offset, unsigned int
     return 0;
 }
 
-unsigned int CommunitySearchCriteria::GetKeyType() const
+SessionSearchCriteria::SearchCriteriaKey CommunitySearchCriteria::GetKeyType() const
 {
     return m_keyType;
 }
@@ -30,7 +30,7 @@ unsigned int CommunitySearchCriteria::GetResultRangeSize() const
 
 void CommunitySearchCriteria::Reset()
 {
-    m_keyType = 0;
+    m_keyType = SessionSearchCriteria::cKeyTypeDefault;
     m_resultRangeOffset = 0;
     m_resultRangeSize = 20;
 }

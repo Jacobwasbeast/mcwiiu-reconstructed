@@ -25,17 +25,17 @@ void SyncClock::ClearBaseTime()
     m_hasBaseTime = false;
 }
 
-unsigned int SyncClock::GetTime() const
+unsigned long long SyncClock::GetTime() const
 {
     if (!m_hasBaseTime)
     {
-        return static_cast<unsigned int>(-1);
+        return static_cast<unsigned long long>(-1);
     }
 
     common::Time now;
     now.SetNow();
-    return static_cast<unsigned int>((now.m_tick - m_baseTime)
-                                     / common::TimeSpan::GetTicksPerMSec().m_tick);
+    return static_cast<unsigned long long>(static_cast<long long>(now.m_tick - m_baseTime)
+                                           / common::TimeSpan::GetTicksPerMSec().m_tick);
 }
 
 }}}

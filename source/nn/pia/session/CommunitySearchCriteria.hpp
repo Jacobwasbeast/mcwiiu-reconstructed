@@ -2,29 +2,25 @@
 #define LEGACY_CONSOLE_WIIU_NN_PIA_SESSION_COMMUNITY_SEARCH_CRITERIA_HPP
 
 #include "nn/pia/Reconstruction.hpp"
+#include "nn/pia/session/SessionSearchCriteria.hpp"
 
 namespace nn { namespace pia { namespace session {
 
 class CommunitySearchCriteria
 {
 public:
-    enum SearchCriteriaKey
-    {
-        SearchCriteriaKey_None = 0
-    };
-
     CommunitySearchCriteria();
-    CommunitySearchCriteria(SearchCriteriaKey keyType);
+    CommunitySearchCriteria(SessionSearchCriteria::SearchCriteriaKey keyType);
     ~CommunitySearchCriteria();
     void Copy(const CommunitySearchCriteria& other);
     Result SetResultRange(unsigned int offset, unsigned int size);
-    unsigned int GetKeyType() const;
+    SessionSearchCriteria::SearchCriteriaKey GetKeyType() const;
     unsigned int GetResultRangeOffset() const;
     unsigned int GetResultRangeSize() const;
     void Reset();
 
 private:
-    unsigned int m_keyType;
+    SessionSearchCriteria::SearchCriteriaKey m_keyType;
     unsigned int m_resultRangeOffset;
     unsigned int m_resultRangeSize;
 };

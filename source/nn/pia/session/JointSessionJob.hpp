@@ -6,6 +6,7 @@
 #include "nn/pia/common/CallContext.hpp"
 #include "nn/pia/common/StepSequenceJob.hpp"
 #include "nn/pia/session/Session.hpp"
+#include "nn/pia/session/SessionProtocol.hpp"
 
 namespace nn { namespace pia { namespace session {
 
@@ -35,7 +36,7 @@ public:
     virtual Result StartupLeaveJointSessionImpl() = 0;
     virtual Result StartupDestroyJointSessionImpl() = 0;
     virtual Result StartupPassiveProcessImpl(Session::ProcessType processType,
-                                             unsigned int messageType,
+                                             SessionProtocol::MessageType messageType,
                                              const unsigned long long* stationIds,
                                              unsigned short stationIdNum,
                                              unsigned long long senderStationId) = 0;
@@ -64,6 +65,9 @@ public:
     bool AcceptLeaveStationId(unsigned long long stationId);
     bool IsMigrateSessionToJointSession() const;
     bool IsMigrateJointSessionToSession() const;
+    void NoticeStartingEventByProcessType();
+    void ClearProcessTypeAndNoticeEndingEvent();
+    void ClearProcessTypeAndNoticeFailureEvent();
 
     common::CallContext* m_callerContext;
     common::CallContext m_callContext;
@@ -87,10 +91,10 @@ public:
     unsigned char m_fielda2;
     unsigned char m_fielda3;
     unsigned int m_fielda4;
+    unsigned char m_reserveda8[8];
     unsigned int m_fieldb0;
     unsigned int m_fieldb4;
-    unsigned int m_fieldb8;
-    unsigned int m_fieldbc;
+    common::Time m_startTime;
     unsigned int m_fieldc0;
     unsigned int m_fieldc4;
     unsigned char m_fieldc8;

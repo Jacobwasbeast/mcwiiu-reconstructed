@@ -13,7 +13,7 @@ public:
 
     void SetBaseTime(const common::Time& time);
     void ClearBaseTime();
-    unsigned int GetTime() const;
+    unsigned long long GetTime() const;
     void Trace(unsigned long long value) const;
 
 private:

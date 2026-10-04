@@ -50,12 +50,23 @@ public:
         cConnectionStatusConnected = 2
     };
 
-    typedef unsigned int ProcessType;
+    enum ProcessType
+    {
+        cProcessTypeNone = 0,
+        cProcessTypeCreateJointSession = 6,
+        cProcessTypeJoinJointSession = 7,
+        cProcessTypeJoinRandomJointSession = 8,
+        cProcessTypeDestroyJointSession = 9,
+        cProcessTypeLeaveJointSession = 10
+    };
 
     enum EventType
     {
         cEventTypeJoin = 0,
-        cEventTypeLeave = 1
+        cEventTypeLeave = 1,
+        cEventTypeUnknown02 = 2,
+        cEventTypeUnknown03 = 3,
+        cEventTypeUnknown15 = 0x15
     };
 
     enum SessionOpenStatus
@@ -129,6 +140,8 @@ public:
     void ChangeStatusToDisconnectedSession();
     void CheckStatusAtChangeMeshState();
     void ChangeStatusToDisconnectedNetwork();
+    bool IsProcessingJoin() const;
+    void CallSessionEventCallback(EventType eventType, unsigned long long stationId);
     transport::Station::IdentificationToken* GetMatchmakeAnalysisToken();
     static bool SessionJoiningApprovalCallback(
         const transport::Station::IdentificationToken* identificationToken);

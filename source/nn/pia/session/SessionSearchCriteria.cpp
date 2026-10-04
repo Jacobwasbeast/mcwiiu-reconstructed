@@ -5,7 +5,7 @@ namespace nn { namespace pia { namespace session {
 SessionSearchCriteria::SessionSearchCriteria()
     : m_resultRangeOffset(0),
       m_resultRangeSize(20),
-      m_keyType(0)
+      m_keyType(cKeyTypeDefault)
 {
 }
 
@@ -24,7 +24,7 @@ void SessionSearchCriteria::Reset()
 {
     m_resultRangeOffset = 0;
     m_resultRangeSize = 20;
-    m_keyType = 0;
+    m_keyType = cKeyTypeDefault;
 }
 
 void SessionSearchCriteria::Copy(const SessionSearchCriteria& other)
@@ -48,12 +48,12 @@ unsigned int SessionSearchCriteria::GetResultRangeSize() const
     return m_resultRangeSize;
 }
 
-int SessionSearchCriteria::GetKeyType() const
+SessionSearchCriteria::SearchCriteriaKey SessionSearchCriteria::GetKeyType() const
 {
     return m_keyType;
 }
 
-void SessionSearchCriteria::SetKeyType(int keyType)
+void SessionSearchCriteria::SetKeyType(SearchCriteriaKey keyType)
 {
     m_keyType = keyType;
 }

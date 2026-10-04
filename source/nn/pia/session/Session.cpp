@@ -209,6 +209,17 @@ void Session::ChangeStatusToDisconnectedNetwork()
         m_sessionDisconnectReason = 8;
 }
 
+void Session::CallSessionEventCallback(EventType eventType, unsigned long long stationId)
+{
+    if ((eventType != cEventTypeUnknown03 && eventType != cEventTypeUnknown02) ||
+        (!IsProcessingJoin() && !m_leaveSessionJob->IsRunning() &&
+         m_disconnectStatus - 2 > 4))
+    {
+        if (m_sessionEventCallback != 0)
+            m_sessionEventCallback(eventType, stationId, m_sessionEventCallbackParam);
+    }
+}
+
 transport::Station::IdentificationToken* Session::GetMatchmakeAnalysisToken()
 {
     return &m_matchmakeAnalysisToken;

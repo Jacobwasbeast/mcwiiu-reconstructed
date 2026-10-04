@@ -189,7 +189,7 @@ bool JoinMeshJob::Startup(const transport::StationConnectionInfo& info, common::
         m_stationConnected[index] = 0;
     g_piaMesh->CleanupMonitoringBeginData();
     SetHostInfoToMonitoringData(info);
-    m_principalId = (static_cast<unsigned long long>(info.m_field10) << 32) | static_cast<unsigned int>(info.m_field14);
+    m_principalId = info.m_stationLocation.m_principalId;
     m_startTime = common::g_piaJobScheduler->m_dispatchTime;
     return true;
 }
@@ -217,7 +217,7 @@ unsigned int JoinMeshJob::SetupLocalStation()
         return cExecuteResultFinished;
     }
     g_piaMesh->ResetStationIndexUsage();
-    station->m_stationAddress = *transport::g_stationConnectionInfoTable;
+    station->m_stationAddress = transport::g_stationConnectionInfoTable->m_stationLocation.m_stationAddress;
     Result result = transport::g_stationConnectionInfoTable->AddToTable(station, *transport::g_stationConnectionInfoTable);
     if (result != 0)
     {
@@ -302,9 +302,9 @@ unsigned int JoinMeshJob::StartConnectingToHost()
     if (station->Startup())
     {
         station->SetStationIdAndIndex(
-            (static_cast<unsigned long long>(m_stationInfos->m_field10) << 32) | static_cast<unsigned int>(m_stationInfos->m_field14),
+            m_stationInfos->m_stationLocation.m_principalId,
             g_piaMesh->GetHostStationIndex());
-        station->m_stationAddress = *m_stationInfos;
+        station->m_stationAddress = m_stationInfos->m_stationLocation.m_stationAddress;
         transport::g_stationConnectionInfoTable->AddToTable(station, *m_stationInfos);
         common::Time now;
         now.SetNow();
@@ -536,8 +536,7 @@ unsigned int JoinMeshJob::UpdateLocalAndHostInformation(StationIndex localIndex,
     if (hostStation != 0 && localStation != 0)
     {
         localStation->SetStationIdAndIndex(
-            (static_cast<unsigned long long>(transport::g_stationConnectionInfoTable->m_field10) << 32) |
-                static_cast<unsigned int>(transport::g_stationConnectionInfoTable->m_field14),
+            transport::g_stationConnectionInfoTable->m_stationLocation.m_principalId,
             localIndex);
         g_piaMesh->m_unknown5c = localIndex;
         g_piaMesh->StartUse(localIndex);

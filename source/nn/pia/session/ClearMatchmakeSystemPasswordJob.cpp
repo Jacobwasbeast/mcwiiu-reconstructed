@@ -22,9 +22,7 @@ Result ClearMatchmakeSystemPasswordJob::Startup(common::CallContext* callerConte
     if (!matchmakeSession->IsMatchmakeOwner())
         return static_cast<Result>(0x10c08);
 
-    common::CallContext operationContext;
-    const Result operationResult =
-        matchmakeSession->GenerateMatchmakeSystemPassword(&operationContext, sessionId);
+    const Result operationResult = ClearMatchmakeSystemPassword();
     if (operationResult != 0)
         return operationResult;
 

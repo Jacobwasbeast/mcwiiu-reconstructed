@@ -18,6 +18,7 @@ public:
     unsigned int FailureProcess();
     virtual void Cleanup();
     virtual void Trace(unsigned long long value) const;
+    virtual Result GenerateMatchmakeSystemPassword() = 0;
 
 private:
     unsigned int m_sessionId;

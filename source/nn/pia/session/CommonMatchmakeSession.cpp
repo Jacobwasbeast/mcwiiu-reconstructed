@@ -33,22 +33,15 @@ void CommonMatchmakeSession::SetMatchmakeOwner(bool owner)
 
 nn::pia::common::Result CommonMatchmakeSession::UpdateSelectionPriority(unsigned int, unsigned char)
 {
-    nn::pia::common::Result* result = new nn::pia::common::Result;
-    if (result != 0)
-    {
-        *result = 0xC0B;
-    }
-    nn::pia::common::Result value = *result;
-    delete result;
-    return value;
+    return nn::pia::common::Result(0xC0B);
 }
 
-unsigned int CommonMatchmakeSession::IsUpdatableSelectionPriority(unsigned char) 
+unsigned int CommonMatchmakeSession::IsUpdatableSelectionPriority(unsigned char)
 {
     return 0;
 }
 
-unsigned int CommonMatchmakeSession::ConvertGatheringIdToPersistentGatheringCode(unsigned int)
+unsigned long long CommonMatchmakeSession::ConvertGatheringIdToPersistentGatheringCode(unsigned int)
 {
     return 0;
 }

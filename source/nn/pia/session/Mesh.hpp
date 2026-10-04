@@ -6,7 +6,15 @@
 #include "nn/pia/common/MonitoringDataSender.hpp"
 #include "nn/pia/common/StationAddress.hpp"
 #include "nn/pia/common/Time.hpp"
+#include "nn/pia/common/TimeSpan.hpp"
+#include "nn/pia/transport/Station.hpp"
 #include "nn/pia/transport/StationConnectionInfo.hpp"
+
+namespace nn { namespace pia { namespace transport {
+
+class BandwidthCheckProtocol;
+
+}}}
 
 namespace nn { namespace pia { namespace session {
 
@@ -17,6 +25,7 @@ class ProcessUpdateMeshJob;
 class CreateMeshJob;
 class JoinMeshJob;
 class LeaveMeshJob;
+class LeaveWithHostMigrationJob;
 class DestroyMeshJob;
 class MeshProtocol;
 class MeshEventListener;
@@ -97,7 +106,7 @@ public:
     void ResetInternalAsyncState();
     bool IsJoinMeshCompleted() const;
     Result GetJoinMeshResult() const;
-    void CancelJoinMeshAsync();
+    Result CancelJoinMeshAsync();
     Result LeaveMeshAsync();
     bool IsLeaveMeshCompleted() const;
     Result GetLeaveMeshResult() const;
@@ -113,16 +122,16 @@ public:
     unsigned int GetMeshState() const;
     StationIndex GetHostStationIndex() const;
     StationIndex GetLocalStationIndex() const;
-    void* GetBandwidthCheckProtocol();
+    transport::BandwidthCheckProtocol* GetBandwidthCheckProtocol();
     void RegisterJoiningMeshApprovalCallback(JoiningMeshApprovalCallback callback);
     void UnregisterJoiningMeshApprovalCallback();
-    void RegisterCheckHostCandidateRankingCallback(HostCandidateRankingCallback callback);
+    Result RegisterCheckHostCandidateRankingCallback(HostCandidateRankingCallback callback);
     void UnregisterCheckHostCandidateRankingCallback();
     void RegisterEventListener(MeshEventListener* listener);
     void UnregisterEventListener();
     void RegisterGetSessionIdCallback(GetSessionIdCallback callback);
     void UnregisterGetSessionIdCallback();
-    void* GetMeshProtocol();
+    MeshProtocol* GetMeshProtocol();
     void* GetStationProtocol();
     void SetHostMigrationStarted(bool started);
     bool IsHostMigrationStarted();
@@ -143,7 +152,7 @@ public:
     void StartUse(StationIndex index);
     void FixConnectedId(StationIndex index);
     void JoinResponseComplete(StationIndex index);
-    void SetMeshStartTime(const common::Time& time);
+    void SetMeshStartTime(common::Time time);
     void ProcessingAtMeshBegin();
     void ProcessingAtEndHM();
     void NotifyLeaveStationAddress(const common::StationAddress& address);
@@ -154,8 +163,8 @@ public:
     bool IsHost() const;
     unsigned short GetStationNum() const;
     bool IsMeshStartTimeValid() const;
-    long long CalcDiffWithMeshStartTime(const common::Time& time) const;
-    Result MonitoringProcess(DisconnectReason reason, unsigned char value);
+    common::TimeSpan CalcDiffWithMeshStartTime(common::Time time) const;
+    void MonitoringProcess(DisconnectReason reason, unsigned char value);
     void ProcessingAtMeshEnd(DisconnectReason reason);
     Result DestroyMesh(common::CallContext* callerContext);
     bool IsHostMigrationEnabled() const;
@@ -223,82 +232,69 @@ public:
     bool IsCreateMeshCompleted() const;
     Result GetAsyncProcessResult(AsyncProcessingName process) const;
     Result GetCreateMeshResult() const;
-    void CancelAsyncProcess(AsyncProcessingName process);
+    Result CancelAsyncProcess(AsyncProcessingName process);
 
     CreateMeshJob* m_createMeshJob;
     JoinMeshJob* m_joinMeshJob;
     LeaveMeshJob* m_leaveMeshJob;
     void* m_unknown0c;
     ProcessUpdateMeshJob* m_processUpdateMeshJob;
-    unsigned int m_unknown14;
-    void* m_unknown18;
+    DestroyMeshJob* m_destroyMeshJob;
+    ProcessDestroyMeshJob* m_processDestroyMeshJob;
     ProcessHostMigrationJob* m_processHostMigrationJob;
-    void* m_unknown20;
+    LeaveWithHostMigrationJob* m_leaveWithHostMigrationJob;
     void* m_unknown24;
     KickoutManageJob* m_kickoutManageJob;
-    transport::ProtocolId m_syncClockProtocolId;
+    void* m_unknown2c;
+    MeshEventCallback m_meshEventCallback;
     JoiningMeshApprovalCallback m_joiningMeshApprovalCallback;
     HostCandidateRankingCallback m_hostCandidateRankingCallback;
     GetSessionIdCallback m_getSessionIdCallback;
-    unsigned int m_unknown3c;
+    transport::ProtocolId m_meshProtocolId;
     MeshProtocol* m_meshProtocol;
-    unsigned int m_unknown48;
-    unsigned short m_unknown4c;
-    unsigned short m_unknown4e;
-    void* m_bandwidthCheckProtocol;
+    void* m_stationProtocol;
+    transport::ProtocolId m_bandwidthCheckProtocolId;
+    transport::BandwidthCheckProtocol* m_bandwidthCheckProtocol;
     unsigned short m_unknown54;
     unsigned char m_unknown56;
-    unsigned char m_unknown57;
-    unsigned int m_unknown58;
-    unsigned int m_unknown5c;
-    unsigned int m_unknown60;
+    StationIndex m_unknown58;
+    StationIndex m_unknown5c;
     unsigned int m_meshState;
     unsigned int m_disconnectReason;
-    unsigned int m_unknown6c;
+    unsigned int m_hostMigrationMode;
     unsigned int m_networkTopologyType;
     unsigned int m_bitRateCheckMode;
-    unsigned int m_unknown70;
-    unsigned char m_unknown74;
+    bool m_hostMigrationEnabled;
     unsigned char m_unknown75;
-    unsigned char m_unknown76;
+    bool m_recentPlayRecordEnabled;
     unsigned char m_unknown77;
     unsigned int m_connectedStationBitmap;
     unsigned int m_validStationBitmap;
     unsigned int m_unknown80;
-    unsigned char m_unknown84[4];
+    unsigned int m_unknown84;
     unsigned int m_unknown88;
     unsigned int m_unknown8c;
-    unsigned short m_unknown90;
-    unsigned char m_unknown92[6];
-    unsigned int m_unknown98;
-    unsigned int m_unknown9c;
+    transport::ProtocolId m_syncClockProtocolId;
+    unsigned int m_unknown94;
     unsigned long long m_meshStartTime;
-    unsigned char m_meshStartTimeValid;
-    unsigned char m_playersCountedAsParticipants;
-    unsigned char m_recentPlayRecordEnabled;
+    bool m_meshStartTimeValid;
+    unsigned char m_unknowna1;
+    bool m_hostMigrationStarted;
+    unsigned char m_unknowna3;
     common::MonitoringDataSender* m_monitoringDataSender;
     common::CallContext m_callContext;
     unsigned int m_asyncProcess;
-    void* m_meshEventListener;
-    unsigned char m_skipReport;
-    unsigned char m_skipCleanupReport;
-    unsigned char m_unknownc6;
+    MeshEventListener* m_meshEventListener;
+    bool m_skipReport;
+    bool m_skipCleanupReport;
+    bool m_unknownc6;
     unsigned char m_unknownc7;
     unsigned int m_unknownc8;
     unsigned char m_unknowncc;
     unsigned char m_denyJoinRequestByInvalidState;
     unsigned char m_denyJoinRequestBySessionIsFull;
-    unsigned char m_unknowncf;
-    void* m_playerInfoVector;
-    unsigned char m_unknownd4[0x64];
-    unsigned char m_unknown138;
-    unsigned char m_unknown139[7];
-    unsigned int m_unknown140;
-    unsigned int m_unknown144;
-    unsigned int m_unknown148;
-    unsigned int m_unknown14c;
-    unsigned char m_localPlayerCount;
-    unsigned char m_unknown151[7];
+    transport::Station::PlayerInfo m_playerInfo[1];
+    unsigned char m_unknown150;
 };
 
 extern Mesh* g_piaMesh;

@@ -8,7 +8,7 @@ namespace nn { namespace pia { namespace session {
 class ISessionInfo
 {
 public:
-    virtual ~ISessionInfo();
+    virtual ~ISessionInfo() {}
     virtual unsigned int GetGameMode() const = 0;
     virtual unsigned int GetSessionId() const = 0;
     virtual unsigned short GetCurrentParticipantNum() const = 0;

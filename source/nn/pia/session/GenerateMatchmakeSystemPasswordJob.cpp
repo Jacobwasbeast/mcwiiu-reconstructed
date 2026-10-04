@@ -21,15 +21,13 @@ Result GenerateMatchmakeSystemPasswordJob::Startup(common::CallContext* callerCo
     if (!session->IsMatchmakeOwner())
         return 0x10c08;
 
-    common::CallContext operationContext;
-    const Result operationResult =
-        session->GenerateMatchmakeSystemPassword(&operationContext, sessionId);
+    const Result operationResult = GenerateMatchmakeSystemPassword();
     if (operationResult != 0)
         return operationResult;
 
     m_callerContext = callerContext;
-    m_sessionId = sessionId;
     callerContext->InitiateCall();
+    m_sessionId = sessionId;
     Reset(true);
     return 0;
 }
