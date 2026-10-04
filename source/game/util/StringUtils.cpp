@@ -86,7 +86,7 @@ int atoi_with_len(const char* text, int base, int* length)
     return value;
 }
 
-double atof_with_len(const char* text, int* length)
+float atof_with_len(const char* text, int* length)
 {
     const char* integerBegin = text;
     const bool negative = *text == '-';
