@@ -35,8 +35,8 @@ people direct the campaign, set the rules in `conventions.md`, and review.
 ## What is not here
 
 No game assets, textures, models, sounds, fonts, save data, executables,
-symbol tables, disassembly, or decompiler output are committed to this
-repository, and none should ever be.
+compiled shaders, symbol tables, disassembly, or decompiler output are
+committed to this repository, and none should ever be.
 
 ## Status
 
