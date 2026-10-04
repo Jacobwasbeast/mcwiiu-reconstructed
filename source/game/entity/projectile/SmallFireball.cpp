@@ -62,7 +62,7 @@ void SmallFireball::onHit(const HitResult* result)
         const BlockPos pos = result->getBlockPos().relative(result->mDirection);
         if (mLevel->isEmptyBlock(pos))
         {
-            mLevel->setBlock(pos, Blocks::fire->defaultBlockState(), Block::UPDATE_ALL, false);
+            mLevel->setBlockAndUpdate(pos, Blocks::fire->defaultBlockState());
         }
     }
     else
@@ -75,14 +75,16 @@ void SmallFireball::onHit(const HitResult* result)
 
         boost::shared_ptr<Fireball> fireball =
             boost::static_pointer_cast<Fireball>(shared_from_this());
-        boost::shared_ptr<Entity> owner =
-            boost::static_pointer_cast<Entity>(mOwner);
+        boost::shared_ptr<Entity> owner = mOwner;
         DamageSource* damageSource =
             DamageSource::CreateFireball(fireball, owner);
         if (result->mEntity->hurt(damageSource, 5.0f))
         {
             doEnchantDamageEffects(mOwner, result->mEntity);
             result->mEntity->setSecondsOnFire(5);
+            delete damageSource;
+            remove();
+            return;
         }
         delete damageSource;
     }

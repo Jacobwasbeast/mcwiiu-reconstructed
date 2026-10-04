@@ -2,7 +2,7 @@
 
 #include "game/world/generation/PlayerStats.hpp"
 
-double ProjectileDirectHitMedal::GetScore(PlayerStats* playerStats) const
+float ProjectileDirectHitMedal::GetScore(PlayerStats* playerStats) const
 {
     return static_cast<float>(playerStats->mSnowballDirectHits);
 }

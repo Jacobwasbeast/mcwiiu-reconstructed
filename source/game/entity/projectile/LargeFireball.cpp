@@ -12,21 +12,24 @@
 #include "game/world/Level.hpp"
 
 LargeFireball::LargeFireball(Level* level)
-    : Fireball(level), mExplosionPower(1)
+    : Fireball(level)
 {
     Entity::fjDerivedCtorCalls();
+    mExplosionPower = 1;
 }
 
 LargeFireball::LargeFireball(Level* level, double x, double y, double z, double xd, double yd, double zd)
-    : Fireball(level, x, y, z, xd, yd, zd), mExplosionPower(1)
+    : Fireball(level, x, y, z, xd, yd, zd)
 {
     Entity::fjDerivedCtorCalls();
+    mExplosionPower = 1;
 }
 
 LargeFireball::LargeFireball(Level* level, boost::shared_ptr<LivingEntity> owner, double xd, double yd, double zd)
-    : Fireball(level, owner, xd, yd, zd), mExplosionPower(1)
+    : Fireball(level, owner, xd, yd, zd)
 {
     Entity::fjDerivedCtorCalls();
+    mExplosionPower = 1;
 }
 
 void LargeFireball::create(Level* level)
@@ -50,16 +53,13 @@ void LargeFireball::onHit(const HitResult* result)
     {
         DamageSource* damageSource = DamageSource::CreateFireball(
             boost::static_pointer_cast<Fireball>(shared_from_this()), mOwner);
-        if (result->mEntity->hurt(damageSource, 6.0f))
-        {
-            result->mEntity->setSecondsOnFire(3);
-        }
+        result->mEntity->hurt(damageSource, 6.0f);
         delete damageSource;
     }
 
     const bool mobGriefing = mLevel->getGameRules()->getBoolean(GameRules::RULE_MOBGRIEFING);
-    mLevel->explode(shared_from_this(), mX, mY, mZ, static_cast<float>(mExplosionPower),
-                    false, mobGriefing, false, false, false, -1.0f);
+    mLevel->explode(boost::shared_ptr<Entity>(), mX, mY, mZ, static_cast<float>(mExplosionPower),
+                    mobGriefing, mobGriefing, false, false, false, -1.0f);
     remove();
 }
 

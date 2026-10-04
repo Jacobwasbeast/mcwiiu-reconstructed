@@ -52,7 +52,7 @@ public:
     virtual void lerpTo(double x, double y, double z, float yRot, float xRot, int steps, bool teleport);
     virtual void lerpMotion(double xd, double yd, double zd);
     virtual bool isAttackable();
-    virtual double getEyeHeight();
+    virtual float getEyeHeight();
     virtual bool canChangeDimensions();
 
     virtual bool onHit(const HitResult* result);
@@ -62,7 +62,7 @@ public:
     virtual boost::shared_ptr<Entity> findHitEntity(Vec3* from, Vec3* to);
     virtual not_null_ptr<ItemInstance> getPickupItem() = 0;
     virtual void checkDespawn();
-    virtual double getWaterInertia();
+    virtual float getWaterInertia();
     virtual void shootFromRotation(boost::shared_ptr<Entity> entity, float xRot, float yRot,
         float offset, float velocity, float inaccuracy);
     virtual void shoot(double x, double y, double z, float velocity, float inaccuracy);

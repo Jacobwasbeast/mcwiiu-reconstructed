@@ -19,7 +19,7 @@ TippedArrowRecipe::~TippedArrowRecipe()
 
 void TippedArrowRecipe::addRecipes(Recipes* recipes)
 {
-    mPotions = new std::vector<Potion*>();
+    mPotions = new std::vector<Potion*>;
     mPotions->push_back(Potions::WATER);
     mPotions->push_back(Potions::NIGHT_VISION);
     mPotions->push_back(Potions::INVISIBILITY);
@@ -59,8 +59,7 @@ void TippedArrowRecipe::addRecipes(Recipes* recipes)
     mPotions->push_back(Potions::STRONG_REGENERATION);
     mPotions->push_back(Potions::STRONG_STRENGTH);
     mPotions->push_back(Potions::STRONG_TURTLE_MASTER);
-    std::vector<Potion*>::iterator potion;
-    for (potion = mPotions->begin(); potion != mPotions->end(); ++potion)
+    for (std::vector<Potion*>::iterator potion = mPotions->begin(); potion != mPotions->end(); ++potion)
     {
         not_null_ptr<ItemInstance> result = PotionUtils::setPotion(
             not_null_ptr<ItemInstance>(new ItemInstance(Items::tippedArrow, 8)), *potion);
@@ -74,30 +73,29 @@ void TippedArrowRecipe::addRecipes(Recipes* recipes)
 
 bool TippedArrowRecipe::matches(boost::shared_ptr<CraftingContainer> craftingContainer, Level* level)
 {
-    unsigned int column;
-    unsigned int row;
     if (craftingContainer->getWidth() != 3 || craftingContainer->getHeight() != 3)
     {
         return false;
     }
 
-    for (column = 0; column < craftingContainer->getWidth(); ++column)
+    for (int column = 0; column < craftingContainer->getWidth(); ++column)
     {
-        for (row = 0; row < craftingContainer->getHeight(); ++row)
+        for (int row = 0; row < craftingContainer->getHeight(); ++row)
         {
             not_null_ptr<ItemInstance> item = craftingContainer->getItem(column, row);
             if (item->isEmpty())
             {
                 return false;
             }
+            Item* itemType = item->getItem();
             if (column == 1 && row == 1)
             {
-                if (item->getItem() != Items::lingeringPotion)
+                if (itemType != Items::lingeringPotion)
                 {
                     return false;
                 }
             }
-            else if (item->getItem() != Items::arrow)
+            else if (itemType != Items::arrow)
             {
                 return false;
             }

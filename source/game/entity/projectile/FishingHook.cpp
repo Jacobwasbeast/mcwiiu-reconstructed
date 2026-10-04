@@ -65,9 +65,12 @@ void FishingHook::bringInHookedEntity()
 {
     if (mOwner)
     {
-        mHookedIn->mXd += (mOwner->mX - mX) * 0.1;
-        mHookedIn->mYd += (mOwner->mY - mY) * 0.1;
-        mHookedIn->mZd += (mOwner->mZ - mZ) * 0.1;
+        double dx = mOwner->mX - mX;
+        double dy = mOwner->mY - mY;
+        double dz = mOwner->mZ - mZ;
+        mHookedIn->mXd += dx * 0.1;
+        mHookedIn->mYd += dy * 0.1;
+        mHookedIn->mZd += dz * 0.1;
         mHookedIn->mHurtMarked = true;
     }
 }
@@ -101,8 +104,7 @@ int FishingHook::retrieve()
              it != items->end();
              ++it)
         {
-            not_null_ptr<ItemInstance> item = *it;
-            boost::shared_ptr<ItemEntity> itemEntity(new ItemEntity(mLevel, mX, mY, mZ, item));
+            boost::shared_ptr<ItemEntity> itemEntity(new ItemEntity(mLevel, mX, mY, mZ, *it));
 
             double dx = mOwner->mX - mX;
             double dy = mOwner->mY - mY;
@@ -139,14 +141,14 @@ int FishingHook::retrieve()
 void FishingHook::_init()
 {
     fjDerivedCtorCalls();
-    mInGround = false;
-    mTicksInGround = 0;
-    mOwner.reset();
     mTicksInAir = 0;
     mTicksCatchable = 0;
     mTicksCaughtDelay = 0;
     mTicksCatchableDelay = 0;
-    mHookedIn.reset();
+    mInGround = false;
+    mHookedIn = boost::shared_ptr<Entity>();
+    mOwner = boost::shared_ptr<Player>();
+    mTicksInGround = 0;
     setSize(0.25f, 0.25f);
     mNoCulling = true;
     mCurrentState = 0;
@@ -186,8 +188,8 @@ void FishingHook::shoot()
     mZd *= mRandom->nextGaussian() * 0.0045 + spread;
 
     float horizontal = Mth::sqrt(mXd * mXd + mZd * mZd);
-    mYRot = (float)(std::atan2(mXd, mZd) * 57.2957763671875);
-    mXRot = (float)(std::atan2(mYd, (double)horizontal) * 57.2957763671875);
+    mYRot = (float)(std::atan2(mXd, mZd) * Mth::RAD_TO_DEG);
+    mXRot = (float)(std::atan2(mYd, (double)horizontal) * Mth::RAD_TO_DEG);
     mYRotO = mYRot;
     mXRotO = mXRot;
 
@@ -219,7 +221,19 @@ void FishingHook::defineSynchedData()
 
 bool FishingHook::canBeHooked(const boost::shared_ptr<Entity>& entity)
 {
-    return entity->isPickable() || entity->GetType() == EntityType::ITEM_ENTITY;
+    bool canHook = true;
+
+    if (!entity->isPickable())
+    {
+        bool isItem = entity->GetType() == EntityType::ITEM_ENTITY;
+
+        if (!isItem)
+        {
+            canHook = false;
+        }
+    }
+
+    return canHook;
 }
 
 bool FishingHook::makeStepSound()
@@ -234,10 +248,13 @@ bool FishingHook::shouldRenderAtSqrDistance(double distanceSqr)
 
 void FishingHook::handleEntityEvent(unsigned char event, int data)
 {
-    if (event == EntityEvent::FISHING_ROD_REEL_IN && mHookedIn && Entity::instanceof(mHookedIn, EntityType::PLAYER) &&
-        boost::static_pointer_cast<Player>(mHookedIn)->isLocalPlayer())
+    if (event == EntityEvent::FISHING_ROD_REEL_IN)
     {
-        bringInHookedEntity();
+        if (mHookedIn && Entity::instanceof(mHookedIn, EntityType::PLAYER) &&
+            boost::static_pointer_cast<Player>(mHookedIn)->isLocalPlayer())
+        {
+            bringInHookedEntity();
+        }
     }
 
     Entity::handleEntityEvent(event, data);
@@ -249,22 +266,28 @@ bool FishingHook::shouldStopFishing()
     not_null_ptr<ItemInstance> offhandItem = mOwner->getOffhandItem();
     bool mainHandIsRod = mainHandItem->getItem() == Items::fishingRod;
     bool offhandIsRod = offhandItem->getItem() == Items::fishingRod;
+    bool stop = true;
 
     if (!mOwner->mRemoved && mOwner->isAlive() && (mainHandIsRod || offhandIsRod) &&
         distanceToSqr(mOwner) <= 1024.0)
     {
-        return false;
+        stop = false;
     }
 
-    remove();
-    return true;
+    if (stop)
+    {
+        remove();
+        return true;
+    }
+
+    return false;
 }
 
 void FishingHook::updateRotation()
 {
     float horizontal = Mth::sqrt(mXd * mXd + mZd * mZd);
-    mYRot = (float)(std::atan2(mXd, mZd) * 57.2957763671875);
-    float xRot = (float)(std::atan2(mYd, (double)horizontal) * 57.2957763671875);
+    mYRot = (float)(std::atan2(mXd, mZd) * Mth::RAD_TO_DEG);
+    float xRot = (float)(std::atan2(mYd, (double)horizontal) * Mth::RAD_TO_DEG);
 
     while (xRot - mXRotO < -180.0f)
     {
@@ -421,7 +444,7 @@ void FishingHook::catchingFish(const BlockPos& pos)
                     serverLevel->sendParticles(PARTICLE_BUBBLE,
                                                x, y - 0.10000000149011612, z,
                                                1, (double)sinAngle, 0.1, (double)cosAngle, 0.0,
-                                               arrayWithLength<int>(), 0.0, 0.0, 0.0);
+                                               arrayWithLength<int>());
                 }
 
                 float wakeX = cosAngle * 0.04f;
@@ -429,11 +452,11 @@ void FishingHook::catchingFish(const BlockPos& pos)
                 serverLevel->sendParticles(PARTICLE_WAKE,
                                            x, y, z,
                                            0, (double)wakeX, 0.01, (double)(-wakeZ), 1.0,
-                                           arrayWithLength<int>(), 0.0, 0.0, 0.0);
+                                           arrayWithLength<int>());
                 serverLevel->sendParticles(PARTICLE_WAKE,
                                            x, y, z,
                                            0, (double)(-wakeX), 0.01, (double)wakeZ, 1.0,
-                                           arrayWithLength<int>(), 0.0, 0.0, 0.0);
+                                           arrayWithLength<int>());
             }
         }
         else
@@ -448,13 +471,13 @@ void FishingHook::catchingFish(const BlockPos& pos)
                                        (int)(mBbWidth * 20.0f + 1.0f),
                                        (double)mBbWidth, 0.0, (double)mBbWidth,
                                        0.20000000298023224,
-                                       arrayWithLength<int>(), 0.0, 0.0, 0.0);
+                                       arrayWithLength<int>());
             serverLevel->sendParticles(PARTICLE_WAKE,
                                        mX, surfaceY, mZ,
                                        (int)(mBbWidth * 20.0f + 1.0f),
                                        (double)mBbWidth, 0.0, (double)mBbWidth,
                                        0.20000000298023224,
-                                       arrayWithLength<int>(), 0.0, 0.0, 0.0);
+                                       arrayWithLength<int>());
             mTicksCatchable = Mth::nextInt(mRandom, 20, 40);
         }
     }
@@ -467,15 +490,15 @@ void FishingHook::catchingFish(const BlockPos& pos)
 
         if (caughtDelay < 20.0f)
         {
-            chance = (20.0f - caughtDelay) * 0.05f + chance;
+            chance += (20.0f - caughtDelay) * 0.05f;
         }
         else if (mTicksCaughtDelay < 40)
         {
-            chance = (40.0f - caughtDelay) * 0.02f + chance;
+            chance += (40.0f - caughtDelay) * 0.02f;
         }
         else if (mTicksCaughtDelay < 60)
         {
-            chance = (60.0f - caughtDelay) * 0.01f + chance;
+            chance += (60.0f - caughtDelay) * 0.01f;
         }
 
         if (mRandom->nextFloat() < chance)
@@ -493,7 +516,7 @@ void FishingHook::catchingFish(const BlockPos& pos)
                                            x, y, z,
                                            mRandom->nextInt(2) + 2,
                                            0.10000000149011612, 0.0, 0.10000000149011612, 0.0,
-                                           arrayWithLength<int>(), 0.0, 0.0, 0.0);
+                                           arrayWithLength<int>());
             }
         }
 
@@ -571,9 +594,9 @@ void FishingHook::tick()
 
         if (liquidHeight > 0.0f)
         {
-            double lift = mYd * 0.8 + 0.05;
+            double lift = mYd * 0.8 + 0.05f;
             mXd *= 0.9;
-            mYd = lift < 0.1365 ? lift : 0.1365;
+            mYd = lift >= 0.1365 ? 0.1365 : lift;
             mZd *= 0.9;
 
             if (aboveState->getMaterial() != Material::WATER)
@@ -602,18 +625,19 @@ void FishingHook::tick()
     }
     else if (mCurrentState == 1)
     {
-        if (mHookedIn)
+        Entity* hookedIn = mHookedIn.get();
+        if (hookedIn != NULL)
         {
-            if (mHookedIn->mRemoved)
+            if (hookedIn->mRemoved)
             {
-                mHookedIn.reset();
+                mHookedIn = boost::shared_ptr<Entity>();
                 mCurrentState = 0;
             }
             else
             {
-                mX = mHookedIn->mX;
-                mY = mHookedIn->mBoundingBox->mMinY + (double)mHookedIn->mBbHeight * 0.8;
-                mZ = mHookedIn->mZ;
+                mX = hookedIn->mX;
+                mY = hookedIn->mBoundingBox->mMinY + (double)hookedIn->mBbHeight * 0.8;
+                mZ = hookedIn->mZ;
                 setPos(mX, mY, mZ);
             }
         }
@@ -670,14 +694,7 @@ void FishingHook::onSyncedDataUpdated(const EntityDataAccessor_Base* accessor)
     {
         int hookedId = getEntityData()->get(DATA_HOOKED_ENTITY);
 
-        if (hookedId > 0)
-        {
-            mHookedIn = mLevel->getEntity(hookedId - 1);
-        }
-        else
-        {
-            mHookedIn.reset();
-        }
+        mHookedIn = hookedId > 0 ? mLevel->getEntity(hookedId - 1) : boost::shared_ptr<Entity>();
     }
 
     Entity::onSyncedDataUpdated(accessor);
@@ -694,7 +711,7 @@ void FishingHook::remove()
 
     if (mOwner)
     {
-        mOwner->mFishing.reset();
+        mOwner->mFishing = boost::shared_ptr<FishingHook>();
     }
 }
 

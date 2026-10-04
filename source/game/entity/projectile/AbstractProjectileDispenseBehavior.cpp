@@ -27,10 +27,9 @@ not_null_ptr<ItemInstance> AbstractProjectileDispenseBehavior::execute(
         Position* position = DispenserBlock::getDispensePosition(blockSource);
         const Direction* direction = blockSource->getBlockState()->getValue(DispenserBlock::FACING);
         boost::shared_ptr<Projectile> projectile = getProjectile(level, position, itemInstance);
-        const Vec3i normal = direction->getNormal();
 
-        projectile->shoot((double)normal.x, (double)((float)normal.y + 0.1f), (double)normal.z,
-                          (float)getPower(), (float)getUncertainty());
+        projectile->shoot((double)direction->getStepX(), (double)((float)direction->getStepY() + 0.1f), (double)direction->getStepZ(),
+                          getPower(), getUncertainty());
         boost::shared_ptr<Entity> entity = boost::dynamic_pointer_cast<Entity>(projectile);
         level->addEntity(entity);
 
@@ -54,12 +53,12 @@ void AbstractProjectileDispenseBehavior::playSound(
     }
 }
 
-double AbstractProjectileDispenseBehavior::getUncertainty()
+float AbstractProjectileDispenseBehavior::getUncertainty()
 {
-    return 6.0;
+    return 6.0f;
 }
 
-double AbstractProjectileDispenseBehavior::getPower()
+float AbstractProjectileDispenseBehavior::getPower()
 {
     return 1.1f;
 }

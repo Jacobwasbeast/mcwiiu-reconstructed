@@ -23,14 +23,14 @@
 #include "game/world/chunk/ChunkPos.hpp"
 
 Fireball::Fireball(Level* level)
-    : Entity(level, true), mOwner(), mLife(0), mUnknown(0), mPowerX(0.0), mPowerY(0.0), mPowerZ(0.0)
+    : Entity(level, true), mOwner()
 {
     _init();
     setSize(1.0f, 1.0f);
 }
 
 Fireball::Fireball(Level* level, double x, double y, double z, double xd, double yd, double zd)
-    : Entity(level, true), mOwner(), mLife(0), mUnknown(0), mPowerX(0.0), mPowerY(0.0), mPowerZ(0.0)
+    : Entity(level, true), mOwner()
 {
     _init();
     setSize(1.0f, 1.0f);
@@ -52,17 +52,17 @@ Fireball::Fireball(Level* level, double x, double y, double z, double xd, double
 }
 
 Fireball::Fireball(Level* level, boost::shared_ptr<LivingEntity> owner, double xd, double yd, double zd)
-    : Entity(level, true), mOwner(), mLife(0), mUnknown(0), mPowerX(0.0), mPowerY(0.0), mPowerZ(0.0)
+    : Entity(level, true), mOwner()
 {
     _init();
+    mOwner = owner;
     setSize(1.0f, 1.0f);
-    if (owner)
-    {
-        mOwner = owner;
-        moveTo(owner->mX, owner->mY, owner->mZ, owner->mYRot, owner->mXRot);
-    }
+    moveTo(owner->mX, owner->mY, owner->mZ, owner->mYRot, owner->mXRot);
     setPos(mX, mY, mZ);
-    const double spread = 0.1;
+    mXd = 0.0;
+    mYd = 0.0;
+    mZd = 0.0;
+    const double spread = 0.4;
     xd += mRandom->nextGaussian() * spread;
     yd += mRandom->nextGaussian() * spread;
     zd += mRandom->nextGaussian() * spread;
@@ -92,9 +92,9 @@ void Fireball::addDataWalkers(DataFixerUpper*, unsigned long long)
 
 void Fireball::_init()
 {
-    mOwner.reset();
     mLife = 0;
     mUnknown = 0;
+    mOwner = boost::shared_ptr<LivingEntity>();
     mPowerX = 0.0;
     mPowerY = 0.0;
     mPowerZ = 0.0;
@@ -117,15 +117,17 @@ void Fireball::tick()
 
     if (!mLevel->mIsClientSide)
     {
-        bool keep = false;
-
         if ((mOwner == NULL || !mOwner->mRemoved) && mLevel->hasChunkAt(BlockPos(this)))
         {
             ChunkPos chunkPos(BlockPos(this));
-            keep = mLevel->mDimension->containsChunk(chunkPos.x, chunkPos.z);
+            if (!mLevel->mDimension->containsChunk(chunkPos.x, chunkPos.z))
+            {
+                remove();
+                PIXEndNamedEvent();
+                return;
+            }
         }
-
-        if (!keep)
+        else
         {
             remove();
             PIXEndNamedEvent();
@@ -173,7 +175,8 @@ void Fireball::tick()
                                 arrayWithLength<int>());
         }
 
-        inertia = 0.8f;
+        float waterInertia = 0.8f;
+        inertia = waterInertia;
     }
 
     double xd = (mXd + mPowerX) * inertia;
@@ -200,7 +203,7 @@ void Fireball::tick()
     PIXEndNamedEvent();
 }
 
-double Fireball::getInertia()
+float Fireball::getInertia()
 {
     return 0.95f;
 }
@@ -250,32 +253,30 @@ float Fireball::getPickRadius()
 
 bool Fireball::hurt(const DamageSource* source, float)
 {
-    if (isInvulnerableTo(source))
+    if (!isInvulnerableTo(source))
     {
-        return false;
+        markHurt();
+        if (source->getEntity() != NULL)
+        {
+            Vec3* direction = source->getEntity()->getLookAngle();
+            if (direction != NULL)
+            {
+                mXd = direction->x;
+                mYd = direction->y;
+                mZd = direction->z;
+                mPowerX = direction->x * 0.1;
+                mPowerY = direction->y * 0.1;
+                mPowerZ = direction->z * 0.1;
+            }
+            bool living = (source->getEntity()->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY;
+            if (living)
+            {
+                mOwner = boost::dynamic_pointer_cast<LivingEntity>(source->getEntity());
+            }
+            return true;
+        }
     }
-    markHurt();
-    boost::shared_ptr<Entity> direct = source->getDirectEntity();
-    if (!direct)
-    {
-        return false;
-    }
-    Vec3* direction = direct->getLookAngle();
-    if (direction != NULL)
-    {
-        mXd = direction->x;
-        mYd = direction->y;
-        mZd = direction->z;
-        mPowerX = direction->x * 0.1;
-        mPowerY = direction->y * 0.1;
-        mPowerZ = direction->z * 0.1;
-    }
-    boost::shared_ptr<LivingEntity> owner = boost::dynamic_pointer_cast<LivingEntity>(direct);
-    if (owner)
-    {
-        mOwner = owner;
-    }
-    return true;
+    return false;
 }
 
 float Fireball::getBrightness()

@@ -238,9 +238,9 @@ bool AbstractRotatedItemProjectile::makeStepSound()
     return false;
 }
 
-double AbstractRotatedItemProjectile::getWaterInertia()
+float AbstractRotatedItemProjectile::getWaterInertia()
 {
-    return 0.6000000238418579;
+    return 0.6f;
 }
 
 bool AbstractRotatedItemProjectile::canChangeDimensions()
@@ -508,7 +508,7 @@ bool AbstractRotatedItemProjectile::isAttackable()
     return false;
 }
 
-double AbstractRotatedItemProjectile::getEyeHeight()
+float AbstractRotatedItemProjectile::getEyeHeight()
 {
     return 0.0;
 }

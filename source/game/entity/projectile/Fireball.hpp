@@ -32,7 +32,7 @@ public:
     virtual void defineSynchedData();
     virtual bool shouldRenderAtSqrDistance(double distanceSqr);
     virtual void tick();
-    virtual double getInertia();
+    virtual float getInertia();
     virtual void onHit(const HitResult* result) = 0;
     virtual void addAdditonalSaveData(CompoundTag* tag);
     virtual void readAdditionalSaveData(CompoundTag* tag);

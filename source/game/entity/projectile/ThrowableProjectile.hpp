@@ -29,7 +29,7 @@ public:
     virtual bool shouldRenderAtSqrDistance(double distanceSqr);
     virtual void lerpMotion(double xd, double yd, double zd);
     virtual void tick();
-    virtual double getGravity();
+    virtual float getGravity();
     virtual void addAdditonalSaveData(CompoundTag* tag);
     virtual void readAdditionalSaveData(CompoundTag* tag);
     virtual boost::shared_ptr<LivingEntity> getOwner();

@@ -7,10 +7,6 @@ ArrowItem::ArrowItem()
 {
 }
 
-ArrowItem::~ArrowItem()
-{
-}
-
 boost::shared_ptr<Arrow> ArrowItem::createArrow(Level* level,
                                                 not_null_ptr<ItemInstance> itemInstance,
                                                 boost::shared_ptr<LivingEntity> entity)

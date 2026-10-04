@@ -39,6 +39,7 @@ void SpectralArrow::create(Level* level)
 void SpectralArrow::init()
 {
     mDuration = 0;
+    defineSynchedData();
 }
 
 void SpectralArrow::tick()
@@ -75,8 +76,8 @@ not_null_ptr<ItemInstance> SpectralArrow::getPickupItem()
 void SpectralArrow::doPostHurtEffects(const boost::shared_ptr<LivingEntity>& entity)
 {
     AbstractRotatedItemProjectile::doPostHurtEffects(entity);
-    entity->addEffect(new MobEffectInstance(MobEffects::GLOWING, mDuration, 0),
-        boost::shared_ptr<Entity>());
+    MobEffectInstance* effect = new MobEffectInstance(MobEffects::GLOWING, mDuration, 0);
+    entity->addEffect(effect, boost::shared_ptr<Entity>());
 }
 
 unsigned long long SpectralArrow::GetType()

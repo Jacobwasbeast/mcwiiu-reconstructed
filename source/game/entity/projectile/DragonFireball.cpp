@@ -64,12 +64,13 @@ void DragonFireball::onHit(const HitResult* result)
         cloud->setRadiusPerTick((7.0f - cloud->getRadius()) / static_cast<float>(cloud->getDuration()));
         cloud->addEffect(new MobEffectInstance(MobEffects::HARM, 1, 1));
 
-        if (!entities->empty())
+        if (entities != NULL && !entities->empty())
         {
             for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != entities->end(); ++it)
             {
                 boost::shared_ptr<Entity> entity = *it;
-                if (distanceToSqr(entity) < 16.0)
+                double distance = distanceToSqr(entity);
+                if (distance < 16.0)
                 {
                     cloud->setPos(entity->mX, entity->mY, entity->mZ);
                     break;
@@ -78,7 +79,7 @@ void DragonFireball::onHit(const HitResult* result)
         }
 
         mLevel->levelEvent(LevelEvent::PARTICLES_DRAGON_FIREBALL_SPLASH, BlockPos(mX, mY, mZ), 0);
-        mLevel->addEntity(boost::static_pointer_cast<Entity>(cloud));
+        mLevel->addEntity(cloud);
         delete entities;
         remove();
     }

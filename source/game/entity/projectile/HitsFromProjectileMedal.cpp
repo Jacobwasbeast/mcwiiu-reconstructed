@@ -2,7 +2,7 @@
 
 #include "game/world/generation/PlayerStats.hpp"
 
-double HitsFromProjectileMedal::GetScore(PlayerStats* playerStats) const
+float HitsFromProjectileMedal::GetScore(PlayerStats* playerStats) const
 {
     return static_cast<float>(playerStats->mHitsBySnowball);
 }

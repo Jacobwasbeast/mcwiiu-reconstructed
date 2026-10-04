@@ -33,18 +33,17 @@ void TippedArrowItem::appendHoverText(not_null_ptr<ItemInstance> itemInstance,
 {
     if (Minecraft::InMiniGame(eMiniGameId_Battle, false))
     {
-        PotionUtils::addPotionTooltip(itemInstance, lines, 0.125f, player);
+        PotionUtils::addPotionTooltip(itemInstance, lines, 0.33333334f, player);
     }
     else
     {
-        PotionUtils::addPotionTooltip(itemInstance, lines, 0.33333334f, player);
+        PotionUtils::addPotionTooltip(itemInstance, lines, 0.125f, player);
     }
 }
 
 std::wstring TippedArrowItem::getName(not_null_ptr<ItemInstance> itemInstance)
 {
-    Potion* potion = PotionUtils::getPotion(itemInstance);
-    return potion->getName(Potion::ARROW);
+    return PotionUtils::getPotion(itemInstance)->getName(Potion::ARROW);
 }
 
 int TippedArrowItem::getUseDescriptionId(not_null_ptr<ItemInstance> itemInstance)

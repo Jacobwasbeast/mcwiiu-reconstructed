@@ -27,8 +27,7 @@ bool Projectile::onHit(const HitResult* result)
         && (mOwner->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
     {
         BlockPos pos = result->getBlockPos();
-        boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(mOwner);
-        GameMode* gameMode = player->GetGameMode();
+        GameMode* gameMode = boost::static_pointer_cast<Player>(mOwner)->GetGameMode();
         if (gameMode->MayDestroy(pos))
         {
             Block* block = mLevel->getBlock(pos);
@@ -37,9 +36,7 @@ bool Projectile::onHit(const HitResult* result)
                 TntBlock* tntBlock = dynamic_cast<TntBlock*>(block);
                 if (tntBlock != NULL)
                 {
-                    TypedBoxed<bool> explode(true);
-                    const BlockState* state =
-                        mLevel->getBlockState(pos)->setBoxedValue(TntBlock::EXPLODE, &explode);
+                    const BlockState* state = mLevel->getBlockState(pos)->setValue(TntBlock::EXPLODE, true);
                     tntBlock->destroy(mLevel, pos, state, mOwner);
                     mLevel->removeBlock(pos);
                 }

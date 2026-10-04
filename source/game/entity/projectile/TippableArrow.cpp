@@ -64,8 +64,8 @@ void TippableArrow::init()
 int TippableArrow::getCustomColor(const not_null_ptr<ItemInstance>& itemInstance)
 {
     CompoundTag* tag = itemInstance->getTag();
-    if (tag != NULL && tag->contains(L"CustomPotionColor", Tag::TAG_ANY_NUMERIC))
-        return tag->getInt(L"CustomPotionColor");
+    if (tag != NULL && tag->contains(PotionUtils::TAG_CUSTOM_POTION_COLOR, Tag::TAG_ANY_NUMERIC))
+        return tag->getInt(PotionUtils::TAG_CUSTOM_POTION_COLOR);
     return -1;
 }
 
@@ -204,7 +204,7 @@ void TippableArrow::addAdditonalSaveData(CompoundTag* tag)
         ListTag* list = new ListTag();
         for (std::vector<MobEffectInstance*>::iterator it = mEffects.begin(); it != mEffects.end(); ++it)
             list->add((*it)->save(new CompoundTag()));
-        tag->put(L"CustomPotionEffects", list);
+        tag->put(PotionUtils::TAG_CUSTOM_POTION_EFFECTS, list);
     }
 }
 
@@ -295,7 +295,7 @@ not_null_ptr<ItemInstance> TippableArrow::getPickupItem()
             tag = new CompoundTag();
             item->setTag(tag);
         }
-        tag->putInt(L"CustomPotionColor", getColor());
+        tag->putInt(PotionUtils::TAG_CUSTOM_POTION_COLOR, getColor());
     }
     return item;
 }

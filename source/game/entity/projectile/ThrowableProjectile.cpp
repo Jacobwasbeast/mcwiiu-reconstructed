@@ -59,9 +59,9 @@ void ThrowableProjectile::shoot(double x, double y, double z, float velocity, fl
     mYd = y;
     mZd = z;
     float horizontal = (float)std::sqrt(x * x + z * z);
-    mYRot = (float)(std::atan2(x, z) * 57.2957763671875);
+    mYRot = (float)(std::atan2(x, z) * Mth::RAD_TO_DEG);
     mYRotO = mYRot;
-    mXRot = (float)(std::atan2(y, (double)horizontal) * 57.2957763671875);
+    mXRot = (float)(std::atan2(y, (double)horizontal) * Mth::RAD_TO_DEG);
     mXRotO = mXRot;
     mLife = 0;
 }
@@ -132,9 +132,9 @@ void ThrowableProjectile::lerpMotion(double xd, double yd, double zd)
     if (mXRotO == 0.0f && mYRotO == 0.0f)
     {
         double horizontal = std::sqrt(xd * xd + zd * zd);
-        mYRot = (float)(std::atan2(xd, zd) * 57.2957763671875);
+        mYRot = (float)(std::atan2(xd, zd) * Mth::RAD_TO_DEG);
         mYRotO = mYRot;
-        mXRot = (float)(std::atan2(yd, horizontal) * 57.2957763671875);
+        mXRot = (float)(std::atan2(yd, horizontal) * Mth::RAD_TO_DEG);
         mXRotO = mXRot;
     }
 }
@@ -198,7 +198,7 @@ void ThrowableProjectile::tick()
     from = Vec3::newTemp(mX, mY, mZ);
     to = Vec3::newTemp(mX + mXd, mY + mYd, mZ + mZd);
     if (hitResult != NULL)
-        to = Vec3::newTemp(hitResult->mLocation);
+        to = Vec3::newTemp(hitResult->mLocation->x, hitResult->mLocation->y, hitResult->mLocation->z);
 
     if (!mLevel->mIsClientSide
         && !Minecraft::GetInstance()->GetMiniGame()->HasFeatureGhostThroughProjectiles())
@@ -255,8 +255,8 @@ void ThrowableProjectile::tick()
     mY += mYd;
     mZ += mZd;
     double horizontal = std::sqrt(mXd * mXd + mZd * mZd);
-    mYRot = (float)(std::atan2(mXd, mZd) * 57.2957763671875);
-    mXRot = (float)(std::atan2(mYd, horizontal) * 57.2957763671875);
+    mYRot = (float)(std::atan2(mXd, mZd) * 57.295776f);
+    mXRot = (float)(std::atan2(mYd, horizontal) * 57.295776f);
 
     while (mXRot - mXRotO < -180.0f)
         mXRotO -= 360.0f;
@@ -269,7 +269,7 @@ void ThrowableProjectile::tick()
 
     mXRot = mXRotO + (mXRot - mXRotO) * 0.2f;
     mYRot = mYRotO + (mYRot - mYRotO) * 0.2f;
-    double gravity = getGravity();
+    float gravity = getGravity();
     float inertia = 0.99f;
     if (isInWater())
     {
@@ -287,9 +287,10 @@ void ThrowableProjectile::tick()
     PIXEndNamedEvent();
 }
 
-double ThrowableProjectile::getGravity()
+float ThrowableProjectile::getGravity()
 {
-    return 0.029999999329447746;
+    float gravity = 0.03f;
+    return gravity;
 }
 
 void ThrowableProjectile::addAdditonalSaveData(CompoundTag* tag)

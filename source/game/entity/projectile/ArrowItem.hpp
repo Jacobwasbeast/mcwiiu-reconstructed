@@ -14,7 +14,7 @@ class ArrowItem : public Item
 {
 public:
     ArrowItem();
-    virtual ~ArrowItem();
+    virtual ~ArrowItem() {}
 
     virtual boost::shared_ptr<Arrow> createArrow(Level* level,
                                                 not_null_ptr<ItemInstance> itemInstance,
