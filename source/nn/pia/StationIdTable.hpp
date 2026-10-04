@@ -41,15 +41,16 @@ public:
     bool IsJoinEventNotifiedByStationId(uint64_t) const;
     unsigned int GetEntryNum() const;
     void SetAvailableEntryNum(unsigned int);
+    Entry* FindByUniqueIdCore(uint64_t) const;
     void Trace(uint64_t) const;
 
 private:
     Entry* FindByStationIdCore(uint64_t) const;
     Entry* FindByStationIndexCore(StationIndex) const;
-    Entry* FindByUniqueIdCore(uint64_t) const;
     void RemoveCore(Entry*);
     Result Copy(Entry*, const Entry*) const;
 
+public:
     common::ListBase m_entries;
     common::ListBase m_availableEntries;
     uint32_t m_entryOffset;
