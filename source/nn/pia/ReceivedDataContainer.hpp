@@ -10,7 +10,6 @@ public:
     int m_nodeOffset;
     unsigned char* m_storage;
     unsigned int m_count;
-    ReceivedDataContainer();
 };
 }}}
 #endif

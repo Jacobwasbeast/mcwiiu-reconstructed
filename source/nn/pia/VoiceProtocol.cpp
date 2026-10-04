@@ -1,5 +1,6 @@
 #include "vendor/__N_22_chat_VoiceProtocol_cpp_bf22a0fe.hpp"
 #include <string.h>
+#include "nn/pia/transport/UnreliableProtocol.hpp"
 #include "nn/pia/chat/HandsFree.hpp"
 #include "platform/wiiu/pead.hpp"
 #include "game/core/CriticalSection.hpp"
@@ -186,14 +187,14 @@ Result VoiceProtocol::setupProtocols(unsigned char maxPlayers, unsigned int data
         reinterpret_cast<nn::pia::transport::UnreliableProtocol**>(&m_secondaryStatus),
         reinterpret_cast<unsigned short*>(&m_secondaryState), maxPlayers);
     if (result != 0) return result;
-    const unsigned int initializeResult =
+    Result initializeResult =
         reinterpret_cast<nn::pia::transport::UnreliableProtocol*>(m_secondaryStatus)->Initialize(dataSize);
     if (initializeResult != 0)
     {
         __N_22_chat_VoiceProtocol_cpp_bf22a0fe::destroyProtocol(
             reinterpret_cast<nn::pia::transport::UnreliableProtocol**>(&m_secondaryStatus),
             reinterpret_cast<unsigned short*>(&m_secondaryState));
-        return static_cast<Result>(initializeResult);
+        return initializeResult;
     }
     return 0;
 }

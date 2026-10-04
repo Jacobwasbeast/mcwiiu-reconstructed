@@ -23,6 +23,7 @@ public:
     bool IsIncludeNode(const ListNode* node) const;
     ListNode* PopFrontNode();
     ListNode* PopBackNode();
+    unsigned int GetNodeNum() const { return mSize; }
     ListNode* Sentinel() { return &mSentinel; }
     const ListNode* Sentinel() const { return &mSentinel; }
     void ClearNode();

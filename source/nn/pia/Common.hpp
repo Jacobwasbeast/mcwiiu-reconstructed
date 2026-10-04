@@ -42,9 +42,13 @@ void EmbedModuleInfo();
 unsigned int hashWithMd5(unsigned int value);
 unsigned int hashWithMd5(unsigned long long value);
 
+void serializeU64(unsigned char* buffer, unsigned long long value);
 void serializeU16(unsigned char* buffer, unsigned short value);
 void serializeU32(unsigned char* buffer, unsigned int value);
 unsigned short deserializeU16(const unsigned char* buffer);
+void serializeU8(unsigned char* buffer, unsigned char value);
+unsigned long long deserializeU64(const unsigned char* buffer);
+unsigned char deserializeU8(const unsigned char* buffer);
 unsigned int deserializeU32(const unsigned char* buffer);
 
 }

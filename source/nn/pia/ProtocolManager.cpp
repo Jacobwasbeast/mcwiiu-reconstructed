@@ -1,6 +1,7 @@
 #include "nn/pia/Reconstruction.hpp"
 #include "vendor/__N_29_transport_ProtocolManager_cpp_70a76ebe.hpp"
 #include "nn/pia/HeapManager.hpp"
+#include "nn/pia/transport/UnreliableProtocol.hpp"
 #include "platform/wiiu/pead.hpp"
 
 #include <string.h>

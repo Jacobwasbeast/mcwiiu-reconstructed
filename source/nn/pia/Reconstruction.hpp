@@ -60,21 +60,7 @@ protected:
 
 class ReceivedDataContainer;
 
-class UnreliableProtocol : public Protocol
-{
-public:
-    enum { cProtocolType = 0x68 };
-
-    UnreliableProtocol();
-    virtual ~UnreliableProtocol();
-    virtual void Trace(unsigned long long value) const;
-    virtual unsigned short GetProtocolType() const;
-    void Finalize();
-    unsigned int Initialize(unsigned int count);
-private:
-    unsigned char* m_receivedData;
-    ReceivedDataContainer* m_receivedDataContainer;
-};
+class UnreliableProtocol;
 
 class ReliableSlidingWindow;
 class StationManager;
