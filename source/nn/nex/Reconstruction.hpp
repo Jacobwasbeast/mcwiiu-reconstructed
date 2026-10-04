@@ -7,7 +7,14 @@
 #include "nn/nex/ProviderSupport.hpp"
 #include "nn/nex/ServiceClient.hpp"
 #include "nn/nex/GlobalVariables.hpp"
+#include "nn/nex/NotificationEvent.hpp"
 #include "nn/nex/NotificationEventManager.hpp"
+#include "nn/nex/NotificationEvents.hpp"
+#include "nn/nex/ProtocolCallContext.hpp"
+#include "nn/nex/StationURL.hpp"
+#include "nn/nex/String.hpp"
+#include "nn/nex/qList.hpp"
+#include "nn/nex/qResult.hpp"
 
 namespace nn
 {
@@ -47,6 +54,13 @@ public:
 
     virtual bool Bind(Credentials* pCredentials);
     virtual bool Unbind();
+    bool UpdateNotificationData(ProtocolCallContext* pCallContext, unsigned int uiType,
+                                unsigned int uiParam1, unsigned int uiParam2, String strText);
+    static void SetPersistentGatheringCodeKey(const String& rKey);
+    static void ClearPersistentGatheringCodeKey();
+    bool GetFriendNotificationData(ProtocolCallContext* pCallContext,
+                                   qList<NotificationEvent>* pEvents,
+                                   const qList<unsigned int>& rTypes);
 
 private:
     bool m_protocolRegistered;
@@ -54,11 +68,27 @@ private:
     unsigned long long m_uiLastProgressScoreTime;
 };
 
+class ErrorCodeConverter
+{
+public:
+    static unsigned int ConvertToNetworkErrorCode(const qResult& rResult);
+};
+
+class SecureConnectionClient
+{
+public:
+    bool ReplaceURL(ProtocolCallContext* pCallContext, const StationURL& rCurrentURL,
+                    const StationURL& rNewURL);
+    void SendReport(unsigned int uiReportId, const void* pData, unsigned int uiSize);
+};
+
 class BackEndServices
 {
 public:
-    uint32_t RegisterNotificationEventHandler(NotificationEventHandler* handler);
-    uint32_t UnregisterNotificationEventHandler(NotificationEventHandler* handler);
+    SecureConnectionClient* GetSecureConnectionClient() const;
+    qResult IsConnected() const;
+    bool RegisterNotificationEventHandler(NotificationEventHandler* handler);
+    bool UnregisterNotificationEventHandler(NotificationEventHandler* handler);
     Credentials* GetCredentials();
 
 private:
@@ -76,19 +106,6 @@ public:
 class NgsFacade : public RendezVous
 {
 public:
-};
-
-class EventLog
-{
-public:
-    static EventLog* GetInstance();
-    void SetLogLevel(int level);
-};
-
-class TraceLog
-{
-public:
-    static TraceLog* GetInstance();
 };
 
 }

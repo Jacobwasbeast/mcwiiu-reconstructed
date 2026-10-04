@@ -38,35 +38,29 @@ public:
 
     T& GetRef()
     {
-        m_criticalSection.Enter();
+        ScopedCS lock(&m_criticalSection);
 
         typename ValueMap::iterator value = m_values.find(GetThreadID());
         if (value == m_values.end())
         {
             m_values[GetThreadID()] = m_defaultValue;
-            T& created = m_values[GetThreadID()];
-            m_criticalSection.Leave();
-            return created;
+            return m_values[GetThreadID()];
         }
 
-        m_criticalSection.Leave();
         return value->second;
     }
 
     T& GetRef() const
     {
-        m_criticalSection.Enter();
+        ScopedCS lock(&m_criticalSection);
 
         typename ValueMap::iterator value = m_values.find(GetThreadID());
         if (value == m_values.end())
         {
             m_values[GetThreadID()] = m_defaultValue;
-            T& created = m_values[GetThreadID()];
-            m_criticalSection.Leave();
-            return created;
+            return m_values[GetThreadID()];
         }
 
-        m_criticalSection.Leave();
         return value->second;
     }
 

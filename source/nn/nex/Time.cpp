@@ -27,7 +27,7 @@ uint64_t Time::ConvertTimeoutToDeadline(uint32_t timeout)
     if (timeout == 0xffffffffu)
         return 0;
 
-    return GetTime() + static_cast<uint64_t>(static_cast<int64_t>(static_cast<int32_t>(timeout)));
+    return Time(GetTime()) + static_cast<int32_t>(timeout);
 }
 
 int32_t Time::ConvertDeadlineToTimeout(Time deadline)

@@ -1,11 +1,12 @@
 #ifndef SOURCE_NN_NEX_QRESULT_HPP
 #define SOURCE_NN_NEX_QRESULT_HPP
 #include <stdint.h>
+#include "nn/nex/RootObject.hpp"
 namespace nn
 {
 namespace nex
 {
-class qResult
+class qResult : public RootObject
 {
 public:
     qResult();
@@ -26,4 +27,11 @@ private:
 };
 }
 }
+
+template<class T>
+bool operator==(const nn::nex::qResult& rResult, const T& rValue)
+{
+    return rResult.Equals(rValue);
+}
+
 #endif

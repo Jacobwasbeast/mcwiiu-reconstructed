@@ -53,12 +53,10 @@ T* SpecialNewArray(unsigned int count, const wchar_t*, unsigned int)
 template<class T>
 void SpecialDeleteArray(T* elements)
 {
-    void* storage;
     unsigned int* block;
     unsigned int index;
 
-    storage = const_cast<void*>(static_cast<volatile void*>(elements));
-    block = static_cast<unsigned int*>(storage) - 1;
+    block = (unsigned int*)elements - 1;
 
     for (index = 0; index < *block; ++index)
         elements[index].~T();

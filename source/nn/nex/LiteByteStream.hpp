@@ -9,7 +9,7 @@ namespace nn
 namespace nex
 {
 
-template <unsigned int Capacity>
+template <int Capacity>
 class LiteByteStream : public RootObject
 {
 public:
@@ -19,6 +19,11 @@ public:
 
     virtual ~LiteByteStream()
     {
+    }
+
+    LiteBuffer<Capacity>& GetBuffer()
+    {
+        return m_buffer;
     }
 
 private:

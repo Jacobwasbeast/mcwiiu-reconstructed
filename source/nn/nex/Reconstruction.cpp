@@ -44,7 +44,7 @@ bool MatchmakeExtensionClient::Unbind()
     return bUnbound;
 }
 
-uint32_t BackEndServices::RegisterNotificationEventHandler(
+bool BackEndServices::RegisterNotificationEventHandler(
     NotificationEventHandler* handler)
 {
     if (m_notificationEventManager == 0)
@@ -54,7 +54,7 @@ uint32_t BackEndServices::RegisterNotificationEventHandler(
     return m_notificationEventManager->RegisterNotificationEventHandler(handler);
 }
 
-uint32_t BackEndServices::UnregisterNotificationEventHandler(
+bool BackEndServices::UnregisterNotificationEventHandler(
     NotificationEventHandler* handler)
 {
     if (m_notificationEventManager == 0)

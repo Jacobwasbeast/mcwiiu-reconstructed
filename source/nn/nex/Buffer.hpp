@@ -15,10 +15,14 @@ class String;
 class Buffer : public RefCountedObject
 {
 public:
-    Buffer();
     Buffer(const Buffer& rBuffer);
     explicit Buffer(const String& rString);
     virtual ~Buffer();
+
+    Buffer()
+    {
+        Initialize(GetDefaultBufferSize(), 0);
+    }
 
     Buffer(unsigned int uiRealSize, unsigned char uiFlags)
     {
@@ -49,6 +53,8 @@ public:
 
     String ToString() const;
     void Trace(uint64_t uiFilter) const;
+
+    static unsigned int s_uiDefaultBufferSize;
 
     static unsigned int GetDefaultBufferSize();
     static void SetDefaultBufferSize(unsigned int uiSize);

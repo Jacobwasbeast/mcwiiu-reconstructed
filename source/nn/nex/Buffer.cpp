@@ -19,14 +19,9 @@ namespace
 const unsigned char BUFFER_FLAG_POOLED = 0x04;
 const unsigned int APPEND_AT_END = 0xFFFFFFFFu;
 
-unsigned int s_uiDefaultBufferSize = 1364;
-
 }
 
-Buffer::Buffer()
-{
-    Initialize(GetDefaultBufferSize(), 0);
-}
+unsigned int Buffer::s_uiDefaultBufferSize = 1364;
 
 Buffer::Buffer(const Buffer& rBuffer)
 {

@@ -20,6 +20,14 @@ public:
 
     operator unsigned long long() const { return m_value; }
 
+    Time operator+(int milliseconds) const
+    {
+        if (milliseconds < 0)
+            return Time(m_value - static_cast<int64_t>(-milliseconds));
+
+        return Time(m_value + static_cast<int64_t>(milliseconds));
+    }
+
     Time Multiply(float factor) const;
     Time Divide(float divisor) const;
     Time Scale(float factor) const;

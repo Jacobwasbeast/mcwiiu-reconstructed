@@ -14,6 +14,7 @@ namespace nex
 {
 
 class Buffer;
+class ConnectionManager;
 class ConnectionOrientedStream;
 class EndPointEventHandler;
 class EndPointInfo;
@@ -22,7 +23,13 @@ class Key;
 class UserContext;
 class Protocol;
 
-class EndPoint : public RootObject
+class EndPointInfoInterface
+{
+public:
+    virtual ~EndPointInfoInterface();
+};
+
+class EndPoint : public EndPointInfoInterface, public RootObject
 {
 public:
     enum _ConnectionState
@@ -104,6 +111,7 @@ public:
 
 protected:
     friend class Protocol;
+    friend class ConnectionManager;
 
     ConnectionOrientedStream* m_pStream;
     StationURL m_stationURL;

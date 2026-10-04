@@ -73,7 +73,7 @@ private:
     uint32_t m_unresolvedB0;
     CallContext m_callContext;
     CallContext m_natTraversalContext;
-    uint32_t m_unresolved168;
+    uint32_t m_uiCallContextId;
     Buffer* m_pRequestBuffer;
     Buffer* m_pResponseBuffer;
     EndPoint** m_ppEndPointOutput;
@@ -84,8 +84,8 @@ private:
     URLList::iterator m_currentURL;
     bool m_flag194;
     bool m_cancelRequested;
-    void* m_cancelTarget;
-    uint32_t m_unresolved19C;
+    Job* m_pCancelTarget;
+    uint32_t m_uiPingTime;
     bool m_flag1A0;
 };
 

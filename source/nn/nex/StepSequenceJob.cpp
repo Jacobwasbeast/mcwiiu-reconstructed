@@ -13,22 +13,6 @@ namespace nn
 namespace nex
 {
 
-StepSequenceJob::Step::Step()
-    : m_function(0)
-    , m_pActivity(0)
-{
-}
-
-StepSequenceJob::Step::Step(Function function, const wchar_t* pActivity)
-    : m_function(function)
-    , m_pActivity(pActivity)
-{
-}
-
-StepSequenceJob::Step::~Step()
-{
-}
-
 StepSequenceJob::StepSequenceJob(JobType jobType, const DebugString& rDebugString)
     : Job(jobType, rDebugString)
     , m_stepStartTime(0)

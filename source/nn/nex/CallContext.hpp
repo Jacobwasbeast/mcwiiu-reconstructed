@@ -18,6 +18,8 @@ namespace nex
 
 class CallContextRegister;
 class ClientProtocol;
+class ConnectionManager;
+class JobConnectEndPoint;
 class CallContext : public RefCountedObject
 {
 public:
@@ -85,6 +87,8 @@ protected:
 private:
     friend class CallContextRegister;
     friend class ClientProtocol;
+    friend class JobConnectEndPoint;
+    friend class ConnectionManager;
     class InternalData
     {
     public:

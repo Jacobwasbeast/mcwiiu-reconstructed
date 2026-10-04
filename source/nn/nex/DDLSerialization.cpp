@@ -1,7 +1,9 @@
 #include "nn/nex/DDLSerialization.hpp"
 
+#include "nn/nex/Buffer.hpp"
 #include "nn/nex/qBuffer.hpp"
 #include "nn/nex/SpecialArray.hpp"
+#include "nn/nex/StationURL.hpp"
 #include "nn/nex/String.hpp"
 #include "nn/nex/StringConverter.hpp"
 #include "nn/nex/SystemSetting.hpp"
@@ -135,6 +137,44 @@ void _Type_qBuffer::Extract(Message* pMessage, qBuffer* pDestination)
             pMessage->SetPosition(uiPosition);
         }
     }
+}
+
+void _Type_buffertail::Add(Message* pMessage, const Buffer& rSource)
+{
+    if (rSource.GetLength() != 0)
+        pMessage->GetBuffer()->AppendData(rSource.GetData(), rSource.GetLength(), 0xFFFFFFFF);
+}
+
+void _Type_buffertail::Extract(Message* pMessage, Buffer* pDestination)
+{
+    const unsigned int uiPosition = pMessage->GetPosition();
+    const unsigned int uiLength = pMessage->GetBuffer()->GetLength();
+    pDestination->Clear();
+    if (uiPosition < uiLength)
+    {
+        const unsigned int uiRemaining = uiLength - uiPosition;
+        pDestination->AppendData(pMessage->GetBuffer()->GetData() + pMessage->GetPosition(),
+                                 uiRemaining, 0xFFFFFFFF);
+        const unsigned int uiNewPosition = pMessage->GetPosition() + uiRemaining;
+        if (uiNewPosition <= pMessage->GetLength())
+            pMessage->SetPosition(uiNewPosition);
+    }
+}
+
+void _Type_stationurl::Add(Message* pMessage, const StationURL& rSource)
+{
+    String url(rSource.GetURL());
+    _Type_string::Add(pMessage, url);
+}
+
+bool _Type_stationurl::Extract(Message* pMessage, StationURL* pDestination)
+{
+    String url;
+    if (!_Type_string::Extract(pMessage, &url))
+        return false;
+
+    pDestination->SetURL(url);
+    return true;
 }
 
 }

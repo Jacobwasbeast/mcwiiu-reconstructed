@@ -10,7 +10,7 @@ namespace nex
 {
 
 OutputFormat::OutputFormat()
-    : m_indent(0), m_field4(0), m_flags(),
+    : m_indent(0), m_field4(0), m_flags(), m_field14(0),
       m_startTime(static_cast<uint32_t>(Time::GetTime()))
 {
 }

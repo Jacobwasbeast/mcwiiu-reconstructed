@@ -24,6 +24,9 @@ GlobalVariables::GlobalVariables()
     , m_methodNameMap()
     , m_errorNameMap()
     , m_protocolVersionMap()
+    , m_eventLog()
+    , m_traceLog()
+    , m_cacheManager()
     , m_packetBufferParams()
 {
     g_criticalSectionDisabled = false;

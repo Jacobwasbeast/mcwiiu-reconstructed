@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#include "nn/nex/RootObject.hpp"
+
 struct OSCalendarTime;
 
 namespace nn
@@ -10,7 +12,7 @@ namespace nn
 namespace nex
 {
 
-class DateTime
+class DateTime : public RootObject
 {
 public:
     DateTime();

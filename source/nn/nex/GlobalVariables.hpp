@@ -6,11 +6,14 @@
 #include <map>
 #include <utility>
 
+#include "nn/nex/CacheManager.hpp"
+#include "nn/nex/EventLog.hpp"
 #include "nn/nex/MemAllocator.hpp"
 #include "nn/nex/PacketBufferManager.hpp"
 #include "nn/nex/RefCountedObject.hpp"
 #include "nn/nex/String.hpp"
 #include "nn/nex/ThreadVariable.hpp"
+#include "nn/nex/TraceLog.hpp"
 #include "nn/nex/qVector.hpp"
 
 namespace nn
@@ -68,6 +71,21 @@ public:
         return m_currentThread;
     }
 
+    EventLog& GetEventLog()
+    {
+        return m_eventLog;
+    }
+
+    TraceLog& GetTraceLog()
+    {
+        return m_traceLog;
+    }
+
+    CacheManager& GetCacheManager()
+    {
+        return m_cacheManager;
+    }
+
     String& GetBroadcastAddress()
     {
         return m_broadcastAddress;
@@ -85,6 +103,10 @@ private:
     StringMap m_methodNameMap;
     StringMap m_errorNameMap;
     VersionMap m_protocolVersionMap;
+    EventLog m_eventLog;
+    unsigned int m_field1a4;
+    TraceLog m_traceLog;
+    CacheManager m_cacheManager;
     qVector<PacketBufferManager::UnitHeapParam> m_packetBufferParams;
     bool m_packetBufferPoolEnabled;
 };

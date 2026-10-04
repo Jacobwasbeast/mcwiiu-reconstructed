@@ -50,7 +50,8 @@ private:
     uint32_t m_indent;
     uint32_t m_field4;
     bool m_flags[10];
-    uint64_t m_startTime;
+    uint32_t m_field14;
+    uint32_t m_startTime;
 };
 
 }

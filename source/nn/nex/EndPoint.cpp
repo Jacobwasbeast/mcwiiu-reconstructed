@@ -29,6 +29,10 @@ const unsigned int KEEP_ALIVE_DISABLED = 0xFFFFFFFF;
 
 }
 
+EndPointInfoInterface::~EndPointInfoInterface()
+{
+}
+
 EndPoint::EndPoint(ConnectionOrientedStream* pStream, const StationURL* pStationURL)
     : m_pStream(pStream)
     , m_stationURL(*pStationURL)

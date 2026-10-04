@@ -52,10 +52,6 @@ InetAddress::InetAddress(const wchar_t* pAddress, unsigned short uiPortNumber)
     SetPortNumber(uiPortNumber);
 }
 
-InetAddress::~InetAddress()
-{
-}
-
 InetAddress& InetAddress::operator=(const InetAddress& rAddress)
 {
     std::memcpy(&m_address, &rAddress.m_address, sizeof(m_address));
