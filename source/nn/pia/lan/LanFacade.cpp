@@ -44,6 +44,32 @@ Result LanFacade::Bind(const LanNetworkSetting& setting)
     return 0;
 }
 
+void LanFacade::Cleanup()
+{
+    if (m_lanProtocol == 0)
+        return;
+    m_lanProtocol->UnregisterCryptoSetting();
+}
+
+void LanFacade::RegisterLanProtocol(LanProtocol* protocol)
+{
+    m_lanProtocol = protocol;
+    Result initializeResult = m_lanProtocol->Initialize();
+    Result bindResult = m_lanProtocol->Bind(m_networkSetting);
+}
+
+void LanFacade::UnregisterLanProtocol()
+{
+    if (m_lanProtocol != 0)
+        m_lanProtocol->Finalize();
+    m_lanProtocol = 0;
+}
+
+transport::StationConnectionInfo& LanFacade::GetLocalStationConnectionInfo()
+{
+    return m_lanProtocol->GetLocalStationConnectionInfo();
+}
+
 Result LanFacade::CreateInstance()
 {
     if (IsInitialized() == 0)

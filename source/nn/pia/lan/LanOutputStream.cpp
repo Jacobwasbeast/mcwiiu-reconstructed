@@ -11,7 +11,8 @@
 
 namespace nn { namespace pia { namespace lan {
 
-LanOutputStream::LanOutputStream() : common::SocketStreamBase(), m_protocol(0)
+LanOutputStream::LanOutputStream()
+    : common::SocketStreamBase(), common::IPacketOutput(), m_protocol(0)
 {
 }
 
@@ -69,9 +70,8 @@ int LanOutputStream::CreateMulticastAddressArray(common::SockAddrIn* output, uns
 Result LanOutputStream::SendTo(const void* data, unsigned int size,
                                const common::InetAddress& address, unsigned char flags)
 {
-    const bool started = *reinterpret_cast<const unsigned char*>(this) != 0;
-    common::Socket* socket = *reinterpret_cast<common::Socket**>(
-        reinterpret_cast<unsigned char*>(this) + 4);
+    const bool started = m_started;
+    common::Socket* socket = m_socket;
     if (socket == 0)
         return started ? 0x10c08 : 0;
     int sent = 0;
@@ -87,7 +87,7 @@ Result LanOutputStream::SendTo(const void* data, unsigned int size,
     if (sent != static_cast<int>(size))
         return 0x10c08;
     if (m_protocol != 0)
-        *reinterpret_cast<unsigned char*>(reinterpret_cast<unsigned char*>(m_protocol) + 0x618) = 1;
+        m_protocol->m_unknown618 = 1;
     return 0;
 }
 
@@ -95,8 +95,7 @@ bool LanOutputStream::IsDestinationAddressIndividual(common::SockAddrIn* address
 {
     if (addresses == 0 || m_protocol == 0)
         return count <= 1;
-    const unsigned int localAddress = *reinterpret_cast<const unsigned int*>(
-        reinterpret_cast<const unsigned char*>(m_protocol) + 0x18);
+    const unsigned int localAddress = m_protocol->m_address;
     for (unsigned int i = 0; i != count; ++i)
         if (*reinterpret_cast<const unsigned int*>(addresses[i].bytes + 4) == localAddress)
             return false;
@@ -111,9 +110,8 @@ bool LanOutputStream::IsDestinationAddressIndividual(common::SockAddrIn* address
 Result LanOutputStream::SendToMulti(const void* data, unsigned int size,
                                     const common::SockAddrIn* addresses, int count)
 {
-    const bool started = *reinterpret_cast<const unsigned char*>(this) != 0;
-    common::Socket* socket = *reinterpret_cast<common::Socket* const*>(
-        reinterpret_cast<const unsigned char*>(this) + 4);
+    const bool started = m_started;
+    common::Socket* socket = m_socket;
     if (socket == 0)
         return started ? 0x10c08 : 0;
     int sent = 0;
@@ -135,7 +133,7 @@ Result TraceSendResult(const common::Packet& packet, Result result)
 
 Result LanOutputStream::Write(const common::Packet& packet)
 {
-    if (*reinterpret_cast<const unsigned char*>(this) == 0)
+    if (!m_started)
         return 0;
     common::InetAddress address;
     if (packet.m_stationIndex != 0xff)
@@ -159,8 +157,7 @@ Result LanOutputStream::Write(const common::Packet& packet)
     if (IsDestinationAddressIndividual(addresses, count) == false || m_protocol == 0 ||
         !m_protocol->IsRelayEnabled())
         return TraceSendResult(packet, SendToMulti(packet.m_packetData.m_data, packet.m_size, addresses, count));
-    common::InetAddress relay(*reinterpret_cast<const common::InetAddress*>(
-        reinterpret_cast<const unsigned char*>(m_protocol) + 0x1c));
+    common::InetAddress relay(m_protocol->m_broadcastAddress, m_protocol->m_port);
     relay.m_port = 40000;
     return TraceSendResult(packet, SendTo(packet.m_packetData.m_data, packet.m_size, relay, packet.m_field600));
 }
@@ -180,7 +177,7 @@ unsigned int LanOutputStream::GetMulticastDestinationNum() const
     return 16;
 }
 
-bool LanOutputStream::IsBroadcastSupported() const
+unsigned int LanOutputStream::IsBroadcastSupported() const
 {
     return true;
 }

@@ -3,6 +3,8 @@
 
 #include "nn/pia/Reconstruction.hpp"
 
+namespace nn { namespace pia { namespace transport { class StationConnectionInfo; }}}
+
 namespace nn { namespace pia { namespace lan {
 
 class LanProtocol;
@@ -28,6 +30,10 @@ public:
 
     Result Initialize();
     Result Bind(const LanNetworkSetting& setting);
+    void Cleanup();
+    void RegisterLanProtocol(LanProtocol* protocol);
+    void UnregisterLanProtocol();
+    transport::StationConnectionInfo& GetLocalStationConnectionInfo();
 
     static Result CreateInstance();
     static LanFacade* GetInstance();

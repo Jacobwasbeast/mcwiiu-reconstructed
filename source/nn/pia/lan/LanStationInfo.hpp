@@ -17,6 +17,7 @@ public:
     void SetUserName(const common::FixedString<10>& userName);
     unsigned long long GetStationId() const;
     void SetStationId(unsigned long long stationId);
+    static unsigned int GetSerializedSize();
 
     common::FixedString<10> m_userName;
     unsigned long long m_stationId;

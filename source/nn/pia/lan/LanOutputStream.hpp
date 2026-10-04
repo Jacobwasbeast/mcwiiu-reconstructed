@@ -2,6 +2,7 @@
 #define LEGACY_CONSOLE_WIIU_NN_PIA_LAN_LANOUTPUTSTREAM_HPP
 
 #include "nn/pia.h"
+#include "nn/pia/common/IPacketOutput.hpp"
 #include "nn/pia/common/SocketStreamBase.hpp"
 #include "nn/pia/common/SocketAddress.hpp"
 
@@ -9,7 +10,7 @@ namespace nn { namespace pia { namespace common { class Packet; class InetAddres
 namespace lan {
 class LanProtocol;
 
-class LanOutputStream : public common::SocketStreamBase
+class LanOutputStream : public common::SocketStreamBase, public common::IPacketOutput
 {
 public:
     LanOutputStream();
@@ -24,7 +25,7 @@ public:
     void RegisterLanProtocol(LanProtocol* protocol);
     void UnregisterLanProtocol();
     virtual unsigned int GetMulticastDestinationNum() const;
-    virtual bool IsBroadcastSupported() const;
+    virtual unsigned int IsBroadcastSupported() const;
 
 private:
     unsigned char m_stationAddresses[0x200];

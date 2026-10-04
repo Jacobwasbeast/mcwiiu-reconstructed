@@ -21,6 +21,7 @@
 #include "nn/pia/session/lan.hpp"
 #include "nn/pia/lan/LanSessionInfoPrivate.hpp"
 #include "nn/pia/lan/LanProtocol.hpp"
+#include "nn/pia/transport/UnreliableProtocol.hpp"
 #include "nn/pia/HeapManager.hpp"
 #include "nn/pia/Reconstruction.hpp"
 #include "platform/wiiu/pead.hpp"
@@ -50,9 +51,9 @@ void LanNetworkFactory::CreateProtocols()
     transport::ProtocolManager* manager = transport::g_piaProtocolManager;
     if (manager == 0)
         return;
-    transport::Protocol* storage = manager->AllocProtocol(0x1298);
+    transport::UnreliableProtocol* storage = manager->AllocProtocol(0x1298);
     if (storage != 0) {
-        LanProtocol* protocol = new (storage) LanProtocol();
+        LanProtocol* protocol = new (static_cast<void*>(storage)) LanProtocol();
         manager->CreateProtocolImpl(protocol, transport::ProtocolId(LanProtocol::cProtocolId));
     }
 }

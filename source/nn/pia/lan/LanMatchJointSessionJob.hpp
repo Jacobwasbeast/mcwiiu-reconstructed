@@ -2,6 +2,7 @@
 #define LEGACY_CONSOLE_WIIU_NN_PIA_LAN_LANMATCHJOINTSESSIONJOB_HPP
 
 #include "nn/pia/session/JointSessionJob.hpp"
+#include "nn/pia/transport/StationConnectionInfo.hpp"
 
 namespace nn
 {
@@ -24,7 +25,7 @@ public:
     virtual Result StartupLeaveJointSessionImpl();
     virtual Result StartupDestroyJointSessionImpl();
     virtual Result StartupPassiveProcessImpl(session::Session::ProcessType processType,
-                                             unsigned int messageType,
+                                             session::SessionProtocol::MessageType messageType,
                                              const unsigned long long* stationIds,
                                              unsigned short stationIdNum,
                                              unsigned long long senderStationId);
@@ -73,8 +74,7 @@ public:
     unsigned int WaitHostStationId();
     unsigned int ProcessComplete();
 
-private:
-    unsigned char m_reserved[120];
+    transport::StationConnectionInfo m_stationConnectionInfo;
 };
 
 }

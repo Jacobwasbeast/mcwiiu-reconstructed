@@ -38,4 +38,9 @@ void LanStationInfo::SetStationId(unsigned long long stationId)
     m_stationId = stationId;
 }
 
+unsigned int LanStationInfo::GetSerializedSize()
+{
+    return session::SessionStationInfo::GetSerializedSize() + 0x31;
+}
+
 }}}

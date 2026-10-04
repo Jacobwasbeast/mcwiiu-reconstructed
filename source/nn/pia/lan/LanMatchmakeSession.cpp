@@ -1,241 +1,297 @@
 #include "nn/pia/lan/LanMatchmakeSession.hpp"
-#include <cstring>
+#include "nn/pia/session/Session.hpp"
 
 namespace nn { namespace pia { namespace lan {
 
 LanMatchmakeSession::LanMatchmakeSession()
+    : session::CommonMatchmakeSession(),
+      m_sessionInfo(),
+      m_sessionInfoBuffer(),
+      m_searchCriteria(),
+      m_ownedCallContext(),
+      m_publishedSessionInfo()
 {
+    m_sessionInfoList = session::g_piaSession->m_sessionInfoList;
+    Clear();
 }
 
 LanMatchmakeSession::~LanMatchmakeSession()
 {
+    m_sessionInfoList = 0;
 }
 
 void LanMatchmakeSession::Clear()
 {
+    for (unsigned int i = 0; i < 2; ++i)
+        m_searchCriteria[i].Reset();
+    session::CommonMatchmakeSession::Cleanup();
+    m_inquiryCallContext = 0;
+    m_ignoredSessionId = 0;
+    m_preferredSessionId = 0;
+    session::CommonMatchmakeSession::SetMatchmakeOwnerUniqueId(0);
+    m_sessionParamRegistered = false;
+    session::CommonMatchmakeSession::SetMatchmakeOwner(false);
+    m_gatheringId = 0;
+    m_callContext = 0;
 }
 
 void LanMatchmakeSession::Cleanup()
 {
+    if (m_callContext != 0)
+        m_callContext->SignalCancel();
+    if (m_inquiryCallContext != 0)
+        m_inquiryCallContext->SignalCancel();
+    if (m_ownedCallContext.m_state == common::CallContext::cStateInProgress)
+        m_ownedCallContext.SignalCancel();
+    Clear();
 }
 
-uint64_t LanMatchmakeSession::RandomMatchmakeSession(uint32_t a1, uint32_t a2)
+Result LanMatchmakeSession::RandomMatchmakeSession(common::CallContext* callContext)
 {
     return 0;
 }
 
-void LanMatchmakeSession::SetSessionParam(void* a1, uint32_t a2)
+void LanMatchmakeSession::SetSessionParam(const unsigned char* sessionParam, unsigned int sessionParamSize)
 {
 }
 
-uint32_t LanMatchmakeSession::WaitRandomMatchmakeSession(void* a1, void* a2)
+bool LanMatchmakeSession::WaitRandomMatchmakeSession(unsigned int* gatheringId, bool* found)
+{
+    return false;
+}
+
+Result LanMatchmakeSession::BrowseMatchmakeSession(common::CallContext* callContext)
 {
     return 0;
 }
 
-uint64_t LanMatchmakeSession::BrowseMatchmakeSession(uint32_t a1, uint32_t a2)
+bool LanMatchmakeSession::WaitBrowseMatchmakeSession()
+{
+    return false;
+}
+
+Result LanMatchmakeSession::CreateMatchmakeSession(common::CallContext* callContext)
 {
     return 0;
 }
 
-uint32_t LanMatchmakeSession::WaitBrowseMatchmakeSession()
+bool LanMatchmakeSession::WaitCreateMatchmakeSession(unsigned int* gatheringId)
+{
+    return false;
+}
+
+Result LanMatchmakeSession::JoinMatchmakeSession(common::CallContext* callContext, unsigned int gatheringId)
 {
     return 0;
 }
 
-uint64_t LanMatchmakeSession::CreateMatchmakeSession(uint32_t a1, uint32_t a2)
+bool LanMatchmakeSession::WaitJoinMatchmakeSession()
+{
+    return false;
+}
+
+Result LanMatchmakeSession::LeaveMatchmakeSession(common::CallContext* callContext, unsigned int gatheringId)
+{
+    if (callContext == 0)
+        return static_cast<Result>(0x10c07);
+    if (callContext->m_state == common::CallContext::cStateInProgress)
+        return static_cast<Result>(0x10c07);
+    if (m_callContext != 0)
+        return static_cast<Result>(0x10c08);
+    if (m_gatheringId != gatheringId)
+        return static_cast<Result>(0x10c07);
+    m_callContext = callContext;
+    m_callContext->InitiateCall();
+    return 0;
+}
+
+bool LanMatchmakeSession::WaitLeaveMatchmakeSession()
+{
+    return false;
+}
+
+Result LanMatchmakeSession::UnregisterMatchmakeSession(common::CallContext* callContext, unsigned int gatheringId)
 {
     return 0;
 }
 
-uint32_t LanMatchmakeSession::WaitCreateMatchmakeSession(void* a1)
+bool LanMatchmakeSession::WaitUnregisterMatchmakeSession()
+{
+    return false;
+}
+
+Result LanMatchmakeSession::OpenParticipate(common::CallContext* callContext, unsigned int gatheringId)
 {
     return 0;
 }
 
-uint64_t LanMatchmakeSession::JoinMatchmakeSession(uint32_t a1, uint32_t a2, uint32_t a3)
+bool LanMatchmakeSession::WaitOpenParticipate()
+{
+    return false;
+}
+
+Result LanMatchmakeSession::CloseParticipate(common::CallContext* callContext, unsigned int gatheringId)
 {
     return 0;
 }
 
-uint32_t LanMatchmakeSession::WaitJoinMatchmakeSession()
+bool LanMatchmakeSession::WaitCloseParticipate()
+{
+    return false;
+}
+
+Result LanMatchmakeSession::GetStationConnectionInfo(common::CallContext* callContext, unsigned int gatheringId)
 {
     return 0;
 }
 
-uint64_t LanMatchmakeSession::LeaveMatchmakeSession(uint32_t a1, uint32_t a2, int32_t a3)
+bool LanMatchmakeSession::WaitGetStationConnectionInfo(transport::StationConnectionInfo* stationConnectionInfo)
+{
+    return false;
+}
+
+Result LanMatchmakeSession::RequestSessionInfo(common::CallContext* callContext, unsigned int gatheringId)
 {
     return 0;
 }
 
-uint32_t LanMatchmakeSession::WaitLeaveMatchmakeSession()
+bool LanMatchmakeSession::WaitRequestSessionInfo()
+{
+    return false;
+}
+
+Result LanMatchmakeSession::UpdateMatchmakeSessionHost(unsigned int stationId)
+{
+    return static_cast<Result>(0xc0b);
+}
+
+void LanMatchmakeSession::UpdateStationInfoList()
+{
+}
+
+const LanSessionInfo* LanMatchmakeSession::GetSessionInfo() const
+{
+    return &m_publishedSessionInfo;
+}
+
+LanSessionInfo* LanMatchmakeSession::GetSessionInfo()
+{
+    return &m_publishedSessionInfo;
+}
+
+Result LanMatchmakeSession::UpdateSessionSetting(common::CallContext* callContext, unsigned int gatheringId)
 {
     return 0;
 }
 
-uint64_t LanMatchmakeSession::UnregisterMatchmakeSession(uint32_t a1, uint32_t a2, int32_t a3)
+bool LanMatchmakeSession::WaitUpdateSessionSetting()
+{
+    return false;
+}
+
+Result LanMatchmakeSession::InquiryOwnerPrincipalId(common::CallContext* callContext, unsigned int gatheringId)
 {
     return 0;
 }
 
-uint32_t LanMatchmakeSession::WaitUnregisterMatchmakeSession()
+bool LanMatchmakeSession::WaitInquiryOwnerPrincipalId()
 {
+    return false;
+}
+
+Result LanMatchmakeSession::CancelInquiryOwnerPrincipalId()
+{
+    if (m_inquiryCallContext != 0)
+    {
+        m_inquiryCallContext->SignalCancel();
+        m_inquiryCallContext = 0;
+    }
     return 0;
 }
 
-uint64_t LanMatchmakeSession::OpenParticipate(uint32_t a1, uint32_t a2, int32_t a3)
+unsigned int LanMatchmakeSession::GetGatheringId() const
 {
-    return 0;
+    return m_gatheringId;
 }
 
-uint32_t LanMatchmakeSession::WaitOpenParticipate()
+LanSessionInfo* LanMatchmakeSession::GetSessionInfoPtr()
 {
-    return 0;
+    return &m_sessionInfo;
 }
 
-uint64_t LanMatchmakeSession::CloseParticipate(uint32_t a1, uint32_t a2, int32_t a3)
+LanSessionInfo* LanMatchmakeSession::GetSessionInfoBufferPtr()
 {
-    return 0;
+    return &m_sessionInfoBuffer;
 }
 
-uint32_t LanMatchmakeSession::WaitCloseParticipate()
+session::ISessionInfoList* LanMatchmakeSession::GetSessionInfoListPtr()
 {
-    return 0;
+    return m_sessionInfoList;
 }
 
-uint64_t LanMatchmakeSession::GetStationConnectionInfo(uint32_t a1, uint32_t a2, int32_t a3)
+session::ISessionInfoList* LanMatchmakeSession::GetBrowseMatchmakeSessionResult()
 {
-    return 0;
+    return m_sessionInfoList;
 }
 
-uint32_t LanMatchmakeSession::WaitGetStationConnectionInfo(void* a1)
+LanSessionSearchCriteria* LanMatchmakeSession::GetSessionSearchCriteriaPtr(unsigned char index)
 {
-    return 0;
-}
-
-uint64_t LanMatchmakeSession::UpdateSessionSetting(void* a1, uint32_t a2)
-{
-    return 0;
-}
-
-uint32_t LanMatchmakeSession::WaitUpdateSessionSetting()
-{
-    return 0;
-}
-
-uint64_t LanMatchmakeSession::RequestSessionInfo(uint32_t a1, uint32_t a2, int32_t a3)
-{
-    return 0;
-}
-
-uint32_t LanMatchmakeSession::WaitRequestSessionInfo()
-{
-    return 0;
-}
-
-uint64_t LanMatchmakeSession::InquiryOwnerPrincipalId(uint32_t a1, uint32_t a2, int32_t a3)
-{
-    return 0;
-}
-
-uint32_t LanMatchmakeSession::WaitInquiryOwnerPrincipalId()
-{
-    return 0;
-}
-
-uint64_t LanMatchmakeSession::CancelInquiryOwnerPrincipalId()
-{
-    return 0;
-}
-
-uint32_t LanMatchmakeSession::GetGatheringId()
-{
-    uint32_t value = 0;
-    std::memcpy(&value, m_storage + 0x1378, sizeof(value));
-    return value;
-}
-
-int32_t LanMatchmakeSession::GetSessionInfoPtr()
-{
-    return static_cast<int32_t>(reinterpret_cast<uintptr_t>(this) + 0x18);
-}
-
-int32_t LanMatchmakeSession::GetSessionInfoBufferPtr()
-{
-    return static_cast<int32_t>(reinterpret_cast<uintptr_t>(this) + 0x770);
-}
-
-uint32_t LanMatchmakeSession::GetSessionInfoListPtr()
-{
-    uint32_t value = 0;
-    std::memcpy(&value, m_storage + 0x1374, sizeof(value));
-    return value;
-}
-
-int32_t LanMatchmakeSession::GetSessionSearchCriteriaPtr(uint8_t a1)
-{
-    if (a1 >= 2)
+    if (index >= 2)
         return 0;
-    return static_cast<int32_t>(reinterpret_cast<uintptr_t>(this) + 0xec8 + a1 * 0x254);
+    return &m_searchCriteria[index];
 }
 
-void LanMatchmakeSession::ReflectSettingToMatchmakeSession(void* a1)
+void LanMatchmakeSession::ReflectSettingToMatchmakeSession(const session::CreateSessionSetting* setting)
 {
 }
 
-void LanMatchmakeSession::ReflectSettingToMatchmakeSession(const unsigned char* a1)
+void LanMatchmakeSession::ReflectSettingToMatchmakeSession(const session::JoinSessionSetting* setting)
 {
 }
 
-uint64_t LanMatchmakeSession::ReflectSettingToMatchmakeSession(const unsigned char* a1, bool a2)
+void LanMatchmakeSession::ReflectSettingToMatchmakeSession(const session::UpdateSessionSetting* setting, bool open)
 {
-    return 0;
 }
 
-uint32_t LanMatchmakeSession::RegisterSearchCriteria(void* a1, uint8_t a2)
+unsigned int LanMatchmakeSession::RegisterSearchCriteria(const session::SessionSearchCriteria* criteria, unsigned char count)
 {
-    return 0;
+    if (count > 2)
+        count = 2;
+    m_searchCriteriaCount = count;
+    const LanSessionSearchCriteria* source = static_cast<const LanSessionSearchCriteria*>(criteria);
+    for (unsigned char i = 0; i < m_searchCriteriaCount; ++i)
+        m_searchCriteria[i] = source[i];
+    return 1;
 }
 
 void LanMatchmakeSession::UnregisterSearchCriteria()
 {
+    for (unsigned int i = 0; i < 2; ++i)
+        m_searchCriteria[i].Reset();
+    m_searchCriteriaCount = 0;
 }
 
-uint64_t LanMatchmakeSession::UpdateStationInfoList()
+void LanMatchmakeSession::SetIgnoredSessionId(unsigned int sessionId)
 {
-    return 0;
+    m_ignoredSessionId = sessionId;
 }
 
-void LanMatchmakeSession::SetIgnoredSessionId(uint32_t a1)
+void LanMatchmakeSession::SetPreferredSessionId(unsigned int sessionId)
 {
-}
-
-void LanMatchmakeSession::SetPreferredSessionId(uint32_t a1)
-{
-}
-
-int32_t LanMatchmakeSession::GetSessionInfo()
-{
-    return static_cast<int32_t>(reinterpret_cast<uintptr_t>(this) + 0x13a0);
+    m_preferredSessionId = sessionId;
 }
 
 void LanMatchmakeSession::CopySessionInfo()
 {
 }
 
-uint8_t LanMatchmakeSession::IsSessionParamRegistered()
+bool LanMatchmakeSession::IsSessionParamRegistered() const
 {
-    return 0;
+    return m_sessionParamRegistered;
 }
 
-uint32_t LanMatchmakeSession::GetBrowseMatchmakeSessionResult()
+void LanMatchmakeSession::Trace(unsigned long long value) const
 {
-    return 0;
-}
-
-uint64_t LanMatchmakeSession::UpdateMatchmakeSessionHost(uint32_t a1)
-{
-    return 0;
 }
 
 }}}
