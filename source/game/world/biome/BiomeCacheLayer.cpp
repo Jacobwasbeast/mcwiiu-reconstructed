@@ -20,12 +20,12 @@ BiomeCacheLayer::BiomeCacheLayer(int seed,
     biomeCache = NULL;
     cacheLength = 0;
 
-    cacheSize = xzSize << 2;
+    cacheSize = (xzSize & 0x0fffffff) << 2;
 
     int scale = (int)pow(2.0, (double)biomeScale);
 
-    cacheX = (centreXChunk * scale * 16 >> 2) - (cacheSize >> 1);
-    cacheZ = (centreZChunk * scale * 16 >> 2) - (cacheSize >> 1);
+    cacheX = (centreXChunk * scale * 16 >> 2) - (cacheSize / 2);
+    cacheZ = (centreZChunk * scale * 16 >> 2) - (cacheSize / 2);
 }
 
 BiomeCacheLayer::~BiomeCacheLayer()
@@ -66,8 +66,16 @@ arrayWithLength<int> BiomeCacheLayer::getArea(int x, int z, int width, int heigh
     {
         for (int j = 0; j < width; j++)
         {
-            int cacheColumn = std::max(std::min(cacheSize - 1, x + j), 0);
-            int cacheRow = std::max(std::min(cacheSize - 1, z + i), 0);
+            int cacheColumn = std::min(cacheSize - 1, x + j);
+            if (cacheColumn < 0)
+            {
+                cacheColumn = 0;
+            }
+            int cacheRow = std::min(cacheSize - 1, z + i);
+            if (cacheRow < 0)
+            {
+                cacheRow = 0;
+            }
 
             area.data[j + i * width] = biomeCache[cacheColumn + cacheRow * cacheSize];
         }

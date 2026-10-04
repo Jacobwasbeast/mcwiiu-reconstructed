@@ -3,6 +3,7 @@
 
 #include "game/core/Minecraft.hpp"
 #include "game/core/Mth.hpp"
+#include "game/world/block/BlockId.hpp"
 #include "game/util/Vec3.hpp"
 #include "game/world/biome/TheEndBiomeDecorator.hpp"
 #include "game/world/block/Blocks.hpp"
@@ -19,10 +20,8 @@ TheEndBiome::TheEndBiome(EBiomeIDs biomeId, BiomeProperties* properties)
 
     mMonsters.push_back(new MobSpawnerData(10, EntityType::ENDER_MAN, 4, 4));
 
-    mTopBlock.blockId = 3;
-    mTopBlock.blockData = Blocks::dirt->convertBlockStateToLegacyData(Blocks::dirt->defaultBlockState());
-    mFillerBlock.blockId = 3;
-    mFillerBlock.blockData = Blocks::dirt->convertBlockStateToLegacyData(Blocks::dirt->defaultBlockState());
+    mTopBlock = BlockPair(BlockId::DIRT, Blocks::dirt->convertBlockStateToLegacyData(Blocks::dirt->defaultBlockState()));
+    mFillerBlock = BlockPair(BlockId::DIRT, Blocks::dirt->convertBlockStateToLegacyData(Blocks::dirt->defaultBlockState()));
 
     mDecorator = new TheEndBiomeDecorator();
 }
@@ -37,11 +36,18 @@ Vec3* TheEndBiome::getFogColor(float celestialAngle, float partialTicks) const
     unsigned int fogColour = Minecraft::GetInstance()->getColourTable()->getColour(eMinecraftColour_End_Fog_Colour);
 
     float brightness = Mth::cos(celestialAngle * 3.1415927F * 2.0F) * 2.0F + 0.5F;
-    brightness = Mth::clamp(brightness, 0.0F, 1.0F);
+    if (brightness < 0.0F)
+    {
+        brightness = 0.0F;
+    }
+    if (brightness > 1.0F)
+    {
+        brightness = 1.0F;
+    }
 
-    float red = (float)(fogColour >> 16 & 0xFF) / 255.0F;
-    float green = (float)(fogColour >> 8 & 0xFF) / 255.0F;
-    float blue = (float)(fogColour & 0xFF) / 255.0F;
+    float red = (float)(int)(fogColour >> 16 & 0xFF) / 255.0F;
+    float green = (float)(int)(fogColour >> 8 & 0xFF) / 255.0F;
+    float blue = (float)(int)(fogColour & 0xFF) / 255.0F;
     float scale = brightness * 0.0F + 0.15F;
 
     return Vec3::newTemp(red * scale, green * scale, blue * scale);

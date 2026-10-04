@@ -20,15 +20,16 @@ DesertBiome::DesertBiome(EBiomeIDs biomeId, BiomeProperties* properties)
     mWolves.clear();
     mChickens.clear();
 
-    mTopBlock.blockId = 12;
     mTopBlock.blockData = Blocks::sand->convertBlockStateToLegacyData(Blocks::sand->defaultBlockState());
-    mFillerBlock.blockId = 12;
+    mTopBlock.blockId = 12;
     mFillerBlock.blockData = Blocks::sand->convertBlockStateToLegacyData(Blocks::sand->defaultBlockState());
+    mFillerBlock.blockId = 12;
 
-    mDecorator->treesPerChunk = -999;
-    mDecorator->deadBushPerChunk = 2;
-    mDecorator->reedsPerChunk = 50;
-    mDecorator->cactiPerChunk = 10;
+    BiomeDecorator* decorator = mDecorator;
+    decorator->treesPerChunk = -999;
+    decorator->reedsPerChunk = 50;
+    decorator->cactiPerChunk = 10;
+    decorator->deadBushPerChunk = 2;
 
     for (std::vector<MobSpawnerData*>::iterator iterator = mMonsters.begin();
          iterator != mMonsters.end(); ++iterator)
@@ -57,14 +58,12 @@ void DesertBiome::decorate(Level* level, Random& random, const BlockPos& origin)
         const BlockPos position = origin.offset(x, 0, z);
         const BlockPos heightmapPosition = level->getHeightmapPos(position);
         const BlockPos wellPosition = heightmapPosition.above();
-        DesertWellFeature well;
-        well.place(level, random, wellPosition);
+        DesertWellFeature().place(level, random, wellPosition);
     }
 
     if (random.nextInt(64) == 0)
     {
-        FossilFeature fossil;
-        fossil.place(level, random, origin);
+        FossilFeature().place(level, random, origin);
     }
 }
 

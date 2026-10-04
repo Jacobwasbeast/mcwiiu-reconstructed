@@ -53,12 +53,11 @@ bool BiomeEdgeLayer::checkEdge(arrayWithLength<int> parentArea,
 
     int parentWidth = width + 2;
     int row = x + (z + 1) * parentWidth;
-    int north = parentArea.data[x + z * parentWidth + 1];
+    int west = parentArea.data[row];
     int south = parentArea.data[x + (z + 2) * parentWidth + 1];
     int east = parentArea.data[row + 2];
-    int west = parentArea.data[row];
 
-    if (isValidTemperatureEdge(north, edge)
+    if (isValidTemperatureEdge(parentArea.data[x + z * parentWidth + 1], edge)
         && isValidTemperatureEdge(east, edge)
         && isValidTemperatureEdge(west, edge)
         && isValidTemperatureEdge(south, edge))
@@ -82,31 +81,30 @@ bool BiomeEdgeLayer::checkEdgeStrict(arrayWithLength<int> parentArea,
                                      int edge,
                                      int replacement)
 {
-    if (centre != edge)
+    if (centre == edge)
     {
-        return false;
+        int parentWidth = width + 2;
+        int row = x + (z + 1) * parentWidth;
+        int west = parentArea.data[row];
+        int east = parentArea.data[row + 2];
+        int south = parentArea.data[x + (z + 2) * parentWidth + 1];
+
+        if (Layer::isSame(parentArea.data[x + z * parentWidth + 1], edge)
+            && Layer::isSame(east, edge)
+            && Layer::isSame(west, edge)
+            && Layer::isSame(south, edge))
+        {
+            area.data[x + z * width] = centre;
+        }
+        else
+        {
+            area.data[x + z * width] = replacement;
+        }
+
+        return true;
     }
 
-    int parentWidth = width + 2;
-    int row = x + (z + 1) * parentWidth;
-    int north = parentArea.data[x + z * parentWidth + 1];
-    int south = parentArea.data[x + (z + 2) * parentWidth + 1];
-    int east = parentArea.data[row + 2];
-    int west = parentArea.data[row];
-
-    if (Layer::isSame(north, edge)
-        && Layer::isSame(east, edge)
-        && Layer::isSame(west, edge)
-        && Layer::isSame(south, edge))
-    {
-        area.data[x + z * width] = centre;
-    }
-    else
-    {
-        area.data[x + z * width] = replacement;
-    }
-
-    return true;
+    return false;
 }
 
 arrayWithLength<int> BiomeEdgeLayer::getArea(int x, int z, int width, int height)

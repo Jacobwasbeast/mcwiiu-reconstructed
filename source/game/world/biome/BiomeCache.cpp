@@ -1,3 +1,4 @@
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/world/biome/BiomeCache.hpp"
 
 #include "game/core/CMinecraftApp.hpp"
@@ -6,8 +7,9 @@
 #include "game/core/MemSect.hpp"
 
 BiomeCache::BiomeCache(BiomeSource* biomeSource)
-    : mBiomeSource(biomeSource), mLastUpdate(0)
 {
+    mLastUpdate = 0;
+    mBiomeSource = biomeSource;
     InitializeCriticalSection(&mCriticalSection);
 }
 
@@ -44,7 +46,7 @@ BiomeCache::Area* BiomeCache::getBlockAt(int x, int z)
         area = found->second;
     }
 
-    area->mLastUpdate = static_cast<long long>(g_pApp->getAppTime());
+    area->mLastUpdate = static_cast<long long>(gApp.getAppTime());
     LeaveCriticalSection(&mCriticalSection);
     return area;
 }
@@ -52,15 +54,19 @@ BiomeCache::Area* BiomeCache::getBlockAt(int x, int z)
 Biome* BiomeCache::getBiome(int x, int z, Biome* fallback)
 {
     Biome* biome = getBlockAt(x, z)->getBiome(x, z);
-    return biome == NULL ? fallback : biome;
+    if (biome == NULL)
+    {
+        return fallback;
+    }
+    return biome;
 }
 
 void BiomeCache::update()
 {
     EnterCriticalSection(&mCriticalSection);
 
-    long long now = static_cast<long long>(g_pApp->getAppTime());
-    if (now - mLastUpdate >= 7500)
+    long long now = static_cast<long long>(gApp.getAppTime());
+    if ((unsigned long long)(now - mLastUpdate) > 7500)
     {
         mLastUpdate = now;
 
@@ -68,7 +74,7 @@ void BiomeCache::update()
         while (it != mAreaList.end())
         {
             Area* area = *it;
-            if (now - area->mLastUpdate >= 30000)
+            if ((unsigned long long)(now - area->mLastUpdate) > 30000)
             {
                 long long key = (static_cast<long long>(area->mZ) << 32) |
                                 static_cast<unsigned int>(area->mX);
@@ -89,11 +95,13 @@ void BiomeCache::update()
 arrayWithLength<Biome*> BiomeCache::getBiomeBlockAt(int x, int z)
 {
     Area* area = getBlockAt(x, z);
-    arrayWithLength<Biome*> result(area->mBiomeIndices.length, true);
+    unsigned char* indices = area->mBiomeIndices.data;
+    unsigned int count = area->mBiomeIndices.length;
+    arrayWithLength<Biome*> result(count, true);
 
-    for (unsigned int i = 0; i < area->mBiomeIndices.length; ++i)
+    for (unsigned int i = 0; i < count; ++i)
     {
-        result.data[i] = Biome::getBiome(area->mBiomeIndices.data[i], Biome::DEFAULT);
+        result.data[i] = Biome::getBiome(indices[i], Biome::DEFAULT);
     }
 
     return result;
@@ -109,10 +117,12 @@ arrayWithLength<unsigned char> BiomeCache::getBiomeIndexBlockAt(int x, int z)
 }
 
 BiomeCache::Area::Area(int x, int z, BiomeCache* biomeCache)
-    : mBiomeIndices(), mX(x), mZ(z), mLastUpdate(0)
 {
     mBiomeIndices.data = new unsigned char[256];
+    mLastUpdate = 0;
     mBiomeIndices.length = 256;
+    mX = x;
+    mZ = z;
     biomeCache->mBiomeSource->getBiomeIndexBlock(mBiomeIndices, x << 4, z << 4, 16, 16, false);
 }
 
@@ -123,5 +133,5 @@ BiomeCache::Area::~Area()
 
 Biome* BiomeCache::Area::getBiome(int x, int z)
 {
-    return Biome::getBiome(mBiomeIndices.data[((z & 15) << 4) | (x & 15)], Biome::DEFAULT);
+    return Biome::byId(mBiomeIndices.data[((z & 15) << 4) | (x & 15)]);
 }

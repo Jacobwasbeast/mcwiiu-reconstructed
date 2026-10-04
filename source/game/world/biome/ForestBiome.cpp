@@ -78,19 +78,19 @@ void ForestBiome::addMushrooms(Level* level, Random& random, const BlockPos& pos
             const int x = row * 4 + 9 + random.nextInt(3);
             const int z = column * 4 + 9 + random.nextInt(3);
             BlockPos origin = pos.offset(x, 0, z);
-            origin = level->getHeightmapPos(origin);
+            BlockPos top = level->getHeightmapPos(origin);
             if (random.nextInt(20) == 0)
             {
                 HugeMushroomFeature* mushroom = new HugeMushroomFeature();
-                mushroom->place(level, random, origin);
+                mushroom->place(level, random, top);
                 delete mushroom;
             }
             else
             {
                 AbstractTreeFeature* tree = getTreeFeature(random);
                 tree->init();
-                if (tree->place(level, random, origin))
-                    tree->postPlaceTree(level, random, origin);
+                if (tree->place(level, random, top))
+                    tree->postPlaceTree(level, random, top);
                 delete tree;
             }
         }
@@ -113,9 +113,7 @@ void ForestBiome::addDoublePlants(Level* level, Random& random, const BlockPos& 
         {
             int x = random.nextInt(16);
             int z = random.nextInt(16);
-            BlockPos candidate = pos.offset(x + 8, 0, z + 8);
-            BlockPos heightmap = level->getHeightmapPos(candidate);
-            int y = random.nextInt(heightmap.y + 32);
+            int y = random.nextInt(level->getHeightmapPos(pos.offset(x + 8, 0, z + 8)).y + 32);
             if (DOUBLE_PLANT_FEATURE->place(level, random, BlockPos(pos.x + x + 8, y, pos.z + z + 8)))
                 break;
         }

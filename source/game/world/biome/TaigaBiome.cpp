@@ -84,8 +84,7 @@ void TaigaBiome::decorate(Level* level, Random& random, const BlockPos& pos)
             int x = random.nextInt(16) + 8;
             int z = random.nextInt(16) + 8;
             BlockPos blobPos = level->getHeightmapPos(pos.offset(x, 0, z));
-            BlockBlobFeature blob(Blocks::mossy_cobblestone, 0);
-            blob.place(level, random, blobPos);
+            BlockBlobFeature(Blocks::mossy_cobblestone, 0).place(level, random, blobPos);
         }
     }
 
@@ -114,18 +113,13 @@ void TaigaBiome::buildSurfaceAt(Level* level, Random& random, ChunkPrimer* prime
 
         if (noise > 1.75)
         {
-            TypedBoxed<DirtBlock::Variant*> variant(DirtBlock::Variant::COARSE_DIRT);
-            const BlockState* coarseDirt =
-                Blocks::dirt->defaultBlockState()->setBoxedValue(DirtBlock::VARIANT, &variant);
-            mTopBlock.blockId = 3;
-            mTopBlock.blockData = Blocks::dirt->convertBlockStateToLegacyData(coarseDirt);
+            mTopBlock = BlockPair(3, Blocks::dirt->convertBlockStateToLegacyData(
+                Blocks::dirt->defaultBlockState()->setValue(DirtBlock::VARIANT, DirtBlock::Variant::COARSE_DIRT)));
         }
         else if (noise > -0.95)
         {
-            TypedBoxed<DirtBlock::Variant*> variant(DirtBlock::Variant::PODZOL);
-            const BlockState* podzol =
-                Blocks::dirt->defaultBlockState()->setBoxedValue(DirtBlock::VARIANT, &variant);
-            mTopBlock.blockData = Blocks::dirt->convertBlockStateToLegacyData(podzol);
+            mTopBlock.blockData = Blocks::dirt->convertBlockStateToLegacyData(
+                Blocks::dirt->defaultBlockState()->setValue(DirtBlock::VARIANT, DirtBlock::Variant::PODZOL));
             mTopBlock.blockId = 3;
         }
     }

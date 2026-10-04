@@ -13,23 +13,22 @@
 
 IceBiome::IceBiome(EBiomeIDs biomeId, bool hasIceSpikes, BiomeProperties* properties)
     : Biome(biomeId, eBiomeType_Ice, properties),
-      mIceSpikeFeature(new IceSpikeFeature),
+      mIceSpikeFeature(new IceSpikeFeature()),
       mIcePatchFeature(new IcePatchFeature(4))
 {
     mHasIceSpikes = hasIceSpikes;
 
     if (hasIceSpikes)
     {
-        mTopBlock.blockId = 80;
         mTopBlock.blockData = Blocks::snow->convertBlockStateToLegacyData(Blocks::snow->defaultBlockState());
+        mTopBlock.blockId = 80;
     }
 
     mCreatures.clear();
     mCreatures.push_back(new MobSpawnerData(10, EntityType::RABBIT, 2, 3));
     mCreatures.push_back(new MobSpawnerData(1, EntityType::POLAR_BEAR, 1, 2));
 
-    std::vector<MobSpawnerData*>::iterator monster = mMonsters.begin();
-    while (monster != mMonsters.end())
+    for (std::vector<MobSpawnerData*>::iterator monster = mMonsters.begin(); monster != mMonsters.end();)
     {
         if ((*monster)->mEntityBaseClass == EntityType::SKELETON)
         {

@@ -28,15 +28,13 @@ void MutatedSavannaBiome::buildSurfaceAt(Level* level, Random& random, ChunkPrim
 
     if (noise > 1.75)
     {
-        mTopBlock = BlockPair(1, 0);
-        mFillerBlock = BlockPair(1, 0);
+        mTopBlock = STONE_BLOCK;
+        mFillerBlock = STONE_BLOCK;
     }
     else if (noise > -0.5)
     {
-        TypedBoxed<DirtBlock::Variant*> variant(DirtBlock::Variant::COARSE_DIRT);
-        const BlockState* coarseDirt =
-            Blocks::dirt->defaultBlockState()->setBoxedValue(DirtBlock::VARIANT, &variant);
-        mTopBlock.blockData = Blocks::dirt->convertBlockStateToLegacyData(coarseDirt);
+        mTopBlock.blockData = Blocks::dirt->convertBlockStateToLegacyData(
+            Blocks::dirt->defaultBlockState()->setValue(DirtBlock::VARIANT, DirtBlock::Variant::COARSE_DIRT));
         mTopBlock.blockId = 3;
     }
 

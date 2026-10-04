@@ -16,12 +16,21 @@ OceanColdBiome::OceanColdBiome(EBiomeIDs biomeId, bool deep, BiomeProperties* pr
     mMonsters.push_back(new MobSpawnerData(10, EntityType::DROWNED, 2, 4));
 
     mOceanRuinConfig.biomeType = OceanRuin::eRuinType_Cold;
-    mOceanRuinConfig.smallProbability = mDeep ? 0.5F : 0.3F;
-    mOceanRuinConfig.clusterProbability = mDeep ? 0.95F : 0.9F;
     mOceanRuinConfig.enabled = true;
 
     mDecorator->kelpPerChunk = 20;
     mDecorator->seagrassPerChunk = 12;
+
+    if (mDeep)
+    {
+        mOceanRuinConfig.smallProbability = 0.5F;
+        mOceanRuinConfig.clusterProbability = 0.95F;
+    }
+    else
+    {
+        mOceanRuinConfig.smallProbability = 0.3F;
+        mOceanRuinConfig.clusterProbability = 0.9F;
+    }
 }
 
 float OceanColdBiome::getCreatureProbability()

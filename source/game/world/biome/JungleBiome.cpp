@@ -43,21 +43,13 @@ JungleBiome::JungleBiome(EBiomeIDs biomeId, bool isEdge, BiomeProperties* proper
 
 void JungleBiome::staticCtor()
 {
-    TypedBoxed<PlanksBlock::Variant*> trunkVariant(PlanksBlock::Variant::JUNGLE);
-    sJungleTrunkState =
-        Blocks::log->defaultBlockState()->setBoxedValue(OldLogBlock::VARIANT, &trunkVariant);
-
-    TypedBoxed<PlanksBlock::Variant*> jungleLeafVariant(PlanksBlock::Variant::JUNGLE);
-    TypedBoxed<bool> jungleLeafDecayable(false);
+    sJungleTrunkState = Blocks::log->defaultBlockState()->setValue(OldLogBlock::VARIANT, PlanksBlock::Variant::JUNGLE);
     sJungleLeafState = Blocks::leaves->defaultBlockState()
-                           ->setBoxedValue(OldLeafBlock::VARIANT, &jungleLeafVariant)
-                           ->setBoxedValue(LeafBlock::DECAYABLE, &jungleLeafDecayable);
-
-    TypedBoxed<PlanksBlock::Variant*> oakLeafVariant(PlanksBlock::Variant::OAK);
-    TypedBoxed<bool> oakLeafDecayable(false);
+                           ->setValue(OldLeafBlock::VARIANT, PlanksBlock::Variant::JUNGLE)
+                           ->setValue(LeafBlock::DECAYABLE, false);
     sOakLeafState = Blocks::leaves->defaultBlockState()
-                        ->setBoxedValue(OldLeafBlock::VARIANT, &oakLeafVariant)
-                        ->setBoxedValue(LeafBlock::DECAYABLE, &oakLeafDecayable);
+                        ->setValue(OldLeafBlock::VARIANT, PlanksBlock::Variant::OAK)
+                        ->setValue(LeafBlock::DECAYABLE, false);
 }
 
 AbstractTreeFeature* JungleBiome::getTreeFeature(Random& random)
@@ -95,12 +87,14 @@ void JungleBiome::decorate(Level* level, Random& random, const BlockPos& pos)
 {
     Biome::decorate(level, random, pos);
 
-    int x = random.nextInt(16) + 8;
-    int z = random.nextInt(16) + 8;
-    int melonRange = level->getHeightmapPos(pos.offset(x, 0, z)).y * 2;
-    int y = melonRange > 0 ? random.nextInt(melonRange) : 0;
-    MelonFeature melon;
-    melon.place(level, random, pos.offset(x, y, z));
+    {
+        int x = random.nextInt(16) + 8;
+        int z = random.nextInt(16) + 8;
+        int melonRange = level->getHeightmapPos(pos.offset(x, 0, z)).y * 2;
+        int y = melonRange > 0 ? random.nextInt(melonRange) : 0;
+        MelonFeature melon;
+        melon.place(level, random, pos.offset(x, y, z));
+    }
 
     PIXBeginNamedEvent(0.0F, "Adding vines");
     VinesFeature vines;

@@ -31,9 +31,9 @@ void FixedBiomeSource::getBiomeBlock(arrayWithLength<Biome*>& biomes,
     biomes.resize(count);
     MemSect(0);
 
-    for (int i = 0; i < count; i++)
+    for (Biome** it = biomes.data; it != biomes.data + count; it++)
     {
-        biomes.data[i] = mBiome;
+        *it = mBiome;
     }
 }
 
@@ -50,9 +50,12 @@ void FixedBiomeSource::getBiomeIndexBlock(arrayWithLength<unsigned char>& biomeI
     biomeIndices.resize(count);
     MemSect(0);
 
-    for (int i = 0; i < count; i++)
+    unsigned char* it = biomeIndices.data;
+    unsigned char* end = it + count;
+
+    for (; it != end; it++)
     {
-        biomeIndices.data[i] = (unsigned char)mBiome->id;
+        *it = (unsigned char)mBiome->id;
     }
 }
 
@@ -68,9 +71,9 @@ void FixedBiomeSource::getRawBiomeBlock(arrayWithLength<Biome*>& biomes,
     biomes.resize(count);
     MemSect(0);
 
-    for (int i = 0; i < count; i++)
+    for (Biome** it = biomes.data; it != biomes.data + count; it++)
     {
-        biomes.data[i] = mBiome;
+        *it = mBiome;
     }
 }
 
@@ -80,15 +83,17 @@ BlockPos* FixedBiomeSource::findBiome(int x,
                                       std::vector<Biome*> biomes,
                                       Random* random)
 {
-    if (std::find(biomes.begin(), biomes.end(), mBiome) == biomes.end())
+    BlockPos* result = NULL;
+
+    if (std::find(biomes.begin(), biomes.end(), mBiome) != biomes.end())
     {
-        return NULL;
+        int offsetX = random->nextInt(radius * 2 + 1);
+        int offsetZ = random->nextInt(radius * 2 + 1);
+
+        result = new BlockPos((x - radius) + offsetX, 0, (z - radius) + offsetZ);
     }
 
-    int offsetX = random->nextInt(radius * 2 + 1);
-    int offsetZ = random->nextInt(radius * 2 + 1);
-
-    return new BlockPos((x - radius) + offsetX, 0, (z - radius) + offsetZ);
+    return result;
 }
 
 bool FixedBiomeSource::containsOnly(int x,

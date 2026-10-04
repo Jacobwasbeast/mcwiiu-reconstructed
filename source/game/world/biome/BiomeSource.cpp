@@ -191,9 +191,9 @@ void BiomeSource::getFracs(arrayWithLength<int> biomeIndices, float* biomeFracs,
         groupFracs[i] = 0.0f;
     }
 
-    for (i = 0; i < (int)biomeIndices.length; i++)
+    for (unsigned int index = 0; index < biomeIndices.length; index++)
     {
-        int biomeId = biomeIndices.data[i];
+        int biomeId = biomeIndices.data[index];
 
         biomeFracs[biomeId] += 1.0f;
         groupFracs[getBiomeGroup(biomeId)] += 1.0f;
@@ -281,10 +281,12 @@ long long BiomeSource::findSeed(LevelType* levelType)
             float biomeFracs[NUM_BIOMES];
             float groupFracs[NUM_BIOME_GROUPS];
 
-            BiomeSource biomeSource(seed, levelType, NULL, NULL);
-            biomeSource.getRawBiomeIndices(biomeIndices, -100, -100, 200, 200);
+            {
+                BiomeSource biomeSource(seed, levelType, NULL, NULL);
+                biomeSource.getRawBiomeIndices(biomeIndices, -100, -100, 200, 200);
 
-            matched = getIsMatch(biomeIndices, biomeFracs, groupFracs);
+                matched = getIsMatch(biomeIndices, biomeFracs, groupFracs);
+            }
 
             if (matched)
             {
@@ -666,10 +668,11 @@ void BiomeSource::LayerOverrideSettings::SetSeed(const std::wstring& seedText)
     }
 
     std::wstring seed = seedText;
-    bool isNumber = true;
+    unsigned int length = seed.length();
+    bool isNumber = length != 0;
     unsigned int i;
 
-    for (i = 0; i < seed.length(); i++)
+    for (i = 0; i < length; i++)
     {
         if ((seed.at(i) < L'0' || seed.at(i) > L'9') && (i != 0 || seed.at(0) != L'-'))
         {
@@ -686,7 +689,7 @@ void BiomeSource::LayerOverrideSettings::SetSeed(const std::wstring& seedText)
     {
         int hash = 0;
 
-        for (i = 0; i < seed.length(); i++)
+        for (i = 0; i < length; i++)
         {
             hash = hash * 31 + seed.at(i);
         }
@@ -1073,6 +1076,7 @@ void BiomeSource::LayerOverrideSettings::SetZoomedDisplay(int x, int z)
     mZoomedCentreZ = (z * zoomScale) / mHalfImageWidth;
 
     int deltaX = 0;
+    int deltaZ = 0;
 
     while (!CheckWithinBounds(mZoomedCentreX, deltaX))
     {
@@ -1085,8 +1089,6 @@ void BiomeSource::LayerOverrideSettings::SetZoomedDisplay(int x, int z)
             deltaX--;
         }
     }
-
-    int deltaZ = 0;
 
     while (!CheckWithinBounds(mZoomedCentreZ, deltaZ))
     {
@@ -1214,9 +1216,12 @@ int BiomeSource::LayerOverrideSettings::GetZoomedCentreZPercent()
 
 void BiomeSource::LayerOverrideSettings::NullBiomeSection(int x, int width, int z, int height)
 {
-    for (int row = z; row < z + height; row++)
+    size_t byteCount = width * sizeof(Biome*);
+    int endRow = z + height;
+
+    for (int row = z; row < endRow; row++)
     {
-        memset(mBiomes.data + (x + row * mImageWidth), 0, width * sizeof(Biome*));
+        memset(mBiomes.data + (x + row * mImageWidth), 0, byteCount);
     }
 }
 
@@ -1387,7 +1392,9 @@ bool BiomeSource::LayerOverrideSettings::RegenerateNearestBiomeSection(int& sect
     int section = 1;
     int direction = -1;
 
-    for (int ring = 1; ring <= mBiomeSectionCount; ring++)
+    int ring = 1;
+
+    while (ring <= mBiomeSectionCount)
     {
         for (int axis = 0; axis < 2; axis++)
         {
@@ -1453,7 +1460,11 @@ bool BiomeSource::LayerOverrideSettings::RegenerateNearestBiomeSection(int& sect
                 section++;
             }
 
-            if (axis == 0)
+            if (axis == 1)
+            {
+                ring++;
+            }
+            else
             {
                 direction = -direction;
             }

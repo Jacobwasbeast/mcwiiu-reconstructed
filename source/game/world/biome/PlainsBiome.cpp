@@ -28,33 +28,37 @@ FlowerBlock::Flower* PlainsBiome::getRandomFlower(Random& random, const BlockPos
     const double temperature = BIOME_INFO_NOISE->getValue(pos.x / 200.0, pos.z / 200.0);
     if (temperature >= -0.8)
     {
-        if (random.nextInt(3) == 0)
+        if (random.nextInt(3) <= 0)
         {
             return FlowerBlock::Flower::DANDELION;
         }
 
-        switch (random.nextInt(3))
+        const int flower = random.nextInt(3);
+        if (flower == 0)
         {
-        case 0:
             return FlowerBlock::Flower::POPPY;
-        case 1:
-            return FlowerBlock::Flower::HOUSTONIA;
-        default:
-            return FlowerBlock::Flower::OXEYE_DAISY;
         }
+        if (flower == 1)
+        {
+            return FlowerBlock::Flower::HOUSTONIA;
+        }
+        return FlowerBlock::Flower::OXEYE_DAISY;
     }
 
-    switch (random.nextInt(4))
+    const int tulip = random.nextInt(4);
+    if (tulip == 0)
     {
-    case 0:
         return FlowerBlock::Flower::ORANGE_TULIP;
-    case 1:
-        return FlowerBlock::Flower::RED_TULIP;
-    case 2:
-        return FlowerBlock::Flower::PINK_TULIP;
-    default:
-        return FlowerBlock::Flower::WHITE_TULIP;
     }
+    if (tulip == 1)
+    {
+        return FlowerBlock::Flower::RED_TULIP;
+    }
+    if (tulip == 2)
+    {
+        return FlowerBlock::Flower::PINK_TULIP;
+    }
+    return FlowerBlock::Flower::WHITE_TULIP;
 }
 
 AbstractTreeFeature* PlainsBiome::getTreeFeature(Random& random)
@@ -82,9 +86,9 @@ void PlainsBiome::decorate(Level* level, Random& random, const BlockPos& pos)
             const int x = random.nextInt(16);
             const int z = random.nextInt(16);
             BlockPos plantPos = pos.offset(x + 8, 0, z + 8);
-            plantPos = level->getHeightmapPos(plantPos);
-            const int y = random.nextInt(plantPos.y + 32);
-            DOUBLE_PLANT_FEATURE->place(level, random, pos.offset(x + 8, y, z + 8));
+            const BlockPos heightPos = level->getHeightmapPos(plantPos);
+            const int y = random.nextInt(heightPos.y + 32);
+            DOUBLE_PLANT_FEATURE->place(level, random, plantPos = pos.offset(x + 8, y, z + 8));
         }
     }
     else
@@ -101,9 +105,9 @@ void PlainsBiome::decorate(Level* level, Random& random, const BlockPos& pos)
             const int x = random.nextInt(16);
             const int z = random.nextInt(16);
             BlockPos plantPos = pos.offset(x + 8, 0, z + 8);
-            plantPos = level->getHeightmapPos(plantPos);
-            const int y = random.nextInt(plantPos.y + 32);
-            DOUBLE_PLANT_FEATURE->place(level, random, pos.offset(x + 8, y, z + 8));
+            const BlockPos heightPos = level->getHeightmapPos(plantPos);
+            const int y = random.nextInt(heightPos.y + 32);
+            DOUBLE_PLANT_FEATURE->place(level, random, plantPos = pos.offset(x + 8, y, z + 8));
         }
     }
 

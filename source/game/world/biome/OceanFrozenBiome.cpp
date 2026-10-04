@@ -24,12 +24,12 @@ static const int SNOW_BLOCK_ID = 80;
 OceanFrozenBiome::OceanFrozenBiome(EBiomeIDs id, bool deep, BiomeProperties* properties)
     : Biome(id, eBiomeType_Ocean, properties),
       mDeep(deep),
-      mSeed(0),
-      mRandom(NULL),
-      mIcebergsNoise(NULL),
-      mIcebergsNoise2(NULL),
       mIcebergNoise(new PerlinSimplexNoise(3456LL, 3))
 {
+    mSeed = 0;
+    mRandom = NULL;
+    mIcebergsNoise = NULL;
+    mIcebergsNoise2 = NULL;
     clearDefaultFriendlies();
 
     mWaterCreatures.push_back(new MobSpawnerData(26, EntityType::SALMON, 3, 5));
@@ -42,12 +42,21 @@ OceanFrozenBiome::OceanFrozenBiome(EBiomeIDs id, bool deep, BiomeProperties* pro
     clearDefaultFriendlies();
 
     mOceanRuinConfig.biomeType = OceanRuin::eRuinType_Cold;
-    mOceanRuinConfig.smallProbability = mDeep ? 0.5F : 0.3F;
-    mOceanRuinConfig.clusterProbability = mDeep ? 0.95F : 0.9F;
     mOceanRuinConfig.enabled = true;
 
     mDecorator->kelpPerChunk = 20;
     mDecorator->seagrassPerChunk = 12;
+
+    if (mDeep)
+    {
+        mOceanRuinConfig.smallProbability = 0.5F;
+        mOceanRuinConfig.clusterProbability = 0.95F;
+    }
+    else
+    {
+        mOceanRuinConfig.smallProbability = 0.3F;
+        mOceanRuinConfig.clusterProbability = 0.9F;
+    }
 }
 
 float OceanFrozenBiome::getCreatureProbability()
@@ -96,7 +105,7 @@ void OceanFrozenBiome::buildSurfaceAt(Level* level, Random& random, ChunkPrimer*
     float temperature = getTemperature(BlockPos(x, seaLevel, z));
 
     double height = mIcebergsNoise->getValue((double)x * 0.1, (double)z * 0.1);
-    if (fabs(noise) < height)
+    if (fabs(noise) - height < 0.0)
     {
         height = fabs(noise);
     }
@@ -131,7 +140,7 @@ void OceanFrozenBiome::buildSurfaceAt(Level* level, Random& random, ChunkPrimer*
     int packedIceData =
         Blocks::packed_ice->convertBlockStateToLegacyData(Blocks::packed_ice->defaultBlockState());
     int snowData = Blocks::snow->convertBlockStateToLegacyData(Blocks::snow->defaultBlockState());
-    int column = (z & 15) << 7 | (x & 15) << 11;
+    int column = (x & 15) << 11 | (z & 15) << 7;
 
     for (int y = 127; y >= 0; --y)
     {

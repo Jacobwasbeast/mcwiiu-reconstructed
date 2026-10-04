@@ -41,7 +41,7 @@ void TheEndBiomeDecorator::decorate(Biome* biome, Level* level, Random* random)
 {
     decorateOres(level, random);
 
-    for (int i = 0; i < 8; ++i)
+    for (unsigned int i = 0; i < 8; ++i)
     {
         if (position.x == spikeData[i].posX && position.z == spikeData[i].posZ)
         {
@@ -72,7 +72,7 @@ arrayWithLength<SpikeFeature::EndSpike> TheEndBiomeDecorator::getSpikesForLevel(
     (void)level;
 
     arrayWithLength<SpikeFeature::EndSpike> spikes(8, true);
-    for (int i = 0; i < 8; ++i)
+    for (unsigned int i = 0; i < spikes.length; ++i)
     {
         SpikeFeature::EndSpike spike(spikeData[i].centerX, spikeData[i].centerZ,
                                      spikeData[i].radius,

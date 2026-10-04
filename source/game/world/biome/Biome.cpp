@@ -239,20 +239,8 @@ Biome::MobSpawnerData::~MobSpawnerData()
 }
 
 Biome::Biome(EBiomeIDs biomeId, BiomeType biomeType, BiomeProperties* properties)
-    : mOceanRuinConfig()
+    : mTopBlock(), mFillerBlock(), id(biomeId), mPreviewColour(eMinecraftColour_Preview_Plains), mOceanRuinConfig(), mBiomeType(biomeType), mFloorBlock()
 {
-    id = biomeId;
-
-    mTopBlock.blockId = 0;
-    mTopBlock.blockData = 0;
-    mFillerBlock.blockId = 0;
-    mFillerBlock.blockData = 0;
-
-    mPreviewColour = eMinecraftColour_Preview_Plains;
-    mBiomeType = biomeType;
-    mFloorBlock.blockId = 0;
-    mFloorBlock.blockData = 0;
-
     mTopBlock.blockId = Block::getId(Blocks::grass);
     mTopBlock.blockData = Blocks::grass->convertBlockStateToLegacyData(Blocks::grass->defaultBlockState());
     mFillerBlock.blockId = Block::getId(Blocks::dirt);
@@ -1370,7 +1358,10 @@ float Biome::getFogDistance()
 Vec3* Biome::getFogColor(float celestialAngle, float partialTicks) const
 {
     float brightness = Mth::cos(celestialAngle * 3.1415927F * 2.0F) * 2.0F + 0.5F;
-    brightness = Mth::clamp(brightness, 0.0F, 1.0F);
+    if (brightness < 0.0F)
+        brightness = 0.0F;
+    else if (brightness > 1.0F)
+        brightness = 1.0F;
 
     unsigned int fogColour = Minecraft::GetInstance()->getColourTable()->getColour(eMinecraftColour_Default_Fog_Colour);
 

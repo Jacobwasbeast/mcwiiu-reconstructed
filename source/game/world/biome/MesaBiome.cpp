@@ -22,12 +22,13 @@
 #include "game/core/PIXNamedEvents.hpp"
 #include <cmath>
 
-static Biome::BlockPair sCoarseDirt(3, 1);
-static Biome::BlockPair sGrass(2, 0);
-static Biome::BlockPair sClay(172, 0);
-static Biome::BlockPair sStainedClay(159, 0);
-static Biome::BlockPair sOrange(159, 1);
-static Biome::BlockPair sRedSand(12, 1);
+static Biome::BlockPair sCoarseDirt(BlockId::DIRT, 1);
+static Biome::BlockPair sGrass(BlockId::GRASS, 0);
+static Biome::BlockPair sClay(BlockId::HARDENED_CLAY, 0);
+static Biome::BlockPair sStainedClay(BlockId::STAINED_HARDENED_CLAY, 0);
+static Biome::BlockPair sOrange(BlockId::STAINED_HARDENED_CLAY, 1);
+static Biome::BlockPair sRedSand(BlockId::SAND, 1);
+static const Biome::BlockPair BEDROCK_BLOCK(BlockId::BEDROCK, 0);
 
 MesaBiome::MesaBiome(EBiomeIDs id, bool brycePillars, bool hasForest, BiomeProperties* properties)
     : Biome(id, eBiomeType_Mesa, properties), mClayBands(NULL), mSeed(0),
@@ -57,19 +58,16 @@ MesaBiome::~MesaBiome()
 
 void MesaBiome::staticCtor()
 {
-    TypedBoxed<DirtBlock::Variant*> coarseDirt(DirtBlock::Variant::COARSE_DIRT);
-    sCoarseDirt = BlockPair(3, Blocks::dirt->convertBlockStateToLegacyData(
-        Blocks::dirt->defaultBlockState()->setBoxedValue(DirtBlock::VARIANT, &coarseDirt)));
-    sGrass = BlockPair(2, Blocks::grass->convertBlockStateToLegacyData(Blocks::grass->defaultBlockState()));
-    sClay = BlockPair(172, Blocks::hardened_clay->convertBlockStateToLegacyData(Blocks::hardened_clay->defaultBlockState()));
-    sStainedClay = BlockPair(159, Blocks::stained_hardened_clay->convertBlockStateToLegacyData(
+    sCoarseDirt = BlockPair(BlockId::DIRT, Blocks::dirt->convertBlockStateToLegacyData(
+        Blocks::dirt->defaultBlockState()->setValue(DirtBlock::VARIANT, DirtBlock::Variant::COARSE_DIRT)));
+    sGrass = BlockPair(BlockId::GRASS, Blocks::grass->convertBlockStateToLegacyData(Blocks::grass->defaultBlockState()));
+    sClay = BlockPair(BlockId::HARDENED_CLAY, Blocks::hardened_clay->convertBlockStateToLegacyData(Blocks::hardened_clay->defaultBlockState()));
+    sStainedClay = BlockPair(BlockId::STAINED_HARDENED_CLAY, Blocks::stained_hardened_clay->convertBlockStateToLegacyData(
         Blocks::stained_hardened_clay->defaultBlockState()));
-    TypedBoxed<const DyeColor*> orange(DyeColor::ORANGE);
-    sOrange = BlockPair(159, Blocks::stained_hardened_clay->convertBlockStateToLegacyData(
-        Blocks::stained_hardened_clay->defaultBlockState()->setBoxedValue(ColoredBlock::COLOR, &orange)));
-    TypedBoxed<SandBlock::Variant*> redSand(SandBlock::Variant::RED_SAND);
-    sRedSand = BlockPair(12, Blocks::sand->convertBlockStateToLegacyData(
-        Blocks::sand->defaultBlockState()->setBoxedValue(SandBlock::TYPE, &redSand)));
+    sOrange = BlockPair(BlockId::STAINED_HARDENED_CLAY, Blocks::stained_hardened_clay->convertBlockStateToLegacyData(
+        Blocks::stained_hardened_clay->defaultBlockState()->setValue(ColoredBlock::COLOR, DyeColor::ORANGE)));
+    sRedSand = BlockPair(BlockId::SAND, Blocks::sand->convertBlockStateToLegacyData(
+        Blocks::sand->defaultBlockState()->setValue(SandBlock::TYPE, SandBlock::Variant::RED_SAND)));
 }
 
 AbstractTreeFeature* MesaBiome::getTreeFeature(Random& random)
@@ -115,9 +113,8 @@ void MesaBiome::generateBands(long long seed)
         }
     }
 
-    TypedBoxed<const DyeColor*> yellow(DyeColor::YELLOW);
-    BlockPair yellowBand(159, Blocks::stained_hardened_clay->convertBlockStateToLegacyData(
-        Blocks::stained_hardened_clay->defaultBlockState()->setBoxedValue(ColoredBlock::COLOR, &yellow)));
+    BlockPair yellowBand(BlockId::STAINED_HARDENED_CLAY, Blocks::stained_hardened_clay->convertBlockStateToLegacyData(
+        Blocks::stained_hardened_clay->defaultBlockState()->setValue(ColoredBlock::COLOR, DyeColor::YELLOW)));
     int yellowCount = random.nextInt(4) + 2;
     for (int i = 0; i < yellowCount; ++i)
     {
@@ -129,9 +126,8 @@ void MesaBiome::generateBands(long long seed)
         }
     }
 
-    TypedBoxed<const DyeColor*> brown(DyeColor::BROWN);
-    BlockPair brownBand(159, Blocks::stained_hardened_clay->convertBlockStateToLegacyData(
-        Blocks::stained_hardened_clay->defaultBlockState()->setBoxedValue(ColoredBlock::COLOR, &brown)));
+    BlockPair brownBand(BlockId::STAINED_HARDENED_CLAY, Blocks::stained_hardened_clay->convertBlockStateToLegacyData(
+        Blocks::stained_hardened_clay->defaultBlockState()->setValue(ColoredBlock::COLOR, DyeColor::BROWN)));
     int brownCount = random.nextInt(4) + 2;
     for (int i = 0; i < brownCount; ++i)
     {
@@ -143,9 +139,8 @@ void MesaBiome::generateBands(long long seed)
         }
     }
 
-    TypedBoxed<const DyeColor*> red(DyeColor::RED);
-    BlockPair redBand(159, Blocks::stained_hardened_clay->convertBlockStateToLegacyData(
-        Blocks::stained_hardened_clay->defaultBlockState()->setBoxedValue(ColoredBlock::COLOR, &red)));
+    BlockPair redBand(BlockId::STAINED_HARDENED_CLAY, Blocks::stained_hardened_clay->convertBlockStateToLegacyData(
+        Blocks::stained_hardened_clay->defaultBlockState()->setValue(ColoredBlock::COLOR, DyeColor::RED)));
     int redCount = random.nextInt(4) + 2;
     for (int i = 0; i < redCount; ++i)
     {
@@ -157,12 +152,10 @@ void MesaBiome::generateBands(long long seed)
         }
     }
 
-    TypedBoxed<const DyeColor*> silver(DyeColor::SILVER);
-    BlockPair silverBand(159, Blocks::stained_hardened_clay->convertBlockStateToLegacyData(
-        Blocks::stained_hardened_clay->defaultBlockState()->setBoxedValue(ColoredBlock::COLOR, &silver)));
-    TypedBoxed<const DyeColor*> white(DyeColor::WHITE);
-    BlockPair whiteBand(159, Blocks::stained_hardened_clay->convertBlockStateToLegacyData(
-        Blocks::stained_hardened_clay->defaultBlockState()->setBoxedValue(ColoredBlock::COLOR, &white)));
+    BlockPair silverBand(BlockId::STAINED_HARDENED_CLAY, Blocks::stained_hardened_clay->convertBlockStateToLegacyData(
+        Blocks::stained_hardened_clay->defaultBlockState()->setValue(ColoredBlock::COLOR, DyeColor::SILVER)));
+    BlockPair whiteBand(BlockId::STAINED_HARDENED_CLAY, Blocks::stained_hardened_clay->convertBlockStateToLegacyData(
+        Blocks::stained_hardened_clay->defaultBlockState()->setValue(ColoredBlock::COLOR, DyeColor::WHITE)));
     int whiteCount = random.nextInt(3) + 3;
     int band = 0;
     for (int i = 0; i < whiteCount; ++i)
@@ -206,8 +199,12 @@ void MesaBiome::buildSurfaceAt(Level* level, Random& random, ChunkPrimer* primer
     {
         int pillarX = (x & -16) + (z & 15);
         int pillarZ = (z & -16) + (x & 15);
-        double pillar = std::min(std::fabs(noise),
-                                 mPillarNoise->getValue((double)pillarX * 0.25, (double)pillarZ * 0.25));
+        double pillar = mPillarNoise->getValue((double)pillarX * 0.25, (double)pillarZ * 0.25);
+        double magnitude = std::fabs(noise);
+        if (magnitude < pillar)
+        {
+            pillar = magnitude;
+        }
 
         if (pillar > 0.0)
         {
@@ -226,7 +223,7 @@ void MesaBiome::buildSurfaceAt(Level* level, Random& random, ChunkPrimer* primer
     int localX = x & 15;
     int localZ = z & 15;
     BlockPair filler = mFillerBlock;
-    int depth = (int)(random.nextDouble() * 0.25 + noise / 3.0 + 3.0);
+    int depth = (int)(noise / 3.0 + 3.0 + random.nextDouble() * 0.25);
     bool coarse = std::cos(noise / 3.0 * 3.1415927f) > 0.0;
     int runDepth = -1;
     bool orangeRun = false;
@@ -243,7 +240,7 @@ void MesaBiome::buildSurfaceAt(Level* level, Random& random, ChunkPrimer* primer
 
         if (y <= random.nextInt(2) + 1)
         {
-            primer->setBlockAndData(index, BlockId::BEDROCK, 0);
+            primer->setBlockAndData(index, BEDROCK_BLOCK.blockId, BEDROCK_BLOCK.blockData);
         }
         else if (surfaceBlocks < 15 || mBrycePillars)
         {
@@ -268,7 +265,12 @@ void MesaBiome::buildSurfaceAt(Level* level, Random& random, ChunkPrimer* primer
                         filler = mFillerBlock;
                     }
 
-                    runDepth = depth + std::max(0, y - 63);
+                    int surfaceOffset = y - 63;
+                    if (surfaceOffset < 0)
+                    {
+                        surfaceOffset = 0;
+                    }
+                    runDepth = depth + surfaceOffset;
 
                     if (y >= 62)
                     {

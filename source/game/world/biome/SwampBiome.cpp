@@ -74,16 +74,16 @@ void SwampBiome::buildSurfaceAt(Level* level, Random& random, ChunkPrimer* prime
     {
         const int localX = x & 15;
         const int localZ = z & 15;
-        const int column = (localX << 7) | (localZ << 11);
+        const int column = (localZ << 11) | (localX << 7);
         for (int y = 127; y >= 0; --y)
         {
+            const int index = column | y;
             const BlockState* state = primer->getState(localZ, y, localX);
             Block* block = state->getBlock();
             if (block->mMaterial != Material::AIR)
             {
                 if (y == 62 && block != Blocks::water)
                 {
-                    int index = column | y;
                     primer->setBlockAndData(index, WATER_BLOCK.blockId, WATER_BLOCK.blockData);
                     if (value < 0.12)
                     {
@@ -103,7 +103,7 @@ void SwampBiome::decorate(Level* level, Random& random, const BlockPos& pos)
     Biome::decorate(level, random, pos);
     if (random.nextInt(64) == 0)
     {
-        FossilFeature fossil;
+        FossilFeature fossil = FossilFeature();
         fossil.place(level, random, pos);
     }
 }
