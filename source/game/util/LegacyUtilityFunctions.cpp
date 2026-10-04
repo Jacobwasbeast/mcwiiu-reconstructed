@@ -28,11 +28,7 @@ extern "C" void outresuint(uint32_t value)
 
 int32_t ourtoupper(char value)
 {
-    if (value >= 'a' && value <= 'z')
-    {
-        value = static_cast<char>(value - 0x20);
-    }
-    return static_cast<int32_t>(value);
+    return (value >= 'a' && value <= 'z') ? static_cast<char>(value - 0x20) : value;
 }
 
 int OnlyNum(const char* value)
@@ -41,7 +37,7 @@ int OnlyNum(const char* value)
     while (*current != '\0')
     {
         if ((current != value || *current != '-') &&
-            ((*current < '0' || *current > '9') && *current != '.'))
+            (static_cast<unsigned int>(static_cast<char>(*current + static_cast<unsigned char>(-'0'))) >= 10 && *current != '.'))
         {
             return 0;
         }

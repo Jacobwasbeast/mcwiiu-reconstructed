@@ -63,11 +63,15 @@ ResourceLocation::ResourceLocation(arrayWithLength<int> textures) {
     this->textures = NULL;
     textureCount = 0;
 
-    this->textures = new int[textures.length]();
-    textureCount = textures.length;
+    unsigned int count = textures.length;
+    int* newData = new int[count];
+    arrayWithLength<int>::zero(newData, count);
 
-    for (int i = 0; i < textureCount; i++) {
-        this->textures[i] = textures.data[i];
+    textureCount = count;
+    this->textures = newData;
+
+    for (unsigned int i = 0; i < count; i++) {
+        newData[i] = textures.data[i];
     }
 
     preloaded = true;
@@ -78,10 +82,20 @@ ResourceLocation::~ResourceLocation() {
 }
 
 void ResourceLocation::_init(const ResourceLocation& other) {
-    if (other.textureCount != 0) {
-        textures = new int[other.textureCount]();
-        textureCount = other.textureCount;
-        memcpy(textures, other.textures, other.textureCount * sizeof(int));
+    unsigned int count = other.textureCount;
+
+    if (count != 0) {
+        int* newData = new int[count];
+        unsigned int i = 0;
+
+        do {
+            newData[i] = 0;
+            i++;
+        } while (i < count);
+
+        textureCount = count;
+        textures = newData;
+        memcpy(newData, other.textures, count * sizeof(int));
     } else {
         textures = other.textures;
         textureCount = 0;
@@ -146,9 +160,9 @@ bool ResourceLocation::isPreloaded() const {
 }
 
 std::wstring ResourceLocation::toString() const {
-    std::wstring text = getNamespace() + L':';
+    std::wstring text = nameSpace + L':';
 
-    return text + getPath();
+    return text + path;
 }
 
 int ResourceLocation::hashCode() const {

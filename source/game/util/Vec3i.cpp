@@ -1,17 +1,17 @@
 #include "game/util/Vec3i.hpp"
 #include <math.h>
+#include "game/core/Mth.hpp"
 
 Vec3i::Vec3i(double x, double y, double z)
 {
-    int ix = (int)x, iy = (int)y, iz = (int)z;
-    this->x = x < (double)ix ? ix - 1 : ix;
-    this->y = y < (double)iy ? iy - 1 : iy;
-    this->z = z < (double)iz ? iz - 1 : iz;
+    this->x = Mth::floor(x);
+    this->y = Mth::floor(y);
+    this->z = Mth::floor(z);
 }
 
 Vec3i Vec3i::offset(int dx, int dy, int dz) const { return Vec3i(x + dx, y + dy, z + dz); }
-Vec3i Vec3i::offset(const Vec3i& other) const { return Vec3i(x + other.x, y + other.y, z + other.z); }
-Vec3i Vec3i::subtract(const Vec3i& other) const { return Vec3i(x - other.x, y - other.y, z - other.z); }
+Vec3i Vec3i::offset(const Vec3i& other) const { return offset(other.x, other.y, other.z); }
+Vec3i Vec3i::subtract(const Vec3i& other) const { return offset(-other.x, -other.y, -other.z); }
 Vec3i Vec3i::multiply(int scale) const { return Vec3i(x * scale, y * scale, z * scale); }
 Vec3i Vec3i::cross(const Vec3i& other) const
 {

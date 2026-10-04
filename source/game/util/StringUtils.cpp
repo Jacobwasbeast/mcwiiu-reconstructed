@@ -1,46 +1,77 @@
 #include "game/util/StringUtils.hpp"
 
-#include <cmath>
-#include <limits>
+static const int POWER_TABLE_SIZE = 79;
+static const int POWER_TABLE_UNIT_INDEX = 40;
+
+static const double POWERS_OF_TEN[POWER_TABLE_SIZE] = {
+    0.0, 1e-39, 1e-38, 1e-37, 1e-36, 1e-35,
+    1e-34, 1e-33, 1e-32, 1e-31, 1e-30, 1e-29,
+    1e-28, 1e-27, 1e-26, 1e-25, 1e-24, 1e-23,
+    1e-22, 1e-21, 1e-20, 1e-19, 1e-18, 1e-17,
+    1e-16, 1e-15, 1e-14, 1e-13, 1e-12, 1e-11,
+    1e-10, 1e-9, 1e-8, 1e-7, 1e-6, 1e-5,
+    1e-4, 1e-3, 1e-2, 1e-1, 1e0, 1e1,
+    1e2, 1e3, 1e4, 1e5, 1e6, 1e7,
+    1e8, 1e9, 1e10, 1e11, 1e12, 1e13,
+    1e14, 1e15, 1e16, 1e17, 1e18, 1e19,
+    1e20, 1e21, 1e22, 1e23, 1e24, 1e25,
+    1e26, 1e27, 1e28, 1e29, 1e30, 1e31,
+    1e32, 1e33, 1e34, 1e35, 1e36, 1e37,
+    1e38
+};
+
+static const double DIGIT_VALUES[10] = {0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0};
+
+static const double MAX_PARSED_VALUE = 3.40282e+38;
 
 int atoi_with_len(const char* text, int base, int* length)
 {
     const char* current = text;
     const bool negative = *text == '-';
-    if (negative || *text == '+')
+    int character;
+    if (negative || (character = *text) == '+')
     {
         current = text + 1;
+        character = *current;
     }
 
     int value = 0;
-    if (base == 0)
+    if (base != 0)
     {
-        while (*current >= '0' && *current <= '9')
+        while (true)
         {
-            value = value * 10 + (*current - '0');
+            while (true)
+            {
+                while (static_cast<unsigned int>(character - '0') < 10)
+                {
+                    ++current;
+                    value = value * 16 + static_cast<unsigned int>(character - '0');
+                    character = *current;
+                }
+                if (static_cast<unsigned int>(character - 'A') >= 6)
+                {
+                    break;
+                }
+                ++current;
+                value = value * 16 + (character - 'A' + 10);
+                character = *current;
+            }
+            if (static_cast<unsigned int>(character - 'a') >= 6)
+            {
+                break;
+            }
             ++current;
+            value = value * 16 + (character - 'a' + 10);
+            character = *current;
         }
     }
     else
     {
-        while (true)
+        while (character >= '0' && character <= '9')
         {
-            while (*current >= '0' && *current <= '9')
-            {
-                value = value * 16 + (*current - '0');
-                ++current;
-            }
-            while (*current >= 'A' && *current <= 'F')
-            {
-                value = value * 16 + (*current - 'A' + 10);
-                ++current;
-            }
-            if (*current < 'a' || *current > 'f')
-            {
-                break;
-            }
-            value = value * 16 + (*current - 'a' + 10);
             ++current;
+            value = value * 10 + (character - '0');
+            character = *current;
         }
     }
 
@@ -57,96 +88,149 @@ int atoi_with_len(const char* text, int base, int* length)
 
 double atof_with_len(const char* text, int* length)
 {
-    const char* current = text;
+    const char* integerBegin = text;
     const bool negative = *text == '-';
-    if (negative || *text == '+')
+    int character;
+    if (negative || (character = *text) == '+')
     {
-        ++current;
+        ++integerBegin;
+        character = *integerBegin;
+    }
+    while (character == '0')
+    {
+        ++integerBegin;
+        character = *integerBegin;
     }
 
-    while (*current == '0')
+    const char* integerEnd = integerBegin;
+    const char* lastIntegerDigit = integerBegin;
+    if (static_cast<unsigned int>(character - '0') < 10)
     {
-        ++current;
-    }
-
-    const char* integerBegin = current;
-    while (*current >= '0' && *current <= '9')
-    {
-        ++current;
-    }
-    const char* integerEnd = current;
-
-    const char* fractionBegin = current;
-    const char* fractionEnd = current;
-    if (*current == '.')
-    {
-        ++current;
-        fractionBegin = current;
-        while (*current == '0')
+        while (true)
         {
-            ++current;
+            lastIntegerDigit = integerEnd;
+            ++integerEnd;
+            character = *integerEnd;
+            while (character == '0')
+            {
+                ++integerEnd;
+                character = *integerEnd;
+            }
+            if (static_cast<unsigned int>(character - '0') >= 10)
+            {
+                break;
+            }
         }
-        fractionBegin = current;
-        while (*current >= '0' && *current <= '9')
+    }
+
+    const char* fractionBegin = integerEnd;
+    const char* firstFractionDigit = integerEnd;
+    const char* fractionEnd = integerEnd;
+    const char* lastFractionDigit = integerEnd;
+    if (character == '.')
+    {
+        fractionBegin = integerEnd + 1;
+        character = *fractionBegin;
+        firstFractionDigit = fractionBegin;
+        while (character == '0')
         {
-            ++current;
+            ++firstFractionDigit;
+            character = *firstFractionDigit;
         }
-        fractionEnd = current;
+        fractionEnd = firstFractionDigit;
+        lastFractionDigit = firstFractionDigit;
+        if (static_cast<unsigned int>(character - '0') < 10)
+        {
+            while (true)
+            {
+                lastFractionDigit = fractionEnd;
+                ++fractionEnd;
+                character = *fractionEnd;
+                while (character == '0')
+                {
+                    ++fractionEnd;
+                    character = *fractionEnd;
+                }
+                if (static_cast<unsigned int>(character - '0') >= 10)
+                {
+                    break;
+                }
+            }
+        }
     }
 
     int exponent = 0;
-    const char* exponentEnd = current;
-    if (*current == 'e' || *current == 'E')
+    const char* end = fractionEnd;
+    if (character == 'e' || character == 'E')
     {
-        ++current;
-        const bool negativeExponent = *current == '-';
-        if (negativeExponent || *current == '+')
+        end = fractionEnd + 1;
+        character = *end;
+        const bool negativeExponent = character == '-';
+        if (character == '-' || character == '+')
         {
-            ++current;
+            ++end;
+            character = *end;
         }
-        while (*current >= '0' && *current <= '9')
+        while (static_cast<unsigned int>(character - '0') < 10)
         {
-            exponent = exponent * 10 + (*current - '0');
-            ++current;
+            exponent = exponent * 10 + character - '0';
+            ++end;
+            character = *end;
         }
         if (negativeExponent)
         {
             exponent = -exponent;
         }
-        exponentEnd = current;
     }
 
-    double value = 0.0;
-    const char* digit = integerEnd;
-    int place = 0;
-    while (digit > integerBegin)
+    double integerValue = 0.0;
+    if (integerBegin != integerEnd)
     {
-        --digit;
-        value += static_cast<double>(*digit - '0') * std::pow(10.0, static_cast<double>(place));
-        ++place;
+        integerValue = MAX_PARSED_VALUE;
+        const int topIndex = static_cast<int>(integerEnd - integerBegin) + exponent + POWER_TABLE_UNIT_INDEX - 1;
+        if (topIndex < POWER_TABLE_SIZE)
+        {
+            integerValue = 0.0;
+            int index = topIndex + static_cast<int>(integerBegin - lastIntegerDigit);
+            for (const char* digit = lastIntegerDigit; digit >= integerBegin; --digit)
+            {
+                if (index > 0)
+                {
+                    integerValue += POWERS_OF_TEN[index] * DIGIT_VALUES[*digit - '0'];
+                }
+                ++index;
+            }
+        }
     }
 
-    place = -1;
-    for (digit = fractionBegin; digit < fractionEnd; ++digit)
+    double value = integerValue;
+    if (firstFractionDigit != fractionEnd)
     {
-        value += static_cast<double>(*digit - '0') * std::pow(10.0, static_cast<double>(place));
-        --place;
+        value = MAX_PARSED_VALUE;
+        const int firstIndex = POWER_TABLE_UNIT_INDEX - 1 + static_cast<int>(fractionBegin - firstFractionDigit) + exponent;
+        if (firstIndex < POWER_TABLE_SIZE)
+        {
+            double fractionValue = 0.0;
+            int index = firstIndex + static_cast<int>(firstFractionDigit - lastFractionDigit);
+            for (const char* digit = lastFractionDigit; digit >= firstFractionDigit; --digit)
+            {
+                if (index > 0)
+                {
+                    fractionValue += POWERS_OF_TEN[index] * DIGIT_VALUES[*digit - '0'];
+                }
+                ++index;
+            }
+            value = integerValue + fractionValue;
+        }
     }
 
-    value *= std::pow(10.0, static_cast<double>(exponent));
-    if (value > static_cast<double>(std::numeric_limits<float>::max()))
-    {
-        value = static_cast<double>(std::numeric_limits<float>::max());
-    }
     if (negative)
     {
         value = -value;
     }
     if (length != 0)
     {
-        *length = static_cast<int>((exponentEnd == current ? current : exponentEnd) - text);
+        *length = static_cast<int>(end - text);
     }
-    return static_cast<double>(static_cast<float>(value));
+    return static_cast<float>(value);
 }
-
-template std::wstring toString<int>(int value);

@@ -7,10 +7,5 @@ double fclamp(float value, float min, float max)
         return min;
     }
 
-    if (value - max < 0.0f)
-    {
-        max = value;
-    }
-
-    return max;
+    return (value - max < 0.0f) ? value : max;
 }

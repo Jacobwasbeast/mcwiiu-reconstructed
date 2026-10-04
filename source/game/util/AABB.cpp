@@ -55,7 +55,12 @@ void AABB::ReleaseThreadStorage()
 
 AABB::AABB(double x0, double y0, double z0, double x1, double y1, double z1)
 {
-    set(x0, y0, z0, x1, y1, z1);
+    mMinX = x1 < x0 ? x1 : x0;
+    mMinY = y1 < y0 ? y1 : y0;
+    mMinZ = z1 < z0 ? z1 : z0;
+    mMaxX = x0 < x1 ? x1 : x0;
+    mMaxY = y0 < y1 ? y1 : y0;
+    mMaxZ = z0 < z1 ? z1 : z0;
 }
 
 AABB* AABB::newPermanent(double x0, double y0, double z0, double x1, double y1, double z1)
@@ -90,9 +95,9 @@ void AABB::resetPool()
 
 void AABB::set(double x0, double y0, double z0, double x1, double y1, double z1)
 {
-    mMinX = x0 < x1 ? x0 : x1;
-    mMinY = y0 < y1 ? y0 : y1;
-    mMinZ = z0 < z1 ? z0 : z1;
+    mMinX = x1 < x0 ? x1 : x0;
+    mMinY = y1 < y0 ? y1 : y0;
+    mMinZ = z1 < z0 ? z1 : z0;
     mMaxX = x0 < x1 ? x1 : x0;
     mMaxY = y0 < y1 ? y1 : y0;
     mMaxZ = z0 < z1 ? z1 : z0;
@@ -133,8 +138,13 @@ AABB* AABB::setMaxY(double maxY)
 
 bool AABB::equals(const AABB* other) const
 {
-    return other != NULL && other->mMinX == mMinX && other->mMinY == mMinY && other->mMinZ == mMinZ &&
-        other->mMaxX == mMaxX && other->mMaxY == mMaxY && other->mMaxZ == mMaxZ;
+    if (!(other != NULL && other->mMinX == mMinX && other->mMinY == mMinY && other->mMinZ == mMinZ &&
+        other->mMaxX == mMaxX && other->mMaxY == mMaxY))
+    {
+        return false;
+    }
+
+    return other->mMaxZ == mMaxZ;
 }
 
 void AABB::set(const AABB* box)
@@ -243,9 +253,9 @@ AABB* AABB::intersect(const AABB* other) const
     double minX = mMinX < other->mMinX ? other->mMinX : mMinX;
     double minY = mMinY < other->mMinY ? other->mMinY : mMinY;
     double minZ = mMinZ < other->mMinZ ? other->mMinZ : mMinZ;
-    double maxX = mMaxX < other->mMaxX ? mMaxX : other->mMaxX;
-    double maxY = mMaxY < other->mMaxY ? mMaxY : other->mMaxY;
-    double maxZ = mMaxZ < other->mMaxZ ? mMaxZ : other->mMaxZ;
+    double maxX = other->mMaxX < mMaxX ? other->mMaxX : mMaxX;
+    double maxY = other->mMaxY < mMaxY ? other->mMaxY : mMaxY;
+    double maxZ = other->mMaxZ < mMaxZ ? other->mMaxZ : mMaxZ;
 
     return newTemp(minX, minY, minZ, maxX, maxY, maxZ);
 }
@@ -264,7 +274,7 @@ AABB* AABB::minmax(const AABB* other)
 
 AABB* AABB::minmax(double x0, double y0, double z0, double x1, double y1, double z1)
 {
-    return newTemp(x0 < x1 ? x0 : x1, y0 < y1 ? y0 : y1, z0 < z1 ? z0 : z1,
+    return newTemp(x1 < x0 ? x1 : x0, y1 < y0 ? y1 : y0, z1 < z0 ? z1 : z0,
         x0 < x1 ? x1 : x0, y0 < y1 ? y1 : y0, z0 < z1 ? z1 : z0);
 }
 
@@ -275,7 +285,11 @@ AABB* AABB::move(double x, double y, double z) const
 
 AABB* AABB::move(const BlockPos& pos) const
 {
-    return move((double)pos.x, (double)pos.y, (double)pos.z);
+    double x = (double)pos.x;
+    double y = (double)pos.y;
+    double z = (double)pos.z;
+
+    return newTemp(mMinX + x, mMinY + y, mMinZ + z, mMaxX + x, mMaxY + y, mMaxZ + z);
 }
 
 AABB* AABB::move(const Vec3& vec) const
@@ -285,7 +299,7 @@ AABB* AABB::move(const Vec3& vec) const
 
 double AABB::clipXCollide(const AABB* other, double xa) const
 {
-    if (mMinY < other->mMaxY && other->mMinY < mMaxY && mMinZ < other->mMaxZ && other->mMinZ < mMaxZ)
+    if (other->mMaxY > mMinY && other->mMinY < mMaxY && other->mMaxZ > mMinZ && other->mMinZ < mMaxZ)
     {
         if (xa > 0.0 && other->mMaxX <= mMinX)
         {
@@ -296,8 +310,7 @@ double AABB::clipXCollide(const AABB* other, double xa) const
                 xa = clipped;
             }
         }
-
-        if (xa < 0.0 && mMaxX <= other->mMinX)
+        else if (xa < 0.0 && other->mMinX >= mMaxX)
         {
             double clipped = mMaxX - other->mMinX;
 
@@ -313,7 +326,7 @@ double AABB::clipXCollide(const AABB* other, double xa) const
 
 double AABB::clipYCollide(const AABB* other, double ya) const
 {
-    if (mMinX < other->mMaxX && other->mMinX < mMaxX && mMinZ < other->mMaxZ && other->mMinZ < mMaxZ)
+    if (other->mMaxX > mMinX && other->mMinX < mMaxX && other->mMaxZ > mMinZ && other->mMinZ < mMaxZ)
     {
         if (ya > 0.0 && other->mMaxY <= mMinY)
         {
@@ -324,8 +337,7 @@ double AABB::clipYCollide(const AABB* other, double ya) const
                 ya = clipped;
             }
         }
-
-        if (ya < 0.0 && mMaxY <= other->mMinY)
+        else if (ya < 0.0 && other->mMinY >= mMaxY)
         {
             double clipped = mMaxY - other->mMinY;
 
@@ -341,7 +353,7 @@ double AABB::clipYCollide(const AABB* other, double ya) const
 
 double AABB::clipZCollide(const AABB* other, double za) const
 {
-    if (mMinX < other->mMaxX && other->mMinX < mMaxX && mMinY < other->mMaxY && other->mMinY < mMaxY)
+    if (other->mMaxX > mMinX && other->mMinX < mMaxX && other->mMaxY > mMinY && other->mMinY < mMaxY)
     {
         if (za > 0.0 && other->mMaxZ <= mMinZ)
         {
@@ -352,8 +364,7 @@ double AABB::clipZCollide(const AABB* other, double za) const
                 za = clipped;
             }
         }
-
-        if (za < 0.0 && mMaxZ <= other->mMinZ)
+        else if (za < 0.0 && other->mMinZ >= mMaxZ)
         {
             double clipped = mMaxZ - other->mMinZ;
 
@@ -369,15 +380,20 @@ double AABB::clipZCollide(const AABB* other, double za) const
 
 bool AABB::intersectsInner(const AABB* other) const
 {
-    return mMinX <= other->mMaxX && other->mMinX <= mMaxX && mMinY <= other->mMaxY &&
-        other->mMinY <= mMaxY && mMinZ <= other->mMaxZ && other->mMinZ <= mMaxZ;
+    if (!(other->mMaxX >= mMinX && other->mMinX <= mMaxX && other->mMaxY >= mMinY &&
+        other->mMinY <= mMaxY && other->mMaxZ >= mMinZ && other->mMinZ <= mMaxZ))
+    {
+        return false;
+    }
+
+    return true;
 }
 
 bool AABB::intersects(Vec3* from, Vec3* to) const
 {
-    return intersects(from->x < to->x ? from->x : to->x,
-        from->y < to->y ? from->y : to->y,
-        from->z < to->z ? from->z : to->z,
+    return intersects(to->x < from->x ? to->x : from->x,
+        to->y < from->y ? to->y : from->y,
+        to->z < from->z ? to->z : from->z,
         from->x < to->x ? to->x : from->x,
         from->y < to->y ? to->y : from->y,
         from->z < to->z ? to->z : from->z);
@@ -385,7 +401,12 @@ bool AABB::intersects(Vec3* from, Vec3* to) const
 
 bool AABB::contains(double x, double y, double z) const
 {
-    return mMinX < x && x < mMaxX && mMinY < y && y < mMaxY && mMinZ < z && z < mMaxZ;
+    if (!(x > mMinX && x < mMaxX && y > mMinY && y < mMaxY && z > mMinZ && z < mMaxZ))
+    {
+        return false;
+    }
+
+    return true;
 }
 
 bool AABB::contains(Vec3* pos) const
@@ -400,8 +421,13 @@ bool AABB::contains(const BlockPos& pos) const
 
 bool AABB::containsIncludingLowerBound(Vec3* pos) const
 {
-    return mMinX <= pos->x && pos->x < mMaxX && mMinY <= pos->y && pos->y < mMaxY &&
-        mMinZ <= pos->z && pos->z < mMaxZ;
+    if (!(pos->x >= mMinX && pos->x < mMaxX && pos->y >= mMinY && pos->y < mMaxY &&
+        pos->z >= mMinZ && pos->z < mMaxZ))
+    {
+        return false;
+    }
+
+    return true;
 }
 
 double AABB::getSize() const
@@ -443,12 +469,20 @@ Vec3* AABB::collideWithXPlane(double x, Vec3* from, Vec3* to) const
 
 bool AABB::isClosest(Vec3* from, Vec3* current, Vec3* candidate) const
 {
-    if (current == NULL)
+    bool closest = true;
+
+    if (current != NULL)
     {
-        return true;
+        double candidateDistance = from->distanceToSqr(candidate);
+        double currentDistance = from->distanceToSqr(current);
+
+        if (!(candidateDistance < currentDistance))
+        {
+            closest = false;
+        }
     }
 
-    return from->distanceToSqr(candidate) < from->distanceToSqr(current);
+    return closest;
 }
 
 bool AABB::insideXZ(Vec3* pos) const
@@ -556,7 +590,9 @@ bool AABB::hasNaN() const
 
 bool clip(AABB* box, float* plane)
 {
-    for (int i = 0; i < 6; ++i)
+    int remaining = 6;
+
+    do
     {
         double xMin = (double)plane[0] * box->mMinX;
         double yMin = (double)plane[1] * box->mMinY;
@@ -582,14 +618,18 @@ bool clip(AABB* box, float* plane)
         }
 
         plane += 4;
+        --remaining;
     }
+    while (remaining != 0);
 
     return true;
 }
 
 bool clip(float* matrix, float* plane)
 {
-    for (int i = 0; i < 6; ++i)
+    int remaining = 6;
+
+    do
     {
         float xMin = plane[0] * matrix[0];
         float yMin = plane[1] * matrix[1];
@@ -615,7 +655,9 @@ bool clip(float* matrix, float* plane)
         }
 
         plane += 4;
+        --remaining;
     }
+    while (remaining != 0);
 
     return true;
 }
@@ -696,7 +738,7 @@ AABB* AABB::scaleAndShift(double x, double y, double z) const
     return scaled;
 }
 
-void AABB::divideInternalsBy(double divisor)
+AABB* AABB::divideInternalsBy(double divisor)
 {
     mMinX /= divisor;
     mMinY /= divisor;
@@ -704,6 +746,7 @@ void AABB::divideInternalsBy(double divisor)
     mMaxX /= divisor;
     mMaxY /= divisor;
     mMaxZ /= divisor;
+    return this;
 }
 
 void AABB::correctMinMax()
@@ -715,9 +758,9 @@ void AABB::correctMinMax()
     double maxY = mMaxY;
     double maxZ = mMaxZ;
 
-    mMinX = minX < maxX ? minX : maxX;
-    mMinY = minY < maxY ? minY : maxY;
-    mMinZ = minZ < maxZ ? minZ : maxZ;
+    mMinX = maxX < minX ? maxX : minX;
+    mMinY = maxY < minY ? maxY : minY;
+    mMinZ = maxZ < minZ ? maxZ : minZ;
     mMaxX = maxX < minX ? minX : maxX;
     mMaxY = maxY < minY ? minY : maxY;
     mMaxZ = maxZ < minZ ? minZ : maxZ;

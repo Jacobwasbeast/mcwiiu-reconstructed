@@ -114,12 +114,12 @@ public:
     virtual ~Rabbit();
     static void create(Level* level);
     static void staticCtor();
-    virtual void setSpeedModifier(double speedModifier);
+    void setSpeedModifier(double speedModifier);
     virtual void registerGoals();
     virtual float getJumpPower();
     virtual void jumpFromGround();
-    double getJumpCompletion(float partialTick);
-    virtual const SoundEvent* getJumpSound();
+    float getJumpCompletion(float partialTick);
+    const SoundEvent* getJumpSound();
     virtual void setJumping(bool jumping);
     void startJumping();
     virtual bool checkSpawnRules();

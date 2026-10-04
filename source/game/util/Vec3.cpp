@@ -280,7 +280,11 @@ Vec3* Vec3::clipZ(Vec3* to, double z)
 
 bool Vec3::equals(Vec3* other)
 {
-    return other->x == x && other->y == y && other->z == z;
+    if (other->x == x && other->y == y)
+    {
+        return other->z == z;
+    }
+    return false;
 }
 
 Vec3* Vec3::xRot(float angle)

@@ -48,7 +48,7 @@ struct ChestItemsInfoLess
 
 const std::wstring SPECTATOR_TEAM_NAME = L"s";
 
-GameModeUtilities::Position::Position() : x(0.0), z(0.0), y(0.0) {}
+GameModeUtilities::Position::Position() : x(0.0), z(0.0) {}
 
 GameModeUtilities::Position::Position(double xValue, double zValue)
     : x(xValue), z(zValue), y(Math::random() * 360.0) {}
@@ -95,9 +95,8 @@ void GameModeUtilities::Position::randomize(Random* random, std::vector<long lon
     if (positions != NULL && !positions->empty())
     {
         long long packed = positions->at((unsigned int)Mth::nextInt(random, 0, (int)positions->size() - 1));
-        BlockPos position = BlockPos::decompressBlockPos(packed);
-        x = position.x;
-        z = position.z;
+        x = (double)(int)(packed >> 32);
+        z = (double)(int)packed;
     }
 }
 
@@ -114,10 +113,8 @@ double GameModeUtilities::Position::dist(Position* other)
 
 int GameModeUtilities::Position::getSpawnY(Level* level)
 {
-    int ix = (int)x;
-    int iz = (int)z;
-    if (x < (double)ix) --ix;
-    if (z < (double)iz) --iz;
+    int ix = Mth::floor(x);
+    int iz = Mth::floor(z);
     for (int y = 256; y > 0; y -= 4)
     {
         Block* block;
@@ -387,7 +384,7 @@ std::vector<GameModeUtilities::Position*>* GameModeUtilities::createInitialPosit
                                                                                      double minX, double minZ,
                                                                                      double maxX, double maxZ)
 {
-    std::vector<Position*>* positions = new std::vector<Position*>();
+    std::vector<Position*>* positions = new std::vector<Position*>(std::allocator<Position*>());
     positions->reserve((unsigned int)count);
     for (int i = 0; i < count; ++i)
     {

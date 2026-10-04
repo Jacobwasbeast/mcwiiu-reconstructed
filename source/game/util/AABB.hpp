@@ -92,7 +92,7 @@ public:
 
     bool intersects(double minX, double minY, double minZ, double maxX, double maxY, double maxZ) const
     {
-        return mMinX < maxX && minX < mMaxX && mMinY < maxY && minY < mMaxY && mMinZ < maxZ && minZ < mMaxZ;
+        return mMinX < maxX && mMaxX > minX && mMinY < maxY && mMaxY > minY && mMinZ < maxZ && mMaxZ > minZ;
     }
 
     bool intersectsInner(const AABB* other) const;
@@ -118,7 +118,7 @@ public:
     double getSize() const;
     Vec3* getCenter() const;
 
-    void divideInternalsBy(double divisor);
+    AABB* divideInternalsBy(double divisor);
     void correctMinMax();
 
     std::wstring toString() const;

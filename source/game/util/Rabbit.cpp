@@ -199,9 +199,8 @@ bool Rabbit::RaidGardenGoal::canContinueToUse()
 void Rabbit::RaidGardenGoal::tick()
 {
     MoveToBlockGoal::tick();
-    float maxHeadXRot = static_cast<float>(mRabbit->getMaxHeadXRot());
     mRabbit->getLookControl()->setLookAt(mBlockPos.x + 0.5, mBlockPos.y + 1, mBlockPos.z + 0.5, 10.0f,
-                                         maxHeadXRot);
+                                         static_cast<float>(mRabbit->getMaxHeadXRot()));
     if (isReachedTarget())
     {
         Level* level = mRabbit->mLevel;
@@ -219,8 +218,7 @@ void Rabbit::RaidGardenGoal::tick()
             }
             else
             {
-                TypedBoxed<int> newAge(age - 1);
-                level->setBlock(cropPos, state->setBoxedValue(CropBlock::AGE, &newAge), Block::UPDATE_CLIENTS, false);
+                level->setBlock(cropPos, state->setValue(CropBlock::AGE, age - 1), Block::UPDATE_CLIENTS, false);
                 level->levelEvent(LevelEvent::PARTICLES_DESTROY_BLOCK, cropPos, Block::getIdWithData(state));
                 mRabbit->eatCarrot();
             }
@@ -340,10 +338,10 @@ void Rabbit::jumpFromGround()
         mLevel->broadcastEntityEvent(shared_from_this(), EntityEvent::JUMP, 0);
 }
 
-double Rabbit::getJumpCompletion(float partialTick)
+float Rabbit::getJumpCompletion(float partialTick)
 {
-    if (mJumpDuration == 0) return 0.0;
-    return static_cast<double>(mJumpTicks + partialTick) / static_cast<double>(mJumpDuration);
+    if (mJumpDuration == 0) return 0.0f;
+    return (static_cast<float>(mJumpTicks) + partialTick) / static_cast<float>(mJumpDuration);
 }
 
 const SoundEvent* Rabbit::getJumpSound()
@@ -356,11 +354,8 @@ void Rabbit::setJumping(bool jumping)
     LivingEntity::setJumping(jumping);
     if (jumping)
     {
-        const SoundEvent* sound = getJumpSound();
-        float volume = getSoundVolume();
-        float first = mRandom->nextFloat();
-        float second = mRandom->nextFloat();
-        playSound(sound, volume, ((first - second) * 0.2f + 1.0f) * 0.8f);
+        playSound(getJumpSound(), getSoundVolume(),
+                  ((mRandom->nextFloat() - mRandom->nextFloat()) * 0.2f + 1.0f) * 0.8f);
     }
 }
 
@@ -373,9 +368,16 @@ void Rabbit::startJumping()
 
 bool Rabbit::checkSpawnRules()
 {
-    BlockPos pos(Mth::floor(mX), Mth::floor(mBoundingBox->mMinY), Mth::floor(mZ));
-    Block* below = mLevel->getBlockState(pos.below())->getBlock();
-    bool spawnBlock = below == mGrassBlock || below == mSnowBlock || below == mSnowLayerBlock || below == mSandBlock;
+    int x = Mth::floor(mX);
+    int y = Mth::floor(mBoundingBox->mMinY);
+    int z = Mth::floor(mZ);
+    BlockPos pos(x, y, z);
+    bool spawnBlock = false;
+    if (mLevel->getBlockState(pos.below())->getBlock() == mGrassBlock
+        || mLevel->getBlockState(pos.below())->getBlock() == mSnowBlock
+        || mLevel->getBlockState(pos.below())->getBlock() == mSnowLayerBlock
+        || mLevel->getBlockState(pos.below())->getBlock() == mSandBlock)
+        spawnBlock = true;
     return spawnBlock && mLevel->getDaytimeRawBrightness(pos) > 8 && PathfinderMob::checkSpawnRules();
 }
 
@@ -550,9 +552,7 @@ bool Rabbit::doHurtTarget(boost::shared_ptr<Entity> target)
         DamageSource::CreateMobAttack(boost::dynamic_pointer_cast<LivingEntity>(shared_from_this()));
     if (getRabbitType() == 99)
     {
-        float first = mRandom->nextFloat();
-        float second = mRandom->nextFloat();
-        playSound(SoundEvents::RABBIT_ATTACK, 1.0f, (first - second) * 0.2f + 1.0f);
+        playSound(SoundEvents::RABBIT_ATTACK, 1.0f, (mRandom->nextFloat() - mRandom->nextFloat()) * 0.2f + 1.0f);
         target->hurt(damageSource, 8.0f);
     }
     bool hurt = target->hurt(damageSource, 3.0f);
@@ -600,7 +600,8 @@ boost::shared_ptr<AgableMob> Rabbit::getBreedOffspring(boost::shared_ptr<AgableM
     int type = getRandomRabbitType();
     if (mRandom->nextInt(20) != 0)
     {
-        if (parent->GetType() == EntityType::RABBIT && mRandom->nextBoolean())
+        bool parentIsRabbit = parent->GetType() == EntityType::RABBIT;
+        if (parentIsRabbit && mRandom->nextBoolean())
         {
             boost::shared_ptr<Rabbit> other = boost::static_pointer_cast<Rabbit>(parent);
             type = other->getRabbitType();
@@ -624,17 +625,19 @@ MobGroupData* Rabbit::finalizeMobSpawn(const DifficultyInstance& difficulty, Mob
 {
     MobGroupData* groupData = Mob::finalizeMobSpawn(difficulty, data, L"");
     int type = getRandomRabbitType();
-    RabbitGroupData* rabbitData = dynamic_cast<RabbitGroupData*>(groupData);
-    if (rabbitData == NULL)
+    bool isBaby = false;
+    if (dynamic_cast<RabbitGroupData*>(groupData) != NULL)
     {
-        groupData = new RabbitGroupData(type);
-        setRabbitType(type);
+        type = static_cast<RabbitGroupData*>(groupData)->mRabbitType;
+        isBaby = true;
     }
     else
     {
-        setRabbitType(rabbitData->mRabbitType);
-        setAge(-24000);
+        groupData = new RabbitGroupData(type);
     }
+    setRabbitType(type);
+    if (isBaby)
+        setAge(-24000);
     return groupData;
 }
 
@@ -645,15 +648,15 @@ void Rabbit::eatCarrot()
     int particleData = Block::getIdWithData(state);
     arrayWithLength<int> particleParams(&particleData, 1);
 
-    double randomX = (double)mRandom->nextFloat();
-    double randomY = (double)mRandom->nextFloat();
-    double randomZ = (double)mRandom->nextFloat();
-    double width = (double)mBbWidth;
+    float randomX = mRandom->nextFloat();
+    float randomY = mRandom->nextFloat();
+    float randomZ = mRandom->nextFloat();
+    float width = mBbWidth;
 
     mLevel->addParticle(PARTICLE_BLOCK_DUST,
-                         (mX + (double)((float)(randomX * width) + (float)(randomX * width))) - width,
-                         mY + 0.5 + (double)(float)(randomY * (double)mBbHeight),
-                         (mZ + (double)((float)(randomZ * width) + (float)(randomZ * width))) - width,
+                         (mX + (double)(randomX * width + randomX * width)) - width,
+                         mY + 0.5 + (double)(randomY * mBbHeight),
+                         (mZ + (double)(randomZ * width + randomZ * width)) - width,
                          0.0, 0.0, 0.0,
                          particleParams);
     mMoreCarrotTicks = 40;

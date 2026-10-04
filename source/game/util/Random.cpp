@@ -46,16 +46,15 @@ int Random::nextInt(int bound) {
 
 int Random::nextInt(int min, int max) {
     if (min < max) {
-        return min + nextInt(max - min);
+        min += nextInt(max - min);
     }
 
     return min;
 }
 
 long long Random::nextLong() {
-    const unsigned int high = static_cast<unsigned int>(next(32));
-    const unsigned int low = static_cast<unsigned int>(next(32));
-    return static_cast<long long>((static_cast<unsigned long long>(high) << 32) | low);
+    long long high = next(32);
+    return (high << 32) + next(32);
 }
 
 bool Random::nextBoolean() {
@@ -104,7 +103,7 @@ float Random::nextGaussianFloat() {
 }
 
 int Random::nextGaussianInt(int bound) {
-    return nextInt() - nextInt(bound);
+    return nextInt(bound) - nextInt(bound);
 }
 
 bool Random::rollPercentageChance(int percentage) {
