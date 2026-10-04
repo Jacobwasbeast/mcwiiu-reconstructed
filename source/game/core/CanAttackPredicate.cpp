@@ -7,10 +7,7 @@
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/entity/mob/Mob.hpp"
 
-CanAttackPredicate::CanAttackPredicate(MobNearestMobTargetGoal* goal)
-    : mGoal(goal)
-{
-}
+CanAttackPredicate::CanAttackPredicate(MobNearestMobTargetGoal* goal) : mGoal(goal) {}
 
 bool CanAttackPredicate::apply(boost::shared_ptr<Entity> entity) const
 {
@@ -20,14 +17,13 @@ bool CanAttackPredicate::apply(boost::shared_ptr<Entity> entity) const
     }
 
     double followDistance = mGoal->getFollowDistance();
-    boost::shared_ptr<LivingEntity> livingEntity = boost::static_pointer_cast<LivingEntity>(entity);
 
-    if (livingEntity->isBaby())
+    if (entity->isSneaking())
     {
         followDistance *= 0.800000011920929;
     }
 
-    if (livingEntity->isInvisible())
+    if (entity->isInvisible())
     {
         return false;
     }
@@ -37,11 +33,11 @@ bool CanAttackPredicate::apply(boost::shared_ptr<Entity> entity) const
         return false;
     }
 
-    return TargetGoal::canAttack(mGoal->mMob, livingEntity, false, true);
+    return TargetGoal::canAttack(mGoal->mMob, boost::static_pointer_cast<LivingEntity>(entity), false, true);
 }
 
 Predicate<boost::shared_ptr<Entity> >* CanAttackPredicate::copy() const
 {
-    return new CanAttackPredicate(mGoal);
+    return new CanAttackPredicate(*this);
 }
 

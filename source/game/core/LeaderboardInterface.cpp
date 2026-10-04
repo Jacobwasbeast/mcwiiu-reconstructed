@@ -5,17 +5,17 @@
 #include "game/world/generation/PlayerUID.hpp"
 
 LeaderboardInterface::LeaderboardInterface(LeaderboardManager* pManager)
-    : m_pManager(pManager)
-    , m_bRequestPending(false)
-    , m_bSessionOpen(false)
-    , m_eReadType(LeaderboardManager::eReadType_None)
-    , m_pReadListener(NULL)
-    , m_iUserIndex(0)
-    , m_eStatsType(LeaderboardManager::eStatsType_Count)
-    , m_uid(0)
-    , m_uiStartRank(0)
-    , m_uiNumRows(0)
+    : m_uid(0)
 {
+    m_pManager = pManager;
+    m_bRequestPending = false;
+    m_bSessionOpen = false;
+    m_eReadType = LeaderboardManager::eReadType_None;
+    m_pReadListener = NULL;
+    m_iUserIndex = 0;
+    m_eStatsType = LeaderboardManager::eStatsType_Count;
+    m_uiStartRank = 0;
+    m_uiNumRows = 0;
     tryOpenSession();
 }
 

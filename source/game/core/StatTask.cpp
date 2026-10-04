@@ -8,10 +8,11 @@
 StatTask::StatTask(Tutorial* tutorial, int descriptionId, bool preCompletionEnabled,
                    Stat* stat, int requiredValue)
     : TutorialTask(tutorial, descriptionId, preCompletionEnabled, NULL, false, true, true),
-      mStat(stat), mRequiredValue(0)
+      mStat(stat)
 {
+    Minecraft* minecraft = Minecraft::GetInstance();
     int playerIndex = gProfile->GetPrimaryPad();
-    mRequiredValue = Minecraft::GetInstance()->mStats[playerIndex]->getTotalValue(mStat) + requiredValue;
+    mRequiredValue = minecraft->mStats[playerIndex]->getTotalValue(stat) + requiredValue;
 }
 
 bool StatTask::isCompleted()
@@ -21,7 +22,8 @@ bool StatTask::isCompleted()
         return true;
     }
 
+    Minecraft* minecraft = Minecraft::GetInstance();
     int playerIndex = gProfile->GetPrimaryPad();
-    completed = Minecraft::GetInstance()->mStats[playerIndex]->getTotalValue(mStat) >= mRequiredValue;
+    completed = minecraft->mStats[playerIndex]->getTotalValue(mStat) >= mRequiredValue;
     return completed;
 }

@@ -5,19 +5,25 @@
 #include "game/entity/mob/Entity.hpp"
 
 CombatEntry::CombatEntry(const DamageSource* source, int time, float healthBeforeDamage, float damage, CombatTracker::eLOCATION location, float fallDistance)
-    : mSource(source ? source->GetBaseDamageSource() : NULL), mTime(time), mDamage(damage), mHealthBeforeDamage(healthBeforeDamage),
-      mLocation(location), mFallDistance(fallDistance)
 {
+    mSource = NULL;
+    if (source != NULL)
+        mSource = source->copy();
+    mTime = time;
+    mDamage = damage;
+    mHealthBeforeDamage = healthBeforeDamage;
+    mLocation = location;
+    mFallDistance = fallDistance;
 }
 
 CombatEntry::~CombatEntry()
 {
+    delete mSource;
 }
 
 bool CombatEntry::isCombatRelated()
 {
-    boost::shared_ptr<Entity> entity = mSource->getEntity();
-    return entity && (entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY;
+    return mSource->getEntity() && (mSource->getEntity()->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY;
 }
 
 const DamageSource* CombatEntry::getSource()
@@ -57,11 +63,10 @@ float CombatEntry::getFallDistance()
 
 std::wstring CombatEntry::getAttackerName()
 {
-    boost::shared_ptr<Entity> entity = mSource->getEntity();
-    return entity ? entity->getNetworkName() : L"";
+    return getSource()->getEntity() ? getSource()->getEntity()->getNetworkName() : L"";
 }
 
 boost::shared_ptr<Entity> CombatEntry::getAttacker()
 {
-    return mSource->getEntity();
+    return getSource()->getEntity();
 }

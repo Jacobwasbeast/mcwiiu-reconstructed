@@ -28,6 +28,7 @@ public:
     virtual ModelResourceLocation* getLocation(const BlockState* state);
 
 private:
+    const Property* mNameProperty;
     std::wstring mSuffix;
     std::vector<const Property*> mDeletedProperties;
 };

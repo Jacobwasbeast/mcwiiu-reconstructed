@@ -74,8 +74,9 @@ unsigned int Mule::GetInteractTooltip(const EntityTooltipDataHolder& tooltipData
 
     if (itemId == ItemId::SPAWN_EGG)
     {
-        if (SpawnEggItem::fjGetType(tooltipData.m_pItemInstance) != EntityType::MULE
-            && isLeashedToPlayer(tooltipData.m_pPlayer))
+        if (SpawnEggItem::fjGetType(tooltipData.m_pItemInstance) == EntityType::MULE)
+            return IDS_NONE;
+        if (isLeashedToPlayer(tooltipData.m_pPlayer))
             return IDS_TOOLTIPS_UNLEASH;
         return IDS_NONE;
     }
@@ -119,11 +120,9 @@ unsigned int Mule::GetInteractTooltip(const EntityTooltipDataHolder& tooltipData
         return IDS_NONE;
     }
 
-    bool open = tooltipData.m_pPlayer->isSneaking()
-                && (!isVehicle() || hasPassenger(tooltipData.m_pPlayer)) && isTamed();
-    if (!open && itemId == ItemId::SADDLE && !isSaddled())
-        open = true;
-    if (open)
+    if ((tooltipData.m_pPlayer->isSneaking()
+         && (!isVehicle() || hasPassenger(tooltipData.m_pPlayer)) && isTamed())
+        || (itemId == ItemId::SADDLE && !isSaddled()))
         return IDS_TOOLTIPS_OPEN;
 
     if (itemId == BlockId::CHEST && !hasChest())

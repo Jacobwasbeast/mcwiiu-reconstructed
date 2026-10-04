@@ -446,16 +446,17 @@ void ConsoleUIController::registerSubstitutionTexture(const std::wstring& name, 
 void ConsoleUIController::registerSubstitutionTexture(const std::wstring& name, unsigned char* data,
                                                        unsigned int size, bool deleteData)
 {
-    if (m_substitutionTextures.find(name) == m_substitutionTextures.end()) {
-        m_substitutionTextures[name].referenceCount = 1;
-        m_substitutionTextures[name].data = data;
-        m_substitutionTextures[name].size = size;
-        m_substitutionTextures[name].textureLoaded = false;
-    } else {
+    if (m_substitutionTextures.find(name) != m_substitutionTextures.end()) {
         ++m_substitutionTextures[name].referenceCount;
         if (deleteData)
             delete[] data;
+        return;
     }
+    m_substitutionTextures[name].referenceCount = 1;
+    _TextureDetail& detail = m_substitutionTextures[name];
+    detail.data = data;
+    detail.size = size;
+    m_substitutionTextures[name].textureLoaded = false;
 }
 
 void ConsoleUIController::unregisterSubstitutionTexture(const std::wstring& name, bool deleteData)
@@ -474,14 +475,12 @@ void ConsoleUIController::unregisterSubstitutionTexture(const std::wstring& name
 
 arrayWithLength<unsigned char> ConsoleUIController::getMovieData(const std::wstring& path)
 {
-    unsigned long long now = System::processTimeInMilliSecs();
+    long long now = System::processTimeInMilliSecs();
     boost::unordered_map<std::wstring, _CachedMovieData>::iterator found = m_movieCache.find(path);
     if (found == m_movieCache.end()) {
-        _CachedMovieData cached;
-        cached.data = gApp.getArchiveFile(path, false);
-        cached.expiryTime = now + 60000;
-        m_movieCache[path] = cached;
-        return cached.data;
+        arrayWithLength<unsigned char> data = gApp.getArchiveFile(path, false);
+        m_movieCache[path] = _CachedMovieData(data, now + 60000);
+        return data;
     }
     found->second.expiryTime = now + 60000;
     return found->second.data;
@@ -834,9 +833,9 @@ bool ConsoleUIController::NavigateBack(int playerId, bool closeCurrent, EUIScene
 
 void ConsoleUIController::FixupMenuDisplayedAfterNavigateBack()
 {
-    setFullscreenMenuDisplayed(false);
+    gConsoleUIController.setFullscreenMenuDisplayed(false);
     for (int player = 0; player < 4; ++player)
-        SetMenuDisplayed(player, m_groups[player + 2]->GetMenuDisplayed());
+        gConsoleUIController.SetMenuDisplayed(player, m_groups[player + 2]->GetMenuDisplayed());
 }
 
 UIScene* ConsoleUIController::GetTopScene(int playerId, EUILayer layer, EUIGroup groupId)
@@ -856,9 +855,9 @@ UIScene* ConsoleUIController::GetTopScene(int playerId, EUILayer layer, EUIGroup
 
 unsigned int ConsoleUIController::RegisterForCallbackId(UIScene* scene)
 {
-    unsigned int callbackId = (GetTickCount() & 0x00ffffff) |
-                              ((unsigned int)scene->getSceneType() << 24);
     EnterCriticalSection(&m_callbackMutex);
+    unsigned int tickCount = GetTickCount();
+    unsigned int callbackId = (tickCount & 0x00ffffff) | ((unsigned int)scene->getSceneType() << 24);
     m_callbackScenes[callbackId] = scene;
     LeaveCriticalSection(&m_callbackMutex);
     return callbackId;
@@ -1136,7 +1135,7 @@ void ConsoleUIController::SetSelectedItem(unsigned int playerId, const std::wstr
     if (gApp.GetGameStarted())
         groupId = GetGroup((int)playerId);
     if (m_groups[groupId]->getHUD() != 0)
-        m_groups[groupId]->getHUD()->SetSelectedLabel(itemDescription);
+        m_groups[groupId]->getHUD()->SetSelectedLabel(itemName);
 }
 
 void ConsoleUIController::ResetSelectedItem()
@@ -1271,9 +1270,10 @@ bool ConsoleUIController::IsTutorialVisible(int playerId)
     int groupId = EUIGroup_Fullscreen;
     if (gApp.GetGameStarted())
         groupId = GetGroup(playerId);
+    bool visible = false;
     if (m_groups[groupId]->getTutorialPopup() != 0)
-        return m_groups[groupId]->getTutorialPopup()->IsVisible();
-    return false;
+        visible = m_groups[groupId]->getTutorialPopup()->IsVisible();
+    return visible;
 }
 
 void ConsoleUIController::UpdatePlayerBasePositions()
@@ -1363,12 +1363,10 @@ void ConsoleUIController::ShowAutosaveCountdownTimer(bool show)
 
 void ConsoleUIController::UpdateAutosaveCountdownTimer(unsigned int remainingSecs)
 {
-    UIComponent_PressStartToPlay* component = m_groups[EUIGroup_Fullscreen]->getPressStartToPlay();
-    if (component != 0) {
-        wchar_t text[100];
-        swprintf(text, 100, L10N::GetString(0x2a1b8f34), remainingSecs);
-        component->setTrialTimer(text);
-    }
+    wchar_t text[100];
+    swprintf(text, 100, L10N::GetString(0x2a1b8f34), remainingSecs);
+    if (m_groups[EUIGroup_Fullscreen]->getPressStartToPlay() != 0)
+        m_groups[EUIGroup_Fullscreen]->getPressStartToPlay()->setTrialTimer(text);
 }
 
 void ConsoleUIController::ShowSavingMessage(unsigned int playerId,
@@ -1691,22 +1689,17 @@ void ConsoleUIController::StartReloadSkinThread()
 bool ConsoleUIController::IsReloadingSkin()
 {
     EnterCriticalSection(&m_skinThreadMutex);
-    bool reloading = false;
-    if (m_skinThread != 0 && (!m_skinThread->hasStarted() || m_skinThread->isRunning()))
-        reloading = true;
+    bool reloading = m_skinThread != 0 && (!m_skinThread->hasStarted() || m_skinThread->isRunning());
     LeaveCriticalSection(&m_skinThreadMutex);
     return reloading;
 }
 
 bool ConsoleUIController::IsExpectingOrReloadingSkin()
 {
-    if (Minecraft::GetInstance()->mTexturePackRepository->getSelected()->isLoadingData())
-        return true;
-    if (Minecraft::GetInstance()->mTexturePackRepository->needsUIUpdate())
-        return true;
-    if (IsReloadingSkin())
-        return true;
-    return PendingFontChange();
+    bool expecting = Minecraft::GetInstance()->mTexturePackRepository->getSelected()->isLoadingData() ||
+                     Minecraft::GetInstance()->mTexturePackRepository->needsUIUpdate() ||
+                     IsReloadingSkin() || PendingFontChange();
+    return expecting;
 }
 
 void ConsoleUIController::CleanUpSkinReload()
@@ -1961,13 +1954,12 @@ void ConsoleUIController::tick()
     for (int i = 0; i < 6; ++i)
         m_groups[i]->tick();
     if (!gConsoleUIController.IsReloadingSkin()) {
-        const unsigned long long now = System::processTimeInMilliSecs();
+        const long long now = System::processTimeInMilliSecs();
         for (boost::unordered_map<std::wstring, _CachedMovieData>::iterator it = m_movieCache.begin();
              it != m_movieCache.end();) {
             if (it->second.expiryTime < now) {
                 delete[] it->second.data.data;
-                boost::unordered_map<std::wstring, _CachedMovieData>::iterator expired = it++;
-                m_movieCache.erase(expired);
+                it = m_movieCache.erase(it);
             } else {
                 ++it;
             }
@@ -2328,7 +2320,7 @@ void ConsoleUIController::TouchBoxAdd(UIControl* control, EUIGroup groupId, EUIL
 void ConsoleUIController::PlayUISFX(const SoundEvent* soundEvent)
 {
     unsigned long long now = System::processTimeInMilliSecs();
-    if (now - m_lastUISFXTime > 9)
+    if (!(now - m_lastUISFXTime < 10))
     {
         m_lastUISFXTime = now;
         if (soundEvent == SoundEvents::UI_PRESS)
@@ -2478,10 +2470,10 @@ void ConsoleUIController::NavigateToHomeMenu(bool immediate)
 
 UIScene* ConsoleUIController::FindScene(EUIScene scene)
 {
-    for (int i = 0; i < 6; ++i) {
+    for (int i = 0; i < 5; ++i) {
         UIScene* found = m_groups[i]->FindScene(scene);
         if (found != 0)
             return found;
     }
-    return 0;
+    return m_groups[5]->FindScene(scene);
 }

@@ -14,7 +14,7 @@ public:
 
     static void create(Level* level);
     static void addDataWalkers(DataFixerUpper* fixer);
-    virtual double getEyeHeight();
+    virtual float getEyeHeight();
     virtual void registerAttributes();
     virtual float getWalkTargetValue(const BlockPos& pos);
     virtual ResourceLocation* getDefaultLootTable();

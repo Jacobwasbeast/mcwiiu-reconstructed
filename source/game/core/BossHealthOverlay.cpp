@@ -6,8 +6,9 @@
 #include "game/network/ClientboundBossEventPacket.hpp"
 
 BossHealthOverlay::BossHealthOverlay(Minecraft* minecraft)
-    : GuiComponent(), mMinecraft(minecraft)
+    : GuiComponent()
 {
+    mMinecraft = minecraft;
 }
 
 void BossHealthOverlay::update(boost::shared_ptr<ClientboundBossEventPacket> packet)
@@ -18,7 +19,7 @@ void BossHealthOverlay::update(boost::shared_ptr<ClientboundBossEventPacket> pac
     }
     else if (packet->getOperation() == ClientboundBossEventPacket::REMOVE)
     {
-        boost::unordered_map<std::wstring, LerpingBossEvent*>::iterator iterator =
+        boost::unordered_map<std::wstring, LerpingBossEvent*>::const_iterator iterator =
             mBossEvents.find(packet->getId());
         if (iterator != mBossEvents.end())
         {
@@ -27,7 +28,7 @@ void BossHealthOverlay::update(boost::shared_ptr<ClientboundBossEventPacket> pac
     }
     else
     {
-        boost::unordered_map<std::wstring, LerpingBossEvent*>::iterator iterator =
+        boost::unordered_map<std::wstring, LerpingBossEvent*>::const_iterator iterator =
             mBossEvents.find(packet->getId());
         if (iterator != mBossEvents.end())
         {
@@ -44,38 +45,44 @@ void BossHealthOverlay::reset()
 bool BossHealthOverlay::shouldPlayMusic()
 {
     boost::unordered_map<std::wstring, LerpingBossEvent*>::iterator iterator;
+    bool result = false;
     for (iterator = mBossEvents.begin(); iterator != mBossEvents.end(); ++iterator)
     {
         if (iterator->second->shouldPlayBossMusic())
         {
-            return true;
+            result = true;
+            break;
         }
     }
-    return false;
+    return result;
 }
 
 bool BossHealthOverlay::shouldDarkenScreen()
 {
     boost::unordered_map<std::wstring, LerpingBossEvent*>::iterator iterator;
+    bool result = false;
     for (iterator = mBossEvents.begin(); iterator != mBossEvents.end(); ++iterator)
     {
         if (iterator->second->shouldDarkenScreen())
         {
-            return true;
+            result = true;
+            break;
         }
     }
-    return false;
+    return result;
 }
 
 bool BossHealthOverlay::shouldCreateWorldFog()
 {
     boost::unordered_map<std::wstring, LerpingBossEvent*>::iterator iterator;
+    bool result = false;
     for (iterator = mBossEvents.begin(); iterator != mBossEvents.end(); ++iterator)
     {
         if (iterator->second->shouldCreateWorldFog())
         {
-            return true;
+            result = true;
+            break;
         }
     }
-    return false;
+    return result;
 }

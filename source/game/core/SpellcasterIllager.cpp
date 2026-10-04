@@ -90,20 +90,18 @@ void SpellcasterIllager::tick()
     if (mLevel->mIsClientSide && isCastingSpell())
     {
         const IllagerSpell* spell = getCurrentSpell();
+        double red = spell->mX;
+        double green = spell->mY;
+        double blue = spell->mZ;
         float angle = mYBodyRot * 0.017453292f
                       + Mth::cos((float)mTickCount * 0.6662f) * 0.25f;
         double xOffset = (double)Mth::cos(angle) * 0.6;
         double zOffset = (double)Mth::sin(angle) * 0.6;
         mLevel->addParticle(PARTICLE_MOB_SPELL, mX + xOffset, mY + 1.8, mZ + zOffset,
-                            spell->mX, spell->mY, spell->mZ, arrayWithLength<int>());
+                            red, green, blue, arrayWithLength<int>());
         mLevel->addParticle(PARTICLE_MOB_SPELL, mX - xOffset, mY + 1.8, mZ - zOffset,
-                            spell->mX, spell->mY, spell->mZ, arrayWithLength<int>());
+                            red, green, blue, arrayWithLength<int>());
     }
-}
-
-int SpellcasterIllager::getSpellCastingTime()
-{
-    return mSpellTicks;
 }
 
 SpellcasterIllager::IllagerSpell::IllagerSpell(int id, double x, double y, double z)
@@ -129,8 +127,13 @@ SpellcasterIllager::SpellcasterUseSpellGoal::SpellcasterUseSpellGoal(Spellcaster
 
 bool SpellcasterIllager::SpellcasterUseSpellGoal::canUse()
 {
-    return mSpellcaster->getTarget() != NULL && !mSpellcaster->isCastingSpell()
-        && mNextAttackTickCount <= mSpellcaster->mTickCount;
+    LivingEntity* target = mSpellcaster->getTarget().get();
+    if (target != NULL && !mSpellcaster->isCastingSpell()
+        && mNextAttackTickCount <= mSpellcaster->mTickCount)
+    {
+        return true;
+    }
+    return false;
 }
 
 bool SpellcasterIllager::SpellcasterUseSpellGoal::canContinueToUse()
@@ -147,9 +150,10 @@ bool SpellcasterIllager::SpellcasterUseSpellGoal::canInterrupt()
 void SpellcasterIllager::SpellcasterUseSpellGoal::start()
 {
     mSpellWarmup = getCastWarmupTime();
-    mSpellcaster->mSpellTicks = getCastWarmupTime() + getCastingTime();
+    int castTicks = getCastWarmupTime() + getCastingTime();
+    mSpellcaster->mSpellTicks = castTicks;
     mNextAttackTickCount = mSpellcaster->mTickCount + getCastingInterval();
-    mSpellcaster->getNavigation()->stop();
+    mSpellcaster->mNavigation->stop();
 }
 
 void SpellcasterIllager::SpellcasterUseSpellGoal::stop()
@@ -161,7 +165,7 @@ void SpellcasterIllager::SpellcasterUseSpellGoal::stop()
 
 void SpellcasterIllager::SpellcasterUseSpellGoal::tick()
 {
-    if (mSpellcaster->getTarget() != NULL)
+    if (mSpellcaster->getTarget())
     {
         mSpellcaster->getLookControl()->setLookAt(mSpellcaster->getTarget(),
                                                   (float)mSpellcaster->getMaxHeadYRot(),

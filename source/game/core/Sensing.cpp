@@ -3,8 +3,8 @@
 #include "game/entity/mob/Mob.hpp"
 
 Sensing::Sensing(Mob* mob)
-    : mMob(mob)
 {
+    mMob = mob;
 }
 
 void Sensing::tick()
@@ -29,12 +29,14 @@ bool Sensing::canSee(boost::shared_ptr<Entity> entity)
             return false;
     }
 
-    if (mMob->canSee(entity))
+    bool visible = mMob->canSee(entity);
+    if (visible)
     {
         mSeen.push_back(boost::weak_ptr<Entity>(entity));
-        return true;
     }
-
-    mUnseen.push_back(boost::weak_ptr<Entity>(entity));
-    return false;
+    else
+    {
+        mUnseen.push_back(boost::weak_ptr<Entity>(entity));
+    }
+    return visible;
 }

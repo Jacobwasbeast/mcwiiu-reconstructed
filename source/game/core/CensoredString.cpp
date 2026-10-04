@@ -106,21 +106,17 @@ void CensoredString::set(const std::wstring& value, const std::wstring& uuid, bo
     if (!m_useLocalization)
     {
         _verified(value, false);
-        return;
     }
-    if ((m_flags & 1) != 0 && m_censored == value)
-        return;
-    if (value.empty())
+    else if ((m_flags & 1) <= 0 || m_censored != value)
     {
-        _verified(L"Custom", false);
-        _changed();
-        return;
-    }
-    if (m_pending == value && (m_flags & 1) != 0)
-    {
-        _verified(m_pending, (m_flags & 2) != 0);
-        _changed();
-        return;
+        if (value.empty())
+        {
+            _verified(L"", false);
+        }
+        else if (m_pending == value && (m_flags & 1) > 0)
+        {
+            _verified(m_pending, (m_flags & 2) != 0);
+        }
     }
     _changed();
 }

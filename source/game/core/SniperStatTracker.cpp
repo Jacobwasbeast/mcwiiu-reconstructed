@@ -18,9 +18,6 @@ void SniperStatTracker::update(const DamageEvent* damageEvent)
     if (isTracking(damageEvent->mAttacker)
         && damageEvent->mWeapon.GetItem() == Items::bow)
     {
-        if (mValue < static_cast<double>(damageEvent->mDistance))
-        {
-            mValue = damageEvent->mDistance;
-        }
+        mValue = mValue < damageEvent->mDistance ? damageEvent->mDistance : mValue;
     }
 }

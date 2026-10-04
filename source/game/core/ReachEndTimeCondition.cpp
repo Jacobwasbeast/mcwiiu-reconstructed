@@ -14,16 +14,17 @@ ReachEndTimeCondition::~ReachEndTimeCondition()
 {
 }
 
-double ReachEndTimeCondition::getScore(const GameMedal* medal, PlayerStats* playerStats) const
+float ReachEndTimeCondition::getScore(const GameMedal* medal, PlayerStats* playerStats) const
 {
     if (playerStats == NULL)
     {
-        return FLT_MAX;
+        float worst = FLT_MAX;
+        return worst;
     }
 
     if (mReachedEndOnly)
     {
-        return static_cast<double>(static_cast<float>(static_cast<unsigned int>(playerStats->getBestLifeSpan(!mBestOnly, false))));
+        return static_cast<double>(static_cast<float>(static_cast<unsigned int>(playerStats->getBestLifeSpan(mOperator == GameMedal::OPERATOR_AT_LEAST, false))));
     }
 
     return static_cast<double>(static_cast<float>(static_cast<unsigned int>(playerStats->getTotalLifeSpan())));

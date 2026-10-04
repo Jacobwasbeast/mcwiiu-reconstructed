@@ -62,7 +62,7 @@ int DataInputStream::readUnsignedShort()
     int high = mChildStream->read();
     int low = mChildStream->read();
 
-    return ((high & 0xFF) << 8) | (low & 0xFF);
+    return (unsigned short)((high << 8) | (low & 0xFF));
 }
 
 wchar_t DataInputStream::readChar()
@@ -70,7 +70,7 @@ wchar_t DataInputStream::readChar()
     int high = mChildStream->read();
     int low = mChildStream->read();
 
-    return (wchar_t)(((high & 0xFF) << 8) | (low & 0xFF));
+    return (wchar_t)(unsigned short)((high << 8) | (low & 0xFF));
 }
 
 bool DataInputStream::readFully(arrayWithLength<unsigned char> buffer)
@@ -114,18 +114,26 @@ bool DataInputStream::readBytes(arrayWithLength<unsigned char> buffer)
 
 double DataInputStream::readDouble()
 {
-    long long bits = readLong();
-    double value;
-    std::memcpy(&value, &bits, sizeof(value));
-    return value;
+    union
+    {
+        long long bits;
+        double value;
+    } converter;
+
+    converter.bits = readLong();
+    return converter.value;
 }
 
 float DataInputStream::readFloat()
 {
-    int bits = readInt();
-    float value;
-    std::memcpy(&value, &bits, sizeof(value));
-    return value;
+    union
+    {
+        int bits;
+        float value;
+    } converter;
+
+    converter.bits = readInt();
+    return converter.value;
 }
 
 int DataInputStream::readInt()
@@ -150,9 +158,8 @@ long long DataInputStream::readLong()
     int byte8 = mChildStream->read();
 
     int high = (byte1 << 24) | ((byte2 & 0xFF) << 16) | ((byte3 & 0xFF) << 8) | (byte4 & 0xFF);
-    int low = (byte5 << 24) | ((byte6 & 0xFF) << 16) | ((byte7 & 0xFF) << 8) | (byte8 & 0xFF);
 
-    return ((long long)high << 32) | (long long)(unsigned int)low;
+    return ((long long)high << 32) | ((unsigned long long)(unsigned int)(byte5 & 0xFF) << 24) | ((unsigned long long)(unsigned int)(byte6 & 0xFF) << 16) | ((unsigned long long)(unsigned int)(byte7 & 0xFF) << 8) | (unsigned long long)(unsigned int)(byte8 & 0xFF);
 }
 
 short DataInputStream::readShort()
@@ -170,12 +177,13 @@ std::wstring DataInputStream::readUTF()
     int lengthHigh = mChildStream->read();
     int lengthLow = mChildStream->read();
 
-    unsigned short length = (unsigned short)((lengthHigh << 8) | (lengthLow & 0xFF));
+    unsigned short length = (unsigned short)(((lengthHigh & 0xFF) << 8) | (lengthLow & 0xFF));
     unsigned short count = 0;
 
     while (count < length)
     {
         int byte1 = mChildStream->read();
+        count++;
 
         if (byte1 == -1 || (byte1 & 0xC0) == 0x80 || (byte1 & 0xF0) == 0xF0)
         {
@@ -185,16 +193,16 @@ std::wstring DataInputStream::readUTF()
         if ((byte1 & 0x80) == 0)
         {
             text.push_back((wchar_t)byte1);
-            count++;
         }
         else if ((byte1 & 0xE0) == 0xC0)
         {
-            if (count + 1 >= length)
+            if (count >= length)
             {
                 break;
             }
 
             int byte2 = mChildStream->read();
+            count++;
 
             if (byte2 == -1 || (byte2 & 0xC0) != 0x80)
             {
@@ -202,23 +210,24 @@ std::wstring DataInputStream::readUTF()
             }
 
             text.push_back((wchar_t)(((byte1 & 0x1F) << 6) | (byte2 & 0x3F)));
-            count += 2;
         }
         else if ((byte1 & 0xF0) == 0xE0)
         {
-            if (count + 1 >= length)
+            if (count >= length)
             {
                 break;
             }
 
             int byte2 = mChildStream->read();
+            count++;
 
-            if (byte2 == -1 || count + 2 >= length)
+            if (byte2 == -1 || count >= length)
             {
                 break;
             }
 
             int byte3 = mChildStream->read();
+            count++;
 
             if (byte3 == -1 || (byte2 & 0xC0) != 0x80 || (byte3 & 0xC0) != 0x80)
             {
@@ -226,7 +235,6 @@ std::wstring DataInputStream::readUTF()
             }
 
             text.push_back((wchar_t)(((byte1 & 0x0F) << 12) | ((byte2 & 0x3F) << 6) | (byte3 & 0x3F)));
-            count += 3;
         }
     }
 
@@ -235,50 +243,42 @@ std::wstring DataInputStream::readUTF()
 
 int DataInputStream::readUTFChar()
 {
+    int result = -1;
     int byte1 = mChildStream->read();
 
-    if (byte1 == -1 || (byte1 & 0xC0) == 0x80 || (byte1 & 0xF0) == 0xF0)
+    if (byte1 != -1 && (byte1 & 0xC0) != 0x80 && (byte1 & 0xF0) != 0xF0)
     {
-        return -1;
-    }
+        result = byte1;
 
-    if ((byte1 & 0x80) == 0)
-    {
-        return byte1;
-    }
-
-    if ((byte1 & 0xE0) == 0xC0)
-    {
-        int byte2 = mChildStream->read();
-
-        if (byte2 == -1 || (byte2 & 0xC0) != 0x80)
+        if ((byte1 & 0x80) != 0)
         {
-            return -1;
-        }
+            if ((byte1 & 0xE0) == 0xC0)
+            {
+                int byte2 = mChildStream->read();
 
-        return ((byte1 & 0x1F) << 6) | (byte2 & 0x3F);
+                result = -1;
+
+                if (byte2 != -1 && (byte2 & 0xC0) == 0x80)
+                {
+                    result = ((byte1 & 0x1F) << 6) | (byte2 & 0x3F);
+                }
+            }
+            else
+            {
+                int byte2;
+                int byte3;
+
+                result = -1;
+
+                if ((byte1 & 0xF0) == 0xE0 && (byte2 = mChildStream->read()) != -1 && (byte3 = mChildStream->read()) != -1 && (byte2 & 0xC0) == 0x80 && (byte3 & 0xC0) == 0x80)
+                {
+                    result = ((byte1 & 0x0F) << 12) | ((byte2 & 0x3F) << 6) | (byte3 & 0x3F);
+                }
+            }
+        }
     }
 
-    if ((byte1 & 0xF0) == 0xE0)
-    {
-        int byte2 = mChildStream->read();
-
-        if (byte2 == -1)
-        {
-            return -1;
-        }
-
-        int byte3 = mChildStream->read();
-
-        if (byte3 == -1 || (byte2 & 0xC0) != 0x80 || (byte3 & 0xC0) != 0x80)
-        {
-            return -1;
-        }
-
-        return ((byte1 & 0x0F) << 12) | ((byte2 & 0x3F) << 6) | (byte3 & 0x3F);
-    }
-
-    return -1;
+    return result;
 }
 
 PlayerUID DataInputStream::readPlayerUID()
@@ -345,7 +345,7 @@ int DataInputStream::readVarInt()
 
 long long DataInputStream::readVarLong()
 {
-    unsigned long long value = 0;
+    int value = 0;
     int shift = 0;
     int byteCount = 0;
     unsigned char byteValue;
@@ -355,7 +355,7 @@ long long DataInputStream::readVarLong()
         byteValue = readByte();
         byteCount++;
 
-        value |= (unsigned long long)(byteValue & 0x7F) << shift;
+        value |= (byteValue & 0x7F) << shift;
         shift += 7;
 
         if (byteCount > 10)
@@ -379,7 +379,9 @@ arrayWithLength<int> DataInputStream::readVarIntArray()
         values = arrayWithLength<int>(count, true);
     }
 
-    for (unsigned int index = 0; index < values.length; index++)
+    unsigned int length = values.length;
+
+    for (unsigned int index = 0; index < length; index++)
     {
         values.data[index] = readVarInt();
     }

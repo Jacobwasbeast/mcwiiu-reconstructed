@@ -4,7 +4,7 @@ WinRoundCountCondition::~WinRoundCountCondition()
 {
 }
 
-double WinRoundCountCondition::getScore(const GameMedal* medal, PlayerStats* playerStats) const
+float WinRoundCountCondition::getScore(const GameMedal* medal, PlayerStats* playerStats) const
 {
-    return static_cast<double>(playerStats->getTotalRoundsWon());
+    return static_cast<float>(static_cast<unsigned int>(playerStats->getTotalRoundsWon()));
 }

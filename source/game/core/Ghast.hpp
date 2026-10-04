@@ -93,7 +93,7 @@ public:
     static void addDataWalkers(DataFixerUpper* fixer);
     virtual void addAdditonalSaveData(CompoundTag* tag);
     virtual void readAdditionalSaveData(CompoundTag* tag);
-    virtual double getEyeHeight();
+    virtual float getEyeHeight();
     virtual void tick();
     virtual unsigned long long GetType();
 

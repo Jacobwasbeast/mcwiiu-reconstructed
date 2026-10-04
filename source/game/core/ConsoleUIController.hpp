@@ -61,10 +61,10 @@ public:
     struct _CachedMovieData
     {
         arrayWithLength<unsigned char> data;
-        unsigned long long expiryTime;
+        long long expiryTime;
 
         _CachedMovieData() : expiryTime(0) {}
-        _CachedMovieData(const arrayWithLength<unsigned char>& value, unsigned long long expiry)
+        _CachedMovieData(const arrayWithLength<unsigned char>& value, long long expiry)
             : data(value), expiryTime(expiry) {}
     };
 

@@ -17,7 +17,7 @@ public:
 private:
     double mLastTime;
     double mRotation;
-    int mPlayerIndex;
+    unsigned int mPlayerIndex;
     ClockAtlasSprite* mParent;
 };
 

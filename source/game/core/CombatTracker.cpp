@@ -101,7 +101,7 @@ CombatEntry* CombatTracker::GetKnockoffEntry()
 
 CombatTracker::eLOCATION CombatTracker::getFallLocation(CombatEntry* entry)
 {
-    return entry != 0 ? entry->getLocation() : eLOCATION_NONE;
+    return static_cast<eLOCATION>(entry->getLocation());
 }
 
 boost::shared_ptr<ClientboundChatPacket> CombatTracker::getDeathMessagePacket()
@@ -248,22 +248,22 @@ boost::shared_ptr<LivingEntity> CombatTracker::getKiller()
         const DamageSource* source = entry->getSource();
         if (source != 0 && source->getEntity())
         {
-            if (boost::dynamic_pointer_cast<Player>(source->getEntity()) &&
+            if (eTYPE_DERIVED_FROM(EntityType::PLAYER, entry->getSource()->getEntity()->GetType()) &&
                 (!bestPlayerKiller || entry->getDamage() > bestPlayerDamage))
             {
                 bestPlayerDamage = entry->getDamage();
-                bestPlayerKiller = boost::dynamic_pointer_cast<Player>(source->getEntity());
+                bestPlayerKiller = boost::dynamic_pointer_cast<Player>(entry->getSource()->getEntity());
             }
         }
 
         source = entry->getSource();
         if (source != 0 && source->getEntity())
         {
-            if (boost::dynamic_pointer_cast<LivingEntity>(source->getEntity()) &&
+            if (eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, entry->getSource()->getEntity()->GetType()) &&
                 (!bestLivingKiller || entry->getDamage() > bestLivingDamage))
             {
                 bestLivingDamage = entry->getDamage();
-                bestLivingKiller = boost::dynamic_pointer_cast<LivingEntity>(source->getEntity());
+                bestLivingKiller = boost::dynamic_pointer_cast<LivingEntity>(entry->getSource()->getEntity());
             }
         }
     }
@@ -277,7 +277,7 @@ int CombatTracker::getCombatDuration()
 {
     if (!mInCombat)
         return mCombatEndTime - mCombatStartTime;
-    return mMob != 0 ? mMob->mTickCount - mCombatStartTime : 0;
+    return mMob->mTickCount - mCombatStartTime;
 }
 
 LivingEntity* CombatTracker::getMob()

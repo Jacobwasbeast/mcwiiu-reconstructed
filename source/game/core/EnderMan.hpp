@@ -84,7 +84,7 @@ public:
     void setCarryingBlock(const BlockState* state);
     virtual void readAdditionalSaveData(CompoundTag* tag);
     bool isLookingAtMe(boost::shared_ptr<Player> player);
-    virtual double getEyeHeight();
+    virtual float getEyeHeight();
     virtual void aiStep();
     bool teleport(double x, double y, double z);
     bool teleport();

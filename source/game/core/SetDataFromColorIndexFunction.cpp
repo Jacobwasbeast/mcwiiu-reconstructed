@@ -19,10 +19,9 @@ not_null_ptr<ItemInstance> SetDataFromColorIndexFunction::apply(const not_null_p
 {
     if (!itemInstance->isDamageableItem())
     {
-        boost::shared_ptr<Entity> entity = context.mThisEntity.lock();
-        if (entity->GetType() == EntityType::SHEEP)
+        if (context.mThisEntity.lock()->GetType() == EntityType::SHEEP)
         {
-            boost::shared_ptr<Sheep> sheep = boost::static_pointer_cast<Sheep>(entity);
+            boost::shared_ptr<Sheep> sheep = boost::static_pointer_cast<Sheep>(context.mThisEntity.lock());
 
             itemInstance->setAuxValue(sheep->getColor()->getBlockData());
 

@@ -52,24 +52,22 @@ bool AreaConstraint::isConstraintSatisfied(int playerId)
         withinVertically = false;
     }
 
+    bool satisfied = false;
+
     if (constrainHorizontally)
     {
-        if (withinHorizontally != insideArea)
+        if (withinHorizontally == insideArea &&
+            (!constrainVertically || withinVertically == insideArea))
         {
-            return false;
-        }
-
-        if (!constrainVertically)
-        {
-            return true;
+            satisfied = true;
         }
     }
-    else if (!constrainVertically)
+    else if (constrainVertically && withinVertically == insideArea)
     {
-        return false;
+        satisfied = true;
     }
 
-    return withinVertically == insideArea;
+    return satisfied;
 }
 
 bool AreaConstraint::isConstraintRestrictive(int playerId)
@@ -144,30 +142,69 @@ int AreaConstraint::canMoveToPosition(double oldX, double oldY, double oldZ, dou
 
         if (blockedY && !withinY)
         {
-            clampedPosition->y = newPos->y < area->mMaxY ? area->mMinY : area->mMaxY;
+            if (newPos->y < area->mMaxY)
+        {
+            clampedPosition->y = area->mMinY;
+        }
+        else
+        {
+            clampedPosition->y = area->mMaxY;
+        }
         }
 
         if (blockedZ && !withinZ)
         {
-            clampedPosition->z = newPos->z < area->mMaxZ ? area->mMinZ : area->mMaxZ;
+            if (newPos->z < area->mMaxZ)
+        {
+            clampedPosition->z = area->mMinZ;
+        }
+        else
+        {
+            clampedPosition->z = area->mMaxZ;
+        }
         }
     }
 
-    int blockedAxes = 0;
+    int blockedAxes;
 
     if (blockedX)
     {
-        blockedAxes |= 1;
-    }
+        if (blockedY)
+        {
+            blockedAxes = 3;
 
-    if (blockedY)
-    {
-        blockedAxes |= 2;
-    }
+            if (blockedZ)
+            {
+                blockedAxes = 7;
+            }
+        }
+        else
+        {
+            blockedAxes = 1;
 
-    if (blockedZ)
+            if (blockedZ)
+            {
+                blockedAxes = 5;
+            }
+        }
+    }
+    else if (blockedY)
     {
-        blockedAxes |= 4;
+        blockedAxes = 2;
+
+        if (blockedZ)
+        {
+            blockedAxes = 6;
+        }
+    }
+    else
+    {
+        blockedAxes = 0;
+
+        if (blockedZ)
+        {
+            blockedAxes = 4;
+        }
     }
 
     return blockedAxes;

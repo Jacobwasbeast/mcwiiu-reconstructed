@@ -29,6 +29,7 @@ public:
             bool bValue;
             int iValue;
             long long lValue;
+            double dValue;
             GameRule* pGameRule;
         };
 

@@ -40,89 +40,49 @@ unsigned int cCommerce::PurchaseDLCByIndex(unsigned int index, int contentType)
 
 bool cCommerce::OwnsBundleContainingPack(unsigned int packId)
 {
-    DLCPack* pack = NULL;
+    int bundleId;
 
-    if (packId < 0x409)
+    switch (packId)
     {
-        if (packId < 0x21e)
-        {
-            if (packId != 0x206)
-            {
-                if (packId == 0x214 || packId == 0x219)
-                {
-                    pack = gApp.mDLCManager.getPackFromPackID(0x1197);
-                }
-                else if (packId == 0x21a)
-                {
-                    pack = gApp.mDLCManager.getPackFromPackID(0x1195);
-                }
-                else
-                {
-                    return false;
-                }
-            }
-            else
-            {
-                pack = gApp.mDLCManager.getPackFromPackID(0x1196);
-            }
-        }
-        else if (packId == 0x21e)
-        {
-            pack = gApp.mDLCManager.getPackFromPackID(0x1194);
-        }
-        else if (packId == 0x22b)
-        {
-            pack = gApp.mDLCManager.getPackFromPackID(0x1010);
-        }
-        else if (packId == 0x405)
-        {
-            pack = gApp.mDLCManager.getPackFromPackID(0x1196);
-        }
-        else if (packId == 0x407)
-        {
-            pack = gApp.mDLCManager.getPackFromPackID(0x1195);
-        }
-        else
-        {
-            return false;
-        }
-    }
-    else if (packId < 0x1002)
-    {
-        if (packId == 0x409)
-        {
-            pack = gApp.mDLCManager.getPackFromPackID(0x1194);
-        }
-        else if (packId >= 0x801 && (packId == 0x801 || packId == 0x802 || packId == 0x807 || packId == 0x809))
-        {
-            pack = gApp.mDLCManager.getPackFromPackID(0x1195);
-        }
-        else
-        {
-            return false;
-        }
-    }
-    else if (packId < 0x1006)
-    {
-        pack = gApp.mDLCManager.getPackFromPackID(0x1006);
-    }
-    else if (packId == 0x100b)
-    {
-        pack = gApp.mDLCManager.getPackFromPackID(0x1194);
-    }
-    else if (packId == 0x100c)
-    {
-        pack = gApp.mDLCManager.getPackFromPackID(0x1196);
-    }
-    else if (packId >= 0x1011 && packId <= 0x1013)
-    {
-        pack = gApp.mDLCManager.getPackFromPackID(0x1010);
-    }
-    else
-    {
+    case 0x206:
+    case 0x405:
+    case 0x100c:
+        bundleId = 0x1196;
+        break;
+    case 0x214:
+    case 0x219:
+        bundleId = 0x1197;
+        break;
+    case 0x21a:
+    case 0x407:
+    case 0x801:
+    case 0x802:
+    case 0x807:
+    case 0x809:
+        bundleId = 0x1195;
+        break;
+    case 0x21e:
+    case 0x409:
+    case 0x100b:
+        bundleId = 0x1194;
+        break;
+    case 0x22b:
+    case 0x1011:
+    case 0x1012:
+    case 0x1013:
+        bundleId = 0x1010;
+        break;
+    case 0x1002:
+    case 0x1003:
+    case 0x1004:
+    case 0x1005:
+        bundleId = 0x1006;
+        break;
+    default:
         return false;
     }
 
+    DLCPack* pack = gApp.mDLCManager.getPackFromPackID(bundleId);
     return pack != NULL && pack->hasPurchasedPack();
 }
 

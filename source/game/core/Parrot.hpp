@@ -63,7 +63,7 @@ public:
     virtual void registerGoals();
     virtual void registerAttributes();
     virtual PathNavigation* createNavigation(Level* level);
-    virtual double getEyeHeight();
+    virtual float getEyeHeight();
     void calculateFlapping();
     virtual void aiStep();
     void setRecordPlayingNearby(const BlockPos& pos, bool playing);

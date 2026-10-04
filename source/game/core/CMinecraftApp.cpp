@@ -30,6 +30,7 @@
 #include "game/core/L10N.hpp"
 #include "game/client/audio/ConsoleSoundEngine.hpp"
 #include "game/client/audio/SoundEngine.hpp"
+#include "game/client/render/DLCTexturePack.hpp"
 #include "game/client/render/TexturePack.hpp"
 #include "game/client/render/TexturePackRepository.hpp"
 #include "game/minigame/MiniGameDef.hpp"
@@ -107,7 +108,6 @@
 static boost::unordered_map<PlayerUID, MOJANG_DATA*> g_mojangData;
 unsigned int CMinecraftApp::sPreviousSignInUsersMask = 0;
 CConsoleMinecraftApp gApp;
-CMinecraftApp* g_pApp = &gApp;
 static Random* sTipRandom = new Random();
 static bool s_pendingDlcInstallTip = true;
 static const unsigned int PNG_CHUNK_TYPE_TEXT = 0x74455874U;
@@ -212,7 +212,7 @@ struct InviteJoinData
 {
     int userIndex;
     unsigned int userIndexMask;
-    const FriendPresence* presence;
+    const nn::fp::FriendPresence* presence;
 };
 
 bool sRetryDisconnectAction = false;
@@ -267,7 +267,7 @@ static TIPSTRUCT sMiniGameTipsOther[] = {
 uint32_t DeviceFullErrorReturn(void* context)
 {
     (void)context;
-    uint32_t optionsCallbackStatus = g_pApp->GetOptionsCallbackStatus(0);
+    uint32_t optionsCallbackStatus = gApp.GetOptionsCallbackStatus(0);
     if ((optionsCallbackStatus == 4 || optionsCallbackStatus == 6) &&
         GameSettings::GetGameSettings(0, eGameSetting_EULAAccepted) != 0)
     {
@@ -537,18 +537,16 @@ arrayWithLength<unsigned char> CMinecraftApp::getArchiveFile(const std::wstring&
 }
 bool CMinecraftApp::hasArchiveFile(const std::wstring& path, bool ignoreTexturePack)
 {
-    if (ignoreTexturePack == 0)
-    {
-        Minecraft* minecraft = Minecraft::GetInstance();
-        if (minecraft != 0 && minecraft->mTexturePackRepository != 0)
-        {
-            TexturePack* selected = minecraft->mTexturePackRepository->getSelected();
-            if (selected != 0 && selected->getArchiveFile() != 0 &&
-                selected->getArchiveFile()->hasFile(path))
-                return true;
-        }
-    }
-    return mMediaArchive != 0 && mMediaArchive->hasFile(path);
+    TexturePack* selected = 0;
+    Minecraft* minecraft = Minecraft::GetInstance();
+    if (minecraft != 0 && minecraft->mTexturePackRepository != 0)
+        selected = minecraft->mTexturePackRepository->getSelected();
+
+    if (ignoreTexturePack == 0 && selected != 0 && selected->hasData() && selected->getArchiveFile() != 0 &&
+        selected->getArchiveFile()->hasFile(path))
+        return true;
+
+    return mMediaArchive->hasFile(path);
 }
 void CMinecraftApp::InitTime()
 {
@@ -1040,78 +1038,58 @@ int CMinecraftApp::SignoutExitWorldThreadProc(void* context)
     Compression::UseDefaultThreadStorage();
 
     Minecraft* minecraft = Minecraft::GetInstance();
-    int dimension = -1;
-    const bool isClient = minecraft->isClientSide();
-    const bool inSession = CGameNetworkManager::sInstance.IsInSession();
+    int exitReasonStringId = -1;
 
-    if (!isClient && !inSession)
+    if (!minecraft->isClientSide() && !CGameNetworkManager::sInstance.IsInSession())
     {
-        if (context == NULL)
-            goto waitForSessionEnd;
-
-        int message = IDS_DISCONNECTED;
-        switch (g_pApp->GetDisconnectReason())
+        if (context != NULL)
         {
-        case 8: message = IDS_DISCONNECTED_KICKED; break;
-        case 0xe: message = IDS_DISCONNECTED_SERVER_OLD; break;
-        case 0xf: message = IDS_DISCONNECTED_CLIENT_OLD; break;
-        case 0x14: message = 0xfb7f0496; break;
-        case 0x15: message = 0x4d669d55; break;
+            switch (gApp.GetDisconnectReason())
+            {
+            case 8: exitReasonStringId = IDS_DISCONNECTED_KICKED; break;
+            case 0xe: exitReasonStringId = IDS_DISCONNECTED_SERVER_OLD; break;
+            case 0xf: exitReasonStringId = IDS_DISCONNECTED_CLIENT_OLD; break;
+            case 0x14: exitReasonStringId = 0xfb7f0496; break;
+            case 0x15: exitReasonStringId = 0x4d669d55; break;
+            default: exitReasonStringId = IDS_DISCONNECTED; break;
+            }
+            minecraft->mProgressRenderer->progressStartNoAbort(exitReasonStringId);
         }
-        if (minecraft->mGui != NULL)
-            minecraft->mGui->displayClientMessage(message, 0);
-
-        if (!CGameNetworkManager::sInstance.IsInSession())
-            goto waitForSessionEnd;
     }
     else
     {
         if (context == NULL)
         {
-            if (minecraft->mGui != NULL)
-                minecraft->mGui->displayClientMessage(IDS_EXITING_GAME, 0);
-
-            for (int playerIndex = 0; playerIndex < 2; ++playerIndex)
-            {
-                boost::shared_ptr<MultiplayerLocalPlayer>& localPlayer = minecraft->mLocalPlayers[playerIndex];
-                if (localPlayer)
-                    localPlayer->SetWaitingForScoreboard(true);
-            }
+            exitReasonStringId = IDS_EXITING_GAME;
+            minecraft->mProgressRenderer->progressStartNoAbort(exitReasonStringId);
+            if (minecraft->mLevels[0] != NULL)
+                minecraft->mLevels[0]->disconnect(true);
+            if (minecraft->mLevels[1] != NULL)
+                minecraft->mLevels[1]->disconnect(true);
         }
         else
         {
-            int message = IDS_DISCONNECTED;
-            switch (g_pApp->GetDisconnectReason())
+            switch (gApp.GetDisconnectReason())
             {
-            case 7: message = IDS_DISCONNECTED_FLYING; break;
-            case 8: message = IDS_DISCONNECTED_KICKED; break;
-            case 0xe: message = IDS_DISCONNECTED_SERVER_OLD; break;
-            case 0xf: message = IDS_DISCONNECTED_CLIENT_OLD; break;
-            case 0x14: message = 0xfb7f0496; break;
-            case 0x15: message = 0x4d669d55; break;
+            case 7: exitReasonStringId = IDS_DISCONNECTED_FLYING; break;
+            case 8: exitReasonStringId = IDS_DISCONNECTED_KICKED; break;
+            case 0xe: exitReasonStringId = IDS_DISCONNECTED_SERVER_OLD; break;
+            case 0xf: exitReasonStringId = IDS_DISCONNECTED_CLIENT_OLD; break;
+            case 0x14: exitReasonStringId = 0xfb7f0496; break;
+            case 0x15: exitReasonStringId = 0x4d669d55; break;
+            default: exitReasonStringId = IDS_DISCONNECTED; break;
             }
-            if (minecraft->mGui != NULL)
-                minecraft->mGui->displayClientMessage(message, 0);
-
-            boost::shared_ptr<MultiplayerLocalPlayer>& firstPlayer = minecraft->mLocalPlayers[0];
-            if (firstPlayer)
-                firstPlayer->SetWaitingForScoreboard(false);
-
-            boost::shared_ptr<MultiplayerLocalPlayer>& secondPlayer = minecraft->mLocalPlayers[1];
-            if (secondPlayer)
-            {
-                secondPlayer->SetWaitingForScoreboard(false);
-                MinecraftServer::HaltServer(true);
-                CGameNetworkManager::sInstance.LeaveGame(false);
-                goto waitForSessionEnd;
-            }
+            minecraft->mProgressRenderer->progressStartNoAbort(exitReasonStringId);
+            if (minecraft->mLevels[0] != NULL)
+                minecraft->mLevels[0]->disconnect(false);
+            if (minecraft->mLevels[1] != NULL)
+                minecraft->mLevels[1]->disconnect(false);
         }
 
         MinecraftServer::HaltServer(true);
         CGameNetworkManager::sInstance.LeaveGame(false);
     }
 
-waitForSessionEnd:
     while (CGameNetworkManager::sInstance.IsInSession())
         Sleep(1);
 
@@ -1119,8 +1097,10 @@ waitForSessionEnd:
         Sleep(1);
 
     boost::shared_ptr<Player> emptyPlayer;
-    minecraft->setLevel(NULL, dimension, emptyPlayer, false, true);
+    minecraft->setLevel(NULL, exitReasonStringId, emptyPlayer, false, true);
     gApp.mGameRuleManager.unloadCurrentGameRules();
+    MinecraftServer::s_haltRequested = false;
+    MinecraftServer::s_saveOnExitAnswered = false;
     return 0;
 }
 int CMinecraftApp::TrialOverReturned(void* context, int pad, C4JStorage::EMessageResult result)
@@ -1198,7 +1178,7 @@ int CMinecraftApp::ExitAndJoinFromInviteDeclineSaveReturned(void* context, int p
     {
         if (gMinecraftServer != NULL)
             gMinecraftServer->saveOnExit = false;
-        g_pApp->SetAction(pad, eXuiAction_ExitAndJoinFromInvite, NULL);
+        gApp.SetAction(pad, eXuiAction_ExitAndJoinFromInvite, NULL);
     }
     return 0;
 }
@@ -1299,20 +1279,20 @@ int CMinecraftApp::RemoteSaveThreadProc(void* context)
     progressRenderer->progressStage(-1);
     progressRenderer->progressStagePercentage(0);
 
-    while (g_pApp->GetGameStarted() == 0)
+    while (gApp.GetGameStarted() == 0)
     {
         const int player = gProfile->GetPrimaryPad();
-        if (g_pApp->GetXuiAction(player) != eXuiAction_RemoteSaveInProgress)
+        if (gApp.GetXuiAction(player) != eXuiAction_RemoteSaveInProgress)
             break;
         minecraft->tickAllConnections();
         Sleep(100);
     }
 
     const int player = gProfile->GetPrimaryPad();
-    if (g_pApp->GetXuiAction(player) != eXuiAction_RemoteSaveInProgress)
+    if (gApp.GetXuiAction(player) != eXuiAction_RemoteSaveInProgress)
         return ERROR_CANCELLED;
 
-    g_pApp->SetAction(player, eXuiAction_Idle, NULL);
+    gApp.SetAction(player, eXuiAction_Idle, NULL);
     gConsoleUIController.UpdatePlayerBasePositions();
     Block::ReleaseThreadStorage();
     ElementStorage::ReleaseThreadStorage();
@@ -1521,7 +1501,7 @@ int CMinecraftApp::GameModeTransitionThreadProc(void* context)
     delete params;
 
     Minecraft* minecraft = Minecraft::GetInstance();
-    g_pApp->SetGameStarted(false);
+    gApp.SetGameStarted(false);
     minecraft->mGameRenderer->DisableUpdateThread(3);
 
     AABB::UseDefaultThreadStorage();
@@ -1532,8 +1512,7 @@ int CMinecraftApp::GameModeTransitionThreadProc(void* context)
     FireworksRecipe::UseDefaultThreadStorage();
     ElementStorage::CreateNewThreadStorage(ElementStorage::eHESThreadId_GameModeTransition);
 
-    ClientMasterGameMode* masterGameMode = minecraft->GetClientMasterGameMode();
-    std::wstring transitionOverride = masterGameMode->GetTransitionTextOverride();
+    std::wstring transitionOverride = Minecraft::GetInstance()->GetClientMasterGameMode()->GetTransitionTextOverride();
 
     std::vector<std::wstring> progressStrings;
     if (!transitionOverride.empty())
@@ -1549,30 +1528,29 @@ int CMinecraftApp::GameModeTransitionThreadProc(void* context)
     Sleep(100);
     progressRenderer->progressStagePercentage(10);
 
-    TexturePackRepository* texturePackRepository = minecraft->mTexturePackRepository;
-    TexturePack* previousPack = texturePackRepository->getSelected();
-    TexturePack* previousPackWithData = NULL;
-    if (previousPack != NULL && previousPack->hasData())
-        previousPackWithData = previousPack;
+    TexturePack* previousPack = Minecraft::GetInstance()->mTexturePackRepository->getSelected();
+    TexturePack* previousPackWithAudio = NULL;
+    if (previousPack->hasAudio())
+        previousPackWithAudio = previousPack;
 
     progressRenderer->progressStagePercentage(20);
 
-    if (texturePackRepository->selectTexturePackById(texturePackId, false))
+    if (minecraft->mTexturePackRepository->selectTexturePackById(texturePackId, false))
     {
         SetupMiniGameMusic();
-        if (previousPackWithData != NULL)
+        if (previousPack->hasAudio())
         {
-            previousPackWithData->loadData();
-            if (gStorage != NULL)
-                gStorage->UnmountInstalledDLC("TPACK");
+            previousPackWithAudio->unloadAudio();
+            gStorage->UnmountInstalledDLC("TPACK");
         }
-        else if (previousPack != TexturePackRepository::defaultTexturePack)
+        else if (previousPack != Minecraft::GetInstance()->mTexturePackRepository->defaultTexturePack)
         {
-            if (gStorage != NULL)
-                gStorage->UnmountInstalledDLC("TPACK");
+            gStorage->UnmountInstalledDLC("TPACK");
         }
     }
 
+    progressRenderer->progressStagePercentage(30);
+    ClientMasterGameMode* masterGameMode = minecraft->GetClientMasterGameMode();
     int progress = 30;
     int progressAccumulator = 0;
     bool exitWaitLoop = false;
@@ -1610,8 +1588,8 @@ int CMinecraftApp::GameModeTransitionThreadProc(void* context)
                 if (!masterGameMode->IsRoundStarting() &&
                     !masterGameMode->ServerIsWaitingOnUsLoading())
                 {
-                    if (!g_pApp->IsActionPending(0, eXuiAction_ExitWorld) &&
-                        (!g_pApp->IsActionPending(0, eXuiAction_ConnectionLost) ||
+                    if (!gApp.IsActionPending(0, eXuiAction_ExitWorld) &&
+                        (!gApp.IsActionPending(0, eXuiAction_ConnectionLost) ||
                          CGameNetworkManager::sInstance.IsLocalGame()))
                     {
                         break;
@@ -1666,13 +1644,13 @@ complete_transition:
         !CGameNetworkManager::sInstance.IsLeavingGame() &&
         setGameStartedWhenReady)
     {
-        g_pApp->SetGameStarted(true);
+        gApp.SetGameStarted(true);
     }
 
     minecraft->mGameRenderer->EnableUpdateThread(3);
-    g_pApp->SetAction(gProfile->GetPrimaryPad(), eXuiAction_Idle, NULL);
+    gApp.SetAction(gProfile->GetPrimaryPad(), eXuiAction_Idle, NULL);
 
-    if (g_pApp->GetGameStarted() == 0 || !waitForRoundStart)
+    if (gApp.GetGameStarted() == 0 || !waitForRoundStart)
         goto cleanup;
 
     for (;;)
@@ -1684,11 +1662,11 @@ complete_transition:
         }
         Sleep(100);
         if (masterGameMode->IsRoundStarting() ||
-            g_pApp->IsActionPending(0, eXuiAction_ExitWorld))
+            gApp.IsActionPending(0, eXuiAction_ExitWorld))
         {
             goto cleanup;
         }
-        if (g_pApp->IsActionPending(0, eXuiAction_ConnectionLost) &&
+        if (gApp.IsActionPending(0, eXuiAction_ConnectionLost) &&
             !CGameNetworkManager::sInstance.IsLocalGame())
         {
             Block::ReleaseThreadStorage();
@@ -1966,8 +1944,8 @@ int CMinecraftApp::DLCInstalledCallback(void* context, int result, int index)
 {
     if (result != -1)
     {
-        g_pApp->mDLCInstallCount = static_cast<unsigned int>(result);
-        g_pApp->MountNextDLC(index);
+        gApp.mDLCInstallCount = static_cast<unsigned int>(result);
+        gApp.MountNextDLC(index);
     }
     return 0;
 }
@@ -2439,12 +2417,11 @@ bool CMinecraftApp::IsConsoleChatCensored()
 }
 uint32_t CMinecraftApp::IsUUIDLocal(const std::wstring& uuid)
 {
-    Minecraft* minecraft = Minecraft::GetInstance();
     for (int playerIndex = 0; playerIndex < 4; ++playerIndex)
     {
-        const boost::shared_ptr<MultiplayerLocalPlayer>& localPlayer =
-            minecraft->mLocalPlayers[playerIndex];
-        if (localPlayer && localPlayer->getStringUUID() == uuid)
+        boost::shared_ptr<MultiplayerLocalPlayer> localPlayer =
+            Minecraft::GetInstance()->mLocalPlayers[playerIndex];
+        if (localPlayer && localPlayer->getUUID() == uuid)
             return 1;
     }
     return 0;
@@ -2741,7 +2718,7 @@ uint64_t CMinecraftApp::getArchiveFileSize(const std::wstring& path)
     if (minecraft != NULL && minecraft->mTexturePackRepository != NULL)
     {
         TexturePack* selected = minecraft->mTexturePackRepository->getSelected();
-        if (selected != NULL && selected->hasValidData())
+        if (selected != NULL && selected->hasData())
         {
             ArchiveFile* archive = selected->getArchiveFile();
             if (archive != NULL && archive->hasFile(path))
@@ -2774,9 +2751,9 @@ uint32_t CMinecraftApp::WarningTrialTexturePackReturned(void* context, int pad, 
         }
         else
         {
-            DLCPack* pack = Minecraft::GetInstance()->mTexturePackRepository->getSelected()->getDLCPack();
-            unsigned int packId = pack->GetPackId();
-            if (!gApp.GetCommerceInstance()->OwnsBundleContainingPack(packId))
+            DLCTexturePack* texturePack = static_cast<DLCTexturePack*>(Minecraft::GetInstance()->mTexturePackRepository->getSelected());
+            DLCPack* pack = texturePack->getDLCInfoParentPack();
+            if (!gApp.GetCommerceInstance()->PurchaseDLCByPackID(pack->GetPackId()))
             {
                 int parameter = static_cast<int>(IDS_CONFIRM_OK);
                 gConsoleUIController.RequestErrorMessage(
@@ -3713,38 +3690,27 @@ void CMinecraftApp::SetAdditionalSkinBoxes(unsigned int skinId, SKIN_BOX* boxes,
 {
     const EPlayerModelType modelType = static_cast<EPlayerModelType>(
         Player::GetModelTypeFromAnimBitmask(adjustments.mAnimFlags));
-    Minecraft* minecraft = Minecraft::GetInstance();
-    PlayerModel* model = NULL;
-    if (minecraft != NULL)
-    {
-        EntityRenderDispatcher* dispatcher = minecraft->getEntityRenderDispatcher();
-        if (dispatcher != NULL)
-        {
-            PlayerRenderer* renderer = dispatcher->getPlayerRenderer(modelType);
-            if (renderer != NULL)
-                model = renderer->getModel();
-        }
-    }
+    PlayerModel* model = static_cast<PlayerModel*>(Minecraft::GetInstance()->getEntityRenderDispatcher()->getPlayerRenderer(modelType)->getModel());
 
     std::vector<ModelPart*>* modelParts = new std::vector<ModelPart*>();
     std::vector<SKIN_BOX*>* skinBoxes = new std::vector<SKIN_BOX*>();
 
-    if (model != NULL && count != 0)
+    EnterCriticalSection(&mAdditionalModelPartsMutex);
+    EnterCriticalSection(&mAdditionalSkinBoxesMutex);
+    if (count != 0)
     {
         for (unsigned int index = 0; index < count; ++index)
         {
-            SKIN_BOX* box = boxes + index;
-            model->SetSkinAdjustments(adjustments);
-            ModelPart* part = model->AddOrRetrievePart(box, skinId);
-            modelParts->push_back(part);
-            skinBoxes->push_back(box);
+            if (model != NULL)
+            {
+                model->SetSkinAdjustments(adjustments);
+                modelParts->push_back(model->AddOrRetrievePart(&boxes[index], skinId));
+                skinBoxes->push_back(&boxes[index]);
+            }
         }
     }
-
-    EnterCriticalSection(&mAdditionalModelPartsMutex);
-    EnterCriticalSection(&mAdditionalSkinBoxesMutex);
-    mAdditionalModelParts[skinId] = modelParts;
-    mAdditionalSkinBoxes[skinId] = skinBoxes;
+    mAdditionalModelParts.insert(std::make_pair(skinId, modelParts));
+    mAdditionalSkinBoxes.insert(std::make_pair(skinId, skinBoxes));
     LeaveCriticalSection(&mAdditionalSkinBoxesMutex);
     LeaveCriticalSection(&mAdditionalModelPartsMutex);
 }
@@ -3752,7 +3718,7 @@ std::vector<ModelPart*>* CMinecraftApp::SetAdditionalSkinBoxes(unsigned int skin
 {
     const EPlayerModelType modelType = static_cast<EPlayerModelType>(
         Player::GetModelTypeFromAnimBitmask(adjustments.mAnimFlags));
-    PlayerModel* model = Minecraft::GetInstance()->getEntityRenderDispatcher()->getPlayerRenderer(modelType)->getModel();
+    PlayerModel* model = static_cast<PlayerModel*>(Minecraft::GetInstance()->getEntityRenderDispatcher()->getPlayerRenderer(modelType)->getModel());
     std::vector<ModelPart*>* modelParts = new std::vector<ModelPart*>();
 
     EnterCriticalSection(&mAdditionalModelPartsMutex);

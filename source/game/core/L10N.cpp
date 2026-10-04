@@ -17,13 +17,15 @@ const wchar_t* L10N::GetString(int id)
 void L10N::loadStringTable()
 {
     delete g_stringTable;
-    g_stringTable = NULL;
-
     std::wstring path = L"languages.loc";
     if (gApp.hasArchiveFile(path, true))
     {
         arrayWithLength<unsigned char> data = gApp.getArchiveFile(path, true);
         g_stringTable = new StringTable(data, false, false);
         delete[] data.data;
+    }
+    else
+    {
+        g_stringTable = NULL;
     }
 }

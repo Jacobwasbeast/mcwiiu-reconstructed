@@ -91,41 +91,6 @@ const Options::Option* Options::Option::renderClouds = &::items[15];
 const Options::Option* Options::Option::particles = &::items[16];
 const Options::Option* Options::Option::autoJump = &::items[17];
 
-Options::Option::Option(const std::wstring& captionId, bool progress, bool boolean)
-    : mProgress(progress), mBoolean(boolean)
-{
-    mCaptionId.assign(captionId, 0, 0xffffffff);
-}
-
-Options::Option::~Option()
-{
-}
-
-std::wstring Options::Option::getCaptionId() const
-{
-    return mCaptionId;
-}
-
-bool Options::Option::isProgress() const
-{
-    return mProgress;
-}
-
-bool Options::Option::isBoolean() const
-{
-    return mBoolean;
-}
-
-Options::Option* Options::Option::getItem(int id)
-{
-    return &::items[id];
-}
-
-int Options::Option::getId() const
-{
-    return static_cast<int>(this - ::items);
-}
-
 Options::Options(Minecraft* minecraft, File directory)
 {
     init();
@@ -147,7 +112,6 @@ void Options::init()
     mFancyGraphics = true;
     mAmbientOcclusion = true;
     mClouds = true;
-    mAutoJump = true;
     mSkin = L"Default";
 
     mKeyForward = new KeyMapping(L"key.forward", 22);
@@ -165,17 +129,17 @@ void Options::init()
     mKeyPickItem = new KeyMapping(L"key.pickItem", -98);
     mKeyFog = new KeyMapping(L"key.fog", 5);
 
-    mKeyMappings[0] = mKeyForward;
-    mKeyMappings[1] = mKeyLeft;
-    mKeyMappings[2] = mKeyBack;
-    mKeyMappings[3] = mKeyRight;
-    mKeyMappings[4] = mKeyJump;
-    mKeyMappings[5] = mKeyInventory;
-    mKeyMappings[6] = mKeyDrop;
-    mKeyMappings[7] = mKeyChat;
-    mKeyMappings[8] = mKeySneak;
-    mKeyMappings[9] = mKeyAttack;
-    mKeyMappings[10] = mKeyUse;
+    mKeyMappings[0] = mKeyAttack;
+    mKeyMappings[1] = mKeyUse;
+    mKeyMappings[2] = mKeyForward;
+    mKeyMappings[3] = mKeyLeft;
+    mKeyMappings[4] = mKeyBack;
+    mKeyMappings[5] = mKeyRight;
+    mKeyMappings[6] = mKeyJump;
+    mKeyMappings[7] = mKeySneak;
+    mKeyMappings[8] = mKeyDrop;
+    mKeyMappings[9] = mKeyInventory;
+    mKeyMappings[10] = mKeyChat;
     mKeyMappings[11] = mKeyPlayerList;
     mKeyMappings[12] = mKeyPickItem;
     mKeyMappings[13] = mKeyFog;
@@ -191,6 +155,7 @@ void Options::init()
     mScrollHotbar = false;
     mUnknownFlag4 = false;
     mUnknownFlag5 = false;
+    mAutoJump = true;
     mHotbarScroll = 1.0f;
     mUnknownScale2 = 1.0f;
     mGuiScale = 0;
@@ -220,27 +185,27 @@ void Options::save()
 
     output.writeChars(L"music:" + _toString<float>(mMusicVolume) + L"\n");
     output.writeChars(L"sound:" + _toString<float>(mSoundVolume) + L"\n");
-    output.writeChars(L"invertYMouse:" + _toString<bool>(mInvertYMouse) + L"\n");
-    output.writeChars(L"mouseSensitivity:" + _toString<float>(mSensitivity) + L"\n");
-    output.writeChars(L"fov:" + _toString<float>(mFov) + L"\n");
-    output.writeChars(L"gamma:" + _toString<float>(mGamma) + L"\n");
-    output.writeChars(L"viewDistance:" + _toString<int>(mViewDistance) + L"\n");
-    output.writeChars(L"guiScale:" + _toString<int>(mGuiScale) + L"\n");
-    output.writeChars(L"particles:" + _toString<int>(mParticles) + L"\n");
-    output.writeChars(L"bobView:" + _toString<bool>(mViewBobbing) + L"\n");
-    output.writeChars(L"anaglyph3d:" + _toString<bool>(mAnaglyph3d) + L"\n");
-    output.writeChars(L"advancedOpengl:" + _toString<bool>(mAdvancedOpengl) + L"\n");
-    output.writeChars(L"fpsLimit:" + _toString<int>(mFpsLimit) + L"\n");
-    output.writeChars(L"difficulty:" + _toString<int>(mDifficulty) + L"\n");
-    output.writeChars(L"fancyGraphics:" + _toString<bool>(mFancyGraphics) + L"\n");
-    output.writeChars(L"ao:" + _toString<bool>(mAmbientOcclusion) + L"\n");
-    output.writeChars(L"clouds:" + _toString<bool>(mClouds) + L"\n");
-    output.writeChars(L"skin:" + mSkin + L"\n");
-    output.writeChars(L"lastServer:" + mLastServer + L"\n");
+    output.writeChars(L"invertYMouse:" + std::wstring(mInvertYMouse ? L"true" : L"false") + L"\n");
+    output.writeChars(L"mouseSensitivity:" + _toString<float>(mSensitivity));
+    output.writeChars(L"fov:" + _toString<float>(mFov));
+    output.writeChars(L"gamma:" + _toString<float>(mGamma));
+    output.writeChars(L"viewDistance:" + _toString<int>(mViewDistance));
+    output.writeChars(L"guiScale:" + _toString<int>(mGuiScale));
+    output.writeChars(L"particles:" + _toString<int>(mParticles));
+    output.writeChars(L"bobView:" + std::wstring(mViewBobbing ? L"true" : L"false"));
+    output.writeChars(L"anaglyph3d:" + std::wstring(mAnaglyph3d ? L"true" : L"false"));
+    output.writeChars(L"advancedOpengl:" + std::wstring(mAdvancedOpengl ? L"true" : L"false"));
+    output.writeChars(L"fpsLimit:" + _toString<int>(mFpsLimit));
+    output.writeChars(L"difficulty:" + _toString<int>(mDifficulty));
+    output.writeChars(L"fancyGraphics:" + std::wstring(mFancyGraphics ? L"true" : L"false"));
+    output.writeChars(L"ao:" + std::wstring(mAmbientOcclusion ? L"true" : L"false"));
+    output.writeChars(L"clouds:" + _toString<bool>(mClouds));
+    output.writeChars(L"skin:" + mSkin);
+    output.writeChars(L"lastServer:" + mLastServer);
 
     int i;
     for (i = 0; i < 14; ++i)
-        output.writeChars(L"key_" + mKeyMappings[i]->mName + L":" + _toString<int>(mKeyMappings[i]->mKey) + L"\n");
+        output.writeChars(L"key_" + mKeyMappings[i]->mName + L":" + _toString<int>(mKeyMappings[i]->mKey));
 
     output.close();
 }
@@ -331,14 +296,22 @@ std::wstring Options::getMessage(const Option* option)
     if (!option->isProgress())
     {
         if (option->isBoolean())
-            return caption + language->getElement(getBooleanValue(option) ? L"options.on" : L"options.off");
+        {
+            if (getBooleanValue(option))
+                return caption + language->getElement(L"options.on");
+            return caption + language->getElement(L"options.off");
+        }
         if (option == Option::renderDistance) return caption + language->getElement(renderDistanceNames[mViewDistance]);
         if (option == Option::difficulty) return caption + language->getElement(difficultyNames[mDifficulty]);
         if (option == Option::guiScale) return caption + language->getElement(guiScaleNames[mGuiScale]);
         if (option == Option::particles) return caption + language->getElement(particleNames[mParticles]);
         if (option == Option::framerateLimit) return caption + I18n::get(framerateNames[mFpsLimit]);
         if (option == Option::graphics)
-            return caption + language->getElement(mFancyGraphics ? L"options.graphics.fancy" : L"options.graphics.fast");
+        {
+            if (mFancyGraphics)
+                return caption + language->getElement(L"options.graphics.fancy");
+            return caption + language->getElement(L"options.graphics.fast");
+        }
         return caption;
     }
 
@@ -365,10 +338,10 @@ std::wstring Options::getMessage(const Option* option)
     return caption + L"+" + _toString<int>(static_cast<int>(value * 100.0f)) + L"%";
 }
 
-double Options::readFloat(std::wstring value)
+float Options::readFloat(std::wstring value)
 {
-    if (value == L"true") return 1.0;
-    if (value == L"false") return 0.0;
+    if (value == L"true") return 1.0f;
+    if (value == L"false") return 0.0f;
     return _fromString<float>(value);
 }
 
@@ -380,51 +353,85 @@ void Options::load()
     FileInputStream* fileInput = new FileInputStream(mOptionsFile);
     InputStreamReader* input = new InputStreamReader(fileInput);
     BufferedReader* reader = new BufferedReader(input);
-    std::wstring line;
+    std::wstring line = L"";
 
     while ((line = reader->readLine()) != L"")
     {
-        std::wstring name;
-        std::wstring value;
-        std::wstring::size_type separator = line.find(L':');
+        std::wstring parts[2];
+        std::wstring::size_type separator = line.find(L":");
         if (separator == std::wstring::npos)
         {
-            name = line;
-            value = L"";
+            parts[0] = line;
+            parts[1] = L"";
         }
         else
         {
-            name = line.substr(0, separator);
-            value = line.substr(separator + 1);
+            parts[0] = line.substr(0, separator);
+            parts[1] = line.substr(separator + 1);
         }
 
-        if (name == L"music") mMusicVolume = static_cast<float>(readFloat(value));
-        if (name == L"sound") mSoundVolume = static_cast<float>(readFloat(value));
-        if (name == L"mouseSensitivity") mSensitivity = static_cast<float>(readFloat(value));
-        if (name == L"fov") mFov = static_cast<float>(readFloat(value));
-        if (name == L"gamma") mGamma = static_cast<float>(readFloat(value));
-        if (name == L"invertYMouse") mInvertYMouse = value == L"true";
-        if (name == L"viewDistance") mViewDistance = _fromString<int>(value);
-        if (name == L"guiScale") mGuiScale = _fromString<int>(value);
-        if (name == L"particles") mParticles = _fromString<int>(value);
-        if (name == L"bobView") mViewBobbing = value == L"true";
-        if (name == L"anaglyph3d") mAnaglyph3d = value == L"true";
-        if (name == L"advancedOpengl") mAdvancedOpengl = value == L"true";
-        if (name == L"fpsLimit") mFpsLimit = _fromString<int>(value);
-        if (name == L"difficulty") mDifficulty = _fromString<int>(value);
-        if (name == L"fancyGraphics") mFancyGraphics = value == L"true";
-        if (name == L"ao") mAmbientOcclusion = value == L"true";
-        if (name == L"clouds") mClouds = value == L"true";
-        if (name == L"skin") mSkin.assign(value, 0, 0xffffffff);
-        if (name == L"lastServer") mLastServer.assign(value, 0, 0xffffffff);
+        if (parts[0] == L"music") mMusicVolume = readFloat(parts[1]);
+        if (parts[0] == L"sound") mSoundVolume = readFloat(parts[1]);
+        if (parts[0] == L"mouseSensitivity") mSensitivity = readFloat(parts[1]);
+        if (parts[0] == L"fov") mFov = readFloat(parts[1]);
+        if (parts[0] == L"gamma") mGamma = readFloat(parts[1]);
+        if (parts[0] == L"invertYMouse") mInvertYMouse = parts[1] == L"true";
+        if (parts[0] == L"viewDistance") mViewDistance = _fromString<int>(parts[1]);
+        if (parts[0] == L"guiScale") mGuiScale = _fromString<int>(parts[1]);
+        if (parts[0] == L"particles") mParticles = _fromString<int>(parts[1]);
+        if (parts[0] == L"bobView") mViewBobbing = parts[1] == L"true";
+        if (parts[0] == L"anaglyph3d") mAnaglyph3d = parts[1] == L"true";
+        if (parts[0] == L"advancedOpengl") mAdvancedOpengl = parts[1] == L"true";
+        if (parts[0] == L"fpsLimit") mFpsLimit = _fromString<int>(parts[1]);
+        if (parts[0] == L"difficulty") mDifficulty = _fromString<int>(parts[1]);
+        if (parts[0] == L"fancyGraphics") mFancyGraphics = parts[1] == L"true";
+        if (parts[0] == L"ao") mAmbientOcclusion = parts[1] == L"true";
+        if (parts[0] == L"clouds") mClouds = parts[1] == L"true";
+        if (parts[0] == L"skin") mSkin = parts[1];
+        if (parts[0] == L"lastServer") mLastServer = parts[1];
 
         int i;
         for (i = 0; i < 14; ++i)
         {
-            if (name == L"key_" + mKeyMappings[i]->mName)
-                mKeyMappings[i]->mKey = _fromString<int>(value);
+            if (parts[0] == L"key_" + mKeyMappings[i]->mName)
+                mKeyMappings[i]->mKey = _fromString<int>(parts[1]);
         }
     }
 
     reader->close();
+}
+
+Options::Option::Option(const std::wstring& captionId, bool progress, bool boolean)
+    : mProgress(progress), mBoolean(boolean)
+{
+    mCaptionId.assign(captionId, 0, 0xffffffff);
+}
+
+Options::Option::~Option()
+{
+}
+
+std::wstring Options::Option::getCaptionId() const
+{
+    return mCaptionId;
+}
+
+bool Options::Option::isProgress() const
+{
+    return mProgress;
+}
+
+bool Options::Option::isBoolean() const
+{
+    return mBoolean;
+}
+
+Options::Option* Options::Option::getItem(int id)
+{
+    return &::items[id];
+}
+
+int Options::Option::getId() const
+{
+    return static_cast<int>(this - ::items);
 }

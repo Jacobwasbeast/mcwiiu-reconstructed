@@ -38,47 +38,66 @@ BoundingBox* BoundingBox::getUnknownBox()
 BoundingBox* BoundingBox::orientBox(int x, int y, int z, int xOffset, int yOffset, int zOffset,
                                     int xSize, int ySize, int zSize, const Direction* direction)
 {
-    switch (direction->get3DDataValue())
+    int face = direction->get3DDataValue();
+    if (face == 2)
     {
-        case 2:
-            return new BoundingBox(x + xOffset, y + yOffset, z - zSize + zOffset + 1,
-                                   x + xSize - 1 + xOffset, y + ySize - 1 + yOffset, z + zOffset);
-        case 4:
-            return new BoundingBox(x - zSize + zOffset + 1, y + yOffset, z + xOffset,
-                                   x + zOffset, y + ySize - 1 + yOffset, z + xSize - 1 + xOffset);
-        case 5:
-            return new BoundingBox(x + zOffset, y + yOffset, z + xOffset,
-                                   x + zSize - 1 + zOffset, y + ySize - 1 + yOffset,
-                                   z + xSize - 1 + xOffset);
-        default:
-            return new BoundingBox(x + xOffset, y + yOffset, z + zOffset,
-                                   x + xSize - 1 + xOffset, y + ySize - 1 + yOffset,
-                                   z + zSize - 1 + zOffset);
+        return new BoundingBox(x + xOffset, y + yOffset, z - zSize + zOffset + 1,
+                               x + xSize - 1 + xOffset, y + ySize - 1 + yOffset, z + zOffset);
     }
+    if (face == 4)
+    {
+        return new BoundingBox(x - zSize + zOffset + 1, y + yOffset, z + xOffset,
+                               x + zOffset, y + ySize - 1 + yOffset, z + xSize - 1 + xOffset);
+    }
+    if (face == 5)
+    {
+        return new BoundingBox(x + zOffset, y + yOffset, z + xOffset,
+                               x + zSize - 1 + zOffset, y + ySize - 1 + yOffset,
+                               z + xSize - 1 + xOffset);
+    }
+    return new BoundingBox(x + xOffset, y + yOffset, z + zOffset,
+                           x + xSize - 1 + xOffset, y + ySize - 1 + yOffset,
+                           z + zSize - 1 + zOffset);
 }
 
 BoundingBox* BoundingBox::createProper(int firstX, int firstY, int firstZ,
                                        int secondX, int secondY, int secondZ)
 {
-    return new BoundingBox(std::min(firstX, secondX), std::min(firstY, secondY),
-                           std::min(firstZ, secondZ), std::max(firstX, secondX),
-                           std::max(firstY, secondY), std::max(firstZ, secondZ));
+    int minX = firstX;
+    if (secondX < firstX)
+        minX = secondX;
+    int minY = firstY;
+    if (secondY < firstY)
+        minY = secondY;
+    int minZ = firstZ;
+    if (secondZ < firstZ)
+        minZ = secondZ;
+    int maxX = firstX;
+    if (firstX < secondX)
+        maxX = secondX;
+    int maxY = firstY;
+    if (firstY < secondY)
+        maxY = secondY;
+    int maxZ = secondZ;
+    if (secondZ < firstZ)
+        maxZ = firstZ;
+    return new BoundingBox(minX, minY, minZ, maxX, maxY, maxZ);
 }
 
 bool BoundingBox::intersects(BoundingBox* box)
 {
-    return x1 >= box->x0 && x0 <= box->x1 && z1 >= box->z0 && z0 <= box->z1 && y1 >= box->y0 &&
-           y0 <= box->y1;
+    return !(x1 < box->x0 || x0 > box->x1 || z1 < box->z0 || z0 > box->z1 || y1 < box->y0 ||
+             y0 > box->y1);
 }
 
 bool BoundingBox::intersects(Vec3i min, Vec3i max)
 {
-    return x1 >= min.x && x0 <= max.x && z1 >= min.z && z0 <= max.z && y1 >= min.y && y0 <= max.y;
+    return !(x1 < min.x || x0 > max.x || z1 < min.z || z0 > max.z || y1 < min.y || y0 > max.y);
 }
 
 bool BoundingBox::intersects(int minX, int minZ, int maxX, int maxZ)
 {
-    return x1 >= minX && x0 <= maxX && z1 >= minZ && z0 <= maxZ;
+    return !(x1 < minX || x0 > maxX || z1 < minZ || z0 > maxZ);
 }
 
 void BoundingBox::expand(BoundingBox* box)
@@ -123,7 +142,7 @@ int BoundingBox::getZSpan()
 
 BlockPos BoundingBox::getCenter()
 {
-    return BlockPos(x0 + getXSpan() / 2, y0 + getYSpan() / 2, z0 + getZSpan() / 2);
+    return BlockPos(x0 + (x1 - x0 + 1) / 2, y0 + (y1 - y0 + 1) / 2, z0 + (z1 - z0 + 1) / 2);
 }
 
 void BoundingBox::write(DataOutputStream* output)

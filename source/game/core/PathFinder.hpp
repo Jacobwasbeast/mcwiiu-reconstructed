@@ -27,6 +27,8 @@ public:
     void setNodeEvaluator(NodeEvaluator* nodeEvaluator);
 
 private:
+    friend class PathNavigationListener;
+
     arrayWithLength<Node*>* mNeighbors;
     NodeEvaluator* mNodeEvaluator;
 };

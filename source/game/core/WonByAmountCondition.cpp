@@ -1,6 +1,5 @@
 #include "game/core/WonByAmountCondition.hpp"
 
-#include <algorithm>
 #include <climits>
 
 #include "game/core/GameStats.hpp"
@@ -36,16 +35,23 @@ bool WonByAmountCondition::canAward(const GameMedal* medal, const StatsUID& uid,
                 PlayerStats* opponent = it->second;
                 if (opponent->mStatsUID != playerStats->mStatsUID && opponent->hasRoundStats(round)
                     && opponent->getRoundStats(round)->mReachedEnd)
-                    bestOpponentTime = std::min(bestOpponentTime, static_cast<unsigned int>(opponent->getRoundStats(round)->mLifeSpan));
+                {
+                    unsigned int opponentTime = opponent->getRoundStats(round)->mLifeSpan;
+                    if (opponentTime < bestOpponentTime)
+                        bestOpponentTime = opponentTime;
+                }
             }
         }
 
         if (playerTime < bestOpponentTime)
         {
             const float margin = static_cast<float>(bestOpponentTime - playerTime);
-            if (mOperator == GameMedal::OPERATOR_AT_MOST && margin <= mTarget)
-                return true;
-            if (mOperator == GameMedal::OPERATOR_AT_LEAST && mTarget <= margin)
+            if (mOperator == GameMedal::OPERATOR_AT_MOST)
+            {
+                if (margin <= mTarget)
+                    return true;
+            }
+            else if (mOperator == GameMedal::OPERATOR_AT_LEAST && mTarget <= margin)
                 return true;
         }
     }

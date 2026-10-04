@@ -60,7 +60,7 @@ void Camera::prepare(boost::shared_ptr<Player> player, bool secondPass)
         yRotation += (float)controller->getCurrentRot()->y;
     }
 
-    float side = (float)(secondPass ? -1 : 1);
+    float side = (float)(1 - 2 * (int)secondPass);
     float yaw = yRotation * 0.017453292f;
     float pitch = xRotation * 0.017453292f;
 
@@ -105,8 +105,7 @@ const BlockState* Camera::getBlockAt(Level* level, boost::shared_ptr<Entity> ent
         float height = 0.0f;
         if (state->getBlock()->isLiquidBlock())
         {
-            height = (float)(LiquidBlock::getHeightFromData(state->getValue(LiquidBlock::LEVEL))
-                             - 0.1111111119389534);
+            height = LiquidBlock::getHeightFromData(state->getValue(LiquidBlock::LEVEL)) - 0.11111111f;
         }
 
         if ((float)(blockPos.y + 1) - height <= position->y)

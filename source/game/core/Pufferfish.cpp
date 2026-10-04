@@ -32,13 +32,13 @@ Pufferfish::Pufferfish(Level* level)
       mSmallPuffRadius(1.5f),
       mLargePuffRadius(10.0f),
       mStingRange(0.2f),
-      mLastStingSoundTime(0),
       mStingSoundDelay(2)
 {
     mSwimAmplitude = 0.02f;
     mSwimFrequency = 0.01f;
     mWaterValueC = 6.0f;
     setSize(0.8f, 0.8f);
+    mLastStingSoundTime = 0;
     fjDerivedCtorCalls();
 }
 
@@ -55,7 +55,7 @@ void Pufferfish::setNextPuffedState(PuffedState state, int delay)
 
 void Pufferfish::damageNearbyMobs()
 {
-    if (mPuffState <= PUFFED_STATE_MEDIUM)
+    if (mPuffState < PUFFED_STATE_LARGE)
         return;
 
     std::vector<boost::shared_ptr<Entity> >* entities =
@@ -66,25 +66,23 @@ void Pufferfish::damageNearbyMobs()
     for (unsigned int i = 0; i < entities->size(); ++i)
     {
         boost::shared_ptr<Entity> entity = entities->at(i);
-        if (entity->GetType() == EntityType::SERVER_PLAYER ||
-            (entity->GetType() & EntityType::MONSTER) == EntityType::MONSTER)
-        {
-            boost::shared_ptr<LivingEntity> living = boost::static_pointer_cast<LivingEntity>(entity);
-            living->hurt(DamageSource::CreateMobAttack(boost::static_pointer_cast<LivingEntity>(shared_from_this())), mDamage);
-            living->addEffect(new MobEffectInstance(MobEffects::POISON, mPoisonDuration), boost::shared_ptr<Entity>());
-            stung = true;
-        }
+        bool isServerPlayer = entity->GetType() == EntityType::SERVER_PLAYER;
+        if (!isServerPlayer && (entity->GetType() & EntityType::MONSTER) != EntityType::MONSTER)
+            continue;
+
+        boost::shared_ptr<Mob> living = boost::static_pointer_cast<Mob>(entity);
+        DamageSource* source = DamageSource::CreateMobAttack(boost::static_pointer_cast<Mob>(shared_from_this()));
+        living->hurt(source, mDamage);
+        living->addEffect(new MobEffectInstance(MobEffects::POISON, mPoisonDuration), boost::shared_ptr<Entity>());
+        stung = true;
     }
 
-    if (mLevel->mIsClientSide && stung)
+    int64_t now;
+    if (mLevel->mIsClientSide && stung && (now = System::processTimeInSeconds(), mLastStingSoundTime + mStingSoundDelay < now))
     {
-        int64_t now = System::processTimeInSeconds();
-        if (mLastStingSoundTime + mStingSoundDelay < now)
-        {
-            mLastStingSoundTime = now;
-            mLevel->playLocalSound(mX, mY, mZ, SoundEvents::PUFFERFISH_STING, SoundSource::eSoundSource_Hostile, 1.0f,
-                                   1.0f, false, 16.0f);
-        }
+        mLastStingSoundTime = now;
+        mLevel->playLocalSound(mX, mY, mZ, SoundEvents::PUFFERFISH_STING, SoundSource::eSoundSource_Hostile, 1.0f,
+                               1.0f, false, 16.0f);
     }
 }
 
@@ -92,33 +90,45 @@ bool Pufferfish::validatePuffedTypes(boost::shared_ptr<Entity> entity)
 {
     if (entity == NULL)
         return false;
-    unsigned long long type = entity->GetType();
-    if ((type & EntityType::LIVING_ENTITY) != EntityType::LIVING_ENTITY)
+    if ((entity->GetType() & EntityType::LIVING_ENTITY) != EntityType::LIVING_ENTITY)
         return false;
-    return type != EntityType::FISH && type != EntityType::SALMON &&
-           type != EntityType::PUFFERFISH && type != EntityType::TROPICAL_FISH;
+    bool isFish = entity->GetType() == EntityType::FISH;
+    if (!isFish)
+    {
+        bool isSalmon = entity->GetType() == EntityType::SALMON;
+        if (!isSalmon)
+        {
+            bool isPufferfish = entity->GetType() == EntityType::PUFFERFISH;
+            if (!isPufferfish)
+            {
+                bool isTropicalFish = entity->GetType() == EntityType::TROPICAL_FISH;
+                if (!isTropicalFish)
+                    return true;
+            }
+        }
+    }
+    return false;
 }
 
 void Pufferfish::checkForDangerousMobs()
 {
-    bool foundDangerousMob = false;
-    double radius = mPuffState == PUFFED_STATE_SMALL ? (double)mSmallPuffRadius : (double)mLargePuffRadius;
+    float radius = mPuffState == PUFFED_STATE_SMALL ? mSmallPuffRadius : mLargePuffRadius;
     std::vector<boost::shared_ptr<Entity> >* entities =
-        mLevel->getEntities(shared_from_this(), mBoundingBox->grow(radius, radius, radius), NULL);
+        mLevel->getEntities(shared_from_this(), mBoundingBox->grow((double)radius, (double)radius, (double)radius), NULL);
+    bool foundDangerousMob = false;
     for (unsigned int i = 0; i < entities->size(); ++i)
     {
         boost::shared_ptr<Entity> entity = entities->at(i);
         if (!validatePuffedTypes(entity))
             continue;
 
-        bool isSpectatingPlayer = false;
-        if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
-        {
-            boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
-            if (player->isSpectator())
-                isSpectatingPlayer = true;
-        }
-        if (!isSpectatingPlayer && mPuffState == PUFFED_STATE_SMALL)
+        boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
+        bool isCreativePlayer = (entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER &&
+                                boost::static_pointer_cast<Player>(entity)->mAbilities.mInstabuild;
+        if (isCreativePlayer)
+            continue;
+
+        if (mPuffState == PUFFED_STATE_SMALL)
         {
             foundDangerousMob = true;
             setNextPuffedState(PUFFED_STATE_MEDIUM, 1);
@@ -132,33 +142,37 @@ void Pufferfish::baseTick()
 {
     Fish::baseTick();
 
-    if (mNextPuffState != mPuffState)
+    PuffedState nextState = mNextPuffState;
+    PuffedState currentState = mPuffState;
+    if (nextState != currentState)
     {
         --mPuffTransitionTime;
         if (mPuffTransitionTime < 1)
         {
-            PuffedState oldState = mPuffState;
-            mPuffState = mNextPuffState;
-
-            if (oldState == PUFFED_STATE_SMALL)
+            if (currentState == PUFFED_STATE_SMALL)
             {
+                mPuffState = nextState;
                 setNextPuffedState(PUFFED_STATE_LARGE, 1);
                 mLevel->playLocalSound(mX, mY, mZ, SoundEvents::PUFFERFISH_BLOW_UP, SoundSource::eSoundSource_Hostile,
                                        0.6f, 1.0f, false, 16.0f);
             }
-            else if (oldState == PUFFED_STATE_LARGE)
-            {
-                setNextPuffedState(PUFFED_STATE_SMALL, 20);
-            }
-            else if (mPuffState == PUFFED_STATE_LARGE)
-            {
-                getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(0.5);
-            }
             else
             {
-                getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(1.3);
-                mLevel->playLocalSound(mX, mY, mZ, SoundEvents::PUFFERFISH_BLOW_OUT, SoundSource::eSoundSource_Hostile,
-                                       0.6f, 1.0f, false, 16.0f);
+                mPuffState = nextState;
+                if (currentState == PUFFED_STATE_LARGE)
+                {
+                    setNextPuffedState(PUFFED_STATE_SMALL, 20);
+                }
+                else if (nextState == PUFFED_STATE_LARGE)
+                {
+                    getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(0.5);
+                }
+                else
+                {
+                    getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(1.3);
+                    mLevel->playLocalSound(mX, mY, mZ, SoundEvents::PUFFERFISH_BLOW_OUT, SoundSource::eSoundSource_Hostile,
+                                           0.6f, 1.0f, false, 16.0f);
+                }
             }
         }
     }

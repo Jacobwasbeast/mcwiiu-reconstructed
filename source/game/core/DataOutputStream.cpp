@@ -25,7 +25,7 @@ void DataOutputStream::write(unsigned int value)
 
 void DataOutputStream::write(arrayWithLength<unsigned char> data)
 {
-    mOut->write(data);
+    write(data, 0, data.length);
 }
 
 void DataOutputStream::write(arrayWithLength<unsigned char> data, unsigned int offset, unsigned int length)
@@ -47,7 +47,7 @@ void DataOutputStream::flush()
 
 void DataOutputStream::writeBytes(arrayWithLength<unsigned char> data)
 {
-    mOut->write(data);
+    write(data, 0, data.length);
 }
 
 void DataOutputStream::writeByte(unsigned char value)
@@ -57,17 +57,24 @@ void DataOutputStream::writeByte(unsigned char value)
 
 void DataOutputStream::writeDouble(double value)
 {
-    writeLong(Double::doubleToLongBits(value));
+    long long bits = Double::doubleToLongBits(value);
+
+    writeLong(bits);
 
     mWritten += 8;
 }
 
 void DataOutputStream::writeFloat(float value)
 {
-    int bits;
-    memcpy(&bits, &value, sizeof(bits));
+    union
+    {
+        float asFloat;
+        int asBits;
+    } converted;
 
-    writeInt(bits);
+    converted.asFloat = value;
+
+    writeInt(converted.asBits);
 
     mWritten += 4;
 }
@@ -140,7 +147,7 @@ void DataOutputStream::writeUTF(const std::wstring& text)
     int textLength = text.length();
     int utfLength = 0;
     int i;
-    unsigned int c;
+    int c;
 
     for (i = 0; i < textLength; i++)
     {
@@ -250,14 +257,19 @@ void DataOutputStream::writeVarInt(int value)
     unsigned int bits;
     memcpy(&bits, &value, sizeof(bits));
 
-    while ((bits & 0xFFFFFF80) != 0)
+    for (;;)
     {
+        if ((bits & 0xFFFFFF80) == 0)
+        {
+            writeByte((unsigned char)bits);
+
+            return;
+        }
+
         writeByte((unsigned char)((bits & 0x7F) | 0x80));
 
         bits >>= 7;
     }
-
-    writeByte((unsigned char)bits);
 }
 
 void DataOutputStream::writeVarLong(long long value)
@@ -265,14 +277,19 @@ void DataOutputStream::writeVarLong(long long value)
     unsigned long long bits;
     memcpy(&bits, &value, sizeof(bits));
 
-    while ((bits & ~(unsigned long long)0x7F) != 0)
+    for (;;)
     {
+        if ((bits & ~(unsigned long long)0x7F) == 0)
+        {
+            writeByte((unsigned char)bits);
+
+            return;
+        }
+
         writeByte((unsigned char)((bits & 0x7F) | 0x80));
 
         bits >>= 7;
     }
-
-    writeByte((unsigned char)bits);
 }
 
 void DataOutputStream::writeNbt(CompoundTag* tag)
@@ -312,7 +329,7 @@ void DataOutputStream::writeCompressedNbt(CompoundTag* tag)
     compressedData.length = compressedSize;
 
     writeShort((short)nbtData.length);
-    writeShort((short)compressedSize);
+    writeShort((short)compressedData.length);
     write(compressedData);
 
     delete[] nbtData.data;
@@ -331,7 +348,9 @@ void DataOutputStream::writeItem(not_null_ptr<ItemInstance> item)
     writeShort(Item::VALIDgetId(item->getItem()));
     writeByte(item->getCount());
     writeShort(item->getAuxValue());
-    writeNbt(item->getTag());
+    CompoundTag* tag = item->getTag();
+
+    writeNbt(tag);
 }
 
 void DataOutputStream::writeVarIntArray(arrayWithLength<int> values)

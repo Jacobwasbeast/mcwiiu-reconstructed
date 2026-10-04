@@ -542,12 +542,16 @@ arrayWithLength<unsigned char> GenericStats::param_cowsMilked()
 
 arrayWithLength<unsigned char> GenericStats::param_blocksPlaced(const BlockState* state, int count)
 {
-    return gStats->getParam_blocksPlaced(Block::getId(state->getBlock()), state->getBlock()->convertBlockStateToLegacyData(state), count);
+    int id = Block::getId(state->getBlock());
+    int data = state->getBlock()->convertBlockStateToLegacyData(state);
+    return gStats->getParam_blocksPlaced(id, data, count);
 }
 
 arrayWithLength<unsigned char> GenericStats::param_blocksMined(const BlockState* state, int count)
 {
-    return gStats->getParam_blocksMined(Block::getId(state->getBlock()), state->getBlock()->convertBlockStateToLegacyData(state), count);
+    int id = Block::getId(state->getBlock());
+    int data = state->getBlock()->convertBlockStateToLegacyData(state);
+    return gStats->getParam_blocksMined(id, data, count);
 }
 
 arrayWithLength<unsigned char> GenericStats::param_itemsCollected(Item* item, int auxValue, int count)
@@ -1627,15 +1631,23 @@ arrayWithLength<unsigned char> GenericStats::getParam_noArgs()
 
 Stat* GenericStats::itemsCollected(not_null_ptr<ItemInstance> itemInstance)
 {
-    return gStats->get_itemsCollected(Item::VALIDgetId(itemInstance->getItem()), itemInstance->getAuxValue());
+    Item* item = itemInstance->getItem();
+    int auxValue = itemInstance->getAuxValue();
+    return gStats->get_itemsCollected(Item::VALIDgetId(item), auxValue);
 }
 
 arrayWithLength<unsigned char> GenericStats::param_itemsCollected(not_null_ptr<ItemInstance> itemInstance)
 {
-    return param_itemsCollected(itemInstance->getItem(), itemInstance->getAuxValue(), itemInstance->getCount());
+    Item* item = itemInstance->getItem();
+    int auxValue = itemInstance->getAuxValue();
+    int count = itemInstance->getCount();
+    return param_itemsCollected(item, auxValue, count);
 }
 
 arrayWithLength<unsigned char> GenericStats::param_itemsBought(not_null_ptr<ItemInstance> itemInstance)
 {
-    return param_itemsBought(itemInstance->getItem(), itemInstance->getAuxValue(), itemInstance->getCount());
+    Item* item = itemInstance->getItem();
+    int auxValue = itemInstance->getAuxValue();
+    int count = itemInstance->getCount();
+    return param_itemsBought(item, auxValue, count);
 }

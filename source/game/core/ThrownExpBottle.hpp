@@ -20,7 +20,7 @@ public:
     virtual bool onHit(const HitResult* result);
     static void addDataWalkers(DataFixerUpper* fixer);
     void _init();
-    virtual double getGravity();
+    virtual float getGravity();
     virtual unsigned long long GetType();
 };
 

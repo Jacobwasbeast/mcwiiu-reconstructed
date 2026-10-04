@@ -17,12 +17,7 @@ LockCode::~LockCode()
 
 bool LockCode::isEmpty()
 {
-    if (mKey.compare(L"") != 0 && !mKey.empty())
-    {
-        return false;
-    }
-
-    return true;
+    return mKey.compare(L"") == 0 || mKey.empty();
 }
 
 std::wstring LockCode::getKey()

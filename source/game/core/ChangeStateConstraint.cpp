@@ -88,13 +88,16 @@ void ChangeStateConstraint::tick(int playerId)
                 {
                     boost::shared_ptr<MultiplayerLocalPlayer> player =
                         minecraft->mLocalPlayers[playerId];
-                    ClientPacketListener* connection = minecraft->getConnection(playerId);
 
-                    if (player && connection != NULL && connection->getNetworkPlayer() != NULL)
+                    if (minecraft->mLocalPlayers[playerId] && minecraft->mLocalPlayers[playerId].get()->mPacketListener != NULL &&
+                        minecraft->mLocalPlayers[playerId].get()->mPacketListener->getNetworkPlayer() != NULL)
                     {
-                        connection->send(boost::shared_ptr<Packet>(new PlayerInfoPacket(
-                            connection->getNetworkPlayer()->GetSmallId(), -1, privileges,
-                            player->GetGameType()->getId())));
+                        minecraft->mLocalPlayers[playerId].get()->mPacketListener->send(
+                            boost::shared_ptr<Packet>(new PlayerInfoPacket(
+                                minecraft->mLocalPlayers[playerId].get()
+                                    ->mPacketListener->getNetworkPlayer()
+                                    ->GetSmallId(),
+                                -1, privileges, player.get()->GetGameType()->getId())));
                     }
                 }
             }
@@ -130,13 +133,16 @@ void ChangeStateConstraint::tick(int playerId)
                 {
                     boost::shared_ptr<MultiplayerLocalPlayer> player =
                         minecraft->mLocalPlayers[playerId];
-                    ClientPacketListener* connection = minecraft->getConnection(playerId);
 
-                    if (player && connection != NULL && connection->getNetworkPlayer() != NULL)
+                    if (minecraft->mLocalPlayers[playerId] && minecraft->mLocalPlayers[playerId].get()->mPacketListener != NULL &&
+                        minecraft->mLocalPlayers[playerId].get()->mPacketListener->getNetworkPlayer() != NULL)
                     {
-                        connection->send(boost::shared_ptr<Packet>(new PlayerInfoPacket(
-                            connection->getNetworkPlayer()->GetSmallId(), -1, privileges,
-                            player->GetGameType()->getId())));
+                        minecraft->mLocalPlayers[playerId].get()->mPacketListener->send(
+                            boost::shared_ptr<Packet>(new PlayerInfoPacket(
+                                minecraft->mLocalPlayers[playerId].get()
+                                    ->mPacketListener->getNetworkPlayer()
+                                    ->GetSmallId(),
+                                -1, privileges, player.get()->GetGameType()->getId())));
                     }
                 }
             }

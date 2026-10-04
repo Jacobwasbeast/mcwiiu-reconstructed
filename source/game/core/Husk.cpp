@@ -34,10 +34,7 @@ void Husk::addDataWalkers(DataFixerUpper* fixer)
 
 bool Husk::checkSpawnRules()
 {
-    if (!Monster::checkSpawnRules())
-        return false;
-    BlockPos pos(this);
-    return mLevel->canSeeSky(pos);
+    return Monster::checkSpawnRules() && mLevel->canSeeSky(BlockPos(this));
 }
 
 bool Husk::isSunSensitive() const
@@ -73,20 +70,15 @@ ResourceLocation* Husk::getDefaultLootTable()
 bool Husk::doHurtTarget(boost::shared_ptr<Entity> target)
 {
     bool hurt = Zombie::doHurtTarget(target);
-    if (!hurt)
-        return false;
-    not_null_ptr<ItemInstance> item = getMainHandItem();
-    if (item->isEmpty() && target &&
+    if (hurt && getMainHandItem()->isEmpty() &&
         (target->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
     {
+        int difficulty = (int)mLevel->getCurrentDifficultyAt(BlockPos(this)).getEffectiveDifficulty();
         boost::shared_ptr<LivingEntity> living = boost::static_pointer_cast<LivingEntity>(target);
-        BlockPos pos(this);
-        DifficultyInstance difficulty = mLevel->getCurrentDifficultyAt(pos);
-        int duration = (int)difficulty.getEffectiveDifficulty() * 140;
-        living->addEffect(new MobEffectInstance(MobEffects::HUNGER, duration, 0),
+        living->addEffect(new MobEffectInstance(MobEffects::HUNGER, difficulty * 140),
                           boost::shared_ptr<Entity>());
     }
-    return true;
+    return hurt;
 }
 
 not_null_ptr<ItemInstance> Husk::getSkull()
@@ -99,17 +91,15 @@ void Husk::finishConversion()
     boost::shared_ptr<Zombie> zombie(new Zombie(mLevel));
     zombie->copyPosition(shared_from_this());
 
-    BlockPos pos(zombie);
-    DifficultyInstance difficulty = mLevel->getCurrentDifficultyAt(pos);
     if (isBaby())
     {
-        Zombie::ZombieGroupData* group = new Zombie::ZombieGroupData(true, isJockey(), false);
-        zombie->finalizeMobSpawn(difficulty, group, std::wstring());
+        zombie->finalizeMobSpawn(mLevel->getCurrentDifficultyAt(BlockPos(zombie)),
+                                 new Zombie::ZombieGroupData(true, isJockey(), false), std::wstring(L""));
     }
     else
     {
-        Zombie::ZombieGroupData* group = new Zombie::ZombieGroupData(false, false, false);
-        zombie->finalizeMobSpawn(difficulty, group, std::wstring());
+        zombie->finalizeMobSpawn(mLevel->getCurrentDifficultyAt(BlockPos(zombie)),
+                                 new Zombie::ZombieGroupData(false, false, false), std::wstring(L""));
     }
 
     playSound(SoundEvents::HUSK_CONVERTED_TO_ZOMBIE, 1.0f, 1.0f);

@@ -1,5 +1,6 @@
 #include "game/core/GameSettings.hpp"
 #include "game/core/CMinecraftApp.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/DLCPack.hpp"
 #include "game/core/DLCSkinFile.hpp"
 #include "game/core/ConsoleUIController.hpp"
@@ -110,38 +111,38 @@ void DefineActions()
     {
         const unsigned char* controllerMovementMasks =
             movementMasks[g_pInput->IsCircleCrossSwapped() != 0 ? 1 : 0];
-        g_pInput->SetGameJoypadMaps(controller, actionIndices[0], controllerMovementMasks[0]);
-        g_pInput->SetGameJoypadMaps(controller, actionIndices[1], controllerMovementMasks[0]);
-        g_pInput->SetGameJoypadMaps(controller, actionIndices[2], controllerMovementMasks[1]);
-        g_pInput->SetGameJoypadMaps(controller, actionIndices[3], controllerMovementMasks[1]);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, actionIndices[0], controllerMovementMasks[0]);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, actionIndices[1], controllerMovementMasks[0]);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, actionIndices[2], controllerMovementMasks[1]);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, actionIndices[3], controllerMovementMasks[1]);
         for (action = 0; action < 32; ++action)
         {
-            g_pInput->SetGameJoypadMaps(controller, actionMapIndices[action], actionMasks[action]);
+            g_pInput->SetGameControllerTypeJoypadMaps(controller, actionMapIndices[action], actionMasks[action]);
         }
         if (controller == 0)
         {
-            g_pInput->SetGameJoypadMaps(0, EControllerActions_Sneak, 0x100);
-            g_pInput->SetGameJoypadMaps(0, EControllerActions_ChangeCameraMode, 0x200);
-            g_pInput->SetGameJoypadMaps(0, EControllerActions_MenuStickPress, 0x200);
-            g_pInput->SetGameJoypadMaps(0, EControllerActions_MenuOtherStickPress, 0x100);
+            g_pInput->SetGameControllerTypeJoypadMaps(0, EControllerActions_Sneak, 0x100);
+            g_pInput->SetGameControllerTypeJoypadMaps(0, EControllerActions_ChangeCameraMode, 0x200);
+            g_pInput->SetGameControllerTypeJoypadMaps(0, EControllerActions_MenuStickPress, 0x200);
+            g_pInput->SetGameControllerTypeJoypadMaps(0, EControllerActions_MenuOtherStickPress, 0x100);
         }
         else
         {
-            g_pInput->SetGameJoypadMaps(controller, EControllerActions_Sneak, 0x800);
-            g_pInput->SetGameJoypadMaps(controller, EControllerActions_ChangeCameraMode, 0x400);
-            g_pInput->SetGameJoypadMaps(controller, EControllerActions_MenuStickPress, 0x200);
-            g_pInput->SetGameJoypadMaps(controller, EControllerActions_MenuOtherStickPress, 0x100);
+            g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_Sneak, 0x800);
+            g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_ChangeCameraMode, 0x400);
+            g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MenuStickPress, 0x200);
+            g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MenuOtherStickPress, 0x100);
         }
-        g_pInput->SetGameJoypadMaps(controller, EControllerActions_Crafting, 4);
-        g_pInput->SetGameJoypadMaps(controller, EControllerActions_Scoreboard, 0x20);
-        g_pInput->SetGameJoypadMaps(controller, EControllerActions_FlyLeft, 0x1000);
-        g_pInput->SetGameJoypadMaps(controller, EControllerActions_FlyRight, 0x2000);
-        g_pInput->SetGameJoypadMaps(controller, EControllerActions_FlyUp, 0x400);
-        g_pInput->SetGameJoypadMaps(controller, EControllerActions_FlyDown, 0x800);
-        g_pInput->SetGameJoypadMaps(controller, 0x39, 0x1000);
-        g_pInput->SetGameJoypadMaps(controller, 0x3a, 0x2000);
-        g_pInput->SetGameJoypadMaps(controller, 0x3b, 0x400);
-        g_pInput->SetGameJoypadMaps(controller, 0x3c, 0x800);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_Crafting, 4);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_Scoreboard, 0x20);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_FlyLeft, 0x1000);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_FlyRight, 0x2000);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_FlyUp, 0x400);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_FlyDown, 0x800);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, 0x39, 0x1000);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, 0x3a, 0x2000);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, 0x3b, 0x400);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, 0x3c, 0x800);
     }
 }
 
@@ -277,14 +278,20 @@ void GameSettings::UpdateActionMapping(int profile, int scheme, bool swapPrimary
 
 uint32_t GameSettings::GetInputButton(unsigned int value)
 {
-    if (value < 3)
-        return value;
-    static const unsigned int buttons[15] =
+    if (value == 0)
+        return 0;
+    if (value > 2)
     {
-        0, 0, 0, 4, 8, 0x1000, 0x2000, 0x400,
-        0x800, 0x40, 0x80, 0x400000, 0x800000, 0x100, 0x200
-    };
-    return value < 15 ? buttons[value] : 0;
+        static const unsigned int buttons[15] =
+        {
+            0, 0, 0, 4, 8, 0x1000, 0x2000, 0x400,
+            0x800, 0x40, 0x80, 0x400000, 0x800000, 0x100, 0x200
+        };
+        if (value > 14)
+            return 0;
+        return buttons[value];
+    }
+    return value;
 }
 uint32_t GameSettings::GetActionVal(unsigned char value) { return GetInputButton(value & 15) | GetInputButton((value >> 4) & 255); }
 void GameSettings::ActionGameSettings(int profile, eGameSetting setting)
@@ -313,7 +320,7 @@ void GameSettings::ActionGameSettings(int profile, eGameSetting setting)
         if (profile == gProfile->GetPrimaryPad())
         {
             minecraft->mOptions->toggle(Options::Option::difficulty, gGameSettings[profile]->mPackedSettings & 3);
-            g_pApp->SetGameHostOption(eGameHostOption_Difficulty, minecraft->mOptions->mDifficulty);
+            gApp.SetGameHostOption(eGameHostOption_Difficulty, minecraft->mOptions->mDifficulty);
         }
         return;
     case eGameSetting_GameSensitivity:
@@ -350,14 +357,14 @@ void GameSettings::ActionGameSettings(int profile, eGameSetting setting)
     case eGameSetting_DisplayMii:
         if (minecraft->mLevel != NULL && CGameNetworkManager::sInstance.IsHost() && profile == gProfile->GetPrimaryPad())
         {
-            g_pApp->SetGameHostOption(eGameHostOption_Gamertags, (gGameSettings[profile]->mPackedSettings >> 3) & 1);
-            g_pApp->SetXuiServerAction(profile, eXuiServerAction_ServerSettingChanged, NULL);
+            gApp.SetGameHostOption(eGameHostOption_Gamertags, (gGameSettings[profile]->mPackedSettings >> 3) & 1);
+            gApp.SetXuiServerAction(profile, eXuiServerAction_ServerSettingChanged, NULL);
             PlayerList* players = gMinecraftServer != NULL ? gMinecraftServer->getPlayers() : NULL;
             for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator it = players->getPlayers()->begin();
                  it != players->getPlayers()->end(); ++it)
             {
                 boost::shared_ptr<ServerPlayer> player = *it;
-                player->mShowOnMaps = g_pApp->GetGameHostOption(eGameHostOption_Gamertags) != 0;
+                player->mShowOnMaps = gApp.GetGameHostOption(eGameHostOption_Gamertags) != 0;
             }
         }
         return;
@@ -410,7 +417,7 @@ void setGameSettingsHelper(int profile, eGameSetting setting, unsigned char valu
     if ((mask & (oldValue ^ newValue)) != 0)
     {
         *field = static_cast<T>((oldValue & ~mask) | newValue);
-        if (setting > 3 || profile == gProfile->GetPrimaryPad())
+        if (static_cast<unsigned int>(setting) > 3 || profile == gProfile->GetPrimaryPad())
             GameSettings::ActionGameSettings(profile, setting);
         GameSettings::SetSettingsChanged(profile);
     }
@@ -746,21 +753,21 @@ void GameSettings::SetDefaultGameOptions(C4JStorage::PROFILESETTINGS* values, in
     current->mHiddenMashupWorlds = 0xffffffffu;
 
     SetGameSettings(profile, eGameSetting_EULAAccepted, 0);
-    if (g_pApp->GetGameStarted() == 0)
+    if (gApp.GetGameStarted() == 0)
     {
-        current->mMinecraftLocale = 0;
-        current->mMinecraftLanguage = 0;
+        gGameSettings[profile]->mMinecraftLocale = 0;
+        gGameSettings[profile]->mMinecraftLanguage = 0;
     }
 
     MiniGameDef* miniGame = MiniGameDef::GetCustomGameModeById(eMiniGameId_Battle, true);
-    const MiniGamePlayerSettings playerSettings = miniGame->GetDefaultPlayerSettings();
-    current->mGameModeOptions = playerSettings.mHostOptions.Get(eCustomGameModeHostOption_All);
+    GameModeOptions hostOptions = miniGame->GetDefaultPlayerSettings().mHostOptions;
+    gGameSettings[profile]->mGameModeOptions = hostOptions.Get(eCustomGameModeHostOption_All);
 
     SetGameSettings(profile, eGameSetting_ClassicCrafting, 0);
     SetGameSettings(profile, eGameSetting_CaveSounds, 1);
     SetGameSettings(profile, eGameSetting_MinecartSounds, 1);
     SetGameSettings(profile, eGameSetting_GameChat, 0);
-    current->mBattleMiniGameMap = 0xffffffffu;
+    gGameSettings[profile]->mBattleMiniGameMap = 0xffffffffu;
     SetGameSettings(profile, eGameSetting_SecondaryControls, 0);
     SetGameSettings(profile, eGameSetting_PublicMiniGamePrompts, 3);
     SetGameSettings(profile, eGameSetting_DisplayGameMessages, 1);
@@ -769,8 +776,8 @@ void GameSettings::SetDefaultGameOptions(C4JStorage::PROFILESETTINGS* values, in
     SetGameSettings(profile, eGameSetting_ShowGlideGhost, 1);
     SetGameSettings(profile, eGameSetting_ShowGlideGhostPath, 1);
     SetGameSettings(profile, eGameSetting_AutoJump, 0);
-    current->mSkinFlags = 9;
-    current->mGlideMiniGameMap = 0xffffffffu;
+    gGameSettings[profile]->mSkinFlags = 9;
+    gGameSettings[profile]->mGlideMiniGameMap = 0xffffffffu;
     SetDefaultControls(values, profile, changed);
 }
 void GameSettings::InitGameSettings()
@@ -842,8 +849,8 @@ void GameSettings::CheckGameSettingsChanged(bool changed, int profile)
 }
 uint32_t GameSettings::GetInputButton(int profile, bool secondary, EControllerActions action)
 {
-    const unsigned char mapping = GetActionMapping(profile, action - EControllerActions_Jump);
-    return GetInputButton(secondary ? (mapping >> 4) : (mapping & 0x0f));
+    const unsigned int mapping = GetActionMapping(profile, action - EControllerActions_Jump);
+    return GetInputButton(secondary ? ((mapping >> 4) & 255) : (mapping & 0x0f));
 }
 
 void GameSettings::SetPlayerCape(int profile, unsigned int id, bool changed)
@@ -854,7 +861,7 @@ void GameSettings::SetPlayerCape(int profile, unsigned int id, bool changed)
     if (changed)
         current->mChanged = 1;
     if (Minecraft::GetInstance()->mLocalPlayers[profile] != NULL)
-        Minecraft::GetInstance()->mLocalPlayers[profile]->setCustomCape(id);
+        Minecraft::GetInstance()->mLocalPlayers[profile].get()->setAndBroadcastCustomCape(id);
     if (!changed)
         gGameSettings[profile]->mCapeId = oldId;
 }
@@ -874,7 +881,7 @@ uint32_t GameSettings::IsAllowedSkin(int profile)
 
     wchar_t skinPath[256];
     swprintf(skinPath, 256, L"dlcskin%08d.png", settings->mSkinId & 0x7fffffff);
-    DLCPack* pack = g_pApp->mDLCManager.getPackContainingSkin(skinPath);
+    DLCPack* pack = gApp.mDLCManager.getPackContainingSkin(skinPath);
     if (pack != NULL)
     {
         DLCSkinFile* skinFile = static_cast<DLCSkinFile*>(pack->getSkinFile(skinPath));
@@ -891,9 +898,10 @@ uint32_t GameSettings::IsAllowedSkin(int profile)
 }
 uint32_t GameSettings::GetPlayerCapeId(int profile)
 {
+    unsigned int id = 0;
     if (IsAllowedSkin(profile))
-        return gGameSettings[profile]->mCapeId;
-    return 0;
+        id = gGameSettings[profile]->mCapeId;
+    return id;
 }
 
 void GameSettings::SetPlayerSkin(int profile, unsigned int id, bool changed)
@@ -907,7 +915,7 @@ void GameSettings::SetPlayerSkin(int profile, unsigned int id, bool changed)
         telemetryManagerInstance->RecordSkinChanged(profile, id);
     }
     if (Minecraft::GetInstance()->mLocalPlayers[profile] != NULL)
-        Minecraft::GetInstance()->mLocalPlayers[profile]->setCustomSkin(id);
+        Minecraft::GetInstance()->mLocalPlayers[profile].get()->setAndBroadcastCustomSkin(id);
     if (!changed)
         gGameSettings[profile]->mSkinId = oldId;
 }
@@ -921,9 +929,10 @@ std::wstring GameSettings::GetPlayerSkinName(int profile)
 }
 uint32_t GameSettings::GetPlayerSkinId(int profile)
 {
+    unsigned int id = 0;
     if (IsAllowedSkin(profile))
-        return gGameSettings[profile]->mSkinId;
-    return 0;
+        id = gGameSettings[profile]->mSkinId;
+    return id;
 }
 
 void GameSettings::SetPlayerFavoriteSkin(int profile, int index, unsigned int id)
@@ -980,7 +989,7 @@ void GameSettings::ValidateFavoriteSkins(int profile)
     {
         bool isDefaultSkin = false;
         bool hasPurchasedPack = false;
-        DLCFile* skinFile = g_pApp->mDLCManager.getSkinFile(static_cast<int>(GetPlayerFavoriteSkin(profile, static_cast<int>(i))),
+        DLCFile* skinFile = gApp.mDLCManager.getSkinFile(static_cast<int>(GetPlayerFavoriteSkin(profile, static_cast<int>(i))),
                                                             isDefaultSkin, hasPurchasedPack);
         if (isDefaultSkin || (skinFile != NULL && (hasPurchasedPack || static_cast<DLCSkinFile*>(skinFile)->isFree())))
         {
@@ -1059,12 +1068,12 @@ void GameSettings::SetSpecialTutorialCompletionFlag(int profile, int flag)
 void GameSettings::SetTutorialCompletionFlag(int profile, int flag)
 {
     GameSettings* current = gGameSettings[profile];
-    current->mTutorialFlags[flag / 8] |= 1 << (7 - flag % 8);
+    current->mTutorialFlags[flag >> 3] |= 1 << (7 - flag % 8);
     current->mChanged = 1;
 }
 
 bool GameSettings::GetTutorialCompletionFlag(int profile, int flag)
 {
     unsigned int mask = 1 << (7 - flag % 8);
-    return (gGameSettings[profile]->mTutorialFlags[flag / 8] & mask) == mask;
+    return (gGameSettings[profile]->mTutorialFlags[flag >> 3] & mask) == mask;
 }

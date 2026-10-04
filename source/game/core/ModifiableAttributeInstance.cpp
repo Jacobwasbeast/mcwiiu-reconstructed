@@ -5,12 +5,12 @@
 typedef boost::unordered_set<AttributeModifier*> ModifierSet;
 
 ModifiableAttributeInstance::ModifiableAttributeInstance(BaseAttributeMap* attributeMap, Attribute* attribute)
-    : mAttributeMap(attributeMap),
-      mAttribute(attribute),
-      mBaseValue(attribute->getDefaultValue()),
-      mDirty(true),
+    : mDirty(true),
       mCachedValue(0.0)
 {
+    mAttributeMap = attributeMap;
+    mAttribute = attribute;
+    mBaseValue = attribute->getDefaultValue();
 }
 
 ModifiableAttributeInstance::~ModifiableAttributeInstance()
@@ -71,14 +71,15 @@ void ModifiableAttributeInstance::getModifiers(boost::unordered_set<AttributeMod
 
 AttributeModifier* ModifiableAttributeInstance::getModifier(eMODIFIER_ID id)
 {
+    AttributeModifier* modifier = NULL;
     boost::unordered_map<unsigned int, AttributeModifier*>::iterator it = mModifiersById.find(id);
 
     if (it != mModifiersById.end())
     {
-        return it->second;
+        modifier = it->second;
     }
 
-    return NULL;
+    return modifier;
 }
 
 bool ModifiableAttributeInstance::hasModifier(AttributeModifier* modifier)

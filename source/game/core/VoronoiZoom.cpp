@@ -12,7 +12,6 @@ VoronoiZoom::VoronoiZoom(long long seed, boost::shared_ptr<Layer> parentLayer)
 
 VoronoiZoom::~VoronoiZoom()
 {
-    parent.reset();
 }
 
 arrayWithLength<int> VoronoiZoom::getArea(int x, int z, int width, int height)
@@ -60,14 +59,14 @@ arrayWithLength<int> VoronoiZoom::getArea(int x, int z, int width, int height)
 
                 for (int localX = 0; localX < 4; localX++)
                 {
-                    double upperLeftDistance = ((double)localZ - upperLeftZ) * ((double)localZ - upperLeftZ)
-                        + ((double)localX - upperLeftX) * ((double)localX - upperLeftX);
-                    double upperRightDistance = ((double)localZ - upperRightZ) * ((double)localZ - upperRightZ)
-                        + ((double)localX - upperRightX) * ((double)localX - upperRightX);
-                    double lowerLeftDistance = ((double)localZ - lowerLeftZ) * ((double)localZ - lowerLeftZ)
-                        + ((double)localX - lowerLeftX) * ((double)localX - lowerLeftX);
-                    double lowerRightDistance = ((double)localZ - lowerRightZ) * ((double)localZ - lowerRightZ)
-                        + ((double)localX - lowerRightX) * ((double)localX - lowerRightX);
+                    double upperLeftDistance = ((double)localX - upperLeftX) * ((double)localX - upperLeftX)
+                        + ((double)localZ - upperLeftZ) * ((double)localZ - upperLeftZ);
+                    double upperRightDistance = ((double)localX - upperRightX) * ((double)localX - upperRightX)
+                        + ((double)localZ - upperRightZ) * ((double)localZ - upperRightZ);
+                    double lowerLeftDistance = ((double)localX - lowerLeftX) * ((double)localX - lowerLeftX)
+                        + ((double)localZ - lowerLeftZ) * ((double)localZ - lowerLeftZ);
+                    double lowerRightDistance = ((double)localX - lowerRightX) * ((double)localX - lowerRightX)
+                        + ((double)localZ - lowerRightZ) * ((double)localZ - lowerRightZ);
 
                     if (upperLeftDistance < upperRightDistance && upperLeftDistance < lowerLeftDistance
                         && upperLeftDistance < lowerRightDistance)

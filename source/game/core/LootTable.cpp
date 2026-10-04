@@ -17,8 +17,7 @@ LootTable::LootTable(std::vector<LootPool*>* pools)
 std::vector<not_null_ptr<ItemInstance> >* LootTable::getRandomItems(Random* random,
                                                                      LootTableContext& context)
 {
-    std::vector<not_null_ptr<ItemInstance> >* items =
-        new std::vector<not_null_ptr<ItemInstance> >();
+    std::vector<not_null_ptr<ItemInstance> >* items = new std::vector<not_null_ptr<ItemInstance> >;
 
     if (mPools != NULL && context.addVisitedTable(this))
     {
@@ -30,16 +29,23 @@ std::vector<not_null_ptr<ItemInstance> >* LootTable::getRandomItems(Random* rand
     }
 
     return items;
+
+    for (unsigned int index = 0; index < mPools->size(); ++index)
+    {
+        mPools->at(index)->addRandomItems(items, random, context);
+    }
+    context.removeVisitedTable(this);
+
+    return items;
 }
 
 std::vector<int>* LootTable::getAvailableSlots(Container* container, Random* random)
 {
-    std::vector<int>* slots = new std::vector<int>();
+    std::vector<int>* slots = new std::vector<int>;
 
     for (unsigned int slot = 0; slot < container->getContainerSize(); ++slot)
     {
-        not_null_ptr<ItemInstance> item = container->getItem(slot);
-        if (item->isEmpty())
+        if (container->getItem(slot)->isEmpty())
         {
             slots->push_back((int)slot);
         }
@@ -134,13 +140,13 @@ void LootTable::fill(Container* container, Random* random, LootTableContext& con
             return;
         }
 
-        if (!item->isEmpty())
+        if (item->isEmpty())
         {
-            container->setItem((unsigned int)slots->back(), item);
+            container->setItem((unsigned int)slots->back(), ItemInstance::EMPTY);
         }
         else
         {
-            container->setItem((unsigned int)slots->back(), ItemInstance::EMPTY);
+            container->setItem((unsigned int)slots->back(), item);
         }
         slots->pop_back();
     }

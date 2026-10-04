@@ -20,18 +20,10 @@ bool FurnaceFuelSlot::isBucket(not_null_ptr<ItemInstance> item)
 
 bool FurnaceFuelSlot::mayPlace(not_null_ptr<ItemInstance> item)
 {
-    if (FurnaceBlockEntity::isFuel(item))
-    {
-        return true;
-    }
-    return isBucket(item);
+    return FurnaceBlockEntity::isFuel(item) || isBucket(item);
 }
 
 int FurnaceFuelSlot::getMaxStackSize(not_null_ptr<ItemInstance> item)
 {
-    if (isBucket(item))
-    {
-        return 1;
-    }
-    return Slot::getMaxStackSize();
+    return isBucket(item) ? 1 : Slot::getMaxStackSize();
 }

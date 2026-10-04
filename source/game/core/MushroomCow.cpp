@@ -46,16 +46,15 @@ bool MushroomCow::mobInteract(const boost::shared_ptr<Player>& player,
                               InteractionHand::EInteractionHand hand)
 {
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
-    Item* item = itemInstance->getItem();
 
-    if (item == Items::bowl && getAge() >= 0)
+    if (itemInstance->getItem() == Items::bowl && getAge() >= 0)
     {
         itemInstance->shrink(1);
         if (!itemInstance->isEmpty())
         {
             not_null_ptr<ItemInstance> stew(new ItemInstance(Items::mushroomStew));
             if (!player->mInventory->add(stew))
-                player->drop(not_null_ptr<ItemInstance>(new ItemInstance(Items::mushroomStew, 1, 0)), false);
+                player->drop(not_null_ptr<ItemInstance>(new ItemInstance(Items::mushroomStew)), false);
         }
         else
         {
@@ -64,7 +63,7 @@ bool MushroomCow::mobInteract(const boost::shared_ptr<Player>& player,
         return true;
     }
 
-    if (item == Items::shears && getAge() >= 0)
+    if (itemInstance->getItem() == Items::shears && getAge() >= 0)
     {
         if (!mLevel->canCreateMore(EntityType::COW, Level::eSpawnType_Breed))
         {
@@ -102,8 +101,8 @@ bool MushroomCow::mobInteract(const boost::shared_ptr<Player>& player,
 
         for (int i = 0; i < 5; ++i)
         {
-            mLevel->addEntity(boost::shared_ptr<Entity>(new ItemEntity(
-                mLevel, mX, mY + mBbHeight, mZ, not_null_ptr<ItemInstance>(new ItemInstance(Blocks::red_mushroom)))));
+            mLevel->addEntity(boost::shared_ptr<Entity>(boost::shared_ptr<ItemEntity>(new ItemEntity(
+                mLevel, mX, mY + mBbHeight, mZ, not_null_ptr<ItemInstance>(new ItemInstance(Blocks::red_mushroom))))));
         }
 
         itemInstance->hurtAndBreak(1, player);
@@ -118,14 +117,14 @@ bool MushroomCow::checkSpawnRules()
 {
     BlockPos pos(shared_from_this());
     Block* block = mLevel->getBlockState(pos.below())->getBlock();
-    if (block != Blocks::mycelium && block != Blocks::grass)
-        return false;
-    return mLevel->getDaytimeRawBrightness(pos) > 8 && PathfinderMob::checkSpawnRules();
+    return (block == Blocks::grass || block == Blocks::mycelium) && mLevel->getDaytimeRawBrightness(pos) > 8
+           && PathfinderMob::checkSpawnRules();
 }
 
 boost::shared_ptr<AgableMob> MushroomCow::getBreedOffspring(boost::shared_ptr<AgableMob>)
 {
-    return boost::shared_ptr<AgableMob>(new MushroomCow(mLevel));
+    boost::shared_ptr<MushroomCow> offspring(new MushroomCow(mLevel));
+    return offspring;
 }
 
 unsigned int MushroomCow::GetInteractTooltip(const EntityTooltipDataHolder& tooltipData)

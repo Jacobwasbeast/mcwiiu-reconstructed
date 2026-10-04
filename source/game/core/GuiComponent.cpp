@@ -87,8 +87,7 @@ void GuiComponent::drawCenteredString(Font* font, const std::wstring& text, int 
 
 void GuiComponent::drawString(Font* font, const std::wstring& text, int x, int y, int color)
 {
-    font->draw(text, x + 1, y + 1, color, true, true);
-    font->draw(text, x, y, color, false, true);
+    font->drawShadow(text, x, y, color);
 }
 
 void GuiComponent::blit(int x, int y, int u, int v, int width, int height)
@@ -97,15 +96,13 @@ void GuiComponent::blit(int x, int y, int u, int v, int width, int height)
     BufferBuilder* builder = tesselator->getBuilder();
     builder->begin();
     float scale = 0.75f;
-    float screenScale = gGuiScreenScale;
-    Minecraft* minecraft = Minecraft::GetInstance();
-    float xOffset = (scale * static_cast<float>(minecraft->mWidth) /
-                     static_cast<float>(minecraft->mHeight)) / screenScale;
-    float yOffset = scale / screenScale;
-    float x0 = floorf(static_cast<float>(x) * screenScale) / screenScale;
-    float y0 = floorf(static_cast<float>(y) * screenScale) / screenScale;
-    float scaledWidth = floorf(static_cast<float>(width) * screenScale) / screenScale;
-    float scaledHeight = floorf(static_cast<float>(height) * screenScale) / screenScale;
+    float xOffset = (scale * static_cast<float>(Minecraft::GetInstance()->mWidth) /
+                     static_cast<float>(Minecraft::GetInstance()->mHeight)) / gGuiScreenScale;
+    float yOffset = scale / gGuiScreenScale;
+    float x0 = floorf(static_cast<float>(x) * gGuiScreenScale) / gGuiScreenScale;
+    float y0 = floorf(static_cast<float>(y) * gGuiScreenScale) / gGuiScreenScale;
+    float scaledWidth = floorf(static_cast<float>(width) * gGuiScreenScale) / gGuiScreenScale;
+    float scaledHeight = floorf(static_cast<float>(height) * gGuiScreenScale) / gGuiScreenScale;
     float x1 = x0 + scaledWidth;
     float y1 = y0 + scaledHeight;
     float u0 = static_cast<float>(u) * 0.00390625f;

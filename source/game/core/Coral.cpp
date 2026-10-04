@@ -1,6 +1,7 @@
 #include "game/core/Coral.hpp"
 #include "game/core/StringIds.hpp"
 
+#include <cstring>
 #include <string>
 
 #include "game/core/Direction.hpp"
@@ -40,10 +41,7 @@ Coral::Coral()
 {
     DerivedInit();
 
-    for (int i = 0; i < 5; ++i)
-    {
-        mIcons[i] = NULL;
-    }
+    memset(mIcons, 0, sizeof(mIcons));
 }
 
 Coral::~Coral()
@@ -120,8 +118,10 @@ int Coral::convertBlockStateToLegacyData(const BlockState* state)
 
 const BlockState* Coral::getBlockState(int data)
 {
+    const BlockState* defaultState = defaultBlockState();
+    AbstractProperty<int>* property = Coral::VARIANT;
     TypedBoxed<int> variant(data);
-    return defaultBlockState()->setBoxedValue(Coral::VARIANT, &variant);
+    return defaultState->setBoxedValue(property, &variant);
 }
 
 int Coral::getDescriptionId(int auxValue)
@@ -165,7 +165,8 @@ bool Coral::isSilkTouchable()
 
 bool Coral::mayPlaceOn(Level* level, const BlockPos& pos, const BlockState* state)
 {
-    if (!level->isUnderWater(pos.above(), 263, 0))
+    BlockPos abovePos = pos.above();
+    if (!level->isUnderWater(abovePos, 263, 0))
     {
         return false;
     }
@@ -184,16 +185,23 @@ bool Coral::mayPlaceOn(Level* level, const BlockPos& pos, const BlockState* stat
         }
     }
 
-    bool onSlabTop = false;
     Block* block = state->getBlock();
+    bool onSlabTop = false;
 
-    if (block->isSlabBlock()
-        && !HalfSlabBlock::isBottomSlab(block->convertBlockStateToLegacyData(state)))
+    if (block->isSlabBlock())
     {
-        onSlabTop = true;
+        if (!HalfSlabBlock::isBottomSlab(block->convertBlockStateToLegacyData(state)))
+        {
+            onSlabTop = true;
+        }
     }
 
-    return state->canProvideSupport(Direction::UP, BLOCK_SUPPORT_CENTER) || onSlabTop;
+    if (state->canProvideSupport(Direction::UP, BLOCK_SUPPORT_CENTER) || onSlabTop)
+    {
+        return true;
+    }
+
+    return false;
 }
 
 void Coral::onPlace(Level* level, const BlockPos& pos, const BlockState* state)

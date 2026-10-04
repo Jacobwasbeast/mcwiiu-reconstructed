@@ -17,28 +17,37 @@ WeaponDamageStatTracker::~WeaponDamageStatTracker()
 
 void WeaponDamageStatTracker::update(const DamageEvent* damageEvent)
 {
-    const bool trackingDamage = mTrackingType == TRACKING_DEALT
-        ? isTracking(damageEvent->mAttacker)
-        : isTracking(damageEvent->mVictim);
-    if (!trackingDamage || !damageEvent->mWeapon.HasItem())
+    const bool trackingDamage =
+        (mTrackingType == TRACKING_DEALT && isTracking(damageEvent->mVictim))
+        || (mTrackingType == TRACKING_RECEIVED && isTracking(damageEvent->mAttacker));
+    if (!trackingDamage)
     {
         return;
     }
 
-    const unsigned int weaponKey = damageEvent->mWeapon.GetKey();
+    const Scoreboard::Weapon weapon = damageEvent->mWeapon;
+    const unsigned int weaponKey = weapon.GetKey();
+    if (!weapon.HasItem())
+    {
+        return;
+    }
+
+    const float damage = damageEvent->mDamage;
     std::map<unsigned int, float>::iterator existing = mDamageByWeapon.find(weaponKey);
     if (existing != mDamageByWeapon.end())
     {
-        existing->second += damageEvent->mDamage;
+        mDamageByWeapon[weaponKey] += damage;
     }
     else
     {
-        mDamageByWeapon[weaponKey] = damageEvent->mDamage;
+        mDamageByWeapon[weaponKey] = damage;
     }
 
     const unsigned int trackedKey = mValue.GetKey();
-    if (mDamageByWeapon[weaponKey] >= mDamageByWeapon[trackedKey])
+    float& trackedDamage = mDamageByWeapon[trackedKey];
+    float& weaponDamage = mDamageByWeapon[weaponKey];
+    if (weaponDamage >= trackedDamage)
     {
-        mValue = damageEvent->mWeapon;
+        mValue = weapon;
     }
 }

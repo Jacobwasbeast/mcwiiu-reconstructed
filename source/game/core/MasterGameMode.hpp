@@ -263,7 +263,7 @@ public:
     void RegenTumbleLayers();
     virtual long long RestartMapGenerator();
     virtual EGameModeState GetGameModeState() const;
-    virtual ServerLevel* GeneratorTargetLevel() const;
+    virtual Level* GeneratorTargetLevel() const;
     virtual void setChosenThemeWordId(int wordId);
     virtual bool IsRoundPlaying() const;
     virtual Scoreboard* getScoreboard();
@@ -286,6 +286,7 @@ public:
 
 private:
     friend class CheckpointCommand;
+    friend class FastestTimeAndHightestScoreInARoundCondition;
     friend class GameMedal;
     friend class GameStats;
     friend class PlayersEnteredVolumeCondition;
@@ -331,7 +332,7 @@ private:
     int mPlayersLoading;
     unsigned long long mChunkLoadStartTime;
     unsigned int mChunkLoadStartTick;
-    unsigned int mLayerBlocksDestroyed;
+    int mLayerBlocksDestroyed;
     int mSpawnLayerIndex;
     bool mTutorialDirty;
     int mLastTutorialPlayerCount;

@@ -26,36 +26,36 @@ unsigned int FlippedIcon::getHeight() const
     return mSprite->getHeight();
 }
 
-float FlippedIcon::getU0(bool) const
+float FlippedIcon::getU0(bool applyFrame) const
 {
-    return mFlipU ? mSprite->getU1(false) : mSprite->getU0(false);
+    return mFlipU ? mSprite->getU1(applyFrame) : mSprite->getU0(applyFrame);
 }
 
-float FlippedIcon::getU1(bool) const
+float FlippedIcon::getU1(bool applyFrame) const
 {
-    return mFlipU ? mSprite->getU0(false) : mSprite->getU1(false);
+    return mFlipU ? mSprite->getU0(applyFrame) : mSprite->getU1(applyFrame);
 }
 
 float FlippedIcon::getU(double value) const
 {
-    const double width = getU1(false) - getU0(false);
-    return static_cast<float>(static_cast<float>(width) * (static_cast<float>(value) * 0.0625f) + static_cast<float>(getU0(false)));
+    const float width = getU1(false) - getU0(false);
+    return width * (static_cast<float>(value) * 0.0625f) + getU0(false);
 }
 
-float FlippedIcon::getV0(bool) const
+float FlippedIcon::getV0(bool applyFrame) const
 {
-    return mSprite->getV0(false);
+    return mSprite->getV0(applyFrame);
 }
 
-float FlippedIcon::getV1(bool) const
+float FlippedIcon::getV1(bool applyFrame) const
 {
-    return mFlipV ? mSprite->getV0(false) : mSprite->getV1(false);
+    return mFlipV ? mSprite->getV0(applyFrame) : mSprite->getV1(applyFrame);
 }
 
 float FlippedIcon::getV(double value) const
 {
-    const double height = getV1(false) - getV0(false);
-    return static_cast<float>(static_cast<float>(height) * (static_cast<float>(value) * 0.0625f) + static_cast<float>(getV0(false)));
+    const float height = getV1(false) - getV0(false);
+    return height * (static_cast<float>(value) * 0.0625f) + getV0(false);
 }
 
 std::wstring FlippedIcon::getName() const

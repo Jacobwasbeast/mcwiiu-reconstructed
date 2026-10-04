@@ -146,11 +146,8 @@ void Parrot::playAmbientSound(Level* level, boost::shared_ptr<Entity> entity)
 {
     if (entity->isSilent() || imitateNearbyMobs(level, entity.get()) || level->mRandom->nextInt(200) != 0)
         return;
-    const SoundEvent* sound = getAmbient(level->mRandom);
-    SoundSource::ESoundSource source = entity->getSoundSource();
-    float pitch = getPitch(level->mRandom);
-    level->playSound(boost::shared_ptr<Player>(), entity->mX, entity->mY, entity->mZ, sound, source, 1.0f, pitch,
-                     16.0f);
+    level->playSound(boost::shared_ptr<Player>(), entity->mX, entity->mY, entity->mZ, getAmbient(level->mRandom),
+                     entity->getSoundSource(), 1.0f, getPitch(level->mRandom), 16.0f);
 }
 
 void Parrot::_init()
@@ -209,8 +206,8 @@ void Parrot::setVariant(int variant)
 MobGroupData* Parrot::finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data,
                                        const std::wstring& entityData)
 {
-    setVariant(mRandom == NULL ? 0 : mRandom->nextInt(5));
-    return Mob::finalizeMobSpawn(difficulty, data, entityData);
+    setVariant(mRandom->nextInt(5));
+    return Mob::finalizeMobSpawn(difficulty, data, std::wstring(L""));
 }
 
 void Parrot::registerGoals()
@@ -245,7 +242,7 @@ PathNavigation* Parrot::createNavigation(Level* level)
     return mFlyingNavigation;
 }
 
-double Parrot::getEyeHeight()
+float Parrot::getEyeHeight()
 {
     return static_cast<double>(mBbHeight * 0.6f);
 }
@@ -374,17 +371,15 @@ bool Parrot::isFood(const not_null_ptr<ItemInstance>& itemInstance)
 
 bool Parrot::checkSpawnRules()
 {
-    BlockPos pos(Mth::floor(mX), Mth::floor(mBoundingBox->mMinY), Mth::floor(mZ));
+    int x = Mth::floor(mX);
+    int y = Mth::floor(mBoundingBox->mMinY);
+    int z = Mth::floor(mZ);
+    BlockPos pos(x, y, z);
     Block* block = mLevel->getBlockState(pos.below())->getBlock();
-    if (block != NULL && dynamic_cast<LeafBlock*>(block) != NULL)
-        return true;
-    if (block == Blocks::grass)
-        return true;
-    if (block != NULL && dynamic_cast<LogBlock*>(block) != NULL)
-        return true;
-    if (block == Blocks::air && mLevel->getDaytimeRawBrightness(pos) >= 9 && Animal::checkSpawnRules())
-        return true;
-    return false;
+    return (block != NULL && dynamic_cast<LeafBlock*>(block) != NULL)
+        || block == Blocks::grass
+        || (block != NULL && dynamic_cast<LogBlock*>(block) != NULL)
+        || (block == Blocks::air && mLevel->getDaytimeRawBrightness(pos) > 8 && Animal::checkSpawnRules());
 }
 
 void Parrot::causeFallDamage(float, float)
@@ -468,9 +463,8 @@ boost::shared_ptr<AgableMob> Parrot::getBreedOffspring(boost::shared_ptr<AgableM
 
 bool Parrot::doHurtTarget(boost::shared_ptr<Entity> target)
 {
-    boost::shared_ptr<LivingEntity> self =
-        boost::static_pointer_cast<LivingEntity>(shared_from_this());
-    EntityDamageSource* damageSource = DamageSource::CreateMobAttack(self);
+    EntityDamageSource* damageSource =
+        DamageSource::CreateMobAttack(boost::static_pointer_cast<LivingEntity>(shared_from_this()));
     bool result = target->hurt(damageSource, 3.0f);
     delete damageSource;
     return result;
@@ -535,7 +529,8 @@ bool Parrot::hurt(const DamageSource* source, float damage)
         boost::shared_ptr<Entity> direct = source->getDirectEntity();
         if (direct && (direct->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
         {
-            if (!boost::static_pointer_cast<Player>(direct)->canHarmPlayer(getOwnerUUID()))
+            boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(direct);
+            if (!player->canHarmPlayer(getOwnerUUID()))
                 return false;
         }
     }

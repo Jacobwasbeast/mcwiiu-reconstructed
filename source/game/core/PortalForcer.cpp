@@ -19,6 +19,7 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/Material.hpp"
+#include "game/world/block/EnumProperty.hpp"
 #include "game/world/block/PortalBlock.hpp"
 #include "game/world/chunk/LevelChunk.hpp"
 #include "game/server/ServerLevel.hpp"
@@ -485,7 +486,7 @@ bool PortalForcer::createPortal(boost::shared_ptr<Entity> entity)
 
     Direction::Axis* portalAxis = xDirection == 0 ? Direction::Axis::Z : Direction::Axis::X;
     const BlockState* portalState =
-        Blocks::portal->getBlockState(PortalBlock::getDataForAxis(portalAxis));
+        Blocks::portal->defaultBlockState()->setValue(PortalBlock::AXIS, portalAxis);
     for (int pass = 0; pass < 4; ++pass)
     {
         for (int width = 0; width < 4; ++width)

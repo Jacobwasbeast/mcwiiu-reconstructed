@@ -39,11 +39,14 @@
 
 CommonMasterGameMode* CommonMasterGameMode::GetMasterOrClient()
 {
-    static Minecraft* minecraft = Minecraft::GetInstance();
     MinecraftServer* server = gMinecraftServer;
+    static Minecraft* minecraft = Minecraft::GetInstance();
+    CommonMasterGameMode* masterGameMode;
     if ((server == NULL || server->mMasterGameMode == NULL) && minecraft != NULL)
-        return minecraft->GetClientMasterGameMode();
-    return server->mMasterGameMode;
+        masterGameMode = minecraft->GetClientMasterGameMode();
+    else
+        masterGameMode = server->mMasterGameMode;
+    return masterGameMode;
 }
 
 CommonMasterGameMode::CommonMasterGameMode()
@@ -92,7 +95,7 @@ void CommonMasterGameMode::Tick()
     if (mMapGenerator != NULL)
     {
         const unsigned int state = GetGameModeState();
-        if (state > eGameModeState_SelectingGameRules && (state < eGameModeState_PostRound || state == eGameModeState_LoadingSubRound))
+        if (state >= eGameModeState_LoadingRound && (state <= eGameModeState_RoundPlaying || state == eGameModeState_LoadingSubRound))
             mMapGenerator->ContinueGeneration();
     }
     LeaveCriticalSection(&mGeneratorMutex);
@@ -106,7 +109,8 @@ const MiniGameDef* CommonMasterGameMode::GetMiniGame()
 void CommonMasterGameMode::SetupMiniGameInstance(const MiniGameDef& definition, int variant)
 {
     Minecraft::GetInstance()->SetupMiniGameInstance(definition, 0);
-    gMinecraftServer->setPvpAllowed(definition.AllowPvP());
+    MinecraftServer* server = gMinecraftServer;
+    server->setPvpAllowed(definition.AllowPvP());
     maybe<int> difficulty = definition.getDifficulty();
     if (difficulty.isSet())
         gApp.SetGameHostOption(eGameHostOption_Difficulty, difficulty.get());
@@ -207,7 +211,7 @@ int CommonMasterGameMode::GetLayer(const double& y)
         {
             if (mMapGenerator->GetLayerBB(layer) != NULL
                 && mMapGenerator->GetLayerBB(layer)->mMinY <= y
-                && y < mMapGenerator->GetLayerBB(layer)->mMaxY)
+                && mMapGenerator->GetLayerBB(layer)->mMaxY > y)
             {
                 LeaveCriticalSection(&mGeneratorMutex);
                 return layer;
@@ -292,7 +296,10 @@ void CommonMasterGameMode::CleanUpMapGenerator()
 
     EnterCriticalSection(&mGeneratorMutex);
     if (mMapGenerator != NULL)
-        mMapGenerator->CleanUp(GeneratorTargetLevel());
+    {
+        Level* level = GeneratorTargetLevel();
+        mMapGenerator->CleanUp(level);
+    }
     LeaveCriticalSection(&mGeneratorMutex);
 }
 
@@ -401,7 +408,11 @@ void CommonMasterGameMode::CacheMapDistance()
         for (std::vector<Vec3*>::const_iterator spawn = spawnPositions.begin(); spawn != spawnPositions.end(); ++spawn)
         {
             for (std::vector<AABB*>::const_iterator area = mPrimaryTargetAreas.begin(); area != mPrimaryTargetAreas.end(); ++area)
-                distance = std::max(distance, (*spawn)->distanceTo(*area));
+            {
+                double areaDistance = (*spawn)->distanceTo(*area);
+                if (distance < areaDistance)
+                    distance = areaDistance;
+            }
         }
         mSequenceDistances.push_back(distance);
         mCheckpointDistances.push_back(distance);
@@ -415,7 +426,11 @@ void CommonMasterGameMode::CacheMapDistance()
             if ((*checkpoint)->getSequenceID() != 0)
                 continue;
             for (std::vector<Vec3*>::const_iterator spawn = spawnPositions.begin(); spawn != spawnPositions.end(); ++spawn)
-                startDistance = std::max(startDistance, (*spawn)->distanceTo((*checkpoint)->getArea()));
+            {
+                double spawnDistance = (*spawn)->distanceTo((*checkpoint)->getArea());
+                if (startDistance < spawnDistance)
+                    startDistance = spawnDistance;
+            }
         }
         mSequenceDistances.push_back(startDistance);
         mTotalDistance += startDistance;
@@ -442,7 +457,12 @@ void CommonMasterGameMode::CacheMapDistance()
             {
                 hasSpawnPoint = hasSpawnPoint || (*next)->hasSpawnPoint();
                 for (std::vector<CheckpointRuleDefinition*>::const_iterator current = currentCheckpoints.begin(); current != currentCheckpoints.end(); ++current)
-                    distance = std::max(distance, (*next)->getArea()->getCenter()->distanceTo((*current)->getArea()));
+                {
+                    AABB* currentArea = (*current)->getArea();
+                    double areaDistance = (*next)->getArea()->getCenter()->distanceTo(currentArea);
+                    if (distance < areaDistance)
+                        distance = areaDistance;
+                }
             }
 
             sequenceDistance += distance;
@@ -464,7 +484,11 @@ void CommonMasterGameMode::CacheMapDistance()
         for (std::vector<CheckpointRuleDefinition*>::const_iterator checkpoint = lastCheckpoints.begin(); checkpoint != lastCheckpoints.end(); ++checkpoint)
         {
             for (std::vector<AABB*>::const_iterator area = mPrimaryTargetAreas.begin(); area != mPrimaryTargetAreas.end(); ++area)
-                endDistance = std::max(endDistance, (*checkpoint)->getArea()->getCenter()->distanceTo(*area));
+            {
+                double areaDistance = (*checkpoint)->getArea()->getCenter()->distanceTo(*area);
+                if (endDistance < areaDistance)
+                    endDistance = areaDistance;
+            }
         }
         mSequenceDistances.push_back(endDistance);
         mTotalDistance += endDistance;

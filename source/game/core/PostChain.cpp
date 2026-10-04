@@ -8,10 +8,13 @@
 
 PostChain::PostChain(TextureManager* textureManager, ResourceManager* resourceManager,
                      RenderTarget* screenTarget, ResourceLocation* name)
-    : mScreenTarget(screenTarget), mResourceManager(resourceManager),
-      mWidth(screenTarget->width), mHeight(screenTarget->height),
-      mTime(0.0f), mLastStamp(0.0f)
 {
+    mScreenTarget = screenTarget;
+    mResourceManager = resourceManager;
+    mWidth = screenTarget->width;
+    mHeight = screenTarget->height;
+    mTime = 0.0f;
+    mLastStamp = 0.0f;
     (void)textureManager;
     mName = name->toString();
     updateOrthoMatrix();

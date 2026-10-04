@@ -1,6 +1,7 @@
 #include "game/core/StringConversion.hpp"
 
 #include <cstdlib>
+#include <cstring>
 #include <cwchar>
 #include <iomanip>
 #include <sstream>
@@ -9,21 +10,24 @@
 
 std::wstring char16towstring(wchar_t* text)
 {
-    return text == NULL ? std::wstring() : std::wstring(text);
+    return std::wstring(text);
 }
 
 void charTowchar_tArray(const char* text, wchar_t* destination, unsigned int capacity)
 {
-    if (text == NULL || destination == NULL || capacity == 0)
-        return;
-
-    unsigned int index = 0;
-    while (index < capacity)
+    bool finished = false;
+    wchar_t* start = destination;
+    for (;;)
     {
-        destination[index] = static_cast<signed char>(text[index]);
-        if (text[index] == '\0')
+        *destination = *text;
+        if (*text == '\0')
+            finished = true;
+        ++text;
+        ++destination;
+        if (finished)
+            break;
+        if (capacity <= (unsigned int)(destination - start))
             return;
-        ++index;
     }
 }
 
@@ -45,7 +49,7 @@ wchar_t* stringtowchararray(const std::string& text)
 
 std::wstring convStringToWstring(wchar_t* text)
 {
-    return text == NULL ? std::wstring() : std::wstring(text);
+    return std::wstring(text);
 }
 
 std::wstring convStringToWstring(const std::string& text)
@@ -66,32 +70,10 @@ std::wstring convUtf8ToWstring(const char* text)
 
 std::string convWstringToString(const std::wstring& text)
 {
+    char* buffer = new char[text.size() + 1];
     std::string result;
-    result.reserve(text.size());
-    for (std::wstring::const_iterator it = text.begin(); it != text.end(); ++it)
-    {
-        unsigned int codePoint = static_cast<unsigned int>(*it);
-        if (codePoint < 0x80)
-            result.push_back(static_cast<char>(codePoint));
-        else if (codePoint < 0x800)
-        {
-            result.push_back(static_cast<char>(0xc0 | (codePoint >> 6)));
-            result.push_back(static_cast<char>(0x80 | (codePoint & 0x3f)));
-        }
-        else if (codePoint < 0x10000)
-        {
-            result.push_back(static_cast<char>(0xe0 | (codePoint >> 12)));
-            result.push_back(static_cast<char>(0x80 | ((codePoint >> 6) & 0x3f)));
-            result.push_back(static_cast<char>(0x80 | (codePoint & 0x3f)));
-        }
-        else
-        {
-            result.push_back(static_cast<char>(0xf0 | (codePoint >> 18)));
-            result.push_back(static_cast<char>(0x80 | ((codePoint >> 12) & 0x3f)));
-            result.push_back(static_cast<char>(0x80 | ((codePoint >> 6) & 0x3f)));
-            result.push_back(static_cast<char>(0x80 | (codePoint & 0x3f)));
-        }
-    }
+    result.assign(buffer, std::strlen(buffer));
+    delete[] buffer;
     return result;
 }
 

@@ -17,7 +17,7 @@
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
-#include "game/world/block/HorizontalDirectionalBlock.hpp"
+#include "game/world/block/ChestBlock.hpp"
 #include "game/world/block/DirectionProperty.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
@@ -52,10 +52,8 @@ AbstractContainerMenu* MinecartChest::createMenu(boost::shared_ptr<Inventory> in
 {
     unpackLootTable(player);
 
-    boost::shared_ptr<Container> playerInventory = boost::dynamic_pointer_cast<Container>(inventory);
-    boost::shared_ptr<Container> container = boost::static_pointer_cast<MinecartChest>(shared_from_this());
-
-    return new ChestMenu(playerInventory, container, player);
+    return new ChestMenu(boost::dynamic_pointer_cast<Container>(inventory),
+                         boost::static_pointer_cast<MinecartChest>(shared_from_this()), player);
 }
 
 int MinecartChest::getTypeId(bool large)
@@ -90,9 +88,7 @@ const Minecart::Type* MinecartChest::getType()
 
 const BlockState* MinecartChest::getDefaultDisplayBlockState()
 {
-    TypedBoxed<const Direction*> facing(Direction::NORTH);
-    return Blocks::chest->defaultBlockState()->setBoxedValue(
-        HorizontalDirectionalBlock::FACING_PROPERTY, &facing);
+    return Blocks::chest->defaultBlockState()->setValue(ChestBlock::FACING, Direction::NORTH);
 }
 
 int MinecartChest::getDefaultDisplayOffset()

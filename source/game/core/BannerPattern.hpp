@@ -24,7 +24,7 @@ public:
     void _init(unsigned int id, const std::wstring& hashname, int* displayName, wchar_t craftingMenuTab);
     static void staticCtor();
     arrayWithLength<std::wstring> getPatterns() const;
-    unsigned int hasPattern() const;
+    bool hasPattern() const;
     bool hasPatternItem() const;
     ItemInstance* getPatternItem() const;
     unsigned int getAtlasIndex() const;

@@ -38,14 +38,13 @@ bool ThrownExpBottle::onHit(const HitResult* result)
     Projectile::onHit(result);
     if (!mLevel->mIsClientSide)
     {
-        BlockPos pos(shared_from_this());
-        mLevel->levelEvent(LevelEvent::PARTICLES_SPELL_POTION_SPLASH, pos, PotionUtils::getColor(Potions::WATER));
+        mLevel->levelEvent(LevelEvent::PARTICLES_SPELL_POTION_SPLASH, BlockPos(shared_from_this()), PotionUtils::getColor(Potions::WATER));
         int experience = mLevel->mRandom->nextInt(5) + mLevel->mRandom->nextInt(5) + 3;
         while (experience > 0)
         {
             int value = ExperienceOrb::getExperienceValue(experience);
             experience -= value;
-            mLevel->addEntity(boost::shared_ptr<Entity>(new ExperienceOrb(
+            mLevel->addEntity(boost::shared_ptr<ExperienceOrb>(new ExperienceOrb(
                 mLevel, mX, mY, mZ, value)));
         }
         remove();
@@ -62,9 +61,9 @@ void ThrownExpBottle::_init()
     fjDerivedCtorCalls();
 }
 
-double ThrownExpBottle::getGravity()
+float ThrownExpBottle::getGravity()
 {
-    return 0.07000000029802322;
+    return 0.07f;
 }
 
 unsigned long long ThrownExpBottle::GetType()

@@ -11,27 +11,23 @@ static std::vector<Achievement*>* achievements = new std::vector<Achievement*>()
 
 Achievement::Achievement(int id, const std::wstring& name, int displayColumn, int displayRow,
                          Item* item, Achievement* parent)
-    : Stat(id + 5242880, std::wstring(L"achievement.") + name),
+    : Stat(id + 5242880, std::wstring(L"achievement.").append(name)),
       displayColumn(displayColumn),
       displayRow(displayRow),
       parent(parent),
-      description(I18n::get(std::wstring(L"achievement.") + name + L".desc")),
-      descFormatter(NULL),
-      icon(new ItemInstance(item)),
-      golden(false)
+      description(I18n::get(std::wstring(L"achievement.").append(name).append(L".desc"))),
+      icon(new ItemInstance(item))
 {
 }
 
 Achievement::Achievement(int id, const std::wstring& name, int displayColumn, int displayRow,
                          Block* block, Achievement* parent)
-    : Stat(id + 5242880, std::wstring(L"achievement.") + name),
+    : Stat(id + 5242880, std::wstring(L"achievement.").append(name)),
       displayColumn(displayColumn),
       displayRow(displayRow),
       parent(parent),
-      description(I18n::get(std::wstring(L"achievement.") + name + L".desc")),
-      descFormatter(NULL),
-      icon(new ItemInstance(block)),
-      golden(false)
+      description(I18n::get(std::wstring(L"achievement.").append(name).append(L".desc"))),
+      icon(new ItemInstance(block))
 {
 }
 
@@ -46,9 +42,10 @@ Achievement* Achievement::postConstruct(bool addToList)
     return this;
 }
 
-void Achievement::setAwardLocallyOnly()
+Achievement* Achievement::setAwardLocallyOnly()
 {
     awardLocallyOnly = true;
+    return this;
 }
 
 void Achievement::setGolden()

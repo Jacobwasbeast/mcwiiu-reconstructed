@@ -75,9 +75,9 @@ public:
     StatsCounter();
     static void setupStatBoards();
     unsigned int isLargeStat(Stat* stat);
-    unsigned long long award(Stat* stat, ESubTypes subtype, unsigned int amount, bool fromServer);
+    void award(Stat* stat, ESubTypes subtype, unsigned int amount, bool accumulate);
     int getTotalValue(Stat* stat);
-    unsigned long long save(int profile, bool force, unsigned char* data);
+    void save(int profile, bool force, unsigned char* data);
     void writeStats();
     void flushLeaderboards();
     void tick(int profile);
@@ -91,6 +91,24 @@ public:
     void dumpStatsToTTY();
 
 private:
+    static const unsigned int PROFILE_STATS_OFFSET = 204;
+    static const unsigned int PROFILE_STATS_SIZE = 1740;
+    static const int SAVE_DELAY = 1800;
+
+    union StatsEntry
+    {
+        unsigned short small[4];
+        unsigned int large[4];
+    };
+
+    struct ProfileStats
+    {
+        unsigned long long woolBits;
+        unsigned long long biomeBits;
+        unsigned char armourBits;
+        unsigned char entries[1];
+    };
+
     unsigned char mSavePending;
     int mSaveDelay;
     boost::unordered_map<unsigned int, bool> mLeaderboardPending;

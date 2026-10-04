@@ -6,19 +6,27 @@ RoundDeathsCondition::~RoundDeathsCondition()
 {
 }
 
-double RoundDeathsCondition::getScore(const GameMedal* medal, PlayerStats* playerStats) const
+float RoundDeathsCondition::getScore(const GameMedal* medal, PlayerStats* playerStats) const
 {
+    int deaths;
     switch (mOperator)
     {
     case GameMedal::OPERATOR_AT_LEAST:
-        return static_cast<double>(static_cast<float>(playerStats->getDeathsInAnyRound(0x7fffffff)));
+        deaths = playerStats->getDeathsInAnyRound(0x7fffffff);
+        break;
 
     case GameMedal::OPERATOR_AT_MOST:
-        return static_cast<double>(static_cast<float>(playerStats->getDeathsInAnyRound(0)));
+        deaths = playerStats->getDeathsInAnyRound(0);
+        break;
 
     case GameMedal::OPERATOR_EQUAL:
-        return static_cast<double>(static_cast<float>(playerStats->getDeathsInAnyRound(static_cast<int>(mTarget))));
+        deaths = playerStats->getDeathsInAnyRound(static_cast<int>(mTarget));
+        break;
+
+    default:
+        deaths = -1;
+        break;
     }
 
-    return -1.0f;
+    return static_cast<double>(static_cast<float>(deaths));
 }

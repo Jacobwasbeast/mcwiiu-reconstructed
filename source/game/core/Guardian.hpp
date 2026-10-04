@@ -84,7 +84,7 @@ public:
     virtual unsigned int getAttackDuration();
     void setActiveAttackTarget(int targetId);
     bool hasActiveAttackTarget();
-    boost::shared_ptr<Entity> getActiveAttackTarget();
+    boost::shared_ptr<LivingEntity> getActiveAttackTarget();
     virtual void onSyncedDataUpdated(const EntityDataAccessor_Base* accessor);
     virtual int getAmbientSoundInterval();
     virtual const SoundEvent* getAmbientSound();
@@ -92,9 +92,9 @@ public:
     virtual const SoundEvent* getDeathSound();
     virtual const SoundEvent* getFlopSound();
     virtual bool makeStepSound();
-    virtual double getEyeHeight();
+    virtual float getEyeHeight();
     virtual float getWalkTargetValue(const BlockPos& pos);
-    double getAttackAnimationScale(float partialTicks);
+    float getAttackAnimationScale(float partialTicks);
     virtual void aiStep();
     double getTailAnimation(float partialTicks);
     double getSpikesAnimation(float partialTicks);

@@ -64,7 +64,7 @@ public:
     const IllagerSpell* getCurrentSpell();
     virtual void customServerAiStep();
     virtual void tick();
-    int getSpellCastingTime();
+    int getSpellCastingTime() { return mSpellTicks; }
 
 private:
     int mSpellTicks;

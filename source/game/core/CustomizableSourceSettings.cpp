@@ -1,17 +1,5 @@
 #include "game/core/CustomizableSourceSettings.hpp"
 
-#include "game/core/StringConversion.hpp"
-
-template <typename T>
-T fromString(const std::wstring& value)
-{
-    return _fromString<T>(value);
-}
-
-template double fromString<double>(const std::wstring&);
-template float fromString<float>(const std::wstring&);
-template int fromString<int>(const std::wstring&);
-
 CustomizableSourceSettings::Builder::Builder()
 {
     setDefaults();

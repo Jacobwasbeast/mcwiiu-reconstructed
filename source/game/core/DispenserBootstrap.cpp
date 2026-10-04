@@ -144,11 +144,11 @@ void DispenserBootstrap::StaticCtor()
         {
             return boost::shared_ptr<Projectile>(new ThrownExpBottle(level, position->getX(), position->getY(), position->getZ()));
         }
-        virtual double getUncertainty()
+        virtual float getUncertainty()
         {
             return AbstractProjectileDispenseBehavior::getUncertainty() * 0.5F;
         }
-        virtual double getPower()
+        virtual float getPower()
         {
             return AbstractProjectileDispenseBehavior::getPower() * 1.25F;
         }
@@ -163,11 +163,11 @@ void DispenserBootstrap::StaticCtor()
         {
             return boost::shared_ptr<Projectile>(new ThrownPotion(level, position->getX(), position->getY(), position->getZ(), itemInstance->copy()));
         }
-        virtual double getUncertainty()
+        virtual float getUncertainty()
         {
             return AbstractProjectileDispenseBehavior::getUncertainty() * 0.5F;
         }
-        virtual double getPower()
+        virtual float getPower()
         {
             return AbstractProjectileDispenseBehavior::getPower() * 1.25F;
         }

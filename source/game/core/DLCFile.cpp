@@ -13,7 +13,8 @@ DLCFile::DLCFile(DLCManager::EDLCType type, const std::wstring& path)
         idString = idString.substr(0, idString.find(L'.'));
 
         std::wstringstream stream;
-        stream << std::dec << idString.c_str();
+        stream.setf(std::ios_base::dec, std::ios_base::basefield);
+        stream << idString.c_str();
         stream >> m_fileID;
 
         m_fileID |= 0x80000000;
@@ -40,7 +41,7 @@ void DLCFile::addParameter(DLCManager::EDLCParameterType parameter, const std::w
 
 std::wstring DLCFile::getParameterAsString(DLCManager::EDLCParameterType parameter, const std::wstring& name)
 {
-    return L"char1";
+    return L"";
 }
 
 bool DLCFile::getParameterAsBool(DLCManager::EDLCParameterType parameter)

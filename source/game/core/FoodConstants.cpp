@@ -20,20 +20,19 @@ uint32_t FoodConstants::MaxFood()
     return 20;
 }
 
-double FoodConstants::StartSaturation()
+float FoodConstants::StartSaturation()
 {
-    const float value = START_SATURATION;
     Minecraft* minecraft = Minecraft::GetInstance();
     if (minecraft != 0)
     {
         const MiniGameDef* miniGame = minecraft->GetMiniGame();
         if (Minecraft::InMiniGame(eMiniGameId_Any, true))
-            return miniGame->getStartSaturation(value);
+            return miniGame->getStartSaturation(START_SATURATION);
     }
-    return value;
+    return START_SATURATION;
 }
 
-double FoodConstants::ExhaustionHeal()
+float FoodConstants::ExhaustionHeal()
 {
     const float value = 6.0f;
     Minecraft* minecraft = Minecraft::GetInstance();
@@ -46,7 +45,7 @@ double FoodConstants::ExhaustionHeal()
     return value;
 }
 
-double FoodConstants::ExhaustionDrop()
+float FoodConstants::ExhaustionDrop()
 {
     const float value = 4.0f;
     Minecraft* minecraft = Minecraft::GetInstance();
@@ -83,7 +82,7 @@ uint32_t FoodConstants::HealthTickCountSaturated()
     return 10;
 }
 
-double FoodConstants::MaxSaturation()
+float FoodConstants::MaxSaturation()
 {
     const float value = MAX_SATURATION;
     Minecraft* minecraft = Minecraft::GetInstance();
@@ -132,7 +131,7 @@ uint32_t FoodConstants::SprintLevel()
     return 6;
 }
 
-double FoodConstants::ExhaustionJump()
+float FoodConstants::ExhaustionJump()
 {
     const float value = EXHAUSTION_JUMP;
     Minecraft* minecraft = Minecraft::GetInstance();
@@ -145,20 +144,19 @@ double FoodConstants::ExhaustionJump()
     return value;
 }
 
-double FoodConstants::ExhaustionSprintJump()
+float FoodConstants::ExhaustionSprintJump()
 {
-    const float value = EXHAUSTION_SPRINT_JUMP;
     Minecraft* minecraft = Minecraft::GetInstance();
     if (minecraft != 0)
     {
         const MiniGameDef* miniGame = minecraft->GetMiniGame();
         if (Minecraft::InMiniGame(eMiniGameId_Any, true))
-            return miniGame->getExhaustionSprintJump(value);
+            return miniGame->getExhaustionSprintJump(EXHAUSTION_SPRINT_JUMP);
     }
-    return value;
+    return EXHAUSTION_SPRINT_JUMP;
 }
 
-double FoodConstants::ExhaustionMine()
+float FoodConstants::ExhaustionMine()
 {
     const float value = 0.005f;
     Minecraft* minecraft = Minecraft::GetInstance();
@@ -171,7 +169,7 @@ double FoodConstants::ExhaustionMine()
     return value;
 }
 
-double FoodConstants::ExhaustionAttack()
+float FoodConstants::ExhaustionAttack()
 {
     const float value = 0.1f;
     Minecraft* minecraft = Minecraft::GetInstance();
@@ -184,7 +182,7 @@ double FoodConstants::ExhaustionAttack()
     return value;
 }
 
-double FoodConstants::ExhaustionWalk()
+float FoodConstants::ExhaustionWalk()
 {
     const float value = 0.0f;
     Minecraft* minecraft = Minecraft::GetInstance();
@@ -197,7 +195,7 @@ double FoodConstants::ExhaustionWalk()
     return value;
 }
 
-double FoodConstants::ExhaustionSneak()
+float FoodConstants::ExhaustionSneak()
 {
     const float value = 0.0f;
     Minecraft* minecraft = Minecraft::GetInstance();
@@ -210,7 +208,7 @@ double FoodConstants::ExhaustionSneak()
     return value;
 }
 
-double FoodConstants::ExhaustionSprint()
+float FoodConstants::ExhaustionSprint()
 {
     const float value = 0.1f;
     Minecraft* minecraft = Minecraft::GetInstance();
@@ -223,7 +221,7 @@ double FoodConstants::ExhaustionSprint()
     return value;
 }
 
-double FoodConstants::ExhaustionSwim()
+float FoodConstants::ExhaustionSwim()
 {
     const float value = 0.01f;
     Minecraft* minecraft = Minecraft::GetInstance();
@@ -236,7 +234,7 @@ double FoodConstants::ExhaustionSwim()
     return value;
 }
 
-double FoodConstants::ExhaustionIdle()
+float FoodConstants::ExhaustionIdle()
 {
     const float value = 0.0f;
     Minecraft* minecraft = Minecraft::GetInstance();
@@ -249,7 +247,7 @@ double FoodConstants::ExhaustionIdle()
     return value;
 }
 
-double FoodConstants::SaturationFloor()
+float FoodConstants::SaturationFloor()
 {
     const float value = SATURATION_FLOOR;
     Minecraft* minecraft = Minecraft::GetInstance();
@@ -262,7 +260,7 @@ double FoodConstants::SaturationFloor()
     return value;
 }
 
-double FoodConstants::ExhaustionDamage()
+float FoodConstants::ExhaustionDamage()
 {
     const float value = 0.1f;
     Minecraft* minecraft = Minecraft::GetInstance();

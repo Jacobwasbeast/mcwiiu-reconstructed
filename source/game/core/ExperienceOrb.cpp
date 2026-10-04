@@ -42,47 +42,47 @@ ExperienceOrb::ExperienceOrb(Level* level)
 
 int ExperienceOrb::getExperienceValue(int value)
 {
-    if (value > 2476)
+    if (value >= 2477)
     {
         return 2477;
     }
-    if (value > 1236)
+    if (value >= 1237)
     {
         return 1237;
     }
-    if (value > 616)
+    if (value >= 617)
     {
         return 617;
     }
-    if (value > 306)
+    if (value >= 307)
     {
         return 307;
     }
-    if (value > 148)
+    if (value >= 149)
     {
         return 149;
     }
-    if (value > 72)
+    if (value >= 73)
     {
         return 73;
     }
-    if (value > 36)
+    if (value >= 37)
     {
         return 37;
     }
-    if (value > 16)
+    if (value >= 17)
     {
         return 17;
     }
-    if (value > 6)
+    if (value >= 7)
     {
         return 7;
     }
-    if (value < 3)
+    if (value >= 3)
     {
-        return 1;
+        return 3;
     }
-    return 3;
+    return 1;
 }
 
 void ExperienceOrb::_init()
@@ -110,12 +110,14 @@ int ExperienceOrb::getLightColor()
 {
     float brightness = Mth::clamp(0.5f, 0.0f, 1.0f);
     int color = Entity::getLightColor();
-    int lower = (color & 255) + (int)(brightness * 15.0f * 16.0f);
+    int lower = color & 255;
+    int upper = (color >> 16) & 255;
+    lower += (int)(brightness * 15.0f * 16.0f);
     if (lower > 240)
     {
         lower = 240;
     }
-    return lower | (color & 0x00ff0000);
+    return lower | (upper << 16);
 }
 
 void ExperienceOrb::tick()
@@ -135,8 +137,7 @@ void ExperienceOrb::tick()
         mYd -= 0.029999999329447746;
     }
 
-    const BlockState* state = mLevel->getBlockState(BlockPos(shared_from_this()));
-    if (state->getMaterial() == Material::LAVA)
+    if (mLevel->getBlockState(BlockPos(shared_from_this()))->getBlock()->mMaterial == Material::LAVA)
     {
         mYd = 0.20000000298023224;
         mXd = (double)((mRandom->nextFloat() - mRandom->nextFloat()) * 0.2f);
@@ -146,11 +147,12 @@ void ExperienceOrb::tick()
 
     checkInBlock(mX, (mBoundingBox->mMinY + mBoundingBox->mMaxY) * 0.5, mZ);
 
+    double maxDist = 8.0;
     if (mFollowingTime < mCount - 20 + getId() % 100)
     {
-        if (!mFollowingPlayer || mFollowingPlayer->distanceToSqr(shared_from_this()) > 64.0)
+        if (!mFollowingPlayer || mFollowingPlayer->distanceToSqr(shared_from_this()) > maxDist * maxDist)
         {
-            mFollowingPlayer = mLevel->getNearestPlayer(shared_from_this(), 8.0, -1.0);
+            mFollowingPlayer = mLevel->getNearestPlayer(shared_from_this(), maxDist, -1.0);
         }
         mFollowingTime = mCount;
     }
@@ -162,9 +164,9 @@ void ExperienceOrb::tick()
 
     if (mFollowingPlayer)
     {
-        double xd = (mFollowingPlayer->mX - mX) / 8.0;
-        double yd = (mFollowingPlayer->mY + (double)mFollowingPlayer->getEyeHeight() * 0.5 - mY) / 8.0;
-        double zd = (mFollowingPlayer->mZ - mZ) / 8.0;
+        double xd = (mFollowingPlayer->mX - mX) / maxDist;
+        double yd = (mFollowingPlayer->mY + (double)mFollowingPlayer->getEyeHeight() * 0.5 - mY) / maxDist;
+        double zd = (mFollowingPlayer->mZ - mZ) / maxDist;
         double distance = std::sqrt(xd * xd + yd * yd + zd * zd);
         double strength = 1.0 - distance;
 
@@ -179,14 +181,10 @@ void ExperienceOrb::tick()
 
     move(eMoverType_Self, mXd, mYd, mZd, false);
 
-    double friction = 0.9800000190734863;
+    float friction = 0.98f;
     if (mOnGround)
     {
-        int x = Mth::floor(mX);
-        int y = Mth::floor(mBoundingBox->mMinY) - 1;
-        int z = Mth::floor(mZ);
-        friction = (double)mLevel->getBlockState(BlockPos(x, y, z))->getBlock()->mFriction
-                 * 0.9800000190734863;
+        friction = mLevel->getBlockState(BlockPos(Mth::floor(mX), Mth::floor(mBoundingBox->mMinY) - 1, Mth::floor(mZ)))->getBlock()->mFriction * 0.98f;
     }
 
     mXd *= friction;
@@ -200,7 +198,7 @@ void ExperienceOrb::tick()
 
     ++mCount;
     ++mAge;
-    if (mAge > 5999)
+    if (mAge >= 6000)
     {
         remove();
     }
@@ -255,7 +253,7 @@ int ExperienceOrb::xpToDurability(int value)
 
 int ExperienceOrb::durabilityToXp(int value)
 {
-    return (value >> 1) + ((value < 0 && (value & 1) != 0) ? 1 : 0);
+    return value / 2;
 }
 
 void ExperienceOrb::playerTouch(boost::shared_ptr<Player> player)
@@ -266,13 +264,14 @@ void ExperienceOrb::playerTouch(boost::shared_ptr<Player> player)
         player->take(shared_from_this(), 1);
 
         boost::shared_ptr<ItemInstance> item = EnchantmentHelper::getRandomItemWith(
-            Enchantments::MENDING, boost::static_pointer_cast<LivingEntity>(player));
+            Enchantments::MENDING, player);
         if (!item->isEmpty() && item->isDamaged())
         {
             int repaired = xpToDurability(mValue);
-            if (repaired > item->getDamageValue())
+            int damage = item->getDamageValue();
+            if (damage < repaired)
             {
-                repaired = item->getDamageValue();
+                repaired = damage;
             }
             mValue -= durabilityToXp(repaired);
             item->setAuxValue(item->getDamageValue() - repaired);
@@ -293,43 +292,43 @@ int ExperienceOrb::getValue()
 
 unsigned char ExperienceOrb::getIcon()
 {
-    if (mValue > 2476)
+    if (mValue >= 2477)
     {
         return 10;
     }
-    if (mValue > 1236)
+    if (mValue >= 1237)
     {
         return 9;
     }
-    if (mValue > 616)
+    if (mValue >= 617)
     {
         return 8;
     }
-    if (mValue > 306)
+    if (mValue >= 307)
     {
         return 7;
     }
-    if (mValue > 148)
+    if (mValue >= 149)
     {
         return 6;
     }
-    if (mValue > 72)
+    if (mValue >= 73)
     {
         return 5;
     }
-    if (mValue > 36)
+    if (mValue >= 37)
     {
         return 4;
     }
-    if (mValue > 16)
+    if (mValue >= 17)
     {
         return 3;
     }
-    if (mValue > 6)
+    if (mValue >= 7)
     {
         return 2;
     }
-    return (unsigned char)(mValue > 2);
+    return (unsigned char)(mValue >= 3);
 }
 
 bool ExperienceOrb::isAttackable()
@@ -339,7 +338,11 @@ bool ExperienceOrb::isAttackable()
 
 bool ExperienceOrb::shouldRender(double distanceSqr)
 {
-    return distanceSqr >= 4.0 && Entity::shouldRender(distanceSqr);
+    if (distanceSqr < 4.0)
+    {
+        return false;
+    }
+    return Entity::shouldRender(distanceSqr);
 }
 
 void ExperienceOrb::create(Level* level)

@@ -65,7 +65,7 @@ public:
     virtual void tick();
     double getBodyRollAngle(float a, float b);
     double getHeadRollAngle(float partialTick);
-    virtual double getEyeHeight();
+    virtual float getEyeHeight();
     virtual int getMaxHeadXRot();
     virtual bool hurt(const DamageSource* source, float damage);
     virtual bool doHurtTarget(boost::shared_ptr<Entity> target);

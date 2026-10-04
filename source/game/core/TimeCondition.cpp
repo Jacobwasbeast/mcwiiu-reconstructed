@@ -9,20 +9,18 @@
 #include "game/minigame/MiniGameDef.hpp"
 
 TimeCondition::TimeCondition(const XmlObject& object)
-    : IntegerCondition(object)
-    , m_offset(0)
 {
     maybe<std::wstring> op = object[L"op"].maybeString();
     if (!op.isSet())
     {
-        m_operator = EOperator_GreaterThanOrEquals;
+        _init(object, EOperator_GreaterThanOrEquals);
     }
     else
     {
         std::pair<bool, EOperator> parsed = IntegerCondition::parseOperator(op.get());
-        if (!parsed.first)
-            m_operator = EOperator_GreaterThanOrEquals;
+        _init(object, parsed.first ? parsed.second : EOperator_GreaterThanOrEquals);
     }
+    m_offset = 0;
 
     maybe<int> offset = object[L"offset"].maybeInt();
     if (offset.isSet())
@@ -31,8 +29,10 @@ TimeCondition::TimeCondition(const XmlObject& object)
 
 void TimeCondition::AddIntParams(MasterGameMode* gameMode, std::vector<int>* params) const
 {
-    params->push_back(GetValue(gameMode));
-    params->push_back(IDS_MG_SECONDS);
+    int threshold = GetThreshold(gameMode);
+    params->push_back(threshold);
+    int unit = IDS_MG_SECONDS;
+    params->push_back(unit);
 }
 
 unsigned int TimeCondition::GetThreshold(MasterGameMode* gameMode) const

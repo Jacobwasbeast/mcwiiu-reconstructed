@@ -38,7 +38,6 @@ public:
     {
     public:
         SilverfishWakeUpFriendsGoal(Silverfish* silverfish);
-        virtual ~SilverfishWakeUpFriendsGoal();
         void notifyHurt();
         virtual bool canUse();
         virtual void tick();
@@ -55,7 +54,7 @@ public:
     static void addDataWalkers(DataFixerUpper* fixer);
     virtual void registerGoals();
     virtual double getRidingHeight();
-    virtual double getEyeHeight();
+    virtual float getEyeHeight();
     virtual void registerAttributes();
     virtual bool makeStepSound();
     virtual const SoundEvent* getAmbientSound();

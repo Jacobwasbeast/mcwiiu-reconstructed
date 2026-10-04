@@ -9,10 +9,7 @@ static FloatBuffer* BUFFER = MemoryTracker::createFloatBuffer(16);
 FloatBuffer* Lighting::getBuffer(float x, float y, float z, float w)
 {
     BUFFER->clear();
-    BUFFER->put(x);
-    BUFFER->put(y);
-    BUFFER->put(z);
-    BUFFER->put(w);
+    BUFFER->put(x)->put(y)->put(z)->put(w);
     BUFFER->flip();
 
     return BUFFER;

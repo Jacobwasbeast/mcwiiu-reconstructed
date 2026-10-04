@@ -122,9 +122,13 @@ bool EnderCrystal::isPickable()
 
 void EnderCrystal::onDestroyedBy(const DamageSource* source)
 {
-    TheEndDimension* dimension = static_cast<TheEndDimension*>(mLevel->mDimension);
-    if (dimension != NULL && dimension->getDragonFight() != NULL)
-        dimension->getDragonFight()->onCrystalDestroyed(boost::static_pointer_cast<EnderCrystal>(shared_from_this()), source);
+    TheEndDimension* dimension = dynamic_cast<TheEndDimension*>(mLevel->mDimension);
+    if (dimension != NULL)
+    {
+        EndDragonFight* fight = dimension->getDragonFight();
+        if (fight != NULL)
+            fight->onCrystalDestroyed(boost::static_pointer_cast<EnderCrystal>(shared_from_this()), source);
+    }
 }
 
 bool EnderCrystal::hurt(const DamageSource* source, float damage)
@@ -132,24 +136,27 @@ bool EnderCrystal::hurt(const DamageSource* source, float damage)
     if (isInvulnerableTo(source))
         return false;
 
-    boost::shared_ptr<Entity> entity = source->getEntity();
-    if (entity && entity->GetType() == EntityType::ENDER_DRAGON)
+    bool fromDragon = source->getEntity() && source->getEntity()->GetType() == EntityType::ENDER_DRAGON;
+    if (fromDragon)
         return false;
 
     if (!mRemoved && !mLevel->mIsClientSide)
     {
         remove();
-        if (!mLevel->mIsClientSide && gApp.GetGameHostOption(eGameHostOption_TNT)
-            && mLevel->explodeNextEnderCrystal() && !source->isExplosion())
-            mLevel->explode(shared_from_this(), mX, mY, mZ, 6.0f, false, true, false, false, false, -1.0f);
-        onDestroyedBy(source);
+        if (!mLevel->mIsClientSide)
+        {
+            if (gApp.GetGameHostOption(eGameHostOption_TNT)
+                && mLevel->explodeNextEnderCrystal() && !source->isExplosion())
+                mLevel->explode(boost::shared_ptr<Entity>(), mX, mY, mZ, 6.0f, false, true, false, false, false, -1.0f);
+            onDestroyedBy(source);
+        }
     }
     return true;
 }
 
 void EnderCrystal::kill()
 {
-    onDestroyedBy(NULL);
+    onDestroyedBy(DamageSource::GENERIC);
     Entity::kill();
 }
 

@@ -124,7 +124,7 @@ const unsigned int CENTRAL_SPAWN_MAX_PLAYERS = 8;
 const char NO_VOTE = -1;
 const int ACHIEVEMENT_EXPLOIT_PLAYER_COUNT = 2;
 const int MAX_KICK_VOTES_REQUIRED = 3;
-const unsigned int SPAWN_LAYER_REMAINING_BLOCKS = 11;
+const int SPAWN_LAYER_REMAINING_BLOCKS = 11;
 const double FINISH_LINE_SOUND_RANGE = 30.0;
 const int END_ZONE_SHOWDOWN_REDUCTION = 60000;
 const int END_ZONE_SHOWDOWN_MINIMUM = 30000;
@@ -522,7 +522,7 @@ void MasterGameMode::ChooseNextGameRules(bool preview)
         for (std::vector<LevelRules::LevelRulesetGroup*>::const_iterator group = mPlaylist.begin(); group != mPlaylist.end() && chosenGroup == NULL; ++group)
         {
             std::vector<LevelRuleset*>& rulesets = (*group)->rulesets;
-            if (LevelGenerationOptions::GetMapSizeFromUniqueId(vote) == -1)
+            if (static_cast<short>(LevelGenerationOptions::GetMapSizeFromUniqueId(vote)) == -1)
             {
                 if (rulesets.front()->getThemeId() == LevelGenerationOptions::GetThemeFromUniqueId(vote))
                     chosenGroup = *group;
@@ -1919,7 +1919,7 @@ void MasterGameMode::Tick()
                 break;
 
             if (mTickCount == mChunkLoadStartTick + 1)
-                GeneratorTargetLevel()->getChunkMap()->PauseBlockUpdatePackets(false);
+                static_cast<ServerLevel*>(GeneratorTargetLevel())->getChunkMap()->PauseBlockUpdatePackets(false);
 
             if (!playersLoaded && !loadTimedOut)
                 break;
@@ -1928,7 +1928,7 @@ void MasterGameMode::Tick()
             SetState(eInternalGameModeState_PreparingRound);
             BroadcastGameModePacket(GameModePacket::eMessage_RoundStart,
                                     GameModePacket::RoundStartGameModeData(mRoundInfo.getRoundId(), mRoundInfo.getSubRoundId()));
-            GeneratorTargetLevel()->getChunkMap()->PauseBlockUpdatePackets(false);
+            static_cast<ServerLevel*>(GeneratorTargetLevel())->getChunkMap()->PauseBlockUpdatePackets(false);
         }
         break;
 
@@ -2463,7 +2463,8 @@ void MasterGameMode::OnLeave(boost::shared_ptr<ServerPlayer> player)
     if (mPlayersLoading > 0)
         --mPlayersLoading;
 
-    gMinecraftServer->getLevel(0)->GetScoreboard()->removePlayerFromTeam(player->mXuid);
+    Scoreboard *scoreboard = gMinecraftServer->getLevel(0)->GetScoreboard();
+    scoreboard->removePlayerFromTeam(player->mXuid);
     const StatsUID suid = player->getSUID();
     if (mGameStats.GetPlayerStats(suid) != NULL)
         player->getLevel()->GetServerScoreboard()->OnPlayerStatsChanged(suid, mGameStats.GetDeathCount(suid));
@@ -2845,8 +2846,8 @@ void MasterGameMode::BlockDestroyedAt(const BlockPos& pos)
     if (layerBounds == NULL || !layerBounds->contains(pos))
         return;
 
-    const unsigned int blocksDestroyed = mLayerBlocksDestroyed++;
-    if (mMapGenerator->GetBlockCountOnLayer(mSpawnLayerIndex) < blocksDestroyed + SPAWN_LAYER_REMAINING_BLOCKS)
+    const int blocksDestroyed = mLayerBlocksDestroyed++;
+    if (static_cast<int>(mMapGenerator->GetBlockCountOnLayer(mSpawnLayerIndex)) < blocksDestroyed + SPAWN_LAYER_REMAINING_BLOCKS)
     {
         ++mSpawnLayerIndex;
         mLayerBlocksDestroyed = 0;
@@ -2885,7 +2886,7 @@ EGameModeState MasterGameMode::GetGameModeState() const
     return sStateMap[mState];
 }
 
-ServerLevel* MasterGameMode::GeneratorTargetLevel() const
+Level* MasterGameMode::GeneratorTargetLevel() const
 {
     return gMinecraftServer->getLevel(0);
 }

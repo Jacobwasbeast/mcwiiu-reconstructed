@@ -94,15 +94,14 @@ void Ocelot::addDataWalkers(DataFixerUpper* fixer)
 void Ocelot::setSittingOnBlock(bool sitting)
 {
     unsigned char flags = mEntityData->get(TamableAnimal::DATA_FLAGS);
-    if (sitting)
-        mEntityData->set(TamableAnimal::DATA_FLAGS, static_cast<unsigned char>(flags | 2), true);
-    else
-        mEntityData->set(TamableAnimal::DATA_FLAGS, static_cast<unsigned char>(flags & 0xfd), true);
+    mEntityData->set(TamableAnimal::DATA_FLAGS,
+                     sitting ? static_cast<unsigned char>(flags | 2) : static_cast<unsigned char>(flags & ~2),
+                     true);
 }
 
 bool Ocelot::isSittingOnBlock()
 {
-    return (mEntityData->get(TamableAnimal::DATA_FLAGS) & 2) != 0;
+    return (mEntityData->get(TamableAnimal::DATA_FLAGS) & 2) > 0;
 }
 
 void Ocelot::SetIsTempted(bool tempted)
@@ -116,8 +115,8 @@ void Ocelot::registerGoals()
     mSitGoal = new SitGoal(this);
 
     static Item* temptItems[2] = { Items::fish, Items::fish };
-    static int temptAuxValues[2] = { static_cast<int>(gFishFoodTypes[0]->getId()),
-                                     static_cast<int>(gFishFoodTypes[1]->getId()) };
+    static int temptAuxValues[2] = { static_cast<int>(FishFoodItem::Type::COD->getId()),
+                                     static_cast<int>(FishFoodItem::Type::SALMON->getId()) };
 
     arrayWithLength<Item*> items;
     items.data = temptItems;
@@ -180,11 +179,7 @@ void Ocelot::customServerAiStep()
         setSprinting(false);
     }
 
-    bool tempted = true;
-    if (mTemptGoal != NULL)
-        tempted = mTemptGoal->isRunning();
-
-    SetIsTempted(tempted);
+    SetIsTempted(mTemptGoal == NULL || mTemptGoal->isRunning());
 }
 
 bool Ocelot::removeWhenFarAway()
@@ -274,11 +269,9 @@ bool Ocelot::mobInteract(const boost::shared_ptr<Player>& player, InteractionHan
     if (!isTame())
     {
         bool canTame = false;
-        if (mEntityData->get(DATA_IS_TEMPTED) || (!isBaby() && player->mAbilities.mInstabuild))
-        {
-            if (isFood(item) && player->distanceToSqr(shared_from_this()) < 9.0)
-                canTame = true;
-        }
+        if ((mEntityData->get(DATA_IS_TEMPTED) || (!isBaby() && player->mAbilities.mInstabuild))
+            && isFood(item) && player->distanceToSqr(shared_from_this()) < 9.0)
+            canTame = true;
 
         if (canTame)
         {
@@ -352,11 +345,14 @@ boost::shared_ptr<AgableMob> Ocelot::getBreedOffspring(boost::shared_ptr<AgableM
 
 bool Ocelot::isFood(const not_null_ptr<ItemInstance>& item)
 {
-    if (item->getItem() != Items::fish)
-        return false;
-
-    FishFoodItem::Type* type = FishFoodItem::Type::getById(item->getAuxValue());
-    return type == gFishFoodTypes[0] || type == gFishFoodTypes[1];
+    bool food = false;
+    if (item->getItem() == Items::fish)
+    {
+        FishFoodItem::Type* type = FishFoodItem::Type::getById(item->getAuxValue());
+        if (type == FishFoodItem::Type::COD || type == FishFoodItem::Type::SALMON)
+            food = true;
+    }
+    return food;
 }
 
 bool Ocelot::canMate(const boost::shared_ptr<Animal>& other)
@@ -392,11 +388,9 @@ bool Ocelot::checkSpawnRules()
 
 bool Ocelot::checkSpawnObstruction()
 {
-    if (!mLevel->isUnobstructed(mBoundingBox))
-        return false;
-    if (!mLevel->getCollisionAABBs(shared_from_this(), mBoundingBox, false, false, false)->empty())
-        return false;
-    if (mLevel->containsAnyLiquid(mBoundingBox))
+    if (!(mLevel->isUnobstructed(mBoundingBox)
+          && mLevel->getCollisionAABBs(shared_from_this(), mBoundingBox, false, false, false)->empty()
+          && !mLevel->containsAnyLiquid(mBoundingBox)))
         return false;
 
     BlockPos pos(mX, mBoundingBox->mMinY, mZ);
@@ -404,7 +398,9 @@ bool Ocelot::checkSpawnObstruction()
         return false;
 
     const BlockState* below = mLevel->getBlockState(pos.below());
-    return below->getBlock() == Blocks::grass || below->getMaterial() == Material::LEAVES;
+    if (below->getBlock() == Blocks::grass || below->getMaterial() == Material::LEAVES)
+        return true;
+    return false;
 }
 
 std::wstring Ocelot::getName()
@@ -438,7 +434,7 @@ void Ocelot::positionRider(const boost::shared_ptr<Entity>& passenger)
     if (!RiderPositionOverrides::OverridePosition(shared_from_this(), passenger))
         passenger->setPos(mX, mY + 0.35 + passenger->getRidingHeight(), mZ);
 
-    if (Entity::instanceof(passenger, EntityType::LIVING_ENTITY))
+    if ((passenger->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
     {
         boost::shared_ptr<LivingEntity> living = boost::static_pointer_cast<LivingEntity>(passenger);
         living->mYBodyRot = mYBodyRot;
@@ -464,7 +460,10 @@ unsigned int Ocelot::GetInteractTooltip(const EntityTooltipDataHolder& tooltipDa
 
     if (!isPassenger() && itemId == ItemId::NAME_TAG && tooltipData.m_pItemInstance->hasCustomHoverName())
     {
-        if (!hasCustomName() || tooltipData.m_pItemInstance->getHoverName() != getCustomName())
+        bool renaming = true;
+        if (hasCustomName() && tooltipData.m_pItemInstance->getHoverName() == getCustomName())
+            renaming = false;
+        if (renaming)
             return IDS_TOOLTIPS_NAME;
     }
 
@@ -472,11 +471,16 @@ unsigned int Ocelot::GetInteractTooltip(const EntityTooltipDataHolder& tooltipDa
     {
         if (!isFood(tooltipData.m_pItemInstance))
         {
-            if (!isOwnedBy(tooltipData.m_pPlayer) || isSittingOnBlock())
-                return IDS_NONE;
-            if (isSitting())
-                return IDS_TOOLTIPS_FOLLOWME;
-            return IDS_TOOLTIPS_SIT;
+            bool canSit = false;
+            if (isOwnedBy(tooltipData.m_pPlayer) && !isSittingOnBlock())
+                canSit = true;
+            if (canSit)
+            {
+                if (isSitting())
+                    return IDS_TOOLTIPS_FOLLOWME;
+                return IDS_TOOLTIPS_SIT;
+            }
+            return IDS_NONE;
         }
 
         if (isBaby())
@@ -490,12 +494,10 @@ unsigned int Ocelot::GetInteractTooltip(const EntityTooltipDataHolder& tooltipDa
         return IDS_NONE;
 
     bool nearPlayer = false;
-    if (mEntityData->get(DATA_IS_TEMPTED)
-        || (!isBaby() && tooltipData.m_pPlayer->mAbilities.mInstabuild))
-    {
-        if (tooltipData.m_pPlayer->distanceToSqr(shared_from_this()) < 9.0)
-            nearPlayer = true;
-    }
+    if ((mEntityData->get(DATA_IS_TEMPTED)
+         || (!isBaby() && tooltipData.m_pPlayer->mAbilities.mInstabuild))
+        && tooltipData.m_pPlayer->distanceToSqr(shared_from_this()) < 9.0)
+        nearPlayer = true;
 
     if (nearPlayer)
     {

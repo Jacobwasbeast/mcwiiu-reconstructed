@@ -8,10 +8,6 @@ Buffer::Buffer(unsigned int capacity)
     mIsWrapped = false;
 }
 
-Buffer::~Buffer()
-{
-}
-
 void Buffer::clear()
 {
     mPosition = 0;

@@ -308,7 +308,7 @@ void IUIScene_LoadCreateJoin::AddMatchmakingButton(std::wstring label, int id, s
         if (gApp.hasArchiveFile(path, false))
         {
             arrayWithLength<unsigned char> file = gApp.getArchiveFile(path, false);
-            if (file.data != NULL && file.length != 0)
+            if (file.length != 0 && file.data != NULL)
                 SetCreateListIcon(m_matchmakingButtonCount, file.data, file.length, icon);
         }
     }
@@ -322,7 +322,7 @@ void IUIScene_LoadCreateJoin::AddGameModeButton(std::wstring label, int id, std:
     if (gApp.hasArchiveFile(path, false))
     {
         arrayWithLength<unsigned char> file = gApp.getArchiveFile(path, false);
-        if (file.data != NULL && file.length != 0)
+        if (file.length != 0 && file.data != NULL)
             SetLoadListIcon(m_buttonCount, file.data, file.length, icon);
     }
     ++m_buttonCount;
@@ -347,8 +347,8 @@ void IUIScene_LoadCreateJoin::AddDefaultButtons()
             const wchar_t* icon;
             EMiniGameId id;
         };
-        static const MiniGameButton buttons[] = {
-            { 0x42e0ac30, L"BattleModeIcon", eMiniGameId_Battle },
+        MiniGameButton buttons[] = {
+            { IDS_MINI_GAME_01, L"BattleModeIcon", eMiniGameId_Battle },
             { IDS_MINI_GAME_02, L"MG02icon", eMiniGameId_Tumble },
             { IDS_MINI_GAME_03, L"MG03icon", eMiniGameId_Glide },
         };
@@ -366,11 +366,10 @@ void IUIScene_LoadCreateJoin::AddDefaultButtons()
 
     AddCreateListButton(L10N::GetString(IDS_CREATE_NEW_WORLD), -1);
     ++m_buttonCount;
-    std::wstring createWorldIcon = L"Graphics\\CreateWorldIcon.png";
-    if (gApp.hasArchiveFile(createWorldIcon, false))
+    if (gApp.hasArchiveFile(L"Graphics\\CreateWorldIcon.png", false))
     {
-        arrayWithLength<unsigned char> file = gApp.getArchiveFile(createWorldIcon, false);
-        if (file.data != NULL && file.length != 0)
+        arrayWithLength<unsigned char> file = gApp.getArchiveFile(L"Graphics\\CreateWorldIcon.png", false);
+        if (file.length != 0 && file.data != NULL)
             SetCreateListIcon(0, file.data, file.length, L"CreateWorldIcon");
     }
 
@@ -393,33 +392,33 @@ void IUIScene_LoadCreateJoin::AddDefaultButtons()
     {
         LevelGenerationOptions* options = *it;
         unsigned int texturePackId = options->getTexturePackId();
-        AddCreateListButton(std::wstring(options->getWorldName()), id);
+        std::wstring worldName(options->getWorldName());
+        AddCreateListButton(worldName, id);
         if (texturePackId == 0)
         {
             if (options->isTutorial())
             {
-                std::wstring tutorialIcon = L"Graphics\\TutorialIcon.png";
-                if (gApp.hasArchiveFile(tutorialIcon, false))
+                if (gApp.hasArchiveFile(L"Graphics\\TutorialIcon.png", false))
                 {
-                    arrayWithLength<unsigned char> file = gApp.getArchiveFile(tutorialIcon, false);
-                    if (file.data != NULL && file.length != 0)
+                    arrayWithLength<unsigned char> file = gApp.getArchiveFile(L"Graphics\\TutorialIcon.png", false);
+                    if (file.length != 0 && file.data != NULL)
                         SetCreateListIcon(m_buttonCount, file.data, file.length, L"TutorialIcon");
                 }
             }
-            ++m_buttonCount;
-            continue;
         }
-
-        ++m_texturePackWorldCount;
-        TexturePack* pack = Minecraft::GetInstance()->mTexturePackRepository->getTexturePackById(
-            options->getTexturePackId());
-        unsigned int iconSize = 0;
-        unsigned char* icon = static_cast<unsigned char*>(const_cast<void*>(pack->getPackIcon(iconSize)));
-        if (iconSize != 0 && icon != NULL)
+        else
         {
-            wchar_t name[64];
-            std::swprintf(name, 64, L"tpack%08x", pack->getId());
-            SetCreateListIcon(m_buttonCount, icon, iconSize, name);
+            ++m_texturePackWorldCount;
+            TexturePack* pack = Minecraft::GetInstance()->mTexturePackRepository->getTexturePackById(
+                options->getTexturePackId());
+            unsigned int iconSize = 0;
+            unsigned char* icon = static_cast<unsigned char*>(const_cast<void*>(pack->getPackIcon(iconSize)));
+            if (iconSize != 0 && icon != NULL)
+            {
+                wchar_t name[64];
+                std::swprintf(name, 64, L"tpack%08x", pack->getId());
+                SetCreateListIcon(m_buttonCount, icon, iconSize, name);
+            }
         }
         ++m_buttonCount;
     }
@@ -590,35 +589,48 @@ int IUIScene_LoadCreateJoin::DeleteSaveDialogReturned(void* context, int, C4JSto
 
 int IUIScene_LoadCreateJoin::SaveOptionsDialogReturned(void* context, int userIndex, C4JStorage::EMessageResult result)
 {
-    static_cast<IUIScene_LoadCreateJoin*>(context)->handleSaveOptionsDialogReturned(userIndex, result);
-    return 0;
+    return static_cast<IUIScene_LoadCreateJoin*>(context)->handleSaveOptionsDialogReturned(userIndex, result);
 }
 
-uint32_t IUIScene_LoadCreateJoin::handleKeyDown(int pad, int action, bool)
+bool IUIScene_LoadCreateJoin::handleKeyDown(int pad, int action, bool)
 {
     if (m_ignoreInput || (!m_saveInfoReady && !m_miniGames))
         return 0;
 
+    bool handled = false;
     switch (action)
     {
     case EControllerActions_MenuB:
     case EControllerActions_MenuCancel:
         gConsoleUIController.NavigateBack(GetPad(), false, EUIScene_None, EUILayer_Count);
-        return 1;
+        handled = true;
+        break;
     case EControllerActions_MenuY:
         if (!m_miniGames && DoesLoadListHaveFocus() && GetLoadListSize() != 0)
         {
             m_ignoreInput = true;
-            if (gStorage->GetSaveDisabled() || !gStorage->EnoughSpaceForAMinSaveGame())
+            if (gStorage->GetSaveDisabled())
             {
                 int options[] = { IDS_CONFIRM_CANCEL, IDS_CONFIRM_OK };
                 gConsoleUIController.RequestAlertMessage(IDS_TOOLTIPS_DELETESAVE, IDS_TEXT_DELETE_SAVE, options, 2,
                                                          pad, &IUIScene_LoadCreateJoin::DeleteSaveDialogReturned,
                                                          this, 0, true);
                 gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
-                return 0;
+                break;
             }
-            int options[4] = { IDS_TITLE_RENAMESAVE, IDS_TOOLTIPS_DELETESAVE, IDS_TOOLTIPS_DELETESAVE };
+            if (!gStorage->EnoughSpaceForAMinSaveGame())
+            {
+                int options[] = { IDS_CONFIRM_CANCEL, IDS_CONFIRM_OK };
+                gConsoleUIController.RequestAlertMessage(IDS_TOOLTIPS_DELETESAVE, IDS_TEXT_DELETE_SAVE, options, 2,
+                                                         pad, &IUIScene_LoadCreateJoin::DeleteSaveDialogReturned,
+                                                         this, 0, true);
+                gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
+                break;
+            }
+            int options[4];
+            options[0] = IDS_TITLE_RENAMESAVE;
+            options[1] = IDS_TOOLTIPS_DELETESAVE;
+            options[2] = IDS_TOOLTIPS_DELETESAVE;
             unsigned int optionCount = 2;
             if (!gApp.HasNoSpaceForSaveQuota())
             {
@@ -632,7 +644,7 @@ uint32_t IUIScene_LoadCreateJoin::handleKeyDown(int pad, int action, bool)
                                                      &IUIScene_LoadCreateJoin::SaveOptionsDialogReturned, this, 0,
                                                      true);
             gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
-            return 0;
+            break;
         }
         if (DoesMashUpWorldHaveFocus())
         {
@@ -649,7 +661,7 @@ uint32_t IUIScene_LoadCreateJoin::handleKeyDown(int pad, int action, bool)
             }
             gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
         }
-        return 0;
+        break;
     case EControllerActions_MenuRight:
     case EControllerActions_MenuRightScroll:
     {
@@ -659,7 +671,7 @@ uint32_t IUIScene_LoadCreateJoin::handleKeyDown(int pad, int action, bool)
             m_currentTab = 0;
         SelectTab(m_currentTab);
         updateTooltips();
-        return 0;
+        break;
     }
     case EControllerActions_MenuLeft:
     case EControllerActions_MenuLeftScroll:
@@ -670,10 +682,10 @@ uint32_t IUIScene_LoadCreateJoin::handleKeyDown(int pad, int action, bool)
             m_currentTab = tabCount - 1;
         SelectTab(m_currentTab);
         updateTooltips();
-        return 0;
+        break;
     }
     }
-    return 0;
+    return handled;
 }
 
 void IUIScene_LoadCreateJoin::LoadLevelGen(LevelGenerationOptions* options)
@@ -934,8 +946,7 @@ void IUIScene_LoadCreateJoin::HandleNewListPress(int index, int variant)
 
 int IUIScene_LoadCreateJoin::TexturePackDialogReturned(void* context, int userIndex, C4JStorage::EMessageResult result)
 {
-    static_cast<IUIScene_LoadCreateJoin*>(context)->handleTexturePackDialogReturned(userIndex, result);
-    return 0;
+    return static_cast<IUIScene_LoadCreateJoin*>(context)->handleTexturePackDialogReturned(userIndex, result);
 }
 
 void IUIScene_LoadCreateJoin::CheckAndJoinGame(int index)

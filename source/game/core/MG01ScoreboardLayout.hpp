@@ -23,7 +23,7 @@ private:
 public:
     explicit MG01ScoreboardLayout(EScoreboardType type);
     virtual ~MG01ScoreboardLayout();
-    static unsigned int SORTBYSCORE(PlayerInfo* first, PlayerInfo* second);
+    static bool SORTBYSCORE(PlayerInfo* first, PlayerInfo* second);
     void Init(int value);
     unsigned int getNumberOfColumns();
     boost::shared_ptr<ItemInstance> getItemForSlot(int row, int column, const unsigned int& slot, const EScoreboardType& type);

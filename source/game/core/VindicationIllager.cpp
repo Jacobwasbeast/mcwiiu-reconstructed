@@ -15,6 +15,8 @@
 #include "game/entity/mob/SharedMonsterAttributes.hpp"
 #include <boost/assert.hpp>
 
+static const std::wstring JOHNNY_KEY(L"Johnny");
+
 VindicationIllager::VindicationIllager(Level* level) : AbstractIllager(level)
 {
     fjDerivedCtorCalls();
@@ -45,7 +47,7 @@ void VindicationIllager::registerGoals()
 void VindicationIllager::registerAttributes()
 {
     Monster::registerAttributes();
-    getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(0.35);
+    getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(0.35f);
     getAttribute(SharedMonsterAttributes::FOLLOW_RANGE)->setBaseValue(12.0);
     getAttribute(SharedMonsterAttributes::MAX_HEALTH)->setBaseValue(24.0);
     getAttribute(SharedMonsterAttributes::ATTACK_DAMAGE)->setBaseValue(5.0);
@@ -66,21 +68,24 @@ void VindicationIllager::addAdditonalSaveData(CompoundTag* tag)
 {
     Mob::addAdditonalSaveData(tag);
     if (mJohnny)
-        tag->putBoolean(L"Johnny", true);
+        tag->putBoolean(JOHNNY_KEY, true);
 }
-int VindicationIllager::getArmPose() { return isAgressive() ? ILLAGER_ARM_POSE_ATTACKING : ILLAGER_ARM_POSE_CROSSED; }
+int VindicationIllager::getArmPose() { return isAgressive(); }
 void VindicationIllager::readAdditionalSaveData(CompoundTag* tag)
 {
     Mob::readAdditionalSaveData(tag);
-    if (tag->contains(L"Johnny", Tag::TAG_ANY_NUMERIC))
-        mJohnny = tag->getBoolean(L"Johnny");
+    if (tag->contains(JOHNNY_KEY, Tag::TAG_ANY_NUMERIC))
+        mJohnny = tag->getBoolean(JOHNNY_KEY);
 }
 MobGroupData* VindicationIllager::finalizeMobSpawn(const DifficultyInstance& difficulty,
                                                   MobGroupData* data,
                                                   const std::wstring& reason)
 {
-    const std::wstring spawnReason;
-    MobGroupData* result = Mob::finalizeMobSpawn(difficulty, data, spawnReason);
+    MobGroupData* result;
+    {
+        const std::wstring spawnReason(L"");
+        result = Mob::finalizeMobSpawn(difficulty, data, spawnReason);
+    }
     populateDefaultEquipmentSlots(difficulty);
     populateDefaultEquipmentEnchantments(difficulty);
     return result;
@@ -94,17 +99,18 @@ bool VindicationIllager::isAlliedTo(boost::shared_ptr<Entity> entity)
 {
     if (Entity::isAlliedTo(entity))
         return true;
-    if ((entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY) {
-        boost::shared_ptr<LivingEntity> living = boost::static_pointer_cast<LivingEntity>(entity);
-        if (living->getMobType() == MOB_TYPE_ILLAGER)
-            return getTeam() == 0 && entity->getTeam() == 0;
-    }
-    return false;
+    bool illager = false;
+    if ((entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY
+        && boost::static_pointer_cast<LivingEntity>(entity)->getMobType() == MOB_TYPE_ILLAGER)
+        illager = true;
+    if (!illager)
+        return false;
+    return getTeam() == 0 && entity->getTeam() == 0;
 }
 void VindicationIllager::setCustomName(const std::wstring& name, const std::wstring& displayName, bool visible)
 {
     Entity::setCustomName(name, displayName, visible);
-    mJohnny = name == L"Johnny";
+    mJohnny = JOHNNY_KEY == name;
 }
 const SoundEvent* VindicationIllager::getAmbientSound() { return SoundEvents::VINDICATION_ILLAGER_AMBIENT; }
 const SoundEvent* VindicationIllager::getDeathSound() { return SoundEvents::VINDICATION_ILLAGER_DEATH; }
@@ -113,10 +119,8 @@ unsigned long long VindicationIllager::GetType() { return EntityType::VINDICATIO
 
 bool VindicationIllager::LIVING_ENTITY_SELECTOR::apply(boost::shared_ptr<Entity> entity) const
 {
-    if ((entity->GetType() & EntityType::LIVING_ENTITY) != EntityType::LIVING_ENTITY)
-        return false;
-    boost::shared_ptr<LivingEntity> living = boost::static_pointer_cast<LivingEntity>(entity);
-    return living->attackable();
+    return (entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY
+        && boost::static_pointer_cast<LivingEntity>(entity)->attackable();
 }
 VindicationIllager::VindicatorJohnnyAttackGoal::VindicatorJohnnyAttackGoal(VindicationIllager* mob)
     : NearestAttackableTargetGoal(mob, typeid(Entity), 0, true, false,

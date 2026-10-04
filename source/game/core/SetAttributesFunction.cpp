@@ -8,7 +8,7 @@ not_null_ptr<ItemInstance> SetAttributesFunction::apply(const not_null_ptr<ItemI
                                                         Random* random,
                                                         LootTableContext& context)
 {
-    if (random == NULL || modifiers == NULL || modifiers->empty())
+    if (!itemInstance || modifiers == NULL || modifiers->empty())
     {
         (void)context;
         return itemInstance;

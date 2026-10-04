@@ -4,6 +4,7 @@
 #include "game/core/InputConstraint.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/core/UnityClient6.hpp"
+#include "game/world/block/Material.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "platform/wiiu/CInput.hpp"
 
@@ -12,7 +13,7 @@ extern ConsoleUIController gConsoleUIController;
 InfoTask::InfoTask(Tutorial* tutorial, int descriptionId, int promptId, bool addConstraint,
                    int completionId, ETelemetryChallenges telemetryChallenge)
     : TutorialTask(tutorial, descriptionId, false, NULL, true, false, false),
-      completedInputs(), telemetryChallenge(telemetryChallenge)
+      completedInputs()
 {
     if (addConstraint)
     {
@@ -22,6 +23,7 @@ InfoTask::InfoTask(Tutorial* tutorial, int descriptionId, int promptId, bool add
     completedInputs[completionId] = false;
     this->promptId = promptId;
     tutorial->addMessage(promptId, false, 3);
+    this->telemetryChallenge = telemetryChallenge;
 }
 
 void InfoTask::sendTelemetry()
@@ -47,7 +49,15 @@ bool InfoTask::isCompleted()
         return true;
     }
 
-    if (!activated || !shownForMinimumTime)
+    if (tutorial->popupPending || !activated || !shownForMinimumTime)
+    {
+        return false;
+    }
+
+    bool result = true;
+    Minecraft* minecraft = Minecraft::GetInstance();
+
+    if (minecraft->mLocalPlayers[tutorial->playerId]->isUnderLiquid(Material::WATER))
     {
         return false;
     }
@@ -59,13 +69,15 @@ bool InfoTask::isCompleted()
         {
             if (!input->second)
             {
-                if (g_pInput->GetValue(tutorial->playerId, (unsigned char)input->first, false))
+                if (g_pInput->GetValue(minecraft->mPlayer->mUserIndex,
+                                       static_cast<unsigned char>(input->first), false))
                 {
                     input->second = true;
+                    result = true;
                 }
                 else
                 {
-                    return false;
+                    result = false;
                 }
             }
             ++input;
@@ -78,16 +90,21 @@ bool InfoTask::isCompleted()
         {
             if (!input->second)
             {
+                completed = false;
                 return false;
             }
             ++input;
         }
     }
 
-    sendTelemetry();
-    enableConstraints(false, true);
-    completed = true;
-    return true;
+    if (result)
+    {
+        sendTelemetry();
+        enableConstraints(false, true);
+    }
+
+    completed = result;
+    return result;
 }
 
 int InfoTask::getPromptId()
@@ -107,18 +124,22 @@ void InfoTask::setAsCurrentTask(bool currentTask)
 
 void InfoTask::handleUIInput(int input)
 {
-    if (!activated || completedInputs.empty())
+    if (activated)
     {
-        return;
-    }
-
-    boost::unordered_map<int, bool>::iterator current = completedInputs.begin();
-    while (current != completedInputs.end())
-    {
-        if (current->first == input)
+        if (completedInputs.empty())
         {
-            current->second = true;
+            return;
         }
-        ++current;
+
+        boost::unordered_map<int, bool>::iterator current = completedInputs.begin();
+        while (current != completedInputs.end())
+        {
+            if (current->first == input)
+            {
+                current->second = true;
+            }
+            ++current;
+        }
     }
+    return;
 }

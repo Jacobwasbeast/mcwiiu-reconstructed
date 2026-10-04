@@ -28,6 +28,7 @@
 #include "game/client/render/Renderer.hpp"
 #include "game/client/render/TextureAtlas.hpp"
 #include "game/client/render/TextureManager.hpp"
+#include "game/client/render/DLCTexturePack.hpp"
 #include "game/client/render/TexturePack.hpp"
 #include "game/client/render/TexturePackRepository.hpp"
 #include "game/client/render/Textures.hpp"
@@ -415,7 +416,7 @@ ItemColors* Minecraft::getItemColors()
 }
 
 
-double Minecraft::getFrameTime()
+float Minecraft::getFrameTime()
 {
     return mTimer->renderPartialTicks;
 }
@@ -1592,7 +1593,7 @@ void Minecraft::tick(bool handleInput, bool lastTickOfFrame)
 
                 if (InMiniGame(eMiniGameId_Glide, true))
                 {
-                    std::wstring winner = mLevel->GetClientScoreboard()->GetWinnerName(-1);
+                    std::wstring winner = static_cast<ClientScoreboard*>(mLevel->GetScoreboard())->GetWinnerName(-1);
                     if (winner.compare(0, winner.size(), mPlayer->getDisplayName().c_str(),
                                        mPlayer->getDisplayName().size()) == 0 && waitingForScoreboard)
                     {
@@ -1765,6 +1766,12 @@ void Minecraft::tick(bool handleInput, bool lastTickOfFrame)
                 {
                     if (!mPlayer->mAbilities.mInstabuild)
                     {
+                        int lastUseTick = mPlayer->mLastUseTick;
+                        bool useDelayElapsed =
+                            mTimer->ticksPerSecond * 0.25f <= (float)(mTicks - mPlayer->mLastUseTick);
+                        if (mPlayer->isPassenger() || mPlayer->isSprinting() || mPlayer->isSleeping())
+                            useDelayElapsed = false;
+
                         bool repeat = g_pInput->ButtonDown(playerIdx, EControllerActions_Use);
                         if (!repeat)
                         {
@@ -1775,11 +1782,15 @@ void Minecraft::tick(bool handleInput, bool lastTickOfFrame)
                             if (mPlayer->isSleeping())
                                 mPlayer->mLastUseTick = mTicks + (int)(mTimer->ticksPerSecond * 2.0f);
 
-                            mPlayer->handleMouseClick(1);
-                            if (!mPlayer->isSleeping())
-                                mPlayer->mLastUseTick = mTicks;
-                            else
-                                mPlayer->mLastUseTick = mTicks + (int)(mTimer->ticksPerSecond * 2.0f);
+                            if (lastUseTick == 0 || useDelayElapsed)
+                            {
+                                bool sleeping = mPlayer->isSleeping();
+                                mPlayer->handleMouseClick(1);
+                                if (!sleeping)
+                                    mPlayer->mLastUseTick = mTicks;
+                                else
+                                    mPlayer->mLastUseTick = mTicks + (int)(mTimer->ticksPerSecond * 2.0f);
+                            }
                         }
                     }
                     else
@@ -1959,7 +1970,7 @@ void Minecraft::tick(bool handleInput, bool lastTickOfFrame)
                     if (tooltipLines->size() > 4)
                         tooltipLines->push_back(HtmlString(L"...", eMinecraftColour_NOTSET, false, false, 0));
 
-                    gConsoleUIController.SetSelectedItem(playerIdx, itemName, HtmlString::Compose(tooltipLines));
+                    gConsoleUIController.SetSelectedItem(playerIdx, HtmlString::Compose(tooltipLines), L"");
                     delete tooltipLines;
                 }
                 else
@@ -2061,7 +2072,7 @@ void Minecraft::tick(bool handleInput, bool lastTickOfFrame)
         for (int i = 0; i < 4; ++i)
         {
             if (mLocalPlayers[i] &&
-                (mLocalPlayers[i]->GetScoreboard() == NULL ||
+                (!mLocalPlayers[i]->isSpectator() ||
                  scoreboard->GetLastCheckpointID(mLocalPlayers[i]->getSUID(), -1) != 0))
             {
                 ++checkpointPlayers;
@@ -2141,10 +2152,14 @@ void Minecraft::run_middle()
                     GameSettings::GetGameSettings(primary, eGameSetting_Autosave) != 0;
                 TexturePack* selected =
                     GetInstance()->mTexturePackRepository->getSelected();
-                if (selected != TexturePackRepository::defaultTexturePack &&
-                    selected->getDLCPack() != NULL && !selected->getDLCPack()->hasPurchasedPack())
+                if (selected != TexturePackRepository::defaultTexturePack)
                 {
-                    autosaveAllowed = false;
+                    DLCPack* parentPack =
+                        static_cast<DLCTexturePack*>(selected)->getDLCInfoParentPack();
+                    if (parentPack != NULL && !parentPack->hasPurchasedPack())
+                    {
+                        autosaveAllowed = false;
+                    }
                 }
 
                 if (autosaveAllowed)
@@ -2232,8 +2247,7 @@ void Minecraft::run_middle()
                             if (gProfile->IsSignedInLive(gProfile->GetPrimaryPad()) &&
                                 !gProfile->AllowedToPlayMultiplayer(i))
                             {
-                                gProfile->RequestSignInUI(false, false, false, false, false,
-                                                        InGame_SignInReturned, this, i);
+                                gProfile->RequestConvertOfflineToGuestUI(InGame_SignInReturned, this, i);
                                 gConsoleUIController.HidePressStart();
                                 int messageParameters[1];
                                 messageParameters[0] = IDS_CONFIRM_OK;
@@ -2292,7 +2306,7 @@ void Minecraft::run_middle()
         if (g_pInput->ButtonPressed(i, EControllerActions_Drop, GameSettings::GetInputButton(i, true, EControllerActions_Drop)))
             localPlayer->mButtonsDown |= 0x40;
         if ((!localPlayer->mAbilities.mFlying &&
-             (!localPlayer->headInWater() || localPlayer->mOnGround))
+             (!localPlayer->isInWater() || localPlayer->mOnGround))
                 ? g_pInput->ButtonPressed(i, EControllerActions_Sneak,
                                      GameSettings::GetInputButton(i, true, EControllerActions_Sneak))
                 : g_pInput->ButtonDown(i, EControllerActions_Sneak))
@@ -3000,8 +3014,8 @@ void Minecraft::fjReloadTexturePack()
     mTexturePackRepository->updateUI();
 
     TexturePack* selected = mTexturePackRepository->getSelected();
-    unsigned int packId = selected->getId();
-    if (selected->hasAudio() || packId == 0x801 || packId == 0x803 || packId == 0x806 || packId == 0x808)
+    if (selected->hasAudio() || selected->getId() == 0x801 || selected->getId() == 0x803 ||
+        selected->getId() == 0x806 || selected->getId() == 0x808)
     {
         const MiniGameDef* miniGame = GetMiniGame();
         ClientMasterGameMode* masterGameMode = GetInstance()->GetClientMasterGameMode();

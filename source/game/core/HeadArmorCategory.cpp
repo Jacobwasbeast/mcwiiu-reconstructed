@@ -6,5 +6,5 @@
 bool HeadArmorCategory::canEnchant(Item* item) const
 {
     ArmorItem* armorItem = dynamic_cast<ArmorItem*>(item);
-    return armorItem != NULL && armorItem->getSlot() == EquipmentSlot::HEAD;
+    return armorItem != NULL && armorItem->mSlot == EquipmentSlot::HEAD;
 }

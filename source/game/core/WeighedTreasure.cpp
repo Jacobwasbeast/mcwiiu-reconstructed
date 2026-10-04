@@ -5,15 +5,22 @@
 #include "game/util/WeighedRandom.hpp"
 
 WeighedTreasure::WeighedTreasure(Item* item, int data, int minCount, int maxCount, int weight)
-    : WeighedRandomItem(weight), mItem(new ItemInstance(item, 1, data)), mMinCount(minCount), mMaxCount(maxCount) {}
+    : WeighedRandomItem(weight)
+{
+    mItem = not_null_ptr<ItemInstance>(new ItemInstance(item, 1, data));
+    mMinCount = minCount;
+    mMaxCount = maxCount;
+}
 
 WeighedTreasure::WeighedTreasure(not_null_ptr<ItemInstance> item, int minCount, int maxCount, int weight)
-    : WeighedRandomItem(weight), mItem(item), mMinCount(minCount), mMaxCount(maxCount) {}
-
-WeighedTreasure::~WeighedTreasure()
+    : WeighedRandomItem(weight)
 {
-    mItem.reset();
+    mItem = item;
+    mMinCount = minCount;
+    mMaxCount = maxCount;
 }
+
+WeighedTreasure::~WeighedTreasure() {}
 
 not_null_ptr<ItemInstance> WeighedTreasure::getItem() { return mItem; }
 

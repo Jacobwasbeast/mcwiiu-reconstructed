@@ -86,15 +86,17 @@ void Creeper::registerAttributes()
 
 int Creeper::getMaxFallDistance()
 {
-    boost::shared_ptr<LivingEntity> target = getTarget();
-    if (!target) return 3;
+    if (!getTarget()) return 3;
     return (int)(getHealth() - 1.0f) + 3;
 }
 
 void Creeper::causeFallDamage(float fallDistance, float damageMultiplier)
 {
     LivingEntity::causeFallDamage(fallDistance, damageMultiplier);
-    mSwell = std::min(mSwell + (int)(fallDistance * 1.5f), mMaxSwell - 5);
+    int limit = mMaxSwell - 5;
+    int swell = mSwell + (int)(fallDistance * 1.5f);
+    if (limit < swell) swell = limit;
+    mSwell = swell;
 }
 
 void Creeper::defineSynchedData()
@@ -118,7 +120,7 @@ bool Creeper::isIgnited()
 void Creeper::addAdditonalSaveData(CompoundTag* tag)
 {
     Mob::addAdditonalSaveData(tag);
-    if (isPowered()) tag->putBoolean(L"powered", true);
+    if (mEntityData->get(DATA_IS_POWERED)) tag->putBoolean(L"powered", true);
     tag->putShort(L"Fuse", (short)mMaxSwell);
     tag->putByte(L"ExplosionRadius", (unsigned char)mExplosionRadius);
     tag->putBoolean(L"ignited", isIgnited());
@@ -191,9 +193,13 @@ void Creeper::tick()
         if (isIgnited()) setSwellDir(1);
         int swellDir = getSwellDir();
         if (swellDir >= 1 && mSwell == 0) playSound(SoundEvents::CREEPER_PRIMED, 1.0f, 0.5f);
-        mSwell += swellDir;
-        if (mSwell < 0) mSwell = 0;
-        if (mSwell >= mMaxSwell)
+        int swell = mSwell + swellDir;
+        if (swell < 0) swell = 0;
+        if (swell < mMaxSwell)
+        {
+            mSwell = swell;
+        }
+        else
         {
             mSwell = mMaxSwell;
             explodeCreeper();
@@ -219,17 +225,16 @@ void Creeper::die(const DamageSource* source)
 
     if (mLevel->getGameRules()->getBoolean(GameRules::RULE_DOMOBLOOT))
     {
-        boost::shared_ptr<Entity> attacker = source->getEntity();
-        if (attacker && attacker->GetType() == EntityType::SKELETON)
+        if (source->getEntity() != NULL && source->getEntity()->GetType() == EntityType::SKELETON)
         {
             int firstRecord = Item::VALIDgetId(Items::record13);
             int recordCount = Item::VALIDgetId(Items::recordWait) - firstRecord + 1;
             spawnAtLocation(Item::byId(firstRecord + mRandom->nextInt(recordCount)), 1);
         }
-        else if (attacker && attacker->GetType() == EntityType::CREEPER)
+        else if (source->getEntity() != NULL && source->getEntity()->GetType() == EntityType::CREEPER)
         {
-            boost::shared_ptr<Creeper> creeper = boost::dynamic_pointer_cast<Creeper>(attacker);
-            if (creeper.get() != this && creeper->isPowered() && creeper->canDropMobsSkull())
+            boost::shared_ptr<Creeper> creeper = boost::dynamic_pointer_cast<Creeper>(source->getEntity());
+            if (creeper != shared_from_this() && creeper->isPowered() && creeper->canDropMobsSkull())
             {
                 creeper->increaseDroppedSkulls();
                 spawnAtLocation(not_null_ptr<ItemInstance>(new ItemInstance(Items::skull, 1, 4)), 0.0f);
@@ -237,13 +242,12 @@ void Creeper::die(const DamageSource* source)
         }
     }
 
-    boost::shared_ptr<Entity> directEntity = source->getDirectEntity();
-    boost::shared_ptr<Entity> attacker = source->getEntity();
-    if (directEntity && attacker
-        && (directEntity->GetType() & EntityType::ARROW) == EntityType::ARROW
-        && (attacker->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+    if (source->getDirectEntity() != NULL
+        && (source->getDirectEntity()->GetType() & EntityType::ARROW) == EntityType::ARROW
+        && source->getEntity() != NULL
+        && (source->getEntity()->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
     {
-        boost::shared_ptr<Player> player = boost::dynamic_pointer_cast<Player>(attacker);
+        boost::shared_ptr<Player> player = boost::dynamic_pointer_cast<Player>(source->getEntity());
         player->awardStat(GenericStats::archer(), GenericStats::param_archer());
     }
 }

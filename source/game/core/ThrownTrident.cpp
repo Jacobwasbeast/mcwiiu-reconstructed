@@ -107,17 +107,17 @@ void ThrownTrident::tick()
     if (mInGroundTime > 4)
         mDealtDamage = true;
 
-    if (mOwnerId >= 0 && !mOwner)
-        mOwner = boost::dynamic_pointer_cast<LivingEntity>(mLevel->getEntity(mOwnerId));
+    if (!mOwner && mOwnerId >= 0)
+        mOwner = mLevel->getEntity(mOwnerId);
 
-    if ((mDealtDamage || isNoPhysics()) && mOwner && getLoyaltyLevel() > 0)
+    int loyalty = 0;
+    if ((mDealtDamage || isNoPhysics()) && mOwner && (loyalty = getLoyaltyLevel()) > 0)
     {
         mClampedToLevel = true;
         setNoPhysics(true);
         Vec3* direction = Vec3::newTemp(mOwner->mX - mX,
             mOwner->mY + mOwner->getEyeHeight() - mY, mOwner->mZ - mZ);
-        double scale = static_cast<double>(getLoyaltyLevel());
-        mY += direction->y * 0.015 * scale;
+        mY += direction->y * 0.015 * loyalty;
         if (mLevel->mIsClientSide)
             mYOld = mY;
         if (mReturnTimer == 0)
@@ -126,10 +126,10 @@ void ThrownTrident::tick()
             mLevel->playSound(boost::shared_ptr<Player>(), BlockPos(mOwner), SoundEvents::TRIDENT_RETURN,
                               SoundSource::eSoundSource_Players, 0.2f, 1.0f, 16.0f);
         }
-        direction->normalize();
-        mXd += direction->x * 0.05 * scale - mXd * 0.05;
-        mYd += direction->y * 0.05 * scale - mYd * 0.05;
-        mZd += direction->z * 0.05 * scale - mZd * 0.05;
+        direction = direction->normalize();
+        mXd += 0.05 * loyalty * direction->x - mXd * 0.05;
+        mYd += 0.05 * loyalty * direction->y - mYd * 0.05;
+        mZd += 0.05 * loyalty * direction->z - mZd * 0.05;
         ++mReturnTimer;
         if (!mLevel->mIsClientSide && !mOwner->isAlive())
         {
@@ -169,35 +169,35 @@ void ThrownTrident::onHitEntity(const HitResult* result)
 {
     boost::shared_ptr<Entity> entity = result->mEntity;
     float damage = 8.0f;
-    if ((entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+    if (eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, entity->GetType()))
     {
         if (!mTridentItem->isEmpty())
         {
             boost::shared_ptr<LivingEntity> target =
                 boost::static_pointer_cast<LivingEntity>(entity);
-            damage += static_cast<float>(EnchantmentHelper::getDamageBonus(mTridentItem, target));
+            damage += EnchantmentHelper::getDamageBonus(mTridentItem, target);
         }
     }
-    boost::shared_ptr<ThrownTrident> trident =
-        boost::static_pointer_cast<ThrownTrident>(shared_from_this());
-    boost::shared_ptr<Entity> owner = mOwner
-        ? boost::static_pointer_cast<Entity>(mOwner)
-        : boost::static_pointer_cast<Entity>(trident);
-    DamageSource* source = DamageSource::CreateTrident(trident, owner);
+    DamageSource* source;
+    if (mOwner)
+        source = DamageSource::CreateTrident(
+            boost::static_pointer_cast<ThrownTrident>(shared_from_this()), mOwner);
+    else
+        source = DamageSource::CreateTrident(
+            boost::static_pointer_cast<ThrownTrident>(shared_from_this()), shared_from_this());
     mDealtDamage = true;
     if (entity->hurt(source, damage))
     {
-        if ((entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+        if (eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, entity->GetType()))
         {
             boost::shared_ptr<LivingEntity> target =
                 boost::static_pointer_cast<LivingEntity>(entity);
             if (mOwner &&
-                (mOwner->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+                eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, mOwner->GetType()))
             {
-                EnchantmentHelper::doPostHurtEffects(target,
-                    boost::static_pointer_cast<Entity>(mOwner));
+                EnchantmentHelper::doPostHurtEffects(target, mOwner);
                 EnchantmentHelper::doPostDamageEffects(
-                    boost::static_pointer_cast<LivingEntity>(mOwner), entity);
+                    boost::static_pointer_cast<LivingEntity>(mOwner), target);
             }
             doPostHurtEffects(target);
         }
@@ -205,16 +205,16 @@ void ThrownTrident::onHitEntity(const HitResult* result)
             1.2f / (mRandom->nextFloat() * 0.2f + 0.9f));
     }
 
-    mXd *= -0.01;
-    mYd *= -0.1;
-    mZd *= -0.01;
+    mXd *= -0.01f;
+    mYd *= -0.1f;
+    mZd *= -0.01f;
     mHasImpulse = true;
 
-    if ((entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY
+    if (eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, entity->GetType())
         && mLevel->isThundering() && !mTridentItem->isEmpty()
         && EnchantmentHelper::hasChanneling(mTridentItem))
     {
-        BlockPos pos(entity);
+        BlockPos pos = entity->getCommandSenderBlockPosition();
         if (mLevel->canSeeSky(pos))
         {
             playSound(SoundEvents::TRIDENT_THUNDER, 1.0f, 1.0f);
@@ -258,10 +258,7 @@ void ThrownTrident::addAdditonalSaveData(CompoundTag* tag)
 {
     AbstractRotatedItemProjectile::addAdditonalSaveData(tag);
     if (!mTridentItem->isEmpty())
-    {
-        CompoundTag* item = new CompoundTag();
-        tag->put(L"Trident", mTridentItem->save(item));
-    }
+        tag->put(L"Trident", mTridentItem->save(new CompoundTag()));
     tag->putBoolean(L"DealtDamage", mDealtDamage);
     if (mOwnerId >= 0)
         tag->putInt(L"OwnerId", mOwnerId);
@@ -275,9 +272,9 @@ void ThrownTrident::checkDespawn()
     AbstractRotatedItemProjectile::checkDespawn();
 }
 
-double ThrownTrident::getWaterInertia()
+float ThrownTrident::getWaterInertia()
 {
-    return 0.9900000095367432;
+    return 0.99f;
 }
 
 bool ThrownTrident::shouldRender(double, double, double)

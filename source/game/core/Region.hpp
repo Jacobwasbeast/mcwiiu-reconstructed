@@ -59,7 +59,7 @@ public:
     virtual bool isEmptyBlock(const BlockPos& pos);
     virtual bool isEmptyWaterBlock(const BlockPos& pos);
     virtual int getBrightness(LightLayer::variety layer, const BlockPos& pos);
-    virtual void setCachedBlocksAndData(unsigned short* elements, int x, int y, int z, const BlockState** states);
+    void setCachedBlocksAndData(unsigned short* elements, int x, int y, int z, const BlockState** states);
     unsigned int elementToBlockId(unsigned short element);
     unsigned int elementToData(unsigned short element);
     LevelChunk* getLevelChunk(const BlockPos& pos) { return mChunks->data[(pos.x >> 4) - mMinChunkX]->data[(pos.z >> 4) - mMinChunkZ]; }

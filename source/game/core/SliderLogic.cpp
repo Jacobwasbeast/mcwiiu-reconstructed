@@ -16,7 +16,10 @@ SliderLogic::SliderLogic(int id, int label, eCustomGameModeHostOption option, EM
 
 void SliderLogic::AddTo(UIControl_MultiList& list, int value) const
 {
-    list.AddNewSlider(GetLabel(value), mId, MasterGameMode::GetOptionMin(mMiniGameId, mOption, mIncludeRandom), MasterGameMode::GetOptionMax(mMiniGameId, mOption), value, false, 7, 3);
+    std::wstring label = GetLabel(value);
+    int maxValue = MasterGameMode::GetOptionMax(mMiniGameId, mOption);
+    int minValue = MasterGameMode::GetOptionMin(mMiniGameId, mOption, mIncludeRandom);
+    list.AddNewSlider(label, mId, minValue, maxValue, value, false, 7, 3);
 }
 
 void SliderLogic::Update(UIControl_MultiList& list, int value) const
@@ -26,10 +29,9 @@ void SliderLogic::Update(UIControl_MultiList& list, int value) const
 
 std::wstring SliderLogic::GetLabel(int value) const
 {
-    std::wstring label(L"Game");
+    std::wstring label(L"");
     std::wstring valueText = MasterGameMode::GetValueText(mMiniGameId, mOption, value);
     if (mLabel != -1 && mLabel != -2)
         label = std::wstring(L10N::GetString(mLabel)) + L": ";
-    label += valueText;
-    return label;
+    return label + valueText;
 }

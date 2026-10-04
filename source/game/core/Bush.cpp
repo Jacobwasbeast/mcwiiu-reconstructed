@@ -38,12 +38,7 @@ void Bush::_init()
 
 bool Bush::mayPlace(Level* level, const BlockPos& pos)
 {
-    if (!Block::mayPlace(level, pos))
-    {
-        return false;
-    }
-
-    return mayPlaceOn(level, pos.below(), level->getBlockState(pos.below()));
+    return Block::mayPlace(level, pos) && mayPlaceOn(level, pos.below(), level->getBlockState(pos.below()));
 }
 
 bool Bush::mayPlaceOn(Level* level, const BlockPos& pos, const BlockState* state)

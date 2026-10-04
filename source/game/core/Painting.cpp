@@ -49,10 +49,8 @@ static Painting::Motive* paintingMotives[30] = {
     new Painting::Motive(L"1x1E4", 16, 16, 48, 16)
 };
 
-Painting::Motive::Motive(std::wstring motiveName, int motiveWidth, int motiveHeight,
-                         int motiveTextureX, int motiveTextureY)
-    : name(motiveName), width(motiveWidth), height(motiveHeight),
-      textureX(motiveTextureX), textureY(motiveTextureY)
+Painting::Motive::Motive(std::wstring name, int width, int height, int textureX, int textureY)
+    : name(name), width(width), height(height), textureX(textureX), textureY(textureY)
 {
 }
 
@@ -77,17 +75,13 @@ Painting::Painting(Level* level, const BlockPos& pos, const Direction* direction
     Entity::fjDerivedCtorCalls();
     _init(level);
 
-    for (int i = 0; i < 5; ++i)
+    for (int i = 0; i < 30; ++i)
     {
-        for (int j = 0; j < 6; ++j)
+        if (paintingMotives[i]->name == motiveName)
         {
-            Motive* candidate = paintingMotives[i * 6 + j];
-            if (candidate != NULL && candidate->name == motiveName)
-            {
-                motive = candidate;
-                setDirection(direction);
-                return;
-            }
+            motive = paintingMotives[i];
+            setDirection(direction);
+            return;
         }
     }
     setDirection(direction);
@@ -111,7 +105,8 @@ void Painting::PaintingPostConstructor(const Direction* direction, int unused)
     for (int i = 0; i < 30; ++i)
     {
         motive = paintingMotives[i];
-        if (motive != NULL && survives())
+        setDirection(direction);
+        if (survives())
         {
             validMotives.push_back(motive);
             int area = motive->width * motive->height;
@@ -120,33 +115,33 @@ void Painting::PaintingPostConstructor(const Direction* direction, int unused)
         }
     }
 
-    for (std::vector<Motive*>::iterator it = validMotives.begin(); it != validMotives.end();)
-    {
-        if ((*it)->width * (*it)->height < largestArea)
-            it = validMotives.erase(it);
-        else
-            ++it;
-    }
-
     if (!validMotives.empty())
+    {
+        for (std::vector<Motive*>::iterator it = validMotives.begin(); it != validMotives.end();)
+        {
+            if ((*it)->width * (*it)->height < largestArea)
+                it = validMotives.erase(it);
+            else
+                ++it;
+        }
         motive = validMotives.at((unsigned int)mRandom->nextInt((int)validMotives.size()));
+    }
 
     setDirection(direction);
 }
 
 void Painting::addAdditonalSaveData(CompoundTag* tag)
 {
-    tag->putString(L"Motive", motive != NULL ? motive->name : L"");
+    tag->putString(L"Motive", motive->name);
     HangingEntity::addAdditonalSaveData(tag);
 }
 
 void Painting::readAdditionalSaveData(CompoundTag* tag)
 {
     std::wstring motiveName = tag->getString(L"Motive");
-    motive = NULL;
     for (int i = 0; i < 30; ++i)
     {
-        if (paintingMotives[i] != NULL && paintingMotives[i]->name == motiveName)
+        if (paintingMotives[i]->name == motiveName)
             motive = paintingMotives[i];
     }
     if (motive == NULL)

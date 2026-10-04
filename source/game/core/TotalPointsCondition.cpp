@@ -9,7 +9,7 @@ TotalPointsCondition::~TotalPointsCondition()
 {
 }
 
-double TotalPointsCondition::getScore(const GameMedal* medal, PlayerStats* playerStats) const
+float TotalPointsCondition::getScore(const GameMedal* medal, PlayerStats* playerStats) const
 {
-    return (double)(float)playerStats->getTotalPoints();
+    return (double)(float)(unsigned int)playerStats->getTotalPoints();
 }

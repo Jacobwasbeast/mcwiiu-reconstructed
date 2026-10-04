@@ -32,7 +32,7 @@ MG01ScoreboardLayout::~MG01ScoreboardLayout()
 {
 }
 
-unsigned int MG01ScoreboardLayout::SORTBYSCORE(PlayerInfo* first, PlayerInfo* second)
+bool MG01ScoreboardLayout::SORTBYSCORE(PlayerInfo* first, PlayerInfo* second)
 {
     const MG01PlayerInfo* firstInfo = static_cast<const MG01PlayerInfo*>(first);
     const MG01PlayerInfo* secondInfo = static_cast<const MG01PlayerInfo*>(second);
@@ -119,11 +119,11 @@ void MG01ScoreboardLayout::Init(int value)
     m_userIndex = value;
     ClearPlayersInfo();
 
+    const unsigned int playerCount = CGameNetworkManager::sInstance.GetPlayerCount();
     boost::shared_ptr<MultiplayerLocalPlayer> localPlayer =
         Minecraft::GetInstance()->mLocalPlayers[value];
 
-    const int playerCount = CGameNetworkManager::sInstance.GetPlayerCount();
-    for (int index = 0; index < playerCount; ++index)
+    for (unsigned int index = 0; index < playerCount; ++index)
     {
         INetworkPlayer* networkPlayer = CGameNetworkManager::sInstance.GetPlayerByIndex(index);
         if (networkPlayer != 0)
@@ -445,8 +445,7 @@ PlayerInfo* MG01ScoreboardLayout::CreatePlayerInfo()
 void MG01ScoreboardLayout::AddPlayer(unsigned char smallId)
 {
     PlayerInfo* info = new MG01PlayerInfo();
-    INetworkPlayer* networkPlayer = CGameNetworkManager::sInstance.GetPlayerBySmallId(smallId);
-    BuildPlayerInfo(networkPlayer, info);
+    BuildPlayerInfo(CGameNetworkManager::sInstance.GetPlayerBySmallId(smallId), info);
     m_players.push_back(info);
 }
 
@@ -454,8 +453,8 @@ void MG01ScoreboardLayout::UpdatePlayer(int index, PlayerInfo*, PlayerInfo* newI
 {
     PlayerInfo* info = m_players[index];
     info->smallId = newInfo->smallId;
-    info->voiceStatus = newInfo->voiceStatus;
     info->colour = newInfo->colour;
+    info->voiceStatus = newInfo->voiceStatus;
     info->name = newInfo->name;
 }
 

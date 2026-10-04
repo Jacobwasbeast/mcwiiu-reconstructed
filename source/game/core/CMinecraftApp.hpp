@@ -634,7 +634,6 @@ private:
     static unsigned int sPreviousSignInUsersMask;
 };
 extern CConsoleMinecraftApp gApp;
-extern CMinecraftApp* g_pApp;
 extern CStorage* gStorage;
 
 uint32_t DeviceFullErrorReturn(void* context);

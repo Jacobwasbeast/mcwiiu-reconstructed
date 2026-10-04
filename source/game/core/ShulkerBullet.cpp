@@ -25,8 +25,7 @@
 #include "game/world/generation/Player.hpp"
 
 ShulkerBullet::ShulkerBullet(Level* level)
-    : Entity(level, true), mOwner(), mTarget(), mMoveDirection(NULL), mSteps(0),
-      mPowerX(0.0), mPowerY(0.0), mPowerZ(0.0), mOwnerUniqueId(), mOwnerPos(),
+    : Entity(level, true), mOwner(), mTarget(), mOwnerUniqueId(), mOwnerPos(),
       mTargetUniqueId(), mTargetPos()
 {
     init();
@@ -36,8 +35,7 @@ ShulkerBullet::ShulkerBullet(Level* level)
 
 ShulkerBullet::ShulkerBullet(Level* level, double x, double y, double z,
                              double xd, double yd, double zd)
-    : Entity(level, true), mOwner(), mTarget(), mMoveDirection(NULL), mSteps(0),
-      mPowerX(0.0), mPowerY(0.0), mPowerZ(0.0), mOwnerUniqueId(), mOwnerPos(),
+    : Entity(level, true), mOwner(), mTarget(), mOwnerUniqueId(), mOwnerPos(),
       mTargetUniqueId(), mTargetPos()
 {
     init();
@@ -50,8 +48,7 @@ ShulkerBullet::ShulkerBullet(Level* level, double x, double y, double z,
 ShulkerBullet::ShulkerBullet(Level* level, boost::shared_ptr<LivingEntity> owner,
                              boost::shared_ptr<Entity> target,
                              const Direction::Axis* axis)
-    : Entity(level, true), mOwner(), mTarget(), mMoveDirection(NULL), mSteps(0),
-      mPowerX(0.0), mPowerY(0.0), mPowerZ(0.0), mOwnerUniqueId(), mOwnerPos(),
+    : Entity(level, true), mOwner(), mTarget(), mOwnerUniqueId(), mOwnerPos(),
       mTargetUniqueId(), mTargetPos()
 {
     init();
@@ -75,6 +72,7 @@ void ShulkerBullet::create(Level* level)
 void ShulkerBullet::init()
 {
     fjDerivedCtorCalls();
+    mTargetUniqueId = L"";
     mOwner.reset();
     mTarget.reset();
     mMoveDirection = Direction::UP;
@@ -82,10 +80,10 @@ void ShulkerBullet::init()
     mPowerX = 0.0;
     mPowerY = 0.0;
     mPowerZ = 0.0;
-    mTargetUniqueId.clear();
-    mTargetPos = BlockPos();
-    mOwnerUniqueId.clear();
-    mOwnerPos = BlockPos();
+    mOwnerUniqueId = L"";
+    mOwnerPos = BlockPos(0, 0, 0);
+    mTargetUniqueId = L"";
+    mTargetPos = BlockPos(0, 0, 0);
     defineSynchedData();
 }
 
@@ -146,7 +144,7 @@ void ShulkerBullet::selectNextMoveDirection(const Direction::Axis* axis)
         }
         else
         {
-            direction = choices[mRandom->nextInt((int)choices.size())];
+            direction = choices.at(mRandom->nextInt((int)choices.size()));
         }
 
         targetX = mX + direction->getStepX();
@@ -205,6 +203,7 @@ void ShulkerBullet::tick()
     if (!mLevel->mIsClientSide && mLevel->getDifficulty() == Difficulty::PEACEFUL)
     {
         remove();
+        return;
     }
 
     Entity::tick();
@@ -248,14 +247,11 @@ void ShulkerBullet::tick()
         }
 
         bool tracking = false;
-        if (mTarget != NULL && mTarget->isAlive())
+        if (mTarget != NULL && mTarget->isAlive()
+            && !((mTarget->GetType() & EntityType::PLAYER) == EntityType::PLAYER
+                 && boost::static_pointer_cast<Player>(mTarget)->isSpectator()))
         {
             tracking = true;
-            if ((mTarget->GetType() & EntityType::PLAYER) == EntityType::PLAYER
-                && boost::static_pointer_cast<Player>(mTarget)->isSpectator())
-            {
-                tracking = false;
-            }
         }
 
         if (tracking)
@@ -353,7 +349,7 @@ void ShulkerBullet::addAdditonalSaveData(CompoundTag* tag)
 {
     if (mOwner != NULL)
     {
-        BlockPos pos(boost::static_pointer_cast<Entity>(mOwner));
+        BlockPos pos(mOwner);
         CompoundTag* owner = new CompoundTag();
         owner->putString(L"UUID", mOwner->getUUID());
         owner->putInt(L"X", pos.x);

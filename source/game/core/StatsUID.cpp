@@ -10,7 +10,8 @@ StatsUID::StatsUID(const PlayerUID& uid)
 
 StatsUID StatsUID::EMPTY_SUID()
 {
-    return StatsUID(PlayerUID(0));
+    PlayerUID uid(0);
+    return StatsUID(uid);
 }
 
 StatsUID StatsUID::NETWORKPLAYER_SUID(INetworkPlayer* networkPlayer)
@@ -25,7 +26,7 @@ StatsUID StatsUID::NETWORKPLAYER_SUID(INetworkPlayer* networkPlayer)
 
 PlayerUID StatsUID::GetID() const
 {
-    return *this;
+    return static_cast<const PlayerUID&>(*this);
 }
 
 std::wstring StatsUID::toString() const

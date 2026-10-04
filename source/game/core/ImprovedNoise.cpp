@@ -57,9 +57,10 @@ void ImprovedNoise::init(Random* random)
     yo = random->nextDouble() * 256.0;
     zo = random->nextDouble() * 256.0;
 
+    int* table = p;
     for (int i = 0; i < 256; ++i)
     {
-        p[i] = i;
+        table[i] = i;
     }
 
     for (int i = 0; i < 256; ++i)

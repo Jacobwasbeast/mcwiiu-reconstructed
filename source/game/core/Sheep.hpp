@@ -48,8 +48,8 @@ public:
     virtual void defineSynchedData();
     virtual ResourceLocation* getDefaultLootTable();
     virtual void handleEntityEvent(unsigned char event, int data);
-    double getHeadEatPositionScale(float partialTick);
-    double getHeadEatAngleScale(float partialTick);
+    float getHeadEatPositionScale(float partialTick);
+    float getHeadEatAngleScale(float partialTick);
     bool isSheared();
     void setSheared(bool sheared);
     const DyeColor* getColor();
@@ -68,7 +68,7 @@ public:
     virtual boost::shared_ptr<AgableMob> getBreedOffspring(boost::shared_ptr<AgableMob> partner);
     virtual void ate();
     virtual MobGroupData* finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* group, const std::wstring& name);
-    virtual double getEyeHeight();
+    virtual float getEyeHeight();
     virtual unsigned long long GetType();
 
 private:

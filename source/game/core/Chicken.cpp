@@ -29,6 +29,7 @@
 #include "game/world/Level.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
 #include "game/world/block/Block.hpp"
+#include "game/world/block/BlockPathTypes.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/generation/LookAtPlayerGoal.hpp"
 #include "game/world/generation/Player.hpp"
@@ -60,6 +61,7 @@ void Chicken::_init()
     mOFlap = 0.0f;
     mFlapping = 1.0f;
     mTimeUntilNextEgg = 0;
+    setPathfindingMalus(BlockPathTypes::WATER, 0.0f);
 }
 
 void Chicken::registerGoals()
@@ -76,11 +78,11 @@ void Chicken::registerGoals()
 
 void Chicken::staticCtor()
 {
-    static Item* foodItems[] = { Items::wheatSeeds, Items::pumpkinSeeds, Items::melonSeeds, Items::beetrootSeeds };
+    static Item* foodItems[] = { Items::wheatSeeds, Items::melonSeeds, Items::pumpkinSeeds, Items::beetrootSeeds };
     FOOD_ITEMS = arrayWithLength<Item*>(foodItems, 4);
 }
 
-double Chicken::getEyeHeight()
+float Chicken::getEyeHeight()
 {
     return static_cast<double>(mBbHeight);
 }
@@ -144,18 +146,21 @@ ResourceLocation* Chicken::getDefaultLootTable()
 
 boost::shared_ptr<AgableMob> Chicken::getBreedOffspring(boost::shared_ptr<AgableMob>)
 {
-    return boost::shared_ptr<AgableMob>(new Chicken(mLevel));
+    boost::shared_ptr<Chicken> offspring(new Chicken(mLevel));
+    return offspring;
 }
 
 bool Chicken::isFood(const not_null_ptr<ItemInstance>& itemInstance)
 {
     Item* item = itemInstance->getItem();
-    for (unsigned int i = 0; i < FOOD_ITEMS.length; ++i)
+    Item** it = FOOD_ITEMS.data;
+    Item** end = FOOD_ITEMS.data + FOOD_ITEMS.length;
+    for (; it != end; ++it)
     {
-        if (FOOD_ITEMS.data[i] == item)
-            return true;
+        if (*it == item)
+            break;
     }
-    return false;
+    return it != end;
 }
 
 void Chicken::readAdditionalSaveData(CompoundTag* tag)
@@ -167,12 +172,8 @@ void Chicken::readAdditionalSaveData(CompoundTag* tag)
 
 bool Chicken::canBeControlledByRider()
 {
-    if (Entity::instanceof(getControllingPassenger(), EntityType::ZOMBIE))
-    {
-        boost::shared_ptr<Zombie> zombie = boost::static_pointer_cast<Zombie>(getControllingPassenger());
-        return zombie->isJockey();
-    }
-    return false;
+    return Entity::instanceof(getControllingPassenger(), EntityType::ZOMBIE)
+        && boost::static_pointer_cast<Zombie>(getControllingPassenger())->isJockey();
 }
 
 void Chicken::addAdditonalSaveData(CompoundTag* tag)
@@ -190,17 +191,20 @@ bool Chicken::removeWhenFarAway()
 
 void Chicken::positionRider(const boost::shared_ptr<Entity>& passenger)
 {
-    if (RiderPositionOverrides::OverridePosition(shared_from_this(), passenger))
-        return;
-    Entity::positionRider(passenger);
-    double angle = static_cast<double>(mYRot) * 0.01745329238474369;
-    passenger->setPos(mX + static_cast<double>(0.1f * Mth::sin(static_cast<float>(angle))),
-                      mY + static_cast<double>(mEyeHeight * 0.5f) + passenger->getRideHeight(),
-                      mZ - static_cast<double>(0.1f * Mth::cos(static_cast<float>(angle))));
-    if (Entity::instanceof(passenger, EntityType::LIVING_ENTITY) != 0)
+    if (!RiderPositionOverrides::OverridePosition(shared_from_this(), passenger))
+    {
+        Entity::positionRider(passenger);
+        float sinAngle = Mth::sin(mYBodyRot * 0.017453292f);
+        float cosAngle = Mth::cos(mYBodyRot * 0.017453292f);
+        double yOffset = 0.0;
+        passenger->setPos(mX + static_cast<double>(0.1f * sinAngle),
+                          mY + static_cast<double>(mBbHeight * 0.5f) + passenger->getRidingHeight() + yOffset,
+                          mZ - static_cast<double>(0.1f * cosAngle));
+    }
+    if ((passenger->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
     {
         boost::shared_ptr<LivingEntity> living = boost::static_pointer_cast<LivingEntity>(passenger);
-        living->mYBodyRot = mYRot;
+        living->mYBodyRot = mYBodyRot;
     }
 }
 

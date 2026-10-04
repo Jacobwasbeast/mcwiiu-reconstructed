@@ -34,7 +34,7 @@ public:
     bool InConstraintArea(Vec3* pos, int state);
     bool NotInConstraintArea(int playerId, int state);
     bool HasGlobalConstraint(int state);
-    bool canMoveToPosition(double oldX, double oldY, double oldZ, double newX, double newY,
+    int canMoveToPosition(double oldX, double oldY, double oldZ, double newX, double newY,
                            double newZ, Vec3* clampedPosition);
     bool CanUsePortal();
     bool isInputAllowed(int mapping);

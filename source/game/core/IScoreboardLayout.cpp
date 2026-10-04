@@ -172,16 +172,20 @@ const wchar_t* IScoreboardLayout::getIcon(int index)
 
 bool IScoreboardLayout::doesExist(const unsigned int& index)
 {
-    return index < m_players.size() && m_players[index] != 0;
+    if (index < m_players.size())
+    {
+        return m_players[index] != 0;
+    }
+    return false;
 }
 
 std::wstring IScoreboardLayout::getNameOfPlayerAt(const unsigned int& index)
 {
-    if (index >= m_players.size())
+    if (index < m_players.size())
     {
-        return std::wstring(L"");
+        return m_players[index]->name;
     }
-    return m_players[index]->name;
+    return std::wstring(L"");
 }
 
 unsigned char IScoreboardLayout::getSmallIDOfPlayerAt(const unsigned int& index)
@@ -223,14 +227,17 @@ PlayerInfo* IScoreboardLayout::GetPlayer(int index)
 
 bool IScoreboardLayout::RemovePlayer(int index)
 {
-    if (index < 0)
+    bool removable = index >= 0;
+    if (removable)
     {
-        return false;
+        if (m_players[index] != 0)
+        {
+            delete m_players[index];
+        }
+        m_players[index] = 0;
+        m_players.erase(m_players.begin() + index);
     }
-    delete m_players[index];
-    m_players[index] = 0;
-    m_players.erase(m_players.begin() + index);
-    return true;
+    return removable;
 }
 
 void IScoreboardLayout::BuildPlayerInfo(INetworkPlayer* player, PlayerInfo* info)
@@ -269,7 +276,7 @@ unsigned int IScoreboardLayout::getTitleIcon(int, const EScoreboardType&)
 
 std::wstring IScoreboardLayout::GetRowLabel(int, const StatsUID&, const EScoreboardType&)
 {
-    return std::wstring(L"Culler");
+    return std::wstring(L"");
 }
 
 unsigned int IScoreboardLayout::getNumberOfColumns()

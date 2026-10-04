@@ -11,7 +11,7 @@ TotalDeathsCondition::~TotalDeathsCondition()
 {
 }
 
-double TotalDeathsCondition::getScore(const GameMedal* medal, PlayerStats* playerStats) const
+float TotalDeathsCondition::getScore(const GameMedal* medal, PlayerStats* playerStats) const
 {
     return static_cast<double>(static_cast<float>(playerStats->getTotalDeaths()));
 }

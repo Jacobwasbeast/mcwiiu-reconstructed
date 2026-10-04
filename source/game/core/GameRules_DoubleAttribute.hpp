@@ -16,8 +16,8 @@ public:
     virtual void save(ConsoleGameRules::EGameRuleAttr attribute, GameRuleSaveInterface* saveInterface);
     virtual void writeAsXml(ConsoleGameRules::EGameRuleAttr attribute, std::string& xml);
 
-    void setMin(double min);
-    void setMax(double max);
+    GameRules_DoubleAttribute* setMin(double min);
+    GameRules_DoubleAttribute* setMax(double max);
 
 private:
     double* mValue;

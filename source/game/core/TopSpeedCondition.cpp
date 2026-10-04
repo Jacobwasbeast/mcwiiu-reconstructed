@@ -9,7 +9,7 @@ TopSpeedCondition::~TopSpeedCondition()
 {
 }
 
-double TopSpeedCondition::getScore(const GameMedal* medal, PlayerStats* playerStats) const
+float TopSpeedCondition::getScore(const GameMedal* medal, PlayerStats* playerStats) const
 {
     return (double)(float)playerStats->getTopSpeed();
 }

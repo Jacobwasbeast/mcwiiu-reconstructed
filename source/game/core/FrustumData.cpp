@@ -13,12 +13,9 @@ FrustumData::FrustumData()
         frustum[i] = new float[4];
     }
 
-    proj.data = new float[16]();
-    proj.length = 16;
-    modl.data = new float[16]();
-    modl.length = 16;
-    clip.data = new float[16]();
-    clip.length = 16;
+    proj = arrayWithLength<float>(16, true);
+    modl = arrayWithLength<float>(16, true);
+    clip = arrayWithLength<float>(16, true);
 }
 
 FrustumData::~FrustumData()
@@ -37,7 +34,7 @@ FrustumData::~FrustumData()
 
 double FrustumData::discriminant(float* plane, double x, double y, double z)
 {
-    return (double)plane[2] * z + (double)plane[0] * x + (double)plane[1] * y + (double)plane[3];
+    return (double)plane[0] * x + (double)plane[1] * y + (double)plane[2] * z + (double)plane[3];
 }
 
 bool FrustumData::cubeFullyInFrustum(double x0, double y0, double z0, double x1, double y1, double z1)

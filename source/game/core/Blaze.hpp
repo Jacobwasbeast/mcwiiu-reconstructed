@@ -48,12 +48,12 @@ public:
     virtual void customServerAiStep();
     virtual void causeFallDamage(float fallDistance, float damageMultiplier);
     virtual ResourceLocation* getDefaultLootTable();
-    virtual bool isCharged();
+    bool isCharged();
     virtual bool isOnFire();
     virtual void dropDeathLoot(bool hitByPlayer, int lootingLevel);
     void setCharged(bool charged);
     virtual bool isDarkEnoughToSpawn();
-    virtual double getFollowDistance();
+    double getFollowDistance();
     virtual unsigned long long GetType();
     static void create(Level* level);
 

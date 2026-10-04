@@ -88,9 +88,9 @@ void Pig::registerGoals()
 
 boost::shared_ptr<Entity> Pig::getControllingPassenger()
 {
-    std::vector<boost::weak_ptr<Entity> >* passengers = getPassengers();
-    if (passengers->empty())
+    if (getPassengers()->empty())
         return boost::shared_ptr<Entity>();
+    const std::vector<boost::weak_ptr<Entity> >* passengers = getPassengers();
     return passengers->at(0).lock();
 }
 
@@ -108,14 +108,14 @@ bool Pig::canBeControlledByRider()
         return false;
 
     boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(passenger);
+    not_null_ptr<ItemInstance> mainHandItem = player->getMainHandItem();
     return player->getMainHandItem()->getItem() == Items::carrotOnAStick
         || player->getOffhandItem()->getItem() == Items::carrotOnAStick;
 }
 
 void Pig::onSyncedDataUpdated(const EntityDataAccessor_Base* accessor)
 {
-    if (DATA_BOOST_TIME != NULL && accessor->getId() == DATA_BOOST_TIME->getId()
-        && mLevel->mIsClientSide)
+    if (accessor->getId() == DATA_BOOST_TIME->getId() && mLevel->mIsClientSide)
     {
         int boostTime = mEntityData->get(DATA_BOOST_TIME);
         if (boostTime < 1 || boostTime == mBoostTotalTime)
@@ -139,8 +139,8 @@ void Pig::onSyncedDataUpdated(const EntityDataAccessor_Base* accessor)
 void Pig::defineSynchedData()
 {
     Animal::defineSynchedData();
-    if (DATA_SADDLE != NULL) mEntityData->createDateItem(DATA_SADDLE, false);
-    if (DATA_BOOST_TIME != NULL) mEntityData->createDateItem(DATA_BOOST_TIME, 0);
+    mEntityData->createDateItem(DATA_SADDLE, false);
+    mEntityData->createDateItem(DATA_BOOST_TIME, 0);
 }
 
 void Pig::addDataWalkers(DataFixerUpper* fixer)
@@ -150,7 +150,7 @@ void Pig::addDataWalkers(DataFixerUpper* fixer)
 
 bool Pig::hasSaddle()
 {
-    return DATA_SADDLE != NULL && mEntityData->get(DATA_SADDLE);
+    return mEntityData->get(DATA_SADDLE);
 }
 
 void Pig::addAdditonalSaveData(CompoundTag* tag)
@@ -161,7 +161,10 @@ void Pig::addAdditonalSaveData(CompoundTag* tag)
 
 void Pig::setSaddle(bool saddled)
 {
-    if (DATA_SADDLE != NULL) mEntityData->set(DATA_SADDLE, saddled, true);
+    if (saddled)
+        mEntityData->set(DATA_SADDLE, true, true);
+    else
+        mEntityData->set(DATA_SADDLE, false, true);
 }
 
 void Pig::readAdditionalSaveData(CompoundTag* tag)
@@ -197,10 +200,10 @@ bool Pig::mobInteract(const boost::shared_ptr<Player>& player,
     {
         if (!mLevel->mIsClientSide)
         {
-            if (!hasPassenger(boost::static_pointer_cast<Entity>(player)))
-                player->startRiding(shared_from_this());
-            else
+            if (hasPassenger(player))
                 player->stopRiding();
+            else
+                player->startRiding(shared_from_this());
         }
         return true;
     }
@@ -276,80 +279,83 @@ void Pig::causeFallDamage(float fallDistance, float damageMultiplier)
 void Pig::travel(float xxa, float yya, float zza)
 {
     boost::shared_ptr<Entity> passenger;
-    std::vector<boost::weak_ptr<Entity> >* passengers = getPassengers();
-    if (!passengers->empty())
+    if (!getPassengers()->empty())
+    {
+        const std::vector<boost::weak_ptr<Entity> >* passengers = getPassengers();
         passenger = passengers->at(0).lock();
+    }
 
-    if (!isVehicle() || !canBeControlledByRider())
+    if (isVehicle() && canBeControlledByRider())
+    {
+        mYRot = passenger->mYRot;
+        mYRotO = mYRot;
+        mXRot = passenger->mXRot * 0.5f;
+        setRot(mYRot, mXRot);
+        mYBodyRot = mYRot;
+        mYHeadRot = mYRot;
+        mMaxUpStep = 1.0f;
+        mFlyingSpeed = getSpeed() * 0.1f;
+
+        if (mBoosting)
+        {
+            int elapsed = Mth::clamp(
+                static_cast<int>((static_cast<long long>(System::processTimeInMilliSecs()) - mBoostStartTime) / 1000 * 20),
+                0, mBoostTotalTime);
+            if (!mLevel->mIsClientSide && elapsed == mBoostTotalTime)
+            {
+                mBoostTime = 0;
+                mBoosting = false;
+                mBoostTotalTime = 0;
+                mBoostStartTime = 0;
+                mEntityData->set(DATA_BOOST_TIME, 0, true);
+            }
+            else
+            {
+                mBoostTime = elapsed;
+            }
+        }
+
+        if (isControlledByLocalInstance())
+        {
+            float speed = static_cast<float>(
+                getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->getValue()) * 0.225f;
+            if (mBoosting)
+                speed += (speed + speed)
+                    * std::sin(static_cast<float>(mBoostTime) / mBoostTotalTime * 3.1415927f);
+            setSpeed(speed);
+            LivingEntity::travel(0.0f, 0.0f, 1.0f);
+        }
+        else
+        {
+            mXd = 0.0;
+            mYd = 0.0;
+            mZd = 0.0;
+        }
+
+        mAnimationSpeedOld = mAnimationSpeed;
+        float movement = static_cast<float>(
+            std::sqrt((mX - mXo) * (mX - mXo) + (mZ - mZo) * (mZ - mZo))) * 4.0f;
+        movement = std::min(movement, 1.0f);
+        mAnimationSpeed += (movement - mAnimationSpeed) * 0.4f;
+        mAnimationPosition += mAnimationSpeed;
+    }
+    else
     {
         mMaxUpStep = 0.5f;
         mFlyingSpeed = 0.02f;
         LivingEntity::travel(xxa, yya, zza);
-        return;
     }
-
-    mYRot = passenger->mYRot;
-    mYRotO = mYRot;
-    mXRot = passenger->mXRot * 0.5f;
-    setRot(mYRot, mXRot);
-    mYBodyRot = mYRot;
-    mYHeadRot = mYRot;
-    mMaxUpStep = 1.0f;
-    mFlyingSpeed = getSpeed() * 0.1f;
-
-    if (mBoosting)
-    {
-        int elapsed = Mth::clamp(
-            static_cast<int>((System::processTimeInMilliSecs() - mBoostStartTime) / 1000 * 20),
-            0, mBoostTotalTime);
-        if (!mLevel->mIsClientSide && elapsed == mBoostTotalTime)
-        {
-            mBoostTime = 0;
-            mBoosting = false;
-            mBoostTotalTime = 0;
-            mBoostStartTime = 0;
-            mEntityData->set(DATA_BOOST_TIME, 0, true);
-        }
-        else
-        {
-            mBoostTime = elapsed;
-        }
-    }
-
-    if (isControlledByLocalInstance())
-    {
-        float speed = static_cast<float>(
-            getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->getValue()) * 0.225f;
-        if (mBoosting)
-            speed += (speed + speed)
-                * std::sin(static_cast<float>(mBoostTime) / mBoostTotalTime * 3.1415927f);
-        setSpeed(speed);
-        LivingEntity::travel(0.0f, 0.0f, 1.0f);
-    }
-    else
-    {
-        mXd = 0.0;
-        mYd = 0.0;
-        mZd = 0.0;
-    }
-
-    mAnimationSpeedOld = mAnimationSpeed;
-    float movement = static_cast<float>(
-        std::sqrt((mX - mXo) * (mX - mXo) + (mZ - mZo) * (mZ - mZo))) * 4.0f;
-    movement = std::min(movement, 1.0f);
-    mAnimationSpeed += (movement - mAnimationSpeed) * 0.4f;
-    mAnimationPosition += mAnimationSpeed;
 }
 
 bool Pig::boost()
 {
-    if (!mBoosting && mLevel != NULL && !mLevel->mIsClientSide)
+    if (!mBoosting && !mLevel->mIsClientSide)
     {
         mBoosting = true;
         mBoostTime = 0;
-        mBoostTotalTime = mRandom->nextInt(0x231) + 0x8c;
+        mBoostTotalTime = getRandom()->nextInt(561) + 140;
         mBoostStartTime = System::processTimeInMilliSecs();
-        if (DATA_BOOST_TIME != NULL) mEntityData->set(DATA_BOOST_TIME, mBoostTotalTime, true);
+        mEntityData->set(DATA_BOOST_TIME, mBoostTotalTime, true);
         return true;
     }
     return false;
@@ -359,7 +365,8 @@ bool Pig::testboost() { return !mBoosting; }
 
 boost::shared_ptr<AgableMob> Pig::getBreedOffspring(boost::shared_ptr<AgableMob>)
 {
-    return boost::shared_ptr<AgableMob>(new Pig(mLevel));
+    boost::shared_ptr<Pig> offspring(new Pig(mLevel));
+    return offspring;
 }
 
 bool Pig::isFood(const not_null_ptr<ItemInstance>& itemInstance)

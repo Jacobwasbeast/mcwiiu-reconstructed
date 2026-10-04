@@ -9,7 +9,7 @@ public:
     TotalThermalsEnteredCondition(float target, GameMedal::EOperator op, bool bestOnly);
     virtual ~TotalThermalsEnteredCondition();
 
-    virtual double getScore(const GameMedal* medal, PlayerStats* playerStats) const;
+    virtual float getScore(const GameMedal* medal, PlayerStats* playerStats) const;
 };
 
 #endif

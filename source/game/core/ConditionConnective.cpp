@@ -15,8 +15,9 @@
 #include "game/core/StringUtils.hpp"
 
 ConditionConnective::ConditionConnective(const XmlObject& object)
-    : m_type(parseType(object.mName).second), m_conditions()
 {
+    m_type = parseType(object.mName).second;
+
     const std::vector<XmlChild>& children = object.getChildrenRaw();
     for (std::vector<XmlChild>::const_iterator child = children.begin(); child != children.end(); ++child)
     {
@@ -48,23 +49,25 @@ GameCondition* ConditionConnective::parseCondition(const XmlObject& object)
 {
     if (equalsIgnoreCase(object.mName, L"PlayersCondition"))
         return new PlayersCondition(object);
-    if (equalsIgnoreCase(object.mName, L"TeamsCondition"))
+    else if (equalsIgnoreCase(object.mName, L"TeamsCondition"))
         return new TeamsCondition(object);
-    if (equalsIgnoreCase(object.mName, L"RoundTimeCondition"))
+    else if (equalsIgnoreCase(object.mName, L"RoundTimeCondition"))
         return new RoundTimeCondition(object);
-    if (equalsIgnoreCase(object.mName, L"ShowdownTimeCondition"))
+    else if (equalsIgnoreCase(object.mName, L"ShowdownTimeCondition"))
         return new ShowdownTimeCondition(object);
-    if (equalsIgnoreCase(object.mName, L"PostGameTimeCondition"))
+    else if (equalsIgnoreCase(object.mName, L"PostGameTimeCondition"))
         return new PostGameTimeCondition(object);
-    if (equalsIgnoreCase(object.mName, L"LastKillTimeCondition"))
+    else if (equalsIgnoreCase(object.mName, L"LastKillTimeCondition"))
         return new LastKillTimeCondition(object);
-    if (equalsIgnoreCase(object.mName, L"TimeSincePlayersCondition"))
+    else if (equalsIgnoreCase(object.mName, L"TimeSincePlayersCondition"))
         return new TimeSincePlayersCondition(object);
-    if (equalsIgnoreCase(object.mName, L"PlayersVotedPercent"))
+    else if (equalsIgnoreCase(object.mName, L"PlayersVotedPercent"))
         return new PercentagePlayersVotedCondition(object);
-    if (equalsIgnoreCase(object.mName, L"Conjunction") || equalsIgnoreCase(object.mName, L"Disjunction"))
+    else if (equalsIgnoreCase(object.mName, L"Conjunction"))
         return new ConditionConnective(object);
-    if (equalsIgnoreCase(object.mName, L"PlayersEnteredVolumeCondition"))
+    else if (equalsIgnoreCase(object.mName, L"Disjunction"))
+        return new ConditionConnective(object);
+    else if (equalsIgnoreCase(object.mName, L"PlayersEnteredVolumeCondition"))
         return new PlayersEnteredVolumeCondition(object);
     return NULL;
 }
@@ -81,13 +84,15 @@ GameCondition* ConditionConnective::FirstConditionWithValue(bool value, MasterGa
 
 bool ConditionConnective::IsSatisfied(MasterGameMode* gameMode) const
 {
-    if (m_type != 0)
-    {
-        if (m_type == 1)
-            return FirstConditionWithValue(true, gameMode) != NULL;
-        return true;
-    }
-    return FirstConditionWithValue(false, gameMode) == NULL;
+    if (m_type == 0)
+        return FirstConditionWithValue(false, gameMode) == NULL;
+
+    bool satisfied;
+    if (m_type == 1)
+        satisfied = FirstConditionWithValue(true, gameMode) != NULL;
+    else
+        satisfied = true;
+    return satisfied;
 }
 
 unsigned char ConditionConnective::GetMessage() const

@@ -19,7 +19,6 @@ Uniform::Uniform(const std::wstring& n, int t, int c, Effect* e)
     mLocation = -1;
     markDirty();
 }
-Uniform::~Uniform(){}
 void Uniform::markDirty(){mDirty=true;if(mEffect)mEffect->markDirty();}
 void Uniform::set(float a){mFloatBuffer->position(0);mFloatBuffer->put(0,a);markDirty();}
 void Uniform::set(float a,float b){mFloatBuffer->position(0);mFloatBuffer->put(0,a);mFloatBuffer->put(1,b);markDirty();}

@@ -13,6 +13,8 @@ template <class T> class EntityDataAccessor;
 
 class EnderCrystal : public Entity
 {
+    friend class EnderCrystalRenderer;
+
 public:
     EnderCrystal(Level* level);
     EnderCrystal(Level* level, double x, double y, double z);

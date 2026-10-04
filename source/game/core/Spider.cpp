@@ -1,6 +1,7 @@
 #include "game/core/Spider.hpp"
 #include "game/entity/mob/MobEffects.hpp"
 #include "game/core/EntityType.hpp"
+#include "game/core/PIXNamedEvents.hpp"
 
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/core/AttributeInstance.hpp"
@@ -38,7 +39,6 @@ Spider::Spider(Level* level) : Monster(level)
 {
     fjDerivedCtorCalls();
     setSize(1.4f, 0.9f);
-    mBlocksBuilding = true;
     mCategories |= EntityCategory::eEntityCategory_Arthropod;
 }
 
@@ -46,7 +46,6 @@ Spider::Spider(Level* level, bool callDerivedConstructor) : Monster(level)
 {
     if (callDerivedConstructor) fjDerivedCtorCalls();
     setSize(1.4f, 0.9f);
-    mBlocksBuilding = true;
     mCategories |= EntityCategory::eEntityCategory_Arthropod;
 }
 
@@ -97,8 +96,10 @@ void Spider::defineSynchedData()
 
 void Spider::tick()
 {
+    PIXBeginNamedEvent(0.0f, "Spider tick");
     Monster::tick();
-    if (!mLevel->mIsClientSide) setClimbing(isClimbing());
+    if (!mLevel->mIsClientSide) setClimbing(mHorizontalCollision);
+    PIXEndNamedEvent();
 }
 
 void Spider::registerAttributes()
@@ -174,7 +175,7 @@ MobGroupData* Spider::finalizeMobSpawn(const DifficultyInstance& difficulty, Mob
         rider->moveTo(mX, mY, mZ, mYRot, 0.0f);
         rider->finalizeMobSpawn(difficulty, NULL, L"");
         mLevel->addEntity(rider);
-        rider->Entity::startRiding(shared_from_this());
+        rider->startRiding(shared_from_this());
     }
 
     if (result == NULL)
@@ -195,7 +196,7 @@ MobGroupData* Spider::finalizeMobSpawn(const DifficultyInstance& difficulty, Mob
     return result;
 }
 
-double Spider::getEyeHeight() { return 0.65f; }
+float Spider::getEyeHeight() { return 0.65f; }
 unsigned long long Spider::GetType() { return EntityType::SPIDER; }
 
 Spider::SpiderAttackGoal::SpiderAttackGoal(Spider* spider)
@@ -219,7 +220,7 @@ bool Spider::SpiderAttackGoal::canContinueToUse()
 
 double Spider::SpiderAttackGoal::getAttackReachSqr(boost::shared_ptr<LivingEntity> target)
 {
-    return (double)(target->mBbWidth * target->mBbWidth + 4.0f);
+    return (double)(target->mBbWidth + 4.0f);
 }
 
 Spider::SpiderEffectsGroupData::SpiderEffectsGroupData() : mEffect(NULL) { }
@@ -249,5 +250,6 @@ Spider::SpiderTargetGoal::~SpiderTargetGoal()
 
 bool Spider::SpiderTargetGoal::canUse()
 {
-    return mMob->getBrightness() < 0.5 && NearestAttackableTargetGoal::canUse();
+    if (mMob->getBrightness() < 0.5f) return NearestAttackableTargetGoal::canUse();
+    return false;
 }

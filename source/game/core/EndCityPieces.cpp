@@ -30,10 +30,10 @@ static boost::unordered_map<Rotation*, BlockPos> gTowerBridges;
 static boost::unordered_map<Rotation*, BlockPos> gFatTowerBridges;
 static StructurePlaceSettings* gIgnoreEntitiesSettings = NULL;
 static StructurePlaceSettings* gIgnoreEntitiesAndBlocksSettings = NULL;
-static EndCityPieces::TowerSectionGenerator* gTowerGenerator = NULL;
-static EndCityPieces::HouseTowerSectionGenerator* gHouseGenerator = NULL;
-static EndCityPieces::TowerBridgeSectionGenerator* gTowerBridgeGenerator = NULL;
-static EndCityPieces::FatTowerSectionGenerator* gFatTowerGenerator = NULL;
+static EndCityPieces::HouseTowerSectionGenerator* gHouseGenerator;
+static EndCityPieces::TowerSectionGenerator* gTowerGenerator;
+static EndCityPieces::TowerBridgeSectionGenerator* gTowerBridgeGenerator;
+static EndCityPieces::FatTowerSectionGenerator* gFatTowerGenerator;
 
 EndCityPieces::EndCityPiece* EndCityPieces::addHelper(std::vector<StructurePiece*>& pieces,
     EndCityPieces::EndCityPiece* piece)
@@ -123,11 +123,8 @@ void EndCityPieces::loadStatic()
     StructureFeatureIO::setPieceId(eStructurePiece_EndCityPiece, &EndCityPiece::Create, L"ECP");
     gTowerBridges = createTowerBridgesMap();
     gFatTowerBridges = createFatTowerBridgesMap();
-    gIgnoreEntitiesSettings = new StructurePlaceSettings();
-    gIgnoreEntitiesSettings->setIgnoreEntities(true);
-    gIgnoreEntitiesAndBlocksSettings = new StructurePlaceSettings();
-    gIgnoreEntitiesAndBlocksSettings->setIgnoreEntities(true);
-    gIgnoreEntitiesAndBlocksSettings->setIgnoreBlock(Blocks::air);
+    gIgnoreEntitiesSettings = (new StructurePlaceSettings())->setIgnoreEntities(true);
+    gIgnoreEntitiesAndBlocksSettings = (new StructurePlaceSettings())->setIgnoreEntities(true)->setIgnoreBlock(Blocks::air);
     gHouseGenerator = new HouseTowerSectionGenerator();
     gTowerGenerator = new TowerSectionGenerator();
     gTowerBridgeGenerator = new TowerBridgeSectionGenerator();
@@ -156,10 +153,10 @@ EndCityPieces::EndCityPiece::~EndCityPiece()
 void EndCityPieces::EndCityPiece::loadTemplate(StructureManager* structureManager)
 {
     const StructureTemplate* structure = structureManager->getOrCreate(mTemplateType);
-    StructurePlaceSettings* settings = (mOverwrite ? gIgnoreEntitiesSettings :
-        gIgnoreEntitiesAndBlocksSettings)->copy();
-    settings->setRotation(mRotation);
-    setup(structure, mTemplatePosition, settings);
+    if (mOverwrite)
+        setup(structure, mTemplatePosition, gIgnoreEntitiesSettings->copy()->setRotation(mRotation));
+    else
+        setup(structure, mTemplatePosition, gIgnoreEntitiesAndBlocksSettings->copy()->setRotation(mRotation));
 }
 
 void EndCityPieces::EndCityPiece::addAdditionalSaveData(DataOutputStream* output)
@@ -176,7 +173,10 @@ void EndCityPieces::EndCityPiece::readAdditionalSaveData(DataInputStream* input,
 void EndCityPieces::EndCityPiece::handleDataMarker(const std::wstring& marker,
     const BlockPos& position, Level* level, Random& random, BoundingBox* box)
 {
-    if (marker == L"Chest")
+    std::wstring chestMarker = L"Chest";
+    std::wstring sentryMarker = L"Sentry";
+    std::wstring elytraMarker = L"Elytra";
+    if (marker.compare(0, chestMarker.length(), chestMarker) == 0)
     {
         BlockPos below = position.below();
         if (box->isInside(below))
@@ -190,14 +190,14 @@ void EndCityPieces::EndCityPiece::handleDataMarker(const std::wstring& marker,
             }
         }
     }
-    else if (marker == L"Sentry")
+    else if (marker.compare(0, sentryMarker.length(), sentryMarker) == 0)
     {
         boost::shared_ptr<Shulker> shulker(new Shulker(level));
         shulker->setPos(position.x + 0.5, position.y + 0.5, position.z + 0.5);
         shulker->setAttachPosition(new BlockPos(position));
         level->addEntity(shulker);
     }
-    else if (marker == L"Elytra")
+    else if (marker.compare(0, elytraMarker.length(), elytraMarker) == 0)
     {
         boost::shared_ptr<ItemFrame> frame(new ItemFrame(level, position,
             mRotation->rotate(Direction::SOUTH)));

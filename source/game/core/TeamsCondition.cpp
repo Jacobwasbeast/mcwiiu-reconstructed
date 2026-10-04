@@ -14,6 +14,7 @@ int TeamsCondition::GetValue(MasterGameMode* gameMode) const
 
 void TeamsCondition::AddIntParams(MasterGameMode* gameMode, std::vector<int>* params) const
 {
-    params->push_back(gameMode->GetActiveTeamCount());
-    params->push_back(IDS_MG_TEAMS);
+    params->push_back(GetThreshold(gameMode));
+    int message = IDS_MG_TEAMS;
+    params->push_back(message);
 }

@@ -25,9 +25,8 @@ void ClockAtlasSprite::cycleFrames()
     double time = 0.0;
     if (mPlayerIndex < 4 && minecraft->mLevel != NULL && minecraft->mLocalPlayers[mPlayerIndex] != NULL)
     {
-        boost::shared_ptr<MultiplayerLocalPlayer> player = minecraft->mLocalPlayers[mPlayerIndex];
-        time = player->mLevel->getTimeOfDay(1.0f);
-        if (!player->mLevel->mDimension->isNaturalDimension())
+        time = minecraft->mLocalPlayers[mPlayerIndex]->mLevel->getTimeOfDay(1.0f);
+        if (!minecraft->mLocalPlayers[mPlayerIndex]->mLevel->mDimension->isNaturalDimension())
         {
             time = Math::random();
         }
@@ -50,26 +49,54 @@ void ClockAtlasSprite::cycleFrames()
     mRotation = (delta * 0.1 + mRotation) * 0.8;
     mLastTime += mRotation;
 
-    ClockAtlasSprite* frameSource = mParent != NULL ? mParent : this;
-    unsigned int frameCount = frameSource->mFrames == NULL ? 0 : frameSource->mFrames->size();
-    int frame = static_cast<unsigned int>((mLastTime + 1.0) * static_cast<double>(frameCount)) % frameCount;
-    if (frame != mFrame)
+    if (mParent == NULL)
     {
-        mFrame = frame;
-        frameSource->mSource->blit(mX, mY, frameSource->mFrames->at(frame), mRotated);
+        std::vector<Texture*>* frames = mFrames;
+        unsigned int count = frames->size();
+        unsigned int divisor = frames->size();
+        int scaled = static_cast<int>((mLastTime + 1.0) * static_cast<double>(count));
+        int frame = scaled % divisor;
+        while (frame < 0)
+        {
+            int total = frames->size();
+            int modulus = frames->size();
+            frame = (frame + total) % modulus;
+        }
+        if (frame != mFrame)
+        {
+            mFrame = frame;
+            mSource->blit(mX, mY, frames->at(frame), mRotated);
+        }
+    }
+    else
+    {
+        std::vector<Texture*>* frames = mParent->mFrames;
+        unsigned int count = frames->size();
+        unsigned int divisor = frames->size();
+        int scaled = static_cast<int>((mLastTime + 1.0) * static_cast<double>(count));
+        int frame = scaled % divisor;
+        while (frame < 0)
+        {
+            int total = frames->size();
+            int modulus = frames->size();
+            frame = (frame + total) % modulus;
+        }
+        if (frame != mFrame)
+        {
+            mFrame = frame;
+            mParent->mSource->blit(mX, mY, frames->at(frame), mRotated);
+        }
     }
 }
 
 unsigned int ClockAtlasSprite::getSourceWidth() const
 {
-    Texture* source = const_cast<ClockAtlasSprite*>(this)->getSource();
-    return source->getWidth();
+    return mSource->getWidth();
 }
 
 unsigned int ClockAtlasSprite::getSourceHeight() const
 {
-    Texture* source = const_cast<ClockAtlasSprite*>(this)->getSource();
-    return source->getHeight();
+    return mSource->getHeight();
 }
 
 int ClockAtlasSprite::getFrames()

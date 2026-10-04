@@ -15,5 +15,5 @@ WinnerCondition::WinnerCondition()
 bool WinnerCondition::canAward(const GameMedal* medal, const StatsUID& uid, GameStats* gameStats) const
 {
     boost::shared_ptr<ServerPlayer> firstPlace = gameStats->GetFirstPlace();
-    return firstPlace->getSUID() == uid;
+    return uid == firstPlace->getSUID();
 }

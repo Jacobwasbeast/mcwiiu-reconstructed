@@ -1,6 +1,7 @@
 #include "game/core/ShipwreckPiece.hpp"
 #include "game/core/EntityType.hpp"
 
+#include <algorithm>
 #include <utility>
 
 #include <boost/shared_ptr.hpp>
@@ -84,7 +85,7 @@ int ShipwreckPiece::GetNonUpsideDownShipwreckType(Random& random)
 
 ShipwreckPiece::ShipwreckPiece(Level* level, GenericOverworldLevelSource* levelSource,
                                int x, int z, Random& random, const Direction* orientation)
-    : StructurePiece(20), mRotation(NULL), mType(0), mNonUpsideDownType(0), mWoodType(0), mHeight(0)
+    : StructurePiece(20)
 {
     mWoodType = random.nextInt(9);
     setOrientation(orientation);
@@ -98,12 +99,12 @@ ShipwreckPiece::ShipwreckPiece(Level* level, GenericOverworldLevelSource* levelS
         SHIPWRECK_TYPES[mNonUpsideDownType]);
     BlockPos normalSize = normal->getSize();
     BlockPos alternateSize = alternate->getSize();
-    int sizeX = normalSize.x < alternateSize.x ? alternateSize.x : normalSize.x;
-    int sizeY = normalSize.y < alternateSize.y ? alternateSize.y : normalSize.y;
-    int sizeZ = normalSize.z < alternateSize.z ? alternateSize.z : normalSize.z;
-    BlockPos size(sizeX, sizeY, sizeZ);
-    int maxSize = size.x;
-    if (maxSize < size.z) maxSize = size.z;
+    if (normalSize.x < alternateSize.x) normalSize.x = alternateSize.x;
+    if (normalSize.y < alternateSize.y) normalSize.y = alternateSize.y;
+    if (normalSize.z < alternateSize.z) normalSize.z = alternateSize.z;
+    BlockPos size(normalSize.x, normalSize.y, normalSize.z);
+    int maxSize = size.z;
+    if (maxSize < size.x) maxSize = size.x;
 
     mRotation = Rotation::VALUES[random.nextInt(4)];
     setBoundingBox(new BoundingBox(x, 0, z, x + maxSize - 1, size.y - 1, z + maxSize - 1));
@@ -113,32 +114,41 @@ ShipwreckPiece::ShipwreckPiece(Level* level, GenericOverworldLevelSource* levelS
     ChunkPrimer primer(true, elements);
     ChunkPos chunkPos(origin);
     levelSource->prepareHeights(chunkPos.x, chunkPos.z, &primer);
-    int heights[4] = { primer.getHighestSolidPos(7, 7), primer.getHighestSolidPos(7, 12),
-        primer.getHighestSolidPos(12, 7), primer.getHighestSolidPos(12, 12) };
-    mHeight = heights[0];
-    int i;
-    for (i = 1; i < 4; ++i)
-    {
-        if (heights[i] < mHeight) mHeight = heights[i];
-    }
+    int heightA = primer.getHighestSolidPos(7, 7);
+    int heightB = primer.getHighestSolidPos(7, 12);
+    int heightC = primer.getHighestSolidPos(12, 7);
+    int heightD = primer.getHighestSolidPos(12, 12);
+    const int& lowAB = std::min(heightA, heightB);
+    const int& lowCD = std::min(heightC, heightD);
+    mHeight = lowAB < lowCD ? lowAB : lowCD;
 }
 
 bool ShipwreckPiece::IsUpsideDownShipwreckType(int type)
 {
+    const eMinecraftStructureTemplate upsideDownTypes[6] =
+    {
+        eMinecraftStructureTemplate_Shipwreck_UpsideDownFull,
+        eMinecraftStructureTemplate_Shipwreck_UpsideDownFrontHalf,
+        eMinecraftStructureTemplate_Shipwreck_UpsideDownBackHalf,
+        eMinecraftStructureTemplate_Shipwreck_UpsideDownFullDegraded,
+        eMinecraftStructureTemplate_Shipwreck_UpsideDownFrontHalfDegraded,
+        eMinecraftStructureTemplate_Shipwreck_UpsideDownBackHalfDegraded
+    };
     eMinecraftStructureTemplate value = SHIPWRECK_TYPES[type];
-    return value == eMinecraftStructureTemplate_Shipwreck_UpsideDownFull
-        || value == eMinecraftStructureTemplate_Shipwreck_UpsideDownFrontHalf
-        || value == eMinecraftStructureTemplate_Shipwreck_UpsideDownBackHalf
-        || value == eMinecraftStructureTemplate_Shipwreck_UpsideDownFullDegraded
-        || value == eMinecraftStructureTemplate_Shipwreck_UpsideDownFrontHalfDegraded
-        || value == eMinecraftStructureTemplate_Shipwreck_UpsideDownBackHalfDegraded;
+    for (int i = 0; i < 6; ++i)
+    {
+        if (value == upsideDownTypes[i])
+            return true;
+    }
+    return false;
 }
 
 bool ShipwreckPiece::postProcess(Level* level, Random& random, BoundingBox* box)
 {
     BlockPos origin(getWorldX(0, 0), getWorldY(1), getWorldZ(0, 0));
     Biome* biome = level->getBiome(origin);
-    bool beached = biome == Biome::BEACH || biome == Biome::COLD_BEACH;
+    bool beached = false;
+    if (biome == Biome::BEACH || biome == Biome::COLD_BEACH) beached = true;
     StructureManager* structureManager = level->getLevelStorage()->getStructureManager();
     int templateType;
     bool upsideDown;
@@ -185,9 +195,11 @@ bool ShipwreckPiece::postProcess(Level* level, Random& random, BoundingBox* box)
     StructureTemplate::MarkerMap::const_iterator it;
     for (it = markers.begin(); it != markers.end(); ++it)
     {
-        if (it->second == L"mapChest")
+        BlockPos markerPos = it->first;
+        std::wstring markerName = it->second;
+        if (markerName == L"mapChest")
         {
-            boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(it->first.below());
+            boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(markerPos.below());
             if (blockEntity && blockEntity->GetType() == BlockEntityType::CHEST)
             {
                 boost::shared_ptr<ChestBlockEntity> chest =
@@ -195,9 +207,9 @@ bool ShipwreckPiece::postProcess(Level* level, Random& random, BoundingBox* box)
                 chest->setLootTable(&BuiltInLootTables::SHIPWRECK, random.nextLong());
             }
         }
-        else if (it->second == L"supplyChest")
+        else if (markerName == L"supplyChest")
         {
-            boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(it->first.below());
+            boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(markerPos.below());
             if (blockEntity && blockEntity->GetType() == BlockEntityType::CHEST)
             {
                 boost::shared_ptr<ChestBlockEntity> chest =
@@ -205,9 +217,9 @@ bool ShipwreckPiece::postProcess(Level* level, Random& random, BoundingBox* box)
                 chest->setLootTable(&BuiltInLootTables::SHIPWRECKSUPPLY, random.nextLong());
             }
         }
-        else if (it->second == L"treasureChest")
+        else if (markerName == L"treasureChest")
         {
-            boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(it->first.below());
+            boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(markerPos.below());
             if (blockEntity && blockEntity->GetType() == BlockEntityType::CHEST)
             {
                 boost::shared_ptr<ChestBlockEntity> chest =

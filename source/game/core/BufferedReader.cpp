@@ -102,15 +102,10 @@ unsigned int BufferedReader::read(wchar_t* buffer, unsigned int offset, unsigned
         count++;
     }
 
-    while (count < length)
+    int character;
+
+    while (count < length && (character = mReader->read()) != -1)
     {
-        int character = mReader->read();
-
-        if (character == -1)
-        {
-            break;
-        }
-
         mBuffer[mCount] = (wchar_t)character;
         mCount++;
 
@@ -132,36 +127,27 @@ std::wstring BufferedReader::readLine()
 
     while (mPosition < mCount)
     {
-        wchar_t character = mBuffer[mPosition];
+        wchar_t character = mBuffer[mPosition++];
 
-        if (endOfLine)
+        if (!endOfLine)
         {
-            if (character != L'\n' && character != L'\r')
-            {
-                break;
-            }
-
-            mPosition++;
-
-            bufferMore();
-        }
-        else
-        {
-            mPosition++;
-
             if (character == L'\n' || character == L'\r')
             {
                 endOfLine = true;
-
-                bufferMore();
             }
             else
             {
                 line.push_back(character);
-
-                bufferMore();
             }
         }
+        else if (character != L'\n' && character != L'\r')
+        {
+            mPosition--;
+
+            break;
+        }
+
+        bufferMore();
     }
 
     return line;

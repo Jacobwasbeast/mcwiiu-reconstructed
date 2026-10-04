@@ -9,7 +9,7 @@ ConsoleGameRules::EGameRuleType OnGameStartSpawnPositions::getActionType()
 
 GameRuleDefinition* OnGameStartSpawnPositions::addChild(ConsoleGameRules::EGameRuleType type)
 {
-    GameRuleDefinition* pChild = NULL;
+    SpawnPositionSet* pChild = NULL;
 
     if (type == ConsoleGameRules::eGameRuleType_SpawnPositionSet)
     {
@@ -22,7 +22,7 @@ GameRuleDefinition* OnGameStartSpawnPositions::addChild(ConsoleGameRules::EGameR
 
 SpawnPositionSet* OnGameStartSpawnPositions::getSpawnSet(unsigned char type)
 {
-    for (std::vector<GameRuleDefinition*>::iterator it = mChildren.begin(); it != mChildren.end(); ++it)
+    for (std::vector<GameRuleDefinition*>::iterator it = mChildren.begin(), end = mChildren.end(); it != end; ++it)
     {
         SpawnPositionSet* pSpawnSet = static_cast<SpawnPositionSet*>(*it);
 

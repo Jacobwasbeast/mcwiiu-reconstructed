@@ -9,7 +9,7 @@ public:
     ReachEndTimeCondition(float target, bool reachedEndOnly, GameMedal::EOperator op);
 
     virtual ~ReachEndTimeCondition();
-    virtual double getScore(const GameMedal* medal, PlayerStats* playerStats) const;
+    virtual float getScore(const GameMedal* medal, PlayerStats* playerStats) const;
 
 private:
     bool mReachedEndOnly;

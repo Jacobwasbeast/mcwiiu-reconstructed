@@ -14,8 +14,7 @@
 #include "game/world/Level.hpp"
 #include "game/server/ServerLevel.hpp"
 
-EvocationFangs::EvocationFangs(Level* level) : Entity(level, true), mWarmupDelay(0), mSentSpikeEvent(false),
-    mLifeTicks(0), mClientSideAttack(false), mOwner(), mOwnerUUID()
+EvocationFangs::EvocationFangs(Level* level) : Entity(level, true), mOwner()
 {
     _init();
     setSize(0.5f, 0.8f);
@@ -23,7 +22,7 @@ EvocationFangs::EvocationFangs(Level* level) : Entity(level, true), mWarmupDelay
 
 EvocationFangs::EvocationFangs(Level* level, double x, double y, double z, float yRot, int warmupDelay,
                                const boost::shared_ptr<LivingEntity>& owner) : Entity(level, true),
-    mWarmupDelay(0), mSentSpikeEvent(false), mLifeTicks(0), mClientSideAttack(false), mOwner(), mOwnerUUID()
+    mOwner()
 {
     _init();
     mWarmupDelay = warmupDelay;
@@ -43,19 +42,25 @@ void EvocationFangs::_init()
     mLifeTicks = 22;
     mClientSideAttack = false;
     mWarmupDelay = 0;
-    mOwnerUUID.clear();
+    std::wstring ownerUUID(L"");
 }
 
 void EvocationFangs::setOwner(const boost::shared_ptr<LivingEntity>& owner)
 {
     mOwner = owner;
-    mOwnerUUID = owner ? owner->getUUID() : std::wstring();
+    if (owner.get() == NULL)
+        mOwnerUUID = std::wstring(L"");
+    else
+        mOwnerUUID = owner.get()->getUUID();
 }
 
 boost::shared_ptr<LivingEntity> EvocationFangs::getOwner()
 {
     ServerLevel* serverLevel = dynamic_cast<ServerLevel*>(mLevel);
-    if (mOwner.lock() == NULL && mOwnerUUID.compare(L"") != 0 && serverLevel != NULL)
+    bool lookupOwner = false;
+    if (mOwner.lock() == NULL && mOwnerUUID != L"" && serverLevel != NULL)
+        lookupOwner = true;
+    if (lookupOwner)
     {
         boost::shared_ptr<Entity> entity = serverLevel->getEntityByUUID(mOwnerUUID);
         if ((entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
@@ -70,16 +75,14 @@ void EvocationFangs::defineSynchedData()
 
 void EvocationFangs::readAdditionalSaveData(CompoundTag* tag)
 {
-    if (tag == NULL) return;
     mWarmupDelay = tag->getInt(L"Warmup");
     mOwnerUUID = tag->getString(L"OwnerUUID");
 }
 
 void EvocationFangs::addAdditonalSaveData(CompoundTag* tag)
 {
-    if (tag == NULL) return;
     tag->putInt(L"Warmup", mWarmupDelay);
-    if (!mOwnerUUID.empty()) tag->putString(L"OwnerUUID", mOwnerUUID);
+    if (mOwnerUUID != L"") tag->putString(L"OwnerUUID", mOwnerUUID);
 }
 
 void EvocationFangs::dealDamageTo(const boost::shared_ptr<LivingEntity>& target)
@@ -93,12 +96,9 @@ void EvocationFangs::dealDamageTo(const boost::shared_ptr<LivingEntity>& target)
         }
         else
         {
-            boost::shared_ptr<Entity> ownerEntity = boost::static_pointer_cast<Entity>(owner);
-            boost::shared_ptr<Entity> targetEntity = boost::static_pointer_cast<Entity>(target);
-            if (!owner->isAlliedTo(targetEntity))
+            if (!owner->isAlliedTo(target))
             {
-                boost::shared_ptr<Entity> direct = shared_from_this();
-                DamageSource* damage = DamageSource::CreateIndirectMagic(direct, ownerEntity, NULL);
+                DamageSource* damage = DamageSource::CreateIndirectMagic(shared_from_this(), owner, DamageSource::MAGIC);
                 target->hurt(damage, 6.0f);
                 delete damage;
             }
@@ -109,7 +109,6 @@ void EvocationFangs::dealDamageTo(const boost::shared_ptr<LivingEntity>& target)
 void EvocationFangs::tick()
 {
     Entity::tick();
-    if (mLevel == NULL) return;
 
     if (!mLevel->mIsClientSide)
     {
@@ -118,8 +117,9 @@ void EvocationFangs::tick()
         {
             if (mWarmupDelay == -8)
             {
+                Level* level = mLevel;
                 std::vector<boost::shared_ptr<Entity> >* entities =
-                    mLevel->getEntitiesOfClass(typeid(LivingEntity), mBoundingBox->grow(0.2, 0.0, 0.2));
+                    level->getEntitiesOfClass(typeid(LivingEntity), mBoundingBox->grow(0.2, 0.0, 0.2));
                 for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != entities->end(); ++it)
                 {
                     dealDamageTo(boost::static_pointer_cast<LivingEntity>(*it));
@@ -150,26 +150,28 @@ void EvocationFangs::tick()
 
 void EvocationFangs::handleEntityEvent(unsigned char event, int data)
 {
-    if (event != EntityEvent::START_ATTACKING)
+    if (event == EntityEvent::START_ATTACKING)
+    {
+        mClientSideAttack = true;
+        if (!isSilent())
+        {
+            mLevel->playLocalSound(mX, mY, mZ, SoundEvents::EVOCATION_FANGS_ATTACK,
+                                   getSoundSource(), 1.0f,
+                                   0.85f + mRandom->nextFloat() * 0.2f, false, 16.0f);
+        }
+    }
+    else
     {
         Entity::handleEntityEvent(event, data);
-        return;
-    }
-    mClientSideAttack = true;
-    if (!isSilent() && mLevel != NULL)
-    {
-        mLevel->playLocalSound(mX, mY, mZ, SoundEvents::EVOCATION_FANGS_ATTACK,
-                               getSoundSource(), 1.0f,
-                               0.85f + mRandom->nextFloat() * 0.2f, false, 16.0f);
     }
 }
 
-double EvocationFangs::getAnimationProgress(float partialTicks) const
+float EvocationFangs::getAnimationProgress(float partialTicks) const
 {
-    if (!mClientSideAttack) return 0.0;
+    if (!mClientSideAttack) return 0.0f;
     int ticks = mLifeTicks - 2;
-    double progress = 1.0;
-    if (ticks > 0) progress = 1.0 - ((double)ticks - (double)partialTicks) / 20.0;
+    float progress = 1.0f;
+    if (ticks > 0) progress = 1.0f - ((float)ticks - partialTicks) / 20.0f;
     return progress;
 }
 

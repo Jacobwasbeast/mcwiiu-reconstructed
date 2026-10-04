@@ -174,10 +174,18 @@ const BlockState* Region::getBlockState(const BlockPos& pos)
 
 const BlockState* Region::getBlockState(EntityTickCache& tickCache, const BlockPos& pos)
 {
-    if ((unsigned int)pos.y >= 256)
-        return Blocks::air->defaultBlockState();
-    const BlockState* state = tickCache.getBlockState(pos.x, pos.y, pos.z);
-    return state == NULL ? getBlockState(pos) : state;
+    const BlockState* state;
+    if ((unsigned int)pos.y < 256)
+    {
+        state = tickCache.getBlockState(pos.x, pos.y, pos.z);
+        if (state == NULL)
+            return getBlockState(pos);
+    }
+    else
+    {
+        state = Blocks::air->defaultBlockState();
+    }
+    return state;
 }
 
 const BlockState* Region::getBlockState(LevelChunk* chunk, EntityTickCache& tickCache, const BlockPos& pos)

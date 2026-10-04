@@ -136,11 +136,12 @@ void Sheep::aiStep()
 {
     if (mLevel->mIsClientSide)
     {
-        mEatAnimationTick = mEatAnimationTick - 1;
-        if (mEatAnimationTick < 0)
+        int ticks = mEatAnimationTick - 1;
+        if (ticks < 0)
         {
-            mEatAnimationTick = 0;
+            ticks = 0;
         }
+        mEatAnimationTick = ticks;
     }
     Animal::aiStep();
 }
@@ -174,7 +175,7 @@ void Sheep::handleEntityEvent(unsigned char event, int data)
     Animal::handleEntityEvent(event, data);
 }
 
-double Sheep::getHeadEatPositionScale(float partialTick)
+float Sheep::getHeadEatPositionScale(float partialTick)
 {
     if (mEatAnimationTick < 1)
     {
@@ -191,14 +192,19 @@ double Sheep::getHeadEatPositionScale(float partialTick)
     return -((mEatAnimationTick - 40 - partialTick) * 0.25f);
 }
 
-double Sheep::getHeadEatAngleScale(float partialTick)
+float Sheep::getHeadEatAngleScale(float partialTick)
 {
     if (mEatAnimationTick > 4 && mEatAnimationTick <= 36)
     {
         return 0.62831855f
                + 0.21991149f * Mth::sin((mEatAnimationTick - 4 - partialTick) * 0.03125f * 28.7f);
     }
-    return mEatAnimationTick > 0 ? 0.62831855f : mXRot * 0.017453292f;
+    float scale = 0.62831855f;
+    if (mEatAnimationTick <= 0)
+    {
+        scale = mXRot * 0.017453292f;
+    }
+    return scale;
 }
 
 bool Sheep::isSheared()
@@ -301,8 +307,12 @@ unsigned int Sheep::GetInteractTooltip(const EntityTooltipDataHolder& holder)
             return IDS_TOOLTIPS_DYE;
         }
     }
-    else if (itemId == ItemId::SHEARS)
+    else
     {
+        if (itemId != ItemId::SHEARS)
+        {
+            return Animal::GetInteractTooltip(holder);
+        }
         if (!isBaby() && !isSheared())
         {
             return IDS_TOOLTIPS_SHEAR;
@@ -380,7 +390,7 @@ MobGroupData* Sheep::finalizeMobSpawn(const DifficultyInstance& difficulty, MobG
     return result;
 }
 
-double Sheep::getEyeHeight()
+float Sheep::getEyeHeight()
 {
     return 0.95f * mBbHeight;
 }

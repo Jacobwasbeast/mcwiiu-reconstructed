@@ -264,9 +264,13 @@ bool GameStats::SORT_MG02_STATS(PlayerStats* first, PlayerStats* second)
 
 boost::shared_ptr<ServerPlayer> GameStats::getPlayerFromStatsVec(const std::vector<PlayerStats*>& stats, unsigned int index)
 {
-    return index < stats.size()
-        ? (gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers)->getPlayerFromStatsUID(stats.at(index)->mStatsUID)
-        : boost::shared_ptr<ServerPlayer>();
+    if (index < stats.size())
+    {
+        boost::shared_ptr<ServerPlayer> player =
+            (gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers)->getPlayerFromStatsUID(stats.at(index)->mStatsUID);
+        return player;
+    }
+    return boost::shared_ptr<ServerPlayer>();
 }
 
 void GameStats::AwardMG02Medals(const std::vector<boost::shared_ptr<ServerPlayer> >* players)

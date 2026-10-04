@@ -110,14 +110,16 @@ Minecart::Minecart(Level* level, double x, double y, double z) : Entity(level, t
     mYo = y;
     mZo = z;
 
-    BlockPos pos(Mth::floor(x), Mth::floor(y), Mth::floor(z));
-    if (BaseRailBlock::isRail(level, pos))
+    int blockX = Mth::floor(x);
+    int blockY = Mth::floor(y);
+    int blockZ = Mth::floor(z);
+    if (BaseRailBlock::isRail(level, BlockPos(blockX, blockY, blockZ)))
     {
-        const BlockState* state = level->getBlockState(pos);
+        const BlockState* state = level->getBlockState(BlockPos(blockX, blockY, blockZ));
         BaseRailBlock* rail = static_cast<BaseRailBlock*>(state->getBlock());
         BaseRailBlock::RailShape* shape = state->getValue(rail->getShapeProperty());
-        if (shape == BaseRailBlock::RailShape::NORTH_SOUTH || shape == BaseRailBlock::RailShape::ASCENDING_NORTH
-            || shape == BaseRailBlock::RailShape::ASCENDING_SOUTH)
+        if (shape == BaseRailBlock::RailShape::NORTH_SOUTH || shape == BaseRailBlock::RailShape::ASCENDING_EAST
+            || shape == BaseRailBlock::RailShape::ASCENDING_NORTH)
         {
             mYRot = 90.0f;
             mYRotO = 90.0f;
@@ -224,7 +226,12 @@ AABB* Minecart::getBoundingBoxForCulling()
     {
         return AABB::newTemp(box->mMinX, box->mMinY, box->mMinZ, box->mMaxX, box->mMaxY, box->mMaxZ);
     }
-    return box->grow(std::abs(getDisplayOffset()) * 0.0625);
+    int displayOffset = getDisplayOffset();
+    if (displayOffset < 0)
+    {
+        return box->grow(-displayOffset * 0.0625);
+    }
+    return box->grow(displayOffset * 0.0625);
 }
 
 bool Minecart::isPushable(boost::shared_ptr<Entity> entity)
@@ -251,7 +258,7 @@ bool Minecart::hurt(const DamageSource* source, float damage)
     if (source != NULL && dynamic_cast<const EntityDamageSource*>(source) != NULL)
     {
         boost::shared_ptr<Entity> attacker = source->getDirectEntity();
-        if (Entity::instanceof(attacker, EntityType::PLAYER)
+        if ((attacker->GetType() & EntityType::PLAYER) == EntityType::PLAYER
             && !boost::static_pointer_cast<Player>(attacker)->isAllowedToHurtEntity(shared_from_this()))
         {
             return false;
@@ -268,7 +275,7 @@ bool Minecart::hurt(const DamageSource* source, float damage)
     if (source->getEntity() != NULL)
     {
         boost::shared_ptr<Entity> entity = source->getEntity();
-        if (Entity::instanceof(entity, EntityType::PLAYER))
+        if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
         {
             creativePlayer = boost::static_pointer_cast<Player>(source->getEntity())->mAbilities.mInstabuild;
         }
@@ -617,7 +624,7 @@ void Minecart::moveAlongTrack(const BlockPos& pos, const BlockState* state)
     if (!passengers->empty())
     {
         boost::shared_ptr<Entity> passenger = passengers->at(0).lock();
-        if (Entity::instanceof(passenger, EntityType::LIVING_ENTITY))
+        if ((passenger->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
         {
             boost::shared_ptr<LivingEntity> living = boost::static_pointer_cast<LivingEntity>(passenger);
             if (living->mZza > 0.0 && mXd * mXd + mZd * mZd < 0.01)
@@ -896,14 +903,7 @@ void Minecart::readAdditionalSaveData(CompoundTag* tag)
         }
 
         int data = tag->getInt(L"DisplayData");
-        if (block == NULL)
-        {
-            setDisplayBlockState(Blocks::air->defaultBlockState());
-        }
-        else
-        {
-            setDisplayBlockState(block->getBlockState(data));
-        }
+        setDisplayBlockState(block == NULL ? Blocks::air->defaultBlockState() : block->getBlockState(data));
         setDisplayOffset(tag->getInt(L"DisplayOffset"));
     }
 }
@@ -948,7 +948,7 @@ void Minecart::push(boost::shared_ptr<Entity> entity)
     double xPush = xDistance / distance * scale * 0.1f * (1.0f - mPushthrough) * 0.5;
     double zPush = zDistance / distance * scale * 0.1f * (1.0f - mPushthrough) * 0.5;
 
-    if (!Entity::instanceof(entity, EntityType::MINECART))
+    if ((entity->GetType() & EntityType::MINECART) != EntityType::MINECART)
     {
         push(-xPush, 0.0, -zPush);
         entity->push(xPush * 0.25, 0.0, zPush * 0.25);
@@ -958,7 +958,7 @@ void Minecart::push(boost::shared_ptr<Entity> entity)
     double xOffset = entity->mX - mX;
     double zOffset = entity->mZ - mZ;
     Vec3* toEntity = Vec3::newTemp(xOffset, 0.0, zOffset)->normalize();
-    Vec3* facing = Vec3::newTemp(std::cos(mYRot * Mth::DEG_TO_RAD), 0.0, std::sin(mYRot * Mth::DEG_TO_RAD))->normalize();
+    Vec3* facing = Vec3::newTemp(std::cos(mYRot * 0.017453292f), 0.0, std::sin(mYRot * 0.017453292f))->normalize();
     if (std::abs(toEntity->dot(facing)) < 0.8)
     {
         return;
@@ -1003,6 +1003,14 @@ void Minecart::push(boost::shared_ptr<Entity> entity)
             double separation = 2.0 - (xOffset + std::abs(zOffset)) * 0.5;
             entity->mXd /= separation;
             entity->mZd /= separation;
+        }
+        if (mXd != mXd)
+        {
+            mXd = 0.0;
+        }
+        if (mZd != mZd)
+        {
+            mZd = 0.0;
         }
         if (entity->mXd != entity->mXd)
         {

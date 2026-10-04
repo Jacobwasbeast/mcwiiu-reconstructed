@@ -35,10 +35,6 @@ Cow::Cow(Level* level, bool callDerivedCtor)
     setSize(0.9f, 1.4f);
 }
 
-Cow::~Cow()
-{
-}
-
 void Cow::addDataWalkers(DataFixerUpper* fixer)
 {
     Mob::addDataWalkers(fixer, EntityType::COW);
@@ -66,7 +62,7 @@ void Cow::registerAttributes()
 {
     Mob::registerAttributes();
     getAttribute(SharedMonsterAttributes::MAX_HEALTH)->setBaseValue(10.0);
-    getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(0.2);
+    getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(0.2f);
 }
 
 const SoundEvent* Cow::getAmbientSound()
@@ -126,10 +122,11 @@ bool Cow::mobInteract(const boost::shared_ptr<Player>& player,
 
 boost::shared_ptr<AgableMob> Cow::getBreedOffspring(boost::shared_ptr<AgableMob>)
 {
-    return boost::shared_ptr<AgableMob>(new Cow(mLevel, true));
+    boost::shared_ptr<Cow> cow(new Cow(mLevel, true));
+    return cow;
 }
 
-double Cow::getEyeHeight()
+float Cow::getEyeHeight()
 {
     return isBaby() ? mBbHeight : 1.3f;
 }

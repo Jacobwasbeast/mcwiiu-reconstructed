@@ -3,17 +3,23 @@
 #include <vector>
 #include <sstream>
 #include <algorithm>
+#include <cctype>
 
-std::vector<std::wstring> stringSplit(const std::wstring& text, wchar_t separator)
+std::vector<std::wstring>& stringSplit(const std::wstring& text, wchar_t separator, std::vector<std::wstring>& result)
 {
-    std::vector<std::wstring> result;
-    std::wistringstream stream(text);
+    std::wstringstream stream(text);
     std::wstring field;
     while (std::getline(stream, field, separator))
     {
         result.push_back(field);
     }
     return result;
+}
+
+std::vector<std::wstring> stringSplit(const std::wstring& text, wchar_t separator)
+{
+    std::vector<std::wstring> result;
+    return stringSplit(text, separator, result);
 }
 
 bool BothAreSpaces(wchar_t first, wchar_t second)
@@ -24,37 +30,42 @@ bool BothAreSpaces(wchar_t first, wchar_t second)
 std::wstring toLower(const std::wstring& text)
 {
     std::wstring result(text);
-    for (std::wstring::iterator it = result.begin(); it != result.end(); ++it)
-    {
-        if (*it >= L'A' && *it <= L'Z')
-        {
-            *it = static_cast<wchar_t>(*it + (L'a' - L'A'));
-        }
-    }
+    std::transform(result.begin(), result.end(), result.begin(), tolower);
     return result;
 }
 
 std::wstring trimString(const std::wstring& text)
 {
-    const std::wstring whitespace(L" \t\n\r");
-    const std::wstring::size_type first = text.find_first_not_of(whitespace);
+    std::wstring result;
+    int first = text.find_first_not_of(L" \t\n\r");
+    int last = text.find_last_not_of(L" \t\n\r");
     if (first == std::wstring::npos)
     {
-        return std::wstring();
+        first = 0;
     }
-
-    const std::wstring::size_type last = text.find_last_not_of(whitespace);
-    return text.substr(first, last - first + 1);
+    if (last == std::wstring::npos)
+    {
+        last = -1;
+    }
+    if (first == 0 && last < 0)
+    {
+        result = L"";
+    }
+    else
+    {
+        result = text.substr(first, last - first + 1);
+    }
+    return result;
 }
 
 void stripWhitespaceForHtml(std::wstring& text, bool collapse)
 {
     if (collapse)
     {
-        text.erase(std::remove(text.begin(), text.end(), L'\n'), text.end());
-        text.erase(std::remove(text.begin(), text.end(), L'\r'), text.end());
+        text.erase(std::remove(text.begin(), text.end(), '\n'), text.end());
+        text.erase(std::remove(text.begin(), text.end(), '\r'), text.end());
     }
-    text.erase(std::remove(text.begin(), text.end(), L'\t'), text.end());
+    text.erase(std::remove(text.begin(), text.end(), '\t'), text.end());
     text.erase(std::unique(text.begin(), text.end(), BothAreSpaces), text.end());
     text = trimString(text);
 }
@@ -92,7 +103,9 @@ bool equalsIgnoreCase(const std::wstring& first, const std::wstring& second)
 
 std::wstring escapeXML(const std::wstring& text)
 {
-    std::wstring result = replaceAll(text, L"&", L"&amp;");
+    std::wstring result = text;
+    result = replaceAll(result, L"&", L"&amp;");
     result = replaceAll(result, L"<", L"&lt;");
-    return replaceAll(result, L">", L"&gt;");
+    result = replaceAll(result, L">", L"&gt;");
+    return result;
 }

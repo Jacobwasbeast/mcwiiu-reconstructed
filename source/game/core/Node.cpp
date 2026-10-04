@@ -61,19 +61,19 @@ Node* Node::GetNodeFromPool(int xValue, int yValue, int zValue)
         node = new Node(xValue, yValue, zValue);
     else if (poolSize < 1024)
     {
-        node = &pool[poolSize++];
+        node = &pool[poolSize];
         node->x = xValue;
         node->y = yValue;
         node->z = zValue;
         node->hash = createHash(xValue, yValue, zValue);
         node->_init();
+        ++poolSize;
     }
     else
     {
-        unsigned int index = poolSize - 1024;
-        if (index < allocated.size())
+        if (poolSize - 1024 < allocated.size())
         {
-            node = allocated[index];
+            node = allocated[poolSize - 1024];
             node->x = xValue;
             node->y = yValue;
             node->z = zValue;
@@ -152,13 +152,16 @@ void Node::writeToStream(DataOutputStream* stream)
     stream->writeFloat(cost);
     stream->writeFloat(costMalus);
     stream->writeBoolean(closed);
-    stream->writeInt(type != 0 ? type->ordinal() : 0);
+    stream->writeInt(type->ordinal());
     stream->writeFloat(f);
 }
 
 Node* Node::createFromStream(DataInputStream* stream)
 {
-    Node* node = GetNodeFromPool(stream->readInt(), stream->readInt(), stream->readInt());
+    int xValue = stream->readInt();
+    int yValue = stream->readInt();
+    int zValue = stream->readInt();
+    Node* node = GetNodeFromPool(xValue, yValue, zValue);
     node->walkedDistance = stream->readFloat();
     node->cost = stream->readFloat();
     node->costMalus = stream->readFloat();

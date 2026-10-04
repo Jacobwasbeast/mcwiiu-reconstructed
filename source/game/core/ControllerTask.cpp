@@ -11,8 +11,7 @@ ControllerTask::ControllerTask(Tutorial* tutorial, int descriptionId, bool preCo
                                bool showMinimumTime, int* mappings, unsigned int mappingCount,
                                int* completionIdValues, int completionIdValueCount,
                                int* alternateMappings, unsigned int alternateMappingCount)
-    : TutorialTask(tutorial, descriptionId, preCompletionEnabled, NULL, showMinimumTime, true, true),
-      useAlternateMappings(false)
+    : TutorialTask(tutorial, descriptionId, preCompletionEnabled, NULL, showMinimumTime, true, true)
 {
     unsigned int i;
 
@@ -25,18 +24,19 @@ ControllerTask::ControllerTask(Tutorial* tutorial, int descriptionId, bool preCo
     if (alternateMappingCount != 0)
     {
         useAlternateMappings = true;
-
-        for (i = 0; i < alternateMappingCount; ++i)
-        {
-            inputMappings[alternateMappings[i]] = false;
-        }
     }
 
-    completionIds = new int[completionIdValueCount];
+    for (i = 0; i < alternateMappingCount; ++i)
+    {
+        inputMappings[alternateMappings[i]] = false;
+    }
+
+    int* ids = new int[completionIdValueCount];
+    completionIds = ids;
 
     for (int completionId = 0; completionId < completionIdValueCount; ++completionId)
     {
-        completionIds[completionId] = completionIdValues[completionId];
+        ids[completionId] = completionIdValues[completionId];
     }
 
     completionIdCount = completionIdValueCount;
@@ -70,34 +70,49 @@ bool ControllerTask::isCompleted()
 
     bool result = true;
     Minecraft* minecraft = Minecraft::GetInstance();
-    boost::unordered_map<int, bool>* mappings = &constrainedMappings;
+    unsigned int mappingIndex = 0;
 
     if (useAlternateMappings
         && GameSettings::GetGameSettings(minecraft->mPlayer->mUserIndex,
                                          eGameSetting_SouthPaw) != 0)
     {
-        mappings = &inputMappings;
+        for (boost::unordered_map<int, bool>::iterator mapping = inputMappings.begin();
+             mapping != inputMappings.end(); ++mapping, ++mappingIndex)
+        {
+            if (!mapping->second)
+            {
+                if (g_pInput->GetValue(minecraft->mPlayer->mUserIndex,
+                                       static_cast<unsigned char>(mapping->first), false) > 0)
+                {
+                    mapping->second = true;
+                    completionMask |= 1 << (mappingIndex & 0x3f);
+                }
+                else
+                {
+                    result = false;
+                }
+            }
+        }
     }
-
-    unsigned int mappingIndex = 0;
-
-    for (boost::unordered_map<int, bool>::iterator mapping = mappings->begin();
-         mapping != mappings->end(); ++mapping, ++mappingIndex)
+    else
     {
-        if (mapping->second)
+        for (boost::unordered_map<int, bool>::iterator mapping = constrainedMappings.begin();
+             mapping != constrainedMappings.end(); ++mapping, ++mappingIndex)
         {
-            continue;
+            if (!mapping->second)
+            {
+                if (g_pInput->GetValue(minecraft->mPlayer->mUserIndex,
+                                       static_cast<unsigned char>(mapping->first), false) > 0)
+                {
+                    mapping->second = true;
+                    completionMask |= 1 << (mappingIndex & 0x3f);
+                }
+                else
+                {
+                    result = false;
+                }
+            }
         }
-
-        if (g_pInput->GetValue(minecraft->mPlayer->mUserIndex,
-                               static_cast<unsigned char>(mapping->first), false) == 0)
-        {
-            result = false;
-            continue;
-        }
-
-        mapping->second = true;
-        completionMask |= 1 << (mappingIndex & 0x3f);
     }
 
     if (completionIds != NULL && CompletionMaskIsValid())

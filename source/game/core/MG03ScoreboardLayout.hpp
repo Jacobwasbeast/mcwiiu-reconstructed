@@ -22,7 +22,7 @@ private:
 public:
     explicit MG03ScoreboardLayout(EScoreboardType type);
     virtual ~MG03ScoreboardLayout();
-    static unsigned int SORTBYSCORE(PlayerInfo* first, PlayerInfo* second);
+    static bool SORTBYSCORE(PlayerInfo* first, PlayerInfo* second);
     void Init(int value);
     virtual unsigned int getStatIcon2(const EScoreboardType& type);
     virtual unsigned int getStatIcon3(const EScoreboardType& type);

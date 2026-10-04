@@ -40,9 +40,9 @@ OceanRuin::OceanRuin(Level* level, Random& random, int x, int z, int width, int 
 {
     setOrientation(Direction::SOUTH);
     setBoundingBox(new BoundingBox(x, 0, z, x + width - 1, height - 1, z + depth - 1));
+    mBlockState = Blocks::water->defaultBlockState();
     mIsLarge = isLarge;
     mIsWarm = isWarm;
-    mBlockState = Blocks::water->defaultBlockState();
     setRotation(Rotation::getRandom(random));
 }
 
@@ -71,64 +71,62 @@ eMinecraftStructureTemplate OceanRuin::getSmallWarmRuin(Random& random)
 
 eMinecraftStructureTemplate OceanRuin::getRuin(int index, bool large, ERuinType type)
 {
-    if (type == eRuinType_Cold)
+    switch (type)
     {
-        eMinecraftStructureTemplate ruins[12] =
-        {
-            eMinecraftStructureTemplate_OceanRuin_BigRuin1Brick,
-            eMinecraftStructureTemplate_OceanRuin_BigRuin2Brick,
-            eMinecraftStructureTemplate_OceanRuin_BigRuin3Brick,
-            eMinecraftStructureTemplate_OceanRuin_BigRuin8Brick,
-            eMinecraftStructureTemplate_OceanRuin_Ruin1Brick,
-            eMinecraftStructureTemplate_OceanRuin_Ruin2Brick,
-            eMinecraftStructureTemplate_OceanRuin_Ruin3Brick,
-            eMinecraftStructureTemplate_OceanRuin_Ruin4Brick,
-            eMinecraftStructureTemplate_OceanRuin_Ruin5Brick,
-            eMinecraftStructureTemplate_OceanRuin_Ruin6Brick,
-            eMinecraftStructureTemplate_OceanRuin_Ruin7Brick,
-            eMinecraftStructureTemplate_OceanRuin_Ruin8Brick
-        };
+    case eRuinType_Cold:
+    {
+        eMinecraftStructureTemplate ruins[12];
+        ruins[0] = eMinecraftStructureTemplate_OceanRuin_BigRuin1Brick;
+        ruins[1] = eMinecraftStructureTemplate_OceanRuin_BigRuin2Brick;
+        ruins[2] = eMinecraftStructureTemplate_OceanRuin_BigRuin3Brick;
+        ruins[3] = eMinecraftStructureTemplate_OceanRuin_BigRuin8Brick;
+        ruins[4] = eMinecraftStructureTemplate_OceanRuin_Ruin1Brick;
+        ruins[5] = eMinecraftStructureTemplate_OceanRuin_Ruin2Brick;
+        ruins[6] = eMinecraftStructureTemplate_OceanRuin_Ruin3Brick;
+        ruins[7] = eMinecraftStructureTemplate_OceanRuin_Ruin4Brick;
+        ruins[8] = eMinecraftStructureTemplate_OceanRuin_Ruin5Brick;
+        ruins[9] = eMinecraftStructureTemplate_OceanRuin_Ruin6Brick;
+        ruins[10] = eMinecraftStructureTemplate_OceanRuin_Ruin7Brick;
+        ruins[11] = eMinecraftStructureTemplate_OceanRuin_Ruin8Brick;
         return large ? ruins[index] : ruins[index + 4];
     }
-    if (type == eRuinType_Warm)
+    case eRuinType_Warm:
     {
-        eMinecraftStructureTemplate ruins[12] =
-        {
-            eMinecraftStructureTemplate_OceanRuin_BigRuin1Cracked,
-            eMinecraftStructureTemplate_OceanRuin_BigRuin2Cracked,
-            eMinecraftStructureTemplate_OceanRuin_BigRuin3Cracked,
-            eMinecraftStructureTemplate_OceanRuin_BigRuin8Cracked,
-            eMinecraftStructureTemplate_OceanRuin_Ruin1Cracked,
-            eMinecraftStructureTemplate_OceanRuin_Ruin2Cracked,
-            eMinecraftStructureTemplate_OceanRuin_Ruin3Cracked,
-            eMinecraftStructureTemplate_OceanRuin_Ruin4Cracked,
-            eMinecraftStructureTemplate_OceanRuin_Ruin5Cracked,
-            eMinecraftStructureTemplate_OceanRuin_Ruin6Cracked,
-            eMinecraftStructureTemplate_OceanRuin_Ruin7Cracked,
-            eMinecraftStructureTemplate_OceanRuin_Ruin8Cracked
-        };
+        eMinecraftStructureTemplate ruins[12];
+        ruins[0] = eMinecraftStructureTemplate_OceanRuin_BigRuin1Cracked;
+        ruins[1] = eMinecraftStructureTemplate_OceanRuin_BigRuin2Cracked;
+        ruins[2] = eMinecraftStructureTemplate_OceanRuin_BigRuin3Cracked;
+        ruins[3] = eMinecraftStructureTemplate_OceanRuin_BigRuin8Cracked;
+        ruins[4] = eMinecraftStructureTemplate_OceanRuin_Ruin1Cracked;
+        ruins[5] = eMinecraftStructureTemplate_OceanRuin_Ruin2Cracked;
+        ruins[6] = eMinecraftStructureTemplate_OceanRuin_Ruin3Cracked;
+        ruins[7] = eMinecraftStructureTemplate_OceanRuin_Ruin4Cracked;
+        ruins[8] = eMinecraftStructureTemplate_OceanRuin_Ruin5Cracked;
+        ruins[9] = eMinecraftStructureTemplate_OceanRuin_Ruin6Cracked;
+        ruins[10] = eMinecraftStructureTemplate_OceanRuin_Ruin7Cracked;
+        ruins[11] = eMinecraftStructureTemplate_OceanRuin_Ruin8Cracked;
         return large ? ruins[index] : ruins[index + 4];
     }
-    if (type == eRuinType_ColdBrick)
+    case eRuinType_ColdBrick:
     {
-        eMinecraftStructureTemplate ruins[12] =
-        {
-            eMinecraftStructureTemplate_OceanRuin_BigRuin1Mossy,
-            eMinecraftStructureTemplate_OceanRuin_BigRuin2Mossy,
-            eMinecraftStructureTemplate_OceanRuin_BigRuin3Mossy,
-            eMinecraftStructureTemplate_OceanRuin_BigRuin8Mossy,
-            eMinecraftStructureTemplate_OceanRuin_Ruin1Mossy,
-            eMinecraftStructureTemplate_OceanRuin_Ruin2Mossy,
-            eMinecraftStructureTemplate_OceanRuin_Ruin3Mossy,
-            eMinecraftStructureTemplate_OceanRuin_Ruin4Mossy,
-            eMinecraftStructureTemplate_OceanRuin_Ruin5Mossy,
-            eMinecraftStructureTemplate_OceanRuin_Ruin6Mossy,
-            eMinecraftStructureTemplate_OceanRuin_Ruin7Mossy,
-            eMinecraftStructureTemplate_OceanRuin_Ruin8Mossy
-        };
+        eMinecraftStructureTemplate ruins[12];
+        ruins[0] = eMinecraftStructureTemplate_OceanRuin_BigRuin1Mossy;
+        ruins[1] = eMinecraftStructureTemplate_OceanRuin_BigRuin2Mossy;
+        ruins[2] = eMinecraftStructureTemplate_OceanRuin_BigRuin3Mossy;
+        ruins[3] = eMinecraftStructureTemplate_OceanRuin_BigRuin8Mossy;
+        ruins[4] = eMinecraftStructureTemplate_OceanRuin_Ruin1Mossy;
+        ruins[5] = eMinecraftStructureTemplate_OceanRuin_Ruin2Mossy;
+        ruins[6] = eMinecraftStructureTemplate_OceanRuin_Ruin3Mossy;
+        ruins[7] = eMinecraftStructureTemplate_OceanRuin_Ruin4Mossy;
+        ruins[8] = eMinecraftStructureTemplate_OceanRuin_Ruin5Mossy;
+        ruins[9] = eMinecraftStructureTemplate_OceanRuin_Ruin6Mossy;
+        ruins[10] = eMinecraftStructureTemplate_OceanRuin_Ruin7Mossy;
+        ruins[11] = eMinecraftStructureTemplate_OceanRuin_Ruin8Mossy;
         return large ? ruins[index] : ruins[index + 4];
     }
-    return eMinecraftStructureTemplate_Invalid;
+    default:
+        return eMinecraftStructureTemplate_Invalid;
+    }
 }
 
 void OceanRuin::updateChestReplacer(eMinecraftStructureTemplate structureTemplate)
@@ -159,9 +157,10 @@ const StructureTemplate* OceanRuin::placeRuin(Random& random, StructureManager* 
     if (!mIsWarm)
     {
         int index = random.nextInt(mIsLarge ? 4 : 8);
-        eMinecraftStructureTemplate base = getRuin(index, mIsLarge, eRuinType_Cold);
-        eMinecraftStructureTemplate second = getRuin(index, mIsLarge, eRuinType_Warm);
-        eMinecraftStructureTemplate third = getRuin(index, mIsLarge, eRuinType_ColdBrick);
+        bool large = mIsLarge;
+        eMinecraftStructureTemplate base = getRuin(index, large, eRuinType_Cold);
+        eMinecraftStructureTemplate second = getRuin(index, large, eRuinType_Warm);
+        eMinecraftStructureTemplate third = getRuin(index, large, eRuinType_ColdBrick);
         updateChestReplacer(base);
         const StructureTemplate* result = structureManager->getOrCreate(base);
         settings.setIntegrity(integrity);
@@ -174,7 +173,16 @@ const StructureTemplate* OceanRuin::placeRuin(Random& random, StructureManager* 
         thirdTemplate->placeInWorld(level, pos, &settings);
         return result;
     }
-    eMinecraftStructureTemplate ruin = mIsLarge ? getBigWarmRuin(random) : getSmallWarmRuin(random);
+    if (!mIsLarge)
+    {
+        eMinecraftStructureTemplate ruin = getSmallWarmRuin(random);
+        updateChestReplacer(ruin);
+        const StructureTemplate* result = structureManager->getOrCreate(ruin);
+        settings.setIntegrity(integrity);
+        result->placeInWorld(level, pos, &settings);
+        return result;
+    }
+    eMinecraftStructureTemplate ruin = getBigWarmRuin(random);
     updateChestReplacer(ruin);
     const StructureTemplate* result = structureManager->getOrCreate(ruin);
     settings.setIntegrity(integrity);
@@ -186,10 +194,10 @@ BlockPos OceanRuin::adaptPosition(const BlockPos& pos, Mirror* mirror, Rotation*
 {
     BlockPos end = StructureTemplate::transform(BlockPos(mWidth - 1, 0, mDepth - 1), mirror, rotation)
         .offset(pos.x, pos.y, pos.z);
-    BlockPos min(pos.x < end.x ? pos.x : end.x, end.y < pos.y ? end.y : pos.y,
-        pos.z < end.z ? pos.z : end.z);
-    BlockPos max(end.x < pos.x ? pos.x : end.x, pos.y < end.y ? end.y : pos.y,
-        end.z < pos.z ? pos.z : end.z);
+    BlockPos min(end.x < pos.x ? end.x : pos.x, end.y < pos.y ? end.y : pos.y,
+        end.z < pos.z ? end.z : pos.z);
+    BlockPos max(pos.x < end.x ? end.x : pos.x, end.y < pos.y ? pos.y : end.y,
+        pos.z < end.z ? end.z : pos.z);
     int lowest = 0x200;
     int lowCount = 0;
     for (int x = min.x; x <= max.x; ++x)
@@ -219,25 +227,29 @@ void OceanRuin::fillBelow(const BlockPos& pos, Mirror* mirror, Rotation* rotatio
 {
     BlockPos end = StructureTemplate::transform(BlockPos(mWidth - 1, 0, mDepth - 1), mirror, rotation)
         .offset(pos.x, pos.y, pos.z);
-    BlockPos min(pos.x < end.x ? pos.x : end.x, pos.y < end.y ? pos.y : end.y,
-        pos.z < end.z ? pos.z : end.z);
-    BlockPos max(end.x < pos.x ? pos.x : end.x, end.y < pos.y ? pos.y : end.y,
-        end.z < pos.z ? pos.z : end.z);
+    int top = pos.y - 1;
+    BlockPos min(end.x < pos.x ? end.x : pos.x, end.y < pos.y ? end.y : pos.y,
+        end.z < pos.z ? end.z : pos.z);
+    BlockPos max(pos.x < end.x ? end.x : pos.x, pos.y < end.y ? end.y : pos.y,
+        pos.z < end.z ? end.z : pos.z);
     for (int x = min.x; x <= max.x; ++x)
     {
         for (int z = min.z; z <= max.z; ++z)
         {
             for (int y = min.y; y <= max.y; ++y)
             {
-                int height = y - 1;
+                int height = y;
+                do
+                {
+                    --height;
+                }
                 while ((level->isEmptyBlock(BlockPos(x, height, z))
                            || level->getBlockState(BlockPos(x, height, z))->getMaterial()->isLiquid())
-                    && height > 1)
-                    --height;
-                for (; height < pos.y; ++height)
+                    && height > 1);
+                for (int h = height; h < top + 1; ++h)
                 {
                     if (level->mRandom->rollPercentageChance(0x52))
-                        level->setBlock(BlockPos(x, height, z), Blocks::gravel->defaultBlockState(), Block::UPDATE_CLIENTS, false);
+                        level->setBlock(BlockPos(x, h, z), Blocks::gravel->defaultBlockState(), Block::UPDATE_CLIENTS, false);
                 }
             }
         }
@@ -292,12 +304,11 @@ bool OceanRuin::postProcess(Level* level, Random& random, BoundingBox* box)
     {
         BlockPos markerPos = it->first;
         std::wstring marker = it->second;
-        if (marker.compare(0, marker.size(), L"chest", 5) == 0)
+        if (marker.compare(0, marker.size(), L"chest") == 0)
         {
             level->setBlock(markerPos, mBlockState, Block::UPDATE_ALL, false);
-            TypedBoxed<const Direction*> facing(Direction::EAST);
             level->setBlock(markerPos.below(),
-                Blocks::chest->defaultBlockState()->setBoxedValue(static_cast<const Property*>(ChestBlock::FACING), &facing), Block::UPDATE_ALL, false);
+                Blocks::chest->defaultBlockState()->setValue(ChestBlock::FACING, Direction::EAST), Block::UPDATE_ALL, false);
             level->setExtraBlock(markerPos.below(), Blocks::water->defaultBlockState(), Block::UPDATE_ALL, false);
             boost::shared_ptr<BlockEntity> entity = level->getBlockEntity(markerPos.below());
             if (entity != NULL && entity->GetType() == BlockEntityType::CHEST)

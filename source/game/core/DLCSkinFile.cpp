@@ -8,25 +8,22 @@
 #include "game/core/ChinaDlcFilter.hpp"
 #include "game/core/DLCLocalisationFile.hpp"
 #include "game/core/DLCPack.hpp"
+#include "game/core/StringUtils.hpp"
 #include "game/data/StringTable.hpp"
 
 extern CConsoleMinecraftApp gApp;
 
 DLCSkinFile::DLCSkinFile(const std::wstring& path)
-    : DLCFile(DLCManager::eDLCType_Skin, path), mLocKeySet(false), mSkinAdjustments(), mFree(false), mAdditionalBoxes()
+    : DLCFile(DLCManager::eDLCType_Skin, path), mSkinAdjustments(), mAdditionalBoxes()
 {
     mDisplayName = L"";
-    mThemeName = L"";
-    mLocKey = L"";
     mDisplayNameID = L"";
+    mThemeName = L"";
+    mLocKeySet = false;
+    mLocKey = L"";
     mThemeNameID = L"";
     mCapePath = L"";
-}
-
-DLCSkinFile::~DLCSkinFile()
-{
-    for (std::vector<SKIN_BOX*>::iterator it = mAdditionalBoxes.begin(); it != mAdditionalBoxes.end(); ++it)
-        delete *it;
+    mFree = false;
 }
 
 bool DLCSkinFile::isFiltered()
@@ -105,27 +102,33 @@ std::wstring DLCSkinFile::getParameterAsString(DLCManager::EDLCParameterType par
     case DLCManager::eDLCParameterType_DisplayName:
         if (!mLocKeySet)
             return lookupString(mDisplayNameID, mDisplayName);
-        break;
+        {
+            std::vector<std::wstring> parts = stringSplit(lookupString(mLocKey, mDisplayName), L'-');
+            return parts[0];
+        }
     case DLCManager::eDLCParameterType_ThemeName:
         if (mLocKeySet)
         {
             std::wstring themeKey = lookupString(mLocKey, mThemeName);
-            if (themeKey.find(L"-") == std::wstring::npos)
-                return lookupString(mThemeNameID, mThemeName);
-            break;
+            if (themeKey.find(L"-") != std::wstring::npos)
+            {
+                std::vector<std::wstring> parts = stringSplit(themeKey, L'-');
+                return parts.back();
+            }
         }
         return lookupString(mThemeNameID, mThemeName);
     case DLCManager::eDLCParameterType_CapePath:
         return mCapePath;
     default:
-        break;
+        return L"";
     }
-    return L"";
 }
 
 bool DLCSkinFile::getParameterAsBool(DLCManager::EDLCParameterType parameter)
 {
-    return parameter == DLCManager::eDLCParameterType_Free && mFree;
+    if (parameter != DLCManager::eDLCParameterType_Free)
+        return false;
+    return mFree;
 }
 
 DLCLocalisationFile* DLCSkinFile::getLocalisationFile()
@@ -143,11 +146,11 @@ DLCLocalisationFile* DLCSkinFile::getLocalisationFile()
 std::wstring DLCSkinFile::lookupString(const std::wstring& key, const std::wstring& fallback)
 {
     DLCLocalisationFile* localisation = getLocalisationFile();
-    if (m_pPack != NULL && localisation != NULL && localisation->getStringTable() != NULL)
+    if (!key.empty() && localisation != NULL)
     {
-        wchar_t* value = localisation->getStringTable()->getString(key);
-        if (value != NULL)
-            return std::wstring(value);
+        StringTable* table = localisation->getStringTable();
+        if (table != NULL)
+            return std::wstring(table->getString(key));
     }
     return fallback;
 }

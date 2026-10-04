@@ -2,6 +2,7 @@
 #include "game/world/LevelEvent.hpp"
 
 #include <string>
+#include <string.h>
 
 #include "game/core/Direction.hpp"
 #include "game/core/IconRegister.hpp"
@@ -49,15 +50,10 @@ CoralFan::CoralFan()
 {
     DerivedInit();
 
-    for (int i = 0; i < 5; ++i)
-    {
-        mIcons[i] = NULL;
-    }
+    memset(mIcons, 0, sizeof(mIcons));
 
-    TypedBoxed<int> type(3);
-    TypedBoxed<int> direction(1);
-    registerDefaultState(defaultBlockState()->setBoxedValue(CoralFan::VARIANT, &type)
-                                            ->setBoxedValue(CoralFan::DIRECTION, &direction));
+    registerDefaultState(defaultBlockState()->setValue(CoralFan::VARIANT, 3)
+                                            ->setValue(CoralFan::DIRECTION, 1));
 }
 
 int CoralFan::getColor(const BlockState* state)
@@ -136,7 +132,8 @@ void CoralFan::neighborChanged(const BlockState* state, Level* level, const Bloc
         return;
     }
 
-    level->addToTickNextTick(pos, this, level->mRandom->nextInt(40, 200));
+    int delay = level->mRandom->nextInt(40, 200);
+    level->addToTickNextTick(pos, this, delay);
 }
 
 EBlockOffsetType CoralFan::getOffsetType()
@@ -172,11 +169,8 @@ int CoralFan::convertBlockStateToLegacyData(const BlockState* state)
 
 const BlockState* CoralFan::getBlockState(int data)
 {
-    TypedBoxed<int> type(data & 7);
-    TypedBoxed<int> direction((data >> 3) & 1);
-
-    return defaultBlockState()->setBoxedValue(CoralFan::VARIANT, &type)
-                              ->setBoxedValue(CoralFan::DIRECTION, &direction);
+    return defaultBlockState()->setValue(CoralFan::VARIANT, data & 7)
+                              ->setValue(CoralFan::DIRECTION, (data >> 3) & 1);
 }
 
 int CoralFan::getDescriptionId(int auxValue)
@@ -184,18 +178,29 @@ int CoralFan::getDescriptionId(int auxValue)
     const BlockState* state = getBlockState(auxValue);
     bool dead = state->getBlock() == Blocks::coral_fan_dead;
 
-    switch (state->getValue(CoralFan::VARIANT))
+    int variant = state->getValue(CoralFan::VARIANT);
+
+    if (variant != 0)
     {
-    case 1:
-        return dead ? 0x49DEF5D4 : 0x54923487;
-    case 2:
-        return dead ? static_cast<int>(0x842794C6U) : 0x5C092885;
-    case 3:
-        return dead ? 0x4A67CEEB : 0x29A6A280;
-    case 4:
-        return dead ? static_cast<int>(0x93926B4CU) : 0x6932757F;
-    default:
-        break;
+        if (variant == 1)
+        {
+            return dead ? 0x49DEF5D4 : 0x54923487;
+        }
+
+        if (variant == 2)
+        {
+            return dead ? static_cast<int>(0x842794C6U) : 0x5C092885;
+        }
+
+        if (variant == 3)
+        {
+            return dead ? 0x4A67CEEB : 0x29A6A280;
+        }
+
+        if (variant == 4)
+        {
+            return dead ? static_cast<int>(0x93926B4CU) : 0x6932757F;
+        }
     }
 
     return dead ? static_cast<int>(0xB34422EEU) : static_cast<int>(0xA1128C9DU);
@@ -208,16 +213,16 @@ bool CoralFan::mayReplaceWithPlace(LevelSource* levelSource, const BlockPos& pos
 
 not_null_ptr<ItemInstance> CoralFan::getSilkTouchItemInstance(const BlockState* state)
 {
-    TypedBoxed<int> direction(0);
-    int auxValue = convertBlockStateToLegacyData(state->setBoxedValue(CoralFan::DIRECTION, &direction));
+    const BlockState* upright = state->setValue(CoralFan::DIRECTION, 0);
+    int auxValue = convertBlockStateToLegacyData(upright);
     return not_null_ptr<ItemInstance>(new ItemInstance(this, 1, auxValue));
 }
 
 not_null_ptr<ItemInstance> CoralFan::getCloneItemInstance(Level* level, const BlockPos& pos,
                                                           const BlockState* state)
 {
-    TypedBoxed<int> direction(0);
-    int auxValue = convertBlockStateToLegacyData(state->setBoxedValue(CoralFan::DIRECTION, &direction));
+    const BlockState* upright = state->setValue(CoralFan::DIRECTION, 0);
+    int auxValue = convertBlockStateToLegacyData(upright);
     return not_null_ptr<ItemInstance>(new ItemInstance(this, 1, auxValue));
 }
 
@@ -249,7 +254,10 @@ bool CoralFan::mayPlaceOn(Level* level, const BlockPos& pos, const BlockState* s
 
     if (HalfSlabBlock::isHalfSlab(support))
     {
-        return support->getValue(HalfSlabBlock::TYPE) == HalfSlabBlock::TOP;
+        if (support->getValue(HalfSlabBlock::TYPE) == HalfSlabBlock::TOP)
+        {
+            return true;
+        }
     }
 
     return false;
@@ -272,12 +280,10 @@ void CoralFan::checkAlive(Level* level, const BlockPos& pos, const BlockState* s
 {
     if (!level->isUnderWater(pos, 263, 0))
     {
-        TypedBoxed<int> type(state->getValue(CoralFan::VARIANT));
-        TypedBoxed<int> direction(state->getValue(CoralFan::DIRECTION));
+        const BlockState* dead = Blocks::coral_fan_dead->defaultBlockState();
         level->setBlock(pos,
-                        Blocks::coral_fan_dead->defaultBlockState()
-                            ->setBoxedValue(CoralFan::VARIANT, &type)
-                            ->setBoxedValue(CoralFan::DIRECTION, &direction),
+                        dead->setValue(CoralFan::VARIANT, state->getValue(CoralFan::VARIANT))
+                            ->setValue(CoralFan::DIRECTION, state->getValue(CoralFan::DIRECTION)),
                         Block::UPDATE_ALL, false);
     }
 

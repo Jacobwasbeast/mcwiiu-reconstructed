@@ -55,7 +55,7 @@ void GhostController::GhostRecordSample::write(DataOutputStream* stream) {
     stream->writeShort(rotZ);
 }
 
-GhostController::GhostRecord::GhostRecord(Vec3* pos) : hasRecording(false), startPos(), mElapsed(0) { startPos = Vec3::newPermanent(pos); samples.reserve(GHOST_RECORD_RESERVED_SAMPLES); }
+GhostController::GhostRecord::GhostRecord(Vec3* pos) : samples(), hasRecording(false), mElapsed(0) { startPos = Vec3::newPermanent(pos); samples.reserve(GHOST_RECORD_RESERVED_SAMPLES); }
 GhostController::GhostRecord::~GhostRecord() { delete startPos; }
 Vec3* GhostController::GhostRecord::GetPosAtIndex(unsigned int index)
 {
@@ -70,14 +70,12 @@ Vec3* GhostController::GhostRecord::GetPosAtIndex(unsigned int index)
 bool GhostController::GhostRecord::HasRecording() const { return hasRecording; }
 void GhostController::GhostRecord::ResetHasRecording() { hasRecording=false; }
 void GhostController::GhostRecord::AddSample(double a, double b, double c, float d, float e, float f) {
-    const long long timestamp = mElapsed;
-    GhostRecordSample sample((short)GhostController::Double1DPAsInt16(a - startPos->x),
-                             (short)GhostController::Double1DPAsInt16(b - startPos->y),
-                             (short)GhostController::Double1DPAsInt16(c - startPos->z),
-                             (short)GhostController::Double1DPAsInt16(d),
-                             (short)GhostController::Double1DPAsInt16(e),
-                             (short)GhostController::Double1DPAsInt16(f), timestamp);
-    samples.push_back(sample);
+    samples.push_back(GhostRecordSample(GhostController::Double1DPAsInt16(a - startPos->x),
+                                        GhostController::Double1DPAsInt16(b - startPos->y),
+                                        GhostController::Double1DPAsInt16(c - startPos->z),
+                                        GhostController::Double1DPAsInt16(d),
+                                        GhostController::Double1DPAsInt16(e),
+                                        GhostController::Double1DPAsInt16(f), mElapsed));
     hasRecording = true;
 }
 int GhostController::GhostRecord::NumSamples() const { return (int)samples.size(); }
@@ -99,19 +97,26 @@ Vec3* GhostController::GhostRecord::GetRotAtIndex(unsigned int index)
     return rotation;
 }
 
-double GhostController::GhostRecord::GetVelocityAtIndex(unsigned int index)
+float GhostController::GhostRecord::GetVelocityAtIndex(unsigned int index)
 {
     if (index == 0 || index >= samples.size())
-        return 0.0;
+        return 0.0f;
     const GhostRecordSample& previous = samples[index - 1];
     const GhostRecordSample& current = samples[index];
     const float dx = (float)(current.x - previous.x) / 10.0f;
     const float dy = (float)(current.y - previous.y) / 10.0f;
     const float dz = (float)(current.z - previous.z) / 10.0f;
-    return (double)std::sqrt(dx * dx + dy * dy + dz * dz);
+    return std::sqrt(dx * dx + dy * dy + dz * dz);
 }
 
-int32_t GhostController::Double1DPAsInt16(double value) { return (int32_t)(short)std::floor(value*10.0+0.5); }
+short GhostController::Double1DPAsInt16(double value)
+{
+    const double scaled = value * 10.0 + 0.5;
+    int rounded = (int)scaled;
+    if (scaled < (double)rounded)
+        --rounded;
+    return (short)rounded;
+}
 
 GhostController::GhostController(int gameMode, const std::wstring& levelName, bool timed)
 {
@@ -207,7 +212,7 @@ void GhostController::reset(int gameMode, const std::wstring& levelName, bool ti
 
 std::wstring GhostController::getGhostPlayerName(int track)
 {
-    return std::wstring(L"GHOST_CONTROLLER_PLAYER_") + _toString<int>(track);
+    return L"GHOST_CONTROLLER_PLAYER_" + _toString<int>(track);
 }
 
 void GhostController::createGhostPlayers()
@@ -241,9 +246,9 @@ void GhostController::startPlayback()
 
 boost::shared_ptr<GhostPlayer> GhostController::getGhostPlayer(int track)
 {
-    if (mLoaded[track] == NULL)
-        return boost::shared_ptr<GhostPlayer>();
-    return mGhostPlayers[track];
+    if (mLoaded[track] != NULL)
+        return mGhostPlayers[track];
+    return boost::shared_ptr<GhostPlayer>();
 }
 
 std::vector<boost::shared_ptr<GhostPlayer> > GhostController::getGhostPlayers()
@@ -288,15 +293,14 @@ void GhostController::UpdateGhostRecord(int track, long long elapsed)
     if (player == NULL)
         return;
 
-    player->getHealth();
-    GhostRecord* record = mRecording[track];
-    record->mElapsed += elapsed - mSuspendedTime;
-    if (record->mElapsed > MAX_GHOST_RECORDING_MS)
+    player.get()->getHealth();
+    mRecording[track]->mElapsed += elapsed - mSuspendedTime;
+    if (mRecording[track]->mElapsed > MAX_GHOST_RECORDING_MS)
     {
         stopRecording(track);
         return;
     }
-    record->AddSample(player->mX, player->mY, player->mZ, player->getRotationVector()->x,
+    mRecording[track]->AddSample(player->mX, player->mY, player->mZ, player->getRotationVector()->x,
                       player->getRotationVector()->y, player->mFallFlyYaw);
 }
 
@@ -304,7 +308,10 @@ void GhostController::setRecordingActive(int track, bool active)
 {
     mLastSampleTime = System::processTimeInMilliSecs();
     mRecordingActive[track] = active;
-    mAnyRecordingActive = mRecordingActive[0] || mRecordingActive[1] || mRecordingActive[2] || mRecordingActive[3];
+    if (!mRecordingActive[0] && !mRecordingActive[1] && !mRecordingActive[2] && !mRecordingActive[3])
+        mAnyRecordingActive = false;
+    else
+        mAnyRecordingActive = true;
     if (active)
     {
         mRecordingPending[track] = true;
@@ -410,26 +417,25 @@ void GhostController::SetTrackHeader(int track, int key, unsigned int time, unsi
     }
     else
     {
-        TrackHeader& header = mTrackHeaders[track][key];
-        if (header.time == 0 || time < header.time)
+        if (mTrackHeaders[track][key].time == 0 || time < mTrackHeaders[track][key].time)
         {
             changed = true;
-            header.time = time;
+            mTrackHeaders[track][key].time = time;
         }
-        if (header.score < score)
+        if (mTrackHeaders[track][key].score < score)
         {
             changed = true;
-            header.score = score;
+            mTrackHeaders[track][key].score = score;
         }
-        if (timeRecorded && !header.timeRecorded)
+        if (timeRecorded && !mTrackHeaders[track][key].timeRecorded)
         {
             changed = true;
-            header.timeRecorded = true;
+            mTrackHeaders[track][key].timeRecorded = true;
         }
-        if (scoreRecorded && !header.scoreRecorded)
+        if (scoreRecorded && !mTrackHeaders[track][key].scoreRecorded)
         {
             changed = true;
-            header.scoreRecorded = true;
+            mTrackHeaders[track][key].scoreRecorded = true;
         }
     }
     if (save && (changed || !mTrackHeaderSaved[track]))
@@ -633,14 +639,13 @@ void GhostController::ProcessLoadSaveQueue()
         switch (operation.type)
         {
         case GhostLoadSaveOperation::LOAD_HEADER:
-            mCurrentOperation = GhostLoadSaveOperation::LOAD_HEADER;
+            mCurrentOperation = operation.type;
             started = LoadGhostHeaderOp(operation.track);
             break;
         case GhostLoadSaveOperation::LOAD_RECORD:
-        {
-            mCurrentOperation = GhostLoadSaveOperation::LOAD_RECORD;
-            const TrackHeader header = GetTrackHeader(operation.track, mGameMode);
-            if (mTimed ? header.timeRecorded : header.scoreRecorded)
+            mCurrentOperation = operation.type;
+            if ((mTimed && GetTrackHeader(operation.track, mGameMode).timeRecorded) ||
+                (!mTimed && GetTrackHeader(operation.track, mGameMode).scoreRecorded))
             {
                 started = LoadGhostRecordOp(operation.track);
             }
@@ -649,13 +654,12 @@ void GhostController::ProcessLoadSaveQueue()
                 mPlaybackActive[operation.track] = false;
             }
             break;
-        }
         case GhostLoadSaveOperation::SAVE_HEADER:
-            mCurrentOperation = GhostLoadSaveOperation::SAVE_HEADER;
+            mCurrentOperation = operation.type;
             started = SaveGhostHeaderOp(operation.track);
             break;
         case GhostLoadSaveOperation::SAVE_RECORD:
-            mCurrentOperation = GhostLoadSaveOperation::SAVE_RECORD;
+            mCurrentOperation = operation.type;
             started = SaveGhostRecordOp(operation.track, operation.record);
             break;
         default:
@@ -714,17 +718,21 @@ bool GhostController::finaliseRecording(int track, bool scoreMode)
                 {
                     delete loaded;
                     mLoaded[track] = NULL;
+                    recording = mRecording[track];
                 }
-                AddGhostRecord(track, mRecording[track], false);
+                AddGhostRecord(track, recording, false);
                 mRecording[track] = NULL;
                 return true;
             }
         }
     }
-    else if (mLoaded[track] != NULL)
+    else
     {
-        delete mLoaded[track];
-        mLoaded[track] = NULL;
+        if (mLoaded[track] != NULL)
+        {
+            delete mLoaded[track];
+            mLoaded[track] = NULL;
+        }
     }
     if (!mTrackHeaderSaved[track])
     {
@@ -749,7 +757,6 @@ int GhostController::RecordTime(int track, int key, unsigned int time)
     }
     const bool recorded = finaliseRecording(track, false);
     int changed = 0;
-    bool saveHeader = true;
     if (mTrackHeaders[track].find(key) == mTrackHeaders[track].end())
     {
         TrackHeader header;
@@ -757,23 +764,32 @@ int GhostController::RecordTime(int track, int key, unsigned int time)
         mTrackHeaders[track][key] = header;
         changed = 1;
         if (recorded && !mTrackHeaders[track][key].timeRecorded)
+        {
             mTrackHeaders[track][key].timeRecorded = true;
+            SaveGhostHeader(track);
+        }
+        else
+        {
+            SaveGhostHeader(track);
+        }
     }
     else
     {
-        TrackHeader& header = mTrackHeaders[track][key];
-        if (header.time == 0 || time < header.time)
+        if (mTrackHeaders[track][key].time == 0 || time < mTrackHeaders[track][key].time)
         {
             changed = 1;
-            header.time = time;
+            mTrackHeaders[track][key].time = time;
         }
-        if (recorded && !header.timeRecorded)
-            header.timeRecorded = true;
-        else if (changed == 0 && mTrackHeaderSaved[track])
-            saveHeader = false;
+        if (recorded && !mTrackHeaders[track][key].timeRecorded)
+        {
+            mTrackHeaders[track][key].timeRecorded = true;
+            SaveGhostHeader(track);
+        }
+        else if (changed != 0 || !mTrackHeaderSaved[track])
+        {
+            SaveGhostHeader(track);
+        }
     }
-    if (saveHeader)
-        SaveGhostHeader(track);
     mRecordingPending[track] = false;
     return changed;
 }
@@ -799,22 +815,22 @@ int GhostController::RecordScore(int track, int key, unsigned short score, unsig
     }
     else
     {
-        TrackHeader& header = mTrackHeaders[track][key];
-        if (header.score < score && score != 0)
+        if (mTrackHeaders[track][key].score < score && score != 0)
         {
             changed = 1;
-            header.score = score;
-            header.scoreRecorded = finaliseRecording(track, true);
+            mTrackHeaders[track][key].score = score;
+            mTrackHeaders[track][key].scoreRecorded = finaliseRecording(track, true);
         }
         else
         {
-            if (score == header.score && score != 0)
+            if (score == mTrackHeaders[track][key].score && score != 0)
             {
                 GhostRecord* loaded = mLoaded[track];
                 if (loaded == NULL || loaded->mElapsed > (long long)time)
                 {
-                    changed = finaliseRecording(track, true);
-                    header.scoreRecorded = header.scoreRecorded || changed != 0;
+                    bool recorded = finaliseRecording(track, true);
+                    changed = recorded;
+                    mTrackHeaders[track][key].scoreRecorded |= recorded;
                 }
             }
             else

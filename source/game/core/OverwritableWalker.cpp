@@ -18,16 +18,14 @@ OverwritableWalker::~OverwritableWalker()
 
 CompoundTag* OverwritableWalker::walk(DataFixer* fixer, CompoundTag* tag, int version)
 {
-    const std::wstring idName(L"id");
-    const std::wstring oldId(tag->getString(idName));
+    const std::wstring oldId(tag->getString(L"id"));
     ResourceLocation id(oldId);
-    ResourceLocation key(EntityIO::getKey(mType));
 
-    if (key.equals(&id))
+    if (EntityIO::getKey(mType).equals(&id))
     {
-        tag->putString(idName, mName);
+        tag->putString(L"id", mName);
         fixer->update(DataFixTypes::eDataFixTypes_BlockEntity, tag, version);
-        tag->putString(idName, oldId);
+        tag->putString(L"id", oldId);
     }
 
     return tag;

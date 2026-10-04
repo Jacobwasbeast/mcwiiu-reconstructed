@@ -13,6 +13,7 @@ class Options
 {
 public:
     friend class Minecraft;
+    friend class TextureUtil;
     friend class GameRenderer;
     friend class BlockRenderer;
     friend class Font;
@@ -70,7 +71,7 @@ public:
     float getProgressValue(const Option* option);
     bool getBooleanValue(const Option* option);
     std::wstring getMessage(const Option* option);
-    double readFloat(std::wstring value);
+    float readFloat(std::wstring value);
     void load();
     bool isCloudsOn();
 

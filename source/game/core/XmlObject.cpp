@@ -12,19 +12,27 @@ XmlObject gXmlObjectNull(L"");
 XmlObject::XmlObject(const std::wstring& name)
     : mName(name)
 {
+    m_children = std::vector<XmlChild>();
+    m_attrs = std::vector<std::pair<std::wstring, std::wstring> >();
 }
 
 XmlObject::~XmlObject()
 {
     for (std::vector<XmlChild>::iterator item = m_children.begin(); item != m_children.end(); ++item)
-        if (item->m_type == 1 && item->xml() != 0)
-            delete item->xml();
+    {
+        if (item->m_type == 1)
+        {
+            XmlObject* object = item->xml();
+            if (object != 0)
+                delete object;
+        }
+    }
 }
 
 XmlObject* XmlObject::child(const std::wstring& name)
 {
     for (std::vector<XmlChild>::iterator item = m_children.begin(); item != m_children.end(); ++item)
-        if (item->m_type == 1 && item->xml() != 0)
+        if (item->m_type == 1)
         {
             if (equalsIgnoreCase(item->xml()->mName, name) || name.empty())
                 return item->xml();
@@ -35,7 +43,7 @@ XmlObject* XmlObject::child(const std::wstring& name)
 const XmlObject* XmlObject::child(const std::wstring& name) const
 {
     for (std::vector<XmlChild>::const_iterator item = m_children.begin(); item != m_children.end(); ++item)
-        if (item->m_type == 1 && item->xml() != 0)
+        if (item->m_type == 1)
         {
             if (equalsIgnoreCase(item->xml()->mName, name) || name.empty())
                 return item->xml();
@@ -50,7 +58,7 @@ void XmlObject::addChildRaw(const XmlChild& child)
 
 void XmlObject::addAttr(const std::wstring& name, const std::wstring& value)
 {
-    m_attrs.push_back(std::make_pair(name, value));
+    m_attrs.push_back(std::pair<std::wstring, std::wstring>(name, value));
 }
 
 int XmlObject::size() const
@@ -68,7 +76,7 @@ XmlValue XmlObject::operator[](const std::wstring& name) const
     XmlValue result;
     result.m_isString = 0;
     for (std::vector<std::pair<std::wstring, std::wstring> >::const_iterator attribute = m_attrs.begin(); attribute != m_attrs.end(); ++attribute)
-        if (equalsIgnoreCase(attribute->first, name))
+        if (equalsIgnoreCase(name, attribute->first))
         {
             result.m_isString = 1;
             result.m_value = attribute->second;

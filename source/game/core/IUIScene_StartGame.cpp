@@ -404,44 +404,46 @@ void IUIScene_StartGame::FindAndJoinGame(unsigned int playerMask)
         telemetryManagerInstance->PrepareMiniGameHostOptions(m_playerId, &m_launchData,
                                                              eTelemetryJoinMethod_Matchmaking);
         Minecraft::GetInstance()->SetJoiningFromFriendsTabOrInvite(false);
-        return;
     }
-    if (result < 2)
+    else if (result < 2)
     {
         gConsoleUIController.NavigateBack(m_playerId, false, EUIScene_None,
                                           EUILayer_Count);
         Minecraft::GetInstance()->SetJoiningFromFriendsTabOrInvite(false);
-        return;
     }
-    int parameters[1];
-    parameters[0] = IDS_CONFIRM_OK;
-    if (result == 2)
+    else if (result == 2)
     {
+        int parameters[1];
+        parameters[0] = IDS_CONFIRM_OK;
         gConsoleUIController.RequestErrorMessage(IDS_CONNECTION_FAILED, -0x479419FD, parameters, 1,
                                                  gProfile->GetPrimaryPad(), NULL, NULL, NULL, true);
         gConsoleUIController.NavigateToHomeMenu(false);
         Minecraft::GetInstance()->SetJoiningFromFriendsTabOrInvite(false);
-        return;
     }
-    if (result < 4)
+    else if (result < 4)
     {
+        int parameters[1];
+        parameters[0] = IDS_CONFIRM_OK;
         gConsoleUIController.RequestErrorMessage(IDS_CONNECTION_FAILED, -0x554D4923, parameters, 1,
                                                  gProfile->GetPrimaryPad(), NULL, NULL, NULL, true);
         gConsoleUIController.NavigateToHomeMenu(false);
         Minecraft::GetInstance()->SetJoiningFromFriendsTabOrInvite(false);
-        return;
     }
-    if (result == 4)
+    else if (result == 4)
     {
+        int parameters[1];
+        parameters[0] = IDS_CONFIRM_OK;
         gConsoleUIController.RequestErrorMessage(0x252AB13F, -0x33A5A6F1, parameters, 1,
                                                  gProfile->GetPrimaryPad(), NULL, NULL, NULL, true);
         gConsoleUIController.NavigateToHomeMenu(false);
         Minecraft::GetInstance()->SetJoiningFromFriendsTabOrInvite(false);
-        return;
     }
-    gConsoleUIController.NavigateBack(m_playerId, false, EUIScene_None,
-                                      EUILayer_Count);
-    Minecraft::GetInstance()->SetJoiningFromFriendsTabOrInvite(false);
+    else
+    {
+        gConsoleUIController.NavigateBack(m_playerId, false, EUIScene_None,
+                                          EUILayer_Count);
+        Minecraft::GetInstance()->SetJoiningFromFriendsTabOrInvite(false);
+    }
 }
 
 void IUIScene_StartGame::HostGame(unsigned int playerMask)
@@ -686,7 +688,7 @@ int IUIScene_StartGame::StartGame_SignInReturned(void* context, bool signedIn, i
     int index;
     for (index = 0; index < 4; ++index)
     {
-        if (gProfile->IsSignedIn(index) && (localMultiplayer || index == primaryPad))
+        if (gProfile->IsSignedIn(index) && (index == primaryPad || localMultiplayer))
         {
             if (allSignedInLive)
             {
@@ -773,27 +775,23 @@ void IUIScene_StartGame::handleSliderMove(int id, int value)
         if (value == 0)
         {
             m_gameModeSlider.setLabel(UIString(L10N::GetString(IDS_GAMEMODE_SURVIVAL)), false, false);
-            m_isCreative = false;
             m_gameTypeId = GameType::SURVIVAL->getId();
-            return;
+            m_isCreative = false;
         }
-        if (value == 1)
+        else if (value == 1)
         {
             m_gameModeSlider.setLabel(UIString(L10N::GetString(IDS_GAMEMODE_CREATIVE)), false, false);
             m_gameTypeId = GameType::CREATIVE->getId();
             m_isCreative = true;
-            return;
         }
-        if (value != 2)
+        else if (value == 2)
         {
-            return;
+            m_gameModeSlider.setLabel(UIString(L10N::GetString(IDS_GAMEMODE_ADVENTURE)), false, false);
+            m_gameTypeId = GameType::ADVENTURE->getId();
+            m_isCreative = false;
         }
-        m_gameModeSlider.setLabel(UIString(L10N::GetString(IDS_GAMEMODE_ADVENTURE)), false, false);
-        m_isCreative = false;
-        m_gameTypeId = GameType::ADVENTURE->getId();
-        return;
     }
-    if (id == 2)
+    else if (id == 2)
     {
         m_difficulty = value;
         m_difficultySlider.handleSliderMove(value);
@@ -1011,7 +1009,7 @@ void IUIScene_StartGame::CheckPermissionsAndContinue(bool fromLoad)
     int index;
     for (index = 0; index < 4; ++index)
     {
-        if (gProfile->IsSignedIn(index) && (localMultiplayer || index == primaryPad))
+        if (gProfile->IsSignedIn(index) && (index == primaryPad || localMultiplayer))
         {
             if (allSignedInLive)
             {
@@ -1105,10 +1103,10 @@ void IUIScene_StartGame::StartSharedLaunchFlow()
     {
         if (!m_launchData.mOnlineSettingChangedBySystem)
         {
-            unsigned char online = 0;
-            if (m_launchData.mOnlineGame || m_launchData.mMatchmaking)
+            int online = 1;
+            if (!m_launchData.mOnlineGame && !m_launchData.mMatchmaking)
             {
-                online = 1;
+                online = 0;
             }
             GameSettings::SetGameSettings(m_playerId, eGameSetting_Online, online);
         }

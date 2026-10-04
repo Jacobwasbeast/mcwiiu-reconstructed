@@ -70,7 +70,6 @@ Predicate<boost::shared_ptr<Entity> >* WitherBoss::LIVING_ENTITY_SELECTOR = new 
 WitherBoss::WitherBoss(Level* level)
     : Monster(level),
       mInitialShieldHealth(40),
-      mDeathSource(NULL),
       mPhase(1),
       mShotDelay(0),
       mPauseTicks(0),
@@ -96,14 +95,10 @@ WitherBoss::WitherBoss(Level* level)
       mShotCount(0),
       mChargeInterval(40),
       mSkipNextCharge(false),
-      mMaxHealth(0),
       mLastHealthInterval(-1),
       mSpinSpeed(10.0f),
       mDestroyBlocksTick(5),
-      mPhaseHealth(0),
-      mHealthInterval(0),
-      mIsPathing(false),
-      mBossEvent(NULL)
+      mIsPathing(false)
 {
     defineSynchedData();
     registerAttributes();
@@ -524,11 +519,6 @@ void WitherBoss::dropDeathLoot(bool hitByPlayer, int lootingLevel)
 int WitherBoss::getArmorValue()
 {
     return 4;
-}
-
-float WitherBoss::getMaxHealth()
-{
-    return LivingEntity::getMaxHealth();
 }
 
 EMobType WitherBoss::getMobType()

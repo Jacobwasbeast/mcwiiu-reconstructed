@@ -5,6 +5,7 @@
 #include "game/core/ChangeStateConstraint.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/util/Vec3.hpp"
+#include "game/world/block/Material.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 
 GameModeConstraints::GameModeConstraints(int playerId)
@@ -29,8 +30,7 @@ void GameModeConstraints::tick()
         DelayedConstraintList::iterator delayed = entry->second.begin();
         while (delayed < entry->second.end())
         {
-            ++delayed->second;
-            if (delayed->second < 16)
+            if (++delayed->second < 16)
             {
                 ++delayed;
                 continue;
@@ -46,12 +46,13 @@ void GameModeConstraints::tick()
     }
     for (ConstraintList::iterator it = globalConstraints.begin(); it < globalConstraints.end(); ++it)
         (*it)->tick(playerId);
-    if (failedConstraints.find(currentState) != failedConstraints.end())
+    FailedConstraintMap::iterator failed = failedConstraints.find(currentState);
+    if (failed != failedConstraints.end())
     {
-        if (failedConstraints[currentState] != NULL
+        if (failed->second != NULL
             && !failedConstraints[currentState]->isConstraintSatisfied(playerId))
             return;
-        if (failedConstraints[currentState] != NULL
+        if (failed->second != NULL
             && failedConstraints[currentState]->isConstraintSatisfied(playerId))
         {
             failedConstraintChanged = true;
@@ -147,7 +148,8 @@ void GameModeConstraints::RemoveConstraint(TutorialConstraint* constraint, bool 
 
 void GameModeConstraints::ClearAllAreaConstraints()
 {
-    for (unsigned int state = 0; state < constraints.size(); ++state)
+    unsigned int stateCount = constraints.size();
+    for (unsigned int state = 0; state < stateCount; ++state)
     {
         ConstraintList::iterator it = constraints[state].begin();
         while (it < constraints[state].end())
@@ -158,14 +160,15 @@ void GameModeConstraints::ClearAllAreaConstraints()
                 ++it;
                 continue;
             }
-            if (failedConstraints.find(state) != failedConstraints.end()
-                && failedConstraints[state] == constraint)
+            FailedConstraintMap::iterator failed = failedConstraints.find(state);
+            if (failed != failedConstraints.end() && failed->second == constraint)
                 failedConstraints[state] = NULL;
             delete constraint;
             it = constraints[state].erase(it);
         }
     }
-    ownedConstraints.clear();
+    if (!ownedConstraints.empty())
+        ownedConstraints.clear();
 }
 
 bool GameModeConstraints::InConstraintArea(Vec3* pos, int state)
@@ -185,8 +188,8 @@ bool GameModeConstraints::NotInConstraintArea(int playerId, int state)
     for (ConstraintList::iterator it = globalConstraints.begin(); it < globalConstraints.end(); ++it)
     {
         ChangeStateConstraint* constraint = (ChangeStateConstraint*)*it;
-        if (constraint->isTargetState(state) && !inArea)
-            inArea = constraint->withinTargetStateArea(playerId);
+        if (constraint->isTargetState(state))
+            inArea = inArea || constraint->withinTargetStateArea(playerId);
     }
     return !inArea;
 }
@@ -199,16 +202,16 @@ bool GameModeConstraints::HasGlobalConstraint(int state)
     return false;
 }
 
-bool GameModeConstraints::canMoveToPosition(double oldX, double oldY, double oldZ, double newX,
+int GameModeConstraints::canMoveToPosition(double oldX, double oldY, double oldZ, double newX,
                                             double newY, double newZ, Vec3* clampedPosition)
 {
-    bool canMove = false;
+    int canMove = 0;
     for (ConstraintList::iterator it = constraints[currentState].begin();
          it < constraints[currentState].end(); ++it)
     {
         TutorialConstraint* constraint = *it;
         if (constraint->getType() == 1 && constraint->isConstraintSatisfied(playerId))
-            return false;
+            return canMove;
     }
     for (ConstraintList::iterator it = constraints[currentState].begin();
          it < constraints[currentState].end(); ++it)
@@ -236,7 +239,7 @@ bool GameModeConstraints::CanUsePortal()
 
 bool GameModeConstraints::isInputAllowed(int mapping)
 {
-    if (!Minecraft::GetInstance()->mLocalPlayers[playerId]->isUnderLiquid(NULL)
+    if (!Minecraft::GetInstance()->mLocalPlayers[playerId]->isUnderLiquid(Material::WATER)
         && failedConstraints[currentState] == NULL)
     {
         for (ConstraintList::iterator it = constraints[currentState].begin();

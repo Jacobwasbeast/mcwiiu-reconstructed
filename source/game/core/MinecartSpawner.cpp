@@ -17,14 +17,14 @@ void MinecartSpawner::create(Level* level)
 }
 
 MinecartSpawner::MinecartSpawner(Level* level)
-    : Minecart(level), mSpawner(NULL)
+    : Minecart(level)
 {
     Entity::fjDerivedCtorCalls();
     mSpawner = new MinecartMobSpawner(this);
 }
 
 MinecartSpawner::MinecartSpawner(Level* level, double x, double y, double z)
-    : Minecart(level, x, y, z), mSpawner(NULL)
+    : Minecart(level, x, y, z)
 {
     Entity::fjDerivedCtorCalls();
     mSpawner = new MinecartMobSpawner(this);

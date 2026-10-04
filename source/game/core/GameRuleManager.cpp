@@ -63,19 +63,24 @@ GameRuleManager::GameRuleManager()
 void GameRuleManager::unloadCurrentGameRules()
 {
     LevelRuleset* definitions = mGameRuleDefinitions;
+    LevelGenerationOptions* options;
     if (definitions != NULL)
     {
-        LevelGenerationOptions* options = mLevelGenerationOptions;
-        if (options != NULL && options->isFromSave())
+        options = mLevelGenerationOptions;
+        if (options->isFromSave())
         {
             mLevelRules->removeLevelRule(definitions);
             if (mGameRuleDefinitions != NULL)
             {
                 delete mGameRuleDefinitions;
             }
+            options = mLevelGenerationOptions;
         }
     }
-    LevelGenerationOptions* options = mLevelGenerationOptions;
+    else
+    {
+        options = mLevelGenerationOptions;
+    }
     if (options != NULL)
     {
         if (options->isFromSave())
@@ -217,9 +222,9 @@ unsigned int GameRuleManager::readRuleFile(LevelGenerationOptions* options, unsi
     DataInputStream input(&bytes);
     DataInputStream* rules = &input;
     ByteArrayInputStream* expandedBytes = NULL;
-    DataInputStream* expandedInput = NULL;
-    short version = input.readShort();
+    long long version = input.readShort();
     unsigned char compression = 0;
+    unsigned int expectedCRC = 0;
     if (version == 0)
     {
         for (int i = 0; i < 14; ++i) input.readByte();
@@ -227,45 +232,47 @@ unsigned int GameRuleManager::readRuleFile(LevelGenerationOptions* options, unsi
     else
     {
         compression = input.readByte();
-        unsigned int expectedCRC = input.readInt();
+        expectedCRC = input.readInt();
         input.readBoolean();
         input.readBoolean();
         input.readBoolean();
         input.readBoolean();
-        if (compression != 0)
-        {
-            unsigned int expandedSize = input.readInt();
-            unsigned int compressedSize = input.readInt();
-            arrayWithLength<unsigned char> compressed(compressedSize, true);
-            input.read(compressed);
-            options->setCRCIsValid(CRC(compressed.data, compressed.length) == expectedCRC);
-            arrayWithLength<unsigned char> expanded(expandedSize, true);
-            if (compression == 1)
-            {
-                Compression::getCompression()->Decompress(expanded.data, &expanded.length, compressed.data, compressed.length);
-            }
-            else
-            {
-                Compression::getCompression()->DecompressLZXRLE(expanded.data, &expanded.length, compressed.data, compressed.length);
-            }
-            delete[] compressed.data;
-            compressed.data = NULL;
-            expandedBytes = new ByteArrayInputStream(expanded);
-            expandedInput = new DataInputStream(expandedBytes);
-            rules = expandedInput;
-        }
     }
-    unsigned int stringCount = rules->readInt();
+    if (compression != 0)
+    {
+        unsigned int expandedSize = input.readInt();
+        unsigned int compressedSize = input.readInt();
+        arrayWithLength<unsigned char> compressed(compressedSize, true);
+        input.read(compressed);
+        options->setCRCIsValid(CRC(compressed.data, compressed.length) == expectedCRC);
+        arrayWithLength<unsigned char> expanded(expandedSize, true);
+        switch (compression)
+        {
+        case 0:
+            memcpy(expanded.data, compressed.data, expanded.length);
+            break;
+        case 1:
+            Compression::getCompression()->Decompress(expanded.data, &expanded.length, compressed.data, compressed.length);
+            break;
+        default:
+            Compression::getCompression()->DecompressLZXRLE(expanded.data, &expanded.length, compressed.data, compressed.length);
+            break;
+        }
+        delete[] compressed.data;
+        expandedBytes = new ByteArrayInputStream(expanded);
+        rules = new DataInputStream(expandedBytes);
+    }
+    int stringCount = rules->readInt();
     std::vector<std::wstring> names;
     names.reserve(stringCount);
-    for (unsigned int i = 0; i < stringCount; ++i)
+    for (int i = 0; i < stringCount; ++i)
     {
         names.push_back(rules->readUTF());
     }
     boost::unordered_map<int, ConsoleGameRules::EGameRuleType> types;
-    for (unsigned int type = 0; type < ConsoleGameRules::eGameRuleType_Count; ++type)
+    for (int type = 0; type < ConsoleGameRules::eGameRuleType_Count; ++type)
     {
-        for (unsigned int name = 0; name < names.size(); ++name)
+        for (int name = 0; name < stringCount; ++name)
         {
             if (names[name] == gGameRuleTypeNames[type])
             {
@@ -274,17 +281,18 @@ unsigned int GameRuleManager::readRuleFile(LevelGenerationOptions* options, unsi
             }
         }
     }
-    unsigned int schematicCount = rules->readInt();
-    for (unsigned int schematic = 0; schematic < schematicCount; ++schematic)
+    int schematicCount = rules->readInt();
+    for (int schematic = 0; schematic < schematicCount; ++schematic)
     {
         std::wstring name = rules->readUTF();
         unsigned int schematicSize = rules->readInt();
         arrayWithLength<unsigned char> schematicData(schematicSize, true);
         rules->read(schematicData);
         options->loadSchematicFile(name, schematicData.data, schematicData.length);
+        delete[] schematicData.data;
     }
-    unsigned int rootCount = rules->readInt();
-    for (unsigned int root = 0; root < rootCount; ++root)
+    int rootCount = rules->readInt();
+    for (int root = 0; root < rootCount; ++root)
     {
         int nameIndex = rules->readInt();
         ConsoleGameRules::EGameRuleType type = static_cast<ConsoleGameRules::EGameRuleType>(-1);
@@ -309,11 +317,11 @@ unsigned int GameRuleManager::readRuleFile(LevelGenerationOptions* options, unsi
         readAttributes(rules, &names, definition);
         readChildren(rules, &names, &types, definition);
     }
-    if (expandedInput != NULL)
+    if (compression != 0)
     {
-        expandedInput->close();
-        delete expandedInput;
+        rules->close();
         delete expandedBytes;
+        delete rules;
     }
     input.close();
     bytes.mBuffer.data = NULL;
@@ -367,13 +375,16 @@ void GameRuleManager::loadGameRules(LevelGenerationOptions* options, unsigned ch
     DataInputStream input(&bytes);
     input.readShort();
     for (int i = 0; i < 8; ++i) input.readByte();
-    input.readByte();
-    unsigned int expandedSize = input.readInt();
+    unsigned char decompressionType = input.readByte();
     unsigned int compressedSize = input.readInt();
+    unsigned int expandedSize = input.readInt();
+    arrayWithLength<unsigned char> expanded(expandedSize, true);
     arrayWithLength<unsigned char> compressed(compressedSize, true);
     input.read(compressed);
-    arrayWithLength<unsigned char> expanded(expandedSize, true);
-    Compression::getCompression()->DecompressLZXRLE(expanded.data, &expanded.length, compressed.data, compressed.length);
+    Compression* compression = Compression::getCompression();
+    compression->m_decompressionType = static_cast<Compression::ECompressionTypes>(decompressionType);
+    compression->DecompressLZXRLE(expanded.data, &expanded.length, compressed.data, compressed.length);
+    compression->SetDecompressionType(eSavePlatform_WIIU);
     input.close();
     bytes.close();
     delete[] compressed.data;
@@ -418,41 +429,45 @@ LevelGenerationOptions* GameRuleManager::getLevelGenerationOptions()
 
 void GameRuleManager::writeRuleFile(DataOutputStream* output)
 {
-    boost::unordered_map<int, int> tags;
-    boost::unordered_set<int> tagTypes;
-    boost::unordered_set<int> attributes;
     output->writeShort(2);
     output->writeByte(0);
     for (int i = 0; i < 8; ++i) output->writeBoolean(false);
-    mLevelGenerationOptions->findDistinctTagsAndAttributes(tagTypes, attributes);
-    mGameRuleDefinitions->findDistinctTagsAndAttributes(tagTypes, attributes);
-    output->writeInt(tagTypes.size() + attributes.size());
-    int key = 0;
-    for (int type = 0; type < ConsoleGameRules::eGameRuleType_Count; ++type)
+    boost::unordered_map<int, int> tags;
     {
-        if (tagTypes.find(type) != tagTypes.end())
+        boost::unordered_set<int> tagTypes;
+        boost::unordered_set<int> attributes;
+        mLevelGenerationOptions->findDistinctTagsAndAttributes(tagTypes, attributes);
+        mGameRuleDefinitions->findDistinctTagsAndAttributes(tagTypes, attributes);
+        output->writeInt(tagTypes.size() + attributes.size());
+        int key = 0;
+        for (int type = 0; type < ConsoleGameRules::eGameRuleType_Count; ++type)
         {
-            output->writeUTF(gGameRuleTypeNames[type]);
-            tags[type] = key++;
+            if (tagTypes.find(type) != tagTypes.end())
+            {
+                output->writeUTF(gGameRuleTypeNames[type]);
+                tags[type] = key++;
+            }
+        }
+        for (int attribute = 0; attribute < ConsoleGameRules::eGameRuleAttr_Count; ++attribute)
+        {
+            if (attributes.find(attribute) != attributes.end())
+            {
+                output->writeUTF(gGameRuleAttributeNames[attribute]);
+                tags[attribute + 77] = key++;
+            }
         }
     }
-    for (int attribute = 0; attribute < ConsoleGameRules::eGameRuleAttr_Count; ++attribute)
-    {
-        if (attributes.find(attribute) != attributes.end())
-        {
-            output->writeUTF(gGameRuleAttributeNames[attribute]);
-            tags[attribute + 77] = key++;
-        }
-    }
-    LevelGenerationOptions::SchematicFileMap* schematics = mLevelGenerationOptions->getUnfinishedSchematicFiles();
+    LevelGenerationOptions::SchematicFileMap* schematics = getLevelGenerationOptions()->getUnfinishedSchematicFiles();
     output->writeInt(schematics->size());
     LevelGenerationOptions::SchematicFileMap::iterator schematic;
     for (schematic = schematics->begin(); schematic != schematics->end(); ++schematic)
     {
+        std::wstring name = schematic->first;
+        ConsoleSchematicFile* file = schematic->second;
         ByteArrayOutputStream schematicBytes;
         DataOutputStream schematicOutput(&schematicBytes);
-        schematic->second->save(&schematicOutput);
-        output->writeUTF(schematic->first);
+        file->save(&schematicOutput);
+        output->writeUTF(name);
         output->writeInt(schematicBytes.mCount);
         arrayWithLength<unsigned char> schematicData;
         schematicData.data = schematicBytes.mBuffer.data;
@@ -482,7 +497,8 @@ void GameRuleManager::saveGameRules(unsigned char** data, unsigned int* size)
     output.writeByte(3);
     ByteArrayOutputStream rulesBytes;
     DataOutputStream rules(&rulesBytes);
-    if (mGameRuleDefinitions == NULL)
+    LevelRuleset* definitions = mGameRuleDefinitions;
+    if (definitions == NULL)
     {
         rules.writeInt(0);
         rules.writeInt(2);
@@ -495,12 +511,11 @@ void GameRuleManager::saveGameRules(unsigned char** data, unsigned int* size)
     }
     else
     {
-        StringTable* table = mGameRuleDefinitions->getStringTable();
-        if (table != NULL)
+        if (definitions->getStringTable() != NULL)
         {
             unsigned char* stringData = NULL;
             unsigned int stringSize = 0;
-            table->getData(&stringData, &stringSize);
+            definitions->getStringTable()->getData(&stringData, &stringSize);
             rules.writeInt(stringSize);
             arrayWithLength<unsigned char> tableData;
             tableData.data = stringData;
@@ -510,7 +525,7 @@ void GameRuleManager::saveGameRules(unsigned char** data, unsigned int* size)
         }
     }
     unsigned int sourceSize = rulesBytes.mCount;
-    arrayWithLength<unsigned char> compressed(sourceSize, true);
+    arrayWithLength<unsigned char> compressed(sourceSize, false);
     Compression::getCompression()->CompressLZXRLE(compressed.data, &compressed.length, rulesBytes.mBuffer.data, sourceSize, NULL);
     output.writeInt(compressed.length);
     output.writeInt(sourceSize);
@@ -546,16 +561,22 @@ void GameRuleManager::processSchematicsLighting(LevelChunk* chunk)
 
 unsigned int GameRuleManager::loadGameRulesPack(File* file)
 {
-    if (!file->exists()) return 0;
-    DLCPack* pack = new DLCPack(L"", 0xffffffffU);
-    unsigned int count = 0;
-    if (!gApp.mDLCManager.readDLCDataFile(count, file->getPath(), pack, 0, false))
+    unsigned int loaded = 0;
+    if (file->exists())
     {
-        delete pack;
-        return 0;
+        DLCPack* pack = new DLCPack(std::wstring(L""), 0xffffffffU);
+        unsigned int count = 0;
+        if (gApp.mDLCManager.readDLCDataFile(count, file->getPath(), pack, 0, false))
+        {
+            gApp.mDLCManager.addPack(pack);
+            loaded = 1;
+        }
+        else
+        {
+            delete pack;
+        }
     }
-    gApp.mDLCManager.addPack(pack);
-    return 1;
+    return loaded;
 }
 
 void GameRuleManager::loadDefaultGameRules()
@@ -566,8 +587,8 @@ void GameRuleManager::loadDefaultGameRules()
     File file(root + L"Lobby.pck");
     if (loadGameRulesPack(&file) != 0)
     {
-        options->at(index)->setBaseSaveRoot(root);
-        options->at(index)->setIsGameModeLobby(true);
+        mLevelGenerators->getLevelGenerators()->at(index)->setBaseSaveRoot(root);
+        mLevelGenerators->getLevelGenerators()->at(index)->setIsGameModeLobby(true);
     }
 }
 
@@ -584,5 +605,5 @@ LevelRuleset* GameRuleManager::getGameRuleDefinitions()
 const wchar_t* GameRuleManager::GetGameRulesString(const std::wstring& key)
 {
     if (mGameRuleDefinitions != NULL && !key.empty()) return mGameRuleDefinitions->getString(key);
-    return L"target";
+    return L"";
 }

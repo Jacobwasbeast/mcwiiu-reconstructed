@@ -62,9 +62,9 @@ void OceanMonumentPieces::loadStatic()
 }
 
 OceanMonumentPieces::RoomDefinition::RoomDefinition(int index)
-    : mIndex(index),
-      mClaimed(false)
 {
+    mClaimed = false;
+    mIndex = index;
 }
 
 void OceanMonumentPieces::RoomDefinition::setConnection(const Direction* direction,
@@ -134,15 +134,15 @@ int OceanMonumentPieces::RoomDefinition::countOpenings()
 OceanMonumentPieces::OceanMonumentPiece::OceanMonumentPiece(int genDepth)
     : StructurePiece(genDepth)
 {
-    mRoomDefinition.reset();
+    mRoomDefinition = boost::shared_ptr<RoomDefinition>();
 }
 
 OceanMonumentPieces::OceanMonumentPiece::OceanMonumentPiece(const Direction* orientation, BoundingBox* boundingBox)
     : StructurePiece(1)
 {
     setOrientation(orientation);
-    mRoomDefinition.reset();
     mBoundingBox = boundingBox;
+    mRoomDefinition = boost::shared_ptr<RoomDefinition>();
 }
 
 OceanMonumentPieces::OceanMonumentPiece::OceanMonumentPiece(int genDepth, const Direction* orientation,
@@ -183,7 +183,7 @@ OceanMonumentPieces::OceanMonumentPiece::OceanMonumentPiece(int genDepth, const 
 
 OceanMonumentPieces::OceanMonumentPiece::~OceanMonumentPiece()
 {
-    mRoomDefinition.reset();
+    mRoomDefinition = boost::shared_ptr<RoomDefinition>();
 }
 
 void OceanMonumentPieces::OceanMonumentPiece::staticCtor()
@@ -300,8 +300,17 @@ bool OceanMonumentPieces::OceanMonumentPiece::chunkIntersects(BoundingBox* box, 
     int worldZ0 = getWorldZ(x0, z0);
     int worldX1 = getWorldX(x1, z1);
     int worldZ1 = getWorldZ(x1, z1);
-    return box->intersects(std::min(worldX0, worldX1), std::min(worldZ0, worldZ1), std::max(worldX0, worldX1),
-                           std::max(worldZ0, worldZ1));
+    int minX = worldX0;
+    if (worldX1 < worldX0)
+        minX = worldX1;
+    int minZ = worldZ0;
+    if (worldZ1 < worldZ0)
+        minZ = worldZ1;
+    if (worldX0 < worldX1)
+        worldX0 = worldX1;
+    if (worldZ1 < worldZ0)
+        worldZ1 = worldZ0;
+    return box->intersects(minX, minZ, worldX0, worldZ1);
 }
 
 bool OceanMonumentPieces::OceanMonumentPiece::spawnElder(Level* level, BoundingBox* box, int x, int y, int z)
@@ -309,7 +318,8 @@ bool OceanMonumentPieces::OceanMonumentPiece::spawnElder(Level* level, BoundingB
     int worldX = getWorldX(x, z);
     int worldY = getWorldY(y);
     int worldZ = getWorldZ(x, z);
-    if (!box->isInside(BlockPos(worldX, worldY, worldZ)))
+    BlockPos pos(worldX, worldY, worldZ);
+    if (!box->isInside(pos))
     {
         return false;
     }
@@ -553,7 +563,8 @@ OceanMonumentPieces::MonumentBuilding::MonumentBuilding(Random& random, int x, i
 
 OceanMonumentPieces::MonumentBuilding::~MonumentBuilding()
 {
-    for (std::vector<OceanMonumentPiece*>::iterator it = mChildPieces.begin(); it != mChildPieces.end(); ++it)
+    std::vector<OceanMonumentPiece*>::iterator end = mChildPieces.end();
+    for (std::vector<OceanMonumentPiece*>::iterator it = mChildPieces.begin(); it != end; ++it)
     {
         delete *it;
     }
@@ -1169,7 +1180,7 @@ bool OceanMonumentPieces::OceanMonumentSimpleRoom::postProcess(Level* level, Ran
     {
         generateDefaultFloor(level, box, 0, 0, mRoomDefinition->mHasOpening[Direction::DOWN->get3DDataValue()]);
     }
-    if (mRoomDefinition->fjConnection(Direction::UP) == NULL)
+    if (!mRoomDefinition->fjConnection(Direction::UP))
     {
         generateBoxOnFillOnly(level, box, 1, 4, 1, 6, 4, 6, BASE_GRAY);
     }
@@ -1366,7 +1377,7 @@ bool OceanMonumentPieces::OceanMonumentSimpleTopRoom::postProcess(Level* level, 
     {
         generateDefaultFloor(level, box, 0, 0, mRoomDefinition->mHasOpening[Direction::DOWN->get3DDataValue()]);
     }
-    if (mRoomDefinition->fjConnection(Direction::UP) == NULL)
+    if (!mRoomDefinition->fjConnection(Direction::UP))
     {
         generateBoxOnFillOnly(level, box, 1, 4, 1, 6, 4, 6, BASE_GRAY);
     }
@@ -1435,7 +1446,7 @@ bool OceanMonumentPieces::OceanMonumentDoubleYRoom::postProcess(Level* level, Ra
         generateDefaultFloor(level, box, 0, 0, mRoomDefinition->mHasOpening[Direction::DOWN->get3DDataValue()]);
     }
     boost::shared_ptr<RoomDefinition> upperRoom = mRoomDefinition->fjConnection(Direction::UP);
-    if (upperRoom->fjConnection(Direction::UP) == NULL)
+    if (!upperRoom->fjConnection(Direction::UP))
     {
         generateBoxOnFillOnly(level, box, 1, 8, 1, 6, 8, 6, BASE_GRAY);
     }
@@ -1537,11 +1548,11 @@ bool OceanMonumentPieces::OceanMonumentDoubleXRoom::postProcess(Level* level, Ra
         generateDefaultFloor(level, box, 8, 0, eastRoom->mHasOpening[Direction::DOWN->get3DDataValue()]);
         generateDefaultFloor(level, box, 0, 0, westRoom->mHasOpening[Direction::DOWN->get3DDataValue()]);
     }
-    if (westRoom->fjConnection(Direction::UP) == NULL)
+    if (!westRoom->fjConnection(Direction::UP))
     {
         generateBoxOnFillOnly(level, box, 1, 4, 1, 7, 4, 6, BASE_GRAY);
     }
-    if (eastRoom->fjConnection(Direction::UP) == NULL)
+    if (!eastRoom->fjConnection(Direction::UP))
     {
         generateBoxOnFillOnly(level, box, 8, 4, 1, 14, 4, 6, BASE_GRAY);
     }
@@ -1616,19 +1627,18 @@ OceanMonumentPieces::OceanMonumentDoubleXYRoom::OceanMonumentDoubleXYRoom(
 bool OceanMonumentPieces::OceanMonumentDoubleXYRoom::postProcess(Level* level, Random& random, BoundingBox* box)
 {
     boost::shared_ptr<RoomDefinition> eastRoom = mRoomDefinition->fjConnection(Direction::EAST);
-    boost::shared_ptr<RoomDefinition> westRoom = mRoomDefinition;
-    boost::shared_ptr<RoomDefinition> westUpperRoom = westRoom->fjConnection(Direction::UP);
+    boost::shared_ptr<RoomDefinition> westUpperRoom = mRoomDefinition->fjConnection(Direction::UP);
     boost::shared_ptr<RoomDefinition> eastUpperRoom = eastRoom->fjConnection(Direction::UP);
     if (mRoomDefinition->mIndex / 25 > 0)
     {
         generateDefaultFloor(level, box, 8, 0, eastRoom->mHasOpening[Direction::DOWN->get3DDataValue()]);
-        generateDefaultFloor(level, box, 0, 0, westRoom->mHasOpening[Direction::DOWN->get3DDataValue()]);
+        generateDefaultFloor(level, box, 0, 0, mRoomDefinition->mHasOpening[Direction::DOWN->get3DDataValue()]);
     }
-    if (westUpperRoom->fjConnection(Direction::UP) == NULL)
+    if (!westUpperRoom->fjConnection(Direction::UP))
     {
         generateBoxOnFillOnly(level, box, 1, 8, 1, 7, 8, 6, BASE_GRAY);
     }
-    if (eastUpperRoom->fjConnection(Direction::UP) == NULL)
+    if (!eastUpperRoom->fjConnection(Direction::UP))
     {
         generateBoxOnFillOnly(level, box, 8, 8, 1, 14, 8, 6, BASE_GRAY);
     }
@@ -1667,15 +1677,15 @@ bool OceanMonumentPieces::OceanMonumentDoubleXYRoom::postProcess(Level* level, R
     placeBlock(level, LAMP_BLOCK, 5, 4, 5, box);
     placeBlock(level, LAMP_BLOCK, 10, 4, 2, box);
     placeBlock(level, LAMP_BLOCK, 10, 4, 5, box);
-    if (westRoom->mHasOpening[Direction::SOUTH->get3DDataValue()])
+    if (mRoomDefinition->mHasOpening[Direction::SOUTH->get3DDataValue()])
     {
         generateWaterBox(level, box, 3, 1, 0, 4, 2, 0, false);
     }
-    if (westRoom->mHasOpening[Direction::NORTH->get3DDataValue()])
+    if (mRoomDefinition->mHasOpening[Direction::NORTH->get3DDataValue()])
     {
         generateWaterBox(level, box, 3, 1, 7, 4, 2, 7, false);
     }
-    if (westRoom->mHasOpening[Direction::WEST->get3DDataValue()])
+    if (mRoomDefinition->mHasOpening[Direction::WEST->get3DDataValue()])
     {
         generateWaterBox(level, box, 0, 1, 3, 0, 2, 4, false);
     }
@@ -1756,11 +1766,11 @@ bool OceanMonumentPieces::OceanMonumentDoubleYZRoom::postProcess(Level* level, R
         generateDefaultFloor(level, box, 0, 8, northRoom->mHasOpening[Direction::DOWN->get3DDataValue()]);
         generateDefaultFloor(level, box, 0, 0, southRoom->mHasOpening[Direction::DOWN->get3DDataValue()]);
     }
-    if (southUpperRoom->fjConnection(Direction::UP) == NULL)
+    if (!southUpperRoom->fjConnection(Direction::UP))
     {
         generateBoxOnFillOnly(level, box, 1, 8, 1, 6, 8, 7, BASE_GRAY);
     }
-    if (northUpperRoom->fjConnection(Direction::UP) == NULL)
+    if (!northUpperRoom->fjConnection(Direction::UP))
     {
         generateBoxOnFillOnly(level, box, 1, 8, 8, 6, 8, 14, BASE_GRAY);
     }
@@ -1881,11 +1891,11 @@ bool OceanMonumentPieces::OceanMonumentDoubleZRoom::postProcess(Level* level, Ra
         generateDefaultFloor(level, box, 0, 8, northRoom->mHasOpening[Direction::DOWN->get3DDataValue()]);
         generateDefaultFloor(level, box, 0, 0, southRoom->mHasOpening[Direction::DOWN->get3DDataValue()]);
     }
-    if (southRoom->fjConnection(Direction::UP) == NULL)
+    if (!southRoom->fjConnection(Direction::UP))
     {
         generateBoxOnFillOnly(level, box, 1, 4, 1, 6, 4, 7, BASE_GRAY);
     }
-    if (northRoom->fjConnection(Direction::UP) == NULL)
+    if (!northRoom->fjConnection(Direction::UP))
     {
         generateBoxOnFillOnly(level, box, 1, 4, 8, 6, 4, 14, BASE_GRAY);
     }

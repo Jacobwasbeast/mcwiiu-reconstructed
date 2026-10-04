@@ -7,17 +7,6 @@
 
 #include <string>
 
-template<typename T>
-std::wstring toString(T value);
-
-template<typename T>
-T fromHEXString(const std::wstring& text)
-{
-    return _fromHEXString<T>(text);
-}
-
-template int fromHEXString<int>(const std::wstring&);
-
 GameRules_HexAttribute::GameRules_HexAttribute(int* value)
     : mValue(value)
 {
@@ -31,12 +20,12 @@ void GameRules_HexAttribute::setValue(const std::wstring& value)
 {
     mHasValue = true;
 
-    *mValue = fromHEXString<int>(value);
+    *mValue = _fromHEXString<int>(value);
 }
 
 void GameRules_HexAttribute::save(ConsoleGameRules::EGameRuleAttr attribute, GameRuleSaveInterface* saveInterface)
 {
-    saveInterface->saveAttribute(attribute, toString(*mValue));
+    saveInterface->saveAttribute(attribute, _toString<int>(*mValue));
 }
 
 void GameRules_HexAttribute::writeAsXml(ConsoleGameRules::EGameRuleAttr attribute, std::string& xml)

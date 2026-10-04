@@ -48,7 +48,7 @@ public:
     virtual boost::shared_ptr<Entity> findHitEntity(Vec3* from, Vec3* to);
     virtual not_null_ptr<ItemInstance> getPickupItem();
     virtual void checkDespawn();
-    virtual double getWaterInertia();
+    virtual float getWaterInertia();
 
     void _init();
     unsigned char getLoyaltyLevel();

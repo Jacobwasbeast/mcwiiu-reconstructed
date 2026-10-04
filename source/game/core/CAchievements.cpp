@@ -10,11 +10,10 @@ int getSlotId(int iQuad);
 PlayerUID getPlayerUID(int iQuad, bool includeOffline);
 
 CAchievements::CAchievements(int iQuad)
-    : mPlayerUID(0)
+    : mPlayerUID(getPlayerUID(iQuad, false))
 {
     mIsSystemPlayer = getSlotId(iQuad) != 0;
     mSlotId = (unsigned char)getSlotId(iQuad);
-    mPlayerUID = getPlayerUID(iQuad, false);
     mDirty = false;
     std::memset(mAwarded, 0, sizeof(mAwarded));
     mState = 0;
@@ -115,7 +114,8 @@ bool CAchievements::GetAwardedBit(int achievementId) const
     {
         return false;
     }
-    return (mAwarded[registrationId >> 3] & (1 << (registrationId & 7))) != 0;
+    unsigned char mask = (unsigned char)(1 << (registrationId & 7));
+    return (mAwarded[registrationId >> 3] & mask) != 0;
 }
 
 bool CAchievements::hasPendingAwards() const

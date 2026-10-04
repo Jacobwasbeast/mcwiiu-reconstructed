@@ -8,6 +8,7 @@
 #include "game/item/Inventory.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/ui/AbstractContainerMenu.hpp"
+#include "game/ui/InventoryMenu.hpp"
 #include "game/util/AABB.hpp"
 #include "game/util/Math.hpp"
 #include "game/world/Level.hpp"
@@ -22,33 +23,33 @@
 
 FillTool::FillTool(ConsoleSchematicFile* schematic)
     : BlockPos(0, 0, 0),
-      mPointB(0, 0, 0),
-      mEdgeBlock(NULL),
-      mFillBlock(NULL),
-      mReplaceOnlyBlock(NULL),
-      mEdgeData(0),
-      mFillData(0),
-      mReplaceOnlyData(0),
-      mReplaceOnlyDataMask(-1),
-      mFillDataMask(-1),
-      mDimension(0),
-      mReplaceOnly(false),
-      mHasPointB(false),
-      mHandleDataType(HANDLE_DATA_NONE),
-      mShape(1),
-      mMode(1),
-      mLiquidType(0),
-      mField0x50(0),
-      mBrushStrength(2.0f),
-      mSurfaceBrush(false),
-      mField0x6C(false),
-      mSchematic(schematic),
-      mActive(false)
+      mPointB(0, 0, 0)
 {
     mPointB.x = 3;
     mPointB.y = 3;
     mPointB.z = 3;
+    mEdgeBlock = NULL;
+    mFillBlock = NULL;
+    mReplaceOnlyBlock = NULL;
+    mEdgeData = 0;
+    mFillData = 0;
+    mReplaceOnlyData = 0;
+    mReplaceOnlyDataMask = -1;
+    mDimension = 0;
+    mReplaceOnly = false;
+    mHasPointB = false;
+    mField0x6C = false;
+    mSchematic = schematic;
+    mActive = false;
     mOperation.mBounds = AABB::newPermanent(0.0, 0.0, 0.0, 3.0, 3.0, 3.0);
+    mMode = 1;
+    mShape = 1;
+    mFillDataMask = -1;
+    mSurfaceBrush = false;
+    mBrushStrength = 2.0f;
+    mHandleDataType = HANDLE_DATA_NONE;
+    mLiquidType = 0;
+    mField0x50 = 0;
 }
 
 FillTool::~FillTool()
@@ -65,19 +66,28 @@ void FillTool::Reset()
     mReplaceOnlyBlock = NULL;
 }
 
-bool FillTool::IsWaterBlock(const BlockState* state)
+int FillTool::IsWaterBlock(const BlockState* state)
 {
+    int result = 0;
     unsigned int id = Block::getId(state->getBlock());
-    return id > 7 && id < 10;
+    if (id > 7)
+    {
+        if (id < 10)
+            result = 1;
+    }
+    return result;
 }
 
-bool FillTool::IsLavaBlock(const BlockState* state)
+int FillTool::IsLavaBlock(const BlockState* state)
 {
+    int result = 0;
     unsigned int id = Block::getId(state->getBlock());
-    return id > 9 && id < 12;
+    if (id > 9 && id < 12)
+        result = 1;
+    return result;
 }
 
-bool FillTool::IsValidSurfaceBlock(const BlockState* state)
+int FillTool::IsValidSurfaceBlock(const BlockState* state)
 {
     unsigned int id = Block::getId(state->getBlock());
     if (id < 0x6a)
@@ -85,7 +95,7 @@ bool FillTool::IsValidSurfaceBlock(const BlockState* state)
     if (id < 0x102)
         return id != 0x6a && id != 0x7f && (id < 0xa1 || id > 0xa2);
     if (id == 0x102)
-        return false;
+        return 0;
     return id < 0x108 || (id > 0x10c && (id < 0x10e || id > 0x110));
 }
 
@@ -97,8 +107,8 @@ void FillTool::tick()
     if (mOperation.mMode == 4)
     {
         AABB* bounds = mOperation.mBounds;
-        unsigned int width = (unsigned int)(bounds->mMaxX - bounds->mMinX);
-        unsigned int depth = (unsigned int)(bounds->mMaxZ - bounds->mMinZ);
+        int width = (int)(bounds->mMaxX - bounds->mMinX);
+        int depth = (int)(bounds->mMaxZ - bounds->mMinZ);
         int baseZ = (int)bounds->mMinZ;
         int baseX = (int)bounds->mMinX;
         float halfWidth = (float)width * 0.5f;
@@ -114,11 +124,11 @@ void FillTool::tick()
         for (unsigned int i = 0; i < area; ++i)
             surface[i] = 0;
 
-        unsigned int index = 0;
+        int index = 0;
         int top = -1;
-        for (unsigned int z = 0; z < depth; ++z)
+        for (int z = 0; z < depth; ++z)
         {
-            for (unsigned int x = 0; x < width; ++x)
+            for (int x = 0; x < width; ++x)
             {
                 int height = mOperation.mLevel->getHeightmapHeight(baseX + (int)x, baseZ + (int)z);
                 surface[index] = height - 1;
@@ -145,14 +155,14 @@ void FillTool::tick()
             else if (mLiquidType == 1)
                 liquid = Blocks::lava->defaultBlockState();
 
-            unsigned int row = 0;
-            for (unsigned int z = 0; z < depth; ++z)
+            int row = 0;
+            for (int z = 0; z < depth; ++z)
             {
-                for (unsigned int x = 0; x < width; ++x)
+                for (int x = 0; x < width; ++x)
                 {
                     float worldX = (float)x + (float)bounds->mMinX;
                     float worldZ = (float)z + (float)bounds->mMinZ;
-                    if ((mOperation.mShape != 1 && mOperation.mShape != 2) ||
+                    if (mOperation.mShape == 0 || mOperation.mShape > 2 ||
                         sqrtf((worldX - centreX) * (worldX - centreX) +
                               (worldZ - centreZ) * (worldZ - centreZ)) < radius)
                     {
@@ -174,8 +184,8 @@ void FillTool::tick()
     else if (mOperation.mMode == 3)
     {
         AABB* bounds = mOperation.mBounds;
-        unsigned int width = (unsigned int)(bounds->mMaxX - bounds->mMinX);
-        unsigned int depth = (unsigned int)(bounds->mMaxZ - bounds->mMinZ);
+        int width = (int)(bounds->mMaxX - bounds->mMinX);
+        int depth = (int)(bounds->mMaxZ - bounds->mMinZ);
         float halfWidth = (float)width * 0.5f;
         float halfDepth = (float)depth * 0.5f;
         float radius = halfDepth;
@@ -184,13 +194,13 @@ void FillTool::tick()
         float centreZ = ((float)bounds->mMinZ + halfDepth) - 0.5f;
         float centreX = ((float)bounds->mMinX + halfWidth) - 0.5f;
 
-        for (unsigned int z = 0; z < depth; ++z)
+        for (int z = 0; z < depth; ++z)
         {
-            for (unsigned int x = 0; x < width; ++x)
+            for (int x = 0; x < width; ++x)
             {
                 float worldX = (float)x + (float)bounds->mMinX;
                 float worldZ = (float)z + (float)bounds->mMinZ;
-                if ((mOperation.mShape != 1 && mOperation.mShape != 2) ||
+                if (mOperation.mShape == 0 || mOperation.mShape > 2 ||
                     sqrtf((worldX - centreX) * (worldX - centreX) +
                           (worldZ - centreZ) * (worldZ - centreZ)) < radius)
                 {
@@ -509,7 +519,7 @@ void FillTool::PopulateSurfaceBrushBlock(boost::shared_ptr<Player> player)
     boost::shared_ptr<Inventory> inventory = player->mInventory;
     for (int i = 0; i < 9; ++i)
     {
-        Slot* slot = player->mInventoryMenu->getSlot(36 + i);
+        Slot* slot = player->mInventoryMenu->getSlot(InventoryMenu::USE_ROW_SLOT_START + i);
         not_null_ptr<ItemInstance> item = slot->getItem();
         if (item->isEmpty())
             break;
@@ -517,8 +527,8 @@ void FillTool::PopulateSurfaceBrushBlock(boost::shared_ptr<Player> player)
         if (blockItem == NULL)
             break;
         Block* block = blockItem->getBlock();
-        const BlockState* state =
-            block->getBlockState(blockItem->getLevelDataForAuxValue(item->getAuxValue()));
+        int data = blockItem->getLevelDataForAuxValue(item->getAuxValue());
+        const BlockState* state = block->getBlockState(data);
         mSurfaceBlocks.push_back(std::make_pair(state, item->getCount()));
     }
 }

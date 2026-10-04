@@ -37,6 +37,8 @@
 
 const EntityDataAccessor<int>* Slime::DATA_ID_SIZE = NULL;
 
+static ResourceLocation* sNoLootTable = NULL;
+
 Slime::Slime(Level* level)
     : Mob(level)
 {
@@ -218,10 +220,10 @@ void Slime::remove()
         int count = 2 + mRandom->nextInt(3);
         for (int i = 0; i < count; ++i)
         {
-            if (i > 0 && static_cast<unsigned int>(mLevel->countInstanceOf(EntityType::SLIME, true, NULL, NULL))
+            if (i != 0 && static_cast<unsigned int>(mLevel->countInstanceOf(EntityType::SLIME, true, NULL, NULL))
                 >= MobCategory::SLIME->getMaxInstancesPerLevel())
             {
-                break;
+                continue;
             }
 
             float offsetX = (static_cast<float>(i % 2) - 0.5f) * static_cast<float>(size) * 0.25f;
@@ -236,7 +238,7 @@ void Slime::remove()
                 child->setPersistenceRequired(true);
             }
             child->setSize(size / 2, true);
-            child->moveTo(mX + offsetX, mY + 0.5, mZ + offsetZ, static_cast<float>(mRandom->nextFloat() * 360.0), 0.0f);
+            child->moveTo(mX + offsetX, mY + 0.5, mZ + offsetZ, mRandom->nextFloat() * 360.0f, 0.0f);
             mLevel->addEntity(child);
         }
     }
@@ -246,15 +248,15 @@ void Slime::remove()
 void Slime::push(boost::shared_ptr<Entity> entity)
 {
     Entity::push(entity);
-    if (entity->GetType() == EntityType::VILLAGER_GOLEM && isDealsDamage())
+    bool isGolem = entity->GetType() == EntityType::VILLAGER_GOLEM;
+    if (isGolem && isDealsDamage())
         dealDamage(boost::static_pointer_cast<LivingEntity>(entity));
 }
 
 void Slime::playerTouch(boost::shared_ptr<Player> player)
 {
     if (isDealsDamage())
-        dealDamage(boost::shared_ptr<LivingEntity>(player, (LivingEntity*)player.get()));
-    Entity::playerTouch(player);
+        dealDamage(player);
 }
 
 void Slime::dealDamage(boost::shared_ptr<LivingEntity> entity)
@@ -262,8 +264,7 @@ void Slime::dealDamage(boost::shared_ptr<LivingEntity> entity)
     int size = getSize();
     if (canSee(entity) && distanceToSqr(entity) < (0.6 * (double)size) * (0.6 * (double)size))
     {
-        boost::shared_ptr<Mob> attacker = boost::static_pointer_cast<Mob>(shared_from_this());
-        EntityDamageSource* source = DamageSource::CreateMobAttack(attacker);
+        EntityDamageSource* source = DamageSource::CreateMobAttack(boost::static_pointer_cast<Mob>(shared_from_this()));
         if (entity->hurt(source, (float)getAttackDamage()))
         {
             playSound(SoundEvents::SLIME_ATTACK, 1.0f, (mRandom->nextFloat() - mRandom->nextFloat()) * 0.2f + 1.0f);
@@ -273,7 +274,7 @@ void Slime::dealDamage(boost::shared_ptr<LivingEntity> entity)
     }
 }
 
-double Slime::getEyeHeight()
+float Slime::getEyeHeight()
 {
     return 0.625f * mBbHeight;
 }
@@ -305,7 +306,7 @@ const SoundEvent* Slime::getSquishSound()
 
 ResourceLocation* Slime::getDefaultLootTable()
 {
-    return getSize() == 1 ? &BuiltInLootTables::SLIME : NULL;
+    return getSize() == 1 ? &BuiltInLootTables::SLIME : sNoLootTable;
 }
 
 bool Slime::checkSpawnRules()
@@ -385,12 +386,9 @@ bool Slime::SlimeAttackGoal::canUse()
         return false;
     if (!target->isAlive())
         return false;
-    if ((target->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
-    {
-        boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(target);
-        if (player->mAbilities.mInvulnerable)
-            return false;
-    }
+    if ((target->GetType() & EntityType::PLAYER) == EntityType::PLAYER &&
+        boost::static_pointer_cast<Player>(target)->mAbilities.mInvulnerable)
+        return false;
     return true;
 }
 
@@ -407,13 +405,12 @@ bool Slime::SlimeAttackGoal::canContinueToUse()
         return false;
     if (!target->isAlive())
         return false;
-    if ((target->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
-    {
-        boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(target);
-        if (player->mAbilities.mInvulnerable)
-            return false;
-    }
-    return --mGrowTiredTimer > 0;
+    if ((target->GetType() & EntityType::PLAYER) == EntityType::PLAYER &&
+        boost::static_pointer_cast<Player>(target)->mAbilities.mInvulnerable)
+        return false;
+    if (--mGrowTiredTimer > 0)
+        return true;
+    return false;
 }
 
 void Slime::SlimeAttackGoal::tick()
@@ -503,9 +500,10 @@ void Slime::SlimeMoveControl::tick()
         mMob->setSpeed((float)(mSpeedModifier * mMob->getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->getValue()));
         if (mJumpDelay-- <= 0)
         {
-            mJumpDelay = mSlime->getJumpDelay();
+            int jumpDelay = mSlime->getJumpDelay();
             if (mWasOnGround)
-                mJumpDelay /= 3;
+                jumpDelay /= 3;
+            mJumpDelay = jumpDelay;
             static_cast<JumpControl*>(mSlime->getJumpControl())->jump();
             if (mSlime->doPlayJumpSound())
             {

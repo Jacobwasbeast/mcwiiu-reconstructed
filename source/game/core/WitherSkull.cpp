@@ -47,16 +47,19 @@ void WitherSkull::addDataWalkers(DataFixerUpper* fixer) { Fireball::addDataWalke
 bool WitherSkull::isOnFire() { return false; }
 float WitherSkull::getBlockExplosionResistance(Explosion* explosion, Level* level, const BlockPos& pos)
 {
-    const float resistance = Entity::getBlockExplosionResistance(explosion, level, pos);
-    Block* block = level->getBlockState(pos)->getBlock();
-    if (isDangerous() && WitherBoss::canDestroy(block) && resistance > 0.8f)
-        return 0.8f;
+    float resistance = Entity::getBlockExplosionResistance(explosion, level, pos);
+    Block* block = level->getBlock(pos);
+    if (isDangerous() && WitherBoss::canDestroy(block))
+    {
+        const float capped = resistance < 0.8f ? resistance : 0.8f;
+        resistance = capped;
+    }
     return resistance;
 }
 bool WitherSkull::isPickable() { return isDangerous(); }
 bool WitherSkull::isDangerous() { return mEntityData->get(DATA_DANGEROUS); }
 void WitherSkull::setDangerous(bool dangerous) { mEntityData->set(DATA_DANGEROUS, dangerous, true); }
-double WitherSkull::getInertia()
+float WitherSkull::getInertia()
 {
     if (isDangerous())
         return 0.73f;
@@ -66,7 +69,7 @@ void WitherSkull::onHit(const HitResult* result)
 {
     if (mLevel->mIsClientSide)
         return;
-    if (result->mEntity)
+    if (result->mEntity.get() != NULL)
     {
         if (mOwner)
         {
@@ -79,20 +82,22 @@ void WitherSkull::onHit(const HitResult* result)
         {
             result->mEntity->hurt(DamageSource::MAGIC, 5.0f);
         }
-        if ((result->mEntity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+        if (eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, result->mEntity->GetType()))
         {
-            const Difficulty* difficulty = mLevel->getDifficulty();
-            if (difficulty == Difficulty::NORMAL || difficulty == Difficulty::HARD)
+            int duration = 0;
+            if (mLevel->getDifficulty() == Difficulty::NORMAL)
+                duration = 10;
+            else if (mLevel->getDifficulty() == Difficulty::HARD)
+                duration = 40;
+            if (duration != 0)
             {
-                const int duration = difficulty == Difficulty::HARD ? 40 : 10;
                 boost::shared_ptr<LivingEntity> target = boost::dynamic_pointer_cast<LivingEntity>(result->mEntity);
                 target->addEffect(new MobEffectInstance(MobEffects::WITHER, duration * 20, 1),
                                   boost::shared_ptr<Entity>());
             }
         }
     }
-    const bool mobGriefing = mLevel->getGameRules()->getBoolean(GameRules::RULE_MOBGRIEFING);
-    mLevel->explode(shared_from_this(), mX, mY, mZ, 1.0f, false, mobGriefing,
+    mLevel->explode(shared_from_this(), mX, mY, mZ, 1.0f, false, mLevel->getGameRules()->getBoolean(GameRules::RULE_MOBGRIEFING),
                     false, false, false, -1.0f);
     remove();
 }
@@ -103,7 +108,7 @@ void WitherSkull::defineSynchedData()
 bool WitherSkull::shouldBurn() { return false; }
 std::vector<unsigned long long>* WitherSkull::getEntityTypesToIgnoreCollisionsWith()
 {
-    std::vector<unsigned long long>* types = new std::vector<unsigned long long>();
+    std::vector<unsigned long long>* types = new std::vector<unsigned long long>;
     types->push_back(GetType());
     return types;
 }

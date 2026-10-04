@@ -34,6 +34,8 @@ public:
     virtual int GetValue(MasterGameMode* gameMode) const = 0;
 
 protected:
+    IntegerCondition() {}
+
     EOperator m_operator;
     int m_threshold;
     int m_option;

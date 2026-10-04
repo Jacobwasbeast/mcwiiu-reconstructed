@@ -51,7 +51,6 @@ public:
     int GetBlocksDestroyed(const StatsUID& suid, int round);
     int GetBlocksPlaced(const StatsUID& suid, int round);
     int GetSecondaryTargets(const StatsUID& suid, int round);
-    int GetLapsCompleted(const StatsUID& suid, int round);
     int GetPoints(const StatsUID& suid, int round);
     int GetLastPointsAdded(const StatsUID& suid, int round);
     int GetBestPoints(const StatsUID& suid, int* round);
@@ -59,10 +58,11 @@ public:
     void SetPersonalBest(const StatsUID& suid, int round);
     bool IsPersonalBest(const StatsUID& suid, int round);
     virtual int GetLastCheckpointID(const StatsUID& suid, int round);
+    virtual int GetLapsCompleted(const StatsUID& suid, int round);
+    virtual bool GetEndZoneEntered(const StatsUID& suid, int round);
     virtual int GetLastCheckpointSequenceID(const StatsUID& suid, int round);
     int GetDeaths(const StatsUID& suid, int round);
     double GetPercentageOfMapTraversed(const StatsUID& suid, int round);
-    virtual bool GetEndZoneEntered(const StatsUID& suid, int round);
     int GetTotalBlocksDestroyed(const StatsUID& suid);
     int GetTotalDistanceTravelled(const StatsUID& suid);
     int GetTotalTrapsSetOff(const StatsUID& suid);

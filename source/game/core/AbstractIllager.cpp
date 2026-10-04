@@ -32,12 +32,12 @@ bool AbstractIllager::getIllagerFlag(int flag)
 
 void AbstractIllager::setIllagerFlag(int flag, bool value)
 {
-    unsigned char flags = mEntityData->get(DATA_ILLAGER_FLAGS);
+    int flags = mEntityData->get(DATA_ILLAGER_FLAGS);
     if (value)
-        flags = (unsigned char)(flags | flag);
+        flags = flags | flag;
     else
-        flags = (unsigned char)(flags & ~flag);
-    mEntityData->set(DATA_ILLAGER_FLAGS, flags, true);
+        flags = flags & ~flag;
+    mEntityData->set(DATA_ILLAGER_FLAGS, (unsigned char)flags, true);
 }
 
 EMobType AbstractIllager::getMobType()

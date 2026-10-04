@@ -3,9 +3,9 @@
 
 VertexFormat::VertexFormat()
 {
+    normalOffset = -1;
     vertexSize = 0;
     colorOffset = -1;
-    normalOffset = -1;
 }
 
 VertexFormat::VertexFormat(VertexFormat* other)
@@ -91,9 +91,9 @@ int VertexFormat::getOffset(int index)
 
 bool VertexFormat::hasPositionElement()
 {
-    for (std::vector<const VertexFormatElement*>::const_iterator it = elements.begin(); it != elements.end(); ++it)
+    for (int i = 0; i < (int)elements.size(); ++i)
     {
-        if ((*it)->isPosition())
+        if (elements[i]->isPosition())
         {
             return true;
         }
@@ -125,5 +125,6 @@ VertexFormat* VertexFormat::addElement(const VertexFormatElement* element)
         break;
     }
     vertexSize += newElement->getByteSize();
+    delete newElement;
     return this;
 }

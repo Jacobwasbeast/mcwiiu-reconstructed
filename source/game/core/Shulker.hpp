@@ -127,17 +127,17 @@ public:
     virtual float getClientPeekAmount(float partialTick);
     virtual int getClientSideTeleportInterpolation();
     virtual BlockPos* getOldAttachPosition();
-    virtual double getEyeHeight();
+    virtual float getEyeHeight();
     virtual int getMaxHeadXRot();
     virtual int getMaxHeadYRot();
     virtual void push(boost::shared_ptr<Entity> entity);
     virtual float getPickRadius();
-    virtual bool hasValidInterpolationPositions();
+    bool hasValidInterpolationPositions();
     virtual ResourceLocation* getDefaultLootTable();
-    virtual const DyeColor* getColor();
+    const DyeColor* getColor();
     virtual unsigned int GetInteractTooltip(const EntityTooltipDataHolder& holder);
     virtual unsigned long long GetType();
-    virtual void setColor(const DyeColor* color);
+    void setColor(const DyeColor* color);
 
 private:
     static const EntityDataAccessor<const Direction*>* DATA_ATTACH_FACE;

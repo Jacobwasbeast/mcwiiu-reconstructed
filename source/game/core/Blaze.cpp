@@ -256,8 +256,7 @@ void Blaze::BlazeAttackGoal::tick()
     --mAttackTime;
     boost::shared_ptr<LivingEntity> target = mBlaze->getTarget();
     double distance = mBlaze->distanceToSqr(target);
-    double followDistance = mBlaze->getFollowDistance();
-    if (distance < followDistance * followDistance)
+    if (distance < mBlaze->getFollowDistance() * mBlaze->getFollowDistance())
     {
         mBlaze->getLookControl()->setLookAt(target, 10.0f, 10.0f);
     }
@@ -274,8 +273,8 @@ void Blaze::BlazeAttackGoal::tick()
     else if (distance < 256.0)
     {
         double xd = target->mX - mBlaze->mX;
-        double yd = target->mY + target->getEyeHeight() * 0.5
-                  - (mBlaze->mY + mBlaze->getEyeHeight() * 0.5);
+        double yd = target->mBoundingBox->mMinY + target->mBbHeight * 0.5f
+                  - (mBlaze->mY + mBlaze->mBbHeight * 0.5f);
         double zd = target->mZ - mBlaze->mZ;
 
         if (mAttackTime <= 0)
@@ -301,12 +300,13 @@ void Blaze::BlazeAttackGoal::tick()
             {
                 double spread = std::sqrt(std::sqrt(distance)) * 0.5;
                 mBlaze->mLevel->levelEvent(boost::shared_ptr<Player>(), LevelEvent::SOUND_BLAZE_FIREBALL,
-                                           BlockPos(mBlaze->mX, mBlaze->mY, mBlaze->mZ), 0);
+                                           BlockPos(static_cast<int>(mBlaze->mX), static_cast<int>(mBlaze->mY),
+                                                     static_cast<int>(mBlaze->mZ)), 0);
                 boost::shared_ptr<SmallFireball> fireball(new SmallFireball(
                     mBlaze->mLevel, boost::dynamic_pointer_cast<Mob>(mBlaze->shared_from_this()),
                     xd + mBlaze->mRandom->nextGaussian() * spread, yd,
                     zd + mBlaze->mRandom->nextGaussian() * spread));
-                fireball->mY = mBlaze->mY + mBlaze->getEyeHeight() * 0.5 + 0.5;
+                fireball->mY = mBlaze->mY + mBlaze->mBbHeight * 0.5f + 0.5;
                 mBlaze->mLevel->addEntity(fireball);
             }
         }

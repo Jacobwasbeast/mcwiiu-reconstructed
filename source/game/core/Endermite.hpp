@@ -23,7 +23,7 @@ public:
     virtual void addAdditonalSaveData(CompoundTag* tag);
     virtual double getRidingHeight();
     virtual void setYBodyRot(float yBodyRot);
-    virtual double getEyeHeight();
+    virtual float getEyeHeight();
     virtual void registerAttributes();
     virtual const SoundEvent* getHurtSound(const DamageSource* source);
     virtual const SoundEvent* getDeathSound();

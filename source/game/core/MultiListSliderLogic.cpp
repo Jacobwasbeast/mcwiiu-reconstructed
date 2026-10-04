@@ -20,19 +20,18 @@ void MultiListSliderLogic::AddTo(UIControl_MultiList& list, int itemIndex) const
 {
     std::wstring label = GetLabel(itemIndex);
     const std::vector<int>& options = MasterGameMode::GetOptionsList(mMiniGameId, mOption);
-    int maximum = options.empty() ? 0 : static_cast<int>(options.size());
+    int maximum = static_cast<int>(options.size());
     list.AddNewSlider(label, mLabelId, 0, maximum - 1, itemIndex, false, 7, 3);
 }
 
 void MultiListSliderLogic::Update(UIControl_MultiList& list, int itemIndex) const
 {
-    UIString label(GetLabel(itemIndex));
-    list.SetItemLabel(mLabelId, label, false);
+    list.SetItemLabel(mLabelId, UIString(GetLabel(itemIndex)), false);
 }
 
 std::wstring MultiListSliderLogic::GetLabel(int value) const
 {
-    std::wstring label(L"Description: ");
+    std::wstring label(L"");
     std::wstring valueText = MasterGameMode::GetValueText(mMiniGameId, mOption, value);
 
     if (mDescriptionId != -1 && mDescriptionId != -2)

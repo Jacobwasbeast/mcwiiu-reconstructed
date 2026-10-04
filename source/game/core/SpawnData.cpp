@@ -16,8 +16,8 @@ SpawnData::SpawnData()
 
 SpawnData::SpawnData(CompoundTag* tag)
     : WeighedRandomItem(tag->contains(std::wstring(L"Weight"), 99) ? tag->getInt(std::wstring(L"Weight")) : 1)
-    , mTag(tag->getCompound(std::wstring(L"Entity"))->copy())
 {
+    mTag = tag->getCompound(std::wstring(L"Entity"))->copy();
 }
 
 SpawnData::SpawnData(int weight, CompoundTag* entityTag)
@@ -29,23 +29,22 @@ SpawnData::SpawnData(int weight, CompoundTag* entityTag)
 SpawnData::~SpawnData()
 {
     delete mTag;
-    mTag = NULL;
 }
 
 CompoundTag* SpawnData::save()
 {
     CompoundTag* tag = new CompoundTag();
 
-    if (mTag->contains(std::wstring(L"id"), 8))
+    if (!mTag->contains(std::wstring(L"id"), 8))
+    {
+        mTag->putString(std::wstring(L"id"), EMPTY_STRING);
+    }
+    else
     {
         if (mTag->getString(std::wstring(L"id")).find(L':') == std::wstring::npos)
         {
             mTag->putString(std::wstring(L"id"), ResourceLocation(mTag->getString(std::wstring(L"id"))).toString());
         }
-    }
-    else
-    {
-        mTag->putString(std::wstring(L"id"), EMPTY_STRING);
     }
 
     tag->put(std::wstring(L"Entity"), mTag->copy());

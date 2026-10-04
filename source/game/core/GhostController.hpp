@@ -57,7 +57,7 @@ public:
         void WriteStartPos(DataOutputStream*);
         void WriteSampleAtIndex(unsigned int, DataOutputStream*);
         Vec3* GetRotAtIndex(unsigned int);
-        double GetVelocityAtIndex(unsigned int);
+        float GetVelocityAtIndex(unsigned int);
     };
     struct TrackHeader
     {
@@ -86,7 +86,7 @@ public:
     };
     GhostController(int, const std::wstring&, bool);
     ~GhostController();
-    static int32_t Double1DPAsInt16(double);
+    static short Double1DPAsInt16(double);
     void addLoadSaveOp(GhostLoadSaveOperation::EOpType, int, GhostRecord*);
     void LoadGhostRecord(int);
     void Initialise(int, const std::wstring&, bool);

@@ -38,7 +38,7 @@ void Salmon::staticCtor()
 
 void Salmon::setSalmonScale(SalmonScale scale)
 {
-    if (mEntityData != NULL && DATA_ID_SCALE != NULL)
+    if (!mLevel->mIsClientSide)
         mEntityData->set(DATA_ID_SCALE, static_cast<unsigned char>(scale), true);
 }
 
@@ -47,16 +47,17 @@ void Salmon::SalmonWeightedRandomize()
     int value = mRandom->nextInt(95);
     if (value < 30)
         setSalmonScale(SMALL);
-    else if (value < 80)
-        setSalmonScale(MEDIUM);
     else
-        setSalmonScale(LARGE);
+    {
+        SalmonScale scale = MEDIUM;
+        if (value > 80)
+            scale = LARGE;
+        setSalmonScale(scale);
+    }
 }
 
 Salmon::SalmonScale Salmon::getSalmonScale()
 {
-    if (mEntityData == NULL || DATA_ID_SCALE == NULL)
-        return SMALL;
     return static_cast<SalmonScale>(mEntityData->get(DATA_ID_SCALE));
 }
 
@@ -74,41 +75,39 @@ void Salmon::readAdditionalSaveData(CompoundTag* tag)
 
 void Salmon::onSyncedDataUpdated(const EntityDataAccessor_Base* accessor)
 {
-    if (DATA_ID_SCALE == NULL || accessor != DATA_ID_SCALE)
+    if (DATA_ID_SCALE->getId() != accessor->getId())
         return;
 
-    SalmonScale scale = getSalmonScale();
-    if (scale == SMALL)
+    switch (getSalmonScale())
     {
+    case SMALL:
         setSize(0.5f, 0.5f);
         mSwimSpeed = 0.5f;
         mSwimFlag = true;
         mSwimTicks = 24;
         getAttribute(SharedMonsterAttributes::MAX_HEALTH)->setBaseValue(2.0);
-    }
-    else if (scale == MEDIUM)
-    {
+        break;
+    case MEDIUM:
         setSize(1.0f, 1.0f);
         mSwimTicks = 1;
         mSwimFlag = false;
         mSwimSpeed = 1.0f;
         getAttribute(SharedMonsterAttributes::MAX_HEALTH)->setBaseValue(3.0);
-    }
-    else if (scale == LARGE)
-    {
+        break;
+    case LARGE:
         setSize(1.5f, 1.5f);
         mSwimTicks = -7;
         mSwimFlag = true;
         mSwimSpeed = 1.5f;
         getAttribute(SharedMonsterAttributes::MAX_HEALTH)->setBaseValue(5.0);
+        break;
     }
 }
 
 void Salmon::defineSynchedData()
 {
     Mob::defineSynchedData();
-    if (mEntityData != NULL && DATA_ID_SCALE != NULL)
-        mEntityData->createDateItem(DATA_ID_SCALE, static_cast<unsigned char>(MEDIUM));
+    mEntityData->createDateItem(DATA_ID_SCALE, static_cast<unsigned char>(MEDIUM));
 }
 
 void Salmon::registerGoals()

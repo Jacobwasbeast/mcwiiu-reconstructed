@@ -35,11 +35,7 @@ void Stray::addDataWalkers(DataFixerUpper* fixer)
 
 bool Stray::checkSpawnRules()
 {
-    if (!Monster::checkSpawnRules())
-        return false;
-
-    BlockPos pos(this);
-    return mLevel->canSeeSky(pos);
+    return Monster::checkSpawnRules() && mLevel->canSeeSky(BlockPos(this));
 }
 
 void Stray::registerGoals()
@@ -79,11 +75,11 @@ const SoundEvent* Stray::getStepSound()
     return SoundEvents::STRAY_STEP;
 }
 
-boost::shared_ptr<TippableArrow> Stray::getArrow(float distanceFactor)
+boost::shared_ptr<Arrow> Stray::getArrow(float distanceFactor)
 {
-    boost::shared_ptr<TippableArrow> arrow = AbstractSkeleton::getArrow(distanceFactor);
-    if (arrow && arrow->GetType() == EntityType::TIPPABLE_ARROW)
-        arrow->addEffect(new MobEffectInstance(MobEffects::MOVEMENT_SLOWDOWN, 600));
+    boost::shared_ptr<Arrow> arrow = AbstractSkeleton::getArrow(distanceFactor);
+    if (arrow->GetType() == EntityType::TIPPABLE_ARROW)
+        boost::static_pointer_cast<TippableArrow>(arrow)->addEffect(new MobEffectInstance(MobEffects::MOVEMENT_SLOWDOWN, 600));
     return arrow;
 }
 

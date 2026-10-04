@@ -548,8 +548,7 @@ boost::shared_ptr<LivingEntity> Explosion::getSourceMob()
 
 boost::shared_ptr<Entity> Explosion::getDirectSource()
 {
-    boost::shared_ptr<Entity> source = mSource;
-    return source;
+    return mSource;
 }
 
 void Explosion::clearToBlow()

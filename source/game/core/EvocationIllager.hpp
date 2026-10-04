@@ -3,6 +3,7 @@
 
 #include <string>
 #include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
 #include "game/core/SpellcasterIllager.hpp"
 #include "game/world/block/Predicate.hpp"
 
@@ -50,7 +51,7 @@ public:
         {
         public:
             virtual bool apply(boost::shared_ptr<Entity> entity) const;
-            virtual ~SheepSelector();
+            virtual ~SheepSelector() {}
         };
         explicit EvokerWololoSpellGoal(EvocationIllager* evoker);
         virtual ~EvokerWololoSpellGoal();
@@ -87,7 +88,7 @@ public:
     static void create(Level* level);
     virtual unsigned long long GetType();
 private:
-    boost::shared_ptr<Sheep> mWololoTarget;
+    boost::weak_ptr<Sheep> mWololoTarget;
 };
 
 #endif

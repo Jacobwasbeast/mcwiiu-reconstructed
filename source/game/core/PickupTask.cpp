@@ -34,12 +34,12 @@ unsigned int PickupTask::hasPickedUpWoodBlock(not_null_ptr<ItemInstance> item)
     Item* pickedUpItem = item->getItem();
     return pickedUpItem == Item::byBlock(Blocks::log) ||
            pickedUpItem == Item::byBlock(Blocks::log2) ||
-           pickedUpItem == Item::byBlock(Blocks::stripped_log_spruce) ||
+           pickedUpItem == Item::byBlock(Blocks::stripped_log_dark_oak) ||
+           pickedUpItem == Item::byBlock(Blocks::stripped_log_acacia) ||
            pickedUpItem == Item::byBlock(Blocks::stripped_log_birch) ||
            pickedUpItem == Item::byBlock(Blocks::stripped_log_jungle) ||
-           pickedUpItem == Item::byBlock(Blocks::stripped_log_acacia) ||
-           pickedUpItem == Item::byBlock(Blocks::stripped_log_dark_oak) ||
-           pickedUpItem == Item::byBlock(Blocks::stripped_log_oak);
+           pickedUpItem == Item::byBlock(Blocks::stripped_log_oak) ||
+           pickedUpItem == Item::byBlock(Blocks::stripped_log_spruce);
 }
 
 void PickupTask::onTake(not_null_ptr<ItemInstance> item, unsigned int itemCount,

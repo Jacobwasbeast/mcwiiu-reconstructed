@@ -8,6 +8,7 @@
 #include <typeinfo>
 
 #include "game/core/DamageSource.hpp"
+#include "game/core/Mth.hpp"
 #include "game/core/DifficultyInstance.hpp"
 #include "game/entity/ai/Goal.hpp"
 #include "game/entity/ai/LookControl.hpp"
@@ -126,11 +127,11 @@ bool Guardian::hasActiveAttackTarget()
     return mEntityData->get(DATA_ID_ATTACK_TARGET) != 0;
 }
 
-boost::shared_ptr<Entity> Guardian::getActiveAttackTarget()
+boost::shared_ptr<LivingEntity> Guardian::getActiveAttackTarget()
 {
     if (!hasActiveAttackTarget())
     {
-        return boost::shared_ptr<Entity>();
+        return boost::shared_ptr<LivingEntity>();
     }
     if (!mLevel->mIsClientSide)
     {
@@ -188,7 +189,7 @@ bool Guardian::makeStepSound()
     return false;
 }
 
-double Guardian::getEyeHeight()
+float Guardian::getEyeHeight()
 {
     return mBbHeight * 0.5f;
 }
@@ -202,7 +203,7 @@ float Guardian::getWalkTargetValue(const BlockPos& pos)
     return Monster::getWalkTargetValue(pos);
 }
 
-double Guardian::getAttackAnimationScale(float partialTicks)
+float Guardian::getAttackAnimationScale(float partialTicks)
 {
     return (mAttackTime + partialTicks) / (float)(int)getAttackDuration();
 }
@@ -214,9 +215,8 @@ void Guardian::aiStep()
         mTailAnimationOld = mTailAnimation;
         if (!isInWater())
         {
-            bool touchedSurface = mYd > 0.0 && mTouchedGround;
             mTailAnimationSpeed = 2.0f;
-            if (touchedSurface && !isSilent())
+            if (mYd > 0.0 && mTouchedGround && !isSilent())
             {
                 mLevel->playLocalSound(mX, mY, mZ, getFlopSound(), getSoundSource(),
                                        1.0f, 1.0f, false, 16.0f);
@@ -296,13 +296,13 @@ void Guardian::aiStep()
             {
                 ++mAttackTime;
             }
-            boost::shared_ptr<Entity> target = getActiveAttackTarget();
+            boost::shared_ptr<LivingEntity> target = getActiveAttackTarget();
             if (target != NULL)
             {
                 getLookControl()->setLookAt(target, 90.0f, 90.0f);
                 getLookControl()->tick();
 
-                double scale = getAttackAnimationScale(0.0f);
+                float scale = getAttackAnimationScale(0.0f);
                 double dx = target->mX - mX;
                 double dy = (target->mY + target->mBbHeight * 0.5f) - (mY + getEyeHeight());
                 double dz = target->mZ - mZ;
@@ -333,9 +333,9 @@ void Guardian::aiStep()
             mYd += 0.5;
             mXd += (double)((mRandom->nextFloat() * 2.0f - 1.0f) * 0.4f);
             mZd += (double)((mRandom->nextFloat() * 2.0f - 1.0f) * 0.4f);
-            mHasImpulse = true;
-            mOnGround = false;
             mYRot = mRandom->nextFloat() * 360.0f;
+            mOnGround = false;
+            mHasImpulse = true;
         }
     }
     else
@@ -562,7 +562,7 @@ void Guardian::GuardianMoveControl::tick()
         double distance = std::sqrt(dx * dx + dy * dy + dz * dz);
         double angle = std::atan2(dz, dx);
         float newYRot = rotlerp(mGuardian->mYRot,
-            (float)(angle * 57.295776f) - 90.0f, 30.0f);
+            (float)(angle * Mth::RAD_TO_DEG) - 90.0f, 30.0f);
         mGuardian->mYRot = newYRot;
         mGuardian->mYBodyRot = newYRot;
 
@@ -571,8 +571,8 @@ void Guardian::GuardianMoveControl::tick()
         mGuardian->setSpeed(mGuardian->getSpeed() + (targetSpeed - mGuardian->getSpeed()) * 0.125f);
 
         double wag1 = std::sin((double)(mGuardian->mTickCount + mGuardian->getId()) * 0.5) * 0.05;
-        float cosYRot = cosf((float)(mGuardian->mYRot * 57.295776f));
-        float sinYRot = sinf((float)(mGuardian->mYRot * 57.295776f));
+        float cosYRot = cosf((float)(mGuardian->mYRot * Mth::RAD_TO_DEG));
+        float sinYRot = sinf((float)(mGuardian->mYRot * Mth::RAD_TO_DEG));
         mGuardian->mXd += wag1 * cosYRot;
         mGuardian->mZd += wag1 * sinYRot;
 

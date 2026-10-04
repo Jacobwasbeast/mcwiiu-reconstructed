@@ -10,9 +10,6 @@
 #include <string>
 
 
-template<typename T>
-T fromString(const std::wstring& text);
-
 GameRules_DoubleAttribute::GameRules_DoubleAttribute(double* value)
     : mValue(value)
 {
@@ -30,7 +27,7 @@ void GameRules_DoubleAttribute::setValue(const std::wstring& value)
 {
     mHasValue = true;
 
-    *mValue = fromString<double>(value);
+    *mValue = _fromString<double>(value);
 
     if (mHasMin)
     {
@@ -45,7 +42,7 @@ void GameRules_DoubleAttribute::setValue(const std::wstring& value)
 
 void GameRules_DoubleAttribute::save(ConsoleGameRules::EGameRuleAttr attribute, GameRuleSaveInterface* saveInterface)
 {
-    saveInterface->saveAttribute(attribute, _toString(*mValue));
+    saveInterface->saveAttribute(attribute, _toString<double>(*mValue));
 }
 
 void GameRules_DoubleAttribute::writeAsXml(ConsoleGameRules::EGameRuleAttr attribute, std::string& xml)
@@ -53,14 +50,16 @@ void GameRules_DoubleAttribute::writeAsXml(ConsoleGameRules::EGameRuleAttr attri
     xml.append(formatstr(" %ls=\"%.1f\"", gRuleAttributeNames[attribute], *mValue));
 }
 
-void GameRules_DoubleAttribute::setMin(double min)
+GameRules_DoubleAttribute* GameRules_DoubleAttribute::setMin(double min)
 {
     mMin = min;
     mHasMin = true;
+    return this;
 }
 
-void GameRules_DoubleAttribute::setMax(double max)
+GameRules_DoubleAttribute* GameRules_DoubleAttribute::setMax(double max)
 {
     mMax = max;
     mHasMax = true;
+    return this;
 }

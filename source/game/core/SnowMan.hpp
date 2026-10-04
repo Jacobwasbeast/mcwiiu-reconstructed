@@ -36,7 +36,7 @@ public:
     virtual void readAdditionalSaveData(CompoundTag* tag);
     virtual void aiStep();
     virtual ResourceLocation* getDefaultLootTable();
-    virtual double getEyeHeight();
+    virtual float getEyeHeight();
     virtual bool hurt(const DamageSource* source, float damage);
     virtual unsigned int GetInteractTooltip(const EntityTooltipDataHolder& tooltipData);
     virtual unsigned int GetHitTooltip(const EntityTooltipDataHolder& tooltipData);

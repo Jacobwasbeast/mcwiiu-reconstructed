@@ -14,10 +14,6 @@ FrustumCuller::FrustumCuller(FrustumData* frustumData)
     this->frustumData = frustumData;
 }
 
-FrustumCuller::~FrustumCuller()
-{
-}
-
 bool FrustumCuller::isVisible(AABB* boundingBox)
 {
     return cubeInFrustum(boundingBox->mMinX, boundingBox->mMinY, boundingBox->mMinZ,

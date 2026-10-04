@@ -58,6 +58,8 @@ public:
     static const std::wstring TEXTURE_NAMES[16];
 
 private:
+    friend class CraftingMenu;
+
     static const DyeColor* BY_BLOCK_DATA[16];
     static const DyeColor* BY_ITEM_DATA[16];
 

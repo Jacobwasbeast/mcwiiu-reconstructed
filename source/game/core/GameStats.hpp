@@ -27,6 +27,7 @@ class GameStats
     friend class CheckpointCommand;
     friend class MasterGameMode;
     friend class ServerScoreboard;
+    friend class FastestTimeAndHightestScoreInARoundCondition;
     friend class NotFastestTimeButWonAnywayCondition;
 
 public:

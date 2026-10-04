@@ -58,7 +58,7 @@ LightningBolt::LightningBolt(Level* level, double x, double y, double z, bool vi
 
             if (gMinecraftServer->getPlayers()->isTrackingBlock(pos, level->mDimension)
                 && level->getBlockState(firePos)->getMaterial() == Material::AIR
-                && Blocks::fire->mayPlace(level, firePos))
+                && Blocks::fire->mayPlace(level, pos))
             {
                 level->setBlockAndUpdate(firePos, Blocks::fire->defaultBlockState());
             }

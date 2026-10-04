@@ -1,6 +1,7 @@
 #include "game/core/DLCManager.hpp"
 #include "game/core/StringIds.hpp"
 
+#include <algorithm>
 #include <sstream>
 #include <fstream>
 #include <cstring>
@@ -20,7 +21,6 @@
 #include "platform/wiiu/NintendoFileSystem_WiiU.hpp"
 
 extern ConsoleUIController gConsoleUIController;
-extern CMinecraftApp* g_pApp;
 std::vector<std::wstring> g_dlcSkinNames;
 
 char* wstringtofilename(const std::wstring& text, char (&fileName)[256]);
@@ -29,6 +29,7 @@ int CreateFileA(const char* fileName, unsigned int desiredAccess, unsigned int s
                 void* securityAttributes, unsigned int creationDisposition,
                 unsigned int flagsAndAttributes, int templateFile);
 unsigned int GetFileSize(int file, unsigned int* highSize);
+unsigned int GetLastError();
 unsigned int ReadFile(int file, void* buffer, unsigned int bytesToRead,
                       unsigned int* bytesRead, _OVERLAPPED* overlapped);
 
@@ -151,12 +152,7 @@ void DLCManager::removePack(DLCPack* pPack)
 {
     if (pPack != NULL)
     {
-        std::vector<DLCPack*>::iterator it = m_packs.begin();
-
-        while (it != m_packs.end() && *it != pPack)
-        {
-            ++it;
-        }
+        std::vector<DLCPack*>::iterator it = std::find(m_packs.begin(), m_packs.end(), pPack);
 
         if (it != m_packs.end())
         {
@@ -177,22 +173,26 @@ void DLCManager::LanguageChanged()
 
 DLCPack* DLCManager::getPack(const std::wstring& name)
 {
+    DLCPack* pFound = NULL;
+
     for (std::vector<DLCPack*>::iterator it = m_packs.begin(); it != m_packs.end(); ++it)
     {
         DLCPack* pPack = *it;
+        const std::wstring& packName = pPack->getName();
 
-        if (pPack->getName() == name)
+        if (packName == name)
         {
-            return pPack;
+            pFound = pPack;
+            break;
         }
     }
 
-    return NULL;
+    return pFound;
 }
 
 DLCPack* DLCManager::getPackFromPackID(int packID)
 {
-    for (std::vector<DLCPack*>::iterator it = m_packs.begin(); it != m_packs.end(); ++it)
+    for (std::vector<DLCPack*>::iterator it = m_packs.begin(), end = m_packs.end(); it != end; ++it)
     {
         DLCPack* pPack = *it;
 
@@ -583,9 +583,11 @@ bool DLCManager::processDLCDataFile(unsigned int& numItemsAdded, unsigned char* 
 
 bool DLCManager::readDLCDataFile(unsigned int& numItemsAdded, const std::string& fileName, DLCPack* pPack, unsigned int packID, bool bTakeDataOwnership)
 {
+    std::wstring wideFileName = convStringToWstring(fileName);
     int file = CreateFileA(fileName.c_str(), 0x80000000, 0, NULL, 3, 0x80, 0);
     if (file == -1)
     {
+        GetLastError();
         if (numItemsAdded == 0)
         {
             removePack(pPack);
@@ -601,8 +603,6 @@ bool DLCManager::readDLCDataFile(unsigned int& numItemsAdded, const std::string&
     {
         pPack->SetIsCorrupt(true);
         m_bCorruptDLCFound = true;
-        CloseHandle(file);
-        delete[] pData;
         return false;
     }
     CloseHandle(file);

@@ -63,33 +63,34 @@ ArchiveFile::ArchiveFile(unsigned char* data, unsigned int size)
 
 ArchiveFile::~ArchiveFile()
 {
+    delete m_data;
     boost::unordered_map<std::wstring, _MetaData*>::iterator iterator = m_files.begin();
     while (iterator != m_files.end())
     {
         delete iterator->second;
         ++iterator;
     }
-    m_files.clear();
-    dereferenceCachedData();
 }
 
 void ArchiveFile::_readHeader(DataInputStream* stream)
 {
     int count = stream->readInt();
-    while (count > 0)
+    for (int i = 0; i < count; ++i)
     {
-        _MetaData* metadata = new _MetaData;
+        _MetaData* metadata = new _MetaData();
         metadata->name = stream->readUTF();
         metadata->offset = static_cast<unsigned int>(stream->readInt());
         metadata->size = static_cast<unsigned int>(stream->readInt());
-        metadata->compressed = false;
-        if (!metadata->name.empty() && metadata->name[0] == L'*')
+        if (metadata->name[0] == L'*')
         {
-            metadata->name.erase(0, 1);
+            metadata->name = metadata->name.substr(1);
             metadata->compressed = true;
         }
+        else
+        {
+            metadata->compressed = false;
+        }
         m_files.insert(std::make_pair(metadata->name, metadata));
-        --count;
     }
 }
 
@@ -146,7 +147,7 @@ arrayWithLength<unsigned char> ArchiveFile::getFile(const std::wstring& name)
         DataInputStream stream((InputStream*)&input);
         unsigned int decompressedSize = static_cast<unsigned int>(stream.readInt());
         stream.close();
-        arrayWithLength<unsigned char> decompressed(decompressedSize, true);
+        arrayWithLength<unsigned char> decompressed(decompressedSize, false);
         Compression::getCompression()->Decompress(decompressed.data, &decompressedSize, result.data + 4, result.length - 4);
         input.mBuffer.data = NULL;
         input.mBuffer.length = 0;

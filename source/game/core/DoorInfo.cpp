@@ -18,15 +18,15 @@ void DoorInfo::_init(const BlockPos& pos, const Direction* direction, int timeSt
     y = pos.y;
     z = pos.z;
     this->direction = direction;
-    indoorPos = relative(direction, 2);
+    indoorPos = pos.relative(direction, 2);
     this->timeStamp = timeStamp;
 }
 
 const Direction* DoorInfo::facingFromDelta(int dx, int dz)
 {
-    if (dx > 0)
-        return Direction::WEST;
     if (dx < 0)
+        return Direction::WEST;
+    if (dx > 0)
         return Direction::EAST;
     if (dz < 0)
         return Direction::NORTH;
@@ -40,7 +40,7 @@ int DoorInfo::distanceToSqr(int x, int y, int z)
 
 int DoorInfo::distanceToSqr(const BlockPos& pos)
 {
-    return static_cast<int>(Vec3i::distSqr(pos));
+    return static_cast<int>(indoorPos.distSqr(pos));
 }
 
 int DoorInfo::distanceToInsideSqr(const BlockPos& pos)

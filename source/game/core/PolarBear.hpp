@@ -92,7 +92,7 @@ public:
     virtual void tick();
     virtual bool doHurtTarget(boost::shared_ptr<Entity> target);
     void setStanding(bool standing);
-    double getStandingAnimationScale(float partialTick);
+    float getStandingAnimationScale(float partialTick);
     virtual float getWaterSlowDown();
     virtual MobGroupData* finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data,
                                            const std::wstring& name);

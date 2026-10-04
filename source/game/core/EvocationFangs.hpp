@@ -24,7 +24,7 @@ public:
     void setOwner(const boost::shared_ptr<LivingEntity>& owner);
     boost::shared_ptr<LivingEntity> getOwner();
     void dealDamageTo(const boost::shared_ptr<LivingEntity>& target);
-    double getAnimationProgress(float partialTicks) const;
+    float getAnimationProgress(float partialTicks) const;
 
     virtual unsigned long long GetType();
     virtual void defineSynchedData();

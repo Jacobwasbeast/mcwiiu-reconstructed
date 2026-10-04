@@ -95,35 +95,6 @@ public:
     virtual bool getCleanupOnReload() = 0;
     virtual void setCleanupOnReload(bool bCleanupOnReload) = 0;
     virtual bool IsExpectingOrReloadingSkin() = 0;
-    virtual void SetTooltips(unsigned int playerId, int* pTooltips, bool bShow, bool bUseGlobalGroup) = 0;
-    virtual bool IsToolTipDynamic(unsigned int playerId, unsigned int tooltipIndex, EControllerActions& action) = 0;
-    virtual int GetHotBarX(unsigned int playerId) = 0;
-    virtual int GetHotBarY(unsigned int playerId) = 0;
-    virtual int GetHotBarWidth(unsigned int playerId) = 0;
-    virtual int GetHotBarHeight(unsigned int playerId) = 0;
-    virtual bool GetQuickSelectVisible(unsigned int playerId) = 0;
-    virtual bool GetDRCEnabled() = 0;
-    virtual void SetTutorial(int playerId, Tutorial* pTutorial) = 0;
-    virtual void RemoveInteractSceneReference(int playerId, UIScene* pScene) = 0;
-    virtual void HideChestRefillAnimation() = 0;
-    virtual void ShowPlayerDisplayname(bool bShow) = 0;
-    virtual void HidePressStart() = 0;
-    virtual int RequestProfileSignInMenu(int titleId, int messageId, wchar_t** ppMessageParameters,
-                                         unsigned int parameterCount, unsigned int userIndex,
-                                         int (*pCallback)(void*, int, int), void* pCallbackData,
-                                         wchar_t* pOverrideText, unsigned int controllerIndex) = 0;
-    virtual void RequestAlertMessage(int titleId, int messageId, int* pMessageParameters,
-                                     unsigned int parameterCount, unsigned int userIndex,
-                                     int (*pCallback)(void*, int, C4JStorage::EMessageResult),
-                                     void* pCallbackData, wchar_t* pOverrideText, bool bBlocking) = 0;
-    virtual int RequestErrorMessage(int titleId, int messageId, int* pMessageParameters,
-                                    unsigned int parameterCount, unsigned int userIndex,
-                                    int (*pCallback)(void*, int, C4JStorage::EMessageResult),
-                                    void* pCallbackData, wchar_t* pOverrideText, bool bBlocking) = 0;
-    virtual int RequestMessageBox(int titleId, int messageId, int* pMessageParameters, unsigned int parameterCount,
-                                  unsigned int userIndex, int (*pCallback)(void*, int, C4JStorage::EMessageResult),
-                                  void* pCallbackData, wchar_t* pOverrideText, unsigned int buttonFlags,
-                                  bool bAlert, bool bBlocking) = 0;
 };
 
 #endif

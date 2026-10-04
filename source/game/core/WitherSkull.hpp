@@ -22,7 +22,7 @@ public:
     bool isPickable();
     virtual bool isDangerous();
     virtual void setDangerous(bool dangerous);
-    double getInertia();
+    float getInertia();
     void onHit(const HitResult* result);
     void defineSynchedData();
     bool shouldBurn();

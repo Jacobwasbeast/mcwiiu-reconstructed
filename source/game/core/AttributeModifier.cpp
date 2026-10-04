@@ -20,18 +20,19 @@ void AttributeModifier::_init(eMODIFIER_ID id, std::wstring name, double amount,
 }
 
 AttributeModifier::AttributeModifier(double amount, int operation)
+    : name()
 {
-    _init(eMODIFIER_ID_None, std::wstring(), amount, operation);
+    _init(eMODIFIER_ID_None, name, amount, operation);
 }
 
 AttributeModifier::AttributeModifier(eMODIFIER_ID id, double amount, int operation)
 {
-    _init(id, std::wstring(), amount, operation);
+    _init(id, name, amount, operation);
 }
 
 AttributeModifier::AttributeModifier(eMODIFIER_ID id, double amount, int operation, bool serialize)
 {
-    _init(id, std::wstring(), amount, operation);
+    _init(id, name, amount, operation);
 
     this->serialize = serialize;
 }
@@ -104,18 +105,13 @@ HtmlString AttributeModifier::getHoverText(eATTRIBUTE_ID attributeId, not_null_p
 
     int operation = getOperation();
 
-    double value;
-    bool percentage;
+    double value = amount;
+    bool percentage = false;
 
     if (operation == 1 || operation == 2)
     {
-        value = amount * 100.0;
         percentage = true;
-    }
-    else
-    {
-        value = amount;
-        percentage = false;
+        value = amount * 100.0;
     }
 
     eMinecraftColour colour = eMinecraftColour_NOTSET;
@@ -137,7 +133,7 @@ HtmlString AttributeModifier::getHoverText(eATTRIBUTE_ID attributeId, not_null_p
             colour = eMinecraftColour_HTMLColor_c;
         }
 
-        sign = amount < 0.0 ? L"-" : L"+";
+        sign.assign(amount >= 0.0 ? L"+" : L"-");
     }
 
     wchar_t text[256];

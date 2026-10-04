@@ -27,9 +27,10 @@ extern bool gHalloweenEvent;
 const EntityDataAccessor<unsigned char>* Bat::DATA_ID_FLAGS = NULL;
 
 Bat::Bat(Level* level)
-    : AmbientCreature(level), mTargetPosition(NULL)
+    : AmbientCreature(level)
 {
     fjDerivedCtorCalls();
+    mTargetPosition = NULL;
     setSize(0.5f, 0.9f);
     setResting(true);
     mCategories |= EntityCategory::eEntityCategory_Bat;
@@ -49,9 +50,14 @@ void Bat::staticCtor()
 void Bat::setResting(bool resting)
 {
     unsigned char flags = mEntityData->get(DATA_ID_FLAGS);
-    mEntityData->set(DATA_ID_FLAGS,
-                         resting ? (unsigned char)(flags | 1) : (unsigned char)(flags & 0xfe),
-                         true);
+    if (resting)
+    {
+        mEntityData->set(DATA_ID_FLAGS, (unsigned char)(flags | 1), true);
+    }
+    else
+    {
+        mEntityData->set(DATA_ID_FLAGS, (unsigned char)(flags & 0xfe), true);
+    }
 }
 
 void Bat::defineSynchedData()
@@ -160,21 +166,13 @@ void Bat::customServerAiStep()
         return;
     }
 
-    bool chooseTarget = mTargetPosition == NULL;
-    if (!chooseTarget)
+    if (mTargetPosition != NULL && (!mLevel->isEmptyBlock(*mTargetPosition) || mTargetPosition->y < 1))
     {
-        if (mLevel->isEmptyBlock(*mTargetPosition) && mTargetPosition->y >= 1)
-        {
-            if (mRandom->nextInt(30) != 0 &&
-                mTargetPosition->distSqr((int)mX, (int)mY, (int)mZ) >= 4.0)
-                chooseTarget = false;
-            else
-                chooseTarget = true;
-        }
-        else
-            chooseTarget = true;
+        delete mTargetPosition;
+        mTargetPosition = NULL;
     }
-    if (chooseTarget)
+    if (mTargetPosition == NULL || mRandom->nextInt(30) == 0 ||
+        mTargetPosition->distSqr((int)mX, (int)mY, (int)mZ) < 4.0)
     {
         delete mTargetPosition;
         mTargetPosition = new BlockPos((int)mX + mRandom->nextInt(7) - mRandom->nextInt(7),
@@ -185,17 +183,16 @@ void Bat::customServerAiStep()
     double xDelta = ((double)mTargetPosition->x + 0.5) - mX;
     double yDelta = ((double)mTargetPosition->y + 0.1) - mY;
     double zDelta = ((double)mTargetPosition->z + 0.5) - mZ;
-    float xDirection = xDelta > 0.0 ? 1.0f : (xDelta < 0.0 ? -1.0f : 0.0f);
-    float yDirection = yDelta > 0.0 ? 1.0f : (yDelta < 0.0 ? -1.0f : 0.0f);
-    float zDirection = zDelta > 0.0 ? 1.0f : (zDelta < 0.0 ? -1.0f : 0.0f);
+    float xDirection = (float)((xDelta > 0.0) - (xDelta < 0.0));
+    float yDirection = (float)((yDelta > 0.0) - (yDelta < 0.0));
+    float zDirection = (float)((zDelta > 0.0) - (zDelta < 0.0));
     mXd = (xDirection * 0.5f - mXd) * 0.1f + mXd;
     mYd = (yDirection * 0.7f - mYd) * 0.1f + mYd;
     mZd = (zDirection * 0.5f - mZd) * 0.1f + mZd;
-    mYRot += Mth::wrapDegrees((float)(std::atan2(mZd, mXd) * 57.2957763671875 - 90.0f - mYRot));
+    mYRot += Mth::wrapDegrees((float)(std::atan2(mZd, mXd) * 57.2957763671875) - 90.0f - mYRot);
     mZza = 0.5f;
-    if (mRandom->nextInt(100) == 0 &&
-        mLevel->getBlockState(above)->getBlock()->isSolidBlockingCubeAndNotSignalSource(
-            mLevel->getBlockState(above)))
+    const BlockState* aboveState = mLevel->getBlockState(above);
+    if (mRandom->nextInt(100) == 0 && aboveState->getBlock()->isSolidBlockingCubeAndNotSignalSource(aboveState))
         setResting(true);
 }
 
@@ -264,7 +261,7 @@ bool Bat::checkSpawnRules()
     return false;
 }
 
-double Bat::getEyeHeight()
+float Bat::getEyeHeight()
 {
     return (double)(mBbHeight * 0.5f);
 }

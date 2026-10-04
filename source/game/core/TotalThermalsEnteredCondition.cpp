@@ -13,7 +13,7 @@ TotalThermalsEnteredCondition::~TotalThermalsEnteredCondition()
 {
 }
 
-double TotalThermalsEnteredCondition::getScore(const GameMedal* medal, PlayerStats* playerStats) const
+float TotalThermalsEnteredCondition::getScore(const GameMedal* medal, PlayerStats* playerStats) const
 {
-    return static_cast<double>(static_cast<float>(playerStats->getTotalThermalsEntered()));
+    return static_cast<double>(static_cast<float>(static_cast<unsigned int>(playerStats->getTotalThermalsEntered())));
 }

@@ -10,6 +10,8 @@
 #include "game/entity/mob/SharedMonsterAttributes.hpp"
 #include "game/world/Level.hpp"
 
+static ResourceLocation* sNoLootTable = NULL;
+
 MagmaCube::MagmaCube(Level* level)
     : Slime(level)
 {
@@ -34,7 +36,7 @@ void MagmaCube::addDataWalkers(DataFixerUpper* fixer)
 void MagmaCube::registerAttributes()
 {
     Mob::registerAttributes();
-    getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(0.2);
+    getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(0.2f);
 }
 
 void MagmaCube::defineSynchedData()
@@ -43,28 +45,22 @@ void MagmaCube::defineSynchedData()
 
 bool MagmaCube::checkSpawnRules()
 {
-    if (mLevel->getDifficulty() == Difficulty::PEACEFUL ||
-        !mLevel->isUnobstructed(mBoundingBox))
-        return false;
-    return mLevel->getCollisionAABBs(shared_from_this(), mBoundingBox, false, false, false)->empty() &&
+    return mLevel->getDifficulty() != Difficulty::PEACEFUL && mLevel->isUnobstructed(mBoundingBox) &&
+           mLevel->getCollisionAABBs(shared_from_this(), mBoundingBox, false, false, false)->empty() &&
            !mLevel->containsAnyLiquid(mBoundingBox);
 }
 
 bool MagmaCube::checkSpawnObstruction()
 {
-    if (!mLevel->isUnobstructed(mBoundingBox, shared_from_this()))
-        return false;
-    std::vector<AABB*>* collisions =
-        mLevel->getCollisionAABBs(shared_from_this(), mBoundingBox, false, false, false);
-    const bool clear = collisions->empty();
-    delete collisions;
-    return clear && !mLevel->containsAnyLiquid(mBoundingBox);
+    return mLevel->isUnobstructed(mBoundingBox, shared_from_this()) &&
+           mLevel->getCollisionAABBs(shared_from_this(), mBoundingBox, false, false, false)->empty() &&
+           !mLevel->containsAnyLiquid(mBoundingBox);
 }
 
 void MagmaCube::setSize(int size, bool reset)
 {
     Slime::setSize(size, reset);
-    getAttribute(SharedMonsterAttributes::MAX_HEALTH)->setBaseValue((double)(size * 3));
+    getAttribute(SharedMonsterAttributes::ARMOR)->setBaseValue((double)(size * 3));
 }
 
 int MagmaCube::getLightColor()
@@ -84,12 +80,12 @@ const ParticleType* MagmaCube::getParticleType()
 
 boost::shared_ptr<Slime> MagmaCube::createChild()
 {
-    return boost::shared_ptr<Slime>(new MagmaCube(mLevel));
+    return boost::shared_ptr<MagmaCube>(new MagmaCube(mLevel));
 }
 
 ResourceLocation* MagmaCube::getDefaultLootTable()
 {
-    return isTiny() ? NULL : &BuiltInLootTables::MAGMA_CUBE;
+    return isTiny() ? sNoLootTable : &BuiltInLootTables::MAGMA_CUBE;
 }
 
 bool MagmaCube::isOnFire()
@@ -114,14 +110,16 @@ void MagmaCube::decreaseSquish()
 
 void MagmaCube::jumpFromGround()
 {
+    float jump = getSize() * 0.1f + 0.42f;
     mHasImpulse = true;
-    mYd = (double)(getSize() * 0.1f + 0.42f);
+    mYd = (double)jump;
 }
 
 void MagmaCube::jumpInLava()
 {
+    float jump = getSize() * 0.05f + 0.22f;
     mHasImpulse = true;
-    mYd = (double)(getSize() * 0.05f + 0.22f);
+    mYd = (double)jump;
 }
 
 void MagmaCube::causeFallDamage(float, float)

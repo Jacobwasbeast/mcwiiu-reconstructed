@@ -30,7 +30,7 @@ public:
     unsigned char get(int index);
     short getShort();
     int getInt();
-    int getInt(unsigned int index);
+    unsigned int getInt(unsigned int index);
     long long getLong();
     void getShortArray(arrayWithLength<short>& values);
 

@@ -9,10 +9,10 @@
 ResultSlot::ResultSlot(Player* player, boost::shared_ptr<CraftingContainer> craftSlots,
                        boost::shared_ptr<Container> resultContainer, int slot, int x, int y)
     : Slot(resultContainer, slot, x, y),
-      mCraftSlots(craftSlots),
-      mPlayer(player),
-      mRemoveCount(0)
+      mPlayer(player)
 {
+    mCraftSlots = craftSlots;
+    mRemoveCount = 0;
 }
 
 bool ResultSlot::mayPlace(not_null_ptr<ItemInstance>)
@@ -25,7 +25,8 @@ not_null_ptr<ItemInstance> ResultSlot::remove(int count)
     if (hasItem())
     {
         not_null_ptr<ItemInstance> item = getItem();
-        mRemoveCount += count < item->getCount() ? count : item->getCount();
+        int available = item->getCount();
+        mRemoveCount += count < available ? count : available;
     }
     return Slot::remove(count);
 }
@@ -56,7 +57,6 @@ not_null_ptr<ItemInstance> ResultSlot::onTake(boost::shared_ptr<Player> player,
                                                not_null_ptr<ItemInstance> item)
 {
     checkTakeAchievements(item);
-    Slot::onTake(player, item);
 
     NonNullList<not_null_ptr<ItemInstance> > remaining =
         Recipes::getInstance()->getRemainingItemsFor(mCraftSlots, player->mLevel,

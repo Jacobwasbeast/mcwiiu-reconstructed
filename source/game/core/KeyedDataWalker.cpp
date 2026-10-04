@@ -10,7 +10,7 @@
 KeyedDataWalker::KeyedDataWalker(unsigned long long type)
     : mKey()
 {
-    if ((type & EntityType::ENTITY) != 0)
+    if ((EntityType::ENTITY & type) == EntityType::ENTITY)
     {
         mKey = EntityIO::getKey(type);
     }
@@ -26,11 +26,11 @@ KeyedDataWalker::KeyedDataWalker(unsigned long long type)
 
 CompoundTag* KeyedDataWalker::walk(DataFixer* fixer, CompoundTag* tag, int version)
 {
-    ResourceLocation location(tag->getString(std::wstring(L"id")));
+    bool matches = ResourceLocation(tag->getString(std::wstring(L"id"))).equals(&mKey);
 
-    if (location.equals(&mKey))
+    if (matches)
     {
-        return doWalk(fixer, tag, version);
+        tag = doWalk(fixer, tag, version);
     }
 
     return tag;

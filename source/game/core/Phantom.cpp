@@ -70,8 +70,7 @@ bool Phantom::checkSpawnRules()
     PlayerSelector selector(this);
     std::vector<boost::shared_ptr<Player> >* players =
         mLevel->getPlayers(EntityType::PLAYER, &selector);
-    std::vector<boost::shared_ptr<Player> >::iterator it;
-    for (it = players->begin(); it != players->end(); ++it)
+    for (std::vector<boost::shared_ptr<Player> >::iterator it = players->begin(); it != players->end(); ++it)
     {
         boost::shared_ptr<Player> player = *it;
         BlockPos playerPos(player);
@@ -107,8 +106,7 @@ void Phantom::aiStep()
         float brightness = getBrightness();
         if (brightness > 0.5f && mRandom->nextFloat() * 30.0f < (brightness - 0.4f) * 2.0f)
         {
-            BlockPos pos(this);
-            if (mLevel->canSeeSky(pos))
+            if (mLevel->canSeeSky(BlockPos(this)))
                 setSecondsOnFire(8);
         }
     }
@@ -157,4 +155,3 @@ bool Phantom::PlayerSelector::apply(boost::shared_ptr<Player> player) const
     return mPhantom->distanceToSqr(player) < 10000.0;
 }
 
-Phantom::PlayerSelector::~PlayerSelector() { }

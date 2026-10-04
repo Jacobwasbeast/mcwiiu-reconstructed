@@ -237,7 +237,7 @@ public:
         BridgeCrossing();
         BridgeCrossing(Random& random, int x, int z);
         BridgeCrossing(int depth, Random& random, BoundingBox* box, const Direction* direction);
-        virtual ~BridgeCrossing();
+        virtual ~BridgeCrossing() {}
         static StructurePiece* createPiece(std::vector<StructurePiece*>* pieces, Random& random, int x, int y, int z,
                                            const Direction* direction, int depth);
         virtual void addChildren(StructurePiece* start, std::vector<StructurePiece*>* pieces, Random& random);

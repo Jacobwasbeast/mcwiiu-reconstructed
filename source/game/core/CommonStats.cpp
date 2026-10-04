@@ -136,7 +136,7 @@ Stat* CommonStats::get_tamedEntity(unsigned long long entityType)
     }
     if (entityType == EntityType::HORSE)
     {
-        return GenericStats::leaderOfThePack();
+        return Achievements::saddleUp;
     }
     return NULL;
 }
@@ -180,11 +180,11 @@ Stat* CommonStats::get_blocksPlaced(int blockId)
 
 Stat* CommonStats::get_blocksMined(int blockId)
 {
-    if (blockId > 255)
+    if (blockId < 256)
     {
-        return NULL;
+        return Stats::blockMinedStats.data[blockId];
     }
-    return Stats::blockMinedStats.data[blockId];
+    return NULL;
 }
 
 Stat* CommonStats::get_itemsCollected(int itemId, int auxValue)
@@ -234,11 +234,14 @@ Stat* CommonStats::get_itemsBought(int itemId)
 
 Stat* CommonStats::get_armourDyed(int itemId)
 {
-    if (itemId < 298 || itemId > 301)
+    switch (itemId)
     {
-        return NULL;
+    case 298: return Stats::armourDyedStats.data[0];
+    case 299: return Stats::armourDyedStats.data[1];
+    case 300: return Stats::armourDyedStats.data[2];
+    case 301: return Stats::armourDyedStats.data[3];
     }
-    return Stats::armourDyedStats.data[itemId - 298];
+    return NULL;
 }
 
 Stat* CommonStats::get_killsEnderdragon()
@@ -253,8 +256,16 @@ Stat* CommonStats::get_completeTheEnd()
 
 Stat* CommonStats::get_enteredBiome(int biomeId)
 {
-    if (biomeId > 39 && biomeId < 48)
+    switch (biomeId)
     {
+    case 40:
+    case 41:
+    case 42:
+    case 43:
+    case 44:
+    case 45:
+    case 46:
+    case 47:
         return Stats::biomesVisitedStats.data[0];
     }
     if (biomeId > 40)
@@ -488,7 +499,5 @@ unsigned int CommonStats::readParam(arrayWithLength<unsigned char> value)
     {
         return 1;
     }
-    unsigned int result;
-    std::memcpy(&result, value.data, 4);
-    return result;
+    return *reinterpret_cast<unsigned int*>(value.data);
 }

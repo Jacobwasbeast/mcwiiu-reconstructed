@@ -21,7 +21,9 @@ void TimerBasedCondition::SetUpTimer(MasterGameMode* gameMode, int message) cons
         return;
 
     MasterGameMode::CountdownInfo* countdownInfo = new MasterGameMode::CountdownInfo();
+    countdownInfo->completeCallback = NULL;
     countdownInfo->message = GetMessage();
+    countdownInfo->arguments.clear();
     AddIntParams(gameMode, &countdownInfo->arguments);
     countdownInfo->arguments.push_back(message);
 

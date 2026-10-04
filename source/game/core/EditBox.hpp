@@ -20,7 +20,7 @@ public:
     std::wstring getValue();
     void keyPressed(wchar_t key, int action);
     void focus(bool focused);
-    void mouseClicked(int button, int x, int y);
+    void mouseClicked(int x, int y, int button);
     void render();
     int getMaxLength();
 

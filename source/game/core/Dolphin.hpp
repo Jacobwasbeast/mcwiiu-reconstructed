@@ -30,7 +30,7 @@ public:
     Dolphin(Level* level);
     virtual MobGroupData* finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data, const std::wstring& name);
     virtual unsigned int getMaxAirSupply();
-    virtual double getEyeHeight();
+    virtual float getEyeHeight();
     virtual int getAmbientSoundInterval();
     virtual int getMaxHeadXRot();
     virtual int getMaxHeadYRot();
@@ -43,7 +43,7 @@ public:
     virtual ResourceLocation* getDefaultLootTable();
     virtual bool doHurtTarget(boost::shared_ptr<Entity> target);
     virtual void positionRider(const boost::shared_ptr<Entity>& passenger);
-    virtual boost::shared_ptr<ItemEntity> drop(const not_null_ptr<ItemInstance>& item);
+    boost::shared_ptr<ItemEntity> drop(const not_null_ptr<ItemInstance>& item);
     virtual boost::shared_ptr<AgableMob> getBreedOffspring(boost::shared_ptr<AgableMob> parent);
     bool isItemABribingFish(not_null_ptr<ItemInstance> item);
     virtual unsigned int GetInteractTooltip(const EntityTooltipDataHolder& tooltipData);

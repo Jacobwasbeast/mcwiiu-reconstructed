@@ -3,6 +3,7 @@
 #include "game/core/EntityType.hpp"
 
 #include "game/core/DamageSource.hpp"
+#include "game/core/Direction.hpp"
 #include "game/core/Mth.hpp"
 #include "game/core/PIXNamedEvents.hpp"
 #include "game/data/CompoundTag.hpp"
@@ -17,20 +18,28 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/block/DirectionProperty.hpp"
+#include "game/world/block/FurnaceBlock.hpp"
 #include "game/client/render/ParticleType.hpp"
 #include "game/world/generation/Player.hpp"
 
 const EntityDataAccessor<bool>* MinecartFurnace::DATA_HAS_FUEL = NULL;
 
-MinecartFurnace::MinecartFurnace(Level* level) : Minecart(level), mFuel(0), mPushX(0.0), mPushZ(0.0)
+MinecartFurnace::MinecartFurnace(Level* level) : Minecart(level)
 {
     fjDerivedCtorCalls();
+    mFuel = 0;
+    mPushX = 0.0;
+    mPushZ = 0.0;
 }
 
 MinecartFurnace::MinecartFurnace(Level* level, double x, double y, double z)
-    : Minecart(level, x, y, z), mFuel(0), mPushX(0.0), mPushZ(0.0)
+    : Minecart(level, x, y, z)
 {
     fjDerivedCtorCalls();
+    mFuel = 0;
+    mPushX = 0.0;
+    mPushZ = 0.0;
 }
 
 void MinecartFurnace::create(Level* level)
@@ -154,9 +163,10 @@ void MinecartFurnace::applyNaturalSlowdown()
 bool MinecartFurnace::interact(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand)
 {
     not_null_ptr<ItemInstance> item = player->getItemInHand(hand);
-    if (player->isAllowedToInteract(shared_from_this()))
+    const int allowed = player->isAllowedToInteract(shared_from_this());
+    if (allowed == 1)
     {
-        if (item->getItem() == Items::coal && mFuel + 3600 < 32001)
+        if (item->getItem() == Items::coal && mFuel + 3600 <= 32000)
         {
             if (!player->mAbilities.mInstabuild)
             {
@@ -194,7 +204,7 @@ void MinecartFurnace::readAdditionalSaveData(CompoundTag* tag)
 
 const BlockState* MinecartFurnace::getDefaultDisplayBlockState()
 {
-    return (hasFuel() ? Blocks::lit_furnace : Blocks::furnace)->defaultBlockState();
+    return (hasFuel() ? Blocks::lit_furnace : Blocks::furnace)->defaultBlockState()->setValue(FurnaceBlock::FACING, Direction::NORTH);
 }
 
 unsigned long long MinecartFurnace::GetType()

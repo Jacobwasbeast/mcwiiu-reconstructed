@@ -32,19 +32,20 @@ Path* PathFinder::reconstruct_path(Node* start, Node* end)
         node = node->cameFrom;
     }
 
-    arrayWithLength<Node*> nodes;
-    nodes.data = new Node*[length]();
-    nodes.length = length;
-    nodes.data[length - 1] = end;
-    node = end;
-    for (unsigned int i = length - 1; node->cameFrom != NULL; --i)
+    Node** data = new Node*[length];
+    arrayWithLength<Node*>::zero(data, length);
+    unsigned int last = length - 1;
+    data[last] = end;
+    Node** slot = data + last;
+    for (node = end->cameFrom; node != NULL; node = node->cameFrom)
     {
-        node = node->cameFrom;
-        nodes.data[i - 1] = node;
+        --slot;
+        *slot = node;
     }
 
+    arrayWithLength<Node*> nodes(data, length);
     Path* path = new Path(nodes);
-    delete[] nodes.data;
+    delete[] data;
     return path;
 }
 
@@ -76,24 +77,23 @@ Path* PathFinder::findPath(Node* start, Node* end, float maxDistance)
         {
             Node* neighbor = mNeighbors->data[i];
             float distance = (float)current->distanceManhattan(neighbor);
-            float walkedDistance = current->walkedDistance + distance;
-            float cost = distance + neighbor->costMalus;
-            float totalCost = current->g + cost;
-            if (walkedDistance >= maxDistance || (neighbor->inOpenSet() && neighbor->g <= totalCost))
+            neighbor->walkedDistance = current->walkedDistance + distance;
+            neighbor->cost = distance + neighbor->costMalus;
+            float totalCost = current->g + neighbor->cost;
+            if (neighbor->walkedDistance < maxDistance && (!neighbor->inOpenSet() || totalCost < neighbor->g))
             {
-                continue;
-            }
-            neighbor->cameFrom = current;
-            neighbor->g = totalCost;
-            neighbor->h = (float)neighbor->distanceManhattan(end) + neighbor->costMalus;
-            if (!neighbor->inOpenSet())
-            {
-                neighbor->f = neighbor->g + neighbor->h;
-                insert(neighbor);
-            }
-            else
-            {
-                changeCost(neighbor, neighbor->f);
+                neighbor->cameFrom = current;
+                neighbor->g = totalCost;
+                neighbor->h = (float)neighbor->distanceManhattan(end) + neighbor->costMalus;
+                if (!neighbor->inOpenSet())
+                {
+                    neighbor->f = neighbor->g + neighbor->h;
+                    insert(neighbor);
+                }
+                else
+                {
+                    changeCost(neighbor, neighbor->f);
+                }
             }
         }
     }
@@ -110,8 +110,7 @@ Path* PathFinder::findPath(LevelSource* levelSource, Mob* mob, double x, double 
     clear();
     mNodeEvaluator->prepare(levelSource, mob);
     Node* start = mNodeEvaluator->getStart();
-    BlockPos mobPos(mob->mX, mob->mY, mob->mZ);
-    Block* block = levelSource->getBlock(mobPos);
+    Block* block = levelSource->getBlock(BlockPos(mob->mX, mob->mY, mob->mZ));
     if (block->instanceof(EBLOCK_TYPE_FENCE))
     {
         int mobX = (int)floor(mob->mX + 0.5);
@@ -132,7 +131,7 @@ Path* PathFinder::findPath(LevelSource* levelSource, Mob* mob, double x, double 
 
 Path* PathFinder::findPath(LevelSource* levelSource, Mob* mob, const BlockPos& pos, float maxDistance)
 {
-    return findPath(levelSource, mob, (double)pos.x + 0.5, (double)pos.y + 0.5, (double)pos.z + 0.5, maxDistance);
+    return findPath(levelSource, mob, (float)pos.x + 0.5f, (float)pos.y + 0.5f, (float)pos.z + 0.5f, maxDistance);
 }
 
 Path* PathFinder::findPath(LevelSource* levelSource, Mob* mob, Entity* entity, float maxDistance)

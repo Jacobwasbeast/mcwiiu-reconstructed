@@ -106,7 +106,7 @@ public:
     virtual void push(boost::shared_ptr<Entity> entity);
     virtual void readAdditionalSaveData(CompoundTag* tag);
     virtual void addAdditonalSaveData(CompoundTag* tag);
-    virtual double getEyeHeight();
+    virtual float getEyeHeight();
     virtual const SoundEvent* getHurtSound(const DamageSource* source);
     virtual const SoundEvent* getDeathSound();
     virtual float getSoundVolume();

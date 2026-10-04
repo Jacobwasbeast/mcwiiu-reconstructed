@@ -12,7 +12,7 @@ class Uniform
 {
 public:
     Uniform(const std::wstring&, int, int, Effect*);
-    virtual ~Uniform();
+    virtual ~Uniform() {}
     virtual void set(float);
     virtual void set(float, float);
     virtual void set(float, float, float);

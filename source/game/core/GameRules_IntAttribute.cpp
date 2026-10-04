@@ -4,14 +4,10 @@
 #include "game/data/GameRuleSaveInterface.hpp"
 #include "game/core/StringFormat.hpp"
 
+#include "game/core/StringConversion.hpp"
+
 #include <algorithm>
 #include <string>
-
-template<typename T>
-std::wstring toString(T value);
-
-template<typename T>
-T fromString(const std::wstring& text);
 
 GameRules_IntAttribute::GameRules_IntAttribute(int* value)
     : mValue(value),
@@ -30,7 +26,7 @@ void GameRules_IntAttribute::setValue(const std::wstring& value)
 {
     mHasValue = true;
 
-    *mValue = fromString<int>(value);
+    *mValue = _fromString<int>(value);
 
     if (mHasMin)
     {
@@ -45,7 +41,7 @@ void GameRules_IntAttribute::setValue(const std::wstring& value)
 
 void GameRules_IntAttribute::save(ConsoleGameRules::EGameRuleAttr attribute, GameRuleSaveInterface* saveInterface)
 {
-    saveInterface->saveAttribute(attribute, toString(*mValue));
+    saveInterface->saveAttribute(attribute, _toString<int>(*mValue));
 }
 
 void GameRules_IntAttribute::writeAsXml(ConsoleGameRules::EGameRuleAttr attribute, std::string& xml)
@@ -53,14 +49,16 @@ void GameRules_IntAttribute::writeAsXml(ConsoleGameRules::EGameRuleAttr attribut
     xml.append(formatstr(" %ls=\"%d\"", gRuleAttributeNames[attribute], *mValue));
 }
 
-void GameRules_IntAttribute::setMin(int min)
+GameRules_IntAttribute* GameRules_IntAttribute::setMin(int min)
 {
     mMin = min;
     mHasMin = true;
+    return this;
 }
 
-void GameRules_IntAttribute::setMax(int max)
+GameRules_IntAttribute* GameRules_IntAttribute::setMax(int max)
 {
     mMax = max;
     mHasMax = true;
+    return this;
 }

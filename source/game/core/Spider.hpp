@@ -77,7 +77,7 @@ public:
     virtual void setClimbing(bool climbing);
     virtual MobGroupData* finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data,
                                            const std::wstring& name);
-    virtual double getEyeHeight();
+    virtual float getEyeHeight();
     virtual unsigned long long GetType();
 };
 

@@ -189,7 +189,7 @@ public:
     StructureManager* getStructureManager();
     Textures* getTextureManager() { return mTextures; }
     FrameTimer* getFrameTimer() { return mFrameTimer; }
-    double getFrameTime();
+    float getFrameTime();
     BlockRenderDispatcher* getBlockRenderer();
     ItemRenderer* getItemRenderer();
     ItemInHandRenderer* getItemInHandRenderer();

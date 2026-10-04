@@ -88,14 +88,12 @@ static int TRIANGLES_BOTTOM_DISPLAY_NAMES[16] = { IDS_ITEM_BANNER_TRIANGLES_BOTT
 static int TRIANGLES_TOP_DISPLAY_NAMES[16] = { IDS_ITEM_BANNER_TRIANGLES_TOP_WHITE, IDS_ITEM_BANNER_TRIANGLES_TOP_ORANGE, IDS_ITEM_BANNER_TRIANGLES_TOP_MAGENTA, IDS_ITEM_BANNER_TRIANGLES_TOP_LIGHTBLUE, IDS_ITEM_BANNER_TRIANGLES_TOP_YELLOW, IDS_ITEM_BANNER_TRIANGLES_TOP_LIME, IDS_ITEM_BANNER_TRIANGLES_TOP_PINK, IDS_ITEM_BANNER_TRIANGLES_TOP_GRAY, IDS_ITEM_BANNER_TRIANGLES_TOP_SILVER, IDS_ITEM_BANNER_TRIANGLES_TOP_CYAN, IDS_ITEM_BANNER_TRIANGLES_TOP_PURPLE, IDS_ITEM_BANNER_TRIANGLES_TOP_BLUE, IDS_ITEM_BANNER_TRIANGLES_TOP_BROWN, IDS_ITEM_BANNER_TRIANGLES_TOP_GREEN, IDS_ITEM_BANNER_TRIANGLES_TOP_RED, IDS_ITEM_BANNER_TRIANGLES_TOP_BLACK };
 
 BannerPattern::BannerPattern(unsigned int id, const std::wstring& name, int* names, wchar_t tab)
-    : patternItem(NULL)
 {
     _init(id, name, names, tab);
 }
 
 BannerPattern::BannerPattern(unsigned int id, const std::wstring& name, const std::wstring& p0,
                              const std::wstring& p1, const std::wstring& p2, int* names, wchar_t tab)
-    : patternItem(NULL)
 {
     _init(id, name, names, tab);
     patterns[0] = p0;
@@ -130,8 +128,9 @@ BannerPattern* BannerPattern::byHash(const std::wstring& name)
     std::vector<const BannerPattern*>::const_iterator it;
     for (it = PATTERNS.begin(); it != PATTERNS.end(); ++it)
     {
-        if ((*it)->hashname == name)
-            return const_cast<BannerPattern*>(*it);
+        const BannerPattern* pattern = *it;
+        if (pattern->hashname == name)
+            return const_cast<BannerPattern*>(pattern);
     }
     return NULL;
 }
@@ -189,9 +188,9 @@ arrayWithLength<std::wstring> BannerPattern::getPatterns() const
     return arrayWithLength<std::wstring>(const_cast<std::wstring*>(patterns), 3);
 }
 
-unsigned int BannerPattern::hasPattern() const
+bool BannerPattern::hasPattern() const
 {
-    return (patternItem != NULL || !patterns[0].empty()) ? 1U : 0U;
+    return patternItem != NULL || !patterns[0].empty();
 }
 
 bool BannerPattern::hasPatternItem() const

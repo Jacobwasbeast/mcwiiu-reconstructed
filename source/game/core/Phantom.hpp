@@ -21,7 +21,7 @@ public:
     public:
         PlayerSelector(Phantom* phantom) : mPhantom(phantom) { }
         virtual bool apply(boost::shared_ptr<Player> player) const;
-        virtual ~PlayerSelector();
+        virtual ~PlayerSelector() { }
 
     private:
         Phantom* mPhantom;

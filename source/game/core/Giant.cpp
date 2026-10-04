@@ -25,7 +25,7 @@ void Giant::addDataWalkers(DataFixerUpper* fixer)
     Mob::addDataWalkers(fixer, EntityType::GIANT);
 }
 
-double Giant::getEyeHeight()
+float Giant::getEyeHeight()
 {
     return (double)(1.62f * 6.0f);
 }

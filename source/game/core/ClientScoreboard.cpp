@@ -130,6 +130,7 @@ void ClientScoreboard::RemovePlayerStats(const StatsUID& suid)
     if (found != mPlayerStats.end())
     {
         delete found->second;
+        found->second = NULL;
         mPlayerStats.erase(found);
     }
 }
@@ -140,6 +141,7 @@ void ClientScoreboard::ResetPlayerScores()
     for (; it != mPlayerStats.end(); ++it)
     {
         delete it->second;
+        it->second = NULL;
     }
     mPlayerStats.clear();
 }
@@ -203,8 +205,13 @@ std::wstring ClientScoreboard::GetDisplayName(const StatsUID& suid)
 
 GameMedal* ClientScoreboard::GetMedal(const StatsUID& suid)
 {
+    GameMedal* medal = NULL;
     PlayerStats* stats = GetPlayerStats(suid);
-    return stats == NULL ? NULL : const_cast<GameMedal*>(stats->mMedal);
+    if (stats != NULL)
+    {
+        medal = const_cast<GameMedal*>(stats->mMedal);
+    }
+    return medal;
 }
 
 bool ClientScoreboard::IsWinner(const StatsUID& suid, int round)
@@ -390,12 +397,15 @@ int ClientScoreboard::GetBestLifeSpan()
 
 int ClientScoreboard::GetTotalLifeSpan(const StatsUID& suid)
 {
-    PlayerStats* player = GetPlayerStats(suid);
     int total = 0;
-    if (player != NULL)
+    PlayerStats* player = GetPlayerStats(suid);
+    if (player != NULL && !player->mRoundStats.empty())
     {
         PlayerStats::RoundStatsMap::iterator it = player->mRoundStats.begin();
-        for (; it != player->mRoundStats.end(); ++it) total += it->second.mPlacement;
+        for (; it != player->mRoundStats.end(); ++it)
+        {
+            total += it->second.mPlacement;
+        }
     }
     return total;
 }
@@ -518,8 +528,13 @@ void ClientScoreboard::SetPersonalBest(const StatsUID& suid, int round)
 
 bool ClientScoreboard::IsPersonalBest(const StatsUID& suid, int round)
 {
+    bool best = false;
     PlayerStats::_RoundStats* stats = GetPlayerRoundStats(suid, round);
-    return stats != NULL && stats->mQuit;
+    if (stats != NULL)
+    {
+        best = stats->mQuit;
+    }
+    return best;
 }
 
 int ClientScoreboard::GetLastCheckpointID(const StatsUID& suid, int round)
@@ -585,7 +600,7 @@ int ClientScoreboard::GetTotalDistanceTravelled(const StatsUID& suid)
     {
         PlayerStats::RoundStatsMap::iterator it = player->mRoundStats.begin();
         for (; it != player->mRoundStats.end(); ++it)
-            total += (int)it->second.mDistanceTravelled;
+            total += it->second.mArrowsFired;
     }
     return total;
 }
@@ -838,12 +853,13 @@ std::wstring ClientScoreboard::GetGlideOverallWinner(bool usePoints)
 
 bool ClientScoreboard::IsOverallGlideWinner(const StatsUID& suid, bool usePoints)
 {
-    int round = -1;
-    const int value = usePoints ? GetBestPoints(suid, &round) : GetBestLifeSpan(suid, &round);
-    const int global = usePoints ? GetBestPoints() : GetBestLifeSpan();
-    if (value != global)
+    if (usePoints)
     {
-        return false;
+        int round = -1;
+        const int value = GetBestPoints(suid, &round);
+        return value == GetBestPoints() && GetEndZoneEntered(suid, round);
     }
-    return GetEndZoneEntered(suid, round);
+    int round = -1;
+    const int value = GetBestLifeSpan(suid, &round);
+    return value == GetBestLifeSpan() && GetEndZoneEntered(suid, round);
 }

@@ -56,7 +56,8 @@ void EditBox::keyPressed(wchar_t key, int action)
         mValue = mValue.substr(0, mValue.size() - 1);
     }
 
-    if (ALLOWED_CHARACTERS.find(&key, 0, 1) != std::wstring::npos
+    wchar_t character = key;
+    if (ALLOWED_CHARACTERS.find(&character, 0, 1) != std::wstring::npos
         && (mValue.size() < static_cast<std::wstring::size_type>(mMaxLength) || mMaxLength == 0))
     {
         mValue += key;
@@ -72,7 +73,7 @@ void EditBox::focus(bool focused)
     mFocused = focused;
 }
 
-void EditBox::mouseClicked(int button, int x, int y)
+void EditBox::mouseClicked(int x, int y, int button)
 {
     bool focused = mActive && mX <= x && x < mX + mWidth
         && mY <= y && y < mY + mHeight;
@@ -84,19 +85,19 @@ void EditBox::render()
     fill(mX - 1, mY - 1, mX + mWidth + 1, mY + mHeight + 1, 0xffa0a0a0);
     fill(mX, mY, mX + mWidth, mY + mHeight, 0xff000000);
 
-    int textY = mY + (mHeight - 8) / 2;
-    if (!mActive)
+    if (mActive)
     {
-        drawString(mFont, mValue, mX + 4, textY, 0x707070);
-    }
-    else
-    {
+        bool showCursor = mFocused && (mTickCount / 6 & 1) == 0;
         const wchar_t* cursor = L"";
-        if (mFocused && (mTickCount / 6 & 1) == 0)
+        if (showCursor)
         {
             cursor = L"_";
         }
         std::wstring displayedValue = mValue + cursor;
-        drawString(mFont, displayedValue, mX + 4, textY, 0xe0e0e0);
+        drawString(mFont, displayedValue, mX + 4, mY + (mHeight - 8) / 2, 0xe0e0e0);
+    }
+    else
+    {
+        drawString(mFont, mValue, mX + 4, mY + (mHeight - 8) / 2, 0x707070);
     }
 }

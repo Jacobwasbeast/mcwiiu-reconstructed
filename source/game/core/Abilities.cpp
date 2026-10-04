@@ -17,6 +17,7 @@ Abilities::Abilities()
 
 bool Abilities::operator==(const Abilities& other) const
 {
+    bool equal = false;
     if (mInvulnerable == other.mInvulnerable
         && mFlying == other.mFlying
         && mMayfly == other.mMayfly
@@ -25,10 +26,10 @@ bool Abilities::operator==(const Abilities& other) const
         && mFlyingSpeed == other.mFlyingSpeed
         && mWalkingSpeed == other.mWalkingSpeed)
     {
-        return true;
+        equal = true;
     }
 
-    return false;
+    return equal;
 }
 
 void Abilities::addSaveData(CompoundTag* tag)

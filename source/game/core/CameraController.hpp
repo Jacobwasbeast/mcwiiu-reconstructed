@@ -21,6 +21,11 @@ public:
         Vec3* position;
         Vec3* rotation;
         float time;
+
+        SplineNode(Vec3* nodePosition, Vec3* nodeRotation, float nodeTime)
+            : position(nodePosition), rotation(nodeRotation), time(nodeTime)
+        {
+        }
     };
 
     CameraController(int cameraMode);

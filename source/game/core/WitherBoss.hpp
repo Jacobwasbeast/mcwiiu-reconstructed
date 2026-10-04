@@ -81,7 +81,7 @@ public:
     virtual const SoundEvent* getDeathSound();
     virtual void dropDeathLoot(bool hitByPlayer, int lootingLevel);
     virtual int getArmorValue();
-    virtual float getMaxHealth();
+    virtual float getMaxHealth() { return LivingEntity::getMaxHealth(); }
     virtual EMobType getMobType();
     virtual void aiStep();
     virtual void registerGoals();

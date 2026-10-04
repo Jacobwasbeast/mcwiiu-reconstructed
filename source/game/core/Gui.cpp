@@ -531,28 +531,32 @@ void Gui::addMessage(const std::wstring& message, int playerIndex, bool overlay,
 {
     std::wstring text = message;
 
-    boost::shared_ptr<MultiplayerLocalPlayer> player = mMinecraft->mPlayer;
-    BOOST_ASSERT(player.get() != 0);
-    const unsigned int language = XGetLanguage();
-    const bool narrowGlyphs = language != XC_LANGUAGE_JAPANESE && language != XC_LANGUAGE_KOREAN &&
-                              language != XC_LANGUAGE_TCHINESE;
     unsigned int maxLength;
-    if (static_cast<unsigned int>(player->mViewport) < 3) {
-        if (narrowGlyphs) {
-            maxLength = gRenderer->IsHiDef() ? 0x69 : 0x37;
-        } else {
+    if (static_cast<unsigned int>(mMinecraft->mPlayer->mViewport) < 3) {
+        maxLength = gRenderer->IsHiDef() ? 0x69 : 0x37;
+        const unsigned int language = XGetLanguage();
+        if (language == XC_LANGUAGE_JAPANESE || language == XC_LANGUAGE_KOREAN ||
+            language == XC_LANGUAGE_TCHINESE) {
             maxLength = gRenderer->IsHiDef() ? 0x46 : 0x23;
         }
     } else {
-        maxLength = narrowGlyphs ? 0x37 : 0x23;
+        maxLength = 0x37;
+        const unsigned int language = XGetLanguage();
+        if (language == XC_LANGUAGE_JAPANESE || language == XC_LANGUAGE_KOREAN ||
+            language == XC_LANGUAGE_TCHINESE) {
+            maxLength = 0x23;
+        }
     }
 
     bool wrapped = false;
     while (text.length() > maxLength) {
         const unsigned int searchEnd = std::min<unsigned int>(text.length(), maxLength);
-        unsigned int split = static_cast<unsigned int>(text.find_last_of(L" ", searchEnd));
-        if (!narrowGlyphs) {
-            split = maxLength;
+        text.find_last_of(L" ", searchEnd);
+        unsigned int split = maxLength;
+        const unsigned int splitLanguage = XGetLanguage();
+        if (splitLanguage != XC_LANGUAGE_JAPANESE && splitLanguage != XC_LANGUAGE_KOREAN &&
+            splitLanguage != XC_LANGUAGE_TCHINESE) {
+            split = static_cast<unsigned int>(text.find_last_of(L" ", searchEnd));
         }
         if (split != searchEnd) {
             ++split;

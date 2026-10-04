@@ -51,7 +51,7 @@ public:
     virtual ~DamageSource() {}
     bool equals(const DamageSource* source) const;
     static EntityDamageSource* CreateMobAttack(boost::shared_ptr<LivingEntity> entity);
-    void setProjectile();
+    DamageSource* setProjectile();
     static DamageSource* CreateIndirectMobAttack(const boost::shared_ptr<Entity>& source, const boost::shared_ptr<LivingEntity>& target, bool projectile);
     static EntityDamageSource* CreatePlayerAttack(boost::shared_ptr<Player> player);
     void setIsFireProjectile();
@@ -65,7 +65,7 @@ public:
     static DamageSource* CreateIndirectMagic(boost::shared_ptr<Entity> source, boost::shared_ptr<Entity> target, const DamageSource* baseSource);
     static EntityDamageSource* CreateThorns(boost::shared_ptr<Entity> entity);
     DamageSource* setExplosion();
-    void setScalesWithDifficulty();
+    DamageSource* setScalesWithDifficulty();
     static DamageSource* CreateExplosion(Explosion* explosion);
     static DamageSource* CreateExplosion(const boost::shared_ptr<LivingEntity>& entity);
     virtual boost::shared_ptr<Entity> getDirectEntity() const;

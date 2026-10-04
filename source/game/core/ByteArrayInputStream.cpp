@@ -3,20 +3,17 @@
 
 
 ByteArrayInputStream::ByteArrayInputStream(arrayWithLength<unsigned char> data)
-    : mCount(data.length), mMark(0), mPosition(0)
+    : mBuffer(data), mCount(data.length), mMark(0), mPosition(0)
 {
-    mBuffer.data = data.data;
-    mBuffer.length = data.length;
 }
 
 ByteArrayInputStream::ByteArrayInputStream(arrayWithLength<unsigned char> data,
                                            unsigned int offset,
                                            unsigned int length)
-    : mCount(offset + length < data.length ? offset + length : data.length),
+    : mBuffer(data),
+      mCount(offset + length < data.length ? offset + length : data.length),
       mMark(offset), mPosition(offset)
 {
-    mBuffer.data = data.data;
-    mBuffer.length = data.length;
 }
 
 ByteArrayInputStream::~ByteArrayInputStream()
@@ -75,5 +72,5 @@ long long ByteArrayInputStream::skip(long long count)
         newPosition = mCount;
     }
     mPosition = newPosition;
-    return static_cast<long long>(newPosition - position);
+    return static_cast<long long>(static_cast<int>(newPosition - position));
 }

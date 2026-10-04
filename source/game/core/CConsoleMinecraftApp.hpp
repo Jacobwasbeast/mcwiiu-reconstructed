@@ -40,7 +40,7 @@ public:
     void SetRichPresenceContext(int, int);
     uint8_t HasNoSpaceForSaveQuota();
     void SetDRCCheckPlayerCountEnabled(bool);
-    uint8_t getIgnoreMainMenuInputDuringInvite();
+    bool getIgnoreMainMenuInputDuringInvite();
     void ReleaseSaveThumbnail();
     void ExitGame();
     void StoreLaunchData();

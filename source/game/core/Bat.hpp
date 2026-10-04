@@ -29,7 +29,7 @@ public:
     virtual void readAdditionalSaveData(CompoundTag* tag);
     virtual void addAdditonalSaveData(CompoundTag* tag);
     virtual bool isIgnoringBlockTriggers();
-    virtual double getEyeHeight();
+    virtual float getEyeHeight();
     virtual void registerAttributes();
     virtual const SoundEvent* getHurtSound(const DamageSource* source);
     virtual const SoundEvent* getDeathSound();

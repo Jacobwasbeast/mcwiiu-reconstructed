@@ -24,7 +24,7 @@ public:
     virtual bool doHurtTarget(boost::shared_ptr<Entity> target);
     virtual MobGroupData* finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data,
                                            const std::wstring& name);
-    virtual double getEyeHeight();
+    virtual float getEyeHeight();
     virtual ResourceLocation* getDefaultLootTable();
     virtual unsigned long long GetType();
 };

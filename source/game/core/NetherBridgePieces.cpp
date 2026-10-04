@@ -1,6 +1,7 @@
 #include "game/core/NetherBridgePieces.hpp"
 #include "game/core/EntityType.hpp"
 
+#include <algorithm>
 #include <cstdlib>
 
 #include "game/core/BuiltInLootTables.hpp"
@@ -267,7 +268,7 @@ StructurePiece* NetherBridgePieces::NetherBridgePiece::generateChildRight(StartP
 void NetherBridgePieces::NetherBridgePiece::generateLightPost(Level* level, Random&, BoundingBox* box,
                                                               int x, int y, int z, int xOffset, int zOffset)
 {
-    BlockPos pos(getWorldX(x, z), getWorldY(y), getWorldZ(x, z));
+    const BlockPos& pos = BlockPos(getWorldX(x, z), getWorldY(y), getWorldZ(x, z));
     if (!box->isInside(pos))
         return;
 
@@ -335,8 +336,6 @@ NetherBridgePieces::BridgeCrossing::BridgeCrossing(int depth, Random&, BoundingB
     mBoundingBox = box;
 }
 
-NetherBridgePieces::BridgeCrossing::~BridgeCrossing() { }
-
 StructurePiece* NetherBridgePieces::BridgeCrossing::createPiece(std::vector<StructurePiece*>* pieces, Random& random,
                                                                 int x, int y, int z, const Direction* direction, int depth)
 {
@@ -357,42 +356,40 @@ void NetherBridgePieces::BridgeCrossing::addChildren(StructurePiece* start, std:
 
 bool NetherBridgePieces::BridgeCrossing::postProcess(Level* level, Random&, BoundingBox* box)
 {
-    const BlockState* brick = Blocks::nether_brick->defaultBlockState();
-    const BlockState* air = Blocks::air->defaultBlockState();
-    generateBox(level, box, 7, 3, 0, 11, 4, 18, brick, brick, false);
-    generateBox(level, box, 0, 3, 7, 18, 4, 11, brick, brick, false);
-    generateBox(level, box, 8, 5, 0, 10, 7, 18, air, air, false);
-    generateBox(level, box, 0, 5, 8, 18, 7, 10, air, air, false);
-    generateBox(level, box, 7, 5, 0, 7, 5, 7, brick, brick, false);
-    generateBox(level, box, 7, 5, 11, 7, 5, 18, brick, brick, false);
-    generateBox(level, box, 11, 5, 0, 11, 5, 7, brick, brick, false);
-    generateBox(level, box, 11, 5, 11, 11, 5, 18, brick, brick, false);
-    generateBox(level, box, 0, 5, 7, 7, 5, 7, brick, brick, false);
-    generateBox(level, box, 11, 5, 7, 18, 5, 7, brick, brick, false);
-    generateBox(level, box, 0, 5, 11, 7, 5, 11, brick, brick, false);
-    generateBox(level, box, 11, 5, 11, 18, 5, 11, brick, brick, false);
-    generateBox(level, box, 7, 2, 0, 11, 2, 5, brick, brick, false);
-    generateBox(level, box, 7, 2, 13, 11, 2, 18, brick, brick, false);
-    generateBox(level, box, 7, 0, 0, 11, 1, 3, brick, brick, false);
-    generateBox(level, box, 7, 0, 15, 11, 1, 18, brick, brick, false);
+    generateBox(level, box, 7, 3, 0, 11, 4, 18, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 0, 3, 7, 18, 4, 11, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 8, 5, 0, 10, 7, 18, Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(), false);
+    generateBox(level, box, 0, 5, 8, 18, 7, 10, Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(), false);
+    generateBox(level, box, 7, 5, 0, 7, 5, 7, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 7, 5, 11, 7, 5, 18, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 11, 5, 0, 11, 5, 7, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 11, 5, 11, 11, 5, 18, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 0, 5, 7, 7, 5, 7, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 11, 5, 7, 18, 5, 7, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 0, 5, 11, 7, 5, 11, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 11, 5, 11, 18, 5, 11, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 7, 2, 0, 11, 2, 5, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 7, 2, 13, 11, 2, 18, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 7, 0, 0, 11, 1, 3, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 7, 0, 15, 11, 1, 18, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
     for (int x = 7; x <= 11; ++x)
     {
         for (int z = 0; z <= 2; ++z)
         {
-            fillColumnDown(level, brick, x, -1, z, box);
-            fillColumnDown(level, brick, x, -1, 18 - z, box);
+            fillColumnDown(level, Blocks::nether_brick->defaultBlockState(), x, -1, z, box);
+            fillColumnDown(level, Blocks::nether_brick->defaultBlockState(), x, -1, 18 - z, box);
         }
     }
-    generateBox(level, box, 0, 2, 7, 5, 2, 11, brick, brick, false);
-    generateBox(level, box, 13, 2, 7, 18, 2, 11, brick, brick, false);
-    generateBox(level, box, 0, 0, 7, 3, 1, 11, brick, brick, false);
-    generateBox(level, box, 15, 0, 7, 18, 1, 11, brick, brick, false);
+    generateBox(level, box, 0, 2, 7, 5, 2, 11, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 13, 2, 7, 18, 2, 11, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 0, 0, 7, 3, 1, 11, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 15, 0, 7, 18, 1, 11, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
     for (int x = 0; x <= 2; ++x)
     {
         for (int z = 7; z <= 11; ++z)
         {
-            fillColumnDown(level, brick, x, -1, z, box);
-            fillColumnDown(level, brick, 18 - x, -1, z, box);
+            fillColumnDown(level, Blocks::nether_brick->defaultBlockState(), x, -1, z, box);
+            fillColumnDown(level, Blocks::nether_brick->defaultBlockState(), 18 - x, -1, z, box);
         }
     }
     return true;
@@ -439,25 +436,24 @@ void NetherBridgePieces::BridgeEndFiller::addAdditionalSaveData(DataOutputStream
 bool NetherBridgePieces::BridgeEndFiller::postProcess(Level* level, Random&, BoundingBox* box)
 {
     Random random(static_cast<long long>(mSelfSeed));
-    const BlockState* brick = Blocks::nether_brick->defaultBlockState();
     for (int x = 0; x <= 4; ++x)
     {
         for (int y = 3; y <= 4; ++y)
         {
             int length = random.nextInt(8);
-            generateBox(level, box, x, y, 0, x, y, length, brick, brick, false);
+            generateBox(level, box, x, y, 0, x, y, length, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
         }
     }
 
     int length = random.nextInt(8);
-    generateBox(level, box, 0, 5, 0, 0, 5, length, brick, brick, false);
+    generateBox(level, box, 0, 5, 0, 0, 5, length, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
     length = random.nextInt(8);
-    generateBox(level, box, 4, 5, 0, 4, 5, length, brick, brick, false);
+    generateBox(level, box, 4, 5, 0, 4, 5, length, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
 
     for (int x = 0; x <= 4; ++x)
     {
         int depth = random.nextInt(5);
-        generateBox(level, box, x, 2, 0, x, 2, depth, brick, brick, false);
+        generateBox(level, box, x, 2, 0, x, 2, depth, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
     }
 
     for (int x = 0; x <= 4; ++x)
@@ -465,7 +461,7 @@ bool NetherBridgePieces::BridgeEndFiller::postProcess(Level* level, Random&, Bou
         for (int y = 0; y <= 1; ++y)
         {
             int depth = random.nextInt(3);
-            generateBox(level, box, x, y, 0, x, y, depth, brick, brick, false);
+            generateBox(level, box, x, y, 0, x, y, depth, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
         }
     }
     return true;
@@ -505,33 +501,30 @@ void NetherBridgePieces::BridgeStraight::addChildren(StructurePiece* start, std:
 
 bool NetherBridgePieces::BridgeStraight::postProcess(Level* level, Random&, BoundingBox* box)
 {
-    const BlockState* brick = Blocks::nether_brick->defaultBlockState();
-    const BlockState* air = Blocks::air->defaultBlockState();
-    const BlockState* fence = Blocks::nether_brick_fence->defaultBlockState();
-    generateBox(level, box, 0, 3, 0, 4, 4, 18, brick, brick, false);
-    generateBox(level, box, 1, 5, 0, 3, 7, 18, air, air, false);
-    generateBox(level, box, 0, 5, 0, 0, 5, 18, brick, brick, false);
-    generateBox(level, box, 4, 5, 0, 4, 5, 18, brick, brick, false);
-    generateBox(level, box, 0, 2, 0, 4, 2, 5, brick, brick, false);
-    generateBox(level, box, 0, 2, 13, 4, 2, 18, brick, brick, false);
-    generateBox(level, box, 0, 0, 0, 4, 1, 3, brick, brick, false);
-    generateBox(level, box, 0, 0, 15, 4, 1, 18, brick, brick, false);
+    generateBox(level, box, 0, 3, 0, 4, 4, 18, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 1, 5, 0, 3, 7, 18, Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(), false);
+    generateBox(level, box, 0, 5, 0, 0, 5, 18, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 4, 5, 0, 4, 5, 18, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 0, 2, 0, 4, 2, 5, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 0, 2, 13, 4, 2, 18, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 0, 0, 0, 4, 1, 3, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 0, 0, 15, 4, 1, 18, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
     for (int x = 0; x <= 4; ++x)
     {
         for (int z = 0; z <= 2; ++z)
         {
-            fillColumnDown(level, brick, x, -1, z, box);
-            fillColumnDown(level, brick, x, -1, 18 - z, box);
+            fillColumnDown(level, Blocks::nether_brick->defaultBlockState(), x, -1, z, box);
+            fillColumnDown(level, Blocks::nether_brick->defaultBlockState(), x, -1, 18 - z, box);
         }
     }
-    generateBox(level, box, 0, 1, 1, 0, 4, 1, fence, fence, false);
-    generateBox(level, box, 0, 3, 4, 0, 4, 4, fence, fence, false);
-    generateBox(level, box, 0, 3, 14, 0, 4, 14, fence, fence, false);
-    generateBox(level, box, 0, 1, 17, 0, 4, 17, fence, fence, false);
-    generateBox(level, box, 4, 1, 1, 4, 4, 1, fence, fence, false);
-    generateBox(level, box, 4, 3, 4, 4, 4, 4, fence, fence, false);
-    generateBox(level, box, 4, 3, 14, 4, 4, 14, fence, fence, false);
-    generateBox(level, box, 4, 1, 17, 4, 4, 17, fence, fence, false);
+    generateBox(level, box, 0, 1, 1, 0, 4, 1, Blocks::nether_brick_fence->defaultBlockState(), Blocks::nether_brick_fence->defaultBlockState(), false);
+    generateBox(level, box, 0, 3, 4, 0, 4, 4, Blocks::nether_brick_fence->defaultBlockState(), Blocks::nether_brick_fence->defaultBlockState(), false);
+    generateBox(level, box, 0, 3, 14, 0, 4, 14, Blocks::nether_brick_fence->defaultBlockState(), Blocks::nether_brick_fence->defaultBlockState(), false);
+    generateBox(level, box, 0, 1, 17, 0, 4, 17, Blocks::nether_brick_fence->defaultBlockState(), Blocks::nether_brick_fence->defaultBlockState(), false);
+    generateBox(level, box, 4, 1, 1, 4, 4, 1, Blocks::nether_brick_fence->defaultBlockState(), Blocks::nether_brick_fence->defaultBlockState(), false);
+    generateBox(level, box, 4, 3, 4, 4, 4, 4, Blocks::nether_brick_fence->defaultBlockState(), Blocks::nether_brick_fence->defaultBlockState(), false);
+    generateBox(level, box, 4, 3, 14, 4, 4, 14, Blocks::nether_brick_fence->defaultBlockState(), Blocks::nether_brick_fence->defaultBlockState(), false);
+    generateBox(level, box, 4, 1, 17, 4, 4, 17, Blocks::nether_brick_fence->defaultBlockState(), Blocks::nether_brick_fence->defaultBlockState(), false);
     return true;
 }
 
@@ -569,35 +562,31 @@ void NetherBridgePieces::CastleCorridorStairsPiece::addChildren(StructurePiece* 
 
 bool NetherBridgePieces::CastleCorridorStairsPiece::postProcess(Level* level, Random&, BoundingBox* box)
 {
-    const BlockState* brick = Blocks::nether_brick->defaultBlockState();
-    const BlockState* air = Blocks::air->defaultBlockState();
-    const BlockState* fence = Blocks::nether_brick_fence->defaultBlockState();
-    TypedBoxed<const Direction*> facing(Direction::SOUTH);
-    const BlockState* stairs = Blocks::nether_brick_stairs->defaultBlockState()->setBoxedValue(StairBlock::FACING, &facing);
+    const BlockState* stairs = Blocks::nether_brick_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::SOUTH);
     for (int z = 0; z <= 9; ++z)
     {
         int floor = 7 - z < 1 ? 1 : 7 - z;
-        int ceiling = floor + 5 < 14 - z ? 14 - z : floor + 5;
+        int ceiling = std::max(floor + 5, 14 - z);
         if (ceiling > 13)
             ceiling = 13;
-        generateBox(level, box, 0, 0, z, 4, floor, z, brick, brick, false);
-        generateBox(level, box, 1, floor + 1, z, 3, ceiling - 1, z, air, air, false);
+        generateBox(level, box, 0, 0, z, 4, floor, z, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+        generateBox(level, box, 1, floor + 1, z, 3, ceiling - 1, z, Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(), false);
         if (z <= 6)
         {
             placeBlock(level, stairs, 1, floor + 1, z, box);
             placeBlock(level, stairs, 2, floor + 1, z, box);
             placeBlock(level, stairs, 3, floor + 1, z, box);
         }
-        generateBox(level, box, 0, ceiling, z, 4, ceiling, z, brick, brick, false);
-        generateBox(level, box, 0, floor + 1, z, 0, ceiling - 1, z, brick, brick, false);
-        generateBox(level, box, 4, floor + 1, z, 4, ceiling - 1, z, brick, brick, false);
+        generateBox(level, box, 0, ceiling, z, 4, ceiling, z, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+        generateBox(level, box, 0, floor + 1, z, 0, ceiling - 1, z, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+        generateBox(level, box, 4, floor + 1, z, 4, ceiling - 1, z, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
         if ((z & 1) == 0)
         {
-            generateBox(level, box, 0, floor + 2, z, 0, floor + 3, z, fence, fence, false);
-            generateBox(level, box, 4, floor + 2, z, 4, floor + 3, z, fence, fence, false);
+            generateBox(level, box, 0, floor + 2, z, 0, floor + 3, z, Blocks::nether_brick_fence->defaultBlockState(), Blocks::nether_brick_fence->defaultBlockState(), false);
+            generateBox(level, box, 4, floor + 2, z, 4, floor + 3, z, Blocks::nether_brick_fence->defaultBlockState(), Blocks::nether_brick_fence->defaultBlockState(), false);
         }
         for (int x = 0; x <= 4; ++x)
-            fillColumnDown(level, brick, x, -1, z, box);
+            fillColumnDown(level, Blocks::nether_brick->defaultBlockState(), x, -1, z, box);
     }
     return true;
 }
@@ -642,32 +631,29 @@ void NetherBridgePieces::CastleCorridorTBalconyPiece::addChildren(StructurePiece
 
 bool NetherBridgePieces::CastleCorridorTBalconyPiece::postProcess(Level* level, Random&, BoundingBox* box)
 {
-    const BlockState* brick = Blocks::nether_brick->defaultBlockState();
-    const BlockState* air = Blocks::air->defaultBlockState();
-    const BlockState* fence = Blocks::nether_brick_fence->defaultBlockState();
-    generateBox(level, box, 0, 0, 0, 8, 1, 8, brick, brick, false);
-    generateBox(level, box, 0, 2, 0, 8, 5, 8, air, air, false);
-    generateBox(level, box, 0, 6, 0, 8, 6, 5, brick, brick, false);
-    generateBox(level, box, 0, 2, 0, 2, 5, 0, brick, brick, false);
-    generateBox(level, box, 6, 2, 0, 8, 5, 0, brick, brick, false);
-    generateBox(level, box, 1, 3, 0, 1, 4, 0, fence, fence, false);
-    generateBox(level, box, 7, 3, 0, 7, 4, 0, fence, fence, false);
-    generateBox(level, box, 0, 2, 4, 8, 2, 8, brick, brick, false);
-    generateBox(level, box, 1, 1, 4, 2, 2, 4, air, air, false);
-    generateBox(level, box, 6, 1, 4, 7, 2, 4, air, air, false);
-    generateBox(level, box, 0, 3, 8, 8, 3, 8, fence, fence, false);
-    generateBox(level, box, 0, 3, 6, 0, 3, 7, fence, fence, false);
-    generateBox(level, box, 8, 3, 6, 8, 3, 7, fence, fence, false);
-    generateBox(level, box, 0, 3, 4, 0, 5, 5, brick, brick, false);
-    generateBox(level, box, 8, 3, 4, 8, 5, 5, brick, brick, false);
-    generateBox(level, box, 1, 3, 5, 2, 5, 5, brick, brick, false);
-    generateBox(level, box, 6, 3, 5, 7, 5, 5, brick, brick, false);
-    generateBox(level, box, 1, 4, 5, 1, 5, 5, fence, fence, false);
-    generateBox(level, box, 7, 4, 5, 7, 5, 5, fence, fence, false);
+    generateBox(level, box, 0, 0, 0, 8, 1, 8, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 0, 2, 0, 8, 5, 8, Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(), false);
+    generateBox(level, box, 0, 6, 0, 8, 6, 5, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 0, 2, 0, 2, 5, 0, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 6, 2, 0, 8, 5, 0, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 1, 3, 0, 1, 4, 0, Blocks::nether_brick_fence->defaultBlockState(), Blocks::nether_brick_fence->defaultBlockState(), false);
+    generateBox(level, box, 7, 3, 0, 7, 4, 0, Blocks::nether_brick_fence->defaultBlockState(), Blocks::nether_brick_fence->defaultBlockState(), false);
+    generateBox(level, box, 0, 2, 4, 8, 2, 8, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 1, 1, 4, 2, 2, 4, Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(), false);
+    generateBox(level, box, 6, 1, 4, 7, 2, 4, Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(), false);
+    generateBox(level, box, 0, 3, 8, 8, 3, 8, Blocks::nether_brick_fence->defaultBlockState(), Blocks::nether_brick_fence->defaultBlockState(), false);
+    generateBox(level, box, 0, 3, 6, 0, 3, 7, Blocks::nether_brick_fence->defaultBlockState(), Blocks::nether_brick_fence->defaultBlockState(), false);
+    generateBox(level, box, 8, 3, 6, 8, 3, 7, Blocks::nether_brick_fence->defaultBlockState(), Blocks::nether_brick_fence->defaultBlockState(), false);
+    generateBox(level, box, 0, 3, 4, 0, 5, 5, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 8, 3, 4, 8, 5, 5, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 1, 3, 5, 2, 5, 5, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 6, 3, 5, 7, 5, 5, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 1, 4, 5, 1, 5, 5, Blocks::nether_brick_fence->defaultBlockState(), Blocks::nether_brick_fence->defaultBlockState(), false);
+    generateBox(level, box, 7, 4, 5, 7, 5, 5, Blocks::nether_brick_fence->defaultBlockState(), Blocks::nether_brick_fence->defaultBlockState(), false);
     for (int z = 0; z <= 5; ++z)
     {
         for (int x = 0; x <= 8; ++x)
-            fillColumnDown(level, brick, x, -1, z, box);
+            fillColumnDown(level, Blocks::nether_brick->defaultBlockState(), x, -1, z, box);
     }
     return true;
 }
@@ -706,73 +692,70 @@ void NetherBridgePieces::CastleEntrance::addChildren(StructurePiece* start, std:
 
 bool NetherBridgePieces::CastleEntrance::postProcess(Level* level, Random& random, BoundingBox* box)
 {
-    const BlockState* brick = Blocks::nether_brick->defaultBlockState();
-    const BlockState* air = Blocks::air->defaultBlockState();
-    const BlockState* fence = Blocks::nether_brick_fence->defaultBlockState();
-    generateBox(level, box, 0, 3, 0, 12, 4, 12, brick, brick, false);
-    generateBox(level, box, 0, 5, 0, 12, 13, 12, air, air, false);
-    generateBox(level, box, 0, 5, 0, 1, 12, 12, brick, brick, false);
-    generateBox(level, box, 11, 5, 0, 12, 12, 12, brick, brick, false);
-    generateBox(level, box, 2, 5, 11, 4, 12, 12, brick, brick, false);
-    generateBox(level, box, 8, 5, 11, 10, 12, 12, brick, brick, false);
-    generateBox(level, box, 5, 9, 11, 7, 12, 12, brick, brick, false);
-    generateBox(level, box, 2, 5, 0, 4, 12, 1, brick, brick, false);
-    generateBox(level, box, 8, 5, 0, 10, 12, 1, brick, brick, false);
-    generateBox(level, box, 5, 9, 0, 7, 12, 1, brick, brick, false);
-    generateBox(level, box, 2, 11, 2, 10, 12, 10, brick, brick, false);
-    generateBox(level, box, 5, 8, 0, 7, 8, 0, fence, fence, false);
+    generateBox(level, box, 0, 3, 0, 12, 4, 12, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 0, 5, 0, 12, 13, 12, Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(), false);
+    generateBox(level, box, 0, 5, 0, 1, 12, 12, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 11, 5, 0, 12, 12, 12, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 2, 5, 11, 4, 12, 12, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 8, 5, 11, 10, 12, 12, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 5, 9, 11, 7, 12, 12, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 2, 5, 0, 4, 12, 1, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 8, 5, 0, 10, 12, 1, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 5, 9, 0, 7, 12, 1, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 2, 11, 2, 10, 12, 10, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 5, 8, 0, 7, 8, 0, Blocks::nether_brick_fence->defaultBlockState(), Blocks::nether_brick_fence->defaultBlockState(), false);
     for (int i = 1; i <= 11; i += 2)
     {
-        generateBox(level, box, i, 10, 0, i, 11, 0, fence, fence, false);
-        generateBox(level, box, i, 10, 12, i, 11, 12, fence, fence, false);
-        generateBox(level, box, 0, 10, i, 0, 11, i, fence, fence, false);
-        generateBox(level, box, 12, 10, i, 12, 11, i, fence, fence, false);
-        placeBlock(level, brick, i, 13, 0, box);
-        placeBlock(level, brick, i, 13, 12, box);
-        placeBlock(level, brick, 0, 13, i, box);
-        placeBlock(level, brick, 12, 13, i, box);
-        placeBlock(level, fence, i + 1, 13, 0, box);
-        placeBlock(level, fence, i + 1, 13, 12, box);
-        placeBlock(level, fence, 0, 13, i + 1, box);
-        placeBlock(level, fence, 12, 13, i + 1, box);
+        generateBox(level, box, i, 10, 0, i, 11, 0, Blocks::nether_brick_fence->defaultBlockState(), Blocks::nether_brick_fence->defaultBlockState(), false);
+        generateBox(level, box, i, 10, 12, i, 11, 12, Blocks::nether_brick_fence->defaultBlockState(), Blocks::nether_brick_fence->defaultBlockState(), false);
+        generateBox(level, box, 0, 10, i, 0, 11, i, Blocks::nether_brick_fence->defaultBlockState(), Blocks::nether_brick_fence->defaultBlockState(), false);
+        generateBox(level, box, 12, 10, i, 12, 11, i, Blocks::nether_brick_fence->defaultBlockState(), Blocks::nether_brick_fence->defaultBlockState(), false);
+        placeBlock(level, Blocks::nether_brick->defaultBlockState(), i, 13, 0, box);
+        placeBlock(level, Blocks::nether_brick->defaultBlockState(), i, 13, 12, box);
+        placeBlock(level, Blocks::nether_brick->defaultBlockState(), 0, 13, i, box);
+        placeBlock(level, Blocks::nether_brick->defaultBlockState(), 12, 13, i, box);
+        placeBlock(level, Blocks::nether_brick_fence->defaultBlockState(), i + 1, 13, 0, box);
+        placeBlock(level, Blocks::nether_brick_fence->defaultBlockState(), i + 1, 13, 12, box);
+        placeBlock(level, Blocks::nether_brick_fence->defaultBlockState(), 0, 13, i + 1, box);
+        placeBlock(level, Blocks::nether_brick_fence->defaultBlockState(), 12, 13, i + 1, box);
     }
-    placeBlock(level, fence, 0, 13, 0, box);
-    placeBlock(level, fence, 0, 13, 12, box);
-    placeBlock(level, fence, 0, 13, 0, box);
-    placeBlock(level, fence, 12, 13, 0, box);
+    placeBlock(level, Blocks::nether_brick_fence->defaultBlockState(), 0, 13, 0, box);
+    placeBlock(level, Blocks::nether_brick_fence->defaultBlockState(), 0, 13, 12, box);
+    placeBlock(level, Blocks::nether_brick_fence->defaultBlockState(), 0, 13, 0, box);
+    placeBlock(level, Blocks::nether_brick_fence->defaultBlockState(), 12, 13, 0, box);
     for (int z = 3; z <= 9; z += 2)
     {
-        generateBox(level, box, 1, 7, z, 1, 8, z, fence, fence, false);
-        generateBox(level, box, 11, 7, z, 11, 8, z, fence, fence, false);
+        generateBox(level, box, 1, 7, z, 1, 8, z, Blocks::nether_brick_fence->defaultBlockState(), Blocks::nether_brick_fence->defaultBlockState(), false);
+        generateBox(level, box, 11, 7, z, 11, 8, z, Blocks::nether_brick_fence->defaultBlockState(), Blocks::nether_brick_fence->defaultBlockState(), false);
     }
-    generateBox(level, box, 4, 2, 0, 8, 2, 12, brick, brick, false);
-    generateBox(level, box, 0, 2, 4, 12, 2, 8, brick, brick, false);
-    generateBox(level, box, 4, 0, 0, 8, 1, 3, brick, brick, false);
-    generateBox(level, box, 4, 0, 9, 8, 1, 12, brick, brick, false);
-    generateBox(level, box, 0, 0, 4, 3, 1, 8, brick, brick, false);
-    generateBox(level, box, 9, 0, 4, 12, 1, 8, brick, brick, false);
+    generateBox(level, box, 4, 2, 0, 8, 2, 12, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 0, 2, 4, 12, 2, 8, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 4, 0, 0, 8, 1, 3, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 4, 0, 9, 8, 1, 12, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 0, 0, 4, 3, 1, 8, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 9, 0, 4, 12, 1, 8, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
     for (int x = 4; x <= 8; ++x)
     {
         for (int z = 0; z <= 2; ++z)
         {
-            fillColumnDown(level, brick, x, -1, z, box);
-            fillColumnDown(level, brick, x, -1, 12 - z, box);
+            fillColumnDown(level, Blocks::nether_brick->defaultBlockState(), x, -1, z, box);
+            fillColumnDown(level, Blocks::nether_brick->defaultBlockState(), x, -1, 12 - z, box);
         }
     }
     for (int x = 0; x <= 2; ++x)
     {
         for (int z = 4; z <= 8; ++z)
         {
-            fillColumnDown(level, brick, x, -1, z, box);
-            fillColumnDown(level, brick, 12 - x, -1, z, box);
+            fillColumnDown(level, Blocks::nether_brick->defaultBlockState(), x, -1, z, box);
+            fillColumnDown(level, Blocks::nether_brick->defaultBlockState(), 12 - x, -1, z, box);
         }
     }
-    generateBox(level, box, 5, 5, 5, 7, 5, 7, brick, brick, false);
-    generateBox(level, box, 6, 1, 6, 6, 4, 6, air, air, false);
-    placeBlock(level, brick, 6, 0, 6, box);
+    generateBox(level, box, 5, 5, 5, 7, 5, 7, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 6, 1, 6, 6, 4, 6, Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(), false);
+    placeBlock(level, Blocks::nether_brick->defaultBlockState(), 6, 0, 6, box);
     const BlockState* lava = Blocks::flowing_lava->defaultBlockState();
     placeBlock(level, lava, 6, 5, 6, box);
-    BlockPos pos(getWorldX(6, 6), getWorldY(5), getWorldZ(6, 6));
+    const BlockPos& pos = BlockPos(getWorldX(6, 6), getWorldY(5), getWorldZ(6, 6));
     if (box->isInside(pos))
         level->instaTick(pos, lava, random);
     return true;
@@ -816,19 +799,17 @@ void NetherBridgePieces::CastleSmallCorridorCrossingPiece::addChildren(Structure
 
 bool NetherBridgePieces::CastleSmallCorridorCrossingPiece::postProcess(Level* level, Random&, BoundingBox* box)
 {
-    const BlockState* brick = Blocks::nether_brick->defaultBlockState();
-    const BlockState* air = Blocks::air->defaultBlockState();
-    generateBox(level, box, 0, 0, 0, 4, 1, 4, brick, brick, false);
-    generateBox(level, box, 0, 2, 0, 4, 5, 4, air, air, false);
-    generateBox(level, box, 0, 2, 0, 0, 5, 0, brick, brick, false);
-    generateBox(level, box, 4, 2, 0, 4, 5, 0, brick, brick, false);
-    generateBox(level, box, 0, 2, 4, 0, 5, 4, brick, brick, false);
-    generateBox(level, box, 4, 2, 4, 4, 5, 4, brick, brick, false);
-    generateBox(level, box, 0, 6, 0, 4, 6, 4, brick, brick, false);
+    generateBox(level, box, 0, 0, 0, 4, 1, 4, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 0, 2, 0, 4, 5, 4, Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(), false);
+    generateBox(level, box, 0, 2, 0, 0, 5, 0, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 4, 2, 0, 4, 5, 0, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 0, 2, 4, 0, 5, 4, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 4, 2, 4, 4, 5, 4, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 0, 6, 0, 4, 6, 4, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
     for (int x = 0; x <= 4; ++x)
     {
         for (int z = 0; z <= 4; ++z)
-            fillColumnDown(level, brick, x, -1, z, box);
+            fillColumnDown(level, Blocks::nether_brick->defaultBlockState(), x, -1, z, box);
     }
     return true;
 }
@@ -867,22 +848,19 @@ void NetherBridgePieces::CastleSmallCorridorPiece::addChildren(StructurePiece* s
 
 bool NetherBridgePieces::CastleSmallCorridorPiece::postProcess(Level* level, Random&, BoundingBox* box)
 {
-    const BlockState* brick = Blocks::nether_brick->defaultBlockState();
-    const BlockState* air = Blocks::air->defaultBlockState();
-    const BlockState* fence = Blocks::nether_brick_fence->defaultBlockState();
-    generateBox(level, box, 0, 0, 0, 4, 1, 4, brick, brick, false);
-    generateBox(level, box, 0, 2, 0, 4, 5, 4, air, air, false);
-    generateBox(level, box, 0, 2, 0, 0, 5, 4, brick, brick, false);
-    generateBox(level, box, 4, 2, 0, 4, 5, 4, brick, brick, false);
-    generateBox(level, box, 0, 3, 1, 0, 4, 1, fence, fence, false);
-    generateBox(level, box, 0, 3, 3, 0, 4, 3, fence, fence, false);
-    generateBox(level, box, 4, 3, 1, 4, 4, 1, fence, fence, false);
-    generateBox(level, box, 4, 3, 3, 4, 4, 3, fence, fence, false);
-    generateBox(level, box, 0, 6, 0, 4, 6, 4, brick, brick, false);
+    generateBox(level, box, 0, 0, 0, 4, 1, 4, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 0, 2, 0, 4, 5, 4, Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(), false);
+    generateBox(level, box, 0, 2, 0, 0, 5, 4, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 4, 2, 0, 4, 5, 4, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 0, 3, 1, 0, 4, 1, Blocks::nether_brick_fence->defaultBlockState(), Blocks::nether_brick_fence->defaultBlockState(), false);
+    generateBox(level, box, 0, 3, 3, 0, 4, 3, Blocks::nether_brick_fence->defaultBlockState(), Blocks::nether_brick_fence->defaultBlockState(), false);
+    generateBox(level, box, 4, 3, 1, 4, 4, 1, Blocks::nether_brick_fence->defaultBlockState(), Blocks::nether_brick_fence->defaultBlockState(), false);
+    generateBox(level, box, 4, 3, 3, 4, 4, 3, Blocks::nether_brick_fence->defaultBlockState(), Blocks::nether_brick_fence->defaultBlockState(), false);
+    generateBox(level, box, 0, 6, 0, 4, 6, 4, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
     for (int x = 0; x <= 4; ++x)
     {
         for (int z = 0; z <= 4; ++z)
-            fillColumnDown(level, brick, x, -1, z, box);
+            fillColumnDown(level, Blocks::nether_brick->defaultBlockState(), x, -1, z, box);
     }
     return true;
 }
@@ -923,78 +901,69 @@ void NetherBridgePieces::CastleStalkRoom::addChildren(StructurePiece* start, std
 
 bool NetherBridgePieces::CastleStalkRoom::postProcess(Level* level, Random&, BoundingBox* box)
 {
-    const BlockState* brick = Blocks::nether_brick->defaultBlockState();
-    const BlockState* air = Blocks::air->defaultBlockState();
-    const BlockState* fence = Blocks::nether_brick_fence->defaultBlockState();
-    generateBox(level, box, 0, 3, 0, 12, 4, 12, brick, brick, false);
-    generateBox(level, box, 0, 5, 0, 12, 13, 12, air, air, false);
-    generateBox(level, box, 0, 5, 0, 1, 12, 12, brick, brick, false);
-    generateBox(level, box, 11, 5, 0, 12, 12, 12, brick, brick, false);
-    generateBox(level, box, 2, 5, 11, 4, 12, 12, brick, brick, false);
-    generateBox(level, box, 8, 5, 11, 10, 12, 12, brick, brick, false);
-    generateBox(level, box, 5, 9, 11, 7, 12, 12, brick, brick, false);
-    generateBox(level, box, 2, 5, 0, 4, 12, 1, brick, brick, false);
-    generateBox(level, box, 8, 5, 0, 10, 12, 1, brick, brick, false);
-    generateBox(level, box, 5, 9, 0, 7, 12, 1, brick, brick, false);
-    generateBox(level, box, 2, 11, 2, 10, 12, 10, brick, brick, false);
+    generateBox(level, box, 0, 3, 0, 12, 4, 12, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 0, 5, 0, 12, 13, 12, Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(), false);
+    generateBox(level, box, 0, 5, 0, 1, 12, 12, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 11, 5, 0, 12, 12, 12, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 2, 5, 11, 4, 12, 12, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 8, 5, 11, 10, 12, 12, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 5, 9, 11, 7, 12, 12, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 2, 5, 0, 4, 12, 1, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 8, 5, 0, 10, 12, 1, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 5, 9, 0, 7, 12, 1, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 2, 11, 2, 10, 12, 10, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
     for (int i = 1; i <= 11; i += 2)
     {
-        generateBox(level, box, i, 10, 0, i, 11, 0, fence, fence, false);
-        generateBox(level, box, i, 10, 12, i, 11, 12, fence, fence, false);
-        generateBox(level, box, 0, 10, i, 0, 11, i, fence, fence, false);
-        generateBox(level, box, 12, 10, i, 12, 11, i, fence, fence, false);
-        placeBlock(level, brick, i, 13, 0, box);
-        placeBlock(level, brick, i, 13, 12, box);
-        placeBlock(level, brick, 0, 13, i, box);
-        placeBlock(level, brick, 12, 13, i, box);
-        placeBlock(level, fence, i + 1, 13, 0, box);
-        placeBlock(level, fence, i + 1, 13, 12, box);
-        placeBlock(level, fence, 0, 13, i + 1, box);
-        placeBlock(level, fence, 12, 13, i + 1, box);
+        generateBox(level, box, i, 10, 0, i, 11, 0, Blocks::nether_brick_fence->defaultBlockState(), Blocks::nether_brick_fence->defaultBlockState(), false);
+        generateBox(level, box, i, 10, 12, i, 11, 12, Blocks::nether_brick_fence->defaultBlockState(), Blocks::nether_brick_fence->defaultBlockState(), false);
+        generateBox(level, box, 0, 10, i, 0, 11, i, Blocks::nether_brick_fence->defaultBlockState(), Blocks::nether_brick_fence->defaultBlockState(), false);
+        generateBox(level, box, 12, 10, i, 12, 11, i, Blocks::nether_brick_fence->defaultBlockState(), Blocks::nether_brick_fence->defaultBlockState(), false);
+        placeBlock(level, Blocks::nether_brick->defaultBlockState(), i, 13, 0, box);
+        placeBlock(level, Blocks::nether_brick->defaultBlockState(), i, 13, 12, box);
+        placeBlock(level, Blocks::nether_brick->defaultBlockState(), 0, 13, i, box);
+        placeBlock(level, Blocks::nether_brick->defaultBlockState(), 12, 13, i, box);
+        placeBlock(level, Blocks::nether_brick_fence->defaultBlockState(), i + 1, 13, 0, box);
+        placeBlock(level, Blocks::nether_brick_fence->defaultBlockState(), i + 1, 13, 12, box);
+        placeBlock(level, Blocks::nether_brick_fence->defaultBlockState(), 0, 13, i + 1, box);
+        placeBlock(level, Blocks::nether_brick_fence->defaultBlockState(), 12, 13, i + 1, box);
     }
-    placeBlock(level, fence, 0, 13, 0, box);
-    placeBlock(level, fence, 0, 13, 12, box);
-    placeBlock(level, fence, 0, 13, 0, box);
-    placeBlock(level, fence, 12, 13, 0, box);
+    placeBlock(level, Blocks::nether_brick_fence->defaultBlockState(), 0, 13, 0, box);
+    placeBlock(level, Blocks::nether_brick_fence->defaultBlockState(), 0, 13, 12, box);
+    placeBlock(level, Blocks::nether_brick_fence->defaultBlockState(), 0, 13, 0, box);
+    placeBlock(level, Blocks::nether_brick_fence->defaultBlockState(), 12, 13, 0, box);
     for (int z = 3; z <= 9; z += 2)
     {
-        generateBox(level, box, 1, 7, z, 1, 8, z, fence, fence, false);
-        generateBox(level, box, 11, 7, z, 11, 8, z, fence, fence, false);
+        generateBox(level, box, 1, 7, z, 1, 8, z, Blocks::nether_brick_fence->defaultBlockState(), Blocks::nether_brick_fence->defaultBlockState(), false);
+        generateBox(level, box, 11, 7, z, 11, 8, z, Blocks::nether_brick_fence->defaultBlockState(), Blocks::nether_brick_fence->defaultBlockState(), false);
     }
 
-    TypedBoxed<const Direction*> north(Direction::NORTH);
-    const BlockState* stairsNorth =
-        Blocks::nether_brick_stairs->defaultBlockState()->setBoxedValue(StairBlock::FACING, &north);
+    const BlockState* stairsNorth = Blocks::nether_brick_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::NORTH);
     for (int step = 0; step <= 6; ++step)
     {
         int z = step + 4;
         for (int x = 5; x <= 7; ++x)
             placeBlock(level, stairsNorth, x, 5 + step, z, box);
         if (z >= 5 && z <= 8)
-            generateBox(level, box, 5, 5, z, 7, step + 4, z, brick, brick, false);
+            generateBox(level, box, 5, 5, z, 7, step + 4, z, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
         else if (z >= 9 && z <= 10)
-            generateBox(level, box, 5, 8, z, 7, step + 4, z, brick, brick, false);
+            generateBox(level, box, 5, 8, z, 7, step + 4, z, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
         if (step >= 1)
-            generateBox(level, box, 5, 6 + step, z, 7, 9 + step, z, air, air, false);
+            generateBox(level, box, 5, 6 + step, z, 7, 9 + step, z, Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(), false);
     }
     for (int x = 5; x <= 7; ++x)
         placeBlock(level, stairsNorth, x, 12, 11, box);
-    generateBox(level, box, 5, 6, 7, 5, 7, 7, fence, fence, false);
-    generateBox(level, box, 7, 6, 7, 7, 7, 7, fence, fence, false);
-    generateBox(level, box, 5, 13, 12, 7, 13, 12, air, air, false);
-    generateBox(level, box, 2, 5, 2, 3, 5, 3, brick, brick, false);
-    generateBox(level, box, 2, 5, 9, 3, 5, 10, brick, brick, false);
-    generateBox(level, box, 2, 5, 4, 2, 5, 8, brick, brick, false);
-    generateBox(level, box, 9, 5, 2, 10, 5, 3, brick, brick, false);
-    generateBox(level, box, 9, 5, 9, 10, 5, 10, brick, brick, false);
-    generateBox(level, box, 10, 5, 4, 10, 5, 8, brick, brick, false);
+    generateBox(level, box, 5, 6, 7, 5, 7, 7, Blocks::nether_brick_fence->defaultBlockState(), Blocks::nether_brick_fence->defaultBlockState(), false);
+    generateBox(level, box, 7, 6, 7, 7, 7, 7, Blocks::nether_brick_fence->defaultBlockState(), Blocks::nether_brick_fence->defaultBlockState(), false);
+    generateBox(level, box, 5, 13, 12, 7, 13, 12, Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(), false);
+    generateBox(level, box, 2, 5, 2, 3, 5, 3, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 2, 5, 9, 3, 5, 10, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 2, 5, 4, 2, 5, 8, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 9, 5, 2, 10, 5, 3, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 9, 5, 9, 10, 5, 10, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 10, 5, 4, 10, 5, 8, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
 
-    TypedBoxed<const Direction*> east(Direction::EAST);
-    const BlockState* stairsEast =
-        Blocks::nether_brick_stairs->defaultBlockState()->setBoxedValue(StairBlock::FACING, &east);
-    TypedBoxed<const Direction*> west(Direction::WEST);
-    const BlockState* stairsWest =
-        Blocks::nether_brick_stairs->defaultBlockState()->setBoxedValue(StairBlock::FACING, &west);
+    const BlockState* stairsEast = stairsNorth->setValue(StairBlock::FACING, Direction::EAST);
+    const BlockState* stairsWest = stairsNorth->setValue(StairBlock::FACING, Direction::WEST);
     placeBlock(level, stairsWest, 4, 5, 2, box);
     placeBlock(level, stairsWest, 4, 5, 3, box);
     placeBlock(level, stairsWest, 4, 5, 9, box);
@@ -1011,26 +980,26 @@ bool NetherBridgePieces::CastleStalkRoom::postProcess(Level* level, Random&, Bou
                 Blocks::nether_wart->defaultBlockState(), Blocks::nether_wart->defaultBlockState(), false);
     generateBox(level, box, 8, 5, 4, 9, 5, 8,
                 Blocks::nether_wart->defaultBlockState(), Blocks::nether_wart->defaultBlockState(), false);
-    generateBox(level, box, 4, 2, 0, 8, 2, 12, brick, brick, false);
-    generateBox(level, box, 0, 2, 4, 12, 2, 8, brick, brick, false);
-    generateBox(level, box, 4, 0, 0, 8, 1, 3, brick, brick, false);
-    generateBox(level, box, 4, 0, 9, 8, 1, 12, brick, brick, false);
-    generateBox(level, box, 0, 0, 4, 3, 1, 8, brick, brick, false);
-    generateBox(level, box, 9, 0, 4, 12, 1, 8, brick, brick, false);
+    generateBox(level, box, 4, 2, 0, 8, 2, 12, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 0, 2, 4, 12, 2, 8, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 4, 0, 0, 8, 1, 3, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 4, 0, 9, 8, 1, 12, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 0, 0, 4, 3, 1, 8, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 9, 0, 4, 12, 1, 8, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
     for (int x = 4; x <= 8; ++x)
     {
         for (int z = 0; z <= 2; ++z)
         {
-            fillColumnDown(level, brick, x, -1, z, box);
-            fillColumnDown(level, brick, x, -1, 12 - z, box);
+            fillColumnDown(level, Blocks::nether_brick->defaultBlockState(), x, -1, z, box);
+            fillColumnDown(level, Blocks::nether_brick->defaultBlockState(), x, -1, 12 - z, box);
         }
     }
     for (int x = 0; x <= 2; ++x)
     {
         for (int z = 4; z <= 8; ++z)
         {
-            fillColumnDown(level, brick, x, -1, z, box);
-            fillColumnDown(level, brick, 12 - x, -1, z, box);
+            fillColumnDown(level, Blocks::nether_brick->defaultBlockState(), x, -1, z, box);
+            fillColumnDown(level, Blocks::nether_brick->defaultBlockState(), 12 - x, -1, z, box);
         }
     }
     return true;
@@ -1073,31 +1042,28 @@ void NetherBridgePieces::RoomCrossing::addChildren(StructurePiece* start, std::v
 
 bool NetherBridgePieces::RoomCrossing::postProcess(Level* level, Random&, BoundingBox* box)
 {
-    const BlockState* brick = Blocks::nether_brick->defaultBlockState();
-    const BlockState* air = Blocks::air->defaultBlockState();
-    const BlockState* fence = Blocks::nether_brick_fence->defaultBlockState();
-    generateBox(level, box, 0, 0, 0, 6, 1, 6, brick, brick, false);
-    generateBox(level, box, 0, 2, 0, 6, 7, 6, air, air, false);
-    generateBox(level, box, 0, 2, 0, 1, 6, 0, brick, brick, false);
-    generateBox(level, box, 0, 2, 6, 1, 6, 6, brick, brick, false);
-    generateBox(level, box, 5, 2, 0, 6, 6, 0, brick, brick, false);
-    generateBox(level, box, 5, 2, 6, 6, 6, 6, brick, brick, false);
-    generateBox(level, box, 0, 2, 0, 0, 6, 1, brick, brick, false);
-    generateBox(level, box, 0, 2, 5, 0, 6, 6, brick, brick, false);
-    generateBox(level, box, 6, 2, 0, 6, 6, 1, brick, brick, false);
-    generateBox(level, box, 6, 2, 5, 6, 6, 6, brick, brick, false);
-    generateBox(level, box, 2, 6, 0, 4, 6, 0, brick, brick, false);
-    generateBox(level, box, 2, 5, 0, 4, 5, 0, fence, fence, false);
-    generateBox(level, box, 2, 6, 6, 4, 6, 6, brick, brick, false);
-    generateBox(level, box, 2, 5, 6, 4, 5, 6, fence, fence, false);
-    generateBox(level, box, 0, 6, 2, 0, 6, 4, brick, brick, false);
-    generateBox(level, box, 0, 5, 2, 0, 5, 4, fence, fence, false);
-    generateBox(level, box, 6, 6, 2, 6, 6, 4, brick, brick, false);
-    generateBox(level, box, 6, 5, 2, 6, 5, 4, fence, fence, false);
+    generateBox(level, box, 0, 0, 0, 6, 1, 6, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 0, 2, 0, 6, 7, 6, Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(), false);
+    generateBox(level, box, 0, 2, 0, 1, 6, 0, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 0, 2, 6, 1, 6, 6, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 5, 2, 0, 6, 6, 0, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 5, 2, 6, 6, 6, 6, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 0, 2, 0, 0, 6, 1, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 0, 2, 5, 0, 6, 6, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 6, 2, 0, 6, 6, 1, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 6, 2, 5, 6, 6, 6, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 2, 6, 0, 4, 6, 0, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 2, 5, 0, 4, 5, 0, Blocks::nether_brick_fence->defaultBlockState(), Blocks::nether_brick_fence->defaultBlockState(), false);
+    generateBox(level, box, 2, 6, 6, 4, 6, 6, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 2, 5, 6, 4, 5, 6, Blocks::nether_brick_fence->defaultBlockState(), Blocks::nether_brick_fence->defaultBlockState(), false);
+    generateBox(level, box, 0, 6, 2, 0, 6, 4, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 0, 5, 2, 0, 5, 4, Blocks::nether_brick_fence->defaultBlockState(), Blocks::nether_brick_fence->defaultBlockState(), false);
+    generateBox(level, box, 6, 6, 2, 6, 6, 4, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 6, 5, 2, 6, 5, 4, Blocks::nether_brick_fence->defaultBlockState(), Blocks::nether_brick_fence->defaultBlockState(), false);
     for (int x = 0; x <= 6; ++x)
     {
         for (int z = 0; z <= 6; ++z)
-            fillColumnDown(level, brick, x, -1, z, box);
+            fillColumnDown(level, Blocks::nether_brick->defaultBlockState(), x, -1, z, box);
     }
     return true;
 }
@@ -1136,32 +1102,29 @@ void NetherBridgePieces::StairsRoom::addChildren(StructurePiece* start, std::vec
 
 bool NetherBridgePieces::StairsRoom::postProcess(Level* level, Random&, BoundingBox* box)
 {
-    const BlockState* brick = Blocks::nether_brick->defaultBlockState();
-    const BlockState* air = Blocks::air->defaultBlockState();
-    const BlockState* fence = Blocks::nether_brick_fence->defaultBlockState();
-    generateBox(level, box, 0, 0, 0, 6, 1, 6, brick, brick, false);
-    generateBox(level, box, 0, 2, 0, 6, 10, 6, air, air, false);
-    generateBox(level, box, 0, 2, 0, 1, 8, 0, brick, brick, false);
-    generateBox(level, box, 5, 2, 0, 6, 8, 0, brick, brick, false);
-    generateBox(level, box, 0, 2, 1, 0, 8, 6, brick, brick, false);
-    generateBox(level, box, 6, 2, 1, 6, 8, 6, brick, brick, false);
-    generateBox(level, box, 1, 2, 6, 5, 8, 6, brick, brick, false);
-    generateBox(level, box, 0, 3, 2, 0, 5, 4, fence, fence, false);
-    generateBox(level, box, 6, 3, 2, 6, 5, 2, fence, fence, false);
-    generateBox(level, box, 6, 3, 4, 6, 5, 4, fence, fence, false);
-    placeBlock(level, brick, 5, 2, 5, box);
-    generateBox(level, box, 4, 2, 5, 4, 3, 5, brick, brick, false);
-    generateBox(level, box, 3, 2, 5, 3, 4, 5, brick, brick, false);
-    generateBox(level, box, 2, 2, 5, 2, 5, 5, brick, brick, false);
-    generateBox(level, box, 1, 2, 5, 1, 6, 5, brick, brick, false);
-    generateBox(level, box, 1, 7, 1, 5, 7, 4, brick, brick, false);
-    generateBox(level, box, 6, 8, 2, 6, 8, 4, air, air, false);
-    generateBox(level, box, 2, 6, 0, 4, 8, 0, brick, brick, false);
-    generateBox(level, box, 2, 5, 0, 4, 5, 0, fence, fence, false);
+    generateBox(level, box, 0, 0, 0, 6, 1, 6, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 0, 2, 0, 6, 10, 6, Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(), false);
+    generateBox(level, box, 0, 2, 0, 1, 8, 0, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 5, 2, 0, 6, 8, 0, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 0, 2, 1, 0, 8, 6, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 6, 2, 1, 6, 8, 6, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 1, 2, 6, 5, 8, 6, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 0, 3, 2, 0, 5, 4, Blocks::nether_brick_fence->defaultBlockState(), Blocks::nether_brick_fence->defaultBlockState(), false);
+    generateBox(level, box, 6, 3, 2, 6, 5, 2, Blocks::nether_brick_fence->defaultBlockState(), Blocks::nether_brick_fence->defaultBlockState(), false);
+    generateBox(level, box, 6, 3, 4, 6, 5, 4, Blocks::nether_brick_fence->defaultBlockState(), Blocks::nether_brick_fence->defaultBlockState(), false);
+    placeBlock(level, Blocks::nether_brick->defaultBlockState(), 5, 2, 5, box);
+    generateBox(level, box, 4, 2, 5, 4, 3, 5, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 3, 2, 5, 3, 4, 5, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 2, 2, 5, 2, 5, 5, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 1, 2, 5, 1, 6, 5, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 1, 7, 1, 5, 7, 4, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 6, 8, 2, 6, 8, 4, Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(), false);
+    generateBox(level, box, 2, 6, 0, 4, 8, 0, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 2, 5, 0, 4, 5, 0, Blocks::nether_brick_fence->defaultBlockState(), Blocks::nether_brick_fence->defaultBlockState(), false);
     for (int x = 0; x <= 6; ++x)
     {
         for (int z = 0; z <= 6; ++z)
-            fillColumnDown(level, brick, x, -1, z, box);
+            fillColumnDown(level, Blocks::nether_brick->defaultBlockState(), x, -1, z, box);
     }
     return true;
 }
@@ -1212,18 +1175,15 @@ void NetherBridgePieces::CastleSmallCorridorLeftTurnPiece::addChildren(Structure
 
 bool NetherBridgePieces::CastleSmallCorridorLeftTurnPiece::postProcess(Level* level, Random& random, BoundingBox* box)
 {
-    const BlockState* brick = Blocks::nether_brick->defaultBlockState();
-    const BlockState* air = Blocks::air->defaultBlockState();
-    const BlockState* fence = Blocks::nether_brick_fence->defaultBlockState();
-    generateBox(level, box, 0, 0, 0, 4, 1, 4, brick, brick, false);
-    generateBox(level, box, 0, 2, 0, 4, 5, 4, air, air, false);
-    generateBox(level, box, 4, 2, 0, 4, 5, 4, brick, brick, false);
-    generateBox(level, box, 4, 3, 1, 4, 4, 1, fence, fence, false);
-    generateBox(level, box, 4, 3, 3, 4, 4, 3, fence, fence, false);
-    generateBox(level, box, 0, 2, 0, 0, 5, 0, brick, brick, false);
-    generateBox(level, box, 0, 2, 4, 3, 5, 4, brick, brick, false);
-    generateBox(level, box, 1, 3, 4, 1, 4, 4, fence, brick, false);
-    generateBox(level, box, 3, 3, 4, 3, 4, 4, fence, brick, false);
+    generateBox(level, box, 0, 0, 0, 4, 1, 4, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 0, 2, 0, 4, 5, 4, Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(), false);
+    generateBox(level, box, 4, 2, 0, 4, 5, 4, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 4, 3, 1, 4, 4, 1, Blocks::nether_brick_fence->defaultBlockState(), Blocks::nether_brick_fence->defaultBlockState(), false);
+    generateBox(level, box, 4, 3, 3, 4, 4, 3, Blocks::nether_brick_fence->defaultBlockState(), Blocks::nether_brick_fence->defaultBlockState(), false);
+    generateBox(level, box, 0, 2, 0, 0, 5, 0, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 0, 2, 4, 3, 5, 4, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 1, 3, 4, 1, 4, 4, Blocks::nether_brick_fence->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 3, 3, 4, 3, 4, 4, Blocks::nether_brick_fence->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
     if (mIsNeedingChest)
     {
         BlockPos pos(getWorldX(3, 3), getWorldY(2), getWorldZ(3, 3));
@@ -1234,11 +1194,11 @@ bool NetherBridgePieces::CastleSmallCorridorLeftTurnPiece::postProcess(Level* le
             createChest(level, box, random, 3, 2, 3, &BuiltInLootTables::NETHER_BRIDGE);
         }
     }
-    generateBox(level, box, 0, 6, 0, 4, 6, 4, brick, brick, false);
+    generateBox(level, box, 0, 6, 0, 4, 6, 4, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
     for (int x = 0; x <= 4; ++x)
     {
         for (int z = 0; z <= 4; ++z)
-            fillColumnDown(level, brick, x, -1, z, box);
+            fillColumnDown(level, Blocks::nether_brick->defaultBlockState(), x, -1, z, box);
     }
     return true;
 }
@@ -1289,18 +1249,15 @@ void NetherBridgePieces::CastleSmallCorridorRightTurnPiece::addChildren(Structur
 
 bool NetherBridgePieces::CastleSmallCorridorRightTurnPiece::postProcess(Level* level, Random& random, BoundingBox* box)
 {
-    const BlockState* brick = Blocks::nether_brick->defaultBlockState();
-    const BlockState* air = Blocks::air->defaultBlockState();
-    const BlockState* fence = Blocks::nether_brick_fence->defaultBlockState();
-    generateBox(level, box, 0, 0, 0, 4, 1, 4, brick, brick, false);
-    generateBox(level, box, 0, 2, 0, 4, 5, 4, air, air, false);
-    generateBox(level, box, 0, 2, 0, 0, 5, 4, brick, brick, false);
-    generateBox(level, box, 0, 3, 1, 0, 4, 1, fence, fence, false);
-    generateBox(level, box, 0, 3, 3, 0, 4, 3, fence, fence, false);
-    generateBox(level, box, 4, 2, 0, 4, 5, 0, brick, brick, false);
-    generateBox(level, box, 1, 2, 4, 4, 5, 4, brick, brick, false);
-    generateBox(level, box, 1, 3, 4, 1, 4, 4, fence, brick, false);
-    generateBox(level, box, 3, 3, 4, 3, 4, 4, fence, brick, false);
+    generateBox(level, box, 0, 0, 0, 4, 1, 4, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 0, 2, 0, 4, 5, 4, Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(), false);
+    generateBox(level, box, 0, 2, 0, 0, 5, 4, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 0, 3, 1, 0, 4, 1, Blocks::nether_brick_fence->defaultBlockState(), Blocks::nether_brick_fence->defaultBlockState(), false);
+    generateBox(level, box, 0, 3, 3, 0, 4, 3, Blocks::nether_brick_fence->defaultBlockState(), Blocks::nether_brick_fence->defaultBlockState(), false);
+    generateBox(level, box, 4, 2, 0, 4, 5, 0, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 1, 2, 4, 4, 5, 4, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 1, 3, 4, 1, 4, 4, Blocks::nether_brick_fence->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 3, 3, 4, 3, 4, 4, Blocks::nether_brick_fence->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
     if (mIsNeedingChest)
     {
         BlockPos pos(getWorldX(1, 3), getWorldY(2), getWorldZ(1, 3));
@@ -1311,11 +1268,11 @@ bool NetherBridgePieces::CastleSmallCorridorRightTurnPiece::postProcess(Level* l
             createChest(level, box, random, 1, 2, 3, &BuiltInLootTables::NETHER_BRIDGE);
         }
     }
-    generateBox(level, box, 0, 6, 0, 4, 6, 4, brick, brick, false);
+    generateBox(level, box, 0, 6, 0, 4, 6, 4, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
     for (int x = 0; x <= 4; ++x)
     {
         for (int z = 0; z <= 4; ++z)
-            fillColumnDown(level, brick, x, -1, z, box);
+            fillColumnDown(level, Blocks::nether_brick->defaultBlockState(), x, -1, z, box);
     }
     return true;
 }
@@ -1360,30 +1317,27 @@ void NetherBridgePieces::MonsterThrone::addAdditionalSaveData(DataOutputStream* 
 
 bool NetherBridgePieces::MonsterThrone::postProcess(Level* level, Random&, BoundingBox* box)
 {
-    const BlockState* brick = Blocks::nether_brick->defaultBlockState();
-    const BlockState* air = Blocks::air->defaultBlockState();
-    const BlockState* fence = Blocks::nether_brick_fence->defaultBlockState();
-    generateBox(level, box, 0, 2, 0, 6, 7, 7, air, air, false);
-    generateBox(level, box, 1, 0, 0, 5, 1, 7, brick, brick, false);
-    generateBox(level, box, 1, 2, 1, 5, 2, 7, brick, brick, false);
-    generateBox(level, box, 1, 3, 2, 5, 3, 7, brick, brick, false);
-    generateBox(level, box, 1, 4, 3, 5, 4, 7, brick, brick, false);
-    generateBox(level, box, 1, 2, 0, 1, 4, 2, brick, brick, false);
-    generateBox(level, box, 5, 2, 0, 5, 4, 2, brick, brick, false);
-    generateBox(level, box, 1, 5, 2, 1, 5, 3, brick, brick, false);
-    generateBox(level, box, 5, 5, 2, 5, 5, 3, brick, brick, false);
-    generateBox(level, box, 0, 5, 3, 0, 5, 8, brick, brick, false);
-    generateBox(level, box, 6, 5, 3, 6, 5, 8, brick, brick, false);
-    generateBox(level, box, 1, 5, 8, 5, 5, 8, brick, brick, false);
-    placeBlock(level, fence, 1, 6, 3, box);
-    placeBlock(level, fence, 5, 6, 3, box);
-    generateBox(level, box, 0, 6, 3, 0, 6, 8, fence, fence, false);
-    generateBox(level, box, 6, 6, 3, 6, 6, 8, fence, fence, false);
-    generateBox(level, box, 1, 6, 8, 5, 7, 8, fence, fence, false);
-    generateBox(level, box, 2, 8, 8, 4, 8, 8, fence, fence, false);
+    generateBox(level, box, 0, 2, 0, 6, 7, 7, Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(), false);
+    generateBox(level, box, 1, 0, 0, 5, 1, 7, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 1, 2, 1, 5, 2, 7, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 1, 3, 2, 5, 3, 7, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 1, 4, 3, 5, 4, 7, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 1, 2, 0, 1, 4, 2, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 5, 2, 0, 5, 4, 2, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 1, 5, 2, 1, 5, 3, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 5, 5, 2, 5, 5, 3, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 0, 5, 3, 0, 5, 8, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 6, 5, 3, 6, 5, 8, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    generateBox(level, box, 1, 5, 8, 5, 5, 8, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
+    placeBlock(level, Blocks::nether_brick_fence->defaultBlockState(), 1, 6, 3, box);
+    placeBlock(level, Blocks::nether_brick_fence->defaultBlockState(), 5, 6, 3, box);
+    generateBox(level, box, 0, 6, 3, 0, 6, 8, Blocks::nether_brick_fence->defaultBlockState(), Blocks::nether_brick_fence->defaultBlockState(), false);
+    generateBox(level, box, 6, 6, 3, 6, 6, 8, Blocks::nether_brick_fence->defaultBlockState(), Blocks::nether_brick_fence->defaultBlockState(), false);
+    generateBox(level, box, 1, 6, 8, 5, 7, 8, Blocks::nether_brick_fence->defaultBlockState(), Blocks::nether_brick_fence->defaultBlockState(), false);
+    generateBox(level, box, 2, 8, 8, 4, 8, 8, Blocks::nether_brick_fence->defaultBlockState(), Blocks::nether_brick_fence->defaultBlockState(), false);
     if (!mHasPlacedSpawner)
     {
-        BlockPos pos(getWorldX(3, 5), getWorldY(5), getWorldZ(3, 5));
+        const BlockPos& pos = BlockPos(getWorldX(3, 5), getWorldY(5), getWorldZ(3, 5));
         if (box->isInside(pos))
         {
             setDirty();
@@ -1401,7 +1355,7 @@ bool NetherBridgePieces::MonsterThrone::postProcess(Level* level, Random&, Bound
     for (int x = 0; x <= 6; ++x)
     {
         for (int z = 0; z <= 6; ++z)
-            fillColumnDown(level, brick, x, -1, z, box);
+            fillColumnDown(level, Blocks::nether_brick->defaultBlockState(), x, -1, z, box);
     }
     return true;
 }
@@ -1410,9 +1364,10 @@ StructurePiece* NetherBridgePieces::MonsterThrone::Create() { return new Monster
 EStructurePiece NetherBridgePieces::MonsterThrone::GetType() { return eStructurePiece_MonsterThrone; }
 
 NetherBridgePieces::StartPiece::StartPiece(Random& random, int x, int z, Level* level)
-    : BridgeCrossing(random, x, z), mPreviousPiece(NULL), mLevel(level), mAvailableBridgePieces(),
-      mAvailableCastlePieces(), mPendingChildren()
+    : BridgeCrossing(random, x, z), mAvailableBridgePieces(), mAvailableCastlePieces(), mPendingChildren()
 {
+    mLevel = level;
+    mPreviousPiece = NULL;
     for (int i = 0; i < 6; ++i)
     {
         PieceWeight* weight = bridgePieceWeights[i];

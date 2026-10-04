@@ -57,13 +57,13 @@ const SoundEvent* Donkey::getHurtSound(const DamageSource* source)
 
 bool Donkey::canMate(const boost::shared_ptr<Animal>& other)
 {
-    if (other.get() == this)
+    if (other == shared_from_this())
     {
         return false;
     }
 
-    unsigned long long type = other->GetType();
-    if (type != EntityType::DONKEY && type != EntityType::HORSE)
+    if (!eTYPE_DERIVED_FROM(EntityType::DONKEY, other->GetType())
+        && !eTYPE_DERIVED_FROM(EntityType::HORSE, other->GetType()))
     {
         return false;
     }
@@ -73,16 +73,16 @@ bool Donkey::canMate(const boost::shared_ptr<Animal>& other)
 
 boost::shared_ptr<AgableMob> Donkey::getBreedOffspring(boost::shared_ptr<AgableMob> partner)
 {
-    boost::shared_ptr<AgableMob> child;
-    if (partner->GetType() == EntityType::HORSE)
+    boost::shared_ptr<AbstractHorse> child;
+    if (eTYPE_DERIVED_FROM(EntityType::HORSE, partner->GetType()))
     {
-        child.reset(new Mule(mLevel));
+        child = boost::shared_ptr<AbstractHorse>(new Mule(mLevel));
     }
     else
     {
-        child.reset(new Donkey(mLevel));
+        child = boost::shared_ptr<AbstractHorse>(new Donkey(mLevel));
     }
-    setOffspringAttributes(partner, boost::static_pointer_cast<AbstractHorse>(child));
+    setOffspringAttributes(partner, child);
     return child;
 }
 
@@ -100,7 +100,9 @@ unsigned int Donkey::GetInteractTooltip(const EntityTooltipDataHolder& tooltipDa
     {
         if (SpawnEggItem::fjGetType(tooltipData.m_pItemInstance) == EntityType::DONKEY)
             return IDS_TOOLTIPS_PLACE;
-        return isLeashedToPlayer(tooltipData.m_pPlayer) ? IDS_TOOLTIPS_UNLEASH : IDS_NONE;
+        if (isLeashedToPlayer(tooltipData.m_pPlayer))
+            return IDS_TOOLTIPS_UNLEASH;
+        return IDS_NONE;
     }
 
     if (isLeashedToPlayer(tooltipData.m_pPlayer))
@@ -142,11 +144,9 @@ unsigned int Donkey::GetInteractTooltip(const EntityTooltipDataHolder& tooltipDa
         return IDS_NONE;
     }
 
-    bool open = tooltipData.m_pPlayer->isSneaking()
-                && (!isVehicle() || hasPassenger(tooltipData.m_pPlayer)) && isTamed();
-    if (!open && itemId == ItemId::SADDLE && !isSaddled())
-        open = true;
-    if (open)
+    if ((tooltipData.m_pPlayer->isSneaking()
+         && (!isVehicle() || hasPassenger(tooltipData.m_pPlayer)) && isTamed())
+        || (itemId == ItemId::SADDLE && !isSaddled()))
         return IDS_TOOLTIPS_OPEN;
 
     if (itemId == BlockId::CHEST && !hasChest())

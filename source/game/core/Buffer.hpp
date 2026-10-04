@@ -5,7 +5,7 @@ class Buffer
 {
 public:
     Buffer(unsigned int capacity);
-    virtual ~Buffer();
+    virtual ~Buffer() {}
 
     virtual Buffer* flip() = 0;
 

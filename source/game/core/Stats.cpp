@@ -66,35 +66,19 @@ void Stats::init()
 
 void Stats::staticCtor()
 {
-    Stat* stat;
+    walkOneM = (new GeneralStat(2000, L"stat.walkOneM", Stat::distanceFormatter))->setAwardLocallyOnly()->postConstruct(true);
 
-    stat = new GeneralStat(2000, L"stat.walkOneM", Stat::distanceFormatter);
-    stat->setAwardLocallyOnly();
-    walkOneM = stat->postConstruct(true);
+    swimOneM = (new GeneralStat(2001, L"stat.swimOneM", Stat::distanceFormatter))->setAwardLocallyOnly()->postConstruct(true);
 
-    stat = new GeneralStat(2001, L"stat.swimOneM", Stat::distanceFormatter);
-    stat->setAwardLocallyOnly();
-    swimOneM = stat->postConstruct(true);
+    fallOneM = (new GeneralStat(2002, L"stat.fallOneM", Stat::distanceFormatter))->setAwardLocallyOnly()->postConstruct(true);
 
-    stat = new GeneralStat(2002, L"stat.fallOneM", Stat::distanceFormatter);
-    stat->setAwardLocallyOnly();
-    fallOneM = stat->postConstruct(true);
+    climbOneM = (new GeneralStat(2003, L"stat.climbOneM", Stat::distanceFormatter))->setAwardLocallyOnly()->postConstruct(true);
 
-    stat = new GeneralStat(2003, L"stat.climbOneM", Stat::distanceFormatter);
-    stat->setAwardLocallyOnly();
-    climbOneM = stat->postConstruct(true);
+    minecartOneM = (new GeneralStat(2004, L"stat.minecartOneM", Stat::distanceFormatter))->setAwardLocallyOnly()->postConstruct(true);
 
-    stat = new GeneralStat(2004, L"stat.minecartOneM", Stat::distanceFormatter);
-    stat->setAwardLocallyOnly();
-    minecartOneM = stat->postConstruct(true);
+    boatOneM = (new GeneralStat(2005, L"stat.boatOneM", Stat::distanceFormatter))->setAwardLocallyOnly()->postConstruct(true);
 
-    stat = new GeneralStat(2005, L"stat.boatOneM", Stat::distanceFormatter);
-    stat->setAwardLocallyOnly();
-    boatOneM = stat->postConstruct(true);
-
-    stat = new GeneralStat(2006, L"stat.pigOneM", Stat::distanceFormatter);
-    stat->setAwardLocallyOnly();
-    pigOneM = stat->postConstruct(true);
+    pigOneM = (new GeneralStat(2006, L"stat.pigOneM", Stat::distanceFormatter))->setAwardLocallyOnly()->postConstruct(true);
 
     portalsUsed = (new GeneralStat(2007, L"stat.portalsUsed"))->postConstruct(true);
     cowsMilked = (new GeneralStat(2008, L"stat.cowsMilked"))->postConstruct(true);
@@ -109,28 +93,18 @@ void Stats::staticCtor()
     killsGhast = (new GeneralStat(2017, L"stat.killsGhast"))->postConstruct(true);
     killsNetherZombiePigman = (new GeneralStat(2018, L"stat.killsNetherZombiePigman"))->postConstruct(true);
 
-    stat = new GeneralStat(3000, L"stat.MG03Score");
-    stat->setAwardLocallyOnly();
-    mg03Score = stat->postConstruct(false);
+    mg03Score = (new GeneralStat(3000, L"stat.MG03Score"))->setAwardLocallyOnly()->postConstruct(false);
 
-    stat = new GeneralStat(3001, L"stat.MG03RingCount");
-    stat->setAwardLocallyOnly();
-    mg03RingCount = stat->postConstruct(false);
+    mg03RingCount = (new GeneralStat(3001, L"stat.MG03RingCount"))->setAwardLocallyOnly()->postConstruct(false);
 
-    stat = new GeneralStat(3002, L"stat.MG03BestTimeScoreChallenge");
-    stat->setAwardLocallyOnly();
-    mg03BestTimeScoreChallenge = stat->postConstruct(false);
+    mg03BestTimeScoreChallenge = (new GeneralStat(3002, L"stat.MG03BestTimeScoreChallenge"))->setAwardLocallyOnly()->postConstruct(false);
 
-    stat = new GeneralStat(3003, L"stat.MG03BestTime");
-    stat->setAwardLocallyOnly();
-    mg03BestTime = stat->postConstruct(false);
+    mg03BestTime = (new GeneralStat(3003, L"stat.MG03BestTime"))->setAwardLocallyOnly()->postConstruct(false);
 
     befriendsWolf = (new GeneralStat(2019, L"stat.befriendsWolf"))->postConstruct(true);
     totalBlocksMined = (new GeneralStat(2020, L"stat.totalBlocksMined"))->postConstruct(true);
 
-    stat = new GeneralStat(2021, L"stat.timePlayed");
-    stat->setAwardLocallyOnly();
-    timePlayed = stat->postConstruct(true);
+    timePlayed = (new GeneralStat(2021, L"stat.timePlayed"))->setAwardLocallyOnly()->postConstruct(true);
 
     buildBlockStats();
     Achievements::init();
@@ -150,16 +124,16 @@ void Stats::buildBlockStats()
     blockMinedStats.data[Item::getId(Item::byBlock(Blocks::farmland))] = stat;
     stat->postConstruct(true);
 
-    stat = new ItemStat(0x01000001, L"mineBlock.stone", Item::getId(Item::byBlock(Blocks::stone)));
-    blockMinedStats.data[Item::getId(Item::byBlock(Blocks::stone))] = stat;
+    stat = new ItemStat(0x01000001, L"mineBlock.stone", Item::getId(Item::byBlock(Blocks::cobblestone)));
+    blockMinedStats.data[Item::getId(Item::byBlock(Blocks::cobblestone))] = stat;
     stat->postConstruct(true);
 
     stat = new ItemStat(0x01000002, L"mineBlock.sand", Item::getId(Item::byBlock(Blocks::sand)));
     blockMinedStats.data[Item::getId(Item::byBlock(Blocks::sand))] = stat;
     stat->postConstruct(true);
 
-    stat = new ItemStat(0x01000003, L"mineBlock.cobblestone", Item::getId(Item::byBlock(Blocks::cobblestone)));
-    blockMinedStats.data[Item::getId(Item::byBlock(Blocks::cobblestone))] = stat;
+    stat = new ItemStat(0x01000003, L"mineBlock.cobblestone", Item::getId(Item::byBlock(Blocks::stone)));
+    blockMinedStats.data[Item::getId(Item::byBlock(Blocks::stone))] = stat;
     stat->postConstruct(true);
 
     stat = new ItemStat(0x01000004, L"mineBlock.gravel", Item::getId(Item::byBlock(Blocks::gravel)));
@@ -436,9 +410,7 @@ void Stats::buildAdditionalStats()
 
     for (unsigned int wool = 0; wool < 16; wool++)
     {
-        stat = new GeneralStat(statId++, L"rainbowCollection." + _toString(wool));
-        stat->setWoolStat(true);
-        stat->setExtended();
+        stat = (new GeneralStat(statId++, L"rainbowCollection." + _toString(wool)))->setWoolStat(true)->setExtended();
         rainbowCollectionStats.data[wool] = stat;
         stat->postConstruct(true);
     }
@@ -447,9 +419,7 @@ void Stats::buildAdditionalStats()
 
     for (unsigned int biome = 0; biome < 40; biome++)
     {
-        stat = new GeneralStat(statId++, L"biomesVisited." + _toString(biome));
-        stat->setBiomeStat(true);
-        stat->setExtended();
+        stat = (new GeneralStat(statId++, L"biomesVisited." + _toString(biome)))->setBiomeStat(true)->setExtended();
         biomesVisitedStats.data[biome] = stat;
         stat->postConstruct(true);
     }
@@ -464,31 +434,19 @@ void Stats::buildAdditionalStats()
 
     armourDyedStats = arrayWithLength<Stat*>(4, true);
 
-    stat = new GeneralStat(statId++, L"armorDyed.helmet");
-    stat->setArmourStat(true);
-    stat->setAwardLocallyOnly();
-    stat->setExtended();
+    stat = (new GeneralStat(statId++, L"armorDyed.helmet"))->setArmourStat(true)->setAwardLocallyOnly()->setExtended();
     armourDyedStats.data[0] = stat;
     stat->postConstruct(true);
 
-    stat = new GeneralStat(statId++, L"armorDyed.chestplate");
-    stat->setArmourStat(true);
-    stat->setAwardLocallyOnly();
-    stat->setExtended();
+    stat = (new GeneralStat(statId++, L"armorDyed.chestplate"))->setArmourStat(true)->setAwardLocallyOnly()->setExtended();
     armourDyedStats.data[1] = stat;
     stat->postConstruct(true);
 
-    stat = new GeneralStat(statId++, L"armorDyed.leggings");
-    stat->setArmourStat(true);
-    stat->setAwardLocallyOnly();
-    stat->setExtended();
+    stat = (new GeneralStat(statId++, L"armorDyed.leggings"))->setArmourStat(true)->setAwardLocallyOnly()->setExtended();
     armourDyedStats.data[2] = stat;
     stat->postConstruct(true);
 
-    stat = new GeneralStat(statId++, L"armorDyed.boots");
-    stat->setArmourStat(true);
-    stat->setAwardLocallyOnly();
-    stat->setExtended();
+    stat = (new GeneralStat(statId++, L"armorDyed.boots"))->setArmourStat(true)->setAwardLocallyOnly()->setExtended();
     armourDyedStats.data[3] = stat;
     stat->postConstruct(true);
 }

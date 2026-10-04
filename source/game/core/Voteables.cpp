@@ -5,6 +5,7 @@
 Voteables::Voteables()
     : boost::unordered_map<int, Voteable*>(11)
 {
+    boost::unordered_map<int, Voteable*>::operator=(boost::unordered_map<int, Voteable*>(11));
 }
 
 Voteables::~Voteables()
@@ -19,7 +20,12 @@ Voteables::~Voteables()
 Voteable* Voteables::getVoteable(unsigned int voteableId)
 {
     boost::unordered_map<int, Voteable*>::iterator it = find(static_cast<int>(voteableId));
-    return it == end() ? NULL : it->second;
+    if (it == end())
+    {
+        return NULL;
+    }
+
+    return find(static_cast<int>(voteableId))->second;
 }
 
 void Voteables::init()
@@ -31,7 +37,7 @@ void Voteables::addVoteable(Voteable* voteable)
     const int voteableId = voteable->mVoteableId;
     if (find(voteableId) == end())
     {
-        (*this)[voteableId] = voteable;
+        insert(std::make_pair(voteableId, voteable));
     }
 }
 

@@ -33,7 +33,7 @@ public:
     virtual void addAdditonalSaveData(CompoundTag* tag);
     virtual void readAdditionalSaveData(CompoundTag* tag);
     virtual boost::shared_ptr<LivingEntity> getOwner();
-    virtual double getEyeHeight();
+    virtual float getEyeHeight();
     int getFuse();
     virtual void onSyncedDataUpdated(const EntityDataAccessor_Base* accessor);
     virtual unsigned long long GetType();

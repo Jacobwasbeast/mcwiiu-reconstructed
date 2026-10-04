@@ -14,7 +14,6 @@ class DLCSkinFile : public DLCFile
 {
 public:
     DLCSkinFile(const std::wstring& path);
-    virtual ~DLCSkinFile();
     bool isFiltered();
     virtual void addData(unsigned char* data, unsigned int size);
     virtual void addParameter(DLCManager::EDLCParameterType parameter, const std::wstring& value);

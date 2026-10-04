@@ -49,6 +49,7 @@ public:
     void SetDecompressionType(ESavePlatform platform);
 
     friend class ConsoleSchematicFile;
+    friend class GameRuleManager;
 
 private:
     static int internalCompressRle(void* pDest, unsigned int* pDestSize, void* pSource, unsigned int sourceSize);

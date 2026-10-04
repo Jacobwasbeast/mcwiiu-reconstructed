@@ -109,9 +109,7 @@ void Achievements::staticCtor()
 {
     Achievement* achievement;
 
-    achievement = new Achievement(0, L"openInventory", 0, 0, Items::book, NULL);
-    achievement->setAwardLocallyOnly();
-    openInventory = achievement->postConstruct(true);
+    openInventory = (new Achievement(0, L"openInventory", 0, 0, Items::book, NULL))->setAwardLocallyOnly()->postConstruct(true);
 
     mineWood = (new Achievement(1, L"mineWood", 2, 1, Blocks::log, openInventory))->postConstruct(true);
 
@@ -147,33 +145,21 @@ void Achievements::staticCtor()
     achievement->setGolden();
     flyPig = achievement->postConstruct(true);
 
-    achievement = new Achievement(16, L"leaderOfThePack", 0, 0, Blocks::log, buildSword);
-    achievement->setAwardLocallyOnly();
-    leaderOfThePack = achievement->postConstruct(true);
+    leaderOfThePack = (new Achievement(16, L"leaderOfThePack", 0, 0, Blocks::log, buildSword))->setAwardLocallyOnly()->postConstruct(true);
 
-    achievement = new Achievement(17, L"MOARTools", 0, 0, Blocks::log, buildSword);
-    achievement->setAwardLocallyOnly();
-    MOARTools = achievement->postConstruct(true);
+    MOARTools = (new Achievement(17, L"MOARTools", 0, 0, Blocks::log, buildSword))->setAwardLocallyOnly()->postConstruct(true);
 
     dispenseWithThis = (new Achievement(18, L"dispenseWithThis", 0, 0, Blocks::log, buildSword))->postConstruct(true);
 
     InToTheNether = (new Achievement(19, L"InToTheNether", 0, 0, Blocks::log, buildSword))->postConstruct(true);
 
-    achievement = new Achievement(20, L"mine100Blocks", 0, 0, Blocks::log, buildSword);
-    achievement->setAwardLocallyOnly();
-    mine100Blocks = achievement->postConstruct(true);
+    mine100Blocks = (new Achievement(20, L"mine100Blocks", 0, 0, Blocks::log, buildSword))->setAwardLocallyOnly()->postConstruct(true);
 
-    achievement = new Achievement(21, L"kill10Creepers", 0, 0, Blocks::log, buildSword);
-    achievement->setAwardLocallyOnly();
-    kill10Creepers = achievement->postConstruct(true);
+    kill10Creepers = (new Achievement(21, L"kill10Creepers", 0, 0, Blocks::log, buildSword))->setAwardLocallyOnly()->postConstruct(true);
 
-    achievement = new Achievement(22, L"eatPorkChop", 0, 0, Blocks::log, buildSword);
-    achievement->setAwardLocallyOnly();
-    eatPorkChop = achievement->postConstruct(true);
+    eatPorkChop = (new Achievement(22, L"eatPorkChop", 0, 0, Blocks::log, buildSword))->setAwardLocallyOnly()->postConstruct(true);
 
-    achievement = new Achievement(23, L"play100Days", 0, 0, Blocks::log, buildSword);
-    achievement->setAwardLocallyOnly();
-    play100Days = achievement->postConstruct(true);
+    play100Days = (new Achievement(23, L"play100Days", 0, 0, Blocks::log, buildSword))->setAwardLocallyOnly()->postConstruct(true);
 
     arrowKillCreeper = (new Achievement(24, L"arrowKillCreeper", 0, 0, Blocks::log, buildSword))->postConstruct(true);
 
@@ -209,39 +195,27 @@ void Achievements::staticCtor()
 
     bookcase = (new Achievement(36, L"bookcase", -3, 6, Blocks::bookshelf, enchantments))->postConstruct(true)->setExtended();
 
-    achievement = new Achievement(37, L"adventuringTime", 0, 0, Blocks::bookshelf, NULL);
-    achievement->setAwardLocallyOnly();
-    adventuringTime = achievement->postConstruct(true)->setExtended();
+    adventuringTime = (new Achievement(37, L"adventuringTime", 0, 0, Blocks::bookshelf, NULL))->setAwardLocallyOnly()->postConstruct(true)->setExtended();
 
     repopulation = (new Achievement(38, L"repopulation", 0, 0, Blocks::bookshelf, NULL))->postConstruct(true)->setExtended();
 
     diamondsToYou = (new Achievement(39, L"diamondsToYou", 0, 0, Blocks::bookshelf, NULL))->postConstruct(true)->setExtended();
 
-    achievement = new Achievement(40, L"theHaggler", 0, 0, Blocks::bookshelf, NULL);
-    achievement->setAwardLocallyOnly();
-    theHaggler = achievement->postConstruct(true)->setExtended();
+    theHaggler = (new Achievement(40, L"theHaggler", 0, 0, Blocks::bookshelf, NULL))->setAwardLocallyOnly()->postConstruct(true)->setExtended();
 
-    achievement = new Achievement(41, L"potPlanter", 0, 0, Blocks::bookshelf, NULL);
-    achievement->setAwardLocallyOnly();
-    potPlanter = achievement->postConstruct(true)->setExtended();
+    potPlanter = (new Achievement(41, L"potPlanter", 0, 0, Blocks::bookshelf, NULL))->setAwardLocallyOnly()->postConstruct(true)->setExtended();
 
-    achievement = new Achievement(42, L"itsASign", 0, 0, Blocks::bookshelf, NULL);
-    achievement->setAwardLocallyOnly();
-    itsASign = achievement->postConstruct(true)->setExtended();
+    itsASign = (new Achievement(42, L"itsASign", 0, 0, Blocks::bookshelf, NULL))->setAwardLocallyOnly()->postConstruct(true)->setExtended();
 
     ironBelly = (new Achievement(43, L"ironBelly", 0, 0, Blocks::bookshelf, NULL))->postConstruct(true)->setExtended();
 
     haveAShearfulDay = (new Achievement(44, L"haveAShearfulDay", 0, 0, Blocks::bookshelf, NULL))->postConstruct(true)->setExtended();
 
-    achievement = new Achievement(45, L"rainbowCollection", 0, 0, Blocks::bookshelf, NULL);
-    achievement->setAwardLocallyOnly();
-    rainbowCollection = achievement->postConstruct(true)->setExtended();
+    rainbowCollection = (new Achievement(45, L"rainbowCollection", 0, 0, Blocks::bookshelf, NULL))->setAwardLocallyOnly()->postConstruct(true)->setExtended();
 
     stayingFrosty = (new Achievement(46, L"stayingFrosty", 0, 0, Blocks::bookshelf, NULL))->postConstruct(true)->setExtended();
 
-    achievement = new Achievement(47, L"chestfulOfCobblestone", 0, 0, Blocks::bookshelf, NULL);
-    achievement->setAwardLocallyOnly();
-    chestfulOfCobblestone = achievement->postConstruct(true)->setExtended();
+    chestfulOfCobblestone = (new Achievement(47, L"chestfulOfCobblestone", 0, 0, Blocks::bookshelf, NULL))->setAwardLocallyOnly()->postConstruct(true)->setExtended();
 
     renewableEnergy = (new Achievement(48, L"renewableEnergy", 0, 0, Blocks::bookshelf, NULL))->postConstruct(true)->setExtended();
 
@@ -249,9 +223,7 @@ void Achievements::staticCtor()
 
     bodyGuard = (new Achievement(50, L"bodyGuard", 0, 0, Blocks::bookshelf, NULL))->postConstruct(true)->setExtended();
 
-    achievement = new Achievement(51, L"ironMan", 0, 0, Blocks::bookshelf, NULL);
-    achievement->setAwardLocallyOnly();
-    ironMan = achievement->postConstruct(true)->setExtended();
+    ironMan = (new Achievement(51, L"ironMan", 0, 0, Blocks::bookshelf, NULL))->setAwardLocallyOnly()->postConstruct(true)->setExtended();
 
     zombieDoctor = (new Achievement(52, L"zombieDoctor", 0, 0, Blocks::bookshelf, NULL))->postConstruct(true)->setExtended();
 
@@ -269,21 +241,13 @@ void Achievements::staticCtor()
 
     overpowered = (new Achievement(57, L"overpowered", 0, 0, Blocks::bookshelf, buildBetterPickaxe))->postConstruct(true)->setExtended();
 
-    achievement = new Achievement(58, L"theDyeOutfit", 0, 0, Blocks::bookshelf, NULL);
-    achievement->setAwardLocallyOnly();
-    theDyeOutfit = achievement->postConstruct(true)->setExtended();
+    theDyeOutfit = (new Achievement(58, L"theDyeOutfit", 0, 0, Blocks::bookshelf, NULL))->setAwardLocallyOnly()->postConstruct(true)->setExtended();
 
-    achievement = new Achievement(59, L"trampoline", 0, 0, Blocks::bookshelf, NULL);
-    achievement->setAwardLocallyOnly();
-    trampoline = achievement->postConstruct(true)->setExtended();
+    trampoline = (new Achievement(59, L"trampoline", 0, 0, Blocks::bookshelf, NULL))->setAwardLocallyOnly()->postConstruct(true)->setExtended();
 
-    achievement = new Achievement(60, L"theStudent", 0, 0, Blocks::log, NULL);
-    achievement->setAwardLocallyOnly();
-    theStudent = achievement->postConstruct(true)->setExtended();
+    theStudent = (new Achievement(60, L"theStudent", 0, 0, Blocks::log, NULL))->setAwardLocallyOnly()->postConstruct(true)->setExtended();
 
-    achievement = new Achievement(61, L"hasBecomeTheMaster", 0, 0, Blocks::log, NULL);
-    achievement->setAwardLocallyOnly();
-    hasBecomeTheMaster = achievement->postConstruct(true)->setExtended();
+    hasBecomeTheMaster = (new Achievement(61, L"hasBecomeTheMaster", 0, 0, Blocks::log, NULL))->setAwardLocallyOnly()->postConstruct(true)->setExtended();
 
     tisButAScratch = (new Achievement(62, L"tisButAScratch", 0, 0, Blocks::log, NULL))->postConstruct(true)->setExtended();
 
@@ -297,15 +261,11 @@ void Achievements::staticCtor()
 
     youNeedAMint = (new Achievement(67, L"youNeedAMint", 0, 0, Blocks::log, NULL))->postConstruct(true)->setExtended();
 
-    achievement = new Achievement(68, L"superSonic", 0, 0, Blocks::log, NULL);
-    achievement->setAwardLocallyOnly();
-    superSonic = achievement->postConstruct(true)->setExtended();
+    superSonic = (new Achievement(68, L"superSonic", 0, 0, Blocks::log, NULL))->setAwardLocallyOnly()->postConstruct(true)->setExtended();
 
     drySpell = (new Achievement(69, L"drySpell", 0, 0, Blocks::log, NULL))->postConstruct(true)->setExtended();
 
-    achievement = new Achievement(70, L"freeDiver", 0, 0, Blocks::log, NULL);
-    achievement->setAwardLocallyOnly();
-    freeDiver = achievement->postConstruct(true)->setExtended();
+    freeDiver = (new Achievement(70, L"freeDiver", 0, 0, Blocks::log, NULL))->setAwardLocallyOnly()->postConstruct(true)->setExtended();
 
     superFuel = (new Achievement(71, L"superFuel", 0, 0, Blocks::log, NULL))->postConstruct(true)->setExtended();
 
@@ -343,9 +303,7 @@ void Achievements::staticCtor()
 
     soIGotThatGoingForMe = (new Achievement(88, L"soIGotThatGoingForMe", 0, 0, Blocks::log, NULL))->postConstruct(true)->setExtended();
 
-    achievement = new Achievement(89, L"letItGo", 0, 0, Blocks::log, NULL);
-    achievement->setAwardLocallyOnly();
-    letItGo = achievement->postConstruct(true)->setExtended();
+    letItGo = (new Achievement(89, L"letItGo", 0, 0, Blocks::log, NULL))->setAwardLocallyOnly()->postConstruct(true)->setExtended();
 
     feelingIll = (new Achievement(90, L"feelingIll", 0, 0, Blocks::log, NULL))->postConstruct(true)->setExtended();
 

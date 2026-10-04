@@ -12,9 +12,7 @@ ChoiceTask::ChoiceTask(Tutorial* tutorial, int descriptionId, int promptId, bool
                        int firstInput, int secondInput,
                        eTutorial_CompletionAction completionAction,
                        ETelemetryChallenges telemetryChallenge)
-    : TutorialTask(tutorial, descriptionId, false, NULL, true, false, false),
-      firstInput(firstInput), secondInput(secondInput), firstChoice(false), secondChoice(false),
-      completionAction(completionAction), telemetryChallenge(telemetryChallenge)
+    : TutorialTask(tutorial, descriptionId, false, NULL, true, false, false)
 {
     if (preCompletionEnabled)
     {
@@ -22,28 +20,34 @@ ChoiceTask::ChoiceTask(Tutorial* tutorial, int descriptionId, int promptId, bool
         constraints.push_back(new InputConstraint(secondInput));
     }
 
+    this->firstInput = firstInput;
     this->promptId = promptId;
+    this->completionAction = completionAction;
+    this->secondInput = secondInput;
+    firstChoice = false;
+    secondChoice = false;
     tutorial->addMessage(promptId, false, 3);
+    this->telemetryChallenge = telemetryChallenge;
 }
 
 void ChoiceTask::sendTelemetry()
 {
     Minecraft* minecraft = Minecraft::GetInstance();
 
-    if (telemetryChallenge == eTelemetryChallenges_None)
+    switch (telemetryChallenge)
     {
+    case eTelemetryChallenges_None:
         return;
-    }
-
-    if (telemetryChallenge == eTelemetryChallenges_TutorialStart)
-    {
+    case eTelemetryChallenges_TutorialStart:
         tutorial->getCompleted(386);
         tutorial->setCompleted(386);
-    }
-    else if (telemetryChallenge == eTelemetryChallenges_CraftingChoice)
-    {
+        break;
+    case eTelemetryChallenges_CraftingChoice:
         tutorial->getCompleted(387);
         tutorial->setCompleted(387);
+        break;
+    default:
+        break;
     }
 
     telemetryManagerInstance->RecordEnemyKilledOrOvercome(minecraft->mPlayer->mUserIndex, 0, 0, 0, 0, 0, 0,
@@ -54,16 +58,22 @@ bool ChoiceTask::isCompleted()
 {
     Minecraft* minecraft = Minecraft::GetInstance();
 
-    if (firstChoice || secondChoice)
+    bool choiceMade = firstChoice;
+
+    if (choiceMade || secondChoice)
     {
         sendTelemetry();
         enableConstraints(false, true);
         return true;
     }
 
-    if (!gConsoleUIController.GetMenuDisplayed(tutorial->playerId))
+    Tutorial* owner = tutorial;
+
+    if (!gConsoleUIController.GetMenuDisplayed(owner->playerId))
     {
-        if (minecraft->mLocalPlayers[tutorial->playerId]->isUnderLiquid(Material::WATER))
+        boost::shared_ptr<MultiplayerLocalPlayer>& localPlayer = minecraft->mLocalPlayers[owner->playerId];
+
+        if (localPlayer->isUnderLiquid(Material::WATER))
         {
             return false;
         }
@@ -80,14 +90,17 @@ bool ChoiceTask::isCompleted()
             secondChoice = true;
         }
 
-        if (firstChoice || secondChoice)
+        choiceMade = firstChoice;
+
+        if (choiceMade || secondChoice)
         {
             sendTelemetry();
             enableConstraints(false, true);
+            choiceMade = firstChoice;
         }
     }
 
-    return firstChoice || secondChoice;
+    return choiceMade || secondChoice;
 }
 
 eTutorial_CompletionAction ChoiceTask::getCompletionAction()

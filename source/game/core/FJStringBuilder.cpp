@@ -2,16 +2,14 @@
 
 FJStringBuilder::FJStringBuilder()
 {
-    mCore.reset();
 }
 
 FJStringBuilder::FJStringBuilder(StringBuilderCore* core)
 {
-    boost::shared_ptr<StringBuilderCore> temp(core);
-    mCore.swap(temp);
+    mCore = boost::shared_ptr<StringBuilderCore>(core);
 }
 
 std::wstring FJStringBuilder::operator()()
 {
-    return mCore->getString();
+    return mCore.get()->getString();
 }

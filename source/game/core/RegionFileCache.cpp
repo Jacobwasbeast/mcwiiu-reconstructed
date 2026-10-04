@@ -32,7 +32,12 @@ RegionFileCache::~RegionFileCache()
 
 bool RegionFileCache::useSplitSaves(ESavePlatform platform)
 {
-    return platform == eSavePlatform_NX || platform == eSavePlatform_XB1 || platform == eSavePlatform_PS4;
+    if (platform == eSavePlatform_NX || platform == eSavePlatform_XB1 || platform == eSavePlatform_PS4)
+    {
+        return true;
+    }
+
+    return false;
 }
 
 File RegionFileCache::getFilepath(ConsoleSaveFile* saveFile, const std::wstring& folder, int x, int z)

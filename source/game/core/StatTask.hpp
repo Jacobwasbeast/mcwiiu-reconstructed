@@ -16,7 +16,7 @@ public:
 
 private:
     Stat* mStat;
-    int mRequiredValue;
+    unsigned int mRequiredValue;
 };
 
 #endif

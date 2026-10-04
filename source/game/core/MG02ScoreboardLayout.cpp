@@ -95,10 +95,10 @@ void MG02ScoreboardLayout::Init(int value)
     m_userIndex = value;
     ClearPlayersInfo();
 
-    const int playerCount = CGameNetworkManager::sInstance.GetPlayerCount();
+    const unsigned int playerCount = CGameNetworkManager::sInstance.GetPlayerCount();
     boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = Minecraft::GetInstance()->mLocalPlayers[value];
 
-    for (int index = 0; index < playerCount; ++index)
+    for (unsigned int index = 0; index < playerCount; ++index)
     {
         INetworkPlayer* networkPlayer = CGameNetworkManager::sInstance.GetPlayerByIndex(index);
         if (networkPlayer != 0)
@@ -194,7 +194,7 @@ std::wstring MG02ScoreboardLayout::GetRowLabel(int row, const StatsUID& uid, con
             Minecraft::GetInstance()->mLocalPlayers[m_userIndex]->GetLevel()->GetClientScoreboard();
         return _toString<int>(scoreboard->GetRoundsWon(uid));
     }
-    if (row == 1 && getNumberOfColumns() > 2)
+    if (row == 1 && (int)getNumberOfColumns() > 2)
     {
         ClientScoreboard* scoreboard =
             Minecraft::GetInstance()->mLocalPlayers[m_userIndex]->GetLevel()->GetClientScoreboard();
@@ -275,16 +275,15 @@ PlayerInfo* MG02ScoreboardLayout::CreatePlayerInfo()
 void MG02ScoreboardLayout::AddPlayer(unsigned char id)
 {
     PlayerInfo* info = new MG02PlayerInfo();
-    INetworkPlayer* networkPlayer = CGameNetworkManager::sInstance.GetPlayerBySmallId(id);
-    BuildPlayerInfo(networkPlayer, info);
+    BuildPlayerInfo(CGameNetworkManager::sInstance.GetPlayerBySmallId(id), info);
     m_players.push_back(info);
 }
 
 void MG02ScoreboardLayout::UpdatePlayer(int index, PlayerInfo*, PlayerInfo* newInfo, bool)
 {
     PlayerInfo* info = m_players[index];
-    info->smallId = newInfo->smallId;
     info->voiceStatus = newInfo->voiceStatus;
+    info->smallId = newInfo->smallId;
     info->colour = newInfo->colour;
     info->name = newInfo->name;
 }

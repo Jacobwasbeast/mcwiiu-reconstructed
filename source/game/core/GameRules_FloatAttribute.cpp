@@ -10,9 +10,6 @@
 #include <string>
 
 
-template<typename T>
-T fromString(const std::wstring& text);
-
 GameRules_FloatAttribute::GameRules_FloatAttribute(float* value)
     : mValue(value)
 {
@@ -30,7 +27,7 @@ void GameRules_FloatAttribute::setValue(const std::wstring& value)
 {
     mHasValue = true;
 
-    *mValue = fromString<float>(value);
+    *mValue = _fromString<float>(value);
 
     if (mHasMin)
     {
@@ -53,14 +50,16 @@ void GameRules_FloatAttribute::writeAsXml(ConsoleGameRules::EGameRuleAttr attrib
     xml.append(formatstr(" %ls=\"%.1f\"", gRuleAttributeNames[attribute], *mValue));
 }
 
-void GameRules_FloatAttribute::setMin(float min)
+GameRules_FloatAttribute* GameRules_FloatAttribute::setMin(float min)
 {
     mMin = min;
     mHasMin = true;
+    return this;
 }
 
-void GameRules_FloatAttribute::setMax(float max)
+GameRules_FloatAttribute* GameRules_FloatAttribute::setMax(float max)
 {
     mMax = max;
     mHasMax = true;
+    return this;
 }

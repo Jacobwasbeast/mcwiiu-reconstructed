@@ -27,12 +27,8 @@ bool RepairResultSlot::mayPlace(not_null_ptr<ItemInstance>)
 
 bool RepairResultSlot::mayPickup(boost::shared_ptr<Player> player)
 {
-    if (!player->mAbilities.mInstabuild && player->mExperienceLevel < mMenu->mRepairCost)
-    {
-        return false;
-    }
-
-    return mMenu->mRepairCost > 0 && hasItem();
+    return (player->mAbilities.mInstabuild || player->mExperienceLevel >= mMenu->mRepairCost) &&
+           mMenu->mRepairCost > 0 && hasItem();
 }
 
 not_null_ptr<ItemInstance> RepairResultSlot::onTake(boost::shared_ptr<Player> player,
@@ -70,7 +66,7 @@ not_null_ptr<ItemInstance> RepairResultSlot::onTake(boost::shared_ptr<Player> pl
 
     const BlockState* state = mMenu->mLevel->getBlockState(mPosition);
     if (!player->mAbilities.mInstabuild && !mMenu->mLevel->mIsClientSide &&
-        state->getBlock() == Blocks::anvil && player->mRandom->nextFloat() < 0.12f)
+        state->getBlock() == Blocks::anvil && player->getRandom()->nextFloat() < 0.12f)
     {
         int damage = state->getValue(AnvilBlock::DAMAGE) + 1;
         if (damage > 2)

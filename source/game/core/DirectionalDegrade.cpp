@@ -9,6 +9,22 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/Iterator.hpp"
 
+struct DirectionName
+{
+    std::wstring name;
+    int direction;
+};
+
+static DirectionName sDirectionNames[7] =
+{
+    { L"North", 1 },
+    { L"South", 2 },
+    { L"East", 3 },
+    { L"West", 4 },
+    { L"ToEdges", 5 },
+    { L"ToCentre", 6 }
+};
+
 DirectionalDegrade::DirectionalDegrade()
     : mDirection(5)
 {
@@ -28,29 +44,12 @@ void DirectionalDegrade::addAttribute(const std::wstring& name, const std::wstri
 {
     if (name == L"dir")
     {
-        if (value == L"down")
+        for (int i = 0; i < 7; ++i)
         {
-            mDirection = 1;
-        }
-        else if (value == L"up")
-        {
-            mDirection = 2;
-        }
-        else if (value == L"north")
-        {
-            mDirection = 3;
-        }
-        else if (value == L"south")
-        {
-            mDirection = 4;
-        }
-        else if (value == L"west")
-        {
-            mDirection = 5;
-        }
-        else if (value == L"east")
-        {
-            mDirection = 6;
+            if (value == sDirectionNames[i].name)
+            {
+                mDirection = sDirectionNames[i].direction;
+            }
         }
         return;
     }
@@ -82,13 +81,13 @@ void DirectionalDegrade::NextBlocks(BlockDegradeRoutine::LayerCache* layerCache,
         BlockPos size(bounds->mMaxX - bounds->mMinX,
                       bounds->mMaxY - bounds->mMinY,
                       bounds->mMaxZ - bounds->mMinZ);
-        size = size.offset(BlockPos(1, 1, 1));
+        BlockPos paddedSize = size.offset(BlockPos(1, 1, 1));
 
         Random random;
         PerlinNoise noise(&random, 3);
         arrayWithLength<double> values;
         values = noise.getRegion(values, min.x, min.y, min.z,
-                                 size.x, size.y, size.z, 5.0, 5.0, 5.0);
+                                 paddedSize.x, paddedSize.y, paddedSize.z, 5.0, 5.0, 5.0);
 
         CachedSortFunction sortFunction(values, bounds);
         std::sort(mBlocks.begin(), mBlocks.end(), sortFunction);

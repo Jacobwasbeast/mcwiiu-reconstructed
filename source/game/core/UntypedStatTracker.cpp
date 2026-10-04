@@ -5,10 +5,6 @@ UntypedStatTracker::UntypedStatTracker(const StatsUID& statsUID)
 {
 }
 
-UntypedStatTracker::~UntypedStatTracker()
-{
-}
-
 bool UntypedStatTracker::isTracking(const StatsUID& statsUID)
 {
     return mStatsUID == statsUID;

@@ -37,7 +37,7 @@ public:
     void _init();
     void registerGoals();
     void registerAttributes();
-    virtual double getEyeHeight();
+    virtual float getEyeHeight();
     virtual const SoundEvent* getAmbientSound();
     virtual const SoundEvent* getHurtSound(const DamageSource* source);
     virtual const SoundEvent* getDeathSound();

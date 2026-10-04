@@ -10,9 +10,9 @@ std::wstring CreateRoundGuid()
 }
 
 RoundInfo::RoundInfo()
+    : mRoundId(L"")
+    , mSubRoundId(L"")
 {
-    mRoundId = L"";
-    mSubRoundId = L"";
     mCurrentSubRoundNumber = -1;
     mThemeId = -1;
     mThemeSubId = -1;

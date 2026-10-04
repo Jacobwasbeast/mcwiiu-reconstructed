@@ -42,7 +42,7 @@ unsigned long long Endermite::GetType()
     return EntityType::ENDERMITE;
 }
 
-double Endermite::getEyeHeight()
+float Endermite::getEyeHeight()
 {
     return 0.1f;
 }
@@ -162,7 +162,7 @@ void Endermite::aiStep()
     {
         if (!isPersistenceRequired())
             ++mLifetime;
-        if (mLifetime > 2399)
+        if (mLifetime >= 2400)
             remove();
     }
 }

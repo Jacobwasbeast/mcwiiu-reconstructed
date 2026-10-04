@@ -17,8 +17,9 @@ MineShaftStart::MineShaftStart(Level* level, Random& random, int chunkX, int chu
 
     if (type == MineShaftFeature::eMineShaftType_Mesa)
     {
-        BoundingBox* box = getBoundingBox();
-        int y = level->getSeaLevel() - box->y0 + box->getYSpan() / 2 + 5;
+        int seaLevel = level->getSeaLevel();
+        BoundingBox* box = mBoundingBox;
+        int y = seaLevel - box->y0 + box->getYSpan() / 2 + 5;
         box->move(0, y, 0);
         for (std::vector<StructurePiece*>::iterator it = begin(); it != end(); ++it)
         {

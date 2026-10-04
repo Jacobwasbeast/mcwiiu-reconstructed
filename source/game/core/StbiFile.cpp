@@ -12,7 +12,7 @@ struct _OVERLAPPED
     int hEvent;
 };
 
-unsigned int ReadFile(int file, void* buffer, unsigned int bytesToRead, unsigned int* bytesRead, _OVERLAPPED* overlapped);
+int ReadFile(int file, void* buffer, unsigned int bytesToRead, unsigned int* bytesRead, _OVERLAPPED* overlapped);
 
 static const unsigned int FILE_CURRENT = 1;
 

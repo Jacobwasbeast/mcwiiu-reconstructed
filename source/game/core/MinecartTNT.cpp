@@ -8,6 +8,7 @@
 #include <string>
 
 #include "game/core/CMinecraftApp.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/DamageSource.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/data/DataFixerUpper.hpp"
@@ -27,7 +28,6 @@
 #include "game/client/audio/SoundSource.hpp"
 #include "game/world/generation/Player.hpp"
 
-extern CMinecraftApp* g_pApp;
 
 void MinecartTNT::create(Level* level)
 {
@@ -85,7 +85,7 @@ void MinecartTNT::tick()
         }
     }
 
-    if (mHorizontalCollision && mXd * mXd + mZd * mZd >= 0.01)
+    if (mHorizontalCollision && mXd * mXd + mZd * mZd >= 0.01f)
     {
         explode(mXd * mXd + mZd * mZd);
     }
@@ -95,12 +95,15 @@ void MinecartTNT::tick()
 bool MinecartTNT::hurt(const DamageSource* source, float damage)
 {
     boost::shared_ptr<Entity> entity = source->getDirectEntity();
-    if (entity && (entity->GetType() & EntityType::ARROW) == EntityType::ARROW)
+    if (entity)
     {
-        boost::shared_ptr<Arrow> arrow = boost::dynamic_pointer_cast<Arrow>(entity);
-        if (arrow->isOnFire())
+        if ((entity->GetType() & EntityType::ARROW) == EntityType::ARROW)
         {
-            explode(arrow->mXd * arrow->mXd + arrow->mYd * arrow->mYd + arrow->mZd * arrow->mZd);
+            boost::shared_ptr<Arrow> arrow = boost::dynamic_pointer_cast<Arrow>(entity);
+            if (arrow->isOnFire())
+            {
+                explode(arrow->mXd * arrow->mXd + arrow->mYd * arrow->mYd + arrow->mZd * arrow->mZd);
+            }
         }
     }
     return Minecart::hurt(source, damage);
@@ -108,8 +111,9 @@ bool MinecartTNT::hurt(const DamageSource* source, float damage)
 
 void MinecartTNT::destroy(const DamageSource* source)
 {
-    if (g_pApp->GetGameHostOption(eGameHostOption_TNT) != 0 &&
-        (source->isFire() || source->isExplosion() || mXd * mXd + mZd * mZd >= 0.01f))
+    double speedSqr = mXd * mXd + mZd * mZd;
+    if (gApp.GetGameHostOption(eGameHostOption_TNT) != 0 &&
+        (source->isFire() || source->isExplosion() || speedSqr >= 0.01f))
     {
         if (mFuse < 0)
         {
@@ -120,7 +124,7 @@ void MinecartTNT::destroy(const DamageSource* source)
     }
 
     Minecart::destroy(source);
-    if (g_pApp->GetGameHostOption(eGameHostOption_TNT) == 0 ||
+    if (gApp.GetGameHostOption(eGameHostOption_TNT) == 0 ||
         (!source->isExplosion() && mLevel->getGameRules()->getBoolean(GameRules::RULE_DOENTITYDROPS)))
     {
         spawnAtLocation(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::tnt, 1)), 0.0f);
@@ -131,7 +135,7 @@ void MinecartTNT::explode(double power)
 {
     if (!mLevel->mIsClientSide)
     {
-        if (g_pApp->GetGameHostOption(eGameHostOption_TNT) != 0)
+        if (gApp.GetGameHostOption(eGameHostOption_TNT) != 0)
         {
             double radius = std::sqrt(power);
             if (radius > 5.0)
@@ -172,7 +176,7 @@ void MinecartTNT::handleEntityEvent(unsigned char event, int data)
 
 void MinecartTNT::primeFuse()
 {
-    if (g_pApp->GetGameHostOption(eGameHostOption_TNT) != 0)
+    if (gApp.GetGameHostOption(eGameHostOption_TNT) != 0)
     {
         mFuse = 80;
         if (!mLevel->mIsClientSide)
@@ -207,7 +211,7 @@ float MinecartTNT::getBlockExplosionResistance(Explosion* explosion, Level* leve
 
 bool MinecartTNT::shouldBlockExplode(Explosion* explosion, Level* level, const BlockPos& pos, float radius)
 {
-    if (g_pApp->GetGameHostOption(eGameHostOption_TNT) == 0 || BaseRailBlock::isRail(level->getBlock(pos)) ||
+    if (gApp.GetGameHostOption(eGameHostOption_TNT) == 0 || BaseRailBlock::isRail(level->getBlock(pos)) ||
         BaseRailBlock::isRail(level, pos.above()))
     {
         return false;
@@ -218,9 +222,8 @@ bool MinecartTNT::shouldBlockExplode(Explosion* explosion, Level* level, const B
 void MinecartTNT::readAdditionalSaveData(CompoundTag* tag)
 {
     Minecart::readAdditionalSaveData(tag);
-    std::wstring key(L"TNTFuse");
-    if (tag->contains(key, Tag::TAG_ANY_NUMERIC))
-        mFuse = tag->getInt(key);
+    if (tag->contains(std::wstring(L"TNTFuse"), Tag::TAG_ANY_NUMERIC))
+        mFuse = tag->getInt(std::wstring(L"TNTFuse"));
 }
 
 void MinecartTNT::addAdditonalSaveData(CompoundTag* tag)

@@ -12,7 +12,10 @@ SystemCheckFunctor::~SystemCheckFunctor()
 
 void SystemCheckFunctor::operator()() const
 {
-    nn::nex::BadEvents::Signal(nn::nex::BadEvents::SYSTEM_CHECK_FAILURE);
+    if (nn::nex::BadEvents::s_pInstance != NULL)
+    {
+        nn::nex::BadEvents::Signal(nn::nex::BadEvents::SYSTEM_CHECK_FAILURE);
+    }
 
     if (m_pHandler != NULL)
     {

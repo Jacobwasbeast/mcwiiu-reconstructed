@@ -14,6 +14,8 @@ class Socket
     friend class ServerGamePacketListenerImpl;
     friend class ClientPacketListener;
     friend class PlayerList;
+    friend class CPlatformNetworkManagerNintendo;
+    friend void closeSocketForLockedProfile();
 
 public:
     class SocketInputStreamLocal : public InputStream

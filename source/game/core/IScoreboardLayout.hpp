@@ -20,7 +20,7 @@ enum EScoreboardType
 struct PlayerInfo
 {
     unsigned char smallId;
-    char voiceStatus;
+    signed char voiceStatus;
     short colour;
     std::wstring name;
 };

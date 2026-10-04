@@ -49,14 +49,14 @@ void PerlinSimplexNoise::init(Random* random, int levels)
 
 double PerlinSimplexNoise::getValue(double x, double y)
 {
-    double value = 1.0;
-    double frequency = 0.5;
+    double value = 0.0;
+    double frequency = 1.0;
 
     for (int i = 0; i < levels; i++)
     {
         value += noiseLevels[i]->getValue(x * frequency, y * frequency) / frequency;
 
-        frequency /= 2.0;
+        frequency *= 0.5;
     }
 
     return value;
@@ -101,8 +101,8 @@ arrayWithLength<double> PerlinSimplexNoise::getRegion(arrayWithLength<double> va
         values = arrayWithLength<double>(xSize * ySize, true);
     }
 
-    double frequency = 0.5;
-    double amplitude = 0.5;
+    double frequency = 1.0;
+    double amplitude = 1.0;
 
     for (int i = 0; i < levels; i++)
     {

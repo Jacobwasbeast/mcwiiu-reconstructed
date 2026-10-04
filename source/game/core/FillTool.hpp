@@ -23,9 +23,9 @@ public:
     FillTool(ConsoleSchematicFile* schematic);
     ~FillTool();
     void Reset();
-    bool IsWaterBlock(const BlockState* state);
-    bool IsLavaBlock(const BlockState* state);
-    bool IsValidSurfaceBlock(const BlockState* state);
+    int IsWaterBlock(const BlockState* state);
+    int IsLavaBlock(const BlockState* state);
+    int IsValidSurfaceBlock(const BlockState* state);
     void tick();
     void PopulateSurfaceBrushBlock(boost::shared_ptr<Player> player);
     void Serialise(DataOutputStream* output);
@@ -87,7 +87,7 @@ private:
         int mReplaceOnlyDataMask;
         int mFillDataMask;
         int mHandleDataType;
-        int mShape;
+        unsigned int mShape;
         int mMode;
         int mField0xF8;
         int mSmoothType;

@@ -64,7 +64,7 @@ double Silverfish::getRidingHeight()
     return 0.1;
 }
 
-double Silverfish::getEyeHeight()
+float Silverfish::getEyeHeight()
 {
     return 0.1f;
 }
@@ -155,7 +155,7 @@ bool Silverfish::checkSpawnRules()
     {
         return false;
     }
-    return !mLevel->getNearestPlayer(boost::static_pointer_cast<Entity>(shared_from_this()), 5.0, -1.0);
+    return !mLevel->getNearestPlayer(shared_from_this(), 5.0, -1.0);
 }
 
 EMobType Silverfish::getMobType()
@@ -180,18 +180,20 @@ Silverfish::SilverfishMergeWithStoneGoal::~SilverfishMergeWithStoneGoal()
 
 bool Silverfish::SilverfishMergeWithStoneGoal::canUse()
 {
-    Silverfish* silverfish = static_cast<Silverfish*>(mMob);
-    if (silverfish->getTarget() || !silverfish->getNavigation()->isDone())
+    if (mMob->getTarget())
     {
         return false;
     }
-    Random* random = silverfish->getRandom();
-    if (silverfish->mLevel->getGameRules()->getBoolean(GameRules::RULE_MOBGRIEFING) && random->nextInt(10) == 0)
+    if (!mMob->getNavigation()->isDone())
     {
-        const Direction* direction = Direction::getRandomDirection(*random);
-        BlockPos pos(silverfish->mX, silverfish->mY + 0.5, silverfish->mZ);
-        mDirection = direction;
-        if (MonsterEggBlock::isCompatibleHostBlock(silverfish->mLevel->getBlockState(pos.relative(direction))))
+        return false;
+    }
+    Random* random = mMob->getRandom();
+    if (mMob->mLevel->getGameRules()->getBoolean(GameRules::RULE_MOBGRIEFING) && random->nextInt(10) == 0)
+    {
+        mDirection = Direction::getRandomDirection(*random);
+        BlockPos hostPos = BlockPos(mMob->mX, mMob->mY + 0.5, mMob->mZ).relative(mDirection);
+        if (MonsterEggBlock::isCompatibleHostBlock(mMob->mLevel->getBlockState(hostPos)))
         {
             mShouldMerge = true;
             return true;
@@ -203,7 +205,9 @@ bool Silverfish::SilverfishMergeWithStoneGoal::canUse()
 
 bool Silverfish::SilverfishMergeWithStoneGoal::canContinueToUse()
 {
-    return !mShouldMerge && RandomStrollGoal::canContinueToUse();
+    if (mShouldMerge)
+        return false;
+    return RandomStrollGoal::canContinueToUse();
 }
 
 void Silverfish::SilverfishMergeWithStoneGoal::start()
@@ -213,18 +217,14 @@ void Silverfish::SilverfishMergeWithStoneGoal::start()
         RandomStrollGoal::start();
         return;
     }
-    Silverfish* silverfish = static_cast<Silverfish*>(mMob);
-    BlockPos pos(silverfish->mX, silverfish->mY + 0.5, silverfish->mZ);
-    BlockPos mergePos = pos.relative(mDirection);
-    const BlockState* host = silverfish->mLevel->getBlockState(mergePos);
+    Level* level = mMob->mLevel;
+    BlockPos mergePos = BlockPos(mMob->mX, mMob->mY + 0.5, mMob->mZ).relative(mDirection);
+    const BlockState* host = level->getBlockState(mergePos);
     if (MonsterEggBlock::isCompatibleHostBlock(host))
     {
-        MonsterEggBlock::Variant* variant = MonsterEggBlock::Variant::byHostBlock(host);
-        TypedBoxed<MonsterEggBlock::Variant*> value(variant);
-        const BlockState* state = Blocks::monster_egg->defaultBlockState()->setBoxedValue(MonsterEggBlock::VARIANT, &value);
-        silverfish->mLevel->setBlock(mergePos, state, Block::UPDATE_ALL, false);
-        silverfish->spawnAnim();
-        silverfish->remove();
+        level->setBlock(mergePos, Blocks::monster_egg->defaultBlockState()->setValue(MonsterEggBlock::VARIANT, MonsterEggBlock::Variant::byHostBlock(host)), Block::UPDATE_ALL, false);
+        mMob->spawnAnim();
+        mMob->remove();
     }
 }
 
@@ -235,10 +235,6 @@ std::wstring Silverfish::SilverfishMergeWithStoneGoal::getName()
 
 Silverfish::SilverfishWakeUpFriendsGoal::SilverfishWakeUpFriendsGoal(Silverfish* silverfish)
     : Goal(), mSilverfish(silverfish)
-{
-}
-
-Silverfish::SilverfishWakeUpFriendsGoal::~SilverfishWakeUpFriendsGoal()
 {
 }
 
@@ -264,12 +260,12 @@ void Silverfish::SilverfishWakeUpFriendsGoal::tick()
     }
     Level* level = mSilverfish->mLevel;
     Random* random = mSilverfish->getRandom();
-    BlockPos center(boost::static_pointer_cast<Entity>(mSilverfish->shared_from_this()));
-    for (int y = 0; y <= 5 && y >= -5; y = y > 0 ? -y : 1 - y)
+    BlockPos center(mSilverfish->shared_from_this());
+    for (int y = 0; y <= 5 && y >= -5; y = (y <= 0 ? 1 : 0) - y)
     {
-        for (int x = 0; x <= 10 && x >= -10; x = x > 0 ? -x : 1 - x)
+        for (int x = 0; x <= 10 && x >= -10; x = (x <= 0 ? 1 : 0) - x)
         {
-            for (int z = 0; z <= 10 && z >= -10; z = z > 0 ? -z : 1 - z)
+            for (int z = 0; z <= 10 && z >= -10; z = (z <= 0 ? 1 : 0) - z)
             {
                 BlockPos pos = center.offset(x, y, z);
                 const BlockState* state = level->getBlockState(pos);
@@ -277,8 +273,7 @@ void Silverfish::SilverfishWakeUpFriendsGoal::tick()
                 {
                     if (!level->getGameRules()->getBoolean(GameRules::RULE_MOBGRIEFING))
                     {
-                        const BlockState* host = state->getValue(MonsterEggBlock::VARIANT)->getHostBlockState();
-                        level->setBlock(pos, host, Block::UPDATE_ALL, false);
+                        level->setBlock(pos, state->getValue(MonsterEggBlock::VARIANT)->getHostBlockState(), Block::UPDATE_ALL, false);
                     }
                     else
                     {

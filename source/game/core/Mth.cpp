@@ -36,7 +36,8 @@ void Mth::init()
 
     for (int i = 0; i < 65536; ++i)
     {
-        sSinTable[i] = ::sinf((float)i / 10430.378f);
+        float sine = ::sinf((float)i / 10430.378f);
+        sSinTable[i] = sine;
     }
 
     sAtanTable = new float[cached_atan_index(ATAN_CACHE_SIZE, ATAN_CACHE_SIZE) + 1];
@@ -63,11 +64,14 @@ float Mth::cached_atan(int y, int x)
     }
 
     const float* table = sAtanTable;
-    int index = cached_atan_index(abs(y), abs(x));
+    bool flip = (y < 0) ^ (x < 0);
+    int absY = abs(y);
+    int absX = abs(x);
+    int index = cached_atan_index(absY, absX);
     static const int tableSize = cached_atan_index(ATAN_CACHE_SIZE, ATAN_CACHE_SIZE) + 1;
     float result = table[index];
 
-    if ((y < 0) != (x < 0))
+    if (flip)
     {
         result = -result;
     }
@@ -97,7 +101,10 @@ float Mth::cos(float radians)
 
 float Mth::atan2(int y, int x)
 {
-    if (abs(y) > ATAN_CACHE_SIZE || abs(x) > ATAN_CACHE_SIZE)
+    int absY = abs(y);
+    int absX = abs(x);
+
+    if (absY > ATAN_CACHE_SIZE || absX > ATAN_CACHE_SIZE)
     {
         return ::atan2f((float)y, (float)x);
     }
@@ -275,7 +282,7 @@ int Mth::nextInt(Random* random, int min, int max)
 {
     if (min < max)
     {
-        return random->nextInt(max - min + 1) + min;
+        min = random->nextInt(max - min + 1) + min;
     }
 
     return min;
@@ -285,7 +292,7 @@ float Mth::nextFloat(Random* random, float min, float max)
 {
     if (min < max)
     {
-        return random->nextFloat() * (max - min) + min;
+        min = random->nextFloat() * (max - min) + min;
     }
 
     return min;
@@ -295,7 +302,7 @@ double Mth::nextDouble(Random* random, double min, double max)
 {
     if (min < max)
     {
-        return random->nextDouble() * (max - min) + min;
+        min = random->nextDouble() * (max - min) + min;
     }
 
     return min;
@@ -431,8 +438,8 @@ std::wstring Mth::createInsecureUUID(Random* random)
         int high = (int)(mostSignificantBits & 0xF);
         int low = (int)(leastSignificantBits & 0xF);
 
-        digits[15 - i] = (wchar_t)(high + (high > 9 ? 'a' - 10 : '0'));
         digits[31 - i] = (wchar_t)(low + (low > 9 ? 'a' - 10 : '0'));
+        digits[15 - i] = (wchar_t)(high + (high > 9 ? 'a' - 10 : '0'));
 
         mostSignificantBits >>= 4;
         leastSignificantBits >>= 4;
@@ -523,12 +530,11 @@ float Mth::ceil(double value, double step)
 
 float Mth::subtractFromLarger(float a, float b)
 {
-    if (a - b < 0.0f)
-    {
-        return b - a;
-    }
+    float difference = a - b;
+    float larger = difference >= 0.0f ? a : b;
+    float smaller = difference >= 0.0f ? b : a;
 
-    return a - b;
+    return larger - smaller;
 }
 
 float Mth::degreesDifference(float a, float b)
@@ -566,12 +572,12 @@ float Mth::degreesDifferenceAbs(float a, float b)
 {
     float difference = wrapDegrees(a - b);
 
-    if (difference >= 180.0f)
+    if (difference < 180.0f)
     {
-        difference -= 360.0f;
+        return abs(difference);
     }
 
-    return abs(difference);
+    return abs(difference - 360.0f);
 }
 
 bool Mth::almostEquals(double a, double b, double epsilon)
@@ -581,8 +587,8 @@ bool Mth::almostEquals(double a, double b, double epsilon)
 
 int Mth::hsvToRgb(float hue, float saturation, float value)
 {
-    int sector = (int)(hue * 6.0f) % 6;
-    float offset = hue * 6.0f - (float)sector;
+    unsigned int sector = (int)(hue * 6.0f) % 6;
+    float offset = hue * 6.0f - (float)(int)sector;
     float shaded = value * (1.0f - saturation);
     float falling = value * (1.0f - offset * saturation);
     float rising = value * (1.0f - (1.0f - offset) * saturation);

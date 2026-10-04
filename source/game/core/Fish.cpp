@@ -32,7 +32,7 @@ Fish::Fish(Level* level, bool deferredInit)
         setSize(0.6f, 0.2f);
     }
     _init();
-    mRandom->setSeed(static_cast<long long>(getId()) + 1);
+    mRandom->setSeed(static_cast<long long>(getId() + 1));
 }
 
 void Fish::_init()
@@ -52,7 +52,8 @@ void Fish::baseTick()
 {
     WaterAnimal::baseTick();
     mSwimRotationOld = mSwimRotation;
-    mSwimRotation = mSwimRotation + 1.0f + 0.2f;
+    mSwimRotation = mSwimRotation + 1.0f;
+    mSwimRotation = mSwimRotation + 0.2f;
 }
 
 void Fish::registerGoals()
@@ -70,7 +71,7 @@ void Fish::registerAttributes()
     getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(1.0);
 }
 
-double Fish::getEyeHeight()
+float Fish::getEyeHeight()
 {
     return static_cast<double>(mBbHeight * 0.5f);
 }
@@ -135,12 +136,11 @@ bool Fish::mobInteract(const boost::shared_ptr<Player>& player,
                        InteractionHand::EInteractionHand hand)
 {
     not_null_ptr<ItemInstance> item = player->getItemInHand(hand);
-    Item* heldItem = item->getItem();
-    if (heldItem != Items::bucket && heldItem != Items::waterBucket)
+    if (item->getItem() != Items::bucket && item->getItem() != Items::waterBucket)
         return Mob::mobInteract(player, hand);
 
-    not_null_ptr<ItemInstance> result =
-        static_cast<BucketItem*>(heldItem)->collectFish(player, shared_from_this(), item);
+    not_null_ptr<ItemInstance> result(
+        static_cast<BucketItem*>(item->getItem())->collectFish(player, shared_from_this(), item));
     player->setItemInHand(hand, result);
     return true;
 }
@@ -165,5 +165,5 @@ unsigned long long Fish::GetType()
 
 void Fish::create(Level* level)
 {
-    new Fish(level, true);
+    new Fish(level, false);
 }

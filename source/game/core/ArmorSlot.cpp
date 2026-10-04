@@ -38,5 +38,5 @@ bool ArmorSlot::mayPickup(boost::shared_ptr<Player> player)
 
 std::wstring ArmorSlot::getNoItemIcon()
 {
-    return std::wstring();
+    return std::wstring(L"");
 }

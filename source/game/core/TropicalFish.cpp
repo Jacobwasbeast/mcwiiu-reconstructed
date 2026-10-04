@@ -21,12 +21,33 @@
 const EntityDataAccessor<int>* TropicalFish::DATA_VARIANT = NULL;
 const EntityDataAccessor<int>* TropicalFish::DATA_COLOR = NULL;
 
-static const int TROPICAL_FISH_BASE_VARIANTS[22] = { 1,1,1,1,1,1,1,7,1,1,1,1,1,1,1,1,1,7,1,1,1,1 };
-static const int TROPICAL_FISH_MARK_VARIANTS[22] = { 1,1,1,1,1,1,7,1,1,1,1,1,1,7,1,1,1,1,1,1,1,1 };
-static const int TROPICAL_FISH_COLOR1_VARIANTS[22] = { 1,1,7,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1 };
-static const int TROPICAL_FISH_COLOR2_VARIANTS[22] = { 7,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,7 };
-static const int TROPICAL_FISH_BASE_TEXTURES[2] = { 0xD6, 0xDD };
-static const int TROPICAL_FISH_MARK_TEXTURES[2][6] = { { 0xD7,0xD8,0xD9,0xDA,0xDB,0xDC }, { 0xDE,0xDF,0xE0,0xE1,0xE2,0xE3 } };
+static const int TROPICAL_FISH_VARIANTS[22][4] = {
+    { 1, 1, 1, 7 },
+    { 1, 0, 7, 7 },
+    { 0, 1, 7, 3 },
+    { 0, 4, 0, 7 },
+    { 0, 1, 11, 7 },
+    { 0, 0, 1, 0 },
+    { 0, 5, 6, 3 },
+    { 1, 3, 10, 4 },
+    { 1, 5, 0, 14 },
+    { 0, 5, 0, 4 },
+    { 1, 2, 0, 7 },
+    { 1, 5, 0, 1 },
+    { 0, 3, 9, 6 },
+    { 0, 4, 5, 3 },
+    { 1, 4, 14, 0 },
+    { 0, 2, 7, 14 },
+    { 1, 3, 14, 0 },
+    { 1, 0, 0, 4 },
+    { 0, 1, 0, 0 },
+    { 0, 0, 14, 0 },
+    { 1, 1, 4, 4 },
+    { 0, 3, 0, 7 }
+};
+static int TROPICAL_FISH_BASE_TEXTURES[2] = { 0xD6, 0xDD };
+static int TROPICAL_FISH_PATTERN_A_TEXTURES[6] = { 0xD7,0xD8,0xD9,0xDA,0xDB,0xDC };
+static int TROPICAL_FISH_PATTERN_B_TEXTURES[6] = { 0xDE,0xDF,0xE0,0xE1,0xE2,0xE3 };
 static const std::wstring TROPICAL_FISH_BASE_HASHES[2] = { L"fba", L"fbb" };
 static const std::wstring TROPICAL_FISH_PATTERN_A_HASHES[6] = { L"pa1", L"pa2", L"pa3", L"pa4", L"pa5", L"pa6" };
 static const std::wstring TROPICAL_FISH_PATTERN_B_HASHES[6] = { L"pb1", L"pb2", L"pb3", L"pb4", L"pb5", L"pb6" };
@@ -45,7 +66,10 @@ TropicalFish::TropicalFish(Level* level)
     setSize(0.4f, 0.4f);
 }
 
-TropicalFish::~TropicalFish() {}
+TropicalFish::~TropicalFish()
+{
+    delete[] mLayeredTextureLayers.data;
+}
 
 void TropicalFish::create(Level* level) { new TropicalFish(level); }
 
@@ -57,7 +81,7 @@ void TropicalFish::staticCtor()
 
 void TropicalFish::clearLayeredTextureInfo()
 {
-    mLayeredTextureHashName.clear();
+    mLayeredTextureHashName.erase(mLayeredTextureHashName.begin(), mLayeredTextureHashName.end());
 }
 
 void TropicalFish::tick()
@@ -91,18 +115,25 @@ void TropicalFish::rebuildLayeredTextureInfo()
 {
     mLayeredTextureHashName = L"fish/";
 
+    int* layer = mLayeredTextureLayers.data;
     for (unsigned int i = 0; i < mLayeredTextureLayers.length; i++)
     {
-        mLayeredTextureLayers.data[i] = -1;
+        *layer++ = -1;
     }
 
     int baseVariant = getBaseVariant();
     int markVariant = getMarkVariant();
     mLayeredTextureLayers.data[0] = TROPICAL_FISH_BASE_TEXTURES[baseVariant];
-    mLayeredTextureLayers.data[1] = baseVariant == 0 ? TROPICAL_FISH_MARK_TEXTURES[0][markVariant] : TROPICAL_FISH_MARK_TEXTURES[1][markVariant];
+    if (baseVariant == 0)
+    {
+        mLayeredTextureLayers.data[1] = TROPICAL_FISH_PATTERN_A_TEXTURES[markVariant];
+    }
+    else
+    {
+        mLayeredTextureLayers.data[1] = TROPICAL_FISH_PATTERN_B_TEXTURES[markVariant];
+    }
 
-    const std::wstring* patternHashes = baseVariant == 0 ? TROPICAL_FISH_PATTERN_A_HASHES : TROPICAL_FISH_PATTERN_B_HASHES;
-    mLayeredTextureHashName = L"fish/" + TROPICAL_FISH_BASE_HASHES[baseVariant] + patternHashes[markVariant];
+    mLayeredTextureHashName = L"fish/" + TROPICAL_FISH_BASE_HASHES[baseVariant] + (baseVariant == 0 ? TROPICAL_FISH_PATTERN_A_HASHES : TROPICAL_FISH_PATTERN_B_HASHES)[markVariant];
 }
 
 std::wstring TropicalFish::getLayeredTextureHashName()
@@ -155,36 +186,35 @@ void TropicalFish::readAdditionalSaveData(CompoundTag* tag)
 MobGroupData* TropicalFish::finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data, const std::wstring& name)
 {
     mRandom = new Random();
-    if (data == NULL)
+    if (dynamic_cast<TropicalFishGroupData*>(data) != NULL)
     {
-        if (mRandom->nextFloat() < 0.9)
-        {
-            int index = mRandom->nextInt(22);
-            TropicalFishGroupData* group = new TropicalFishGroupData(TROPICAL_FISH_BASE_VARIANTS[index], TROPICAL_FISH_MARK_VARIANTS[index], TROPICAL_FISH_COLOR1_VARIANTS[index], TROPICAL_FISH_COLOR2_VARIANTS[index]);
-            setVariant(group->mBaseVariant | (group->mMarkVariant << 8));
-            setColor(group->mColor1 | (group->mColor2 << 8));
-            data = group;
-        }
+        TropicalFishGroupData* group = static_cast<TropicalFishGroupData*>(data);
+        int baseVariant = group->mBaseVariant;
+        int markVariant = group->mMarkVariant;
+        int color1 = group->mColor1;
+        int color2 = group->mColor2;
+        setVariant(baseVariant | (markVariant << 8));
+        setColor(color1 | (color2 << 8));
+    }
+    else if (mRandom->nextFloat() < 0.9)
+    {
+        int index = mRandom->nextInt(22);
+        int baseVariant = TROPICAL_FISH_VARIANTS[index][0];
+        int markVariant = TROPICAL_FISH_VARIANTS[index][1];
+        int color1 = TROPICAL_FISH_VARIANTS[index][2];
+        int color2 = TROPICAL_FISH_VARIANTS[index][3];
+        data = new TropicalFishGroupData(baseVariant, markVariant, color1, color2);
+        setVariant(baseVariant | (markVariant << 8));
+        setColor(color1 | (color2 << 8));
     }
     else
     {
-        TropicalFishGroupData* group = dynamic_cast<TropicalFishGroupData*>(data);
-        if (group != NULL)
-        {
-            setVariant(group->mBaseVariant | (group->mMarkVariant << 8));
-            setColor(group->mColor1 | (group->mColor2 << 8));
-        }
-        else if (mRandom->nextFloat() < 0.9)
-        {
-            int index = mRandom->nextInt(22);
-            setVariant(TROPICAL_FISH_BASE_VARIANTS[index] | (TROPICAL_FISH_MARK_VARIANTS[index] << 8));
-            setColor(TROPICAL_FISH_COLOR1_VARIANTS[index] | (TROPICAL_FISH_COLOR2_VARIANTS[index] << 8));
-        }
-    }
-    if (data == NULL)
-    {
-        setVariant(mRandom->nextInt(2) | (mRandom->nextInt(6) << 8));
-        setColor(mRandom->nextInt(15) | (mRandom->nextInt(15) << 8));
+        int baseVariant = mRandom->nextInt(2);
+        int markVariant = mRandom->nextInt(6);
+        int color1 = mRandom->nextInt(15);
+        int color2 = mRandom->nextInt(15);
+        setVariant(baseVariant | (markVariant << 8));
+        setColor(color1 | (color2 << 8));
     }
     return Mob::finalizeMobSpawn(difficulty, data, std::wstring(L""));
 }

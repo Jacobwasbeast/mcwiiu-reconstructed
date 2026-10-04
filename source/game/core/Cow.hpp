@@ -19,12 +19,12 @@ class Cow : public Animal
 public:
     Cow(Level* level, bool callDerivedCtor);
     virtual unsigned long long GetType();
-    virtual ~Cow();
+    virtual ~Cow() {}
 
     static void addDataWalkers(DataFixerUpper* fixer);
     virtual void playStepSound(const BlockPos& pos, Block* block);
     virtual unsigned int GetInteractTooltip(const EntityTooltipDataHolder& tooltipData);
-    virtual double getEyeHeight();
+    virtual float getEyeHeight();
     virtual void registerAttributes();
     virtual const SoundEvent* getHurtSound(const DamageSource* source);
     virtual const SoundEvent* getDeathSound();

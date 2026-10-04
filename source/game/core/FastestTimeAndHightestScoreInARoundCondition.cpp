@@ -4,7 +4,9 @@
 #include <boost/unordered_map.hpp>
 
 #include "game/core/GameStats.hpp"
+#include "game/core/MasterGameMode.hpp"
 #include "game/core/StatsUID.hpp"
+#include "game/server/MinecraftServer.hpp"
 #include "game/world/generation/PlayerStats.hpp"
 
 FastestTimeAndHightestScoreInARoundCondition::FastestTimeAndHightestScoreInARoundCondition()
@@ -28,7 +30,7 @@ bool FastestTimeAndHightestScoreInARoundCondition::canAward(const GameMedal* med
 
     typedef boost::unordered_map<StatsUID, PlayerStats*, boost::hash<StatsUID> > PlayerStatsMap;
     PlayerStatsMap* allPlayerStats = gameStats->GetPlayerStats();
-    const unsigned int roundCount = static_cast<unsigned int>(playerStats->getTotalRounds());
+    const unsigned int roundCount = gMinecraftServer->mMasterGameMode->mGameStats.mCurrentRound;
 
     for (unsigned int round = 0; round < roundCount; ++round)
     {

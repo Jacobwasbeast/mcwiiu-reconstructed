@@ -40,6 +40,7 @@
 #include "game/world/generation/LookAtPlayerGoal.hpp"
 #include "game/world/generation/Player.hpp"
 #include "game/item/ItemId.hpp"
+#include "game/entity/ai/ShulkerDefenseAttackGoalPredicate.hpp"
 
 const EntityDataAccessor<const Direction*>* Shulker::DATA_ATTACH_FACE = NULL;
 const EntityDataAccessor<BlockPos*>* Shulker::DATA_ATTACH_POSITION = NULL;
@@ -64,7 +65,9 @@ bool Shulker::ShulkerAttackGoal::canUse()
     boost::shared_ptr<LivingEntity> target = mShulker->getTarget();
     if (target == NULL || !target->isAlive())
         return false;
-    return mShulker->mLevel->getDifficulty() != Difficulty::PEACEFUL;
+    if (mShulker->mLevel->getDifficulty() != Difficulty::PEACEFUL)
+        return true;
+    return false;
 }
 
 void Shulker::ShulkerAttackGoal::start()
@@ -87,20 +90,23 @@ void Shulker::ShulkerAttackGoal::tick()
     boost::shared_ptr<LivingEntity> target = mShulker->getTarget();
     mShulker->getLookControl()->setLookAt(target, 180.0f, 180.0f);
 
-    if (mShulker->distanceToSqr(target) >= 400.0)
+    double distance = mShulker->distanceToSqr(target);
+    if (distance < 400.0)
+    {
+        if (mAttackTime <= 0)
+        {
+            mAttackTime = mShulker->mRandom->nextInt(10) * 20 / 2 + 20;
+            boost::shared_ptr<Entity> bullet(new ShulkerBullet(mShulker->mLevel,
+                boost::static_pointer_cast<LivingEntity>(mShulker->shared_from_this()), target,
+                mShulker->getAttachFace()->getAxis()));
+            mShulker->mLevel->addEntity(bullet);
+            mShulker->playSound(SoundEvents::SHULKER_SHOOT, 2.0f,
+                (mShulker->mRandom->nextFloat() - mShulker->mRandom->nextFloat()) * 0.2f + 1.0f);
+        }
+    }
+    else
     {
         mShulker->setTarget(boost::shared_ptr<LivingEntity>());
-    }
-    else if (mAttackTime <= 0)
-    {
-        mAttackTime = mShulker->mRandom->nextInt(10) * 10 + 20;
-        const Direction* attachFace = mShulker->getAttachFace();
-        Direction::Axis* axis = attachFace->getAxis();
-        boost::shared_ptr<Entity> bullet(new ShulkerBullet(mShulker->mLevel,
-            boost::static_pointer_cast<LivingEntity>(mShulker->shared_from_this()), target, axis));
-        mShulker->mLevel->addEntity(bullet);
-        float pitch = (mShulker->mRandom->nextFloat() - mShulker->mRandom->nextFloat()) * 0.2f + 1.0f;
-        mShulker->playSound(SoundEvents::SHULKER_SHOOT, 2.0f, pitch);
     }
 
     Goal::tick();
@@ -122,6 +128,7 @@ void Shulker::ShulkerBodyControl::clientTick()
 Shulker::ShulkerDefenseAttackGoal::ShulkerDefenseAttackGoal(Shulker* shulker)
     : NearestAttackableTargetGoal(shulker, typeid(LivingEntity), 10, true, false, NULL, false, false)
 {
+    mTargetSelector = new ShulkerDefenseAttackGoalPredicate();
 }
 
 bool Shulker::ShulkerDefenseAttackGoal::canUse()
@@ -409,12 +416,13 @@ void Shulker::tick()
             }
         }
 
-        if (!mLevel->isSolidBlockingBlockInLoadedChunk(attachPos->relative(getAttachFace()), false))
+        BlockPos adjacent = attachPos->relative(getAttachFace());
+        if (!mLevel->isSolidBlockingBlockInLoadedChunk(adjacent, false))
         {
             bool attached = false;
-            for (unsigned int i = 0; i < Direction::VALUES.size(); ++i)
+            for (std::vector<const Direction*>::iterator it = Direction::VALUES.begin(); it != Direction::VALUES.end(); ++it)
             {
-                const Direction* direction = Direction::VALUES[i];
+                const Direction* direction = *it;
                 if (mLevel->isSolidBlockingBlockInLoadedChunk(attachPos->relative(direction), false))
                 {
                     mEntityData->set(DATA_ATTACH_FACE, direction, true);
@@ -425,11 +433,12 @@ void Shulker::tick()
             if (!attached) teleportSomewhere();
         }
 
-        if (mLevel->isSolidBlockingBlockInLoadedChunk(attachPos->relative(getAttachFace()->getOpposite()), false))
+        BlockPos opposite = attachPos->relative(getAttachFace()->getOpposite());
+        if (mLevel->isSolidBlockingBlockInLoadedChunk(opposite, false))
             teleportSomewhere();
     }
 
-    float targetPeek = getRawPeekAmount() * 0.01f;
+    float targetPeek = static_cast<int>(getRawPeekAmount()) * 0.01f;
     mOldPeekAmount = mPeekAmount;
     if (mPeekAmount > targetPeek)
         mPeekAmount = Mth::clamp(mPeekAmount - 0.05f, targetPeek, 1.0f);
@@ -460,8 +469,8 @@ void Shulker::tick()
     mYOld = y;
     mZOld = z;
 
-    double peekOffset = 0.5 - Mth::sin((mPeekAmount + 0.5f) * Mth::PI) * 0.5;
-    double oldPeekOffset = 0.5 - Mth::sin((mOldPeekAmount + 0.5f) * Mth::PI) * 0.5;
+    double peekOffset = 0.5 - Mth::sin((0.5f + mPeekAmount) * 3.1415927f) * 0.5;
+    double oldPeekOffset = 0.5 - Mth::sin(3.1415927f * (mOldPeekAmount + 0.5f)) * 0.5;
     double pushAmount = peekOffset - oldPeekOffset;
     double pushX = 0.0;
     double pushY = 0.0;
@@ -686,7 +695,7 @@ BlockPos* Shulker::getOldAttachPosition()
     return mOldAttachPosition;
 }
 
-double Shulker::getEyeHeight()
+float Shulker::getEyeHeight()
 {
     return 0.5f;
 }

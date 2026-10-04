@@ -75,13 +75,13 @@ void CustomSet::resize()
 
     Node** entries;
 
-    if (mEntries == NULL)
+    if (mEntries != NULL)
     {
-        entries = (Node**)malloc(mCapacity * sizeof(Node*));
+        entries = (Node**)realloc(mEntries, mCapacity * sizeof(Node*));
     }
     else
     {
-        entries = (Node**)realloc(mEntries, mCapacity * sizeof(Node*));
+        entries = (Node**)malloc(mCapacity * sizeof(Node*));
     }
 
     for (int i = 0; i < mCapacity - oldCapacity; i++)

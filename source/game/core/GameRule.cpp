@@ -15,7 +15,7 @@ GameRule::~GameRule()
 {
     for (ParameterMap::iterator it = mParameters.begin(); it != mParameters.end(); ++it)
     {
-        if (it->second.bIsGameRule && it->second.pGameRule != NULL)
+        if (it->second.bIsGameRule)
         {
             delete it->second.pGameRule;
         }
@@ -59,9 +59,10 @@ void GameRule::write(DataOutputStream* pOutput)
         _ValueType value = it->second;
 
         pOutput->writeUTF(it->first);
-        pOutput->writeBoolean(value.bIsGameRule);
+        bool isRule = value.bIsGameRule;
+        pOutput->writeBoolean(isRule);
 
-        if (value.bIsGameRule)
+        if (isRule)
         {
             value.pGameRule->write(pOutput);
         }

@@ -37,7 +37,7 @@ public:
     public:
         PieceWeight(EPieceClass pieceClass, int weight, int maxPlaceCount);
         virtual ~PieceWeight();
-        virtual bool isValid();
+        bool isValid();
         virtual bool doPlace(int depth);
         EPieceClass pieceClass;
         int weight;

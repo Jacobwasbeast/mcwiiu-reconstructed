@@ -1,5 +1,7 @@
 #include "game/core/LootTableContext.hpp"
 
+#include <algorithm>
+
 #include "game/core/DamageSource.hpp"
 #include "game/world/generation/Player.hpp"
 
@@ -18,31 +20,24 @@ LootTableContext::LootTableContext(float luck, ServerLevel* level, LootTables* l
 
 bool LootTableContext::addVisitedTable(LootTable* lootTable)
 {
-    for (std::list<LootTable*>::iterator it = mVisitedTables.begin();
-         it != mVisitedTables.end();
-         ++it)
+    std::list<LootTable*>::iterator it = std::find(mVisitedTables.begin(), mVisitedTables.end(), lootTable);
+
+    if (it == mVisitedTables.end())
     {
-        if (*it == lootTable)
-        {
-            return false;
-        }
+        mVisitedTables.push_back(lootTable);
+        return true;
     }
 
-    mVisitedTables.push_back(lootTable);
-    return true;
+    return false;
 }
 
 void LootTableContext::removeVisitedTable(LootTable* lootTable)
 {
-    for (std::list<LootTable*>::iterator it = mVisitedTables.begin();
-         it != mVisitedTables.end();
-         ++it)
+    std::list<LootTable*>::iterator it = std::find(mVisitedTables.begin(), mVisitedTables.end(), lootTable);
+
+    if (it != mVisitedTables.end())
     {
-        if (*it == lootTable)
-        {
-            mVisitedTables.erase(it);
-            return;
-        }
+        mVisitedTables.erase(it);
     }
 }
 

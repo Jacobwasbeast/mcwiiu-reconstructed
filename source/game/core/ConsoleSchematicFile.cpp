@@ -303,13 +303,11 @@ int ConsoleSchematicFile::calculateFullElementSize(int x, int y, int z) { return
 
 std::wstring ConsoleSchematicFile::formatFilenameWithExt(const std::wstring& filename)
 {
-    if (filename.size() != 0)
+    wchar_t extension[] = L".sch";
+    if (filename.size() != 0 &&
+        std::wstring(filename, filename.size() - 4, filename.size()).compare(extension) != 0)
     {
-        std::wstring extension(filename, filename.size() - 4);
-        if (extension.compare(L".sch") != 0)
-        {
-            return filename + L".sch";
-        }
+        return filename + extension;
     }
     return filename;
 }
@@ -825,14 +823,14 @@ void ConsoleSchematicFile::getElements(LevelChunk* chunk, arrayWithLength<unsign
     arrayWithLength<unsigned short> extraBuffer(0x10000, true);
     chunk->getElementRange(arrayWithLength<unsigned short>(elementsBuffer.data, elementsBuffer.length), arrayWithLength<unsigned short>(extraBuffer.data, extraBuffer.length), 0, 0x40);
 
-    count = 0;
+    int lowCount = lowYEnd - y0;
+    int highCount = highYEnd - highYStart;
     for (int x = x0; x < x1; ++x)
     {
         for (int z = z0; z < z1; ++z)
         {
             if (hasLowY)
             {
-                int lowCount = lowYEnd - y0;
                 unsigned int src = (unsigned int)((x << 11) | (z << 7) | y0);
                 System::arraycopy(elementsBuffer, src, elements, count, lowCount);
                 System::arraycopy(extraBuffer, src, extra, count, lowCount);
@@ -840,7 +838,6 @@ void ConsoleSchematicFile::getElements(LevelChunk* chunk, arrayWithLength<unsign
             }
             if (hasHighY)
             {
-                int highCount = highYEnd - highYStart;
                 unsigned int src = (unsigned int)(((x << 11) | (z << 7) | highYStart) + 0x8000);
                 System::arraycopy(elementsBuffer, src, elements, count, highCount);
                 System::arraycopy(extraBuffer, src, extra, count, highCount);
@@ -850,7 +847,6 @@ void ConsoleSchematicFile::getElements(LevelChunk* chunk, arrayWithLength<unsign
     }
 
     delete[] elementsBuffer.data;
-    delete[] extraBuffer.data;
 }
 
 void ConsoleSchematicFile::getData(arrayWithLength<unsigned char> in, arrayWithLength<unsigned char>* out, int& count, int x, int y, int z, int width, int height, int depth)

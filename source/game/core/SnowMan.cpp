@@ -55,14 +55,14 @@ void SnowMan::create(Level* level)
 
 void SnowMan::performRangedAttack(boost::shared_ptr<LivingEntity> target, float)
 {
-    boost::shared_ptr<LivingEntity> owner =
-        boost::dynamic_pointer_cast<LivingEntity>(shared_from_this());
-    boost::shared_ptr<Snowball> snowball(new Snowball(mLevel, owner));
+    boost::shared_ptr<Snowball> snowball(
+        new Snowball(mLevel, boost::dynamic_pointer_cast<LivingEntity>(shared_from_this())));
+    double targetY = target->mY + target->getEyeHeight() - 1.1f;
     double dx = target->mX - mX;
+    double dy = targetY - snowball->mY;
     double dz = target->mZ - mZ;
-    double targetY = target->mY + target->getEyeHeight() - 1.1;
     float distance = Mth::sqrt(dx * dx + dz * dz) * 0.2f;
-    snowball->shoot(dx, targetY - snowball->mY + distance, dz, 1.6f, 12.0f);
+    snowball->shoot(dx, dy + distance, dz, 1.6f, 12.0f);
     playSound(SoundEvents::SNOWMAN_SHOOT, 1.0f,
               1.0f / (getRandom()->nextFloat() * 0.4f + 0.8f));
     mLevel->addEntity(snowball);
@@ -102,7 +102,7 @@ void SnowMan::registerAttributes()
 {
     Mob::registerAttributes();
     getAttribute(SharedMonsterAttributes::MAX_HEALTH)->setBaseValue(4.0);
-    getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(0.2);
+    getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->setBaseValue(0.2f);
 }
 
 void SnowMan::defineSynchedData()
@@ -125,7 +125,10 @@ void SnowMan::addAdditonalSaveData(CompoundTag* tag)
 void SnowMan::setPumpkin(bool pumpkin)
 {
     unsigned char flags = mEntityData->get(DATA_PUMPKIN);
-    mEntityData->set(DATA_PUMPKIN, pumpkin ? static_cast<unsigned char>(flags | 16) : static_cast<unsigned char>(flags & 239), true);
+    if (pumpkin)
+        mEntityData->set(DATA_PUMPKIN, static_cast<unsigned char>(flags | 16), true);
+    else
+        mEntityData->set(DATA_PUMPKIN, static_cast<unsigned char>(flags & 239), true);
 }
 
 void SnowMan::readAdditionalSaveData(CompoundTag* tag)
@@ -141,9 +144,9 @@ void SnowMan::aiStep()
     if (mLevel->mIsClientSide)
         return;
 
-    int x = static_cast<int>(std::floor(mX));
-    int y = static_cast<int>(std::floor(mY));
-    int z = static_cast<int>(std::floor(mZ));
+    int x = Mth::floor(mX);
+    int y = Mth::floor(mY);
+    int z = Mth::floor(mZ);
 
     if (isInWaterRainOrBubble())
         hurt(DamageSource::DROWN, 1.0f);
@@ -155,9 +158,9 @@ void SnowMan::aiStep()
     {
         for (int i = 0; i < 4; ++i)
         {
-            int snowX = static_cast<int>(std::floor(mX + ((i % 2) * 2 - 1) * 0.25));
-            int snowY = static_cast<int>(std::floor(mY));
-            int snowZ = static_cast<int>(std::floor(mZ + (((i / 2) % 2) * 2 - 1) * 0.25));
+            int snowX = Mth::floor(mX + ((i % 2) * 2 - 1) * 0.25f);
+            int snowY = Mth::floor(mY);
+            int snowZ = Mth::floor(mZ + (((i / 2) % 2) * 2 - 1) * 0.25f);
             BlockPos snowPos(snowX, snowY, snowZ);
             if (mLevel->getBlockState(snowPos)->getMaterial() == Material::AIR &&
                 mLevel->getBiome(snowPos)->getTemperature(snowPos) < 0.8f &&
@@ -172,14 +175,14 @@ ResourceLocation* SnowMan::getDefaultLootTable()
     return &BuiltInLootTables::SNOWMAN;
 }
 
-double SnowMan::getEyeHeight()
+float SnowMan::getEyeHeight()
 {
     return 1.7f;
 }
 
 bool SnowMan::hurt(const DamageSource* source, float damage)
 {
-    boost::shared_ptr<Entity> entity = source->getEntity();
+    boost::shared_ptr<Entity> entity = source->getDirectEntity();
     if (entity && (entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
     {
         boost::shared_ptr<Player> player = boost::dynamic_pointer_cast<Player>(entity);

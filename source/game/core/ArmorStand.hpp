@@ -65,6 +65,7 @@ public:
     static void staticCtor();
     static const EntityDataAccessor<unsigned char>* DATA_FLAGS;
     static const EntityDataAccessor<int>* DATA_POSE;
+    static const RidableMinecartEntitySelector* IS_RIDEABLE_MINECART;
     static void addDataWalkers(DataFixerUpper* fixer);
     static void create(Level* level);
     void _init();
@@ -90,12 +91,13 @@ public:
     virtual bool isPushable(boost::shared_ptr<Entity> entity);
     const EquipmentSlot* getClickedSlot(const Vec3* hit);
     bool isDisabled(const EquipmentSlot* slot);
-    bool swapItem(const boost::shared_ptr<Player>& player, const EquipmentSlot* slot,
+    void swapItem(const boost::shared_ptr<Player>& player, const EquipmentSlot* slot,
                   const not_null_ptr<ItemInstance>& item,
                   InteractionHand::EInteractionHand hand);
     bool isShowArms();
-    bool interactAt(const boost::shared_ptr<Player>& player, Vec3* hit,
-                    InteractionHand::EInteractionHand hand);
+    InteractionResult::EInteractionResult interactAt(const boost::shared_ptr<Player>& player,
+                                                     Vec3* hit,
+                                                     InteractionHand::EInteractionHand hand);
     EInteraction test_interactAt(boost::shared_ptr<Player> player, Vec3* hit,
                                  not_null_ptr<ItemInstance> item,
                                  InteractionHand::EInteractionHand hand);
@@ -128,7 +130,7 @@ public:
     virtual const HumanoidArm* getMainArm();
     virtual float tickHeadTurn(float bodyRot, float headTurnDelta);
     virtual double getRidingHeight();
-    virtual double getEyeHeight();
+    virtual float getEyeHeight();
     virtual void travel(float xxa, float yya, float zza);
     virtual void setYBodyRot(float bodyRot);
     virtual void setYHeadRot(float headRot);

@@ -9,12 +9,12 @@
 #include <sstream>
 
 HtmlString::HtmlString(const HtmlString& other)
+    : mText(other.mText)
+    , mColour(other.mColour)
+    , mItalic(other.mItalic)
+    , mIndent(other.mIndent)
+    , mFontSize(other.mFontSize)
 {
-    mText = other.mText;
-    mItalic = other.mItalic;
-    mIndent = other.mIndent;
-    mColour = other.mColour;
-    mFontSize = other.mFontSize;
 }
 
 HtmlString::HtmlString(std::wstring text, eMinecraftColour colour, bool italic, bool indent, int fontSize)
@@ -52,14 +52,16 @@ std::wstring HtmlString::ToString()
         wchar_t fontSize[8];
         swprintf(fontSize, 8, L"%d", mFontSize);
 
-        stream << L"<font color=\"#" << std::setfill(L'0') << std::setw(6) << std::hex
-               << static_cast<unsigned int>(gApp.GetHTMLColour(colour)) << L"\" size=\"" << fontSize << L"\">" << mText
-               << "</font>";
+        std::wostream& colourStream = stream << L"<font color=\"#" << std::setfill(L'0') << std::setw(6);
+        colourStream.setf(std::ios_base::hex, std::ios_base::basefield);
+        colourStream << static_cast<int>(gApp.GetHTMLColor(colour)) << L"\"size=\"" << fontSize << L"\">" << mText
+                     << "</font>";
     }
     else
     {
-        stream << L"<font color=\"#" << std::setfill(L'0') << std::setw(6) << std::hex
-               << static_cast<unsigned int>(gApp.GetHTMLColour(colour)) << L"\">" << mText << "</font>";
+        std::wostream& colourStream = stream << L"<font color=\"#" << std::setfill(L'0') << std::setw(6);
+        colourStream.setf(std::ios_base::hex, std::ios_base::basefield);
+        colourStream << static_cast<int>(gApp.GetHTMLColor(colour)) << L"\">" << mText << "</font>";
     }
 
     if (mItalic)

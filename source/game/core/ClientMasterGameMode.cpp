@@ -312,8 +312,7 @@ void ClientMasterGameMode::OnStateChange(EGameModeState state)
         return;
     case eGameModeState_SelectingGameRules:
     {
-        MultiPlayerLevel* level = static_cast<MultiPlayerLevel*>(Minecraft::GetInstance()->mLevel);
-        ClientScoreboard* scoreboard = level->GetClientScoreboard();
+        Scoreboard* scoreboard = Minecraft::GetInstance()->mLevel->GetScoreboard();
         scoreboard->mCurrentRound = 0;
         Voteable* voteable = mVoteables->getVoteable(Voteables::eVoteable_Map);
         if (voteable != NULL)
@@ -426,11 +425,11 @@ void ClientMasterGameMode::GetCurrentMapVotesText(std::vector<HtmlString>& text)
     for (std::vector<MapSelectInfo>::const_iterator it = playlist.begin(); it != playlist.end(); ++it)
     {
         const int uniqueId = it->uniqueId;
-        LevelRules* levelRules = g_pApp->getLevelRules();
+        LevelRules* levelRules = gApp.getLevelRules();
         LevelGenerationOptions* options = levelRules->getLevelGenFromUniqueId(ruleType, uniqueId);
         const wchar_t* worldName = options != NULL ? options->getWorldName() : L"Unknown";
         boost::unordered_map<int, int>::const_iterator vote = totals.find(uniqueId);
-        if (g_pApp->DebugArtToolsOn())
+        if (gApp.DebugArtToolsOn())
         {
             const std::wstring label = vote == totals.end()
                                            ? formatwstr(L"%ls : 0", worldName)
@@ -478,7 +477,7 @@ void ClientMasterGameMode::SetKickVote(int playerIndex, unsigned char colour, bo
 
     if (CGameNetworkManager::sInstance.GetPlayerBySmallId(colour) != NULL)
     {
-        const unsigned int voteableId = g_pApp->GetPlayerColour(colour);
+        const unsigned int voteableId = gApp.GetPlayerColour(colour);
         Voteable* voteable = mVoteables->getVoteable(Voteables::eVoteable_Kick);
         voteable->setVoteAndSync(playerIndex, voteableId, vote);
     }
@@ -746,7 +745,7 @@ void ClientMasterGameMode::OnChatPacket(boost::shared_ptr<ClientboundChatPacket>
 void ClientMasterGameMode::SetGeneratorSeed(long long seed, float scale)
 {
     UpdateGeneratorSeed(seed, scale);
-    ResetMapDistances();
+    RestartMapGenerator();
 }
 bool ClientMasterGameMode::IsWaitingToStart() const { return mGameModeState == eGameModeState_WaitingToStart; }
 bool ClientMasterGameMode::IsRoundStarting() const { return mGameModeState == eGameModeState_RoundStarting; }

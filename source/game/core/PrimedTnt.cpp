@@ -16,25 +16,25 @@
 
 const EntityDataAccessor<int>* PrimedTnt::DATA_FUSE_ID = NULL;
 
-PrimedTnt::PrimedTnt(Level* level) : Entity(level, true), mOwner(), mLife(0)
+PrimedTnt::PrimedTnt(Level* level) : Entity(level, true), mOwner()
 {
     _init();
 }
 
 PrimedTnt::PrimedTnt(Level* level, double x, double y, double z, boost::shared_ptr<LivingEntity> owner)
-    : Entity(level, true), mOwner(), mLife(0)
+    : Entity(level, true), mOwner()
 {
     _init();
     setPos(x, y, z);
     const double angle = Math::random() * 6.2831854820251465;
     mXd = -(std::sin((float)angle) * 0.02f);
-    mYd = 0.2;
+    mYd = 0.2f;
     mZd = -(std::cos((float)angle) * 0.02f);
     setFuse(80);
     mXo = x;
     mYo = y;
     mZo = z;
-    mOwner = owner;
+    mOwner = boost::weak_ptr<LivingEntity>(owner);
 }
 
 PrimedTnt::~PrimedTnt()
@@ -58,7 +58,7 @@ void PrimedTnt::_init()
     mFireImmune = true;
     mBlocksBuilding = true;
     setSize(0.98f, 0.98f);
-    mOwner.reset();
+    mOwner = boost::weak_ptr<LivingEntity>();
 }
 
 void PrimedTnt::setFuse(int fuse)
@@ -153,7 +153,7 @@ boost::shared_ptr<LivingEntity> PrimedTnt::getOwner()
     return mOwner.lock();
 }
 
-double PrimedTnt::getEyeHeight()
+float PrimedTnt::getEyeHeight()
 {
     return 0.0;
 }
@@ -165,7 +165,7 @@ int PrimedTnt::getFuse()
 
 void PrimedTnt::onSyncedDataUpdated(const EntityDataAccessor_Base* accessor)
 {
-    if (accessor != NULL && DATA_FUSE_ID != NULL && accessor->getId() == DATA_FUSE_ID->getId())
+    if (DATA_FUSE_ID->getId() == accessor->getId())
     {
         mLife = getFuse();
     }

@@ -24,7 +24,7 @@ public:
     virtual void baseTick();
     virtual void registerGoals();
     virtual void registerAttributes();
-    virtual double getEyeHeight();
+    virtual float getEyeHeight();
     virtual bool breathesWater();
     virtual bool breathesAir();
     virtual const SoundEvent* getSwimSound();

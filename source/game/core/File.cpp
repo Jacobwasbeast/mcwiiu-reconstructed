@@ -1,7 +1,5 @@
 #include "game/core/File.hpp"
 #include "game/core/StringConversion.hpp"
-#include "platform/wiiu/NintendoFileSystem_WiiU.hpp"
-#include "platform/wiiu/WiiU_FileSystem.hpp"
 #include "platform/wiiu/WiiU_Runtime.hpp"
 
 #include <stdio.h>
@@ -25,10 +23,18 @@ std::wstring filenametowstring(const char* filename);
 
 char* wstringtofilename(const std::wstring& path, char (&filename)[256])
 {
-    for (std::wstring::size_type i = 0; i < path.length(); ++i)
+    std::wstring::size_type length = path.length();
+
+    for (std::wstring::size_type i = 0; i < length; ++i)
     {
-        char character = static_cast<char>(path[i]);
-        filename[i] = character == '\\' ? '/' : character;
+        wchar_t character = path[i];
+
+        if (character == L'\\')
+        {
+            character = L'/';
+        }
+
+        filename[i] = character;
     }
     filename[path.length()] = '\0';
     return filename;
@@ -46,26 +52,8 @@ unsigned int GetFileSize(int file, unsigned int* fileSizeHigh);
 int FindFirstFileA(const char* fileName, _WIN32_FIND_DATAA* findData);
 int FindNextFileA(int findHandle, _WIN32_FIND_DATAA* findData);
 int MoveFileA(const char* existingFileName, const char* newFileName);
-
-int DeleteFileA(const char*)
-{
-    return 0;
-}
-
-int FindFirstFileA(const char*, _WIN32_FIND_DATAA*)
-{
-    return 0;
-}
-
-int FindNextFileA(int, _WIN32_FIND_DATAA*)
-{
-    return 0;
-}
-
-int MoveFileA(const char*, const char*)
-{
-    return 0;
-}
+int CreateDirectoryA(const char* pathName, void* securityAttributes);
+void CloseHandle(int file);
 
 static const int INVALID_HANDLE_VALUE = -1;
 static const unsigned int INVALID_FILE_ATTRIBUTES = 0xFFFFFFFF;
@@ -134,27 +122,15 @@ std::wstring File::ext() const
 bool File::exists() const
 {
     char filename[256];
-    char path[256];
-    wstringtofilename(getPath(), filename);
-    getFinalFilePath(path, filename);
-    return GetFileAttributesA(path) != INVALID_FILE_ATTRIBUTES;
+
+    return GetFileAttributesA(wstringtofilename(getPath(), filename)) != INVALID_FILE_ATTRIBUTES;
 }
 
 bool File::isDirectory() const
 {
-    bool directory = false;
+    char filename[256];
 
-    if (exists())
-    {
-        char filename[256];
-
-        if ((GetFileAttributesA(wstringtofilename(getPath(), filename)) & FILE_ATTRIBUTE_DIRECTORY) != 0)
-        {
-            directory = true;
-        }
-    }
-
-    return directory;
+    return exists() && (GetFileAttributesA(wstringtofilename(getPath(), filename)) & FILE_ATTRIBUTE_DIRECTORY) != 0;
 }
 
 bool File::isFile() const
@@ -201,7 +177,7 @@ long long File::length()
 
 std::vector<File*>* File::listFiles() const
 {
-    std::vector<File*>* files = new std::vector<File*>();
+    std::vector<File*>* files = new std::vector<File*>;
 
     if (isDirectory())
     {
@@ -235,7 +211,7 @@ std::vector<File*>* File::listFiles(FileFilter* filter) const
         return NULL;
     }
 
-    std::vector<File*>* files = new std::vector<File*>();
+    std::vector<File*>* files = new std::vector<File*>;
 
     char filename[256];
     char searchPath[260];
@@ -253,7 +229,9 @@ std::vector<File*>* File::listFiles(FileFilter* filter) const
 
             if (filter->accept(entry))
             {
-                files->push_back(new File(entry));
+                File copy(entry);
+
+                files->push_back(&copy);
             }
         }
         while (FindNextFileA(findHandle, &findData) != 0);
@@ -331,4 +309,24 @@ File File::parentDir()
         return File(L"");
     }
     return File(mPath.substr(0, separator));
+}
+
+int DeleteFileA(const char*)
+{
+    return 0;
+}
+
+int FindFirstFileA(const char*, _WIN32_FIND_DATAA*)
+{
+    return 0;
+}
+
+int FindNextFileA(int, _WIN32_FIND_DATAA*)
+{
+    return 0;
+}
+
+int MoveFileA(const char*, const char*)
+{
+    return 0;
 }

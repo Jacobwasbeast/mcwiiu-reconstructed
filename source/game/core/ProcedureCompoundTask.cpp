@@ -6,11 +6,11 @@
 
 ProcedureCompoundTask::~ProcedureCompoundTask()
 {
-    for (std::vector<TutorialTask*>::iterator it = tasks.begin(); it != tasks.end(); ++it)
+    for (std::vector<TutorialTask*>::iterator it = tasks.begin(); it < tasks.end(); ++it)
     {
         if (*it != NULL)
         {
-            (*it)->enableConstraints(false, false);
+            delete *it;
         }
     }
 }
@@ -30,13 +30,16 @@ int ProcedureCompoundTask::getDescriptionId()
         return -1;
     }
 
-    for (std::vector<TutorialTask*>::iterator it = tasks.begin(); it != tasks.end(); ++it)
+    int result = -1;
+
+    for (std::vector<TutorialTask*>::iterator it = tasks.begin(), end = tasks.end(); it < end; ++it)
     {
         TutorialTask* task = *it;
         if (!task->isCompleted())
         {
             task->setAsCurrentTask(true);
-            return task->getDescriptionId();
+            result = task->getDescriptionId();
+            break;
         }
         if (task->getCompletionAction() == eTutorial_CompletionAction_CompleteState)
         {
@@ -45,7 +48,7 @@ int ProcedureCompoundTask::getDescriptionId()
         }
     }
 
-    return -1;
+    return result;
 }
 
 int ProcedureCompoundTask::getPromptId()
@@ -55,43 +58,51 @@ int ProcedureCompoundTask::getPromptId()
         return -1;
     }
 
-    for (std::vector<TutorialTask*>::iterator it = tasks.begin(); it != tasks.end(); ++it)
+    int result = -1;
+
+    for (std::vector<TutorialTask*>::iterator it = tasks.begin(), end = tasks.end(); it < end; ++it)
     {
         TutorialTask* task = *it;
         if (!task->isCompleted())
         {
-            return task->getPromptId();
+            result = task->getPromptId();
+            break;
         }
     }
 
-    return -1;
+    return result;
 }
 
 bool ProcedureCompoundTask::isCompleted()
 {
     bool result = true;
+    bool pending = true;
 
-    for (std::vector<TutorialTask*>::iterator it = tasks.begin(); it != tasks.end(); ++it)
+    for (std::vector<TutorialTask*>::iterator it = tasks.begin(), end = tasks.end(); it < end; ++it)
     {
         TutorialTask* task = *it;
         if (!result)
         {
             task->setAsCurrentTask(false);
-            continue;
         }
-        if (!task->isCompleted())
+        else if (pending)
         {
-            task->setAsCurrentTask(true);
-            result = false;
-            continue;
+            if (!task->isCompleted())
+            {
+                task->setAsCurrentTask(true);
+                result = false;
+                pending = false;
+            }
+            else if (task->getCompletionAction() == eTutorial_CompletionAction_CompleteState)
+            {
+                break;
+            }
         }
-        if (task->getCompletionAction() == eTutorial_CompletionAction_CompleteState)
-            break;
     }
 
     if (result)
     {
-        for (std::vector<TutorialTask*>::iterator it = tasks.begin(); it != tasks.end(); ++it)
+        for (std::vector<TutorialTask*>::iterator it = tasks.begin(), end = tasks.end(); it < end; ++it)
         {
             (*it)->enableConstraints(false, false);
         }
@@ -103,7 +114,7 @@ bool ProcedureCompoundTask::isCompleted()
 
 void ProcedureCompoundTask::onCrafted(not_null_ptr<ItemInstance> item)
 {
-    for (std::vector<TutorialTask*>::iterator it = tasks.begin(); it != tasks.end(); ++it)
+    for (std::vector<TutorialTask*>::iterator it = tasks.begin(), end = tasks.end(); it < end; ++it)
     {
         (*it)->onCrafted(item);
     }
@@ -111,7 +122,7 @@ void ProcedureCompoundTask::onCrafted(not_null_ptr<ItemInstance> item)
 
 void ProcedureCompoundTask::handleUIInput(int input)
 {
-    for (std::vector<TutorialTask*>::iterator it = tasks.begin(); it != tasks.end(); ++it)
+    for (std::vector<TutorialTask*>::iterator it = tasks.begin(), end = tasks.end(); it < end; ++it)
     {
         (*it)->handleUIInput(input);
     }
@@ -120,7 +131,7 @@ void ProcedureCompoundTask::handleUIInput(int input)
 void ProcedureCompoundTask::setAsCurrentTask(bool currentTask)
 {
     bool current = true;
-    for (std::vector<TutorialTask*>::iterator it = tasks.begin(); it != tasks.end(); ++it)
+    for (std::vector<TutorialTask*>::iterator it = tasks.begin(), end = tasks.end(); it < end; ++it)
     {
         TutorialTask* task = *it;
         if (current)
@@ -145,16 +156,19 @@ bool ProcedureCompoundTask::ShowMinimumTime()
         return false;
     }
 
-    for (std::vector<TutorialTask*>::iterator it = tasks.begin(); it != tasks.end(); ++it)
+    bool result = false;
+
+    for (std::vector<TutorialTask*>::iterator it = tasks.begin(), end = tasks.end(); it < end; ++it)
     {
         TutorialTask* task = *it;
         if (!task->isCompleted())
         {
-            return task->ShowMinimumTime();
+            result = task->ShowMinimumTime();
+            break;
         }
     }
 
-    return false;
+    return result;
 }
 
 bool ProcedureCompoundTask::hasBeenActivated()
@@ -164,21 +178,24 @@ bool ProcedureCompoundTask::hasBeenActivated()
         return true;
     }
 
-    for (std::vector<TutorialTask*>::iterator it = tasks.begin(); it != tasks.end(); ++it)
+    bool result = false;
+
+    for (std::vector<TutorialTask*>::iterator it = tasks.begin(), end = tasks.end(); it < end; ++it)
     {
         TutorialTask* task = *it;
         if (!task->isCompleted())
         {
-            return task->hasBeenActivated();
+            result = task->hasBeenActivated();
+            break;
         }
     }
 
-    return false;
+    return result;
 }
 
 void ProcedureCompoundTask::setShownForMinimumTime()
 {
-    for (std::vector<TutorialTask*>::iterator it = tasks.begin(); it != tasks.end(); ++it)
+    for (std::vector<TutorialTask*>::iterator it = tasks.begin(), end = tasks.end(); it < end; ++it)
     {
         TutorialTask* task = *it;
         if (!task->isCompleted())
@@ -196,22 +213,25 @@ bool ProcedureCompoundTask::AllowFade()
         return true;
     }
 
-    for (std::vector<TutorialTask*>::iterator it = tasks.begin(); it != tasks.end(); ++it)
+    bool result = true;
+
+    for (std::vector<TutorialTask*>::iterator it = tasks.begin(), end = tasks.end(); it < end; ++it)
     {
         TutorialTask* task = *it;
         if (!task->isCompleted())
         {
-            return task->AllowFade();
+            result = task->AllowFade();
+            break;
         }
     }
 
-    return true;
+    return result;
 }
 
 void ProcedureCompoundTask::useItemOn(Level* level, not_null_ptr<ItemInstance> item,
                                       const BlockPos& pos, bool cancelled)
 {
-    for (std::vector<TutorialTask*>::iterator it = tasks.begin(); it != tasks.end(); ++it)
+    for (std::vector<TutorialTask*>::iterator it = tasks.begin(), end = tasks.end(); it < end; ++it)
     {
         (*it)->useItemOn(level, item, pos, cancelled);
     }
@@ -219,7 +239,7 @@ void ProcedureCompoundTask::useItemOn(Level* level, not_null_ptr<ItemInstance> i
 
 void ProcedureCompoundTask::useItem(not_null_ptr<ItemInstance> item, bool cancelled)
 {
-    for (std::vector<TutorialTask*>::iterator it = tasks.begin(); it != tasks.end(); ++it)
+    for (std::vector<TutorialTask*>::iterator it = tasks.begin(), end = tasks.end(); it < end; ++it)
     {
         (*it)->useItem(item, cancelled);
     }
@@ -228,7 +248,7 @@ void ProcedureCompoundTask::useItem(not_null_ptr<ItemInstance> item, bool cancel
 void ProcedureCompoundTask::onTake(not_null_ptr<ItemInstance> item, unsigned int itemCount,
                                    unsigned int exactCount)
 {
-    for (std::vector<TutorialTask*>::iterator it = tasks.begin(); it != tasks.end(); ++it)
+    for (std::vector<TutorialTask*>::iterator it = tasks.begin(), end = tasks.end(); it < end; ++it)
     {
         (*it)->onTake(item, itemCount, exactCount);
     }
@@ -236,7 +256,7 @@ void ProcedureCompoundTask::onTake(not_null_ptr<ItemInstance> item, unsigned int
 
 void ProcedureCompoundTask::onStateChange(eTutorial_State state)
 {
-    for (std::vector<TutorialTask*>::iterator it = tasks.begin(); it != tasks.end(); ++it)
+    for (std::vector<TutorialTask*>::iterator it = tasks.begin(), end = tasks.end(); it < end; ++it)
     {
         (*it)->onStateChange(state);
     }

@@ -1,3 +1,5 @@
+#include <string.h>
+
 #include "game/core/Node.hpp"
 #include "game/core/Path.hpp"
 #include "game/entity/mob/Entity.hpp"
@@ -17,7 +19,7 @@ Path::Path(arrayWithLength<Node*> nodes)
     for (int i = 0; i < size; i++)
     {
         this->nodes.data[i] = new Node();
-        *this->nodes.data[i] = *nodes.data[i];
+        memcpy(this->nodes.data[i], nodes.data[i], sizeof(Node));
     }
 }
 
@@ -201,14 +203,16 @@ Node* Path::get(int index)
 
 void Path::set(int index, Node* node)
 {
-    *nodes.data[index] = *node;
+    memcpy(nodes.data[index], node, sizeof(Node));
 }
 
 Node* Path::last()
 {
+    int lastIndex = size - 1;
+
     if (size > 0)
     {
-        return nodes.data[size - 1];
+        return nodes.data[lastIndex];
     }
 
     return NULL;
@@ -223,10 +227,9 @@ Vec3* Path::getPos(boost::shared_ptr<Entity> entity, int index)
 {
     Node* node = nodes.data[index];
 
-    double offset = (int)(entity->mBbWidth + 1.0f) * 0.5f;
-    return Vec3::newTemp(node->x + offset,
+    return Vec3::newTemp(node->x + (int)(entity->mBbWidth + 1.0f) * 0.5,
                          node->y,
-                         node->z + offset);
+                         node->z + (int)(entity->mBbWidth + 1.0f) * 0.5);
 }
 
 Vec3* Path::currentPos(boost::shared_ptr<Entity> entity)

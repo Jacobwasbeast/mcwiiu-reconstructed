@@ -5,6 +5,7 @@
 #include <list>
 
 #include "game/core/BuiltInLootTables.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/entity/mob/EntityIO.hpp"
 #include "game/util/ResourceLocation.hpp"
@@ -27,9 +28,9 @@
 #include "game/world/block/TorchBlock.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
+static int sStrongholdWeightTotal = 0;
 static StrongholdPieces::SmoothStoneSelector* sStrongholdStoneSelector = NULL;
 static std::list<StrongholdPieces::PieceWeight*> sStrongholdPieceWeights;
-static int sStrongholdWeightTotal;
 static StrongholdPieces::EPieceClass sForcedPieceClass = StrongholdPieces::ePieceClass_None;
 
 StrongholdPieces::PieceWeight::PieceWeight(EPieceClass pieceClass, int weight, int maxPlaceCount)
@@ -833,8 +834,7 @@ bool StrongholdPieces::FiveCrossing::postProcess(Level* level, Random& random, B
         Blocks::stone_slab->defaultBlockState(), Blocks::stone_slab->defaultBlockState(), false);
     generateBox(level, box, 5, 5, 7, 7, 5, 9,
         Blocks::double_stone_slab->defaultBlockState(), Blocks::double_stone_slab->defaultBlockState(), false);
-    TypedBoxed<const Direction*> facing(Direction::SOUTH);
-    placeBlock(level, Blocks::torch->defaultBlockState()->setBoxedValue(TorchBlock::FACING, &facing), 6, 5, 6, box);
+    placeBlock(level, Blocks::torch->defaultBlockState()->setValue(TorchBlock::FACING, Direction::SOUTH), 6, 5, 6, box);
     return true;
 }
 
@@ -903,10 +903,8 @@ bool StrongholdPieces::Library::postProcess(Level* level, Random& random, Boundi
                 Blocks::planks->defaultBlockState(), Blocks::planks->defaultBlockState(), false);
             generateBox(level, box, 12, 1, z, 12, 4, z,
                 Blocks::planks->defaultBlockState(), Blocks::planks->defaultBlockState(), false);
-            TypedBoxed<const Direction*> east(Direction::EAST);
-            placeBlock(level, Blocks::torch->defaultBlockState()->setBoxedValue(TorchBlock::FACING, &east), 2, 3, z, box);
-            TypedBoxed<const Direction*> west(Direction::WEST);
-            placeBlock(level, Blocks::torch->defaultBlockState()->setBoxedValue(TorchBlock::FACING, &west), 11, 3, z, box);
+            placeBlock(level, Blocks::torch->defaultBlockState()->setValue(TorchBlock::FACING, Direction::EAST), 2, 3, z, box);
+            placeBlock(level, Blocks::torch->defaultBlockState()->setValue(TorchBlock::FACING, Direction::WEST), 11, 3, z, box);
             if (mIsTall)
             {
                 generateBox(level, box, 1, 6, z, 1, 9, z,
@@ -966,8 +964,7 @@ bool StrongholdPieces::Library::postProcess(Level* level, Random& random, Boundi
         placeBlock(level, Blocks::fence->defaultBlockState(), 8, 6, 11, box);
         placeBlock(level, Blocks::fence->defaultBlockState(), 9, 6, 10, box);
 
-        TypedBoxed<const Direction*> south(Direction::SOUTH);
-        const BlockState* ladder = Blocks::ladder->defaultBlockState()->setBoxedValue(LadderBlock::FACING, &south);
+        const BlockState* ladder = Blocks::ladder->defaultBlockState()->setValue(LadderBlock::FACING, Direction::SOUTH);
         placeBlock(level, ladder, 10, 1, 13, box);
         placeBlock(level, ladder, 10, 2, 13, box);
         placeBlock(level, ladder, 10, 3, 13, box);
@@ -989,8 +986,7 @@ bool StrongholdPieces::Library::postProcess(Level* level, Random& random, Boundi
         placeBlock(level, Blocks::fence->defaultBlockState(), 7, 7, 6, box);
         placeBlock(level, Blocks::fence->defaultBlockState(), 7, 7, 8, box);
 
-        TypedBoxed<const Direction*> up(Direction::UP);
-        const BlockState* torch = Blocks::torch->defaultBlockState()->setBoxedValue(TorchBlock::FACING, &up);
+        const BlockState* torch = Blocks::torch->defaultBlockState()->setValue(TorchBlock::FACING, Direction::UP);
         placeBlock(level, torch, 5, 8, 7, box);
         placeBlock(level, torch, 8, 8, 7, box);
         placeBlock(level, torch, 6, 8, 6, box);
@@ -1035,14 +1031,11 @@ bool StrongholdPieces::PrisonHall::postProcess(Level* level, Random& random, Bou
     placeBlock(level, Blocks::iron_bars->defaultBlockState(), 4, 3, 2, box);
     placeBlock(level, Blocks::iron_bars->defaultBlockState(), 4, 3, 8, box);
 
-    TypedBoxed<const Direction*> lowerFacing(Direction::WEST);
     const BlockState* lowerDoor =
-        Blocks::iron_door->defaultBlockState()->setBoxedValue(DoorBlock::FACING, &lowerFacing);
-    TypedBoxed<const Direction*> upperFacing(Direction::WEST);
-    TypedBoxed<DoorBlock::DoorHalf*> upperHalf(DoorBlock::UPPER);
+        Blocks::iron_door->defaultBlockState()->setValue(DoorBlock::FACING, Direction::WEST);
     const BlockState* upperDoor =
-        Blocks::iron_door->defaultBlockState()->setBoxedValue(DoorBlock::FACING, &upperFacing)
-            ->setBoxedValue(DoorBlock::HALF, &upperHalf);
+        Blocks::iron_door->defaultBlockState()->setValue(DoorBlock::FACING, Direction::WEST)
+            ->setValue(DoorBlock::HALF, DoorBlock::UPPER);
     placeBlock(level, lowerDoor, 4, 1, 2, box);
     placeBlock(level, upperDoor, 4, 2, 2, box);
     placeBlock(level, lowerDoor, 4, 1, 8, box);
@@ -1093,14 +1086,10 @@ bool StrongholdPieces::RoomCrossing::postProcess(Level* level, Random& random, B
         placeBlock(level, Blocks::stonebrick->defaultBlockState(), 5, 1, 5, box);
         placeBlock(level, Blocks::stonebrick->defaultBlockState(), 5, 2, 5, box);
         placeBlock(level, Blocks::stonebrick->defaultBlockState(), 5, 3, 5, box);
-        TypedBoxed<const Direction*> west(Direction::WEST);
-        placeBlock(level, Blocks::torch->defaultBlockState()->setBoxedValue(TorchBlock::FACING, &west), 4, 3, 5, box);
-        TypedBoxed<const Direction*> east(Direction::EAST);
-        placeBlock(level, Blocks::torch->defaultBlockState()->setBoxedValue(TorchBlock::FACING, &east), 6, 3, 5, box);
-        TypedBoxed<const Direction*> south(Direction::SOUTH);
-        placeBlock(level, Blocks::torch->defaultBlockState()->setBoxedValue(TorchBlock::FACING, &south), 5, 3, 4, box);
-        TypedBoxed<const Direction*> north(Direction::NORTH);
-        placeBlock(level, Blocks::torch->defaultBlockState()->setBoxedValue(TorchBlock::FACING, &north), 5, 3, 6, box);
+        placeBlock(level, Blocks::torch->defaultBlockState()->setValue(TorchBlock::FACING, Direction::WEST), 4, 3, 5, box);
+        placeBlock(level, Blocks::torch->defaultBlockState()->setValue(TorchBlock::FACING, Direction::EAST), 6, 3, 5, box);
+        placeBlock(level, Blocks::torch->defaultBlockState()->setValue(TorchBlock::FACING, Direction::SOUTH), 5, 3, 4, box);
+        placeBlock(level, Blocks::torch->defaultBlockState()->setValue(TorchBlock::FACING, Direction::NORTH), 5, 3, 6, box);
         placeBlock(level, Blocks::stone_slab->defaultBlockState(), 4, 1, 4, box);
         placeBlock(level, Blocks::stone_slab->defaultBlockState(), 4, 1, 5, box);
         placeBlock(level, Blocks::stone_slab->defaultBlockState(), 4, 1, 6, box);
@@ -1165,8 +1154,7 @@ bool StrongholdPieces::RoomCrossing::postProcess(Level* level, Random& random, B
             placeBlock(level, Blocks::planks->defaultBlockState(), 7, 3, z, box);
             placeBlock(level, Blocks::planks->defaultBlockState(), 8, 3, z, box);
         }
-        TypedBoxed<const Direction*> west(Direction::WEST);
-        const BlockState* ladder = Blocks::ladder->defaultBlockState()->setBoxedValue(LadderBlock::FACING, &west);
+        const BlockState* ladder = Blocks::ladder->defaultBlockState()->setValue(LadderBlock::FACING, Direction::WEST);
         placeBlock(level, ladder, 9, 1, 3, box);
         placeBlock(level, ladder, 9, 2, 3, box);
         placeBlock(level, ladder, 9, 3, 3, box);
@@ -1260,10 +1248,8 @@ bool StrongholdPieces::Straight::postProcess(Level* level, Random& random, Bound
     generateBox(level, box, 0, 0, 0, 4, 4, 6, true, random, sStrongholdStoneSelector);
     generateSmallDoor(level, random, box, mEntryDoor, 1, 1, 0);
     generateSmallDoor(level, random, box, OPENING, 1, 1, 6);
-    TypedBoxed<const Direction*> east(Direction::EAST);
-    const BlockState* torchEast = Blocks::torch->defaultBlockState()->setBoxedValue(TorchBlock::FACING, &east);
-    TypedBoxed<const Direction*> west(Direction::WEST);
-    const BlockState* torchWest = Blocks::torch->defaultBlockState()->setBoxedValue(TorchBlock::FACING, &west);
+    const BlockState* torchEast = Blocks::torch->defaultBlockState()->setValue(TorchBlock::FACING, Direction::EAST);
+    const BlockState* torchWest = Blocks::torch->defaultBlockState()->setValue(TorchBlock::FACING, Direction::WEST);
     maybeGenerateBlock(level, box, random, 0.1f, 1, 2, 1, torchEast);
     maybeGenerateBlock(level, box, random, 0.1f, 3, 2, 1, torchWest);
     maybeGenerateBlock(level, box, random, 0.1f, 1, 2, 5, torchEast);
@@ -1296,8 +1282,7 @@ bool StrongholdPieces::StraightStairsDown::postProcess(Level* level, Random& ran
     generateBox(level, box, 0, 0, 0, 4, 10, 7, true, random, sStrongholdStoneSelector);
     generateSmallDoor(level, random, box, mEntryDoor, 1, 7, 0);
     generateSmallDoor(level, random, box, OPENING, 1, 1, 7);
-    TypedBoxed<const Direction*> facing(Direction::SOUTH);
-    const BlockState* stairs = Blocks::stone_stairs->defaultBlockState()->setBoxedValue(StairBlock::FACING, &facing);
+    const BlockState* stairs = Blocks::stone_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::SOUTH);
     for (int i = 0; i < 6; ++i)
     {
         placeBlock(level, stairs, 1, 6 - i, 1 + i, box);
@@ -1364,9 +1349,8 @@ bool StrongholdPieces::PortalRoom::postProcess(Level* level, Random& random, Bou
             Blocks::iron_bars->defaultBlockState(), Blocks::iron_bars->defaultBlockState(), false);
     }
 
-    TypedBoxed<const Direction*> stairFacing(Direction::NORTH);
     const BlockState* stairs =
-        Blocks::stone_brick_stairs->defaultBlockState()->setBoxedValue(StairBlock::FACING, &stairFacing);
+        Blocks::stone_brick_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::NORTH);
     generateBox(level, box, 4, 1, 5, 6, 1, 7, false, random, sStrongholdStoneSelector);
     generateBox(level, box, 4, 2, 6, 6, 2, 7, false, random, sStrongholdStoneSelector);
     generateBox(level, box, 4, 3, 7, 6, 3, 7, false, random, sStrongholdStoneSelector);
@@ -1377,18 +1361,14 @@ bool StrongholdPieces::PortalRoom::postProcess(Level* level, Random& random, Bou
         placeBlock(level, stairs, x, 3, 6, box);
     }
 
-    TypedBoxed<const Direction*> frameNorth(Direction::NORTH);
     const BlockState* frameNorthState =
-        Blocks::end_portal_frame->defaultBlockState()->setBoxedValue(EndPortalFrameBlock::FACING, &frameNorth);
-    TypedBoxed<const Direction*> frameSouth(Direction::SOUTH);
+        Blocks::end_portal_frame->defaultBlockState()->setValue(EndPortalFrameBlock::FACING, Direction::NORTH);
     const BlockState* frameSouthState =
-        Blocks::end_portal_frame->defaultBlockState()->setBoxedValue(EndPortalFrameBlock::FACING, &frameSouth);
-    TypedBoxed<const Direction*> frameEast(Direction::EAST);
+        Blocks::end_portal_frame->defaultBlockState()->setValue(EndPortalFrameBlock::FACING, Direction::SOUTH);
     const BlockState* frameEastState =
-        Blocks::end_portal_frame->defaultBlockState()->setBoxedValue(EndPortalFrameBlock::FACING, &frameEast);
-    TypedBoxed<const Direction*> frameWest(Direction::WEST);
+        Blocks::end_portal_frame->defaultBlockState()->setValue(EndPortalFrameBlock::FACING, Direction::EAST);
     const BlockState* frameWestState =
-        Blocks::end_portal_frame->defaultBlockState()->setBoxedValue(EndPortalFrameBlock::FACING, &frameWest);
+        Blocks::end_portal_frame->defaultBlockState()->setValue(EndPortalFrameBlock::FACING, Direction::WEST);
 
     bool complete = true;
     bool eyes[12];
@@ -1398,24 +1378,18 @@ bool StrongholdPieces::PortalRoom::postProcess(Level* level, Random& random, Bou
         complete &= eyes[i];
     }
 
-    const BlockState* frames[12] = {
-        frameNorthState, frameNorthState, frameNorthState,
-        frameSouthState, frameSouthState, frameSouthState,
-        frameEastState, frameEastState, frameEastState,
-        frameWestState, frameWestState, frameWestState,
-    };
-    static const int framePositions[12][2] = {
-        { 4, 8 }, { 5, 8 }, { 6, 8 },
-        { 4, 12 }, { 5, 12 }, { 6, 12 },
-        { 3, 9 }, { 3, 10 }, { 3, 11 },
-        { 7, 9 }, { 7, 10 }, { 7, 11 },
-    };
-    for (int i = 0; i < 12; ++i)
-    {
-        TypedBoxed<bool> eye(eyes[i]);
-        placeBlock(level, frames[i]->setBoxedValue(EndPortalFrameBlock::EYE, &eye),
-                   framePositions[i][0], 3, framePositions[i][1], box);
-    }
+    placeBlock(level, frameNorthState->setValue(EndPortalFrameBlock::EYE, eyes[0]), 4, 3, 8, box);
+    placeBlock(level, frameNorthState->setValue(EndPortalFrameBlock::EYE, eyes[1]), 5, 3, 8, box);
+    placeBlock(level, frameNorthState->setValue(EndPortalFrameBlock::EYE, eyes[2]), 6, 3, 8, box);
+    placeBlock(level, frameSouthState->setValue(EndPortalFrameBlock::EYE, eyes[3]), 4, 3, 12, box);
+    placeBlock(level, frameSouthState->setValue(EndPortalFrameBlock::EYE, eyes[4]), 5, 3, 12, box);
+    placeBlock(level, frameSouthState->setValue(EndPortalFrameBlock::EYE, eyes[5]), 6, 3, 12, box);
+    placeBlock(level, frameEastState->setValue(EndPortalFrameBlock::EYE, eyes[6]), 3, 3, 9, box);
+    placeBlock(level, frameEastState->setValue(EndPortalFrameBlock::EYE, eyes[7]), 3, 3, 10, box);
+    placeBlock(level, frameEastState->setValue(EndPortalFrameBlock::EYE, eyes[8]), 3, 3, 11, box);
+    placeBlock(level, frameWestState->setValue(EndPortalFrameBlock::EYE, eyes[9]), 7, 3, 9, box);
+    placeBlock(level, frameWestState->setValue(EndPortalFrameBlock::EYE, eyes[10]), 7, 3, 10, box);
+    placeBlock(level, frameWestState->setValue(EndPortalFrameBlock::EYE, eyes[11]), 7, 3, 11, box);
 
     if (complete)
     {
@@ -1433,10 +1407,13 @@ bool StrongholdPieces::PortalRoom::postProcess(Level* level, Random& random, Bou
 
     if (!mHasPlacedSpawner)
     {
-        BlockPos pos(getWorldX(5, 6), getWorldY(3), getWorldZ(5, 6));
+        int worldY = getWorldY(3);
+        int worldX = getWorldX(5, 6);
+        int worldZ = getWorldZ(5, 6);
+        BlockPos pos(worldX, worldY, worldZ);
         if (box->isInside(pos))
         {
-            g_pApp->AddTerrainFeaturePosition((_eTerrainFeatureType)6, pos.x, pos.z);
+            gApp.AddTerrainFeaturePosition((_eTerrainFeatureType)6, pos.x, pos.z);
             level->getLevelData()->setXStrongholdEndPortal(pos.x);
             level->getLevelData()->setZStrongholdEndPortal(pos.z);
             level->getLevelData()->setHasStrongholdEndPortal();
@@ -1444,7 +1421,8 @@ bool StrongholdPieces::PortalRoom::postProcess(Level* level, Random& random, Bou
             mHasPlacedSpawner = true;
             level->setBlock(pos, Blocks::mob_spawner->defaultBlockState(), Block::UPDATE_CLIENTS, false);
             boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
-            if (blockEntity->GetType() == BlockEntityType::MOB_SPAWNER)
+            bool isSpawner = blockEntity->GetType() == BlockEntityType::MOB_SPAWNER;
+            if (isSpawner)
             {
                 boost::shared_ptr<MobSpawnerBlockEntity> spawner =
                     boost::static_pointer_cast<MobSpawnerBlockEntity>(blockEntity);
@@ -1544,9 +1522,12 @@ StructurePiece* StrongholdPieces::RightTurn::Create() { return new RightTurn(); 
 EStructurePiece StrongholdPieces::RightTurn::GetType() { return eStructurePiece_RightTurn; }
 
 StrongholdPieces::StartPiece::StartPiece(int depth, Random& random, int x, int z, Level* level)
-    : StairsDown(0, random, x, z), mStartFlag(false), mLastPieceWeight(NULL), mPortalRoom(NULL), mLevel(level),
-      mPendingChildren()
+    : StairsDown(0, random, x, z)
 {
+    mLevel = level;
+    mPortalRoom = NULL;
+    mLastPieceWeight = NULL;
+    mStartFlag = false;
 }
 
 StrongholdPieces::StartPiece::StartPiece()
@@ -1577,7 +1558,7 @@ void StrongholdPieces::SmoothStoneSelector::next(Random& random, int, int, int, 
     else if (roll < 0.5f)
         mNext = Blocks::stonebrick->getBlockState(StoneBrickBlock::MOSSY_META);
     else if (roll < 0.55f)
-        mNext = Blocks::monster_egg->getBlockState(MonsterEggBlock::Variant::byData(2)->getData());
+        mNext = Blocks::monster_egg->getBlockState(MonsterEggBlock::Variant::STONEBRICK->getData());
     else
         mNext = Blocks::stonebrick->defaultBlockState();
 }

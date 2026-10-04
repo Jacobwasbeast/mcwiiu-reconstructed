@@ -16,6 +16,10 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/generation/PlayerUID.hpp"
 
+static const std::wstring MONUMENT_DESTINATION(L"Monument");
+static const std::wstring MANSION_DESTINATION(L"Mansion");
+static const std::wstring BURIED_TREASURE_DESTINATION(L"BuriedTreasure");
+
 ExplorationMapFunction::ExplorationMapFunction(std::vector<LootItemCondition*>* conditions,
                                                const std::wstring& destination)
     : LootItemFunction(conditions), mDestination(destination)
@@ -28,15 +32,15 @@ ExplorationMapFunction::~ExplorationMapFunction()
 
 const MapDecoration::Type* ExplorationMapFunction::getType(const std::wstring& destination)
 {
-    if (destination == L"Monument")
+    if (destination == MONUMENT_DESTINATION)
     {
         return &MapDecoration::Type::TYPES[15];
     }
-    if (destination == L"Mansion")
+    if (destination == MANSION_DESTINATION)
     {
         return &MapDecoration::Type::TYPES[14];
     }
-    if (destination == L"BuriedTreasure")
+    if (destination == BURIED_TREASURE_DESTINATION)
     {
         return &MapDecoration::Type::TYPES[20];
     }
@@ -45,15 +49,15 @@ const MapDecoration::Type* ExplorationMapFunction::getType(const std::wstring& d
 
 unsigned int ExplorationMapFunction::getTranslatableName(const std::wstring& destination)
 {
-    if (destination == L"Monument")
+    if (destination == MONUMENT_DESTINATION)
     {
-        return 0x9ac0e2be;
+        return IDS_ITEM_FILLED_MAP_OCEAN_MONUMENT;
     }
-    if (destination == L"Mansion")
+    if (destination == MANSION_DESTINATION)
     {
-        return 0x09f84bee;
+        return IDS_ITEM_FILLED_MAP_WOODLAND_MANSION;
     }
-    if (destination == L"BuriedTreasure")
+    if (destination == BURIED_TREASURE_DESTINATION)
     {
         return 0xd2f653b5;
     }

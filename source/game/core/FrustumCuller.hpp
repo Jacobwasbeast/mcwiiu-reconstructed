@@ -10,7 +10,7 @@ class FrustumCuller : public Culler
 {
 public:
     FrustumCuller(FrustumData* frustumData);
-    virtual ~FrustumCuller();
+    virtual ~FrustumCuller() {}
 
     virtual bool isVisible(AABB* boundingBox);
     virtual bool cubeInFrustum(double x0, double y0, double z0, double x1, double y1, double z1);

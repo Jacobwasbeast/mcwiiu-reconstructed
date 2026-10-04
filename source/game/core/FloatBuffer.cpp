@@ -4,7 +4,8 @@
 
 FloatBuffer::FloatBuffer(unsigned int capacity) : Buffer(capacity)
 {
-    mBuffer = new float[capacity]();
+    mBuffer = new float[capacity];
+    memset(mBuffer, 0, capacity * sizeof(float));
 }
 
 FloatBuffer::FloatBuffer(unsigned int capacity, float* data) : Buffer(capacity)
@@ -51,8 +52,8 @@ FloatBuffer* FloatBuffer::put(arrayWithLength<float> values)
 
 void FloatBuffer::get(arrayWithLength<float>* values)
 {
-    unsigned int i;
-    for (i = 0; i < values->length; ++i)
+    unsigned int length = values->length;
+    for (unsigned int i = 0; i < length; i++)
     {
         values->data[i] = mBuffer[i];
     }

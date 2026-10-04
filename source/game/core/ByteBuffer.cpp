@@ -44,18 +44,22 @@ unsigned char* ByteBuffer::getBuffer()
     return mBuffer;
 }
 
-int ByteBuffer::getInt(unsigned int index)
+unsigned int ByteBuffer::getInt(unsigned int index)
 {
     unsigned char* bytes = mBuffer + index;
+    unsigned char first = bytes[0];
+    unsigned char second = bytes[1];
+    unsigned char third = bytes[2];
+    unsigned char fourth = bytes[3];
 
     if (mOrder == eByteOrder_BigEndian)
     {
-        return (bytes[0] << 24) | (bytes[1] << 16) | (bytes[2] << 8) | bytes[3];
+        return ((unsigned int)first << 24) | ((unsigned int)second << 16) | ((unsigned int)third << 8) | (unsigned int)fourth;
     }
 
     if (mOrder == eByteOrder_LittleEndian)
     {
-        return (bytes[3] << 24) | (bytes[2] << 16) | (bytes[1] << 8) | bytes[0];
+        return ((unsigned int)fourth << 24) | ((unsigned int)third << 16) | ((unsigned int)second << 8) | (unsigned int)first;
     }
 
     return 0;
@@ -65,9 +69,9 @@ void ByteBuffer::putInt(unsigned int index, int value)
 {
     if (mOrder == eByteOrder_BigEndian)
     {
-        mBuffer[index] = (unsigned char)(value >> 24);
-        mBuffer[index + 1] = (unsigned char)(value >> 16);
-        mBuffer[index + 2] = (unsigned char)(value >> 8);
+        mBuffer[index] = (unsigned char)((value >> 24) & 0xFF);
+        mBuffer[index + 1] = (unsigned char)((value >> 16) & 0xFF);
+        mBuffer[index + 2] = (unsigned char)((value >> 8) & 0xFF);
         mBuffer[index + 3] = (unsigned char)value;
         return;
     }
@@ -75,9 +79,9 @@ void ByteBuffer::putInt(unsigned int index, int value)
     if (mOrder == eByteOrder_LittleEndian)
     {
         mBuffer[index] = (unsigned char)value;
-        mBuffer[index + 1] = (unsigned char)(value >> 8);
-        mBuffer[index + 2] = (unsigned char)(value >> 16);
-        mBuffer[index + 3] = (unsigned char)(value >> 24);
+        mBuffer[index + 1] = (unsigned char)((value >> 8) & 0xFF);
+        mBuffer[index + 2] = (unsigned char)((value >> 16) & 0xFF);
+        mBuffer[index + 3] = value >> 24;
     }
 }
 

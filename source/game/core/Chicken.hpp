@@ -31,7 +31,7 @@ public:
     void _init();
     virtual void registerGoals();
     static void staticCtor();
-    virtual double getEyeHeight();
+    virtual float getEyeHeight();
     virtual void registerAttributes();
     virtual void aiStep();
     virtual void causeFallDamage(float fallDistance, float damageMultiplier);

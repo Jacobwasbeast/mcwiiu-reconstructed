@@ -8,11 +8,11 @@ DLCGameRulesHeader::DLCGameRulesHeader(const std::wstring& path)
     : DLCGameRules(DLCManager::eDLCType_GameRulesHeader, path),
       m_data(NULL),
       m_dataSize(0),
-      m_ready(false),
-      m_levelGenerationOptions(NULL)
+      m_ready(false)
 {
     std::wstring grfPath = path.substr(0, path.size() - 4) + L".grf";
     m_grfPath = grfPath;
+    m_levelGenerationOptions = NULL;
 }
 
 DLCGameRulesHeader::~DLCGameRulesHeader()

@@ -45,6 +45,8 @@
 #include "game/world/block/BlockId.hpp"
 
 
+static const int MAX_STRENGTH = 5;
+
 const EntityDataAccessor<int>* Llama::DATA_STRENGTH = NULL;
 const EntityDataAccessor<int>* Llama::DATA_SWAG = NULL;
 const EntityDataAccessor<int>* Llama::DATA_VARIANT = NULL;
@@ -82,9 +84,10 @@ bool Llama::LlamaHurtByTargetGoal::canContinueToUse()
 }
 
 Llama::Llama(Level* level)
-    : AbstractChestedHorse(level), mDidSpit(false), mCaravanHead(), mCaravanTail()
+    : AbstractChestedHorse(level), mCaravanHead(), mCaravanTail()
 {
     AbstractHorse::fjDerivedCtorCalls();
+    mDidSpit = false;
     setSize(0.9f, 1.87f);
     internalSetSize(1.0f);
 }
@@ -92,11 +95,6 @@ Llama::~Llama() { }
 void Llama::create(Level* level) { new Llama(level); }
 const DyeColor* Llama::getSwag()
 {
-    if (mEntityData == NULL || DATA_SWAG == NULL)
-    {
-        return NULL;
-    }
-
     int blockData = mEntityData->get(DATA_SWAG);
     return blockData == -1 ? NULL : DyeColor::byBlockData(blockData);
 }
@@ -137,7 +135,8 @@ void Llama::staticCtor()
 }
 void Llama::setStrength(int strength)
 {
-    mEntityData->set(DATA_STRENGTH, std::max(1, std::min(strength, 5)), true);
+    int clamped = std::min(MAX_STRENGTH, strength);
+    mEntityData->set(DATA_STRENGTH, clamped < 1 ? 1 : clamped, true);
 }
 void Llama::setRandomStrength() {
     int maxStrength = mRandom->nextFloat() < 0.04f ? 5 : 3;
@@ -157,11 +156,9 @@ void Llama::addAdditonalSaveData(CompoundTag* tag)
     tag->putInt(L"Variant", getVariant());
     tag->putInt(L"Strength", getStrength());
 
-    not_null_ptr<ItemInstance> item = mInventory->getItem(1);
-    if (!item->isEmpty())
+    if (!mInventory->getItem(1)->isEmpty())
     {
-        not_null_ptr<ItemInstance> decorItem = mInventory->getItem(1);
-        tag->put(L"DecorItem", decorItem->save(new CompoundTag()));
+        tag->put(L"DecorItem", mInventory->getItem(1)->save(new CompoundTag()));
     }
 }
 void Llama::setVariant(int variant)
@@ -215,17 +212,16 @@ int Llama::getInventorySize()
 }
 void Llama::positionRider(const boost::shared_ptr<Entity>& passenger)
 {
-    if (!hasPassenger(passenger))
-        return;
-
-    if (!RiderPositionOverrides::OverridePosition(shared_from_this(), passenger))
+    if (hasPassenger(passenger))
     {
-        const float angle = mYBodyRot * 0.017453292f;
-        const float sin = Mth::sin(angle);
-        const float cos = Mth::cos(angle);
-        passenger->setPos(mX + 0.30000001192092896 * sin,
-                          mY + getRideHeight() + passenger->getRidingHeight(),
-                          mZ - 0.30000001192092896 * cos);
+        if (!RiderPositionOverrides::OverridePosition(shared_from_this(), passenger))
+        {
+            const float cos = Mth::cos(mYBodyRot * 0.017453292f);
+            const float sin = Mth::sin(mYBodyRot * 0.017453292f);
+            passenger->setPos(mX + 0.30000001192092896 * sin,
+                              mY + getRideHeight() + passenger->getRidingHeight(),
+                              mZ - 0.30000001192092896 * cos);
+        }
     }
 }
 double Llama::getRideHeight() { return mBbHeight * 0.67; }
@@ -297,9 +293,7 @@ int Llama::handleEating(const boost::shared_ptr<Player>& player, const not_null_
 }
 bool Llama::isImmobile()
 {
-    if (getHealth() > 0.0f && !isEating())
-        return false;
-    return true;
+    return !(getHealth() > 0.0f) || isEating();
 }
 MobGroupData* Llama::finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data, const std::wstring& name)
 {
@@ -414,12 +408,7 @@ unsigned int Llama::GetInteractTooltip(const EntityTooltipDataHolder& tooltipDat
 bool Llama::HideUseTooltips() { return true; }
 void Llama::setSwag(const DyeColor* color)
 {
-    int blockData = -1;
-    if (color != NULL)
-    {
-        blockData = color->getBlockData();
-    }
-    mEntityData->set(DATA_SWAG, blockData, true);
+    mEntityData->set(DATA_SWAG, color != NULL ? color->getBlockData() : -1, true);
 }
 
 void Llama::setSwagByItem(const not_null_ptr<ItemInstance>& item)
@@ -441,16 +430,8 @@ void Llama::updateEquipment()
 int Llama::getMaxTemper() const { return 30; }
 bool Llama::canMate(const boost::shared_ptr<Animal>& other)
 {
-    if (other == shared_from_this())
-        return false;
-
-    if (other->GetType() == EntityType::LLAMA && canParent())
-    {
-        boost::shared_ptr<Llama> partner = boost::static_pointer_cast<Llama>(other);
-        return partner->canParent();
-    }
-
-    return false;
+    return other != shared_from_this() && other->GetType() == EntityType::LLAMA && canParent() &&
+           boost::static_pointer_cast<Llama>(other)->canParent();
 }
 boost::shared_ptr<AgableMob> Llama::getBreedOffspring(boost::shared_ptr<AgableMob> partner)
 {
@@ -499,11 +480,11 @@ void Llama::causeFallDamage(float fallDistance, float damageMultiplier)
         }
     }
 
-    Block* block = mLevel->getBlockState(BlockPos(mX, mY - 0.2 - static_cast<double>(mYRotO), mZ))->getBlock();
-    if (block->mMaterial == Material::AIR || isSilent())
+    const BlockState* state = mLevel->getBlockState(BlockPos(mX, mY - 0.2 - static_cast<double>(mYRotO), mZ));
+    if (state->getMaterial() == Material::AIR || isSilent())
         return;
 
-    const SoundType* soundType = block->getSoundType();
+    const SoundType* soundType = state->getBlock()->getSoundType();
     mLevel->playSound(boost::shared_ptr<Player>(), mX, mY, mZ, soundType->getStepSound(),
                       getSoundSource(), soundType->getVolume() * 0.5f,
                       soundType->getPitch() * 0.75f, 16.0f);
@@ -523,14 +504,12 @@ void Llama::joinCaravan(const boost::shared_ptr<Llama>& llama)
 }
 bool Llama::hasCaravanTail()
 {
-    boost::weak_ptr<Llama> weakTail(mCaravanTail);
-    return weakTail.lock().get() != NULL;
+    return mCaravanTail.lock().get() != NULL;
 }
 
 bool Llama::inCaravan()
 {
-    boost::weak_ptr<Llama> weakHead(mCaravanHead);
-    return weakHead.lock().get() != NULL;
+    return mCaravanHead.lock().get() != NULL;
 }
 boost::shared_ptr<Llama> Llama::getCaravanHead() { return mCaravanHead.lock(); }
 double Llama::followLeashSpeed() { return 2.0; }

@@ -18,11 +18,10 @@ Slot::Slot(boost::shared_ptr<Container> container, int index, int x, int y)
 
 void Slot::onQuickCraft(not_null_ptr<ItemInstance> oldItem, not_null_ptr<ItemInstance> newItem)
 {
-    int oldCount = oldItem->getCount();
-    int newCount = newItem->getCount();
-    if (newCount - oldCount > 0)
+    int diff = newItem->getCount() - oldItem->getCount();
+    if (diff > 0)
     {
-        onQuickCraft(newItem, newCount - oldCount);
+        onQuickCraft(newItem, diff);
     }
 }
 
@@ -85,7 +84,7 @@ int Slot::getMaxStackSize(not_null_ptr<ItemInstance> item)
 
 std::wstring Slot::getNoItemIcon()
 {
-    return std::wstring();
+    return std::wstring((const wchar_t*)NULL);
 }
 
 not_null_ptr<ItemInstance> Slot::remove(int count)
@@ -111,20 +110,21 @@ bool Slot::isActive()
 bool Slot::mayCombine(not_null_ptr<ItemInstance> item)
 {
     not_null_ptr<ItemInstance> current = getItem();
-    if (current->isEmpty() || item->isEmpty())
+    if (!current->isEmpty() && !item->isEmpty())
     {
+        if (!current->isEmpty() && !item->isEmpty() &&
+            Item::getId(current->getItem()) == Item::getId(item->getItem()) &&
+            current->getCount() == 1 && item->getCount() == 1 &&
+            current->getItem()->canBeDepleted())
+        {
+            if (current->isDamaged() || item->isDamaged())
+            {
+                return !current->isEnchanted() && !item->isEnchanted();
+            }
+        }
         return false;
     }
-    if (Item::getId(current->getItem()) != Item::getId(item->getItem()))
-    {
-        return false;
-    }
-    if (current->getCount() == 1 && item->getCount() == 1 &&
-        current->getItem()->canBeDepleted())
-    {
-        return current->isDamaged() == item->isDamaged();
-    }
-    return !current->isEnchanted() && !item->isEnchanted();
+    return false;
 }
 
 not_null_ptr<ItemInstance> Slot::combine(not_null_ptr<ItemInstance> item)
@@ -147,10 +147,10 @@ not_null_ptr<ItemInstance> Slot::combine(not_null_ptr<ItemInstance> item)
 
 void Slot::swap(Slot* other)
 {
-    not_null_ptr<ItemInstance> current = getItem();
-    not_null_ptr<ItemInstance> incoming = other->getItem();
+    not_null_ptr<ItemInstance> current = mContainer->getItem(mSlot);
+    not_null_ptr<ItemInstance> incoming = other->mContainer->getItem(other->mSlot);
 
-    if (!current->isEmpty() && other->getMaxStackSize(current) < current->getCount())
+    if (!current->isEmpty() && current->getCount() > other->getMaxStackSize(current))
     {
         if (!incoming->isEmpty())
         {
@@ -159,7 +159,7 @@ void Slot::swap(Slot* other)
         incoming = current->split(current->getCount() - other->getMaxStackSize(current));
     }
 
-    if (!incoming->isEmpty() && getMaxStackSize(incoming) < incoming->getCount())
+    if (!incoming->isEmpty() && incoming->getCount() > getMaxStackSize(incoming))
     {
         if (!current->isEmpty())
         {

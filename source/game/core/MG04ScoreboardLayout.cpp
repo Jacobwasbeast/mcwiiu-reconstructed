@@ -71,11 +71,11 @@ void MG04ScoreboardLayout::Init(int value)
     m_userIndex = value;
     ClearPlayersInfo();
 
-    const int playerCount = CGameNetworkManager::sInstance.GetPlayerCount();
+    const unsigned int playerCount = CGameNetworkManager::sInstance.GetPlayerCount();
     boost::shared_ptr<MultiplayerLocalPlayer> localPlayer =
         Minecraft::GetInstance()->mLocalPlayers[value];
 
-    for (int index = 0; index < playerCount; ++index)
+    for (unsigned int index = 0; index < playerCount; ++index)
     {
         INetworkPlayer* networkPlayer = CGameNetworkManager::sInstance.GetPlayerByIndex(index);
         if (networkPlayer != 0)
@@ -162,11 +162,15 @@ unsigned int MG04ScoreboardLayout::getStatIcon5(const EScoreboardType&)
 
 unsigned int MG04ScoreboardLayout::getTitleIcon(int column, const EScoreboardType&)
 {
-    if (static_cast<unsigned int>(column) < 3)
+    switch (column)
     {
+    case 0:
+    case 1:
+    case 2:
         return 0x77;
+    default:
+        return 0xffffffffu;
     }
-    return 0xffffffffu;
 }
 
 std::wstring MG04ScoreboardLayout::GetRowLabel(int column, const StatsUID& uid, const EScoreboardType& type)
@@ -175,12 +179,15 @@ std::wstring MG04ScoreboardLayout::GetRowLabel(int column, const StatsUID& uid, 
     {
         ClientScoreboard* scoreboard =
             Minecraft::GetInstance()->mLocalPlayers[m_userIndex]->GetLevel()->GetClientScoreboard();
-        if (column == 0)
+        switch (column)
+        {
+        case 0:
             return _toString<unsigned short>(scoreboard->GetVotesReceived(uid, -1)[1]);
-        if (column == 1)
+        case 1:
             return _toString<unsigned short>(scoreboard->GetVotesReceived(uid, -1)[2]);
-        if (column == 2)
+        case 2:
             return _toString<unsigned short>(scoreboard->GetVotesReceived(uid, -1)[3]);
+        }
     }
     return std::wstring(L"");
 }
@@ -250,8 +257,7 @@ PlayerInfo* MG04ScoreboardLayout::CreatePlayerInfo()
 void MG04ScoreboardLayout::AddPlayer(unsigned char smallId)
 {
     PlayerInfo* info = new MG04PlayerInfo();
-    INetworkPlayer* player = CGameNetworkManager::sInstance.GetPlayerBySmallId(smallId);
-    BuildPlayerInfo(player, info);
+    BuildPlayerInfo(CGameNetworkManager::sInstance.GetPlayerBySmallId(smallId), info);
     m_players.push_back(info);
 }
 
@@ -259,8 +265,8 @@ void MG04ScoreboardLayout::UpdatePlayer(int index, PlayerInfo*, PlayerInfo* newI
 {
     PlayerInfo* info = m_players[index];
     info->smallId = newInfo->smallId;
-    info->voiceStatus = newInfo->voiceStatus;
     info->colour = newInfo->colour;
+    info->voiceStatus = newInfo->voiceStatus;
     info->name = newInfo->name;
 }
 

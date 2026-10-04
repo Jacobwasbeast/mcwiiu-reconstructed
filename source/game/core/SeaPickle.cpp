@@ -54,35 +54,39 @@ bool SeaPickle::performBonemeal(bool simulate, Level* level, Random* random, con
     if (belowState->getValue(CoralBlock::DEAD))
         return false;
 
+    int x = pos.x - 2;
+    int dx = 0;
     int offset = 0;
     int width = 1;
     for (int layer = 0; layer < 5; ++layer)
     {
         for (int i = 0; i < width; ++i)
         {
-            for (int y = pos.y - 1; y < pos.y + 1; ++y)
+            int yEnd = pos.y + 1;
+            for (int y = pos.y - 1; y < yEnd; ++y)
             {
-                BlockPos target(pos.x - 2 + layer, y, pos.z - offset + i);
-                if (target == pos || random->nextInt(3) != 0 || !level->isUnderWater(target, 0x10f, 0))
-                    continue;
-                Block* targetBelow = level->getBlock(target.below());
-                if (targetBelow != Blocks::coral_block)
-                    continue;
-                if (targetBelow->defaultBlockState()->getValue(CoralBlock::DEAD) || !level->isEmptyWaterBlock(target))
-                    continue;
-
-                Block* existing = level->getBlock(target);
-                int minCount = 0;
-                int count;
-                if (existing == Blocks::sea_pickle && (minCount = existing->defaultBlockState()->getValue(COUNT)) >= 3)
-                    count = 3;
-                else
-                    count = random->nextInt(minCount, 3);
-                if (!simulate)
+                BlockPos target(x + dx, y, pos.z - offset + i);
+                if (!(target == pos) && random->nextInt(3) == 0 && level->isUnderWater(target, 0x10f, 0))
                 {
-                    TypedBoxed<int> boxed(count);
-                    level->setBlock(target, Blocks::sea_pickle->defaultBlockState()->setBoxedValue(COUNT, &boxed), Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE,
-                                    false);
+                    Block* targetBelow = level->getBlock(target.below());
+                    if (targetBelow == Blocks::coral_block)
+                    {
+                        if (!targetBelow->defaultBlockState()->getValue(CoralBlock::DEAD) && level->isEmptyWaterBlock(target))
+                        {
+                            Block* existing = level->getBlock(target);
+                            int minCount = 0;
+                            int count;
+                            if (existing != Blocks::sea_pickle || (minCount = existing->defaultBlockState()->getValue(COUNT)) < 3)
+                                count = random->nextInt(minCount, 3);
+                            else
+                                count = 3;
+                            if (!simulate)
+                            {
+                                const BlockState* grown = Blocks::sea_pickle->defaultBlockState()->setValue(COUNT, count);
+                                level->setBlock(target, grown, Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false);
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -96,12 +100,13 @@ bool SeaPickle::performBonemeal(bool simulate, Level* level, Random* random, con
             --offset;
             width -= 2;
         }
+        ++dx;
     }
 
     if (!simulate)
     {
-        TypedBoxed<int> full(3);
-        level->setBlock(pos, Blocks::sea_pickle->defaultBlockState()->setBoxedValue(COUNT, &full), Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false);
+        const BlockState* full = Blocks::sea_pickle->defaultBlockState()->setValue(COUNT, 3);
+        level->setBlock(pos, full, Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false);
     }
     return true;
 }
@@ -158,7 +163,7 @@ int SeaPickle::getLightEmission(const BlockState* state)
     if (state->getBlock() == Blocks::sea_pickle)
     {
         int count = state->getValue(COUNT);
-        if (state->getValue(FLANGE) != 1 && (unsigned int)count < 4)
+        if (state->getValue(FLANGE) != 1 && (unsigned int)count <= 3)
             return LIGHT_EMISSION[count];
     }
     return 0;
@@ -219,9 +224,7 @@ unsigned int SeaPickle::GetInteractTooltip(const BlockTooltipDataHolder& tooltip
 
 const BlockState* SeaPickle::getBlockState(int data)
 {
-    TypedBoxed<int> count(data & 7);
-    TypedBoxed<int> flange(data >> 3 & 1);
-    return defaultBlockState()->setBoxedValue(COUNT, &count)->setBoxedValue(FLANGE, &flange);
+    return defaultBlockState()->setValue(COUNT, data & 7)->setValue(FLANGE, data >> 3 & 1);
 }
 
 BlockStateDefinition* SeaPickle::createBlockStateDefinition()
@@ -237,11 +240,14 @@ bool SeaPickle::mayPlaceOn(Level* level, const BlockPos& pos, const BlockState* 
     int id = level->getBlockId(pos.x, pos.y, pos.z);
     if (id == 20 || id == 95)
         return true;
-    if (level->isEmptyBlock(pos) || level->isEmptyWaterBlock(pos))
-        return false;
-    if (HalfSlabBlock::isHalfSlab(state) && state->getValue(HalfSlabBlock::TYPE) != HalfSlabBlock::TOP)
-        return false;
-    return state->isSolidBlockingBlock();
+    if (!level->isEmptyBlock(pos) && !level->isEmptyWaterBlock(pos))
+    {
+        if (HalfSlabBlock::isHalfSlab(state) && state->getValue(HalfSlabBlock::TYPE) != HalfSlabBlock::TOP)
+            return false;
+        if (state->isSolidBlockingBlock())
+            return true;
+    }
+    return false;
 }
 
 void SeaPickle::onPlace(Level* level, const BlockPos& pos, const BlockState* state)
@@ -283,22 +289,18 @@ void SeaPickle::tick(Level* level, const BlockPos& pos, const BlockState* state,
     int count = state->getValue(COUNT);
     int flange = state->getValue(FLANGE);
     bool underWater = level->isUnderWater(pos, 0x10f, 0);
-    if (flange == 1)
+    if (flange != 1)
     {
-        if (underWater)
+        if (!underWater)
         {
-            TypedBoxed<int> submerged(0);
-            TypedBoxed<int> boxedCount(count);
-            level->setBlock(pos, block->defaultBlockState()->setBoxedValue(FLANGE, &submerged)->setBoxedValue(COUNT, &boxedCount),
-                            Block::UPDATE_ALL, false);
+            const BlockState* exposed = block->defaultBlockState()->setValue(FLANGE, 1)->setValue(COUNT, count);
+            level->setBlock(pos, exposed, Block::UPDATE_ALL, false);
         }
     }
-    else if (!underWater)
+    else if (underWater)
     {
-        TypedBoxed<int> exposed(1);
-        TypedBoxed<int> boxedCount(count);
-        level->setBlock(pos, block->defaultBlockState()->setBoxedValue(FLANGE, &exposed)->setBoxedValue(COUNT, &boxedCount),
-                        Block::UPDATE_ALL, false);
+        const BlockState* submerged = block->defaultBlockState()->setValue(FLANGE, 0)->setValue(COUNT, count);
+        level->setBlock(pos, submerged, Block::UPDATE_ALL, false);
     }
 }
 

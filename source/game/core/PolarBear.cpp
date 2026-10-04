@@ -38,10 +38,13 @@
 const EntityDataAccessor<bool>* PolarBear::DATA_STANDING = NULL;
 
 PolarBear::PolarBear(Level* level)
-    : Animal(level), mStandingScaleO(0.0f), mStandingScale(0.0f), mWarningSoundTicks(0)
+    : Animal(level)
 {
     fjDerivedCtorCalls();
     setSize(1.3f, 1.4f);
+    mStandingScale = 0.0f;
+    mStandingScaleO = 0.0f;
+    mWarningSoundTicks = 0;
 }
 
 PolarBear::~PolarBear()
@@ -61,7 +64,8 @@ void PolarBear::staticCtor()
 
 boost::shared_ptr<AgableMob> PolarBear::getBreedOffspring(boost::shared_ptr<AgableMob>)
 {
-    return boost::shared_ptr<AgableMob>(new PolarBear(mLevel));
+    boost::shared_ptr<PolarBear> offspring(new PolarBear(mLevel));
+    return offspring;
 }
 
 bool PolarBear::isFood(const not_null_ptr<ItemInstance>&)
@@ -152,15 +156,11 @@ void PolarBear::tick()
 
 bool PolarBear::doHurtTarget(boost::shared_ptr<Entity> target)
 {
-    if (!target) return false;
-    boost::shared_ptr<LivingEntity> livingTarget = boost::dynamic_pointer_cast<LivingEntity>(target);
-    if (!livingTarget) return false;
-    boost::shared_ptr<LivingEntity> attacker = boost::static_pointer_cast<LivingEntity>(shared_from_this());
-    EntityDamageSource* source = DamageSource::CreateMobAttack(attacker);
-    float damage = static_cast<float>(getAttribute(SharedMonsterAttributes::ATTACK_DAMAGE)->getValue());
-    bool hurt = livingTarget->hurt(source, damage);
+    EntityDamageSource* source =
+        DamageSource::CreateMobAttack(boost::dynamic_pointer_cast<LivingEntity>(shared_from_this()));
+    bool hurt = target->hurt(source, static_cast<float>(getAttribute(SharedMonsterAttributes::ATTACK_DAMAGE)->getValue()));
     delete source;
-    if (hurt) doEnchantDamageEffects(boost::static_pointer_cast<LivingEntity>(shared_from_this()), target);
+    if (hurt) doEnchantDamageEffects(boost::dynamic_pointer_cast<LivingEntity>(shared_from_this()), target);
     return hurt;
 }
 
@@ -169,9 +169,9 @@ void PolarBear::setStanding(bool standing)
     mEntityData->set(DATA_STANDING, standing, true);
 }
 
-double PolarBear::getStandingAnimationScale(float partialTick)
+float PolarBear::getStandingAnimationScale(float partialTick)
 {
-    return static_cast<double>((mStandingScale - mStandingScaleO) * partialTick + mStandingScaleO) / 6.0;
+    return ((mStandingScale - mStandingScaleO) * partialTick + mStandingScaleO) / 6.0f;
 }
 
 float PolarBear::getWaterSlowDown()
@@ -181,22 +181,25 @@ float PolarBear::getWaterSlowDown()
 
 MobGroupData* PolarBear::finalizeMobSpawn(const DifficultyInstance&, MobGroupData* data, const std::wstring&)
 {
-    PolarBearGroupData* group = dynamic_cast<PolarBearGroupData*>(data);
-    if (group == NULL)
+    if (data == NULL || dynamic_cast<PolarBearGroupData*>(data) == NULL)
     {
-        group = new PolarBearGroupData();
+        PolarBearGroupData* group = new PolarBearGroupData();
+        data = group;
         group->mIsBaby = true;
     }
-    else if (group->mIsBaby)
+    else if (static_cast<PolarBearGroupData*>(data)->mIsBaby)
     {
-        setAge(-144000);
+        setAge(-24000);
     }
-    return group;
+    return data;
 }
 
 bool PolarBear::checkSpawnRules()
 {
-    BlockPos pos(Mth::floor(mX), Mth::floor(mBoundingBox->mMinY), Mth::floor(mZ));
+    int x = Mth::floor(mX);
+    int y = Mth::floor(mBoundingBox->mMinY);
+    int z = Mth::floor(mZ);
+    BlockPos pos(x, y, z);
     Biome* biome = mLevel->getBiome(pos);
     if (biome != Biome::FROZEN_OCEAN && biome != Biome::DEEP_FROZEN_OCEAN) return Animal::checkSpawnRules();
     return mLevel->getRawBrightness(pos, false) > 8 && mLevel->getBlockState(pos.below())->getBlock() == Blocks::ice;
@@ -229,9 +232,8 @@ bool PolarBear::PolarBearAttackPlayersGoal::canUse()
     if (mMob->mLevel->getDifficulty() != Difficulty::PEACEFUL && !mMob->isBaby() &&
         NearestAttackableTargetGoal::canUse())
     {
-        AABB* box = mMob->mBoundingBox->grow(8.0, 4.0, 8.0);
         std::vector<boost::shared_ptr<Entity> >* entities =
-            mMob->mLevel->getEntitiesOfClass(typeid(PolarBear), box);
+            mMob->mLevel->getEntitiesOfClass(typeid(PolarBear), mMob->mBoundingBox->grow(8.0, 4.0, 8.0));
 
         for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin();
              it != entities->end(); ++it)
@@ -277,10 +279,10 @@ void PolarBear::PolarBearHurtByTargetGoal::start()
 void PolarBear::PolarBearHurtByTargetGoal::alertOther(boost::shared_ptr<PathfinderMob> mob,
                                                        boost::shared_ptr<LivingEntity> target)
 {
-    if (mob->GetType() == EntityType::POLAR_BEAR)
+    bool isPolarBear = mob->GetType() == EntityType::POLAR_BEAR;
+    if (isPolarBear)
     {
-        boost::shared_ptr<PolarBear> bear = boost::static_pointer_cast<PolarBear>(mob);
-        if (!bear->isBaby())
+        if (!boost::static_pointer_cast<PolarBear>(mob)->isBaby())
         {
             HurtByTargetGoal::alertOther(mob, target);
         }
@@ -315,15 +317,19 @@ void PolarBear::PolarBearMeleeAttackGoal::checkAndPerformAttack(boost::shared_pt
         mMob->doHurtTarget(target);
         static_cast<PolarBear*>(mMob)->setStanding(false);
     }
-    else if (distance + distance < reach)
+    else if (reach + reach < distance)
     {
         mTicksUntilNextAttack = mAttackInterval;
         static_cast<PolarBear*>(mMob)->setStanding(false);
     }
     else
     {
-        if (mTicksUntilNextAttack < 1) mTicksUntilNextAttack = mAttackInterval;
-        if (mTicksUntilNextAttack < 11)
+        if (mTicksUntilNextAttack < 1)
+        {
+            static_cast<PolarBear*>(mMob)->setStanding(false);
+            mTicksUntilNextAttack = mAttackInterval;
+        }
+        if (mTicksUntilNextAttack <= 10)
         {
             static_cast<PolarBear*>(mMob)->setStanding(true);
             static_cast<PolarBear*>(mMob)->playWarningSound();
@@ -339,7 +345,7 @@ void PolarBear::PolarBearMeleeAttackGoal::stop()
 
 double PolarBear::PolarBearMeleeAttackGoal::getAttackReachSqr(boost::shared_ptr<LivingEntity> target)
 {
-    return static_cast<double>(target->mBbWidth) + 4.0;
+    return target->mBbWidth + 4.0f;
 }
 
 PolarBear::PolarBearPanicGoal::PolarBearPanicGoal(PolarBear* polarBear)

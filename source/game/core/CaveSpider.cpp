@@ -48,34 +48,34 @@ void CaveSpider::registerAttributes()
 
 bool CaveSpider::doHurtTarget(boost::shared_ptr<Entity> target)
 {
-    if (!Monster::doHurtTarget(target))
+    if (Monster::doHurtTarget(target))
     {
-        return false;
+        if ((target->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+        {
+            int duration;
+
+            if (mLevel->getDifficulty() == Difficulty::NORMAL)
+            {
+                duration = 7;
+            }
+            else if (mLevel->getDifficulty() == Difficulty::HARD)
+            {
+                duration = 15;
+            }
+            else
+            {
+                return true;
+            }
+
+            boost::dynamic_pointer_cast<LivingEntity>(target)->addEffect(
+                new MobEffectInstance(MobEffects::POISON, duration * 20, 0),
+                boost::shared_ptr<Entity>());
+        }
+
+        return true;
     }
 
-    if ((target->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
-    {
-        int duration;
-
-        if (mLevel->getDifficulty() == Difficulty::NORMAL)
-        {
-            duration = 7;
-        }
-        else if (mLevel->getDifficulty() == Difficulty::HARD)
-        {
-            duration = 15;
-        }
-        else
-        {
-            return true;
-        }
-
-        boost::dynamic_pointer_cast<LivingEntity>(target)->addEffect(
-            new MobEffectInstance(MobEffects::POISON, duration * 20, 0),
-            boost::shared_ptr<Entity>());
-    }
-
-    return true;
+    return false;
 }
 
 MobGroupData* CaveSpider::finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data,
@@ -113,12 +113,12 @@ MobGroupData* CaveSpider::finalizeMobSpawn(const DifficultyInstance& difficulty,
     rider->moveTo(mX, mY, mZ, mYRot, 0.0f);
     rider->finalizeMobSpawn(difficulty, NULL, L"");
     mLevel->addEntity(rider);
-    rider->Entity::startRiding(shared_from_this());
+    rider->startRiding(shared_from_this());
 
     return data;
 }
 
-double CaveSpider::getEyeHeight()
+float CaveSpider::getEyeHeight()
 {
     return 0.45f;
 }

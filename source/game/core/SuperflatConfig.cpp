@@ -9,7 +9,7 @@
 #include "game/world/generation/FlatGeneratorInfo.hpp"
 
 SuperflatConfig::SuperflatConfig()
-    : mDisplayname(), mVersion(255), layers(), mOptions()
+    : mDisplayname(), mVersion(0), layers(), mOptions()
 {
     clear();
 }
@@ -27,11 +27,7 @@ SuperflatConfig* SuperflatConfig::setDisplayname(const std::wstring& name)
 
 bool SuperflatConfig::hasOption(unsigned char parameter, unsigned char option)
 {
-    if (!hasParam(parameter))
-    {
-        return false;
-    }
-    return mOptions[parameter].find(option) != mOptions[parameter].end();
+    return hasParam(parameter) && mOptions[parameter].find(option) != mOptions[parameter].end();
 }
 
 void SuperflatConfig::addParam(unsigned char parameter)
@@ -74,9 +70,9 @@ void SuperflatConfig::updateLayers()
 
 void SuperflatConfig::clear()
 {
+    mVersion = 255;
     layers.clear();
     mOptions.clear();
-    mVersion = 255;
 }
 
 std::wstring SuperflatConfig::getDisplayname()
@@ -93,7 +89,9 @@ unsigned char SuperflatConfig::getOption(unsigned char parameter, unsigned char 
 {
     if (hasOption(parameter, option))
     {
-        return mOptions[parameter][option];
+        unsigned char key = parameter;
+        unsigned char subkey = option;
+        return mOptions[key][subkey];
     }
     return 0;
 }

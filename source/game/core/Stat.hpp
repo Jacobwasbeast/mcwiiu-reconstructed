@@ -49,7 +49,7 @@ public:
 
     Stat(int id, const std::wstring& name, StatFormatter* formatter);
     Stat(int id, const std::wstring& name);
-    virtual ~Stat();
+    virtual ~Stat() {}
 
     virtual Stat* postConstruct(bool addToList);
     virtual bool isAchievement();
@@ -59,14 +59,14 @@ public:
     virtual void handleParamBlob(boost::shared_ptr<LocalPlayer> player,
                                  arrayWithLength<unsigned char> params);
 
-    void setWoolStat(bool woolStat);
-    void setBiomeStat(bool biomeStat);
-    void setArmourStat(bool armourStat);
+    Stat* setWoolStat(bool woolStat);
+    Stat* setBiomeStat(bool biomeStat);
+    Stat* setArmourStat(bool armourStat);
 
-    void setExtended();
+    Stat* setExtended();
     bool isExtended() { return extended; }
 
-    void setAwardLocallyOnly();
+    Stat* setAwardLocallyOnly();
     bool isAwardedFromServer() const;
 
     std::wstring format(int value);

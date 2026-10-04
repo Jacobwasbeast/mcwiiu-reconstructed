@@ -334,7 +334,9 @@ void Direction::Axis::staticCtor()
 
     for (int i = 0; i < 3; i++)
     {
-        BY_NAME[toLower(VALUES[i]->getName())] = VALUES[i];
+        Axis* axis = VALUES[i];
+
+        BY_NAME[toLower(axis->getName())] = axis;
     }
 }
 
@@ -384,29 +386,21 @@ Direction::Plane::~Plane()
 
 arrayWithLength<const Direction*> Direction::Plane::getFaces()
 {
-    arrayWithLength<const Direction*> faces;
-
     if (this == HORIZONTAL)
     {
         static const Direction* horizontalFaces[4] = { NORTH, EAST, SOUTH, WEST };
 
-        faces.data = horizontalFaces;
-        faces.length = 4;
-
-        return faces;
+        return arrayWithLength<const Direction*>(horizontalFaces, 4);
     }
 
     if (this == VERTICAL)
     {
         static const Direction* verticalFaces[2] = { UP, DOWN };
 
-        faces.data = verticalFaces;
-        faces.length = 2;
-
-        return faces;
+        return arrayWithLength<const Direction*>(verticalFaces, 2);
     }
 
-    return faces;
+    return arrayWithLength<const Direction*>();
 }
 
 arrayWithLength<const Direction*> Direction::Plane::iterator()

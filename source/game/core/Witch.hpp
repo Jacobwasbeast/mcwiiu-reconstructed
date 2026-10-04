@@ -16,9 +16,6 @@ public:
     static void create(Level* level);
     static void staticCtor();
     static void addDataWalkers(DataFixerUpper* fixer);
-    virtual void performRangedAttack(boost::shared_ptr<LivingEntity> target, float distanceFactor);
-    virtual bool isAggressive();
-    virtual void setAggressive(bool aggressive);
     virtual void registerGoals();
     virtual void defineSynchedData();
     virtual const SoundEvent* getAmbientSound();
@@ -26,12 +23,15 @@ public:
     virtual const SoundEvent* getDeathSound();
     virtual void setUsingItem(bool usingItem);
     virtual bool isDrinkingPotion();
+    virtual void performRangedAttack(boost::shared_ptr<LivingEntity> target, float distanceFactor);
+    virtual bool isAggressive();
+    virtual void setAggressive(bool aggressive);
     virtual void registerAttributes();
     virtual void aiStep();
     virtual void handleEntityEvent(unsigned char event, int data);
     virtual float getDamageAfterMagicAbsorb(const DamageSource* source, float damage);
     virtual ResourceLocation* getDefaultLootTable();
-    virtual double getEyeHeight();
+    virtual float getEyeHeight();
     virtual unsigned long long GetType();
     static void DEATH_LOOT();
 

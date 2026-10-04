@@ -31,10 +31,6 @@ Stat::Stat(int id, const std::wstring& name)
     _init();
 }
 
-Stat::~Stat()
-{
-}
-
 void Stat::_init()
 {
     extended = false;
@@ -51,7 +47,7 @@ Stat* Stat::postConstruct(bool addToList)
         stats->push_back(this);
     }
 
-    statsById->insert(std::pair<int, Stat*>(id, this));
+    statsById->emplace(std::pair<int, Stat*>(id, this));
 
     return this;
 }
@@ -81,30 +77,35 @@ void Stat::handleParamBlob(boost::shared_ptr<LocalPlayer> player,
 {
 }
 
-void Stat::setWoolStat(bool woolStat)
+Stat* Stat::setWoolStat(bool woolStat)
 {
     this->woolStat = woolStat;
+    return this;
 }
 
-void Stat::setBiomeStat(bool biomeStat)
+Stat* Stat::setBiomeStat(bool biomeStat)
 {
     this->biomeStat = biomeStat;
+    return this;
 }
 
-void Stat::setArmourStat(bool armourStat)
+Stat* Stat::setArmourStat(bool armourStat)
 {
     this->armourStat = armourStat;
+    return this;
 }
 
-void Stat::setExtended()
+Stat* Stat::setExtended()
 {
     extended = true;
+    return this;
 }
 
 
-void Stat::setAwardLocallyOnly()
+Stat* Stat::setAwardLocallyOnly()
 {
     awardLocallyOnly = true;
+    return this;
 }
 
 bool Stat::isAwardedFromServer() const
@@ -127,7 +128,9 @@ std::wstring Stat::DefaultFormat::format(int value)
 
     swprintf(buffer, 256, L"%d", value);
 
-    return std::wstring(buffer);
+    std::wstring text(buffer);
+
+    return text;
 }
 
 Stat::TimeFormatter::~TimeFormatter()

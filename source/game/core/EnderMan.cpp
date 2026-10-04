@@ -197,7 +197,8 @@ void EnderMan::readAdditionalSaveData(CompoundTag* tag)
 
 bool EnderMan::isLookingAtMe(boost::shared_ptr<Player> player)
 {
-    if (player->mInventory->getArmor(3)->getItem() == Item::byBlock(Blocks::carved_pumpkin))
+    not_null_ptr<ItemInstance> helmet = player->mInventory->m_armor[3];
+    if (helmet->getItem() == Item::byBlock(Blocks::carved_pumpkin))
         return false;
 
     Vec3* view = player->getViewVector(1.0f)->normalize();
@@ -209,7 +210,7 @@ bool EnderMan::isLookingAtMe(boost::shared_ptr<Player> player)
     return view->dot(toEnderMan) > 1.0 - 0.025 / distance && player->canSee(shared_from_this());
 }
 
-double EnderMan::getEyeHeight()
+float EnderMan::getEyeHeight()
 {
     float eyeHeight = 2.55f;
     return eyeHeight;

@@ -25,12 +25,14 @@ static arrayWithLength<unsigned char> emptySector(SECTOR_BYTES, true);
 static unsigned int sThreadStorageIndex = TlsAlloc();
 
 RegionFile::RegionFile(ConsoleSaveFile* saveFile, File* file)
-    : mFile(file), mSaveFile(saveFile), mSizeDelta(0), mLastModified(0)
+    : mSaveFile(saveFile), mLastModified(0)
 {
     mOffsets = new unsigned int[SECTOR_INTS];
     std::memset(mOffsets, 0, SECTOR_BYTES);
     mTimestamps = new unsigned int[SECTOR_INTS];
     std::memset(mTimestamps, 0, SECTOR_BYTES);
+    mFile = file;
+    mSizeDelta = 0;
 
     mFileEntry = mSaveFile->createFile(ConsoleSavePath(file->getPath()));
     mSaveFile->setFilePointer(mFileEntry, 0, NULL, FILE_END);
@@ -127,9 +129,9 @@ unsigned int RegionFile::getOffset(int x, int z)
     return mOffsets[x + z * 32];
 }
 
-unsigned int RegionFile::outOfBounds(int x, int z)
+bool RegionFile::outOfBounds(int x, int z)
 {
-    return static_cast<unsigned int>(x) >= 32 || static_cast<unsigned int>(z) >= 32;
+    return x < 0 || x >= 32 || z < 0 || z >= 32;
 }
 
 DataInputStream* RegionFile::getChunkDataInputStream(int x, int z, bool* compressed)
@@ -189,6 +191,8 @@ DataInputStream* RegionFile::getChunkDataInputStream(int x, int z, bool* compres
     MemSect(0);
 
     unsigned int decompressedSize = decompressedLength;
+    arrayWithLength<unsigned char> chunkData;
+    chunkData.data = decompressed;
     mSaveFile->readFile(mFileEntry, data, length, &bytesRead);
     mSaveFile->ReleaseSaveAccess();
 
@@ -204,8 +208,6 @@ DataInputStream* RegionFile::getChunkDataInputStream(int x, int z, bool* compres
     Compression::getCompression()->SetDecompressionType(eSavePlatform_WIIU);
     delete[] data;
 
-    arrayWithLength<unsigned char> chunkData;
-    chunkData.data = decompressed;
     chunkData.length = decompressedSize;
     return new DataInputStream(new ByteArrayInputStream(chunkData));
 }
@@ -280,10 +282,9 @@ void RegionFile::setOffset(int x, int z, int offset)
         insertInitialSectors();
     }
 
+    mOffsets[x + z * 32] = offset;
     unsigned int bytesWritten = 0;
-    int index = x + z * 32;
-    mOffsets[index] = offset;
-    mSaveFile->setFilePointer(mFileEntry, index * 4, NULL, FILE_BEGIN);
+    mSaveFile->setFilePointer(mFileEntry, (x + z * 32) * 4, NULL, FILE_BEGIN);
     mSaveFile->writeFile(mFileEntry, &offset, 4, &bytesWritten);
 }
 
@@ -294,10 +295,9 @@ void RegionFile::setTimestamp(int x, int z, int timestamp)
         insertInitialSectors();
     }
 
+    mTimestamps[x + z * 32] = timestamp;
     unsigned int bytesWritten = 0;
-    int index = x + z * 32;
-    mTimestamps[index] = timestamp;
-    mSaveFile->setFilePointer(mFileEntry, index * 4 + SECTOR_BYTES, NULL, FILE_BEGIN);
+    mSaveFile->setFilePointer(mFileEntry, (x + z * 32) * 4 + SECTOR_BYTES, NULL, FILE_BEGIN);
     mSaveFile->writeFile(mFileEntry, &timestamp, 4, &bytesWritten);
 }
 
@@ -347,27 +347,30 @@ void RegionFile::write(int x, int z, unsigned char* data, int length, bool compr
         PIXBeginNamedEvent(0.0f, "Scanning for free space\n");
         unsigned int runStart = std::find(mUsedSectors->begin(), mUsedSectors->end(), true) - mUsedSectors->begin();
         int runLength = 0;
-        for (unsigned int i = runStart; i < mUsedSectors->size(); ++i)
+        if (runStart != static_cast<unsigned int>(-1))
         {
-            if (runLength != 0)
+            for (unsigned int i = runStart; i < mUsedSectors->size(); ++i)
             {
-                if (mUsedSectors->at(i))
+                if (runLength != 0)
                 {
-                    ++runLength;
+                    if (mUsedSectors->at(i))
+                    {
+                        ++runLength;
+                    }
+                    else
+                    {
+                        runLength = 0;
+                    }
                 }
-                else
+                else if (mUsedSectors->at(i))
                 {
-                    runLength = 0;
+                    runStart = i;
+                    runLength = 1;
                 }
-            }
-            else if (mUsedSectors->at(i))
-            {
-                runStart = i;
-                runLength = 1;
-            }
-            if (runLength >= sectorsNeeded)
-            {
-                break;
+                if (runLength >= sectorsNeeded)
+                {
+                    break;
+                }
             }
         }
         PIXEndNamedEvent();

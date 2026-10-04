@@ -3,6 +3,7 @@
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/world/LevelEvent.hpp"
 #include "game/core/EntityType.hpp"
+#include "game/core/Mth.hpp"
 
 #include <cmath>
 
@@ -16,15 +17,16 @@
 #include "game/world/block/BlockPos.hpp"
 
 EyeOfEnderSignal::EyeOfEnderSignal(Level* level, double x, double y, double z)
-    : Entity(level, true), mUnknown(0), mTargetX(0.0), mTargetY(0.0), mTargetZ(0.0), mLife(0), mDropItem(false)
+    : Entity(level, true)
 {
     _init();
+    mLife = 0;
     setSize(0.25f, 0.25f);
     setPos(x, y, z);
 }
 
 EyeOfEnderSignal::EyeOfEnderSignal(Level* level)
-    : Entity(level, true), mUnknown(0), mTargetX(0.0), mTargetY(0.0), mTargetZ(0.0), mLife(0), mDropItem(false)
+    : Entity(level, true)
 {
     _init();
     setSize(0.25f, 0.25f);
@@ -57,7 +59,7 @@ void EyeOfEnderSignal::signalTo(const BlockPos& pos)
     {
         mTargetX = mX + dx / distance * 12.0;
         mLife = 0;
-        mTargetZ = mZ + dz / distance * 8.0;
+        mTargetZ = mZ + dz / distance * 12.0;
         mTargetY = mY + 8.0;
     }
     mDropItem = mRandom->nextInt(5) > 0;
@@ -81,9 +83,9 @@ void EyeOfEnderSignal::lerpMotion(double xd, double yd, double zd)
     if (mXRotO == 0.0f && mYRotO == 0.0f)
     {
         double horizontal = std::sqrt(xd * xd + zd * zd);
-        mYRot = static_cast<float>(std::atan2(xd, zd) * 57.2957763671875);
+        mYRot = static_cast<float>(std::atan2(xd, zd) * Mth::RAD_TO_DEG);
         mYRotO = mYRot;
-        mXRot = static_cast<float>(std::atan2(yd, horizontal) * 57.2957763671875);
+        mXRot = static_cast<float>(std::atan2(yd, horizontal) * Mth::RAD_TO_DEG);
         mXRotO = mXRot;
     }
 }
@@ -100,31 +102,33 @@ void EyeOfEnderSignal::tick()
     mZ += mZd;
 
     double horizontal = sqrt(mXd * mXd + mZd * mZd);
-    mYRot = (float)(atan2(mXd, mZd) * 57.295776f);
-    mXRot = (float)(atan2(mYd, horizontal) * 57.295776f);
+    mYRot = (float)(atan2(mXd, mZd) * Mth::RAD_TO_DEG);
+    float xRot = (float)(atan2(mYd, horizontal) * Mth::RAD_TO_DEG);
 
-    while (mXRot - mXRotO < -180.0f)
+    while (xRot - mXRotO < -180.0f)
     {
         mXRotO -= 360.0f;
     }
 
-    while (mXRot - mXRotO >= 180.0f)
+    while (xRot - mXRotO >= 180.0f)
     {
         mXRotO += 360.0f;
     }
 
-    while (mYRot - mYRotO < -180.0f)
+    float yRot = mYRot;
+
+    while (yRot - mYRotO < -180.0f)
     {
         mYRotO -= 360.0f;
     }
 
-    while (mYRot - mYRotO >= 180.0f)
+    while (yRot - mYRotO >= 180.0f)
     {
         mYRotO += 360.0f;
     }
 
-    mXRot = mXRotO + (mXRot - mXRotO) * 0.2f;
-    mYRot = mYRotO + (mYRot - mYRotO) * 0.2f;
+    mYRot = mYRotO + (yRot - mYRotO) * 0.2f;
+    mXRot = mXRotO + (xRot - mXRotO) * 0.2f;
 
     if (!mLevel->mIsClientSide)
     {
@@ -184,8 +188,8 @@ void EyeOfEnderSignal::tick()
 
         if (mDropItem)
         {
-            mLevel->addEntity(boost::shared_ptr<Entity>(
-                new ItemEntity(mLevel, mX, mY, mZ, not_null_ptr<ItemInstance>(new ItemInstance(Items::enderEye)))));
+            not_null_ptr<ItemInstance> item(new ItemInstance(Items::enderEye));
+            mLevel->addEntity(boost::shared_ptr<Entity>(new ItemEntity(mLevel, mX, mY, mZ, item)));
         }
         else
         {

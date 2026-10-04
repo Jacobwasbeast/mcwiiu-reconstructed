@@ -12,15 +12,17 @@ IntegerCondition::IntegerCondition(const XmlObject& object)
 {
     maybe<std::wstring> op = object[L"op"].maybeString();
     if (op.isSet())
-        _init(object, parseOperator(op.get()).second);
+    {
+        std::pair<bool, EOperator> parsed = parseOperator(op.get());
+        _init(object, parsed.second);
+    }
     else
         _init(object, EOperator_LessThan);
 }
 
 void IntegerCondition::_init(const XmlObject& object, EOperator op)
 {
-    maybe<int> value = object[L"value"].maybeInt();
-    m_threshold = value.isSet() ? value.get() : 0;
+    m_threshold = object[L"value"].maybeInt().otherwise(0).get();
 
     maybe<std::wstring> option = object[L"value"].maybeString();
     if (option.isSet())
@@ -54,14 +56,17 @@ bool IntegerCondition::IsSatisfied(MasterGameMode* gameMode) const
     int value = GetValue(gameMode);
     int threshold = static_cast<int>(GetThreshold(gameMode));
 
-    if (m_operator == EOperator_LessThan)
-        return value < static_cast<int>(threshold);
-    if (m_operator == EOperator_LessThanOrEquals)
-        return value <= static_cast<int>(threshold);
-    if (m_operator == EOperator_GreaterThan)
-        return threshold < value;
-    if (m_operator == EOperator_GreaterThanOrEquals)
-        return threshold <= value;
+    switch (m_operator)
+    {
+    case EOperator_LessThan:
+        return value < threshold;
+    case EOperator_LessThanOrEquals:
+        return value <= threshold;
+    case EOperator_GreaterThan:
+        return value > threshold;
+    case EOperator_GreaterThanOrEquals:
+        return value >= threshold;
+    }
     return false;
 }
 

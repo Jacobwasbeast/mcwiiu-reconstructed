@@ -7,26 +7,26 @@ class FoodConstants
 {
 public:
     static uint32_t MaxFood();
-    static double StartSaturation();
-    static double ExhaustionHeal();
-    static double ExhaustionDrop();
+    static float StartSaturation();
+    static float ExhaustionHeal();
+    static float ExhaustionDrop();
     static uint32_t HealthTickCount();
     static uint32_t HealthTickCountSaturated();
-    static double MaxSaturation();
+    static float MaxSaturation();
     static uint32_t HealLevel();
     static uint32_t StarveLevel();
     static uint32_t SprintLevel();
-    static double ExhaustionJump();
-    static double ExhaustionSprintJump();
-    static double ExhaustionMine();
-    static double ExhaustionAttack();
-    static double ExhaustionWalk();
-    static double ExhaustionSneak();
-    static double ExhaustionSprint();
-    static double ExhaustionSwim();
-    static double ExhaustionIdle();
-    static double SaturationFloor();
-    static double ExhaustionDamage();
+    static float ExhaustionJump();
+    static float ExhaustionSprintJump();
+    static float ExhaustionMine();
+    static float ExhaustionAttack();
+    static float ExhaustionWalk();
+    static float ExhaustionSneak();
+    static float ExhaustionSprint();
+    static float ExhaustionSwim();
+    static float ExhaustionIdle();
+    static float SaturationFloor();
+    static float ExhaustionDamage();
 };
 
 #endif

@@ -35,9 +35,12 @@
 #include "game/core/EquipmentSlot.hpp"
 
 const EntityDataAccessor<bool>* Witch::DATA_USING_ITEM = NULL;
-Witch::Witch(Level* level) : Monster(level), mUsingTime(0) {
+static AttributeModifier* SPEED_MODIFIER_DRINKING =
+    (new AttributeModifier(eMODIFIER_ID_WitchDrinkingSpeedPenalty, -0.25, 0))->setSerialize(false);
+Witch::Witch(Level* level) : Monster(level) {
     fjDerivedCtorCalls();
     setSize(0.6f, 1.95f);
+    mUsingTime = 0;
     mCategories |= EntityCategory::eEntityCategory_Humanoid | EntityCategory::eEntityCategory_Monster;
 }
 void Witch::create(Level* level) { new Witch(level); }
@@ -60,10 +63,9 @@ void Witch::performRangedAttack(boost::shared_ptr<LivingEntity> target, float di
     } else if (horizontal <= 3.0f && !target->hasEffect(MobEffects::WEAKNESS) && mRandom->nextFloat() < 0.25f) {
         potion = Potions::WEAKNESS;
     }
-    boost::shared_ptr<LivingEntity> owner = boost::static_pointer_cast<LivingEntity>(shared_from_this());
-    not_null_ptr<ItemInstance> item = PotionUtils::setPotion(
-        not_null_ptr<ItemInstance>(new ItemInstance(Items::splashPotion)), potion);
-    boost::shared_ptr<ThrownPotion> projectile(new ThrownPotion(mLevel, owner, item));
+    boost::shared_ptr<ThrownPotion> projectile(new ThrownPotion(
+        mLevel, boost::static_pointer_cast<LivingEntity>(shared_from_this()),
+        PotionUtils::setPotion(not_null_ptr<ItemInstance>(new ItemInstance(Items::splashPotion)), potion)));
     projectile->mXRot -= -20.0f;
     projectile->shoot(dx, dy + horizontal * 0.2f, dz, 0.75f, 8.0f);
     playSound(SoundEvents::WITCH_THROW, 1.0f, getRandom()->nextFloat() * 0.4f + 0.8f);
@@ -113,28 +115,30 @@ void Witch::aiStep()
                     if (effects != NULL) {
                         for (std::vector<MobEffectInstance*>::iterator it = effects->begin();
                              it != effects->end(); ++it)
-                            addEffect(new MobEffectInstance(*it), shared_from_this());
+                            addEffect(new MobEffectInstance(*it), boost::shared_ptr<Entity>());
                         delete effects;
                     }
                 }
-                getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->removeModifier(
-                    eMODIFIER_ID_WitchDrinkingSpeedPenalty);
+                getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->removeModifier(SPEED_MODIFIER_DRINKING);
             }
         } else {
             Potion* potion = NULL;
-            const DamageSource* lastDamage = NULL;
             if (mRandom->nextFloat() < 0.15f && isUnderLiquid(Material::WATER)
                 && !hasEffect(MobEffects::WATER_BREATHING)) {
                 potion = Potions::WATER_BREATHING;
             } else if (mRandom->nextFloat() < 0.15f
-                       && (isOnFire() || ((lastDamage = getLastDamageSource()) != NULL && lastDamage->isFire()))
+                       && (isOnFire() || (getLastDamageSource() != NULL && getLastDamageSource()->isFire()))
                        && !hasEffect(MobEffects::FIRE_RESISTANCE)) {
                 potion = Potions::FIRE_RESISTANCE;
             } else if (mRandom->nextFloat() < 0.05f && getHealth() < getMaxHealth()) {
                 potion = Potions::HEALING;
             } else if (mRandom->nextFloat() < 0.25f && getTarget() != NULL
                        && !hasEffect(MobEffects::MOVEMENT_SPEED)
-                       && getTarget()->distanceToSqr(boost::static_pointer_cast<Entity>(shared_from_this())) > 121.0) {
+                       && getTarget()->distanceToSqr(shared_from_this()) > 121.0) {
+                potion = Potions::SWIFTNESS;
+            } else if (mRandom->nextFloat() < 0.25f && getTarget() != NULL
+                       && !hasEffect(MobEffects::MOVEMENT_SPEED)
+                       && getTarget()->distanceToSqr(shared_from_this()) > 121.0) {
                 potion = Potions::SWIFTNESS;
             }
 
@@ -146,8 +150,8 @@ void Witch::aiStep()
                 mLevel->playSound(boost::shared_ptr<Player>(), mX, mY, mZ, SoundEvents::WITCH_DRINK, getSoundSource(),
                                   1.0f, 0.8f + getRandom()->nextFloat() * 0.4f, 16.0f);
                 AttributeInstance* speed = getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED);
-                speed->removeModifier(eMODIFIER_ID_WitchDrinkingSpeedPenalty);
-                speed->addModifier(new AttributeModifier(eMODIFIER_ID_WitchDrinkingSpeedPenalty, -0.25, 0, false));
+                speed->removeModifier(SPEED_MODIFIER_DRINKING);
+                speed->addModifier(new AttributeModifier(*SPEED_MODIFIER_DRINKING));
             }
         }
 
@@ -164,7 +168,7 @@ void Witch::handleEntityEvent(unsigned char event, int data)
         for (int i = 0; i < mRandom->nextInt(35) + 10; ++i) {
             mLevel->addParticle(PARTICLE_WITCH_MAGIC,
                                 mX + mRandom->nextGaussian() * 0.13f,
-                                mRandom->nextGaussian() * 0.13f + mBoundingBox->mMaxY + 0.5,
+                                (mBoundingBox->mMaxY + 0.5) + mRandom->nextGaussian() * 0.13f,
                                 mZ + mRandom->nextGaussian() * 0.13f,
                                 0.0, 0.0, 0.0,
                                 arrayWithLength<int>());
@@ -177,14 +181,16 @@ void Witch::handleEntityEvent(unsigned char event, int data)
 float Witch::getDamageAfterMagicAbsorb(const DamageSource* source, float damage)
 {
     float result = LivingEntity::getDamageAfterMagicAbsorb(source, damage);
-    boost::shared_ptr<Entity> attacker = source->getEntity();
-    boost::shared_ptr<Entity> self = shared_from_this();
-    if (attacker == self)
+    if (source->getEntity() == shared_from_this())
         result = 0.0f;
     if (source->isMagic())
         result *= 0.15f;
     return result;
 }
 ResourceLocation* Witch::getDefaultLootTable() { return &BuiltInLootTables::WITCH; }
-double Witch::getEyeHeight() { return 1.62f; }
+float Witch::getEyeHeight()
+{
+    float eyeHeight = 1.62f;
+    return eyeHeight;
+}
 unsigned long long Witch::GetType() { return EntityType::WITCH; }

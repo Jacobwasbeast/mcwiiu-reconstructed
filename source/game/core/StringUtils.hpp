@@ -8,6 +8,7 @@
 
 bool BothAreSpaces(wchar_t first, wchar_t second);
 std::vector<std::wstring> stringSplit(const std::wstring& text, wchar_t separator);
+std::vector<std::wstring>& stringSplit(const std::wstring& text, wchar_t separator, std::vector<std::wstring>& result);
 std::wstring toLower(const std::wstring& text);
 bool equalsIgnoreCase(const std::wstring& first, const std::wstring& second);
 std::wstring escapeXML(const std::wstring& text);

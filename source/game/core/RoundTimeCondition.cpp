@@ -23,9 +23,8 @@ unsigned int RoundTimeCondition::GetThreshold(MasterGameMode* gameMode) const
 {
     if (m_option < 0)
     {
-        const MiniGameDef* miniGame = CommonMasterGameMode::GetMiniGame();
-        if (miniGame->GetId() == eMiniGameId_Glide
-            && miniGame->GetHostOption(eCustomGameModeHostOption_TimeTrial) != 0)
+        if (CommonMasterGameMode::GetMiniGame()->GetId() == eMiniGameId_Glide
+            && CommonMasterGameMode::GetMiniGame()->GetHostOption(eCustomGameModeHostOption_TimeTrial) != 0)
         {
             return TimeCondition::GetThreshold(gameMode) << 1;
         }

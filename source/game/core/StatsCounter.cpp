@@ -1,5 +1,7 @@
 #include "game/core/StatsCounter.hpp"
 
+#include "game/core/GenericStats.hpp"
+#include "game/core/LeaderboardManager.hpp"
 #include "game/core/Stat.hpp"
 #include "game/core/Stats.hpp"
 #include "game/item/Item.hpp"
@@ -9,6 +11,7 @@
 #include "platform/wiiu/CProfile.hpp"
 #include "platform/wiiu/CStorage.hpp"
 
+#include <climits>
 #include <cstring>
 
 extern CProfile* gProfile;
@@ -17,8 +20,10 @@ extern CStorage* gStorage;
 boost::unordered_map<Stat*, boost::unordered_map<unsigned int, StatsCounter::LEADERBOARD_FLAG> > StatsCounter::statBoards;
 
 StatsCounter::StatsCounter()
-    : mSavePending(0), mSaveDelay(0), mLeaderboardPending(), mLeaderboardDelay(0)
 {
+    mSavePending = 0;
+    mLeaderboardDelay = 0;
+    mSaveDelay = 0;
 }
 
 void StatsCounter::setupStatBoards()
@@ -207,9 +212,9 @@ unsigned int StatsCounter::isLargeStat(Stat* stat)
         &Stats::walkOneM, &Stats::swimOneM, &Stats::fallOneM, &Stats::climbOneM,
         &Stats::minecartOneM, &Stats::boatOneM, &Stats::pigOneM, &Stats::portalsUsed
     };
-    for (unsigned int i = 0; i < sizeof(largeStats) / sizeof(largeStats[0]); ++i)
+    for (Stat*** largeStat = largeStats; largeStat != largeStats + sizeof(largeStats) / sizeof(largeStats[0]); ++largeStat)
     {
-        if (*largeStats[i] == stat)
+        if (**largeStat == stat)
         {
             return 1;
         }
@@ -217,13 +222,8 @@ unsigned int StatsCounter::isLargeStat(Stat* stat)
     return 0;
 }
 
-unsigned long long StatsCounter::award(Stat* stat, ESubTypes subtype, unsigned int amount, bool fromServer)
+void StatsCounter::award(Stat* stat, ESubTypes subtype, unsigned int amount, bool accumulate)
 {
-    if (stat == NULL)
-    {
-        return 0;
-    }
-
     if (stat->isAchievement())
     {
         subtype = eSubtype0;
@@ -233,24 +233,24 @@ unsigned long long StatsCounter::award(Stat* stat, ESubTypes subtype, unsigned i
     if (statIt == end())
     {
         boost::unordered_map<unsigned int, unsigned int> values;
-        values[0] = 0;
-        values[1] = 0;
-        values[2] = 0;
-        values[3] = 0;
         values[static_cast<unsigned int>(subtype)] = amount;
         (*this)[stat] = values;
     }
-    else if (!fromServer)
+    else if (!accumulate)
     {
-        unsigned int& value = statIt->second[static_cast<unsigned int>(subtype)];
-        value += amount;
-        if (value < amount)
+        statIt->second[static_cast<unsigned int>(subtype)] = amount;
+    }
+    else
+    {
+        statIt->second[static_cast<unsigned int>(subtype)] += amount;
+        gStats->get_timePlayed();
+        if (statIt->second[static_cast<unsigned int>(subtype)] < statIt->second[static_cast<unsigned int>(subtype)] - amount)
         {
-            value = 0xffffffffu;
+            statIt->second[static_cast<unsigned int>(subtype)] = UINT_MAX;
         }
-        if (value > 0xffffu && !isLargeStat(stat))
+        if (statIt->second[static_cast<unsigned int>(subtype)] > USHRT_MAX && !isLargeStat(stat))
         {
-            value = 0xffffu;
+            statIt->second[static_cast<unsigned int>(subtype)] = USHRT_MAX;
         }
     }
 
@@ -259,150 +259,136 @@ unsigned long long StatsCounter::award(Stat* stat, ESubTypes subtype, unsigned i
         statBoards.find(stat);
     if (boardIt != statBoards.end())
     {
-        LEADERBOARD_FLAG flag = boardIt->second[static_cast<unsigned int>(subtype)];
-        mLeaderboardPending[static_cast<unsigned int>(flag)] = true;
-        if (mLeaderboardDelay == 0)
+        boost::unordered_map<unsigned int, LEADERBOARD_FLAG>::iterator flagIt =
+            boardIt->second.find(static_cast<unsigned int>(subtype));
+        if (flagIt != boardIt->second.end())
         {
-            mLeaderboardDelay = 9000;
+            mLeaderboardPending[static_cast<unsigned int>(flagIt->second)] = true;
+            if (mLeaderboardDelay == 0)
+            {
+                mLeaderboardDelay = 9000;
+            }
         }
     }
-    return 0;
 }
 
 int StatsCounter::getTotalValue(Stat* stat)
 {
-    boost::unordered_map<Stat*, boost::unordered_map<unsigned int, unsigned int> >::const_iterator statIt = find(stat);
-    if (statIt == end())
+    boost::unordered_map<Stat*, boost::unordered_map<unsigned int, unsigned int> >::iterator statIt = find(stat);
+    if (statIt != end())
     {
-        return 0;
+        int total = 0;
+        for (unsigned int subtype = 0; subtype < statIt->second.size(); ++subtype)
+        {
+            total += statIt->second[subtype];
+        }
+        return total;
     }
-    int total = 0;
-    boost::unordered_map<unsigned int, unsigned int>::const_iterator it;
-    for (it = statIt->second.begin(); it != statIt->second.end(); ++it)
-    {
-        total += static_cast<int>(it->second);
-    }
-    return total;
+    return 0;
 }
 
-unsigned long long StatsCounter::save(int profile, bool force, unsigned char* data)
+void StatsCounter::save(int profile, bool force, unsigned char* data)
 {
     if (!gProfile->IsFullVersion())
     {
-        return 0;
+        return;
     }
 
-    bool ownBuffer = data == NULL;
-    if (ownBuffer)
+    unsigned char* buffer = data;
+    if (buffer == NULL)
     {
-        data = gStorage->GetGameDefinedProfileData(profile);
+        buffer = gStorage->GetGameDefinedProfileData(profile);
     }
 
-    std::memset(data + 0xcc, 0, 0x6cc);
+    std::memset(buffer + PROFILE_STATS_OFFSET, 0, PROFILE_STATS_SIZE);
+    ProfileStats* profileStats = reinterpret_cast<ProfileStats*>(buffer + PROFILE_STATS_OFFSET);
+    unsigned char* cursor = profileStats->entries;
+    unsigned int woolIndex = 0;
+    unsigned int biomeIndex = 0;
+    unsigned int armourIndex = 0;
 
-    if (Stat::stats != NULL)
+    std::vector<Stat*>::const_iterator it;
+    for (it = Stat::stats->begin(); it != Stat::stats->end(); ++it)
     {
-        unsigned long long woolBits = 0;
-        unsigned int woolIndex = 0;
-        unsigned long long biomeBits = 0;
-        unsigned int biomeIndex = 0;
-        unsigned char armourBits = 0;
-        unsigned int armourIndex = 0;
-        unsigned char* cursor = data + 0xdd;
+        Stat* stat = *it;
+        boost::unordered_map<Stat*, boost::unordered_map<unsigned int, unsigned int> >::iterator statIt = find(stat);
 
-        std::vector<Stat*>::const_iterator it;
-        for (it = Stat::stats->begin(); it != Stat::stats->end(); ++it)
+        if (stat->isAchievement())
         {
-            Stat* stat = *it;
-            boost::unordered_map<Stat*, boost::unordered_map<unsigned int, unsigned int> >::iterator statIt = find(stat);
-
-            if (stat->isAchievement())
+            continue;
+        }
+        else if (stat->isWoolStat())
+        {
+            if (statIt != end())
             {
-                continue;
+                profileStats->woolBits |= static_cast<unsigned long long>(statIt->second[0] & 1) << woolIndex;
             }
-            else if (stat->isWoolStat())
+            ++woolIndex;
+        }
+        else if (stat->isBiomeStat())
+        {
+            if (statIt != end())
+            {
+                profileStats->biomeBits |= static_cast<unsigned long long>(statIt->second[0] & 1) << biomeIndex;
+            }
+            ++biomeIndex;
+        }
+        else if (stat->isArmourStat())
+        {
+            if (statIt != end())
+            {
+                profileStats->armourBits |= static_cast<unsigned char>((statIt->second[0] & 1) << armourIndex);
+            }
+            ++armourIndex;
+        }
+        else
+        {
+            StatsEntry* entry = reinterpret_cast<StatsEntry*>(cursor);
+            if (!isLargeStat(stat))
             {
                 if (statIt != end())
                 {
-                    boost::unordered_map<unsigned int, unsigned int>::const_iterator valueIt = statIt->second.find(0);
-                    if (valueIt != statIt->second.end() && (valueIt->second & 1) != 0)
-                    {
-                        woolBits |= (1ULL << woolIndex);
-                    }
+                    entry->small[0] = static_cast<unsigned short>(statIt->second[0]);
+                    entry->small[1] = static_cast<unsigned short>(statIt->second[1]);
+                    entry->small[2] = static_cast<unsigned short>(statIt->second[2]);
+                    entry->small[3] = static_cast<unsigned short>(statIt->second[3]);
                 }
-                ++woolIndex;
-            }
-            else if (stat->isBiomeStat())
-            {
-                if (statIt != end())
-                {
-                    boost::unordered_map<unsigned int, unsigned int>::const_iterator valueIt = statIt->second.find(0);
-                    if (valueIt != statIt->second.end() && (valueIt->second & 1) != 0)
-                    {
-                        biomeBits |= (1ULL << biomeIndex);
-                    }
-                }
-                ++biomeIndex;
-            }
-            else if (stat->isArmourStat())
-            {
-                if (statIt != end())
-                {
-                    boost::unordered_map<unsigned int, unsigned int>::const_iterator valueIt = statIt->second.find(0);
-                    if (valueIt != statIt->second.end() && (valueIt->second & 1) != 0)
-                    {
-                        armourBits |= static_cast<unsigned char>(1u << armourIndex);
-                    }
-                }
-                ++armourIndex;
+                cursor += sizeof(entry->small);
             }
             else
             {
-                bool large = isLargeStat(stat) != 0;
                 if (statIt != end())
                 {
-                    unsigned int i;
-                    for (i = 0; i < 4; ++i)
-                    {
-                        if (large)
-                        {
-                            unsigned int value = statIt->second[i];
-                            std::memcpy(cursor + i * sizeof(value), &value, sizeof(value));
-                        }
-                        else
-                        {
-                            unsigned short value = static_cast<unsigned short>(statIt->second[i]);
-                            std::memcpy(cursor + i * sizeof(value), &value, sizeof(value));
-                        }
-                    }
+                    entry->large[0] = statIt->second[0];
+                    entry->large[1] = statIt->second[1];
+                    entry->large[2] = statIt->second[2];
+                    entry->large[3] = statIt->second[3];
                 }
-                cursor += large ? 16 : 8;
+                cursor += sizeof(entry->large);
             }
         }
-
-        std::memcpy(data + 0xcc, &woolBits, sizeof(woolBits));
-        std::memcpy(data + 0xd4, &biomeBits, sizeof(biomeBits));
-        data[0xdc] = armourBits;
     }
 
-    if (ownBuffer)
+    if (data == NULL)
     {
         gStorage->WriteToProfile(profile, true, force);
     }
 
-    mSaveDelay = 0x708;
-    return 0;
+    mSaveDelay = SAVE_DELAY;
 }
 
 void StatsCounter::writeStats()
 {
-    if (gProfile != NULL)
-        (void)gProfile->IsFullVersion();
+    gProfile->IsFullVersion();
 }
 
 void StatsCounter::flushLeaderboards()
 {
-    writeStats();
+    if (g_pLeaderboardManager->OpenSession())
+    {
+        writeStats();
+        g_pLeaderboardManager->FlushStats();
+    }
     mLeaderboardPending.clear();
 }
 
@@ -428,8 +414,8 @@ void StatsCounter::tick(int profile)
 
 void StatsCounter::parse(void* data)
 {
-    unsigned char* bytes = static_cast<unsigned char*>(data);
-    unsigned char* cursor = bytes + 0xdd;
+    ProfileStats* profileStats = reinterpret_cast<ProfileStats*>(static_cast<unsigned char*>(data) + PROFILE_STATS_OFFSET);
+    unsigned char* cursor = profileStats->entries;
     unsigned int woolIndex = 0;
     unsigned int biomeIndex = 0;
     unsigned int armourIndex = 0;
@@ -444,12 +430,10 @@ void StatsCounter::parse(void* data)
         }
         else if (stat->isWoolStat())
         {
-            unsigned long long woolBits;
-            std::memcpy(&woolBits, bytes + 0xcc, sizeof(woolBits));
-            if (woolBits != 0)
+            if (profileStats->woolBits != 0)
             {
                 values[0] = 0;
-                values[0] |= static_cast<unsigned int>((woolBits >> woolIndex) & 1);
+                values[0] |= (profileStats->woolBits >> woolIndex) & 1;
                 values[1] = 0;
                 values[2] = 0;
                 values[3] = 0;
@@ -459,12 +443,10 @@ void StatsCounter::parse(void* data)
         }
         else if (stat->isBiomeStat())
         {
-            unsigned long long biomeBits;
-            std::memcpy(&biomeBits, bytes + 0xd4, sizeof(biomeBits));
-            if (biomeBits != 0)
+            if (profileStats->biomeBits != 0)
             {
                 values[0] = 0;
-                values[0] |= static_cast<unsigned int>((biomeBits >> biomeIndex) & 1);
+                values[0] |= (profileStats->biomeBits >> biomeIndex) & 1;
                 values[1] = 0;
                 values[2] = 0;
                 values[3] = 0;
@@ -474,11 +456,10 @@ void StatsCounter::parse(void* data)
         }
         else if (stat->isArmourStat())
         {
-            signed char armourBits = static_cast<signed char>(bytes[0xdc]);
-            if (armourBits != 0)
+            if (static_cast<signed char>(profileStats->armourBits) != 0)
             {
                 values[0] = 0;
-                values[0] |= (armourBits >> armourIndex) & 1;
+                values[0] |= (static_cast<signed char>(profileStats->armourBits) >> armourIndex) & 1;
                 values[1] = 0;
                 values[2] = 0;
                 values[3] = 0;
@@ -486,101 +467,87 @@ void StatsCounter::parse(void* data)
             }
             ++armourIndex;
         }
-        else if (isLargeStat(stat))
-        {
-            unsigned int a, b, c, d;
-            std::memcpy(&a, cursor, 4);
-            std::memcpy(&b, cursor + 4, 4);
-            std::memcpy(&c, cursor + 8, 4);
-            std::memcpy(&d, cursor + 12, 4);
-            if (a != 0 || b != 0 || c != 0 || d != 0)
-            {
-                values[0] = a;
-                values[1] = b;
-                values[2] = c;
-                values[3] = d;
-                insert(std::make_pair(stat, values));
-            }
-            cursor += 16;
-        }
         else
         {
-            unsigned short a, b, c, d;
-            std::memcpy(&a, cursor, 2);
-            std::memcpy(&b, cursor + 2, 2);
-            std::memcpy(&c, cursor + 4, 2);
-            std::memcpy(&d, cursor + 6, 2);
-            if (a != 0 || b != 0 || c != 0 || d != 0)
+            StatsEntry* entry = reinterpret_cast<StatsEntry*>(cursor);
+            if (!isLargeStat(stat))
             {
-                values[0] = a;
-                values[1] = b;
-                values[2] = c;
-                values[3] = d;
-                insert(std::make_pair(stat, values));
+                unsigned short first = entry->small[0];
+                if (first != 0 || entry->small[1] != 0 || entry->small[2] != 0 || entry->small[3] != 0)
+                {
+                    values[0] = first;
+                    values[1] = entry->small[1];
+                    values[2] = entry->small[2];
+                    values[3] = entry->small[3];
+                    insert(std::make_pair(stat, values));
+                }
+                cursor += sizeof(entry->small);
             }
-            cursor += 8;
+            else
+            {
+                if (entry->large[0] != 0 || entry->large[1] != 0 || entry->large[2] != 0 || entry->large[3] != 0)
+                {
+                    values[0] = entry->large[0];
+                    values[1] = entry->large[1];
+                    values[2] = entry->large[2];
+                    values[3] = entry->large[3];
+                    insert(std::make_pair(stat, values));
+                }
+                cursor += sizeof(entry->large);
+            }
         }
     }
 }
 
 void StatsCounter::parseOld(unsigned short, void* data)
 {
-    unsigned char* cursor = static_cast<unsigned char*>(data) + 0xcc;
+    unsigned char* cursor = static_cast<unsigned char*>(data) + PROFILE_STATS_OFFSET;
     boost::unordered_map<unsigned int, unsigned int> values;
     std::vector<Stat*>::const_iterator it;
     for (it = Stat::stats->begin(); it != Stat::stats->end(); ++it)
     {
         Stat* stat = *it;
+        StatsEntry* entry = reinterpret_cast<StatsEntry*>(cursor);
         if (!stat->isAchievement())
         {
-            if (isLargeStat(stat))
+            if (!isLargeStat(stat))
             {
-                unsigned int a, b, c, d;
-                std::memcpy(&a, cursor, 4);
-                std::memcpy(&b, cursor + 4, 4);
-                std::memcpy(&c, cursor + 8, 4);
-                std::memcpy(&d, cursor + 12, 4);
-                if (a != 0 || b != 0 || c != 0 || d != 0)
+                unsigned short first = entry->small[0];
+                if (first != 0 || entry->small[1] != 0 || entry->small[2] != 0 || entry->small[3] != 0)
                 {
-                    values[0] = a;
-                    values[1] = b;
-                    values[2] = c;
-                    values[3] = d;
+                    values[0] = first;
+                    values[1] = entry->small[1];
+                    values[2] = entry->small[2];
+                    values[3] = entry->small[3];
                     insert(std::make_pair(stat, values));
                 }
-                cursor += 16;
+                cursor += sizeof(entry->small);
             }
             else
             {
-                unsigned short a, b, c, d;
-                std::memcpy(&a, cursor, 2);
-                std::memcpy(&b, cursor + 2, 2);
-                std::memcpy(&c, cursor + 4, 2);
-                std::memcpy(&d, cursor + 6, 2);
-                if (a != 0 || b != 0 || c != 0 || d != 0)
+                if (entry->large[0] != 0 || entry->large[1] != 0 || entry->large[2] != 0 || entry->large[3] != 0)
                 {
-                    values[0] = a;
-                    values[1] = b;
-                    values[2] = c;
-                    values[3] = d;
+                    values[0] = entry->large[0];
+                    values[1] = entry->large[1];
+                    values[2] = entry->large[2];
+                    values[3] = entry->large[3];
                     insert(std::make_pair(stat, values));
                 }
-                cursor += 8;
+                cursor += sizeof(entry->large);
             }
         }
         else
         {
-            unsigned short a;
-            std::memcpy(&a, cursor, 2);
-            if (a != 0)
+            unsigned short value = entry->small[0];
+            if (value != 0)
             {
-                values[0] = a;
+                values[0] = value;
                 values[1] = 0;
                 values[2] = 0;
                 values[3] = 0;
                 insert(std::make_pair(stat, values));
             }
-            cursor += 2;
+            cursor += sizeof(entry->small[0]);
         }
     }
 }
@@ -593,6 +560,13 @@ void StatsCounter::clear()
 
 void StatsCounter::saveLeaderboards()
 {
-    writeStats();
-    mLeaderboardPending.clear();
+    if (gProfile->IsFullVersion())
+    {
+        if (g_pLeaderboardManager->OpenSession())
+        {
+            writeStats();
+            g_pLeaderboardManager->CloseSession();
+        }
+        mLeaderboardPending.clear();
+    }
 }

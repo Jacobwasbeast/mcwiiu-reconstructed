@@ -14,9 +14,12 @@
 #include "game/world/generation/Player.hpp"
 
 FoodData::FoodData()
-    : foodLevel(FoodConstants::MaxFood()), saturationLevel(static_cast<float>(FoodConstants::StartSaturation())),
-      exhaustionLevel(0.0f), foodTickTimer(0), lastFoodLevel(FoodConstants::MaxFood())
 {
+    exhaustionLevel = 0.0f;
+    foodTickTimer = 0;
+    foodLevel = FoodConstants::MaxFood();
+    lastFoodLevel = FoodConstants::MaxFood();
+    saturationLevel = FoodConstants::StartSaturation();
 }
 
 void FoodData::eat(int foodLevelValue, float saturationModifier)
@@ -27,10 +30,8 @@ void FoodData::eat(int foodLevelValue, float saturationModifier)
         newFoodLevel = maxFood;
     float newSaturation = saturationLevel + saturationModifier * static_cast<float>(foodLevelValue) * 2.0f;
     const float foodLevelAsFloat = static_cast<float>(newFoodLevel);
-    if (newSaturation > foodLevelAsFloat)
-        newSaturation = foodLevelAsFloat;
     foodLevel = newFoodLevel;
-    saturationLevel = newSaturation;
+    saturationLevel = newSaturation >= foodLevelAsFloat ? foodLevelAsFloat : newSaturation;
 }
 
 void FoodData::eat(FoodItem* foodItem, const not_null_ptr<ItemInstance>& itemInstance)
@@ -40,50 +41,49 @@ void FoodData::eat(FoodItem* foodItem, const not_null_ptr<ItemInstance>& itemIns
 
 void FoodData::addExhaustion(float exhaustion)
 {
-    exhaustionLevel += exhaustion;
-    const float maxExhaustion = static_cast<float>(FoodConstants::MaxSaturation() * 2.0);
-    if (exhaustionLevel >= maxExhaustion)
-        exhaustionLevel = maxExhaustion;
+    float newExhaustion = exhaustionLevel + exhaustion;
+    const float maxExhaustion = FoodConstants::MaxSaturation() * 2.0f;
+    exhaustionLevel = newExhaustion >= maxExhaustion ? maxExhaustion : newExhaustion;
 }
 
 void FoodData::tick(const boost::shared_ptr<Player>& player)
 {
     const Difficulty* difficulty = player->mLevel->getDifficulty();
     lastFoodLevel = foodLevel;
-    const double exhaustionDrop = FoodConstants::ExhaustionDrop();
-    const double one = 1.0;
-    const bool naturalRegeneration = player->mLevel->getGameRules()->getBoolean(GameRules::RULE_NATURAL_REGENERATION);
 
-    if (static_cast<double>(exhaustionLevel) > exhaustionDrop)
+    if (static_cast<double>(exhaustionLevel) > FoodConstants::ExhaustionDrop())
     {
-        exhaustionLevel = static_cast<float>(static_cast<double>(exhaustionLevel) - exhaustionDrop);
+        exhaustionLevel -= FoodConstants::ExhaustionDrop();
         if (saturationLevel <= 0.0f)
         {
             if (difficulty != Difficulty::PEACEFUL)
             {
-                --foodLevel;
-                if (foodLevel < 0)
-                    foodLevel = 0;
+                const int reducedFoodLevel = foodLevel - 1;
+                foodLevel = reducedFoodLevel < 0 ? 0 : reducedFoodLevel;
             }
         }
         else
         {
-            saturationLevel = static_cast<float>(static_cast<double>(saturationLevel) - one);
-            if (saturationLevel < 0.0f)
-                saturationLevel = 0.0f;
+            const float reducedSaturation = saturationLevel - 1.0f;
+            saturationLevel = reducedSaturation < 0.0f ? 0.0f : reducedSaturation;
         }
     }
 
+    const bool naturalRegeneration = player->mLevel->getGameRules()->getBoolean(GameRules::RULE_NATURAL_REGENERATION);
+
     if (player->isAllowedToIgnoreExhaustion() && naturalRegeneration)
     {
-        if (foodLevel > 0 && player->isHurt())
+        if (foodLevel > 0)
         {
-            ++foodTickTimer;
-            if (foodTickTimer >= static_cast<int>(FoodConstants::HealthTickCount()))
+            if (player->isHurt())
             {
-                player->heal(1.0f);
-                foodTickTimer = 0;
-                --foodLevel;
+                ++foodTickTimer;
+                if (foodTickTimer >= static_cast<int>(FoodConstants::HealthTickCount()))
+                {
+                    player->heal(1.0f);
+                    foodTickTimer = 0;
+                    --foodLevel;
+                }
             }
         }
         return;
@@ -95,21 +95,23 @@ void FoodData::tick(const boost::shared_ptr<Player>& player)
         ++foodTickTimer;
         if (foodTickTimer >= static_cast<int>(FoodConstants::HealthTickCountSaturated()))
         {
-            const double healAmount = std::min(FoodConstants::ExhaustionHeal(), static_cast<double>(saturationLevel));
-            player->heal(static_cast<float>(healAmount / FoodConstants::ExhaustionHeal()));
-            addExhaustion(static_cast<float>(healAmount));
+            const float exhaustionHeal = FoodConstants::ExhaustionHeal();
+            const float healAmount = saturationLevel >= exhaustionHeal ? exhaustionHeal : saturationLevel;
+            player->heal(healAmount / FoodConstants::ExhaustionHeal());
+            addExhaustion(healAmount);
             foodTickTimer = 0;
         }
         return;
     }
 
-    if (naturalRegeneration && foodLevel >= static_cast<int>(FoodConstants::HealLevel()) && player->isHurt())
+    if (player->mLevel->getGameRules()->getBoolean(GameRules::RULE_NATURAL_REGENERATION) &&
+        foodLevel >= static_cast<int>(FoodConstants::HealLevel()) && player->isHurt())
     {
         ++foodTickTimer;
         if (foodTickTimer >= static_cast<int>(FoodConstants::HealthTickCount()))
         {
-            player->heal(static_cast<float>(one));
-            addExhaustion(static_cast<float>(FoodConstants::ExhaustionHeal()));
+            player->heal(1.0f);
+            addExhaustion(FoodConstants::ExhaustionHeal());
             foodTickTimer = 0;
         }
         return;
@@ -120,22 +122,26 @@ void FoodData::tick(const boost::shared_ptr<Player>& player)
         ++foodTickTimer;
         if (foodTickTimer >= static_cast<int>(FoodConstants::HealthTickCount()))
         {
-            const float health = player->getHealth();
-            if ((health > 10.0f || difficulty == Difficulty::HARD) &&
-                (health > 1.0f && (difficulty == Difficulty::NORMAL || difficulty == Difficulty::HARD)) &&
-                !Minecraft::InMiniGame(eMiniGameId_Tumble, true))
-                player->hurt(DamageSource::STARVE, 1.0f);
+            if ((player->getHealth() > 10.0f || difficulty == Difficulty::HARD) ||
+                (player->getHealth() > 1.0f && (difficulty == Difficulty::NORMAL || difficulty == Difficulty::HARD)))
+            {
+                if (!Minecraft::InMiniGame(eMiniGameId_Glide, true))
+                    player->hurt(DamageSource::STARVE, 1.0f);
+            }
+            foodTickTimer = 0;
         }
     }
-    foodTickTimer = 0;
+    else
+    {
+        foodTickTimer = 0;
+    }
 }
 
 void FoodData::readAdditionalSaveData(CompoundTag* tag)
 {
-    const std::wstring foodLevelName(L"foodLevel");
-    if (tag->contains(foodLevelName, Tag::TAG_ANY_NUMERIC))
+    if (tag->contains(std::wstring(L"foodLevel"), Tag::TAG_ANY_NUMERIC))
     {
-        foodLevel = tag->getInt(foodLevelName);
+        foodLevel = tag->getInt(std::wstring(L"foodLevel"));
         foodTickTimer = tag->getInt(std::wstring(L"foodTickTimer"));
         saturationLevel = tag->getFloat(std::wstring(L"foodSaturationLevel"));
         exhaustionLevel = tag->getFloat(std::wstring(L"foodExhaustionLevel"));

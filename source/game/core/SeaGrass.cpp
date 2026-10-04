@@ -31,8 +31,13 @@ SeaGrass::SeaGrass()
     : Bush(Material::REPLACEABLE_PLANT)
 {
     DerivedInit();
-    TypedBoxed<int> type(TYPE_SINGLE);
-    registerDefaultState(defaultBlockState()->setBoxedValue(TYPE, &type));
+    const BlockState* state = defaultBlockState();
+    AbstractProperty<int>* property = TYPE;
+    {
+        TypedBoxed<int> type(TYPE_SINGLE);
+        state = state->setBoxedValue(property, &type);
+    }
+    registerDefaultState(state);
     setTicking(true);
 }
 
@@ -43,7 +48,9 @@ bool SeaGrass::isValidBonemealTarget(Level* level, const BlockPos& pos, const Bl
 
 bool SeaGrass::isBonemealSuccess(Level* level, Random* random, const BlockPos& pos, const BlockState* state)
 {
-    return state->getBlock() == this && state->getValue(TYPE) == TYPE_SINGLE;
+    if (state->getBlock() == this && state->getValue(TYPE) == TYPE_SINGLE)
+        return true;
+    return false;
 }
 
 void SeaGrass::performBonemeal(Level* level, Random* random, const BlockPos& pos, const BlockState* state)
@@ -57,10 +64,18 @@ void SeaGrass::performBonemeal(Level* level, Random* random, const BlockPos& pos
         || aboveState->getValue(LiquidBlock::LEVEL) != 0)
         return;
 
-    TypedBoxed<int> top(TYPE_TALL_TOP);
-    const BlockState* topState = defaultBlockState()->setBoxedValue(TYPE, &top);
-    TypedBoxed<int> bottom(TYPE_TALL_BOTTOM);
-    const BlockState* bottomState = defaultBlockState()->setBoxedValue(TYPE, &bottom);
+    const BlockState* topState = defaultBlockState();
+    AbstractProperty<int>* topProperty = TYPE;
+    {
+        TypedBoxed<int> top(TYPE_TALL_TOP);
+        topState = topState->setBoxedValue(topProperty, &top);
+    }
+    const BlockState* bottomState = defaultBlockState();
+    AbstractProperty<int>* bottomProperty = TYPE;
+    {
+        TypedBoxed<int> bottom(TYPE_TALL_BOTTOM);
+        bottomState = bottomState->setBoxedValue(bottomProperty, &bottom);
+    }
     level->setBlock(pos.above(), topState, Block::UPDATE_ALL, false);
     level->setBlock(pos, bottomState, Block::UPDATE_ALL, false);
 }
@@ -68,7 +83,10 @@ void SeaGrass::performBonemeal(Level* level, Random* random, const BlockPos& pos
 void SeaGrass::tick(Level* level, const BlockPos& pos, const BlockState* state, Random* random)
 {
     if (!level->mIsClientSide)
+    {
         checkAlive(level, pos, state);
+        level->getBlock(pos);
+    }
 }
 
 void SeaGrass::registerIcons(IconRegister* iconRegister)
@@ -119,8 +137,10 @@ Item* SeaGrass::getResource(const BlockState* state, Random* random, int lootBon
 
 const BlockState* SeaGrass::getBlockState(int data)
 {
+    const BlockState* state = defaultBlockState();
+    AbstractProperty<int>* property = TYPE;
     TypedBoxed<int> type(data);
-    return defaultBlockState()->setBoxedValue(TYPE, &type);
+    return state->setBoxedValue(property, &type);
 }
 
 int SeaGrass::convertBlockStateToLegacyData(const BlockState* state)
@@ -161,22 +181,28 @@ void SeaGrass::neighborChanged(const BlockState* state, Level* level, const Bloc
 bool SeaGrass::mayPlace(Level* level, const BlockPos& pos, bool clientSide)
 {
     Block* below = level->getBlock(pos.below());
-    if (below == Blocks::magma || below->mIsFence || below == Blocks::soul_sand
-        || !level->isSolidBlockingBlock(pos.below()))
-        return false;
-    if (clientSide)
-        return true;
-    if (!level->isUnderWater(pos, BlockId::SEA_GRASS, 0)
-        || level->getLiquidBlock(pos)->mMaterial != Material::WATER)
-        return false;
-    int waterLevel = level->getLiquidBlockState(pos)->getValue(LiquidBlock::LEVEL);
-    return waterLevel == 0 || waterLevel > 7;
+    if (below != Blocks::magma && !below->mIsFence && below != Blocks::soul_sand
+        && level->isSolidBlockingBlock(pos.below()))
+    {
+        if (clientSide)
+            return true;
+        if (level->isUnderWater(pos, BlockId::SEA_GRASS, 0)
+            && level->getLiquidBlock(pos)->mMaterial == Material::WATER)
+        {
+            int waterLevel = level->getLiquidBlockState(pos)->getValue(LiquidBlock::LEVEL);
+            if (waterLevel == 0)
+                return true;
+            if (waterLevel > 7)
+                return true;
+        }
+    }
+    return false;
 }
 
 bool SeaGrass::canSurvive(Level* level, const BlockPos& pos, const BlockState* state, bool clientSide)
 {
     if (level->getBlock(pos) != this)
-        return mayPlace(level, pos, clientSide);
+        return SeaGrass::mayPlace(level, pos, clientSide);
     if (!level->isUnderWater(pos, BlockId::SEA_GRASS, convertBlockStateToLegacyData(state)))
         return false;
 
@@ -186,24 +212,28 @@ bool SeaGrass::canSurvive(Level* level, const BlockPos& pos, const BlockState* s
         if (!level->isUnderWater(pos, BlockId::SEA_GRASS, convertBlockStateToLegacyData(state)))
             return false;
         const BlockState* belowState = level->getBlockState(pos.below());
-        return belowState->getBlock() == this && belowState->getValue(TYPE) == TYPE_TALL_BOTTOM;
+        if (belowState->getBlock() == this && belowState->getValue(TYPE) == TYPE_TALL_BOTTOM)
+            return true;
+        return false;
     }
     if (type != TYPE_TALL_BOTTOM)
-        return mayPlace(level, pos, clientSide);
+        return SeaGrass::mayPlace(level, pos, clientSide);
 
     const BlockState* aboveState = level->getBlockState(pos.above());
-    return aboveState->getBlock() == this && aboveState->getValue(TYPE) == TYPE_TALL_TOP
-        && level->isSolidBlockingBlock(pos.below());
+    if (aboveState->getBlock() == this && aboveState->getValue(TYPE) == TYPE_TALL_TOP
+        && level->isSolidBlockingBlock(pos.below()))
+        return true;
+    return false;
 }
 
 bool SeaGrass::canSurvive(Level* level, const BlockPos& pos, const BlockState* state)
 {
-    return canSurvive(level, pos, state, false);
+    return SeaGrass::canSurvive(level, pos, state, false);
 }
 
 bool SeaGrass::mayPlace(Level* level, const BlockPos& pos)
 {
-    return mayPlace(level, pos, false);
+    return SeaGrass::mayPlace(level, pos, false);
 }
 
 void SeaGrass::onPlace(Level* level, const BlockPos& pos, const BlockState* state)
@@ -233,8 +263,12 @@ bool SeaGrass::trySpawnSeaGrass(bool simulate, Level* level, Random* random, con
 
     bool spawned = false;
     bool tall = false;
-    TypedBoxed<int> top(TYPE_TALL_TOP);
-    const BlockState* tallTopState = Blocks::sea_grass->defaultBlockState()->setBoxedValue(TYPE, &top);
+    const BlockState* tallTopState = Blocks::sea_grass->defaultBlockState();
+    AbstractProperty<int>* topProperty = TYPE;
+    {
+        TypedBoxed<int> top(TYPE_TALL_TOP);
+        tallTopState = tallTopState->setBoxedValue(topProperty, &top);
+    }
 
     for (int attempt = 16; attempt < 64; ++attempt)
     {
@@ -267,24 +301,25 @@ bool SeaGrass::trySpawnSeaGrass(bool simulate, Level* level, Random* random, con
         if (roll == 0)
         {
             tall = true;
+            spawnState = Blocks::sea_grass->defaultBlockState();
+            AbstractProperty<int>* bottomProperty = TYPE;
             TypedBoxed<int> bottom(TYPE_TALL_BOTTOM);
-            spawnState = Blocks::sea_grass->defaultBlockState()->setBoxedValue(TYPE, &bottom);
+            spawnState = spawnState->setBoxedValue(bottomProperty, &bottom);
         }
         else if (roll == 2)
         {
+            spawnState = Blocks::coral->defaultBlockState();
+            AbstractProperty<int>* variantProperty = Coral::VARIANT;
             TypedBoxed<int> variant(random->nextInt(5));
-            spawnState = Blocks::coral->defaultBlockState()->setBoxedValue(Coral::VARIANT, &variant);
+            spawnState = spawnState->setBoxedValue(variantProperty, &variant);
         }
         else
         {
             spawnState = Blocks::sea_grass->defaultBlockState();
         }
 
-        bool canPlace = false;
-        if (spawnState != NULL && spawnState->getBlock()->mayPlace(level, spawnPos))
-            canPlace = !tall || level->isEmptyWaterBlock(spawnPos.above());
-
-        if (canPlace)
+        if (spawnState != NULL && spawnState->getBlock()->mayPlace(level, spawnPos)
+            && (!tall || level->isEmptyWaterBlock(spawnPos.above())))
         {
             spawned = true;
             if (!simulate)

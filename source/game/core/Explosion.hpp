@@ -10,6 +10,7 @@
 #include <boost/unordered_map.hpp>
 #include <boost/unordered_set.hpp>
 
+#include "game/ui/AbstractContainerMenu.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/block/BlockPos.hpp"
 
@@ -20,29 +21,11 @@ class Player;
 class Vec3;
 
 
-class _ExplosionPlayerKeyHash
-{
-public:
-    std::size_t operator()(const boost::shared_ptr<Player>& player) const
-    {
-        return (std::size_t)player.get();
-    }
-};
-
-class _ExplosionPlayerKeyEq
-{
-public:
-    bool operator()(const boost::shared_ptr<Player>& left, const boost::shared_ptr<Player>& right) const
-    {
-        return left.get() == right.get();
-    }
-};
-
 class Explosion
 {
 public:
     typedef boost::unordered_set<BlockPos, boost::hash<const BlockPos>, std::equal_to<const BlockPos>, std::allocator<BlockPos> > ToBlowSet;
-    typedef boost::unordered_map<boost::shared_ptr<Player>, Vec3*, _ExplosionPlayerKeyHash, _ExplosionPlayerKeyEq, std::allocator<std::pair<const boost::shared_ptr<Player>, Vec3*> > > HitPlayerMap;
+    typedef boost::unordered_map<boost::shared_ptr<Player>, Vec3*, _PlayerKeyHash, _PlayerKeyEq, std::allocator<std::pair<const boost::shared_ptr<Player>, Vec3*> > > HitPlayerMap;
 
     Explosion(Level* level, boost::shared_ptr<Entity> source, double x, double y, double z, float radius, float damageRadius);
     Explosion(Level* level, boost::shared_ptr<Entity> source, double x, double y, double z, float radius, std::vector<BlockPos>* toBlow, float damageRadius);

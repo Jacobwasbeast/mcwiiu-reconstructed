@@ -2,11 +2,13 @@
 
 #include <cstdarg>
 #include <cstdio>
+#include <cstring>
 #include <cwchar>
 
 std::wstring formatwstr(const wchar_t* format, ...)
 {
     wchar_t buffer[256];
+    std::memset(buffer, 0, sizeof(buffer));
     va_list arguments;
     va_start(arguments, format);
     std::vswprintf(buffer, 256, format, arguments);
@@ -17,6 +19,7 @@ std::wstring formatwstr(const wchar_t* format, ...)
 std::string formatstr(const char* format, ...)
 {
     char buffer[256];
+    std::memset(buffer, 0, sizeof(buffer));
     va_list arguments;
     va_start(arguments, format);
     std::vsprintf(buffer, format, arguments);

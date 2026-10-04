@@ -9,7 +9,7 @@ class UntypedStatTracker
 {
 public:
     UntypedStatTracker(const StatsUID& statsUID);
-    virtual ~UntypedStatTracker();
+    virtual ~UntypedStatTracker() {}
     virtual void update(const DamageEvent* damageEvent) = 0;
 
 protected:

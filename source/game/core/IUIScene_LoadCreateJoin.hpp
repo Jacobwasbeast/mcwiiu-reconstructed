@@ -47,7 +47,7 @@ public:
     void handleTimer(int);
     static int DeleteSaveDialogReturned(void*, int, C4JStorage::EMessageResult);
     static int SaveOptionsDialogReturned(void*, int, C4JStorage::EMessageResult);
-    uint32_t handleKeyDown(int, int, bool);
+    bool handleKeyDown(int, int, bool);
     void LoadLevelGen(LevelGenerationOptions*);
     void LoadSaveFromDisk(File*, ESavePlatform);
     void LoadGameMode(EMiniGameId);
@@ -97,8 +97,8 @@ public:
     virtual void ShowJoinListTimer(bool show) = 0;
     virtual void ShowNoGamesLabel(bool show) = 0;
     virtual void DeleteSaveFile(int index) = 0;
-    virtual void handleSaveOptionsDialogReturned(int userIndex, C4JStorage::EMessageResult result) = 0;
-    virtual void handleTexturePackDialogReturned(int userIndex, C4JStorage::EMessageResult result) = 0;
+    virtual int handleSaveOptionsDialogReturned(int userIndex, C4JStorage::EMessageResult result) = 0;
+    virtual int handleTexturePackDialogReturned(int userIndex, C4JStorage::EMessageResult result) = 0;
     virtual uint32_t GetCustomGameModeID();
 protected:
     std::vector<FriendSessionInfo*>* m_friendSessions;

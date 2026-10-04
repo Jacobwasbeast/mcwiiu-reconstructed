@@ -1,6 +1,7 @@
 #include "game/core/BodyControl.hpp"
 #include "game/core/EntityType.hpp"
 
+#include <math.h>
 #include <vector>
 
 #include <boost/weak_ptr.hpp>
@@ -58,13 +59,7 @@ void BodyControl::clientTick()
             }
 
             float yHeadRot = mMob->mYHeadRot;
-            float headDifference = yHeadRot - mLastStableYHeadRot;
-            if (headDifference < 0.0f)
-            {
-                headDifference = -headDifference;
-            }
-
-            if (headDifference > 15.0f)
+            if (fabsf(yHeadRot - mLastStableYHeadRot) > 15.0f)
             {
                 mLastStableYHeadRot = yHeadRot;
                 mHeadStableTime = 0;

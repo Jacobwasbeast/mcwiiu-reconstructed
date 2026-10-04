@@ -515,8 +515,7 @@ bool Boat::findBlockHeightOnPlane(const AABB* box, float& height, BlockPos& pos)
             if (state->getMaterial() != Material::WATER)
                 state = mLevel->getExtraBlockState(pos);
             if (state->getMaterial() == Material::WATER)
-                height = static_cast<float>(std::max(static_cast<double>(height),
-                                                     LiquidBlock::getLiquidHeight(state, mLevel, pos)));
+                height = std::max(height, LiquidBlock::getLiquidHeight(state, mLevel, pos));
 
             if (height >= 1.0f)
                 return false;

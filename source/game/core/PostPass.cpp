@@ -46,23 +46,21 @@ Effect* PostPass::getEffect()
 
 void PostPass::process(float time)
 {
-    const int outputWidth = mOutput->renderWidth;
-    const int outputHeight = mOutput->renderHeight;
-    const int inputWidth = mInput->renderWidth;
-    const int inputHeight = mInput->renderHeight;
+    const float outputWidth = static_cast<float>(mOutput->renderWidth);
+    const float outputHeight = static_cast<float>(mOutput->renderHeight);
 
     prepareState();
-    GlStateManager::viewport(0, 0, outputWidth, outputHeight);
+    GlStateManager::viewport(0, 0, static_cast<int>(outputWidth), static_cast<int>(outputHeight));
     mEffect->setSampler(L"DiffuseSampler", mInput);
-    for (unsigned int i = 0; i < mAuxAssetNames.size(); ++i)
+    for (int i = 0; i < mAuxAssets.size(); ++i)
     {
         mEffect->setSampler(mAuxAssetNames.at(i), mAuxAssets.at(i));
         Uniform* auxSize = mEffect->safeGetUniform(L"AuxSize" + _toString(i));
         auxSize->set(static_cast<float>(mAuxWidths.at(i)), static_cast<float>(mAuxHeights.at(i)));
     }
     mEffect->safeGetUniform(L"ProjMat")->set(mOrthoMatrix);
-    mEffect->safeGetUniform(L"InSize")->set(static_cast<float>(inputWidth), static_cast<float>(inputHeight));
-    mEffect->safeGetUniform(L"OutSize")->set(static_cast<float>(outputWidth), static_cast<float>(outputHeight));
+    mEffect->safeGetUniform(L"InSize")->set(static_cast<float>(mInput->renderWidth), static_cast<float>(mInput->renderHeight));
+    mEffect->safeGetUniform(L"OutSize")->set(outputWidth, outputHeight);
     mEffect->safeGetUniform(L"Time")->set(time);
     Minecraft* minecraft = Minecraft::GetInstance();
     mEffect->safeGetUniform(L"ScreenSize")->set(static_cast<float>(minecraft->mWidth), static_cast<float>(minecraft->mHeight));
@@ -72,12 +70,14 @@ void PostPass::process(float time)
     BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
     builder->begin();
     builder->color(255, 255, 255, 255);
-    builder->vertex(0.0f, static_cast<float>(outputHeight), 500.0f);
-    builder->vertex(static_cast<float>(outputWidth), static_cast<float>(outputHeight), 500.0f);
-    builder->vertex(static_cast<float>(outputWidth), 0.0f, 500.0f);
+    builder->vertex(0.0f, outputHeight, 500.0f);
+    builder->vertex(outputWidth, outputHeight, 500.0f);
+    builder->vertex(outputWidth, 0.0f, 500.0f);
     builder->vertex(0.0f, 0.0f, 500.0f);
     builder->end();
     GlStateManager::depthMask(true);
     GlStateManager::colorMask(true, true, true, true);
     mEffect->clear();
+    for (std::vector<RenderTarget*>::iterator it = mAuxAssets.begin(); it != mAuxAssets.end(); ++it)
+        (*it)->unbindRead();
 }

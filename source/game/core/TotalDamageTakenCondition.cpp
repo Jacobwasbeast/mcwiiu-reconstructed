@@ -11,7 +11,7 @@ TotalDamageTakenCondition::~TotalDamageTakenCondition()
 {
 }
 
-double TotalDamageTakenCondition::getScore(const GameMedal* medal, PlayerStats* playerStats) const
+float TotalDamageTakenCondition::getScore(const GameMedal* medal, PlayerStats* playerStats) const
 {
     return playerStats->getAllDamageTaken();
 }

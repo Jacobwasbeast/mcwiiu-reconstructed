@@ -10,9 +10,9 @@ Rotation* Rotation::COUNTERCLOCKWISE_90 = new Rotation(L"rotate_270", Rotation::
 Rotation* Rotation::VALUES[4] = { NONE, CLOCKWISE_90, CLOCKWISE_180, COUNTERCLOCKWISE_90 };
 
 Rotation::Rotation(const std::wstring& name, eTYPE type)
+    : name(name)
+    , type(type)
 {
-    this->name = name;
-    this->type = type;
 }
 
 Rotation* Rotation::byType(eTYPE type)
@@ -180,6 +180,6 @@ Vec3i Rotation::fjRotate(const Vec3i& pos) const
         return Vec3i(pos.z, pos.y, -pos.x);
 
     default:
-        return Vec3i(pos.x, pos.y, pos.z);
+        return pos;
     }
 }

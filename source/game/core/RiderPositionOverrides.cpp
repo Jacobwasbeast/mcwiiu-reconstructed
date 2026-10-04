@@ -29,32 +29,14 @@ void RiderPositionOverrides::ReadOverrides(DataInputStream* stream)
     std::wstring entityName = stream->readUTF();
     int count = stream->readInt();
 
-    for (int i = 0; i < count / 2; ++i)
+    for (int i = 0; i < count; ++i)
     {
         PositionOverrideStruct overridePosition;
-        overridePosition.isTamed = stream->readByte();
-        overridePosition.isSaddled = stream->readByte();
-        overridePosition.x = stream->readDouble();
-        overridePosition.y = stream->readDouble();
-        overridePosition.z = stream->readDouble();
-        gRiderPositionOverrides[EntityIO::byString(entityName)].push_back(overridePosition);
-
-        overridePosition.isTamed = stream->readByte();
-        overridePosition.isSaddled = stream->readByte();
-        overridePosition.x = stream->readDouble();
-        overridePosition.y = stream->readDouble();
-        overridePosition.z = stream->readDouble();
-        gRiderPositionOverrides[EntityIO::byString(entityName)].push_back(overridePosition);
-    }
-
-    if ((count & 1) != 0)
-    {
-        PositionOverrideStruct overridePosition;
-        overridePosition.isTamed = stream->readByte();
-        overridePosition.isSaddled = stream->readByte();
-        overridePosition.x = stream->readDouble();
-        overridePosition.y = stream->readDouble();
-        overridePosition.z = stream->readDouble();
+        overridePosition.isTamed = stream->readBoolean();
+        overridePosition.isSaddled = stream->readBoolean();
+        overridePosition.x = stream->readFloat();
+        overridePosition.y = stream->readFloat();
+        overridePosition.z = stream->readFloat();
         gRiderPositionOverrides[EntityIO::byString(entityName)].push_back(overridePosition);
     }
 }
@@ -87,7 +69,7 @@ bool RiderPositionOverrides::OverridePosition(
 
     for (unsigned int i = 0; i < gRiderPositionOverrides.at(vehicle->GetType()).size(); ++i)
     {
-        PositionOverrideStruct& overridePosition =
+        PositionOverrideStruct overridePosition =
             gRiderPositionOverrides.at(vehicle->GetType()).at(i);
         if (overridePosition.isTamed != isTamed || overridePosition.isSaddled != isSaddled)
         {
@@ -105,8 +87,8 @@ bool RiderPositionOverrides::OverridePosition(
             vehicle->mBoundingBox->mMinY,
             vehicle->mZ);
 
-        double cosine;
-        double sine;
+        float cosine;
+        float sine;
         if ((vehicle->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
         {
             float bodyRotation =

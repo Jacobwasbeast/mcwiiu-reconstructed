@@ -3,6 +3,7 @@
 #include <deque>
 
 #include "game/core/System.hpp"
+#include "game/server/ServerLevel.hpp"
 #include "game/world/chunk/ChunkPos.hpp"
 #include "game/world/chunk/ChunkSource.hpp"
 #include "platform/wiiu/C4JThreadImpl.hpp"
@@ -23,9 +24,9 @@ GenerationWriteTask::~GenerationWriteTask()
 
 void GenerationWriteTask::doWork(long long endTime)
 {
-    if (mLevel->getChunkSource() != NULL)
+    if (mLevel->mChunkSource != NULL)
     {
-        while (!mChunks->empty() && System::processTimeInMilliSecs() < endTime)
+        while (!mChunks->empty() && static_cast<long long>(System::processTimeInMilliSecs()) < endTime)
         {
             ChunkPos chunk = mChunks->front();
             mChunks->pop_front();
@@ -49,7 +50,7 @@ void GenerationWriteTask::doWork(long long endTime)
 
             if (!mLevel->mIsClientSide)
             {
-                if (mLevel->getChunkSource()->getChunk(chunk.x, chunk.z) == NULL)
+                if (!static_cast<ServerLevel*>(mLevel)->getChunkSource()->hasChunk(chunk.x, chunk.z))
                 {
                     Sleep(1);
                     mChunks->push_back(chunk);

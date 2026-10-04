@@ -15,8 +15,8 @@ ShulkerBoxColoring::~ShulkerBoxColoring()
 
 bool ShulkerBoxColoring::matches(boost::shared_ptr<CraftingContainer> craftingContainer, Level* level)
 {
-    unsigned int shulkerBoxCount = 0;
-    unsigned int dyeCount = 0;
+    int shulkerBoxCount = 0;
+    int dyeCount = 0;
     unsigned int slot;
 
     for (slot = 0; slot < craftingContainer->getContainerSize(); ++slot)

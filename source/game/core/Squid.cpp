@@ -31,7 +31,7 @@ Squid::Squid(Level* level) : WaterAnimal(level)
     Mob::fjDerivedCtorCalls();
     _init();
     setSize(0.8f, 0.8f);
-    mRandom->setSeed((long long)getId());
+    mRandom->setSeed((long long)(getId() + 1));
     mTentacleSpeed = 1.0f / (mRandom->nextFloat() + 1.0f) * 0.2f;
 }
 
@@ -74,7 +74,7 @@ void Squid::registerAttributes()
     getAttribute(SharedMonsterAttributes::MAX_HEALTH)->setBaseValue(10.0);
 }
 
-double Squid::getEyeHeight()
+float Squid::getEyeHeight()
 {
     return static_cast<double>(mBbHeight * 0.5f);
 }
@@ -120,10 +120,10 @@ void Squid::aiStep()
     mZBodyRotO = mZBodyRot;
     mOldTentacleMovement = mTentacleMovement;
     mOldTentacleAngle = mTentacleAngle;
-    float tentacleMovement = mTentacleMovement + mTentacleSpeed;
-    if (tentacleMovement > 6.2831855f)
+    mTentacleMovement += mTentacleSpeed;
+    if (mTentacleMovement > 6.2831855f)
     {
-        mTentacleMovement = tentacleMovement - 6.2831855f;
+        mTentacleMovement -= 6.2831855f;
         if (!mLevel->mIsClientSide)
         {
             if (mRandom->nextInt(10) == 0)
@@ -133,10 +133,6 @@ void Squid::aiStep()
             mLevel->broadcastEntityEvent(shared_from_this(), EntityEvent::SQUID_ANIM_SYNCH, 0);
         }
     }
-    else
-    {
-        mTentacleMovement = tentacleMovement;
-    }
 
     if (!isInWaterOrBubble())
     {
@@ -145,16 +141,15 @@ void Squid::aiStep()
         mZd = 0.0;
         if (hasEffect(MobEffects::LEVITATION))
         {
-            mYd = (mYd + (0.05 * (double)(getEffect(MobEffects::LEVITATION)->getAmplifier() + 1) - mYd)) * 0.98;
+            mYd = (mYd + (0.05 * (double)(getEffect(MobEffects::LEVITATION)->getAmplifier() + 1) - mYd)) * 0.98f;
         }
         else
         {
-            double yd = mYd;
             if (!isNoGravity())
             {
-                yd -= 0.08;
+                mYd -= 0.08;
             }
-            mYd = yd * 0.98;
+            mYd *= 0.98f;
         }
         mXBodyRot += (-90.0f - mXBodyRot) * 0.02f;
     }
@@ -210,34 +205,41 @@ Vec3* Squid::randomInkDir()
     Random* random = getRandom();
     Vec3* backwards = getViewVector(0.0f)->multiply(-0.25, -0.25, -0.25);
     float xSpread = random->nextFloat() * mBbWidth;
-    float x = (float)backwards->x + xSpread + xSpread - mBbWidth;
-    float y = (float)(random->nextFloat() * (double)mBbHeight + ((float)backwards->y + 0.5f));
+    float x = (float)backwards->x + (xSpread + xSpread) - mBbWidth;
+    float yBase = (float)backwards->y + 0.5f;
+    double y = random->nextFloat() * (double)mBbHeight + yBase;
     float zSpread = random->nextFloat() * mBbWidth;
-    float z = (float)backwards->z + zSpread + zSpread - mBbWidth;
+    float z = (float)backwards->z + (zSpread + zSpread) - mBbWidth;
     return Vec3::newTemp(x, y, z)->normalize();
 }
 
 void Squid::spawnInkParticles()
 {
-    unsigned int count = isBaby() ? 8 : 15;
-    int inkValue = isBaby() ? 300 : 500;
-    for (unsigned int i = 0; i < count; ++i)
+    int inkValue = 500;
+    int count = 15;
+    if (isBaby())
     {
-        Vec3* direction = randomInkDir();
-        direction->multiply(0.1, 0.1, 0.1);
-        arrayWithLength<int> inkData(1, false);
-        inkData.data[0] = inkValue;
+        inkValue = 300;
+        count = 8;
+    }
+    for (int i = 0; i < count; ++i)
+    {
+        Vec3* direction = randomInkDir()->multiply(0.1, 0.1, 0.1);
+        int inkValues[1];
+        inkValues[0] = inkValue;
+        arrayWithLength<int> inkData(inkValues, 1);
         mLevel->addParticle(PARTICLE_INK, mX, mY, mZ, direction->x, direction->y, direction->z, inkData);
     }
 
     for (int i = 0; i < 5; ++i)
     {
         Vec3* direction = randomInkDir();
-        arrayWithLength<int> bubbleData(4, false);
-        bubbleData.data[0] = 0;
-        bubbleData.data[1] = 1;
-        bubbleData.data[2] = 244;
-        bubbleData.data[3] = 1;
+        int bubbleValues[4];
+        bubbleValues[0] = 0;
+        bubbleValues[1] = 1;
+        bubbleValues[2] = 244;
+        bubbleValues[3] = 1;
+        arrayWithLength<int> bubbleData(bubbleValues, 4);
         mLevel->addParticle(PARTICLE_BUBBLE, mX, mY, mZ, direction->x, direction->y, direction->z, bubbleData);
     }
 }

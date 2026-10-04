@@ -106,12 +106,12 @@ unsigned char MapDecoration::getImg() const
 
 int MapDecoration::getX() const
 {
-    return this->x;
+    return (char)this->x;
 }
 
 int MapDecoration::getY() const
 {
-    return this->y;
+    return (char)this->y;
 }
 
 int MapDecoration::getRot() const

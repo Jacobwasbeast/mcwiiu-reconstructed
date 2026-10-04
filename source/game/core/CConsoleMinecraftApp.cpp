@@ -22,12 +22,10 @@
 #endif
 
 extern "C" void OSReport(const char*, ...);
+extern "C" void ProcUIShutdown();
 
 extern void altMain();
 struct _OVERLAPPED;
-unsigned char g_fatalLoadErrorRequested = 0;
-unsigned char g_fatalLoadErrorReady = 0;
-unsigned char g_fatalLoadErrorActive = 0;
 extern int CreateFileA(const char*, unsigned int, unsigned int, void*, unsigned int, unsigned int, int);
 extern unsigned int ReadFile(int, void*, unsigned int, unsigned int*, _OVERLAPPED*);
 extern unsigned int GetFileSize(int, unsigned int*);
@@ -37,8 +35,8 @@ extern CStorage* gStorage;
 static unsigned char s_requestBackground = 0;
 static unsigned char s_signInRequested = 0;
 
-unsigned char s_altMainOKToRun = 0;
 unsigned char s_altMainPending = 0;
+unsigned char s_altMainOKToRun = 0;
 unsigned char s_altMainExit = 0;
 
 void setAltMainOKToRun()
@@ -59,33 +57,41 @@ void RegisterAwardsWithProfileManager()
 
     gProfile->RichPresenceInit(-1, -1);
     gProfile->SetRichPresenceGetStringCallback(GetRichPresenceStringFromId);
-    gProfile->RichPresenceRegisterPresenceString(0, 0x0d21c173);
+    gProfile->RichPresenceRegisterContext(0, 0x0d21c173);
 
-    const unsigned int contextStrings[] = {
-        0xd371d4e, 0xb0e2d942, 0xeb1a4a80, 0x7703ee79, 0x32d9dd56, 0x28b67b1f
-    };
-    for (int context = 0; context < 6; ++context)
-        gProfile->RichPresenceRegisterContext(context, contextStrings[context]);
-
-    const unsigned int activityStrings[] = {
-        0x2292bf7f, 0x01e201d3, 0x05c4c95e, 0xb231c7f5, 0xc5036f69, 0x074e6d4f,
-        0x711f8b99, 0x3a2982d5, 0xa6dd54da, 0xbe2f93d1, 0x559d1b96, 0x123e6b5f,
-        0x59c6e2b1, 0xddd337be
-    };
-    for (int activity = 0; activity < 14; ++activity)
-        gProfile->RichPresenceRegisterContextString(0, activity, activityStrings[activity]);
+    gProfile->RichPresenceRegisterPresenceString(0, 0x0d371d4e);
+    gProfile->RichPresenceRegisterPresenceString(1, 0xb0e2d942);
+    gProfile->RichPresenceRegisterPresenceString(2, 0xeb1a4a80);
+    gProfile->RichPresenceRegisterPresenceString(3, 0x7703ee79);
+    gProfile->RichPresenceRegisterPresenceString(4, 0x32d9dd56);
+    gProfile->RichPresenceRegisterPresenceString(5, 0x28b67b1f);
+    gProfile->RichPresenceRegisterContextString(0, 0, 0x2292bf7f);
+    gProfile->RichPresenceRegisterContextString(0, 1, 0x01e201d3);
+    gProfile->RichPresenceRegisterContextString(0, 2, 0x05c4c95e);
+    gProfile->RichPresenceRegisterContextString(0, 3, 0xb231c7f5);
+    gProfile->RichPresenceRegisterContextString(0, 4, 0xc5036f69);
+    gProfile->RichPresenceRegisterContextString(0, 5, 0x074e6d4f);
+    gProfile->RichPresenceRegisterContextString(0, 6, 0x711f8b99);
+    gProfile->RichPresenceRegisterContextString(0, 7, 0x3a2982d5);
+    gProfile->RichPresenceRegisterContextString(0, 8, 0xa6dd54da);
+    gProfile->RichPresenceRegisterContextString(0, 9, 0xbe2f93d1);
+    gProfile->RichPresenceRegisterContextString(0, 10, 0x559d1b96);
+    gProfile->RichPresenceRegisterContextString(0, 11, 0x123e6b5f);
+    gProfile->RichPresenceRegisterContextString(0, 12, 0x59c6e2b1);
+    gProfile->RichPresenceRegisterContextString(0, 13, 0xddd337be);
 }
 
 void ShutdownAndExit()
 {
+    gRenderer->WiiUWaitDrawDone();
     ShutdownManager::MainThreadHandleShutdown();
-    g_pApp->ExitGame();
+    ProcUIShutdown();
     _Exit(0);
 }
 
 CConsoleMinecraftApp::CConsoleMinecraftApp() : CMinecraftApp()
 {
-    memset(m_productCode, 0, 4);
+    memset(m_productCode, 0, sizeof(m_productCode) + sizeof(m_productSKU));
     m_noSpaceForSaveQuota = false;
     m_drcCheckPlayerCountEnabled = true;
     m_signInResult = 0;
@@ -118,18 +124,19 @@ void CConsoleMinecraftApp::FatalLoadError(const wchar_t* message, ...)
     }
 #endif
     gRenderer->InitialiseContext();
-    g_pInput->RequestErrorViewer(1, GetLastFileErrorCodeForViewer(), NULL, NULL);
+    unsigned int errorCode = GetLastFileErrorCodeForViewer();
+    g_pInput->RequestErrorViewer(1, errorCode, NULL, NULL);
     altMain();
     for (;;)
     {
-        if (g_fatalLoadErrorRequested != 0)
-            g_fatalLoadErrorReady = 1;
+        if (s_altMainPending != 0)
+            s_altMainOKToRun = 1;
         Sleep(10);
-        if (g_fatalLoadErrorActive != 0 && C4JThread::isMainThread())
+        if (s_altMainExit != 0 && C4JThread::isMainThread())
             ShutdownAndExit();
     }
 }
-void CConsoleMinecraftApp::InitialiseDLCInfo() { m_dlcInfo = new cNintendoDLCInfo(); }
+void CConsoleMinecraftApp::InitialiseDLCInfo() { m_dlcInfo = new cNintendoDLCInfo; }
 uint32_t CConsoleMinecraftApp::ReadProductCodes()
 {
     unsigned int bytesRead = 0;
@@ -138,7 +145,7 @@ uint32_t CConsoleMinecraftApp::ReadProductCodes()
         return 0;
 
     unsigned int fileSize = 0;
-    if (GetFileSize(handle, &fileSize) != 0xffffffffU)
+    if (GetFileSize(handle, &fileSize) != 0)
     {
         if (ReadFile(handle, m_productCode, 9, &bytesRead, 0) == 0)
             return 0;
@@ -191,7 +198,7 @@ uint32_t CConsoleMinecraftApp::GetProductSKU() { return (uint32_t)m_productSKU; 
 void CConsoleMinecraftApp::CommerceInit()
 {
     m_commerceInitialized = 0;
-    m_commerce = new cCommerceNintendoWiiU();
+    m_commerce = new cCommerceNintendoWiiU;
     m_commerceResult = 0;
     m_commerceProduct = 0;
     m_commerceCategory = 0;
@@ -218,22 +225,26 @@ int CConsoleMinecraftApp::Callback_SaveGameIncompleteMessageBoxReturned(void* co
                                                                          C4JStorage::EMessageResult result)
 {
     CMinecraftApp* app = static_cast<CMinecraftApp*>(context);
-    if (result < C4JStorage::EMessageResult_Cancelled)
+    if (static_cast<unsigned int>(result) < C4JStorage::EMessageResult_Cancelled)
         return 0;
-    if (result == C4JStorage::EMessageResult_Accept)
+    if (result != C4JStorage::EMessageResult_Cancelled)
     {
-        app->LeaveSaveNotificationSection();
-        gStorage->ContinueIncompleteOperation();
+        if (static_cast<unsigned int>(result) < C4JStorage::EMessageResult_Decline)
+        {
+            app->LeaveSaveNotificationSection();
+            gStorage->ContinueIncompleteOperation();
+            return 0;
+        }
+        if (result != C4JStorage::EMessageResult_Decline)
+        {
+            if (result != C4JStorage::EMessageResult_ThirdOption)
+                return 0;
+            gConsoleUIController.NavigateToScene(playerId, EUIScene_InGameSaveManagementMenu, NULL, EUILayer_Alert, EUIGroup_Fullscreen);
+            return 0;
+        }
     }
-    else if (result == C4JStorage::EMessageResult_Cancelled || result == C4JStorage::EMessageResult_Decline)
-    {
-        app->LeaveSaveNotificationSection();
-        gStorage->CancelIncompleteOperation();
-    }
-    else if (result == C4JStorage::EMessageResult_ThirdOption)
-    {
-        gConsoleUIController.NavigateToScene(playerId, EUIScene_InGameSaveManagementMenu, NULL, EUILayer_Alert, EUIGroup_Fullscreen);
-    }
+    app->LeaveSaveNotificationSection();
+    gStorage->CancelIncompleteOperation();
     return 0;
 }
 void CConsoleMinecraftApp::Callback_SaveGameIncomplete(void* context, C4JStorage::ESaveIncompleteType type)
@@ -264,7 +275,7 @@ void CConsoleMinecraftApp::SetRichPresenceContext(int context, int value)
 }
 uint8_t CConsoleMinecraftApp::HasNoSpaceForSaveQuota() { return m_noSpaceForSaveQuota; }
 void CConsoleMinecraftApp::SetDRCCheckPlayerCountEnabled(bool value) { m_drcCheckPlayerCountEnabled = value; }
-uint8_t CConsoleMinecraftApp::getIgnoreMainMenuInputDuringInvite() { return m_ignoreMainMenuInputDuringInvite; }
+bool CConsoleMinecraftApp::getIgnoreMainMenuInputDuringInvite() { return m_ignoreMainMenuInputDuringInvite; }
 void CConsoleMinecraftApp::ExitGame()
 {
     SYSLaunchMenu();

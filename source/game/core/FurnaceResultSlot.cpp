@@ -14,10 +14,10 @@
 FurnaceResultSlot::FurnaceResultSlot(boost::shared_ptr<Player> player,
                                      boost::shared_ptr<Container> container,
                                      int index, int x, int y)
-    : Slot(container, index, x, y),
-      mPlayer(player),
-      mRemoveCount(0)
+    : Slot(container, index, x, y)
 {
+    mPlayer = player;
+    mRemoveCount = 0;
 }
 
 bool FurnaceResultSlot::mayPlace(not_null_ptr<ItemInstance> item)
@@ -44,7 +44,8 @@ not_null_ptr<ItemInstance> FurnaceResultSlot::onTake(boost::shared_ptr<Player> p
                                                      not_null_ptr<ItemInstance> item)
 {
     checkTakeAchievements(item);
-    return Slot::onTake(player, item);
+    Slot::onTake(player, item);
+    return item;
 }
 
 bool FurnaceResultSlot::mayCombine(not_null_ptr<ItemInstance> item)
@@ -65,8 +66,8 @@ void FurnaceResultSlot::checkTakeAchievements(not_null_ptr<ItemInstance> item)
     if (!mPlayer->mLevel->mIsClientSide)
     {
         int count = mRemoveCount;
-        double value = FurnaceRecipes::getInstance()->getRecipeValue(item);
-        if (value != 0.0)
+        float value = FurnaceRecipes::getInstance()->getRecipeValue(item);
+        if (value != 0.0f)
         {
             if (value < 1.0f)
             {

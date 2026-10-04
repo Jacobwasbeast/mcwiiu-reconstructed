@@ -2,6 +2,7 @@
 #include "game/entity/mob/EntityEvent.hpp"
 #include "game/core/StringIds.hpp"
 #include "game/core/EntityType.hpp"
+#include "game/core/Minecart.hpp"
 
 #include <cmath>
 
@@ -17,6 +18,7 @@
 #include "game/data/ListTag.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/Mob.hpp"
+#include "game/item/Inventory.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/util/Vec3.hpp"
 #include "game/core/HitResult.hpp"
@@ -37,6 +39,7 @@
 #include "game/entity/mob/EntityDataSerializers.hpp"
 #include "game/entity/mob/SynchedEntityData.hpp"
 #include "game/world/block/Block.hpp"
+#include "game/core/Abilities.hpp"
 #include "game/world/generation/Player.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 
@@ -146,6 +149,8 @@ static ArmorStand::Pose POSE_HERO(Vec3::newPermanent(-4.0, 67.0, 0.0),
                                   Vec3::newPermanent(4.0, 63.0, 8.0),
                                   Vec3::newPermanent(0.0, -75.0, -8.0),
                                   Vec3::newPermanent(0.0, 0.0, 0.0));
+
+const ArmorStand::RidableMinecartEntitySelector* ArmorStand::IS_RIDEABLE_MINECART = new ArmorStand::RidableMinecartEntitySelector();
 
 static ArmorStand::Pose* POSES[13] = {
     &POSE_DEFAULT, &POSE_NONE, &POSE_SOLEMN, &POSE_ATHENA, &POSE_BRANDISH, &POSE_HONOR, &POSE_ENTERTAIN,
@@ -277,21 +282,21 @@ bool ArmorStand::setSlot(int slot, const not_null_ptr<ItemInstance>& item)
     {
         equipmentSlot = EquipmentSlot::OFFHAND;
     }
-    else if (slot == EquipmentSlot::FEET->getIndex() + 100)
+    else if (slot == EquipmentSlot::HEAD->getIndex() + 100)
     {
-        equipmentSlot = EquipmentSlot::FEET;
-    }
-    else if (slot == EquipmentSlot::LEGS->getIndex() + 100)
-    {
-        equipmentSlot = EquipmentSlot::LEGS;
+        equipmentSlot = EquipmentSlot::HEAD;
     }
     else if (slot == EquipmentSlot::CHEST->getIndex() + 100)
     {
         equipmentSlot = EquipmentSlot::CHEST;
     }
-    else if (slot == EquipmentSlot::HEAD->getIndex() + 100)
+    else if (slot == EquipmentSlot::LEGS->getIndex() + 100)
     {
-        equipmentSlot = EquipmentSlot::HEAD;
+        equipmentSlot = EquipmentSlot::LEGS;
+    }
+    else if (slot == EquipmentSlot::FEET->getIndex() + 100)
+    {
+        equipmentSlot = EquipmentSlot::FEET;
     }
     else
     {
@@ -406,7 +411,7 @@ void ArmorStand::readAdditionalSaveData(CompoundTag* tag)
         mLastSignal = pose->getInt(L"LastSignal");
     }
 }
-bool ArmorStand::isPushable(boost::shared_ptr<Entity> entity) { return entity.get() != this; }
+bool ArmorStand::isPushable(boost::shared_ptr<Entity> entity) { return false; }
 const EquipmentSlot* ArmorStand::getClickedSlot(const Vec3* hit)
 {
     const EquipmentSlot* slot = EquipmentSlot::MAINHAND;
@@ -444,7 +449,7 @@ bool ArmorStand::isDisabled(const EquipmentSlot* slot)
     return (mDisabledSlots & (1 << slot->getFilterFlag())) != 0;
 }
 
-bool ArmorStand::swapItem(const boost::shared_ptr<Player>& player, const EquipmentSlot* slot,
+void ArmorStand::swapItem(const boost::shared_ptr<Player>& player, const EquipmentSlot* slot,
                           const not_null_ptr<ItemInstance>& item,
                           InteractionHand::EInteractionHand hand)
 {
@@ -452,56 +457,77 @@ bool ArmorStand::swapItem(const boost::shared_ptr<Player>& player, const Equipme
     if (!equipped->isEmpty()
         && (mDisabledSlots & (1 << (slot->getFilterFlag() + 8))) != 0)
     {
-        return false;
+        return;
     }
     if (!equipped->isEmpty()
         && (mDisabledSlots & (1 << (slot->getFilterFlag() + 16))) != 0)
     {
-        return false;
+        return;
+    }
+
+    if (player->mAbilities.mInstabuild && equipped->isEmpty() && !item->isEmpty())
+    {
+        not_null_ptr<ItemInstance> singleItem = item->copy();
+        singleItem->setCount(1);
+        setItemSlot(slot, singleItem);
+        return;
     }
 
     if (!item->isEmpty() && item->getCount() > 1)
     {
-        if (!equipped->isEmpty())
+        if (equipped->isEmpty())
         {
-            return false;
+            not_null_ptr<ItemInstance> singleItem = item->copy();
+            singleItem->setCount(1);
+            setItemSlot(slot, singleItem);
+            if (!player->mAbilities.mInstabuild)
+            {
+                item->shrink(1);
+            }
+            return;
+        }
+        if (player->mInventory->add(equipped) != 1)
+        {
+            return;
         }
         not_null_ptr<ItemInstance> singleItem = item->copy();
         singleItem->setCount(1);
         setItemSlot(slot, singleItem);
-        item->shrink(1);
-        return true;
+        if (!player->mAbilities.mInstabuild)
+        {
+            item->shrink(1);
+        }
+        return;
     }
 
     setItemSlot(slot, item);
-    ((LivingEntity*)player.get())->setItemInHand(hand, equipped);
-    return true;
+    player->setItemInHand(hand, equipped);
 }
 bool ArmorStand::isShowArms() { return (mEntityData->get(DATA_FLAGS) & 4) != 0; }
-bool ArmorStand::interactAt(const boost::shared_ptr<Player>& player, Vec3* hit,
-                            InteractionHand::EInteractionHand hand)
+InteractionResult::EInteractionResult ArmorStand::interactAt(
+    const boost::shared_ptr<Player>& player, Vec3* hit, InteractionHand::EInteractionHand hand)
 {
-    not_null_ptr<ItemInstance> heldItem = ((LivingEntity*)player.get())->getItemInHand(hand);
+    not_null_ptr<ItemInstance> heldItem = player->getItemInHand(hand);
 
     if (!player->isAllowedToInteract(shared_from_this()))
     {
-        return true;
+        return InteractionResult::eInteractionResult_Pass;
     }
 
     if (player->isSneaking())
     {
         setPoseIndex((getPoseIndex() + 1) % 13);
-        return false;
+        return InteractionResult::eInteractionResult_Success;
     }
 
     if (isMarker())
     {
-        return true;
+        return InteractionResult::eInteractionResult_Pass;
     }
 
     if (heldItem->getItem() == Items::nameTag && heldItem->hasCustomHoverName())
     {
-        return true;
+        return InteractionResult::eInteractionResult_Pass;
     }
 
     if (!mLevel->mIsClientSide && !player->isSpectator())
@@ -511,11 +537,11 @@ bool ArmorStand::interactAt(const boost::shared_ptr<Player>& player, Vec3* hit,
         {
             if (isDisabled(equipmentSlot))
             {
-                return true;
+                return InteractionResult::eInteractionResult_Fail;
             }
             if (equipmentSlot->getType() == EquipmentSlot::HAND && !isShowArms())
             {
-                return true;
+                return InteractionResult::eInteractionResult_Fail;
             }
             swapItem(player, equipmentSlot, heldItem, hand);
         }
@@ -530,7 +556,7 @@ bool ArmorStand::interactAt(const boost::shared_ptr<Player>& player, Vec3* hit,
         }
     }
 
-    return false;
+    return InteractionResult::eInteractionResult_Success;
 }
 ArmorStand::EInteraction ArmorStand::test_interactAt(boost::shared_ptr<Player> player, Vec3* hit,
                                                      not_null_ptr<ItemInstance> item,
@@ -654,13 +680,10 @@ void ArmorStand::brokenByPlayer()
 bool ArmorStand::hurt(const DamageSource* source, float damage)
 {
     boost::shared_ptr<Entity> sourceEntity = source->getEntity();
-    if (sourceEntity && (sourceEntity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+    if (sourceEntity && (sourceEntity->GetType() & EntityType::PLAYER) == EntityType::PLAYER
+        && boost::dynamic_pointer_cast<Player>(sourceEntity)->isAllowedToHurtEntity(shared_from_this()) == 0)
     {
-        boost::shared_ptr<Player> sourcePlayer = boost::dynamic_pointer_cast<Player>(sourceEntity);
-        if (sourcePlayer->isAllowedToHurtEntity(shared_from_this()) == 0)
-        {
-            return false;
-        }
+        return false;
     }
 
     if (mLevel->mIsClientSide)
@@ -705,28 +728,23 @@ bool ArmorStand::hurt(const DamageSource* source, float damage)
         return false;
     }
 
-    const int msgId = source->getMsgId();
-    if (msgId != ClientboundChatPacket::eChatPacketMessage_DeathPlayer &&
-        msgId != ClientboundChatPacket::eChatPacketMessage_DeathArrow &&
-        msgId != ClientboundChatPacket::eChatPacketMessage_DeathTrident)
+    const bool isArrow = source->getMsgId() == ClientboundChatPacket::eChatPacketMessage_DeathArrow;
+    const bool isTrident = source->getMsgId() == ClientboundChatPacket::eChatPacketMessage_DeathTrident;
+    const bool isPlayer = source->getMsgId() == ClientboundChatPacket::eChatPacketMessage_DeathPlayer;
+    if (!(isPlayer || isArrow || isTrident))
     {
         return false;
     }
 
-    boost::shared_ptr<Entity> directEntity = source->getDirectEntity();
-    if ((directEntity->GetType() & EntityType::ARROW) == EntityType::ARROW)
+    if ((source->getDirectEntity()->GetType() & EntityType::ARROW) == EntityType::ARROW)
     {
-        directEntity->remove();
+        source->getDirectEntity()->remove();
     }
 
-    boost::shared_ptr<Entity> attacker = source->getEntity();
-    if ((attacker->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+    if ((source->getEntity()->GetType() & EntityType::PLAYER) == EntityType::PLAYER
+        && !boost::dynamic_pointer_cast<Player>(source->getEntity())->mAbilities.mMayBuild)
     {
-        boost::shared_ptr<Player> attackingPlayer = boost::dynamic_pointer_cast<Player>(source->getEntity());
-        if (!attackingPlayer->mAbilities.mMayBuild)
-        {
-            return false;
-        }
+        return false;
     }
 
     if (source->isCreativePlayer())
@@ -738,18 +756,16 @@ bool ArmorStand::hurt(const DamageSource* source, float damage)
     }
 
     long long gameTime = mLevel->getGameTime();
-    if (gameTime - mLastHit > 5 &&
-        msgId != ClientboundChatPacket::eChatPacketMessage_DeathArrow &&
-        msgId != ClientboundChatPacket::eChatPacketMessage_DeathTrident)
-    {
-        mLevel->broadcastEntityEvent(shared_from_this(), EntityEvent::ARMORSTAND_WOBBLE, 0);
-        mLastHit = gameTime;
-    }
-    else
+    if (gameTime - mLastHit <= 5 || isArrow || isTrident)
     {
         brokenByPlayer();
         showBreakingParticles();
         remove();
+    }
+    else
+    {
+        mLevel->broadcastEntityEvent(shared_from_this(), EntityEvent::ARMORSTAND_WOBBLE, 0);
+        mLastHit = gameTime;
     }
     return false;
 }
@@ -812,7 +828,7 @@ float ArmorStand::tickHeadTurn(float bodyRot, float headTurnDelta)
     return 0.0f;
 }
 double ArmorStand::getRidingHeight() { return isMarker() ? 0.0 : 0.1; }
-double ArmorStand::getEyeHeight() { return (double)(mBbHeight * (isBaby() ? 0.5f : 0.9f)); }
+float ArmorStand::getEyeHeight() { return mBbHeight * (isBaby() ? 0.5f : 0.9f); }
 void ArmorStand::travel(float xxa, float yya, float zza)
 {
     if (!isNoGravity())
@@ -929,7 +945,7 @@ void ArmorStand::doPush(boost::shared_ptr<Entity>) {}
 void ArmorStand::pushEntities()
 {
     std::vector<boost::shared_ptr<Entity> >* entities =
-        mLevel->getEntities(shared_from_this(), mBoundingBox, NULL, NULL);
+        mLevel->getEntities(shared_from_this(), mBoundingBox, IS_RIDEABLE_MINECART, NULL);
 
     if (entities == NULL || entities->empty())
     {
@@ -954,7 +970,8 @@ void ArmorStand::create(Level* level) { new ArmorStand(level); }
 
 bool ArmorStand::RidableMinecartEntitySelector::apply(boost::shared_ptr<Entity> entity) const
 {
-    return entity.get() != NULL && entity->isVehicle();
+    return (entity->GetType() & EntityType::MINECART) == EntityType::MINECART
+        && boost::static_pointer_cast<Minecart>(entity)->getType() == Minecart::Type::RIDEABLE;
 }
 
 ArmorStand::RidableMinecartEntitySelector::~RidableMinecartEntitySelector()

@@ -1,4 +1,5 @@
 #include "game/core/Compression.hpp"
+#include "game/core/PIXNamedEvents.hpp"
 #include "game/core/XMem.hpp"
 #include "platform/wiiu/TLSStorageCafe.hpp"
 
@@ -8,12 +9,25 @@
 static unsigned int g_compressionTlsIndex = 0;
 static Compression::ThreadStorage* g_pDefaultThreadStorage = NULL;
 
+struct XMemCodecParametersLZX
+{
+    unsigned int flags;
+    unsigned int windowSize;
+    unsigned int compressionPartitionSize;
+};
+
+static const unsigned int LZX_CODEC_WINDOW_SIZE = 0x20000;
+
 Compression::Compression()
 {
-    unsigned int contextSize = 0x20000;
-    XMemCreateCompressionContext(XMEMCODEC_LZX, &contextSize, 0, &m_pCompressionContext);
-    XMemCreateDecompressionContext(XMEMCODEC_LZX, &contextSize, 0, &m_pDecompressionContext);
+    XMemCodecParametersLZX codecParameters;
+    codecParameters.flags = 0;
+    codecParameters.windowSize = LZX_CODEC_WINDOW_SIZE;
+    codecParameters.compressionPartitionSize = LZX_CODEC_WINDOW_SIZE;
+
     m_pDecompressBuffer = NULL;
+    XMemCreateCompressionContext(XMEMCODEC_LZX, &codecParameters, 0, &m_pCompressionContext);
+    XMemCreateDecompressionContext(XMEMCODEC_LZX, &codecParameters, 0, &m_pDecompressionContext);
 
     m_compressionType = eCompressionTypes_Zlib;
     m_decompressionType = eCompressionTypes_Zlib;
@@ -85,6 +99,8 @@ int Compression::internalCompressRle(void* pDest, unsigned int* pDestSize, void*
     unsigned char* pInput = (unsigned char*)pSource;
     unsigned char* pInputEnd = (unsigned char*)pSource + sourceSize;
 
+    PIXBeginNamedEvent(0.0f, "RLE compression");
+
     do
     {
         unsigned char value = *pInput;
@@ -98,29 +114,30 @@ int Compression::internalCompressRle(void* pDest, unsigned int* pDestSize, void*
             ++runLength;
         }
 
-        if (runLength < 4)
-        {
-            if (value == 0xFF)
-            {
-                pOutput[0] = 0xFF;
-                pOutput[1] = (unsigned char)(runLength - 1);
-                pOutput += 2;
-            }
-            else
-            {
-                memset(pOutput, value, runLength);
-                pOutput += runLength;
-            }
-        }
-        else
+        if (runLength > 3)
         {
             pOutput[0] = 0xFF;
             pOutput[1] = (unsigned char)(runLength - 1);
             pOutput[2] = value;
             pOutput += 3;
         }
+        else if (value == 0xFF)
+        {
+            pOutput[0] = 0xFF;
+            pOutput[1] = (unsigned char)(runLength - 1);
+            pOutput += 2;
+        }
+        else
+        {
+            for (unsigned int i = 0; i < runLength; ++i)
+            {
+                *pOutput++ = value;
+            }
+        }
     }
     while (pInput != pInputEnd && pOutput < pOutputLimit);
+
+    PIXEndNamedEvent();
 
     *pDestSize = (unsigned int)(pOutput - (unsigned char*)pDest);
 
@@ -140,23 +157,14 @@ int Compression::internalDecompressRle(void* pDest, unsigned int* pDestSize, voi
 
     while (pInput != pInputEnd)
     {
-        unsigned char value = *pInput;
-
-        ++pInput;
-
-        if (value != 0xFF)
+        if (*pInput == 0xFF)
         {
-            *pOutput = value;
-            ++pOutput;
-        }
-        else
-        {
-            unsigned int runLength = *pInput;
+            unsigned int runLength = pInput[1];
             unsigned char runValue = 0xFF;
 
-            ++pInput;
+            pInput += 2;
 
-            if (runLength > 2)
+            if (runLength >= 3)
             {
                 runValue = *pInput;
                 ++pInput;
@@ -164,8 +172,16 @@ int Compression::internalDecompressRle(void* pDest, unsigned int* pDestSize, voi
 
             ++runLength;
 
-            memset(pOutput, runValue, runLength);
-            pOutput += runLength;
+            for (unsigned int i = 0; i < runLength; ++i)
+            {
+                *pOutput++ = runValue;
+            }
+        }
+        else
+        {
+            *pOutput = *pInput;
+            ++pOutput;
+            ++pInput;
         }
     }
 
@@ -177,35 +193,39 @@ int Compression::internalDecompressRle(void* pDest, unsigned int* pDestSize, voi
 int Compression::Compress(void* pDest, unsigned int* pDestSize, void* pSource, unsigned int sourceSize)
 {
     uLong compressedSize = *pDestSize;
+    int result = 0;
 
     if (pDest == NULL)
     {
         *pDestSize = compressBound(sourceSize);
-
-        return 0;
     }
+    else
+    {
+        result = compress((Bytef*)pDest, &compressedSize, (const Bytef*)pSource, sourceSize);
 
-    int result = compress((Bytef*)pDest, &compressedSize, (const Bytef*)pSource, sourceSize);
-
-    *pDestSize = compressedSize;
+        *pDestSize = compressedSize;
+    }
 
     if (result != 0)
     {
-        return -1;
+        result = -1;
     }
 
-    return 0;
+    return result;
 }
 
 int Compression::DecompressWithType(void* pDest, unsigned int* pDestSize, void* pSource, unsigned int sourceSize)
 {
-    if (m_decompressionType < eCompressionTypes_LZXRLE)
+    switch (m_decompressionType)
     {
+    case eCompressionTypes_None:
+    case eCompressionTypes_RLE:
         memcpy(pDest, pSource, sourceSize);
         *pDestSize = sourceSize;
         return 0;
+    default:
+        return -1;
     }
-    return -1;
 }
 
 int Compression::Decompress(void* pDest, unsigned int* pDestSize, void* pSource, unsigned int sourceSize)
@@ -248,7 +268,9 @@ int Compression::CompressLZXRLE(void* pDest, unsigned int* pDestSize, void* pSou
 
     if (result == 0)
     {
+        PIXBeginNamedEvent(0.0f, "Secondary compression");
         result = Compress(pDest, pDestSize, m_rleBuffer, rleSize);
+        PIXEndNamedEvent();
     }
 
     LeaveCriticalSection(&m_compressLock);
@@ -284,7 +306,10 @@ int Compression::DecompressLZXRLE(void* pDest, unsigned int* pDestSize, void* pS
         internalDecompressRle(pDest, pDestSize, m_pDecompressBuffer, decompressedSize);
     }
 
-    delete[] pScratchBuffer;
+    if (pScratchBuffer != NULL)
+    {
+        delete[] pScratchBuffer;
+    }
 
     LeaveCriticalSection(&m_decompressLock);
 
@@ -334,29 +359,23 @@ void Compression::VitaVirtualDecompress(void* pDest, unsigned int* pDestSize, vo
 
     while (inputOffset != sourceSize)
     {
-        unsigned char value = pInput[inputOffset];
-
-        if (value != 0)
+        if (pInput[inputOffset] == 0)
         {
-            pOutput[outputSize] = value;
-            ++outputSize;
-            ++inputOffset;
+            int zeroCount = pInput[inputOffset + 1];
+
+            for (int i = 0; i < zeroCount; ++i)
+            {
+                pOutput[outputSize] = 0;
+                ++outputSize;
+            }
+
+            inputOffset += 2;
         }
         else
         {
-            unsigned char runLengthByte = pInput[inputOffset + 1];
-
-            inputOffset += 2;
-
-            if (runLengthByte != 0)
-            {
-                unsigned int blockCount = runLengthByte >> 3;
-                unsigned int remainder = runLengthByte & 7;
-                unsigned int runLength = blockCount * 8 + remainder;
-
-                memset(pOutput + outputSize, 0, runLength);
-                outputSize += runLength;
-            }
+            pOutput[outputSize] = pInput[inputOffset];
+            ++outputSize;
+            ++inputOffset;
         }
     }
 
@@ -369,22 +388,21 @@ void Compression::SetDecompressionType(ESavePlatform platform)
     {
     case eSavePlatform_X360:
         getCompression()->m_decompressionType = eCompressionTypes_LZXRLE;
-        break;
-
+        return;
+    case eSavePlatform_WIIU:
+    case eSavePlatform_NX:
+    case eSavePlatform_XB1:
+        getCompression()->m_decompressionType = eCompressionTypes_Zlib;
+        return;
     case eSavePlatform_PS3:
         getCompression()->m_decompressionType = eCompressionTypes_ZlibPS3;
-        break;
-
-    case eSavePlatform_WIIU:
-    case eSavePlatform_XB1:
-    case eSavePlatform_NX:
+        return;
     case eSavePlatform_PS4:
     case eSavePlatform_WIN:
     case eSavePlatform_PSV:
         getCompression()->m_decompressionType = eCompressionTypes_Zlib;
-        break;
-
+        return;
     default:
-        break;
+        return;
     }
 }

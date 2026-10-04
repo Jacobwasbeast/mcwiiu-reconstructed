@@ -1,3 +1,4 @@
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CTelemetryManager.hpp"
 
 #include "game/core/GameSettings.hpp"
@@ -52,7 +53,7 @@ unsigned int CTelemetryManager::RecordLevelStart(int playerId, ESen_FriendOrMatc
         mLevelStarted = true;
 
     ++mLevelInstanceId;
-    mLevelStartTime[playerId] = g_pApp->getAppTime();
+    mLevelStartTime[playerId] = gApp.getAppTime();
     return 1;
 }
 
@@ -244,16 +245,15 @@ unsigned int CTelemetryManager::GetMode(unsigned int playerId)
     if (playerId >= 4)
         return 0;
 
-    const boost::shared_ptr<MultiplayerLocalPlayer>& player = minecraft->mLocalPlayers[playerId];
-    if (!player)
+    if (minecraft->mLocalPlayers[playerId] == NULL)
         return 0;
 
     const GameType* gameType = NULL;
-    if (player->mLevel != NULL && player->mLevel->getLevelData() != NULL)
-        gameType = player->mLevel->getLevelData()->getGameType();
+    if (minecraft->mLocalPlayers[playerId]->mLevel != NULL && minecraft->mLocalPlayers[playerId]->mLevel->getLevelData() != NULL)
+        gameType = minecraft->mLocalPlayers[playerId]->mLevel->getLevelData()->getGameType();
 
-    if (gameType == NULL && g_pApp->GetGameHostOption(eGameHostOption_HostCanFly))
-        gameType = player->GetGameType();
+    if (gameType == NULL && gApp.GetGameHostOption(eGameHostOption_HostCanFly))
+        gameType = minecraft->mLocalPlayers[playerId]->GetGameType();
 
     if (gameType == GameType::SURVIVAL)
         return 1;
@@ -275,14 +275,22 @@ unsigned int CTelemetryManager::GetLicense()
 
 unsigned int CTelemetryManager::GetAudioSettings(unsigned int playerId)
 {
-    if (playerId != (unsigned int)gProfile->GetPrimaryPad())
-        return 0;
+    unsigned int settings = 0;
 
-    int volume = GameSettings::GetGameSettings(playerId, eGameSetting_SoundVolume);
-    if (volume == 0)
-        return 1;
-    if (volume == 100)
-        return 2;
+    if (playerId == (unsigned int)gProfile->GetPrimaryPad())
+    {
+        int volume = GameSettings::GetGameSettings(playerId, eGameSetting_SoundVolume);
+        if (volume == 0)
+        {
+            settings = 1;
+        }
+        else
+        {
+            settings = 3;
+            if (volume == 100)
+                settings = 2;
+        }
+    }
 
-    return 3;
+    return settings;
 }

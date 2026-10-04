@@ -30,7 +30,7 @@ public:
     RegionFile(ConsoleSaveFile* saveFile, File* file);
     ~RegionFile();
     unsigned int getOffset(int x, int z);
-    unsigned int outOfBounds(int x, int z);
+    bool outOfBounds(int x, int z);
     DataInputStream* getChunkDataInputStream(int x, int z, bool* compressed);
     DataOutputStream* getChunkDataOutputStream(int x, int z, bool compressed);
     void* GetThreadCompressedDataStorage();
