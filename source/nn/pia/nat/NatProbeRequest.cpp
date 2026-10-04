@@ -25,10 +25,6 @@ NatProbeRequest::NatProbeRequest(const transport::StationLocation& location)
 {
 }
 
-NatProbeRequest::~NatProbeRequest()
-{
-}
-
 void NatProbeRequest::Trace(unsigned long long) const
 {
 }

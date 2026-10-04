@@ -1,0 +1,1078 @@
+#include "nn/pia/nat/NatTraversalProtocol.hpp"
+
+#include <stdint.h>
+
+#include "nn/pia/common/InetAddress.hpp"
+#include "nn/pia/common/StationAddress.hpp"
+#include "nn/pia/common/TimeSpan.hpp"
+#include "nn/pia/inet/Api.hpp"
+#include "nn/pia/nat/Api.hpp"
+#include "nn/pia/nat/NatPortDetecter.hpp"
+#include "nn/pia/nat/NatProbe.hpp"
+#include "nn/pia/nat/NatProbeData.hpp"
+#include "nn/pia/nat/NatProbeRequest.hpp"
+#include "nn/pia/nat/NatTraversalTime.hpp"
+#include "nn/pia/nat/NatTraverser.hpp"
+#include "nn/pia/session/Mesh.hpp"
+#include "nn/pia/session/ProcessUpdateMeshJob.hpp"
+#include "nn/pia/transport/PacketHandler.hpp"
+#include "nn/pia/transport/ProtocolMessageWriter.hpp"
+#include "nn/pia/transport/StationConnectionInfoTable.hpp"
+
+namespace nn { namespace pia { namespace nat {
+
+namespace {
+
+inline void setDeadline(common::Time& deadline, int msec)
+{
+    const long long span = common::TimeSpan::GetTicksPerMSec().m_tick * msec;
+    common::Time now;
+    now.SetNow();
+    deadline.m_tick = now.m_tick + span;
+}
+
+inline transport::PacketHandler* handlerOf(unsigned int value)
+{
+    return reinterpret_cast<transport::PacketHandler*>(static_cast<uintptr_t>(value));
+}
+
+}
+
+static void NatPortDetectionCompletionCallback(common::Result result, void* param);
+
+NatTraversalProtocol::NatTraversalProtocol()
+    : m_localServiceConnectionId(0), m_localLocation(), m_serverLocation(), m_callContext(),
+      m_probeList(), m_edmProbeRequests(), m_probeRequests(), m_traversalTimes(),
+      m_nextDispatchTime(), m_pendingDetectionDeadline(), m_fieldC58(false), m_fieldC59(false),
+      m_fieldC5A(false), m_fieldC5B(false), m_fieldC5C(false), m_pendingConnectionId(0),
+      m_portDetectionLocation(), m_serverKeepAliveEnabled(false), m_serverKeepAliveTime(),
+      m_ownerNatTraverser(0), m_random()
+{
+}
+
+NatTraversalProtocol::~NatTraversalProtocol()
+{
+    m_probeList.Clear();
+    m_edmProbeRequests.Clear();
+    m_probeRequests.Clear();
+    m_traversalTimes.Clear();
+}
+
+common::Result NatTraversalProtocol::StartupNatTraversal(NatTraverser* traverser)
+{
+    if (traverser == 0)
+        return cResultInvalidArgument;
+    if (traverser->m_servers.size == 0)
+        return cResultInvalidState;
+
+    common::InetAddress address = traverser->m_servers.data[0];
+    address.m_port = cNatServerPort;
+    m_serverLocation.m_stationAddress.SetInetAddress(address);
+    m_serverLocation.Trace(cTraceBrief);
+    if (!static_cast<const common::InetAddress&>(m_serverLocation.m_stationAddress).IsValid())
+    {
+        m_serverLocation.Trace(cTraceError);
+        return cResultInvalidState;
+    }
+
+    m_ownerNatTraverser = traverser;
+    m_serverKeepAliveEnabled = false;
+    m_fieldC58 = false;
+    m_fieldC5A = false;
+    m_fieldC5C = false;
+    m_fieldC5B = false;
+    m_pendingConnectionId = 0;
+    m_fieldC59 = false;
+    g_natLocalConnectionId = traverser->GetLocalServiceConnectionId();
+    m_localServiceConnectionId = g_natLocalConnectionId;
+    return 0;
+}
+
+void NatTraversalProtocol::CancelPortDetection()
+{
+    if (m_callContext.m_state == common::CallContext::cStateInProgress)
+    {
+        unsigned int state = common::CallContext::cStateInProgress;
+        if (m_ownerNatTraverser != 0)
+        {
+            if (m_ownerNatTraverser->GetNatPortDetecter() != 0)
+                m_ownerNatTraverser->GetNatPortDetecter()->CancelDetectionJob();
+            state = m_callContext.m_state;
+        }
+        if (state == common::CallContext::cStateInProgress)
+            m_callContext.SignalCancel();
+    }
+}
+
+void NatTraversalProtocol::CleanupNatTraversal()
+{
+    m_probeList.Clear();
+    m_edmProbeRequests.Clear();
+    m_probeRequests.Clear();
+    m_traversalTimes.Clear();
+    if (m_callContext.m_state == common::CallContext::cStateInProgress)
+        CancelPortDetection();
+    m_callContext.Reset();
+    m_fieldC5C = false;
+    m_pendingConnectionId = 0;
+    m_serverKeepAliveEnabled = false;
+    m_ownerNatTraverser = 0;
+    m_fieldC58 = false;
+    m_fieldC59 = false;
+    m_fieldC5A = false;
+    m_fieldC5B = false;
+}
+
+void NatTraversalProtocol::AddProbeRequest(const NatProbeRequest& request)
+{
+    if (request.m_stationLocation.m_field1c == 0)
+    {
+        request.Trace(cTraceBrief);
+        return;
+    }
+
+    request.Trace(cTraceBrief);
+    if (m_edmProbeRequests.HasFreeNode())
+    {
+        NatProbeRequest* element = m_edmProbeRequests.Allocate();
+        if (element != 0)
+        {
+            element->m_stationLocation = request.m_stationLocation;
+            element->m_stationConnectionInfo = request.m_stationConnectionInfo;
+            element->m_probeRequested = request.m_probeRequested;
+            element->m_addressValid = request.m_addressValid;
+            element->m_deadline = request.m_deadline;
+            element->m_callContext = request.m_callContext;
+        }
+    }
+    if (request.m_probeRequested)
+    {
+        if (m_probeRequests.HasFreeNode())
+        {
+            NatProbeRequest* element = m_probeRequests.Allocate();
+            if (element != 0)
+            {
+                element->m_stationLocation = request.m_stationLocation;
+                element->m_stationConnectionInfo = request.m_stationConnectionInfo;
+                element->m_probeRequested = request.m_probeRequested;
+                element->m_addressValid = request.m_addressValid;
+                element->m_deadline = request.m_deadline;
+                element->m_callContext = request.m_callContext;
+            }
+        }
+    }
+    m_nextDispatchTime = common::Time();
+}
+
+bool NatTraversalProtocol::PrepareNatTraversal(const transport::StationLocation& location,
+                                               const transport::StationConnectionInfo& connection,
+                                               common::CallContext* context,
+                                               bool passive, bool force)
+{
+    if (location.m_field1c == 0)
+        return false;
+
+    transport::StationLocation requestLocation(location);
+    bool shiftPort;
+    if (!force)
+    {
+        const DebugSetting* debugSetting = GetDebugSetting();
+        unsigned char threshold = debugSetting->options[1];
+        int roll = static_cast<int>(
+            (static_cast<unsigned long long>(m_random.getU32()) * 100) >> 32);
+        shiftPort = roll < threshold;
+    }
+    else
+    {
+        const DebugSetting* debugSetting = GetDebugSetting();
+        unsigned char threshold = debugSetting->options[0];
+        int roll = static_cast<int>(
+            (static_cast<unsigned long long>(m_random.getU32()) * 100) >> 32);
+        shiftPort = roll < threshold;
+    }
+    if (shiftPort && !passive)
+    {
+        common::StationAddress address(location.m_stationAddress);
+        common::InetAddress inetAddress(address);
+        unsigned int port = static_cast<unsigned short>(inetAddress.m_port + 10);
+        unsigned int minPort = m_ownerNatTraverser->GetRandomPortRangeMin();
+        unsigned int maxPort = m_ownerNatTraverser->GetRandomPortRangeMax();
+        if (port < minPort || maxPort < port)
+            port = static_cast<unsigned short>(minPort + inetAddress.m_port - maxPort + 9);
+        inetAddress.m_port = static_cast<unsigned short>(port);
+        address.SetInetAddress(inetAddress);
+        requestLocation.SetStationAddress(address);
+        requestLocation.m_field22 = cInvalidIndex;
+    }
+
+    NatProbeRequest request(requestLocation, connection, true, passive, context);
+    request.Trace(cTraceBrief);
+    m_probeList.Trace(cTraceVerbose);
+    NatProbe* probe = m_probeList.FindByAddressPortAndConnectionId(location);
+    bool reset = false;
+    if (probe == 0)
+    {
+        probe = m_probeList.FindByAddressAndConnectionId(location);
+        if (probe != 0 && probe->m_sent)
+            reset = true;
+    }
+    else if (probe->m_rtt != -1)
+    {
+        reset = true;
+    }
+
+    if (reset)
+    {
+        setDeadline(probe->m_deadline, g_natProbeDurationMsec);
+        probe->m_sent = 0;
+        probe->m_probeCount = 0;
+        location.Trace(cTraceVerbose);
+        return false;
+    }
+    AddProbeRequest(request);
+    return true;
+}
+
+bool NatTraversalProtocol::EraseProbeRequestByConnectionId(unsigned int connectionId)
+{
+    bool erased = false;
+    common::ListNode* node = m_probeRequests.Begin();
+    common::ListNode* next = node->next;
+    while (node != m_probeRequests.End())
+    {
+        if (static_cast<unsigned int>(NatProbeRequestList::RequestOf(node)->m_stationLocation.m_field1c) ==
+            connectionId)
+        {
+            m_probeRequests.Release(node);
+            erased = true;
+        }
+        node = next;
+        next = node->next;
+    }
+    node = m_edmProbeRequests.Begin();
+    next = node->next;
+    while (node != m_edmProbeRequests.End())
+    {
+        if (static_cast<unsigned int>(NatProbeRequestList::RequestOf(node)->m_stationLocation.m_field1c) ==
+            connectionId)
+        {
+            m_edmProbeRequests.Release(node);
+            erased = true;
+        }
+        node = next;
+        next = node->next;
+    }
+    return erased;
+}
+
+void NatTraversalProtocol::ClearNatTraversal(const transport::StationLocation& location, bool relay)
+{
+    if (EraseProbeRequestByConnectionId(location.m_field1c))
+    {
+        if (m_pendingConnectionId == static_cast<unsigned int>(location.m_field1c))
+        {
+            if (m_fieldC59)
+            {
+                m_fieldC59 = false;
+                m_pendingConnectionId = 0;
+                m_fieldC58 = false;
+            }
+            if (m_fieldC5A)
+            {
+                m_fieldC5A = false;
+                m_pendingConnectionId = 0;
+                m_fieldC58 = false;
+            }
+            if (m_callContext.m_state == common::CallContext::cStateInProgress)
+                CancelPortDetection();
+            m_fieldC5C = false;
+        }
+    }
+    if (relay)
+    {
+        m_probeList.RemoveSameAddressPortAndConnectionIdProbes(location);
+        m_traversalTimes.Remove(location);
+        return;
+    }
+
+    NatProbe* probe = m_probeList.FindByConnectionId(location.m_field1c);
+    if (probe != 0 && probe->m_rtt != -1)
+    {
+        probe->m_sent = 1;
+        probe->m_probeCount = 1;
+        setDeadline(probe->m_deadline, g_natClearProbeDelayMsec);
+        probe->Trace(cTraceBrief);
+        return;
+    }
+    m_probeList.RemoveProbesByConnectionId(location.m_field1c);
+    m_traversalTimes.Remove(location);
+}
+
+void NatTraversalProtocol::ProcessProbeRequest(const transport::StationLocation& location)
+{
+    if (!static_cast<const common::InetAddress&>(location.m_stationAddress).IsValid())
+    {
+        location.Trace(cTraceError);
+        return;
+    }
+
+    bool pendingRequest = false;
+    bool edmLocation;
+    if (location.m_field26 == 0)
+    {
+        if (inet::IsEdmMapping(m_localLocation) && m_fieldC58 &&
+            m_pendingConnectionId == static_cast<unsigned int>(location.m_field1c))
+        {
+            pendingRequest = true;
+            m_fieldC58 = false;
+        }
+        NatTraversalTime* traversalTime = m_traversalTimes.Find(location);
+        if (traversalTime != 0)
+        {
+            common::Time now;
+            now.SetNow();
+            traversalTime->m_count = static_cast<unsigned int>(
+                static_cast<long long>(now.m_tick - traversalTime->m_endTime.m_tick) /
+                common::TimeSpan::GetTicksPerMSec().m_tick);
+        }
+        edmLocation = inet::IsEdmMapping(location);
+    }
+    else
+    {
+        NatProbeRequest request(location);
+        AddProbeRequest(request);
+        NatTraversalTime* traversalTime = m_traversalTimes.Find(location);
+        if (traversalTime == 0)
+        {
+            NatTraversalTime newTraversalTime;
+            newTraversalTime.m_location = location;
+            newTraversalTime.m_endTime.SetNow();
+            newTraversalTime.m_count = 0;
+            newTraversalTime.m_port = 0;
+            m_traversalTimes.Add(newTraversalTime);
+        }
+        else
+        {
+            traversalTime->m_endTime.SetNow();
+            traversalTime->m_count = 0;
+        }
+        edmLocation = inet::IsEdmMapping(location);
+    }
+
+    common::Time startTime;
+    common::TimeSpan duration(common::TimeSpan::GetTicksPerMSec().m_tick * g_natProbeDurationMsec);
+    unsigned char sprayRange = 0;
+    if (edmLocation && !location.m_inetAddress.IsValid())
+        sprayRange = 2;
+    NatProbe probe(location, startTime, duration, 0, g_natProbeSprayCount, sprayRange);
+    if (pendingRequest)
+    {
+        setDeadline(m_pendingDetectionDeadline, 5000);
+        probe.m_received = 1;
+        probe.Trace(cTraceBrief);
+    }
+    m_probeList.AddProbe(probe);
+}
+
+common::Result NatTraversalProtocol::SendMessage(transport::ProtocolId protocolId,
+                                                 const common::StationAddress& address,
+                                                 const void* payload, unsigned int payloadSize,
+                                                 bool relay, unsigned char type)
+{
+    transport::ProtocolMessageWriter* writer =
+        handlerOf(mStationPacketHandler)->AssignByStationAddress(protocolId, address,
+                                                                  payloadSize, relay, false);
+    if (writer == 0)
+        return 0;
+    if (relay && type != 0)
+        writer->m_priority = type;
+    writer->SetPayload(payload);
+    handlerOf(mStationPacketHandler)->Commit();
+    return 0;
+}
+
+void NatTraversalProtocol::SendProbe(ProbeType type, const transport::StationLocation& location,
+                                     common::Time time, unsigned char count)
+{
+    NatProbeData data;
+    data.m_time = time;
+    data.m_connectionId = m_localServiceConnectionId;
+    data.m_type = static_cast<unsigned char>(type);
+    data.Trace(cTraceVerbose);
+    location.Trace(cTraceBrief);
+    unsigned short port = 1;
+    if (data.m_type == 1)
+        port = 2;
+    unsigned int size;
+    unsigned char buffer[16];
+    common::Result result = data.Serialize(buffer, &size, sizeof(buffer));
+    if (result == 0)
+    {
+        port |= cProtocolType << 8;
+        SendMessage(transport::ProtocolId(port), location.m_stationAddress, buffer,
+                    sizeof(buffer), true, count);
+    }
+}
+
+void NatTraversalProtocol::ReceiveMessage(const transport::ProtocolMessageReader& reader)
+{
+    reader.GetProtocolIdPort();
+    if (reader.m_messageSize != cProbeMessageSize)
+        return;
+
+    NatProbeData data;
+    common::Result result = data.Deserialize(
+        reader.m_message + transport::ProtocolMessageReader::cMessageHeaderSize, cProbeMessageSize);
+    if (result != 0)
+        return;
+    data.Trace(cTraceVerbose);
+    if (data.m_connectionId == 0)
+        return;
+
+    transport::StationLocation location;
+    location.SetStationAddress(reader.m_stationAddress);
+    location.m_field1c = data.m_connectionId;
+    location.Trace(cTraceDetail);
+    if (!static_cast<const common::InetAddress&>(location.m_stationAddress).IsValid())
+    {
+        location.Trace(cTraceError);
+        return;
+    }
+
+    if (data.m_type == 0)
+    {
+        if (m_probeList.ProcessProbe(location, reader.m_field39) && m_localServiceConnectionId != 0)
+            SendProbe(cProbeType1, location, data.m_time, 0);
+    }
+    else if (data.m_type == 1)
+    {
+        m_probeList.ProcessProbeReply(location, data.m_time, reader.m_field39);
+        if (m_pendingConnectionId == data.m_connectionId)
+        {
+            EraseProbeRequestByConnectionId(data.m_connectionId);
+            m_pendingConnectionId = 0;
+            m_fieldC59 = false;
+            m_fieldC58 = false;
+            m_fieldC5A = false;
+        }
+    }
+}
+
+void NatTraversalProtocol::SendDummyPacket(const transport::StationLocation& location,
+                                           unsigned char type, unsigned char count)
+{
+    if (!static_cast<const common::InetAddress&>(location.m_stationAddress).IsValid())
+    {
+        location.Trace(cTraceBrief);
+        return;
+    }
+
+    char payload[16] = "NATTestId_Dummy";
+    for (unsigned int i = 0; i < count; ++i)
+        SendMessage(transport::ProtocolId((cProtocolType << 8) | 3), location.m_stationAddress,
+                    payload, sizeof(payload), true, type);
+}
+
+NatProbeRequest* NatTraversalProtocol::FindProbeRequestByConnectionId(unsigned int connectionId)
+{
+    for (common::ListNode* node = m_probeRequests.Begin(); node != m_probeRequests.End();
+         node = node->next)
+    {
+        NatProbeRequest* request = NatProbeRequestList::RequestOf(node);
+        if (static_cast<unsigned int>(request->m_stationLocation.m_field1c) == connectionId)
+            return request;
+    }
+    return 0;
+}
+
+unsigned short NatTraversalProtocol::GetPeer2PeerPort(const transport::StationLocation& location)
+{
+    session::ProcessUpdateMeshJob* job = session::g_piaMesh->GetProcessUpdateMeshJobPtr();
+    transport::StationConnectionInfoTable* table = transport::g_stationConnectionInfoTable;
+    if (job == 0)
+        return 0;
+
+    if (job->m_started)
+    {
+        location.Trace(cTraceDetail);
+        for (unsigned int index = 0; index < job->m_stationCount; ++index)
+        {
+            transport::StationConnectionInfo* info = &job->m_stationConnectionInfos[index];
+            if (info == 0)
+                continue;
+            if (info->m_stationLocation == location)
+            {
+                info->Trace(cTraceDetail);
+                if (inet::IsEdmMapping(info->m_stationLocation))
+                    return 0;
+                return info->m_localStationLocation.m_stationAddress.m_port;
+            }
+            if (location.m_field26 != 0)
+            {
+                if (!inet::IsEdmMapping(info->m_stationLocation))
+                {
+                    transport::StationLocation candidate(info->m_stationLocation);
+                    candidate.m_field26 = 1;
+                    candidate.m_stationAddress.m_port = info->m_localStationLocation.m_stationAddress.m_port;
+                    if (candidate == location)
+                    {
+                        info->Trace(cTraceDetail);
+                        return candidate.m_stationAddress.m_port;
+                    }
+                }
+                else
+                {
+                    transport::StationLocation candidate(info->m_stationLocation);
+                    candidate.m_stationAddress.m_port = location.m_stationAddress.m_port;
+                    candidate.m_field26 = 1;
+                    if (candidate == location)
+                    {
+                        info->Trace(cTraceDetail);
+                        return 0;
+                    }
+                }
+            }
+        }
+        m_fieldC5C = true;
+        return 0;
+    }
+
+    transport::StationConnectionInfo& host = table->m_hostStationConnectionInfo;
+    if (host.m_stationLocation == location)
+    {
+        host.Trace(cTraceDetail);
+        if (inet::IsGlobal(host.m_stationLocation))
+            return host.m_stationLocation.m_stationAddress.m_port;
+        if (inet::IsEimMapping(host.m_localStationLocation) &&
+            host.m_stationLocation.m_stationAddress.m_port !=
+                host.m_localStationLocation.m_stationAddress.m_port)
+            return host.m_localStationLocation.m_stationAddress.m_port;
+    }
+    return 0;
+}
+
+void NatTraversalProtocol::CompletedNatPortDetection(common::Result)
+{
+    m_nextDispatchTime = common::Time();
+    m_fieldC5B = true;
+    if (m_fieldC5A)
+    {
+        setDeadline(m_pendingDetectionDeadline, 5000);
+    }
+}
+
+void NatTraversalProtocol::DetectNatPort(const transport::StationLocation& local,
+                                         const transport::StationLocation& remote)
+{
+    if (session::g_piaMesh == 0 || !session::g_piaMesh->IsProcessedAtMeshBegin())
+        ++g_natMonitoringData.portDetectionCount;
+
+    m_callContext.RegisterCompletionCallback(NatPortDetectionCompletionCallback, this);
+    NatPortDetecter* detecter = m_ownerNatTraverser->GetNatPortDetecter();
+    common::InetAddress address;
+    common::Result result =
+        detecter->Startup(m_ownerNatTraverser, &m_callContext, address, local, remote, true);
+    if (result != 0)
+        m_callContext.SignalFailure(result);
+    m_ownerNatTraverser->GetNatPortDetecter()->StartDetectionJob();
+    m_portDetectionLocation = local;
+}
+
+void NatTraversalProtocol::RelayProbeRequest(const transport::StationLocation& source,
+                                             const transport::StationLocation& destination)
+{
+    NatTraversalTime* traversalTime = m_traversalTimes.Find(source);
+    if (traversalTime == 0)
+    {
+        NatTraversalTime newTraversalTime;
+        newTraversalTime.m_location = source;
+        newTraversalTime.m_endTime.SetNow();
+        newTraversalTime.m_count = 0;
+        newTraversalTime.m_port = 0;
+        m_traversalTimes.Add(newTraversalTime);
+        m_ownerNatTraverser->RelayProbeRequest(source, destination, false, 0);
+    }
+    else if (destination.m_field26 == 0)
+    {
+        traversalTime->m_startTime.SetNow();
+        m_ownerNatTraverser->RelayProbeRequest(source, destination, false, 0);
+    }
+    else
+    {
+        traversalTime->m_endTime.SetNow();
+        traversalTime->m_count = 0;
+        m_ownerNatTraverser->RelayProbeRequest(source, destination, false, 0);
+    }
+}
+
+void NatTraversalProtocol::SendProbeRequest(transport::StationLocation location,
+                                            const NatProbeRequest& request)
+{
+    bool fromLocal = request.m_stationLocation.m_field26 == 0;
+    location.m_field1c = m_localServiceConnectionId;
+    location.m_field26 = fromLocal;
+    if (request.m_addressValid)
+    {
+        if (fromLocal)
+            location.m_inetAddress = m_ownerNatTraverser->GetRelayServerAddress();
+        else
+            location.m_inetAddress = request.m_stationLocation.m_inetAddress;
+    }
+    location.Trace(cTraceBrief);
+    request.m_stationLocation.Trace(cTraceBrief);
+
+    if (inet::IsPublic(location) && inet::IsEdmMapping(m_localLocation) &&
+        !location.m_inetAddress.IsValid())
+    {
+        if (fromLocal)
+        {
+            m_fieldC59 = true;
+            m_pendingConnectionId = request.m_stationLocation.m_field1c;
+            m_fieldC58 = true;
+        }
+        else
+        {
+            m_fieldC5A = true;
+            m_pendingConnectionId = request.m_stationLocation.m_field1c;
+        }
+        setDeadline(m_pendingDetectionDeadline, 15000);
+        if (m_ownerNatTraverser->m_natProperty.m_flag != 0)
+        {
+            transport::StationLocation target(request.m_stationLocation);
+            target.m_stationAddress.m_port = cNatServerPort;
+            SendDummyPacket(target, 4, 5);
+        }
+        DetectNatPort(request.m_stationLocation, location);
+        return;
+    }
+
+    if (!location.m_inetAddress.IsValid())
+    {
+        unsigned short port = 0;
+        if (!inet::IsPublic(location))
+        {
+            if (m_ownerNatTraverser != 0)
+                port = m_ownerNatTraverser->m_publicPort;
+            location.m_stationAddress.m_port = port;
+        }
+        else
+        {
+            location.m_stationAddress.m_port = m_ownerNatTraverser->m_natProperty.m_publicPort;
+        }
+    }
+    RelayProbeRequest(request.m_stationLocation, location);
+}
+
+void NatTraversalProtocol::ScheduleProbeRequest(const NatProbeRequest& request)
+{
+    for (common::ListNode* node = m_edmProbeRequests.Begin(); node != m_edmProbeRequests.End();
+         node = node->next)
+    {
+        NatProbeRequest* element = NatProbeRequestList::RequestOf(node);
+        if (inet::IsEdmMapping(element->m_stationLocation) &&
+            element->m_stationLocation.m_stationAddress.m_address ==
+                request.m_stationLocation.m_stationAddress.m_address)
+        {
+            setDeadline(element->m_deadline, 1000);
+            request.Trace(cTraceBrief);
+            element->Trace(cTraceBrief);
+            return;
+        }
+    }
+}
+
+bool NatTraversalProtocol::SendProbeRequests()
+{
+    if ((inet::IsEdmMapping(m_localLocation) &&
+         (m_callContext.m_state == common::CallContext::cStateInProgress || m_fieldC59 ||
+          m_fieldC5A)) ||
+        m_edmProbeRequests.GetSize() == 0)
+        return false;
+
+    NatProbeRequest request(*NatProbeRequestList::RequestOf(m_edmProbeRequests.Begin()));
+    common::Time now;
+    now.SetNow();
+    if (request.m_deadline.m_tick != 0 && now < request.m_deadline)
+    {
+        request.Trace(cTraceBrief);
+        return false;
+    }
+
+    transport::StationConnectionInfoTable* table = transport::g_stationConnectionInfoTable;
+    bool sent = false;
+    bool sendToLocal = false;
+    if (!request.m_addressValid)
+    {
+        if (!request.m_probeRequested)
+        {
+            if (inet::IsPublic(request.m_stationLocation))
+                sendToLocal = true;
+        }
+        else if (request.m_stationConnectionInfo.m_stationLocation.m_stationAddress.m_address !=
+                 table->m_stationLocation.m_stationAddress.m_address)
+        {
+            sendToLocal = true;
+        }
+    }
+    else
+    {
+        sendToLocal = true;
+    }
+
+    if (!sendToLocal)
+    {
+        sent = true;
+        SendProbeRequest(table->m_localStationLocation, request);
+        if (request.m_probeRequested && !inet::IsEdmMapping(m_localLocation) &&
+            !inet::IsEdmMapping(request.m_stationLocation))
+            SendProbeRequest(table->m_stationLocation, request);
+    }
+    else
+    {
+        SendProbeRequest(table->m_stationLocation, request);
+    }
+
+    m_edmProbeRequests.Release(m_edmProbeRequests.Begin());
+    if (!sent && inet::IsEdmMapping(request.m_stationLocation) &&
+        !inet::IsEdmMapping(m_localLocation))
+        ScheduleProbeRequest(request);
+    return m_edmProbeRequests.GetSize() != 0 && !m_fieldC58;
+}
+
+void NatTraversalProtocol::SendProbes()
+{
+    if (m_localServiceConnectionId == 0)
+        return;
+
+    common::ListNode* node = m_probeList.Begin();
+    while (node != m_probeList.End())
+    {
+        NatProbe* probe = NatProbeList::ProbeOf(node);
+        common::Time now;
+        now.SetNow();
+        if (now <= probe->m_deadline || (probe->m_rtt != -1 && !probe->m_sent))
+        {
+            common::Time updateTime;
+            updateTime.SetNow();
+            if (!probe->UpdateIsNeeded(updateTime))
+            {
+                node = node->next;
+                continue;
+            }
+            if (m_fieldC58 && probe->m_probeCount == 0)
+            {
+                node = node->next;
+                continue;
+            }
+        }
+        else
+        {
+            probe->Trace(cTraceVerbose);
+            m_traversalTimes.Remove(probe->m_stationLocation);
+            m_ownerNatTraverser->ClearNatMonitoringData(probe->m_stationLocation);
+            common::ListNode* next = node->next;
+            m_probeList.Release(node);
+            node = next;
+            continue;
+        }
+
+        unsigned char count = 0;
+        unsigned int repeat = 2;
+        if (probe->m_probeCount < 11 && probe->m_startTime.m_tick == 0 &&
+            probe->m_stationLocation.m_field26 == 1 && inet::IsPublic(probe->m_stationLocation) &&
+            probe->m_stationLocation.m_stationAddress.m_address !=
+                m_localLocation.m_stationAddress.m_address)
+        {
+            count = 4;
+            repeat = 3;
+        }
+
+        NatProbeRequest* request =
+            FindProbeRequestByConnectionId(probe->m_stationLocation.m_field1c);
+        if (request == 0 || request->m_callContext == 0 ||
+            request->m_callContext->m_state == common::CallContext::cStateInProgress)
+        {
+            if (probe->m_startTime.m_tick == 0)
+                probe->SprayTargetPort();
+        }
+        else
+        {
+            request->m_callContext->InitiateCall();
+            NatTraversalTime* traversalTime = m_traversalTimes.Find(request->m_stationLocation);
+            if (traversalTime == 0)
+            {
+                NatTraversalTime newTraversalTime;
+                newTraversalTime.m_location = request->m_stationLocation;
+                newTraversalTime.m_startTime.SetNow();
+                newTraversalTime.m_endTime.SetNow();
+                newTraversalTime.m_count = 0;
+                newTraversalTime.m_port = 0;
+                m_traversalTimes.Add(newTraversalTime);
+            }
+            else
+            {
+                traversalTime->m_startTime.SetNow();
+            }
+            if (probe->m_startTime.m_tick == 0)
+                probe->SprayTargetPort();
+        }
+
+        transport::StationLocation target(probe->m_stationLocation);
+        for (unsigned int i = 0; i < repeat; ++i)
+        {
+            common::Time sendTime;
+            sendTime.SetNow();
+            SendProbe(cProbeType0, target, sendTime, count);
+        }
+        ++probe->m_probeCount;
+        if (inet::IsEdmMapping(m_localLocation))
+        {
+            if (probe->m_probeLimit <= probe->m_probeCount)
+            {
+                m_fieldC58 = true;
+                return;
+            }
+            m_pendingConnectionId = probe->m_stationLocation.m_field1c;
+            return;
+        }
+        node = node->next;
+    }
+}
+
+common::Result NatTraversalProtocol::dispatchProbe(common::Time& now)
+{
+    if (m_fieldC58 || m_fieldC59 || m_fieldC5A)
+    {
+        if (m_pendingDetectionDeadline < now && m_fieldC5A)
+        {
+            NatProbe* probe = m_probeList.FindByConnectionId(m_pendingConnectionId);
+            NatProbeRequest* request = FindProbeRequestByConnectionId(m_pendingConnectionId);
+            m_pendingConnectionId = 0;
+            m_fieldC5A = false;
+            if (m_fieldC59)
+            {
+                probe = m_probeList.FindByConnectionId(m_pendingConnectionId);
+                request = FindProbeRequestByConnectionId(m_pendingConnectionId);
+                m_pendingConnectionId = 0;
+                m_fieldC59 = false;
+            }
+            if (m_callContext.m_state == common::CallContext::cStateInProgress)
+                CancelPortDetection();
+            if (probe != 0)
+            {
+                probe->m_stationLocation.Trace(cTraceBrief);
+                common::Time probeTime;
+                probeTime.SetNow();
+                probe->m_deadline = probeTime;
+            }
+            if (request != 0)
+            {
+                request->Trace(cTraceBrief);
+                if (request->m_callContext != 0)
+                {
+                    common::Result failure = cResultProbeRequestTimedOut;
+                    request->m_callContext->SignalFailure(failure);
+                }
+                m_probeRequests.Release(NatProbeRequestList::NodeOf(request));
+            }
+            m_fieldC58 = false;
+        }
+    }
+
+    if (m_callContext.m_state >= common::CallContext::cStateSuccess &&
+        m_callContext.m_state <= common::CallContext::cStateCancelled)
+    {
+        if (m_callContext.m_result == 0)
+        {
+            if (m_fieldC5B)
+            {
+                unsigned short port = GetPeer2PeerPort(m_portDetectionLocation);
+                if (port != 0)
+                {
+                    transport::StationLocation target(m_portDetectionLocation);
+                    target.m_stationAddress.m_port = port;
+                    SendDummyPacket(target, 4, 5);
+                }
+                m_fieldC5B = false;
+                unsigned int index =
+                    m_ownerNatTraverser->GetNatMonitoringDataIndex(m_portDetectionLocation);
+                if (index < cNatMonitoringEntryNum)
+                    g_natMonitoringData.traversalStates[index] = port == 0 ? 0 : 1;
+                if (m_fieldC5C)
+                {
+                    m_fieldC5C = false;
+                    m_portDetectionLocation = transport::StationLocation();
+                    m_callContext.Reset();
+                    m_nextDispatchTime = common::Time();
+                    return 0;
+                }
+            }
+            m_callContext.Reset();
+        }
+        else
+        {
+            NatProbeRequest* request =
+                FindProbeRequestByConnectionId(m_portDetectionLocation.m_field1c);
+            if (request != 0)
+            {
+                if (request->m_callContext != 0)
+                {
+                    common::Result failure = cResultPortDetectionFailed;
+                    request->m_callContext->SignalFailure(failure);
+                }
+                EraseProbeRequestByConnectionId(m_portDetectionLocation.m_field1c);
+            }
+            NatProbe* probe = m_probeList.FindByConnectionId(m_portDetectionLocation.m_field1c);
+            if (probe != 0)
+            {
+                common::Time probeTime;
+                probeTime.SetNow();
+                probe->m_deadline = probeTime;
+            }
+            m_portDetectionLocation = transport::StationLocation();
+            m_callContext.Reset();
+        }
+    }
+
+    while (SendProbeRequests())
+    {
+    }
+    if (m_callContext.m_state != common::CallContext::cStateInProgress)
+        SendProbes();
+    if (m_ownerNatTraverser != 0)
+        m_ownerNatTraverser->UpdateRelayTable();
+    return 0;
+}
+
+common::Result NatTraversalProtocol::Dispatch()
+{
+    if (m_ownerNatTraverser == 0 || !m_ownerNatTraverser->IsNatDetectionCompleted())
+        return 0;
+
+    transport::PacketHandler* handler = handlerOf(mStationPacketHandler);
+    transport::PacketHandler::Iterator& iterator = handler->GetIterator(cProtocolType);
+    handler->BeginIteration();
+    while (!handler->IsEndIteration())
+    {
+        ReceiveMessage(*iterator.GetMessageReader());
+        handler->NextIteration();
+    }
+
+    common::Time now;
+    now.SetNow();
+    if (now <= m_nextDispatchTime)
+        return 0;
+
+    m_nextDispatchTime.m_tick =
+        now.m_tick + common::TimeSpan::GetTicksPerMSec().m_tick * g_natDispatchIntervalMsec;
+    if (m_serverKeepAliveEnabled && m_serverKeepAliveTime < now)
+    {
+        SendDummyPacket(m_serverLocation, 0, 3);
+        m_serverKeepAliveTime.m_tick =
+            now.m_tick + common::TimeSpan::GetTicksPerMSec().m_tick * 15000;
+    }
+    return dispatchProbe(now);
+}
+
+bool NatTraversalProtocol::GetLatestStationLocation(const transport::StationLocation& location,
+                                                    transport::StationLocation* latest)
+{
+    NatProbe* probe = m_probeList.FindByConnectionId(location.m_field1c);
+    if (probe != 0 && !(probe->m_stationLocation == location))
+    {
+        *latest = probe->m_stationLocation;
+        if (latest->m_principalId == 0)
+            latest->m_principalId = location.m_principalId;
+        if (latest->m_field24 == 0)
+            latest->m_field24 = location.m_field24;
+        if (latest->m_field23 == 0)
+            latest->m_field23 = location.m_field23;
+        if (latest->m_field25 == 0)
+            latest->m_field25 = location.m_field25;
+        if (latest->m_field18 == 0)
+            latest->m_field18 = location.m_field18;
+        if (latest->m_field21 == 0)
+            latest->m_field21 = location.m_field21;
+        if (latest->m_field22 == 0)
+            latest->m_field22 = location.m_field22;
+        if (latest->m_field20 == 0)
+            latest->m_field20 = location.m_field20;
+        if (!latest->m_inetAddress.IsValid())
+            latest->m_inetAddress = location.m_inetAddress;
+        return true;
+    }
+    return false;
+}
+
+void NatTraversalProtocol::StartServerKeepAlive()
+{
+    common::Time now;
+    m_serverKeepAliveEnabled = true;
+    now.SetNow();
+    m_serverKeepAliveTime = now;
+}
+
+void NatTraversalProtocol::StopServerKeepAlive()
+{
+    m_serverKeepAliveEnabled = false;
+}
+
+void NatTraversalProtocol::Trace(unsigned long long value) const
+{
+    m_probeList.Trace(value);
+}
+
+NatProbe* NatTraversalProtocol::GetNatProbe(const transport::StationLocation& location)
+{
+    return m_probeList.FindByConnectionId(location.m_field1c);
+}
+
+void NatTraversalProtocol::ResetProbeStatus(const transport::StationLocation& location, bool relay)
+{
+    NatProbe* probe;
+    if (!relay)
+    {
+        probe = m_probeList.FindByAddressPortAndConnectionId(location);
+        if (probe == 0 || probe->m_rtt == -1)
+        {
+            probe = m_probeList.FindByAddressAndConnectionId(location);
+            if (probe == 0)
+                return;
+        }
+    }
+    else
+    {
+        probe = m_probeList.FindByAddressAndConnectionId(location);
+        if (probe == 0)
+            return;
+        if (probe->m_rtt == -1)
+            return;
+    }
+
+    probe->m_probeCount = 0;
+    probe->m_sent = 0;
+    setDeadline(probe->m_deadline, g_natProbeDurationMsec);
+    location.Trace(cTraceVerbose);
+}
+
+void NatTraversalProtocol::ResetNextProbeTime()
+{
+    m_nextDispatchTime = common::Time();
+}
+
+unsigned short NatTraversalProtocol::GetProtocolType() const
+{
+    return cProtocolType;
+}
+
+unsigned int NatTraversalProtocol::IsProtocolFilteringEnabled() const
+{
+    return 0;
+}
+
+static void NatPortDetectionCompletionCallback(common::Result result, void* param)
+{
+    static_cast<NatTraversalProtocol*>(param)->CompletedNatPortDetection(result);
+}
+
+}}}

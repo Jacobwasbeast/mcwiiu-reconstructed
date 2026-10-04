@@ -15,7 +15,8 @@ public:
                     const transport::StationConnectionInfo& connectionInfo,
                     bool probeRequested, bool addressValid, common::CallContext* callContext);
     explicit NatProbeRequest(const transport::StationLocation& location);
-    virtual ~NatProbeRequest();
+    NatProbeRequest() : m_stationLocation(), m_stationConnectionInfo(), m_deadline() {}
+    virtual ~NatProbeRequest() {}
 
     virtual void Trace(unsigned long long value) const;
 

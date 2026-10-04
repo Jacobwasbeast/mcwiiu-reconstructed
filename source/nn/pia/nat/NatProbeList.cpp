@@ -1,3 +1,4 @@
+#include "nn/pia/nat/Api.hpp"
 #include "nn/pia/nat/NatProbeList.hpp"
 
 #include <cstddef>
@@ -9,22 +10,6 @@
 #include "nn/pia/nat/NatProbe.hpp"
 
 namespace nn { namespace pia { namespace nat {
-
-struct NatProbeList::ProbeRecord
-{
-    common::ListNode node;
-    boost::aligned_storage<sizeof(NatProbe), boost::alignment_of<NatProbe>::value>::type probeStorage;
-
-    NatProbe* Probe()
-    {
-        return reinterpret_cast<NatProbe*>(&probeStorage);
-    }
-
-    const NatProbe* Probe() const
-    {
-        return reinterpret_cast<const NatProbe*>(&probeStorage);
-    }
-};
 
 NatProbeList::NatProbeList()
     : m_active(), m_free(), m_nodeOffset(0), m_storage(0), m_storageCount(0),
@@ -79,27 +64,6 @@ NatProbeList::~NatProbeList()
         common::DeleteArray(m_allocation);
         m_allocation = 0;
     }
-}
-
-NatProbeList::ProbeRecord* NatProbeList::RecordFromNode(common::ListNode* node) const
-{
-    return reinterpret_cast<ProbeRecord*>(reinterpret_cast<char*>(node) - offsetof(ProbeRecord, node));
-}
-
-const NatProbeList::ProbeRecord* NatProbeList::RecordFromLocation(
-    const transport::StationLocation* location) const
-{
-    return reinterpret_cast<const ProbeRecord*>(
-        reinterpret_cast<const char*>(location) - offsetof(ProbeRecord, probeStorage));
-}
-
-void NatProbeList::Retire(ProbeRecord* record)
-{
-    NatProbe* probe = record->Probe();
-    probe->Trace(0x800);
-    probe->~NatProbe();
-    m_active.EraseNode(&record->node);
-    m_free.InsertAfterNode(m_free.Sentinel(), &record->node);
 }
 
 bool NatProbeList::IsSameAddressPortAndConnectionId(
@@ -208,7 +172,7 @@ void NatProbeList::RemoveDifferentPortAndSameAddressAndConnectionIdProbes(
 
 bool NatProbeList::AddProbe(const NatProbe& probe)
 {
-    probe.Trace(0x800);
+    probe.Trace(cTraceBrief);
     if (probe.m_startTime.m_tick == 0)
     {
         RemoveDifferentConnectionIdAndSameAddressPortProbes(probe.m_stationLocation);
@@ -295,10 +259,10 @@ bool NatProbeList::ProcessProbe(const transport::StationLocation& location,
 
     if (probe == 0)
     {
-        location.Trace(0x800);
+        location.Trace(cTraceBrief);
         const common::TimeSpan duration(
             common::TimeSpan::GetTicksPerMSec().m_tick * 90000LL);
-        const NatProbe newProbe(location, now, duration, timeout, 0x32, 0);
+        const NatProbe newProbe(location, now, duration, timeout, cDefaultSprayCount, 0);
         return AddProbe(newProbe);
     }
 
@@ -316,7 +280,7 @@ void NatProbeList::ProcessProbeReply(const transport::StationLocation& location,
     NatProbe* probe = FindByAddressAndConnectionId(location);
     if (probe == 0)
     {
-        location.Trace(0x800);
+        location.Trace(cTraceBrief);
         return;
     }
 

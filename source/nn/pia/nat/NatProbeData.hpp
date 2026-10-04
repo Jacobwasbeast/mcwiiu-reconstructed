@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 #include "nn/pia/Common.hpp"
+#include "nn/pia/common/Time.hpp"
 
 namespace nn { namespace pia { namespace nat {
 
@@ -11,14 +12,16 @@ class NatProbeData
 {
 public:
     NatProbeData();
-    virtual ~NatProbeData();
+    virtual ~NatProbeData() {}
 
-    common::Result Serialize(unsigned char* buffer, unsigned int* result, unsigned int size) const;
+    common::Result Serialize(unsigned char* buffer, unsigned int* size, unsigned int maxSize) const;
     common::Result Deserialize(const unsigned char* buffer, unsigned int size);
     void Trace(uint64_t value) const;
 
-private:
-    unsigned char mStorage[16];
+    unsigned int m_connectionId;
+    unsigned char m_type;
+    unsigned char m_extra[3];
+    common::Time m_time;
 };
 
 }}}

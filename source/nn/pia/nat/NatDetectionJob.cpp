@@ -13,12 +13,12 @@ namespace {
 typedef unsigned int (common::StepSequenceJob::*BaseStep)();
 
 template <typename T>
-BaseStep stepOf(unsigned int (T::*method)())
+inline BaseStep stepOf(unsigned int (T::*method)())
 {
     return static_cast<BaseStep>(method);
 }
 
-void setStep(NatDetectionJob* job, unsigned int (NatDetectionJob::*method)(),
+inline void setStep(NatDetectionJob* job, unsigned int (NatDetectionJob::*method)(),
              const char* name)
 {
     job->m_currentStep.m_function = stepOf(method);
@@ -56,8 +56,8 @@ NatDetectionJob::~NatDetectionJob()
 {
 }
 
-void NatDetectionJob::Startup(common::CallContext* context, NatDetecter* detecter,
-                              NatTraverser* traverser)
+common::Result NatDetectionJob::Startup(common::CallContext* context, NatDetecter* detecter,
+                                        NatTraverser* traverser)
 {
     m_endTime = 0;
     m_detecter = detecter;
@@ -67,11 +67,11 @@ void NatDetectionJob::Startup(common::CallContext* context, NatDetecter* detecte
     m_traverser = traverser;
     Reset(true);
     m_context = context;
-    if (m_context == 0 || !m_context->InitiateCall())
-        return;
+    if (!m_context->InitiateCall())
+        return cResultInvalidState;
     m_sendStarted = false;
     m_receivedFirstReply = false;
-    m_success = false;
+    return 0;
 }
 
 void NatDetectionJob::Cleanup()

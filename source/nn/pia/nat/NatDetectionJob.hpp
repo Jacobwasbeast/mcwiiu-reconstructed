@@ -1,6 +1,7 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_PIA_NAT_NAT_DETECTION_JOB_HPP
 #define LEGACY_CONSOLE_WIIU_NN_PIA_NAT_NAT_DETECTION_JOB_HPP
 
+#include "nn/pia/Common.hpp"
 #include "nn/pia/common/StepSequenceJob.hpp"
 
 namespace nn { namespace pia { namespace common { class CallContext; } namespace nat {
@@ -14,8 +15,8 @@ public:
     NatDetectionJob();
     virtual ~NatDetectionJob();
 
-    void Startup(common::CallContext* context, NatDetecter* detecter,
-                 NatTraverser* traverser);
+    common::Result Startup(common::CallContext* context, NatDetecter* detecter,
+                           NatTraverser* traverser);
     void Cleanup();
     virtual void CancelCleanup();
     unsigned int StepPreTest();

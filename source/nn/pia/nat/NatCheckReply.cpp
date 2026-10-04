@@ -3,8 +3,12 @@
 namespace nn { namespace pia { namespace nat {
 
 NatCheckReply::NatCheckReply()
-    : m_values()
+    : count(0), body()
 {
+    body.portWord = 0;
+    body.address = 0;
+    body.type = 0;
+    body.payload = 0;
 }
 
 }}}

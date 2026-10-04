@@ -1,3 +1,4 @@
+#include "nn/pia/nat/Api.hpp"
 #include "nn/pia/nat/NatProbe.hpp"
 
 #include "nn/pia/common/InetAddress.hpp"
@@ -7,7 +8,7 @@ namespace nn { namespace pia { namespace nat {
 
 namespace
 {
-unsigned short s_targetAddressUpdateCount = 0xffff;
+unsigned short s_targetAddressUpdateCount = cCounterMax;
 }
 
 NatProbe::NatProbe(const transport::StationLocation& location, const common::Time& start,
@@ -29,7 +30,7 @@ NatProbe::NatProbe(const transport::StationLocation& location, const common::Tim
     now.SetNow();
     m_deadline.m_tick = now.m_tick + duration.m_tick;
 
-    if (location.m_field22 == 0xff)
+    if (location.m_field22 == cInvalidIndex)
     {
         common::InetAddress adjusted(location.m_stationAddress.m_address,
                                      static_cast<unsigned short>(location.m_stationAddress.m_port + 10));
@@ -39,11 +40,7 @@ NatProbe::NatProbe(const transport::StationLocation& location, const common::Tim
     m_firstPort = static_cast<short>(m_stationLocation.m_stationAddress.m_port);
     m_lastPort = static_cast<short>(m_firstPort + sprayRange);
     if (static_cast<unsigned short>(m_lastPort) < static_cast<unsigned short>(m_firstPort))
-        m_lastPort = static_cast<short>(0xffff);
-}
-
-NatProbe::~NatProbe()
-{
+        m_lastPort = static_cast<short>(cPortMax);
 }
 
 bool NatProbe::UpdateTargetAddress(const transport::StationLocation& location)
@@ -55,7 +52,7 @@ bool NatProbe::UpdateTargetAddress(const transport::StationLocation& location)
     {
         if (session::g_piaMesh == 0 || !session::g_piaMesh->IsProcessedAtMeshBegin())
         {
-            if (s_targetAddressUpdateCount == 0xffff)
+            if (s_targetAddressUpdateCount == cCounterMax)
                 s_targetAddressUpdateCount = 1;
             else
                 ++s_targetAddressUpdateCount;
@@ -77,7 +74,7 @@ bool NatProbe::UpdateTargetAddress(const transport::StationLocation& location)
     }
     else if (session::g_piaMesh == 0 || !session::g_piaMesh->IsProcessedAtMeshBegin())
     {
-        if (s_targetAddressUpdateCount == 0xffff)
+        if (s_targetAddressUpdateCount == cCounterMax)
             s_targetAddressUpdateCount = 1;
         else
             ++s_targetAddressUpdateCount;

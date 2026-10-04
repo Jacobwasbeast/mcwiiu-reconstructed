@@ -15,10 +15,10 @@ public:
 
     Result Startup(NatTraverser* traverser, common::CallContext* context,
                    const common::InetAddress& address);
-    Result Startup(NatTraverser* traverser, common::CallContext* context,
-                   const common::InetAddress& address,
-                   const transport::StationLocation& primary,
-                   const transport::StationLocation& secondary, bool relay);
+    virtual Result Startup(NatTraverser* traverser, common::CallContext* context,
+                           const common::InetAddress& address,
+                           const transport::StationLocation& primary,
+                           const transport::StationLocation& secondary, bool relay);
     void Cleanup();
     void SendNatPortDetectionProbes();
     void StartSendingNatCheckProbe();
@@ -28,11 +28,9 @@ public:
     unsigned int GetDetectionTimeout() const;
 
 private:
-    NatTraverser* m_portTraverser;
     transport::StationLocation m_primaryStation;
     transport::StationLocation m_secondaryStation;
     bool m_relay;
-    unsigned char m_padding[3];
     common::Time m_startTime;
 };
 

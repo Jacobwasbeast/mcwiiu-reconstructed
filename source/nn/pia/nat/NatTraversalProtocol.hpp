@@ -21,6 +21,8 @@ class NatProbeRequest;
 class NatTraversalProtocol : public transport::Protocol
 {
 public:
+    enum { cProtocolType = 0x34 };
+
     enum ProbeType
     {
         cProbeType0 = 0,
@@ -34,11 +36,11 @@ public:
     void CancelPortDetection();
     void CleanupNatTraversal();
     void AddProbeRequest(const NatProbeRequest& request);
-    common::Result PrepareNatTraversal(const transport::StationLocation& location,
-                                       const transport::StationConnectionInfo& connection,
-                                       common::CallContext* context,
-                                       bool relay, bool passive);
-    unsigned int EraseProbeRequestByConnectionId(unsigned int connectionId);
+    bool PrepareNatTraversal(const transport::StationLocation& location,
+                             const transport::StationConnectionInfo& connection,
+                             common::CallContext* context,
+                             bool passive, bool force);
+    bool EraseProbeRequestByConnectionId(unsigned int connectionId);
     void ClearNatTraversal(const transport::StationLocation& location, bool relay);
     void ProcessProbeRequest(const transport::StationLocation& location);
     common::Result SendMessage(transport::ProtocolId protocolId,
@@ -60,7 +62,7 @@ public:
     void SendProbeRequest(transport::StationLocation location,
                           const NatProbeRequest& request);
     void ScheduleProbeRequest(const NatProbeRequest& request);
-    unsigned int SendProbeRequests();
+    bool SendProbeRequests();
     void SendProbes();
     common::Result dispatchProbe(common::Time& now);
     virtual common::Result Dispatch();
@@ -75,20 +77,18 @@ public:
     virtual unsigned short GetProtocolType() const;
     virtual unsigned int IsProtocolFilteringEnabled() const;
 
-    bool IsProcessingNatDetection() const;
-
 private:
     friend class NatTraverser;
 
     unsigned int m_localServiceConnectionId;
     transport::StationLocation m_localLocation;
-    transport::StationLocation m_otherLocation;
+    transport::StationLocation m_serverLocation;
     common::CallContext m_callContext;
     NatProbeList m_probeList;
     NatProbeRequestList m_edmProbeRequests;
     NatProbeRequestList m_probeRequests;
     NatTraversalTimeList m_traversalTimes;
-    common::Time m_nextProbeTime;
+    common::Time m_nextDispatchTime;
     common::Time m_pendingDetectionDeadline;
     bool m_fieldC58;
     bool m_fieldC59;

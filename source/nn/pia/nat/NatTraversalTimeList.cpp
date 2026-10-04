@@ -1,40 +1,11 @@
+#include "nn/pia/nat/Api.hpp"
 #include "nn/pia/nat/NatTraversalTimeList.hpp"
 
-#include <cstring>
 #include <new>
 
+#include "nn/pia/transport/StationLocation.hpp"
+
 namespace nn { namespace pia { namespace nat {
-
-namespace
-{
-NatTraversalTime* valueFromNode(common::ListNode* node, int nodeOffset)
-{
-    unsigned char* value = reinterpret_cast<unsigned char*>(node) - nodeOffset;
-    return reinterpret_cast<NatTraversalTime*>(value + sizeof(common::ListNode));
-}
-
-bool sameLocation(const transport::StationLocation& left,
-                  const transport::StationLocation& right)
-{
-    if (left.m_field1c == right.m_field1c)
-        return true;
-    const unsigned long long key = right.m_stationAddress.GetKey();
-    const unsigned long long recordKey = left.m_stationAddress.GetKey();
-    return key == recordKey;
-}
-}
-
-NatTraversalTimeList::NatTraversalTimeList()
-    : m_active(), m_free(), m_nodeOffset(0), m_storage(m_embeddedNodePool),
-      m_storageCount(32)
-{
-    for (unsigned int i = 0; i < m_storageCount; ++i)
-    {
-        m_embeddedNodePool[i].node.prev = 0;
-        m_embeddedNodePool[i].node.next = 0;
-        m_free.InsertBeforeNode(m_free.Sentinel(), &m_embeddedNodePool[i].node);
-    }
-}
 
 NatTraversalTimeList::~NatTraversalTimeList()
 {
@@ -57,8 +28,11 @@ NatTraversalTime* NatTraversalTimeList::Find(const transport::StationLocation& l
     common::ListNode* sentinel = m_active.Sentinel();
     for (common::ListNode* node = sentinel->next; node != sentinel; node = node->next)
     {
-        NatTraversalTime* value = valueFromNode(node, m_nodeOffset);
-        if (sameLocation(value->m_location, location))
+        NatTraversalTime* value = ValueOf(node);
+        if (value->m_location.m_field1c == location.m_field1c)
+            return value;
+        if (value->m_location.m_field1c != location.m_field1c &&
+            location.m_stationAddress.GetKey() == value->m_location.m_stationAddress.GetKey())
             return value;
     }
     return 0;
@@ -69,17 +43,20 @@ void NatTraversalTimeList::Add(const NatTraversalTime& time)
     NatTraversalTime* value = Find(time.m_location);
     if (value == 0)
     {
-        common::ListNode* node = m_free.PopBackNode();
-        if (node == 0)
+        if (m_free.GetNodeNum() == 0)
             return;
-
-        value = valueFromNode(node, m_nodeOffset);
-        std::memset(value, 0, sizeof(NatTraversalTime));
-        ::new (static_cast<void*>(value)) NatTraversalTime();
+        common::ListNode* node = m_free.PopBackNode();
+        if (node != 0)
+            node = reinterpret_cast<common::ListNode*>(reinterpret_cast<unsigned char*>(node) - m_nodeOffset);
+        value = ValueOf(node);
+        if (value != 0)
+            ::new (static_cast<void*>(value)) NatTraversalTime();
         m_active.InsertBeforeNode(m_active.Sentinel(), node);
+        if (value == 0)
+            return;
     }
 
-    time.m_location.Trace(0x800);
+    time.m_location.Trace(cTraceBrief);
     value->m_location = time.m_location;
     value->m_startTime = time.m_startTime;
     value->m_endTime = time.m_endTime;
@@ -94,10 +71,12 @@ void NatTraversalTimeList::Remove(const transport::StationLocation& location)
     while (node != sentinel)
     {
         common::ListNode* next = node->next;
-        NatTraversalTime* value = valueFromNode(node, m_nodeOffset);
-        if (sameLocation(value->m_location, location))
+        NatTraversalTime* value = ValueOf(node);
+        if (value->m_location.m_field1c == location.m_field1c ||
+            (value->m_location.m_field1c != location.m_field1c &&
+             location.m_stationAddress.GetKey() == value->m_location.m_stationAddress.GetKey()))
         {
-            value->m_location.Trace(0x800);
+            value->m_location.Trace(cTraceBrief);
             value->~NatTraversalTime();
             m_active.EraseNode(node);
             m_free.InsertAfterNode(m_free.Sentinel(),

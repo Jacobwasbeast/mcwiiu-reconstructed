@@ -13,7 +13,7 @@ public:
     NatProbe(const transport::StationLocation& location, const common::Time& start,
              const common::TimeSpan& duration, unsigned char timeout,
              unsigned char sprayCount, unsigned char sprayRange);
-    virtual ~NatProbe();
+    virtual ~NatProbe() {}
 
     bool UpdateTargetAddress(const transport::StationLocation& location);
     void UpdateTargetPort(const transport::StationLocation& location);
@@ -23,12 +23,10 @@ public:
     short GetPortSprayCount();
     virtual void Trace(unsigned long long value) const;
 
-private:
     NatProbe()
         : m_stationLocation(), m_startTime(), m_deadline(), m_ticksPerTimeout(0)
     {
     }
-    friend class NatProbeList;
 
     transport::StationLocation m_stationLocation;
     common::Time m_startTime;

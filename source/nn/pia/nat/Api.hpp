@@ -11,6 +11,68 @@ struct DebugSetting
 
 const DebugSetting* GetDebugSetting();
 
+enum
+{
+    cResultInvalidArgument = 0x10c07,
+    cResultInvalidState = 0x10c08,
+    cResultCancelled = 0x6c05,
+    cResultProbeRequestTimedOut = 0x644a,
+    cResultPortDetectionFailed = 0x6434
+};
+
+enum
+{
+    cTraceError = 1,
+    cTraceBrief = 0x800,
+    cTraceDetail = 0x1000,
+    cTraceVerbose = 0x2000
+};
+
+enum
+{
+    cNatServerPort = 0x8237,
+    cProbeMessageSize = 0x10,
+    cDefaultSprayCount = 0x32,
+    cPortDetectionProbeRequest = 0x65,
+    cNatMonitoringEntryNum = 15
+};
+
+enum
+{
+    cInvalidIndex = 0xff,
+    cPortMax = 0xffff,
+    cCounterMax = 0xffff,
+    cInvalidId = 0xffffffff
+};
+
+struct NatMonitoringData
+{
+    unsigned short propertyDetectionCount;
+    unsigned short portDetectionCount;
+    unsigned int connectionIds[cNatMonitoringEntryNum];
+    unsigned int principalIdHashes[cNatMonitoringEntryNum];
+    unsigned int elapsedTimes[cNatMonitoringEntryNum];
+    unsigned int attemptCounts[cNatMonitoringEntryNum];
+    unsigned int results[cNatMonitoringEntryNum];
+    unsigned char probeFlags[cNatMonitoringEntryNum];
+    unsigned char sprayCounts[cNatMonitoringEntryNum];
+    unsigned char probeTimeouts[cNatMonitoringEntryNum];
+    unsigned char traversalStates[cNatMonitoringEntryNum];
+    unsigned char reserved[4];
+    unsigned short successCount;
+    unsigned short failureCount;
+    unsigned short unknownEC0;
+    unsigned short portDetectionElapsedMsec;
+    unsigned char remoteMappingFlags[cNatMonitoringEntryNum];
+};
+
+extern NatMonitoringData g_natMonitoringData;
+extern unsigned int g_natLocalConnectionId;
+extern int g_natClearProbeDelayMsec;
+extern int g_natProbeDurationMsec;
+extern unsigned char g_natProbeSprayCount;
+extern int g_natDispatchIntervalMsec;
+
 }}}
 
 #endif

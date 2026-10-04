@@ -4,12 +4,16 @@
 #include "nn/pia/Common.hpp"
 #include "nn/pia/common/CallContext.hpp"
 #include "nn/pia/common/InetAddress.hpp"
+#include "nn/pia/common/SimpleContainer.hpp"
 
 namespace nn { namespace pia {
 namespace common { class CallContext; }
-namespace inet { class IFacade; }
+namespace inet { class IFacade; class NexFacade; }
 namespace transport { class StationLocation; class StationConnectionInfo; }
 namespace nat {
+class NatDetecter;
+class NatPortDetecter;
+class NatPropertyDetecter;
 class NatTraversalProtocol;
 
 class NatTraverser
@@ -17,24 +21,24 @@ class NatTraverser
 public:
     NatTraverser();
     virtual ~NatTraverser();
+    virtual common::Result Startup(inet::IFacade* facade, common::CallContext* context);
+    virtual void Cleanup();
+    virtual void Trace(unsigned long long value) const;
     void CompleteNatDetectionCommon();
     void CompletedNatPropertyDetection(bool success);
-    void StartNatPropertyDetection();
+    common::Result StartNatPropertyDetection();
     void CompletedNatPortDetection(bool success);
-    void StartNatPortDetection();
-    common::Result Startup(inet::IFacade* facade, common::CallContext* context);
-    void Cleanup();
-    int GetNatMonitoringDataIndex(const transport::StationLocation& location);
+    common::Result StartNatPortDetection();
+    unsigned int GetNatMonitoringDataIndex(const transport::StationLocation& location);
     void IncrementNatTraversalSuccessCount(unsigned int index);
     void IncrementNatTraversalFailureCount(unsigned int index);
     void ReportNatTraversalResult(const transport::StationLocation& location, common::Result result, bool relay);
-    unsigned int PrepareNatTraversal(const transport::StationLocation& location,
-                                     const transport::StationConnectionInfo& connection,
-                                     common::CallContext* context, bool relay, bool passive, bool force);
+    bool PrepareNatTraversal(const transport::StationLocation& location,
+                             const transport::StationConnectionInfo& connection,
+                             common::CallContext* context, bool relay, bool passive, bool force);
     void ClearNatTraversal(const transport::StationLocation& location, bool relay);
-    unsigned int CheckLatestStationLocation(transport::StationLocation& location);
-    void Trace(unsigned long long value) const;
-    void CreateProtocols();
+    bool CheckLatestStationLocation(transport::StationLocation& location);
+    common::Result CreateProtocols();
     void ClearNatMonitoringData(const transport::StationLocation& location);
     bool IsStartupCancelled();
     void RelayProbeRequest(const transport::StationLocation& source,
@@ -44,38 +48,50 @@ public:
     bool IsTraversed(const transport::StationLocation& location) const;
     bool IsTraversed(unsigned int index) const;
     void SetLocalPublicLocation(const transport::StationLocation& location);
-    void* GetNatPortDetecter();
+    NatPortDetecter* GetNatPortDetecter();
     unsigned int GetLocalServiceConnectionId() const;
     unsigned short GetRandomPortRangeMin() const;
     unsigned short GetRandomPortRangeMax() const;
     bool IsNatDetectionCompleted() const;
     void ResetProbeStatus(const transport::StationLocation& location, bool relay);
     void UpdateRelayTable();
-    unsigned int GetRelayServerAddress() const;
-    bool IsProcessingNatDetection() const;
+    const common::InetAddress& GetRelayServerAddress() const;
 
 private:
-    common::CallContext* m_activeContext;
-    unsigned char m_monitoringData[0x14];
-    common::InetAddress m_servers[2];
-    unsigned char m_detectionActive;
-    unsigned char m_reservedState;
-    unsigned short m_portDelta;
-    unsigned int m_serverCount;
+    friend class NatDetecter;
+    friend class inet::NexFacade;
+    friend class NatPortDetecter;
+    friend class NatPropertyDetecter;
+    friend class NatTraversalProtocol;
+
+    struct NatProperty
+    {
+        NatProperty()
+            : m_privatePort(0), m_publicPort(0), m_mappingType(0), m_filteringType(0),
+              m_portDelta(0), m_flag(0)
+        {
+        }
+
+        unsigned short m_privatePort;
+        unsigned short m_publicPort;
+        int m_mappingType;
+        int m_filteringType;
+        int m_portDelta;
+        unsigned char m_flag;
+    };
+
+    common::CallContext* m_callContext;
+    NatProperty m_natProperty;
+    common::SimpleContainer<common::InetAddress, 4> m_servers;
+    unsigned short m_protocolId;
     NatTraversalProtocol* m_protocol;
-    void* m_natPortDetecter;
-    void* m_natPropertyDetecter;
+    unsigned char m_state;
+    unsigned short m_publicPort;
+    NatPortDetecter* m_natPortDetecter;
+    NatPropertyDetecter* m_natPropertyDetecter;
     common::CallContext m_propertyContext;
     common::CallContext m_portContext;
-    unsigned int m_localServiceConnectionId;
-    unsigned short m_randomPortRangeMin;
-    unsigned short m_randomPortRangeMax;
-    unsigned int m_relayServerAddress;
-    bool m_startupCancelled;
     inet::IFacade* m_facade;
-    unsigned int m_monitoringConnectionIds[15];
-    unsigned int m_successCount;
-    unsigned int m_failureCount;
 };
 
 }}
