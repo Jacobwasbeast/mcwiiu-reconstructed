@@ -121,7 +121,7 @@ void SessionBeginMonitoringContent::Cleanup()
     m_metric116 = 0xffffffff;
     m_metric117 = 0xff;
     m_metric118 = 0xff;
-    m_metric125 = 0xffffffff;
+    m_joinTargetIdHash = 0xffffffff;
     m_metric126 = 0xffffffff;
     m_metric133 = 0xffff;
     m_metric134 = 0xffff;
@@ -310,13 +310,13 @@ Result SessionBeginMonitoringContent::Serialize(unsigned char* buffer, unsigned 
     WriteMetric(cursor, m_ownerChangeRetryCount);
     WriteMetric(cursor, m_sessionInfoRetryCount);
     WriteMetric(cursor, m_retryReasonBCount);
-    WriteMetric(cursor, m_metric125);
+    WriteMetric(cursor, m_joinTargetIdHash);
     WriteMetric(cursor, m_metric126);
     WriteMetric(cursor, m_metric127);
     WriteMetric(cursor, m_metric128);
-    WriteMetric(cursor, m_metric129);
+    WriteMetric(cursor, m_joinSessionState);
     WriteMetric(cursor, m_metric130);
-    WriteMetric(cursor, m_metric131);
+    WriteMetric(cursor, m_joinMeshState);
     WriteMetric(cursor, m_metric132);
     WriteMetric(cursor, m_metric133);
     WriteMetric(cursor, m_metric134);

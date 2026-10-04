@@ -1,8 +1,6 @@
 #include "nn/pia/common/Crypto.hpp"
 #include "nn/pia/common/common.hpp"
 
-#include <cstring>
-#include <coreinit/time.h>
 
 namespace nn { namespace pia { namespace common {
 
@@ -70,30 +68,31 @@ Result Crypto::Decrypt(void* destination, const void* source, unsigned int size,
 
 }}}
 
+namespace nn { namespace crypto {
+
+void GenerateRandomBytes(void* destination, unsigned int size);
+
+}}
+
 namespace nn { namespace pia { namespace common { namespace crypto {
 
 void ClearMemory(void* destination, unsigned int size)
 {
-    if (destination != 0)
-        std::memset(destination, 0, size);
+    unsigned char* bytes = static_cast<unsigned char*>(destination);
+    for (int index = 0; index < static_cast<int>(size); ++index)
+        bytes[index] = 0;
 }
 
-unsigned int GenerateRandomSeed()
+unsigned long long GenerateRandomSeed()
 {
-    return static_cast<unsigned int>(OSGetTime());
+    unsigned long long seed = 0;
+    nn::crypto::GenerateRandomBytes(&seed, sizeof(seed));
+    return seed;
 }
 
 void GenerateRandomParameter(void* destination, unsigned int size)
 {
-    if (destination == 0)
-        return;
-    unsigned char* bytes = static_cast<unsigned char*>(destination);
-    unsigned int seed = GenerateRandomSeed();
-    for (unsigned int i = 0; i < size; ++i)
-    {
-        seed = seed * 1664525u + 1013904223u;
-        bytes[i] = static_cast<unsigned char>(seed >> 24);
-    }
+    nn::crypto::GenerateRandomBytes(destination, size);
 }
 
 }}}}

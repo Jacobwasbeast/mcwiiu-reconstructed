@@ -142,13 +142,13 @@ public:
     unsigned char m_ownerChangeRetryCount;
     unsigned char m_sessionInfoRetryCount;
     unsigned char m_retryReasonBCount;
-    unsigned int m_metric125;
+    unsigned int m_joinTargetIdHash;
     unsigned int m_metric126;
     unsigned char m_metric127;
     unsigned char m_metric128;
-    unsigned char m_metric129;
+    unsigned char m_joinSessionState;
     unsigned char m_metric130;
-    unsigned char m_metric131;
+    unsigned char m_joinMeshState;
     unsigned char m_metric132;
     unsigned short m_metric133;
     unsigned short m_metric134;

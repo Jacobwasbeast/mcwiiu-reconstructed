@@ -14,12 +14,11 @@ public:
     unsigned int GetU32();
 
 private:
+    uint64_t m_counter;
+    unsigned char m_unknown08[16];
     uint64_t m_seed;
-    uint64_t m_stream;
-    uint32_t m_setting0;
-    uint32_t m_setting1;
-    uint32_t m_setting2;
-    uint32_t m_setting3;
+    uint64_t m_setting0;
+    uint64_t m_setting1;
 };
 
 }}}

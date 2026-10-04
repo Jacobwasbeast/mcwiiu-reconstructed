@@ -8,11 +8,11 @@ namespace nn { namespace pia { namespace common {
 class Sha256Context : public ShaBlock512BitContext
 {
 public:
-    void ProcessBlock();
-    void Initialize();
-    void Update(const void* data, unsigned int size);
-    void GetHash(void* hash);
-    unsigned int GetHashSize() const;
+    virtual void Initialize();
+    virtual void Update(const void* data, unsigned int size);
+    virtual unsigned int GetHashSize() const;
+    virtual void GetHash(void* hash);
+    virtual void ProcessBlock();
 
 private:
     unsigned int m_state[8];

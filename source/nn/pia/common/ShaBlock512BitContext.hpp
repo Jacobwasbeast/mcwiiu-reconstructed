@@ -3,12 +3,14 @@
 
 #include <stddef.h>
 
+#include "nn/pia/common/Hmac.hpp"
+
 namespace nn { namespace pia { namespace common {
 
-class ShaBlock512BitContext
+class ShaBlock512BitContext : public HashContextBase
 {
 public:
-    unsigned int GetBlockSize() const;
+    virtual unsigned int GetBlockSize() const;
     virtual void Update(const void* data, unsigned int size);
     void AddPadding();
     virtual void ProcessBlock();

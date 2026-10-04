@@ -6,7 +6,6 @@ namespace nn { namespace pia { namespace common {
 class HashContextBase
 {
 public:
-    virtual ~HashContextBase();
     virtual void Initialize() = 0;
     virtual void Update(const void* data, unsigned int size) = 0;
     virtual unsigned int GetHashSize() const = 0;
@@ -24,8 +23,8 @@ public:
 
 private:
     HashContextBase* m_context;
-    unsigned char m_innerPad[64];
-    unsigned char m_outerPad[64];
+    unsigned int m_innerPad[16];
+    unsigned int m_outerPad[16];
 };
 
 }}}

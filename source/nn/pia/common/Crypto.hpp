@@ -38,7 +38,7 @@ public:
 namespace nn { namespace pia { namespace common { namespace crypto {
 
 void ClearMemory(void* destination, unsigned int size);
-unsigned int GenerateRandomSeed();
+unsigned long long GenerateRandomSeed();
 void GenerateRandomParameter(void* destination, unsigned int size);
 
 }}}}

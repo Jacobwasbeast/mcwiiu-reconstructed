@@ -6,8 +6,26 @@
 
 namespace nn { namespace pia { namespace common {
 
-struct SockAddrIn { unsigned char bytes[16]; };
-struct AddrInfo { unsigned char bytes[32]; };
+struct SockAddrIn
+{
+    union
+    {
+        unsigned char bytes[16];
+        unsigned int words[4];
+    };
+};
+
+struct AddrInfo
+{
+    int flags;
+    int family;
+    int socketType;
+    int protocol;
+    unsigned int addressLength;
+    char* canonicalName;
+    SockAddrIn* address;
+    AddrInfo* next;
+};
 
 class SocketAddress
 {
@@ -23,6 +41,7 @@ public:
     void GetHostByName(const char* host);
 
 private:
+    SockAddrIn* m_pointer;
     SockAddrIn m_address;
 };
 
