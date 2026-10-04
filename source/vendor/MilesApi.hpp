@@ -29,5 +29,8 @@ extern "C" int AIL_API_background();
 extern "C" void AIL_API_set_error(const char* pError);
 extern "C" void* AIL_API_mem_alloc_lock(unsigned int uSize);
 extern "C" void AIL_API_mem_free_lock(void* pBlock);
+extern "C" void* MSS_alloc_info(unsigned int uSize, unsigned int uUser, const char* pOwnerName,
+                                int iOwnerLine);
+extern "C" void MSS_free_info(void* pBlock);
 
 #endif

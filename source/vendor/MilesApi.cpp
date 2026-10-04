@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include "vendor/MilesFilters.hpp"
+#include "vendor/MilesMem.hpp"
 #include "vendor/MilesMixer.hpp"
 #include "vendor/MilesRib.hpp"
 #include "vendor/MilesTime.hpp"
@@ -236,4 +237,15 @@ extern "C" void AIL_API_startup()
     }
 
     MilesAsyncStartup();
+}
+
+extern "C" void* MSS_alloc_info(unsigned int uSize, unsigned int, const char* pOwnerName,
+                                int iOwnerLine)
+{
+    return AIL_mem_alloc_lock_info(uSize, pOwnerName, iOwnerLine);
+}
+
+extern "C" void MSS_free_info(void* pBlock)
+{
+    AIL_mem_free_lock(pBlock);
 }

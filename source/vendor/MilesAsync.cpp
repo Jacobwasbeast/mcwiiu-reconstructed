@@ -6,7 +6,7 @@
 #include "vendor/MilesMem.hpp"
 
 typedef int (*MilesAsyncFileReadFunc)(MilesAsyncRead* pRead);
-typedef void (*MilesAsyncFileCancelFunc)(MilesAsyncRead* pRead);
+typedef int (*MilesAsyncFileCancelFunc)(MilesAsyncRead* pRead);
 typedef int (*MilesAsyncFileStatusFunc)(MilesAsyncRead* pRead, unsigned int uTimeoutMilliseconds);
 typedef int (*MilesAsyncStartupFunc)();
 typedef int (*MilesAsyncShutdownFunc)();
@@ -228,9 +228,9 @@ int MilesAsyncFileStatus_default(MilesAsyncRead* pRead, unsigned int uTimeoutMil
     return InternalCancelOrWait(pRead, uTimeoutMilliseconds, 0);
 }
 
-void MilesAsyncFileCancel_default(MilesAsyncRead* pRead)
+int MilesAsyncFileCancel_default(MilesAsyncRead* pRead)
 {
-    InternalCancelOrWait(pRead, 0, 1);
+    return InternalCancelOrWait(pRead, 0, 1);
 }
 
 int MilesAsyncFileRead_default(MilesAsyncRead* pRead)
@@ -682,9 +682,9 @@ extern "C" int MilesAsyncFileRead(MilesAsyncRead* pRead)
     return MilesAsyncFileReadHandler(pRead);
 }
 
-extern "C" void MilesAsyncFileCancel(MilesAsyncRead* pRead)
+extern "C" int MilesAsyncFileCancel(MilesAsyncRead* pRead)
 {
-    MilesAsyncFileCancelHandler(pRead);
+    return MilesAsyncFileCancelHandler(pRead);
 }
 
 extern "C" int MilesAsyncFileStatus(MilesAsyncRead* pRead, unsigned int uTimeoutMilliseconds)

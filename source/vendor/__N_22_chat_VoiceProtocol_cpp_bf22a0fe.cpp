@@ -1,6 +1,7 @@
 #include "vendor/__N_22_chat_VoiceProtocol_cpp_bf22a0fe.hpp"
 #include <new>
 #include "game/core/CriticalSection.hpp"
+#include "nn/pia/transport/UnreliableProtocol.hpp"
 
 extern OSFastMutex g_voiceProtocolMutex;
 void __N_22_chat_VoiceProtocol_cpp_bf22a0fe::lock_()

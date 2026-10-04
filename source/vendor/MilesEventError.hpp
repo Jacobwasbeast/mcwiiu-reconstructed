@@ -1,6 +1,8 @@
 #ifndef SOURCE_VENDOR_MILES_EVENT_ERROR_HPP
 #define SOURCE_VENDOR_MILES_EVENT_ERROR_HPP
 
+struct _SAMPLE;
+
 enum ErrorType
 {
     ERROR_TYPE_OUT_OF_MEMORY = 0,
@@ -22,6 +24,18 @@ extern "C" void MilesSetEventErrorCallbackInternal(MilesEventErrorCallback callb
 extern "C" void Audition_Error(long long context, const char* text);
 extern "C" void Audition_SoundEvicted(unsigned long long instanceId, unsigned long long eventId,
                                       unsigned int policy);
+extern "C" void AIL_set_sample_3D_cone(_SAMPLE* pSample, float fInnerAngle, float fOuterAngle,
+                                       float fOuterVolume);
+extern "C" void AIL_set_sample_3D_orientation(_SAMPLE* pSample, float fForwardX, float fForwardY,
+                                              float fForwardZ, float fUpX, float fUpY, float fUpZ);
+extern "C" void AIL_set_sample_3D_velocity(_SAMPLE* pSample, float fDirectionX, float fDirectionY,
+                                           float fDirectionZ, float fMagnitude);
+extern "C" void AIL_set_sample_occlusion(_SAMPLE* pSample, float fOcclusion);
+extern "C" void AIL_set_sample_exclusion(_SAMPLE* pSample, float fExclusion);
+extern "C" void AIL_set_sample_obstruction(_SAMPLE* pSample, float fObstruction);
+extern "C" int AIL_sample_stage_property(_SAMPLE* pSample, int iStage, const char* pName,
+                                         int iChannel, void* pBefore, const void* pNewValue,
+                                         void* pAfter);
 void ErrorHandler(ErrorType type, unsigned long long context, const char* text);
 
 #endif

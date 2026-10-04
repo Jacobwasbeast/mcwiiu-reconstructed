@@ -99,14 +99,14 @@ struct MilesAsyncRead
 };
 
 extern "C" int MilesAsyncFileRead(MilesAsyncRead* pRead);
-extern "C" void MilesAsyncFileCancel(MilesAsyncRead* pRead);
+extern "C" int MilesAsyncFileCancel(MilesAsyncRead* pRead);
 extern "C" int MilesAsyncFileStatus(MilesAsyncRead* pRead, unsigned int uTimeoutMilliseconds);
 extern "C" int MilesAsyncStartup();
 extern "C" int MilesAsyncShutdown();
 extern "C" void MilesAsyncSetPaused(int iPaused);
 
 int MilesAsyncFileRead_default(MilesAsyncRead* pRead);
-void MilesAsyncFileCancel_default(MilesAsyncRead* pRead);
+int MilesAsyncFileCancel_default(MilesAsyncRead* pRead);
 int MilesAsyncFileStatus_default(MilesAsyncRead* pRead, unsigned int uTimeoutMilliseconds);
 int MilesAsyncStartup_default();
 int MilesAsyncShutdown_default();

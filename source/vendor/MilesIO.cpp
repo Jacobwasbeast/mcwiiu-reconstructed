@@ -1,5 +1,9 @@
 #include "vendor/MilesIO.hpp"
 
+#include "game/client/audio/EventSystem.hpp"
+#include "game/core/PODHandleArray.hpp"
+#include "game/util/LegacyUtilityFunctions.hpp"
+
 #include <stddef.h>
 #include <string.h>
 
@@ -11,6 +15,7 @@ static const unsigned int MILES_IO_WHOLE_FILE = 0xFFFFFFFF;
 static const unsigned int MILES_IO_SEEK_SET = 0;
 static const unsigned int MILES_IO_SEEK_CURRENT = 1;
 static const unsigned int MILES_IO_SEEK_END = 2;
+static const int CONTAINER_NAME_SIZE = 260;
 
 static const char MILES_IO_FILE[] = "C:\\devel\\projects\\mss\\src\\sdk\\shared\\io.cpp";
 
@@ -243,4 +248,135 @@ void CloseAsync(MilesAsyncRead* pRead)
 
     MilesAsyncFileRead(pRead);
     MilesAsyncFileStatus(pRead, MILES_IO_WHOLE_FILE);
+}
+
+PODHandleArray<SoundBank*> g_soundBanks;
+EventSystem* g_eventSystem = NULL;
+
+MilesContainerGetSoundCallback g_milesContainerGetSoundCallback = Default_GetSound;
+MilesContainerGetPresetCallback g_milesContainerGetPresetCallback = Default_GetPreset;
+MilesAuditionAsyncQueuedCallback g_milesAuditionAsyncQueuedCallback = NULL;
+MilesAuditionAsyncLoadCallback g_milesAuditionAsyncLoadCallback = NULL;
+MilesAuditionAsyncCancelCallback g_milesAuditionAsyncCancelCallback = NULL;
+MilesAuditionSetPersistCallback g_milesAuditionSetPersistCallback = NULL;
+MilesAuditionRampStateCallback g_milesAuditionRampStateCallback = NULL;
+
+SoundBank* GetContainer(const char* name, const char** assetName)
+{
+    const char* separator = strchr(name, '/');
+    if (separator == NULL)
+    {
+        return NULL;
+    }
+
+    const unsigned int length = static_cast<unsigned int>(separator - name);
+    char bankName[CONTAINER_NAME_SIZE];
+    if (length == 0)
+    {
+        bankName[0] = '\0';
+    }
+    else
+    {
+        strncpy(bankName, name, length);
+        bankName[length] = '\0';
+    }
+
+    g_soundBanks.Reacquire();
+    int count = g_soundBanks.Count();
+    SoundBank** banks = g_soundBanks.Data();
+    while (count != 0)
+    {
+        if (reinterpret_cast<SoundBankHeader*>(*banks)->magic != AUDIO_BANK_MAGIC)
+        {
+            if (AIL_stricmp(AIL_get_soundbank_name(*banks), bankName) == 0)
+            {
+                *assetName = separator + 1;
+                return *banks;
+            }
+        }
+
+        --count;
+        ++banks;
+    }
+
+    *assetName = separator + 1;
+    return NULL;
+}
+
+int Default_GetSound(const char* name, char* path, _MILESBANKSOUNDINFO* info)
+{
+    const char* assetName = NULL;
+    SoundBank* bank = GetContainer(name, &assetName);
+    if (bank != NULL)
+    {
+        return AIL_sound_asset_info(bank, name, path, info);
+    }
+
+    return 0;
+}
+
+void* Default_GetPreset(const char* name)
+{
+    const char* assetName = NULL;
+    SoundBank* bank = GetContainer(name, &assetName);
+    if (bank != NULL)
+    {
+        return AIL_find_sound_preset(bank, name);
+    }
+
+    return NULL;
+}
+
+void EvalFunc(void* instance, const char* name, int index, void* value, int flags)
+{
+    if (instance != NULL)
+    {
+        SoundInstanceData* data = static_cast<SoundInstanceData*>(instance);
+        Handle context = data->m_context;
+        Var_LookupWithContext(data->m_eventSystem, context, name, flags, value);
+        return;
+    }
+
+    Handle context = g_eventSystem->m_variables;
+    Var_LookupWithContext(g_eventSystem, context, name, flags, value);
+}
+
+extern "C" int Container_GetSound(const char* name, char* path, _MILESBANKSOUNDINFO* info)
+{
+    return g_milesContainerGetSoundCallback(name, path, info);
+}
+
+extern "C" void* Container_GetPreset(const char* name)
+{
+    return g_milesContainerGetPresetCallback(name);
+}
+
+extern "C" void Audition_AsyncQueued(unsigned long long eventId, int auditionId, const char* name)
+{
+    if (g_milesAuditionAsyncQueuedCallback)
+        g_milesAuditionAsyncQueuedCallback(eventId, auditionId, name);
+}
+
+extern "C" void Audition_AsyncLoad(int auditionId, int size)
+{
+    if (g_milesAuditionAsyncLoadCallback)
+        g_milesAuditionAsyncLoadCallback(auditionId, size);
+}
+
+extern "C" void Audition_AsyncCancel(int auditionId)
+{
+    if (g_milesAuditionAsyncCancelCallback)
+        g_milesAuditionAsyncCancelCallback(auditionId);
+}
+
+extern "C" void Audition_SetPersist(unsigned long long eventId, const char* name, const char* preset)
+{
+    if (g_milesAuditionSetPersistCallback)
+        g_milesAuditionSetPersistCallback(eventId, name, preset);
+}
+
+extern "C" void Audition_RampState(const char* name, unsigned long long eventId, int target)
+{
+    if (g_milesAuditionRampStateCallback)
+        g_milesAuditionRampStateCallback(name, eventId, target);
 }
