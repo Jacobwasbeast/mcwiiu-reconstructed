@@ -1,0 +1,50 @@
+{
+  "title": "Minecraft: Wii U Edition",
+  "update_title_id": "0005000E101D9D00",
+  "update_version": 688,
+  "executable": {
+    "path": "code/Minecraft.Client.rpx",
+    "size": 15629504,
+    "sha256": "1469512f0fd7d03eaf73fef34d953d532b22ac2a186ea3ebef190b0e920156ba"
+  },
+  "renderer_shaders": {
+    "output": "RendererShaders.inc",
+    "shaders": [
+      {"name": "Standard", "kind": "vertex", "object": "0x104CDC08"},
+      {"name": "Quad", "kind": "vertex", "object": "0x104CDD3C"},
+      {"name": "StandardLit", "kind": "vertex", "object": "0x104CDE70"},
+      {"name": "Terrain", "kind": "vertex", "object": "0x104CDFA4"},
+      {"name": "Position", "kind": "vertex", "object": "0x104CE0D8"},
+      {"name": "PositionAlpha", "kind": "vertex", "object": "0x104CE20C"},
+      {"name": "PositionLerp", "kind": "vertex", "object": "0x104CE340"},
+      {"name": "Particle", "kind": "vertex", "object": "0x104CE474"},
+      {"name": "Layered", "kind": "vertex", "object": "0x104CE5A8"},
+      {"name": "LayeredLit", "kind": "vertex", "object": "0x104CE6DC"},
+      {"name": "ScreenQuad", "kind": "vertex", "object": "0x104CDAD4"},
+      {"name": "Clear", "kind": "vertex", "object": "0x104CD9A0", "blank_line_after": true},
+      {"name": "Textured", "kind": "pixel", "object": "0x104CCFA8"},
+      {"name": "TexturedAlpha", "kind": "pixel", "object": "0x104CD178"},
+      {"name": "TexturedMask", "kind": "pixel", "object": "0x104CD260"},
+      {"name": "TexturedLerp", "kind": "pixel", "object": "0x104CD348"},
+      {"name": "TexturedFog", "kind": "pixel", "object": "0x104CD430"},
+      {"name": "TexturedForceLOD", "kind": "pixel", "object": "0x104CD518"},
+      {"name": "Untextured", "kind": "pixel", "object": "0x104CD090"},
+      {"name": "OrderIndependentAlpha", "kind": "pixel", "object": "0x104CD600"},
+      {"name": "Layered", "kind": "pixel", "object": "0x104CD6E8"},
+      {"name": "TexturedShadow", "kind": "pixel", "object": "0x104CD7D0"},
+      {"name": "TexturedGlow", "kind": "pixel", "object": "0x104CD8B8"},
+      {"name": "TexturedBlend", "kind": "pixel", "object": "0x104CE810"},
+      {"name": "TexturedModulate", "kind": "pixel", "object": "0x104CE8F8"},
+      {"name": "TexturedAdd", "kind": "pixel", "object": "0x104CE9E0"},
+      {"name": "Copy", "kind": "pixel", "object": "0x104CCCF0"},
+      {"name": "Clear", "kind": "pixel", "object": "0x104CCB20"},
+      {"name": "AlphaResolve", "kind": "pixel", "object": "0x104CCDD8", "blank_line_after": true},
+      {"name": "AlphaAccumulate", "kind": "pixel", "object": "0x104CCC08", "blank_line_after": true},
+      {"name": "Gamma", "kind": "pixel", "object": "0x104CCEC0"}
+    ]
+  },
+  "shader_files": [
+    {"output": "MiiIconDefaultShader.inc", "address": "0x10460060", "size": 4912},
+    {"output": "MiiIconExtShader.inc", "address": "0x10461594", "size": 2312}
+  ]
+}
