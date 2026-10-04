@@ -9,10 +9,6 @@ InteractGoal::InteractGoal(Mob* mob, const std::type_info& lookAtType, float loo
     setRequiredControlFlags(3);
 }
 
-InteractGoal::~InteractGoal()
-{
-}
-
 std::wstring InteractGoal::getName()
 {
     return std::wstring(L"Interact");

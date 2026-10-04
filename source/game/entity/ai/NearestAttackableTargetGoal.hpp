@@ -58,7 +58,7 @@ protected:
     const std::type_info* mTargetType;
     int mRandomInterval;
     DistComp mSorter;
-    SubselectEntitySelector* mTargetSelector;
+    Predicate<boost::shared_ptr<Entity> >* mTargetSelector;
     boost::weak_ptr<LivingEntity> mTarget;
     bool mIncludeRemoved;
     DisguisedRangeModifier* mRangeModifier;

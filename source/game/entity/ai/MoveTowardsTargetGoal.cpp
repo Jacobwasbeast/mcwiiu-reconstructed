@@ -5,82 +5,68 @@
 #include "game/entity/ai/PathNavigation.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
+#include "game/entity/mob/Mob.hpp"
 #include "game/entity/mob/PathfinderMob.hpp"
 #include "game/util/RandomPos.hpp"
 
 MoveTowardsTargetGoal::MoveTowardsTargetGoal(PathfinderMob* mob, double speedModifier,
                                              float within)
-    : mMob(mob),
-      mTarget(),
-      mWantedPosition(0.0, 0.0, 0.0),
-      mSpeedModifier(speedModifier),
-      mWithin(within)
 {
+    mMob = mob;
+    mSpeedModifier = speedModifier;
+    mWithin = within;
+    mWantedX = 0.0;
+    mWantedY = 0.0;
+    mWantedZ = 0.0;
     setRequiredControlFlags(1);
 }
 
 MoveTowardsTargetGoal::~MoveTowardsTargetGoal()
 {
-    mTarget.reset();
-    mMob = 0;
 }
 
 bool MoveTowardsTargetGoal::canUse()
 {
-    mTarget = mMob->getTarget();
+    mTarget = boost::weak_ptr<LivingEntity>(mMob->getTarget());
     if (!mTarget.lock())
     {
         return false;
     }
 
-    if (mTarget.lock()->distanceToSqr(mMob->shared_from_this()) < (double)(mWithin * mWithin))
+    if (mTarget.lock()->distanceToSqr(mMob->shared_from_this()) > (double)(mWithin * mWithin))
     {
         return false;
     }
 
-    boost::shared_ptr<PathfinderMob> mob =
-        boost::dynamic_pointer_cast<PathfinderMob>(mMob->shared_from_this());
-    Vec3* targetPosition = Vec3::newTemp(mTarget.lock()->mX, mTarget.lock()->mY, mTarget.lock()->mZ);
-    Vec3* position = RandomPos::getPosTowards(mob, 16, 7, targetPosition);
+    Vec3* position = RandomPos::getPosTowards(
+        boost::dynamic_pointer_cast<PathfinderMob>(mMob->shared_from_this()), 16, 7,
+        Vec3::newTemp(mTarget.lock()->mX, mTarget.lock()->mY, mTarget.lock()->mZ));
     if (position == NULL)
     {
         return false;
     }
 
-    mWantedPosition = *position;
+    mWantedX = position->x;
+    mWantedY = position->y;
+    mWantedZ = position->z;
     return true;
 }
 
 bool MoveTowardsTargetGoal::canContinueToUse()
 {
-    if (!mTarget.lock())
-    {
-        return false;
-    }
-
-    if (mMob->getNavigation()->isDone())
-    {
-        return false;
-    }
-
-    if (!mTarget.lock()->isAlive())
-    {
-        return false;
-    }
-
-    return mTarget.lock()->distanceToSqr(mMob->shared_from_this()) >
-           (double)(mWithin * mWithin);
+    return mTarget.lock() && !mMob->getNavigation()->isDone() && mTarget.lock()->isAlive() &&
+           mTarget.lock()->distanceToSqr(mMob->shared_from_this()) <
+               (double)(mWithin * mWithin);
 }
 
 void MoveTowardsTargetGoal::start()
 {
-    mMob->getNavigation()->moveTo(mWantedPosition.x, mWantedPosition.y,
-                                  mWantedPosition.z, mSpeedModifier);
+    mMob->getNavigation()->moveTo(mWantedX, mWantedY, mWantedZ, mSpeedModifier);
 }
 
 void MoveTowardsTargetGoal::stop()
 {
-    mTarget.reset();
+    mTarget = boost::weak_ptr<Mob>();
 }
 
 std::wstring MoveTowardsTargetGoal::getName()

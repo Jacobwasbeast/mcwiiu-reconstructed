@@ -14,7 +14,6 @@ class LandOnOwnersShoulderGoal : public Goal
 {
 public:
     LandOnOwnersShoulderGoal(ShoulderRidingEntity* owner);
-    virtual ~LandOnOwnersShoulderGoal();
 
     virtual bool canUse();
     virtual bool canInterrupt();

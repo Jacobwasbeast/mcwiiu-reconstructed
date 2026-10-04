@@ -29,21 +29,13 @@ void TurtleMoveControl::updateSpeed()
         if (mTurtle->distanceToSqr(homePos) > 256.0)
         {
             float speed = mTurtle->getSpeed() * 0.5f;
-            if (speed < 0.08f)
-            {
-                speed = 0.08f;
-            }
-            mTurtle->setSpeed(speed);
+            mTurtle->setSpeed(speed - 0.08f >= 0.0f ? speed : 0.08f);
         }
     }
     else if (mTurtle->mOnGround)
     {
         float speed = mTurtle->getSpeed() * 0.5f;
-        if (speed < 0.06f)
-        {
-            speed = 0.06f;
-        }
-        mTurtle->setSpeed(speed);
+        mTurtle->setSpeed(speed - 0.06f >= 0.0f ? speed : 0.06f);
     }
 }
 
@@ -76,24 +68,22 @@ void TurtleMoveControl::tick()
     double y = mWantedY - mTurtle->mY;
     double z = mWantedZ - mTurtle->mZ;
     double distance = Mth::sqrt(x * x + y * y + z * z);
-    float wantedYRot = (float)(atan2(z, x) * 57.2957763671875) - 90.0f;
-    mTurtle->mYRot = rotlerp(mTurtle->mYRot, wantedYRot, 30.0f);
-    mTurtle->mYBodyRot = mTurtle->mYRot;
+    float wantedYRot = (float)atan2(z, x) * 57.295776f - 90.0f;
+    float yRot = rotlerp(mTurtle->mYRot, wantedYRot, 30.0f);
+    mTurtle->mYRot = yRot;
+    mTurtle->mYBodyRot = yRot;
 
     float wantedSpeed = (float)(mSpeedModifier
         * mTurtle->getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->getValue());
-    mTurtle->setSpeed((wantedSpeed - mTurtle->getSpeed()) * 0.125f + mTurtle->getSpeed());
+    mTurtle->setSpeed(mTurtle->getSpeed() + (wantedSpeed - mTurtle->getSpeed()) * 0.125f);
 
     double climb = y / distance;
     mTurtle->mYd += (double)mTurtle->getSpeed() * climb * 0.1;
 
     if ((double)mMob->mMaxUpStep < climb)
     {
-        float horizontalLimit = 1.0f;
-        if (horizontalLimit < mMob->mBbWidth)
-        {
-            horizontalLimit = mMob->mBbWidth;
-        }
+        float width = mMob->mBbWidth;
+        float horizontalLimit = 1.0f - width >= 0.0f ? 1.0f : width;
         if (x * x + z * z < (double)horizontalLimit)
         {
             static_cast<JumpControl*>(mMob->getJumpControl())->jump();

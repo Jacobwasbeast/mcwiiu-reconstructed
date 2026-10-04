@@ -28,14 +28,14 @@ RiverFollowingGoal::~RiverFollowingGoal()
 
 bool RiverFollowingGoal::canUse()
 {
-    if (mMob->getNavigation() == NULL || mMob->followsLeader())
-        return false;
+    if (mMob->getNavigation() != NULL && !mMob->followsLeader())
+    {
+        if (mMob->mLevel->getBiome(BlockPos(mMob->getPos(0.0f)))->getBiomeType() != Biome::eBiomeType_Ocean
+            && mMob->isInWater())
+            return true;
+    }
 
-    BlockPos position(mMob->getPos(0.0f));
-    if (mMob->mLevel->getBiome(position)->getBiomeType() == Biome::eBiomeType_Ocean)
-        return false;
-
-    return mMob->isInWater();
+    return false;
 }
 
 void RiverFollowingGoal::start()
@@ -59,18 +59,19 @@ void RiverFollowingGoal::determineSteerDirection()
 {
     Vec3* position = mMob->getPos(0.0f);
     Vec3* lookAngle = mMob->getLookAngle();
-    Level* level = mMob->mLevel;
     mSteerDirection = lookAngle;
 
     Vec3* left = Vec3::newTemp(lookAngle->x, 0.0, lookAngle->z)->yRot(15.0f);
     Vec3* right = Vec3::newTemp(lookAngle->x, 0.0, lookAngle->z)->yRot(-15.0f);
+    float lookDistance = mDistance;
+    Level* level = mMob->mLevel;
 
     HitResult* forwardHit = level->clip(position,
-        lookAngle->multiply(mDistance)->add(position), false, true, true, false, NULL, false);
+        lookAngle->multiply(lookDistance)->add(position), false, true, true, false, NULL, false);
     HitResult* leftHit = level->clip(position,
-        left->multiply(mDistance - 1.5f)->add(position), false, true, true, false, NULL, false);
+        left->multiply(lookDistance - 1.5f)->add(position), false, true, true, false, NULL, false);
     HitResult* rightHit = level->clip(position,
-        right->multiply(mDistance - 1.5f)->add(position), false, true, true, false, NULL, false);
+        right->multiply(lookDistance - 1.5f)->add(position), false, true, true, false, NULL, false);
 
     Material* forwardMaterial = Material::WATER;
     if (forwardHit != NULL)
@@ -107,12 +108,11 @@ void RiverFollowingGoal::determineSteerDirection()
                                                 position->z + (double)offsetZ)
                                       ->subtract(position)->normalize();
                 HitResult* hit = level->clip(position,
-                    candidate->multiply(mDistance)->add(position), false, true, true, false,
+                    candidate->multiply(lookDistance)->add(position), false, true, true, false,
                     NULL, false);
 
-                Material* material = Material::WATER;
-                if (hit != NULL)
-                    material = level->getBlock(hit->getBlockPos())->mMaterial;
+                Material* material =
+                    hit != NULL ? level->getBlock(hit->getBlockPos())->mMaterial : Material::WATER;
 
                 if ((hit != NULL && hit->mType != HitResult::MISS) || material->blocksMotion())
                 {
@@ -120,7 +120,6 @@ void RiverFollowingGoal::determineSteerDirection()
                         position->distanceToSqr((hit->getBlockPos() - position)->add(position));
                     if (!clearDirectionFound && distance > furthestDistance)
                     {
-                        furthestDistance = distance;
                         chosen = candidate;
                     }
                 }
@@ -138,7 +137,7 @@ void RiverFollowingGoal::determineSteerDirection()
         }
 
         if (chosen == unchosen)
-            mSteerDirection->multiply(-1.0, -1.0, -1.0);
+            mSteerDirection = lookAngle->multiply(-1.0, -1.0, -1.0);
         else
             mSteerDirection = chosen->multiply(2.0);
     }
@@ -147,9 +146,9 @@ void RiverFollowingGoal::determineSteerDirection()
     Vec3* turnRight = Vec3::newTemp(lookAngle->x, 0.0, lookAngle->z)->yRot(-45.0f);
 
     HitResult* turnLeftHit = level->clip(position,
-        turnLeft->multiply(mDistance)->add(position), false, true, true, false, NULL, false);
+        turnLeft->multiply(lookDistance)->add(position), false, true, true, false, NULL, false);
     HitResult* turnRightHit = level->clip(position,
-        turnRight->multiply(mDistance)->add(position), false, true, true, false, NULL, false);
+        turnRight->multiply(lookDistance)->add(position), false, true, true, false, NULL, false);
 
     if (turnLeftHit != NULL && turnLeftHit->mType != HitResult::MISS)
         mSteerDirection = mSteerDirection->add(turnRight->normalize()->multiply(1.2));
@@ -193,8 +192,9 @@ void RiverFollowingGoal::tick()
     if (!mMob->followsLeader() || mMob->isLeader())
     {
         mSteerDirection = mSteerDirection->normalize()->multiply(mSpeed);
-        float rotation = (float)std::atan2(mSteerDirection->x, mSteerDirection->z);
-        mMob->mYRot = Mth::clampRotateDegrees(mMob->mYRot, -rotation * 57.295776f, 45.0f);
+        float rotation = -(float)std::atan2(mSteerDirection->x, mSteerDirection->z);
+        float yRot = Mth::clampRotateDegrees(mMob->mYRot, rotation * 57.295776f, 45.0f);
+        mMob->mYRot = yRot;
         if (mMob->isUnderLiquid(Material::WATER))
             mMob->mYd = 0.0;
 
@@ -209,8 +209,7 @@ bool RiverFollowingGoal::canContinueToUse()
     if (mMob->followsLeader())
         return false;
 
-    BlockPos position(mMob->getPos(0.0f));
-    return mMob->mLevel->getBiome(position)->getBiomeType() != Biome::eBiomeType_Ocean;
+    return mMob->mLevel->getBiome(BlockPos(mMob->getPos(0.0f)))->getBiomeType() != Biome::eBiomeType_Ocean;
 }
 
 std::wstring RiverFollowingGoal::getName()

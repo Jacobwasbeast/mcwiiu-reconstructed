@@ -24,27 +24,14 @@ JumpGoal::~JumpGoal()
 
 bool JumpGoal::isObstacle()
 {
-    const Direction* direction = mMob->getMotionDirection();
-    const Vec3i normal = direction->getNormal();
-    BlockPos position(mMob);
     Level* level = mMob->mLevel;
-    if (!level->getBlockState(position.offset(normal.x * 2, 0, normal.z * 2))->isSolidRender())
-    {
-        return false;
-    }
-    if (level->getBlockState(position.offset(normal.x, 0, normal.z))->getMaterial() != Material::WATER)
-    {
-        return false;
-    }
-    if (level->getBlockState(position.offset(normal.x, 1, normal.z))->getMaterial() != Material::AIR)
-    {
-        return false;
-    }
-    if (level->getBlockState(position.offset(normal.x, 2, normal.z))->getMaterial() != Material::AIR)
-    {
-        return false;
-    }
-    return level->getBlockState(position.offset(normal.x * 4, 0, normal.z * 4))->getMaterial() == Material::WATER;
+    int stepX = mMob->getMotionDirection()->getStepX();
+    int stepZ = mMob->getMotionDirection()->getStepZ();
+    return level->getBlockState(BlockPos(mMob).offset(stepX * 2, 0, stepZ * 2))->isSolidBlockingCube()
+        && level->getBlockState(BlockPos(mMob).offset(stepX, 0, stepZ))->getMaterial() == Material::WATER
+        && level->getBlockState(BlockPos(mMob).offset(stepX, 1, stepZ))->getMaterial() == Material::AIR
+        && level->getBlockState(BlockPos(mMob).offset(stepX, 2, stepZ))->getMaterial() == Material::AIR
+        && level->getBlockState(BlockPos(mMob).offset(stepX * 4, 0, stepZ * 4))->getMaterial() == Material::WATER;
 }
 
 bool JumpGoal::canUse()
@@ -61,24 +48,23 @@ bool JumpGoal::canUse()
         if (mMob->mLevel->getBlockState(position.relative(direction, distance))->getMaterial() != Material::WATER)
         {
             clear = false;
-            break;
         }
     }
-    if (!isObstacle() && !clear)
-    {
-        return false;
-    }
-    return mMob->mLevel->getBlockState(position.above(2))->getMaterial() == Material::AIR;
+    return (isObstacle() || clear) && mMob->mLevel->getBlockState(BlockPos(mMob).above(2))->getMaterial() == Material::AIR;
 }
 
 bool JumpGoal::canContinueToUse()
 {
-    if (mMob->mYd * mMob->mYd < 0.03 && mMob->mXRot != 0.0f && std::fabs(mMob->mXRot) < 10.0f
-        && mMob->isInWater())
+    int finished = 1;
+    if (!(mMob->mYd * mMob->mYd < 0.03 && mMob->mXRot != 0.0f && std::fabs(mMob->mXRot) < 10.0f
+          && mMob->isInWater()))
     {
-        return false;
+        if (!mMob->mOnGround)
+        {
+            finished = 0;
+        }
     }
-    return !mMob->mOnGround;
+    return !finished;
 }
 
 bool JumpGoal::canInterrupt()
@@ -89,10 +75,9 @@ bool JumpGoal::canInterrupt()
 void JumpGoal::start()
 {
     const Direction* direction = mMob->getMotionDirection();
-    const Vec3i normal = direction->getNormal();
-    mMob->mXd += static_cast<double>(normal.x) * 0.6;
+    mMob->mXd += static_cast<double>(direction->getStepX()) * 0.6;
     mMob->mYd += 0.7;
-    mMob->mZd += static_cast<double>(normal.z) * 0.6;
+    mMob->mZd += static_cast<double>(direction->getStepZ()) * 0.6;
     mMob->getNavigation()->stop();
 }
 
@@ -101,7 +86,7 @@ void JumpGoal::stop()
     mMob->mXRot = 0.0f;
 }
 
-double JumpGoal::rotlerp(float from, float to, float amount)
+float JumpGoal::rotlerp(float from, float to, float amount)
 {
     float difference = to - from;
     while (difference < -180.0f)
@@ -112,7 +97,7 @@ double JumpGoal::rotlerp(float from, float to, float amount)
     {
         difference -= 360.0f;
     }
-    return static_cast<double>(from + amount * difference);
+    return from + amount * difference;
 }
 
 void JumpGoal::tick()
@@ -125,15 +110,15 @@ void JumpGoal::tick()
     double verticalSpeed = mMob->mYd * mMob->mYd;
     if (verticalSpeed < 0.03 && mMob->mXRot != 0.0f)
     {
-        mMob->mXRot = static_cast<float>(rotlerp(mMob->mXRot, 0.0f, 0.2f));
+        mMob->mXRot = rotlerp(mMob->mXRot, 0.0f, 0.2f);
         return;
     }
-    double speed = Mth::sqrt(mMob->mZd * mMob->mZd + mMob->mXd * mMob->mXd + verticalSpeed);
+    double speed = Mth::sqrt(mMob->mXd * mMob->mXd + verticalSpeed + mMob->mZd * mMob->mZd);
     double horizontalSpeed = Mth::sqrt(mMob->mXd * mMob->mXd + mMob->mZd * mMob->mZd);
     double fallSpeed = -mMob->mYd;
     int sign = (0.0 < fallSpeed) - (fallSpeed < 0.0);
     double pitch = std::acos(Mth::clamp(horizontalSpeed / speed, -1.0, 1.0));
-    mMob->mXRot = static_cast<float>(static_cast<double>(sign) * pitch * 57.2957763671875);
+    mMob->mXRot = static_cast<float>(static_cast<double>(sign) * pitch * Mth::RAD_TO_DEG);
 }
 
 std::wstring JumpGoal::getName()

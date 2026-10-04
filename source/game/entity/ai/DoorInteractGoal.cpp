@@ -10,10 +10,10 @@
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/DoorBlock.hpp"
+#include "game/world/block/Material.hpp"
 
 DoorInteractGoal::DoorInteractGoal(Mob* mob)
     : Goal(),
-      mMob(mob),
       mDoorPos(),
       mDoorBlock(NULL),
       mHasDoor(false),
@@ -21,14 +21,15 @@ DoorInteractGoal::DoorInteractGoal(Mob* mob)
       mDoorZ(0.0f)
 {
     mDoorPos = BlockPos::ZERO;
+    mMob = mob;
 }
 
 Block* DoorInteractGoal::getDoorBlock(const BlockPos& pos)
 {
     const BlockState* state = mMob->mLevel->getBlockState(pos);
     Block* block = state->getBlock();
-    if (DoorBlock::isDoor(block) && state->getValue(DoorBlock::HALF) == DoorBlock::LOWER)
-        return block;
+    if (DoorBlock::isDoor(block) && state->getMaterial() == Material::WOOD)
+        return state->getBlock();
     return NULL;
 }
 
@@ -44,28 +45,28 @@ bool DoorInteractGoal::canUse()
     {
         int index = 0;
         int limit = path->getIndex() + 2;
-        if (path->getSize() < limit)
-            limit = path->getSize();
+        int size = path->getSize();
+        if (size < limit)
+            limit = size;
 
         while (index < limit)
         {
             Node* node = path->get(index);
-            BlockPos pos(node->x, node->y + 1, node->z);
-            if (mMob->distanceToSqr((double)pos.x, mMob->mY, (double)pos.z) <= 2.25)
+            mDoorPos = BlockPos(node->x, node->y + 1, node->z);
+            if (mMob->distanceToSqr((double)mDoorPos.x, mMob->mY, (double)mDoorPos.z) <= 2.25)
             {
-                mDoorPos = pos;
                 mDoorBlock = getDoorBlock(mDoorPos);
                 if (mDoorBlock != NULL)
                     return true;
             }
             ++index;
             limit = path->getIndex() + 2;
-            if (path->getSize() < limit)
-                limit = path->getSize();
+            size = path->getSize();
+            if (size < limit)
+                limit = size;
         }
 
-        BlockPos pos(mMob->shared_from_this());
-        mDoorPos = pos.above();
+        mDoorPos = BlockPos(mMob->shared_from_this()).above();
         mDoorBlock = getDoorBlock(mDoorPos);
         return mDoorBlock != NULL;
     }

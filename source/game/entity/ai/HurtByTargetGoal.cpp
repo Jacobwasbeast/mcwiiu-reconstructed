@@ -16,15 +16,15 @@
 
 HurtByTargetGoal::HurtByTargetGoal(PathfinderMob* mob, bool alertSameType,
                                    arrayWithLength<unsigned long long> entityTypes)
-    : TargetGoal(mob, alertSameType),
+    : TargetGoal(mob, false),
       mAlertSameType(alertSameType),
-      mTimestamp(0),
       mEntityTypes(NULL),
       mEntityTypesLength(0)
 {
     mEntityTypes = entityTypes.data;
     mEntityTypesLength = entityTypes.length;
     setRequiredControlFlags(1);
+    mTimestamp = 0;
 }
 
 HurtByTargetGoal::~HurtByTargetGoal()
@@ -34,29 +34,27 @@ HurtByTargetGoal::~HurtByTargetGoal()
 
 bool HurtByTargetGoal::canUse()
 {
-    if (mMob->getLastHurtByMobTimestamp() == mTimestamp)
-        return false;
-
-    if (!canAttack(mMob->getLastHurtByMob(), false))
-        return false;
-
-    return !mMob->mHurtByPlayerOnPeaceful;
+    return mMob->getLastHurtByMobTimestamp() != mTimestamp
+        && canAttack(mMob->getLastHurtByMob(), false) && !mMob->mHurtByPlayerOnPeaceful;
 }
 
 void HurtByTargetGoal::alertOthers()
 {
     double followDistance = getFollowDistance();
-    AABB* box = AABB::newTemp(mMob->mX, mMob->mY, mMob->mZ, mMob->mX + 1.0, mMob->mY + 1.0, mMob->mZ + 1.0)
-                    ->grow(followDistance, 4.0, followDistance);
-    std::vector<boost::shared_ptr<Entity> >* entities =
-        mMob->mLevel->getEntitiesOfClass(typeid(*mMob), box);
+    std::vector<boost::shared_ptr<Entity> >* entities = mMob->mLevel->getEntitiesOfClass(
+        typeid(*mMob),
+        AABB::newTemp(mMob->mX, mMob->mY, mMob->mZ, mMob->mX + 1.0, mMob->mY + 1.0, mMob->mZ + 1.0)
+            ->grow(followDistance, 4.0, followDistance));
 
     for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin();
          it != entities->end(); ++it)
     {
         boost::shared_ptr<PathfinderMob> mob =
             boost::dynamic_pointer_cast<PathfinderMob>(*it);
-        if (!mob || mob.get() == mMob || mob->getTarget())
+        if (mob == mMob->shared_from_this())
+            continue;
+
+        if (mob->getTarget())
             continue;
 
         if ((mMob->GetType() & EntityType::TAMABLE_ANIMAL) == EntityType::TAMABLE_ANIMAL
@@ -69,9 +67,9 @@ void HurtByTargetGoal::alertOthers()
 
         bool excluded = false;
         unsigned int i;
-        for (i = 0; i < mEntityTypesLength; ++i)
+        for (i = 0; i != mEntityTypesLength; ++i)
         {
-            if (mob->GetType() == mEntityTypes[i])
+            if (mEntityTypes[i] == mob->GetType())
             {
                 excluded = true;
                 break;
@@ -100,8 +98,7 @@ void HurtByTargetGoal::start()
 void HurtByTargetGoal::alertOther(boost::shared_ptr<PathfinderMob> mob,
                                   boost::shared_ptr<LivingEntity> target)
 {
-    if (mob)
-        mob->setTarget(target);
+    mob->setTarget(target);
 }
 
 std::wstring HurtByTargetGoal::getName()

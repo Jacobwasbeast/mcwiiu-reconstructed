@@ -23,9 +23,10 @@ BreakDoorGoal::~BreakDoorGoal()
 
 bool BreakDoorGoal::canUse()
 {
-    return DoorInteractGoal::canUse()
-        && mMob->mLevel->getGameRules()->getBoolean(GameRules::RULE_MOBGRIEFING)
-        && !DoorBlock::isOpen(mMob->mLevel, mDoorPos);
+    if (!DoorInteractGoal::canUse() || !mMob->mLevel->getGameRules()->getBoolean(GameRules::RULE_MOBGRIEFING))
+        return false;
+
+    return !DoorBlock::isOpen(mMob->mLevel, mDoorPos);
 }
 
 void BreakDoorGoal::start()
@@ -42,9 +43,8 @@ void BreakDoorGoal::stop()
 
 bool BreakDoorGoal::canContinueToUse()
 {
-    return mBreakingTime < 241
-        && !DoorBlock::isOpen(mMob->mLevel, mDoorPos)
-        && mMob->distanceToSqr(mDoorPos) < 4.0;
+    double distance = mMob->distanceToSqr(mDoorPos);
+    return mBreakingTime <= 240 && !DoorBlock::isOpen(mMob->mLevel, mDoorPos) && distance < 4.0;
 }
 
 void BreakDoorGoal::tick()

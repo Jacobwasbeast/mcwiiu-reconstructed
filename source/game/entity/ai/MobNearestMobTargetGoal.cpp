@@ -20,9 +20,9 @@
 
 MobNearestMobTargetGoal::MobNearestMobTargetGoal(Mob* mob,
                                                  const std::type_info& targetType)
-    : Goal(), mMob(mob), mCanAttack(this), mSorter(mob), mTarget(),
-      mTargetType(&targetType)
+    : Goal(), mCanAttack(this), mSorter(mob), mTarget(), mTargetType(&targetType)
 {
+    mMob = mob;
 }
 
 MobNearestMobTargetGoal::~MobNearestMobTargetGoal()
@@ -40,9 +40,10 @@ double MobNearestMobTargetGoal::getFollowDistance()
 bool MobNearestMobTargetGoal::canUse()
 {
     double followDistance = getFollowDistance();
-    AABB* searchBox = mMob->mBoundingBox->grow(followDistance, 4.0, followDistance);
+    Mob* mob = mMob;
+    AABB* searchBox = mob->mBoundingBox->grow(followDistance, 4.0, followDistance);
     std::vector<boost::shared_ptr<Entity> >* entities =
-        mMob->mLevel->getEntitiesOfClass(*mTargetType, searchBox, &mCanAttack, true);
+        mob->mLevel->getEntitiesOfClass(*mTargetType, searchBox, &mCanAttack, true);
     std::sort(entities->begin(), entities->end(), mSorter);
     if (!entities->empty())
     {
@@ -58,14 +59,18 @@ bool MobNearestMobTargetGoal::canUse()
 bool MobNearestMobTargetGoal::canContinueToUse()
 {
     boost::shared_ptr<LivingEntity> target = mMob->getTarget();
-    if (!target || !target->isAlive())
+    if (!target)
+        return false;
+
+    if (!target->isAlive())
         return false;
 
     double followDistance = getFollowDistance();
     if (mMob->distanceToSqr(target) > followDistance * followDistance)
         return false;
 
-    if (target->GetType() == EntityType::SERVER_PLAYER)
+    bool isServerPlayer = target->GetType() == EntityType::SERVER_PLAYER;
+    if (isServerPlayer)
     {
         boost::shared_ptr<ServerPlayer> player =
             boost::dynamic_pointer_cast<ServerPlayer>(target);

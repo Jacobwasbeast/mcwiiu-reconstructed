@@ -13,27 +13,31 @@
 #include "game/world/Level.hpp"
 
 LeapAtTargetGoal::LeapAtTargetGoal(Mob* mob, float yd)
-    : mMob(mob), mTarget(), mYd(yd)
 {
+    mTarget = boost::weak_ptr<LivingEntity>();
+    mYd = yd;
+    mMob = mob;
     setRequiredControlFlags(5);
 }
 
 LeapAtTargetGoal::~LeapAtTargetGoal()
 {
-    mTarget.reset();
-    mMob = 0;
 }
 
 bool LeapAtTargetGoal::canUse()
 {
-    mTarget = mMob->getTarget();
+    mTarget = boost::weak_ptr<LivingEntity>(mMob->getTarget());
     if (!mTarget.lock())
     {
         return false;
     }
     double distance = mMob->distanceToSqr(mTarget.lock());
-    return distance >= 4.0 && distance <= 16.0 && mMob->mOnGround
-        && mMob->getRandom()->nextInt(5) == 0;
+    if (distance >= 4.0 && distance <= 16.0 && mMob->mOnGround
+        && mMob->getRandom()->nextInt(5) == 0)
+    {
+        return true;
+    }
+    return false;
 }
 
 bool LeapAtTargetGoal::canContinueToUse()

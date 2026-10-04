@@ -44,35 +44,38 @@ void TurtleTravelGoal::start()
         targetY = 0.0;
     }
 
-    BlockPos travelPos(mTurtle->mX + (double)(x - 512),
-                       mTurtle->mY + targetY,
-                       mTurtle->mZ + (double)(z - 512));
-    mTurtle->setTravelPos(travelPos);
+    mTurtle->setTravelPos(BlockPos((double)(x - 512) + mTurtle->mX,
+                                   mTurtle->mY + targetY,
+                                   (double)(z - 512) + mTurtle->mZ));
     mTurtle->setTravelling(true);
     mReachedPosition = false;
 }
 
 void TurtleTravelGoal::tick()
 {
-    PathNavigation* navigation = mTurtle->getNavigation();
     if (!mTurtle->closeToNextPos())
     {
-        navigation->tick();
-        if (!navigation->isDone())
+        if (!mTurtle->getNavigation()->isDone())
         {
             return;
         }
     }
 
     BlockPos travelPos = mTurtle->getTravelPos();
-    boost::shared_ptr<PathfinderMob> mob =
-        boost::static_pointer_cast<PathfinderMob>(mTurtle->shared_from_this());
-    Vec3* target = Vec3::newTemp((double)travelPos.x, (double)travelPos.y, (double)travelPos.z);
-    Vec3* position = RandomPos::getPosTowards(mob, 16, 3, target, 0.3141592741012573);
+    Vec3* position = RandomPos::getPosTowards(
+        boost::static_pointer_cast<PathfinderMob>(mTurtle->shared_from_this()),
+        16,
+        3,
+        Vec3::newTemp((double)travelPos.x, (double)travelPos.y, (double)travelPos.z),
+        0.3141592741012573);
 
     if (position == NULL)
     {
-        position = RandomPos::getPosTowards(mob, 8, 7, target);
+        position = RandomPos::getPosTowards(
+            boost::static_pointer_cast<PathfinderMob>(mTurtle->shared_from_this()),
+            8,
+            7,
+            Vec3::newTemp((double)travelPos.x, (double)travelPos.y, (double)travelPos.z));
         if (position == NULL)
         {
             mReachedPosition = true;
@@ -82,11 +85,11 @@ void TurtleTravelGoal::tick()
 
     int x = (int)position->x;
     int z = (int)position->z;
-    if ((double)x > position->x)
+    if (position->x < (double)x)
     {
         --x;
     }
-    if ((double)z > position->z)
+    if (position->z < (double)z)
     {
         --z;
     }
@@ -94,7 +97,7 @@ void TurtleTravelGoal::tick()
     BoundingBox box(x - 34, 0, z - 34, x + 34, 0, z + 34);
     if (mTurtle->mLevel->hasChunksAt(box))
     {
-        navigation->moveTo(position->x, position->y, position->z, mSpeedModifier);
+        mTurtle->getNavigation()->moveTo(position->x, position->y, position->z, mSpeedModifier);
         return;
     }
 

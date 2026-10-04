@@ -5,6 +5,7 @@
 
 #include "game/core/Node.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
+#include "game/world/chunk/Chunk.hpp"
 
 class BlockPathTypes;
 class BlockPos;
@@ -47,7 +48,7 @@ public:
 protected:
     LevelSource* mLevelSource;
     Mob* mMob;
-    boost::unordered_map<int, Node*> mNodeMap;
+    boost::unordered_map<int, Node*, IntKeyHash2, IntKeyEq> mNodeMap;
     boost::unordered_map<int, const BlockState*> mBlockStateMap;
     boost::unordered_map<int, int> mBlockPathTypeMap;
     int mEntityWidth;

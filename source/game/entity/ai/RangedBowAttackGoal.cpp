@@ -46,9 +46,7 @@ bool RangedBowAttackGoal::canUse()
 
 bool RangedBowAttackGoal::canContinueToUse()
 {
-    if (!canUse() && mMob->getNavigation()->isDone())
-        return false;
-    return isHoldingBow();
+    return (canUse() || !mMob->getNavigation()->isDone()) && isHoldingBow();
 }
 
 void RangedBowAttackGoal::start()
@@ -74,8 +72,7 @@ void RangedBowAttackGoal::tick()
 
     double distance = mMob->distanceToSqr(target->mX, target->mBoundingBox->mMinY, target->mZ);
     bool canSee = mMob->getSensing()->canSee(target);
-    bool hadSeen = mSeeTime > 0;
-    if (canSee != hadSeen)
+    if (canSee != (mSeeTime > 0))
         mSeeTime = 0;
 
     if (canSee)

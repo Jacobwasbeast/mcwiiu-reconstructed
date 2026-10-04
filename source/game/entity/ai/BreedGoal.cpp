@@ -22,9 +22,13 @@
 #include "game/world/generation/Player.hpp"
 
 BreedGoal::BreedGoal(Animal* animal, double speedModifier)
-    : mAnimal(animal), mPartner(), mLevel(animal->mLevel),
-      mPartnerType(&typeid(*animal)), mTicks(0), mSpeedModifier(speedModifier)
+    : mPartner()
 {
+    mPartnerType = &typeid(*animal);
+    mTicks = 0;
+    mSpeedModifier = speedModifier;
+    mAnimal = animal;
+    mLevel = animal->mLevel;
     setRequiredControlFlags(3);
 }
 
@@ -68,16 +72,7 @@ bool BreedGoal::canUse()
 bool BreedGoal::canContinueToUse()
 {
     boost::shared_ptr<Animal> partner = mPartner.lock();
-    if (!partner)
-        return false;
-
-    if (!partner->isAlive())
-        return false;
-
-    if (!partner->isInLove())
-        return false;
-
-    return mTicks < 60;
+    return partner && partner->isAlive() && partner->isInLove() && mTicks < 60;
 }
 
 void BreedGoal::stop()
@@ -93,13 +88,22 @@ void BreedGoal::tick()
     mAnimal->getLookControl()->setLookAt(partner, 10.0f,
                                          static_cast<float>(mAnimal->getMaxHeadXRot()));
     mAnimal->getNavigation()->moveTo(partner, mSpeedModifier);
-    if (mTicks > 59)
+    if (mTicks >= 60)
     {
         BlockPos pos(partner);
         Path* path = mAnimal->getNavigation()->getPath();
-        if (path != NULL && path->endsIn(Vec3::newTemp(&pos)) && path->IsWithinStepsToTheEnd(1) &&
-            mAnimal->getSensing()->canSee(partner) && mAnimal->distanceToSqr(partner) < 9.0)
-            breed();
+        if (path != NULL)
+        {
+            bool atEnd = false;
+            if (path->endsIn(Vec3::newTemp(&pos)) && path->IsWithinStepsToTheEnd(1))
+                atEnd = true;
+            if (atEnd)
+            {
+                bool seen = mAnimal->getSensing()->canSee(partner);
+                if (seen && mAnimal->distanceToSqr(partner) < 9.0)
+                    breed();
+            }
+        }
     }
 }
 
@@ -118,12 +122,12 @@ void BreedGoal::breed()
     boost::shared_ptr<AgableMob> child = mAnimal->getBreedOffspring(partner);
 
     boost::shared_ptr<Player> player = mAnimal->getLoveCause();
-    if (!player)
+    if (!player && partner->getLoveCause())
         player = partner->getLoveCause();
     if (player)
     {
-        player->awardStat(gStats->get_breedEntity(child->GetType()),
-                          GenericStats::param_breedEntity(child->GetType()));
+        Stat* stat = gStats->get_breedEntity(child->GetType());
+        player->awardStat(stat, GenericStats::param_breedEntity(child->GetType()));
     }
 
     mAnimal->setAge(6000);
@@ -144,8 +148,9 @@ void BreedGoal::breed()
         double xOffset = random->nextDouble() * mAnimal->mBbWidth * 2.0 - mAnimal->mBbWidth;
         double yOffset = random->nextDouble() * mAnimal->mBbHeight + 0.5;
         double zOffset = random->nextDouble() * mAnimal->mBbWidth * 2.0 - mAnimal->mBbWidth;
+        arrayWithLength<int> particleData;
         mLevel->addParticle(PARTICLE_HEART, mAnimal->mX + xOffset, mAnimal->mY + yOffset, mAnimal->mZ + zOffset,
-                            xa, ya, za, arrayWithLength<int>());
+                            xa, ya, za, particleData);
     }
 
     if (mLevel->getGameRules()->getBoolean(GameRules::RULE_DOMOBLOOT))

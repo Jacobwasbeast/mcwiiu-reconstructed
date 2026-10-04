@@ -13,31 +13,25 @@ OwnerHurtByTargetGoal::OwnerHurtByTargetGoal(TamableAnimal* tamableAnimal)
     setRequiredControlFlags(1);
 }
 
-OwnerHurtByTargetGoal::~OwnerHurtByTargetGoal()
-{
-    mOwnerLastHurtBy.reset();
-    mTamableAnimal = 0;
-}
-
 bool OwnerHurtByTargetGoal::canUse()
 {
-    boost::shared_ptr<LivingEntity> owner = mTamableAnimal->getOwner();
+    if (!mTamableAnimal->isTame())
+        return false;
+
+    boost::shared_ptr<LivingEntity> owner = boost::dynamic_pointer_cast<LivingEntity>(mTamableAnimal->getOwner());
     if (!owner)
         return false;
 
     boost::shared_ptr<LivingEntity> target = owner->getLastHurtByMob();
-    if (!target)
-        return false;
-
     mOwnerLastHurtBy = target;
 
     if (owner->getLastHurtByMobTimestamp() == mTimestamp)
         return false;
 
-    if (!canAttack(target, false))
+    if (!canAttack(mOwnerLastHurtBy.lock(), false))
         return false;
 
-    if (!mTamableAnimal->wantsToAttack(target, owner))
+    if (!mTamableAnimal->wantsToAttack(mOwnerLastHurtBy.lock(), owner))
         return false;
 
     if (mMob->mHurtByPlayerOnPeaceful)
@@ -50,7 +44,7 @@ void OwnerHurtByTargetGoal::start()
 {
     mMob->setTarget(mOwnerLastHurtBy.lock());
 
-    boost::shared_ptr<LivingEntity> owner = mTamableAnimal->getOwner();
+    boost::shared_ptr<LivingEntity> owner = boost::dynamic_pointer_cast<LivingEntity>(mTamableAnimal->getOwner());
     if (owner)
         mTimestamp = owner->getLastHurtByMobTimestamp();
 

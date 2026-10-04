@@ -14,8 +14,10 @@
 #include "game/world/generation/VillagerGolem.hpp"
 
 TakeFlowerGoal::TakeFlowerGoal(Villager* villager)
-    : mVillager(villager), mGolem(), mTicks(0), mWantsToTakeFlower(false)
+    : mGolem(), mTicks(0), mWantsToTakeFlower(false)
 {
+    mGolem = boost::weak_ptr<VillagerGolem>();
+    mVillager = villager;
     setRequiredControlFlags(3);
 }
 
@@ -52,8 +54,7 @@ bool TakeFlowerGoal::canUse()
 
 bool TakeFlowerGoal::canContinueToUse()
 {
-    boost::shared_ptr<VillagerGolem> golem = mGolem.lock();
-    return golem && golem->getOfferFlowerTick() > 0;
+    return mGolem.lock() && mGolem.lock()->getOfferFlowerTick() > 0;
 }
 
 void TakeFlowerGoal::start()
@@ -65,7 +66,7 @@ void TakeFlowerGoal::start()
 
 void TakeFlowerGoal::stop()
 {
-    mGolem.reset();
+    mGolem = boost::weak_ptr<VillagerGolem>();
     mVillager->getNavigation()->stop();
 }
 
@@ -79,10 +80,13 @@ void TakeFlowerGoal::tick()
         mWantsToTakeFlower = true;
     }
 
-    if (mWantsToTakeFlower && mVillager->distanceToSqr(mGolem.lock()) < 4.0)
+    if (mWantsToTakeFlower)
     {
-        mGolem.lock()->offerFlower(false);
-        mVillager->getNavigation()->stop();
+        if (mVillager->distanceToSqr(mGolem.lock()) < 4.0)
+        {
+            mGolem.lock()->offerFlower(false);
+            mVillager->getNavigation()->stop();
+        }
     }
 }
 

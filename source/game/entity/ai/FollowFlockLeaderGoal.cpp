@@ -18,10 +18,9 @@ FollowFlockLeaderGoal::FollowFlockLeaderGoal(Mob* mob, bool inWater)
       mInterval(sIntervalOffset + 11),
       mMob(mob),
       mLeader(),
-      mTimeToRecalcPath(sIntervalOffset + 11),
+      mTimeToRecalcPath(sIntervalOffset++ + 11),
       mInWater(inWater)
 {
-    ++sIntervalOffset;
     if (sIntervalOffset > 10)
     {
         sIntervalOffset = 0;
@@ -37,37 +36,34 @@ bool FollowFlockLeaderGoal::canUse()
 
     std::vector<boost::shared_ptr<Entity> >* entities =
         mMob->mLevel->getEntitiesOfClass(typeid(*mMob), mMob->mBoundingBox->grow(8.0));
-    if (entities->size() < 2)
+    if (entities->size() > 1)
     {
-        delete entities;
-        return false;
-    }
+        boost::shared_ptr<Mob> self = boost::static_pointer_cast<Mob>(mMob->shared_from_this());
 
-    boost::shared_ptr<Mob> self = boost::static_pointer_cast<Mob>(mMob->shared_from_this());
-
-    std::vector<boost::shared_ptr<Entity> >::iterator it;
-    for (it = entities->begin(); it != entities->end(); ++it)
-    {
-        boost::shared_ptr<Mob> candidate = boost::static_pointer_cast<Mob>(*it);
-        if (candidate->shouldFollow() && candidate != self)
+        std::vector<boost::shared_ptr<Entity> >::iterator it;
+        for (it = entities->begin(); it != entities->end(); ++it)
         {
-            ++candidate->mFlockSize;
-            mLeader = candidate;
-            delete entities;
-            return true;
+            boost::shared_ptr<Mob> candidate = boost::static_pointer_cast<Mob>(*it);
+            if (candidate->shouldFollow() && candidate != self)
+            {
+                ++candidate->mFlockSize;
+                mLeader = candidate;
+                delete entities;
+                return true;
+            }
         }
-    }
 
-    for (it = entities->begin(); it != entities->end(); ++it)
-    {
-        boost::shared_ptr<Mob> candidate = boost::static_pointer_cast<Mob>(*it);
-        if (candidate != self && !candidate->followsLeader() && !candidate->isLeader())
+        for (it = entities->begin(); it != entities->end(); ++it)
         {
-            candidate->setLeader(true);
-            ++candidate->mFlockSize;
-            mLeader = candidate;
-            delete entities;
-            return true;
+            boost::shared_ptr<Mob> candidate = boost::static_pointer_cast<Mob>(*it);
+            if (candidate != self && !candidate->followsLeader() && !candidate->isLeader())
+            {
+                candidate->setLeader(true);
+                ++candidate->mFlockSize;
+                mLeader = candidate;
+                delete entities;
+                return true;
+            }
         }
     }
 
@@ -108,9 +104,9 @@ void FollowFlockLeaderGoal::stop()
 
 BlockPos FollowFlockLeaderGoal::GetTargetPosition(boost::shared_ptr<Mob> leader)
 {
-    Vec3* up = Vec3::newTemp(0.0, 1.0, 0.0);
-    Vec3* side = leader->getLookAngle()->cross(up)->normalize();
-    Vec3* delta = mMob->getPos(0.0f)->subtract(leader->getPos(0.0f))->normalize();
+    Vec3* side = leader->getLookAngle()->cross(Vec3::newTemp(0.0, 1.0, 0.0))->normalize();
+    Vec3* mobPos = mMob->getPos(0.0f);
+    Vec3* delta = mobPos->subtract(leader->getPos(0.0f))->normalize();
     double sideAmount = side->dot(delta);
 
     double leaderX = leader->getPos(0.0f)->x;
@@ -125,12 +121,9 @@ BlockPos FollowFlockLeaderGoal::GetTargetPosition(boost::shared_ptr<Mob> leader)
     int z = static_cast<int>(leaderZ);
     if (leaderZ < static_cast<double>(z)) --z;
 
-    Vec3* sideOffset = side->multiply(sideAmount * 3.0);
-    Vec3* viewOffset = leader->getLookAngle()->multiply(6.0);
-    Vec3* position = Vec3::newTemp(static_cast<double>(x), static_cast<double>(y), static_cast<double>(z))
-                         ->add(0.5, 0.5, 0.5)
-                         ->add(viewOffset)
-                         ->add(sideOffset);
+    Vec3* center = Vec3::newTemp(static_cast<double>(x), static_cast<double>(y), static_cast<double>(z))
+                       ->add(0.5, 0.5, 0.5);
+    Vec3* position = center->add(leader->getLookAngle()->multiply(6.0))->add(side->multiply(sideAmount * 3.0));
 
     BlockPos target(position);
     if (leader->getNavigation()->isRiverFollowing())
@@ -149,14 +142,15 @@ void FollowFlockLeaderGoal::tick()
         return;
     }
 
-    --mTimeToRecalcPath;
-    if (mTimeToRecalcPath < 1)
+    if (mTimeToRecalcPath - 1 > 0)
     {
-        mTimeToRecalcPath = mInterval;
-        boost::shared_ptr<Mob> self = boost::static_pointer_cast<Mob>(mMob->shared_from_this());
-        BlockPos target = GetTargetPosition(mLeader);
-        self->getNavigation()->moveTo((double)target.x, (double)target.y, (double)target.z, 1.0);
+        --mTimeToRecalcPath;
+        return;
     }
+    mTimeToRecalcPath = mInterval;
+    boost::shared_ptr<Mob> self = boost::static_pointer_cast<Mob>(mMob->shared_from_this());
+    BlockPos target = GetTargetPosition(mLeader);
+    self->getNavigation()->moveTo((double)target.x, (double)target.y, (double)target.z, 1.0);
 }
 
 std::wstring FollowFlockLeaderGoal::getName()

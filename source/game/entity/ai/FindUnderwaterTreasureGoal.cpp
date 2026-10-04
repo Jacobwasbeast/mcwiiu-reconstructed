@@ -4,6 +4,7 @@
 #include "game/entity/ai/PathNavigation.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/Mob.hpp"
+#include "game/entity/mob/PathfinderMob.hpp"
 #include "game/core/AttributeInstance.hpp"
 #include "game/entity/mob/SharedMonsterAttributes.hpp"
 #include "game/client/render/ParticleType.hpp"
@@ -19,6 +20,9 @@
 #include "game/world/block/Iterator.hpp"
 #include "game/world/block/MutableBlockPos.hpp"
 
+static const std::wstring kRuinName(L"Ruin");
+static const std::wstring kShipwreckName(L"Shipwreck");
+
 FindUnderwaterTreasureGoal::FindUnderwaterTreasureGoal(PathfinderMob* mob, float speedModifier, int searchRadius, int maxDistance)
     : Goal(),
       mBribed(false),
@@ -31,7 +35,7 @@ FindUnderwaterTreasureGoal::FindUnderwaterTreasureGoal(PathfinderMob* mob, float
       mDirectionChanges(0),
       mSearchRadius(searchRadius),
       mSpeedModifier(speedModifier),
-      mMob((Entity*)mob)
+      mMob(mob)
 {
 }
 
@@ -43,7 +47,7 @@ FindUnderwaterTreasureGoal::~FindUnderwaterTreasureGoal()
 
 bool FindUnderwaterTreasureGoal::canUse()
 {
-    return mBribed && mMob != NULL && mMob->isInWaterOrBubble();
+    return mBribed && mMob->isInWaterOrBubble() && mMob->getNavigation() != NULL;
 }
 
 bool FindUnderwaterTreasureGoal::canContinueToUse()
@@ -62,8 +66,8 @@ void FindUnderwaterTreasureGoal::start()
     if (!level->mIsClientSide)
     {
         BlockPos pos(mMob->getPos(0.0f));
-        BlockPos* ruin = level->findNearestMapFeature(L"Ruin", pos, false);
-        BlockPos* shipwreck = level->findNearestMapFeature(L"Shipwreck", pos, false);
+        BlockPos* ruin = level->findNearestMapFeature(kRuinName, pos, false);
+        BlockPos* shipwreck = level->findNearestMapFeature(kShipwreckName, pos, false);
 
         BlockPos* chest = NULL;
         Iterator<MutableBlockPos*>* positions = BlockPos::mutablesBetween(
@@ -78,30 +82,43 @@ void FindUnderwaterTreasureGoal::start()
                 break;
             }
         }
-        delete positions;
 
         if (ruin == NULL)
             mTreasurePos = shipwreck;
         else if (shipwreck == NULL)
             mTreasurePos = ruin;
+        else if (pos.distSqr(*shipwreck) < pos.distSqr(*ruin))
+        {
+            mTreasurePos = shipwreck;
+            delete ruin;
+        }
         else
-            mTreasurePos = pos.distSqr(*shipwreck) < pos.distSqr(*ruin) ? shipwreck : ruin;
+        {
+            mTreasurePos = ruin;
+            delete shipwreck;
+        }
 
         if (mTreasurePos != NULL && chest != NULL && pos.distSqr(*mTreasurePos) < (double)(mSearchRadius * mSearchRadius))
+        {
+            delete mTreasurePos;
             mTreasurePos = chest;
+        }
+        else
+        {
+            delete chest;
+        }
     }
 
     mTick = 10;
     mDistanceTravelled = 0;
-    delete mStartPos;
     mStartPos = new BlockPos(mMob->mX, mMob->mY, mMob->mZ);
     mStuck = 0;
     mDirectionChanges = 0;
 
     if (mTreasurePos != NULL)
     {
-        if (!static_cast<Mob*>(mMob)->getNavigation()->isDone())
-            static_cast<Mob*>(mMob)->getNavigation()->stop();
+        if (!mMob->getNavigation()->isDone())
+            mMob->getNavigation()->stop();
     }
 }
 
@@ -144,14 +161,15 @@ void FindUnderwaterTreasureGoal::tick()
         return;
     }
 
-    Random* random = static_cast<Mob*>(mMob)->getRandom();
-    float xSpread = random->nextFloat() * mMob->mBbWidth;
-    float ySpread = random->nextFloat() * mMob->mBbHeight;
-    float zSpread = random->nextFloat() * mMob->mBbWidth;
+    float xSpread = mMob->getRandom()->nextFloat() * mMob->mBbWidth;
+    double particleX = mMob->mX + (xSpread + xSpread) - mMob->mBbWidth;
+    float ySpread = mMob->getRandom()->nextFloat() * mMob->mBbHeight;
+    double particleY = mMob->mY + 0.5 + ySpread;
+    float zSpread = mMob->getRandom()->nextFloat() * mMob->mBbWidth;
+    double particleZ = mMob->mZ + (zSpread + zSpread) - mMob->mBbWidth;
     static_cast<ServerLevel*>(mMob->mLevel)->sendParticles(
-        PARTICLE_FIREWORKS_SPARK, mMob->mX + (xSpread + xSpread) - mMob->mBbWidth, mMob->mY + 0.5 + ySpread,
-        mMob->mZ + (zSpread + zSpread) - mMob->mBbWidth, 7, 0.0, 0.0, 0.0, 1.0, arrayWithLength<int>(), 0.0, 0.0,
-        0.0);
+        PARTICLE_FIREWORKS_SPARK, particleX, particleY, particleZ, 7, 0.0, 0.0, 0.0, 1.0, arrayWithLength<int>(), 0.0,
+        0.0, 0.0);
 
     BlockPos topSolid = mMob->mLevel->getTopSolidBlockPos(*mTreasurePos);
     Vec3* current = mMob->getPos(0.0f);
@@ -163,8 +181,8 @@ void FindUnderwaterTreasureGoal::tick()
     double targetY = topSolid.y;
     double targetZ = topSolid.z;
 
+    AttributeInstance* followRange = mMob->getAttribute(SharedMonsterAttributes::FOLLOW_RANGE);
     double range = 16.0;
-    AttributeInstance* followRange = static_cast<LivingEntity*>(mMob)->getAttribute(SharedMonsterAttributes::FOLLOW_RANGE);
     if (followRange != NULL)
     {
         range = followRange->getValue();
@@ -175,7 +193,7 @@ void FindUnderwaterTreasureGoal::tick()
         if (mStuck > 1)
         {
             Direction const* facing = Direction::fromVec3(direction);
-            random = static_cast<Mob*>(mMob)->getRandom();
+            Random* random = mMob->getRandom();
             if (facing == Direction::UP || facing == Direction::DOWN)
             {
                 facing = facing->getOpposite();
@@ -188,10 +206,10 @@ void FindUnderwaterTreasureGoal::tick()
             {
                 facing = facing->getCounterClockWise();
             }
-            BlockPos destination(current->x + facing->getStepX() * 10.0,
-                                 current->y + facing->getStepY() * 10.0,
-                                 current->z + facing->getStepZ() * 10.0);
-            static_cast<Mob*>(mMob)->getNavigation()->moveTo(destination.x, destination.y, destination.z,
+            BlockPos destination(current->x + facing->getStepX() * 10,
+                                 current->y + facing->getStepY() * 10,
+                                 current->z + facing->getStepZ() * 10);
+            mMob->getNavigation()->moveTo(destination.x, destination.y, destination.z,
                                                               (double)(mSpeedModifier + 1.0f));
             return;
         }
@@ -205,7 +223,7 @@ void FindUnderwaterTreasureGoal::tick()
         targetZ = partial.z;
     }
 
-    static_cast<Mob*>(mMob)->getNavigation()->moveTo(targetX, targetY, targetZ, (double)(mSpeedModifier + 1.0f));
+    mMob->getNavigation()->moveTo(targetX, targetY, targetZ, (double)(mSpeedModifier + 1.0f));
 }
 
 void FindUnderwaterTreasureGoal::stop()

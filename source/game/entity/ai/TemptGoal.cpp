@@ -14,15 +14,15 @@
 TemptGoal::TemptGoal(PathfinderMob* mob, double speedModifier,
                      arrayWithLength<Item*> items, bool canScare,
                      arrayWithLength<int> itemAuxValues)
+    : mTargetX(0.0)
+    , mTargetY(0.0)
+    , mTargetZ(0.0)
+    , mTargetXRot(0.0)
+    , mTargetYRot(0.0)
 {
+    mPlayer = boost::weak_ptr<Player>();
     mMob = mob;
     mSpeedModifier = speedModifier;
-    mTargetX = 0.0;
-    mTargetY = 0.0;
-    mTargetZ = 0.0;
-    mTargetXRot = 0.0;
-    mTargetYRot = 0.0;
-    mPlayer.reset();
     mDelayTemptCounter = 0;
     mRunning = false;
     mItems.data = items.data;
@@ -36,16 +36,18 @@ TemptGoal::TemptGoal(PathfinderMob* mob, double speedModifier,
 
 bool TemptGoal::shouldFollowItem(not_null_ptr<ItemInstance> item)
 {
+    bool follow = false;
     for (unsigned int i = 0; i < mItems.length; ++i)
     {
         if (item->getItem() == mItems.data[i]
             && (mItemAuxValues.length == 0 || item->getAuxValue() == mItemAuxValues.data[i]))
         {
-            return true;
+            follow = true;
+            break;
         }
     }
 
-    return false;
+    return follow;
 }
 
 bool TemptGoal::canUse()
@@ -56,7 +58,7 @@ bool TemptGoal::canUse()
         return false;
     }
 
-    mPlayer = mMob->mLevel->getNearestPlayer(mMob->shared_from_this(), 10.0, -1.0);
+    mPlayer = boost::weak_ptr<Player>(mMob->mLevel->getNearestPlayer(mMob->shared_from_this(), 10.0, -1.0));
     if (!mPlayer.lock())
     {
         return false;
@@ -121,14 +123,14 @@ void TemptGoal::start()
     mTargetX = player->mX;
     mTargetY = player->mY;
     mTargetZ = player->mZ;
+    mRunning = true;
     mTargetXRot = (double)player->mXRot;
     mTargetYRot = (double)player->mYRot;
-    mRunning = true;
 }
 
 void TemptGoal::stop()
 {
-    mPlayer.reset();
+    mPlayer = boost::weak_ptr<Player>();
     mMob->getNavigation()->stop();
     mRunning = false;
 }

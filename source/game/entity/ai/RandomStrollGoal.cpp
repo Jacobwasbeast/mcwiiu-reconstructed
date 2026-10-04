@@ -38,7 +38,8 @@ bool RandomStrollGoal::canUse()
     {
         return false;
     }
-    if (!mForceTrigger && !mMob->isExtraWanderingEnabled())
+    bool extraWandering = mMob->isExtraWanderingEnabled();
+    if (!mForceTrigger && !extraWandering)
     {
         if (mMob->getNoActionTime() >= 100)
         {
@@ -73,8 +74,8 @@ void RandomStrollGoal::start()
 
 Vec3* RandomStrollGoal::getPosition()
 {
-    boost::shared_ptr<PathfinderMob> mob = boost::static_pointer_cast<PathfinderMob>(mMob->shared_from_this());
-    return RandomPos::getPos(mob, 10, 7, mMob->getWanderingQuadrant());
+    return RandomPos::getPos(boost::static_pointer_cast<PathfinderMob>(mMob->shared_from_this()), 10, 7,
+                             mMob->getWanderingQuadrant());
 }
 
 void RandomStrollGoal::trigger()

@@ -29,6 +29,5 @@ bool SubselectEntitySelector::apply(boost::shared_ptr<Entity> entity) const
     if (!EntitySelector::NO_SPECTATORS->apply(entity))
         return false;
 
-    boost::shared_ptr<LivingEntity> livingEntity = boost::dynamic_pointer_cast<LivingEntity>(entity);
-    return mGoal->canAttack(livingEntity, false);
+    return mGoal->canAttack(boost::dynamic_pointer_cast<LivingEntity>(entity), false);
 }

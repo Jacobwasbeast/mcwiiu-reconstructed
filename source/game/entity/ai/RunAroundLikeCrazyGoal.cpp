@@ -2,7 +2,10 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include "game/core/EntityType.hpp"
 #include "game/entity/mob/AbstractHorse.hpp"
+#include "game/entity/mob/EntityEvent.hpp"
+#include "game/world/Level.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/ai/PathNavigation.hpp"
 #include "game/util/Random.hpp"
@@ -27,8 +30,13 @@ bool RunAroundLikeCrazyGoal::canUse()
         return false;
     }
 
-    boost::shared_ptr<PathfinderMob> horse = boost::static_pointer_cast<PathfinderMob>(mHorse->shared_from_this());
-    Vec3* target = RandomPos::getPos(horse, 5, 4, -1);
+    bool isPlayer = (mHorse->getControllingPassenger()->GetType() & EntityType::PLAYER) == EntityType::PLAYER;
+    if (!isPlayer)
+    {
+        return false;
+    }
+
+    Vec3* target = RandomPos::getPos(boost::static_pointer_cast<PathfinderMob>(mHorse->shared_from_this()), 5, 4, -1);
     if (target == NULL)
     {
         return false;
@@ -63,18 +71,22 @@ void RunAroundLikeCrazyGoal::tick()
         return;
     }
 
-    boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(passenger);
-    int temper = mHorse->getTemper();
-    int maxTemper = mHorse->getMaxTemper();
-    if (maxTemper > 0 && mHorse->getRandom()->nextInt(maxTemper) < temper)
+    if ((passenger->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
     {
-        mHorse->tameWithName(player);
-        return;
+        int temper = mHorse->getTemper();
+        int maxTemper = mHorse->getMaxTemper();
+        if (maxTemper > 0 && mHorse->getRandom()->nextInt(maxTemper) < temper)
+        {
+            mHorse->tameWithName(boost::static_pointer_cast<Player>(passenger));
+            return;
+        }
+
+        mHorse->modifyTemper(5);
     }
 
-    mHorse->modifyTemper(5);
     mHorse->ejectPassengers();
     mHorse->makeMad();
+    mHorse->mLevel->broadcastEntityEvent(mHorse->shared_from_this(), EntityEvent::TAMING_FAILED, 0);
 }
 
 std::wstring RunAroundLikeCrazyGoal::getName()

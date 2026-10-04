@@ -18,7 +18,7 @@ public:
     virtual bool canInterrupt();
     virtual void start();
     virtual void stop();
-    double rotlerp(float from, float to, float amount);
+    float rotlerp(float from, float to, float amount);
     virtual void tick();
     virtual std::wstring getName();
 

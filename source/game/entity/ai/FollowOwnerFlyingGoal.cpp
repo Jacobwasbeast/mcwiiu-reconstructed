@@ -15,7 +15,7 @@ bool FollowOwnerFlyingGoal::isTeleportFriendlyBlock(int x, int z, int y, int dx,
 {
     BlockPos blockPos(x + dx, y - 1, z + dz);
     const BlockState* blockState = mLevel->getBlockState(blockPos);
-    return (blockState->isTopSolidBlocking() || blockState->getMaterial() == Material::AIR)
+    return (blockState->isTopSolidBlocking() || blockState->getMaterial() == Material::LEAVES)
         && mLevel->isEmptyBlock(BlockPos(x + dx, y, z + dz))
         && mLevel->isEmptyBlock(BlockPos(x + dx, y + 1, z + dz));
 }

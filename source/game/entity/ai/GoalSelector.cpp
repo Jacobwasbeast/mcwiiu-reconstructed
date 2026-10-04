@@ -18,6 +18,7 @@ GoalSelector::~GoalSelector()
     {
         delete *it;
     }
+    mAvailableGoals.clear();
 }
 
 GoalSelector::InternalGoal::InternalGoal(int priority, Goal* goal, bool ownsGoal)
@@ -44,17 +45,15 @@ void GoalSelector::removeGoal(Goal* goal)
     while (available != mAvailableGoals.end())
     {
         InternalGoal* internalGoal = *available;
-        if (internalGoal->mGoal == goal)
+        Goal* current = internalGoal->mGoal;
+        if (current == goal)
         {
             if (internalGoal->mIsRunning)
             {
                 internalGoal->mIsRunning = false;
-                internalGoal->mGoal->stop();
+                current->stop();
                 std::vector<InternalGoal*>::iterator running = std::find(mGoals.begin(), mGoals.end(), internalGoal);
-                if (running != mGoals.end())
-                {
-                    mGoals.erase(running);
-                }
+                mGoals.erase(running);
             }
             mAvailableGoals.erase(available);
             delete internalGoal;
@@ -66,7 +65,7 @@ void GoalSelector::removeGoal(Goal* goal)
 
 bool GoalSelector::isControlFlagDisabled(int controlFlag)
 {
-    return (mDisabledControlFlags & controlFlag) != 0;
+    return (mDisabledControlFlags & controlFlag) > 0;
 }
 
 bool GoalSelector::canCoExist(InternalGoal* goal, InternalGoal* otherGoal)
@@ -146,7 +145,7 @@ void GoalSelector::tick()
         while (running != mGoals.end())
         {
             InternalGoal* goal = *running;
-            if (!canContinueToUse(goal))
+            if (!goal->mGoal->canContinueToUse())
             {
                 goal->mIsRunning = false;
                 goal->mGoal->stop();
@@ -174,10 +173,9 @@ bool GoalSelector::isUsingGoal(Goal* goal)
     {
         return false;
     }
-    std::vector<InternalGoal*>::iterator it;
-    for (it = mGoals.begin(); it != mGoals.end(); ++it)
+    for (unsigned int i = 0; i < mGoals.size(); ++i)
     {
-        if ((*it)->mGoal == goal)
+        if (mGoals[i]->mGoal == goal)
         {
             return true;
         }

@@ -6,7 +6,7 @@
 
 #include "game/entity/ai/Goal.hpp"
 
-class Entity;
+class LivingEntity;
 class Level;
 class Mob;
 
@@ -26,7 +26,7 @@ public:
 protected:
     Level* mLevel;
     Mob* mMob;
-    boost::weak_ptr<Entity> mTarget;
+    boost::weak_ptr<LivingEntity> mTarget;
     int mAttackTime;
     float mValue;
     bool mFlag;

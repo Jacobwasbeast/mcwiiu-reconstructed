@@ -27,8 +27,6 @@ MoveIndoorsGoal::MoveIndoorsGoal(PathfinderMob* mob)
 
 MoveIndoorsGoal::~MoveIndoorsGoal()
 {
-    mDoorInfo.reset();
-    mMob = 0;
 }
 
 bool MoveIndoorsGoal::canUse()
@@ -76,19 +74,12 @@ void MoveIndoorsGoal::start()
     boost::shared_ptr<DoorInfo> doorInfo = mDoorInfo.lock();
     if (!doorInfo)
     {
-        mDoorInfo.reset();
+        mDoorInfo = boost::weak_ptr<DoorInfo>();
         return;
     }
 
     BlockPos pos = doorInfo->getIndoorPos();
-    if (mMob->distanceToSqr(pos) <= 256.0)
-    {
-        mMob->getNavigation()->moveTo((double)pos.x + 0.5,
-                                      (double)pos.y,
-                                      (double)pos.z + 0.5,
-                                      1.0);
-    }
-    else
+    if (mMob->distanceToSqr(pos) > 256.0)
     {
         Vec3* destination = RandomPos::getPosTowards(
             boost::dynamic_pointer_cast<PathfinderMob>(mMob->shared_from_this()),
@@ -101,6 +92,13 @@ void MoveIndoorsGoal::start()
                                           destination->z, 1.0);
         }
     }
+    else
+    {
+        mMob->getNavigation()->moveTo((double)pos.x + 0.5,
+                                      (double)pos.y,
+                                      (double)pos.z + 0.5,
+                                      1.0);
+    }
 }
 
 void MoveIndoorsGoal::stop()
@@ -108,13 +106,13 @@ void MoveIndoorsGoal::stop()
     boost::shared_ptr<DoorInfo> doorInfo = mDoorInfo.lock();
     if (!doorInfo)
     {
-        mDoorInfo.reset();
+        mDoorInfo = boost::weak_ptr<DoorInfo>();
         return;
     }
 
     mDoorX = doorInfo->getIndoorPos().x;
     mDoorZ = doorInfo->getIndoorPos().z;
-    mDoorInfo.reset();
+    mDoorInfo = boost::weak_ptr<DoorInfo>();
 }
 
 std::wstring MoveIndoorsGoal::getName()

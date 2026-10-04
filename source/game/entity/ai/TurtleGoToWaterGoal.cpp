@@ -6,13 +6,14 @@
 #include "game/world/block/Blocks.hpp"
 
 TurtleGoToWaterGoal::TurtleGoToWaterGoal(Turtle* turtle, double speedModifier)
-    : MoveToBlockGoal(turtle, speedModifier, 16, 1, 1.0),
-      mTurtle(turtle)
+    : MoveToBlockGoal(turtle, speedModifier, 16, 1, 1.0)
 {
     if (turtle->isBaby())
     {
         mSpeedModifier = 2.0;
     }
+
+    mTurtle = turtle;
 }
 
 TurtleGoToWaterGoal::~TurtleGoToWaterGoal()

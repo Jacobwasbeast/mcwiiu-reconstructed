@@ -24,8 +24,7 @@ bool RestrictOpenDoorGoal::canUse()
         return false;
 
     BlockPos pos(mMob->shared_from_this());
-    boost::shared_ptr<Villages> villages = mMob->mLevel->getVillages();
-    boost::shared_ptr<Village> village = villages->getClosestVillage(pos, 16);
+    boost::shared_ptr<Village> village = mMob->mLevel->getVillages()->getClosestVillage(pos, 16);
     if (!village)
         return false;
 
@@ -46,11 +45,7 @@ bool RestrictOpenDoorGoal::canContinueToUse()
     if (!doorInfo)
         return false;
 
-    if (doorInfo->isRemoved())
-        return false;
-
-    BlockPos pos(mMob->shared_from_this());
-    return doorInfo->isInsideSide(pos);
+    return !doorInfo->isRemoved() && doorInfo->isInsideSide(BlockPos(mMob->shared_from_this()));
 }
 
 void RestrictOpenDoorGoal::start()
@@ -63,7 +58,7 @@ void RestrictOpenDoorGoal::stop()
 {
     static_cast<GroundPathNavigation*>(mMob->getNavigation())->setCanOpenDoors(true);
     static_cast<GroundPathNavigation*>(mMob->getNavigation())->setCanPassDoors(true);
-    mDoorInfo.reset();
+    mDoorInfo = boost::weak_ptr<DoorInfo>();
 }
 
 void RestrictOpenDoorGoal::tick()

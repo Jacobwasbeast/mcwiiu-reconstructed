@@ -44,10 +44,12 @@ double NearestAttackableTargetGoal::DisguisedRangeModifier::apply(boost::shared_
     if (item->getItem() == Items::skull)
     {
         int damage = item->getDamageValue();
-        bool disguisedAsSkeleton = mMob->GetType() == EntityType::SKELETON && damage == 0;
+        bool isSkeleton = mMob->GetType() == EntityType::SKELETON;
+        bool disguisedAsSkeleton = isSkeleton && damage == 0;
         bool disguisedAsZombie =
             (mMob->GetType() & EntityType::ZOMBIE) == EntityType::ZOMBIE && damage == 2;
-        bool disguisedAsCreeper = mMob->GetType() == EntityType::CREEPER && damage == 4;
+        bool isCreeper = mMob->GetType() == EntityType::CREEPER;
+        bool disguisedAsCreeper = isCreeper && damage == 4;
         if (disguisedAsSkeleton || disguisedAsZombie || disguisedAsCreeper)
             return 0.5;
     }
@@ -57,9 +59,9 @@ double NearestAttackableTargetGoal::DisguisedRangeModifier::apply(boost::shared_
 NearestAttackableTargetGoal::NearestAttackableTargetGoal(
     PathfinderMob* mob, const std::type_info& targetType, bool mustSee,
     bool mustReach, bool includeRemoved)
-    : TargetGoal(mob, mustSee, mustReach), mTargetType(&targetType), mRandomInterval(10),
-      mSorter(mob)
+    : TargetGoal(mob, mustSee, mustReach), mTargetType(&targetType), mSorter(mob)
 {
+    mRandomInterval = 10;
     setRequiredControlFlags(1);
     mTargetSelector = new SubselectEntitySelector(
         this, Predicates<boost::shared_ptr<Entity> >::alwaysTrue, false);
@@ -71,9 +73,9 @@ NearestAttackableTargetGoal::NearestAttackableTargetGoal(
     PathfinderMob* mob, const std::type_info& targetType, int randomInterval,
     bool mustSee, bool mustReach, const Predicate<boost::shared_ptr<Entity> >* selector,
     bool includeRemoved, bool ownsSelector)
-    : TargetGoal(mob, mustSee, mustReach), mTargetType(&targetType),
-      mRandomInterval(randomInterval), mSorter(mob)
+    : TargetGoal(mob, mustSee, mustReach), mTargetType(&targetType), mSorter(mob)
 {
+    mRandomInterval = randomInterval;
     setRequiredControlFlags(1);
     mTargetSelector = new SubselectEntitySelector(this, selector, ownsSelector);
     mIncludeRemoved = includeRemoved;
@@ -82,11 +84,8 @@ NearestAttackableTargetGoal::NearestAttackableTargetGoal(
 
 NearestAttackableTargetGoal::~NearestAttackableTargetGoal()
 {
-    mTarget.reset();
     delete mRangeModifier;
     delete mTargetSelector;
-    mRangeModifier = 0;
-    mTargetSelector = 0;
 }
 
 bool NearestAttackableTargetGoal::canUse()
@@ -111,7 +110,7 @@ bool NearestAttackableTargetGoal::canUse()
         double distance = getFollowDistance();
         if (mMob->distanceToSqr(entities->at(0)) <= distance * distance)
         {
-            mTarget = boost::dynamic_pointer_cast<LivingEntity>(entities->at(0));
+            mTarget = boost::weak_ptr<LivingEntity>(boost::dynamic_pointer_cast<LivingEntity>(entities->at(0)));
             found = true;
         }
     }

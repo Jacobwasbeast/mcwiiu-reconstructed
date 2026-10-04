@@ -2,6 +2,7 @@
 #define GAME_ENTITY_AI_RANGEDATTACKGOAL_HPP
 
 #include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
 #include <string>
 
 #include "game/entity/ai/Goal.hpp"
@@ -34,7 +35,7 @@ private:
     int mAttackIntervalMax;
     float mAttackRadius;
     float mAttackRadiusSqr;
-    boost::shared_ptr<LivingEntity> mTarget;
+    boost::weak_ptr<LivingEntity> mTarget;
 };
 
 #endif

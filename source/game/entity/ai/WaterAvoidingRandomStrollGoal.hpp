@@ -14,7 +14,7 @@ public:
     virtual ~WaterAvoidingRandomStrollGoal() {}
     virtual Vec3* getPosition();
 
-private:
+protected:
     float mProbability;
 };
 

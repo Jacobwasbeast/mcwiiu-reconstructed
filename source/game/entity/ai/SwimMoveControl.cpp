@@ -12,6 +12,7 @@
 SwimMoveControl::SwimMoveControl(Mob* mob)
     : MoveControl(mob)
 {
+    mMob = mob;
     setSpeedModifier(0.5);
 }
 
@@ -51,30 +52,33 @@ void SwimMoveControl::tick()
     {
         wantedYRot = (float)(atan2(dz, dx) * 57.295776f) - 90.0f;
     }
-    mMob->mYRot = Mth::clampRotateDegrees(mMob->mYRot, wantedYRot, 30.0f);
-    mMob->mYBodyRot = mMob->mYRot;
+    float yRot = Mth::clampRotateDegrees(mMob->mYRot, wantedYRot, 30.0f);
+    mMob->mYRot = yRot;
+    mMob->mYBodyRot = yRot;
 
     double attributeSpeed = mMob->getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->getValue();
     float speed = (float)(getSpeedModifier() * attributeSpeed);
     mMob->setSpeed(speed);
 
     float pitch = (float)atan2(dy / distance, static_cast<double>(Mth::sqrt(horizontalSqr)));
-    Vec3* rotation = Vec3::newTemp((double)(float)(pitch * -57.295776f), (double)mMob->mYRot, 0.0);
-    LookControl* lookControl = static_cast<LookControl*>(mMob->getLookControl());
+    Mob* mob = mMob;
+    Vec3* rotation = Vec3::newTemp((double)(float)(pitch * -57.295776f), (double)mob->mYRot, 0.0);
+    LookControl* lookControl = static_cast<LookControl*>(mob->getLookControl());
     lookControl->setLookRotation(rotation, 5.0f, 10.0f);
 
-    float sinXRot = Mth::sin(mMob->mXRot * Mth::DEG_TO_RAD);
-    float cosXRot = Mth::cos(mMob->mXRot * Mth::DEG_TO_RAD);
+    float sinXRot = Mth::sin(mMob->mXRot * 0.017453292f);
+    float cosXRot = Mth::cos(mMob->mXRot * 0.017453292f);
     mMob->setZza((float)(cosXRot * speed));
     mMob->setYya(-(float)(sinXRot * speed));
 
     lookControl = static_cast<LookControl*>(mMob->getLookControl());
-    double eyeY = mMob->getAttachPos(Entity::ENTITY_LOCATION_MOUNT, 0.0f)->y;
+    mob = mMob;
+    double eyeY = mob->getAttachPos(Entity::ENTITY_LOCATION_MOUNT, 0.0f)->y;
     double posZ = mMob->getPos(0.0f)->z;
-    double posX = mMob->getPos(0.0f)->x;
-    Vec3* target = Vec3::newTemp(posX + dx / distance + dx / distance,
+    double posX = mob->getPos(0.0f)->x;
+    Vec3* target = Vec3::newTemp(posX + (dx / distance + dx / distance),
                                  eyeY + (dy / distance) / distance,
-                                 posZ + dz / distance + dz / distance);
+                                 posZ + (dz / distance + dz / distance));
     Vec3* wanted = Vec3::newTemp(lookControl->getWantedX(), lookControl->getWantedY(), lookControl->getWantedZ());
     if (!lookControl->isHasWanted())
     {

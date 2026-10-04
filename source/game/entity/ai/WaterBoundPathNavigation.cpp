@@ -1,6 +1,7 @@
 #include "game/entity/ai/WaterBoundPathNavigation.hpp"
 
 #include "game/world/block/Block.hpp"
+#include "game/world/block/BlockState.hpp"
 #include "game/core/HitResult.hpp"
 #include "game/core/Mth.hpp"
 #include "game/core/Path.hpp"
@@ -37,19 +38,21 @@ Vec3* WaterBoundPathNavigation::getTempMobPos()
 
 void WaterBoundPathNavigation::updatePath()
 {
-    boost::shared_ptr<Entity> entity = mMob->shared_from_this();
-    Vec3* currentPos = mPath->currentPos(entity);
     Vec3* mobPos = getTempMobPos();
     double speed = 0.2;
     float width = mMob->mBbWidth;
-    float distance = width <= 0.75f ? 0.75f - width * 0.5f : width * 0.5f;
-    double motionLength = Mth::sqrt(mMob->mXd * mMob->mXd + mMob->mYd * mMob->mYd + mMob->mZd * mMob->mZd);
+    float distance = width > 0.75f ? width * 0.5f : 0.75f - width * 0.5f;
     if (Mth::abs(mMob->mXd) > speed || Mth::abs(mMob->mZd) > speed)
-        distance = distance * ((float)motionLength * 6.0f);
+    {
+        float motionLength = (float)Mth::sqrt(mMob->mXd * mMob->mXd + mMob->mYd * mMob->mYd + mMob->mZd * mMob->mZd);
+        distance = distance * (motionLength * 6.0f);
+    }
 
-    if (Mth::abs(mMob->mX - (currentPos->x + 0.5)) < distance &&
-        Mth::abs(mMob->mZ - (currentPos->z + 0.5)) < distance &&
-        Mth::abs(mMob->mY - currentPos->y) < distance + distance)
+    Vec3* currentPos = mPath->currentPos(mMob->shared_from_this());
+
+    if ((float)Mth::abs(mMob->mX - (currentPos->x + 0.5)) < distance &&
+        (float)Mth::abs(mMob->mZ - (currentPos->z + 0.5)) < distance &&
+        (float)Mth::abs(mMob->mY - currentPos->y) < distance + distance)
         mPath->next();
 
     int index = mPath->getIndex();
@@ -61,7 +64,7 @@ void WaterBoundPathNavigation::updatePath()
     index = mPath->getIndex();
     while (index < best)
     {
-        Vec3* position = mPath->getPos(entity, best);
+        Vec3* position = mPath->getPos(mMob->shared_from_this(), best);
         if (position->distanceToSqr(mobPos) <= 36.0 &&
             canMoveDirectly(mobPos, position, 0, 0, 0))
         {
@@ -91,5 +94,5 @@ NodeEvaluator* WaterBoundPathNavigation::getNodeEvaluator()
 
 bool WaterBoundPathNavigation::isStableDestination(const BlockPos& pos)
 {
-    return !mLevel->getBlock(pos)->isPathfindable(mLevel, pos);
+    return !mLevel->getBlockState(pos)->isSolid();
 }

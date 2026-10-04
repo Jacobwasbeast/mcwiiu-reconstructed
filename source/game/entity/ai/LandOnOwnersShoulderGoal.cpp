@@ -12,13 +12,6 @@ LandOnOwnersShoulderGoal::LandOnOwnersShoulderGoal(ShoulderRidingEntity* owner)
 {
 }
 
-LandOnOwnersShoulderGoal::~LandOnOwnersShoulderGoal()
-{
-    mPlayer.reset();
-    mOwner = 0;
-    mShoulderRiding = false;
-}
-
 bool LandOnOwnersShoulderGoal::canUse()
 {
     boost::shared_ptr<LivingEntity> owner = boost::dynamic_pointer_cast<LivingEntity>(mOwner->getOwner());

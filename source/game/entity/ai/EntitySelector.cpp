@@ -12,12 +12,8 @@
 
 bool validPlayerPredicate(boost::shared_ptr<Player> player)
 {
-    static Predicate<boost::shared_ptr<Entity> >* validPlayerDistance = NULL;
-
-    if (validPlayerDistance == NULL)
-    {
-        validPlayerDistance = EntitySelector::withinDistance(0.0, 128.0, 0.0, 192.0);
-    }
+    static Predicate<boost::shared_ptr<Entity> >* validPlayerDistance =
+        EntitySelector::withinDistance(0.0, 128.0, 0.0, 192.0);
 
     return EntitySelector::ENTITY_STILL_ALIVE->apply(player)
         && validPlayerDistance->apply(player);
@@ -25,12 +21,12 @@ bool validPlayerPredicate(boost::shared_ptr<Player> player)
 
 bool enemySelectorFunc(boost::shared_ptr<Entity> entity)
 {
-    return (entity->GetType() & EntityType::ENEMY) == EntityType::ENEMY;
+    return eTYPE_DERIVED_FROM(EntityType::ENEMY, entity->GetType());
 }
 
 bool visibleEnemySelectorFunc(boost::shared_ptr<Entity> entity)
 {
-    return (entity->GetType() & EntityType::ENEMY) == EntityType::ENEMY && !entity->isInvisible();
+    return eTYPE_DERIVED_FROM(EntityType::ENEMY, entity->GetType()) && !entity->isInvisible();
 }
 
 namespace EntitySelector

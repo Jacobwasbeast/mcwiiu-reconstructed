@@ -36,8 +36,8 @@ bool FollowBoatGoal::canUse()
             if (Mth::abs(passenger->mXxa) > 0.0f || Mth::abs(passenger->mZza) > 0.0f)
             {
                 boatMoving = true;
+                break;
             }
-            break;
         }
     }
     delete boats;
@@ -47,11 +47,8 @@ bool FollowBoatGoal::canUse()
 bool FollowBoatGoal::canContinueToUse()
 {
     boost::shared_ptr<LivingEntity> target = mTarget.lock();
-    if (target == NULL || !target->isPassenger())
-    {
-        return false;
-    }
-    return Mth::abs(target->mXxa) > 0.0f || Mth::abs(target->mZza) > 0.0f;
+    return target != NULL && target->isPassenger()
+        && (Mth::abs(target->mXxa) > 0.0f || Mth::abs(target->mZza) > 0.0f);
 }
 
 bool FollowBoatGoal::canInterrupt()
@@ -111,7 +108,8 @@ void FollowBoatGoal::tick()
 
     if (mState == 0)
     {
-        BlockPos behind = BlockPos(target).relative(target->getDirection()->getOpposite()).offset(0, -1, 0);
+        BlockPos behind = BlockPos(target).relative(target->getDirection()->getOpposite());
+        behind = behind.offset(0, -1, 0);
         mDolphin->getNavigation()->moveTo(behind.x, behind.y, behind.z, 1.0);
         if (mDolphin->distanceTo(target) < static_cast<float>(mSearchDistance))
         {
@@ -121,7 +119,8 @@ void FollowBoatGoal::tick()
     }
     else if (mState == 1)
     {
-        BlockPos ahead = BlockPos(target).relative(target->getMotionDirection(), 10);
+        const Direction* motion = target->getMotionDirection();
+        BlockPos ahead = BlockPos(target).relative(motion, 10);
         mDolphin->getNavigation()->moveTo(ahead.x, ahead.y - 1, ahead.z, 1.0);
         if (mDolphin->distanceTo(target) > static_cast<float>(mMaxDistance))
         {

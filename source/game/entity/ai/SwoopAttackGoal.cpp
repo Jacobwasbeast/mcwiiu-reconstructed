@@ -17,8 +17,7 @@ SwoopAttackGoal::SwoopAttackGoal(Mob* mob, float speedModifier,
     : Goal()
     , mMob(mob)
     , mSpeedModifier(speedModifier)
-    , mAttackDistanceMin(attackDistance.min)
-    , mAttackDistanceMax(attackDistance.max)
+    , mAttackDistance(attackDistance)
     , mAttackInterval(0)
     , mSwoopTicks(0)
     , mSwooping(false)
@@ -46,7 +45,7 @@ bool SwoopAttackGoal::canUse()
     if (mAttackInterval < 1)
     {
         int distance = (int)(mMob->getRandom()->nextFloat()
-            * (mAttackDistanceMax - mAttackDistanceMin) + mAttackDistanceMin);
+            * (mAttackDistance.max - mAttackDistance.min) + mAttackDistance.min);
         mAttackInterval = distance * 20;
         return true;
     }
@@ -78,7 +77,7 @@ void SwoopAttackGoal::stop()
 bool SwoopAttackGoal::canContinueToUse()
 {
     boost::shared_ptr<LivingEntity> target = mMob->getTarget();
-    return target && !mSwooping && !mMob->mHorizontalCollision && mMob->mHurtTime < 1;
+    return !(!target || mSwooping || mMob->mHorizontalCollision || mMob->mHurtTime >= 1);
 }
 
 void SwoopAttackGoal::tick()
@@ -104,10 +103,10 @@ void SwoopAttackGoal::tick()
                                (double)mSpeedModifier);
         }
 
+        AABB* targetBox = target->mBoundingBox;
         if (mMob->mBoundingBox->grow(0.2)->intersects(
-                target->mBoundingBox->mMinX, target->mBoundingBox->mMinY,
-                target->mBoundingBox->mMinZ, target->mBoundingBox->mMaxX,
-                target->mBoundingBox->mMaxY, target->mBoundingBox->mMaxZ))
+                targetBox->mMinX, targetBox->mMinY, targetBox->mMinZ,
+                targetBox->mMaxX, targetBox->mMaxY, targetBox->mMaxZ))
         {
             mMob->doHurtTarget(target);
             mSwooping = true;

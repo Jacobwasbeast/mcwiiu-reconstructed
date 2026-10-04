@@ -27,7 +27,6 @@ FindMountGoal::FindMountGoal(Mob& mob, float targetDistance, int startDelay,
 
 FindMountGoal::~FindMountGoal()
 {
-    mTarget.reset();
 }
 
 bool FindMountGoal::canUse()
@@ -38,7 +37,7 @@ bool FindMountGoal::canUse()
     if (!mMob->getNavigation() || mMob->isPassenger())
         return false;
 
-    boost::shared_ptr<LivingEntity> attackTarget = mMob->getTarget();
+    boost::shared_ptr<Entity> attackTarget = mMob->getTarget();
     if (mTargetNeeded && (!attackTarget || mMob->isPassenger()))
         return false;
 
@@ -48,11 +47,10 @@ bool FindMountGoal::canUse()
         return false;
     }
 
-    AABB* searchBox = mMob->mBoundingBox->grow((double)mTargetDistance);
     std::vector<boost::shared_ptr<Entity> >* entities =
-        mMob->mLevel->getEntitiesOfClass(typeid(Mob), searchBox);
+        mMob->mLevel->getEntitiesOfClass(typeid(Mob), mMob->mBoundingBox->grow((double)mTargetDistance));
 
-    const unsigned long long mountTypes[] = {
+    static const unsigned long long mountTypes[] = {
         EntityType::CHICKEN, EntityType::CAVE_SPIDER, EntityType::COW, EntityType::DONKEY,
         EntityType::HORSE, EntityType::HUSK, EntityType::MUSHROOM_COW, EntityType::MULE,
         EntityType::OCELOT, EntityType::PIG, EntityType::SHEEP, EntityType::SKELETON_HORSE,
@@ -60,21 +58,20 @@ bool FindMountGoal::canUse()
         EntityType::ZOMBIE_VILLAGER
     };
     double nearestDistance = -1.0;
-    std::vector<boost::shared_ptr<Entity> >::iterator it;
-    for (it = entities->begin(); it != entities->end(); ++it)
+    for (unsigned int i = 0; i < entities->size(); ++i)
     {
-        boost::shared_ptr<Entity> candidate = *it;
-        unsigned long long type = candidate->GetType();
-        if ((type & EntityType::MOB) != EntityType::MOB || candidate->getId() == mMob->getId())
+        boost::shared_ptr<Entity> candidate = entities->at(i);
+        if ((candidate->GetType() & EntityType::MOB) != EntityType::MOB || mMob->getId() == candidate->getId())
             continue;
 
         boost::shared_ptr<Mob> mount = boost::static_pointer_cast<Mob>(candidate);
-        if (!mount->isAlive() || !mount->canAddPassenger(mMob->shared_from_this()) || mount->isSleeping())
+        boost::shared_ptr<Entity> self = mMob->shared_from_this();
+        if (!mount->isAlive() || !mount->canAddPassenger(self) || mount->isSleeping())
             continue;
-        if ((type & EntityType::TAMABLE_ANIMAL) == EntityType::TAMABLE_ANIMAL &&
+        if ((mount->GetType() & EntityType::TAMABLE_ANIMAL) == EntityType::TAMABLE_ANIMAL &&
             boost::static_pointer_cast<TamableAnimal>(mount)->isTame())
             continue;
-        if ((type & EntityType::ABSTRACT_HORSE) == EntityType::ABSTRACT_HORSE &&
+        if ((mount->GetType() & EntityType::ABSTRACT_HORSE) == EntityType::ABSTRACT_HORSE &&
             boost::static_pointer_cast<AbstractHorse>(mount)->isTamed())
             continue;
         if (mount->isBaby() || (mAvoidWater && mount->isInWater()))
@@ -83,7 +80,7 @@ bool FindMountGoal::canUse()
         bool mountType = false;
         for (unsigned int index = 0; index < sizeof(mountTypes) / sizeof(mountTypes[0]); ++index)
         {
-            if (type == mountTypes[index])
+            if (mount->GetType() == mountTypes[index])
             {
                 mountType = true;
                 break;
@@ -92,7 +89,7 @@ bool FindMountGoal::canUse()
         if (!mountType)
             continue;
 
-        double distance = mount->distanceToSqr(mMob->shared_from_this());
+        double distance = mount->distanceToSqr(self);
         if (nearestDistance < 0.0 || distance < nearestDistance)
         {
             mTarget = mount;
@@ -112,8 +109,8 @@ bool FindMountGoal::canUse()
 bool FindMountGoal::canContinueToUse()
 {
     boost::shared_ptr<Entity> target = mTarget.lock();
-    if (!target || !target->isAlive() || mMob->isPassenger() ||
-        !target->canAddPassenger(mMob->shared_from_this()))
+    if (!(target && target->isAlive() && !mMob->isPassenger() &&
+          target->canAddPassenger(mMob->shared_from_this())))
     {
         mMob->setTarget(boost::shared_ptr<LivingEntity>());
         return false;
@@ -147,11 +144,11 @@ void FindMountGoal::tick()
 
     mMob->getLookControl()->setLookAt(target, 30.0f, 30.0f);
     double mountRange = (double)mMountDistance;
-    if (mountRange < 0.0)
+    if (mMountDistance < 0.0f)
         mountRange = getAttackReachSqr();
 
-    BlockPos ridingPos(target->getPos(0.0f)->add(0.0, target->getRidingHeight(), 0.0));
-    if (mMob != target.get() && mMob->distanceToSqr(ridingPos) < mountRange && target->isAlive())
+    Vec3* ridingPos = target->getPos(0.0f)->add(0.0, target->getRidingHeight(), 0.0);
+    if (mMob != target.get() && mMob->distanceToSqr(BlockPos(ridingPos)) < mountRange && target->isAlive())
     {
         static_cast<Entity*>(mMob)->startRiding(target);
         stop();

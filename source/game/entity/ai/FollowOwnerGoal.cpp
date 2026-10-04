@@ -4,6 +4,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/core/Direction.hpp"
+#include "game/core/Mth.hpp"
 #include "game/entity/ai/LookControl.hpp"
 #include "game/entity/ai/PathNavigation.hpp"
 #include "game/entity/mob/Entity.hpp"
@@ -17,11 +18,17 @@
 #include "game/world/generation/Player.hpp"
 
 FollowOwnerGoal::FollowOwnerGoal(TamableAnimal* tamable, double speedModifier, float startDistance, float stopDistance)
-    : mTamable(tamable), mOwner(), mLevel(tamable->mLevel), mSpeedModifier(speedModifier),
-      mNavigation(tamable->getNavigation()), mTimeToRecalcPath(0), mStopDistance(stopDistance),
-      mStartDistance(startDistance), mOldWaterCost(0.0f)
+    : mOwner()
 {
-    mOwner.reset();
+    mOwner = boost::weak_ptr<Mob>();
+    mTimeToRecalcPath = 0;
+    mOldWaterCost = 0.0f;
+    mTamable = tamable;
+    mLevel = tamable->mLevel;
+    mSpeedModifier = speedModifier;
+    mNavigation = tamable->getNavigation();
+    mStopDistance = stopDistance;
+    mStartDistance = startDistance;
     setRequiredControlFlags(3);
 }
 
@@ -58,17 +65,9 @@ bool FollowOwnerGoal::canUse()
 
 bool FollowOwnerGoal::canContinueToUse()
 {
-    if (!mOwner.lock())
-    {
-        return false;
-    }
-
-    if (mNavigation->isDone())
-    {
-        return false;
-    }
-
-    return mTamable->distanceToSqr(mOwner.lock()) > (double)(mStopDistance * mStopDistance)
+    return mOwner.lock() != NULL
+        && !mNavigation->isDone()
+        && mTamable->distanceToSqr(mOwner.lock()) > (double)(mStopDistance * mStopDistance)
         && !mTamable->isSitting();
 }
 
@@ -81,7 +80,7 @@ void FollowOwnerGoal::start()
 
 void FollowOwnerGoal::stop()
 {
-    mOwner.reset();
+    mOwner = boost::weak_ptr<Mob>();
     mNavigation->stop();
     mTamable->setPathfindingMalus(BlockPathTypes::WATER, mOldWaterCost);
 }
@@ -119,16 +118,9 @@ void FollowOwnerGoal::tick()
 
     boost::shared_ptr<LivingEntity> owner = mOwner.lock();
 
-    int x = static_cast<int>(owner->mX);
-    if (owner->mX < static_cast<double>(x)) --x;
-    x -= 2;
-
-    int z = static_cast<int>(owner->mZ);
-    if (owner->mZ < static_cast<double>(z)) --z;
-    z -= 2;
-
-    int y = static_cast<int>(owner->mBoundingBox->mMinY);
-    if (owner->mBoundingBox->mMinY < static_cast<double>(y)) --y;
+    int x = Mth::floor(owner->mX) - 2;
+    int z = Mth::floor(owner->mZ) - 2;
+    int y = Mth::floor(owner->mBoundingBox->mMinY);
 
     int minX = -1;
     int maxX = -1;
@@ -192,15 +184,8 @@ bool FollowOwnerGoal::isTeleportFriendlyBlock(int x, int z, int y, int dx, int d
 {
     BlockPos blockPos(x + dx, y - 1, z + dz);
     const BlockState* blockState = mLevel->getBlockState(blockPos);
-    if (blockState->getBlockFaceShape(mLevel, blockPos, Direction::DOWN) != BLOCK_FACE_SOLID)
-    {
-        return false;
-    }
-
-    if (!blockState->isValidSpawn(mTamable->shared_from_this()))
-    {
-        return false;
-    }
-
-    return mLevel->isEmptyBlock(blockPos.above()) && mLevel->isEmptyBlock(blockPos.above(2));
+    return blockState->getBlockFaceShape(mLevel, blockPos, Direction::DOWN) == BLOCK_FACE_SOLID
+        && blockState->isValidSpawn(mTamable->shared_from_this())
+        && mLevel->isEmptyBlock(blockPos.above())
+        && mLevel->isEmptyBlock(blockPos.above(2));
 }

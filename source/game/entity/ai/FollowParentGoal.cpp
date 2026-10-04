@@ -22,14 +22,14 @@ bool FollowParentGoal::canUse()
         return false;
     }
 
+    Animal* animal = mAnimal;
     std::vector<boost::shared_ptr<Entity> >* animals =
-        mAnimal->mLevel->getEntitiesOfClass(typeid(*mAnimal), mAnimal->mBoundingBox->grow(8.0, 4.0, 8.0));
+        animal->mLevel->getEntitiesOfClass(typeid(*animal), animal->mBoundingBox->grow(8.0, 4.0, 8.0));
 
     boost::shared_ptr<Entity> parent;
     double closestDistance = 1.7976931348623157e+308;
 
-    std::vector<boost::shared_ptr<Entity> >::iterator it;
-    for (it = animals->begin(); it != animals->end(); ++it)
+    for (std::vector<boost::shared_ptr<Entity> >::iterator it = animals->begin(); it != animals->end(); ++it)
     {
         Animal* candidate = static_cast<Animal*>(it->get());
         if (candidate->getAge() >= 0)
@@ -45,7 +45,12 @@ bool FollowParentGoal::canUse()
 
     delete animals;
 
-    if (!parent || closestDistance < 9.0)
+    if (!parent)
+    {
+        return false;
+    }
+
+    if (closestDistance < 9.0)
     {
         return false;
     }
@@ -66,9 +71,13 @@ bool FollowParentGoal::canContinueToUse()
         return false;
     }
 
-    boost::shared_ptr<Animal> parent = mParentAnimal.lock();
-    double distance = mAnimal->distanceToSqr(boost::static_pointer_cast<Entity>(parent));
-    return distance >= 9.0 && distance <= 256.0;
+    double distance = mAnimal->distanceToSqr(mParentAnimal.lock());
+    if (distance < 9.0 || distance > 256.0)
+    {
+        return false;
+    }
+
+    return true;
 }
 
 void FollowParentGoal::start()
@@ -78,7 +87,7 @@ void FollowParentGoal::start()
 
 void FollowParentGoal::stop()
 {
-    mParentAnimal.reset();
+    mParentAnimal = boost::weak_ptr<Animal>();
 }
 
 void FollowParentGoal::tick()

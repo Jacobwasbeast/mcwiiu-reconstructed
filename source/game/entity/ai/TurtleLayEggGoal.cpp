@@ -1,11 +1,10 @@
 #include "game/entity/ai/TurtleLayEggGoal.hpp"
 
-#include <cmath>
-
 #include <boost/shared_ptr.hpp>
 
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/client/audio/SoundSource.hpp"
+#include "game/core/Mth.hpp"
 #include "game/core/Turtle.hpp"
 #include "game/entity/mob/PathfinderMob.hpp"
 #include "game/util/Random.hpp"
@@ -18,7 +17,7 @@
 
 TurtleLayEggGoal::TurtleLayEggGoal(Turtle* turtle, double speedModifier,
                                    double searchDistance)
-    : MoveToBlockGoal(turtle, speedModifier, (int)std::ceil(searchDistance), 1, 1.0),
+    : MoveToBlockGoal(turtle, speedModifier, Mth::ceil((float)searchDistance), 1, 1.0),
       mTurtle(turtle),
       mLayEggCounter(0),
       mSearchDistanceSquared(searchDistance * searchDistance)
@@ -38,18 +37,15 @@ bool TurtleLayEggGoal::isNearHome()
 
 bool TurtleLayEggGoal::homeIsValid()
 {
-    if (mVerticalSearchStart < 0)
+    int verticalSearchStart = mVerticalSearchStart;
+    int searchRange = mSearchRange;
+    for (int y = 0; y <= verticalSearchStart; y = y <= 0 ? 1 - y : -y)
     {
-        return false;
-    }
-
-    for (int y = 0; y <= mVerticalSearchStart; y = y <= 0 ? 1 - y : -y)
-    {
-        for (int radius = 0; radius < mSearchRange; ++radius)
+        for (int radius = 0; radius < searchRange; ++radius)
         {
             for (int x = 0; x <= radius; x = x <= 0 ? 1 - x : -x)
             {
-                int firstZ = x == radius || x == -radius ? 0 : radius;
+                int firstZ = x < radius && x > -radius ? radius : 0;
                 for (int z = firstZ; z <= radius; z = z <= 0 ? 1 - z : -z)
                 {
                     BlockPos candidate = mTurtle->getHomePos().offset(x, y - 1, z);
@@ -112,9 +108,7 @@ void TurtleLayEggGoal::tick()
         level->playSound(boost::shared_ptr<Player>(), position, SoundEvents::TURTLE_LAY_EGG,
                          SoundSource::eSoundSource_Blocks, 0.3f,
                          level->mRandom->nextFloat() * 0.2f + 0.9f, 16.0f);
-        TypedBoxed<int> eggCount(eggs);
-        const BlockState* state = Blocks::turtle_egg->defaultBlockState()->setBoxedValue(TurtleEggBlock::EGG_COUNT, &eggCount);
-        level->setBlock(position, state, Block::UPDATE_ALL, false);
+        level->setBlock(position, Blocks::turtle_egg->defaultBlockState()->setValue(TurtleEggBlock::EGG_COUNT, eggs), Block::UPDATE_ALL, false);
         mTurtle->setHasEgg(false);
         mTurtle->setIsLayingEgg(false);
     }
@@ -131,12 +125,15 @@ void TurtleLayEggGoal::start()
 
 bool TurtleLayEggGoal::isValidTarget(Level* level, const BlockPos& pos)
 {
-    int radius = (int)std::floor(mTurtle->mBbWidth);
+    int radius = Mth::floor(mTurtle->mBbWidth);
+    int originX = pos.x;
+    int originY = pos.y;
+    int originZ = pos.z;
     for (int x = -radius; x <= radius; ++x)
     {
         for (int z = -radius; z <= radius; ++z)
         {
-            BlockPos candidate(pos.x + x, pos.y, pos.z + z);
+            BlockPos candidate(originX + x, originY, originZ + z);
             if (!level->isEmptyBlock(candidate.above()) ||
                 level->getBlock(candidate) != Blocks::sand)
                 return false;

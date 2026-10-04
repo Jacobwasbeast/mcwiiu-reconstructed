@@ -100,12 +100,9 @@ Path* PathNavigation::createPath(boost::shared_ptr<Entity> entity)
     delete mTargetPos;
     mTargetPos = new BlockPos(pos);
     float maxDist = getMaxDist();
-    BlockPos mobPos(mMob);
-    BlockPos center = mobPos.above();
+    BlockPos center = BlockPos(mMob).above();
     int radius = (int)(maxDist + 16.0f);
-    BlockPos min = center.offset(-radius, -radius, -radius);
-    BlockPos max = center.offset(radius, radius, radius);
-    Region region(mLevel, min, max, 0);
+    Region region(mLevel, center.offset(-radius, -radius, -radius), center.offset(radius, radius, radius), 0);
     return mPathFinder->findPath(&region, mMob, entity.get(), maxDist);
 }
 
@@ -134,7 +131,9 @@ bool PathNavigation::moveTo(double x, double y, double z, double speed)
 
 bool PathNavigation::moveTo(boost::shared_ptr<Entity> entity, double speed)
 {
+    MemSect(53);
     Path* path = createPath(entity);
+    MemSect(0);
     return path != 0 && moveTo(path, speed);
 }
 

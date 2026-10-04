@@ -4,12 +4,7 @@
 
 bool WithinDistanceSelector::apply(boost::shared_ptr<Entity> entity) const
 {
-    if (!entity)
-    {
-        return false;
-    }
-
-    return entity->distanceToSqr(x, y, z) <= distanceSqr;
+    return entity && entity->distanceToSqr(x, y, z) <= distanceSqr;
 }
 
 WithinDistanceSelector::~WithinDistanceSelector()

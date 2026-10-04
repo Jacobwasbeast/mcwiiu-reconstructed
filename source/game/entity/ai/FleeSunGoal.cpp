@@ -32,17 +32,11 @@ Vec3* FleeSunGoal::getHidePos()
 {
     Random* random = mMob->getRandom();
     BlockPos origin(mMob->mX, mMob->mBoundingBox->mMinY, mMob->mZ);
-    for (int attempt = 0; attempt < 5; ++attempt)
+    for (int attempt = 0; attempt < 10; ++attempt)
     {
         BlockPos candidate = origin.offset(random->nextInt(20) - 10,
                                            random->nextInt(6) - 3,
                                            random->nextInt(20) - 10);
-        if (!mLevel->canSeeSky(candidate) && mMob->getWalkTargetValue(candidate) < 0.0f)
-            return Vec3::newTemp((double)candidate.x, (double)candidate.y, (double)candidate.z);
-
-        candidate = origin.offset(random->nextInt(20) - 10,
-                                  random->nextInt(6) - 3,
-                                  random->nextInt(20) - 10);
         if (!mLevel->canSeeSky(candidate) && mMob->getWalkTargetValue(candidate) < 0.0f)
             return Vec3::newTemp((double)candidate.x, (double)candidate.y, (double)candidate.z);
     }
@@ -55,12 +49,10 @@ bool FleeSunGoal::canUse()
     if (!mLevel->isDay() || !mMob->isOnFire() || mMob->isUnderLiquid(Material::WATER))
         return false;
 
-    BlockPos pos(mMob->mX, mMob->mBoundingBox->mMinY, mMob->mZ);
-    if (!mLevel->canSeeSky(pos))
+    if (!mLevel->canSeeSky(BlockPos(mMob->mX, mMob->mBoundingBox->mMinY, mMob->mZ)))
         return false;
 
-    not_null_ptr<ItemInstance> helmet = mMob->getItemSlot(EquipmentSlot::HEAD);
-    if (!helmet->isEmpty())
+    if (!mMob->getItemSlot(EquipmentSlot::HEAD)->isEmpty())
         return false;
 
     Vec3* hidePos = getHidePos();

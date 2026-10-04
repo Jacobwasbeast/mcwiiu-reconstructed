@@ -22,7 +22,7 @@ public:
     virtual void tick();
     virtual std::wstring getName();
 
-    double calculateHeightOffset() const;
+    float calculateHeightOffset() const;
     void setAnchorAboveTarget();
     void selectNext();
     bool touchingTarget() const;
@@ -30,13 +30,10 @@ public:
 private:
     Mob* mMob;
     float mSpeedModifier;
-    float mDistanceMin;
-    float mDistanceMax;
+    Goal::FloatRange mDistanceRange;
     int mDistanceInterval;
-    float mHeightMin;
-    float mHeightMax;
-    float mVerticalMin;
-    float mVerticalMax;
+    Goal::FloatRange mHeightRange;
+    Goal::FloatRange mVerticalRange;
     int mVerticalInterval;
     float mMinDistanceSquared;
     Vec3* mAnchor;

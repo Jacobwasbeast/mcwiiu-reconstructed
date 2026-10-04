@@ -28,9 +28,8 @@ BlockPos* BreathAirGoal::findAirInArea(const BlockPos& minPos, const BlockPos& m
         {
             for (int y = minPos.y; y <= maxPos.y; ++y)
             {
-                BlockPos pos(x, y, z);
-                if (mDolphin->mLevel->getBlockState(pos)->getMaterial() == Material::AIR)
-                    return new BlockPos(pos);
+                if (mDolphin->mLevel->getBlockState(BlockPos(x, y, z))->getMaterial() == Material::AIR)
+                    return new BlockPos(x, y, z);
             }
         }
     }
@@ -65,8 +64,7 @@ void BreathAirGoal::tick()
 {
     if (mDolphin->getNavigation()->isDone())
     {
-        BlockPos pos(mDolphin);
-        if (mDolphin->mLevel->getBlockState(pos)->getMaterial() != Material::AIR)
+        if (mDolphin->mLevel->getBlockState(BlockPos(mDolphin))->getMaterial() != Material::AIR)
             findAirPosition();
     }
 
@@ -91,5 +89,5 @@ bool BreathAirGoal::canInterrupt()
 
 std::wstring BreathAirGoal::getName()
 {
-    return std::wstring(L"Breath_Air");
+    return std::wstring(L"Breath Air");
 }

@@ -5,34 +5,32 @@
 #include "game/entity/ai/LookControl.hpp"
 #include "game/entity/ai/PathNavigation.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/entity/mob/LivingEntity.hpp"
 #include "game/entity/mob/Mob.hpp"
 #include "game/util/AABB.hpp"
 
 OcelotAttackGoal::OcelotAttackGoal(Mob* mob)
-    : mLevel(mob->mLevel),
-      mMob(mob),
-      mTarget(),
-      mAttackTime(0),
-      mValue(0.0f),
-      mFlag(false)
 {
+    mTarget = boost::weak_ptr<LivingEntity>();
+    mMob = mob;
+    mFlag = false;
+    mAttackTime = 0;
+    mLevel = mob->mLevel;
+    mValue = 0.0f;
     setRequiredControlFlags(3);
 }
 
 OcelotAttackGoal::~OcelotAttackGoal()
 {
-    mTarget.reset();
-    mMob = 0;
-    mLevel = 0;
 }
 
 bool OcelotAttackGoal::canUse()
 {
-    boost::shared_ptr<Entity> target = mMob->getTarget();
+    boost::shared_ptr<LivingEntity> target = mMob->getTarget();
     if (!target)
         return false;
 
-    mTarget = target;
+    mTarget = boost::weak_ptr<LivingEntity>(target);
     return true;
 }
 
@@ -44,13 +42,12 @@ bool OcelotAttackGoal::canContinueToUse()
     if (mMob->distanceToSqr(mTarget.lock()) > 225.0)
         return false;
 
-    return !mMob->getNavigation()->isDone() ||
-           mMob->distanceToSqr(mTarget.lock()) <= 16.0;
+    return !mMob->getNavigation()->isDone() || canUse();
 }
 
 void OcelotAttackGoal::stop()
 {
-    mTarget = boost::weak_ptr<Entity>().lock();
+    mTarget = boost::weak_ptr<Mob>();
     mMob->getNavigation()->stop();
 }
 
@@ -58,10 +55,10 @@ void OcelotAttackGoal::tick()
 {
     mMob->getLookControl()->setLookAt(mTarget.lock(), 30.0f, 30.0f);
 
-    double attackReachSqr = (double)((mMob->mBbWidth * 2.0f) * (mMob->mBbWidth * 2.0f));
     double distance = mMob->distanceToSqr(mTarget.lock()->mX,
                                           mTarget.lock()->mBoundingBox->mMinY,
                                           mTarget.lock()->mZ);
+    double attackReachSqr = (double)((mMob->mBbWidth * 2.0f) * (mMob->mBbWidth * 2.0f));
 
     double speed = 0.8;
     if (distance > attackReachSqr && distance < 16.0)

@@ -15,7 +15,6 @@ class OwnerHurtByTargetGoal : public TargetGoal
 {
 public:
     OwnerHurtByTargetGoal(TamableAnimal* tamableAnimal);
-    virtual ~OwnerHurtByTargetGoal();
 
     virtual bool canUse();
     virtual void start();

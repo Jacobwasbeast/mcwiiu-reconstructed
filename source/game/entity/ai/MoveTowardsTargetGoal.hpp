@@ -26,7 +26,9 @@ public:
 private:
     PathfinderMob* mMob;
     boost::weak_ptr<LivingEntity> mTarget;
-    Vec3 mWantedPosition;
+    double mWantedX;
+    double mWantedY;
+    double mWantedZ;
     double mSpeedModifier;
     float mWithin;
 };

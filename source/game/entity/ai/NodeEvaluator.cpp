@@ -8,6 +8,7 @@
 
 NodeEvaluator::NodeEvaluator()
 {
+    mNodeMap = boost::unordered_map<int, Node*, IntKeyHash2, IntKeyEq>();
     mMob = 0;
     mCanPassDoors = false;
     mCanOpenDoors = false;
@@ -17,11 +18,6 @@ NodeEvaluator::NodeEvaluator()
 
 NodeEvaluator::~NodeEvaluator()
 {
-    mNodeMap.clear();
-    mBlockStateMap.clear();
-    mBlockPathTypeMap.clear();
-    mLevelSource = 0;
-    mMob = 0;
 }
 
 void NodeEvaluator::prepare(LevelSource* levelSource, Mob* mob)
@@ -43,12 +39,18 @@ void NodeEvaluator::done()
 
 Node* NodeEvaluator::getNode(int x, int y, int z)
 {
-    unsigned int hash = Node::createHash(x, y, z);
-    boost::unordered_map<int, Node*>::iterator it = mNodeMap.find(static_cast<int>(hash));
-    if (it != mNodeMap.end())
-        return it->second;
-    Node* node = Node::GetNodeFromPool(x, y, z);
-    mNodeMap.insert(std::pair<int, Node*>(static_cast<int>(hash), node));
+    int hash = static_cast<int>(Node::createHash(x, y, z));
+    boost::unordered_map<int, Node*, IntKeyHash2, IntKeyEq>::iterator it = mNodeMap.find(hash);
+    Node* node;
+    if (it == mNodeMap.end())
+    {
+        node = Node::GetNodeFromPool(x, y, z);
+        mNodeMap.insert(std::pair<const int, Node*>(hash, node));
+    }
+    else
+    {
+        node = it->second;
+    }
     return node;
 }
 

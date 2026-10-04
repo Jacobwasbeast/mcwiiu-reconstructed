@@ -10,15 +10,13 @@ OwnerHurtTargetGoal::OwnerHurtTargetGoal(TamableAnimal* tamable)
     : TargetGoal(tamable, false)
     , mTamable(tamable)
     , mOwnerLastHurt()
-    , mTimestamp(0)
 {
     setRequiredControlFlags(1);
+    mTimestamp = 0;
 }
 
 OwnerHurtTargetGoal::~OwnerHurtTargetGoal()
 {
-    mOwnerLastHurt.reset();
-    mTamable = 0;
 }
 
 bool OwnerHurtTargetGoal::canUse()

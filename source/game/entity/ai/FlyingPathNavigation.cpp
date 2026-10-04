@@ -2,6 +2,7 @@
 
 #include <cmath>
 
+#include "game/core/Mth.hpp"
 #include "game/core/Path.hpp"
 #include "game/core/PathFinder.hpp"
 #include "game/entity/ai/MoveControl.hpp"
@@ -29,7 +30,7 @@ bool FlyingPathNavigation::canFloat()
 
 bool FlyingPathNavigation::canUpdatePath()
 {
-    return !((!canFloat() || !isInLiquid()) && mMob->isPassenger());
+    return (canFloat() && isInLiquid()) || !mMob->isPassenger();
 }
 
 Vec3* FlyingPathNavigation::getTempMobPos()
@@ -39,8 +40,7 @@ Vec3* FlyingPathNavigation::getTempMobPos()
 
 Path* FlyingPathNavigation::createPath(boost::shared_ptr<Entity> entity)
 {
-    BlockPos pos(entity);
-    return createPath(pos);
+    return createPath(BlockPos(entity));
 }
 
 void FlyingPathNavigation::tick()
@@ -49,39 +49,39 @@ void FlyingPathNavigation::tick()
     if (mHasDelayedRecomputation)
         recomputePath();
 
-    if (isDone())
-        return;
-
-    if (!canUpdatePath())
-    {
-        if (mPath != NULL && mPath->getIndex() < mPath->getSize())
-        {
-            boost::shared_ptr<Entity> entity = mMob->shared_from_this();
-            Vec3* next = mPath->getPos(entity, mPath->getIndex());
-            if (static_cast<int>(std::floor(mMob->mX)) == static_cast<int>(std::floor(next->x)) &&
-                static_cast<int>(std::floor(mMob->mY)) == static_cast<int>(std::floor(next->y)) &&
-                static_cast<int>(std::floor(mMob->mZ)) == static_cast<int>(std::floor(next->z)))
-                mPath->setIndex(mPath->getIndex() + 1);
-        }
-        debugPathfinding();
-    }
-    else
-    {
-        updatePath();
-        debugPathfinding();
-    }
-
     if (!isDone())
     {
-        boost::shared_ptr<Entity> entity = mMob->shared_from_this();
-        Vec3* current = mPath->currentPos(entity);
-        mMob->getMoveControl()->setWantedPosition(current->x, current->y, current->z,
-                                                  mSpeedModifier);
+        if (canUpdatePath())
+        {
+            updatePath();
+        }
+        else
+        {
+            if (mPath != NULL && mPath->getIndex() < mPath->getSize())
+            {
+                Vec3* next = mPath->getPos(mMob->shared_from_this(), mPath->getIndex());
+                if (Mth::floor(mMob->mX) == Mth::floor(next->x) &&
+                    Mth::floor(mMob->mY) == Mth::floor(next->y) &&
+                    Mth::floor(mMob->mZ) == Mth::floor(next->z))
+                    mPath->setIndex(mPath->getIndex() + 1);
+            }
+        }
+        debugPathfinding();
+
+        if (!isDone())
+        {
+            Vec3* current = mPath->currentPos(mMob->shared_from_this());
+            mMob->getMoveControl()->setWantedPosition(current->x, current->y, current->z,
+                                                      mSpeedModifier);
+        }
     }
 }
 
 bool FlyingPathNavigation::canMoveDirectly(Vec3* start, Vec3* end, int, int, int)
 {
+    const int x = Mth::floor(start->x);
+    const int y = Mth::floor(start->y);
+    const int z = Mth::floor(start->z);
     const double xDelta = end->x - start->x;
     const double yDelta = end->y - start->y;
     const double zDelta = end->z - start->z;
@@ -94,22 +94,28 @@ bool FlyingPathNavigation::canMoveDirectly(Vec3* start, Vec3* end, int, int, int
     const double xStep = xDelta * scale;
     const double yStep = yDelta * scale;
     const double zStep = zDelta * scale;
-    int x = static_cast<int>(std::floor(start->x));
-    int y = static_cast<int>(std::floor(start->y));
-    int z = static_cast<int>(std::floor(start->z));
-    const int endX = static_cast<int>(std::floor(end->x));
-    const int endY = static_cast<int>(std::floor(end->y));
-    const int endZ = static_cast<int>(std::floor(end->z));
+    double xDistance = (x - start->x);
+    double yDistance = (y - start->y);
+    double zDistance = (z - start->z);
+    if (xStep >= 0.0)
+        xDistance += 1.0;
+    if (yStep >= 0.0)
+        yDistance += 1.0;
+    if (zStep >= 0.0)
+        zDistance += 1.0;
+    xDistance /= xStep;
+    yDistance /= yStep;
+    zDistance /= zStep;
     const int xDirection = xStep < 0.0 ? -1 : 1;
     const int yDirection = yStep < 0.0 ? -1 : 1;
     const int zDirection = zStep < 0.0 ? -1 : 1;
-    double xDistance = ((x - start->x) + (xStep >= 0.0 ? 1.0 : 0.0)) / xStep;
-    double yDistance = ((y - start->y) + (yStep >= 0.0 ? 1.0 : 0.0)) / yStep;
-    double zDistance = ((z - start->z) + (zStep >= 0.0 ? 1.0 : 0.0)) / zStep;
+    int xRemaining = Mth::floor(end->x) - x;
+    int yRemaining = Mth::floor(end->y) - y;
+    int zRemaining = Mth::floor(end->z) - z;
     while (true)
     {
-        if ((endX - x) * xDirection < 1 && (endY - y) * yDirection < 1 &&
-            (endZ - z) * zDirection < 1)
+        if (xRemaining * xDirection < 1 && yRemaining * yDirection < 1 &&
+            zRemaining * zDirection < 1)
         {
             return true;
         }
@@ -117,24 +123,24 @@ bool FlyingPathNavigation::canMoveDirectly(Vec3* start, Vec3* end, int, int, int
         {
             if (zDistance < yDistance)
             {
-                z += zDirection;
                 zDistance += 1.0 / std::fabs(zStep);
+                zRemaining -= zDirection;
             }
             else
             {
-                y += yDirection;
                 yDistance += 1.0 / std::fabs(yStep);
+                yRemaining -= yDirection;
             }
         }
         else if (zDistance <= xDistance)
         {
-            z += zDirection;
             zDistance += 1.0 / std::fabs(zStep);
+            zRemaining -= zDirection;
         }
         else
         {
-            x += xDirection;
             xDistance += 1.0 / std::fabs(xStep);
+            xRemaining -= xDirection;
         }
     }
 }

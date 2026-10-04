@@ -24,8 +24,7 @@ MeleeAttackGoal::MeleeAttackGoal(PathfinderMob* mob, double speedModifier, bool 
 
 MeleeAttackGoal::~MeleeAttackGoal()
 {
-    if (mPath != NULL)
-        delete mPath;
+    delete mPath;
 }
 
 void MeleeAttackGoal::_init(PathfinderMob* mob, double speedModifier, bool followingTargetEvenIfNotSeen)
@@ -46,7 +45,9 @@ void MeleeAttackGoal::_init(PathfinderMob* mob, double speedModifier, bool follo
 bool MeleeAttackGoal::canUse()
 {
     boost::shared_ptr<LivingEntity> target = mMob->getTarget();
-    if (!target || !target->isAlive())
+    if (!target)
+        return false;
+    if (!target->isAlive())
         return false;
 
     delete mPath;
@@ -54,37 +55,37 @@ bool MeleeAttackGoal::canUse()
     if (mPath != NULL)
         return true;
 
-    if (getAttackReachSqr(target) < mMob->distanceToSqr(target->mX, target->mBoundingBox->mMinY, target->mZ))
-    {
-        if ((target->GetType() & EntityType::PLAYER) == EntityType::PLAYER
-            && mMob->mLevel->getDifficulty() == Difficulty::PEACEFUL)
-            mMob->setTarget(boost::shared_ptr<LivingEntity>());
-        return false;
-    }
-    return true;
+    if (!(getAttackReachSqr(target) < mMob->distanceToSqr(target->mX, target->mBoundingBox->mMinY, target->mZ)))
+        return true;
+
+    if ((target->GetType() & EntityType::PLAYER) == EntityType::PLAYER
+        && mMob->mLevel->getDifficulty() == Difficulty::PEACEFUL)
+        mMob->setTarget(boost::shared_ptr<LivingEntity>());
+    return false;
 }
 
 bool MeleeAttackGoal::canContinueToUse()
 {
     boost::shared_ptr<LivingEntity> target = mMob->getTarget();
-    if (!target || !target->isAlive())
+    if (!target)
+        return false;
+    if (!target->isAlive())
         return false;
 
     if (!mFollowingTargetEvenIfNotSeen)
         return !mMob->getNavigation()->isDone();
 
-    if (mMob->isWithinRestriction(BlockPos(target)))
+    if (!mMob->isWithinRestriction(BlockPos(target)))
+        return false;
+
+    if ((target->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
     {
-        if ((target->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
-        {
-            boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(target);
-            if (player->isSpectator() || player->isCreative()
-                || mMob->mLevel->getDifficulty() == Difficulty::PEACEFUL)
-                return false;
-        }
-        return true;
+        boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(target);
+        if (player->isSpectator() || player->isCreative()
+            || mMob->mLevel->getDifficulty() == Difficulty::PEACEFUL)
+            return false;
     }
-    return false;
+    return true;
 }
 
 void MeleeAttackGoal::start()
@@ -115,36 +116,27 @@ void MeleeAttackGoal::tick()
     bool canSeeTarget = true;
     --mTicksUntilNextPathRecalculation;
 
-    if (!mFollowingTargetEvenIfNotSeen)
-        canSeeTarget = mMob->getSensing()->canSee(target);
+    if (!mFollowingTargetEvenIfNotSeen && !mMob->getSensing()->canSee(target))
+        canSeeTarget = false;
 
-    if (canSeeTarget && mTicksUntilNextPathRecalculation <= 0)
+    if (canSeeTarget && mTicksUntilNextPathRecalculation <= 0
+        && ((mTargetX == 0.0 && mTargetY == 0.0 && mTargetZ != 0.0)
+            || target->distanceToSqr(mTargetX, mTargetY, mTargetZ) >= 1.0
+            || mMob->getRandom()->nextFloat() < 0.05f))
     {
-        bool recalculatePath = true;
-        if (mTargetX != 0.0 || mTargetY != 0.0 || mTargetZ == 0.0)
-        {
-            double targetDelta = target->distanceToSqr(mTargetX, mTargetY, mTargetZ);
-            if (targetDelta < 1.0 && mMob->getRandom()->nextFloat() >= 0.05f)
-                recalculatePath = false;
-        }
+        mTargetX = target->mX;
+        mTargetY = target->mBoundingBox->mMinY;
+        mTargetZ = target->mZ;
 
-        if (recalculatePath)
-        {
-            mTargetX = target->mX;
-            mTargetY = target->mBoundingBox->mMinY;
-            mTargetZ = target->mZ;
+        int pathRecalculationDelay = mMob->getRandom()->nextInt(7);
+        mTicksUntilNextPathRecalculation = pathRecalculationDelay + 4;
+        if (distance > 1024.0)
+            mTicksUntilNextPathRecalculation += 10;
+        else if (distance > 256.0)
+            mTicksUntilNextPathRecalculation += 5;
 
-            int pathRecalculationDelay = mMob->getRandom()->nextInt(7);
-            if (distance <= 256.0)
-                mTicksUntilNextPathRecalculation = pathRecalculationDelay + 4;
-            else if (distance <= 1024.0)
-                mTicksUntilNextPathRecalculation = pathRecalculationDelay + 9;
-            else
-                mTicksUntilNextPathRecalculation = pathRecalculationDelay + 14;
-
-            if (!mMob->getNavigation()->moveTo(target, mSpeedModifier))
-                mTicksUntilNextPathRecalculation += 15;
-        }
+        if (mMob->getNavigation()->moveTo(target, mSpeedModifier) != true)
+            mTicksUntilNextPathRecalculation += 15;
     }
 
     mTicksUntilNextAttack = mTicksUntilNextAttack - 1;
@@ -155,7 +147,8 @@ void MeleeAttackGoal::tick()
 
 void MeleeAttackGoal::checkAndPerformAttack(boost::shared_ptr<LivingEntity> target, double distance)
 {
-    if (distance <= getAttackReachSqr(target) && mTicksUntilNextAttack <= 0)
+    double attackReachSqr = getAttackReachSqr(target);
+    if (distance <= attackReachSqr && mTicksUntilNextAttack <= 0)
     {
         mTicksUntilNextAttack = mAttackInterval;
         mMob->swing(InteractionHand::eInteractionHand_MainHand);
@@ -165,11 +158,8 @@ void MeleeAttackGoal::checkAndPerformAttack(boost::shared_ptr<LivingEntity> targ
 
 double MeleeAttackGoal::getAttackReachSqr(boost::shared_ptr<LivingEntity> target)
 {
-    Entity* reachEntity = mMob;
-    if (Entity::instanceof(mMob->getVehicle(), EntityType::MOB))
-        reachEntity = mMob->getVehicle().get();
-    double width = reachEntity->mBbWidth + reachEntity->mBbWidth;
-    return width * width + target->mBbWidth;
+    Entity* reachEntity = Entity::instanceof(mMob->getVehicle(), EntityType::MOB) ? mMob->getVehicle().get() : mMob;
+    return (reachEntity->mBbWidth + reachEntity->mBbWidth) * (reachEntity->mBbWidth + reachEntity->mBbWidth) + target->mBbWidth;
 }
 
 void MeleeAttackGoal::setLevel(Level* level)

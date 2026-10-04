@@ -8,9 +8,10 @@
 #include "game/entity/mob/LivingEntity.hpp"
 
 SwellGoal::SwellGoal(Creeper* creeper)
-    : mCreeper(creeper), mTarget()
+    : mTarget()
 {
-    mTarget.reset();
+    mTarget = boost::weak_ptr<LivingEntity>();
+    mCreeper = creeper;
     setRequiredControlFlags(1);
 }
 
@@ -24,24 +25,30 @@ bool SwellGoal::canUse()
 void SwellGoal::start()
 {
     mCreeper->getNavigation()->stop();
-    mTarget = mCreeper->getTarget();
+    mTarget = boost::weak_ptr<LivingEntity>(mCreeper->getTarget());
 }
 
 void SwellGoal::stop()
 {
-    mTarget.reset();
+    mTarget = boost::weak_ptr<LivingEntity>();
 }
 
 void SwellGoal::tick()
 {
-    if (mTarget.lock() && mCreeper->distanceToSqr(mTarget.lock()) <= 49.0
-        && mCreeper->getSensing()->canSee(mTarget.lock()))
-    {
-        mCreeper->setSwellDir(1);
-    }
-    else
+    if (mTarget.lock().get() == NULL)
     {
         mCreeper->setSwellDir(-1);
+        return;
     }
+    if (mCreeper->distanceToSqr(mTarget.lock()) > 49.0)
+    {
+        mCreeper->setSwellDir(-1);
+        return;
+    }
+    if (!mCreeper->getSensing()->canSee(mTarget.lock()))
+    {
+        mCreeper->setSwellDir(-1);
+        return;
+    }
+    mCreeper->setSwellDir(1);
 }
-

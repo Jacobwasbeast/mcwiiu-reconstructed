@@ -15,9 +15,7 @@
 TurtleGoHomeGoal::TurtleGoHomeGoal(Turtle* turtle, double speedModifier)
     : Goal(),
       mTurtle(turtle),
-      mSpeedModifier(speedModifier),
-      mReachedHome(false),
-      mTravelTime(0)
+      mSpeedModifier(speedModifier)
 {
 }
 
@@ -63,7 +61,7 @@ bool TurtleGoHomeGoal::canContinueToUse()
     BlockPos home = mTurtle->getHomePos();
     return mTurtle->distanceToSqr(home) >= 16.0
         && !mReachedHome
-        && mTravelTime < 601;
+        && mTravelTime <= 600;
 }
 
 void TurtleGoHomeGoal::tick()

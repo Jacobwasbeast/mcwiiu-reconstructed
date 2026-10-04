@@ -1,7 +1,6 @@
 #include "game/entity/ai/TargetGoal.hpp"
 #include "game/core/EntityType.hpp"
-
-#include <cmath>
+#include "game/core/Mth.hpp"
 
 #include <boost/shared_ptr.hpp>
 
@@ -121,7 +120,13 @@ void TargetGoal::stop()
 bool TargetGoal::canAttack(Mob* mob, boost::shared_ptr<LivingEntity> target,
                            bool allowInvulnerablePlayers, bool requireSight)
 {
-    if (!target || target == mob->shared_from_this() || !target->isAlive())
+    if (!target)
+        return false;
+
+    if (target == mob->shared_from_this())
+        return false;
+
+    if (!target->isAlive())
         return false;
 
     if (!mob->canAttackType(target->GetType()))
@@ -131,28 +136,22 @@ bool TargetGoal::canAttack(Mob* mob, boost::shared_ptr<LivingEntity> target,
         return false;
 
     OwnableEntity* mobOwnable = dynamic_cast<OwnableEntity*>(mob);
-    if (mobOwnable != NULL)
+    if (mobOwnable != NULL && !mobOwnable->getOwnerUUID().empty())
     {
-        std::wstring mobOwnerUUID = mobOwnable->getOwnerUUID();
-        if (!mobOwnerUUID.empty())
-        {
-            boost::shared_ptr<OwnableEntity> targetOwnable =
-                boost::dynamic_pointer_cast<OwnableEntity>(target);
-            if (targetOwnable && targetOwnable->getOwnerUUID() == mobOwnerUUID)
-                return false;
+        boost::shared_ptr<OwnableEntity> targetOwnable =
+            boost::dynamic_pointer_cast<OwnableEntity>(target);
+        if (targetOwnable && mobOwnable->getOwnerUUID() == targetOwnable->getOwnerUUID())
+            return false;
 
-            if (target == mobOwnable->getOwner())
-                return false;
-        }
+        if (target == mobOwnable->getOwner())
+            return false;
     }
 
     if ((target->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
     {
-        if (!allowInvulnerablePlayers
-            && boost::static_pointer_cast<Player>(target)->mAbilities.mInvulnerable)
-            return false;
-
-        if (target->mLevel->getDifficulty() == Difficulty::PEACEFUL)
+        if ((!allowInvulnerablePlayers
+             && boost::static_pointer_cast<Player>(target)->mAbilities.mInvulnerable)
+            || target->mLevel->getDifficulty() == Difficulty::PEACEFUL)
             return false;
     }
 
@@ -171,10 +170,13 @@ bool TargetGoal::canReach(boost::shared_ptr<LivingEntity> target)
 
     Node* last = path->last();
     if (last == NULL)
+    {
+        delete path;
         return false;
+    }
 
-    int x = (int)std::floor(target->mX);
-    int z = (int)std::floor(target->mZ);
+    int x = Mth::floor(target->mX);
+    int z = Mth::floor(target->mZ);
     bool result = (double)((last->x - x) * (last->x - x) + (last->z - z) * (last->z - z)) <= 2.25;
     delete path;
     return result;
@@ -185,9 +187,8 @@ bool TargetGoal::canAttack(boost::shared_ptr<LivingEntity> target, bool allowInv
     if (!canAttack(mMob, target, allowInvulnerablePlayers, mMustSee))
         return false;
 
-    BlockPos pos((int)std::floor(target->mX), (int)std::floor(target->mY),
-                 (int)std::floor(target->mZ));
-    if (!mMob->isWithinRestriction(pos))
+    if (!mMob->isWithinRestriction(
+            BlockPos(Mth::floor(target->mX), Mth::floor(target->mY), Mth::floor(target->mZ))))
         return false;
 
     if (!mMustReach)
@@ -199,7 +200,10 @@ bool TargetGoal::canAttack(boost::shared_ptr<LivingEntity> target, bool allowInv
     if (mCanReach == 0)
         mCanReach = canReach(target) ? 1 : 2;
 
-    return mCanReach != 2;
+    if (mCanReach == 2)
+        return false;
+
+    return true;
 }
 
 TargetGoal* TargetGoal::setUnseenMemoryTicks(int ticks)

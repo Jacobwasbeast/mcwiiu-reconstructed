@@ -23,11 +23,11 @@ const BlockPathTypes* SwimNodeEvaluator::getPathTypeAtPos(int x, int y, int z, b
     BlockPos pos(x, y, z);
     const BlockState* state = mLevelSource->getBlockState(mMob->mTickCache, pos);
     const Material* material = state->getMaterial();
-    const Material* liquidMaterial = Material::AIR;
+    const Material* liquidMaterial = NULL;
     if (material == Material::AIR)
         liquidMaterial = mLevelSource->getLiquidBlock(pos)->getCraftingMaterial();
 
-    if (material == Material::AIR && liquidMaterial == Material::AIR)
+    if (state->getMaterial() == Material::AIR && liquidMaterial == Material::AIR)
     {
         BlockPos belowPos = pos.below();
         const BlockState* belowState = mLevelSource->getBlockState(mMob->mTickCache, belowPos);
@@ -38,7 +38,7 @@ const BlockPathTypes* SwimNodeEvaluator::getPathTypeAtPos(int x, int y, int z, b
     }
     else
     {
-        if (material == Material::WATER)
+        if (state->getMaterial() == Material::WATER)
         {
             if (checkNeighbors)
             {
@@ -47,8 +47,8 @@ const BlockPathTypes* SwimNodeEvaluator::getPathTypeAtPos(int x, int y, int z, b
                 {
                     const Direction* direction = *it;
                     if (direction != Direction::DOWN && direction != Direction::UP &&
-                        getPathTypeAtPos(x + direction->getNormal().x, y + direction->getNormal().y,
-                                         z + direction->getNormal().z, false) == BlockPathTypes::BLOCKED)
+                        getPathTypeAtPos(x + direction->getStepX(), y + direction->getStepY(),
+                                         z + direction->getStepZ(), false) == BlockPathTypes::BLOCKED)
                         return BlockPathTypes::WATER_BORDER;
                 }
             }
@@ -146,9 +146,9 @@ int SwimNodeEvaluator::getNeighbors(arrayWithLength<Node*>* neighbors, Node* cur
          it != Direction::VALUES.end(); ++it)
     {
         const Direction* direction = *it;
-        Node* node = getWaterNode(current->x + direction->getNormal().x,
-                                  current->y + direction->getNormal().y,
-                                  current->z + direction->getNormal().z);
+        Node* node = getWaterNode(current->x + direction->getStepX(),
+                                  current->y + direction->getStepY(),
+                                  current->z + direction->getStepZ());
         if (node != NULL && !node->closed && node->distanceTo(target) < maxCost)
         {
             neighbors->data[count++] = node;

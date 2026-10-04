@@ -21,54 +21,58 @@ DolphinMoveControl::~DolphinMoveControl()
 
 void DolphinMoveControl::tick()
 {
-    if (mMob->isInWater())
+    Mob* mob = mMob;
+    if (mob->isInWater())
     {
-        mMob->mYd += 0.005;
+        mob->mYd += 0.005;
     }
 
-    if (mOperation == MOVE_TO && !mMob->getNavigation()->isDone())
+    if (mOperation == MOVE_TO && !mob->getNavigation()->isDone())
     {
-        mMob->setMoving(true);
+        mob->setMoving(true);
 
-        double dx = mWantedX - mMob->mX;
-        double dz = mWantedZ - mMob->mZ;
-        double dy = mWantedY + 0.5 - mMob->mY;
-        if (dy * dy + dx * dx + dz * dz < 0.0001)
+        double dx = mWantedX - mob->mX;
+        double dz = mWantedZ - mob->mZ;
+        double dy = mWantedY + 0.5 - mob->mY;
+        if (dy * dy + dx * dx + dz * dz < MIN_SPEED_SQR)
         {
             mMob->setZza(0.0f);
             return;
         }
 
-        float wantedYRot = (float)(atan2(dz, dx) * 57.2957763671875) - 90.0f;
-        mMob->mYRot = rotlerp(mMob->mYRot, wantedYRot, mMaxXRotChange);
-        mMob->mYBodyRot = mMob->mYRot;
-        mMob->mYHeadRot = mMob->mYRot;
+        float wantedYRot = (float)atan2(dz, dx) * 57.295776f - 90.0f;
+        float yRot = rotlerp(mob->mYRot, wantedYRot, mMaxXRotChange);
+        mob->mYRot = yRot;
+        mob->mYHeadRot = yRot;
+        mob->mYBodyRot = yRot;
 
-        AttributeInstance* movementSpeed = mMob->getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED);
+        AttributeInstance* movementSpeed = mob->getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED);
         float speed = (float)(mSpeedModifier * movementSpeed->getValue());
 
-        if (mMob->isInWater())
+        if (mob->isInWater())
         {
-            mMob->setSpeed(speed * 0.02f);
+            mob->setSpeed(speed * 0.02f);
 
-            double horizontal = Mth::sqrt(dx * dx + dz * dz);
-            float wantedXRot = Mth::wrapDegrees(-(float)(atan2(dy, horizontal) * 57.2957763671875));
+            float horizontal = (float)Mth::sqrt(dx * dx + dz * dz);
+            float wantedXRot = Mth::wrapDegrees(-atan2f((float)dy, horizontal * 57.295776f));
             wantedXRot = Mth::clamp(wantedXRot, -mMaxYRotChange, mMaxYRotChange);
-            mMob->mXRot = rotlerp(mMob->mXRot, wantedXRot, 5.0f);
-            mMob->setZza(Mth::cos(mMob->mXRot * 0.017453292f) * speed);
-            mMob->setYya((float)dy * speed);
+            float xRot = rotlerp(mob->mXRot, wantedXRot, 5.0f);
+            mob->mXRot = xRot;
+            float zza = Mth::cos(xRot * 0.017453292f) * speed;
+            mob->setZza(zza);
+            mob->setYya((float)dy * speed);
         }
         else
         {
-            mMob->setSpeed(speed * 0.1f);
+            mob->setSpeed(speed * 0.1f);
         }
 
         return;
     }
 
-    mMob->setSpeed(0.0f);
-    mMob->setXxa(0.0f);
-    mMob->setYya(0.0f);
-    mMob->setZza(0.0f);
-    mMob->setMoving(false);
+    mob->setSpeed(0.0f);
+    mob->setXxa(0.0f);
+    mob->setYya(0.0f);
+    mob->setZza(0.0f);
+    mob->setMoving(false);
 }

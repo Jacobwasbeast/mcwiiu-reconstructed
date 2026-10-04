@@ -49,7 +49,7 @@ Node* AmphibiousNodeEvaluator::getStart()
     if (box->mMinX < static_cast<double>(x)) --x;
     if (box->mMinY + 0.5 < static_cast<double>(y)) --y;
     if (box->mMinZ < static_cast<double>(z)) --z;
-    return NodeEvaluator::getNode(x, y, z);
+    return getNode(x, y, z);
 }
 
 Node* AmphibiousNodeEvaluator::getGoal(double x, double y, double z)
@@ -60,7 +60,7 @@ Node* AmphibiousNodeEvaluator::getGoal(double x, double y, double z)
     if (x < static_cast<double>(ix)) --ix;
     if (y + 0.5 < static_cast<double>(iy)) --iy;
     if (z < static_cast<double>(iz)) --iz;
-    return NodeEvaluator::getNode(ix, iy, iz);
+    return getNode(ix, iy, iz);
 }
 
 double AmphibiousNodeEvaluator::inWaterDependentPosHeight(const BlockPos& pos)
@@ -68,8 +68,8 @@ double AmphibiousNodeEvaluator::inWaterDependentPosHeight(const BlockPos& pos)
     if (mMob->isInWater())
         return static_cast<double>(pos.y) + 0.5;
     BlockPos below = pos.below();
-    return static_cast<double>(pos.y)
-           - (1.0 - getBlockState(mEntity->mTickCache, mLevelSource, below)->getShape(mLevelSource, below)->mMaxY);
+    double y = static_cast<double>(pos.y);
+    return y - (1.0 - getBlockState(mEntity->mTickCache, mLevelSource, below)->getShape(mLevelSource, below)->mMaxY);
 }
 
 Node* AmphibiousNodeEvaluator::getAcceptedNode(int x, int y, int z, int verticalRange,
@@ -97,7 +97,7 @@ Node* AmphibiousNodeEvaluator::getAcceptedNode(int x, int y, int z, int vertical
     {
         node = getNode(x, y, z);
         node->type = type;
-        node->costMalus = std::max(node->costMalus, malus);
+        node->costMalus = node->costMalus < malus ? malus : node->costMalus;
     }
 
     if (type == BlockPathTypes::WATER || type == BlockPathTypes::WALKABLE)
@@ -126,13 +126,23 @@ Node* AmphibiousNodeEvaluator::getAcceptedNode(int x, int y, int z, int vertical
         const BlockPathTypes* below =
             WalkNodeEvaluator::getBlockPathType(mLevelSource, x, y - 1, z, mMob, mEntityWidth, mEntityHeight,
                                                 mEntityDepth, isCanOpenDoors(), isCanPassDoors());
-        if (below == BlockPathTypes::BLOCKED || below == BlockPathTypes::WATER)
+        if (below == BlockPathTypes::BLOCKED)
         {
             node = getNode(x, y, z);
             cachedNode->hasAcceptedNode = true;
             cachedNode->acceptedNode = node;
-            node->type = below == BlockPathTypes::BLOCKED ? BlockPathTypes::WALKABLE : BlockPathTypes::WATER;
-            node->costMalus = std::max(node->costMalus, malus);
+            node->type = BlockPathTypes::WALKABLE;
+            node->costMalus = node->costMalus < malus ? malus : node->costMalus;
+            return node;
+        }
+
+        if (below == BlockPathTypes::WATER)
+        {
+            node = getNode(x, y, z);
+            cachedNode->hasAcceptedNode = true;
+            cachedNode->acceptedNode = node;
+            node->type = BlockPathTypes::WATER;
+            node->costMalus = node->costMalus < malus ? malus : node->costMalus;
             return node;
         }
 
@@ -159,7 +169,10 @@ Node* AmphibiousNodeEvaluator::getAcceptedNode(int x, int y, int z, int vertical
             {
                 node = getNode(x, y, z);
                 node->type = type;
-                node->costMalus = std::max(node->costMalus, malus);
+                node->costMalus = node->costMalus < malus ? malus : node->costMalus;
+                cachedNode->hasAcceptedNode = true;
+                cachedNode->acceptedNode = node;
+                return node;
             }
         }
     }
@@ -172,32 +185,65 @@ Node* AmphibiousNodeEvaluator::getAcceptedNode(int x, int y, int z, int vertical
 int AmphibiousNodeEvaluator::getNeighbors(arrayWithLength<Node*>* neighbors, Node* current,
                                           Node* target, float maxCost)
 {
-    double height = inWaterDependentPosHeight(BlockPos(current->x, current->y, current->z));
-    Node* candidates[10];
-    candidates[0] = getAcceptedNode(current->x, current->y, current->z + 1, 1, height);
-    candidates[1] = getAcceptedNode(current->x - 1, current->y, current->z, 1, height);
-    candidates[2] = getAcceptedNode(current->x + 1, current->y, current->z, 1, height);
-    candidates[3] = getAcceptedNode(current->x, current->y, current->z - 1, 1, height);
-    candidates[4] = getAcceptedNode(current->x, current->y + 1, current->z, 0, height);
-    candidates[5] = getAcceptedNode(current->x, current->y - 1, current->z, 1, height);
-    bool north = candidates[3] == NULL || candidates[3]->GetType() != BlockPathTypes::BLOCKED;
-    bool south = candidates[0] == NULL || candidates[0]->GetType() != BlockPathTypes::BLOCKED;
-    bool west = candidates[1] == NULL || candidates[1]->GetType() != BlockPathTypes::BLOCKED;
-    bool east = candidates[2] == NULL || candidates[2]->GetType() != BlockPathTypes::BLOCKED;
-    candidates[6] = north && west
-        ? getAcceptedNode(current->x - 1, current->y, current->z - 1, 1, height) : NULL;
-    candidates[7] = north && east
-        ? getAcceptedNode(current->x + 1, current->y, current->z - 1, 1, height) : NULL;
-    candidates[8] = south && west
-        ? getAcceptedNode(current->x - 1, current->y, current->z + 1, 1, height) : NULL;
-    candidates[9] = south && east
-        ? getAcceptedNode(current->x + 1, current->y, current->z + 1, 1, height) : NULL;
     int count = 0;
-    int i;
-    for (i = 0; i < 10; ++i)
-        if (candidates[i] != NULL && !candidates[i]->closed &&
-            candidates[i]->distanceTo(target) < maxCost)
-            neighbors->data[count++] = candidates[i];
+    BlockPos pos(current->x, current->y, current->z);
+    double height = inWaterDependentPosHeight(pos);
+    Node* south = getAcceptedNode(current->x, current->y, current->z + 1, 1, height);
+    Node* west = getAcceptedNode(current->x - 1, current->y, current->z, 1, height);
+    Node* east = getAcceptedNode(current->x + 1, current->y, current->z, 1, height);
+    Node* north = getAcceptedNode(current->x, current->y, current->z - 1, 1, height);
+    Node* up = getAcceptedNode(current->x, current->y + 1, current->z, 0, height);
+    Node* down = getAcceptedNode(current->x, current->y - 1, current->z, 1, height);
+
+    if (south != NULL && !south->closed && south->distanceTo(target) < maxCost)
+        neighbors->data[count++] = south;
+    if (west != NULL && !west->closed && west->distanceTo(target) < maxCost)
+        neighbors->data[count++] = west;
+    if (east != NULL && !east->closed && east->distanceTo(target) < maxCost)
+        neighbors->data[count++] = east;
+    if (north != NULL && !north->closed && north->distanceTo(target) < maxCost)
+        neighbors->data[count++] = north;
+    if (up != NULL && !up->closed && up->distanceTo(target) < maxCost)
+        neighbors->data[count++] = up;
+    if (down != NULL && !down->closed && down->distanceTo(target) < maxCost)
+        neighbors->data[count++] = down;
+
+    bool northOpen = north == NULL || north->type == BlockPathTypes::OPEN || north->costMalus != 0.0f;
+    bool southOpen = south == NULL || south->type == BlockPathTypes::OPEN || south->costMalus != 0.0f;
+    bool eastOpen = east == NULL || east->type == BlockPathTypes::OPEN || east->costMalus != 0.0f;
+    bool westOpen = west == NULL || west->type == BlockPathTypes::OPEN || west->costMalus != 0.0f;
+
+    if (northOpen)
+    {
+        if (westOpen)
+        {
+            Node* northWest = getAcceptedNode(current->x - 1, current->y, current->z - 1, 1, height);
+            if (northWest != NULL && !northWest->closed && northWest->distanceTo(target) < maxCost)
+                neighbors->data[count++] = northWest;
+        }
+        if (eastOpen)
+        {
+            Node* northEast = getAcceptedNode(current->x + 1, current->y, current->z - 1, 1, height);
+            if (northEast != NULL && !northEast->closed && northEast->distanceTo(target) < maxCost)
+                neighbors->data[count++] = northEast;
+        }
+    }
+
+    if (southOpen)
+    {
+        if (westOpen)
+        {
+            Node* southWest = getAcceptedNode(current->x - 1, current->y, current->z + 1, 1, height);
+            if (southWest != NULL && !southWest->closed && southWest->distanceTo(target) < maxCost)
+                neighbors->data[count++] = southWest;
+        }
+        if (eastOpen)
+        {
+            Node* southEast = getAcceptedNode(current->x + 1, current->y, current->z + 1, 1, height);
+            if (southEast != NULL && !southEast->closed && southEast->distanceTo(target) < maxCost)
+                neighbors->data[count++] = southEast;
+        }
+    }
     return count;
 }
 
@@ -223,14 +269,17 @@ const BlockPathTypes* AmphibiousNodeEvaluator::getBlockPathTypes(LevelSource* le
 
                 const BlockPathTypes* type = getBlockPathType(levelSource, x + dx, y + dy, z + dz);
                 if (type == BlockPathTypes::RAIL
-                    && !levelSource->getBlockState(mobPos)->getBlock()->instanceof(EBLOCK_TYPE_RAIL)
-                    && !levelSource->getBlockState(mobPos.below())->getBlock()->instanceof(EBLOCK_TYPE_RAIL))
-                    type = BlockPathTypes::FENCE;
+                    && !levelSource->getBlockState(mobPos)->getBlock()->instanceof(EBLOCK_TYPE_RAIL))
+                {
+                    if (!levelSource->getBlockState(mobPos.below())->getBlock()->instanceof(EBLOCK_TYPE_RAIL))
+                        type = BlockPathTypes::FENCE;
+                }
 
                 if (type == BlockPathTypes::DOOR_OPEN || type == BlockPathTypes::DOOR_WOOD_CLOSED
                     || type == BlockPathTypes::DOOR_IRON_CLOSED)
                 {
-                    if (mMob->GetType() == EntityType::TURTLE)
+                    bool isTurtle = mMob->GetType() == EntityType::TURTLE;
+                    if (isTurtle)
                         type = BlockPathTypes::BLOCKED;
                     else if (type == BlockPathTypes::DOOR_WOOD_CLOSED && canOpenDoors && canPassDoors)
                         type = BlockPathTypes::WALKABLE;
@@ -240,8 +289,8 @@ const BlockPathTypes* AmphibiousNodeEvaluator::getBlockPathTypes(LevelSource* le
                 if (dx == 0 && dy == 0 && dz == 0)
                     pathType = type;
 
-                pathTypeFlags |= 1 << type->ordinal();
-                mBlockPathTypeMap[key] = 1 << type->ordinal();
+                pathTypeFlags |= 1 << type->id;
+                mBlockPathTypeMap[key] = 1 << type->id;
             }
     return pathType;
 }
@@ -266,11 +315,10 @@ const BlockPathTypes* AmphibiousNodeEvaluator::getBlockPathType(LevelSource* lev
     {
         Block* blockBelow = levelSource->getBlockState(BlockPos(x, y - 1, z))->getBlock();
         const BlockPathTypes* typeBelow = getBlockPathTypeRaw(levelSource, x, y - 1, z);
+        type = BlockPathTypes::WALKABLE;
         if (typeBelow == BlockPathTypes::WALKABLE || typeBelow == BlockPathTypes::OPEN
             || typeBelow == BlockPathTypes::LAVA)
             type = BlockPathTypes::OPEN;
-        else
-            type = BlockPathTypes::WALKABLE;
         if (typeBelow == BlockPathTypes::DAMAGE_FIRE || blockBelow == Blocks::magma)
             type = BlockPathTypes::DAMAGE_FIRE;
         if (typeBelow == BlockPathTypes::DAMAGE_CACTUS)

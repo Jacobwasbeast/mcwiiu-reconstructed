@@ -11,9 +11,12 @@
 #include "game/world/generation/Player.hpp"
 
 BegGoal::BegGoal(Wolf* wolf, float distance)
-    : mWolf(wolf), mLevel(wolf->mLevel), mDistance(distance), mTime(0)
 {
-    mPlayer.reset();
+    mPlayer = boost::weak_ptr<Player>();
+    mLevel = wolf->mLevel;
+    mTime = 0;
+    mWolf = wolf;
+    mDistance = distance;
     setRequiredControlFlags(2);
 }
 
@@ -40,7 +43,7 @@ bool BegGoal::playerHoldingInteresting(boost::shared_ptr<Player> player)
 
 bool BegGoal::canUse()
 {
-    mPlayer = mLevel->getNearestPlayer(mWolf->shared_from_this(), mDistance, -1.0);
+    mPlayer = boost::weak_ptr<Player>(mLevel->getNearestPlayer(mWolf->shared_from_this(), mDistance, -1.0));
 
     if (!mPlayer.lock())
     {
@@ -76,7 +79,7 @@ void BegGoal::start()
 void BegGoal::stop()
 {
     mWolf->setIsInterested(false);
-    mPlayer.reset();
+    mPlayer = boost::weak_ptr<Player>();
 }
 
 void BegGoal::tick()

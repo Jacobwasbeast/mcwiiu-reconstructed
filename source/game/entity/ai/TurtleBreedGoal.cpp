@@ -24,7 +24,7 @@ bool TurtleBreedGoal::canUse()
 
 void TurtleBreedGoal::breed()
 {
-    boost::shared_ptr<Player> player = mAnimal->getLoveCause();
+    boost::shared_ptr<ServerPlayer> player = mAnimal->getLoveCause();
     if (!player && mPartner.lock()->getLoveCause())
     {
         player = mPartner.lock()->getLoveCause();

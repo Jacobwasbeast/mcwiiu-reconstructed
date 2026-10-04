@@ -40,7 +40,18 @@ PathFinder* DrownedPathNavigation::createPathFinder()
 Path* DrownedPathNavigation::createPath(const BlockPos& pos)
 {
     boost::shared_ptr<LivingEntity> target = mMob->getTarget();
-    if (target && target->isInWaterOrBubble() && !target->mOnGround && isInLiquid())
+    if (target && (!target->isInWaterOrBubble() || target->mOnGround))
+    {
+        mPathFinder = mGroundPathFinder;
+        Path* path = GroundPathNavigation::createPath(pos);
+        if (path)
+        {
+            mMob->stopSwimming();
+            return path;
+        }
+    }
+
+    if (target && isInLiquid())
     {
         mMob->startSwimming();
         mPathFinder = mWaterPathFinder;
@@ -72,47 +83,50 @@ void DrownedPathNavigation::tick()
     if (!mMob->isSwimming())
     {
         PathNavigation::tick();
-        return;
     }
-
-    ++mTick;
-    if (mHasDelayedRecomputation)
+    else
     {
-        recomputePath();
-    }
-
-    if (isDone())
-    {
-        return;
-    }
-
-    if (canUpdatePath())
-    {
-        PIXBeginNamedEvent(0.0f, "updatePath");
-        updatePath();
-        PIXEndNamedEvent();
-    }
-    else if (mPath != 0 && mPath->getIndex() < mPath->getSize())
-    {
-        Vec3* mobPos = getTempMobPos();
-        Vec3* next = mPath->getPos(mMob->shared_from_this(), mPath->getIndex());
-        if (next->y < mobPos->y && (!mMob->mOnGround || !isInLiquid()) &&
-            std::floor(mobPos->x) == std::floor(next->x) &&
-            std::floor(mobPos->z) == std::floor(next->z))
+        ++mTick;
+        if (mHasDelayedRecomputation)
         {
-            mPath->setIndex(mPath->getIndex() + 1);
+            recomputePath();
         }
-    }
 
-    debugPathfinding();
-    if (isDone())
-    {
-        return;
-    }
+        if (isDone())
+        {
+            return;
+        }
 
-    Vec3* current = mPath->currentPos(mMob->shared_from_this());
-    if (current != 0)
-    {
+        if (canUpdatePath())
+        {
+            PIXBeginNamedEvent(0.0f, "updatePath");
+            updatePath();
+            PIXEndNamedEvent();
+        }
+        else if (mPath != 0 && mPath->getIndex() < mPath->getSize())
+        {
+            Vec3* mobPos = getTempMobPos();
+            Vec3* next = mPath->getPos(mMob->shared_from_this(), mPath->getIndex());
+            if (next->y < mobPos->y && (!mMob->mOnGround || !isInLiquid()) &&
+                std::floor(mobPos->x) == std::floor(next->x) &&
+                std::floor(mobPos->z) == std::floor(next->z))
+            {
+                mPath->setIndex(mPath->getIndex() + 1);
+            }
+        }
+
+        debugPathfinding();
+        if (isDone())
+        {
+            return;
+        }
+
+        Vec3* current = mPath->currentPos(mMob->shared_from_this());
+        if (current == 0)
+        {
+            return;
+        }
+
         BlockPos pos(current);
         BlockPos below = pos.below();
         const AABB* shape = mLevel->getBlockState(below)->getShape(mLevel, below);

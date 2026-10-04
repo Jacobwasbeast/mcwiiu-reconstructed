@@ -8,11 +8,10 @@
 
 bool ParentHorseSelector::apply(boost::shared_ptr<Entity> entity) const
 {
-    return entity->GetType() == EntityType::HORSE
-        && boost::static_pointer_cast<AbstractHorse>(entity)->isBred();
+    const bool isHorse = entity->GetType() == EntityType::HORSE;
+    return isHorse && boost::static_pointer_cast<AbstractHorse>(entity)->isBred();
 }
 
 ParentHorseSelector::~ParentHorseSelector()
 {
-    static_cast<void>(this);
 }

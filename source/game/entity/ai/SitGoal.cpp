@@ -21,7 +21,7 @@ SitGoal::~SitGoal()
 
 bool SitGoal::canUse()
 {
-    if (!mMob->isSitting() || mMob->isInWaterOrBubble() || !mMob->mOnGround)
+    if (!mMob->isTame() || mMob->isInWaterOrBubble() || !mMob->mOnGround)
     {
         return false;
     }

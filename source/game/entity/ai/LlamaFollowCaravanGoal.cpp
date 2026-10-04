@@ -32,13 +32,13 @@ bool LlamaFollowCaravanGoal::firstIsLeashed(Llama* llama, int& distance,
     }
 
     ++distance;
-    if (!llama->getCaravanHead()->isLeashed())
+    if (llama->getCaravanHead()->isLeashed())
     {
-        return firstIsLeashed(llama->getCaravanHead().get(), distance, leashHolder);
+        leashHolder = llama->getCaravanHead()->getLeashHolder();
+        return true;
     }
 
-    leashHolder = llama->getCaravanHead()->getLeashHolder();
-    return true;
+    return firstIsLeashed(llama->getCaravanHead().get(), distance, leashHolder);
 }
 
 bool LlamaFollowCaravanGoal::canUse()
@@ -115,15 +115,15 @@ bool LlamaFollowCaravanGoal::canUse()
 
 bool LlamaFollowCaravanGoal::canContinueToUse()
 {
-    if (mLlama == NULL || !mLlama->inCaravan())
+    if (mLlama == NULL)
     {
         return false;
     }
 
     boost::shared_ptr<Entity> leashHolder;
     int distance = 0;
-    if (!mLlama->getCaravanHead()->isLeashed() || !firstIsLeashed(mLlama, distance, leashHolder)
-        || mLlama->isLeashed())
+    if (!mLlama->inCaravan() || !mLlama->getCaravanHead()->isAlive()
+        || !firstIsLeashed(mLlama, distance, leashHolder) || mLlama->isLeashed())
     {
         return false;
     }
@@ -135,13 +135,15 @@ bool LlamaFollowCaravanGoal::canContinueToUse()
         {
             mSpeedModifier *= 1.2;
             mDistanceToStop = 40;
+            return true;
         }
-        else if (mDistanceToStop < 1)
+        else if (mDistanceToStop >= 0)
         {
-            return false;
-        }
-        else
-        {
+            if (mDistanceToStop < 1)
+            {
+                return false;
+            }
+
             --mDistanceToStop;
         }
     }
@@ -176,13 +178,13 @@ void LlamaFollowCaravanGoal::tick()
     Vec3* direction = Vec3::newTemp(caravanHead->mX - mLlama->mX,
                                     caravanHead->mY - mLlama->mY,
                                     caravanHead->mZ - mLlama->mZ);
-    direction->normalize();
+    direction = direction->normalize();
     if (distance < 0.0)
     {
-        distance = 0.014;
+        distance = 0.0;
     }
 
-    direction->scale(distance);
+    direction = direction->scale(distance);
     mLlama->getNavigation()->moveTo(mLlama->mX + direction->x,
                                     mLlama->mY + direction->y,
                                     mLlama->mZ + direction->z,

@@ -41,7 +41,7 @@ public:
 private:
     Mob* mMob;
     FollowPredicate* mPredicate;
-    boost::weak_ptr<Entity> mTarget;
+    boost::weak_ptr<Mob> mTarget;
     double mSpeedModifier;
     PathNavigation* mNavigation;
     int mTimeToRecalcPath;

@@ -31,74 +31,62 @@ boost::shared_ptr<Skeleton> SkeletonTrapGoal::createSkeleton(
     const DifficultyInstance& difficulty, const boost::shared_ptr<AbstractHorse>& horse)
 {
     boost::shared_ptr<Skeleton> skeleton(new Skeleton(horse->mLevel));
-    skeleton->finalizeMobSpawn(difficulty, NULL, std::wstring());
+    skeleton->finalizeMobSpawn(difficulty, NULL, std::wstring(L""));
     skeleton->setPos(horse->mX, horse->mY, horse->mZ);
-    skeleton->mNoActionTime = 60;
+    skeleton->mInvulnerableTime = 60;
     skeleton->setPersistenceRequired(true);
 
-    not_null_ptr<ItemInstance> helmet = skeleton->getItemSlot(EquipmentSlot::HEAD);
-    if (helmet->isEmpty())
-    {
-        helmet = not_null_ptr<ItemInstance>(new ItemInstance(Items::ironHelmet));
-        skeleton->setItemSlot(EquipmentSlot::HEAD, helmet);
-    }
+    if (skeleton->getItemSlot(EquipmentSlot::HEAD)->isEmpty())
+        skeleton->setItemSlot(EquipmentSlot::HEAD, not_null_ptr<ItemInstance>(new ItemInstance(Items::ironHelmet)));
 
-    not_null_ptr<ItemInstance> mainHand = skeleton->getMainHandItem();
-    mainHand = EnchantmentHelper::enchantItem(
-        skeleton->getRandom(), mainHand,
+    skeleton->setItemSlot(EquipmentSlot::MAINHAND, EnchantmentHelper::enchantItem(
+        skeleton->getRandom(), skeleton->getMainHandItem(),
         (int)(5.0F + difficulty.getSpecialMultiplier() *
-              (float)skeleton->getRandom()->nextInt(18)), false);
-    skeleton->setItemSlot(EquipmentSlot::MAINHAND, mainHand);
-
-    helmet = skeleton->getItemSlot(EquipmentSlot::HEAD);
-    helmet = EnchantmentHelper::enchantItem(
-        skeleton->getRandom(), helmet,
+              (float)skeleton->getRandom()->nextInt(18)), false));
+    skeleton->setItemSlot(EquipmentSlot::HEAD, EnchantmentHelper::enchantItem(
+        skeleton->getRandom(), skeleton->getItemSlot(EquipmentSlot::HEAD),
         (int)(5.0F + difficulty.getSpecialMultiplier() *
-              (float)skeleton->getRandom()->nextInt(18)), false);
-    skeleton->setItemSlot(EquipmentSlot::HEAD, helmet);
+              (float)skeleton->getRandom()->nextInt(18)), false));
 
+    skeleton->mLevel->addEntity(skeleton);
     return skeleton;
 }
 
 boost::shared_ptr<AbstractHorse> SkeletonTrapGoal::createHorse(const DifficultyInstance& difficulty)
 {
     boost::shared_ptr<SkeletonHorse> horse(new SkeletonHorse(mHorse->mLevel));
-    horse->finalizeMobSpawn(difficulty, NULL, std::wstring());
+    horse->finalizeMobSpawn(difficulty, NULL, std::wstring(L""));
     horse->setPos(mHorse->mX, mHorse->mY, mHorse->mZ);
     horse->mInvulnerableTime = 60;
     horse->setPersistenceRequired(true);
     horse->setTamed(true);
     horse->setAge(0);
-    mHorse->mLevel->addEntity(horse);
+    horse->mLevel->addEntity(horse);
     return horse;
 }
 
 void SkeletonTrapGoal::tick()
 {
-    BlockPos position(mHorse);
-    DifficultyInstance difficulty = mHorse->mLevel->getCurrentDifficultyAt(position);
+    DifficultyInstance difficulty(mHorse->mLevel->getCurrentDifficultyAt(BlockPos(mHorse)));
 
     mHorse->setTrap(false);
     mHorse->setTamed(true);
     mHorse->setAge(0);
 
-    boost::shared_ptr<LightningBolt> lightning(new LightningBolt(
-        mHorse->mLevel, mHorse->mX, mHorse->mY, mHorse->mZ, true));
-    mHorse->mLevel->addGlobalEntity(lightning);
+    mHorse->mLevel->addGlobalEntity(boost::shared_ptr<LightningBolt>(new LightningBolt(
+        mHorse->mLevel, mHorse->mX, mHorse->mY, mHorse->mZ, true)));
 
-    boost::shared_ptr<AbstractHorse> horse = boost::static_pointer_cast<AbstractHorse>(mHorse->shared_from_this());
-    boost::shared_ptr<Skeleton> skeleton = createSkeleton(difficulty, horse);
-    static_cast<Entity*>(skeleton.get())->startRiding(horse);
+    boost::shared_ptr<Skeleton> skeleton = createSkeleton(difficulty, boost::static_pointer_cast<AbstractHorse>(mHorse->shared_from_this()));
+    skeleton->startRiding(mHorse->shared_from_this());
 
-    int count = 3;
-    while (count-- != 0)
+    for (int i = 0; i < 3; ++i)
     {
-        horse = createHorse(difficulty);
-        skeleton = createSkeleton(difficulty, horse);
-        static_cast<Entity*>(skeleton.get())->startRiding(horse);
+        boost::shared_ptr<AbstractHorse> trapHorse = createHorse(difficulty);
+        boost::shared_ptr<Skeleton> trapSkeleton = createSkeleton(difficulty, trapHorse);
+        trapSkeleton->startRiding(trapHorse);
         double pushX = mHorse->getRandom()->nextGaussian() * 0.5;
         double pushZ = mHorse->getRandom()->nextGaussian() * 0.5;
-        horse->push(pushX, 0.0, pushZ);
+        trapHorse->push(pushX, 0.0, pushZ);
     }
 }
 

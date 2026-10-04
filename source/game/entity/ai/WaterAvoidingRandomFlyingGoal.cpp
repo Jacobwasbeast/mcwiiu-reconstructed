@@ -1,8 +1,8 @@
 #include "game/entity/ai/WaterAvoidingRandomFlyingGoal.hpp"
 
 #include <boost/shared_ptr.hpp>
-#include <cmath>
 
+#include "game/core/Mth.hpp"
 #include "game/entity/mob/PathfinderMob.hpp"
 #include "game/util/RandomPos.hpp"
 #include "game/world/Level.hpp"
@@ -23,15 +23,17 @@ WaterAvoidingRandomFlyingGoal::~WaterAvoidingRandomFlyingGoal()
 Vec3* WaterAvoidingRandomFlyingGoal::getTreePos()
 {
     BlockPos origin(mMob);
-    MutableBlockPos candidate(0, 0, 0);
+    MutableBlockPos above(0, 0, 0);
     MutableBlockPos below(0, 0, 0);
 
-    const int minX = static_cast<int>(std::floor(mMob->mX - 3.0));
-    const int maxX = static_cast<int>(std::floor(mMob->mX + 3.0));
-    const int minY = static_cast<int>(std::floor(mMob->mY - 6.0));
-    const int maxY = static_cast<int>(std::floor(mMob->mY + 6.0));
-    const int minZ = static_cast<int>(std::floor(mMob->mZ - 3.0));
-    const int maxZ = static_cast<int>(std::floor(mMob->mZ + 3.0));
+    const int minX = Mth::floor(mMob->mX - 3.0);
+    const int minY = Mth::floor(mMob->mY - 6.0);
+    const int minZ = Mth::floor(mMob->mZ - 3.0);
+    const int maxX = Mth::floor(mMob->mX + 3.0);
+    const int maxY = Mth::floor(mMob->mY + 6.0);
+    const int maxZ = Mth::floor(mMob->mZ + 3.0);
+
+    MutableBlockPos candidate(minX, minY, minZ);
 
     for (int x = minX; x <= maxX; ++x)
     {
@@ -47,13 +49,11 @@ Vec3* WaterAvoidingRandomFlyingGoal::getTreePos()
                     continue;
                 }
 
-                below.set(candidate);
-                below.move(Direction::DOWN);
-                Block* block = mMob->mLevel->getBlockState(below)->getBlock();
-                if ((dynamic_cast<LeafBlock*>(block) != NULL
+                Block* block = mMob->mLevel->getBlock(*below.set(candidate)->move(Direction::DOWN));
+                if ((block != NULL && dynamic_cast<LeafBlock*>(block) != NULL
                      || block == Blocks::log || block == Blocks::log2)
                     && mMob->mLevel->isEmptyBlock(candidate)
-                    && mMob->mLevel->isEmptyBlock(candidate.above()))
+                    && mMob->mLevel->isEmptyBlock(*above.set(candidate)->move(Direction::UP)))
                 {
                     return Vec3::newTemp(candidate.x, candidate.y, candidate.z);
                 }
@@ -66,24 +66,20 @@ Vec3* WaterAvoidingRandomFlyingGoal::getTreePos()
 
 Vec3* WaterAvoidingRandomFlyingGoal::getPosition()
 {
-    boost::shared_ptr<PathfinderMob> mob = boost::static_pointer_cast<PathfinderMob>(mMob->shared_from_this());
-
-    if (mMob->isInWaterOrBubble() || mMob->isInLava())
+    Vec3* position = NULL;
+    if (mMob->isInWater() || mMob->isOverWater())
     {
-        Vec3* position = RandomPos::getLandPos(mob, 15, 15, -1);
-        if (position != NULL)
-        {
-            return position;
-        }
+        position = RandomPos::getLandPos(boost::static_pointer_cast<PathfinderMob>(mMob->shared_from_this()), 15, 15, -1);
     }
 
-    if (mMob->getRandom()->nextFloat() < 0.001f)
+    if (mMob->getRandom()->nextFloat() >= mProbability)
     {
-        Vec3* position = getTreePos();
-        if (position != NULL)
-        {
-            return position;
-        }
+        position = getTreePos();
+    }
+
+    if (position != NULL)
+    {
+        return position;
     }
 
     return WaterAvoidingRandomStrollGoal::getPosition();

@@ -19,7 +19,7 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/util/AABB.hpp"
 
-const float MoveControl::MIN_SPEED_SQR = 2.5000003E-7f;
+float MoveControl::MIN_SPEED_SQR = 2.5000003E-7f;
 
 MoveControl::MoveControl(Mob* mob)
     : mMob(mob), mWantedX(0.0), mWantedY(0.0), mWantedZ(0.0), mSpeedModifier(0.0),

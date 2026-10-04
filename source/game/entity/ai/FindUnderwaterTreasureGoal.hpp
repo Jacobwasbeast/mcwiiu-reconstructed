@@ -36,7 +36,7 @@ private:
     int mDirectionChanges;
     int mSearchRadius;
     float mSpeedModifier;
-    Entity* mMob;
+    PathfinderMob* mMob;
 };
 
 #endif

@@ -20,8 +20,7 @@ public:
 private:
     Mob* mMob;
     float mSpeedModifier;
-    float mAttackDistanceMin;
-    float mAttackDistanceMax;
+    Goal::FloatRange mAttackDistance;
     int mAttackInterval;
     int mSwoopTicks;
     bool mSwooping;

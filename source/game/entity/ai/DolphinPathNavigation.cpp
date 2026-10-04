@@ -54,7 +54,9 @@ void DolphinPathNavigation::updatePath()
 
     int width = static_cast<int>(ceilf(mMob->mBbWidth));
     int height = static_cast<int>(mMob->mBbHeight) + 1;
-    int best = mPath->getIndex() + 6;
+    index = mPath->getIndex();
+    size = mPath->getSize();
+    int best = index + 6;
     if (size - 1 < best)
         best = size - 1;
 

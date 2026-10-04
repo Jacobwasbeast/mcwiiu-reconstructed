@@ -17,7 +17,6 @@
 
 PlayWithItemsGoal::~PlayWithItemsGoal()
 {
-    mDolphin = 0;
 }
 
 bool PlayWithItemsGoal::canUse()
@@ -25,14 +24,10 @@ bool PlayWithItemsGoal::canUse()
     if (!mDolphin->isInWater())
         return false;
 
-    AABB* searchBox = mDolphin->mBoundingBox->grow(8.0, 8.0, 8.0);
+    Level* level = mDolphin->mLevel;
     std::vector<boost::shared_ptr<Entity> >* entities =
-        mDolphin->mLevel->getEntitiesOfClass(typeid(ItemEntity), searchBox);
-    bool result = true;
-    if (entities->empty())
-    {
-        result = !mDolphin->getMainHandItem()->isEmpty();
-    }
+        level->getEntitiesOfClass(typeid(ItemEntity), mDolphin->mBoundingBox->grow(8.0, 8.0, 8.0));
+    bool result = !entities->empty() || !mDolphin->getMainHandItem()->isEmpty();
     delete entities;
     return result;
 }
@@ -44,9 +39,9 @@ bool PlayWithItemsGoal::canContinueToUse()
 
 void PlayWithItemsGoal::start()
 {
-    AABB* searchBox = mDolphin->mBoundingBox->grow(8.0, 8.0, 8.0);
+    Level* level = mDolphin->mLevel;
     std::vector<boost::shared_ptr<Entity> >* entities =
-        mDolphin->mLevel->getEntitiesOfClass(typeid(ItemEntity), searchBox);
+        level->getEntitiesOfClass(typeid(ItemEntity), mDolphin->mBoundingBox->grow(8.0, 8.0, 8.0));
     if (!entities->empty())
     {
         mDolphin->getNavigation()->moveTo(entities->at(0), 1.2f);
@@ -75,9 +70,9 @@ void PlayWithItemsGoal::tick()
         return;
     }
 
-    AABB* searchBox = mDolphin->mBoundingBox->grow(8.0, 8.0, 8.0);
+    Level* level = mDolphin->mLevel;
     std::vector<boost::shared_ptr<Entity> >* entities =
-        mDolphin->mLevel->getEntitiesOfClass(typeid(ItemEntity), searchBox);
+        level->getEntitiesOfClass(typeid(ItemEntity), mDolphin->mBoundingBox->grow(8.0, 8.0, 8.0));
     if (!entities->empty())
     {
         mDolphin->getNavigation()->moveTo(entities->at(0), 1.2f);

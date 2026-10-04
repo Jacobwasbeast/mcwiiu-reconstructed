@@ -6,8 +6,8 @@
 #include "game/item/ItemInstance.hpp"
 
 MobCanWearArmourEntitySelector::MobCanWearArmourEntitySelector(not_null_ptr<ItemInstance> itemInstance)
-    : mItemInstance(itemInstance)
 {
+    mItemInstance = itemInstance;
 }
 
 bool MobCanWearArmourEntitySelector::apply(boost::shared_ptr<Entity> entity) const
@@ -17,41 +17,46 @@ bool MobCanWearArmourEntitySelector::apply(boost::shared_ptr<Entity> entity) con
         return false;
     }
 
-    const unsigned long long type = entity->GetType();
-    if ((type & EntityType::LIVING_ENTITY) != EntityType::LIVING_ENTITY)
+    if ((entity->GetType() & EntityType::LIVING_ENTITY) != EntityType::LIVING_ENTITY)
     {
         return false;
     }
 
     boost::shared_ptr<LivingEntity> livingEntity = boost::static_pointer_cast<LivingEntity>(entity);
-    not_null_ptr<ItemInstance> equippedItem = livingEntity->getItemSlot(Mob::getEquipmentSlotForItem(mItemInstance));
-    if (!equippedItem->isEmpty())
+    if (!livingEntity->getItemSlot(Mob::getEquipmentSlotForItem(mItemInstance))->isEmpty())
     {
         return false;
     }
 
-    if (type == EntityType::VILLAGER)
+    const bool isVillager = livingEntity->GetType() == EntityType::VILLAGER;
+    if (isVillager)
     {
         return false;
     }
 
-    if ((type & EntityType::ZOMBIE) == EntityType::ZOMBIE ||
-        (type & EntityType::ABSTRACT_SKELETON) == EntityType::ABSTRACT_SKELETON)
+    if ((livingEntity->GetType() & EntityType::ZOMBIE) == EntityType::ZOMBIE ||
+        (livingEntity->GetType() & EntityType::ABSTRACT_SKELETON) == EntityType::ABSTRACT_SKELETON)
     {
         return true;
     }
 
-    if ((type & EntityType::MOB) == EntityType::MOB)
+    if ((livingEntity->GetType() & EntityType::MOB) == EntityType::MOB)
     {
         return boost::static_pointer_cast<Mob>(livingEntity)->canPickUpLoot();
     }
 
-    if (type == EntityType::ARMOR_STAND)
+    const bool isArmorStand = livingEntity->GetType() == EntityType::ARMOR_STAND;
+    if (isArmorStand)
     {
         return true;
     }
 
-    return (type & EntityType::PLAYER) == EntityType::PLAYER;
+    if ((livingEntity->GetType() & EntityType::PLAYER) != EntityType::PLAYER)
+    {
+        return false;
+    }
+
+    return true;
 }
 
 MobCanWearArmourEntitySelector::~MobCanWearArmourEntitySelector()

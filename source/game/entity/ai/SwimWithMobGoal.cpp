@@ -32,19 +32,18 @@ bool SwimWithMobGoal::canSwimWith(boost::shared_ptr<Entity> entity)
     if (mEntityTypes.length == 0)
         return true;
 
-    unsigned int i;
-    for (i = 0; i < mEntityTypes.length; ++i)
+    unsigned long long* it;
+    for (it = mEntityTypes.data; it != mEntityTypes.data + mEntityTypes.length; ++it)
     {
-        unsigned long long type = mEntityTypes.data[i];
+        unsigned long long entityType = entity->GetType();
+        unsigned long long type = *it;
+        bool matches;
         if ((type & 0x3FULL) == 0)
-        {
-            if ((entity->GetType() & type) == type)
-                return true;
-        }
-        else if (entity->GetType() == type)
-        {
+            matches = (entityType & type) == type;
+        else
+            matches = entityType == type;
+        if (matches)
             return true;
-        }
     }
 
     return false;
@@ -52,26 +51,25 @@ bool SwimWithMobGoal::canSwimWith(boost::shared_ptr<Entity> entity)
 
 bool SwimWithMobGoal::setWantedMob()
 {
-    AABB* searchBox = mMob->mBoundingBox->grow((double)mSearchDistance);
-    std::vector<boost::shared_ptr<Entity> >* entities =
-        mMob->mLevel->getEntities(mMob->shared_from_this(), searchBox, NULL);
+    std::vector<boost::shared_ptr<Entity> >* entities = mMob->mLevel->getEntities(
+        mMob->shared_from_this(), mMob->mBoundingBox->grow((double)mSearchDistance), NULL);
     std::vector<boost::shared_ptr<Entity> >* candidates =
-        new std::vector<boost::shared_ptr<Entity> >();
+        new std::vector<boost::shared_ptr<Entity> >;
 
-    std::vector<boost::shared_ptr<Entity> >::iterator it;
-    for (it = entities->begin(); it != entities->end(); ++it)
+    for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin();
+         it != entities->end(); ++it)
     {
         boost::shared_ptr<Entity> entity = *it;
-        if (!entity)
-            continue;
-
-        bool ridingAndMoving = entity->isPassenger()
-            && entity->mXd * entity->mXd + entity->mYd * entity->mYd + entity->mZd * entity->mZd
-                > 0.01;
-        if (entity->isAlive() && (ridingAndMoving || entity->isSwimming())
-            && canSwimWith(entity))
+        if (entity)
         {
-            candidates->push_back(entity);
+            double speedSqr = entity->mXd * entity->mXd + entity->mYd * entity->mYd
+                + entity->mZd * entity->mZd;
+            bool ridingAndMoving = entity->isPassenger() && speedSqr > 0.010000000000000002;
+            if (entity->isAlive() && (ridingAndMoving || entity->isSwimming())
+                && canSwimWith(entity))
+            {
+                candidates->push_back(entity);
+            }
         }
     }
 
@@ -101,7 +99,7 @@ bool SwimWithMobGoal::canContinueToUse()
         return false;
 
     bool ridingAndMoving = wantedMob->mXd * wantedMob->mXd + wantedMob->mYd * wantedMob->mYd
-            + wantedMob->mZd * wantedMob->mZd > 0.01
+            + wantedMob->mZd * wantedMob->mZd > 0.010000000000000002
         && wantedMob->isPassenger();
     if (!ridingAndMoving && !wantedMob->isSwimming()
         && wantedMob->mLevel->mRandom->nextInt(30) == 0)
@@ -134,10 +132,11 @@ BlockPos SwimWithMobGoal::GetTargetPosition(boost::shared_ptr<Entity> entity, Ve
     Vec3* position = Vec3::newTemp((double)Mth::floor(entity->getPos(0.0f)->x),
                                    (double)Mth::floor(entity->getPos(0.0f)->y),
                                    (double)Mth::floor(entity->getPos(0.0f)->z))
-                         ->add(0.5, 0.5, 0.5)
-                         ->add(entity->getLookAngle()->multiply(offset))
-                         ->add(direction->multiply(distance * 3.0));
-    return BlockPos(position).offset(0, -1, 0);
+                         ->add(0.5, 0.5, 0.5);
+    position = position->add(entity->getLookAngle()->multiply(offset))
+                   ->add(direction->multiply(distance * 3.0));
+    BlockPos target = BlockPos(position).offset(0, -1, 0);
+    return target;
 }
 
 void SwimWithMobGoal::tick()
@@ -156,24 +155,25 @@ void SwimWithMobGoal::tick()
     mCooldown = 10;
 
     Vec3* direction = wantedMob->getLookAngle()->cross(Vec3::newTemp(0.0, 1.0, 0.0))->normalize();
-    Vec3* delta = mMob->getPos(0.0f)->subtract(wantedMob->getPos(0.0f))->normalize();
+    Vec3* mobPos = mMob->getPos(0.0f);
+    Vec3* delta = mobPos->subtract(wantedMob->getPos(0.0f))->normalize();
     double side = direction->dot(delta);
     if (side <= 2.220446049250313e-16 && side >= -2.220446049250313e-16)
         side = 0.2;
 
     if (mState == 0)
     {
-        if (mMob->distanceToSqr(wantedMob) >= 6.25)
-        {
-            BlockPos target = GetTargetPosition(wantedMob, direction, side, 2.0);
-            mMob->getNavigation()->moveTo((double)target.x, (double)target.y, (double)target.z,
-                                          (double)(speed + 1.0f));
-        }
-        else
+        if (mMob->distanceToSqr(wantedMob) < 6.25)
         {
             mMob->getNavigation()->stop();
             mCooldown = 0;
             mState = 1;
+        }
+        else
+        {
+            BlockPos target = GetTargetPosition(wantedMob, direction, side, 2.0);
+            mMob->getNavigation()->moveTo((double)target.x, (double)target.y, (double)target.z,
+                                          (double)(speed + 1.0f));
         }
     }
     else if (mState == 1)

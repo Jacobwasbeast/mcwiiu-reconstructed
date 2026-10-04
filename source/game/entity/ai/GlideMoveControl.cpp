@@ -25,57 +25,56 @@ void GlideMoveControl::tick()
         return;
     }
 
-    Mob* mob = mMob;
-    double dz = mWantedZ - mob->mZ;
-    double dx = mWantedX - mob->mX;
-    double dy = mWantedY - mob->mY;
-    double horizontalDistance = Mth::sqrt(dx * dx + dz * dz);
-
-    if (mob->mHorizontalCollision)
+    if (mMob->mHorizontalCollision)
     {
-        mob->mYRot += 180.0f;
+        mMob->mYRot += 180.0f;
         mSpeed = mStartSpeed;
     }
+
+    double dz = mWantedZ - mMob->mZ;
+    double dx = mWantedX - mMob->mX;
+    double dy = mWantedY - mMob->mY;
+    double horizontalDistance = Mth::sqrt(dx * dx + dz * dz);
 
     double horizontalScale = 1.0;
     if (horizontalDistance != 0.0)
     {
-        horizontalScale = 1.0 - Mth::abs(dy * 0.7) / horizontalDistance;
+        horizontalScale = 1.0 - fabs(dy * 0.7) / horizontalDistance;
     }
 
     dx *= horizontalScale;
     dz *= horizontalScale;
-    double horizontalLength = Mth::sqrt(dx * dx + dz * dz);
-    double distance = Mth::sqrt(dy * dy + dx * dx + dz * dz);
-    float oldYRot = mob->mYRot;
-    float wantedYRot = Mth::wrapDegrees((float)atan2(dz, dx) * 57.295776f);
-    float yRot = Mth::approachDegrees(Mth::wrapDegrees(mob->mYRot + 90.0f), wantedYRot, 4.0f) - 90.0f;
-    mob->mYBodyRot = yRot;
-    mob->mYRot = yRot;
+    double horizontalSquared = dx * dx + dz * dz;
+    double horizontalLength = Mth::sqrt(horizontalSquared);
+    double distance = Mth::sqrt(dy * dy + horizontalSquared);
+    float oldYRot = mMob->mYRot;
+    float wantedAngle = (float)atan2(dz, dx);
+    float currentYRot = Mth::wrapDegrees(90.0f + mMob->mYRot);
+    float wantedYRot = Mth::wrapDegrees(wantedAngle * 57.295776f);
+    float yRot = Mth::approachDegrees(currentYRot, wantedYRot, 4.0f) - 90.0f;
+    mMob->mYBodyRot = yRot;
+    mMob->mYRot = yRot;
 
-    if (Mth::degreesDifferenceAbs(oldYRot, mob->mYRot) >= 3.0f)
+    if (Mth::degreesDifferenceAbs(oldYRot, mMob->mYRot) >= 3.0f)
     {
         mSpeed = Mth::approach(mSpeed, (float)(mSpeedWhenTurning * mSpeedModifier), 0.025f);
     }
     else
     {
-        float movementSpeed = (float)mob->getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->getValue();
-        mSpeed = Mth::approach(mSpeed, (float)(movementSpeed * mSpeedModifier),
-                               0.005f * (float)(0.6999999225139618 / (double)mSpeed));
+        float movementSpeed = (float)mMob->getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->getValue();
+        mSpeed = Mth::approach(mSpeed, (float)(movementSpeed * mSpeedModifier), 0.005f * (1.8f / mSpeed));
     }
 
-    float wantedXRot = -((float)atan2(-dy, horizontalLength) * 57.29578f);
-    LookControl* lookControl = static_cast<LookControl*>(mob->getLookControl());
-    lookControl->setLookRotation(Vec3::newTemp((double)wantedXRot, (double)mob->mYRot, 0.0),
-                                  60.0f, 20.0f);
+    float wantedXRot = -((float)atan2(-dy, horizontalLength) * 57.295776f);
+    static_cast<LookControl*>(mMob->getLookControl())->setLookRotation(Vec3::newTemp((double)wantedXRot, (double)mMob->mYRot, 0.0), 60.0f, 20.0f);
 
-    float yawRadians = (mob->mYRot + 90.0f) * 0.017453292f;
+    float yawRadians = (90.0f + mMob->mYRot) * 0.017453292f;
     float pitchRadians = wantedXRot * 0.017453292f;
-    float cosYaw = cosf(yawRadians);
-    float sinYaw = sinf(yawRadians);
-    float sinPitch = sinf(pitchRadians);
-    mob->mXd += ((double)(mSpeed * cosYaw * Mth::abs((float)(dx / distance))) - mob->mXd) * 0.2;
-    mob->mZd += ((double)(mSpeed * sinYaw * Mth::abs((float)(dz / distance))) - mob->mZd) * 0.2;
-    mob->mYd += ((double)(mSpeed * sinPitch * Mth::abs((float)(dy / distance))) - mob->mYd) * 0.2;
-    mob->mFallDistance = 0.0f;
+    float xSpeed = mSpeed * cosf(yawRadians);
+    float zSpeed = mSpeed * sinf(yawRadians);
+    float ySpeed = mSpeed * sinf(pitchRadians);
+    mMob->mXd += ((double)(xSpeed * fabsf((float)(dx / distance))) - mMob->mXd) * 0.2;
+    mMob->mZd += ((double)(zSpeed * fabsf((float)(dz / distance))) - mMob->mZd) * 0.2;
+    mMob->mYd += ((double)(ySpeed * fabsf((float)(dy / distance))) - mMob->mYd) * 0.2;
+    mMob->mFallDistance = 0.0f;
 }

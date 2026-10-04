@@ -14,7 +14,7 @@ class PanicGoal : public Goal
 {
 public:
     PanicGoal(PathfinderMob* mob, double speedModifier);
-    virtual ~PanicGoal();
+    virtual ~PanicGoal() {}
 
     BlockPos* lookForWater(Level* level, Entity* entity, int range, int verticalRange);
     bool findRandomPosition();

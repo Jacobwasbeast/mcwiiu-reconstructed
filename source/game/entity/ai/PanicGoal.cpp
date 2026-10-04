@@ -8,6 +8,8 @@
 #include "game/util/Vec3.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
+#include "game/world/block/BlockState.hpp"
+#include "game/world/block/Material.hpp"
 #include "game/entity/mob/PathfinderMob.hpp"
 
 PanicGoal::PanicGoal(PathfinderMob* mob, double speedModifier)
@@ -16,29 +18,30 @@ PanicGoal::PanicGoal(PathfinderMob* mob, double speedModifier)
     setRequiredControlFlags(1);
 }
 
-PanicGoal::~PanicGoal()
-{
-    mMob = 0;
-}
-
 BlockPos* PanicGoal::lookForWater(Level* level, Entity* entity, int range, int verticalRange)
 {
     BlockPos origin(entity);
     BlockPos* result = NULL;
+    int originX = origin.x;
+    int originY = origin.y;
+    int originZ = origin.z;
     float bestDistance = static_cast<float>(range * range * verticalRange * 2);
+    BlockPos pos(0, 0, 0);
 
-    for (int x = origin.x - range; x <= origin.x + range; ++x)
+    for (int x = originX - range; x <= originX + range; ++x)
     {
-        for (int y = origin.y - verticalRange; y <= origin.y + verticalRange; ++y)
+        for (int y = originY - verticalRange; y <= originY + verticalRange; ++y)
         {
-            for (int z = origin.z - range; z <= origin.z + range; ++z)
+            for (int z = originZ - range; z <= originZ + range; ++z)
             {
-                BlockPos pos(x, y, z);
-                if (level->isWaterAt(pos))
+                pos.x = x;
+                pos.y = y;
+                pos.z = z;
+                if (level->getBlockState(pos)->getMaterial() == Material::WATER)
                 {
-                    const float distance = static_cast<float>((x - origin.x) * (x - origin.x)
-                        + (z - origin.z) * (z - origin.z)
-                        + (y - origin.y) * (y - origin.y));
+                    const float distance = static_cast<float>((x - originX) * (x - originX)
+                        + (y - originY) * (y - originY)
+                        + (z - originZ) * (z - originZ));
                     if (distance < bestDistance)
                     {
                         result = new BlockPos(pos);
@@ -54,8 +57,7 @@ BlockPos* PanicGoal::lookForWater(Level* level, Entity* entity, int range, int v
 
 bool PanicGoal::findRandomPosition()
 {
-    boost::shared_ptr<PathfinderMob> mob = boost::dynamic_pointer_cast<PathfinderMob>(mMob->shared_from_this());
-    Vec3* position = RandomPos::getPos(mob, 5, 4, -1);
+    Vec3* position = RandomPos::getPos(boost::dynamic_pointer_cast<PathfinderMob>(mMob->shared_from_this()), 5, 4, -1);
     if (position == NULL)
     {
         return false;
@@ -69,8 +71,7 @@ bool PanicGoal::findRandomPosition()
 
 bool PanicGoal::canUse()
 {
-    boost::shared_ptr<LivingEntity> lastHurtByMob = mMob->getLastHurtByMob();
-    if (lastHurtByMob.get() == NULL && !mMob->isOnFire())
+    if (mMob->getLastHurtByMob().get() == NULL && !mMob->isOnFire())
     {
         return false;
     }

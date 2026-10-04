@@ -20,7 +20,7 @@ void FlyingMoveControl::tick()
     {
         mMob->setNoGravity(false);
         mMob->setYya(0.0f);
-        mMob->setXxa(0.0f);
+        mMob->setZza(0.0f);
         return;
     }
 
@@ -32,16 +32,16 @@ void FlyingMoveControl::tick()
     double yDistance = mWantedY - mMob->mY;
     double horizontalDistanceSquared = xDistance * xDistance + zDistance * zDistance;
 
-    if (2.5000003e-7 >= yDistance * yDistance + horizontalDistanceSquared)
+    if (yDistance * yDistance + xDistance * xDistance + zDistance * zDistance < MIN_SPEED_SQR)
     {
         mMob->setYya(0.0f);
-        mMob->setXxa(0.0f);
+        mMob->setZza(0.0f);
         return;
     }
 
-    float yRot = (float)((double)Mth::atan2((int)zDistance, (int)xDistance)
-                         * 57.2957763671875) - 90.0f;
-    mMob->mYRot = rotlerp(mMob->mYRot, yRot, 10.0f);
+    float yRot = (float)(Mth::atan2((int)zDistance, (int)xDistance) * 57.2957763671875f - 90.0f);
+    float newYRot = rotlerp(mMob->mYRot, yRot, 10.0f);
+    mMob->mYRot = newYRot;
 
     Attribute* movementAttribute = mMob->mOnGround
         ? SharedMonsterAttributes::MOVEMENT_SPEED
@@ -50,8 +50,15 @@ void FlyingMoveControl::tick()
     mMob->setSpeed(speed);
 
     double horizontalDistance = (double)Mth::sqrt(horizontalDistanceSquared);
-    float xRot = (float)(-(double)Mth::atan2((int)yDistance, (int)horizontalDistance)
-                         * 57.2957763671875);
-    mMob->mXRot = rotlerp(mMob->mXRot, xRot, 10.0f);
-    mMob->setYya(yDistance <= 0.52 ? -speed : speed);
+    float xRot = -(Mth::atan2((int)yDistance, (int)horizontalDistance) * 57.2957763671875f);
+    float newXRot = rotlerp(mMob->mXRot, xRot, 10.0f);
+    mMob->mXRot = newXRot;
+    if (yDistance <= 0.0)
+    {
+        mMob->setYya(-speed);
+    }
+    else
+    {
+        mMob->setYya(speed);
+    }
 }

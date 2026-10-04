@@ -21,8 +21,6 @@ OfferFlowerGoal::OfferFlowerGoal(VillagerGolem* golem)
 
 OfferFlowerGoal::~OfferFlowerGoal()
 {
-    mTarget.reset();
-    mGolem = 0;
 }
 
 bool OfferFlowerGoal::canUse()
@@ -32,10 +30,9 @@ bool OfferFlowerGoal::canUse()
     if (mGolem->getRandom()->nextInt(8000) != 0)
         return false;
 
-    AABB* area = mGolem->mBoundingBox->grow(6.0, 2.0, 6.0);
-    boost::shared_ptr<Entity> closest =
-        mGolem->mLevel->getClosestEntityOfClass(typeid(Villager), area, mGolem->shared_from_this());
-    mTarget = boost::dynamic_pointer_cast<Villager>(closest);
+    VillagerGolem* golem = mGolem;
+    mTarget = boost::weak_ptr<Villager>(boost::dynamic_pointer_cast<Villager>(
+        mGolem->mLevel->getClosestEntityOfClass(typeid(Villager), golem->mBoundingBox->grow(6.0, 2.0, 6.0), golem->shared_from_this())));
     return !!mTarget.lock();
 }
 
@@ -53,7 +50,7 @@ void OfferFlowerGoal::start()
 void OfferFlowerGoal::stop()
 {
     mGolem->offerFlower(false);
-    mTarget.reset();
+    mTarget = boost::weak_ptr<Villager>();
 }
 
 void OfferFlowerGoal::tick()

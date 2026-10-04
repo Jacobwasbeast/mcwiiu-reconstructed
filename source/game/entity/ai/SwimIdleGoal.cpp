@@ -40,12 +40,13 @@ bool SwimIdleGoal::canUse()
         return false;
     }
 
-    if (!mMob->isInWater())
+    bool result = false;
+    if (mMob->isInWater() && mMob->getRandom()->nextInt(10) == 0)
     {
-        return false;
+        result = true;
     }
 
-    return mMob->getRandom()->nextInt(10) == 0;
+    return result;
 }
 
 bool SwimIdleGoal::canContinueToUse()
@@ -69,33 +70,29 @@ void SwimIdleGoal::tick()
     mMob->mYd = 0.0;
     mMob->mZd = 0.0;
 
-    const unsigned long long type = mMob->GetType();
-    if ((type & EntityType::WATER_ANIMAL) != EntityType::WATER_ANIMAL
-        && (mMob->GetType() & EntityType::AGABLE_WATER_ANIMAL) != EntityType::AGABLE_WATER_ANIMAL)
+    if ((mMob->GetType() & EntityType::WATER_ANIMAL) == EntityType::WATER_ANIMAL
+        || (mMob->GetType() & EntityType::AGABLE_WATER_ANIMAL) == EntityType::AGABLE_WATER_ANIMAL)
     {
-        return;
-    }
+        boost::shared_ptr<WaterAnimal> waterAnimal =
+            boost::static_pointer_cast<WaterAnimal>(mMob->shared_from_this());
+        if (waterAnimal->mSwimAmplitude > 0.0f)
+        {
+            const int id = mMob->getId();
+            const float phase = static_cast<float>(std::abs(id) % 100);
+            const float swim = Mth::sin((static_cast<float>(mMob->mTickCount) + phase) * waterAnimal->mSwimFrequency)
+                * waterAnimal->mSwimAmplitude;
+            const float yaw = mMob->mYRot * 0.017453292f;
+            const float cosYaw = Mth::cos(yaw);
+            const float sinYaw = Mth::sin(yaw);
 
-    boost::shared_ptr<WaterAnimal> waterAnimal =
-        boost::static_pointer_cast<WaterAnimal>(mMob->shared_from_this());
-    if (waterAnimal->mSwimAmplitude > 0.0f)
-    {
-        const int id = mMob->getId();
-        const float phase = static_cast<float>(std::abs(id) % 100);
-        const float angle =
-            (static_cast<float>(mMob->mTickCount) + phase) * waterAnimal->mSwimFrequency;
-        const float swim = Mth::sin(angle) * waterAnimal->mSwimAmplitude;
-        const float yaw = mMob->mYRot * 0.017453292f;
-        const float cosYaw = Mth::cos(yaw);
-        const float sinYaw = Mth::sin(yaw);
+            mMob->mXd += static_cast<double>(swim * cosYaw);
+            mMob->mZd += static_cast<double>(swim * sinYaw);
 
-        mMob->mXd += static_cast<double>(swim * cosYaw);
-        mMob->mZd += static_cast<double>(swim * sinYaw);
-
-        const int bobId = mMob->getId();
-        const float bobPhase = static_cast<float>(std::abs(bobId) % 100);
-        const float bob = Mth::sin((static_cast<float>(mMob->mTickCount) + bobPhase) * 0.75f);
-        mMob->mYd += static_cast<double>(bob * 0.05f * (sinYaw + cosYaw) * 0.5f);
+            const int bobId = mMob->getId();
+            const float bobPhase = static_cast<float>(std::abs(bobId) % 100);
+            const float bob = Mth::sin((static_cast<float>(mMob->mTickCount) + bobPhase) * 0.75f);
+            mMob->mYd += static_cast<double>(bob * 0.05f * (sinYaw + cosYaw) * 0.5f);
+        }
     }
 }
 

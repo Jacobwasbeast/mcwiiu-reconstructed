@@ -30,7 +30,7 @@ void WitherRandomAttackPosGoal::start()
     WitherBoss* wither = static_cast<WitherBoss*>(mMob);
     mIsPathing = true;
     wither->setIsPathing(true);
-    mMob->mFlyingSpeed *= 15.0f;
+    wither->mFlyingSpeed *= 15.0f;
     RandomStrollGoal::start();
 }
 
@@ -48,31 +48,26 @@ void WitherRandomAttackPosGoal::stop()
 bool WitherRandomAttackPosGoal::canUse()
 {
     WitherBoss* wither = static_cast<WitherBoss*>(mMob);
-    if (!mMob->getTarget() || wither->isPowered() || !wither->wantsToMove())
+    if (mMob->getTarget() && !wither->isPowered() && wither->wantsToMove())
     {
-        return false;
-    }
+        Vec3* targetPos = mMob->getTarget()->getPos(1.0f);
 
-    Vec3* targetPos = mMob->getTarget()->getPos(1.0f);
-
-    if (!mIsPathing)
-    {
-        boost::shared_ptr<PathfinderMob> mob =
-            boost::static_pointer_cast<PathfinderMob>(mMob->shared_from_this());
-        Vec3* position = RandomPos::getPos(mob, mXz, mY, -1);
-        if (position != NULL)
+        if (!mIsPathing)
         {
-            Vec3* direction = position->subtract(mMob->mX, mMob->mY, mMob->mZ);
-            direction->y = 0.0;
-            direction->normalize();
-            float scale = (float)mXz;
-            direction->multiply(scale, scale, scale);
-            Vec3* target = direction->add(targetPos);
-            target->y = mMob->mY;
-            mWantedX = target->x;
-            mWantedY = target->y;
-            mWantedZ = target->z;
-            return true;
+            boost::shared_ptr<PathfinderMob> mob =
+                boost::static_pointer_cast<PathfinderMob>(mMob->shared_from_this());
+            Vec3* position = RandomPos::getPos(mob, mXz, mY, -1);
+            if (position != NULL)
+            {
+                Vec3* direction = position->subtract(mMob->mX, mMob->mY, mMob->mZ);
+                direction->y = 0.0;
+                Vec3* target = direction->normalize()->multiply((float)mXz, (float)mXz, (float)mXz)->add(targetPos);
+                target->y = mMob->mY;
+                mWantedX = target->x;
+                mWantedY = target->y;
+                mWantedZ = target->z;
+                return true;
+            }
         }
     }
 

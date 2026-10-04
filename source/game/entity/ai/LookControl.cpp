@@ -7,6 +7,7 @@
 
 #include "game/core/Mth.hpp"
 #include "game/entity/ai/PathNavigation.hpp"
+#include "game/entity/mob/LivingEntity.hpp"
 #include "game/entity/mob/Mob.hpp"
 #include "game/util/AABB.hpp"
 #include "game/util/Vec3.hpp"
@@ -20,18 +21,18 @@ LookControl::LookControl(Mob* mob)
 void LookControl::setLookAt(boost::shared_ptr<Entity> entity, float yMaxRotationIncrease, float xMaxRotationIncrease)
 {
     mWantedX = entity->mX;
-    mWantedZ = entity->mZ;
     if ((entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
     {
-        mWantedY = entity->mY + entity->getEyeHeight();
+        mWantedY = boost::static_pointer_cast<LivingEntity>(entity)->getEyeHeight() + entity->mY;
     }
     else
     {
         mWantedY = (entity->mBoundingBox->mMinY + entity->mBoundingBox->mMaxY) * 0.5;
     }
+    mWantedZ = entity->mZ;
     mYMax = yMaxRotationIncrease;
-    mXMax = xMaxRotationIncrease;
     mHasWanted = true;
+    mXMax = xMaxRotationIncrease;
 }
 
 void LookControl::setLookAt(double x, double y, double z, float yMaxRotationIncrease, float xMaxRotationIncrease)
@@ -106,8 +107,8 @@ void LookControl::tick()
         double dz = mWantedZ - mMob->mZ;
         double dy = mWantedY - (mMob->mY + mMob->getEyeHeight());
         double horizontal = sqrt(dx * dx + dz * dz);
-        float wantedYRot = (float)(atan2(dz, dx) * 57.2957763671875) - 90.0f;
-        float wantedXRot = (float)(-(atan2(dy, horizontal) * 57.2957763671875));
+        float wantedYRot = (float)(atan2(dz, dx) * Mth::RAD_TO_DEG) - 90.0f;
+        float wantedXRot = (float)(-(atan2(dy, horizontal) * Mth::RAD_TO_DEG));
         mMob->mXRot = rotlerp(mMob->mXRot, wantedXRot, mXMax);
         mMob->mYHeadRot = rotlerp(mMob->mYHeadRot, wantedYRot, mYMax);
     }

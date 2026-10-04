@@ -17,13 +17,13 @@
 
 GroundPathNavigation::GroundPathNavigation(Mob* mob, Level* level, bool createPathFinder)
     : PathNavigation(mob, level),
-      mNodeEvaluator(mob),
-      mAvoidSun(false)
+      mNodeEvaluator(mob)
 {
     if (createPathFinder)
     {
         mPathFinder = this->createPathFinder();
     }
+    mAvoidSun = false;
 }
 
 NodeEvaluator* GroundPathNavigation::getNodeEvaluator()
@@ -49,17 +49,8 @@ bool GroundPathNavigation::canSinkInWaterWalk()
 
 bool GroundPathNavigation::canUpdatePath()
 {
-    if (!mMob->mOnGround && (!canFloat() || !isInLiquid()))
-    {
-        if (!mMob->isPassenger())
-        {
-            if (mMob->GetType() != EntityType::WITHER_BOSS && !canSinkInWaterWalk())
-            {
-                return false;
-            }
-        }
-    }
-    return true;
+    return mMob->mOnGround || (canFloat() && isInLiquid()) || mMob->isPassenger()
+        || mMob->GetType() == EntityType::WITHER_BOSS || canSinkInWaterWalk();
 }
 
 int GroundPathNavigation::getSurfaceY()
@@ -71,7 +62,7 @@ int GroundPathNavigation::getSurfaceY()
                              static_cast<int>(std::floor(mMob->mZ)));
         int checks = 0;
         Block* block = mLevel->getBlock(pos);
-        while (block == Blocks::water || block == Blocks::flowing_water)
+        while (block == Blocks::flowing_water || block == Blocks::water)
         {
             ++y;
             pos.setY(y);
@@ -95,45 +86,58 @@ Vec3* GroundPathNavigation::getTempMobPos()
 Path* GroundPathNavigation::createPath(const BlockPos& pos)
 {
     BlockPos target(pos);
-    Material* material = mLevel->getBlockState(target)->getMaterial();
-    if (material == Material::WATER && !mMob->isInWater() && !canSinkInWaterWalk())
+    if (mLevel->getBlockState(target)->getMaterial() == Material::AIR && !mMob->canFly())
     {
-        while (target.y > 0 && mLevel->getBlockState(target)->getMaterial() == material)
+        BlockPos column = target.below();
+        while (column.y > 0 && mLevel->getBlockState(column)->getMaterial() == Material::AIR)
         {
-            target = target.below();
+            column = column.below();
         }
-        if (target.y > 0)
+        if (column.y > 0)
         {
-            return PathNavigation::createPath(target.above());
+            return PathNavigation::createPath(column.above());
         }
+        while (column.y < mLevel->getMaxBuildHeight() &&
+               mLevel->getBlockState(column)->getMaterial() == Material::AIR)
+        {
+            column = column.above();
+        }
+        target = column;
     }
-    if (material == Material::LAVA && static_cast<Mob*>(mMob)->getPathfindingMalus(BlockPathTypes::LAVA) >= 0.0F)
+    if (mLevel->getBlockState(target)->getMaterial()->isSolid())
     {
-        while (target.y < mLevel->getMaxBuildHeight() &&
-               mLevel->getBlockState(target.above())->getMaterial() == material)
+        BlockPos column = target.above();
+        while (column.y < mLevel->getMaxBuildHeight() &&
+               mLevel->getBlockState(column)->getMaterial()->isSolid())
         {
-            target = target.above();
+            column = column.above();
         }
-        return PathNavigation::createPath(target);
+        return PathNavigation::createPath(column);
     }
-    if (material == Material::WATER && canSinkInWaterWalk())
+    if (mLevel->getBlockState(target)->getMaterial() == Material::WATER && canSinkInWaterWalk())
     {
-        while (target.y > 0 && mLevel->getBlockState(target)->getMaterial() == material)
+        BlockPos column = target.below();
+        while (column.y > 0 && mLevel->getBlockState(column)->getMaterial() == Material::WATER)
         {
-            target = target.below();
+            column = column.below();
         }
-        if (target.y > 0)
+        if (column.y > 0)
         {
-            return PathNavigation::createPath(target.above());
+            return PathNavigation::createPath(column.above());
         }
+        while (column.y < mLevel->getMaxBuildHeight() &&
+               mLevel->getBlockState(column)->getMaterial() == Material::WATER)
+        {
+            column = column.above();
+        }
+        target = column;
     }
     return PathNavigation::createPath(target);
 }
 
 Path* GroundPathNavigation::createPath(boost::shared_ptr<Entity> entity)
 {
-    BlockPos pos(entity);
-    return createPath(pos);
+    return createPath(BlockPos(entity));
 }
 
 void GroundPathNavigation::trimPath()
@@ -143,30 +147,30 @@ void GroundPathNavigation::trimPath()
     {
         return;
     }
-    BlockPos pos(mMob->mX, mMob->mBoundingBox->mMinY + 0.5, mMob->mZ);
-    if (mLevel->canSeeSky(pos))
+    if (mLevel->canSeeSky(BlockPos(mMob->mX, mMob->mBoundingBox->mMinY + 0.5, mMob->mZ)))
     {
         return;
     }
     MutableBlockPos pathPos;
     int removeCount = -1;
-    int index = 0;
-    while (index < mPath->getSize())
+    for (int index = 0; index < mPath->getSize(); ++index)
     {
         Node* node = mPath->get(index);
         pathPos.set(node->x, node->y, node->z);
         if (mLevel->canSeeSky(pathPos))
         {
+            if (index == 0)
+            {
+                mPath->setSize(0);
+            }
+            else
+            {
+                mPath->setSize(removeCount);
+            }
             break;
         }
         ++removeCount;
-        ++index;
     }
-    if (index == mPath->getSize())
-    {
-        return;
-    }
-    mPath->setSize(index == 0 ? 0 : removeCount);
 }
 
 bool GroundPathNavigation::canWalkAbove(int x, int y, int z, int sizeX, int sizeY, int sizeZ,
@@ -237,38 +241,51 @@ bool GroundPathNavigation::canWalkOn(int x, int y, int z, int sizeX, int sizeY, 
 
 bool GroundPathNavigation::canMoveDirectly(Vec3* start, Vec3* end, int width, int height, int depth)
 {
-    const double xDelta = end->x - start->x;
-    const double zDelta = end->z - start->z;
-    const double length = std::sqrt(xDelta * xDelta + zDelta * zDelta);
-    if (length < 1.0)
+    int x = static_cast<int>(std::floor(start->x));
+    int z = static_cast<int>(std::floor(start->z));
+    double xDelta = end->x - start->x;
+    double zDelta = end->z - start->z;
+    double lengthSquared = xDelta * xDelta + zDelta * zDelta;
+    if (lengthSquared < 1.0E-8)
     {
         return false;
     }
-    const double xStep = xDelta / length;
-    const double zStep = zDelta / length;
-    int x = static_cast<int>(std::floor(start->x));
-    int z = static_cast<int>(std::floor(start->z));
-    int endX = static_cast<int>(std::floor(end->x));
-    int endZ = static_cast<int>(std::floor(end->z));
+    double length = std::sqrt(lengthSquared);
+    double xStep = xDelta * (1.0 / length);
+    double zStep = zDelta * (1.0 / length);
     if (!canWalkOn(x, static_cast<int>(start->y), z, width + 2, height, depth + 2, start, xStep, zStep))
     {
         return false;
     }
-    const int xDirection = xStep < 0.0 ? -1 : 1;
-    const int zDirection = zStep < 0.0 ? -1 : 1;
-    double xDistance = (x + (xStep >= 0.0 ? 1.0 : 0.0) - start->x) / xStep;
-    double zDistance = (z + (zStep >= 0.0 ? 1.0 : 0.0) - start->z) / zStep;
-    while (x != endX || z != endZ)
+    double xDistance = x - start->x;
+    double zDistance = z - start->z;
+    if (xStep >= 0.0)
     {
-        if (zDistance > xDistance)
+        xDistance += 1.0;
+    }
+    if (zStep >= 0.0)
+    {
+        zDistance += 1.0;
+    }
+    xDistance /= xStep;
+    zDistance /= zStep;
+    int xDirection = xStep < 0.0 ? -1 : 1;
+    int zDirection = zStep < 0.0 ? -1 : 1;
+    int xRemaining = static_cast<int>(std::floor(end->x)) - x;
+    int zRemaining = static_cast<int>(std::floor(end->z)) - z;
+    while (xRemaining * xDirection > 0 || zRemaining * zDirection > 0)
+    {
+        if (xDistance < zDistance)
         {
             x += xDirection;
             xDistance += 1.0 / std::fabs(xStep);
+            xRemaining -= xDirection;
         }
         else
         {
             z += zDirection;
             zDistance += 1.0 / std::fabs(zStep);
+            zRemaining -= zDirection;
         }
         if (!canWalkOn(x, static_cast<int>(start->y), z, width, height, depth, start, xStep, zStep))
         {

@@ -13,17 +13,20 @@
 #include "game/world/generation/Villager.hpp"
 
 PlayGoal::PlayGoal(Villager* villager, double speedModifier)
-    : mVillager(villager), mTarget(), mSpeedModifier(speedModifier),
-      mPlayPosition(0.0, 0.0, 0.0), mPlayTime(0)
+    : mTarget()
 {
-    mTarget.reset();
+    mTarget = boost::weak_ptr<Villager>();
+    mVillager = villager;
+    mPlayPosition.x = 0.0;
+    mPlayPosition.y = 0.0;
+    mPlayPosition.z = 0.0;
+    mPlayTime = 0;
+    mSpeedModifier = speedModifier;
     setRequiredControlFlags(1);
 }
 
 PlayGoal::~PlayGoal()
 {
-    mTarget.reset();
-    mVillager = 0;
 }
 
 bool PlayGoal::canUse()
@@ -34,9 +37,8 @@ bool PlayGoal::canUse()
     if (mVillager->getRandom()->nextInt(400) != 0)
         return false;
 
-    AABB* searchBox = mVillager->mBoundingBox->grow(6.0, 3.0, 6.0);
     std::vector<boost::shared_ptr<Entity> >* entities =
-        mVillager->mLevel->getEntitiesOfClass(typeid(Villager), searchBox);
+        mVillager->mLevel->getEntitiesOfClass(typeid(Villager), mVillager->mBoundingBox->grow(6.0, 3.0, 6.0));
     double closestDistance = 1.7976931348623157e+308;
     std::vector<boost::shared_ptr<Entity> >::iterator it;
     for (it = entities->begin(); it != entities->end(); ++it)
@@ -47,7 +49,9 @@ bool PlayGoal::canUse()
 
         boost::shared_ptr<Villager> candidate =
             boost::dynamic_pointer_cast<Villager>(entity);
-        if (candidate->isChasing() || candidate->getAge() >= 0)
+        if (candidate->isChasing())
+            continue;
+        if (candidate->getAge() >= 0)
             continue;
 
         double distance = candidate->distanceToSqr(mVillager->shared_from_this());
@@ -62,9 +66,8 @@ bool PlayGoal::canUse()
 
     if (!mTarget.lock())
     {
-        boost::shared_ptr<PathfinderMob> mob =
-            boost::dynamic_pointer_cast<PathfinderMob>(mVillager->shared_from_this());
-        if (RandomPos::getPos(mob, 16, 3, -1) == 0)
+        if (RandomPos::getPos(
+                boost::dynamic_pointer_cast<PathfinderMob>(mVillager->shared_from_this()), 16, 3, -1) == 0)
             return false;
     }
     return true;
@@ -85,7 +88,7 @@ void PlayGoal::start()
 void PlayGoal::stop()
 {
     mVillager->setChasing(false);
-    mTarget.reset();
+    mTarget = boost::weak_ptr<Villager>();
 }
 
 void PlayGoal::tick()
@@ -101,9 +104,8 @@ void PlayGoal::tick()
 
     if (mVillager->getNavigation()->isDone())
     {
-        boost::shared_ptr<PathfinderMob> mob =
-            boost::dynamic_pointer_cast<PathfinderMob>(mVillager->shared_from_this());
-        Vec3* position = RandomPos::getPos(mob, 16, 3, -1);
+        Vec3* position = RandomPos::getPos(
+            boost::dynamic_pointer_cast<PathfinderMob>(mVillager->shared_from_this()), 16, 3, -1);
         if (position != 0)
         {
             mVillager->getNavigation()->moveTo(position->x, position->y, position->z,

@@ -23,13 +23,10 @@ CircleAroundAnchorGoal::CircleAroundAnchorGoal(Mob* mob, float speedModifier,
     : Goal()
     , mMob(mob)
     , mSpeedModifier(speedModifier)
-    , mDistanceMin(distanceRange.min)
-    , mDistanceMax(distanceRange.max)
+    , mDistanceRange(distanceRange)
     , mDistanceInterval(distanceInterval)
-    , mHeightMin(heightRange.min)
-    , mHeightMax(heightRange.max)
-    , mVerticalMin(verticalRange.min)
-    , mVerticalMax(verticalRange.max)
+    , mHeightRange(heightRange)
+    , mVerticalRange(verticalRange)
     , mVerticalInterval(verticalInterval)
     , mMinDistanceSquared(minDistance * minDistance)
     , mAnchor(NULL)
@@ -46,12 +43,12 @@ CircleAroundAnchorGoal::~CircleAroundAnchorGoal()
     delete mAnchor;
 }
 
-double CircleAroundAnchorGoal::calculateHeightOffset() const
+float CircleAroundAnchorGoal::calculateHeightOffset() const
 {
-    float height = mVerticalMin;
-    if (mVerticalMax - height > 0.0f)
+    float height = mVerticalRange.min;
+    if (mVerticalRange.max - height > 0.0f)
     {
-        height += mMob->mLevel->mRandom->nextFloat(mVerticalMax - height);
+        height += mMob->mLevel->mRandom->nextFloat(mVerticalRange.max - height);
     }
     return height;
 }
@@ -64,11 +61,11 @@ void CircleAroundAnchorGoal::setAnchorAboveTarget()
         return;
     }
 
-    Vec3* position = target->getPos(0.0f)->add(0.0, (double)mHeightMin, 0.0);
-    if (mHeightMax - mHeightMin > 0.0f)
+    Vec3* position = target->getPos(0.0f)->add(0.0, (double)mHeightRange.min, 0.0);
+    if (mHeightRange.max - mHeightRange.min > 0.0f)
     {
         position = position->add(0.0,
-                                 (double)mMob->mLevel->mRandom->nextFloat(mHeightMax - mHeightMin),
+                                 (double)mMob->mLevel->mRandom->nextFloat(mHeightRange.max - mHeightRange.min),
                                  0.0);
     }
     int seaLevel = mMob->mLevel->getSeaLevel();
@@ -82,20 +79,25 @@ void CircleAroundAnchorGoal::setAnchorAboveTarget()
 
 void CircleAroundAnchorGoal::selectNext()
 {
-    if (mAnchor == NULL)
+    Vec3* anchor = mAnchor;
+    if (anchor == NULL)
     {
-        mAnchor = Vec3::newPermanent(mMob->getPos(0.0f));
-        mAnchor->y += 20.0;
-        if (mAnchor->y >= 256.0)
+        anchor = Vec3::newPermanent(mMob->getPos(0.0f));
+        mAnchor = anchor;
+        if (anchor->y + 20.0 < 256.0)
         {
-            mAnchor->y = 236.0;
+            anchor->y += 20.0;
+        }
+        else
+        {
+            anchor->y = 236.0;
         }
     }
 
     mAngle += mDirection * 30.0f * 0.017453292f;
-    Vec3* wanted = mAnchor->add((double)(mCurrentDistance * Mth::cos(mAngle)),
-                                (double)mCurrentHeight,
-                                (double)(mCurrentDistance * Mth::sin(mAngle)));
+    Vec3* wanted = anchor->add((double)(mCurrentDistance * Mth::cos(mAngle)),
+                               (double)mCurrentHeight,
+                               (double)(mCurrentDistance * Mth::sin(mAngle)));
     PathNavigation* navigation = mMob->getNavigation();
     if (navigation != NULL)
     {
@@ -110,8 +112,8 @@ void CircleAroundAnchorGoal::selectNext()
 void CircleAroundAnchorGoal::start()
 {
     Random* random = mMob->mLevel->mRandom;
-    mCurrentDistance = random->nextFloat() * (mDistanceMax - mDistanceMin) + mDistanceMin;
-    mCurrentHeight = (float)calculateHeightOffset();
+    mCurrentDistance = random->nextFloat() * (mDistanceRange.max - mDistanceRange.min) + mDistanceRange.min;
+    mCurrentHeight = calculateHeightOffset();
     mDirection = random->nextBoolean() ? 1.0f : -1.0f;
     if (mMob->getTarget())
     {
@@ -161,20 +163,24 @@ void CircleAroundAnchorGoal::tick()
         setAnchorAboveTarget();
     }
 
-    if (mVerticalMin < mVerticalMax
+    if (mVerticalRange.min < mVerticalRange.max
         && (mVerticalInterval == 0 || random->nextInt(mVerticalInterval) == 0))
     {
-        mCurrentHeight = (float)calculateHeightOffset();
+        mCurrentHeight = calculateHeightOffset();
     }
 
-    if (mDistanceMin < mDistanceMax
+    if (mDistanceRange.min < mDistanceRange.max
         && (mDistanceInterval == 0 || random->nextInt(mDistanceInterval) == 0))
     {
-        mCurrentDistance += 1.0f;
-        if (mCurrentDistance > mDistanceMax)
+        float nextDistance = mCurrentDistance + 1.0f;
+        if (mDistanceRange.max < nextDistance)
         {
-            mCurrentDistance = mDistanceMin;
+            mCurrentDistance = mDistanceRange.min;
             mDirection = -mDirection;
+        }
+        else
+        {
+            mCurrentDistance = nextDistance;
         }
     }
 
