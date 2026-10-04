@@ -39,7 +39,7 @@ public:
 
     struct HtmlImageDrawData
     {
-        fuiFontSet::FontVert quad[6];
+        fuiFontSet::FontVert vertices[6];
         std::string symbolName;
     };
 
