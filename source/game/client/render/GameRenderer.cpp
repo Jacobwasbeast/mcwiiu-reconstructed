@@ -115,6 +115,7 @@
 #include "platform/wiiu/C4JThreadImpl.hpp"
 #include "game/core/MemSect.hpp"
 
+#include <cfloat>
 #include <cmath>
 #include <cstring>
 #include <vector>
