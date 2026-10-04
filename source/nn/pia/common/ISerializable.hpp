@@ -6,7 +6,7 @@ namespace nn { namespace pia { namespace common {
 class ISerializable
 {
 public:
-    virtual ~ISerializable();
+    virtual ~ISerializable() {}
 };
 
 }}}
