@@ -15,8 +15,8 @@ public:
     unsigned int GetCommunityId() const;
     bool IsOfficialCommunity() const;
     bool IsRestrictedByPassword() const;
-    const common::DateTime& GetParticipationStartDate() const;
-    const common::DateTime& GetParticipationEndDate() const;
+    const common::DateTime& GetParticipationStartDate();
+    const common::DateTime& GetParticipationEndDate();
     unsigned int GetRelatedSessionCount() const;
     bool GetAttribute(unsigned char index, unsigned int* value) const;
     unsigned long long GetOwnerPrincipalId() const;
@@ -24,8 +24,8 @@ public:
     unsigned short GetMaxParticipantNum() const;
     unsigned short GetMinParticipantNum() const;
     const common::String& GetDescription() const;
-    bool GetApplicationData(void* buffer, unsigned int size) const;
-    bool GetApplicationDataSize(unsigned int* size) const;
+    bool GetApplicationData(void* buffer, unsigned int size);
+    bool GetApplicationDataSize(unsigned int* size);
     void SetCommunityId(unsigned int communityId);
     virtual void SetOfficialCommunity(bool official);
     virtual void SetRestrictedByPassword(bool restricted);

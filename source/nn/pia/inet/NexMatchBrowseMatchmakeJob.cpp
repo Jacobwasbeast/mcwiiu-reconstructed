@@ -18,19 +18,19 @@ void NexMatchBrowseMatchmakeJob::Cleanup()
     m_state = 0;
 
 }
-void NexMatchBrowseMatchmakeJob::StartupImpl(unsigned long long p0, unsigned long long p1)
+Result NexMatchBrowseMatchmakeJob::StartupImpl(session::IMatchmakeSession* matchmakeSession, const session::SessionSearchCriteria* searchCriteria)
 {
     m_state = 0;
+    return Result(0);
 
 }
-unsigned long long NexMatchBrowseMatchmakeJob::StartupImpl(unsigned long long p0, unsigned long long p1, unsigned long long p2)
+Result NexMatchBrowseMatchmakeJob::StartupImpl(session::IMatchmakeSession* matchmakeSession, unsigned int sessionId)
 {
-    return m_state;
+    return Result(m_state);
 
 }
-void NexMatchBrowseMatchmakeJob::Trace(unsigned long long p0)
+void NexMatchBrowseMatchmakeJob::Trace(unsigned long long p0) const
 {
-    m_state = 0;
 
 }
 unsigned int NexMatchBrowseMatchmakeJob::WaitBrowseMatchmake()

@@ -23,7 +23,7 @@ unsigned int NexMatchClearSystemPasswordJob::StartupImpl()
     m_started = true; return m_result;
 
 }
-void NexMatchClearSystemPasswordJob::Trace(unsigned long long p0)
+void NexMatchClearSystemPasswordJob::Trace(unsigned long long p0) const
 {
     (void)p0;
 

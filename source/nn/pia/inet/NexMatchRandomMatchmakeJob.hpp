@@ -3,8 +3,11 @@
 
 #include <stdint.h>
 
+#include "nn/pia/Common.hpp"
+
+namespace nn { namespace pia { namespace session { class JoinRandomSessionSetting; }}}
+
 namespace nn { namespace pia { namespace inet {
-struct nn_pia_Result;
 
 class NexMatchRandomMatchmakeJob
 {
@@ -25,15 +28,15 @@ public:
     uint32_t WaitChangeParticipation();
     uint32_t CleanupForRetryJoinMesh();
     uint32_t WaitForRetryJoinMesh();
-    uint64_t NoticeOwnerChangeEvent(int32_t a1, uint32_t a2, uint32_t a3);
+    uint64_t NoticeOwnerChangeEvent(uint32_t a1, uint64_t a2);
     void NoticeUnregisterEvent(uint32_t a1);
-    void Trace(uint64_t a1);
-    uint64_t StartupImpl(uint32_t a1, uint32_t a2);
+    void Trace(uint64_t a1) const;
+    uint64_t StartupImpl(const session::JoinRandomSessionSetting* a1);
     void CleanupImpl();
     void SetNextStepAtWaitCreateMesh();
     void SetNextStepAtWaitJoinMesh();
-    uint32_t SetNextStepAtFailedCreateMesh(uint32_t a1, uint32_t a2, uint32_t a3);
-    uint32_t SetNextStepAtFailedJoinMesh(nn_pia_Result* a1);
+    uint32_t SetNextStepAtFailedCreateMesh(Result a1);
+    uint32_t SetNextStepAtFailedJoinMesh(Result a1);
     uint32_t SetNextStepAtWaitLeaveMesh();
 
 private:

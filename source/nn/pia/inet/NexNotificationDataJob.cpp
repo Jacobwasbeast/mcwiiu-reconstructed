@@ -2,14 +2,14 @@
 
 namespace nn { namespace pia { namespace inet {
 
-uint64_t NexNotificationDataJob::Startup(uint32_t a1, uint32_t a2, int32_t a3, uint32_t a4, uint32_t a5, uint32_t a6)
+Result NexNotificationDataJob::Startup(common::CallContext* callContext, unsigned int type, unsigned int param1, unsigned int param2, const common::String& text)
 {
-    return static_cast<uint64_t>(state_);
+    return 0;
 }
 
-void NexNotificationDataJob::Startup(uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4)
+Result NexNotificationDataJob::Startup(common::CallContext* callContext, unsigned char typeMask, nex::qList<nex::NotificationEvent>* events)
 {
-    state_ += 1;
+    return 0;
 }
 
 uint32_t NexNotificationDataJob::WaitUpdateNotificationData()

@@ -1,6 +1,7 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_PIA_INET_NEXJOINRANDOMSESSIONSETTING_HPP
 #define LEGACY_CONSOLE_WIIU_NN_PIA_INET_NEXJOINRANDOMSESSIONSETTING_HPP
 
+#include "nn/pia/Common.hpp"
 #include "nn/pia/inet/NexCreateSessionSetting.hpp"
 #include "nn/pia/inet/NexSessionSearchCriteria.hpp"
 
@@ -18,8 +19,8 @@ public:
     unsigned int GetSessionSearchCriteriaSize();
     unsigned int GetSessionSearchCriteriaSize() const;
     void Reset();
-    void SetCreateSessionSetting(const NexCreateSessionSetting* setting);
-    void SetSessionSearchCriteria(const NexSessionSearchCriteria* criteria, unsigned int count);
+    Result SetCreateSessionSetting(const session::CreateSessionSetting* setting);
+    Result SetSessionSearchCriteria(const session::SessionSearchCriteria* criteria, unsigned int count);
     void Trace(unsigned long long p0) const;
     void SetBlockListOption(bool useMyBlockList, bool useOthersBlockList);
     void SetMatchmakeUniqueKeyword(bool enabled);

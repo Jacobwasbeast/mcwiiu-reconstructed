@@ -8,7 +8,7 @@ NexMatchLeaveSessionJob::NexMatchLeaveSessionJob() : m_state(0)
 NexMatchLeaveSessionJob::~NexMatchLeaveSessionJob()
 {}
 
-void NexMatchLeaveSessionJob::ChooseNextStepByCheckingBufferMatchmakeSessions(unsigned long long p0)
+void NexMatchLeaveSessionJob::ChooseNextStepByCheckingBufferMatchmakeSessions(const common::StepSequenceJob::Step& step)
 {
     m_state = 0;
 
@@ -23,7 +23,7 @@ unsigned int NexMatchLeaveSessionJob::GetMatchmakeSessionOwners()
     return m_state;
 
 }
-unsigned int NexMatchLeaveSessionJob::GetWaitHostMigrationTimeout()
+unsigned int NexMatchLeaveSessionJob::GetWaitHostMigrationTimeout() const
 {
     return m_state;
 
@@ -73,10 +73,8 @@ void NexMatchLeaveSessionJob::SetNextStepAtWaitLeaveCurrentMatchmakeSession()
     m_state = 0;
 
 }
-void NexMatchLeaveSessionJob::Trace(unsigned long long p0)
+void NexMatchLeaveSessionJob::Trace(unsigned long long p0) const
 {
-    m_state = 0;
-
 }
 unsigned int NexMatchLeaveSessionJob::WaitGetMatchmakeSessionOwners()
 {

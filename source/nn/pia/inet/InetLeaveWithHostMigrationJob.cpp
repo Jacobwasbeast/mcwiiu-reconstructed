@@ -13,8 +13,8 @@ int InetLeaveWithHostMigrationJob::DecideNextHost()
     const StationIndex local = mesh->GetLocalStationIndex();
     if (local < 32 && local == mesh->GetHostStationIndex())
     {
-        for (StationIndex candidate = 0; candidate < 32; ++candidate)
-            if (candidate != local && mesh->IsValidStationIndex(candidate))
+        for (int candidate = 0; candidate < 32; ++candidate)
+            if (candidate != local && mesh->IsValidStationIndex(static_cast<StationIndex>(candidate)))
                 return candidate;
     }
     return -3;

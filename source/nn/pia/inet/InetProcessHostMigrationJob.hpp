@@ -37,13 +37,13 @@ public:
     unsigned int InetCheckMatchMakingClientHost();
     void HostChangeEventNotice(unsigned int);
     unsigned int IsFatalErrorOccur();
-    unsigned long long CheckWhetherNewHostIsUnknown(unsigned int, int, int);
+    void CheckWhetherNewHostIsUnknown(unsigned long long deadline);
     unsigned int InetCheckMatchMakingClientHostIsUpdated();
     unsigned int InetWaitMatchMakingClientHostIsUpdated();
     unsigned int IsValidHostMigrationSetting();
     unsigned int PreprocessForSendingMigrationFinish();
     void Trace(unsigned long long) const;
-    unsigned int StartupImpl(bool, unsigned int);
+    unsigned int StartupImpl(bool, StationIndex);
     void CleanupImpl();
     unsigned int UpdateSessionHostAsync(unsigned int);
     unsigned int IsUpdateSessionHostCompleted();

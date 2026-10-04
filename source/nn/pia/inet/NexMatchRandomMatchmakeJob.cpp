@@ -72,7 +72,7 @@ uint32_t NexMatchRandomMatchmakeJob::WaitForRetryJoinMesh()
     return static_cast<uint32_t>(state_);
 }
 
-uint64_t NexMatchRandomMatchmakeJob::NoticeOwnerChangeEvent(int32_t a1, uint32_t a2, uint32_t a3)
+uint64_t NexMatchRandomMatchmakeJob::NoticeOwnerChangeEvent(uint32_t a1, uint64_t a2)
 {
     return static_cast<uint64_t>(state_);
 }
@@ -82,12 +82,11 @@ void NexMatchRandomMatchmakeJob::NoticeUnregisterEvent(uint32_t a1)
     state_ += 1;
 }
 
-void NexMatchRandomMatchmakeJob::Trace(uint64_t a1)
+void NexMatchRandomMatchmakeJob::Trace(uint64_t a1) const
 {
-    state_ += 1;
 }
 
-uint64_t NexMatchRandomMatchmakeJob::StartupImpl(uint32_t a1, uint32_t a2)
+uint64_t NexMatchRandomMatchmakeJob::StartupImpl(const session::JoinRandomSessionSetting* a1)
 {
     return static_cast<uint64_t>(state_);
 }
@@ -107,12 +106,12 @@ void NexMatchRandomMatchmakeJob::SetNextStepAtWaitJoinMesh()
     state_ += 1;
 }
 
-uint32_t NexMatchRandomMatchmakeJob::SetNextStepAtFailedCreateMesh(uint32_t a1, uint32_t a2, uint32_t a3)
+uint32_t NexMatchRandomMatchmakeJob::SetNextStepAtFailedCreateMesh(Result a1)
 {
     return static_cast<uint32_t>(state_);
 }
 
-uint32_t NexMatchRandomMatchmakeJob::SetNextStepAtFailedJoinMesh(nn_pia_Result* a1)
+uint32_t NexMatchRandomMatchmakeJob::SetNextStepAtFailedJoinMesh(Result a1)
 {
     return static_cast<uint32_t>(state_);
 }

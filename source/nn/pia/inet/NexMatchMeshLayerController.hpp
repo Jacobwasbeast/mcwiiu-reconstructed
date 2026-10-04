@@ -1,6 +1,12 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_PIA_INET_NEXMATCHMESHLAYERCONTROLLER_HPP
 #define LEGACY_CONSOLE_WIIU_NN_PIA_INET_NEXMATCHMESHLAYERCONTROLLER_HPP
 
+#include "nn/pia/Common.hpp"
+#include "nn/pia/session/Session.hpp"
+
+namespace nn { namespace pia { namespace session { class IMatchmakeSession; }}}
+namespace nn { namespace nex { class NgsBridgeInterface; }}
+
 namespace nn { namespace pia { namespace inet {
 
 class NexMatchMeshLayerController
@@ -10,29 +16,29 @@ public:
     virtual ~NexMatchMeshLayerController();
     void CancelStartNatSession();
     unsigned long long CheckConnectedStatus();
-    unsigned long long CheckConnectedStatusCore(unsigned long long p0, unsigned long long p1);
-    unsigned int CheckSessionId(unsigned long long p0);
+    unsigned long long CheckConnectedStatusCore(nn::nex::NgsBridgeInterface* ngsInterface);
+    unsigned int CheckSessionId(unsigned int p0);
     void Cleanup();
     void CleanupEventHandler();
-    void ClearSessionId(unsigned long long p0);
-    unsigned int GetMatchmakeSessionTotalParticipants();
-    unsigned int GetMatchmakeSessionTotalStations();
-    unsigned int GetMatchmakeSessionTotalStations(unsigned long long p0);
-    unsigned int GetNgsInterface(unsigned long long p0);
-    unsigned char GetNgsInterfaceIndexBoundNexFacade();
-    unsigned long long GetSessionId(unsigned long long p0);
-    unsigned int GetSessionIdArraySize();
-    unsigned long long GetSessionParticipantInfo(unsigned long long p0);
-    bool IsAllStationJoined(unsigned long long p0);
-    unsigned int IsJoinedUnknownSession(unsigned long long p0, unsigned long long p1);
-    unsigned int IsParticipated(unsigned long long p0, unsigned long long p1);
+    void ClearSessionId(unsigned int p0);
+    unsigned int GetMatchmakeSessionTotalParticipants() const;
+    unsigned int GetMatchmakeSessionTotalStations() const;
+    unsigned int GetMatchmakeSessionTotalStations(unsigned int p0) const;
+    unsigned int GetNgsInterface(unsigned char p0);
+    unsigned char GetNgsInterfaceIndexBoundNexFacade() const;
+    unsigned long long GetSessionId(unsigned int p0) const;
+    unsigned int GetSessionIdArraySize() const;
+    unsigned long long GetSessionParticipantInfo(unsigned int p0) const;
+    bool IsAllStationJoined(unsigned int p0);
+    unsigned int IsJoinedUnknownSession(unsigned int p0, unsigned int p1);
+    unsigned int IsParticipated(unsigned int p0, unsigned long long p1) const;
     void MeshCleanup();
-    unsigned long long MeshStartup(unsigned long long p0, unsigned long long p1, unsigned long long p2);
+    unsigned long long MeshStartup(session::IMatchmakeSession* matchmakeSession, bool p1);
     void SetLeaveFlag();
     unsigned long long StartNatSession();
-    unsigned long long Startup(unsigned long long p0, unsigned long long p1);
-    void Trace(unsigned long long p0);
-    unsigned int WaitStartNatSession(unsigned long long p0);
+    unsigned long long Startup(const session::Session::StartupSetting& setting);
+    void Trace(unsigned long long p0) const;
+    unsigned int WaitStartNatSession(Result* result);
 
 private:
     unsigned int m_state;

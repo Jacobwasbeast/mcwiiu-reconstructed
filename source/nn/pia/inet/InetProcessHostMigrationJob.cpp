@@ -25,13 +25,13 @@ void InetProcessHostMigrationJob::HostChangeEventNotice(unsigned int sessionId)
         m_hostChanged = 1;
 }
 unsigned int InetProcessHostMigrationJob::IsFatalErrorOccur(){return m_hostChanged&&m_newHost<0;}
-unsigned long long InetProcessHostMigrationJob::CheckWhetherNewHostIsUnknown(unsigned int,int high,int low){if((high!=m_reselectDeadlineHigh||low!=m_reselectDeadlineLow)&&(high!=m_finishDeadlineHigh||low!=m_finishDeadlineLow)){m_newHost=-1;return 1;}return 0;}
+void InetProcessHostMigrationJob::CheckWhetherNewHostIsUnknown(unsigned long long deadline){int high=static_cast<int>(deadline>>32);int low=static_cast<int>(deadline);if((high!=m_reselectDeadlineHigh||low!=m_reselectDeadlineLow)&&(high!=m_finishDeadlineHigh||low!=m_finishDeadlineLow))m_newHost=-1;}
 unsigned int InetProcessHostMigrationJob::InetCheckMatchMakingClientHostIsUpdated(){return m_newHost>=0&&m_hostChanged==0;}
 unsigned int InetProcessHostMigrationJob::InetWaitMatchMakingClientHostIsUpdated(){return m_newHost>=0&&m_hostChanged!=0;}
 unsigned int InetProcessHostMigrationJob::IsValidHostMigrationSetting(){return m_migrationMode!=0;}
 unsigned int InetProcessHostMigrationJob::PreprocessForSendingMigrationFinish(){m_finishDeadlineLow+=2000;return 1;}
 void InetProcessHostMigrationJob::Trace(unsigned long long) const{}
-unsigned int InetProcessHostMigrationJob::StartupImpl(bool multi,unsigned int station){m_migrationMode=multi?2:1;m_newHost=static_cast<int>(station);m_callContext.Reset();return 1;}
+unsigned int InetProcessHostMigrationJob::StartupImpl(bool multi,StationIndex station){m_migrationMode=multi?2:1;m_newHost=static_cast<int>(station);m_callContext.Reset();return 1;}
 void InetProcessHostMigrationJob::CleanupImpl(){m_hostChanged=0;m_notificationHandler=0;}
 unsigned int InetProcessHostMigrationJob::UpdateSessionHostAsync(unsigned int station){if(!station)return 0;m_callContext.Reset();m_newHost=static_cast<int>(station);return 1;}
 unsigned int InetProcessHostMigrationJob::IsUpdateSessionHostCompleted(){if(m_protocolCallContext==0)return 1;if(m_protocolCallContext->GetState()!=nn::nex::CallContext::CallInProgress)return 1;if(m_hostUpdateDeadlineHigh<m_updateDeadlineHigh||(m_hostUpdateDeadlineHigh==m_updateDeadlineHigh&&m_hostUpdateDeadlineLow<=m_updateDeadlineLow)){m_protocolCallContext->Cancel(nn::nex::CallContext::CallCanceled);m_protocolCallContext->Reset();return 1;}return 0;}

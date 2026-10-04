@@ -2,7 +2,7 @@
 
 namespace nn { namespace pia { namespace inet {
 
-uint64_t NexNatServerAddressResolveJob::Startup(uint32_t a1, int32_t a2)
+uint64_t NexNatServerAddressResolveJob::Startup(common::CallContext* a1)
 {
     return static_cast<uint64_t>(state_);
 }

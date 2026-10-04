@@ -1,6 +1,10 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_PIA_INET_NEXMATCHCOMMUNITYMANAGEMENTJOB_HPP
 #define LEGACY_CONSOLE_WIIU_NN_PIA_INET_NEXMATCHCOMMUNITYMANAGEMENTJOB_HPP
 
+#include "nn/pia/Common.hpp"
+
+namespace nn { namespace pia { namespace session { class CommunitySearchCriteria; class CreateCommunitySetting; class JoinCommunitySetting; class UpdateCommunitySetting; }}}
+
 namespace nn { namespace pia { namespace inet {
 
 class NexMatchCommunityManagementJob
@@ -8,23 +12,23 @@ class NexMatchCommunityManagementJob
 public:
     NexMatchCommunityManagementJob();
     virtual ~NexMatchCommunityManagementJob();
-    unsigned long long BrowseCommunityStartupImpl(unsigned long long p0, unsigned long long p1);
+    Result BrowseCommunityStartupImpl(const session::CommunitySearchCriteria* searchCriteria);
     void Cleanup();
     unsigned int CreateCommunity();
-    unsigned long long CreateCommunityStartupImpl(unsigned long long p0);
+    Result CreateCommunityStartupImpl(const session::CreateCommunitySetting* setting);
     unsigned int DestroyCommunity();
-    unsigned long long DestroyCommunityStartupImpl(unsigned long long p0, unsigned long long p1);
+    Result DestroyCommunityStartupImpl(unsigned int communityId);
     unsigned int FindCommunityByCommunityId();
     unsigned int FindCommunityByOwner();
     unsigned int FindCommunityByParticipant();
     unsigned int FindOfficialCommunity();
     unsigned int JoinCommunity();
-    unsigned long long JoinCommunityStartupImpl(unsigned long long p0);
+    Result JoinCommunityStartupImpl(const session::JoinCommunitySetting* setting);
     unsigned int LeaveCommunity();
-    unsigned long long LeaveCommunityStartupImpl(unsigned long long p0, unsigned long long p1);
-    void Trace(unsigned long long p0);
+    Result LeaveCommunityStartupImpl(unsigned int communityId);
+    void Trace(unsigned long long p0) const;
     unsigned int UpdateCommunity();
-    unsigned long long UpdateCommunityStartupImpl(unsigned long long p0);
+    Result UpdateCommunityStartupImpl(const session::UpdateCommunitySetting* setting);
     unsigned int WaitCreateCommunity();
     unsigned int WaitDestroyCommunity();
     unsigned int WaitFindCommunityByCommunityId();

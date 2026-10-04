@@ -8,7 +8,7 @@ NexMatchmakeSession::NexMatchmakeSession() : m_state(0)
 NexMatchmakeSession::~NexMatchmakeSession()
 {}
 
-unsigned long long NexMatchmakeSession::BrowseMatchmakeSession(unsigned long long p0, unsigned long long p1)
+unsigned long long NexMatchmakeSession::BrowseMatchmakeSession(nn::pia::common::CallContext* callContext)
 {
     return m_state;
 
@@ -18,77 +18,77 @@ void NexMatchmakeSession::Cleanup()
     m_state = 0;
 
 }
-unsigned long long NexMatchmakeSession::ClearSystemPassword(unsigned long long p0, unsigned long long p1, unsigned long long p2)
+unsigned long long NexMatchmakeSession::ClearSystemPassword(nn::pia::common::CallContext* callContext, unsigned int gatheringId)
 {
     return m_state;
 
 }
-unsigned long long NexMatchmakeSession::CloseParticipate(unsigned long long p0, unsigned long long p1, unsigned long long p2)
+unsigned long long NexMatchmakeSession::CloseParticipate(nn::pia::common::CallContext* callContext, unsigned int gatheringId)
 {
     return m_state;
 
 }
-unsigned long long NexMatchmakeSession::ConvertGatheringIdToPersistentGatheringCode(unsigned long long p0)
+unsigned long long NexMatchmakeSession::ConvertGatheringIdToPersistentGatheringCode(unsigned int gatheringId)
 {
     return m_state;
 
 }
-unsigned int NexMatchmakeSession::ConvertMatchmakeSystemTypeToSessionType(unsigned long long p0)
+unsigned int NexMatchmakeSession::ConvertMatchmakeSystemTypeToSessionType(nn::nex::MatchmakeSystemType systemType)
 {
-    if (p0 == 2) {
+    if (systemType == nn::nex::cMatchmakeSystemType_2) {
         return 1;
     }
     return 0;
 
 }
-unsigned int NexMatchmakeSession::ConvertPersistentGatheringCodeToGatheringId(unsigned long long p0, unsigned long long p1, unsigned long long p2)
+unsigned int NexMatchmakeSession::ConvertPersistentGatheringCodeToGatheringId(unsigned long long code)
 {
     return m_state;
 
 }
-unsigned int NexMatchmakeSession::ConvertSelectionMethodToMatchmakeSelectionMethod(unsigned long long p0)
+unsigned int NexMatchmakeSession::ConvertSelectionMethodToMatchmakeSelectionMethod(SelectionMethod method)
 {
-    if (p0 == 1) {
+    if (method == cSelectionMethod_1) {
         return 4;
     }
-    if (p0 == 2) {
+    if (method == cSelectionMethod_2) {
         return 5;
     }
     return 0;
 
 }
-unsigned int NexMatchmakeSession::ConvertSessionTypeToMatchmakeSystemType(unsigned long long p0)
+unsigned int NexMatchmakeSession::ConvertSessionTypeToMatchmakeSystemType(SessionType sessionType)
 {
-    if (p0 == 0) {
+    if (sessionType == cSessionType_Normal) {
         return 1;
     }
-    if (p0 == 1) {
+    if (sessionType == cSessionType_Ranked) {
         return 2;
     }
     return 0;
 
 }
-void NexMatchmakeSession::CopyFoundPersistentGatheringToBrowsedCommunityInfoList(unsigned long long p0, unsigned long long p1)
+void NexMatchmakeSession::CopyFoundPersistentGatheringToBrowsedCommunityInfoList(const nn::nex::PersistentGathering* gathering, NexCommunityInfo* communityInfo)
 {
     m_state = 0;
 
 }
-void NexMatchmakeSession::CopyMatchmakeSessionToSessionInfo(unsigned long long p0, unsigned long long p1)
+void NexMatchmakeSession::CopyMatchmakeSessionToSessionInfo(const nn::nex::MatchmakeSession* session, NexSessionInfo* sessionInfo)
 {
     m_state = 0;
 
 }
-unsigned long long NexMatchmakeSession::CreateCommunity(unsigned long long p0, unsigned long long p1)
+unsigned long long NexMatchmakeSession::CreateCommunity(nn::pia::common::CallContext* callContext)
 {
     return m_state;
 
 }
-unsigned long long NexMatchmakeSession::CreateMatchmakeSession(unsigned long long p0, unsigned long long p1)
+unsigned long long NexMatchmakeSession::CreateMatchmakeSession(nn::pia::common::CallContext* callContext)
 {
     return m_state;
 
 }
-unsigned long long NexMatchmakeSession::CreateMatchmakeSessionWithTeam(unsigned long long p0, unsigned long long p1, unsigned long long p2, unsigned long long p3, unsigned long long p4)
+unsigned long long NexMatchmakeSession::CreateMatchmakeSessionWithTeam(nn::pia::common::CallContext* callContext, unsigned long long* teamOwnerIds, unsigned short teamCount, unsigned int gatheringId)
 {
     return m_state;
 
@@ -98,42 +98,42 @@ unsigned long long NexMatchmakeSession::Finalize()
     return m_state;
 
 }
-unsigned long long NexMatchmakeSession::FindCommunityByGatheringId(unsigned long long p0, unsigned long long p1)
+unsigned long long NexMatchmakeSession::FindCommunityByGatheringId(nn::pia::common::CallContext* callContext)
 {
     return m_state;
 
 }
-unsigned long long NexMatchmakeSession::FindCommunityByOwner(unsigned long long p0, unsigned long long p1, unsigned long long p2, unsigned long long p3, unsigned long long p4, unsigned long long p5, unsigned long long p6)
+unsigned long long NexMatchmakeSession::FindCommunityByOwner(nn::pia::common::CallContext* callContext, unsigned long long ownerId, unsigned int offset, unsigned int size)
 {
     return m_state;
 
 }
-unsigned long long NexMatchmakeSession::FindCommunityByParticipant(unsigned long long p0, unsigned long long p1, unsigned long long p2, unsigned long long p3, unsigned long long p4, unsigned long long p5, unsigned long long p6)
+unsigned long long NexMatchmakeSession::FindCommunityByParticipant(nn::pia::common::CallContext* callContext, unsigned long long participantId, unsigned int offset, unsigned int size)
 {
     return m_state;
 
 }
-unsigned long long NexMatchmakeSession::FindOfficialCommunity(unsigned long long p0, unsigned long long p1, unsigned long long p2, unsigned long long p3, unsigned long long p4)
+unsigned long long NexMatchmakeSession::FindOfficialCommunity(nn::pia::common::CallContext* callContext, bool isOfficial, unsigned int offset, unsigned int size)
 {
     return m_state;
 
 }
-unsigned long long NexMatchmakeSession::FindSessionByOwner(unsigned long long p0, unsigned long long p1, unsigned long long p2)
+unsigned long long NexMatchmakeSession::FindSessionByOwner(nn::pia::common::CallContext* callContext, const NexSessionSearchCriteriaOwner& criteria)
 {
     return m_state;
 
 }
-unsigned long long NexMatchmakeSession::FindSessionByParticipant(unsigned long long p0, unsigned long long p1, unsigned long long p2)
+unsigned long long NexMatchmakeSession::FindSessionByParticipant(nn::pia::common::CallContext* callContext, const NexSessionSearchCriteriaParticipant& criteria)
 {
     return m_state;
 
 }
-unsigned long long NexMatchmakeSession::FindSessionBySessionId(unsigned long long p0, unsigned long long p1, unsigned long long p2)
+unsigned long long NexMatchmakeSession::FindSessionBySessionId(nn::pia::common::CallContext* callContext, const NexSessionSearchCriteriaSessionId& criteria)
 {
     return m_state;
 
 }
-unsigned long long NexMatchmakeSession::GenerateSystemPassword(unsigned long long p0, unsigned long long p1, unsigned long long p2)
+unsigned long long NexMatchmakeSession::GenerateSystemPassword(nn::pia::common::CallContext* callContext, unsigned int gatheringId)
 {
     return m_state;
 
@@ -148,7 +148,7 @@ unsigned int NexMatchmakeSession::GetBrowseMatchmakeSessionResult()
     return m_state;
 
 }
-unsigned int NexMatchmakeSession::GetRandomMatchmakeScore()
+unsigned int NexMatchmakeSession::GetRandomMatchmakeScore() const
 {
     return m_state;
 
@@ -158,7 +158,7 @@ int NexMatchmakeSession::GetSessionInfo()
     return m_state;
 
 }
-unsigned long long NexMatchmakeSession::GetStationConnectionInfo(unsigned long long p0, unsigned long long p1, unsigned long long p2)
+unsigned long long NexMatchmakeSession::GetStationConnectionInfo(nn::pia::common::CallContext* callContext, unsigned int stationId)
 {
     return m_state;
 
@@ -168,112 +168,112 @@ unsigned long long NexMatchmakeSession::Initialize()
     return m_state;
 
 }
-unsigned char NexMatchmakeSession::IsMatchmakeHost()
+unsigned char NexMatchmakeSession::IsMatchmakeHost() const
 {
     return m_state;
 
 }
-unsigned char NexMatchmakeSession::IsProcessingJoinMatchmakeSession()
+unsigned char NexMatchmakeSession::IsProcessingJoinMatchmakeSession() const
 {
     return m_state;
 
 }
-unsigned char NexMatchmakeSession::IsRandomMatchmakeScoreAvailable()
+unsigned char NexMatchmakeSession::IsRandomMatchmakeScoreAvailable() const
 {
     return m_state;
 
 }
-unsigned int NexMatchmakeSession::IsUpdatableSelectionPriority(unsigned long long p0)
+unsigned int NexMatchmakeSession::IsUpdatableSelectionPriority(unsigned char priority)
 {
     return m_state;
 
 }
-unsigned long long NexMatchmakeSession::JoinCommunity(unsigned long long p0, unsigned long long p1)
+unsigned long long NexMatchmakeSession::JoinCommunity(nn::pia::common::CallContext* callContext)
 {
     return m_state;
 
 }
-unsigned long long NexMatchmakeSession::JoinMatchmakeSession(unsigned long long p0, unsigned long long p1, unsigned long long p2)
+unsigned long long NexMatchmakeSession::JoinMatchmakeSession(nn::pia::common::CallContext* callContext, unsigned int gatheringId)
 {
     return m_state;
 
 }
-unsigned long long NexMatchmakeSession::JoinMatchmakeSessionWithTeam(unsigned long long p0, unsigned long long p1, unsigned long long p2, unsigned long long p3, unsigned long long p4, unsigned long long p5)
+unsigned long long NexMatchmakeSession::JoinMatchmakeSessionWithTeam(nn::pia::common::CallContext* callContext, unsigned int gatheringId, unsigned long long* teamOwnerIds, unsigned short teamCount, unsigned int teamIndex)
 {
     return m_state;
 
 }
-unsigned long long NexMatchmakeSession::LeaveMatchmakeSession(unsigned long long p0, unsigned long long p1, unsigned long long p2)
+unsigned long long NexMatchmakeSession::LeaveMatchmakeSession(nn::pia::common::CallContext* callContext, unsigned int gatheringId)
 {
     return m_state;
 
 }
-unsigned long long NexMatchmakeSession::MigrateMatchmakeSessionOwner(unsigned long long p0, unsigned long long p1, unsigned long long p2, unsigned long long p3, unsigned long long p4)
+unsigned long long NexMatchmakeSession::MigrateMatchmakeSessionOwner(nn::pia::common::CallContext* callContext, unsigned int gatheringId, unsigned long long* candidateIds, unsigned short candidateCount)
 {
     return m_state;
 
 }
-unsigned long long NexMatchmakeSession::ModifyAttribute(unsigned long long p0, unsigned long long p1, unsigned long long p2, unsigned long long p3, unsigned long long p4)
+unsigned long long NexMatchmakeSession::ModifyAttribute(nn::pia::common::CallContext* callContext, unsigned int gatheringId, unsigned int index, unsigned int value)
 {
     return m_state;
 
 }
-unsigned long long NexMatchmakeSession::OpenParticipate(unsigned long long p0, unsigned long long p1, unsigned long long p2)
+unsigned long long NexMatchmakeSession::OpenParticipate(nn::pia::common::CallContext* callContext, unsigned int gatheringId)
 {
     return m_state;
 
 }
-unsigned long long NexMatchmakeSession::RandomMatchmakeSession(unsigned long long p0, unsigned long long p1)
+unsigned long long NexMatchmakeSession::RandomMatchmakeSession(nn::pia::common::CallContext* callContext)
 {
     return m_state;
 
 }
-unsigned long long NexMatchmakeSession::RandomMatchmakeSessionWithTeam(unsigned long long p0, unsigned long long p1, unsigned long long p2, unsigned long long p3, unsigned long long p4)
+unsigned long long NexMatchmakeSession::RandomMatchmakeSessionWithTeam(nn::pia::common::CallContext* callContext, unsigned long long* teamOwnerIds, unsigned short teamCount, unsigned int gatheringId)
 {
     return m_state;
 
 }
-unsigned long long NexMatchmakeSession::ReflectCommunityIdList(unsigned long long p0, unsigned long long p1)
+unsigned long long NexMatchmakeSession::ReflectCommunityIdList(const unsigned int* idList, unsigned int count)
 {
     return m_state;
 
 }
-unsigned long long NexMatchmakeSession::ReflectCreateCommunitySetting(unsigned long long p0, unsigned long long p1)
+unsigned long long NexMatchmakeSession::ReflectCreateCommunitySetting(const NexCreateCommunitySetting* setting)
 {
     return m_state;
 
 }
-void NexMatchmakeSession::ReflectCreateSetting(unsigned long long p0, unsigned long long p1)
+void NexMatchmakeSession::ReflectCreateSetting(const nn::pia::session::CreateSessionSetting* setting, bool isTeam)
 {
     m_state = 0;
 
 }
-unsigned long long NexMatchmakeSession::ReflectJoinCommunitySetting(unsigned long long p0, unsigned long long p1)
+unsigned long long NexMatchmakeSession::ReflectJoinCommunitySetting(const NexJoinCommunitySetting* setting)
 {
     return m_state;
 
 }
-unsigned long long NexMatchmakeSession::ReflectJoinRandomSetting(unsigned long long p0, unsigned long long p1, unsigned long long p2)
+unsigned long long NexMatchmakeSession::ReflectJoinRandomSetting(const nn::pia::session::JoinRandomSessionSetting* setting, bool isTeam)
 {
     return m_state;
 
 }
-unsigned long long NexMatchmakeSession::ReflectJoinSetting(unsigned long long p0, unsigned long long p1)
+unsigned long long NexMatchmakeSession::ReflectJoinSetting(const nn::pia::session::JoinSessionSetting* setting)
 {
     return m_state;
 
 }
-unsigned long long NexMatchmakeSession::ReflectSettingToMatchmakeSession(unsigned long long p0, unsigned long long p1, unsigned long long p2)
+unsigned long long NexMatchmakeSession::ReflectSettingToMatchmakeSession(const nn::pia::session::CreateSessionSetting* setting, bool isTeam)
 {
     return m_state;
 
 }
-unsigned long long NexMatchmakeSession::ReflectUpdateCommunitySetting(unsigned long long p0, unsigned long long p1)
+unsigned long long NexMatchmakeSession::ReflectUpdateCommunitySetting(const NexUpdateCommunitySetting* setting)
 {
     return m_state;
 
 }
-unsigned long long NexMatchmakeSession::ReflectUpdateSetting(unsigned long long p0, unsigned long long p1, unsigned long long p2)
+unsigned long long NexMatchmakeSession::ReflectUpdateSetting(const nn::pia::session::UpdateSessionSetting* setting, bool isTeam)
 {
     return m_state;
 
@@ -288,47 +288,47 @@ void NexMatchmakeSession::RegisterFindSessionResult(unsigned long long p0)
     m_state = 0;
 
 }
-unsigned long long NexMatchmakeSession::RegisterSearchCriteria(unsigned long long p0, unsigned long long p1, unsigned long long p2)
+unsigned long long NexMatchmakeSession::RegisterSearchCriteria(const nn::pia::session::SessionSearchCriteria* criteria, unsigned char flags)
 {
     return m_state;
 
 }
-unsigned long long NexMatchmakeSession::RequestSessionInfo(unsigned long long p0, unsigned long long p1, unsigned long long p2)
+unsigned long long NexMatchmakeSession::RequestSessionInfo(nn::pia::common::CallContext* callContext, unsigned int gatheringId)
 {
     return m_state;
 
 }
-unsigned long long NexMatchmakeSession::RequestSessionInfoWithoutPermission(unsigned long long p0, unsigned long long p1, unsigned long long p2)
+unsigned long long NexMatchmakeSession::RequestSessionInfoWithoutPermission(nn::pia::common::CallContext* callContext, unsigned int gatheringId)
 {
     return m_state;
 
 }
-void NexMatchmakeSession::SetMatchmakeCurrentParticipantNum(unsigned long long p0)
+void NexMatchmakeSession::SetMatchmakeCurrentParticipantNum(unsigned short participantNum)
 {
     m_state = 0;
 
 }
-void NexMatchmakeSession::SetMatchmakeOwnerUniqueId(unsigned long long p0, unsigned long long p1, unsigned long long p2)
+void NexMatchmakeSession::SetMatchmakeOwnerUniqueId(unsigned long long ownerId)
 {
     m_state = 0;
 
 }
-unsigned long long NexMatchmakeSession::SetMatchmakeSessionKey(unsigned long long p0, unsigned long long p1)
+unsigned long long NexMatchmakeSession::SetMatchmakeSessionKey(const unsigned char* key, unsigned int keySize)
 {
     return m_state;
 
 }
-unsigned long long NexMatchmakeSession::SetMatchmakeSessionKey(unsigned long long p0, unsigned long long p1, unsigned long long p2)
+unsigned long long NexMatchmakeSession::SetMatchmakeSessionKey(const nn::nex::qVector<unsigned char>& key)
 {
     return m_state;
 
 }
-void NexMatchmakeSession::SetTemporaryOwnerChangeEvent(unsigned long long p0, unsigned long long p1, unsigned long long p2)
+void NexMatchmakeSession::SetTemporaryOwnerChangeEvent(unsigned int gatheringId, unsigned long long ownerId)
 {
     m_state = 0;
 
 }
-unsigned long long NexMatchmakeSession::UnregisterMatchmakeSession(unsigned long long p0, unsigned long long p1, unsigned long long p2)
+unsigned long long NexMatchmakeSession::UnregisterMatchmakeSession(nn::pia::common::CallContext* callContext, unsigned int gatheringId)
 {
     return m_state;
 
@@ -338,32 +338,32 @@ void NexMatchmakeSession::UnregisterSearchCriteria()
     m_state = 0;
 
 }
-unsigned long long NexMatchmakeSession::UpdateApplicationBuffer(unsigned long long p0, unsigned long long p1, unsigned long long p2, unsigned long long p3, unsigned long long p4)
+unsigned long long NexMatchmakeSession::UpdateApplicationBuffer(nn::pia::common::CallContext* callContext, unsigned int gatheringId, const unsigned char* buffer, unsigned int size)
 {
     return m_state;
 
 }
-unsigned long long NexMatchmakeSession::UpdateAttributes(unsigned long long p0, unsigned long long p1, unsigned long long p2, unsigned long long p3)
+unsigned long long NexMatchmakeSession::UpdateAttributes(nn::pia::common::CallContext* callContext, unsigned int gatheringId, unsigned int* attributes)
 {
     return m_state;
 
 }
-unsigned long long NexMatchmakeSession::UpdateCommunity(unsigned long long p0, unsigned long long p1)
+unsigned long long NexMatchmakeSession::UpdateCommunity(nn::pia::common::CallContext* callContext)
 {
     return m_state;
 
 }
-unsigned long long NexMatchmakeSession::UpdateMatchmakeSessionHost(unsigned long long p0, unsigned long long p1)
+unsigned long long NexMatchmakeSession::UpdateMatchmakeSessionHost(unsigned int stationId)
 {
     return m_state;
 
 }
-unsigned long long NexMatchmakeSession::UpdateSelectionPriority(unsigned long long p0, unsigned long long p1, unsigned long long p2)
+unsigned long long NexMatchmakeSession::UpdateSelectionPriority(unsigned int gatheringId, unsigned char priority)
 {
     return m_state;
 
 }
-unsigned long long NexMatchmakeSession::UpdateSessionSetting(unsigned long long p0, unsigned long long p1, unsigned long long p2)
+unsigned long long NexMatchmakeSession::UpdateSessionSetting(nn::pia::common::CallContext* callContext, unsigned int gatheringId)
 {
     return m_state;
 
@@ -388,12 +388,12 @@ unsigned int NexMatchmakeSession::WaitCreateCommunity()
     return m_state;
 
 }
-unsigned int NexMatchmakeSession::WaitCreateMatchmakeSession(unsigned long long p0)
+unsigned int NexMatchmakeSession::WaitCreateMatchmakeSession(unsigned int* gatheringId)
 {
     return m_state;
 
 }
-unsigned int NexMatchmakeSession::WaitCreateMatchmakeSessionWithTeam(unsigned long long p0)
+unsigned int NexMatchmakeSession::WaitCreateMatchmakeSessionWithTeam(unsigned int* gatheringId)
 {
     return m_state;
 
@@ -438,7 +438,7 @@ unsigned int NexMatchmakeSession::WaitGenerateSystemPassword()
     return m_state;
 
 }
-unsigned int NexMatchmakeSession::WaitGetStationConnectionInfo(unsigned long long p0)
+unsigned int NexMatchmakeSession::WaitGetStationConnectionInfo(nn::pia::transport::StationConnectionInfo* info)
 {
     return m_state;
 
@@ -483,12 +483,12 @@ unsigned int NexMatchmakeSession::WaitOpenParticipate()
     return m_state;
 
 }
-unsigned int NexMatchmakeSession::WaitRandomMatchmakeSession(unsigned long long p0, unsigned long long p1)
+unsigned int NexMatchmakeSession::WaitRandomMatchmakeSession(unsigned int* gatheringId, bool* found)
 {
     return m_state;
 
 }
-unsigned int NexMatchmakeSession::WaitRandomMatchmakeSessionWithTeam(unsigned long long p0, unsigned long long p1)
+unsigned int NexMatchmakeSession::WaitRandomMatchmakeSessionWithTeam(unsigned int* gatheringId, bool* found)
 {
     return m_state;
 

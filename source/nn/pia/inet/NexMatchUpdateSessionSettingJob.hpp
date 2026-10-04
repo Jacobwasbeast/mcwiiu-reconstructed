@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+namespace nn { namespace pia { namespace session { class IMatchmakeSession; class UpdateSessionSetting; }}}
+
 namespace nn { namespace pia { namespace inet {
 
 class NexMatchUpdateSessionSettingJob
@@ -10,7 +12,7 @@ class NexMatchUpdateSessionSettingJob
 public:
     NexMatchUpdateSessionSettingJob();
     ~NexMatchUpdateSessionSettingJob();
-    uint64_t StartupImpl(uint32_t a1, int32_t a2, int32_t a3, int32_t a4, uint8_t a5);
+    uint64_t StartupImpl(uint32_t a1, session::IMatchmakeSession* a2, const session::UpdateSessionSetting* a3, bool a4);
     uint32_t UpdateSessionSetting();
     uint32_t WaitUpdateSessionSetting();
     uint32_t ModifyAttribute();
@@ -20,7 +22,7 @@ public:
     uint32_t UpdateApplicationData();
     uint32_t WaitUpdateApplicationData();
     void Cleanup();
-    void Trace(uint64_t a1);
+    void Trace(uint64_t a1) const;
 
 private:
     uint64_t state_;

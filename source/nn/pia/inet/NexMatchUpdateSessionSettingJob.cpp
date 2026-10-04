@@ -2,7 +2,7 @@
 
 namespace nn { namespace pia { namespace inet {
 
-uint64_t NexMatchUpdateSessionSettingJob::StartupImpl(uint32_t a1, int32_t a2, int32_t a3, int32_t a4, uint8_t a5)
+uint64_t NexMatchUpdateSessionSettingJob::StartupImpl(uint32_t a1, session::IMatchmakeSession* a2, const session::UpdateSessionSetting* a3, bool a4)
 {
     return static_cast<uint64_t>(state_);
 }
@@ -52,9 +52,8 @@ void NexMatchUpdateSessionSettingJob::Cleanup()
     state_ += 1;
 }
 
-void NexMatchUpdateSessionSettingJob::Trace(uint64_t a1)
+void NexMatchUpdateSessionSettingJob::Trace(uint64_t a1) const
 {
-    state_ += 1;
 }
 
 }}}

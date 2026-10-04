@@ -23,7 +23,7 @@ unsigned int NexMatchCreateSessionJob::LeaveJoinedMatchmakeSession()
     return m_state;
 
 }
-unsigned int NexMatchCreateSessionJob::SetNextStepAtFailedCreateMesh(unsigned long long p0, unsigned long long p1, unsigned long long p2)
+unsigned int NexMatchCreateSessionJob::SetNextStepAtFailedCreateMesh(Result result)
 {
     return m_state;
 
@@ -38,14 +38,13 @@ unsigned int NexMatchCreateSessionJob::StartNatSession()
     return m_state;
 
 }
-unsigned long long NexMatchCreateSessionJob::StartupImpl(unsigned long long p0, unsigned long long p1)
+Result NexMatchCreateSessionJob::StartupImpl(const session::CreateSessionSetting* setting)
 {
-    return m_state;
+    return Result(m_state);
 
 }
-void NexMatchCreateSessionJob::Trace(unsigned long long p0)
+void NexMatchCreateSessionJob::Trace(unsigned long long p0) const
 {
-    m_state = 0;
 
 }
 unsigned int NexMatchCreateSessionJob::UnregisterGathering()

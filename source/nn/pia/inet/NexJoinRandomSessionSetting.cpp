@@ -2,6 +2,10 @@
 
 namespace nn { namespace pia { namespace inet {
 
+namespace {
+const int kInvalidParameterResult = 0x10c07;
+}
+
 NexJoinRandomSessionSetting::NexJoinRandomSessionSetting()
     : m_sessionSearchCriteriaSize(0), m_matchmakeUniqueKeyword(false),
       m_myBlockListUsed(true), m_othersBlockListUsed(false)
@@ -45,17 +49,24 @@ void NexJoinRandomSessionSetting::Reset()
     m_myBlockListUsed = true;
     m_othersBlockListUsed = false;
 }
-void NexJoinRandomSessionSetting::SetCreateSessionSetting(const NexCreateSessionSetting* setting)
+Result NexJoinRandomSessionSetting::SetCreateSessionSetting(const session::CreateSessionSetting* setting)
 {
-    if (setting) m_createSessionSetting.Copy(*setting);
+    if (setting == 0) return Result(kInvalidParameterResult);
+    m_createSessionSetting.Copy(static_cast<const NexCreateSessionSetting&>(*setting));
+    return Result(0);
 }
-void NexJoinRandomSessionSetting::SetSessionSearchCriteria(const NexSessionSearchCriteria* criteria, unsigned int count)
+Result NexJoinRandomSessionSetting::SetSessionSearchCriteria(const session::SessionSearchCriteria* criteria, unsigned int count)
 {
-    if (count > 2 || (count != 0 && criteria == 0)) return;
+    if (count > 2 || criteria == 0) return Result(kInvalidParameterResult);
+    const NexSessionSearchCriteria* nexCriteria = static_cast<const NexSessionSearchCriteria*>(criteria);
     for (unsigned int i = 0; i < count; ++i) {
-        m_sessionSearchCriteria[i].Copy(criteria[i]);
+        if (nexCriteria[i].GetKeyType() != 0) return Result(kInvalidParameterResult);
+    }
+    for (unsigned int i = 0; i < count; ++i) {
+        m_sessionSearchCriteria[i].Copy(nexCriteria[i]);
     }
     m_sessionSearchCriteriaSize = count;
+    return Result(0);
 }
 void NexJoinRandomSessionSetting::Trace(unsigned long long p0) const
 {

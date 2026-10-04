@@ -2,6 +2,10 @@
 #define LEGACY_CONSOLE_WIIU_NN_PIA_INET_NEXNOTIFICATIONDATAJOB_HPP
 
 #include <stdint.h>
+#include "nn/pia/Common.hpp"
+
+namespace nn { namespace nex { template <typename T> class qList; class NotificationEvent; }}
+namespace nn { namespace pia { namespace common { class CallContext; class String; }}}
 
 namespace nn { namespace pia { namespace inet {
 
@@ -10,8 +14,8 @@ class NexNotificationDataJob
 public:
     NexNotificationDataJob();
     ~NexNotificationDataJob();
-    uint64_t Startup(uint32_t a1, uint32_t a2, int32_t a3, uint32_t a4, uint32_t a5, uint32_t a6);
-    void Startup(uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4);
+    Result Startup(common::CallContext* callContext, unsigned int type, unsigned int param1, unsigned int param2, const common::String& text);
+    Result Startup(common::CallContext* callContext, unsigned char typeMask, nex::qList<nex::NotificationEvent>* events);
     uint32_t WaitUpdateNotificationData();
     uint32_t WaitRetrieveNotificationData();
     uint64_t Cleanup();

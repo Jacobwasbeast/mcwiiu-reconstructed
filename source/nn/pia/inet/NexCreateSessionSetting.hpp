@@ -1,6 +1,9 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_PIA_INET_NEX_CREATE_SESSION_SETTING_HPP
 #define LEGACY_CONSOLE_WIIU_NN_PIA_INET_NEX_CREATE_SESSION_SETTING_HPP
 
+#include "nn/pia/inet/SessionType.hpp"
+#include "nn/pia/session/CreateSessionSetting.hpp"
+
 namespace nn
 {
 namespace pia
@@ -8,7 +11,7 @@ namespace pia
 namespace inet
 {
 
-class NexCreateSessionSetting
+class NexCreateSessionSetting : public session::CreateSessionSetting
 {
 public:
     NexCreateSessionSetting();
@@ -19,8 +22,8 @@ public:
     void SetGameMode(unsigned int value);
     unsigned int GetGameMode() const;
     bool IsSetGameMode() const;
-    void SetSessionType(int value);
-    int GetSessionType() const;
+    void SetSessionType(SessionType value);
+    SessionType GetSessionType() const;
     bool IsSetSessionType() const;
     bool IsAutoCloseSession() const;
     bool IsSetSessionMatchmakeKeyword() const;
@@ -57,7 +60,7 @@ public:
 
 private:
     unsigned int m_gameMode;
-    int m_sessionType;
+    SessionType m_sessionType;
     bool m_autoCloseSession;
     unsigned int m_attributes[6];
     unsigned char m_applicationData[512];

@@ -11,7 +11,7 @@ public:
     void Cleanup();
     unsigned int ClearMatchmakeSystemPassword();
     unsigned int StartupImpl();
-    void Trace(unsigned long long p0);
+    void Trace(unsigned long long p0) const;
     unsigned int WaitClearMatchmakeSystemPassword();
 
 private:

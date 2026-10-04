@@ -35,8 +35,8 @@ void NexCommunityInfo::Clear()
 unsigned int NexCommunityInfo::GetCommunityId() const { return m_communityId; }
 bool NexCommunityInfo::IsOfficialCommunity() const { return m_official; }
 bool NexCommunityInfo::IsRestrictedByPassword() const { return m_restricted; }
-const common::DateTime& NexCommunityInfo::GetParticipationStartDate() const { return m_participationStartDate; }
-const common::DateTime& NexCommunityInfo::GetParticipationEndDate() const { return m_participationEndDate; }
+const common::DateTime& NexCommunityInfo::GetParticipationStartDate() { return m_participationStartDate; }
+const common::DateTime& NexCommunityInfo::GetParticipationEndDate() { return m_participationEndDate; }
 unsigned int NexCommunityInfo::GetRelatedSessionCount() const { return m_relatedSessionCount; }
 
 bool NexCommunityInfo::GetAttribute(unsigned char index, unsigned int* value) const
@@ -53,7 +53,7 @@ unsigned short NexCommunityInfo::GetMaxParticipantNum() const { return m_maxPart
 unsigned short NexCommunityInfo::GetMinParticipantNum() const { return m_minParticipantNum; }
 const common::String& NexCommunityInfo::GetDescription() const { return m_description; }
 
-bool NexCommunityInfo::GetApplicationData(void* buffer, unsigned int size) const
+bool NexCommunityInfo::GetApplicationData(void* buffer, unsigned int size)
 {
     if (buffer == 0 || size < m_applicationDataSize)
         return false;
@@ -61,7 +61,7 @@ bool NexCommunityInfo::GetApplicationData(void* buffer, unsigned int size) const
     return true;
 }
 
-bool NexCommunityInfo::GetApplicationDataSize(unsigned int* size) const
+bool NexCommunityInfo::GetApplicationDataSize(unsigned int* size)
 {
     if (size == 0)
         return false;

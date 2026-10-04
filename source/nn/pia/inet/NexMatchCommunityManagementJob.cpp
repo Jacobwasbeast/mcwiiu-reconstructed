@@ -8,9 +8,9 @@ NexMatchCommunityManagementJob::NexMatchCommunityManagementJob() : m_state(0)
 NexMatchCommunityManagementJob::~NexMatchCommunityManagementJob()
 {}
 
-unsigned long long NexMatchCommunityManagementJob::BrowseCommunityStartupImpl(unsigned long long p0, unsigned long long p1)
+Result NexMatchCommunityManagementJob::BrowseCommunityStartupImpl(const session::CommunitySearchCriteria* searchCriteria)
 {
-    return m_state;
+    return Result(m_state);
 
 }
 void NexMatchCommunityManagementJob::Cleanup()
@@ -23,9 +23,9 @@ unsigned int NexMatchCommunityManagementJob::CreateCommunity()
     return m_state;
 
 }
-unsigned long long NexMatchCommunityManagementJob::CreateCommunityStartupImpl(unsigned long long p0)
+Result NexMatchCommunityManagementJob::CreateCommunityStartupImpl(const session::CreateCommunitySetting* setting)
 {
-    return m_state;
+    return Result(m_state);
 
 }
 unsigned int NexMatchCommunityManagementJob::DestroyCommunity()
@@ -33,9 +33,9 @@ unsigned int NexMatchCommunityManagementJob::DestroyCommunity()
     return m_state;
 
 }
-unsigned long long NexMatchCommunityManagementJob::DestroyCommunityStartupImpl(unsigned long long p0, unsigned long long p1)
+Result NexMatchCommunityManagementJob::DestroyCommunityStartupImpl(unsigned int communityId)
 {
-    return m_state;
+    return Result(m_state);
 
 }
 unsigned int NexMatchCommunityManagementJob::FindCommunityByCommunityId()
@@ -63,9 +63,9 @@ unsigned int NexMatchCommunityManagementJob::JoinCommunity()
     return m_state;
 
 }
-unsigned long long NexMatchCommunityManagementJob::JoinCommunityStartupImpl(unsigned long long p0)
+Result NexMatchCommunityManagementJob::JoinCommunityStartupImpl(const session::JoinCommunitySetting* setting)
 {
-    return m_state;
+    return Result(m_state);
 
 }
 unsigned int NexMatchCommunityManagementJob::LeaveCommunity()
@@ -73,14 +73,13 @@ unsigned int NexMatchCommunityManagementJob::LeaveCommunity()
     return m_state;
 
 }
-unsigned long long NexMatchCommunityManagementJob::LeaveCommunityStartupImpl(unsigned long long p0, unsigned long long p1)
+Result NexMatchCommunityManagementJob::LeaveCommunityStartupImpl(unsigned int communityId)
 {
-    return m_state;
+    return Result(m_state);
 
 }
-void NexMatchCommunityManagementJob::Trace(unsigned long long p0)
+void NexMatchCommunityManagementJob::Trace(unsigned long long p0) const
 {
-    m_state = 0;
 
 }
 unsigned int NexMatchCommunityManagementJob::UpdateCommunity()
@@ -88,9 +87,9 @@ unsigned int NexMatchCommunityManagementJob::UpdateCommunity()
     return m_state;
 
 }
-unsigned long long NexMatchCommunityManagementJob::UpdateCommunityStartupImpl(unsigned long long p0)
+Result NexMatchCommunityManagementJob::UpdateCommunityStartupImpl(const session::UpdateCommunitySetting* setting)
 {
-    return m_state;
+    return Result(m_state);
 
 }
 unsigned int NexMatchCommunityManagementJob::WaitCreateCommunity()

@@ -29,14 +29,9 @@ void NexSessionSearchCriteriaParticipant::Reset()
     application_data_enabled_ = true;
 }
 
-void NexSessionSearchCriteriaParticipant::SetResultRange(uint32_t, nn::pia::common::Result* result)
+nn::pia::common::Result NexSessionSearchCriteriaParticipant::SetResultRange(uint32_t, uint32_t)
 {
-    if (result == 0) {
-        result = new nn::pia::common::Result;
-    }
-    if (result != 0) {
-        *result = 0x10c08;
-    }
+    return 0x10c08;
 }
 
 }}}

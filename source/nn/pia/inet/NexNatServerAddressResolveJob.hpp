@@ -3,6 +3,10 @@
 
 #include <stdint.h>
 
+namespace nn { namespace pia { namespace common {
+class CallContext;
+}}}
+
 namespace nn { namespace pia { namespace inet {
 
 class NexNatServerAddressResolveJob
@@ -10,7 +14,7 @@ class NexNatServerAddressResolveJob
 public:
     NexNatServerAddressResolveJob();
     ~NexNatServerAddressResolveJob();
-    uint64_t Startup(uint32_t a1, int32_t a2);
+    uint64_t Startup(common::CallContext* a1);
     void Cleanup();
     void CancelCleanup();
     uint32_t StepResolveNatServerAddress();

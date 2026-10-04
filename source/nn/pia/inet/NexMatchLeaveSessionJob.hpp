@@ -1,6 +1,8 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_PIA_INET_NEXMATCHLEAVESESSIONJOB_HPP
 #define LEGACY_CONSOLE_WIIU_NN_PIA_INET_NEXMATCHLEAVESESSIONJOB_HPP
 
+#include "nn/pia/common/StepSequenceJob.hpp"
+
 namespace nn { namespace pia { namespace inet {
 
 class NexMatchLeaveSessionJob
@@ -8,10 +10,10 @@ class NexMatchLeaveSessionJob
 public:
     NexMatchLeaveSessionJob();
     virtual ~NexMatchLeaveSessionJob();
-    void ChooseNextStepByCheckingBufferMatchmakeSessions(unsigned long long p0);
+    void ChooseNextStepByCheckingBufferMatchmakeSessions(const common::StepSequenceJob::Step& step);
     void CleanupImpl();
     unsigned int GetMatchmakeSessionOwners();
-    unsigned int GetWaitHostMigrationTimeout();
+    unsigned int GetWaitHostMigrationTimeout() const;
     bool IsNeedSkipLeaveCurrentMatchmakeSession();
     unsigned int LeaveMatchmakeSessionCompanions();
     unsigned int MigrateMatchmakeSessionOwner();
@@ -21,7 +23,7 @@ public:
     void SetNextStepAtWaitHostMigratedTimeout();
     void SetNextStepAtWaitLeaveBufferMatchmakeSession();
     void SetNextStepAtWaitLeaveCurrentMatchmakeSession();
-    void Trace(unsigned long long p0);
+    void Trace(unsigned long long p0) const;
     unsigned int WaitGetMatchmakeSessionOwners();
     unsigned int WaitLeaveMatchmakeSessionCompanions();
     unsigned int WaitMigrateMatchmakeSessionOwner();

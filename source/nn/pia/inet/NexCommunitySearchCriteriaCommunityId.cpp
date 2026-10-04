@@ -8,7 +8,7 @@ NexCommunitySearchCriteriaCommunityId::~NexCommunitySearchCriteriaCommunityId()
 
 Result NexCommunitySearchCriteriaCommunityId::SetResultRange(unsigned int offset, unsigned int size)
 {
-    return size <= 100 ? session::CommunitySearchCriteria::SetResultRange(offset, size) : 0x10c07;
+    return size <= 100 ? session::CommunitySearchCriteria::SetResultRange(offset, size) : Result(0x10c07);
 }
 
 const unsigned int* NexCommunitySearchCriteriaCommunityId::GetCommunityIdList() const

@@ -18,12 +18,12 @@ unsigned long long NexMatchMeshLayerController::CheckConnectedStatus()
     return m_state;
 
 }
-unsigned long long NexMatchMeshLayerController::CheckConnectedStatusCore(unsigned long long p0, unsigned long long p1)
+unsigned long long NexMatchMeshLayerController::CheckConnectedStatusCore(nn::nex::NgsBridgeInterface* ngsInterface)
 {
     return m_state;
 
 }
-unsigned int NexMatchMeshLayerController::CheckSessionId(unsigned long long p0)
+unsigned int NexMatchMeshLayerController::CheckSessionId(unsigned int p0)
 {
     return m_state;
 
@@ -38,62 +38,62 @@ void NexMatchMeshLayerController::CleanupEventHandler()
     m_state = 0;
 
 }
-void NexMatchMeshLayerController::ClearSessionId(unsigned long long p0)
+void NexMatchMeshLayerController::ClearSessionId(unsigned int p0)
 {
     m_state = 0;
 
 }
-unsigned int NexMatchMeshLayerController::GetMatchmakeSessionTotalParticipants()
+unsigned int NexMatchMeshLayerController::GetMatchmakeSessionTotalParticipants() const
 {
     return m_state;
 
 }
-unsigned int NexMatchMeshLayerController::GetMatchmakeSessionTotalStations()
+unsigned int NexMatchMeshLayerController::GetMatchmakeSessionTotalStations() const
 {
     return m_state;
 
 }
-unsigned int NexMatchMeshLayerController::GetMatchmakeSessionTotalStations(unsigned long long p0)
+unsigned int NexMatchMeshLayerController::GetMatchmakeSessionTotalStations(unsigned int p0) const
 {
     return m_state;
 
 }
-unsigned int NexMatchMeshLayerController::GetNgsInterface(unsigned long long p0)
+unsigned int NexMatchMeshLayerController::GetNgsInterface(unsigned char p0)
 {
     return m_state;
 
 }
-unsigned char NexMatchMeshLayerController::GetNgsInterfaceIndexBoundNexFacade()
+unsigned char NexMatchMeshLayerController::GetNgsInterfaceIndexBoundNexFacade() const
 {
     return m_state;
 
 }
-unsigned long long NexMatchMeshLayerController::GetSessionId(unsigned long long p0)
+unsigned long long NexMatchMeshLayerController::GetSessionId(unsigned int p0) const
 {
     return m_state;
 
 }
-unsigned int NexMatchMeshLayerController::GetSessionIdArraySize()
+unsigned int NexMatchMeshLayerController::GetSessionIdArraySize() const
 {
     return m_state;
 
 }
-unsigned long long NexMatchMeshLayerController::GetSessionParticipantInfo(unsigned long long p0)
+unsigned long long NexMatchMeshLayerController::GetSessionParticipantInfo(unsigned int p0) const
 {
     return m_state;
 
 }
-bool NexMatchMeshLayerController::IsAllStationJoined(unsigned long long p0)
+bool NexMatchMeshLayerController::IsAllStationJoined(unsigned int p0)
 {
     return m_state != 0;
 
 }
-unsigned int NexMatchMeshLayerController::IsJoinedUnknownSession(unsigned long long p0, unsigned long long p1)
+unsigned int NexMatchMeshLayerController::IsJoinedUnknownSession(unsigned int p0, unsigned int p1)
 {
     return m_state;
 
 }
-unsigned int NexMatchMeshLayerController::IsParticipated(unsigned long long p0, unsigned long long p1)
+unsigned int NexMatchMeshLayerController::IsParticipated(unsigned int p0, unsigned long long p1) const
 {
     return m_state;
 
@@ -103,7 +103,7 @@ void NexMatchMeshLayerController::MeshCleanup()
     m_state = 0;
 
 }
-unsigned long long NexMatchMeshLayerController::MeshStartup(unsigned long long p0, unsigned long long p1, unsigned long long p2)
+unsigned long long NexMatchMeshLayerController::MeshStartup(session::IMatchmakeSession* matchmakeSession, bool p1)
 {
     return m_state;
 
@@ -118,17 +118,15 @@ unsigned long long NexMatchMeshLayerController::StartNatSession()
     return m_state;
 
 }
-unsigned long long NexMatchMeshLayerController::Startup(unsigned long long p0, unsigned long long p1)
+unsigned long long NexMatchMeshLayerController::Startup(const session::Session::StartupSetting& setting)
 {
     return m_state;
 
 }
-void NexMatchMeshLayerController::Trace(unsigned long long p0)
+void NexMatchMeshLayerController::Trace(unsigned long long p0) const
 {
-    m_state = 0;
-
 }
-unsigned int NexMatchMeshLayerController::WaitStartNatSession(unsigned long long p0)
+unsigned int NexMatchMeshLayerController::WaitStartNatSession(Result* result)
 {
     return m_state;
 

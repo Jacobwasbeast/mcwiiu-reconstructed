@@ -11,8 +11,8 @@ void NexCreateSessionSetting::Copy(const NexCreateSessionSetting& other) { std::
 void NexCreateSessionSetting::SetGameMode(unsigned int value) { m_gameMode = value; m_stateFlags |= 1u; }
 unsigned int NexCreateSessionSetting::GetGameMode() const { return m_gameMode; }
 bool NexCreateSessionSetting::IsSetGameMode() const { return (m_stateFlags & 1u) != 0; }
-void NexCreateSessionSetting::SetSessionType(int value) { m_sessionType = value; m_autoCloseSession = value == 1; m_stateFlags |= 2u; }
-int NexCreateSessionSetting::GetSessionType() const { return m_sessionType; }
+void NexCreateSessionSetting::SetSessionType(SessionType value) { m_sessionType = value; m_autoCloseSession = value == cSessionType_Ranked; m_stateFlags |= 2u; }
+SessionType NexCreateSessionSetting::GetSessionType() const { return m_sessionType; }
 bool NexCreateSessionSetting::IsSetSessionType() const { return (m_stateFlags & 2u) != 0; }
 bool NexCreateSessionSetting::IsAutoCloseSession() const { return m_autoCloseSession; }
 void NexCreateSessionSetting::SetOpenSession(bool value) { m_autoCloseSession = !value; m_stateFlags |= 4u; }
@@ -45,6 +45,6 @@ unsigned int NexCreateSessionSetting::GetCommunityId() const { return m_communit
 bool NexCreateSessionSetting::IsSetCommunityId() const { return (m_stateFlags & 0x40000000u) != 0; }
 bool NexCreateSessionSetting::IsSetScoreBasedParameter() const { return (m_stateFlags & 0x2000000u) != 0; }
 bool NexCreateSessionSetting::IsSetSessionMatchmakeKeyword() const { return (m_stateFlags & 0x400000u) != 0; }
-void NexCreateSessionSetting::Reset() { m_gameMode = 0; m_sessionType = 0; m_autoCloseSession = false; m_applicationDataSize = 0; m_matchmakeSessionOption = 0; m_selectionPriority = 0; m_ratingValue = 0; m_disconnectionRate = 0; m_violationRate = 0; m_useGeoIp = false; m_countryCode = 0; m_extraParticipantNum = 0; m_communityId = 0; m_stateFlags = 0; std::memset(m_attributes, 0, sizeof(m_attributes)); std::memset(m_applicationData, 0, sizeof(m_applicationData)); }
+void NexCreateSessionSetting::Reset() { m_gameMode = 0; m_sessionType = cSessionType_Normal; m_autoCloseSession = false; m_applicationDataSize = 0; m_matchmakeSessionOption = 0; m_selectionPriority = 0; m_ratingValue = 0; m_disconnectionRate = 0; m_violationRate = 0; m_useGeoIp = false; m_countryCode = 0; m_extraParticipantNum = 0; m_communityId = 0; m_stateFlags = 0; std::memset(m_attributes, 0, sizeof(m_attributes)); std::memset(m_applicationData, 0, sizeof(m_applicationData)); }
 
 }}}
