@@ -1,56 +1,522 @@
 #include "nn/pia/lan/LanMatchmakeUpdateJob.hpp"
 
+#include <coreinit/memory.h>
+
+#include "nn/pia/common/Crypto.hpp"
+#include "nn/pia/common/TimeSpan.hpp"
+#include "nn/pia/lan/LanMatchMeshLayerController.hpp"
+#include "nn/pia/lan/LanMatchmakeSession.hpp"
+#include "nn/pia/lan/LanProtocol.hpp"
+#include "nn/pia/session/Mesh.hpp"
+#include "nn/pia/session/lan.hpp"
+#include "nn/pia/session/Session.hpp"
+#include "platform/wiiu/pead.hpp"
+
 namespace nn { namespace pia { namespace lan {
 
-LanMatchmakeUpdateJob::LanMatchmakeUpdateJob(void* a1)
+namespace
 {
+enum
+{
+    cResultInvalidArgument = 0x10c07,
+    cResultInvalidState = 0x10c08,
+    cResultSocketNoBufferSpace = 0x4c0d,
+    cMessageTypeRequest = 0,
+    cMessageTypeReply = 1,
+    cMessageHeaderSize = 5,
+    cMessageTrailerVersion = 1,
+    cTrailerFlagCrypto = 1,
+    cTrailerSequenceOffset = 2,
+    cTrailerKeyParamOffset = 10,
+    cTrailerSignatureOffset = 0x1a,
+    cTrailerTokenOffset = 0x2a,
+    cTrailerTokenSize = 0x100,
+    cTrailerHashSize = 0x10,
+    cRequestTrailerSize = 0x12a,
+    cReplyTrailerSize = 0x3a,
+    cTrailerMinimumSize = 0x2a,
+    cSessionParamSize = 0x20,
+    cKeyParamSize = 0x10,
+    cKeySize = 0x10,
+    cIvSize = 0xc,
+    cBrowseRequestCountMax = 2,
+    cBrowseTimeoutMsec = 2000,
+    cReplySendCount = 3,
+    cWaitMsec = 10
+};
+
+const unsigned long long cTraceMessage = 0x0200000000000000ULL;
+const unsigned long long cTraceSessionInfo = 0x0100000000000000ULL;
+
+inline LanMatchmakeSession* GetCurrentMatchmakeSession()
+{
+    return static_cast<LanMatchmakeSession*>(
+        session::g_piaSession->m_matchmakeSession[session::g_piaSession->m_currentSessionIndex]);
+}
+}
+
+LanMatchmakeUpdateJob::LanMatchmakeUpdateJob(LanProtocol* protocol)
+    : common::StepSequenceJob(), m_protocol(protocol), m_socket(), m_searchCriteria(),
+      m_browseContext(), m_browseDeadline()
+{
+    OSBlockSet(m_browseKeyParam, 0, sizeof(m_browseKeyParam));
 }
 
 LanMatchmakeUpdateJob::~LanMatchmakeUpdateJob()
 {
 }
 
-uint64_t LanMatchmakeUpdateJob::Startup(uint32_t a1, uint32_t a2)
+void LanMatchmakeUpdateJob::Trace(unsigned long long value) const
 {
+}
+
+Result LanMatchmakeUpdateJob::Startup(unsigned short* port)
+{
+    Result result = m_socket.Open();
+    if (result != 0)
+        return cResultInvalidState;
+
+    result = m_socket.Bind(common::InetAddress(0, cBrowsePort), true);
+    if (result != 0)
+        return cResultInvalidState;
+
+    if (port != 0)
+        *port = cBrowsePort;
+    m_browseContext.Reset();
+    m_randomSeedPending = true;
+    m_browseSequence = 0;
+    m_browseRequested = false;
+    Reset(true);
+    union
+    {
+        unsigned int (LanMatchmakeUpdateJob::*derived)();
+        unsigned int (common::StepSequenceJob::*base)();
+    } step;
+    step.derived = &LanMatchmakeUpdateJob::Update;
+    m_currentStep.m_function = step.base;
+    m_currentStep.m_name = "LanMatchmakeUpdateJob::Update";
     return 0;
 }
 
-uint32_t LanMatchmakeUpdateJob::Cleanup()
+void LanMatchmakeUpdateJob::Cleanup()
 {
-    return 0;
+    if (m_browseContext.m_state == common::CallContext::cStateInProgress)
+        m_browseContext.SignalCancel();
+    if (m_socket.m_openCount > 0)
+        m_socket.Close();
 }
 
 void LanMatchmakeUpdateJob::NotifyDisconnectToMeshLayerController()
 {
+    static_cast<LanMatchMeshLayerController*>(session::g_piaSession->m_meshLayerController)
+        ->SetConnectionStatusDisconnected();
 }
 
-uint64_t LanMatchmakeUpdateJob::SendBrowseReplyMessage(uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, uint32_t a5, uint32_t a6, int32_t a7, uint8_t a8)
+Result LanMatchmakeUpdateJob::SendBrowseReplyMessage(const common::InetAddress& address,
+                                                      unsigned char* keyParam,
+                                                      unsigned int keyParamSize,
+                                                      unsigned char* token,
+                                                      unsigned int tokenSize,
+                                                      bool isAuthenticated,
+                                                      bool omitSessionParam)
 {
-    return 0;
+    LanMatchmakeSession* matchmake = GetCurrentMatchmakeSession();
+    unsigned char payload[cMessageBufferSize];
+    unsigned int payloadSize;
+    Result result = matchmake->GetSessionInfoPtr()->Serialize(
+        payload, &payloadSize, sizeof(payload) - cMessageHeaderSize - cReplyTrailerSize);
+    if (result == 0)
+    {
+        unsigned char* message = m_sendBuffer;
+        common::serializeU8(message, cMessageTypeReply);
+        common::serializeU32(message + 1, payloadSize);
+        OSBlockMove(message + cMessageHeaderSize, payload, payloadSize, FALSE);
+        unsigned int sendSize;
+        if (!omitSessionParam)
+        {
+            unsigned char* trailer = message + cMessageHeaderSize + payloadSize;
+            unsigned char* sessionParam =
+                message + cMessageHeaderSize + payloadSize - cSessionParamSize;
+            ++m_browseSequence;
+            common::serializeU8(trailer, cMessageTrailerVersion);
+            common::serializeU8(trailer + 1, m_protocol->IsCryptoEnabled());
+            common::serializeU64(trailer + cTrailerSequenceOffset, m_browseSequence);
+            if (!m_protocol->IsCryptoEnabled() || !m_protocol->IsCryptoSettingRegistered() ||
+                !isAuthenticated)
+            {
+                pead::Random random;
+                for (unsigned int index = 0; index < cSessionParamSize; ++index)
+                    sessionParam[index] = static_cast<unsigned char>(random.getU32());
+                for (unsigned int index = 0; index < cKeyParamSize; ++index)
+                    trailer[cTrailerKeyParamOffset + index] =
+                        static_cast<unsigned char>(random.getU32());
+                for (unsigned int index = 0; index < cTrailerHashSize; ++index)
+                    trailer[cTrailerSignatureOffset + index] =
+                        static_cast<unsigned char>(random.getU32());
+                for (unsigned int index = 0; index < cTrailerHashSize; ++index)
+                    trailer[cTrailerTokenOffset + index] =
+                        static_cast<unsigned char>(random.getU32());
+            }
+            else
+            {
+                unsigned char peerSessionParam[cSessionParamSize];
+                if (keyParamSize > cKeyParamSize)
+                    keyParamSize = cKeyParamSize;
+                common::crypto::GenerateRandomParameter(peerSessionParam, cKeyParamSize);
+                OSBlockMove(peerSessionParam + cKeyParamSize, keyParam, keyParamSize, FALSE);
+                if (!matchmake->IsSessionParamRegistered())
+                {
+                    matchmake->SetSessionParam(peerSessionParam, cSessionParamSize);
+                    m_protocol->RequestRegisterSessionKey();
+                    OSBlockMove(sessionParam, peerSessionParam, cSessionParamSize, FALSE);
+                }
+                OSBlockMove(trailer + cTrailerKeyParamOffset, peerSessionParam, cKeyParamSize,
+                            FALSE);
+                unsigned char iv[cIvSize];
+                common::serializeU32(iv, m_protocol->m_broadcastAddress);
+                common::serializeU64(iv + 4, m_browseSequence);
+                unsigned char key[cKeySize];
+                result = m_protocol->CalculateCryptionKeyForBrowseReply(
+                    peerSessionParam, cSessionParamSize, key, cKeySize);
+                unsigned char hash[cTrailerHashSize];
+                result = m_protocol->CalculateTokenHash(token, tokenSize, hash, cTrailerHashSize);
+                common::Crypto::Setting setting;
+                setting.m_mode = common::Crypto::cModeAesGcm;
+                setting.m_iv = iv;
+                setting.m_ivLength = cIvSize;
+                setting.m_key = key;
+                setting.m_keyLength = cKeySize;
+                common::Crypto::Encrypt(trailer + cTrailerTokenOffset, hash, cTrailerHashSize,
+                                        trailer + cTrailerSignatureOffset, cTrailerHashSize,
+                                        setting);
+            }
+            sendSize = payloadSize + cMessageHeaderSize + cReplyTrailerSize;
+        }
+        else
+        {
+            sendSize = payloadSize + cMessageHeaderSize - cSessionParamSize;
+        }
+        common::InetAddress destination(address);
+        for (unsigned int attempt = 0; attempt < cReplySendCount; ++attempt)
+        {
+            int sentSize;
+            result = m_socket.SendTo(message, sendSize, destination, &sentSize);
+            if (result != 0 && result != cResultSocketNoBufferSpace)
+                NotifyDisconnectToMeshLayerController();
+        }
+        destination.Trace(cTraceMessage);
+        matchmake->GetSessionInfoPtr()->Trace(cTraceMessage);
+    }
+    return result;
 }
 
-uint64_t LanMatchmakeUpdateJob::SendBrowseMessage(uint32_t a1, uint32_t a2)
+Result LanMatchmakeUpdateJob::SendBrowseMessage(unsigned char index)
 {
-    return 0;
+    if (index >= cBrowseRequestCountMax)
+        return cResultInvalidArgument;
+    if (m_protocol == 0)
+        return cResultInvalidState;
+    if (!m_protocol->IsCryptoSettingRegistered())
+        return cResultInvalidState;
+    if (!m_protocol->IsCryptoEnabled())
+        return cResultInvalidState;
+
+    LanMatchmakeSession* matchmake = GetCurrentMatchmakeSession();
+    LanSessionSearchCriteria* criteria = matchmake->GetSessionSearchCriteriaPtr(index);
+    unsigned char payload[cMessageBufferSize];
+    unsigned int payloadSize;
+    Result result = criteria->Serialize(payload, &payloadSize,
+                                        sizeof(payload) - cMessageHeaderSize - cRequestTrailerSize);
+    if (result != 0)
+        return result;
+
+    unsigned char* message = m_sendBuffer;
+    common::serializeU8(message, cMessageTypeRequest);
+    common::serializeU32(message + 1, payloadSize);
+    OSBlockMove(message + cMessageHeaderSize, payload, payloadSize, FALSE);
+    unsigned char* trailer = message + cMessageHeaderSize + payloadSize;
+    ++m_browseSequence;
+    common::serializeU8(trailer, cMessageTrailerVersion);
+    common::serializeU8(trailer + 1, m_protocol->IsCryptoEnabled());
+    common::serializeU64(trailer + cTrailerSequenceOffset, m_browseSequence);
+    OSBlockMove(trailer + cTrailerKeyParamOffset, m_browseKeyParam, cKeyParamSize, FALSE);
+    if (!m_protocol->IsCryptoEnabled())
+    {
+        pead::Random random;
+        for (unsigned int offset = 0; offset < cTrailerHashSize; ++offset)
+            trailer[cTrailerSignatureOffset + offset] = static_cast<unsigned char>(random.getU32());
+        for (unsigned int offset = 0; offset < cTrailerTokenSize; ++offset)
+            trailer[cTrailerTokenOffset + offset] = static_cast<unsigned char>(random.getU32());
+        common::InetAddress destination(m_protocol->m_broadcastAddress, cBrowsePort);
+        int sentSize;
+        result = m_socket.SendTo(message, payloadSize + cMessageHeaderSize + cRequestTrailerSize,
+                                 destination, &sentSize);
+    }
+    else
+    {
+        unsigned char iv[cIvSize];
+        common::serializeU32(iv, m_protocol->m_broadcastAddress);
+        common::serializeU64(iv + 4, m_browseSequence);
+        unsigned char key[cKeySize];
+        result = m_protocol->CalculateCryptionKeyForBrowse(m_browseKeyParam, cKeyParamSize, key,
+                                                           cKeySize);
+        common::Crypto::Setting setting;
+        setting.m_mode = common::Crypto::cModeAesGcm;
+        setting.m_iv = iv;
+        setting.m_ivLength = cIvSize;
+        setting.m_key = key;
+        setting.m_keyLength = cKeySize;
+        common::Crypto::Encrypt(trailer + cTrailerTokenOffset, m_browseToken, cTrailerTokenSize,
+                                trailer + cTrailerSignatureOffset, cTrailerHashSize, setting);
+        common::InetAddress destination(m_protocol->m_broadcastAddress, cBrowsePort);
+        int sentSize;
+        result = m_socket.SendTo(message, payloadSize + cMessageHeaderSize + cRequestTrailerSize,
+                                 destination, &sentSize);
+    }
+    if (result != 0 && result != cResultSocketNoBufferSpace)
+        NotifyDisconnectToMeshLayerController();
+    criteria->Trace(cTraceMessage);
+    return result;
 }
 
-uint32_t LanMatchmakeUpdateJob::Update()
+unsigned int LanMatchmakeUpdateJob::Update()
 {
-    return 0;
+    common::InetAddress sender;
+    if (m_randomSeedPending)
+    {
+        const unsigned long long first = common::crypto::GenerateRandomSeed();
+        const unsigned long long second = common::crypto::GenerateRandomSeed();
+        if (m_protocol != 0)
+            m_protocol->SetRandomSeed(first, second);
+        m_randomSeedPending = false;
+    }
+
+    LanMatchmakeSession* matchmake = GetCurrentMatchmakeSession();
+    if (matchmake == 0)
+        return cExecuteResultWait | cWaitMsec;
+
+    const bool isLeavingMesh = session::g_piaMesh->IsProcessingLeaveMesh();
+    bool isCryptoActive = false;
+    if (m_protocol->IsCryptoEnabled() && m_protocol->IsCryptoSettingRegistered())
+        isCryptoActive = true;
+    bool isAuthenticated = true;
+    bool omitSessionParam = false;
+    unsigned char ancillary[4];
+    int receivedSize;
+    unsigned char peerParam[cSessionParamSize];
+    unsigned char token[cTrailerTokenSize + 4];
+    const Result receiveResult = m_socket.RecvFrom(m_receiveBuffer, cMessageBufferSize, &sender,
+                                                   ancillary, &receivedSize);
+    if (receiveResult == 0)
+    {
+        if (common::InetAddress(m_protocol->m_address, m_protocol->m_filterPort).GetKey() ==
+            sender.GetKey())
+            return cExecuteResultWait | cWaitMsec;
+
+        const unsigned char type = m_receiveBuffer[0];
+        const unsigned int payloadSize = common::deserializeU32(m_receiveBuffer + 1);
+        unsigned int messageSize = payloadSize;
+        bool dispatch = false;
+        if (static_cast<unsigned int>(receivedSize) <= payloadSize + cMessageHeaderSize)
+        {
+            omitSessionParam = true;
+            dispatch = true;
+        }
+        else if ((type == cMessageTypeRequest || type == cMessageTypeReply) &&
+                 payloadSize + cMessageHeaderSize + cTrailerMinimumSize <=
+                     static_cast<unsigned int>(receivedSize))
+        {
+            const unsigned char* trailer = m_receiveBuffer + cMessageHeaderSize + payloadSize;
+            common::deserializeU8(trailer);
+            const bool isEncrypted = (common::deserializeU8(trailer + 1) & cTrailerFlagCrypto) != 0;
+            if (isCryptoActive == isEncrypted)
+            {
+                if (!isCryptoActive || !isEncrypted)
+                {
+                    dispatch = true;
+                }
+                else
+                {
+                    unsigned char iv[cIvSize];
+                    common::serializeU32(iv, m_protocol->m_broadcastAddress);
+                    OSBlockMove(iv + 4, trailer + cTrailerSequenceOffset, 8, FALSE);
+                    if (type == cMessageTypeRequest)
+                    {
+                        if (static_cast<unsigned int>(receivedSize) >=
+                            payloadSize + cMessageHeaderSize + cRequestTrailerSize)
+                        {
+                            OSBlockMove(peerParam, trailer + cTrailerKeyParamOffset, cKeyParamSize,
+                                        FALSE);
+                            unsigned char key[cKeySize];
+                            Result result = m_protocol->CalculateCryptionKeyForBrowse(
+                                peerParam, cKeyParamSize, key, cKeySize);
+                            common::Crypto::Setting setting;
+                            setting.m_mode = common::Crypto::cModeAesGcm;
+                            setting.m_iv = iv;
+                            setting.m_ivLength = cIvSize;
+                            setting.m_key = key;
+                            setting.m_keyLength = cKeySize;
+                            result = common::Crypto::Decrypt(
+                                token, trailer + cTrailerTokenOffset, cTrailerTokenSize,
+                                const_cast<unsigned char*>(trailer) + cTrailerSignatureOffset,
+                                cTrailerHashSize, setting);
+                            if (result != 0)
+                                isAuthenticated = false;
+                            dispatch = true;
+                        }
+                    }
+                    else
+                    {
+                        if (static_cast<unsigned int>(receivedSize) >=
+                            payloadSize + cMessageHeaderSize + cReplyTrailerSize)
+                        {
+                            OSBlockMove(peerParam, trailer + cTrailerKeyParamOffset, cKeyParamSize,
+                                        FALSE);
+                            OSBlockMove(peerParam + cKeyParamSize, m_browseKeyParam, cKeyParamSize,
+                                        FALSE);
+                            unsigned char key[cKeySize];
+                            Result result = m_protocol->CalculateCryptionKeyForBrowseReply(
+                                peerParam, cSessionParamSize, key, cKeySize);
+                            common::Crypto::Setting setting;
+                            setting.m_mode = common::Crypto::cModeAesGcm;
+                            setting.m_iv = iv;
+                            setting.m_ivLength = cIvSize;
+                            setting.m_key = key;
+                            setting.m_keyLength = cKeySize;
+                            result = common::Crypto::Decrypt(
+                                token, trailer + cTrailerTokenOffset, cTrailerHashSize,
+                                const_cast<unsigned char*>(trailer) + cTrailerSignatureOffset,
+                                cTrailerHashSize, setting);
+                            if (result != 0)
+                            {
+                                isAuthenticated = false;
+                            }
+                            else
+                            {
+                                unsigned char expectedHash[cTrailerHashSize];
+                                m_protocol->CalculateTokenHash(m_browseToken, cBrowseTokenSize,
+                                                               expectedHash, cTrailerHashSize);
+                                for (unsigned int index = 0; index < cTrailerHashSize; ++index)
+                                {
+                                    if (token[index] != expectedHash[index])
+                                    {
+                                        isAuthenticated = false;
+                                        break;
+                                    }
+                                }
+                            }
+                            dispatch = true;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (dispatch)
+        {
+            if (type == cMessageTypeRequest)
+            {
+                if (!isLeavingMesh && matchmake->IsMatchmakeOwner())
+                {
+                    m_searchCriteria.Deserialize(m_receiveBuffer + cMessageHeaderSize, payloadSize);
+                    m_searchCriteria.Trace(cTraceMessage);
+                    matchmake->GetSessionInfoPtr()->Trace(cTraceMessage);
+                    if (m_searchCriteria.IsHit(matchmake->GetSessionInfoPtr()))
+                        SendBrowseReplyMessage(sender, peerParam, cKeyParamSize, token,
+                                               cTrailerTokenSize, isAuthenticated,
+                                               omitSessionParam);
+                }
+            }
+            else if (type == cMessageTypeReply)
+            {
+                if (!isLeavingMesh && isAuthenticated)
+                {
+                    if (omitSessionParam)
+                    {
+                        OSBlockSet(m_sendBuffer + cMessageHeaderSize + messageSize, 0,
+                                   cSessionParamSize);
+                        messageSize += cSessionParamSize;
+                    }
+                    LanSessionInfo* buffer = matchmake->GetSessionInfoBufferPtr();
+                    buffer->Deserialize(m_receiveBuffer + cMessageHeaderSize, messageSize);
+                    session::SessionInfoList<LanSessionInfoPrivate>* list =
+                        static_cast<session::SessionInfoList<LanSessionInfoPrivate>*>(matchmake->GetSessionInfoListPtr());
+                    if (list != 0)
+                    {
+                        session::ISessionInfo* entry = 0;
+                        for (session::ISessionInfo** it = list->Begin(); it != list->End(); ++it)
+                        {
+                            if ((*it)->GetSessionId() == buffer->GetSessionId())
+                            {
+                                entry = *it;
+                                break;
+                            }
+                        }
+                        if (entry == 0 && list->m_maxSize != 0 && list->m_size < list->m_maxSize)
+                        {
+                            entry = list->m_items[list->m_size];
+                            entry->Clear();
+                            ++list->m_size;
+                        }
+                        if (entry != 0)
+                        {
+                            static_cast<LanSessionInfo*>(entry)->Deserialize(
+                                m_receiveBuffer + cMessageHeaderSize, messageSize);
+                            entry->Trace(cTraceSessionInfo);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if (m_browseRequested)
+    {
+        if (isCryptoActive)
+        {
+            common::crypto::GenerateRandomParameter(m_browseKeyParam, sizeof(m_browseKeyParam));
+            common::crypto::GenerateRandomParameter(m_browseToken, sizeof(m_browseToken));
+        }
+        for (unsigned char index = 0; index < m_browseRequestCount; ++index)
+            SendBrowseMessage(index);
+        m_browseRequested = false;
+        const common::TimeSpan& ticksPerMsec = common::TimeSpan::GetTicksPerMSec();
+        common::Time deadline;
+        deadline.SetNow();
+        deadline.m_tick += ticksPerMsec.m_tick * cBrowseTimeoutMsec;
+        m_browseDeadline = deadline;
+        return cExecuteResultWait | cWaitMsec;
+    }
+
+    if (m_browseContext.m_state == common::CallContext::cStateInProgress)
+    {
+        common::Time now;
+        now.SetNow();
+        if (m_browseDeadline < now)
+            m_browseContext.SignalSuccess(0);
+    }
+    return cExecuteResultWait | cWaitMsec;
 }
 
-uint32_t LanMatchmakeUpdateJob::RequestBrowseMessage(uint8_t a1)
+bool LanMatchmakeUpdateJob::RequestBrowseMessage(unsigned char count)
 {
-    return 0;
+    if (count >= 1 && count <= cBrowseRequestCountMax &&
+        m_browseContext.m_state != common::CallContext::cStateInProgress)
+    {
+        m_browseRequestCount = count;
+        m_browseRequested = true;
+        m_browseContext.Reset();
+        m_browseContext.InitiateCall();
+        return true;
+    }
+    return false;
 }
 
-bool LanMatchmakeUpdateJob::IsBrowseMessageCompleted()
+bool LanMatchmakeUpdateJob::IsBrowseMessageCompleted() const
 {
-    return 0;
-}
-
-void LanMatchmakeUpdateJob::Trace(uint64_t a1)
-{
+    return m_browseContext.m_state == common::CallContext::cStateSuccess ||
+           m_browseContext.m_state == common::CallContext::cStateFailure ||
+           m_browseContext.m_state == common::CallContext::cStateCancelled;
 }
 
 }}}

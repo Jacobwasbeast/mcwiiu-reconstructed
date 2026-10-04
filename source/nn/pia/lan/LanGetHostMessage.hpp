@@ -5,21 +5,19 @@
 
 namespace nn { namespace pia { namespace lan {
 
-enum LanGetHostMessageKind { cLanGetHostMessageKind = 3 };
-
 class LanGetHostMessage : public LanMessage
 {
 public:
+    enum { cSerializedSize = 16 };
+
     LanGetHostMessage();
     explicit LanGetHostMessage(unsigned int sessionId);
-    virtual ~LanGetHostMessage();
-    void Serialize(unsigned char* buffer, unsigned int* size) const;
-    void Deserialize(const unsigned char* buffer);
-    unsigned int GetSerializedSize() const;
+    virtual ~LanGetHostMessage() {}
+    virtual Result Serialize(unsigned char* buffer, unsigned int* size) const;
+    virtual Result Deserialize(const unsigned char* buffer);
+    virtual unsigned int GetSerializedSize() const;
 
-private:
-    LanGetHostMessageKind messageType;
-    unsigned int sessionId;
+    unsigned int m_sessionId;
 };
 
 }}}

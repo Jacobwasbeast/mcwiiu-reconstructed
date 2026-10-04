@@ -2,32 +2,32 @@
 
 namespace nn { namespace pia { namespace lan {
 
+namespace
+{
+enum { cMessageType = 7 };
+}
+
 LanSelfKeepAliveMessage::LanSelfKeepAliveMessage()
-    : LanMessage()
 {
-    reinterpret_cast<unsigned int*>(this)[1] = 7;
+    m_messageType = cMessageType;
 }
 
-LanSelfKeepAliveMessage::~LanSelfKeepAliveMessage()
+Result LanSelfKeepAliveMessage::Serialize(unsigned char* buffer, unsigned int* size) const
 {
+    Result result = LanMessage::Serialize(buffer, size);
+    if (result != 0)
+        return result;
+
+    return 0;
 }
 
-void LanSelfKeepAliveMessage::Serialize(unsigned char* buffer, unsigned int* size) const
+Result LanSelfKeepAliveMessage::Deserialize(const unsigned char* buffer)
 {
-    unsigned int serializedSize = 0;
-    LanMessage::Serialize(buffer, &serializedSize);
-    if (size != 0)
-        *size = serializedSize;
-}
+    Result result = LanMessage::Deserialize(buffer);
+    if (result != 0)
+        return result;
 
-void LanSelfKeepAliveMessage::Deserialize(const unsigned char* buffer)
-{
-    LanMessage::Deserialize(buffer);
-}
-
-unsigned int LanSelfKeepAliveMessage::GetSerializedSize() const
-{
-    return 12;
+    return 0;
 }
 
 }}}

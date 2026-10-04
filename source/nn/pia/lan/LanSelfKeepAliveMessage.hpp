@@ -9,10 +9,9 @@ class LanSelfKeepAliveMessage : public LanMessage
 {
 public:
     LanSelfKeepAliveMessage();
-    virtual ~LanSelfKeepAliveMessage();
-    void Serialize(unsigned char* buffer, unsigned int* size) const;
-    void Deserialize(const unsigned char* buffer);
-    unsigned int GetSerializedSize() const;
+    virtual ~LanSelfKeepAliveMessage() {}
+    virtual Result Serialize(unsigned char* buffer, unsigned int* size) const;
+    virtual Result Deserialize(const unsigned char* buffer);
 };
 
 }}}

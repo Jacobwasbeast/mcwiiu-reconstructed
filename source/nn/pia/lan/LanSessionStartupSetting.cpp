@@ -1,18 +1,25 @@
 #include "nn/pia/lan/LanSessionStartupSetting.hpp"
 
-#include <cstring>
-
 namespace nn { namespace pia { namespace lan {
 
-LanSessionStartupSetting::LanSessionStartupSetting()
-    : m_field00(4000),
-      m_field04(400),
-      m_field08(0),
-      m_field90(1),
-      m_cryptoSetting()
+namespace
 {
-    std::memset(m_stationPlayerInfo, 0, sizeof(m_stationPlayerInfo));
-    std::memset(m_field91, 0, sizeof(m_field91));
+enum
+{
+    cDefaultField00 = 4000,
+    cDefaultField04 = 400,
+    cCryptoKeySize = 0x10
+};
+}
+
+LanSessionStartupSetting::LanSessionStartupSetting()
+    : session::Session::StartupSetting(), m_playerInfo(), m_playersCountedAsParticipants(true), m_cryptoSetting()
+{
+    m_cryptoSetting.m_mode = 1;
+    m_field04 = cDefaultField04;
+    m_field00 = cDefaultField00;
+    for (unsigned int index = 0; index < cCryptoKeySize; ++index)
+        m_cryptoSetting.m_key[index] = 0;
 }
 
 }}}

@@ -59,6 +59,9 @@ public:
     virtual void SetSystemCommunicationVersion(unsigned char version);
     virtual void SetApplicationCommunicationVersion(unsigned char version);
     virtual const unsigned char* GetSessionParam() const;
+    unsigned int GetSerializedSize() const;
+    common::Result Serialize(unsigned char* buffer, unsigned int* size, unsigned int bufferSize) const;
+    common::Result Deserialize(const unsigned char* buffer, unsigned int bufferSize);
 
     unsigned int m_gameMode;
     unsigned int m_sessionId;

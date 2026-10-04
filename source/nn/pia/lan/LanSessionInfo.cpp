@@ -1,5 +1,6 @@
 #include "nn/pia/lan/LanSessionInfo.hpp"
 
+#include "nn/pia/String.hpp"
 #include "platform/wiiu/pead.hpp"
 
 #include <coreinit/memory.h>
@@ -283,6 +284,232 @@ void LanSessionInfo::SetApplicationCommunicationVersion(unsigned char version)
 const unsigned char* LanSessionInfo::GetSessionParam() const
 {
     return m_sessionParam;
+}
+
+namespace
+{
+enum
+{
+    cResultInvalidArgument = 0x10c07,
+    cSerializedFixedSize = 0x1cf,
+    cUserNameAsciiBytes = 0x28,
+    cUserNameUtf16Units = 0x14,
+    cSessionParamSize = 0x20,
+    cApplicationDataSize = 0x180,
+    cAttributeCount = 6
+};
+
+const unsigned long long cTraceSessionInfo = 0x0100000000000000ULL;
+}
+
+unsigned int LanSessionInfo::GetSerializedSize() const
+{
+    return (m_stationConnectionInfo.GetSerializedSize() >> 1) + cSerializedFixedSize +
+           LanStationInfo::GetSerializedSize() * cMaxStationInfo;
+}
+
+common::Result LanSessionInfo::Serialize(unsigned char* buffer, unsigned int* size,
+                                         unsigned int bufferSize) const
+{
+    if (buffer == 0)
+        return cResultInvalidArgument;
+    if (size == 0)
+        return cResultInvalidArgument;
+    if (bufferSize < GetSerializedSize())
+        return cResultInvalidArgument;
+
+    const transport::StationLocation& location = m_stationConnectionInfo.m_stationLocation;
+    unsigned char* cursor = buffer;
+    common::serializeU32(cursor, m_gameMode);
+    common::serializeU32(cursor + 4, m_sessionId);
+    cursor += 8;
+    for (unsigned int index = 0; index < cAttributeCount; ++index)
+    {
+        common::serializeU32(cursor, m_attribute[index]);
+        cursor += 4;
+    }
+    common::serializeU16(cursor, m_currentParticipantNum);
+    common::serializeU16(cursor + 2, m_minParticipantNum);
+    common::serializeU16(cursor + 4, m_maxParticipantNum);
+    common::serializeU8(cursor + 6, m_systemCommunicationVersion);
+    common::serializeU8(cursor + 7, m_applicationCommunicationVersion);
+    common::serializeU16(cursor + 8, m_sessionType);
+    cursor += 10;
+    for (unsigned int index = 0; index < cApplicationDataSize; ++index)
+    {
+        common::serializeU8(cursor, m_applicationData[index]);
+        cursor += 1;
+    }
+    common::serializeU32(cursor, m_applicationDataSize);
+    common::serializeU8(cursor + 4, m_open);
+    cursor += 5;
+
+    unsigned int written;
+    location.m_stationAddress.Serialize(cursor, &written, bufferSize - (cursor - buffer));
+    cursor += location.m_stationAddress.GetSerializedSize();
+    common::serializeU64(cursor, location.m_principalId);
+    common::serializeU32(cursor + 8, location.m_field18);
+    common::serializeU32(cursor + 12, location.m_field1c);
+    common::serializeU8(cursor + 16, location.m_field20);
+    common::serializeU8(cursor + 17, location.m_field21);
+    common::serializeU8(cursor + 18, location.m_field22);
+    common::serializeU8(cursor + 19, location.m_field23);
+    common::serializeU8(cursor + 20, location.m_field24);
+    common::serializeU8(cursor + 21, location.m_field25);
+    common::serializeU8(cursor + 22, location.m_field26);
+    location.m_inetAddress.Serialize(cursor + 23, &written, bufferSize - ((cursor + 23) - buffer));
+    cursor += 29;
+
+    for (unsigned int index = 0; index < cMaxStationInfo; ++index)
+    {
+        if (index < m_stationInfoCount)
+        {
+            const LanStationInfo& stationInfo = m_stationInfo[index];
+            stationInfo.GetUserName().Trace(cTraceSessionInfo);
+            common::serializeU8(cursor, stationInfo.GetRole());
+            common::serializeU8(cursor + 1, stationInfo.GetUserName().GetEncodingType());
+            if (stationInfo.GetUserName().GetEncodingType() != common::String::EncodingType_Utf16)
+            {
+                const char* name = stationInfo.GetUserName().GetCharArray();
+                cursor += 2;
+                for (unsigned int unit = 0; unit < cUserNameAsciiBytes; ++unit)
+                {
+                    common::serializeU8(cursor, name[unit]);
+                    cursor += 1;
+                }
+            }
+            else
+            {
+                const unsigned short* name =
+                    static_cast<const unsigned short*>(stationInfo.GetUserName().GetBuffer());
+                cursor += 2;
+                for (unsigned int unit = 0; unit < cUserNameUtf16Units; ++unit)
+                {
+                    common::serializeU16(cursor, name[unit]);
+                    cursor += 2;
+                }
+            }
+            common::serializeU64(cursor, stationInfo.GetStationId());
+            cursor += 8;
+        }
+        else
+        {
+            for (unsigned int offset = 0; offset < LanStationInfo::GetSerializedSize(); ++offset)
+            {
+                common::serializeU8(cursor, 0);
+                cursor += 1;
+            }
+        }
+    }
+
+    for (unsigned int index = 0; index < cSessionParamSize; ++index)
+    {
+        common::serializeU8(cursor, m_sessionParam[index]);
+        cursor += 1;
+    }
+    *size = cursor - buffer;
+    return 0;
+}
+
+common::Result LanSessionInfo::Deserialize(const unsigned char* buffer, unsigned int bufferSize)
+{
+    if (buffer == 0)
+        return cResultInvalidArgument;
+    if (bufferSize < GetSerializedSize())
+        return cResultInvalidArgument;
+
+    transport::StationLocation& location = m_stationConnectionInfo.m_stationLocation;
+    const unsigned char* cursor = buffer;
+    m_gameMode = common::deserializeU32(cursor);
+    m_sessionId = common::deserializeU32(cursor + 4);
+    cursor += 8;
+    for (unsigned int index = 0; index < cAttributeCount; ++index)
+    {
+        m_attribute[index] = common::deserializeU32(cursor);
+        cursor += 4;
+    }
+    m_currentParticipantNum = common::deserializeU16(cursor);
+    m_minParticipantNum = common::deserializeU16(cursor + 2);
+    m_maxParticipantNum = common::deserializeU16(cursor + 4);
+    m_systemCommunicationVersion = common::deserializeU8(cursor + 6);
+    m_applicationCommunicationVersion = common::deserializeU8(cursor + 7);
+    m_sessionType = common::deserializeU16(cursor + 8);
+    cursor += 10;
+    for (unsigned int index = 0; index < cApplicationDataSize; ++index)
+    {
+        m_applicationData[index] = common::deserializeU8(cursor);
+        cursor += 1;
+    }
+    m_applicationDataSize = common::deserializeU32(cursor);
+    m_open = common::deserializeU8(cursor + 4) != 0;
+    cursor += 5;
+
+    location.m_stationAddress.Deserialize(cursor);
+    cursor += location.m_stationAddress.GetSerializedSize();
+    location.m_principalId = common::deserializeU64(cursor);
+    location.m_field18 = common::deserializeU32(cursor + 8);
+    location.m_field1c = common::deserializeU32(cursor + 12);
+    location.m_field20 = common::deserializeU8(cursor + 16);
+    location.m_field21 = common::deserializeU8(cursor + 17);
+    location.m_field22 = common::deserializeU8(cursor + 18);
+    location.m_field23 = common::deserializeU8(cursor + 19);
+    location.m_field24 = common::deserializeU8(cursor + 20);
+    location.m_field25 = common::deserializeU8(cursor + 21);
+    location.m_field26 = common::deserializeU8(cursor + 22);
+    location.m_inetAddress.Deserialize(cursor + 23);
+    cursor += 29;
+    m_stationConnectionInfo.m_localStationLocation.SetStationLocation(location);
+
+    m_stationInfoCount = 0;
+    for (unsigned int index = 0; index < cMaxStationInfo; ++index)
+    {
+        LanStationInfo& stationInfo = m_stationInfo[index];
+        stationInfo.SetRole(static_cast<session::SessionStationInfo::StationInfoRole>(
+            common::deserializeU8(cursor)));
+        if (common::deserializeU8(cursor + 1) == common::String::EncodingType_Utf16)
+        {
+            unsigned short name[cUserNameUtf16Units];
+            cursor += 2;
+            for (unsigned int unit = 0; unit < cUserNameUtf16Units; ++unit)
+            {
+                name[unit] = common::deserializeU16(cursor);
+                cursor += 2;
+            }
+            common::FixedString<10> userName;
+            userName.SetString(name, userName.CalcBytes(name, common::String::EncodingType_Utf16),
+                               common::String::EncodingType_Utf16);
+            stationInfo.SetUserName(userName);
+            stationInfo.SetStationId(common::deserializeU64(cursor));
+            cursor += 8;
+        }
+        else
+        {
+            char name[cUserNameAsciiBytes];
+            cursor += 2;
+            for (unsigned int unit = 0; unit < cUserNameAsciiBytes; ++unit)
+            {
+                name[unit] = common::deserializeU8(cursor);
+                cursor += 1;
+            }
+            common::FixedString<10> userName;
+            userName.SetString(name, userName.CalcBytes(name, common::String::EncodingType_Ascii),
+                               common::String::EncodingType_Ascii);
+            stationInfo.SetUserName(userName);
+            stationInfo.SetStationId(common::deserializeU64(cursor));
+            cursor += 8;
+        }
+        stationInfo.GetUserName().Trace(cTraceSessionInfo);
+        if (stationInfo.GetRole() != session::SessionStationInfo::cStationInfoRole_Invalid ||
+            stationInfo.GetUserName().GetStringLength() != 0)
+            ++m_stationInfoCount;
+    }
+
+    for (unsigned int index = 0; index < cSessionParamSize; ++index)
+    {
+        m_sessionParam[index] = common::deserializeU8(cursor);
+        cursor += 1;
+    }
+    return 0;
 }
 
 }}}

@@ -1,33 +1,34 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_PIA_LAN_LANMATCHMESHLAYERCONTROLLER_HPP
 #define LEGACY_CONSOLE_WIIU_NN_PIA_LAN_LANMATCHMESHLAYERCONTROLLER_HPP
 
-#include <stdint.h>
-
 #include "nn/pia/Common.hpp"
+#include "nn/pia/session/MeshLayerController.hpp"
 #include "nn/pia/session/Session.hpp"
 
 namespace nn { namespace pia { namespace session { class IMatchmakeSession; }}}
 
 namespace nn { namespace pia { namespace lan {
 
-class LanMatchMeshLayerController
+class LanMatchMeshLayerController : public session::MeshLayerController
 {
 public:
     LanMatchMeshLayerController();
-    ~LanMatchMeshLayerController();
-    Result Startup(const session::Session::StartupSetting& setting);
-    void MeshCleanup();
-    void Cleanup();
-    void MeshStartup(session::IMatchmakeSession* matchmakeSession, bool isHost);
-    uint64_t CheckConnectedStatus();
-    void Trace(unsigned long long value) const;
-    void GetMatchmakeSessionTotalStations() const;
-    int16_t GetMatchmakeSessionTotalParticipants() const;
-    bool IsParticipated(unsigned int index, unsigned long long stationId) const;
+    virtual ~LanMatchMeshLayerController();
+    virtual Result Startup(const session::Session::StartupSetting& setting);
+    virtual void Cleanup();
+    virtual Result MeshStartup(session::IMatchmakeSession* matchmakeSession, bool isHost);
+    virtual void MeshCleanup();
+    virtual Result CheckConnectedStatus();
+    virtual void Trace(unsigned long long value) const;
+    virtual unsigned int GetMatchmakeSessionTotalStations() const;
+    virtual unsigned int GetMatchmakeSessionTotalParticipants() const;
+    virtual bool IsParticipated(unsigned int sessionId, unsigned long long principalId) const;
+
     void SetConnectionStatusDisconnected();
 
 private:
-    unsigned char m_storage[1];
+    session::IMatchmakeSession* m_matchmakeSession;
+    unsigned int m_connectionStatus;
 };
 
 }}}

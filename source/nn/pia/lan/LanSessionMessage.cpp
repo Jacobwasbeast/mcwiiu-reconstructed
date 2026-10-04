@@ -1,75 +1,89 @@
 #include "nn/pia/lan/LanSessionMessage.hpp"
 
-#include <cstring>
+#include <coreinit/memory.h>
 
 namespace nn { namespace pia { namespace lan {
 
-namespace {
-void put32(unsigned char* p, unsigned int value)
+namespace
 {
-    p[0] = static_cast<unsigned char>(value >> 24);
-    p[1] = static_cast<unsigned char>(value >> 16);
-    p[2] = static_cast<unsigned char>(value >> 8);
-    p[3] = static_cast<unsigned char>(value);
-}
-
-unsigned int get32(const unsigned char* p)
+enum
 {
-    return (static_cast<unsigned int>(p[0]) << 24)
-         | (static_cast<unsigned int>(p[1]) << 16)
-         | (static_cast<unsigned int>(p[2]) << 8)
-         | static_cast<unsigned int>(p[3]);
-}
+    cMessageType = 6,
+    cHeaderSize = 24
+};
 }
 
 LanSessionMessage::LanSessionMessage()
-    : LanMessage(), mSessionId(0), mPort(0), mType(0), mFlags(0), mPayloadSize(0)
+    : m_fragmentSize(0)
 {
+    m_sessionId = 0;
+    m_messageType = cMessageType;
+    m_sequence = 0;
+    m_count = 0;
+    m_index = 0;
 }
 
-LanSessionMessage::LanSessionMessage(unsigned int sessionId, unsigned short port,
-                                     unsigned char type, unsigned char flags,
-                                     const unsigned char* payload, unsigned int payloadSize)
-    : LanMessage(), mSessionId(sessionId), mPort(port), mType(type), mFlags(flags),
-      mPayloadSize(payloadSize)
+LanSessionMessage::LanSessionMessage(unsigned int sessionId, unsigned short sequence,
+                                     unsigned char index, unsigned char count,
+                                     const unsigned char* fragment, unsigned int fragmentSize)
 {
-    if (payload != NULL && mPayloadSize != 0)
-        std::memcpy(mPayload, payload, mPayloadSize);
+    m_sessionId = sessionId;
+    m_sequence = sequence;
+    m_index = index;
+    m_messageType = cMessageType;
+    m_fragmentSize = fragmentSize;
+    m_count = count;
+    OSBlockMove(m_fragment, fragment, fragmentSize, FALSE);
 }
 
-LanSessionMessage::~LanSessionMessage()
+Result LanSessionMessage::Serialize(unsigned char* buffer, unsigned int* size) const
 {
+    Result result = LanMessage::Serialize(buffer, size);
+    if (result != 0)
+        return result;
+
+    unsigned char* out = buffer + *size;
+    out[0] = (m_sessionId >> 24) & 0xff;
+    out[1] = (m_sessionId >> 16) & 0xff;
+    out[2] = (m_sessionId >> 8) & 0xff;
+    out[3] = m_sessionId & 0xff;
+    out[4] = (m_sequence >> 8) & 0xff;
+    out[5] = m_sequence & 0xff;
+    out[6] = m_index;
+    out[7] = m_count;
+    out[8] = (m_fragmentSize >> 24) & 0xff;
+    out[9] = (m_fragmentSize >> 16) & 0xff;
+    out[10] = (m_fragmentSize >> 8) & 0xff;
+    out[11] = m_fragmentSize & 0xff;
+    OSBlockMove(out + 12, m_fragment, m_fragmentSize, FALSE);
+    *size = out + 12 + m_fragmentSize - buffer;
+    return 0;
 }
 
-void LanSessionMessage::Serialize(unsigned char* buffer, unsigned int* size) const
+Result LanSessionMessage::Deserialize(const unsigned char* buffer)
 {
-    const unsigned int baseSize = 12;
-    std::memset(buffer, 0, baseSize);
-    unsigned char* out = buffer + baseSize;
-    put32(out, mSessionId);
-    out[4] = static_cast<unsigned char>(mPort >> 8);
-    out[5] = static_cast<unsigned char>(mPort);
-    out[6] = mType;
-    out[7] = mFlags;
-    put32(out + 8, mPayloadSize);
-    std::memcpy(out + 12, mPayload, mPayloadSize);
-    *size = baseSize + 12 + mPayloadSize;
-}
+    Result result = LanMessage::Deserialize(buffer);
+    if (result != 0)
+        return result;
 
-void LanSessionMessage::Deserialize(const unsigned char* buffer)
-{
-    const unsigned char* in = buffer + 12;
-    mSessionId = get32(in);
-    mPort = static_cast<unsigned short>(in[4] << 8 | in[5]);
-    mType = in[6];
-    mFlags = in[7];
-    mPayloadSize = get32(in + 8);
-    std::memcpy(mPayload, in + 12, mPayloadSize);
+    m_sessionId = (static_cast<unsigned int>(buffer[12]) << 24) |
+                  (static_cast<unsigned int>(buffer[13]) << 16) |
+                  (static_cast<unsigned int>(buffer[14]) << 8) |
+                  static_cast<unsigned int>(buffer[15]);
+    m_sequence = static_cast<unsigned short>((buffer[16] << 8) | buffer[17]);
+    m_index = buffer[18];
+    m_count = buffer[19];
+    m_fragmentSize = (static_cast<unsigned int>(buffer[20]) << 24) |
+                     (static_cast<unsigned int>(buffer[21]) << 16) |
+                     (static_cast<unsigned int>(buffer[22]) << 8) |
+                     static_cast<unsigned int>(buffer[23]);
+    OSBlockMove(m_fragment, buffer + cHeaderSize, m_fragmentSize, FALSE);
+    return 0;
 }
 
 unsigned int LanSessionMessage::GetSerializedSize() const
 {
-    return 24 + mPayloadSize;
+    return m_fragmentSize + cHeaderSize;
 }
 
 }}}

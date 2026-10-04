@@ -1,36 +1,58 @@
 #include "nn/pia/lan/LanGetSessionMessage.hpp"
-#include <cstring>
 
 namespace nn { namespace pia { namespace lan {
 
-LanGetSessionMessage::LanGetSessionMessage() : LanMessage(), messageType(cLanGetSessionMessageKind), sessionId(0) {}
-LanGetSessionMessage::LanGetSessionMessage(unsigned int value) : LanMessage(), messageType(cLanGetSessionMessageKind), sessionId(value) {}
-LanGetSessionMessage::~LanGetSessionMessage() {}
-
-void LanGetSessionMessage::Serialize(unsigned char* buffer, unsigned int* size) const
+namespace
 {
-    if (buffer != 0)
-    {
-        std::memset(buffer, 0, GetSerializedSize());
-        buffer[3] = static_cast<unsigned char>(messageType);
-        buffer[12] = static_cast<unsigned char>(sessionId >> 24);
-        buffer[13] = static_cast<unsigned char>(sessionId >> 16);
-        buffer[14] = static_cast<unsigned char>(sessionId >> 8);
-        buffer[15] = static_cast<unsigned char>(sessionId);
-    }
-    if (size != 0)
-        *size = GetSerializedSize();
+enum
+{
+    cMessageType = 5
+};
 }
 
-void LanGetSessionMessage::Deserialize(const unsigned char* buffer)
+LanGetSessionMessage::LanGetSessionMessage()
+    : m_sessionId(0)
 {
-    if (buffer != 0)
-        sessionId = (static_cast<unsigned int>(buffer[12]) << 24) |
-                    (static_cast<unsigned int>(buffer[13]) << 16) |
-                    (static_cast<unsigned int>(buffer[14]) << 8) |
-                    static_cast<unsigned int>(buffer[15]);
+    m_messageType = cMessageType;
 }
 
-unsigned int LanGetSessionMessage::GetSerializedSize() const { return 16; }
+LanGetSessionMessage::LanGetSessionMessage(unsigned int sessionId)
+    : m_sessionId(sessionId)
+{
+    m_messageType = cMessageType;
+}
+
+Result LanGetSessionMessage::Serialize(unsigned char* buffer, unsigned int* size) const
+{
+    Result result = LanMessage::Serialize(buffer, size);
+    if (result != 0)
+        return result;
+
+    unsigned char* out = buffer + *size;
+    out[0] = (m_sessionId >> 24) & 0xff;
+    out[1] = (m_sessionId >> 16) & 0xff;
+    out[2] = (m_sessionId >> 8) & 0xff;
+    out[3] = m_sessionId & 0xff;
+    *size = out + 4 - buffer;
+    return 0;
+}
+
+Result LanGetSessionMessage::Deserialize(const unsigned char* buffer)
+{
+    Result result = LanMessage::Deserialize(buffer);
+    if (result != 0)
+        return result;
+
+    m_sessionId = (static_cast<unsigned int>(buffer[12]) << 24) |
+                  (static_cast<unsigned int>(buffer[13]) << 16) |
+                  (static_cast<unsigned int>(buffer[14]) << 8) |
+                  static_cast<unsigned int>(buffer[15]);
+    return 0;
+}
+
+unsigned int LanGetSessionMessage::GetSerializedSize() const
+{
+    return cSerializedSize;
+}
 
 }}}

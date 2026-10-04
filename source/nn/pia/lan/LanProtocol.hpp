@@ -118,7 +118,9 @@ public:
     unsigned int GetProtocolIdentifier() const { return m_address; }
     bool IsRelayEnabled() const { return m_unknown24 != 0; }
 
+    friend class LanFacade;
     friend class LanInputStream;
+    friend class LanMatchmakeUpdateJob;
     friend class LanOutputStream;
 
 private:
@@ -126,7 +128,7 @@ private:
     unsigned int m_address;
     unsigned int m_broadcastAddress;
     unsigned short m_port;
-    unsigned short m_unknown22;
+    unsigned short m_filterPort;
     unsigned char m_unknown24;
     common::Socket* m_socket;
     common::Socket* m_broadcastSocket;

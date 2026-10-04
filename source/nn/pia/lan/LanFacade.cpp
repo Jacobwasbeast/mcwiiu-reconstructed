@@ -9,18 +9,28 @@
 
 namespace nn { namespace pia { namespace lan {
 
-LanFacade* g_lanFacade = 0;
-
 namespace
 {
-void* g_lanFacadeStorage = 0;
+enum
+{
+    cResultInvalidArgument = 0x10c07,
+    cResultInvalidState = 0x10c08,
+    cResultNotInitialized = 0x10c0c,
+    cResultAlreadyCreated = 0x10c0f,
+    cResultOutOfMemory = 0x10c01,
+    cNetworkSettingMask = 0xffffff00
+};
 }
+
+LanFacade* g_lanFacade = 0;
+
+void* g_lanFacadeStorage = 0;
 
 LanFacade::LanFacade()
     : m_lanProtocol(0),
       m_networkSetting()
 {
-    m_networkSetting.m_field04 = 0xffffff00;
+    m_networkSetting.m_field04 = cNetworkSettingMask;
 }
 
 LanFacade::~LanFacade()
@@ -33,15 +43,30 @@ Result LanFacade::Initialize()
     return 0;
 }
 
+Result LanFacade::Startup(const common::CryptoSetting& cryptoSetting)
+{
+    if (m_lanProtocol == 0)
+        return cResultInvalidState;
+    m_lanProtocol->RegisterCryptoSetting(cryptoSetting);
+    return 0;
+}
+
 Result LanFacade::Bind(const LanNetworkSetting& setting)
 {
     if (setting.m_field00 == 0)
-        return 0x10c07;
+        return cResultInvalidArgument;
 
     m_networkSetting = setting;
     if (m_lanProtocol != 0)
         return m_lanProtocol->Bind(setting);
     return 0;
+}
+
+void LanFacade::Unbind()
+{
+    if (m_lanProtocol == 0)
+        return;
+    m_lanProtocol->Unbind();
 }
 
 void LanFacade::Cleanup()
@@ -65,6 +90,36 @@ void LanFacade::UnregisterLanProtocol()
     m_lanProtocol = 0;
 }
 
+Result LanFacade::StartLanSession()
+{
+    return m_lanProtocol->StartLanSession();
+}
+
+void LanFacade::StopLanSession()
+{
+    m_lanProtocol->StopLanSession();
+}
+
+unsigned int LanFacade::RequestBrowseMessage(unsigned char type)
+{
+    return m_lanProtocol->RequestBrowseMessage(type);
+}
+
+bool LanFacade::IsBrowseMessageCompleted() const
+{
+    return m_lanProtocol->IsBrowseMessageCompleted();
+}
+
+unsigned char LanFacade::GetApplicationCommunicationVersion() const
+{
+    return m_lanProtocol->m_unknown24;
+}
+
+unsigned long long LanFacade::GetLocalPrincipalId() const
+{
+    return m_lanProtocol->GetLocalPrincipalId();
+}
+
 transport::StationConnectionInfo& LanFacade::GetLocalStationConnectionInfo()
 {
     return m_lanProtocol->GetLocalStationConnectionInfo();
@@ -73,20 +128,35 @@ transport::StationConnectionInfo& LanFacade::GetLocalStationConnectionInfo()
 Result LanFacade::CreateInstance()
 {
     if (IsInitialized() == 0)
-        return 0x10c0c;
+        return cResultNotInitialized;
     if (IsInSetupMode() == 0)
-        return 0x10c08;
+        return cResultInvalidState;
     if (g_lanFacade != 0)
-        return 0x10c0f;
+        return cResultAlreadyCreated;
 
     pead::Heap* heap = common::HeapManager::GetHeap();
     g_lanFacadeStorage = pead::allocateFromSeadHeap(sizeof(LanFacade), heap, 8);
     if (g_lanFacadeStorage == 0)
-        return 0x10c01;
+        return cResultOutOfMemory;
 
     g_lanFacade = new (g_lanFacadeStorage) LanFacade();
     g_lanFacade->Initialize();
     return 0;
+}
+
+void LanFacade::DestroyInstance()
+{
+    if (g_lanFacade != 0)
+    {
+        g_lanFacade->~LanFacade();
+        g_lanFacade = 0;
+    }
+    if (g_lanFacadeStorage != 0)
+    {
+        pead::getArraySize(g_lanFacadeStorage);
+        pead::freeToSeadHeap(g_lanFacadeStorage);
+        g_lanFacadeStorage = 0;
+    }
 }
 
 LanFacade* LanFacade::GetInstance()

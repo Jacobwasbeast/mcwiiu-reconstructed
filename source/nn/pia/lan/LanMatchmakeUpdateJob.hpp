@@ -1,27 +1,60 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_PIA_LAN_LANMATCHMAKEUPDATEJOB_HPP
 #define LEGACY_CONSOLE_WIIU_NN_PIA_LAN_LANMATCHMAKEUPDATEJOB_HPP
 
-#include <stdint.h>
+#include "nn/pia/Common.hpp"
+#include "nn/pia/common/CallContext.hpp"
+#include "nn/pia/common/InetAddress.hpp"
+#include "nn/pia/common/Socket.hpp"
+#include "nn/pia/common/StepSequenceJob.hpp"
+#include "nn/pia/common/Time.hpp"
+#include "nn/pia/lan/LanSessionSearchCriteria.hpp"
 
 namespace nn { namespace pia { namespace lan {
 
-class LanMatchmakeUpdateJob
+class LanProtocol;
+
+class LanMatchmakeUpdateJob : public common::StepSequenceJob
 {
 public:
-    LanMatchmakeUpdateJob(void* a1);
-    ~LanMatchmakeUpdateJob();
-    uint64_t Startup(uint32_t a1, uint32_t a2);
-    uint32_t Cleanup();
+    enum
+    {
+        cBrowsePort = 30000,
+        cBrowseKeyParamSize = 0x10,
+        cBrowseTokenSize = 0x100,
+        cMessageBufferSize = 0x554
+    };
+
+    explicit LanMatchmakeUpdateJob(LanProtocol* protocol);
+    virtual ~LanMatchmakeUpdateJob();
+    virtual void Trace(unsigned long long value) const;
+    virtual Result Startup(unsigned short* port);
+    virtual void Cleanup();
+
     void NotifyDisconnectToMeshLayerController();
-    uint64_t SendBrowseReplyMessage(uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, uint32_t a5, uint32_t a6, int32_t a7, uint8_t a8);
-    uint64_t SendBrowseMessage(uint32_t a1, uint32_t a2);
-    uint32_t Update();
-    uint32_t RequestBrowseMessage(uint8_t a1);
-    bool IsBrowseMessageCompleted();
-    void Trace(uint64_t a1);
+    Result SendBrowseReplyMessage(const common::InetAddress& address, unsigned char* keyParam,
+                                  unsigned int keyParamSize, unsigned char* token,
+                                  unsigned int tokenSize, bool isAuthenticated,
+                                  bool omitSessionParam);
+    Result SendBrowseMessage(unsigned char index);
+    unsigned int Update();
+    bool RequestBrowseMessage(unsigned char count);
+    bool IsBrowseMessageCompleted() const;
+    void RequestGenerateRandomSeed() { m_randomSeedPending = true; }
 
 private:
-    unsigned char m_storage[1];
+    LanProtocol* m_protocol;
+    common::Socket m_socket;
+    unsigned char m_receiveBuffer[cMessageBufferSize];
+    unsigned char m_sendBuffer[cMessageBufferSize];
+    LanSessionSearchCriteria m_searchCriteria;
+    unsigned char m_browseRequestCount;
+    bool m_browseRequested;
+    common::CallContext m_browseContext;
+    common::Time m_browseDeadline;
+    bool m_randomSeedPending;
+    unsigned long long m_browseSequence;
+    unsigned char m_browseKeyParam[cBrowseKeyParamSize];
+    unsigned char m_browseToken[cBrowseTokenSize];
 };
 
 }}}

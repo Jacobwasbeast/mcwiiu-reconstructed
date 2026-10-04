@@ -4,22 +4,20 @@
 #include "nn/pia/lan/LanMessage.hpp"
 #include "nn/pia/transport/StationConnectionInfo.hpp"
 
-namespace nn { namespace pia { namespace transport { } namespace lan {
+namespace nn { namespace pia { namespace lan {
 
 class LanHostMessage : public LanMessage
 {
 public:
     LanHostMessage();
     LanHostMessage(unsigned int sessionId, const transport::StationConnectionInfo& connectionInfo);
-    virtual ~LanHostMessage();
-    void Serialize(unsigned char* buffer, unsigned int* size) const;
-    void Deserialize(const unsigned char* buffer);
-    unsigned int GetSerializedSize() const;
+    virtual ~LanHostMessage() {}
+    virtual Result Serialize(unsigned char* buffer, unsigned int* size) const;
+    virtual Result Deserialize(const unsigned char* buffer);
+    virtual unsigned int GetSerializedSize() const;
 
-private:
-    unsigned int messageType;
-    unsigned int sessionId;
-    transport::StationConnectionInfo connectionInfo;
+    unsigned int m_sessionId;
+    transport::StationConnectionInfo m_connectionInfo;
 };
 
 }}}
