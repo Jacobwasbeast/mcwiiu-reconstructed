@@ -1,4 +1,5 @@
 #include "nn/pia/Reconstruction.hpp"
+#include "nn/pia/ProtocolManager.hpp"
 #include "nn/pia/HeapManager.hpp"
 #include "platform/wiiu/pead.hpp"
 #include <new>

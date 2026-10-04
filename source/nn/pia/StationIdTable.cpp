@@ -2,14 +2,14 @@
 #include "nn/pia/HeapManager.hpp"
 #include "platform/wiiu/pead.hpp"
 
+#include <cstddef>
 #include <cstring>
 
 namespace nn { namespace pia { namespace transport {
 
 
 StationIdTable::StationIdTable()
-    : m_entryOffset(0), m_entryNum(0), m_maxEntryNum(0), m_storage(0),
-      m_availableEntryNum(0)
+    : m_entryOffset(0), m_elements(0), m_elementNum(0), m_storage(0)
 {
 }
 
@@ -20,25 +20,33 @@ StationIdTable::~StationIdTable()
 
 void StationIdTable::Clear()
 {
-    while (m_entries.Sentinel()->next != m_entries.Sentinel())
+    if (m_elements != 0)
     {
-        Entry* entry = reinterpret_cast<Entry*>(m_entries.PopFrontNode());
-        m_availableEntries.InsertAfterNode(m_availableEntries.Sentinel(),
-                                            &entry->node);
+        common::ListNode* sentinel = m_entries.Sentinel();
+        common::ListNode* node = sentinel->next;
+        while (node != sentinel)
+        {
+            common::ListNode* next = node->next;
+            node->prev = 0;
+            node->next = 0;
+            m_availableEntries.InsertAfterNode(
+                m_availableEntries.Sentinel(),
+                reinterpret_cast<common::ListNode*>(reinterpret_cast<char*>(node) + m_entryOffset));
+            node = next;
+        }
+        m_entries.Init();
     }
-    m_entryNum = 0;
-    m_availableEntryNum = m_maxEntryNum;
+    m_availableEntryNum = m_elementNum;
 }
 
-Result StationIdTable::Finalize()
+void StationIdTable::Finalize()
 {
     if (m_storage != 0)
     {
         Clear();
-        pead::freeToSeadHeap(m_storage);
+        pead::DeleteArray(m_storage);
         m_storage = 0;
     }
-    return 0;
 }
 
 Result StationIdTable::Initialize(unsigned int count)
@@ -48,40 +56,43 @@ Result StationIdTable::Initialize(unsigned int count)
     if (m_storage != 0)
         return static_cast<Result>(0x10c02);
 
-    m_maxEntryNum = count;
-    m_availableEntryNum = count;
     pead::Heap* heap = common::HeapManager::GetHeap();
-    m_storage = static_cast<Entry*>(pead::allocateFromSeadHeap(
-        sizeof(Entry) * count, heap));
-    if (m_storage == 0)
+    Element* storage = static_cast<Element*>(pead::allocateFromSeadHeap(sizeof(Element) * count, heap));
+    if (storage == 0)
     {
-        m_maxEntryNum = 0;
-        m_availableEntryNum = 0;
+        m_storage = 0;
         return static_cast<Result>(0x10c01);
     }
-    for (unsigned int i = 0; i < count; ++i)
+    std::memset(storage, 0, sizeof(Element) * count);
+    m_storage = storage;
+    m_elements = storage;
+    m_elementNum = count;
+    for (unsigned int index = 0; index < m_elementNum; ++index)
     {
-        std::memset(&m_storage[i], 0, sizeof(Entry));
-        m_availableEntries.InsertAfterNode(m_availableEntries.Sentinel(),
-                                            &m_storage[i].node);
+        Element* element = m_elements + index;
+        element->node.prev = 0;
+        element->node.next = 0;
+        m_availableEntries.InsertBeforeNode(
+            m_availableEntries.Sentinel(),
+            reinterpret_cast<common::ListNode*>(reinterpret_cast<char*>(element) + m_entryOffset));
     }
+    m_availableEntryNum = count;
     return 0;
 }
 
 Result StationIdTable::Add(uint64_t stationId, StationIndex index,
                             uint64_t uniqueId)
 {
-    common::ListNode* node = m_availableEntries.PopBackNode();
-    if (node == 0)
+    if (m_availableEntries.GetNodeNum() == 0)
         return static_cast<Result>(0xc10);
-    Entry* entry = reinterpret_cast<Entry*>(node);
-    std::memset(entry, 0, sizeof(Entry));
-    entry->stationId = stationId;
-    entry->stationIndex = static_cast<uint32_t>(index);
-    entry->uniqueId = uniqueId;
-    m_entries.InsertBeforeNode(m_entries.Sentinel(), node);
-    ++m_entryNum;
-    --m_availableEntryNum;
+    common::ListNode* node = m_availableEntries.PopBackNode();
+    Element* element = reinterpret_cast<Element*>(reinterpret_cast<char*>(node) - m_entryOffset);
+    std::memset(&element->entry, 0, sizeof(Entry));
+    m_entries.InsertBeforeNode(m_entries.Sentinel(), &element->node);
+    element->entry.stationId = stationId;
+    element->entry.stationIndex = static_cast<uint32_t>(index);
+    element->entry.uniqueId = uniqueId;
+    element->entry.joinEventNotified = false;
     return 0;
 }
 
@@ -91,9 +102,9 @@ StationIdTable::Entry* StationIdTable::FindByStationIdCore(
     const common::ListNode* head = m_entries.Sentinel();
     for (common::ListNode* node = head->next; node != head; node = node->next)
     {
-        Entry* entry = reinterpret_cast<Entry*>(node);
-        if (entry->stationId == stationId)
-            return entry;
+        Element* element = reinterpret_cast<Element*>(node);
+        if (element->entry.stationId == stationId)
+            return &element->entry;
     }
     return 0;
 }
@@ -104,9 +115,9 @@ StationIdTable::Entry* StationIdTable::FindByStationIndexCore(
     const common::ListNode* head = m_entries.Sentinel();
     for (common::ListNode* node = head->next; node != head; node = node->next)
     {
-        Entry* entry = reinterpret_cast<Entry*>(node);
-        if (entry->stationIndex == static_cast<uint32_t>(index))
-            return entry;
+        Element* element = reinterpret_cast<Element*>(node);
+        if (element->entry.stationIndex == static_cast<uint32_t>(index))
+            return &element->entry;
     }
     return 0;
 }
@@ -117,20 +128,18 @@ StationIdTable::Entry* StationIdTable::FindByUniqueIdCore(
     const common::ListNode* head = m_entries.Sentinel();
     for (common::ListNode* node = head->next; node != head; node = node->next)
     {
-        Entry* entry = reinterpret_cast<Entry*>(node);
-        if (entry->uniqueId == uniqueId)
-            return entry;
+        Element* element = reinterpret_cast<Element*>(node);
+        if (element->entry.uniqueId == uniqueId)
+            return &element->entry;
     }
     return 0;
 }
 
 Result StationIdTable::Copy(Entry* destination, const Entry* source) const
 {
-    if (destination == 0)
-        return static_cast<Result>(0x10c07);
     if (source == 0)
         return static_cast<Result>(0x2c0a);
-    std::memcpy(destination, source, sizeof(Entry));
+    *destination = *source;
     return 0;
 }
 
@@ -152,20 +161,25 @@ Result StationIdTable::FindByUniqueId(Entry* entry,
     return Copy(entry, FindByUniqueIdCore(uniqueId));
 }
 
-void StationIdTable::RemoveCore(Entry* entry)
+Result StationIdTable::RemoveCore(Entry* entry)
 {
     if (entry == 0)
-        return;
-    m_entries.EraseNode(&entry->node);
-    m_availableEntries.InsertAfterNode(m_availableEntries.Sentinel(),
-                                        &entry->node);
-    --m_entryNum;
-    ++m_availableEntryNum;
+        return static_cast<Result>(0x2c0a);
+    Element* element = reinterpret_cast<Element*>(reinterpret_cast<char*>(entry) - offsetof(Element, entry));
+    entry->stationId = 0;
+    entry->stationIndex = 0xfd;
+    entry->uniqueId = 0;
+    entry->joinEventNotified = false;
+    m_entries.EraseNode(&element->node);
+    m_availableEntries.InsertAfterNode(
+        m_availableEntries.Sentinel(),
+        reinterpret_cast<common::ListNode*>(reinterpret_cast<char*>(element) + m_entryOffset));
+    return 0;
 }
 
-void StationIdTable::RemoveByStationId(uint64_t stationId)
+Result StationIdTable::RemoveByStationId(uint64_t stationId)
 {
-    RemoveCore(FindByStationIdCore(stationId));
+    return RemoveCore(FindByStationIdCore(stationId));
 }
 
 void StationIdTable::SetJoinEventNotifiedByStationId(uint64_t stationId,
@@ -184,29 +198,34 @@ void StationIdTable::SetJoinEventNotifiedByStationIndex(StationIndex index,
         entry->joinEventNotified = notified;
 }
 
-bool StationIdTable::IsJoinEventNotifiedByStationIndex(
+uint8_t StationIdTable::IsJoinEventNotifiedByStationIndex(
     StationIndex index) const
 {
     Entry* entry = FindByStationIndexCore(index);
-    return entry != 0 && entry->joinEventNotified;
+    return entry != 0 ? entry->joinEventNotified : 0;
 }
 
-bool StationIdTable::IsJoinEventNotifiedByStationId(
+uint8_t StationIdTable::IsJoinEventNotifiedByStationId(
     uint64_t stationId) const
 {
     Entry* entry = FindByStationIdCore(stationId);
-    return entry != 0 && entry->joinEventNotified;
+    return entry != 0 ? entry->joinEventNotified : 0;
 }
 
 unsigned int StationIdTable::GetEntryNum() const
 {
-    return m_entryNum;
+    unsigned int entryNum = 0;
+    const common::ListNode* sentinel = m_entries.Sentinel();
+    for (const common::ListNode* node = sentinel->next; node != sentinel; node = node->next)
+        ++entryNum;
+    return entryNum;
 }
 
 void StationIdTable::SetAvailableEntryNum(unsigned int count)
 {
-    if (count <= m_maxEntryNum)
-        m_availableEntryNum = count;
+    if (count > m_elementNum)
+        return;
+    m_availableEntryNum = count;
 }
 
 

@@ -1,9 +1,7 @@
 #include "nn/pia/NetworkFactory.hpp"
-#include "nn/pia/HeapManager.hpp"
+#include "nn/pia/transport/StationPacketHandler.hpp"
 #include "nn/pia/transport/ConnectStationJob.hpp"
 #include "nn/pia/transport/DisconnectStationJob.hpp"
-#include "platform/wiiu/pead.hpp"
-#include <new>
 
 namespace nn
 
@@ -21,34 +19,57 @@ NetworkFactory::~NetworkFactory()
 {
 }
 
+Result NetworkFactory::CreateProtocols()
+{
+    return 0;
+}
+
+PacketHandler* NetworkFactory::CreatePacketHandler()
+{
+    return CreateObject<StationPacketHandler>();
+}
+
+MissingStationHandler* NetworkFactory::CreateMissingStationHandler()
+{
+    return 0;
+}
+
+void NetworkFactory::DeletePacketHandler(PacketHandler* handler)
+{
+    DestroyObject(handler);
+}
+
+void NetworkFactory::DeleteMissingStationHandler(MissingStationHandler*)
+{
+}
+
 ConnectStationJob* NetworkFactory::CreateConnectStationJob()
 {
-    void* storage = pead::allocateFromSeadHeap(sizeof(ConnectStationJob), common::HeapManager::GetHeap());
-    return storage != 0 ? new (storage) ConnectStationJob() : 0;
+    return CreateObject<ConnectStationJob>();
 }
 
 DisconnectStationJob* NetworkFactory::CreateDisconnectStationJob()
 {
-    void* storage = pead::allocateFromSeadHeap(sizeof(DisconnectStationJob), common::HeapManager::GetHeap());
-    return storage != 0 ? new (storage) DisconnectStationJob() : 0;
+    return CreateObject<DisconnectStationJob>();
 }
 
 void NetworkFactory::DeleteConnectStationJob(ConnectStationJob* job)
 {
-    if (job != 0)
-    {
-        job->~ConnectStationJob();
-        pead::freeToSeadHeap(job);
-    }
+    DestroyObject(job);
 }
 
 void NetworkFactory::DeleteDisconnectStationJob(DisconnectStationJob* job)
 {
-    if (job != 0)
-    {
-        job->~DisconnectStationJob();
-        pead::freeToSeadHeap(job);
-    }
+    DestroyObject(job);
+}
+
+common::MonitoringDataSender* NetworkFactory::CreateMonitoringDataSender()
+{
+    return 0;
+}
+
+void NetworkFactory::DeleteMonitoringDataSender(common::MonitoringDataSender*)
+{
 }
 
 bool NetworkFactory::IsClientRelayConnectionPermitted() const

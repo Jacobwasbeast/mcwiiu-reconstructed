@@ -1,8 +1,10 @@
+#include "nn/pia/ProtocolManager.hpp"
 #include "nn/pia/Reconstruction.hpp"
 #include "vendor/__N_29_transport_ProtocolManager_cpp_70a76ebe.hpp"
 #include "nn/pia/HeapManager.hpp"
 #include "nn/pia/transport/UnreliableProtocol.hpp"
 #include "platform/wiiu/pead.hpp"
+#include "nn/pia/Transport.hpp"
 
 #include <string.h>
 
@@ -40,9 +42,9 @@ void ProtocolManager::Initialize(NetworkFactory* networkFactory)
 Result ProtocolManager::Startup(PacketHandler* packetHandler)
 {
     if (packetHandler == 0)
-        return static_cast<Result>(0x10c07);
+        return static_cast<Result>(transport::cResultInvalidArgument);
     if (m_started != 0)
-        return static_cast<Result>(0x10c08);
+        return static_cast<Result>(transport::cResultInvalidState);
 
     common::ListNode* sentinel = m_protocols.Sentinel();
     for (common::ListNode* node = sentinel->next; node != sentinel; node = node->next)
@@ -59,7 +61,7 @@ Result ProtocolManager::Startup(PacketHandler* packetHandler)
 Result ProtocolManager::StartupProtocols()
 {
     if (m_started == 0)
-        return static_cast<Result>(0x10c08);
+        return static_cast<Result>(transport::cResultInvalidState);
 
     common::ListNode* sentinel = m_protocols.Sentinel();
     for (common::ListNode* node = sentinel->next; node != sentinel; node = node->next)
@@ -79,7 +81,7 @@ Result ProtocolManager::StartupProtocols()
 Result ProtocolManager::Dispatch()
 {
     if (m_started == 0)
-        return static_cast<Result>(0x10c08);
+        return static_cast<Result>(transport::cResultInvalidState);
 
     common::ListNode* sentinel = m_protocols.Sentinel();
     for (common::ListNode* node = sentinel->next; node != sentinel; node = node->next)
@@ -88,6 +90,53 @@ Result ProtocolManager::Dispatch()
         const Result result = protocol->Dispatch();
         if (result != 0)
             return result;
+    }
+    return 0;
+}
+
+void ProtocolManager::Cleanup()
+{
+    common::ListNode* sentinel = m_protocols.Sentinel();
+    Protocol* end = reinterpret_cast<Protocol*>(reinterpret_cast<char*>(sentinel) - m_nodeOffset);
+    for (Protocol* protocol = reinterpret_cast<Protocol*>(
+             reinterpret_cast<char*>(sentinel->next) - m_nodeOffset);
+         protocol != end;
+         protocol = reinterpret_cast<Protocol*>(
+             reinterpret_cast<char*>(reinterpret_cast<common::ListNode*>(
+                 reinterpret_cast<char*>(protocol) + m_nodeOffset)->next) - m_nodeOffset))
+    {
+        protocol->mStationPacketHandler = 0;
+    }
+    m_started = 0;
+}
+
+void ProtocolManager::CleanupProtocolsWithStationAddress()
+{
+    common::ListNode* sentinel = m_protocols.Sentinel();
+    for (common::ListNode* node = sentinel->next; node != sentinel; node = node->next)
+    {
+        Protocol* protocol = reinterpret_cast<Protocol*>(
+            reinterpret_cast<char*>(node) - m_nodeOffset);
+        protocol->CleanupWithStationAddress();
+    }
+}
+
+Result ProtocolManager::StartupProtocolsWithStationAddress(const common::StationAddress& address)
+{
+    if (!m_started)
+        return static_cast<Result>(transport::cResultInvalidState);
+
+    common::ListNode* sentinel = m_protocols.Sentinel();
+    for (common::ListNode* node = sentinel->next; node != sentinel; node = node->next)
+    {
+        Protocol* protocol = reinterpret_cast<Protocol*>(
+            reinterpret_cast<char*>(node) - m_nodeOffset);
+        const Result result = protocol->StartupWithStationAddress(address);
+        if (result != 0)
+        {
+            CleanupProtocolsWithStationAddress();
+            return result;
+        }
     }
     return 0;
 }

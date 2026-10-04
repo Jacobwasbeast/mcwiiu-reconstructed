@@ -104,30 +104,6 @@ private:
     unsigned int m_field30;
 };
 
-class ProtocolManager
-{
-public:
-    ProtocolManager();
-    virtual ~ProtocolManager();
-    void Finalize();
-    void Initialize(NetworkFactory* networkFactory);
-    Result Startup(PacketHandler* packetHandler);
-    Result StartupProtocols();
-    Result Dispatch();
-    void CleanupProtocols();
-    UnreliableProtocol* AllocProtocol(unsigned int size);
-    ProtocolId CreateProtocolImpl(Protocol* protocol, ProtocolId id);
-    Protocol* SearchProtocol(ProtocolId id, unsigned char type);
-    void DestroyProtocol(unsigned short id);
-private:
-    NetworkFactory* m_networkFactory;
-    common::ListBase m_protocols;
-    int m_nodeOffset;
-public:
-    unsigned char m_started;
-};
-extern ProtocolManager* g_piaProtocolManager;
-
 }
 
 namespace session {

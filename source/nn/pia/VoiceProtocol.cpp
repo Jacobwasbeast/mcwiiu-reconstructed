@@ -1,6 +1,7 @@
 #include "vendor/__N_22_chat_VoiceProtocol_cpp_bf22a0fe.hpp"
 #include <string.h>
 #include "nn/pia/transport/UnreliableProtocol.hpp"
+#include "nn/pia/ProtocolManager.hpp"
 #include "nn/pia/chat/HandsFree.hpp"
 #include "platform/wiiu/pead.hpp"
 #include "game/core/CriticalSection.hpp"

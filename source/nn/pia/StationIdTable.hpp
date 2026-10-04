@@ -14,49 +14,54 @@ class StationIdTable
 public:
     struct Entry
     {
-        common::ListNode node;
         uint64_t stationId;
         uint32_t stationIndex;
         uint64_t uniqueId;
-        bool joinEventNotified;
+        uint8_t joinEventNotified;
+    };
+
+    struct Element
+    {
+        common::ListNode node;
+        Entry entry;
     };
 
     StationIdTable();
     ~StationIdTable();
     void Clear();
-    Result Finalize();
+    void Finalize();
     Result Initialize(unsigned int);
     Result Add(uint64_t, StationIndex, uint64_t);
     Result FindByStationId(Entry*, uint64_t) const;
     Result FindByStationIndex(Entry*, StationIndex) const;
     Result FindByUniqueId(Entry*, uint64_t) const;
-    void RemoveByStationId(uint64_t);
-    void RemoveByStationIndex(StationIndex);
-    void RemoveByUniqueId(uint64_t);
+    Result RemoveByStationId(uint64_t);
+    Result RemoveByStationIndex(StationIndex);
+    Result RemoveByUniqueId(uint64_t);
     Entry* FindUnsafe(StationIndex) const;
     StationIndex FindUnsafe(uint64_t stationId) const;
     void SetJoinEventNotifiedByStationId(uint64_t, bool);
     void SetJoinEventNotifiedByStationIndex(StationIndex, bool);
-    bool IsJoinEventNotifiedByStationIndex(StationIndex) const;
-    bool IsJoinEventNotifiedByStationId(uint64_t) const;
+    uint8_t IsJoinEventNotifiedByStationIndex(StationIndex) const;
+    uint8_t IsJoinEventNotifiedByStationId(uint64_t) const;
     unsigned int GetEntryNum() const;
     void SetAvailableEntryNum(unsigned int);
     Entry* FindByUniqueIdCore(uint64_t) const;
+    Entry* FindByStationIdCore(uint64_t) const;
     void Trace(uint64_t) const;
 
 private:
-    Entry* FindByStationIdCore(uint64_t) const;
     Entry* FindByStationIndexCore(StationIndex) const;
-    void RemoveCore(Entry*);
+    Result RemoveCore(Entry*);
     Result Copy(Entry*, const Entry*) const;
 
 public:
     common::ListBase m_entries;
     common::ListBase m_availableEntries;
-    uint32_t m_entryOffset;
-    uint32_t m_entryNum;
-    uint32_t m_maxEntryNum;
-    Entry* m_storage;
+    int m_entryOffset;
+    Element* m_elements;
+    uint32_t m_elementNum;
+    Element* m_storage;
     uint32_t m_availableEntryNum;
 };
 

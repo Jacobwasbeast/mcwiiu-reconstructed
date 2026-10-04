@@ -24,6 +24,9 @@ public:
 
 enum StationIndex
 {
+    cStationIndexInvalid = 0xfd,
+    cStationIndexSentinelFE = 0xfe,
+    cStationIndexSentinelFF = 0xff
 };
 
 namespace common

@@ -17,10 +17,6 @@ String::String(const wchar_t* text)
     SetString(text, 0, EncodingType_Utf16);
 }
 
-String::~String()
-{
-}
-
 void String::Clear()
 {
     m_text = 0;
