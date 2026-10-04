@@ -102,7 +102,7 @@ public:
     unsigned long long ReflectUpdateCommunitySetting(const NexUpdateCommunitySetting* setting);
     unsigned long long ReflectUpdateSetting(const nn::pia::session::UpdateSessionSetting* setting, bool isTeam);
     void RegisterFindCommunityResult();
-    void RegisterFindSessionResult(unsigned long long p0);
+    void RegisterFindSessionResult(nn::pia::session::SessionSearchCriteria::SearchCriteriaKey keyType);
     unsigned long long RegisterSearchCriteria(const nn::pia::session::SessionSearchCriteria* criteria, unsigned char flags);
     unsigned long long RequestSessionInfo(nn::pia::common::CallContext* callContext, unsigned int gatheringId);
     unsigned long long RequestSessionInfoWithoutPermission(nn::pia::common::CallContext* callContext, unsigned int gatheringId);

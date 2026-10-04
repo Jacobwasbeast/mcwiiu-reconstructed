@@ -19,14 +19,15 @@ uint32_t NexSessionSearchCriteriaParticipant::GetParticipantPrincipalIdSize() co
 void NexSessionSearchCriteriaParticipant::Reset()
 {
     nn::pia::session::SessionSearchCriteria::Reset();
-    principal_id_size_ = 0;
+    m_keyType = nn::pia::session::SessionSearchCriteria::cKeyTypeParticipant;
     for (unsigned int index = 0; index != 100; ++index) {
         principal_ids_[index] = 0;
     }
-    network_service_account_id_used_ = false;
-    my_block_list_used_ = true;
     others_block_list_used_ = false;
     application_data_enabled_ = true;
+    network_service_account_id_used_ = false;
+    my_block_list_used_ = true;
+    principal_id_size_ = 0;
 }
 
 nn::pia::common::Result NexSessionSearchCriteriaParticipant::SetResultRange(uint32_t, uint32_t)

@@ -35,8 +35,8 @@ private:
     uint32_t principal_id_size_;
     bool network_service_account_id_used_;
     bool my_block_list_used_;
-    bool others_block_list_used_;
     bool application_data_enabled_;
+    bool others_block_list_used_;
 };
 }
 }

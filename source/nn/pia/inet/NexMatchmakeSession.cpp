@@ -283,7 +283,7 @@ void NexMatchmakeSession::RegisterFindCommunityResult()
     m_state = 0;
 
 }
-void NexMatchmakeSession::RegisterFindSessionResult(unsigned long long p0)
+void NexMatchmakeSession::RegisterFindSessionResult(nn::pia::session::SessionSearchCriteria::SearchCriteriaKey keyType)
 {
     m_state = 0;
 
