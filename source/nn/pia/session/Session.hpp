@@ -141,6 +141,7 @@ public:
     void CheckStatusAtChangeMeshState();
     void ChangeStatusToDisconnectedNetwork();
     bool IsProcessingJoin() const;
+    unsigned int GetJoinRandomSessionStateForDebug() const;
     void CallSessionEventCallback(EventType eventType, unsigned long long stationId);
     transport::Station::IdentificationToken* GetMatchmakeAnalysisToken();
     static bool SessionJoiningApprovalCallback(
@@ -196,8 +197,7 @@ public:
     unsigned int m_sessionDisconnectReason;
     unsigned char m_fieldc0;
     bool m_postponeNotice;
-    unsigned short m_fieldc2;
-    unsigned short m_fieldc4;
+    unsigned short m_fieldc2[2];
     unsigned char m_currentSessionIndex;
     IMatchmakeSession* m_matchmakeSession[2];
     ISessionInfoList* m_sessionInfoList;

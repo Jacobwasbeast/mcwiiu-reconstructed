@@ -11,8 +11,8 @@ public:
     struct MeshEvent
     {
         unsigned int type;
-        unsigned long long stationId;
         StationIndex stationIndex;
+        unsigned long long stationId;
     };
 
     MeshEventListener();

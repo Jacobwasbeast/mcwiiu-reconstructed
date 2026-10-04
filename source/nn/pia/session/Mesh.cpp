@@ -261,19 +261,19 @@ Result Mesh::CreateMeshAsync()
     return result;
 }
 
-bool Mesh::IsAsyncProcessCompleted(AsyncProcessingName process) const
+bool Mesh::IsAsyncProcessCompleted(AsyncProcessingName process)
 {
     if (m_asyncProcess == static_cast<unsigned int>(process))
         return m_callContext.m_state - 2u < 3u;
     return false;
 }
 
-bool Mesh::IsCreateMeshCompleted() const
+bool Mesh::IsCreateMeshCompleted()
 {
     return IsAsyncProcessCompleted(cAsyncCreateMesh);
 }
 
-Result Mesh::GetAsyncProcessResult(AsyncProcessingName process) const
+Result Mesh::GetAsyncProcessResult(AsyncProcessingName process)
 {
     if (m_asyncProcess == static_cast<unsigned int>(process) &&
         m_callContext.m_state - 2u < 3u)
@@ -281,7 +281,7 @@ Result Mesh::GetAsyncProcessResult(AsyncProcessingName process) const
     return static_cast<Result>(0x10c08);
 }
 
-Result Mesh::GetCreateMeshResult() const
+Result Mesh::GetCreateMeshResult()
 {
     return GetAsyncProcessResult(cAsyncCreateMesh);
 }
@@ -347,12 +347,12 @@ void Mesh::ResetInternalAsyncState()
     }
 }
 
-bool Mesh::IsJoinMeshCompleted() const
+bool Mesh::IsJoinMeshCompleted()
 {
     return IsAsyncProcessCompleted(cAsyncJoinMesh);
 }
 
-Result Mesh::GetJoinMeshResult() const
+Result Mesh::GetJoinMeshResult()
 {
     return GetAsyncProcessResult(cAsyncJoinMesh);
 }
@@ -373,12 +373,12 @@ Result Mesh::LeaveMeshAsync()
     return result;
 }
 
-bool Mesh::IsLeaveMeshCompleted() const
+bool Mesh::IsLeaveMeshCompleted()
 {
     return IsAsyncProcessCompleted(cAsyncLeaveMesh);
 }
 
-Result Mesh::GetLeaveMeshResult() const
+Result Mesh::GetLeaveMeshResult()
 {
     return GetAsyncProcessResult(cAsyncLeaveMesh);
 }
@@ -394,12 +394,12 @@ Result Mesh::LeaveMeshWithHostMigrationAsync()
     return result;
 }
 
-bool Mesh::IsLeaveMeshWithHostMigrationCompleted() const
+bool Mesh::IsLeaveMeshWithHostMigrationCompleted()
 {
     return IsAsyncProcessCompleted(cAsyncLeaveMeshWithHostMigration);
 }
 
-Result Mesh::GetLeaveMeshWithHostMigrationResult() const
+Result Mesh::GetLeaveMeshWithHostMigrationResult()
 {
     return GetAsyncProcessResult(cAsyncLeaveMeshWithHostMigration);
 }
@@ -415,12 +415,12 @@ Result Mesh::DestroyMeshAsync()
     return result;
 }
 
-bool Mesh::IsDestroyMeshCompleted() const
+bool Mesh::IsDestroyMeshCompleted()
 {
     return IsAsyncProcessCompleted(cAsyncDestroyMesh);
 }
 
-Result Mesh::GetDestroyMeshResult() const
+Result Mesh::GetDestroyMeshResult()
 {
     return GetAsyncProcessResult(cAsyncDestroyMesh);
 }

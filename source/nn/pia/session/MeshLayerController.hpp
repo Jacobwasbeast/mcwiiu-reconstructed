@@ -1,11 +1,10 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_PIA_SESSION_MESH_LAYER_CONTROLLER_HPP
 #define LEGACY_CONSOLE_WIIU_NN_PIA_SESSION_MESH_LAYER_CONTROLLER_HPP
 
+#include "nn/pia/common/CryptoSetting.hpp"
 #include "nn/pia/common/Job.hpp"
 #include "nn/pia/session/Session.hpp"
 #include "nn/pia/transport/Station.hpp"
-
-namespace nn { namespace pia { namespace common { class CryptoSetting; }}}
 
 namespace nn { namespace pia { namespace session {
 
@@ -51,12 +50,12 @@ public:
     unsigned int m_bandwidthCheckIpPacketSize;
     unsigned char m_skipBandwidthCheck;
     int m_bandwidthCheckMeasurementCount;
+    common::CryptoSetting m_cryptoSetting;
     unsigned int m_payloadSize;
     transport::Station::IdentificationToken m_identificationToken;
     unsigned char m_recentPlayRecordEnabled;
     unsigned char m_startedUp;
-    unsigned int m_fielde0;
-    unsigned int m_fielde4;
+    unsigned long long m_fielde0;
 };
 
 }}}

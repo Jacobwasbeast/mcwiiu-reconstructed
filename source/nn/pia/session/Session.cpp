@@ -7,6 +7,7 @@
 #include "nn/pia/session/JoinSessionJob.hpp"
 #include "nn/pia/session/Mesh.hpp"
 #include "nn/pia/session/MeshLayerController.hpp"
+#include "nn/pia/session/RandomMatchmakeJob.hpp"
 #include "nn/pia/session/SessionStatusCheckJob.hpp"
 #include "nn/pia/session/SessionSupport.hpp"
 #include "nn/pia/session/StationIdStatusTable.hpp"
@@ -20,6 +21,7 @@ unsigned char s_checkStartupSettingRange = 1;
 
 const unsigned char s_statusByDisconnectStatus[7] = { 0, 0, 4, 5, 6, 7, 8 };
 const unsigned char s_statusByMatchmakeStatus[5] = { 0, 0, 1, 2, 3 };
+const unsigned char s_joinRandomStateByJoinMeshState[4] = { 4, 5, 6, 7 };
 }
 
 Session* g_piaSession = 0;
@@ -122,6 +124,30 @@ unsigned int Session::GetStatus() const
 unsigned int Session::GetJoinMeshState() const
 {
     return g_piaMesh->GetJoinMeshState();
+}
+
+unsigned int Session::GetJoinRandomSessionStateForDebug() const
+{
+    unsigned int state = m_randomMatchmakeJob->GetJoinSessionStateForDebug();
+    if (state == 4)
+    {
+        const unsigned int joinMeshState = GetJoinMeshState();
+        if (joinMeshState < 4)
+            state = s_joinRandomStateByJoinMeshState[joinMeshState];
+        else
+            state = 9;
+    }
+    return state;
+}
+
+bool Session::IsProcessingJoin() const
+{
+    bool processing = false;
+    if (m_randomMatchmakeJob != 0)
+        processing = m_randomMatchmakeJob->IsRunning();
+    if (m_joinSessionJob != 0)
+        processing |= m_joinSessionJob->IsRunning();
+    return processing;
 }
 
 unsigned int Session::GetSessionOpenStatus() const

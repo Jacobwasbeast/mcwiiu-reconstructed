@@ -104,18 +104,18 @@ public:
 
     Result JoinMeshAsync(const transport::StationConnectionInfo& info);
     void ResetInternalAsyncState();
-    bool IsJoinMeshCompleted() const;
-    Result GetJoinMeshResult() const;
+    bool IsJoinMeshCompleted();
+    Result GetJoinMeshResult();
     Result CancelJoinMeshAsync();
     Result LeaveMeshAsync();
-    bool IsLeaveMeshCompleted() const;
-    Result GetLeaveMeshResult() const;
+    bool IsLeaveMeshCompleted();
+    Result GetLeaveMeshResult();
     Result LeaveMeshWithHostMigrationAsync();
-    bool IsLeaveMeshWithHostMigrationCompleted() const;
-    Result GetLeaveMeshWithHostMigrationResult() const;
+    bool IsLeaveMeshWithHostMigrationCompleted();
+    Result GetLeaveMeshWithHostMigrationResult();
     Result DestroyMeshAsync();
-    bool IsDestroyMeshCompleted() const;
-    Result GetDestroyMeshResult() const;
+    bool IsDestroyMeshCompleted();
+    Result GetDestroyMeshResult();
     unsigned int GetJoinMeshState() const;
     void SetSkipReport(bool skip);
     void SendReport(unsigned char reason);
@@ -228,10 +228,10 @@ public:
     Result Startup(StartupSetting& setting);
     Result CreateMesh(common::CallContext* callerContext);
     Result CreateMeshAsync();
-    bool IsAsyncProcessCompleted(AsyncProcessingName process) const;
-    bool IsCreateMeshCompleted() const;
-    Result GetAsyncProcessResult(AsyncProcessingName process) const;
-    Result GetCreateMeshResult() const;
+    bool IsAsyncProcessCompleted(AsyncProcessingName process);
+    bool IsCreateMeshCompleted();
+    Result GetAsyncProcessResult(AsyncProcessingName process);
+    Result GetCreateMeshResult();
     Result CancelAsyncProcess(AsyncProcessingName process);
 
     CreateMeshJob* m_createMeshJob;
