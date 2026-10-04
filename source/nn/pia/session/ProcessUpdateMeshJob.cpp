@@ -36,7 +36,7 @@ void ProcessUpdateMeshJob::UpdateJoinMeshFailureResult(StationIndex station, uns
 unsigned int ProcessUpdateMeshJob::WaitDirectConnection() { return m_processing ? 0x1000000u : 0x5000000u; }
 unsigned int ProcessUpdateMeshJob::SendConnectionReport(StationIndex station, unsigned int value, unsigned int* output)
 { if (output) *output=value; if (station>=0 && station<32) m_failureNotice[station]=0; return 0; }
-unsigned int ProcessUpdateMeshJob::SendConnectionReport() { return SendConnectionReport(-1,0,0); }
+unsigned int ProcessUpdateMeshJob::SendConnectionReport() { return SendConnectionReport(static_cast<StationIndex>(-1), 0, 0); }
 unsigned int ProcessUpdateMeshJob::StartRelayConnection() { m_relayRequested=1; return 0; }
 unsigned int ProcessUpdateMeshJob::CheckConnectionAll() { return m_processing ? 0 : 1; }
 unsigned int ProcessUpdateMeshJob::UpdateFailed() { m_processing=0; return 0; }

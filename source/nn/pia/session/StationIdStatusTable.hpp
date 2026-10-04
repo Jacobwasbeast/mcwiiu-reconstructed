@@ -10,6 +10,23 @@ class StationIdStatusTable
 {
 public:
     enum PrepareStatus { cPrepareStatusNone = 0, cPrepareStatusPrepared = 1 };
+
+private:
+    struct Element {
+        unsigned long long stationId;
+        unsigned int sessionId;
+        PrepareStatus prepare;
+        bool connect;
+        bool answer;
+        bool invitation;
+        bool migration;
+        bool eventNotified;
+        bool host;
+        StationIndex stationIndex;
+        Element() : stationId(0), sessionId(0), prepare(cPrepareStatusNone), connect(false), answer(false), invitation(false), migration(false), eventNotified(false), host(false), stationIndex(static_cast<StationIndex>(0xfd)) {}
+    };
+
+public:
     StationIdStatusTable();
     virtual ~StationIdStatusTable();
     void Finalize();
@@ -17,7 +34,7 @@ public:
     void ClearAllElements();
     Result AddElement(unsigned long long stationId, unsigned int sessionId, PrepareStatus status, bool host);
     Result RemoveElement(unsigned long long stationId);
-    bool FindElement(unsigned long long stationId) const;
+    Element* FindElement(unsigned long long stationId);
     void ClearAllPrepareStatus();
     void SetPrepareStatus(unsigned long long stationId, bool value);
     bool CheckAllPrepareStatus(unsigned long long* stationIds, unsigned short count) const;
@@ -54,22 +71,8 @@ public:
     bool CheckSessionHost(unsigned int sessionId) const;
 
 private:
-    struct Element {
-        unsigned long long stationId;
-        unsigned int sessionId;
-        PrepareStatus prepare;
-        bool connect;
-        bool answer;
-        bool invitation;
-        bool migration;
-        bool eventNotified;
-        bool host;
-        StationIndex stationIndex;
-        Element() : stationId(0), sessionId(0), prepare(cPrepareStatusNone), connect(false), answer(false), invitation(false), migration(false), eventNotified(false), host(false), stationIndex(static_cast<StationIndex>(0xfd)) {}
-    };
     std::vector<Element> m_elements;
     unsigned short m_capacity;
-    Element* find(unsigned long long stationId);
     const Element* find(unsigned long long stationId) const;
 };
 

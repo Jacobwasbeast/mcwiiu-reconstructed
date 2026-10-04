@@ -12,14 +12,19 @@ namespace nn { namespace pia { namespace session {
 class JoinMeshJob : public common::StepSequenceJob
 {
 public:
+    enum
+    {
+        cReceivedFlagNum = 3
+    };
+
     JoinMeshJob();
     virtual ~JoinMeshJob();
-    Result Startup(const transport::StationConnectionInfo&, common::CallContext*);
+    bool Startup(const transport::StationConnectionInfo&, common::CallContext*);
     unsigned int SetupLocalPlayerInfo();
     unsigned int SetupLocalStation();
     void CleanupStations();
     void CalcProcessingTimeOfJoin() const;
-    bool CheckRelayConnectionForMonitoring() const;
+    void CheckRelayConnectionForMonitoring() const;
     unsigned int CheckContextCallCancelled();
     unsigned int StartConnectingToHost();
     unsigned int CheckTransportConnectionStatus();
@@ -44,32 +49,46 @@ public:
     unsigned int GetJoinMeshState() const;
     virtual void Trace(unsigned long long) const;
     virtual unsigned int StartupImpl();
-    virtual void SetNextStepAtSetupLocalPlayerInfoImpl();
     virtual void CleanupImpl();
     virtual void SetHostInfoToMonitoringData(const transport::StationConnectionInfo&);
+    virtual void SetNextStepAtSetupLocalPlayerInfoImpl();
     virtual unsigned int SetNextStepAfterWaitAllConnection();
     void CleanupInternalContexts();
 
+    void setStep(unsigned int (JoinMeshJob::*function)(), const char* name)
+    {
+        union
+        {
+            unsigned int (JoinMeshJob::*derived)();
+            unsigned int (common::StepSequenceJob::*base)();
+        } step;
+        step.derived = function;
+        m_currentStep.m_function = step.base;
+        m_currentStep.m_name = name;
+    }
+
     common::CallContext* m_callerContext;
     common::CallContext* m_internalContext;
-    unsigned int m_status;
-    StationIndex m_localStationIndex;
-    StationIndex m_hostStationIndex;
-    const transport::StationConnectionInfo* m_stationConnectionInfo;
-    const unsigned char* m_stationData;
-    unsigned char m_joinState;
-    unsigned char m_cancelWithLeave;
-    unsigned char m_hostMigration;
-    unsigned char m_stationDataSize;
-    unsigned int m_step;
-    unsigned int m_result;
-    unsigned int m_sessionId;
-    unsigned int m_stationBitmap;
-    unsigned int m_hostBitmap;
-    unsigned int m_startTick;
-    unsigned int m_deadlineTick;
-    unsigned int m_field88;
-    unsigned char m_padding7c[0x14];
+    unsigned int m_requestAckId;
+    unsigned short m_stationCount;
+    unsigned short m_stationCapacity;
+    transport::StationConnectionInfo* m_stationInfos;
+    unsigned int* m_stationIndices;
+    bool m_waitingJoinResponse;
+    bool m_received[cReceivedFlagNum];
+    unsigned char m_responseResult;
+    unsigned short m_responseStationCount;
+    unsigned char m_responseHostSlot;
+    unsigned char m_responseLocalSlot;
+    unsigned char m_responsePartCount;
+    unsigned int m_lastUpdateCount;
+    unsigned char* m_stationConnected;
+    unsigned int m_joinState;
+    unsigned int m_joinResult;
+    unsigned char m_reserved74[4];
+    unsigned long long m_principalId;
+    common::Time m_startTime;
+    common::Time m_disconnectDeadline;
     common::CallContext m_callContext;
 };
 

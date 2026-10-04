@@ -61,16 +61,14 @@ void UpdateSessionSettingJob::CompleteProcess()
     m_callerContext = 0;
 }
 
-void UpdateSessionSettingJob::SetCurrentSessionOpenStatus(unsigned int status)
+void UpdateSessionSettingJob::SetCurrentSessionOpenStatus(Session::SessionOpenStatus status)
 {
-    g_piaSession->SetCurrentSessionOpenStatus(
-        static_cast<Session::SessionOpenStatus>(status));
+    g_piaSession->SetCurrentSessionOpenStatus(status);
 }
 
-void UpdateSessionSettingJob::SetBufferSessionOpenStatus(unsigned int status)
+void UpdateSessionSettingJob::SetBufferSessionOpenStatus(Session::SessionOpenStatus status)
 {
-    g_piaSession->SetBufferSessionOpenStatus(
-        static_cast<Session::SessionOpenStatus>(status));
+    g_piaSession->SetBufferSessionOpenStatus(status);
 }
 
 void UpdateSessionSettingJob::Trace(unsigned long long value) const

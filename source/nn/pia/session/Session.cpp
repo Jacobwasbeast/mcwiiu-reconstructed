@@ -9,6 +9,7 @@
 #include "nn/pia/session/MeshLayerController.hpp"
 #include "nn/pia/session/SessionStatusCheckJob.hpp"
 #include "nn/pia/session/SessionSupport.hpp"
+#include "nn/pia/session/StationIdStatusTable.hpp"
 #include "nn/pia/session/UpdateSessionSettingJob.hpp"
 
 namespace nn { namespace pia { namespace session {
@@ -16,6 +17,9 @@ namespace nn { namespace pia { namespace session {
 namespace
 {
 unsigned char s_checkStartupSettingRange = 1;
+
+const unsigned char s_statusByDisconnectStatus[7] = { 0, 0, 4, 5, 6, 7, 8 };
+const unsigned char s_statusByMatchmakeStatus[5] = { 0, 0, 1, 2, 3 };
 }
 
 Session* g_piaSession = 0;
@@ -27,7 +31,7 @@ Result Session::Startup(const StartupSetting& setting)
         return static_cast<Result>(0x10c08);
     if (m_startupState != 0)
         return static_cast<Result>(0x10c08);
-    if (s_checkStartupSettingRange != 0 && setting.m_field00 - 1000 > 28992)
+    if (s_checkStartupSettingRange != 0 && setting.m_field00 - 1000 >= 29001)
         return static_cast<Result>(0x10c07);
 
     Result result = m_meshLayerController->Startup(setting);
@@ -66,6 +70,11 @@ Result Session::Startup(const StartupSetting& setting)
     return transport::g_piaTransport->Startup(m_meshLayerController->m_payloadSize, 0);
 }
 
+bool Session::IsValidStationId(unsigned long long stationId) const
+{
+    return m_stationIdStatusTable->CheckConnectStatus(stationId);
+}
+
 bool Session::IsHost() const
 {
     if (m_localStationId == 0)
@@ -74,9 +83,9 @@ bool Session::IsHost() const
         return false;
 
     const IMatchmakeSession* matchmakeSession = m_matchmakeSession[m_currentSessionIndex];
-    if (matchmakeSession == 0)
-        return false;
-    return matchmakeSession->IsMatchmakeOwner();
+    if (matchmakeSession != 0 && matchmakeSession->IsMatchmakeOwner())
+        return true;
+    return false;
 }
 
 bool Session::IsJointSessionHost() const
@@ -96,19 +105,23 @@ bool Session::IsJointSessionHost() const
 
     const IMatchmakeSession* bufferSession =
         m_matchmakeSession[m_currentSessionIndex == 0 ? 1 : 0];
-    if (bufferSession == 0)
-        return false;
-    return bufferSession->IsMatchmakeOwner();
+    if (bufferSession != 0 && bufferSession->IsMatchmakeOwner())
+        return true;
+    return false;
 }
 
 unsigned int Session::GetStatus() const
 {
-    return m_matchmakeStatus;
+    if (m_disconnectStatus > 1 && m_disconnectStatus < 7)
+        return s_statusByDisconnectStatus[m_disconnectStatus];
+    if (m_matchmakeStatus > 1 && m_matchmakeStatus < 5)
+        return s_statusByMatchmakeStatus[m_matchmakeStatus];
+    return 0;
 }
 
 unsigned int Session::GetJoinMeshState() const
 {
-    return g_piaMesh != 0 ? g_piaMesh->GetJoinMeshState() : 0;
+    return g_piaMesh->GetJoinMeshState();
 }
 
 unsigned int Session::GetSessionOpenStatus() const
@@ -141,7 +154,9 @@ bool Session::UpdateStationIdToBecomeHost()
         return false;
     m_localStationId = principalId;
     m_hostStationId = principalId;
-    return m_matchmakeStatus == 2;
+    if (m_matchmakeStatus == cMatchmakeStatusMatched)
+        return true;
+    return false;
 }
 
 void Session::CheckStatusAtChangeMeshState()
@@ -163,12 +178,33 @@ void Session::ChangeStatusToDisconnectedSession()
 
 bool Session::UpdateStationIdToBecomeClient()
 {
-    return false;
+    g_piaMesh->GetLocalStationIndex();
+    const unsigned long long localPrincipalId =
+        transport::g_stationConnectionInfoTable->GetPrincipalIdByStation(
+            transport::g_piaStationManager->m_localStation);
+    if (localPrincipalId == 0)
+        return false;
+
+    m_localStationId = localPrincipalId;
+    const unsigned long long hostPrincipalId =
+        transport::g_stationConnectionInfoTable->GetPrincipalIdByStation(
+            transport::g_piaStationManager->GetStation(g_piaMesh->GetHostStationIndex()));
+    if (hostPrincipalId == 0)
+        return false;
+
+    m_field110 = 0;
+    if (m_matchmakeStatus == 4)
+        return false;
+    m_hostStationId = hostPrincipalId;
+    return true;
 }
 
 void Session::ChangeStatusToDisconnectedNetwork()
 {
     m_disconnectStatus = 3;
+    m_hostStationId = 0;
+    m_jointSessionHostStationId = 0;
+    CheckStatusAtChangeMeshState();
     if (m_sessionDisconnectReason == 0)
         m_sessionDisconnectReason = 8;
 }
@@ -194,10 +230,10 @@ void Session::SetSyncClockPulseInterval(int interval)
 
 void Session::ResetInternalAsyncState()
 {
-    if (m_asyncOperationState != 0 && m_callContext.m_state != common::CallContext::cStateInProgress)
+    if (m_asyncProcessingName != 0 && m_callContext.m_state != common::CallContext::cStateInProgress)
     {
         m_callContext.Reset();
-        m_asyncOperationState = 0;
+        m_asyncProcessingName = cAsyncProcessingNameNone;
     }
 }
 
@@ -209,7 +245,7 @@ Result Session::JoinSessionAsync(const JoinSessionSetting* setting)
         return static_cast<Result>(0x10c08);
     if (m_startupState != 1)
         return static_cast<Result>(0x10c08);
-    if (m_joinSessionJobRunning)
+    if (m_matchmakeStatus != cMatchmakeStatusNone)
         return static_cast<Result>(0x10c08);
 
     ResetInternalAsyncState();
@@ -217,7 +253,7 @@ Result Session::JoinSessionAsync(const JoinSessionSetting* setting)
     if (result == 0)
     {
         m_joinSessionJob->Ready(false);
-        m_asyncOperationState = 4;
+        m_asyncProcessingName = cAsyncProcessingNameJoinSession;
     }
     return result;
 }
@@ -228,7 +264,7 @@ Result Session::UpdateSessionSettingAsync(const UpdateSessionSetting* setting)
     unsigned int sessionId = m_sessionId[m_currentSessionIndex];
     Result result = UpdateSessionSettingAsyncCore(sessionId, matchmakeSession, setting, false);
     if (result == 0)
-        m_asyncOperationState = 0x11;
+        m_asyncProcessingName = cAsyncProcessingNameUpdateSessionSetting;
     return result;
 }
 

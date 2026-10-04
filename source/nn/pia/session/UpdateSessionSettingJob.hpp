@@ -4,11 +4,11 @@
 #include "nn/pia.h"
 #include "nn/pia/common/CallContext.hpp"
 #include "nn/pia/common/StepSequenceJob.hpp"
+#include "nn/pia/session/Session.hpp"
 
 namespace nn { namespace pia { namespace session {
 
 class IMatchmakeSession;
-class Session;
 class UpdateSessionSetting;
 
 class UpdateSessionSettingJob : public common::StepSequenceJob
@@ -23,8 +23,8 @@ public:
                    bool isJointSession);
     void CompleteProcess();
     virtual void Cleanup();
-    virtual void SetCurrentSessionOpenStatus(unsigned int status);
-    virtual void SetBufferSessionOpenStatus(unsigned int status);
+    virtual void SetCurrentSessionOpenStatus(Session::SessionOpenStatus status);
+    virtual void SetBufferSessionOpenStatus(Session::SessionOpenStatus status);
     virtual Result StartupImpl(unsigned int sessionId, IMatchmakeSession* matchmakeSession,
                                const UpdateSessionSetting* setting, bool isJointSession) = 0;
 
