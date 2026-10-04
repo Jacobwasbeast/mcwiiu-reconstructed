@@ -62,6 +62,10 @@ public:
                                                 ::nn::pia::StationIndex stationIndex,
                                                 unsigned int size, bool isReliable,
                                                 bool isPriority, bool isBroadcast);
+    ProtocolMessageWriter* AssignByStationId(const ProtocolId& protocolId,
+                                             unsigned long long stationId,
+                                             unsigned int size, bool isReliable,
+                                             bool isPriority, bool isBroadcast);
     StationManager* GetStationManager();
     void UpdateLocalStation();
     ProtocolMessageWriter* AssignByStationBitmap(const ProtocolId& protocolId,

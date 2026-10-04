@@ -7,7 +7,7 @@ namespace nn { namespace pia { namespace common { class String; }} }
 
 namespace nn { namespace pia { namespace transport {
 
-class StationLocation : public common::StationAddress
+class StationLocation
 {
 public:
     StationLocation();
@@ -24,8 +24,8 @@ public:
     virtual common::Result Deserialize(const unsigned char* buffer);
     virtual void Trace(unsigned long long value) const;
 
-    int m_field10;
-    int m_field14;
+    common::StationAddress m_stationAddress;
+    unsigned long long m_principalId;
     int m_field18;
     int m_field1c;
     unsigned char m_field20;

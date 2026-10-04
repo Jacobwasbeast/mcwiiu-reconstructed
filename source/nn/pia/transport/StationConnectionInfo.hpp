@@ -10,7 +10,7 @@ namespace nn { namespace pia { namespace transport {
 
 using common::Result;
 
-class StationConnectionInfo : public StationLocation
+class StationConnectionInfo
 {
 public:
     StationConnectionInfo();
@@ -29,6 +29,7 @@ public:
     unsigned int LittleMembersSerialize(unsigned char* buffer, const StationLocation& location) const;
     unsigned int LittleMembersDeserialize(StationLocation* location, const unsigned char* buffer);
 
+    StationLocation m_stationLocation;
     StationLocation m_localStationLocation;
 };
 

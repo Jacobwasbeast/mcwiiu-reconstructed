@@ -60,8 +60,7 @@ Result Station::GetPrincipalId(unsigned long long* principalId)
         Trace(0x8000);
         return result;
     }
-    *principalId = (static_cast<unsigned long long>(static_cast<unsigned int>(info.m_field10)) << 32) |
-                   static_cast<unsigned int>(info.m_field14);
+    *principalId = info.m_stationLocation.m_principalId;
     return 0;
 }
 

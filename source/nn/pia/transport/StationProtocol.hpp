@@ -7,11 +7,33 @@
 namespace nn { namespace pia { namespace transport {
 
 class ConnectStationJob;
-class ReceivedMessageAccessor;
+
+class ReceivedMessageAccessor
+{
+public:
+    const unsigned char* m_message;
+    unsigned int m_messageSize;
+    unsigned long long m_sourceStationId;
+    common::StationAddress m_stationAddress;
+    unsigned char m_field1c;
+};
 
 class StationProtocol : public Protocol
 {
 public:
+    enum MessageType
+    {
+        cMessageTypeConnectionRequest = 1,
+        cMessageTypeConnectionResponse = 2,
+        cMessageTypeDisconnectionRequest = 3,
+        cMessageTypeDisconnectionResponse = 4,
+        cMessageTypeAck = 5,
+        cMessageTypeRelayConnectionRequest = 6,
+        cMessageTypeRelayConnectionResponse = 7
+    };
+
+    enum { cConnectionRequestHeaderSize = 17 };
+
     StationProtocol();
     virtual ~StationProtocol();
     Result Initialize();
@@ -33,7 +55,7 @@ public:
                                     bool relay) const;
 
     void SendDenyingConnectionResponse(const common::StationAddress& address,
-                                       unsigned char nonce, unsigned long long principalId,
+                                       unsigned char rejection, unsigned long long principalId,
                                        unsigned int infoField);
     void SendAck(unsigned int value, StationIndex stationIndex);
     void SendAck(unsigned int value, const common::StationAddress& address);
@@ -49,7 +71,7 @@ public:
     void ParseAck(const ReceivedMessageAccessor& message);
     void ParseRelayConnectionRequest(const ReceivedMessageAccessor& message);
     void ParseRelayConnectionResponse(const ReceivedMessageAccessor& message);
-    void ParseHelper(const ReceivedMessageAccessor& message);
+    Result ParseHelper(const ReceivedMessageAccessor& message);
     unsigned int SendSimpleMessage(unsigned char messageType, StationIndex stationIndex,
                                    bool relay);
     void SendDisconnectionRequest(StationIndex stationIndex, bool relay);

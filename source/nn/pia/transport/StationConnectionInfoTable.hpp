@@ -32,9 +32,7 @@ public:
     void ClearTable();
     void Trace(unsigned long long value) const;
 
-    unsigned char m_baseLayoutPadding[0x78 - sizeof(StationConnectionInfo)];
     StationConnectionInfo m_hostStationConnectionInfo;
-    unsigned char m_hostLayoutPadding[0x78 - sizeof(StationConnectionInfo)];
     common::StationAddress m_hostStationAddress;
 
 private:

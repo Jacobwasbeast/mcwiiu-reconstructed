@@ -47,7 +47,7 @@ int ConnectStationJob::StartupImpl(common::CallContext* context, Station* statio
     m_context = context;
     context->InitiateCall();
     m_station = station;
-    station->m_stationAddress = info;
+    station->m_stationAddress = info.m_stationLocation.m_stationAddress;
     m_secure = secure;
     Reset(true);
     m_station->m_field56 = 1;
@@ -296,7 +296,7 @@ bool ConnectStationJob::SendConnectionRequestMessage()
 
     unsigned char buffer[128] = {};
     protocol->MakeConnectionRequestData(buffer, m_station->m_field54, principalId,
-                                         static_cast<unsigned int>(info.m_field18),
+                                         static_cast<unsigned int>(info.m_stationLocation.m_field18),
                                          m_station->m_field55, false, m_secure);
 
     common::StationAddress stationAddress;
@@ -336,7 +336,7 @@ bool ConnectStationJob::SendRelayConnectionRequestMessage()
 
     unsigned char buffer[128] = {};
     protocol->MakeConnectionRequestData(buffer, m_station->m_field54, principalId,
-                                         static_cast<unsigned int>(info.m_field18),
+                                         static_cast<unsigned int>(info.m_stationLocation.m_field18),
                                          m_station->m_field55, true, m_secure);
     return g_piaResendingMessageManager->SetSendMessageByStationIndex(
         &m_requestAckId, buffer, protocol->GetConnectionRequestDataSize(),

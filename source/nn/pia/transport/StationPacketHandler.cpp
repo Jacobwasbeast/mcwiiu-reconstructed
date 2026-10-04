@@ -225,6 +225,17 @@ ProtocolMessageWriter* StationPacketHandler::AssignByStationIndex(
     return AssignSingle(protocolId, stationIndex, size, isReliable, isPriority, isBroadcast);
 }
 
+ProtocolMessageWriter* StationPacketHandler::AssignByStationId(
+    const ProtocolId& protocolId, unsigned long long stationId,
+    unsigned int size, bool isReliable, bool isPriority, bool isBroadcast)
+{
+    Station* station = g_piaStationManager->GetStationByStationIdWithoutConvert(stationId);
+    if (station != 0 && station->m_field10 != 0xfd)
+        return AssignByStationIndex(protocolId, static_cast<StationIndex>(station->m_field10),
+                                    size, isReliable, isPriority, isBroadcast);
+    return 0;
+}
+
 StationConnectionInfoTable* StationPacketHandler::GetStationConnectionInfoTable()
 {
     return g_stationConnectionInfoTable;
