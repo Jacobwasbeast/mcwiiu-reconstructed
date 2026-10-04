@@ -14,6 +14,7 @@
 #include "nn/pia/Transport.hpp"
 #include "nn/pia/session/Session.hpp"
 #include "nn/pia/transport/StationManager.hpp"
+#include "nn/pia/transport/UnreliableProtocol.hpp"
 #include "platform/wiiu/NQRNetworkManager_WiiU.hpp"
 #include "platform/wiiu/NQRNetworkPlayer.hpp"
 #include "platform/wiiu/SndMicDevice.hpp"
