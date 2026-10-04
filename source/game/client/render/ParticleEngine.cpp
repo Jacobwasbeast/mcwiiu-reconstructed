@@ -77,13 +77,11 @@ ParticleEngine::ParticleList::ParticleList()
 {
 }
 
-#if defined(RECON_NATIVE)
 ParticleEngine::ParticleList::~ParticleList()
 {
     ClearParticles();
     delete[] particles;
 }
-#endif
 
 void ParticleEngine::ParticleList::ClearParticles()
 {
