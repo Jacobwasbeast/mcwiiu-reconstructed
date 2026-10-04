@@ -27,19 +27,19 @@ EGameCommand TeleportCommand::getId()
 
 void TeleportCommand::execute(boost::shared_ptr<CommandSender> sender, arrayWithLength<unsigned char> data)
 {
+    PlayerList* playerList = gMinecraftServer != NULL ? gMinecraftServer->mPlayers : NULL;
     ByteArrayInputStream byteStream(data);
     DataInputStream stream(&byteStream);
     unsigned char mode = stream.readByte();
     PlayerUID sourceUid = stream.readPlayerUID();
-    PlayerList* playerList = gMinecraftServer != NULL ? gMinecraftServer->getPlayers() : NULL;
-    boost::shared_ptr<ServerPlayer> source = playerList != NULL ? playerList->getPlayer(sourceUid) : boost::shared_ptr<ServerPlayer>();
+    boost::shared_ptr<ServerPlayer> source = playerList->getPlayer(sourceUid);
 
     if (mode == 0)
     {
         PlayerUID targetUid = stream.readPlayerUID();
-        boost::shared_ptr<ServerPlayer> target = playerList != NULL ? playerList->getPlayer(targetUid) : boost::shared_ptr<ServerPlayer>();
-        if (source && target && source->getLevel()->mDimension->getType()->getId() == target->getLevel()->mDimension->getType()->getId()
-            && source->isAlive() && target->isAlive())
+        boost::shared_ptr<ServerPlayer> target = playerList->getPlayer(targetUid);
+        if (source && target && source->mLevel->mDimension->getType() == target->mLevel->mDimension->getType()
+            && source->isAlive())
         {
             if (source->isSleeping())
             {
@@ -48,20 +48,18 @@ void TeleportCommand::execute(boost::shared_ptr<CommandSender> sender, arrayWith
 
             bool sourcePassenger = source->isPassenger();
             bool targetPassenger = target->isPassenger();
-            source->stopRiding();
-            source->mConnection->teleport(target->mX, target->mY + (sourcePassenger || targetPassenger ? 1.0 : 0.0), target->mZ,
+            source->stopRidingBeforeTeleport();
+            source->mConnection->teleport(target->mX, (sourcePassenger || targetPassenger ? target->mY + 1.0 : target->mY), target->mZ,
                                           target->mYRot, target->mXRot, true, true);
             if (source == sender)
             {
-                std::wstring stringParams[1];
-                stringParams[0] = source->getName();
-                target->sendMessage(ClientboundChatPacket::eChatPacketMessage_TeleportedToYou, NULL, 0, stringParams, 1);
+                std::wstring stringParams = source->getName();
+                target->sendMessage(ClientboundChatPacket::eChatPacketMessage_TeleportedToYou, NULL, 0, &stringParams, 1);
             }
             else
             {
-                std::wstring stringParams[1];
-                stringParams[0] = target->getName();
-                source->sendMessage(ClientboundChatPacket::eChatPacketMessage_TeleportedYouToPosition, NULL, 0, stringParams, 1);
+                std::wstring stringParams = target->getName();
+                source->sendMessage(ClientboundChatPacket::eChatPacketMessage_TeleportedYouToPosition, NULL, 0, &stringParams, 1);
             }
         }
     }
@@ -78,8 +76,8 @@ void TeleportCommand::execute(boost::shared_ptr<CommandSender> sender, arrayWith
             }
 
             bool passenger = source->isPassenger();
-            source->stopRiding();
-            source->mConnection->teleport(x, y + (passenger ? 1.0 : 0.0), z,
+            source->stopRidingBeforeTeleport();
+            source->mConnection->teleport(x, (passenger ? y + 1.0f : y), z,
                                           source->mYRot, source->mXRot, true, true);
         }
     }

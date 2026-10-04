@@ -2,6 +2,7 @@
 
 #include "game/core/ByteArrayInputStream.hpp"
 #include "game/core/ByteArrayOutputStream.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/DataInputStream.hpp"
 #include "game/core/DataOutputStream.hpp"
@@ -37,8 +38,8 @@ void DefaultGameModeCommand::doSetGameType(const GameType* gameType)
     if (gMinecraftServer->getForceGameType())
     {
         for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator it =
-                 gMinecraftServer->getPlayers()->getPlayers()->begin();
-             it != gMinecraftServer->getPlayers()->getPlayers()->end();
+                 gMinecraftServer->getPlayers()->mPlayers.begin();
+             it != gMinecraftServer->getPlayers()->mPlayers.end();
              ++it)
         {
             (*it)->setGameMode(const_cast<GameType*>(gameType));
@@ -61,7 +62,7 @@ void DefaultGameModeCommand::execute(boost::shared_ptr<CommandSender> sender,
 
     unsigned char gameType = stream.readByte();
     doSetGameType(GameType::byId(gameType));
-    g_pApp->SetGameHostOption(eGameHostOption_DefaultGameMode, gameType);
+    gApp.SetGameHostOption(eGameHostOption_DefaultGameMode, gameType);
 
     int intParams[1] = { gameType };
     logAdminAction(sender, eChatPacketMessage_AdminAction,

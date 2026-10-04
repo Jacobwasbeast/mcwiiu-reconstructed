@@ -4,6 +4,7 @@
 
 #include "game/core/ByteArrayInputStream.hpp"
 #include "game/core/ByteArrayOutputStream.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CommonMasterGameMode.hpp"
 #include "game/core/DataInputStream.hpp"
 #include "game/core/DataOutputStream.hpp"
@@ -47,13 +48,13 @@ void CheckpointCommand::execute(boost::shared_ptr<CommandSender> sender, arrayWi
 
     StatsUID uid(stream.readPlayerUID());
 
-    PlayerList* playerList = (gMinecraftServer != NULL) ? gMinecraftServer->getPlayers() : NULL;
+    PlayerList* playerList = (gMinecraftServer != NULL) ? gMinecraftServer->mPlayers : NULL;
     boost::shared_ptr<ServerPlayer> player = playerList->getPlayerFromStatsUID(uid);
 
     int checkpoint = stream.readInt();
 
     std::vector<CheckpointRuleDefinition*>* checkpoints =
-        g_pApp->getLevelGenerationOptions()->getRequiredGameRules()->getCheckpoints();
+        gApp.getLevelGenerationOptions()->getRequiredGameRules()->getCheckpoints();
 
     MasterGameMode* gameMode = gMinecraftServer->mMasterGameMode;
     unsigned int round = gameMode->mGameStats.mCurrentRound;
@@ -102,7 +103,7 @@ void CheckpointCommand::execute(boost::shared_ptr<CommandSender> sender, arrayWi
             int spawnY = spawnPoint->getY();
             int spawnZ = spawnPoint->getZ();
 
-            PlayerList* players = (gMinecraftServer != NULL) ? gMinecraftServer->getPlayers() : NULL;
+            PlayerList* players = (gMinecraftServer != NULL) ? gMinecraftServer->mPlayers : NULL;
             std::vector<boost::shared_ptr<ServerPlayer> >* allPlayers = players->getPlayers();
 
             for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator it = allPlayers->begin();

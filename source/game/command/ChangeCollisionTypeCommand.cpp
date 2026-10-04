@@ -6,6 +6,7 @@
 #include "game/core/DataOutputStream.hpp"
 #include "game/world/generation/Player.hpp"
 #include "game/world/generation/PlayerList.hpp"
+#include "game/server/MinecraftServer.hpp"
 #include "game/server/ServerPlayer.hpp"
 
 ChangeCollisionTypeCommand::~ChangeCollisionTypeCommand()
@@ -28,8 +29,14 @@ void ChangeCollisionTypeCommand::execute(boost::shared_ptr<CommandSender> sender
     DataInputStream stream(&byteStream);
 
     PlayerUID uid = stream.readPlayerUID();
-    boost::shared_ptr<ServerPlayer> player = getPlayer(uid);
+    PlayerList* playerList = (gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers);
+    boost::shared_ptr<ServerPlayer> player = playerList->getPlayer(uid);
     int collisionType = stream.readInt();
+    byteStream.mBuffer.data = NULL;
+    byteStream.mBuffer.length = 0;
+    byteStream.mCount = 0;
+    byteStream.mMark = 0;
+    byteStream.mPosition = 0;
 
     if (collisionType == 1)
     {
@@ -43,11 +50,6 @@ void ChangeCollisionTypeCommand::execute(boost::shared_ptr<CommandSender> sender
     {
         player->SetNormalSize();
     }
-    byteStream.mBuffer.data = NULL;
-    byteStream.mBuffer.length = 0;
-    byteStream.mCount = 0;
-    byteStream.mMark = 0;
-    byteStream.mPosition = 0;
 }
 
 boost::shared_ptr<GameCommandPacket> ChangeCollisionTypeCommand::preparePacket(PlayerUID uid, int collisionType)

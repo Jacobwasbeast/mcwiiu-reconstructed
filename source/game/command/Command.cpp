@@ -11,6 +11,10 @@ Command::Command()
 {
 }
 
+Command::~Command()
+{
+}
+
 int Command::getPermissionLevel()
 {
     return 4;
@@ -48,12 +52,12 @@ boost::shared_ptr<ServerPlayer> Command::convertSourceToPlayer(boost::shared_ptr
 {
     boost::shared_ptr<ServerPlayer> player = boost::dynamic_pointer_cast<ServerPlayer>(sender);
 
-    if (player.get() == NULL)
+    if (player.get() != NULL)
     {
-        return boost::shared_ptr<ServerPlayer>();
+        return player;
     }
 
-    return player;
+    return boost::shared_ptr<ServerPlayer>();
 }
 
 boost::shared_ptr<ServerPlayer> Command::convertToPlayer(boost::shared_ptr<CommandSender> sender, std::wstring playerName)
@@ -70,9 +74,7 @@ std::wstring Command::convertToPlayerName(boost::shared_ptr<CommandSender> sende
 
 std::wstring Command::convertToEntityName(boost::shared_ptr<CommandSender> sender, std::wstring entityName)
 {
-    boost::shared_ptr<ServerPlayer> entity = convertToPlayer(sender, entityName);
-
-    return entity->getName();
+    return convertToPlayer(sender, entityName)->getName();
 }
 
 boost::shared_ptr<ServerPlayer> Command::getPlayer(PlayerUID uid)

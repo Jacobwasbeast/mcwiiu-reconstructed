@@ -3,7 +3,7 @@
 #include "game/command/CommandSender.hpp"
 
 CommandDispatcher::CommandDispatcher()
-    : boost::unordered_map<EGameCommand, Command*>(), mCommands()
+    : mCommandsById(), mCommands()
 {
 }
 
@@ -20,8 +20,8 @@ unsigned int CommandDispatcher::performCommand(boost::shared_ptr<CommandSender> 
                                                EGameCommand command,
                                                arrayWithLength<unsigned char> data)
 {
-    iterator it = find(command);
-    if (it != end() && it->second != NULL)
+    boost::unordered_map<EGameCommand, Command*>::iterator it = mCommandsById.find(command);
+    if (it != mCommandsById.end())
     {
         Command* selected = it->second;
         if (selected->canExecute(sender))
@@ -34,10 +34,7 @@ unsigned int CommandDispatcher::performCommand(boost::shared_ptr<CommandSender> 
 
 Command* CommandDispatcher::addCommand(Command* command)
 {
-    if (command != NULL)
-    {
-        (*this)[command->getId()] = command;
-        mCommands.insert(command);
-    }
+    mCommandsById[command->getId()] = command;
+    mCommands.insert(command);
     return command;
 }

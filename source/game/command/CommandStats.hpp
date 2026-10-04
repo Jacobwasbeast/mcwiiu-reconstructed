@@ -11,7 +11,7 @@ public:
     CommandStats();
     ~CommandStats();
     void setCommandStats(MinecraftServer*, boost::shared_ptr<CommandSender>, CommandStatType, int);
-    void setCommandStats(boost::shared_ptr<CommandSender>, CommandStatType, int);
+    void setCommandStats(boost::shared_ptr<CommandSender>, CommandStatType, int) {}
     static void unsetStatsSetting(CommandStats*, CommandStatType);
     static void assignStatsSetting(CommandStats*, CommandStatType, std::wstring*, std::wstring*);
     void read(CompoundTag*);
@@ -19,7 +19,7 @@ public:
     void cloneFrom(CommandStats*);
     bool hasStats(CommandStatType);
 private:
-    std::wstring* m_objectiveNames;
     std::wstring* m_entityNames;
+    std::wstring* m_objectiveNames;
 };
 #endif

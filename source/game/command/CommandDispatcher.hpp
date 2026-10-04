@@ -11,7 +11,7 @@
 
 class CommandSender;
 
-class CommandDispatcher : public boost::unordered_map<EGameCommand, Command*>
+class CommandDispatcher
 {
 public:
     CommandDispatcher();
@@ -22,6 +22,7 @@ public:
     Command* addCommand(Command* command);
 
 private:
+    boost::unordered_map<EGameCommand, Command*> mCommandsById;
     boost::unordered_set<Command*> mCommands;
 };
 
