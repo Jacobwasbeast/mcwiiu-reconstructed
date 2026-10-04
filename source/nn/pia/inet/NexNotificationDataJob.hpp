@@ -1,27 +1,32 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_PIA_INET_NEXNOTIFICATIONDATAJOB_HPP
 #define LEGACY_CONSOLE_WIIU_NN_PIA_INET_NEXNOTIFICATIONDATAJOB_HPP
 
-#include <stdint.h>
+#include "nn/nex/ProtocolCallContext.hpp"
 #include "nn/pia/Common.hpp"
+#include "nn/pia/common/CallContext.hpp"
+#include "nn/pia/common/StepSequenceJob.hpp"
 
 namespace nn { namespace nex { template <typename T> class qList; class NotificationEvent; }}
-namespace nn { namespace pia { namespace common { class CallContext; class String; }}}
+namespace nn { namespace pia { namespace common { class String; }}}
 
 namespace nn { namespace pia { namespace inet {
 
-class NexNotificationDataJob
+class NexNotificationDataJob : public common::StepSequenceJob
 {
 public:
     NexNotificationDataJob();
-    ~NexNotificationDataJob();
-    Result Startup(common::CallContext* callContext, unsigned int type, unsigned int param1, unsigned int param2, const common::String& text);
-    Result Startup(common::CallContext* callContext, unsigned char typeMask, nex::qList<nex::NotificationEvent>* events);
-    uint32_t WaitUpdateNotificationData();
-    uint32_t WaitRetrieveNotificationData();
-    uint64_t Cleanup();
+    virtual ~NexNotificationDataJob();
+    virtual Result Startup(common::CallContext* callContext, unsigned int type, unsigned int param1,
+                           unsigned int param2, const common::String& text);
+    virtual Result Startup(common::CallContext* callContext, unsigned char typeMask,
+                           nex::qList<nex::NotificationEvent>* events);
+    virtual void Cleanup();
+    unsigned int WaitUpdateNotificationData();
+    unsigned int WaitRetrieveNotificationData();
 
 private:
-    uint64_t state_;
+    common::CallContext* m_callContext;
+    nex::ProtocolCallContext m_protocolCallContext;
 };
 
 }}}

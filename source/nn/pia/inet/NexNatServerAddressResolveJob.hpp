@@ -1,30 +1,31 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_PIA_INET_NEXNATSERVERADDRESSRESOLVEJOB_HPP
 #define LEGACY_CONSOLE_WIIU_NN_PIA_INET_NEXNATSERVERADDRESSRESOLVEJOB_HPP
 
-#include <stdint.h>
-
-namespace nn { namespace pia { namespace common {
-class CallContext;
-}}}
+#include "nn/pia/Common.hpp"
+#include "nn/pia/common/CallContext.hpp"
+#include "nn/pia/common/StepSequenceJob.hpp"
+#include "nn/pia/common/Time.hpp"
 
 namespace nn { namespace pia { namespace inet {
 
-class NexNatServerAddressResolveJob
+class NexNatServerAddressResolveJob : public common::StepSequenceJob
 {
 public:
     NexNatServerAddressResolveJob();
-    ~NexNatServerAddressResolveJob();
-    uint64_t Startup(common::CallContext* a1);
+    virtual ~NexNatServerAddressResolveJob();
+    virtual void CancelCleanup();
+    Result Startup(common::CallContext* callContext);
     void Cleanup();
-    void CancelCleanup();
-    uint32_t StepResolveNatServerAddress();
-    uint32_t StepRequestRelayServerSetting();
-    uint32_t StepWaitRequestRelayServerSetting();
-    uint32_t StepResolveRelayServerSetting();
-    uint32_t StepComplete();
+    unsigned int StepResolveNatServerAddress();
+    unsigned int StepRequestRelayServerSetting();
+    unsigned int StepWaitRequestRelayServerSetting();
+    unsigned int StepResolveRelayServerSetting();
+    unsigned int StepComplete();
 
 private:
-    uint64_t state_;
+    common::CallContext* m_callContext;
+    common::Time m_deadline;
+    Result m_result;
 };
 
 }}}

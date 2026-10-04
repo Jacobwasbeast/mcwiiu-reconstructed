@@ -1,30 +1,181 @@
 #include "nn/pia/inet/NexNotificationDataJob.hpp"
+#include "nn/nex/Reconstruction.hpp"
+#include "nn/nex/String.hpp"
+#include "nn/nex/qList.hpp"
+#include "nn/pia/String.hpp"
+#include "nn/pia/inet/NexFacade.hpp"
 
 namespace nn { namespace pia { namespace inet {
 
-Result NexNotificationDataJob::Startup(common::CallContext* callContext, unsigned int type, unsigned int param1, unsigned int param2, const common::String& text)
+namespace {
+typedef unsigned int (NexNotificationDataJob::*Step)();
+
+enum
 {
+    cFirstNotificationType = 0x65,
+    cNotificationTypeCount = 8,
+    cMaxTextLength = 0x100,
+    cResultCancelled = 0x6c05,
+    cResultInvalidArgument = 0x10c07,
+    cResultInvalidState = 0x10c08,
+    cResultRequestFailed = 0xac5a,
+    cResultNexError = 0xe437
+};
+
+inline void SelectStep(common::StepSequenceJob::Step& slot, Step step)
+{
+    union { Step derived; unsigned int (common::StepSequenceJob::*base)(); } value;
+    value.derived = step;
+    slot.m_function = value.base;
+}
+}
+
+NexNotificationDataJob::NexNotificationDataJob()
+    : common::StepSequenceJob(), m_callContext(0), m_protocolCallContext(0)
+{
+}
+
+NexNotificationDataJob::~NexNotificationDataJob()
+{
+}
+
+Result NexNotificationDataJob::Startup(common::CallContext* callContext, unsigned int type,
+                                       unsigned int param1, unsigned int param2,
+                                       const common::String& text)
+{
+    const void* buffer = text.GetBuffer();
+    if (type - cFirstNotificationType >= cNotificationTypeCount)
+        return cResultInvalidArgument;
+    if (text.GetStringLength() > cMaxTextLength)
+        return cResultInvalidArgument;
+    if (text.GetStringLength() != 0 && text.GetEncodingType() != common::String::EncodingType_Utf16)
+        return cResultInvalidArgument;
+    if (m_protocolCallContext.GetState() == nex::CallContext::CallInProgress)
+        return cResultInvalidState;
+    m_protocolCallContext.Reset();
+    if (NexFacade::s_instance->m_matchmakeExtensionClient->UpdateNotificationData(
+            &m_protocolCallContext, type, param1, param2,
+            nex::String(static_cast<const wchar_t*>(buffer))) != 1)
+        return cResultRequestFailed;
+    m_callContext = callContext;
+    callContext->InitiateCall();
+    Reset(true);
+    SelectStep(m_currentStep, &NexNotificationDataJob::WaitUpdateNotificationData);
+    m_currentStep.m_name = "NexNotificationDataJob::WaitUpdateNotificationData";
     return 0;
 }
 
-Result NexNotificationDataJob::Startup(common::CallContext* callContext, unsigned char typeMask, nex::qList<nex::NotificationEvent>* events)
+Result NexNotificationDataJob::Startup(common::CallContext* callContext, unsigned char typeMask,
+                                       nex::qList<nex::NotificationEvent>* events)
 {
+    nex::qList<unsigned int> types;
+    if (m_protocolCallContext.GetState() == nex::CallContext::CallInProgress)
+        return cResultInvalidState;
+    for (unsigned int index = 0; index < cNotificationTypeCount; ++index)
+    {
+        if ((typeMask & (1 << index)) != 0)
+            types.push_back(cFirstNotificationType + index);
+    }
+    m_protocolCallContext.Reset();
+    if (!NexFacade::s_instance->m_matchmakeExtensionClient->GetFriendNotificationData(
+            &m_protocolCallContext, events, types))
+        return cResultRequestFailed;
+    m_callContext = callContext;
+    callContext->InitiateCall();
+    Reset(true);
+    SelectStep(m_currentStep, &NexNotificationDataJob::WaitRetrieveNotificationData);
+    m_currentStep.m_name = "NexNotificationDataJob::WaitRetrieveNotificationData";
     return 0;
 }
 
-uint32_t NexNotificationDataJob::WaitUpdateNotificationData()
+void NexNotificationDataJob::Cleanup()
 {
-    return static_cast<uint32_t>(state_);
+    if (m_protocolCallContext.GetState() == nex::CallContext::CallInProgress)
+        m_protocolCallContext.Cancel(nex::CallContext::CallCanceled);
+    m_protocolCallContext.Reset();
+    if (m_callContext != 0 && m_callContext->m_state == common::CallContext::cStateInProgress)
+    {
+        m_callContext->SignalCancel();
+        m_callContext = 0;
+    }
 }
 
-uint32_t NexNotificationDataJob::WaitRetrieveNotificationData()
+unsigned int NexNotificationDataJob::WaitUpdateNotificationData()
 {
-    return static_cast<uint32_t>(state_);
+    common::CallContext* callContext = m_callContext;
+    if (callContext != 0 && callContext->m_cancelRequested)
+    {
+        callContext->SignalFailure(cResultCancelled);
+        m_callContext = 0;
+        Cleanup();
+        return cExecuteResultFinished;
+    }
+    if (m_protocolCallContext.GetState() != nex::CallContext::CallFailed)
+    {
+        if (m_protocolCallContext.GetState() == nex::CallContext::CallSucceeded)
+        {
+            callContext->SignalSuccess(0);
+            m_callContext = 0;
+            m_protocolCallContext.Reset();
+            Cleanup();
+            return cExecuteResultFinished;
+        }
+        return cExecuteResultNextStep;
+    }
+    nex::qResult result = m_protocolCallContext.GetResult();
+    if (result.Equals(static_cast<int>(0x8001000Au)))
+    {
+        callContext->SignalFailure(cResultInvalidArgument);
+        m_callContext = 0;
+        m_protocolCallContext.Reset();
+        Cleanup();
+        return cExecuteResultFinished;
+    }
+    Result::SetNexNetworkErrorCode(nex::ErrorCodeConverter::ConvertToNetworkErrorCode(result));
+    m_callContext->SignalFailure(cResultNexError);
+    m_callContext = 0;
+    m_protocolCallContext.Reset();
+    Cleanup();
+    return cExecuteResultFinished;
 }
 
-uint64_t NexNotificationDataJob::Cleanup()
+unsigned int NexNotificationDataJob::WaitRetrieveNotificationData()
 {
-    return static_cast<uint64_t>(state_);
+    common::CallContext* callContext = m_callContext;
+    if (callContext != 0 && callContext->m_cancelRequested)
+    {
+        callContext->SignalFailure(cResultCancelled);
+        m_callContext = 0;
+        Cleanup();
+        return cExecuteResultFinished;
+    }
+    if (m_protocolCallContext.GetState() != nex::CallContext::CallFailed)
+    {
+        if (m_protocolCallContext.GetState() == nex::CallContext::CallSucceeded)
+        {
+            callContext->SignalSuccess(0);
+            m_callContext = 0;
+            m_protocolCallContext.Reset();
+            Cleanup();
+            return cExecuteResultFinished;
+        }
+        return cExecuteResultNextStep;
+    }
+    nex::qResult result = m_protocolCallContext.GetResult();
+    if (result.Equals(static_cast<int>(0x8001000Au)))
+    {
+        callContext->SignalFailure(cResultInvalidArgument);
+        m_callContext = 0;
+        m_protocolCallContext.Reset();
+        Cleanup();
+        return cExecuteResultFinished;
+    }
+    Result::SetNexNetworkErrorCode(nex::ErrorCodeConverter::ConvertToNetworkErrorCode(result));
+    m_callContext->SignalFailure(cResultNexError);
+    m_callContext = 0;
+    m_protocolCallContext.Reset();
+    Cleanup();
+    return cExecuteResultFinished;
 }
 
 }}}

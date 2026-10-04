@@ -7,8 +7,8 @@ const int kInvalidParameterResult = 0x10c07;
 }
 
 NexJoinRandomSessionSetting::NexJoinRandomSessionSetting()
-    : m_sessionSearchCriteriaSize(0), m_matchmakeUniqueKeyword(false),
-      m_myBlockListUsed(true), m_othersBlockListUsed(false)
+    : m_sessionSearchCriteriaSize(0), m_myBlockListUsed(true), m_othersBlockListUsed(true),
+      m_matchmakeUniqueKeyword(false)
 {
     Reset();
 }
@@ -45,9 +45,9 @@ void NexJoinRandomSessionSetting::Reset()
     m_createSessionSetting.Reset();
     for (unsigned int i = 0; i < 2; ++i) m_sessionSearchCriteria[i].Reset();
     m_sessionSearchCriteriaSize = 0;
-    m_matchmakeUniqueKeyword = false;
     m_myBlockListUsed = true;
-    m_othersBlockListUsed = false;
+    m_othersBlockListUsed = true;
+    m_matchmakeUniqueKeyword = false;
 }
 Result NexJoinRandomSessionSetting::SetCreateSessionSetting(const session::CreateSessionSetting* setting)
 {

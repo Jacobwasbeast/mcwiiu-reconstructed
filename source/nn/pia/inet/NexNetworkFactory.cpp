@@ -1,390 +1,261 @@
 #include "nn/pia/inet/NexNetworkFactory.hpp"
+#include "nn/pia/common/MonitoringDataSender.hpp"
+#include "nn/pia/common/StepSequenceJob.hpp"
+#include "nn/pia/inet/MonitoringDataSender.hpp"
+#include "nn/pia/session/ICommunityInfoList.hpp"
+#include "nn/pia/session/IMatchmakeSession.hpp"
+#include "nn/pia/session/ISessionInfoList.hpp"
+#include "nn/pia/session/MeshLayerController.hpp"
+#include "nn/pia/String.hpp"
+#include "nn/pia/transport/ConnectStationJob.hpp"
+#include "nn/pia/transport/DisconnectStationJob.hpp"
+#include "nn/pia/transport/MissingStationHandler.hpp"
+#include "nn/pia/transport/RelayStationPacketHandler.hpp"
 
 namespace nn { namespace pia { namespace inet {
 
-uint32_t NexNetworkFactory::CreateSelf()
-{
-    return static_cast<uint32_t>(state_);
-}
-
-uint64_t NexNetworkFactory::DeleteSelf(transport::NetworkFactory* a1)
-{
-    return static_cast<uint64_t>(state_);
-}
-
-uint64_t NexNetworkFactory::CreateProtocols()
-{
-    return static_cast<uint64_t>(state_);
-}
-
-uint32_t NexNetworkFactory::CreatePacketHandler()
-{
-    return static_cast<uint32_t>(state_);
-}
-
-uint32_t NexNetworkFactory::CreateMissingStationHandler()
-{
-    return static_cast<uint32_t>(state_);
-}
-
-uint64_t NexNetworkFactory::DeletePacketHandler(transport::PacketHandler* a1)
-{
-    return static_cast<uint64_t>(state_);
-}
-
-uint64_t NexNetworkFactory::DeleteMissingStationHandler(transport::MissingStationHandler* a1)
-{
-    return static_cast<uint64_t>(state_);
-}
-
-int32_t NexNetworkFactory::CreateInputStream()
-{
-    return static_cast<int32_t>(state_);
-}
-
-int32_t NexNetworkFactory::CreateOutputStream()
-{
-    return static_cast<int32_t>(state_);
-}
-
-uint64_t NexNetworkFactory::DeleteInputStream(common::IPacketInput* a1)
-{
-    return static_cast<uint64_t>(state_);
-}
-
-uint64_t NexNetworkFactory::DeleteOutputStream(common::IPacketOutput* a1)
-{
-    return static_cast<uint64_t>(state_);
-}
-
-uint32_t NexNetworkFactory::CreateConnectStationJob()
-{
-    return static_cast<uint32_t>(state_);
-}
-
-uint32_t NexNetworkFactory::CreateDisconnectStationJob()
-{
-    return static_cast<uint32_t>(state_);
-}
-
-uint64_t NexNetworkFactory::DeleteConnectStationJob(transport::ConnectStationJob* a1)
-{
-    return static_cast<uint64_t>(state_);
-}
+namespace {
 
-uint64_t NexNetworkFactory::DeleteDisconnectStationJob(transport::DisconnectStationJob* a1)
-{
-    return static_cast<uint64_t>(state_);
-}
-
-uint32_t NexNetworkFactory::CreateCreateMeshJob()
-{
-    return static_cast<uint32_t>(state_);
-}
-
-uint32_t NexNetworkFactory::CreateJoinMeshJob()
-{
-    return static_cast<uint32_t>(state_);
-}
-
-uint32_t NexNetworkFactory::CreateLeaveMeshJob()
-{
-    return static_cast<uint32_t>(state_);
-}
-
-uint32_t NexNetworkFactory::CreateProcessHostMigrationJob()
-{
-    return static_cast<uint32_t>(state_);
-}
-
-uint32_t NexNetworkFactory::CreateLeaveWithHostMigrationJob()
-{
-    return static_cast<uint32_t>(state_);
-}
-
-uint32_t NexNetworkFactory::CreateKickoutManageJob()
-{
-    return static_cast<uint32_t>(state_);
-}
-
-uint64_t NexNetworkFactory::DeleteCreateMeshJob(common::StepSequenceJob* a1)
-{
-    return static_cast<uint64_t>(state_);
-}
-
-uint64_t NexNetworkFactory::DeleteJoinMeshJob(common::StepSequenceJob* a1)
-{
-    return static_cast<uint64_t>(state_);
-}
-
-uint64_t NexNetworkFactory::DeleteLeaveMeshJob(common::StepSequenceJob* a1)
-{
-    return static_cast<uint64_t>(state_);
-}
-
-uint64_t NexNetworkFactory::DeleteProcessHostMigrationJob(common::StepSequenceJob* a1)
-{
-    return static_cast<uint64_t>(state_);
-}
-
-uint64_t NexNetworkFactory::DeleteLeaveWithHostMigrationJob(common::StepSequenceJob* a1)
-{
-    return static_cast<uint64_t>(state_);
-}
-
-uint64_t NexNetworkFactory::DeleteKickoutManageJob(common::StepSequenceJob* a1)
-{
-    return static_cast<uint64_t>(state_);
-}
-
-uint32_t NexNetworkFactory::CreateMatchCreateSessionJob()
-{
-    return static_cast<uint32_t>(state_);
-}
+enum { cMaxStationNum = 16, cHeaderSize = 28, cMtuSizeMax = 1364, cMtuSizeMin = 576 };
 
-uint32_t NexNetworkFactory::CreateMatchRandomMatchmakeJob()
-{
-    return static_cast<uint32_t>(state_);
 }
 
-uint32_t NexNetworkFactory::CreateMatchBrowseMatchmakeJob()
+NexNetworkFactory::NexNetworkFactory()
 {
-    return static_cast<uint32_t>(state_);
 }
 
-uint32_t NexNetworkFactory::CreateMatchJoinSessionJob()
+NexNetworkFactory::~NexNetworkFactory()
 {
-    return static_cast<uint32_t>(state_);
 }
 
-uint32_t NexNetworkFactory::CreateMatchLeaveSessionJob()
+unsigned int NexNetworkFactory::GetMaxStationNum() const
 {
-    return static_cast<uint32_t>(state_);
+    return cMaxStationNum;
 }
 
-uint32_t NexNetworkFactory::CreateMatchDestroySessionJob()
+unsigned int NexNetworkFactory::GetHeaderSize() const
 {
-    return static_cast<uint32_t>(state_);
+    return cHeaderSize;
 }
 
-uint32_t NexNetworkFactory::CreateMatchUpdateSessionSettingJob()
+unsigned int NexNetworkFactory::GetMtuSizeMax() const
 {
-    return static_cast<uint32_t>(state_);
+    return cMtuSizeMax;
 }
 
-uint32_t NexNetworkFactory::CreateMatchJointSessionJob()
+unsigned int NexNetworkFactory::GetMtuSizeMin() const
 {
-    return static_cast<uint32_t>(state_);
+    return cMtuSizeMin;
 }
 
-uint64_t NexNetworkFactory::DeleteMatchCreateSessionJob(common::StepSequenceJob* a1)
+int NexNetworkFactory::GetDefaultRttInitialPulseInterval() const
 {
-    return static_cast<uint64_t>(state_);
+    return 200;
 }
 
-uint64_t NexNetworkFactory::DeleteMatchRandomMatchmakeJob(common::StepSequenceJob* a1)
+bool NexNetworkFactory::IsClientRelayConnectionPermitted() const
 {
-    return static_cast<uint64_t>(state_);
+    return true;
 }
 
-uint64_t NexNetworkFactory::DeleteMatchBrowseMatchmakeJob(common::StepSequenceJob* a1)
+bool NexNetworkFactory::IsBitRateCheckPermitted() const
 {
-    return static_cast<uint64_t>(state_);
+    return true;
 }
 
-uint64_t NexNetworkFactory::DeleteMatchJoinSessionJob(common::StepSequenceJob* a1)
+void NexNetworkFactory::DeleteSelf(transport::NetworkFactory* factory)
 {
-    return static_cast<uint64_t>(state_);
+    transport::DestroyObject(factory);
 }
 
-uint64_t NexNetworkFactory::DeleteMatchLeaveSessionJob(common::StepSequenceJob* a1)
+transport::PacketHandler* NexNetworkFactory::CreatePacketHandler()
 {
-    return static_cast<uint64_t>(state_);
+    return transport::CreateObject<transport::RelayStationPacketHandler>();
 }
 
-uint64_t NexNetworkFactory::DeleteMatchDestroySessionJob(common::StepSequenceJob* a1)
+void NexNetworkFactory::DeletePacketHandler(transport::PacketHandler* handler)
 {
-    return static_cast<uint64_t>(state_);
+    transport::DestroyObject(handler);
 }
 
-uint64_t NexNetworkFactory::DeleteMatchUpdateSessionSettingJob(common::StepSequenceJob* a1)
+void NexNetworkFactory::DeleteMissingStationHandler(transport::MissingStationHandler* handler)
 {
-    return static_cast<uint64_t>(state_);
+    transport::DestroyObject(handler);
 }
 
-uint64_t NexNetworkFactory::DestroyMatchJointSessionJob(common::StepSequenceJob* a1)
+void NexNetworkFactory::DeleteConnectStationJob(transport::ConnectStationJob* job)
 {
-    return static_cast<uint64_t>(state_);
+    transport::DestroyObject(job);
 }
 
-uint32_t NexNetworkFactory::CreateGenerateMatchmakeSystemPasswordJob()
+void NexNetworkFactory::DeleteDisconnectStationJob(transport::DisconnectStationJob* job)
 {
-    return static_cast<uint32_t>(state_);
+    transport::DestroyObject(job);
 }
 
-uint32_t NexNetworkFactory::CreateClearMatchmakeSystemPasswordJob()
+common::MonitoringDataSender* NexNetworkFactory::CreateMonitoringDataSender()
 {
-    return static_cast<uint32_t>(state_);
+    return transport::CreateObject<MonitoringDataSender>();
 }
 
-uint32_t NexNetworkFactory::CreateCommunityManagementJob()
+void NexNetworkFactory::DeleteMonitoringDataSender(common::MonitoringDataSender* sender)
 {
-    return static_cast<uint32_t>(state_);
+    transport::DestroyObject(sender);
 }
 
-uint64_t NexNetworkFactory::DeleteGenerateMatchmakeSystemPasswordJob(common::StepSequenceJob* a1)
+unsigned int NexNetworkFactory::GetHostMigrationMode() const
 {
-    return static_cast<uint64_t>(state_);
+    return 2;
 }
 
-uint64_t NexNetworkFactory::DeleteClearMatchmakeSystemPasswordJob(common::StepSequenceJob* a1)
+unsigned int NexNetworkFactory::GetBrowseSessionInfoListSizeMax() const
 {
-    return static_cast<uint64_t>(state_);
+    return 300;
 }
 
-uint64_t NexNetworkFactory::DeleteCommunityManagementJob(common::StepSequenceJob* a1)
+unsigned int NexNetworkFactory::GetBrowseCommunityInfoListSizeMax() const
 {
-    return static_cast<uint64_t>(state_);
+    return 100;
 }
 
-uint32_t NexNetworkFactory::CreateSessionInfoList(uint16_t a1)
+bool NexNetworkFactory::IsBindRequired() const
 {
-    return static_cast<uint32_t>(state_);
+    return true;
 }
 
-uint32_t NexNetworkFactory::CreateCommunityInfoList(uint8_t a1)
+bool NexNetworkFactory::IsServerRequired() const
 {
-    return static_cast<uint32_t>(state_);
+    return true;
 }
 
-uint32_t NexNetworkFactory::CreateMatchmakeSession()
+bool NexNetworkFactory::IsMultiCandidatePermitted() const
 {
-    return static_cast<uint32_t>(state_);
+    return true;
 }
 
-uint32_t NexNetworkFactory::CreateMatchmakeSessionSystemPassword()
+bool NexNetworkFactory::IsJointSessionPermitted() const
 {
-    return static_cast<uint32_t>(state_);
+    return true;
 }
 
-uint32_t NexNetworkFactory::CreateMatchMeshLayerController()
+bool NexNetworkFactory::IsMultiplayerPermitted() const
 {
-    return static_cast<uint32_t>(state_);
+    return true;
 }
 
-uint64_t NexNetworkFactory::DeleteSessionInfoList(session::ISessionInfoList* a1)
+bool NexNetworkFactory::IsRecentPlayRecordPermitted() const
 {
-    return static_cast<uint64_t>(state_);
+    return true;
 }
 
-uint64_t NexNetworkFactory::DeleteCommunityInfoList(session::ICommunityInfoList* a1)
+void NexNetworkFactory::DeleteCreateMeshJob(common::StepSequenceJob* object)
 {
-    return static_cast<uint64_t>(state_);
+    transport::DestroyObject(object);
 }
 
-uint64_t NexNetworkFactory::DeleteMatchmakeSession(session::IMatchmakeSession* a1)
+void NexNetworkFactory::DeleteJoinMeshJob(common::StepSequenceJob* object)
 {
-    return static_cast<uint64_t>(state_);
+    transport::DestroyObject(object);
 }
 
-uint64_t NexNetworkFactory::DeleteMatchmakeSessionSystemPassword(common::String* a1)
+void NexNetworkFactory::DeleteLeaveMeshJob(common::StepSequenceJob* object)
 {
-    return static_cast<uint64_t>(state_);
+    transport::DestroyObject(object);
 }
 
-uint64_t NexNetworkFactory::DeleteMatchMeshLayerController(session::MeshLayerController* a1)
+void NexNetworkFactory::DeleteProcessHostMigrationJob(common::StepSequenceJob* object)
 {
-    return static_cast<uint64_t>(state_);
+    transport::DestroyObject(object);
 }
 
-uint32_t NexNetworkFactory::CreateMonitoringDataSender()
+void NexNetworkFactory::DeleteLeaveWithHostMigrationJob(common::StepSequenceJob* object)
 {
-    return static_cast<uint32_t>(state_);
+    transport::DestroyObject(object);
 }
 
-uint64_t NexNetworkFactory::DeleteMonitoringDataSender(common::MonitoringDataSender* a1)
+void NexNetworkFactory::DeleteKickoutManageJob(common::StepSequenceJob* object)
 {
-    return static_cast<uint64_t>(state_);
+    transport::DestroyObject(object);
 }
 
-uint32_t NexNetworkFactory::GetMaxStationNum() const
+void NexNetworkFactory::DeleteMatchCreateSessionJob(common::StepSequenceJob* object)
 {
-    return static_cast<uint32_t>(state_);
+    transport::DestroyObject(object);
 }
 
-uint32_t NexNetworkFactory::GetHeaderSize() const
+void NexNetworkFactory::DeleteMatchRandomMatchmakeJob(common::StepSequenceJob* object)
 {
-    return static_cast<uint32_t>(state_);
+    transport::DestroyObject(object);
 }
 
-uint32_t NexNetworkFactory::GetHostMigrationMode() const
+void NexNetworkFactory::DeleteMatchBrowseMatchmakeJob(common::StepSequenceJob* object)
 {
-    return static_cast<uint32_t>(state_);
+    transport::DestroyObject(object);
 }
 
-uint32_t NexNetworkFactory::GetBrowseSessionInfoListSizeMax() const
+void NexNetworkFactory::DeleteMatchJoinSessionJob(common::StepSequenceJob* object)
 {
-    return static_cast<uint32_t>(state_);
+    transport::DestroyObject(object);
 }
 
-uint32_t NexNetworkFactory::GetBrowseCommunityInfoListSizeMax() const
+void NexNetworkFactory::DeleteMatchLeaveSessionJob(common::StepSequenceJob* object)
 {
-    return static_cast<uint32_t>(state_);
+    transport::DestroyObject(object);
 }
 
-uint32_t NexNetworkFactory::GetMtuSizeMax() const
+void NexNetworkFactory::DeleteMatchDestroySessionJob(common::StepSequenceJob* object)
 {
-    return static_cast<uint32_t>(state_);
+    transport::DestroyObject(object);
 }
 
-uint32_t NexNetworkFactory::GetMtuSizeMin() const
+void NexNetworkFactory::DestroyMatchJointSessionJob(common::StepSequenceJob* object)
 {
-    return static_cast<uint32_t>(state_);
+    transport::DestroyObject(object);
 }
 
-uint32_t NexNetworkFactory::GetDefaultRttInitialPulseInterval() const
+void NexNetworkFactory::DeleteMatchUpdateSessionSettingJob(common::StepSequenceJob* object)
 {
-    return static_cast<uint32_t>(state_);
+    transport::DestroyObject(object);
 }
 
-uint32_t NexNetworkFactory::IsBindRequired() const
+void NexNetworkFactory::DeleteGenerateMatchmakeSystemPasswordJob(common::StepSequenceJob* object)
 {
-    return static_cast<uint32_t>(state_);
+    transport::DestroyObject(object);
 }
 
-uint32_t NexNetworkFactory::IsServerRequired() const
+void NexNetworkFactory::DeleteClearMatchmakeSystemPasswordJob(common::StepSequenceJob* object)
 {
-    return static_cast<uint32_t>(state_);
+    transport::DestroyObject(object);
 }
 
-uint32_t NexNetworkFactory::IsMultiCandidatePermitted() const
+void NexNetworkFactory::DeleteCommunityManagementJob(common::StepSequenceJob* object)
 {
-    return static_cast<uint32_t>(state_);
+    transport::DestroyObject(object);
 }
 
-uint32_t NexNetworkFactory::IsClientRelayConnectionPermitted() const
+void NexNetworkFactory::DeleteSessionInfoList(session::ISessionInfoList* list)
 {
-    return static_cast<uint32_t>(state_);
+    transport::DestroyObject(list);
 }
 
-uint32_t NexNetworkFactory::IsJointSessionPermitted() const
+void NexNetworkFactory::DeleteCommunityInfoList(session::ICommunityInfoList* list)
 {
-    return static_cast<uint32_t>(state_);
+    transport::DestroyObject(list);
 }
 
-uint32_t NexNetworkFactory::IsMultiplayerPermitted() const
+void NexNetworkFactory::DeleteMatchmakeSession(session::IMatchmakeSession* session)
 {
-    return static_cast<uint32_t>(state_);
+    transport::DestroyObject(session);
 }
 
-uint32_t NexNetworkFactory::IsRecentPlayRecordPermitted() const
+void NexNetworkFactory::DeleteMatchmakeSessionSystemPassword(common::String* password)
 {
-    return static_cast<uint32_t>(state_);
+    transport::DestroyObject(password);
 }
 
-uint32_t NexNetworkFactory::IsBitRateCheckPermitted() const
+void NexNetworkFactory::DeleteMatchMeshLayerController(session::MeshLayerController* controller)
 {
-    return static_cast<uint32_t>(state_);
+    transport::DestroyObject(controller);
 }
 
 }}}

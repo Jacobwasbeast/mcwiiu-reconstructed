@@ -4,10 +4,11 @@
 #include "nn/pia/Common.hpp"
 #include "nn/pia/inet/NexCreateSessionSetting.hpp"
 #include "nn/pia/inet/NexSessionSearchCriteria.hpp"
+#include "nn/pia/session/JoinRandomSessionSetting.hpp"
 
 namespace nn { namespace pia { namespace inet {
 
-class NexJoinRandomSessionSetting
+class NexJoinRandomSessionSetting : public session::JoinRandomSessionSetting
 {
 public:
     NexJoinRandomSessionSetting();
@@ -32,9 +33,9 @@ private:
     NexCreateSessionSetting m_createSessionSetting;
     NexSessionSearchCriteria m_sessionSearchCriteria[2];
     unsigned int m_sessionSearchCriteriaSize;
-    bool m_matchmakeUniqueKeyword;
     bool m_myBlockListUsed;
     bool m_othersBlockListUsed;
+    bool m_matchmakeUniqueKeyword;
 };
 
 }}}
