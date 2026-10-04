@@ -7,6 +7,7 @@
 #include "nn/pia/Transport.hpp"
 #include "nn/pia/transport/TransportSupport.hpp"
 #include "platform/wiiu/pead.hpp"
+#include "vendor/__N_28_transport_StationManager_cpp_626c851d.hpp"
 
 #include <new>
 #include <cstddef>
@@ -22,9 +23,8 @@ struct StationPoolEntry {
 }
 static Station* stationAt(common::ListNode* node) { return reinterpret_cast<Station*>(reinterpret_cast<unsigned char*>(node) + offsetof(StationPoolEntry, station)); }
 static const Station* stationAt(const common::ListNode* node) { return reinterpret_cast<const Station*>(reinterpret_cast<const unsigned char*>(node) + offsetof(StationPoolEntry, station)); }
-static bool isValidStationIndex(StationIndex index) { return index <= 0x1f || index == static_cast<StationIndex>(0xfe); }
 
-StationManager::StationManager() : m_stationList(), m_freeStationList(), m_stationOffset(0), m_stationPool(0), m_stationNum(0), m_stationStorage(0), m_stations(), m_freeStations(), m_localStation(0), m_invalidStationIndex(0xfd) {}
+StationManager::StationManager() : m_stationList(), m_freeStationList(), m_stationOffset(0), m_stationPool(0), m_stationNum(0), m_stationStorage(0), m_stations(), m_freeStations(), m_localStation(0), m_invalidStationIndex(static_cast<StationIndex>(0xfd)) {}
 StationManager::~StationManager() { if (m_stationStorage != 0) Finalize(); }
 
 Result StationManager::CreateInstance() {
@@ -112,12 +112,12 @@ void StationManager::DestroyStation(Station* station) {
         return;
     }
 }
-Station* StationManager::GetStation(StationIndex index) { if (!isValidStationIndex(index)) return 0; for (unsigned int i = 0; i < m_stations.size; ++i) if (m_stations.data[i]->m_field10 == static_cast<unsigned int>(index)) return m_stations.data[i]; return 0; }
+Station* StationManager::GetStation(StationIndex index) { if (!__N_28_transport_StationManager_cpp_626c851d::isValidStationIndex(index)) return 0; for (unsigned int i = 0; i < m_stations.size; ++i) if (m_stations.data[i]->m_field10 == static_cast<unsigned int>(index)) return m_stations.data[i]; return 0; }
 const Station* StationManager::GetStation(StationIndex index) const { return const_cast<StationManager*>(this)->GetStation(index); }
 Station* StationManager::GetStation(unsigned long long id) { return GetStation(Conv2StationIndex(id)); }
 Station* StationManager::GetStation(const common::StationAddress& address) { for (unsigned int i = 0; i < m_stations.size; ++i) if (m_stations.data[i]->m_stationAddress == address) return m_stations.data[i]; return 0; }
 Station* StationManager::GetStationByStationIdWithoutConvert(unsigned long long id) { const unsigned int high = static_cast<unsigned int>(id >> 32); const unsigned int low = static_cast<unsigned int>(id); for (unsigned int i = 0; i < m_stations.size; ++i) if (m_stations.data[i]->m_field18 == high && m_stations.data[i]->m_field1c == low) return m_stations.data[i]; return 0; }
-Result StationManager::GetStationAddress(common::StationAddress* address, StationIndex index) const { if (address == 0 || !isValidStationIndex(index)) return 0x10c07; const Station* station = GetStation(index); if (station == 0) return 0x2c0a; *address = station->m_stationAddress; return 0; }
+Result StationManager::GetStationAddress(common::StationAddress* address, StationIndex index) const { if (address == 0 || !__N_28_transport_StationManager_cpp_626c851d::isValidStationIndex(index)) return 0x10c07; const Station* station = GetStation(index); if (station == 0) return 0x2c0a; *address = station->m_stationAddress; return 0; }
 unsigned short StationManager::GetValidStationNum() const { return static_cast<unsigned short>(m_stations.size); }
 unsigned int StationManager::GetParticipatingStationBitmap(bool includeLocal) const { unsigned int result = 0; for (unsigned int i = 0; i < m_stations.size; ++i) { const Station* s = m_stations.data[i]; if (s->m_field10 < 32 && s->m_field20 == 5) result |= 1u << s->m_field10; } if (!includeLocal && m_localStation != 0 && m_localStation->m_field10 < 32) result &= ~(1u << m_localStation->m_field10); return result; }
 void StationManager::Trace(unsigned long long) const {}

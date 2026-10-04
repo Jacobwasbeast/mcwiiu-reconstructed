@@ -319,7 +319,7 @@ Result ReliableProtocol::Send(StationIndex stationIndex, const void* data, unsig
 
 Result ReliableProtocol::Send(unsigned long long stationId, const void* data, unsigned int size)
 {
-    StationIndex index = 0;
+    StationIndex index = static_cast<StationIndex>(0);
     Result r = g_piaTransport->ConvertToStationIndex(&index, stationId);
     if (r == 0)
         return Send(index, data, size);

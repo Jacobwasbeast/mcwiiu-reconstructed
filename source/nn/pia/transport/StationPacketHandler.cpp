@@ -313,7 +313,7 @@ bool StationPacketHandler::AssignHostMessage(unsigned int size, unsigned int siz
     if (packet == 0)
     {
         const common::StationAddress address(GetStationConnectionInfoTable()->m_hostStationAddress);
-        packet = AssignPacket(0xfe, 0, address, isPriority, field602, field604);
+        packet = AssignPacket(static_cast< ::nn::pia::StationIndex>(0xfe), 0, address, isPriority, field602, field604);
         if (packet == 0)
             return false;
     }
@@ -357,7 +357,7 @@ bool StationPacketHandler::AssignDirectMessage(unsigned int stationBitmap, unsig
         common::Packet* packet;
         {
             common::StationAddress address;
-            ::nn::pia::StationIndex stationIndex = 0xfd;
+            ::nn::pia::StationIndex stationIndex = static_cast< ::nn::pia::StationIndex>(0xfd);
             if (pead::BitFlagUtil::countOnBit(selected) == 1)
             {
                 stationIndex = static_cast< ::nn::pia::StationIndex>(
@@ -409,7 +409,7 @@ bool StationPacketHandler::AssignAllMessage(unsigned int stationBitmap, unsigned
     if (packet == 0)
     {
         common::StationAddress address;
-        packet = AssignPacket(0xff, stationBitmap, address, isPriority, field602, field604);
+        packet = AssignPacket(static_cast< ::nn::pia::StationIndex>(0xff), stationBitmap, address, isPriority, field602, field604);
         if (packet == 0)
             return false;
     }

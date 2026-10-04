@@ -139,7 +139,7 @@ bool Station::Startup(unsigned long long id, StationIndex index, const common::S
 
 bool Station::Startup(const common::StationAddress& address)
 {
-    helperStartupCleanup(true, 0, 0xfd, address, static_cast<StationState>(1));
+    helperStartupCleanup(true, 0, static_cast<StationIndex>(0xfd), address, static_cast<StationState>(1));
     return true;
 }
 
@@ -147,7 +147,7 @@ bool Station::Startup()
 {
     common::StationAddress address;
     address.Clear();
-    helperStartupCleanup(true, 0, 0xfd, address, static_cast<StationState>(1));
+    helperStartupCleanup(true, 0, static_cast<StationIndex>(0xfd), address, static_cast<StationState>(1));
     return true;
 }
 
@@ -155,7 +155,7 @@ void Station::Cleanup()
 {
     common::StationAddress address;
     address.Clear();
-    helperStartupCleanup(false, 0, 0xfd, address, static_cast<StationState>(0));
+    helperStartupCleanup(false, 0, static_cast<StationIndex>(0xfd), address, static_cast<StationState>(0));
 }
 
 int Station::GetRtt() const

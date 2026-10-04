@@ -160,7 +160,7 @@ Result PacketHandler::Startup(PacketStream::Writer* writer, PacketStream::Reader
     }
     else if (m_cryptoSetting.m_mode == 1)
     {
-        const unsigned int blockSize = common::Crypto::GetBlockSize(1);
+        const unsigned int blockSize = common::Crypto::GetBlockSize(common::Crypto::cModeAesGcm);
         m_packetSize =
             ((packetSize - cPacketHeaderSize) / blockSize) * blockSize + cPacketHeaderSize;
     }
@@ -414,12 +414,12 @@ void PacketHandler::BeginDispatch(const common::Time&)
 {
     m_reader->PullAll();
     common::Crypto::Setting setting;
-    setting.m_mode = 0;
+    setting.m_mode = common::Crypto::cModeNone;
     setting.m_key = 0;
     setting.m_keyLength = 0;
     if (m_cryptoSetting.m_mode == 1)
     {
-        setting.m_mode = 1;
+        setting.m_mode = common::Crypto::cModeAesGcm;
         setting.m_key = m_cryptoSetting.m_key;
         setting.m_keyLength = sizeof(m_cryptoSetting.m_key);
     }
@@ -534,7 +534,7 @@ void PacketHandler::EndDispatch(const common::Time&)
         common::Crypto::Setting setting;
         if (m_cryptoSetting.m_mode == 1)
         {
-            setting.m_mode = 1;
+            setting.m_mode = common::Crypto::cModeAesGcm;
             setting.m_key = m_cryptoSetting.m_key;
             setting.m_keyLength = sizeof(m_cryptoSetting.m_key);
         }

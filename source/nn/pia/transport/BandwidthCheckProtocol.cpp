@@ -10,6 +10,7 @@
 #include "nn/pia/transport/ProtocolMessageWriter.hpp"
 #include "nn/pia/transport/Station.hpp"
 #include "nn/pia/transport/StationManager.hpp"
+#include "vendor/__N_36_transport_BandwidthCheckProtocol_cpp_b607135d.hpp"
 #include "nn/pia/transport/StationPacketHandler.hpp"
 #include "platform/wiiu/pead.hpp"
 
@@ -87,11 +88,11 @@ BandwidthCheckProtocol::BandwidthCheckProtocol()
       m_measurementTime(static_cast<unsigned int>(-1)),
       m_bulkPacketSize(0), m_completionTimeout(0), m_measurementCount(0),
       m_senderState(SenderState_None), m_senderStartTime(), m_ackReceived(false),
-      m_bulkStartTime(), m_uplinkBitRate(0), m_senderStation(0xfd),
+      m_bulkStartTime(), m_uplinkBitRate(0), m_senderStation(static_cast<StationIndex>(0xfd)),
       m_bulkPacketSequence(0), m_cancelRequested(false), m_receiverState(ReceiverState_None),
       m_receiverStartTime(), m_bulkArrivalTime(), m_responseSentTime(), m_ackSentTime(),
       m_receivedBytes(0),
-      m_receiverStation(0xfd), m_stationAddress(), m_receivedBulkPacketCount(0),
+      m_receiverStation(static_cast<StationIndex>(0xfd)), m_stationAddress(), m_receivedBulkPacketCount(0),
       m_firstBulkPacketSequence(-1), m_lastBulkPacketSequence(-1), m_receiverActive(false),
       m_isServer(false), m_measurementResult(0)
 {
@@ -105,7 +106,7 @@ void BandwidthCheckProtocol::initSender()
 {
     m_senderStartTime.m_tick = 0;
     m_uplinkBitRate = -1;
-    m_senderStation = 0xfd;
+    m_senderStation = static_cast<StationIndex>(0xfd);
     m_bulkPacketSequence = 0;
     m_senderState = SenderState_None;
     m_ackReceived = false;
@@ -117,7 +118,7 @@ void BandwidthCheckProtocol::initSender()
 void BandwidthCheckProtocol::initReceiver()
 {
     m_receiverState = ReceiverState_None;
-    m_receiverStation = 0xfd;
+    m_receiverStation = static_cast<StationIndex>(0xfd);
     m_receivedBytes = 0;
     m_bulkArrivalTime.m_tick = 0;
     m_receiverStartTime.m_tick = 0;
@@ -244,7 +245,7 @@ unsigned int BandwidthCheckProtocol::IsReady() const
 
 Result BandwidthCheckProtocol::StartSend(StationIndex stationIndex)
 {
-    if (stationIndex < 0 || stationIndex >= 32)
+    if (__N_36_transport_BandwidthCheckProtocol_cpp_b607135d::isUnavailableStationIndex(stationIndex))
         return 0x10c07;
     if (!m_initialized)
         return 0x10c0c;
