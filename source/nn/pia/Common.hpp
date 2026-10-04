@@ -7,8 +7,24 @@ namespace nn
 {
 namespace pia
 {
-typedef int Result;
-typedef short StationIndex;
+class Result
+{
+public:
+    Result() {}
+    Result(int code) : m_code(code) {}
+    Result(const Result& other) : m_code(other.m_code) {}
+    operator int() const { return m_code; }
+
+    int GetErrorCode() const;
+    static void SetNexNetworkErrorCode(unsigned int code);
+    static void ClearNexNetworkErrorCode();
+
+    int m_code;
+};
+
+enum StationIndex
+{
+};
 
 namespace common
 {

@@ -228,7 +228,7 @@ Result Transport::ConvertToStationIndex(StationIndex* index,
     const Result result = m_stationIdTable->FindByStationId(&entry, stationId);
     if (result != 0)
         return result;
-    *index = entry.stationIndex;
+    *index = static_cast<StationIndex>(entry.stationIndex);
     return 0;
 }
 StationIndex Transport::ConvertToStationIndexUnsafe(uint64_t stationId) const

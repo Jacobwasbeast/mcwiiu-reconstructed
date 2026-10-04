@@ -104,7 +104,7 @@ void ProtocolManager::CleanupProtocols()
 
 ProtocolId ProtocolManager::CreateProtocolImpl(Protocol* protocol, ProtocolId id)
 {
-    const unsigned short value = static_cast<unsigned short>(id);
+    const unsigned short value = id;
     const unsigned char type = static_cast<unsigned char>(value >> 8);
     if (m_networkFactory == 0 ||
         m_networkFactory->IsSupportedProtocol(type) == 0)
@@ -138,7 +138,7 @@ ProtocolId ProtocolManager::CreateProtocolImpl(Protocol* protocol, ProtocolId id
     return ProtocolId(value);
 }
 
-void ProtocolManager::DestroyProtocol(ProtocolId id)
+void ProtocolManager::DestroyProtocol(unsigned short id)
 {
     common::ListNode* sentinel = m_protocols.Sentinel();
     for (common::ListNode* node = sentinel->next; node != sentinel;
@@ -146,14 +146,13 @@ void ProtocolManager::DestroyProtocol(ProtocolId id)
     {
         Protocol* protocol = reinterpret_cast<Protocol*>(
             reinterpret_cast<char*>(node) - m_nodeOffset);
-        if (static_cast<unsigned short>(protocol->mProtocolId) !=
-            static_cast<unsigned short>(id))
+        if (static_cast<unsigned short>(protocol->mProtocolId) != id)
             continue;
         if (g_piaProtocolMessageFilteringManager != 0 &&
             protocol->IsProtocolFilteringEnabled() == 0)
         {
             g_piaProtocolMessageFilteringManager->RemoveNoFilteringProtocolType(
-                static_cast<unsigned char>(static_cast<unsigned short>(id) >> 8));
+                static_cast<unsigned char>(id >> 8));
         }
         m_protocols.EraseNode(static_cast<common::ListNode*>(protocol));
         DestroyProtocolStorage(protocol);
@@ -172,13 +171,13 @@ UnreliableProtocol* ProtocolManager::AllocProtocol(unsigned int size)
 
 Protocol* ProtocolManager::SearchProtocol(ProtocolId id, unsigned char type)
 {
-    if ((static_cast<unsigned short>(id) >> 8) != type)
+    if ((id >> 8) != type)
         return 0;
     common::ListNode* sentinel = m_protocols.Sentinel();
     for (common::ListNode* node = sentinel->next; node != sentinel; node = node->next)
     {
         Protocol* protocol = reinterpret_cast<Protocol*>(reinterpret_cast<char*>(node) - m_nodeOffset);
-        if (static_cast<unsigned short>(protocol->mProtocolId) == static_cast<unsigned short>(id))
+        if (static_cast<unsigned short>(protocol->mProtocolId) == id)
             return protocol;
     }
     return 0;

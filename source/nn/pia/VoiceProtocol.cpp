@@ -31,7 +31,7 @@ VoiceProtocol::VoiceProtocol()
       m_secondaryState(0),
       m_vctSession(0),
       m_auxiliarySession(0),
-      m_stationIndex(0xfd),
+      m_stationIndex(static_cast<StationIndex>(0xfd)),
       m_codec(4),
       m_bufferSize(0x90),
       m_maxPlayers(10),

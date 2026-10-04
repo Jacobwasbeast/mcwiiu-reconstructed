@@ -132,11 +132,12 @@ public:
     UnreliableProtocol* AllocProtocol(unsigned int size);
     ProtocolId CreateProtocolImpl(Protocol* protocol, ProtocolId id);
     Protocol* SearchProtocol(ProtocolId id, unsigned char type);
-    void DestroyProtocol(ProtocolId id);
+    void DestroyProtocol(unsigned short id);
 private:
     NetworkFactory* m_networkFactory;
     common::ListBase m_protocols;
     int m_nodeOffset;
+public:
     unsigned char m_started;
 };
 extern ProtocolManager* g_piaProtocolManager;

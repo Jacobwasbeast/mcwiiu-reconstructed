@@ -15,7 +15,7 @@ struct ListNode
 class ListBase
 {
 public:
-    ListBase();
+    ListBase() { Init(); }
     void Init();
     void InsertBeforeNode(ListNode* node, ListNode* newNode);
     void InsertAfterNode(ListNode* node, ListNode* newNode);
@@ -23,8 +23,8 @@ public:
     bool IsIncludeNode(const ListNode* node) const;
     ListNode* PopFrontNode();
     ListNode* PopBackNode();
-    ListNode* Sentinel();
-    const ListNode* Sentinel() const;
+    ListNode* Sentinel() { return &mSentinel; }
+    const ListNode* Sentinel() const { return &mSentinel; }
     void ClearNode();
     void RotateNode(ListNode* node);
 

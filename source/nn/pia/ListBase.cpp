@@ -3,11 +3,6 @@
 namespace nn { namespace pia { namespace common {
 
 
-ListBase::ListBase()
-{
-    Init();
-}
-
 void ListBase::Init()
 {
     mSentinel.prev = &mSentinel;
@@ -72,8 +67,5 @@ ListNode* ListBase::PopBackNode()
     EraseNode(node);
     return node;
 }
-
-ListNode* ListBase::Sentinel() { return &mSentinel; }
-const ListNode* ListBase::Sentinel() const { return &mSentinel; }
 
 }}}
