@@ -78,10 +78,9 @@ public:
     void SendDisconnectionRequest(StationIndex stationIndex, bool relay);
     void SendDisconnectionRequest(const common::StationAddress& address);
 
-protected:
     friend class ConnectStationJob;
     unsigned int m_timeoutMsec;
-    unsigned int m_field18;
+    unsigned int m_reconnectionCount;
 };
 
 }}}

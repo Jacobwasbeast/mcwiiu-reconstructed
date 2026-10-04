@@ -1,9 +1,15 @@
 #include "nn/pia/transport/ReliableSlidingWindow.hpp"
 #include "nn/pia/transport/StationPacketHandler.hpp"
+#include "nn/pia/transport/ProtocolMessageReader.hpp"
+#include "nn/pia/transport/ProtocolMessageWriter.hpp"
+#include "nn/pia/transport/Station.hpp"
+#include "nn/pia/transport/StationManager.hpp"
+#include "nn/pia/common/TimeSpan.hpp"
 #include "nn/pia/Transport.hpp"
 #include "nn/pia/HeapManager.hpp"
 #include "platform/wiiu/pead.hpp"
 
+#include <coreinit/memory.h>
 #include <coreinit/systeminfo.h>
 #include <coreinit/time.h>
 #include <new>
@@ -13,53 +19,21 @@ namespace nn { namespace pia { namespace transport {
 
 unsigned short g_reliableSlidingWindowGeneration = 0;
 
-ReliableSlidingWindow::MessageHeader::~MessageHeader()
-{
-}
+float ReliableSlidingWindow::s_retransmissionTimeOutRate = 1.25f;
+unsigned int ReliableSlidingWindow::s_rttSamplingNum = 8;
+int (*ReliableSlidingWindow::s_resendTimeCallback)(int, int) = 0;
 
-Result ReliableSlidingWindow::MessageHeader::Serialize(unsigned char* buffer,
-                                                       unsigned int* size) const
-{
-    if (buffer == 0 || size == 0)
-        return 0x10c07;
-    buffer[0] = static_cast<unsigned char>(m_flags >> 8);
-    buffer[1] = static_cast<unsigned char>(m_flags);
-    buffer[2] = static_cast<unsigned char>(m_size >> 8);
-    buffer[3] = static_cast<unsigned char>(m_size);
-    const unsigned int words[] = { m_field08, m_sequenceId, m_field10 };
-    for (unsigned int index = 0; index < 3; ++index)
-    {
-        buffer[4 + index * 4] = static_cast<unsigned char>(words[index] >> 24);
-        buffer[5 + index * 4] = static_cast<unsigned char>(words[index] >> 16);
-        buffer[6 + index * 4] = static_cast<unsigned char>(words[index] >> 8);
-        buffer[7 + index * 4] = static_cast<unsigned char>(words[index]);
-    }
-    for (unsigned int index = 0; index < 8; ++index)
-        buffer[16 + index] = static_cast<unsigned char>(m_field18 >> (56 - index * 8));
-    *size = cHeaderSize;
-    return 0;
-}
+namespace {
 
-Result ReliableSlidingWindow::MessageHeader::Deserialize(const unsigned char* buffer)
-{
-    if (buffer == 0)
-        return 0x10c07;
-    m_flags = static_cast<unsigned short>((buffer[0] << 8) | buffer[1]);
-    m_size = static_cast<unsigned short>((buffer[2] << 8) | buffer[3]);
-    unsigned int* words[] = { &m_field08, &m_sequenceId, &m_field10 };
-    for (unsigned int index = 0; index < 3; ++index)
-        *words[index] = (static_cast<unsigned int>(buffer[4 + index * 4]) << 24) |
-            (static_cast<unsigned int>(buffer[5 + index * 4]) << 16) |
-            (static_cast<unsigned int>(buffer[6 + index * 4]) << 8) | buffer[7 + index * 4];
-    m_field18 = 0;
-    for (unsigned int index = 0; index < 8; ++index)
-        m_field18 = (m_field18 << 8) | buffer[16 + index];
-    return 0;
-}
+enum { cProfiledStationNum = 4, cProfiledSizeMin = 102400, cResendCountReset = 65535 };
+const unsigned int cInitialSequence = 4294965295u;
+const unsigned long long cNeverResendTime = 18446744073709551615ULL;
+const unsigned long long cHighestReceivedBit = 9223372036854775808ULL;
 
-unsigned int ReliableSlidingWindow::MessageHeader::GetSerializedSize() const
-{
-    return cHeaderSize;
+unsigned int g_profileByteCount[cProfiledStationNum];
+unsigned int g_profileDurationMs[cProfiledStationNum];
+unsigned short g_maximumResendCount;
+
 }
 
 void ReliableSlidingWindow::MessageData::DeserializeHeader(const void* buffer)
@@ -76,12 +50,12 @@ void ReliableSlidingWindow::MessageData::SerializeHeader()
 void ReliableSlidingWindow::MessageData::CopyPayload(void* destination, const void* source,
                                                      unsigned int size)
 {
-    memmove(destination, source, size);
+    OSBlockMove(destination, static_cast<const unsigned char*>(source) + cHeaderSize, size, FALSE);
 }
 
 void ReliableSlidingWindow::MessageData::SetPayload(const void* data, unsigned int size)
 {
-    memmove(m_data + cHeaderSize, data, size);
+    OSBlockMove(m_data + cHeaderSize, data, size, FALSE);
 }
 
 template <typename T>
@@ -100,9 +74,9 @@ template <typename T>
 Result ReliableSlidingWindow::Buffer<T>::Initialize(unsigned int capacity)
 {
     if (m_data != 0)
-        return 0x10c02;
+        return cResultAlreadyInitialized;
     if (capacity == 0)
-        return 0x10c07;
+        return cResultInvalidArgument;
     T* data = static_cast<T*>(pead::allocateFromSeadHeap(capacity * sizeof(T), common::HeapManager::GetHeap()));
     if (data != 0)
     {
@@ -130,7 +104,7 @@ template <typename T>
 void ReliableSlidingWindow::Buffer<T>::Clear()
 {
     m_head = 0;
-    m_sequence = 0xfffff82fu;
+    m_sequence = cInitialSequence;
     m_count = 0;
 }
 
@@ -216,8 +190,7 @@ Result ReliableSlidingWindow::Initialize(unsigned int sendCapacity, unsigned int
         m_sendBuffer.Finalize();
         return result;
     }
-    const unsigned long long ticksPerSecond = OSGetSystemInfo()->busClockSpeed >> 2;
-    m_retrySpan = ticksPerSecond * 500 / 1000;
+    m_retrySpan = pead::TickSpan::cFrequency * 500 / 1000;
     return 0;
 }
 
@@ -226,12 +199,12 @@ Result ReliableSlidingWindow::Startup(StationPacketHandler* handler, unsigned sh
                                       unsigned long long remoteStationId)
 {
     if (m_sendBuffer.m_capacity == 0)
-        return 0x10c0c;
+        return cResultNotInitialized;
     if (IsInCommunication())
-        return 0x10c08;
+        return cResultInvalidState;
     if (generation == g_reliableSlidingWindowGeneration || localStationId == 0 ||
         remoteStationId == 0 || localStationId == remoteStationId)
-        return 0x10c07;
+        return cResultInvalidArgument;
     m_localStationId = localStationId;
     m_generation = generation;
     m_remoteStationId = remoteStationId;
@@ -239,7 +212,7 @@ Result ReliableSlidingWindow::Startup(StationPacketHandler* handler, unsigned sh
     m_sendBuffer.Clear();
     m_receiveBuffer.Clear();
     m_time = static_cast<unsigned long long>(OSGetSystemTime());
-    m_sequence = 0xfffff82fu;
+    m_sequence = cInitialSequence;
     m_receivedBits = 0;
     m_field68 = false;
     m_byteCount = 0;
@@ -273,13 +246,13 @@ unsigned int ReliableSlidingWindow::CanPushData(unsigned int size)
 Result ReliableSlidingWindow::PushData(const void* data, unsigned int size)
 {
     if (!IsInCommunication())
-        return 0x10c08;
+        return cResultInvalidState;
     if (size != 0 && data == 0)
-        return 0x10c07;
+        return cResultInvalidArgument;
     const unsigned int count = size == 0 ? 1 : (size - 1) / m_payloadLimit + 1;
     if (count > m_sendBuffer.m_capacity - m_sendBuffer.m_count)
-        return 0x4c0d;
-    if (m_byteCount != 0 || size >= 0x19000)
+        return cResultWindowOverflow;
+    if (m_byteCount != 0 || size >= cProfiledSizeMin)
     {
         if (m_byteCount == 0)
             m_profileStart = g_piaTransport->m_time.m_tick;
@@ -310,9 +283,9 @@ Result ReliableSlidingWindow::PushData(const void* data, unsigned int size)
 Result ReliableSlidingWindow::PopData(void* buffer, unsigned int* size, unsigned int bufferSize)
 {
     if (!IsInCommunication())
-        return 0x10c08;
+        return cResultInvalidState;
     if (buffer == 0 || size == 0)
-        return 0x10c07;
+        return cResultInvalidArgument;
     unsigned int total = 0;
     unsigned int count = 0;
     while (count < m_receiveBuffer.m_count)
@@ -322,12 +295,12 @@ Result ReliableSlidingWindow::PopData(void* buffer, unsigned int* size, unsigned
             index -= m_receiveBuffer.m_capacity;
         ReceiveData* fragment = m_receiveBuffer.m_data + index;
         if (!fragment->m_valid)
-            return 0x2c09;
+            return cResultDataNotReady;
         total += fragment->m_size;
         if (fragment->m_end)
         {
             if (bufferSize < total)
-                return 0x2c03;
+                return cResultDataSizeInvalid;
             unsigned char* destination = static_cast<unsigned char*>(buffer);
             for (unsigned int offset = 0; offset <= count; ++offset)
             {
@@ -335,7 +308,7 @@ Result ReliableSlidingWindow::PopData(void* buffer, unsigned int* size, unsigned
                 if (index >= m_receiveBuffer.m_capacity)
                     index -= m_receiveBuffer.m_capacity;
                 fragment = m_receiveBuffer.m_data + index;
-                MessageData::CopyPayload(destination, fragment->m_payload, fragment->m_size);
+                OSBlockMove(destination, fragment->m_payload, fragment->m_size, FALSE);
                 destination += fragment->m_size;
             }
             *size = total;
@@ -344,7 +317,217 @@ Result ReliableSlidingWindow::PopData(void* buffer, unsigned int* size, unsigned
         }
         ++count;
     }
-    return count < m_receiveBuffer.m_capacity ? 0x2c09 : 0x2c03;
+    return count < m_receiveBuffer.m_capacity ? cResultDataNotReady : cResultDataSizeInvalid;
+}
+
+Result ReliableSlidingWindow::AnalyzeProtocolMessage(const ProtocolMessageReader& reader)
+{
+    if (!IsInCommunication())
+        return cResultInvalidState;
+    const unsigned int messageSize = reader.m_messageSize;
+    if (messageSize < cHeaderSize)
+        return cResultDataSizeInvalid;
+
+    const unsigned char* body = reader.m_message + ProtocolMessageReader::cMessageHeaderSize;
+    MessageData message;
+    message.DeserializeHeader(body);
+
+    if (m_localStationId != 0)
+    {
+        const int acknowledged =
+            static_cast<int>(message.m_header.m_field10 - m_sendBuffer.m_sequence);
+        if (acknowledged >= 0)
+        {
+            if (m_sendBuffer.m_count < static_cast<unsigned int>(acknowledged))
+                return cResultDataSizeInvalid;
+            if (acknowledged > 0)
+                m_sendBuffer.Withdraw(acknowledged);
+            unsigned long long received = message.m_header.m_field18;
+            if (m_sendBuffer.m_count != 0)
+            {
+                for (unsigned int index = 1; index < m_sendBuffer.m_count; ++index)
+                {
+                    if ((received & 1) != 0)
+                    {
+                        unsigned int slot = m_sendBuffer.m_head + index;
+                        if (slot >= m_sendBuffer.m_capacity)
+                            slot -= m_sendBuffer.m_capacity;
+                        m_sendBuffer.m_data[slot].m_sendTime = cNeverResendTime;
+                    }
+                    received >>= 1;
+                    if (received == 0)
+                        break;
+                }
+            }
+        }
+    }
+
+    if (m_byteCount != 0 && m_sendBuffer.m_count == 0)
+    {
+        const StationIndex stationIndex =
+            g_piaTransport->ConvertToStationIndexUnsafe(m_remoteStationId);
+        if (stationIndex < cProfiledStationNum)
+        {
+            g_profileByteCount[stationIndex] = m_byteCount;
+            g_profileDurationMs[stationIndex] = static_cast<unsigned int>(
+                static_cast<long long>(g_piaTransport->m_time.m_tick - m_profileStart) /
+                common::TimeSpan::GetTicksPerMSec().m_tick);
+        }
+        m_byteCount = 0;
+        m_profileStart = 0;
+    }
+
+    if ((message.m_header.m_flags & 1) != 0)
+    {
+        const unsigned int payloadSize = message.m_header.m_size;
+        if (messageSize != payloadSize + cHeaderSize)
+            return cResultDataSizeInvalid;
+        if (payloadSize > cPayloadSizeMax)
+            return cResultDataSizeInvalid;
+        const int offset =
+            static_cast<int>(message.m_header.m_sequenceId - m_receiveBuffer.m_sequence);
+        if (offset < 0)
+        {
+            m_field68 = true;
+            return 0;
+        }
+        if (static_cast<unsigned int>(offset) >= m_receiveBuffer.m_capacity)
+            return cResultWindowOverflow;
+
+        ReceiveData* fragment = m_receiveBuffer.Assign(message.m_header.m_sequenceId);
+        m_field68 = true;
+        if (fragment->m_valid)
+            return 0;
+        MessageData::CopyPayload(fragment->m_payload, body, payloadSize);
+        fragment->m_size = message.m_header.m_size;
+        fragment->m_valid = true;
+        fragment->m_end = ((message.m_header.m_flags >> 1) & 1) != 0;
+
+        const unsigned int distance = message.m_header.m_sequenceId - m_sequence;
+        if (distance == 0)
+        {
+            bool continuous;
+            do
+            {
+                continuous = (m_receivedBits & 1) != 0;
+                ++m_sequence;
+                m_receivedBits >>= 1;
+                ReceiveData* ahead = m_receiveBuffer.GetData(m_sequence + 64);
+                if (ahead != 0 && ahead->m_valid)
+                    m_receivedBits |= cHighestReceivedBit;
+            } while (continuous);
+        }
+        else if (distance - 1 < 64)
+            m_receivedBits |= 1ULL << (distance - 1);
+    }
+    return 0;
+}
+
+Result ReliableSlidingWindow::Dispatch(StationPacketHandler* handler, unsigned int* size,
+                                       unsigned int limit)
+{
+    if (!IsInCommunication())
+        return cResultInvalidState;
+    m_time = static_cast<unsigned long long>(OSGetSystemTime());
+
+    int rtt = -1;
+    long long resendTime = m_retrySpan;
+    Station* station =
+        g_piaStationManager->GetStationByStationIdWithoutConvert(m_remoteStationId);
+    if (station != 0)
+    {
+        rtt = station->GetRtt(s_rttSamplingNum);
+        if (rtt < 1)
+            resendTime = m_time + m_retrySpan;
+        else
+        {
+            const int timeout =
+                static_cast<int>(static_cast<float>(rtt) * s_retransmissionTimeOutRate);
+            resendTime = static_cast<long long>(timeout) * pead::TickSpan::cFrequency / 1000 + m_time;
+        }
+    }
+
+    const unsigned int sequence = m_sequence;
+    const unsigned long long receivedBits = m_receivedBits;
+    unsigned int total = 0;
+    for (unsigned int index = 0; index < m_sendBuffer.m_count; ++index)
+    {
+        unsigned int slot = m_sendBuffer.m_head + index;
+        if (slot >= m_sendBuffer.m_capacity)
+            slot -= m_sendBuffer.m_capacity;
+        SendData* fragment = m_sendBuffer.m_data + slot;
+        if (fragment->m_sendTime > m_time)
+            continue;
+        if (limit < total + fragment->m_size)
+        {
+            if (size != 0)
+                *size = total;
+            return 0;
+        }
+        ProtocolMessageWriter* writer = handler->AssignByStationId(
+            ProtocolId(m_generation), m_remoteStationId, fragment->m_size, false, false, true);
+        if (writer == 0)
+        {
+            if (size != 0)
+                *size = total;
+            return 0;
+        }
+        fragment->m_message.m_header.m_field10 = sequence;
+        fragment->m_message.m_header.m_field18 = receivedBits;
+        fragment->m_message.SerializeHeader();
+        writer->SetPayload(fragment->m_message.m_data);
+        handler->Commit();
+        total += fragment->m_size;
+
+        if (s_resendTimeCallback == 0)
+            fragment->m_sendTime = resendTime;
+        else
+        {
+            const int timeout = s_resendTimeCallback(rtt, fragment->m_field0c);
+            fragment->m_sendTime =
+                static_cast<long long>(timeout) * pead::TickSpan::cFrequency / 1000 + m_time;
+        }
+        m_field68 = false;
+        if (g_maximumResendCount == cResendCountReset || g_maximumResendCount < fragment->m_field0c)
+            g_maximumResendCount = fragment->m_field0c;
+        ++fragment->m_field0c;
+    }
+
+    unsigned int written = total;
+    if (m_field68)
+    {
+        written = total + cHeaderSize;
+        if (limit < written)
+        {
+            if (size != 0)
+                *size = total;
+            return 0;
+        }
+        ProtocolMessageWriter* writer = handler->AssignByStationId(
+            ProtocolId(m_generation), m_remoteStationId, cHeaderSize, false, false, true);
+        if (writer == 0)
+        {
+            if (size != 0)
+                *size = total;
+            return 0;
+        }
+        MessageHeader header;
+        header.m_flags = 0;
+        header.m_size = 0;
+        header.m_field08 = 0;
+        header.m_sequenceId = 0;
+        header.m_field10 = sequence;
+        header.m_field18 = receivedBits;
+        unsigned char buffer[cHeaderSize];
+        unsigned int headerSize;
+        header.Serialize(buffer, &headerSize);
+        writer->SetPayload(buffer);
+        handler->Commit();
+        m_field68 = false;
+    }
+    if (size != 0)
+        *size = written;
+    return 0;
 }
 
 void ReliableSlidingWindow::Trace(unsigned long long) const

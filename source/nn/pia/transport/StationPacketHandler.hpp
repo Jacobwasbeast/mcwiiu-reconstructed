@@ -85,6 +85,9 @@ public:
     ProtocolMessageWriter* AssignByStationBitmap(const ProtocolId& protocolId,
                                                 unsigned int stationBitmap, unsigned int size,
                                                 bool isReliable, bool isPriority, bool isBroadcast);
+    static Result GetStationAddress(const StationManager* manager,
+                                    common::StationAddress* address,
+                                    ::nn::pia::StationIndex stationIndex);
     static unsigned int GetParticipatingStationBitmap(const StationManager* manager);
     static StationConnectionInfoTable* GetStationConnectionInfoTable();
 

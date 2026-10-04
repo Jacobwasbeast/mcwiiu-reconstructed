@@ -6,6 +6,7 @@
 #include "nn/pia/common/Time.hpp"
 #include "nn/pia/transport/ConnectStationJob.hpp"
 #include "nn/pia/transport/DisconnectStationJob.hpp"
+#include "nn/pia/transport/IdentificationInfoTable.hpp"
 #include "nn/pia/transport/ProcessConnectionRequestJob.hpp"
 #include "nn/pia/transport/ReliableSlidingWindow.hpp"
 #include "nn/pia/transport/RttProtocol.hpp"
@@ -14,6 +15,14 @@
 #include <new>
 
 namespace nn { namespace pia { namespace transport {
+
+namespace
+{
+enum
+{
+    cStationState5 = 5
+};
+}
 
 Station::Station()
     : m_field0(0), m_stationAddress(), m_field10(0xfd), m_field18(0), m_field1c(0),
@@ -209,6 +218,34 @@ void Station::CleanupJobs()
         m_processConnectionRequestJob->Cleanup();
         m_processConnectionRequestJob->Reset(false);
     }
+}
+
+Result Station::GetPlayerCount(unsigned char* count)
+{
+    if (IdentificationInfoTable::GetInstance() == 0)
+        return cResultInvalidState;
+    return IdentificationInfoTable::GetInstance()->GetPlayerCount(this, count);
+}
+
+Result Station::GetParticipantCount(unsigned char* count)
+{
+    if (IdentificationInfoTable::GetInstance() == 0)
+        return cResultInvalidState;
+    return IdentificationInfoTable::GetInstance()->GetParticipantCount(this, count);
+}
+
+bool Station::IsConnectionRouteRelay() const
+{
+    if (m_field20 == cStationState5 && m_field56 == 0)
+        return true;
+    return false;
+}
+
+bool Station::IsConnectionRouteDirect() const
+{
+    if (m_field20 == cStationState5 && m_field56 != 0)
+        return true;
+    return false;
 }
 
 void Station::Trace(unsigned long long) const

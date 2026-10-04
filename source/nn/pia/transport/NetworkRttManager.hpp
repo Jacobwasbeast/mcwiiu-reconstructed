@@ -126,12 +126,13 @@ public:
     static int CompareFunc(const MeasurementData* value, const common::StationAddress* address);
     void Trace(unsigned long long value) const;
 
+    static NetworkRttManager* sInstance;
+
 private:
     friend class Transport;
     DataBuffer<ResponseData> mResponses;
     DataBuffer<MeasurementData> mMeasurements;
     common::Time mStartTime;
-    static NetworkRttManager* sInstance;
 };
 
 }}}

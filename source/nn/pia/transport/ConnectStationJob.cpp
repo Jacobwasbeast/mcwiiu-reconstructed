@@ -29,6 +29,21 @@ int ConnectStationJob::Startup(common::CallContext* context, Station* station,
     return StartupImpl(context, station, info, secure);
 }
 
+int ConnectStationJob::StartupRelayConnection(common::CallContext* context, Station* station,
+    const StationConnectionInfo& info, bool secure, int timeoutMsec)
+{
+    m_timeoutMsec = timeoutMsec;
+    const int result = StartupImpl(context, station, info, secure);
+    if (result == 0)
+    {
+        m_station->m_field56 = 0;
+        m_currentStep.m_function = static_cast<unsigned int (common::StepSequenceJob::*)()>(
+            &ConnectStationJob::SendRelayConnectionRequest);
+        m_currentStep.m_name = "ConnectStationJob::SendRelayConnectionRequest";
+    }
+    return result;
+}
+
 int ConnectStationJob::StartupImpl(common::CallContext* context, Station* station,
     const StationConnectionInfo& info, bool secure)
 {

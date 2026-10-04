@@ -216,6 +216,13 @@ void StationPacketHandler::BeginDispatch(const common::Time& time)
     m_keepAliveReceiver.Update(stationBitmap, time);
 }
 
+Result StationPacketHandler::GetStationAddress(const StationManager* manager,
+                                               common::StationAddress* address,
+                                               ::nn::pia::StationIndex stationIndex)
+{
+    return manager->GetStationAddress(address, stationIndex);
+}
+
 unsigned int StationPacketHandler::GetParticipatingStationBitmap(const StationManager* manager)
 {
     return manager->GetParticipatingStationBitmap(false);
@@ -383,7 +390,7 @@ bool StationPacketHandler::AssignDirectMessage(unsigned int stationBitmap, unsig
             {
                 stationIndex = static_cast< ::nn::pia::StationIndex>(
                     pead::BitFlagUtil::countOnBit((selected & (0u - selected)) - 1u));
-                if (manager->GetStationAddress(&address, stationIndex) != 0)
+                if (GetStationAddress(manager, &address, stationIndex) != 0)
                     continue;
             }
             else

@@ -13,7 +13,6 @@ public:
     void Update(unsigned int stationBitmap, const common::Time& time);
     void Trace(unsigned long long value) const;
 
-private:
     bool m_enabled;
 };
 

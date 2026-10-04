@@ -2,6 +2,8 @@
 #define LEGACY_CONSOLE_WIIU_NN_PIA_TRANSPORT_RELIABLESLIDINGWINDOW_HPP
 
 #include "nn/pia/Common.hpp"
+#include "nn/pia/Transport.hpp"
+#include "nn/pia/common/ISerializable.hpp"
 
 namespace nn { namespace pia { namespace transport {
 
@@ -11,15 +13,80 @@ class ProtocolMessageReader;
 class ReliableSlidingWindow
 {
 public:
-    enum { cHeaderSize = 24, cPayloadSizeMax = 0x568 };
+    enum { cHeaderSize = 24, cPayloadSizeMax = 1384 };
 
-    class MessageHeader
+    class MessageHeader : public common::ISerializable
     {
     public:
-        virtual ~MessageHeader();
-        virtual Result Serialize(unsigned char* buffer, unsigned int* size) const;
-        virtual Result Deserialize(const unsigned char* buffer);
-        virtual unsigned int GetSerializedSize() const;
+        virtual ~MessageHeader()
+        {
+        }
+
+        virtual Result Serialize(unsigned char* buffer, unsigned int* size) const
+        {
+            if (buffer == 0)
+                return static_cast<Result>(cResultInvalidArgument);
+            if (size == 0)
+                return static_cast<Result>(cResultInvalidArgument);
+
+            buffer[0] = (m_flags >> 8) & 0xff;
+            buffer[1] = m_flags & 0xff;
+            buffer[2] = (m_size >> 8) & 0xff;
+            buffer[3] = m_size & 0xff;
+            buffer[4] = (m_field08 >> 24) & 0xff;
+            buffer[5] = (m_field08 >> 16) & 0xff;
+            buffer[6] = (m_field08 >> 8) & 0xff;
+            buffer[7] = m_field08 & 0xff;
+            buffer[8] = (m_sequenceId >> 24) & 0xff;
+            buffer[9] = (m_sequenceId >> 16) & 0xff;
+            buffer[10] = (m_sequenceId >> 8) & 0xff;
+            buffer[11] = m_sequenceId & 0xff;
+            buffer[12] = (m_field10 >> 24) & 0xff;
+            buffer[13] = (m_field10 >> 16) & 0xff;
+            buffer[14] = (m_field10 >> 8) & 0xff;
+            buffer[15] = m_field10 & 0xff;
+            buffer[16] = (m_field18 >> 56) & 0xff;
+            buffer[17] = (m_field18 >> 48) & 0xff;
+            buffer[18] = (m_field18 >> 40) & 0xff;
+            buffer[19] = (m_field18 >> 32) & 0xff;
+            buffer[20] = (m_field18 >> 24) & 0xff;
+            buffer[21] = (m_field18 >> 16) & 0xff;
+            buffer[22] = (m_field18 >> 8) & 0xff;
+            buffer[23] = m_field18 & 0xff;
+            *size = cHeaderSize;
+            return 0;
+        }
+
+        virtual Result Deserialize(const unsigned char* buffer)
+        {
+            if (buffer == 0)
+                return static_cast<Result>(cResultInvalidArgument);
+
+            m_flags = (buffer[0] << 8) | buffer[1];
+            m_size = (buffer[2] << 8) | buffer[3];
+            m_field08 = static_cast<unsigned int>(buffer[4]) << 24 |
+                static_cast<unsigned int>(buffer[5]) << 16 |
+                static_cast<unsigned int>(buffer[6]) << 8 | buffer[7];
+            m_sequenceId = static_cast<unsigned int>(buffer[8]) << 24 |
+                static_cast<unsigned int>(buffer[9]) << 16 |
+                static_cast<unsigned int>(buffer[10]) << 8 | buffer[11];
+            m_field10 = static_cast<unsigned int>(buffer[12]) << 24 |
+                static_cast<unsigned int>(buffer[13]) << 16 |
+                static_cast<unsigned int>(buffer[14]) << 8 | buffer[15];
+            m_field18 = static_cast<unsigned long long>(buffer[16]) << 56 |
+                static_cast<unsigned long long>(buffer[17]) << 48 |
+                static_cast<unsigned long long>(buffer[18]) << 40 |
+                static_cast<unsigned long long>(buffer[19]) << 32 |
+                static_cast<unsigned long long>(buffer[20]) << 24 |
+                static_cast<unsigned long long>(buffer[21]) << 16 |
+                static_cast<unsigned long long>(buffer[22]) << 8 | buffer[23];
+            return 0;
+        }
+
+        virtual unsigned int GetSerializedSize() const
+        {
+            return cHeaderSize;
+        }
 
         unsigned short m_flags;
         unsigned short m_size;
@@ -115,6 +182,11 @@ public:
     bool m_field68;
     unsigned int m_byteCount;
     unsigned long long m_profileStart;
+
+private:
+    static float s_retransmissionTimeOutRate;
+    static unsigned int s_rttSamplingNum;
+    static int (*s_resendTimeCallback)(int, int);
 };
 
 extern unsigned short g_reliableSlidingWindowGeneration;

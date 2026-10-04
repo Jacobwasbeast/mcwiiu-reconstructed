@@ -43,14 +43,14 @@ void ProtocolMessageReader::Attach(const common::Packet& packet, unsigned int of
             if ((m_header.m_flags & 4) == 0)
             {
                 m_stationAddress = packet.m_field608;
-                m_field38 = packet.m_packetData.m_header.m_field09;
+                m_sendingPassId = packet.m_packetData.m_header.m_field09;
                 m_field39 = packet.m_field600;
                 m_field3a = packet.m_field603;
             }
             else
             {
                 m_stationAddress.Clear();
-                m_field38 = 0;
+                m_sendingPassId = 0;
                 m_field39 = 0;
                 m_field3a = packet.m_field603;
             }
@@ -66,7 +66,7 @@ void ProtocolMessageReader::Clear()
     m_message = 0;
     m_stationAddress.Clear();
     m_messageSize = 0;
-    m_field38 = 0;
+    m_sendingPassId = 0;
 }
 
 unsigned long long ProtocolMessageReader::GetDestination() const

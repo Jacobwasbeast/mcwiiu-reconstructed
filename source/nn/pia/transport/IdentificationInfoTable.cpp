@@ -136,7 +136,7 @@ void IdentificationInfoTable::ClearIdentificationInfo(IdentificationInfo* info)
     memset(info->m_field20.m_bytes, 0, sizeof(info->m_field20.m_bytes));
     info->m_playerCount = 0;
     info->m_field109 = 0;
-    info->m_principalId = 0;
+    info->m_principalId[0] = 0;
     info->m_field10c = 0;
     info->m_participantCount = 0;
 }
@@ -150,7 +150,7 @@ void IdentificationInfoTable::SetLocalIdentificationInfo(const IdentificationInf
         m_field60[0] = info->m_field60[0];
         m_field108 = info->m_field108;
         m_field20 = info->m_field20;
-        m_principalId = info->m_principalId;
+        m_principalId[0] = info->m_principalId[0];
         m_fieldC8[0].Trace(0x4000000);
         m_field60[0].Trace(0x4000000);
         CopyCounts(this, info);
@@ -165,7 +165,7 @@ Result IdentificationInfoTable::GetLocalIdentificationInfo(IdentificationInfo* i
     info->m_field60[0] = m_field60[0];
     info->m_field108 = m_field108;
     info->m_field20 = m_field20;
-    info->m_principalId = m_principalId;
+    info->m_principalId[0] = m_principalId[0];
     CopyCounts(info, this);
     return 0;
 }
@@ -194,7 +194,7 @@ Result IdentificationInfoTable::AddToTable(const Station* station, const Identif
             record.m_info.m_field60[0].Copy(info->m_field60[0]);
             record.m_info.m_field108 = info->m_field108;
             memcpy(record.m_info.m_field20.m_bytes, info->m_field20.m_bytes, sizeof(record.m_info.m_field20.m_bytes));
-            record.m_info.m_principalId = info->m_principalId;
+            record.m_info.m_principalId[0] = info->m_principalId[0];
             CopyCounts(&record.m_info, info);
         }
         else if (kind == 1)
@@ -210,7 +210,7 @@ Result IdentificationInfoTable::AddToTable(const Station* station, const Identif
             record.m_info.m_field60[0].Copy(info->m_field60[0]);
             record.m_info.m_field108 = info->m_field108;
             memcpy(record.m_info.m_field20.m_bytes, info->m_field20.m_bytes, sizeof(record.m_info.m_field20.m_bytes));
-            record.m_info.m_principalId = info->m_principalId;
+            record.m_info.m_principalId[0] = info->m_principalId[0];
             CopyCounts(&record.m_info, info);
         }
         else
@@ -240,7 +240,7 @@ Result IdentificationInfoTable::AddToTable(const Station* station, const Identif
             record.m_info.m_field60[0].Copy(info->m_field60[0]);
             record.m_info.m_field108 = info->m_field108;
             memcpy(record.m_info.m_field20.m_bytes, info->m_field20.m_bytes, sizeof(record.m_info.m_field20.m_bytes));
-            record.m_info.m_principalId = info->m_principalId;
+            record.m_info.m_principalId[0] = info->m_principalId[0];
         }
         else if (kind == 1)
         {
@@ -249,7 +249,7 @@ Result IdentificationInfoTable::AddToTable(const Station* station, const Identif
             record.m_info.m_field60[0].Copy(info->m_field60[0]);
             record.m_info.m_field108 = info->m_field108;
             memcpy(record.m_info.m_field20.m_bytes, info->m_field20.m_bytes, sizeof(record.m_info.m_field20.m_bytes));
-            record.m_info.m_principalId = info->m_principalId;
+            record.m_info.m_principalId[0] = info->m_principalId[0];
         }
         else
         {
@@ -291,7 +291,7 @@ Result IdentificationInfoTable::GetIdentificationInfo(const Station* station,
     info->m_field60[0].Copy(found->m_field60[0]);
     info->m_field108 = found->m_field108;
     memcpy(info->m_field20.m_bytes, found->m_field20.m_bytes, sizeof(info->m_field20.m_bytes));
-    info->m_principalId = found->m_principalId;
+    info->m_principalId[0] = found->m_principalId[0];
     CopyCounts(info, found);
     return 0;
 }
@@ -304,7 +304,7 @@ IdentificationInfo* IdentificationInfoTable::GetIdentificationInfoPtr(unsigned l
     {
         Slot* slot = reinterpret_cast<Slot*>(node);
         if (slot->GetRecord()->m_state == 3 &&
-            slot->GetRecord()->m_info.m_principalId == principalId)
+            slot->GetRecord()->m_info.m_principalId[0] == principalId)
         {
             m_criticalSection.Unlock();
             return &slot->GetRecord()->m_info;
@@ -325,7 +325,7 @@ Result IdentificationInfoTable::GetIdentificationInfo(unsigned long long princip
     info->m_field60[0].Copy(found->m_field60[0]);
     info->m_field108 = found->m_field108;
     memcpy(info->m_field20.m_bytes, found->m_field20.m_bytes, sizeof(info->m_field20.m_bytes));
-    info->m_principalId = found->m_principalId;
+    info->m_principalId[0] = found->m_principalId[0];
     CopyCounts(info, found);
     return 0;
 }

@@ -31,7 +31,7 @@ public:
     unsigned char m_playerCount;
     unsigned char m_participantCount;
     unsigned int m_field10c;
-    unsigned long long m_principalId;
+    unsigned long long m_principalId[1];
 };
 
 class IdentificationInfoTable : public IdentificationInfo

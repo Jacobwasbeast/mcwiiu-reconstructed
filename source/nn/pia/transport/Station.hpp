@@ -53,8 +53,8 @@ public:
     void GetIdentificationToken(IdentificationToken* token);
     void GetPlayerInfo(unsigned char index, PlayerInfo* info);
     Result GetPrincipalId(unsigned long long* principalId);
-    void GetPlayerCount(unsigned char* count);
-    void GetParticipantCount(unsigned char* count);
+    Result GetPlayerCount(unsigned char* count);
+    Result GetParticipantCount(unsigned char* count);
     bool IsConnectionRouteRelay() const;
     bool IsConnectionRouteDirect() const;
     unsigned char m_field0;

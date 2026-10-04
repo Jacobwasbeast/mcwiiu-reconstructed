@@ -30,6 +30,9 @@ public:
     public:
         explicit Iterator(PacketHandler* handler) : m_handler(handler) {}
         ProtocolMessageReader* GetMessageReader() const;
+        inline void BeginIteration();
+        inline bool IsEndIteration() const;
+        inline void NextIteration();
 
     private:
         PacketHandler* m_handler;
@@ -110,6 +113,21 @@ public:
     common::IPacketInput* m_packetInput;
     common::IPacketOutput* m_packetOutput;
 };
+
+inline void PacketHandler::Iterator::BeginIteration()
+{
+    m_handler->BeginIteration();
+}
+
+inline bool PacketHandler::Iterator::IsEndIteration() const
+{
+    return m_handler->IsEndIteration();
+}
+
+inline void PacketHandler::Iterator::NextIteration()
+{
+    m_handler->NextIteration();
+}
 
 }}}
 

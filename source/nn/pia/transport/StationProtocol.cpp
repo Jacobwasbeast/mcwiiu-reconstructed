@@ -69,13 +69,13 @@ Result StationProtocol::Initialize()
 
 Result StationProtocol::StartupWithStationAddress(const common::StationAddress&)
 {
-    m_field18 = 0;
+    m_reconnectionCount = 0;
     return 0;
 }
 
 void StationProtocol::CleanupWithStationAddress()
 {
-    m_field18 = 0;
+    m_reconnectionCount = 0;
 }
 
 void StationProtocol::SendDenyingConnectionResponse(const common::StationAddress& address,
@@ -225,7 +225,7 @@ void StationProtocol::ParseConnectionRequestCommon(const ReceivedMessageAccessor
             }
             station->m_stationAddress.Trace(0x8000);
             message.m_stationAddress.Trace(0x8000);
-            ++m_field18;
+            ++m_reconnectionCount;
             station->m_stationAddress = message.m_stationAddress;
         }
         else if (secure == 0)
@@ -499,7 +499,7 @@ void StationProtocol::ParseConnectionResponseCommon(const ReceivedMessageAccesso
             remaining = 2;
     }
     unsigned char* flags = &info.m_field108;
-    unsigned long long* principals = &info.m_principalId;
+    unsigned long long* principals = info.m_principalId;
     for (unsigned int index = first; remaining > 0; --remaining, ++index)
     {
         const unsigned char* entry = data + cResponseHeaderSize + (index - first) * cResponseEntrySize;
@@ -690,7 +690,7 @@ Result StationProtocol::Dispatch()
         message.m_messageSize = reader->m_messageSize;
         message.m_sourceStationId = reader->m_header.m_source;
         message.m_stationAddress = reader->m_stationAddress;
-        message.m_field1c = reader->m_field38;
+        message.m_field1c = reader->m_sendingPassId;
         Result result = ParseHelper(message);
         if (result != 0)
             return result;
@@ -805,7 +805,7 @@ void StationProtocol::MakeConnectionResponseData(unsigned char* buffer, unsigned
             remaining = 2;
     }
     unsigned char* flags = &info.m_field108;
-    unsigned long long* principals = &info.m_principalId;
+    unsigned long long* principals = info.m_principalId;
     for (unsigned int index = first; remaining > 0; --remaining, ++index)
     {
         unsigned char* entry = buffer + cResponseHeaderSize + (index - first) * cResponseEntrySize;

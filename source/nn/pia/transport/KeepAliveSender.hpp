@@ -15,7 +15,6 @@ public:
     unsigned int Update(unsigned int stationBitmap, const common::Time& time);
     void Trace(unsigned long long value) const;
 
-private:
     unsigned int m_interval;
     bool m_enabled;
 };
