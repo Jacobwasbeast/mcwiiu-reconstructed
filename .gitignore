@@ -7,5 +7,6 @@
 *.log
 __pycache__/
 
-# Compiled GX2 shader objects, generated from your own copy of the game
-/source/platform/wiiu/RendererShaders.inc
+# Generated from your own copy of the game by tools/prepare.py
+/source/platform/wiiu/shaders/
+/assets/

@@ -11,6 +11,7 @@ See `docs/overview.md`.
 
 ```
 git clone --recurse-submodules https://github.com/Jacobwasbeast/WiiUConsoleEditionRecon.git
+python tools/prepare.py --base <base game dump> --update <update v688 dump>
 ```
 
 - [docs/overview.md](docs/overview.md) - what is here, what is not, and status

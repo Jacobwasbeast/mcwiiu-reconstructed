@@ -31,6 +31,8 @@ people direct the campaign, set the rules in `conventions.md`, and review.
 - `source/cafe/` - reconstructed Cafe SDK pieces: GX2 and GFD declarations
   and the matrix library.
 - `docs/` - these notes.
+- `tools/` - `prepare.py`, which sets up the game files from your own
+  dumps, and the shader generator it uses.
 
 ## What is not here
 
