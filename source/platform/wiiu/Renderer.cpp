@@ -65,7 +65,7 @@ namespace nn
     }
 }
 
-#include "platform/wiiu/RendererShaders.inc"
+#include "platform/wiiu/shaders/RendererShaders.inc"
 
 const GX2AttribStream gAttribStreamStandard[5] = {
     {0, 0, 0, GX2_ATTRIB_FORMAT_32_32_32_32_FLOAT, GX2_ATTRIB_INDEX_VERTEX_ID, 0, GX2_COMP_SEL_XYZ1, GX2_ENDIANSWAP_DEFAULT},
