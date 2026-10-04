@@ -18,13 +18,13 @@ void MiiData::CreateSysUserData(int slot)
 
     sAdditionalInfoResult = FFLGetAdditionalInfo(&additionalInfo, FFL_DATA_SOURCE_STORE_DATA, &storeData, 0, TRUE);
 
+    nn::act::GetUuidEx(reinterpret_cast<char*>(&entry.mUuid), slot);
+
     memcpy(entry.mName, additionalInfo.name, sizeof(entry.mName));
-    memcpy(entry.mCreatorId, &additionalInfo.creatorID, sizeof(entry.mCreatorId));
+    *reinterpret_cast<FFLCreateID*>(entry.mCreatorId) = additionalInfo.creatorID;
 
     entry.mIsAccountMii = true;
     entry.mIsGuestMii = false;
-
-    nn::act::GetUuidEx(reinterpret_cast<char*>(&entry.mUuid), slot);
 
     entry.mIconMemory = (void*)gRenderer->CreateMiiIconTexture(FFL_DATA_SOURCE_STORE_DATA, &storeData, 0,
                                                                &entry.mIconTexture);
@@ -40,7 +40,7 @@ void MiiData::CreateGuestData(int index)
     FFLGetAdditionalInfo(&additionalInfo, FFL_DATA_SOURCE_DEFAULT, NULL, index, TRUE);
 
     memcpy(entry.mName, additionalInfo.name, sizeof(entry.mName));
-    memcpy(entry.mCreatorId, &additionalInfo.creatorID, sizeof(entry.mCreatorId));
+    *reinterpret_cast<FFLCreateID*>(entry.mCreatorId) = additionalInfo.creatorID;
 
     entry.mIsAccountMii = false;
     entry.mIsGuestMii = true;
@@ -59,7 +59,7 @@ void MiiData::CreateMiiMakerData(int index)
     FFLGetAdditionalInfo(&additionalInfo, FFL_DATA_SOURCE_OFFICIAL, NULL, index, TRUE);
 
     memcpy(entry.mName, additionalInfo.name, sizeof(entry.mName));
-    memcpy(entry.mCreatorId, &additionalInfo.creatorID, sizeof(entry.mCreatorId));
+    *reinterpret_cast<FFLCreateID*>(entry.mCreatorId) = additionalInfo.creatorID;
 
     entry.mIsAccountMii = false;
     entry.mIsGuestMii = false;

@@ -71,10 +71,13 @@ DLC_INFO* cNintendoDLCInfo::GetDLCInfoFromBanner(char* pBannerName)
 
 DLC_INFO* cNintendoDLCInfo::GetDLCInfoByCatalogIndex(unsigned int catalogIndex)
 {
-    boost::unordered_map<unsigned int, DLC_INFO*>::iterator it = m_dlcInfoByCatalogIndex.find(catalogIndex);
-    if (it != m_dlcInfoByCatalogIndex.end())
+    if (!m_dlcInfoByCatalogIndex.empty())
     {
-        return it->second;
+        boost::unordered_map<unsigned int, DLC_INFO*>::iterator it = m_dlcInfoByCatalogIndex.find(catalogIndex);
+        if (it != m_dlcInfoByCatalogIndex.end())
+        {
+            return it->second;
+        }
     }
 
     return NULL;
@@ -82,14 +85,17 @@ DLC_INFO* cNintendoDLCInfo::GetDLCInfoByCatalogIndex(unsigned int catalogIndex)
 
 bool cNintendoDLCInfo::GetDLCPurchased(char* pPackName)
 {
-    wchar_t packName[64];
-    mbstowcs(packName, pPackName, 64);
-    packName[63] = L'\0';
-
-    boost::unordered_map<std::wstring, DLC_INFO*>::iterator it = m_dlcInfoByPackName.find(std::wstring(packName));
-    if (it != m_dlcInfoByPackName.end())
+    if (!m_dlcInfoByPackName.empty())
     {
-        return it->second->Purchased;
+        wchar_t packName[64];
+        mbstowcs(packName, pPackName, 64);
+        packName[63] = L'\0';
+
+        boost::unordered_map<std::wstring, DLC_INFO*>::iterator it = m_dlcInfoByPackName.find(std::wstring(packName));
+        if (it != m_dlcInfoByPackName.end())
+        {
+            return it->second->Purchased;
+        }
     }
 
     return false;
@@ -133,8 +139,7 @@ DLC_INFO* cNintendoDLCInfo::GetDLCInfoByRomName(const char* pRomName)
          it != m_dlcInfoByCatalogIndex.end(); ++it)
     {
         DLC_INFO* pDLCInfo = it->second;
-        if (romName.compare(0, romName.size(), pDLCInfo->RomName, std::strlen(pDLCInfo->RomName)) == 0 &&
-            std::strlen(pDLCInfo->RomName) == romName.size())
+        if (romName.compare(0, romName.size(), pDLCInfo->RomName, std::strlen(pDLCInfo->RomName)) == 0)
         {
             return pDLCInfo;
         }

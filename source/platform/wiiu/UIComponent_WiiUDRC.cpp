@@ -21,9 +21,7 @@ UIComponent_WiiUDRC::UIComponent_WiiUDRC(int sceneType, void* param, UILayer* la
     m_drcIconEnabled = false;
     m_touchX = 0;
     m_touchY = 0;
-    m_touchingIcon = false;
-    m_touchPressed = false;
-    SetEnableBackground(true);
+    SetEnableBackground(false);
     SetDRCIcon(false, false);
     GetIconWidth();
     GetIconHeight();

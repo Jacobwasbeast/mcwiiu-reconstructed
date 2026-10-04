@@ -112,8 +112,9 @@ OSMessage gMainMessageBuffer;
 OSFastMutex gMainMutex;
 static int s_drcIconDelay = 0x78;
 static unsigned char s_trialTimerShown = 1;
-static OSThread gMainThread;
+static const unsigned int kStorageFullErrorCode = 1550100;
 static unsigned char gMainThreadStack[0x20000];
+static OSThread gMainThread;
 
 int main()
 {
@@ -134,7 +135,7 @@ int main()
 
     DefineActions();
     g_pInput->SetJoypadMapArraySetupComplete();
-    g_pInput->SetKeyRepeatRate(0.5f, 0.8f);
+    g_pInput->SetKeyRepeatRate(0.3f, 0.2f);
     g_pInput->SetDeadzoneAndMovementRange(0, 20000, 0x7fff);
     ProcUIInitEx(SaveCallback, 0);
     ProcUIRegisterCallback(0, CallbackAcquiredForeground, 0, 100);
@@ -146,21 +147,21 @@ int main()
     gApp.loadMediaArchive();
     gApp.InitialiseDLCInfo();
     if (gApp.ReadProductCodes() == 0)
-        gApp.FatalLoadError(L"ReadProductCodes failed");
+        gApp.FatalLoadError(L"ReadProductCodes");
 
     int productSku = gApp.GetProductSKU();
     if (productSku == 0)
-        gProfile->SetPlayerListTitleID(7);
+        gProfile->SetMinimumAge(7);
     else if (productSku == 1)
-        gProfile->SetPlayerListTitleID(10);
+        gProfile->SetMinimumAge(10);
     else if (productSku == 2)
-        gProfile->SetPlayerListTitleID(0);
+        gProfile->SetMinimumAge(0);
     L10N::loadStringTable();
     g_pInput->SetCircleCrossSwapped(true);
 
     int uiWidth = 640;
     int uiHeight = 480;
-    if (productSku == 1)
+    if (gRenderer->IsWidescreen())
     {
         uiWidth = 1280;
         uiHeight = 720;
@@ -171,52 +172,40 @@ int main()
     static unsigned int s_profileDefaults[5];
     gProfile->Initialise(L"", L"", 0x22, 5, 4, s_profileDefaults, 0x1e60, &gApp.mGameDefinedDataChangedBitmask);
     gProfile->SetSignInChoicesCallback(CConsoleMinecraftApp::RequestSignInUIChoices);
-    gProfile->SetNotificationsCallback(
-        reinterpret_cast<CProfile::NotificationsHandler>(PopupToast), 0);
+    gProfile->SetOnAwardHandler(PopupToast, 0);
     RegisterAwardsWithProfileManager();
 
     bool noSpaceForSaveQuota = false;
-    if (gStorage != 0)
-    {
-        gStorage->Init(0, L10N::GetString(0xc0b26be6), "savegame.dat", 51000000,
-                       CConsoleMinecraftApp::DisplaySavingMessageWiiU, &gApp, "", &noSpaceForSaveQuota);
-        gApp.SetNoSpaceForSaveQuota(noSpaceForSaveQuota);
-    }
+    gStorage->Init(0, L10N::GetString(0xc0b26be6), "savegame.dat", 51000000,
+                   CConsoleMinecraftApp::DisplaySavingMessageWiiU, &gApp, "", &noSpaceForSaveQuota);
+    gApp.SetNoSpaceForSaveQuota(noSpaceForSaveQuota);
     gProfile->LoadAllMiiData();
     gProfile->SetSignInChangeCallback(
         (CProfile::SignInChangeHandler)CMinecraftApp::SignInChangeCallback, &gApp);
     gProfile->SetProfileReadErrorCallback(CMinecraftApp::ProfileReadErrorCallback, &gApp);
 
+    gStorage->InitialiseGenericData();
+    gStorage->InitialiseProfileData(0x22, 5, 4, s_profileDefaults, 0x1e60, &gApp.mGameDefinedDataChangedBitmask);
+    gStorage->SetDefaultOptionsCallback(
+        CMinecraftApp::DefaultOptionsCallback, &gApp);
+    gStorage->SetOptionsDataCallback(
+        CMinecraftApp::OptionsDataCallback, &gApp);
+    gStorage->SetOldProfileVersionCallback(
+        GameSettings::OldProfileVersionCallback, &gApp);
+    gStorage->SetGameSaveFolderPrefix("");
+    gStorage->SetMaxSaves(99);
     arrayWithLength<unsigned char> thumbnail = gApp.getArchiveFile(
         L"DefaultSaveThumbnail64x64.png", false);
-    if (gStorage != 0)
-    {
-        gStorage->InitialiseProfileData(0x22, 5, 4, s_profileDefaults, 0x1e60, &gApp.mGameDefinedDataChangedBitmask);
-        gStorage->SetDefaultOptionsCallback(
-            CMinecraftApp::DefaultOptionsCallback, &gApp);
-        gStorage->SetOptionsDataCallback(
-            CMinecraftApp::OptionsDataCallback, &gApp);
-        gStorage->SetOldProfileVersionCallback(
-            GameSettings::OldProfileVersionCallback, &gApp);
-        gStorage->SetCorruptSaveName(L"");
-        gStorage->SetMaxSaves(99);
-        gStorage->SetDefaultImages(thumbnail.data, thumbnail.length,
-                                   thumbnail.data, thumbnail.length,
-                                   thumbnail.data, thumbnail.length);
-        gStorage->SetIncompleteSaveCallback(
-            CConsoleMinecraftApp::Callback_SaveGameIncomplete, &gApp);
-        if (thumbnail.data != 0)
-            delete[] thumbnail.data;
-        gStorage->SetSaveTitle(L"Default Save");
-        gStorage->SetOpenDirFn(OpenDir);
-        gStorage->SetReadDirFn(ReadDir);
-        gStorage->SetCloseDirFn(CloseDir);
-        gStorage->SetDLCPackageRoot("DLCDrive");
-    }
-
-    gProfile->SetUpsellCallback(
-        reinterpret_cast<CProfile::UpsellHandler>(CMinecraftApp::UpsellReturnedCallback), &gApp);
-    gApp.SetRichPresenceContext(0, 0);
+    gStorage->SetDefaultImages(0, 0, 0, 0, thumbnail.data, thumbnail.length);
+    gStorage->SetIncompleteSaveCallback(
+        CConsoleMinecraftApp::Callback_SaveGameIncomplete, &gApp);
+    if (thumbnail.data != 0)
+        delete[] thumbnail.data;
+    gStorage->SetSaveTitle(L"Default Save");
+    gStorage->SetOpenDirFn(OpenDir);
+    gStorage->SetReadDirFn(ReadDir);
+    gStorage->SetCloseDirFn(CloseDir);
+    gStorage->SetDLCPackageRoot("DLCDrive");
 
     Tesselator::CreateNewThreadStorage(0x100000);
     AABB::CreateNewThreadStorage();
@@ -235,10 +224,15 @@ int main()
     Minecraft* minecraft = Minecraft::GetInstance();
     gApp.InitGameSettings();
     gStorage->ReadFromProfile(0, 0);
+    gProfile->SetUpsellCallback(
+        reinterpret_cast<CProfile::UpsellHandler>(CMinecraftApp::UpsellReturnedCallback), &gApp);
     gApp.InitialiseTips();
     g_pLeaderboardManager->OpenSession();
     CGameNetworkManager::sInstance.Initialise();
     CGameNetworkManager::sInstance.SetLocalGame(true);
+    if (noSpaceForSaveQuota)
+        g_pInput->RequestErrorViewer(1, kStorageFullErrorCode,
+                                     reinterpret_cast<C_4JInput::ErrorViewerCallback>(DeviceFullErrorReturn), 0);
     C_AOC::getInstance()->Init();
 
     float timingColour = 0.0f;
@@ -253,7 +247,7 @@ int main()
         EnterCriticalSection(&gMainMutex);
         LeaveCriticalSection(&gMainMutex);
         if (s_altMainExit != 0)
-            break;
+            return 0;
         int processResult = ProcUIProcessMessages(1);
         if (processResult == 3)
             break;
@@ -270,13 +264,16 @@ int main()
         gProfile->Tick();
         PIXEndNamedEvent();
         PIXBeginNamedEvent(timingColour, "Storage manager tick");
-        if (gStorage != 0)
-            gStorage->Tick();
+        gStorage->Tick();
         PIXEndNamedEvent();
         PIXBeginNamedEvent(timingColour, "Render manager tick");
         gRenderer->Tick();
         PIXEndNamedEvent();
+        PIXBeginNamedEvent(timingColour, "Sentient tick");
+        PIXEndNamedEvent();
+        PIXBeginNamedEvent(timingColour, "Network manager do work #1");
         CGameNetworkManager::sInstance.DoWork();
+        PIXEndNamedEvent();
 
         if (gApp.GetDRCOutputEnabled() == 0 && gApp.GetDRCIconEnabled() == 0 &&
             CGameNetworkManager::sInstance.IsInGameplay() &&
@@ -306,7 +303,7 @@ int main()
             minecraft->run_middle();
             gApp.SetAppPaused(CGameNetworkManager::sInstance.IsLocalGame() &&
                               CGameNetworkManager::sInstance.GetPlayerCount() == 1 &&
-                              gConsoleUIController.IsPauseMenuDisplayed(0));
+                              gConsoleUIController.IsPauseMenuDisplayed(gProfile->GetPrimaryPad()));
         }
 
         minecraft->mSoundEngine->playMusicTick();

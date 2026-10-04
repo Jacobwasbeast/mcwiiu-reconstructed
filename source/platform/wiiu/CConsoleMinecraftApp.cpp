@@ -24,15 +24,15 @@ extern unsigned char s_altMainOKToRun;
 extern unsigned char s_altMainPending;
 extern unsigned char s_altMainExit;
 extern OSMessageQueue gMainMessageQueue;
-extern OSMessage gMainMessageBuffer;
 
 extern OSFastMutex gMainMutex;
 unsigned char s_altMainStopRequested;
 
 void altMain()
 {
+    OSMessage message;
     s_altMainPending = 1;
-    OSSendMessage(&gMainMessageQueue, &gMainMessageBuffer, OS_MESSAGE_FLAGS_NONE);
+    OSSendMessage(&gMainMessageQueue, &message, OS_MESSAGE_FLAGS_NONE);
 }
 
 void altMainStop()
@@ -48,12 +48,13 @@ void waitForAltMainThreadToComplete()
 
 int altMainThread(int, void*)
 {
+    OSMessage message;
     if (s_altMainExit == 0)
     {
         do
         {
             gRenderer->InitialiseContext();
-            OSReceiveMessage(&gMainMessageQueue, &gMainMessageBuffer, OS_MESSAGE_FLAGS_BLOCKING);
+            OSReceiveMessage(&gMainMessageQueue, &message, OS_MESSAGE_FLAGS_BLOCKING);
             while (s_altMainOKToRun == 0)
             {
                 Sleep(10);
@@ -73,7 +74,6 @@ int altMainThread(int, void*)
                     s_altMainExit = 1;
                     LeaveCriticalSection(&gMainMutex);
                     ShutdownAndExit();
-                    LeaveCriticalSection(&gMainMutex);
                     break;
                 }
                 if (processResult == 2)

@@ -52,10 +52,7 @@ void C4JEventQueueImpl::threadPoll()
                 EnterCriticalSection(&m_mutex);
                 void* event = m_events.front();
                 LeaveCriticalSection(&m_mutex);
-                if (m_eventHandler != NULL)
-                {
-                    m_eventHandler(event);
-                }
+                m_eventHandler(event);
                 EnterCriticalSection(&m_mutex);
                 m_events.pop_front();
                 const bool hasEvents = !m_events.empty();

@@ -3,6 +3,7 @@
 #include "game/core/GameSettings.hpp"
 #include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/XLanguage.hpp"
+#include "game/util/Mth.hpp"
 
 #include <cstdlib>
 #include <cstdio>
@@ -52,7 +53,7 @@ double multiBreak(double first, double second, double third)
     return third;
 }
 
-int VerifyLanguageRange(int* language)
+extern "C" int VerifyLanguageRange(int* language)
 {
     if (*language < 12 && static_cast<signed char>(*language) >= 0)
     {
@@ -247,20 +248,12 @@ int XGetLocale()
     }
 }
 
-static int GetStickValue(float value)
+static inline int GetStickValue(float value)
 {
-    if (value < -1.0f)
-    {
-        value = -1.0f;
-    }
-    else if (value > 1.0f)
-    {
-        value = 1.0f;
-    }
-    return static_cast<short>(value * 32767.0f);
+    return static_cast<short>(static_cast<int>(fclamp(value, -1.0f, 1.0f) * 32767.0f));
 }
 
-static int ApplyDeadzone(int value, int deadzone)
+static inline int ApplyDeadzone(int value, int deadzone)
 {
     if (value > deadzone)
     {
@@ -273,7 +266,7 @@ static int ApplyDeadzone(int value, int deadzone)
     return 0;
 }
 
-static float NormaliseStick(int value, float range)
+static inline float NormaliseStick(int value, float range)
 {
     float result = static_cast<float>(value) / range;
     if (result > -0.15f && result < 0.15f)
@@ -283,12 +276,12 @@ static float NormaliseStick(int value, float range)
     return result;
 }
 
-static unsigned long long GetTimeValue(const CInput::TIME_VALUE& value)
+static inline long long GetTimeValue(const CInput::TIME_VALUE& value)
 {
-    return static_cast<unsigned long long>(value.high) << 32 | value.low;
+    return static_cast<long long>(value.high) << 32 | value.low;
 }
 
-static void SetTimeValue(CInput::TIME_VALUE& value, unsigned long long time)
+static inline void SetTimeValue(CInput::TIME_VALUE& value, long long time)
 {
     value.high = static_cast<unsigned int>(time >> 32);
     value.low = static_cast<unsigned int>(time);
@@ -355,7 +348,7 @@ void CInput::Initialise(int count, unsigned char gameMapCount, unsigned char alt
         s_connectionResults[channel] = static_cast<KPADError>(0xFD);
     }
 
-    controllerCount = count;
+    controllerCount = 0;
     deadzone = 10000;
     maximumInput = 10000;
     movementRange = 0x7fff;
@@ -369,10 +362,10 @@ void CInput::Initialise(int count, unsigned char gameMapCount, unsigned char alt
         joypads[pad].statusIndex = 0xff;
         joypads[pad].controllerId = -1;
         joypads[pad].lockedController = -1;
-        joypads[pad].leftXSource = &joypads[pad].leftX;
-        joypads[pad].leftYSource = &joypads[pad].leftY;
-        joypads[pad].rightXSource = &joypads[pad].rightX;
-        joypads[pad].rightYSource = &joypads[pad].rightY;
+        joypads[pad].leftXSource = &joypads[pad].rightX;
+        joypads[pad].leftYSource = &joypads[pad].rightY;
+        joypads[pad].rightXSource = &joypads[pad].leftX;
+        joypads[pad].rightYSource = &joypads[pad].leftY;
         joypads[pad].leftTriggerSource = &joypads[pad].hasTouch;
         joypads[pad].rightTriggerSource = &joypads[pad].touchPressed;
         if (pad == 0)
@@ -398,7 +391,6 @@ void CInput::Initialise(int count, unsigned char gameMapCount, unsigned char alt
     controllerConfiguration[1] = gameMapCount;
     controllerConfiguration[2] = alternateMapCount;
     joypadMapsReady = 0;
-    inputTick = 0;
     for (int pad = 0; pad < 4; ++pad)
     {
         padRemap[pad] = -1;
@@ -532,10 +524,10 @@ void CInput::SetJoypadValuesDRC(JOYPAD* joypad)
     joypad->rawRightStickY = ApplyDeadzone(rightY, deadzone);
     joypad->rawLeftStickX = ApplyDeadzone(leftX, deadzone);
     joypad->rawLeftStickY = ApplyDeadzone(leftY, deadzone);
-    joypad->leftStickX = joypad->rawLeftStickX / static_cast<int>(movementSpan);
-    joypad->leftStickY = joypad->rawLeftStickY / static_cast<int>(movementSpan);
-    joypad->rightStickX = joypad->rawRightStickX / static_cast<int>(movementSpan);
-    joypad->rightStickY = joypad->rawRightStickY / static_cast<int>(movementSpan);
+    joypad->leftStickX = joypad->rawRightStickX / static_cast<int>(movementSpan);
+    joypad->leftStickY = joypad->rawRightStickY / static_cast<int>(movementSpan);
+    joypad->rightStickX = joypad->rawLeftStickX / static_cast<int>(movementSpan);
+    joypad->rightStickY = joypad->rawLeftStickY / static_cast<int>(movementSpan);
     joypad->leftX = NormaliseStick(joypad->rawRightStickX, movementSpanFloat);
     joypad->leftY = NormaliseStick(joypad->rawRightStickY, movementSpanFloat);
     joypad->rightX = NormaliseStick(joypad->rawLeftStickX, movementSpanFloat);
@@ -544,35 +536,36 @@ void CInput::SetJoypadValuesDRC(JOYPAD* joypad)
 void CInput::GetStartTime(int pad, int type)
 {
     BUTTON_TIME& time = buttonTimes[pad][type];
-    unsigned long long now = OSGetTime();
+    long long now = OSGetTime();
     SetTimeValue(time.lastUpdate, now);
     time.elapsed.high = 0;
     time.elapsed.low = 0;
     time.heldTime = 0.0f;
-    time.repeatTime = -1.0f;
+    time.repeatTime = 0.0f;
     time.repeated = 0;
     SetTimeValue(idleStartTimes[pad], now);
 }
 void CInput::UpdateTime(int pad, int type)
 {
     BUTTON_TIME& time = buttonTimes[pad][type];
-    unsigned long long now = OSGetTime();
-    unsigned long long elapsed = now - GetTimeValue(time.lastUpdate);
+    long long now = OSGetTime();
+    long long elapsed = now - GetTimeValue(time.lastUpdate);
     SetTimeValue(time.lastUpdate, now);
     SetTimeValue(time.elapsed, GetTimeValue(time.elapsed) + elapsed);
     time.heldTime += static_cast<float>(elapsed) * timeScale;
     SetTimeValue(idleStartTimes[pad], now);
 }
-void CInput::UpdateDRCPad()
+bool CInput::UpdateDRCPad()
 {
     JOYPAD& joypad = joypads[0];
     unsigned int previous = joypad.rawValue;
     controllerCount = 0;
     joypad.rawValue = 0;
-    joypad.leftStickX = 0;
-    joypad.leftStickY = 0;
-    joypad.rightStickX = 0;
-    joypad.rightStickY = 0;
+    joypad.previousValue = previous;
+    joypad.rawRightStickX = 0;
+    joypad.rawRightStickY = 0;
+    joypad.rawLeftStickX = 0;
+    joypad.rawLeftStickY = 0;
     joypad.hasTouch = 0;
     joypad.touchPressed = 0;
     if (!joypad.sampleIndex)
@@ -591,16 +584,15 @@ void CInput::UpdateDRCPad()
             {
                 ClearJoypadValues(&joypad);
             }
-            return;
+            return true;
         }
 
         controllerCount = 1;
         SetJoypadValuesDRC(&joypad);
         joypad.rawValue |= joypad.fakeValue;
         joypad.fakeValue = 0;
-        joypad.previousValue = previous;
-        joypad.pressedValue = joypad.rawValue & ~previous;
-        joypad.releasedValue = previous & ~joypad.rawValue;
+        joypad.pressedValue = joypad.rawValue & ~joypad.previousValue;
+        joypad.releasedValue = joypad.previousValue & ~joypad.rawValue;
         for (int button = 0; button < 24; ++button)
         {
             unsigned int mask = 1u << button;
@@ -614,6 +606,7 @@ void CInput::UpdateDRCPad()
             }
         }
     }
+    return true;
 }
 void CInput::SetClassicJoypadValue(JOYPAD* joypad, unsigned int sourceMask, unsigned int mappedMask)
 {
@@ -642,8 +635,11 @@ void CInput::SetURCCJoypadValue(JOYPAD* joypad, unsigned int sourceMask, unsigne
 void CInput::SetJoypadValues(JOYPAD* joypad)
 {
     KPADStatus* status = static_cast<KPADStatus*>(joypad->statusStorage.kpad.statuses) + joypad->statusIndex;
-    joypad->leftX = joypad->leftY = joypad->rightX = joypad->rightY = 0.0f;
-    if (status->extensionType == 2 || status->extensionType == 7)
+    int leftX = 0;
+    int leftY = 0;
+    int rightX = 0;
+    int rightY = 0;
+    if (status->extensionType == 2)
     {
         static const unsigned int source[] = { 0x10, 0x40, 0x20, 8, 4, 0x80, 0x200, 0x2000, 0x400, 0x1000, 1, 0x4000, 2, 0x8000 };
         static const unsigned int destination[] = { 2, 1, 4, 8, 0x400000, 0x800000, 0x40, 0x80, 0x10, 0x20, 0x400, 0x800, 0x1000, 0x2000 };
@@ -651,12 +647,10 @@ void CInput::SetJoypadValues(JOYPAD* joypad)
         {
             SetClassicJoypadValue(joypad, source[button], destination[button]);
         }
-        joypad->leftX = status->classic.leftStick.x;
-        joypad->leftY = status->classic.leftStick.y;
-        joypad->rightX = status->classic.rightStick.x;
-        joypad->rightY = status->classic.rightStick.y;
-        joypad->hasTouch = static_cast<unsigned char>(status->classic.leftTrigger * 255.0f);
-        joypad->touchPressed = static_cast<unsigned char>(status->classic.rightTrigger * 255.0f);
+        rightX = GetStickValue(status->classic.rightStick.x);
+        rightY = GetStickValue(status->classic.rightStick.y);
+        leftX = GetStickValue(status->classic.leftStick.x);
+        leftY = GetStickValue(status->classic.leftStick.y);
     }
     else if (status->extensionType == 1)
     {
@@ -666,8 +660,8 @@ void CInput::SetJoypadValues(JOYPAD* joypad)
         {
             SetFreestyleJoypadValue(joypad, source[button], destination[button]);
         }
-        joypad->leftX = status->nunchuk.stick.x;
-        joypad->leftY = status->nunchuk.stick.y;
+        leftX = GetStickValue(status->nunchuk.stick.x);
+        leftY = GetStickValue(status->nunchuk.stick.y);
     }
     else if (status->extensionType == 0x1f)
     {
@@ -677,15 +671,11 @@ void CInput::SetJoypadValues(JOYPAD* joypad)
         {
             SetURCCJoypadValue(joypad, source[button], destination[button]);
         }
-        joypad->leftX = status->pro.leftStick.x;
-        joypad->leftY = status->pro.leftStick.y;
-        joypad->rightX = status->pro.rightStick.x;
-        joypad->rightY = status->pro.rightStick.y;
+        rightX = GetStickValue(status->pro.rightStick.x);
+        rightY = GetStickValue(status->pro.rightStick.y);
+        leftX = GetStickValue(status->pro.leftStick.x);
+        leftY = GetStickValue(status->pro.leftStick.y);
     }
-    int leftX = GetStickValue(joypad->leftX);
-    int leftY = GetStickValue(joypad->leftY);
-    int rightX = GetStickValue(joypad->rightX);
-    int rightY = GetStickValue(joypad->rightY);
     if (leftX > static_cast<int>(maximumInput))
         joypad->rawValue |= 0x4000;
     if (leftX < -static_cast<int>(maximumInput))
@@ -706,35 +696,41 @@ void CInput::SetJoypadValues(JOYPAD* joypad)
     joypad->rawRightStickY = ApplyDeadzone(rightY, deadzone);
     joypad->rawLeftStickX = ApplyDeadzone(leftX, deadzone);
     joypad->rawLeftStickY = ApplyDeadzone(leftY, deadzone);
-    joypad->leftStickX = joypad->rawLeftStickX / static_cast<int>(movementSpan);
-    joypad->leftStickY = joypad->rawLeftStickY / static_cast<int>(movementSpan);
-    joypad->rightStickX = joypad->rawRightStickX / static_cast<int>(movementSpan);
-    joypad->rightStickY = joypad->rawRightStickY / static_cast<int>(movementSpan);
+    joypad->leftStickX = joypad->rawRightStickX / static_cast<int>(movementSpan);
+    joypad->leftStickY = joypad->rawRightStickY / static_cast<int>(movementSpan);
+    joypad->rightStickX = joypad->rawLeftStickX / static_cast<int>(movementSpan);
+    joypad->rightStickY = joypad->rawLeftStickY / static_cast<int>(movementSpan);
     joypad->leftX = NormaliseStick(joypad->rawRightStickX, movementSpanFloat);
     joypad->leftY = NormaliseStick(joypad->rawRightStickY, movementSpanFloat);
     joypad->rightX = NormaliseStick(joypad->rawLeftStickX, movementSpanFloat);
     joypad->rightY = NormaliseStick(joypad->rawLeftStickY, movementSpanFloat);
 }
-void CInput::UpdateJoypads()
+bool CInput::UpdateJoypads()
 {
     int connected = 0;
     for (int pad = 1; pad < 5; ++pad)
     {
         JOYPAD& joypad = joypads[pad];
-        unsigned int previous = joypad.rawValue;
-        joypad.previousValue = previous;
+        joypad.previousValue = joypad.rawValue;
         joypad.rawValue = joypad.pendingValue;
-        joypad.pendingValue = 0;
         if (joypad.fakeTimer)
         {
             --joypad.fakeTimer;
         }
+        else
+        {
+            joypad.pendingValue = 0;
+        }
+        joypad.rawRightStickX = 0;
+        joypad.rawRightStickY = 0;
+        joypad.rawLeftStickX = 0;
+        joypad.rawLeftStickY = 0;
         joypad.hasTouch = 0;
         joypad.touchPressed = 0;
-        joypad.leftStickX = 0;
-        joypad.leftStickY = 0;
-        joypad.rightStickX = 0;
-        joypad.rightStickY = 0;
+    }
+    for (int pad = 1; pad < 5; ++pad)
+    {
+        JOYPAD& joypad = joypads[pad];
         if (joypad.sampleIndex)
         {
             ClearJoypadValues(&joypad);
@@ -759,8 +755,8 @@ void CInput::UpdateJoypads()
             joypad.fakeValue = 0;
             if (!joypad.previousSampleIndex)
             {
-                joypad.pressedValue = joypad.rawValue & ~previous;
-                joypad.releasedValue = previous & ~joypad.rawValue;
+                joypad.pressedValue = joypad.rawValue & ~joypad.previousValue;
+                joypad.releasedValue = joypad.previousValue & ~joypad.rawValue;
             }
             else
             {
@@ -790,6 +786,7 @@ void CInput::UpdateJoypads()
         }
     }
     controllerCount += connected;
+    return true;
 }
 void CInput::Tick()
 {
@@ -918,10 +915,10 @@ unsigned int CInput::GetValue(int pad, unsigned char map, bool repeated)
     }
     BUTTON_TIME& time = buttonTimes[mappedPad][button];
     BUTTON_TIME* repeatTime = &time;
-    unsigned int remainingButtons = buttons >> 1;
-    if (remainingButtons != 0)
+    if (!only_one_bit_set(buttons))
     {
         int secondButton = button + 1;
+        unsigned int remainingButtons = buttons >> 1;
         while ((remainingButtons & 1) == 0)
         {
             ++secondButton;
@@ -932,22 +929,21 @@ unsigned int CInput::GetValue(int pad, unsigned char map, bool repeated)
         {
             if (secondTime.heldTime - time.heldTime < 0.001f)
             {
-                secondTime.repeatTime = secondTime.heldTime + 0.002f;
+                secondTime.heldTime = secondTime.heldTime + 0.002f;
             }
-        }
-        else if (time.heldTime - secondTime.heldTime < 0.001f)
-        {
-            time.repeatTime = time.heldTime + 0.002f;
-            repeatTime = &secondTime;
         }
         else
         {
+            if (time.heldTime - secondTime.heldTime < 0.001f)
+            {
+                time.heldTime = time.heldTime + 0.002f;
+            }
             repeatTime = &secondTime;
         }
     }
     if (repeatTime->heldTime >= initialRepeatDelay)
     {
-        if (repeatTime->repeatTime == -1.0f)
+        if (repeatTime->repeatTime == 0.0f)
         {
             repeatTime->repeatTime = initialRepeatDelay;
             return value;
@@ -1086,7 +1082,7 @@ void CInput::SetDebugSequence(const char* sequence, InputCallback callback, void
 }
 double CInput::GetIdleSeconds(int pad)
 {
-    return static_cast<double>(OSGetTime() - GetTimeValue(idleStartTimes[pad])) * timeScale;
+    return static_cast<float>(OSGetTime() - GetTimeValue(idleStartTimes[pad])) * timeScale;
 }
 unsigned char CInput::IsPadConnected(int pad)
 {
@@ -1421,7 +1417,7 @@ void CInput::GetText(wchar_t* value, int length)
 {
     std::wcsncpy(value, keyboardText, length);
 }
-void CInput::ProcFont(int value, void* context)
+int CInput::ProcFont(int value, void* context)
 {
     for (;;)
     {
@@ -1430,7 +1426,7 @@ void CInput::ProcFont(int value, void* context)
         nn::swkbd::CalcSubThreadFont();
     }
 }
-void CInput::ProcPredict(int value, void* context)
+int CInput::ProcPredict(int value, void* context)
 {
     for (;;)
     {
@@ -1440,27 +1436,15 @@ void CInput::ProcPredict(int value, void* context)
     }
 }
 
-static int ProcFontThreadEntry(int value, void* context)
-{
-    CInput::ProcFont(value, context);
-    return 0;
-}
-
-static int ProcPredictThreadEntry(int value, void* context)
-{
-    CInput::ProcPredict(value, context);
-    return 0;
-}
-
 void CInput::KeyboardOnCreate()
 {
     keyboardState = eKeyboardProcessState_0;
     destroyKeyboardRequested = 0;
     OSInitMessageQueue(&s_fontQueue, &s_fontMessage, 1);
     OSInitMessageQueue(&s_predictQueue, &s_predictMessage, 1);
-    C4JThreadImpl::OSCreateThread4J(&s_fontThread, ProcFontThreadEntry, 0, 0, s_fontStack + sizeof(s_fontStack), sizeof(s_fontStack), 0x11, 0);
+    C4JThreadImpl::OSCreateThread4J(&s_fontThread, CInput::ProcFont, 0, 0, s_fontStack + sizeof(s_fontStack), sizeof(s_fontStack), 0x11, 0);
     OSResumeThread(&s_fontThread);
-    C4JThreadImpl::OSCreateThread4J(&s_predictThread, ProcPredictThreadEntry, 0, 0, s_predictStack + sizeof(s_predictStack), sizeof(s_predictStack), 0x12, 0);
+    C4JThreadImpl::OSCreateThread4J(&s_predictThread, CInput::ProcPredict, 0, 0, s_predictStack + sizeof(s_predictStack), sizeof(s_predictStack), 0x12, 0);
     OSResumeThread(&s_predictThread);
 }
 unsigned int CInput::GetKeyboardControllerType()
@@ -1534,6 +1518,7 @@ void CInput::TickKeyboard()
         appearArg.keyboardArg.configArg.keyboardMode = static_cast<nn::swkbd::KeyboardMode>(GetKeyboardMode());
         appearArg.keyboardArg.configArg.accessFlags = keyboardControllerType;
         appearArg.keyboardArg.configArg.languageType = static_cast<nn::swkbd::LanguageType>(GetLanguageType());
+        appearArg.keyboardArg.configArg.disableNewLine = true;
         appearArg.inputFormArg.type = static_cast<nn::swkbd::InputFormType>(1);
         appearArg.inputFormArg.initialText = reinterpret_cast<const char16_t*>(keyboardText);
         appearArg.inputFormArg.unk_0x04 = -1;

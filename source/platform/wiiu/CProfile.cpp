@@ -7,12 +7,15 @@
 #include <cwchar>
 #include <coreinit/fastmutex.h>
 #include <coreinit/memdefaultheap.h>
+#include <coreinit/thread.h>
+#include <coreinit/time.h>
 #include <nn/save.h>
 #include <nn/act/client_cpp.h>
 #include <nn/fp/fp_cpp.h>
 
 #include "game/core/CAchievements.hpp"
 #include "platform/wiiu/CInput.hpp"
+#include "platform/wiiu/CStorage.hpp"
 #include "platform/wiiu/WiiU_Runtime.hpp"
 
 #if defined(RECON_NATIVE)
@@ -29,14 +32,16 @@ unsigned char GetSlotNoEx(const ACTUuid&) asm("GetSlotNoEx__Q2_2nn3actFRC7ACTUui
 
 PlayerUID getPlayerUID(int, bool);
 int getSlotId(int);
-int SCIGetParentalEnable(unsigned char*);
-int SCIGetParentalAccountEShopPurchase(unsigned char*, unsigned char);
-int SCIGetParentalAccountNetCommunicationOnGame(unsigned char*, unsigned char);
+extern "C" int SCIGetParentalEnable(unsigned char*);
+extern "C" int SCIGetParentalAccountEShopPurchase(unsigned char*, unsigned char);
+extern "C" int SCIGetParentalAccountNetCommunicationOnGame(unsigned char*, unsigned char);
 extern "C" int _SCIReadSysConfig(const char*, unsigned int, unsigned int, void*);
 int VerifyCountryRange(unsigned int*);
 int SCIGetISOResource(char*, unsigned int, const char*);
 void* allocAligned();
 void stateChangeCallback(FSClient*, FSVolumeState, void*);
+
+extern CStorage* gStorage;
 
 CProfile* gProfile;
 
@@ -133,9 +138,9 @@ int SCIGetParentalAccountNetCommunicationOnGame(unsigned char* blocked, unsigned
     return result;
 }
 
-static unsigned long long getSystemMilliseconds()
+static inline unsigned long long getSystemMilliseconds()
 {
-    return OSGetTime() * 1000 / (OSGetSystemInfo()->busClockSpeed >> 2);
+    return OSTicksToMilliseconds(OSGetTime());
 }
 
 CProfile::PROFILE_DETAILS::PROFILE_DETAILS()
@@ -220,9 +225,9 @@ CProfile::CProfile()
       mPresenceUpdatePending(false),
       mPresenceUpdateDelay(false),
       mGameModeUpdateReady(false),
-      mRichPresenceSettingHandler(NULL),
+      mRichPresenceTitleId(0),
       mRichPresenceState(0),
-      mRichPresenceStatus(0),
+      mRichPresenceSettingHandler(NULL),
       mFriendPresenceHandler(NULL),
       mFriendPresenceContext(NULL),
       mRichPresenceStringHandler(NULL),
@@ -232,13 +237,13 @@ CProfile::CProfile()
       mAwardThreadStack(NULL),
       mAwardThreadStackTop(NULL)
 {
-    std::memset(mAccountState, 0, sizeof(mAccountState));
+    std::memset(&mAccountCreateId, 0, sizeof(mAccountCreateId));
     std::memset(mNetworkAccountId, 0, sizeof(mNetworkAccountId));
     std::memset(mParentalControls, 0, sizeof(mParentalControls));
     std::memset(mProfileResult, 0, sizeof(mProfileResult));
     std::memset(mPrimaryState, 0, sizeof(mPrimaryState));
     std::memset(mRichPresenceData, 0, sizeof(mRichPresenceData));
-    std::memset(mGameModeData, 0, sizeof(mGameModeData));
+    std::memset(&mGameMode, 0, sizeof(mGameMode));
     std::memset(mCurrentGameActivity, 0, sizeof(mCurrentGameActivity));
     std::memset(mAchievementsByPad, 0, sizeof(mAchievementsByPad));
     InitializeCriticalSection(&mProfileCriticalSection);
@@ -331,11 +336,11 @@ int CProfile::RequestSignInUI(bool online, bool guest, bool subAccount, bool tri
 
 void CProfile::checkParentalControl(int quadrant)
 {
+    unsigned char slot = nn::act::GetSlotNo();
     ParentalControlState& state = mParentalControls[quadrant];
     if (!state.loaded)
     {
         unsigned char result = 0;
-        unsigned char slot = nn::act::GetSlotNo();
         if (SCIGetParentalEnable(&result) == 1)
             state.enabled = result == 1;
         if (SCIGetParentalAccountEShopPurchase(&result, slot) == 1)
@@ -371,12 +376,12 @@ int CProfile::SignInUser(MiiDataEntry* mii, int pad)
     if (mii != NULL)
     {
         profile.onlineAccount = mii->mIsAccountMii && mii->mUuid == mAccountUuid;
-        if (mProfileReady)
+        if (mNetworkAccount)
         {
             if (quadrant == 0)
-                std::swprintf((wchar_t*)profile.gamertag, 32, L"%s", (const wchar_t*)mii->mName);
+                std::swprintf((wchar_t*)profile.gamertag, 32, L"%s", mNetworkAccountId);
             else
-                std::swprintf((wchar_t*)profile.gamertag, 32, L"%s (%d)", (const wchar_t*)mii->mName, quadrant + 1);
+                std::swprintf((wchar_t*)profile.gamertag, 32, L"%s (%d)", mNetworkAccountId, quadrant + 1);
         }
         checkParentalControl(quadrant);
     }
@@ -515,7 +520,7 @@ bool CProfile::CanViewPlayerCreatedContent(int quadrant, bool singlePlayer, Play
 
 bool CProfile::GetProfileAvatar(int quadrant, AvatarHandler handler, void* context)
 {
-    AvatarRequest request = { quadrant, handler, context };
+    AvatarRequest request = { quadrant, context, handler };
     mAvatarRequests.push_back(request);
     return true;
 }
@@ -628,31 +633,51 @@ void CProfile::Tick()
     AwardManagerTick();
     while (!mAvatarRequests.empty())
     {
-        AvatarRequest request = mAvatarRequests.back();
+        AvatarRequest& request = mAvatarRequests.back();
         if (request.handler != NULL)
         {
             MiiDataEntry* mii = mProfiles[request.quadrant].mii;
-            request.handler(request.context, mii == NULL ? NULL : (unsigned char*)mii->mIconMemory, 0);
+            request.handler(request.context, NULL, mii == NULL ? 0 : mii->mIconTexture);
+            request.handler = NULL;
         }
         mAvatarRequests.pop_back();
     }
     if (!mSignOutQueue.empty())
     {
         int quadrant = mSignOutQueue.front();
-        if (IsSignedIn(quadrant))
+        if (gStorage->IsOptionsWriteInProgressOrPending(quadrant) == 0)
         {
-            OnSignout(quadrant);
-            mProfiles[quadrant] = PROFILE_DETAILS();
+            if (mProfiles[quadrant].signedIn)
+            {
+                mProfiles[quadrant].signedIn = false;
+                std::memset(&mProfiles[quadrant], 0, PROFILE_DETAILS::SIGN_OUT_CLEAR_SIZE);
+                g_pInput->UnlockPad(quadrant);
+            }
             SetSignInChange(true);
+            mSignOutQueue.pop_front();
         }
-        mSignOutQueue.pop_front();
     }
     if (mProfileProcessState == eProfileProcessState_Idle)
     {
         SetLeaderboardDisable(false);
-        if (mPrimaryPlayerChanged && GetLockedProfile() != -1)
+        if (PrimaryPlayerChanged() && GetLockedProfile() != -1)
             SetLockedProfile(-1);
-        ShowSigninUI();
+        else
+            SetPrimaryPlayerChanged(false);
+    }
+    else if (mProfileProcessState == eProfileProcessState_Unknown7)
+    {
+        SetProfileProcessState(eProfileProcessState_Unknown12);
+    }
+    else if (mProfileProcessState == eProfileProcessState_Unknown11)
+    {
+        if (PrimaryPlayerChanged() && PrimaryPlayerHasSignedOutDialogBox(true))
+            SetLockedProfile(-1);
+    }
+    else if (mProfileProcessState == eProfileProcessState_Upsell)
+    {
+        DebugPrintf("-----------------------------SonyCommerce_UpgradeTrial removed for now\n");
+        SetProfileProcessState(eProfileProcessState_Unknown12);
     }
 }
 
@@ -755,19 +780,12 @@ void CProfile::LoadAllMiiData()
 {
     mLoadedMiiData->LoadAllData();
     MiiDataEntry* accountMii = NULL;
-    for (std::vector<MiiDataEntry>::iterator it = mLoadedMiiData->mSysUserMiis.begin(); it != mLoadedMiiData->mSysUserMiis.end(); ++it)
+    for (unsigned int index = 0; index < mLoadedMiiData->mSysUserMiis.size(); ++index)
     {
-        if (it->mUuid == mAccountUuid)
-            accountMii = &*it;
+        if (mLoadedMiiData->mSysUserMiis[index].mUuid == mAccountUuid)
+            accountMii = &mLoadedMiiData->mSysUserMiis[index];
     }
-    if (accountMii == NULL)
-    {
-        if (!mLoadedMiiData->mSysUserMiis.empty())
-            accountMii = &mLoadedMiiData->mSysUserMiis.front();
-        else
-            return;
-    }
-    std::memcpy(mAccountState, accountMii->mCreatorId, sizeof(accountMii->mCreatorId));
+    mAccountCreateId = *reinterpret_cast<const FFLCreateID*>(accountMii->mCreatorId);
     SignInUser(accountMii, -1);
 }
 
@@ -869,7 +887,7 @@ void CProfile::RichPresenceRegisterContextString(int context, int value, int str
 
 void CProfile::RichPresenceInit(int, int titleId)
 {
-    mRichPresenceSettingHandler = (RichPresenceSettingHandler)titleId;
+    mRichPresenceTitleId = titleId;
     nn::Result result = nn::fp::Initialize();
     unsigned int resultValue = static_cast<NNResult>(result).value;
     unsigned int level = (resultValue >> 27) & 3;
@@ -884,7 +902,7 @@ void CProfile::RichPresenceInit(int, int titleId)
     }
     mLastPresenceUpdate = getSystemMilliseconds() - 600000;
     mLastGameModeUpdate = 0;
-    mCurrentPresenceString.clear();
+    mCurrentPresenceString = L"";
     mPresenceUpdatePending = false;
     mPresenceUpdateDelay = false;
     mGameModeUpdateReady = false;
@@ -925,7 +943,7 @@ void CProfile::SetPresenceString(int presence)
 
     unsigned long long now = getSystemMilliseconds();
     unsigned int interval = 600000;
-    if (reinterpret_cast<nn::fp::GameMode*>(mGameModeData)->joinAvailabilityFlag == 1)
+    if (mGameMode.joinAvailabilityFlag == 1)
         interval = 120000;
     long long elapsed = now - mLastPresenceUpdate;
     if (elapsed <= interval && !mGameModeUpdateReady)
@@ -948,8 +966,7 @@ void CProfile::SetPresenceString(int presence)
     else
     {
         DebugPrintf("nn::fp::UpdateGameMode - %ls\n", text.c_str());
-        result = nn::fp::UpdateGameMode(reinterpret_cast<nn::fp::GameMode*>(mGameModeData),
-                                        reinterpret_cast<const char16_t*>(text.c_str()), 0);
+        result = nn::fp::UpdateGameMode(&mGameMode, reinterpret_cast<const char16_t*>(text.c_str()), 0);
     }
     if (result.IsSuccess())
     {
@@ -1016,9 +1033,12 @@ void CProfile::SetRichPresenceSettingFn(RichPresenceSettingHandler handler)
 
 void CProfile::SetRichPresenceGameModeData(nn::fp::GameMode& gameMode)
 {
-    if (std::memcmp(mGameModeData, &gameMode, sizeof(mGameModeData)) == 0)
+    if (std::memcmp(&mGameMode, &gameMode, sizeof(mGameMode)) == 0)
+    {
+        DebugPrintf("CProfile::SetRichPresenceGameModeData - data hasn't changed, not updating gamemode\n");
         return;
-    std::memcpy(mGameModeData, &gameMode, sizeof(mGameModeData));
+    }
+    mGameMode = gameMode;
     mPresenceUpdateDelay = true;
     mLastGameModeUpdate = getSystemMilliseconds();
 }
@@ -1036,8 +1056,8 @@ void CProfile::SetRichPresenceGetStringCallback(RichPresenceStringHandler handle
 
 void CProfile::RichPresenceOnCreate()
 {
+    mRichPresenceTitleId = 0;
     mRichPresenceSettingHandler = NULL;
-    mRichPresenceStatus = 0;
     mFriendPresenceHandler = NULL;
 }
 
@@ -1045,6 +1065,7 @@ void CProfile::TickRichPresence()
 {
     if (mPresenceUpdateDelay && getSystemMilliseconds() - mLastGameModeUpdate > 2000)
     {
+        DebugPrintf("Setting m_bGameModeUpdateReady true\n");
         mPresenceUpdateDelay = false;
         mGameModeUpdateReady = true;
     }
@@ -1369,22 +1390,23 @@ void CProfile::flushSaveDirectory(unsigned char slot)
     SAVEFlushQuota(&mFileSystemClient, &mFileSystemCommand, slot, FS_ERROR_FLAG_ALL);
 }
 
-void CProfile::AwardManagerThreadProc(int, void* argument)
+int CProfile::AwardManagerThreadProc(int, void* argument)
 {
     CProfile* profile = (CProfile*)argument;
+    gProfile->DebugPrintf("<CAwardManager> Thread Starting: %p.\n", argument);
     for (;;)
     {
-        C4JThreadImpl::Sleep(70);
+        OSSleepTicks(OSMillisecondsToTicks(70));
         CAchievements* achievements = profile->nextAwardManagerTask();
         if (achievements == NULL)
             continue;
 
         const char* filename = achievements->GetFilename();
         unsigned int state = achievements->GetState();
-        profile->initSaveDirectory(achievements->mSlotId);
         int file = -1;
         if (state == 2)
         {
+            profile->initSaveDirectory(achievements->mSlotId);
             if (profile->openAwardManagerFile(file, "w+", achievements->mSlotId, filename) == 0)
             {
                 uint8_t* data = static_cast<uint8_t*>(allocAligned());
@@ -1404,6 +1426,7 @@ void CProfile::AwardManagerThreadProc(int, void* argument)
         }
         else if (state == 1)
         {
+            profile->initSaveDirectory(achievements->mSlotId);
             if (profile->openAwardManagerFile(file, "r", achievements->mSlotId, filename) == 0)
             {
                 FSStat stat;
@@ -1424,12 +1447,6 @@ void CProfile::AwardManagerThreadProc(int, void* argument)
     }
 }
 
-static int AwardManagerThreadEntry(int value, void* context)
-{
-    CProfile::AwardManagerThreadProc(value, context);
-    return 0;
-}
-
 void CProfile::AwardManagerOnCreate()
 {
     mAwardHandler = NULL;
@@ -1439,11 +1456,16 @@ void CProfile::AwardManagerOnCreate()
     FSAddClient(&mFileSystemClient, FS_ERROR_FLAG_ALL);
     FSStateChangeParams notification = { stateChangeCallback, NULL, 0 };
     FSSetStateChangeNotification(&mFileSystemClient, &notification);
-    mAwardThreadStack = MEMAllocFromDefaultHeapEx(60000, 16);
+    mAwardThreadStack = MEMAllocFromDefaultHeap(60000);
     mAwardThreadStackTop = (unsigned char*)mAwardThreadStack + 60000;
-    if (C4JThreadImpl::OSCreateThread4J(&mAwardThread, AwardManagerThreadEntry, 0, this, mAwardThreadStackTop, 60000, 16, 7) != 0)
+    if (C4JThreadImpl::OSCreateThread4J(&mAwardThread, AwardManagerThreadProc, 0, this, mAwardThreadStackTop, 60000, 16, 7) != 0)
         OSResumeThread(&mAwardThread);
-    std::memset(mAwardRegistrations, 0xff, sizeof(mAwardRegistrations));
+    for (int index = 0; index < 128; ++index)
+    {
+        mAwardRegistrations[index].registrationId = -1;
+        mAwardRegistrations[index].callbackValue = -1;
+        mAwardRegistrations[index].callbackContext = -1;
+    }
 }
 
 void CProfile::AwardManagerTick()

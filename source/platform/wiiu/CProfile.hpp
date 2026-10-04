@@ -9,6 +9,7 @@
 #include <nn/ffl/miidata.h>
 #include <coreinit/filesystem.h>
 #include <nn/pia.h>
+#include <nn/fp/fp_cpp.h>
 
 #include "game/core/CriticalSection.hpp"
 #include "game/util/ACTUuid.hpp"
@@ -18,11 +19,6 @@
 #include "platform/wiiu/MiiData.hpp"
 
 class CAchievements;
-
-namespace nn
-{
-    namespace fp { struct GameMode; }
-}
 
 enum eAwardType
 {
@@ -167,19 +163,24 @@ public:
         eProfileProcessState_ProcessSignIn = 2,
         eProfileProcessState_QuerySignIn = 3,
         eProfileProcessState_SignOut = 4,
+        eProfileProcessState_Unknown7 = 7,
         eProfileProcessState_OfflineProfile = 8,
+        eProfileProcessState_Unknown11 = 11,
+        eProfileProcessState_Unknown12 = 12,
         eProfileProcessState_Upsell = 13
     };
 
     struct AvatarRequest
     {
         int quadrant;
-        AvatarHandler handler;
         void* context;
+        AvatarHandler handler;
     };
 
     struct PROFILE_DETAILS
     {
+        static const unsigned int SIGN_OUT_CLEAR_SIZE = 20;
+
         PROFILE_DETAILS();
 
         bool signedIn;
@@ -187,9 +188,9 @@ public:
         bool onlineAccount;
         unsigned char state;
         MiiDataEntry* mii;
+        unsigned char reservedBeforeGamertag[4];
         unsigned short gamertag[32];
-        unsigned int userId;
-        unsigned int principalId;
+        unsigned char reservedAfterGamertag[4];
     };
 
     struct CONTEXTVAL : public boost::unordered_map<int, int>
@@ -351,7 +352,7 @@ public:
     int initSaveDirectory(unsigned char);
     void closeAwardManagerFile(int&);
     void flushSaveDirectory(unsigned char);
-    static void AwardManagerThreadProc(int, void*);
+    static int AwardManagerThreadProc(int, void*);
     void AwardManagerOnCreate();
     void AwardManagerTick();
     bool initSaveDirectoryForQuadrant(int, unsigned char*);
@@ -399,7 +400,7 @@ private:
     EProfileProcessState mProfileProcessState;
     unsigned int mInitialisationData;
     ACTUuid mAccountUuid;
-    unsigned char mAccountState[10];
+    FFLCreateID mAccountCreateId;
     struct ParentalControlState
     {
         bool loaded;
@@ -497,13 +498,13 @@ private:
     bool mPresenceUpdateDelay;
     bool mGameModeUpdateReady;
     unsigned char mPresenceAlignment;
-    unsigned char mGameModeData[44];
+    nn::fp::GameMode mGameMode;
     std::wstring mCurrentPresenceString;
     int mCurrentGameActivity[4];
     CONTEXTVAL mContextValues[4];
-    RichPresenceSettingHandler mRichPresenceSettingHandler;
+    int mRichPresenceTitleId;
     unsigned int mRichPresenceState;
-    unsigned int mRichPresenceStatus;
+    RichPresenceSettingHandler mRichPresenceSettingHandler;
     FriendPresenceHandler mFriendPresenceHandler;
     void* mFriendPresenceContext;
     RichPresenceStringHandler mRichPresenceStringHandler;

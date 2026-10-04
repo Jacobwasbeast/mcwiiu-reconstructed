@@ -11,9 +11,9 @@
 #include "platform/wiiu/WiiU_FileCache.hpp"
 
 static FSClient* sFileSystemClient = 0;
+FSClient* gFileCacheClient = 0;
 
-extern void altMain();
-extern void altMainStop();
+void stateChangeCallback(FSClient*, FSVolumeState, void*);
 
 FSClient* GetWiiUFileSystemClient()
 {
@@ -27,23 +27,12 @@ unsigned int FileTimeToSystemTime(const FILETIME* fileTime, SYSTEMTIME* systemTi
     return 0;
 }
 
-static void stateChangeCallback(FSClient* client, FSVolumeState state, void*)
-{
-    if (state == FS_VOLUME_STATE_READY)
-    {
-        altMainStop();
-    }
-    else
-    {
-        (void)FSGetLastErrorCodeForViewer(client);
-    }
-}
-
 void WiiUInitialise()
 {
     FSInit();
     sFileSystemClient = static_cast<FSClient*>(std::malloc(0x1700));
     FSAddClient(sFileSystemClient, FS_ERROR_FLAG_NONE);
+    gFileCacheClient = sFileSystemClient;
     FSStateChangeParams notification = {stateChangeCallback, 0, 0};
     FSSetStateChangeNotification(sFileSystemClient, &notification);
     s_writeBuffer = static_cast<unsigned char*>(MEMAllocFromDefaultHeapEx(FILE_CACHE_BUFFER_SIZE, 64));

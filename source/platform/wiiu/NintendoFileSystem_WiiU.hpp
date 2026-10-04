@@ -8,7 +8,7 @@
 int ReadDir(int* directory, FSDirEntry* entry);
 int CloseDir(int* directory);
 void CloseHandle(int file);
-bool CreateDirectoryA(const char* pathName, void* securityAttributes);
+int CreateDirectoryA(const char* pathName, void* securityAttributes);
 int CreateFileA(const char* fileName, unsigned int desiredAccess, unsigned int shareMode,
                 void* securityAttributes, unsigned int creationDisposition,
                 unsigned int flagsAndAttributes, int templateFile);

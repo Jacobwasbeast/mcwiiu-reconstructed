@@ -141,7 +141,7 @@ public:
         float sensitivity;
         unsigned char* leftTriggerSource;
         unsigned char* rightTriggerSource;
-        unsigned char statusIndex;
+        signed char statusIndex;
         unsigned char statusPadding[3];
         union STATUS_STORAGE
         {
@@ -249,12 +249,12 @@ public:
     void SetJoypadValuesDRC(JOYPAD* joypad);
     void GetStartTime(int value, int type);
     void UpdateTime(int value, int type);
-    void UpdateDRCPad();
+    bool UpdateDRCPad();
     void SetClassicJoypadValue(JOYPAD* value, unsigned int type, unsigned int flags);
     void SetFreestyleJoypadValue(JOYPAD* value, unsigned int type, unsigned int flags);
     void SetURCCJoypadValue(JOYPAD* value, unsigned int type, unsigned int flags);
     void SetJoypadValues(JOYPAD* joypad);
-    void UpdateJoypads();
+    bool UpdateJoypads();
     virtual void Tick();
     virtual void SetDeadzoneAndMovementRange(unsigned int deadzone, unsigned int maximum, unsigned int movementRange);
     virtual void SetGameControllerTypeJoypadMaps(int controllerType, unsigned char map, unsigned int value);
@@ -318,8 +318,8 @@ public:
     int GetKPadStatus(int value);
     unsigned char IsShowingOnscreenKeyboard();
     void SetKeyboardMode(eKeyboardProcessState value);
-    static void ProcFont(int value, void* context);
-    static void ProcPredict(int value, void* context);
+    static int ProcFont(int value, void* context);
+    static int ProcPredict(int value, void* context);
     void KeyboardOnCreate();
     unsigned int GetKeyboardControllerType();
     unsigned int GetKeyboardMode();

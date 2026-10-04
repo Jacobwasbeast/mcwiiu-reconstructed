@@ -15,7 +15,7 @@ namespace nn
 class __N_35_session_ProcessHostMigrationJob_cpp_89c02c09
 {
 public:
-    unsigned int UpdateHostStationConnectionInfo(nn::pia::transport::Station* station);
+    static unsigned int UpdateHostStationConnectionInfo(nn::pia::transport::Station* station);
 };
 
 #endif

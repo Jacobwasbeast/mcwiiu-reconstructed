@@ -53,7 +53,7 @@ int CreateFileA(const char* fileName, unsigned int desiredAccess, unsigned int s
     return static_cast<int>(file);
 }
 
-bool CreateDirectoryA(const char* pathName, void* securityAttributes)
+int CreateDirectoryA(const char* pathName, void* securityAttributes)
 {
     (void)securityAttributes;
 

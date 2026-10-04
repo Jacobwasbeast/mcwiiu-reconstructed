@@ -6,7 +6,7 @@ static unsigned long long elapsedMilliseconds(unsigned long long ticks)
 }
 
 C4JEventArrayImpl::C4JEventArrayImpl(int count, C4JEventArray::EMode mode)
-    : m_count(count), m_mode(mode), m_events(0)
+    : m_count(count), m_mode(mode)
 {
     m_events = new OSEvent[static_cast<unsigned int>(count)];
     for (int index = 0; index < count; ++index)
@@ -61,19 +61,21 @@ unsigned int C4JEventArrayImpl::WaitForAll(int timeout)
     int remaining = timeout;
     for (int index = 0; index < m_count; ++index)
     {
-        unsigned long long start = OSGetTick();
-        if (timeout != 0 && OSWaitEventWithTimeout(&m_events[index], remaining) == 0)
+        int start = OSGetTick();
+        int waitResult = 0;
+        if (remaining != 0)
+        {
+            waitResult = OSWaitEventWithTimeout(&m_events[index], remaining);
+        }
+        int now = OSGetTick();
+        if (waitResult == 0)
         {
             return 0x102;
         }
-        int elapsed = static_cast<int>(elapsedMilliseconds(OSGetTick() - start));
-        if (elapsed >= remaining)
+        remaining -= static_cast<int>(elapsedMilliseconds(now - start));
+        if (remaining < 0)
         {
             remaining = 0;
-        }
-        else
-        {
-            remaining -= elapsed;
         }
     }
     return 0;
@@ -95,9 +97,9 @@ unsigned int C4JEventArrayImpl::WaitForAny(int timeout)
         }
     }
 
-    unsigned long long start = OSGetTick();
-    int timeoutDuration = timeout;
-    for (;;)
+    int start = OSGetTick();
+    unsigned long long elapsed;
+    do
     {
         for (int index = 0; index < m_count; ++index)
         {
@@ -106,12 +108,10 @@ unsigned int C4JEventArrayImpl::WaitForAny(int timeout)
                 return 0;
             }
         }
-        int elapsed = static_cast<int>(elapsedMilliseconds(OSGetTick() - start));
-        if (timeoutDuration >= 0 && elapsed >= timeoutDuration)
-        {
-            return 0x102;
-        }
-    }
+        int now = OSGetTick();
+        elapsed = elapsedMilliseconds(now - start);
+    } while (elapsed < static_cast<unsigned long long>(static_cast<long long>(timeout)));
+    return 0x102;
 }
 
 unsigned int C4JEventArrayImpl::WaitForSingle(int index, int timeout)

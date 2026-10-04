@@ -16,12 +16,12 @@ struct CFileHandle
     int mStartOffset;
     int mLength;
     int mCurrentPos;
-    char mValidPosition;
+    unsigned char mValidPosition;
     char mPadding[3];
     int mFileSize;
 };
 
-static char sInitialized = 0;
+static unsigned char sInitialized = 0;
 static std::vector<CFileHandle*> sFileHandles;
 static OSFastMutex sMutex;
 
@@ -52,125 +52,81 @@ unsigned int file_open_callback(const char* filename, unsigned int* handleOut)
         char localName[260];
         const char* p = filename + 1;
         char* dst = localName;
-        while (*p != '*' && *p != '\0')
+        while (*p != '*')
         {
             *dst++ = *p++;
         }
         *dst = '\0';
-        if (*p == '*')
-            p++;
+        p++;
 
-        CFileHandle* existingHandle = NULL;
-        EnterCriticalSection(&sMutex);
+        CFileHandle* handle = NULL;
         for (size_t i = 0; i < sFileHandles.size(); ++i)
         {
-            if (strcmp(sFileHandles[i]->mFilename, filename) == 0)
+            if (strcmp(sFileHandles[i]->mFilename, localName) == 0)
             {
-                existingHandle = sFileHandles[i];
+                CFileHandle* existingHandle = sFileHandles[i];
+                handle = new CFileHandle;
+                if (handle != NULL)
+                {
+                    handle->mFileSize = existingHandle->mFileSize;
+                    handle->mStartOffset = 0;
+                    handle->mCurrentPos = 0;
+                    handle->mValidPosition = 1;
+                    handle->mFileHandle = existingHandle->mFileHandle;
+                    handle->mLength = 0;
+                    strncpy(handle->mFilename, filename, 0x104);
+                }
                 break;
             }
         }
-        LeaveCriticalSection(&sMutex);
 
-        if (existingHandle != NULL)
+        if (handle == NULL)
         {
-            CFileHandle* newHandle = new CFileHandle();
-            if (newHandle != NULL)
-            {
-                newHandle->mFileSize = existingHandle->mFileSize;
-                newHandle->mStartOffset = 0;
-                newHandle->mCurrentPos = 0;
-                newHandle->mValidPosition = 1;
-                newHandle->mFileHandle = existingHandle->mFileHandle;
-                newHandle->mLength = 0;
-                strncpy(newHandle->mFilename, filename, 0x104);
-            }
-            char numBuf[260];
-            char* numDst = numBuf;
-            while (*p != '*' && *p != '\0')
-            {
-                *numDst++ = *p++;
-            }
-            *numDst = '\0';
-            if (*p == '*')
-                p++;
-            int start = atoi(numBuf);
-            if (newHandle)
-                newHandle->mLength = start;
-
-            numDst = numBuf;
-            while (*p != '.' && *p != '\0')
-            {
-                *numDst++ = *p++;
-            }
-            *numDst = '\0';
-            int length = atoi(numBuf);
-            if (newHandle)
-            {
-                newHandle->mCurrentPos = length;
-                newHandle->mStartOffset = length;
-                newHandle->mValidPosition = 0;
-                InvalidePositionsForOtherHandles(newHandle);
-                EnterCriticalSection(&sMutex);
-                sFileHandles.push_back(newHandle);
-                LeaveCriticalSection(&sMutex);
-                *handleOut = (unsigned int)newHandle;
-                return 1;
-            }
-            *handleOut = 0;
-            return 0;
-        }
-
-        int fd = CreateFileA(localName, 0x80000000, 0, NULL, 3, 0, 0);
-        if (fd != 0)
-        {
+            int fd = CreateFileA(localName, 0x80000000, 0, NULL, 3, 0, 0);
             int size = SetFilePointer(fd, 0, NULL, 2);
             SetFilePointer(fd, 0, NULL, 0);
-            CFileHandle* newHandle = new CFileHandle();
-            if (newHandle != NULL)
+            if (fd == 0)
             {
-                newHandle->mFileHandle = fd;
-                newHandle->mLength = 0;
-                newHandle->mStartOffset = 0;
-                newHandle->mFileSize = size;
-                newHandle->mValidPosition = 1;
-                strncpy(newHandle->mFilename, localName, 0x104);
+                *handleOut = 0;
+                return 0;
             }
-            char numBuf[260];
-            char* numDst = numBuf;
-            while (*p != '*' && *p != '\0')
+            handle = new CFileHandle;
+            if (handle != NULL)
             {
-                *numDst++ = *p++;
-            }
-            *numDst = '\0';
-            if (*p == '*')
-                p++;
-            int start = atoi(numBuf);
-            if (newHandle)
-                newHandle->mLength = start;
-
-            numDst = numBuf;
-            while (*p != '.' && *p != '\0')
-            {
-                *numDst++ = *p++;
-            }
-            *numDst = '\0';
-            int length = atoi(numBuf);
-            if (newHandle)
-            {
-                newHandle->mCurrentPos = length;
-                newHandle->mStartOffset = length;
-                newHandle->mValidPosition = 0;
-                InvalidePositionsForOtherHandles(newHandle);
-                EnterCriticalSection(&sMutex);
-                sFileHandles.push_back(newHandle);
-                LeaveCriticalSection(&sMutex);
-                *handleOut = (unsigned int)newHandle;
-                return 1;
+                handle->mFileHandle = fd;
+                handle->mLength = 0;
+                handle->mStartOffset = 0;
+                handle->mFileSize = size;
+                handle->mValidPosition = 1;
+                strncpy(handle->mFilename, localName, 0x104);
             }
         }
-        *handleOut = 0;
-        return 0;
+
+        dst = localName;
+        while (*p != '*')
+        {
+            *dst++ = *p++;
+        }
+        *dst = '\0';
+        handle->mLength = atoi(localName);
+        p++;
+
+        dst = localName;
+        while (*p != '.')
+        {
+            *dst++ = *p++;
+        }
+        *dst = '\0';
+        int length = atoi(localName);
+        handle->mCurrentPos = length;
+        handle->mStartOffset = length;
+        handle->mValidPosition = 0;
+        InvalidePositionsForOtherHandles(handle);
+        EnterCriticalSection(&sMutex);
+        sFileHandles.push_back(handle);
+        LeaveCriticalSection(&sMutex);
+        *handleOut = (unsigned int)handle;
+        return 1;
     }
 
     int fd = CreateFileA(filename, 0x80000000, 0, NULL, 3, 0, 0);
@@ -178,7 +134,7 @@ unsigned int file_open_callback(const char* filename, unsigned int* handleOut)
     {
         int size = SetFilePointer(fd, 0, NULL, 2);
         SetFilePointer(fd, 0, NULL, 0);
-        CFileHandle* handle = new CFileHandle();
+        CFileHandle* handle = new CFileHandle;
         if (handle != NULL)
         {
             handle->mCurrentPos = 0;
@@ -203,8 +159,6 @@ unsigned int file_open_callback(const char* filename, unsigned int* handleOut)
 void file_close_callback(unsigned int handleVal)
 {
     CFileHandle* handle = (CFileHandle*)handleVal;
-    if (!handle)
-        return;
     int fd = handle->mFileHandle;
 
     EnterCriticalSection(&sMutex);
@@ -234,14 +188,12 @@ void file_close_callback(unsigned int handleVal)
 int file_seek_callback(unsigned int handleVal, int offset, unsigned int origin)
 {
     CFileHandle* handle = (CFileHandle*)handleVal;
-    if (!handle)
-        return 0;
 
     int length = handle->mLength;
     if (length != 0)
     {
-        int target;
-        int maxPos = handle->mStartOffset + length;
+        unsigned int target;
+        unsigned int maxPos = handle->mStartOffset + length;
         if (origin == 1)
         {
             target = handle->mCurrentPos + offset;
@@ -266,8 +218,8 @@ int file_seek_callback(unsigned int handleVal, int offset, unsigned int origin)
         return handle->mCurrentPos - handle->mStartOffset;
     }
 
-    int target;
-    int maxPos = handle->mFileSize;
+    unsigned int target;
+    unsigned int maxPos = handle->mFileSize;
     if (origin == 1)
     {
         target = handle->mCurrentPos + offset;
@@ -295,8 +247,6 @@ int file_seek_callback(unsigned int handleVal, int offset, unsigned int origin)
 int file_read_callback(unsigned int handleVal, void* buffer, unsigned int bytes)
 {
     CFileHandle* handle = (CFileHandle*)handleVal;
-    if (!handle)
-        return 0;
 
     if (handle->mValidPosition == 0)
     {
@@ -313,7 +263,7 @@ int file_read_callback(unsigned int handleVal, void* buffer, unsigned int bytes)
         }
     }
 
-    unsigned int bytesRead = 0;
+    unsigned int bytesRead;
     int success = ReadFile(handle->mFileHandle, buffer, bytes, &bytesRead, NULL);
     if (success != 0)
     {

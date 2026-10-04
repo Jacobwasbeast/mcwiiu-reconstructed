@@ -2,5 +2,5 @@
 
 bool IsEqualXUID(PlayerUID first, PlayerUID second)
 {
-    return first == second;
+    return false;
 }

@@ -91,11 +91,10 @@ private:
     OSFastMutex m_voiceMutex;
     OSFastMutex m_sendMutex;
     std::deque<QueuedSendBlock> m_sendQueue;
-    unsigned int m_totalSendQueueMessages;
     unsigned int m_totalSendQueueBytes;
     unsigned int m_outstandingAckCount;
     unsigned int m_sessionIndex;
-    unsigned int m_talkingTicks;
+    int m_talkingTicks;
 };
 
 #endif

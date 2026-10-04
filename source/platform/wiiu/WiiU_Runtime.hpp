@@ -62,6 +62,7 @@ void GetLocalTime(SYSTEMTIME* systemTime);
 unsigned int FileTimeToSystemTime(const FILETIME* fileTime, SYSTEMTIME* systemTime);
 
 FSClient* GetWiiUFileSystemClient();
+extern FSClient* gFileCacheClient;
 void WiiUInitialise();
 
 #endif

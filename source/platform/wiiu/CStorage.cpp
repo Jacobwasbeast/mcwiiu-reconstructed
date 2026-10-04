@@ -8,6 +8,7 @@
 #include "platform/wiiu/WiiU_Runtime.hpp"
 #include "platform/wiiu/C4JThreadImpl.hpp"
 #include <algorithm>
+#include <cstdarg>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -76,11 +77,12 @@ void stateChangeCallback(FSClient* client, FSVolumeState state, void*)
 {
     if (state != static_cast<FSVolumeState>(1))
     {
-        gRenderer->BeginConditionalSurvey(0);
+        gRenderer->InitialiseContext();
         g_pInput->RequestErrorViewer(1, static_cast<unsigned int>(FSGetLastErrorCodeForViewer(client)), NULL, NULL);
+        altMain();
         return;
     }
-    gRenderer->EndConditionalSurvey();
+    g_pInput->DestroyErrorViewer();
     altMainStop();
 }
 
@@ -307,28 +309,19 @@ void CStorage::MakeCRCTable()
 }
 unsigned int CStorage::UpdateCRC(unsigned int crc, unsigned char* data, int length)
 {
-    int offset = 0;
+    int offset;
     if (!m_crcReady)
         MakeCRCTable();
-    while (length >= 8) {
-        crc = m_crcTable[(crc ^ data[offset++]) & 0xffU] ^ (crc >> 8);
-        crc = m_crcTable[(crc ^ data[offset++]) & 0xffU] ^ (crc >> 8);
-        crc = m_crcTable[(crc ^ data[offset++]) & 0xffU] ^ (crc >> 8);
-        crc = m_crcTable[(crc ^ data[offset++]) & 0xffU] ^ (crc >> 8);
-        crc = m_crcTable[(crc ^ data[offset++]) & 0xffU] ^ (crc >> 8);
-        crc = m_crcTable[(crc ^ data[offset++]) & 0xffU] ^ (crc >> 8);
-        crc = m_crcTable[(crc ^ data[offset++]) & 0xffU] ^ (crc >> 8);
-        crc = m_crcTable[(crc ^ data[offset++]) & 0xffU] ^ (crc >> 8);
-        length -= 8;
-    }
-    while (length-- > 0)
-        crc = m_crcTable[(crc ^ data[offset++]) & 0xffU] ^ (crc >> 8);
+    for (offset = 0; offset < length; ++offset)
+        crc = m_crcTable[(crc ^ data[offset]) & 0xffU] ^ (crc >> 8);
     return crc;
 }
 unsigned int CStorage::CRC(unsigned char* data, int length) { return ~UpdateCRC(FS_ERROR_FLAG_ALL, data, length); }
-void CStorage::DebugPrintf(const char*, ...)
+void CStorage::DebugPrintf(const char* format, ...)
 {
-    return;
+    va_list args;
+    va_start(args, format);
+    va_end(args);
 }
 void CStorage::SetSaveDeviceSelected(unsigned int, bool) {}
 int CStorage::GetSaveDeviceSelected(unsigned int) { return 1; }
@@ -548,7 +541,6 @@ unsigned int CStorage::LoadOptionsThreadProc(int profile)
             } else {
                 FSCloseFile(&m_profileClient, &m_profileCommandBlock, handle, FS_ERROR_FLAG_ALL);
                 MEMFreeToDefaultHeap(buffer);
-                m_profileReadBuffers[profile] = NULL;
                 m_profileReadState[profile].state = 8;
                 gProfile->LeaveInitSaveDirCS();
                 OSFastMutex_Unlock(&m_storageMutex);
@@ -580,19 +572,21 @@ void CStorage::CheckForProfileUpdatesRequired()
                             m_gameProfileStride);
             m_profileWriteState[profile].state = 2;
             m_profileWriteState[profile].timer = GetTickCount() + 300000;
-            void* stack = MEMAllocFromDefaultHeapEx(0x10000, 16);
+            void* stack = MEMAllocFromDefaultHeap(0x10000);
             if (!C4JThreadImpl::OSCreateThread4J(&m_profileSaveThreads[profile], _SaveOptionsThreadProc, profile, this,
                                                  (unsigned char*)stack + 0x10000, 0x10000, 0x10, 7))
                 m_profileWriteState[profile].state = 4;
             else
                 OSResumeThread(&m_profileSaveThreads[profile]);
         }
+    }
+    for (profile = 0; profile < 4; ++profile) {
         if (m_profileReadState[profile].state == 5) {
             m_profileReadState[profile].state = 6;
-            void* stack = MEMAllocFromDefaultHeapEx(0x10000, 16);
+            void* stack = MEMAllocFromDefaultHeap(0x10000);
             if (!C4JThreadImpl::OSCreateThread4J(&m_profileLoadThreads[profile], _LoadOptionsThreadProc, profile, this,
                                                  (unsigned char*)stack + 0x10000, 0x10000, 0x10, 7))
-                m_profileReadState[profile].state = 8;
+                m_profileWriteState[profile].state = 8;
             else
                 OSResumeThread(&m_profileLoadThreads[profile]);
         }
@@ -702,7 +696,7 @@ int CStorage::saveInfoSortfn(const void* left, const void* right)
 }
 unsigned int CStorage::GetSavesInfoThreadProc()
 {
-    DebugPrintf("GetSavesInfoThreadProc - start\n");
+    s_storage->DebugPrintf("GetSavesInfoThreadProc - start\n");
     while (m_saveState != C4JStorage::ESaveGame_Idle && m_saveState != C4JStorage::ESaveGame_SaveIncompleteWaiting)
         Sleep(10);
 
@@ -725,7 +719,7 @@ unsigned int CStorage::GetSavesInfoThreadProc()
     if (result == 0) {
         FSDirEntry entry;
         while (FSReadDir(&m_saveClient, &m_saveDirectoryCommandBlock, directory, &entry, FS_ERROR_FLAG_ALL) == 0) {
-            unsigned int length = std::strlen(entry.name);
+            int length = std::strlen(entry.name);
             if (length > 4 && m_savesInfo->count < 100 && (entry.info.flags & 0x80000000U) == 0 &&
                 std::strcmp(entry.name + length - 4, ".ext") == 0) {
                 FSFileHandle file;
@@ -765,11 +759,11 @@ unsigned int CStorage::GetSavesInfoThreadProc()
         }
         std::qsort(m_savesInfo->saves, m_savesInfo->count, sizeof(SAVE_INFO), saveInfoSortfn);
         m_savesInfoState = 2;
-        DebugPrintf("GetSavesInfoThreadProc - complete\n");
+        s_storage->DebugPrintf("GetSavesInfoThreadProc - complete\n");
         FSCloseDir(&m_saveClient, &m_saveDirectoryCommandBlock, directory, FS_ERROR_FLAG_ALL);
     } else {
         m_savesInfoState = 0;
-        DebugPrintf("GetSavesInfoThreadProc - ret != FS_STATUS_OK (%d)\n", result);
+        s_storage->DebugPrintf("GetSavesInfoThreadProc - ret != FS_STATUS_OK (%d)\n", result);
         m_savesInfoState = 2;
     }
     return 0;
@@ -782,7 +776,7 @@ int CStorage::GetSavesInfo(int, SavesInfoCallback callback, void* context, const
     m_savesInfoContext = context;
     if (m_savesInfoState == 0) {
         m_savesInfoState = 1;
-        void* stack = MEMAllocFromDefaultHeapEx(0x10000, 16);
+        void* stack = MEMAllocFromDefaultHeap(0x10000);
         if (C4JThreadImpl::OSCreateThread4J(&m_saveThreads[2], _GetSavesInfoThreadProc, 0, this,
                                             (unsigned char*)stack + 0x10000, 0x10000, 0x10, 7))
             OSResumeThread(&m_saveThreads[2]);
@@ -844,7 +838,7 @@ C4JStorage::ESaveGameState CStorage::LoadSaveData(SAVE_INFO* info, LoadCallback 
     SetSaveUniqueFilename(info->filename);
     std::memcpy(m_saveTitle, info->title, 0x100);
     m_saveState = C4JStorage::ESaveGame_Load;
-    void* stack = MEMAllocFromDefaultHeapEx(0x10000, 16);
+    void* stack = MEMAllocFromDefaultHeap(0x10000);
     if (C4JThreadImpl::OSCreateThread4J(&m_saveThreads[1], _LoadGameThreadProc, 0, this,
                                         (unsigned char*)stack + 0x10000, 0x10000, 0x10, 7)) {
         OSResumeThread(&m_saveThreads[1]);
@@ -1034,7 +1028,7 @@ C4JStorage::ESaveGameState CStorage::SaveSaveData(SaveCallback callback, void* c
     if (m_saveState != C4JStorage::ESaveGame_Idle && m_saveState != C4JStorage::ESaveGame_SaveIncompleteWaiting)
         return C4JStorage::ESaveGame_Idle;
     m_saveState = C4JStorage::ESaveGame_Save;
-    void* stack = MEMAllocFromDefaultHeapEx(0x10000, 16);
+    void* stack = MEMAllocFromDefaultHeap(0x10000);
     if (C4JThreadImpl::OSCreateThread4J(&m_saveThreads[0], _SaveGameThreadProc, 0, this,
                                         (unsigned char*)stack + 0x10000, 0x10000, 0x10, 7)) {
         OSResumeThread(&m_saveThreads[0]);
@@ -1087,7 +1081,7 @@ C4JStorage::ESaveGameState CStorage::DeleteSaveData(SAVE_INFO* info, SaveCallbac
         return C4JStorage::ESaveGame_Idle;
     m_saveState = C4JStorage::ESaveGame_Delete;
     m_previousSaveState = oldState;
-    void* stack = MEMAllocFromDefaultHeapEx(0x10000, 16);
+    void* stack = MEMAllocFromDefaultHeap(0x10000);
     if (C4JThreadImpl::OSCreateThread4J(&m_saveThreads[3], _DeleteGameThreadProc, 0, this,
                                         (unsigned char*)stack + 0x10000, 0x10000, 0x10, 7)) {
         OSResumeThread(&m_saveThreads[3]);
@@ -1104,7 +1098,7 @@ unsigned int CStorage::CopyGameThreadProc()
     FSFileHandle sourceFile;
     FSStat sourceStat;
     int result =
-        SAVEOpenFile(&m_saveClient, &m_saveCommandBlock, slot, m_selectedSave->filename, "r", &sourceFile, FS_ERROR_FLAG_ALL);
+        SAVEOpenFile(&m_saveClient, &m_saveCommandBlock, slot, m_saveUniqueFilename, "r", &sourceFile, FS_ERROR_FLAG_ALL);
     if (result != 0 || FSGetStatFile(&m_saveClient, &m_saveCommandBlock, sourceFile, &sourceStat, FS_ERROR_FLAG_ALL) != 0) {
         m_saveState = C4JStorage::ESaveGame_CopyFailed;
         SAVERollbackQuota(&m_saveClient, &m_saveCommandBlock, slot, FS_ERROR_FLAG_ALL);
@@ -1124,7 +1118,7 @@ unsigned int CStorage::CopyGameThreadProc()
     FSCloseFile(&m_saveClient, &m_saveCommandBlock, sourceFile, FS_ERROR_FLAG_ALL);
 
     char metadataName[128];
-    std::snprintf(metadataName, sizeof(metadataName), "%s.ext", m_selectedSave->filename);
+    std::snprintf(metadataName, sizeof(metadataName), "%s.ext", m_saveUniqueFilename);
     FSFileHandle metadataFile;
     FSStat metadataStat;
     result = SAVEOpenFile(&m_saveClient, &m_saveCommandBlock, slot, metadataName, "r", &metadataFile, FS_ERROR_FLAG_ALL);
@@ -1214,7 +1208,6 @@ int CStorage::_CopyGameThreadProc(int, void* storage) { return ((CStorage*)stora
 C4JStorage::ESaveGameState CStorage::CopySaveData(SAVE_INFO* info, CopyCallback callback, CopyProgressCallback progressCallback,
                            void* context)
 {
-    m_selectedSave = info;
     m_copyCallback = callback;
     m_copyProgressCallback = progressCallback;
     m_copyCallbackContext = context;
@@ -1223,7 +1216,7 @@ C4JStorage::ESaveGameState CStorage::CopySaveData(SAVE_INFO* info, CopyCallback 
     SetSaveUniqueFilename(info->filename);
     std::memcpy(m_saveTitle, info->title, 0x100);
     m_saveState = C4JStorage::ESaveGame_Copy;
-    void* stack = MEMAllocFromDefaultHeapEx(0x10000, 16);
+    void* stack = MEMAllocFromDefaultHeap(0x10000);
     if (C4JThreadImpl::OSCreateThread4J(&m_saveThreads[5], _CopyGameThreadProc, 0, this,
                                         (unsigned char*)stack + 0x10000, 0x10000, 0x10, 7)) {
         OSResumeThread(&m_saveThreads[5]);
@@ -1268,7 +1261,7 @@ C4JStorage::ESaveGameState CStorage::RenameSaveData(int index, wchar_t* title, S
     if (m_saveState != C4JStorage::ESaveGame_Idle)
         return C4JStorage::ESaveGame_Idle;
     m_saveState = C4JStorage::ESaveGame_Rename;
-    void* stack = MEMAllocFromDefaultHeapEx(0x10000, 16);
+    void* stack = MEMAllocFromDefaultHeap(0x10000);
     if (C4JThreadImpl::OSCreateThread4J(&m_saveThreads[4], _RenameGameThreadProc, 0, this,
                                         (unsigned char*)stack + 0x10000, 0x10000, 0x10, 7)) {
         OSResumeThread(&m_saveThreads[4]);
@@ -1382,7 +1375,7 @@ void CStorage::TickSaveGame()
         m_savesInfoAvailable = true;
 
         if (m_savesInfoCallback != NULL) {
-            m_savesInfoCallback(m_savesInfoContext, m_savesInfo, true);
+            m_savesInfoCallback(m_saveCallbackContext, m_savesInfo, true);
         }
 
         state = m_saveState;
@@ -1461,7 +1454,7 @@ unsigned int CStorage::EnumerateLocalDLCPackages()
     char root[32];
     std::strcpy(root, "/vol/content/WiiU/DLC");
     if (!m_openDir(root, &m_dlcDirectory)) {
-        DebugPrintf("Error reading directory %s\n", root);
+        s_storage->DebugPrintf("Error reading directory %s\n", root);
         return 0;
     }
 
@@ -1479,12 +1472,12 @@ unsigned int CStorage::EnumerateLocalDLCPackages()
             AddInstalled(content);
         }
     }
-    DebugPrintf("Finished finding files in %s\n", root);
+    s_storage->DebugPrintf("Finished finding files in %s\n", root);
     m_closeDir(&m_dlcDirectory);
 
     std::strcpy(root, "/vol/content/WiiU/CU/DLC");
     if (!m_openDir(root, &m_dlcDirectory)) {
-        DebugPrintf("Error reading directory %s\n", root);
+        s_storage->DebugPrintf("Error reading directory %s\n", root);
         return 0;
     }
 
@@ -1502,7 +1495,7 @@ unsigned int CStorage::EnumerateLocalDLCPackages()
             AddInstalled(content);
         }
     }
-    DebugPrintf("Finished finding files in %s\n", root);
+    s_storage->DebugPrintf("Finished finding files in %s\n", root);
     m_closeDir(&m_dlcDirectory);
     return 1;
 }
@@ -1542,7 +1535,7 @@ int CStorage::MountInstalledDLC(int, unsigned int index, DLCMountCallback callba
     m_dlcMountContext = context;
     m_dlcMountName = mountName == NULL ? m_defaultDLCMountName : mountName;
     m_mountedDLCIndex = index;
-    void* stack = MEMAllocFromDefaultHeapEx(0x10000, 16);
+    void* stack = MEMAllocFromDefaultHeap(0x10000);
     if (C4JThreadImpl::OSCreateThread4J(&m_dlcThread, MountInstalledDLC_threadEntry, 0, this,
                                         (unsigned char*)stack + 0x10000, 0x10000, 0x10, 7)) {
         OSResumeThread(&m_dlcThread);
@@ -1658,8 +1651,8 @@ int CStorage::WriteToGenericData(int slot, const std::wstring& name, void* data,
     m_genericFilename = name;
     m_genericWriteData = data;
     m_genericDataSize = size;
-    DebugPrintf("Writing data of size %d at 0x%08x\n", size, data);
-    DebugPrintf("Writing data of size %d at 0x%08x\n", size, data);
+    DebugPrintf("Writing data of size %d at 0x%016llx", size, data);
+    DebugPrintf("Writing data of size %d at 0x%016llx", size, data);
     m_genericCallback = callback;
     m_genericSlot = slot;
     m_genericState = 1;
@@ -1773,7 +1766,7 @@ void CStorage::GenericDataTick()
         break;
     case 1:
         m_genericState = 2;
-        stack = MEMAllocFromDefaultHeapEx(0x10000, 16);
+        stack = MEMAllocFromDefaultHeap(0x10000);
         if (!C4JThreadImpl::OSCreateThread4J(&m_genericThread, _SaveGenericDataThreadProc, m_genericSlot, this,
                                              (unsigned char*)stack + 0x10000, 0x10000, 0x10, 7)) {
             m_genericState = 5;
@@ -1805,7 +1798,7 @@ void CStorage::GenericDataTick()
         return;
     case 7:
         m_genericState = 8;
-        stack = MEMAllocFromDefaultHeapEx(0x10000, 16);
+        stack = MEMAllocFromDefaultHeap(0x10000);
         if (!C4JThreadImpl::OSCreateThread4J(&m_genericThread, _LoadGenericDataThreadProc, m_genericSlot, this,
                                              (unsigned char*)stack + 0x10000, 0x10000, 0x10, 7)) {
             m_genericState = 11;

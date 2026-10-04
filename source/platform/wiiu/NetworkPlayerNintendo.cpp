@@ -130,7 +130,7 @@ std::wstring NetworkPlayerNintendo::GetMiiName()
 
 std::wstring NetworkPlayerNintendo::GetDisplayName()
 {
-    if (IsGuest())
+    if (IsLocal())
         return GetMiiName();
     return std::wstring(GetOnlineName());
 }

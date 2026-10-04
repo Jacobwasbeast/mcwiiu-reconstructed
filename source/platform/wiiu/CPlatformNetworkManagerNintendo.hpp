@@ -69,7 +69,7 @@ public:
     virtual bool ShouldMessageForFullSession();
     virtual INetworkPlayer* GetHostPlayer();
     virtual bool IsHost();
-    virtual bool JoinGameFromInviteInfo(int userIndex, int userIndexMask, const FriendPresence* presence);
+    virtual bool JoinGameFromInviteInfo(int userIndex, int userIndexMask, const nn::fp::FriendPresence* presence);
     virtual bool LeaveGame(bool error);
     virtual bool IsInSession();
     virtual bool IsInGameplay();
@@ -115,7 +115,7 @@ public:
     virtual void GetFullFriendSessionInfo(FriendSessionInfo* info, void (*callback)(bool, void*), void* callbackData);
     virtual void ForceFriendsSessionRefresh();
     virtual void ClearFriendsSessions();
-    virtual bool AlreadyInSession(const FriendPresence* presence);
+    virtual bool AlreadyInSession(const nn::fp::FriendPresence* presence);
     virtual bool GetAgeRestricted();
     virtual bool usingAdhocMode();
     virtual bool setAdhocMode(bool mode);
@@ -128,7 +128,7 @@ public:
     virtual bool usingLanMode();
     virtual bool isLanConnected();
     virtual bool isLanModeChangeInProgress();
-    virtual bool checkValidInviteData(const FriendPresence* presence);
+    virtual bool checkValidInviteData(const nn::fp::FriendPresence* presence);
     virtual void SetExitAndJoinFromInviteInProgress(bool inProgress);
     virtual void CancelDisconnectFromExitAndJoin();
     virtual std::wstring GetDisplayNameByGamertag(std::wstring gamertag);

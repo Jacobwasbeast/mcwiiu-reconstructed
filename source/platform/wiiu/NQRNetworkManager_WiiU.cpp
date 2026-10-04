@@ -11,6 +11,7 @@
 
 #include "game/core/System.hpp"
 #include "game/core/CMinecraftApp.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/ConsoleUIController.hpp"
 #include "platform/wiiu/C4JEventImpl.hpp"
 #include "platform/wiiu/C4JThreadImpl.hpp"
@@ -1214,8 +1215,8 @@ void NQRNetworkManager_WiiU::PollReceiveData()
             if ((mask & 1) == 0)
             {
                 for (unsigned int index = 1; index < 4; ++index)
-                    if ((mask & (1ull << index)) != 0 && g_pApp != NULL)
-                        g_pApp->SetAction(static_cast<int>(index), eXuiAction_RemoveLocalPlayer, NULL);
+                    if ((mask & (1ull << index)) != 0)
+                        gApp.SetAction(static_cast<int>(index), eXuiAction_RemoveLocalPlayer, NULL);
                 int parameter = static_cast<int>(IDS_CONFIRM_OK);
                 if (m_localGame == false)
                     gConsoleUIController.RequestErrorMessage(0x1afa54b5, 0xf18fccd0,
@@ -1229,14 +1230,11 @@ void NQRNetworkManager_WiiU::PollReceiveData()
             }
             else
             {
-                if (g_pApp != NULL)
-                {
-                    const DisconnectPacket::eDisconnectReason reason =
-                        m_localGame == false ? DisconnectPacket::eDisconnectReason_GameFull :
-                        m_localGame == true ? DisconnectPacket::eDisconnectReason_AgeRestricted :
-                        DisconnectPacket::eDisconnectReason_None;
-                    g_pApp->SetDisconnectReason(reason);
-                }
+                const DisconnectPacket::eDisconnectReason reason =
+                    m_localGame == false ? DisconnectPacket::eDisconnectReason_GameFull :
+                    m_localGame == true ? DisconnectPacket::eDisconnectReason_AgeRestricted :
+                    DisconnectPacket::eDisconnectReason_None;
+                gApp.SetDisconnectReason(reason);
                 if (m_listener != NULL)
                     m_listener->HandleDisconnect(true);
             }

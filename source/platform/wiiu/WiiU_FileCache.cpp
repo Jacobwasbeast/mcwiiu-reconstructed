@@ -95,22 +95,17 @@ int WriteFile(int file, const void *buffer, unsigned int bytesToWrite,
     (void)overlapped;
     setAltMainOKToRun();
     FSStatus result;
-    if ((bytesToWrite & 0x3fu) == 0)
+    if ((reinterpret_cast<uintptr_t>(buffer) & 0x3fu) == 0)
     {
         FSCmdBlock *commandBlock = GetCommandBlock();
-        result = FSWriteFile(GetWiiUFileSystemClient(), commandBlock, const_cast<unsigned char *>(static_cast<const unsigned char *>(buffer)), 1, bytesToWrite, file, 0, FS_ERROR_FLAG_ALL);
+        result = FSWriteFile(GetWiiUFileSystemClient(), commandBlock, const_cast<unsigned char *>(static_cast<const unsigned char *>(buffer)), 1, bytesToWrite, file, 0, FS_ERROR_FLAG_NONE);
     }
     else
     {
-        if (s_writeBuffer == 0)
-        {
-            waitForAltMainThreadToComplete();
-            return 0;
-        }
         EnterCriticalSection(&s_writeMutex);
         std::memcpy(s_writeBuffer, buffer, bytesToWrite);
         FSCmdBlock *commandBlock = GetCommandBlock();
-        result = FSWriteFile(GetWiiUFileSystemClient(), commandBlock, s_writeBuffer, 1, bytesToWrite, file, 0, FS_ERROR_FLAG_ALL);
+        result = FSWriteFile(GetWiiUFileSystemClient(), commandBlock, s_writeBuffer, 1, bytesToWrite, file, 0, FS_ERROR_FLAG_NONE);
         LeaveCriticalSection(&s_writeMutex);
     }
     if (result >= 0 && bytesWritten != 0)
@@ -135,9 +130,9 @@ int SetFilePointer(int file, long distanceToMove, int *distanceToMoveHigh, unsig
     {
         position += cache->m_filePos;
     }
-    int result = cache->SetFilePos(position);
+    cache->SetFilePos(position);
     waitForAltMainThreadToComplete();
-    return result;
+    return position;
 }
 
 unsigned int GetFileAttributesA(const char *fileName)
@@ -157,7 +152,7 @@ unsigned int GetFileAttributesA(const char *fileName)
 }
 
 WiiU_FileCache::WiiU_FileCache(int file)
-    : m_cache(0), m_file(file), m_fileSize(0), m_filePos(0), m_cacheLength(0), m_cachePos(0)
+    : m_file(file), m_filePos(0), m_cacheLength(0), m_cachePos(0)
 {
     m_cache = (unsigned char *)MEMAllocFromDefaultHeapEx(FILE_CACHE_BUFFER_SIZE, 64);
     m_fileSize = GetFileSize(file, 0);
@@ -165,10 +160,7 @@ WiiU_FileCache::WiiU_FileCache(int file)
 
 WiiU_FileCache::~WiiU_FileCache()
 {
-    if (m_cache != 0)
-    {
-        MEMFreeToDefaultHeap(m_cache);
-    }
+    MEMFreeToDefaultHeap(m_cache);
 }
 
 WiiU_FileCache *WiiU_FileCache::GetFileCache(int file)
@@ -192,11 +184,11 @@ int WiiU_FileCache::bytesAvailableInCache()
 void WiiU_FileCache::fillCache()
 {
     FSCmdBlock *commandBlock = GetCommandBlock();
-    FSStatus result = FSSetPosFile(GetWiiUFileSystemClient(), commandBlock, m_file, (unsigned int)m_filePos, FS_ERROR_FLAG_ALL);
+    FSStatus result = FSSetPosFile(gFileCacheClient, commandBlock, m_file, (unsigned int)m_filePos, FS_ERROR_FLAG_ALL);
     if (result == 0)
     {
         commandBlock = GetCommandBlock();
-        result = FSReadFile(GetWiiUFileSystemClient(), commandBlock, m_cache, 1, FILE_CACHE_BUFFER_SIZE, m_file, 0, FS_ERROR_FLAG_ALL);
+        result = FSReadFile(gFileCacheClient, commandBlock, m_cache, 1, FILE_CACHE_BUFFER_SIZE, m_file, 0, FS_ERROR_FLAG_ALL);
         if (result >= 0)
         {
             m_cacheLength = result;
@@ -238,7 +230,7 @@ unsigned int WiiU_FileCache::Read(void *buffer, unsigned int size)
 
 unsigned int WiiU_FileCache::SetFilePos(int position)
 {
-    if (position >= 0 && (unsigned int)position < m_fileSize)
+    if (position >= 0 && position < (int)m_fileSize)
     {
         unsigned int cacheBase = (unsigned int)m_filePos & 0xffff0000u;
         if (cacheBase != (unsigned int)m_cachePos)
@@ -268,7 +260,7 @@ void WiiU_FileCache::CreateFileCache(int file)
 bool WiiU_FileCache::Close()
 {
     FSCmdBlock *commandBlock = GetCommandBlock();
-    FSStatus result = FSCloseFile(GetWiiUFileSystemClient(), commandBlock, m_file, FS_ERROR_FLAG_ALL);
+    FSStatus result = FSCloseFile(gFileCacheClient, commandBlock, m_file, FS_ERROR_FLAG_ALL);
     return result == 0;
 }
 

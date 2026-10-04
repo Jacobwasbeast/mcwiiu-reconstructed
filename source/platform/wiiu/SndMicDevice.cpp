@@ -737,7 +737,7 @@ SndMicDevice::eSndMicResult SndMicDevice::StoreDataSnd(const short* pData, short
     memcpy(&m_pSndBuffer[m_usSndWriteIndex], pData, sSamples * 2);
 
     m_usSndStoredSamples = (unsigned short)(m_usSndStoredSamples + sSamples);
-    m_usSndWriteIndex = (unsigned short)((m_usSndWriteIndex + sSamples) % (m_iFrameSamples * 3));
+    m_usSndWriteIndex = (unsigned short)((unsigned int)(m_usSndWriteIndex + sSamples) % (unsigned int)(m_iFrameSamples * 3));
 
     return eSndMicResult_Success;
 }
@@ -930,7 +930,7 @@ void SndMicDevice::readVoiceData(short* pBuffer, short sSamples)
     memcpy(pBuffer, &m_pSndBuffer[m_usSndReadIndex], sSamples * 2);
 
     m_usSndStoredSamples = (unsigned short)(m_usSndStoredSamples - sSamples);
-    m_usSndReadIndex = (unsigned short)((m_usSndReadIndex + sSamples) % (m_iFrameSamples * 3));
+    m_usSndReadIndex = (unsigned short)((unsigned int)(m_usSndReadIndex + sSamples) % (unsigned int)(m_iFrameSamples * 3));
 }
 
 void SndMicDevice::readRefData(short* pLeft, short* pRight, short sSamples)
