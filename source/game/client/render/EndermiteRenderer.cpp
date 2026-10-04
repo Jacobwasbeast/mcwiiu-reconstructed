@@ -15,9 +15,9 @@ EndermiteRenderer::~EndermiteRenderer()
 {
 }
 
-double EndermiteRenderer::getFlipDegrees(boost::shared_ptr<LivingEntity>&)
+float EndermiteRenderer::getFlipDegrees(boost::shared_ptr<LivingEntity>&)
 {
-    return 180.0;
+    return 180.0F;
 }
 
 const ResourceLocation* EndermiteRenderer::getTextureLocation(boost::shared_ptr<Entity>&)

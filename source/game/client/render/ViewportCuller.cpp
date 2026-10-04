@@ -193,12 +193,34 @@ bool ViewportCuller::cubeInFrustum(double x0, double y0, double z0, double x1, d
         }
     }
 
-    for (int i = 0; i < 6; ++i)
+    if (!mFaces[0].inFront(x0, y0, z0, x1, y1, z1))
     {
-        if (!mFaces[i].inFront(x0, y0, z0, x1, y1, z1))
-        {
-            return false;
-        }
+        return false;
+    }
+
+    if (!mFaces[1].inFront(x0, y0, z0, x1, y1, z1))
+    {
+        return false;
+    }
+
+    if (!mFaces[2].inFront(x0, y0, z0, x1, y1, z1))
+    {
+        return false;
+    }
+
+    if (!mFaces[3].inFront(x0, y0, z0, x1, y1, z1))
+    {
+        return false;
+    }
+
+    if (!mFaces[4].inFront(x0, y0, z0, x1, y1, z1))
+    {
+        return false;
+    }
+
+    if (!mFaces[5].inFront(x0, y0, z0, x1, y1, z1))
+    {
+        return false;
     }
 
     return true;
@@ -231,12 +253,34 @@ bool ViewportCuller::cubeFullyInFrustum(double x0, double y0, double z0, double 
         }
     }
 
-    for (int i = 0; i < 6; ++i)
+    if (!mFaces[0].fullyInFront(x0, y0, z0, x1, y1, z1))
     {
-        if (!mFaces[i].fullyInFront(x0, y0, z0, x1, y1, z1))
-        {
-            return false;
-        }
+        return false;
+    }
+
+    if (!mFaces[1].fullyInFront(x0, y0, z0, x1, y1, z1))
+    {
+        return false;
+    }
+
+    if (!mFaces[2].fullyInFront(x0, y0, z0, x1, y1, z1))
+    {
+        return false;
+    }
+
+    if (!mFaces[3].fullyInFront(x0, y0, z0, x1, y1, z1))
+    {
+        return false;
+    }
+
+    if (!mFaces[4].fullyInFront(x0, y0, z0, x1, y1, z1))
+    {
+        return false;
+    }
+
+    if (!mFaces[5].fullyInFront(x0, y0, z0, x1, y1, z1))
+    {
+        return false;
     }
 
     return true;

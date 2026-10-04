@@ -37,12 +37,22 @@ void BedRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x, d
 
     boost::shared_ptr<BedBlockEntity> bed = boost::static_pointer_cast<BedBlockEntity>(blockEntity);
     unsigned int direction = 0;
-    const DyeColor* colour = bed->getColor();
-    if (bed->getLevel() != NULL)
+    bool isHeadPiece = true;
+    bool hasLevel = bed->getLevel() != NULL;
+    if (hasLevel)
     {
-        if (!bed->isHeadPiece())
-            return;
+        isHeadPiece = bed->isHeadPiece();
+    }
+    const DyeColor* colour = DyeColor::RED;
+    if (bed != NULL)
+    {
+        colour = bed->getColor();
+    }
+    if (hasLevel)
+    {
         direction = (unsigned int)(bed->getData() & 3);
+        if (!isHeadPiece)
+            return;
     }
 
     bindTexture(&BED_TEXTURE);
@@ -116,7 +126,7 @@ void BedRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x, d
     GlStateManager::enableRescaleNormal();
     GlStateManager::pushMatrix();
 
-    unsigned int colourValue = Minecraft::GetInstance()->getColourTable()->getColour(colour->getBedColor());
+    int colourValue = Minecraft::GetInstance()->getColourTable()->getColour(colour->getBedColor());
     GlStateManager::color4f((float)((colourValue >> 16) & 0xff) / 255.0F,
                             (float)((colourValue >> 8) & 0xff) / 255.0F,
                             (float)(colourValue & 0xff) / 255.0F, alpha);
@@ -150,12 +160,12 @@ void BedRenderer::setupForTexturePack(TexturePack* pTexturePack)
         mModel = NULL;
     }
 
-    if (!pTexturePack->HasCustomModel(mDefaultModel->getName()))
+    if (pTexturePack->HasCustomModel(mDefaultModel->getName()))
     {
-        mModel = mDefaultModel;
+        mModel = new BedModel(*pTexturePack->GetCustomModel(mDefaultModel->getName()));
     }
     else
     {
-        mModel = new BedModel(*pTexturePack->GetCustomModel(mDefaultModel->getName()));
+        mModel = mDefaultModel;
     }
 }

@@ -3,6 +3,7 @@
 
 #include <cmath>
 
+#include "game/client/render/EntityRenderDispatcher.hpp"
 #include "game/client/render/Model.hpp"
 #include "game/client/render/Tesselator.hpp"
 #include "game/core/BufferBuilder.hpp"
@@ -10,6 +11,7 @@
 #include "game/core/Culler.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/core/Minecraft.hpp"
+#include "game/core/Mth.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/Mob.hpp"
 
@@ -20,12 +22,9 @@ MobRenderer::MobRenderer(EntityRenderDispatcher* dispatcher, Model* model, float
 
 bool MobRenderer::shouldShowName(boost::shared_ptr<Entity>& entity)
 {
-    if (!LivingEntityRenderer::shouldShowName(entity))
-        return false;
-    boost::shared_ptr<Mob> mob = boost::static_pointer_cast<Mob>(entity);
-    if (!entity->isInvisible())
-        return true;
-    return mob->isCustomNameVisible();
+    return LivingEntityRenderer::shouldShowName(entity) &&
+           (entity->shouldShowName() || boost::static_pointer_cast<Mob>(entity)->hasCustomName()) &&
+           entity.get() == mDispatcher->mPlayer.get();
 }
 
 bool MobRenderer::shouldRender(boost::shared_ptr<Entity>& entity, Culler* culler,
@@ -34,17 +33,19 @@ bool MobRenderer::shouldRender(boost::shared_ptr<Entity>& entity, Culler* culler
     if (EntityRenderer::shouldRender(entity, culler, x, y, z))
         return true;
     boost::shared_ptr<Mob> mob = boost::static_pointer_cast<Mob>(entity);
-    if (!mob || !mob->isLeashed())
-        return false;
-    boost::shared_ptr<Entity> leashHolder = mob->getLeashHolder();
-    return leashHolder && culler->isVisible(leashHolder->getBoundingBoxForCulling());
+    if (mob && mob->isLeashed() && mob->getLeashHolder())
+    {
+        boost::shared_ptr<Entity> leashHolder = mob->getLeashHolder();
+        return culler->isVisible(leashHolder->getBoundingBoxForCulling());
+    }
+    return false;
 }
 
 void MobRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
                          float yaw, float partialTick)
 {
     LivingEntityRenderer::render(entity, x, y, z, yaw, partialTick);
-    if (mItemFrame)
+    if (mSolidRender)
         return;
     if ((entity->GetType() & EntityType::MOB) != EntityType::MOB)
         return;
@@ -56,7 +57,7 @@ void MobRenderer::setLightColor(boost::shared_ptr<Entity>& entity)
 {
     int lightColor = entity->getLightColor();
     GlStateManager::multiTexCoord2f((float)(lightColor & 65535),
-                                    (float)((unsigned int)lightColor >> 16));
+                                    (float)(lightColor >> 16));
 }
 
 double MobRenderer::lerp(double first, double second, double fraction)
@@ -75,27 +76,25 @@ void MobRenderer::renderLeash(boost::shared_ptr<Mob>& mob, double x, double y, d
     y -= (1.6 - (double)mob->mBbHeight) * 0.5;
     BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
 
-    double holderYaw = lerp((double)holder->mYRotO, (double)holder->mYRot, (double)(partialTick * 0.5F)) *
-                       0.01745329238474369;
-    double holderPitch = lerp((double)holder->mXRotO, (double)holder->mXRot, (double)(partialTick * 0.5F)) *
-                         0.01745329238474369;
-    double cosYaw = std::cos(holderYaw);
-    double sinYaw = std::sin(holderYaw);
-    double sinPitch = std::sin(holderPitch);
+    double holderYaw = lerp((double)holder->mYRotO, (double)holder->mYRot, (double)(partialTick * 0.5F));
+    double holderPitch = lerp((double)holder->mXRotO, (double)holder->mXRot, (double)(partialTick * 0.5F));
+    double cosYaw = std::cos(holderYaw * Mth::DEG_TO_RAD);
+    double sinYaw = std::sin(holderYaw * Mth::DEG_TO_RAD);
+    double sinPitch = std::sin(holderPitch * Mth::DEG_TO_RAD);
     if ((holder->GetType() & EntityType::HANGING_ENTITY) == EntityType::HANGING_ENTITY)
     {
         cosYaw = 0.0;
         sinYaw = 0.0;
         sinPitch = -1.0;
     }
-    double cosPitch = std::cos(holderPitch);
+    double cosPitch = std::cos(holderPitch * Mth::DEG_TO_RAD);
     double holderX = lerp(holder->mXo, holder->mX, partialTick) - cosYaw * 0.7 - sinYaw * 0.5 * cosPitch;
     double holderY = lerp(holder->mYo + holder->getEyeHeight() * 0.7, holder->mY + holder->getEyeHeight() * 0.7,
                           partialTick) -
                      sinPitch * 0.5 - 0.25;
     double holderZ = lerp(holder->mZo, holder->mZ, partialTick) - sinYaw * 0.7 + cosYaw * 0.5 * cosPitch;
 
-    double bodyYaw = lerp((double)mob->mYBodyRotO, (double)mob->mYBodyRot, partialTick) * 0.01745329238474369 +
+    double bodyYaw = lerp((double)mob->mYBodyRotO, (double)mob->mYBodyRot, partialTick) * Mth::DEG_TO_RAD +
                      1.5707963705062866;
     double offsetX = std::cos(bodyYaw) * (double)mob->mBbWidth * 0.4;
     double offsetZ = std::sin(bodyYaw) * (double)mob->mBbWidth * 0.4;

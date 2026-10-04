@@ -17,7 +17,7 @@ class GuardianRenderer : public MobRenderer
 {
 public:
     GuardianRenderer(EntityRenderDispatcher* dispatcher);
-    virtual ~GuardianRenderer();
+    virtual ~GuardianRenderer() {}
     Vec3* getPosition(boost::shared_ptr<Entity>& entity, double yOffset, float partialTicks);
     virtual bool shouldRender(boost::shared_ptr<Entity>& entity, Culler* culler, double x, double y, double z);
     virtual void render(boost::shared_ptr<Entity>& entity, double x, double y, double z, float yaw, float partialTick);

@@ -1,5 +1,7 @@
 #include "game/client/render/WolfRenderer.hpp"
 
+#include <algorithm>
+
 #include <boost/shared_ptr.hpp>
 
 #include "game/client/render/Model.hpp"
@@ -27,7 +29,7 @@ WolfRenderer::~WolfRenderer()
 {
 }
 
-double WolfRenderer::getBob(boost::shared_ptr<LivingEntity>& entity, float partialTicks)
+float WolfRenderer::getBob(boost::shared_ptr<LivingEntity>& entity, float partialTicks)
 {
     boost::shared_ptr<Wolf> wolf = boost::static_pointer_cast<Wolf>(entity);
     return wolf->getTailAngle();
@@ -63,12 +65,8 @@ void WolfRenderer::setupForTexturePack(TexturePack* pack)
         removeLayer(mCollarLayer);
         return;
     }
-    for (std::vector<RenderLayer*>::iterator it = mLayers.begin(); it != mLayers.end(); ++it)
-    {
-        if (*it == mCollarLayer)
-            return;
-    }
-    addLayer(mCollarLayer);
+    if (std::find(mLayers.begin(), mLayers.end(), mCollarLayer) == mLayers.end())
+        addLayer(mCollarLayer);
 }
 
 Model* WolfRenderer::createModel(const ModelDefinition& definition)

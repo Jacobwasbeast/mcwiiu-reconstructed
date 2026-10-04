@@ -24,7 +24,7 @@ GiantMobRenderer::~GiantMobRenderer()
 
 void GiantMobRenderer::translateWeaponItem()
 {
-    GlStateManager::translatef(0.0F, 0.5F, 0.1875F);
+    GlStateManager::translatef(0.0F, 0.1875F, 0.0F);
 }
 
 void GiantMobRenderer::scale(boost::shared_ptr<LivingEntity>& entity, float partialTicks)

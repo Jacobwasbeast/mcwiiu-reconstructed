@@ -93,7 +93,7 @@ CFontData::CFontData(SFontData& fontData, int* imageData)
 
     for (unsigned int pixel = 0; pixel < numPixels; ++pixel)
     {
-        m_glyphPixels[pixel] = (unsigned char)(imageData[pixel] >> 24);
+        m_glyphPixels[pixel] = (unsigned char)((unsigned int)imageData[pixel] >> 24);
     }
 
     for (unsigned int glyph = 0; glyph < fontData.numGlyphs; ++glyph)
@@ -138,11 +138,13 @@ CFontData::CFontData(SFontData& fontData, int* imageData)
         }
     }
 
-    m_glyphAdvances = new float[fontData.numGlyphs];
+    float* advances = new float[fontData.numGlyphs];
+    m_glyphAdvances = advances;
+    unsigned int glyphCount = fontData.numGlyphs;
 
-    for (unsigned short glyphId = 0; glyphId < fontData.numGlyphs; ++glyphId)
+    for (unsigned short glyphId = 0; glyphId < glyphCount; ++glyphId)
     {
-        m_glyphAdvances[glyphId] = m_glyphWidths[glyphId] * m_fontData->glyphWidthScale;
+        advances[glyphId] = m_glyphWidths[glyphId] * m_fontData->glyphWidthScale;
     }
 }
 

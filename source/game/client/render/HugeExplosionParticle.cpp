@@ -16,7 +16,6 @@ HugeExplosionParticle::HugeExplosionParticle(Textures* textures, Level* level, d
                                              double xa, double ya, double za)
     : Particle(level, x, y, z, 0.0, 0.0, 0.0)
     , textureManager(textures)
-    , size(1.0f - (float)xa * 0.5f)
 {
     lifetime = random.nextInt(4) + 6;
 
@@ -28,13 +27,14 @@ HugeExplosionParticle::HugeExplosionParticle(Textures* textures, Level* level, d
     rCol = red * intensity;
     gCol = green * intensity;
     bCol = blue * intensity;
+    size = 1.0f - (float)xa * 0.5f;
 }
 
 void HugeExplosionParticle::render(BufferBuilder* buffer, const boost::shared_ptr<Entity>& camera,
                                    float partialTicks, float xa, float ya, float za, float xa2, float za2)
 {
     const int frame = (int)(((float)age + partialTicks) * 15.0f / (float)lifetime);
-    if (frame < 16)
+    if (frame <= 15)
     {
         textureManager->bindTexture(&EXPLOSION_LOCATION);
 

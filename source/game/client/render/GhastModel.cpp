@@ -41,7 +41,7 @@ GhastModel::GhastModel(const ModelDefinition& modelDefinition)
         mBody->addBox(-8.0f, -8.0f, -8.0f, 16, 16, 16);
         mBody->setPos(0.0f, 8.0f, 0.0f);
 
-        Random random(1660);
+        Random* random = new Random(1660);
 
         for (int i = 0; i < 9; ++i)
         {
@@ -49,7 +49,7 @@ GhastModel::GhastModel(const ModelDefinition& modelDefinition)
 
             float x = (((float)(i % 3) - (float)(i / 3 % 2) * 0.5f + 0.25f) / 2.0f * 2.0f - 1.0f) * 5.0f;
             float z = ((float)(i / 3) / 2.0f * 2.0f - 1.0f) * 5.0f;
-            int height = random.nextInt(7) + 8;
+            int height = random->nextInt(7) + 8;
 
             mTentacles[i]->addBox(-1.0f, 0.0f, -1.0f, 2, height, 2);
             mTentacles[i]->setPos(x, 15.0f, z);

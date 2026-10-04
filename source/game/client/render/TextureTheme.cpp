@@ -39,9 +39,10 @@ const BlockState* TextureTheme::BlockStack::at(int index) const
         return NULL;
     if (index < 0)
         return Blocks::air->defaultBlockState();
-    if (index >= (int)mStates.size() - 1)
-        index = (int)mStates.size() - 1;
-    return mStates.at(index);
+    int last = (int)mStates.size() - 1;
+    if (index < last)
+        last = index;
+    return mStates.at(last);
 }
 
 TextureTheme::TextureTheme()
@@ -50,23 +51,22 @@ TextureTheme::TextureTheme()
 
 const TextureTheme::BlockStack& TextureTheme::getStack(BufferedImage* image, int x, int y) const
 {
-    static BlockStack defaultStack;
-    static BlockStack invalidStack(Blocks::air->defaultBlockState(), 1, 0);
     if (x > 0 && y > 0 && x < (int)image->getWidth() && y < (int)image->getHeight())
     {
         int key = image->getData()[(x * image->getWidth() + y)] & 0xFFFFFF;
-        boost::unordered_map<int, BlockStack>::const_iterator it = mStacks.find(key);
-        if (it != mStacks.end())
-            return it->second;
+        if (mStacks.find(key) != mStacks.end())
+            return mStacks.at(key);
+        static BlockStack defaultStack;
         return defaultStack;
     }
+    static BlockStack invalidStack(Blocks::air->defaultBlockState(), 1, 0);
     return invalidStack;
 }
 
 void TextureTheme::addStack(const std::wstring& key, const BlockStack& stack)
 {
     int value = _fromHEXString<int>(key);
-    mStacks.emplace(std::make_pair(value, stack));
+    mStacks.insert(std::make_pair(value, stack));
 }
 
 void TextureTheme::Apply(Random&, BlockTransaction* transaction, int&, int&) const

@@ -7,7 +7,7 @@
 #include "game/core/BufferBuilder.hpp"
 #include "game/core/Mth.hpp"
 #include "game/core/Wolf.hpp"
-WolfModel::WolfModel(const ModelDefinition& modelDefinition):mHead(NULL),mBody(NULL),mLeg1(NULL),mLeg2(NULL),mLeg3(NULL),mLeg4(NULL),mTail(NULL),mUpperBody(NULL)
+WolfModel::WolfModel(const ModelDefinition& modelDefinition)
 {
     BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
 
@@ -161,7 +161,7 @@ void WolfModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTic
                           float headPitch, float scale, boost::shared_ptr<Entity> entity,
                           _SkinAdjustments skinAdjustments)
 {
-    Model::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, skinAdjustments);
+    Model::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, _SkinAdjustments());
     mHead->mXRot = headPitch * 0.017453292f;
     mHead->mYRot = netHeadYaw * 0.017453292f;
     mTail->mXRot = ageInTicks;

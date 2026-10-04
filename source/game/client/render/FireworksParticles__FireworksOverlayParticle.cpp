@@ -37,7 +37,7 @@ void FireworksParticles::FireworksOverlayParticle::render(BufferBuilder* buffer,
 
     if (3.0f <= px * px + py * py + pz * pz)
     {
-        int texture = getParticleTexture();
+        int texture = getLightColor(partialTicks);
         buffer->color(rCol, gCol, bCol, getAlpha());
         buffer->tex2(texture);
 

@@ -90,8 +90,7 @@ void VillagerZombieModel::_init(float scale, float yOffset, bool armourModel, co
 
 void VillagerZombieModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
 {
-    _SkinAdjustments defaultSkinAdjustments;
-    HumanoidModel::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, defaultSkinAdjustments);
+    HumanoidModel::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, _SkinAdjustments());
 
     boost::shared_ptr<Zombie> zombie = boost::static_pointer_cast<Zombie>(entity);
     float swing = Mth::sin(mAttackTime * 3.1415927f);

@@ -33,26 +33,23 @@ void TntRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, 
     GlStateManager::pushMatrix();
     GlStateManager::translatef((float)x, (float)y + 0.5f, (float)z);
 
-    int life = tnt->getLife();
-    if ((float)life - partialTick + 1.0f < 10.0f)
+    if ((float)tnt->getLife() - partialTick + 1.0f < 10.0f)
     {
-        float swelling = Mth::clamp(1.0f - ((float)life - partialTick + 1.0f) / 10.0f, 0.0f, 1.0f);
+        float swelling = Mth::clamp(1.0f - ((float)tnt->getLife() - partialTick + 1.0f) / 10.0f, 0.0f, 1.0f);
         swelling *= swelling;
         swelling *= swelling;
         float scale = 1.0f + swelling * 0.3f;
         GlStateManager::scalef(scale, scale, scale);
     }
 
-    life = tnt->getLife();
-    float alpha = (1.0f - ((float)life - partialTick + 1.0f) / 100.0f) * 0.8f;
+    float alpha = (1.0f - ((float)tnt->getLife() - partialTick + 1.0f) / 100.0f) * 0.8f;
     bindTexture(entity);
     GlStateManager::rotatef(-90.0f, 0.0f, 1.0f, 0.0f);
     blockRenderer->renderSingleBlock(Blocks::tnt->defaultBlockState(), 1.0f, 1.0f, true);
 
     if (!mSolidRender)
     {
-        life = tnt->getLife();
-        if ((life / 5 & 1) == 0)
+        if ((tnt->getLife() / 5 & 1) == 0)
         {
             GlStateManager::disableTexture();
             GlStateManager::disableLighting();
@@ -71,9 +68,6 @@ void TntRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, 
             GlStateManager::enableLighting();
             GlStateManager::enableTexture();
         }
-
-        GlStateManager::popMatrix();
-        EntityRenderer::render(entity, x, y, z, yaw, partialTick);
     }
     else
     {
@@ -83,9 +77,10 @@ void TntRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, 
         blockRenderer->renderSingleBlock(Blocks::tnt->defaultBlockState(), 1.0f, 1.0f, true);
         GlStateManager::tearDownSolidRenderingTextureCombine();
         GlStateManager::disableColorMaterial();
-        GlStateManager::popMatrix();
-        EntityRenderer::render(entity, x, y, z, yaw, partialTick);
     }
+
+    GlStateManager::popMatrix();
+    EntityRenderer::render(entity, x, y, z, yaw, partialTick);
 }
 
 const ResourceLocation* TntRenderer::getTextureLocation(boost::shared_ptr<Entity>&)

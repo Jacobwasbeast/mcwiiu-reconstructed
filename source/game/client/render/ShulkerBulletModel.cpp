@@ -26,7 +26,7 @@ void ShulkerBulletModel::render(boost::shared_ptr<Entity>& entity, float limbSwi
 
 void ShulkerBulletModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
 {
-    Model::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, skinAdjustments);
+    Model::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, _SkinAdjustments());
 
     mBase->mYRot = netHeadYaw * 0.017453292f;
     mBase->mXRot = headPitch * 0.017453292f;

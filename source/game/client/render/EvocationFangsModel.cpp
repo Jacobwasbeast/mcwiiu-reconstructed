@@ -44,8 +44,9 @@ void EvocationFangsModel::render(boost::shared_ptr<Entity>& entity, float limbSw
     mLowerJaw->mYRot = 3.1415927f;
     mLowerJaw->mZRot = 3.1415927f + openProgress * 0.35f * 3.1415927f;
 
-    mUpperJaw->mY = 24.0f - (limbSwing + sinf(limbSwing * 2.7f)) * 0.6f * 12.0f;
-    mLowerJaw->mY = mUpperJaw->mY;
+    float jawY = 24.0f - (limbSwing + sinf(limbSwing * 2.7f)) * 0.6f * 12.0f;
+    mUpperJaw->mY = jawY;
+    mLowerJaw->mY = jawY;
     mBase->mY = mUpperJaw->mY;
 
     mBase->render(scale, useDisplayList, false);

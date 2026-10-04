@@ -47,12 +47,12 @@ TerrainParticle::TerrainParticle(Level* level,
         uo = random.nextFloat();
         vo = random.nextFloat();
 
-        uvs = TextureUVCoordinateSet(sprite->getU(uo * 0.5f * 3.0f + 5.0f),
-                                     sprite->getV(vo * 0.5f * 3.0f + 5.0f),
-                                     sprite->getU((uo + 0.5f) * 3.0f + 5.0f),
-                                     sprite->getV((vo + 0.5f) * 3.0f + 5.0f),
-                                     1,
-                                     1);
+        float u0 = sprite->getU(uo * 0.5f * 3.0f + 5.0f);
+        float u1 = sprite->getU((uo + 0.5f) * 3.0f + 5.0f);
+        float v0 = sprite->getV(vo * 0.5f * 3.0f + 5.0f);
+        float v1 = sprite->getV((vo + 0.5f) * 3.0f + 5.0f);
+
+        uvs = TextureUVCoordinateSet(u0, v0, u1, v1, 1, 1);
     }
 }
 
@@ -72,9 +72,9 @@ void TerrainParticle::multiplyColor(const BlockPos* pos)
     unsigned int colour =
         Minecraft::GetInstance()->getBlockColors()->getColor(blockState, level, pos, 0);
 
-    rCol *= (float)((colour >> 16) & 0xFF) / 255.0f;
-    gCol *= (float)((colour >> 8) & 0xFF) / 255.0f;
-    bCol *= (float)(colour & 0xFF) / 255.0f;
+    rCol *= (float)(int)((colour >> 16) & 0xFF) / 255.0f;
+    gCol *= (float)(int)((colour >> 8) & 0xFF) / 255.0f;
+    bCol *= (float)(int)(colour & 0xFF) / 255.0f;
 }
 
 TerrainParticle* TerrainParticle::init(const BlockPos& pos)

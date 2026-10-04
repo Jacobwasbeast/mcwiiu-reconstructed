@@ -22,7 +22,7 @@ const ResourceLocation* ChickenRenderer::getTextureLocation(boost::shared_ptr<En
     return &CHICKEN_LOCATION;
 }
 
-double ChickenRenderer::getBob(boost::shared_ptr<LivingEntity>& entity, float partialTicks)
+float ChickenRenderer::getBob(boost::shared_ptr<LivingEntity>& entity, float partialTicks)
 {
     boost::shared_ptr<Chicken> chicken = boost::static_pointer_cast<Chicken>(entity);
     float flap = (chicken->mFlapTime - chicken->mOFlap) * partialTicks + chicken->mOFlap;

@@ -7,12 +7,13 @@
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
+#include "game/world/block/Material.hpp"
 
 SuspendedParticle::SuspendedParticle(Level* level, double x, double y, double z,
                                      double xa, double ya, double za)
     : Particle(level, x, y - 0.125, z, xa, ya, za)
 {
-    int colour = Minecraft::GetInstance()->getColourTable()->getColour(eMinecraftColour_Particle_Suspend);
+    unsigned int colour = Minecraft::GetInstance()->getColourTable()->getColour(eMinecraftColour_Particle_Suspend);
     rCol = (float)((colour >> 16) & 0xff) / 255.0f;
     gCol = (float)((colour >> 8) & 0xff) / 255.0f;
     bCol = (float)(colour & 0xff) / 255.0f;
@@ -31,11 +32,9 @@ void SuspendedParticle::tick()
     yo = y;
     zo = z;
     move(xd, yd, zd);
-    BlockPos position(x, y, z);
-    const BlockState* state = ((LevelSource*)level)->getBlockState(position);
-    if (state == 0 || state->getBlock()->getRenderShape(state) != BLOCK_RENDER_MODEL)
+    if (((LevelSource*)level)->getBlockState(BlockPos(x, y, z))->getMaterial() != Material::WATER)
         remove();
-    if (--lifetime <= 0)
+    if (lifetime-- <= 0)
         remove();
 }
 

@@ -43,7 +43,7 @@ void NoteParticle::tick()
 
     move(xd, yd, zd);
 
-    if (x == xo)
+    if (y == yo)
     {
         xd *= 1.1;
         zd *= 1.1;

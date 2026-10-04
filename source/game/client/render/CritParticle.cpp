@@ -63,8 +63,8 @@ void CritParticle::_init(Level* level, double x, double y, double z,
 
     size = size * 0.75f * scale;
     sizeMultiplier = size;
-    hasPhysics = true;
     lifetime = (int)((int)(6.0 / (random.nextDouble() * 0.8 + 0.6)) * scale);
+    hasPhysics = true;
     setMiscTex(65);
 }
 
@@ -90,9 +90,9 @@ Particle* CritParticle::MagicProvider::createParticle(ePARTICLE_TYPE type, Level
 {
     CritParticle* particle = new CritParticle(level, x, y, z, xa, ya, za);
     particle->tick();
-    particle->setColor((float)(particle->getRedCol() * 0.3f),
-                       (float)(particle->getGreenCol() * 0.8f),
-                       (float)particle->getBlueCol());
+    particle->setColor(particle->getRedCol() * 0.3f,
+                       particle->getGreenCol() * 0.8f,
+                       particle->getBlueCol());
     particle->setMiscTex(66);
     return particle;
 }

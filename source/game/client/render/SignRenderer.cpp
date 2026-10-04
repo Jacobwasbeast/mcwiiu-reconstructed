@@ -7,6 +7,7 @@
 #include "game/client/render/Tesselator.hpp"
 #include "game/core/BufferBuilder.hpp"
 #include "game/core/CMinecraftApp.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/ColourTable.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/core/L10N.hpp"
@@ -22,12 +23,13 @@
 static ResourceLocation SIGN_LOCATION(TN_ITEM_SIGN);
 
 SignRenderer::SignRenderer()
-    : mTextCacheCount(0), mCensorText(false)
 {
     mModel = new SignModel(ModelDefinition());
     mTextDisplayLists = gRenderer->CBuffCreate(200);
     for (int i = 0; i < 200; ++i)
         mTextCache[i].uniqueId = -1;
+    mTextCacheCount = 0;
+    mCensorText = false;
     mLanguage = XGetLanguage();
 }
 
@@ -37,7 +39,7 @@ SignRenderer::~SignRenderer()
 
 void SignRenderer::CensorString(std::wstring& text)
 {
-    if (text.compare(0, text.size(), L" ", 1) != 0)
+    if (text.compare(0, text.size(), L" ", wcslen(L" ")) != 0)
     {
         unsigned int language = XGetLanguage();
         if (language == XC_LANGUAGE_JAPANESE || language == XC_LANGUAGE_KOREAN || language == XC_LANGUAGE_TCHINESE ||
@@ -59,7 +61,7 @@ void SignRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x, 
     if (block == Blocks::standing_sign)
     {
         GlStateManager::translatef((float)x + 0.5f, (float)y + 0.5f, (float)z + 0.5f);
-        GlStateManager::rotatef(-(float)(sign->getData() * 360) * 0.0625f, 0.0f, 1.0f, 0.0f);
+        GlStateManager::rotatef(-((float)(sign->getData() * 360) * 0.0625f), 0.0f, 1.0f, 0.0f);
         mModel->mSignStick->mShow = true;
     }
     else
@@ -105,6 +107,7 @@ void SignRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x, 
 
     unsigned int colour = Minecraft::GetInstance()->getColourTable()->getColour(eMinecraftColour_Sign_Text);
     colour |= 0xff000000;
+    std::wstring text = L"";
     int cacheIndex = -1;
 
     if (breakProgress < 0)
@@ -140,10 +143,10 @@ void SignRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x, 
             std::wstring creator = sign->getCreatedPlayerUUID();
             if (creator != L"")
             {
-                Minecraft* minecraft = Minecraft::GetInstance();
                 for (int i = 0; i < 4; ++i)
                 {
-                    if (minecraft->mLocalPlayers[i] && minecraft->mLocalPlayers[i]->getStringUUID() == creator)
+                    boost::shared_ptr<MultiplayerLocalPlayer> player = Minecraft::GetInstance()->mLocalPlayers[i];
+                    if (player && player->getUUID() == creator)
                     {
                         localCreator = true;
                         break;
@@ -154,7 +157,7 @@ void SignRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x, 
             bool rendered = true;
             for (int line = 0; line < 4; ++line)
             {
-                std::wstring text = sign->mMessages[line];
+                text = std::wstring(sign->mMessages[line]);
                 bool trusted = !mCensorText && !sign->wasCreatedByRestrictedPlayer();
                 if (!trusted && localCreator && CGameNetworkManager::sInstance.IsHost() &&
                     sign->wasCreatedByHostPlayer())
@@ -226,7 +229,7 @@ void SignRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x, 
 
 void SignRenderer::tick()
 {
-    bool censorText = g_pApp->IsConsoleChatCensored();
+    bool censorText = gApp.IsConsoleChatCensored();
     int language = XGetLanguage();
     if (censorText == mCensorText && language == mLanguage)
     {

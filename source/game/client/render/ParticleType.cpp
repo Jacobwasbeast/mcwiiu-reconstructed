@@ -146,6 +146,5 @@ bool ParticleType::getOverrideLimiter() const
 
 const ParticleType* ParticleType::byId(ePARTICLE_TYPE id)
 {
-    boost::unordered_map<ePARTICLE_TYPE, const ParticleType*>::const_iterator it = sParticleTypes.find(id);
-    return it == sParticleTypes.end() ? NULL : it->second;
+    return sParticleTypes[id];
 }

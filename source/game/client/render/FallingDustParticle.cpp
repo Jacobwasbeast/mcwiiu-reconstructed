@@ -10,6 +10,7 @@
 #include "game/world/block/BlockColors.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
+#include "game/world/block/FallingBlock.hpp"
 
 FallingDustParticle::FallingDustParticle(Level* level,
                                          double x,
@@ -18,19 +19,19 @@ FallingDustParticle::FallingDustParticle(Level* level,
                                          float red,
                                          float green,
                                          float blue)
-    : Particle(level, x, y, z, 0.0, 0.0, 0.0), m_size(0.0f), mRotSpeed(0.0f)
+    : Particle(level, x, y, z, 0.0, 0.0, 0.0)
 {
+    mRotSpeed = (random.nextFloat() - 0.5f) * 0.1f;
     xd = 0.0;
     yd = 0.0;
     zd = 0.0;
-    mRotSpeed = (random.nextFloat() - 0.5f) * 0.1f;
     rCol = red;
     gCol = green;
     bCol = blue;
     m_size = Particle::size * 0.75f * 0.9f;
     Particle::size = m_size;
     lifetime = (int)std::floor(32.0f / (random.nextFloat() * 0.8f + 0.2f) * 0.9f);
-    uo = random.nextFloat() * 6.2831855f;
+    roll = random.nextFloat() * 6.2831855f;
 }
 
 void FallingDustParticle::render(BufferBuilder* buffer,
@@ -50,27 +51,32 @@ void FallingDustParticle::render(BufferBuilder* buffer,
 
 void FallingDustParticle::tick()
 {
-    int oldAge = age;
+    int previousAge = age;
     int particleLifetime = lifetime;
-    ++age;
+    age = previousAge + 1;
     xo = x;
     yo = y;
     zo = z;
-    if (oldAge >= particleLifetime)
+    if (previousAge >= particleLifetime)
+    {
         remove();
+        particleLifetime = lifetime;
+    }
 
-    oRoll = roll;
-    roll += mRotSpeed * 3.1415927f * 2.0f;
+    float spin = 3.1415927f * mRotSpeed;
+    float previousRoll = roll;
+    float nextRoll = roll + (spin + spin);
     if (onGround)
     {
-        oRoll = 0.0f;
-        roll = 0.0f;
+        previousRoll = 0.0f;
+        nextRoll = 0.0f;
     }
+    roll = nextRoll;
+    oRoll = previousRoll;
     setMiscTex(7 - (age << 3) / particleLifetime);
     move(xd, yd, zd);
     yd -= 0.003;
-    if (yd < -0.14)
-        yd = -0.14;
+    yd = yd < -0.14 ? -0.14 : yd;
 }
 
 uint64_t FallingDustParticle::GetType()
@@ -92,13 +98,11 @@ Particle* FallingDustParticle::Provider::createParticle(ePARTICLE_TYPE type,
     if (state->getBlock() != Blocks::air && state->getRenderShape() == BLOCK_RENDER_INVISIBLE)
         return NULL;
 
-    Block* block = state->getBlock();
-    BlockPos position(x, y, z);
-    int colour = Minecraft::GetInstance()->getBlockColors()->getColor(state, (LevelSource*)level, position);
-    if (block->instanceof(EBLOCK_TYPE_FALLING))
-        colour = block->getColor(state);
-    float red = (float)((colour >> 16) & 0xff) / 255.0f;
-    float green = (float)((colour >> 8) & 0xff) / 255.0f;
-    float blue = (float)(colour & 0xff) / 255.0f;
+    unsigned int colour = Minecraft::GetInstance()->getBlockColors()->getColor(state, (LevelSource*)level, BlockPos(x, y, z));
+    if (state->getBlock()->instanceof(EBLOCK_TYPE_FALLING))
+        colour = static_cast<FallingBlock*>(state->getBlock())->getDustColor(state);
+    float red = (float)(int)((colour >> 16) & 0xff) / 255.0f;
+    float green = (float)(int)((colour >> 8) & 0xff) / 255.0f;
+    float blue = (float)(int)(colour & 0xff) / 255.0f;
     return new FallingDustParticle(level, x, y, z, red, green, blue);
 }

@@ -40,7 +40,10 @@ void FootstepParticle::render(BufferBuilder* buffer,
 {
     float progress = ((float)age + partialTicks) / (float)lifetime;
     progress *= progress;
-    float alpha = std::min(1.0f, 2.0f - progress * 2.0f) * 0.2f;
+    float fade = 2.0f - progress * 2.0f;
+    if (1.0f < fade)
+        fade = 1.0f;
+    float alpha = fade * 0.2f;
 
     GlStateManager::disableLighting();
 

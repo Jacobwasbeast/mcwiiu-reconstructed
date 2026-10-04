@@ -90,7 +90,7 @@ void LavaSlimeModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, fl
 
     for (int i = 0; i < 8; ++i)
     {
-        mBodyCubes[i]->mY = -(4.0f - (float)i) * squish * 1.7f;
+        mBodyCubes[i]->mY = (float)(i - 4) * squish * 1.7f;
     }
 }
 

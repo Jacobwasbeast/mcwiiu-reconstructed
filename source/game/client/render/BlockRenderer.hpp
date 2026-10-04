@@ -175,6 +175,8 @@ public:
     void renderCube(const BlockState* state, float scale);
 
 private:
+    friend class FallingBlockRenderer;
+
     void _init();
 
     BlockColors* mBlockColors;

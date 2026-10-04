@@ -64,7 +64,7 @@ public:
     void checkEntityPostEffect(boost::shared_ptr<Entity>);
     void cycleEffect();
     void onResourceManagerReload(ResourceManager*);
-    double GetFovVal();
+    float GetFovVal();
     static void UpdateElementStorageDeleteTicks();
     void tickFov();
     void tickLightTexture();
@@ -76,8 +76,8 @@ public:
     void bobHurt(float);
     void bobView(float);
     unsigned int getCameraThirdPerson();
-    double getCameraYRot(float);
-    double getCameraXRot(float);
+    float getCameraYRot(float);
+    float getCameraXRot(float);
     void moveCameraToPlayer(float);
     void getFovAndAspect(float&, float&, float, bool);
     void setupCamera(float, int);

@@ -43,19 +43,14 @@ const ResourceLocation* SheepRenderer::getTextureLocation(boost::shared_ptr<Enti
 
 void SheepRenderer::setColourState(boost::shared_ptr<Sheep> sheep, float partialTicks)
 {
-    bool hasName = false;
     bool isJeb = false;
+    if (sheep->hasCustomName() && sheep->getCustomName() == L"jeb_")
+        isJeb = true;
 
-    if (sheep->hasCustomName())
-    {
-        hasName = true;
-        isJeb = sheep->getCustomName() == L"jeb_";
-    }
-
-    if (hasName && isJeb)
+    if (isJeb)
     {
         int colourIndex = sheep->mTickCount / 25 + sheep->getId();
-        const int colourCount = 16;
+        int colourCount = static_cast<int>(DyeColor::COLORS.size());
         int firstIndex = colourIndex % colourCount;
         int secondIndex = (colourIndex + 1) % colourCount;
         float blend = (static_cast<float>(sheep->mTickCount % 25) + partialTicks) / 25.0F;
@@ -102,17 +97,15 @@ void SheepRenderer::setupForTexturePack(TexturePack* pack)
     if (mFurModel != mOriginalFurModel && mFurModel != NULL)
     {
         delete mFurModel;
-        mFurModel = NULL;
     }
 
-    std::wstring modelName = L"sheep";
-    if (!pack->HasCustomModel(modelName))
+    if (pack->HasCustomModel(L"sheep"))
     {
-        mFurModel = mOriginalFurModel;
+        mFurModel = new SheepFurModel(*pack->GetCustomModel(L"sheep"));
     }
     else
     {
-        mFurModel = new SheepFurModel(*pack->GetCustomModel(modelName));
+        mFurModel = mOriginalFurModel;
     }
 }
 

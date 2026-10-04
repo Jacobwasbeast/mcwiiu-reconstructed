@@ -5,12 +5,7 @@
 static const std::wstring DEFAULT_VARIANT = L"normal";
 
 ModelResourceLocation::ModelResourceLocation(int dummy, arrayWithLength<std::wstring> parts)
-    : ResourceLocation(parts.data[0], parts.data[1]) {
-    if (parts.data[2].length() == 0) {
-        variant = DEFAULT_VARIANT;
-    } else {
-        variant = toLower(parts.data[2]);
-    }
+    : ResourceLocation(parts.data[0], parts.data[1]), variant(parts.data[2].length() == 0 ? DEFAULT_VARIANT : toLower(parts.data[2])) {
 }
 
 ModelResourceLocation::~ModelResourceLocation() {
@@ -68,9 +63,7 @@ ModelResourceLocation* ModelResourceLocation::Make(const std::wstring& location)
 }
 
 std::wstring ModelResourceLocation::toString() const {
-    std::wstring text = ResourceLocation::toString() + L'#';
-
-    return text + variant;
+    return ResourceLocation::toString() + L'#' + variant;
 }
 
 int ModelResourceLocation::hashCode() {

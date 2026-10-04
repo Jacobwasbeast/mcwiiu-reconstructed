@@ -25,10 +25,10 @@ public:
 
     const ResourceLocation* getSpectateTextureLocation(boost::shared_ptr<MultiplayerLocalPlayer> player);
     virtual const ResourceLocation* getTextureLocation(boost::shared_ptr<Entity>& entity);
-    double getCustomBob(boost::shared_ptr<Parrot> parrot, float partialTicks);
-    double getCustomBob(boost::shared_ptr<Player> player, float partialTicks);
+    float getCustomBob(boost::shared_ptr<Parrot> parrot, float partialTicks);
+    float getCustomBob(boost::shared_ptr<Player> player, float partialTicks);
     virtual Model* createModel(const ModelDefinition& definition);
-    virtual double getBob(boost::shared_ptr<LivingEntity>& entity, float partialTicks);
+    virtual float getBob(boost::shared_ptr<LivingEntity>& entity, float partialTicks);
 };
 
 #endif

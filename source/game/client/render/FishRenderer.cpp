@@ -16,25 +16,24 @@ FishRenderer::FishRenderer(EntityRenderDispatcher* dispatcher, FishType fishType
 {
 }
 
-FishRenderer::~FishRenderer()
-{
-    return;
-}
-
 Model* FishRenderer::getModel(boost::shared_ptr<LivingEntity>& entity)
 {
-    if (entity->GetType() == EntityType::PUFFERFISH)
-        return LivingEntityRenderer::getModel(entity);
+    const bool isPufferfish = entity->GetType() == EntityType::PUFFERFISH;
+    if (isPufferfish)
+        return getModel(entity);
     return mModel;
 }
 
 const ResourceLocation* FishRenderer::getTextureLocation(boost::shared_ptr<Entity>& entity)
 {
-    if (entity->GetType() != EntityType::FISH)
+    const bool isFish = entity->GetType() == EntityType::FISH;
+    if (!isFish)
     {
-        if (entity->GetType() == EntityType::PUFFERFISH)
+        const bool isPufferfish = entity->GetType() == EntityType::PUFFERFISH;
+        if (isPufferfish)
             return &PUFFERFISH_TEXTURE;
-        if (entity->GetType() == EntityType::SALMON)
+        const bool isSalmon = entity->GetType() == EntityType::SALMON;
+        if (isSalmon)
             return &SALMON_TEXTURE;
     }
     return &FISH_TEXTURE;

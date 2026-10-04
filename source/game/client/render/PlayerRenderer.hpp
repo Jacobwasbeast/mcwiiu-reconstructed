@@ -26,7 +26,7 @@ public:
 
     void _init();
     static unsigned int getNametagColour(int colour);
-    virtual PlayerModel* getModel();
+    virtual Model* getModel();
     ElytraModel* getElytraModel();
     void setModelProperties(boost::shared_ptr<Player> player, float partialTicks);
     void hideAdditionalModelParts(boost::shared_ptr<Player> player);
@@ -51,6 +51,8 @@ public:
                               bool overlay);
 
 private:
+    friend class ElytraLayer;
+
     bool mSpecialRenderActive;
     float mSpecialRenderAlpha;
     bool mSlimArms;

@@ -1,10 +1,9 @@
 #include "game/client/render/DripParticle.hpp"
 #include "game/core/EntityType.hpp"
 
-#include <cmath>
-
 #include "game/core/ColourTable.hpp"
 #include "game/core/Minecraft.hpp"
+#include "game/core/Mth.hpp"
 #include "game/world/block/AbstractProperty.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
@@ -16,9 +15,13 @@
 DripParticle::DripParticle(Level* level, double x, double y, double z, Material* material)
     : Particle(level, x, y, z, 0.0, 0.0, 0.0)
 {
-    unsigned int colour = Minecraft::GetInstance()->getColourTable()->getColour(
-        material == Material::WATER ? eMinecraftColour_Particle_DripWater
-                                    : eMinecraftColour_Particle_DripLavaStart);
+    bool isWater = material == Material::WATER;
+    ColourTable* colourTable = Minecraft::GetInstance()->getColourTable();
+    unsigned int colour;
+    if (isWater)
+        colour = colourTable->getColour(eMinecraftColour_Particle_DripWater);
+    else
+        colour = colourTable->getColour(eMinecraftColour_Particle_DripLavaStart);
     rCol = (float)((colour >> 16) & 255) / 255.0f;
     gCol = (float)((colour >> 8) & 255) / 255.0f;
     bCol = (float)(colour & 255) / 255.0f;
@@ -53,18 +56,18 @@ void DripParticle::tick()
     yo = y;
     zo = z;
 
-    if (material == Material::WATER)
+    bool isWater = material == Material::WATER;
+    ColourTable* colourTable = Minecraft::GetInstance()->getColourTable();
+    if (isWater)
     {
-        unsigned int colour = Minecraft::GetInstance()->getColourTable()->getColour(
-            eMinecraftColour_Particle_DripWater);
+        unsigned int colour = colourTable->getColour(eMinecraftColour_Particle_DripWater);
         rCol = (float)((colour >> 16) & 255) / 255.0f;
         gCol = (float)((colour >> 8) & 255) / 255.0f;
         bCol = (float)(colour & 255) / 255.0f;
     }
     else
     {
-        unsigned int start = Minecraft::GetInstance()->getColourTable()->getColour(
-            eMinecraftColour_Particle_DripLavaStart);
+        unsigned int start = colourTable->getColour(eMinecraftColour_Particle_DripLavaStart);
         unsigned int end = Minecraft::GetInstance()->getColourTable()->getColour(
             eMinecraftColour_Particle_DripLavaEnd);
         float startRed = (float)((start >> 16) & 255) / 255.0f;
@@ -79,22 +82,23 @@ void DripParticle::tick()
         bCol = startBlue - (startBlue - endBlue) / 40.0f * age;
     }
 
-    yd -= gravity;
-    if (delay-- < 1)
-    {
-        setMiscTex(112);
-    }
-    else
+    double fall = yd - gravity;
+    if (delay-- > 0)
     {
         xd *= 0.02;
-        yd *= 0.02;
+        yd = fall * 0.02;
         zd *= 0.02;
         setMiscTex(113);
     }
+    else
+    {
+        yd = fall;
+        setMiscTex(112);
+    }
     move(xd, yd, zd);
-    xd *= 0.98;
-    yd *= 0.98;
-    zd *= 0.98;
+    xd *= 0.98f;
+    yd *= 0.98f;
+    zd *= 0.98f;
 
     if (lifetime-- < 1)
         remove();
@@ -106,20 +110,21 @@ void DripParticle::tick()
             remove();
             level->addParticle(PARTICLE_SPLASH, x, y, z, 0.0, 0.0, 0.0,
                                arrayWithLength<int>());
-            xd *= 0.7;
-            zd *= 0.7;
+            xd *= 0.7f;
+            zd *= 0.7f;
         }
         else
         {
             setMiscTex(114);
-            xd *= 0.7;
-            zd *= 0.7;
+            xd *= 0.7f;
+            zd *= 0.7f;
         }
     }
 
     BlockPos position(x, y, z);
     const BlockState* state = level->getBlockState(position);
-    if (state->getMaterial()->isLiquid() || state->getMaterial()->isSolid())
+    Material* stateMaterial = state->getBlock()->mMaterial;
+    if (stateMaterial->isLiquid() || stateMaterial->isSolid())
     {
         double height = 0.0;
         if (state->getBlock()->isLiquidBlock())
@@ -127,7 +132,7 @@ void DripParticle::tick()
             int data = state->getValue(LiquidBlock::LEVEL);
             height = LiquidBlock::getHeightFromData(data);
         }
-        double surface = std::floor(y) + 1.0 - height;
+        double surface = Mth::floor(y) + 1.0 - height;
         if (y < surface)
             remove();
     }

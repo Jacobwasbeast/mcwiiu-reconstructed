@@ -54,7 +54,7 @@ void PlayerRenderer::_init()
     addLayer(new ArrowLayer(this));
     addLayer(new Deadmau5EarsLayer(this));
     addLayer(new CapeLayer(this));
-    addLayer(new CustomHeadLayer(getModel()->mHead));
+    addLayer(new CustomHeadLayer(static_cast<PlayerModel*>(getModel())->mHead));
     addLayer(new EntityRidingShoulderLayer(mDispatcher));
     addLayer(new SpinAttackLayer(this));
     mElytraLayer = new ElytraLayer(this);
@@ -65,12 +65,12 @@ unsigned int PlayerRenderer::getNametagColour(int colour)
 {
     static const unsigned int colours[8] = { 0xff000000, 0xff33cc33, 0xffcc3333, 0xff3333cc,
                                              0xffcc33cc, 0xffcc6633, 0xffcccc33, 0xff33dccc };
-    return colour < 8 ? colours[colour] : 0xff000000;
+    return static_cast<unsigned int>(colour) < 8 ? colours[colour] : 0xff000000;
 }
 
-PlayerModel* PlayerRenderer::getModel()
+Model* PlayerRenderer::getModel()
 {
-    return static_cast<PlayerModel*>(LivingEntityRenderer::getModel());
+    return LivingEntityRenderer::getModel();
 }
 
 ElytraModel* PlayerRenderer::getElytraModel()
@@ -80,7 +80,7 @@ ElytraModel* PlayerRenderer::getElytraModel()
 
 void PlayerRenderer::setModelProperties(boost::shared_ptr<Player> player, float partialTicks)
 {
-    PlayerModel* model = getModel();
+    PlayerModel* model = static_cast<PlayerModel*>(getModel());
     model->mSkinAdjustments = player->getSkinAdjustments();
     model->mSitting = false;
     if (player->isSpectator()
@@ -99,14 +99,14 @@ void PlayerRenderer::setModelProperties(boost::shared_ptr<Player> player, float 
         not_null_ptr<ItemInstance> mainHandItem = player->getMainHandItem();
         not_null_ptr<ItemInstance> offhandItem = player->getOffhandItem();
         model->setAllVisible(true);
-        model->mHat->mShow = player->isModelPartShown(PlayerModelPart::HAT) != 0;
+        model->mHat->mShow = player->isModelPartShown(PlayerModelPart::HAT);
         if (mIs64x64)
         {
-            model->mJacket->mShow = player->isModelPartShown(PlayerModelPart::JACKET) != 0;
-            model->mLeftPants->mShow = player->isModelPartShown(PlayerModelPart::LEFT_PANTS_LEG) != 0;
-            model->mRightPants->mShow = player->isModelPartShown(PlayerModelPart::RIGHT_PANTS_LEG) != 0;
-            model->mLeftSleeve->mShow = player->isModelPartShown(PlayerModelPart::LEFT_SLEEVE) != 0;
-            model->mRightSleeve->mShow = player->isModelPartShown(PlayerModelPart::RIGHT_SLEEVE) != 0;
+            model->mJacket->mShow = player->isModelPartShown(PlayerModelPart::JACKET);
+            model->mLeftPants->mShow = player->isModelPartShown(PlayerModelPart::LEFT_PANTS_LEG);
+            model->mRightPants->mShow = player->isModelPartShown(PlayerModelPart::RIGHT_PANTS_LEG);
+            model->mLeftSleeve->mShow = player->isModelPartShown(PlayerModelPart::LEFT_SLEEVE);
+            model->mRightSleeve->mShow = player->isModelPartShown(PlayerModelPart::RIGHT_SLEEVE);
         }
         model->mCrouching = player->isSneaking();
         model->mSwimming = player->getDamageNearbyMobs();
@@ -138,10 +138,10 @@ void PlayerRenderer::setModelProperties(boost::shared_ptr<Player> player, float 
                 {
                     float remainingTicks =
                         (float)player->getUseItemRemainingTicks() - partialTicks + 1.0f;
+                    float useDuration = (float)mainHandItem->getUseDuration();
                     model->mEating = true;
                     model->mUseItemRemainingTicks = remainingTicks;
-                    model->mUseItemProgress =
-                        1.0f - remainingTicks / (float)mainHandItem->getUseDuration();
+                    model->mUseItemProgress = 1.0f - remainingTicks / useDuration;
                 }
             }
         }
@@ -181,7 +181,7 @@ void PlayerRenderer::setModelProperties(boost::shared_ptr<Player> player, float 
 void PlayerRenderer::hideAdditionalModelParts(boost::shared_ptr<Player> player)
 {
     std::vector<ModelPart*>* parts = player->GetAdditionalModelParts();
-    if (parts == NULL)
+    if (parts == NULL || parts->empty())
     {
         return;
     }
@@ -244,17 +244,17 @@ void PlayerRenderer::showAdditionalModelParts(boost::shared_ptr<Player> player)
     {
         return;
     }
-    std::vector<ModelPart*>::iterator part;
-    for (part = parts->begin(); part != parts->end(); ++part)
+    for (std::vector<ModelPart*>::iterator part = parts->begin(); part != parts->end(); ++part)
     {
-        updatePartVisibility(*part, player, true);
+        ModelPart* modelPart = *part;
+        updatePartVisibility(modelPart, player, true);
     }
 }
 
 void PlayerRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z, float yaw, float partialTick)
 {
     boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
-    if (player->isLocalPlayer() && player->IsSpectatingOtherPlayer())
+    if (player->isLocalPlayer() && boost::static_pointer_cast<LocalPlayer>(player)->IsSpectatingOtherPlayer())
     {
         return;
     }
@@ -263,24 +263,24 @@ void PlayerRenderer::render(boost::shared_ptr<Entity>& entity, double x, double 
         return;
     }
 
+    bool fallFlying = false;
+    if (player)
+    {
+        fallFlying = (player->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY
+            && boost::static_pointer_cast<LivingEntity>(player)->getFallFlyingTicks() > 4;
+    }
+
     double renderY = y;
-    if (player->isSneaking() && player->getFallFlyingTicks() <= 4)
+    if (player->isSneaking() && !fallFlying)
     {
         renderY -= 0.125;
     }
 
     setModelProperties(player, partialTick);
 
-    if (player->isSpectator())
+    if (player->isSpectator() && (player->SpectateAsInvisible() || player->IsSpectatingOtherPlayer()))
     {
-        if (player->SpectateAsInvisible() || player->IsSpectatingOtherPlayer())
-        {
-            hideAdditionalModelParts(player);
-        }
-        else
-        {
-            showAdditionalModelParts(player);
-        }
+        hideAdditionalModelParts(player);
     }
     else
     {
@@ -289,21 +289,21 @@ void PlayerRenderer::render(boost::shared_ptr<Entity>& entity, double x, double 
     GlStateManager::setProfile();
 
     bool suppressSpecialRender = false;
-    if ((player->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+    if (player && (player->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
     {
         boost::shared_ptr<Player> localPlayer = Minecraft::GetInstance()->mPlayer;
         if (localPlayer->GetThirdPersonView(false) != 0
-            && (localPlayer.get() == player.get() || player->IsSpectatingOtherPlayer()))
+            && (Minecraft::GetInstance()->mPlayer.get() == player.get() || localPlayer->IsSpectatingOtherPlayer()))
         {
             suppressSpecialRender = true;
         }
     }
 
     mSpecialRenderActive = player->isFallFlying() && Minecraft::InMiniGame(eMiniGameId_Glide, true)
-        && !mDispatcher->mRenderName && !suppressSpecialRender;
+        && !Minecraft::GetInstance()->getEntityRenderDispatcher()->mRenderName && !suppressSpecialRender;
     if (mSpecialRenderActive)
     {
-        mSpecialRenderAlpha = Mth::clamp((float)((x * x + y * y + z * z) * 0.5), 0.0f, 1.0f);
+        mSpecialRenderAlpha = Mth::clamp((float)(x * x + y * y + z * z) * 0.5f, 0.0f, 1.0f);
         GlStateManager::pushMatrix();
         GlStateManager::enableBlend();
         GlStateManager::blendFunc(4, 5);
@@ -348,7 +348,7 @@ void PlayerRenderer::scale(boost::shared_ptr<LivingEntity>& entity, float partia
 void PlayerRenderer::renderRightHand(boost::shared_ptr<Player> player)
 {
     GlStateManager::color3f(1.0f, 1.0f, 1.0f);
-    PlayerModel* model = getModel();
+    PlayerModel* model = static_cast<PlayerModel*>(getModel());
     setModelProperties(player, 0.0f);
     model->mSitting = false;
     showAdditionalModelParts(player);
@@ -371,7 +371,7 @@ void PlayerRenderer::renderRightHand(boost::shared_ptr<Player> player)
 void PlayerRenderer::renderLeftHand(boost::shared_ptr<Player> player)
 {
     GlStateManager::color3f(1.0f, 1.0f, 1.0f);
-    PlayerModel* model = getModel();
+    PlayerModel* model = static_cast<PlayerModel*>(getModel());
     setModelProperties(player, 0.0f);
     model->mSitting = false;
     showAdditionalModelParts(player);
@@ -398,23 +398,25 @@ void PlayerRenderer::setupPosition(boost::shared_ptr<LivingEntity>& entity, doub
     {
         LivingEntityRenderer::setupPosition(entity, x + player->mBedOffsetX, y + player->mBedOffsetY,
                                             z + player->mBedOffsetZ);
-        return;
     }
-    if (player->isPassenger())
+    else
     {
-        if ((player->getSkinAdjustments().mAnimFlags & (1 << HumanoidModel::eAnimBit_Seated)) == 0)
+        if (player->isPassenger())
         {
-            if (player->getSkinAdjustments().mHeadY > 0.0f)
+            if ((player->getSkinAdjustments().mAnimFlags & (1 << HumanoidModel::eAnimBit_Seated)) == 0)
             {
-                y += (double)(player->getSkinAdjustments().mHeadY * 0.0625f);
+                if (player->getSkinAdjustments().mHeadY > 0.0f)
+                {
+                    y += (double)(player->getSkinAdjustments().mHeadY * 0.0625f);
+                }
+            }
+            else
+            {
+                y += 0.5;
             }
         }
-        else
-        {
-            y += 0.5;
-        }
+        LivingEntityRenderer::setupPosition(entity, x, y, z);
     }
-    LivingEntityRenderer::setupPosition(entity, x, y, z);
 }
 
 void PlayerRenderer::setupRotations(boost::shared_ptr<LivingEntity>& entity, float ageInTicks, float rotationYaw,
@@ -426,10 +428,8 @@ void PlayerRenderer::setupRotations(boost::shared_ptr<LivingEntity>& entity, flo
         GlStateManager::rotatef(player->getSleepRotation(), 0.0f, 1.0f, 0.0f);
         GlStateManager::rotatef(getFlipDegrees(entity), 0.0f, 0.0f, 1.0f);
         GlStateManager::rotatef(270.0f, 0.0f, 1.0f, 0.0f);
-        return;
     }
-
-    if (!mDispatcher->mRenderLeash && player->isFallFlying())
+    else if (!mDispatcher->mRenderLeash && player->isFallFlying())
     {
         LivingEntityRenderer::setupRotations(entity, ageInTicks, rotationYaw, partialTicks);
 
@@ -440,7 +440,7 @@ void PlayerRenderer::setupRotations(boost::shared_ptr<LivingEntity>& entity, flo
 
         if (player->isLocalPlayer())
         {
-            LocalPlayer* localPlayer = static_cast<LocalPlayer*>(player.get());
+            boost::shared_ptr<LocalPlayer> localPlayer = boost::static_pointer_cast<LocalPlayer>(player);
             float fallFlyYaw = localPlayer->mFallFlyYawOld
                 + (localPlayer->mFallFlyYaw - localPlayer->mFallFlyYawOld) * partialTicks;
             GlStateManager::rotatef(fallFlyYaw, 0.0f, 1.0f, 0.0f);
@@ -448,40 +448,33 @@ void PlayerRenderer::setupRotations(boost::shared_ptr<LivingEntity>& entity, flo
         else
         {
             Vec3* viewVector = player->getViewVector(partialTicks);
-            double motionX = player->mXd;
-            double motionZ = player->mZd;
-            double horizontalMotionLengthSqr = motionX * motionX + motionZ * motionZ;
+            double horizontalMotionLengthSqr = player->mXd * player->mXd + player->mZd * player->mZd;
             double horizontalViewLengthSqr = viewVector->x * viewVector->x + viewVector->z * viewVector->z;
             if (horizontalMotionLengthSqr > 0.0 && horizontalViewLengthSqr > 0.0)
             {
-                double cosine = Mth::clamp((motionX * viewVector->x + motionZ * viewVector->z)
-                                                / (Mth::sqrt(horizontalMotionLengthSqr)
-                                                   * Mth::sqrt(horizontalViewLengthSqr)),
+                double cosine = Mth::clamp((player->mXd * viewVector->x + player->mZd * viewVector->z)
+                                                / (double)(float)(Mth::sqrt(horizontalMotionLengthSqr)
+                                                                  * Mth::sqrt(horizontalViewLengthSqr)),
                                             -1.0, 1.0);
-                double angle = std::acos(cosine);
-                double cross = motionX * viewVector->z - motionZ * viewVector->x;
-                if (cross < 0.0)
-                {
-                    angle = -angle;
-                }
-                GlStateManager::rotatef((float)angle * 180.0f / 3.1415927f,
+                double cross = player->mXd * viewVector->z - player->mZd * viewVector->x;
+                double direction = (double)((cross > 0.0) - (cross < 0.0));
+                GlStateManager::rotatef((float)(direction * std::acos(cosine)) * 180.0f / 3.1415927f,
                                         0.0f, 1.0f, 0.0f);
             }
         }
-        return;
     }
-
-    if (player->getDamageNearbyMobs())
+    else if (player->getDamageNearbyMobs())
     {
         LivingEntityRenderer::setupRotations(entity, ageInTicks, rotationYaw, partialTicks);
         GlStateManager::rotatef(-90.0f - player->mXRot, 1.0f, 0.0f, 0.0f);
         GlStateManager::translatef(0.0f, -1.0f, 0.5f);
         GlStateManager::rotatef((player->mAutoSpinAttackTicks + partialTicks) * -75.0f,
                                 0.0f, 1.0f, 0.0f);
-        return;
     }
-
-    LivingEntityRenderer::setupRotations(entity, ageInTicks, rotationYaw, partialTicks);
+    else
+    {
+        LivingEntityRenderer::setupRotations(entity, ageInTicks, rotationYaw, partialTicks);
+    }
 }
 
 void PlayerRenderer::renderShadow(boost::shared_ptr<Entity>& entity, double x, double y, double z, float alpha,
@@ -492,16 +485,17 @@ void PlayerRenderer::renderShadow(boost::shared_ptr<Entity>& entity, double x, d
     {
         return;
     }
-    if (!gApp.GetGameHostOption(eGameHostOption_HostCanBeInvisible) || !player->hasInvisiblePrivilege())
+    if (gApp.GetGameHostOption(eGameHostOption_HostCanBeInvisible) && player && player->hasInvisiblePrivilege())
     {
-        EntityRenderer::renderShadow(entity, x, y, z, alpha, partialTicks);
+        return;
     }
+    EntityRenderer::renderShadow(entity, x, y, z, alpha, partialTicks);
 }
 
 bool PlayerRenderer::bindTexture(boost::shared_ptr<Entity>& entity)
 {
     boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
-    return EntityRenderer::bindTexture(player->mSkinLocation, player->getTexture());
+    return bindTexture(player->mSkinLocation, player->getTexture());
 }
 
 void PlayerRenderer::renderLayers(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount,

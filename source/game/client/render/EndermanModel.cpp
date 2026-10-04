@@ -16,16 +16,17 @@
 
 EndermanModel::EndermanModel(float scale, const ModelDefinition& definition)
     : HumanoidModel(definition, 0.0f, -14.0f, 64, 32, false, true, true)
-    , mCarrying(false)
-    , mCreepy(false)
     , mModelParts(NULL)
     , mNumModelParts(0)
 {
-    mModelParts = new ModelPart*[eModelPart_Count];
+    mCarrying = false;
+    mCreepy = false;
+    ModelPart** modelParts = new ModelPart*[eModelPart_Count];
+    mModelParts = modelParts;
 
     for (int i = 0; i < eModelPart_Count; ++i)
     {
-        mModelParts[i] = NULL;
+        modelParts[i] = NULL;
     }
 
     mNumModelParts = eModelPart_Count;
@@ -137,34 +138,41 @@ void EndermanModel::createInvisibleModelParts(float scale, const ModelDefinition
     }
     else
     {
-        mModelParts[eModelPart_InvisibleHead] = new ModelPartSkin(this, 0, 0, &mInvisibleParts);
-        mModelParts[eModelPart_InvisibleHead]->addHumanoidBox(-4.0f, -8.0f, -4.0f, 8, 8, 8, scale);
+        ModelPart* part = new ModelPartSkin(this, 0, 0, &mInvisibleParts);
+        mModelParts[eModelPart_InvisibleHead] = part;
+        part->addHumanoidBox(-4.0f, -8.0f, -4.0f, 8, 8, 8, scale);
         mModelParts[eModelPart_InvisibleHead]->setPos(0.0f, -14.0f, 0.0f);
 
-        mModelParts[eModelPart_InvisibleHat] = new ModelPartSkin(this, 0, 16, &mInvisibleParts);
-        mModelParts[eModelPart_InvisibleHat]->addBox(-4.0f, -8.0f, -4.0f, 8, 8, 8, scale - 0.5f);
+        part = new ModelPartSkin(this, 0, 16, &mInvisibleParts);
+        mModelParts[eModelPart_InvisibleHat] = part;
+        part->addBox(-4.0f, -8.0f, -4.0f, 8, 8, 8, scale - 0.5f);
         mModelParts[eModelPart_InvisibleHat]->setPos(0.0f, -14.0f, 0.0f);
 
-        mModelParts[eModelPart_InvisibleBody] = new ModelPartSkin(this, 32, 16, &mInvisibleParts);
-        mModelParts[eModelPart_InvisibleBody]->addBox(-4.0f, 0.0f, -2.0f, 8, 12, 4, scale);
+        part = new ModelPartSkin(this, 32, 16, &mInvisibleParts);
+        mModelParts[eModelPart_InvisibleBody] = part;
+        part->addBox(-4.0f, 0.0f, -2.0f, 8, 12, 4, scale);
         mModelParts[eModelPart_InvisibleBody]->setPos(0.0f, -14.0f, 0.0f);
 
-        mModelParts[eModelPart_InvisibleRightArm] = new ModelPartSkin(this, 56, 0, &mInvisibleParts);
-        mModelParts[eModelPart_InvisibleRightArm]->addBox(-1.0f, -2.0f, -1.0f, 2, 30, 2, scale);
+        part = new ModelPartSkin(this, 56, 0, &mInvisibleParts);
+        mModelParts[eModelPart_InvisibleRightArm] = part;
+        part->addBox(-1.0f, -2.0f, -1.0f, 2, 30, 2, scale);
         mModelParts[eModelPart_InvisibleRightArm]->setPos(-3.0f, -12.0f, 0.0f);
 
-        mModelParts[eModelPart_InvisibleLeftArm] = new ModelPartSkin(this, 56, 0, &mInvisibleParts);
-        mModelParts[eModelPart_InvisibleLeftArm]->mMirror = true;
-        mModelParts[eModelPart_InvisibleLeftArm]->addBox(-1.0f, -2.0f, -1.0f, 2, 30, 2, scale);
+        part = new ModelPartSkin(this, 56, 0, &mInvisibleParts);
+        part->mMirror = true;
+        mModelParts[eModelPart_InvisibleLeftArm] = part;
+        part->addBox(-1.0f, -2.0f, -1.0f, 2, 30, 2, scale);
         mModelParts[eModelPart_InvisibleLeftArm]->setPos(5.0f, -12.0f, 0.0f);
 
-        mModelParts[eModelPart_InvisibleRightLeg] = new ModelPartSkin(this, 56, 0, &mInvisibleParts);
-        mModelParts[eModelPart_InvisibleRightLeg]->addBox(-1.0f, 0.0f, -1.0f, 2, 30, 2, scale);
+        part = new ModelPartSkin(this, 56, 0, &mInvisibleParts);
+        mModelParts[eModelPart_InvisibleRightLeg] = part;
+        part->addBox(-1.0f, 0.0f, -1.0f, 2, 30, 2, scale);
         mModelParts[eModelPart_InvisibleRightLeg]->setPos(-2.0f, -2.0f, 0.0f);
 
-        mModelParts[eModelPart_InvisibleLeftLeg] = new ModelPartSkin(this, 56, 0, &mInvisibleParts);
-        mModelParts[eModelPart_InvisibleLeftLeg]->mMirror = true;
-        mModelParts[eModelPart_InvisibleLeftLeg]->addBox(-1.0f, 0.0f, -1.0f, 2, 30, 2, scale);
+        part = new ModelPartSkin(this, 56, 0, &mInvisibleParts);
+        part->mMirror = true;
+        mModelParts[eModelPart_InvisibleLeftLeg] = part;
+        part->addBox(-1.0f, 0.0f, -1.0f, 2, 30, 2, scale);
         mModelParts[eModelPart_InvisibleLeftLeg]->setPos(2.0f, -2.0f, 0.0f);
     }
 
@@ -180,90 +188,97 @@ void EndermanModel::setupAnim(float limbSwing, float limbSwingAmount, float ageI
 {
     HumanoidModel::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, skinAdjustments);
 
-    mBody->mY = -14.0f;
-    mBody->mZ = -0.0f;
-    mBody->mXRot = 0.0f;
+    ModelPart* body = mBody;
 
-    mRightArm->mXRot *= 0.5f;
-    mLeftArm->mXRot *= 0.5f;
-    mRightLeg->mXRot *= 0.5f;
-    mLeftLeg->mXRot *= 0.5f;
+    body->mY = -14.0f;
+    body->mZ = -0.0f;
+    body->mXRot = 0.0f;
 
-    mHead->mShow = true;
+    ModelPart* rightArm = mRightArm;
+    ModelPart* leftArm = mLeftArm;
+    ModelPart* rightLeg = mRightLeg;
+    ModelPart* leftLeg = mLeftLeg;
 
-    float limbRotLimit = 0.4f;
+    rightArm->mXRot *= 0.5f;
+    leftArm->mXRot *= 0.5f;
+    rightLeg->mXRot *= 0.5f;
+    leftLeg->mXRot *= 0.5f;
 
-    if (mRightArm->mXRot > limbRotLimit)
+    ModelPart* head = mHead;
+    head->mShow = true;
+
+    if (rightArm->mXRot > 0.4f)
     {
-        mRightArm->mXRot = limbRotLimit;
+        rightArm->mXRot = 0.4f;
     }
 
-    if (mLeftArm->mXRot > limbRotLimit)
+    if (leftArm->mXRot > 0.4f)
     {
-        mLeftArm->mXRot = limbRotLimit;
+        leftArm->mXRot = 0.4f;
     }
 
-    if (mRightArm->mXRot < -limbRotLimit)
+    if (rightArm->mXRot < -0.4f)
     {
-        mRightArm->mXRot = -limbRotLimit;
+        rightArm->mXRot = -0.4f;
     }
 
-    if (mLeftArm->mXRot < -limbRotLimit)
+    if (leftArm->mXRot < -0.4f)
     {
-        mLeftArm->mXRot = -limbRotLimit;
+        leftArm->mXRot = -0.4f;
     }
 
-    if (mRightLeg->mXRot > limbRotLimit)
+    if (rightLeg->mXRot > 0.4f)
     {
-        mRightLeg->mXRot = limbRotLimit;
+        rightLeg->mXRot = 0.4f;
     }
 
-    if (mLeftLeg->mXRot > limbRotLimit)
+    if (leftLeg->mXRot > 0.4f)
     {
-        mLeftLeg->mXRot = limbRotLimit;
+        leftLeg->mXRot = 0.4f;
     }
 
-    if (mRightLeg->mXRot < -limbRotLimit)
+    if (rightLeg->mXRot < -0.4f)
     {
-        mRightLeg->mXRot = -limbRotLimit;
+        rightLeg->mXRot = -0.4f;
     }
 
-    if (mLeftLeg->mXRot < -limbRotLimit)
+    if (leftLeg->mXRot < -0.4f)
     {
-        mLeftLeg->mXRot = -limbRotLimit;
+        leftLeg->mXRot = -0.4f;
     }
 
     if (mCarrying)
     {
-        mRightArm->mXRot = -0.5f;
-        mLeftArm->mXRot = -0.5f;
-        mRightArm->mZRot = 0.05f;
-        mLeftArm->mZRot = -0.05f;
+        rightArm->mXRot = -0.5f;
+        leftArm->mXRot = -0.5f;
+        rightArm->mZRot = 0.05f;
+        leftArm->mZRot = -0.05f;
     }
 
-    mRightArm->mZ = -0.0f;
-    mLeftArm->mZ = -0.0f;
-    mRightLeg->mZ = -0.0f;
-    mLeftLeg->mZ = -0.0f;
+    rightArm->mZ = -0.0f;
+    leftArm->mZ = -0.0f;
+    rightLeg->mZ = -0.0f;
+    leftLeg->mZ = -0.0f;
 
-    mRightArm->mY = -12.0f;
-    mLeftArm->mY = -12.0f;
-    mRightLeg->mY = -5.0f;
-    mLeftLeg->mY = -5.0f;
+    rightArm->mY = -12.0f;
+    leftArm->mY = -12.0f;
+    rightLeg->mY = -5.0f;
+    leftLeg->mY = -5.0f;
 
-    mHead->mZ = -0.0f;
-    mHead->mY = -13.0f;
+    head->mZ = -0.0f;
+    head->mY = -13.0f;
 
-    mHat->mX = mHead->mX;
-    mHat->mY = mHead->mY;
-    mHat->mZ = mHead->mZ;
-    mHat->mXRot = mHead->mXRot;
-    mHat->mYRot = mHead->mYRot;
-    mHat->mZRot = mHead->mZRot;
+    ModelPart* hat = mHat;
+    hat->mX = head->mX;
+    hat->mY = head->mY;
+    hat->mZ = head->mZ;
+    hat->mXRot = head->mXRot;
+    hat->mYRot = head->mYRot;
+    hat->mZRot = head->mZRot;
 
     if (mCreepy)
     {
-        mHead->mY -= 5.0f;
+        head->mY -= 5.0f;
     }
 }
 

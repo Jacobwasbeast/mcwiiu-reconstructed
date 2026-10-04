@@ -110,7 +110,7 @@ void PigZombieModel::setupAnim(float limbSwing, float limbSwingAmount, float age
     {
         boost::shared_ptr<PigZombie> pigZombie = boost::static_pointer_cast<PigZombie>(entity);
 
-        if (pigZombie->isAngry())
+        if (pigZombie->isAggressive())
         {
             angry = true;
         }

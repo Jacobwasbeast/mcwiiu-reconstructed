@@ -39,11 +39,8 @@ void BatRenderer::setupRotations(boost::shared_ptr<LivingEntity>& entity, float 
                                  float rotationYaw, float partialTicks)
 {
     bool resting = false;
-    boost::shared_ptr<Bat> bat;
-    if (entity->GetType() == EntityType::BAT)
-        bat = boost::static_pointer_cast<Bat>(entity);
-    if (bat)
-        resting = bat->isResting();
+    if (entity->GetType() == EntityType::BAT && boost::static_pointer_cast<Bat>(entity)->isResting())
+        resting = true;
 
     if (resting)
         GlStateManager::translatef(0.0F, -0.1F, 0.0F);

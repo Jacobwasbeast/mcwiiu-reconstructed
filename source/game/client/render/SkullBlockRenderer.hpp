@@ -36,12 +36,12 @@ public:
     virtual void setupForTexturePack(TexturePack* pTexturePack);
 
 private:
-    CreeperHeadModel* mCreeperModel;
-    DragonHeadModel* mDragonModel;
-    SkeletonHeadModel* mSkeletonModels[4];
-    DragonHeadModel* mActiveDragonModel;
     CreeperHeadModel* mActiveCreeperModel;
+    DragonHeadModel* mActiveDragonModel;
     SkeletonHeadModel* mActiveSkeletonModels[4];
+    DragonHeadModel* mDragonModel;
+    CreeperHeadModel* mCreeperModel;
+    SkeletonHeadModel* mSkeletonModels[4];
 };
 
 #endif

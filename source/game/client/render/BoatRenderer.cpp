@@ -44,9 +44,9 @@ void BoatRenderer::setupTranslation(double x, double y, double z)
 
 void BoatRenderer::setupRotation(boost::shared_ptr<Entity> entity, float yaw, float partialTick)
 {
-    GlStateManager::rotatef(180.0F - yaw, 0.0F, 1.0F, 0.0F);
     boost::shared_ptr<Boat> boat = boost::static_pointer_cast<Boat>(entity);
-    float hurtTime = (float)((double)boat->getHurtTime() - (double)partialTick);
+    GlStateManager::rotatef(180.0F - yaw, 0.0F, 1.0F, 0.0F);
+    float hurtTime = (float)boat->getHurtTime() - partialTick;
     float damage = boat->getDamage() - partialTick;
     if (damage < 0.0F)
         damage = 0.0F;
@@ -83,7 +83,8 @@ void BoatRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y,
     EntityRenderer::render(entity, x, y, z, yaw, partialTick);
     if (!mSolidRender)
     {
-        if (entity->GetType() == EntityType::BOAT)
+        const bool isBoat = entity->GetType() == EntityType::BOAT;
+        if (isBoat)
         {
             boost::shared_ptr<Boat> leashedBoat = boost::static_pointer_cast<Boat>(entity);
             renderLeash(leashedBoat, x, y, z, yaw, partialTick);
@@ -122,15 +123,16 @@ double BoatRenderer::lerp(double oldValue, double newValue, double partialTick)
 void BoatRenderer::renderLeash(boost::shared_ptr<Boat>& boat, double x, double y, double z,
                                float yaw, float partialTick)
 {
+    if (!boat)
+        return;
     boost::shared_ptr<Entity> holder = boat->getLeashHolder();
     if (!holder)
         return;
     GlStateManager::color4f(1.0F, 1.0F, 1.0F, 1.0F);
     y -= boat->mBbHeight;
     BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
-    const double radians = (double)0.017453292F;
-    double holderYaw = lerp(holder->mYRotO, holder->mYRot, partialTick * 0.5F) * radians;
-    double holderPitch = lerp(holder->mXRotO, holder->mXRot, partialTick * 0.5F) * radians;
+    double holderYaw = lerp(holder->mYRotO, holder->mYRot, partialTick * 0.5F) * Mth::DEG_TO_RAD;
+    double holderPitch = lerp(holder->mXRotO, holder->mXRot, partialTick * 0.5F) * Mth::DEG_TO_RAD;
     double cosYaw = std::cos(holderYaw);
     double sinYaw = std::sin(holderYaw);
     double sinPitch = std::sin(holderPitch);
@@ -154,22 +156,29 @@ void BoatRenderer::renderLeash(boost::shared_ptr<Boat>& boat, double x, double y
     GlStateManager::disableTexture();
     GlStateManager::disableLighting();
     GlStateManager::disableCull();
-    unsigned int startColour = Minecraft::GetInstance()->getColourTable()->getColour(eMinecraftColour_Leash_Light_Colour);
-    unsigned int endColour = Minecraft::GetInstance()->getColourTable()->getColour(eMinecraftColour_Leash_Dark_Colour);
+    unsigned int lightColour = Minecraft::GetInstance()->getColourTable()->getColour(
+        eMinecraftColour_Leash_Light_Colour);
+    const float lightRed = (float)((lightColour >> 16) & 255) / 255.0F;
+    const float lightGreen = (float)((lightColour >> 8) & 255) / 255.0F;
+    const float lightBlue = (float)(lightColour & 255) / 255.0F;
+    unsigned int darkColour = Minecraft::GetInstance()->getColourTable()->getColour(
+        eMinecraftColour_Leash_Dark_Colour);
+    const float darkRed = (float)((darkColour >> 16) & 255) / 255.0F;
+    const float darkGreen = (float)((darkColour >> 8) & 255) / 255.0F;
+    const float darkBlue = (float)(darkColour & 255) / 255.0F;
     for (int strip = 0; strip < 2; ++strip)
     {
         builder->begin(1);
-        for (int i = 0; i <= 24; ++i)
+        for (int i = 0; i < 25; ++i)
         {
+            const bool light = (i & 1) != 0;
+            builder->color(light ? lightRed : darkRed, light ? lightGreen : darkGreen,
+                           light ? lightBlue : darkBlue, 1.0F);
             double t = (float)i / 24.0F;
             double px = x + dx * t;
             double py = dy * (float)(t * t + t) * 0.5 + y +
                         (double)((24.0F - (float)i) / 18.0F + 0.125F);
             double pz = z + dz * t;
-            unsigned int colour = (i & 1) == 0 ? endColour : startColour;
-            builder->color((float)((colour >> 16) & 255) / 255.0F,
-                           (float)((colour >> 8) & 255) / 255.0F,
-                           (float)(colour & 255) / 255.0F, 1.0F);
             if (strip == 0)
             {
                 builder->vertex((float)px, (float)py, (float)pz);
@@ -194,10 +203,9 @@ bool BoatRenderer::shouldRender(boost::shared_ptr<Entity>& entity, Culler* culle
     if (EntityRenderer::shouldRender(entity, culler, x, y, z))
         return true;
     boost::shared_ptr<Boat> boat = boost::static_pointer_cast<Boat>(entity);
-    if (!boat || !boat->isLeashed())
-        return false;
-    boost::shared_ptr<Entity> holder = boat->getLeashHolder();
-    return holder && culler->isVisible(holder->getBoundingBoxForCulling());
+    if (boat && boat->isLeashed() && boat->getLeashHolder())
+        return culler->isVisible(boat->getLeashHolder()->getBoundingBoxForCulling());
+    return false;
 }
 
 Model* BoatRenderer::createModel(const ModelDefinition& definition)

@@ -32,9 +32,9 @@ BubbleParticle::BubbleParticle(Level* level,
     setMiscTex(32);
     setSize(0.02f, 0.02f);
     size *= random.nextFloat() * 0.6f + 0.2f;
-    xd = xa * 0.2 + (double)((float)(Math::random() * 2.0 - 1.0) * 0.02f);
-    yd = ya * 0.2 + (double)((float)(Math::random() * 2.0 - 1.0) * 0.02f);
-    zd = za * 0.2 + (double)((float)(Math::random() * 2.0 - 1.0) * 0.02f);
+    xd = xa * 0.2f + (double)((float)(Math::random() * 2.0 - 1.0) * 0.02f);
+    yd = ya * 0.2f + (double)((float)(Math::random() * 2.0 - 1.0) * 0.02f);
+    zd = za * 0.2f + (double)((float)(Math::random() * 2.0 - 1.0) * 0.02f);
     lifetime = (int)(8.0 / (Math::random() * 0.8 + 0.2));
 
     BlockPos pos(x, y, z);
@@ -56,27 +56,24 @@ void BubbleParticle::tick()
     zo = z;
 
     yd += 0.002;
-    if (level->getBlockState(BlockPos(x, y, z))->getMaterial() == Material::BUBBLE_COLUMN)
+    BlockPos waterPos(x, y, z);
+    if (level->getBlockState(waterPos)->getMaterial() == Material::BUBBLE_COLUMN)
     {
         yd += 0.003;
     }
 
     move(xd, yd, zd);
 
-    xd *= 0.85;
-    yd *= 0.85;
-    zd *= 0.85;
+    xd *= 0.85f;
+    yd *= 0.85f;
+    zd *= 0.85f;
 
     BlockPos pos(x, y, z);
     const BlockState* state = level->getBlockState(pos);
     Block* block = level->getBlock(pos);
     Block* blockBelow = level->getBlock(pos.below());
-    bool survives = true;
-    if (!block->ParticlesSurviveWithin()
-        && (!blockBelow->ParticlesSurviveWithin() || state->getMaterial() != Material::AIR))
-    {
-        survives = false;
-    }
+    bool survives = block->ParticlesSurviveWithin()
+        || (blockBelow->ParticlesSurviveWithin() && state->getMaterial() == Material::AIR);
 
     Material* material = level->getBlockState(BlockPos(x, y, z))->getMaterial();
     if (material != Material::WATER
@@ -112,14 +109,14 @@ float BubbleParticle::getBrightness(float partialTicks)
 int BubbleParticle::getLightColor(float partialTicks)
 {
     BlockPos pos(x, y, z);
-    int key = (pos.z & 0xFF) | ((pos.y & 0xFF) << 8) | ((pos.x & 0xFF) << 16);
+    int key = ((pos.x & 0xFF) << 16) | ((pos.y & 0xFF) << 8) | (pos.z & 0xFF);
     if (key == cachedLightPos)
     {
         return cachedLightColor;
     }
 
-    cachedLightPos = key;
     int brightness = getRawBr();
+    cachedLightPos = key;
     cachedLightColor = brightness << 4 | brightness << 20;
     return cachedLightColor;
 }

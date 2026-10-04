@@ -66,8 +66,7 @@ void VillagerModel::_init(float scale, float yOffset, int texWidth, int texHeigh
 
 void VillagerModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)
 {
-    _SkinAdjustments skinAdjustments;
-    setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, skinAdjustments);
+    setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, _SkinAdjustments());
     if (mYoung)
     {
         GlStateManager::pushMatrix();
@@ -94,7 +93,8 @@ void VillagerModel::setupAnim(float limbSwing, float limbSwingAmount, float ageI
     mArms->mXRot = -0.75f;
     mArms->mZ = -1.0f;
     mLeg0->mXRot = Mth::cos(limbSwing * 0.6662f) * 1.4f * limbSwingAmount * 0.5f;
-    mLeg1->mXRot = Mth::cos(limbSwing * 0.6662f + 3.1415927f) * 1.4f * limbSwingAmount * 0.5f;
+    float leg1Swing = Mth::cos(limbSwing * 0.6662f + 3.1415927f) * 1.4f * limbSwingAmount * 0.5f;
+    mLeg1->mXRot = leg1Swing;
     mLeg0->mYRot = 0.0f;
     mLeg1->mYRot = 0.0f;
 }

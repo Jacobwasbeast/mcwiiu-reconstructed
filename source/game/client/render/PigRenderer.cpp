@@ -1,5 +1,7 @@
 #include "game/client/render/PigRenderer.hpp"
 
+#include <algorithm>
+
 #include <boost/shared_ptr.hpp>
 
 #include "game/client/render/Model.hpp"
@@ -24,12 +26,8 @@ PigRenderer::~PigRenderer()
 
 const ResourceLocation* PigRenderer::getTextureLocation(boost::shared_ptr<Entity>& entity)
 {
-    if (mModel->hasOverriddenParts())
-    {
-        boost::shared_ptr<Pig> pig = boost::static_pointer_cast<Pig>(entity);
-        if (pig->hasSaddle())
-            return mSaddleLayer->getSaddleTextureLocation();
-    }
+    if (mModel->hasOverriddenParts() && boost::static_pointer_cast<Pig>(entity)->hasSaddle())
+        return mSaddleLayer->getSaddleTextureLocation();
     return &PIG_LOCATION;
 }
 
@@ -42,14 +40,7 @@ void PigRenderer::setupForTexturePack(TexturePack* pack)
         return;
     }
 
-    std::vector<RenderLayer*>::iterator layer = mLayers.begin();
-    while (layer != mLayers.end())
-    {
-        if (*layer == mSaddleLayer)
-            break;
-        ++layer;
-    }
-    if (layer == mLayers.end())
+    if (std::find(mLayers.begin(), mLayers.end(), mSaddleLayer) == mLayers.end())
         addLayer(mSaddleLayer);
 }
 

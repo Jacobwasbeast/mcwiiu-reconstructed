@@ -6,6 +6,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/client/render/Model.hpp"
+#include "game/world/biome/arrayWithLength.hpp"
 #include "vendor/_SkinAdjustments.hpp"
 
 class Entity;
@@ -23,10 +24,8 @@ public:
     virtual void setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments);
     virtual std::wstring getName();
 
-    ModelPart** mBodyParts;
-    unsigned int mNumBodyParts;
-    ModelPart** mBodyLayers;
-    unsigned int mNumBodyLayers;
+    arrayWithLength<ModelPart*> mBodyParts;
+    arrayWithLength<ModelPart*> mBodyLayers;
     float mBodyPartZ[7];
 };
 

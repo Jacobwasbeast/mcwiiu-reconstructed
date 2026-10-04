@@ -7,9 +7,6 @@ DLCModelsFile::DLCModelsFile(const std::wstring& path)
 
 DLCModelsFile::~DLCModelsFile()
 {
-    delete[] m_data.data;
-    m_data.data = NULL;
-    m_data.length = 0;
 }
 
 void DLCModelsFile::addData(unsigned char* pData, unsigned int size)

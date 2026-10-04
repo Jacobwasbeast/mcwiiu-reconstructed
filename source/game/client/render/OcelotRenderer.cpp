@@ -24,21 +24,25 @@ OcelotRenderer::~OcelotRenderer()
 const ResourceLocation* OcelotRenderer::getTextureLocation(boost::shared_ptr<Entity>& entity)
 {
     boost::shared_ptr<Ocelot> ocelot = boost::static_pointer_cast<Ocelot>(entity);
-    int catType = ocelot->getCatType();
-    if (catType == 1)
+    switch (ocelot->getCatType())
+    {
+    case 0:
+    default:
+        return &sOcelotTexture;
+    case 1:
         return &sBlackOcelotTexture;
-    if (catType == 2)
+    case 2:
         return &sRedOcelotTexture;
-    if (catType == 3)
+    case 3:
         return &sSiameseOcelotTexture;
-    return &sOcelotTexture;
+    }
 }
 
 void OcelotRenderer::scale(boost::shared_ptr<LivingEntity>& entity, float partialTicks)
 {
-    LivingEntityRenderer::scale(entity, partialTicks);
     boost::shared_ptr<Ocelot> ocelot = boost::static_pointer_cast<Ocelot>(entity);
-    if (ocelot->isBaby())
+    LivingEntityRenderer::scale(entity, partialTicks);
+    if (ocelot->isTame())
         GlStateManager::scalef(0.8F, 0.8F, 0.8F);
 }
 

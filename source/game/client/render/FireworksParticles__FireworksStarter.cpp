@@ -22,16 +22,24 @@ FireworksParticles::FireworksStarter::FireworksStarter(Level* level, double x, d
                                    double xa, double ya, double za,
                                    ParticleEngine* particleEngine, CompoundTag* fireworks)
     : Particle(level, x, y, z, 0.0, 0.0, 0.0), life(0), particleEngine(particleEngine),
-      explosions(NULL), twinkle(false)
+      twinkle(false)
 {
     xd = xa;
     yd = ya;
     zd = za;
     lifetime = 8;
-    if (fireworks != NULL)
+    if (fireworks == NULL)
+    {
+        explosions = NULL;
+    }
+    else
     {
         explosions = fireworks->getList(FireworksItem::TAG_EXPLOSIONS, Tag::TAG_COMPOUND)->copy();
-        if (!explosions->isEmpty())
+        if (explosions->isEmpty())
+        {
+            explosions = NULL;
+        }
+        else
         {
             lifetime = explosions->size() * 2 - 1;
             for (int i = 0; i < explosions->size(); ++i)
@@ -43,10 +51,6 @@ FireworksParticles::FireworksStarter::FireworksStarter(Level* level, double x, d
                     break;
                 }
             }
-        }
-        else
-        {
-            explosions = NULL;
         }
     }
 }
@@ -67,7 +71,10 @@ bool FireworksParticles::FireworksStarter::isFarAwayFromCamera()
     Minecraft* minecraft = Minecraft::GetInstance();
     if (minecraft != NULL && minecraft->getCameraEntity())
     {
-        return !(minecraft->getCameraEntity()->distanceToSqr(x, y, z) < 256.0);
+        if (minecraft->getCameraEntity()->distanceToSqr(x, y, z) < 256.0)
+        {
+            return false;
+        }
     }
     return true;
 }
@@ -96,25 +103,28 @@ void FireworksParticles::FireworksStarter::createParticleBall(double scale, int 
                                           bool trail, bool flicker)
 {
     const double spread = 0.5;
-    for (int x = -radius; x <= radius; ++x)
+    const double originX = x;
+    const double originY = y;
+    const double originZ = z;
+    for (int yy = -radius; yy <= radius; ++yy)
     {
-        for (int y = -radius; y <= radius; ++y)
+        for (int xx = -radius; xx <= radius; ++xx)
         {
-            for (int z = -radius; z <= radius; ++z)
+            for (int zz = -radius; zz <= radius; ++zz)
             {
-                double dx = random.nextDouble();
-                dx = (double)x + (dx - random.nextDouble()) * spread;
-                double dy = random.nextDouble();
-                dy = (double)y + (dy - random.nextDouble()) * spread;
-                double dz = random.nextDouble();
-                dz = (double)z + (dz - random.nextDouble()) * spread;
-                double distance = std::sqrt(dx * dx + dy * dy + dz * dz);
+                double xa = random.nextDouble();
+                xa = (double)xx + (xa - random.nextDouble()) * spread;
+                double ya = random.nextDouble();
+                ya = (double)yy + (ya - random.nextDouble()) * spread;
+                double za = random.nextDouble();
+                za = (double)zz + (za - random.nextDouble()) * spread;
+                double distance = std::sqrt(xa * xa + ya * ya + za * za);
                 double velocity = random.nextGaussian() * 0.05 + distance / scale;
-                createParticle(this->x, this->y, this->z,
-                               dx / velocity, dy / velocity, dz / velocity,
+                createParticle(originX, originY, originZ,
+                               xa / velocity, ya / velocity, za / velocity,
                                colors, fadeColors, trail, flicker);
-                if (x != -radius && x != radius && y != -radius && y != radius)
-                    z += radius * 2 - 1;
+                if (yy != -radius && yy != radius && xx != -radius && xx != radius)
+                    zz += radius * 2 - 1;
             }
         }
     }
@@ -144,11 +154,13 @@ void FireworksParticles::FireworksStarter::createParticleShape(double scale,
             for (double fraction = 0.25; fraction <= 1.0; fraction += 0.25)
             {
                 double horizontal = ((nextX - previousX) * fraction + previousX) * scale;
-                double vertical = ((nextY - previousY) * fraction + previousY) * scale;
+                double sine = std::sin(angle);
+                double cosine = std::cos(angle);
                 for (double side = -1.0; side <= 1.0; side += 2.0)
                 {
-                    createParticle(x, y, z, horizontal * std::cos(angle) * side,
-                                   vertical, horizontal * std::sin(angle) * side,
+                    double vertical = ((nextY - previousY) * fraction + previousY) * scale;
+                    createParticle(x, y, z, horizontal * cosine * side,
+                                   vertical, horizontal * sine * side,
                                    colors, fadeColors, trail, flicker);
                 }
             }
@@ -166,12 +178,9 @@ void FireworksParticles::FireworksStarter::createParticleBurst(arrayWithLength<i
     double zVelocityBase = random.nextGaussian() * 0.05;
     for (int i = 0; i < 70; ++i)
     {
-        double xNoise = random.nextGaussian();
-        double zNoise = random.nextGaussian();
-        double yNoise = random.nextDouble();
-        double xVelocity = xd * 0.5 + xNoise * 0.15 + xVelocityBase;
-        double yVelocity = yd * 0.5 + yNoise * 0.5;
-        double zVelocity = zd * 0.5 + zNoise * 0.15 + zVelocityBase;
+        double xVelocity = xd * 0.5 + random.nextGaussian() * 0.15 + xVelocityBase;
+        double zVelocity = zd * 0.5 + random.nextGaussian() * 0.15 + zVelocityBase;
+        double yVelocity = yd * 0.5 + random.nextDouble() * 0.5;
         createParticle(x, y, z, xVelocity, yVelocity, zVelocity,
                        colors, fadeColors, trail, flicker);
     }
@@ -182,11 +191,21 @@ void FireworksParticles::FireworksStarter::tick()
     if (life == 0 && explosions != NULL)
     {
         const bool farAway = isFarAwayFromCamera();
-        bool large = explosions->size() >= 3;
-        for (int i = 0; !large && i < explosions->size(); ++i)
+        bool large = false;
+        if (explosions->size() >= 3)
         {
-            if (explosions->getCompound(i)->getByte(FireworksItem::TAG_E_TYPE) == 1)
-                large = true;
+            large = true;
+        }
+        else
+        {
+            for (int i = 0; i < explosions->size(); ++i)
+            {
+                if (explosions->getCompound(i)->getByte(FireworksItem::TAG_E_TYPE) == 1)
+                {
+                    large = true;
+                    break;
+                }
+            }
         }
         const SoundEvent* blast;
         if (large)
@@ -217,15 +236,17 @@ void FireworksParticles::FireworksStarter::tick()
         }
         else if (type == 2)
         {
-            static const double STAR_SHAPE[6][2] = {
+            double starShape[6][2] = {
                 { 0.0, 1.0 }, { 0.3455, 0.309 }, { 0.9511, 0.309 },
                 { 0.3795918367346939, -0.12653061224489795 }, { 0.6122448979591837, -0.8040816326530612 },
                 { 0.0, -0.35918367346938773 } };
             array2DWithLength<double> shape(6, 2);
             for (unsigned int point = 0; point < shape.length; ++point)
             {
-                shape.data[point]->data[0] = STAR_SHAPE[point][0];
-                shape.data[point]->data[1] = STAR_SHAPE[point][1];
+                arrayWithLength<double>* row = shape.data[point];
+                unsigned int count = row->length;
+                for (unsigned int axis = 0; axis < count; ++axis)
+                    row->data[axis] = starShape[point][axis];
             }
             createParticleShape(0.5, shape, colors, fadeColors, trail, flicker, false);
             for (unsigned int point = 0; point < shape.length; ++point)
@@ -234,14 +255,16 @@ void FireworksParticles::FireworksStarter::tick()
         }
         else if (type == 3)
         {
-            static const double CREEPER_SHAPE[12][2] = {
+            double creeperShape[12][2] = {
                 { 0.0, 0.2 }, { 0.2, 0.2 }, { 0.2, 0.6 }, { 0.6, 0.6 }, { 0.6, 0.2 }, { 0.2, 0.2 },
                 { 0.2, 0.0 }, { 0.4, 0.0 }, { 0.4, -0.6 }, { 0.2, -0.6 }, { 0.2, -0.4 }, { 0.0, -0.4 } };
             array2DWithLength<double> shape(12, 2);
             for (unsigned int point = 0; point < shape.length; ++point)
             {
-                shape.data[point]->data[0] = CREEPER_SHAPE[point][0];
-                shape.data[point]->data[1] = CREEPER_SHAPE[point][1];
+                arrayWithLength<double>* row = shape.data[point];
+                unsigned int count = row->length;
+                for (unsigned int axis = 0; axis < count; ++axis)
+                    row->data[axis] = creeperShape[point][axis];
             }
             createParticleShape(0.5, shape, colors, fadeColors, trail, flicker, true);
             for (unsigned int point = 0; point < shape.length; ++point)

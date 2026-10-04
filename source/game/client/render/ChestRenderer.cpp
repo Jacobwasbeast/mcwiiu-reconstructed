@@ -12,6 +12,7 @@ static ResourceLocation TRAPPED_CHEST_LOCATION(TN_MOB_REDCOW);
 static ResourceLocation LARGE_TRAPPED_CHEST_LOCATION(TN_MOB_SNOWMAN);
 
 ChestRenderer::ChestRenderer()
+    : BlockEntityRenderer()
 {
     mChestModel = new ChestModel(ModelDefinition());
     mLargeChestModel = new LargeChestModel(ModelDefinition());
@@ -123,43 +124,29 @@ void ChestRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x,
     GlStateManager::translatef(0.5F, 0.5F, 0.5F);
 
     float yRot = 0.0F;
-    bool eastNeighbour = false;
     if (data == 2)
     {
         yRot = 180.0F;
-        if (chest->mEastNeighbour.lock())
-        {
-            eastNeighbour = true;
-        }
     }
-    else if (data == 3)
+    if (data == 3)
     {
         yRot = 0.0F;
     }
-    else if (data == 4)
+    if (data == 4)
     {
         yRot = 90.0F;
     }
-    else if (data == 5)
+    if (data == 5)
     {
         yRot = -90.0F;
     }
 
-    if (eastNeighbour)
+    if (data == 2 && chest->mEastNeighbour.lock())
     {
         GlStateManager::translatef(1.0F, 0.0F, 0.0F);
     }
 
-    bool southNeighbour = false;
-    if (data == 5)
-    {
-        if (chest->mSouthNeighbour.lock())
-        {
-            southNeighbour = true;
-        }
-    }
-
-    if (southNeighbour)
+    if (data == 5 && chest->mSouthNeighbour.lock())
     {
         GlStateManager::translatef(0.0F, 0.0F, -1.0F);
     }

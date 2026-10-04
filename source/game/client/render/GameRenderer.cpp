@@ -48,6 +48,7 @@
 #include "game/client/render/TexturePackRepository.hpp"
 #include "game/core/Camera.hpp"
 #include "game/core/CameraController.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/ColourTable.hpp"
 #include "game/core/Direction.hpp"
@@ -573,12 +574,12 @@ void GameRenderer::shutdownEffect()
     mEffectIndex = EFFECT_NONE;
 }
 
-void GameRenderer::cycleEffect()
+void GameRenderer::checkEntityPostEffect(boost::shared_ptr<Entity>)
 {
     return;
 }
 
-void GameRenderer::checkEntityPostEffect(boost::shared_ptr<Entity>)
+void GameRenderer::cycleEffect()
 {
     return;
 }
@@ -594,7 +595,7 @@ void GameRenderer::onResourceManagerReload(ResourceManager*)
         checkEntityPostEffect(mMinecraft->getCameraEntity());
 }
 
-double GameRenderer::GetFovVal()
+float GameRenderer::GetFovVal()
 {
     return mFovSetting;
 }
@@ -1104,16 +1105,14 @@ unsigned int GameRenderer::getCameraThirdPerson()
     return player->GetThirdPersonView(false);
 }
 
-double GameRenderer::getCameraYRot(float amount)
+float GameRenderer::getCameraYRot(float amount)
 {
-    return static_cast<double>((mMinecraft->mPlayer->mYRot - mMinecraft->mPlayer->mYRotO) * amount +
-                               mMinecraft->mPlayer->mYRotO);
+    return (mMinecraft->mPlayer->mYRot - mMinecraft->mPlayer->mYRotO) * amount + mMinecraft->mPlayer->mYRotO;
 }
 
-double GameRenderer::getCameraXRot(float amount)
+float GameRenderer::getCameraXRot(float amount)
 {
-    return static_cast<double>((mMinecraft->mPlayer->mXRot - mMinecraft->mPlayer->mXRotO) * amount +
-                               mMinecraft->mPlayer->mXRotO);
+    return (mMinecraft->mPlayer->mXRot - mMinecraft->mPlayer->mXRotO) * amount + mMinecraft->mPlayer->mXRotO;
 }
 
 void GameRenderer::moveCameraToPlayer(float partialTick)
@@ -1131,226 +1130,196 @@ void GameRenderer::moveCameraToPlayer(float partialTick)
     static const float kFallFlightYawScale = 0.5f;
     static const float kFallFlightAlignmentScale = 0.25f;
 
-    boost::shared_ptr<Entity> cameraEntity = getCamera();
     boost::shared_ptr<LivingEntity> living =
-        boost::static_pointer_cast<LivingEntity>(cameraEntity);
-    LivingEntity* entity = living.get();
-    boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = mMinecraft->mPlayer;
+        boost::static_pointer_cast<LivingEntity>(getCamera());
 
     const unsigned int thirdPerson = getCameraThirdPerson();
-    double eyeHeight = static_cast<double>(
-        (entity->mEyeHeight - entity->mEyeHeightO) * partialTick + entity->mEyeHeightO);
-    double x = (entity->mX - entity->mXo) * partialTick + entity->mXo;
-    double y = (entity->mY - entity->mYo) * partialTick + entity->mYo;
-    double z = (entity->mZ - entity->mZo) * partialTick + entity->mZo;
-    double yEye = y + entity->getEyeHeight();
-
-    char sleepingFlag = 0;
-    if (mMinecraft->mOptions != NULL)
-        sleepingFlag = mMinecraft->mOptions->mUnknownFlag5;
+    float eyeHeight = (living->mEyeHeightO - living->mEyeHeight) * partialTick + living->mEyeHeight;
+    double x = (living->mX - living->mXo) * partialTick + living->mXo;
+    double yEye = (living->mY - living->mYo) * partialTick + living->mYo + living->getEyeHeight();
+    double z = (living->mZ - living->mZo) * partialTick + living->mZo;
 
     if (thirdPerson == 3)
     {
-        CameraController* controller = localPlayer->GetCameraController();
-        if (controller != NULL && controller->getCameraMode() == 0)
+        CameraController* controller =
+            boost::static_pointer_cast<Player>(mMinecraft->mPlayer)->GetCameraController();
+        if (controller == NULL)
         {
-            localPlayer->SetThirdPersonView(1);
-            sleepingFlag = mMinecraft->mOptions != NULL
-                ? mMinecraft->mOptions->mUnknownFlag5
-                : 0;
-        }
-        else if (controller != NULL)
-        {
-            Vec3* pos = controller->getCurrentPos();
-            Vec3* rot = controller->getCurrentRot();
-            GlStateManager::translatef(static_cast<float>(pos->x),
-                                     static_cast<float>(pos->y),
-                                     static_cast<float>(pos->z));
-            GlStateManager::rotatef(static_cast<float>(rot->x), kOne, kZero, kZero);
-            GlStateManager::rotatef(static_cast<float>(rot->y), kZero, kOne, kZero);
-            GlStateManager::rotatef(static_cast<float>(rot->z), kZero, kZero, kOne);
-            sleepingFlag = mMinecraft->mOptions != NULL
-                ? mMinecraft->mOptions->mUnknownFlag5
-                : 0;
-        }
-    }
-    else if (!entity->isSleeping())
-    {
-        if (thirdPerson == 0)
-        {
-            GlStateManager::translatef(kZero, kZero, kFirstPersonNudge);
+            mMinecraft->mPlayer->SetThirdPersonView(1);
         }
         else
         {
-            float distance = (mThirdPersonDistance - mThirdPersonDistanceO) * partialTick + mThirdPersonDistanceO;
-
-            if (sleepingFlag == 0)
-            {
-                const float yaw = static_cast<float>(getCameraYRot(partialTick));
-                float pitch = static_cast<float>(getCameraXRot(partialTick));
-                if (thirdPerson == 2)
-                    pitch += k180;
-
-                const float yawRad = yaw * kDegToRad;
-                const float pitchRad = pitch * kDegToRad;
-                const float sinYaw = Mth::sin(yawRad);
-                const float cosYaw = Mth::cos(yawRad);
-                const float cosPitch = Mth::cos(pitchRad);
-                const float sinPitch = Mth::sin(pitchRad);
-
-                double offsetX = -sinYaw * cosPitch * distance;
-                double offsetZ = cosYaw * cosPitch * distance;
-                double offsetY = -sinPitch * distance;
-
-                Level* level = mMinecraft->mLevel;
-                for (int corner = 0; corner < 8; ++corner)
-                {
-                    const float probeX = static_cast<float>(((corner & 2) != 0 ? 1 : -1)) * kCollisionProbe;
-                    const float probeY = static_cast<float>(((corner >> 1 & 2) != 0 ? 1 : -1)) * kCollisionProbe;
-                    const float probeZ = static_cast<float>(((corner & 1) != 0 ? 1 : -1)) * kCollisionProbe;
-
-                    Vec3* from = Vec3::newTemp(x + probeX, yEye + probeY, z + probeZ);
-                    Vec3* to = Vec3::newTemp(x - offsetX + probeX,
-                                             yEye - offsetY + probeY,
-                                             z - offsetZ + probeZ);
-
-                    HitResult* hitForward = level->clip(from, to, false, true, false, true, NULL, true);
-                    HitResult* hitReverse = level->clip(to, from, false, true, false, true, NULL, true);
-
-                    if (hitForward == NULL)
-                    {
-                        if (hitReverse != NULL)
-                            delete hitReverse;
-                        continue;
-                    }
-
-                    if (hitReverse == NULL)
-                    {
-                        BlockPos blockPos = hitForward->getBlockPos();
-                        const BlockState* state = level->getBlockState(blockPos);
-                        if (state != NULL && state->getBlock() != NULL
-                            && state->getBlock()->isSolidBlockingCube(state))
-                        {
-                            if (!Minecraft::InMiniGame(eMiniGameId_Any, true)
-                                || g_pApp->ShouldCollideWith(state->getBlock()))
-                            {
-                                Vec3* origin = Vec3::newTemp(x, yEye, z);
-                                const double hitDistance = hitForward->mLocation->distanceTo(origin);
-                                if (hitDistance < distance)
-                                    distance = static_cast<float>(hitDistance);
-                            }
-                        }
-                        delete hitForward;
-                    }
-                    else
-                    {
-                        BlockPos forwardPos = hitForward->getBlockPos();
-                        BlockPos reversePos = hitReverse->getBlockPos();
-                        const BlockState* forwardState = level->getBlockState(forwardPos);
-                        const BlockState* reverseState = level->getBlockState(reversePos);
-                        bool forwardSolid = forwardState != NULL && forwardState->getBlock() != NULL
-                            && forwardState->getBlock()->isSolidBlockingCube(forwardState)
-                            && (!Minecraft::InMiniGame(eMiniGameId_Any, true)
-                                || g_pApp->ShouldCollideWith(forwardState->getBlock()));
-                        bool reverseSolid = reverseState != NULL && reverseState->getBlock() != NULL
-                            && reverseState->getBlock()->isSolidBlockingCube(reverseState)
-                            && (!Minecraft::InMiniGame(eMiniGameId_Any, true)
-                                || g_pApp->ShouldCollideWith(reverseState->getBlock()));
-                        if (forwardSolid || reverseSolid)
-                        {
-                            Vec3* origin = Vec3::newTemp(x, yEye, z);
-                            const double hitDistance = hitForward->mLocation->distanceTo(origin);
-                            if (hitDistance < distance)
-                                distance = static_cast<float>(hitDistance);
-                        }
-                        delete hitForward;
-                        delete hitReverse;
-                    }
-                }
-
-                if (thirdPerson == 2)
-                    GlStateManager::rotatef(k180, kZero, kOne, kZero);
-
-                GlStateManager::rotatef(pitch - static_cast<float>(getCameraXRot(partialTick)),
-                                      kOne, kZero, kZero);
-                GlStateManager::rotatef(yaw - static_cast<float>(getCameraYRot(partialTick)),
-                                      kZero, kOne, kZero);
-                GlStateManager::translatef(kZero, kZero, -distance);
-                GlStateManager::rotatef(static_cast<float>(getCameraYRot(partialTick)) - yaw,
-                                      kZero, kOne, kZero);
-                GlStateManager::rotatef(static_cast<float>(getCameraXRot(partialTick)) - pitch,
-                                      kOne, kZero, kZero);
-            }
-            else
-            {
-                GlStateManager::translatef(kZero, kZero, -distance);
-            }
+            GlStateManager::translatef(static_cast<float>(controller->getCurrentPos()->x),
+                                     static_cast<float>(controller->getCurrentPos()->y),
+                                     static_cast<float>(controller->getCurrentPos()->z));
+            GlStateManager::rotatef(static_cast<float>(controller->getCurrentRot()->x), kOne, kZero, kZero);
+            GlStateManager::rotatef(static_cast<float>(controller->getCurrentRot()->y), kZero, kOne, kZero);
+            GlStateManager::rotatef(static_cast<float>(controller->getCurrentRot()->z), kZero, kZero, kOne);
         }
     }
     else
     {
-        eyeHeight = static_cast<double>(static_cast<float>(eyeHeight + kSleepingHeightAdd));
-        GlStateManager::translatef(kZero, kSleepingYOffset, kZero);
-        if (sleepingFlag == 0)
+        if (!living->isSleeping())
         {
-            const BlockPos cameraBlockPos(cameraEntity);
-            const BlockState* bedState = mMinecraft->mLevel->getBlockState(cameraBlockPos);
-            if (bedState != NULL && bedState->getBlock() == Blocks::bed)
+            if (thirdPerson == 0)
             {
-                const Direction* facing =
-                    bedState->getValue<const Direction*>(HorizontalDirectionalBlock::FACING_PROPERTY);
-                const float bedFacingAngle =
-                    static_cast<float>(facing->get2DDataValue()) * kBedFacingRotation;
-                GlStateManager::rotatef(bedFacingAngle, kZero, kOne, kZero);
+                GlStateManager::translatef(kZero, kZero, kFirstPersonNudge);
             }
-            const float yaw = static_cast<float>(getCameraYRot(partialTick) + k180);
-            GlStateManager::rotatef(yaw, kZero, kNegOne, kZero);
-            GlStateManager::rotatef(static_cast<float>(getCameraXRot(partialTick)),
-                                  kNegOne, kZero, kZero);
+            else
+            {
+                double distance = static_cast<double>(
+                    (mThirdPersonDistance - mThirdPersonDistanceO) * partialTick + mThirdPersonDistanceO);
+
+                if (mMinecraft->mOptions->mUnknownFlag5 == 0)
+                {
+                    const float cameraYaw = static_cast<float>(getCameraYRot(partialTick));
+                    const float cameraPitch = static_cast<float>(getCameraXRot(partialTick));
+                    float yaw = cameraYaw;
+                    float pitch = cameraPitch;
+                    if (thirdPerson == 2)
+                        pitch = pitch + k180;
+
+                    const float yawRad = kDegToRad * yaw;
+                    const float pitchRad = kDegToRad * pitch;
+
+                    double offsetX = static_cast<float>(-Mth::sin(yawRad) * Mth::cos(pitchRad)) * distance;
+                    double offsetZ = static_cast<float>(Mth::cos(yawRad) * Mth::cos(pitchRad)) * distance;
+                    double offsetY = -Mth::sin(pitchRad) * distance;
+
+                    for (int corner = 0; corner < 8; ++corner)
+                    {
+                        const float probeY = static_cast<float>((corner & 2) - 1) * kCollisionProbe;
+                        const float probeZ = static_cast<float>((corner >> 1 & 2) - 1) * kCollisionProbe;
+                        const float probeX = static_cast<float>((corner & 1) * 2 - 1) * kCollisionProbe;
+
+                        Vec3* from = Vec3::newTemp(x + probeX, yEye + probeY, z + probeZ);
+                        Vec3* to = Vec3::newTemp(x - offsetX + probeX,
+                                                 yEye - offsetY + probeY,
+                                                 z - offsetZ + probeZ);
+
+                        HitResult* hitForward = mMinecraft->mLevel->clip(from, to, false, true, false, false, NULL, false);
+                        HitResult* hitReverse = mMinecraft->mLevel->clip(to, from, false, true, false, false, NULL, false);
+
+                        if (hitForward == NULL)
+                        {
+                            if (hitReverse != NULL)
+                                delete hitReverse;
+                        }
+                        else if (hitReverse == NULL)
+                        {
+                            Block* block = mMinecraft->mLevel->getBlock(hitForward->getBlockPos());
+                            if (block->mMaterial->blocksMotion())
+                            {
+                                if (!Minecraft::InMiniGame(eMiniGameId_Any, true)
+                                    || gApp.ShouldCollideWith(block))
+                                {
+                                    const double hitDistance = hitForward->mLocation->distanceTo(Vec3::newTemp(x, yEye, z));
+                                    if (hitDistance < distance)
+                                        distance = hitDistance;
+                                }
+                            }
+                            delete hitForward;
+                        }
+                        else
+                        {
+                            Block* forwardBlock = mMinecraft->mLevel->getBlock(hitForward->getBlockPos());
+                            Block* reverseBlock = mMinecraft->mLevel->getBlock(hitReverse->getBlockPos());
+                            if ((forwardBlock->mMaterial->blocksMotion()
+                                 && (!Minecraft::InMiniGame(eMiniGameId_Any, true)
+                                     || gApp.ShouldCollideWith(forwardBlock)))
+                                || (reverseBlock->mMaterial->blocksMotion()
+                                    && (!Minecraft::InMiniGame(eMiniGameId_Any, true)
+                                        || gApp.ShouldCollideWith(reverseBlock))))
+                            {
+                                const double hitDistance = hitForward->mLocation->distanceTo(Vec3::newTemp(x, yEye, z));
+                                if (hitDistance < distance)
+                                    distance = hitDistance;
+                            }
+                            delete hitForward;
+                            delete hitReverse;
+                        }
+                    }
+
+                    if (thirdPerson == 2)
+                        GlStateManager::rotatef(k180, kZero, kOne, kZero);
+
+                    GlStateManager::rotatef(cameraPitch - pitch, kOne, kZero, kZero);
+                    GlStateManager::rotatef(cameraYaw - yaw, kZero, kOne, kZero);
+                    GlStateManager::translatef(kZero, kZero, -static_cast<float>(distance));
+                    GlStateManager::rotatef(yaw - cameraYaw, kZero, kOne, kZero);
+                    GlStateManager::rotatef(pitch - cameraPitch, kOne, kZero, kZero);
+                }
+                else
+                {
+                    GlStateManager::translatef(kZero, kZero, -static_cast<float>(distance));
+                }
+            }
+        }
+        else
+        {
+            eyeHeight = eyeHeight + kSleepingHeightAdd;
+            GlStateManager::translatef(kZero, kSleepingYOffset, kZero);
+            if (mMinecraft->mOptions->mUnknownFlag5 == 0)
+            {
+                const BlockPos cameraBlockPos(living);
+                const BlockState* bedState = mMinecraft->mLevel->getBlockState(cameraBlockPos);
+                if (bedState->getBlock() == Blocks::bed)
+                {
+                    const Direction* facing =
+                        bedState->getValue<const Direction*>(HorizontalDirectionalBlock::FACING_PROPERTY);
+                    GlStateManager::rotatef(static_cast<float>(facing->get2DDataValue()) * kBedFacingRotation,
+                                          kZero, kOne, kZero);
+                }
+                GlStateManager::rotatef(static_cast<float>(getCameraYRot(partialTick) + k180),
+                                      kZero, kNegOne, kZero);
+                GlStateManager::rotatef(static_cast<float>(getCameraXRot(partialTick)),
+                                      kNegOne, kZero, kZero);
+            }
+        }
+
+        if (living->isFallFlying())
+        {
+            if (GameSettings::GetGameSettings(mMinecraft->mPlayer->mUserIndex,
+                                              eGameSetting_FlyingViewRolling) == 0)
+            {
+                const float fallFlightRotation =
+                    ((mMinecraft->mPlayer->mFallFlyYaw - mMinecraft->mPlayer->mFallFlyYawOld) * partialTick
+                     + mMinecraft->mPlayer->mFallFlyYawOld)
+                    * ((mMinecraft->mPlayer->mFallFlyingAlignment - mMinecraft->mPlayer->mFallFlyingAlignmentO)
+                           * partialTick
+                       + mMinecraft->mPlayer->mFallFlyingAlignmentO);
+                GlStateManager::rotatef(fallFlightRotation * kFallFlightYawScale,
+                                        kZero, kZero, kOne);
+                GlStateManager::rotatef(fallFlightRotation * kFallFlightAlignmentScale,
+                                        kZero, kOne, kZero);
+            }
         }
     }
 
-    if (entity->isFallFlying())
+    if (mMinecraft->mOptions->mUnknownFlag5 == 0)
     {
-        if (GameSettings::GetGameSettings(localPlayer->mUserIndex,
-                                          eGameSetting_FlyingViewRolling) == 0)
+        GlStateManager::rotatef(static_cast<float>(getCameraXRot(partialTick)), kOne, kZero, kZero);
+        if ((living->GetType() & EntityType::ANIMAL) == EntityType::ANIMAL)
         {
-            const float fallFlyYaw =
-                (localPlayer->mFallFlyYaw - localPlayer->mFallFlyYawOld) * partialTick
-                + localPlayer->mFallFlyYawOld;
-            const float fallFlyingAlignment =
-                (localPlayer->mFallFlyingAlignment - localPlayer->mFallFlyingAlignmentO)
-                    * partialTick
-                + localPlayer->mFallFlyingAlignmentO;
-            const float fallFlightRotation = fallFlyYaw * fallFlyingAlignment;
-            GlStateManager::rotatef(fallFlightRotation * kFallFlightYawScale,
-                                    kZero, kZero, kOne);
-            GlStateManager::rotatef(fallFlightRotation * kFallFlightAlignmentScale,
+            boost::shared_ptr<Animal> animal = boost::static_pointer_cast<Animal>(living);
+            GlStateManager::rotatef((animal->mYHeadRot - animal->mYHeadRotO) * partialTick
+                                        + animal->mYHeadRotO + k180,
+                                    kZero, kOne, kZero);
+        }
+        else
+        {
+            GlStateManager::rotatef(static_cast<float>(getCameraYRot(partialTick) + k180),
                                     kZero, kOne, kZero);
         }
     }
 
-    if (sleepingFlag == 0)
-    {
-        GlStateManager::rotatef(static_cast<float>(getCameraXRot(partialTick)), kOne, kZero, kZero);
-        Animal* animal = dynamic_cast<Animal*>(entity);
-        if (animal != NULL)
-        {
-            const float headYaw = animal->mYHeadRotO + (animal->mYHeadRot - animal->mYHeadRotO) * partialTick + k180;
-            GlStateManager::rotatef(headYaw, kZero, kOne, kZero);
-        }
-        else
-        {
-            const float yaw = static_cast<float>(getCameraYRot(partialTick) + k180);
-            GlStateManager::rotatef(yaw, kZero, kOne, kZero);
-        }
-    }
+    GlStateManager::translatef(kZero, -eyeHeight, kZero);
 
-    GlStateManager::translatef(kZero, -static_cast<float>(eyeHeight), kZero);
-
-    const bool inCloud = mMinecraft->mLevelRenderer->isInCloud(
-        x, y + eyeHeight, z, partialTick);
-    mCloudFog = inCloud;
+    mCloudFog = mMinecraft->mLevelRenderer->isInCloud(
+        (living->mX - living->mXo) * partialTick + living->mXo,
+        (living->mY - living->mYo) * partialTick + living->mYo + eyeHeight,
+        (living->mZ - living->mZo) * partialTick + living->mZo,
+        partialTick);
 }
 
 void GameRenderer::getFovAndAspect(float& fov, float& aspect, float partialTick, bool useSmoothing)
@@ -1578,7 +1547,7 @@ void GameRenderer::renderItemInHand(float partialTick, int eyeIndex)
     {
         if (!localPlayer->mAbilities.mFlying && skinMask == skinAlt)
         {
-            if (!localPlayer->isUsingItem())
+            if (!localPlayer->isSwimming())
                 bobView(partialTick);
         }
     }
@@ -1616,7 +1585,7 @@ void GameRenderer::renderItemInHand(float partialTick, int eyeIndex)
     {
         if (!localPlayer->mAbilities.mFlying && skinMask == skinAlt)
         {
-            if (!localPlayer->isUsingItem())
+            if (!localPlayer->isSwimming())
                 bobView(partialTick);
         }
     }
@@ -2358,7 +2327,7 @@ static const float ARROW_ALPHAS[4] = { 0.0f, 1.0f, 0.5f, 0.0f };
 
 void GameRenderer::renderThermal(Culler* culler, float partialTick)
 {
-    LevelRuleset* ruleset = g_pApp->getGameRuleDefinitions();
+    LevelRuleset* ruleset = gApp.getGameRuleDefinitions();
     if (!Minecraft::InMiniGame(eMiniGameId_Glide, true) || ruleset == NULL)
     {
         return;
@@ -2646,155 +2615,130 @@ void GameRenderer::renderGhost(float partialTick, boost::shared_ptr<Entity> enti
     static const float kGhostScale = 0.9375f;
     static const float kModelScale = 0.0625f;
     static const float kDepthOffset = 0.125f;
-    static const float kNeg180 = -180.0f;
-    static const float kNeg90 = -90.0f;
+    static const double kNeg180 = -180.0;
+    static const double kNeg90 = -90.0;
     static const float kNegOne = -1.0f;
     static const float kPowBase = 1.5f;
     static const float kColourDivisor = 255.0f;
     static const float kPolygonOffset = -0.3f;
 
-    ColourTable* colourTable = mMinecraft->getColourTable();
-    const int startColour = colourTable->getColour(eMinecraftColour_Glide_Ghost_Slow);
-    const int middleColour = colourTable->getColour(eMinecraftColour_Glide_Ghost_Medium);
-    const int endColour = colourTable->getColour(eMinecraftColour_Glide_Ghost_Fast);
+    const int startColour = mMinecraft->getColourTable()->getColour(eMinecraftColour_Glide_Ghost_Slow);
+    const int middleColour = mMinecraft->getColourTable()->getColour(eMinecraftColour_Glide_Ghost_Medium);
+    const int endColour = mMinecraft->getColourTable()->getColour(eMinecraftColour_Glide_Ghost_Fast);
 
     GhostController* ghostController = mMinecraft->GetGhostController();
-    LevelGenerationOptions* generationOptions = g_pApp->getLevelGenerationOptions();
-    if (ghostController == NULL || generationOptions == NULL)
+    LevelGenerationOptions* generationOptions = gApp.getLevelGenerationOptions();
+    if (ghostController != NULL && generationOptions != NULL)
     {
-        return;
-    }
+        boost::shared_ptr<MultiplayerLocalPlayer> player = mMinecraft->mPlayer;
 
-    boost::shared_ptr<MultiplayerLocalPlayer> player = mMinecraft->mPlayer;
-    const int trackIndex = player->mUserIndex;
-
-    GhostController::GhostRecord* record = ghostController->mLoaded[trackIndex];
-    if (record == NULL || !record->HasRecording() || ghostController->HasFinished(record))
-    {
-        return;
-    }
-
-    if (!ghostController->mPlaybackActive[trackIndex])
-    {
-        return;
-    }
-
-    float playbackFraction = kOne;
-    unsigned int sampleIndex = ghostController->getPlaybackIndex(record, playbackFraction);
-
-    Vec3* samplePos = record->GetPosAtIndex(sampleIndex);
-    Vec3* sampleRot = record->GetRotAtIndex(sampleIndex);
-    double sampleVelocity = record->GetVelocityAtIndex(sampleIndex);
-
-    Vec3* renderPos = samplePos;
-    Vec3* renderRot = sampleRot;
-    float flyAmount = kOne;
-    const unsigned int sampleCount = static_cast<unsigned int>(record->NumSamples());
-    if (sampleIndex + 1U < sampleCount)
-    {
-        Vec3* nextRot = record->GetRotAtIndex(sampleIndex + 1U);
-        const double nextVelocity = record->GetVelocityAtIndex(sampleIndex + 1U);
-        Vec3* nextPos =
-            record->GetPosAtIndex(sampleIndex + 1U);
-
-        renderPos = samplePos->interpolateTo(nextPos, static_cast<double>(playbackFraction));
-        renderRot = sampleRot->interpolateTo(nextRot, static_cast<double>(playbackFraction));
-        sampleVelocity =
-            Mth::Lerp(static_cast<float>(sampleVelocity), static_cast<float>(nextVelocity),
-                      playbackFraction);
-
-        if (renderPos->y < samplePos->y)
+        GhostController::GhostRecord* record = ghostController->mLoaded[player->mUserIndex];
+        if (record != NULL && record->HasRecording() && !ghostController->HasFinished(record))
         {
-            Vec3* delta = Vec3::newTemp(renderPos->x - samplePos->x, renderPos->y - samplePos->y,
-                                        renderPos->z - samplePos->z);
-            delta->normalize();
-            const double lift = std::pow(-delta->y, (double)kPowBase);
-            flyAmount = kOne - static_cast<float>(lift);
+            if (ghostController->mPlaybackActive[player->mUserIndex])
+            {
+                float playbackFraction = kOne;
+                unsigned int sampleIndex = ghostController->getPlaybackIndex(record, playbackFraction);
+
+                Vec3* samplePos = record->GetPosAtIndex(sampleIndex);
+                Vec3* renderRot = record->GetRotAtIndex(sampleIndex);
+                float sampleVelocity = record->GetVelocityAtIndex(sampleIndex);
+
+                Vec3* renderPos = samplePos;
+                float flyAmount = kOne;
+                if (sampleIndex + 1U < static_cast<unsigned int>(record->NumSamples()))
+                {
+                    Vec3* nextRot = record->GetRotAtIndex(sampleIndex + 1U);
+                    const float nextVelocity = record->GetVelocityAtIndex(sampleIndex + 1U);
+                    Vec3* nextPos = record->GetPosAtIndex(sampleIndex + 1U);
+
+                    renderPos = samplePos->interpolateTo(nextPos, static_cast<double>(playbackFraction));
+                    if (renderPos->y < samplePos->y)
+                    {
+                        Vec3* direction = Vec3::newTemp(renderPos->x - samplePos->x, renderPos->y - samplePos->y,
+                                                        renderPos->z - samplePos->z)->normalize();
+                        flyAmount = kOne - static_cast<float>(std::pow(-direction->y, static_cast<double>(kPowBase)));
+                    }
+                    renderRot = renderRot->interpolateTo(nextRot, static_cast<double>(playbackFraction));
+                    sampleVelocity = Mth::Lerp(sampleVelocity, nextVelocity, playbackFraction);
+                }
+
+                const double cameraX = (player->mX - player->mXOld) * partialTick + player->mXOld;
+                const double cameraY = (player->mY - player->mYOld) * partialTick + player->mYOld;
+                const double cameraZ = (player->mZ - player->mZOld) * partialTick + player->mZOld;
+
+                const float velocityAlpha = Mth::clamp(sampleVelocity * kDepthOffset, kZero, kOne);
+                const unsigned int blendedColour =
+                    ColourTable::LinearBlend(startColour, middleColour, endColour, velocityAlpha);
+
+                const float distanceAlpha = Mth::clamp(
+                    static_cast<float>(Vec3::newTemp(player->mX, player->mY, player->mZ)->distanceTo(renderPos))
+                        * kHalf,
+                    kZero, kOne);
+
+                PlayerRenderer* playerRenderer =
+                    mMinecraft->getEntityRenderDispatcher()->getPlayerRenderer(EPLAYER_MODEL_SLIM);
+                if (playerRenderer != NULL)
+                {
+                    HumanoidModel* humanoidModel = static_cast<HumanoidModel*>(playerRenderer->getModel());
+                    GlStateManager::pushMatrix();
+                    GlStateManager::translatef(-static_cast<float>(cameraX), -static_cast<float>(cameraY),
+                                               -static_cast<float>(cameraZ));
+                    GlStateManager::translatef(static_cast<float>(renderPos->x), static_cast<float>(renderPos->y),
+                                               static_cast<float>(renderPos->z));
+                    GlStateManager::rotatef(static_cast<float>(kNeg180 - renderRot->y), kZero, kOne, kZero);
+                    GlStateManager::rotatef(static_cast<float>(kNeg90 - renderRot->x), kOne, kZero, kZero);
+                    GlStateManager::rotatef(static_cast<float>(renderRot->z), kZero, kZero, kOne);
+                    GlStateManager::enableRescaleNormal();
+                    GlStateManager::scalef(kNegOne, kNegOne, kOne);
+                    GlStateManager::scalef(kGhostScale, kGhostScale, kGhostScale);
+
+                    humanoidModel->setAllVisible(true);
+                    ElytraModel* elytraModel = playerRenderer->getElytraModel();
+                    ResourceLocation ghostBodyTexture(TN_MOB_GLIDE_GHOST);
+                    ResourceLocation ghostElytraTexture(TN_ITEM_ELYTRA);
+                    GlStateManager::translatef(kZero, kZero, kDepthOffset);
+                    humanoidModel->overrideAnim();
+                    humanoidModel->clearAllOffsets();
+                    elytraModel->overrideAnim(flyAmount, static_cast<float>(renderRot->y),
+                                              static_cast<float>(renderRot->x), kModelScale);
+
+                    const float red = static_cast<float>(static_cast<int>((blendedColour >> 16) & 0xFF)) / kColourDivisor;
+                    const float green = static_cast<float>(static_cast<int>((blendedColour >> 8) & 0xFF)) / kColourDivisor;
+                    const float blue = static_cast<float>(static_cast<int>(blendedColour & 0xFF)) / kColourDivisor;
+                    const float alpha = kHalf * distanceAlpha;
+                    GlStateManager::color4f(red, green, blue, alpha);
+
+                    Lighting::turnOn();
+                    GlStateManager::cullFace(1);
+                    gRenderer->StateSetWriteEnable(false, false, false, false);
+                    Minecraft::GetInstance()->mTextures->bindTexture(&ghostBodyTexture);
+                    humanoidModel->overrideRender(kModelScale, true);
+                    Minecraft::GetInstance()->mTextures->bindTexture(&ghostElytraTexture);
+                    boost::shared_ptr<Entity> noEntity;
+                    elytraModel->render(noEntity, kZero, kZero, kZero, static_cast<float>(renderRot->y),
+                                        static_cast<float>(renderRot->x), kModelScale, true);
+
+                    gRenderer->StateSetWriteEnable(true, true, true, true);
+                    GlStateManager::color4f(red, green, blue, alpha);
+                    GlStateManager::enableBlend();
+                    GlStateManager::blendFuncSeparate(4, 5, 1, 0);
+                    GlStateManager::polygonOffset(kPolygonOffset, kPolygonOffset);
+
+                    Minecraft::GetInstance()->mTextures->bindTexture(&ghostBodyTexture);
+                    humanoidModel->overrideRender(kModelScale, true);
+                    Minecraft::GetInstance()->mTextures->bindTexture(&ghostElytraTexture);
+                    elytraModel->render(noEntity, kZero, kZero, kZero, static_cast<float>(renderRot->y),
+                                        static_cast<float>(renderRot->x), kModelScale, true);
+
+                    Lighting::turnOff();
+                    GlStateManager::polygonOffset(kZero, kZero);
+                    GlStateManager::disableBlend();
+                    GlStateManager::popMatrix();
+                }
+            }
         }
     }
-
-    const double cameraX = (player->mX - player->mXOld) * partialTick + player->mXOld;
-    const double cameraY = (player->mY - player->mYOld) * partialTick + player->mYOld;
-    const double cameraZ = (player->mZ - player->mZOld) * partialTick + player->mZOld;
-
-    const float velocityAlpha =
-        Mth::clamp(static_cast<float>(sampleVelocity * kDepthOffset), kZero, kOne);
-    const unsigned int blendedColour =
-        ColourTable::LinearBlend(startColour, middleColour, endColour, velocityAlpha);
-
-    Vec3* playerPos = Vec3::newTemp(player->mX, player->mY, player->mZ);
-    const float distanceAlpha = Mth::clamp(
-        static_cast<float>(playerPos->distanceTo(renderPos) * kHalf), kZero, kOne);
-
-    EntityRenderDispatcher* dispatcher = mMinecraft->getEntityRenderDispatcher();
-    PlayerRenderer* playerRenderer =
-        dispatcher->getPlayerRenderer(EPLAYER_MODEL_SLIM);
-    if (playerRenderer == NULL)
-    {
-        return;
-    }
-
-    HumanoidModel* humanoidModel = playerRenderer->getModel();
-    GlStateManager::pushMatrix();
-    GlStateManager::translatef(static_cast<float>(-(cameraX)), static_cast<float>(-(cameraY)),
-                               static_cast<float>(-(cameraZ)));
-    GlStateManager::translatef(static_cast<float>(renderPos->x), static_cast<float>(renderPos->y),
-                               static_cast<float>(renderPos->z));
-    GlStateManager::rotatef(kNeg180 - static_cast<float>(renderRot->y), kZero, kOne, kZero);
-    GlStateManager::rotatef(kNeg90 - static_cast<float>(renderRot->x), kOne, kZero, kZero);
-    GlStateManager::rotatef(static_cast<float>(renderRot->z), kZero, kZero, kOne);
-    GlStateManager::enableRescaleNormal();
-    GlStateManager::scalef(kNegOne, kNegOne, kOne);
-    GlStateManager::scalef(kGhostScale, kGhostScale, kOne);
-
-    ElytraModel* elytraModel = playerRenderer->getElytraModel();
-    GlStateManager::translatef(kZero, kZero, kDepthOffset);
-    humanoidModel->overrideAnim();
-    boost::shared_ptr<Entity> renderEntity = boost::static_pointer_cast<Entity>(player);
-    humanoidModel->render(renderEntity, kZero, kZero, kZero, kZero, kZero, kModelScale, true);
-    elytraModel->overrideAnim(flyAmount, static_cast<float>(renderRot->y),
-                              static_cast<float>(renderRot->x), kModelScale);
-
-    const float red =
-        static_cast<float>(static_cast<double>((blendedColour >> 16) & 0xFF) /
-                         kColourDivisor);
-    const float green =
-        static_cast<float>(static_cast<double>((blendedColour >> 8) & 0xFF) /
-                         kColourDivisor);
-    const float blue =
-        static_cast<float>(static_cast<double>((blendedColour >> 0) & 0xFF) /
-                         kColourDivisor);
-    const float alpha = distanceAlpha * kHalf;
-    GlStateManager::color4f(red, green, blue, alpha);
-
-    Lighting::turnOn();
-    GlStateManager::cullFace(1);
-    Tesselator::getInstance()->end();
-
-    static ResourceLocation sGhostBodyTexture(TN_MOB_GLIDE_GHOST);
-    static ResourceLocation sGhostElytraTexture(TN_ITEM_ELYTRA);
-    mMinecraft->mTextures->bindTexture(&sGhostBodyTexture);
-    humanoidModel->overrideRender(kModelScale, true);
-    mMinecraft->mTextures->bindTexture(&sGhostElytraTexture);
-    humanoidModel->render(renderEntity, kZero, kZero, kZero, static_cast<float>(renderRot->y),
-                          static_cast<float>(renderRot->x), kModelScale, true);
-
-    Tesselator::getInstance()->end();
-    GlStateManager::color4f(red, green, blue, alpha);
-    GlStateManager::enableBlend();
-    GlStateManager::blendFuncSeparate(4, 5, 1, 0);
-    GlStateManager::polygonOffset(kPolygonOffset, kPolygonOffset);
-
-    mMinecraft->mTextures->bindTexture(&sGhostBodyTexture);
-    humanoidModel->overrideRender(kModelScale, true);
-    mMinecraft->mTextures->bindTexture(&sGhostElytraTexture);
-    humanoidModel->render(renderEntity, kZero, kZero, kZero, static_cast<float>(renderRot->y),
-                          static_cast<float>(renderRot->x), kModelScale, true);
-
-    Lighting::turnOff();
-    GlStateManager::polygonOffset(kZero, kZero);
-    GlStateManager::disableBlend();
-    GlStateManager::popMatrix();
 }
 
 void GameRenderer::renderGhostPath(float partialTick, boost::shared_ptr<Entity> entity)
@@ -2948,12 +2892,6 @@ void GameRenderer::renderSnowAndRain(float partialTick)
             const float offsetZ = mRainSizeZ[offsetIndex] * 0.5f;
 
             BlockPos samplePos(blockX, 0, blockZ);
-            if (!level->hasChunkAt(samplePos))
-            {
-                zSeedAccumulator += columnStep * 0x35c1;
-                continue;
-            }
-
             Biome* biome = level->getBiome(samplePos);
             if (!tumbleWeather && !biome->hasRain() && !biome->hasSnow())
             {
@@ -2989,7 +2927,7 @@ void GameRenderer::renderSnowAndRain(float partialTick)
             if (!tumbleWeather)
             {
                 const float scaledTemp =
-                    level->getBiomeSource()->scaleTemp(temperature, level->getSeaLevel());
+                    level->getBiomeSource()->scaleTemp(temperature, topY);
                 if (scaledTemp >= 0.15f)
                 {
                     if (precipitationMode < 0)
@@ -3130,51 +3068,45 @@ void GameRenderer::renderSnowAndRain(float partialTick)
 
 void GameRenderer::renderEyePass(int eyeIndex, float partialTick, long long, bool sortTransparent)
 {
+    LevelRenderer* levelRenderer = mMinecraft->mLevelRenderer;
     gHangingEntityRenderCount = 0;
+    ParticleEngine* particleEngine = mMinecraft->mParticleEngine;
     GlStateManager::enableCull();
-    boost::shared_ptr<Player> cameraPlayer =
-        boost::static_pointer_cast<Player>(mMinecraft->getCameraEntity());
-    Camera::UpdatePlayerOffsets(cameraPlayer);
+    Camera::UpdatePlayerOffsets(mMinecraft->mPlayer);
 
     setupClearColor(partialTick);
     GlStateManager::clear(3);
     setupCamera(partialTick, eyeIndex);
 
-    const bool thirdPerson = getCameraThirdPerson() == 2;
-    Camera::prepare(cameraPlayer, thirdPerson);
+    Camera::prepare(mMinecraft->mPlayer, getCameraThirdPerson() == 2);
 
     Frustum::getFrustum();
     setupFog(-1, partialTick);
-    mMinecraft->mLevelRenderer->renderSky(partialTick);
+    levelRenderer->renderSky(partialTick);
 
     if (mMinecraft->mTexturePackRepository->getSelected()->getId() == 0x402)
     {
-        mMinecraft->mLevelRenderer->renderHaloRing(partialTick);
+        levelRenderer->renderHaloRing(partialTick);
     }
 
     GlStateManager::enableFog();
     setupFog(0, partialTick);
 
     MemSect(0x1f);
-    FrustumCuller frustumCuller(Frustum::getFrustum());
+    FrustumCuller frustumCuller(NULL);
     MemSect(0);
 
     boost::shared_ptr<Entity> cameraEntity = mMinecraft->getCameraEntity();
-    Entity* camera = cameraEntity.get();
-    const double cameraX = (camera->mX - camera->mXOld) * partialTick + camera->mXOld;
-    const double cameraY = (camera->mY - camera->mYOld) * partialTick + camera->mYOld;
-    const double cameraZ = (camera->mZ - camera->mZOld) * partialTick + camera->mZOld;
-    frustumCuller.prepare(cameraX, cameraY, cameraZ);
-
-    Culler* culler = reinterpret_cast<Culler*>(&frustumCuller);
+    const double cameraX = (cameraEntity->mX - cameraEntity->mXOld) * partialTick + cameraEntity->mXOld;
+    const double cameraY = (cameraEntity->mY - cameraEntity->mYOld) * partialTick + cameraEntity->mYOld;
+    const double cameraZ = (cameraEntity->mZ - cameraEntity->mZOld) * partialTick + cameraEntity->mZOld;
+    Culler* culler = &frustumCuller;
+    culler->prepare(cameraX, cameraY, cameraZ);
     mMinecraft->mLevelRenderer->cull(culler, partialTick);
 
-    const double eyeHeight = camera->getEyeHeight();
-    const double headY = camera->mY + eyeHeight;
-    if (headY < static_cast<double>(mMinecraft->mLevel->getCloudHeight()))
+    if (cameraEntity->mY + cameraEntity->getEyeHeight() < static_cast<double>(mMinecraft->mLevel->getCloudHeight()))
     {
-        prepareAndRenderClouds(mMinecraft->mLevelRenderer, partialTick, eyeIndex, cameraX, cameraY,
-                               cameraZ);
+        prepareAndRenderClouds(levelRenderer, partialTick, eyeIndex, cameraX, cameraY, cameraZ);
     }
 
     GlStateManager::disableBlend();
@@ -3182,14 +3114,13 @@ void GameRenderer::renderEyePass(int eyeIndex, float partialTick, long long, boo
     setupFog(0, partialTick);
     GlStateManager::enableFog();
 
-    static ResourceLocation sTerrainTexture(TN_BLOCK_ATLAS);
     MemSect(0x1f);
-    mMinecraft->mTextures->bindTexture(&sTerrainTexture);
+    mMinecraft->mTextures->bindTexture(&BLOCKS_LOCATION);
     MemSect(0);
     Lighting::turnOff();
 
     InfoBarManager::StartTimingCategory(InfoBarManager::eTimingCagegory_Terrain);
-    mMinecraft->mLevelRenderer->render(cameraEntity, 0, partialTick, sortTransparent);
+    levelRenderer->render(cameraEntity, 0, partialTick, sortTransparent);
     InfoBarManager::EndTimingCategory(InfoBarManager::eTimingCagegory_Terrain);
 
     GlStateManager::alphaFunc(4, 0.01f);
@@ -3197,28 +3128,27 @@ void GameRenderer::renderEyePass(int eyeIndex, float partialTick, long long, boo
     if (mDebugView == 0)
     {
         Lighting::turnOn();
-        frustumCuller.prepare(camera->mX, camera->mY, camera->mZ);
-        mMinecraft->mLevelRenderer->renderEntities(cameraEntity, culler, partialTick);
+        culler->prepare(cameraEntity->mX, cameraEntity->mY, cameraEntity->mZ);
+        levelRenderer->renderEntities(cameraEntity, culler, partialTick);
 
         InfoBarManager::StartTimingCategory(InfoBarManager::eTimingCagegory_Entities);
-        turnOnLightLayer(0.0);
-        if (mMinecraft->mParticleEngine != NULL)
-        {
-            mMinecraft->mParticleEngine->renderLit(cameraEntity, partialTick, 1);
-        }
+        turnOnLightLayer(partialTick);
+        particleEngine->renderLit(cameraEntity, partialTick, 1);
         Lighting::turnOff();
         setupFog(0, partialTick);
-        if (mMinecraft->mParticleEngine != NULL)
-        {
-            mMinecraft->mParticleEngine->render(cameraEntity, partialTick, 1);
-        }
-        turnOffLightLayer(0.0);
+        particleEngine->render(cameraEntity, partialTick, 1);
+        turnOffLightLayer(partialTick);
 
-        if (mMinecraft->mHitResult != NULL && cameraPlayer->mInventory != NULL)
+        if (mMinecraft->mHitResult != NULL && cameraEntity->isUnderLiquid(Material::WATER))
         {
-            not_null_ptr<ItemInstance> selectedItem = cameraPlayer->mInventory->getSelected();
-            mMinecraft->mLevelRenderer->renderHit(cameraPlayer, mMinecraft->mHitResult, 0,
-                                                  selectedItem, partialTick);
+            if ((cameraEntity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+            {
+                boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(cameraEntity);
+                GlStateManager::disableAlphaTest();
+                levelRenderer->renderHit(player, mMinecraft->mHitResult, 0, player->mInventory->getSelected(),
+                                         partialTick);
+                GlStateManager::enableAlphaTest();
+            }
         }
 
         InfoBarManager::EndTimingCategory(InfoBarManager::eTimingCagegory_Entities);
@@ -3233,76 +3163,67 @@ void GameRenderer::renderEyePass(int eyeIndex, float partialTick, long long, boo
     GlStateManager::enableBlend();
     GlStateManager::disableCull();
     MemSect(0x1f);
-    mMinecraft->mTextures->bindTexture(&sTerrainTexture);
+    mMinecraft->mTextures->bindTexture(&BLOCKS_LOCATION);
     MemSect(0);
     GlStateManager::blendFunc(0, 1);
     GlStateManager::enableCull();
-    mMinecraft->mLevelRenderer->render(cameraEntity, 2, partialTick, sortTransparent);
+    levelRenderer->render(cameraEntity, 2, partialTick, sortTransparent);
     GlStateManager::blendFunc(4, 5);
-    mMinecraft->mLevelRenderer->render(cameraEntity, 2, partialTick, sortTransparent);
+    levelRenderer->render(cameraEntity, 2, partialTick, sortTransparent);
     gRenderer->BeginOrderIndependentAlpha();
-    mMinecraft->mLevelRenderer->render(cameraEntity, 1, partialTick, sortTransparent);
+    levelRenderer->render(cameraEntity, 1, partialTick, sortTransparent);
     InfoBarManager::EndTimingCategory(InfoBarManager::eTimingCagegory_TerrainTransparent);
 
     Lighting::turnOn();
-    turnOnLightLayer(0.0);
-    if (mMinecraft->mParticleEngine != NULL)
-    {
-        mMinecraft->mParticleEngine->renderLit(cameraEntity, partialTick, 0);
-    }
+    turnOnLightLayer(partialTick);
+    particleEngine->renderLit(cameraEntity, partialTick, 0);
+    Lighting::turnOff();
     setupFog(0, partialTick);
-    if (mMinecraft->mParticleEngine != NULL)
-    {
-        mMinecraft->mParticleEngine->render(cameraEntity, partialTick, 0);
-    }
-    turnOffLightLayer(0.0);
+    particleEngine->render(cameraEntity, partialTick, 0);
+    turnOffLightLayer(partialTick);
 
     gRenderer->EndOrderIndependentAlpha();
     GlStateManager::depthMask(true);
     GlStateManager::enableCull();
     GlStateManager::disableBlend();
-    if (mMinecraft->mHitResult != NULL)
+    if (mZoom == 1.0f)
     {
-        boost::shared_ptr<Player> outlinePlayer = boost::static_pointer_cast<Player>(cameraEntity);
-        GlStateManager::disableAlphaTest();
-        mMinecraft->mLevelRenderer->renderHitOutline(outlinePlayer, mMinecraft->mHitResult, 0,
-                                                     partialTick);
-        GlStateManager::enableAlphaTest();
+        if ((cameraEntity->GetType() & EntityType::PLAYER) == EntityType::PLAYER && mMinecraft->mHitResult != NULL)
+        {
+            boost::shared_ptr<Player> outlinePlayer = boost::static_pointer_cast<Player>(cameraEntity);
+            GlStateManager::disableAlphaTest();
+            levelRenderer->renderHitOutline(outlinePlayer, mMinecraft->mHitResult, 0, partialTick);
+            GlStateManager::enableAlphaTest();
+        }
     }
 
     renderThermal(culler, partialTick);
 
     if (Minecraft::InMiniGame(eMiniGameId_Glide, true))
     {
-        const MiniGameDef* miniGame = mMinecraft->GetMiniGame();
-        if (miniGame != NULL && miniGame->GetHostOption(eCustomGameModeHostOption_TimeTrial) != 0)
+        if (Minecraft::GetInstance()->GetMiniGame()->GetHostOption(eCustomGameModeHostOption_TimeTrial) != 0)
         {
-            const int ghostSetting =
-                GameSettings::GetGameSettings(mMinecraft->mPlayer->mUserIndex,
-                                              eGameSetting_ShowGlideGhost);
-            if (ghostSetting != 0 && g_pApp->IsAppPaused() == 0 && !mMinecraft->mPlayer->isSpectator())
+            boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = mMinecraft->mPlayer;
+            if (GameSettings::GetGameSettings(localPlayer->mUserIndex, eGameSetting_ShowGlideGhost) != 0
+                && gApp.IsAppPaused() == 0 && !localPlayer->isSpectator())
             {
                 renderGhost(partialTick, cameraEntity);
             }
 
-            const int ghostPathSetting =
-                GameSettings::GetGameSettings(mMinecraft->mPlayer->mUserIndex,
-                                              eGameSetting_ShowGlideGhostPath);
-            if (ghostPathSetting != 0 && !mMinecraft->mPlayer->isSpectator())
+            if (GameSettings::GetGameSettings(localPlayer->mUserIndex, eGameSetting_ShowGlideGhostPath) != 0
+                && !localPlayer->isSpectator())
             {
                 renderGhostPath(partialTick, cameraEntity);
             }
         }
     }
 
-    boost::shared_ptr<Player> destroyPlayer = boost::static_pointer_cast<Player>(cameraEntity);
-    mMinecraft->mLevelRenderer->renderDestroyAnimation(Tesselator::getInstance(), destroyPlayer,
-                                                         partialTick);
+    levelRenderer->renderDestroyAnimation(Tesselator::getInstance(),
+                                          boost::static_pointer_cast<Player>(cameraEntity), partialTick);
 
-    if (headY >= static_cast<double>(mMinecraft->mLevel->getCloudHeight()))
+    if (static_cast<double>(mMinecraft->mLevel->getCloudHeight()) <= cameraEntity->mY + cameraEntity->getEyeHeight())
     {
-        prepareAndRenderClouds(mMinecraft->mLevelRenderer, partialTick, eyeIndex, cameraX, cameraY,
-                               cameraZ);
+        prepareAndRenderClouds(levelRenderer, partialTick, eyeIndex, cameraX, cameraY, cameraZ);
     }
 
     setupFog(0, partialTick);

@@ -7,6 +7,8 @@
 #include "game/entity/mob/Entity.hpp"
 #include "game/util/ResourceLocation.hpp"
 
+static ResourceLocation FANGS_LOCATION(TN_MOB_ILLAGER_FANGS);
+
 EvocationFangsRenderer::EvocationFangsRenderer(EntityRenderDispatcher* dispatcher)
     : EntityRenderer(dispatcher)
 {
@@ -22,17 +24,17 @@ void EvocationFangsRenderer::render(boost::shared_ptr<Entity>& entity, double x,
                                     float yaw, float partialTick)
 {
     boost::shared_ptr<EvocationFangs> fangs = boost::static_pointer_cast<EvocationFangs>(entity);
-    double progress = fangs->getAnimationProgress(partialTick);
-    float scale = 0.5F;
+    float progress = fangs->getAnimationProgress(partialTick);
 
-    if (progress == 1.0)
+    if (progress == 0.0F)
     {
         return;
     }
 
-    if (progress > 0.9f)
+    float scale = 2.0F;
+    if (progress > 0.9F)
     {
-        scale = static_cast<float>((1.0 - progress) / 0.1f);
+        scale = (1.0F - progress) / 0.1F;
         scale += scale;
     }
 
@@ -44,8 +46,7 @@ void EvocationFangsRenderer::render(boost::shared_ptr<Entity>& entity, double x,
     GlStateManager::rotatef(90.0F - fangs->mYRot, 0.0F, 1.0F, 0.0F);
     GlStateManager::scalef(-scale, -scale, scale);
     GlStateManager::translatef(0.0F, -0.626F, 0.0F);
-    mFangsModel->render(entity, static_cast<float>(progress), 0.5F, 1.75F, fangs->mYRot,
-                   fangs->mXRot, 0.03125F, true);
+    mFangsModel->render(entity, progress, 0.0F, 0.0F, fangs->mYRot, fangs->mXRot, 0.03125F, true);
     GlStateManager::popMatrix();
     GlStateManager::enableCull();
     EntityRenderer::render(entity, x, y, z, yaw, partialTick);
@@ -53,8 +54,7 @@ void EvocationFangsRenderer::render(boost::shared_ptr<Entity>& entity, double x,
 
 const ResourceLocation* EvocationFangsRenderer::getTextureLocation(boost::shared_ptr<Entity>& entity)
 {
-    static ResourceLocation location(TN_MOB_ILLAGER_FANGS);
-    return &location;
+    return &FANGS_LOCATION;
 }
 
 Model* EvocationFangsRenderer::createModel(const ModelDefinition& definition)

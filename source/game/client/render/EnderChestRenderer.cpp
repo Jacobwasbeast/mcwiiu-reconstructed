@@ -51,22 +51,31 @@ void EnderChestRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, doub
     GlStateManager::scalef(1.0F, -1.0F, -1.0F);
     GlStateManager::translatef(0.5F, 0.5F, 0.5F);
 
-    float yRot = 0.0F;
     if (data == 2)
     {
-        yRot = 180.0F;
+        GlStateManager::rotatef(180.0F, 0.0F, 1.0F, 0.0F);
+        GlStateManager::translatef(-0.5F, -0.5F, -0.5F);
+    }
+    else if (data == 3)
+    {
+        GlStateManager::rotatef(0.0F, 0.0F, 1.0F, 0.0F);
+        GlStateManager::translatef(-0.5F, -0.5F, -0.5F);
     }
     else if (data == 4)
     {
-        yRot = 90.0F;
+        GlStateManager::rotatef(90.0F, 0.0F, 1.0F, 0.0F);
+        GlStateManager::translatef(-0.5F, -0.5F, -0.5F);
     }
-    else if (data == 5)
+    else
     {
-        yRot = -90.0F;
+        float yRot = 0.0F;
+        if (data == 5)
+        {
+            yRot = -90.0F;
+        }
+        GlStateManager::rotatef(yRot, 0.0F, 1.0F, 0.0F);
+        GlStateManager::translatef(-0.5F, -0.5F, -0.5F);
     }
-
-    GlStateManager::rotatef(yRot, 0.0F, 1.0F, 0.0F);
-    GlStateManager::translatef(-0.5F, -0.5F, -0.5F);
 
     float openness = enderChest->mOpenOld +
         (enderChest->mOpen - enderChest->mOpenOld) * a;

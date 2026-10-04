@@ -50,9 +50,7 @@ void InkParticle::tick()
     yo = y;
     zo = z;
     move(xd, yd, zd);
-    BlockPos position(x, y, z);
-    const BlockState* state = ((LevelSource*)level)->getBlockState(position);
-    if (state->getMaterial() == Material::AIR)
+    if (((LevelSource*)level)->getBlockState(BlockPos(x, y, z))->getMaterial() == Material::AIR)
         yd -= 0.008;
     if (y == yo)
     {

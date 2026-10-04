@@ -15,6 +15,7 @@
 #include "game/world/block/ChestBlockEntity.hpp"
 #include "game/world/block/ConduitBlockEntity.hpp"
 #include "game/world/block/EnderChestBlockEntity.hpp"
+#include "game/world/block/ShulkerBoxBlock.hpp"
 #include "game/world/block/ShulkerBoxBlockEntity.hpp"
 #include "game/world/block/SkullBlockEntity.hpp"
 
@@ -22,14 +23,14 @@ EntityBlockRenderer* EntityBlockRenderer::instance = NULL;
 
 EntityBlockRenderer::EntityBlockRenderer()
 {
-    mChestBlockEntity.reset(new ChestBlockEntity(false));
-    mTrappedChestBlockEntity.reset(new ChestBlockEntity(ChestBlock::TYPE_SINGLE, false));
-    mEnderChestBlockEntity.reset(new EnderChestBlockEntity());
-    mBannerBlockEntity.reset(new BannerBlockEntity());
-    mSkullBlockEntity.reset(new SkullBlockEntity());
-    mShulkerBoxBlockEntity.reset(new ShulkerBoxBlockEntity());
-    mBedBlockEntity.reset(new BedBlockEntity());
-    mConduitBlockEntity.reset(new ConduitBlockEntity());
+    mChestBlockEntity = boost::shared_ptr<ChestBlockEntity>(new ChestBlockEntity(false));
+    mTrappedChestBlockEntity = boost::shared_ptr<ChestBlockEntity>(new ChestBlockEntity(ChestBlock::TYPE_SINGLE, false));
+    mEnderChestBlockEntity = boost::shared_ptr<EnderChestBlockEntity>(new EnderChestBlockEntity());
+    mBannerBlockEntity = boost::shared_ptr<BannerBlockEntity>(new BannerBlockEntity());
+    mSkullBlockEntity = boost::shared_ptr<SkullBlockEntity>(new SkullBlockEntity());
+    mShulkerBoxBlockEntity = boost::shared_ptr<ShulkerBoxBlockEntity>(new ShulkerBoxBlockEntity());
+    mBedBlockEntity = boost::shared_ptr<BedBlockEntity>(new BedBlockEntity());
+    mConduitBlockEntity = boost::shared_ptr<ConduitBlockEntity>(new ConduitBlockEntity());
 }
 
 void EntityBlockRenderer::renderByItem(not_null_ptr<ItemInstance> item, float partialTicks,
@@ -37,7 +38,7 @@ void EntityBlockRenderer::renderByItem(not_null_ptr<ItemInstance> item, float pa
 {
     Item* itemType = item->getItem();
 
-    if (itemType == Items::banner)
+    if (item->getItem() == Items::banner)
     {
         mBannerBlockEntity->setItemValues(item, false);
         BlockEntityRenderDispatcher::instance->render(mBannerBlockEntity, 0.0, 0.0, 0.0,
@@ -81,43 +82,7 @@ void EntityBlockRenderer::renderByItem(not_null_ptr<ItemInstance> item, float pa
     }
     else
     {
-        Block* blockItem = Block::byItem(itemType);
-        const DyeColor* color = NULL;
-
-        if (blockItem == Blocks::white_shulker_box)
-            color = DyeColor::WHITE;
-        else if (blockItem == Blocks::orange_shulker_box)
-            color = DyeColor::ORANGE;
-        else if (blockItem == Blocks::magenta_shulker_box)
-            color = DyeColor::MAGENTA;
-        else if (blockItem == Blocks::light_blue_shulker_box)
-            color = DyeColor::LIGHT_BLUE;
-        else if (blockItem == Blocks::yellow_shulker_box)
-            color = DyeColor::YELLOW;
-        else if (blockItem == Blocks::lime_shulker_box)
-            color = DyeColor::LIME;
-        else if (blockItem == Blocks::pink_shulker_box)
-            color = DyeColor::PINK;
-        else if (blockItem == Blocks::gray_shulker_box)
-            color = DyeColor::GRAY;
-        else if (blockItem == Blocks::silver_shulker_box)
-            color = DyeColor::SILVER;
-        else if (blockItem == Blocks::cyan_shulker_box)
-            color = DyeColor::CYAN;
-        else if (blockItem == Blocks::purple_shulker_box)
-            color = DyeColor::PURPLE;
-        else if (blockItem == Blocks::blue_shulker_box)
-            color = DyeColor::BLUE;
-        else if (blockItem == Blocks::brown_shulker_box)
-            color = DyeColor::BROWN;
-        else if (blockItem == Blocks::green_shulker_box)
-            color = DyeColor::GREEN;
-        else if (blockItem == Blocks::red_shulker_box)
-            color = DyeColor::RED;
-        else if (blockItem == Blocks::black_shulker_box)
-            color = DyeColor::BLACK;
-
-        if (color == NULL)
+        if (dynamic_cast<ShulkerBoxBlock*>(Block::byItem(itemType)) == NULL)
         {
             BlockEntityRenderDispatcher::instance->render(mChestBlockEntity, 0.0, 0.0, 0.0,
                                                  partialTicks, bTranslucent, 1.0F,
@@ -125,8 +90,8 @@ void EntityBlockRenderer::renderByItem(not_null_ptr<ItemInstance> item, float pa
         }
         else
         {
-            ShulkerBoxBlockEntity shulkerBoxEntity(color);
-            *mShulkerBoxBlockEntity = shulkerBoxEntity;
+            *mShulkerBoxBlockEntity = ShulkerBoxBlockEntity(
+                static_cast<ShulkerBoxBlock*>(Block::byItem(itemType))->getDyeColor());
             BlockEntityRenderDispatcher::instance->render(mShulkerBoxBlockEntity, 0.0, 0.0, 0.0,
                                                  partialTicks, bTranslucent, 1.0F,
                                                  bUseDisplayList);

@@ -14,25 +14,24 @@
 DefaultTexturePack* TexturePackRepository::defaultTexturePack = NULL;
 
 TexturePackRepository::TexturePackRepository(File file, Minecraft* minecraft)
-    : m_unknown0(0)
-    , m_unknown1(NULL)
-    , m_minecraft(minecraft)
-    , m_allTexturePacks(NULL)
-    , m_selected(NULL)
-    , m_previousSelected(NULL)
-    , m_skinReloaded(false)
 {
     if (defaultTexturePack == NULL)
     {
         defaultTexturePack = new DefaultTexturePack();
     }
 
-    m_allTexturePacks = new std::vector<TexturePack*>();
+    m_selected = NULL;
+    m_skinReloaded = false;
+    m_allTexturePacks = new std::vector<TexturePack*>;
+    m_minecraft = minecraft;
     m_allTexturePacks->push_back(defaultTexturePack);
     m_texturePacksById[defaultTexturePack->getId()] = defaultTexturePack;
     m_selected = defaultTexturePack;
     m_selected->loadColourTable();
-    m_selected->loadStructureManager();
+    defaultTexturePack->loadStructureManager();
+    m_unknown1 = NULL;
+    m_unknown0 = 0;
+    m_previousSelected = NULL;
 }
 
 TexturePack* TexturePackRepository::getSelected()
@@ -84,9 +83,9 @@ unsigned int TexturePackRepository::getSelectedId()
 
 TexturePackRepository::TexturePackIdNames* TexturePackRepository::getTexturePackIdNames()
 {
-    TexturePackIdNames* names = new TexturePackIdNames();
-    for (std::vector<TexturePack*>::iterator iterator = m_allTexturePacks->begin();
-         iterator != m_allTexturePacks->end(); ++iterator)
+    TexturePackIdNames* names = new TexturePackIdNames;
+    std::vector<TexturePack*>::iterator iterator;
+    for (iterator = m_allTexturePacks->begin(); iterator != m_allTexturePacks->end(); ++iterator)
     {
         TexturePack* texturePack = *iterator;
         names->push_back(TexturePackIdName(texturePack->getId(), texturePack->getName()));
@@ -97,6 +96,7 @@ TexturePackRepository::TexturePackIdNames* TexturePackRepository::getTexturePack
 bool TexturePackRepository::selectTexturePackById(unsigned int packId, bool forceReload)
 {
     gApp.SetRequiredTexturePackID(packId);
+    bool result;
     boost::unordered_map<unsigned int, TexturePack*>::iterator iterator = m_texturePacksById.find(packId);
     if (iterator == m_texturePacksById.end())
     {
@@ -104,21 +104,26 @@ bool TexturePackRepository::selectTexturePackById(unsigned int packId, bool forc
         {
             gApp.StartReloadingTexturePack();
         }
-        return false;
+        result = false;
     }
-
-    TexturePack* texturePack = iterator->second;
-    if (texturePack != m_selected)
+    else
     {
-        selectSkin(texturePack);
-        if (texturePack->hasData())
+        TexturePack* texturePack = iterator->second;
+        if (texturePack != m_selected)
         {
-            gApp.StartReloadingTexturePack();
-            return true;
+            selectSkin(texturePack);
+            if (texturePack->hasData())
+            {
+                gApp.StartReloadingTexturePack();
+            }
+            else
+            {
+                texturePack->loadData();
+            }
         }
-        texturePack->loadData();
+        result = true;
     }
-    return true;
+    return result;
 }
 
 TexturePack* TexturePackRepository::getTexturePackById(unsigned int packId)
@@ -168,11 +173,12 @@ int TexturePackRepository::getTexturePackCount()
 
 TexturePack* TexturePackRepository::getTexturePackByIndex(unsigned int index)
 {
+    TexturePack* texturePack = NULL;
     if (index < m_allTexturePacks->size())
     {
-        return m_allTexturePacks->at(index);
+        texturePack = m_allTexturePacks->at(index);
     }
-    return NULL;
+    return texturePack;
 }
 
 unsigned int TexturePackRepository::getTexturePackIndexByPackId(unsigned int packId)
@@ -183,8 +189,12 @@ unsigned int TexturePackRepository::getTexturePackIndexByPackId(unsigned int pac
     {
         if ((*iterator)->getId() == packId)
         {
-            return index;
+            break;
         }
     }
-    return 0;
+    if (index >= m_allTexturePacks->size())
+    {
+        index = 0;
+    }
+    return index;
 }

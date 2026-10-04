@@ -17,10 +17,10 @@ ModelPartDefinition::~ModelPartDefinition()
 void ModelPartDefinition::SetPartPosition(ModelPart* part, ModelPart* parent) const
 {
     part->setWorldPos(mX, mY, mZ);
-    if (parent == 0)
-        part->setPos(mX, mY, mZ);
+    if (parent != 0)
+        part->setPos(mX - parent->mWorldX, mY - parent->mWorldY, mZ - parent->mWorldZ);
     else
-        part->setPos(mX - parent->mZ, mY - parent->mWorldX, mZ - parent->mWorldY);
+        part->setPos(mX, mY, mZ);
 }
 
 void ModelPartDefinition::SetPartRotation(ModelPart* part) const

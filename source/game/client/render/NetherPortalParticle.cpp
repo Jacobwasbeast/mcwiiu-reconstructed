@@ -31,7 +31,7 @@ NetherPortalParticle::NetherPortalParticle(Level* level,
     Particle::size = particleScale;
     scale = particleScale;
 
-    unsigned int colour = Minecraft::GetInstance()->getColourTable()->getColour(eMinecraftColour_Particle_NetherPortal);
+    int colour = Minecraft::GetInstance()->getColourTable()->getColour(eMinecraftColour_Particle_NetherPortal);
     rCol = (float)((colour >> 16) & 255) / 255.0f * colourScale;
     gCol = (float)((colour >> 8) & 255) / 255.0f * colourScale;
     bCol = (float)(colour & 255) / 255.0f * colourScale;
@@ -50,7 +50,8 @@ void NetherPortalParticle::render(BufferBuilder* buffer,
 {
     float progress = ((float)age + partialTicks) / (float)lifetime;
     float inverseProgress = 1.0f - progress;
-    Particle::size = scale * -(inverseProgress * inverseProgress - 1.0f);
+    progress = -(inverseProgress * inverseProgress - 1.0f);
+    Particle::size = scale * progress;
     Particle::render(buffer, camera, partialTicks, xa, ya, za, xa2, za2);
 }
 
@@ -60,10 +61,11 @@ int NetherPortalParticle::getLightColor(float partialTicks)
     float progress = (float)age / (float)lifetime;
     progress *= progress;
     int block = (light >> 16) & 255;
+    int sky = light & 255;
     block += (int)(progress * progress * 15.0f * 16.0f);
     if (block > 240)
         block = 240;
-    return (light & 255) | (block << 16);
+    return sky | (block << 16);
 }
 
 float NetherPortalParticle::getBrightness(float partialTicks)

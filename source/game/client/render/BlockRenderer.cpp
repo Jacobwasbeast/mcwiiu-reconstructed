@@ -2081,8 +2081,9 @@ bool BlockRenderer::tesselateCactusInWorld(const BlockState* state, const BlockP
 
 bool BlockRenderer::tesselateTurtleEggInWorld(const BlockState* state, const BlockPos& pos)
 {
+    Block* block = state->getBlock();
     BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
-    builder->tex2(getLightColor(state->getBlock(), mLevelSource, pos));
+    builder->tex2(getLightColor(block, mLevelSource, pos));
     int color = mBlockColors->getColor(state, mLevelSource, &pos, 0);
     float red = (float)(color >> 16 & 255) / 255.0f;
     float green = (float)(color >> 8 & 255) / 255.0f;
@@ -3817,12 +3818,12 @@ bool BlockRenderer::tesselateWaterInWorld(const BlockState* state, const BlockPo
     float red = (float)(color >> 16 & 255) / 255.0f;
     float green = (float)(color >> 8 & 255) / 255.0f;
     float blue = (float)(color & 255) / 255.0f;
-    bool top = state->shouldRenderFace(mLevelSource, pos, Direction::UP);
-    bool bottom = state->shouldRenderFace(mLevelSource, pos, Direction::DOWN);
+    bool top = block->shouldRenderFace(state, mLevelSource, pos, Direction::UP);
+    bool bottom = block->shouldRenderFace(state, mLevelSource, pos, Direction::DOWN);
     const Direction* sides[4] = { Direction::NORTH, Direction::SOUTH, Direction::WEST, Direction::EAST };
     bool visibleSides[4];
     for (int i = 0; i < 4; ++i)
-        visibleSides[i] = state->shouldRenderFace(mLevelSource, pos, sides[i]);
+        visibleSides[i] = block->shouldRenderFace(state, mLevelSource, pos, sides[i]);
     const int buckets[4] = { 2, 4, 5, 3 };
     if (!top && !bottom && !visibleSides[0] && !visibleSides[1] && !visibleSides[2] && !visibleSides[3])
         return false;
@@ -3948,7 +3949,7 @@ bool BlockRenderer::tesselateWaterInWorld(const BlockState* state, const BlockPo
         float vFirst = (float)texture->getV((1.0f - height[first]) * 16.0f * textureScale);
         float vSecond = (float)texture->getV((1.0f - height[second]) * 16.0f * textureScale);
         float vBottom = (float)texture->getV(16.0f * textureScale);
-        float vInset = 0.01f / (float)texture->getWidth();
+        float vInset = 0.01f / (float)texture->getHeight();
         if (stillSide)
             vInset *= 0.5f;
         vBottom -= vInset;
@@ -5510,6 +5511,7 @@ bool BlockRenderer::tesselateLeverInWorld(const BlockState* state, const BlockPo
         clearFixedTexture();
 
     builder->tex2(getLightColor(state->getBlock(), mLevelSource, pos));
+    state->getBlock()->defaultBlockState()->getLightEmission();
     builder->color(1.0f, 1.0f, 1.0f);
     TextureAtlasSprite* texture = getTexture(state, NULL);
     if (hasFixedTexture())
@@ -5550,8 +5552,14 @@ bool BlockRenderer::tesselateLeverInWorld(const BlockState* state, const BlockPo
         if (facing == LeverBlock::LeverDirection::UP_X || facing == LeverBlock::LeverDirection::DOWN_X)
             corners[i] = corners[i]->yRot(1.5707964f);
 
-        if (facing == LeverBlock::LeverDirection::NORTH || facing == LeverBlock::LeverDirection::SOUTH ||
-            facing == LeverBlock::LeverDirection::WEST || facing == LeverBlock::LeverDirection::EAST)
+        if (facing == LeverBlock::LeverDirection::DOWN_X || facing == LeverBlock::LeverDirection::DOWN_Z)
+        {
+            corners[i]->x += (double)pos.x + 0.5;
+            corners[i]->y += (double)((float)pos.y + 0.875f);
+            corners[i]->z += (double)pos.z + 0.5;
+        }
+        else if (facing == LeverBlock::LeverDirection::NORTH || facing == LeverBlock::LeverDirection::SOUTH ||
+                 facing == LeverBlock::LeverDirection::WEST || facing == LeverBlock::LeverDirection::EAST)
         {
             corners[i]->y -= 0.375;
             corners[i] = corners[i]->xRot(1.5707964f);
@@ -5567,16 +5575,10 @@ bool BlockRenderer::tesselateLeverInWorld(const BlockState* state, const BlockPo
             corners[i]->y += (double)((float)pos.y + 0.5f);
             corners[i]->z += (double)pos.z + 0.5;
         }
-        else if (facing == LeverBlock::LeverDirection::UP_Z || facing == LeverBlock::LeverDirection::UP_X)
-        {
-            corners[i]->x += (double)pos.x + 0.5;
-            corners[i]->y += (double)((float)pos.y + 0.125f);
-            corners[i]->z += (double)pos.z + 0.5;
-        }
         else
         {
             corners[i]->x += (double)pos.x + 0.5;
-            corners[i]->y += (double)((float)pos.y + 0.875f);
+            corners[i]->y += (double)((float)pos.y + 0.125f);
             corners[i]->z += (double)pos.z + 0.5;
         }
     }
@@ -7865,33 +7867,25 @@ bool BlockRenderer::tesselateChorusPlantInWorld(const BlockState* state, const B
     bool rendered = true;
     rendered |= tesselateBlockInWorld(state, pos);
 
-    const BlockState* northNeighbor = mLevelSource->getBlockState(pos.north());
-    bool north = northNeighbor->getBlock() == plant || northNeighbor->getBlock() == Blocks::air;
-    if (north)
+    if (state->getValue(ChorusPlantBlock::NORTH_PROPERTY))
     {
         setShape(plant->getHorizontalShape(state, Direction::NORTH));
         rendered |= tesselateBlockInWorld(state, pos);
     }
 
-    const BlockState* southNeighbor = mLevelSource->getBlockState(pos.south());
-    bool south = southNeighbor->getBlock() == plant || southNeighbor->getBlock() == Blocks::air;
-    if (south)
+    if (state->getValue(ChorusPlantBlock::SOUTH_PROPERTY))
     {
         setShape(plant->getHorizontalShape(state, Direction::SOUTH));
         rendered |= tesselateBlockInWorld(state, pos);
     }
 
-    const BlockState* eastNeighbor = mLevelSource->getBlockState(pos.east());
-    bool east = eastNeighbor->getBlock() == plant || eastNeighbor->getBlock() == Blocks::air;
-    if (east)
+    if (state->getValue(ChorusPlantBlock::EAST_PROPERTY))
     {
         setShape(plant->getHorizontalShape(state, Direction::EAST));
         rendered |= tesselateBlockInWorld(state, pos);
     }
 
-    const BlockState* westNeighbor = mLevelSource->getBlockState(pos.west());
-    bool west = westNeighbor->getBlock() == plant || westNeighbor->getBlock() == Blocks::air;
-    if (west)
+    if (state->getValue(ChorusPlantBlock::WEST_PROPERTY))
     {
         setShape(plant->getHorizontalShape(state, Direction::WEST));
         rendered |= tesselateBlockInWorld(state, pos);
@@ -7904,25 +7898,25 @@ bool BlockRenderer::tesselateChorusPlantInWorld(const BlockState* state, const B
 
     if (variantGate > 1)
     {
-        if (!north)
+        if (!state->getValue(ChorusPlantBlock::NORTH_PROPERTY))
         {
             setShape(plant->getRandomNoduleShape(northNodule == 1, state, Direction::NORTH));
             rendered |= tesselateBlockInWorld(state, pos);
         }
 
-        if (!south)
+        if (!state->getValue(ChorusPlantBlock::SOUTH_PROPERTY))
         {
             setShape(plant->getRandomNoduleShape(southNodule == 1, state, Direction::SOUTH));
             rendered |= tesselateBlockInWorld(state, pos);
         }
 
-        if (!east)
+        if (!state->getValue(ChorusPlantBlock::EAST_PROPERTY))
         {
             setShape(plant->getRandomNoduleShape(eastNodule == 1, state, Direction::EAST));
             rendered |= tesselateBlockInWorld(state, pos);
         }
 
-        if (!west)
+        if (!state->getValue(ChorusPlantBlock::WEST_PROPERTY))
         {
             setShape(plant->getRandomNoduleShape(westNodule == 1, state, Direction::WEST));
             rendered |= tesselateBlockInWorld(state, pos);

@@ -21,13 +21,8 @@ ExplodeParticle::ExplodeParticle(Level* level, double x, double y, double z, dou
     rCol = red * intensity;
     gCol = green * intensity;
     bCol = blue * intensity;
-    gravity = (float)(random.nextFloat() * random.nextFloat()) * 6.0f + 1.0f;
+    size = (float)(random.nextFloat() * random.nextFloat()) * 6.0f + 1.0f;
     lifetime = (int)(16.0f / (random.nextFloat() * 0.8f + 0.2f)) + 2;
-}
-
-ExplodeParticle::~ExplodeParticle()
-{
-    return;
 }
 
 uint64_t ExplodeParticle::GetType()

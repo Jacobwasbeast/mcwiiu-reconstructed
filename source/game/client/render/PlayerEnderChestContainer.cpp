@@ -10,6 +10,7 @@
 PlayerEnderChestContainer::PlayerEnderChestContainer()
     : SimpleContainer(L"", 27)
 {
+    m_activeChest = boost::shared_ptr<EnderChestBlockEntity>();
 }
 
 PlayerEnderChestContainer::~PlayerEnderChestContainer()
@@ -18,12 +19,9 @@ PlayerEnderChestContainer::~PlayerEnderChestContainer()
 
 bool PlayerEnderChestContainer::stillValid(boost::shared_ptr<Player> player)
 {
-    if (m_activeChest)
+    if (m_activeChest && !m_activeChest->stillValid(player))
     {
-        if (!m_activeChest->stillValid(player))
-        {
-            return false;
-        }
+        return false;
     }
     return SimpleContainer::stillValid(player);
 }
@@ -34,6 +32,7 @@ void PlayerEnderChestContainer::startOpen(boost::shared_ptr<Player> player)
     {
         m_activeChest->startOpen();
     }
+    SimpleContainer::startOpen(player);
 }
 
 void PlayerEnderChestContainer::stopOpen(boost::shared_ptr<Player> player)
@@ -42,6 +41,7 @@ void PlayerEnderChestContainer::stopOpen(boost::shared_ptr<Player> player)
     {
         m_activeChest->stopOpen();
     }
+    SimpleContainer::stopOpen(player);
     m_activeChest.reset();
 }
 
@@ -65,8 +65,8 @@ void PlayerEnderChestContainer::setItemsByTag(ListTag* tag)
     for (int index = 0; index < tag->size(); ++index)
     {
         CompoundTag* itemTag = tag->getCompound(index);
-        unsigned char slot = itemTag->getByte(L"Slot");
-        if (slot < getContainerSize())
+        int slot = itemTag->getByte(L"Slot");
+        if (slot >= 0 && slot < getContainerSize())
         {
             setItem(slot, not_null_ptr<ItemInstance>(new ItemInstance(itemTag)));
         }
@@ -92,9 +92,5 @@ ListTag* PlayerEnderChestContainer::createTag()
 
 InteractionObject::NameData PlayerEnderChestContainer::GetNetworkNameData()
 {
-    if (m_activeChest)
-    {
-        return m_activeChest->GetNetworkNameData();
-    }
-    return InteractionObject::NameData(getDisplayName(), L"", true, false);
+    return m_activeChest ? m_activeChest->GetNetworkNameData() : InteractionObject::NameData(getDisplayName(), L"", true, false);
 }

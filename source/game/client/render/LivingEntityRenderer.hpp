@@ -38,11 +38,11 @@ public:
     virtual void setupRotations(boost::shared_ptr<LivingEntity>& entity, float ageInTicks, float rotationYaw,
                                 float partialTicks);
     virtual float getAttackAnim(boost::shared_ptr<LivingEntity>& entity, float partialTicks);
-    virtual double getBob(boost::shared_ptr<LivingEntity>& entity, float partialTicks);
+    virtual float getBob(boost::shared_ptr<LivingEntity>& entity, float partialTicks);
     virtual void renderLayers(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount,
                               float partialTick, float ageInTicks, float netHeadYaw, float headPitch, float scale,
                               bool overlay);
-    virtual double getFlipDegrees(boost::shared_ptr<LivingEntity>& entity);
+    virtual float getFlipDegrees(boost::shared_ptr<LivingEntity>& entity);
     virtual int getOverlayColor(boost::shared_ptr<LivingEntity>& entity, float u, float v);
     virtual void scale(boost::shared_ptr<LivingEntity>& entity, float partialTicks);
     virtual void renderName(boost::shared_ptr<Entity>& entity, double x, double y, double z);

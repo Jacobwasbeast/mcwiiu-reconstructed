@@ -34,9 +34,9 @@ void DragonBreathParticle::init(Level* level, double x, double y, double z,
     bCol = (float)((endBlue - startBlue) * Math::random() + startBlue);
     baseSize = size * 0.75f * scale;
     size = baseSize;
+    lifetime = (int)((float)(int)(20.0 / (random.nextDouble() * 0.8 + 0.2)) * scale);
     hasPhysics = true;
     hasHitGround = false;
-    lifetime = (int)((double)((float)(20.0 / (random.nextDouble() * 0.8 + 0.2))) * scale);
 }
 
 void DragonBreathParticle::render(BufferBuilder* buffer,
@@ -59,15 +59,13 @@ void DragonBreathParticle::tick()
     yo = y;
     zo = z;
 
-    int oldAge = age;
-    ++age;
-    if (lifetime <= oldAge)
+    if (age++ >= lifetime)
     {
         remove();
         return;
     }
 
-    setMiscTex((age * 3) / lifetime + 5);
+    setMiscTex(3 * age / lifetime + 5);
 
     if (onGround)
     {
@@ -78,15 +76,17 @@ void DragonBreathParticle::tick()
         yd += 0.002;
     move(xd, yd, zd);
 
+    double motionX = xd;
+    double motionZ = zd;
     if (y == yo)
     {
-        xd *= 1.1;
-        zd *= 1.1;
+        motionX *= 1.1;
+        motionZ *= 1.1;
     }
-    xd *= 0.9599999785423279;
-    zd *= 0.9599999785423279;
+    xd = motionX * 0.96f;
+    zd = motionZ * 0.96f;
     if (hasHitGround)
-        yd *= 0.9599999785423279;
+        yd *= 0.96f;
 }
 
 int DragonBreathParticle::getParticleTexture()
@@ -97,7 +97,11 @@ int DragonBreathParticle::getParticleTexture()
 float DragonBreathParticle::getBrightness(float partialTicks)
 {
     float progress = (((float)age + partialTicks) / (float)lifetime) * 32.0f;
-    float value = Mth::clamp(progress, 0.0f, 1.0f);
+    float value = progress;
+    if (value < 0.0f)
+        value = 0.0f;
+    else if (value > 1.0f)
+        value = 1.0f;
     return 0.5f / value + 0.5f;
 }
 

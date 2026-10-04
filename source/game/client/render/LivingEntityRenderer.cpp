@@ -8,6 +8,7 @@
 #include "game/client/render/Renderer.hpp"
 #include "game/client/render/RenderLayer.hpp"
 #include "game/client/render/TexturePack.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/GameSettings.hpp"
 #include "game/core/GlStateManager.hpp"
@@ -107,8 +108,8 @@ bool LivingEntityRenderer::setupOverlayColor(boost::shared_ptr<LivingEntity>& en
                                              bool combineTextures)
 {
     float brightness = entity->getBrightness();
-    unsigned int overlayColor = getOverlayColor(entity, brightness, partialTicks);
-    unsigned int alpha = overlayColor >> 24;
+    int overlayColor = getOverlayColor(entity, brightness, partialTicks);
+    int alpha = overlayColor >> 24 & 0xff;
     bool hasOverlay = alpha > 0;
     bool hurt = entity->mHurtTime > 0 || entity->mDeathTime > 0;
 
@@ -125,7 +126,7 @@ bool LivingEntityRenderer::setupOverlayColor(boost::shared_ptr<LivingEntity>& en
         {
             progress = Mth::clamp((float)elapsed / 5.0F, 0.0F, 1.0F);
         }
-        else if (elapsed <= 4)
+        else if (elapsed < 5)
         {
             progress = 1.0F - Mth::clamp((float)elapsed / 5.0F, 0.0F, 1.0F);
         }
@@ -150,17 +151,16 @@ bool LivingEntityRenderer::setupOverlayColor(boost::shared_ptr<LivingEntity>& en
     if (fireTransition)
     {
         gRenderer->StateSetLerpColour(fireRed, fireGreen, fireBlue, fireAlpha);
+        return true;
     }
-    else if (hurt)
-    {
-        gRenderer->StateSetLerpColour(1.0F, 0.0F, 0.0F, 0.3F);
-    }
-    else
+    if (!hurt)
     {
         gRenderer->StateSetLerpColour((float)(overlayColor >> 16 & 0xff) / 255.0F,
                                       (float)(overlayColor >> 8 & 0xff) / 255.0F,
                                       (float)(overlayColor & 0xff) / 255.0F, (float)alpha / 255.0F);
+        return true;
     }
+    gRenderer->StateSetLerpColour(1.0F, 0.0F, 0.0F, 0.3F);
     return true;
 }
 
@@ -226,7 +226,7 @@ void LivingEntityRenderer::render(boost::shared_ptr<Entity>& entity, double x, d
 
     float headPitch = living->mXRotO + (living->mXRot - living->mXRotO) * partialTick;
     setupPosition(living, x, y, z);
-    float bob = (float)getBob(living, partialTick);
+    float bob = getBob(living, partialTick);
     setupRotations(living, bob, bodyRot, partialTick);
     float scale = setupScale(living, partialTick);
 
@@ -249,8 +249,7 @@ void LivingEntityRenderer::render(boost::shared_ptr<Entity>& entity, double x, d
     PIXEndNamedEvent();
 
     PIXBeginNamedEvent(0.0F, "setupAnim");
-    model->setupAnim(limbSwing, limbSwingAmount, bob, netHeadYaw, headPitch, scale,
-                     boost::static_pointer_cast<Entity>(living), _SkinAdjustments());
+    model->setupAnim(limbSwing, limbSwingAmount, bob, netHeadYaw, headPitch, scale, living, _SkinAdjustments());
     PIXEndNamedEvent();
 
     if (!mSolidRender)
@@ -271,18 +270,6 @@ void LivingEntityRenderer::render(boost::shared_ptr<Entity>& entity, double x, d
         }
         if (showLayers)
             renderLayers(living, limbSwing, limbSwingAmount, partialTick, bob, netHeadYaw, headPitch, scale, true);
-        PIXEndNamedEvent();
-
-        GlStateManager::disableRescaleNormal();
-        GlStateManager::activeTexture(1);
-        GlStateManager::enableTexture();
-        GlStateManager::activeTexture(0);
-        GlStateManager::enableCull();
-        GlStateManager::popMatrix();
-        PIXBeginNamedEvent(0.0F, "EntityRender");
-        EntityRenderer::render(entity, x, y, z, yaw, partialTick);
-        PIXEndNamedEvent();
-        model->clearAllOffsets();
         PIXEndNamedEvent();
     }
     else
@@ -314,19 +301,19 @@ void LivingEntityRenderer::render(boost::shared_ptr<Entity>& entity, double x, d
         PIXEndNamedEvent();
         if (solidState)
             tearDownSolidState();
-
-        GlStateManager::disableRescaleNormal();
-        GlStateManager::activeTexture(1);
-        GlStateManager::enableTexture();
-        GlStateManager::activeTexture(0);
-        GlStateManager::enableCull();
-        GlStateManager::popMatrix();
-        PIXBeginNamedEvent(0.0F, "EntityRender");
-        EntityRenderer::render(entity, x, y, z, yaw, partialTick);
-        PIXEndNamedEvent();
-        model->clearAllOffsets();
-        PIXEndNamedEvent();
     }
+
+    GlStateManager::disableRescaleNormal();
+    GlStateManager::activeTexture(1);
+    GlStateManager::enableTexture();
+    GlStateManager::activeTexture(0);
+    GlStateManager::enableCull();
+    GlStateManager::popMatrix();
+    PIXBeginNamedEvent(0.0F, "EntityRender");
+    EntityRenderer::render(entity, x, y, z, yaw, partialTick);
+    PIXEndNamedEvent();
+    model->clearAllOffsets();
+    PIXEndNamedEvent();
 }
 
 void LivingEntityRenderer::setupForTexturePack(TexturePack* pack)
@@ -347,34 +334,28 @@ void LivingEntityRenderer::renderModel(boost::shared_ptr<LivingEntity>& entity, 
     bool visible = isVisible(entity);
     bool solid = false;
     if (!visible)
+        solid = !entity->isInvisibleTo(Minecraft::GetInstance()->mPlayer);
+
+    if (visible || solid)
     {
-        boost::shared_ptr<Player> localPlayer = Minecraft::GetInstance()->mPlayer;
-        visible = !entity->isInvisibleTo(localPlayer);
-        solid = visible;
+        boost::shared_ptr<Entity> baseEntity = entity;
+        if (bindTexture(baseEntity))
+        {
+            if (solid)
+                GlStateManager::setProfile();
+
+            Model* model = getModel(entity);
+            model->render(baseEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, true);
+
+            if (solid)
+                GlStateManager::unsetProfile();
+        }
     }
-
-    if (!visible)
-        return;
-
-    boost::shared_ptr<Entity> baseEntity = boost::static_pointer_cast<Entity>(entity);
-    if (!bindTexture(baseEntity))
-        return;
-
-    if (solid)
-        GlStateManager::setProfile();
-
-    Model* model = getModel(entity);
-    model->render(baseEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, true);
-
-    if (solid)
-        GlStateManager::unsetProfile();
 }
 
 bool LivingEntityRenderer::isVisible(boost::shared_ptr<LivingEntity>& entity)
 {
-    if (entity->isInvisible() && !mSolidRender)
-        return false;
-    return true;
+    return !entity->isInvisible() || mSolidRender;
 }
 
 void LivingEntityRenderer::setupPosition(boost::shared_ptr<LivingEntity>&, double x, double y, double z)
@@ -392,7 +373,7 @@ void LivingEntityRenderer::setupRotations(boost::shared_ptr<LivingEntity>& entit
         float fall = std::sqrt(((float)entity->mDeathTime + partialTicks - 1.0F) / 20.0F * 1.6F);
         if (fall > 1.0F)
             fall = 1.0F;
-        GlStateManager::rotatef(fall * (float)getFlipDegrees(entity), 0.0F, 0.0F, 1.0F);
+        GlStateManager::rotatef(fall * getFlipDegrees(entity), 0.0F, 0.0F, 1.0F);
     }
     else
     {
@@ -436,7 +417,7 @@ float LivingEntityRenderer::getAttackAnim(boost::shared_ptr<LivingEntity>& entit
     return entity->getAttackAnim(partialTicks);
 }
 
-double LivingEntityRenderer::getBob(boost::shared_ptr<LivingEntity>& entity, float partialTicks)
+float LivingEntityRenderer::getBob(boost::shared_ptr<LivingEntity>& entity, float partialTicks)
 {
     return (float)entity->mTickCount + partialTicks;
 }
@@ -448,29 +429,26 @@ void LivingEntityRenderer::renderLayers(boost::shared_ptr<LivingEntity>& entity,
     for (std::vector<RenderLayer*>::iterator it = mLayers.begin(); it != mLayers.end(); ++it)
     {
         RenderLayer* layer = *it;
-        bool skipLayer = false;
         if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER &&
             boost::static_pointer_cast<Player>(entity)->isSpectator() &&
             boost::static_pointer_cast<Player>(entity)->SpectateAsFloatingHead() &&
             (layer == NULL || dynamic_cast<CustomHeadLayer*>(layer) == NULL))
         {
-            skipLayer = true;
+            continue;
         }
 
-        if (!skipLayer)
-        {
-            bool damageOverlay = setupOverlayColor(entity, partialTick, layer->colorsOnDamage());
-            layer->render(entity, limbSwing, limbSwingAmount, partialTick, ageInTicks, netHeadYaw, headPitch,
-                          scale, overlay);
-            if (damageOverlay)
-                teardownOverlayColor();
-        }
+        bool damageOverlay = setupOverlayColor(entity, partialTick, layer->colorsOnDamage());
+        layer->render(entity, limbSwing, limbSwingAmount, partialTick, ageInTicks, netHeadYaw, headPitch, scale,
+                      overlay);
+        if (damageOverlay)
+            teardownOverlayColor();
     }
 }
 
-double LivingEntityRenderer::getFlipDegrees(boost::shared_ptr<LivingEntity>&)
+float LivingEntityRenderer::getFlipDegrees(boost::shared_ptr<LivingEntity>&)
 {
-    return 90.0F;
+    float flipDegrees = 90.0F;
+    return flipDegrees;
 }
 
 int LivingEntityRenderer::getOverlayColor(boost::shared_ptr<LivingEntity>&, float, float)
@@ -485,28 +463,25 @@ void LivingEntityRenderer::scale(boost::shared_ptr<LivingEntity>&, float)
 
 void LivingEntityRenderer::renderName(boost::shared_ptr<Entity>& entity, double x, double y, double z)
 {
-    if (!shouldShowName(entity) && !Minecraft::renderDebug())
-        return;
+    if (shouldShowName(entity) || Minecraft::renderDebug())
+    {
+        double distanceSqr = entity->distanceToSqr(Minecraft::GetInstance()->mPlayer->GetCamera());
 
-    boost::shared_ptr<Player> player = Minecraft::GetInstance()->mPlayer;
-    boost::shared_ptr<Entity> camera = player->GetCamera();
-    double distanceSqr = entity->distanceToSqr(camera);
+        float maxDistance = entity->isSneaking() ? 32.0F : 64.0F;
+        if (distanceSqr < maxDistance * maxDistance)
+        {
+            std::wstring name = entity->getDisplayName();
+            if (!name.empty())
+            {
+                if (GameSettings::GetGameSettings(eGameSetting_DisplayHUD) == 0 ||
+                    Minecraft::GetInstance()->mOptions->mHideGui)
+                    return;
 
-    int maxDistance = entity->isSneaking() ? 32 : 64;
-    double maxDistanceSqr = (double)(maxDistance * maxDistance);
-    if (distanceSqr >= maxDistanceSqr)
-        return;
-
-    std::wstring name = entity->getDisplayName();
-    if (name.empty())
-        return;
-
-    if (GameSettings::GetGameSettings(eGameSetting_DisplayHUD) == 0 ||
-        Minecraft::GetInstance()->mOptions->mHideGui)
-        return;
-
-    GlStateManager::alphaFunc(4, 0.01f);
-    renderNameTags(entity, x, y, z, name, distanceSqr, 0xFF000000);
+                GlStateManager::alphaFunc(4, 0.01f);
+                renderNameTags(entity, x, y, z, name, distanceSqr, 0xFF000000);
+            }
+        }
+    }
 }
 
 bool LivingEntityRenderer::shouldShowName(boost::shared_ptr<Entity>& entity)
@@ -515,36 +490,25 @@ bool LivingEntityRenderer::shouldShowName(boost::shared_ptr<Entity>& entity)
     boost::shared_ptr<Player> localPlayer = Minecraft::GetInstance()->mPlayer;
     bool visibleToPlayer = !living->isInvisibleTo(localPlayer);
 
-    if (visibleToPlayer && entity.get() != mDispatcher->mPlayer.get())
-    {
-        if (!living->shouldShowName())
-            return false;
-    }
-    else if (visibleToPlayer)
-    {
+    if (living->isInvisibleTo(localPlayer) || living.get() == mDispatcher->mCamera.get() || living->isVehicle())
         return false;
-    }
 
-    if ((entity->GetType() & EntityType::PLAYER) != EntityType::PLAYER)
+    if ((living->GetType() & EntityType::PLAYER) != EntityType::PLAYER || living.get() == localPlayer.get())
     {
-        return Minecraft::renderNames() && entity->hasCustomName();
+        bool renderNames = Minecraft::renderNames();
+        bool hasCustomName = living->hasCustomName();
+        return renderNames && hasCustomName;
     }
 
-    if (entity.get() == localPlayer.get())
-        return Minecraft::renderNames() && entity->hasCustomName();
-
-    bool showName = false;
+    bool showName;
     if (!Minecraft::InMiniGame(eMiniGameId_Tumble, true))
     {
-        showName = entity.get() == mDispatcher->mPlayer.get();
+        showName = living.get() == mDispatcher->mPlayer.get();
     }
     else
     {
-        if (living->distanceTo(boost::static_pointer_cast<Entity>(localPlayer)) < 3.0)
-        {
-            if (!localPlayer->isSpectator())
-                showName = true;
-        }
+        float range = 3.0F;
+        showName = living->distanceTo(localPlayer) < range && !localPlayer->isSpectator();
     }
 
     boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(living);
@@ -552,8 +516,11 @@ bool LivingEntityRenderer::shouldShowName(boost::shared_ptr<Entity>& entity)
     {
         if (player->SpectateAsInvisible())
             return showName;
+    }
+    if (player->isSpectator())
+    {
         if (player->SpectateAsFloatingHead())
-            return showName;
+            return false;
     }
 
     if (!Minecraft::InMiniGame(eMiniGameId_Lobby, true))
@@ -562,57 +529,48 @@ bool LivingEntityRenderer::shouldShowName(boost::shared_ptr<Entity>& entity)
         Team* playerTeam = localPlayer->getTeam();
         if (entityTeam != NULL)
         {
-            Team::Visibility visibility = entityTeam->getNameTagVisibility();
-            if (visibility == Team::ALWAYS)
-                return visibleToPlayer;
-            if (visibility == Team::NEVER)
-                return showName;
-            if (visibility == Team::HIDE_FOR_OTHER_TEAMS)
+            switch (entityTeam->getNameTagVisibility())
             {
-                if (!showName && !localPlayer->isSpectator())
+            case Team::ALWAYS:
+                return visibleToPlayer;
+            case Team::NEVER:
+                return showName;
+            case Team::HIDE_FOR_OTHER_TEAMS:
+                if (!showName)
                 {
-                    bool result = visibleToPlayer;
-                    if (playerTeam != NULL)
+                    if (!localPlayer->isSpectator())
                     {
-                        result = false;
-                        if (entityTeam->isAlliedTo(playerTeam) &&
-                            (entityTeam->isAllowFriendlyFire() || visibleToPlayer))
-                            result = true;
+                        bool result = visibleToPlayer;
+                        if (playerTeam != NULL)
+                            result = entityTeam->isAlliedTo(playerTeam) &&
+                                     (entityTeam->canSeeFriendlyInvisibles() || visibleToPlayer);
+                        return result;
                     }
-                    return result;
                 }
                 return true;
-            }
-            if (visibility == Team::HIDE_FOR_OWN_TEAM)
-            {
-                if (!showName && !localPlayer->isSpectator())
+            case Team::HIDE_FOR_OWN_TEAM:
+                if (!showName)
                 {
-                    bool result = visibleToPlayer;
-                    if (playerTeam != NULL)
+                    if (!localPlayer->isSpectator())
                     {
-                        result = false;
-                        if (!entityTeam->isAlliedTo(playerTeam) && visibleToPlayer)
-                            result = true;
+                        bool result = visibleToPlayer;
+                        if (playerTeam != NULL)
+                            result = !entityTeam->isAlliedTo(playerTeam) && visibleToPlayer;
+                        return result;
                     }
-                    return result;
                 }
                 return true;
             }
         }
+    }
+
+    if (localPlayer->isSpectator())
         return true;
-    }
 
-    if (Minecraft::InMiniGame(eMiniGameId_Any, true))
+    if (!Minecraft::InMiniGame(eMiniGameId_Any, true))
     {
-        const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
-        if (miniGame != NULL && miniGame->GetShowNametags())
-            return true;
-        return showName;
+        return Minecraft::renderNames() && gApp.GetGameHostOption(eGameHostOption_Gamertags) != 0;
     }
 
-    if (!Minecraft::renderNames())
-        return false;
-    if (g_pApp->GetGameHostOption(eGameHostOption_Gamertags) == 0)
-        return false;
-    return true;
+    return Minecraft::GetInstance()->GetMiniGame()->GetShowNametags() || showName;
 }

@@ -6,6 +6,8 @@
 
 #include "game/core/GlStateManager.hpp"
 #include "game/core/IntBuffer.hpp"
+#include "game/core/Minecraft.hpp"
+#include "game/core/Options.hpp"
 #include "game/core/BufferedImage.hpp"
 #include "game/core/StbiFile.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
@@ -21,38 +23,44 @@ unsigned int GetFileSize(int file, unsigned int* fileSizeHigh);
 
 int ProcessLoadedTextureData(unsigned char* data, int* width, int* height, int** pixels)
 {
+    int result;
+
     if (data == NULL)
     {
-        return -1;
+        result = -1;
     }
-
-    int pixelCount = *width * *height;
-    unsigned int* convertedPixels = (unsigned int*)malloc(pixelCount * sizeof(unsigned int));
-    *pixels = (int*)convertedPixels;
-    memcpy(convertedPixels, data, pixelCount * sizeof(unsigned int));
-    stbi_image_free(data);
-
-    for (int i = 0; i < pixelCount; ++i)
+    else
     {
+        unsigned int byteCount = *width * *height * sizeof(unsigned int);
+        result = 0;
+        unsigned int* convertedPixels = (unsigned int*)malloc(byteCount);
+        *pixels = (int*)convertedPixels;
+        memcpy(convertedPixels, data, byteCount);
+        stbi_image_free(data);
+
+        unsigned int* pixel = (unsigned int*)*pixels;
+        for (int i = 0; i < *width * *height; ++i)
+        {
 #ifdef RECON_NATIVE
-        const unsigned char* rgba = reinterpret_cast<const unsigned char*>(&convertedPixels[i]);
-        convertedPixels[i] = (static_cast<unsigned int>(rgba[3]) << 24) |
-                             (static_cast<unsigned int>(rgba[0]) << 16) |
-                             (static_cast<unsigned int>(rgba[1]) << 8) | rgba[2];
+            const unsigned char* rgba = reinterpret_cast<const unsigned char*>(pixel);
+            *pixel = (static_cast<unsigned int>(rgba[3]) << 24) |
+                     (static_cast<unsigned int>(rgba[0]) << 16) |
+                     (static_cast<unsigned int>(rgba[1]) << 8) | rgba[2];
 #else
-        TextureUtil::ByteFlipRGBAToARGB(convertedPixels[i]);
+            TextureUtil::ByteFlipRGBAToARGB(*pixel);
 #endif
+            ++pixel;
+        }
     }
 
-    return 0;
+    return result;
 }
 
 static IntBuffer* dataBuffer = NULL;
-static bool textureAnaglyph = false;
 
 void TextureUtil::ByteFlipRGBAToARGB(unsigned int& colour)
 {
-    colour = (colour >> 8) | (colour << 24);
+    colour = ((colour & 0xff) << 24) | (colour >> 8);
 }
 
 int TextureUtil::generateTextureId()
@@ -114,7 +122,7 @@ void TextureUtil::copyToBuffer(arrayWithLength<int> pixels, int offset, int leng
 {
     arrayWithLength<int> source = pixels;
 
-    if (textureAnaglyph)
+    if (Minecraft::GetInstance()->mOptions->mAnaglyph3d)
     {
         source = anaglyph(pixels);
     }
@@ -246,21 +254,21 @@ int TextureUtil::LoadTextureData(const char* fileName, int* width, int* height, 
         file.mFileSize = GetFileSize(file.mFile, NULL);
     }
 
-    if (file.mFile == -1)
-    {
-        return -1;
-    }
-
-    int components = 0;
-    unsigned char* data = stbi_load_from_callbacks(&callbacks, &file, width, height, &components, 4);
-    int result = ProcessLoadedTextureData(data, width, height, pixels);
-
     if (file.mFile != -1)
     {
-        CloseHandle(file.mFile);
+        int components = 0;
+        unsigned char* data = stbi_load_from_callbacks(&callbacks, &file, width, height, &components, 4);
+        int result = ProcessLoadedTextureData(data, width, height, pixels);
+
+        if (file.mFile != -1)
+        {
+            CloseHandle(file.mFile);
+        }
+
+        return result;
     }
 
-    return result;
+    return -1;
 }
 
 int TextureUtil::LoadTextureData(unsigned char* data, unsigned int length, int* width, int* height, int** pixels)

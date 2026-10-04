@@ -37,9 +37,17 @@ double BlockEntityRenderDispatcher::zOff = 0.0;
 
 BlockEntityRenderDispatcher::BlockEntityRenderDispatcher()
     : boost::unordered_map<unsigned long long, BlockEntityRenderer*>(),
-      mFont(NULL), mTextures(NULL), mLevel(NULL), mCamera(), mCameraYRot(0.0f),
-      mCameraXRot(0.0f), mCameraHitResult(NULL), mX(0.0), mY(0.0), mZ(0.0)
+      mCamera()
 {
+    mFont = NULL;
+    mTextures = NULL;
+    mLevel = NULL;
+    mCamera = boost::shared_ptr<Entity>();
+    mCameraYRot = 0.0f;
+    mCameraXRot = 0.0f;
+    mX = 0.0;
+    mY = 0.0;
+    mZ = 0.0;
     GlStateManager::enableLighting();
 
     (*this)[BlockEntityType::SIGN] = new SignRenderer();
@@ -54,9 +62,8 @@ BlockEntityRenderDispatcher::BlockEntityRenderDispatcher()
     (*this)[BlockEntityType::FURNACE] = NULL;
     (*this)[BlockEntityType::BEACON] = new BeaconRenderer();
     (*this)[BlockEntityType::BANNER] = new BannerRenderer();
-    ModelDefinition shulkerModelDefinition;
     (*this)[BlockEntityType::SHULKER_BOX] =
-        new ShulkerBoxRenderer(new ShulkerModel(shulkerModelDefinition));
+        new ShulkerBoxRenderer(new ShulkerModel(ModelDefinition()));
     (*this)[BlockEntityType::BED] = new BedRenderer();
     (*this)[BlockEntityType::CONDUIT] = new ConduitRenderer();
 
@@ -109,7 +116,7 @@ void BlockEntityRenderDispatcher::setLevel(Level* level)
     mLevel = level;
     if (level == NULL)
     {
-        mCamera.reset();
+        mCamera = boost::shared_ptr<Entity>();
     }
     for (iterator it = begin(); it != end(); ++it)
     {
@@ -130,14 +137,14 @@ void BlockEntityRenderDispatcher::prepare(Level* level, Textures* textures, Font
         setLevel(level);
     }
     mTextures = textures;
-    mFont = font;
     mCamera = camera;
+    mFont = font;
     mCameraHitResult = cameraHitResult;
-    mCameraYRot = (camera->mYRot - camera->mYRotO) * partialTicks + camera->mYRotO;
-    mCameraXRot = (camera->mXRot - camera->mXRotO) * partialTicks + camera->mXRotO;
-    mX = (camera->mX - camera->mXOld) * partialTicks + camera->mXOld;
-    mY = (camera->mY - camera->mYOld) * partialTicks + camera->mYOld;
-    mZ = (camera->mZ - camera->mZOld) * partialTicks + camera->mZOld;
+    mCameraYRot = camera->mYRotO + (camera->mYRot - camera->mYRotO) * partialTicks;
+    mCameraXRot = camera->mXRotO + (camera->mXRot - camera->mXRotO) * partialTicks;
+    mX = camera->mXOld + (camera->mX - camera->mXOld) * partialTicks;
+    mY = camera->mYOld + (camera->mY - camera->mYOld) * partialTicks;
+    mZ = camera->mZOld + (camera->mZ - camera->mZOld) * partialTicks;
     static_cast<SignRenderer*>((*this)[BlockEntityType::SIGN])->tick();
 }
 
@@ -167,23 +174,17 @@ void BlockEntityRenderDispatcher::render(boost::shared_ptr<BlockEntity> blockEnt
                                          float partialTicks, int breakProgress,
                                          bool bTranslucent)
 {
-    BlockEntityRenderer* renderer = getRenderer(blockEntity);
-    if (renderer == NULL)
-    {
-        return;
-    }
     if (blockEntity->distanceToSqr(mX, mY, mZ) < blockEntity->getViewDistance())
     {
         Lighting::turnOn();
-        BlockPos position = blockEntity->getBlockPos();
-        int lightColor = mLevel->getLightColor(position, 0, -1);
+        int lightColor = mLevel->getLightColor(blockEntity->getBlockPos(), 0, -1);
         GlStateManager::multiTexCoord2f((float)(lightColor % 65536),
                                         (float)(lightColor / 65536));
         if (bTranslucent)
         {
             GlStateManager::color4f(1.0f, 1.0f, 1.0f, 1.0f);
         }
-        position = blockEntity->getBlockPos();
+        BlockPos position = blockEntity->getBlockPos();
         render(blockEntity, (double)position.x - xOff, (double)position.y - yOff,
                (double)position.z - zOff, partialTicks, breakProgress, bTranslucent, 1.0f,
                true);

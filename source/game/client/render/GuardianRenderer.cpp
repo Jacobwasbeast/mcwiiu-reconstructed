@@ -25,16 +25,12 @@ GuardianRenderer::GuardianRenderer(EntityRenderDispatcher* dispatcher)
 {
 }
 
-GuardianRenderer::~GuardianRenderer()
-{
-    return;
-}
-
 Vec3* GuardianRenderer::getPosition(boost::shared_ptr<Entity>& entity, double yOffset, float partialTicks)
 {
-    return Vec3::newTemp(entity->mXOld + (entity->mX - entity->mXOld) * partialTicks,
-                         yOffset + entity->mYOld + (entity->mY - entity->mYOld) * partialTicks,
-                         entity->mZOld + (entity->mZ - entity->mZOld) * partialTicks);
+    double x = entity->mXOld + (entity->mX - entity->mXOld) * partialTicks;
+    double y = yOffset + entity->mYOld + (entity->mY - entity->mYOld) * partialTicks;
+    double z = entity->mZOld + (entity->mZ - entity->mZOld) * partialTicks;
+    return Vec3::newTemp(x, y, z);
 }
 
 bool GuardianRenderer::shouldRender(boost::shared_ptr<Entity>& entity, Culler* culler,
@@ -44,18 +40,21 @@ bool GuardianRenderer::shouldRender(boost::shared_ptr<Entity>& entity, Culler* c
         return true;
 
     boost::shared_ptr<Guardian> guardian = boost::static_pointer_cast<Guardian>(entity);
-    if (!guardian->hasActiveAttackTarget())
-        return false;
+    if (guardian->hasActiveAttackTarget())
+    {
+        boost::shared_ptr<Entity> target = guardian->getActiveAttackTarget();
+        if (target)
+        {
+            boost::shared_ptr<LivingEntity> living = boost::static_pointer_cast<LivingEntity>(guardian);
+            Vec3* targetPosition = getPosition(target, (double)target->mBbHeight * 0.5, 1.0f);
+            Vec3* guardianPosition = getPosition(entity, living->getEyeHeight(), 1.0f);
+            if (culler->isVisible(AABB::minmax(guardianPosition->x, guardianPosition->y, guardianPosition->z,
+                                               targetPosition->x, targetPosition->y, targetPosition->z)))
+                return true;
+        }
+    }
 
-    boost::shared_ptr<Entity> target = guardian->getActiveAttackTarget();
-    if (!target)
-        return false;
-
-    boost::shared_ptr<LivingEntity> living = boost::static_pointer_cast<LivingEntity>(guardian);
-    Vec3* targetPosition = getPosition(target, (double)target->mBbHeight * 0.5, 1.0f);
-    Vec3* guardianPosition = getPosition(entity, living->getEyeHeight(), 1.0f);
-    return culler->isVisible(AABB::minmax(guardianPosition->x, guardianPosition->y, guardianPosition->z,
-                                           targetPosition->x, targetPosition->y, targetPosition->z));
+    return false;
 }
 
 void GuardianRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
@@ -68,7 +67,7 @@ void GuardianRenderer::render(boost::shared_ptr<Entity>& entity, double x, doubl
     if (!target)
         return;
 
-    double attackScale = guardian->getAttackAnimationScale(partialTick);
+    float attackScale = guardian->getAttackAnimationScale(partialTick);
     Tesselator* tesselator = Tesselator::getInstance();
     BufferBuilder* builder = tesselator->getBuilder();
     bindTexture(&GUARDIAN_BEAM_LOCATION);
@@ -82,9 +81,9 @@ void GuardianRenderer::render(boost::shared_ptr<Entity>& entity, double x, doubl
     GlStateManager::blendFuncSeparate(4, 1, 1, 0);
 
     float gameTime = (float)guardian->mLevel->getGameTime() + partialTick;
-    double guardianEyeHeight = guardian->getEyeHeight();
+    float guardianEyeHeight = guardian->getEyeHeight();
     GlStateManager::pushMatrix();
-    GlStateManager::translatef((float)x, (float)(y + guardianEyeHeight), (float)z);
+    GlStateManager::translatef((float)x, (float)y + guardianEyeHeight, (float)z);
 
     Vec3* source = getPosition(target, (double)target->mBbHeight * 0.5, partialTick);
     Vec3* destination = getPosition(entity, guardianEyeHeight, partialTick);
@@ -100,7 +99,7 @@ void GuardianRenderer::render(boost::shared_ptr<Entity>& entity, double x, doubl
 
     double time = (double)gameTime * 0.05 * -1.5;
     builder->begin();
-    float attackScaleSquared = (float)(attackScale * attackScale);
+    float attackScaleSquared = attackScale * attackScale;
     int intensity = (int)(attackScaleSquared * 191.0f);
     builder->color(intensity + 64, intensity + 32,
                    128 - (int)(attackScaleSquared * 64.0f), 255);

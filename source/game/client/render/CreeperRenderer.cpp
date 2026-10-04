@@ -48,7 +48,7 @@ int CreeperRenderer::getOverlayColor(boost::shared_ptr<LivingEntity>& entity,
         return 0;
 
     int alpha = Mth::clamp((int)(swelling * 0.2F * 255.0F), 0, 255);
-    return (255 - alpha) * 0x1000000 | 0x30FFFFFF;
+    return (int)((unsigned)(255 - alpha) << 24) | 0x30FFFFFF;
 }
 
 const ResourceLocation* CreeperRenderer::getTextureLocation(boost::shared_ptr<Entity>&)

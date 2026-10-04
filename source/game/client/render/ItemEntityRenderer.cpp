@@ -104,7 +104,7 @@ void ItemEntityRenderer::renderItemBillboard(boost::shared_ptr<ItemEntity> entit
                                 0.0F, 1.0F, 0.0F);
     }
 
-    float layerDepth = 0.0625F + 0.021875F;
+    float thickness = 0.0625F;
     not_null_ptr<ItemInstance> item = entity->getItem();
     int stackCount = item->getCount();
     int layers;
@@ -120,7 +120,7 @@ void ItemEntityRenderer::renderItemBillboard(boost::shared_ptr<ItemEntity> entit
 
     for (int layer = 0; layer < layers; ++layer)
     {
-        GlStateManager::translatef(0.0F, 0.0F, layerDepth);
+        GlStateManager::translatef(0.0F, 0.0F, thickness + 0.021875F);
         Block* block = Block::byItem(item->getItem());
         if (dynamic_cast<StainedGlassPaneBlock*>(block) != NULL)
         {
@@ -128,7 +128,7 @@ void ItemEntityRenderer::renderItemBillboard(boost::shared_ptr<ItemEntity> entit
             GlStateManager::color4f(red, green, blue, 1.0F);
             Minecraft::GetInstance()->getItemInHandRenderer()->renderItem3D(
                 tesselator, u0, v0, u1, v1,
-                sprite->getSourceWidth(), sprite->getSourceHeight(), 0.0625F,
+                sprite->getSourceWidth(), sprite->getSourceHeight(), thickness,
                 ItemInHandRenderer::ITEM_RENDER_MODE_GUI);
         }
         else if (item->getItem()->getIconType() == 0 && block != NULL)
@@ -137,7 +137,7 @@ void ItemEntityRenderer::renderItemBillboard(boost::shared_ptr<ItemEntity> entit
             GlStateManager::color4f(red, green, blue, 1.0F);
             Minecraft::GetInstance()->getItemInHandRenderer()->renderItem3D(
                 tesselator, u0, v0, u1, v1,
-                sprite->getSourceWidth(), sprite->getSourceHeight(), 0.0625F,
+                sprite->getSourceWidth(), sprite->getSourceHeight(), thickness,
                 ItemInHandRenderer::ITEM_RENDER_MODE_NONE);
         }
         else
@@ -146,7 +146,7 @@ void ItemEntityRenderer::renderItemBillboard(boost::shared_ptr<ItemEntity> entit
             GlStateManager::color4f(red, green, blue, 1.0F);
             Minecraft::GetInstance()->getItemInHandRenderer()->renderItem3D(
                 tesselator, u0, v0, u1, v1,
-                sprite->getSourceWidth(), sprite->getSourceHeight(), 0.0625F,
+                sprite->getSourceWidth(), sprite->getSourceHeight(), thickness,
                 ItemInHandRenderer::ITEM_RENDER_MODE_3D);
         }
         if (item->getItem()->isFoil(item))
@@ -197,12 +197,8 @@ void ItemEntityRenderer::render(boost::shared_ptr<Entity>& entity, double x, dou
         GlStateManager::blendFunc(4, 5);
     }
 
-    bool special = true;
-    if (item->getItem() != Items::skull && item->getItem() != Items::banner
-        && item->getItem() != Item::byBlock(Blocks::conduit))
-    {
-        special = false;
-    }
+    bool special = item->getItem() == Items::skull || item->getItem() == Items::banner
+                   || item->getItem() == Item::byBlock(Blocks::conduit);
 
     if (special
         || (item->getItem()->getIconType() == 0 && block != NULL
@@ -303,9 +299,9 @@ void ItemEntityRenderer::render(boost::shared_ptr<Entity>& entity, double x, dou
                 float red = (float)((colour >> 16) & 0xFF) / 255.0F;
                 float green = (float)((colour >> 8) & 0xFF) / 255.0F;
                 float blue = (float)(colour & 0xFF) / 255.0F;
-                GlStateManager::color4f(red * 1.0F, green * 1.0F, blue * 1.0F, 1.0F);
+                GlStateManager::color4f(red * 1.0, green * 1.0, blue * 1.0, 1.0F);
                 renderItemBillboard(itemEntity, sprite, count, partialTick,
-                                    red * 1.0F, green * 1.0F, blue * 1.0F);
+                                    red * 1.0, green * 1.0, blue * 1.0);
             }
         }
     }
@@ -338,7 +334,7 @@ void ItemEntityRenderer::render(boost::shared_ptr<Entity>& entity, double x, dou
             float blue = (float)(colour & 0xFF) / 255.0F;
             GlStateManager::color4f(red, green, blue, 1.0F);
             renderItemBillboard(itemEntity, sprite, count, partialTick,
-                                red * 1.0F, green * 1.0F, blue * 1.0F);
+                                red * 1.0, green * 1.0, blue * 1.0);
         }
     }
 

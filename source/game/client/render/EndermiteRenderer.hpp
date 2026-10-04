@@ -18,7 +18,7 @@ public:
     EndermiteRenderer(EntityRenderDispatcher* dispatcher);
     virtual ~EndermiteRenderer();
 
-    virtual double getFlipDegrees(boost::shared_ptr<LivingEntity>& entity);
+    virtual float getFlipDegrees(boost::shared_ptr<LivingEntity>& entity);
     virtual const ResourceLocation* getTextureLocation(boost::shared_ptr<Entity>& entity);
     virtual Model* createModel(const ModelDefinition& definition);
 };

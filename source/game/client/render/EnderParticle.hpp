@@ -23,10 +23,10 @@ public:
         virtual Particle* createParticle(ePARTICLE_TYPE, Level*, double, double, double, double, double, double, arrayWithLength<int>);
     };
 private:
+    float scale;
     double originX;
     double originY;
     double originZ;
-    float scale;
 };
 
 #endif

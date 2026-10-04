@@ -17,20 +17,13 @@ void LlamaSpitModel::_init(float delta, const ModelDefinition& modelDefinition)
 {
     mSpit = new ModelPart(this);
 
-    mSpit->texOffs(0, 0);
-    mSpit->addBox(-4.0f, 0.0f, 0.0f, 2, 2, 2, delta);
-    mSpit->texOffs(0, 0);
-    mSpit->addBox(0.0f, -4.0f, 0.0f, 2, 2, 2, delta);
-    mSpit->texOffs(0, 0);
-    mSpit->addBox(0.0f, 0.0f, -4.0f, 2, 2, 2, delta);
-    mSpit->texOffs(0, 0);
-    mSpit->addBox(0.0f, 0.0f, 0.0f, 2, 2, 2, delta);
-    mSpit->texOffs(0, 0);
-    mSpit->addBox(2.0f, 0.0f, 0.0f, 2, 2, 2, delta);
-    mSpit->texOffs(0, 0);
-    mSpit->addBox(0.0f, 2.0f, 0.0f, 2, 2, 2, delta);
-    mSpit->texOffs(0, 0);
-    mSpit->addBox(0.0f, 0.0f, 2.0f, 2, 2, 2, delta);
+    mSpit->texOffs(0, 0)->addBox(-4.0f, 0.0f, 0.0f, 2, 2, 2, delta);
+    mSpit->texOffs(0, 0)->addBox(0.0f, -4.0f, 0.0f, 2, 2, 2, delta);
+    mSpit->texOffs(0, 0)->addBox(0.0f, 0.0f, -4.0f, 2, 2, 2, delta);
+    mSpit->texOffs(0, 0)->addBox(0.0f, 0.0f, 0.0f, 2, 2, 2, delta);
+    mSpit->texOffs(0, 0)->addBox(2.0f, 0.0f, 0.0f, 2, 2, 2, delta);
+    mSpit->texOffs(0, 0)->addBox(0.0f, 2.0f, 0.0f, 2, 2, 2, delta);
+    mSpit->texOffs(0, 0)->addBox(0.0f, 0.0f, 2.0f, 2, 2, 2, delta);
 
     mSpit->setPos(0.0f, 0.0f, 0.0f);
     mSpit->compile(0.0625f);

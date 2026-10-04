@@ -29,18 +29,17 @@ AbstractTexturePack::AbstractTexturePack(unsigned int id,
                                          TexturePack* pParentPack)
     : m_id(id)
     , m_packName(packName)
-    , m_pFile(pFile)
-    , m_pIconData(NULL)
-    , m_iconSize(0)
-    , m_pComparisonData(NULL)
-    , m_comparisonSize(0)
-    , m_pParentPack(pParentPack)
-    , m_pMaterialTable(NULL)
-    , m_pColourTable(NULL)
-    , m_pStructureManager(NULL)
-    , m_pIconImage(NULL)
-    , m_iconTextureId(-1)
 {
+    m_pFile = pFile;
+    m_pIconData = NULL;
+    m_iconSize = 0;
+    m_pComparisonData = NULL;
+    m_comparisonSize = 0;
+    m_pParentPack = pParentPack;
+    m_pMaterialTable = NULL;
+    m_pColourTable = NULL;
+    m_pStructureManager = NULL;
+    m_iconTextureId = -1;
 }
 
 void AbstractTexturePack::unload(Textures* pTextures)
@@ -189,7 +188,7 @@ void AbstractTexturePack::loadDefaultUI()
 
 void AbstractTexturePack::loadDefaultColourTable()
 {
-    File file(TexturePack::getPath(true, NULL) + L"res/colours.col");
+    File file(TexturePack::getPath(true, NULL).append(L"res/colours.col"));
 
     if (!file.exists())
     {
@@ -204,7 +203,8 @@ void AbstractTexturePack::loadDefaultColourTable()
         stream.read(colourData, 0, length);
         stream.close();
 
-        delete m_pColourTable;
+        if (m_pColourTable != NULL)
+            delete m_pColourTable;
         m_pColourTable = new ColourTable(colourData.data, length);
 
         delete[] colourData.data;
@@ -234,10 +234,11 @@ BufferedImage* AbstractTexturePack::getImageResource(const std::wstring& fileNam
                                                      bool bTitleUpdate,
                                                      const std::wstring& path)
 {
-    std::wstring imageName = fileName + L".png";
+    std::wstring imageName(fileName);
+    imageName.append(L".png");
     std::wstring imagePath = L"/" + imageName;
 
-    return new BufferedImage(imagePath, bSingleImage, bTitleUpdate, path);
+    return new BufferedImage(std::wstring(imagePath), bSingleImage, bTitleUpdate, path);
 }
 
 void AbstractTexturePack::loadColourTable()

@@ -41,7 +41,7 @@ public:
                       TextureAtlasSprite* sprite);
     void renderGuiItem(not_null_ptr<ItemInstance> item, float x, float y, float scaleX, float scaleY,
                        float alpha, bool, TextureAtlasSprite* sprite);
-    void renderGuiItem(not_null_ptr<ItemInstance> item, float x, float y, float scaleX, float scaleY);
+    void renderGuiItem(not_null_ptr<ItemInstance> item, float x, float y, float scale, float alpha);
     void renderGuiItem(not_null_ptr<ItemInstance> item, int x, int y);
     void renderAndDecorateItem(not_null_ptr<ItemInstance> item, float x, float y, float scaleX, float scaleY,
                                float alpha, bool, bool, bool lighting, TextureAtlasSprite* sprite);

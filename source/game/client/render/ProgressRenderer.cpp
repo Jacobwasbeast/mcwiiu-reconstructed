@@ -15,9 +15,11 @@ ProgressRenderer::TextField::TextField(const TextField& other)
 }
 
 ProgressRenderer::ProgressRenderer(Minecraft* minecraft)
-    : mStatus(false, -1, std::wstring(L"")), mMinecraft(minecraft), mTitle(false, -1, std::wstring(L"")), mStartTime(0), mNoAbort(false)
+    : mStatus(false, -1, std::wstring(L"")), mTitle(false, -1, std::wstring(L""))
 {
     mStartTime = static_cast<unsigned long long>(System::processTimeInMilliSecs());
+    mMinecraft = minecraft;
+    mNoAbort = false;
 }
 
 ProgressRenderer::~ProgressRenderer()
@@ -81,9 +83,7 @@ void ProgressRenderer::progressStage(int id)
     {
         mStartTime = 0;
         EnterCriticalSection(&sProgressRendererMutex);
-        mStatus.active = true;
-        mStatus.id = id;
-        mStatus.text = L10N::GetString(id);
+        mStatus = TextField(true, id, std::wstring(L10N::GetString(id)));
         LeaveCriticalSection(&sProgressRendererMutex);
         progressStagePercentage(-1);
         mStartTime = 0;
@@ -96,9 +96,7 @@ void ProgressRenderer::progressStage(const std::wstring& text)
     {
         mStartTime = 0;
         EnterCriticalSection(&sProgressRendererMutex);
-        mStatus.id = -1;
-        mStatus.active = false;
-        mStatus.text = text;
+        mStatus = TextField(false, -1, text);
         LeaveCriticalSection(&sProgressRendererMutex);
         progressStagePercentage(-1);
         mStartTime = 0;

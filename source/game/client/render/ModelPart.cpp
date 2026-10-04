@@ -8,14 +8,13 @@
 #include "game/core/Cube.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/core/MemoryTracker.hpp"
+#include "game/core/Mth.hpp"
 #include "game/core/TexOffs.hpp"
 #include "vendor/SKIN_BOX.hpp"
 #include "game/core/PIXNamedEvents.hpp"
 
 #include <cmath>
 #include <cstdio>
-
-static const float RADIANS_TO_DEGREES = (float)(180.0 / M_PI);
 
 static const int ALL_FACES = 63;
 
@@ -50,10 +49,6 @@ ModelPart::ModelPart(Model* model, const std::wstring& name, const ModelDefiniti
     construct(model);
     setTexSize(definition.getTextureWidth(), definition.getTextureHeight());
     definition[name].SetupModelPart(this, parent, scale);
-}
-
-ModelPart::~ModelPart()
-{
 }
 
 void ModelPart::_init()
@@ -230,15 +225,17 @@ ModelPart* ModelPart::retrieveChild(SKIN_BOX* skinBox)
     std::vector<ModelPart*>::iterator child;
     for (child = mChildren.begin(); child != mChildren.end(); ++child)
     {
+        ModelPart* part = *child;
         std::vector<Cube*>::iterator cube;
-        for (cube = (*child)->mCubes.begin(); cube != (*child)->mCubes.end(); ++cube)
+        for (cube = part->mCubes.begin(); cube != part->mCubes.end(); ++cube)
         {
-            if ((*cube)->mX0 == skinBox->x && (*cube)->mY0 == skinBox->y && (*cube)->mZ0 == skinBox->z &&
-                (*cube)->mX1 == skinBox->x + skinBox->width &&
-                (*cube)->mY1 == skinBox->y + skinBox->height &&
-                (*cube)->mZ1 == skinBox->z + skinBox->depth)
+            Cube* box = *cube;
+            if (box->mX0 == skinBox->x && box->mY0 == skinBox->y && box->mZ0 == skinBox->z &&
+                box->mX1 == skinBox->x + skinBox->width &&
+                box->mY1 == skinBox->y + skinBox->height &&
+                box->mZ1 == skinBox->z + skinBox->depth)
             {
-                return *child;
+                return part;
             }
         }
     }
@@ -333,17 +330,17 @@ void ModelPart::render(float scale, bool useDisplayList, bool childrenOnly)
 
         if (mZRot != 0.0f)
         {
-            GlStateManager::rotatef(mZRot * RADIANS_TO_DEGREES, 0.0f, 0.0f, 1.0f);
+            GlStateManager::rotatef(mZRot * Mth::RAD_TO_DEG, 0.0f, 0.0f, 1.0f);
         }
 
         if (mYRot != 0.0f)
         {
-            GlStateManager::rotatef(mYRot * RADIANS_TO_DEGREES, 0.0f, 1.0f, 0.0f);
+            GlStateManager::rotatef(mYRot * Mth::RAD_TO_DEG, 0.0f, 1.0f, 0.0f);
         }
 
         if (mXRot != 0.0f)
         {
-            GlStateManager::rotatef(mXRot * RADIANS_TO_DEGREES, 1.0f, 0.0f, 0.0f);
+            GlStateManager::rotatef(mXRot * Mth::RAD_TO_DEG, 1.0f, 0.0f, 0.0f);
         }
 
         GlStateManager::translatef(mXOffset * scale, mYRotOffset * scale, mZOffset * scale);
@@ -452,17 +449,17 @@ void ModelPart::renderRollable(float scale, bool useDisplayList)
 
     if (mYRot != 0.0f)
     {
-        GlStateManager::rotatef(mYRot * RADIANS_TO_DEGREES, 0.0f, 1.0f, 0.0f);
+        GlStateManager::rotatef(mYRot * Mth::RAD_TO_DEG, 0.0f, 1.0f, 0.0f);
     }
 
     if (mXRot != 0.0f)
     {
-        GlStateManager::rotatef(mXRot * RADIANS_TO_DEGREES, 1.0f, 0.0f, 0.0f);
+        GlStateManager::rotatef(mXRot * Mth::RAD_TO_DEG, 1.0f, 0.0f, 0.0f);
     }
 
     if (mZRot != 0.0f)
     {
-        GlStateManager::rotatef(mZRot * RADIANS_TO_DEGREES, 0.0f, 0.0f, 1.0f);
+        GlStateManager::rotatef(mZRot * Mth::RAD_TO_DEG, 0.0f, 0.0f, 1.0f);
     }
 
     GlStateManager::callList(mDisplayList);
@@ -487,17 +484,17 @@ void ModelPart::translateTo(float scale)
 
         if (mZRot != 0.0f)
         {
-            GlStateManager::rotatef(mZRot * RADIANS_TO_DEGREES, 0.0f, 0.0f, 1.0f);
+            GlStateManager::rotatef(mZRot * Mth::RAD_TO_DEG, 0.0f, 0.0f, 1.0f);
         }
 
         if (mYRot != 0.0f)
         {
-            GlStateManager::rotatef(mYRot * RADIANS_TO_DEGREES, 0.0f, 1.0f, 0.0f);
+            GlStateManager::rotatef(mYRot * Mth::RAD_TO_DEG, 0.0f, 1.0f, 0.0f);
         }
 
         if (mXRot != 0.0f)
         {
-            GlStateManager::rotatef(mXRot * RADIANS_TO_DEGREES, 1.0f, 0.0f, 0.0f);
+            GlStateManager::rotatef(mXRot * Mth::RAD_TO_DEG, 1.0f, 0.0f, 0.0f);
         }
     }
     else if (mX != 0.0f || mY != 0.0f || mZ != 0.0f)

@@ -77,12 +77,12 @@ void ShulkerModel::setupAnim(float limbSwing, float limbSwingAmount, float ageIn
         mLid->mYRot = lidTwist * lidTwist * lidTwist * lidTwist * 3.1415927f * 0.125f;
     else
         mLid->mYRot = 0.0f;
-    mHead->mXRot = headPitch * Mth::DEG_TO_RAD;
-    mHead->mYRot = netHeadYaw * Mth::DEG_TO_RAD;
+    mHead->mXRot = headPitch * 0.017453292f;
+    mHead->mYRot = netHeadYaw * 0.017453292f;
     if (mHeadSkin != NULL)
     {
-        mHeadSkin->mXRot = mHead->mXRot;
-        mHeadSkin->mYRot = mHead->mYRot;
+        mHeadSkin->mXRot = headPitch * 0.017453292f;
+        mHeadSkin->mYRot = netHeadYaw * 0.017453292f;
     }
 }
 
@@ -91,7 +91,7 @@ void ShulkerModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, fl
                           bool useDisplayList)
 {
     boost::shared_ptr<Shulker> shulker = boost::static_pointer_cast<Shulker>(entity);
-    const unsigned int colour = Minecraft::GetInstance()->getColourTable()->getColour(
+    const int colour = Minecraft::GetInstance()->getColourTable()->getColour(
         shulker->getColor()->getShulkerColor());
     GlStateManager::color3f((float)((colour >> 16) & 0xFF) / 255.0f, (float)((colour >> 8) & 0xFF) / 255.0f,
                             (float)(colour & 0xFF) / 255.0f);
@@ -127,7 +127,7 @@ void ShulkerModel::renderWhenInvisible(boost::shared_ptr<Entity>& entity, float 
     if (mHasOverriddenParts)
     {
         boost::shared_ptr<Shulker> shulker = boost::static_pointer_cast<Shulker>(entity);
-        const unsigned int colour = Minecraft::GetInstance()->getColourTable()->getColour(
+        const int colour = Minecraft::GetInstance()->getColourTable()->getColour(
             shulker->getColor()->getShulkerColor());
         GlStateManager::color3f((float)((colour >> 16) & 0xFF) / 255.0f, (float)((colour >> 8) & 0xFF) / 255.0f,
                                 (float)(colour & 0xFF) / 255.0f);

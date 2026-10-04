@@ -34,16 +34,18 @@ void ShulkerRenderer::render(boost::shared_ptr<Entity>& entity, double x, double
     int interpolation = shulker->getClientSideTeleportInterpolation();
     if (interpolation > 0 && shulker->hasValidInterpolationPositions())
     {
-        BlockPos* oldPosition = shulker->getOldAttachPosition();
         BlockPos* position = shulker->getAttachPosition();
-        float progress = ((float)interpolation - partialTick) / 6.0F;
+        BlockPos* oldPosition = shulker->getOldAttachPosition();
+        double progress = ((float)interpolation - partialTick) / 6.0;
         progress *= progress;
         MobRenderer::render(entity, -((double)(position->x - oldPosition->x) * progress - x),
                             -((double)(position->y - oldPosition->y) * progress - y),
                             -((double)(position->z - oldPosition->z) * progress - z), yaw, partialTick);
-        return;
     }
-    MobRenderer::render(entity, x, y, z, yaw, partialTick);
+    else
+    {
+        MobRenderer::render(entity, x, y, z, yaw, partialTick);
+    }
 }
 
 bool ShulkerRenderer::shouldRender(boost::shared_ptr<Entity>& entity, Culler* culler, double x, double y, double z)
@@ -52,16 +54,17 @@ bool ShulkerRenderer::shouldRender(boost::shared_ptr<Entity>& entity, Culler* cu
         return true;
 
     boost::shared_ptr<Shulker> shulker = boost::static_pointer_cast<Shulker>(entity);
-    if (shulker->getClientSideTeleportInterpolation() <= 0 || !shulker->hasValidInterpolationPositions())
-        return false;
-
-    BlockPos* oldPosition = shulker->getOldAttachPosition();
-    BlockPos* position = shulker->getAttachPosition();
-    Vec3* oldPositionVector = Vec3::newPermanent(oldPosition->x, oldPosition->y, oldPosition->z);
-    Vec3* positionVector = Vec3::newPermanent(position->x, position->y, position->z);
-    AABB* box = AABB::newPermanent(oldPositionVector->x, oldPositionVector->y, oldPositionVector->z,
-                                    positionVector->x, positionVector->y, positionVector->z);
-    return culler->isVisible(box);
+    if (shulker->getClientSideTeleportInterpolation() > 0 && shulker->hasValidInterpolationPositions())
+    {
+        BlockPos* oldPosition = shulker->getOldAttachPosition();
+        BlockPos* position = shulker->getAttachPosition();
+        Vec3* positionVector = Vec3::newPermanent(position->x, position->y, position->z);
+        Vec3* oldPositionVector = Vec3::newPermanent(oldPosition->x, oldPosition->y, oldPosition->z);
+        if (culler->isVisible(AABB::newPermanent(oldPositionVector->x, oldPositionVector->y, oldPositionVector->z,
+                                                 positionVector->x, positionVector->y, positionVector->z)))
+            return true;
+    }
+    return false;
 }
 
 const ResourceLocation* ShulkerRenderer::getTextureLocation(boost::shared_ptr<Entity>&)
@@ -71,36 +74,39 @@ const ResourceLocation* ShulkerRenderer::getTextureLocation(boost::shared_ptr<En
 
 void ShulkerRenderer::setupRotations(boost::shared_ptr<LivingEntity>& entity, float ageInTicks, float bodyRot, float partialTick)
 {
-    LivingEntityRenderer::setupRotations(entity, ageInTicks, bodyRot, partialTick);
     boost::shared_ptr<Shulker> shulker = boost::static_pointer_cast<Shulker>(entity);
+    LivingEntityRenderer::setupRotations(entity, ageInTicks, bodyRot, partialTick);
     const Direction* face = shulker->getAttachFace();
-    if (face == Direction::EAST)
+    if (face != Direction::DOWN)
     {
-        GlStateManager::translatef(0.5F, 0.5F, 0.0F);
-        GlStateManager::rotatef(90.0F, 1.0F, 0.0F, 0.0F);
-        GlStateManager::rotatef(90.0F, 0.0F, 0.0F, 1.0F);
-    }
-    else if (face == Direction::WEST)
-    {
-        GlStateManager::translatef(-0.5F, 0.5F, 0.0F);
-        GlStateManager::rotatef(90.0F, 1.0F, 0.0F, 0.0F);
-        GlStateManager::rotatef(-90.0F, 0.0F, 0.0F, 1.0F);
-    }
-    else if (face == Direction::NORTH)
-    {
-        GlStateManager::translatef(0.0F, 0.5F, -0.5F);
-        GlStateManager::rotatef(90.0F, 1.0F, 0.0F, 0.0F);
-    }
-    else if (face == Direction::SOUTH)
-    {
-        GlStateManager::translatef(0.0F, 0.5F, 0.5F);
-        GlStateManager::rotatef(90.0F, 1.0F, 0.0F, 0.0F);
-        GlStateManager::rotatef(180.0F, 0.0F, 0.0F, 1.0F);
-    }
-    else if (face == Direction::UP)
-    {
-        GlStateManager::translatef(0.0F, 1.0F, 0.0F);
-        GlStateManager::rotatef(180.0F, 1.0F, 0.0F, 0.0F);
+        if (face == Direction::EAST)
+        {
+            GlStateManager::translatef(0.5F, 0.5F, 0.0F);
+            GlStateManager::rotatef(90.0F, 1.0F, 0.0F, 0.0F);
+            GlStateManager::rotatef(90.0F, 0.0F, 0.0F, 1.0F);
+        }
+        else if (face == Direction::WEST)
+        {
+            GlStateManager::translatef(-0.5F, 0.5F, 0.0F);
+            GlStateManager::rotatef(90.0F, 1.0F, 0.0F, 0.0F);
+            GlStateManager::rotatef(-90.0F, 0.0F, 0.0F, 1.0F);
+        }
+        else if (face == Direction::NORTH)
+        {
+            GlStateManager::translatef(0.0F, 0.5F, -0.5F);
+            GlStateManager::rotatef(90.0F, 1.0F, 0.0F, 0.0F);
+        }
+        else if (face == Direction::SOUTH)
+        {
+            GlStateManager::translatef(0.0F, 0.5F, 0.5F);
+            GlStateManager::rotatef(90.0F, 1.0F, 0.0F, 0.0F);
+            GlStateManager::rotatef(180.0F, 0.0F, 0.0F, 1.0F);
+        }
+        else if (face == Direction::UP)
+        {
+            GlStateManager::translatef(0.0F, 1.0F, 0.0F);
+            GlStateManager::rotatef(180.0F, 1.0F, 0.0F, 0.0F);
+        }
     }
 }
 
@@ -117,16 +123,16 @@ void ShulkerRenderer::renderLayers(boost::shared_ptr<LivingEntity>& entity, floa
 
 void ShulkerRenderer::renderModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale)
 {
-    if (!isVisible(entity) && entity->isInvisibleTo(boost::static_pointer_cast<Player>(Minecraft::GetInstance()->mPlayer)))
+    if (isVisible(entity) || !entity->isInvisibleTo(Minecraft::GetInstance()->mPlayer))
     {
-        boost::shared_ptr<Entity> renderEntity = entity;
-        if (!bindTexture(renderEntity))
-            return;
-        ShulkerModel* model = static_cast<ShulkerModel*>(getModel(entity));
-        model->renderWhenInvisible(renderEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, true);
+        LivingEntityRenderer::renderModel(entity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale);
         return;
     }
-    LivingEntityRenderer::renderModel(entity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale);
+    boost::shared_ptr<Entity> renderEntity = entity;
+    if (!bindTexture(renderEntity))
+        return;
+    ShulkerModel* model = static_cast<ShulkerModel*>(getModel(entity));
+    model->renderWhenInvisible(renderEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, true);
 }
 
 Model* ShulkerRenderer::createModel(const ModelDefinition& definition)

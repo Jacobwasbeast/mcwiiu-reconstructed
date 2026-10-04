@@ -3,12 +3,12 @@
 #include "game/client/render/ModelDefinition.hpp"
 #include "game/client/render/ModelPart.hpp"
 
-static const int FACE_RIGHT = 1;
-static const int FACE_LEFT = 2;
-static const int FACE_TOP = 4;
-static const int FACE_BOTTOM = 8;
-static const int FACE_FRONT = 16;
-static const int FACE_BACK = 32;
+static int FACE_RIGHT = 1;
+static int FACE_LEFT = 2;
+static int FACE_TOP = 4;
+static int FACE_BOTTOM = 8;
+static int FACE_FRONT = 16;
+static int FACE_BACK = 32;
 
 ShieldModel::ShieldModel(const ModelDefinition& modelDefinition)
 {

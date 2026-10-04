@@ -31,7 +31,7 @@ void SquidRenderer::setupRotations(boost::shared_ptr<LivingEntity>& entity, floa
     GlStateManager::translatef(0.0F, -1.2F, 0.0F);
 }
 
-double SquidRenderer::getBob(boost::shared_ptr<LivingEntity>& entity, float partialTicks)
+float SquidRenderer::getBob(boost::shared_ptr<LivingEntity>& entity, float partialTicks)
 {
     boost::shared_ptr<Squid> squid = boost::static_pointer_cast<Squid>(entity);
     return (squid->mTentacleAngle - squid->mOldTentacleAngle) * partialTicks + squid->mOldTentacleAngle;

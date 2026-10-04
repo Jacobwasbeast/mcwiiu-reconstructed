@@ -135,7 +135,7 @@ void SkeletonModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, flo
     mRightArmPose = eArmPose_Empty;
     mLeftArmPose = eArmPose_Empty;
 
-    boost::shared_ptr<ItemInstance> itemInHand = entity->getItemInHand(InteractionHand::eInteractionHand_MainHand);
+    not_null_ptr<ItemInstance> itemInHand = entity->getItemInHand(InteractionHand::eInteractionHand_MainHand);
 
     if (itemInHand->getItem() == Items::bow && boost::static_pointer_cast<AbstractSkeleton>(entity)->isAggressive())
     {
@@ -156,7 +156,7 @@ void SkeletonModel::setupAnim(float limbSwing, float limbSwingAmount, float ageI
 {
     HumanoidModel::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, _SkinAdjustments());
 
-    boost::shared_ptr<ItemInstance> mainHandItem = boost::static_pointer_cast<LivingEntity>(entity)->getMainHandItem();
+    not_null_ptr<ItemInstance> mainHandItem = boost::static_pointer_cast<LivingEntity>(entity)->getMainHandItem();
     boost::shared_ptr<AbstractSkeleton> skeleton = boost::static_pointer_cast<AbstractSkeleton>(entity);
 
     if (skeleton->isAggressive() && mainHandItem->getItem() != Items::bow)
@@ -186,21 +186,11 @@ void SkeletonModel::setupAnim(float limbSwing, float limbSwingAmount, float ageI
 
 void SkeletonModel::translateToHandItem(float scale, const HumanoidArm* arm)
 {
-    if (arm == HumanoidArm::RIGHT)
-    {
-        ModelPart* part = getArm(arm);
+    float side = arm == HumanoidArm::RIGHT ? 1.0f : -1.0f;
+    ModelPart* part = getArm(arm);
 
-        part->mX += 1.0f;
-        part->translateTo(scale);
-        part->mX -= 1.0f;
-    }
-    else
-    {
-        ModelPart* part = getArm(arm);
-
-        part->mX += -1.0f;
-        part->translateTo(scale);
-        part->mX -= -1.0f;
-    }
+    part->mX += side;
+    part->translateTo(scale);
+    part->mX -= side;
 }
 

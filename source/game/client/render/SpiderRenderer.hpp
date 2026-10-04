@@ -21,7 +21,7 @@ public:
     SpiderRenderer(EntityRenderDispatcher* dispatcher);
     virtual ~SpiderRenderer() {}
 
-    virtual double getFlipDegrees(boost::shared_ptr<LivingEntity>& entity);
+    virtual float getFlipDegrees(boost::shared_ptr<LivingEntity>& entity);
     virtual const ResourceLocation* getTextureLocation(boost::shared_ptr<Entity>& entity);
     virtual void setupForTexturePack(TexturePack* pack);
     virtual Model* createModel(const ModelDefinition& definition);

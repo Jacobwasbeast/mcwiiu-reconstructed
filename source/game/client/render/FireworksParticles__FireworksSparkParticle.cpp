@@ -8,14 +8,20 @@ FireworksParticles::FireworksSparkParticle::FireworksSparkParticle(
     Level* level, double x, double y, double z, double xa, double ya,
     double za, ParticleEngine* particleEngine)
     : SimpleAnimatedParticle(level, x, y, z, 160, 8, -0.004f),
-      trail(false), flicker(false), particleEngine(particleEngine)
+      particleEngine(particleEngine)
 {
     xd = xa;
     yd = ya;
     zd = za;
     size *= 0.75f;
-    alpha = 0.99f;
     lifetime = random.nextInt(12) + 48;
+    alpha = 0.99f;
+    fadeRed = 0.0f;
+    fadeGreen = 0.0f;
+    fadeBlue = 0.0f;
+    fading = false;
+    trail = false;
+    flicker = false;
     hasPhysics = false;
 }
 

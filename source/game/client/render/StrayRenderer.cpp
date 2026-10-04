@@ -46,9 +46,7 @@ void StrayRenderer::renderLayers(boost::shared_ptr<LivingEntity>& entity, float 
                                  bool overlay)
 {
     bool visible = isVisible(entity);
-    bool invisibleToPlayer = false;
-    if (!visible)
-        invisibleToPlayer = !entity->isInvisibleTo(Minecraft::GetInstance()->mPlayer);
+    bool invisibleToPlayer = !visible && !entity->isInvisibleTo(Minecraft::GetInstance()->mPlayer);
 
     std::vector<RenderLayer*>::iterator it = mLayers.begin();
     while (it != mLayers.end())

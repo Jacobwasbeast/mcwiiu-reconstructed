@@ -1,5 +1,6 @@
 #include "game/client/render/Font.hpp"
 
+#include <string.h>
 #include <vector>
 
 #include "game/client/render/Tesselator.hpp"
@@ -20,7 +21,8 @@ Font::Font(Options* options, const std::wstring& name, Textures* textures, bool,
     : mTextures(textures), mCharacterMap()
 {
     const int characterCount = columns * rows;
-    mCharWidths = new float[characterCount]();
+    mCharWidths = new float[characterCount];
+    memset(mCharWidths, 0, characterCount * sizeof(float));
     mColumns = columns;
     mRows = rows;
     mCharacterWidth = characterWidth;
@@ -122,24 +124,23 @@ int Font::MapCharacter(wchar_t character)
 std::wstring Font::sanitize(const std::wstring& text, bool trim)
 {
     std::wstring result(text);
-    for (unsigned int i = 0; i < result.length();)
+    for (int i = 0; i < result.length(); ++i)
     {
         if (!CharacterExists(result[i]))
         {
             if (trim)
             {
                 result.erase(result.begin() + i);
+                --i;
             }
             else
             {
                 result[i] = 0;
-                ++i;
             }
         }
         else
         {
             result[i] = static_cast<wchar_t>(MapCharacter(result[i]));
-            ++i;
         }
     }
 
@@ -163,18 +164,13 @@ int Font::width(const std::wstring& text)
         return 0;
 
     float result = 0.0f;
-    for (unsigned int i = 0; i < value.length();)
+    for (int i = 0; i < value.length(); ++i)
     {
         const wchar_t character = value.at(i);
         if (character == 0xA7)
-        {
-            i += 2;
-        }
-        else
-        {
-            result += mCharWidths[character];
             ++i;
-        }
+        else
+            result += mCharWidths[character];
     }
     return static_cast<int>(result + 0.5f);
 }
@@ -195,7 +191,7 @@ void Font::renderCharacter(wchar_t character, BufferBuilder* builder)
 
 unsigned int Font::draw(const std::wstring& text, bool darken, bool useBuilder)
 {
-    bindTexture();
+    mTextures->bindTexture(mTextureLocation);
     bool noise = false;
     const std::wstring value = sanitize(text, false);
     BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
@@ -205,7 +201,7 @@ unsigned int Font::draw(const std::wstring& text, bool darken, bool useBuilder)
     for (int i = 0; i < static_cast<int>(value.length());)
     {
         wchar_t character = value.at(i);
-        if (character == 0xA7 && i + 1 < static_cast<int>(value.length()))
+        if (character == 0xA7 && i + 1 < value.length())
         {
             const wchar_t code = value[i + 1];
             int colorIndex;
@@ -234,33 +230,43 @@ unsigned int Font::draw(const std::wstring& text, bool darken, bool useBuilder)
                 builder->color(color >> 16 & 255, color >> 8 & 255, color & 255);
             }
             i += 2;
-            continue;
         }
-
-        if (noise)
+        else
         {
-            const int letterCount = static_cast<int>(ALLOWED_CHARACTERS.length());
-            if (letterCount > 0 && ALLOWED_CHARACTERS.find(character) != std::wstring::npos)
+            if (noise)
             {
-                int attempts = 0;
-                int replacement;
-                bool matched = true;
-                do
+                const int letterCount = static_cast<int>(ALLOWED_CHARACTERS.length());
+                int found = -1;
+                for (int k = 0; k < letterCount; ++k)
                 {
-                    replacement = mRandom->nextInt(letterCount);
-                    if (++attempts >= letterCount)
+                    if (ALLOWED_CHARACTERS[k] == character)
                     {
-                        matched = false;
+                        found = k;
                         break;
                     }
-                } while (mCharWidths[character] != mCharWidths[ALLOWED_CHARACTERS[replacement]]);
-                if (matched)
-                    character = ALLOWED_CHARACTERS[replacement];
+                }
+                if (found != -1)
+                {
+                    int attempts = 0;
+                    int replacement;
+                    bool matched = true;
+                    do
+                    {
+                        replacement = mRandom->nextInt(letterCount);
+                        if (++attempts >= letterCount)
+                        {
+                            matched = false;
+                            break;
+                        }
+                    } while (mCharWidths[character] != mCharWidths[ALLOWED_CHARACTERS[replacement]]);
+                    if (matched)
+                        character = ALLOWED_CHARACTERS[replacement];
+                }
             }
-        }
 
-        renderCharacter(character, builder);
-        ++i;
+            renderCharacter(character, builder);
+            ++i;
+        }
     }
 
     if (useBuilder)
@@ -275,7 +281,8 @@ unsigned int Font::draw(const std::wstring& text, int x, int y, int color, bool 
         if (darken)
             color = (color & 0xFCFCFC) >> 2 | (color & 0xFF000000);
         GlStateManager::color4f((color >> 16 & 255) / 255.0f, (color >> 8 & 255) / 255.0f,
-                                (color & 255) / 255.0f, (static_cast<unsigned int>(color) >> 24) / 255.0f);
+                                (color & 255) / 255.0f,
+                                static_cast<int>(static_cast<unsigned int>(color) >> 24) / 255.0f);
         mX = static_cast<float>(x);
         mY = static_cast<float>(y);
         return draw(text, darken, useBuilder);
@@ -307,7 +314,7 @@ void Font::cacheCharacter(int character)
     }
 
     Character& glyph = mCharacters[character];
-    glyph.height = textureHeight > 7.99f ? 7.99f : textureHeight;
+    glyph.height = textureHeight <= 7.99f ? textureHeight : 7.99f;
     glyph.u0 = x / sheetWidth;
     glyph.u1 = (x + textureWidth) / sheetWidth;
     glyph.v0 = y / sheetHeight;

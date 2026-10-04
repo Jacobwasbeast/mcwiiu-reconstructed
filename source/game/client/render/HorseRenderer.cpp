@@ -59,24 +59,24 @@ void HorseRenderer::renderModel(boost::shared_ptr<LivingEntity>& entity, float l
                                 float limbSwingAmount, float ageInTicks, float netHeadYaw,
                                 float headPitch, float scale)
 {
-    boost::shared_ptr<Entity> renderEntity = boost::static_pointer_cast<Entity>(entity);
-
     if (!entity->isInvisible())
     {
+        boost::shared_ptr<Entity> renderEntity(entity);
         const ResourceLocation* location = getTextureLocation(renderEntity);
         int textureCount = location == NULL ? 0 : location->getTextureCount();
         bool dyedArmor = false;
         boost::shared_ptr<Horse> horse;
 
-        if (entity->GetType() == EntityType::HORSE)
+        const bool isHorse = entity->GetType() == EntityType::HORSE;
+        if (isHorse)
         {
             horse = boost::static_pointer_cast<Horse>(entity);
             if (horse->isWearingDyedArmor())
             {
                 unsigned int color = horse->getDyedArmorColor();
-                float red = (float)((color >> 16) & 0xff) / 255.0F;
-                float green = (float)((color >> 8) & 0xff) / 255.0F;
-                float blue = (float)(color & 0xff) / 255.0F;
+                float red = (float)(int)((color >> 16) & 0xff) / 255.0F;
+                float green = (float)(int)((color >> 8) & 0xff) / 255.0F;
+                float blue = (float)(int)(color & 0xff) / 255.0F;
                 GlStateManager::texLayerColor3f(horse->getDyedArmorLayer(), red, green, blue);
                 dyedArmor = true;
             }
@@ -99,6 +99,6 @@ void HorseRenderer::renderModel(boost::shared_ptr<LivingEntity>& entity, float l
     else
     {
         mModel->setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch,
-                          scale, renderEntity, _SkinAdjustments());
+                          scale, entity, _SkinAdjustments());
     }
 }

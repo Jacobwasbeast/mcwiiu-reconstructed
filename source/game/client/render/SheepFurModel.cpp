@@ -62,7 +62,7 @@ void SheepFurModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, flo
     Model::prepareMobModel(entity, limbSwing, limbSwingAmount, partialTicks);
 
     boost::shared_ptr<Sheep> sheep = boost::dynamic_pointer_cast<Sheep>(entity);
-    mHead->mX = 9.0f * sheep->getHeadEatPositionScale(partialTicks) + 6.0f;
+    mHead->mY = 9.0f * sheep->getHeadEatPositionScale(partialTicks) + 6.0f;
     mHeadEatAngleScale = sheep->getHeadEatAngleScale(partialTicks);
 }
 
@@ -77,7 +77,5 @@ void SheepFurModel::setupAnim(float limbSwing, float limbSwingAmount, float ageI
 
 std::wstring SheepFurModel::getName()
 {
-    std::wstring result;
-    result.assign(L"sheep");
-    return result;
+    return std::wstring(L"sheep");
 }

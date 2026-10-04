@@ -63,7 +63,7 @@ PlayerModel::PlayerModel(float scale, bool slimArms, bool is64x64)
 
             mRightSleeve = new ModelPart(this, 40, 32);
             mRightSleeve->addBox(-2.0f, -2.0f, -2.0f, 3, 12, 4, scale + 0.25f);
-            mRightSleeve->setPos(-5.0f, 2.0f, 0.0f);
+            mRightSleeve->setPos(-5.0f, 2.0f, 10.0f);
         }
         else
         {
@@ -130,17 +130,8 @@ void PlayerModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, flo
         {
             if (entity)
             {
-                bool fallFlying = false;
-
-                if ((entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
-                {
-                    boost::shared_ptr<LivingEntity> livingEntity = boost::static_pointer_cast<LivingEntity>(entity);
-
-                    if (livingEntity->getFallFlyingTicks() > 4)
-                    {
-                        fallFlying = true;
-                    }
-                }
+                bool fallFlying = (entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY &&
+                                  boost::static_pointer_cast<LivingEntity>(entity)->getFallFlyingTicks() > 4;
 
                 if (entity && entity->isSneaking() && !fallFlying)
                 {
@@ -154,57 +145,43 @@ void PlayerModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, flo
             mRightSleeve->render(scale, useDisplayList, IsBodyPartDisabled(eAnimBit_RightSleeve));
             mJacket->render(scale, useDisplayList, IsBodyPartDisabled(eAnimBit_Jacket));
 
-            boost::shared_ptr<Player> player;
-            bool hasChestArmour = false;
-
-            if (entity)
             {
-                player = boost::static_pointer_cast<Player>(entity);
+                boost::shared_ptr<Player> player;
 
-                if (player)
+                if (entity)
                 {
-                    hasChestArmour = !player->getItemSlot(EquipmentSlot::CHEST)->isEmpty();
+                    player = boost::static_pointer_cast<Player>(entity);
                 }
+
+                bool hasChestArmour = player && !player->getItemSlot(EquipmentSlot::CHEST)->isEmpty();
+                bool hasLegsArmour = player && !player->getItemSlot(EquipmentSlot::LEGS)->isEmpty();
+                bool hasFeetArmour = player && !player->getItemSlot(EquipmentSlot::FEET)->isEmpty();
+
+                mLeftLegging->mShow = !hasLegsArmour;
+                mRightLegging->mShow = !hasLegsArmour;
+                mLeftLegging->render(scale, useDisplayList, false);
+                mRightLegging->render(scale, useDisplayList, false);
+
+                mLeftBoot->mShow = !hasFeetArmour;
+                mRightBoot->mShow = !hasFeetArmour;
+                mLeftBoot->render(scale, useDisplayList, false);
+                mRightBoot->render(scale, useDisplayList, false);
+
+                mLeftShin->mShow = !(hasLegsArmour || hasFeetArmour);
+                mRightShin->mShow = !(hasLegsArmour || hasFeetArmour);
+                mLeftShin->render(scale, useDisplayList, false);
+                mRightShin->render(scale, useDisplayList, false);
+
+                mChest->mShow = !hasChestArmour;
+                mLeftShoulder->mShow = !hasChestArmour;
+                mRightShoulder->mShow = !hasChestArmour;
+                mChest->render(scale, useDisplayList, false);
+                mLeftShoulder->render(scale, useDisplayList, false);
+                mRightShoulder->render(scale, useDisplayList, false);
+
+                mWaist->mShow = !(hasChestArmour || hasLegsArmour);
+                mWaist->render(scale, useDisplayList, false);
             }
-
-            bool hasLegsArmour = false;
-
-            if (player)
-            {
-                hasLegsArmour = !player->getItemSlot(EquipmentSlot::LEGS)->isEmpty();
-            }
-
-            bool hasFeetArmour = false;
-
-            if (player)
-            {
-                hasFeetArmour = !player->getItemSlot(EquipmentSlot::FEET)->isEmpty();
-            }
-
-            mLeftLegging->mShow = !hasLegsArmour;
-            mRightLegging->mShow = !hasLegsArmour;
-            mLeftLegging->render(scale, useDisplayList, false);
-            mRightLegging->render(scale, useDisplayList, false);
-
-            mLeftBoot->mShow = !hasFeetArmour;
-            mRightBoot->mShow = !hasFeetArmour;
-            mLeftBoot->render(scale, useDisplayList, false);
-            mRightBoot->render(scale, useDisplayList, false);
-
-            mLeftShin->mShow = !(hasLegsArmour || hasFeetArmour);
-            mRightShin->mShow = !(hasLegsArmour || hasFeetArmour);
-            mLeftShin->render(scale, useDisplayList, false);
-            mRightShin->render(scale, useDisplayList, false);
-
-            mChest->mShow = !hasChestArmour;
-            mLeftShoulder->mShow = !hasChestArmour;
-            mRightShoulder->mShow = !hasChestArmour;
-            mChest->render(scale, useDisplayList, false);
-            mLeftShoulder->render(scale, useDisplayList, false);
-            mRightShoulder->render(scale, useDisplayList, false);
-
-            mWaist->mShow = !(hasChestArmour || hasLegsArmour);
-            mWaist->render(scale, useDisplayList, false);
 
             GlStateManager::popMatrix();
         }
@@ -281,17 +258,8 @@ void PlayerModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInT
 
         if (entity)
         {
-            bool fallFlying = false;
-
-            if ((entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
-            {
-                boost::shared_ptr<LivingEntity> livingEntity = boost::static_pointer_cast<LivingEntity>(entity);
-
-                if (livingEntity->getFallFlyingTicks() > 4)
-                {
-                    fallFlying = true;
-                }
-            }
+            bool fallFlying = (entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY &&
+                              boost::static_pointer_cast<LivingEntity>(entity)->getFallFlyingTicks() > 4;
 
             if (entity && entity->isSneaking() && !fallFlying)
             {
@@ -366,14 +334,9 @@ void PlayerModel::translateToHandItem(float scale, const HumanoidArm* arm)
 
     part->mY = y + mSkinAdjustments.mTool0Y;
 
-    if (!mSlimArms)
+    if (mSlimArms)
     {
-        part->translateTo(scale);
-        part->mY = y;
-    }
-    else if (arm == HumanoidArm::RIGHT)
-    {
-        float offset = 0.5f * 1.0f;
+        float offset = 0.5f * (arm == HumanoidArm::RIGHT ? 1.0f : -1.0f);
 
         part->mX += offset;
         part->translateTo(scale);
@@ -382,12 +345,8 @@ void PlayerModel::translateToHandItem(float scale, const HumanoidArm* arm)
     }
     else
     {
-        float offset = 0.5f * -1.0f;
-
-        part->mX += offset;
         part->translateTo(scale);
         part->mY = y;
-        part->mX -= offset;
     }
 }
 

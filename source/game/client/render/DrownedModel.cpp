@@ -71,9 +71,8 @@ void DrownedModel::init(float scale, const ModelDefinition& definition)
         mRightSleeve->addBox(-2.0f, -2.0f, -2.0f, 4, 12, 4, scale + 0.52f);
         mRightSleeve->setWorldPos(-5.0f, 2.0f, 0.0f);
 
-        mLeftLeg->mMirror = true;
-
         mLeftPants = new ModelPartSkin(this, 0, 32, NULL);
+        mLeftLeg->mMirror = true;
         mLeftPants->addBox(-1.65f, 0.0f, -2.0f, 4, 12, 4, scale + 0.25f);
         mLeftPants->setWorldPos(1.9f, 12.0f, 0.0f);
 
@@ -154,16 +153,8 @@ void DrownedModel::setupAnim(float limbSwing, float limbSwingAmount, float ageIn
 {
     ZombieModel::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, skinAdjustments);
 
-    bool swimming = false;
-
-    if (entity->GetType() == EntityType::DROWNED)
-    {
-        boost::shared_ptr<Drowned> drowned = boost::static_pointer_cast<Drowned>(entity);
-
-        swimming = drowned->getSwimAmount(limbSwingAmount) != 0.0f;
-    }
-
-    float swimAmount = (float)swimming;
+    bool isDrowned = entity->GetType() == EntityType::DROWNED;
+    float swimAmount = (float)(isDrowned && boost::static_pointer_cast<Drowned>(entity)->getSwimAmount(limbSwingAmount) != 0.0f);
 
     float swing = Mth::sin(mAttackTime * 3.1415927f);
     float swingBack = Mth::sin((1.0f - (1.0f - mAttackTime) * (1.0f - mAttackTime)) * 3.1415927f);
@@ -177,12 +168,16 @@ void DrownedModel::setupAnim(float limbSwing, float limbSwingAmount, float ageIn
         mRightArm->mZRot = Mth::Lerp(mRightArm->mZRot, -0.25f, swimAmount);
         mLeftArm->mZRot = Mth::Lerp(mLeftArm->mZRot, 0.25f, swimAmount);
 
-        mRightArm->mXRot -= swimAmount * (swing * 1.2f - swingBack * 0.4f);
-        mLeftArm->mXRot -= swimAmount * (swing * 1.2f - swingBack * 0.4f);
-        mRightArm->mZRot += swimAmount * (swimAmount * (Mth::cos(ageInTicks * 0.09f) * 0.05f + 0.05f));
-        mLeftArm->mZRot -= swimAmount * (swimAmount * (Mth::cos(ageInTicks * 0.09f) * 0.05f + 0.05f));
-        mRightArm->mXRot += swimAmount * (swimAmount * (Mth::sin(ageInTicks * 0.067f) * 0.05f));
-        mLeftArm->mXRot -= swimAmount * (swimAmount * (Mth::sin(ageInTicks * 0.067f) * 0.05f));
+        float armSwing = swimAmount * (swing * 1.2f - swingBack * 0.4f);
+        mRightArm->mXRot -= armSwing;
+        mLeftArm->mXRot -= armSwing;
+
+        float zBob = swimAmount * (swimAmount * (Mth::cos(ageInTicks * 0.09f) * 0.05f + 0.05f));
+        float xBob = swimAmount * (swimAmount * (Mth::sin(ageInTicks * 0.067f) * 0.05f));
+        mRightArm->mZRot += zBob;
+        mLeftArm->mZRot -= zBob;
+        mRightArm->mXRot += xBob;
+        mLeftArm->mXRot -= xBob;
     }
 }
 
@@ -191,7 +186,7 @@ void DrownedModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, floa
     mRightArmPose = eArmPose_Empty;
     mLeftArmPose = eArmPose_Empty;
 
-    boost::shared_ptr<ItemInstance> itemInHand = entity->getItemInHand(InteractionHand::eInteractionHand_MainHand);
+    not_null_ptr<ItemInstance> itemInHand = entity->getItemInHand(InteractionHand::eInteractionHand_MainHand);
 
     bool throwingSpear = false;
 

@@ -10,11 +10,11 @@ SuspendedTownParticle::SuspendedTownParticle(Level* level, double x, double y, d
     bCol = rCol;
     setMiscTex(0);
     setSize(0.02f, 0.02f);
+    size *= random.nextFloat() * 0.6f + 0.5f;
     double velocityScale = 0.02;
     xd *= velocityScale;
     yd *= velocityScale;
     zd *= velocityScale;
-    gravity *= random.nextFloat() * 0.6f + 0.5f;
     lifetime = (int)(20.0 / (random.nextDouble() * 0.8 + 0.2));
 }
 
@@ -27,8 +27,7 @@ void SuspendedTownParticle::tick()
     xd *= 0.99;
     yd *= 0.99;
     zd *= 0.99;
-    --lifetime;
-    if (lifetime <= 0)
+    if (lifetime-- <= 0)
         remove();
 }
 

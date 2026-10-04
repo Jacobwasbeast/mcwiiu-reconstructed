@@ -21,7 +21,7 @@ void SnowShovelParticle::render(BufferBuilder* buffer,
                                 float xa2,
                                 float za2)
 {
-    const float progress = Mth::clamp((float)((double)age + partialTicks) /
+    const float progress = Mth::clamp((partialTicks + (float)age) /
                                       (float)lifetime * 32.0f,
                                       0.0f,
                                       1.0f);
@@ -31,27 +31,28 @@ void SnowShovelParticle::render(BufferBuilder* buffer,
 
 void SnowShovelParticle::tick()
 {
-    const int oldAge = age;
-    const int currentLifetime = lifetime;
     xo = x;
     yo = y;
     zo = z;
-    age = oldAge + 1;
-    if (currentLifetime <= oldAge)
+    int particleLifetime = lifetime;
+    if (particleLifetime <= age++)
     {
         remove();
+        particleLifetime = lifetime;
     }
 
-    setMiscTex(7 - (age << 3) / currentLifetime);
+    setMiscTex(7 - (age << 3) / particleLifetime);
     yd -= 0.03;
     move(xd, yd, zd);
-    xd *= 0.99;
+    double xdNew = xd * 0.99;
     yd *= 0.99;
-    zd *= 0.99;
+    double zdNew = zd * 0.99;
+    xd = xdNew;
+    zd = zdNew;
     if (onGround)
     {
-        xd *= 0.7;
-        zd *= 0.7;
+        xd = xdNew * 0.7;
+        zd = zdNew * 0.7;
     }
 }
 
@@ -69,7 +70,7 @@ void SnowShovelParticle::init(Level* level, double x, double y, double z,
     const float particleSize = Particle::size * 0.75f * scale;
     Particle::size = particleSize;
     size = particleSize;
-    lifetime = (int)((double)(int)floor(8.0 / (random.nextDouble() * 0.8 + 0.2)) * scale);
+    lifetime = (int)((float)(int)floor(8.0 / (random.nextDouble() * 0.8 + 0.2)) * scale);
 }
 
 uint64_t SnowShovelParticle::GetType()

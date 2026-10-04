@@ -14,6 +14,7 @@
 #include "game/client/render/Textures.hpp"
 #include "game/core/BufferBuilder.hpp"
 #include "game/core/CMinecraftApp.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/Culler.hpp"
 #include "game/core/MemSect.hpp"
 #include "game/core/GlStateManager.hpp"
@@ -117,7 +118,7 @@ void EntityRenderer::render(AABB* box, double x, double y, double z)
 void EntityRenderer::renderName(boost::shared_ptr<Entity>& entity, double x, double y, double z)
 {
     if (shouldShowName(entity))
-        renderNameTag(entity, entity->getName(), x, y, z, 64, 0xFF000000);
+        renderNameTag(entity, entity->getDisplayName(), x, y, z, 64, 0xFF000000);
 }
 
 bool EntityRenderer::shouldShowName(boost::shared_ptr<Entity>& entity)
@@ -279,7 +280,7 @@ Level* EntityRenderer::getLevel()
 void EntityRenderer::renderBlockShadow(const BlockState* state, double x, double y, double z, const BlockPos& pos,
                                        float alpha, float radius, double offsetX, double offsetY, double offsetZ)
 {
-    if (!state->isSolidRender())
+    if (!state->isCubeShaped())
         return;
     BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
     Level* level = getLevel();
@@ -291,7 +292,7 @@ void EntityRenderer::renderBlockShadow(const BlockState* state, double x, double
         shade = 1.0;
 
     builder->color(1.0F, 1.0F, 1.0F, (float)shade);
-    const AABB* shape = state->getShape(level, pos);
+    const AABB* shape = state->getShape(getLevel(), pos);
     double minX = (double)pos.x + shape->mMinX + offsetX;
     double maxX = (double)pos.x + shape->mMaxX + offsetX;
     double minY = (double)pos.y + shape->mMinY + offsetY + 0.015625;
@@ -352,13 +353,13 @@ void EntityRenderer::renderNameTag(boost::shared_ptr<Entity>& entity, const std:
     if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
     {
         boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
-        if (g_pApp->isXuidDeadmau5(player->mXuid))
+        if (gApp.isXuidDeadmau5(player->mXuid))
             nameOffset = -10;
         displayName = name;
     }
 
     int fadeDistance = 256;
-    if (!gRenderer->IsHiDef() || g_pApp->GetLocalPlayerCount() > 2)
+    if (!gRenderer->IsHiDef() || gApp.GetLocalPlayerCount() > 2)
         fadeDistance = 64;
     float alpha = 1.0F;
     if (distance >= (double)fadeDistance)

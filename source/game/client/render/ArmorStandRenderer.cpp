@@ -32,12 +32,12 @@ ArmorStandRenderer::~ArmorStandRenderer()
 void ArmorStandRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z, float yaw, float partialTick)
 {
     boost::shared_ptr<ArmorStand> armorStand = boost::static_pointer_cast<ArmorStand>(entity);
-    if (armorStand->isMarker())
+    if (armorStand.get()->isMarker())
     {
         mItemFrame = true;
     }
     LivingEntityRenderer::render(entity, x, y, z, yaw, partialTick);
-    if (armorStand->isMarker())
+    if (armorStand.get()->isMarker())
     {
         mItemFrame = false;
     }
@@ -52,7 +52,7 @@ void ArmorStandRenderer::setupRotations(boost::shared_ptr<LivingEntity>& entity,
 {
     boost::shared_ptr<ArmorStand> armorStand = boost::static_pointer_cast<ArmorStand>(entity);
     GlStateManager::rotatef(180.0f - rotationYaw, 0.0f, 1.0f, 0.0f);
-    float time = static_cast<float>(armorStand->mLevel->getGameTime() - armorStand->mLastHit) + partialTicks;
+    float time = static_cast<float>(armorStand.get()->mLevel->getGameTime() - armorStand.get()->mLastHit) + partialTicks;
     if (time < 5.0f)
     {
         GlStateManager::rotatef(std::sin(time / 1.5f * 3.1415927f) * 3.0f, 0.0f, 1.0f, 0.0f);
@@ -61,15 +61,9 @@ void ArmorStandRenderer::setupRotations(boost::shared_ptr<LivingEntity>& entity,
 
 bool ArmorStandRenderer::shouldShowName(boost::shared_ptr<Entity>& entity)
 {
-    if (!LivingEntityRenderer::shouldShowName(entity))
-    {
-        return false;
-    }
-    if (!entity->shouldShowName() && !entity->hasCustomName())
-    {
-        return false;
-    }
-    return entity == mDispatcher->mPlayer;
+    return LivingEntityRenderer::shouldShowName(entity)
+        && (entity.get()->shouldShowName() || entity.get()->hasCustomName())
+        && entity == mDispatcher->mPlayer;
 }
 
 Model* ArmorStandRenderer::createModel(const ModelDefinition& definition)

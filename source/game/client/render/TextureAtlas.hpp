@@ -19,11 +19,9 @@ public:
                  BufferedImage* image, bool singleImage);
     virtual ~TextureAtlas();
 
-    TextureAtlasSprite* addIcon(bool singleImage, int x, int y,
-                                const std::wstring& name);
-    TextureAtlasSprite* addIconWithName(bool singleImage, int x, int y,
-                                        const std::wstring& name,
-                                        const std::wstring& spriteName);
+    void addIcon(bool singleImage, int x, int y, const std::wstring& name);
+    void addIconWithName(bool singleImage, int x, int y, const std::wstring& name,
+                         const std::wstring& spriteName);
     void addIconSize(bool singleImage, int x, int y, const std::wstring& name,
                      int width, int height);
     void loadUVs();

@@ -13,6 +13,7 @@
 #include "game/client/render/VillagerModel.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/core/Minecraft.hpp"
+#include "game/core/Options.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/item/Item.hpp"
 #include "game/item/Items.hpp"
@@ -49,64 +50,71 @@ void VillagerRenderer::render(boost::shared_ptr<Entity>& entity, double x, doubl
     MobRenderer::render(entity, x, y, z, yaw, partialTick);
 
     boost::shared_ptr<Villager> villager = boost::static_pointer_cast<Villager>(entity);
-    if (villager->getTrading() == 0)
-        return;
+    if (villager->getTrading() != 0)
+    {
+        not_null_ptr<ItemInstance> item = ItemInstance::EMPTY;
+        item = not_null_ptr<ItemInstance>(new ItemInstance(Items::emerald, 1));
+        Item* itemType = item->getItem();
+        TextureAtlasSprite* sprite = itemType->getIcon(item);
 
-    not_null_ptr<ItemInstance> item(new ItemInstance(Items::emerald, 1));
-    Tesselator* tesselator = Tesselator::getInstance();
-    BufferBuilder* builder = tesselator->getBuilder();
-    Item* itemType = item->getItem();
-    TextureAtlasSprite* sprite = itemType->getIcon(item);
+        mDispatcher = Minecraft::GetInstance()->getEntityRenderDispatcher();
 
-    Minecraft* minecraft = Minecraft::GetInstance();
-    EntityRenderDispatcher* dispatcher = minecraft->getEntityRenderDispatcher();
-    bindTexture(&ITEM_LOCATION);
+        const float height = entity->mBbHeight;
+        GlStateManager::pushMatrix();
+        GlStateManager::translatef((float)x, height + 0.5F + (float)y, (float)z);
+        GlStateManager::normal3f(0.0F, 1.0F, 0.0F);
+        GlStateManager::rotatef(180.0F - mDispatcher->mCameraYRot, 0.0F, 1.0F, 0.0F);
+        const float pitchDirection = mDispatcher->mOptions->mThirdPersonView == 2 ? -1.0F : 1.0F;
+        GlStateManager::rotatef(-(pitchDirection * mDispatcher->mCameraXRot), 1.0F, 0.0F, 0.0F);
+        GlStateManager::scalef(0.5F, 0.5F, 0.5F);
+        GlStateManager::enableBlend();
+        GlStateManager::blendFunc(4, 5);
 
-    GlStateManager::pushMatrix();
-    GlStateManager::translatef((float)x,
-                               (float)y + villager->getEyeHeight() + 0.5F,
-                               (float)z);
-    GlStateManager::normal3f(0.0F, 1.0F, 0.0F);
-    GlStateManager::rotatef(180.0F - dispatcher->mCameraYRot, 0.0F, 1.0F, 0.0F);
-    GlStateManager::rotatef(-dispatcher->mCameraXRot, 1.0F, 0.0F, 0.0F);
-    GlStateManager::scalef(0.5F, 0.5F, 0.5F);
-    GlStateManager::enableBlend();
-    GlStateManager::blendFunc(4, 5);
+        Tesselator* tesselator = Tesselator::getInstance();
+        BufferBuilder* builder = tesselator->getBuilder();
+        bindTexture(&ITEM_LOCATION);
+        const float u0 = (float)sprite->getU0(false);
+        const float u1 = (float)sprite->getU1(false);
+        const float v0 = (float)sprite->getV0(false);
+        const float v1 = (float)sprite->getV1(false);
 
-    builder->begin();
-    builder->color(0xFFFFFF, 0x80);
-    builder->normal(0.0F, 1.0F, 0.0F);
-    builder->vertexUV(-0.5F, -0.25F, 0.0F, (float)sprite->getU0(false), (float)sprite->getV1(false));
-    builder->vertexUV(0.5F, -0.25F, 0.0F, (float)sprite->getU1(false), (float)sprite->getV1(false));
-    builder->vertexUV(0.5F, 0.75F, 0.0F, (float)sprite->getU1(false), (float)sprite->getV0(false));
-    builder->vertexUV(-0.5F, 0.75F, 0.0F, (float)sprite->getU0(false), (float)sprite->getV0(false));
-    builder->end();
+        builder->begin();
+        builder->color(0xFFFFFF, 0x80);
+        builder->normal(0.0F, 1.0F, 0.0F);
+        builder->vertexUV(-0.5F, -0.25F, 0.0F, u0, v1);
+        builder->vertexUV(0.5F, -0.25F, 0.0F, u1, v1);
+        builder->vertexUV(0.5F, 0.75F, 0.0F, u1, v0);
+        builder->vertexUV(-0.5F, 0.75F, 0.0F, u0, v0);
+        builder->end();
 
-    GlStateManager::disableBlend();
-    GlStateManager::popMatrix();
+        GlStateManager::disableBlend();
+        GlStateManager::popMatrix();
+    }
 }
 
 const ResourceLocation* VillagerRenderer::getTextureLocation(boost::shared_ptr<Entity>& entity)
 {
     boost::shared_ptr<Villager> villager = boost::static_pointer_cast<Villager>(entity);
-    int profession = villager->getProfession();
-    if (profession == 0)
+    switch (villager->getProfession())
+    {
+    case 0:
         return &FARMER_LOCATION;
-    if (profession == 1)
+    case 1:
         return &LIBRARIAN_LOCATION;
-    if (profession < 3)
+    case 2:
         return &PRIEST_LOCATION;
-    if (profession == 3)
+    case 3:
         return &SMITH_LOCATION;
-    if (profession == 4)
+    case 4:
         return &BUTCHER_LOCATION;
+    }
     return &VILLAGER_LOCATION;
 }
 
 void VillagerRenderer::scale(boost::shared_ptr<LivingEntity>& entity, float)
 {
     boost::shared_ptr<Villager> villager = boost::static_pointer_cast<Villager>(entity);
-    if (villager->isBaby())
+    if (villager->getAge() < 0)
     {
         mShadowRadius = 0.25F;
         GlStateManager::scalef(0.46875F, 0.46875F, 0.46875F);

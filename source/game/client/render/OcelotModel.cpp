@@ -4,22 +4,35 @@
 #include "game/client/render/ModelPart.hpp"
 #include "game/client/render/ModelPartSkin.hpp"
 #include "game/client/render/Tesselator.hpp"
+#include "game/client/render/TexturePack.hpp"
+#include "game/client/render/TexturePackRepository.hpp"
 #include "game/core/BufferBuilder.hpp"
 #include "game/core/GlStateManager.hpp"
+#include "game/core/Minecraft.hpp"
 #include "game/core/Mth.hpp"
 #include "game/core/Ocelot.hpp"
 
+static float OCELOT_HEAD_Y = 15.0f;
+static float OCELOT_HEAD_Z = -9.0f;
+static float OCELOT_BODY_Y = 12.0f;
+static float OCELOT_BODY_Z = -10.0f;
+static float OCELOT_TAIL1_Y = 15.0f;
+static float OCELOT_TAIL1_Z = 8.0f;
+static float OCELOT_TAIL2_Y = 20.0f;
+static float OCELOT_TAIL2_Z = 14.0f;
+static float OCELOT_BACK_LEG_Y = 18.0f;
+static float OCELOT_BACK_LEG_Z = 5.0f;
+static float OCELOT_FRONT_LEG_Y = 13.8f;
+static float OCELOT_FRONT_LEG_Z = -5.0f;
+
 OcelotModel::OcelotModel()
-    : mBackLegL(NULL), mBackLegR(NULL), mFrontLegL(NULL), mFrontLegR(NULL),
-      mTail1(NULL), mTail2(NULL), mHead(NULL), mBody(NULL), mPose(0)
 {
-    ModelDefinition modelDefinition;
-    LoadOcelotModelDefinition(modelDefinition);
+    Minecraft::GetInstance();
+    TexturePack* texturePack = TexturePackRepository::defaultTexturePack;
+    LoadOcelotModelDefinition(*texturePack->GetCustomModel(L"ocelot"));
 }
 
 OcelotModel::OcelotModel(const ModelDefinition& modelDefinition)
-    : mBackLegL(NULL), mBackLegR(NULL), mFrontLegL(NULL), mFrontLegR(NULL),
-      mTail1(NULL), mTail2(NULL), mHead(NULL), mBody(NULL), mPose(0)
 {
     LoadOcelotModelDefinition(modelDefinition);
 }
@@ -27,7 +40,7 @@ OcelotModel::OcelotModel(const ModelDefinition& modelDefinition)
 void OcelotModel::LoadOcelotModelDefinition(const ModelDefinition& modelDefinition)
 {
     mPose = 1;
-    Tesselator::getInstance()->getBuilder();
+    BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
 
     if (modelDefinition.DoesOverrideModel())
     {
@@ -40,43 +53,9 @@ void OcelotModel::LoadOcelotModelDefinition(const ModelDefinition& modelDefiniti
         mHead = new ModelPartSkin(this, L"head", modelDefinition, NULL, 0.0f, NULL);
         mBody = new ModelPartSkin(this, L"body", modelDefinition, NULL, 0.0f, NULL);
     }
-    else
-    {
-        mHead = new ModelPartSkin(this, 0, 0, NULL);
-        mHead->addBox(-2.0f, -3.0f, -2.0f, 5, 4, 5, 0.0f);
-        mHead->setPos(0.0f, 15.0f, -9.0f);
-
-        mBody = new ModelPartSkin(this, 20, 0, NULL);
-        mBody->addBox(-2.0f, -2.0f, -3.0f, 4, 16, 6, 0.0f);
-        mBody->setPos(0.0f, 12.0f, -10.0f);
-
-        mTail1 = new ModelPartSkin(this, 0, 9, NULL);
-        mTail1->addBox(-1.0f, 0.0f, -1.0f, 2, 8, 2, 0.0f);
-        mTail1->setPos(0.0f, 15.0f, 0.0f);
-
-        mTail2 = new ModelPartSkin(this, 4, 9, NULL);
-        mTail2->addBox(-1.0f, 0.0f, -1.0f, 2, 8, 2, 0.0f);
-        mTail2->setPos(0.0f, 20.0f, 7.0f);
-
-        mBackLegL = new ModelPartSkin(this, 8, 13, NULL);
-        mBackLegL->addBox(-1.0f, 0.0f, -1.0f, 2, 8, 2, 0.0f);
-        mBackLegL->setPos(-2.0f, 16.0f, 7.0f);
-
-        mBackLegR = new ModelPartSkin(this, 8, 13, NULL);
-        mBackLegR->addBox(-1.0f, 0.0f, -1.0f, 2, 8, 2, 0.0f);
-        mBackLegR->setPos(2.0f, 16.0f, 7.0f);
-
-        mFrontLegL = new ModelPartSkin(this, 8, 13, NULL);
-        mFrontLegL->addBox(-1.0f, 0.0f, -1.0f, 2, 8, 2, 0.0f);
-        mFrontLegL->setPos(-2.0f, 16.0f, -5.0f);
-
-        mFrontLegR = new ModelPartSkin(this, 8, 13, NULL);
-        mFrontLegR->addBox(-1.0f, 0.0f, -1.0f, 2, 8, 2, 0.0f);
-        mFrontLegR->setPos(2.0f, 16.0f, -5.0f);
-    }
 
     compileSkinnedDrawlist();
-    Tesselator::getInstance()->getBuilder()->useDefaultShaders();
+    builder->useDefaultShaders();
 }
 
 void OcelotModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount,
@@ -151,25 +130,29 @@ void OcelotModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInT
                             float netHeadYaw, float headPitch, float scale,
                             boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
 {
-    mHead->mYRot = netHeadYaw * 0.017453292f;
+    int pose = mPose;
     mHead->mXRot = headPitch * 0.017453292f;
+    mHead->mYRot = netHeadYaw * 0.017453292f;
 
-    if (mPose != 3)
+    if (pose != 3)
     {
         mBackLegL->mXRot = Mth::cos(limbSwing * 0.6662f) * 1.0f * limbSwingAmount;
-        if (mPose == 2)
+        if (pose == 2)
         {
-            mBackLegR->mXRot = Mth::cos(limbSwing * 0.6662f + 0.3f) * limbSwingAmount;
-            mFrontLegL->mXRot = Mth::cos(limbSwing * 0.6662f + 3.4415927f) * limbSwingAmount;
-            mFrontLegR->mXRot = Mth::cos(limbSwing * 0.6662f + 3.1415927f) * limbSwingAmount;
+            mBackLegR->mXRot = Mth::cos(limbSwing * 0.6662f + 0.3f) * 1.0f * limbSwingAmount;
+            mFrontLegL->mXRot = Mth::cos(limbSwing * 0.6662f + 3.4415927f) * 1.0f * limbSwingAmount;
+            mFrontLegR->mXRot = Mth::cos(limbSwing * 0.6662f + 3.1415927f) * 1.0f * limbSwingAmount;
             mTail2->mXRot = 0.31415927f * Mth::cos(limbSwing) * limbSwingAmount + 1.7278761f;
         }
         else
         {
-            mBackLegR->mXRot = Mth::cos(limbSwing * 0.6662f + 3.1415927f) * limbSwingAmount;
-            mFrontLegL->mXRot = Mth::cos(limbSwing * 0.6662f + 3.1415927f) * limbSwingAmount;
-            mFrontLegR->mXRot = Mth::cos(limbSwing * 0.6662f) * limbSwingAmount;
-            mTail2->mXRot = (mPose == 1 ? 0.7853982f : 0.47123894f) * Mth::cos(limbSwing) * limbSwingAmount + 1.7278761f;
+            mBackLegR->mXRot = Mth::cos(limbSwing * 0.6662f + 3.1415927f) * 1.0f * limbSwingAmount;
+            mFrontLegL->mXRot = Mth::cos(limbSwing * 0.6662f + 3.1415927f) * 1.0f * limbSwingAmount;
+            mFrontLegR->mXRot = Mth::cos(limbSwing * 0.6662f) * 1.0f * limbSwingAmount;
+            if (mPose == 1)
+                mTail2->mXRot = 0.7853982f * Mth::cos(limbSwing) * limbSwingAmount + 1.7278761f;
+            else
+                mTail2->mXRot = 0.47123894f * Mth::cos(limbSwing) * limbSwingAmount + 1.7278761f;
         }
     }
 }
@@ -179,22 +162,22 @@ void OcelotModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float
 {
     boost::shared_ptr<Ocelot> ocelot = boost::dynamic_pointer_cast<Ocelot>(entity);
 
-    mBody->mY = 0.0f;
-    mBody->mZ = 0.0f;
-    mHead->mY = 0.0f;
-    mHead->mZ = 0.0f;
-    mTail1->mY = 0.0f;
-    mTail1->mZ = 0.0f;
-    mTail2->mY = 0.0f;
-    mTail2->mZ = 0.0f;
-    mFrontLegR->mY = 0.0f;
-    mFrontLegR->mZ = 0.0f;
-    mFrontLegL->mY = 0.0f;
-    mFrontLegL->mZ = 0.0f;
-    mBackLegR->mY = 0.0f;
-    mBackLegR->mZ = 0.0f;
-    mBackLegL->mY = 0.0f;
-    mBackLegL->mZ = 0.0f;
+    mBody->mY = OCELOT_BODY_Y;
+    mBody->mZ = OCELOT_BODY_Z;
+    mHead->mY = OCELOT_HEAD_Y;
+    mHead->mZ = OCELOT_HEAD_Z;
+    mTail1->mY = OCELOT_TAIL1_Y;
+    mTail1->mZ = OCELOT_TAIL1_Z;
+    mTail2->mY = OCELOT_TAIL2_Y;
+    mTail2->mZ = OCELOT_TAIL2_Z;
+    mFrontLegR->mY = OCELOT_FRONT_LEG_Y;
+    mFrontLegR->mZ = OCELOT_FRONT_LEG_Z;
+    mFrontLegL->mY = OCELOT_FRONT_LEG_Y;
+    mFrontLegL->mZ = OCELOT_FRONT_LEG_Z;
+    mBackLegR->mY = OCELOT_BACK_LEG_Y;
+    mBackLegR->mZ = OCELOT_BACK_LEG_Z;
+    mBackLegL->mY = OCELOT_BACK_LEG_Y;
+    mBackLegL->mZ = OCELOT_BACK_LEG_Z;
     mTail1->mXRot = 0.9f;
     mBody->mXRot = 0.0f;
 
@@ -217,40 +200,35 @@ void OcelotModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float
         mTail2->mXRot = 1.5707964f;
         mPose = 2;
     }
+    else if (ocelot->isSitting())
+    {
+        mBody->mY += -4.0f;
+        mBody->mXRot = -45.0f * Mth::DEG_TO_RAD;
+        mBody->mZ += 5.0f;
+        mHead->mY += -3.3f;
+        mHead->mZ += 1.0f;
+        mTail1->mY += 8.0f;
+        mTail1->mZ += -2.0f;
+        mTail1->mXRot = 1.7278761f;
+        mTail2->mY += 2.0f;
+        mTail2->mZ += -0.8f;
+        mTail2->mXRot = 2.670354f;
+        mFrontLegL->mXRot = -0.15707964f;
+        mFrontLegL->mY = OCELOT_FRONT_LEG_Y + 2.0f;
+        mFrontLegL->mZ = -7.0f;
+        mFrontLegR->mXRot = -0.15707964f;
+        mFrontLegR->mY = OCELOT_FRONT_LEG_Y + 2.0f;
+        mFrontLegR->mZ = -7.0f;
+        mBackLegL->mXRot = -1.5707964f;
+        mBackLegL->mY = OCELOT_BACK_LEG_Y + 3.0f;
+        mBackLegL->mZ = OCELOT_BACK_LEG_Z - 4.0f;
+        mBackLegR->mXRot = -1.5707964f;
+        mBackLegR->mY = OCELOT_BACK_LEG_Y + 3.0f;
+        mBackLegR->mZ = OCELOT_BACK_LEG_Z - 4.0f;
+        mPose = 3;
+    }
     else
     {
-
-        if (ocelot->isSitting())
-        {
-            mBody->mY += -4.0f;
-            mBody->mXRot = -45.0f * 0.017453292f;
-            mBody->mZ += 5.0f;
-            mHead->mY += -3.3f;
-            mHead->mZ += 1.0f;
-            mTail1->mY += 8.0f;
-            mTail1->mZ += -2.0f;
-            mTail1->mXRot = 1.7278761f;
-            mTail2->mY += 2.0f;
-            mTail2->mZ += -0.8f;
-            mTail2->mXRot = 2.670354f;
-            mFrontLegL->mXRot = -0.15707964f;
-            mFrontLegL->mY = 2.0f;
-            mFrontLegL->mZ = -7.0f;
-            mFrontLegR->mXRot = -0.15707964f;
-            mFrontLegR->mY = 2.0f;
-            mFrontLegR->mZ = -7.0f;
-            mBackLegL->mXRot = -1.5707964f;
-            mBackLegL->mY = 3.0f;
-            mBackLegL->mZ = -4.0f;
-            mBackLegR->mXRot = -1.5707964f;
-            mBackLegR->mY = 3.0f;
-            mBackLegR->mZ = -4.0f;
-            mPose = 3;
-        }
-        else
-        {
-            mPose = 1;
-        }
+        mPose = 1;
     }
 }
-

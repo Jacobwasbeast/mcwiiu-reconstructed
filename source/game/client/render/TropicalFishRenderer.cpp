@@ -24,9 +24,9 @@
 static std::map<std::wstring, ResourceLocation*> LAYERED_LOCATION_CACHE;
 
 TropicalFishRenderer::TropicalFishRenderer(EntityRenderDispatcher* dispatcher)
-    : FishRenderer(dispatcher, FISH_TYPE_TROPICAL_FISH, 0.1F),
-      mModel2(new FishModel(ModelDefinition(), FISH_TYPE_TROPICAL_FISH, 1))
+    : FishRenderer(dispatcher, FISH_TYPE_TROPICAL_FISH, 0.1F)
 {
+    mModel2 = new FishModel(ModelDefinition(), FISH_TYPE_TROPICAL_FISH, 1);
 }
 
 TropicalFishRenderer::~TropicalFishRenderer()
@@ -45,11 +45,11 @@ void TropicalFishRenderer::renderModel(boost::shared_ptr<LivingEntity>& entity, 
                                        float limbSwingAmount, float ageInTicks, float netHeadYaw,
                                        float headPitch, float scale)
 {
-    boost::shared_ptr<Entity> renderEntity = boost::static_pointer_cast<Entity>(entity);
     boost::shared_ptr<TropicalFish> fish = boost::static_pointer_cast<TropicalFish>(entity);
 
     if (!entity->isInvisible())
     {
+        boost::shared_ptr<Entity> renderEntity = entity;
         const ResourceLocation* location = getTextureLocation(renderEntity);
         int textureCount = location == NULL ? 0 : location->getTextureCount();
         int color1 = fish->getColor1();
@@ -88,12 +88,12 @@ void TropicalFishRenderer::renderModel(boost::shared_ptr<LivingEntity>& entity, 
         if (fish->getBaseVariant() == 0)
         {
             mModel->setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch,
-                              scale, renderEntity, _SkinAdjustments());
+                              scale, entity, _SkinAdjustments());
         }
         else
         {
             mModel2->setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch,
-                               scale, renderEntity, _SkinAdjustments());
+                               scale, entity, _SkinAdjustments());
         }
     }
 }
@@ -121,7 +121,9 @@ const ResourceLocation* TropicalFishRenderer::getTextureLocation(boost::shared_p
 Model* TropicalFishRenderer::getModel(boost::shared_ptr<LivingEntity>& entity)
 {
     boost::shared_ptr<TropicalFish> fish = boost::static_pointer_cast<TropicalFish>(entity);
-    return fish->getVariant() & 1 ? mModel2 : mModel;
+    if ((fish->getVariant() & 1) == 0)
+        return mModel;
+    return mModel2;
 }
 
 Model* TropicalFishRenderer::createModel(const ModelDefinition& definition)

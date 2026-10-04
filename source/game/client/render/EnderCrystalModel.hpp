@@ -18,8 +18,8 @@ public:
                         float ageInTicks, float netHeadYaw, float headPitch, float scale,
                         bool useDisplayList);
 
-    ModelPartSkin* mGlass;
     ModelPartSkin* mCube;
+    ModelPartSkin* mGlass;
     ModelPartSkin* mBase;
 };
 

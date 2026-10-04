@@ -14,19 +14,21 @@ FishModel::FishModel(const ModelDefinition& modelDefinition, FishRenderer::FishT
       mPart0(NULL), mPart1(NULL), mPart2(NULL), mPart3(NULL), mPart4(NULL), mPart5(NULL),
       mPart6(NULL), mPart7(NULL), mPart8(NULL), mPart9(NULL), mPart10(NULL), mPart11(NULL),
       mPart12(NULL), mPart13(NULL), mPart14(NULL), mPart15(NULL), mPart16(NULL), mPart17(NULL),
-      mPart18(NULL), mPart19(NULL), mPart20(NULL), mFishType(fishType), mVariant(variant),
-      mAnimationScale(0.0f), mAnimationOffset(0.0f)
+      mPart18(NULL), mPart19(NULL), mPart20(NULL), mFishType(fishType), mVariant(variant)
 {
     if (modelDefinition.DoesOverrideModel())
     {
-        if (fishType == FishRenderer::FISH_TYPE_COD)
+        switch (fishType)
+        {
+        case FishRenderer::FISH_TYPE_COD:
         {
             mPart0 = new ModelPartSkin(this, L"body", modelDefinition, NULL, 0.0f, NULL);
             mPart1 = new ModelPartSkin(this, L"tailfin", modelDefinition, mPart0, 0.0f, NULL);
             mPart4 = new ModelPartSkin(this, L"head", modelDefinition, mPart0, 0.0f, NULL);
             mPart5 = new ModelPartSkin(this, L"waist", modelDefinition, mPart0, 0.0f, NULL);
+            break;
         }
-        else if (fishType == FishRenderer::FISH_TYPE_PUFFERFISH)
+        case FishRenderer::FISH_TYPE_PUFFERFISH:
         {
             mPart0 = new ModelPartSkin(this, L"body", modelDefinition, NULL, 0.0f, NULL);
             mPart1 = new ModelPartSkin(this, L"tailfin", modelDefinition, mPart0, 0.0f, NULL);
@@ -42,8 +44,9 @@ FishModel::FishModel(const ModelDefinition& modelDefinition, FishRenderer::FishT
             mPart18 = new ModelPartSkin(this, L"spines_right_front", modelDefinition, mPart0, 0.0f, NULL);
             mPart19 = new ModelPartSkin(this, L"spines_right_mid", modelDefinition, mPart0, 0.0f, NULL);
             mPart20 = new ModelPartSkin(this, L"spines_right_back", modelDefinition, mPart0, 0.0f, NULL);
+            break;
         }
-        else if (fishType == FishRenderer::FISH_TYPE_SALMON)
+        case FishRenderer::FISH_TYPE_SALMON:
         {
             mPart0 = new ModelPartSkin(this, L"body_front", modelDefinition, NULL, 0.0f, NULL);
             mPart6 = new ModelPartSkin(this, L"body_back", modelDefinition, mPart0, 0.0f, NULL);
@@ -51,11 +54,14 @@ FishModel::FishModel(const ModelDefinition& modelDefinition, FishRenderer::FishT
             mPart8 = new ModelPartSkin(this, L"dorsal_back", modelDefinition, mPart6, 0.0f, NULL);
             mPart1 = new ModelPartSkin(this, L"tailfin", modelDefinition, mPart6, 0.0f, NULL);
             mPart4 = new ModelPartSkin(this, L"head", modelDefinition, mPart0, 0.0f, NULL);
+            break;
         }
-        else if (fishType == FishRenderer::FISH_TYPE_TROPICAL_FISH)
+        case FishRenderer::FISH_TYPE_TROPICAL_FISH:
         {
             mPart0 = new ModelPartSkin(this, L"body", modelDefinition, NULL, 0.0f, NULL);
             mPart1 = new ModelPartSkin(this, L"tailfin", modelDefinition, mPart0, 0.0f, NULL);
+            break;
+        }
         }
         mPart2 = new ModelPartSkin(this, L"leftFin", modelDefinition, mPart0, 0.0f, NULL);
         mPart3 = new ModelPartSkin(this, L"rightFin", modelDefinition, mPart0, 0.0f, NULL);
@@ -65,7 +71,9 @@ FishModel::FishModel(const ModelDefinition& modelDefinition, FishRenderer::FishT
 
     mTexHeight = 32;
     mTexWidth = 32;
-    if (fishType == FishRenderer::FISH_TYPE_COD)
+    switch (fishType)
+    {
+    case FishRenderer::FISH_TYPE_COD:
     {
         mPart0 = new ModelPartSkin(this, 0, 0, NULL);
         mPart0->addBox(-1.0f, -4.0f, 1.0f, 2, 4, 7);
@@ -92,8 +100,9 @@ FishModel::FishModel(const ModelDefinition& modelDefinition, FishRenderer::FishT
         mPart1->setPos(0.0f, 0.0f, 8.0f);
         mPart0->addChild(mPart1);
         compileSkinnedDrawlist();
+        break;
     }
-    else if (fishType == FishRenderer::FISH_TYPE_PUFFERFISH)
+    case FishRenderer::FISH_TYPE_PUFFERFISH:
     {
         if (variant == 0)
         {
@@ -124,15 +133,15 @@ FishModel::FishModel(const ModelDefinition& modelDefinition, FishRenderer::FishT
             mPart0->addBox(-2.5f, -6.0f, -2.5f, 5, 5, 5);
             mPart2 = new ModelPartSkin(this, 24, 3, NULL);
             mPart2->setPos(2.5f, -5.0f, 0.5f);
-            mPart2->addBox(0.0f, 0.0f, -2.0f, 2, 1, 2);
+            mPart2->addBox(0.0f, -0.0f, -2.0f, 2, 1, 2);
             mPart0->addChild(mPart2);
             mPart3 = new ModelPartSkin(this, 24, 0, NULL);
             mPart3->setPos(-2.5f, -5.0f, 0.5f);
-            mPart3->addBox(-2.0f, 0.0f, -2.0f, 2, 1, 2);
+            mPart3->addBox(-2.0f, -0.0f, -2.0f, 2, 1, 2);
             mPart0->addChild(mPart3);
             mPart9 = new ModelPartSkin(this, 19, 17, NULL);
             mPart9->setPos(0.0f, -6.0f, -2.5f);
-            mPart9->mXRot = 0.7853982f;
+            mPart9->mXRot = 45.0f * Mth::DEG_TO_RAD;
             mPart9->addBox(-2.5f, -1.0f, 0.0f, 5, 1, 0);
             mPart0->addChild(mPart9);
             mPart10 = new ModelPartSkin(this, 0, 0, NULL);
@@ -140,25 +149,25 @@ FishModel::FishModel(const ModelDefinition& modelDefinition, FishRenderer::FishT
             mPart0->addChild(mPart10);
             mPart11 = new ModelPartSkin(this, 11, 17, NULL);
             mPart11->setPos(0.0f, -6.0f, 2.5f);
-            mPart11->mXRot = -0.7853982f;
+            mPart11->mXRot = -45.0f * Mth::DEG_TO_RAD;
             mPart11->addBox(-2.5f, -1.0f, 0.0f, 5, 1, 0);
             mPart0->addChild(mPart11);
             mPart12 = new ModelPartSkin(this, 18, 20, NULL);
             mPart12->setPos(0.0f, -1.0f, -2.5f);
-            mPart12->mXRot = -0.7853982f;
-            mPart12->addBox(-2.5f, 0.0f, 0.0f, 5, 1, 0);
+            mPart12->mXRot = -45.0f * Mth::DEG_TO_RAD;
+            mPart12->addBox(-2.5f, -0.0f, 0.0f, 5, 1, 0);
             mPart0->addChild(mPart12);
             mPart13 = new ModelPartSkin(this, 0, 0, NULL);
             mPart13->setPos(0.0f, -24.0f, 0.0f);
             mPart0->addChild(mPart13);
             mPart14 = new ModelPartSkin(this, 18, 20, NULL);
             mPart14->setPos(0.0f, -1.0f, 2.5f);
-            mPart14->mXRot = 0.7853982f;
-            mPart14->addBox(-2.5f, 0.0f, 0.0f, 5, 1, 0);
+            mPart14->mXRot = 45.0f * Mth::DEG_TO_RAD;
+            mPart14->addBox(-2.5f, -0.0f, 0.0f, 5, 1, 0);
             mPart0->addChild(mPart14);
             mPart15 = new ModelPartSkin(this, 1, 17, NULL);
             mPart15->setPos(2.5f, 0.0f, -2.5f);
-            mPart15->mYRot = 0.7853982f;
+            mPart15->mYRot = 45.0f * Mth::DEG_TO_RAD;
             mPart15->addBox(0.0f, -6.0f, 0.0f, 1, 5, 0);
             mPart0->addChild(mPart15);
             mPart16 = new ModelPartSkin(this, 0, 0, NULL);
@@ -166,12 +175,12 @@ FishModel::FishModel(const ModelDefinition& modelDefinition, FishRenderer::FishT
             mPart0->addChild(mPart16);
             mPart17 = new ModelPartSkin(this, 1, 17, NULL);
             mPart17->setPos(2.5f, 0.0f, 2.5f);
-            mPart17->mYRot = -0.7853982f;
+            mPart17->mYRot = -45.0f * Mth::DEG_TO_RAD;
             mPart17->addBox(0.0f, -6.0f, 0.0f, 1, 5, 0);
             mPart0->addChild(mPart17);
             mPart18 = new ModelPartSkin(this, 5, 17, NULL);
             mPart18->setPos(-2.5f, 0.0f, -2.5f);
-            mPart18->mYRot = -0.7853982f;
+            mPart18->mYRot = -45.0f * Mth::DEG_TO_RAD;
             mPart18->addBox(-1.0f, -6.0f, 0.0f, 1, 5, 0);
             mPart0->addChild(mPart18);
             mPart19 = new ModelPartSkin(this, 0, 0, NULL);
@@ -179,7 +188,7 @@ FishModel::FishModel(const ModelDefinition& modelDefinition, FishRenderer::FishT
             mPart0->addChild(mPart19);
             mPart20 = new ModelPartSkin(this, 9, 17, NULL);
             mPart20->setPos(-2.5f, 0.0f, 2.5f);
-            mPart20->mYRot = 0.7853982f;
+            mPart20->mYRot = 45.0f * Mth::DEG_TO_RAD;
             mPart20->addBox(-1.0f, -6.0f, 0.0f, 1, 5, 0);
             mPart0->addChild(mPart20);
             mPart1 = NULL;
@@ -192,15 +201,15 @@ FishModel::FishModel(const ModelDefinition& modelDefinition, FishRenderer::FishT
             mPart0->addBox(-4.0f, -8.0f, -4.0f, 8, 8, 8);
             mPart2 = new ModelPartSkin(this, 24, 3, NULL);
             mPart2->setPos(4.0f, -7.0f, 3.0f);
-            mPart2->addBox(0.0f, 0.0f, -5.99f, 2, 1, 2);
+            mPart2->addBox(0.0f, -0.0f, -5.99f, 2, 1, 2);
             mPart0->addChild(mPart2);
             mPart3 = new ModelPartSkin(this, 24, 0, NULL);
             mPart3->setPos(-4.0f, -7.0f, 1.0f);
-            mPart3->addBox(-1.997f, 0.0f, -3.992f, 2, 1, 2);
+            mPart3->addBox(-1.997f, -0.0f, -3.992f, 2, 1, 2);
             mPart0->addChild(mPart3);
             mPart9 = new ModelPartSkin(this, 14, 16, NULL);
             mPart9->setPos(-4.0f, -8.0f, -4.0f);
-            mPart9->mXRot = 0.7853982f;
+            mPart9->mXRot = 45.0f * Mth::DEG_TO_RAD;
             mPart9->addBox(0.0f, -1.0f, 0.0f, 8, 1, 1);
             mPart0->addChild(mPart9);
             mPart10 = new ModelPartSkin(this, 14, 16, NULL);
@@ -209,13 +218,13 @@ FishModel::FishModel(const ModelDefinition& modelDefinition, FishRenderer::FishT
             mPart0->addChild(mPart10);
             mPart11 = new ModelPartSkin(this, 14, 16, NULL);
             mPart11->setPos(0.0f, -8.0f, 4.0f);
-            mPart11->mXRot = -0.7853982f;
+            mPart11->mXRot = -45.0f * Mth::DEG_TO_RAD;
             mPart11->addBox(-4.0f, -1.0f, 0.0f, 8, 1, 1);
             mPart0->addChild(mPart11);
             mPart12 = new ModelPartSkin(this, 14, 19, NULL);
             mPart12->setPos(0.0f, 0.0f, -4.0f);
-            mPart12->mXRot = -0.7853982f;
-            mPart12->addBox(-4.0f, 0.0f, 0.0f, 8, 1, 1);
+            mPart12->mXRot = -45.0f * Mth::DEG_TO_RAD;
+            mPart12->addBox(-4.0f, -0.0f, 0.0f, 8, 1, 1);
             mPart0->addChild(mPart12);
             mPart13 = new ModelPartSkin(this, 14, 19, NULL);
             mPart13->setPos(0.0f, 1.0f, 0.0f);
@@ -223,12 +232,12 @@ FishModel::FishModel(const ModelDefinition& modelDefinition, FishRenderer::FishT
             mPart0->addChild(mPart13);
             mPart14 = new ModelPartSkin(this, 14, 19, NULL);
             mPart14->setPos(0.0f, 0.0f, 4.0f);
-            mPart14->mXRot = 0.7853982f;
-            mPart14->addBox(-4.0f, 0.0f, 0.0f, 8, 1, 1);
+            mPart14->mXRot = 45.0f * Mth::DEG_TO_RAD;
+            mPart14->addBox(-4.0f, -0.0f, 0.0f, 8, 1, 1);
             mPart0->addChild(mPart14);
             mPart15 = new ModelPartSkin(this, 0, 16, NULL);
             mPart15->setPos(4.0f, 0.0f, -4.0f);
-            mPart15->mYRot = 0.7853982f;
+            mPart15->mYRot = 45.0f * Mth::DEG_TO_RAD;
             mPart15->addBox(0.0f, -8.0f, 0.0f, 1, 8, 1);
             mPart0->addChild(mPart15);
             mPart16 = new ModelPartSkin(this, 4, 16, NULL);
@@ -237,12 +246,12 @@ FishModel::FishModel(const ModelDefinition& modelDefinition, FishRenderer::FishT
             mPart0->addChild(mPart16);
             mPart17 = new ModelPartSkin(this, 8, 16, NULL);
             mPart17->setPos(4.0f, 0.0f, 4.0f);
-            mPart17->mYRot = -0.7853982f;
+            mPart17->mYRot = -45.0f * Mth::DEG_TO_RAD;
             mPart17->addBox(0.0f, -8.0f, 0.0f, 1, 8, 1, true);
             mPart0->addChild(mPart17);
             mPart18 = new ModelPartSkin(this, 4, 16, NULL);
             mPart18->setPos(-4.0f, 0.0f, -4.0f);
-            mPart18->mYRot = -0.7853982f;
+            mPart18->mYRot = -45.0f * Mth::DEG_TO_RAD;
             mPart18->addBox(-1.0f, -8.0f, 0.0f, 1, 8, 1);
             mPart0->addChild(mPart18);
             mPart19 = new ModelPartSkin(this, 8, 16, NULL);
@@ -251,7 +260,7 @@ FishModel::FishModel(const ModelDefinition& modelDefinition, FishRenderer::FishT
             mPart0->addChild(mPart19);
             mPart20 = new ModelPartSkin(this, 8, 16, NULL);
             mPart20->setPos(-4.0f, 0.0f, 4.0f);
-            mPart20->mYRot = 0.7853982f;
+            mPart20->mYRot = 45.0f * Mth::DEG_TO_RAD;
             mPart20->addBox(-1.0f, -8.0f, 0.0f, 1, 8, 1);
             mPart0->addChild(mPart20);
             mPart1 = NULL;
@@ -261,8 +270,9 @@ FishModel::FishModel(const ModelDefinition& modelDefinition, FishRenderer::FishT
         {
             compileSkinnedDrawlist();
         }
+        break;
     }
-    else if (fishType == FishRenderer::FISH_TYPE_SALMON)
+    case FishRenderer::FISH_TYPE_SALMON:
     {
         mPart0 = new ModelPartSkin(this, 0, 0, NULL);
         mPart0->addBox(-1.5f, -8.5f, 0.0f, 3, 5, 8);
@@ -298,8 +308,9 @@ FishModel::FishModel(const ModelDefinition& modelDefinition, FishRenderer::FishT
         mPart3->setPos(-1.5f, -1.0f, 0.0f);
         mPart0->addChild(mPart3);
         compileSkinnedDrawlist();
+        break;
     }
-    else if (fishType == FishRenderer::FISH_TYPE_TROPICAL_FISH)
+    case FishRenderer::FISH_TYPE_TROPICAL_FISH:
     {
         if (variant == 0)
         {
@@ -350,10 +361,11 @@ FishModel::FishModel(const ModelDefinition& modelDefinition, FishRenderer::FishT
         {
             compileSkinnedDrawlist();
         }
+        break;
     }
-    else
-    {
+    default:
         compileSkinnedDrawlist();
+        break;
     }
 }
 
@@ -367,9 +379,8 @@ void FishModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float
                        bool useDisplayList)
 {
     boost::shared_ptr<Fish> fish = boost::static_pointer_cast<Fish>(entity);
-    const float fishLimbSwing = Mth::Lerp(fish->mSwimRotationOld, fish->mSwimRotation, 0.05f);
-    setupAnim(fishLimbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity,
-              _SkinAdjustments());
+    setupAnim(Mth::Lerp(fish->mSwimRotationOld, fish->mSwimRotation, 0.05f), limbSwingAmount, ageInTicks,
+              netHeadYaw, headPitch, scale, entity, _SkinAdjustments());
     if (!fish->mSwimFlag)
     {
         mPart0->render(scale, useDisplayList, false);
@@ -391,27 +402,26 @@ void FishModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTic
                           _SkinAdjustments skinAdjustments)
 {
     const float swing = Mth::cos(limbSwing * Mth::DEG_TO_RAD * mAnimationScale) * Mth::DEG_TO_RAD;
-    if (mFishType == FishRenderer::FISH_TYPE_COD)
+    switch (mFishType)
     {
+    case FishRenderer::FISH_TYPE_COD:
         mPart4->mYRot = swing * 4.0f;
         mPart0->mYRot = swing + swing;
         mPart1->mYRot = swing * -25.75f;
-    }
-    else if (mFishType == FishRenderer::FISH_TYPE_PUFFERFISH)
-    {
+        break;
+    case FishRenderer::FISH_TYPE_PUFFERFISH:
         if (mPart1 != NULL)
             mPart1->mYRot = swing * -5.75f;
-    }
-    else if (mFishType == FishRenderer::FISH_TYPE_SALMON)
-    {
+        break;
+    case FishRenderer::FISH_TYPE_SALMON:
         mPart0->mYRot = swing * 4.0f;
         mPart6->mYRot = swing * -21.75f;
         mPart1->mYRot = swing * -40.0f;
-    }
-    else if (mFishType == FishRenderer::FISH_TYPE_TROPICAL_FISH)
-    {
+        break;
+    case FishRenderer::FISH_TYPE_TROPICAL_FISH:
         mPart0->mYRot = swing + swing;
         mPart1->mYRot = swing * -25.75f;
+        break;
     }
 }
 
@@ -432,16 +442,21 @@ void FishModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float l
 
 std::wstring FishModel::getName()
 {
-    if (mFishType == FishRenderer::FISH_TYPE_COD) return L"cod";
-    if (mFishType == FishRenderer::FISH_TYPE_PUFFERFISH)
+    switch (mFishType)
     {
+    case FishRenderer::FISH_TYPE_COD:
+        return L"cod";
+    case FishRenderer::FISH_TYPE_PUFFERFISH:
         if (mVariant == 0) return L"pufferfish.small";
         if (mVariant == 1) return L"pufferfish.mid";
         if (mVariant == 2) return L"pufferfish.large";
         return L"pufferfish";
+    case FishRenderer::FISH_TYPE_SALMON:
+        return L"salmon";
+    case FishRenderer::FISH_TYPE_TROPICAL_FISH:
+        if (mVariant == 0) return L"tropicalfish_a";
+        if (mVariant == 1) return L"tropicalfish_b";
+        break;
     }
-    if (mFishType == FishRenderer::FISH_TYPE_SALMON) return L"salmon";
-    if (mVariant == 0) return L"tropicalfish_a";
-    if (mVariant == 1) return L"tropicalfish_b";
     return L"cod";
 }

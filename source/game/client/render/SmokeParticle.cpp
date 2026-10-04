@@ -1,6 +1,8 @@
 #include "game/client/render/SmokeParticle.hpp"
 #include "game/core/EntityType.hpp"
 
+#include <cmath>
+
 #include "game/core/ColourTable.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/core/Mth.hpp"
@@ -25,9 +27,9 @@ void SmokeParticle::init(Level* level, double x, double y, double z, double xa, 
 
     const float randomScale = random.nextFloat();
     const unsigned int colour = Minecraft::GetInstance()->getColourTable()->getColour(eMinecraftColour_Particle_Smoke);
-    const float red = ((float)((colour >> 16) & 255)) / 255.0f;
-    const float green = ((float)((colour >> 8) & 255)) / 255.0f;
-    const float blue = ((float)(colour & 255)) / 255.0f;
+    const float red = ((float)(int)((colour >> 16) & 255)) / 255.0f;
+    const float green = ((float)(int)((colour >> 8) & 255)) / 255.0f;
+    const float blue = ((float)(int)(colour & 255)) / 255.0f;
     rCol = red * randomScale;
     gCol = green * randomScale;
     bCol = blue * randomScale;
@@ -35,7 +37,7 @@ void SmokeParticle::init(Level* level, double x, double y, double z, double xa, 
     const float particleSize = Particle::size * 0.75f * scale;
     Particle::size = particleSize;
     size = particleSize;
-    lifetime = (int)((double)(int)(8.0 / (random.nextDouble() * 0.8 + 0.2)) * scale);
+    lifetime = (int)((float)(int)floor(8.0 / (random.nextDouble() * 0.8 + 0.2)) * scale);
     setMiscTex(7);
 }
 
@@ -52,8 +54,7 @@ void SmokeParticle::tick()
     xo = x;
     yo = y;
     zo = z;
-    ++age;
-    if (age >= lifetime)
+    if (age++ >= lifetime)
     {
         remove();
     }

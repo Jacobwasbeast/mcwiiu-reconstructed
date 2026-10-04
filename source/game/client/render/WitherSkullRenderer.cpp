@@ -10,8 +10,9 @@ static ResourceLocation WITHER_SKULL_LOCATION(TN_MOB_WITHER_WITHER);
 static ResourceLocation WITHER_SKULL_INVULNERABLE_LOCATION(TN_MOB_WITHER_WITHER_INVULNERABLE);
 
 WitherSkullRenderer::WitherSkullRenderer(EntityRenderDispatcher* dispatcher)
-    : EntityRenderer(dispatcher), mWitherSkullModel(new SkeletonHeadModel(ModelDefinition()))
+    : EntityRenderer(dispatcher)
 {
+    mWitherSkullModel = new SkeletonHeadModel(ModelDefinition());
 }
 
 WitherSkullRenderer::~WitherSkullRenderer()
@@ -41,12 +42,12 @@ void WitherSkullRenderer::render(boost::shared_ptr<Entity>& entity, double x, do
     GlStateManager::enableRescaleNormal();
     GlStateManager::scalef(-1.0F, -1.0F, 1.0F);
     GlStateManager::enableAlphaTest();
+    bindTexture(entity);
 
     if (mSolidRender)
     {
         GlStateManager::enableColorMaterial();
-        getTeamColor(entity);
-        GlStateManager::setupSolidRenderingTextureCombine(1);
+        GlStateManager::setupSolidRenderingTextureCombine(getTeamColor(entity));
     }
 
     mWitherSkullModel->render(entity, 0.0F, 0.0F, 0.0F, interpolatedYaw,
@@ -65,10 +66,7 @@ void WitherSkullRenderer::render(boost::shared_ptr<Entity>& entity, double x, do
 const ResourceLocation* WitherSkullRenderer::getTextureLocation(boost::shared_ptr<Entity>& entity)
 {
     boost::shared_ptr<WitherSkull> skull = boost::static_pointer_cast<WitherSkull>(entity);
-    if (skull->isDangerous())
-        return &WITHER_SKULL_INVULNERABLE_LOCATION;
-
-    return &WITHER_SKULL_LOCATION;
+    return skull->isDangerous() ? &WITHER_SKULL_INVULNERABLE_LOCATION : &WITHER_SKULL_LOCATION;
 }
 
 Model* WitherSkullRenderer::createModel(const ModelDefinition& definition)

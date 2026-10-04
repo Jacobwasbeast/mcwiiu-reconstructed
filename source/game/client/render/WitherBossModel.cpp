@@ -16,10 +16,18 @@ WitherBossModel::WitherBossModel(float scale, const ModelDefinition& modelDefini
     , mHeads(NULL)
     , mNumHeads(0)
 {
+    mUpperBodyParts = new ModelPartSkin*[3];
     mNumUpperBodyParts = 3;
-    mUpperBodyParts = new ModelPartSkin*[3]();
+    for (unsigned int i = 0; i < 3; ++i)
+    {
+        mUpperBodyParts[i] = NULL;
+    }
+    mHeads = new ModelPartSkin*[3];
     mNumHeads = 3;
-    mHeads = new ModelPartSkin*[3]();
+    for (unsigned int i = 0; i < 3; ++i)
+    {
+        mHeads[i] = NULL;
+    }
 
     BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
 
@@ -41,30 +49,36 @@ WitherBossModel::WitherBossModel(float scale, const ModelDefinition& modelDefini
         mTexWidth = 64;
         mTexHeight = 64;
 
-        mUpperBodyParts[0] = new ModelPartSkin(this, 0, 16, NULL);
-        mUpperBodyParts[0]->addBox(-10.0f, 3.9f, -0.5f, 20, 3, 3, scale);
+        ModelPartSkin* part = new ModelPartSkin(this, 0, 16, NULL);
+        mUpperBodyParts[0] = part;
+        part->addBox(-10.0f, 3.9f, -0.5f, 20, 3, 3, scale);
 
-        mUpperBodyParts[1] = new ModelPartSkin(this);
-        mUpperBodyParts[1]->setTexSize(64, 64);
+        part = new ModelPartSkin(this);
+        mUpperBodyParts[1] = part;
+        part->setTexSize(mTexWidth, mTexHeight);
         mUpperBodyParts[1]->setPos(-2.0f, 6.9f, -0.5f);
         mUpperBodyParts[1]->texOffs(0, 22)->addBox(0.0f, 0.0f, 0.0f, 3, 10, 3, scale);
         mUpperBodyParts[1]->texOffs(24, 22)->addBox(-4.0f, 1.5f, 0.5f, 11, 2, 2, scale);
         mUpperBodyParts[1]->texOffs(24, 22)->addBox(-4.0f, 4.0f, 0.5f, 11, 2, 2, scale);
         mUpperBodyParts[1]->texOffs(24, 22)->addBox(-4.0f, 6.5f, 0.5f, 11, 2, 2, scale);
 
-        mUpperBodyParts[2] = new ModelPartSkin(this, 12, 22, NULL);
-        mUpperBodyParts[2]->addBox(0.0f, 0.0f, 0.0f, 3, 6, 3, scale);
+        part = new ModelPartSkin(this, 12, 22, NULL);
+        mUpperBodyParts[2] = part;
+        part->addBox(0.0f, 0.0f, 0.0f, 3, 6, 3, scale);
 
-        mHeads[0] = new ModelPartSkin(this, 0, 0, NULL);
-        mHeads[0]->addBox(-4.0f, -4.0f, -4.0f, 8, 8, 8, scale);
+        part = new ModelPartSkin(this, 0, 0, NULL);
+        mHeads[0] = part;
+        part->addBox(-4.0f, -4.0f, -4.0f, 8, 8, 8, scale);
 
-        mHeads[1] = new ModelPartSkin(this, 32, 0, NULL);
-        mHeads[1]->addBox(-4.0f, -4.0f, -4.0f, 6, 6, 6, scale);
+        part = new ModelPartSkin(this, 32, 0, NULL);
+        mHeads[1] = part;
+        part->addBox(-4.0f, -4.0f, -4.0f, 6, 6, 6, scale);
         mHeads[1]->mX = -8.0f;
         mHeads[1]->mY = 4.0f;
 
-        mHeads[2] = new ModelPartSkin(this, 32, 0, NULL);
-        mHeads[2]->addBox(-4.0f, -4.0f, -4.0f, 6, 6, 6, scale);
+        part = new ModelPartSkin(this, 32, 0, NULL);
+        mHeads[2] = part;
+        part->addBox(-4.0f, -4.0f, -4.0f, 6, 6, 6, scale);
         mHeads[2]->mX = 10.0f;
         mHeads[2]->mY = 4.0f;
 
@@ -96,12 +110,14 @@ void WitherBossModel::setupAnim(float limbSwing, float limbSwingAmount, float ag
                                 _SkinAdjustments skinAdjustments)
 {
     float angle = ageInTicks * 0.1f;
-    float headRotation = (cosf(angle) * 0.05f + 0.065f) * 3.1415927f +
+    float swing = cosf(angle);
+    float headRotation = (swing * 0.05f + 0.065f) * 3.1415927f +
                          headPitch * 0.017453292f;
 
     mUpperBodyParts[1]->mXRot = headRotation;
-    mUpperBodyParts[2]->setPos(-2.0f, cosf(headRotation) * 10.0f + 6.9f, sinf(headRotation) * 10.0f - 0.5f);
-    mUpperBodyParts[2]->mXRot = (cosf(angle) * 0.1f + 0.265f) * 3.1415927f;
+    mUpperBodyParts[2]->setPos(-2.0f, cosf(headRotation) * 10.0f + 6.9f,
+                               sinf(mUpperBodyParts[1]->mXRot) * 10.0f - 0.5f);
+    mUpperBodyParts[2]->mXRot = (swing * 0.1f + 0.265f) * 3.1415927f;
     mHeads[0]->mXRot = headPitch * 0.017453292f;
     mHeads[0]->mYRot = netHeadYaw * 0.017453292f;
 }

@@ -8,8 +8,14 @@
 #include "game/util/AABB.hpp"
 
 EnderParticle::EnderParticle(Level* level, double x, double y, double z, double xa, double ya, double za)
-    : Particle(level, x, y, z, xa, ya, za), originX(x), originY(y), originZ(z), scale(1.0f)
+    : Particle(level, x, y, z, xa, ya, za), originX(x), originY(y), originZ(z)
 {
+    xd = xa;
+    yd = ya;
+    zd = za;
+    this->x = x;
+    this->y = y;
+    this->z = z;
     unsigned int colour = Minecraft::GetInstance()->getColourTable()->getColour(eMinecraftColour_Particle_Ender);
     rCol = (float)((colour >> 16) & 255) / 255.0f;
     gCol = (float)((colour >> 8) & 255) / 255.0f;

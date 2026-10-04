@@ -30,14 +30,14 @@ public:
         ~ParticleList();
         void ClearParticles();
         Particle* at(int index);
-        unsigned int size();
+        int size();
         void push_back(Particle* particle);
         void RemoveParticle(unsigned int index);
         bool empty();
 
     private:
         Particle** particles;
-        unsigned int particleCount;
+        int particleCount;
     };
 
     ParticleEngine(Level* level, Textures* textures);

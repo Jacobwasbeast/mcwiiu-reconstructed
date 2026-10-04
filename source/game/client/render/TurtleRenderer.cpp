@@ -28,8 +28,8 @@ void TurtleRenderer::render(boost::shared_ptr<Entity>& entity, double x, double 
                             float yaw, float partialTick)
 {
     boost::shared_ptr<Turtle> turtle = boost::static_pointer_cast<Turtle>(entity);
-    if (turtle->isLayingEgg())
-        partialTick *= 0.5f;
+    if (turtle->isBaby())
+        mShadowRadius *= 0.5f;
 
     MobRenderer::render(entity, x, y, z, yaw, partialTick);
 }

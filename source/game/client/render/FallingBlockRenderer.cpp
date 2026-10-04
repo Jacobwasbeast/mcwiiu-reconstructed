@@ -31,18 +31,18 @@ void FallingBlockRenderer::render(boost::shared_ptr<Entity>& entity, double x, d
                                   float yaw, float partialTick)
 {
     boost::shared_ptr<FallingBlockEntity> fallingBlock = boost::static_pointer_cast<FallingBlockEntity>(entity);
-    const BlockState* blockState = fallingBlock->getBlock();
-    if (blockState == NULL)
+    if (fallingBlock->getBlock() == NULL)
         return;
 
     bindTexture(&BLOCKS_LOCATION);
 
+    const BlockState* blockState = fallingBlock->getBlock();
+    Block* block = blockState->getBlock();
     BlockPos blockPos(fallingBlock);
     Level* level = fallingBlock->getLevel();
     const BlockState* levelState = level->getBlockState(blockPos);
     if (blockState != levelState)
     {
-        Block* block = blockState->getBlock();
         const BlockState* defaultState = block->defaultBlockState();
         if (defaultState->getRenderShape() != BLOCK_RENDER_INVISIBLE)
         {
@@ -57,7 +57,7 @@ void FallingBlockRenderer::render(boost::shared_ptr<Entity>& entity, double x, d
             float offset = 0.5F;
             if (block == Blocks::anvil && defaultState->getRenderShape() == BLOCK_RENDER_ANVIL)
             {
-                blockRenderer->prepare(level);
+                blockRenderer->mLevelSource = level;
                 builder->begin();
                 builder->offset((float)-(int)fallingBlock->mX - offset,
                                 (float)-(int)fallingBlock->mY,
@@ -69,7 +69,7 @@ void FallingBlockRenderer::render(boost::shared_ptr<Entity>& entity, double x, d
             }
             else if (block != NULL)
             {
-                blockRenderer->prepare(level);
+                blockRenderer->mLevelSource = level;
                 builder->begin();
                 builder->offset((float)-(int)fallingBlock->mX - offset,
                                 (float)-(int)fallingBlock->mY,

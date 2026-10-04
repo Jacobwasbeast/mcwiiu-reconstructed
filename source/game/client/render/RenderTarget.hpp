@@ -16,7 +16,7 @@ public:
     void unbindWrite();
     void clear();
     void bindWrite(unsigned char setViewport);
-    void unbindRead();
+    void unbindRead() {}
     void createBuffers(int width, int height);
     void setFilterMode(int filterMode);
     void checkStatus();

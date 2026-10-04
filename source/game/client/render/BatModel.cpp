@@ -8,6 +8,7 @@
 #include "game/client/render/Tesselator.hpp"
 #include "game/core/Bat.hpp"
 #include "game/core/BufferBuilder.hpp"
+#include "game/core/Mth.hpp"
 
 BatModel::BatModel(const ModelDefinition& modelDefinition)
 {
@@ -103,8 +104,8 @@ void BatModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTick
 
     if (bat && bat->isResting())
     {
-        mHead->mXRot = headPitch * 0.017453292f;
-        mHead->mYRot = 3.1415927f - netHeadYaw * 0.017453292f;
+        mHead->mXRot = headPitch * Mth::DEG_TO_RAD;
+        mHead->mYRot = 3.1415927f - netHeadYaw * Mth::DEG_TO_RAD;
         mHead->mZRot = 3.1415927f;
         mHead->setPos(0.0f, -2.0f, 0.0f);
 
@@ -123,22 +124,24 @@ void BatModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTick
     }
     else
     {
-        mHead->mXRot = headPitch * 0.017453292f;
-        mHead->mYRot = netHeadYaw * 0.017453292f;
+        mHead->mXRot = headPitch * Mth::DEG_TO_RAD;
+        mHead->mYRot = netHeadYaw * Mth::DEG_TO_RAD;
         mHead->mZRot = 0.0f;
         mHead->setPos(0.0f, 0.0f, 0.0f);
 
         mRightWing->setPos(0.0f, 0.0f, 0.0f);
         mLeftWing->setPos(0.0f, 0.0f, 0.0f);
 
-        mBody->mXRot = 0.7853982f + cosf(ageInTicks * 0.1f) * 0.15f;
+        float bob = cosf(ageInTicks * 0.1f);
+        mBody->mXRot = 0.7853982f + 0.15f * bob;
         mBody->mYRot = 0.0f;
 
-        mRightWing->mYRot = cosf(ageInTicks * 1.3f) * 3.1415927f * 0.25f;
-        mLeftWing->mYRot = -mRightWing->mYRot;
+        float flap = cosf(ageInTicks * 1.3f) * 3.1415927f * 0.25f;
+        mRightWing->mYRot = flap;
+        mLeftWing->mYRot = -flap;
 
         mRightWingTip->mYRot = mRightWing->mYRot * 0.5f;
-        mLeftWingTip->mYRot = -mRightWing->mYRot * 0.5f;
+        mLeftWingTip->mYRot = -(mRightWing->mYRot * 0.5f);
     }
 }
 

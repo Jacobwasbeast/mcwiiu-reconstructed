@@ -23,42 +23,41 @@ static ResourceLocation SKULL_TEXTURE_5(TN_MOB_ENDERDRAGON_ENDER);
 SkullBlockRenderer* SkullBlockRenderer::instance = NULL;
 
 SkullBlockRenderer::SkullBlockRenderer()
-    : mCreeperModel(NULL), mDragonModel(NULL), mActiveCreeperModel(NULL), mActiveDragonModel(NULL)
 {
-    mSkeletonModels[0] = new SkeletonHeadModel(0, 0, 64, 32, ModelDefinition());
-    mSkeletonModels[1] = new SkeletonHeadModel(0, 0, 64, 32, ModelDefinition());
-    mSkeletonModels[2] = new SkeletonHeadModel(0, 0, 64, 32, ModelDefinition());
-    mSkeletonModels[3] = new SkeletonHeadModel(0, 0, 64, 64, ModelDefinition());
-    mCreeperModel = new CreeperHeadModel(0.0F, ModelDefinition());
-    mDragonModel = new DragonHeadModel(0.0F, ModelDefinition());
-    mActiveCreeperModel = mCreeperModel;
-    mActiveDragonModel = mDragonModel;
-    mActiveSkeletonModels[0] = mSkeletonModels[0];
-    mActiveSkeletonModels[1] = mSkeletonModels[1];
-    mActiveSkeletonModels[2] = mSkeletonModels[2];
-    mActiveSkeletonModels[3] = mSkeletonModels[3];
+    mActiveSkeletonModels[0] = new SkeletonHeadModel(0, 0, 64, 32, ModelDefinition());
+    mActiveSkeletonModels[1] = new SkeletonHeadModel(0, 0, 64, 32, ModelDefinition());
+    mActiveSkeletonModels[2] = new SkeletonHeadModel(0, 0, 64, 32, ModelDefinition());
+    mActiveSkeletonModels[3] = new SkeletonHeadModel(0, 0, 64, 64, ModelDefinition());
+    mActiveCreeperModel = new CreeperHeadModel(0.0F, ModelDefinition());
+    mActiveDragonModel = new DragonHeadModel(0.0F, ModelDefinition());
+    mCreeperModel = mActiveCreeperModel;
+    mSkeletonModels[3] = mActiveSkeletonModels[3];
+    mSkeletonModels[0] = mActiveSkeletonModels[0];
+    mSkeletonModels[1] = mActiveSkeletonModels[1];
+    mDragonModel = mActiveDragonModel;
+    mSkeletonModels[2] = mActiveSkeletonModels[2];
 }
 
 SkullBlockRenderer::~SkullBlockRenderer()
 {
-    if (mActiveSkeletonModels[3] != mSkeletonModels[3] && mActiveSkeletonModels[3] != NULL)
-        delete mActiveSkeletonModels[3];
-    if (mActiveCreeperModel != mCreeperModel && mActiveCreeperModel != NULL)
-        delete mActiveCreeperModel;
-    if (mActiveSkeletonModels[0] != mSkeletonModels[0] && mActiveSkeletonModels[0] != NULL)
-        delete mActiveSkeletonModels[0];
-    if (mActiveSkeletonModels[1] != mSkeletonModels[1] && mActiveSkeletonModels[1] != NULL)
-        delete mActiveSkeletonModels[1];
-    if (mActiveSkeletonModels[2] != mSkeletonModels[2] && mActiveSkeletonModels[2] != NULL)
-        delete mActiveSkeletonModels[2];
-    if (mActiveDragonModel != mDragonModel && mActiveDragonModel != NULL)
-        delete mActiveDragonModel;
-    delete mSkeletonModels[0];
-    delete mSkeletonModels[1];
-    delete mSkeletonModels[2];
-    delete mSkeletonModels[3];
-    delete mCreeperModel;
-    delete mDragonModel;
+    if (mDragonModel != mActiveDragonModel && mDragonModel != NULL)
+        delete mDragonModel;
+    if (mCreeperModel != mActiveCreeperModel && mCreeperModel != NULL)
+        delete mCreeperModel;
+    if (mSkeletonModels[0] != mActiveSkeletonModels[0] && mSkeletonModels[0] != NULL)
+        delete mSkeletonModels[0];
+    if (mSkeletonModels[1] != mActiveSkeletonModels[1] && mSkeletonModels[1] != NULL)
+        delete mSkeletonModels[1];
+    if (mSkeletonModels[2] != mActiveSkeletonModels[2] && mSkeletonModels[2] != NULL)
+        delete mSkeletonModels[2];
+    if (mSkeletonModels[3] != mActiveSkeletonModels[3] && mSkeletonModels[3] != NULL)
+        delete mSkeletonModels[3];
+    delete mActiveSkeletonModels[0];
+    delete mActiveSkeletonModels[1];
+    delete mActiveSkeletonModels[2];
+    delete mActiveSkeletonModels[3];
+    delete mActiveCreeperModel;
+    delete mActiveDragonModel;
 }
 
 void SkullBlockRenderer::renderSkull(float x, float y, float z, const Direction* direction,
@@ -70,36 +69,43 @@ void SkullBlockRenderer::renderSkull(float x, float y, float z, const Direction*
         model = mActiveCreeperModel;
     else if (skullType == 5)
         model = mActiveDragonModel;
-    else if (skullType >= 0 && skullType < 4)
-        model = mActiveSkeletonModels[skullType];
     else
-        model = mActiveSkeletonModels[0];
+        model = mActiveSkeletonModels[skullType];
 
     if (destroyStage >= 0)
     {
         bindTexture(&BREAKING_LOCATIONS[destroyStage]);
         GlStateManager::matrixMode(2);
         GlStateManager::pushMatrix();
-        GlStateManager::scalef(2.0F, -2.0F, 1.0F);
-        GlStateManager::translatef(0.0F, 0.0F, 0.0F);
+        GlStateManager::scalef(4.0F, 2.0F, 1.0F);
+        GlStateManager::translatef(0.0625F, 0.0625F, 0.0625F);
         GlStateManager::matrixMode(0);
         GlStateManager::pushMatrix();
         GlStateManager::disableCull();
     }
     else
     {
-        if (skullType == 1)
+        switch (skullType)
+        {
+        case 1:
             bindTexture(&SKULL_TEXTURE_1);
-        else if (skullType == 2)
+            break;
+        case 2:
             bindTexture(&SKULL_TEXTURE_2);
-        else if (skullType == 3)
+            break;
+        case 3:
             bindTexture(&SKULL_TEXTURE_3);
-        else if (skullType == 4)
+            break;
+        case 4:
             bindTexture(&SKULL_TEXTURE_4);
-        else if (skullType == 5)
+            break;
+        case 5:
             bindTexture(&SKULL_TEXTURE_5);
-        else
+            break;
+        default:
             bindTexture(&SKULL_TEXTURE_0);
+            break;
+        }
         GlStateManager::pushMatrix();
         GlStateManager::disableCull();
     }
@@ -114,46 +120,27 @@ void SkullBlockRenderer::renderSkull(float x, float y, float z, const Direction*
     else
     {
         const float offset = 0.25F;
-        unsigned int data = direction->get3DDataValue();
-        if (data < 2)
+        switch (direction->get3DDataValue())
         {
-            GlStateManager::translatef(x + 0.26F, y + offset, z + 0.5F);
-            rotation = 90.0F;
-            GlStateManager::enableRescaleNormal();
-            GlStateManager::scalef(-1.0F, -1.0F, 1.0F);
-            GlStateManager::enableAlphaTest();
-        }
-        else if (data == 2)
-        {
+        case 2:
             GlStateManager::translatef(x + 0.5F, y + offset, z + 0.74F);
-            GlStateManager::enableRescaleNormal();
-            GlStateManager::scalef(-1.0F, -1.0F, 1.0F);
-            GlStateManager::enableAlphaTest();
-        }
-        else if (data < 4)
-        {
+            break;
+        case 3:
             GlStateManager::translatef(x + 0.5F, y + offset, z + 0.26F);
             rotation = 180.0F;
-            GlStateManager::enableRescaleNormal();
-            GlStateManager::scalef(-1.0F, -1.0F, 1.0F);
-            GlStateManager::enableAlphaTest();
-        }
-        else if (data == 4)
-        {
+            break;
+        case 4:
             GlStateManager::translatef(x + 0.74F, y + offset, z + 0.5F);
             rotation = 270.0F;
-            GlStateManager::enableRescaleNormal();
-            GlStateManager::scalef(-1.0F, -1.0F, 1.0F);
-            GlStateManager::enableAlphaTest();
-        }
-        else
-        {
+            break;
+        default:
             GlStateManager::translatef(x + 0.26F, y + offset, z + 0.5F);
             rotation = 90.0F;
-            GlStateManager::enableRescaleNormal();
-            GlStateManager::scalef(-1.0F, -1.0F, 1.0F);
-            GlStateManager::enableAlphaTest();
+            break;
         }
+        GlStateManager::enableRescaleNormal();
+        GlStateManager::scalef(-1.0F, -1.0F, 1.0F);
+        GlStateManager::enableAlphaTest();
     }
 
     boost::shared_ptr<Entity> entity;
@@ -175,9 +162,10 @@ void SkullBlockRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, doub
     const Direction* direction = Direction::from3DDataValue(skull->getData() & 7);
     if (skull->isRenderReady())
     {
-        float rotation = (float)(skull->getRotation() * 360) * 0.0625F;
-        renderSkull((float)x, (float)y, (float)z, direction, rotation, 0.0F,
-                    skull->getSkullType(), breakProgress, partialTicks, bUseDisplayList);
+        float animationTime = skull->getMouthAnimation(partialTicks);
+        renderSkull((float)x, (float)y, (float)z, direction,
+                    (float)(skull->getRotation() * 360) * 0.0625F, 0.0F, skull->getSkullType(),
+                    breakProgress, animationTime, bUseDisplayList);
     }
 }
 
@@ -189,19 +177,20 @@ void SkullBlockRenderer::init(BlockEntityRenderDispatcher* pDispatcher)
 
 bool SkullBlockRenderer::dragonJawCheck()
 {
-    return mDragonModel->hasJawPart();
+    return mActiveDragonModel->hasJawPart();
 }
 
 void SkullBlockRenderer::updateModel(int modelIndex, const std::wstring& modelName,
                                      const std::wstring& originalModelName, TexturePack* pTexturePack)
 {
     SkeletonHeadModel*& model = mActiveSkeletonModels[modelIndex];
-    SkeletonHeadModel* original = mSkeletonModels[modelIndex];
-    if (model == NULL)
-        model = original;
+    SkeletonHeadModel*& original = mSkeletonModels[modelIndex];
+    if (original == NULL)
+        original = model;
     if (model != original)
     {
-        delete model;
+        if (model != NULL)
+            delete model;
         model = NULL;
     }
     if (pTexturePack->HasCustomModel(modelName))
@@ -218,33 +207,29 @@ void SkullBlockRenderer::setupForTexturePack(TexturePack* pTexturePack)
     updateModel(1, L"skeleton_wither_head", L"skeleton.wither", pTexturePack);
     updateModel(2, L"zombie_head", L"zombie", pTexturePack);
 
-    if (mActiveDragonModel == NULL)
-        mActiveDragonModel = mDragonModel;
+    if (mDragonModel == NULL)
+        mDragonModel = mActiveDragonModel;
+    if (mActiveDragonModel != mDragonModel)
+    {
+        if (mActiveDragonModel != NULL)
+            delete mActiveDragonModel;
+        mActiveDragonModel = NULL;
+    }
     if (pTexturePack->HasCustomModel(L"dragon_head"))
-    {
-        if (mActiveDragonModel != mDragonModel)
-            delete mActiveDragonModel;
         mActiveDragonModel = new DragonHeadModel(0.0F, *pTexturePack->GetCustomModel(L"dragon_head"));
-    }
     else
-    {
-        if (mActiveDragonModel != mDragonModel)
-            delete mActiveDragonModel;
         mActiveDragonModel = mDragonModel;
-    }
 
-    if (mActiveCreeperModel == NULL)
-        mActiveCreeperModel = mCreeperModel;
+    if (mCreeperModel == NULL)
+        mCreeperModel = mActiveCreeperModel;
+    if (mActiveCreeperModel != mCreeperModel)
+    {
+        if (mActiveCreeperModel != NULL)
+            delete mActiveCreeperModel;
+        mActiveCreeperModel = NULL;
+    }
     if (pTexturePack->HasCustomModel(L"creeper_head"))
-    {
-        if (mActiveCreeperModel != mCreeperModel)
-            delete mActiveCreeperModel;
         mActiveCreeperModel = new CreeperHeadModel(0.0F, *pTexturePack->GetCustomModel(L"creeper_head"));
-    }
     else
-    {
-        if (mActiveCreeperModel != mCreeperModel)
-            delete mActiveCreeperModel;
         mActiveCreeperModel = mCreeperModel;
-    }
 }

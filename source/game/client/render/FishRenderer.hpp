@@ -24,7 +24,7 @@ public:
     };
 
     FishRenderer(EntityRenderDispatcher* dispatcher, FishType fishType, float shadowRadius);
-    virtual ~FishRenderer();
+    virtual ~FishRenderer() {}
 
     virtual const ResourceLocation* getTextureLocation(boost::shared_ptr<Entity>& entity);
     virtual Model* createModel(const ModelDefinition& definition);

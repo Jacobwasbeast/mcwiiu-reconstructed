@@ -19,7 +19,7 @@ public:
     virtual ~ChickenRenderer();
 
     virtual const ResourceLocation* getTextureLocation(boost::shared_ptr<Entity>& entity);
-    virtual double getBob(boost::shared_ptr<LivingEntity>& entity, float partialTicks);
+    virtual float getBob(boost::shared_ptr<LivingEntity>& entity, float partialTicks);
     virtual Model* createModel(const ModelDefinition& definition);
 };
 

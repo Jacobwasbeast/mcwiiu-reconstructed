@@ -9,6 +9,7 @@
 #include "game/core/GlStateManager.hpp"
 #include "game/core/Lighting.hpp"
 #include "game/core/Mth.hpp"
+#include "game/core/Options.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/util/ResourceLocation.hpp"
 
@@ -39,23 +40,25 @@ void ExperienceOrbRenderer::render(boost::shared_ptr<Entity>& entity, double x, 
     bindTexture(entity);
     Lighting::turnOn();
 
-    float u0 = (float)(icon % 4) * 0.0625F;
-    float u1 = u0 + 0.0625F;
-    float v0 = (float)(icon / 4) * 0.0625F;
-    float v1 = v0 + 0.0625F;
+    int iconX = (icon % 4) * 16;
+    int iconY = (icon / 4) * 16;
+    float u0 = (float)iconX * 0.015625F;
+    float u1 = (float)(iconX + 16) * 0.015625F;
+    float v0 = (float)iconY * 0.015625F;
+    float v1 = (float)(iconY + 16) * 0.015625F;
 
     int brightness = orb->getLightColor();
-    GlStateManager::multiTexCoord2f((float)(brightness & 0xFFFF) / 65536.0F,
-                                    (float)((unsigned int)brightness >> 16) / 65536.0F);
+    GlStateManager::multiTexCoord2f((float)(brightness % 65536), (float)(brightness / 65536));
     GlStateManager::color4f(1.0F, 1.0F, 1.0F, 1.0F);
 
-    float angle = ((float)entity->mTickCount + partialTick) * 0.1F;
+    float angle = ((float)orb->mTickCount + partialTick) * 0.5F;
     int red = (int)((Mth::sin(angle) + 1.0F) * 0.5F * 255.0F);
     int blue = (int)((Mth::sin(angle + 4.1887903F) + 1.0F) * 0.1F * 255.0F);
     float scale = 0.3F;
     GlStateManager::translatef(0.0F, 0.1F, 0.0F);
     GlStateManager::rotatef(180.0F - mDispatcher->mCameraYRot, 0.0F, 1.0F, 0.0F);
-    GlStateManager::rotatef(-mDispatcher->mCameraXRot, 1.0F, 0.0F, 0.0F);
+    float pitchSign = mDispatcher->mOptions->mThirdPersonView == 2 ? -1.0F : 1.0F;
+    GlStateManager::rotatef(-(pitchSign * mDispatcher->mCameraXRot), 1.0F, 0.0F, 0.0F);
     GlStateManager::scalef(scale, scale, scale);
 
     BufferBuilder* builder = Tesselator::getInstance()->getBuilder();

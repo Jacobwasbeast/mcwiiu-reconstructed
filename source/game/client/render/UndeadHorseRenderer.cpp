@@ -7,6 +7,9 @@
 #include "game/entity/mob/Entity.hpp"
 #include "game/util/ResourceLocation.hpp"
 
+static ResourceLocation ZOMBIE_HORSE_LOCATION(TN_MOB_HORSE_HORSE_ZOMBIE);
+static ResourceLocation SKELETON_HORSE_LOCATION(TN_MOB_HORSE_HORSE_SKELETON);
+
 UndeadHorseRenderer::UndeadHorseRenderer(EntityRenderDispatcher* dispatcher)
     : AbstractHorseRenderer(dispatcher, new AbstractHorseModel(true, ModelDefinition()), 1.0F)
 {
@@ -18,14 +21,11 @@ UndeadHorseRenderer::~UndeadHorseRenderer()
 
 const ResourceLocation* UndeadHorseRenderer::getTextureLocation(boost::shared_ptr<Entity>& entity)
 {
-    static ResourceLocation skeletonHorseTexture(TN_MOB_HORSE_HORSE_SKELETON);
-    static ResourceLocation zombieHorseTexture(TN_MOB_HORSE_HORSE_ZOMBIE);
-
     unsigned long long type = entity->GetType();
     if (type == EntityType::SKELETON_HORSE)
-        return &skeletonHorseTexture;
+        return &SKELETON_HORSE_LOCATION;
     if (type == EntityType::ZOMBIE_HORSE)
-        return &zombieHorseTexture;
+        return &ZOMBIE_HORSE_LOCATION;
     return EntityRenderer::getTextureLocation(entity);
 }
 

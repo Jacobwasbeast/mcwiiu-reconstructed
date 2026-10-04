@@ -1,5 +1,6 @@
 #include "game/client/render/EnderDragonRenderer.hpp"
 
+#include <algorithm>
 #include <cmath>
 
 #include "game/client/render/DragonModel.hpp"
@@ -43,15 +44,16 @@ void EnderDragonRenderer::setupRotations(boost::shared_ptr<LivingEntity>& entity
     offsets.data = positions;
     offsets.length = 3;
     dragon->getLatencyPos(offsets, 7, partialTicks);
+    float tilt = dragon->getTilt(partialTicks);
     GlStateManager::rotatef(-(float)positions[0], 0.0f, 1.0f, 0.0f);
-    GlStateManager::rotatef((float)dragon->getTilt(partialTicks), 1.0f, 0.0f, 0.0f);
+    GlStateManager::rotatef(tilt, 1.0f, 0.0f, 0.0f);
     GlStateManager::translatef(0.0f, 0.0f, 1.0f);
-    if (dragon->mDeathTime > 0)
+    if (dragon->LivingEntity::mDeathTime > 0)
     {
-        float progress = Mth::sqrt(((float)dragon->mDeathTime + partialTicks - 1.0f) / 20.0f * 1.6f);
+        float progress = sqrtf(((float)dragon->LivingEntity::mDeathTime + partialTicks - 1.0f) / 20.0f * 1.6f);
         if (progress > 1.0f)
             progress = 1.0f;
-        GlStateManager::rotatef((float)(progress * getFlipDegrees(entity)), 0.0f, 0.0f, 1.0f);
+        GlStateManager::rotatef(progress * getFlipDegrees(entity), 0.0f, 0.0f, 1.0f);
     }
 }
 
@@ -62,9 +64,10 @@ void EnderDragonRenderer::renderModel(boost::shared_ptr<LivingEntity>& entity, f
     boost::shared_ptr<Entity> renderEntity = dragon;
     if (dragon->mDeathTime > 0)
     {
+        float deathProgress = (float)dragon->mDeathTime / 200.0f;
         GlStateManager::depthFunc(3);
         GlStateManager::enableAlphaTest();
-        GlStateManager::alphaFunc(4, (float)dragon->mDeathTime / 200.0f);
+        GlStateManager::alphaFunc(4, deathProgress);
         bindTexture(&ENDER_DRAGON_EXPLODING_LOCATION);
         mModel->render(renderEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, true);
         GlStateManager::alphaFunc(4, 0.1f);
@@ -119,12 +122,8 @@ void EnderDragonRenderer::setupForTexturePack(TexturePack* pack)
         removeLayer(mEyesLayer);
         return;
     }
-    for (std::vector<RenderLayer*>::iterator it = mLayers.begin(); it != mLayers.end(); ++it)
-    {
-        if (*it == mEyesLayer)
-            return;
-    }
-    addLayer(mEyesLayer);
+    if (std::find(mLayers.begin(), mLayers.end(), mEyesLayer) == mLayers.end())
+        addLayer(mEyesLayer);
 }
 
 Model* EnderDragonRenderer::createModel(const ModelDefinition& definition)
@@ -163,7 +162,7 @@ void EnderDragonRenderer::renderCrystalBeams(double x, double y, double z, float
     for (int i = 0; i <= 8; ++i)
     {
         float section = (float)(i % 8) * 0.125f;
-        float angle = section * 6.2831855f;
+        float angle = (float)(i % 8) * 6.2831855f * 0.125f;
         float sine = std::sin(angle);
         float cosine = std::cos(angle);
         builder->vertexUV(sine * 0.75f * 0.2f, cosine * 0.75f * 0.2f, 0.0f, section, length);

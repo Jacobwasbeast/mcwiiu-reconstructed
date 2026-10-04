@@ -13,6 +13,8 @@ class Model;
 class ModelDefinition;
 class ResourceLocation;
 
+extern ResourceLocation END_CRYSTAL_BEAM_LOCATION;
+
 class EnderCrystalRenderer : public EntityRenderer
 {
 public:

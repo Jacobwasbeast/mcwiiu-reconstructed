@@ -128,9 +128,9 @@ void QuadrupedModel::setupAnim(float limbSwing, float limbSwingAmount, float age
                                float netHeadYaw, float headPitch, float scale,
                                boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
 {
-    mHead->mYRot = netHeadYaw * 0.017453292f;
-    mHead->mXRot = headPitch * 0.017453292f;
-    mBody->mXRot = 90.0f * 0.017453292f;
+    mHead->mYRot = netHeadYaw * Mth::DEG_TO_RAD;
+    mHead->mXRot = headPitch * Mth::DEG_TO_RAD;
+    mBody->mXRot = 90.0f * Mth::DEG_TO_RAD;
 
     mLeg0->mXRot = Mth::cos(limbSwing * 0.6662f) * 1.4f * limbSwingAmount;
     mLeg1->mXRot = Mth::cos(limbSwing * 0.6662f + 3.1415927f) * 1.4f * limbSwingAmount;
@@ -140,12 +140,12 @@ void QuadrupedModel::setupAnim(float limbSwing, float limbSwingAmount, float age
 
 void QuadrupedModel::render(QuadrupedModel* model, float scale, bool useDisplayList)
 {
-    mHead->mXRot = model->mHead->mXRot;
     mHead->mYRot = model->mHead->mYRot;
+    mHead->mXRot = model->mHead->mXRot;
     mHead->mY = model->mHead->mY;
     mHead->mX = model->mHead->mX;
-    mBody->mXRot = model->mBody->mXRot;
     mBody->mYRot = model->mBody->mYRot;
+    mBody->mXRot = model->mBody->mXRot;
     mLeg0->mXRot = model->mLeg0->mXRot;
     mLeg1->mXRot = model->mLeg1->mXRot;
     mLeg2->mXRot = model->mLeg2->mXRot;

@@ -25,7 +25,7 @@ public:
     Particle(Level* level, double x, double y, double z);
     virtual uint64_t GetType() = 0;
     virtual ~Particle();
-    virtual void setPower(float power);
+    virtual Particle* setPower(float power);
     virtual Particle* scale(float factor);
     virtual void tick();
     virtual void render(BufferBuilder* buffer, const boost::shared_ptr<Entity>& camera,
@@ -44,7 +44,7 @@ public:
     virtual void setLocationFromBoundingbox();
 
     Level* getLevel();
-    double getAlpha();
+    float getAlpha();
     uint8_t isAlive();
     void remove();
     void setBoundingBox(const AABB* box);
@@ -52,9 +52,9 @@ public:
     void setColor(float red, float green, float blue);
     void setAlpha(float alpha);
     void setLifetime(int lifetime);
-    double getRedCol();
-    double getGreenCol();
-    double getBlueCol();
+    float getRedCol();
+    float getGreenCol();
+    float getBlueCol();
 
     static void setXOffset(double offset);
     static void setYOffset(double offset);

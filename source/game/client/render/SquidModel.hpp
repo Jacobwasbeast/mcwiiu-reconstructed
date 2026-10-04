@@ -19,14 +19,7 @@ public:
     virtual std::wstring getName() { return L"squid"; }
 
     ModelPartSkin* mBody;
-    ModelPartSkin* mTentacle1;
-    ModelPartSkin* mTentacle2;
-    ModelPartSkin* mTentacle3;
-    ModelPartSkin* mTentacle4;
-    ModelPartSkin* mTentacle5;
-    ModelPartSkin* mTentacle6;
-    ModelPartSkin* mTentacle7;
-    ModelPartSkin* mTentacle8;
+    ModelPartSkin* mTentacles[8];
 };
 
 #endif

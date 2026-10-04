@@ -40,7 +40,10 @@ void WitherBossRenderer::scale(boost::shared_ptr<LivingEntity>& entity, float pa
     float swelling = wither->getSwellAmount(partialTicks);
     float scale = 1.0F + Mth::sin(swelling * 100.0F) * swelling * 0.01F;
 
-    swelling = Mth::clamp(swelling, 0.0F, 1.0F);
+    if (swelling < 0.0F)
+        swelling = 0.0F;
+    else if (swelling > 1.0F)
+        swelling = 1.0F;
     swelling *= swelling;
     swelling *= swelling;
 
@@ -52,17 +55,21 @@ void WitherBossRenderer::scale(boost::shared_ptr<LivingEntity>& entity, float pa
 
 int WitherBossRenderer::getOverlayColor(boost::shared_ptr<LivingEntity>& entity, float u, float v)
 {
-    if (boost::static_pointer_cast<WitherBoss>(entity)->getInvulnerableTicks() < 1)
-        return LivingEntityRenderer::getOverlayColor(entity, u, v);
+    int invulnerableTicks = boost::static_pointer_cast<WitherBoss>(entity)->getInvulnerableTicks();
+    if (invulnerableTicks > 0)
+    {
+        boost::shared_ptr<WitherBoss> wither = boost::static_pointer_cast<WitherBoss>(entity);
+        float alpha = wither->getOverlayAlpha();
+        if (alpha < 0.0F)
+            alpha = 0.0F;
+        else if (alpha > 1.0F)
+            alpha = 1.0F;
 
-    double alpha = boost::static_pointer_cast<WitherBoss>(entity)->getOverlayAlpha();
-    if (alpha < 0.0)
-        alpha = 0.0;
-    else if (alpha > 1.0)
-        alpha = 1.0;
+        int overlay = Mth::floor(alpha * 255.0F);
+        return overlay << 24 | 0x00FFFFFF;
+    }
 
-    int overlay = (int)(alpha * 255.0F);
-    return overlay << 24 | 0x00FFFFFF;
+    return LivingEntityRenderer::getOverlayColor(entity, u, v);
 }
 
 Model* WitherBossRenderer::createModel(const ModelDefinition& definition)

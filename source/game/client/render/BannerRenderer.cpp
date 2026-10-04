@@ -23,9 +23,8 @@ static ResourceLocation* BANNER_PATTERN_LOCATION =
     new ResourceLocation(arrayWithLength<int>(BANNER_PATTERN_TEXTURES, 2));
 
 BannerRenderer::BannerRenderer()
-    : mModel(NULL)
+    : BlockEntityRenderer(), mModel(new BannerModel(ModelDefinition()))
 {
-    mModel = new BannerModel(ModelDefinition());
 }
 
 BannerRenderer::~BannerRenderer()
@@ -35,7 +34,12 @@ BannerRenderer::~BannerRenderer()
 bool BannerRenderer::hasTexture(boost::shared_ptr<BlockEntity> blockEntity)
 {
     boost::shared_ptr<BannerBlockEntity> banner = boost::static_pointer_cast<BannerBlockEntity>(blockEntity);
-    return !banner->getTextureHashName().empty();
+    std::wstring textureHashName = banner->getTextureHashName();
+    if (textureHashName.empty())
+    {
+        return false;
+    }
+    return true;
 }
 
 void BannerRenderer::getUV(int atlasIndex, bool layered, float& u, float& v)
@@ -98,31 +102,20 @@ void BannerRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x
                             float partialTicks, int breakProgress, bool bTranslucent, float alpha,
                             bool bUseDisplayList)
 {
-    bool standing = true;
-    int direction;
-    long long gameTime;
-    if (blockEntity->getLevel() == NULL)
-    {
-        direction = 0;
-        gameTime = 0;
-    }
-    else
-    {
-        standing = blockEntity->getBlock() == Blocks::standing_banner;
-        direction = blockEntity->getData();
-        gameTime = blockEntity->getLevel()->getGameTime();
-    }
+    bool hasLevel = blockEntity->getLevel() != NULL;
+    bool standing = !hasLevel || blockEntity->getBlock() == Blocks::standing_banner;
+    int direction = hasLevel ? blockEntity->getData() : 0;
+    long long gameTime = hasLevel ? blockEntity->getLevel()->getGameTime() : 0;
 
     GlStateManager::pushMatrix();
     if (standing)
     {
         GlStateManager::translatef((float)x + 0.5F, (float)y + 0.5F, (float)z + 0.5F);
-        GlStateManager::rotatef(-(float)(direction * 22.5F), 0.0F, 1.0F, 0.0F);
+        GlStateManager::rotatef(-(float)(direction * 360) / 16.0F, 0.0F, 1.0F, 0.0F);
         mModel->mPole->mShow = true;
     }
     else
     {
-        GlStateManager::translatef((float)x + 0.5F, (float)y - 0.16666667F, (float)z + 0.5F);
         float rotation = 0.0F;
         if (direction == 2)
             rotation = 180.0F;
@@ -130,6 +123,7 @@ void BannerRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x
             rotation = 90.0F;
         else if (direction == 5)
             rotation = -90.0F;
+        GlStateManager::translatef((float)x + 0.5F, (float)y - 0.16666667F, (float)z + 0.5F);
         GlStateManager::rotatef(-rotation, 0.0F, 1.0F, 0.0F);
         GlStateManager::translatef(0.0F, -0.3125F, -0.4375F);
         mModel->mPole->mShow = false;
@@ -141,7 +135,8 @@ void BannerRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x
     }
 
     BlockPos position = blockEntity->getBlockPos();
-    mModel->mFlag->mXRot = (0.01F * cosf((float)(position.x * 7 + position.y * 9 + position.z * 13 + gameTime + partialTicks) * 3.1415927F * 0.02F) - 0.0125F) * 3.1415927F;
+    float phase = (float)(position.x * 7 + position.y * 9 + position.z * 13) + (float)gameTime + partialTicks;
+    mModel->mFlag->mXRot = (0.01F * cosf(phase * 3.1415927F * 0.02F) - 0.0125F) * 3.1415927F;
     GlStateManager::enableRescaleNormal();
 
     if (hasTexture(blockEntity))

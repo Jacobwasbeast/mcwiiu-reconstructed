@@ -274,7 +274,8 @@ PlayerRenderer* EntityRenderDispatcher::getPlayerRenderer(EPlayerModelType model
 
 EntityRenderer* EntityRenderDispatcher::getRenderer(boost::shared_ptr<Entity> entity)
 {
-    if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+    bool isPlayer = (entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER;
+    if (isPlayer)
     {
         boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
         if (player->isSpectator() && player->SpectateAsOtherEntity())
@@ -282,7 +283,8 @@ EntityRenderer* EntityRenderDispatcher::getRenderer(boost::shared_ptr<Entity> en
         return getPlayerRenderer(static_cast<EPlayerModelType>(player->getModelName()));
     }
 
-    if (entity->GetType() == EntityType::FIREWORKS_ROCKET_ENTITY)
+    bool isFireworks = entity->GetType() == EntityType::FIREWORKS_ROCKET_ENTITY;
+    if (isFireworks)
         return getRenderer(EntityType::ARROW);
 
     return getRenderer(entity->GetType());
@@ -297,10 +299,8 @@ void EntityRenderDispatcher::prepare(Level* level, Font* font, boost::shared_ptr
     mFont = font;
     mPlayer = player;
 
-    bool sleeping = (camera->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY
-        && boost::static_pointer_cast<LivingEntity>(camera)->isSleeping();
-
-    if (sleeping)
+    bool isLiving = (camera->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY;
+    if (isLiving && boost::static_pointer_cast<LivingEntity>(camera)->isSleeping())
     {
         const BlockState* state = level->getBlockState(BlockPos(camera));
         if (state->getBlock() == Blocks::bed)
@@ -312,10 +312,10 @@ void EntityRenderDispatcher::prepare(Level* level, Font* font, boost::shared_ptr
     }
     else
     {
-        mCameraYRot = (camera->mYRot - camera->mYRotO) * partialTicks
-            + Minecraft::GetInstance()->mPlayer->mYRotO;
-        mCameraXRot = (camera->mXRot - camera->mXRotO) * partialTicks
-            + Minecraft::GetInstance()->mPlayer->mXRotO;
+        mCameraYRot = Minecraft::GetInstance()->mPlayer->mYRotO
+            + (camera->mYRot - camera->mYRotO) * partialTicks;
+        mCameraXRot = Minecraft::GetInstance()->mPlayer->mXRotO
+            + (camera->mXRot - camera->mXRotO) * partialTicks;
     }
 
     if ((Minecraft::GetInstance()->mPlayer->GetType() & EntityType::PLAYER) == EntityType::PLAYER
@@ -332,21 +332,24 @@ void EntityRenderDispatcher::prepare(Level* level, Font* font, boost::shared_ptr
 
 bool EntityRenderDispatcher::hasSecondPass(boost::shared_ptr<Entity>& entity)
 {
-    EntityRenderer* renderer = getRenderer(entity);
-    return renderer != NULL && renderer->hasSecondPass();
+    return getRenderer(entity)->hasSecondPass();
 }
 
 bool EntityRenderDispatcher::shouldRender(boost::shared_ptr<Entity>& entity, Culler* culler,
                                           double x, double y, double z)
 {
     EntityRenderer* renderer = getRenderer(entity);
-    return renderer != NULL && renderer->shouldRender(entity, culler, x, y, z);
+    if (renderer != NULL && renderer->shouldRender(entity, culler, x, y, z))
+        return true;
+    return false;
 }
 
 bool EntityRenderDispatcher::shouldRender(boost::shared_ptr<Entity>& entity, Culler* culler, double distance)
 {
     EntityRenderer* renderer = getRenderer(entity);
-    return renderer != NULL && renderer->shouldRender(entity, culler, distance);
+    if (renderer != NULL && renderer->shouldRender(entity, culler, distance))
+        return true;
+    return false;
 }
 
 void EntityRenderDispatcher::renderHitbox(boost::shared_ptr<Entity>& entity, double x, double y, double z,

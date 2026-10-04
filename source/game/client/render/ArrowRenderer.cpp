@@ -19,16 +19,16 @@ ArrowRenderer::ArrowRenderer(EntityRenderDispatcher* dispatcher)
 void ArrowRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
                            float yaw, float partialTick)
 {
-    float xRotO = entity->mXRotO;
-    float xRot = entity->mXRot;
-    float yRotO = entity->mYRotO;
-    float yRot = entity->mYRot;
+    float xRotO = entity.get()->mXRotO;
+    float xRot = entity.get()->mXRot;
+    float yRotO = entity.get()->mYRotO;
+    float yRot = entity.get()->mYRot;
     float shake = 0.0F;
 
-    if ((entity->GetType() & EntityType::ARROW) == EntityType::ARROW)
+    if ((entity.get()->GetType() & EntityType::ARROW) == EntityType::ARROW)
     {
         boost::shared_ptr<Arrow> arrow = boost::static_pointer_cast<Arrow>(entity);
-        shake = (float)arrow->mShake - partialTick;
+        shake = (float)arrow.get()->mShake - partialTick;
     }
 
     bindTexture(entity);
@@ -36,16 +36,16 @@ void ArrowRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y
     GlStateManager::pushMatrix();
 
     float yRotDelta = yRot - yRotO;
-    if (yRotDelta < -180.0F)
-        yRotDelta = (yRot + 360.0F) - yRotO;
-    else if (yRotDelta > 180.0F)
+    if (yRotDelta > 180.0F)
         yRotDelta = (yRot - 360.0F) - yRotO;
+    else if (yRotDelta < -180.0F)
+        yRotDelta = (yRot + 360.0F) - yRotO;
 
     float xRotDelta = xRot - xRotO;
-    if (xRotDelta < -180.0F)
-        xRotDelta = (xRot + 360.0F) - xRotO;
-    else if (xRotDelta > 180.0F)
+    if (xRotDelta > 180.0F)
         xRotDelta = (xRot - 360.0F) - xRotO;
+    else if (xRotDelta < -180.0F)
+        xRotDelta = (xRot + 360.0F) - xRotO;
 
     GlStateManager::translatef((float)x, (float)y, (float)z);
     GlStateManager::rotatef(yRotO + yRotDelta * partialTick - 90.0F,
@@ -59,8 +59,7 @@ void ArrowRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y
 
     if (shake > 0.0F)
     {
-        float shakeRotation = Mth::sin(shake * 3.0F) * shake;
-        GlStateManager::rotatef(-shakeRotation, 0.0F, 0.0F, 1.0F);
+        GlStateManager::rotatef(-Mth::sin(shake * 3.0F) * shake, 0.0F, 0.0F, 1.0F);
     }
 
     GlStateManager::rotatef(45.0F, 1.0F, 0.0F, 0.0F);

@@ -80,29 +80,30 @@ void ArmorStandModel::setupAnim(float limbSwing, float limbSwingAmount, float ag
     ArmorStandArmorModel::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale,
                                     entity, skinAdjustments);
 
-    if (entity->GetType() == EntityType::ARMOR_STAND)
+    bool isArmorStand = entity.get()->GetType() == EntityType::ARMOR_STAND;
+    if (isArmorStand)
     {
         boost::shared_ptr<ArmorStand> armorStand = boost::dynamic_pointer_cast<ArmorStand>(entity);
 
-        mRightArm->mShow = armorStand->isShowArms();
-        mLeftArm->mShow = armorStand->isShowArms();
-        mArmorStandBase->mShow = !armorStand->isNoBasePlate();
+        mLeftArm->mShow = armorStand.get()->isShowArms();
+        mRightArm->mShow = armorStand.get()->isShowArms();
+        mArmorStandBase->mShow = !armorStand.get()->isNoBasePlate();
 
         const float degreesToRadians = 0.017453292f;
-        mArmorStandBody->mXRot = (float)armorStand->getBodyPose()->x * degreesToRadians;
-        mArmorStandBody->mYRot = (float)armorStand->getBodyPose()->y * degreesToRadians;
-        mArmorStandBody->mZRot = (float)armorStand->getBodyPose()->z * degreesToRadians;
+        mArmorStandBody->mXRot = (float)armorStand.get()->getBodyPose()->x * degreesToRadians;
+        mArmorStandBody->mYRot = (float)armorStand.get()->getBodyPose()->y * degreesToRadians;
+        mArmorStandBody->mZRot = (float)armorStand.get()->getBodyPose()->z * degreesToRadians;
 
-        mArmorStandRightArm->mXRot = (float)armorStand->getBodyPose()->x * degreesToRadians;
-        mArmorStandRightArm->mYRot = (float)armorStand->getBodyPose()->y * degreesToRadians;
-        mArmorStandRightArm->mZRot = (float)armorStand->getBodyPose()->z * degreesToRadians;
+        mArmorStandRightArm->mXRot = (float)armorStand.get()->getBodyPose()->x * degreesToRadians;
+        mArmorStandRightArm->mYRot = (float)armorStand.get()->getBodyPose()->y * degreesToRadians;
+        mArmorStandRightArm->mZRot = (float)armorStand.get()->getBodyPose()->z * degreesToRadians;
 
-        mArmorStandLeftArm->mXRot = (float)armorStand->getBodyPose()->x * degreesToRadians;
-        mArmorStandLeftArm->mYRot = (float)armorStand->getBodyPose()->y * degreesToRadians;
-        mArmorStandLeftArm->mZRot = (float)armorStand->getBodyPose()->z * degreesToRadians;
+        mArmorStandLeftArm->mXRot = (float)armorStand.get()->getBodyPose()->x * degreesToRadians;
+        mArmorStandLeftArm->mYRot = (float)armorStand.get()->getBodyPose()->y * degreesToRadians;
+        mArmorStandLeftArm->mZRot = (float)armorStand.get()->getBodyPose()->z * degreesToRadians;
 
         mArmorStandBase->mXRot = 0.0f;
-        mArmorStandBase->mYRot = -(entity->mYRot * degreesToRadians);
+        mArmorStandBase->mYRot = -(degreesToRadians * entity.get()->mYRot);
         mArmorStandBase->mZRot = 0.0f;
     }
 }
@@ -117,7 +118,7 @@ void ArmorStandModel::render(boost::shared_ptr<Entity>& entity, float limbSwing,
 
     if (!mYoung)
     {
-        if (entity->isSneaking())
+        if (entity.get()->isSneaking())
         {
             GlStateManager::translatef(0.0f, 0.2f, 0.0f);
         }

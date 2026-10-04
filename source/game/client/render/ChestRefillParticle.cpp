@@ -1,6 +1,7 @@
 #include "game/client/render/ChestRefillParticle.hpp"
 #include "game/core/EntityType.hpp"
 
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/ColourTable.hpp"
 #include "game/core/Mth.hpp"
@@ -48,9 +49,9 @@ void ChestRefillParticle::_init(Level* level, double x, double y, double z,
     xd = xa;
     yd = ya;
     zd = za;
-    size *= 0.75f * scale;
+    size = size * 0.75f * scale;
     baseSize = size;
-    lifetime = (int)((float)(12.0 / (random.nextDouble() * 0.8 + 0.6)) * scale);
+    lifetime = (int)((float)(int)(12.0 / (random.nextDouble() * 0.8 + 0.6)) * scale);
     hasPhysics = false;
     setMiscTex(65);
 }
@@ -73,7 +74,7 @@ Particle* ChestRefillParticle::Provider::createParticle(ePARTICLE_TYPE type,
 {
     ChestRefillParticle* particle = new ChestRefillParticle(level, x, y, z, xa, ya, za);
     particle->tick();
-    const int colour = static_cast<int>(g_pApp->GetHTMLColor(eMinecraftColour_HTMLColor_e));
+    const int colour = static_cast<int>(gApp.GetHTMLColor(eMinecraftColour_HTMLColor_e));
     particle->setColor(static_cast<float>(colour >> 4),
                        static_cast<float>((colour >> 2) | 0xff),
                        static_cast<float>(colour | 0xff));

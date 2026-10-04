@@ -301,7 +301,8 @@ void DragonModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, flo
 
     float flapAngle = ((dragon->mFlapTime - dragon->mOldFlapTime) * mPartialTicks + dragon->mOldFlapTime) * 6.2831855f;
 
-    mJaw->mXRot = (Mth::sin(flapAngle) + 1.0f) * 0.2f;
+    float jawOpen = (Mth::sin(flapAngle) + 1.0f) * 0.2f;
+    mJaw->mXRot = jawOpen;
 
     float bob = Mth::sin(flapAngle - 1.0f) + 1.0f;
     bob = (bob * bob + bob * 2.0f) * 0.05f;
@@ -348,14 +349,16 @@ void DragonModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, flo
         float wobble = Mth::cos((float)i * 0.45f + flapAngle) * 0.15f;
 
         mNeck[i]->mYRot = rotWrap(dragon->getHeadPartYRotDiff(i, headOffsets, partOffsets)) * 0.017453292f * 1.5f;
-        mNeck[i]->mXRot = wobble + (float)dragon->getHeadPartYOffset(i, headOffsets, partOffsets) * 0.017453292f * 1.5f * 5.0f;
-        mNeck[i]->mZRot = -rotWrap(partOffsets.data[0] - bodyYaw) * 0.017453292f * 1.5f;
+        float neckPitch = (float)dragon->getHeadPartYOffset(i, headOffsets, partOffsets) * 0.017453292f * 1.5f * 5.0f;
+        float neckXRot = wobble + neckPitch;
+        ModelPart* neck = mNeck[i];
+        neck->mXRot = neckXRot;
+        neck->mZRot = -rotWrap(partOffsets.data[0] - bodyYaw) * 0.017453292f * 1.5f;
+        neck->mY = y;
+        neck->mZ = z;
+        neck->mX = x;
 
-        mNeck[i]->mY = y;
-        mNeck[i]->mZ = z;
-        mNeck[i]->mX = x;
-
-        y += Mth::sin(mNeck[i]->mXRot) * 10.0f;
+        y += Mth::sin(neckXRot) * 10.0f;
         z -= Mth::cos(mNeck[i]->mYRot) * Mth::cos(mNeck[i]->mXRot) * 10.0f;
         x -= Mth::sin(mNeck[i]->mYRot) * Mth::cos(mNeck[i]->mXRot) * 10.0f;
 
@@ -369,10 +372,12 @@ void DragonModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, flo
     dragon->getLatencyPos(partOffsets, 0, mPartialTicks);
 
     mHead->mYRot = rotWrap(dragon->getHeadPartYRotDiff(6, headOffsets, partOffsets)) * 0.017453292f;
-    mHead->mXRot = (float)dragon->getHeadPartYOffset(6, headOffsets, partOffsets) * 0.017453292f * 1.5f * 5.0f;
-    mHead->mZRot = -rotWrap(partOffsets.data[0] - bodyYaw) * 0.017453292f;
+    float headPitchRot = (float)dragon->getHeadPartYOffset(6, headOffsets, partOffsets) * 0.017453292f * 1.5f * 5.0f;
+    ModelPart* head = mHead;
+    head->mXRot = headPitchRot;
+    head->mZRot = -rotWrap(partOffsets.data[0] - bodyYaw) * 0.017453292f;
 
-    mHead->render(scale, useDisplayList, false);
+    head->render(scale, useDisplayList, false);
 
     GlStateManager::pushMatrix();
     GlStateManager::translatef(0.0f, 1.0f, 0.0f);
@@ -384,9 +389,11 @@ void DragonModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, flo
 
     GlStateManager::enableCull();
 
-    mWing->mXRot = 0.125f - Mth::cos(flapAngle) * 0.2f;
-    mWing->mYRot = mWingYRot;
-    mWing->mZRot = (Mth::sin(flapAngle) + 0.125f) * 0.8f;
+    float wingXRot = 0.125f - Mth::cos(flapAngle) * 0.2f;
+    ModelPart* wing = mWing;
+    wing->mXRot = wingXRot;
+    wing->mYRot = mWingYRot;
+    wing->mZRot = (Mth::sin(flapAngle) + 0.125f) * 0.8f;
     mWingTip->mZRot = -(Mth::sin(flapAngle + 2.0f) + 0.5f) * 0.75f;
 
     mWing->render(scale, useDisplayList, false);
@@ -410,22 +417,24 @@ void DragonModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, flo
         GlStateManager::cullFace(0);
     }
 
-    mWing1->mXRot = 0.125f - Mth::cos(flapAngle) * 0.2f;
-    mWing1->mYRot = mWing1YRot;
+    float wing1XRot = 0.125f - Mth::cos(flapAngle) * 0.2f;
+    ModelPart* wing1 = mWing1;
+    wing1->mXRot = wing1XRot;
+    wing1->mYRot = mWing1YRot;
 
     if (!mHasOverriddenParts)
     {
-        mWing1->mZRot = (Mth::sin(flapAngle) + 0.125f) * 0.8f;
+        wing1->mZRot = (Mth::sin(flapAngle) + 0.125f) * 0.8f;
         mWingTip1->mZRot = -(Mth::sin(flapAngle + 2.0f) + 0.5f) * 0.75f;
     }
     else if (!mHasNamedNeckParts)
     {
-        mWing1->mZRot = 3.1415927f - (Mth::sin(flapAngle) + 0.125f) * 0.8f;
+        wing1->mZRot = 3.1415927f - (Mth::sin(flapAngle) + 0.125f) * 0.8f;
         mWingTip1->mZRot = (Mth::sin(flapAngle + 2.0f) + 0.5f) * 0.75f;
     }
     else
     {
-        mWing1->mZRot = (Mth::sin(-flapAngle) + 0.125f) * 0.8f;
+        wing1->mZRot = (Mth::sin(-flapAngle) + 0.125f) * 0.8f;
         mWingTip1->mZRot = (Mth::sin(flapAngle + 2.0f) + 0.5f) * 0.75f;
     }
 
@@ -476,15 +485,18 @@ void DragonModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, flo
 
         tailWobble += Mth::sin((float)i * 0.45f + flapAngle) * 0.05f;
 
-        mTail[i]->mYRot = (rotWrap(partOffsets.data[0] - headOffsets.data[0]) * 1.5f + tailYRotOffset) * 0.017453292f;
-        mTail[i]->mXRot = tailWobble + (float)(partOffsets.data[1] - headOffsets.data[1]) * 0.017453292f * 1.5f * 5.0f;
-        mTail[i]->mZRot = rotWrap(partOffsets.data[0] - bodyYaw) * 0.017453292f * 1.5f;
+        float tailYRot = (rotWrap(partOffsets.data[0] - headOffsets.data[0]) * 1.5f + tailYRotOffset) * 0.017453292f;
+        ModelPart* tail = mTail[i];
+        float tailXRot = tailWobble + (float)(partOffsets.data[1] - headOffsets.data[1]) * 0.017453292f * 1.5f * 5.0f;
+        tail->mYRot = tailYRot;
+        tail->mXRot = tailXRot;
+        tail->mZRot = rotWrap(partOffsets.data[0] - bodyYaw) * 0.017453292f * 1.5f;
 
-        mTail[i]->mY = y;
-        mTail[i]->mZ = z;
-        mTail[i]->mX = x;
+        tail->mY = y;
+        tail->mZ = z;
+        tail->mX = x;
 
-        y += Mth::sin(mTail[i]->mXRot) * 10.0f * (float)tailSide;
+        y += Mth::sin(tailXRot) * 10.0f * (float)tailSide;
         z -= Mth::cos(mTail[i]->mYRot) * Mth::cos(mTail[i]->mXRot) * 10.0f * (float)tailSide;
         x -= Mth::sin(mTail[i]->mYRot) * Mth::cos(mTail[i]->mXRot) * 10.0f;
 

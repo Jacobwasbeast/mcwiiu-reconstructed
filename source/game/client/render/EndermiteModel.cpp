@@ -77,8 +77,10 @@ void EndermiteModel::setupAnim(float limbSwing, float limbSwingAmount, float age
     {
         float angle = ageInTicks * 0.9f + (float)i * 0.15f * 3.1415927f;
 
-        mBodyParts[i]->mYRot = Mth::cos(angle) * 3.1415927f * 0.01f * (float)(Mth::abs(i - 2) + 1);
-        mBodyParts[i]->mX = Mth::sin(angle) * 3.1415927f * 0.1f * (float)Mth::abs(i - 2);
+        float yRot = Mth::cos(angle) * 3.1415927f * 0.01f * (float)(Mth::abs(i - 2) + 1);
+        ModelPart* part = mBodyParts[i];
+        part->mYRot = yRot;
+        part->mX = Mth::sin(angle) * 3.1415927f * 0.1f * (float)Mth::abs(i - 2);
     }
 }
 

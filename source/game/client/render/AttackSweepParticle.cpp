@@ -16,9 +16,9 @@ AttackSweepParticle::AttackSweepParticle(Textures* textures, Level* level,
     : Particle(level, x, y, z, 0.0, 0.0, 0.0)
     , textures(textures)
 {
-    quadSize = (float)(-(xa * 0.5 - 1.0));
-    lifetime = 4;
+    quadSize = (float)(1.0 - xa * 0.5);
     rCol = random.nextFloat() * 0.6f + 0.4f;
+    lifetime = 4;
     gCol = rCol;
     bCol = rCol;
 }
@@ -33,35 +33,37 @@ void AttackSweepParticle::render(BufferBuilder* buffer,
                                  float za2)
 {
     int frame = (int)(((float)age + partialTicks) * 3.0f / (float)lifetime);
-    if (frame < 8)
-    {
-        textures->bindTexture(&PARTICLES_LOCATION);
+    if (frame > 7)
+        return;
 
-        float u0 = (float)(frame % 4) * 0.25f;
-        float u1 = (float)(frame / 2) * 0.5f;
-        float px = (float)((x - xo) * partialTicks + xo - Particle::xOff);
-        float py = (float)((y - yo) * partialTicks + yo - Particle::yOff);
-        float pz = (float)((z - zo) * partialTicks + zo - Particle::zOff);
-        float halfHeight = ya * quadSize * 0.5f;
-        float width = xa2 * quadSize;
-        float depth = za2 * quadSize;
-        float left = px - xa * quadSize;
-        float back = pz - za * quadSize;
+    textures->bindTexture(&PARTICLES_LOCATION);
 
-        GlStateManager::color4f(1.0f, 1.0f, 1.0f, 1.0f);
-        GlStateManager::disableLighting();
-        Lighting::turnOff();
-        buffer->begin(3);
-        buffer->color(rCol, gCol, bCol);
-        buffer->vertexUV(left - width, py - halfHeight, back - depth, u0 + 0.24975f, u1 + 0.4995f);
-        buffer->vertexUV(left + width, py + halfHeight, back + depth, u0 + 0.24975f, u1);
-        buffer->vertexUV(px + xa * quadSize + width, py + halfHeight,
-                         pz + za * quadSize + depth, u0, u1);
-        buffer->vertexUV(px + xa * quadSize - width, py - halfHeight,
-                         pz + za * quadSize - depth, u0, u1 + 0.4995f);
-        buffer->end();
-        GlStateManager::enableLighting();
-    }
+    float u0 = (float)(frame % 4) * 0.25f;
+    float u1 = (float)(frame / 2) * 0.5f;
+    float px = (float)((x - xo) * partialTicks + xo - Particle::xOff);
+    float py = (float)((y - yo) * partialTicks + yo - Particle::yOff);
+    float pz = (float)((z - zo) * partialTicks + zo - Particle::zOff);
+    float halfHeight = ya * quadSize * 0.5f;
+    float width = xa2 * quadSize;
+    float depth = za2 * quadSize;
+    float xaScaled = xa * quadSize;
+    float zaScaled = za * quadSize;
+    float left = px - xaScaled;
+    float back = pz - zaScaled;
+
+    GlStateManager::color4f(1.0f, 1.0f, 1.0f, 1.0f);
+    GlStateManager::disableLighting();
+    Lighting::turnOff();
+    buffer->begin(3);
+    buffer->color(rCol, gCol, bCol);
+    buffer->vertexUV(left - width, py - halfHeight, back - depth, u0 + 0.24975f, u1 + 0.4995f);
+    buffer->vertexUV(left + width, py + halfHeight, back + depth, u0 + 0.24975f, u1);
+    float right = px + xaScaled;
+    float front = pz + zaScaled;
+    buffer->vertexUV(right + width, py + halfHeight, front + depth, u0, u1);
+    buffer->vertexUV(right - width, py - halfHeight, front - depth, u0, u1 + 0.4995f);
+    buffer->end();
+    GlStateManager::enableLighting();
 }
 
 int AttackSweepParticle::getLightColor(float partialTicks)

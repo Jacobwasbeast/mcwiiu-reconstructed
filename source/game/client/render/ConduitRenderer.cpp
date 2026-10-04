@@ -212,6 +212,10 @@ void ConduitRenderer::_tessellateHeart() const
     Tesselator* tesselator = Tesselator::getInstance();
     BufferBuilder* builder = tesselator->getBuilder();
 
+    float width = 1.0F;
+    float halfWidth = 0.5F;
+    float quarterWidth = 0.25F;
+
     GlStateManager::rotatef(180.0F - Minecraft::GetInstance()->getCameraEntity()->mYRot, 0.0F, 1.0F, 0.0F);
     GlStateManager::rotatef(-Minecraft::GetInstance()->getCameraEntity()->mXRot, 1.0F, 0.0F, 0.0F);
 
@@ -219,10 +223,10 @@ void ConduitRenderer::_tessellateHeart() const
 
     builder->begin();
     builder->normal(0.0F, 1.0F, 0.0F);
-    builder->vertexUV(-0.5F, -0.25F, 0.0F, 0.0F, 1.0F);
-    builder->vertexUV(0.5F, -0.25F, 0.0F, 1.0F, 1.0F);
-    builder->vertexUV(0.5F, 0.75F, 0.0F, 1.0F, 0.0F);
-    builder->vertexUV(-0.5F, 0.75F, 0.0F, 0.0F, 0.0F);
+    builder->vertexUV(0.0F - halfWidth, 0.0F - quarterWidth, 0.0F, 0.0F, 1.0F);
+    builder->vertexUV(width - halfWidth, 0.0F - quarterWidth, 0.0F, 1.0F, 1.0F);
+    builder->vertexUV(width - halfWidth, width - quarterWidth, 0.0F, 1.0F, 0.0F);
+    builder->vertexUV(0.0F - halfWidth, width - quarterWidth, 0.0F, 0.0F, 0.0F);
 
     tesselator->end();
 }

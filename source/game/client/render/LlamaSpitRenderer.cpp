@@ -26,9 +26,9 @@ void LlamaSpitRenderer::render(boost::shared_ptr<Entity>& entity, double x, doub
     GlStateManager::pushMatrix();
     GlStateManager::translatef((float)x, (float)y + 0.15F, (float)z);
 
-    GlStateManager::rotatef((entity->mYRot - entity->mYRotO) * partialTick + entity->mYRotO - 90.0F,
+    GlStateManager::rotatef(entity->mYRotO + (entity->mYRot - entity->mYRotO) * partialTick - 90.0F,
                             0.0F, 1.0F, 0.0F);
-    GlStateManager::rotatef((entity->mXRot - entity->mXRotO) * partialTick + entity->mXRotO,
+    GlStateManager::rotatef(entity->mXRotO + (entity->mXRot - entity->mXRotO) * partialTick,
                             0.0F, 0.0F, 1.0F);
 
     bindTexture(entity);

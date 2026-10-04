@@ -1,6 +1,7 @@
 #include "game/client/render/WitchModel.hpp"
 #include "game/client/render/ModelDefinition.hpp"
 #include "game/client/render/ModelPartSkin.hpp"
+#include "game/core/Mth.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include <cmath>
 
@@ -35,20 +36,20 @@ WitchModel::WitchModel(float scale, const ModelDefinition& modelDefinition)
         mHat2->setTexSize(64, 128);
         mHat2->setPos(1.75f, -4.0f, 2.0f);
         mHat2->texOffs(0, 76)->addBox(0.0f, 0.0f, 0.0f, 7, 4, 7);
-        mHat2->mXRot = -3.0f * 0.017453292f;
-        mHat2->mZRot = 1.5f * 0.017453292f;
+        mHat2->mXRot = -3.0f * Mth::DEG_TO_RAD;
+        mHat2->mZRot = 1.5f * Mth::DEG_TO_RAD;
         mHat3 = new ModelPartSkin(this);
         mHat3->setTexSize(64, 128);
         mHat3->setPos(1.75f, -4.0f, 2.0f);
         mHat3->texOffs(0, 87)->addBox(0.0f, 0.0f, 0.0f, 4, 4, 4);
-        mHat3->mXRot = -6.0f * 0.017453292f;
-        mHat3->mZRot = 3.0f * 0.017453292f;
+        mHat3->mXRot = -6.0f * Mth::DEG_TO_RAD;
+        mHat3->mZRot = 3.0f * Mth::DEG_TO_RAD;
         mHat4 = new ModelPartSkin(this);
         mHat4->setTexSize(64, 128);
         mHat4->setPos(1.75f, -2.0f, 2.0f);
         mHat4->texOffs(0, 95)->addBox(0.0f, 0.0f, 0.0f, 1, 2, 1, 0.25f);
-        mHat4->mXRot = -12.0f * 0.017453292f;
-        mHat4->mZRot = 6.0f * 0.017453292f;
+        mHat4->mXRot = -12.0f * Mth::DEG_TO_RAD;
+        mHat4->mZRot = 6.0f * Mth::DEG_TO_RAD;
         mNose->addChild(mWitchNose);
         mHead->addChild(mHat);
         mHat->addChild(mHat2);

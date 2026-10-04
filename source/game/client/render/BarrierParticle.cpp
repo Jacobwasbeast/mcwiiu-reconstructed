@@ -36,6 +36,10 @@ void BarrierParticle::render(BufferBuilder* buffer,
                              float xa2,
                              float za2)
 {
+    float u0 = (float)sprite->getU0(false);
+    float u1 = (float)sprite->getU1(false);
+    float v0 = (float)sprite->getV0(false);
+    float v1 = (float)sprite->getV1(false);
     float scale = 0.5f;
     float px = (float)(xo + (x - xo) * partialTicks - Particle::xOff);
     float py = (float)(yo + (y - yo) * partialTicks - Particle::yOff);
@@ -45,13 +49,9 @@ void BarrierParticle::render(BufferBuilder* buffer,
     float z1 = za * scale;
     float x2 = xa2 * scale;
     float z2 = za2 * scale;
-    float u0 = (float)sprite->getU0(false);
-    float u1 = (float)sprite->getU1(false);
-    float v0 = (float)sprite->getV0(false);
-    float v1 = (float)sprite->getV1(false);
     int light = getLightColor(partialTicks);
 
-    buffer->color(rCol, gCol, bCol, alpha);
+    buffer->color(rCol, gCol, bCol);
     buffer->tex2(light);
     buffer->vertexUV(px - x1 - x2, py - y1, pz - z1 - z2, u1, v1);
     buffer->vertexUV(px - x1 + x2, py + y1, pz - z1 + z2, u1, v0);

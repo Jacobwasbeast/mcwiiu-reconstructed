@@ -86,8 +86,8 @@ void FishingHookRenderer::render(boost::shared_ptr<Entity>& entity, double x, do
             sideOffset = -0.165f;
         Vec3* offset = Vec3::newTemp((double)(sideOffset * fov), -0.045 * (double)fov, 0.4);
         offset = offset->xRot(-(owner->mXRotO + (owner->mXRot - owner->mXRotO) * partialTick) * 0.017453292f);
-        offset->yRot(-(owner->mYRotO + (owner->mYRot - owner->mYRotO) * partialTick) * 0.017453292f);
-        offset->yRot(swing * 0.5f);
+        offset = offset->yRot(-(owner->mYRotO + (owner->mYRot - owner->mYRotO) * partialTick) * 0.017453292f);
+        offset = offset->yRot(swing * 0.5f);
         offset = offset->xRot(swing * 0.7f);
         handX = owner->mXo + (owner->mX - owner->mXo) * (double)partialTick + offset->x;
         handY = owner->mYo + (owner->mY - owner->mYo) * (double)partialTick + offset->y;

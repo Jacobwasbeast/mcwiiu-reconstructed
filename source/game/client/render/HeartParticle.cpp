@@ -43,32 +43,38 @@ void HeartParticle::tick()
 
     move(xd, yd, zd);
 
-    if (x == xo)
+    double xdNew = xd;
+    double zdNew = zd;
+    if (y == yo)
     {
-        xd *= 1.1;
-        zd *= 1.1;
+        xdNew *= 1.1;
+        zdNew *= 1.1;
     }
 
-    xd *= 0.8600000143051147;
+    xdNew *= 0.8600000143051147;
     yd *= 0.8600000143051147;
-    zd *= 0.8600000143051147;
+    zdNew *= 0.8600000143051147;
 
     if (onGround)
     {
-        xd *= 0.699999988079071;
-        zd *= 0.699999988079071;
+        xdNew *= 0.699999988079071;
+        zdNew *= 0.699999988079071;
     }
+
+    xd = xdNew;
+    zd = zdNew;
 }
 
 void HeartParticle::init(Level* level, double x, double y, double z,
                          double xa, double ya, double za, float scale)
 {
-    xd *= 0.01;
-    zd *= 0.01;
-    yd = yd * 0.01 + 0.1;
+    xd *= 0.01f;
+    zd *= 0.01f;
+    yd = yd * 0.01f + 0.1;
 
     lifetime = 16;
     size = this->scale = size * 0.75f * scale;
+    setMiscTex(80);
 }
 
 uint64_t HeartParticle::GetType()
@@ -99,7 +105,7 @@ Particle* HeartParticle::AngryVillagerProvider::createParticle(ePARTICLE_TYPE ty
                                                                 double za,
                                                                 arrayWithLength<int> params)
 {
-    HeartParticle* particle = new HeartParticle(level, x, y + 0.5, z, 0.0, 0.0, 0.0);
+    HeartParticle* particle = new HeartParticle(level, x, y + 0.5, z, xa, ya, za);
     particle->setMiscTex(81);
     particle->setColor(1.0f, 1.0f, 1.0f);
     return particle;

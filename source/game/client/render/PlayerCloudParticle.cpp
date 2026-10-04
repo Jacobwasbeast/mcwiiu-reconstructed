@@ -67,7 +67,7 @@ void PlayerCloudParticle::tick()
         if (playerY < y)
         {
             y = (playerY - y) * 0.2 + y;
-            yd = (nearestPlayer->mY - yd) * 0.2 + yd;
+            yd = (nearestPlayer->mYd - yd) * 0.2 + yd;
             setPos(x, y, z);
         }
     }

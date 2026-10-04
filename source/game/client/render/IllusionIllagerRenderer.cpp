@@ -43,24 +43,24 @@ void IllusionIllagerRenderer::render(boost::shared_ptr<Entity>& entity, double x
     if (!entity->isInvisible())
     {
         MobRenderer::render(entity, x, y, z, yaw, partialTick);
-        return;
     }
-
-    boost::shared_ptr<IllusionIllager> illusion = boost::static_pointer_cast<IllusionIllager>(entity);
-    arrayWithLength<Vec3*> offsets = illusion->getIllusionOffsets(partialTick);
-    boost::shared_ptr<LivingEntity> livingEntity = boost::static_pointer_cast<LivingEntity>(entity);
-    double bob = getBob(livingEntity, partialTick);
-    for (unsigned int index = 0; index < offsets.length; ++index)
+    else
     {
-        Vec3* offset = offsets.data[index];
-        float phase = (float)index;
-        MobRenderer::render(entity,
-                            Mth::cos(phase + (float)(bob * 0.5f)) * 0.025 + x + offset->x,
-                            Mth::cos(phase + (float)(bob * 0.75f)) * 0.0125 + y + offset->y,
-                            Mth::cos(phase + (float)(bob * 0.7f)) * 0.025 + z + offset->z,
-                            yaw, partialTick);
+        arrayWithLength<Vec3*> offsets = boost::static_pointer_cast<IllusionIllager>(entity)->getIllusionOffsets(partialTick);
+        boost::shared_ptr<LivingEntity> livingEntity = boost::static_pointer_cast<LivingEntity>(entity);
+        float bob = getBob(livingEntity, partialTick);
+        for (unsigned int index = 0; index < offsets.length; ++index)
+        {
+            Vec3* offset = offsets.data[index];
+            float phase = (float)index;
+            MobRenderer::render(entity,
+                                Mth::cos(phase + bob * 0.5f) * 0.025 + x + offset->x,
+                                Mth::cos(phase + bob * 0.75f) * 0.0125 + y + offset->y,
+                                Mth::cos(phase + bob * 0.7f) * 0.025 + z + offset->z,
+                                yaw, partialTick);
+        }
+        delete offsets.data;
     }
-    delete offsets.data;
 }
 
 void IllusionIllagerRenderer::renderName(boost::shared_ptr<Entity>& entity, double x, double y, double z)
@@ -93,7 +93,7 @@ void IllusionIllagerRenderer::IllusionIllagerRenderer_ItemInHandLayer::render(
     float ageInTicks, float netHeadYaw, float headPitch, float scale, bool bUseDisplayList)
 {
     if (boost::static_pointer_cast<IllusionIllager>(entity)->isCastingSpell() ||
-        boost::static_pointer_cast<IllusionIllager>(entity)->isInvisible())
+        boost::static_pointer_cast<IllusionIllager>(entity)->isAggressive())
         ItemInHandLayer::render(entity, limbSwing, limbSwingAmount, partialTicks, ageInTicks, netHeadYaw,
                                 headPitch, scale, bUseDisplayList);
 }

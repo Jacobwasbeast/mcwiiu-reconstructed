@@ -33,23 +33,20 @@ bool SimpleAnimatedParticle::isTransparent()
 void SimpleAnimatedParticle::tick()
 {
     int oldAge = age;
-    int oldLifetime = lifetime;
     ++age;
     xo = x;
     yo = y;
     zo = z;
 
-    if (oldLifetime <= oldAge)
+    if (lifetime <= oldAge)
     {
         remove();
-        oldLifetime = lifetime;
     }
 
-    int fadeStart = oldLifetime / 2;
-    int currentAge = age;
-    if (fadeStart < currentAge)
+    int fadeStart = lifetime / 2;
+    if (fadeStart < age)
     {
-        setAlpha(1.0f - (float)(currentAge - fadeStart) / (float)oldLifetime);
+        setAlpha(1.0f - ((float)age - (float)fadeStart) / (float)lifetime);
         if (fading)
         {
             rCol += (fadeRed - rCol) * 0.2f;
@@ -58,12 +55,12 @@ void SimpleAnimatedParticle::tick()
         }
     }
 
-    setMiscTex(texture + (frameCount - 1 - age * frameCount / oldLifetime));
+    setMiscTex(texture + (frameCount - 1 - age * frameCount / lifetime));
     yd += (double)verticalSpeed;
     move(xd, yd, zd);
-    xd *= (double)baseAirFriction;
-    yd *= (double)baseAirFriction;
-    zd *= (double)baseAirFriction;
+    xd *= baseAirFriction;
+    yd *= baseAirFriction;
+    zd *= baseAirFriction;
     if (onGround)
     {
         xd *= 0.699999988079071;

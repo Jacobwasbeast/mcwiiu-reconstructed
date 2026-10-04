@@ -138,8 +138,8 @@ void ParrotModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInT
                             float netHeadYaw, float headPitch, float scale,
                             boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
 {
-    mHead->mXRot = headPitch * Mth::DEG_TO_RAD;
-    mHead->mYRot = netHeadYaw * Mth::DEG_TO_RAD;
+    mHead->mXRot = headPitch * 0.017453292f;
+    mHead->mYRot = netHeadYaw * 0.017453292f;
     mHead->mZRot = mHeadDefaultZRot;
     mHead->mX = mHeadDefaultX;
     mBody->mX = mBodyDefaultX;
@@ -154,7 +154,8 @@ void ParrotModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInT
         mLeg0->mXRot += Mth::cos(swing) * 1.4f * limbSwingAmount;
         mLeg1->mXRot += Mth::cos(swing + 3.1415927f) * 1.4f * limbSwingAmount;
         mHead->mY = mHeadDefaultY + bob;
-        mTail->mXRot = Mth::cos(swing) * 0.3f * limbSwingAmount + 1.015f;
+        const float tailRot = Mth::cos(swing) * 0.3f * limbSwingAmount + 1.015f;
+        mTail->mXRot = tailRot;
         mTail->mY = mTailDefaultY + bob;
         mBody->mY = mBodyDefaultY + bob;
         mWing0->mZRot = -0.0873f - ageInTicks;
@@ -163,39 +164,43 @@ void ParrotModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInT
         mWing1->mY = mWing1DefaultY + bob;
         mLeg0->mY = mLeg0DefaultY + bob;
         mLeg1->mY = mLeg1DefaultY + bob;
-    }
-    else if (mAnimationState == 3)
-    {
-        const float danceX = Mth::cos(static_cast<float>(entity->mTickCount));
-        const float danceY = Mth::sin(static_cast<float>(entity->mTickCount));
-        mHead->mX = danceX;
-        mHead->mY = mHeadDefaultY + danceY;
-        mHead->mXRot = 0.0f;
-        mHead->mYRot = 0.0f;
-        mHead->mZRot = Mth::sin(static_cast<float>(entity->mTickCount)) * 0.4f;
-        mBody->mX = danceX;
-        mBody->mY = mBodyDefaultY + danceY;
-        mWing0->mZRot = -0.0873f - ageInTicks;
-        mWing0->mX = danceX + 1.5f;
-        mWing0->mY = mWing0DefaultY + danceY;
-        mWing1->mZRot = 0.0873f + ageInTicks;
-        mWing1->mX = danceX - 1.5f;
-        mWing1->mY = mWing1DefaultY + danceY;
-        mTail->mX = danceX;
-        mTail->mY = mTailDefaultY + danceY;
     }
     else if (mAnimationState != 2)
     {
-        mHead->mY = mHeadDefaultY + bob;
-        mTail->mXRot = Mth::cos(limbSwing * 0.6662f) * 0.3f * limbSwingAmount + 1.015f;
-        mTail->mY = mTailDefaultY + bob;
-        mBody->mY = mBodyDefaultY + bob;
-        mWing0->mZRot = -0.0873f - ageInTicks;
-        mWing0->mY = mWing0DefaultY + bob;
-        mWing1->mZRot = 0.0873f + ageInTicks;
-        mWing1->mY = mWing1DefaultY + bob;
-        mLeg0->mY = mLeg0DefaultY + bob;
-        mLeg1->mY = mLeg1DefaultY + bob;
+        if (mAnimationState == 3)
+        {
+            const float danceX = Mth::cos(static_cast<float>(entity->mTickCount));
+            const float danceY = Mth::sin(static_cast<float>(entity->mTickCount));
+            mHead->mX = danceX;
+            mHead->mY = mHeadDefaultY + danceY;
+            mHead->mXRot = 0.0f;
+            mHead->mYRot = 0.0f;
+            mHead->mZRot = Mth::sin(static_cast<float>(entity->mTickCount)) * 0.4f;
+            mBody->mX = danceX;
+            mBody->mY = mBodyDefaultY + danceY;
+            mWing0->mZRot = -0.0873f - ageInTicks;
+            mWing0->mX = danceX + 1.5f;
+            mWing0->mY = mWing0DefaultY + danceY;
+            mWing1->mZRot = 0.0873f + ageInTicks;
+            mWing1->mX = -1.5f + danceX;
+            mWing1->mY = mWing1DefaultY + danceY;
+            mTail->mX = danceX;
+            mTail->mY = mTailDefaultY + danceY;
+        }
+        else
+        {
+            mHead->mY = mHeadDefaultY + bob;
+            const float tailRot = Mth::cos(limbSwing * 0.6662f) * 0.3f * limbSwingAmount + 1.015f;
+            mTail->mXRot = tailRot;
+            mTail->mY = mTailDefaultY + bob;
+            mBody->mY = mBodyDefaultY + bob;
+            mWing0->mZRot = -0.0873f - ageInTicks;
+            mWing0->mY = mWing0DefaultY + bob;
+            mWing1->mZRot = 0.0873f + ageInTicks;
+            mWing1->mY = mWing1DefaultY + bob;
+            mLeg0->mY = mLeg0DefaultY + bob;
+            mLeg1->mY = mLeg1DefaultY + bob;
+        }
     }
 }
 
@@ -213,7 +218,8 @@ void ParrotModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float
     mLeg0->mY = mLeg0DefaultY;
     mLeg1->mY = mLeg1DefaultY;
 
-    if (entity->GetType() == EntityType::PARROT)
+    const bool isParrot = entity->GetType() == EntityType::PARROT;
+    if (isParrot)
     {
         boost::shared_ptr<Parrot> parrot = boost::static_pointer_cast<Parrot>(entity);
         if (parrot->isPartyParrot())

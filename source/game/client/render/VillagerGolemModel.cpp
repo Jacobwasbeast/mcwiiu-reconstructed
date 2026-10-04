@@ -34,42 +34,34 @@ VillagerGolemModel::VillagerGolemModel(float scale, float yOffset, const ModelDe
         mHead = new ModelPartSkin(this);
         mHead->setTexSize(128, 128);
         mHead->setPos(0.0f, yOffset, -2.0f);
-        mHead->texOffs(0, 0);
-        mHead->addBox(-4.0f, -12.0f, -5.5f, 8, 10, 8, scale);
-        mHead->texOffs(24, 0);
-        mHead->addBox(-1.0f, -5.0f, -7.5f, 2, 4, 2, scale);
+        mHead->texOffs(0, 0)->addBox(-4.0f, -12.0f, -5.5f, 8, 10, 8, scale);
+        mHead->texOffs(24, 0)->addBox(-1.0f, -5.0f, -7.5f, 2, 4, 2, scale);
 
         mBody = new ModelPartSkin(this);
         mBody->setTexSize(128, 128);
         mBody->setPos(0.0f, yOffset, 0.0f);
-        mBody->texOffs(0, 40);
-        mBody->addBox(-9.0f, -2.0f, -6.0f, 18, 12, 11, scale);
-        mBody->texOffs(0, 70);
-        mBody->addBox(-4.5f, 10.0f, -3.0f, 9, 5, 6, scale + 0.5f);
+        mBody->texOffs(0, 40)->addBox(-9.0f, -2.0f, -6.0f, 18, 12, 11, scale);
+        mBody->texOffs(0, 70)->addBox(-4.5f, 10.0f, -3.0f, 9, 5, 6, scale + 0.5f);
 
         mArm1 = new ModelPartSkin(this);
         mArm1->setTexSize(128, 128);
         mArm1->setPos(0.0f, -7.0f, 0.0f);
-        mArm1->texOffs(60, 21);
-        mArm1->addBox(-13.0f, -2.5f, -3.0f, 4, 30, 6, scale);
+        mArm1->texOffs(60, 21)->addBox(-13.0f, -2.5f, -3.0f, 4, 30, 6, scale);
 
         mArm0 = new ModelPartSkin(this);
         mArm0->setTexSize(128, 128);
         mArm0->setPos(0.0f, -7.0f, 0.0f);
-        mArm0->texOffs(60, 58);
-        mArm0->addBox(9.0f, -2.5f, -3.0f, 4, 30, 6, scale);
+        mArm0->texOffs(60, 58)->addBox(9.0f, -2.5f, -3.0f, 4, 30, 6, scale);
 
         mLeg0 = new ModelPartSkin(this, 0, 22, NULL);
         mLeg0->setTexSize(128, 128);
         mLeg0->setPos(-4.0f, yOffset + 18.0f, 0.0f);
-        mLeg0->texOffs(37, 0);
-        mLeg0->addBox(-3.5f, -3.0f, -3.0f, 6, 16, 5, scale);
+        mLeg0->texOffs(37, 0)->addBox(-3.5f, -3.0f, -3.0f, 6, 16, 5, scale);
 
         mLeg1 = new ModelPartSkin(this, 0, 22, NULL);
         mLeg1->setTexSize(128, 128);
         mLeg1->mMirror = true;
-        mLeg1->texOffs(60, 0);
-        mLeg1->setPos(5.0f, yOffset + 18.0f, 0.0f);
+        mLeg1->texOffs(60, 0)->setPos(5.0f, yOffset + 18.0f, 0.0f);
         mLeg1->addBox(-3.5f, -3.0f, -3.0f, 6, 16, 5, scale);
 
         compileSkinnedDrawlist();
@@ -103,7 +95,8 @@ void VillagerGolemModel::setupAnim(float limbSwing, float limbSwingAmount, float
     mHead->mXRot = headPitch / 57.295776f;
 
     mLeg0->mXRot = -1.5f * triangleWave(limbSwing, 13.0f) * limbSwingAmount;
-    mLeg1->mXRot = 1.5f * triangleWave(limbSwing, 13.0f) * limbSwingAmount;
+    float legSwing = 1.5f * triangleWave(limbSwing, 13.0f) * limbSwingAmount;
+    mLeg1->mXRot = legSwing;
 
     mLeg0->mYRot = 0.0f;
     mLeg1->mYRot = 0.0f;

@@ -19,7 +19,7 @@ public:
     ModelPart(Model* model, const std::wstring& name);
     ModelPart(Model* model, const std::wstring& name, const ModelDefinition& definition, ModelPart* parent, float scale);
 
-    virtual ~ModelPart();
+    virtual ~ModelPart() {}
 
     virtual void render(float scale, bool useDisplayList, bool childrenOnly);
     virtual void renderRollable(float scale, bool useDisplayList);

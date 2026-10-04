@@ -46,11 +46,7 @@ void PistonHeadRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, doub
     BlockPos position = movingBlock->getBlockPos();
     const BlockState* movedState = movingBlock->getBlockState();
     const Block* movedBlock = movedState->getBlock();
-    if (movedState->getMaterial() == Material::AIR)
-        return;
-
-    double progress = movingBlock->getProgress(partialTick);
-    if (progress > 1.0)
+    if (movedState->getMaterial() == Material::AIR || movingBlock->getProgress(partialTick) > 1.0F)
         return;
 
     Tesselator* tesselator = Tesselator::getInstance();
@@ -65,52 +61,46 @@ void PistonHeadRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, doub
     builder->begin();
     builder->setVertexFormat(DefaultVertexFormat::BLOCK);
 
-    const double xOffset = movingBlock->getXOff(partialTick);
-    const double yOffset = movingBlock->getYOff(partialTick);
-    const double zOffset = movingBlock->getZOff(partialTick);
-    builder->offset((float)((float)x - (float)position.x + xOffset),
-                    (float)((float)y - (float)position.y + yOffset),
-                    (float)((float)z - (float)position.z + zOffset));
+    builder->offset((float)x - (float)position.x + movingBlock->getXOff(partialTick),
+                    (float)y - (float)position.y + movingBlock->getYOff(partialTick),
+                    (float)z - (float)position.z + movingBlock->getZOff(partialTick));
     builder->color(1.0F, 1.0F, 1.0F);
     onNewLevel(getLevel());
 
-    if (movedBlock == Blocks::piston_head && progress <= 0.25)
+    if (movedBlock == Blocks::piston_head && movingBlock->getProgress(partialTick) <= 0.25F)
     {
-        TypedBoxed<bool> shortHeadValue(true);
-        const BlockState* headState = movedState->setBoxedValue(
-            static_cast<const Property*>(PistonHeadBlock::SHORT), &shortHeadValue);
+        const BlockState* headState = movedState;
+        {
+            TypedBoxed<bool> shortHeadValue(true);
+            headState = headState->setBoxedValue(PistonHeadBlock::SHORT, &shortHeadValue);
+        }
         mBlockRenderer->tesselatePistonArmNoCulling(headState, position, false, headState);
     }
     else if (movingBlock->isSourcePiston() && !movingBlock->isExtending())
     {
-        TypedBoxed<PistonHeadBlock::PistonType*> pistonType(
-            PistonHeadBlock::TYPE->getUnboxedValue(
-                movedBlock == Blocks::sticky_piston ? L"sticky" : L"normal"));
-        const BlockState* headState = Blocks::piston_head->defaultBlockState()->setBoxedValue(
-            static_cast<const Property*>(PistonHeadBlock::TYPE), &pistonType);
-        TypedBoxed<const Direction*> facing(movedState->getValue(PistonBaseBlock::FACING));
-        headState = headState->setBoxedValue(
-            static_cast<const Property*>(PistonHeadBlock::FACING), &facing);
-        TypedBoxed<bool> shortHeadValue(progress >= 0.5);
-        headState = headState->setBoxedValue(
-            static_cast<const Property*>(PistonHeadBlock::SHORT), &shortHeadValue);
-        mBlockRenderer->tesselatePistonArmNoCulling(headState, position, progress < 0.5, headState);
+        PistonHeadBlock::PistonType* pistonType =
+            movedBlock == Blocks::sticky_piston ? pistonTypeSticky : pistonTypeNormal;
+        const BlockState* headState = Blocks::piston_head->defaultBlockState()
+                                          ->setValue(PistonHeadBlock::TYPE, pistonType)
+                                          ->setValue(PistonHeadBlock::FACING, movedState->getValue(PistonBaseBlock::FACING))
+                                          ->setValue(PistonHeadBlock::SHORT, movingBlock->getProgress(partialTick) >= 0.5F);
+        mBlockRenderer->tesselatePistonArmNoCulling(headState, position,
+                                                    movingBlock->getProgress(partialTick) < 0.5F, headState);
 
-        builder->offset((float)((float)x - (float)position.x),
-                        (float)((float)y - (float)position.y),
-                        (float)((float)z - (float)position.z));
-        TypedBoxed<bool> extendedValue(true);
-        movedState->setBoxedValue(
-            static_cast<const Property*>(PistonBaseBlock::EXTENDED), &extendedValue);
+        builder->offset((float)x - (float)position.x, (float)y - (float)position.y,
+                        (float)z - (float)position.z);
+        {
+            TypedBoxed<bool> extendedValue(true);
+            movedState->setBoxedValue(PistonBaseBlock::EXTENDED, &extendedValue);
+        }
         mBlockRenderer->tesselatePistonBaseForceExtended(movedState, position, movedState);
     }
     else
     {
-        mBlockRenderer->tesselateInWorldNoCulling(movedState, position, movedState, blockEntity);
+        mBlockRenderer->tesselateInWorldNoCulling(movedState, position, movedState, movingBlock);
     }
 
     builder->offset(0.0F, 0.0F, 0.0F);
-    builder->color(1.0F, 1.0F, 1.0F);
     tesselator->end();
     Lighting::turnOn();
 }

@@ -8,7 +8,7 @@ class ExplodeParticle : public Particle
 {
 public:
     ExplodeParticle(Level* level, double x, double y, double z, double xa, double ya, double za);
-    virtual ~ExplodeParticle();
+    virtual ~ExplodeParticle() {}
     virtual uint64_t GetType();
     virtual void tick();
     virtual void render(BufferBuilder* buffer, const boost::shared_ptr<Entity>& camera,

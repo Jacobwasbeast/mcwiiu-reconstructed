@@ -7,8 +7,7 @@
 SpellParticle::SpellParticle(Level* level, double x, double y, double z,
                              double xa, double ya, double za)
     : Particle(level, x, y, z, (0.5 - Math::random()) * 128.0, Math::random() * 255.0,
-               (0.5 - Math::random()) * 128.0),
-      baseTex(0)
+               (0.5 - Math::random()) * 128.0)
 {
     yd *= static_cast<double>(0.2f);
     if (xa == 0.0 && za == 0.0)

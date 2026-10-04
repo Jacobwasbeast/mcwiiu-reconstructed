@@ -1,5 +1,7 @@
 #include "game/client/render/SpiderRenderer.hpp"
 
+#include <algorithm>
+
 #include "game/client/render/Model.hpp"
 #include "game/client/render/ModelDefinition.hpp"
 #include "game/client/render/SpiderModel.hpp"
@@ -20,9 +22,9 @@ SpiderRenderer::SpiderRenderer(EntityRenderDispatcher* dispatcher)
     addLayer(mSpiderEyesLayer);
 }
 
-double SpiderRenderer::getFlipDegrees(boost::shared_ptr<LivingEntity>&)
+float SpiderRenderer::getFlipDegrees(boost::shared_ptr<LivingEntity>&)
 {
-    return 180.0;
+    return 180.0F;
 }
 
 const ResourceLocation* SpiderRenderer::getTextureLocation(boost::shared_ptr<Entity>&)
@@ -39,14 +41,7 @@ void SpiderRenderer::setupForTexturePack(TexturePack* pack)
         return;
     }
 
-    std::vector<RenderLayer*>::iterator layer = mLayers.begin();
-    while (layer != mLayers.end())
-    {
-        if (*layer == mSpiderEyesLayer)
-            break;
-        ++layer;
-    }
-    if (layer == mLayers.end())
+    if (std::find(mLayers.begin(), mLayers.end(), mSpiderEyesLayer) == mLayers.end())
         addLayer(mSpiderEyesLayer);
 }
 
@@ -54,22 +49,19 @@ void SpiderRenderer::renderModel(boost::shared_ptr<LivingEntity>& entity, float 
                                  float limbSwingAmount, float ageInTicks, float netHeadYaw,
                                  float headPitch, float scale)
 {
-    bool translucent = false;
-    if (!isVisible(entity))
-    {
-        boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(Minecraft::GetInstance()->mPlayer);
-        if (entity->isInvisibleTo(player))
-            return;
-        translucent = true;
+    bool solid = !isVisible(entity) && !entity->isInvisibleTo(Minecraft::GetInstance()->mPlayer);
+
+    boost::shared_ptr<Entity> baseEntity = entity;
+    if (!bindTexture(baseEntity))
+        return;
+
+    if (solid)
         GlStateManager::setProfile();
-    }
 
     Model* model = getModel(entity);
-    boost::shared_ptr<Entity> renderEntity = boost::static_pointer_cast<Entity>(entity);
-    model->render(renderEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale,
-                  translucent);
+    model->render(baseEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, true);
 
-    if (translucent)
+    if (solid)
         GlStateManager::unsetProfile();
 }
 

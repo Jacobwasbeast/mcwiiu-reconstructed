@@ -84,7 +84,7 @@ void PolarBearModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, 
         mYHeadOffs = 16.0f;
         mZHeadOffs = 4.0f;
         GlStateManager::pushMatrix();
-        GlStateManager::scalef(0.5f, 0.5f, 0.5f);
+        GlStateManager::scalef(0.6666667f, 0.6666667f, 0.6666667f);
         GlStateManager::translatef(0.0f, mYHeadOffs * scale, mZHeadOffs * scale);
         mHead->render(scale, useDisplayList, false);
         GlStateManager::popMatrix();
@@ -107,10 +107,11 @@ void PolarBearModel::setupAnim(float limbSwing, float limbSwingAmount, float age
                                boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
 {
     QuadrupedModel::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch,
-                              scale, entity, skinAdjustments);
+                              scale, entity, _SkinAdjustments());
 
-    boost::shared_ptr<PolarBear> polarBear = boost::static_pointer_cast<PolarBear>(entity);
-    float standingScale = polarBear->getStandingAnimationScale(ageInTicks - entity->mTickCount);
+    float entityAge = static_cast<float>(entity->mTickCount);
+    float standingScale = boost::static_pointer_cast<PolarBear>(entity)->getStandingAnimationScale(
+        ageInTicks - entityAge);
     float standingScaleSquared = standingScale * standingScale;
     float standingScaleComplement = 1.0f - standingScaleSquared;
 

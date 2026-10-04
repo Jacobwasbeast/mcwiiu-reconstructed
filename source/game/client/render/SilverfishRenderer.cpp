@@ -4,6 +4,8 @@
 #include "game/client/render/SilverfishModel.hpp"
 #include "game/util/ResourceLocation.hpp"
 
+static ResourceLocation SILVERFISH_LOCATION(TN_MOB_SILVERFISH);
+
 SilverfishRenderer::SilverfishRenderer(EntityRenderDispatcher* dispatcher)
     : MobRenderer(dispatcher, new SilverfishModel(ModelDefinition()), 0.3F)
 {
@@ -13,15 +15,14 @@ SilverfishRenderer::~SilverfishRenderer()
 {
 }
 
-double SilverfishRenderer::getFlipDegrees(boost::shared_ptr<LivingEntity>&)
+float SilverfishRenderer::getFlipDegrees(boost::shared_ptr<LivingEntity>&)
 {
-    return 180.0;
+    return 180.0F;
 }
 
 const ResourceLocation* SilverfishRenderer::getTextureLocation(boost::shared_ptr<Entity>&)
 {
-    static ResourceLocation location(TN_MOB_SILVERFISH);
-    return &location;
+    return &SILVERFISH_LOCATION;
 }
 
 Model* SilverfishRenderer::createModel(const ModelDefinition& definition)

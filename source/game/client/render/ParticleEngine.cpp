@@ -87,7 +87,7 @@ ParticleEngine::ParticleList::~ParticleList()
 
 void ParticleEngine::ParticleList::ClearParticles()
 {
-    for (unsigned int i = 0; i < particleCount; ++i)
+    for (int i = 0; i < particleCount; ++i)
     {
         if (particles[i] != NULL)
         {
@@ -102,7 +102,7 @@ Particle* ParticleEngine::ParticleList::at(int index)
     return particles[index];
 }
 
-unsigned int ParticleEngine::ParticleList::size()
+int ParticleEngine::ParticleList::size()
 {
     return particleCount;
 }
@@ -123,9 +123,13 @@ bool ParticleEngine::ParticleList::empty()
 }
 
 ParticleEngine::ParticleEngine(Level* level, Textures* textures)
-    : level(level), textures(textures), translucent(false), opaque(false), particleCount(0)
 {
+    this->textures = textures;
+    translucent = false;
+    opaque = false;
+    this->level = level;
     registerProviders();
+    particleCount = 0;
 }
 
 void ParticleEngine::registerParticle(ePARTICLE_TYPE type, ParticleProvider* provider)
@@ -135,67 +139,67 @@ void ParticleEngine::registerParticle(ePARTICLE_TYPE type, ParticleProvider* pro
 
 void ParticleEngine::registerProviders()
 {
-    registerParticle(ePARTICLE_EXPLODE, new ExplodeParticle::Provider());
-    registerParticle(ePARTICLE_SPIT, new SpitParticle::Provider());
-    registerParticle(ePARTICLE_BUBBLE, new BubbleParticle::Provider());
-    registerParticle(ePARTICLE_BUBBLE_POP, new BubblePopParticle::Provider());
-    registerParticle(ePARTICLE_CURRENT_DOWN, new WaterCurrentDownParticle::Provider());
-    registerParticle(ePARTICLE_SPLASH, new SplashParticle::Provider());
-    registerParticle(ePARTICLE_WAKE, new WakeParticle::Provider());
-    registerParticle(ePARTICLE_DROPLET, new WaterDropParticle::Provider());
-    registerParticle(ePARTICLE_SUSPENDED, new SuspendedParticle::Provider());
-    registerParticle(ePARTICLE_DEPTH_SUSPEND, new SuspendedTownParticle::Provider());
-    registerParticle(ePARTICLE_CRIT, new CritParticle::Provider());
-    registerParticle(ePARTICLE_MAGIC_CRIT, new CritParticle::MagicProvider());
-    registerParticle(ePARTICLE_SMOKE, new SmokeParticle::Provider());
-    registerParticle(ePARTICLE_LARGE_SMOKE, new LargeSmokeParticle::Provider());
-    registerParticle(ePARTICLE_SPELL, new SpellParticle::Provider());
-    registerParticle(ePARTICLE_INSTANT_SPELL, new SpellParticle::InstantProvider());
-    registerParticle(ePARTICLE_MOB_SPELL, new SpellParticle::MobProvider());
-    registerParticle(ePARTICLE_MOB_SPELL_AMBIENT, new SpellParticle::AmbientMobProvider());
-    registerParticle(ePARTICLE_WITCH_MAGIC, new SpellParticle::WitchProvider());
-    registerParticle(ePARTICLE_DRIP_WATER, new DripParticle::WaterProvider());
-    registerParticle(ePARTICLE_DRIP_LAVA, new DripParticle::LavaProvider());
-    registerParticle(ePARTICLE_ANGRY_VILLAGER, new HeartParticle::AngryVillagerProvider());
-    registerParticle(ePARTICLE_HAPPY_VILLAGER, new SuspendedTownParticle::HappyVillagerProvider());
-    registerParticle(ePARTICLE_TOWN_AURA, new SuspendedTownParticle::Provider());
-    registerParticle(ePARTICLE_NOTE, new NoteParticle::Provider());
-    registerParticle(ePARTICLE_PORTAL, new NetherPortalParticle::Provider());
-    registerParticle(ePARTICLE_END_PORTAL, new SmokeParticle::Provider());
-    registerParticle(ePARTICLE_ENCHANTMENT_TABLE, new EnchantmentTableParticle::Provider());
-    registerParticle(ePARTICLE_DRAGON_BREATH, new DragonBreathParticle::Provider());
-    registerParticle(ePARTICLE_ENDER, new EnderParticle::Provider());
-    registerParticle(ePARTICLE_FLAME, new FlameParticle::Provider());
-    registerParticle(ePARTICLE_LAVA, new LavaParticle::Provider());
-    registerParticle(ePARTICLE_FOOTSTEP, new FootstepParticle::Provider());
-    registerParticle(ePARTICLE_CLOUD, new PlayerCloudParticle::Provider());
-    registerParticle(ePARTICLE_RED_DUST, new RedDustParticle::Provider());
-    registerParticle(ePARTICLE_FALLING_DUST, new FallingDustParticle::Provider());
-    registerParticle(ePARTICLE_SNOWBALL_POOF, new BreakingItemParticle::SnowballProvider());
-    registerParticle(ePARTICLE_SNOW_SHOVEL, new SnowShovelParticle::Provider());
-    registerParticle(ePARTICLE_SLIME, new BreakingItemParticle::SlimeProvider());
-    registerParticle(ePARTICLE_HEART, new HeartParticle::Provider());
-    registerParticle(ePARTICLE_BARRIER, new BarrierParticle::Provider());
-    registerParticle(ePARTICLE_ICON_CRACK, new BreakingItemParticle::Provider());
-    registerParticle(ePARTICLE_BLOCK_CRACK, new TerrainParticle::Provider());
-    registerParticle(ePARTICLE_BLOCK_DUST, new TerrainDustParticle::Provider());
-    registerParticle(ePARTICLE_HUGE_EXPLOSION, new HugeExplosionSeedParticle::Provider());
-    registerParticle(ePARTICLE_LARGE_EXPLODE, new HugeExplosionParticle::Provider());
-    registerParticle(ePARTICLE_FIREWORKS_SPARK, new FireworksParticles::Provider());
-    registerParticle(ePARTICLE_MOB_APPEARANCE, new MobAppearanceParticle::Provider());
-    registerParticle(ePARTICLE_END_ROD, new EndRodParticle::Provider());
-    registerParticle(ePARTICLE_DAMAGE_INDICATOR, new CritParticle::DamageIndicatorProvider());
-    registerParticle(ePARTICLE_SWEEP_ATTACK, new AttackSweepParticle::Provider());
-    registerParticle(ePARTICLE_TOTEM, new TotemParticle::Provider());
-    registerParticle(ePARTICLE_INK, new InkParticle::Provider());
-    registerParticle(ePARTICLE_CONDUIT, new ConduitParticle::Provider());
-    registerParticle(ePARTICLE_CHEST_REFILL, new ChestRefillParticle::Provider());
-    registerParticle(ePARTICLE_WINNING_INSTANT_SPELL, new SpellParticle::WinningInstantProvider());
+    registerParticle(PARTICLE_EXPLODE->getId(), new ExplodeParticle::Provider());
+    registerParticle(PARTICLE_SPIT->getId(), new SpitParticle::Provider());
+    registerParticle(PARTICLE_BUBBLE->getId(), new BubbleParticle::Provider());
+    registerParticle(PARTICLE_BUBBLE_POP->getId(), new BubblePopParticle::Provider());
+    registerParticle(PARTICLE_CURRENT_DOWN->getId(), new WaterCurrentDownParticle::Provider());
+    registerParticle(PARTICLE_SPLASH->getId(), new SplashParticle::Provider());
+    registerParticle(PARTICLE_WAKE->getId(), new WakeParticle::Provider());
+    registerParticle(PARTICLE_DROPLET->getId(), new WaterDropParticle::Provider());
+    registerParticle(PARTICLE_SUSPENDED->getId(), new SuspendedParticle::Provider());
+    registerParticle(PARTICLE_DEPTH_SUSPEND->getId(), new SuspendedTownParticle::Provider());
+    registerParticle(PARTICLE_CRIT->getId(), new CritParticle::Provider());
+    registerParticle(PARTICLE_MAGIC_CRIT->getId(), new CritParticle::MagicProvider());
+    registerParticle(PARTICLE_SMOKE->getId(), new SmokeParticle::Provider());
+    registerParticle(PARTICLE_LARGE_SMOKE->getId(), new LargeSmokeParticle::Provider());
+    registerParticle(PARTICLE_SPELL->getId(), new SpellParticle::Provider());
+    registerParticle(PARTICLE_INSTANT_SPELL->getId(), new SpellParticle::InstantProvider());
+    registerParticle(PARTICLE_MOB_SPELL->getId(), new SpellParticle::MobProvider());
+    registerParticle(PARTICLE_MOB_SPELL_AMBIENT->getId(), new SpellParticle::AmbientMobProvider());
+    registerParticle(PARTICLE_WITCH_MAGIC->getId(), new SpellParticle::WitchProvider());
+    registerParticle(PARTICLE_DRIP_WATER->getId(), new DripParticle::WaterProvider());
+    registerParticle(PARTICLE_DRIP_LAVA->getId(), new DripParticle::LavaProvider());
+    registerParticle(PARTICLE_ANGRY_VILLAGER->getId(), new HeartParticle::AngryVillagerProvider());
+    registerParticle(PARTICLE_HAPPY_VILLAGER->getId(), new SuspendedTownParticle::HappyVillagerProvider());
+    registerParticle(PARTICLE_TOWN_AURA->getId(), new SuspendedTownParticle::Provider());
+    registerParticle(PARTICLE_NOTE->getId(), new NoteParticle::Provider());
+    registerParticle(PARTICLE_PORTAL->getId(), new NetherPortalParticle::Provider());
+    registerParticle(PARTICLE_END_PORTAL->getId(), new SmokeParticle::Provider());
+    registerParticle(PARTICLE_ENCHANTMENT_TABLE->getId(), new EnchantmentTableParticle::Provider());
+    registerParticle(PARTICLE_DRAGON_BREATH->getId(), new DragonBreathParticle::Provider());
+    registerParticle(PARTICLE_ENDER->getId(), new EnderParticle::Provider());
+    registerParticle(PARTICLE_FLAME->getId(), new FlameParticle::Provider());
+    registerParticle(PARTICLE_LAVA->getId(), new LavaParticle::Provider());
+    registerParticle(PARTICLE_FOOTSTEP->getId(), new FootstepParticle::Provider());
+    registerParticle(PARTICLE_CLOUD->getId(), new PlayerCloudParticle::Provider());
+    registerParticle(PARTICLE_RED_DUST->getId(), new RedDustParticle::Provider());
+    registerParticle(PARTICLE_FALLING_DUST->getId(), new FallingDustParticle::Provider());
+    registerParticle(PARTICLE_SNOWBALL_POOF->getId(), new BreakingItemParticle::SnowballProvider());
+    registerParticle(PARTICLE_SNOW_SHOVEL->getId(), new SnowShovelParticle::Provider());
+    registerParticle(PARTICLE_SLIME->getId(), new BreakingItemParticle::SlimeProvider());
+    registerParticle(PARTICLE_HEART->getId(), new HeartParticle::Provider());
+    registerParticle(PARTICLE_BARRIER->getId(), new BarrierParticle::Provider());
+    registerParticle(PARTICLE_ICON_CRACK->getId(), new BreakingItemParticle::Provider());
+    registerParticle(PARTICLE_BLOCK_CRACK->getId(), new TerrainParticle::Provider());
+    registerParticle(PARTICLE_BLOCK_DUST->getId(), new TerrainDustParticle::Provider());
+    registerParticle(PARTICLE_HUGE_EXPLOSION->getId(), new HugeExplosionSeedParticle::Provider());
+    registerParticle(PARTICLE_LARGE_EXPLODE->getId(), new HugeExplosionParticle::Provider());
+    registerParticle(PARTICLE_FIREWORKS_SPARK->getId(), new FireworksParticles::Provider());
+    registerParticle(PARTICLE_MOB_APPEARANCE->getId(), new MobAppearanceParticle::Provider());
+    registerParticle(PARTICLE_END_ROD->getId(), new EndRodParticle::Provider());
+    registerParticle(PARTICLE_DAMAGE_INDICATOR->getId(), new CritParticle::DamageIndicatorProvider());
+    registerParticle(PARTICLE_SWEEP_ATTACK->getId(), new AttackSweepParticle::Provider());
+    registerParticle(PARTICLE_TOTEM->getId(), new TotemParticle::Provider());
+    registerParticle(PARTICLE_INK->getId(), new InkParticle::Provider());
+    registerParticle(PARTICLE_CONDUIT->getId(), new ConduitParticle::Provider());
+    registerParticle(PARTICLE_CHEST_REFILL->getId(), new ChestRefillParticle::Provider());
+    registerParticle(PARTICLE_WINNING_INSTANT_SPELL->getId(), new SpellParticle::WinningInstantProvider());
 }
 
 void ParticleEngine::createTrackingEmitter(boost::shared_ptr<Entity> entity, const ParticleType* type)
 {
-    createTrackingEmitter(entity, type, 3);
+    trackingEmitters.push_back(new TrackingEmitter(level, entity, type, 3));
 }
 
 void ParticleEngine::createTrackingEmitter(boost::shared_ptr<Entity> entity, const ParticleType* type, int count)
@@ -206,13 +210,15 @@ void ParticleEngine::createTrackingEmitter(boost::shared_ptr<Entity> entity, con
 void ParticleEngine::add(Particle* particle)
 {
     int texture = particle->getParticleTexture();
-    Level* particleLevel = particle->getLevel();
-    const DimensionType* dimensionType = particleLevel->mDimension->getType();
-    int textureType = 0;
-    if (dimensionType != DimensionType::OVERWORLD)
+    int textureType;
+    if (particle->getLevel()->mDimension->getType() == DimensionType::OVERWORLD)
+    {
+        textureType = 0;
+    }
+    else
     {
         textureType = 2;
-        if (dimensionType == DimensionType::NETHER)
+        if (particle->getLevel()->mDimension->getType() == DimensionType::NETHER)
         {
             textureType = 1;
         }
@@ -220,9 +226,9 @@ void ParticleEngine::add(Particle* particle)
     bool lit = particle->getAlpha() == 1.0;
     unsigned long long type = particle->GetType();
     int limit;
-    if (type == 0x80221)
+    if (type == ParticleKind::FIREWORKS_SPARK)
     {
-        if (particleCount >= 2000)
+        if (particleCount + 1 > 2000)
         {
             delete particle;
             return;
@@ -230,7 +236,7 @@ void ParticleEngine::add(Particle* particle)
         ++particleCount;
         limit = 0x4000;
     }
-    else if (type == 0x8021e)
+    else if (type == ParticleKind::DRAGON_BREATH)
     {
         limit = 1000;
     }
@@ -243,14 +249,14 @@ void ParticleEngine::add(Particle* particle)
         lit = false;
     }
     ParticleList& list = particles[(textureType * 5 + texture) * 2 + (lit ? 1 : 0)];
-    if (type == 0x8021e)
+    if (particle->GetType() == ParticleKind::DRAGON_BREATH)
     {
-        if (list.size() >= static_cast<unsigned int>(limit))
+        if (list.size() >= limit)
         {
             return;
         }
     }
-    else if (list.size() >= static_cast<unsigned int>(limit))
+    else if (list.size() >= limit)
     {
         Particle* old = list.at(0);
         if (old->GetType() == ParticleKind::FIREWORKS_SPARK)
@@ -267,17 +273,21 @@ Particle* ParticleEngine::createParticle(ePARTICLE_TYPE type, double x, double y
                                          double xa, double ya, double za,
                                          arrayWithLength<int> parameters, Level* level)
 {
-    ParticleProvider*& provider = providers[type];
-    if (provider == NULL)
+    ParticleProvider* provider = providers[type];
+    if (provider != NULL)
     {
-        return NULL;
+        if (level == NULL)
+        {
+            level = this->level;
+        }
+        Particle* particle = provider->createParticle(type, level, x, y, z, xa, ya, za, parameters);
+        if (particle != NULL)
+        {
+            add(particle);
+            return particle;
+        }
     }
-    Particle* particle = provider->createParticle(type, level, x, y, z, xa, ya, za, parameters);
-    if (particle != NULL)
-    {
-        add(particle);
-    }
-    return particle;
+    return NULL;
 }
 
 void ParticleEngine::tickParticle(Particle* particle)
@@ -351,18 +361,21 @@ void ParticleEngine::tick()
     {
         tickTextureType(i);
     }
-    for (std::vector<TrackingEmitter*>::iterator it = trackingEmitters.begin(); it != trackingEmitters.end();)
+    if (!trackingEmitters.empty())
     {
-        TrackingEmitter* emitter = *it;
-        emitter->tick();
-        if (!emitter->isAlive())
+        for (std::vector<TrackingEmitter*>::iterator it = trackingEmitters.begin(); it != trackingEmitters.end();)
         {
-            it = trackingEmitters.erase(it);
-            delete emitter;
-        }
-        else
-        {
-            ++it;
+            TrackingEmitter* emitter = *it;
+            emitter->tick();
+            if (!emitter->isAlive())
+            {
+                it = trackingEmitters.erase(it);
+                delete emitter;
+            }
+            else
+            {
+                ++it;
+            }
         }
     }
 }
@@ -380,16 +393,23 @@ void ParticleEngine::render(boost::shared_ptr<Entity>& entity, float partialTick
     const float cameraYOff = gCameraYOff2;
     const float cameraXOff = gCameraXOff2;
 
-    Particle::setXOffset((entity->mX - entity->mXOld) * partialTick + entity->mXOld);
-    Particle::setYOffset((entity->mY - entity->mYOld) * partialTick + entity->mYOld);
-    Particle::setZOffset((entity->mZ - entity->mZOld) * partialTick + entity->mZOld);
+    Particle::setXOffset(entity->mXOld + (entity->mX - entity->mXOld) * partialTick);
+    Particle::setYOffset(entity->mYOld + (entity->mY - entity->mYOld) * partialTick);
+    Particle::setZOffset(entity->mZOld + (entity->mZ - entity->mZOld) * partialTick);
     Particle::setCamerViewDirection(entity->getViewVector(partialTick));
 
-    const DimensionType* dimensionType = level->mDimension->getType();
-    int dimension = 0;
-    if (dimensionType != DimensionType::OVERWORLD)
+    int dimension;
+    if (level->mDimension->getType() == DimensionType::OVERWORLD)
     {
-        dimension = dimensionType == DimensionType::NETHER ? 1 : 2;
+        dimension = 0;
+    }
+    else
+    {
+        dimension = 2;
+        if (level->mDimension->getType() == DimensionType::NETHER)
+        {
+            dimension = 1;
+        }
     }
 
     if (layer != 0)
@@ -409,7 +429,7 @@ void ParticleEngine::render(boost::shared_ptr<Entity>& entity, float partialTick
         ParticleList& list = particles[(dimension * 5 + textureType) * 2 + layer];
         if (!list.empty())
         {
-            if (layer < 2)
+            if (static_cast<unsigned int>(layer) < 2)
             {
                 GlStateManager::depthMask(layer != 0);
             }
@@ -432,7 +452,7 @@ void ParticleEngine::render(boost::shared_ptr<Entity>& entity, float partialTick
             BufferBuilder* buffer = Tesselator::getInstance()->getBuilder();
             GlStateManager::color4f(1.0f, 1.0f, 1.0f, 1.0f);
             buffer->begin();
-            for (unsigned int i = 0; i < list.size(); ++i)
+            for (int i = 0; i < list.size(); ++i)
             {
                 if (buffer->hasMaxVertices())
                 {
@@ -453,29 +473,30 @@ void ParticleEngine::render(boost::shared_ptr<Entity>& entity, float partialTick
 
 void ParticleEngine::renderLit(boost::shared_ptr<Entity> entity, float partialTick, int layer)
 {
+    Particle::setXOffset(entity->mXOld + (entity->mX - entity->mXOld) * partialTick);
+    Particle::setYOffset(entity->mYOld + (entity->mY - entity->mYOld) * partialTick);
+    Particle::setZOffset(entity->mZOld + (entity->mZ - entity->mZOld) * partialTick);
+    Particle::setCamerViewDirection(entity->getViewVector(partialTick));
+
     const float degToRad = 0.017453292f;
-    const float yaw = entity->mYRot * degToRad;
-    const float pitch = entity->mXRot * degToRad;
-    const float cosYaw = Mth::cos(yaw);
-    const float sinYaw = Mth::sin(yaw);
-    const float sinPitchY = Mth::sin(pitch);
-    const float sinPitchX = Mth::sin(pitch);
-    const float cosPitch = Mth::cos(pitch);
-    const float cameraYOff = -sinYaw * sinPitchY;
-    const float cameraXOff = cosYaw * sinPitchX;
+    const float cosYaw = Mth::cos(entity->mYRot * degToRad);
+    const float sinYaw = Mth::sin(entity->mYRot * degToRad);
+    const float cameraYOff = -sinYaw * Mth::sin(entity->mXRot * degToRad);
+    const float cameraXOff = cosYaw * Mth::sin(entity->mXRot * degToRad);
+    const float cosPitch = Mth::cos(entity->mXRot * degToRad);
 
-    Particle::setXOffset((entity->mX - entity->mXOld) * partialTick + entity->mXOld);
-    Particle::setYOffset((entity->mY - entity->mYOld) * partialTick + entity->mYOld);
-    Particle::setZOffset((entity->mZ - entity->mZOld) * partialTick + entity->mZOld);
-
-    Vec3* viewDirection = entity->getViewVector(partialTick);
-    Particle::setCamerViewDirection(viewDirection);
-
-    const DimensionType* dimensionType = level->mDimension->getType();
-    int dimension = 0;
-    if (dimensionType != DimensionType::OVERWORLD)
+    int dimension;
+    if (level->mDimension->getType() == DimensionType::OVERWORLD)
     {
-        dimension = dimensionType == DimensionType::NETHER ? 1 : 2;
+        dimension = 0;
+    }
+    else
+    {
+        dimension = 2;
+        if (level->mDimension->getType() == DimensionType::NETHER)
+        {
+            dimension = 1;
+        }
     }
 
     if (layer != 0)
@@ -490,9 +511,8 @@ void ParticleEngine::renderLit(boost::shared_ptr<Entity> entity, float partialTi
     ParticleList& list = particles[dimension * 10 + 6 + layer];
     if (!list.empty())
     {
-        Tesselator::getInstance();
         BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
-        for (unsigned int i = 0; i < list.size(); ++i)
+        for (int i = 0; i < list.size(); ++i)
         {
             Particle* particle = list.at(i);
             particle->render(builder, entity, partialTick, cosYaw, cosPitch, sinYaw,
@@ -507,37 +527,23 @@ void ParticleEngine::renderLit(boost::shared_ptr<Entity> entity, float partialTi
 void ParticleEngine::destroy(const BlockPos& pos, const BlockState* state)
 {
     Block* block = state->getBlock();
-    if (block->getCraftingMaterial() != Material::AIR)
+    if (Material::AIR != block->getCraftingMaterial())
     {
         block = state->getBlock();
         const BlockState* particleState = block->fillVirtualBlockStateProperties(state, level, pos);
         for (int x = 0; x < 4; ++x)
         {
-            const double xOffset = (x + 0.5) * 0.25;
-            const double xVelocity = xOffset - 0.5;
             for (int y = 0; y < 4; ++y)
             {
-                const double yOffset = (y + 0.5) * 0.25;
-                const double yVelocity = yOffset - 0.5;
-                const double xPosition = pos.x + xOffset;
-                const double yPosition = pos.y + yOffset;
-                const double zPosition = pos.z;
-
-                TerrainParticle* particle = new TerrainParticle(level, xPosition, yPosition,
-                    zPosition + 0.125, xVelocity, yVelocity, -0.375, particleState);
-                add(particle->init(pos));
-
-                particle = new TerrainParticle(level, xPosition, yPosition,
-                    zPosition + 0.375, xVelocity, yVelocity, -0.125, particleState);
-                add(particle->init(pos));
-
-                particle = new TerrainParticle(level, xPosition, yPosition,
-                    zPosition + 0.625, xVelocity, yVelocity, 0.125, particleState);
-                add(particle->init(pos));
-
-                particle = new TerrainParticle(level, xPosition, yPosition,
-                    zPosition + 0.875, xVelocity, yVelocity, 0.375, particleState);
-                add(particle->init(pos));
+                for (int z = 0; z < 4; ++z)
+                {
+                    const double xOffset = (x + 0.5) * 0.25;
+                    const double yOffset = (y + 0.5) * 0.25;
+                    const double zOffset = (z + 0.5) * 0.25;
+                    TerrainParticle* particle = new TerrainParticle(level, pos.x + xOffset, pos.y + yOffset,
+                        pos.z + zOffset, xOffset - 0.5, yOffset - 0.5, zOffset - 0.5, particleState);
+                    add(particle->init(pos));
+                }
             }
         }
     }
@@ -556,40 +562,38 @@ void ParticleEngine::crack(const BlockPos& pos, const Direction* direction)
     const double randomX = random.nextDouble();
     const double randomY = random.nextDouble();
     const double randomZ = random.nextDouble();
-    double x = randomX * ((shape->mMaxX - shape->mMinX) - 0.2) + pos.x + 0.1 + shape->mMinX;
-    double y = randomY * ((shape->mMaxY - shape->mMinY) - 0.2) + pos.y + 0.1 + shape->mMinY;
-    double z = randomZ * ((shape->mMaxZ - shape->mMinZ) - 0.2) + pos.z + 0.1 + shape->mMinZ;
+    double x = randomX * ((shape->mMaxX - shape->mMinX) - 0.2f) + pos.x + 0.1f + shape->mMinX;
+    double y = randomY * ((shape->mMaxY - shape->mMinY) - 0.2f) + pos.y + 0.1f + shape->mMinY;
+    double z = randomZ * ((shape->mMaxZ - shape->mMinZ) - 0.2f) + pos.z + 0.1f + shape->mMinZ;
 
-    if (direction == Direction::DOWN)
+    if (Direction::DOWN == direction)
     {
-        y = pos.y + shape->mMinY - 0.1;
+        y = pos.y + shape->mMinY - 0.1f;
     }
-    if (direction == Direction::UP)
+    if (Direction::UP == direction)
     {
-        y = pos.y + shape->mMaxY + 0.1;
+        y = pos.y + shape->mMaxY + 0.1f;
     }
-    if (direction == Direction::NORTH)
+    if (Direction::NORTH == direction)
     {
-        z = pos.z + shape->mMinZ - 0.1;
+        z = pos.z + shape->mMinZ - 0.1f;
     }
-    if (direction == Direction::SOUTH)
+    if (Direction::SOUTH == direction)
     {
-        z = pos.z + shape->mMaxZ + 0.1;
+        z = pos.z + shape->mMaxZ + 0.1f;
     }
-    if (direction == Direction::WEST)
+    if (Direction::WEST == direction)
     {
-        x = pos.x + shape->mMinX - 0.1;
+        x = pos.x + shape->mMinX - 0.1f;
     }
-    if (direction == Direction::EAST)
+    if (Direction::EAST == direction)
     {
-        x = pos.x + shape->mMaxX + 0.1;
+        x = pos.x + shape->mMaxX + 0.1f;
     }
 
-    TerrainParticle* particle = new TerrainParticle(level, x, y, z, 0.0, 0.0, 0.0, state);
-    particle = particle->init(pos);
-    particle->setPower(0.2f);
-    particle->scale(0.6f);
-    add(particle);
+    TerrainParticle* particle = new TerrainParticle(level, x, y, z, 0.0, 0.0, 0.0,
+        block->fillVirtualBlockStateProperties(state, level, pos));
+    add(particle->init(pos)->setPower(0.2f)->scale(0.6f));
 }
 
 void ParticleEngine::setLevel(Level* newLevel)
@@ -601,11 +605,11 @@ void ParticleEngine::setLevel(Level* newLevel)
         {
             particles[i].ClearParticles();
         }
-        for (std::vector<TrackingEmitter*>::iterator it = trackingEmitters.begin(); it != trackingEmitters.end(); ++it)
+        for (unsigned int i = 0; i < trackingEmitters.size(); ++i)
         {
-            if (*it != NULL)
+            if (trackingEmitters[i] != NULL)
             {
-                delete *it;
+                delete trackingEmitters[i];
             }
         }
         trackingEmitters.clear();
@@ -614,16 +618,15 @@ void ParticleEngine::setLevel(Level* newLevel)
 
 std::wstring ParticleEngine::countParticles()
 {
-    const DimensionType* dimensionType = level->mDimension->getType();
     int dimension = 0;
-    if (dimensionType != DimensionType::OVERWORLD)
+    if (level->mDimension->getType() != DimensionType::OVERWORLD)
     {
-        dimension = dimensionType == DimensionType::NETHER ? 1 : 2;
+        dimension = level->mDimension->getType() == DimensionType::NETHER ? 1 : 2;
     }
-    unsigned int count = 0;
-    for (int i = dimension * 10; i < dimension * 10 + 10; ++i)
+    int count = 0;
+    for (int textureType = 0; textureType < 5; ++textureType)
     {
-        count += particles[i].size();
+        count += particles[dimension * 10 + textureType * 2].size() + particles[dimension * 10 + textureType * 2 + 1].size();
     }
     return _toString(count);
 }

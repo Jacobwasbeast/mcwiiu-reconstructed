@@ -16,9 +16,9 @@ class ShulkerModel : public Model
 public:
     ShulkerModel(const ModelDefinition& modelDefinition);
     virtual ~ShulkerModel();
-    virtual void renderWhenInvisible(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount,
-                                     float ageInTicks, float netHeadYaw, float headPitch, float scale,
-                                     bool useDisplayList);
+    void renderWhenInvisible(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount,
+                             float ageInTicks, float netHeadYaw, float headPitch, float scale,
+                             bool useDisplayList);
     virtual void setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw,
                            float headPitch, float scale, boost::shared_ptr<Entity> entity,
                            _SkinAdjustments skinAdjustments);

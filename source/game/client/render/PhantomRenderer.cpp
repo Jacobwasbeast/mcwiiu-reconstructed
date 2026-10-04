@@ -48,16 +48,9 @@ void PhantomRenderer::renderModel(boost::shared_ptr<LivingEntity>& entity, float
                                   float limbSwingAmount, float ageInTicks, float netHeadYaw,
                                   float headPitch, float scale)
 {
-    bool translucent = false;
-    if (!isVisible(entity))
-    {
-        boost::shared_ptr<Player> player =
-            boost::static_pointer_cast<Player>(Minecraft::GetInstance()->mPlayer);
-        if (!entity->isInvisibleTo(player))
-            translucent = true;
-    }
+    bool translucent = !isVisible(entity) && !entity->isInvisibleTo(Minecraft::GetInstance()->mPlayer);
 
-    boost::shared_ptr<Entity> renderEntity = boost::static_pointer_cast<Entity>(entity);
+    boost::shared_ptr<Entity> renderEntity = entity;
     if (!bindTexture(renderEntity))
         return;
 

@@ -13,8 +13,7 @@
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/util/Math.hpp"
 
-static const float DEGREES_TO_RADIANS = 0.017453292f;
-static const float EATING_HEAD_X_ROT = 110.0f * DEGREES_TO_RADIANS;
+static const float EATING_HEAD_X_ROT = 110.0f * Mth::DEG_TO_RAD;
 
 AbstractHorseModel::AbstractHorseModel(bool horse, const ModelDefinition& modelDefinition)
 {
@@ -242,12 +241,12 @@ void AbstractHorseModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity
 {
     Model::prepareMobModel(entity, limbSwing, limbSwingAmount, partialTicks);
 
-    float bodyRot = rotlerp(entity->mYBodyRotO, entity->mYBodyRot, partialTicks);
-    float headRot = rotlerp(entity->mYHeadRotO, entity->mYHeadRot, partialTicks);
-    float xRot = rotlerp(entity->mXRotO, entity->mXRot, partialTicks);
+    float bodyRot = rotlerp(entity.get()->mYBodyRotO, entity.get()->mYBodyRot, partialTicks);
+    float headRot = rotlerp(entity.get()->mYHeadRotO, entity.get()->mYHeadRot, partialTicks);
+    float xRot = rotlerp(entity.get()->mXRotO, entity.get()->mXRot, partialTicks);
 
     float netHeadYaw = Math::wrapDegrees(headRot - bodyRot);
-    float headPitch = xRot * DEGREES_TO_RADIANS;
+    float headPitch = xRot * Mth::DEG_TO_RAD;
 
     if (netHeadYaw > 20.0f)
     {
@@ -266,14 +265,14 @@ void AbstractHorseModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity
 
     boost::shared_ptr<AbstractHorse> horse = boost::static_pointer_cast<AbstractHorse>(entity);
 
-    float eatAnim = horse->getEatAnim(partialTicks);
-    float standAnim = horse->getStandAnim(partialTicks);
+    float eatAnim = horse.get()->getEatAnim(partialTicks);
+    float standAnim = horse.get()->getStandAnim(partialTicks);
     float notStandAnim = 1.0f - standAnim;
-    float mouthAnim = horse->getMouthAnim(partialTicks);
-    bool tailSwinging = horse->getTailCounter() != 0;
-    bool saddled = horse->isSaddled();
+    float mouthAnim = horse.get()->getMouthAnim(partialTicks);
+    bool tailSwinging = horse.get()->getTailCounter() != 0;
+    bool saddled = horse.get()->isSaddled();
 
-    float ageInTicks = (float)entity->mTickCount + partialTicks;
+    float ageInTicks = (float)entity.get()->mTickCount + partialTicks;
     float legCos = Mth::cos(limbSwing * 0.6662f + 3.1415927f);
 
     mBody->mXRot = 0.0f;
@@ -283,18 +282,23 @@ void AbstractHorseModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity
     float legSwing = legCos * 0.8f * limbSwingAmount;
 
     mNeck->mXRot = headPitch + 0.5235988f;
-    mNeck->mYRot = netHeadYaw * DEGREES_TO_RADIANS;
+    mNeck->mYRot = netHeadYaw * Mth::DEG_TO_RAD;
 
     float bob = Mth::sin(ageInTicks);
-    float notAnim = 1.0f - std::max(standAnim, eatAnim);
+    float maxAnim = standAnim;
+    if (standAnim - eatAnim < 0.0f)
+    {
+        maxAnim = eatAnim;
+    }
+    float notAnim = 1.0f - maxAnim;
 
     mNeck->mXRot = notAnim * (mouthAnim * bob * 0.05f + mNeck->mXRot)
         + (standAnim * (headPitch + 0.2617994f) + eatAnim * (bob * 0.05f + EATING_HEAD_X_ROT));
-    mNeck->mYRot = standAnim * netHeadYaw * DEGREES_TO_RADIANS + notAnim * mNeck->mYRot;
+    mNeck->mYRot = standAnim * netHeadYaw * Mth::DEG_TO_RAD + notAnim * mNeck->mYRot;
     mNeck->mY = notAnim * mNeck->mY + (standAnim * -4.0f + eatAnim * 8.0f);
     mNeck->mZ = notAnim * mNeck->mZ + (eatAnim * -10.0f - standAnim);
 
-    mBody->mXRot = standAnim * (-45.0f * DEGREES_TO_RADIANS) + notStandAnim * mBody->mXRot;
+    mBody->mXRot = standAnim * (-45.0f * Mth::DEG_TO_RAD) + notStandAnim * mBody->mXRot;
 
     mBag2->mY = standAnim * 5.5f + notStandAnim * mBag2DefaultY;
     mBag2->mZ = standAnim * 15.0f + notStandAnim * mBag2DefaultZ;
@@ -322,12 +326,12 @@ void AbstractHorseModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity
     mLeg4A->mZ = mLeg3A->mZ;
 
     float legFrontSwing = legCos * 0.5f * limbSwingAmount * notStandAnim;
-    float legStandRot = 5.0f * DEGREES_TO_RADIANS * standAnim;
+    float legStandRot = 5.0f * Mth::DEG_TO_RAD * standAnim;
 
     mLeg1A->mXRot = legStandRot - legFrontSwing;
     mLeg2A->mXRot = legStandRot + legFrontSwing;
-    mLeg3A->mXRot = (-60.0f * DEGREES_TO_RADIANS + standCos) * standAnim + legSwing * notStandAnim;
-    mLeg4A->mXRot = (-60.0f * DEGREES_TO_RADIANS - standCos) * standAnim - legSwing * notStandAnim;
+    mLeg3A->mXRot = (-60.0f * Mth::DEG_TO_RAD + standCos) * standAnim + legSwing * notStandAnim;
+    mLeg4A->mXRot = (-60.0f * Mth::DEG_TO_RAD - standCos) * standAnim - legSwing * notStandAnim;
 
     if (saddled)
     {
@@ -341,7 +345,7 @@ void AbstractHorseModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity
         mSaddleMouthLineR->mYRot = mNeck->mYRot;
     }
 
-    mTailA->mXRot = standAnim * (80.0f * DEGREES_TO_RADIANS) + notStandAnim * (25.0f * DEGREES_TO_RADIANS);
+    mTailA->mXRot = standAnim * (80.0f * Mth::DEG_TO_RAD) + notStandAnim * (25.0f * Mth::DEG_TO_RAD);
 
     if (tailSwinging)
     {
@@ -357,35 +361,15 @@ void AbstractHorseModel::render(boost::shared_ptr<Entity>& entity, float limbSwi
 {
     boost::shared_ptr<AbstractHorse> horse = boost::static_pointer_cast<AbstractHorse>(entity);
 
-    bool baby = horse->isBaby();
-    unsigned long long type = entity->GetType();
+    bool baby = horse.get()->isBaby();
+    unsigned long long type = entity.get()->GetType();
 
-    bool saddled = false;
+    bool saddled = !baby && horse.get()->isSaddled();
+    bool chestedHorse = type == EntityType::DONKEY || type == EntityType::MULE;
+    bool hasChest = !baby && chestedHorse && boost::static_pointer_cast<AbstractChestedHorse>(horse).get()->hasChest();
 
-    if (!baby && horse->isSaddled())
-    {
-        saddled = true;
-    }
-
-    bool chestedHorse = true;
-
-    if (type != EntityType::DONKEY && type != EntityType::MULE)
-    {
-        chestedHorse = false;
-    }
-
-    bool hasChest = false;
-
-    if (!baby && chestedHorse)
-    {
-        if (boost::static_pointer_cast<AbstractChestedHorse>(horse)->hasChest())
-        {
-            hasChest = true;
-        }
-    }
-
-    bool ridden = horse->isVehicle();
-    float foalScale = horse->getFoalScale();
+    bool ridden = horse.get()->isVehicle();
+    float foalScale = horse.get()->getFoalScale();
 
     mSaddle->mShow = saddled;
     mSaddleMouthLine->mShow = saddled && ridden;

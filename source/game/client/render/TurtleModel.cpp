@@ -28,10 +28,8 @@ TurtleModel::TurtleModel(float scale, const ModelDefinition& modelDefinition)
 
         delete mBody;
         mBody = new ModelPartSkin(this);
-        mBody->texOffs(6, 37);
-        mBody->addBox(-9.5f, 3.0f, -10.0f, 19, 20, 6, 0.0f);
-        mBody->texOffs(30, 1);
-        mBody->addBox(-5.5f, 3.0f, -13.0f, 11, 18, 3, 0.0f);
+        mBody->texOffs(6, 37)->addBox(-9.5f, 3.0f, -10.0f, 19, 20, 6, 0.0f);
+        mBody->texOffs(30, 1)->addBox(-5.5f, 3.0f, -13.0f, 11, 18, 3, 0.0f);
         mBody->setPos(0.0f, 11.0f, -10.0f);
 
         delete mLeg0;
@@ -70,10 +68,12 @@ void TurtleModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, flo
               entity, _SkinAdjustments());
 
     boost::shared_ptr<Turtle> turtle = boost::static_pointer_cast<Turtle>(entity);
-    mEggBelly->mShow = !mYoung && turtle->hasEgg();
+    const bool show = !mYoung && turtle->hasEgg();
+    const bool young = mYoung;
+    mEggBelly->mShow = show;
 
     GlStateManager::pushMatrix();
-    if (!mYoung)
+    if (!young)
     {
         if (turtle->hasEgg())
         {
@@ -111,7 +111,7 @@ void TurtleModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInT
                             _SkinAdjustments skinAdjustments)
 {
     QuadrupedModel::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch,
-                              scale, entity, skinAdjustments);
+                              scale, entity, _SkinAdjustments());
 
     boost::shared_ptr<Turtle> turtle = boost::static_pointer_cast<Turtle>(entity);
     const float halfPi = 1.5707964f;
@@ -128,36 +128,35 @@ void TurtleModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInT
     mLeg3->mZRot = Mth::clamp(Mth::cos(swing) * 0.5f * limbSwingAmount, -halfPi, halfPi);
     mEggBelly->mXRot = 90.0f * Mth::DEG_TO_RAD;
 
-    if (turtle->isInWater() || !turtle->mOnGround)
-        return;
-
-    float frontSwing = 3.0f;
-    float backSwing = 8.0f;
-    float speed = 5.0f;
-    float pace = 1.0f;
-    if (turtle->isVehicle())
+    if (!turtle->isInWater() && turtle->mOnGround)
     {
-        speed = 2.0f;
-        frontSwing = 0.5f;
-        backSwing = 2.0f;
-        pace = 0.39972f;
+        float frontSwing = 3.0f;
+        float backSwing = 8.0f;
+        float speed = 5.0f;
+        float pace = 1.0f;
+        if (turtle->isVehicle())
+        {
+            speed = 2.0f;
+            frontSwing = 0.5f;
+            backSwing = 2.0f;
+            pace = 0.39972f;
+        }
+        const float walk = limbSwing * pace * speed;
+        if (!turtle->isLayingEgg())
+        {
+            mLeg2->mYRot = Mth::clamp(Mth::cos(walk + 3.1415927f) * backSwing * limbSwingAmount, -halfPi, halfPi);
+            mLeg3->mYRot = Mth::clamp(Mth::cos(walk) * backSwing * limbSwingAmount, -halfPi, halfPi);
+        }
+        else
+        {
+            mLeg2->mYRot = Mth::cos(ageInTicks + 3.1415927f) * halfPi;
+            mLeg3->mYRot = Mth::cos(ageInTicks) * halfPi;
+        }
+        mLeg0->mXRot = 0.0f;
+        mLeg0->mYRot = Mth::clamp(Mth::cos(walk + 3.1415927f) * frontSwing * limbSwingAmount, -halfPi, halfPi);
+        mLeg1->mXRot = 0.0f;
+        mLeg1->mYRot = Mth::clamp(Mth::cos(walk) * frontSwing * limbSwingAmount, -halfPi, halfPi);
+        mLeg2->mZRot = 0.0f;
+        mLeg3->mZRot = 0.0f;
     }
-    const float walk = limbSwing * pace * speed;
-    if (!turtle->isLayingEgg())
-    {
-        mLeg2->mYRot = Mth::clamp(Mth::cos(walk + 3.1415927f) * backSwing * limbSwingAmount, -halfPi, halfPi);
-        mLeg3->mYRot = Mth::clamp(Mth::cos(walk) * backSwing * limbSwingAmount, -halfPi, halfPi);
-    }
-    else
-    {
-        mLeg2->mYRot = Mth::cos(ageInTicks + 3.1415927f) * halfPi;
-        mLeg3->mYRot = Mth::cos(ageInTicks) * halfPi;
-    }
-    mLeg0->mXRot = 0.0f;
-    mLeg0->mYRot = Mth::clamp(Mth::cos(walk + 3.1415927f) * frontSwing * limbSwingAmount, -halfPi, halfPi);
-    mLeg1->mXRot = 0.0f;
-    mLeg1->mYRot = Mth::clamp(Mth::cos(walk) * frontSwing * limbSwingAmount, -halfPi, halfPi);
-    mLeg2->mZRot = 0.0f;
-    mLeg3->mZRot = 0.0f;
 }
-

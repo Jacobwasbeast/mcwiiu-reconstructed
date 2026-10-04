@@ -9,13 +9,13 @@
 #include "game/entity/mob/LivingEntity.hpp"
 
 PufferfishRenderer::PufferfishRenderer(EntityRenderDispatcher* dispatcher)
-    : FishRenderer(dispatcher, FISH_TYPE_PUFFERFISH, 0.2f),
-      mPuffState(Pufferfish::PUFFED_STATE_SMALL),
-      mModelMedium(new FishModel(ModelDefinition(), FISH_TYPE_PUFFERFISH, 1)),
-      mModelLarge(new FishModel(ModelDefinition(), FISH_TYPE_PUFFERFISH, 2)),
-      mOriginalModelMedium(mModelMedium),
-      mOriginalModelLarge(mModelLarge)
+    : FishRenderer(dispatcher, FISH_TYPE_PUFFERFISH, 0.2f)
 {
+    mModelMedium = new FishModel(ModelDefinition(), FISH_TYPE_PUFFERFISH, 1);
+    mModelLarge = new FishModel(ModelDefinition(), FISH_TYPE_PUFFERFISH, 2);
+    mPuffState = Pufferfish::PUFFED_STATE_SMALL;
+    mOriginalModelMedium = mModelMedium;
+    mOriginalModelLarge = mModelLarge;
 }
 
 PufferfishRenderer::~PufferfishRenderer()
@@ -43,36 +43,34 @@ void PufferfishRenderer::setupForTexturePack(TexturePack* pack)
 {
     LivingEntityRenderer::setupForTexturePack(pack);
 
-    std::wstring modelName = mModelMedium->getName();
     if (mModelMedium != mOriginalModelMedium)
     {
         if (mModelMedium != NULL)
             delete mModelMedium;
         mModelMedium = NULL;
     }
-    if (!pack->HasCustomModel(modelName))
+    if (pack->HasCustomModel(mOriginalModelMedium->getName()))
     {
-        mModelMedium = mOriginalModelMedium;
+        mModelMedium = new FishModel(*pack->GetCustomModel(mOriginalModelMedium->getName()), FISH_TYPE_PUFFERFISH, 1);
     }
     else
     {
-        mModelMedium = new FishModel(*pack->GetCustomModel(modelName), FISH_TYPE_PUFFERFISH, 1);
+        mModelMedium = mOriginalModelMedium;
     }
 
-    modelName = mModelLarge->getName();
     if (mModelLarge != mOriginalModelLarge)
     {
         if (mModelLarge != NULL)
             delete mModelLarge;
         mModelLarge = NULL;
     }
-    if (!pack->HasCustomModel(modelName))
+    if (pack->HasCustomModel(mOriginalModelLarge->getName()))
     {
-        mModelLarge = mOriginalModelLarge;
+        mModelLarge = new FishModel(*pack->GetCustomModel(mOriginalModelLarge->getName()), FISH_TYPE_PUFFERFISH, 2);
     }
     else
     {
-        mModelLarge = new FishModel(*pack->GetCustomModel(modelName), FISH_TYPE_PUFFERFISH, 2);
+        mModelLarge = mOriginalModelLarge;
     }
 }
 

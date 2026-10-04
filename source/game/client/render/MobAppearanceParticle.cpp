@@ -14,6 +14,14 @@
 MobAppearanceParticle::MobAppearanceParticle(Level* level, double x, double y, double z)
     : Particle(level, x, y, z, 0.0, 0.0, 0.0)
 {
+    xd = 0.0;
+    yd = 0.0;
+    zd = 0.0;
+    rCol = 1.0f;
+    gCol = 1.0f;
+    bCol = 1.0f;
+    lifetime = 30;
+    gravity = 0.0f;
 }
 
 int MobAppearanceParticle::getParticleTexture()
@@ -36,13 +44,15 @@ void MobAppearanceParticle::tick()
 bool MobAppearanceParticle::isAffected()
 {
     Minecraft* minecraft = Minecraft::GetInstance();
-    if (guardian != NULL && minecraft != NULL && minecraft->getCameraEntity())
+    int hasCamera = guardian != NULL && minecraft != NULL && minecraft->getCameraEntity();
+    MobEffect* slowdown = MobEffects::DIG_SLOWDOWN;
+    if (hasCamera)
     {
         if ((minecraft->getCameraEntity()->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
         {
             boost::shared_ptr<LivingEntity> living =
                 boost::static_pointer_cast<LivingEntity>(minecraft->getCameraEntity());
-            if (living && living->hasEffect(MobEffects::DIG_SLOWDOWN))
+            if (living && living->hasEffect(slowdown))
                 return true;
         }
     }
@@ -63,7 +73,7 @@ void MobAppearanceParticle::render(BufferBuilder*,
 
     Minecraft* minecraft = Minecraft::GetInstance();
     EntityRenderDispatcher* dispatcher = minecraft->getEntityRenderDispatcher();
-    dispatcher->setPosition(0.0, 0.0, 0.0);
+    dispatcher->setPosition(Particle::xOff, Particle::yOff, Particle::zOff);
 
     float scale = 1.0f / 2.35f;
     float progress = ((float)age + partialTicks) / (float)lifetime;
@@ -81,8 +91,8 @@ void MobAppearanceParticle::render(BufferBuilder*,
     GlStateManager::rotatef(-(150.0f * progress - 60.0f) - camera->mXRot, 1.0f, 0.0f, 0.0f);
     GlStateManager::translatef(0.0f, -0.4f, -1.5f);
     GlStateManager::scalef(scale, scale, scale);
-    guardian->mYRotO = guardian->mYRot = 0.0f;
-    guardian->mYHeadRotO = guardian->mYHeadRot = 0.0f;
+    guardian->mYRot = guardian->mYRotO = 0.0f;
+    guardian->mYHeadRot = guardian->mYHeadRotO = 0.0f;
     boost::shared_ptr<Entity> renderEntity = guardian;
     dispatcher->render(renderEntity, 0.0, 0.0, 0.0, 0.0f, partialTicks,
                        false, false, true, false);

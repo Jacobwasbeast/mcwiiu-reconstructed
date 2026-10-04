@@ -15,6 +15,7 @@
 #include "game/client/render/BlockRenderer.hpp"
 #include "game/client/render/EntityRenderDispatcher.hpp"
 #include "game/client/render/Font.hpp"
+#include "game/client/render/MobSkinMemTextureProcessor.hpp"
 #include "game/client/render/Tesselator.hpp"
 #include "game/client/render/Textures.hpp"
 #include "game/core/BufferBuilder.hpp"
@@ -1284,6 +1285,12 @@ void LevelRenderer::renderEntities(boost::shared_ptr<Entity> camera, Culler* cul
             }
         }
 
+        const BlockState* destroyState = mLevels[userIndex]->getBlockState(destroyPos);
+        if (destroyBlockEntity && destroyState->hasCustomBreakingProgress())
+        {
+            BlockEntityRenderDispatcher::instance->render(destroyBlockEntity, partialTick, progress->getProgress(),
+                false);
+        }
     }
 
     restoreDestroyState();
@@ -2341,7 +2348,7 @@ void LevelRenderer::renderHit(boost::shared_ptr<Player> player, const HitResult*
     GlStateManager::enableAlphaTest();
     GlStateManager::blendFunc(4, 1);
 
-    float phase = sinf((float)((double)Minecraft::currentTimeMillis() / 100.0));
+    float phase = sinf((float)Minecraft::currentTimeMillis() / 100.0f);
     GlStateManager::color4f(1.0f, 1.0f, 1.0f, (phase * 0.2f + 0.4f) * 0.5f);
 
     if (pass != 0)
@@ -2350,10 +2357,10 @@ void LevelRenderer::renderHit(boost::shared_ptr<Player> player, const HitResult*
         {
             GlStateManager::blendFunc(4, 5);
 
-            float phase1 = sinf((float)((double)Minecraft::currentTimeMillis() / 100.0));
+            float phase1 = sinf((float)Minecraft::currentTimeMillis() / 100.0f);
             float rgb = phase1 * 0.2f + 0.8f;
 
-            float phase2 = sinf((float)((double)Minecraft::currentTimeMillis() / 200.0));
+            float phase2 = sinf((float)Minecraft::currentTimeMillis() / 200.0f);
             float alpha = phase2 * 0.2f + 0.5f;
 
             GlStateManager::color4f(rgb, rgb, rgb, alpha);
@@ -3290,22 +3297,24 @@ void LevelRenderer::entityAdded(boost::shared_ptr<Entity> entity)
         boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
 
         player->prepareCustomTextures();
+        if (player->mSkinLocation != L"")
+            mTextures->addMemTexture(player->mSkinLocation, new MobSkinMemTextureProcessor());
+        if (player->mCapeLocation != L"")
+            mTextures->addMemTexture(player->mCapeLocation, new MobSkinMemTextureProcessor());
     }
 }
 
 void LevelRenderer::entityRemoved(boost::shared_ptr<Entity> entity)
 {
-    if (!entity)
-        return;
-    if ((entity->GetType() & EntityType::PLAYER) != EntityType::PLAYER)
-        return;
-    boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
-    if (!player)
-        return;
-    if (!player->mSkinLocation.empty())
-        mTextures->removeMemTexture(player->mSkinLocation);
-    if (!player->mCapeLocation.empty())
-        mTextures->removeMemTexture(player->mCapeLocation);
+    if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+    {
+        boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
+
+        if (player->mSkinLocation != L"")
+            mTextures->removeMemTexture(player->mSkinLocation);
+        if (player->mCapeLocation != L"")
+            mTextures->removeMemTexture(player->mCapeLocation);
+    }
 }
 
 void LevelRenderer::globalLevelEvent(int type, const BlockPos& pos, int data)

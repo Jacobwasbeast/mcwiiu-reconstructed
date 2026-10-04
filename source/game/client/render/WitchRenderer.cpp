@@ -26,8 +26,10 @@ void WitchRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y
                            float yaw, float partialTick)
 {
     boost::shared_ptr<Mob> mob = boost::static_pointer_cast<Mob>(entity);
-    not_null_ptr<ItemInstance> itemInstance = mob->getMainHandItem();
-    static_cast<WitchModel*>(mModel)->mHoldingItem = !itemInstance->isEmpty();
+    {
+        not_null_ptr<ItemInstance> itemInstance = mob->getMainHandItem();
+        static_cast<WitchModel*>(mModel)->mHoldingItem = !itemInstance->isEmpty();
+    }
     MobRenderer::render(entity, x, y, z, yaw, partialTick);
 }
 

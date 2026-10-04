@@ -27,7 +27,7 @@ void SpinAttackModel::renderSpin(boost::shared_ptr<Entity> entity, float ageInTi
     GlStateManager::pushMatrix();
     GlStateManager::rotatef(ageInTicks * -50.0f, 0.0f, 1.0f, 0.0f);
     GlStateManager::scalef(0.75f, 0.75f, 0.75f);
-    GlStateManager::translatef(0.0f, 0.4f, 0.0f);
+    GlStateManager::translatef(0.0f, 0.40000004f, 0.0f);
     mBox->render(scale, useDisplayList, false);
     GlStateManager::popMatrix();
 

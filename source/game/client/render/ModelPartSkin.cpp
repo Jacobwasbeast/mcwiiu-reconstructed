@@ -5,11 +5,8 @@
 #include "game/client/render/Renderer.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/core/Matrix4f.hpp"
+#include "game/core/Mth.hpp"
 #include "game/core/PIXNamedEvents.hpp"
-
-#include <cmath>
-
-static const float RADIANS_TO_DEGREES = (float)(180.0 / M_PI);
 
 ModelPartSkin::ModelPartSkin()
     : ModelPart(), mBoneIndex(-1), mSkinnedParts(NULL)
@@ -67,20 +64,21 @@ ModelPartSkin::ModelPartSkin(Model* model, const std::wstring& name, const Model
 
     if (skinnedParts == NULL)
     {
-        skinnedParts = &model->mSkinnedParts;
+        mCompiled = true;
+        mSkinnedParts = &model->mSkinnedParts;
+        mSkinnedParts->addModelPart(this);
     }
-
-    mCompiled = true;
-    mSkinnedParts = skinnedParts;
-    mSkinnedParts->addModelPart(this);
+    else
+    {
+        mCompiled = true;
+        mSkinnedParts = skinnedParts;
+        mSkinnedParts->addModelPart(this);
+    }
 }
 
 ModelPartSkin::~ModelPartSkin()
 {
-    if (mSkinnedParts != NULL)
-    {
-        mSkinnedParts->removeModelPart(this);
-    }
+    mSkinnedParts->removeModelPart(this);
 }
 
 void ModelPartSkin::setNullBoneMatricesRecursive()
@@ -198,7 +196,13 @@ void ModelPartSkin::render(float scale, bool useDisplayList, bool childrenOnly)
 
 void ModelPartSkin::renderRollable(float scale, bool useDisplayList)
 {
-    if (mHidden || !mShow)
+    if (mHidden)
+    {
+        gRenderer->StateSetBoneMatrixNull(mBoneIndex);
+        return;
+    }
+
+    if (!mShow)
     {
         gRenderer->StateSetBoneMatrixNull(mBoneIndex);
         return;
@@ -209,17 +213,17 @@ void ModelPartSkin::renderRollable(float scale, bool useDisplayList)
 
     if (mYRot != 0.0f)
     {
-        GlStateManager::rotatef(mYRot * RADIANS_TO_DEGREES, 0.0f, 1.0f, 0.0f);
+        GlStateManager::rotatef(mYRot * Mth::RAD_TO_DEG, 0.0f, 1.0f, 0.0f);
     }
 
     if (mXRot != 0.0f)
     {
-        GlStateManager::rotatef(mXRot * RADIANS_TO_DEGREES, 1.0f, 0.0f, 0.0f);
+        GlStateManager::rotatef(mXRot * Mth::RAD_TO_DEG, 1.0f, 0.0f, 0.0f);
     }
 
     if (mZRot != 0.0f)
     {
-        GlStateManager::rotatef(mZRot * RADIANS_TO_DEGREES, 0.0f, 0.0f, 1.0f);
+        GlStateManager::rotatef(mZRot * Mth::RAD_TO_DEG, 0.0f, 0.0f, 1.0f);
     }
 
     gRenderer->StateSetBoneMatrixData(mBoneIndex);

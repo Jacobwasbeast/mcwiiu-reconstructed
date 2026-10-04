@@ -22,18 +22,18 @@ void SkiModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTick
     mSkiParts.data[1]->mY = 24.2f;
     mSkiParts.data[1]->mXRot = 1.5707964f;
 
-    if (mMirrored)
-    {
-        mSkiParts.data[0]->mZ = -(cosf(limbSwing * 0.6662f) * 0.7f * 12.0f * limbSwingAmount + 26.0f);
-        mSkiParts.data[1]->mZ = -(cosf(limbSwing * 0.6662f) * 0.7f * 12.0f * limbSwingAmount + 26.0f);
-        mSkiParts.data[0]->mX = 0.5f;
-        mSkiParts.data[1]->mX = 0.5f;
-    }
-    else
+    if (!mMirrored)
     {
         mSkiParts.data[0]->mZ = cosf(limbSwing * 0.6662f) * 0.7f * 12.0f * limbSwingAmount - 26.0f;
         mSkiParts.data[1]->mZ = cosf(limbSwing * 0.6662f) * 0.7f * 12.0f * limbSwingAmount - 26.0f;
         mSkiParts.data[0]->mX = -3.5f;
         mSkiParts.data[1]->mX = -3.5f;
+    }
+    else
+    {
+        mSkiParts.data[0]->mZ = -(cosf(limbSwing * 0.6662f) * 0.7f * 12.0f * limbSwingAmount + 26.0f);
+        mSkiParts.data[1]->mZ = -(cosf(limbSwing * 0.6662f) * 0.7f * 12.0f * limbSwingAmount + 26.0f);
+        mSkiParts.data[0]->mX = 0.5f;
+        mSkiParts.data[1]->mX = 0.5f;
     }
 }

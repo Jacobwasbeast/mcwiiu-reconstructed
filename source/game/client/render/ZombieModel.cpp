@@ -32,7 +32,10 @@ void ZombieModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInT
     if ((entity->GetType() & EntityType::ZOMBIE) == EntityType::ZOMBIE)
     {
         boost::shared_ptr<Zombie> zombie = boost::dynamic_pointer_cast<Zombie>(entity);
-        aggressive = zombie->isAggressive();
+        if (zombie->isAggressive())
+        {
+            aggressive = true;
+        }
     }
 
     float attackSwing = Mth::sin(mAttackTime * 3.1415927f);

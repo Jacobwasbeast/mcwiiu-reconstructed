@@ -11,8 +11,20 @@ BlazeModel::BlazeModel(const ModelDefinition& modelDefinition)
     : mUpperBodyParts(NULL)
     , mNumUpperBodyParts(0)
 {
+    mUpperBodyParts = new ModelPartSkin*[12];
     mNumUpperBodyParts = 12;
-    mUpperBodyParts = new ModelPartSkin*[12]();
+    mUpperBodyParts[0] = NULL;
+    mUpperBodyParts[1] = NULL;
+    mUpperBodyParts[2] = NULL;
+    mUpperBodyParts[3] = NULL;
+    mUpperBodyParts[4] = NULL;
+    mUpperBodyParts[5] = NULL;
+    mUpperBodyParts[6] = NULL;
+    mUpperBodyParts[7] = NULL;
+    mUpperBodyParts[8] = NULL;
+    mUpperBodyParts[9] = NULL;
+    mUpperBodyParts[10] = NULL;
+    mUpperBodyParts[11] = NULL;
 
     BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
 
@@ -45,8 +57,9 @@ BlazeModel::BlazeModel(const ModelDefinition& modelDefinition)
     {
         for (unsigned int i = 0; i < mNumUpperBodyParts; ++i)
         {
-            mUpperBodyParts[i] = new ModelPartSkin(this, 0, 16, NULL);
-            mUpperBodyParts[i]->addBox(0.0f, 0.0f, 0.0f, 2, 8, 2);
+            ModelPartSkin* part = new ModelPartSkin(this, 0, 16, NULL);
+            mUpperBodyParts[i] = part;
+            part->addBox(0.0f, 0.0f, 0.0f, 2, 8, 2);
         }
 
         mHead = new ModelPartSkin(this, 0, 0, NULL);

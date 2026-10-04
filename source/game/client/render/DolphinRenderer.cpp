@@ -6,7 +6,7 @@
 #include "game/util/ResourceLocation.hpp"
 #include "game/world/generation/DolphinCarryingItemLayer.hpp"
 
-static ResourceLocation DOLPHIN_LOCATION(TN_MOB_DOLPHIN);
+static ResourceLocation* DOLPHIN_LOCATION = new ResourceLocation(TN_MOB_DOLPHIN);
 
 DolphinRenderer::DolphinRenderer(EntityRenderDispatcher* dispatcher)
     : MobRenderer(dispatcher, new DolphinModel(ModelDefinition()), 0.7F)
@@ -20,7 +20,7 @@ DolphinRenderer::~DolphinRenderer()
 
 const ResourceLocation* DolphinRenderer::getTextureLocation(boost::shared_ptr<Entity>& entity)
 {
-    return &DOLPHIN_LOCATION;
+    return DOLPHIN_LOCATION;
 }
 
 void DolphinRenderer::scale(boost::shared_ptr<LivingEntity>& entity, float partialTicks)

@@ -7,6 +7,7 @@
 #include "game/client/render/ModelDefinition.hpp"
 #include "game/client/render/ModelPart.hpp"
 #include "game/client/render/ModelPartSkin.hpp"
+#include "game/core/EntityType.hpp"
 #include "game/core/HumanoidArm.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/core/Vex.hpp"
@@ -25,8 +26,9 @@ VexModel::~VexModel()
 
 void VexModel::_init(float scale, const ModelDefinition& modelDefinition)
 {
+    bool overridesModel = modelDefinition.DoesOverrideModel();
     mLeftLeg->mShow = false;
-    if (!modelDefinition.DoesOverrideModel())
+    if (!overridesModel)
     {
         mHat->mShow = false;
         delete mRightLeg;
@@ -65,10 +67,10 @@ void VexModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTick
 {
     HumanoidModel::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, skinAdjustments);
 
-    if (Minecraft::InMiniGame(eMiniGameId_Any, true))
+    if (!Minecraft::InMiniGame(eMiniGameId_Any, true) || (entity->GetType() & EntityType::PLAYER) != EntityType::PLAYER)
     {
         boost::shared_ptr<Vex> vex = boost::static_pointer_cast<Vex>(entity);
-        if (vex && vex->isCharging())
+        if (vex->isCharging())
         {
             if (vex->getMainArm() == HumanoidArm::RIGHT)
             {
@@ -81,7 +83,7 @@ void VexModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTick
         }
     }
 
-    mHead->mXRot += 0.62831855f;
+    mRightLeg->mXRot += 0.62831855f;
     mRightWing->mY = 1.0f;
     mRightWing->mZ = 2.0f;
     mLeftWing->mY = 1.0f;

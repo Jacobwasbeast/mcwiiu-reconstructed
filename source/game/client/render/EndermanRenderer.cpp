@@ -1,5 +1,7 @@
 #include "game/client/render/EndermanRenderer.hpp"
 
+#include <algorithm>
+
 #include "game/client/render/EndermanModel.hpp"
 #include "game/client/render/Model.hpp"
 #include "game/client/render/ModelDefinition.hpp"
@@ -32,8 +34,9 @@ void EndermanRenderer::render(boost::shared_ptr<Entity>& entity, double x, doubl
                               float yaw, float partialTick)
 {
     boost::shared_ptr<EnderMan> enderman = boost::static_pointer_cast<EnderMan>(entity);
+    bool carrying = enderman->getCarryingBlock() != NULL;
     EndermanModel* model = static_cast<EndermanModel*>(getModel());
-    model->mCarrying = enderman->getCarryingBlock() != NULL;
+    model->mCarrying = carrying;
     model->mCreepy = enderman->isCreepy();
 
     if (enderman->isCreepy())
@@ -59,26 +62,15 @@ void EndermanRenderer::setupForTexturePack(TexturePack* pack)
         return;
     }
 
-    for (std::vector<RenderLayer*>::iterator it = mLayers.begin(); it != mLayers.end(); ++it)
-    {
-        if (*it == mEyesLayer)
-            return;
-    }
-    addLayer(mEyesLayer);
+    if (std::find(mLayers.begin(), mLayers.end(), mEyesLayer) == mLayers.end())
+        addLayer(mEyesLayer);
 }
 
 void EndermanRenderer::renderModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing,
                                    float limbSwingAmount, float ageInTicks, float netHeadYaw,
                                    float headPitch, float scale)
 {
-    bool translucent = false;
-    if (!isVisible(entity))
-    {
-        if (!entity->isInvisibleTo(Minecraft::GetInstance()->mPlayer))
-        {
-            translucent = true;
-        }
-    }
+    bool translucent = !isVisible(entity) && !entity->isInvisibleTo(Minecraft::GetInstance()->mPlayer);
 
     boost::shared_ptr<Entity> renderEntity = entity;
     if (!bindTexture(renderEntity))

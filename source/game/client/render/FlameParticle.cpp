@@ -49,10 +49,11 @@ int FlameParticle::getLightColor(float partialTicks)
 {
     float progress = Mth::clamp(((float)age + partialTicks) / (float)lifetime, 0.0f, 1.0f);
     int light = Particle::getLightColor(partialTicks);
+    int sky = (light >> 16) & 0xff;
     int block = (light & 255) + (int)(progress * 15.0f * 16.0f);
     if (block > 240)
         block = 240;
-    return (light & 0xff0000) | block;
+    return (sky << 16) | block;
 }
 
 float FlameParticle::getBrightness(float partialTicks)

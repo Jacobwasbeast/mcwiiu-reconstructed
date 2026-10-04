@@ -25,7 +25,7 @@ public:
     virtual const ResourceLocation* getTextureLocation(boost::shared_ptr<Entity>& entity);
     virtual void setupForTexturePack(TexturePack* pack);
     virtual Model* createModel(const ModelDefinition& definition);
-    virtual double getBob(boost::shared_ptr<LivingEntity>& entity, float partialTicks);
+    virtual float getBob(boost::shared_ptr<LivingEntity>& entity, float partialTicks);
 
 private:
     RenderLayer* mCollarLayer;

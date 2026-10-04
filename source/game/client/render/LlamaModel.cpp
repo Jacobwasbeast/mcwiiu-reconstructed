@@ -20,8 +20,6 @@ LlamaModel::LlamaModel(float scale, const ModelDefinition& modelDefinition)
         mTexHeight = 64;
 
         delete mHead;
-        delete mBody;
-
         mHead = new ModelPartSkin(this, 0, 0, NULL);
         mHead->addBox(-2.0f, -14.0f, -10.0f, 4, 4, 9, scale);
         mHead->setPos(0.0f, 7.0f, -6.0f);
@@ -29,6 +27,7 @@ LlamaModel::LlamaModel(float scale, const ModelDefinition& modelDefinition)
         mHead->texOffs(17, 0)->addBox(-4.0f, -19.0f, -4.0f, 3, 3, 2, scale);
         mHead->texOffs(17, 0)->addBox(1.0f, -19.0f, -4.0f, 3, 3, 2, scale);
 
+        delete mBody;
         mBody = new ModelPartSkin(this, 29, 0, NULL);
         mBody->addBox(-6.0f, -10.0f, -7.0f, 12, 18, 10, scale);
         mBody->setPos(0.0f, 5.0f, 2.0f);
@@ -86,15 +85,12 @@ void LlamaModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, floa
                         bool useDisplayList)
 {
     boost::shared_ptr<AbstractChestedHorse> horse = boost::static_pointer_cast<AbstractChestedHorse>(entity);
-    bool chestChildrenOnly = true;
-
-    if (!horse->isBaby() && horse->hasChest())
-    {
-        chestChildrenOnly = false;
-    }
+    bool chestVisible = !horse->isBaby() && horse->hasChest();
 
     setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale,
               entity, _SkinAdjustments());
+
+    bool chestOnly = !chestVisible;
 
     if (!mYoung)
     {
@@ -104,11 +100,15 @@ void LlamaModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, floa
         mLeg1->render(scale, useDisplayList, false);
         mLeg2->render(scale, useDisplayList, false);
         mLeg3->render(scale, useDisplayList, false);
-        mChest1->render(scale, useDisplayList, chestChildrenOnly);
-        mChest2->render(scale, useDisplayList, chestChildrenOnly);
+        mChest1->render(scale, useDisplayList, chestOnly);
+        mChest2->render(scale, useDisplayList, chestOnly);
     }
     else
     {
+        GlStateManager::pushMatrix();
+        GlStateManager::translatef(0.0f, mYHeadOffs * scale, mZHeadOffs * scale);
+        GlStateManager::popMatrix();
+
         GlStateManager::pushMatrix();
         GlStateManager::scalef(0.71428573f, 0.64935064f, 0.79365081f);
         GlStateManager::translatef(0.0f, 21.0f * scale, 0.22f);
@@ -128,8 +128,8 @@ void LlamaModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, floa
         mLeg1->render(scale, useDisplayList, false);
         mLeg2->render(scale, useDisplayList, false);
         mLeg3->render(scale, useDisplayList, false);
-        mChest1->render(scale, useDisplayList, chestChildrenOnly);
-        mChest2->render(scale, useDisplayList, chestChildrenOnly);
+        mChest1->render(scale, useDisplayList, chestOnly);
+        mChest2->render(scale, useDisplayList, chestOnly);
         GlStateManager::popMatrix();
     }
 

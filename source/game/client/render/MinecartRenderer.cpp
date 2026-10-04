@@ -15,6 +15,8 @@
 #include "game/util/Vec3.hpp"
 #include "game/world/block/Block.hpp"
 
+static ResourceLocation MINECART_LOCATION(TN_ITEM_CART);
+
 MinecartRenderer::MinecartRenderer(EntityRenderDispatcher* dispatcher)
     : EntityRenderer(dispatcher)
 {
@@ -37,9 +39,9 @@ void MinecartRenderer::render(boost::shared_ptr<Entity>& entity, double x, doubl
     float offsetZ = (((float)(seed >> 24 & 7) + 0.5F) / 8.0F - 0.5F) * 0.004F;
     GlStateManager::translatef(offsetX, offsetY, offsetZ);
 
-    double renderX = minecart->mXo + (minecart->mX - minecart->mXo) * partialTick;
-    double renderY = minecart->mYo + (minecart->mY - minecart->mYo) * partialTick;
-    double renderZ = minecart->mZo + (minecart->mZ - minecart->mZo) * partialTick;
+    double renderX = minecart->mXOld + (minecart->mX - minecart->mXOld) * partialTick;
+    double renderY = minecart->mYOld + (minecart->mY - minecart->mYOld) * partialTick;
+    double renderZ = minecart->mZOld + (minecart->mZ - minecart->mZOld) * partialTick;
     Vec3* trackPosition = minecart->getPos(renderX, renderY, renderZ);
     float pitch = minecart->mXRotO + (minecart->mXRot - minecart->mXRotO) * partialTick;
     if (trackPosition != NULL)
@@ -112,8 +114,7 @@ void MinecartRenderer::render(boost::shared_ptr<Entity>& entity, double x, doubl
 
 const ResourceLocation* MinecartRenderer::getTextureLocation(boost::shared_ptr<Entity>&)
 {
-    static ResourceLocation location(TN_ITEM_CART);
-    return &location;
+    return &MINECART_LOCATION;
 }
 
 void MinecartRenderer::renderMinecartContents(boost::shared_ptr<Minecart>, float,

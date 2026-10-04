@@ -15,6 +15,7 @@
 #include "game/client/render/ThrownTridentRenderer.hpp"
 #include "game/client/render/Font.hpp"
 #include "game/core/BufferBuilder.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/ColourTable.hpp"
 #include "game/core/GlStateManager.hpp"
@@ -71,11 +72,11 @@ ItemRenderer::ItemRenderer(EntityRenderDispatcher* dispatcher, Textures* texture
         for (int row = 0; row < 16; ++row)
         {
             float y0 = row * step;
-            float y1 = y0 + step;
             float v0 = (15 - row) * step;
-            float v1 = v0 - step;
             for (int column = 0; column < 16; ++column)
             {
+                float y1 = y0 + step;
+                float v1 = v0 - step;
                 float x0 = column * step;
                 float x1 = x0 + step;
                 float u0 = (15 - column) * step;
@@ -190,12 +191,7 @@ void ItemRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y,
     GlStateManager::enableRescaleNormal();
 
     Block* block = Block::byItem(item->getItem());
-    bool entityBlock = true;
-    if (item->getItem() != Items::skull)
-    {
-        if (item->getItem() != Items::banner && block != Blocks::conduit)
-            entityBlock = false;
-    }
+    bool entityBlock = item->getItem() == Items::skull || item->getItem() == Items::banner || block == Blocks::conduit;
 
     if (entityBlock || (item->getItem()->getIconType() == 0 && block != NULL &&
                         BlockRenderer::canRender(block->defaultBlockState()->getRenderShape())))
@@ -335,9 +331,9 @@ const ResourceLocation* ItemRenderer::getTextureLocation(boost::shared_ptr<Entit
 
 const ResourceLocation* ItemRenderer::getTextureLocation(int iconType)
 {
-    if (iconType != 0)
-        return &ITEM_LOCATION;
-    return &BLOCKS_LOCATION;
+    if (iconType == 0)
+        return &BLOCKS_LOCATION;
+    return &ITEM_LOCATION;
 }
 
 void ItemRenderer::renderItemBillboard(boost::shared_ptr<ItemEntity>& entity, TextureAtlasSprite* sprite, int count,
@@ -380,55 +376,56 @@ void ItemRenderer::renderItemBillboard(boost::shared_ptr<ItemEntity>& entity, Te
             tesselator->end();
             GlStateManager::popMatrix();
         }
-        return;
-    }
-
-    int width = sprite->getWidth();
-    int lod = -1;
-    if (width == 32)
-        lod = 1;
-    else if (width == 64)
-        lod = 2;
-    gRenderer->StateSetForceLOD(lod);
-    GlStateManager::pushMatrix();
-    if (mItemFrameEnabled)
-    {
-        GlStateManager::rotatef(180.0F, 0.0F, 1.0F, 0.0F);
     }
     else
     {
-        GlStateManager::rotatef((((float)entity->mAge + partialTicks) / 20.0F + entity->mBobOffs) * 57.295776F,
-                                0.0F, 1.0F, 0.0F);
-    }
-
-    const float thickness = 0.0625F;
-    const float spacing = 0.021875F;
-    not_null_ptr<ItemInstance> item = entity->getItem();
-    int itemCount = item->getCount();
-    int layers;
-    if (itemCount < 2)
-        layers = 1;
-    else if (itemCount < 16)
-        layers = 2;
-    else if (itemCount < 32)
-        layers = 3;
-    else
-        layers = 4;
-    GlStateManager::translatef(-0.5F, -0.25F, -(0.084375F * (float)layers * 0.5F));
-
-    for (int layer = 0; layer < layers; ++layer)
-    {
-        GlStateManager::translatef(0.0F, 0.0F, thickness + spacing);
-        if (item->getItem()->getIconType() == 0 && Block::byItem(item->getItem()) != NULL)
-            bindTexture(&BLOCKS_LOCATION);
+        int width = sprite->getWidth();
+        int lod = -1;
+        if (width == 32)
+            lod = 1;
+        else if (width == 64)
+            lod = 2;
+        gRenderer->StateSetForceLOD(lod);
+        GlStateManager::pushMatrix();
+        if (mItemFrameEnabled)
+        {
+            GlStateManager::rotatef(180.0F, 0.0F, 1.0F, 0.0F);
+        }
         else
-            bindTexture(&ITEM_LOCATION);
-        GlStateManager::color4f(red, green, blue, 1.0F);
-        if (item->getItem()->isFoil(item))
-            renderFoilLayer(tesselator);
+        {
+            GlStateManager::rotatef((((float)entity->mAge + partialTicks) / 20.0F + entity->mBobOffs) * 57.295776F,
+                                    0.0F, 1.0F, 0.0F);
+        }
+
+        const float thickness = 0.0625F;
+        const float spacing = 0.021875F;
+        not_null_ptr<ItemInstance> item = entity->getItem();
+        int itemCount = item->getCount();
+        int layers;
+        if (itemCount < 2)
+            layers = 1;
+        else if (itemCount < 16)
+            layers = 2;
+        else if (itemCount < 32)
+            layers = 3;
+        else
+            layers = 4;
+        GlStateManager::translatef(-0.5F, -0.25F, -(0.084375F * (float)layers * 0.5F));
+
+        for (int layer = 0; layer < layers; ++layer)
+        {
+            GlStateManager::translatef(0.0F, 0.0F, thickness + spacing);
+            if (item->getItem()->getIconType() == 0 && Block::byItem(item->getItem()) != NULL)
+                bindTexture(&BLOCKS_LOCATION);
+            else
+                bindTexture(&ITEM_LOCATION);
+            GlStateManager::color4f(red, green, blue, 1.0F);
+            if (item->getItem()->isFoil(item))
+                renderFoilLayer(tesselator);
+        }
+        GlStateManager::popMatrix();
+        gRenderer->StateSetForceLOD(-1);
     }
-    GlStateManager::popMatrix();
-    gRenderer->StateSetForceLOD(-1);
 }
 
 void ItemRenderer::setupGuiItem(float x, float y, float scaleX, float scaleY, bool lighting)
@@ -492,14 +489,14 @@ void ItemRenderer::renderStatic(const not_null_ptr<ItemInstance>& item, boost::s
         }
     }
     else if (item->getItem() != Items::skull && item->getItem() != Items::banner && blockId != BlockId::CONDUIT &&
-             (unsigned int)(blockId - 219) > 15)
+             !(blockId >= BlockId::WHITE_SHULKER_BOX && blockId <= BlockId::BLACK_SHULKER_BOX))
     {
         if (item->getItem()->getIconType() == 0 && block != NULL &&
             BlockRenderer::canRender(block->defaultBlockState()->getRenderShape()))
         {
             GlStateManager::translatef(0.5F, 0.5F, 0.5F);
             int id = Block::getId(block);
-            if (id == 54 || id == 130 || id == 146)
+            if (id == BlockId::CHEST || id == BlockId::ENDER_CHEST || id == BlockId::TRAPPED_CHEST)
                 GlStateManager::rotatef(90.0F, 0.0F, 1.0F, 0.0F);
             MemSect(31);
             minecraft->mTextures->bindTexture(minecraft->mTextures->getTextureLocation(0));
@@ -530,7 +527,7 @@ void ItemRenderer::renderStatic(const not_null_ptr<ItemInstance>& item, boost::s
             GlStateManager::popMatrix();
             GlStateManager::rotatef(180.0F, 0.0F, 1.0F, 0.0F);
             GlStateManager::pushMatrix();
-            ItemTransforms::apply(transforms->getTransform(ItemTransforms::FIXED), leftHand);
+            ItemTransforms::apply(transforms->getTransform(transformType), leftHand);
             GlStateManager::pushMatrix();
             GlStateManager::translatef(-0.5F, -0.5F, -0.5F);
         }
@@ -580,19 +577,25 @@ void ItemRenderer::renderStatic(const not_null_ptr<ItemInstance>& item, boost::s
             float u1 = (float)icon->getU1(false);
             float v0 = (float)icon->getV0(false);
             float v1 = (float)icon->getV1(false);
-            ItemInHandRenderer::eItemRenderMode mode;
             if (iconType == 0)
             {
-                mode = (transformType == ItemTransforms::GUI || pane) ? ItemInHandRenderer::ITEM_RENDER_MODE_GUI
-                                                                      : ItemInHandRenderer::ITEM_RENDER_MODE_NONE;
+                if (transformType == ItemTransforms::GUI || pane)
+                    minecraft->getItemInHandRenderer()->renderItem3D(tesselator, u0, v0, u1, v1, icon->getSourceWidth(),
+                                                                      icon->getSourceHeight(), 0.0625F,
+                                                                      ItemInHandRenderer::ITEM_RENDER_MODE_GUI);
+                else
+                    minecraft->getItemInHandRenderer()->renderItem3D(tesselator, u0, v0, u1, v1, icon->getSourceWidth(),
+                                                                      icon->getSourceHeight(), 0.0625F,
+                                                                      ItemInHandRenderer::ITEM_RENDER_MODE_NONE);
             }
             else
             {
-                mode = transformType == ItemTransforms::GUI ? ItemInHandRenderer::ITEM_RENDER_MODE_FLAT
-                                                            : ItemInHandRenderer::ITEM_RENDER_MODE_3D;
+                minecraft->getItemInHandRenderer()->renderItem3D(tesselator, u0, v0, u1, v1, icon->getSourceWidth(),
+                                                                  icon->getSourceHeight(), 0.0625F,
+                                                                  transformType == ItemTransforms::GUI
+                                                                      ? ItemInHandRenderer::ITEM_RENDER_MODE_FLAT
+                                                                      : ItemInHandRenderer::ITEM_RENDER_MODE_3D);
             }
-            minecraft->getItemInHandRenderer()->renderItem3D(tesselator, u0, v0, u1, v1, icon->getSourceWidth(),
-                                                              icon->getSourceHeight(), 0.0625F, mode);
             if (item->hasFoil())
                 renderFoilLayer(tesselator);
         }
@@ -631,9 +634,9 @@ void ItemRenderer::renderGuiItem(not_null_ptr<ItemInstance> item, float x, float
     GlStateManager::popMatrix();
 }
 
-void ItemRenderer::renderGuiItem(not_null_ptr<ItemInstance> item, float x, float y, float scaleX, float scaleY)
+void ItemRenderer::renderGuiItem(not_null_ptr<ItemInstance> item, float x, float y, float scale, float alpha)
 {
-    renderGuiItem(item, x, y, scaleX, scaleY, scaleY, true, NULL);
+    renderGuiItem(item, x, y, scale, scale, alpha, true, NULL);
 }
 
 void ItemRenderer::renderGuiItem(not_null_ptr<ItemInstance> item, int x, int y)
@@ -719,10 +722,10 @@ void ItemRenderer::renderGuiItemDecorations(Font* font, not_null_ptr<ItemInstanc
         GlStateManager::color4f(1.0F, 1.0F, 1.0F, 1.0F);
     }
 
-    if (item->getCount() >= 2 || !countText.empty() || item->mUnknown)
+    if (item->getCount() > 1 || !countText.empty() || item->mUnknown)
     {
         if (colour == -1)
-            colour = g_pApp->GetHTMLColour(eMinecraftColour_Color_ItemCount);
+            colour = gApp.GetHTMLColour(eMinecraftColour_Color_ItemCount);
         MemSect(31);
         std::wstring text = countText;
         if (text.empty())
@@ -747,7 +750,7 @@ void ItemRenderer::renderGuiItemDecorations(Font* font, not_null_ptr<ItemInstanc
     if (player != NULL)
     {
         Item* rawItem = item->getItem();
-        float cooldown = player->getCooldowns()->getCooldownPercent(rawItem, (float)Minecraft::GetInstance()->getFrameTime());
+        float cooldown = player->getCooldowns()->getCooldownPercent(rawItem, Minecraft::GetInstance()->getFrameTime());
         if (cooldown > 0.0F)
         {
             GlStateManager::disableLighting();

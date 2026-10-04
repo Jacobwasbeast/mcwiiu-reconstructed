@@ -25,7 +25,7 @@ void TntMinecartRenderer::renderMinecartContents(boost::shared_ptr<Minecart> min
 
     if (fuse >= 0)
     {
-        float remainingFuse = (float)fuse - partialTick;
+        float remainingFuse = ((float)fuse - partialTick) + 1.0F;
         if (remainingFuse < 10.0F)
         {
             float scale = 1.0F - remainingFuse / 10.0F;
@@ -41,15 +41,15 @@ void TntMinecartRenderer::renderMinecartContents(boost::shared_ptr<Minecart> min
 
     if (fuse >= 0 && (fuse / 5 & 1) == 0)
     {
+        BlockRenderDispatcher* blockRenderer = Minecraft::GetInstance()->getBlockRenderer();
         GlStateManager::disableTexture();
         GlStateManager::disableLighting();
         GlStateManager::enableBlend();
         GlStateManager::blendFunc(4, 6);
         GlStateManager::color4f(1.0F, 1.0F, 1.0F,
-                                (1.0F - ((float)fuse - partialTick) / 100.0F) * 0.8F);
+                                (1.0F - (((float)fuse - partialTick) + 1.0F) / 100.0F) * 0.8F);
         GlStateManager::pushMatrix();
-        Minecraft::GetInstance()->getBlockRenderer()->renderSingleBlock(Blocks::tnt->defaultBlockState(),
-                                                                          1.0F, 1.0F, true);
+        blockRenderer->renderSingleBlock(Blocks::tnt->defaultBlockState(), 1.0F, 1.0F, true);
         GlStateManager::popMatrix();
         GlStateManager::color4f(1.0F, 1.0F, 1.0F, 1.0F);
         GlStateManager::disableBlend();

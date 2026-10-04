@@ -27,24 +27,31 @@ RabbitRenderer::~RabbitRenderer()
 
 const ResourceLocation* RabbitRenderer::getTextureLocation(boost::shared_ptr<Entity>& entity)
 {
-    if (entity->getName() == L"Toast")
+    boost::shared_ptr<Rabbit> rabbit = boost::static_pointer_cast<Rabbit>(entity);
+    std::wstring name = entity->getName();
+    if (name == L"Toast")
         return &RABBIT_TEXTURES[6];
 
-    boost::shared_ptr<Rabbit> rabbit = boost::static_pointer_cast<Rabbit>(entity);
-    unsigned int type = rabbit->getRabbitType();
-
-    if (type == 1)
+    switch (rabbit->getRabbitType())
+    {
+    case 0:
+        return &RABBIT_TEXTURES[0];
+    case 1:
         return &RABBIT_TEXTURES[1];
-    if (type == 2)
+    case 2:
         return &RABBIT_TEXTURES[2];
-    if (type == 3)
+    case 3:
         return &RABBIT_TEXTURES[5];
-    if (type == 4)
+    case 4:
         return &RABBIT_TEXTURES[3];
-    if (type == 5)
+    case 5:
         return &RABBIT_TEXTURES[4];
-    if (type == 99)
+    case 99:
         return &RABBIT_TEXTURES[7];
+    default:
+        break;
+    }
+
     return &RABBIT_TEXTURES[0];
 }
 

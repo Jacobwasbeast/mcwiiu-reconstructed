@@ -19,7 +19,8 @@
 static ResourceLocation END_SKY_LOCATION(TN_MISC_TUNNEL);
 static ResourceLocation END_PORTAL_LOCATION(TN_MISC_PARTICLEFIELD);
 
-static Random RANDOM(31100LL);
+static int RANDOM_SEED = 31100;
+static Random RANDOM(RANDOM_SEED);
 
 static FloatBuffer* MODELVIEW = MemoryTracker::createFloatBuffer(16);
 static FloatBuffer* PROJECTION = MemoryTracker::createFloatBuffer(16);
@@ -32,10 +33,7 @@ TheEndPortalRenderer::TheEndPortalRenderer()
 FloatBuffer* TheEndPortalRenderer::getBuffer(float x, float y, float z, float w)
 {
     mBuffer->clear();
-    mBuffer->put(x);
-    mBuffer->put(y);
-    mBuffer->put(z);
-    mBuffer->put(w);
+    mBuffer->put(x)->put(y)->put(z)->put(w);
     mBuffer->flip();
 
     return mBuffer;
@@ -47,7 +45,7 @@ void TheEndPortalRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, do
 
     GlStateManager::disableLighting();
 
-    RANDOM.setSeed(31100LL);
+    RANDOM.setSeed(RANDOM_SEED);
 
     GlStateManager::getMatrix(0, MODELVIEW);
     GlStateManager::getMatrix(1, PROJECTION);
@@ -71,7 +69,7 @@ void TheEndPortalRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, do
             GlStateManager::blendFunc(4, 5);
         }
 
-        else
+        else if (i > 0)
         {
             bindTexture(&END_PORTAL_LOCATION);
             fogColorReset = true;
@@ -107,7 +105,9 @@ void TheEndPortalRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, do
 
         float layer = (float)(i + 1);
 
-        GlStateManager::translatef(17.0F / layer, (layer / 1.5F + 2.0F) * ((float)(System::processTimeInMilliSecs() % 800000LL) / 800000.0F), 0.0F);
+        double timeFraction = (float)((long long)System::processTimeInMilliSecs() % 800000LL) / 800000.0F;
+
+        GlStateManager::translatef(17.0F / layer, (layer / 1.5F + 2.0F) * timeFraction, 0.0F);
         GlStateManager::rotatef((layer * layer * 4321.0F + layer * 9.0F) * 2.0F, 0.0F, 0.0F, 1.0F);
 
         float scale = 4.5F - layer / 4.0F;
@@ -250,5 +250,6 @@ int TheEndPortalRenderer::getPasses(double distanceSqr)
 
 double TheEndPortalRenderer::getOffset()
 {
-    return 0.75F;
+    float offset = 0.75F;
+    return offset;
 }

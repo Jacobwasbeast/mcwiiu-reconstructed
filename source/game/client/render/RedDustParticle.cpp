@@ -55,12 +55,12 @@ void RedDustParticle::tick()
     if (oldAge >= particleLifetime)
         remove();
 
-    setMiscTex(7 - (age << 3) / particleLifetime);
+    setMiscTex(7 - (age << 3) / lifetime);
     move(xd, yd, zd);
 
     double xMotion = xd;
     double zMotion = zd;
-    if (x == xo)
+    if (y == yo)
     {
         xMotion *= 1.1;
         zMotion *= 1.1;

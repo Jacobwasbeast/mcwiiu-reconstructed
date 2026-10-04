@@ -66,12 +66,11 @@ void Particle::_init(Level* level, double x, double y, double z)
     gCol = 1.0f;
     bCol = 1.0f;
 
-    age = 0;
-
     uo = random.nextFloat() * 3.0f;
     vo = random.nextFloat() * 3.0f;
     size = (random.nextFloat() * 0.5f + 0.5f) * 2.0f;
     lifetime = (int)(4.0f / (random.nextFloat() * 0.9f + 0.1f));
+    age = 0;
 
     uvs = TextureUVCoordinateSet(0.0f, 0.0f, 1.0f, 1.0f, 16, 16);
 
@@ -89,11 +88,12 @@ void Particle::_init(Level* level, double x, double y, double z)
     zd = 0.0;
 }
 
-void Particle::setPower(float power)
+Particle* Particle::setPower(float power)
 {
-    xd *= power;
     yd = (yd - 0.10000000149011612) * power + 0.10000000149011612;
+    xd *= power;
     zd *= power;
+    return this;
 }
 
 Particle* Particle::scale(float factor)
@@ -119,14 +119,14 @@ void Particle::tick()
 
     move(xd, yd, zd);
 
-    xd *= 0.9800000190734863;
-    yd *= 0.9800000190734863;
-    zd *= 0.9800000190734863;
+    xd *= 0.98f;
+    yd *= 0.98f;
+    zd *= 0.98f;
 
     if (onGround)
     {
-        xd *= 0.699999988079071;
-        zd *= 0.699999988079071;
+        xd *= 0.7f;
+        zd *= 0.7f;
     }
 
 }
@@ -173,24 +173,26 @@ void Particle::render(BufferBuilder* buffer,
     {
         float angle = (roll + (roll - oRoll) * partialTicks) * 0.5f;
         float cosAngle = Mth::cos(angle);
+        Vec3* axis = Vec3::newTemp(Mth::sin(angle) * (float)cameraViewDirection->x,
+                                   Mth::sin(angle) * (float)cameraViewDirection->y,
+                                   Mth::sin(angle) * (float)cameraViewDirection->z);
 
-        float sinAngle = Mth::sin(angle);
-        Vec3* axis = Vec3::newTemp(sinAngle * (float)cameraViewDirection->x,
-                                   sinAngle * (float)cameraViewDirection->y,
-                                   sinAngle * (float)cameraViewDirection->z);
-
-        corner0 = axis->scale(2.0 * corner0->dot(axis))
-                      ->add(corner0->scale((double)(cosAngle * cosAngle) - axis->dot(axis)))
-                      ->add(axis->cross(corner0)->scale(2.0f * cosAngle));
-        corner1 = axis->scale(2.0 * corner1->dot(axis))
-                      ->add(corner1->scale((double)(cosAngle * cosAngle) - axis->dot(axis)))
-                      ->add(axis->cross(corner1)->scale(2.0f * cosAngle));
-        corner2 = axis->scale(2.0 * corner2->dot(axis))
-                      ->add(corner2->scale((double)(cosAngle * cosAngle) - axis->dot(axis)))
-                      ->add(axis->cross(corner2)->scale(2.0f * cosAngle));
-        corner3 = axis->scale(2.0 * corner3->dot(axis))
-                      ->add(corner3->scale((double)(cosAngle * cosAngle) - axis->dot(axis)))
-                      ->add(axis->cross(corner3)->scale(2.0f * cosAngle));
+        Vec3* along0 = axis->scale(2.0 * corner0->dot(axis));
+        Vec3* kept0 = corner0->scale((double)(cosAngle * cosAngle) - axis->dot(axis));
+        Vec3* sum0 = along0->add(kept0);
+        corner0 = sum0->add(axis->cross(corner0)->scale(2.0f * cosAngle));
+        Vec3* along1 = axis->scale(2.0 * corner1->dot(axis));
+        Vec3* kept1 = corner1->scale((double)(cosAngle * cosAngle) - axis->dot(axis));
+        Vec3* sum1 = along1->add(kept1);
+        corner1 = sum1->add(axis->cross(corner1)->scale(2.0f * cosAngle));
+        Vec3* along2 = axis->scale(2.0 * corner2->dot(axis));
+        Vec3* kept2 = corner2->scale((double)(cosAngle * cosAngle) - axis->dot(axis));
+        Vec3* sum2 = along2->add(kept2);
+        corner2 = sum2->add(axis->cross(corner2)->scale(2.0f * cosAngle));
+        Vec3* along3 = axis->scale(2.0 * corner3->dot(axis));
+        Vec3* kept3 = corner3->scale((double)(cosAngle * cosAngle) - axis->dot(axis));
+        Vec3* sum3 = along3->add(kept3);
+        corner3 = sum3->add(axis->cross(corner3)->scale(2.0f * cosAngle));
     }
 
     buffer->color(rCol, gCol, bCol, alpha);
@@ -284,18 +286,11 @@ void Particle::setPos(double x, double y, double z)
 
 void Particle::move(double xa, double ya, double za)
 {
-    double xMoved = xa;
-    double yMoved = ya;
-    double zMoved = za;
+    double xaOrg = xa;
+    double yaOrg = ya;
+    double zaOrg = za;
 
-    if (!hasPhysics)
-    {
-        setBoundingBox(getBoundingBox()->move(xa, ya, za));
-        setLocationFromBoundingbox();
-
-        onGround = false;
-    }
-    else
+    if (hasPhysics)
     {
         boost::shared_ptr<Entity> entity;
         std::vector<AABB*>& boxes = *level->getCollisionAABBs(entity, getBoundingBox()->expand(xa, ya, za), false, false, true);
@@ -304,35 +299,40 @@ void Particle::move(double xa, double ya, double za)
 
         for (box = boxes.begin(); box != boxes.end(); ++box)
         {
-            yMoved = (*box)->clipYCollide(getBoundingBox(), yMoved);
+            ya = (*box)->clipYCollide(getBoundingBox(), ya);
         }
 
-        setBoundingBox(getBoundingBox()->move(0.0, yMoved, 0.0));
+        setBoundingBox(getBoundingBox()->move(0.0, ya, 0.0));
 
         for (box = boxes.begin(); box != boxes.end(); ++box)
         {
-            xMoved = (*box)->clipXCollide(getBoundingBox(), xMoved);
+            xa = (*box)->clipXCollide(getBoundingBox(), xa);
         }
 
-        setBoundingBox(getBoundingBox()->move(xMoved, 0.0, 0.0));
+        setBoundingBox(getBoundingBox()->move(xa, 0.0, 0.0));
 
         for (box = boxes.begin(); box != boxes.end(); ++box)
         {
-            zMoved = (*box)->clipZCollide(getBoundingBox(), zMoved);
+            za = (*box)->clipZCollide(getBoundingBox(), za);
         }
 
-        setBoundingBox(getBoundingBox()->move(0.0, 0.0, zMoved));
+        setBoundingBox(getBoundingBox()->move(0.0, 0.0, za));
         setLocationFromBoundingbox();
-
-        onGround = ya != yMoved && ya < 0.0;
+    }
+    else
+    {
+        setBoundingBox(getBoundingBox()->move(xa, ya, za));
+        setLocationFromBoundingbox();
     }
 
-    if (xa != xMoved)
+    onGround = yaOrg != ya && yaOrg < 0.0;
+
+    if (xaOrg != xa)
     {
         xd = 0.0;
     }
 
-    if (za != zMoved)
+    if (zaOrg != za)
     {
         zd = 0.0;
     }
@@ -342,17 +342,18 @@ void Particle::move(double xa, double ya, double za)
 int Particle::getLightColor(float partialTicks)
 {
     BlockPos pos(x, y, z);
-    uint32_t key = (uint32_t)((pos.z & 0xFF) | ((pos.y & 0xFF) << 8) | ((pos.x & 0xFF) << 16));
+    uint32_t key = ((pos.x & 0xFF) << 16) | ((pos.y & 0xFF) << 8) | (pos.z & 0xFF);
 
     if (key == cachedLightPos)
     {
-        return (uint32_t)cachedLightColor;
+        return cachedLightColor;
     }
     if (level->hasChunkAt(pos))
     {
-        cachedLightPos = (int)key;
-        cachedLightColor = level->getLightColor(pos, 0, -1);
-        return (uint32_t)cachedLightColor;
+        int color = level->getLightColor(pos, 0, -1);
+        cachedLightPos = key;
+        cachedLightColor = color;
+        return color;
     }
     return 0;
 }
@@ -382,17 +383,17 @@ void Particle::setLifetime(int lifetime)
     this->lifetime = lifetime;
 }
 
-double Particle::getRedCol()
+float Particle::getRedCol()
 {
     return rCol;
 }
 
-double Particle::getGreenCol()
+float Particle::getGreenCol()
 {
     return gCol;
 }
 
-double Particle::getBlueCol()
+float Particle::getBlueCol()
 {
     return bCol;
 }
@@ -429,7 +430,7 @@ Level* Particle::getLevel()
     return level;
 }
 
-double Particle::getAlpha()
+float Particle::getAlpha()
 {
     return alpha;
 }

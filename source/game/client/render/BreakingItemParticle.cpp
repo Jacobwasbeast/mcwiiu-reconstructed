@@ -57,7 +57,7 @@ void BreakingItemParticle::render(BufferBuilder* buffer,
     float z2 = za2 * scale;
     int light = getLightColor(partialTicks);
 
-    buffer->color(rCol, gCol, bCol, alpha);
+    buffer->color(rCol, gCol, bCol);
     buffer->tex2(light);
     buffer->vertexUV(px - x1 - x2, py - y1, pz - z1 - z2, uvs.u0, uvs.v1);
     buffer->vertexUV(px - x1 + x2, py + y1, pz - z1 + z2, uvs.u0, uvs.v0);

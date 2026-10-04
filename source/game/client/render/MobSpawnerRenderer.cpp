@@ -31,8 +31,14 @@ void MobSpawnerRenderer::render(BaseMobSpawner* pSpawner, double x, double y, do
         entity->setLevel(pSpawner->getLevel());
 
         float scale = 0.53125F;
-        float maxSize = std::max(entity->mBbWidth, entity->mBbHeight);
-        if (maxSize > 1.0F)
+        const float& width = entity->mBbWidth;
+        const float& height = entity->mBbHeight;
+        float maxSize = width;
+        if (width - height < 0.0F)
+        {
+            maxSize = height;
+        }
+        if (maxSize > 1.0)
         {
             scale = 0.53125F / maxSize;
         }

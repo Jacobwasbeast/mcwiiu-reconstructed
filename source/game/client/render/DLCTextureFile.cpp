@@ -8,19 +8,16 @@ std::vector<std::wstring> stringSplit(const std::wstring& text, wchar_t separato
 
 DLCTextureFile::DLCTextureFile(const std::wstring& path)
     : DLCFile(DLCManager::eDLCType_Texture, path.substr(0, path.length() - 4))
-    , m_hasAnimation(false)
     , m_parameters()
-    , m_disableMipMap(false)
-    , m_pData(NULL)
-    , m_dataSize(0)
 {
+    m_dataSize = 0;
+    m_pData = NULL;
+    m_disableMipMap = false;
+    m_hasAnimation = false;
 }
 
 DLCTextureFile::~DLCTextureFile()
 {
-    delete[] m_pData;
-    m_pData = NULL;
-    m_dataSize = 0;
 }
 
 void DLCTextureFile::addData(unsigned char* pData, unsigned int size)
@@ -48,17 +45,13 @@ void DLCTextureFile::addParameter(DLCManager::EDLCParameterType parameter, const
         if (animation[0] == L'%')
         {
             std::vector<std::wstring> parts = stringSplit(animation.substr(1), L'%');
-            if (parts.size() >= 2)
-            {
-                m_parameters[parts[0]] = parts[1];
-            }
-            m_hasAnimation = true;
+            m_parameters[parts[0]] = parts[1];
         }
         else
         {
             m_parameters[L"True"] = animation;
-            m_hasAnimation = true;
         }
+        m_hasAnimation = true;
         return;
     }
 
@@ -82,6 +75,10 @@ std::wstring DLCTextureFile::getParameterAsString(DLCManager::EDLCParameterType 
         }
 
         boost::unordered_map<std::wstring, std::wstring>::const_iterator it = m_parameters.find(name);
+        if (it == m_parameters.end())
+        {
+            return m_parameters.begin()->second;
+        }
         return it->second;
     }
 

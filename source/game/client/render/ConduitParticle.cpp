@@ -10,11 +10,13 @@ ConduitParticle::ConduitParticle(Level* level,
                                  double za,
                                  arrayWithLength<int> params)
     : Particle(level, x, y, z, xa, ya, za),
-      m_conduitParticleValue(0.0f),
       m_startX(x),
       m_startY(y),
       m_startZ(z)
 {
+    xo = x;
+    yo = y;
+    zo = z;
     xd = xa;
     yd = ya;
     zd = za;
@@ -46,10 +48,9 @@ void ConduitParticle::tick()
 
     double inverseProgress = 1.0 - (double)age / (double)lifetime;
     double progress = 1.0 - inverseProgress;
-    x = xd * inverseProgress + m_startX;
-    y = -(progress * progress * progress * 1.2 - (yd * inverseProgress + m_startY));
-    z = zd * inverseProgress + m_startZ;
-    setPos(x, y, z);
+    setPos(xd * inverseProgress + m_startX,
+           -(progress * progress * progress * 1.2 - (yd * inverseProgress + m_startY)),
+           zd * inverseProgress + m_startZ);
 
     if (age++ >= lifetime)
         remove();
