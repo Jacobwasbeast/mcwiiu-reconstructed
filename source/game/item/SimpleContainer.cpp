@@ -137,14 +137,6 @@ bool SimpleContainer::stillValid(boost::shared_ptr<Player> player)
     return true;
 }
 
-void SimpleContainer::startOpen(boost::shared_ptr<Player> player)
-{
-}
-
-void SimpleContainer::stopOpen(boost::shared_ptr<Player> player)
-{
-}
-
 bool SimpleContainer::canPlaceItem(int slot, not_null_ptr<ItemInstance> item)
 {
     return true;

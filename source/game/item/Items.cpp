@@ -230,7 +230,8 @@ Item* Items::debugFourjItem = NULL;
 
 Item* Items::get(const std::wstring& name)
 {
-    return Item::itemRegistry.get(ResourceLocation(name));
+    ResourceLocation key(name);
+    return Item::itemRegistry.get(key);
 }
 
 void Items::staticCtor()

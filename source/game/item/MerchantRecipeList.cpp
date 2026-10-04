@@ -45,37 +45,20 @@ MerchantRecipe* MerchantRecipeList::getRecipeFor(not_null_ptr<ItemInstance> firs
                                                  not_null_ptr<ItemInstance> second,
                                                  int hint)
 {
-    unsigned int count = static_cast<unsigned int>(std::vector<MerchantRecipe*>::size());
-
-    if (hint >= 1 && static_cast<unsigned int>(hint) < count)
+    if (hint >= 1 && static_cast<unsigned int>(hint) < std::vector<MerchantRecipe*>::size())
     {
         MerchantRecipe* recipe = std::vector<MerchantRecipe*>::at(static_cast<unsigned int>(hint));
-        bool matched = false;
-        if (isRequiredItem(first, recipe->getBuyAItem()))
-        {
-            if (!second->isEmpty() && !recipe->hasSecondaryBuyItem())
-            {
-                matched = false;
-            }
-            else if (recipe->hasSecondaryBuyItem())
-            {
-                matched = isRequiredItem(second, recipe->getBuyAItem());
-            }
-            else
-            {
-                matched = true;
-            }
-        }
+        bool matched = isRequiredItem(first, recipe->getBuyAItem()) &&
+                       ((second->isEmpty() && !recipe->hasSecondaryBuyItem()) ||
+                        (recipe->hasSecondaryBuyItem() && isRequiredItem(second, recipe->getBuyAItem())));
         if (!matched)
         {
             return NULL;
         }
 
-        bool countOk = first->getCount() >= recipe->getBuyAItem()->getCount();
-        if (countOk && recipe->hasSecondaryBuyItem())
-        {
-            countOk = second->getCount() >= recipe->getBuyBItem()->getCount();
-        }
+        bool countOk = first->getCount() >= recipe->getBuyAItem()->getCount() &&
+                       (!recipe->hasSecondaryBuyItem() ||
+                        second->getCount() >= recipe->getBuyBItem()->getCount());
         if (!countOk)
         {
             return NULL;
@@ -83,24 +66,15 @@ MerchantRecipe* MerchantRecipeList::getRecipeFor(not_null_ptr<ItemInstance> firs
         return recipe;
     }
 
-    for (unsigned int index = 0; index < count; ++index)
+    for (unsigned int index = 0; index < std::vector<MerchantRecipe*>::size(); ++index)
     {
         MerchantRecipe* recipe = std::vector<MerchantRecipe*>::at(index);
-        not_null_ptr<ItemInstance> buyA = recipe->getBuyAItem();
-        if (!isRequiredItem(first, buyA) || first->getCount() < buyA->getCount())
-        {
-            continue;
-        }
-        if (!recipe->hasSecondaryBuyItem())
-        {
-            if (second->isEmpty())
-            {
-                return recipe;
-            }
-            continue;
-        }
-        not_null_ptr<ItemInstance> buyB = recipe->getBuyBItem();
-        if (isRequiredItem(second, buyB) && second->getCount() >= buyB->getCount())
+        bool matched = isRequiredItem(first, recipe->getBuyAItem()) &&
+                       first->getCount() >= recipe->getBuyAItem()->getCount() &&
+                       ((!recipe->hasSecondaryBuyItem() && second->isEmpty()) ||
+                        (recipe->hasSecondaryBuyItem() && isRequiredItem(second, recipe->getBuyBItem()) &&
+                         second->getCount() >= recipe->getBuyBItem()->getCount()));
+        if (matched)
         {
             return recipe;
         }
@@ -133,31 +107,24 @@ MerchantRecipe* MerchantRecipeList::getMatchingRecipeFor(not_null_ptr<ItemInstan
                                                          not_null_ptr<ItemInstance> second,
                                                          not_null_ptr<ItemInstance> result)
 {
-    unsigned int count = static_cast<unsigned int>(std::vector<MerchantRecipe*>::size());
-    for (unsigned int index = 0; index < count; ++index)
+    for (unsigned int index = 0; index < std::vector<MerchantRecipe*>::size(); ++index)
     {
         MerchantRecipe* recipe = std::vector<MerchantRecipe*>::at(index);
-        bool matched = false;
-        if (first->getItem() == recipe->getBuyAItem()->getItem() &&
-            first->getCount() >= recipe->getBuyAItem()->getCount())
-        {
-            matched = result->getItem() == recipe->getSellItem()->getItem();
-        }
-
-        if (!matched)
-        {
-            continue;
-        }
-
-        if (recipe->hasSecondaryBuyItem())
-        {
-            matched = !second->isEmpty() && second->getItem() == recipe->getBuyBItem()->getItem() &&
-                      second->getCount() >= recipe->getBuyBItem()->getCount();
-        }
-
+        bool matched = first->getItem() == recipe->getBuyAItem()->getItem() &&
+                       first->getCount() >= recipe->getBuyAItem()->getCount() &&
+                       result->getItem() == recipe->getSellItem()->getItem();
         if (matched)
         {
-            return recipe;
+            if (recipe->hasSecondaryBuyItem() &&
+                !(!second->isEmpty() && second->getItem() == recipe->getBuyBItem()->getItem() &&
+                  second->getCount() >= recipe->getBuyBItem()->getCount()))
+            {
+                matched = false;
+            }
+            if (matched)
+            {
+                return recipe;
+            }
         }
     }
     return NULL;

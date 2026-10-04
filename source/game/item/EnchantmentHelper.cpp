@@ -12,6 +12,7 @@
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/item/EnchantedBookItem.hpp"
 #include "game/item/Enchantment.hpp"
+#include "game/item/EnchantmentCategory.hpp"
 #include "game/item/EnchantmentInstance.hpp"
 #include "game/item/Enchantments.hpp"
 #include "game/item/Item.hpp"
@@ -19,7 +20,9 @@
 #include "game/item/Items.hpp"
 #include "game/util/Math.hpp"
 #include "game/util/Random.hpp"
+#include "game/util/ResourceLocation.hpp"
 #include "game/util/WeighedRandom.hpp"
+#include "game/world/block/MappedRegistry.hpp"
 
 static EnchantmentHelper::GetDamageProtectionIteration sDamageProtectionIteration;
 static EnchantmentHelper::GetDamageBonusIteration sDamageBonusIteration;
@@ -117,9 +120,9 @@ boost::unordered_map<Enchantment*, int>* EnchantmentHelper::getEnchantments(
         {
             CompoundTag* tag = tags->getCompound(index);
             Enchantment* enchantment = Enchantment::byId(tag->getShort(L"id"));
+            int level = tag->getShort(L"lvl");
 
-            enchantments->insert(
-                std::make_pair(enchantment, static_cast<int>(tag->getShort(L"lvl"))));
+            enchantments->insert(std::make_pair(enchantment, level));
         }
     }
 
@@ -175,6 +178,10 @@ int EnchantmentHelper::getEnchantmentLevel(Enchantment* enchantment,
     }
 
     std::vector<boost::weak_ptr<ItemInstance> > items = enchantment->getSlotItems(entity);
+    if (items.empty())
+    {
+        return 0;
+    }
 
     int level = 0;
     for (std::vector<boost::weak_ptr<ItemInstance> >::const_iterator it = items.begin();
@@ -257,8 +264,7 @@ void EnchantmentHelper::doPostHurtEffects(const boost::shared_ptr<LivingEntity>&
     if (target.get() != NULL)
     {
         NonNullList<not_null_ptr<ItemInstance> > slots = target->getAllSlots();
-        for (unsigned int i = 0; i < slots.size(); ++i)
-            runIterationOnItem(sPostHurtIteration, slots[i]);
+        runIterationOnInventory(sPostHurtIteration, slots);
     }
 
     if (attacker.get() != NULL
@@ -280,8 +286,7 @@ void EnchantmentHelper::doPostDamageEffects(const boost::shared_ptr<LivingEntity
     }
 
     NonNullList<not_null_ptr<ItemInstance> > slots = target->getAllSlots();
-    for (unsigned int i = 0; i < slots.size(); ++i)
-        runIterationOnItem(sPostDamageIteration, slots[i]);
+    runIterationOnInventory(sPostDamageIteration, slots);
 
     if ((attacker->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
     {
@@ -407,7 +412,8 @@ int EnchantmentHelper::getEnchantmentCost(Random* random,
 
     if (slot == 0)
     {
-        return Math::_max(value / 3, 1);
+        int third = value / 3;
+        return third < 1 ? 1 : third;
     }
 
     if (slot == 1)
@@ -415,7 +421,13 @@ int EnchantmentHelper::getEnchantmentCost(Random* random,
         return value * 2 / 3 + 1;
     }
 
-    return Math::_max(level * 2, value);
+    int doubled = level * 2;
+    if (doubled < value)
+    {
+        doubled = value;
+    }
+
+    return doubled;
 }
 
 std::vector<EnchantmentInstance*>* EnchantmentHelper::getAvailableEnchantmentResults(
@@ -423,24 +435,32 @@ std::vector<EnchantmentInstance*>* EnchantmentHelper::getAvailableEnchantmentRes
     const not_null_ptr<ItemInstance>& item,
     bool treasure)
 {
+    Item* itemType = item->getItem();
     std::vector<EnchantmentInstance*>* results = new std::vector<EnchantmentInstance*>();
 
     bool isBook = item->getItem() == Items::book;
 
-    for (int id = 0; id < 256; ++id)
+    const boost::unordered_map<Enchantment*,
+                               ResourceLocation,
+                               boost::hash<Enchantment*>,
+                               std::equal_to<Enchantment*> >& registry =
+        Enchantment::enchantmentRegistry->mInverseRegistry;
+
+    for (boost::unordered_map<Enchantment*,
+                              ResourceLocation,
+                              boost::hash<Enchantment*>,
+                              std::equal_to<Enchantment*> >::const_iterator it = registry.begin();
+         it != registry.end();
+         ++it)
     {
-        Enchantment* enchantment = Enchantment::byId(id);
-        if (enchantment == NULL)
-        {
-            continue;
-        }
+        Enchantment* enchantment = it->first;
 
         if (enchantment->isTreasureOnly() && !treasure)
         {
             continue;
         }
 
-        if (!enchantment->canEnchant(item) && !isBook)
+        if (!enchantment->mCategory->canEnchant(itemType) && !isBook)
         {
             continue;
         }

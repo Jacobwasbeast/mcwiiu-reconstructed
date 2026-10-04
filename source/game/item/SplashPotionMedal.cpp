@@ -2,7 +2,7 @@
 
 #include "game/world/generation/PlayerStats.hpp"
 
-double SplashPotionMedal::GetScore(PlayerStats* playerStats) const
+float SplashPotionMedal::GetScore(PlayerStats* playerStats) const
 {
-    return static_cast<double>(static_cast<float>(playerStats->getTotalSplashPotionsUsed()));
+    return static_cast<double>(static_cast<float>(static_cast<unsigned int>(playerStats->getTotalSplashPotionsUsed())));
 }

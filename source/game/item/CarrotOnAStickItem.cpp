@@ -3,6 +3,7 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include "game/core/EntityType.hpp"
 #include "game/core/GenericStats.hpp"
 #include "game/core/InteractionResult.hpp"
 #include "game/core/Pig.hpp"
@@ -37,12 +38,9 @@ bool CarrotOnAStickItem::TestUse(Level*, boost::shared_ptr<Player> player,
                                   InteractionHand::EInteractionHand hand)
 {
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
-    boost::shared_ptr<Pig> pig = player->isPassenger()
-        ? boost::dynamic_pointer_cast<Pig>(player->getVehicle())
-        : boost::shared_ptr<Pig>();
-
-    if (pig)
+    if (player->isPassenger() && player->getVehicle()->GetType() == EntityType::PIG)
     {
+        boost::shared_ptr<Pig> pig = boost::static_pointer_cast<Pig>(player->getVehicle());
         if (itemInstance->getMaxDamage() - itemInstance->getAuxValue() > 6 && pig->testboost())
         {
             return true;
@@ -67,12 +65,9 @@ InteractionResultHolder CarrotOnAStickItem::use(Level* level,
             itemInstance);
     }
 
-    boost::shared_ptr<Pig> pig = player->isPassenger()
-        ? boost::dynamic_pointer_cast<Pig>(player->getVehicle())
-        : boost::shared_ptr<Pig>();
-
-    if (pig)
+    if (player->isPassenger() && player->getVehicle()->GetType() == EntityType::PIG)
     {
+        boost::shared_ptr<Pig> pig = boost::static_pointer_cast<Pig>(player->getVehicle());
         if (itemInstance->getMaxDamage() - itemInstance->getAuxValue() > 6 && pig->boost())
         {
             itemInstance->hurtAndBreak(7, player);
@@ -90,17 +85,18 @@ InteractionResultHolder CarrotOnAStickItem::use(Level* level,
         }
     }
 
-    player->awardStat(gStats->get_itemsUsed(VALIDgetId(this)),
-                      GenericStats::param_itemsUsed(player, itemInstance));
+    Player* awardee = player.operator->();
+    Stat* stat = gStats->get_itemsUsed(VALIDgetId(this));
+    awardee->awardStat(stat, GenericStats::param_itemsUsed(player, itemInstance));
     return InteractionResultHolder(InteractionResult::eInteractionResult_Pass,
                                    itemInstance);
 }
 
 unsigned int CarrotOnAStickItem::GetUseTooltip(const ItemTooltipDataHolder& tooltipData)
 {
-    if (tooltipData.m_eInteractionResult != InteractionResult::eInteractionResult_Success)
+    if (tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Success)
     {
-        return IDS_NONE;
+        return IDS_TOOLTIPS_BOOST;
     }
-    return IDS_TOOLTIPS_BOOST;
+    return IDS_NONE;
 }

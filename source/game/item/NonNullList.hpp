@@ -37,16 +37,13 @@ public:
     T defaultValue;
 
 private:
-    NonNullList(T* items, unsigned int length, const T& defaultValue);
+    NonNullList(T* items, unsigned int length, const T& defaultValue)
+        : items(items),
+          length(length),
+          defaultValue(defaultValue)
+    {
+    }
 };
-
-template <class T>
-NonNullList<T>::NonNullList(T* items, unsigned int length, const T& defaultValue)
-    : items(items),
-      length(length),
-      defaultValue(defaultValue)
-{
-}
 
 template <class T>
 NonNullList<T> NonNullList<T>::withSize(unsigned int size, const T& defaultValue)

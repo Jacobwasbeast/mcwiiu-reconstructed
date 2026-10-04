@@ -148,23 +148,23 @@ FurnaceRecipes* FurnaceRecipes::getInstance()
     return gFurnaceRecipes;
 }
 
-double FurnaceRecipes::getRecipeValue(not_null_ptr<ItemInstance> item)
+float FurnaceRecipes::getRecipeValue(not_null_ptr<ItemInstance> item)
 {
     boost::unordered_map<ItemInstance*, float>::iterator it;
     for (it = mRecipeExperience.begin(); it != mRecipeExperience.end(); ++it)
     {
         if (isSameItem(item, it->first))
         {
-            return (double)it->second;
+            return it->second;
         }
     }
-    return 0.0;
+    return 0.0f;
 }
 
 void FurnaceRecipes::addFurnaceRecipe(ItemInstance* item, ItemInstance* result, float experience)
 {
     (*this)[item] = result;
-    mRecipeExperience[item] = experience;
+    mRecipeExperience[result] = experience;
 }
 
 void FurnaceRecipes::addFurnaceRecipe(Item* item, ItemInstance* result, float experience)

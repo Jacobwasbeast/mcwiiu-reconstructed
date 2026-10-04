@@ -21,8 +21,8 @@ public:
     PlaceContainerRuleDefinition();
     virtual ~PlaceContainerRuleDefinition();
 
-    uint32_t placeContainerInLevel(Level* level, const BlockPos& pos, LevelRuleset* ruleset);
-    uint32_t placeContainerInChunk(StructurePiece* structurePiece, Level* level, BoundingBox* box);
+    bool placeContainerInLevel(Level* level, const BlockPos& pos, LevelRuleset* ruleset);
+    bool placeContainerInChunk(StructurePiece* structurePiece, Level* level, BoundingBox* box);
     virtual void getChildren(std::vector<GameRuleDefinition*>* children);
     virtual GameRuleDefinition* addChild(ConsoleGameRules::EGameRuleType type);
     virtual bool evaluateRule(Level* level, LevelRuleset* ruleset, const MiniGameDef& miniGameDef);

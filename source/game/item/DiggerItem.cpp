@@ -22,10 +22,6 @@ DiggerItem::DiggerItem(const Item::Tier* tier, arrayWithLength<Block*> blocks)
     _init(0.0f, 0.0f, blocks);
 }
 
-DiggerItem::~DiggerItem()
-{
-}
-
 void DiggerItem::_init(float attackDamage, float attackSpeed, arrayWithLength<Block*> blocks)
 {
     mBlocks = blocks;
@@ -63,7 +59,7 @@ bool DiggerItem::mineBlock(not_null_ptr<ItemInstance> itemInstance,
                            const BlockPos& pos,
                            boost::shared_ptr<LivingEntity> entity)
 {
-    if (!level->mIsClientSide && state->getDestroySpeed(level, pos) != 0.0f)
+    if (!level->mIsClientSide && state->getDestroySpeed(level, pos) != 0.0)
     {
         itemInstance->hurtAndBreak(1, entity);
     }
@@ -104,7 +100,8 @@ boost::unordered_map<eATTRIBUTE_ID, AttributeModifier*>* DiggerItem::getDefaultA
 
     if (Minecraft::InMiniGame(eMiniGameId_Any, true))
     {
-        attackDamage = Minecraft::GetInstance()->GetMiniGame()->getBaseDamage(getId(this), mAttackDamage);
+        const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
+        attackDamage = miniGame->getBaseDamage(getId(this), mAttackDamage);
     }
 
     if (slot == EquipmentSlot::MAINHAND)

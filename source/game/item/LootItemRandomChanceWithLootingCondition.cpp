@@ -3,6 +3,7 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include "game/core/DamageSource.hpp"
 #include "game/core/LootTableContext.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
@@ -18,11 +19,11 @@ bool LootItemRandomChanceWithLootingCondition::applies(Random* random, LootTable
 {
     int lootingLevel = 0;
 
-    if (context.getEntity(LootTableContext::DIRECT_KILLER)
-        && (context.getEntity(LootTableContext::DIRECT_KILLER)->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+    if ((context.mDamageSource == NULL ? boost::shared_ptr<Entity>() : context.mDamageSource->getEntity())
+        && (((context.mDamageSource == NULL ? boost::shared_ptr<Entity>() : context.mDamageSource->getEntity()))->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
     {
-        lootingLevel = EnchantmentHelper::getMobLooting(
-            boost::dynamic_pointer_cast<LivingEntity>(context.getEntity(LootTableContext::DIRECT_KILLER)));
+        lootingLevel = EnchantmentHelper::getMobLooting(boost::dynamic_pointer_cast<LivingEntity>(
+            context.mDamageSource == NULL ? boost::shared_ptr<Entity>() : context.mDamageSource->getEntity()));
     }
 
     return random->nextFloat() < static_cast<float>(lootingLevel) * lootingMultiplier + chance;

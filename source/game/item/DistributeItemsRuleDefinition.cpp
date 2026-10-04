@@ -22,7 +22,7 @@ public:
 DistributeItemsRuleDefinition::DistributeItemsRuleDefinition()
     : GameRuleDefinition()
 {
-    mLootGroup.assign(L"rule");
+    mLootGroup.assign(L"");
     addStringAttribute(ConsoleGameRules::eGameRuleAttr_id, &mLootGroup);
 }
 
@@ -49,13 +49,14 @@ ConsoleGameRules::EGameRuleType DistributeItemsRuleDefinition::getActionType()
 
 GameRuleDefinition* DistributeItemsRuleDefinition::addChild(ConsoleGameRules::EGameRuleType type)
 {
-    WorldPositionRuleDefinition* child = NULL;
+    GameRuleDefinition* rule = NULL;
     if (type == ConsoleGameRules::eGameRuleType_WorldPosition)
     {
-        child = new WorldPositionRuleDefinition();
-        mPositions.push_back(child);
+        WorldPositionRuleDefinition* position = new WorldPositionRuleDefinition();
+        rule = position;
+        mPositions.push_back(position);
     }
-    return child;
+    return rule;
 }
 
 std::vector<boost::shared_ptr<Container> > DistributeItemsRuleDefinition::getContainers(Level* level, const std::vector<WorldPositionRuleDefinition*>& positions)
@@ -80,7 +81,7 @@ bool DistributeItemsRuleDefinition::evaluateRule(Level* level, LevelRuleset* rul
 {
     (void)ruleset;
     std::vector<boost::shared_ptr<Container> > containers = getContainers(level, mPositions);
-    return miniGameDef.PopulateContainers(&containers, mLootGroup) != 0;
+    return miniGameDef.PopulateContainers(&containers, mLootGroup);
 }
 
 std::wstring DistributeItemsRuleDefinition::getId() const

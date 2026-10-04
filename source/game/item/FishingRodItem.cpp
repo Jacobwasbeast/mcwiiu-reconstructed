@@ -77,7 +77,8 @@ InteractionResultHolder FishingRodItem::use(Level* level,
                 hook->setLuck(luck);
             }
             player->mFishing = hook;
-            level->addEntity(hook);
+            boost::shared_ptr<Entity> entity = hook;
+            level->addEntity(entity);
         }
         player->swing(hand);
         player->awardStat(gStats->get_itemsUsed(VALIDgetId(this)),
@@ -120,11 +121,9 @@ float FishingRodItem::FishingRodItem_ItemPropertyFunction::call(
     float result = 0.0f;
     if (entity)
     {
-        not_null_ptr<ItemInstance> mainHandItem = entity->getMainHandItem();
-        not_null_ptr<ItemInstance> offhandItem = entity->getOffhandItem();
-        bool inMainHand = mainHandItem == itemInstance;
-        bool inOffhand = offhandItem == itemInstance;
-        if (dynamic_cast<FishingRodItem*>(mainHandItem->getItem()) != NULL)
+        bool inMainHand = entity->getMainHandItem() == itemInstance;
+        bool inOffhand = entity->getOffhandItem() == itemInstance;
+        if (dynamic_cast<FishingRodItem*>(entity->getMainHandItem()->getItem()) != NULL)
         {
             inOffhand = false;
         }

@@ -21,16 +21,10 @@ not_null_ptr<ItemInstance> MilkBucketItem::finishUsingItem(not_null_ptr<ItemInst
                                                            Level* level,
                                                            boost::shared_ptr<LivingEntity> entity)
 {
-    bool isPlayer = (entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER;
-    boost::shared_ptr<Player> player;
-
-    if (isPlayer)
+    if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER &&
+        !boost::static_pointer_cast<Player>(entity)->mAbilities.mInstabuild)
     {
-        player = boost::static_pointer_cast<Player>(entity);
-        if (!player->mAbilities.mInstabuild)
-        {
-            itemInstance->shrink(1);
-        }
+        itemInstance->shrink(1);
     }
 
     if (!level->mIsClientSide)
@@ -38,10 +32,12 @@ not_null_ptr<ItemInstance> MilkBucketItem::finishUsingItem(not_null_ptr<ItemInst
         entity->removeAllEffects();
     }
 
-    if (isPlayer)
+    if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
     {
-        player->awardStat(gStats->get_itemsUsed(Item::VALIDgetId(this)),
-                          GenericStats::param_itemsUsed(player, itemInstance));
+        boost::static_pointer_cast<Player>(entity)->awardStat(
+            gStats->get_itemsUsed(Item::VALIDgetId(this)),
+                          GenericStats::param_itemsUsed(boost::static_pointer_cast<Player>(entity),
+                                                        itemInstance));
     }
 
     if (itemInstance->isEmpty())

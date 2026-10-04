@@ -39,7 +39,8 @@ InteractionResult::EInteractionResult FireChargeItem::useOn(boost::shared_ptr<Pl
         return InteractionResult::eInteractionResult_Success;
     }
 
-    BlockPos target = pos.relative(direction);
+    BlockPos target = pos;
+    target = target.relative(direction);
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
 
     if (!player->mayUseItemAt(target, direction, itemInstance))
@@ -88,6 +89,5 @@ TextureAtlasSprite* FireChargeItem::getIcon(int auxValue)
 void FireChargeItem::registerIcons(IconRegister* iconRegister)
 {
     Item::registerIcons(iconRegister);
-    std::wstring iconName = L"dragonFireball";
-    mIcon2 = iconRegister->registerIcon(iconName);
+    mIcon2 = iconRegister->registerIcon(L"dragonFireball");
 }

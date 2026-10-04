@@ -75,8 +75,12 @@ bool PickaxeItem::canDestroySpecial(const BlockState* state)
     }
 
     Material* material = state->getMaterial();
-    return material == Material::STONE || material == Material::METAL ||
-           material == Material::HEAVY_METAL;
+    if (material == Material::STONE || material == Material::METAL || material == Material::HEAVY_METAL)
+    {
+        return true;
+    }
+
+    return false;
 }
 
 float PickaxeItem::getDestroySpeed(not_null_ptr<ItemInstance> itemInstance, const BlockState* state)

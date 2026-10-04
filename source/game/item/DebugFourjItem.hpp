@@ -33,7 +33,7 @@ public:
                                                         bool simulate);
 
 private:
-    ResourceLocation mTextures[22];
+    ResourceLocation mLootTables[22];
 };
 
 #endif

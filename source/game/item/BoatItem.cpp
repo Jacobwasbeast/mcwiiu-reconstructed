@@ -34,12 +34,13 @@ BoatItem::~BoatItem()
 
 bool BoatItem::TestUse(Level* level, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand)
 {
-    player->getItemInHand(hand);
+    not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
     float xRot = player->mXRotO + (player->mXRot - player->mXRotO);
     float yRot = player->mYRotO + (player->mYRot - player->mYRotO);
-    Vec3* from = Vec3::newTemp(player->mXo + (player->mX - player->mXo),
-                               player->mYo + (player->mY - player->mYo) + player->getEyeHeight(),
-                               player->mZo + (player->mZ - player->mZo));
+    double fromX = player->mXo + (player->mX - player->mXo);
+    double fromY = player->mYo + (player->mY - player->mYo) + player->getEyeHeight();
+    double fromZ = player->mZo + (player->mZ - player->mZo);
+    Vec3* from = Vec3::newTemp(fromX, fromY, fromZ);
     float yaw = -yRot * 0.017453292f - 3.1415927f;
     float pitch = -xRot * 0.017453292f;
     float yawCos = Mth::cos(yaw);
@@ -69,7 +70,12 @@ bool BoatItem::TestUse(Level* level, boost::shared_ptr<Player> player, Interacti
     delete hit;
     boat->setType(mType);
     boat->mYRot = player->mYRot;
-    return level->getCollisionAABBs(boat, boat->Entity::mBoundingBox->grow(-0.1), false, false, false)->size() == 0;
+    bool blocked = level->getCollisionAABBs(boat, boat->Entity::mBoundingBox->grow(-0.1), false, false, false)->size() != 0;
+    if (!blocked)
+    {
+        return true;
+    }
+    return false;
 }
 
 InteractionResultHolder BoatItem::use(Level* level,
@@ -79,9 +85,10 @@ InteractionResultHolder BoatItem::use(Level* level,
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
     float xRot = player->mXRotO + (player->mXRot - player->mXRotO);
     float yRot = player->mYRotO + (player->mYRot - player->mYRotO);
-    Vec3* from = Vec3::newTemp(player->mXo + (player->mX - player->mXo),
-                               player->mYo + (player->mY - player->mYo) + player->getEyeHeight(),
-                               player->mZo + (player->mZ - player->mZo));
+    double fromX = player->mXo + (player->mX - player->mXo);
+    double fromY = player->mYo + (player->mY - player->mYo) + player->getEyeHeight();
+    double fromZ = player->mZo + (player->mZ - player->mZo);
+    Vec3* from = Vec3::newTemp(fromX, fromY, fromZ);
     float yaw = -yRot * 0.017453292f - 3.1415927f;
     float pitch = -xRot * 0.017453292f;
     float yawCos = Mth::cos(yaw);
@@ -97,18 +104,23 @@ InteractionResultHolder BoatItem::use(Level* level,
         return InteractionResultHolder(InteractionResult::eInteractionResult_Pass, itemInstance);
     }
 
-    Vec3* view = player->getViewVector(1.0f);
+    float partialTicks = 1.0f;
+    Vec3* view = player->getViewVector(partialTicks);
     std::vector<boost::shared_ptr<Entity> >* entities = level->getEntities(
         player,
-        player->mBoundingBox->expand(view->x * 5.0, view->y * 5.0, view->z * 5.0)->grow(1.0, 1.0, 1.0),
+        player->mBoundingBox->expand(view->x * 5.0, view->y * 5.0, view->z * 5.0)->grow(partialTicks, partialTicks, partialTicks),
         NULL);
     bool blocked = false;
     for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != entities->end(); ++it)
     {
         boost::shared_ptr<Entity> entity = *it;
-        if (entity->isPickable() && entity->mBoundingBox->grow(entity->getPickRadius())->contains(from))
+        if (entity->isPickable())
         {
-            blocked = true;
+            AABB* pickBox = entity->mBoundingBox->grow(entity->getPickRadius());
+            if (pickBox->contains(from))
+            {
+                blocked = true;
+            }
         }
     }
     if (blocked)
@@ -125,7 +137,7 @@ InteractionResultHolder BoatItem::use(Level* level,
 
     Block* block = level->getBlockState(hit->getBlockPos())->getBlock();
     bool onWater = block == Blocks::water || block == Blocks::flowing_water;
-    if (level->countInstanceOf(EntityType::BOAT, true, NULL, NULL) < 40)
+    if (static_cast<unsigned int>(level->countInstanceOf(EntityType::BOAT, true, NULL, NULL)) < 40)
     {
         boost::shared_ptr<Boat> boat(new Boat(level,
                                               hit->mLocation->x,

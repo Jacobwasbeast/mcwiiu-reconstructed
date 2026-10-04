@@ -1,8 +1,16 @@
 #include "game/item/ItemInstance.hpp"
 
+static const wchar_t* TAG_ENCH = L"ench";
+static const wchar_t* TAG_ENCH_ID = L"id";
+static const wchar_t* TAG_ENCH_LEVEL = L"lvl";
 static const wchar_t* TAG_DISPLAY = L"display";
 static const wchar_t* TAG_NAME = L"Name";
 static const wchar_t* TAG_LOC_NAME = L"LocName";
+static const wchar_t* TAG_UNBREAKABLE = L"Unbreakable";
+static const wchar_t* TAG_REPAIR_COST = L"RepairCost";
+static const wchar_t* TAG_OWNER_ID = L"ownerID";
+static const wchar_t* TAG_CREATED_ON_HOST = L"createdOnHost";
+static const wchar_t* TAG_CREATED_BY_RESTRICTED = L"createdByRestricted";
 #include "game/core/StringIds.hpp"
 #include "game/item/Item.hpp"
 #include "game/item/Items.hpp"
@@ -38,6 +46,7 @@ static const wchar_t* TAG_LOC_NAME = L"LocName";
 #include "game/core/EquipmentSlot.hpp"
 #include "game/core/GenericStats.hpp"
 #include "game/core/StringConversion.hpp"
+#include "game/item/CraftingContainer.hpp"
 #include "game/item/HoeItem.hpp"
 #include "game/item/NonNullList.hpp"
 #include "game/item/PickaxeItem.hpp"
@@ -116,7 +125,7 @@ ItemInstance::ItemInstance(const ItemInstance& other)
     : mCount(other.mCount),
       mPopTime(other.mPopTime),
       mItem(other.mItem),
-      mTag(other.mTag != 0 ? other.mTag->copy() : 0),
+      mTag(other.mTag),
       mEmptyCache(other.mEmptyCache),
       mAuxValue(other.mAuxValue),
       mUnknown(other.mUnknown),
@@ -136,13 +145,10 @@ ItemInstance::~ItemInstance()
 
 ItemInstance& ItemInstance::operator=(const ItemInstance& other)
 {
-    if (this == &other)
-        return *this;
-    delete mTag;
     mCount = other.mCount;
     mPopTime = other.mPopTime;
     mItem = other.mItem;
-    mTag = other.mTag != 0 ? other.mTag->copy() : 0;
+    mTag = other.mTag;
     mEmptyCache = other.mEmptyCache;
     mAuxValue = other.mAuxValue;
     mUnknown = other.mUnknown;
@@ -246,8 +252,14 @@ InteractionResult::EInteractionResult ItemInstance::useOn(boost::shared_ptr<Play
                                                           const Direction* direction, float x, float y, float z,
                                                           bool flag)
 {
-    return mItem != 0 ? mItem->useOn(player, level, pos, hand, direction, x, y, z, flag)
-                      : InteractionResult::eInteractionResult_Pass;
+    InteractionResult::EInteractionResult result = getItem()->useOn(player, level, pos, hand, direction, x, y, z, flag);
+    if (result == InteractionResult::eInteractionResult_Success)
+    {
+        Player* awardee = player.operator->();
+        Stat* stat = gStats->get_itemsUsed(Item::VALIDgetId(mItem));
+        awardee->awardStat(stat, GenericStats::param_itemsUsed(player, not_null_ptr<ItemInstance>(shared_from_this())));
+    }
+    return result;
 }
 
 float ItemInstance::getDestroySpeed(const BlockState* state)
@@ -257,24 +269,17 @@ float ItemInstance::getDestroySpeed(const BlockState* state)
 
 bool ItemInstance::TestUse(Level* level, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand)
 {
-    return mItem != 0 && mItem->TestUse(level, player, hand);
+    return getItem()->TestUse(level, player, hand);
 }
 
-void ItemInstance::use(Level* level, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand)
+InteractionResultHolder ItemInstance::use(Level* level, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand)
 {
-    if (mItem != 0)
-    {
-        mItem->use(level, player, hand);
-    }
+    return getItem()->use(level, player, hand);
 }
 
 not_null_ptr<ItemInstance> ItemInstance::finishUsingItem(Level* level, boost::shared_ptr<Player> player)
 {
-    if (isEmpty() || mItem == 0)
-        return copy();
-    not_null_ptr<ItemInstance> self;
-    static_cast<boost::shared_ptr<ItemInstance>&>(self) = shared_from_this();
-    return getItem()->finishUsingItem(self, level, player);
+    return getItem()->finishUsingItem(not_null_ptr<ItemInstance>(shared_from_this()), level, player);
 }
 
 CompoundTag* ItemInstance::save(CompoundTag* tag)
@@ -310,7 +315,7 @@ bool ItemInstance::isDamageableItem()
         bool unbreakable = false;
         if (hasTag())
         {
-            unbreakable = getTag()->getBoolean(L"Unbreakable");
+            unbreakable = getTag()->getBoolean(TAG_UNBREAKABLE);
         }
         return !unbreakable;
     }
@@ -409,21 +414,13 @@ void ItemInstance::hurtAndBreak(int amount, boost::shared_ptr<LivingEntity> enti
 
 void ItemInstance::hurtEnemy(boost::shared_ptr<LivingEntity> entity, boost::shared_ptr<Player> player)
 {
-    if (isEmpty() || mItem == 0)
-        return;
-    not_null_ptr<ItemInstance> self;
-    static_cast<boost::shared_ptr<ItemInstance>&>(self) = shared_from_this();
-    getItem()->hurtEnemy(self, entity, player);
+    getItem()->hurtEnemy(not_null_ptr<ItemInstance>(shared_from_this()), entity, player);
 }
 
 void ItemInstance::mineBlock(Level* level, const BlockState* state, const BlockPos& pos,
                              boost::shared_ptr<Player> player)
 {
-    if (isEmpty() || mItem == 0)
-        return;
-    not_null_ptr<ItemInstance> self;
-    static_cast<boost::shared_ptr<ItemInstance>&>(self) = shared_from_this();
-    getItem()->mineBlock(self, level, state, pos, player);
+    getItem()->mineBlock(not_null_ptr<ItemInstance>(shared_from_this()), level, state, pos, player);
 }
 
 bool ItemInstance::canDestroySpecial(const BlockState* state)
@@ -434,11 +431,7 @@ bool ItemInstance::canDestroySpecial(const BlockState* state)
 bool ItemInstance::interactEnemy(boost::shared_ptr<Player> player, boost::shared_ptr<LivingEntity> entity,
                                  InteractionHand::EInteractionHand hand)
 {
-    if (isEmpty() || mItem == 0)
-        return false;
-    not_null_ptr<ItemInstance> self;
-    static_cast<boost::shared_ptr<ItemInstance>&>(self) = shared_from_this();
-    return getItem()->interactEnemy(self, player, entity, hand);
+    return getItem()->interactEnemy(not_null_ptr<ItemInstance>(shared_from_this()), player, entity, hand);
 }
 
 ItemInstance* ItemInstance::copy_not_shared() const
@@ -600,9 +593,7 @@ void ItemInstance::inventoryTick(Level* level, boost::shared_ptr<Entity> entity,
     }
     if (mItem != 0)
     {
-        not_null_ptr<ItemInstance> self;
-        static_cast<boost::shared_ptr<ItemInstance>&>(self) = shared_from_this();
-        mItem->inventoryTick(self, level, entity, slot, selected);
+        mItem->inventoryTick(not_null_ptr<ItemInstance>(shared_from_this()), level, entity, slot, selected);
     }
 }
 
@@ -635,7 +626,7 @@ void ItemInstance::onCraftedBy(Level* level, boost::shared_ptr<Player> player, i
         bool swordRemains = false;
         for (unsigned int index = 0; index < remainingItems.size(); ++index)
         {
-            not_null_ptr<ItemInstance> remaining = remainingItems[index];
+            not_null_ptr<ItemInstance> remaining = craftSlots->getItem(index);
             if (dynamic_cast<PickaxeItem*>(remaining->getItem()) != NULL)
                 pickaxeRemains = true;
             if (dynamic_cast<HoeItem*>(remaining->getItem()) != NULL)
@@ -716,11 +707,7 @@ int ItemInstance::getUseAnimation() const
 
 void ItemInstance::releaseUsing(Level* level, boost::shared_ptr<LivingEntity> entity, int duration)
 {
-    if (isEmpty() || mItem == 0 || !entity)
-        return;
-    not_null_ptr<ItemInstance> self;
-    static_cast<boost::shared_ptr<ItemInstance>&>(self) = shared_from_this();
-    getItem()->releaseUsing(self, level, entity, duration);
+    getItem()->releaseUsing(not_null_ptr<ItemInstance>(shared_from_this()), level, entity, duration);
 }
 
 void ItemInstance::setTag(CompoundTag* tag)
@@ -733,7 +720,7 @@ void ItemInstance::setTag(CompoundTag* tag)
 void ItemInstance::addTagElement(std::wstring name, Tag* tag)
 {
     if (mTag == 0)
-        mTag = new CompoundTag();
+        setTag(new CompoundTag());
     mTag->put(name, tag);
 }
 
@@ -753,16 +740,16 @@ Tag* ItemInstance::getTagElement(const std::wstring& name)
 
 ListTag* ItemInstance::getEnchantmentTags()
 {
-    if (mTag != 0 && mTag->contains(L"ench"))
-        return mTag->getList(L"ench", Tag::TAG_COMPOUND);
+    if (mTag != 0 && mTag->contains(TAG_ENCH))
+        return mTag->getList(TAG_ENCH, Tag::TAG_COMPOUND);
     return 0;
 }
 
 bool ItemInstance::wasCreatedByRestrictedPlayer()
 {
-    if (mTag == 0 || !mTag->contains(L"createdByRestricted"))
+    if (mTag == 0 || !mTag->contains(TAG_CREATED_BY_RESTRICTED))
         return false;
-    return mTag->getBoolean(L"createdByRestricted");
+    return mTag->getBoolean(TAG_CREATED_BY_RESTRICTED);
 }
 
 std::wstring ItemInstance::getHoverNameUnfiltered()
@@ -797,9 +784,9 @@ std::wstring ItemInstance::getHoverName()
         return getHoverNameUnfiltered();
     }
     std::wstring name = display->getString(TAG_NAME);
-    std::wstring ownerUUID = mTag->getString(L"ownerID");
+    std::wstring ownerUUID = mTag->getString(TAG_OWNER_ID);
     bool restricted = wasCreatedByRestrictedPlayer();
-    mCensorshipInfo->set(name, ownerUUID, restricted, mTag->getByte(L"createdOnHost") != 0);
+    mCensorshipInfo->set(name, ownerUUID, restricted, mTag->getByte(TAG_CREATED_ON_HOST) != 0);
     if (mCensorshipInfo->checkParentalFilter() == 0)
     {
         not_null_ptr<ItemInstance> self;
@@ -828,8 +815,8 @@ void ItemInstance::setCensorshipInfo(const std::wstring& name, bool censored)
 {
     if (mTag == 0)
         mTag = new CompoundTag();
-    mTag->putString(L"ownerID", name);
-    mTag->putBoolean(L"createdByRestricted", censored);
+    mTag->putString(TAG_OWNER_ID, name);
+    mTag->putBoolean(TAG_CREATED_BY_RESTRICTED, censored);
     bool createdOnHost = false;
     if (CGameNetworkManager::sInstance.IsHost())
     {
@@ -837,30 +824,30 @@ void ItemInstance::setCensorshipInfo(const std::wstring& name, bool censored)
         for (int i = 0; minecraft != 0 && i < 4; ++i)
         {
             boost::shared_ptr<MultiplayerLocalPlayer> local = minecraft->mLocalPlayers[i];
-            if (local != 0 && local->getName() == name)
+            if (local != 0 && local->getUUID() == name)
             {
                 createdOnHost = true;
                 break;
             }
         }
     }
-    mTag->putByte(L"createdOnHost", createdOnHost ? 1 : 0);
+    mTag->putByte(TAG_CREATED_ON_HOST, createdOnHost ? 1 : 0);
 }
 
 std::wstring ItemInstance::getOwnerUUID()
 {
-    if (mTag != 0 && mTag->contains(L"ownerID"))
+    if (mTag != 0 && mTag->contains(TAG_OWNER_ID))
     {
-        return mTag->getString(L"ownerID");
+        return mTag->getString(TAG_OWNER_ID);
     }
     return std::wstring();
 }
 
 bool ItemInstance::wasCreatedOnHost()
 {
-    if (mTag == 0 || !mTag->contains(L"createdOnHost"))
+    if (mTag == 0 || !mTag->contains(TAG_CREATED_ON_HOST))
         return true;
-    return mTag->getByte(L"createdOnHost") == 1;
+    return mTag->getByte(TAG_CREATED_ON_HOST) == 1;
 }
 
 void ItemInstance::resetHoverName()
@@ -957,8 +944,8 @@ std::vector<HtmlString>* ItemInstance::getTooltipLines(boost::shared_ptr<Player>
         {
             for (int index = 0; index < enchantments->size(); ++index)
             {
-                const int enchantmentId = enchantments->getCompound(index)->getShort(L"id");
-                const int level = enchantments->getCompound(index)->getShort(L"lvl");
+                const int enchantmentId = enchantments->getCompound(index)->getShort(TAG_ENCH_ID);
+                const int level = enchantments->getCompound(index)->getShort(TAG_ENCH_LEVEL);
                 if (Enchantment::byId(enchantmentId) != NULL)
                     lines->push_back(Enchantment::byId(enchantmentId)->getFullname(level));
             }
@@ -985,7 +972,7 @@ std::vector<HtmlString>* ItemInstance::getTooltipLines(boost::shared_ptr<Player>
         }
     }
 
-    if (hasTag() && getTag()->getBoolean(L"Unbreakable") && (hideFlags & 0x04) == 0)
+    if (hasTag() && getTag()->getBoolean(TAG_UNBREAKABLE) && (hideFlags & 0x04) == 0)
         lines->push_back(HtmlString(L10N::GetString(IDS_ITEM_UNBREAKABLE), eMinecraftColour_HTMLColor_9, false, false, 0));
 
     if (hasTag() && mTag->contains(L"CanDestroy", Tag::TAG_LIST) && (hideFlags & 0x08) == 0)
@@ -1049,14 +1036,9 @@ std::vector<HtmlString>* ItemInstance::getTooltipLines(boost::shared_ptr<Player>
 std::vector<HtmlString>* ItemInstance::getHoverTextOnly(boost::shared_ptr<Player> player, bool advanced)
 {
     std::vector<HtmlString>* lines = new std::vector<HtmlString>();
-    if (mItem != 0)
-    {
-        not_null_ptr<ItemInstance> self;
-        static_cast<boost::shared_ptr<ItemInstance>&>(self) = shared_from_this();
-        mItem->appendHoverText(self, player, lines, advanced);
-    }
+    getItem()->appendHoverText(not_null_ptr<ItemInstance>(shared_from_this()), player, lines, advanced);
 
-    ListTag* enchantments = getEnchantmentTags();
+    ListTag* enchantments = hasTag() ? getEnchantmentTags() : 0;
     if (enchantments != 0)
     {
         for (int i = 0; i < enchantments->size(); ++i)
@@ -1066,10 +1048,10 @@ std::vector<HtmlString>* ItemInstance::getHoverTextOnly(boost::shared_ptr<Player
             {
                 continue;
             }
-            Enchantment* enchantment = Enchantment::byId(entry->getShort(L"id"));
+            Enchantment* enchantment = Enchantment::byId(entry->getShort(TAG_ENCH_ID));
             if (enchantment != 0)
             {
-                lines->push_back(enchantment->getFullname(entry->getShort(L"lvl")));
+                lines->push_back(enchantment->getFullname(entry->getShort(TAG_ENCH_LEVEL)));
             }
         }
     }
@@ -1088,9 +1070,9 @@ const Rarity* ItemInstance::getRarity()
 
 bool ItemInstance::isEnchanted()
 {
-    if (mTag != 0 && mTag->contains(L"ench", Tag::TAG_LIST))
+    if (mTag != 0 && mTag->contains(TAG_ENCH, Tag::TAG_LIST))
     {
-        ListTag* list = mTag->getList(L"ench", Tag::TAG_COMPOUND);
+        ListTag* list = mTag->getList(TAG_ENCH, Tag::TAG_COMPOUND);
         return !list->isEmpty();
     }
     return false;
@@ -1109,10 +1091,10 @@ void ItemInstance::enchant(Enchantment* enchantment, int level)
     if (!mTag->contains(L"ench"))
         mTag->put(L"ench", new ListTag(Tag::TAG_END));
 
-    ListTag* enchantments = mTag->getList(L"ench", Tag::TAG_COMPOUND);
+    ListTag* enchantments = mTag->getList(TAG_ENCH, Tag::TAG_COMPOUND);
     CompoundTag* entry = new CompoundTag();
-    entry->putShort(L"id", static_cast<short>(Enchantment::getId(enchantment)));
-    entry->putShort(L"lvl", static_cast<short>(level));
+    entry->putShort(TAG_ENCH_ID, static_cast<short>(Enchantment::getId(enchantment)));
+    entry->putShort(TAG_ENCH_LEVEL, static_cast<short>(level));
     enchantments->add(entry);
 }
 
@@ -1142,8 +1124,8 @@ boost::shared_ptr<ItemFrame> ItemInstance::getFrame()
 
 int ItemInstance::getBaseRepairCost()
 {
-    if (hasTag() && mTag->contains(L"RepairCost", Tag::TAG_INT))
-        return mTag->getInt(L"RepairCost");
+    if (hasTag() && mTag->contains(TAG_REPAIR_COST, Tag::TAG_INT))
+        return mTag->getInt(TAG_REPAIR_COST);
     return 0;
 }
 
@@ -1151,7 +1133,7 @@ void ItemInstance::setRepairCost(int cost)
 {
     if (!hasTag())
         mTag = new CompoundTag();
-    mTag->putInt(L"RepairCost", cost);
+    mTag->putInt(TAG_REPAIR_COST, cost);
 }
 
 bool ItemInstance::hasAdventureModeBreakTagForBlock(Block* block)
@@ -1181,11 +1163,6 @@ bool ItemInstance::hasAdventureModePlaceTagForBlock(Block* block)
         mCanPlace = mayBePlacedInAdventureMode();
     }
     return mCanPlace != 0;
-}
-
-int ItemInstance::getPopTime() const
-{
-    return mPopTime;
 }
 
 void ItemInstance::setPopTime(int time)

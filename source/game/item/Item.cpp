@@ -421,7 +421,8 @@ void Item::registerItem(int id, const ResourceLocation& location, Item* item)
 
 void Item::registerItem(int id, const std::wstring& name, Item* item)
 {
-    registerItem(id, ResourceLocation(name), item);
+    ResourceLocation location(name);
+    registerItem(id, location, item);
 }
 
 void Item::registerBlock(Block* block, Item* item)
@@ -561,13 +562,7 @@ int Item::CobblestoneWallBlockNameResolver(not_null_ptr<ItemInstance> itemInstan
 int Item::QuartzBlockNameResolver(not_null_ptr<ItemInstance> itemInstance)
 {
     unsigned int auxValue = itemInstance->getAuxValue();
-
-    if (auxValue > 2)
-    {
-        auxValue = 0;
-    }
-
-    return QUARTZ_BLOCK_NAME_IDS[auxValue];
+    return QUARTZ_BLOCK_NAME_IDS[auxValue < 3 ? auxValue : 0];
 }
 
 int Item::ClayBlockNameResolver(not_null_ptr<ItemInstance> itemInstance)
@@ -881,8 +876,7 @@ not_null_ptr<ItemInstance> Item::finishUsingItem(not_null_ptr<ItemInstance> item
                                                  Level* level,
                                                  boost::shared_ptr<LivingEntity> entity)
 {
-    not_null_ptr<ItemInstance> result = itemInstance;
-    return result;
+    return itemInstance;
 }
 
 int Item::getMaxStackSize()

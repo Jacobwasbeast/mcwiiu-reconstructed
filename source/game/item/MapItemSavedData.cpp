@@ -22,10 +22,18 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/generation/Player.hpp"
 
+static const wchar_t* TAG_DISPLAY = L"display";
+
 MapItemSavedData::MapItemSavedData(const std::wstring& id)
-    : SavedData(id), mXCenter(0), mZCenter(0), mDimension(0), mTrackingPosition(true),
-      mScale(0), mColors(0x4000, true), mLastUpdateTime(0)
+    : SavedData(id)
 {
+    mZCenter = 0;
+    mTrackingPosition = true;
+    mScale = 0;
+    mDimension = 0;
+    mXCenter = 0;
+    mColors = arrayWithLength<unsigned char>(16384, true);
+    mLastUpdateTime = 0;
 }
 
 MapItemSavedData::~MapItemSavedData()
@@ -35,26 +43,37 @@ MapItemSavedData::~MapItemSavedData()
 
 void MapItemSavedData::setOrigin(double x, double z, int scale)
 {
-    int size = (1 << (scale & 0x3f)) * 0x80;
+    int size = (1 << scale) << 7;
     mXCenter = (int)Math::round(x / (double)size) * size;
     mZCenter = (int)Math::round(z / (double)size) * size;
 }
 
 boost::shared_ptr<MapItemSavedData::HoldingPlayer> MapItemSavedData::getHoldingPlayer(boost::shared_ptr<Player> player)
 {
+    boost::shared_ptr<HoldingPlayer> holding;
     boost::unordered_map<boost::shared_ptr<Player>, boost::shared_ptr<HoldingPlayer>, _PlayerKeyHash, _PlayerKeyEq>::iterator it = mCarriedBy.find(player);
-    if (it != mCarriedBy.end()) return it->second;
-    boost::shared_ptr<HoldingPlayer> holding(new HoldingPlayer(player, this));
-    mCarriedBy[player] = holding;
-    mHoldingPlayers.push_back(holding);
+    if (it == mCarriedBy.end())
+    {
+        holding = boost::shared_ptr<HoldingPlayer>(new HoldingPlayer(player, this));
+        mCarriedBy[player] = holding;
+        mHoldingPlayers.push_back(holding);
+    }
+    else
+    {
+        holding = it->second;
+    }
     return holding;
 }
 
 void MapItemSavedData::setDirty(int x, int y)
 {
     SavedData::setDirty();
-    std::vector<boost::shared_ptr<HoldingPlayer> >::iterator it;
-    for (it = mHoldingPlayers.begin(); it != mHoldingPlayers.end(); ++it) (*it)->markDirty(x, y);
+    std::vector<boost::shared_ptr<HoldingPlayer> >::iterator end = mHoldingPlayers.end();
+    for (std::vector<boost::shared_ptr<HoldingPlayer> >::iterator it = mHoldingPlayers.begin(); it != end; ++it)
+    {
+        boost::shared_ptr<HoldingPlayer> holding = *it;
+        holding->markDirty(x, y);
+    }
 }
 
 int MapItemSavedData::fjEnumerateAxisPoint(int point)
@@ -79,7 +98,8 @@ void MapItemSavedData::addDecoration(const MapDecoration::Type* type, Level* lev
     char imageX = (char)(int)((double)(mapX * 2.0f) + 0.5);
     char imageZ = (char)(int)((double)(mapZ * 2.0f) + 0.5);
     char rot = 0;
-    boost::unordered_map<int, MapDecoration>* decorations = type->isPlayer() ? &mDecorations : &mDecorationsById;
+    bool isPlayerType = type->isPlayer();
+    boost::unordered_map<int, MapDecoration>* decorations = isPlayerType ? &mDecorations : &mDecorationsById;
 
     if (mapX >= -63.0f && mapZ >= -63.0f && mapX <= 63.0f && mapZ <= 63.0f)
     {
@@ -93,7 +113,7 @@ void MapItemSavedData::addDecoration(const MapDecoration::Type* type, Level* lev
     }
     else
     {
-        if (!type->isPlayer())
+        if (!isPlayerType)
         {
             if (type != &MapDecoration::Type::TYPES[4])
             {
@@ -285,7 +305,8 @@ boost::shared_ptr<ClientboundMapItemDataPacket> MapItemSavedData::getUpdatePacke
 {
     boost::unordered_map<boost::shared_ptr<Player>, boost::shared_ptr<HoldingPlayer>, _PlayerKeyHash, _PlayerKeyEq>::iterator it = mCarriedBy.find(player);
     if (it == mCarriedBy.end()) return boost::shared_ptr<ClientboundMapItemDataPacket>();
-    return it->second->nextUpdatePacket(item);
+    boost::shared_ptr<HoldingPlayer> holding = it->second;
+    return holding->nextUpdatePacket(item);
 }
 
 void MapItemSavedData::load(CompoundTag* tag)
@@ -295,7 +316,14 @@ void MapItemSavedData::load(CompoundTag* tag)
     mZCenter = tag->getInt(L"zCenter");
     mScale = tag->getByte(L"scale");
     mScale = (unsigned char)Mth::clamp(mScale, 0, 4);
-    mTrackingPosition = !tag->contains(L"trackingPosition", Tag::TAG_BYTE) || tag->getBoolean(L"trackingPosition");
+    if (tag->contains(L"trackingPosition", Tag::TAG_BYTE))
+    {
+        mTrackingPosition = tag->getBoolean(L"trackingPosition");
+    }
+    else
+    {
+        mTrackingPosition = true;
+    }
     mUnlimitedTracking = tag->getBoolean(L"unlimitedTracking");
     int width = tag->getShort(L"width");
     int height = tag->getShort(L"height");
@@ -323,7 +351,12 @@ CompoundTag* MapItemSavedData::save(CompoundTag* tag)
     tag->putByte(L"scale", mScale);
     tag->putShort(L"width", 128);
     tag->putShort(L"height", 128);
-    tag->putByteArray(L"colors", mColors);
+    arrayWithLength<unsigned char> colors(mColors.length, true);
+    for (unsigned int i = 0; i < mColors.length; i++)
+    {
+        colors.data[i] = mColors.data[i];
+    }
+    tag->putByteArray(L"colors", colors);
     tag->putBoolean(L"trackingPosition", mTrackingPosition);
     tag->putBoolean(L"unlimitedTracking", mUnlimitedTracking);
     return tag;
@@ -343,7 +376,7 @@ void MapItemSavedData::addTargetDecoration(const not_null_ptr<ItemInstance>& ite
     decorations->add(decoration);
     if (type->hasMapColor())
     {
-        CompoundTag* display = static_cast<CompoundTag*>(item->getOrCreateTagElement(L"display"));
+        CompoundTag* display = static_cast<CompoundTag*>(item->getOrCreateTagElement(TAG_DISPLAY));
         display->putInt(L"MapColor", type->getMapColor());
     }
 }
@@ -357,9 +390,10 @@ bool MapItemSavedData::fjIsCompletelyExplored() const
         for (int y = 0; y < 128; ++y)
         {
             int scale = 1 << (mScale & 0x3f);
+            unsigned char* colors = mColors.data;
             bool generated = level->mDimension->containsChunk((mXCenter + (x - 64) * scale) >> 4,
                                                              (mZCenter + (y - 64) * scale) >> 4);
-            if (mColors.data[y * 128 + x] == 0 && generated)
+            if (colors[y * 128 + x] == 0 && generated)
                 ++unexplored;
         }
     }
@@ -390,10 +424,10 @@ void MapItemSavedData::HoldingPlayer::markDirty(int x, int y)
 {
     if (mDirty)
     {
-        mMinX = std::min(mMinX, x);
-        mMinY = std::min(mMinY, y);
-        mMaxX = std::max(mMaxX, x);
-        mMaxY = std::max(mMaxY, y);
+        mMinX = x < mMinX ? x : mMinX;
+        mMinY = y < mMinY ? y : mMinY;
+        mMaxX = mMaxX < x ? x : mMaxX;
+        mMaxY = mMaxY < y ? y : mMaxY;
     }
     else
     {
@@ -417,9 +451,10 @@ boost::shared_ptr<ClientboundMapItemDataPacket> MapItemSavedData::HoldingPlayer:
     }
     if (mTick++ % 5 == 0)
     {
-        return boost::shared_ptr<ClientboundMapItemDataPacket>(new ClientboundMapItemDataPacket(
+        boost::shared_ptr<ClientboundMapItemDataPacket> packet(new ClientboundMapItemDataPacket(
             item->getAuxValue(), mMapData->mScale, mMapData->mTrackingPosition, decorations, mMapData->mColors, 0, 0,
             0, 0));
+        return packet;
     }
     return boost::shared_ptr<ClientboundMapItemDataPacket>();
 }

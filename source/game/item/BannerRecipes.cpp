@@ -16,6 +16,11 @@
 #include "game/world/block/BannerBlockEntity.hpp"
 #include "game/world/block/Blocks.hpp"
 
+static const std::wstring TAG_PATTERNS = L"Patterns";
+static const std::wstring TAG_PATTERN = L"Pattern";
+static const std::wstring TAG_COLOR = L"Color";
+static const std::wstring TAG_BLOCK_ENTITY = L"BlockEntityTag";
+
 BannerRecipes::BannerDuplicateRecipe* BannerRecipes::mDuplicateRecipe = NULL;
 BannerRecipes::BannerAddPatternRecipe* BannerRecipes::mAddPatternRecipe = NULL;
 
@@ -26,20 +31,20 @@ BannerRecipes::BannerRecipes()
 ItemInstance* BannerRecipes::createOutputItem(int color, const std::wstring& pattern)
 {
     ItemInstance* result = new ItemInstance(Items::banner, 1, DyeColor::WHITE->getItemData());
-    CompoundTag* tag = static_cast<CompoundTag*>(result->getOrCreateTagElement(L"BlockEntityTag"));
+    CompoundTag* tag = static_cast<CompoundTag*>(result->getOrCreateTagElement(TAG_BLOCK_ENTITY));
     ListTag* patterns;
-    if (!tag->contains(L"Patterns", Tag::TAG_LIST))
+    if (tag->contains(TAG_PATTERNS, Tag::TAG_LIST))
     {
-        patterns = new ListTag(10);
-        tag->put(L"Patterns", patterns);
+        patterns = tag->getList(TAG_PATTERNS, Tag::TAG_COMPOUND);
     }
     else
     {
-        patterns = tag->getList(L"Patterns", Tag::TAG_COMPOUND);
+        patterns = new ListTag();
+        tag->put(TAG_PATTERNS, patterns);
     }
     CompoundTag* entry = new CompoundTag();
-    entry->putString(L"Pattern", pattern);
-    entry->putInt(L"Color", color);
+    entry->putString(TAG_PATTERN, pattern);
+    entry->putInt(TAG_COLOR, color);
     patterns->add(entry);
     return result;
 }
@@ -90,7 +95,8 @@ void BannerRecipes::addRecipes(Recipes* recipes)
             for (int dye = 0; dye < 16; ++dye)
             {
                 arrayWithLength<std::wstring> rows = pattern->getPatterns();
-                recipes->addShapedRecipe(createOutputItem(dye, hashname), Recipes::eRecipeCategory_Banners, L"sssczczbg",
+                ItemInstance* output = createOutputItem(dye, hashname);
+                recipes->addShapedRecipe(output, Recipes::eRecipeCategory_Banners, L"sssczczbg",
                                          rows.data[0].c_str(), rows.data[1].c_str(), rows.data[2].c_str(), L'#',
                                          new ItemInstance(Items::dye, 1, dye), L'*',
                                          BannerItem::makeBanner(DyeColor::WHITE, NULL), pattern->getAtlasIndex(),
@@ -158,8 +164,7 @@ const BannerPattern* BannerRecipes::BannerAddPatternRecipe::matchPatterns(boost:
         }
         else
         {
-            arrayWithLength<std::wstring> rows = pattern->getPatterns();
-            if (craftingContainer->getContainerSize() != rows.length * pattern->getPatterns().data[0].size())
+            if (craftingContainer->getContainerSize() != pattern->getPatterns().length * pattern->getPatterns().data[0].size())
                 continue;
 
             int color = -1;
@@ -178,8 +183,7 @@ const BannerPattern* BannerRecipes::BannerAddPatternRecipe::matchPatterns(boost:
                         rejected = true;
                         break;
                     }
-                    wchar_t cell = pattern->getPatterns().data[row].at(column);
-                    if (cell == L' ' || cell == L'*')
+                    if (pattern->getPatterns().data[row].at(column) == L' ' || pattern->getPatterns().data[row].at(column) == L'*')
                     {
                         rejected = true;
                         break;
@@ -188,8 +192,7 @@ const BannerPattern* BannerRecipes::BannerAddPatternRecipe::matchPatterns(boost:
                 }
                 else
                 {
-                    wchar_t cell = pattern->getPatterns().data[row].at(column);
-                    if (cell != L' ' && cell != L'*')
+                    if (pattern->getPatterns().data[row].at(column) != L' ' && pattern->getPatterns().data[row].at(column) != L'*')
                         matches = false;
                 }
             }
@@ -210,50 +213,64 @@ bool BannerRecipes::BannerAddPatternRecipe::matches(boost::shared_ptr<CraftingCo
     for (i = 0; i < craftingContainer->getContainerSize(); ++i)
     {
         not_null_ptr<ItemInstance> item = craftingContainer->getItem(i);
-        if (!item->isEmpty() && item->getItem() == Items::banner)
-        {
-            if (foundBanner || BannerBlockEntity::getPatternCount(item) > 5)
-                return false;
+        if (item->isEmpty() || item->getItem() != Items::banner)
+            continue;
+
+        if (foundBanner)
+            return false;
+        if (BannerBlockEntity::getPatternCount(item) < 6)
             foundBanner = true;
-        }
+        else
+            return false;
     }
-    return foundBanner && matchPatterns(craftingContainer) != NULL;
+    if (!foundBanner)
+        return false;
+    return matchPatterns(craftingContainer) != NULL;
 }
 
 not_null_ptr<ItemInstance> BannerRecipes::BannerAddPatternRecipe::assemble(boost::shared_ptr<CraftingContainer> craftingContainer)
 {
-    const BannerPattern* pattern = matchPatterns(craftingContainer);
-    if (pattern == NULL)
-        return ItemInstance::EMPTY;
-    unsigned int i;
-    int color = 0;
     not_null_ptr<ItemInstance> result = ItemInstance::EMPTY;
-    for (i = 0; i < craftingContainer->getContainerSize(); ++i)
+    const BannerPattern* pattern = matchPatterns(craftingContainer);
+    if (pattern != NULL)
     {
-        not_null_ptr<ItemInstance> item = craftingContainer->getItem(i);
-        if (!item->isEmpty() && item->getItem() == Items::banner)
+        unsigned int i;
+        for (i = 0; i < craftingContainer->getContainerSize(); ++i)
         {
-            result = item->copy();
-            result->setCount(1);
+            not_null_ptr<ItemInstance> item = craftingContainer->getItem(i);
+            if (!item->isEmpty() && item->getItem() == Items::banner)
+            {
+                result = item->copy();
+                result->setCount(1);
+                break;
+            }
         }
-        else if (!item->isEmpty() && item->getItem() == Items::dye)
-            color = item->getAuxValue();
+        int color = 0;
+        for (i = 0; i < craftingContainer->getContainerSize(); ++i)
+        {
+            not_null_ptr<ItemInstance> item = craftingContainer->getItem(i);
+            if (!item->isEmpty() && item->getItem() == Items::dye)
+            {
+                color = item->getAuxValue();
+                break;
+            }
+        }
+        CompoundTag* tag = static_cast<CompoundTag*>(result->getOrCreateTagElement(TAG_BLOCK_ENTITY));
+        ListTag* patterns;
+        if (tag->contains(TAG_PATTERNS, Tag::TAG_LIST))
+        {
+            patterns = tag->getList(TAG_PATTERNS, Tag::TAG_COMPOUND);
+        }
+        else
+        {
+            patterns = new ListTag();
+            tag->put(TAG_PATTERNS, patterns);
+        }
+        CompoundTag* entry = new CompoundTag();
+        entry->putString(TAG_PATTERN, pattern->getHashname());
+        entry->putInt(TAG_COLOR, color);
+        patterns->add(entry);
     }
-    CompoundTag* tag = static_cast<CompoundTag*>(result->getOrCreateTagElement(L"BlockEntityTag"));
-    ListTag* patterns;
-    if (!tag->contains(L"Patterns", Tag::TAG_LIST))
-    {
-        patterns = new ListTag(10);
-        tag->put(L"Patterns", patterns);
-    }
-    else
-    {
-        patterns = tag->getList(L"Patterns", Tag::TAG_COMPOUND);
-    }
-    CompoundTag* entry = new CompoundTag();
-    entry->putString(L"Pattern", pattern->getHashname());
-    entry->putInt(L"Color", color);
-    patterns->add(entry);
     return result;
 }
 
@@ -275,8 +292,7 @@ ItemInstance* BannerRecipes::BannerAddPatternRecipe::getIngredientItem(int colum
 NonNullList<not_null_ptr<ItemInstance> > BannerRecipes::BannerAddPatternRecipe::getRemainingItems(boost::shared_ptr<CraftingContainer> craftingContainer)
 {
     NonNullList<not_null_ptr<ItemInstance> > result = NonNullList<not_null_ptr<ItemInstance> >::withSize(craftingContainer->getContainerSize(), ItemInstance::EMPTY);
-    unsigned int i;
-    for (i = 0; i < craftingContainer->getContainerSize(); ++i)
+    for (unsigned int i = 0; i < result.size(); ++i)
     {
         not_null_ptr<ItemInstance> item = craftingContainer->getItem(i);
         if (!item->isEmpty() && item->getItem()->hasCraftingRemainingItem())
@@ -358,7 +374,10 @@ not_null_ptr<ItemInstance> BannerRecipes::BannerDuplicateRecipe::assemble(boost:
     for (unsigned int i = 0; i < craftingContainer->getContainerSize(); ++i)
     {
         not_null_ptr<ItemInstance> item = craftingContainer->getItem(i);
-        if (!item->isEmpty() && BannerBlockEntity::getPatternCount(item) > 0)
+        if (item->isEmpty())
+            continue;
+
+        if (BannerBlockEntity::getPatternCount(item) > 0)
         {
             not_null_ptr<ItemInstance> result = item->copy();
             result->setCount(1);
@@ -387,21 +406,21 @@ NonNullList<not_null_ptr<ItemInstance> > BannerRecipes::BannerDuplicateRecipe::g
 {
     NonNullList<not_null_ptr<ItemInstance> > result =
         NonNullList<not_null_ptr<ItemInstance> >::withSize(craftingContainer->getContainerSize(), ItemInstance::EMPTY);
-    for (unsigned int i = 0; i < result.size(); ++i)
+    for (unsigned int i = 0; i < craftingContainer->getContainerSize(); ++i)
     {
         not_null_ptr<ItemInstance> item = craftingContainer->getItem(i);
-        if (item->isEmpty())
-            continue;
-
-        if (item->getItem()->hasCraftingRemainingItem())
+        if (!item->isEmpty())
         {
-            result[i] = not_null_ptr<ItemInstance>(new ItemInstance(item->getItem()->getCraftingRemainingItem()));
-        }
-        else if (item->hasTag() && BannerBlockEntity::getPatternCount(item) > 0)
-        {
-            not_null_ptr<ItemInstance> copy = item->copy();
-            copy->setCount(1);
-            result[i] = copy;
+            if (item->getItem()->hasCraftingRemainingItem())
+            {
+                result[i] = not_null_ptr<ItemInstance>(new ItemInstance(item->getItem()->getCraftingRemainingItem()));
+            }
+            else if (item->hasTag() && BannerBlockEntity::getPatternCount(item) > 0)
+            {
+                not_null_ptr<ItemInstance> copy = item->copy();
+                copy->setCount(1);
+                result[i] = copy;
+            }
         }
     }
     return result;

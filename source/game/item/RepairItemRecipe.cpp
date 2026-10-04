@@ -27,9 +27,10 @@ bool RepairItemRecipe::matches(boost::shared_ptr<CraftingContainer> craftingCont
             items.push_back(item);
             if (items.size() > 1)
             {
-                if (items[0]->getItem() != item->getItem() ||
-                    items[0]->getCount() != 1 || item->getCount() != 1 ||
-                    !items[0]->getItem()->canBeDepleted())
+                not_null_ptr<ItemInstance> first = items[0];
+                if (item->getItem() != first->getItem() ||
+                    first->getCount() != 1 || item->getCount() != 1 ||
+                    !first->getItem()->canBeDepleted())
                 {
                     return false;
                 }
@@ -51,9 +52,10 @@ not_null_ptr<ItemInstance> RepairItemRecipe::assemble(boost::shared_ptr<Crafting
             items.push_back(item);
             if (items.size() > 1)
             {
-                if (items[0]->getItem() != item->getItem() ||
-                    items[0]->getCount() != 1 || item->getCount() != 1 ||
-                    !items[0]->getItem()->canBeDepleted())
+                not_null_ptr<ItemInstance> first = items[0];
+                if (item->getItem() != first->getItem() ||
+                    first->getCount() != 1 || item->getCount() != 1 ||
+                    !first->getItem()->canBeDepleted())
                 {
                     return ItemInstance::EMPTY;
                 }
@@ -61,20 +63,25 @@ not_null_ptr<ItemInstance> RepairItemRecipe::assemble(boost::shared_ptr<Crafting
         }
     }
 
-    if (items.size() == 2 && items[0]->getItem() == items[1]->getItem() &&
-        items[0]->getCount() == 1 && items[1]->getCount() == 1 &&
-        items[0]->getItem()->canBeDepleted())
+    if (items.size() == 2)
     {
-        int maxDamage = items[0]->getItem()->getMaxDamage();
-        int damage = maxDamage - items[0]->getDamageValue();
-        damage += maxDamage - items[1]->getDamageValue();
-        damage += maxDamage * 5 / 100;
-        int resultDamage = maxDamage - damage;
-        if (resultDamage < 0)
+        not_null_ptr<ItemInstance> first = items[0];
+        not_null_ptr<ItemInstance> second = items[1];
+        if (first->getItem() == second->getItem() &&
+            first->getCount() == 1 && second->getCount() == 1 &&
+            first->getItem()->canBeDepleted())
         {
-            resultDamage = 0;
+            Item* item = first->getItem();
+            int damage = item->getMaxDamage() - first->getDamageValue();
+            damage += item->getMaxDamage() - second->getDamageValue();
+            damage += item->getMaxDamage() * 5 / 100;
+            int resultDamage = item->getMaxDamage() - damage;
+            if (resultDamage < 0)
+            {
+                resultDamage = 0;
+            }
+            return not_null_ptr<ItemInstance>(new ItemInstance(first->getItem(), 1, resultDamage));
         }
-        return not_null_ptr<ItemInstance>(new ItemInstance(items[0]->getItem(), 1, resultDamage));
     }
     return ItemInstance::EMPTY;
 }
@@ -99,7 +106,7 @@ NonNullList<not_null_ptr<ItemInstance> > RepairItemRecipe::getRemainingItems(boo
     NonNullList<not_null_ptr<ItemInstance> > result =
         NonNullList<not_null_ptr<ItemInstance> >::withSize(craftingContainer->getContainerSize(), ItemInstance::EMPTY);
     unsigned int i;
-    for (i = 0; i < craftingContainer->getContainerSize(); ++i)
+    for (i = 0; i < result.size(); ++i)
     {
         not_null_ptr<ItemInstance> item = craftingContainer->getItem(i);
         if (item->getItem()->hasCraftingRemainingItem())
@@ -126,12 +133,5 @@ void RepairItemRecipe::recipeRequires(INGREDIENTS_REQUIRED* ingredientsRequired)
 
 boost::shared_ptr<CraftingContainer> RepairItemRecipe::generateExpectedCraftSlots()
 {
-    boost::shared_ptr<CraftingContainer> result;
-    unsigned int* storage = reinterpret_cast<unsigned int*>(&result);
-    if (storage != NULL || (storage = static_cast<unsigned int*>(operator new(8)), storage != NULL))
-    {
-        storage[0] = 0;
-        storage[1] = 0;
-    }
-    return result;
+    return boost::shared_ptr<CraftingContainer>();
 }

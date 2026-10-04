@@ -68,8 +68,9 @@ void ArmorRecipes::_init()
 
 void ArmorRecipes::addRecipes(Recipes* recipes)
 {
+    unsigned int count = mLists[eArmorList_Ingredients].size();
     unsigned int i;
-    for (i = 0; i < mLists[eArmorList_Ingredients].size(); ++i)
+    for (i = 0; i < count; ++i)
     {
         Object* ingredient = mLists[eArmorList_Ingredients].at(i);
 

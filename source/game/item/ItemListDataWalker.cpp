@@ -6,6 +6,7 @@
 ItemListDataWalker::ItemListDataWalker(unsigned long long type, const std::wstring& itemName)
     : KeyedDataWalker(type)
 {
+    mItemNames = std::vector<std::wstring>();
     mItemNames.push_back(itemName);
 }
 

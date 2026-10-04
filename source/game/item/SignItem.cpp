@@ -80,20 +80,15 @@ InteractionResult::EInteractionResult SignItem::useOn(boost::shared_ptr<Player> 
         if (direction == Direction::UP)
         {
             int rotation = Mth::absFloor((double)((player->mYRot + 180.0f) * 16.0f / 360.0f) + 0.5) & 15;
-            TypedBoxed<int> rotationValue(rotation);
-
             level->setBlock(signPos,
-                            Blocks::standing_sign->defaultBlockState()->setBoxedValue(StandingSignBlock::ROTATION,
-                                                                                      &rotationValue),
+                            Blocks::standing_sign->defaultBlockState()->setValue(StandingSignBlock::ROTATION, rotation),
                             Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE,
                             false);
         }
         else
         {
-            TypedBoxed<const Direction*> facingValue(direction);
-
             level->setBlock(signPos,
-                            Blocks::wall_sign->defaultBlockState()->setBoxedValue(WallSignBlock::FACING, &facingValue),
+                            Blocks::wall_sign->defaultBlockState()->setValue(WallSignBlock::FACING, direction),
                             Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE,
                             false);
         }
@@ -112,7 +107,7 @@ InteractionResult::EInteractionResult SignItem::useOn(boost::shared_ptr<Player> 
 
         Block* signBlock = direction == Direction::UP ? Blocks::standing_sign : Blocks::wall_sign;
 
-        player->awardStat(Stats::blockPlacedStats.data[Block::getId(signBlock)],
+        player->awardStat(gStats->get_blocksPlaced(Block::getId(signBlock)),
                           GenericStats::param_blocksPlaced(signBlock->getBlockState(itemInstance->getAuxValue()), 1));
     }
 

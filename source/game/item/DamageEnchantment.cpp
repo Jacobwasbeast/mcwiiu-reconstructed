@@ -17,7 +17,7 @@ static const int MIN_COST[3] = { 1, 5, 5 };
 static const int LEVEL_COST[3] = { 11, 8, 8 };
 static const int LEVEL_COST_SPAN[3] = { 20, 20, 20 };
 static const int DESCRIPTION_IDS[3] = {
-    (int)IDS_ENCHANTMENT_DAMAGE_ALL, (int)0xBD9225A1, IDS_ENCHANTMENT_DAMAGE_ARTHROPODS
+    (int)IDS_ENCHANTMENT_DAMAGE_ALL, IDS_ENCHANTMENT_DAMAGE_UNDEAD, IDS_ENCHANTMENT_DAMAGE_ARTHROPODS
 };
 
 DamageEnchantment::DamageEnchantment(const Rarity* rarity, int type,
@@ -52,7 +52,12 @@ float DamageEnchantment::getDamageBonus(
 
     if (mType == 0)
     {
-        return 1.0f + (level - 1 > 0 ? level - 1 : 0) * 0.5f;
+        float bonus = (float)level - 1.0f;
+        if (bonus < 0.0f)
+        {
+            bonus = 0.0f;
+        }
+        return bonus * 0.5f + 1.0f;
     }
 
     if ((mType == 1 && mobType == MOB_TYPE_UNDEAD) ||

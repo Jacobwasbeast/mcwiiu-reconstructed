@@ -4,8 +4,8 @@
 #include "game/item/ItemInstance.hpp"
 
 ResultContainer::ResultContainer()
+    : items(NonNullList<not_null_ptr<ItemInstance> >::withSize(1, ItemInstance::EMPTY))
 {
-    items = NonNullList<not_null_ptr<ItemInstance> >::withSize(1, ItemInstance::EMPTY);
 }
 
 ResultContainer::~ResultContainer()
@@ -88,18 +88,18 @@ void ResultContainer::clearContent()
 {
     for (unsigned int slot = 0; slot < items.size(); ++slot)
     {
-        items[slot] = ItemInstance::EMPTY;
+        items[slot] = items.defaultValue;
     }
 }
 
 std::wstring ResultContainer::getName()
 {
-    return std::wstring();
+    return std::wstring(L"");
 }
 
 std::wstring ResultContainer::getCustomName()
 {
-    return std::wstring();
+    return std::wstring(L"");
 }
 
 bool ResultContainer::hasCustomName()

@@ -12,8 +12,13 @@
 #include "game/core/HitResult.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/ui/ItemTooltipDataHolder.hpp"
+#include "game/server/ServerLevel.hpp"
 #include "game/util/Random.hpp"
+#include "game/world/Dimension.hpp"
+#include "game/world/DimensionType.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/LevelData.hpp"
+#include "game/world/chunk/ChunkSource.hpp"
 #include "game/world/block/BlockPattern.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/Blocks.hpp"
@@ -22,6 +27,8 @@
 #include "game/world/block/TypedBoxed.hpp"
 #include "game/world/generation/MultiPlayerLevel.hpp"
 #include "game/world/generation/Player.hpp"
+
+static const std::wstring kStrongholdName(L"StrongHold");
 
 EnderEyeItem::EnderEyeItem() : Item()
 {
@@ -47,8 +54,7 @@ InteractionResult::EInteractionResult EnderEyeItem::useOn(boost::shared_ptr<Play
 
     if (!simulate)
     {
-        TypedBoxed<bool> eye(true);
-        level->setBlock(pos, state->setBoxedValue(EndPortalFrameBlock::EYE, &eye), Block::UPDATE_CLIENTS, false);
+        level->setBlock(pos, state->setValue(EndPortalFrameBlock::EYE, true), Block::UPDATE_CLIENTS, false);
         level->updateNeighbourForOutputSignal(pos, Blocks::end_portal_frame);
         itemInstance->shrink(1);
 
@@ -56,9 +62,9 @@ InteractionResult::EInteractionResult EnderEyeItem::useOn(boost::shared_ptr<Play
         for (int i = 0; i < 16; ++i)
         {
             level->addParticle(PARTICLE_SMOKE,
-                               static_cast<double>(pos.x) + (5.0f + random->nextFloat() * 6.0f) / 16.0f,
-                               static_cast<double>(pos.y) + 0.8125,
-                               static_cast<double>(pos.z) + (5.0f + random->nextFloat() * 6.0f) / 16.0f,
+                               (float)pos.x + (random->nextFloat() * 6.0f + 5.0f) * 0.0625f,
+                               (float)pos.y + 0.8125f,
+                               (float)pos.z + (random->nextFloat() * 6.0f + 5.0f) * 0.0625f,
                                0.0, 0.0, 0.0, particleParameters);
         }
         level->playSound(boost::shared_ptr<Player>(), pos, SoundEvents::END_PORTAL_FRAME_FILL,
@@ -84,15 +90,25 @@ InteractionResult::EInteractionResult EnderEyeItem::useOn(boost::shared_ptr<Play
 
 bool EnderEyeItem::TestUse(Level* level, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand)
 {
+    not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
     HitResult* hit = getPlayerPOVHitResult(level, player, false);
-    if (hit == NULL)
+    if (hit != NULL)
     {
-        return true;
+        if (hit->mType == HitResult::BLOCK)
+        {
+            Block* block = level->getBlockState(hit->getBlockPos())->getBlock();
+            delete hit;
+            if (block == Blocks::end_portal_frame)
+            {
+                return false;
+            }
+        }
+        else
+        {
+            delete hit;
+        }
     }
-    bool result = hit->mType != HitResult::BLOCK
-        || level->getBlockState(hit->getBlockPos())->getBlock() != Blocks::end_portal_frame;
-    delete hit;
-    return result;
+    return true;
 }
 
 InteractionResultHolder EnderEyeItem::use(Level* level, boost::shared_ptr<Player> player,
@@ -111,7 +127,7 @@ InteractionResultHolder EnderEyeItem::use(Level* level, boost::shared_ptr<Player
     player->startUsingItem(hand);
     if (!level->mIsClientSide)
     {
-        BlockPos* target = level->findNearestMapFeature(std::wstring(L"StrongHold"), BlockPos(player), false);
+        BlockPos* target = static_cast<ServerLevel*>(level)->getChunkSource()->findNearestMapFeature(level, kStrongholdName, BlockPos(player), false);
         if (target != NULL)
         {
             boost::shared_ptr<EyeOfEnderSignal> signal(
@@ -128,15 +144,16 @@ InteractionResultHolder EnderEyeItem::use(Level* level, boost::shared_ptr<Player
             }
             player->awardStat(gStats->get_itemsUsed(VALIDgetId(this)),
                               GenericStats::param_itemsUsed(player, itemInstance));
-            delete target;
         }
+        delete target;
     }
     return InteractionResultHolder(InteractionResult::eInteractionResult_Success, itemInstance);
 }
 
 unsigned int EnderEyeItem::GetUseTooltip(const ItemTooltipDataHolder& tooltipData)
 {
-    if (tooltipData.m_pLevel->isGenerateMapFeatures())
+    if (tooltipData.m_pLevel->mDimension->getType() == DimensionType::OVERWORLD
+        && tooltipData.m_pLevel->getLevelData()->getHasStronghold())
     {
         return IDS_TOOLTIPS_THROW;
     }

@@ -32,11 +32,10 @@ PlaceContainerRuleDefinition::~PlaceContainerRuleDefinition()
     }
 }
 
-uint32_t PlaceContainerRuleDefinition::placeContainerInLevel(Level* level, const BlockPos& pos,
-                                                              LevelRuleset* ruleset)
+bool PlaceContainerRuleDefinition::placeContainerInLevel(Level* level, const BlockPos& pos,
+                                                           LevelRuleset* ruleset)
 {
-    boost::shared_ptr<BlockEntity> oldBlockEntity = level->getBlockEntity(pos);
-    if (oldBlockEntity)
+    if (level->getBlockEntity(pos))
     {
         level->removeBlockEntity(pos);
         level->setBlock(pos, Blocks::air->defaultBlockState(), Block::UPDATE_ALL, false);
@@ -45,12 +44,11 @@ uint32_t PlaceContainerRuleDefinition::placeContainerInLevel(Level* level, const
     Random random;
     if (mChance <= random.nextFloat())
     {
-        return 0;
+        return false;
     }
 
     level->setBlock(pos, mBlock->getBlockState(mAuxValue), Block::UPDATE_ALL, false);
-    boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
-    boost::shared_ptr<Container> container = boost::dynamic_pointer_cast<Container>(blockEntity);
+    boost::shared_ptr<Container> container = boost::dynamic_pointer_cast<Container>(level->getBlockEntity(pos));
     if (container)
     {
         for (std::vector<RandomItemSetRuleDefinition*>::iterator it = mRandomItemSets.begin();
@@ -71,11 +69,11 @@ uint32_t PlaceContainerRuleDefinition::placeContainerInLevel(Level* level, const
             ++slot;
         }
     }
-    return 1;
+    return true;
 }
 
-uint32_t PlaceContainerRuleDefinition::placeContainerInChunk(StructurePiece* structurePiece, Level* level,
-                                                              BoundingBox* box)
+bool PlaceContainerRuleDefinition::placeContainerInChunk(StructurePiece* structurePiece, Level* level,
+                                                           BoundingBox* box)
 {
     BlockPos pos(structurePiece->getWorldX(mEndX, mEndZ),
                  structurePiece->getWorldY(mEndY),
@@ -84,7 +82,7 @@ uint32_t PlaceContainerRuleDefinition::placeContainerInChunk(StructurePiece* str
     {
         return placeContainerInLevel(level, pos, NULL);
     }
-    return 0;
+    return false;
 }
 
 void PlaceContainerRuleDefinition::getChildren(std::vector<GameRuleDefinition*>* children)
@@ -100,15 +98,13 @@ GameRuleDefinition* PlaceContainerRuleDefinition::addChild(ConsoleGameRules::EGa
     GameRuleDefinition* child = NULL;
     if (type == ConsoleGameRules::eGameRuleType_AddItem)
     {
-        AddItemRuleDefinition* addItem = new AddItemRuleDefinition();
-        mAddItems.push_back(addItem);
-        child = addItem;
+        child = new AddItemRuleDefinition();
+        mAddItems.push_back(static_cast<AddItemRuleDefinition*>(child));
     }
     else if (type == ConsoleGameRules::eGameRuleType_RandomItemSet)
     {
-        RandomItemSetRuleDefinition* randomItemSet = new RandomItemSetRuleDefinition();
-        mRandomItemSets.push_back(randomItemSet);
-        child = randomItemSet;
+        child = new RandomItemSetRuleDefinition();
+        mRandomItemSets.push_back(static_cast<RandomItemSetRuleDefinition*>(child));
     }
     return child;
 }
@@ -117,8 +113,7 @@ bool PlaceContainerRuleDefinition::evaluateRule(Level* level, LevelRuleset* rule
                                                  const MiniGameDef& miniGameDef)
 {
     (void)miniGameDef;
-    BlockPos pos(mEndX, mEndY, mEndZ);
-    return placeContainerInLevel(level, pos, ruleset) != 0;
+    return placeContainerInLevel(level, BlockPos(mEndX, mEndY, mEndZ), ruleset);
 }
 
 ConsoleGameRules::EGameRuleType PlaceContainerRuleDefinition::getActionType()

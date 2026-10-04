@@ -30,6 +30,8 @@
 #include "game/core/Mth.hpp"
 #include "game/core/HitResult.hpp"
 
+static const std::wstring TAG_ENTITY = L"EntityTag";
+
 SpawnEggItem::SpawnEggItem()
     : Item()
 {
@@ -45,22 +47,23 @@ SpawnEggItem::~SpawnEggItem()
 ResourceLocation SpawnEggItem::getNamedIdFrom(not_null_ptr<ItemInstance> itemInstance)
 {
     CompoundTag* tag = itemInstance->getTag();
-    if (tag == NULL || !tag->contains(L"EntityTag", Tag::TAG_COMPOUND))
+    if (tag == NULL || !tag->contains(TAG_ENTITY, Tag::TAG_COMPOUND))
     {
-        return ResourceLocation();
+        return ResourceLocation(std::wstring(L""));
     }
 
-    CompoundTag* entityTag = tag->getCompound(L"EntityTag");
-    if (entityTag != NULL && entityTag->contains(L"id", Tag::TAG_STRING))
+    CompoundTag* entityTag = tag->getCompound(TAG_ENTITY);
+    if (entityTag->contains(L"id", Tag::TAG_STRING) == 1)
     {
-        ResourceLocation result(entityTag->getString(L"id"));
-        if (result.toString().find(L':') == std::wstring::npos)
+        std::wstring id = entityTag->getString(L"id");
+        ResourceLocation result(id);
+        if (id.find(L':') == std::wstring::npos)
         {
             entityTag->putString(L"id", result.toString());
         }
-        return result;
+        return ResourceLocation(result);
     }
-    return ResourceLocation();
+    return ResourceLocation(std::wstring(L""));
 }
 
 std::wstring SpawnEggItem::getName(not_null_ptr<ItemInstance> itemInstance)
@@ -82,9 +85,8 @@ double SpawnEggItem::getYOffset(Level* level, const BlockPos& pos)
 {
     double yOffset = 0.0;
     AABB* box = AABB::newPermanent(pos)->expand(0.0, -1.0, 0.0);
-    boost::shared_ptr<Entity> emptyEntity;
     std::vector<AABB*>* collisions =
-        level->getCollisionAABBs(emptyEntity, box, false, false, false);
+        level->getCollisionAABBs(boost::shared_ptr<Entity>(), box, false, false, false);
     if (!collisions->empty())
     {
         double maxY = box->mMinY;
@@ -115,61 +117,69 @@ boost::shared_ptr<Entity> SpawnEggItem::canSpawn(const ResourceLocation& entityT
             *error = 12;
             return boost::shared_ptr<Entity>();
         }
-        if (level->canCreateMore(type, Level::eSpawnType_Egg))
-            return entity;
-        *error = 10;
-        return boost::shared_ptr<Entity>();
+        if (!level->canCreateMore(type, Level::eSpawnType_Egg))
+        {
+            *error = 10;
+            return boost::shared_ptr<Entity>();
+        }
     }
-    if (type == EntityType::DOLPHIN)
+    else if (type == EntityType::DOLPHIN)
     {
-        if (level->canCreateMore(type, Level::eSpawnType_Egg))
-            return entity;
-        *error = 9;
-        return boost::shared_ptr<Entity>();
+        if (!level->canCreateMore(type, Level::eSpawnType_Egg))
+        {
+            *error = 9;
+            return boost::shared_ptr<Entity>();
+        }
     }
-    if (type == EntityType::SHULKER)
+    else if (type == EntityType::SHULKER)
     {
-        if (level->canCreateMore(type, Level::eSpawnType_Egg))
-            return entity;
-        *error = 7;
-        return boost::shared_ptr<Entity>();
+        if (!level->canCreateMore(type, Level::eSpawnType_Egg))
+        {
+            *error = 7;
+            return boost::shared_ptr<Entity>();
+        }
     }
-    if (type == EntityType::BAT)
+    else if (type == EntityType::BAT)
     {
-        if (level->canCreateMore(type, Level::eSpawnType_Egg))
-            return entity;
-        *error = 3;
-        return boost::shared_ptr<Entity>();
+        if (!level->canCreateMore(type, Level::eSpawnType_Egg))
+        {
+            *error = 3;
+            return boost::shared_ptr<Entity>();
+        }
     }
-    if (type == EntityType::MUSHROOM_COW)
+    else if (type == EntityType::MUSHROOM_COW)
     {
-        if (level->canCreateMore(type, Level::eSpawnType_Egg))
-            return entity;
-        *error = 5;
-        return boost::shared_ptr<Entity>();
+        if (!level->canCreateMore(type, Level::eSpawnType_Egg))
+        {
+            *error = 5;
+            return boost::shared_ptr<Entity>();
+        }
     }
-    if (type == EntityType::VILLAGER)
+    else if (type == EntityType::VILLAGER)
     {
-        if (level->canCreateMore(type, Level::eSpawnType_Egg))
-            return entity;
-        *error = 8;
-        return boost::shared_ptr<Entity>();
+        if (!level->canCreateMore(type, Level::eSpawnType_Egg))
+        {
+            *error = 8;
+            return boost::shared_ptr<Entity>();
+        }
     }
-    if (type == EntityType::WOLF)
+    else if (type == EntityType::WOLF)
     {
-        if (level->canCreateMore(type, Level::eSpawnType_Egg))
-            return entity;
-        *error = 4;
-        return boost::shared_ptr<Entity>();
+        if (!level->canCreateMore(type, Level::eSpawnType_Egg))
+        {
+            *error = 4;
+            return boost::shared_ptr<Entity>();
+        }
     }
-    if (type == EntityType::CHICKEN)
+    else if (type == EntityType::CHICKEN)
     {
-        if (level->canCreateMore(type, Level::eSpawnType_Egg))
-            return entity;
-        *error = 2;
-        return boost::shared_ptr<Entity>();
+        if (!level->canCreateMore(type, Level::eSpawnType_Egg))
+        {
+            *error = 2;
+            return boost::shared_ptr<Entity>();
+        }
     }
-    if ((entity->GetType() & EntityType::WATER_ANIMAL) == EntityType::WATER_ANIMAL)
+    else if ((entity->GetType() & EntityType::WATER_ANIMAL) == EntityType::WATER_ANIMAL)
     {
         type = entity->GetType();
         if ((type & EntityType::ENEMY) != 0 && type != EntityType::SHULKER
@@ -178,12 +188,13 @@ boost::shared_ptr<Entity> SpawnEggItem::canSpawn(const ResourceLocation& entityT
             *error = 12;
             return boost::shared_ptr<Entity>();
         }
-        if (level->canCreateMore(type, Level::eSpawnType_Egg))
-            return entity;
-        *error = 11;
-        return boost::shared_ptr<Entity>();
+        if (!level->canCreateMore(type, Level::eSpawnType_Egg))
+        {
+            *error = 11;
+            return boost::shared_ptr<Entity>();
+        }
     }
-    if ((entity->GetType() & EntityType::CREATURE_CATEGORY) == EntityType::CREATURE_CATEGORY)
+    else if ((entity->GetType() & EntityType::CREATURE_CATEGORY) == EntityType::CREATURE_CATEGORY)
     {
         type = entity->GetType();
         if ((type & EntityType::ENEMY) != 0 && type != EntityType::SHULKER
@@ -192,12 +203,13 @@ boost::shared_ptr<Entity> SpawnEggItem::canSpawn(const ResourceLocation& entityT
             *error = 12;
             return boost::shared_ptr<Entity>();
         }
-        if (level->canCreateMore(type, Level::eSpawnType_Egg))
-            return entity;
-        *error = 1;
-        return boost::shared_ptr<Entity>();
+        if (!level->canCreateMore(type, Level::eSpawnType_Egg))
+        {
+            *error = 1;
+            return boost::shared_ptr<Entity>();
+        }
     }
-    if ((entity->GetType() & EntityType::ENEMY) == EntityType::ENEMY)
+    else if ((entity->GetType() & EntityType::ENEMY) == EntityType::ENEMY)
     {
         if (level->getDifficulty() == Difficulty::PEACEFUL)
         {
@@ -211,12 +223,17 @@ boost::shared_ptr<Entity> SpawnEggItem::canSpawn(const ResourceLocation& entityT
             *error = 12;
             return boost::shared_ptr<Entity>();
         }
-        if (level->canCreateMore(type, Level::eSpawnType_Egg))
-            return entity;
-        *error = 7;
+        if (!level->canCreateMore(type, Level::eSpawnType_Egg))
+        {
+            *error = 7;
+            return boost::shared_ptr<Entity>();
+        }
+    }
+    else
+    {
         return boost::shared_ptr<Entity>();
     }
-    return boost::shared_ptr<Entity>();
+    return entity;
 }
 
 boost::shared_ptr<Entity> SpawnEggItem::getMob(Level* level, const ResourceLocation& entityType,
@@ -226,11 +243,13 @@ boost::shared_ptr<Entity> SpawnEggItem::getMob(Level* level, const ResourceLocat
     if (entityType.toString().compare(L"") == 0 || EntityIO::sSpawnInfo.find(entityType) == EntityIO::sSpawnInfo.end())
         return boost::shared_ptr<Entity>();
 
-    boost::shared_ptr<Entity> entity = canSpawn(entityType, level, error);
+    boost::shared_ptr<Entity> entity;
+    entity = canSpawn(entityType, level, error);
     if (entity && (entity->GetType() & EntityType::MOB) == EntityType::MOB)
     {
         boost::shared_ptr<Mob> mob = boost::static_pointer_cast<Mob>(entity);
-        if (mob->GetType() == EntityType::SHULKER && level->getBlock(BlockPos(x, y, z)) == Blocks::soul_sand)
+        bool isShulker = mob->GetType() == EntityType::SHULKER;
+        if (isShulker && level->getBlock(BlockPos(x, y, z)) == Blocks::soul_sand)
             y += 0.125;
         entity->moveTo(x, y, z, Mth::wrapDegrees(level->mRandom->nextFloat() * 360.0f), 0.0f);
         entity->setDespawnProtected();
@@ -315,7 +334,7 @@ InteractionResult::EInteractionResult SpawnEggItem::useOn(boost::shared_ptr<Play
     if (level->mIsClientSide)
         return InteractionResult::eInteractionResult_Success;
 
-    if (player->mayUseItemAt(pos.relative(direction), direction, itemInstance) != 1)
+    if (!player->mayUseItemAt(pos.relative(direction), direction, itemInstance))
         return InteractionResult::eInteractionResult_Fail;
 
     const BlockState* state = level->getBlockState(pos);
@@ -326,7 +345,8 @@ InteractionResult::EInteractionResult SpawnEggItem::useOn(boost::shared_ptr<Play
     if (block == Blocks::mob_spawner)
     {
         boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
-        if (blockEntity->GetType() == BlockEntityType::MOB_SPAWNER)
+        bool isSpawner = blockEntity->GetType() == BlockEntityType::MOB_SPAWNER;
+        if (isSpawner)
         {
             BaseMobSpawner* spawner = boost::static_pointer_cast<MobSpawnerBlockEntity>(blockEntity)->getSpawner();
             spawner->setEntityId(getNamedIdFrom(itemInstance));
@@ -441,15 +461,11 @@ InteractionResultHolder SpawnEggItem::use(Level* level, boost::shared_ptr<Player
 void SpawnEggItem::addSpawnEntity(not_null_ptr<ItemInstance> itemInstance,
                                   const ResourceLocation& entityType)
 {
-    CompoundTag* tag = itemInstance->getTag();
-    if (tag == NULL)
-    {
-        tag = new CompoundTag();
-        itemInstance->setTag(tag);
-    }
+    CompoundTag* tag = itemInstance->hasTag() ? itemInstance->getTag() : new CompoundTag();
     CompoundTag* entityTag = new CompoundTag();
     entityTag->putString(L"id", entityType.toString());
-    tag->put(L"EntityTag", entityTag);
+    tag->put(TAG_ENTITY, entityTag);
+    itemInstance->setTag(tag);
 }
 
 bool SpawnEggItem::hasMultipleSpriteLayers()
@@ -458,11 +474,11 @@ bool SpawnEggItem::hasMultipleSpriteLayers()
 }
 
 TextureAtlasSprite* SpawnEggItem::getLayerIcon(int auxValue, int layer,
-                                               not_null_ptr<ItemInstance>)
+                                               not_null_ptr<ItemInstance> itemInstance)
 {
     if (layer < 1)
     {
-        return Item::getLayerIcon(auxValue, 0, ItemInstance::EMPTY);
+        return Item::getLayerIcon(auxValue, layer, itemInstance);
     }
     return mOverlayIcon;
 }
@@ -475,7 +491,12 @@ void SpawnEggItem::registerIcons(IconRegister* iconRegister)
 
 unsigned long long SpawnEggItem::fjGetType(const not_null_ptr<ItemInstance>& itemInstance)
 {
-    return EntityIO::byString(getNamedIdFrom(itemInstance).toString());
+    ResourceLocation id = getNamedIdFrom(itemInstance);
+    if (!EntityIO::isValidEntityType(id))
+    {
+        return 0;
+    }
+    return EntityIO::byString(id.toString());
 }
 
 bool SpawnEggItem::TestUse(Level* level, boost::shared_ptr<Player> player,
@@ -483,8 +504,12 @@ bool SpawnEggItem::TestUse(Level* level, boost::shared_ptr<Player> player,
 {
     HitResult* hitResult = Item::getPlayerPOVHitResult(level, player, true);
     const BlockPos& pos = hitResult->getBlockPos();
-    return hitResult != NULL && level->getBlockState(pos)->getBlock()->instanceof(EBLOCK_TYPE_LIQUID)
-        && level->getBlockState(pos)->getBlock()->mMaterial == Material::WATER;
+    if (hitResult != NULL && level->getBlockState(pos)->getBlock()->instanceof(EBLOCK_TYPE_LIQUID)
+        && level->getBlockState(pos)->getBlock()->mMaterial == Material::WATER)
+    {
+        return true;
+    }
+    return false;
 }
 
 unsigned int SpawnEggItem::GetUseTooltip(const ItemTooltipDataHolder& tooltipData)

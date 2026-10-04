@@ -90,16 +90,11 @@ not_null_ptr<ItemInstance> CraftingContainer::removeItemNoUpdate(int slot)
 
 void CraftingContainer::setItem(unsigned int slot, not_null_ptr<ItemInstance> item)
 {
-    if (slot >= mItems.size())
-    {
-        return;
-    }
     mItems[slot] = item;
-    if (!item->isEmpty() && item->getCount() > getMaxStackSize())
+    if (mMenu != NULL)
     {
-        item->setCount(getMaxStackSize());
+        mMenu->slotsChanged();
     }
-    setChanged();
 }
 
 int CraftingContainer::getMaxStackSize()
@@ -151,12 +146,12 @@ void CraftingContainer::clearContent()
     }
 }
 
-unsigned int CraftingContainer::getHeight()
+int CraftingContainer::getHeight()
 {
     return mHeight;
 }
 
-unsigned int CraftingContainer::getWidth()
+int CraftingContainer::getWidth()
 {
     return mWidth;
 }

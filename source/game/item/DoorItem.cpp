@@ -28,16 +28,14 @@ void DoorItem::place(Level* level, const BlockPos& pos, const Direction* directi
 {
     BlockPos clockwise = pos.relative(direction->getClockWise());
     BlockPos counterClockwise = pos.relative(direction->getCounterClockWise());
-    BlockPos clockwiseAbove = clockwise.above();
-    BlockPos counterClockwiseAbove = counterClockwise.above();
     const BlockState* clockwiseState = level->getBlockState(clockwise);
     const BlockState* counterClockwiseState = level->getBlockState(counterClockwise);
-    const BlockState* clockwiseAboveState = level->getBlockState(clockwiseAbove);
-    const BlockState* counterClockwiseAboveState = level->getBlockState(counterClockwiseAbove);
-    int counterClockwiseSupport = counterClockwiseState->getBlock()->isSolidRender(counterClockwiseState)
-        + counterClockwiseAboveState->getBlock()->isSolidRender(counterClockwiseAboveState);
-    int clockwiseSupport = clockwiseState->getBlock()->isSolidRender(clockwiseState)
-        + clockwiseAboveState->getBlock()->isSolidRender(clockwiseAboveState);
+    const BlockState* clockwiseAboveState = level->getBlockState(clockwise.above());
+    const BlockState* counterClockwiseAboveState = level->getBlockState(counterClockwise.above());
+    int counterClockwiseSupport = counterClockwiseState->getBlock()->isSolidBlockingCubeAndNotSignalSource(counterClockwiseState)
+        + counterClockwiseAboveState->getBlock()->isSolidBlockingCubeAndNotSignalSource(counterClockwiseAboveState);
+    int clockwiseSupport = clockwiseState->getBlock()->isSolidBlockingCubeAndNotSignalSource(clockwiseState)
+        + clockwiseAboveState->getBlock()->isSolidBlockingCubeAndNotSignalSource(clockwiseAboveState);
     bool counterClockwiseDoor = counterClockwiseState->getBlock() == block
         || counterClockwiseAboveState->getBlock() == block;
     bool clockwiseDoor = clockwiseState->getBlock() == block
@@ -51,23 +49,39 @@ void DoorItem::place(Level* level, const BlockPos& pos, const Direction* directi
         hingeRight = false;
     }
 
-    bool powered = level->hasNeighborSignal(pos) || level->hasNeighborSignal(pos.above());
+    BlockPos above = pos.above();
+    bool powered = level->hasNeighborSignal(pos) || level->hasNeighborSignal(above);
     const BlockState* state = block->defaultBlockState();
-    TypedBoxed<const Direction*> facing(direction);
-    TypedBoxed<DoorBlock::HingeSide*> hinge(hingeRight ? DoorBlock::RIGHT : DoorBlock::LEFT);
-    TypedBoxed<bool> open(powered);
-    TypedBoxed<DoorBlock::DoorHalf*> half(DoorBlock::LOWER);
-    state = state->setBoxedValue(DoorBlock::FACING, &facing);
-    state = state->setBoxedValue(DoorBlock::HINGE, &hinge);
-    state = state->setBoxedValue(DoorBlock::OPEN, &open);
-    state = state->setBoxedValue(DoorBlock::POWERED, &open);
-    state = state->setBoxedValue(DoorBlock::HALF, &half);
-    level->setBlock(pos, state, Block::UPDATE_ALL, false);
-    TypedBoxed<DoorBlock::DoorHalf*> upper(DoorBlock::UPPER);
-    state = state->setBoxedValue(DoorBlock::HALF, &upper);
-    level->setBlock(pos.above(), state, Block::UPDATE_ALL, false);
+    {
+        TypedBoxed<const Direction*> facing(direction);
+        state = state->setBoxedValue(DoorBlock::FACING, &facing);
+    }
+    {
+        TypedBoxed<DoorBlock::HingeSide*> hinge(hingeRight ? DoorBlock::RIGHT : DoorBlock::LEFT);
+        state = state->setBoxedValue(DoorBlock::HINGE, &hinge);
+    }
+    {
+        TypedBoxed<bool> open(powered);
+        state = state->setBoxedValue(DoorBlock::OPEN, &open);
+    }
+    {
+        TypedBoxed<bool> poweredValue(powered);
+        state = state->setBoxedValue(DoorBlock::POWERED, &poweredValue);
+    }
+    const BlockState* lowerState;
+    {
+        TypedBoxed<DoorBlock::DoorHalf*> lower(DoorBlock::LOWER);
+        lowerState = state->setBoxedValue(DoorBlock::HALF, &lower);
+    }
+    level->setBlock(pos, lowerState, Block::UPDATE_ALL, false);
+    const BlockState* upperState;
+    {
+        TypedBoxed<DoorBlock::DoorHalf*> upper(DoorBlock::UPPER);
+        upperState = state->setBoxedValue(DoorBlock::HALF, &upper);
+    }
+    level->setBlock(above, upperState, Block::UPDATE_ALL, false);
     level->updateNeighborsAt(pos, block, false);
-    level->updateNeighborsAt(pos.above(), block, false);
+    level->updateNeighborsAt(above, block, false);
 }
 
 InteractionResult::EInteractionResult DoorItem::useOn(boost::shared_ptr<Player> player, Level* level,

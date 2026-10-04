@@ -107,7 +107,7 @@ NonNullList<not_null_ptr<ItemInstance> > MapCloningRecipe::getRemainingItems(
         NonNullList<not_null_ptr<ItemInstance> >::withSize(craftingContainer->getContainerSize(),
                                                            ItemInstance::EMPTY);
     unsigned int i;
-    for (i = 0; i < craftingContainer->getContainerSize(); ++i)
+    for (i = 0; i < result.size(); ++i)
     {
         not_null_ptr<ItemInstance> item = craftingContainer->getItem(i);
         if (!item->isEmpty() && item->getItem()->hasCraftingRemainingItem())
@@ -134,12 +134,5 @@ void MapCloningRecipe::recipeRequires(INGREDIENTS_REQUIRED* ingredientsRequired)
 
 boost::shared_ptr<CraftingContainer> MapCloningRecipe::generateExpectedCraftSlots()
 {
-    boost::shared_ptr<CraftingContainer> result;
-    unsigned int* storage = reinterpret_cast<unsigned int*>(&result);
-    if (storage != NULL || (storage = static_cast<unsigned int*>(operator new(8)), storage != NULL))
-    {
-        storage[0] = 0;
-        storage[1] = 0;
-    }
-    return result;
+    return boost::shared_ptr<CraftingContainer>();
 }

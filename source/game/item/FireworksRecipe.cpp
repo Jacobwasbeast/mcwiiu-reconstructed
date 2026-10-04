@@ -16,8 +16,8 @@ static unsigned int g_fireworksRecipeTlsIndex = 0;
 static FireworksRecipe::ThreadStorage* g_pDefaultThreadStorage = NULL;
 
 FireworksRecipe::ThreadStorage::ThreadStorage()
-    : mResultItem(ItemInstance::EMPTY)
 {
+    mResultItem = ItemInstance::EMPTY;
 }
 
 FireworksRecipe::FireworksRecipe()
@@ -101,12 +101,17 @@ void FireworksRecipe::updatePossibleRecipes(boost::shared_ptr<CraftingContainer>
         return;
     }
 
-    if (paper == 0 && charges == 0 && shapes <= 1)
+    if (dyes >= 0 && paper == 0 && charges == 0 && shapes <= 1)
     {
         *hasGunpowder = true;
     }
 
     if (gunpowder != 0 || paper != 0 || charges > 1)
+    {
+        return;
+    }
+
+    if (dyes < 0)
     {
         return;
     }
@@ -121,32 +126,29 @@ bool FireworksRecipe::isValidIngredient(not_null_ptr<ItemInstance> item,
 {
     if (item->getItem() == Items::gunpowder)
     {
-        return hasPaper || hasGunpowder;
+        hasPaper = hasPaper || hasGunpowder;
     }
-
-    if (item->getItem() == Items::fireworkCharge)
+    else if (item->getItem() == Items::fireworkCharge)
     {
-        return hasPaper || hasFireworkCharge;
+        hasPaper = hasPaper || hasFireworkCharge;
     }
-
-    if (item->getItem() == Items::dye)
+    else if (item->getItem() == Items::dye)
     {
-        return hasGunpowder || hasFireworkCharge;
+        hasPaper = hasGunpowder || hasFireworkCharge;
     }
-
-    if (item->getItem() == Items::paper)
+    else if (item->getItem() != Items::paper)
     {
-        return hasPaper;
+        hasPaper = hasGunpowder;
+
+        if (item->getItem() != Items::glowstoneDust && item->getItem() != Items::diamond &&
+            item->getItem() != Items::fireCharge && item->getItem() != Items::feather &&
+            item->getItem() != Items::goldNugget && item->getItem() != Items::skull)
+        {
+            hasPaper = false;
+        }
     }
 
-    if (item->getItem() == Items::glowstoneDust || item->getItem() == Items::diamond ||
-        item->getItem() == Items::fireCharge || item->getItem() == Items::feather ||
-        item->getItem() == Items::goldNugget || item->getItem() == Items::skull)
-    {
-        return hasGunpowder;
-    }
-
-    return false;
+    return hasPaper;
 }
 
 void FireworksRecipe::setResultItem(not_null_ptr<ItemInstance> item)
@@ -421,14 +423,7 @@ NonNullList<not_null_ptr<ItemInstance> > FireworksRecipe::getRemainingItems(boos
 
 boost::shared_ptr<CraftingContainer> FireworksRecipe::generateExpectedCraftSlots()
 {
-    boost::shared_ptr<CraftingContainer> result;
-    unsigned int* storage = reinterpret_cast<unsigned int*>(&result);
-    if (storage != NULL || (storage = static_cast<unsigned int*>(operator new(8)), storage != NULL))
-    {
-        storage[0] = 0;
-        storage[1] = 0;
-    }
-    return result;
+    return boost::shared_ptr<CraftingContainer>();
 }
 
 Recipe::_eGroupType FireworksRecipe::getGroup()

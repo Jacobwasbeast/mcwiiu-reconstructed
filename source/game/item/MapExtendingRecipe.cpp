@@ -36,15 +36,18 @@ void MapExtendingRecipe::StaticCtor()
 
 bool MapExtendingRecipe::isExplorationMap(const boost::shared_ptr<MapItemSavedData>& data)
 {
-    boost::unordered_map<int, MapDecoration>::const_iterator it;
-    for (it = data->mDecorations.begin(); it != data->mDecorations.end(); ++it)
+    if (!data->mDecorations.empty())
     {
-        const MapDecoration::Type* type = it->second.getType();
-        if (type == &MapDecoration::Type::TYPES[14] ||
-            type == &MapDecoration::Type::TYPES[15] ||
-            type == &MapDecoration::Type::TYPES[20])
+        boost::unordered_map<int, MapDecoration>::iterator it;
+        for (it = data->mDecorations.begin(); it != data->mDecorations.end(); ++it)
         {
-            return true;
+            const MapDecoration::Type* type = it->second.getType();
+            if (type == &MapDecoration::Type::TYPES[14] ||
+                type == &MapDecoration::Type::TYPES[15] ||
+                type == &MapDecoration::Type::TYPES[20])
+            {
+                return true;
+            }
         }
     }
     return false;
@@ -98,14 +101,14 @@ not_null_ptr<ItemInstance> MapExtendingRecipe::assemble(boost::shared_ptr<Crafti
         }
     }
 
-    not_null_ptr<ItemInstance> result = map->copy();
-    result->setCount(1);
-    if (result->getTag() == NULL)
+    map = map->copy();
+    map->setCount(1);
+    if (map->getTag() == NULL)
     {
-        result->setTag(new CompoundTag());
+        map->setTag(new CompoundTag());
     }
-    result->getTag()->putInt(L"map_scale_direction", 1);
-    return result;
+    map->getTag()->putInt(L"map_scale_direction", 1);
+    return map;
 }
 
 Recipe::_eGroupType MapExtendingRecipe::getGroup()

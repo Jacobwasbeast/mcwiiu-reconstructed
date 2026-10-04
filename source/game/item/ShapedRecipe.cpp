@@ -1,5 +1,7 @@
 #include "game/item/ShapedRecipe.hpp"
 
+#include <cstring>
+
 #include "game/data/CompoundTag.hpp"
 #include "game/item/CraftingContainer.hpp"
 #include "game/item/Item.hpp"
@@ -8,19 +10,19 @@
 ShapedRecipe::ShapedRecipe(int width, int height, ItemInstance** ingredients, ItemInstance* result, int group)
     : mWidth(width),
       mHeight(height),
-      mGroup(static_cast<_eGroupType>(group)),
-      mIngredients(ingredients),
-      mResult(result),
-      mKeepTag(false)
+      mIngredients(ingredients)
 {
     int i;
-    for (i = 0; i < mWidth * mHeight; ++i)
+    for (i = 0; i < width * height; ++i)
     {
-        if (mIngredients[i] == NULL)
+        if (ingredients[i] == NULL)
         {
-            mIngredients[i] = ItemInstance::EMPTY.get();
+            ingredients[i] = ItemInstance::EMPTY.get();
         }
     }
+    mGroup = static_cast<_eGroupType>(group);
+    mResult = result;
+    mKeepTag = false;
 }
 
 ItemInstance* ShapedRecipe::getResultItem()
@@ -38,7 +40,7 @@ NonNullList<not_null_ptr<ItemInstance> > ShapedRecipe::getRemainingItems(boost::
     NonNullList<not_null_ptr<ItemInstance> > result =
         NonNullList<not_null_ptr<ItemInstance> >::withSize(craftingContainer->getContainerSize(), ItemInstance::EMPTY);
     unsigned int i;
-    for (i = 0; i < craftingContainer->getContainerSize(); ++i)
+    for (i = 0; i < result.size(); ++i)
     {
         not_null_ptr<ItemInstance> item = craftingContainer->getItem(i);
         if (item->getItem()->hasCraftingRemainingItem())
@@ -108,8 +110,11 @@ bool ShapedRecipe::matches(boost::shared_ptr<CraftingContainer> craftingContaine
     {
         for (row = 0; row <= 3 - mHeight; ++row)
         {
-            if (matches(craftingContainer, column, row, true) ||
-                matches(craftingContainer, column, row, false))
+            if (matches(craftingContainer, column, row, true))
+            {
+                return true;
+            }
+            if (matches(craftingContainer, column, row, false))
             {
                 return true;
             }
@@ -121,7 +126,7 @@ bool ShapedRecipe::matches(boost::shared_ptr<CraftingContainer> craftingContaine
 not_null_ptr<ItemInstance> ShapedRecipe::assemble(boost::shared_ptr<CraftingContainer> craftingContainer)
 {
     not_null_ptr<ItemInstance> result = getResultItem()->copy();
-    if (mKeepTag)
+    if (mKeepTag && craftingContainer)
     {
         unsigned int i;
         for (i = 0; i < craftingContainer->getContainerSize(); ++i)
@@ -160,81 +165,90 @@ bool ShapedRecipe::recipeRequires(int itemId)
 
 void ShapedRecipe::recipeRequires(INGREDIENTS_REQUIRED* ingredientsRequired)
 {
-    int itemIds[9] = {0};
-    int itemCounts[9] = {0};
-    int auxValues[9];
-    CompoundTag* itemTags[9] = {NULL};
-    int craftingGrid[9] = {0};
-    int ingredientCount = 0;
+    int requiresCraftingTable = mWidth > 2 || mHeight > 2;
+    int* craftingGrid = new int[9];
+    int* itemIds = new int[9];
+    int* itemCounts = new int[9];
+    int* auxValues = new int[9];
+    CompoundTag** itemTags = new CompoundTag*[9];
+    std::memset(itemIds, 0, sizeof(int) * 9);
+    std::memset(itemCounts, 0, sizeof(int) * 9);
+    std::memset(auxValues, -1, sizeof(int) * 9);
+    std::memset(itemTags, 0, sizeof(CompoundTag*) * 9);
+    std::memset(craftingGrid, 0, sizeof(int) * 9);
+
+    int count = 0;
     int column;
     int row;
-
     for (column = 0; column < 3; ++column)
     {
         for (row = 0; row < 3; ++row)
         {
-            int index = column + row * 3;
-            if (column >= mWidth || row >= mHeight)
+            if (column < mWidth && row < mHeight)
             {
-                auxValues[index] = -1;
-                continue;
-            }
-            ItemInstance* ingredient = mIngredients[column + row * mWidth];
-            if (ingredient == NULL || ingredient->isEmpty())
-            {
-                auxValues[index] = -1;
-                continue;
-            }
-            int itemId = Item::VALIDgetId(ingredient->getItem());
-            int auxValue = ingredient->getAuxValue();
-            craftingGrid[index] = itemId | (auxValue << 24);
-            int found = -1;
-            int i;
-            for (i = 0; i < ingredientCount; ++i)
-            {
-                if (itemIds[i] == itemId && (auxValues[i] == -1 || auxValues[i] == auxValue))
+                ItemInstance* ingredient = mIngredients[column + row * mWidth];
+                if (!ingredient->isEmpty())
                 {
-                    found = i;
-                    break;
+                    int aux = ingredient->getAuxValue();
+                    craftingGrid[column + row * 3] = Item::VALIDgetId(ingredient->getItem()) | (aux << 24);
+
+                    int j;
+                    for (j = 0; j < count; ++j)
+                    {
+                        if (itemIds[j] == Item::VALIDgetId(ingredient->getItem()) && (aux == -1 || auxValues[j] == aux))
+                        {
+                            break;
+                        }
+                    }
+                    if (j < count)
+                    {
+                        ++itemCounts[j];
+                    }
+                    else
+                    {
+                        itemIds[count] = Item::VALIDgetId(ingredient->getItem());
+                        auxValues[count] = aux;
+                        itemTags[count] = ingredient->getTag();
+                        ++itemCounts[count];
+                        ++count;
+                    }
                 }
             }
-            if (found < 0)
-            {
-                found = ingredientCount++;
-                itemIds[found] = itemId;
-                auxValues[found] = auxValue;
-                itemTags[found] = ingredient->getTag();
-            }
-            ++itemCounts[found];
         }
     }
 
-    ingredientsRequired->numIngredients = ingredientCount;
-    ingredientsRequired->requiresCraftingTable = mWidth < 3 && mHeight < 3 ? 0 : 1;
-    ingredientsRequired->itemIds = new int[ingredientCount];
-    ingredientsRequired->itemCounts = new int[ingredientCount];
-    ingredientsRequired->auxValues = new int[ingredientCount];
-    ingredientsRequired->itemTags = new CompoundTag*[ingredientCount];
-    ingredientsRequired->recipe = this;
+    ingredientsRequired->itemIds = new int[count];
+    ingredientsRequired->itemCounts = new int[count];
+    ingredientsRequired->auxValues = new int[count];
+    ingredientsRequired->itemTags = new CompoundTag*[count];
+    int* grid = new int[9];
+    int i;
+    for (i = 0; i < 9; ++i)
+    {
+        grid[i] = craftingGrid[i];
+    }
+    ingredientsRequired->craftingGrid = grid;
+    ingredientsRequired->numIngredients = count;
+    ingredientsRequired->requiresCraftingTable = requiresCraftingTable;
     ingredientsRequired->available[0] = false;
     ingredientsRequired->available[1] = false;
     ingredientsRequired->available[2] = false;
     ingredientsRequired->available[3] = false;
-    ingredientsRequired->craftingGrid = new int[9];
-    if (ingredientCount != 0)
+    ingredientsRequired->recipe = this;
+    if (count != 0)
     {
-        for (int i = 0; i < ingredientCount; ++i)
-        {
-            ingredientsRequired->itemIds[i] = itemIds[i];
-            ingredientsRequired->itemCounts[i] = itemCounts[i];
-            ingredientsRequired->auxValues[i] = auxValues[i];
-            ingredientsRequired->itemTags[i] = itemTags[i];
-        }
+        std::memcpy(ingredientsRequired->itemIds, itemIds, sizeof(int) * count);
+        std::memcpy(ingredientsRequired->itemCounts, itemCounts, sizeof(int) * count);
+        std::memcpy(ingredientsRequired->auxValues, auxValues, sizeof(int) * count);
+        std::memcpy(ingredientsRequired->itemTags, itemTags, sizeof(CompoundTag*) * count);
     }
-    for (int i = 0; i < 9; ++i)
-    {
-        ingredientsRequired->craftingGrid[i] = craftingGrid[i];
-    }
+    std::memcpy(ingredientsRequired->craftingGrid, craftingGrid, sizeof(int) * 9);
+
+    delete[] itemIds;
+    delete[] itemCounts;
+    delete[] auxValues;
+    delete[] itemTags;
+    delete[] craftingGrid;
 }
 
 boost::shared_ptr<CraftingContainer> ShapedRecipe::generateExpectedCraftSlots()
@@ -250,7 +264,7 @@ boost::shared_ptr<CraftingContainer> ShapedRecipe::generateExpectedCraftSlots()
             {
                 unsigned int slotIndex = static_cast<unsigned int>(column + row * 3);
                 ItemInstance* ingredient = mIngredients[slotIndex];
-                if (ingredient != NULL && !ingredient->isEmpty())
+                if (!ingredient->isEmpty())
                 {
                     result->setItem(slotIndex, ingredient->copy());
                 }

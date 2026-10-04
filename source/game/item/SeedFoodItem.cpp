@@ -27,19 +27,19 @@ InteractionResult::EInteractionResult SeedFoodItem::useOn(boost::shared_ptr<Play
                                                            float hitZ,
                                                            bool simulate)
 {
-    LivingEntity* livingPlayer = (LivingEntity*)(void*)player.get();
-    not_null_ptr<ItemInstance> itemInstance = livingPlayer->getItemInHand(hand);
-    if (direction == Direction::UP
-        && player->mayUseItemAt(pos.relative(direction), direction, itemInstance)
-        && level->getBlockState(pos)->getBlock() == mSoilBlock
-        && level->isEmptyBlock(pos.above()))
+    not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
+    if (direction != Direction::UP
+        || !player->mayUseItemAt(pos.relative(direction), direction, itemInstance)
+        || level->getBlockState(pos)->getBlock() != mSoilBlock
+        || !level->isEmptyBlock(pos.above()))
     {
-        if (!simulate)
-        {
-            level->setBlock(pos.above(), mCropBlock->defaultBlockState(), Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false);
-            itemInstance->shrink(1);
-        }
-        return InteractionResult::eInteractionResult_Success;
+        return InteractionResult::eInteractionResult_Fail;
     }
-    return InteractionResult::eInteractionResult_Pass;
+
+    if (!simulate)
+    {
+        level->setBlock(pos.above(), mCropBlock->defaultBlockState(), Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false);
+        itemInstance->shrink(1);
+    }
+    return InteractionResult::eInteractionResult_Success;
 }

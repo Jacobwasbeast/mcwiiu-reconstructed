@@ -2,6 +2,7 @@
 #include "game/world/LevelEvent.hpp"
 #include "game/core/EntityType.hpp"
 
+#include <cstring>
 #include <string>
 
 #include "game/client/render/ParticleType.hpp"
@@ -37,11 +38,7 @@ DyeItem::DyeItem()
 {
     setStackedByData(true);
     setMaxDamage(0);
-
-    for (int i = 0; i < 16; ++i)
-    {
-        mIcons[i] = NULL;
-    }
+    memset(mIcons, 0, sizeof(mIcons));
 }
 
 DyeItem::~DyeItem()
@@ -95,9 +92,10 @@ InteractionResult::EInteractionResult DyeItem::useOn(boost::shared_ptr<Player> p
     Level* level, const BlockPos& pos, InteractionHand::EInteractionHand hand,
     const Direction* direction, float hitX, float hitY, float hitZ, bool simulate)
 {
+    BlockPos blockPos(pos);
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
 
-    if (!player->mayUseItemAt(pos.relative(direction), direction, itemInstance))
+    if (!player->mayUseItemAt(blockPos.relative(direction), direction, itemInstance))
     {
         return InteractionResult::eInteractionResult_Fail;
     }
@@ -106,11 +104,11 @@ InteractionResult::EInteractionResult DyeItem::useOn(boost::shared_ptr<Player> p
 
     if (color == DyeColor::WHITE)
     {
-        if (growCrop(itemInstance, level, pos, simulate))
+        if (growCrop(itemInstance, level, blockPos, simulate))
         {
             if (!level->mIsClientSide)
             {
-                level->levelEvent(LevelEvent::PARTICLES_PLANT_GROWTH, pos, 0);
+                level->levelEvent(LevelEvent::PARTICLES_PLANT_GROWTH, blockPos, 0);
             }
 
             return InteractionResult::eInteractionResult_Success;
@@ -118,7 +116,7 @@ InteractionResult::EInteractionResult DyeItem::useOn(boost::shared_ptr<Player> p
     }
     else if (color == DyeColor::BROWN)
     {
-        const BlockState* state = level->getBlockState(pos);
+        const BlockState* state = level->getBlockState(blockPos);
 
         if (state->getBlock() == Blocks::log &&
             state->getValue(OldLogBlock::VARIANT) == PlanksBlock::Variant::JUNGLE)
@@ -128,15 +126,15 @@ InteractionResult::EInteractionResult DyeItem::useOn(boost::shared_ptr<Player> p
                 return InteractionResult::eInteractionResult_Fail;
             }
 
-            const BlockPos placePos = pos.relative(direction);
+            blockPos = blockPos.relative(direction);
 
-            if (level->isEmptyBlock(placePos))
+            if (level->isEmptyBlock(blockPos))
             {
                 if (!simulate)
                 {
                     const BlockState* cocoa = Blocks::cocoa->getStateForPlacement(
-                        level, placePos, direction, hitX, hitY, hitZ, 0, player);
-                    level->setBlock(placePos, cocoa, Block::UPDATE_CLIENTS | Block::UPDATE_IMMEDIATE, false);
+                        level, blockPos, direction, hitX, hitY, hitZ, 0, player);
+                    level->setBlock(blockPos, cocoa, Block::UPDATE_CLIENTS | Block::UPDATE_IMMEDIATE, false);
 
                     if (!player->mAbilities.mInstabuild)
                     {
@@ -186,21 +184,23 @@ bool DyeItem::interactEnemy(not_null_ptr<ItemInstance> itemInstance,
     boost::shared_ptr<Player> player, boost::shared_ptr<LivingEntity> target,
     InteractionHand::EInteractionHand hand)
 {
-    if (target->GetType() != EntityType::SHEEP)
+    bool isSheep = target->GetType() == EntityType::SHEEP;
+
+    if (isSheep)
     {
-        return false;
+        boost::shared_ptr<Sheep> sheep = boost::static_pointer_cast<Sheep>(target);
+        const DyeColor* color = DyeColor::byItemData(itemInstance->getAuxValue());
+
+        if (!sheep->isSheared() && sheep->getColor() != color)
+        {
+            sheep->setColor(color);
+            itemInstance->shrink(1);
+        }
+
+        return true;
     }
 
-    boost::shared_ptr<Sheep> sheep = boost::static_pointer_cast<Sheep>(target);
-    const DyeColor* color = DyeColor::byItemData(itemInstance->getAuxValue());
-
-    if (!sheep->isSheared() && sheep->getColor() != color)
-    {
-        sheep->setColor(color);
-        itemInstance->shrink(1);
-    }
-
-    return true;
+    return false;
 }
 
 TextureAtlasSprite* DyeItem::getIcon(int auxValue)

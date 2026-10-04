@@ -54,15 +54,13 @@ GameRuleDefinition* PopulateContainerRuleDefinition::addChild(ConsoleGameRules::
     GameRuleDefinition* child = NULL;
     if (type == ConsoleGameRules::eGameRuleType_AddItem)
     {
-        AddItemRuleDefinition* addItem = new AddItemRuleDefinition();
-        mAddItems.push_back(addItem);
-        child = addItem;
+        child = new AddItemRuleDefinition();
+        mAddItems.push_back(static_cast<AddItemRuleDefinition*>(child));
     }
     else if (type == ConsoleGameRules::eGameRuleType_RandomItemSet)
     {
-        RandomItemSetRuleDefinition* randomItemSet = new RandomItemSetRuleDefinition();
-        mRandomItemSets.push_back(randomItemSet);
-        child = randomItemSet;
+        child = new RandomItemSetRuleDefinition();
+        mRandomItemSets.push_back(static_cast<RandomItemSetRuleDefinition*>(child));
     }
     return child;
 }
@@ -70,12 +68,10 @@ GameRuleDefinition* PopulateContainerRuleDefinition::addChild(ConsoleGameRules::
 bool PopulateContainerRuleDefinition::evaluateRule(Level* level, LevelRuleset* ruleset, const MiniGameDef& miniGameDef)
 {
     (void)miniGameDef;
-    BlockPos position(mX, mY, mZ);
-    boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(position);
-    boost::shared_ptr<Container> container = boost::dynamic_pointer_cast<Container>(blockEntity);
+    boost::shared_ptr<Container> container = boost::dynamic_pointer_cast<Container>(level->getBlockEntity(BlockPos(mX, mY, mZ)));
     if (container)
     {
-        container->setChanged();
+        container->clearContent();
         for (std::vector<RandomItemSetRuleDefinition*>::iterator it = mRandomItemSets.begin(); it != mRandomItemSets.end(); ++it)
         {
             (*it)->populateContainer(container, ruleset);

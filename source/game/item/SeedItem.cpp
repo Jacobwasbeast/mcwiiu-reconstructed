@@ -27,14 +27,14 @@ InteractionResult::EInteractionResult SeedItem::useOn(boost::shared_ptr<Player> 
                                                        bool simulate)
 {
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
-    if (hand == InteractionHand::eInteractionHand_MainHand
+    if (direction == Direction::UP
         && player->mayUseItemAt(pos.relative(direction), direction, itemInstance)
         && level->getBlockState(pos)->getBlock() == mSoilBlock
         && level->isEmptyBlock(pos.above()))
     {
         if (!simulate)
         {
-            level->setBlock(pos.above(), mCropBlock->defaultBlockState(), Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false);
+            level->setBlockAndUpdate(pos.above(), mCropBlock->defaultBlockState());
             itemInstance->shrink(1);
         }
         return InteractionResult::eInteractionResult_Success;

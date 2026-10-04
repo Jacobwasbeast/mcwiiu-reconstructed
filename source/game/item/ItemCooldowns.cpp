@@ -26,15 +26,15 @@ ItemCooldowns::~ItemCooldowns()
 float ItemCooldowns::getCooldownPercent(Item* item, float partialTicks)
 {
     CooldownMap::iterator it = mCooldowns.find(item);
-    if (it == mCooldowns.end())
+    if (it != mCooldowns.end())
     {
-        return 0.0f;
+        CooldownInstance* cooldown = it->second;
+        float remaining = (float)cooldown->mEndTime - ((float)mTickCount + partialTicks);
+        float duration = (float)(cooldown->mEndTime - cooldown->mStartTime);
+        return Mth::clamp(remaining / duration, 0.0f, 1.0f);
     }
 
-    CooldownInstance* cooldown = it->second;
-    float remaining = (float)cooldown->mEndTime - ((float)mTickCount + partialTicks);
-    float duration = (float)(cooldown->mEndTime - cooldown->mStartTime);
-    return Mth::clamp(remaining / duration, 0.0f, 1.0f);
+    return 0.0f;
 }
 
 bool ItemCooldowns::isOnCooldown(Item* item)

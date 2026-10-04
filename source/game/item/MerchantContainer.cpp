@@ -21,12 +21,12 @@ MerchantContainer::~MerchantContainer()
 
 std::wstring MerchantContainer::getName()
 {
-    return mMerchant ? mMerchant->getDisplayName() : std::wstring();
+    return mMerchant->getDisplayName();
 }
 
 std::wstring MerchantContainer::getCustomName()
 {
-    return std::wstring();
+    return std::wstring(L"");
 }
 
 bool MerchantContainer::hasCustomName()
@@ -85,8 +85,8 @@ void MerchantContainer::updateSellItem()
                 }
             }
         }
+        mMerchant->notifyTradeUpdated(getItem(2));
     }
-    mMerchant->notifyTradeUpdated(getItem(2));
 }
 
 void MerchantContainer::setSelectionHint(int hint)
@@ -104,7 +104,8 @@ bool MerchantContainer::isEmpty()
 {
     for (unsigned int i = 0; i < mItems.size(); ++i)
     {
-        if (!mItems[i]->isEmpty())
+        not_null_ptr<ItemInstance> item = mItems[i];
+        if (!item->isEmpty())
         {
             return false;
         }
@@ -127,7 +128,7 @@ not_null_ptr<ItemInstance> MerchantContainer::removeItem(unsigned int slot, int 
     not_null_ptr<ItemInstance> item = mItems[slot];
     if (slot == 2 && !item->isEmpty())
     {
-        return ContainerHelper::removeItem(mItems, 2, (unsigned int)item->getCount());
+        return ContainerHelper::removeItem(mItems, slot, (unsigned int)item->getCount());
     }
 
     not_null_ptr<ItemInstance> removed = ContainerHelper::removeItem(mItems, slot, (unsigned int)count);
@@ -163,7 +164,7 @@ int MerchantContainer::getMaxStackSize()
 
 bool MerchantContainer::stillValid(boost::shared_ptr<Player> player)
 {
-    return mMerchant && mMerchant->getTradingPlayer() == player;
+    return mMerchant->getTradingPlayer() == player;
 }
 
 void MerchantContainer::startOpen(boost::shared_ptr<Player>)
@@ -207,6 +208,6 @@ void MerchantContainer::clearContent()
 {
     for (unsigned int i = 0; i < mItems.size(); ++i)
     {
-        mItems[i] = ItemInstance::EMPTY;
+        mItems[i] = mItems.defaultValue;
     }
 }

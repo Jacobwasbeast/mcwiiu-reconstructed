@@ -21,7 +21,8 @@ CompoundTag* ItemIdFix::fix(CompoundTag* tag)
 {
     if (tag->contains(L"id", Tag::TAG_ANY_NUMERIC))
     {
-        boost::unordered_map<int, std::wstring>::iterator entry = ID_MAP.find(tag->getShort(L"id"));
+        int id = tag->getShort(L"id");
+        boost::unordered_map<int, std::wstring>::iterator entry = ID_MAP.find(id);
 
         if (entry != ID_MAP.end())
         {

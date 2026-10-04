@@ -12,6 +12,7 @@
 #include "game/item/not_null_ptr.hpp"
 #include "game/core/InteractionHand.hpp"
 #include "game/core/InteractionResult.hpp"
+#include "game/core/InteractionResultHolder.hpp"
 #include "game/core/CensoredString.hpp"
 
 class Block;
@@ -66,7 +67,7 @@ public:
     InteractionResult::EInteractionResult useOn(boost::shared_ptr<Player> player, Level* level, const BlockPos& pos, InteractionHand::EInteractionHand hand, const Direction* direction, float x, float y, float z, bool flag);
     float getDestroySpeed(const BlockState* state);
     bool TestUse(Level* level, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand);
-    void use(Level* level, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand);
+    InteractionResultHolder use(Level* level, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand);
     not_null_ptr<ItemInstance> finishUsingItem(Level* level, boost::shared_ptr<Player> player);
     CompoundTag* save(CompoundTag* tag);
     int getMaxStackSize();
@@ -136,7 +137,7 @@ public:
     void setRepairCost(int cost);
     bool hasAdventureModeBreakTagForBlock(Block* block);
     bool hasAdventureModePlaceTagForBlock(Block* block);
-    int getPopTime() const;
+    int getPopTime() const { return mPopTime; }
     void setPopTime(int time);
     void set4JData(int data);
     int get4JData();

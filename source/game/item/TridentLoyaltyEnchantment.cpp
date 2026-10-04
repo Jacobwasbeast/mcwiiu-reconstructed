@@ -3,6 +3,7 @@
 
 #include "game/item/Enchantments.hpp"
 #include "game/item/EnchantmentCategory.hpp"
+#include "game/item/TridentRiptideEnchantment.hpp"
 
 TridentLoyaltyEnchantment::TridentLoyaltyEnchantment(const Rarity* rarity,
                                                      arrayWithLength<const EquipmentSlot*> slots)
@@ -32,7 +33,7 @@ int TridentLoyaltyEnchantment::getMaxLevel()
 
 bool TridentLoyaltyEnchantment::checkCompatibility(const Enchantment* other) const
 {
-    if (other == Enchantments::RIPTIDE)
+    if (other != NULL && dynamic_cast<const TridentRiptideEnchantment*>(other) != NULL)
     {
         return false;
     }

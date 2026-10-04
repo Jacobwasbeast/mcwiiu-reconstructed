@@ -24,7 +24,7 @@ public:
     DiggerItem(float attackDamage, float attackSpeed, const Item::Tier* tier, arrayWithLength<Block*> blocks);
     DiggerItem(const Item::Tier* tier, arrayWithLength<Block*> blocks);
 
-    virtual ~DiggerItem();
+    virtual ~DiggerItem() {}
     virtual float getDestroySpeed(not_null_ptr<ItemInstance> itemInstance, const BlockState* state);
     virtual bool hurtEnemy(not_null_ptr<ItemInstance> itemInstance,
                            boost::shared_ptr<LivingEntity> target,

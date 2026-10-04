@@ -35,7 +35,8 @@ InteractionResult::EInteractionResult FlintAndSteelItem::useOn(boost::shared_ptr
                                                                 float hitZ,
                                                                 bool simulate)
 {
-    BlockPos firePos = pos.relative(direction);
+    BlockPos firePos = pos;
+    firePos = firePos.relative(direction);
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
 
     if (!player->mayUseItemAt(firePos, direction, itemInstance))

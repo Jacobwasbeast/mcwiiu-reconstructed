@@ -70,9 +70,8 @@ void PowerupItems::BroadcastTimedPowerup(boost::shared_ptr<Player> player,
 {
     if (!player->mLevel->mIsClientSide)
     {
-        PlayerList* players = gMinecraftServer != NULL ? gMinecraftServer->getPlayers() : NULL;
-        boost::shared_ptr<Packet> packet(new ClientboundPowerupPacket(powerupId, time));
-        players->broadcastToAllExceptTeam(player, packet);
+        PlayerList* players = gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers;
+        players->broadcastToAllExceptTeam(player, boost::shared_ptr<ClientboundPowerupPacket>(new ClientboundPowerupPacket(powerupId, time)));
     }
 }
 
@@ -80,7 +79,7 @@ void PowerupItems::ActivateTimedPowerup(boost::shared_ptr<Player> player,
                                         eGlide_Timed_Powerup_ID powerupId,
                                         int time)
 {
-    if (player->mLevel->mIsClientSide && player->CheckPowerup(powerupId) == 0)
+    if (player->mLevel->mIsClientSide && !player->isSpectator())
     {
         if (IsDebuff(powerupId) && player->mAbilities.mInvulnerable)
         {
@@ -109,42 +108,51 @@ void PowerupItems::DoSetInvulnerable(boost::shared_ptr<Player> player, int time)
     if (!player->mLevel->mIsClientSide)
     {
         player->mAbilities.mInvulnerable = true;
-        PlayerList* players = gMinecraftServer != NULL ? gMinecraftServer->getPlayers() : NULL;
-        boost::shared_ptr<Packet> packet(new ClientboundPlayerAbilitiesPacket(&player->mAbilities,
-                                                                                player->getId()));
-        players->broadcastAll(packet);
+        PlayerList* players = gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers;
+        players->broadcastAll(boost::shared_ptr<ClientboundPlayerAbilitiesPacket>(
+            new ClientboundPlayerAbilitiesPacket(&player->mAbilities, player->getId())));
         player->SetPowerupTicks(eGlide_Timed_Powerup_ID_Invulnerable, time);
     }
 }
 
 void PowerupItems::UsePowerupItem(boost::shared_ptr<Player> player, int itemId)
 {
-    if (itemId == BlockId::TNT)
+    switch (itemId)
     {
-        DoDropTNT(player);
-    }
-    else if (itemId == BlockId::REDSTONE_TORCH)
-    {
-        DoSmallBoost(player);
-    }
-    else if (itemId == ItemId::FEATHER)
-    {
-        DoTimedPowerup(player, eGlide_Timed_Powerup_ID_SlowFall, 0x3c);
-    }
-    else if (itemId == ItemId::GOLDEN_APPLE)
-    {
-        DoSetInvulnerable(player, 100);
-    }
-    else if (itemId == ItemId::COMPASS)
-    {
-        DoTimedPowerup(player, eGlide_Timed_Powerup_ID_InvertControls, 0x3c);
-    }
-    else if (itemId == ItemId::BLAZE_POWDER)
-    {
-        DoLargeBoost(player);
-    }
-    else if (itemId == ItemId::EMERALD)
-    {
-        DoGainPoint(player);
+    case BlockId::TNT:
+        {
+            DoDropTNT(player);
+        }
+        break;
+    case BlockId::REDSTONE_TORCH:
+        {
+            DoSmallBoost(player);
+        }
+        break;
+    case ItemId::FEATHER:
+        {
+            DoTimedPowerup(player, eGlide_Timed_Powerup_ID_SlowFall, 0x3c);
+        }
+        break;
+    case ItemId::GOLDEN_APPLE:
+        {
+            DoSetInvulnerable(player, 100);
+        }
+        break;
+    case ItemId::COMPASS:
+        {
+            DoTimedPowerup(player, eGlide_Timed_Powerup_ID_InvertControls, 0x3c);
+        }
+        break;
+    case ItemId::BLAZE_POWDER:
+        {
+            DoLargeBoost(player);
+        }
+        break;
+    case ItemId::EMERALD:
+        {
+            DoGainPoint(player);
+        }
+        break;
     }
 }

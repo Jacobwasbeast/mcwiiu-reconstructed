@@ -94,10 +94,8 @@ public:
     void clearColor(not_null_ptr<ItemInstance> itemInstance);
     void setColor(not_null_ptr<ItemInstance> itemInstance, int color);
 
-private:
-    const EquipmentSlot* mSlot;
-
 public:
+    const EquipmentSlot* mSlot;
     int mDefense;
 
 private:

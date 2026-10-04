@@ -330,33 +330,28 @@ void AreaEffectCloud::generateParticles()
 
 void AreaEffectCloud::suckInNearbyPlayers()
 {
-    AABB* searchArea = mBoundingBox->expand(4.0, 4.0, 4.0)->expand(-4.0, -4.0, -4.0);
-    std::vector<boost::shared_ptr<Entity> >* entities = mLevel->getEntities(shared_from_this(), searchArea, NULL);
+    std::vector<boost::shared_ptr<Entity> >* entities = mLevel->getEntities(shared_from_this(), mBoundingBox->expand(4.0, 4.0, 4.0)->expand(-4.0, -4.0, -4.0), NULL);
     for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != entities->end(); ++it)
     {
-        if (((*it)->GetType() & EntityType::PLAYER) != EntityType::PLAYER)
+        if (((*it)->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
         {
-            continue;
+            boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(*it);
+            if (!player->isSpectator() && !(player->isCreative() && player->mAbilities.mFlying) && player != getOwner())
+            {
+                double pull = -(Mth::clamp((4.0 - (*it)->distanceTo(mX, mY, mZ)) * 0.25, 0.0, 1.0) * 0.05);
+                double dx = (*it)->mX - mX;
+                double dy = ((*it)->mY + (*it)->getEyeHeight()) - mY;
+                double dz = (*it)->mZ - mZ;
+                double distance = std::sqrt(dz * dz + dx * dx + dy * dy);
+                if (distance == 0.0)
+                {
+                    continue;
+                }
+                player->mXd += dx / distance * pull;
+                player->mYd += dy / distance * pull;
+                player->mZd += dz / distance * pull;
+            }
         }
-
-        boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(*it);
-        if (player->isSpectator() || (player->isCreative() && player->mAbilities.mFlying) || player == getOwner())
-        {
-            continue;
-        }
-
-        double pull = -(Mth::clamp((4.0 - player->distanceTo(mX, mY, mZ)) * 0.25, 0.0, 1.0) * 0.05);
-        double dx = player->mX - mX;
-        double dy = (player->mY + player->getEyeHeight()) - mY;
-        double dz = player->mZ - mZ;
-        double distance = std::sqrt(dz * dz + dx * dx + dy * dy);
-        if (distance == 0.0)
-        {
-            continue;
-        }
-        player->mXd += dx / distance * pull;
-        player->mYd += dy / distance * pull;
-        player->mZd += dz / distance * pull;
     }
 }
 
@@ -436,7 +431,7 @@ void AreaEffectCloud::tick()
 {
     Entity::tick();
     bool waiting = isWaiting();
-    double radius = getRadius();
+    float radius = getRadius();
     if (Minecraft::GetInstance()->GetMiniGame()->HasFeatureInvertedExplodingGrenades())
     {
         suckInNearbyPlayers();
@@ -458,7 +453,7 @@ void AreaEffectCloud::tick()
         if (mRadiusPerTick != 0.0f)
         {
             radius += mRadiusPerTick;
-            if (radius < 0.5)
+            if (radius < 0.5f)
             {
                 remove();
                 return;
@@ -490,7 +485,7 @@ void AreaEffectCloud::setWaitTime(int waitTime)
 void AreaEffectCloud::setOwner(boost::shared_ptr<LivingEntity> owner)
 {
     mOwner = owner;
-    mOwnerUUID = owner ? owner->getUUID() : std::wstring();
+    mOwnerUUID = owner ? owner->getUUID() : std::wstring(L"");
 }
 
 void AreaEffectCloud::readAdditionalSaveData(CompoundTag* tag)
@@ -516,7 +511,7 @@ void AreaEffectCloud::readAdditionalSaveData(CompoundTag* tag)
     }
     if (tag->contains(L"Color", Tag::TAG_ANY_NUMERIC))
         setFixedColor(tag->getInt(L"Color"));
-    if (tag->contains(L"Potion", Tag::TAG_STRING))
+    if (tag->contains(PotionUtils::TAG_POTION, Tag::TAG_STRING))
         setPotion(PotionUtils::getPotion(tag));
     if (tag->contains(L"Effects", Tag::TAG_LIST))
     {
@@ -549,12 +544,15 @@ void AreaEffectCloud::addAdditonalSaveData(CompoundTag* tag)
     if (mFixedColor)
         tag->putInt(L"Color", getColor());
     if (mPotion != Potions::EMPTY && mPotion != NULL)
-        tag->putString(L"Potion", Potion::potionRegistry->getKey(mPotion).toString());
-    if (!mEffects.empty())
+        tag->putString(PotionUtils::TAG_POTION, Potion::potionRegistry->getKey(mPotion).toString());
+    if (mEffects.size() != 0)
     {
-        ListTag* effects = new ListTag(0);
+        ListTag* effects = new ListTag();
         for (std::vector<MobEffectInstance*>::iterator it = mEffects.begin(); it != mEffects.end(); ++it)
-            effects->add((*it)->save(new CompoundTag()));
+        {
+            MobEffectInstance* effect = *it;
+            effects->add(effect->save(new CompoundTag()));
+        }
         tag->put(L"Effects", effects);
     }
 }

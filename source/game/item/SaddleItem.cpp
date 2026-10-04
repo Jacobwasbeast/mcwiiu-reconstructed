@@ -10,7 +10,7 @@
 SaddleItem::SaddleItem()
     : Item()
 {
-    mMaterialData = 1;
+    mMaxStackSize = 1;
 }
 
 SaddleItem::~SaddleItem()

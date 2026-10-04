@@ -2,6 +2,7 @@
 #include "game/core/StringIds.hpp"
 #include "game/core/EntityType.hpp"
 
+#include <cstring>
 #include <string>
 
 #include "game/client/audio/SoundEvents.hpp"
@@ -54,8 +55,7 @@ void ItemFrame::create(Level* level)
 
 void ItemFrame::addDataWalkers(DataFixerUpper* fixer)
 {
-    ItemDataWalker* walker = new ItemDataWalker(EntityType::ITEM_FRAME, L"Item");
-    fixer->addWalker(DataFixTypes::eDataFixTypes_ItemInstance, (DataWalker*)walker);
+    fixer->addWalker(DataFixTypes::eDataFixTypes_Entity, new ItemDataWalker(EntityType::ITEM_FRAME, L"Item"));
 }
 
 unsigned long long ItemFrame::staticCtor()
@@ -95,6 +95,7 @@ void ItemFrame::setItem(not_null_ptr<ItemInstance> item, bool updateNeighbours)
         item->setFramed(boost::static_pointer_cast<ItemFrame>(shared_from_this()));
     }
     getEntityData()->set(DATA_ITEM, item, true);
+    getEntityData()->markDirty(DATA_ITEM);
     if (!item->isEmpty())
         playSound(SoundEvents::ITEMFRAME_ADD_ITEM, 1.0f, 1.0f);
     if (updateNeighbours)
@@ -115,25 +116,22 @@ bool ItemFrame::hurt(const DamageSource* source, float damage)
         return false;
     }
     boost::shared_ptr<Entity> attacker = source->getEntity();
-    if (attacker && (attacker->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+    if (attacker && (attacker->GetType() & EntityType::PLAYER) == EntityType::PLAYER
+        && !boost::dynamic_pointer_cast<Player>(attacker)->isAllowedToHurtEntity(shared_from_this()))
     {
-        boost::shared_ptr<Player> attackerPlayer = boost::dynamic_pointer_cast<Player>(attacker);
-        if (!attackerPlayer->isAllowedToHurtEntity(shared_from_this()))
+        return false;
+    }
+    if (!source->isExplosion() && !getItem()->isEmpty())
+    {
+        if (!mLevel->mIsClientSide)
         {
-            return false;
+            dropItem(source->getEntity(), false);
+            playSound(SoundEvents::ITEMFRAME_REMOVE_ITEM, 1.0f, 1.0f);
+            setItem(ItemInstance::EMPTY);
         }
+        return true;
     }
-    if (source->isExplosion() || getItem()->isEmpty())
-    {
-        return HangingEntity::hurt(source, damage);
-    }
-    if (!mLevel->mIsClientSide)
-    {
-        dropItem(source->getEntity(), false);
-        playSound(SoundEvents::ITEMFRAME_REMOVE_ITEM, 1.0f, 1.0f);
-        setItem(ItemInstance::EMPTY);
-    }
-    return true;
+    return HangingEntity::hurt(source, damage);
 }
 
 int ItemFrame::getWidth()
@@ -185,8 +183,7 @@ void ItemFrame::dropItem(boost::shared_ptr<Entity> breaker, bool dropSelf)
     not_null_ptr<ItemInstance> item = getItem();
     if (breaker && (breaker->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
     {
-        boost::shared_ptr<Player> breakerPlayer = boost::static_pointer_cast<Player>(breaker);
-        if (breakerPlayer->mAbilities.mInstabuild)
+        if (boost::static_pointer_cast<Player>(breaker)->mAbilities.mInstabuild)
         {
             removeFramedMap(item);
             return;
@@ -199,7 +196,8 @@ void ItemFrame::dropItem(boost::shared_ptr<Entity> breaker, bool dropSelf)
     if (!item->isEmpty() && mRandom->nextFloat() < mDropChance)
     {
         removeFramedMap(item);
-        spawnAtLocation(item->copy(), 0.0f);
+        item = item->copy();
+        spawnAtLocation(item, 0.0f);
     }
 }
 
@@ -210,7 +208,7 @@ void ItemFrame::playPlacementSound()
 
 void ItemFrame::onSyncedDataUpdated(const EntityDataAccessor_Base* accessor)
 {
-    if (accessor == DATA_ITEM)
+    if (accessor->getId() == DATA_ITEM->getId())
     {
         not_null_ptr<ItemInstance> item = getItem();
         if (!item->isEmpty() && item->getFrame() != shared_from_this())
@@ -241,15 +239,13 @@ void ItemFrame::setRotation(int rotation)
 
 void ItemFrame::addAdditonalSaveData(CompoundTag* tag)
 {
-    HangingEntity::addAdditonalSaveData(tag);
-    not_null_ptr<ItemInstance> item = getItem();
-    if (!item->isEmpty())
+    if (!getItem()->isEmpty())
     {
-        CompoundTag* itemTag = new CompoundTag();
-        tag->put(L"Item", item->save(itemTag));
+        tag->put(L"Item", getItem()->save(new CompoundTag()));
+        tag->putByte(L"ItemRotation", (unsigned char)getRotation());
+        tag->putFloat(L"ItemDropChance", mDropChance);
     }
-    tag->putByte(L"ItemRotation", (unsigned char)getRotation());
-    tag->putFloat(L"ItemDropChance", mDropChance);
+    HangingEntity::addAdditonalSaveData(tag);
 }
 
 void ItemFrame::readAdditionalSaveData(CompoundTag* tag)
@@ -286,34 +282,41 @@ boost::shared_ptr<ItemFrame> ItemFrame::fjGetItemFrameForPos(Level* level, const
 
 bool ItemFrame::fjTryAwardMapRoom(const boost::shared_ptr<Player>& player)
 {
-    if (!player || mLevel == NULL || mLevel->mDimension == NULL ||
-        !mLevel->mDimension->isNaturalDimension() ||
-        getItem()->isEmpty() || getItem()->getItem() != Items::filledMap)
-        return false;
+    struct MapRoomMatch
+    {
+        bool valid;
+        int xCenter;
+        int zCenter;
+        int rotation;
+    };
 
-    const Direction* direction = getDirection();
-    if (direction == NULL)
-        return false;
-    BlockPos adjacentPos = getPos().relative(direction->getCounterClockWise(), 0);
-    adjacentPos = adjacentPos.relative(Direction::UP, 0);
-    boost::shared_ptr<ItemFrame> adjacent = fjGetItemFrameForPos(mLevel, adjacentPos);
-    if (!adjacent || adjacent->getDirection() != direction ||
-        adjacent->getItem()->isEmpty() || adjacent->getItem()->getItem() != Items::filledMap)
-        return false;
-
-    MapItem* map = static_cast<MapItem*>(adjacent->getItem()->getItem());
-    boost::shared_ptr<MapItemSavedData> data = map->getSavedData(adjacent->getItem(), mLevel);
-    if (!data || data->mDimension != 0 || data->mScale != 3 ||
-        !data->fjIsCompletelyExplored())
-        return false;
-
-    const int mapCenterX = data->mXCenter;
-    const int mapCenterZ = data->mZCenter;
-    (void)mapCenterX;
-    (void)mapCenterZ;
-
-    player->awardStat(GenericStats::mapRoom(), GenericStats::param_noArgs());
-    return true;
+    if (mLevel->mDimension->isNaturalDimension() && getItem()->getItem() == Items::filledMap)
+    {
+        MapRoomMatch match;
+        std::memset(&match, 0, sizeof(MapRoomMatch));
+        const Direction* direction = getDirection();
+        BlockPos adjacentPos = mPos.relative(direction->getCounterClockWise(), 0).relative(Direction::UP, 0);
+        {
+            boost::shared_ptr<ItemFrame> adjacent = fjGetItemFrameForPos(mLevel, adjacentPos);
+            if (adjacent && adjacent->getDirection() == getDirection() && adjacent->getItem()->getItem() == Items::filledMap)
+            {
+                boost::shared_ptr<MapItemSavedData> data = static_cast<MapItem*>(Items::filledMap)->getSavedData(adjacent->getItem(), mLevel);
+                if (data->mDimension == 0 && data->mScale == 3 && data->fjIsCompletelyExplored())
+                {
+                    MapRoomMatch candidate = { true, 0, 0, 0 };
+                    candidate.xCenter = data->mXCenter;
+                    candidate.zCenter = data->mZCenter;
+                    candidate.rotation = adjacent->getRotation() % 4;
+                    match = candidate;
+                }
+            }
+        }
+        if (match.valid)
+        {
+            player->awardStat(GenericStats::mapRoom(), GenericStats::param_noArgs());
+        }
+    }
+    return false;
 }
 
 bool ItemFrame::interact(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand)
@@ -325,9 +328,7 @@ bool ItemFrame::interact(const boost::shared_ptr<Player>& player, InteractionHan
     not_null_ptr<ItemInstance> heldItem = player->getItemInHand(hand);
     if (!mLevel->mIsClientSide)
     {
-        not_null_ptr<ItemInstance> item = getItem();
-        bool takeItem = item->isEmpty() && !Minecraft::InMiniGame(eMiniGameId_Any, true);
-        if (takeItem)
+        if (getItem()->isEmpty() && !Minecraft::InMiniGame(eMiniGameId_Any, true))
         {
             if (!heldItem->isEmpty())
             {
@@ -375,7 +376,7 @@ int ItemFrame::getAnalogOutput()
     {
         return 0;
     }
-    return getRotation() + 1;
+    return getRotation() % 8 + 1;
 }
 
 unsigned long long ItemFrame::GetType()

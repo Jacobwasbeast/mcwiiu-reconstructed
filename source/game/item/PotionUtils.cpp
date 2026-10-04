@@ -1,6 +1,7 @@
 #include "game/item/PotionUtils.hpp"
 #include "game/core/StringIds.hpp"
 
+#include "game/core/AttributeModifier.hpp"
 #include "game/core/HtmlString.hpp"
 #include "game/core/L10N.hpp"
 #include "game/data/CompoundTag.hpp"
@@ -11,11 +12,12 @@
 #include "game/item/Potions.hpp"
 #include "game/world/block/DefaultedMappedRegistry.hpp"
 
+const std::wstring PotionUtils::TAG_CUSTOM_POTION_EFFECTS(L"CustomPotionEffects");
+const std::wstring PotionUtils::TAG_CUSTOM_POTION_COLOR(L"CustomPotionColor");
 const std::wstring PotionUtils::TAG_POTION(L"Potion");
 boost::unordered_map<std::wstring, PotionUtils::PotionCacheEntry> PotionUtils::potionCache;
 OSFastMutex PotionUtils::potionCacheLock;
 bool PotionUtils::potionCacheLockInitialised = false;
-static const std::wstring customEffectsKey(L"CustomPotionEffects");
 
 not_null_ptr<ItemInstance> PotionUtils::setPotion(not_null_ptr<ItemInstance> item, Potion* potion)
 {
@@ -47,8 +49,8 @@ Potion* PotionUtils::getPotion(CompoundTag* tag)
 
 void PotionUtils::getCustomEffects(CompoundTag* tag, std::vector<MobEffectInstance*>* effects)
 {
-    if (tag == NULL || effects == NULL || !tag->contains(customEffectsKey, Tag::TAG_LIST)) return;
-    ListTag* list = tag->getList(customEffectsKey, Tag::TAG_COMPOUND);
+    if (tag == NULL || effects == NULL || !tag->contains(TAG_CUSTOM_POTION_EFFECTS, Tag::TAG_LIST)) return;
+    ListTag* list = tag->getList(TAG_CUSTOM_POTION_EFFECTS, Tag::TAG_COMPOUND);
     for (int i = 0; i < list->size(); ++i)
     {
         MobEffectInstance* effect = MobEffectInstance::load(list->getCompound(i));
@@ -59,7 +61,8 @@ void PotionUtils::getCustomEffects(CompoundTag* tag, std::vector<MobEffectInstan
 std::vector<MobEffectInstance*>* PotionUtils::getAllEffects(CompoundTag* tag)
 {
     std::vector<MobEffectInstance*>* effects = new std::vector<MobEffectInstance*>();
-    getAllEffects(getPotion(tag), effects);
+    std::vector<MobEffectInstance*>& potionEffects = getPotion(tag)->getEffects();
+    effects->insert(effects->end(), potionEffects.begin(), potionEffects.end());
     getCustomEffects(tag, effects);
     return effects;
 }
@@ -92,60 +95,89 @@ Potion* PotionUtils::getPotion(not_null_ptr<ItemInstance> item)
 void PotionUtils::addPotionTooltip(not_null_ptr<ItemInstance> item, std::vector<HtmlString>* lines, float durationFactor, boost::shared_ptr<Player> player)
 {
     std::vector<MobEffectInstance*>* effects = getMobEffects(item);
-    if (effects->empty())
+    if (effects != NULL && !effects->empty())
     {
-        lines->push_back(HtmlString(L10N::GetString(IDS_POTION_EFFECT_EMPTY), eMinecraftColour_Potion_BaseColour, false, false, 0));
-    }
-    else
-    {
-        for (std::vector<MobEffectInstance*>::iterator it = effects->begin(); it != effects->end(); ++it)
+        boost::unordered_map<eATTRIBUTE_ID, AttributeModifier*> modifiers;
+        if (effects->empty())
         {
-            MobEffectInstance* effect = *it;
-            std::wstring text(L10N::GetString(effect->getDescriptionId()));
-            int amplifier = effect->getAmplifier();
-            if (amplifier > 0)
+            std::wstring none(L10N::GetString(IDS_POTION_EFFECT_EMPTY));
+            lines->push_back(HtmlString(none, eMinecraftColour_HTMLColor_7, false, false, 0));
+        }
+        else
+        {
+            for (std::vector<MobEffectInstance*>::iterator it = effects->begin(); it != effects->end(); ++it)
             {
-                if (amplifier == 1)
+                MobEffectInstance* effect = *it;
+                std::wstring text(L10N::GetString(effect->getDescriptionId()));
+                MobEffect* mobEffect = effect->getEffect();
+                boost::unordered_map<Attribute*, AttributeModifier*>* effectModifiers = mobEffect->getAttributeModifiers();
+                if (effectModifiers != NULL && !effectModifiers->empty())
                 {
-                    text += L" ";
-                    text += L10N::GetString(0xe0296084);
+                    for (boost::unordered_map<Attribute*, AttributeModifier*>::iterator mod = effectModifiers->begin(); mod != effectModifiers->end(); ++mod)
+                    {
+                        AttributeModifier* base = mod->second;
+                        AttributeModifier* scaled = new AttributeModifier(mobEffect->getAttributeModifierValue(effect->getAmplifier(), base), base->getOperation());
+                        modifiers.insert(boost::unordered_map<eATTRIBUTE_ID, AttributeModifier*>::value_type(mod->first->getId(), scaled));
+                    }
                 }
-                else if (amplifier == 2)
+                if (effect->getAmplifier() > 0)
                 {
-                    text += L" ";
-                    text += L10N::GetString(0x5230cfbf);
+                    std::wstring amplifierText(L"");
+                    switch (effect->getAmplifier())
+                    {
+                    case 1:
+                        amplifierText = L" ";
+                        amplifierText += L10N::GetString(IDS_POTION_POTENCY_1);
+                        text += amplifierText;
+                        break;
+                    case 2:
+                        amplifierText = L" ";
+                        amplifierText += L10N::GetString(IDS_POTION_POTENCY_2);
+                        text += amplifierText;
+                        break;
+                    case 3:
+                        amplifierText = L" ";
+                        amplifierText += L10N::GetString(IDS_POTION_POTENCY_3);
+                        text += amplifierText;
+                        break;
+                    case 4:
+                        amplifierText = L" ";
+                        amplifierText += L10N::GetString(IDS_POTION_POTENCY_4);
+                        text += amplifierText;
+                        break;
+                    case 5:
+                        amplifierText = L" ";
+                        amplifierText += L10N::GetString(IDS_POTION_POTENCY_5);
+                        text += amplifierText;
+                        break;
+                    default:
+                        amplifierText = L10N::GetString(IDS_POTION_POTENCY_0);
+                        text += amplifierText;
+                        break;
+                    }
                 }
-                else if (amplifier == 3)
+                if (effect->getDuration() > 20)
                 {
-                    text += L" ";
-                    text += L10N::GetString(0x2c2e5556);
+                    text += L" (" + MobEffect::formatDuration(effect, durationFactor) + L")";
                 }
-                else if (amplifier == 4)
-                {
-                    text += L" ";
-                    text += L10N::GetString(0x6e21f149);
-                }
-                else if (amplifier == 5)
-                {
-                    text += L" ";
-                    text += L10N::GetString(0x481f76e0);
-                }
-                else
-                {
-                    text += L10N::GetString(0x62bdaed);
-                }
+                eMinecraftColour colour = eMinecraftColour_HTMLColor_7;
+                if (mobEffect->isHarmful())
+                    colour = eMinecraftColour_HTMLColor_c;
+                lines->push_back(HtmlString(text, colour, false, false, 0));
             }
-            if (effect->getDuration() > 20)
+        }
+        delete effects;
+        if (!modifiers.empty())
+        {
+            lines->push_back(HtmlString(L"", eMinecraftColour_NOTSET, false, false, 0));
+            lines->push_back(HtmlString(L10N::GetString(IDS_POTION_EFFECTS_WHENDRANK), eMinecraftColour_HTMLColor_5, false, false, 0));
+            for (boost::unordered_map<eATTRIBUTE_ID, AttributeModifier*>::iterator it = modifiers.begin(); it != modifiers.end(); ++it)
             {
-                text += L" (";
-                text += MobEffect::formatDuration(effect, durationFactor);
-                text += L")";
+                lines->push_back(it->second->getHoverText(it->first, item, player));
+                delete it->second;
             }
-            lines->push_back(HtmlString(text, effect->getEffect()->isHarmful() ? eMinecraftColour_HTMLColor_c : eMinecraftColour_HTMLColor_7, false, false, 0));
         }
     }
-    (void)player;
-    delete effects;
 }
 
 bool PotionUtils::isFoil(not_null_ptr<ItemInstance> item)
@@ -156,27 +188,26 @@ bool PotionUtils::isFoil(not_null_ptr<ItemInstance> item)
         potionCacheLockInitialised = true;
     }
 
-    if (item->getTag() == NULL || !item->getTag()->contains(TAG_POTION))
+    bool foil = false;
+    if (item->getTag() != NULL && item->getTag()->contains(TAG_POTION))
     {
-        return false;
-    }
-
-    std::wstring potionName = item->getTag()->getString(TAG_POTION);
-    EnterCriticalSection(&potionCacheLock);
-    boost::unordered_map<std::wstring, PotionCacheEntry>::iterator cached = potionCache.find(potionName);
-    if (cached != potionCache.end())
-    {
-        bool isFoil = cached->second.isFoil;
+        std::wstring potionName = item->getTag()->getString(TAG_POTION);
+        EnterCriticalSection(&potionCacheLock);
+        boost::unordered_map<std::wstring, PotionCacheEntry>::iterator cached = potionCache.find(potionName);
+        if (cached != potionCache.end())
+        {
+            foil = cached->second.isFoil;
+        }
+        else
+        {
+            std::vector<MobEffectInstance*>* effects = getMobEffects(item);
+            foil = effects != NULL && !effects->empty();
+            delete effects;
+            potionCache[potionName].isFoil = foil;
+        }
         LeaveCriticalSection(&potionCacheLock);
-        return isFoil;
     }
-
-    std::vector<MobEffectInstance*>* effects = getMobEffects(item);
-    bool isFoil = effects != NULL && !effects->empty();
-    delete effects;
-    potionCache[potionName].isFoil = isFoil;
-    LeaveCriticalSection(&potionCacheLock);
-    return isFoil;
+    return foil;
 }
 
 std::vector<MobEffectInstance*>* PotionUtils::getAllEffects(Potion* potion, std::vector<MobEffectInstance*>* effects)
@@ -208,12 +239,8 @@ int PotionUtils::getColor(std::vector<MobEffectInstance*>* effects)
 int PotionUtils::getColor(const not_null_ptr<ItemInstance>& item)
 {
     CompoundTag* tag = item->getTag();
-    if (tag != NULL && tag->contains(L"CustomPotionColor", Tag::TAG_ANY_NUMERIC)) return tag->getInt(L"CustomPotionColor");
-    if (getPotion(item) == Potions::EMPTY) return 0xf800f8;
-    std::vector<MobEffectInstance*>* effects = getMobEffects(item);
-    int color = getColor(effects);
-    delete effects;
-    return color;
+    if (tag != NULL && tag->contains(TAG_CUSTOM_POTION_COLOR, Tag::TAG_ANY_NUMERIC)) return tag->getInt(TAG_CUSTOM_POTION_COLOR);
+    return getPotion(item) == Potions::EMPTY ? 0xf800f8 : getColor(getMobEffects(item));
 }
 
 int PotionUtils::getColor(Potion* potion)
@@ -236,18 +263,20 @@ not_null_ptr<ItemInstance> PotionUtils::setCustomEffects(not_null_ptr<ItemInstan
 {
     if (effects == NULL || effects->empty()) return item;
     CompoundTag* tag = item->getTag() == NULL ? new CompoundTag() : item->getTag()->copy();
-    ListTag* list = tag->getList(customEffectsKey, Tag::TAG_LIST);
+    ListTag* list = tag->getList(TAG_CUSTOM_POTION_EFFECTS, Tag::TAG_LIST);
     for (std::vector<MobEffectInstance*>::iterator it = effects->begin(); it != effects->end(); ++it)
         list->add((*it)->save(new CompoundTag()));
-    tag->put(customEffectsKey, list);
+    tag->put(TAG_CUSTOM_POTION_EFFECTS, list);
     item->setTag(tag);
     return item;
 }
 
 not_null_ptr<ItemInstance> PotionUtils::setPotionAndCustomEffects(not_null_ptr<ItemInstance> target, not_null_ptr<ItemInstance> source)
 {
-    target = setPotion(target, getPotion(source));
-    return setCustomEffects(target, getCustomEffects(source));
+    Potion* potion = getPotion(source->getTag());
+    target = setPotion(target, potion);
+    target = setCustomEffects(target, getCustomEffects(source->getTag()));
+    return target;
 }
 
 void PotionUtils::setPotionName(not_null_ptr<ItemInstance> item, const std::wstring& name)

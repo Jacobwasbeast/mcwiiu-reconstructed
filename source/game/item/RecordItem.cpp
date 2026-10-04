@@ -67,7 +67,7 @@ InteractionResult::EInteractionResult RecordItem::useOn(boost::shared_ptr<Player
 
 void RecordItem::appendHoverText(not_null_ptr<ItemInstance> item, boost::shared_ptr<Player>, std::vector<HtmlString>* lines, bool)
 {
-    eMinecraftColour colour = getRarity(item)->colour;
+    eMinecraftColour colour = getRarity(not_null_ptr<ItemInstance>())->colour;
     lines->push_back(HtmlString(L10N::GetString(mRecordId), colour, false, false, 0));
 }
 

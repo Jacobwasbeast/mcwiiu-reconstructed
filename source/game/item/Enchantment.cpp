@@ -49,9 +49,8 @@ MappedRegistry<ResourceLocation, Enchantment*, boost::hash<ResourceLocation>, st
     new MappedRegistry<ResourceLocation, Enchantment*, boost::hash<ResourceLocation>, std::equal_to<ResourceLocation>, boost::hash<Enchantment*>, std::equal_to<Enchantment*> >();
 
 Enchantment::Enchantment(const Rarity* rarity, const EnchantmentCategory* category, arrayWithLength<const EquipmentSlot*> slots)
-    : mCategory(category), mRarity(rarity)
+    : mCategory(category), mSlots(slots), mRarity(rarity)
 {
-    mSlots = slots;
 }
 
 Enchantment* Enchantment::byId(int id)

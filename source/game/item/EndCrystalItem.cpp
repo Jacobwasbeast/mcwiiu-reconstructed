@@ -3,8 +3,9 @@
 #include <vector>
 
 #include "game/core/EnderCrystal.hpp"
+#include "game/core/EntityType.hpp"
+#include "game/core/StringIds.hpp"
 #include "game/entity/mob/EndDragonFight.hpp"
-#include "game/entity/mob/MobCategory.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/util/AABB.hpp"
 #include "game/world/Level.hpp"
@@ -14,11 +15,6 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/generation/Player.hpp"
-
-namespace
-{
-const int MESSAGE_END_CRYSTAL_LIMIT = static_cast<int>(0xC952E8B9U);
-}
 
 EndCrystalItem::EndCrystalItem()
     : Item()
@@ -81,9 +77,9 @@ InteractionResult::EInteractionResult EndCrystalItem::useOn(boost::shared_ptr<Pl
 
     if (!level->mIsClientSide)
     {
-        if (!level->canCreateMore(MobCategory::ENDER_CRYSTAL->getEnumBaseClass(), Level::eSpawnType_Egg))
+        if (!level->canCreateMore(EntityType::ENDER_CRYSTAL, Level::eSpawnType_Egg))
         {
-            player->displayClientMessage(MESSAGE_END_CRYSTAL_LIMIT, true);
+            player->displayClientMessage(IDS_MAX_ENDER_CRYSTALS, true);
             return InteractionResult::eInteractionResult_Fail;
         }
 
@@ -92,10 +88,9 @@ InteractionResult::EInteractionResult EndCrystalItem::useOn(boost::shared_ptr<Pl
         crystal->setShowBottom(false);
         level->addEntity(crystal);
 
-        TheEndDimension* dimension = dynamic_cast<TheEndDimension*>(level->mDimension);
-        if (dimension != NULL)
+        if (dynamic_cast<TheEndDimension*>(level->mDimension) != NULL)
         {
-            dimension->getDragonFight()->tryRespawn();
+            static_cast<TheEndDimension*>(level->mDimension)->getDragonFight()->tryRespawn();
         }
     }
 

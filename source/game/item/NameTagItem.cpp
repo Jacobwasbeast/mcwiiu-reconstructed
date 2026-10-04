@@ -18,17 +18,8 @@ bool NameTagItem::interactEnemy(not_null_ptr<ItemInstance> itemInstance,
                                 boost::shared_ptr<LivingEntity> target,
                                 InteractionHand::EInteractionHand hand)
 {
-    if (!itemInstance->hasCustomHoverName())
-    {
-        return false;
-    }
-
-    if (Entity::instanceof(target, EntityType::PLAYER))
-    {
-        return false;
-    }
-
-    if (itemInstance->getHoverName() == target->getCustomName())
+    if (!itemInstance->hasCustomHoverName() || Entity::instanceof(target, EntityType::PLAYER) ||
+        itemInstance->getHoverName() == target->getCustomName())
     {
         return false;
     }

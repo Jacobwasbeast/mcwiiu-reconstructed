@@ -11,7 +11,7 @@ class AreaEffectCloud_Predicate : public Predicate<boost::shared_ptr<Entity> >
 {
 public:
     virtual bool apply(boost::shared_ptr<Entity> entity) const;
-    virtual ~AreaEffectCloud_Predicate();
+    virtual ~AreaEffectCloud_Predicate() {}
 };
 
 #endif

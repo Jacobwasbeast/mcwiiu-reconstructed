@@ -37,8 +37,8 @@ public:
     virtual int getMaxStackSize();
     virtual void setChanged();
     virtual bool stillValid(boost::shared_ptr<Player> player);
-    virtual void startOpen(boost::shared_ptr<Player> player);
-    virtual void stopOpen(boost::shared_ptr<Player> player);
+    virtual void startOpen(boost::shared_ptr<Player> player) {}
+    virtual void stopOpen(boost::shared_ptr<Player> player) {}
     virtual bool canPlaceItem(int slot, not_null_ptr<ItemInstance> item);
     virtual int getContainerData(int id);
     virtual void setContainerData(int id, int value);

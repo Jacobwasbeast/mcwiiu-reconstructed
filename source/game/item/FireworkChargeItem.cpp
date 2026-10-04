@@ -4,10 +4,29 @@
 #include "game/core/IconRegister.hpp"
 #include "game/data/Tag.hpp"
 #include "game/core/HtmlString.hpp"
+#include "game/core/L10N.hpp"
+#include "game/core/StringIds.hpp"
+#include "game/item/DyeItem.hpp"
+#include "game/item/FireworksItem.hpp"
 #include "game/item/ItemInstance.hpp"
 
+namespace
+{
+    const int SHAPE_NAME_IDS[5] = {
+        IDS_FIREWORKS_CHARGE_TYPE_0, IDS_FIREWORKS_CHARGE_TYPE_1, IDS_FIREWORKS_CHARGE_TYPE_2,
+        IDS_FIREWORKS_CHARGE_TYPE_3, IDS_FIREWORKS_CHARGE_TYPE_4
+    };
+
+    const int COLOUR_NAME_IDS[16] = {
+        IDS_FIREWORKS_CHARGE_BLACK, IDS_FIREWORKS_CHARGE_RED, IDS_FIREWORKS_CHARGE_GREEN, IDS_FIREWORKS_CHARGE_BROWN,
+        IDS_FIREWORKS_CHARGE_BLUE, IDS_FIREWORKS_CHARGE_PURPLE, IDS_FIREWORKS_CHARGE_CYAN, IDS_FIREWORKS_CHARGE_SILVER,
+        IDS_FIREWORKS_CHARGE_GRAY, IDS_FIREWORKS_CHARGE_PINK, IDS_FIREWORKS_CHARGE_LIME, IDS_FIREWORKS_CHARGE_YELLOW,
+        IDS_FIREWORKS_CHARGE_LIGHT_BLUE, IDS_FIREWORKS_CHARGE_MAGENTA, IDS_FIREWORKS_CHARGE_ORANGE, IDS_FIREWORKS_CHARGE_WHITE
+    };
+}
+
 FireworkChargeItem::FireworkChargeItem()
-    : Item(), mOverlayIcon(NULL)
+    : Item()
 {
 }
 
@@ -17,57 +36,93 @@ FireworkChargeItem::~FireworkChargeItem()
 
 Tag* FireworkChargeItem::getExplosionTagField(not_null_ptr<ItemInstance> item, const std::wstring& name)
 {
-    if (!item || !item->hasTag())
+    if (item->hasTag())
     {
-        return NULL;
+        CompoundTag* explosion = item->getTag()->getCompound(FireworksItem::TAG_EXPLOSION);
+        if (explosion != NULL)
+        {
+            return explosion->get(name);
+        }
     }
-    CompoundTag* tag = item->getTag();
-    if (tag == NULL)
-    {
-        return NULL;
-    }
-    CompoundTag* explosion = tag->getCompound(L"Explosion");
-    return explosion == NULL ? NULL : explosion->get(name);
+    return NULL;
 }
 
 void FireworkChargeItem::appendHoverText(CompoundTag* tag, std::vector<HtmlString>* lines)
 {
-    if (tag == NULL || lines == NULL)
+    unsigned char shape = tag->getByte(FireworksItem::TAG_E_TYPE);
+    if (shape > 4)
     {
-        return;
+        lines->push_back(HtmlString(std::wstring(L10N::GetString(IDS_FIREWORKS_CHARGE_TYPE)), eMinecraftColour_NOTSET, false, false, 0));
     }
-    static const wchar_t* shapeNames[] = { L"Small Ball", L"Large Ball", L"Star", L"Creeper", L"Burst" };
-    unsigned char shape = tag->getByte(L"Type");
-    std::wstring shapeText = shape < 5 ? shapeNames[shape] : L"Unknown";
-    lines->push_back(HtmlString(shapeText, eMinecraftColour_NOTSET, false, false, 0));
-    if (tag->getIntArray(L"Colors").data != NULL)
+    else
     {
-        lines->push_back(HtmlString(L"Colors", eMinecraftColour_NOTSET, false, false, 0));
+        lines->push_back(HtmlString(std::wstring(L10N::GetString(SHAPE_NAME_IDS[shape])), eMinecraftColour_NOTSET, false, false, 0));
     }
-    if (tag->getIntArray(L"FadeColors").data != NULL)
+
+    arrayWithLength<int> colours = tag->getIntArray(FireworksItem::TAG_E_COLORS);
+    if (colours.length != 0)
     {
-        lines->push_back(HtmlString(L"Fade Colors", eMinecraftColour_NOTSET, false, false, 0));
+        std::wstring text;
+        for (unsigned int i = 0; i < colours.length; ++i)
+        {
+            if (i != 0)
+            {
+                text += L",\n";
+            }
+            int nameId = IDS_FIREWORKS_CHARGE_CUSTOM;
+            for (int dye = 0; dye < 16; ++dye)
+            {
+                if (colours.data[i] == DyeItem::DYE_COLORS[dye])
+                {
+                    nameId = COLOUR_NAME_IDS[dye];
+                    break;
+                }
+            }
+            text += L10N::GetString(nameId);
+        }
+        lines->push_back(HtmlString(text, eMinecraftColour_NOTSET, false, false, 0));
     }
-    if (tag->getBoolean(L"Trail"))
+
+    arrayWithLength<int> fadeColours = tag->getIntArray(FireworksItem::TAG_E_FADECOLORS);
+    if (fadeColours.length != 0)
     {
-        lines->push_back(HtmlString(L"Trail", eMinecraftColour_NOTSET, false, false, 0));
+        std::wstring text = std::wstring(L10N::GetString(IDS_FIREWORKS_CHARGE_FADE_TO)) + L" ";
+        for (unsigned int i = 0; i < fadeColours.length; ++i)
+        {
+            if (i != 0)
+            {
+                text += L",\n";
+            }
+            int nameId = IDS_FIREWORKS_CHARGE_CUSTOM;
+            for (int dye = 0; dye < 16; ++dye)
+            {
+                if (fadeColours.data[i] == DyeItem::DYE_COLORS[dye])
+                {
+                    nameId = COLOUR_NAME_IDS[dye];
+                    break;
+                }
+            }
+            text += L10N::GetString(nameId);
+        }
+        lines->push_back(HtmlString(text, eMinecraftColour_NOTSET, false, false, 0));
     }
-    if (tag->getBoolean(L"Flicker"))
+
+    if (tag->getBoolean(FireworksItem::TAG_E_TRAIL))
     {
-        lines->push_back(HtmlString(L"Twinkle", eMinecraftColour_NOTSET, false, false, 0));
+        lines->push_back(HtmlString(std::wstring(L10N::GetString(IDS_FIREWORKS_CHARGE_TRAIL)), eMinecraftColour_NOTSET, false, false, 0));
+    }
+
+    if (tag->getBoolean(FireworksItem::TAG_E_FLICKER))
+    {
+        lines->push_back(HtmlString(std::wstring(L10N::GetString(IDS_FIREWORKS_CHARGE_FLICKER)), eMinecraftColour_NOTSET, false, false, 0));
     }
 }
 
 void FireworkChargeItem::appendHoverText(not_null_ptr<ItemInstance> item, boost::shared_ptr<Player> player, std::vector<HtmlString>* lines, bool advanced)
 {
-    if (!item || !item->hasTag() || lines == NULL)
+    if (item->hasTag())
     {
-        return;
-    }
-    CompoundTag* tag = item->getTag();
-    if (tag != NULL)
-    {
-        CompoundTag* explosion = tag->getCompound(L"Explosion");
+        CompoundTag* explosion = item->getTag()->getCompound(FireworksItem::TAG_EXPLOSION);
         if (explosion != NULL)
         {
             appendHoverText(explosion, lines);
@@ -92,9 +147,5 @@ bool FireworkChargeItem::hasMultipleSpriteLayers()
 void FireworkChargeItem::registerIcons(IconRegister* iconRegister)
 {
     Item::registerIcons(iconRegister);
-    if (iconRegister != NULL)
-    {
-        std::wstring overlay = getIconName() + L"_overlay";
-        mOverlayIcon = iconRegister->registerIcon(overlay);
-    }
+    mOverlayIcon = iconRegister->registerIcon(getIconName() + L"_overlay");
 }

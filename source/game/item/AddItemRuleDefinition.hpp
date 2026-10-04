@@ -14,7 +14,7 @@ class AddItemRuleDefinition : public GameRuleDefinition
 {
 public:
     AddItemRuleDefinition();
-    virtual ~AddItemRuleDefinition();
+    virtual ~AddItemRuleDefinition() {}
 
     not_null_ptr<ItemInstance> getItem();
     static bool addItemToContainer(boost::shared_ptr<Container> container,

@@ -1,12 +1,16 @@
 #include "game/item/DigDurabilityEnchantment.hpp"
 
+#include "game/core/StringIds.hpp"
+#include "game/item/ArmorItem.hpp"
+#include "game/item/EnchantmentCategory.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/util/Random.hpp"
 
 DigDurabilityEnchantment::DigDurabilityEnchantment(const Rarity* rarity,
                                                    arrayWithLength<const EquipmentSlot*> slots)
-    : Enchantment(rarity, 0, slots)
+    : Enchantment(rarity, EnchantmentCategory::BREAKABLE, slots)
 {
+    setDescriptionId(IDS_ENCHANTMENT_DURABILITY);
 }
 
 DigDurabilityEnchantment::~DigDurabilityEnchantment()
@@ -36,7 +40,8 @@ bool DigDurabilityEnchantment::canEnchant(not_null_ptr<ItemInstance> item)
 bool DigDurabilityEnchantment::shouldIgnoreDurabilityDrop(not_null_ptr<ItemInstance> item,
                                                           int level, Random* random)
 {
-    if (item->getItem() != 0 && random->nextFloat() < 0.6f)
+    Item* held = item->getItem();
+    if (held != 0 && dynamic_cast<ArmorItem*>(held) != 0 && random->nextFloat() < 0.6f)
         return false;
-    return random->nextInt(level + 1) == 0;
+    return random->nextInt(level + 1) > 0;
 }

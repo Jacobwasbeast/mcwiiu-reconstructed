@@ -50,8 +50,9 @@ InteractionResultHolder EnderpearlItem::use(Level* level,
         player->getCooldowns()->addCooldown(this, 20);
     }
 
-    player->awardStat(gStats->get_itemsUsed(VALIDgetId(this)),
-                      GenericStats::param_itemsUsed(player, itemInstance));
+    Player* awardee = player.operator->();
+    Stat* stat = gStats->get_itemsUsed(VALIDgetId(this));
+    awardee->awardStat(stat, GenericStats::param_itemsUsed(player, itemInstance));
 
     return InteractionResultHolder(InteractionResult::eInteractionResult_Success, itemInstance);
 }
@@ -65,9 +66,10 @@ bool EnderpearlItem::TestUse(Level*,
 
 unsigned int EnderpearlItem::GetUseTooltip(const ItemTooltipDataHolder& tooltipData)
 {
-    if (tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Fail)
+    unsigned int tooltip = IDS_NONE;
+    if (tooltipData.m_eInteractionResult != InteractionResult::eInteractionResult_Fail)
     {
-        return IDS_NONE;
+        tooltip = IDS_TOOLTIPS_THROW;
     }
-    return IDS_TOOLTIPS_THROW;
+    return tooltip;
 }

@@ -7,6 +7,7 @@
 
 #include "game/core/Boat.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/entity/mob/Mob.hpp"
 #include "game/util/AABB.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
@@ -24,22 +25,27 @@ LeadItem::~LeadItem()
 
 bool LeadItem::bindPlayerMobsTest(boost::shared_ptr<Player> player, Level* level, const BlockPos& pos)
 {
-    AABB* bounds = AABB::newTemp(static_cast<double>(pos.x) - 7.0,
-                                  static_cast<double>(pos.y) - 7.0,
-                                  static_cast<double>(pos.z) - 7.0,
-                                  static_cast<double>(pos.x) + 7.0,
-                                  static_cast<double>(pos.y) + 7.0,
-                                  static_cast<double>(pos.z) + 7.0);
     std::vector<boost::shared_ptr<Entity> >* entities =
-        level->getEntitiesOfClass(typeid(Entity), bounds);
+        level->getEntitiesOfClass(typeid(Mob), AABB::newTemp(static_cast<double>(pos.x) - 7.0,
+                                                              static_cast<double>(pos.y) - 7.0,
+                                                              static_cast<double>(pos.z) - 7.0,
+                                                              static_cast<double>(pos.x) + 7.0,
+                                                              static_cast<double>(pos.y) + 7.0,
+                                                              static_cast<double>(pos.z) + 7.0));
     std::vector<boost::shared_ptr<Entity> >* boats =
-        level->getEntitiesOfClass(typeid(Boat), bounds);
+        level->getEntitiesOfClass(typeid(Boat), AABB::newTemp(static_cast<double>(pos.x) - 7.0,
+                                                               static_cast<double>(pos.y) - 7.0,
+                                                               static_cast<double>(pos.z) - 7.0,
+                                                               static_cast<double>(pos.x) + 7.0,
+                                                               static_cast<double>(pos.y) + 7.0,
+                                                               static_cast<double>(pos.z) + 7.0));
     entities->insert(entities->end(), boats->begin(), boats->end());
 
     for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin();
          it != entities->end(); ++it)
     {
-        if ((*it)->canBeLeashed(player))
+        boost::shared_ptr<Entity> entity = *it;
+        if (entity->isLeashedToPlayer(player))
         {
             delete entities;
             delete boats;
@@ -56,29 +62,34 @@ bool LeadItem::bindPlayerMobs(boost::shared_ptr<Player> player, Level* level, co
 {
     boost::shared_ptr<LeashFenceKnotEntity> knot =
         LeashFenceKnotEntity::findKnotAt(level, pos);
-    AABB* bounds = AABB::newTemp(static_cast<double>(pos.x) - 7.0,
-                                  static_cast<double>(pos.y) - 7.0,
-                                  static_cast<double>(pos.z) - 7.0,
-                                  static_cast<double>(pos.x) + 7.0,
-                                  static_cast<double>(pos.y) + 7.0,
-                                  static_cast<double>(pos.z) + 7.0);
     std::vector<boost::shared_ptr<Entity> >* entities =
-        level->getEntitiesOfClass(typeid(Entity), bounds);
+        level->getEntitiesOfClass(typeid(Mob), AABB::newTemp(static_cast<double>(pos.x) - 7.0,
+                                                              static_cast<double>(pos.y) - 7.0,
+                                                              static_cast<double>(pos.z) - 7.0,
+                                                              static_cast<double>(pos.x) + 7.0,
+                                                              static_cast<double>(pos.y) + 7.0,
+                                                              static_cast<double>(pos.z) + 7.0));
     std::vector<boost::shared_ptr<Entity> >* boats =
-        level->getEntitiesOfClass(typeid(Boat), bounds);
+        level->getEntitiesOfClass(typeid(Boat), AABB::newTemp(static_cast<double>(pos.x) - 7.0,
+                                                               static_cast<double>(pos.y) - 7.0,
+                                                               static_cast<double>(pos.z) - 7.0,
+                                                               static_cast<double>(pos.x) + 7.0,
+                                                               static_cast<double>(pos.y) + 7.0,
+                                                               static_cast<double>(pos.z) + 7.0));
     entities->insert(entities->end(), boats->begin(), boats->end());
 
     bool bound = false;
     for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin();
          it != entities->end(); ++it)
     {
-        if ((*it)->canBeLeashed(player))
+        boost::shared_ptr<Entity> entity = *it;
+        if (entity->isLeashedToPlayer(player))
         {
             if (!knot)
             {
                 knot = LeashFenceKnotEntity::createAndAddKnot(level, pos);
             }
-            (*it)->setLeashedTo(knot, true);
+            entity->setLeashedTo(knot, true);
             bound = true;
         }
     }

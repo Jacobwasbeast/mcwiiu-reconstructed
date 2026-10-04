@@ -20,8 +20,7 @@ void Containers::dropItemStack(Level* level, double x, double y, double z, not_n
 
     while (!itemInstance->isEmpty())
     {
-        int count = randomGenerator.nextInt(21) + 10;
-        not_null_ptr<ItemInstance> split = itemInstance->split(count);
+        not_null_ptr<ItemInstance> split = itemInstance->split(randomGenerator.nextInt(21) + 10);
         split->set4JData(itemInstance->get4JData());
 
         boost::shared_ptr<ItemEntity> itemEntity(new ItemEntity(level,
@@ -41,18 +40,19 @@ void Containers::dropContents(Level* level, double x, double y, double z, boost:
     for (unsigned int slot = 0; slot < container->getContainerSize(); ++slot)
     {
         not_null_ptr<ItemInstance> itemInstance = container->getItem(slot);
-        if (!itemInstance->isEmpty())
+        if (itemInstance->isEmpty())
         {
-            dropItemStack(level, x, y, z, itemInstance);
+            continue;
         }
+
+        dropItemStack(level, x, y, z, itemInstance);
+        container->setItem(slot, ItemInstance::EMPTY);
     }
 }
 
 void Containers::dropContents(Level* level, const BlockPos& pos, boost::shared_ptr<Container> container)
 {
-    dropContents(level, (double)pos.x - 0.5,
-        (double)pos.y - 0.5,
-        (double)pos.z - 0.5, container);
+    dropContents(level, (double)pos.x, (double)pos.y, (double)pos.z, container);
 }
 
 void Containers::dropContents(Level* level, boost::shared_ptr<Entity> entity, boost::shared_ptr<Container> container)

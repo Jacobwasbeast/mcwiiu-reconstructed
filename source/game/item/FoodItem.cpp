@@ -69,6 +69,7 @@ not_null_ptr<ItemInstance> FoodItem::finishUsingItem(not_null_ptr<ItemInstance> 
                              0.5f,
                              level->mRandom->nextFloat() * 0.1f + 0.9f,
                              16.0f);
+            addEatEffect(itemInstance, level, player);
         }
 
         bool consume = true;
@@ -110,12 +111,12 @@ int FoodItem::getUseAnimation(not_null_ptr<const ItemInstance> itemInstance) con
 InteractionResultHolder FoodItem::use(Level* level, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand)
 {
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
-    if (!canEat(player))
+    if (player->canEat(mCanAlwaysEat))
     {
-        return InteractionResultHolder(InteractionResult::eInteractionResult_Fail, itemInstance);
+        player->startUsingItem(hand);
+        return InteractionResultHolder(InteractionResult::eInteractionResult_Success, itemInstance);
     }
-    player->startUsingItem(hand);
-    return InteractionResultHolder(InteractionResult::eInteractionResult_Success, itemInstance);
+    return InteractionResultHolder(InteractionResult::eInteractionResult_Fail, itemInstance);
 }
 
 bool FoodItem::canEat(boost::shared_ptr<Player> player)
@@ -137,7 +138,8 @@ int FoodItem::getNutrition(not_null_ptr<ItemInstance> itemInstance)
 {
     if (Minecraft::InMiniGame(eMiniGameId_Any, true))
     {
-        return Minecraft::GetInstance()->GetMiniGame()->getNutrition(Item::VALIDgetId(itemInstance->getItem()), mNutrition);
+        const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
+        return miniGame->getNutrition(Item::VALIDgetId(itemInstance->getItem()), mNutrition);
     }
     return mNutrition;
 }
@@ -146,7 +148,8 @@ float FoodItem::getSaturationModifier(not_null_ptr<ItemInstance> itemInstance)
 {
     if (Minecraft::InMiniGame(eMiniGameId_Any, true))
     {
-        return Minecraft::GetInstance()->GetMiniGame()->getSaturationModifier(Item::VALIDgetId(itemInstance->getItem()), mSaturationModifier);
+        const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
+        return miniGame->getSaturationModifier(Item::VALIDgetId(itemInstance->getItem()), mSaturationModifier);
     }
     return mSaturationModifier;
 }

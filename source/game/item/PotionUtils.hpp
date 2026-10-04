@@ -21,6 +21,8 @@ class PotionUtils
 {
 public:
     static const std::wstring TAG_POTION;
+    static const std::wstring TAG_CUSTOM_POTION_EFFECTS;
+    static const std::wstring TAG_CUSTOM_POTION_COLOR;
     static not_null_ptr<ItemInstance> setPotion(not_null_ptr<ItemInstance> item, Potion* potion);
     static Potion* getPotion(CompoundTag* tag);
     static void getCustomEffects(CompoundTag* tag, std::vector<MobEffectInstance*>* effects);

@@ -15,7 +15,7 @@ public:
     bool isSameItem(not_null_ptr<ItemInstance> item, ItemInstance* recipeItem);
     ItemInstance* getResult(not_null_ptr<ItemInstance> item);
     static FurnaceRecipes* getInstance();
-    double getRecipeValue(not_null_ptr<ItemInstance> item);
+    float getRecipeValue(not_null_ptr<ItemInstance> item);
     void addFurnaceRecipe(ItemInstance* item, ItemInstance* result, float experience);
     void addFurnaceRecipe(Item* item, ItemInstance* result, float experience);
     void addFurnaceRecipe(Block* block, ItemInstance* result, float experience);

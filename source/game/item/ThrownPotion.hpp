@@ -49,7 +49,7 @@ public:
     static void addDataWalkers(DataFixerUpper* fixer);
     virtual void readAdditionalSaveData(CompoundTag* tag);
     virtual void addAdditonalSaveData(CompoundTag* tag);
-    virtual double getGravity();
+    virtual float getGravity();
     virtual void defineSynchedData();
     virtual unsigned long long GetType();
 

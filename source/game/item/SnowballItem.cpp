@@ -17,7 +17,7 @@
 
 SnowballItem::SnowballItem() : Item()
 {
-    setMaxStackSize(16);
+    mMaxStackSize = 16;
 }
 
 SnowballItem::~SnowballItem()
@@ -38,7 +38,7 @@ InteractionResultHolder SnowballItem::use(Level* level,
                      player->mY,
                      player->mZ,
                      SoundEvents::SNOWBALL_THROW,
-                     SoundSource::eSoundSource_Players,
+                     SoundSource::eSoundSource_Neutral,
                      0.5f,
                      0.4f / (random->nextFloat() * 0.4f + 0.8f),
                      16.0f);
@@ -51,11 +51,12 @@ InteractionResultHolder SnowballItem::use(Level* level,
     }
     else if (Minecraft::GetInstance()->GetMiniGame()->HasFeatureOverrideHandSwing())
     {
-        player->swing(hand);
+        player->swing(InteractionHand::eInteractionHand_MainHand);
     }
 
-    player->awardStat(gStats->get_itemsUsed(VALIDgetId(this)),
-                      GenericStats::param_itemsUsed(player, itemInstance));
+    Player* awardee = player.operator->();
+    Stat* stat = gStats->get_itemsUsed(VALIDgetId(this));
+    awardee->awardStat(stat, GenericStats::param_itemsUsed(player, itemInstance));
 
     return InteractionResultHolder(InteractionResult::eInteractionResult_Success, itemInstance);
 }

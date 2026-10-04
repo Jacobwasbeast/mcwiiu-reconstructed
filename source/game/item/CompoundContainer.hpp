@@ -21,12 +21,13 @@ public:
         boost::shared_ptr<LockableContainer> second);
     virtual ~CompoundContainer();
 
+    virtual unsigned int getContainerSize();
+    virtual bool isEmpty();
+    virtual bool contains(boost::shared_ptr<Container> container);
     virtual std::wstring getName();
     virtual std::wstring getCustomName();
     virtual bool hasCustomName();
     virtual std::wstring getDisplayName();
-    virtual unsigned int getContainerSize();
-    virtual bool isEmpty();
     virtual not_null_ptr<ItemInstance> getItem(unsigned int slot);
     virtual not_null_ptr<ItemInstance> removeItem(unsigned int slot, int count);
     virtual not_null_ptr<ItemInstance> removeItemNoUpdate(int slot);
@@ -49,8 +50,6 @@ public:
     virtual int getTypeId(bool large);
     virtual AbstractContainerMenu* createMenu(boost::shared_ptr<Inventory> inventory,
         boost::shared_ptr<Player> player);
-
-    virtual bool contains(boost::shared_ptr<Container> container);
 
 private:
     int mId;

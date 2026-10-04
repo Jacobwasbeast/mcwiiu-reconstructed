@@ -99,9 +99,9 @@ void EnchantItemCommand::execute(boost::shared_ptr<CommandSender> sender,
         {
             for (int i = 0; i < enchantmentTags->size(); ++i)
             {
-                CompoundTag* tag = enchantmentTags->getCompound(i);
-                Enchantment* existing = Enchantment::byId(tag->getShort(L"id"));
-                if (existing != NULL && !existing->isCompatibleWith(enchantment))
+                int existingId = enchantmentTags->getCompound(i)->getShort(L"id");
+                if (Enchantment::byId(existingId) != NULL &&
+                    !Enchantment::byId(existingId)->isCompatibleWith(enchantment))
                 {
                     byteStream.mBuffer.data = NULL;
                     byteStream.mBuffer.length = 0;
@@ -139,7 +139,8 @@ boost::shared_ptr<GameCommandPacket> EnchantItemCommand::preparePacket(
     ByteArrayOutputStream byteStream;
     DataOutputStream stream(&byteStream);
 
-    stream.writePlayerUID(player->mXuid);
+    PlayerUID uid = player->mXuid;
+    stream.writePlayerUID(uid);
     stream.writeInt(enchantmentId);
     stream.writeInt(level);
 

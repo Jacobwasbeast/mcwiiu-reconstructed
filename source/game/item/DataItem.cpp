@@ -15,12 +15,13 @@ int DataItem::getAccessorId()
     return -1;
 }
 
+void DataItem::setDirty(bool dirty)
+{
+    mDirty = dirty;
+}
+
 bool DataItem::isDirty()
 {
     return mDirty;
 }
 
-void DataItem::setDirty(bool dirty)
-{
-    mDirty = dirty;
-}

@@ -6,6 +6,8 @@
 #include "game/item/ItemInstance.hpp"
 #include "game/world/generation/Player.hpp"
 
+static const std::wstring TAG_PAGES = L"pages";
+
 WritableBookItem::WritableBookItem()
     : Item()
 {
@@ -34,20 +36,20 @@ bool WritableBookItem::TestUse(Level* level,
 
 bool WritableBookItem::makeSureTagIsValid(CompoundTag* tag)
 {
-    if (tag == NULL || !tag->contains(L"pages", Tag::TAG_LIST))
+    if (tag != NULL && tag->contains(TAG_PAGES, Tag::TAG_LIST))
     {
-        return false;
-    }
-
-    ListTag* pages = tag->getList(L"pages", Tag::TAG_STRING);
-    for (int index = 0; index < pages->size(); ++index)
-    {
-        if (pages->getString(index).size() > 256)
+        ListTag* pages = tag->getList(TAG_PAGES, Tag::TAG_STRING);
+        for (int index = 0; index < pages->size(); ++index)
         {
-            return false;
+            std::wstring page = pages->getString(index);
+            if (page.size() > 256)
+            {
+                return false;
+            }
         }
+        return true;
     }
-    return true;
+    return false;
 }
 
 unsigned int WritableBookItem::GetUseTooltip(const ItemTooltipDataHolder& tooltipData)

@@ -33,16 +33,17 @@ public:
         virtual bool apply(not_null_ptr<ItemInstance> itemInstance) const;
         virtual ~PredicateItemInstance();
 
-    private:
-        int mUnknown0;
-        int mUnknown1;
-        std::vector<Predicate<not_null_ptr<ItemInstance> >*>* mPredicates;
     };
 
     template <class T>
     class Mix
     {
     public:
+        Mix(T* from, Predicate<not_null_ptr<ItemInstance> >* ingredient, T* result)
+            : from(from), ingredient(ingredient), result(result)
+        {
+        }
+
         T* from;
         Predicate<not_null_ptr<ItemInstance> >* ingredient;
         T* result;
@@ -59,6 +60,12 @@ public:
     static void addContainerRecipe(PotionItem* from, ItemInstancePredicate* ingredient, PotionItem* result);
     static void addMix(Potion* from, Predicate<not_null_ptr<ItemInstance> >* ingredient, Potion* result);
     static void StaticCtor();
+
+private:
+    static std::vector<Mix<Potion>*> potionMixes;
+    static std::vector<Mix<Item>*> containerMixes;
+    static std::vector<ItemInstancePredicate*> containerPredicates;
+    static PredicateItemInstance* containerPredicate;
 };
 
 #endif

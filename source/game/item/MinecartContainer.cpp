@@ -17,6 +17,7 @@
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
+#include "game/util/Vec3.hpp"
 #include "game/world/generation/Player.hpp"
 #include "game/world/generation/StructureFeatureIO.hpp"
 
@@ -84,14 +85,14 @@ void MinecartContainer::unpackLootTable(const boost::shared_ptr<Player>& player)
 
     mLootTable = NULL;
     Random* random = mLootTableSeed == 0 ? new Random() : new Random(mLootTableSeed);
-    boost::shared_ptr<Entity> entity = shared_from_this();
-    LootTableContext context(player ? (float)player->getLuck() : 0.0f,
-                             (ServerLevel*)mLevel,
-                             (LootTables*)mLevel->getLootTables(),
-                             entity,
-                             player,
-                             NULL);
+    LootTableContext::Builder* builder = new LootTableContext::Builder(static_cast<ServerLevel*>(mLevel));
+    if (player)
+    {
+        builder->mLuck = player->getLuck();
+    }
+    LootTableContext context = builder->build();
     lootTable->fill(static_cast<Container*>(this), random, context);
+    delete builder;
 }
 
 bool MinecartContainer::isEmpty()
@@ -133,8 +134,7 @@ not_null_ptr<ItemInstance> MinecartContainer::removeItemNoUpdate(int slot)
 
 void MinecartContainer::setItem(unsigned int slot, not_null_ptr<ItemInstance> item)
 {
-    boost::shared_ptr<Player> player;
-    unpackLootTable(player);
+    unpackLootTable(boost::shared_ptr<Player>());
     mItems[slot] = item;
     if (!item->isEmpty() && item->getCount() > getMaxStackSize())
     {
@@ -158,8 +158,11 @@ bool MinecartContainer::stillValid(boost::shared_ptr<Player> player)
     {
         return false;
     }
-    BlockPos position(mX, mY, mZ);
-    return player->distanceAsIfHitscanned(position, *player->mBoundingBox) <= 30.25;
+    if (player->distanceAsIfHitscanned(BlockPos(Vec3::newTemp(mX, mY, mZ)), *player->mBoundingBox) <= 30.25f)
+    {
+        return true;
+    }
+    return false;
 }
 
 bool MinecartContainer::canPlaceItem(int slot, not_null_ptr<ItemInstance> item)
@@ -294,8 +297,7 @@ bool MinecartContainer::interact(const boost::shared_ptr<Player>& player, Intera
 
     if (!mLevel->mIsClientSide)
     {
-        boost::shared_ptr<MinecartContainer> minecart = boost::static_pointer_cast<MinecartContainer>(shared_from_this());
-        player->openContainer(minecart);
+        player->openContainer(boost::static_pointer_cast<MinecartContainer>(shared_from_this()));
     }
     return true;
 }

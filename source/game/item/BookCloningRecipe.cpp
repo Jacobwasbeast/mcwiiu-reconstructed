@@ -6,6 +6,8 @@
 #include "game/item/Items.hpp"
 #include "game/item/WrittenBookItem.hpp"
 
+static const std::wstring TAG_GENERATION = L"generation";
+
 BookCloningRecipe::BookCloningRecipe()
     : Recipe()
 {
@@ -88,7 +90,7 @@ not_null_ptr<ItemInstance> BookCloningRecipe::assemble(boost::shared_ptr<Craftin
 
     not_null_ptr<ItemInstance> result(new ItemInstance(Items::writtenBook, writableBooks));
     result->setTag(writtenBook->getTag()->copy());
-    result->getTag()->putInt(L"generation", WrittenBookItem::getGeneration(writtenBook) + 1);
+    result->getTag()->putInt(TAG_GENERATION, WrittenBookItem::getGeneration(writtenBook) + 1);
     if (writtenBook->hasCustomHoverName())
     {
         result->setHoverName(writtenBook->getHoverName());

@@ -6,6 +6,7 @@
 
 #include "game/network/CGameNetworkManager.hpp"
 #include "game/core/CMinecraftApp.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/L10N.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/data/CompoundTag.hpp"
@@ -22,6 +23,15 @@
 #include "game/world/Level.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/world/generation/Player.hpp"
+
+static const std::wstring TAG_TITLE = L"title";
+static const std::wstring TAG_AUTHOR = L"author";
+static const std::wstring TAG_PAGES = L"pages";
+static const std::wstring TAG_GENERATION = L"generation";
+static const std::wstring TAG_RESOLVED = L"resolved";
+static const std::wstring TAG_OWNER_UUID = L"ownerUUID";
+static const std::wstring TAG_CREATED_BY_RESTRICTED_PLAYER = L"createdByRestrictedPlayer";
+static const std::wstring TAG_CREATED_BY_HOST = L"createdByHost";
 
 WrittenBookItem::WrittenBookItem()
     : Item()
@@ -40,23 +50,23 @@ bool WrittenBookItem::makeSureTagIsValid(CompoundTag* tag)
         return false;
     }
 
-    if (!tag->contains(L"title", Tag::TAG_STRING))
+    if (!tag->contains(TAG_TITLE, Tag::TAG_STRING))
     {
         return false;
     }
 
-    std::wstring title = tag->getString(L"title");
+    std::wstring title = tag->getString(TAG_TITLE);
     if (title.empty() || title.size() > 32)
     {
         return false;
     }
 
-    return tag->contains(L"author", Tag::TAG_STRING);
+    return tag->contains(TAG_AUTHOR, Tag::TAG_STRING);
 }
 
 int WrittenBookItem::getGeneration(not_null_ptr<ItemInstance> itemInstance)
 {
-    return itemInstance->getTag()->getInt(L"generation");
+    return itemInstance->getTag()->getInt(TAG_GENERATION);
 }
 
 std::wstring WrittenBookItem::getName(not_null_ptr<ItemInstance> itemInstance)
@@ -66,12 +76,12 @@ std::wstring WrittenBookItem::getName(not_null_ptr<ItemInstance> itemInstance)
         CompoundTag* tag = itemInstance->getTag();
 
         bool ownedByLocalPlayer = false;
-        if (tag->getString(L"ownerUUID").compare(L"") != 0)
+        if (tag->getString(TAG_OWNER_UUID) != L"")
         {
             for (int i = 0; i < 4; ++i)
             {
                 boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = Minecraft::GetInstance()->mLocalPlayers[i];
-                if (localPlayer != NULL && localPlayer->getUUID() == tag->getString(L"ownerUUID"))
+                if (localPlayer != NULL && localPlayer->getUUID() == tag->getString(TAG_OWNER_UUID))
                 {
                     ownedByLocalPlayer = true;
                     break;
@@ -79,11 +89,15 @@ std::wstring WrittenBookItem::getName(not_null_ptr<ItemInstance> itemInstance)
             }
         }
 
-        bool chatCensored = g_pApp->IsConsoleChatCensored();
-        bool createdByRestrictedPlayer =
-            tag->contains(L"createdByRestrictedPlayer") && tag->getByte(L"createdByRestrictedPlayer") != 0;
+        bool chatCensored = gApp.IsConsoleChatCensored();
+        bool createdByRestrictedPlayer = false;
+        if (tag->contains(TAG_CREATED_BY_RESTRICTED_PLAYER))
+        {
+            if (tag->getByte(TAG_CREATED_BY_RESTRICTED_PLAYER) != 0)
+                createdByRestrictedPlayer = true;
+        }
         bool createdByHost = true;
-        if (tag->contains(L"createdByHost") && tag->getByte(L"createdByHost") == 0)
+        if (tag->contains(TAG_CREATED_BY_HOST) && tag->getByte(TAG_CREATED_BY_HOST) == 0)
             createdByHost = false;
 
         if ((chatCensored || createdByRestrictedPlayer) && !ownedByLocalPlayer &&
@@ -92,7 +106,7 @@ std::wstring WrittenBookItem::getName(not_null_ptr<ItemInstance> itemInstance)
             return Item::getName(itemInstance);
         }
 
-        std::wstring title = tag->getString(L"title");
+        std::wstring title = tag->getString(TAG_TITLE);
         if (!title.empty())
             return title;
     }
@@ -104,27 +118,25 @@ void WrittenBookItem::appendHoverText(not_null_ptr<ItemInstance> itemInstance,
                                       std::vector<HtmlString>* lines,
                                       bool advanced)
 {
-    if (!itemInstance->hasTag())
+    if (itemInstance->hasTag())
     {
-        return;
-    }
+        CompoundTag* tag = itemInstance->getTag();
+        std::wstring author = tag->getString(TAG_AUTHOR);
+        if (!author.empty())
+        {
+            std::wstring line = L10N::GetString(IDS_BOOK_BY_AUTHOR);
+            line.replace(line.find(L"%s"), 2, author);
+            lines->push_back(HtmlString(line, eMinecraftColour_NOTSET, false, false, 0));
+        }
 
-    CompoundTag* tag = itemInstance->getTag();
-    std::wstring author = tag->getString(L"author");
-    if (!author.empty())
-    {
-        std::wstring line = L10N::GetString(IDS_BOOK_BY_AUTHOR);
-        line.replace(line.find(L"%s"), 2, author);
-        lines->push_back(HtmlString(line, eMinecraftColour_NOTSET, false, false, 0));
+        unsigned int generationIds[4];
+        generationIds[0] = IDS_BOOK_GENERATION_0;
+        generationIds[1] = IDS_BOOK_GENERATION_1;
+        generationIds[2] = IDS_BOOK_GENERATION_2;
+        generationIds[3] = IDS_BOOK_GENERATION_3;
+        lines->push_back(HtmlString(L10N::GetString(generationIds[tag->getInt(TAG_GENERATION)]),
+                                    eMinecraftColour_NOTSET, false, false, 0));
     }
-
-    unsigned int generationIds[4];
-    generationIds[0] = 0x4af696b3u;
-    generationIds[1] = 0x24f41c4au;
-    generationIds[2] = 0xfef1a1e1u;
-    generationIds[3] = 0xd8ef2778u;
-    lines->push_back(HtmlString(L10N::GetString(generationIds[tag->getInt(L"generation")]),
-                                eMinecraftColour_NOTSET, false, false, 0));
 }
 
 void WrittenBookItem::resolveBookComponents(not_null_ptr<ItemInstance> itemInstance,
@@ -136,31 +148,33 @@ void WrittenBookItem::resolveBookComponents(not_null_ptr<ItemInstance> itemInsta
     }
 
     CompoundTag* tag = itemInstance->getTag();
-    if (tag->getBoolean(L"resolved"))
+    if (tag->getBoolean(TAG_RESOLVED))
     {
         return;
     }
 
-    tag->putBoolean(L"resolved", true);
+    tag->putBoolean(TAG_RESOLVED, true);
     if (!makeSureTagIsValid(tag))
     {
         return;
     }
 
-    ListTag* pages = tag->getList(L"pages", Tag::TAG_STRING);
+    ListTag* pages = tag->getList(TAG_PAGES, Tag::TAG_STRING);
     for (int i = 0; i < pages->size(); ++i)
     {
         pages->set(i, new StringTag(pages->getString(i)));
     }
-    tag->put(L"pages", pages);
+    tag->put(TAG_PAGES, pages);
 
-    if (player->GetType() == EntityType::SERVER_PLAYER && player->getMainHandItem() == itemInstance)
+    if (!(player->GetType() == EntityType::SERVER_PLAYER && player->getMainHandItem() == itemInstance))
     {
-        boost::shared_ptr<ServerPlayer> serverPlayer = boost::static_pointer_cast<ServerPlayer>(player);
-        Slot* slot = player->mContainerMenu->getSlotFor(player->mInventory, player->mInventory->m_selected);
-        serverPlayer->mConnection->send(
-            boost::shared_ptr<Packet>(new ClientboundContainerSetSlotPacket(0, slot->mIndex, itemInstance)));
+        return;
     }
+
+    boost::shared_ptr<ServerPlayer> serverPlayer = boost::static_pointer_cast<ServerPlayer>(player);
+    Slot* slot = player->mContainerMenu->getSlotFor(player->mInventory, player->mInventory->m_selected);
+    serverPlayer->mConnection->send(
+        boost::shared_ptr<Packet>(new ClientboundContainerSetSlotPacket(0, slot->mIndex, itemInstance)));
 }
 
 InteractionResultHolder WrittenBookItem::use(Level* level,
@@ -197,10 +211,5 @@ bool WrittenBookItem::isFoil(not_null_ptr<ItemInstance> itemInstance)
 
 bool WrittenBookItem::HasBookTags(not_null_ptr<ItemInstance> itemInstance)
 {
-    if (!itemInstance->hasTag())
-    {
-        return false;
-    }
-
-    return itemInstance->getTag()->contains(L"pages") || itemInstance->getTag()->contains(L"title");
+    return itemInstance->hasTag() && (itemInstance->getTag()->contains(TAG_PAGES) || itemInstance->getTag()->contains(TAG_TITLE));
 }

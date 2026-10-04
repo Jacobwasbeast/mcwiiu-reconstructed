@@ -9,17 +9,17 @@ LootBonusEnchantment::LootBonusEnchantment(const Rarity* rarity,
                                            arrayWithLength<const EquipmentSlot*> slots)
     : Enchantment(rarity, category, slots)
 {
-    if (category == EnchantmentCategory::WEAPON)
+    if (category == EnchantmentCategory::DIGGER)
     {
         setDescriptionId(IDS_ENCHANTMENT_LOOT_BONUS_DIGGER);
     }
-    else if (category == EnchantmentCategory::DIGGER)
+    else if (category == EnchantmentCategory::FISHING_ROD)
     {
-        setDescriptionId(IDS_ENCHANTMENT_LOOT_BONUS);
+        setDescriptionId(IDS_ENCHANTMENT_LOOT_BONUS_FISHING_ROD);
     }
     else
     {
-        setDescriptionId(IDS_ENCHANTMENT_LOOT_BONUS_FISHING_ROD);
+        setDescriptionId(IDS_ENCHANTMENT_LOOT_BONUS);
     }
 }
 

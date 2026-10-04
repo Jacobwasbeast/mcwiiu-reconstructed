@@ -1,6 +1,7 @@
 #include "game/item/CompassItem.hpp"
 
 #include <cmath>
+#include <cstring>
 
 #include <boost/shared_ptr.hpp>
 
@@ -17,10 +18,19 @@
 #include "game/world/Level.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 
+static const std::wstring COMPASS_ICON_NAMES[4] =
+{
+    std::wstring(L"compassP0"),
+    std::wstring(L"compassP1"),
+    std::wstring(L"compassP2"),
+    std::wstring(L"compassP3")
+};
+
 CompassItem::CompassItem()
     : Item()
 {
-    mIcons[0] = NULL;
+    memset(mIcons, 0, sizeof(mIcons));
+
     addProperty(ResourceLocation(L"angle"), new CompassItem_ItemPropertyFunction());
 }
 
@@ -44,10 +54,10 @@ TextureAtlasSprite* CompassItem::getIcon(int auxValue)
 void CompassItem::registerIcons(IconRegister* iconRegister)
 {
     Item::registerIcons(iconRegister);
-    mIcons[0] = iconRegister->registerIcon(L"compassP0");
-    mIcons[1] = iconRegister->registerIcon(L"compassP1");
-    mIcons[2] = iconRegister->registerIcon(L"compassP2");
-    mIcons[3] = iconRegister->registerIcon(L"compassP3");
+    mIcons[0] = iconRegister->registerIcon(COMPASS_ICON_NAMES[0]);
+    mIcons[1] = iconRegister->registerIcon(COMPASS_ICON_NAMES[1]);
+    mIcons[2] = iconRegister->registerIcon(COMPASS_ICON_NAMES[2]);
+    mIcons[3] = iconRegister->registerIcon(COMPASS_ICON_NAMES[3]);
 }
 
 double CompassItem::CompassItem_ItemPropertyFunction::getFrameRotation(boost::shared_ptr<ItemFrame> frame)
@@ -84,20 +94,21 @@ float CompassItem::CompassItem_ItemPropertyFunction::call(not_null_ptr<ItemInsta
                                                           Level* level,
                                                           boost::shared_ptr<LivingEntity> entity)
 {
+    if (entity == NULL && !itemInstance->isFramed())
+    {
+        return 0.0f;
+    }
+
+    bool hasEntity = entity.get() != NULL;
     boost::shared_ptr<Entity> source;
 
-    if (entity == NULL)
+    if (hasEntity)
     {
-        if (!itemInstance->isFramed())
-        {
-            return 0.0f;
-        }
-
-        source = boost::dynamic_pointer_cast<Entity>(itemInstance->getFrame());
+        source = entity;
     }
     else
     {
-        source = boost::dynamic_pointer_cast<Entity>(entity);
+        source = boost::dynamic_pointer_cast<Entity>(itemInstance->getFrame());
     }
 
     if (level == NULL)
@@ -115,7 +126,7 @@ float CompassItem::CompassItem_ItemPropertyFunction::call(not_null_ptr<ItemInsta
     {
         double rotation;
 
-        if (entity != NULL)
+        if (hasEntity)
         {
             rotation = (double)source->mYRot;
         }
@@ -126,10 +137,10 @@ float CompassItem::CompassItem_ItemPropertyFunction::call(not_null_ptr<ItemInsta
 
         rotation = std::fmod(rotation, 360.0);
         angle = 3.1415927410125732 -
-            ((rotation - 90.0) * 0.01745329238474369 - getSpawnToAngle(level, source));
+            ((rotation - 90.0) * 0.017453292f - getSpawnToAngle(level, source));
     }
 
-    if (entity != NULL)
+    if (hasEntity)
     {
         angle = wobble(level, angle);
     }

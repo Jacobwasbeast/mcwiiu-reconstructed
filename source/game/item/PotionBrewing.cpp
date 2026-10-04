@@ -8,9 +8,10 @@
 #include "game/item/Potions.hpp"
 #include "game/item/PotionUtils.hpp"
 
-static std::vector<PotionBrewing::Mix<Potion>*> potionMixes;
-static std::vector<PotionBrewing::Mix<Item>*> containerMixes;
-static std::vector<PotionBrewing::ItemInstancePredicate*> containerPredicates;
+std::vector<PotionBrewing::Mix<Potion>*> PotionBrewing::potionMixes;
+std::vector<PotionBrewing::Mix<Item>*> PotionBrewing::containerMixes;
+std::vector<PotionBrewing::ItemInstancePredicate*> PotionBrewing::containerPredicates;
+PotionBrewing::PredicateItemInstance* PotionBrewing::containerPredicate = new PotionBrewing::PredicateItemInstance();
 
 PotionBrewing::ItemInstancePredicate::ItemInstancePredicate(Item* item)
     : mItem(item), mAuxValue(-1)
@@ -24,11 +25,7 @@ PotionBrewing::ItemInstancePredicate::ItemInstancePredicate(Item* item, int auxV
 
 bool PotionBrewing::ItemInstancePredicate::apply(not_null_ptr<ItemInstance> itemInstance) const
 {
-    if (itemInstance->getItem() != mItem)
-    {
-        return false;
-    }
-    return mAuxValue == -1 || mAuxValue == itemInstance->getAuxValue();
+    return itemInstance->getItem() == mItem && (mAuxValue == -1 || mAuxValue == itemInstance->getAuxValue());
 }
 
 PotionBrewing::ItemInstancePredicate::~ItemInstancePredicate()
@@ -37,8 +34,8 @@ PotionBrewing::ItemInstancePredicate::~ItemInstancePredicate()
 
 bool PotionBrewing::PredicateItemInstance::apply(not_null_ptr<ItemInstance> itemInstance) const
 {
-    std::vector<PotionBrewing::ItemInstancePredicate*>::const_iterator predicate;
-    for (predicate = containerPredicates.begin(); predicate != containerPredicates.end(); ++predicate)
+    for (std::vector<PotionBrewing::ItemInstancePredicate*>::iterator predicate = containerPredicates.begin();
+         predicate != containerPredicates.end(); ++predicate)
     {
         if ((*predicate)->apply(itemInstance))
         {
@@ -54,8 +51,9 @@ PotionBrewing::PredicateItemInstance::~PredicateItemInstance()
 
 bool PotionBrewing::isContainerIngredient(not_null_ptr<ItemInstance> itemInstance)
 {
-    unsigned int i;
-    for (i = 0; i < containerMixes.size(); ++i)
+    int i = 0;
+    int count = containerMixes.size();
+    for (; i < count; ++i)
     {
         if (containerMixes.at(i)->ingredient->apply(itemInstance))
         {
@@ -67,8 +65,9 @@ bool PotionBrewing::isContainerIngredient(not_null_ptr<ItemInstance> itemInstanc
 
 bool PotionBrewing::isPotionIngredient(not_null_ptr<ItemInstance> itemInstance)
 {
-    unsigned int i;
-    for (i = 0; i < potionMixes.size(); ++i)
+    int i = 0;
+    int count = potionMixes.size();
+    for (; i < count; ++i)
     {
         if (potionMixes.at(i)->ingredient->apply(itemInstance))
         {
@@ -86,8 +85,9 @@ bool PotionBrewing::isIngredient(not_null_ptr<ItemInstance> itemInstance)
 bool PotionBrewing::hasContainerMix(not_null_ptr<ItemInstance> item, not_null_ptr<ItemInstance> ingredient)
 {
     Item* itemType = item->getItem();
-    unsigned int i;
-    for (i = 0; i < containerMixes.size(); ++i)
+    int i = 0;
+    int count = containerMixes.size();
+    for (; i < count; ++i)
     {
         Mix<Item>* containerMix = containerMixes.at(i);
         if (containerMix->from == itemType && containerMix->ingredient->apply(ingredient))
@@ -101,8 +101,9 @@ bool PotionBrewing::hasContainerMix(not_null_ptr<ItemInstance> item, not_null_pt
 bool PotionBrewing::hasPotionMix(not_null_ptr<ItemInstance> item, not_null_ptr<ItemInstance> ingredient)
 {
     Potion* potion = PotionUtils::getPotion(item);
-    unsigned int i;
-    for (i = 0; i < potionMixes.size(); ++i)
+    int i = 0;
+    int count = potionMixes.size();
+    for (; i < count; ++i)
     {
         Mix<Potion>* potionMix = potionMixes.at(i);
         if (potionMix->from == potion && potionMix->ingredient->apply(ingredient))
@@ -115,11 +116,11 @@ bool PotionBrewing::hasPotionMix(not_null_ptr<ItemInstance> item, not_null_ptr<I
 
 bool PotionBrewing::hasMix(not_null_ptr<ItemInstance> item, not_null_ptr<ItemInstance> ingredient)
 {
-    if (hasContainerMix(item, ingredient))
+    if (!containerPredicate->apply(item))
     {
-        return true;
+        return false;
     }
-    return hasPotionMix(item, ingredient);
+    return hasContainerMix(item, ingredient) || hasPotionMix(item, ingredient);
 }
 
 not_null_ptr<ItemInstance> PotionBrewing::mix(not_null_ptr<ItemInstance> ingredient, not_null_ptr<ItemInstance> item)
@@ -128,8 +129,9 @@ not_null_ptr<ItemInstance> PotionBrewing::mix(not_null_ptr<ItemInstance> ingredi
     {
         Potion* potion = PotionUtils::getPotion(item);
         Item* itemType = item->getItem();
-        unsigned int i;
-        for (i = 0; i < containerMixes.size(); ++i)
+        int i = 0;
+        int count = containerMixes.size();
+        for (; i < count; ++i)
         {
             Mix<Item>* containerMix = containerMixes.at(i);
             if (containerMix->from == itemType && containerMix->ingredient->apply(ingredient))
@@ -137,7 +139,9 @@ not_null_ptr<ItemInstance> PotionBrewing::mix(not_null_ptr<ItemInstance> ingredi
                 return PotionUtils::setPotion(not_null_ptr<ItemInstance>(new ItemInstance(containerMix->result)), potion);
             }
         }
-        for (i = 0; i < potionMixes.size(); ++i)
+        i = 0;
+        count = potionMixes.size();
+        for (; i < count; ++i)
         {
             Mix<Potion>* potionMix = potionMixes.at(i);
             if (potionMix->from == potion && potionMix->ingredient->apply(ingredient))
@@ -156,19 +160,13 @@ void PotionBrewing::addContainer(ItemInstancePredicate* predicate)
 
 void PotionBrewing::addContainerRecipe(PotionItem* from, ItemInstancePredicate* ingredient, PotionItem* result)
 {
-    Mix<Item>* containerMix = new Mix<Item>;
-    containerMix->from = from;
-    containerMix->ingredient = ingredient;
-    containerMix->result = result;
+    Mix<Item>* containerMix = new Mix<Item>(from, ingredient, result);
     containerMixes.push_back(containerMix);
 }
 
 void PotionBrewing::addMix(Potion* from, Predicate<not_null_ptr<ItemInstance> >* ingredient, Potion* result)
 {
-    Mix<Potion>* potionMix = new Mix<Potion>;
-    potionMix->from = from;
-    potionMix->ingredient = ingredient;
-    potionMix->result = result;
+    Mix<Potion>* potionMix = new Mix<Potion>(from, ingredient, result);
     potionMixes.push_back(potionMix);
 }
 

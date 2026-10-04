@@ -6,10 +6,6 @@
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/item/AreaEffectCloud.hpp"
 
-AreaEffectCloud_Predicate::~AreaEffectCloud_Predicate()
-{
-}
-
 bool AreaEffectCloud_Predicate::apply(boost::shared_ptr<Entity> entity) const
 {
     boost::shared_ptr<AreaEffectCloud> cloud = boost::dynamic_pointer_cast<AreaEffectCloud>(entity);

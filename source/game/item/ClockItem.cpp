@@ -1,16 +1,26 @@
 #include "game/item/ClockItem.hpp"
 
+#include <cstring>
+
 #include "game/core/IconRegister.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/util/ResourceLocation.hpp"
 #include "game/world/block/ClockItem_ItemPropertyFunction.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 
+static const std::wstring CLOCK_ICON_NAMES[4] =
+{
+    std::wstring(L"clockP0"),
+    std::wstring(L"clockP1"),
+    std::wstring(L"clockP2"),
+    std::wstring(L"clockP3")
+};
+
 ClockItem::ClockItem()
     : Item()
 {
-    mIcons[0] = NULL;
     addProperty(ResourceLocation(L"time"), new ClockItem_ItemPropertyFunction());
+    memset(mIcons, 0, sizeof(mIcons));
 }
 
 ClockItem::~ClockItem()
@@ -29,8 +39,8 @@ TextureAtlasSprite* ClockItem::getIcon(int auxValue)
 void ClockItem::registerIcons(IconRegister* iconRegister)
 {
     Item::registerIcons(iconRegister);
-    mIcons[0] = iconRegister->registerIcon(L"clockP0");
-    mIcons[1] = iconRegister->registerIcon(L"clockP1");
-    mIcons[2] = iconRegister->registerIcon(L"clockP2");
-    mIcons[3] = iconRegister->registerIcon(L"clockP3");
+    mIcons[0] = iconRegister->registerIcon(CLOCK_ICON_NAMES[0]);
+    mIcons[1] = iconRegister->registerIcon(CLOCK_ICON_NAMES[1]);
+    mIcons[2] = iconRegister->registerIcon(CLOCK_ICON_NAMES[2]);
+    mIcons[3] = iconRegister->registerIcon(CLOCK_ICON_NAMES[3]);
 }

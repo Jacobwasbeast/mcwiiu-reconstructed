@@ -34,8 +34,7 @@ NonNullList<not_null_ptr<ItemInstance> > ShapelessRecipe::getRemainingItems(boos
 {
     NonNullList<not_null_ptr<ItemInstance> > result =
         NonNullList<not_null_ptr<ItemInstance> >::withSize(craftingContainer->getContainerSize(), ItemInstance::EMPTY);
-    unsigned int i;
-    for (i = 0; i < craftingContainer->getContainerSize(); ++i)
+    for (unsigned int i = 0; i < result.size(); ++i)
     {
         not_null_ptr<ItemInstance> item = craftingContainer->getItem(i);
         if (item->getItem()->hasCraftingRemainingItem())
@@ -54,8 +53,8 @@ Recipe::_eGroupType ShapelessRecipe::getGroup()
 bool ShapelessRecipe::matches(boost::shared_ptr<CraftingContainer> craftingContainer, Level* level)
 {
     std::vector<ItemInstance*> remaining = *mIngredients;
-    unsigned int row;
-    unsigned int column;
+    int row;
+    int column;
     for (row = 0; row < craftingContainer->getHeight(); ++row)
     {
         for (column = 0; column < craftingContainer->getWidth(); ++column)
@@ -97,10 +96,10 @@ int ShapelessRecipe::size()
 
 bool ShapelessRecipe::recipeRequires(int itemId)
 {
-    std::vector<ItemInstance*>* ingredients = new std::vector<ItemInstance*>();
+    std::vector<ItemInstance*>* ingredients = new std::vector<ItemInstance*>;
     *ingredients = *mIngredients;
-    std::vector<ItemInstance*>::iterator ingredient;
-    for (ingredient = mIngredients->begin(); ingredient != mIngredients->end(); ++ingredient)
+    std::vector<ItemInstance*>::iterator last = mIngredients->end();
+    for (std::vector<ItemInstance*>::iterator ingredient = mIngredients->begin(); ingredient != last; ++ingredient)
     {
         ingredients->erase(ingredient);
     }
@@ -110,33 +109,40 @@ bool ShapelessRecipe::recipeRequires(int itemId)
 
 void ShapelessRecipe::recipeRequires(INGREDIENTS_REQUIRED* ingredientsRequired)
 {
-    int* craftingGrid = new int[9]();
-    int* itemIds = new int[9]();
-    int* itemCounts = new int[9]();
+    int count = 0;
+    int gridSlot = 0;
+    int requiresCraftingTable = mIngredients->size() > 4;
+    int* craftingGrid = new int[9];
+    int* itemIds = new int[9];
+    int* itemCounts = new int[9];
     int* auxValues = new int[9];
-    CompoundTag** itemTags = new CompoundTag*[9]();
+    CompoundTag** itemTags = new CompoundTag*[9];
+    std::memset(itemIds, 0, sizeof(int) * 9);
+    std::memset(itemCounts, 0, sizeof(int) * 9);
     std::memset(auxValues, -1, sizeof(int) * 9);
+    std::memset(itemTags, 0, sizeof(CompoundTag*) * 9);
+    std::memset(craftingGrid, 0, sizeof(int) * 9);
 
-    unsigned int i;
-    unsigned int count = 0;
-    unsigned int gridSlot = 0;
-    for (i = 0; i < mIngredients->size(); ++i)
+    bool compactRecipe = mIngredients->size() < 5;
+    std::vector<ItemInstance*>::iterator last = mIngredients->end();
+    std::vector<ItemInstance*>::iterator it;
+    for (it = mIngredients->begin(); it != last; ++it)
     {
-        ItemInstance* ingredient = (*mIngredients)[i];
-        if (!ingredient->isEmpty())
+        ItemInstance* ingredient = *it;
+        if (ingredient != NULL && !ingredient->isEmpty())
         {
-            int id = Item::getId(ingredient->getItem());
-            int aux = ingredient->getAuxValue();
-            craftingGrid[gridSlot++] = id | (aux << 24);
-            if (mIngredients->size() < 5 && gridSlot == 2)
+            int aux = (*it)->getAuxValue();
+            craftingGrid[gridSlot] = Item::getId(ingredient->getItem()) | (aux << 24);
+            ++gridSlot;
+            if (compactRecipe && gridSlot == 2)
             {
                 gridSlot = 3;
             }
 
-            unsigned int j;
+            int j;
             for (j = 0; j < count; ++j)
             {
-                if (itemIds[j] == id && (aux == -1 || auxValues[j] == aux))
+                if (itemIds[j] == Item::getId(ingredient->getItem()) && (aux == -1 || auxValues[j] == aux))
                 {
                     ++itemCounts[j];
                     break;
@@ -144,27 +150,27 @@ void ShapelessRecipe::recipeRequires(INGREDIENTS_REQUIRED* ingredientsRequired)
             }
             if (j == count)
             {
-                itemIds[count] = id;
-                itemCounts[count] = 1;
+                itemIds[count] = Item::getId(ingredient->getItem());
                 auxValues[count] = aux;
                 itemTags[count] = ingredient->getTag();
+                ++itemCounts[count];
                 ++count;
             }
         }
     }
 
-    ingredientsRequired->numIngredients = count;
-    ingredientsRequired->requiresCraftingTable = mIngredients->size() > 4;
     ingredientsRequired->itemIds = new int[count];
     ingredientsRequired->itemCounts = new int[count];
     ingredientsRequired->auxValues = new int[count];
     ingredientsRequired->itemTags = new CompoundTag*[count];
-    ingredientsRequired->recipe = this;
     ingredientsRequired->craftingGrid = new int[9];
-    for (i = 0; i < 4; ++i)
-    {
-        ingredientsRequired->available[i] = false;
-    }
+    ingredientsRequired->available[0] = false;
+    ingredientsRequired->recipe = this;
+    ingredientsRequired->available[1] = false;
+    ingredientsRequired->available[2] = false;
+    ingredientsRequired->available[3] = false;
+    ingredientsRequired->numIngredients = count;
+    ingredientsRequired->requiresCraftingTable = requiresCraftingTable;
     if (count != 0)
     {
         std::memcpy(ingredientsRequired->itemIds, itemIds, sizeof(int) * count);
@@ -185,12 +191,12 @@ boost::shared_ptr<CraftingContainer> ShapelessRecipe::generateExpectedCraftSlots
 {
     boost::shared_ptr<CraftingContainer> container(new CraftingContainer(NULL, 3, 3));
     unsigned int slot = 0;
-    std::vector<ItemInstance*>::iterator ingredient;
-    for (ingredient = mIngredients->begin(); ingredient != mIngredients->end(); ++ingredient)
+    for (std::vector<ItemInstance*>::iterator ingredient = mIngredients->begin(); ingredient != mIngredients->end(); ++ingredient)
     {
-        if (*ingredient != NULL && !(*ingredient)->isEmpty())
+        ItemInstance* item = *ingredient;
+        if (item != NULL && !item->isEmpty())
         {
-            container->setItem(slot, (*ingredient)->copy());
+            container->setItem(slot, item->copy());
             ++slot;
         }
     }

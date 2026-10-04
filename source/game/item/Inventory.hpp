@@ -102,6 +102,7 @@ public:
     int countMatches(Item* item);
 
 private:
+    friend class MerchantMenu;
     friend class Minecraft;
     friend class Player;
     friend class ServerGamePacketListenerImpl;
@@ -111,7 +112,11 @@ private:
     friend class MasterGameMode;
     friend class FurnaceMenu;
     friend class EnchantmentMenu;
+    friend class UIScene_AnvilMenu;
+    friend class CraftingMenu;
+    friend class FireworksMenu;
     friend class IUIScene_CraftingMenu;
+    friend class EnderMan;
 
     NonNullList<not_null_ptr<ItemInstance> > m_items;
     NonNullList<not_null_ptr<ItemInstance> > m_armor;

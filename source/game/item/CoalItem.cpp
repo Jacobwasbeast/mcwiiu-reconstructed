@@ -6,7 +6,6 @@
 
 CoalItem::CoalItem()
     : Item()
-    , mCharcoalIcon(NULL)
 {
     setStackedByData(true);
     setMaxDamage(0);

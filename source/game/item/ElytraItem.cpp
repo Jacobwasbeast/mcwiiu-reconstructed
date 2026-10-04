@@ -93,5 +93,6 @@ TextureAtlasSprite* ElytraItem::getLayerIcon(int auxValue, int, not_null_ptr<Ite
 
 TextureAtlasSprite* ElytraItem::getIcon(not_null_ptr<ItemInstance> itemInstance)
 {
-    return isFlyEnabled(itemInstance) ? mIcon : mBrokenIcon;
+    bool flyEnabled = isFlyEnabled(itemInstance);
+    return flyEnabled ? mIcon : mBrokenIcon;
 }

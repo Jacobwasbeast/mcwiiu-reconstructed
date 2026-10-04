@@ -74,8 +74,9 @@ ItemTransforms* ItemTransforms::set_thirdperson_hands(float rotationX, float rot
 {
     set_thirdperson_righthand(rotationX, rotationY, rotationZ, translationX, translationY, translationZ, scaleX,
                               scaleY, scaleZ);
-    return set_thirdperson_lefthand(rotationX, rotationY, rotationZ, translationX, translationY, translationZ, scaleX,
-                                    scaleY, scaleZ);
+    set_thirdperson_lefthand(rotationX, rotationY, rotationZ, translationX, translationY, translationZ, scaleX,
+                          scaleY, scaleZ);
+    return this;
 }
 
 ItemTransforms::ItemTransforms(const ItemTransforms& other)
@@ -349,17 +350,22 @@ ItemTransforms* ItemTransforms::set_firstperson_hands(float rotationX, float rot
 {
     set_firstperson_righthand(rotationX, rotationY, rotationZ, translationX, translationY, translationZ, scaleX,
                               scaleY, scaleZ);
-    return set_firstperson_lefthand(rotationX, rotationY, rotationZ, translationX, translationY, translationZ, scaleX,
-                                    scaleY, scaleZ);
+    set_firstperson_lefthand(rotationX, rotationY, rotationZ, translationX, translationY, translationZ, scaleX,
+                          scaleY, scaleZ);
+    return this;
 }
 
 ItemTransforms* ItemTransforms::getTransforms(const ItemInstance* item, LivingEntity* entity)
 {
-    if (entity != NULL && entity->GetType() == EntityType::ARMOR_STAND)
+    if (entity != NULL)
     {
-        ItemTransforms* armourStandTransforms = getArmourStandTransforms(item, entity);
-        if (armourStandTransforms != NULL)
-            return armourStandTransforms;
+        const bool isArmourStand = entity->GetType() == EntityType::ARMOR_STAND;
+        if (isArmourStand)
+        {
+            ItemTransforms* armourStandTransforms = getArmourStandTransforms(item, entity);
+            if (armourStandTransforms != NULL)
+                return armourStandTransforms;
+        }
     }
 
     switch (Item::getId(item->getItem()))
@@ -423,8 +429,8 @@ ItemTransforms* ItemTransforms::getTransforms(const ItemInstance* item, LivingEn
             (new ItemTransforms(*skull))->set_gui(30.0f, 45.0f, 0.0f, -2.0f, 2.0f, 0.0f, 0.6f, 0.6f, 0.6f);
         if (!SkullBlockRenderer::instance->dragonJawCheck())
         {
-            dragonHead->set_gui(30.0f, 45.0f, 0.0f, 0.0f, -0.5f, 0.0f, 0.6f, 0.6f, 0.6f);
-            dragonHead->set_fixed(0.0f, 180.0f, 0.0f, 0.0f, 2.0f, -3.0f, 1.0f, 1.0f, 1.0f);
+            dragonHead->set_gui(30.0f, 45.0f, 0.0f, 0.0f, -0.5f, 0.0f, 0.6f, 0.6f, 0.6f)
+                ->set_fixed(0.0f, 180.0f, 0.0f, 0.0f, 2.0f, -3.0f, 1.0f, 1.0f, 1.0f);
             return dragonHead;
         }
         dragonHead->set_gui(30.0f, 45.0f, 0.0f, -2.0f, 2.0f, 0.0f, 0.6f, 0.6f, 0.6f);
@@ -519,16 +525,15 @@ ItemTransforms* ItemTransforms::getTransforms(const ItemInstance* item, LivingEn
                 ->set_firstperson_righthand(0.0f, 45.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.4f, 0.4f, 0.4f)
                 ->set_firstperson_lefthand(0.0f, 225.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.4f, 0.4f, 0.4f);
 
-        switch (block->defaultBlockState()->getRenderShape())
-        {
-        case BLOCK_RENDER_WALL:
+        int renderShape = block->defaultBlockState()->getRenderShape();
+        if (renderShape == BLOCK_RENDER_WALL)
         {
             static ItemTransforms* transforms = (new ItemTransforms(*blockTransforms))
                                                     ->set_gui(30.0f, 135.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.55f, 0.55f, 0.55f)
                                                     ->set_fixed(0.0f, 90.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.5f, 0.5f, 0.5f);
             return transforms;
         }
-        case BLOCK_RENDER_FENCE:
+        if (renderShape == BLOCK_RENDER_FENCE)
         {
             static ItemTransforms* transforms =
                 (new ItemTransforms(*blockTransforms))
@@ -536,7 +541,7 @@ ItemTransforms* ItemTransforms::getTransforms(const ItemInstance* item, LivingEn
                     ->set_fixed(0.0f, 90.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.5f, 0.5f, 0.5f);
             return transforms;
         }
-        case BLOCK_RENDER_FENCE_GATE:
+        if (renderShape == BLOCK_RENDER_FENCE_GATE)
         {
             static ItemTransforms* transforms =
                 (new ItemTransforms(*blockTransforms))
@@ -546,7 +551,7 @@ ItemTransforms* ItemTransforms::getTransforms(const ItemInstance* item, LivingEn
                     ->set_firstperson_righthand(0.0f, -45.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.4f, 0.4f, 0.4f);
             return transforms;
         }
-        case BLOCK_RENDER_STAIRS:
+        if (renderShape == BLOCK_RENDER_STAIRS)
         {
             static ItemTransforms* transforms =
                 (new ItemTransforms(*blockTransforms))
@@ -555,20 +560,20 @@ ItemTransforms* ItemTransforms::getTransforms(const ItemInstance* item, LivingEn
                     ->set_thirdperson_lefthand(75.0f, -135.0f, 0.0f, 0.0f, 2.5f, 0.0f, 0.375f, 0.375f, 0.375f);
             return transforms;
         }
-        case BLOCK_RENDER_ANVIL:
+        if (renderShape == BLOCK_RENDER_ANVIL)
         {
             static ItemTransforms* transforms = (new ItemTransforms(*blockTransforms))
                                                     ->set_fixed(0.0f, 90.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.5f, 0.5f, 0.5f);
             return transforms;
         }
-        case BLOCK_RENDER_END_ROD:
+        if (renderShape == BLOCK_RENDER_END_ROD)
         {
             static ItemTransforms* transforms =
                 (new ItemTransforms(*blockTransforms))
                     ->set_thirdperson_hands(30.0f, 45.0f, 0.0f, 0.0f, 2.0f, 1.0f, 0.375f, 0.375f, 0.375f);
             return transforms;
         }
-        case BLOCK_RENDER_CONDUIT:
+        if (renderShape == BLOCK_RENDER_CONDUIT)
         {
             static ItemTransforms* transforms =
                 (new ItemTransforms())
@@ -579,7 +584,7 @@ ItemTransforms* ItemTransforms::getTransforms(const ItemInstance* item, LivingEn
                     ->set_fixed(0.0f, 0.0f, 0.0f, 0.0f, 5.0f, 0.0f, 1.0f, 1.0f, 1.0f);
             return transforms;
         }
-        case BLOCK_RENDER_TURTLE_EGG:
+        if (renderShape == BLOCK_RENDER_TURTLE_EGG)
         {
             static ItemTransforms* transforms =
                 (new ItemTransforms(*blockTransforms))
@@ -587,9 +592,6 @@ ItemTransforms* ItemTransforms::getTransforms(const ItemInstance* item, LivingEn
                     ->set_firstperson_righthand(0.0f, 45.0f, 0.0f, 0.0f, 3.0f, 0.0f, 0.4f, 0.4f, 0.4f)
                     ->set_fixed(0.0f, 0.0f, 0.0f, 0.0f, 2.5f, 0.0f, 0.5f, 0.5f, 0.5f);
             return transforms;
-        }
-        default:
-            break;
         }
 
         if (block == Blocks::stone_button || block == Blocks::wooden_button || block == Blocks::acacia_button

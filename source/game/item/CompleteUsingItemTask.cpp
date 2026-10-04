@@ -8,13 +8,12 @@ CompleteUsingItemTask::CompleteUsingItemTask(Tutorial* tutorial, int description
                                              bool preCompletionEnabled)
     : TutorialTask(tutorial, descriptionId, preCompletionEnabled, NULL, false, true, true)
 {
-    this->items = new Item*[itemCount];
+    Item** copy = new Item*[itemCount];
+    this->items = copy;
 
-    unsigned int index = 0;
-    while (index < itemCount)
+    for (unsigned int index = 0; index < itemCount; ++index)
     {
-        this->items[index] = items[index];
-        ++index;
+        copy[index] = items[index];
     }
 
     this->itemCount = itemCount;

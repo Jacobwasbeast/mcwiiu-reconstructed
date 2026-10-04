@@ -29,6 +29,8 @@ static const unsigned int BED_DESCRIPTION_IDS[16] = {
     IDS_TILE_BED_BROWN, IDS_TILE_BED_GREEN, IDS_TILE_BED_RED, IDS_TILE_BED_BLACK
 };
 
+static const std::wstring BED_OVERLAY_ICON_NAME = L"bed_overlay";
+
 BedItem::BedItem()
     : Item(),
       mBedIcon(NULL)
@@ -106,11 +108,11 @@ InteractionResult::EInteractionResult BedItem::useOn(boost::shared_ptr<Player> p
             BedBlock::OCCUPIED, &occupiedValue);
         TypedBoxed<const Direction*> facingValue(facing);
         footState = footState->setBoxedValue(HorizontalDirectionalBlock::FACING_PROPERTY, &facingValue);
-        TypedBoxed<const BedBlock::Part*> footValue(BedBlock::PART->getUnboxedValue(L"foot"));
+        TypedBoxed<const BedBlock::Part*> footValue(&gBedFoot);
         footState = footState->setBoxedValue(BedBlock::PART, &footValue);
         level->setBlock(footPos, footState, Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false);
 
-        TypedBoxed<const BedBlock::Part*> headValue(BedBlock::PART->getUnboxedValue(L"head"));
+        TypedBoxed<const BedBlock::Part*> headValue(&gBedHead);
         level->setBlock(headPos, footState->setBoxedValue(BedBlock::PART, &headValue), Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false);
 
         player->awardStat(gStats->get_blocksPlaced(Block::getId(Blocks::bed)),
@@ -169,7 +171,7 @@ bool BedItem::hasMultipleSpriteLayers()
 void BedItem::registerIcons(IconRegister* iconRegister)
 {
     Item::registerIcons(iconRegister);
-    mBedIcon = iconRegister->registerIcon(L"bed_overlay");
+    mBedIcon = iconRegister->registerIcon(BED_OVERLAY_ICON_NAME);
 }
 
 int BedItem::getDescriptionId(not_null_ptr<ItemInstance> itemInstance)

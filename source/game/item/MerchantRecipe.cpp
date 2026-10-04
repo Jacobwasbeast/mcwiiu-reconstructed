@@ -46,15 +46,14 @@ void MerchantRecipe::_init(not_null_ptr<ItemInstance> buyA, not_null_ptr<ItemIns
 
 void MerchantRecipe::load(CompoundTag* tag)
 {
-    if (tag == NULL)
-    {
-        return;
-    }
-    mBuyA = not_null_ptr<ItemInstance>(new ItemInstance(tag->getCompound(L"buy")));
-    mSell = not_null_ptr<ItemInstance>(new ItemInstance(tag->getCompound(L"sell")));
+    CompoundTag* buyTag = tag->getCompound(L"buy");
+    mBuyA = not_null_ptr<ItemInstance>(new ItemInstance(buyTag));
+    CompoundTag* sellTag = tag->getCompound(L"sell");
+    mSell = not_null_ptr<ItemInstance>(new ItemInstance(sellTag));
     if (tag->contains(L"buyB", Tag::TAG_COMPOUND))
     {
-        mBuyB = not_null_ptr<ItemInstance>(new ItemInstance(tag->getCompound(L"buyB")));
+        CompoundTag* buyBTag = tag->getCompound(L"buyB");
+        mBuyB = not_null_ptr<ItemInstance>(new ItemInstance(buyBTag));
     }
     if (tag->contains(L"uses", Tag::TAG_ANY_NUMERIC))
     {
@@ -84,25 +83,53 @@ bool MerchantRecipe::hasSecondaryBuyItem() { return !mBuyB->isEmpty(); }
 not_null_ptr<ItemInstance> MerchantRecipe::getSellItem() { return mSell; }
 bool MerchantRecipe::isSame(MerchantRecipe* other)
 {
-    if (mBuyA->getItem() != other->mBuyA->getItem()) return false;
-    if (mSell->getItem() != other->mSell->getItem()) return false;
-    if (mBuyB->isEmpty() && other->mBuyB->isEmpty()) return true;
-    if (!mBuyB->isEmpty() && !other->mBuyB->isEmpty() && mBuyB->getItem() == other->mBuyB->getItem()) return true;
-    return false;
+    bool same = false;
+    if (mBuyA->getItem() == other->mBuyA->getItem())
+    {
+        if (mSell->getItem() == other->mSell->getItem())
+        {
+            if (mBuyB->isEmpty() && other->mBuyB->isEmpty())
+            {
+                same = true;
+            }
+            else if (!mBuyB->isEmpty() && !other->mBuyB->isEmpty() && mBuyB->getItem() == other->mBuyB->getItem())
+            {
+                same = true;
+            }
+        }
+    }
+    return same;
 }
 bool MerchantRecipe::isSameSameButBetter(MerchantRecipe* other)
 {
-    if (!isSame(other)) return false;
-    if (other->mBuyA->getCount() > mBuyA->getCount()) return true;
-    if (mBuyB->isEmpty()) return false;
-    if (other->mBuyB->getCount() <= mBuyB->getCount()) return false;
-    return true;
+    bool better = false;
+    if (isSame(other))
+    {
+        if (mBuyA->getCount() < other->mBuyA->getCount())
+        {
+            better = true;
+        }
+        else if (!mBuyB->isEmpty() && mBuyB->getCount() < other->mBuyB->getCount())
+        {
+            better = true;
+        }
+    }
+    return better;
 }
 int MerchantRecipe::getUses() { return mUses; }
 int MerchantRecipe::getMaxUses() { return mMaxUses; }
 void MerchantRecipe::increaseUses() { ++mUses; }
 void MerchantRecipe::increaseMaxUses(int amount) { mMaxUses += amount; }
-bool MerchantRecipe::isDeprecated() { return mUses >= mMaxUses || mSell->isEmpty(); }
+bool MerchantRecipe::isDeprecated()
+{
+    bool soldOut = mSell->isEmpty();
+    bool deprecated = true;
+    if (mUses < mMaxUses && !soldOut)
+    {
+        deprecated = false;
+    }
+    return deprecated;
+}
 void MerchantRecipe::enforceDeprecated() { mUses = mMaxUses; }
 bool MerchantRecipe::shouldRewardExp() { return mRewardExp; }
 CompoundTag* MerchantRecipe::createTag()

@@ -19,10 +19,10 @@
 
 SwordItem::SwordItem(const Item::Tier* tier)
 {
-    setMaxStackSize(1);
+    mMaxStackSize = 1;
     mTier = tier;
-    setMaxDamage(mTier->getUses());
-    mAttackDamage = 4.0f + mTier->getAttackDamageBonus();
+    setMaxDamage(tier->getUses());
+    mAttackDamage = 4.0f + tier->getAttackDamageBonus();
 }
 
 SwordItem::~SwordItem()
@@ -77,7 +77,7 @@ bool SwordItem::mineBlock(not_null_ptr<ItemInstance> itemInstance,
                           const BlockPos& pos,
                           boost::shared_ptr<LivingEntity> entity)
 {
-    if (state->getDestroySpeed(level, pos) != 0.0f)
+    if (static_cast<double>(state->getDestroySpeed(level, pos)) != 0.0)
     {
         itemInstance->hurtAndBreak(2, entity);
     }
@@ -142,15 +142,18 @@ boost::unordered_map<eATTRIBUTE_ID, AttributeModifier*>* SwordItem::getDefaultAt
 
     if (Minecraft::InMiniGame(eMiniGameId_Any, true))
     {
-        attackDamage = Minecraft::GetInstance()->GetMiniGame()->getBaseDamage(getId(this), mAttackDamage);
+        const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
+        attackDamage = miniGame->getBaseDamage(getId(this), mAttackDamage);
     }
 
     if (slot == EquipmentSlot::MAINHAND)
     {
-        (*modifiers)[SharedMonsterAttributes::ATTACK_DAMAGE->getId()] =
-            new AttributeModifier(eMODIFIER_ID_BaseAttackDamage, attackDamage, 0);
-        (*modifiers)[SharedMonsterAttributes::ATTACK_SPEED->getId()] =
-            new AttributeModifier(eMODIFIER_ID_BaseAttackSpeed, -2.4, 0);
+        modifiers->insert(boost::unordered_map<eATTRIBUTE_ID, AttributeModifier*>::value_type(
+            SharedMonsterAttributes::ATTACK_DAMAGE->getId(),
+            new AttributeModifier(eMODIFIER_ID_BaseAttackDamage, attackDamage, 0)));
+        modifiers->insert(boost::unordered_map<eATTRIBUTE_ID, AttributeModifier*>::value_type(
+            SharedMonsterAttributes::ATTACK_SPEED->getId(),
+            new AttributeModifier(eMODIFIER_ID_BaseAttackSpeed, -2.4f, 0)));
     }
 
     return modifiers;

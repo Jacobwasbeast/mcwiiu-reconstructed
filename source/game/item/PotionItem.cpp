@@ -42,18 +42,17 @@ not_null_ptr<ItemInstance> PotionItem::finishUsingItem(not_null_ptr<ItemInstance
                                                        Level* level,
                                                        boost::shared_ptr<LivingEntity> entity)
 {
-    boost::shared_ptr<Player> player;
-    if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+    boost::shared_ptr<Player> player =
+        (entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER
+            ? boost::static_pointer_cast<Player>(entity)
+            : boost::shared_ptr<Player>();
+    if (player.get() != NULL)
     {
-        player = boost::static_pointer_cast<Player>(entity);
-        if (player.get() != NULL)
+        player->awardStat(gStats->get_itemsUsed(Item::VALIDgetId(this)),
+                          GenericStats::param_itemsUsed(player, itemInstance));
+        if (PotionUtils::hasEffect(itemInstance, MobEffects::WATER_BREATHING))
         {
-            player->awardStat(gStats->get_itemsUsed(Item::VALIDgetId(this)),
-                              GenericStats::param_itemsUsed(player, itemInstance));
-            if (PotionUtils::hasEffect(itemInstance, MobEffects::WATER_BREATHING))
-            {
-                player->ResetTimerAchievement(Player::eTimerAchievement_SleepWithTheFishes);
-            }
+            player->ResetTimerAchievement(Player::eTimerAchievement_SleepWithTheFishes);
         }
     }
 
@@ -119,8 +118,8 @@ int PotionItem::getUseAnimation(not_null_ptr<const ItemInstance>) const
 InteractionResultHolder PotionItem::use(Level*, boost::shared_ptr<Player> player,
                                         InteractionHand::EInteractionHand hand)
 {
-    not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
     player->startUsingItem(hand);
+    not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
     return InteractionResultHolder(InteractionResult::eInteractionResult_Success, itemInstance);
 }
 
@@ -131,8 +130,7 @@ bool PotionItem::TestUse(Level*, boost::shared_ptr<Player>, InteractionHand::EIn
 
 std::wstring PotionItem::getName(not_null_ptr<ItemInstance> itemInstance)
 {
-    Potion* potion = PotionUtils::getPotion(itemInstance);
-    return potion->getName(Potion::NORMAL);
+    return PotionUtils::getPotion(itemInstance)->getName(Potion::NORMAL);
 }
 
 void PotionItem::appendHoverText(not_null_ptr<ItemInstance> itemInstance,
@@ -144,11 +142,7 @@ void PotionItem::appendHoverText(not_null_ptr<ItemInstance> itemInstance,
 
 bool PotionItem::isFoil(not_null_ptr<ItemInstance> itemInstance)
 {
-    if (Item::isFoil(itemInstance))
-    {
-        return true;
-    }
-    return PotionUtils::isFoil(itemInstance);
+    return Item::isFoil(itemInstance) || PotionUtils::isFoil(itemInstance);
 }
 
 int PotionItem::getUseDescriptionId(not_null_ptr<ItemInstance> itemInstance)
@@ -185,11 +179,11 @@ void PotionItem::registerIcons(IconRegister* iconRegister)
 
 unsigned int PotionItem::GetUseTooltip(const ItemTooltipDataHolder& tooltipData)
 {
-    if (tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Fail)
+    if (tooltipData.m_eInteractionResult != InteractionResult::eInteractionResult_Fail)
     {
-        return IDS_NONE;
+        return IDS_TOOLTIPS_DRINK;
     }
-    return IDS_TOOLTIPS_DRINK;
+    return IDS_NONE;
 }
 
 std::wstring PotionItem::getBottleTextureName()

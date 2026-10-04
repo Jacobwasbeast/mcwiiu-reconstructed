@@ -1,8 +1,7 @@
 #include "game/item/ProtectionEnchantment.hpp"
 
-#include <cmath>
-
 #include "game/core/DamageSource.hpp"
+#include "game/core/Mth.hpp"
 #include "game/item/EnchantmentCategory.hpp"
 #include "game/item/EnchantmentHelper.hpp"
 #include "game/item/Enchantments.hpp"
@@ -109,8 +108,12 @@ bool ProtectionEnchantment::checkCompatibility(const Enchantment* other) const
         return Enchantment::checkCompatibility(other);
     }
 
-    return mType != protection->mType &&
-           (mType == Type::ALL || protection->mType == Type::ALL);
+    if (protection->mType != mType &&
+        (mType == Type::FALL || protection->mType == Type::FALL))
+    {
+        return true;
+    }
+    return false;
 }
 
 int ProtectionEnchantment::getFireAfterDampener(
@@ -120,7 +123,7 @@ int ProtectionEnchantment::getFireAfterDampener(
                                                        entity);
     if (level > 0)
     {
-        damage -= (int)std::floor((float)damage * (float)level * 0.15f);
+        damage -= Mth::floor((float)damage * ((float)level * 0.15f));
     }
     return damage;
 }
@@ -132,7 +135,7 @@ double ProtectionEnchantment::getExplosionKnockbackAfterDampener(
         Enchantments::BLAST_PROTECTION, entity);
     if (level > 0)
     {
-        knockback -= std::floor(knockback * (double)((float)level * 0.15f));
+        knockback -= Mth::floor(knockback * (double)((float)level * 0.15f));
     }
     return knockback;
 }

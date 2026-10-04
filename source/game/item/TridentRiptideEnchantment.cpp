@@ -2,7 +2,8 @@
 #include "game/core/StringIds.hpp"
 
 #include "game/item/EnchantmentCategory.hpp"
-#include "game/item/Enchantments.hpp"
+#include "game/item/TridentChannelingEnchantment.hpp"
+#include "game/item/TridentLoyaltyEnchantment.hpp"
 
 TridentRiptideEnchantment::TridentRiptideEnchantment(
     const Rarity* rarity,
@@ -34,7 +35,8 @@ int TridentRiptideEnchantment::getMaxLevel()
 bool TridentRiptideEnchantment::checkCompatibility(const Enchantment* other) const
 {
     if (other != NULL &&
-        (other == Enchantments::CHANNELING || other == Enchantments::LOYALTY))
+        (dynamic_cast<const TridentLoyaltyEnchantment*>(other) != NULL ||
+         dynamic_cast<const TridentChannelingEnchantment*>(other) != NULL))
     {
         return false;
     }

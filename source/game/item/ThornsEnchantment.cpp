@@ -9,6 +9,7 @@
 #include "game/item/ArmorItem.hpp"
 #include "game/item/EnchantmentCategory.hpp"
 #include "game/item/EnchantmentHelper.hpp"
+#include "game/item/Enchantments.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/util/Random.hpp"
 
@@ -70,27 +71,25 @@ void ThornsEnchantment::doPostHurt(boost::shared_ptr<LivingEntity> target,
 {
     Random* random = target->getRandom();
     boost::shared_ptr<ItemInstance> item =
-        EnchantmentHelper::getRandomItemWith(this, target);
+        EnchantmentHelper::getRandomItemWith(Enchantments::THORNS, target);
 
-    if (item->isEmpty())
+    if (!item->isEmpty())
     {
-        return;
-    }
-
-    if (!shouldHit(level, random))
-    {
-        item->hurtAndBreak(1, target);
-    }
-    else
-    {
-        if (attacker)
+        if (!shouldHit(level, random))
         {
-            EntityDamageSource* damageSource = DamageSource::CreateThorns(target);
-            attacker->hurt(damageSource, (float)getDamage(level, random));
-            delete damageSource;
-            attacker->playSound(SoundEvents::ENCHANT_THORNS_HIT, 0.5f, 1.0f);
+            item->hurtAndBreak(1, target);
         }
-        item->hurtAndBreak(3, target);
+        else
+        {
+            if (attacker)
+            {
+                EntityDamageSource* damageSource = DamageSource::CreateThorns(target);
+                attacker->hurt(damageSource, (float)getDamage(level, random));
+                delete damageSource;
+                attacker->playSound(SoundEvents::ENCHANT_THORNS_HIT, 0.5f, 1.0f);
+            }
+            item->hurtAndBreak(3, target);
+        }
     }
 }
 

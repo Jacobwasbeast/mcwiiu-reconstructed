@@ -30,15 +30,16 @@ CompoundTag* ContainerHelper::saveAllItems(CompoundTag* tag, NonNullList<not_nul
     ListTag* list = new ListTag();
     for (unsigned int slot = 0; slot < items.size(); ++slot)
     {
-        if (!items[slot]->isEmpty())
+        not_null_ptr<ItemInstance> item = items[slot];
+        if (!item->isEmpty())
         {
             CompoundTag* itemTag = new CompoundTag();
             itemTag->putByte(L"Slot", (unsigned char)slot);
-            items[slot]->save(itemTag);
+            item->save(itemTag);
             list->add(itemTag);
         }
     }
-    if (list->size() != 0 || saveEmpty)
+    if (!list->isEmpty() || saveEmpty)
     {
         tag->put(L"Items", list);
     }
@@ -59,7 +60,8 @@ void ContainerHelper::loadAllItems(CompoundTag* tag, NonNullList<not_null_ptr<It
         unsigned int slot = (unsigned int)itemTag->getByte(L"Slot");
         if (slot < items.size())
         {
-            items[slot] = not_null_ptr<ItemInstance>(new ItemInstance(itemTag));
+            not_null_ptr<ItemInstance> loaded(new ItemInstance(itemTag));
+            items[slot] = loaded;
         }
     }
 }

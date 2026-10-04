@@ -56,19 +56,13 @@ InteractionResult::EInteractionResult SkullItem::useOn(boost::shared_ptr<Player>
     }
 
     BlockPos placePos = pos;
-    const BlockState* state = level->getBlockState(placePos);
-    bool replaceable = state->getBlock()->mayReplaceWithPlace(level, placePos);
-    if (!state->getMaterial()->isSolid() && !replaceable)
+    if (!level->getBlockState(placePos)->getBlock()->mayReplaceWithPlace(level, placePos))
     {
-        return InteractionResult::eInteractionResult_Fail;
-    }
-    if (replaceable && direction != Direction::UP)
-    {
-        return InteractionResult::eInteractionResult_Fail;
-    }
-    if (!replaceable)
-    {
-        placePos = pos.relative(direction);
+        if (!level->getBlockState(placePos)->getMaterial()->isSolid())
+        {
+            return InteractionResult::eInteractionResult_Fail;
+        }
+        placePos = placePos.relative(direction);
     }
 
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
@@ -115,7 +109,7 @@ int SkullItem::getLevelDataForAuxValue(int auxValue)
 
 int SkullItem::getDescriptionId(int auxValue)
 {
-    if (auxValue > 5)
+    if ((unsigned int)auxValue >= 6)
     {
         auxValue = 0;
     }
@@ -124,21 +118,25 @@ int SkullItem::getDescriptionId(int auxValue)
 
 int SkullItem::getDescriptionId(not_null_ptr<ItemInstance> itemInstance)
 {
-    return getDescriptionId(itemInstance->getAuxValue());
+    int auxValue = itemInstance->getAuxValue();
+    if ((unsigned int)auxValue >= 6)
+    {
+        auxValue = 0;
+    }
+    return SKULL_DESCRIPTION_IDS[auxValue];
 }
 
 std::wstring SkullItem::getName(not_null_ptr<ItemInstance> itemInstance)
 {
     if (itemInstance->getAuxValue() == 3 && itemInstance->hasTag())
     {
-        CompoundTag* tag = itemInstance->getTag();
-        if (tag->contains(L"SkullOwner", Tag::TAG_STRING))
+        if (itemInstance->getTag()->contains(L"SkullOwner", Tag::TAG_STRING))
         {
-            return tag->getString(L"SkullOwner");
+            return itemInstance->getTag()->getString(L"SkullOwner");
         }
-        if (tag->contains(L"SkullOwner", Tag::TAG_COMPOUND))
+        if (itemInstance->getTag()->contains(L"SkullOwner", Tag::TAG_COMPOUND))
         {
-            CompoundTag* owner = tag->getCompound(L"SkullOwner");
+            CompoundTag* owner = itemInstance->getTag()->getCompound(L"SkullOwner");
             if (owner->contains(L"Name", Tag::TAG_STRING))
             {
                 return owner->getString(L"Name");

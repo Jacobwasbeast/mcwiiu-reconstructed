@@ -52,8 +52,9 @@ InteractionResultHolder EggItem::use(Level* level,
         level->addEntity(egg);
     }
 
-    player->awardStat(gStats->get_itemsUsed(VALIDgetId(this)),
-                      GenericStats::param_itemsUsed(player, itemInstance));
+    Player* awardee = player.operator->();
+    Stat* stat = gStats->get_itemsUsed(VALIDgetId(this));
+    awardee->awardStat(stat, GenericStats::param_itemsUsed(player, itemInstance));
 
     return InteractionResultHolder(InteractionResult::eInteractionResult_Success, itemInstance);
 }

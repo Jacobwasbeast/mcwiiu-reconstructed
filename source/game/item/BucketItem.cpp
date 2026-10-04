@@ -476,7 +476,7 @@ bool BucketItem::TestUse(Level* level, boost::shared_ptr<Player> player, Interac
             return false;
         }
         BlockPos placePos = pos.relative(direction);
-        if (player->mayUseItemAt(pos, direction, itemInstance) != 1)
+        if (!player->mayUseItemAt(pos, direction, itemInstance))
         {
             delete hitResult;
             return false;
@@ -497,7 +497,7 @@ bool BucketItem::TestUse(Level* level, boost::shared_ptr<Player> player, Interac
         return false;
     }
 
-    if (player->mayUseItemAt(pos.relative(direction), direction, itemInstance) != 1)
+    if (!player->mayUseItemAt(pos.relative(direction), direction, itemInstance))
     {
         delete hitResult;
         return false;
@@ -742,7 +742,7 @@ InteractionResultHolder BucketItem::use(Level* level, boost::shared_ptr<Player> 
             placePos = placePos.below();
         }
 
-        if (player->mayUseItemAt(placePos, direction, itemInstance) != 1)
+        if (!player->mayUseItemAt(placePos, direction, itemInstance))
         {
             delete hitResult;
             return InteractionResultHolder(InteractionResult::eInteractionResult_Fail, itemInstance);
@@ -764,7 +764,7 @@ InteractionResultHolder BucketItem::use(Level* level, boost::shared_ptr<Player> 
         return InteractionResultHolder(InteractionResult::eInteractionResult_Success, bucketItem);
     }
 
-    if (player->mayUseItemAt(pos.relative(direction), direction, itemInstance) != 1)
+    if (!player->mayUseItemAt(pos.relative(direction), direction, itemInstance))
     {
         delete hitResult;
         return InteractionResultHolder(InteractionResult::eInteractionResult_Fail, itemInstance);

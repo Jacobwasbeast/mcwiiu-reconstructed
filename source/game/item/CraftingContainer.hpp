@@ -25,7 +25,7 @@ public:
     virtual unsigned int getContainerSize();
     virtual bool isEmpty();
     virtual not_null_ptr<ItemInstance> getItem(unsigned int slot);
-    virtual not_null_ptr<ItemInstance> getItem(unsigned int row, unsigned int column);
+    not_null_ptr<ItemInstance> getItem(unsigned int row, unsigned int column);
     virtual not_null_ptr<ItemInstance> removeItem(unsigned int slot, int count);
     virtual not_null_ptr<ItemInstance> removeItemNoUpdate(int slot);
     virtual void setItem(unsigned int slot, not_null_ptr<ItemInstance> item);
@@ -40,8 +40,8 @@ public:
     virtual int getContainerDataCount();
     virtual void clearContent();
 
-    unsigned int getHeight();
-    unsigned int getWidth();
+    int getHeight();
+    int getWidth();
 
 private:
     NonNullList<not_null_ptr<ItemInstance> > mItems;

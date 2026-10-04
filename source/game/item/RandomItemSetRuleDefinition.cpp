@@ -6,8 +6,9 @@
 #include "game/world/LevelRuleset.hpp"
 
 RandomItemSetRuleDefinition::RandomItemSetRuleDefinition()
-    : mId(L""), mMaxCount(0)
 {
+    mId = L"";
+    mMaxCount = 0;
     addStringAttribute(ConsoleGameRules::eGameRuleAttr_id, &mId);
     addIntAttribute(ConsoleGameRules::eGameRuleAttr_maxCount, &mMaxCount);
 }
@@ -70,11 +71,12 @@ ConsoleGameRules::EGameRuleType RandomItemSetRuleDefinition::getActionType()
 
 GameRuleDefinition* RandomItemSetRuleDefinition::addChild(ConsoleGameRules::EGameRuleType type)
 {
-    WeighedTreasureItemRuleDefinition* item = NULL;
+    GameRuleDefinition* rule = NULL;
     if (type == ConsoleGameRules::eGameRuleType_WeighedTreasureItem)
     {
-        item = new WeighedTreasureItemRuleDefinition();
+        WeighedTreasureItemRuleDefinition* item = new WeighedTreasureItemRuleDefinition();
+        rule = item;
         mItems.push_back(item);
     }
-    return item;
+    return rule;
 }

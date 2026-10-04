@@ -130,7 +130,8 @@ boost::unordered_map<eATTRIBUTE_ID, AttributeModifier*>* HoeItem::getDefaultAttr
     double attackDamage = 0.0;
     if (Minecraft::InMiniGame(eMiniGameId_Any, true))
     {
-        attackDamage = Minecraft::GetInstance()->GetMiniGame()->getBaseDamage(getId(this), 0.0);
+        const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
+        attackDamage = miniGame->getBaseDamage(getId(this), 0.0);
     }
     if (slot == EquipmentSlot::MAINHAND)
     {

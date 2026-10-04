@@ -24,28 +24,23 @@ AddItemRuleDefinition::AddItemRuleDefinition()
     addIntAttribute(ConsoleGameRules::eGameRuleAttr_slot, &mSlot);
 }
 
-AddItemRuleDefinition::~AddItemRuleDefinition()
-{
-}
-
 not_null_ptr<ItemInstance> AddItemRuleDefinition::getItem()
 {
-    Item* item = Item::byId(mItemId);
-    if (item != NULL) {
+    not_null_ptr<ItemInstance> itemInstance = ItemInstance::EMPTY;
+    if (Item::byId(mItemId) != NULL) {
+        int maxStackSize = Item::byId(mItemId)->getMaxStackSize();
         int count = mCount;
-        int maxStackSize = item->getMaxStackSize();
         if (maxStackSize < count) {
             count = maxStackSize;
         }
-        not_null_ptr<ItemInstance> itemInstance(new ItemInstance(item, count, mData));
+        itemInstance = not_null_ptr<ItemInstance>(new ItemInstance(Item::byId(mItemId), count, mData));
         itemInstance->set4JData(m4JData);
         std::vector<AddEnchantmentRuleDefinition*>::iterator it;
         for (it = mEnchantments.begin(); it != mEnchantments.end(); ++it) {
             (*it)->enchantItem(itemInstance);
         }
-        return itemInstance;
     }
-    return ItemInstance::EMPTY;
+    return itemInstance;
 }
 
 bool AddItemRuleDefinition::addItemToContainer(boost::shared_ptr<Container> container,
@@ -54,50 +49,47 @@ bool AddItemRuleDefinition::addItemToContainer(boost::shared_ptr<Container> cont
                                                bool randomSlot)
 {
     Random random;
+    bool added = false;
     if (slot >= 0 && static_cast<unsigned int>(slot) < container->getContainerSize()) {
-        container->setItem(static_cast<unsigned int>(slot), item);
-        return true;
-    }
-
-    boost::shared_ptr<Inventory> inventory = boost::dynamic_pointer_cast<Inventory>(container);
-    if (inventory) {
-        return inventory->add(item);
-    }
-
-    if (!randomSlot) {
+        container->setItem(slot, item);
+        added = true;
+    } else if (boost::dynamic_pointer_cast<Inventory>(container)) {
+        added = boost::dynamic_pointer_cast<Inventory>(container)->add(item);
+    } else if (randomSlot) {
+        if (!container->isFull()) {
+            unsigned int index;
+            do {
+                index = static_cast<unsigned int>(random.nextInt(static_cast<int>(container->getContainerSize())));
+            } while (!container->getItem(index)->isEmpty());
+            container->setItem(index, item);
+        }
+        added = false;
+    } else {
         unsigned int index;
         for (index = 0; index < container->getContainerSize(); ++index) {
-            not_null_ptr<ItemInstance> existing = container->getItem(index);
-            if (existing->isEmpty()) {
+            bool empty = container->getItem(index)->isEmpty();
+            if (empty) {
                 container->setItem(index, item);
-                return true;
+                added = true;
+                break;
             }
         }
-        return false;
     }
-
-    if (container->isFull()) {
-        return false;
-    }
-    unsigned int index;
-    do {
-        index = static_cast<unsigned int>(random.nextInt(static_cast<int>(container->getContainerSize())));
-    } while (!container->getItem(index)->isEmpty());
-    container->setItem(index, item);
-    return true;
+    return added;
 }
 
 bool AddItemRuleDefinition::addItemToContainer(boost::shared_ptr<Container> container, int slot)
 {
+    bool added = false;
     not_null_ptr<ItemInstance> item = getItem();
-    if (item->isEmpty()) {
-        return false;
+    if (!item->isEmpty()) {
+        int targetSlot = slot;
+        if (mSlot >= 0 && static_cast<unsigned int>(mSlot) < container->getContainerSize()) {
+            targetSlot = mSlot;
+        }
+        added = addItemToContainer(container, item, targetSlot, false);
     }
-    int targetSlot = slot;
-    if (mSlot >= 0 && static_cast<unsigned int>(mSlot) < container->getContainerSize()) {
-        targetSlot = mSlot;
-    }
-    return addItemToContainer(container, item, targetSlot, false);
+    return added;
 }
 
 void AddItemRuleDefinition::getChildren(std::vector<GameRuleDefinition*>* children)
@@ -115,10 +107,11 @@ ConsoleGameRules::EGameRuleType AddItemRuleDefinition::getActionType()
 
 GameRuleDefinition* AddItemRuleDefinition::addChild(ConsoleGameRules::EGameRuleType type)
 {
-    AddEnchantmentRuleDefinition* child = NULL;
+    GameRuleDefinition* rule = NULL;
     if (type == ConsoleGameRules::eGameRuleType_AddEnchantment) {
-        child = new AddEnchantmentRuleDefinition();
+        AddEnchantmentRuleDefinition* child = new AddEnchantmentRuleDefinition();
+        rule = child;
         mEnchantments.push_back(child);
     }
-    return child;
+    return rule;
 }

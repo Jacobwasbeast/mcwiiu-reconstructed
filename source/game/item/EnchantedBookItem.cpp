@@ -1,11 +1,16 @@
 #include "game/item/EnchantedBookItem.hpp"
 
+#include "game/core/Rarity.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/data/ListTag.hpp"
 #include "game/item/Enchantment.hpp"
 #include "game/item/EnchantmentInstance.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
+
+static const std::wstring TAG_STORED_ENCHANTMENTS = L"StoredEnchantments";
+static const wchar_t* TAG_ENCH_ID = L"id";
+static const wchar_t* TAG_ENCH_LEVEL = L"lvl";
 
 EnchantedBookItem::EnchantedBookItem()
     : Item()
@@ -29,21 +34,21 @@ bool EnchantedBookItem::isEnchantable(not_null_ptr<ItemInstance> itemInstance)
 ListTag* EnchantedBookItem::getEnchantments(not_null_ptr<ItemInstance> itemInstance)
 {
     CompoundTag* tag = itemInstance->getTag();
-    if (tag != NULL)
+    if (tag == NULL)
     {
-        return tag->getList(L"StoredEnchantments", Tag::TAG_COMPOUND);
+        return new ListTag();
     }
-    return new ListTag(0);
+    return tag->getList(TAG_STORED_ENCHANTMENTS, Tag::TAG_COMPOUND);
 }
 
 const Rarity* EnchantedBookItem::getRarity(not_null_ptr<ItemInstance> itemInstance)
 {
     ListTag* enchantments = getEnchantments(itemInstance);
-    if (enchantments != NULL && enchantments->size() != 0)
+    if (enchantments != NULL && enchantments->isEmpty())
     {
         return Item::getRarity(itemInstance);
     }
-    return Item::getRarity(itemInstance);
+    return Rarity::UNCOMMON;
 }
 
 void EnchantedBookItem::appendHoverText(not_null_ptr<ItemInstance> itemInstance,
@@ -53,19 +58,17 @@ void EnchantedBookItem::appendHoverText(not_null_ptr<ItemInstance> itemInstance,
 {
     Item::appendHoverText(itemInstance, player, lines, advanced);
     ListTag* enchantments = getEnchantments(itemInstance);
-    if (enchantments == NULL)
+    if (enchantments != NULL)
     {
-        return;
-    }
-    for (int i = 0; i < enchantments->size(); ++i)
-    {
-        CompoundTag* entry = enchantments->getCompound(i);
-        int id = entry->getShort(L"id");
-        int level = entry->getShort(L"lvl");
-        Enchantment* enchantment = Enchantment::byId(id);
-        if (enchantment != NULL)
+        std::wstring unformatted = L"";
+        for (int i = 0; i < enchantments->size(); ++i)
         {
-            lines->push_back(enchantment->getFullname(level));
+            int id = enchantments->getCompound(i)->getShort(TAG_ENCH_ID);
+            int level = enchantments->getCompound(i)->getShort(TAG_ENCH_LEVEL);
+            if (Enchantment::byId(id) != NULL)
+            {
+                lines->push_back(Enchantment::byId(id)->getFullname(level));
+            }
         }
     }
 }
@@ -74,32 +77,32 @@ void EnchantedBookItem::addEnchantment(not_null_ptr<ItemInstance> itemInstance,
                                        EnchantmentInstance* instance)
 {
     ListTag* enchantments = getEnchantments(itemInstance);
+    bool add = true;
     for (int i = 0; i < enchantments->size(); ++i)
     {
         CompoundTag* entry = enchantments->getCompound(i);
-        if (Enchantment::byId(entry->getShort(L"id")) == instance->enchantment)
+        if (Enchantment::byId(entry->getShort(TAG_ENCH_ID)) == instance->enchantment)
         {
-            if (instance->level > entry->getShort(L"lvl"))
+            if (entry->getShort(TAG_ENCH_LEVEL) < instance->level)
             {
-                entry->putShort(L"lvl", static_cast<short>(instance->level));
+                entry->putShort(TAG_ENCH_LEVEL, static_cast<short>(instance->level));
             }
-            if (!itemInstance->hasTag())
-            {
-                itemInstance->setTag(new CompoundTag());
-            }
-            itemInstance->getTag()->put(L"StoredEnchantments", enchantments);
-            return;
+            add = false;
+            break;
         }
     }
-    CompoundTag* entry = new CompoundTag();
-    entry->putShort(L"id", static_cast<short>(Enchantment::getId(instance->enchantment)));
-    entry->putShort(L"lvl", static_cast<short>(instance->level));
-    enchantments->add(entry);
+    if (add)
+    {
+        CompoundTag* entry = new CompoundTag();
+        entry->putShort(TAG_ENCH_ID, static_cast<short>(Enchantment::getId(instance->enchantment)));
+        entry->putShort(TAG_ENCH_LEVEL, static_cast<short>(instance->level));
+        enchantments->add(entry);
+    }
     if (!itemInstance->hasTag())
     {
         itemInstance->setTag(new CompoundTag());
     }
-    itemInstance->getTag()->put(L"StoredEnchantments", enchantments);
+    itemInstance->getTag()->put(TAG_STORED_ENCHANTMENTS.c_str(), enchantments);
 }
 
 not_null_ptr<ItemInstance> EnchantedBookItem::createForEnchantment(EnchantmentInstance* instance)

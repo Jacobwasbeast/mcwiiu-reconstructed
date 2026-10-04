@@ -41,12 +41,9 @@ InteractionResult::EInteractionResult ArmorStandItem::useOn(boost::shared_ptr<Pl
         return InteractionResult::eInteractionResult_Fail;
     }
 
-    BlockPos placePos = pos;
-
-    if (!level->getBlockState(pos)->getBlock()->mayReplaceWithPlace(level, pos))
-    {
-        placePos = pos.relative(direction);
-    }
+    BlockPos placePos = level->getBlockState(pos)->getBlock()->mayReplaceWithPlace(level, pos)
+        ? pos
+        : pos.relative(direction);
 
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
 

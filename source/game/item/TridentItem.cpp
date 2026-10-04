@@ -34,7 +34,7 @@
 
 TridentItem::TridentItem()
 {
-    setMaxStackSize(1);
+    mMaxStackSize = 1;
     setMaxDamage(250);
 
     addProperty(ResourceLocation(std::wstring(L"throwing")), new TridentItem_Throwing_ItemPropertyFunction());
@@ -111,7 +111,7 @@ void TridentItem::releaseUsing(not_null_ptr<ItemInstance> itemInstance,
                          SoundEvents::TRIDENT_THROW,
                          SoundSource::eSoundSource_Players,
                          1.0f,
-                         1.0f / (player->getRandom()->nextFloat() * 0.4f + 1.2f) + 0.5f,
+                         1.0f / (random->nextFloat() * 0.4f + 1.2f) + 0.5f,
                          16.0f);
     }
     else
@@ -123,13 +123,13 @@ void TridentItem::releaseUsing(not_null_ptr<ItemInstance> itemInstance,
             return;
         }
 
-        float yRot = player->mYRot;
-        float xRot = player->mXRot;
-        float dirX = -Mth::sin(yRot * 0.017453292f) * Mth::cos(xRot * 0.017453292f);
-        float dirY = -Mth::sin(xRot * 0.017453292f);
-        float dirZ = Mth::cos(yRot * 0.017453292f) * Mth::cos(xRot * 0.017453292f);
+        float yRot = player->mYRot * 0.017453292f;
+        float xRot = player->mXRot * 0.017453292f;
+        float dirX = -Mth::sin(yRot) * Mth::cos(xRot);
+        float dirY = -Mth::sin(xRot);
+        float dirZ = Mth::cos(yRot) * Mth::cos(xRot);
         float length = Mth::sqrt(dirX * dirX + dirY * dirY + dirZ * dirZ);
-        float speed = 3.0f * (1.0f + (float)riptide) * 0.25f / length;
+        float speed = 0.25f * ((float)riptide + 1.0f) * 3.0f / length;
 
         player->startSpinAttack();
 
@@ -172,8 +172,8 @@ void TridentItem::releaseUsing(not_null_ptr<ItemInstance> itemInstance,
         }
     }
 
-    player->awardStat(gStats->get_itemsUsed(Item::VALIDgetId(this)),
-                      GenericStats::param_itemsUsed(player, itemInstance));
+    Stat* stat = gStats->get_itemsUsed(Item::VALIDgetId(this));
+    player->awardStat(stat, GenericStats::param_itemsUsed(player, itemInstance));
 }
 
 InteractionResultHolder TridentItem::use(Level* level,
@@ -182,13 +182,10 @@ InteractionResultHolder TridentItem::use(Level* level,
 {
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
 
-    if (EnchantmentHelper::getEnchantmentLevel(Enchantments::RIPTIDE, player) > 0
-        && !player->isInWaterOrRain())
-    {
-        return InteractionResultHolder(InteractionResult::eInteractionResult_Fail, itemInstance);
-    }
+    int riptide = EnchantmentHelper::getEnchantmentLevel(Enchantments::RIPTIDE, player);
 
-    if (itemInstance->getDamageValue() >= itemInstance->getMaxDamage())
+    if ((riptide > 0 && !player->isInWaterOrRain())
+        || itemInstance->getDamageValue() >= itemInstance->getMaxDamage())
     {
         return InteractionResultHolder(InteractionResult::eInteractionResult_Fail, itemInstance);
     }
@@ -213,7 +210,7 @@ bool TridentItem::mineBlock(not_null_ptr<ItemInstance> itemInstance,
                             const BlockPos& pos,
                             boost::shared_ptr<LivingEntity> entity)
 {
-    if (state->getDestroySpeed(level, pos) != 0.0f)
+    if (state->getDestroySpeed(level, pos) != 0.0)
     {
         itemInstance->hurtAndBreak(2, entity);
     }
@@ -228,10 +225,12 @@ boost::unordered_map<eATTRIBUTE_ID, AttributeModifier*>* TridentItem::getDefault
 
     if (slot == EquipmentSlot::MAINHAND)
     {
-        (*modifiers)[SharedMonsterAttributes::ATTACK_DAMAGE->getId()] =
-            new AttributeModifier(eMODIFIER_ID_BaseAttackDamage, 8.0f, 0);
-        (*modifiers)[SharedMonsterAttributes::ATTACK_SPEED->getId()] =
-            new AttributeModifier(eMODIFIER_ID_BaseAttackSpeed, -2.9f, 0);
+        modifiers->insert(boost::unordered_map<eATTRIBUTE_ID, AttributeModifier*>::value_type(
+            SharedMonsterAttributes::ATTACK_DAMAGE->getId(),
+            new AttributeModifier(eMODIFIER_ID_BaseAttackDamage, 8.0f, 0)));
+        modifiers->insert(boost::unordered_map<eATTRIBUTE_ID, AttributeModifier*>::value_type(
+            SharedMonsterAttributes::ATTACK_SPEED->getId(),
+            new AttributeModifier(eMODIFIER_ID_BaseAttackSpeed, -2.9f, 0)));
     }
 
     return modifiers;
@@ -244,7 +243,8 @@ int TridentItem::getEnchantmentValue()
 
 unsigned int TridentItem::GetUseTooltip(const ItemTooltipDataHolder& tooltipData)
 {
-    if (EnchantmentHelper::getItemEnchantmentLevel(Enchantments::RIPTIDE, tooltipData.m_pItemInstance) > 0)
+    bool riptide = EnchantmentHelper::getItemEnchantmentLevel(Enchantments::RIPTIDE, tooltipData.m_pItemInstance) > 0;
+    if (riptide)
     {
         if (tooltipData.m_pPlayer->isUsingItem())
         {

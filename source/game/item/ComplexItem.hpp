@@ -14,7 +14,7 @@ class ComplexItem : public Item
 {
 public:
     ComplexItem();
-    virtual ~ComplexItem();
+    virtual ~ComplexItem() {}
 
     virtual bool isComplex();
     virtual boost::shared_ptr<Packet> getUpdatePacket(not_null_ptr<ItemInstance> itemInstance,

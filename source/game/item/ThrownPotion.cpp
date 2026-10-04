@@ -40,6 +40,7 @@
 
 namespace
 {
+double SPLASH_RANGE_SQUARED = 16.0;
 }
 
 const EntityDataAccessor<not_null_ptr<ItemInstance> >* ThrownPotion::DATA_ITEM = NULL;
@@ -99,25 +100,28 @@ void ThrownPotion::dowseFire(const BlockPos& pos, const Direction* direction)
 
 bool ThrownPotion::isWaterSensitiveEntity(const boost::shared_ptr<Entity>& entity)
 {
-    if (!entity)
-        return true;
-    unsigned long long type = entity->GetType();
-    return type == EntityType::ENDER_MAN || type == EntityType::BLAZE || type == EntityType::SNOW_MAN;
+    return entity->GetType() == EntityType::ENDER_MAN || entity->GetType() == EntityType::BLAZE
+        || entity->GetType() == EntityType::SNOW_MAN;
 }
 
 void ThrownPotion::applyWater()
 {
+    AABB* area = mBoundingBox->grow(4.0, 2.0, 4.0);
     WATER_SENSITIVE* predicate = new WATER_SENSITIVE();
-    std::vector<boost::shared_ptr<Entity> >* entities = mLevel->getEntitiesOfClass(
-        typeid(LivingEntity), mBoundingBox->grow(4.0, 2.0, 4.0), predicate, false);
+    std::vector<boost::shared_ptr<Entity> >* entities =
+        mLevel->getEntitiesOfClass(typeid(LivingEntity), area, predicate, false);
     delete predicate;
 
-    for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != entities->end(); ++it)
+    if (!entities->empty())
     {
-        boost::shared_ptr<LivingEntity> living = boost::static_pointer_cast<LivingEntity>(*it);
-        if (distanceToSqr(living) < 16.0 && isWaterSensitiveEntity(living))
+        for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != entities->end(); ++it)
         {
-            living->hurt(DamageSource::DROWN, 1.0f);
+            boost::shared_ptr<LivingEntity> living = boost::static_pointer_cast<LivingEntity>(*it);
+            double distance = distanceToSqr(living);
+            if (distance < SPLASH_RANGE_SQUARED && isWaterSensitiveEntity(living))
+            {
+                living->hurt(DamageSource::DROWN, 1.0f);
+            }
         }
     }
 
@@ -131,14 +135,15 @@ bool ThrownPotion::isLingering()
 
 void ThrownPotion::makeAreaOfEffectCloud(const not_null_ptr<ItemInstance>& item, Potion* potion)
 {
-    AreaEffectCloud* cloud = new AreaEffectCloud(mLevel, mX, mY, mZ);
+    boost::shared_ptr<AreaEffectCloud> cloud(new AreaEffectCloud(mLevel, mX, mY, mZ));
 
+    const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
     std::vector<MobEffectInstance*>* mobEffects = PotionUtils::getMobEffects(item);
     if (mobEffects->size() == 1)
     {
         MobEffectInstance* effectInstance = mobEffects->at(0);
-        int lingeringDuration = Minecraft::GetInstance()->GetMiniGame()->getLingeringDuration(
-            effectInstance->getAmplifier(), cloud->getDuration());
+        int lingeringDuration = miniGame->getLingeringDuration(
+            effectInstance->durationEffectId, cloud->getDuration());
         cloud->setDuration(lingeringDuration);
     }
 
@@ -149,7 +154,7 @@ void ThrownPotion::makeAreaOfEffectCloud(const not_null_ptr<ItemInstance>& item,
     cloud->setRadius(3.0f);
     cloud->setRadiusOnUse(-0.5f);
     cloud->setWaitTime(10);
-    cloud->setRadiusPerTick((float)(-cloud->getRadius() / (double)cloud->getDuration()));
+    cloud->setRadiusPerTick(-cloud->getRadius() / (float)cloud->getDuration());
     cloud->setPotion(potion);
 
     std::vector<MobEffectInstance*>* effects = PotionUtils::getCustomEffects(item);
@@ -160,7 +165,7 @@ void ThrownPotion::makeAreaOfEffectCloud(const not_null_ptr<ItemInstance>& item,
         cloud->addEffect(new MobEffectInstance(orig->getEffect(), orig->getDuration(), orig->getAmplifier()));
     }
 
-    mLevel->addEntity(boost::shared_ptr<Entity>(cloud));
+    mLevel->addEntity(cloud);
 }
 
 void ThrownPotion::applySplash(const HitResult* result, std::vector<MobEffectInstance*>* effects)
@@ -180,7 +185,7 @@ void ThrownPotion::applySplash(const HitResult* result, std::vector<MobEffectIns
         if (!living || !living->isAffectedByPotions())
             continue;
         double distance = distanceToSqr(*entityIt);
-        if (distance >= 16.0)
+        if (distance >= SPLASH_RANGE_SQUARED)
             continue;
         double scale = -(std::sqrt(distance) * 0.25 - 1.0);
         if (result != NULL && result->mEntity == *entityIt)
@@ -235,27 +240,30 @@ bool ThrownPotion::onHit(const HitResult* result)
     not_null_ptr<ItemInstance> item = getItem();
     Potion* potion = PotionUtils::getPotion(item);
     std::vector<MobEffectInstance*>* effects = PotionUtils::getMobEffects(item);
-    bool noEffects = effects == NULL || effects->empty();
-    bool isWaterSplash = potion == Potions::WATER && noEffects;
+    bool isWaterSplash = false;
+    if (potion == Potions::WATER && effects->empty())
+        isWaterSplash = true;
 
-    if (isWaterSplash && result->mType == HitResult::BLOCK)
+    if (isWaterSplash)
     {
-        BlockPos pos = result->getBlockPos().relative(result->mDirection);
-        dowseFire(pos, result->mDirection);
-        arrayWithLength<const Direction*> directions = Direction::Plane::HORIZONTAL->iterator();
-        for (unsigned int i = 0; i < directions.length; ++i)
-            dowseFire(pos.relative(directions.data[i]), directions.data[i]);
+        if (result->mType == HitResult::BLOCK)
+        {
+            BlockPos pos = result->getBlockPos().relative(result->mDirection);
+            dowseFire(pos, result->mDirection);
+            arrayWithLength<const Direction*> directions = Direction::Plane::HORIZONTAL->iterator();
+            const Direction** end = directions.data + directions.length;
+            for (const Direction** direction = directions.data; direction != end; ++direction)
+                dowseFire(pos.relative(*direction), *direction);
+        }
     }
 
-    bool invertedGrenades = Minecraft::GetInstance()->GetMiniGame()->HasFeatureInvertedExplodingGrenades();
-
-    if (isWaterSplash && !invertedGrenades)
+    if (isWaterSplash && !Minecraft::GetInstance()->GetMiniGame()->HasFeatureInvertedExplodingGrenades())
     {
         applyWater();
         if (isLingering())
             makeAreaOfEffectCloud(item, potion);
     }
-    else if (!(noEffects && !invertedGrenades))
+    else if (!(effects->empty() && !Minecraft::GetInstance()->GetMiniGame()->HasFeatureInvertedExplodingGrenades()))
     {
         if (isLingering())
             makeAreaOfEffectCloud(item, potion);
@@ -289,19 +297,18 @@ void ThrownPotion::setItem(not_null_ptr<ItemInstance> item)
 
 void ThrownPotion::addDataWalkers(DataFixerUpper* fixer)
 {
-    if (fixer != NULL)
-        fixer->addWalker(DataFixTypes::eDataFixTypes_ItemInstance,
-                         (DataWalker*)new ItemDataWalker(EntityType::THROWN_POTION, L"Potion"));
+    fixer->addWalker(DataFixTypes::eDataFixTypes_Entity,
+                     (DataWalker*)new ItemDataWalker(EntityType::THROWN_POTION, L"Potion"));
 }
 
 void ThrownPotion::readAdditionalSaveData(CompoundTag* tag)
 {
     ThrowableProjectile::readAdditionalSaveData(tag);
     not_null_ptr<ItemInstance> item(new ItemInstance(tag->getCompound(L"Potion")));
-    if (!item->isEmpty())
-        setItem(item);
-    else
+    if (item->isEmpty())
         remove();
+    else
+        setItem(item);
 }
 
 void ThrownPotion::addAdditonalSaveData(CompoundTag* tag)
@@ -312,9 +319,10 @@ void ThrownPotion::addAdditonalSaveData(CompoundTag* tag)
         tag->put(L"Potion", item->save(new CompoundTag()));
 }
 
-double ThrownPotion::getGravity()
+float ThrownPotion::getGravity()
 {
-    return 0.05000000074505806;
+    float gravity = 0.05f;
+    return gravity;
 }
 
 void ThrownPotion::defineSynchedData()
@@ -334,5 +342,4 @@ bool ThrownPotion::WATER_SENSITIVE::apply(boost::shared_ptr<Entity> entity) cons
 
 ThrownPotion::WATER_SENSITIVE::~WATER_SENSITIVE()
 {
-    (void)0;
 }
