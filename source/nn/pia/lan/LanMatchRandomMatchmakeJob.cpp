@@ -50,20 +50,19 @@ uint32_t LanMatchRandomMatchmakeJob::WaitRequestSessionInfo()
     return 0;
 }
 
-uint64_t LanMatchRandomMatchmakeJob::NoticeOwnerChangeEvent(int32_t a1, uint32_t a2, uint32_t a3)
+void LanMatchRandomMatchmakeJob::NoticeOwnerChangeEvent(uint32_t ownerId, uint64_t principalId)
 {
-    return 0;
 }
 
 void LanMatchRandomMatchmakeJob::Cleanup()
 {
 }
 
-void LanMatchRandomMatchmakeJob::Trace(uint64_t a1)
+void LanMatchRandomMatchmakeJob::Trace(uint64_t value) const
 {
 }
 
-uint64_t LanMatchRandomMatchmakeJob::StartupImpl(uint32_t a1, uint32_t a2)
+Result LanMatchRandomMatchmakeJob::StartupImpl(const session::JoinRandomSessionSetting* setting)
 {
     return 0;
 }
@@ -76,12 +75,12 @@ void LanMatchRandomMatchmakeJob::SetNextStepAtWaitJoinMesh()
 {
 }
 
-uint32_t LanMatchRandomMatchmakeJob::SetNextStepAtFailedCreateMesh(void* a1)
+uint32_t LanMatchRandomMatchmakeJob::SetNextStepAtFailedCreateMesh(Result result)
 {
     return 0;
 }
 
-uint32_t LanMatchRandomMatchmakeJob::SetNextStepAtFailedJoinMesh(uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4)
+uint32_t LanMatchRandomMatchmakeJob::SetNextStepAtFailedJoinMesh(Result result)
 {
     return 0;
 }

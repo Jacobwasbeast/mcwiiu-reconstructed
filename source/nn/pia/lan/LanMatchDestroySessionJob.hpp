@@ -14,7 +14,7 @@ public:
     uint32_t WaitUnregisterCurrentMatchmakeSession();
     void Cleanup();
     void Trace(unsigned long long value) const;
-    void StartupImpl(unsigned int* result);
+    Result StartupImpl();
     void SetNextStepAtWaitDestroyMesh();
     void SetNextStepAtMeshCleanup();
 

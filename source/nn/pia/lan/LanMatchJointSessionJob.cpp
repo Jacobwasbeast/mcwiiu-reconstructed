@@ -1,219 +1,253 @@
 #include "nn/pia/lan/LanMatchJointSessionJob.hpp"
-#include <cstring>
 
 namespace nn { namespace pia { namespace lan {
+namespace {
+typedef unsigned int (LanMatchJointSessionJob::*Step)();
+inline void SelectStep(common::StepSequenceJob::Step& slot, Step step)
+{
+    union { Step derived; unsigned int (common::StepSequenceJob::*base)(); } value;
+    value.derived = step;
+    slot.m_function = value.base;
+}
+}
 
 LanMatchJointSessionJob::LanMatchJointSessionJob()
+    : session::JointSessionJob()
 {
-    std::memset(m_storage, 0, sizeof(m_storage));
 }
 
 LanMatchJointSessionJob::~LanMatchJointSessionJob()
 {
 }
 
-uint32_t LanMatchJointSessionJob::CallSessionEvent()
+unsigned int LanMatchJointSessionJob::CallSessionEvent()
 {
     return 0;
 }
 
-uint32_t LanMatchJointSessionJob::SendInvitationAsCompanion()
+unsigned int LanMatchJointSessionJob::SendInvitationAsCompanion()
 {
     return 0;
 }
 
-uint32_t LanMatchJointSessionJob::WaitForAnswerToInvitation()
+unsigned int LanMatchJointSessionJob::WaitForAnswerToInvitation()
 {
     return 0;
 }
 
-uint32_t LanMatchJointSessionJob::StartRandomMatchmake()
+unsigned int LanMatchJointSessionJob::StartRandomMatchmake()
 {
     return 0;
 }
 
-uint32_t LanMatchJointSessionJob::WaitRandomMatchmake()
+unsigned int LanMatchJointSessionJob::WaitRandomMatchmake()
 {
     return 0;
 }
 
-uint32_t LanMatchJointSessionJob::StartJoinMatchmakeSession()
+unsigned int LanMatchJointSessionJob::StartJoinMatchmakeSession()
 {
     return 0;
 }
 
-uint32_t LanMatchJointSessionJob::WaitJoinMatchmakeSession()
+unsigned int LanMatchJointSessionJob::WaitJoinMatchmakeSession()
 {
     return 0;
 }
 
-uint32_t LanMatchJointSessionJob::SendNextSessionId()
+unsigned int LanMatchJointSessionJob::SendNextSessionId()
 {
     return 0;
 }
 
-uint32_t LanMatchJointSessionJob::WaitCompanionStationPrepared()
+unsigned int LanMatchJointSessionJob::WaitCompanionStationPrepared()
 {
     return 0;
 }
 
-uint32_t LanMatchJointSessionJob::SendAnswerToInvitation()
+unsigned int LanMatchJointSessionJob::SendAnswerToInvitation()
 {
     return 0;
 }
 
-uint32_t LanMatchJointSessionJob::WaitNextSessionId()
+unsigned int LanMatchJointSessionJob::WaitNextSessionId()
 {
     return 0;
 }
 
-uint32_t LanMatchJointSessionJob::StartUpdateSessionKey()
+unsigned int LanMatchJointSessionJob::StartUpdateSessionKey()
 {
     return 0;
 }
 
-uint32_t LanMatchJointSessionJob::WaitUpdateSessionKey()
+unsigned int LanMatchJointSessionJob::WaitUpdateSessionKey()
 {
     return 0;
 }
 
-uint32_t LanMatchJointSessionJob::SendPreparedForMigrateSession()
+unsigned int LanMatchJointSessionJob::SendPreparedForMigrateSession()
 {
     return 0;
 }
 
-uint32_t LanMatchJointSessionJob::WaitUntilLeaderLeavesMesh()
+unsigned int LanMatchJointSessionJob::WaitUntilLeaderLeavesMesh()
 {
     return 0;
 }
 
-uint32_t LanMatchJointSessionJob::StartLeavePreviousMesh()
+unsigned int LanMatchJointSessionJob::StartLeavePreviousMesh()
 {
     return 0;
 }
 
-uint32_t LanMatchJointSessionJob::WaitLeavePreviousMesh()
+unsigned int LanMatchJointSessionJob::WaitLeavePreviousMesh()
 {
     return 0;
 }
 
-uint32_t LanMatchJointSessionJob::StartLeavePreviousMatchmakeSession()
+unsigned int LanMatchJointSessionJob::StartLeavePreviousMatchmakeSession()
 {
     return 0;
 }
 
-uint32_t LanMatchJointSessionJob::WaitLeavePreviousMatchmakeSession()
+unsigned int LanMatchJointSessionJob::WaitLeavePreviousMatchmakeSession()
 {
     return 0;
 }
 
-uint32_t LanMatchJointSessionJob::MeshRestart()
+unsigned int LanMatchJointSessionJob::MeshRestart()
+{
+    if (m_field9d == 0)
+    {
+        SelectStep(m_currentStep, &LanMatchJointSessionJob::StartGetNextMeshHostStationConnectionInfo);
+        m_currentStep.m_name = "LanMatchJointSessionJob::StartGetNextMeshHostStationConnectionInfo";
+    }
+    else
+    {
+        SelectStep(m_currentStep, &LanMatchJointSessionJob::StartCreateNextMesh);
+        m_currentStep.m_name = "LanMatchJointSessionJob::StartCreateNextMesh";
+    }
+    return cExecuteResultContinue;
+}
+
+unsigned int LanMatchJointSessionJob::StartCreateNextMesh()
 {
     return 0;
 }
 
-uint32_t LanMatchJointSessionJob::StartCreateNextMesh()
+unsigned int LanMatchJointSessionJob::WaitCreateNextMesh()
 {
     return 0;
 }
 
-uint32_t LanMatchJointSessionJob::WaitCreateNextMesh()
+unsigned int LanMatchJointSessionJob::StartGetNextMeshHostStationConnectionInfo()
 {
     return 0;
 }
 
-uint32_t LanMatchJointSessionJob::StartGetNextMeshHostStationConnectionInfo()
+unsigned int LanMatchJointSessionJob::WaitGetNextMeshHostStationConnectionInfo()
 {
     return 0;
 }
 
-uint32_t LanMatchJointSessionJob::WaitGetNextMeshHostStationConnectionInfo()
+unsigned int LanMatchJointSessionJob::StartJoinNextMesh()
 {
     return 0;
 }
 
-uint32_t LanMatchJointSessionJob::StartJoinNextMesh()
+unsigned int LanMatchJointSessionJob::WaitJoinNextMesh()
 {
     return 0;
 }
 
-uint32_t LanMatchJointSessionJob::WaitJoinNextMesh()
+unsigned int LanMatchJointSessionJob::WaitCompanionStation()
 {
     return 0;
 }
 
-uint32_t LanMatchJointSessionJob::WaitCompanionStation()
+unsigned int LanMatchJointSessionJob::WaitHostStationId()
 {
     return 0;
 }
 
-uint32_t LanMatchJointSessionJob::WaitHostStationId()
+unsigned int LanMatchJointSessionJob::ProcessComplete()
 {
     return 0;
 }
 
-uint32_t LanMatchJointSessionJob::ProcessComplete()
+void LanMatchJointSessionJob::Trace(unsigned long long value) const
+{
+}
+
+Result LanMatchJointSessionJob::StartupJoinRandomJointSessionImpl(
+    const session::JoinRandomSessionSetting* setting)
 {
     return 0;
 }
 
-void LanMatchJointSessionJob::Trace(uint64_t a1)
-{
-}
-
-uint64_t LanMatchJointSessionJob::StartupJoinRandomJointSessionImpl(void* a1)
+Result LanMatchJointSessionJob::StartupCreateJointSessionImpl(
+    const session::CreateSessionSetting* setting)
 {
     return 0;
 }
 
-uint64_t LanMatchJointSessionJob::StartupCreateJointSessionImpl(void* a1)
+Result LanMatchJointSessionJob::StartupJoinJointSessionImpl(
+    const session::JoinSessionSetting* setting)
 {
     return 0;
 }
 
-uint64_t LanMatchJointSessionJob::StartupJoinJointSessionImpl(void* a1)
+Result LanMatchJointSessionJob::StartupLeaveJointSessionImpl()
 {
     return 0;
 }
 
-uint64_t LanMatchJointSessionJob::StartupLeaveJointSessionImpl()
+Result LanMatchJointSessionJob::StartupDestroyJointSessionImpl()
 {
     return 0;
 }
 
-uint64_t LanMatchJointSessionJob::StartupDestroyJointSessionImpl()
+Result LanMatchJointSessionJob::StartupPassiveProcessImpl(session::Session::ProcessType processType,
+                                                          unsigned int messageType,
+                                                          const unsigned long long* stationIds,
+                                                          unsigned short stationIdNum,
+                                                          unsigned long long senderStationId)
 {
     return 0;
 }
 
-uint64_t LanMatchJointSessionJob::StartupPassiveProcessImpl(uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, int32_t a5, int32_t a6, int32_t a7)
+Result LanMatchJointSessionJob::ReceiveLeaveInvitationImpl(session::Session::ProcessType processType,
+                                                           const unsigned long long* stationIds,
+                                                           unsigned short stationIdNum,
+                                                           unsigned long long senderStationId)
 {
     return 0;
 }
 
-uint64_t LanMatchJointSessionJob::ReceiveLeaveInvitationImpl(uint32_t a1, void* a2, uint16_t a3, uint64_t a4)
+unsigned int LanMatchJointSessionJob::GetJointSessionStateForDebug() const
 {
     return 0;
 }
 
-uint32_t LanMatchJointSessionJob::GetJointSessionStateForDebug()
-{
-    uint32_t value = 0;
-    std::memcpy(&value, m_storage + 0x1b4, sizeof(value));
-    return value;
-}
-
-uint64_t LanMatchJointSessionJob::ReceiveNextSessionIdImpl(uint32_t a1, uint32_t a2, void* a3, uint8_t a4, uint64_t a5)
+Result LanMatchJointSessionJob::ReceiveNextSessionIdImpl(session::Session::ProcessType processType,
+                                                         unsigned int sessionId,
+                                                         const unsigned char* applicationData,
+                                                         unsigned char applicationDataSize,
+                                                         unsigned long long senderStationId)
 {
     return 0;
 }
 
-void LanMatchJointSessionJob::ReceiveLeaveMeshInvitationImpl(uint32_t a1, uint64_t a2)
+Result LanMatchJointSessionJob::ReceiveLeaveMeshInvitationImpl(session::Session::ProcessType processType,
+                                                               unsigned long long senderStationId)
 {
+    return 0;
 }
 
-void LanMatchJointSessionJob::ReceiveCompletionResponseImpl(uint32_t a1, uint64_t a2)
+Result LanMatchJointSessionJob::ReceiveCompletionResponseImpl(session::Session::ProcessType processType,
+                                                              unsigned long long senderStationId)
 {
+    return 0;
 }
 
 void LanMatchJointSessionJob::CleanupImpl()

@@ -2,6 +2,9 @@
 #define LEGACY_CONSOLE_WIIU_NN_PIA_LAN_LANMATCHRANDOMMATCHMAKEJOB_HPP
 
 #include <stdint.h>
+#include "nn/pia/Common.hpp"
+
+namespace nn { namespace pia { namespace session { class JoinRandomSessionSetting; }}}
 
 namespace nn { namespace pia { namespace lan {
 
@@ -18,14 +21,14 @@ public:
     uint32_t WaitLeaveMatchmakeSession();
     uint32_t WaitForRetryRandomMatchmake();
     uint32_t WaitRequestSessionInfo();
-    uint64_t NoticeOwnerChangeEvent(int32_t a1, uint32_t a2, uint32_t a3);
+    void NoticeOwnerChangeEvent(uint32_t ownerId, uint64_t principalId);
     void Cleanup();
-    void Trace(uint64_t a1);
-    uint64_t StartupImpl(uint32_t a1, uint32_t a2);
+    void Trace(uint64_t value) const;
+    Result StartupImpl(const session::JoinRandomSessionSetting* setting);
     void SetNextStepAtWaitCreateMesh();
     void SetNextStepAtWaitJoinMesh();
-    uint32_t SetNextStepAtFailedCreateMesh(void* a1);
-    uint32_t SetNextStepAtFailedJoinMesh(uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4);
+    uint32_t SetNextStepAtFailedCreateMesh(Result result);
+    uint32_t SetNextStepAtFailedJoinMesh(Result result);
     uint32_t SetNextStepAtWaitLeaveMesh();
 
 private:

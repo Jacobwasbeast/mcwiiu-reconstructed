@@ -3,6 +3,10 @@
 
 #include <stdint.h>
 
+#include "nn/pia/Common.hpp"
+
+namespace nn { namespace pia { namespace session { class JoinSessionSetting; }}}
+
 namespace nn { namespace pia { namespace lan {
 
 class LanMatchJoinSessionJob
@@ -19,13 +23,13 @@ public:
     uint32_t WaitForRetryJoinMatchmakeSession();
     uint32_t WaitRequestSessionInfo();
     void Cleanup();
-    uint64_t NoticeOwnerChangeEvent(int32_t a1, uint32_t a2, uint32_t a3);
-    void Trace(uint64_t a1);
+    void NoticeOwnerChangeEvent(unsigned int sessionId, unsigned long long ownerId);
+    void Trace(unsigned long long value) const;
     void SetNextStepAtWaitJoinMesh();
-    uint32_t SetNextStepAtFailedJoinMesh(uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, uint32_t a5);
+    uint32_t SetNextStepAtFailedJoinMesh(Result result);
     uint32_t SetNextStepAtWaitLeaveMesh();
     uint32_t SetNextStepAtMeshCleanup();
-    uint64_t StartupImpl(uint32_t a1, int32_t a2);
+    Result StartupImpl(const session::JoinSessionSetting* setting);
 
 private:
     unsigned char m_storage[1];

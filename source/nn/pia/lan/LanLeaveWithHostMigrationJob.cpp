@@ -11,8 +11,8 @@ int LanLeaveWithHostMigrationJob::DecideNextHost()
     const StationIndex local = session::g_piaMesh->GetLocalStationIndex();
     if (local < 0x20 && local == session::g_piaMesh->GetHostStationIndex())
     {
-        for (StationIndex candidate = 0; candidate < 0x20; ++candidate)
-            if (candidate != local && session::g_piaMesh->IsValidStationIndex(candidate))
+        for (int candidate = 0; candidate < 0x20; ++candidate)
+            if (candidate != local && session::g_piaMesh->IsValidStationIndex(static_cast<StationIndex>(candidate)))
                 return candidate;
     }
     return 0xfd;

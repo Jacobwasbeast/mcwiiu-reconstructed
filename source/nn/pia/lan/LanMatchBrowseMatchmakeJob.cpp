@@ -1,5 +1,7 @@
 #include "nn/pia/lan/LanMatchBrowseMatchmakeJob.hpp"
 #include "nn/pia/lan/LanMatchmakeSession.hpp"
+#include "nn/pia/session/IMatchmakeSession.hpp"
+#include "nn/pia/session/SessionSearchCriteria.hpp"
 #include <cstring>
 
 namespace nn { namespace pia { namespace lan {
@@ -82,45 +84,35 @@ uint32_t LanMatchBrowseMatchmakeJob::WaitRequestSessionInfo()
     return 0x05000000u;
 }
 
-void LanMatchBrowseMatchmakeJob::Trace(uint64_t a1)
+void LanMatchBrowseMatchmakeJob::Trace(uint64_t a1) const
 {
 }
 
-uint64_t LanMatchBrowseMatchmakeJob::StartupImpl(uint32_t a1, uint32_t a2, uint32_t a3)
+Result LanMatchBrowseMatchmakeJob::StartupImpl(session::IMatchmakeSession* matchmake, const session::SessionSearchCriteria* criteria)
 {
-    std::memcpy(m_storage + 0x5c, &a2, sizeof(a2));
-    if (a2 != 0)
-    {
-        LanMatchmakeSession* session = reinterpret_cast<LanMatchmakeSession*>(static_cast<uintptr_t>(a2));
-        const uint32_t registered = session->RegisterSearchCriteria(
-            reinterpret_cast<void*>(static_cast<uintptr_t>(a3)), 1);
-        if (registered == 0)
-        {
-            if (a1 != 0)
-                *reinterpret_cast<uint32_t*>(static_cast<uintptr_t>(a1)) = 0x10c07u;
-            return static_cast<uint64_t>(reinterpret_cast<uintptr_t>(this)) << 32;
-        }
-    }
-    if (a2 != 0 && a3 != 0)
-    {
-        const uint32_t next = 0x036153A4u;
-        std::memcpy(m_storage + 0x24, &next, sizeof(next));
-        const uint32_t state = 0xffffu;
-        std::memcpy(m_storage + 0x20, &state, sizeof(state));
-    }
-    return static_cast<uint64_t>(reinterpret_cast<uintptr_t>(this)) << 32;
+    const uint32_t sessionAddress = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(matchmake));
+    std::memcpy(m_storage + 0x5c, &sessionAddress, sizeof(sessionAddress));
+    LanMatchmakeSession* session = reinterpret_cast<LanMatchmakeSession*>(matchmake);
+    const uint32_t registered = session->RegisterSearchCriteria(
+        const_cast<session::SessionSearchCriteria*>(criteria), 1);
+    if (registered == 0)
+        return 0x10c07;
+    const uint32_t next = 0x036153A4u;
+    std::memcpy(m_storage + 0x24, &next, sizeof(next));
+    const uint32_t state = 0xffffu;
+    std::memcpy(m_storage + 0x20, &state, sizeof(state));
+    return 0;
 }
 
-void LanMatchBrowseMatchmakeJob::StartupImpl(const unsigned char* a1, uint32_t a2)
+Result LanMatchBrowseMatchmakeJob::StartupImpl(session::IMatchmakeSession* matchmake, unsigned int a2)
 {
-    std::memcpy(m_storage + 0x5c, &a2, sizeof(a2));
-    if (a2 != 0)
-    {
-        const uint32_t next = 0x03615670u;
-        std::memcpy(m_storage + 0x24, &next, sizeof(next));
-        const uint32_t state = 0xffffu;
-        std::memcpy(m_storage + 0x20, &state, sizeof(state));
-    }
+    const uint32_t sessionAddress = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(matchmake));
+    std::memcpy(m_storage + 0x5c, &sessionAddress, sizeof(sessionAddress));
+    const uint32_t next = 0x03615670u;
+    std::memcpy(m_storage + 0x24, &next, sizeof(next));
+    const uint32_t state = 0xffffu;
+    std::memcpy(m_storage + 0x20, &state, sizeof(state));
+    return 0;
 }
 
 }}}

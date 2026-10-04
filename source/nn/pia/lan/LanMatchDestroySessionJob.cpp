@@ -60,10 +60,9 @@ void LanMatchDestroySessionJob::Trace(unsigned long long) const
 {
 }
 
-void LanMatchDestroySessionJob::StartupImpl(unsigned int* result)
+Result LanMatchDestroySessionJob::StartupImpl()
 {
-    if (result != 0)
-        *result = 0;
+    return 0;
 }
 
 void LanMatchDestroySessionJob::SetNextStepAtWaitDestroyMesh()

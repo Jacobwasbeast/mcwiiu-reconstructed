@@ -2,6 +2,9 @@
 #define LEGACY_CONSOLE_WIIU_NN_PIA_LAN_LANMATCHBROWSEMATCHMAKEJOB_HPP
 
 #include <stdint.h>
+#include "nn/pia/Common.hpp"
+
+namespace nn { namespace pia { namespace session { class IMatchmakeSession; class SessionSearchCriteria; }}}
 
 namespace nn
 {
@@ -19,9 +22,9 @@ public:
     uint32_t BrowseMatchmake();
     uint32_t WaitBrowseMatchmake();
     uint32_t WaitRequestSessionInfo();
-    void Trace(uint64_t a1);
-    uint64_t StartupImpl(uint32_t a1, uint32_t a2, uint32_t a3);
-    void StartupImpl(const unsigned char* a1, uint32_t a2);
+    void Trace(uint64_t a1) const;
+    Result StartupImpl(session::IMatchmakeSession* matchmake, const session::SessionSearchCriteria* criteria);
+    Result StartupImpl(session::IMatchmakeSession* matchmake, unsigned int a2);
 
 private:
     unsigned char m_storage[96];

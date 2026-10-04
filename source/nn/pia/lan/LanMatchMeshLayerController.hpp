@@ -3,6 +3,11 @@
 
 #include <stdint.h>
 
+#include "nn/pia/Common.hpp"
+#include "nn/pia/session/Session.hpp"
+
+namespace nn { namespace pia { namespace session { class IMatchmakeSession; }}}
+
 namespace nn { namespace pia { namespace lan {
 
 class LanMatchMeshLayerController
@@ -10,15 +15,15 @@ class LanMatchMeshLayerController
 public:
     LanMatchMeshLayerController();
     ~LanMatchMeshLayerController();
-    uint64_t Startup(uint32_t a1, int32_t a2);
+    Result Startup(const session::Session::StartupSetting& setting);
     void MeshCleanup();
     void Cleanup();
-    void MeshStartup(void* a1, bool a2);
+    void MeshStartup(session::IMatchmakeSession* matchmakeSession, bool isHost);
     uint64_t CheckConnectedStatus();
-    void Trace(uint64_t a1);
-    void GetMatchmakeSessionTotalStations();
-    int16_t GetMatchmakeSessionTotalParticipants();
-    uint32_t IsParticipated(uint32_t a1, int32_t a2, int32_t a3);
+    void Trace(unsigned long long value) const;
+    void GetMatchmakeSessionTotalStations() const;
+    int16_t GetMatchmakeSessionTotalParticipants() const;
+    bool IsParticipated(unsigned int index, unsigned long long stationId) const;
     void SetConnectionStatusDisconnected();
 
 private:

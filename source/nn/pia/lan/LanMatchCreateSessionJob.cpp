@@ -1,4 +1,5 @@
 #include "nn/pia/lan/LanMatchCreateSessionJob.hpp"
+#include "nn/pia/session/CreateSessionSetting.hpp"
 #include <cstring>
 
 namespace nn { namespace pia { namespace lan {
@@ -72,14 +73,19 @@ void LanMatchCreateSessionJob::Cleanup()
     std::memset(m_storage + 0x64, 0, sizeof(uint32_t));
 }
 
-void LanMatchCreateSessionJob::Trace(uint64_t a1)
+void LanMatchCreateSessionJob::Trace(uint64_t a1) const
 {
 }
 
-uint64_t LanMatchCreateSessionJob::StartupImpl(uint32_t a1, uint32_t a2)
+Result LanMatchCreateSessionJob::StartupImpl(const session::CreateSessionSetting* setting)
 {
-    std::memcpy(m_storage + 0x64, &a2, sizeof(a2));
-    return static_cast<uint64_t>(reinterpret_cast<uintptr_t>(this)) << 32;
+    if (setting->GetMaxParticipantNum() == 0)
+        return 0x10c07;
+    const uint32_t step = 0x03615C1Cu;
+    std::memcpy(m_storage + 0x24, &step, sizeof(step));
+    const uint32_t state = 0xffffu;
+    std::memcpy(m_storage + 0x20, &state, sizeof(state));
+    return 0;
 }
 
 void LanMatchCreateSessionJob::SetNextStepAtWaitCreateMesh()
@@ -88,10 +94,15 @@ void LanMatchCreateSessionJob::SetNextStepAtWaitCreateMesh()
     std::memcpy(m_storage + 0x24, &step, sizeof(step));
 }
 
-uint32_t LanMatchCreateSessionJob::SetNextStepAtFailedCreateMesh(uint32_t a1, uint32_t a2, uint32_t a3)
+uint32_t LanMatchCreateSessionJob::SetNextStepAtFailedCreateMesh(Result result)
 {
-    std::memcpy(m_storage + 0x60, &a1, sizeof(a1));
-    return a2;
+    const uint32_t code = result.m_code;
+    std::memcpy(m_storage + 0x60, &code, sizeof(code));
+    const uint32_t step = 0x036162D8u;
+    std::memcpy(m_storage + 0x24, &step, sizeof(step));
+    const uint32_t state = 0xffffu;
+    std::memcpy(m_storage + 0x20, &state, sizeof(state));
+    return 0x05000000u;
 }
 
 }}}

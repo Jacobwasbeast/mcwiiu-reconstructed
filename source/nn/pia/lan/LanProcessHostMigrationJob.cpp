@@ -5,7 +5,7 @@
 namespace nn { namespace pia { namespace lan {
 
 LanProcessHostMigrationJob::LanProcessHostMigrationJob()
-    : m_callContext(), m_state(0), m_mode(0), m_host(-1), m_candidate(-1), m_rank(0),
+    : m_callContext(), m_state(0), m_mode(0), m_host(static_cast<StationIndex>(-1)), m_candidate(static_cast<StationIndex>(-1)), m_rank(0),
       m_candidateCount(0), m_waitCount(0), m_waitLimit(0), m_multiCandidate(false),
       m_hostChanged(false), m_fatalError(false), m_finishDeadline(0), m_reselectDeadline(0)
 {
@@ -19,7 +19,7 @@ LanProcessHostMigrationJob::~LanProcessHostMigrationJob()
 unsigned int LanProcessHostMigrationJob::LanCleanupOldHostInfo()
 {
     m_state = 1;
-    m_candidate = -1;
+    m_candidate = static_cast<StationIndex>(-1);
     m_waitCount = 0;
     return m_host < 0 ? 0u : 1u;
 }
@@ -30,9 +30,9 @@ unsigned int LanProcessHostMigrationJob::LanDecideNextHost()
     if (m_candidateCount == 0)
         return 0;
     if (m_candidate < 0)
-        m_candidate = 0;
+        m_candidate = static_cast<StationIndex>(0);
     if (m_candidate == m_host)
-        ++m_candidate;
+        m_candidate = static_cast<StationIndex>(m_candidate + 1);
     if (m_candidate >= static_cast<StationIndex>(m_candidateCount))
     {
         m_fatalError = true;
@@ -58,7 +58,7 @@ unsigned int LanProcessHostMigrationJob::LanCleanupOldHostInfoOnMultiCandidate()
 {
     m_state = 3;
     m_waitCount = 0;
-    m_candidate = -1;
+    m_candidate = static_cast<StationIndex>(-1);
     return m_multiCandidate ? 1u : 0u;
 }
 
@@ -198,7 +198,7 @@ unsigned int LanProcessHostMigrationJob::StartupMultiImpl(bool multi, unsigned s
     m_multiCandidate = multi;
     m_candidateCount = candidates;
     m_waitLimit = candidates * 3000u + 1000u;
-    m_candidate = -1;
+    m_candidate = static_cast<StationIndex>(-1);
     m_hostChanged = false;
     m_state = 1;
     return 1;
@@ -210,7 +210,7 @@ void LanProcessHostMigrationJob::CleanupStatus()
     if (m_callContext.m_state == common::CallContext::cStateInProgress)
         m_callContext.SignalCancel();
     m_callContext.Reset();
-    m_candidate = -1;
+    m_candidate = static_cast<StationIndex>(-1);
 }
 
 unsigned int LanProcessHostMigrationJob::CheckWhetherReselectNewHost()
@@ -219,7 +219,7 @@ unsigned int LanProcessHostMigrationJob::CheckWhetherReselectNewHost()
         return 0;
     if (m_waitCount >= m_reselectDeadline)
     {
-        m_candidate = -1;
+        m_candidate = static_cast<StationIndex>(-1);
         m_hostChanged = false;
         StopRankDecisionResending();
         return 1;

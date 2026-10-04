@@ -10,7 +10,7 @@ LanMatchMeshLayerController::~LanMatchMeshLayerController()
 {
 }
 
-uint64_t LanMatchMeshLayerController::Startup(uint32_t a1, int32_t a2)
+Result LanMatchMeshLayerController::Startup(const session::Session::StartupSetting&)
 {
     return 0;
 }
@@ -23,7 +23,7 @@ void LanMatchMeshLayerController::Cleanup()
 {
 }
 
-void LanMatchMeshLayerController::MeshStartup(void* a1, bool a2)
+void LanMatchMeshLayerController::MeshStartup(session::IMatchmakeSession*, bool)
 {
 }
 
@@ -32,20 +32,20 @@ uint64_t LanMatchMeshLayerController::CheckConnectedStatus()
     return 0;
 }
 
-void LanMatchMeshLayerController::Trace(uint64_t a1)
+void LanMatchMeshLayerController::Trace(unsigned long long) const
 {
 }
 
-void LanMatchMeshLayerController::GetMatchmakeSessionTotalStations()
+void LanMatchMeshLayerController::GetMatchmakeSessionTotalStations() const
 {
 }
 
-int16_t LanMatchMeshLayerController::GetMatchmakeSessionTotalParticipants()
+int16_t LanMatchMeshLayerController::GetMatchmakeSessionTotalParticipants() const
 {
     return 0;
 }
 
-uint32_t LanMatchMeshLayerController::IsParticipated(uint32_t a1, int32_t a2, int32_t a3)
+bool LanMatchMeshLayerController::IsParticipated(unsigned int, unsigned long long) const
 {
     return 0;
 }

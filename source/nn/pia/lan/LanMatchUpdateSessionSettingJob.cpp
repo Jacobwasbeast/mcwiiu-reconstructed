@@ -10,7 +10,7 @@ LanMatchUpdateSessionSettingJob::~LanMatchUpdateSessionSettingJob()
 {
 }
 
-uint64_t LanMatchUpdateSessionSettingJob::StartupImpl(uint32_t a1, int32_t a2, uint32_t a3, uint32_t a4, uint32_t a5)
+Result LanMatchUpdateSessionSettingJob::StartupImpl(uint32_t gatheringId, session::IMatchmakeSession* matchmakeSession, const session::UpdateSessionSetting* setting, bool notify)
 {
     return 0;
 }
@@ -29,7 +29,7 @@ void LanMatchUpdateSessionSettingJob::Cleanup()
 {
 }
 
-void LanMatchUpdateSessionSettingJob::Trace(uint64_t a1)
+void LanMatchUpdateSessionSettingJob::Trace(uint64_t value) const
 {
 }
 

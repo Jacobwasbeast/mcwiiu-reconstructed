@@ -75,15 +75,15 @@ Result LanOutputStream::SendTo(const void* data, unsigned int size,
     if (socket == 0)
         return started ? 0x10c08 : 0;
     int sent = 0;
-    Result ttlResult = flags == 0 ? 0 : socket->SetTtl(flags);
+    Result ttlResult = flags == 0 ? Result(0) : socket->SetTtl(flags);
     if (ttlResult != 0)
-        return started ? ttlResult : 0;
+        return started ? ttlResult : Result(0);
     Result result = socket->SendTo(data, static_cast<int>(size), address, &sent);
-    Result resetResult = flags == 0 ? 0 : socket->SetTtl(0);
+    Result resetResult = flags == 0 ? Result(0) : socket->SetTtl(0);
     if (resetResult != 0)
-        return started ? resetResult : 0;
+        return started ? resetResult : Result(0);
     if (result != 0)
-        return started ? result : 0;
+        return started ? result : Result(0);
     if (sent != static_cast<int>(size))
         return 0x10c08;
     if (m_protocol != 0)
@@ -120,7 +120,7 @@ Result LanOutputStream::SendToMulti(const void* data, unsigned int size,
     Result result = socket->SendToMulti(data, static_cast<int>(size), addresses, count, &sent);
     if (result == 0)
         return 0x10c08;
-    return started ? result : 0;
+    return started ? result : Result(0);
 }
 
 namespace
