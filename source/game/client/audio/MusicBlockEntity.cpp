@@ -94,16 +94,16 @@ CompoundTag* MusicBlockEntity::save(CompoundTag* tag)
 void MusicBlockEntity::load(CompoundTag* tag)
 {
     BlockEntity::load(tag);
-    mNote = (unsigned char)Mth::clamp((int)tag->getByte(L"note"), 0, 24);
+    mNote = tag->getByte(L"note");
+    mNote = (unsigned char)Mth::clamp(mNote, 0, 24);
     mPowered = tag->getBoolean(L"powered");
 }
 
 boost::shared_ptr<BlockEntity> MusicBlockEntity::clone()
 {
-    boost::shared_ptr<BlockEntity> result(new MusicBlockEntity());
+    boost::shared_ptr<MusicBlockEntity> result(new MusicBlockEntity());
     BlockEntity::clone(result);
-    MusicBlockEntity* copy = static_cast<MusicBlockEntity*>(result.get());
-    copy->mNote = mNote;
+    result->mNote = mNote;
     return result;
 }
 

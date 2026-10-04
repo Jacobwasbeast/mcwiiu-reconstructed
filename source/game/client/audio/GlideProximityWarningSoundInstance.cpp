@@ -5,9 +5,9 @@
 GlideProximityWarningSoundInstance::GlideProximityWarningSoundInstance(boost::shared_ptr<LocalPlayer> player,
                                                                        const SoundEvent* sound)
     : AbstractTickableSoundInstance(sound, SoundSource::eSoundSource_Players)
-    , player(player)
-    , ticks(0)
 {
+    this->player = player;
+    this->ticks = 0;
     this->volume = 1.0f;
     this->looping = true;
     this->delay = 0;

@@ -12,14 +12,14 @@
 
 ElytraOnPlayerSoundInstance::ElytraOnPlayerSoundInstance(boost::shared_ptr<Player> player)
     : AbstractTickableSoundInstance(SoundEvents::ELYTRA_FLYING, SoundSource::eSoundSource_Players)
-    , ticks(0)
-    , player(player)
-    , warningSoundDelay(0)
-    , warning(false)
 {
+    this->player = player;
     this->volume = 1.0f;
     this->looping = true;
     this->delay = 0;
+    this->warningSoundDelay = 0;
+    this->ticks = 0;
+    this->warning = false;
 }
 
 ElytraOnPlayerSoundInstance::ElytraOnPlayerSoundInstance(const ElytraOnPlayerSoundInstance& other)
@@ -65,12 +65,12 @@ void ElytraOnPlayerSoundInstance::tick()
     float speed = 0.0f;
     if (!this->player->PositionLocked())
     {
-        speed = Mth::sqrt(this->player->mXd * this->player->mXd +
-                          this->player->mYd * this->player->mYd +
-                          this->player->mZd * this->player->mZd);
+        speed = Mth::sqrt(this->player->mZd * this->player->mZd +
+                          this->player->mXd * this->player->mXd +
+                          this->player->mYd * this->player->mYd);
     }
 
-    float scaledSpeed = static_cast<float>(speed * 0.5);
+    float scaledSpeed = speed * 0.5f;
 
     if (this->player->getElytraProximityWarning())
         this->warning = true;
@@ -89,20 +89,27 @@ void ElytraOnPlayerSoundInstance::tick()
         --this->warningSoundDelay;
     }
 
+    const float maxVolume = 0.8f;
+    float newVolume = 0.0f;
     if (speed >= 0.01)
-        this->volume = Mth::clamp(scaledSpeed * scaledSpeed, 0.0f, 0.8f);
-    else
-        this->volume = 0.0f;
+        newVolume = Mth::clamp(scaledSpeed * scaledSpeed, 0.0f, maxVolume);
 
     if (this->ticks < 20)
+    {
         this->volume = 0.0f;
-    else if (this->ticks < 40)
-        this->volume = this->volume * static_cast<float>((this->ticks - 20) / 20.0);
-
-    if (this->volume > 0.8f)
-        this->pitch = 1.0f + (this->volume - 0.8f);
-    else
         this->pitch = 1.0f;
+    }
+    else
+    {
+        if (this->ticks < 40)
+            newVolume = newVolume * static_cast<float>((this->ticks - 20) / 20.0);
+
+        this->volume = newVolume;
+        if (this->volume > maxVolume)
+            this->pitch = (this->volume - maxVolume) + 1.0f;
+        else
+            this->pitch = 1.0f;
+    }
 
     if (this->player->GetType() == EntityType::LOCAL_PLAYER)
     {

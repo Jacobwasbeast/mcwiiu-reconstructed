@@ -699,7 +699,9 @@ SoundEvent* SoundEvents::registerSound(SoundEvent* soundEvent)
 {
     soundEvent->setIndex(nextSoundEventId);
 
-    soundEventRegistry.registerMapping(nextSoundEventId, ResourceLocation(soundEvent->getName()), soundEvent);
+    ResourceLocation location(soundEvent->getName());
+
+    soundEventRegistry.registerMapping(nextSoundEventId, location, soundEvent);
 
     ++nextSoundEventId;
 

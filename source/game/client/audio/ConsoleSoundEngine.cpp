@@ -235,27 +235,20 @@ void ConsoleSoundEngine::tick()
         int delay = sound->getDelay();
         SoundInstance* finished = sound;
 
-        if (looping && tickable != NULL)
+        if (looping && tickable != NULL && delay > 0 && !tickable->isStopped())
         {
-            if (delay > 0 && !tickable->isStopped())
-            {
-                this->delayedSounds[sound] = this->playTime + delay;
-                finished = NULL;
-                playingIt = this->playingSounds.erase(playingIt);
-            }
-            else if (!tickable->isStopped())
-            {
-                sound->pendingTicks = 0;
-                this->play(sound->getSound(), sound->getX(), sound->getY(), sound->getZ(), sound->getVolume(),
-                           sound->getPitch(), sound);
-                this->playingSoundsStopTime[sound] = this->playTime + 20;
-                ++playingIt;
-                continue;
-            }
-            else
-            {
-                playingIt = this->playingSounds.erase(playingIt);
-            }
+            this->delayedSounds[sound] = this->playTime + delay;
+            finished = NULL;
+            playingIt = this->playingSounds.erase(playingIt);
+        }
+        else if (looping && tickable != NULL && !tickable->isStopped())
+        {
+            sound->pendingTicks = 0;
+            this->play(sound->getSound(), sound->getX(), sound->getY(), sound->getZ(), sound->getVolume(),
+                       sound->getPitch(), sound);
+            this->playingSoundsStopTime[sound] = this->playTime + 20;
+            ++playingIt;
+            continue;
         }
         else
         {
@@ -302,8 +295,10 @@ void ConsoleSoundEngine::schedule(const SoundEvent* sound, SoundSource::ESoundSo
     EnterCriticalSection(&this->criticalSection);
 
     ScheduledSound* scheduled = new ScheduledSound(sound, source, x, y, z, volume, pitch, delay);
-    this->delayedSounds[scheduled] = this->playTime + delay;
-    this->delayedSounds[scheduled->getDRCClone()] = this->playTime + delay;
+    SoundInstance* instance = scheduled;
+    this->delayedSounds[instance] = this->playTime + delay;
+    SoundInstance* clone = scheduled->getDRCClone();
+    this->delayedSounds[clone] = this->playTime + delay;
 
     LeaveCriticalSection(&this->criticalSection);
 }

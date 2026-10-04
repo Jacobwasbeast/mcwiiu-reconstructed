@@ -24,6 +24,8 @@ public:
     virtual unsigned long long GetType();
 
 private:
+    friend class NoteBlock;
+
     unsigned char mNote;
     bool mPowered;
 };

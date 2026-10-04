@@ -33,14 +33,9 @@ int strtoi(const char* value, const char** end)
 {
     int result = 0;
 
-    while (*value != '\0')
+    while (*value != '\0' && (unsigned int)(*value - '0') < 10)
     {
-        const int digit = *value;
-        if ((unsigned int)(digit - '0') > 9)
-        {
-            break;
-        }
-        result = result * 10 + digit - '0';
+        result = result * 10 + *value - '0';
         ++value;
     }
 

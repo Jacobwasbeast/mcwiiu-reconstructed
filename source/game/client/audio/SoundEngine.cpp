@@ -8,6 +8,7 @@
 #include "game/client/render/DefaultTexturePack.hpp"
 #include "game/client/render/TexturePackRepository.hpp"
 #include "game/core/BossHealthOverlay.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/DLCManager.hpp"
 #include "game/core/DLCPack.hpp"
@@ -24,7 +25,6 @@
 #include <cstdlib>
 #include <cstring>
 
-extern CMinecraftApp* g_pApp;
 extern void SetSpecialThreadIDForFS_MilesStreamThread();
 
 namespace {
@@ -407,7 +407,7 @@ SoundEngine::eMusicType SoundEngine::GetMusicToPlay()
         return eMusicType_Nether;
     if (noPlayers)
     {
-        if (g_pApp->GetGameHostOption(eGameHostOption_MiniGame) != 0)
+        if (gApp.GetGameHostOption(eGameHostOption_MiniGame) != 0)
             return eMusicType_Battle;
         return eMusicType_Menu;
     }

@@ -18,7 +18,8 @@ MinecartSoundInstance::MinecartSoundInstance(boost::shared_ptr<Minecart> minecar
 }
 
 MinecartSoundInstance::MinecartSoundInstance(const MinecartSoundInstance& other)
-    : AbstractTickableSoundInstance(other)
+    : SoundInstance(other)
+    , AbstractTickableSoundInstance(other)
     , minecart(other.minecart)
     , distance(other.distance)
 {

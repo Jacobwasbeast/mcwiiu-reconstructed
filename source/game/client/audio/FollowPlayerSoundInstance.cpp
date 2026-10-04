@@ -4,8 +4,9 @@
 
 FollowPlayerSoundInstance::FollowPlayerSoundInstance(boost::shared_ptr<Player> player, const SoundEvent* sound, float volume, float pitch, bool looping)
     : AbstractTickableSoundInstance(sound, SoundSource::eSoundSource_Players)
-    , player(player)
+    , player()
 {
+    this->player = player;
     this->volume = volume;
     this->pitch = pitch;
     this->looping = looping;

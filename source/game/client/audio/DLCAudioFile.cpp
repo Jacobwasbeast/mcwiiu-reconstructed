@@ -15,9 +15,9 @@ static const wchar_t* s_audioParameterNames[] =
 
 DLCAudioFile::DLCAudioFile(const std::wstring& path)
     : DLCFile(DLCManager::eDLCType_Audio, path)
-    , m_pData(NULL)
-    , m_dataSize(0)
 {
+    m_pData = NULL;
+    m_dataSize = 0;
 }
 
 DLCAudioFile::~DLCAudioFile()
@@ -40,15 +40,18 @@ unsigned char* DLCAudioFile::getData(unsigned int& size)
 
 DLCAudioFile::EAudioParameterType DLCAudioFile::getParameterType(const std::wstring& name)
 {
-    for (int i = 0; i < eAudioParameterType_NumTypes; i++)
+    EAudioParameterType result = eAudioParameterType_Invalid;
+
+    if (name == s_audioParameterNames[eAudioParameterType_CueName])
     {
-        if (name == s_audioParameterNames[i])
-        {
-            return (EAudioParameterType)i;
-        }
+        result = eAudioParameterType_CueName;
+    }
+    else if (name == s_audioParameterNames[eAudioParameterType_Credit])
+    {
+        result = eAudioParameterType_Credit;
     }
 
-    return eAudioParameterType_Invalid;
+    return result;
 }
 
 void DLCAudioFile::addParameter(EAudioType type, EAudioParameterType parameter, const std::wstring& value)
@@ -75,11 +78,12 @@ bool DLCAudioFile::processDLCDataFile(unsigned char* pData, unsigned int size)
 
     unsigned int parameterCount = ((unsigned int*)pData)[1];
     unsigned int offset = 8;
+    unsigned int* pParameter = (unsigned int*)(pData + offset);
 
     for (unsigned int i = 0; i < parameterCount; i++)
     {
-        unsigned int* pParameter = (unsigned int*)(pData + offset);
-        EAudioParameterType parameterType = getParameterType(char16towstring((wchar_t*)(pParameter + 2)));
+        std::wstring parameterName = char16towstring((wchar_t*)(pParameter + 2));
+        EAudioParameterType parameterType = getParameterType(parameterName);
 
         if (parameterType != eAudioParameterType_Invalid)
         {
@@ -87,19 +91,20 @@ bool DLCAudioFile::processDLCDataFile(unsigned char* pData, unsigned int size)
         }
 
         offset += pParameter[1] * 2 + 12;
+        pParameter = (unsigned int*)(pData + offset);
     }
 
     unsigned int itemCount = *(unsigned int*)(pData + offset);
     offset += 4;
 
     unsigned int dataOffset = offset;
+    unsigned int* pItemData = (unsigned int*)(pData + dataOffset);
 
     for (unsigned int i = 0; i < itemCount; i++)
     {
-        dataOffset += ((unsigned int*)(pData + dataOffset))[2] * 2 + 16;
+        dataOffset += pItemData[2] * 2 + 16;
+        pItemData = (unsigned int*)(pData + dataOffset);
     }
-
-    unsigned int* pItemData = (unsigned int*)(pData + dataOffset);
 
     while (itemCount != 0)
     {
@@ -111,9 +116,7 @@ bool DLCAudioFile::processDLCDataFile(unsigned char* pData, unsigned int size)
 
         for (unsigned int i = 0; i < itemParameterCount; i++)
         {
-            boost::unordered_map<int, EAudioParameterType>::iterator it = parameterTypes.find((int)pItemData[0]);
-
-            if (it != parameterTypes.end())
+            if (parameterTypes.find((int)pItemData[0]) != parameterTypes.end())
             {
                 addParameter(audioType, (EAudioParameterType)pItemData[0], char16towstring((wchar_t*)(pItemData + 2)));
             }

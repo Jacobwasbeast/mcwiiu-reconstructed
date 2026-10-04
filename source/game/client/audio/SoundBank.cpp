@@ -22,12 +22,12 @@ int32_t FindAsset(
 
             if (searchCharacter < entryCharacter)
             {
-                comparison = -1;
+                comparison = 1;
                 break;
             }
             if (entryCharacter < searchCharacter)
             {
-                comparison = 1;
+                comparison = -1;
                 break;
             }
             if (entryCharacter == 0)
