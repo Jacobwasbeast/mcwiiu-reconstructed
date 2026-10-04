@@ -21,12 +21,10 @@ RingsMedal::RingsMedal(int name, unsigned int weight, eRingMedalAmount* amounts,
 
 bool RingsMedal::CanAward(const StatsUID& uid, GameStats* gameStats) const
 {
-    LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
-    if (options == NULL)
+    if (gApp.getLevelGenerationOptions() == NULL)
         return false;
 
-    LevelRuleset* ruleset = options->getRequiredGameRules();
-    if (ruleset == NULL)
+    if (gApp.getLevelGenerationOptions()->getRequiredGameRules() == NULL)
         return false;
 
     const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
@@ -34,14 +32,15 @@ bool RingsMedal::CanAward(const StatsUID& uid, GameStats* gameStats) const
         return false;
 
     std::vector<TargetAreaRuleDefinition*> targetAreas;
-    ruleset->getTargetAreas(&targetAreas);
+    gApp.getLevelGenerationOptions()->getRequiredGameRules()->getTargetAreas(&targetAreas);
 
-    int targetAreaCounts[3] = { 0, 0, 0 };
+    int targetAreaCounts[3];
+    std::memset(targetAreaCounts, 0, sizeof(targetAreaCounts));
     std::vector<TargetAreaRuleDefinition*>::iterator targetArea = targetAreas.begin();
     for (; targetArea != targetAreas.end(); ++targetArea)
     {
         if (!(*targetArea)->mPrimary)
-            ++targetAreaCounts[(*targetArea)->getActionType()];
+            ++targetAreaCounts[(*targetArea)->getSize()];
     }
 
     PlayerStats* playerStats = gameStats->GetPlayerStats(uid);

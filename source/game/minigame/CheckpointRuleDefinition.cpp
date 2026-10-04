@@ -89,6 +89,7 @@ static const wchar_t* sTagNames[] =
 };
 
 CheckpointRuleDefinition::CheckpointRuleDefinition()
+    : mBeacons()
 {
     mSpawnPoint = NULL;
     mElytraBoost = -1.0;
@@ -139,20 +140,20 @@ void CheckpointRuleDefinition::getChildren(std::vector<GameRuleDefinition*>* chi
 
 GameRuleDefinition* CheckpointRuleDefinition::addChild(ConsoleGameRules::EGameRuleType type)
 {
+    GameRuleDefinition* rule = NULL;
     if (type == ConsoleGameRules::eGameRuleType_UpdatePlayer)
     {
         mSpawnPoint = new UpdatePlayerRuleDefinition();
-        return mSpawnPoint;
+        rule = mSpawnPoint;
     }
-
-    if (type == ConsoleGameRules::eGameRuleType_CustomBeacon)
+    else if (type == ConsoleGameRules::eGameRuleType_CustomBeacon)
     {
         CustomBeaconRuleDefinition* beacon = new CustomBeaconRuleDefinition();
+        rule = beacon;
         mBeacons.push_back(beacon);
-        return beacon;
     }
 
-    return NULL;
+    return rule;
 }
 
 void CheckpointRuleDefinition::setPlayerPosition(boost::shared_ptr<ServerPlayer> player)
@@ -206,6 +207,11 @@ void CheckpointRuleDefinition::WriteXMLData(std::string& xml)
 
 void CheckpointRuleDefinition::processBeacons(ServerLevel* level)
 {
+    if (mBeacons.empty())
+    {
+        return;
+    }
+
     for (std::vector<CustomBeaconRuleDefinition*>::iterator it = mBeacons.begin(); it != mBeacons.end(); ++it)
     {
         (*it)->processCustomBeacon(level);
@@ -214,6 +220,11 @@ void CheckpointRuleDefinition::processBeacons(ServerLevel* level)
 
 void CheckpointRuleDefinition::deactivateBeacons(ServerLevel* level)
 {
+    if (mBeacons.empty())
+    {
+        return;
+    }
+
     for (std::vector<CustomBeaconRuleDefinition*>::iterator it = mBeacons.begin(); it != mBeacons.end(); ++it)
     {
         (*it)->deactivateCustomBeacon(level);

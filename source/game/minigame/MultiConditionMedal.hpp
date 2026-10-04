@@ -13,13 +13,13 @@ public:
         virtual ~MultiCondition() {}
 
         virtual bool canAward(const GameMedal* medal, const StatsUID& uid, GameStats* gameStats) const;
-        virtual double getScore(const GameMedal* medal, PlayerStats* playerStats) const;
+        virtual float getScore(const GameMedal* medal, PlayerStats* playerStats) const;
     };
 
     MultiConditionMedal(int name, unsigned int weight, MultiCondition* condition);
 
     virtual bool CanAward(const StatsUID& uid, GameStats* gameStats) const;
-    virtual double GetScore(PlayerStats* playerStats) const;
+    virtual float GetScore(PlayerStats* playerStats) const;
     MultiConditionMedal* addExtraCondition(MultiCondition* condition);
 };
 

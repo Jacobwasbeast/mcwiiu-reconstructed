@@ -100,10 +100,10 @@ static const wchar_t* sTagNames[] =
 };
 
 GameRuleDefinition::GameRuleDefinition()
-    : mDescriptionName(L""),
-      mPromptName(L""),
-      mDataTag(0)
 {
+    mDescriptionName = L"";
+    mPromptName = L"";
+    mDataTag = 0;
     addStringAttribute(ConsoleGameRules::eGameRuleAttr_descriptionName, &mDescriptionName);
     addStringAttribute(ConsoleGameRules::eGameRuleAttr_promptName, &mPromptName);
     addIntAttribute(ConsoleGameRules::eGameRuleAttr_dataTag, &mDataTag);

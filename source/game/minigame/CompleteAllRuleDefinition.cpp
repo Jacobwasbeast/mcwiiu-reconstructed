@@ -12,8 +12,8 @@ std::wstring CompleteAllRuleDefinition::generateDescriptionString(const std::wst
     std::wstring text = description;
     const int* values = static_cast<const int*>(value);
 
-    text = replaceAll(text, L"___progress___", _toString(values[1]));
-    text = replaceAll(text, L"___goal___", _toString(values[0]));
+    text = replaceAll(text, L"{*progress*}", _toString(values[1]));
+    text = replaceAll(text, L"{*goal*}", _toString(values[0]));
     return text;
 }
 
@@ -30,15 +30,14 @@ void CompleteAllRuleDefinition::updateStatus(GameRule* rule)
         int progress;
     };
 
-    ProgressData data;
-    data.goal = 0;
-    data.progress = 0;
+    int goal = 0;
+    int progress = 0;
     for (GameRule::ParameterMap::iterator it = rule->mParameters.begin(); it != rule->mParameters.end(); ++it)
     {
         if (it->second.bIsGameRule)
         {
-            data.goal += it->second.pGameRule->getGameRuleDefinition()->getGoal();
-            data.progress += it->second.pGameRule->getGameRuleDefinition()->getProgress(it->second.pGameRule);
+            goal += it->second.pGameRule->getGameRuleDefinition()->getGoal();
+            progress += it->second.pGameRule->getGameRuleDefinition()->getProgress(it->second.pGameRule);
         }
     }
 
@@ -46,6 +45,10 @@ void CompleteAllRuleDefinition::updateStatus(GameRule* rule)
     {
         return;
     }
+
+    ProgressData data;
+    data.goal = goal;
+    data.progress = progress;
 
     int icon = -1;
     int auxValue = 0;
@@ -71,8 +74,8 @@ bool CompleteAllRuleDefinition::onUseBlock(GameRule* rule, int blockId, int x, i
 
 bool CompleteAllRuleDefinition::onCollectItem(GameRule* rule, not_null_ptr<ItemInstance> item)
 {
-    int result = CompoundGameRuleDefinition::onCollectItem(rule, item);
-    if (result != 0)
+    bool result = CompoundGameRuleDefinition::onCollectItem(rule, item);
+    if (result)
     {
         updateStatus(rule);
     }

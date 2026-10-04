@@ -24,7 +24,7 @@ DamageSourceMedal::~DamageSourceMedal()
     delete mSources;
 }
 
-double DamageSourceMedal::GetScore(PlayerStats* playerStats) const
+float DamageSourceMedal::GetScore(PlayerStats* playerStats) const
 {
     float score = 0.0f;
 

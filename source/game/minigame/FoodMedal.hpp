@@ -16,7 +16,7 @@ public:
 
     virtual ~FoodMedal();
 
-    virtual double GetScore(PlayerStats* playerStats) const;
+    virtual float GetScore(PlayerStats* playerStats) const;
 
 private:
     std::vector<Item*>* mItems;

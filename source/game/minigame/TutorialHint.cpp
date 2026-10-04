@@ -17,25 +17,26 @@ TutorialHint::TutorialHint(eTutorial_Hint hintValue, Tutorial* tutorialValue, in
 
 int TutorialHint::startDestroyBlock(not_null_ptr<ItemInstance> item, const BlockState* state)
 {
+    int result = -1;
     if (type == HINT_START_DESTROY_BLOCK)
     {
-        Block* block = state->getBlock();
-        if (block == lastBlock && active)
+        if (state->getBlock() == lastBlock && active)
         {
             ++consecutiveTicks;
             if (consecutiveTicks > 20)
             {
-                lastBlock = block;
-                return descriptionId;
+                result = descriptionId;
+                lastBlock = state->getBlock();
+                return result;
             }
         }
         else
         {
             consecutiveTicks = 0;
         }
-        lastBlock = block;
+        lastBlock = state->getBlock();
     }
-    return -1;
+    return result;
 }
 
 unsigned int TutorialHint::destroyBlock(Block* block)
@@ -54,20 +55,22 @@ unsigned int TutorialHint::attack(not_null_ptr<ItemInstance> item, boost::shared
 
 int TutorialHint::createItemSelected(not_null_ptr<ItemInstance> item, bool selected)
 {
+    int result = -1;
     if (type == HINT_CREATE_ITEM_SELECTED && !selected)
     {
-        return descriptionId;
+        result = descriptionId;
     }
-    return -1;
+    return result;
 }
 
 int TutorialHint::itemDamaged(not_null_ptr<ItemInstance> item)
 {
+    int result = -1;
     if (type == HINT_ITEM_DAMAGED)
     {
-        return descriptionId;
+        result = descriptionId;
     }
-    return -1;
+    return result;
 }
 
 unsigned int TutorialHint::onTake(not_null_ptr<ItemInstance> item)
@@ -97,16 +100,22 @@ unsigned int TutorialHint::onGameModeChange(eTutorial_GameMode gameMode)
 
 int TutorialHint::tick()
 {
+    int result = -1;
     if (type == HINT_WATER_MOVEMENT)
     {
+        Tutorial* owner = tutorial;
         Minecraft* minecraft = Minecraft::GetInstance();
-        MultiplayerLocalPlayer* player = minecraft->mLocalPlayers[tutorial->playerId].get();
-        if (player->isUnderLiquid(Material::WATER) && !player->PositionLocked())
+        if (minecraft->mLocalPlayers[owner->playerId]->isUnderLiquid(Material::WATER))
         {
-            return descriptionId;
+            owner = tutorial;
+            Minecraft* current = Minecraft::GetInstance();
+            if (!current->mLocalPlayers[owner->playerId]->isPassenger())
+            {
+                result = descriptionId;
+            }
         }
     }
-    return -1;
+    return result;
 }
 
 unsigned int TutorialHint::getMinimumDisplayTime()

@@ -17,5 +17,8 @@ public:
     virtual ConsoleGameRules::EGameRuleType getActionType();
 
     const std::wstring& GetName() const;
+
+private:
+    std::wstring mDefinitionName;
 };
 #endif

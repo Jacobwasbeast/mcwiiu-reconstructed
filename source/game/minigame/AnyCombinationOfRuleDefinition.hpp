@@ -23,7 +23,6 @@ public:
     AnyCombinationOfRuleDefinition(LayerGenerationRuleDefinition* parent);
     AnyCombinationOfRuleDefinition(LayerGenerationRuleDefinition* parent,
         AnyCombinationOfRuleDefinition* definition);
-    virtual ~AnyCombinationOfRuleDefinition();
 
     AnyCombinationOfRuleDefinition* GetRandomLeafChild(const LayerMetadata& metadata,
         Random& layerRandom, Random& random) const;

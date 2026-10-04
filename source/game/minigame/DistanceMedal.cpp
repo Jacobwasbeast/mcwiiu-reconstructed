@@ -2,7 +2,7 @@
 
 #include "game/world/generation/PlayerStats.hpp"
 
-double DistanceMedal::GetScore(PlayerStats* playerStats) const
+float DistanceMedal::GetScore(PlayerStats* playerStats) const
 {
     return static_cast<double>(static_cast<float>(playerStats->getTotalWalkDistance())
         + static_cast<float>(playerStats->getTotalSprintDistance())

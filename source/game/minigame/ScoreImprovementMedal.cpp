@@ -5,21 +5,21 @@
 #include "game/minigame/MiniGameDef.hpp"
 #include "game/world/generation/PlayerStats.hpp"
 
-double ScoreImprovementMedal::GetScore(PlayerStats* playerStats) const
+float ScoreImprovementMedal::GetScore(PlayerStats* playerStats) const
 {
-    Minecraft* minecraft = Minecraft::GetInstance();
-    int finalRound = minecraft->GetMiniGame()->GetFinalRoundIndex();
+    ClientMasterGameMode* clientMode = Minecraft::GetInstance()->GetClientMasterGameMode();
+    int finalRound = Minecraft::GetInstance()->GetMiniGame()->GetFinalRoundIndex();
 
-    if (minecraft->GetClientMasterGameMode() != NULL)
+    if (clientMode != NULL)
     {
         const MiniGameDef* miniGame = CommonMasterGameMode::GetMiniGame();
         if (miniGame->ArePointsActive())
         {
-            return static_cast<double>(static_cast<float>(
+            return static_cast<double>(static_cast<float>(static_cast<unsigned int>(
                 (playerStats->getRoundStats(finalRound)->mPoints
                  + playerStats->getRoundStats(finalRound)->mUnbankedPoints)
                 - (playerStats->getRoundStats(0)->mPoints
-                   + playerStats->getRoundStats(0)->mUnbankedPoints)));
+                   + playerStats->getRoundStats(0)->mUnbankedPoints))));
         }
 
         miniGame = CommonMasterGameMode::GetMiniGame();
@@ -40,8 +40,8 @@ double ScoreImprovementMedal::GetScore(PlayerStats* playerStats) const
 
             if (playerStats->getRoundStats(finalRound)->mReachedEnd)
             {
-                return static_cast<double>(static_cast<float>(
-                    firstScore - playerStats->getRoundStats(finalRound)->mLifeSpan));
+                return static_cast<double>(static_cast<float>(static_cast<unsigned int>(
+                    firstScore - playerStats->getRoundStats(finalRound)->mLifeSpan)));
             }
         }
     }

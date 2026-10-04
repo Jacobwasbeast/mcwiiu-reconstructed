@@ -31,16 +31,17 @@ int TargetAreaRuleDefinition::getPointValue()
 
 int TargetAreaRuleDefinition::getSize()
 {
-    switch (mPointValue)
+    if (mPointValue != 3)
     {
-    case 3:
-        return 2;
+        if (mPointValue == 5)
+        {
+            return 1;
+        }
 
-    case 5:
-        return 1;
-
-    case 7:
-        return 0;
+        if (mPointValue == 7)
+        {
+            return 0;
+        }
     }
 
     return 2;
@@ -96,13 +97,14 @@ void TargetAreaRuleDefinition::WriteAttributesAsXML(std::string& xml)
     if (getPointValue() == 7)
     {
         xml.append(" size=\"small\"");
+        return;
     }
-    else if (getPointValue() == 5)
+
+    if (getPointValue() == 5)
     {
         xml.append(" size=\"medium\"");
+        return;
     }
-    else
-    {
-        xml.append(" size=\"large\"");
-    }
+
+    xml.append(" size=\"large\"");
 }

@@ -4,7 +4,7 @@
 
 #include "game/world/generation/PlayerStats.hpp"
 
-double HoarderMedal::GetScore(PlayerStats* playerStats) const
+float HoarderMedal::GetScore(PlayerStats* playerStats) const
 {
     std::map<int, int> items;
     playerStats->getAllItems(items);

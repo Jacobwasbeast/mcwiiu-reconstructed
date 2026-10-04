@@ -10,19 +10,19 @@
 #include "game/world/generation/PlayerStats.hpp"
 
 GameMedal::GameMedal(int name, unsigned int weight)
-    : mName(name)
-    , mWeight(weight)
-    , mId(-1)
-    , mCanMultiAward(false)
 {
+    mName = name;
+    mWeight = weight;
+    mCanMultiAward = false;
+    mId = -1;
 }
 
 GameMedal::GameMedal(int name, float target, unsigned int weight, EOperator op, bool bestOnly, bool canMultiAward)
-    : mName(name)
-    , mWeight(weight)
-    , mId(-1)
-    , mCanMultiAward(canMultiAward)
 {
+    mName = name;
+    mWeight = weight;
+    mId = -1;
+    mCanMultiAward = canMultiAward;
     mConditions.push_back(new Condition(target, op, bestOnly));
 }
 
@@ -59,7 +59,8 @@ bool GameMedal::CanAward(const StatsUID& uid, GameStats* gameStats) const
         return false;
     }
 
-    return defaultCanAward(uid, gameStats, GetScore(playerStats), mConditions[0]->mTarget, mConditions[0]->mOperator);
+    float score = GetScore(playerStats);
+    return defaultCanAward(uid, gameStats, score, mConditions[0]->mTarget, mConditions[0]->mOperator);
 }
 
 int GameMedal::GetName() const
@@ -67,7 +68,7 @@ int GameMedal::GetName() const
     return mName;
 }
 
-double GameMedal::GetScore(PlayerStats* playerStats) const
+float GameMedal::GetScore(PlayerStats* playerStats) const
 {
     return 0.0;
 }
@@ -154,7 +155,7 @@ GameStats* GameMedal::getGameStats() const
     return &gMinecraftServer->mMasterGameMode->mGameStats;
 }
 
-double GameMedal::totalOfAllRounds(PlayerStats* playerStats, int (&getRoundValue)(const PlayerStats::RoundStats&))
+float GameMedal::totalOfAllRounds(PlayerStats* playerStats, int (&getRoundValue)(const PlayerStats::RoundStats&))
 {
     int total = 0;
 
@@ -170,10 +171,6 @@ GameMedal::Condition::Condition(float target, EOperator op, bool bestOnly)
     : mTarget(target)
     , mBestOnly(bestOnly)
     , mOperator(op)
-{
-}
-
-GameMedal::Condition::~Condition()
 {
 }
 
@@ -227,7 +224,7 @@ bool GameMedal::Condition::canAward(const GameMedal* medal, const StatsUID& uid,
     return medal->CanAward(uid, gameStats);
 }
 
-double GameMedal::Condition::getScore(const GameMedal* medal, PlayerStats* playerStats) const
+float GameMedal::Condition::getScore(const GameMedal* medal, PlayerStats* playerStats) const
 {
     return medal->GetScore(playerStats);
 }

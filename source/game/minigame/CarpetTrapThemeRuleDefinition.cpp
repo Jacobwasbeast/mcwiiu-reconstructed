@@ -7,15 +7,9 @@
 CarpetTrapThemeRuleDefinition::CarpetTrapThemeRuleDefinition()
     : mCarpetColour(0)
 {
-    GameRules_IntAttribute* carpetColourAttribute =
-        addIntAttribute(ConsoleGameRules::eGameRuleAttr_blockAux, &mCarpetColour);
-    carpetColourAttribute->setMin(0);
-    carpetColourAttribute->setMax(15);
+    addIntAttribute(ConsoleGameRules::eGameRuleAttr_blockAux, &mCarpetColour)->setMin(0)->setMax(15);
 
-    GameRules_FloatAttribute* noiseScaleAttribute =
-        addFloatAttribute(ConsoleGameRules::eGameRuleAttr_scale, &mNoiseScale);
-    noiseScaleAttribute->setMin(0.0f);
-    noiseScaleAttribute->setMax(100.0f);
+    addFloatAttribute(ConsoleGameRules::eGameRuleAttr_scale, &mNoiseScale)->setMin(0.0f)->setMax(100.0f);
 }
 
 CarpetTrapThemeRuleDefinition::~CarpetTrapThemeRuleDefinition()

@@ -63,9 +63,7 @@ SchematicThemeRuleDefinition::AssetRuleDef::AssetRuleDef()
     , mMinimumWidth(0)
 {
     addStringAttribute(ConsoleGameRules::eGameRuleAttr_filename, &mFilename);
-    GameRules_IntAttribute* width = addIntAttribute(ConsoleGameRules::eGameRuleAttr_size, &mMinimumWidth);
-    width->setMin(0);
-    width->setMax(128);
+    addIntAttribute(ConsoleGameRules::eGameRuleAttr_size, &mMinimumWidth)->setMin(0)->setMax(128);
 }
 
 SchematicThemeRuleDefinition::AssetRuleDef::~AssetRuleDef()

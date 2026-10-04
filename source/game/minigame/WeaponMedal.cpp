@@ -1,19 +1,21 @@
 #include "game/minigame/WeaponMedal.hpp"
 
+#include <algorithm>
+
 #include "game/core/DamageEvent.hpp"
 #include "game/item/Item.hpp"
 
 WeaponMedal::WeaponMedal(int name, float target, unsigned int weight, Item* item)
     : DamageDealtMedal(name, target, weight, OPERATOR_AT_LEAST, true, false)
     , mItem(item)
-    , mItemTypes(new std::vector<int>())
+    , mItemTypes(new std::vector<int>)
 {
 }
 
 WeaponMedal::WeaponMedal(int name, float target, unsigned int weight, int itemType)
     : DamageDealtMedal(name, target, weight, OPERATOR_AT_LEAST, true, false)
     , mItem(NULL)
-    , mItemTypes(new std::vector<int>())
+    , mItemTypes(new std::vector<int>)
 {
     mItemTypes->push_back(itemType);
 }
@@ -34,26 +36,20 @@ bool WeaponMedal::IncludeDamage(const DamageEvent* damageEvent) const
 {
     Item* item = damageEvent->mWeapon.GetItem();
 
-    if (mItem == NULL)
+    if (mItem == NULL && !mItemTypes->empty())
     {
-        if (!mItemTypes->empty())
+        bool included = false;
+        if (item != NULL)
         {
-            if (item != NULL)
+            std::vector<int>::const_iterator it =
+                std::find(mItemTypes->begin(), mItemTypes->end(), item->getBaseItemType());
+            if (it != mItemTypes->end())
             {
-                int itemType = item->getBaseItemType();
-                for (std::vector<int>::const_iterator it = mItemTypes->begin();
-                     it != mItemTypes->end();
-                     ++it)
-                {
-                    if (*it == itemType)
-                    {
-                        return true;
-                    }
-                }
+                included = true;
             }
-
-            return false;
         }
+
+        return included;
     }
 
     return item == mItem;

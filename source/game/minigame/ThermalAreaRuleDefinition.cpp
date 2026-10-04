@@ -6,12 +6,17 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/core/ClientScoreboard.hpp"
+#include "game/core/IGameRuleAttribute.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/minigame/GameRuleDefinition.hpp"
 #include "game/world/generation/MultiPlayerLevel.hpp"
 #include "game/world/generation/Player.hpp"
 #include "game/core/StringFormat.hpp"
+
+static const wchar_t* sBoostDirectionNames[8] = {
+    L"plus_x", L"minus_x", L"plus_z", L"minus_z", L"omni_plus_x", L"omni_minus_x", L"omni_plus_z", L"omni_minus_z"
+};
 
 ThermalAreaRuleDefinition::ThermalAreaRuleDefinition()
 {
@@ -52,8 +57,9 @@ bool ThermalAreaRuleDefinition::getConditionsMet(boost::shared_ptr<Entity> entit
     {
         if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
         {
+            ClientScoreboard* scoreboard = Minecraft::GetInstance()->mLevel->GetClientScoreboard();
             boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
-            int points = Minecraft::GetInstance()->mLevel->GetClientScoreboard()->GetPoints(player->getSUID(), -1);
+            int points = scoreboard->GetPoints(player->getSUID(), -1);
             if (points < mConditionValue0 || mConditionValue1 < points)
             {
                 return false;
@@ -76,44 +82,44 @@ void ThermalAreaRuleDefinition::updateUseCount()
 
 void ThermalAreaRuleDefinition::addAttribute(const std::wstring& name, const std::wstring& value)
 {
-    if (name == L"boostDirection")
+    if (name == gRuleAttributeNames[ConsoleGameRules::eGameRuleAttr_boostDirection])
     {
-        if (value == L"plus_x")
+        if (value == sBoostDirectionNames[0])
         {
             mBoostDirection = 0;
             return;
         }
-        if (value == L"minus_x")
+        if (value == sBoostDirectionNames[1])
         {
             mBoostDirection = 1;
             return;
         }
-        if (value == L"plus_z")
+        if (value == sBoostDirectionNames[2])
         {
             mBoostDirection = 2;
             return;
         }
-        if (value == L"minus_z")
+        if (value == sBoostDirectionNames[3])
         {
             mBoostDirection = 3;
             return;
         }
-        if (value == L"omni_plus_x")
+        if (value == sBoostDirectionNames[4])
         {
             mBoostDirection = 4;
             return;
         }
-        if (value == L"omni_minus_x")
+        if (value == sBoostDirectionNames[5])
         {
             mBoostDirection = 5;
             return;
         }
-        if (value == L"omni_plus_z")
+        if (value == sBoostDirectionNames[6])
         {
             mBoostDirection = 6;
             return;
         }
-        if (value == L"omni_minus_z")
+        if (value == sBoostDirectionNames[7])
         {
             mBoostDirection = 7;
             return;
@@ -127,32 +133,27 @@ void ThermalAreaRuleDefinition::addAttribute(const std::wstring& name, const std
 
 unsigned int ThermalAreaRuleDefinition::setBoostMods(int& boostMod, int& boostDirection)
 {
-    unsigned int direction = static_cast<unsigned int>(mBoostDirection);
-    if (direction == 0)
+    switch (mBoostDirection)
     {
+    case 0:
         boostMod = 1;
         boostDirection = 0;
         return 1;
-    }
-    if (direction == 1)
-    {
+    case 1:
         boostMod = -1;
         boostDirection = 0;
         return 1;
-    }
-    if (direction < 3)
-    {
+    case 2:
         boostMod = 0;
         boostDirection = 1;
         return 1;
-    }
-    if (direction != 3)
-    {
+    case 3:
+        boostMod = 0;
+        boostDirection = -1;
+        return 1;
+    default:
         return 0;
     }
-    boostMod = 0;
-    boostDirection = -1;
-    return 1;
 }
 
 unsigned int ThermalAreaRuleDefinition::getBoostDirection()
@@ -181,35 +182,7 @@ void ThermalAreaRuleDefinition::WriteAttributesAsXML(std::string& xml)
     if (mSpeedBoost != 0.0)
     {
         WriteAttributeAsXML(ConsoleGameRules::eGameRuleAttr_speedBoost, xml);
-        const wchar_t* direction = L"none";
-        switch (mBoostDirection)
-        {
-        case 0:
-            direction = L"plus_x";
-            break;
-        case 1:
-            direction = L"minus_x";
-            break;
-        case 2:
-            direction = L"plus_z";
-            break;
-        case 3:
-            direction = L"minus_z";
-            break;
-        case 4:
-            direction = L"omni_plus_x";
-            break;
-        case 5:
-            direction = L"omni_minus_x";
-            break;
-        case 6:
-            direction = L"omni_plus_z";
-            break;
-        case 7:
-            direction = L"omni_minus_z";
-            break;
-        }
-        xml.append(formatstr(" boostDirection=\"%ls\"", direction));
+        xml.append(formatstr(" boostDirection=\"%ls\"", sBoostDirectionNames[mBoostDirection]));
     }
     if (mConditionType != 0)
     {

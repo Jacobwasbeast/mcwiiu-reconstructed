@@ -1625,18 +1625,17 @@ unsigned int Tutorial::onSelectedItemChanged(not_null_ptr<ItemInstance> item)
 {
     if (isSelectedItemState() == 0)
         return 0;
-    if (item.get() == NULL || item->isEmpty())
+    if (item->isEmpty())
     {
         changeTutorialState(eTutorial_State_Gameplay, NULL);
         return 0;
     }
-    Item* itemType = item->getItem();
-    if (itemType == Items::fishingRod)
+    if (item->getItem() == Items::fishingRod)
     {
         changeTutorialState(eTutorial_State_Fishing, NULL);
         return 0;
     }
-    if (itemType == Items::nameTag)
+    if (item->getItem() == Items::nameTag)
     {
         changeTutorialState(eTutorial_State_NameTag, NULL);
         return 0;

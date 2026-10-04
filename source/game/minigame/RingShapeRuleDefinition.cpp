@@ -30,5 +30,5 @@ GameRuleDefinition* RingShapeRuleDefinition::addChild(ConsoleGameRules::EGameRul
 
 LayerShape* RingShapeRuleDefinition::Generate() const
 {
-    return new RingShape(mChild->GetValue(), 2.857143f, static_cast<float>(mScale));
+    return new RingShape(mChild->Generate(), 2.857143f, static_cast<float>(mScale));
 }

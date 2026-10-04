@@ -9,7 +9,7 @@ public:
     class Range
     {
     public:
-        double getScore(float score) const;
+        float getScore(float score) const;
 
         float mTarget;
         float mRange;
@@ -17,7 +17,7 @@ public:
 
     GameVoteMedal(int name, float target, unsigned int weight, Range* ranges);
 
-    virtual double GetScore(PlayerStats* playerStats) const;
+    virtual float GetScore(PlayerStats* playerStats) const;
 
 private:
     Range mRanges[4];

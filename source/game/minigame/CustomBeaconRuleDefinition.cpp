@@ -4,6 +4,7 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include "game/core/IGameRuleAttribute.hpp"
 #include "game/core/StringConversion.hpp"
 #include "game/data/GameRuleSaveInterface.hpp"
 #include "game/server/MinecraftServer.hpp"
@@ -12,6 +13,11 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/MutableBlockPos.hpp"
 #include "game/world/generation/PlayerList.hpp"
+
+static const wchar_t* sBeamDirectionNames[7] =
+{
+    L"none", L"+y", L"-y", L"+x", L"-x", L"+z", L"-z"
+};
 
 CustomBeaconRuleDefinition::CustomBeaconRuleDefinition()
 {
@@ -29,26 +35,24 @@ CustomBeaconRuleDefinition::~CustomBeaconRuleDefinition()
 void CustomBeaconRuleDefinition::processCustomBeacon(ServerLevel* level)
 {
     BlockPos position(mPosition->x, mPosition->y, mPosition->z);
-    boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(position);
-    boost::shared_ptr<BeaconBlockEntity> beacon = boost::dynamic_pointer_cast<BeaconBlockEntity>(blockEntity);
+    boost::shared_ptr<BeaconBlockEntity> beacon = boost::dynamic_pointer_cast<BeaconBlockEntity>(level->getBlockEntity(position));
     if (beacon && mDirection != BeaconBlockEntity::eBEAM_DIRECTION_NONE)
     {
         beacon->setBeamDirection(mDirection);
         beacon->setBeamLength(mLength);
-        gMinecraftServer->getPlayers()->broadcastAll(beacon->getUpdatePacket());
+        (gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers)->broadcastAll(beacon->getUpdatePacket());
     }
 }
 
 void CustomBeaconRuleDefinition::deactivateCustomBeacon(ServerLevel* level)
 {
     BlockPos position(mPosition->x, mPosition->y, mPosition->z);
-    boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(position);
-    boost::shared_ptr<BeaconBlockEntity> beacon = boost::dynamic_pointer_cast<BeaconBlockEntity>(blockEntity);
+    boost::shared_ptr<BeaconBlockEntity> beacon = boost::dynamic_pointer_cast<BeaconBlockEntity>(level->getBlockEntity(position));
     if (beacon && mDirection != BeaconBlockEntity::eBEAM_DIRECTION_NONE)
     {
         beacon->setBeamDirection(BeaconBlockEntity::eBEAM_DIRECTION_NONE);
         beacon->setBeamLength(0);
-        gMinecraftServer->getPlayers()->broadcastAll(beacon->getUpdatePacket());
+        (gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers)->broadcastAll(beacon->getUpdatePacket());
     }
 }
 
@@ -63,7 +67,7 @@ void CustomBeaconRuleDefinition::writeAttributes(GameRuleSaveInterface* saveInte
 
 void CustomBeaconRuleDefinition::addAttribute(const std::wstring& name, const std::wstring& value)
 {
-    if (name.compare(L"spawnX") == 0)
+    if (name.compare(gRuleAttributeNames[ConsoleGameRules::eGameRuleAttr_spawnX]) == 0)
     {
         if (mPosition == NULL)
         {
@@ -72,7 +76,7 @@ void CustomBeaconRuleDefinition::addAttribute(const std::wstring& name, const st
         mPosition->setX(_fromString<int>(value));
         return;
     }
-    if (name.compare(L"spawnY") == 0)
+    if (name.compare(gRuleAttributeNames[ConsoleGameRules::eGameRuleAttr_spawnY]) == 0)
     {
         if (mPosition == NULL)
         {
@@ -81,7 +85,7 @@ void CustomBeaconRuleDefinition::addAttribute(const std::wstring& name, const st
         mPosition->setY(_fromString<int>(value));
         return;
     }
-    if (name.compare(L"spawnZ") == 0)
+    if (name.compare(gRuleAttributeNames[ConsoleGameRules::eGameRuleAttr_spawnZ]) == 0)
     {
         if (mPosition == NULL)
         {
@@ -90,33 +94,33 @@ void CustomBeaconRuleDefinition::addAttribute(const std::wstring& name, const st
         mPosition->setZ(_fromString<int>(value));
         return;
     }
-    if (name.compare(L"beam_direction") == 0)
+    if (name.compare(gRuleAttributeNames[ConsoleGameRules::eGameRuleAttr_beam_direction]) == 0)
     {
-        if (value.compare(L"none") == 0)
+        if (value.compare(sBeamDirectionNames[BeaconBlockEntity::eBEAM_DIRECTION_NONE]) == 0)
         {
             mDirection = BeaconBlockEntity::eBEAM_DIRECTION_NONE;
         }
-        else if (value.compare(L"+y") == 0)
+        else if (value.compare(sBeamDirectionNames[BeaconBlockEntity::eBEAM_DIRECTION_POSITIVE_Y]) == 0)
         {
             mDirection = BeaconBlockEntity::eBEAM_DIRECTION_POSITIVE_Y;
         }
-        else if (value.compare(L"-y") == 0)
+        else if (value.compare(sBeamDirectionNames[BeaconBlockEntity::eBEAM_DIRECTION_NEGATIVE_Y]) == 0)
         {
             mDirection = BeaconBlockEntity::eBEAM_DIRECTION_NEGATIVE_Y;
         }
-        else if (value.compare(L"+x") == 0)
+        else if (value.compare(sBeamDirectionNames[BeaconBlockEntity::eBEAM_DIRECTION_POSITIVE_X]) == 0)
         {
             mDirection = BeaconBlockEntity::eBEAM_DIRECTION_POSITIVE_X;
         }
-        else if (value.compare(L"-x") == 0)
+        else if (value.compare(sBeamDirectionNames[BeaconBlockEntity::eBEAM_DIRECTION_NEGATIVE_X]) == 0)
         {
             mDirection = BeaconBlockEntity::eBEAM_DIRECTION_NEGATIVE_X;
         }
-        else if (value.compare(L"+z") == 0)
+        else if (value.compare(sBeamDirectionNames[BeaconBlockEntity::eBEAM_DIRECTION_POSITIVE_Z]) == 0)
         {
             mDirection = BeaconBlockEntity::eBEAM_DIRECTION_POSITIVE_Z;
         }
-        else if (value.compare(L"-z") == 0)
+        else if (value.compare(sBeamDirectionNames[BeaconBlockEntity::eBEAM_DIRECTION_NEGATIVE_Z]) == 0)
         {
             mDirection = BeaconBlockEntity::eBEAM_DIRECTION_NEGATIVE_Z;
         }

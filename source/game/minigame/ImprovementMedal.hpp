@@ -10,7 +10,7 @@ class ImprovementMedal : public GameMedal
 public:
     ImprovementMedal(int name, float target, unsigned int weight);
 
-    virtual double GetScore(PlayerStats* playerStats) const;
+    virtual float GetScore(PlayerStats* playerStats) const;
 };
 
 #endif

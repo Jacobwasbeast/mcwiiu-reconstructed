@@ -8,6 +8,7 @@
 class TargetAreaRuleDefinition : public NamedAreaRuleDefinition
 {
     friend class CommonMasterGameMode;
+    friend class PlayersEnteredVolumeCondition;
 
 public:
     TargetAreaRuleDefinition();

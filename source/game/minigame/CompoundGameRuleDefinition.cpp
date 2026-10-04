@@ -49,46 +49,42 @@ GameRuleDefinition* CompoundGameRuleDefinition::addChild(ConsoleGameRules::EGame
 {
     GameRuleDefinition* pChild = NULL;
 
-    switch (type)
+    if (type == ConsoleGameRules::eGameRuleType_CompleteAll)
     {
-    case ConsoleGameRules::eGameRuleType_PlaceContainer:
-        pChild = new PlaceContainerRuleDefinition();
-        break;
-
-    case ConsoleGameRules::eGameRuleType_DistributeItems:
-        pChild = new DistributeItemsRuleDefinition();
-        break;
-
-    case ConsoleGameRules::eGameRuleType_UseBlock:
-        pChild = new UseBlockRuleDefinition();
-        break;
-
-    case ConsoleGameRules::eGameRuleType_CollectItem:
-        pChild = new CollectItemRuleDefinition();
-        break;
-
-    case ConsoleGameRules::eGameRuleType_CompleteAll:
         pChild = new CompleteAllRuleDefinition();
-        break;
-
-    case ConsoleGameRules::eGameRuleType_UpdatePlayer:
-        pChild = new UpdatePlayerRuleDefinition();
-        break;
-
-    case ConsoleGameRules::eGameRuleType_PopulateContainer:
-        pChild = new PopulateContainerRuleDefinition();
-        break;
-
-    default:
-        return NULL;
     }
-
-    if (pChild == NULL)
+    else
     {
-        return NULL;
+        if (type == ConsoleGameRules::eGameRuleType_CollectItem)
+        {
+            pChild = new CollectItemRuleDefinition();
+        }
+        else if (type == ConsoleGameRules::eGameRuleType_UseBlock)
+        {
+            pChild = new UseBlockRuleDefinition();
+        }
+        else if (type == ConsoleGameRules::eGameRuleType_UpdatePlayer)
+        {
+            pChild = new UpdatePlayerRuleDefinition();
+        }
+        else if (type == ConsoleGameRules::eGameRuleType_PlaceContainer)
+        {
+            pChild = new PlaceContainerRuleDefinition();
+        }
+        else if (type == ConsoleGameRules::eGameRuleType_DistributeItems)
+        {
+            pChild = new DistributeItemsRuleDefinition();
+        }
+        else if (type == ConsoleGameRules::eGameRuleType_PopulateContainer)
+        {
+            pChild = new PopulateContainerRuleDefinition();
+        }
     }
 
-    mChildren.push_back(pChild);
+    if (pChild != NULL)
+    {
+        mChildren.push_back(pChild);
+    }
 
     return pChild;
 }
@@ -124,7 +120,7 @@ bool CompoundGameRuleDefinition::onUseBlock(GameRule* gameRule, int blockId, int
         if (it->second.bIsGameRule)
         {
             bool childTriggered = it->second.pGameRule->getGameRuleDefinition()->onUseBlock(it->second.pGameRule, blockId, x, y, z);
-            if (childTriggered && !bTriggered)
+            if (!bTriggered && childTriggered)
             {
                 bTriggered = true;
                 mCompletedChild = it->second.pGameRule->getGameRuleDefinition();
@@ -144,7 +140,7 @@ bool CompoundGameRuleDefinition::onCollectItem(GameRule* gameRule, not_null_ptr<
         if (it->second.bIsGameRule)
         {
             bool childTriggered = it->second.pGameRule->getGameRuleDefinition()->onCollectItem(it->second.pGameRule, item);
-            if (childTriggered && !bTriggered)
+            if (!bTriggered && childTriggered)
             {
                 bTriggered = true;
                 mCompletedChild = it->second.pGameRule->getGameRuleDefinition();

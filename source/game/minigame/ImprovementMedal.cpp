@@ -7,17 +7,17 @@ ImprovementMedal::ImprovementMedal(int name, float target, unsigned int weight)
 {
 }
 
-double ImprovementMedal::GetScore(PlayerStats* playerStats) const
+float ImprovementMedal::GetScore(PlayerStats* playerStats) const
 {
     bool hasOnePointRound = false;
-    unsigned int improvedRounds = 0;
+    int improvedRounds = 0;
     unsigned int round = 0;
     unsigned int totalRounds = playerStats->getTotalRounds();
 
     while (round < totalRounds)
     {
         PlayerStats::RoundStats* roundStats = playerStats->getRoundStats(round);
-        if (roundStats->mPoints == 1)
+        if (roundStats->mDeathOrder == 1)
         {
             hasOnePointRound = true;
         }

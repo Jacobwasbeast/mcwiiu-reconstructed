@@ -14,7 +14,7 @@ public:
                       std::vector<Scoreboard::EDamageSource>* sources);
     virtual ~DamageSourceMedal();
 
-    virtual double GetScore(PlayerStats* playerStats) const;
+    virtual float GetScore(PlayerStats* playerStats) const;
 
 private:
     std::vector<Scoreboard::EDamageSource>* mSources;

@@ -249,12 +249,12 @@ FullTutorial::FullTutorial(int playerId, GameModeConstraints* constraints, bool 
     : Tutorial(playerId, constraints, true, false), mEnabledForPlayer(enabled),
       mProgressFlags(false)
 {
+    overridesGameHostOptions = true;
     int i;
     for (i = 0; i < 44; ++i)
     {
         mStateCompleted[i] = 0;
     }
-    overridesGameHostOptions = true;
     addMessage(TutorialIds::WelcomeMessage, false, 3);
 
     if (!mEnabledForPlayer && getCompleted(0x183) == 0)
@@ -508,7 +508,7 @@ FullTutorial::FullTutorial(int playerId, GameModeConstraints* constraints, bool 
             new CraftTask(Items::stick, -1, 1, this, TutorialIds::StickCraft, true, NULL, false, true, true));
 
     ProcedureCompoundTask* compound2 = new ProcedureCompoundTask(this);
-    compound2->AddTask(new UICraftingTask(this, TutorialIds::ToolsUi, Recipe::eGroupType_Tools, true, NULL,
+    compound2->AddTask(new UICraftingTask(this, TutorialIds::ToolsUi, Recipe::eGroupType_Tools, false, NULL,
                                            false, true, true));
     compound2->AddTask(new UICraftingTask(this, TutorialIds::WoodenShovelUi, Items::woodenShovel, false, NULL,
                                            false, true, true));
@@ -1169,19 +1169,23 @@ void FullTutorial::PopulateChest(eTutorial_State state)
 
 void FullTutorial::tick()
 {
-    std::vector<eTutorial_State>::iterator state = completedStates.begin();
-    while (state != completedStates.end())
+    if (!completedStates.empty())
     {
-        if (gameModeConstraints->NotInConstraintArea(playerId, static_cast<int>(*state)))
+        std::vector<eTutorial_State>::iterator state = completedStates.begin();
+        while (state != completedStates.end())
         {
-            mStateCompleted[static_cast<int>(*state)] = 0;
-            AddTutorialArea(*state);
-            PopulateChest(*state);
-            state = completedStates.erase(state);
-        }
-        else
-        {
-            ++state;
+            eTutorial_State current = *state;
+            if (gameModeConstraints->NotInConstraintArea(playerId, static_cast<int>(current)))
+            {
+                mStateCompleted[static_cast<int>(current)] = 0;
+                AddTutorialArea(current);
+                PopulateChest(current);
+                state = completedStates.erase(state);
+            }
+            else
+            {
+                ++state;
+            }
         }
     }
     Tutorial::tick();

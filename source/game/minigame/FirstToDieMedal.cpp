@@ -12,7 +12,7 @@ FirstToDieMedal::FirstToDieMedal(int name, float target, unsigned int weight)
 {
 }
 
-double FirstToDieMedal::GetScore(PlayerStats* playerStats) const
+float FirstToDieMedal::GetScore(PlayerStats* playerStats) const
 {
     float score = 0.0f;
     float roundScore = 10.0f;

@@ -26,11 +26,11 @@ public:
     public:
         Condition(float target, EOperator op, bool bestOnly);
 
-        virtual ~Condition();
+        virtual ~Condition() {}
 
         virtual int findBest(const GameMedal* medal, const std::vector<boost::shared_ptr<ServerPlayer> >* players, GameStats* gameStats) const;
         virtual bool canAward(const GameMedal* medal, const StatsUID& uid, GameStats* gameStats) const;
-        virtual double getScore(const GameMedal* medal, PlayerStats* playerStats) const;
+        virtual float getScore(const GameMedal* medal, PlayerStats* playerStats) const;
 
         float mTarget;
         bool mBestOnly;
@@ -44,11 +44,11 @@ public:
 
     virtual bool CanAward(const StatsUID& uid, GameStats* gameStats) const;
     virtual int GetName() const;
-    virtual double GetScore(PlayerStats* playerStats) const;
+    virtual float GetScore(PlayerStats* playerStats) const;
     virtual int FindBest(const std::vector<boost::shared_ptr<ServerPlayer> >* players, GameStats* gameStats) const;
 
     static bool defaultCanAward(const StatsUID& uid, GameStats* gameStats, float score, float target, EOperator op);
-    static double totalOfAllRounds(PlayerStats* playerStats, int (&getRoundValue)(const PlayerStats::RoundStats&));
+    static float totalOfAllRounds(PlayerStats* playerStats, int (&getRoundValue)(const PlayerStats::RoundStats&));
 
     bool BestOnly() const;
     unsigned int GetWeight() const;

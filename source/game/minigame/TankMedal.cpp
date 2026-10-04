@@ -9,7 +9,7 @@ TankMedal::TankMedal(int name, float target, unsigned int weight)
 {
 }
 
-double TankMedal::GetScore(PlayerStats* playerStats) const
+float TankMedal::GetScore(PlayerStats* playerStats) const
 {
     return static_cast<double>(playerStats->mDamageReceived->getValue());
 }

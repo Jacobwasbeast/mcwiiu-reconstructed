@@ -6,9 +6,7 @@
 PatchyShapeRuleDefinition::PatchyShapeRuleDefinition()
     : mScale(5.0)
 {
-    GameRules_DoubleAttribute* scaleAttribute = addDoubleAttribute(ConsoleGameRules::eGameRuleAttr_scale, &mScale);
-    scaleAttribute->setMin(1.0);
-    scaleAttribute->setMax(254.0);
+    addDoubleAttribute(ConsoleGameRules::eGameRuleAttr_scale, &mScale)->setMin(1.0)->setMax(254.0);
 }
 
 PatchyShapeRuleDefinition::~PatchyShapeRuleDefinition()

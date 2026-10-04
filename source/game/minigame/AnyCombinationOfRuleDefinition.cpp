@@ -10,7 +10,7 @@
 AnyCombinationOfRuleDefinition::AnyCombinationOfRuleDefinition(LayerGenerationRuleDefinition* parent)
     : mParent(parent)
     , mDefinition(NULL)
-    , mName(L"AnyLayer")
+    , mName()
     , mFilter(L"AnyLayer")
     , mCombinationVariations(NULL)
     , mSizes(new LayerSizeRuleDefinition())
@@ -36,19 +36,6 @@ AnyCombinationOfRuleDefinition::AnyCombinationOfRuleDefinition(
     addStringAttribute(ConsoleGameRules::eGameRuleAttr_type, &mFilter);
 }
 
-AnyCombinationOfRuleDefinition::~AnyCombinationOfRuleDefinition()
-{
-    delete mCombinationVariations;
-    delete mSizes;
-    delete mShapes;
-    delete mFills;
-    for (std::vector<LayerThemeRuleDefinition*>::iterator it = mThemes.begin();
-         it != mThemes.end(); ++it)
-    {
-        delete *it;
-    }
-}
-
 AnyCombinationOfRuleDefinition* AnyCombinationOfRuleDefinition::GetRandomLeafChild(
     const LayerMetadata& metadata, Random& layerRandom, Random& random) const
 {
@@ -57,23 +44,24 @@ AnyCombinationOfRuleDefinition* AnyCombinationOfRuleDefinition::GetRandomLeafChi
         return const_cast<AnyCombinationOfRuleDefinition*>(this);
     }
 
-    std::vector<AnyCombinationOfRuleDefinition*>* combinations =
+    const std::vector<AnyCombinationOfRuleDefinition*>* combinations =
         mCombinationVariations->GetCombinations();
-    unsigned int count = static_cast<unsigned int>(combinations->size());
     bool wholeLevel = mCombinationVariations->IsForWholeLevel();
+    int count = static_cast<int>(combinations->size());
     AnyCombinationOfRuleDefinition* child;
 
     do
     {
-        unsigned int index = static_cast<unsigned int>(layerRandom.nextInt(static_cast<int>(count)));
+        unsigned int index = layerRandom.nextInt(count);
+        unsigned int randomIndex = random.nextInt(count);
         if (!wholeLevel)
         {
-            index = static_cast<unsigned int>(random.nextInt(static_cast<int>(count)));
+            index = randomIndex;
         }
 
         child = combinations->at(index);
     }
-    while (child == NULL || LayerMetadata::getFilter(child->mFilter)(metadata) == false);
+    while (LayerMetadata::getFilter(child->mFilter)(metadata) == false || child == NULL);
 
     return child->GetRandomLeafChild(metadata, layerRandom, random);
 }
@@ -168,31 +156,28 @@ void AnyCombinationOfRuleDefinition::getChildren(std::vector<GameRuleDefinition*
 
 GameRuleDefinition* AnyCombinationOfRuleDefinition::addChild(ConsoleGameRules::EGameRuleType type)
 {
-    static CombinationVariationsRuleDefinition variationsActionType(NULL, NULL);
-    static LayerThemeRuleDefinition themeActionType;
-
-    if (type == variationsActionType.getActionType())
+    if (type == ConsoleGameRules::eGameRuleType_Variations)
     {
         mCombinationVariations = new CombinationVariationsRuleDefinition(mParent, this);
         return mCombinationVariations;
     }
 
-    if (type == mSizes->getActionType())
+    if (type == ConsoleGameRules::eGameRuleType_LayerSize)
     {
         return mSizes;
     }
 
-    if (type == mShapes->getActionType())
+    if (type == ConsoleGameRules::eGameRuleType_LayerShape)
     {
         return mShapes;
     }
 
-    if (type == mFills->getActionType())
+    if (type == ConsoleGameRules::eGameRuleType_LayerFill)
     {
         return mFills;
     }
 
-    if (type == themeActionType.getActionType())
+    if (type == ConsoleGameRules::eGameRuleType_LayerTheme)
     {
         LayerThemeRuleDefinition* theme = new LayerThemeRuleDefinition();
         mThemes.push_back(theme);

@@ -2,7 +2,7 @@
 
 #include <math.h>
 
-double GameVoteMedal::GetScore(PlayerStats* playerStats) const
+float GameVoteMedal::GetScore(PlayerStats* playerStats) const
 {
     float roundCount = 0.0f;
     float score = 0.0f;
@@ -62,7 +62,7 @@ double GameVoteMedal::GetScore(PlayerStats* playerStats) const
     return (double)((100.0f * score) / (roundCount + 4.0f));
 }
 
-double GameVoteMedal::Range::getScore(float score) const
+float GameVoteMedal::Range::getScore(float score) const
 {
     float difference = fabsf(score - mTarget);
     if (difference < mRange)
