@@ -1091,6 +1091,8 @@ public:
     void setNanoSeconds(long long);
     long long getTicks() const { return mTicks; }
 
+    static const long long cFrequency;
+
 private:
     long long mTicks;
 };
