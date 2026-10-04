@@ -16,7 +16,7 @@ public:
     void Cleanup();
     Result ImportSocket(Socket* socket);
 
-private:
+protected:
     bool m_started;
     Socket* m_socket;
 };

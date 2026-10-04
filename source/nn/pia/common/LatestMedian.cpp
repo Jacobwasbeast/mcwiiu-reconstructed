@@ -2,7 +2,7 @@
 
 namespace nn { namespace pia { namespace common {
 
-template class LatestMedian<9>;
-template class LatestMedian<10>;
+template class LatestMedian<int, 9>;
+template class LatestMedian<int, 10>;
 
 }}}

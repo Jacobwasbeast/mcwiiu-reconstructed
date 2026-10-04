@@ -1,45 +1,38 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_PIA_COMMON_LATEST_MEDIAN_HPP
 #define LEGACY_CONSOLE_WIIU_NN_PIA_COMMON_LATEST_MEDIAN_HPP
 
+#include <algorithm>
+
 namespace nn { namespace pia { namespace common {
 
-template <int Capacity>
+template <typename T, T N>
 class LatestMedian
 {
 public:
-    int GetMedian() const;
+    LatestMedian() : m_count(0), m_index(0) {}
+    T GetMedian() const;
 
     unsigned int m_count;
     unsigned int m_index;
-    int m_values[9];
+    T m_values[N];
 };
 
-template <int Capacity>
-int LatestMedian<Capacity>::GetMedian() const
+template <typename T, T N>
+T LatestMedian<T, N>::GetMedian() const
 {
     unsigned int count = m_count;
     if (count == 0)
         return 0;
-    if (count > 9)
-        count = 9;
+    if (count > N)
+        count = N;
 
-    int values[9];
+    T values[N];
     for (unsigned int index = 0; index < count; ++index)
     {
-        const unsigned int source = (m_index + m_count - index - 1) % 9;
+        const unsigned int source = (m_index + m_count - index - 1) % N;
         values[index] = m_values[source];
     }
-    for (unsigned int index = 1; index < count; ++index)
-    {
-        const int value = values[index];
-        unsigned int position = index;
-        while (position != 0 && value < values[position - 1])
-        {
-            values[position] = values[position - 1];
-            --position;
-        }
-        values[position] = value;
-    }
+    std::sort(values, values + count);
 
     const unsigned int middle = count / 2;
     if ((count & 1) != 0)
