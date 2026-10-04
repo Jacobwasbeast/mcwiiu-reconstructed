@@ -3,12 +3,13 @@
 
 #include <nn/types.h>
 
-typedef BOOL GX2Boolean;
-
-#define GX2_FALSE 0
-#define GX2_TRUE 1
-#define GX2_DISABLE 0
-#define GX2_ENABLE 1
+typedef enum _GX2Boolean
+{
+    GX2_FALSE = 0,
+    GX2_TRUE = 1,
+    GX2_DISABLE = GX2_FALSE,
+    GX2_ENABLE = GX2_TRUE
+} GX2Boolean;
 
 #define GX2_SHADER_ALIGNMENT 0x100
 #define GX2_CONTEXT_STATE_ALIGNMENT 0x100
