@@ -18,24 +18,15 @@
 #include "game/ui/fuiTimelineAction.hpp"
 #include "game/ui/fuiTTFFontSet.hpp"
 
+fuiMatrix fui::s_identityMatrix = {1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f};
+fui::ColorState fui::s_identityColor = {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f};
+
 fui* gFui = new fui();
 
 fui::fui()
 {
-    m_matrixStack[0].scaleX = 1.0f;
-    m_matrixStack[0].rotateSkew0 = 0.0f;
-    m_matrixStack[0].rotateSkew1 = 0.0f;
-    m_matrixStack[0].scaleY = 1.0f;
-    m_matrixStack[0].translateX = 0.0f;
-    m_matrixStack[0].translateY = 0.0f;
-    m_colorStack[0].redAdd = 0.0f;
-    m_colorStack[0].greenAdd = 0.0f;
-    m_colorStack[0].blueAdd = 0.0f;
-    m_colorStack[0].alphaAdd = 0.0f;
-    m_colorStack[0].redMultiply = 1.0f;
-    m_colorStack[0].greenMultiply = 1.0f;
-    m_colorStack[0].blueMultiply = 1.0f;
-    m_colorStack[0].alphaMultiply = 1.0f;
+    m_matrixStack[0] = s_identityMatrix;
+    m_colorStack[0] = s_identityColor;
     m_matrixDepth = 0;
     m_colorDepth = 0;
     m_filterStack[0] = 0;
@@ -109,10 +100,8 @@ int fui::load(arrayWithLength<unsigned char> bytes, bool createRoot, int fileInd
     {
         unsigned int existingFileIndex;
         for (existingFileIndex = 0; existingFileIndex < m_files.size() && unresolvedReferences != 0; ++existingFileIndex)
-        {
             if (std::strcmp(file->importAssetData[importIndex].name, m_files[existingFileIndex]->header.name) == 0)
                 unresolvedReferences = file->resolveReferences(m_files[existingFileIndex]);
-        }
     }
 
     std::vector<fuiFile*>::reverse_iterator it = m_files.rbegin();
@@ -153,20 +142,23 @@ void fui::unloadScene(fuiFile* file)
     delete file;
 
     std::vector<fuiFile*>::iterator it = m_files.begin();
-    while (it != m_files.end() && *it != file)
-        ++it;
-
-    if (it != m_files.end())
+    unsigned int erasedIndex = 0;
+    while (erasedIndex < m_files.size())
     {
-        int erasedIndex = static_cast<int>(it - m_files.begin());
-        m_files.erase(it);
-        for (int i = 0; i < 64; ++i)
+        if (*(it + erasedIndex) == file)
         {
-            if (m_permanentFileIndices[i] > erasedIndex)
-                --m_permanentFileIndices[i];
-            else if (m_permanentFileIndices[i] == erasedIndex)
-                m_permanentFileIndices[i] = -1;
+            it = it + erasedIndex;
+            m_files.erase(it);
+            for (int i = 0; i < 64; ++i)
+            {
+                if (static_cast<int>(erasedIndex) < m_permanentFileIndices[i])
+                    --m_permanentFileIndices[i];
+                else if (m_permanentFileIndices[i] == static_cast<int>(erasedIndex))
+                    m_permanentFileIndices[i] = -1;
+            }
+            break;
         }
+        ++erasedIndex;
     }
 
     LeaveCriticalSection(&m_mutex);
@@ -174,7 +166,7 @@ void fui::unloadScene(fuiFile* file)
 
 void fui::setScreenSize(float width, float height)
 {
-    if (width == 1280.0f && height == 480.0f)
+    if (height == 480.0f && width == 1280.0f)
         width = 640.0f;
     m_screenWidth = width;
     m_screenHeight = height;
@@ -204,17 +196,19 @@ void fui::tick()
 {
     m_textureManager->tick();
     ++m_frameCount;
-    uint64_t currentTime = System::processTimeInMilliSecs();
-    if (currentTime - m_lastTime < 34)
+    int64_t currentTime = System::processTimeInMilliSecs();
+    if (currentTime - m_lastTime > 33)
+    {
+        m_enterFrameDispatch = true;
+        if (currentTime - (m_lastTime + 33) > 100)
+            m_lastTime = currentTime;
+        else
+            m_lastTime += 33;
+    }
+    else
     {
         m_enterFrameDispatch = false;
-        return;
     }
-    m_enterFrameDispatch = true;
-    if (currentTime - (m_lastTime + 33) > 100)
-        m_lastTime = currentTime;
-    else
-        m_lastTime += 33;
 }
 
 void fui::preRender(fuiFile* file)
@@ -226,19 +220,18 @@ void fui::preRender(fuiFile* file)
 
 void fui::render(fuiFile* file, float x, float y, float width, float height, float scaleX, float scaleY)
 {
-    float renderMatrix[16];
-    std::memset(renderMatrix, 0, sizeof(renderMatrix));
-    renderMatrix[0] = 1.0f;
-    renderMatrix[5] = 1.0f;
-    renderMatrix[10] = 1.0f;
-    renderMatrix[15] = 1.0f;
+    std::memset(m_rendererMatrix, 0, sizeof(m_rendererMatrix));
+    m_rendererMatrix[0] = 1.0f;
+    m_rendererMatrix[5] = 1.0f;
+    m_rendererMatrix[10] = 1.0f;
+    m_rendererMatrix[15] = 1.0f;
 
     gRenderer->TEMP_PatchStateFromIggy();
-    gRenderer->StateSetAlphaTestEnable(false);
+    gRenderer->StateSetFaceCull(false);
     gRenderer->StateSetBlendEnable(true);
     gRenderer->StateSetBlendFunc(1, 5);
+    gRenderer->StateSetAlphaTestEnable(false);
     gRenderer->StateSetDepthTestEnable(false);
-    gRenderer->StateSetFaceCull(false);
     gRenderer->StateSetDepthMask(false);
     gRenderer->MatrixMode(1);
     gRenderer->MatrixSetIdentity();
@@ -282,14 +275,11 @@ void fui::dispatchEnterFrameEvent()
     if (!m_enterFrameDispatch)
         return;
     FJ_Event event(eFJEventType_EnterFrame, false, false);
-    unsigned int i = 0;
-    while (i < m_directEventListeners.size())
+    for (unsigned int i = 0; i < m_directEventListeners.size(); ++i)
     {
-        if (m_directEventListeners[i].m_eType == eFJEventType_EnterFrame)
-        {
-            m_directEventListeners[i].m_pfnHandler(m_directEventListeners[i].m_pNode, &event);
-        }
-        ++i;
+        FJ_EventListener& listener = m_directEventListeners[i];
+        if (listener.m_eType == eFJEventType_EnterFrame)
+            listener.m_pfnHandler(listener.m_pNode, &event);
     }
 }
 
@@ -298,7 +288,7 @@ void fui::removeDirectEventListener(const FJ_EventListener& listener)
     std::vector<FJ_EventListener>::iterator it = m_directEventListeners.begin();
     while (it != m_directEventListeners.end())
     {
-        if (it->m_eType == listener.m_eType && it->m_pNode == listener.m_pNode && it->m_pfnHandler == listener.m_pfnHandler)
+        if (it->m_eType == listener.m_eType && it->m_pfnHandler == listener.m_pfnHandler && it->m_pNode == listener.m_pNode)
         {
             m_directEventListeners.erase(it);
             return;
@@ -341,7 +331,7 @@ uint32_t fui::getCustomTexture(const std::wstring& name, unsigned int* width, un
 
 void fui::releaseCustomTexture(int textureId)
 {
-    if (textureId >= 0 && m_releaseCustomTextureFunction != NULL)
+    if (m_releaseCustomTextureFunction != NULL)
         m_releaseCustomTextureFunction(textureId);
 }
 
@@ -364,7 +354,7 @@ uint32_t fui::getFuiFileFromIndex(unsigned int index)
 
 fuiRenderNode* fui::createNodeFromSymbol(const char* name, fuiRenderNode* parent)
 {
-    if (*name == '\0')
+    if (std::strlen(name) == 0)
     {
         fuiRenderNodeTimeline* timeline = new fuiRenderNodeTimeline(parent->m_stage, NULL, NULL, 0, 0, NULL, 0, false, NULL);
         timeline->disableCtor();
@@ -372,34 +362,42 @@ fuiRenderNode* fui::createNodeFromSymbol(const char* name, fuiRenderNode* parent
         return timeline;
     }
 
-    fuiRenderNode* node = NULL;
     std::vector<fuiFile*>::reverse_iterator file = m_files.rbegin();
-    while (file != m_files.rend() && node == NULL)
+    while (file != m_files.rend())
     {
-        node = (fuiRenderNode*)(*file)->createNodeFromSymbol(name, parent, m_resolution);
+        fuiRenderNode* node = (fuiRenderNode*)(*file)->createNodeFromSymbol(name, parent, m_resolution);
+        if (node != NULL)
+        {
+            if (node->m_type == eFuiObjectType_Timeline)
+            {
+                fuiRenderNodeTimeline* timelineNode = static_cast<fuiRenderNodeTimeline*>(node);
+                fuiTimeline* timeline = static_cast<fuiTimeline*>(node->m_object);
+                unsigned short i;
+                for (i = 0; i < timeline->timelineActionCount; ++i)
+                {
+                    fuiTimelineAction& action = node->m_file->timelineActionData[timeline->timelineActionIndex + i];
+                    switch (action.actionType)
+                    {
+                    case 0x1e:
+                        timelineNode->addFrameAction(action.frameIndex, fuiRenderNodeTimeline::eFrameActionType_Stop, std::string("?"));
+                        break;
+                    case 0x1f:
+                        timelineNode->addFrameAction(action.frameIndex, fuiRenderNodeTimeline::eFrameActionType_GotoAndStopLabel, std::string(action.actionValue));
+                        break;
+                    case 0x20:
+                        timelineNode->addFrameAction(action.frameIndex, fuiRenderNodeTimeline::eFrameActionType_GotoAndPlay, std::string(action.actionValue));
+                        break;
+                    case 0x21:
+                        timelineNode->addFrameAction(action.frameIndex, fuiRenderNodeTimeline::eFrameActionType_GotoAndStop, std::string(action.actionValue));
+                        break;
+                    }
+                }
+            }
+            return node;
+        }
         ++file;
     }
-
-    if (node != NULL && node->m_type == eFuiObjectType_Timeline)
-    {
-        fuiRenderNodeTimeline* timelineNode = static_cast<fuiRenderNodeTimeline*>(node);
-        fuiTimeline* timeline = static_cast<fuiTimeline*>(node->m_object);
-        unsigned int i;
-        for (i = 0; i < timeline->timelineActionCount; ++i)
-        {
-            fuiTimelineAction& action = node->m_file->timelineActionData[timeline->timelineActionIndex + i];
-            if (action.actionType == 0x1e)
-                timelineNode->addFrameAction(action.frameIndex, fuiRenderNodeTimeline::eFrameActionType_Stop, std::string("?"));
-            else if (action.actionType == 0x1f)
-                timelineNode->addFrameAction(action.frameIndex, fuiRenderNodeTimeline::eFrameActionType_GotoAndStopLabel, std::string(action.actionValue));
-            else if (action.actionType == 0x20)
-                timelineNode->addFrameAction(action.frameIndex, fuiRenderNodeTimeline::eFrameActionType_GotoAndPlay, std::string(action.actionValue));
-            else if (action.actionType == 0x21)
-                timelineNode->addFrameAction(action.frameIndex, fuiRenderNodeTimeline::eFrameActionType_GotoAndStop, std::string(action.actionValue));
-        }
-    }
-
-    return node;
+    return NULL;
 }
 
 int fui::findBitmapFromSymbol(const char* name, fuiFile** file)
@@ -445,7 +443,7 @@ void fui::uninstallTrueTypeFont(const char* name)
                     m_fonts.erase(m_fonts.begin() + i);
                 }
             }
-            return;
+            break;
         }
     }
 }

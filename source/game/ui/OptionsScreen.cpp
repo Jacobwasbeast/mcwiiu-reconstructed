@@ -12,8 +12,10 @@
 #include "game/ui/ControlsScreen.hpp"
 
 OptionsScreen::OptionsScreen(Screen* parentScreen, Options* options)
-    : Screen(), mParentScreen(parentScreen), mTitle(L"Options"), mOptions(options)
 {
+    mTitle = L"Options";
+    mParentScreen = parentScreen;
+    mOptions = options;
 }
 
 OptionsScreen::~OptionsScreen()
@@ -23,30 +25,33 @@ OptionsScreen::~OptionsScreen()
 void OptionsScreen::init()
 {
     Language* language = Language::getInstance();
-    int index;
-    int buttonIndex = 0;
-    const int optionCount = 5;
-    const int optionX = mWidth / 2 - 155;
+    mTitle = language->getElement(L"options.title");
 
-    for (index = 0; index < optionCount; ++index)
+    const Options::Option* options[5] = {
+        Options::Option::music,
+        Options::Option::sound,
+        Options::Option::invertMouse,
+        Options::Option::sensitivity,
+        Options::Option::difficulty
+    };
+    int index;
+
+    for (index = 0; index < 5; ++index)
     {
-        Options::Option* option = Options::Option::getItem(index);
-        int x = optionX + (buttonIndex % 2) * 160;
-        int y = mHeight / 6 + (buttonIndex / 2) * 24;
+        const Options::Option* option = options[index];
         if (option->isProgress())
         {
             std::wstring message = mOptions->getMessage(option);
             int id = option->getId();
             double value = mOptions->getProgressValue(option);
-            mButtons.push_back(new SlideButton(id, x, y, option, message, (float)value));
+            mButtons.push_back(new SlideButton(id, mWidth / 2 - 155 + (index % 2) * 160, mHeight / 6 + (index / 2) * 24, option, message, (float)value));
         }
         else
         {
             std::wstring message = mOptions->getMessage(option);
             int id = option->getId();
-            mButtons.push_back(new SmallButton(id, x, y, option, message));
+            mButtons.push_back(new SmallButton(id, mWidth / 2 - 155 + (index % 2) * 160, mHeight / 6 + (index / 2) * 24, option, message));
         }
-        ++buttonIndex;
     }
 
     mButtons.push_back(new Button(101, mWidth / 2 - 100, mHeight / 6 + 108,
@@ -62,29 +67,26 @@ void OptionsScreen::buttonClicked(Button* button)
     if (!button->mActive)
         return;
 
-    int id = button->mId;
-    if (id < 100)
+    if (button->mId < 100)
     {
-        SmallButton* smallButton = dynamic_cast<SmallButton*>(button);
-        if (smallButton != NULL)
+        if (dynamic_cast<SmallButton*>(button) != NULL)
         {
-            mOptions->toggle(smallButton->getOption(), 1);
-            button->mMessage = mOptions->getMessage(Options::Option::getItem(id));
+            mOptions->toggle(static_cast<SmallButton*>(button)->getOption(), 1);
+            button->mMessage = mOptions->getMessage(Options::Option::getItem(button->mId));
         }
-        id = button->mId;
     }
 
-    if (id == 101)
+    if (button->mId == 101)
     {
         mMinecraft->mOptions->save();
         mMinecraft->setScreen(new VideoSettingsScreen(this, mOptions));
     }
-    if (id == 100)
+    if (button->mId == 100)
     {
         mMinecraft->mOptions->save();
         mMinecraft->setScreen(new ControlsScreen(this, mOptions));
     }
-    if (id == 200)
+    if (button->mId == 200)
     {
         mMinecraft->mOptions->save();
         mMinecraft->setScreen(mParentScreen);

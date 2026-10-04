@@ -261,8 +261,9 @@ fuiTTFFontSet::FontSizeData::FontSizeData(float fontSize, fuiTTFFontSet* fontSet
     m_glyphUseCounter = 0;
     m_textureDirty = false;
 
-    m_textureData = new unsigned char[m_textureWidth * m_textureHeight * 4];
-    memset(m_textureData, 0, m_textureWidth * m_textureHeight * 4);
+    size_t textureBytes = m_textureWidth * m_textureHeight * 4;
+    m_textureData = new unsigned char[textureBytes];
+    memset(m_textureData, 0, textureBytes);
 
     m_textureIndex = -1;
 }
@@ -304,6 +305,7 @@ int fuiTTFFontSet::FontSizeData::getTextureIndex()
 fuiTTFFontSet::GlyphInfo* fuiTTFFontSet::FontSizeData::createGlyph(int codepoint)
 {
     float xPos = 2.0f;
+    float shiftX = xPos - floorf(xPos);
 
     int advanceWidth;
     int leftSideBearing;
@@ -316,7 +318,7 @@ fuiTTFFontSet::GlyphInfo* fuiTTFFontSet::FontSizeData::createGlyph(int codepoint
     int y1;
 
     stbtt_GetCodepointBitmapBoxSubpixel(&m_fontSet->m_fonts[m_ttfIndex].m_info, codepoint, m_scale, m_scale,
-                                        xPos - floorf(xPos), 0.0f, &x0, &y0, &x1, &y1);
+                                        shiftX, 0.0f, &x0, &y0, &x1, &y1);
 
     GlyphInfo* glyph = new GlyphInfo;
 
@@ -339,22 +341,24 @@ fuiTTFFontSet::GlyphInfo* fuiTTFFontSet::FontSizeData::getGlyphInfo(int codepoin
 {
     boost::unordered_map<int, GlyphInfo*>::iterator it = m_glyphs.find(codepoint);
 
-    if (it != m_glyphs.end())
+    if (it == m_glyphs.end())
     {
-        return it->second;
+        fuiTTFFontSet* fontSet = m_fontSet;
+
+        if (fontSet->getStbGlyphIndex(codepoint, m_ttfIndex) != 0)
+        {
+            return createGlyph(codepoint);
+        }
+
+        if (codepoint == fontSet->m_missingGlyphChar)
+        {
+            return NULL;
+        }
+
+        return getGlyphInfo(fontSet->m_missingGlyphChar);
     }
 
-    if (m_fontSet->getStbGlyphIndex((unsigned short)codepoint, m_ttfIndex) != 0)
-    {
-        return createGlyph(codepoint);
-    }
-
-    if (codepoint != m_fontSet->m_missingGlyphChar)
-    {
-        return getGlyphInfo(m_fontSet->m_missingGlyphChar);
-    }
-
-    return NULL;
+    return it->second;
 }
 
 void fuiTTFFontSet::FontSizeData::getGlyphTexPos(unsigned short codepoint, float& texX, float& texY)

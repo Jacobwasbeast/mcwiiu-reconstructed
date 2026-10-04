@@ -16,9 +16,9 @@ private:
     boost::shared_ptr<Container> m_container;
 
 public:
-    HorseInventoryMenu(boost::shared_ptr<Container> horseContainer,
-                       boost::shared_ptr<Container> playerInventory,
-                       boost::shared_ptr<AbstractHorse> horse,
+    HorseInventoryMenu(boost::shared_ptr<Container> playerInventory,
+                       boost::shared_ptr<Container> horseContainer,
+                       boost::shared_ptr<AbstractHorse> horseEntity,
                        boost::shared_ptr<Player> player);
 
     virtual not_null_ptr<ItemInstance> quickMoveStack(boost::shared_ptr<Player> player, int index);

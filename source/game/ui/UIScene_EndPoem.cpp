@@ -99,7 +99,7 @@ void UIScene_EndPoem::updateNoise()
                 character = ALLOWED_CHARACTERS[random->nextInt(ALLOWED_CHARACTERS.length())];
             }
             std::wstring characterText = L"";
-            characterText += character;
+            characterText.push_back(character);
 
             if (character == L'<')
                 characterText = L"&lt;";
@@ -163,36 +163,38 @@ void UIScene_EndPoem::handleInput(int playerId, int action, bool repeat, bool pr
     if (pressed)
         gConsoleUIController.AnimateKeyPress(playerId, action, repeat, pressed, released);
 
-    switch (action)
+    if (static_cast<unsigned int>(action) >= EControllerActions_MenuUp)
     {
-    case EControllerActions_MenuUp:
-    case EControllerActions_MenuDown:
-    case EControllerActions_MenuOtherStickUp:
-    case EControllerActions_MenuOtherStickDown:
+        if (static_cast<unsigned int>(action) > EControllerActions_MenuDown)
+        {
+            if (static_cast<unsigned int>(action) < EControllerActions_MenuOtherStickUp)
+                return;
+            if (static_cast<unsigned int>(action) > EControllerActions_MenuOtherStickDown)
+            {
+                if (action != EControllerActions_MenuCancel)
+                    return;
+                if (!pressed)
+                    return;
+                m_finished = true;
+                Minecraft* minecraft = Minecraft::GetInstance();
+                for (int i = 0; i < 4; ++i)
+                {
+                    if (minecraft->mLocalPlayers[i] != NULL)
+                        gApp.SetAction(i, eXuiAction_Respawn, NULL);
+                }
+                if (minecraft->mGameModes[gProfile->GetPrimaryPad()] != NULL)
+                {
+                    Tutorial* tutorial = minecraft->mGameModes[gProfile->GetPrimaryPad()]->getTutorial();
+                    if (tutorial != NULL)
+                        tutorial->showTutorialPopup(true);
+                }
+                updateTooltips();
+                navigateBack();
+                handled = true;
+                return;
+            }
+        }
         sendInputToMovie(action, repeat, pressed, released);
-        break;
-    case EControllerActions_MenuCancel:
-    {
-        if (!pressed)
-            return;
-        m_finished = true;
-        Minecraft* minecraft = Minecraft::GetInstance();
-        for (int i = 0; i < 4; ++i)
-        {
-            if (minecraft->mLocalPlayers[i] != NULL)
-                gApp.SetAction(i, eXuiAction_Respawn, NULL);
-        }
-        if (minecraft->mGameModes[gProfile->GetPrimaryPad()] != NULL)
-        {
-            Tutorial* tutorial = minecraft->mGameModes[gProfile->GetPrimaryPad()]->getTutorial();
-            if (tutorial != NULL)
-                tutorial->showTutorialPopup(true);
-        }
-        updateTooltips();
-        navigateBack();
-        handled = true;
-        break;
-    }
     }
 }
 

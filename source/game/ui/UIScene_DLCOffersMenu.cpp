@@ -20,7 +20,7 @@
 extern ConsoleUIController gConsoleUIController;
 
 UIScene_DLCOffersMenu::UIScene_DLCOffersMenu(int type, void* data, UILayer* layer)
-    : UIScene(type, layer), m_offerList(), m_titleLabel(), m_priceLabel(), m_descriptionLabel(), m_banner(),
+    : UIScene(type, layer), m_titleLabel(), m_priceLabel(), m_descriptionLabel(), m_banner(),
       m_timer(), m_displayUpdated(false), m_category(static_cast<int*>(data)[2]), m_selection(0),
       m_productCount(0), m_populatePending(true), m_products(NULL)
 {

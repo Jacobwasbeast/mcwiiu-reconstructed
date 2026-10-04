@@ -6,7 +6,7 @@
 #include "game/ui/fuiFontSet.hpp"
 #include "game/ui/UIBitmapFont.hpp"
 
-class fuiBitmapFont : public fuiFontSet, public UIBitmapFont
+class fuiBitmapFont : public fuiFontSet
 {
 public:
     struct GlyphScaleData
@@ -36,6 +36,7 @@ public:
     void LoadTTFFallbackFont();
 
 private:
+    UIBitmapFont m_bitmapFont;
     SFontData* m_sFontData;
     unsigned int m_textureIndex;
     bool m_registered;

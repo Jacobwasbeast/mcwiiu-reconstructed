@@ -50,6 +50,7 @@ void FJ_EnchantingButton::SetupIggySlot()
         getStage()->m_pRenderNode, &rect, name);
     renderNode->setAlpha(0.25f);
     FJ_FuiNode* blank = new FJ_FuiNode(renderNode);
+    renderNode->setFuiNode(blank);
     icon->addChild(blank);
 }
 

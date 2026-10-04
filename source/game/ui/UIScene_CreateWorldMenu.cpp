@@ -33,7 +33,7 @@ UIScene_CreateWorldMenu::UIScene_CreateWorldMenu(int sceneType, void* data, UILa
                           GameType::CREATIVE->getId(), GameType::SURVIVAL->getId(), false, 10, 1);
     m_moreOptionsButton.init(UIString(L10N::GetString(IDS_MORE_OPTIONS)), 3);
     m_playButton.init(UIString(L10N::GetString(IDS_CREATE_NEW_WORLD)), 6);
-    m_texturePackList.init(std::wstring(L10N::GetString(0xf6194eb1)), 4);
+    m_texturePackList.init(std::wstring(L10N::GetString(IDS_DLC_MENU_TEXTUREPACKS)), 4);
     m_texturePackName.init(UIString(L""));
     m_texturePackDescription.init(UIString(L""));
     m_difficulty = GameSettings::GetGameSettings(m_playerId, eGameSetting_Difficulty);

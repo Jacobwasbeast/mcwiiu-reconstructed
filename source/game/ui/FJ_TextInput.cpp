@@ -7,15 +7,17 @@
 #include "game/ui/FJ_Event.hpp"
 #include "game/ui/FJ_Factory.hpp"
 #include "game/ui/FJ_FuiNode.hpp"
+#include "game/ui/FJ_KeyboardEvent.hpp"
 #include "game/ui/FJ_ScrollArrowH.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/ui/fuiRenderNodeEditText.hpp"
 #include "game/ui/fuiRenderNodeTimeline.hpp"
+#include "game/ui/UIScene.hpp"
 
 FJ_TextInput::FJ_TextInput(fuiRenderNode* renderNode)
-    : FJ_Base(renderNode), m_scrollWidth(100), m_state(0), m_firstFocus(true),
-      m_caretIndex(0), m_scrollOffset(0.0f), m_charLimit(-1), m_pCaret(0),
-      m_pOutline(0), m_pLeftArrow(0), m_pRightArrow(0), m_pTextField(0),
+    : FJ_Base(renderNode), m_scrollWidth(100), m_firstFocus(true),
+      m_caretIndex(0), m_scrollOffset(0.0f), m_charLimit(-1),
+      m_pLeftArrow(0), m_pRightArrow(0), m_pTextField(0),
       m_bKeepCaret(false), m_bUseScale(false)
 {
 }
@@ -45,15 +47,12 @@ void FJ_TextInput::PositionScrollArrows()
         m_pLeftArrow = FJ_Factory::createObject("fourj.FJ_ScrollArrowH", m_pRenderNode, true, 0);
     if (m_pRightArrow == 0)
         m_pRightArrow = FJ_Factory::createObject("fourj.FJ_ScrollArrowH", m_pRenderNode, true, 0);
-    if (m_pLeftArrow == 0 || m_pRightArrow == 0)
-        return;
 
-    fuiRect rect = getRect(this);
     const float scale = 0.5f;
-    m_pLeftArrow->setX(rect.xMin + getX() - m_pLeftArrow->getWidth() * scale);
-    m_pLeftArrow->setY(rect.yMin + getY() + getHeight() * scale);
-    rect = getRect(this);
-    m_pRightArrow->setX(rect.xMin + getX() + getWidth() + m_pRightArrow->getWidth() * scale);
+    fuiRect rect;
+    m_pLeftArrow->setX(getX() - m_pLeftArrow->getWidth() * scale + (rect = getRect(this)).xMin);
+    m_pLeftArrow->setY(getY() + getHeight() * scale + (rect = getRect(this)).yMin);
+    m_pRightArrow->setX(getX() + getWidth() + m_pRightArrow->getWidth() * scale + (rect = getRect(this)).xMin);
     m_pRightArrow->setY(m_pLeftArrow->getY());
 }
 
@@ -61,46 +60,34 @@ void FJ_TextInput::HandleScrollArrows(bool addArrows)
 {
     if (addArrows)
     {
-        FJ_FuiNode* parent = getParent();
-        if (parent != 0)
-        {
-            parent->addChild(m_pLeftArrow);
-            parent->addChild(m_pRightArrow);
-        }
+        getParent()->addChild(m_pLeftArrow);
+        getParent()->addChild(m_pRightArrow);
         PositionScrollArrows();
-        if (m_pLeftArrow != 0)
-            static_cast<FJ_ScrollArrowH*>(m_pLeftArrow)->ChangeState(0);
-        if (m_pRightArrow != 0)
-            static_cast<FJ_ScrollArrowH*>(m_pRightArrow)->ChangeState(2);
+        static_cast<FJ_ScrollArrowH*>(m_pLeftArrow)->ChangeState(0);
+        static_cast<FJ_ScrollArrowH*>(m_pRightArrow)->ChangeState(2);
     }
-    if (m_pTextField == 0 || m_pLeftArrow == 0 || m_pRightArrow == 0)
-        return;
-
-    float scroll = m_pTextField->getScrollH();
-    if (scroll <= 0.0f)
+    if (m_pTextField != 0)
     {
-        m_pLeftArrow->setVisible(false);
-        m_pRightArrow->setVisible(isVisible() && m_pTextField->getWidth() < m_pTextField->m_textWidth - scroll);
-    }
-    else
-    {
-        m_pLeftArrow->setVisible(isVisible());
-        m_pRightArrow->setVisible(isVisible() && m_pTextField->getWidth() < m_pTextField->m_textWidth - scroll);
+        if (m_pTextField->getScrollH() > 0.0f)
+            m_pLeftArrow->setVisible(isVisible());
+        else
+            m_pLeftArrow->setVisible(false);
+        if (m_pTextField->m_textWidth - m_pTextField->getScrollH() > m_pTextField->getWidth())
+            m_pRightArrow->setVisible(isVisible());
+        else
+            m_pRightArrow->setVisible(false);
     }
 }
 
 void FJ_TextInput::UpdateScrollPosition(float caretPosition, bool movingRight, bool force)
 {
-    if (m_pTextField == 0)
-        return;
-    const float minimum = 0.0f;
     if (!movingRight)
     {
         if (caretPosition < m_pTextField->getScrollH() || (force && !m_pRightArrow->isVisible()))
         {
             float scroll = caretPosition - static_cast<float>(m_scrollWidth);
-            if (scroll < minimum)
-                scroll = minimum;
+            if (scroll < 0.0f)
+                scroll = 0.0f;
             m_pTextField->setScrollH(scroll);
             m_scrollOffset = -m_pTextField->getScrollH();
             if (m_pLeftArrow != 0)
@@ -110,24 +97,23 @@ void FJ_TextInput::UpdateScrollPosition(float caretPosition, bool movingRight, b
     else
     {
         float width = static_cast<float>(static_cast<int>(m_pTextField->getWidth()));
-        float scroll = m_pTextField->getScrollH();
+        float scrollH = m_pTextField->getScrollH();
+        float scroll;
         if (!force)
         {
-            if (caretPosition - scroll <= width)
+            if (caretPosition - scrollH <= width)
             {
                 HandleScrollArrows(false);
                 return;
             }
             scroll = caretPosition - width + 5.0f + static_cast<float>(m_scrollWidth);
-            if (scroll < 0.0f)
-                scroll = 0.0f;
         }
         else
         {
             scroll = caretPosition - width + 5.0f;
-            if (scroll < 0.0f)
-                scroll = 0.0f;
         }
+        if (scroll < 0.0f || caretPosition - m_pTextField->getScrollH() < width)
+            scroll = 0.0f;
         m_pTextField->setScrollH(scroll);
         m_scrollOffset = -m_pTextField->getScrollH();
         if (m_pRightArrow != 0)
@@ -140,33 +126,28 @@ void FJ_TextInput::SetCaretIndex(int index, bool movingRight, bool force)
 {
     if (index > 0)
     {
-        if (index > static_cast<int>(m_label.size()))
-            index = static_cast<int>(m_label.size());
+        if (m_label.size() < index)
+            index = m_label.size();
         m_caretIndex = index;
         float caretPosition = 0.0f;
         for (int i = 0; i < index; ++i)
         {
-            if (m_pTextField != 0)
+            if (i < m_label.size())
             {
-                std::pair<float, float> bounds = m_pTextField->getCharBoundaries(i);
-                caretPosition += bounds.second - bounds.first;
+                fuiRect bounds = m_pTextField->getCharBoundaries(i);
+                caretPosition += bounds.xMax - bounds.xMin;
             }
         }
         UpdateScrollPosition(caretPosition, movingRight, force);
-        if (m_pCaret != 0 && m_pTextField != 0)
-        {
-            m_pCaret->setX(m_pTextField->getX() + caretPosition + m_scrollOffset);
-            m_pCaret->setY(m_pTextField->getY() + m_pTextField->getHeight() - m_pCaret->getHeight());
-        }
+        m_pCaret->setX(m_pTextField->getX() + caretPosition + m_scrollOffset);
+        m_pCaret->setY(m_pTextField->getY() + m_pTextField->getHeight() - m_pCaret->getHeight());
         return;
     }
+    float caretPosition = 0.0f;
     m_caretIndex = 0;
-    UpdateScrollPosition(0.0f, movingRight, force);
-    if (m_pCaret != 0 && m_pTextField != 0)
-    {
-        m_pCaret->setX(m_pTextField->getX() + m_scrollOffset);
-        m_pCaret->setY(m_pTextField->getY() + m_pTextField->getHeight() - m_pCaret->getHeight());
-    }
+    UpdateScrollPosition(caretPosition, movingRight, force);
+    m_pCaret->setX(m_pTextField->getX() + caretPosition + m_scrollOffset);
+    m_pCaret->setY(m_pTextField->getY() + m_pTextField->getHeight() - m_pCaret->getHeight());
 }
 
 void FJ_TextInput::focusInHandler(FJ_Event*)
@@ -186,11 +167,7 @@ void FJ_TextInput::_focusInHandler(FJ_FuiNode* node, FJ_Event* event)
 
 void FJ_TextInput::focusOutHandler(FJ_Event*)
 {
-    m_state = 1;
-    if (m_pOutline != 0 && !m_bKeepCaret)
-        m_pOutline->setVisible(false);
-    if (m_pCaret != 0)
-        m_pCaret->setVisible(false);
+    ChangeState(1);
 }
 
 void FJ_TextInput::_focusOutHandler(FJ_FuiNode* node, FJ_Event* event)
@@ -200,22 +177,25 @@ void FJ_TextInput::_focusOutHandler(FJ_FuiNode* node, FJ_Event* event)
 
 void FJ_TextInput::MoveCaretLeft()
 {
-    SetCaretIndex(m_caretIndex - 1, false, false);
+    m_caretIndex = m_caretIndex - 1;
+    SetCaretIndex(m_caretIndex, false, false);
 }
 
 void FJ_TextInput::MoveCaretRight()
 {
-    SetCaretIndex(m_caretIndex + 1, true, false);
+    m_caretIndex = m_caretIndex + 1;
+    SetCaretIndex(m_caretIndex, true, false);
 }
 
 void FJ_TextInput::keyDownHandler(FJ_Event* event)
 {
-    if (event->m_eType == eFJEventType_FocusChangeInit)
+    FJ_KeyboardEvent* keyEvent = static_cast<FJ_KeyboardEvent*>(event);
+    if (keyEvent->m_iKeyCode == 5)
         MoveCaretLeft();
-    else if (event->m_eType == eFJEventType_FocusChangeUser)
+    else if (keyEvent->m_iKeyCode == 6)
         MoveCaretRight();
-    else if (event->m_eType == eFJEventType_KeyUp)
-        getRoot();
+    if (keyEvent->m_iKeyCode == 0)
+        getRoot()->m_pCallbackScene->handlePress(m_id, 0);
 }
 
 void FJ_TextInput::_keyDownHandler(FJ_FuiNode* node, FJ_Event* event)
@@ -227,11 +207,8 @@ void FJ_TextInput::Init(std::wstring name, int id)
 {
     m_pCaret = getChildByName(std::string("Caret"))->asMovieClip();
     m_pOutline = getChildByName(std::string("Outline"))->asMovieClip();
-    if (m_pCaret != 0)
-    {
-        m_pCaret->setScaleX(1.0f / getScaleX());
-        m_pCaret->setScaleY(1.0f / getScaleY());
-    }
+    m_pCaret->setScaleX(1.0f / getScaleX());
+    m_pCaret->setScaleY(1.0f / getScaleY());
     if (m_pLeftArrow == 0)
         m_pLeftArrow = FJ_Factory::createObject("fourj.FJ_ScrollArrowH", m_pRenderNode, true, 0);
     if (m_pRightArrow == 0)
@@ -240,19 +217,12 @@ void FJ_TextInput::Init(std::wstring name, int id)
     addEventListener(eFJEventType_FocusIn, this, _focusInHandler, false);
     addEventListener(eFJEventType_FocusOut, this, _focusOutHandler, false);
     addEventListener(eFJEventType_KeyDown, this, _keyDownHandler, false);
-    FJ_FuiNode* container = getChildByName(std::string("FJ_TextContainer"));
-    if (container != 0)
+    FJ_FuiNode* movieClip = getChildByName(std::string("FJ_TextContainer"))->getChildAt(0)->asMovieClip();
+    fuiRenderNode* timelineNode = movieClip->m_pRenderNode->asTimeline();
+    if (timelineNode != 0)
     {
-        FJ_FuiNode* child = container->getChildAt(0);
-        if (child != 0)
-        {
-            fuiRenderNode* timelineNode = child->asMovieClip()->m_pRenderNode->asTimeline();
-            if (timelineNode != 0)
-            {
-                fuiRenderNodeTimeline* timeline = static_cast<fuiRenderNodeTimeline*>(timelineNode);
-                m_pTextField = timeline->getChildAt(0)->asEditText();
-            }
-        }
+        fuiRenderNodeTimeline* timeline = static_cast<fuiRenderNodeTimeline*>(timelineNode);
+        m_pTextField = timeline->getChildAt(0)->asEditText();
     }
     fuiRect bounds = m_pTextField->getBounds();
     m_pTextField->setScrollRect(bounds);
@@ -288,11 +258,8 @@ void FJ_TextInput::setVisible(bool visible)
 void FJ_TextInput::SetLabel(const std::wstring& label)
 {
     FJ_Base::SetLabel(label);
-    if (m_pTextField != 0)
-    {
-        m_pTextField->setScrollH(0.0f);
-        SetCaretIndex(static_cast<int>(m_label.size()), true, true);
-    }
+    m_pTextField->setScrollH(0.0f);
+    SetCaretIndex(m_label.size(), true, true);
 }
 
 void FJ_TextInput::SetCharLimit(int limit)
@@ -302,22 +269,22 @@ void FJ_TextInput::SetCharLimit(int limit)
 
 void FJ_TextInput::HandleDirectInput(unsigned int character)
 {
-    std::wstring text = m_label;
     if (character == 8)
     {
-        if (!m_label.empty() && m_caretIndex > 0)
+        int index = m_caretIndex;
+        if (m_label.size() != 0 && index > 0)
         {
-            text.erase(static_cast<std::wstring::size_type>(m_caretIndex - 1), 1);
-            SetLabel(text);
-            SetCaretIndex(m_caretIndex - 1, false, true);
+            m_label = m_label.substr(0, index - 1) + m_label.substr(m_caretIndex);
+            SetLabel(m_label);
+            SetCaretIndex(index - 1, false, true);
         }
-        return;
     }
-    if (m_label.size() < m_charLimit || m_charLimit == -1)
+    else if (m_label.size() < m_charLimit || m_charLimit == -1)
     {
-        text.insert(static_cast<std::wstring::size_type>(m_caretIndex), 1, static_cast<wchar_t>(character & 0xffff));
-        SetLabel(text);
-        SetCaretIndex(m_caretIndex + 1, true, false);
+        int index = m_caretIndex;
+        m_label = m_label.substr(0, index) + static_cast<wchar_t>(character) + m_label.substr(m_caretIndex);
+        SetLabel(m_label);
+        SetCaretIndex(index + 1, true, false);
     }
 }
 

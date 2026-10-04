@@ -9,8 +9,11 @@
 #include "game/ui/ScreenSizeCalculator.hpp"
 
 VideoSettingsScreen::VideoSettingsScreen(Screen* parentScreen, Options* options)
-    : Screen(), mParentScreen(parentScreen), mTitle(L"Video Settings"), mOptions(options)
+    : Screen()
 {
+    mTitle = L"Video Settings";
+    mParentScreen = parentScreen;
+    mOptions = options;
 }
 
 VideoSettingsScreen::~VideoSettingsScreen()
@@ -22,11 +25,15 @@ void VideoSettingsScreen::init()
     Language* language = Language::getInstance();
     mTitle = language->getElement(L"options.videoTitle");
 
-    const int optionIds[8] = { 6, 0, 7, 4, 2, 1, 8, 3 };
+    const Options::Option* videoOptions[8] = {
+        Options::Option::anaglyph, Options::Option::music, Options::Option::advancedOpengl,
+        Options::Option::renderDistance, Options::Option::invertMouse, Options::Option::sound,
+        Options::Option::framerateLimit, Options::Option::sensitivity
+    };
     int buttonIndex;
     for (buttonIndex = 0; buttonIndex < 8; ++buttonIndex)
     {
-        Options::Option* option = Options::Option::getItem(optionIds[buttonIndex]);
+        const Options::Option* option = videoOptions[buttonIndex];
         int x = mWidth / 2 - 155 + (buttonIndex % 2) * 160;
         int y = mHeight / 6 + (buttonIndex / 2) * 24;
         if (option->isProgress())
@@ -60,11 +67,10 @@ void VideoSettingsScreen::buttonClicked(Button* button)
     int id = button->mId;
     if (id < 100)
     {
-        SmallButton* smallButton = dynamic_cast<SmallButton*>(button);
-        if (smallButton != NULL)
+        if (dynamic_cast<SmallButton*>(button) != NULL)
         {
-            mOptions->toggle(smallButton->getOption(), 1);
-            button->mMessage = mOptions->getMessage(Options::Option::getItem(id));
+            mOptions->toggle(static_cast<SmallButton*>(button)->getOption(), 1);
+            button->mMessage = mOptions->getMessage(Options::Option::getItem(button->mId));
         }
         id = button->mId;
     }

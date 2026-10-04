@@ -60,7 +60,7 @@ public:
     void UpdateControls(int player);
     static int ResetControlsWarningDialogReturned(void* context, int pad,
                                                             C4JStorage::EMessageResult result);
-    unsigned int CheckMapping(int player);
+    void CheckMapping(int player);
     virtual void tick();
     virtual std::wstring getMoviePath();
     virtual void handleCheckboxElementToggled(int first, int second, bool checked);

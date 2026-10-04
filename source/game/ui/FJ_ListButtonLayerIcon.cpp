@@ -9,14 +9,14 @@
 #include "game/ui/fuiRenderNodeCodeGenRect.hpp"
 
 FJ_ListButtonLayerIcon::FJ_ListButtonLayerIcon(fuiRenderNode* pRenderNode)
-    : FJ_Button(pRenderNode), m_textureNode(NULL)
+    : FJ_Button(pRenderNode)
 {
 }
 
 void FJ_ListButtonLayerIcon::Init(const std::wstring& name, int id)
 {
     SetLabelAlignment(4);
-    m_isLabel = true;
+    m_textOnly = true;
     FJ_Button::Init(name, id);
 }
 
@@ -44,7 +44,9 @@ void FJ_ListButtonLayerIcon::SetSlotID(int slotId, bool visible)
         getStage()->m_pRenderNode, &rect, name);
     renderNode->setAlpha(0.25f);
     removeChild(slotControl, true);
-    addChild(new FJ_FuiNode(renderNode));
+    FJ_FuiNode* slotNode = new FJ_FuiNode(renderNode);
+    renderNode->setFuiNode(slotNode);
+    addChild(slotNode);
 }
 
 void FJ_ListButtonLayerIcon::SetTextureName(const std::wstring& textureName,
@@ -71,5 +73,6 @@ void FJ_ListButtonLayerIcon::SetTextureName(const std::wstring& textureName,
         getStage()->m_pRenderNode, &rect, "CustomTexture", width, height,
         texture, true, hasTexture);
     m_textureNode = new FJ_FuiNode(renderNode);
+    renderNode->setFuiNode(m_textureNode);
     iconPlaceholder->addChild(m_textureNode);
 }

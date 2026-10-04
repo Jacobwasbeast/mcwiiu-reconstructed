@@ -12,7 +12,7 @@ unsigned int FJ_Label_HUD_SmallWhite::getType()
 
 void FJ_Label_HUD_SmallWhite::SetLabel(const std::wstring& label)
 {
-    m_labelTooWide = true;
+    m_htmlText = true;
     FJ_Label::SetLabel(label);
 }
 

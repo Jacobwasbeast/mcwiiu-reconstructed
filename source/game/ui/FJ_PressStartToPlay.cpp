@@ -71,9 +71,9 @@ void FJ_PressStartToPlay::ShowAchievementToast(const std::wstring& title, const 
         int widest = unlocked->getWidth() > pressButton->getWidth() ? unlocked->getWidth() : pressButton->getWidth();
         panel->getChildAt(0)->setWidth((widest + m_achievementToastX * 2) - (gamerPicture->getWidth() - icon->getWidth()));
         icon->setX(m_achievementToastX + ((widest + m_achievementToastX) - (gamerPicture->getX() + gamerPicture->getWidth())));
-        unlocked->setX(-(unlocked->getWidth() * 0.5f - m_achievementToast->getWidth() * 0.5f));
-        pressButton->setX(-(pressButton->getWidth() * 0.5f - m_achievementToast->getWidth() * 0.5f));
-        m_achievementToast->setX(-(m_achievementToast->getWidth() * 0.5f - getStage()->getStageWidth() * 0.5f));
+        unlocked->setX(m_achievementToast->getWidth() * 0.5f - unlocked->getWidth() * 0.5f);
+        pressButton->setX(m_achievementToast->getWidth() * 0.5f - pressButton->getWidth() * 0.5f);
+        m_achievementToast->setX(getStage()->getStageWidth() * 0.5f - m_achievementToast->getWidth() * 0.5f);
         gotoAndPlay("ShowToast");
     }
 }
@@ -136,7 +136,7 @@ void FJ_PressStartToPlay::SetMultiLineText(const std::wstring& text)
 void FJ_PressStartToPlay::SetSafeZone(int top, int bottom, int left, int right)
 {
     FJ_Document::SetSafeZone(top, bottom, left, right);
-    FJ_FuiNode* saveIcon = getChildByName(std::string("SaveIcon"));
+    FJ_FuiNode* saveIcon = getChildByName("SaveIcon");
     saveIcon->setX(getStage()->getStageWidth() - saveIcon->getWidth() - static_cast<float>(right) - 15.0f);
     saveIcon->setY(static_cast<float>(top + 15));
     if (getChildByName("PlayerName") != 0)
@@ -164,7 +164,7 @@ void FJ_PressStartToPlay::ShowController(int controller, bool show)
         else
             m_mainPanel->getChildByName("ControllerQuadrant")->getChildAt(0)->getChildByName("Controller4")->setVisible(true);
 
-        if (show)
+        if (!show)
             m_mainPanel->getChildByName("ControllerQuadrant")->getChildAt(0)->gotoAndPlay("Play");
         else
             m_mainPanel->getChildByName("ControllerQuadrant")->getChildAt(0)->gotoAndStop("Stop");
@@ -193,8 +193,8 @@ void FJ_PressStartToPlay::ShowChestRefillAnimation(bool left, int yOffset)
     }
     else
     {
-        animation->setX(-(animation->getWidth() * 0.5f - getStage()->getStageWidth() * 0.5f));
-        animation->setY(-(animation->getHeight() * 0.5f - getStage()->getStageHeight() * 0.5f));
+        animation->setX(getStage()->getStageWidth() * 0.5f - animation->getWidth() * 0.5f);
+        animation->setY(getStage()->getStageHeight() * 0.5f - animation->getHeight() * 0.5f);
     }
     FJ_FuiNode::asMovieClip(animation->getChildAt(0))->gotoAndPlay(2);
 }

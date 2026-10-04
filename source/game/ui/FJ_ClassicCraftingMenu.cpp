@@ -21,10 +21,9 @@ void FJ_ClassicCraftingMenu::SetSafeZone(int top, int bottom, int left, int righ
 {
     FJ_Document::SetSafeZone(top, bottom, left, right);
 
-    float stageHeight = getStage()->getStageHeight();
-    if (stageHeight != 360.0f && stageHeight != 540.0f)
+    if (getStage()->getStageHeight() != 360.0f && getStage()->getStageHeight() != 540.0f)
         return;
 
-    setX(-right);
-    setY(top);
+    setX(static_cast<float>(-right));
+    setY(static_cast<float>(top));
 }

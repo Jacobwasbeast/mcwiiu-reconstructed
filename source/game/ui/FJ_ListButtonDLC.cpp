@@ -3,7 +3,7 @@
 #include "game/ui/FJ_FuiNode.hpp"
 
 FJ_ListButtonDLC::FJ_ListButtonDLC(fuiRenderNode* renderNode)
-    : FJ_Button(renderNode), m_tickNode(NULL)
+    : FJ_Button(renderNode)
 {
     m_tickNode = getChildByName("DLCTick")->asMovieClip();
     m_tickNode->setVisible(false);
@@ -28,6 +28,6 @@ void FJ_ListButtonDLC::ShowTick(bool show)
         if (show)
             width = static_cast<int>(m_tickNode->getX() * getScaleX());
         m_ellipsisWidthOverride = width;
-        SetLabel(m_label);
+        SetLabel(GetLabel());
     }
 }

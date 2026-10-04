@@ -27,10 +27,11 @@ extern ConsoleUIController gConsoleUIController;
 
 UIScene_MapSelectMenu::UIScene_MapSelectMenu(int sceneType, void* data, UILayer* layer)
     : UIScene(sceneType, layer), IUIScene_DlcSelectMenu(eDLCContentType_MapPack), m_levelRuleGroups(),
-      m_initData(static_cast<LaunchMoreOptionsMenuInitData*>(data)), m_generationOptions(NULL), m_mapList(),
-      m_mapListTitle(), m_mapTitle(), m_mapDescription(), m_mapIcon()
+      m_mapList(), m_mapListTitle(), m_mapTitle(), m_mapDescription(), m_mapIcon()
 {
     initialiseMovie();
+    m_initData = static_cast<LaunchMoreOptionsMenuInitData*>(data);
+    m_generationOptions = NULL;
     m_playerId = m_initData->mPad;
     LevelRules::ELevelRuleType ruleType = LevelRules::GetRuleTypeForMiniGame(m_initData->mMiniGameId);
     if (m_initData->mMatchmaking && !m_initData->mTimeTrial &&
@@ -126,7 +127,7 @@ void UIScene_MapSelectMenu::_init()
             m_mapList.SetCheckbox(index, selected);
         }
     }
-    if (!anySelected && m_mapList.getItemCount() > 3)
+    if (!anySelected && m_mapList.getItemCount() >= 4)
     {
         m_mapList.SetCheckbox(m_mapList.getItemCount() - 4, true);
         m_mapList.SetCheckbox(m_mapList.getItemCount() - 3, true);
@@ -139,9 +140,9 @@ void UIScene_MapSelectMenu::_init()
 
 std::wstring UIScene_MapSelectMenu::getMoviePath()
 {
-    if (gApp.GetLocalPlayerCount() < 2)
-        return L"MapSelectMenu";
-    return L"MapSelectMenuSplit";
+    if (gApp.GetLocalPlayerCount() > 1)
+        return L"MapSelectMenuSplit";
+    return L"MapSelectMenu";
 }
 
 void UIScene_MapSelectMenu::updateTooltips()
@@ -209,9 +210,7 @@ int UIScene_MapSelectMenu::checkHasPurchased(int index, bool tryPurchase)
     LevelRuleset* ruleset = group->rulesets.at(0);
     LevelGenerationOptions* options = ruleset->getGenerationOptions();
     DLCPack* pack = options->getPack();
-    bool purchased = true;
-    if (!pack->hasPurchasedPack() && !gApp.mDLCManager.IsMiniGameTemporarilyFree(ruleset->getRuleType()))
-        purchased = false;
+    bool purchased = pack->hasPurchasedPack() || gApp.mDLCManager.IsMiniGameTemporarilyFree(ruleset->getRuleType());
     if (!purchased && tryPurchase)
     {
         bool handled = false;
@@ -220,7 +219,7 @@ int UIScene_MapSelectMenu::checkHasPurchased(int index, bool tryPurchase)
         int contentType = info == NULL ? 0 : info->ContentType;
         tryPurchaseDlc(m_playerId, handled, (eDLCContentType)contentType);
     }
-    return purchased ? 1 : 0;
+    return purchased;
 }
 
 void UIScene_MapSelectMenu::handleInput(int, int action, bool repeat, bool pressed, bool released,
@@ -251,18 +250,12 @@ void UIScene_MapSelectMenu::handleInput(int, int action, bool repeat, bool press
                 m_mapList.SetCheckbox(i, false);
         gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
         break;
-    case EControllerActions_MenuUp:
-    case EControllerActions_MenuDown:
-    case EControllerActions_MenuOtherStickUp:
-    case EControllerActions_MenuOtherStickDown:
-        sendInputToMovie(action, repeat, pressed, released);
-        break;
     case EControllerActions_MenuOk:
         if (!pressed || repeat)
             return;
         if (checkHasPurchased((int)m_mapList.getCurrentSelection(), true) == 0)
             return;
-        sendInputToMovie(EControllerActions_MenuOk, false, pressed, released);
+        sendInputToMovie(action, false, pressed, released);
         gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
         break;
     case EControllerActions_MenuCancel:
@@ -284,10 +277,19 @@ void UIScene_MapSelectMenu::handleInput(int, int action, bool repeat, bool press
             if (selection != m_mapSelection)
             {
                 if (m_miniGameType == eMiniGameId_Battle)
+                {
                     GameSettings::SetBattleMiniGameMapSelection(m_playerId, selection);
+                    m_mapSelection = selection;
+                }
                 else if (m_miniGameType == eMiniGameId_Glide)
+                {
                     GameSettings::SetGlideMiniGameMapSelection(m_playerId, selection);
-                m_mapSelection = selection;
+                    m_mapSelection = selection;
+                }
+                else
+                {
+                    m_mapSelection = selection;
+                }
             }
             GameSettings::CheckGameSettingsChanged(true, m_playerId);
             navigateBack();
@@ -302,6 +304,12 @@ void UIScene_MapSelectMenu::handleInput(int, int action, bool repeat, bool press
         handled = true;
         break;
     }
+    case EControllerActions_MenuUp:
+    case EControllerActions_MenuDown:
+    case EControllerActions_MenuOtherStickUp:
+    case EControllerActions_MenuOtherStickDown:
+        sendInputToMovie(action, repeat, pressed, released);
+        break;
     }
 }
 

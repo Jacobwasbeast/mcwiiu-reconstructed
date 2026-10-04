@@ -16,9 +16,11 @@ void UIControl_AchievementsList::setupControl(UIScene* scene, fuiRenderNode* nod
 
 void UIControl_AchievementsList::AddNewItem(int id, const std::wstring& textureName)
 {
-    std::wstring itemTextureName(textureName);
-    FJ_List_ListButtonAchievement* list = static_cast<FJ_List_ListButtonAchievement*>(
-        m_fuiRenderNode->getFuiNode());
-    list->addNewItem(id, itemTextureName);
+    {
+        std::wstring itemTextureName(textureName.c_str());
+        FJ_List_ListButtonAchievement* list = static_cast<FJ_List_ListButtonAchievement*>(
+            m_fuiRenderNode->getFuiNode());
+        list->addNewItem(id, itemTextureName);
+    }
     addElement(UIControl::eUIControlType_Button, -1);
 }

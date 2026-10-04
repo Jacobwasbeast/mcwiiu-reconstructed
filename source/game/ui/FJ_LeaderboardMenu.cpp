@@ -25,12 +25,10 @@ unsigned int FJ_LeaderboardMenu::getType()
 
 void FJ_LeaderboardMenu::ASConstructor()
 {
-    FJ_FuiNode* infoNode = getChildByName("Info");
-    FJ_Label* infoLabel = infoNode->asFJ_Label();
+    FJ_Label* infoLabel = getChildByName("Info")->asFJ_Label();
     infoLabel->SetLabel(L"");
 
-    FJ_FuiNode* gamersNode = getChildByName("Gamers");
-    FJ_LeaderboardList* leaderboardList = gamersNode->asFJ_LeaderboardList();
+    FJ_LeaderboardList* leaderboardList = static_cast<FJ_LeaderboardList*>(getChildByName("Gamers"));
     leaderboardList->SetupPleaseWait(infoLabel);
 }
 
@@ -42,7 +40,7 @@ void FJ_LeaderboardMenu::_keyDownHandler(FJ_FuiNode* node, FJ_Event* event)
 void FJ_LeaderboardMenu::keyDownHandler(FJ_Event* event)
 {
     FJ_FuiNode* gamersNode = getChildByName("Gamers");
-    FJ_LeaderboardList* leaderboardList = gamersNode->asFJ_LeaderboardList();
+    FJ_LeaderboardList* leaderboardList = static_cast<FJ_LeaderboardList*>(gamersNode);
 
     if (event->m_eType == eFJEventType_FocusOut)
     {

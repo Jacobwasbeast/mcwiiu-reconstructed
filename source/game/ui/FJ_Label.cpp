@@ -63,55 +63,49 @@ void FJ_Label::SetLabel(const std::wstring& label)
 int FJ_Label::GetAverageCharHeight()
 {
     fuiRenderNodeEditText* textField = GetTextField();
-    const std::wstring& text = textField->getText();
     int count = 0;
     int total = 0;
-    for (std::wstring::size_type index = 0; index < text.size() && count < 5; ++index)
+    for (std::wstring::size_type index = 0; index < textField->getText().size(); ++index)
     {
         std::pair<float, float> boundaries = textField->getCharBoundaries(static_cast<int>(index));
         ++count;
         total += static_cast<int>(boundaries.second);
+        if (count > 4)
+        {
+            break;
+        }
     }
     return count == 0 ? 0 : total / count;
 }
 
 void FJ_Label::GetLabelTooWide(fuiRenderNodeEditText* textField)
 {
-    const float measured = textField->getWidth();
-    float required = static_cast<float>(m_maxLabelWidth) <= measured
-                         ? static_cast<float>(static_cast<int>(measured))
-                         : static_cast<float>(m_maxLabelWidth);
-    if (required <= getWidth())
-    {
-        required = getWidth();
-    }
-    if (m_newWidth < static_cast<int>(required))
-    {
-        m_newWidth = static_cast<int>(required);
-    }
+    float limit = static_cast<float>(m_maxLabelWidth);
+    float required = static_cast<float>(static_cast<int>(limit <= textField->m_textWidth ? textField->m_textWidth : limit));
+    int width = getWidth() < required ? static_cast<int>(required) : static_cast<int>(getWidth());
+    int newWidth = m_newWidth;
+    m_newWidth = newWidth < width ? width : newWidth;
 }
 
 void FJ_Label::setAction(unsigned char action, char* value)
 {
-    if (action == 5)
+    switch (action)
     {
+    case 5:
         m_textAlignment = static_cast<ETextAlignment>(std::atoi(value));
-    }
-    else if (action == 6)
-    {
+        break;
+    case 6:
         m_multiline = std::strcmp(value, "true") == 0;
-    }
-    else if (action == 7)
-    {
+        break;
+    case 7:
         m_useEllipsis = std::strcmp(value, "true") == 0;
-    }
-    else if (action == 8)
-    {
+        break;
+    case 8:
         m_wordWrap = std::strcmp(value, "true") == 0;
-    }
-    else if (action == 9)
-    {
+        break;
+    case 9:
         m_manualWordWrap = std::strcmp(value, "true") == 0;
+        break;
     }
 }
 

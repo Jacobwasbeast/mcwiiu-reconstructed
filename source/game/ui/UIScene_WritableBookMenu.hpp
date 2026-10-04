@@ -88,8 +88,8 @@ private:
     bool m_canEdit;
     bool m_textChanged;
     bool m_caretHidden;
-    unsigned char m_reserved[0x1fd];
-    int m_controlState;
+    unsigned char m_reservedByte;
+    int m_reserved[0x80];
     bool m_keyboardOpen;
     bool m_signing;
     unsigned char m_unusedControlByte;

@@ -70,8 +70,7 @@ void FJ_CreativeMenu::SetActiveTab(int tab)
     else if (frame > 8)
         frame = 8;
 
-    FJ_FuiNode* tabs = getChildByName(std::string("MainPanel.CreativeTabs"));
-    tabs->getChildAt(0)->gotoAndStop(frame);
+    getChildByName(std::string("MainPanel.CreativeTabs"))->getChildAt(0)->gotoAndStop(frame);
     m_currentPage = 0;
     m_scrollUpArrow->setVisible(true);
     m_scrollDownArrow->setVisible(true);
@@ -84,13 +83,7 @@ void FJ_CreativeMenu::SetScrollBar(int pageCount, int currentPage)
         return;
 
     int lastPage = pageCount - 1;
-    int page = lastPage;
-    if (currentPage < pageCount)
-    {
-        page = currentPage;
-        if (currentPage < 0)
-            page = 0;
-    }
+    int page = currentPage < pageCount ? (currentPage < 0 ? 0 : currentPage) : lastPage;
 
     if (pageCount == 1)
     {
@@ -104,16 +97,7 @@ void FJ_CreativeMenu::SetScrollBar(int pageCount, int currentPage)
         scrollBar->getChildByName(std::string("ScrollBarButton"))->setVisible(true);
         if (pageCount > 1)
         {
-            if (m_currentPage < page)
-            {
-                if (page > 0)
-                {
-                    m_scrollDownArrow->setVisible(true);
-                    m_scrollDownArrow->ChangeState(4);
-                }
-                m_scrollUpArrow->setVisible(true);
-            }
-            else if (page < m_currentPage)
+            if (m_currentPage > page)
             {
                 if (page < lastPage)
                 {
@@ -121,6 +105,15 @@ void FJ_CreativeMenu::SetScrollBar(int pageCount, int currentPage)
                     m_scrollUpArrow->ChangeState(1);
                 }
                 m_scrollDownArrow->setVisible(true);
+            }
+            else if (m_currentPage < page)
+            {
+                if (page > 0)
+                {
+                    m_scrollDownArrow->setVisible(true);
+                    m_scrollDownArrow->ChangeState(4);
+                }
+                m_scrollUpArrow->setVisible(true);
             }
         }
     }
@@ -130,17 +123,18 @@ void FJ_CreativeMenu::SetScrollBar(int pageCount, int currentPage)
     if (page == 0)
         m_scrollUpArrow->setVisible(false);
 
-    if (pageCount < 2)
-    {
-        scrollBar->getChildByName(std::string("ScrollBarButton"))
-            ->setY(static_cast<float>(m_scrollBarButtonPosition));
-    }
-    else
+    if (pageCount > 1)
     {
         scrollBar->getChildByName(std::string("ScrollBarButton"))
             ->setY(static_cast<float>(m_scrollBarEndPosition - m_scrollBarButtonPosition) *
                    (static_cast<float>(page) / static_cast<float>(lastPage)) +
                    static_cast<float>(m_scrollBarButtonPosition));
+        m_currentPage = page;
     }
-    m_currentPage = page;
+    else
+    {
+        scrollBar->getChildByName(std::string("ScrollBarButton"))
+            ->setY(static_cast<float>(m_scrollBarButtonPosition));
+        m_currentPage = page;
+    }
 }

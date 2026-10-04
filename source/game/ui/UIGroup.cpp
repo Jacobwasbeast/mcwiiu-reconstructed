@@ -28,10 +28,10 @@ UIGroup::UIGroup(EUIGroup group, int player)
         m_layers[i]->m_layerId = i;
     }
 
-    if (m_group == EUIGroup_DRC || m_group == EUIGroup_Fullscreen)
-        m_tooltips = static_cast<UIComponent_Tooltips*>(m_layers[EUILayer_Tooltips]->addComponent(0, EUIScene_Tooltips, NULL));
-    else
+    if (m_group != EUIGroup_Fullscreen && m_group != EUIGroup_DRC)
         m_tooltips = static_cast<UIComponent_Tooltips*>(m_layers[EUILayer_Tooltips]->addComponent(m_player, EUIScene_Tooltips, NULL));
+    else
+        m_tooltips = static_cast<UIComponent_Tooltips*>(m_layers[EUILayer_Tooltips]->addComponent(0, EUIScene_Tooltips, NULL));
     m_hud = NULL;
     m_tutorialPopup = NULL;
     m_pressStartToPlay = NULL;
@@ -61,15 +61,20 @@ void UIGroup::getRenderDimensions(int& width, int& height)
 
 unsigned int UIGroup::GetLayerIndex(UILayer* layer)
 {
-    for (int i = 0; i < EUILayer_Count; ++i)
-        if (m_layers[i] == layer)
-            return static_cast<unsigned int>(i);
+    if (m_layers[0] != layer)
+    {
+        for (int i = 1; i < EUILayer_Count; ++i)
+            if (m_layers[i] == layer)
+                return static_cast<unsigned int>(i);
+    }
     return 0;
 }
 
 unsigned int UIGroup::RequestFocus(UILayer* layer)
 {
     unsigned int index = GetLayerIndex(layer);
+    if (index == 0)
+        return 1;
     for (int i = static_cast<int>(index) - 1; i >= 0; --i)
         if (m_layers[i]->m_hasFocus)
             return 0;
@@ -99,24 +104,15 @@ void UIGroup::DestroyAll()
 
 void UIGroup::ReloadAll()
 {
-    int lastLayer;
+    int lastLayer = EUILayer_Count;
     int i;
 
-    if (m_layers[EUILayer_Debug]->hidesLowerScenes() || m_layers[EUILayer_Tooltips]->hidesLowerScenes() ||
-        m_layers[EUILayer_Alert]->hidesLowerScenes() || m_layers[EUILayer_Popup]->hidesLowerScenes())
+    for (i = 0; i < EUILayer_Count; ++i)
     {
-        lastLayer = EUILayer_Fullscreen;
-    }
-    else
-    {
-        lastLayer = EUILayer_Count;
-        for (i = EUILayer_Fullscreen; i < EUILayer_Count; ++i)
+        if (m_layers[i]->hidesLowerScenes())
         {
-            if (m_layers[i]->hidesLowerScenes())
-            {
-                lastLayer = i;
-                break;
-            }
+            lastLayer = i < EUILayer_Fullscreen ? EUILayer_Fullscreen : i;
+            break;
         }
     }
 
@@ -146,10 +142,10 @@ void UIGroup::tick()
 }
 void UIGroup::render()
 {
-    int width = 0;
-    int height = 0;
+    int width;
+    int height;
     int layer;
-    int firstLayer = 0;
+    int firstLayer;
 
     if (m_player >= 0 && !gProfile->IsSignedIn(m_player))
     {
@@ -163,17 +159,16 @@ void UIGroup::render()
     }
     else
     {
-        getRenderDimensions(width, height);
+        width = 0;
+        height = 0;
+        gConsoleUIController.getRenderDimensions(
+            static_cast<C4JRender::eViewportType>(m_viewportType), width, height);
     }
 
-    for (layer = 0; layer < EUILayer_Count; ++layer)
+    for (firstLayer = 0; firstLayer < EUILayer_Count; ++firstLayer)
     {
-        if (m_layers[layer]->hidesLowerScenes())
-        {
-            firstLayer = layer;
+        if (m_layers[firstLayer]->hidesLowerScenes())
             break;
-        }
-        firstLayer = layer + 1;
     }
 
     for (layer = firstLayer; layer >= 0; --layer)
@@ -188,10 +183,13 @@ int UIGroup::hidesLowerScenes()
 {
     if (m_player >= 0 && !gProfile->IsSignedIn(m_player))
         return 0;
-    for (int i = EUILayer_HUD; i >= 0; --i)
-        if (m_layers[i]->hidesLowerScenes())
-            return 1;
-    return 0;
+    for (int i = EUILayer_HUD; i > 0; --i)
+    {
+        int hides = m_layers[i]->hidesLowerScenes();
+        if (hides)
+            return hides;
+    }
+    return m_layers[0]->hidesLowerScenes();
 }
 void UIGroup::updateStackStates()
 {
@@ -249,7 +247,7 @@ void UIGroup::closeAllScenes()
             tutorial->showTutorialPopup(true);
     }
 
-    for (int i = 0; i < EUILayer_Count; ++i)
+    for (unsigned int i = 0; i < EUILayer_Count; ++i)
         if (i != EUILayer_Alert)
             m_layers[i]->closeAllScenes();
     updateStackStates();
@@ -261,10 +259,13 @@ UIScene* UIGroup::GetTopScene(EUILayer layer)
 
 bool UIGroup::IsSceneInStack(EUIScene scene)
 {
-    for (int i = 0; i < EUILayer_Count; ++i)
-        if (m_layers[i]->IsSceneInStack(scene))
-            return true;
-    return false;
+    for (int i = 0; i < EUILayer_Count - 1; ++i)
+    {
+        bool inStack = m_layers[i]->IsSceneInStack(scene);
+        if (inStack)
+            return inStack;
+    }
+    return m_layers[EUILayer_HUD]->IsSceneInStack(scene);
 }
 
 bool UIGroup::GetMenuDisplayed()
@@ -365,13 +366,13 @@ void UIGroup::HandleSaveDeviceRemoved(int device)
 
 UIScene* UIGroup::FindScene(EUIScene scene)
 {
-    for (int i = 0; i < EUILayer_Count; ++i)
+    for (int i = 0; i < EUILayer_Count - 1; ++i)
     {
         UIScene* found = m_layers[i]->FindScene(scene);
         if (found != 0)
             return found;
     }
-    return 0;
+    return m_layers[EUILayer_HUD]->FindScene(scene);
 }
 
 void UIGroup::ClearTooltips()

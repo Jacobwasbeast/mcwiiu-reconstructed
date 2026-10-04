@@ -7,9 +7,13 @@ static int s_confirmScreenTicks = 0;
 
 ConfirmScreen::ConfirmScreen(Screen* parent, const std::wstring& title, const std::wstring& message,
     const std::wstring& yesMessage, const std::wstring& noMessage, int id)
-    : Screen(), mParent(parent), mTitle(title), mMessage(message), mYesMessage(yesMessage),
-      mNoMessage(noMessage), mId(id)
+    : Screen(), mParent(parent)
 {
+    mTitle = title;
+    mMessage = message;
+    mYesMessage = yesMessage;
+    mNoMessage = noMessage;
+    mId = id;
 }
 
 ConfirmScreen::~ConfirmScreen()

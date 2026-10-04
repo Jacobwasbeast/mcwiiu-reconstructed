@@ -9,8 +9,8 @@
 UIBitmapFont::UIBitmapFont(SFontData& fontData)
     : UIAbstractBitmapFont(fontData.fontName)
 {
-    BufferedImage image(fontData.textureFileName, true, true, L"");
     m_numGlyphs = fontData.numGlyphs;
+    BufferedImage image(fontData.textureFileName, true, true, L"");
     m_fontData = new CFontData(fontData, image.getData());
 }
 

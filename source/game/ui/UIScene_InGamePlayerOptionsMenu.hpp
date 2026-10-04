@@ -46,12 +46,12 @@ public:
     virtual void handleSliderElementMove(int first, int second, int value);
 
     bool m_navigatingBack;
-    bool m_isHost;
+    unsigned char m_isHost;
     unsigned char m_smallId;
     unsigned int m_privileges;
     UIControl_Label m_gamertag;
     UIControl_MultiList m_playerOptions;
-    bool m_cheatsEnabled;
+    unsigned char m_cheatsEnabled;
 };
 
 #endif

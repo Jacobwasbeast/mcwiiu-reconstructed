@@ -15,7 +15,7 @@ TrapMenu::TrapMenu(boost::shared_ptr<Container> playerInventory, boost::shared_p
     {
         for (column = 0; column < 3; ++column)
         {
-            addSlot(new Slot(m_container, row * 3 + column, 62 + column * 18, 17 + row * 18));
+            addSlot(new Slot(container, row * 3 + column, 62 + column * 18, 17 + row * 18));
         }
     }
 
@@ -23,7 +23,7 @@ TrapMenu::TrapMenu(boost::shared_ptr<Container> playerInventory, boost::shared_p
     {
         for (column = 0; column < 9; ++column)
         {
-            addSlot(new Slot(playerInventory, 9 + row * 9 + column, 8 + column * 18, 84 + row * 18));
+            addSlot(new Slot(playerInventory, column + row * 9 + 9, 8 + column * 18, 84 + row * 18));
         }
     }
 
@@ -40,19 +40,20 @@ bool TrapMenu::stillValid(boost::shared_ptr<Player> player)
 
 not_null_ptr<ItemInstance> TrapMenu::quickMoveStack(boost::shared_ptr<Player> player, int index)
 {
+    not_null_ptr<ItemInstance> result = ItemInstance::EMPTY;
     Slot* slot = m_slots.at(index);
     if (slot != NULL && slot->hasItem())
     {
         not_null_ptr<ItemInstance> item = slot->getItem();
-        not_null_ptr<ItemInstance> result = item->copy();
+        result = item->copy();
         if (index < 9)
         {
-            if (!moveItemStackTo(item, 9, 45, true, true, true))
+            if (moveItemStackTo(item, 9, 45, true, true, true) != true)
             {
                 return ItemInstance::EMPTY;
             }
         }
-        else if (!moveItemStackTo(item, 0, 9, false, true, true))
+        else if (moveItemStackTo(item, 0, 9, false, true, true) != true)
         {
             return ItemInstance::EMPTY;
         }
@@ -72,8 +73,7 @@ not_null_ptr<ItemInstance> TrapMenu::quickMoveStack(boost::shared_ptr<Player> pl
         }
 
         slot->onTake(player, item);
-        return result;
     }
 
-    return ItemInstance::EMPTY;
+    return result;
 }

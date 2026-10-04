@@ -7,8 +7,7 @@
 
 ScreenSizeCalculator::ScreenSizeCalculator(Options* options, int guiScale)
 {
-    Minecraft* minecraft = Minecraft::GetInstance();
-    _init(options, minecraft->mWidth, minecraft->mHeight, guiScale);
+    _init(options, Minecraft::GetInstance()->mWidth, Minecraft::GetInstance()->mHeight, guiScale);
 }
 
 ScreenSizeCalculator::ScreenSizeCalculator(Options* options, int width, int height, int guiScale)
@@ -24,17 +23,19 @@ void ScreenSizeCalculator::_init(Options* options, int width, int height, int gu
     if (guiScale == -1)
     {
         int maxScale = options->mGuiScale;
-        mScale = 1;
+        int scale = 1;
         if (maxScale == 0)
         {
             maxScale = 1000;
         }
 
-        while (mScale < maxScale && width / (mScale + 1) >= 320 &&
-               height / (mScale + 1) >= 240)
+        while (scale < maxScale && width / (scale + 1) >= 320 &&
+               height / (scale + 1) >= 240)
         {
-            ++mScale;
+            ++scale;
         }
+
+        mScale = scale;
     }
     else
     {
@@ -43,8 +44,8 @@ void ScreenSizeCalculator::_init(Options* options, int width, int height, int gu
 
     mWidthScale = (double)width / (double)mScale;
     mHeightScale = (double)height / (double)mScale;
-    mWidth = (uint32_t)std::ceil(mWidthScale);
-    mHeight = (uint32_t)std::ceil(mHeightScale);
+    mWidth = (int)std::ceil(mWidthScale);
+    mHeight = (int)std::ceil(mHeightScale);
 }
 
 uint32_t ScreenSizeCalculator::getWidth() const

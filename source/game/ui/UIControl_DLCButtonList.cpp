@@ -11,7 +11,7 @@ void UIControl_DLCButtonList::setupControl(UIScene* scene, fuiRenderNode* node, 
 
 void UIControl_DLCButtonList::addItem(const std::string& label, bool enabled, int index)
 {
-    std::wstring wideLabel = convStringToWstring(label);
+    std::wstring wideLabel = convStringToWstring(std::string(label.c_str()));
     FJ_List_ListButtonDLC* list = static_cast<FJ_List_ListButtonDLC*>(m_fuiRenderNode->getFuiNode());
     list->addNewItem(wideLabel, index, enabled);
     addElement(UIControl::eUIControlType_Button, index);

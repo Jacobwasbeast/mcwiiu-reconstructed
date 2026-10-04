@@ -25,5 +25,5 @@ void FJ_Gamertag::SetGamertag(const std::wstring& gamertag)
     FJ_Label* label = labelNode->asFJ_Label();
     label->SetLabel(gamertag);
     labelNode->setX(static_cast<float>(getStage()->getStageWidth() - labelNode->getWidth() - getISafeZoneRight()));
-    labelNode->setY(-static_cast<float>(getISafeZoneTop()));
+    labelNode->setY(static_cast<float>(getISafeZoneTop()));
 }

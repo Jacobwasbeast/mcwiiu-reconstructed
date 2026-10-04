@@ -35,7 +35,7 @@ public:
     virtual void handleLoseFocus();
     virtual void handleGainFocus(bool hadFocus);
     virtual void handleTimerComplete(int timerId);
-    unsigned int handleKeyDown(int player, int action, bool repeat);
+    bool handleKeyDown(int player, int action, bool repeat);
     virtual void handleInput(int player, int action, bool repeat, bool pressed, bool released, bool& handled);
     virtual void handleFocusChange(int focus, int childFocus);
     virtual void handleInitFocus(int focus, int childFocus);

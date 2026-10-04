@@ -284,29 +284,28 @@ void UIScene_HorseInventoryMenu::GetItemScreenData(
     IUIScene_AbstractContainerMenu::ESceneSection section, int slot,
     _UIVec2D* position, _UIVec2D* size)
 {
-    float width;
-    float height;
+    _UIVec2D controlSize;
     switch (section)
     {
     case IUIScene_AbstractContainerMenu::ESceneSection_HorseSaddle:
-        width = m_saddleSlot.getWidth();
-        height = m_saddleSlot.getHeight();
+        controlSize.x = m_saddleSlot.getWidth();
+        controlSize.y = m_saddleSlot.getHeight();
         break;
     case IUIScene_AbstractContainerMenu::ESceneSection_HorseArmor:
-        width = m_armorSlot.getWidth();
-        height = m_armorSlot.getHeight();
+        controlSize.x = m_armorSlot.getWidth();
+        controlSize.y = m_armorSlot.getHeight();
         break;
     case IUIScene_AbstractContainerMenu::ESceneSection_HorseChest:
-        width = m_donkeyInventoryList.getWidth();
-        height = m_donkeyInventoryList.getHeight();
+        controlSize.x = m_donkeyInventoryList.getWidth();
+        controlSize.y = m_donkeyInventoryList.getHeight();
         break;
     case IUIScene_AbstractContainerMenu::ESceneSection_HorseInventory:
-        width = m_inventoryList.getWidth();
-        height = m_inventoryList.getHeight();
+        controlSize.x = m_inventoryList.getWidth();
+        controlSize.y = m_inventoryList.getHeight();
         break;
     case IUIScene_AbstractContainerMenu::ESceneSection_HorseHotbar:
-        width = m_hotbarList.getWidth();
-        height = m_hotbarList.getHeight();
+        controlSize.x = m_hotbarList.getWidth();
+        controlSize.y = m_hotbarList.getHeight();
         break;
     default:
         break;
@@ -315,16 +314,16 @@ void UIScene_HorseInventoryMenu::GetItemScreenData(
     {
         const int rows = getSectionRows(section);
         const int columns = getSectionColumns(section);
-        size->y = height / rows;
-        size->x = width / columns;
+        size->y = controlSize.y / rows;
+        size->x = controlSize.x / columns;
         position->x = (slot % columns) * size->x;
         position->y = (slot / columns) * size->y;
     }
     else
     {
         GetPositionOfSection(section, position);
-        size->x = width;
-        size->y = height;
+        size->x = controlSize.x;
+        size->y = controlSize.y;
     }
 }
 

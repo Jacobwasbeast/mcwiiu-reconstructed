@@ -1,3 +1,4 @@
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/ui/UIScene_SignEntryMenu.hpp"
 #include "game/core/StringIds.hpp"
 
@@ -18,45 +19,80 @@
 #include "game/network/ServerboundSignUpdatePacket.hpp"
 #include "game/world/block/SignBlockEntity.hpp"
 #include "game/world/generation/MultiPlayerLevel.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "platform/wiiu/CInput.hpp"
 #include "game/core/GameSettings.hpp"
 
 UIScene_SignEntryMenu::UIScene_SignEntryMenu(int type, void* data, UILayer* layer)
-    : UIScene(type, layer), m_sign(), m_selectedLine(0), m_confirmRequested(false),
-      m_keyboardActive(false)
+    : UIScene(type, layer), m_sign()
 {
     initialiseMovie();
     m_sign = *static_cast<boost::shared_ptr<SignBlockEntity>*>(data);
+    m_confirmRequested = false;
+    m_keyboardActive = false;
 
     m_confirmButton.init(UIString(L10N::GetString(IDS_DONE)), 4);
     m_messageLabel.init(UIString(L10N::GetString(IDS_EDIT_SIGN_MESSAGE)));
 
-    for (int i = 0; i < 4; ++i)
-        m_lineInputs[i].init(UIString(m_sign->mMessages[i]), i);
+    {
+        std::wstring message(m_sign.get()->mMessages[0]);
+        m_lineInputs[0].init(UIString(message.c_str()), 0);
+    }
+    {
+        std::wstring message(m_sign.get()->mMessages[1]);
+        m_lineInputs[1].init(UIString(message.c_str()), 1);
+    }
+    {
+        std::wstring message(m_sign.get()->mMessages[2]);
+        m_lineInputs[2].init(UIString(message.c_str()), 2);
+    }
+    {
+        std::wstring message(m_sign.get()->mMessages[3]);
+        m_lineInputs[3].init(UIString(message.c_str()), 3);
+    }
 
     layer->addComponent(type, EUIScene_MenuBackground, NULL);
 }
 
 UIScene_SignEntryMenu::~UIScene_SignEntryMenu()
 {
-    if (m_layer != NULL)
-        m_layer->removeComponent(EUIScene_MenuBackground);
+    m_layer->removeComponent(EUIScene_MenuBackground);
 }
 
 unsigned int UIScene_SignEntryMenu::mapElementsAndNames()
 {
     UIScene::mapElementsAndNames();
     fuiRenderNode* root = m_movie->getRootNode();
-    m_confirmButton.setupControl(this, root, std::string("Confirm"));
-    m_messageLabel.setupControl(this, root, std::string("Message"));
-    m_lineInputs[0].setupControl(this, root, std::string("Line1"));
-    m_lineInputs[1].setupControl(this, root, std::string("Line2"));
-    m_lineInputs[2].setupControl(this, root, std::string("Line3"));
-    m_lineInputs[3].setupControl(this, root, std::string("Line4"));
+    {
+        std::string name("Confirm");
+        m_confirmButton.setupControl(this, root, name);
+    }
     m_controls.push_back(&m_confirmButton);
+    {
+        std::string name("Message");
+        m_messageLabel.setupControl(this, root, name);
+    }
     m_controls.push_back(&m_messageLabel);
-    for (int i = 0; i < 4; ++i)
-        m_controls.push_back(&m_lineInputs[i]);
+    {
+        std::string name("Line1");
+        m_lineInputs[0].setupControl(this, root, name);
+    }
+    m_controls.push_back(&m_lineInputs[0]);
+    {
+        std::string name("Line2");
+        m_lineInputs[1].setupControl(this, root, name);
+    }
+    m_controls.push_back(&m_lineInputs[1]);
+    {
+        std::string name("Line3");
+        m_lineInputs[2].setupControl(this, root, name);
+    }
+    m_controls.push_back(&m_lineInputs[2]);
+    {
+        std::string name("Line4");
+        m_lineInputs[3].setupControl(this, root, name);
+    }
+    m_controls.push_back(&m_lineInputs[3]);
     return 1;
 }
 
@@ -78,23 +114,22 @@ void UIScene_SignEntryMenu::tick()
     for (int i = 0; i < 4; ++i)
     {
         std::wstring line(m_lineInputs[i].getLabel());
-        m_sign->SetMessage(i, line);
+        m_sign.get()->SetMessage(i, line);
     }
-    m_sign->setChanged();
+    m_sign.get()->setChanged();
 
     Minecraft* minecraft = Minecraft::GetInstance();
     if (minecraft->mLevel->mIsClientSide)
     {
-        if (minecraft->mLocalPlayers[m_playerId] != NULL)
+        boost::shared_ptr<MultiplayerLocalPlayer> player = minecraft->mLocalPlayers[m_playerId];
+        if (player.get() != NULL && player.get()->mPacketListener != NULL &&
+            player.get()->mPacketListener->isStarted())
         {
-            ClientPacketListener* connection = minecraft->getConnection(m_playerId);
-            if (connection != NULL && connection->isStarted())
-            {
-                BlockPos pos = m_sign->getBlockPos();
-                bool censored = g_pApp->IsConsoleChatCensored();
-                connection->send(boost::shared_ptr<Packet>(
-                    new ServerboundSignUpdatePacket(pos, m_sign->mMessages, censored)));
-            }
+            BlockPos pos = m_sign.get()->getBlockPos();
+            std::wstring* messages = m_sign.get()->mMessages;
+            boost::shared_ptr<Packet> packet(
+                new ServerboundSignUpdatePacket(pos, messages, gApp.IsConsoleChatCensored()));
+            minecraft->mLocalPlayers[m_playerId].get()->mPacketListener->send(packet);
         }
     }
 
@@ -103,39 +138,39 @@ void UIScene_SignEntryMenu::tick()
 
 std::wstring UIScene_SignEntryMenu::getMoviePath()
 {
-    if (g_pApp->GetLocalPlayerCount() < 2)
-        return std::wstring(L"SignEntryMenu");
-    return std::wstring(L"SignEntryMenuSplit");
+    if (gApp.GetLocalPlayerCount() > 1)
+        return std::wstring(L"SignEntryMenuSplit");
+    return std::wstring(L"SignEntryMenu");
 }
 
 void UIScene_SignEntryMenu::handleInput(int playerId, int action, bool repeat, bool pressed,
                                         bool released, bool& handled)
 {
-    if (m_confirmRequested || m_keyboardActive)
-        return;
-
-    gConsoleUIController.AnimateKeyPress(playerId, action, repeat, pressed, released);
-    switch (action)
+    if (!m_confirmRequested && !m_keyboardActive)
     {
-    case EControllerActions_MenuUp:
-    case EControllerActions_MenuDown:
-    case EControllerActions_MenuOk:
-        sendInputToMovie(action, repeat, pressed, released);
-        handled = true;
-        break;
-    case EControllerActions_MenuCancel:
-        if (pressed)
+        gConsoleUIController.AnimateKeyPress(playerId, action, repeat, pressed, released);
+        switch (action)
         {
-            std::wstring empty(L"");
-            m_sign->SetMessage(0, empty);
-            m_sign->SetMessage(1, empty);
-            m_sign->SetMessage(2, empty);
-            m_sign->SetMessage(3, empty);
-            navigateBack();
-            gConsoleUIController.PlayUISFX(SoundEvents::UI_BACK);
+        case EControllerActions_MenuUp:
+        case EControllerActions_MenuDown:
+        case EControllerActions_MenuOk:
+            sendInputToMovie(action, repeat, pressed, released);
             handled = true;
+            break;
+        case EControllerActions_MenuCancel:
+            if (pressed)
+            {
+                std::wstring empty(L"");
+                m_sign.get()->SetMessage(0, empty);
+                m_sign.get()->SetMessage(1, empty);
+                m_sign.get()->SetMessage(2, empty);
+                m_sign.get()->SetMessage(3, empty);
+                navigateBack();
+                gConsoleUIController.PlayUISFX(SoundEvents::UI_BACK);
+                handled = true;
+            }
+            break;
         }
-        break;
     }
 }
 
@@ -158,8 +193,15 @@ int UIScene_SignEntryMenu::KeyboardCompleteCallback(void* data, bool accepted)
 
 void UIScene_SignEntryMenu::handlePress(int controlId, int)
 {
-    if (controlId < 4)
+    switch (controlId)
     {
+    case 4:
+        m_confirmRequested = true;
+        break;
+    case 0:
+    case 1:
+    case 2:
+    case 3:
         m_selectedLine = controlId;
         m_keyboardActive = true;
         if (g_pInput->RequestKeyboard(L10N::GetString(IDS_SIGN_TITLE),
@@ -167,10 +209,7 @@ void UIScene_SignEntryMenu::handlePress(int controlId, int)
                                       KeyboardCompleteCallback, this,
                                       static_cast<C_4JInput::EKeyboardMode>(3)) != 0)
             m_keyboardActive = false;
-    }
-    else if (controlId == 4)
-    {
-        m_confirmRequested = true;
+        break;
     }
 }
 

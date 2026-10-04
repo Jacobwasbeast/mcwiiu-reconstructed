@@ -5,13 +5,14 @@
 #include <string>
 #include "game/ui/FJ_Base.hpp"
 
+class FJ_Button;
 class FJ_Event;
 class FJ_FuiNode;
 class fuiRenderNode;
 class fuiRenderNodeEditText;
 
 typedef void FJ_ButtonKeyDownDelegateFn(FJ_FuiNode*, int);
-typedef void FJ_ButtonUpdateLabelDelegateFn(FJ_FuiNode*);
+typedef void FJ_ButtonUpdateLabelDelegateFn(FJ_Button*);
 
 class FJ_Button : public FJ_Base
 {
@@ -49,6 +50,9 @@ public:
     int getCurrentState() { return m_currentState; }
 
 private:
+    friend class FJ_KeyboardButtons;
+    friend class FJ_ListButtonCheckbox;
+
     bool m_buttonPressed;
     bool m_showOutline;
     bool m_enabled;

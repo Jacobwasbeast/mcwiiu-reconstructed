@@ -1,6 +1,7 @@
 #include "game/ui/TitleScreen.hpp"
 
 #include <string>
+#include <vector>
 
 #include "game/core/Button.hpp"
 #include "game/core/Language.hpp"
@@ -10,9 +11,10 @@
 #include "game/ui/SelectWorldScreen.hpp"
 
 TitleScreen::TitleScreen()
-    : mLogoWidth(256.0f), mTitle(), mMultiplayerButton(NULL)
+    : mLogoWidth(0.0f), mMultiplayerButton(NULL)
 {
     mTitle.assign(L"missingno");
+    std::vector<std::wstring> splashes;
     mTitle.assign(L"");
 }
 
@@ -31,35 +33,33 @@ void TitleScreen::keyPressed(wchar_t key, int action)
 void TitleScreen::init()
 {
     Language* language = Language::getInstance();
-    const int centerX = mWidth / 2;
     const int quarterHeight = mHeight / 4;
 
-    mButtons.push_back(new Button(1, centerX - 100, quarterHeight + 48,
-                                  language->getElement(std::wstring(L"menu.singleplayer"))));
+    mButtons.push_back(new Button(1, mWidth / 2 - 100, quarterHeight + 48,
+                                  language->getElement(L"menu.singleplayer")));
 
-    mMultiplayerButton = new Button(2, centerX - 100, quarterHeight + 72,
-                                    language->getElement(std::wstring(L"menu.multiplayer")));
-    mButtons.push_back(mMultiplayerButton);
+    mButtons.push_back(mMultiplayerButton = new Button(2, mWidth / 2 - 100, quarterHeight + 72,
+                                                       language->getElement(L"menu.multiplayer")));
 
-    mButtons.push_back(new Button(3, centerX - 100, quarterHeight + 96,
-                                  language->getElement(std::wstring(L"menu.mods"))));
+    mButtons.push_back(new Button(3, mWidth / 2 - 100, quarterHeight + 96,
+                                  language->getElement(L"menu.mods")));
 
-    if (mMinecraft->mDefaultHeight == 0)
+    if (mMinecraft->mPaused)
     {
-        mButtons.push_back(new Button(0, centerX - 100, quarterHeight + 132,
-                                      98, 20,
-                                      language->getElement(std::wstring(L"menu.options"))));
-        mButtons.push_back(new Button(4, centerX + 2, quarterHeight + 132,
-                                      98, 20,
-                                      language->getElement(std::wstring(L"menu.quit"))));
+        mButtons.push_back(new Button(0, mWidth / 2 - 100, quarterHeight + 120,
+                                      language->getElement(L"menu.options")));
     }
     else
     {
-        mButtons.push_back(new Button(0, centerX - 100, quarterHeight + 120,
-                                      language->getElement(std::wstring(L"menu.options"))));
+        mButtons.push_back(new Button(0, mWidth / 2 - 100, quarterHeight + 132,
+                                      98, 20,
+                                      language->getElement(L"menu.options")));
+        mButtons.push_back(new Button(4, mWidth / 2 + 2, quarterHeight + 132,
+                                      98, 20,
+                                      language->getElement(L"menu.quit")));
     }
 
-    if (mMinecraft->mDefaultHeight == 0 && mMultiplayerButton != NULL)
+    if (mMinecraft->mUser == NULL)
     {
         mMultiplayerButton->mActive = false;
     }

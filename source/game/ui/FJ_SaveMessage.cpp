@@ -17,19 +17,20 @@ void FJ_SaveMessage::AutoResize() {
     FJ_FuiNode* background = getChildByName(std::string("BackgroundPanel"))->asMovieClip();
 
     float descriptionBottom = description->getY() + description->getHeight();
+    float confirmY = confirm->getY();
+    float confirmHeight = confirm->getHeight();
     float confirmOffset = static_cast<float>(
-        Math::round(confirm->getHeight() * 0.5f + (descriptionBottom - confirm->getY())));
+        Math::round(confirmHeight * 0.5f + (descriptionBottom - confirmY)));
     confirm->setY(confirm->getY() + confirmOffset);
 
     FJ_FuiNode* graphic = background->getChildAt(0)->asMovieClip();
-    graphic->setHeight(graphic->getHeight() + confirmOffset);
+    float graphicHeight = graphic->getHeight();
+    graphic->setHeight(graphicHeight + confirmOffset);
 
-    int count = getNumChildren();
-    float childOffset = static_cast<float>(Math::round(confirmOffset * 0.5f));
     int i;
-    for (i = 0; i < count; ++i) {
+    for (i = 0; i < m_root->getNumChildren(); ++i) {
         FJ_FuiNode* child = getChildAt(i);
-        child->setY(child->getY() - childOffset);
+        child->setY(child->getY() - static_cast<float>(Math::round(confirmOffset * 0.5f)));
     }
 }
 

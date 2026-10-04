@@ -150,19 +150,17 @@ int FJ_FuiNode::getNumChildren()
     if (m_pRenderNode == NULL)
         return 0;
 
-    fuiRenderNodeTimeline* pTimeline = static_cast<fuiRenderNodeTimeline*>(m_pRenderNode->asTimeline());
-    if (pTimeline == NULL)
+    if (m_pRenderNode->m_type != eFuiObjectType_Timeline)
         return 0;
 
-    return pTimeline->getNumChildren();
+    return static_cast<fuiRenderNodeTimeline*>(m_pRenderNode)->getNumChildren();
 }
 
 FJ_FuiNode* FJ_FuiNode::getChildByName(const std::string& name)
 {
-    fuiRenderNodeTimeline* pTimeline = static_cast<fuiRenderNodeTimeline*>(m_pRenderNode->asTimeline());
-    if (pTimeline != NULL)
+    if (m_pRenderNode->m_type == eFuiObjectType_Timeline)
     {
-        fuiRenderNode* pChild = pTimeline->findNode(name.c_str());
+        fuiRenderNode* pChild = static_cast<fuiRenderNodeTimeline*>(m_pRenderNode)->findNode(name.c_str());
         if (pChild != NULL)
             return pChild->getFuiNode();
     }
@@ -172,10 +170,9 @@ FJ_FuiNode* FJ_FuiNode::getChildByName(const std::string& name)
 
 fuiRenderNode* FJ_FuiNode::getRenderNodeChildByName(const std::string& name)
 {
-    fuiRenderNodeTimeline* pTimeline = static_cast<fuiRenderNodeTimeline*>(m_pRenderNode->asTimeline());
-    if (pTimeline != NULL)
+    if (m_pRenderNode->m_type == eFuiObjectType_Timeline)
     {
-        fuiRenderNode* pChild = pTimeline->findNode(name.c_str());
+        fuiRenderNode* pChild = static_cast<fuiRenderNodeTimeline*>(m_pRenderNode)->findNode(name.c_str());
         if (pChild != NULL)
             return pChild;
     }
@@ -185,11 +182,10 @@ fuiRenderNode* FJ_FuiNode::getRenderNodeChildByName(const std::string& name)
 
 fuiRenderNode* FJ_FuiNode::getRenderNodeChildAt(int iIndex)
 {
-    fuiRenderNodeTimeline* pTimeline = static_cast<fuiRenderNodeTimeline*>(m_pRenderNode->asTimeline());
-    if (pTimeline == NULL)
+    if (m_pRenderNode->m_type != eFuiObjectType_Timeline)
         return NULL;
 
-    return pTimeline->getChildAt(iIndex);
+    return static_cast<fuiRenderNodeTimeline*>(m_pRenderNode)->getChildAt(iIndex);
 }
 
 fuiRenderNode* FJ_FuiNode::getRenderNodeParent()
@@ -199,11 +195,10 @@ fuiRenderNode* FJ_FuiNode::getRenderNodeParent()
 
 FJ_FuiNode* FJ_FuiNode::getChildAt(int iIndex)
 {
-    fuiRenderNodeTimeline* pTimeline = static_cast<fuiRenderNodeTimeline*>(m_pRenderNode->asTimeline());
-    if (pTimeline == NULL)
+    if (m_pRenderNode->m_type != eFuiObjectType_Timeline)
         return NULL;
 
-    return pTimeline->getChildAt(iIndex)->getFuiNode();
+    return static_cast<fuiRenderNodeTimeline*>(m_pRenderNode)->getChildAt(iIndex)->getFuiNode();
 }
 
 FJ_FuiNode* FJ_FuiNode::getParent()
@@ -262,7 +257,7 @@ int FJ_FuiNode::getChildIndex(FJ_FuiNode* pNode)
 
 FJ_FuiNode* FJ_FuiNode::asMovieClip()
 {
-    if (m_pRenderNode->asTimeline() != NULL)
+    if (m_pRenderNode->m_type == eFuiObjectType_Timeline)
         return this;
 
     return NULL;
@@ -636,9 +631,9 @@ bool FJ_FuiNode::isFJ_Hud()
 
 void FJ_FuiNode::gotoAndPlay(int iFrame)
 {
-    fuiRenderNodeTimeline* pTimeline = static_cast<fuiRenderNodeTimeline*>(m_pRenderNode->asTimeline());
-    if (pTimeline != NULL)
+    if (m_pRenderNode->m_type == eFuiObjectType_Timeline)
     {
+        fuiRenderNodeTimeline* pTimeline = static_cast<fuiRenderNodeTimeline*>(m_pRenderNode);
         pTimeline->setFrame(iFrame);
         pTimeline->setPlaying(true);
     }
@@ -646,9 +641,9 @@ void FJ_FuiNode::gotoAndPlay(int iFrame)
 
 void FJ_FuiNode::gotoAndPlay(const std::string& sLabel)
 {
-    fuiRenderNodeTimeline* pTimeline = static_cast<fuiRenderNodeTimeline*>(m_pRenderNode->asTimeline());
-    if (pTimeline != NULL)
+    if (m_pRenderNode->m_type == eFuiObjectType_Timeline)
     {
+        fuiRenderNodeTimeline* pTimeline = static_cast<fuiRenderNodeTimeline*>(m_pRenderNode);
         pTimeline->setFrame(sLabel.c_str());
         pTimeline->setPlaying(true);
     }
@@ -656,9 +651,9 @@ void FJ_FuiNode::gotoAndPlay(const std::string& sLabel)
 
 void FJ_FuiNode::gotoAndStop(int iFrame)
 {
-    fuiRenderNodeTimeline* pTimeline = static_cast<fuiRenderNodeTimeline*>(m_pRenderNode->asTimeline());
-    if (pTimeline != NULL)
+    if (m_pRenderNode->m_type == eFuiObjectType_Timeline)
     {
+        fuiRenderNodeTimeline* pTimeline = static_cast<fuiRenderNodeTimeline*>(m_pRenderNode);
         pTimeline->setFrame(iFrame);
         pTimeline->setPlaying(false);
     }
@@ -666,9 +661,9 @@ void FJ_FuiNode::gotoAndStop(int iFrame)
 
 void FJ_FuiNode::gotoAndStop(const std::string& sLabel)
 {
-    fuiRenderNodeTimeline* pTimeline = static_cast<fuiRenderNodeTimeline*>(m_pRenderNode->asTimeline());
-    if (pTimeline != NULL)
+    if (m_pRenderNode->m_type == eFuiObjectType_Timeline)
     {
+        fuiRenderNodeTimeline* pTimeline = static_cast<fuiRenderNodeTimeline*>(m_pRenderNode);
         pTimeline->setFrame(sLabel.c_str());
         pTimeline->setPlaying(false);
     }
@@ -677,11 +672,10 @@ void FJ_FuiNode::gotoAndStop(const std::string& sLabel)
 
 std::string FJ_FuiNode::currentLabel()
 {
-    fuiRenderNodeTimeline* pTimeline = static_cast<fuiRenderNodeTimeline*>(m_pRenderNode->asTimeline());
-    if (pTimeline != NULL)
-        return pTimeline->currentLabel();
+    if (m_pRenderNode->m_type != eFuiObjectType_Timeline)
+        return "FadeOut";
 
-    return "FadeOut";
+    return static_cast<fuiRenderNodeTimeline*>(m_pRenderNode)->currentLabel();
 }
 
 unsigned int FJ_FuiNode::currentFrame()

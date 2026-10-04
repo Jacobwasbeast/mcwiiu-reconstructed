@@ -15,19 +15,14 @@
 #include "game/ui/ScreenSizeCalculator.hpp"
 
 UIControl_MinecraftHorse::UIControl_MinecraftHorse()
-    : mScreenWidth(0.0f), mScreenHeight(0.0f), mScaledWidth(0.0f), mScaledHeight(0.0f)
 {
-    Minecraft* minecraft = Minecraft::GetInstance();
     m_controlType = UIControl::eUIControlType_MinecraftHorse;
-    mScreenWidth = (float)minecraft->mWidth;
-    mScreenHeight = (float)minecraft->mHeight;
-    ScreenSizeCalculator sizeCalculator(minecraft->mOptions, minecraft->mWidth, minecraft->mHeight, -1);
+    Minecraft* minecraft = Minecraft::GetInstance();
+    ScreenSizeCalculator sizeCalculator(minecraft->mOptions, minecraft->mFullWidth, minecraft->mFullHeight, -1);
+    mScreenWidth = (float)minecraft->mFullWidth;
+    mScreenHeight = (float)minecraft->mFullHeight;
     mScaledWidth = (float)sizeCalculator.mWidthScale;
     mScaledHeight = (float)sizeCalculator.mHeightScale;
-}
-
-UIControl_MinecraftHorse::~UIControl_MinecraftHorse()
-{
 }
 
 void UIControl_MinecraftHorse::render(fuiRect* rect)
@@ -49,9 +44,9 @@ void UIControl_MinecraftHorse::render(fuiRect* rect)
     float oldYBodyRot = horse->mYBodyRot;
     float oldYRot = horse->mYRot;
     float oldXRot = horse->mXRot;
-    float oldYHeadRot = horse->mYHeadRot;
     float lookX = (m_x + m_width * 0.5f - scene->m_pointerPos.x) / 40.0f;
     float lookY = (m_y + m_height * 0.5f - 40.0f - scene->m_pointerPos.y) / 40.0f;
+    float oldYHeadRot = horse->mYHeadRot;
 
     GlStateManager::rotatef(135.0f, 0.0f, 1.0f, 0.0f);
     Lighting::turnOn();

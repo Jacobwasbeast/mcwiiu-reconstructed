@@ -4,6 +4,7 @@
 
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/CTelemetryManager.hpp"
+#include "game/core/PIXNamedEvents.hpp"
 #include "game/core/UnityClient6.hpp"
 #include "game/ui/UIComponent_Chat.hpp"
 #include "game/ui/UIComponent_DebugUIConsole.hpp"
@@ -91,7 +92,7 @@ UILayer::UILayer(UIGroup* group)
 
 void UILayer::getRenderDimensions(int& width, int& height)
 {
-    gConsoleUIController.getRenderDimensions(getViewport(), width, height);
+    m_group->getRenderDimensions(width, height);
 }
 
 UIScene* UILayer::addComponent(int player, EUIScene scene, void* data)
@@ -149,7 +150,9 @@ void UILayer::tick()
     if (gConsoleUIController.IsReloadingSkin())
         return;
 
-    std::vector<UIScene*> pendingDestroy(m_pendingDestroy);
+    std::vector<UIScene*> pendingDestroy;
+    for (std::vector<UIScene*>::iterator it = m_pendingDestroy.begin(); it != m_pendingDestroy.end(); ++it)
+        pendingDestroy.push_back(*it);
     m_pendingDestroy.clear();
 
     for (std::vector<UIScene*>::iterator it = pendingDestroy.begin(); it != pendingDestroy.end(); ++it)
@@ -161,8 +164,13 @@ void UILayer::tick()
         }
         else
         {
-            m_pendingReload.erase(std::remove(m_pendingReload.begin(), m_pendingReload.end(), scene),
-                                   m_pendingReload.end());
+            for (std::vector<UIScene*>::iterator reload = m_pendingReload.begin(); reload != m_pendingReload.end();)
+            {
+                if (*reload == scene)
+                    reload = m_pendingReload.erase(reload);
+                else
+                    ++reload;
+            }
             if (scene != NULL)
                 delete scene;
         }
@@ -174,33 +182,52 @@ void UILayer::tick()
         m_pendingReload.pop_back();
         scene->destroyMovie();
     }
+    m_pendingReload.clear();
 
     for (std::vector<UIScene*>::iterator it = m_components.begin(); it != m_components.end(); ++it)
         (*it)->tick();
 
-    for (int i = static_cast<int>(m_scenes.size()) - 1; i >= 0; --i)
+    for (unsigned int i = m_scenes.size() - 1; static_cast<int>(i) >= 0 && i < m_scenes.size(); --i)
         m_scenes[i]->tick();
 }
 
 void UILayer::render(int width, int height, C4JRender::eViewportType viewport)
 {
     if (!gConsoleUIController.IsExpectingOrReloadingSkin())
-        for (std::vector<UIScene*>::iterator it = m_components.begin(); it != m_components.end(); ++it)
-            if (isComponentVisible((EUIScene)(*it)->getSceneType()) && (*it)->isVisible())
-                (*it)->render(width, height, viewport);
-    unsigned int first = 0;
-    for (int i = (int)m_scenes.size() - 1; i >= 0; --i)
-        if (m_scenes[i]->hidesLowerScenes())
-        {
-            first = (unsigned int)i;
-            break;
-        }
-    for (unsigned int i = first; i < m_scenes.size(); ++i)
     {
-        UIScene* scene = m_scenes[i];
-        if (scene->isVisible() &&
-            (!gConsoleUIController.IsExpectingOrReloadingSkin() || scene->getSceneType() == 0x4c))
-            scene->render(width, height, viewport);
+        for (std::vector<UIScene*>::iterator it = m_components.begin(); it != m_components.end(); ++it)
+        {
+            EUIScene type = (EUIScene)(*it)->getSceneType();
+            boost::unordered_map<EUIScene, std::pair<int, bool> >::iterator state = m_componentStates.find(type);
+            if (state != m_componentStates.end() && state->second.second && (*it)->isVisible())
+            {
+                PIXBeginNamedEvent(0.0f, "Rendering component %d", (*it)->getSceneType());
+                (*it)->render(width, height, viewport);
+                PIXEndNamedEvent();
+            }
+        }
+    }
+
+    if (!m_scenes.empty())
+    {
+        unsigned int first = 0;
+        for (int i = (int)m_scenes.size() - 1; i >= 0; --i)
+            if (m_scenes[i]->hidesLowerScenes())
+            {
+                first = (unsigned int)i;
+                break;
+            }
+        for (unsigned int i = first; i < m_scenes.size(); ++i)
+        {
+            UIScene* scene = m_scenes[i];
+            if (scene->isVisible() &&
+                (!gConsoleUIController.IsExpectingOrReloadingSkin() || scene->getSceneType() == EUIScene_Timer))
+            {
+                PIXBeginNamedEvent(0.0f, "Rendering scene %d", scene->getSceneType());
+                scene->render(width, height, viewport);
+                PIXEndNamedEvent();
+            }
+        }
     }
 }
 
@@ -216,13 +243,21 @@ void UILayer::ReloadAll(bool force)
 {
     for (std::vector<UIScene*>::iterator it = m_components.begin(); it != m_components.end(); ++it)
         (*it)->reloadMovie(force);
-    for (std::vector<UIScene*>::iterator it = m_scenes.begin(); it != m_scenes.end(); ++it)
-        (*it)->reloadMovie(force);
+    if (!m_scenes.empty())
+        for (unsigned int i = 0; i < m_scenes.size(); ++i)
+            m_scenes[i]->reloadMovie(force);
 }
 
 bool UILayer::IsSceneInStack(EUIScene scene)
 {
-    return FindScene(scene) != NULL;
+    bool found = false;
+    for (int i = static_cast<int>(m_scenes.size()) - 1; i >= 0; --i)
+        if (m_scenes[i]->getSceneType() == static_cast<int>(scene))
+        {
+            found = true;
+            break;
+        }
+    return found;
 }
 
 bool UILayer::updateFocusState(bool requestFocus)
@@ -240,19 +275,16 @@ bool UILayer::updateFocusState(bool requestFocus)
     for (std::vector<UIScene*>::reverse_iterator it = m_scenes.rbegin(); it != m_scenes.rend(); ++it)
     {
         UIScene* scene = *it;
-        int sceneType;
 
         if (!granted && requestFocus && scene->stealsFocus())
         {
             scene->gainFocus();
             granted = true;
-            sceneType = scene->getSceneType();
         }
         else
         {
             scene->loseFocus();
-            sceneType = scene->getSceneType();
-            if (sceneType == EUIScene_SettingsListMenu)
+            if (scene->getSceneType() == EUIScene_SettingsListMenu)
             {
                 scene->loseFocus();
                 m_pendingReload.push_back(scene);
@@ -260,27 +292,42 @@ bool UILayer::updateFocusState(bool requestFocus)
         }
 
         m_menuDisplayed = true;
+        int sceneType = scene->getSceneType();
 
-        if (sceneType == EUIScene_FullscreenProgress ||
-            (sceneType >= EUIScene_CraftingMenu2x2 && sceneType <= EUIScene_DispenserMenu) ||
-            sceneType == EUIScene_DeathMenu || sceneType == EUIScene_SignEntryMenu ||
-            sceneType == EUIScene_CreativeMenu ||
-            (sceneType >= EUIScene_EnchantingMenu && sceneType <= EUIScene_BrewingStandMenu) ||
-            sceneType == EUIScene_EndPoem ||
-            (sceneType >= EUIScene_TradingMenu && sceneType <= EUIScene_AnvilMenu) ||
-            (sceneType >= EUIScene_HopperMenu && sceneType <= EUIScene_HorseInventoryMenu) ||
-            sceneType == EUIScene_WritableBookMenu)
+        switch (sceneType)
+        {
+        case EUIScene_FullscreenProgress:
+        case EUIScene_DeathMenu:
+        case EUIScene_SignEntryMenu:
+        case EUIScene_EndPoem:
+        case EUIScene_WritableBookMenu:
             m_ignoreAutosaveMenuDisplayed = true;
-
-        if (sceneType == EUIScene_PauseMenu)
+            break;
+        case EUIScene_PauseMenu:
             m_pauseMenuDisplayed = true;
-
-        if ((sceneType >= EUIScene_CraftingMenu2x2 && sceneType <= EUIScene_DispenserMenu) ||
-            sceneType == EUIScene_CreativeMenu ||
-            (sceneType >= EUIScene_EnchantingMenu && sceneType <= EUIScene_BrewingStandMenu) ||
-            (sceneType >= EUIScene_TradingMenu && sceneType <= EUIScene_AnvilMenu) ||
-            (sceneType >= EUIScene_HopperMenu && sceneType <= EUIScene_HorseInventoryMenu))
+            break;
+        case EUIScene_CraftingMenu2x2:
+        case EUIScene_CraftingMenu:
+        case EUIScene_FurnaceMenu:
+        case EUIScene_ContainerMenu:
+        case EUIScene_ContainerMenuLarge:
+        case EUIScene_InventoryMenu:
+        case EUIScene_DispenserMenu:
+        case EUIScene_CreativeMenu:
+        case EUIScene_EnchantingMenu:
+        case EUIScene_BrewingStandMenu:
+        case EUIScene_TradingMenu:
+        case EUIScene_AnvilMenu:
+        case EUIScene_HopperMenu:
+        case EUIScene_BeaconMenu:
+        case EUIScene_HorseInventoryMenu:
+        case EUIScene_ClassicCraftingMenu:
             m_containerMenuDisplayed = true;
+            m_ignoreAutosaveMenuDisplayed = true;
+            break;
+        default:
+            break;
+        }
 
         if (sceneType == EUIScene_FullscreenProgress || sceneType == EUIScene_PauseMenu ||
             sceneType == EUIScene_LeaderboardsMenu || sceneType == EUIScene_Credits ||
@@ -294,15 +341,14 @@ bool UILayer::updateFocusState(bool requestFocus)
 
 void UILayer::closeAllScenes()
 {
-    std::vector<UIScene*> closing(m_scenes);
+    std::vector<UIScene*> closing(m_scenes.begin(), m_scenes.end());
     m_scenes.clear();
 
     for (std::vector<UIScene*>::iterator it = closing.begin(); it != closing.end(); ++it)
     {
-        UIScene* scene = *it;
-        gConsoleUIController.TouchBoxesClear(scene);
-        m_pendingDestroy.push_back(scene);
-        scene->handleDestroy();
+        gConsoleUIController.TouchBoxesClear(*it);
+        m_pendingDestroy.push_back(*it);
+        (*it)->handleDestroy();
     }
 
     updateFocusState(false);
@@ -438,64 +484,92 @@ bool UILayer::NavigateBack(int player, EUIScene scene)
     if (m_scenes.empty())
         return false;
 
-    if (static_cast<int>(scene) < 0x53)
+    bool navigated;
+    if (static_cast<int>(scene) < EUIScene_None)
     {
         while (true)
         {
             UIScene* top = m_scenes.back();
             if (top->getSceneType() == static_cast<int>(scene))
+            {
+                navigated = true;
                 break;
+            }
             if (!top->hasFocus(player))
-                return false;
+            {
+                navigated = false;
+                break;
+            }
             removeScene(top);
             if (m_scenes.empty())
-                return false;
+            {
+                navigated = false;
+                break;
+            }
         }
     }
     else
     {
         UIScene* top = m_scenes.back();
-        if (!top->hasFocus(player))
-            return false;
-        removeScene(top);
+        if (top->hasFocus(player))
+        {
+            removeScene(top);
+            navigated = true;
+        }
+        else
+        {
+            navigated = false;
+        }
     }
-    return true;
+    return navigated;
 }
 
 UIScene* UILayer::GetTopScene()
 {
-    return m_scenes.empty() ? NULL : m_scenes.back();
+    return m_scenes.empty() ? NULL : m_scenes[m_scenes.size() - 1];
 }
 
 bool UILayer::HasFocus(int controllerId)
 {
-    if (!m_hasFocus)
-        return false;
-
-    for (std::vector<UIScene*>::reverse_iterator it = m_scenes.rbegin(); it != m_scenes.rend(); ++it)
+    bool result = false;
+    if (m_hasFocus)
     {
-        UIScene* scene = *it;
-        if (scene->stealsFocus())
-            return scene->hasFocus(controllerId);
+        for (int i = static_cast<int>(m_scenes.size()) - 1; i >= 0; --i)
+        {
+            if (m_scenes[i]->stealsFocus())
+            {
+                if (m_scenes[i]->hasFocus(controllerId))
+                    result = true;
+                break;
+            }
+        }
     }
-    return false;
+    return result;
 }
 
 bool UILayer::hidesLowerScenes()
 {
+    bool hides = false;
     for (std::vector<UIScene*>::iterator it = m_components.begin(); it != m_components.end(); ++it)
         if ((*it)->hidesLowerScenes())
-            return true;
-    for (std::vector<UIScene*>::reverse_iterator it = m_scenes.rbegin(); it != m_scenes.rend(); ++it)
-        if ((*it)->hidesLowerScenes())
-            return true;
-    return false;
+        {
+            hides = true;
+            break;
+        }
+    if (!hides && !m_scenes.empty())
+        for (int i = static_cast<int>(m_scenes.size()) - 1; i >= 0; --i)
+            if (m_scenes[i]->hidesLowerScenes())
+            {
+                hides = true;
+                break;
+            }
+    return hides;
 }
 
 bool UILayer::isComponentVisible(EUIScene scene)
 {
     boost::unordered_map<EUIScene, std::pair<int, bool> >::iterator it = m_componentStates.find(scene);
-    return it != m_componentStates.end() && it->second.second;
+    return it == m_componentStates.end() ? false : it->second.second;
 }
 
 void UILayer::removeComponent(EUIScene scene)
@@ -509,28 +583,23 @@ void UILayer::removeComponent(EUIScene scene)
 
     m_componentStates.erase(state);
 
-    for (std::vector<UIScene*>::iterator it = m_components.begin(); it != m_components.end(); )
+    std::vector<UIScene*>::iterator it = m_components.begin();
+    while (it != m_components.end())
     {
-        if ((*it)->getSceneType() == static_cast<int>(scene))
-        {
-            UIScene* component = *it;
-            gConsoleUIController.TouchBoxesClear(component);
-            m_pendingDestroy.push_back(component);
-            component->handleDestroy();
-            it = m_components.erase(it);
-        }
-        else
+        if ((*it)->getSceneType() != static_cast<int>(scene))
         {
             ++it;
+            continue;
         }
+        gConsoleUIController.TouchBoxesClear(*it);
+        m_pendingDestroy.push_back(*it);
+        (*it)->handleDestroy();
+        it = m_components.erase(it);
     }
 }
 
 void UILayer::handleInput(int playerId, int action, bool repeat, bool pressed, bool released, bool& handled)
 {
-    if (m_scenes.empty())
-        return;
-
     for (std::vector<UIScene*>::reverse_iterator it = m_scenes.rbegin(); it != m_scenes.rend(); ++it)
     {
         UIScene* scene = *it;
@@ -549,10 +618,17 @@ void UILayer::handleInput(int playerId, int action, bool repeat, bool pressed, b
 
 UIScene* UILayer::getCurrentScene(int controllerId)
 {
+    UIScene* current = NULL;
     for (std::vector<UIScene*>::reverse_iterator it = m_scenes.rbegin(); it != m_scenes.rend(); ++it)
-        if ((*it)->hasFocus(controllerId))
-            return *it;
-    return NULL;
+    {
+        UIScene* scene = *it;
+        if (scene->hasFocus(controllerId) && scene->m_tickedLastFrame)
+        {
+            current = scene;
+            break;
+        }
+    }
+    return current;
 }
 
 bool UILayer::IsFullscreenGroup()
@@ -609,9 +685,9 @@ void UILayer::handleUnlockFullVersion()
 
 UIScene* UILayer::FindScene(EUIScene scene)
 {
-    for (std::vector<UIScene*>::iterator it = m_scenes.begin(); it != m_scenes.end(); ++it)
-        if ((*it)->getSceneType() == static_cast<int>(scene))
-            return *it;
+    for (unsigned int i = 0; i < m_scenes.size(); ++i)
+        if (m_scenes[i]->getSceneType() == static_cast<int>(scene))
+            return m_scenes[i];
     return NULL;
 }
 

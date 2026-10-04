@@ -11,6 +11,12 @@
 #include "game/ui/fuiRenderNodeEditText.hpp"
 #include "game/util/Math.hpp"
 
+static std::string s_sliderStates[2][2] =
+{
+    { std::string("Active_Selected"), std::string("Inactive_Selected") },
+    { std::string("Active_Unselected"), std::string("Inactive_Unselected") }
+};
+
 FJ_Slider::FJ_Slider(fuiRenderNode* renderNode)
     : FJ_Base(renderNode)
 {
@@ -38,57 +44,67 @@ int FJ_Slider::getOldWidth()
 
 void FJ_Slider::UpdateSliderScaleMask()
 {
-    FJ_FuiNode* slider = getChildByName(std::string("Slider"));
-    FJ_FuiNode* background = getChildByName(std::string("SliderBackground"));
-    FJ_FuiNode* outline = getChildByName(std::string("Outline"));
-    FJ_FuiNode* terminator = getChildByName(std::string("SliderTrack_TerminatorContainer"));
-    m_sliderMask = getChildByName(std::string("SliderBackgroundHighlight"));
-    m_tintActiveMask = getChildByName(std::string("TintActive"));
-    m_tintInactiveMask = getChildByName(std::string("TintInactive"));
+    FJ_FuiNode* slider = getChildByName(std::string("Slider"))->asMovieClip();
+    FJ_FuiNode* background = getChildByName(std::string("SliderBackground"))->asMovieClip();
+    FJ_FuiNode* outline = getChildByName(std::string("Outline"))->asMovieClip();
+    FJ_FuiNode* terminator = getChildByName(std::string("SliderTrack_TerminatorContainer"))->asMovieClip();
+    m_sliderMask = getChildByName(std::string("SliderBackgroundHighlight"))->asMovieClip();
+    m_tintActiveMask = getChildByName(std::string("TintActive"))->asMovieClip();
+    m_tintInactiveMask = getChildByName(std::string("TintInactive"))->asMovieClip();
 
-    if (slider != NULL)
-    {
-        slider->setScaleX(1.0f / getScaleX());
-    }
+    slider->setScaleX(1.0f / getScaleX());
     m_leftPosition = background->getX();
     m_rightPosition = background->getX() + background->getWidth() - slider->getWidth();
 
-    const float oldBackgroundWidth = background->getWidth();
-    const float outlineWidth = outline->getWidth();
-    const float sliderMaskWidth = m_sliderMask->getWidth();
-    const float scale = getScaleX();
-    if (scale != 1.0f)
+    if (getScaleX() != 1.0f)
     {
-        background->setScaleX(1.0f / scale);
-        outline->setScaleX(1.0f / scale);
-        m_sliderMask->setScaleX(1.0f / scale);
-        m_tintActiveMask->setScaleX(1.0f / scale);
-        m_tintInactiveMask->setScaleX(1.0f / scale);
+        const float backgroundWidth = background->getWidth();
+        const float outlineWidth = outline->getWidth();
+        const float outlineBackgroundWidth = background->getWidth();
+        const float sliderMaskWidth = m_sliderMask->getWidth();
+        const float maskBackgroundWidth = background->getWidth();
+        background->setScaleX(1.0f / getScaleX());
+        outline->setScaleX(1.0f / getScaleX());
+        m_sliderMask->setScaleX(1.0f / getScaleX());
+        m_tintActiveMask->setScaleX(1.0f / getScaleX());
+        m_tintInactiveMask->setScaleX(1.0f / getScaleX());
         outline->setX(-(outline->getWidth() - background->getWidth()) * 0.5f);
         m_sliderMask->setX(-(m_sliderMask->getWidth() - background->getWidth()) * 0.5f);
         m_tintActiveMask->setX(background->getX());
         m_tintInactiveMask->setX(background->getX());
-    }
 
-    if (scale != 1.0f)
-    {
         fuiRect rect;
         rect.xMin = 0.0f;
-        rect.xMax = oldBackgroundWidth * scale;
+        rect.xMax = backgroundWidth * getScaleX();
         rect.yMin = 0.0f;
         rect.yMax = background->getHeight();
-        background->addMask(new FJ_FuiNode(new fuiRenderNodeCodeGenRect(getStage()->m_pRenderNode, &rect, "bgMask")));
-        m_tintActiveMask->addMask(new FJ_FuiNode(new fuiRenderNodeCodeGenRect(getStage()->m_pRenderNode, &rect, "bgTintActiveMask")));
-        m_tintInactiveMask->addMask(new FJ_FuiNode(new fuiRenderNodeCodeGenRect(getStage()->m_pRenderNode, &rect, "bgTintInactiveMask")));
-        rect.xMax = oldBackgroundWidth * scale + sliderMaskWidth - oldBackgroundWidth;
+        fuiRenderNodeCodeGenRect* maskRender = new fuiRenderNodeCodeGenRect(getStage()->m_pRenderNode, &rect, "bgMask");
+        FJ_FuiNode* mask = new FJ_FuiNode(maskRender);
+        maskRender->setFuiNode(mask);
+        background->addMask(mask);
+        maskRender = new fuiRenderNodeCodeGenRect(getStage()->m_pRenderNode, &rect, "bgTintActiveMask");
+        mask = new FJ_FuiNode(maskRender);
+        maskRender->setFuiNode(mask);
+        m_tintActiveMask->addMask(mask);
+        maskRender = new fuiRenderNodeCodeGenRect(getStage()->m_pRenderNode, &rect, "bgTintInactiveMask");
+        mask = new FJ_FuiNode(maskRender);
+        maskRender->setFuiNode(mask);
+        m_tintInactiveMask->addMask(mask);
+        rect.xMax = backgroundWidth * getScaleX() + (sliderMaskWidth - maskBackgroundWidth);
         rect.yMax = m_sliderMask->getHeight();
-        m_sliderMask->addMask(new FJ_FuiNode(new fuiRenderNodeCodeGenRect(getStage()->m_pRenderNode, &rect, "bghMask")));
-        rect.xMax = oldBackgroundWidth * scale + outlineWidth - oldBackgroundWidth;
+        maskRender = new fuiRenderNodeCodeGenRect(getStage()->m_pRenderNode, &rect, "bghMask");
+        mask = new FJ_FuiNode(maskRender);
+        maskRender->setFuiNode(mask);
+        m_sliderMask->addMask(mask);
+        rect.xMax = backgroundWidth * getScaleX() + (outlineWidth - outlineBackgroundWidth);
         rect.yMax = outline->getHeight();
-        outline->addMask(new FJ_FuiNode(new fuiRenderNodeCodeGenRect(getStage()->m_pRenderNode, &rect, "outlineMask")));
-        m_centerBiasX = -(background->getWidth() - oldBackgroundWidth) * 0.5f;
-        terminator->setScaleX(1.0f / scale);
-        terminator->setX(oldBackgroundWidth - terminator->getWidth());
+        maskRender = new fuiRenderNodeCodeGenRect(getStage()->m_pRenderNode, &rect, "outlineMask");
+        mask = new FJ_FuiNode(maskRender);
+        maskRender->setFuiNode(mask);
+        outline->addMask(mask);
+        m_centerBiasX = -((background->getWidth() - backgroundWidth) * 0.5f);
+        terminator->setScaleX(1.0f / getScaleX());
+        terminator->setX(backgroundWidth - terminator->getWidth());
         terminator->setY(background->getY());
     }
 }
@@ -97,18 +113,16 @@ void FJ_Slider::SetSlider(int value)
 {
     const float range = (float)(m_maxValue - m_minValue);
     const float position = (float)(value - m_minValue) / range;
-    FJ_FuiNode* slider = getChildByName(std::string("Slider"));
+    FJ_FuiNode* slider = getChildByName(std::string("Slider"))->asMovieClip();
     slider->setX((m_rightPosition - m_leftPosition) * position + m_leftPosition);
 }
 
 void FJ_Slider::ChangeState(int state)
 {
-    if (state == 0)
-        gotoAndStop(std::string(m_enabled ? "Active_Selected" : "Inactive_Selected"));
-    else
-        gotoAndStop(std::string(m_enabled ? "Active_Unselected" : "Inactive_Unselected"));
+    const std::string* row = s_sliderStates[state];
+    gotoAndStop(row[m_enabled ^ 1]);
     m_currentState = state;
-    FJ_FuiNode* outline = getChildByName(std::string("Outline"));
+    FJ_FuiNode* outline = getChildByName(std::string("Outline"))->asMovieClip();
     if (outline != NULL)
         outline->setVisible(state == 0);
     if (m_sliderMask != NULL)
@@ -140,8 +154,8 @@ void FJ_Slider::_focusInHandler(FJ_FuiNode* node, FJ_Event* event)
 void FJ_Slider::focusOutHandler(FJ_Event*)
 {
     ChangeState(1);
-    m_keyPressDelta = 0;
     m_keyPressTicks = 0;
+    m_keyPressDelta = 0;
 }
 
 void FJ_Slider::_focusOutHandler(FJ_FuiNode* node, FJ_Event* event)
@@ -179,7 +193,7 @@ void FJ_Slider::MoveSlider(int amount)
         SetSlider(m_sliderCurrent);
         if (getObjListParent() != NULL)
         {
-            getRoot()->m_pCallbackScene->handleSliderElementMove(static_cast<FJ_Base*>(getObjListParent())->getId(), getId(), m_sliderCurrent);
+            getRoot()->m_pCallbackScene->handleSliderElementMove(getObjListParent()->getId(), getId(), m_sliderCurrent);
             return;
         }
         getRoot()->m_pCallbackScene->handleSliderMove(getId(), m_sliderCurrent);
@@ -190,15 +204,19 @@ void FJ_Slider::keyDownHandler(FJ_Event* event)
 {
     if (!m_enabled)
         return;
-    ++m_keyPressTicks;
-    if (m_repeat && m_keyPressTicks >= m_repeatDelay)
+    const int ticks = m_keyPressTicks + 1;
+    if (!m_repeat || ticks < m_repeatDelay)
+    {
+        m_keyPressTicks = ticks;
+    }
+    else
     {
         m_keyPressTicks = 0;
         m_keyPressDelta += m_repeatStep;
     }
     const int keyCode = static_cast<FJ_KeyboardEvent*>(event)->m_iKeyCode;
     if (keyCode == 5)
-        MoveSlider(-(m_keyPressDelta + 1));
+        MoveSlider(~m_keyPressDelta);
     else if (keyCode == 6)
         MoveSlider(m_keyPressDelta + 1);
 }
@@ -232,8 +250,8 @@ void FJ_Slider::ASConstructor()
     m_currentState = 0;
     m_leftPosition = 0.0f;
     m_rightPosition = 0.0f;
-    m_maskInitialized = false;
     m_wrapWidth = (int)getWidth();
+    m_maskInitialized = false;
     m_sliderMask = NULL;
     m_tintActiveMask = NULL;
     m_tintInactiveMask = NULL;
@@ -270,7 +288,7 @@ void FJ_Slider::Init(const std::wstring& name, int id, int minValue, int maxValu
 void FJ_Slider::SetRelativeSliderPos(float position)
 {
     const int oldValue = m_sliderCurrent;
-    float clamped = position < 1.0f ? position : 1.0f;
+    float clamped = std::min(1.0f, position);
     if (clamped < 0.0f)
         clamped = 0.0f;
     float bias = 0.0f;
@@ -278,21 +296,19 @@ void FJ_Slider::SetRelativeSliderPos(float position)
         bias = (float)m_minValue;
     const int range = m_maxValue - m_minValue;
     m_sliderCurrent = Math::round((float)range * clamped + bias);
-    if (m_sliderCurrent > m_maxValue)
-        m_sliderCurrent = m_maxValue;
-    if (m_sliderCurrent < m_minValue)
-        m_sliderCurrent = m_minValue;
+    int bounded = std::min(m_maxValue, m_sliderCurrent);
+    if (bounded < m_minValue)
+        bounded = m_minValue;
+    m_sliderCurrent = bounded;
     if (oldValue != m_sliderCurrent)
     {
         SetSlider(m_sliderCurrent);
         if (getObjListParent() != NULL)
         {
-            UIScene* scene = getRoot()->m_pCallbackScene;
-            scene->handleSliderElementMove(getObjListParent()->asFJ_Base()->getId(), getId(), m_sliderCurrent);
+            getRoot()->m_pCallbackScene->handleSliderElementMove(getObjListParent()->getId(), getId(), m_sliderCurrent);
             return;
         }
-        UIScene* scene = getRoot()->m_pCallbackScene;
-        scene->handleSliderMove(getId(), m_sliderCurrent);
+        getRoot()->m_pCallbackScene->handleSliderMove(getId(), m_sliderCurrent);
     }
 }
 
@@ -303,12 +319,11 @@ double FJ_Slider::GetRealWidth()
 
 void FJ_Slider::SetSliderValue(int value)
 {
-    if (value > m_maxValue)
-        value = m_maxValue;
-    if (value < m_minValue)
-        value = m_minValue;
-    m_sliderCurrent = value;
-    SetSlider(value);
+    int bounded = std::min(m_maxValue, value);
+    if (bounded < m_minValue)
+        bounded = m_minValue;
+    m_sliderCurrent = bounded;
+    SetSlider(bounded);
 }
 
 void FJ_Slider::EnableSlider(bool enabled)
@@ -322,12 +337,13 @@ void FJ_Slider::EnableSlider(bool enabled)
 void FJ_Slider::GetLabelTooWide(fuiRenderNodeEditText* textField)
 {
     int widest = m_maxLabelWidth;
-    int fieldWidth = static_cast<int>(textField->m_textWidth);
-    if (widest < fieldWidth)
-        widest = fieldWidth;
-    int scaledWidth = static_cast<int>(static_cast<float>(widest) * 1.1f);
-    if (m_newWidth < scaledWidth)
-        m_newWidth = scaledWidth;
+    if (static_cast<float>(widest) <= textField->m_textWidth)
+        widest = static_cast<int>(textField->m_textWidth);
+    const float scaledWidth = static_cast<float>(widest) * 1.1f;
+    const float currentWidth = static_cast<float>(m_newWidth);
+    const int newWidth = scaledWidth <= currentWidth ? static_cast<int>(currentWidth) : static_cast<int>(scaledWidth);
+    if (m_newWidth < newWidth)
+        m_newWidth = newWidth;
     if (!m_labelOverflowResolved && m_wrapWidth < widest)
     {
         m_ellipsisWidth = static_cast<int>(static_cast<float>(m_wrapWidth) * 0.8f);
@@ -340,15 +356,15 @@ void FJ_Slider::SetNewObjectWidth(int width)
 {
     if (m_wrapWidth < width)
     {
-        SetTextOnly(std::wstring(L"Slider"));
+        SetTextOnly(std::wstring(L" "));
         setWidth(getWidth() + (float)(width - m_wrapWidth) / getScaleX());
         m_wrapWidth = width;
         fuiRect rect = getRect(this);
+        m_objectWidth = getWidth() + (rect.xMin + rect.xMin);
         m_labelTooWide = false;
         m_labelOverflowResolved = false;
-        m_objectWidth = getWidth() + rect.xMin + rect.xMin;
-        FJ_FuiNode* slider = getChildByName(std::string("Slider"));
-        FJ_FuiNode* background = getChildByName(std::string("SliderBackground"));
+        FJ_FuiNode* slider = getChildByName(std::string("Slider"))->asMovieClip();
+        FJ_FuiNode* background = getChildByName(std::string("SliderBackground"))->asMovieClip();
         if (slider != NULL && background != NULL)
         {
             const float oldSliderWidth = slider->getWidth();
@@ -356,6 +372,6 @@ void FJ_Slider::SetNewObjectWidth(int width)
             m_rightPosition += oldSliderWidth - slider->getWidth();
             SetSlider(m_sliderCurrent);
         }
-        UpdateLabel();
+        SetLabel(m_label);
     }
 }

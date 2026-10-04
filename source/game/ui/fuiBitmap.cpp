@@ -4,9 +4,7 @@ void Swap4Bytes(unsigned int& value);
 
 void Swap4Bytes(eFuiBitmapType& value)
 {
-    unsigned int swapped = static_cast<unsigned int>(value);
-    Swap4Bytes(swapped);
-    value = static_cast<eFuiBitmapType>(swapped);
+    Swap4Bytes(reinterpret_cast<unsigned int&>(value));
 }
 
 void Swap4Bytes(int& value);

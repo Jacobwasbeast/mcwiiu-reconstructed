@@ -25,21 +25,23 @@ void UIControl_Button::init(UIString label, int id)
 {
     m_label = label;
     m_controlId = id;
-    FJ_FuiNode* node = m_fuiRenderNode->getFuiNode();
-    if (node->isFJ_Button()) {
-        node->asFJ_Button()->Init(label.getString(), id);
+    if (m_fuiRenderNode->getFuiNode()->isFJ_Button()) {
+        m_fuiRenderNode->getFuiNode()->asFJ_Button()->Init(label.getString(), id);
     }
-    int sceneType = m_scene->getSceneType();
-    if (sceneType == 2 || sceneType == 4 || sceneType == 6 || sceneType == 7) {
+    switch (m_scene->m_layer->m_layerId) {
+    case EUILayer_Alert:
+    case EUILayer_Fullscreen:
+    case EUILayer_Scene:
+    case EUILayer_HUD:
         gConsoleUIController.TouchBoxAdd(this, m_scene);
+        break;
     }
 }
 
 void UIControl_Button::ReInit()
 {
     UIControl::ReInit();
-    UIString label = m_label;
-    init(label, m_controlId);
+    init(m_label, m_controlId);
 }
 
 void UIControl_Button::setEnable(bool enable, bool immediate)

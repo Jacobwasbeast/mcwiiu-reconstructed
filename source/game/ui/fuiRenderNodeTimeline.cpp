@@ -56,9 +56,11 @@ fuiRenderNodeTimeline::fuiRenderNodeTimeline(fuiRenderNode* stage, fuiRenderNode
                                              unsigned char depth, fuiRGBA* color,
                                              unsigned char clipDepth, bool visible, fuiFile* file)
     : fuiRenderNode(stage, parent, object, symbolIndex, eFuiObjectType_Timeline, depth, color,
-                    clipDepth, visible, file), m_mask(0), m_currentFrame(-1),
-      m_previousFrame(0)
+                    clipDepth, visible, file)
 {
+    m_mask = 0;
+    m_currentFrame = -1;
+    m_previousFrame = 0;
     m_flags |= 4;
     if (object != 0)
     {
@@ -147,31 +149,31 @@ void fuiRenderNodeTimeline::shutdown()
 
 fuiObject* fuiRenderNodeTimeline::getReferencedObject(fuiObject* object)
 {
-    for (;;)
+    do
     {
         fuiReference* reference = static_cast<fuiReference*>(object);
         fuiFile* file = reinterpret_cast<fuiFile*>(gFui->getFuiFileFromIndex(reference->index));
-        if (static_cast<int>(reference->symbolIndex) != -1)
+        for (;;)
         {
-            fuiSymbol* symbol = &file->symbolData[reference->symbolIndex];
-            switch (symbol->objectType)
+            while (static_cast<int>(reference->symbolIndex) == -1)
             {
-            case eFuiObjectType_Shape:
+            }
+            fuiSymbol* symbol = &file->symbolData[reference->symbolIndex];
+            if (symbol->objectType == eFuiObjectType_Shape)
                 return &file->shapeData[symbol->objectIndex];
-            case eFuiObjectType_Timeline:
+            if (symbol->objectType == eFuiObjectType_Timeline)
                 return &file->timelineData[symbol->objectIndex];
-            case eFuiObjectType_Bitmap:
+            if (symbol->objectType == eFuiObjectType_Bitmap)
                 return &file->bitmaps[symbol->objectIndex];
-            case eFuiObjectType_EditText:
-                return &file->editTextData[symbol->objectIndex];
-            case eFuiObjectType_Reference:
+            if (symbol->objectType == eFuiObjectType_Reference)
+            {
                 object = &file->referenceData[symbol->objectIndex];
                 break;
-            default:
-                break;
             }
+            if (symbol->objectType == eFuiObjectType_EditText)
+                return &file->editTextData[symbol->objectIndex];
         }
-    }
+    } while (true);
 }
 
 fuiRenderNode* fuiRenderNodeTimeline::createReferencedNode(fuiObject* object, unsigned int depth,
@@ -181,31 +183,32 @@ fuiRenderNode* fuiRenderNodeTimeline::createReferencedNode(fuiObject* object, un
     for (;;)
     {
         fuiReference* reference = static_cast<fuiReference*>(object);
-        if (static_cast<int>(reference->symbolIndex) == -1)
-            return 0;
-        fuiFile* file = reinterpret_cast<fuiFile*>(gFui->getFuiFileFromIndex(reference->index));
-        fuiSymbol* symbol = &file->symbolData[reference->symbolIndex];
-        switch (symbol->objectType)
+        int symbolIndex = reference->symbolIndex;
+        for (;;)
         {
-        case eFuiObjectType_Shape:
-            return new fuiRenderNodeShape(m_stage, this, &file->shapeData[symbol->objectIndex],
-                                          depth, renderFlags, color, clipDepth, visible, file);
-        case eFuiObjectType_Timeline:
-            return new fuiRenderNodeTimeline(m_stage, this,
-                                             &file->timelineData[symbol->objectIndex], depth,
-                                             renderFlags, color, clipDepth, visible, file);
-        case eFuiObjectType_Bitmap:
-            return new fuiRenderNodeBitmap(m_stage, this, &file->bitmaps[symbol->objectIndex],
-                                           depth, renderFlags, color, clipDepth, visible, file);
-        case eFuiObjectType_EditText:
-            return new fuiRenderNodeEditText(m_stage, this,
-                                             &file->editTextData[symbol->objectIndex], depth,
-                                             renderFlags, color, clipDepth, visible, file);
-        case eFuiObjectType_Reference:
-            object = &file->referenceData[symbol->objectIndex];
-            break;
-        default:
-            break;
+            if (symbolIndex == -1)
+                return 0;
+            fuiFile* file = reinterpret_cast<fuiFile*>(gFui->getFuiFileFromIndex(reference->index));
+            fuiSymbol* symbol = &file->symbolData[symbolIndex];
+            if (symbol->objectType == eFuiObjectType_Shape)
+                return new fuiRenderNodeShape(m_stage, this, &file->shapeData[symbol->objectIndex],
+                                              depth, renderFlags, color, clipDepth, visible, file);
+            if (symbol->objectType == eFuiObjectType_Timeline)
+                return new fuiRenderNodeTimeline(m_stage, this,
+                                                 &file->timelineData[symbol->objectIndex], depth,
+                                                 renderFlags, color, clipDepth, visible, file);
+            if (symbol->objectType == eFuiObjectType_Bitmap)
+                return new fuiRenderNodeBitmap(m_stage, this, &file->bitmaps[symbol->objectIndex],
+                                               depth, renderFlags, color, clipDepth, visible, file);
+            if (symbol->objectType == eFuiObjectType_Reference)
+            {
+                object = &file->referenceData[symbol->objectIndex];
+                break;
+            }
+            if (symbol->objectType == eFuiObjectType_EditText)
+                return new fuiRenderNodeEditText(m_stage, this,
+                                                 &file->editTextData[symbol->objectIndex], depth,
+                                                 renderFlags, color, clipDepth, visible, file);
         }
     }
 }
@@ -544,38 +547,39 @@ void fuiRenderNodeTimeline::handleFrameTransition(int frame)
     for (unsigned int i = 0; i < m_frameActions.size(); ++i)
     {
         frameAction& action = m_frameActions[i];
-        if (action.frame != frame)
-            continue;
-        if (action.type == eFrameActionType_GotoAndStop)
+        if (action.frame == frame)
         {
-            if (action.value.compare("handleAnimationStep") == 0)
-                m_node->dispatchEvent(new FJ_Event(eFJEventType_AnimationStep, false, false));
-            else if (action.value.compare("UpdateLabel") == 0)
-                m_node->dispatchEvent(new FJ_Event(eFJEventType_UpdateLabel, false, false));
-            else if (action.value.compare("InitHud") == 0)
-                m_node->dispatchEvent(new FJ_Event(eFJEventType_InitHud, false, false));
-            else if (action.value.compare("AnimationEnd") == 0)
-                m_node->dispatchEvent(new FJ_Event(eFJEventType_AnimationEnd, false, false));
-            else if (action.value.compare("ShowTimerAnimation") == 0)
-                m_node->dispatchEvent(new FJ_Event(eFJEventType_ShowTimerAnimation, false, false));
-            else if (action.value.compare("SlideComplete") == 0)
-                m_node->dispatchEvent(new FJ_Event(eFJEventType_SlideComplete, false, false));
-            else if (action.value.compare("ShowAnimatedLogoText") == 0)
-                m_node->dispatchEvent(new FJ_Event(eFJEventType_ShowAnimatedLogoText, true, false));
-        }
-        else if (action.type == eFrameActionType_Stop)
-        {
-            setPlaying(false);
-        }
-        else if (action.type < eFrameActionType_GotoAndPlay)
-        {
-            setFrame(action.value.c_str());
-            setPlaying(false);
-        }
-        else if (action.type == eFrameActionType_GotoAndPlay)
-        {
-            setFrame(action.value.c_str());
-            setPlaying(true);
+            if (action.type == eFrameActionType_GotoAndStop)
+            {
+                if (action.value.compare("handleAnimationStep") == 0)
+                    m_node->dispatchEvent(new FJ_Event(eFJEventType_AnimationStep, false, false));
+                else if (action.value.compare("UpdateLabel") == 0)
+                    m_node->dispatchEvent(new FJ_Event(eFJEventType_UpdateLabel, false, false));
+                else if (action.value.compare("InitHud") == 0)
+                    m_node->dispatchEvent(new FJ_Event(eFJEventType_InitHud, false, false));
+                else if (action.value.compare("AnimationEnd") == 0)
+                    m_node->dispatchEvent(new FJ_Event(eFJEventType_AnimationEnd, false, false));
+                else if (action.value.compare("ShowTimerAnimation") == 0)
+                    m_node->dispatchEvent(new FJ_Event(eFJEventType_ShowTimerAnimation, false, false));
+                else if (action.value.compare("SlideComplete") == 0)
+                    m_node->dispatchEvent(new FJ_Event(eFJEventType_SlideComplete, false, false));
+                else if (action.value.compare("ShowAnimatedLogoText") == 0)
+                    m_node->dispatchEvent(new FJ_Event(eFJEventType_ShowAnimatedLogoText, true, false));
+            }
+            else if (action.type == eFrameActionType_Stop)
+            {
+                setPlaying(false);
+            }
+            else if (action.type < eFrameActionType_GotoAndPlay)
+            {
+                setFrame(action.value.c_str());
+                setPlaying(false);
+            }
+            else if (action.type == eFrameActionType_GotoAndPlay)
+            {
+                setFrame(action.value.c_str());
+                setPlaying(true);
+            }
         }
     }
 }

@@ -17,13 +17,12 @@
 #include "game/world/generation/Player.hpp"
 
 UIControl_MinecraftPlayer::UIControl_MinecraftPlayer()
-    : mScreenWidth(0.0f), mScreenHeight(0.0f), mScaledWidth(0.0f), mScaledHeight(0.0f)
 {
-    Minecraft* minecraft = Minecraft::GetInstance();
     m_controlType = UIControl::eUIControlType_MinecraftPlayer;
-    mScreenWidth = (float)minecraft->mWidth;
-    mScreenHeight = (float)minecraft->mHeight;
-    ScreenSizeCalculator calculator(minecraft->mOptions, minecraft->mWidth, minecraft->mHeight, -1);
+    Minecraft* minecraft = Minecraft::GetInstance();
+    ScreenSizeCalculator calculator(minecraft->mOptions, minecraft->mFullWidth, minecraft->mFullHeight, -1);
+    mScreenWidth = (float)minecraft->mFullWidth;
+    mScreenHeight = (float)minecraft->mFullHeight;
     mScaledWidth = (float)calculator.mWidthScale;
     mScaledHeight = (float)calculator.mHeightScale;
 }
@@ -60,11 +59,10 @@ void UIControl_MinecraftPlayer::render(fuiRect* rect)
     Lighting::turnOn();
     GlStateManager::rotatef(-135.0f, 0.0f, 1.0f, 0.0f);
     GlStateManager::rotatef(-std::atan(lookY) * 20.0f, 1.0f, 0.0f, 0.0f);
-    float bodyRotation = player->mYBodyRot;
-    GlStateManager::rotatef(-(std::atan(lookX) * 20.0f - bodyRotation), 0.0f, 1.0f, 0.0f);
+    GlStateManager::rotatef(-(std::atan(lookX) * 20.0f - (player->mYBodyRotO + (player->mYBodyRot - player->mYBodyRotO))), 0.0f, 1.0f, 0.0f);
     GlStateManager::color4f(1.0f, 1.0f, 1.0f, 1.0f);
 
-    player->mYRot = bodyRotation;
+    player->mYRot = player->mYBodyRotO + (player->mYBodyRot - player->mYBodyRotO);
     player->mYRotO = player->mYRot;
     player->mYHeadRot = player->mYRot;
     player->mXRot = -std::atan(lookY) * 20.0f;

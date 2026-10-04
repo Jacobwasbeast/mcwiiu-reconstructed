@@ -62,7 +62,7 @@ void UIControl_ScoreboardButtonList::addItem(const std::wstring& label, int play
 {
     if (immediate)
     {
-        m_fuiRenderNode->getFuiNode()->asFJ_List_ListButtonScoreBoard()->addNewItem(
+        static_cast<FJ_List_ListButtonScoreBoard*>(m_fuiRenderNode->getFuiNode())->addNewItem(
             label, m_itemIndex, playerIcon + 1, voipIcon + 1);
         addElement(UIControl::eUIControlType_Button, -1);
         return;
@@ -77,7 +77,7 @@ void UIControl_ScoreboardButtonList::SetSlotTextureName(int item, int slot,
 {
     if (immediate)
     {
-        m_fuiRenderNode->getFuiNode()->asFJ_List_ListButtonScoreBoard()->SetSlotTextureName(
+        static_cast<FJ_List_ListButtonScoreBoard*>(m_fuiRenderNode->getFuiNode())->SetSlotTextureName(
             item, slot, textureName);
         return;
     }
@@ -111,10 +111,10 @@ void UIControl_ScoreboardButtonList::setSlotsText(int item, const std::wstring& 
 
 void UIControl_ScoreboardButtonList::setPlayerIcon(int item, int icon)
 {
-    m_fuiRenderNode->getFuiNode()->asFJ_List_ListButtonScoreBoard()->SetPlayerIcon(item, icon + 1);
+    static_cast<FJ_List_ListButtonScoreBoard*>(m_fuiRenderNode->getFuiNode())->SetPlayerIcon(item, icon + 1);
 }
 
 void UIControl_ScoreboardButtonList::setVOIPIcon(int item, int icon)
 {
-    m_fuiRenderNode->getFuiNode()->asFJ_List_ListButtonScoreBoard()->SetVOIPIcon(item, icon + 1);
+    static_cast<FJ_List_ListButtonScoreBoard*>(m_fuiRenderNode->getFuiNode())->SetVOIPIcon(item, icon + 1);
 }

@@ -11,7 +11,7 @@ FJ_ListButtonPlayerList::FJ_ListButtonPlayerList(fuiRenderNode* renderNode)
 void FJ_ListButtonPlayerList::Init(const std::wstring& name, int id)
 {
     SetLabelAlignment(4);
-    m_isLabel = true;
+    m_textOnly = true;
     FJ_Button::Init(name, id);
 
     m_playerIcon->setScaleX(static_cast<float>(m_playerIcon->getScaleX() / getScaleX()));

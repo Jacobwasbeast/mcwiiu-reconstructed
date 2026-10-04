@@ -22,9 +22,13 @@
 extern CProfile* gProfile;
 
 UIComponent_Tooltips::_TooltipValues::_TooltipValues()
-    : m_enabled(false), m_textId(-1), m_text(), m_type(-1), m_subtype(-1),
-      m_dynamic(false), m_button(0x20)
 {
+    m_enabled = false;
+    m_textId = -1;
+    m_type = -1;
+    m_subtype = -1;
+    m_dynamic = false;
+    m_button = EControllerActions_Jump;
 }
 
 UIComponent_Tooltips::_TooltipValues::~_TooltipValues()
@@ -41,7 +45,7 @@ UIComponent_Tooltips::UIComponent_Tooltips(int sceneType, void* data, UILayer* l
     }
     initialiseMovie();
     m_controllerType = -1;
-    for (int i = 0; i < 16; ++i)
+    for (unsigned int i = 0; i < 16; ++i)
         m_touchControls[i].init(i);
 }
 
@@ -111,9 +115,13 @@ std::wstring UIComponent_Tooltips::getMoviePath()
 
 double UIComponent_Tooltips::getSafeZoneHalfWidth()
 {
-    if (gRenderer->IsHiDef())
-        return gConsoleUIController.getScreenWidth() * 0.05f;
-    return m_stageWidth * 0.075f;
+    float screenWidth = gConsoleUIController.getScreenWidth();
+    float halfWidth;
+    if (gRenderer->IsHiDef() == 0)
+        halfWidth = m_stageWidth * 0.075f;
+    else
+        halfWidth = screenWidth * 0.05f;
+    return halfWidth;
 }
 
 void UIComponent_Tooltips::updateSafeZone()
@@ -163,9 +171,9 @@ void UIComponent_Tooltips::_SetTooltip(unsigned int index, int type, int subtype
         }
         value.m_enabled = enabled;
         value.m_text = text;
-        UIString localText(text);
+        const std::wstring& textString = text.getString();
         static_cast<FJ_ToolTips*>(m_movie->getRootNode()->getFuiNode())
-            ->SetToolTip((int)index, finalType, finalSubtype, localText.getString(), enabled);
+            ->SetToolTip((int)index, finalType, finalSubtype, textString, enabled);
     }
 }
 
@@ -180,21 +188,28 @@ void UIComponent_Tooltips::tick()
 {
     UIScene::tick();
 
-    int pad = gProfile->GetPrimaryPad();
-    if (pad >= 0)
+    if (gProfile->GetPrimaryPad() >= 0)
     {
-        unsigned int level = GameSettings::GetGameSettings(pad, eGameSetting_InterfaceOpacity);
-        if (level < 0x50)
+        unsigned int level = GameSettings::GetGameSettings(gProfile->GetPrimaryPad(), eGameSetting_InterfaceOpacity);
+        if (level < 80)
         {
-            if (gConsoleUIController.GetMenuDisplayed(m_playerId) != 0 && level < 0xf)
-                level = 0xf;
-            unsigned int timer = gApp.GetOpacityTimer(m_playerId);
+            int playerId = m_playerId;
+            if (gConsoleUIController.GetMenuDisplayed(playerId) != 0 && level < 15)
+                level = 15;
+            unsigned int timer = gApp.GetOpacityTimer(playerId);
             if (timer == 0)
+            {
                 setOpacity(0.01f * (float)level);
+            }
             else if (timer < 10)
-                setOpacity(0.01f * -((10.0f - (float)timer) * ((80.0f - (float)level) / 10.0f) - 80.0f));
+            {
+                float fade = -((10.0f - (float)timer) * ((80.0f - (float)level) / 10.0f) - 80.0f);
+                setOpacity(0.01f * fade);
+            }
             else
-                setOpacity(0.8f);
+            {
+                setOpacity(0.01f * 80.0f);
+            }
         }
         else
         {
@@ -225,93 +240,99 @@ void UIComponent_Tooltips::render(int width, int height, C4JRender::eViewportTyp
 {
     if (gProfile->GetLockedProfile() != -1)
     {
-        if (gConsoleUIController.GetMenuDisplayed(m_playerId) == 0)
+        int playerId = m_playerId;
+        if (gConsoleUIController.GetMenuDisplayed(playerId) == 0)
         {
-            if (GameSettings::GetGameSettings(m_playerId, eGameSetting_Tooltips) == 0)
+            if (GameSettings::GetGameSettings(playerId, eGameSetting_Tooltips) == 0)
                 return;
             if (GameSettings::GetGameSettings(m_playerId, eGameSetting_DisplayHUD) == 0)
                 return;
         }
     }
 
-    if (!m_splitTooltips)
+    if (m_splitTooltips)
     {
-        UIScene::render(width, height, viewport);
+        int x = 0;
+        int y = 0;
+        switch (viewport)
+        {
+        case C4JRender::eViewportType_BottomHalf:
+        case C4JRender::eViewportType_BottomLeftQuarter:
+            y = static_cast<int>(gConsoleUIController.getScreenHeight() * 0.5f);
+            break;
+        case C4JRender::eViewportType_RightHalf:
+        case C4JRender::eViewportType_TopRightQuarter:
+            x = static_cast<int>(gConsoleUIController.getScreenWidth() * 0.5f);
+            break;
+        case C4JRender::eViewportType_BottomRightQuarter:
+            x = static_cast<int>(gConsoleUIController.getScreenWidth() * 0.5f);
+            y = static_cast<int>(gConsoleUIController.getScreenHeight() * 0.5f);
+            break;
+        }
+        gConsoleUIController.setupRenderPosition(x, y);
+
+        int top = 0;
+        switch (viewport)
+        {
+        case C4JRender::eViewportType_TopHalf:
+        case C4JRender::eViewportType_BottomHalf:
+            gFui->render(m_movie, 0.0f, m_stageHeight / 2, static_cast<int>(gConsoleUIController.getScreenWidth()), height);
+            return;
+        case C4JRender::eViewportType_LeftHalf:
+        case C4JRender::eViewportType_RightHalf:
+            gFui->render(m_movie, 0.0f, 0, width, static_cast<int>(gConsoleUIController.getScreenHeight()));
+            return;
+        case C4JRender::eViewportType_FullScreen:
+            break;
+        case C4JRender::eViewportType_TopLeftQuarter:
+        case C4JRender::eViewportType_TopRightQuarter:
+        case C4JRender::eViewportType_BottomLeftQuarter:
+        case C4JRender::eViewportType_BottomRightQuarter:
+            top = m_stageHeight / 2;
+            break;
+        default:
+            gFui->render(m_movie, 0.0f, 0, width, height);
+            return;
+        }
+        gFui->render(m_movie, 0.0f, top, width, height);
         return;
     }
 
-    switch (viewport)
-    {
-    case C4JRender::eViewportType_BottomHalf:
-    case C4JRender::eViewportType_BottomLeftQuarter:
-        gConsoleUIController.setupRenderPosition(0, static_cast<int>(gConsoleUIController.getScreenHeight() * 0.5f));
-        break;
-    case C4JRender::eViewportType_RightHalf:
-    case C4JRender::eViewportType_TopRightQuarter:
-        gConsoleUIController.setupRenderPosition(static_cast<int>(gConsoleUIController.getScreenWidth() * 0.5f), 0);
-        break;
-    case C4JRender::eViewportType_BottomRightQuarter:
-        gConsoleUIController.setupRenderPosition(static_cast<int>(gConsoleUIController.getScreenWidth() * 0.5f),
-                                                 static_cast<int>(gConsoleUIController.getScreenHeight() * 0.5f));
-        break;
-    default:
-        gConsoleUIController.setupRenderPosition(0, 0);
-        break;
-    }
-
-    switch (viewport)
-    {
-    case C4JRender::eViewportType_TopHalf:
-    case C4JRender::eViewportType_BottomHalf:
-        gFui->render(m_movie, 0.0f, m_stageHeight / 2, static_cast<int>(gConsoleUIController.getScreenWidth()), height);
-        break;
-    case C4JRender::eViewportType_LeftHalf:
-    case C4JRender::eViewportType_RightHalf:
-        gFui->render(m_movie, 0.0f, 0, width, static_cast<int>(gConsoleUIController.getScreenHeight()));
-        break;
-    case C4JRender::eViewportType_TopLeftQuarter:
-    case C4JRender::eViewportType_TopRightQuarter:
-    case C4JRender::eViewportType_BottomLeftQuarter:
-    case C4JRender::eViewportType_BottomRightQuarter:
-        gFui->render(m_movie, 0.0f, m_stageHeight / 2, width, height);
-        break;
-    default:
-        gFui->render(m_movie, 0.0f, 0, width, height);
-        break;
-    }
+    UIScene::render(width, height, viewport);
 }
 
 void UIComponent_Tooltips::updateViewportTouchOffset()
 {
+    int x = 0;
+    int y = 0;
     switch (m_layer->getViewport())
     {
     case C4JRender::eViewportType_TopHalf:
     case C4JRender::eViewportType_TopLeftQuarter:
-        gConsoleUIController.updateViewportTouchOffset(0, -(int)(gConsoleUIController.getScreenHeight() * 0.5f));
+        y = -(int)(gConsoleUIController.getScreenHeight() * 0.5f);
         break;
     case C4JRender::eViewportType_RightHalf:
     case C4JRender::eViewportType_BottomRightQuarter:
-        gConsoleUIController.updateViewportTouchOffset((int)(gConsoleUIController.getScreenWidth() * 0.5f), 0);
+        x = (int)(gConsoleUIController.getScreenWidth() * 0.5f);
         break;
     case C4JRender::eViewportType_TopRightQuarter:
-        gConsoleUIController.updateViewportTouchOffset((int)(gConsoleUIController.getScreenWidth() * 0.5f),
-                                                       -(int)(gConsoleUIController.getScreenHeight() * 0.5f));
-        break;
-    default:
-        gConsoleUIController.updateViewportTouchOffset(0, 0);
+        x = (int)(gConsoleUIController.getScreenWidth() * 0.5f);
+        y = -(int)(gConsoleUIController.getScreenHeight() * 0.5f);
         break;
     }
+    gConsoleUIController.updateViewportTouchOffset(x, y);
 }
 
 unsigned int UIComponent_Tooltips::_SetTooltip(unsigned int index, int value)
 {
     _TooltipValues& slot = m_tooltipValues[index];
+    unsigned int result = 0;
     if (value == slot.m_textId)
     {
         if (value == -1)
-            return 0;
+            return result;
         if (slot.m_enabled)
-            return 0;
+            return result;
     }
 
     int type = (int)index;
@@ -331,7 +352,8 @@ unsigned int UIComponent_Tooltips::_SetTooltip(unsigned int index, int value)
         _SetTooltip(index, type, -1, UIString(L""), false, false);
     else
         _SetTooltip(index, type, -1, UIString(value), true, false);
-    return 1;
+    result = 1;
+    return result;
 }
 
 void UIComponent_Tooltips::SetTooltipText(unsigned int player, int index)
@@ -368,22 +390,24 @@ unsigned int UIComponent_Tooltips::GetToolTipButton(unsigned int button)
 unsigned int UIComponent_Tooltips::_SetTooltip(unsigned int index, int type, int subtype,
                                                int textId, bool& changed)
 {
+    unsigned int result = 0;
     if (type == -1 || textId == -1)
     {
         changed = false;
-        return 0;
     }
-    changed = true;
-    unsigned int result = 0;
-    _TooltipValues& value = m_tooltipValues[index];
-    if (value.m_textId != textId || !value.m_enabled)
+    else
     {
-        value.m_type = type;
-        value.m_subtype = subtype;
-        value.m_dynamic = true;
-        value.m_textId = textId;
-        result = 1;
-        _SetTooltip(index, type, subtype, UIString(textId), true, false);
+        changed = true;
+        _TooltipValues& value = m_tooltipValues[index];
+        if (value.m_textId != textId || !value.m_enabled)
+        {
+            value.m_type = type;
+            value.m_subtype = subtype;
+            value.m_dynamic = true;
+            value.m_textId = textId;
+            result = 1;
+            _SetTooltip(index, type, subtype, UIString(textId), true, false);
+        }
     }
     return result;
 }
@@ -392,20 +416,21 @@ unsigned int UIComponent_Tooltips::HandleToolTipButton(unsigned int player,
                                                         EControllerActions action,
                                                         unsigned int& button, int type)
 {
+    unsigned int result = 0;
+    bool changed = false;
     unsigned int primary = GetToolTipButton(
         static_cast<unsigned int>(GameSettings::GetInputButton((int)player, false, action)));
     unsigned int secondary = GetToolTipButton(
         static_cast<unsigned int>(GameSettings::GetInputButton((int)player, true, action)));
 
-    unsigned int result = 0;
     unsigned int index = button;
-    bool changed = false;
     if (index < 16)
     {
         result = _SetTooltip(index, (int)primary, (int)secondary, type, changed);
+        index = button;
         _TooltipValues& value = m_tooltipValues[index];
         if (value.m_dynamic && value.m_enabled)
-            value.m_button = (int)action;
+            value.m_button = action;
     }
     if (changed)
         button = index + 1;
@@ -415,42 +440,43 @@ unsigned int UIComponent_Tooltips::HandleToolTipButton(unsigned int player,
 void UIComponent_Tooltips::UpdateControllerType(int controllerType)
 {
     const int previousType = m_controllerType;
-    bool notify = false;
 
     if (g_pInput->IsPadConnected(4) == 0)
     {
         if (g_pInput->IsPadClassicController(controllerType) == 0)
         {
             m_controllerType = 0;
-            notify = previousType != 0;
+            if (previousType == 0)
+                return;
         }
         else
         {
             m_controllerType = 2;
-            notify = previousType != 2;
+            if (previousType == 2)
+                return;
         }
     }
     else if (g_pInput->IsPadDRCController(controllerType) != 0 || controllerType == 4)
     {
         m_controllerType = 1;
-        notify = previousType != 1;
+        if (previousType == 1)
+            return;
     }
     else if (g_pInput->IsPadClassicController(controllerType) == 0)
     {
         m_controllerType = 0;
-        notify = previousType != 0;
+        if (previousType == 0)
+            return;
     }
     else
     {
         m_controllerType = 2;
-        notify = previousType != 2;
+        if (previousType == 2)
+            return;
     }
 
-    if (notify)
-    {
-        static_cast<FJ_ToolTips*>(m_movie->getRootNode()->getFuiNode())
-            ->UpdateControllerType(m_controllerType);
-    }
+    static_cast<FJ_ToolTips*>(m_movie->getRootNode()->getFuiNode())
+        ->UpdateControllerType(m_controllerType);
 }
 
 void UIComponent_Tooltips::SetTooltips(int player, int* tooltips, bool visible)
@@ -507,12 +533,12 @@ void UIComponent_Tooltips::SetTooltips(int player, int* tooltips, bool visible)
                                    tooltips[EControllerActions_RestartSection - EControllerActions_Jump]) || changed;
     changed = HandleToolTipButton(player, EControllerActions_RestartRace, button,
                                    tooltips[EControllerActions_RestartRace - EControllerActions_Jump]) || changed;
-    for (; button < 16; ++button)
+    for (unsigned int index = button; index < 16; ++index)
     {
-        if (m_tooltipValues[button].m_enabled)
+        if (m_tooltipValues[index].m_enabled)
         {
             changed = true;
-            _SetTooltip(button, -1, -1, UIString(L""), false, false);
+            _SetTooltip(index, -1, -1, UIString(L""), false, false);
         }
     }
     if (changed)
@@ -558,19 +584,17 @@ bool UIComponent_Tooltips::IsToolTipDynamic(unsigned int player, EControllerActi
 {
     if (player >= 16)
         return false;
-    action = (EControllerActions)m_tooltipValues[player].m_subtype;
+    action = m_tooltipValues[player].m_button;
     return m_tooltipValues[player].m_dynamic;
 }
 
 void UIComponent_Tooltips::handleReload()
 {
     m_controllerType = -1;
-    int i;
-    for (i = 0; i < 16; ++i)
+    for (unsigned int i = 0; i < 16; ++i)
     {
-        _TooltipValues& value = m_tooltipValues[i];
-        _SetTooltip((unsigned int)i, value.m_type, value.m_subtype, UIString(value.m_textId),
-                   value.m_enabled, true);
+        _SetTooltip(i, m_tooltipValues[i].m_type, m_tooltipValues[i].m_subtype,
+                   UIString(m_tooltipValues[i].m_textId), m_tooltipValues[i].m_enabled, true);
     }
     _Relayout();
 }
@@ -578,8 +602,13 @@ void UIComponent_Tooltips::handleReload()
 void UIComponent_Tooltips::handleInput(int player, int action, bool repeat, bool pressed,
                                        bool released, bool& handled)
 {
-    if (action >= EControllerActions_MenuStickPress && action != EControllerActions_MenuOk && action != EControllerActions_MenuCancel)
-        return;
+    if ((unsigned int)action >= EControllerActions_MenuStickPress)
+    {
+        if ((unsigned int)action < EControllerActions_MenuOk)
+            return;
+        if ((unsigned int)action > EControllerActions_MenuCancel)
+            return;
+    }
     sendInputToMovie(action, repeat, pressed, released);
 }
 

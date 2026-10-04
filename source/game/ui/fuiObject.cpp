@@ -17,9 +17,7 @@ void Swap4Bytes(unsigned int& value)
 
 void Swap4Bytes(eFuiObjectType& value)
 {
-    unsigned int swapped = static_cast<unsigned int>(value);
-    Swap4Bytes(swapped);
-    value = static_cast<eFuiObjectType>(swapped);
+    Swap4Bytes(reinterpret_cast<unsigned int&>(value));
 }
 
 void Swap2Bytes(unsigned short& value)
@@ -33,24 +31,17 @@ void Swap2Bytes(unsigned short& value)
 
 void Swap2Bytes(short& value)
 {
-    unsigned short swapped = static_cast<unsigned short>(value);
-    Swap2Bytes(swapped);
-    value = static_cast<short>(swapped);
+    Swap2Bytes(reinterpret_cast<unsigned short&>(value));
 }
 
 void Swap4Bytes(int& value)
 {
-    unsigned int swapped = static_cast<unsigned int>(value);
-    Swap4Bytes(swapped);
-    value = static_cast<int>(swapped);
+    Swap4Bytes(reinterpret_cast<unsigned int&>(value));
 }
 
 void Swap4Bytes(float& value)
 {
-    unsigned int bits;
-    std::memcpy(&bits, &value, sizeof(bits));
-    Swap4Bytes(bits);
-    std::memcpy(&value, &bits, sizeof(value));
+    Swap4Bytes(reinterpret_cast<unsigned int&>(value));
 }
 
 void fuiObject::EndianSwap()

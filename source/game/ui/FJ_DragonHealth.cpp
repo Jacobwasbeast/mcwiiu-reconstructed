@@ -6,12 +6,12 @@
 #include "game/ui/FJ_Label.hpp"
 
 FJ_DragonHealth::FJ_DragonHealth(fuiRenderNode* renderNode)
-    : FJ_ProgressBar(renderNode), m_pLabel(NULL)
+    : FJ_ProgressBar(renderNode)
 {
     GetBarFiller();
     initFiller();
     m_pLabel = getChildByName("DragonHealthLabel")->asFJ_Label();
-    SetLabelAlignment(0);
+    m_pLabel->SetLabelAlignment(0);
     m_pLabel->SetTextAlignment(FJ_Label::eTextAlignment_Center);
 }
 

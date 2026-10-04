@@ -9,37 +9,37 @@ static unsigned int gCurrentLanguage = static_cast<unsigned int>(-1);
 static unsigned int gCurrentLocale = static_cast<unsigned int>(-1);
 
 UIString::UIStringCore::UIStringCore(FJStringBuilder builder)
-    : mLanguage(static_cast<unsigned int>(-1)),
-      mLocale(static_cast<unsigned int>(-1)),
-      mUpdatedLanguage(static_cast<unsigned int>(-1)),
-      mUpdatedLocale(static_cast<unsigned int>(-1)),
-      mIsConstant(false),
-      mIsCharString(false)
 {
+    mLanguage = static_cast<unsigned int>(-1);
+    mLocale = static_cast<unsigned int>(-1);
+    mUpdatedLanguage = static_cast<unsigned int>(-1);
+    mUpdatedLocale = static_cast<unsigned int>(-1);
+    mIsConstant = false;
+    mIsCharString = false;
     mBuilder = builder;
     mString = L"";
     update(true);
 }
 
 UIString::UIStringCore::UIStringCore(const std::wstring& value)
-    : mLanguage(static_cast<unsigned int>(-1)),
-      mLocale(static_cast<unsigned int>(-1)),
-      mUpdatedLanguage(static_cast<unsigned int>(-1)),
-      mUpdatedLocale(static_cast<unsigned int>(-1)),
-      mIsConstant(true),
-      mIsCharString(false)
 {
+    mLanguage = static_cast<unsigned int>(-1);
+    mLocale = static_cast<unsigned int>(-1);
+    mUpdatedLanguage = static_cast<unsigned int>(-1);
+    mUpdatedLocale = static_cast<unsigned int>(-1);
+    mIsConstant = true;
+    mIsCharString = false;
     mString = value;
 }
 
 UIString::UIStringCore::UIStringCore(const std::string& value)
-    : mLanguage(static_cast<unsigned int>(-1)),
-      mLocale(static_cast<unsigned int>(-1)),
-      mUpdatedLanguage(static_cast<unsigned int>(-1)),
-      mUpdatedLocale(static_cast<unsigned int>(-1)),
-      mIsConstant(true),
-      mIsCharString(true)
 {
+    mLanguage = static_cast<unsigned int>(-1);
+    mLocale = static_cast<unsigned int>(-1);
+    mUpdatedLanguage = static_cast<unsigned int>(-1);
+    mUpdatedLocale = static_cast<unsigned int>(-1);
+    mIsConstant = true;
+    mIsCharString = true;
     mCharString = value;
 }
 
@@ -139,8 +139,7 @@ UIString::UIString(const std::wstring& value)
 
 UIString::UIString(const wchar_t* value)
 {
-    UIStringCore* core = new UIStringCore(std::wstring(value));
-    mCore = boost::shared_ptr<UIStringCore>(core);
+    mCore = boost::shared_ptr<UIStringCore>(new UIStringCore(std::wstring(value)));
 }
 
 UIString::~UIString()

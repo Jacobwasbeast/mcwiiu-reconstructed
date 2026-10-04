@@ -13,7 +13,7 @@ float FJ_ListButtonController::getOriginalHeight()
 void FJ_ListButtonController::Init(const std::wstring& name, int id)
 {
     SetLabelAlignment(4);
-    m_isLabel = true;
+    m_textOnly = true;
     FJ_Button::Init(name, id);
     m_originalHeight = getHeight();
 }

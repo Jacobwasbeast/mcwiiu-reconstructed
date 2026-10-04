@@ -5,9 +5,9 @@
 LocalMenuContainer::LocalMenuContainer(int typeId, const std::wstring& name, int size)
     : SimpleContainer(name, size)
     , LockableContainer()
-    , mTypeId(typeId)
     , mContainerData()
 {
+    mTypeId = typeId;
 }
 
 LocalMenuContainer::~LocalMenuContainer()
@@ -81,10 +81,12 @@ bool LocalMenuContainer::stillValid(boost::shared_ptr<Player> player)
 
 void LocalMenuContainer::startOpen(boost::shared_ptr<Player> player)
 {
+    SimpleContainer::startOpen(player);
 }
 
 void LocalMenuContainer::stopOpen(boost::shared_ptr<Player> player)
 {
+    SimpleContainer::stopOpen(player);
 }
 
 bool LocalMenuContainer::canPlaceItem(int slot, not_null_ptr<ItemInstance> item)
@@ -128,7 +130,7 @@ void LocalMenuContainer::setLocked(LockCode* lockCode)
 
 LockCode* LocalMenuContainer::getLockKeyCode()
 {
-    return NULL;
+    return LockCode::NO_LOCK;
 }
 
 void LocalMenuContainer::unlock()

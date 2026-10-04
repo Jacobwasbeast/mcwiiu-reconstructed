@@ -870,16 +870,18 @@ FJ_FuiNode* FJ_Factory::createObject(const char* symbol, fuiRenderNode* renderNo
 
     FJ_FactoryMap::iterator factory = g_fuiNodeFactories.find(std::string(factoryName, end - factoryName));
 
+    bool hasFactory = separator != NULL && factory != g_fuiNodeFactories.end();
+
     if (!createFromSymbol)
     {
-        if (factory == g_fuiNodeFactories.end())
+        if (!hasFactory)
             return new FJ_FuiNode(renderNode);
         return factory->second(renderNode);
     }
 
     fuiRenderNode* nodeRender = (fuiRenderNode*)gFui->createNodeFromSymbol(symbol, renderNode);
     FJ_FuiNode* node;
-    if (factory == g_fuiNodeFactories.end())
+    if (!hasFactory)
         node = new FJ_FuiNode(nodeRender);
     else
         node = factory->second(nodeRender);

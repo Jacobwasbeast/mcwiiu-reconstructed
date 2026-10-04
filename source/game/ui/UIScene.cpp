@@ -29,13 +29,28 @@ template <typename T>
 std::wstring _toString(T value);
 
 UIScene::UIScene(int playerId, UILayer* layer)
-    : m_moviePath(L""), m_movie(0), m_movieLoaded(false), m_itemRenderer(0),
-      m_controlFocus(-1), m_controlChildFocus(0), m_opacity(1.0f), m_opacityInitialised(false),
-      m_visible(true), m_tickedLastFrame(false), m_backScene(0), m_callbackId(0),
-      m_reloading(false), m_hasGainedFocus(false), m_layer(layer), m_hasFocus(false),
-      m_playerId(playerId), m_hasTicked(false), m_slotDrawPending(false), m_updatePending(true),
-      m_slotDrawCount(0)
 {
+    m_opacity = 1.0f;
+    m_opacityInitialised = false;
+    m_visible = true;
+    m_tickedLastFrame = false;
+    m_backScene = 0;
+    m_callbackId = 0;
+    m_reloading = false;
+    m_hasGainedFocus = false;
+    m_layer = layer;
+    m_hasFocus = false;
+    m_playerId = playerId;
+    m_hasTicked = false;
+    m_slotDrawPending = false;
+    m_updatePending = true;
+    m_slotDrawCount = 0;
+    m_movie = 0;
+    m_itemRenderer = 0;
+    m_controlFocus = -1;
+    m_controlChildFocus = 0;
+    m_moviePath = L"";
+    m_movieLoaded = false;
 }
 
 UIScene::~UIScene()
@@ -57,7 +72,7 @@ UIScene::~UIScene()
 
 void UIScene::reloadMovie(bool force)
 {
-    if (!force && stealsFocus() && getSceneType() != 4 && !m_hasFocus)
+    if (!force && stealsFocus() && getSceneType() != EUIScene_FullscreenProgress && !m_hasFocus)
         return;
 
     m_reloading = true;
@@ -239,7 +254,8 @@ void UIScene::customDraw(const char*, fuiRect*)
 
 bool UIScene::allowRepeat(int action)
 {
-    return action >= EControllerActions_MenuUp && action != EControllerActions_MenuOk && action != EControllerActions_MenuCancel;
+    unsigned int unsignedAction = action;
+    return unsignedAction > EControllerActions_MenuY && (unsignedAction < EControllerActions_MenuOk || unsignedAction > EControllerActions_MenuCancel);
 }
 
 void UIScene::handleInput(int, int, bool, bool, bool, bool&)
@@ -514,22 +530,22 @@ void UIScene::customDrawSlotControlFui(fuiRect* rect, int, not_null_ptr<ItemInst
     Lighting::turnOn();
     GlStateManager::popMatrix();
 
-    const int popTime = item->getPopTime();
-    if (popTime > 0) {
+    if (item->getPopTime() > 0) {
         const float translateX = 8.0f * scaleX + x;
         const float translateY = 12.0f * scaleY + y;
-        const float popScale = popTime / 5.0f + 1.0f;
+        const float popScale = item->getPopTime() / 5.0f + 1.0f;
         GlStateManager::pushMatrix();
         GlStateManager::translatef(translateX, translateY, 0.0f);
         GlStateManager::scalef(1.0f / popScale, (popScale + 1.0f) * 0.5f, 1.0f);
         GlStateManager::translatef(-translateX, -translateY, 0.0f);
     }
 
+    Minecraft* rendererMinecraft = Minecraft::GetInstance();
     PIXBeginNamedEvent(0.0f, "Render and decorate");
     if (m_itemRenderer == 0) {
-        m_itemRenderer = new ItemRenderer(minecraft->getEntityRenderDispatcher(),
-                                          minecraft->getTextureManager(),
-                                          minecraft->getItemColors());
+        m_itemRenderer = new ItemRenderer(rendererMinecraft->getEntityRenderDispatcher(),
+                                          rendererMinecraft->getTextureManager(),
+                                          Minecraft::GetInstance()->getItemColors());
     }
 
     gRenderer->StateSetBlendEnable(true);
@@ -539,20 +555,19 @@ void UIScene::customDrawSlotControlFui(fuiRect* rect, int, not_null_ptr<ItemInst
     std::wstring countText = L"";
     int countColour = -1;
     TextureAtlasSprite* countIcon = 0;
-    if (getSceneType() == 0x31) {
-        Item* renderedItem = item->getItem();
-        int overrideCount = renderedItem->GetOverrideCount();
+    if (getSceneType() == EUIScene_HUD) {
+        int overrideCount = item->getItem()->GetOverrideCount();
         if (overrideCount > 0)
             countText = _toString(overrideCount);
-        countColour = renderedItem->GetOverrideCountColour();
-        countIcon = renderedItem->GetOverrideCountIcon(item);
+        countColour = item->getItem()->GetOverrideCountColour();
+        countIcon = item->getItem()->GetOverrideCountIcon(item);
     }
 
     m_itemRenderer->renderAndDecorateItem(item, x, y, scaleX, scaleY, partialTick, flat, true,
                                           !drawOverlay, countIcon);
     PIXEndNamedEvent();
 
-    if (popTime > 0)
+    if (item->getPopTime() > 0)
         GlStateManager::popMatrix();
 
     if (drawDecorations) {
@@ -588,7 +603,8 @@ void UIScene::destroyMovie()
 
 void UIScene::UpdateSceneControls()
 {
-    for (std::vector<UIControl*>::iterator it = m_controls.begin(); it != m_controls.end(); ++it)
+    std::vector<UIControl*>::iterator end = m_controls.end();
+    for (std::vector<UIControl*>::iterator it = m_controls.begin(); it != end; ++it)
         (*it)->UpdateControl();
 }
 
@@ -625,7 +641,7 @@ void UIScene::gainFocus()
             bool hadFocus = m_hasGainedFocus;
             if (!hadFocus) {
                 if (m_movie->getRootNode()->getFuiNode()->isFJ_Document())
-                    m_movie->getRootNode()->getFuiNode()->asFJ_Document()->SetFocus(-1);
+                    static_cast<FJ_Document*>(m_movie->getRootNode()->getFuiNode())->SetFocus(-1);
                 hadFocus = m_hasGainedFocus;
             }
 
@@ -662,15 +678,21 @@ void UIScene::setSafeZone(double top, double bottom, double left, double right)
         static_cast<FJ_Hud*>(m_movie->getRootNode()->getFuiNode())
             ->SetSafeZone(static_cast<int>(top), static_cast<int>(bottom), static_cast<int>(left),
                           static_cast<int>(right));
-    } else if (m_movie->getRootNode()->getFuiNode()->getType() == 0x58) {
+        return;
+    }
+    if (m_movie->getRootNode()->getFuiNode()->getType() == 0x58) {
         static_cast<FJ_HowToPlay*>(m_movie->getRootNode()->getFuiNode())
             ->SetSafeZone(static_cast<int>(top), static_cast<int>(bottom), static_cast<int>(left),
                           static_cast<int>(right));
-    } else if (m_movie->getRootNode()->getFuiNode()->getType() == 0x5a) {
+        return;
+    }
+    if (m_movie->getRootNode()->getFuiNode()->getType() == 0x5a) {
         static_cast<FJ_TutorialPopup*>(m_movie->getRootNode()->getFuiNode())
             ->SetSafeZone(static_cast<int>(top), static_cast<int>(bottom), static_cast<int>(left),
                           static_cast<int>(right));
-    } else if (m_movie->getRootNode()->getFuiNode()->getType() != 0) {
+        return;
+    }
+    if (m_movie->getRootNode()->getFuiNode()->getType() != 0) {
         static_cast<FJ_Document*>(m_movie->getRootNode()->getFuiNode())
             ->SetSafeZone(static_cast<int>(top), static_cast<int>(bottom), static_cast<int>(left),
                           static_cast<int>(right));
@@ -703,7 +725,7 @@ bool UIScene::controlHasFocus(UIControl_Base* control)
     return controlHasFocus(control->m_controlId);
 }
 
-unsigned int UIScene::getControlFocus()
+int UIScene::getControlFocus()
 {
     return m_controlFocus;
 }
@@ -730,7 +752,9 @@ void UIScene::setVisible(bool visible)
 bool UIScene::hasTimer(int timerId)
 {
     boost::unordered_map<int, _TimerInfo>::iterator found = m_timers.find(timerId);
-    return found != m_timers.end() && found->second.active;
+    if (found != m_timers.end())
+        return found->second.active;
+    return false;
 }
 
 void UIScene::slideLeft()

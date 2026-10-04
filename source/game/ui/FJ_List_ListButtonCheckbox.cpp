@@ -42,7 +42,7 @@ void FJ_List_ListButtonCheckbox::addNewItem(const std::wstring& label, int id,
     if (m_useIggyIcons)
         item->SetTextureName(L"fourj.Button");
     else
-        item->SetTextureName(textureName);
+        item->SetTextureName(std::wstring(textureName));
 
     item->SetCheckBox(checked);
 }

@@ -30,7 +30,7 @@ void FJ_List_ListButton::addNewItem(const std::wstring& label, int id)
     }
 
     addNewListItem(button, label, id);
-    button->SetLabelAlignment(m_labelAlignment);
+    button->m_labelAlignment = m_labelAlignment;
     button->Init(label, id);
 }
 

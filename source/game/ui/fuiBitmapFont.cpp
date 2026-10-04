@@ -10,30 +10,33 @@
 #include "game/ui/fui.hpp"
 
 fuiBitmapFont::fuiBitmapFont(SFontData& fontData, unsigned short missingGlyphChar)
-    : fuiFontSet(fontData.fontName.c_str()), UIBitmapFont(fontData),
+    : fuiFontSet(fontData.fontName.c_str()), m_bitmapFont(fontData),
       m_missingGlyphChar(missingGlyphChar)
 {
     m_sFontData = &fontData;
     BufferedImage image(fontData.textureFileName, true, true, L"");
 
+    int* pixels = image.getData();
+    const int width = static_cast<int>(image.getWidth());
+    const int height = static_cast<int>(image.getHeight());
+
     m_textureIndex = static_cast<unsigned int>(gRenderer->TextureCreate());
 #ifdef RECON_NATIVE
     for (unsigned int i = 0; i < image.getWidth() * image.getHeight(); ++i)
     {
-        const unsigned int argb = static_cast<unsigned int>(image.getData()[i]);
-        unsigned char* rgba = reinterpret_cast<unsigned char*>(&image.getData()[i]);
+        const unsigned int argb = static_cast<unsigned int>(pixels[i]);
+        unsigned char* rgba = reinterpret_cast<unsigned char*>(&pixels[i]);
         rgba[0] = static_cast<unsigned char>(argb >> 16);
         rgba[1] = static_cast<unsigned char>(argb >> 8);
         rgba[2] = static_cast<unsigned char>(argb);
         rgba[3] = static_cast<unsigned char>(argb >> 24);
     }
 #else
-    fui::EndianSwapImageData(image.getData(), image.getWidth() * image.getHeight());
+    fui::EndianSwapImageData(pixels, image.getWidth() * image.getHeight());
 #endif
     gRenderer->TextureBind(static_cast<int>(m_textureIndex));
     gRenderer->TextureSetTextureLevels(1);
-    gRenderer->TextureData(static_cast<int>(image.getWidth()), static_cast<int>(image.getHeight()), image.getData(), 0,
-                           C4JRender::eTextureFormat_RGBA8);
+    gRenderer->TextureData(width, height, pixels, 0, C4JRender::eTextureFormat_RGBA8);
     m_registered = false;
 }
 
@@ -44,16 +47,17 @@ int fuiBitmapFont::getTextureIndex(float fontSize, int ttfIndex)
 
 float fuiBitmapFont::getGlyphScale(float fontSize)
 {
-    for (std::vector<GlyphScaleData>::iterator it = m_glyphScaleData.begin(); it != m_glyphScaleData.end(); ++it)
+    for (unsigned int i = 0; i < m_glyphScaleData.size(); ++i)
     {
-        if (it->fontSize == fontSize)
+        if (m_glyphScaleData[i].fontSize == fontSize)
         {
-            return it->scale;
+            return m_glyphScaleData[i].scale;
         }
     }
 
     float scale = 1.0f;
-    while ((scale + 0.5f) * (1.0f / getFontData()->getFontData().glyphWidthScale) < fontSize)
+    const float inverseWidthScale = 1.0f / m_bitmapFont.getFontData()->getFontData().glyphWidthScale;
+    while ((scale + 0.5f) * inverseWidthScale < fontSize)
     {
         scale += 1.0f;
     }
@@ -67,14 +71,13 @@ float fuiBitmapFont::getGlyphScale(float fontSize)
 
 void fuiBitmapFont::getGlyphTexPos(unsigned short codepoint, float& texX, float& texY)
 {
-    CFontData* fontData = getFontData();
-    const unsigned short glyphId = fontData->getGlyphId(codepoint);
+    const unsigned short glyphId = m_bitmapFont.getFontData()->getGlyphId(codepoint);
     int row = 0;
     int column = 0;
-    fontData->getPos(glyphId, row, column);
+    m_bitmapFont.getFontData()->getPos(glyphId, row, column);
 
-    texX = static_cast<float>(column * static_cast<int>(m_sFontData->glyphWidth)) / static_cast<float>(m_sFontData->imageWidth);
-    texY = static_cast<float>(row * static_cast<int>(m_sFontData->glyphHeight)) / static_cast<float>(m_sFontData->imageHeight);
+    texX = static_cast<float>(column * m_sFontData->glyphWidth) / static_cast<float>(m_sFontData->imageWidth);
+    texY = static_cast<float>(row * m_sFontData->glyphHeight) / static_cast<float>(m_sFontData->imageHeight);
 }
 
 void fuiBitmapFont::getGlyphWidthHeight(float& texWidth, float& texHeight)
@@ -86,11 +89,11 @@ void fuiBitmapFont::getGlyphWidthHeight(float& texWidth, float& texHeight)
 float fuiBitmapFont::renderGlyph(unsigned short codepoint, float x, float y, float fontSize, unsigned int colour,
                                  std::vector<fuiFontSet::FontVert> (&verts)[4])
 {
-    CFontData* fontData = getFontData();
+    CFontData* fontData = m_bitmapFont.getFontData();
     const unsigned short glyphId = fontData->getGlyphId(codepoint);
     const float glyphScale = getGlyphScale(fontSize);
-    const float right = x + static_cast<float>(getFontData()->getFontData().glyphWidth) * glyphScale;
-    const float bottom = y + static_cast<float>(getFontData()->getFontData().glyphHeight) * glyphScale;
+    const float right = x + static_cast<float>(m_bitmapFont.getFontData()->getFontData().glyphWidth) * glyphScale;
+    const float bottom = y + static_cast<float>(m_bitmapFont.getFontData()->getFontData().glyphHeight) * glyphScale;
 
     float texX;
     float texY;
@@ -126,15 +129,15 @@ float fuiBitmapFont::renderGlyph(unsigned short codepoint, float x, float y, flo
 
 float fuiBitmapFont::getRenderedGlyphWidth(unsigned short codepoint, float fontSize)
 {
-    const unsigned short glyphId = getFontData()->getGlyphId(codepoint);
+    const unsigned short glyphId = m_bitmapFont.getFontData()->getGlyphId(codepoint);
     const float glyphScale = getGlyphScale(fontSize);
-    return static_cast<float>(static_cast<int>(getFontData()->getWidth(glyphId))) * glyphScale;
+    return static_cast<float>(static_cast<int>(m_bitmapFont.getFontData()->getWidth(glyphId))) * glyphScale;
 }
 
 float fuiBitmapFont::getRenderedGlyphHeight(unsigned short codepoint, float fontSize)
 {
     const float glyphScale = getGlyphScale(fontSize);
-    return static_cast<float>(getFontData()->getFontData().glyphHeight) * glyphScale - 2.0f;
+    return static_cast<float>(m_bitmapFont.getFontData()->getFontData().glyphHeight) * glyphScale - 2.0f;
 }
 
 bool fuiBitmapFont::isBitmapFont()
@@ -164,16 +167,16 @@ int fuiBitmapFont::getFallbackFontTexture(float fontSize)
 
 void fuiBitmapFont::loadGlyph(int codepoint, float fontSize)
 {
-    getFontData()->getGlyphId(static_cast<unsigned int>(codepoint));
+    m_bitmapFont.getFontData()->getGlyphId(static_cast<unsigned int>(codepoint));
 }
 
 bool fuiBitmapFont::isGlyphLoaded(int codepoint, float fontSize)
 {
-    getFontData()->getGlyphId(static_cast<unsigned int>(codepoint));
+    m_bitmapFont.getFontData()->getGlyphId(static_cast<unsigned int>(codepoint));
     return true;
 }
 
 bool fuiBitmapFont::hasGlyph(int codepoint)
 {
-    return getFontData()->getGlyphId(static_cast<unsigned int>(codepoint)) != 0;
+    return m_bitmapFont.getFontData()->getGlyphId(static_cast<unsigned int>(codepoint)) != 0;
 }

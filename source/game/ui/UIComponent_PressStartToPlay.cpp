@@ -13,6 +13,7 @@
 #include "game/ui/FJ_PressStartToPlay.hpp"
 #include "game/ui/UILayer.hpp"
 #include "game/core/StringUtils.hpp"
+#include "game/core/StringConversion.hpp"
 #include "game/ui/UIString.hpp"
 #include "game/ui/UIScene_AchievementsMenu.hpp"
 #include "game/ui/fuiFile.hpp"
@@ -41,18 +42,27 @@ UIComponent_PressStartToPlay::Toast::Toast(const Toast& other)
 }
 
 UIComponent_PressStartToPlay::UIComponent_PressStartToPlay(int type, void* data, UILayer* layer)
-    : UIScene(type, layer), m_showSaveIcon(false), m_showAutosaveTimer(false),
-      m_showTrialTimer(false), m_showPressStart(), m_trialTimer(), m_autosaveTimer(),
-      m_trialTimerLabel(), m_playerNameLabel(), m_saveIcon(), m_mainPanel(), m_achievement(0),
-      m_achievementToastShowing(false), m_player(0), m_holdToShowAchievements(false),
-      m_holdActionCancelled(false), m_holdCancelPending(false), m_achievementToasts()
+    : UIScene(type, layer)
 {
     initialiseMovie();
-    m_trialTimerLabel.init(UIString(L"PressStartToPlay"));
+    m_showSaveIcon = false;
+    m_showAutosaveTimer = false;
+    m_showTrialTimer = false;
+    for (int i = 0; i < 4; ++i)
+        m_showPressStart[i] = false;
+    m_trialTimer = L"";
+    m_autosaveTimer = L"";
+    m_trialTimerLabel.init(UIString(L""));
     m_trialTimerLabel.setVisible(false);
+    m_achievementToastShowing = false;
+    m_achievement = 0;
+    m_player = 0;
+    m_holdToShowAchievements = false;
+    m_holdActionCancelled = false;
+    m_holdCancelPending = false;
     SetText(UIString(L10N::GetString(IDS_PRESS_START_TO_JOIN)), false);
     m_saveIcon.setVisible(false);
-    m_playerNameLabel.init(UIString(L"PressStartToPlay"));
+    m_playerNameLabel.init(UIString(L""));
     m_mainPanel.setVisible(false);
     m_playerNameLabel.setVisible(false);
 }
@@ -208,20 +218,15 @@ int UIComponent_PressStartToPlay::AvatarReturned(void* context, unsigned char* d
     {
         scene->m_achievement = achievement;
         scene->m_player = player;
+        std::wstring texture = L"PlayerIcon" + _toString<int>(player);
         scene->registerTexture(achievement);
-        wchar_t suffix[32];
-        std::swprintf(suffix, 32, L"%d", player);
-        std::wstring texture(L"PlayerIcon");
-        texture += suffix;
         scene->registerSubstitutionTexture(texture, 0, size, true);
         AchievementInfo* info = (AchievementInfo*)(unsigned int)UIScene_AchievementsMenu::GetInfo(achievement);
-        Toast toast;
-        toast.title = L10N::GetString(info->title);
-        std::wstring description = L10N::GetString(0x4523129e);
-        description = replaceAll(description, L"{*CONTROLLER_VK_X*}", L"{*CONTROLLER_VK_Y*}");
-        toast.description = gApp.FormatHTMLString(achievement, description, -1);
-        toast.gamerPic = texture;
-        toast.achievementIcon = info->icon;
+        std::wstring title = L10N::GetString(info->title);
+        std::wstring text = L10N::GetString(0x4523129e);
+        std::wstring description = gApp.FormatHTMLString(
+            player, replaceAll(text, L"{*CONTROLLER_VK_X*}", L"{*CONTROLLER_VK_Y*}"), -1);
+        Toast toast(title, description, texture, info->icon);
         if (!scene->m_achievementToastShowing)
             scene->ShowAchievementToast(toast);
         else
@@ -278,9 +283,10 @@ void UIComponent_PressStartToPlay::handleReload()
     bool any = false;
     for (int i = 0; i < 4; ++i)
     {
-        if (m_showPressStart[i])
+        bool show = m_showPressStart[i];
+        any |= show;
+        if (show)
         {
-            any = true;
             addTimer(0, 3000);
             static_cast<FJ_PressStartToPlay*>(m_movie->getRootNode()->getFuiNode())->ShowController(i, false);
         }

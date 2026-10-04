@@ -50,7 +50,8 @@ void UIControl_LeaderboardList::initLeaderboard(int focusRank, int totalEntries,
     FJ_LeaderboardList* list = m_fuiRenderNode->getFuiNode()->asFJ_LeaderboardList();
     list->InitLeaderboard(focusRank, totalEntries, numColumns);
     if (!m_touchBoxAdded) {
-        if (m_scene->getSceneType() == 4 || m_scene->getSceneType() == 6)
+        int layerId = m_scene->m_layer->m_layerId;
+        if (layerId == 4 || layerId == 6)
             gConsoleUIController.TouchBoxAdd(this, m_scene);
         m_touchBoxAdded = true;
     }
@@ -58,11 +59,10 @@ void UIControl_LeaderboardList::initLeaderboard(int focusRank, int totalEntries,
 
 void UIControl_LeaderboardList::setColumnIcon(int column, int icon)
 {
-    if (icon <= 32000)
-        icon = 0;
-    else
-        icon -= 32000;
-    m_fuiRenderNode->getFuiNode()->asFJ_LeaderboardList()->SetColumnIcon(column, icon);
+    int offsetIcon = 0;
+    if (icon > 32000)
+        offsetIcon = icon - 32000;
+    m_fuiRenderNode->getFuiNode()->asFJ_LeaderboardList()->SetColumnIcon(column, offsetIcon);
 }
 
 void UIControl_LeaderboardList::addDataSet(bool loading, int rank, int value,
@@ -75,13 +75,27 @@ void UIControl_LeaderboardList::addDataSet(bool loading, int rank, int value,
                                             const std::wstring& sixthColumnText,
                                             const std::wstring& seventhColumnText)
 {
-    const std::wstring* firstColumn = firstColumnText.empty() ? 0 : &firstColumnText;
-    const std::wstring* secondColumn = secondColumnText.empty() ? 0 : &secondColumnText;
-    const std::wstring* thirdColumn = thirdColumnText.empty() ? 0 : &thirdColumnText;
-    const std::wstring* fourthColumn = fourthColumnText.empty() ? 0 : &fourthColumnText;
-    const std::wstring* fifthColumn = fifthColumnText.empty() ? 0 : &fifthColumnText;
-    const std::wstring* sixthColumn = sixthColumnText.empty() ? 0 : &sixthColumnText;
-    const std::wstring* seventhColumn = seventhColumnText.empty() ? 0 : &seventhColumnText;
+    const std::wstring* firstColumn = 0;
+    if (!firstColumnText.empty())
+        firstColumn = &firstColumnText;
+    const std::wstring* secondColumn = 0;
+    if (!secondColumnText.empty())
+        secondColumn = &secondColumnText;
+    const std::wstring* thirdColumn = 0;
+    if (!thirdColumnText.empty())
+        thirdColumn = &thirdColumnText;
+    const std::wstring* fourthColumn = 0;
+    if (!fourthColumnText.empty())
+        fourthColumn = &fourthColumnText;
+    const std::wstring* fifthColumn = 0;
+    if (!fifthColumnText.empty())
+        fifthColumn = &fifthColumnText;
+    const std::wstring* sixthColumn = 0;
+    if (!sixthColumnText.empty())
+        sixthColumn = &sixthColumnText;
+    const std::wstring* seventhColumn = 0;
+    if (!seventhColumnText.empty())
+        seventhColumn = &seventhColumnText;
     m_fuiRenderNode->getFuiNode()->asFJ_LeaderboardList()->AddDataSet(loading, rank, value, gamertag,
         complete, firstColumn, secondColumn, thirdColumn, fourthColumn, fifthColumn,
         sixthColumn, seventhColumn);

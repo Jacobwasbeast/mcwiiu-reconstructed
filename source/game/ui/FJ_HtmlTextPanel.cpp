@@ -52,9 +52,9 @@ void FJ_HtmlTextPanel::SetLabel(const std::wstring& label)
 
         m_textField->setX(m_pointerTextPanel->getX() + 4.0f);
 
-        FJ_FuiNode* panelContents = m_pointerTextPanel->getChildAt(0);
-        panelContents->setWidth(static_cast<float>(Math::round(fCharHeight * 0.8f + m_textField->getWidth())));
-        panelContents->setHeight(m_textField->getHeight() + fCharHeight);
+        FJ_FuiNode* panelWidthNode = m_pointerTextPanel->getChildAt(0);
+        panelWidthNode->setWidth(static_cast<float>(Math::round(fCharHeight * 0.8f + m_textField->getWidth())));
+        m_pointerTextPanel->getChildAt(0)->setHeight(m_textField->getHeight() + fCharHeight);
         m_textField->setX(static_cast<float>(Math::round(fCharHeight * 0.35f + m_pointerTextPanel->getX())));
         m_textField->setY(static_cast<float>(Math::round(m_pointerTextPanel->getY() + static_cast<float>(charHeight / 2))));
     }

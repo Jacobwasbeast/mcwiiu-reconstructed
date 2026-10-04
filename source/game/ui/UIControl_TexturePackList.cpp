@@ -18,9 +18,13 @@ void UIControl_TexturePackList::init(const std::wstring& label, int id)
     m_label = UIString(label);
     m_controlId = id;
     static_cast<FJ_TexturePackList*>(m_fuiRenderNode->getFuiNode())->Init(label, id);
-    int sceneType = m_scene->getSceneType();
-    if (sceneType == 4 || (sceneType > 5 && sceneType < 8)) {
+    unsigned int layerId = m_scene->m_layer->m_layerId;
+    switch (layerId) {
+    case 4:
+    case 6:
+    case 7:
         gConsoleUIController.TouchBoxAdd(this, m_scene);
+        break;
     }
 }
 
@@ -97,8 +101,9 @@ unsigned int UIControl_TexturePackList::CanTouchTrigger(int x, int y)
 
 int UIControl_TexturePackList::GetRealHeight()
 {
-    if (m_fuiRenderNode == NULL) {
-        return 0;
+    int height = 0;
+    if (m_fuiRenderNode != NULL) {
+        height = (int)static_cast<FJ_TexturePackList*>(m_fuiRenderNode->getFuiNode())->GetRealHeight();
     }
-    return (int)static_cast<FJ_TexturePackList*>(m_fuiRenderNode->getFuiNode())->GetRealHeight();
+    return height;
 }

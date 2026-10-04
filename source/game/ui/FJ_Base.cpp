@@ -50,7 +50,8 @@ void FJ_Base::CheckLabelWidths(std::vector<std::wstring>& labels)
     }
 }
 
-FJ_FuiNode* FJ_Base::getObjListParent() { return m_objListParent; }
+FJ_Base* FJ_Base::getObjListParent() { return static_cast<FJ_Base*>(m_objListParent); }
+
 uint32_t FJ_Base::getId() { return static_cast<uint32_t>(m_id); }
 
 void FJ_Base::LostFocus()
@@ -132,8 +133,8 @@ void FJ_Base::CheckLabelWidth(const std::wstring& label)
 {
     fuiRenderNodeEditText* field = GetTextField();
     field->setText(label);
-    int width = static_cast<int>(field->getWidth());
-    if (m_maxLabelWidth < width)
+    int width = static_cast<int>(field->m_textWidth);
+    if (width > m_maxLabelWidth)
         m_maxLabelWidth = width;
     field->setText(std::wstring(L" "));
 }
@@ -320,7 +321,7 @@ void FJ_Base::SetLabel(const std::wstring& label)
     if (m_objectWidth == -1.0f)
     {
         fuiRect rect = getRect(this);
-        m_objectWidth = getWidth() + rect.xMin + rect.xMin;
+        m_objectWidth = rect.xMin + rect.xMin + getWidth();
     }
     if (m_objectHeight == -1.0f)
     {
@@ -369,8 +370,8 @@ void FJ_Base::SetLabel(const std::wstring& label)
     {
         field->setAutoSize(TextFieldAutoSizeCenter);
         field->setWidth(static_cast<float>(m_ellipsisWidth));
-        std::wstring current = field->getText();
-        field->setText(std::wstring(L"\n") + current);
+        std::wstring text = std::wstring(L"\n").append(field->getText());
+        field->setText(text);
     }
     else if (m_isLabel)
     {
@@ -378,9 +379,8 @@ void FJ_Base::SetLabel(const std::wstring& label)
     }
     if (m_textContainerVisible)
         field->setWidth(m_objectWidth);
-    switch (m_labelAlignment)
+    if (m_labelAlignment == 2)
     {
-    case 2:
         if (container != 0)
         {
             container->setX(0.0f);
@@ -393,45 +393,39 @@ void FJ_Base::SetLabel(const std::wstring& label)
             float y = Math::round((m_objectHeight / getScaleY() - field->getHeight()) * 0.5f);
             field->setY(y);
         }
-        break;
-    case 3:
+    }
+    else if (m_labelAlignment == 3)
+    {
         if (container != 0)
         {
             container->setX(0.0f);
             container->setY(0.0f);
         }
-        {
-            float x = Math::round(m_objectWidth / getScaleX() - field->getWidth());
-            field->setX(x);
-            float y = Math::round((m_objectHeight / getScaleY() - field->getHeight()) * 0.5f);
-            field->setY(y);
-        }
-        break;
-    case 1:
+        float x = Math::round(m_objectWidth / getScaleX() - field->getWidth());
+        field->setX(x);
+        float y = Math::round((m_objectHeight / getScaleY() - field->getHeight()) * 0.5f);
+        field->setY(y);
+    }
+    else if (m_labelAlignment == 1)
+    {
         if (container != 0)
             container->setY(0.0f);
         field->setX(0.0f);
-        {
-            float y = Math::round((m_objectHeight / getScaleY() - field->getHeight()) * 0.5f);
-            field->setY(y);
-        }
-        break;
-    case 4:
+        float y = Math::round((m_objectHeight / getScaleY() - field->getHeight()) * 0.5f);
+        field->setY(y);
+    }
+    else if (m_labelAlignment == 4)
+    {
         if (container != 0)
             container->setY(0.0f);
         field->setX(Math::round(field->getX()));
-        {
-            float y = Math::round((m_objectHeight / getScaleY() - field->getHeight()) * 0.5f);
-            field->setY(y);
-        }
-        break;
-    default:
-        if (m_isLabel)
-        {
-            field->setX(0.0f);
-            field->setY(0.0f);
-        }
-        break;
+        float y = Math::round((m_objectHeight / getScaleY() - field->getHeight()) * 0.5f);
+        field->setY(y);
+    }
+    else if (m_isLabel)
+    {
+        field->setX(0.0f);
+        field->setY(0.0f);
     }
 }
 
@@ -440,7 +434,10 @@ const std::wstring& FJ_Base::GetLabel() { return m_label; }
 void FJ_Base::SetTextOnly(const std::wstring& text)
 {
     fuiRenderNodeEditText* field = GetTextField();
-    field->setText(text.empty() ? std::wstring(L" ") : text);
+    if (text == L"")
+        field->setText(std::wstring(L" "));
+    else
+        field->setText(text);
 }
 
 void FJ_Base::GetLabelTooWide(fuiRenderNodeEditText* field)

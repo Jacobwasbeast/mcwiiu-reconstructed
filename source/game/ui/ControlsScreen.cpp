@@ -7,8 +7,12 @@
 #include "game/core/SmallButton.hpp"
 
 ControlsScreen::ControlsScreen(Screen* parent, Options* options)
-    : Screen(), mParent(parent), mTitle(L"Controls"), mOptions(options), mSelectedKey(-1)
+    : Screen()
 {
+    mTitle = L"Controls";
+    mParent = parent;
+    mOptions = options;
+    mSelectedKey = -1;
 }
 
 ControlsScreen::~ControlsScreen()
@@ -40,7 +44,8 @@ void ControlsScreen::buttonClicked(Button* button)
 {
     for (int key = 0; key < 14; ++key)
     {
-        mButtons[key]->mMessage = mOptions->getKeyMessage(key);
+        Button* keyButton = mButtons[key];
+        keyButton->mMessage = mOptions->getKeyMessage(key);
     }
 
     if (button->mId == 200)
@@ -58,7 +63,8 @@ void ControlsScreen::keyPressed(wchar_t key, int action)
     if (mSelectedKey >= 0)
     {
         mOptions->setKey(mSelectedKey, action);
-        mButtons[mSelectedKey]->mMessage = mOptions->getKeyMessage(mSelectedKey);
+        Button* keyButton = mButtons[mSelectedKey];
+        keyButton->mMessage = mOptions->getKeyMessage(mSelectedKey);
         mSelectedKey = -1;
         return;
     }

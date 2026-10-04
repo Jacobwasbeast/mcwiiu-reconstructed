@@ -12,6 +12,7 @@
 #include "game/ui/UIControl_HTMLLabel.hpp"
 #include "game/ui/UIControl_Label.hpp"
 #include "game/world/biome/BiomeSource.hpp"
+#include "game/world/biome/arrayWithLength.hpp"
 
 class C4JThreadImpl;
 class LaunchMoreOptionsMenuInitData;
@@ -29,8 +30,7 @@ public:
         unsigned char mPadding[3];
         UIControl_BitmapIcon mImage;
         int mTexture;
-        unsigned char* mTextureData;
-        unsigned int mTextureDataSize;
+        arrayWithLength<unsigned char> mPixels;
     };
 
     enum ENavDir

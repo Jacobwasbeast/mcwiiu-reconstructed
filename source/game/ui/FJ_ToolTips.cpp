@@ -150,8 +150,9 @@ void FJ_ToolTips::UpdateLayout()
     if (bottom == 0)
         bottom = 2;
     int left = getISafeZoneLeft();
-    fuiRect firstRect = m_toolTipNodes[0]->getRect(m_toolTipNodes[0]);
-    int y = static_cast<int>(getStage()->getStageHeight() - m_toolTipNodes[0]->getHeight() - bottom - firstRect.yMin);
+    FJ_FuiNode** first = &m_toolTipNodes[0];
+    fuiRect firstRect = (*first)->getRect(*first);
+    int y = static_cast<int>(getStage()->getStageHeight() - (*first)->getHeight() - bottom - firstRect.yMin);
     if (left == 0)
         left = 2;
 
@@ -167,8 +168,8 @@ void FJ_ToolTips::UpdateLayout()
                 m_touchNodes[i]->setX(left);
                 m_touchNodes[i]->setY(y - m_toolTipNodes[i]->getHeight());
                 m_touchNodes[i]->setWidth(m_toolTipNodes[i]->getWidth());
-                fuiRect rect = m_toolTipNodes[i]->getRect(m_toolTipNodes[i]);
-                m_touchNodes[i]->setHeight(m_toolTipNodes[i]->getHeight() * 2 + rect.yMin);
+                FJ_FuiNode** node = &m_toolTipNodes[i];
+                m_touchNodes[i]->setHeight((*node)->getRect(*node).yMin + (*node)->getHeight() * 2);
             }
 
             bool emptyLabel = false;

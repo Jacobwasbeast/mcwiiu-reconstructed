@@ -2,6 +2,7 @@
 #include "game/core/StringIds.hpp"
 
 #include "game/core/CMinecraftApp.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/L10N.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/minigame/Tutorial.hpp"
@@ -31,7 +32,6 @@ struct _ContainerMenuArgs
 
 UIScene_ContainerMenu::UIScene_ContainerMenu(int playerId, void* data, UILayer* layer)
     : UIScene_AbstractContainerMenu(playerId, layer),
-      m_largeChest(false),
       m_containerList(),
       m_chestLabel()
 {
@@ -44,10 +44,9 @@ UIScene_ContainerMenu::UIScene_ContainerMenu(int playerId, void* data, UILayer* 
     Minecraft* minecraft = Minecraft::GetInstance();
     boost::shared_ptr<InteractionObject> interaction = boost::dynamic_pointer_cast<InteractionObject>(args->second);
     const int typeId = interaction != NULL ? interaction->getTypeId(false) : -1;
-    const std::wstring customName = args->second->getCustomName();
     AbstractContainerMenu* menu = NULL;
 
-    if (customName.empty())
+    if (args->second->getName().empty())
     {
         if (typeId == ClientboundContainerOpenPacket::BONUS_CHEST)
             m_chestLabel.init(UIString(L10N::GetString(IDS_BONUS_CHEST)));
@@ -64,15 +63,15 @@ UIScene_ContainerMenu::UIScene_ContainerMenu(int playerId, void* data, UILayer* 
     }
     else
     {
-        m_chestLabel.init(UIString(customName));
+        m_chestLabel.init(UIString(args->second->getName()));
     }
 
     if (typeId == ClientboundContainerOpenPacket::SHULKER_BOX)
         menu = new ShulkerBoxMenu(args->first, args->second,
-                                  boost::dynamic_pointer_cast<MultiplayerLocalPlayer>(minecraft->mLocalPlayers[playerId]));
+                                  boost::dynamic_pointer_cast<Player>(minecraft->mLocalPlayers[playerId]));
     if (menu == NULL)
         menu = new ChestMenu(args->first, args->second,
-                             boost::dynamic_pointer_cast<MultiplayerLocalPlayer>(minecraft->mLocalPlayers[playerId]));
+                             boost::dynamic_pointer_cast<Player>(minecraft->mLocalPlayers[playerId]));
 
     if (minecraft->mGameModes[playerId] != NULL)
     {
@@ -91,6 +90,7 @@ UIScene_ContainerMenu::UIScene_ContainerMenu(int playerId, void* data, UILayer* 
     m_containerList.addSlots(0, containerSlots);
 
     delete args;
+    m_takeAllEnabled = true;
 }
 
 UIScene_ContainerMenu::~UIScene_ContainerMenu()
@@ -100,19 +100,20 @@ UIScene_ContainerMenu::~UIScene_ContainerMenu()
 unsigned int UIScene_ContainerMenu::getSectionColumns(
     IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    return section <= IUIScene_AbstractContainerMenu::ESceneSection_ContainerChest ? 9U : 0U;
+    return static_cast<unsigned int>(section) <= IUIScene_AbstractContainerMenu::ESceneSection_ContainerChest ? 9U : 0U;
 }
 
 unsigned int UIScene_ContainerMenu::getSectionRows(
     IUIScene_AbstractContainerMenu::ESceneSection section)
 {
+    unsigned int rows = 0;
     if (section == IUIScene_AbstractContainerMenu::ESceneSection_ContainerHotbar)
-        return 1;
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_ContainerInventory)
-        return GetInventoryRows();
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_ContainerChest)
-        return static_cast<unsigned int>((GetBaseSlotCount() - 36) / 9);
-    return 0;
+        rows = 1;
+    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_ContainerInventory)
+        rows = GetInventoryRows();
+    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_ContainerChest)
+        rows = (static_cast<unsigned int>(m_menu->m_slots.size()) - PLAYER_INVENTORY_SLOTS) / 9;
+    return rows;
 }
 
 unsigned int UIScene_ContainerMenu::GetSectionAndSlotInDirection(
@@ -176,17 +177,20 @@ unsigned int UIScene_ContainerMenu::GetSectionAndSlotInDirection(
 void UIScene_ContainerMenu::GetPositionOfSection(
     IUIScene_AbstractContainerMenu::ESceneSection section, _UIVec2D* position)
 {
-    UIControl* control = 0;
     if (section == IUIScene_AbstractContainerMenu::ESceneSection_ContainerHotbar)
-        control = &m_hotbarList;
-    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_ContainerInventory)
-        control = &m_inventoryList;
-    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_ContainerChest)
-        control = &m_containerList;
-    if (control != 0 && position != 0)
     {
-        position->x = static_cast<float>(control->getXPos());
-        position->y = static_cast<float>(control->getYPos());
+        position->x = static_cast<float>(m_hotbarList.getXPos());
+        position->y = static_cast<float>(m_hotbarList.getYPos());
+    }
+    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_ContainerInventory)
+    {
+        position->x = static_cast<float>(m_inventoryList.getXPos());
+        position->y = static_cast<float>(m_inventoryList.getYPos());
+    }
+    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_ContainerChest)
+    {
+        position->x = static_cast<float>(m_containerList.getXPos());
+        position->y = static_cast<float>(m_containerList.getYPos());
     }
 }
 
@@ -194,27 +198,34 @@ void UIScene_ContainerMenu::GetItemScreenData(
     IUIScene_AbstractContainerMenu::ESceneSection section, int slot,
     _UIVec2D* position, _UIVec2D* size)
 {
-    UIControl* control = 0;
+    _UIVec2D controlSize;
     if (section == IUIScene_AbstractContainerMenu::ESceneSection_ContainerHotbar)
-        control = &m_hotbarList;
-    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_ContainerInventory)
-        control = &m_inventoryList;
-    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_ContainerChest)
-        control = &m_containerList;
-    if (control != 0 && position != 0 && size != 0)
     {
-        const unsigned int columns = getSectionColumns(section);
-        const unsigned int rows = getSectionRows(section);
-        size->x = static_cast<float>(control->getWidth() / static_cast<float>(columns));
-        size->y = static_cast<float>(control->getHeight() / static_cast<float>(rows));
-        position->x = static_cast<float>(slot % static_cast<int>(columns)) * size->x;
-        position->y = static_cast<float>(slot / static_cast<int>(columns)) * size->y;
+        controlSize.x = m_hotbarList.getWidth();
+        controlSize.y = m_hotbarList.getHeight();
     }
+    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_ContainerInventory)
+    {
+        controlSize.x = m_inventoryList.getWidth();
+        controlSize.y = m_inventoryList.getHeight();
+    }
+    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_ContainerChest)
+    {
+        controlSize.x = m_containerList.getWidth();
+        controlSize.y = m_containerList.getHeight();
+    }
+    const int rows = getSectionRows(section);
+    const int columns = getSectionColumns(section);
+    size->x = controlSize.x / static_cast<float>(columns);
+    size->y = controlSize.y / static_cast<float>(rows);
+    position->x = static_cast<float>(slot % columns) * size->x;
+    position->y = static_cast<float>(slot / columns) * size->y;
 }
 
 void UIScene_ContainerMenu::setSectionSelectedSlot(
     IUIScene_AbstractContainerMenu::ESceneSection section, int slot, int direction, bool wrap)
 {
+    const int highlightSlot = slot + direction * getSectionColumns(section);
     UIControl_SlotList* list = 0;
     if (section == IUIScene_AbstractContainerMenu::ESceneSection_ContainerHotbar)
         list = &m_hotbarList;
@@ -222,17 +233,17 @@ void UIScene_ContainerMenu::setSectionSelectedSlot(
         list = &m_inventoryList;
     else if (section == IUIScene_AbstractContainerMenu::ESceneSection_ContainerChest)
         list = &m_containerList;
-    if (wrap && list != 0)
-        list->setHighlightSlot(slot + direction * static_cast<int>(getSectionColumns(section)));
+    if (wrap)
+        list->setHighlightSlot(highlightSlot);
 }
 
 int UIScene_ContainerMenu::getSectionStartOffset(
     IUIScene_AbstractContainerMenu::ESceneSection section)
 {
     if (section == IUIScene_AbstractContainerMenu::ESceneSection_ContainerHotbar)
-        return GetBaseSlotCount() - 9;
+        return static_cast<int>(m_menu->m_slots.size()) - 9;
     if (section == IUIScene_AbstractContainerMenu::ESceneSection_ContainerInventory)
-        return GetBaseSlotCount() - 36;
+        return static_cast<int>(m_menu->m_slots.size()) - PLAYER_INVENTORY_SLOTS;
     return 0;
 }
 
@@ -246,9 +257,15 @@ unsigned int UIScene_ContainerMenu::mapElementsAndNames()
     UIScene_AbstractContainerMenu::mapElementsAndNames();
     fuiRenderNode* root = m_movie->getRootNode();
     fuiRenderNode* panel = m_mainPanel.getFuiRenderNode();
-    m_containerList.setupControl(this, panel, std::string("containerList"));
+    {
+        std::string name("containerList");
+        m_containerList.setupControl(this, panel, name);
+    }
     m_controls.push_back(&m_containerList);
-    m_chestLabel.setupControl(this, panel, std::string("chestLabel"));
+    {
+        std::string name("chestLabel");
+        m_chestLabel.setupControl(this, panel, name);
+    }
     m_controls.push_back(&m_chestLabel);
     (void)root;
     return 1;
@@ -257,19 +274,19 @@ unsigned int UIScene_ContainerMenu::mapElementsAndNames()
 std::wstring UIScene_ContainerMenu::getMoviePath()
 {
     if (m_largeChest)
-        return g_pApp->GetLocalPlayerCount() < 2 ?
-            std::wstring(L"ChestLargeMenu") : std::wstring(L"ChestLargeMenuSplit");
-    return g_pApp->GetLocalPlayerCount() < 2 ?
-        std::wstring(L"ChestMenu") : std::wstring(L"ChestMenuSplit");
+        return 1 < gApp.GetLocalPlayerCount() ?
+            std::wstring(L"ChestLargeMenuSplit") : std::wstring(L"ChestLargeMenu");
+    return 1 < gApp.GetLocalPlayerCount() ?
+        std::wstring(L"ChestMenuSplit") : std::wstring(L"ChestMenu");
 }
 
 void UIScene_ContainerMenu::handleReload()
 {
-    const int count = GetBaseSlotCount();
-    Initialize(true, m_playerId, m_menu, true, count - 36,
+    const int count = static_cast<int>(m_menu->m_slots.size()) - PLAYER_INVENTORY_SLOTS;
+    Initialize(true, m_playerId, m_menu, true, count,
                                 IUIScene_AbstractContainerMenu::ESceneSection_ContainerHotbar,
                                 IUIScene_AbstractContainerMenu::ESceneSection_ContainerMax, false);
-    m_containerList.addSlots(0, count - 36);
+    m_containerList.addSlots(0, count);
 }
 
 UIControl* UIScene_ContainerMenu::getSection(

@@ -1,10 +1,13 @@
 #include "game/ui/FJ_MultilistMenu.hpp"
 
+#include "game/ui/FJ_Base.hpp"
+#include "game/ui/FJ_CheckBox.hpp"
 #include "game/ui/FJ_Event.hpp"
 #include "game/ui/FJ_FuiNode.hpp"
 #include "game/ui/FJ_FuiNodeStage.hpp"
 #include "game/ui/FJ_List.hpp"
 #include "game/ui/FJ_List_MultiList.hpp"
+#include "game/ui/UIScene.hpp"
 #include "game/util/Math.hpp"
 
 FJ_MultilistMenu::FJ_MultilistMenu(fuiRenderNode* renderNode)
@@ -15,15 +18,11 @@ FJ_MultilistMenu::FJ_MultilistMenu(fuiRenderNode* renderNode)
 
 void FJ_MultilistMenu::handleCheckboxToggled(FJ_Event* event)
 {
-    if (event == NULL || event->m_pTarget == NULL)
-        return;
-
-    if (event->m_pTarget->asFJ_CheckBox() == NULL)
-        return;
-
-    FJ_FuiNode* parent = event->m_pTarget->getParent();
-    if (parent != NULL)
-        parent->dispatchEvent(event);
+    FJ_CheckBox* checkBox = event->m_pTarget->asFJ_CheckBox();
+    if (checkBox != NULL)
+    {
+        m_pCallbackScene->handlePress(static_cast<FJ_Base*>(checkBox->getObjListParent())->getId(), checkBox->getId());
+    }
 }
 
 void FJ_MultilistMenu::_handleCheckboxToggled(FJ_FuiNode* node, FJ_Event* event)
@@ -45,11 +44,10 @@ void FJ_MultilistMenu::SetSafeZone(int top, int bottom, int left, int right)
 {
     FJ_Document::SetSafeZone(top, bottom, left, right);
 
-    const float stageHeight = getStage()->getStageHeight();
-    if (stageHeight != 360.0 && stageHeight != 540.0)
-        return;
-
-    setX(-right);
+    if (getStage()->getStageHeight() == 360.0f || getStage()->getStageHeight() == 540.0f)
+    {
+        setX(-right);
+    }
 }
 
 void FJ_MultilistMenu::DoVerticalResizeCheck()
@@ -62,34 +60,32 @@ void FJ_MultilistMenu::DoVerticalResizeCheck()
     float listHeight = static_cast<float>(multiList->asFJ_List_MultiList()->GetListHeight());
     if (listHeight < multiList->getHeight())
     {
-        float oldChildHeight = backgroundList->getChildAt(0)->getHeight();
+        int oldChildHeight = static_cast<int>(backgroundList->getChildAt(0)->getHeight());
         backgroundList->getChildAt(0)->setHeight(
             listHeight + 2.0f * (multiList->getY() - backgroundList->getY()));
-
-        float newChildHeight = backgroundList->getChildAt(0)->getHeight();
         backgroundText->getChildAt(0)->setHeight(
-            newChildHeight - 2.0f * (backgroundText->getY() - backgroundList->getY()));
+            backgroundList->getChildAt(0)->getHeight()
+            - 2.0f * (backgroundText->getY() - backgroundList->getY()));
 
         if (getStage()->getStageHeight() != 360.0f && getStage()->getStageHeight() != 540.0f)
         {
-            float thirdHeight = oldChildHeight / 3.0f;
-            float latestChildHeight = backgroundList->getChildAt(0)->getHeight();
-            int rounded = Math::round(thirdHeight - latestChildHeight * 0.5f);
-            int safeDelta = rounded;
-            int safeBottom = getISafeZoneBottom();
-            if (safeBottom < safeDelta)
-                safeDelta -= safeBottom;
+            float thirdHeight = static_cast<float>(oldChildHeight) / 3.0f;
+            int rounded = Math::round(thirdHeight - backgroundList->getChildAt(0)->getHeight() * 0.5f);
+            int targetY = static_cast<int>(static_cast<float>(rounded) + backgroundList->getY());
+            int safeDelta = static_cast<int>(static_cast<float>(targetY) - backgroundList->getY());
+            if (getISafeZoneBottom() < safeDelta)
+            {
+                safeDelta -= getISafeZoneBottom();
+            }
             float delta = static_cast<float>(safeDelta);
-            if (delta > 0.0f)
+            if (backgroundList->getY() < backgroundList->getY() + delta)
             {
                 multiList->incY(delta);
                 backgroundList->incY(delta);
                 description->incY(delta);
                 backgroundText->incY(delta);
-
-                float bgTextHeight = backgroundText->getHeight();
                 description->setHeight(
-                    bgTextHeight - 2.0f * (description->getY() - backgroundText->getY()));
+                    backgroundText->getHeight() - 2.0f * (description->getY() - backgroundText->getY()));
             }
         }
     }
@@ -97,83 +93,71 @@ void FJ_MultilistMenu::DoVerticalResizeCheck()
     if (getStage()->getStageHeight() == 360.0f || getStage()->getStageHeight() == 540.0f)
     {
         float stageHeight = getStage()->getStageHeight();
-        float childHeight = backgroundList->getChildAt(0)->getHeight();
-        int rounded = Math::round((stageHeight - childHeight) * 0.5f);
-        int safeDelta = rounded;
-        int safeBottom = getISafeZoneBottom();
-        if (safeBottom < safeDelta)
-            safeDelta -= safeBottom;
+        int rounded = Math::round(stageHeight * 0.5f - backgroundList->getChildAt(0)->getHeight() * 0.5f);
+        int safeDelta = static_cast<int>(static_cast<float>(rounded) - backgroundList->getY());
+        if (getISafeZoneBottom() < safeDelta)
+        {
+            safeDelta -= getISafeZoneBottom();
+        }
         float delta = static_cast<float>(safeDelta);
-
         multiList->incY(delta);
         backgroundList->incY(delta);
         description->incY(delta);
         backgroundText->incY(delta);
-
-        float bgTextHeight = backgroundText->getHeight();
         description->setHeight(
-            bgTextHeight - 2.0f * (description->getY() - backgroundText->getY()));
+            backgroundText->getHeight() - 2.0f * (description->getY() - backgroundText->getY()));
     }
 }
 
 void FJ_MultilistMenu::DoHorizontalResizeCheck()
 {
-    FJ_FuiNode* multiList = getChildByName("MultiList");
+    FJ_List_MultiList* multiList = getChildByName("MultiList")->asFJ_List_MultiList();
     FJ_FuiNode* backgroundList = getChildByName("BackgroundPanel_List");
     FJ_FuiNode* backgroundText = getChildByName("BackgroundPanel_Text");
     FJ_FuiNode* description = getChildByName("Description");
 
-    FJ_List_MultiList* list = multiList->asFJ_List_MultiList();
-    float listWidth = static_cast<float>(list->GetListWidth());
+    float listWidth = static_cast<float>(multiList->GetListWidth());
     if (multiList->getWidth() < listWidth)
     {
-        listWidth = static_cast<float>(list->GetListWidth());
-        float widthDelta = listWidth - multiList->getWidth();
+        listWidth = static_cast<float>(multiList->GetListWidth());
+        float widthDelta = static_cast<float>(static_cast<int>(listWidth - multiList->getWidth()));
 
         backgroundList->getChildAt(0)->incWidth(widthDelta);
         multiList->incWidth(widthDelta);
 
-        int itemIndex = 0;
-        int itemCount = list->getINumButtons();
-        while (itemIndex < itemCount)
+        std::wstring savedLabel;
+        for (int itemIndex = 0; itemIndex < multiList->getINumButtons(); ++itemIndex)
         {
-            std::wstring savedLabel = list->GetItemLabel(itemIndex);
-            list->ReturnItem(itemIndex)->asFJ_Base()->SetLabel(std::wstring());
-            float itemWidth = list->ReturnItem(itemIndex)->getWidth();
-            list->ReturnItem(itemIndex)->asFJ_Base()->SetNewObjectWidth(
-                static_cast<int>(itemWidth + widthDelta));
-            list->ReturnItem(itemIndex)->asFJ_Base()->SetLabel(savedLabel);
-            ++itemIndex;
-            itemCount = list->getINumButtons();
+            savedLabel = static_cast<FJ_Base*>(multiList->ReturnItem(itemIndex))->GetLabel();
+            static_cast<FJ_Base*>(multiList->ReturnItem(itemIndex))->SetLabel(std::wstring(L""));
+            float itemWidth = multiList->ReturnItem(itemIndex)->getWidth();
+            static_cast<FJ_Base*>(multiList->ReturnItem(itemIndex))->SetNewObjectWidth(static_cast<int>(itemWidth + widthDelta));
+            static_cast<FJ_Base*>(multiList->ReturnItem(itemIndex))->SetLabel(savedLabel);
         }
 
-        float offset = static_cast<float>(Math::round(widthDelta * 0.5f));
-        multiList->decX(offset);
-        backgroundList->decX(offset);
+        float halfDelta = widthDelta * 0.5f;
+        multiList->decX(static_cast<float>(Math::round(halfDelta)));
+        backgroundList->decX(static_cast<float>(Math::round(halfDelta)));
         if (description->isVisible())
         {
-            description->incX(offset);
-            backgroundText->incX(offset);
+            description->incX(static_cast<float>(Math::round(halfDelta)));
+            backgroundText->incX(static_cast<float>(Math::round(halfDelta)));
         }
     }
 }
 
 void FJ_MultilistMenu::HideDescription()
 {
-    FJ_FuiNode* multiList = getChildByName("MultiList");
+    FJ_List_MultiList* multiList = getChildByName("MultiList")->asFJ_List_MultiList();
     FJ_FuiNode* backgroundList = getChildByName("BackgroundPanel_List");
     FJ_FuiNode* backgroundText = getChildByName("BackgroundPanel_Text");
     FJ_FuiNode* description = getChildByName("Description");
 
-    if (description != NULL)
-        description->setVisible(false);
-    if (backgroundText != NULL)
-        backgroundText->setVisible(false);
-    if (multiList == NULL || backgroundList == NULL)
-        return;
+    description->setVisible(false);
+    backgroundText->setVisible(false);
 
-    const float stageWidth = getStage()->getStageWidth();
-    const float offset = static_cast<float>(static_cast<int>((stageWidth - multiList->getWidth()) * 0.5));
-    multiList->setX(offset);
-    backgroundList->setX(offset);
+    multiList->setX(static_cast<float>(
+        Math::round(getStage()->getStageWidth() * 0.5f - multiList->getWidth() * 0.5f)));
+    backgroundList->setX(static_cast<float>(
+        Math::round(getStage()->getStageWidth() * 0.5f - backgroundList->getWidth() * 0.5f)));
 }

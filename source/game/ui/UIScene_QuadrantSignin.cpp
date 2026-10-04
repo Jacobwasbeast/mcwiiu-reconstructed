@@ -22,11 +22,13 @@ struct AvatarRequest
 {
     UIScene_QuadrantSignin* scene;
     int quadrant;
+
+    AvatarRequest(UIScene_QuadrantSignin* owner, int index) : scene(owner), quadrant(index) {}
 };
 }
 
 UIScene_QuadrantSignin::UIScene_QuadrantSignin(int playerId, void* data, UILayer* layer)
-    : UIScene(playerId, layer), m_signInPending(false)
+    : UIScene(playerId, layer)
 {
     initialiseMovie();
     m_signInInfo = *static_cast<SignInInfo*>(data);
@@ -181,7 +183,7 @@ int UIScene_QuadrantSignin::AvatarReturned(void* context, unsigned char* data, u
     {
         ++s_avatarImageCount;
         wchar_t name[32];
-        std::swprintf(name, 32, L"quadrantImage_%05d", s_avatarImageCount);
+        std::swprintf(name, 32, L"quadrantImage%05d", s_avatarImageCount);
         request->scene->registerSubstitutionTexture(std::wstring(name), data, size, false);
         request->scene->m_playerPictures[request->quadrant].setTextureName(std::wstring(name), true);
     }
@@ -212,10 +214,7 @@ void UIScene_QuadrantSignin::updateState()
         m_gamerTagLabels[i].setLabel(UIString(gProfile->GetMiiName(i)), false, false);
         if (!m_avatarPending[i])
         {
-            AvatarRequest* request = new AvatarRequest;
-            request->scene = this;
-            request->quadrant = i;
-            if (gProfile->GetProfileAvatar(i, AvatarReturned, request))
+            if (gProfile->GetProfileAvatar(i, AvatarReturned, new AvatarRequest(this, i)))
                 m_avatarPending[i] = true;
         }
     }
@@ -250,52 +249,61 @@ int UIScene_QuadrantSignin::SignInReturned(void* context, bool, int, int)
 void UIScene_QuadrantSignin::handleInput(int playerId, int action, bool repeat, bool pressed,
                                          bool released, bool& handled)
 {
-    handled = true;
-    if (m_signInPending)
-        return;
-    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, pressed, released);
-    switch (action)
+    if (!m_signInPending)
     {
-    case EControllerActions_MenuUp:
-    case EControllerActions_MenuDown:
-        if (pressed)
-            sendInputToMovie(action, repeat, pressed, released);
-        break;
-    case EControllerActions_MenuOk:
-        if (!pressed)
-            break;
-        m_signInPending = true;
-        if (gProfile->IsSignedIn(playerId))
+        gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, pressed, released);
+        switch (action)
         {
-            gProfile->CancelProfileAvatarRequest();
-            navigateBack();
-            m_signInInfo.callback(m_signInInfo.context, true, m_playerId);
+        case EControllerActions_MenuUp:
+        case EControllerActions_MenuDown:
+            if (pressed)
+                sendInputToMovie(action, repeat, pressed, released);
             break;
-        }
-        gProfile->RequestSignInUI(false, false, false, false, true, SignInReturned,
-                                  reinterpret_cast<void*>(GetCallbackUniqueId()), playerId);
-        break;
-    case EControllerActions_MenuCancel:
-        if (!pressed)
-            break;
-        if (playerId == gProfile->GetPrimaryPad())
-        {
-            m_signInPending = true;
-            m_signInInfo.callback(m_signInInfo.context, false, playerId);
-            gProfile->CancelProfileAvatarRequest();
-            if (m_signInInfo.returnToHome)
-            {
-                gConsoleUIController.NavigateToHomeMenu(false);
+        case EControllerActions_MenuOk:
+            if (!pressed)
                 break;
+            m_signInPending = true;
+            if (gProfile->IsSignedIn(playerId))
+            {
+                gProfile->CancelProfileAvatarRequest();
+                navigateBack();
+                m_signInInfo.callback(m_signInInfo.context, true, m_playerId);
+                handled = true;
+                return;
             }
-            gApp.SetDRCIconEnabled(true);
-            navigateBack();
+            gProfile->RequestSignInUI(false, false, false, false, true, SignInReturned,
+                                      reinterpret_cast<void*>(GetCallbackUniqueId()), playerId);
+            handled = true;
+            return;
+        case EControllerActions_MenuCancel:
+            if (!pressed)
+                break;
+            if (playerId == gProfile->GetPrimaryPad())
+            {
+                m_signInPending = true;
+                m_signInInfo.callback(m_signInInfo.context, false, playerId);
+                gProfile->CancelProfileAvatarRequest();
+                if (m_signInInfo.returnToHome)
+                {
+                    gConsoleUIController.NavigateToHomeMenu(false);
+                    handled = true;
+                    return;
+                }
+                gApp.SetDRCIconEnabled(true);
+                navigateBack();
+                handled = true;
+                return;
+            }
+            if (gProfile->IsSignedIn(playerId))
+            {
+                gProfile->SignOutUser(playerId);
+                handled = true;
+                return;
+            }
             break;
         }
-        if (gProfile->IsSignedIn(playerId))
-            gProfile->SignOutUser(playerId);
-        break;
     }
+    handled = true;
 }
 
 void UIScene_QuadrantSignin::handleReload()

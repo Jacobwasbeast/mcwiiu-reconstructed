@@ -1,3 +1,4 @@
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/ui/UIScene_DispenserMenu.hpp"
 #include "game/network/ClientboundContainerOpenPacket.hpp"
 #include "game/core/StringIds.hpp"
@@ -16,7 +17,6 @@
 #include "game/world/generation/MultiPlayerGameMode.hpp"
 #include "game/ui/UILayer.hpp"
 
-extern CMinecraftApp* g_pApp;
 
 namespace
 {
@@ -35,8 +35,7 @@ UIScene_DispenserMenu::UIScene_DispenserMenu(int type, void* data, UILayer* laye
     initialiseMovie();
 
     DispenserMenuArgs* args = static_cast<DispenserMenuArgs*>(data);
-    const std::wstring name = args->container->getName();
-    if (name.empty())
+    if (args->container->getName().empty())
     {
         boost::shared_ptr<InteractionObject> interaction =
             boost::dynamic_pointer_cast<InteractionObject>(args->container);
@@ -45,22 +44,22 @@ UIScene_DispenserMenu::UIScene_DispenserMenu(int type, void* data, UILayer* laye
     }
     else
     {
-        m_dispenserLabel.init(UIString(name));
+        m_dispenserLabel.init(UIString(args->container->getName()));
     }
 
-    m_menu = new TrapMenu(args->inventory, args->container);
-    m_containerSize = static_cast<int>(args->container->getContainerSize());
     Minecraft* minecraft = Minecraft::GetInstance();
     if (minecraft->mGameModes[args->player] != 0)
     {
-        Tutorial* tutorial = minecraft->mGameModes[args->player]->getTutorial();
+        Tutorial* tutorial = Minecraft::GetInstance()->mGameModes[type]->getTutorial();
         if (tutorial != 0)
         {
             m_previousTutorialState = tutorial->currentState;
             tutorial->changeTutorialState(eTutorial_State_DispenserMenu, this);
         }
     }
-    Initialize(false, args->player, m_menu, true,
+    AbstractContainerMenu* menu = new TrapMenu(args->inventory, args->container);
+    m_containerSize = static_cast<int>(args->container->getContainerSize());
+    Initialize(false, args->player, menu, true,
                                 m_containerSize, IUIScene_AbstractContainerMenu::ESceneSection_DispenserHotbar,
                                 IUIScene_AbstractContainerMenu::ESceneSection_DispenserMax, false);
     m_dispenserSlot.addSlots(0, 9);
@@ -74,25 +73,43 @@ UIScene_DispenserMenu::~UIScene_DispenserMenu()
 unsigned int UIScene_DispenserMenu::getSectionColumns(
     IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_DispenserHotbar)
-        return 9;
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_DispenserInventory)
-        return 9;
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_DispenserSlots)
-        return 3;
-    return 0;
+    unsigned int columns = 0;
+    switch (section)
+    {
+    case IUIScene_AbstractContainerMenu::ESceneSection_DispenserHotbar:
+        columns = 9;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_DispenserInventory:
+        columns = 9;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_DispenserSlots:
+        columns = 3;
+        break;
+    default:
+        break;
+    }
+    return columns;
 }
 
 unsigned int UIScene_DispenserMenu::getSectionRows(
     IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_DispenserHotbar)
-        return 1;
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_DispenserInventory)
-        return IUIScene_AbstractContainerMenu::GetInventoryRows();
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_DispenserSlots)
-        return 3;
-    return 0;
+    unsigned int rows = 0;
+    switch (section)
+    {
+    case IUIScene_AbstractContainerMenu::ESceneSection_DispenserHotbar:
+        rows = 1;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_DispenserInventory:
+        rows = IUIScene_AbstractContainerMenu::GetInventoryRows();
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_DispenserSlots:
+        rows = 3;
+        break;
+    default:
+        break;
+    }
+    return rows;
 }
 
 unsigned int UIScene_DispenserMenu::GetSectionAndSlotInDirection(
@@ -149,19 +166,22 @@ unsigned int UIScene_DispenserMenu::GetSectionAndSlotInDirection(
 void UIScene_DispenserMenu::GetPositionOfSection(
     IUIScene_AbstractContainerMenu::ESceneSection section, _UIVec2D* position)
 {
-    if (position == 0)
-        return;
-    UIControl* control = static_cast<UIControl*>(0);
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_DispenserHotbar)
-        control = &m_hotbarList;
-    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_DispenserInventory)
-        control = &m_inventoryList;
-    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_DispenserSlots)
-        control = &m_dispenserSlot;
-    if (control != 0)
+    switch (section)
     {
-        position->x = static_cast<float>(control->getXPos());
-        position->y = static_cast<float>(control->getYPos());
+    case IUIScene_AbstractContainerMenu::ESceneSection_DispenserSlots:
+        position->x = static_cast<float>(m_dispenserSlot.getXPos());
+        position->y = static_cast<float>(m_dispenserSlot.getYPos());
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_DispenserInventory:
+        position->x = static_cast<float>(m_inventoryList.getXPos());
+        position->y = static_cast<float>(m_inventoryList.getYPos());
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_DispenserHotbar:
+        position->x = static_cast<float>(m_hotbarList.getXPos());
+        position->y = static_cast<float>(m_hotbarList.getYPos());
+        break;
+    default:
+        break;
     }
 }
 
@@ -169,48 +189,77 @@ void UIScene_DispenserMenu::GetItemScreenData(
     IUIScene_AbstractContainerMenu::ESceneSection section, int slot,
     _UIVec2D* position, _UIVec2D* size)
 {
-    const unsigned int columns = getSectionColumns(section);
-    const unsigned int rows = getSectionRows(section);
-    UIControl* control = static_cast<UIControl*>(0);
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_DispenserHotbar)
-        control = &m_hotbarList;
-    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_DispenserInventory)
-        control = &m_inventoryList;
-    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_DispenserSlots)
-        control = &m_dispenserSlot;
-    if (control != 0 && position != 0 && size != 0 && columns != 0 && rows != 0)
+    float width;
+    float height;
+    switch (section)
     {
-        size->x = static_cast<float>(control->getWidth() / static_cast<float>(columns));
-        size->y = static_cast<float>(control->getHeight() / static_cast<float>(rows));
-        position->x = static_cast<float>(slot % static_cast<int>(columns)) * size->x;
-        position->y = static_cast<float>(slot / static_cast<int>(columns)) * size->y;
+    case IUIScene_AbstractContainerMenu::ESceneSection_DispenserSlots:
+        width = m_dispenserSlot.getWidth();
+        height = m_dispenserSlot.getHeight();
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_DispenserInventory:
+        width = m_inventoryList.getWidth();
+        height = m_inventoryList.getHeight();
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_DispenserHotbar:
+        width = m_hotbarList.getWidth();
+        height = m_hotbarList.getHeight();
+        break;
+    default:
+        break;
     }
+    const int rows = static_cast<int>(getSectionRows(section));
+    const int columns = static_cast<int>(getSectionColumns(section));
+    const float cellHeight = height / static_cast<float>(rows);
+    const float cellWidth = width / static_cast<float>(columns);
+    size->y = cellHeight;
+    size->x = cellWidth;
+    position->x = static_cast<float>(slot % columns) * cellWidth;
+    position->y = static_cast<float>(slot / columns) * cellHeight;
 }
 
 int UIScene_DispenserMenu::getSectionStartOffset(
     IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_DispenserHotbar)
-        return 0;
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_DispenserInventory)
-        return 9;
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_DispenserSlots)
-        return 36;
-    return 0;
+    int offset = 0;
+    switch (section)
+    {
+    case IUIScene_AbstractContainerMenu::ESceneSection_DispenserHotbar:
+        offset = 0;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_DispenserInventory:
+        offset = 9;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_DispenserSlots:
+        offset = 36;
+        break;
+    default:
+        break;
+    }
+    return offset;
 }
 
 void UIScene_DispenserMenu::setSectionSelectedSlot(
     IUIScene_AbstractContainerMenu::ESceneSection section, int slot, int direction, bool wrap)
 {
-    if (wrap)
+    const int columns = static_cast<int>(getSectionColumns(section));
+    UIControl_SlotList* list = 0;
+    switch (section)
     {
-        if (section == IUIScene_AbstractContainerMenu::ESceneSection_DispenserHotbar)
-            m_hotbarList.setHighlightSlot(slot + direction * static_cast<int>(getSectionColumns(section)));
-        else if (section == IUIScene_AbstractContainerMenu::ESceneSection_DispenserInventory)
-            m_inventoryList.setHighlightSlot(slot + direction * static_cast<int>(getSectionColumns(section)));
-        else if (section == IUIScene_AbstractContainerMenu::ESceneSection_DispenserSlots)
-            m_dispenserSlot.setHighlightSlot(slot + direction * static_cast<int>(getSectionColumns(section)));
+    case IUIScene_AbstractContainerMenu::ESceneSection_DispenserSlots:
+        list = &m_dispenserSlot;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_DispenserInventory:
+        list = &m_inventoryList;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_DispenserHotbar:
+        list = &m_hotbarList;
+        break;
+    default:
+        break;
     }
+    if (wrap)
+        list->setHighlightSlot(slot + direction * columns);
 }
 
 unsigned int UIScene_DispenserMenu::mapElementsAndNames()
@@ -218,17 +267,23 @@ unsigned int UIScene_DispenserMenu::mapElementsAndNames()
     UIScene_AbstractContainerMenu::mapElementsAndNames();
     m_movie->getRootNode();
     fuiRenderNode* panel = m_mainPanel.getFuiRenderNode();
-    m_dispenserSlot.setupControl(this, panel, std::string("Trap"));
+    {
+        std::string name("Trap");
+        m_dispenserSlot.setupControl(this, panel, name);
+    }
     m_controls.push_back(&m_dispenserSlot);
-    m_dispenserLabel.setupControl(this, panel, std::string("dispenserLabel"));
+    {
+        std::string name("dispenserLabel");
+        m_dispenserLabel.setupControl(this, panel, name);
+    }
     m_controls.push_back(&m_dispenserLabel);
     return 1;
 }
 
 std::wstring UIScene_DispenserMenu::getMoviePath()
 {
-    return g_pApp->GetLocalPlayerCount() < 2 ? std::wstring(L"DispenserMenu") :
-        std::wstring(L"DispenserMenuSplit");
+    return gApp.GetLocalPlayerCount() > 1 ? std::wstring(L"DispenserMenuSplit") :
+        std::wstring(L"DispenserMenu");
 }
 
 void UIScene_DispenserMenu::handleReload()
@@ -241,13 +296,22 @@ void UIScene_DispenserMenu::handleReload()
 
 UIControl* UIScene_DispenserMenu::getSection(IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_DispenserHotbar)
-        return &m_hotbarList;
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_DispenserInventory)
-        return &m_inventoryList;
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_DispenserSlots)
-        return &m_dispenserSlot;
-    return 0;
+    UIControl* control = 0;
+    switch (section)
+    {
+    case IUIScene_AbstractContainerMenu::ESceneSection_DispenserSlots:
+        control = &m_dispenserSlot;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_DispenserInventory:
+        control = &m_inventoryList;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_DispenserHotbar:
+        control = &m_hotbarList;
+        break;
+    default:
+        break;
+    }
+    return control;
 }
 
 void UIScene_DispenserMenu::handleSectionClick(

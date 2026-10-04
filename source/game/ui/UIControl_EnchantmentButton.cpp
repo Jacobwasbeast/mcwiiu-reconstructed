@@ -1,5 +1,7 @@
 #include "game/ui/UIControl_EnchantmentButton.hpp"
 
+#include <algorithm>
+#include <iterator>
 #include <sstream>
 
 #include "game/client/render/Font.hpp"
@@ -25,11 +27,9 @@ UIControl_EnchantmentButton::EnchantmentNames::EnchantmentNames()
 {
     std::wstring source(L"the elder scrolls klaatu berata niktu xyzzy bless curse light darkness fire air earth water hot dry cold wet ignite snuff embiggen twist shorten stretch fiddle destroy imbue galvanize enchant free limited range of towards inside sphere cube self other ball mental physical grow shrink demon elemental spirit animal creature beast humanoid undead fresh stale phnglui mglwnafh cthulhu rlyeh wgahnagl fhtagn baguette");
     std::wistringstream stream(source);
-    std::wstring name;
-    while (stream >> name)
-    {
-        m_names.push_back(name);
-    }
+    std::copy(std::istream_iterator<std::wstring, wchar_t>(stream),
+              std::istream_iterator<std::wstring, wchar_t>(),
+              std::back_inserter(m_names));
 }
 
 UIControl_EnchantmentButton::EnchantmentNames::~EnchantmentNames()
@@ -39,7 +39,7 @@ UIControl_EnchantmentButton::EnchantmentNames::~EnchantmentNames()
 std::wstring UIControl_EnchantmentButton::EnchantmentNames::getRandomName()
 {
     const int count = nextInt(2) + 3;
-    std::wstring result;
+    std::wstring result(L"");
     int i;
     for (i = 0; i < count; ++i)
     {
@@ -85,21 +85,19 @@ void UIControl_EnchantmentButton::updateState()
     Enchantment* enchantment = Enchantment::byId(menu->mEnchantmentIds[m_index]);
     Minecraft* minecraft = Minecraft::GetInstance();
     int state;
-    if (enchantment == NULL || goldCount < m_index + 1)
+    if ((enchantment == NULL || goldCount < m_index + 1 ||
+         minecraft->mLocalPlayers[scene->getPad()]->mExperienceLevel < level) &&
+        !minecraft->mLocalPlayers[scene->getPad()]->mAbilities.mInstabuild)
     {
-        state = minecraft->mLocalPlayers[scene->getPad()]->mAbilities.mInstabuild
-                    ? (m_focus ? 2 : 1)
-                    : 0;
-    }
-    else if (minecraft->mLocalPlayers[scene->getPad()]->mExperienceLevel < level)
-    {
-        state = minecraft->mLocalPlayers[scene->getPad()]->mAbilities.mInstabuild
-                    ? (m_focus ? 2 : 1)
-                    : 0;
+        state = 0;
     }
     else
     {
-        state = m_focus ? 2 : 1;
+        state = 1;
+        if (m_focus)
+        {
+            state = 2;
+        }
     }
     if (level != m_level)
     {
@@ -115,7 +113,7 @@ void UIControl_EnchantmentButton::updateState()
     if (state != m_state)
     {
         FJ_EnchantingButton* button = static_cast<FJ_EnchantingButton*>(
-            m_fuiRenderNode->getFuiNode()->asFJ_Base());
+            m_fuiRenderNode->getFuiNode());
         button->ChangeState(state);
         m_state = state;
     }
@@ -147,14 +145,15 @@ void UIControl_EnchantmentButton::render(fuiRect* rect)
     EnchantmentMenu* menu = scene->getMenu();
     GlStateManager::scalef((rect->xMax - rect->xMin) / m_width,
                            (rect->yMax - rect->yMin) / m_height, 1.0F);
+    const bool splitScreen = gApp.GetLocalPlayerCount() > 1;
     float scale;
     if (scene->m_movieResolution == 0)
     {
-        scale = gApp.GetLocalPlayerCount() < 2 ? 3.5F : 3.0F;
+        scale = splitScreen ? 3.0F : 3.5F;
     }
     else
     {
-        scale = gApp.GetLocalPlayerCount() < 2 ? 2.5F : 2.0F;
+        scale = splitScreen ? 2.0F : 2.5F;
     }
     GlStateManager::scalef(scale, scale, scale);
     const int level = menu->mCosts[m_index];
@@ -167,17 +166,19 @@ void UIControl_EnchantmentButton::render(fuiRect* rect)
         GlStateManager::alphaFunc(4, 0.1F);
         Minecraft* minecraft = Minecraft::GetInstance();
         std::wstring levelText = _toString(level);
-        int colour = m_inactiveColour;
-        if (goldCount >= m_index + 1 &&
-            minecraft->mLocalPlayers[scene->getPad()]->mExperienceLevel >= level)
+        Font* font = minecraft->mAlternateFont;
+        int colour = m_colour;
+        if ((goldCount < m_index + 1 ||
+             minecraft->mLocalPlayers[scene->getPad()]->mExperienceLevel < level) &&
+            !minecraft->mLocalPlayers[scene->getPad()]->mAbilities.mInstabuild)
         {
-            colour = m_focus ? m_focusColour : m_colour;
+            colour = m_inactiveColour;
         }
-        else if (minecraft->mLocalPlayers[scene->getPad()]->mAbilities.mInstabuild)
+        else if (m_focus)
         {
-            colour = m_focus ? m_focusColour : m_colour;
+            colour = m_focusColour;
         }
-        minecraft->mAlternateFont->drawWordWrap(
+        font->drawWordWrap(
             m_name, 0, 0, (int)(m_width / scale),
             colour, (int)(m_height / scale));
         GlStateManager::disableAlphaTest();
@@ -188,7 +189,7 @@ void UIControl_EnchantmentButton::render(fuiRect* rect)
 void UIControl_EnchantmentButton::SetEnchantmentLevel(int level)
 {
     FJ_EnchantingButton* button = static_cast<FJ_EnchantingButton*>(
-        m_fuiRenderNode->getFuiNode()->asFJ_Base());
+        m_fuiRenderNode->getFuiNode());
     button->SetEnchantmentLevel(level);
 }
 

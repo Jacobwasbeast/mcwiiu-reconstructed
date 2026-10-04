@@ -33,7 +33,6 @@
 #include "platform/wiiu/CProfile.hpp"
 
 extern ConsoleUIController gConsoleUIController;
-extern CMinecraftApp* g_pApp;
 
 namespace
 {
@@ -83,7 +82,7 @@ UIScene_LoadMenu::UIScene_LoadMenu(int sceneType, void* data, UILayer* layer)
     m_launchData.mHostMiniGame = gameModeLobby && miniGameId != eMiniGameId_Any &&
                                  miniGameId > eMiniGameId_Lobby;
 
-    m_texturePackList.init(std::wstring(L10N::GetString(0xf6194eb1)), 4);
+    m_texturePackList.init(std::wstring(L10N::GetString(IDS_DLC_MENU_TEXTUREPACKS)), 4);
     m_launchData.mMatchmaking = false;
     if (m_launchData.mJoinMiniGame)
         m_launchData.mOnlineGame = true;
@@ -121,7 +120,7 @@ UIScene_LoadMenu::UIScene_LoadMenu(int sceneType, void* data, UILayer* layer)
                                 false, 10, 1);
         m_gameModeSlider.init(UIString(L10N::GetString(IDS_GAMEMODE_SURVIVAL)), 1, 0,
                               GameType::ADVENTURE->getId(), 0, false, 10, 1);
-        m_texturePackList.init(std::wstring(L10N::GetString(0xf6194eb1)), 4);
+        m_texturePackList.init(std::wstring(L10N::GetString(IDS_DLC_MENU_TEXTUREPACKS)), 4);
         m_playButton.init(UIString(L10N::GetString(IDS_MORE_OPTIONS)), 3);
         m_loadSettings.init(UIString(L10N::GetString(IDS_LOAD)), 6);
         bool initialOnlineChecked = m_launchData.mOnlineGame;
@@ -494,29 +493,66 @@ unsigned int UIScene_LoadMenu::mapElementsAndNames()
 {
     IUIScene_StartGame::mapElementsAndNames();
     fuiRenderNode* root = m_movie->getRootNode();
-    m_mainPanel.setupControl(this, root, std::string("MainPanel"));
-    m_gameName.setupControl(this, m_mainPanel.getFuiRenderNode(), std::string("GameName"));
-    m_createdMode.setupControl(this, m_mainPanel.getFuiRenderNode(), std::string("CreatedMode"));
-    m_description.setupControl(this, m_mainPanel.getFuiRenderNode(), std::string("Seed"));
-    m_texturePackList.setupControl(this, m_mainPanel.getFuiRenderNode(), std::string("TexturePackSelector"));
-    m_gameModeSlider.setupControl(this, m_mainPanel.getFuiRenderNode(), std::string("GameModeToggle"));
-    m_onlineGameCheckBox.setupControl(this, m_mainPanel.getFuiRenderNode(), std::string("CheckboxOnline"));
-    m_playButton.setupControl(this, m_mainPanel.getFuiRenderNode(), std::string("MoreOptions"));
-    m_loadSettings.setupControl(this, m_mainPanel.getFuiRenderNode(), std::string("LoadSettings"));
-    m_difficultySlider.setupControl(this, m_mainPanel.getFuiRenderNode(), std::string("Difficulty"));
-    m_levelIcon.setupControl(this, m_mainPanel.getFuiRenderNode(), std::string("LevelIcon"));
-    m_list.setupControl(this, m_mainPanel.getFuiRenderNode(), std::string("MultiList"));
+    {
+        std::string name("MainPanel");
+        m_mainPanel.setupControl(this, root, name);
+    }
     m_controls.push_back(&m_mainPanel);
+    fuiRenderNode* panel = m_mainPanel.getFuiRenderNode();
+    {
+        std::string name("GameName");
+        m_gameName.setupControl(this, panel, name);
+    }
     m_controls.push_back(&m_gameName);
+    {
+        std::string name("CreatedMode");
+        m_createdMode.setupControl(this, panel, name);
+    }
     m_controls.push_back(&m_createdMode);
+    {
+        std::string name("Seed");
+        m_description.setupControl(this, panel, name);
+    }
     m_controls.push_back(&m_description);
+    {
+        std::string name("TexturePackSelector");
+        m_texturePackList.setupControl(this, panel, name);
+    }
     m_controls.push_back(&m_texturePackList);
+    {
+        std::string name("GameModeToggle");
+        m_gameModeSlider.setupControl(this, panel, name);
+    }
     m_controls.push_back(&m_gameModeSlider);
+    {
+        std::string name("CheckboxOnline");
+        m_onlineGameCheckBox.setupControl(this, panel, name);
+    }
     m_controls.push_back(&m_onlineGameCheckBox);
+    {
+        std::string name("MoreOptions");
+        m_playButton.setupControl(this, panel, name);
+    }
     m_controls.push_back(&m_playButton);
+    {
+        std::string name("LoadSettings");
+        m_loadSettings.setupControl(this, panel, name);
+    }
     m_controls.push_back(&m_loadSettings);
+    {
+        std::string name("Difficulty");
+        m_difficultySlider.setupControl(this, panel, name);
+    }
     m_controls.push_back(&m_difficultySlider);
+    {
+        std::string name("LevelIcon");
+        m_levelIcon.setupControl(this, panel, name);
+    }
     m_controls.push_back(&m_levelIcon);
+    {
+        std::string name("MultiList");
+        m_list.setupControl(this, panel, name);
+    }
     m_controls.push_back(&m_list);
     return 1;
 }
@@ -869,38 +905,33 @@ void UIScene_LoadMenu::handleCheckboxElementToggled(int, int second, bool checke
     if (m_updateInProgress)
         return;
     gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
-    if (second < 10)
+    switch (second)
     {
-        if (second == 5)
-        {
-            m_launchData.mOnlineGame = checked;
-            m_list.EnableItem(10, checked && m_publicGamesAllowed, false);
-            if (GetMiniGame()->HasMultipleMaps())
-                m_list.EnableItem(0xd, true, false);
+    case 5:
+    {
+        m_launchData.mOnlineGame = checked;
+        m_list.EnableItem(10, checked && m_publicGamesAllowed, false);
+        if (GetMiniGame()->HasMultipleMaps())
+            m_list.EnableItem(0xd, true, false);
 
-            bool allowOnline = checked && m_onlineEnabled &&
-                               gProfile->IsSignedInLive(m_playerId) && !m_launchData.mOnlineSettingChangedBySystem;
-            m_list.EnableItem(0xb, allowOnline && !m_launchData.mMatchmaking, false);
-            m_list.SetCheckboxValue(10, checked && m_launchData.mMatchmaking && m_publicGamesAllowed,
-                                    false);
-            m_list.SetCheckboxValue(0xb, checked && !m_launchData.mMatchmaking && m_launchData.mAllowFriendsOfFriends,
-                                    false);
-            return;
-        }
-        if (second == 8)
-        {
-            m_launchData.mPlayerSettings.mHostOptions.Set(eCustomGameModeHostOption_CentreSpawn, checked);
-            return;
-        }
-        if (second == 9)
-        {
-            m_launchData.mPlayerSettings.mHostOptions.Set(eCustomGameModeHostOption_IsTeams, checked);
-            return;
-        }
+        bool allowOnline = m_launchData.mOnlineGame && m_onlineEnabled;
+        if (!gProfile->IsSignedInLive(m_playerId))
+            allowOnline = false;
+        if (m_launchData.mOnlineSettingChangedBySystem)
+            allowOnline = false;
+        m_list.EnableItem(0xb, allowOnline && checked && !m_launchData.mMatchmaking, false);
+        m_list.SetCheckboxValue(10, checked && m_launchData.mMatchmaking && m_publicGamesAllowed, false);
+        m_list.SetCheckboxValue(0xb, checked && !m_launchData.mMatchmaking && m_launchData.mAllowFriendsOfFriends,
+                                false);
         return;
     }
-
-    if (second < 0xb)
+    case 8:
+        m_launchData.mPlayerSettings.mHostOptions.Set(eCustomGameModeHostOption_CentreSpawn, checked);
+        return;
+    case 9:
+        m_launchData.mPlayerSettings.mHostOptions.Set(eCustomGameModeHostOption_IsTeams, checked);
+        return;
+    case 10:
     {
         m_launchData.mMatchmaking = checked;
         if (checked)
@@ -908,8 +939,11 @@ void UIScene_LoadMenu::handleCheckboxElementToggled(int, int second, bool checke
         if (GetMiniGame()->HasMultipleMaps())
             m_list.EnableItem(0xd, true, false);
 
-        bool allowOnline = m_launchData.mOnlineGame && m_onlineEnabled &&
-                           gProfile->IsSignedInLive(m_playerId) && !m_launchData.mOnlineSettingChangedBySystem;
+        bool allowOnline = m_launchData.mOnlineGame && m_onlineEnabled;
+        if (!gProfile->IsSignedInLive(m_playerId))
+            allowOnline = false;
+        if (m_launchData.mOnlineSettingChangedBySystem)
+            allowOnline = false;
         if (GetMiniGame()->GetId() == 3 && m_launchData.mHostMiniGame)
         {
             if (checked)
@@ -924,29 +958,31 @@ void UIScene_LoadMenu::handleCheckboxElementToggled(int, int second, bool checke
                                 false);
         return;
     }
-
-    if (second == 0xb)
-    {
+    case 0xb:
         m_launchData.mAllowFriendsOfFriends = checked;
         return;
-    }
-    if (second != 0x15)
+    case 0x15:
+    {
+        m_launchData.mTimeTrial = checked;
+        m_launchData.mPlayerSettings.mHostOptions.Set(eCustomGameModeHostOption_TimeTrial, checked);
+        bool allowOnline = m_launchData.mOnlineGame && m_onlineEnabled;
+        if (!gProfile->IsSignedInLive(m_playerId))
+            allowOnline = false;
+        if (m_launchData.mOnlineSettingChangedBySystem)
+            allowOnline = false;
+        m_list.EnableItem(5, !checked && m_onlineEnabled, false);
+        m_list.EnableItem(10, !checked && allowOnline && m_publicGamesAllowed, false);
+        m_list.EnableItem(0xb, !checked && allowOnline && !m_launchData.mMatchmaking, false);
+        m_list.SetCheckboxValue(5, !checked && allowOnline, false);
+        m_list.SetCheckboxValue(10, !checked && allowOnline && m_launchData.mMatchmaking &&
+                                        m_publicGamesAllowed,
+                                false);
+        m_list.SetCheckboxValue(0xb, !checked && allowOnline && !m_launchData.mMatchmaking &&
+                                        m_launchData.mAllowFriendsOfFriends,
+                                false);
         return;
-
-    m_launchData.mTimeTrial = checked;
-    m_launchData.mPlayerSettings.mHostOptions.Set(eCustomGameModeHostOption_TimeTrial, checked);
-    bool allowOnline = m_launchData.mOnlineGame && m_onlineEnabled &&
-                       gProfile->IsSignedInLive(m_playerId) && !m_launchData.mOnlineSettingChangedBySystem;
-    m_list.EnableItem(5, !checked && m_onlineEnabled, false);
-    m_list.EnableItem(10, !checked && allowOnline && m_publicGamesAllowed, false);
-    m_list.EnableItem(0xb, !checked && allowOnline && !m_launchData.mMatchmaking, false);
-    m_list.SetCheckboxValue(5, !checked && allowOnline, false);
-    m_list.SetCheckboxValue(10, !checked && allowOnline && m_launchData.mMatchmaking &&
-                                    m_publicGamesAllowed,
-                            false);
-    m_list.SetCheckboxValue(0xb, !checked && allowOnline && !m_launchData.mMatchmaking &&
-                                    m_launchData.mAllowFriendsOfFriends,
-                            false);
+    }
+    }
 }
 
 void UIScene_LoadMenu::handleSliderElementMove(int, int second, int value)

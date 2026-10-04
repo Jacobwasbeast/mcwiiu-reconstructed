@@ -27,9 +27,21 @@ class UIScene
 {
     friend class ConsoleUIController;
     friend class UILayer;
+    friend class UIControl_Button;
+    friend class UIControl_ButtonList;
+    friend class UIControl_CheckBox;
+    friend class UIControl_DynamicLabel;
+    friend class UIControl_HTMLLabel;
+    friend class UIControl_LeaderboardList;
+    friend class UIControl_List;
+    friend class UIControl_PlayerButtonList;
+    friend class UIControl_Slider;
+    friend class UIControl_TextInput;
+    friend class UIControl_TexturePackList;
     friend class UIControl_Touch;
     friend class UIControl_GridList;
     friend class UIControl_EnchantmentButton;
+    friend class UIControl_Progress;
 
 public:
     struct _TimerInfo
@@ -132,7 +144,7 @@ public:
     void _handleFocusChange(int focus, int childFocus);
     void _handleInitFocus(int focus, int childFocus);
     bool controlHasFocus(UIControl_Base* control);
-    unsigned int getControlFocus();
+    int getControlFocus();
     void setOpacity(float opacity);
     void setVisible(bool visible);
     bool isVisible() { return m_visible; }

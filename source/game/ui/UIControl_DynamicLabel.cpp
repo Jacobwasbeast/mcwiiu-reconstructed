@@ -26,7 +26,7 @@ void UIControl_DynamicLabel::setupControl(UIScene* scene, fuiRenderNode* node,
                                           const std::string& name)
 {
     m_controlType = UIControl::eUIControlType_DynamicLabel;
-    UIControl::setupControl(scene, node, name);
+    UIControl_Base::setupControl(scene, node, name);
 }
 
 void UIControl_DynamicLabel::addText(const std::wstring& text, bool setup)
@@ -41,9 +41,15 @@ void UIControl_DynamicLabel::ReInit()
 
 void UIControl_DynamicLabel::SetupTouch()
 {
-    int sceneType = m_scene->getSceneType();
-    if (sceneType == 4 || (sceneType > 5 && sceneType < 8))
-        gConsoleUIController.TouchBoxAdd(this, m_scene);
+    unsigned int layerId = m_scene->m_layer->m_layerId;
+    if (layerId != 4)
+    {
+        if (layerId < 6)
+            return;
+        if (layerId > 7)
+            return;
+    }
+    gConsoleUIController.TouchBoxAdd(this, m_scene);
 }
 
 void UIControl_DynamicLabel::TouchScroll(int offset, bool active)

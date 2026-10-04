@@ -16,7 +16,7 @@ UIScene_TrialExitUpsell::UIScene_TrialExitUpsell(int sceneType, void*, UILayer* 
 
 void UIScene_TrialExitUpsell::updateTooltips()
 {
-    gConsoleUIController.SetTooltips(0, IDS_EXIT_GAME, 0x4f6bcf5, IDS_UNLOCK_TITLE,
+    gConsoleUIController.SetTooltips(0, IDS_EXIT_GAME, IDS_TOOLTIPS_BACK, IDS_UNLOCK_TITLE,
                                      -1, -1, -1, -1, -1, -1, -1, -1,
                                      -1, -1, -1, -1, -1, false, false);
 }
@@ -30,28 +30,27 @@ void UIScene_TrialExitUpsell::handleInput(int playerId, int action, bool repeat,
                                           bool released, bool&)
 {
     gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, pressed, released);
-    if (action == EControllerActions_MenuOk)
+    switch (action)
     {
+    case EControllerActions_MenuOk:
         if (pressed)
         {
             gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
             gApp.ExitGame();
             return;
         }
-    }
-    else if (action == EControllerActions_MenuCancel)
-    {
+        break;
+    case EControllerActions_MenuCancel:
         navigateBack();
         return;
-    }
-    else if (action == EControllerActions_MenuX)
-    {
+    case EControllerActions_MenuX:
         if (gProfile->IsSignedIn(playerId))
         {
             gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
             telemetryManagerInstance->RecordUpsellPresented(playerId, eSen_UpsellID_FullGame, 1);
             gProfile->DisplayFullVersionPurchase(false, playerId, 1);
         }
+        break;
     }
 }
 

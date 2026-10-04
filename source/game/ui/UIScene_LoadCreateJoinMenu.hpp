@@ -113,8 +113,8 @@ public:
     static int CancelSaveUploadCallback(void* context);
     void LaunchSaveUpload();
     static int SaveTransferDialogReturned(void* context, int pad, C4JStorage::EMessageResult result);
-    virtual void handleSaveOptionsDialogReturned(int pad, C4JStorage::EMessageResult result);
-    virtual void handleTexturePackDialogReturned(int pad, C4JStorage::EMessageResult result);
+    virtual int handleSaveOptionsDialogReturned(int pad, C4JStorage::EMessageResult result);
+    virtual int handleTexturePackDialogReturned(int pad, C4JStorage::EMessageResult result);
     virtual int getSceneType();
     virtual unsigned int getSubSceneType() const;
     virtual int GetPad();

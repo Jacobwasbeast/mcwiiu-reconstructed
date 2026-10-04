@@ -124,7 +124,7 @@ UIScene_HowToPlay::UIScene_HowToPlay(int playerId, void* data, UILayer* layer)
     m_labels[15].init(UIString(repeated));
     m_labels[16].init(UIString(repeated.c_str()));
 
-    std::wstring text(L10N::GetString(0xf3a668fd));
+    std::wstring text(L10N::GetString(IDS_REPAIR_COST));
     text.replace(text.find(L"%d"), 2, std::wstring(L"8"));
     m_labels[17].init(UIString(text.c_str()));
 

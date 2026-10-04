@@ -9,9 +9,8 @@
 #include "game/ui/TitleScreen.hpp"
 
 ConnectScreen::ConnectScreen(Minecraft* minecraft, const std::wstring&, int)
-    : Screen(), mConnection(NULL), mFinished(false)
+    : Screen(), mFinished(false)
 {
-    mMinecraft = minecraft;
     minecraft->setLevel(NULL, -1, boost::shared_ptr<Player>(), true, false);
 }
 
@@ -33,9 +32,9 @@ void ConnectScreen::keyPressed(wchar_t key, int action)
 
 void ConnectScreen::init()
 {
+    Language* language = Language::getInstance();
     mButtons.clear();
-    std::wstring label = Language::getInstance()->getElement(L"gui.cancel");
-    mButtons.push_back(new Button(0, mWidth / 2 - 100, mHeight / 4 + 132, label));
+    mButtons.push_back(new Button(0, mWidth / 2 - 100, mHeight / 4 + 132, language->getElement(L"gui.cancel")));
 }
 
 void ConnectScreen::buttonClicked(Button* button)
@@ -55,14 +54,12 @@ void ConnectScreen::render(int x, int y, float partialTick)
     Language* language = Language::getInstance();
     if (mConnection == NULL)
     {
-        std::wstring message = language->getElement(L"connect.connecting");
-        drawCenteredString(mFont, message, mWidth / 2, mHeight / 2 - 50, 0xffffff);
-        drawCenteredString(mFont, L"connect", mWidth / 2, mHeight / 2 - 10, 0xffffff);
+        drawCenteredString(mFont, language->getElement(L"connect.connecting"), mWidth / 2, mHeight / 2 - 50, 0xffffff);
+        drawCenteredString(mFont, L"", mWidth / 2, mHeight / 2 - 10, 0xffffff);
     }
     else
     {
-        std::wstring message = language->getElement(L"connect.authorizing");
-        drawCenteredString(mFont, message, mWidth / 2, mHeight / 2 - 50, 0xffffff);
+        drawCenteredString(mFont, language->getElement(L"connect.authorizing"), mWidth / 2, mHeight / 2 - 50, 0xffffff);
         drawCenteredString(mFont, mConnection->mRemoteAddress, mWidth / 2, mHeight / 2 - 10, 0xffffff);
     }
     Screen::render(x, y, partialTick);

@@ -9,16 +9,16 @@
 struct SCreditTextItemDef;
 class UILayer;
 
+enum ECreditTextTypes
+{
+    ECreditTextTypes_Title = 0,
+    ECreditTextTypes_Role = 1,
+    ECreditTextTypes_Text = 3
+};
+
 class UIScene_Credits : public UIScene
 {
 public:
-    enum ECreditTextTypes
-    {
-        ECreditTextTypes_Title = 0,
-        ECreditTextTypes_Role = 1,
-        ECreditTextTypes_Text = 3
-    };
-
     enum ECreditIcons
     {
         ECreditIcons_Iggy,
@@ -64,7 +64,7 @@ struct SCreditTextItemDef
     const wchar_t* text;
     int primaryId;
     int secondaryId;
-    UIScene_Credits::ECreditTextTypes type;
+    ECreditTextTypes type;
 };
 
 #endif

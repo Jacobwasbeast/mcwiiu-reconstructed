@@ -38,7 +38,7 @@ void JoinMultiplayerScreen::init()
                                   language->getElement(L"gui.cancel")));
 
     std::wstring value = replaceAll(mMinecraft->mOptions->mLastServer, L"_", L":");
-    mButtons[0]->mActive = !value.empty();
+    mButtons[0]->mActive = value.length() != 0;
     mEditBox = new EditBox(this, mFont, mWidth / 2 - 100, mHeight / 4 + 58,
                            200, 20, value);
     mEditBox->mFocused = true;
@@ -63,7 +63,8 @@ void JoinMultiplayerScreen::buttonClicked(Button* button)
     if (button->mId == 0)
     {
         std::wstring value = trimString(mEditBox->getValue());
-        mMinecraft->mOptions->mLastServer = replaceAll(value, L":", L"_");
+        std::wstring& lastServer = mMinecraft->mOptions->mLastServer;
+        lastServer = replaceAll(value, L":", L"_");
         mMinecraft->mOptions->save();
 
         std::vector<std::wstring> parts = stringSplit(value, L'L');
@@ -106,10 +107,10 @@ void JoinMultiplayerScreen::keyPressed(wchar_t key, int action)
 {
     mEditBox->keyPressed(key, action);
 
-    if (action == 13)
+    if (key == 13)
         buttonClicked(mButtons[0]);
 
-    mButtons[0]->mActive = !mEditBox->getValue().empty();
+    mButtons[0]->mActive = mEditBox->getValue().length() != 0;
 }
 
 void JoinMultiplayerScreen::mouseClicked(int x, int y, int button)

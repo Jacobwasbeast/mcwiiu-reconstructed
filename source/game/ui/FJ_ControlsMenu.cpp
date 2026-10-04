@@ -50,11 +50,13 @@ void FJ_ControlsMenu::init(FJ_Event* event)
     FJ_FuiNode* helpPanel = getChildByName(std::string("ControlsHelpPanel"));
     if (helpPanel->isFJ_HtmlTextPanelLarge())
     {
-        helpPanel->asFJ_HtmlTextPanelLarge()->SetFixedWidth(Math::round(controlsList->getWidth() * 0.5f));
+        FJ_HtmlTextPanelLarge* largePanel = helpPanel->asFJ_HtmlTextPanelLarge();
+        largePanel->SetFixedWidth(Math::round(controlsList->getWidth() * 0.5f));
     }
     else if (helpPanel->isFJ_HtmlTextPanel())
     {
-        helpPanel->asFJ_HtmlTextPanel()->SetFixedWidth(Math::round(controlsList->getWidth() * 0.5f));
+        FJ_HtmlTextPanel* panel = helpPanel->asFJ_HtmlTextPanel();
+        panel->SetFixedWidth(Math::round(controlsList->getWidth() * 0.5f));
     }
 }
 

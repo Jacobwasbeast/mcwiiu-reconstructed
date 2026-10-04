@@ -11,7 +11,6 @@ fuiRenderNodeBitmap::fuiRenderNodeBitmap(fuiRenderNode* parent, fuiRenderNode* r
                                          unsigned char clipDepth, bool visible, fuiFile* file)
     : fuiRenderNode(parent, root, object, symbolIndex, eFuiObjectType_Bitmap, depth, color, clipDepth, visible, file)
 {
-    m_alpha = 1.0f;
     fuiBitmap* bitmap = static_cast<fuiBitmap*>(m_object);
     m_bounds.xMin = 0.0f;
     m_bounds.xMax = (float)bitmap->width;
@@ -44,22 +43,34 @@ void fuiRenderNodeBitmap::render(fuiRect* bounds, fuiMatrix* matrix)
 
     {
         fuiBitmap* bitmap = static_cast<fuiBitmap*>(m_object);
-        m_file->initialiseRenderTexture(bitmap, true);
         const float width = (float)bitmap->width;
         const float height = (float)bitmap->height;
+        float vertices[12];
+        vertices[0] = 0.0f;
+        vertices[1] = 0.0f;
+        vertices[2] = width;
+        vertices[3] = height;
+        vertices[4] = 0.0f;
+        vertices[5] = height;
+        vertices[6] = 0.0f;
+        vertices[7] = 0.0f;
+        vertices[8] = width;
+        vertices[9] = 0.0f;
+        vertices[10] = width;
+        vertices[11] = height;
 
+        m_file->initialiseRenderTexture(bitmap, true);
         gRenderer->TextureBind(bitmap->textureId);
-        gRenderer->StateSetTextureScaleUI(1.0f / width, 1.0f / height, 0.0f, 0.0f);
+        gRenderer->StateSetTextureScaleUI(1.0f / (float)bitmap->width, 1.0f / (float)bitmap->height, 0.0f, 0.0f);
 
-        float vertices[12] =
-        {
-            0.0f, 0.0f,
-            width, height,
-            0.0f, height,
-            0.0f, 0.0f,
-            width, 0.0f,
-            width, height
-        };
+        const float redMultiply = gFui->m_colorStack[gFui->m_colorDepth].redMultiply;
+        const float greenMultiply = gFui->m_colorStack[gFui->m_colorDepth].greenMultiply;
+        const float blueMultiply = gFui->m_colorStack[gFui->m_colorDepth].blueMultiply;
+        const float alphaMultiply = gFui->m_colorStack[gFui->m_colorDepth].alphaMultiply;
+        const float redAdd = gFui->m_colorStack[gFui->m_colorDepth].redAdd;
+        const float greenAdd = gFui->m_colorStack[gFui->m_colorDepth].greenAdd;
+        const float blueAdd = gFui->m_colorStack[gFui->m_colorDepth].blueAdd;
+        const float alphaAdd = gFui->m_colorStack[gFui->m_colorDepth].alphaAdd;
 
         if ((gFui->m_filterStack[gFui->m_filterDepth] & 1) == 0)
         {
@@ -71,8 +82,8 @@ void fuiRenderNodeBitmap::render(fuiRect* bounds, fuiMatrix* matrix)
             gRenderer->TextureSetParam(1, 1);
             gRenderer->TextureSetParam(2, 1);
         }
-        gRenderer->StateSetColour(gFui->m_colorStack[gFui->m_colorDepth].redMultiply, gFui->m_colorStack[gFui->m_colorDepth].greenMultiply, gFui->m_colorStack[gFui->m_colorDepth].blueMultiply, gFui->m_colorStack[gFui->m_colorDepth].alphaMultiply);
-        gRenderer->StateSetColourAdd(gFui->m_colorStack[gFui->m_colorDepth].redAdd, gFui->m_colorStack[gFui->m_colorDepth].greenAdd, gFui->m_colorStack[gFui->m_colorDepth].blueAdd, gFui->m_colorStack[gFui->m_colorDepth].alphaAdd);
+        gRenderer->StateSetColour(redMultiply, greenMultiply, blueMultiply, alphaMultiply);
+        gRenderer->StateSetColourAdd(redAdd, greenAdd, blueAdd, alphaAdd);
         gRenderer->DrawVertices(C4JRender::ePrimitiveType_Triangles, 6, vertices,
                                 C4JRender::eVertexType_UI, C4JRender::ePixelShaderType_UIColourAdd, NULL);
     }

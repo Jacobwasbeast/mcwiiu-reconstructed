@@ -58,45 +58,44 @@ void FJ_TutorialPopup::AdjustLayout(bool reposition)
     setY(0.0f);
     if (reposition)
     {
-        float stageHeight = getStage()->getStageHeight();
-        if (stageHeight == 360.0 || stageHeight == 540.0)
+        if (getStage()->getStageHeight() == 360.0f || getStage()->getStageHeight() == 540.0f)
             setY((float)Math::round((float)m_titleHeight * 1.4f));
     }
 
     FJ_FuiNode* title = getChildByName(std::string("Title"));
-    unsigned int y = 0;
-    unsigned int height = 0;
+    int y = 0;
+    int height = 0;
     if (title->isVisible())
     {
-        y = (unsigned int)m_titleY;
-        height = (unsigned int)(title->getHeight() < (float)m_titleHeight ? (float)m_titleHeight : title->getHeight());
+        y = m_titleY;
+        height = (int)(title->getHeight() < (float)m_titleHeight ? (float)m_titleHeight : title->getHeight());
     }
 
     FJ_FuiNode* exitScreenShot = getChildByName(std::string("ExitScreenShot"));
     if (exitScreenShot->isVisible())
     {
         if (y == 0)
-            y = (unsigned int)m_exitScreenShotY;
+            y = m_exitScreenShotY;
         exitScreenShot->setY((float)(y + height));
-        height += (unsigned int)exitScreenShot->getHeight();
+        height += (int)exitScreenShot->getHeight();
     }
 
     FJ_FuiNode* description = getChildByName(std::string("Description"));
     if (description->isVisible())
     {
         if (y == 0)
-            y = (unsigned int)m_descriptionY;
+            y = m_descriptionY;
         description->setY((float)(y + height));
-        height += (unsigned int)static_cast<FJ_HtmlText*>(description)->getTextHeight();
+        height += description->asFJ_HtmlText()->getTextHeight();
     }
 
     FJ_FuiNode* iconHolder = getChildByName(std::string("IconHolder"));
     if (iconHolder->isVisible())
     {
         if (y == 0)
-            y = (unsigned int)m_iconHolderY;
+            y = m_iconHolderY;
         iconHolder->setY((float)(y + height));
-        height += (unsigned int)iconHolder->getHeight();
+        height += (int)iconHolder->getHeight();
     }
 
     FJ_FuiNode* background = getChildByName(std::string("BackgroundPanel"));
@@ -126,7 +125,7 @@ fuiRenderNode* FJ_TutorialPopup::GetBitmapData(int type)
 void FJ_TutorialPopup::SetupIconHolder(int type)
 {
     FJ_FuiNode* holder = getChildByName(std::string("IconHolder"));
-    FJ_FuiNode* slotControl = holder->getChildAt(0)->asMovieClip()->getChildByName(std::string("SlotControl"))->asMovieClip();
+    FJ_FuiNode* slotControl = FJ_FuiNode::asMovieClip(holder->getChildAt(0))->getChildByName(std::string("SlotControl"))->asMovieClip();
     int width = Math::round(holder->getChildAt(0)->getScaleX());
 
     if (m_iconHolder != NULL && m_iconHolder->getParent() != NULL)
@@ -136,7 +135,7 @@ void FJ_TutorialPopup::SetupIconHolder(int type)
     }
     if (m_bitmap != NULL && m_bitmap->getParent() != NULL)
     {
-        static_cast<fuiRenderNodeTimeline*>(m_bitmap->getParent()->asTimeline())->removeChild(m_bitmap, true);
+        static_cast<fuiRenderNodeTimeline*>(m_bitmap->getParent())->removeChild(m_bitmap, true);
         m_bitmap = NULL;
     }
 
@@ -149,18 +148,19 @@ void FJ_TutorialPopup::SetupIconHolder(int type)
         rect.yMax = rect.yMin + holder->getHeight() - (float)(width * 2);
         fuiRenderNodeCodeGenRect* renderNode = new fuiRenderNodeCodeGenRect(getStage()->m_pRenderNode, &rect, "iggy_slot_IconHolder");
         renderNode->setAlpha(0.25f);
-        m_iconHolder = new FJ_FuiNode(renderNode);
-        renderNode->setFuiNode(m_iconHolder);
-        holder->addChildAt(m_iconHolder, holder->getNumChildren());
-        slotControl->setVisible(false);
-        return;
+        FJ_FuiNode* iconHolder = new FJ_FuiNode(renderNode);
+        m_iconHolder = iconHolder;
+        renderNode->setFuiNode(iconHolder);
+        holder->addChildAt(iconHolder, holder->getNumChildren());
     }
-
-    m_bitmap = GetBitmapData(type);
-    m_bitmap->setX((float)width);
-    m_bitmap->setY((float)width);
-    m_bitmap->setWidth(holder->getWidth() - (float)(width * 2));
-    m_bitmap->setHeight(holder->getHeight() - (float)(width * 2));
-    holder->addChildAt(m_bitmap, holder->getNumChildren());
+    else
+    {
+        m_bitmap = GetBitmapData(type);
+        m_bitmap->setX((float)width);
+        m_bitmap->setY((float)width);
+        m_bitmap->setWidth(holder->getWidth() - (float)(width * 2));
+        m_bitmap->setHeight(holder->getHeight() - (float)(width * 2));
+        holder->addChildAt(m_bitmap, holder->getNumChildren());
+    }
     slotControl->setVisible(false);
 }

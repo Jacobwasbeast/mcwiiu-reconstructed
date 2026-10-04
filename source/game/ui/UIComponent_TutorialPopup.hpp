@@ -22,7 +22,7 @@ public:
         EIcons_None = 0
     };
 
-    UIComponent_TutorialPopup(int sceneType, void* callback, UILayer* layer);
+    UIComponent_TutorialPopup(int sceneType, void*, UILayer* layer);
     virtual ~UIComponent_TutorialPopup();
 
     void SetVisible(bool visible);
@@ -37,6 +37,7 @@ public:
     void SetTutorialDescription(_TutorialPopupInfo* info);
     void RemoveInteractSceneReference(UIScene* scene);
     void UpdateTutorialPopup();
+    void UpdateInteractScenePosition(bool visible);
     bool IsVisible();
 
     virtual unsigned int mapElementsAndNames();
@@ -44,7 +45,6 @@ public:
     virtual void handleReload();
     virtual void render(int width, int height, C4JRender::eViewportType viewport);
     virtual void customDraw(const char* name, fuiRect* rect);
-    virtual void UpdateInteractScenePosition(bool visible);
     virtual void handleTimerComplete(int timerId);
     virtual int getSceneType();
     virtual bool stealsFocus();
@@ -64,7 +64,6 @@ private:
     not_null_ptr<ItemInstance> m_icon;
     bool m_showIcon;
     bool m_containerMenuDisplayed;
-    bool m_hasDescription;
     bool m_splitScreen;
     std::wstring m_title;
     EIcons m_iconHolder;

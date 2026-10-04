@@ -49,18 +49,18 @@ fuiRenderNodeEditText* FJ_ToolTip::GetSecondaryTextField()
     fuiRenderNodeEditText* field = NULL;
     FJ_FuiNode* child;
 
-    if (!isFJ_Label())
+    if (isFJ_Label())
     {
-        FJ_FuiNode* container = getChildByName(std::string("FJ_TextContainer_2"));
-        if (container == NULL)
-            return NULL;
-        if (container->getNumChildren() == 0)
-            return NULL;
-        child = container->getChildAt(0);
+        child = getChildAt(0)->asMovieClip();
     }
     else
     {
-        child = getChildAt(0)->asMovieClip();
+        FJ_FuiNode* container = getChildByName(std::string("FJ_TextContainer_2"));
+        if (container == NULL)
+            return field;
+        if (container->getNumChildren() == 0)
+            return field;
+        child = container->getChildAt(0);
     }
 
     if (child != NULL)
@@ -90,11 +90,9 @@ void FJ_ToolTip::SetSecondaryText(const std::wstring& text)
     if (container != NULL)
         container->setY(0.0f);
 
-    int x = Math::round((container->getWidth() / getScaleX() - field->getWidth()) * 0.5f
-                        + m_centerBiasX);
-    field->setX(static_cast<float>(x));
-    int y = Math::round((m_objectHeight / getScaleY() - field->getHeight()) * 0.5f);
-    field->setY(static_cast<float>(y));
+    field->setX(static_cast<float>(Math::round((container->getWidth() / getScaleX() - field->getWidth()) * 0.5f
+                                               + m_centerBiasX)));
+    field->setY(static_cast<float>(Math::round((m_objectHeight / getScaleY() - field->getHeight()) * 0.5f)));
 }
 
 void FJ_ToolTip::SetType(int type, int subtype)
@@ -105,35 +103,28 @@ void FJ_ToolTip::SetType(int type, int subtype)
     else
         std::sprintf(label, "%s%d", g_toolTipControllerSuffix.c_str(), m_controllerType);
 
-    if (type < 0)
-    {
-        m_primaryText->setVisible(false);
-    }
-    else
+    if (type >= 0)
     {
         if (m_primaryType != type)
             m_primaryText->gotoAndStop(g_toolTipLabels[type][0] + label);
         m_primaryText->setVisible(true);
     }
-
-    if (subtype < 0)
-    {
-        m_secondaryPanel->setVisible(false);
-        SetSecondaryText(std::wstring(L""));
-        m_secondaryText->setVisible(false);
-    }
     else
     {
-        if (static_cast<int>(m_primaryText->getWidth()) < 1)
+        m_primaryText->setVisible(false);
+    }
+
+    if (subtype >= 0)
+    {
+        if (static_cast<int>(m_primaryText->getWidth()) > 0)
         {
-            m_secondaryPanel->setX(m_primaryText->getX()
-                                   + static_cast<float>(m_textContainerX) + 1.0f);
+            m_secondaryPanel->setX(static_cast<float>(static_cast<int>(m_primaryText->getWidth()))
+                                   + m_primaryText->getX() + 1.0f);
         }
         else
         {
             m_secondaryPanel->setX(m_primaryText->getX()
-                                   + static_cast<float>(static_cast<int>(m_primaryText->getWidth()))
-                                   + 1.0f);
+                                   + static_cast<float>(m_textContainerX) + 1.0f);
         }
         m_secondaryPanel->setVisible(true);
 
@@ -144,6 +135,12 @@ void FJ_ToolTip::SetType(int type, int subtype)
 
         m_secondaryText->setX(m_secondaryPanel->getX() + m_secondaryPanel->getWidth() + 1.0f);
         m_secondaryText->setVisible(true);
+    }
+    else
+    {
+        m_secondaryPanel->setVisible(false);
+        SetSecondaryText(std::wstring(L""));
+        m_secondaryText->setVisible(false);
     }
 
     m_primaryType = type;

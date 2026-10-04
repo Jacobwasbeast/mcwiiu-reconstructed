@@ -48,13 +48,17 @@ struct RepairingMenuInitData
 };
 
 UIScene_AnvilMenu::UIScene_AnvilMenu(int type, void* data, UILayer* layer)
-    : UIScene_AbstractContainerMenu(type, layer), m_pendingName(0), m_anvilMenu(0),
-      m_nameUpdateAction(this, &UIScene_AnvilMenu::updateItemName), m_crossVisible(false)
+    : UIScene_AbstractContainerMenu(type, layer),
+      m_nameUpdateAction(this, &UIScene_AnvilMenu::updateItemName)
 {
     RepairingMenuInitData* sceneData = static_cast<RepairingMenuInitData*>(data);
+    m_inventory = boost::shared_ptr<Inventory>();
+    m_anvilMenu = 0;
     m_itemName = boost::shared_ptr<CensoredString>(
         new CensoredString(&m_nameUpdateAction, 0xad36b773, 0x62950b66));
+    m_pendingName = 0;
     initialiseMovie();
+    m_crossVisible = false;
     m_editName.init(UIString(m_itemName->get()), 0);
     m_editName.SetCharLimit(0x1e);
     m_anvilLabel.init(UIString(L10N::GetString(IDS_REPAIR_AND_NAME)));
@@ -83,23 +87,28 @@ UIScene_AnvilMenu::UIScene_AnvilMenu(int type, void* data, UILayer* layer)
     m_ingredientSlot.addSlots(0, 1);
     m_ingredientSlot2.addSlots(1, 1);
     m_resultSlot.addSlots(2, 1);
-    std::wstring costLabel;
+    std::wstring costLabel(L"");
     bool costLabelSafe = false;
     if (m_anvilMenu->mRepairCost > 0)
     {
-        boost::shared_ptr<LocalPlayer> player = minecraft->mLocalPlayers[type];
-        Slot* resultSlot = m_anvilMenu->getSlot(2);
-        if (m_anvilMenu->mRepairCost >= 40 && !resultSlot->mayPickup(player))
+        bool showCost = true;
+        if (m_anvilMenu->mRepairCost >= 40)
         {
-            costLabel = L10N::GetString(IDS_REPAIR_EXPENSIVE);
-            costLabelSafe = true;
+            if (!minecraft->mLocalPlayers[type]->mAbilities.mInstabuild)
+            {
+                costLabel = L10N::GetString(IDS_REPAIR_EXPENSIVE);
+                costLabelSafe = true;
+                showCost = false;
+            }
         }
-        else if (resultSlot->hasItem())
+        if (showCost && m_anvilMenu->getSlot(2)->hasItem())
         {
             wchar_t label[256];
             swprintf(label, 0x100, L10N::GetString(IDS_REPAIR_COST), m_anvilMenu->mRepairCost);
             costLabel = label;
-            costLabelSafe = false;
+            if (m_anvilMenu->getSlot(2)->mayPickup(
+                    boost::dynamic_pointer_cast<Player>(m_inventory->m_player->shared_from_this())) != 1)
+                costLabelSafe = true;
         }
     }
     setCostLabel(costLabel, costLabelSafe);
@@ -463,17 +472,17 @@ void UIScene_AnvilMenu::refreshContainer(AbstractContainerMenu* container,
 
 void UIScene_AnvilMenu::slotChanged(AbstractContainerMenu*, int slot, not_null_ptr<ItemInstance> item)
 {
-    if (slot != 0)
-        return;
-
-    if (!item->isEmpty())
+    if (slot == 0)
     {
-        m_itemName->set(item->getHoverNameUnfiltered(), item->getOwnerUUID(),
-                         item->wasCreatedByRestrictedPlayer(), item->wasCreatedOnHost());
-    }
-    else
-    {
-        m_itemName->set(std::wstring(), std::wstring(), false, true);
+        if (!item->isEmpty())
+        {
+            m_itemName->set(item->getHoverNameUnfiltered(), item->getOwnerUUID(),
+                             item->wasCreatedByRestrictedPlayer(), item->wasCreatedOnHost());
+        }
+        else
+        {
+            m_itemName->set(std::wstring(L""), std::wstring(L""), false, true);
+        }
     }
 }
 

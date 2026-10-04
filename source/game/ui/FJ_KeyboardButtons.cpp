@@ -6,8 +6,8 @@ FJ_KeyboardButtons::FJ_KeyboardButtons(fuiRenderNode* renderNode)
     : FJ_Button(renderNode)
 {
     m_keyboardWidth = static_cast<int>(getWidth());
-    m_remotePressButton = false;
     m_keyboardHeight = static_cast<int>(getHeight());
+    m_remotePressButton = false;
 }
 
 void FJ_KeyboardButtons::Init(const std::wstring& label, int id)
@@ -19,18 +19,16 @@ void FJ_KeyboardButtons::Init(const std::wstring& label, int id)
     int pass = 0;
     while (m_labelTooWide && pass < 5)
     {
-        std::wstring::size_type space = wrappedLabel.find(L' ');
-        if (space != std::wstring::npos)
+        for (std::wstring::size_type i = 0; i < wrappedLabel.size(); ++i)
         {
-            wrappedLabel[space] = L'\n';
-            m_labelTooWide = false;
-            FJ_Button::SetLabel(wrappedLabel);
+            if (wrappedLabel[i] == L' ')
+            {
+                wrappedLabel[i] = L'\n';
+                break;
+            }
         }
-        else
-        {
-            m_labelTooWide = false;
-            FJ_Button::SetLabel(wrappedLabel);
-        }
+        m_labelTooWide = false;
+        FJ_Button::SetLabel(wrappedLabel);
         ++pass;
     }
 }
@@ -43,18 +41,16 @@ void FJ_KeyboardButtons::SetLabel(const std::wstring& label)
     int pass = 0;
     while (m_labelTooWide && pass < 5)
     {
-        std::wstring::size_type space = wrappedLabel.find(L' ');
-        if (space != std::wstring::npos)
+        for (std::wstring::size_type i = 0; i < wrappedLabel.size(); ++i)
         {
-            wrappedLabel[space] = L'\n';
-            m_labelTooWide = false;
-            FJ_Button::SetLabel(wrappedLabel);
+            if (wrappedLabel[i] == L' ')
+            {
+                wrappedLabel[i] = L'\n';
+                break;
+            }
         }
-        else
-        {
-            m_labelTooWide = false;
-            FJ_Button::SetLabel(wrappedLabel);
-        }
+        m_labelTooWide = false;
+        FJ_Button::SetLabel(wrappedLabel);
         ++pass;
     }
 }
@@ -69,8 +65,7 @@ void FJ_KeyboardButtons::UpdateLabel()
 {
     if (getCurrentState() != 2)
     {
-        FJ_FuiNode* outline = getChildByName(std::string("KeyboardOutline"));
-        FJ_FuiNode* outlineMovieClip = outline->asMovieClip();
+        FJ_FuiNode* outlineMovieClip = getChildByName(std::string("KeyboardOutline"))->asMovieClip();
         outlineMovieClip->setWidth(static_cast<float>(m_keyboardWidth + m_keyboardOffset * 2) / getScaleX());
         outlineMovieClip->setHeight(static_cast<float>(m_keyboardHeight + m_keyboardOffset * 2) / getScaleY());
         outlineMovieClip->setX(static_cast<float>(-m_keyboardOffset) / getScaleX());
@@ -89,7 +84,7 @@ void FJ_KeyboardButtons::UpdateLabel()
         }
     }
 
-    if (!getButtonPressed())
+    if (!m_focused)
     {
         if (!m_remotePressButton && getCurrentState() == 3)
             ChangeState(2);

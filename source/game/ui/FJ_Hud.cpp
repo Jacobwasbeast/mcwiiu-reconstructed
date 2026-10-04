@@ -205,12 +205,12 @@ void FJ_Hud::SetSelectedLabel(const std::wstring& label, bool visible)
                                                       m_selectedLabelHeight));
     if (!m_horseHealthBar->isVisible() && !m_healthBar->isVisible() && !m_foodBar->isVisible())
     {
-        float barHeight = m_healthBarHeight * m_hud->getScaleY();
-        getChildByName("SelectedLabel")->incY(Math::round(barHeight + barHeight));
+        getChildByName("SelectedLabel")->incY(Math::round(m_healthBarHeight * m_hud->getScaleY() * 2.0f));
     }
-    else if (m_armourBar->isVisible() && m_healthAbsorbBar->isVisible())
+    else
     {
-        getChildByName("SelectedLabel")->decY(m_healthAbsorbBar->getHeight() * m_hud->getScaleY());
+        if (m_armourBar->isVisible() && m_healthAbsorbBar->isVisible())
+            getChildByName("SelectedLabel")->decY(m_healthAbsorbBar->getHeight() * m_hud->getScaleY());
     }
     SetJukeBoxLabelPos();
 }
@@ -474,10 +474,7 @@ void FJ_Hud::RepositionHud(int width, int height)
     m_crosshair->setX(Math::round(width / 2 - m_crosshair->getWidth() * 0.5f));
     m_crosshair->setY(Math::round(getStage()->getStageHeight() - crosshair->getHeight() * 0.5f - height * 0.5f));
 
-    if (m_safeZoneLeft > 0)
-        m_armourBarIcons->setX(m_safeZoneLeft);
-    else
-        m_armourBarIcons->setX(m_armourBarIcons->getWidth());
+    m_armourBarIcons->setX(m_safeZoneLeft > 0 ? (float)m_safeZoneLeft : m_armourBarIcons->getWidth());
     m_armourBarIcons->setY(Math::round(getStage()->getStageHeight() - m_armourBarIcons->getHeight() * 0.5f -
                                        height * 0.5f));
 
@@ -620,8 +617,8 @@ void FJ_Hud::ShowAnimatedSplash(const std::wstring& label, bool visible)
     if (m_viewportWidth != -1 && m_viewportHeight != -1)
     {
         m_animatedSplash->setX(Math::round(m_viewportWidth * 0.5f));
-        m_animatedSplash->setY(getChildByName("Jukebox")->getY() + getChildByName("Jukebox")->getHeight() +
-                               m_animatedSplashHeight * 0.5f);
+        m_animatedSplash->setY(m_animatedSplashHeight * 0.5f +
+                               (getChildByName("Jukebox")->getY() + getChildByName("Jukebox")->getHeight()));
         m_animatedSplashText->setX(Math::round((m_viewportWidth - m_animatedSplashTextWidth) * 0.5f));
         FJ_FuiNode* panel = m_animatedSplash->getChildByName("TextPanel")->getChildAt(0);
         panel->setHeight(Math::round(m_animatedSplash->getChildByName("TextPanel")->getChildAt(0)->getHeight() * 1.2f));
@@ -629,15 +626,15 @@ void FJ_Hud::ShowAnimatedSplash(const std::wstring& label, bool visible)
     else
     {
         m_animatedSplash->setX(Math::round(getStage()->getStageWidth() * 0.5f));
-        m_animatedSplash->setY(getChildByName("Jukebox")->getY() + getChildByName("Jukebox")->getHeight() +
-                               m_animatedSplashHeight * 0.5f);
+        m_animatedSplash->setY(m_animatedSplashHeight * 0.5f +
+                               (getChildByName("Jukebox")->getY() + getChildByName("Jukebox")->getHeight()));
     }
     m_animatedSplashText->SetLabel(label);
     m_animatedSplashText->setAlpha(0.0f);
 
     int padding = (int)(m_animatedSplash->getChildByName("TextPanel")->getChildAt(0)->getWidth() * 0.25f);
-    int textWidth = Math::round(m_animatedSplashText->getWidth() / m_animatedSplash->getScaleX());
-    m_animatedSplash->getChildByName("TextPanel")->getChildAt(0)->setWidth((float)textWidth + (float)padding);
+    m_animatedSplash->getChildByName("TextPanel")->getChildAt(0)->setWidth(
+        (float)Math::round(m_animatedSplashText->getWidth() / m_animatedSplash->getScaleX()) + (float)padding);
     m_animatedSplash->gotoAndPlay(2);
 }
 
@@ -1212,7 +1209,48 @@ void FJ_Hud::SetHudGameMode(int gameMode)
 {
     m_gameMode = gameMode;
     SetJukeBoxLabelPos();
-    if (m_gameMode != 2)
+    if (m_gameMode == 2)
+    {
+        m_hud->setVisible(false);
+        m_showHud = false;
+        m_raceProgress->setVisible(true);
+        m_wrongWayLabel->setVisible(true);
+        m_roundNumber->setVisible(true);
+        m_timeLabel->setVisible(true);
+        m_timeIcon->setVisible(true);
+        m_speedLabel->setVisible(true);
+        m_speedIcon->setVisible(true);
+        m_scoreLabel->setVisible(false);
+        m_scoreIcon->setVisible(false);
+        m_pickup->setVisible(false);
+        m_positionOne->setVisible(false);
+        m_positionTwo->setVisible(false);
+        m_positionThree->setVisible(false);
+        m_gold->setVisible(false);
+        m_silver->setVisible(false);
+        m_bronze->setVisible(false);
+        if (m_wrongWayLabel->isFJ_Label_HUD_SplashBig())
+            m_wrongWayLabel->asFJ_Label_HUD_SplashBig()->SetLabel(L"");
+        else if (m_wrongWayLabel->isFJ_Label_HUD_Splash())
+            m_wrongWayLabel->asFJ_Label_HUD_Splash()->SetLabel(L"");
+        m_roundNumber->SetLabel(L"");
+        m_timeLabel->SetLabel(L"");
+        m_speedLabel->SetLabel(L"");
+        m_scoreLabel->SetLabel(L"");
+        m_positionOne->SetLabel(L"");
+        m_positionTwo->SetLabel(L"");
+        m_positionThree->SetLabel(L"");
+        PositionGameModeComponents();
+
+        char name[64];
+        for (int i = 0; i < 3; ++i)
+        {
+            sprintf(name, "FJ_Health_0%d", i);
+            m_glideHealthIcons[i] = m_glideHealthBar->getChildByName(name);
+            m_glideHealthIcons[i]->gotoAndStop(3);
+        }
+    }
+    else
     {
         m_hud->setVisible(true);
         m_showHud = true;
@@ -1232,46 +1270,6 @@ void FJ_Hud::SetHudGameMode(int gameMode)
         m_gold->setVisible(false);
         m_silver->setVisible(false);
         m_bronze->setVisible(false);
-        return;
-    }
-
-    m_hud->setVisible(false);
-    m_showHud = false;
-    m_raceProgress->setVisible(true);
-    m_wrongWayLabel->setVisible(true);
-    m_roundNumber->setVisible(true);
-    m_timeLabel->setVisible(true);
-    m_timeIcon->setVisible(true);
-    m_speedLabel->setVisible(true);
-    m_speedIcon->setVisible(true);
-    m_scoreLabel->setVisible(false);
-    m_scoreIcon->setVisible(false);
-    m_pickup->setVisible(false);
-    m_positionOne->setVisible(false);
-    m_positionTwo->setVisible(false);
-    m_positionThree->setVisible(false);
-    m_gold->setVisible(false);
-    m_silver->setVisible(false);
-    m_bronze->setVisible(false);
-    if (m_wrongWayLabel->isFJ_Label_HUD_SplashBig())
-        m_wrongWayLabel->asFJ_Label_HUD_SplashBig()->SetLabel(L"");
-    else if (m_wrongWayLabel->isFJ_Label_HUD_Splash())
-        m_wrongWayLabel->asFJ_Label_HUD_Splash()->SetLabel(L"");
-    m_roundNumber->SetLabel(L"");
-    m_timeLabel->SetLabel(L"");
-    m_speedLabel->SetLabel(L"");
-    m_scoreLabel->SetLabel(L"");
-    m_positionOne->SetLabel(L"");
-    m_positionTwo->SetLabel(L"");
-    m_positionThree->SetLabel(L"");
-    PositionGameModeComponents();
-
-    char name[64];
-    for (int i = 0; i < 3; ++i)
-    {
-        sprintf(name, "FJ_Health_0%d", i);
-        m_glideHealthIcons[i] = m_glideHealthBar->getChildByName(name);
-        m_glideHealthIcons[i]->gotoAndStop(3);
     }
 }
 

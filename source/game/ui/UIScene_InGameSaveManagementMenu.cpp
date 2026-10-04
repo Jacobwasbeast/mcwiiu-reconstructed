@@ -2,6 +2,7 @@
 #include "game/core/StringIds.hpp"
 
 #include <cstring>
+#include <cwchar>
 
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/core/CConsoleMinecraftApp.hpp"
@@ -24,27 +25,36 @@ extern CProfile* gProfile;
 extern CStorage* gStorage;
 
 UIScene_InGameSaveManagementMenu::UIScene_InGameSaveManagementMenu(int playerId, void*, UILayer* layer)
-    : UIScene(playerId, layer), m_saveListDetails(NULL), m_saveDetailsCount(0),
-      m_pendingAction(ePendingAction_None), m_ignoreInput(false), m_thumbnailsComplete(false),
-      m_thumbnailRequested(false), m_thumbnailReturned(false), m_nextThumbnail(0), m_saveDetails(NULL),
-      m_saveInfoReady(false), m_closing(false), m_saveListRefreshState(0), m_selectedSaveIndex(0),
-      m_selectionChanged(false)
+    : UIScene(playerId, layer)
 {
     initialiseMovie();
+    m_nextThumbnail = 0;
+    m_saveListRefreshState = 0;
+    m_ignoreInput = false;
+    m_pendingAction = ePendingAction_None;
     m_saveList.init(0);
     m_saveListTitle.init(UIString(L10N::GetString(IDS_SAVE_INCOMPLETE_DELETE_SAVES)));
     m_saveTimer.setVisible(true);
     m_saveSizeBar.init(UIString(L""), 1, 0, SAVE_DATA_QUOTA);
+    m_closing = false;
+    m_thumbnailsComplete = false;
+    m_saveDetails = NULL;
+    m_saveListDetails = NULL;
+    m_saveInfoReady = false;
+    m_selectionChanged = false;
+    m_thumbnailRequested = false;
+    m_saveDetailsCount = 0;
+    m_thumbnailReturned = false;
     gStorage->ClearSavesInfo();
-    if (gApp.StartInstallDLCProcess(m_playerId) == 0 && gApp.DLCInstallPending() == 0)
+    if (gApp.StartInstallDLCProcess(m_playerId) != 0 || gApp.DLCInstallPending() != 0)
+    {
+        m_ignoreInput = true;
+    }
+    else
     {
         Initialise();
         if (!m_ignoreInput)
             gApp.mDLCManager.checkForCorruptDLCAndAlert(true);
-    }
-    else
-    {
-        m_ignoreInput = true;
     }
     layer->addComponent(playerId, EUIScene_MenuBackground, NULL);
 }
@@ -55,7 +65,7 @@ UIScene_InGameSaveManagementMenu::~UIScene_InGameSaveManagementMenu()
     if (m_saveListDetails != NULL)
     {
         for (int i = 0; i < m_saveDetailsCount; ++i)
-            delete[] m_saveListDetails[i].m_thumbnail;
+            delete m_saveListDetails[i].m_thumbnail;
         delete[] m_saveListDetails;
     }
     gApp.LeaveSaveNotificationSection();
@@ -88,20 +98,34 @@ void UIScene_InGameSaveManagementMenu::Initialise()
 unsigned int UIScene_InGameSaveManagementMenu::mapElementsAndNames()
 {
     fuiRenderNode* root = m_movie->getRootNode();
-    m_saveList.setupControl(this, root, "SavesList");
+    {
+        std::string name("SavesList");
+        m_saveList.setupControl(this, root, name);
+    }
     m_controls.push_back(&m_saveList);
-    m_saveListTitle.setupControl(this, root, "SavesListTitle");
+    {
+        std::string name("SavesListTitle");
+        m_saveListTitle.setupControl(this, root, name);
+    }
     m_controls.push_back(&m_saveListTitle);
-    m_saveTimer.setupControl(this, root, "SavesTimer");
+    {
+        std::string name("SavesTimer");
+        m_saveTimer.setupControl(this, root, name);
+    }
     m_controls.push_back(&m_saveTimer);
-    m_saveSizeBar.setupControl(this, root, "SaveSizeBar");
+    {
+        std::string name("SaveSizeBar");
+        m_saveSizeBar.setupControl(this, root, name);
+    }
     m_controls.push_back(&m_saveSizeBar);
     return 1;
 }
 
 void UIScene_InGameSaveManagementMenu::updateTooltips()
 {
-    int deleteTooltip = m_saveInfoReady && m_saveDetailsCount > 0 ? IDS_TOOLTIPS_DELETESAVE : -1;
+    int deleteTooltip = -1;
+    if (m_saveInfoReady && m_saveDetailsCount > 0)
+        deleteTooltip = IDS_TOOLTIPS_DELETESAVE;
     gConsoleUIController.SetTooltips(m_playerId, deleteTooltip, IDS_SAVE_INCOMPLETE_RETRY_SAVING, -1, -1, -1, -1,
                                      -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, false, m_layer->IsFullscreenGroup());
 }
@@ -131,18 +155,18 @@ void UIScene_InGameSaveManagementMenu::handleInput(int, int action, bool repeat,
     gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, pressed, released);
     switch (action)
     {
+    case EControllerActions_MenuCancel:
+        if (!pressed)
+            break;
+        navigateBack();
+        handled = true;
+        break;
     case EControllerActions_MenuUp:
     case EControllerActions_MenuDown:
     case EControllerActions_MenuPageUp:
     case EControllerActions_MenuPageDown:
     case EControllerActions_MenuOk:
         sendInputToMovie(action, repeat, pressed, released);
-        handled = true;
-        break;
-    case EControllerActions_MenuCancel:
-        if (!pressed)
-            break;
-        navigateBack();
         handled = true;
         break;
     }
@@ -169,18 +193,21 @@ int UIScene_InGameSaveManagementMenu::LoadSaveDataThumbnailReturned(void* contex
                                                                      unsigned int size)
 {
     UIScene_InGameSaveManagementMenu* menu = static_cast<UIScene_InGameSaveManagementMenu*>(context);
-    _SaveListDetails& details = menu->m_saveListDetails[menu->m_nextThumbnail];
-    if (data == NULL || size == 0)
+    if (data != NULL && size != 0)
+    {
+        unsigned char* thumbnail = new unsigned char[size];
+        menu->m_saveListDetails[menu->m_nextThumbnail].m_thumbnail = thumbnail;
+        std::memcpy(thumbnail, data, size);
+        menu->m_thumbnailReturned = true;
+        menu->m_saveListDetails[menu->m_nextThumbnail].m_thumbnailSize = size;
+    }
+    else
     {
         menu->m_thumbnailReturned = true;
-        details.m_thumbnail = NULL;
+        _SaveListDetails& details = menu->m_saveListDetails[menu->m_nextThumbnail];
         details.m_thumbnailSize = 0;
-        return 0;
+        details.m_thumbnail = NULL;
     }
-    details.m_thumbnail = new unsigned char[size];
-    std::memcpy(details.m_thumbnail, data, size);
-    menu->m_thumbnailReturned = true;
-    details.m_thumbnailSize = size;
     return 0;
 }
 
@@ -208,7 +235,10 @@ void UIScene_InGameSaveManagementMenu::tick()
                 if (m_saveListDetails != NULL)
                 {
                     for (int i = 0; i < m_saveDetails->count; ++i)
-                        delete[] m_saveListDetails[i].m_thumbnail;
+                    {
+                        if (m_saveListDetails[i].m_thumbnail != NULL)
+                            delete m_saveListDetails[i].m_thumbnail;
+                    }
                     delete[] m_saveListDetails;
                 }
                 m_saveListDetails = new _SaveListDetails[m_saveDetails->count];
@@ -246,26 +276,39 @@ void UIScene_InGameSaveManagementMenu::tick()
             else if (m_thumbnailReturned)
             {
                 m_thumbnailReturned = false;
-                if (m_closing)
+                if (!m_closing)
                 {
-                    m_thumbnailRequested = false;
-                }
-                else
-                {
-                    _SaveListDetails& details = m_saveListDetails[m_nextThumbnail];
-                    std::wstring name = convUtf8ToWstring(details.m_filename);
-                    if (details.m_thumbnail != NULL)
-                        registerSubstitutionTexture(name, details.m_thumbnail, details.m_thumbnailSize, false);
-                    m_saveList.setTextureName(m_nextThumbnail, name);
+                    std::wstring saveFileName = convUtf8ToWstring(m_saveListDetails[m_nextThumbnail].m_filename);
+                    wchar_t thumbnailName[32];
+                    wcsncpy(thumbnailName, saveFileName.c_str(), 32);
+                    if (m_saveListDetails[m_nextThumbnail].m_thumbnail != NULL)
+                    {
+                        registerSubstitutionTexture(std::wstring(thumbnailName),
+                                                    m_saveListDetails[m_nextThumbnail].m_thumbnail,
+                                                    m_saveListDetails[m_nextThumbnail].m_thumbnailSize, false);
+                    }
+                    m_saveList.setTextureName(m_nextThumbnail, std::wstring(thumbnailName));
                     ++m_nextThumbnail;
-                    if (m_nextThumbnail >= static_cast<int>(m_saveList.getItemCount()) ||
-                        gStorage->LoadSaveDataThumbnail(&gStorage->ReturnSavesInfo()->saves[m_nextThumbnail],
-                                                        &LoadSaveDataThumbnailReturned,
-                                                        this) != C4JStorage::ESaveGame_GetThumbnail)
+                    if (m_nextThumbnail < static_cast<int>(m_saveList.getItemCount()))
+                    {
+                        SAVE_DETAILS* details = gStorage->ReturnSavesInfo();
+                        if (gStorage->LoadSaveDataThumbnail(&details->saves[m_nextThumbnail],
+                                                            &LoadSaveDataThumbnailReturned,
+                                                            this) != C4JStorage::ESaveGame_GetThumbnail)
+                        {
+                            m_thumbnailRequested = false;
+                            m_thumbnailsComplete = true;
+                        }
+                    }
+                    else
                     {
                         m_thumbnailRequested = false;
                         m_thumbnailsComplete = true;
                     }
+                }
+                else
+                {
+                    m_thumbnailRequested = false;
                 }
             }
         }

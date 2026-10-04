@@ -16,7 +16,7 @@ public:
     {
     public:
         EnchantmentNames();
-        virtual ~EnchantmentNames();
+        ~EnchantmentNames();
         std::wstring getRandomName();
 
     private:

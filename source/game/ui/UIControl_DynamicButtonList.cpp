@@ -20,7 +20,7 @@ void UIControl_DynamicButtonList::tick()
 void UIControl_DynamicButtonList::addItem(UIString label, int index)
 {
     if (index < 0) {
-        index = (int)getItemCount();
+        index = m_itemIndex;
     }
     m_labels.push_back(label);
     const std::wstring& value = label.getString();

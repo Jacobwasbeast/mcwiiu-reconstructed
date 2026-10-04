@@ -67,6 +67,8 @@ public:
     void MoveItem(int index, bool down);
 
 protected:
+    friend class FJ_GameModeScoreboard;
+
     bool m_checkboxTick;
     int m_verticalSpacing;
     std::string m_action;

@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "game/core/CMinecraftApp.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/ClientMasterGameMode.hpp"
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/Gui.hpp"
@@ -24,27 +25,31 @@
 #include "game/core/GameSettings.hpp"
 
 UIScene_DeathMenu::UIScene_DeathMenu(int playerId, void*, UILayer* layer)
-    : UIScene(playerId, layer), m_deathMenuActive(false), m_unknownStateA(false),
-      m_unknownStateB(false)
+    : UIScene(playerId, layer)
 {
     initialiseMovie();
 
-    if (g_pApp->GetGameHostOption(eGameHostOption_MiniGame) == 0)
+    int timerId;
+    int timerLength;
+    if (gApp.GetGameHostOption(eGameHostOption_MiniGame) != 0)
+    {
+        m_deathMenuActive = true;
+        m_exitButton.setVisible(false);
+        m_respawnButton.setVisible(false);
+        timerId = 0;
+        timerLength = Minecraft::InMiniGame(eMiniGameId_Glide, true) ? 1000 : 2000;
+    }
+    else
     {
         m_deathMenuActive = false;
         m_exitButton.init(UIString(L10N::GetString(IDS_EXIT_GAME)), 1);
         m_respawnButton.init(UIString(L10N::GetString(IDS_RESPAWN)), 0);
         m_exitButton.setEnable(false, true);
         m_respawnButton.setEnable(false, true);
-        addTimer(1, 1000);
+        timerId = 1;
+        timerLength = 1000;
     }
-    else
-    {
-        m_deathMenuActive = true;
-        m_exitButton.setVisible(false);
-        m_respawnButton.setVisible(false);
-        addTimer(0, Minecraft::InMiniGame(eMiniGameId_Glide, true) ? 1000 : 2000);
-    }
+    addTimer(timerId, timerLength);
 
     if (!Minecraft::InMiniGame(eMiniGameId_Glide, true))
         m_titleLabel.setLabel(UIString(L10N::GetString(IDS_YOU_DIED)), false, false);
@@ -56,13 +61,15 @@ UIScene_DeathMenu::UIScene_DeathMenu(int playerId, void*, UILayer* layer)
     if (!Minecraft::InMiniGame(eMiniGameId_Tumble, true) &&
         !Minecraft::InMiniGame(eMiniGameId_Glide, true))
     {
-        m_deathMessageLabel.setLabel(UIString(gui->mNowPlaying[playerId]), false, false);
+        std::wstring deathMessage(gui->mNowPlaying[playerId]);
+        m_deathMessageLabel.setLabel(UIString(deathMessage), false, false);
         m_unknownStateA = false;
         m_unknownStateB = false;
     }
     else
     {
-        m_deathMessageLabel.setLabel(UIString(std::wstring(L"")), false, false);
+        std::wstring deathMessage(L"");
+        m_deathMessageLabel.setLabel(UIString(deathMessage), false, false);
         m_unknownStateB = false;
         m_unknownStateA = false;
     }
@@ -88,13 +95,13 @@ UIScene_DeathMenu::UIScene_DeathMenu(int playerId, void*, UILayer* layer)
 UIScene_DeathMenu::~UIScene_DeathMenu()
 {
     Minecraft* minecraft = Minecraft::GetInstance();
-    ClientMasterGameMode* gameMode = minecraft != NULL ? minecraft->GetClientMasterGameMode() : NULL;
+    ClientMasterGameMode* gameMode = minecraft->GetClientMasterGameMode();
     if (gameMode != NULL && gameMode->IsRoundRestarting() && hasTimer(0))
         handleTimerComplete(0);
 
     if (minecraft != NULL && minecraft->mGameModes[m_playerId] != NULL)
     {
-        Tutorial* tutorial = minecraft->mGameModes[m_playerId]->getTutorial();
+        Tutorial* tutorial = Minecraft::GetInstance()->mGameModes[m_playerId]->getTutorial();
         if (tutorial != NULL)
             tutorial->showTutorialPopup(true);
     }
@@ -118,22 +125,24 @@ unsigned int UIScene_DeathMenu::mapElementsAndNames()
 
 void UIScene_DeathMenu::handleTimerComplete(int timerId)
 {
-    if (timerId == 0)
+    switch (timerId)
     {
-        g_pApp->SetAction(m_playerId, eXuiAction_Respawn, NULL);
+    case 0:
+        gApp.SetAction(m_playerId, eXuiAction_Respawn, NULL);
         killTimer(0);
+    case 1:
+        m_exitButton.setEnable(true, true);
+        m_respawnButton.setEnable(true, true);
+        break;
     }
-    else if (timerId != 1)
-        return;
-
-    m_exitButton.setEnable(true, true);
-    m_respawnButton.setEnable(true, true);
 }
 
 void UIScene_DeathMenu::updateTooltips()
 {
     int tooltip = IDS_TOOLTIPS_SELECT;
-    if (g_pApp->GetGameHostOption(eGameHostOption_MiniGame) != 0)
+    int timerId;
+    int timerLength;
+    if (gApp.GetGameHostOption(eGameHostOption_MiniGame) != 0)
         tooltip = -1;
     gConsoleUIController.SetTooltips(m_playerId, tooltip, -1, -1, -1, -1, -1, -1,
                                      -1, -1, -1, -1, -1, -1, -1, -1, -1, false, false);
@@ -141,9 +150,9 @@ void UIScene_DeathMenu::updateTooltips()
 
 std::wstring UIScene_DeathMenu::getMoviePath()
 {
-    if (g_pApp->GetLocalPlayerCount() < 2)
-        return std::wstring(L"DeathMenu");
-    return std::wstring(L"DeathMenuSplit");
+    if (gApp.GetLocalPlayerCount() > 1)
+        return std::wstring(L"DeathMenuSplit");
+    return std::wstring(L"DeathMenu");
 }
 
 void UIScene_DeathMenu::handleInput(int playerId, int action, bool repeat, bool pressed,
@@ -151,7 +160,7 @@ void UIScene_DeathMenu::handleInput(int playerId, int action, bool repeat, bool 
 {
     if (m_deathMenuActive)
         return;
-    gConsoleUIController.AnimateKeyPress(playerId, action, repeat, pressed, released);
+    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, pressed, released);
     switch (action)
     {
     case EControllerActions_MenuUp:
@@ -173,13 +182,13 @@ void UIScene_DeathMenu::tick()
 
 void UIScene_DeathMenu::handlePress(int controlId, int)
 {
-    if (controlId == 0)
+    switch (controlId)
     {
+    case 0:
         m_deathMenuActive = true;
-        g_pApp->SetAction(m_playerId, eXuiAction_Respawn, NULL);
-    }
-    else if (controlId == 1)
-    {
+        gApp.SetAction(m_playerId, eXuiAction_Respawn, NULL);
+        break;
+    case 1:
         telemetryManagerInstance->RecordLevelExit(
             m_playerId, eSen_LevelExitStatus_Quit);
         unsigned int callbackId = GetCallbackUniqueId();
@@ -188,6 +197,7 @@ void UIScene_DeathMenu::handlePress(int controlId, int)
             UIScene_PauseMenu::ExitGameDialogReturned,
             UIScene_PauseMenu::ExitGameSaveDialogReturned,
             UIScene_PauseMenu::EOpenExitGameDialog_ExitGame);
+        break;
     }
 }
 

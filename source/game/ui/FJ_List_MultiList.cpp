@@ -34,49 +34,50 @@ uint32_t FJ_List_MultiList::getType()
 
 void FJ_List_MultiList::addNewItem_Label(const std::wstring& label)
 {
-    FJ_Label* item = m_checkboxTick
-        ? FJ_Factory::createObject("fourj.Labels.FJ_ListLabel_SmallBlack", m_pRenderNode, true, NULL)->asFJ_Label()
-        : FJ_Factory::createObject("fourj.Labels.FJ_ListLabel_Black", m_pRenderNode, true, NULL)->asFJ_Label();
+    FJ_Label* item = static_cast<FJ_Label*>(m_checkboxTick
+        ? FJ_Factory::createObject("fourj.Labels.FJ_ListLabel_SmallBlack", m_pRenderNode, true, NULL)
+        : FJ_Factory::createObject("fourj.Labels.FJ_ListLabel_Black", m_pRenderNode, true, NULL));
     addNewListItem(item, label, -1);
     item->Init(label);
 }
 
 void FJ_List_MultiList::addNewItem_Button(const std::wstring& label, int id, bool useEllipsis)
 {
-    FJ_ListButton* item = m_checkboxTick
-        ? FJ_Factory::createObject("fourj.Buttons.FJ_ListButton_Small", m_pRenderNode, true, NULL)->asFJ_ListButton()
-        : FJ_Factory::createObject("fourj.Buttons.FJ_ListButton_Medium", m_pRenderNode, true, NULL)->asFJ_ListButton();
-    item->m_listButtonFlag = true;
-    item->UseEllipsis(useEllipsis);
-    if (id >= 0 && static_cast<unsigned int>(id) < m_labelLists.size() && !m_labelLists[static_cast<unsigned int>(id)].empty())
+    FJ_FuiNode* node = m_checkboxTick
+        ? FJ_Factory::createObject("fourj.Buttons.FJ_ListButton_Small", m_pRenderNode, true, NULL)
+        : FJ_Factory::createObject("fourj.Buttons.FJ_ListButton_Medium", m_pRenderNode, true, NULL);
+    node->asFJ_ListButton()->m_listButtonFlag = true;
+    node->asFJ_ListButton()->UseEllipsis(useEllipsis);
+    FJ_Base* item = static_cast<FJ_Base*>(node);
+    if (static_cast<unsigned int>(id) < m_labelLists.size() && m_labelLists[static_cast<unsigned int>(id)].size() != 0)
     {
         item->CheckLabelWidths(m_labelLists[static_cast<unsigned int>(id)]);
         m_labelLists[static_cast<unsigned int>(id)].clear();
     }
     addNewListItem(item, label, id);
-    item->Init(label, id);
+    static_cast<FJ_ListButton*>(node)->Init(label, id);
 }
 
 void FJ_List_MultiList::addNewItem_MenuButton(const std::wstring& label, int id)
 {
-    FJ_FuiNode* node = m_checkboxTick
+    FJ_MenuButton* node = static_cast<FJ_MenuButton*>(m_checkboxTick
         ? FJ_Factory::createObject("fourj.Buttons.FJ_MenuButton_Small", m_pRenderNode, true, NULL)
-        : FJ_Factory::createObject("fourj.Buttons.FJ_MenuButton_Normal", m_pRenderNode, true, NULL);
-    if (id >= 0 && static_cast<unsigned int>(id) < m_labelLists.size() && !m_labelLists[static_cast<unsigned int>(id)].empty())
+        : FJ_Factory::createObject("fourj.Buttons.FJ_MenuButton_Normal", m_pRenderNode, true, NULL));
+    if (static_cast<unsigned int>(id) < m_labelLists.size() && m_labelLists[static_cast<unsigned int>(id)].size() != 0)
     {
-        node->asFJ_Base()->CheckLabelWidths(m_labelLists[static_cast<unsigned int>(id)]);
+        node->CheckLabelWidths(m_labelLists[static_cast<unsigned int>(id)]);
         m_labelLists[static_cast<unsigned int>(id)].clear();
     }
-    addNewListItem(node->asFJ_Base(), label, id);
-    node->asFJ_MenuButton()->Init(label, id);
+    addNewListItem(node, label, id);
+    node->Init(label, id);
 }
 
 void FJ_List_MultiList::addNewItem_ControllerButton(const std::wstring& label, const std::wstring& secondaryLabel, bool html, int id)
 {
-    FJ_ListButtonController* item = m_checkboxTick
-        ? FJ_Factory::createObject("fourj.Buttons.FJ_ListButtonController_Small", m_pRenderNode, true, NULL)->asFJ_ListButtonController()
-        : FJ_Factory::createObject("fourj.Buttons.FJ_ListButtonController_Normal", m_pRenderNode, true, NULL)->asFJ_ListButtonController();
-    if (id >= 0 && static_cast<unsigned int>(id) < m_labelLists.size() && !m_labelLists[static_cast<unsigned int>(id)].empty())
+    FJ_ListButtonController* item = static_cast<FJ_ListButtonController*>(m_checkboxTick
+        ? FJ_Factory::createObject("fourj.Buttons.FJ_ListButtonController_Small", m_pRenderNode, true, NULL)
+        : FJ_Factory::createObject("fourj.Buttons.FJ_ListButtonController_Normal", m_pRenderNode, true, NULL));
+    if (static_cast<unsigned int>(id) < m_labelLists.size() && m_labelLists[static_cast<unsigned int>(id)].size() != 0)
     {
         item->CheckLabelWidths(m_labelLists[static_cast<unsigned int>(id)]);
         m_labelLists[static_cast<unsigned int>(id)].clear();
@@ -88,10 +89,10 @@ void FJ_List_MultiList::addNewItem_ControllerButton(const std::wstring& label, c
 
 void FJ_List_MultiList::addNewItem_CheckBox(const std::wstring& label, int id, bool checked)
 {
-    FJ_CheckBox* item = m_checkboxTick
-        ? FJ_Factory::createObject("fourj.Checkbox.FJ_CheckBox_Small", m_pRenderNode, true, NULL)->asFJ_CheckBox()
-        : FJ_Factory::createObject("fourj.Checkbox.FJ_CheckBox_Normal", m_pRenderNode, true, NULL)->asFJ_CheckBox();
-    if (id >= 0 && static_cast<unsigned int>(id) < m_labelLists.size() && !m_labelLists[static_cast<unsigned int>(id)].empty())
+    FJ_CheckBox* item = static_cast<FJ_CheckBox*>(m_checkboxTick
+        ? FJ_Factory::createObject("fourj.Checkbox.FJ_CheckBox_Small", m_pRenderNode, true, NULL)
+        : FJ_Factory::createObject("fourj.Checkbox.FJ_CheckBox_Normal", m_pRenderNode, true, NULL));
+    if (static_cast<unsigned int>(id) < m_labelLists.size() && m_labelLists[static_cast<unsigned int>(id)].size() != 0)
     {
         item->CheckLabelWidths(m_labelLists[static_cast<unsigned int>(id)]);
         m_labelLists[static_cast<unsigned int>(id)].clear();
@@ -102,10 +103,10 @@ void FJ_List_MultiList::addNewItem_CheckBox(const std::wstring& label, int id, b
 
 void FJ_List_MultiList::addNewItem_Slider(const std::wstring& label, int id, int minValue, int maxValue, int value, bool repeat, int repeatDelay, int repeatStep)
 {
-    FJ_Slider* item = m_checkboxTick
-        ? FJ_Factory::createObject("fourj.FJ_Slider_Small", m_pRenderNode, true, NULL)->asFJ_Slider()
-        : FJ_Factory::createObject("fourj.FJ_Slider_Normal", m_pRenderNode, true, NULL)->asFJ_Slider();
-    if (id >= 0 && static_cast<unsigned int>(id) < m_labelLists.size() && !m_labelLists[static_cast<unsigned int>(id)].empty())
+    FJ_Slider* item = static_cast<FJ_Slider*>(m_checkboxTick
+        ? FJ_Factory::createObject("fourj.FJ_Slider_Small", m_pRenderNode, true, NULL)
+        : FJ_Factory::createObject("fourj.FJ_Slider_Normal", m_pRenderNode, true, NULL));
+    if (static_cast<unsigned int>(id) < m_labelLists.size() && m_labelLists[static_cast<unsigned int>(id)].size() != 0)
     {
         item->CheckLabelWidths(m_labelLists[static_cast<unsigned int>(id)]);
         m_labelLists[static_cast<unsigned int>(id)].clear();
@@ -126,49 +127,55 @@ void FJ_List_MultiList::addNewItem_TextInput(const std::wstring& label, int id, 
 
 void FJ_List_MultiList::HandleCharInput(unsigned int character)
 {
-    FJ_FuiNode* item = ReturnItem(GetActiveItem());
-    if (item != NULL && item->asFJ_TextInput() != NULL)
-        item->asFJ_TextInput()->HandleDirectInput(character);
+    FJ_TextInput* input = ReturnItem(GetActiveItem())->asFJ_TextInput();
+    if (input != NULL)
+        input->HandleDirectInput(character);
 }
 
 void FJ_List_MultiList::SetCheckBox(int index, bool checked)
 {
-    FJ_FuiNode* item = ReturnItem(index);
-    if (item != NULL && item->asFJ_CheckBox() != NULL)
-        item->asFJ_CheckBox()->SetCheckBox(checked);
+    FJ_CheckBox* checkBox = ReturnItem(index)->asFJ_CheckBox();
+    if (checkBox != NULL)
+        checkBox->SetCheckBox(checked);
 }
 
 uint8_t FJ_List_MultiList::GetCheckBox(int index)
 {
-    FJ_FuiNode* item = ReturnItem(index);
-    return item != NULL && item->asFJ_CheckBox() != NULL ? item->asFJ_CheckBox()->getChecked() : 0;
+    FJ_CheckBox* checkBox = ReturnItem(index)->asFJ_CheckBox();
+    uint8_t checked = 0;
+    if (checkBox != NULL)
+        checked = checkBox->getChecked();
+    return checked;
 }
 
 void FJ_List_MultiList::SetSliderValue(int index, int value)
 {
-    FJ_FuiNode* item = ReturnItem(index);
-    if (item != NULL && item->asFJ_Slider() != NULL)
-        item->asFJ_Slider()->SetSliderValue(value);
+    FJ_Slider* slider = ReturnItem(index)->asFJ_Slider();
+    if (slider != NULL)
+        slider->SetSliderValue(value);
 }
 
 uint32_t FJ_List_MultiList::GetSliderValue(int index)
 {
-    FJ_FuiNode* item = ReturnItem(index);
-    return item != NULL && item->asFJ_Slider() != NULL ? item->asFJ_Slider()->getSliderCurrent() : 0;
+    FJ_Slider* slider = ReturnItem(index)->asFJ_Slider();
+    uint32_t value = 0;
+    if (slider != NULL)
+        value = slider->getSliderCurrent();
+    return value;
 }
 
 void FJ_List_MultiList::SetSecondaryLabel(int index, const std::wstring& label, bool html, bool autoSize)
 {
-    FJ_FuiNode* item = ReturnItem(index);
-    if (item != NULL && item->asFJ_ListButtonController() != NULL)
-        item->asFJ_ListButtonController()->SetSecondaryText(label, html, autoSize);
+    FJ_ListButtonController* button = ReturnItem(index)->asFJ_ListButtonController();
+    if (button != NULL)
+        button->SetSecondaryText(label, html, autoSize);
 }
 
 void FJ_List_MultiList::ToggleButtonOutline(int index, bool show)
 {
-    FJ_FuiNode* item = ReturnItem(index);
-    if (item != NULL && item->asFJ_Button() != NULL)
-        item->asFJ_Button()->ToggleOutline(show);
+    FJ_Button* button = ReturnItem(index)->asFJ_Button();
+    if (button != NULL)
+        button->ToggleOutline(show);
 }
 
 void FJ_List_MultiList::SetPossibleLabels(int index, std::vector<std::wstring> labels)

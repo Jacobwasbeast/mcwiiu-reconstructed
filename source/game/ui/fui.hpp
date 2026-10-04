@@ -54,6 +54,9 @@ private:
         float alphaMultiply;
     };
 
+    static fuiMatrix s_identityMatrix;
+    static ColorState s_identityColor;
+
     float m_rendererMatrix[16];
     fuiMatrix m_matrixStack[10];
     int m_matrixDepth;
@@ -70,7 +73,7 @@ private:
     int m_permanentFileIndices[64];
     unsigned int m_frameCount;
     bool m_enterFrameDispatch;
-    uint64_t m_lastTime;
+    int64_t m_lastTime;
     std::vector<FJ_EventListener> m_directEventListeners;
     std::vector<fuiFontSet*> m_fonts;
     std::vector<fuiFontIndirection> m_fontIndirections;

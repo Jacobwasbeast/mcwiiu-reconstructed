@@ -21,18 +21,16 @@
 
 AnvilMenu::AnvilMenu(boost::shared_ptr<Inventory> inventory, Level* level,
                      const BlockPos& position, boost::shared_ptr<Player> player)
-    : AbstractContainerMenu(), mResultSlots(), mInputSlots(), mLevel(NULL),
-      mPosition(), mRepairCost(0), mMaterialCost(0), mItemName(),
-      mItemNameCensored(false), mPlayer()
+    : AbstractContainerMenu(), mResultSlots(), mInputSlots(),
+      mPosition(), mItemName(), mPlayer()
 {
     _init(inventory, level, position, player);
 }
 
 AnvilMenu::AnvilMenu(boost::shared_ptr<Inventory> inventory, Level* level,
                      boost::shared_ptr<Player> player)
-    : AbstractContainerMenu(), mResultSlots(), mInputSlots(), mLevel(NULL),
-      mPosition(), mRepairCost(0), mMaterialCost(0), mItemName(),
-      mItemNameCensored(false), mPlayer()
+    : AbstractContainerMenu(), mResultSlots(), mInputSlots(),
+      mPosition(), mItemName(), mPlayer()
 {
     _init(inventory, level, BlockPos::ZERO, player);
 }
@@ -50,15 +48,11 @@ void AnvilMenu::_init(boost::shared_ptr<Inventory> inventory, Level* level,
     mPosition = position;
     mRepairCost = 0;
     mMaterialCost = 0;
-    mItemNameCensored = false;
     mPlayer = player;
 
-    boost::shared_ptr<Container> input = mInputSlots;
-    boost::shared_ptr<Container> result = mResultSlots;
-    boost::shared_ptr<Container> playerInventory = inventory;
-    addSlot(new Slot(input, 0, 27, 47));
-    addSlot(new Slot(input, 1, 76, 47));
-    addSlot(new RepairResultSlot(this, mPosition, result, 2, 134, 47));
+    addSlot(new Slot(mInputSlots, 0, 27, 47));
+    addSlot(new Slot(mInputSlots, 1, 76, 47));
+    addSlot(new RepairResultSlot(this, position, mResultSlots, 2, 134, 47));
 
     int row;
     int column;
@@ -66,14 +60,15 @@ void AnvilMenu::_init(boost::shared_ptr<Inventory> inventory, Level* level,
     {
         for (column = 0; column < 9; ++column)
         {
-            addSlot(new Slot(playerInventory, column + row * 9 + 9,
+            addSlot(new Slot(inventory, column + row * 9 + 9,
                              8 + column * 18, 84 + row * 18));
         }
     }
     for (column = 0; column < 9; ++column)
     {
-        addSlot(new Slot(playerInventory, column, 8 + column * 18, 142));
+        addSlot(new Slot(inventory, column, 8 + column * 18, 142));
     }
+    mItemNameCensored = false;
 }
 
 void AnvilMenu::createResult()
@@ -93,8 +88,7 @@ void AnvilMenu::createResult()
     not_null_ptr<ItemInstance> second = mInputSlots->getItem(1);
     boost::unordered_map<Enchantment*, int>* enchantments =
         EnchantmentHelper::getEnchantments(result);
-    int baseCost = first->getBaseRepairCost();
-    if (!second->isEmpty()) baseCost += second->getBaseRepairCost();
+    int baseCost = first->getBaseRepairCost() + (second->isEmpty() ? 0 : second->getBaseRepairCost());
     mMaterialCost = 0;
 
     if (!second->isEmpty())
@@ -283,57 +277,58 @@ void AnvilMenu::removed(boost::shared_ptr<Player> player)
     AbstractContainerMenu::removed(player);
     if (!mLevel->mIsClientSide)
     {
-        boost::shared_ptr<Container> input = mInputSlots;
-        clearContainer(player, mLevel, input);
+        clearContainer(player, mLevel, mInputSlots);
     }
 }
 
 bool AnvilMenu::stillValid(boost::shared_ptr<Player> player)
 {
-    return mLevel->getBlockState(mPosition)->getBlock() == Blocks::anvil &&
-           player->distanceAsIfHitscanned(mPosition, *player->mBoundingBox) <= 30.25f;
+    if (mLevel->getBlockState(mPosition)->getBlock() == Blocks::anvil)
+    {
+        if (player->distanceAsIfHitscanned(mPosition, *player->mBoundingBox) <= 30.25f)
+            return true;
+    }
+    return false;
 }
 
 not_null_ptr<ItemInstance> AnvilMenu::quickMoveStack(boost::shared_ptr<Player> player, int index)
 {
+    not_null_ptr<ItemInstance> clicked = ItemInstance::EMPTY;
     Slot* slot = m_slots.at(index);
-    if (slot == NULL || !slot->hasItem()) return ItemInstance::EMPTY;
-    not_null_ptr<ItemInstance> item = slot->getItem();
-    not_null_ptr<ItemInstance> copy = item->copy();
-    bool moved;
-    if (index == 2)
+    if (slot != NULL && slot->hasItem())
     {
-        moved = moveItemStackTo(item, 3, 39, true, true, true) != 0;
-        if (!moved) return ItemInstance::EMPTY;
-        player->OnTakeFromAnvil(copy);
-        slot->onQuickCraft(item, copy);
+        not_null_ptr<ItemInstance> stack = slot->getItem();
+        clicked = stack->copy();
+        if (index == 2)
+        {
+            if (moveItemStackTo(stack, 3, 39, true, true, true) != true) return ItemInstance::EMPTY;
+            player->OnTakeFromAnvil(clicked);
+            slot->onQuickCraft(stack, clicked);
+        }
+        else if (index == 0 || index == 1)
+        {
+            if (moveItemStackTo(stack, 3, 39, false, true, true) != true) return ItemInstance::EMPTY;
+        }
+        else if ((unsigned int)(index - 3) < 36u)
+        {
+            if (moveItemStackTo(stack, 0, 2, false, true, true) != true) return ItemInstance::EMPTY;
+        }
+        if (stack->isEmpty()) slot->set(ItemInstance::EMPTY);
+        else slot->setChanged();
+        if (stack->getCount() == clicked->getCount()) return ItemInstance::EMPTY;
+        slot->onTake(player, stack);
     }
-    else if (index < 3)
-    {
-        moved = moveItemStackTo(item, 3, 39, false, true, true) != 0;
-        if (!moved) return ItemInstance::EMPTY;
-    }
-    else if ((unsigned int)(index - 3) < 0x24)
-    {
-        moved = moveItemStackTo(item, 0, 2, false, true, true) != 0;
-        if (!moved) return ItemInstance::EMPTY;
-    }
-    if (item->isEmpty()) slot->set(ItemInstance::EMPTY);
-    else slot->setChanged();
-    if (item->getCount() == copy->getCount()) return ItemInstance::EMPTY;
-    slot->onTake(player, item);
-    return copy;
+    return clicked;
 }
 
 void AnvilMenu::setItemName(const std::wstring& name, bool censored)
 {
     mItemName = name;
     mItemNameCensored = censored;
-    Slot* resultSlot = getSlot(2);
-    if (resultSlot->hasItem())
+    if (getSlot(2)->hasItem())
     {
-        not_null_ptr<ItemInstance> result = resultSlot->getItem();
-        if (mItemName.empty()) result->resetHoverName();
+        not_null_ptr<ItemInstance> result = getSlot(2)->getItem();
+        if (name.empty()) result->resetHoverName();
         else
         {
             result->setHoverName(mItemName);

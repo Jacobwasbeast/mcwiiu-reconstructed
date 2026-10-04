@@ -9,6 +9,7 @@
 #include "game/ui/FJ_Label_Blink.hpp"
 #include "game/ui/FJ_List.hpp"
 #include "game/ui/UIScene.hpp"
+#include "game/ui/UIScene_LoadCreateJoinMenu.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 
 FJ_LoadCreateJoinMenu::FJ_LoadCreateJoinMenu(fuiRenderNode* renderNode)
@@ -31,27 +32,24 @@ FJ_LoadCreateJoinMenu::FJ_LoadCreateJoinMenu(fuiRenderNode* renderNode)
     getChildByName("NewGame.TabMiddle")->getChildAt(0)->gotoAndStop(2);
     getChildByName("JoinGame.TabRight")->getChildAt(0)->gotoAndStop(3);
 
-    FJ_FuiNode* loadGame = getChildByName("LoadGame");
-    FJ_FuiNode* loadList = loadGame->getChildByName("LoadGameList");
-    if (loadList != NULL)
-        m_loadListHeight = static_cast<int>(loadList->getHeight());
+    if (getChildByName("LoadGame")->getChildByName("LoadGameList") != NULL)
+        m_loadListHeight = static_cast<int>(getChildByName("LoadGame")->getChildByName("LoadGameList")->getHeight());
 
-    FJ_FuiNode* loadListRecess = loadGame->getChildByName("LoadGameListRecessPanel");
-    if (loadListRecess != NULL)
-        m_loadListRecessHeight = static_cast<int>(loadListRecess->getChildAt(0)->getHeight());
+    if (getChildByName("LoadGame")->getChildByName("LoadGameListRecessPanel") != NULL)
+        m_loadListRecessHeight = static_cast<int>(getChildByName("LoadGame")->getChildByName("LoadGameListRecessPanel")->getChildAt(0)->getHeight());
 
-    if (loadList != NULL)
+    if (getChildByName("LoadGame")->getChildByName("LoadGameList") != NULL)
         m_loadTimerY = static_cast<int>(getChildByName("LoadGame.LoadGameTimer")->getY());
 
     m_loadTabTitleY = static_cast<int>(getChildByName("LoadGameTabTitle")->getY());
     m_joinTabTitleY = static_cast<int>(getChildByName("JoinGameTabTitle")->getY());
 
-    float loadX = loadGame->getX();
-    float quarterWidth = loadGame->getChildAt(0)->getWidth() * 0.25f;
-    m_newTabX = static_cast<int>(-(getChildByName("NewGameTabTitle")->getWidth() * 0.5f -
-                                   (quarterWidth + loadX)));
-    m_joinTabX = static_cast<int>(-(getChildByName("JoinGameTabTitle")->getWidth() * 0.5f -
-                                    (quarterWidth * 3.0f + loadX)));
+    m_newTabX = static_cast<int>(getChildByName("LoadGame")->getX() +
+                                 getChildByName("LoadGame")->getChildAt(0)->getWidth() * 0.25f -
+                                 getChildByName("NewGameTabTitle")->getWidth() * 0.5f);
+    m_joinTabX = static_cast<int>(getChildByName("LoadGame")->getX() +
+                                  getChildByName("LoadGame")->getChildAt(0)->getWidth() * 0.25f * 3.0f -
+                                  getChildByName("JoinGameTabTitle")->getWidth() * 0.5f);
     SetActiveTab(m_activeTab);
 }
 
@@ -67,98 +65,102 @@ unsigned int FJ_LoadCreateJoinMenu::getType()
 
 void FJ_LoadCreateJoinMenu::SetActiveTab(int tab)
 {
-    FJ_FuiNode* loadTab = getChildByName("LoadGame");
-    FJ_FuiNode* newTab = getChildByName("NewGame");
-    FJ_FuiNode* joinTab = getChildByName("JoinGame");
-    FJ_FuiNode* loadList = getChildByName("LoadGame.LoadGameList");
-    FJ_FuiNode* newList = getChildByName("NewGame.NewGameList");
-    FJ_FuiNode* joinList = getChildByName("JoinGame.JoinGameGamesList");
-    FJ_FuiNode* activeTab;
-
     if (tab == 0)
     {
-        activeTab = loadTab;
-        loadTab->setVisible(true);
-        newTab->setVisible(false);
-        joinTab->setVisible(false);
-        loadList->setVisible(loadTab->isVisible());
-        newList->setVisible(newTab->isVisible());
-        joinList->setVisible(joinTab->isVisible());
+        getChildByName("LoadGame")->setVisible(true);
+        getChildByName("NewGame")->setVisible(false);
+        getChildByName("JoinGame")->setVisible(false);
+        getChildByName("LoadGame.LoadGameList")->setVisible(getChildByName("LoadGame")->isVisible());
+        getChildByName("NewGame.NewGameList")->setVisible(getChildByName("NewGame")->isVisible());
+        getChildByName("JoinGame.JoinGameGamesList")->setVisible(getChildByName("JoinGame")->isVisible());
         gotoAndStop("LoadGame");
+
+        if (getStage()->getFocus()->isFJ_Base())
+        {
+            if (m_currentTab == 1)
+                m_newTabFocus = getStage()->getFocus()->asFJ_Base()->getId();
+            else if (m_currentTab == 2)
+                m_joinTabFocus = getStage()->getFocus()->asFJ_Base()->getId();
+        }
+
+        m_root->removeEventListener(eFJEventType_Press, this, FJ_Document::_handlePress);
+        m_root = getChildByName("LoadGame");
+        m_root->addEventListener(eFJEventType_Press, this, FJ_Document::_handlePress, false);
+        SetFocus(m_loadTabFocus);
+        if (m_loadTabFocus >= 0)
+            OnFocusChange(true);
     }
     else if (tab == 1)
     {
-        activeTab = newTab;
-        loadTab->setVisible(false);
-        newTab->setVisible(true);
-        joinTab->setVisible(false);
-        loadList->setVisible(loadTab->isVisible());
-        newList->setVisible(newTab->isVisible());
-        joinList->setVisible(joinTab->isVisible());
+        getChildByName("LoadGame")->setVisible(false);
+        getChildByName("NewGame")->setVisible(true);
+        getChildByName("JoinGame")->setVisible(false);
+        getChildByName("LoadGame.LoadGameList")->setVisible(getChildByName("LoadGame")->isVisible());
+        getChildByName("NewGame.NewGameList")->setVisible(getChildByName("NewGame")->isVisible());
+        getChildByName("JoinGame.JoinGameGamesList")->setVisible(getChildByName("JoinGame")->isVisible());
         gotoAndStop("NewGame");
-    }
-    else if (tab == 2)
-    {
-        activeTab = joinTab;
-        loadTab->setVisible(false);
-        newTab->setVisible(false);
-        joinTab->setVisible(true);
-        loadList->setVisible(loadTab->isVisible());
-        newList->setVisible(newTab->isVisible());
-        joinList->setVisible(joinTab->isVisible());
-        gotoAndStop("JoinGame");
-    }
-    else
-    {
-        m_activeTab = tab;
-        m_currentTab = tab;
-        return;
-    }
 
-    FJ_FuiNode* focus = getStage()->getFocus();
-    if (focus->isFJ_Base() && m_currentTab != tab)
-    {
-        int focusId = focus->asFJ_Base()->getId();
-        if (m_currentTab == 0)
-            m_loadTabFocus = focusId;
-        else if (m_currentTab == 1)
-            m_newTabFocus = focusId;
-        else if (m_currentTab == 2)
-            m_joinTabFocus = focusId;
-    }
+        if (getStage()->getFocus()->isFJ_Base())
+        {
+            if (m_currentTab == 0)
+                m_loadTabFocus = getStage()->getFocus()->asFJ_Base()->getId();
+            else if (m_currentTab == 2)
+                m_joinTabFocus = getStage()->getFocus()->asFJ_Base()->getId();
+        }
 
-    m_root->removeEventListener(eFJEventType_Press, this, FJ_Document::_handlePress);
-    m_root = activeTab;
-    m_root->addEventListener(eFJEventType_Press, this, FJ_Document::_handlePress, false);
-    int focusId = tab == 0 ? m_loadTabFocus :
-                  (tab == 1 ? m_newTabFocus : m_joinTabFocus);
-    SetFocus(focusId);
-#if defined(RECON_NATIVE)
-    if (tab == 2 && focusId < 0 && joinList->asFJ_List() != NULL)
-        getStage()->setFocus(joinList);
-#endif
-    if (focusId >= 0)
-        OnFocusChange(true);
+        m_root->removeEventListener(eFJEventType_Press, this, FJ_Document::_handlePress);
+        m_root = getChildByName("NewGame");
+        m_root->addEventListener(eFJEventType_Press, this, FJ_Document::_handlePress, false);
+        SetFocus(m_newTabFocus);
+        if (m_newTabFocus >= 0)
+            OnFocusChange(true);
 
-    if (tab == 2)
-        getChildByName("JoinGameTabTitle")->asFJ_Label_Blink()->EnableBlink(false);
-
-    if (m_touchEnabled)
-    {
-        if (tab == 1)
+        if (m_touchEnabled)
         {
             getChildByName("NewGameTabTitle")->setY(static_cast<float>(m_loadTabTitleY));
             getChildByName("JoinGameTabTitle")->setY(static_cast<float>(m_joinTabTitleY));
         }
-        else if (tab == 2)
+    }
+    else if (tab == 2)
+    {
+        getChildByName("LoadGame")->setVisible(false);
+        getChildByName("NewGame")->setVisible(false);
+        getChildByName("JoinGame")->setVisible(true);
+        getChildByName("LoadGame.LoadGameList")->setVisible(getChildByName("LoadGame")->isVisible());
+        getChildByName("NewGame.NewGameList")->setVisible(getChildByName("NewGame")->isVisible());
+        getChildByName("JoinGame.JoinGameGamesList")->setVisible(getChildByName("JoinGame")->isVisible());
+        gotoAndStop("JoinGame");
+
+        if (getStage()->getFocus()->isFJ_Base())
+        {
+            if (m_currentTab == 0)
+                m_loadTabFocus = getStage()->getFocus()->asFJ_Base()->getId();
+            else if (m_currentTab == 1)
+                m_newTabFocus = getStage()->getFocus()->asFJ_Base()->getId();
+        }
+
+        m_root->removeEventListener(eFJEventType_Press, this, FJ_Document::_handlePress);
+        m_root = getChildByName("JoinGame");
+        m_root->addEventListener(eFJEventType_Press, this, FJ_Document::_handlePress, false);
+        SetFocus(m_joinTabFocus);
+#if defined(RECON_NATIVE)
+        if (m_joinTabFocus < 0 && getChildByName("JoinGame.JoinGameGamesList")->asFJ_List() != NULL)
+            getStage()->setFocus(getChildByName("JoinGame.JoinGameGamesList"));
+#endif
+        if (m_joinTabFocus >= 0)
+            OnFocusChange(true);
+
+        getChildByName("JoinGameTabTitle")->asFJ_Label_Blink()->EnableBlink(false);
+
+        if (m_touchEnabled)
         {
             getChildByName("NewGameTabTitle")->setY(static_cast<float>(m_joinTabTitleY));
             getChildByName("JoinGameTabTitle")->setY(static_cast<float>(m_loadTabTitleY));
         }
     }
 
-    m_currentTab = tab;
     m_activeTab = tab;
+    m_currentTab = tab;
 }
 
 void FJ_LoadCreateJoinMenu::handlePress(FJ_Event* event)
@@ -167,95 +169,85 @@ void FJ_LoadCreateJoinMenu::handlePress(FJ_Event* event)
     if (button != NULL)
     {
         FJ_FuiNode* parent = button->FJ_Base::getObjListParent();
-        m_pCallbackScene->handlePress(parent->asFJ_List()->getId(), button->getId());
+        static_cast<UIScene_LoadCreateJoinMenu*>(m_pCallbackScene)->handlePress(parent->asFJ_List()->getId(), button->getId());
         button->setButtonPressed(false);
     }
 }
 
 void FJ_LoadCreateJoinMenu::SetMatchesAvailable(bool available)
 {
-    FJ_Label_Blink* label = getChildByName(std::string("JoinGameTabTitle"))->asFJ_Label_Blink();
-    label->EnableBlink(m_activeTab == 2 ? false : available);
+    if (m_activeTab != 2)
+    {
+        getChildByName(std::string("JoinGameTabTitle"))->asFJ_Label_Blink()->EnableBlink(available);
+    }
+    else
+    {
+        getChildByName(std::string("JoinGameTabTitle"))->asFJ_Label_Blink()->EnableBlink(false);
+    }
 }
 
 void FJ_LoadCreateJoinMenu::ShowSaveSizeBar(bool show)
 {
-    FJ_FuiNode* loadGame = getChildByName("LoadGame");
-    FJ_FuiNode* saveSizeBar = loadGame->getChildByName("SaveSizeBar");
-    if (saveSizeBar != NULL)
-        saveSizeBar->setVisible(show);
-
-    FJ_FuiNode* loadList = getChildByName("LoadGame.LoadGameList");
-    FJ_FuiNode* loadListRecess = getChildByName("LoadGame.LoadGameListRecessPanel");
-    FJ_FuiNode* loadTimer = getChildByName("LoadGame.LoadGameTimer");
-    if (!show)
+    if (getChildByName("LoadGame")->getChildByName("SaveSizeBar") != NULL)
     {
-        FJ_FuiNode* newList = getChildByName("NewGame.NewGameList");
-        if (loadList != NULL)
-            loadList->setHeight(newList->getHeight());
-
-        FJ_FuiNode* newListRecess = getChildByName("NewGame.NewGameListRecessPanel");
-        if (loadListRecess != NULL)
-            loadListRecess->getChildAt(0)->setHeight(newListRecess->getChildAt(0)->getHeight());
-
-        if (loadList != NULL)
-            loadTimer->setY(getChildByName("NewGame.NewGameTimer")->getY());
-    }
-    else
-    {
-        if (loadList != NULL)
-            loadList->setHeight(static_cast<float>(m_loadListHeight));
-        if (loadListRecess != NULL)
-            loadListRecess->getChildAt(0)->setHeight(static_cast<float>(m_loadListRecessHeight));
-        if (loadList != NULL)
-            loadTimer->setY(static_cast<float>(m_loadTimerY));
+        getChildByName("LoadGame")->getChildByName("SaveSizeBar")->setVisible(show);
+        if (!show)
+        {
+            if (getChildByName("LoadGame.LoadGameList") != NULL)
+                getChildByName("LoadGame.LoadGameList")->setHeight(getChildByName("NewGame.NewGameList")->getHeight());
+            if (getChildByName("LoadGame.LoadGameListRecessPanel") != NULL)
+                getChildByName("LoadGame.LoadGameListRecessPanel")->getChildAt(0)->setHeight(
+                    getChildByName("NewGame.NewGameListRecessPanel")->getChildAt(0)->getHeight());
+            if (getChildByName("LoadGame.LoadGameList") != NULL)
+                getChildByName("LoadGame.LoadGameTimer")->setY(getChildByName("NewGame.NewGameTimer")->getY());
+        }
+        else
+        {
+            if (getChildByName("LoadGame.LoadGameList") != NULL)
+                getChildByName("LoadGame.LoadGameList")->setHeight(static_cast<float>(m_loadListHeight));
+            if (getChildByName("LoadGame.LoadGameListRecessPanel") != NULL)
+                getChildByName("LoadGame.LoadGameListRecessPanel")->getChildAt(0)->setHeight(static_cast<float>(m_loadListRecessHeight));
+            if (getChildByName("LoadGame.LoadGameList") != NULL)
+                getChildByName("LoadGame.LoadGameTimer")->setY(static_cast<float>(m_loadTimerY));
+        }
     }
 }
 
 void FJ_LoadCreateJoinMenu::HideLoadTab()
 {
-    if (m_touchEnabled)
-        return;
-
-    FJ_FuiNode* loadGame = getChildByName("LoadGame");
-    loadGame->setVisible(false);
-    getChildByName("LoadGameTabTitle")->setVisible(false);
-    getChildByName("TabOff_Load")->setVisible(false);
-    getChildByName("NewGame.TabMiddle")->getChildAt(0)->gotoAndStop(1);
-    getChildByName("JoinGame.TabRight")->getChildAt(0)->gotoAndStop(3);
-
-    float loadX = loadGame->getX();
-    float tabWidth = loadGame->getChildAt(0)->getWidth() * 0.5f;
-
-    FJ_FuiNode* createTabOff = getChildByName("TabOff_Create");
-    createTabOff->setX(loadX);
-    createTabOff->getChildAt(0)->setWidth(tabWidth);
-
-    FJ_FuiNode* newTab = getChildByName("NewGame.TabMiddle");
-    newTab->setX(0.0f);
-    newTab->getChildAt(0)->setWidth(tabWidth);
-
-    FJ_FuiNode* touchLoadTab = getChildByName("LoadGame.TouchTabLoad");
-    if (touchLoadTab != NULL)
+    if (!m_touchEnabled)
     {
-        touchLoadTab->setVisible(false);
-        FJ_FuiNode* touchCreateTab = getChildByName("NewGame.TouchTabCreate");
-        touchCreateTab->setX(0.0f);
-        touchCreateTab->setWidth(newTab->getChildAt(0)->getWidth());
-    }
+        getChildByName("LoadGame")->setVisible(false);
+        getChildByName("LoadGameTabTitle")->setVisible(false);
+        getChildByName("TabOff_Load")->setVisible(false);
+        getChildByName("NewGame.TabMiddle")->getChildAt(0)->gotoAndStop(1);
+        getChildByName("JoinGame.TabRight")->getChildAt(0)->gotoAndStop(3);
 
-    FJ_FuiNode* joinTabOff = getChildByName("TabOff_Join");
-    joinTabOff->setX(loadX + tabWidth);
-    joinTabOff->getChildAt(0)->setWidth(tabWidth);
+        getChildByName("TabOff_Create")->setX(getChildByName("LoadGame")->getX());
+        getChildByName("TabOff_Create")->getChildAt(0)->setWidth(getChildByName("LoadGame")->getChildAt(0)->getWidth() * 0.5f);
 
-    FJ_FuiNode* joinTab = getChildByName("JoinGame.TabRight");
-    joinTab->setX(tabWidth);
-    joinTab->getChildAt(0)->setWidth(tabWidth);
+        getChildByName("NewGame.TabMiddle")->setX(0.0f);
+        getChildByName("NewGame.TabMiddle")->getChildAt(0)->setWidth(getChildByName("LoadGame")->getChildAt(0)->getWidth() * 0.5f);
 
-    if (touchLoadTab != NULL)
-    {
-        FJ_FuiNode* touchJoinTab = getChildByName("JoinGame.TouchTabJoin");
-        touchJoinTab->setX(tabWidth);
-        touchJoinTab->setWidth(tabWidth);
+        if (getChildByName("LoadGame.TouchTabLoad") != NULL)
+        {
+            getChildByName("LoadGame.TouchTabLoad")->setVisible(false);
+            getChildByName("NewGame.TouchTabCreate")->setX(0.0f);
+            getChildByName("NewGame.TouchTabCreate")->setWidth(getChildByName("NewGame.TabMiddle")->getChildAt(0)->getWidth());
+        }
+
+        getChildByName("TabOff_Join")->setX(getChildByName("LoadGame")->getX() +
+                                            getChildByName("LoadGame")->getChildAt(0)->getWidth() * 0.5f);
+        getChildByName("TabOff_Join")->getChildAt(0)->setWidth(getChildByName("LoadGame")->getChildAt(0)->getWidth() * 0.5f);
+
+        getChildByName("JoinGame.TabRight")->setX(getChildByName("LoadGame")->getChildAt(0)->getWidth() * 0.5f);
+        getChildByName("JoinGame.TabRight")->getChildAt(0)->setWidth(getChildByName("LoadGame")->getChildAt(0)->getWidth() * 0.5f);
+
+        FJ_FuiNode* touchLoadTab = getChildByName("LoadGame.TouchTabLoad");
+        if (touchLoadTab != NULL)
+        {
+            getChildByName("JoinGame.TouchTabJoin")->setX(getChildByName("LoadGame")->getChildAt(0)->getWidth() * 0.5f);
+            getChildByName("JoinGame.TouchTabJoin")->setWidth(getChildByName("LoadGame")->getChildAt(0)->getWidth() * 0.5f);
+        }
     }
 }

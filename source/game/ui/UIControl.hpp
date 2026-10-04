@@ -27,6 +27,7 @@ public:
         eUIControlType_LeaderboardList = 9,
         eUIControlType_MinecraftPlayer = 10,
         eUIControlType_MinecraftHorse = 11,
+        eUIControlType_PlayerSkinPreview = 12,
         eUIControlType_Progress = 13,
         eUIControlType_SaveList = 14,
         eUIControlType_Slider = 15,
@@ -83,7 +84,6 @@ protected:
     float m_height;
     float m_opacity;
     bool m_visible;
-    bool m_renderState;
 };
 
 #endif

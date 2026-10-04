@@ -302,7 +302,7 @@ void FJ_Document::OnFocusChange(bool focused)
 
 FJ_FuiNode* FJ_Document::GetTopObject(FJ_FuiNode* node)
 {
-    float y = node->getY();
+    int y = static_cast<int>(node->getY());
     for (;;)
     {
         if (node->asFJ_Base()->m_navUpName.length() == 0)
@@ -312,9 +312,9 @@ FJ_FuiNode* FJ_Document::GetTopObject(FJ_FuiNode* node)
             return node;
         if (candidate == NULL)
             return node;
-        if (static_cast<int>(y) < static_cast<int>(candidate->getY()))
+        if (y < static_cast<int>(candidate->getY()))
             break;
-        y = candidate->getY();
+        y = static_cast<int>(candidate->getY());
         node = candidate;
     }
     return node;
@@ -383,8 +383,8 @@ void FJ_Document::RepositionItems(FJ_FuiNode* first, FJ_FuiNode* second, bool ho
 
             bool move = true;
             if (!m_root->getChildAt(i)->isFJ_Base() &&
-                std::string(m_root->getChildAt(i)->getName()) != "BackgroundPanel" &&
-                std::string(m_root->getChildAt(i)->getName()) != "PlayerIcon")
+                std::string(m_root->getChildAt(i)->getName()).compare("BackgroundPanel") != 0 &&
+                std::string(m_root->getChildAt(i)->getName()).compare("PlayerIcon") != 0)
                 move = false;
             if (move)
                 m_root->getChildAt(i)->incY(Math::round(amount));

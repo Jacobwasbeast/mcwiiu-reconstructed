@@ -9,10 +9,13 @@
 ShulkerBoxMenu::ShulkerBoxMenu(boost::shared_ptr<Container> inventory,
                                boost::shared_ptr<Container> container,
                                boost::shared_ptr<Player> player)
-    : AbstractContainerMenu(), mContainer(container)
+    : AbstractContainerMenu()
 {
     int row;
     int column;
+
+    mContainer = container;
+    container->startOpen(player);
 
     for (row = 0; row < 3; ++row)
     {
@@ -36,8 +39,6 @@ ShulkerBoxMenu::ShulkerBoxMenu(boost::shared_ptr<Container> inventory,
     {
         addSlot(new Slot(inventory, column, 8 + column * 18, 142));
     }
-
-    container->startOpen(player);
 }
 
 bool ShulkerBoxMenu::stillValid(boost::shared_ptr<Player> player)
@@ -57,14 +58,14 @@ not_null_ptr<ItemInstance> ShulkerBoxMenu::quickMoveStack(boost::shared_ptr<Play
 
         if (index < (int)mContainer->getContainerSize())
         {
-            if (!moveItemStackTo(item, (int)mContainer->getContainerSize(),
-                                 (int)m_slots.size(), true, true, true))
+            if (moveItemStackTo(item, (int)mContainer->getContainerSize(),
+                                (int)m_slots.size(), true, true, true) != 1)
             {
                 return ItemInstance::EMPTY;
             }
         }
-        else if (!moveItemStackTo(item, 0, (int)mContainer->getContainerSize(),
-                                  false, true, true))
+        else if (moveItemStackTo(item, 0, (int)mContainer->getContainerSize(),
+                                 false, true, true) != 1)
         {
             return ItemInstance::EMPTY;
         }

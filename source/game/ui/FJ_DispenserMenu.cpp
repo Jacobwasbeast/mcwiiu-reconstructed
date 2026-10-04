@@ -21,9 +21,7 @@ unsigned int FJ_DispenserMenu::getType()
 void FJ_DispenserMenu::SetSafeZone(int top, int bottom, int left, int right)
 {
     FJ_Document::SetSafeZone(top, bottom, left, right);
-    FJ_FuiNodeStage* stage = getStage();
-    float height = stage->getStageHeight();
-    if (height == 360.0 || height == 540.0)
+    if (getStage()->getStageHeight() == 360.0f || getStage()->getStageHeight() == 540.0f)
     {
         setX(-right);
         setY(top);

@@ -22,8 +22,7 @@ void FJ_MapSelectMenu::SetSafeZone(int top, int bottom, int left, int right)
 {
     FJ_Document::SetSafeZone(top, bottom, left, right);
 
-    const float stageHeight = getStage()->getStageHeight();
-    if (stageHeight != 360.0 && stageHeight != 540.0)
+    if (getStage()->getStageHeight() != 360.0f && getStage()->getStageHeight() != 540.0f)
         return;
 
     setY(top);

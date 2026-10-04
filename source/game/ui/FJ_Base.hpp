@@ -19,7 +19,7 @@ class FJ_Base : public FJ_FuiNode
 public:
     explicit FJ_Base(fuiRenderNode* renderNode);
     virtual ~FJ_Base();
-    FJ_FuiNode* getObjListParent();
+    FJ_Base* getObjListParent();
     uint32_t getId();
     void LostFocus();
     uint32_t getNewWidth();

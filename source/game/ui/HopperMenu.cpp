@@ -8,11 +8,11 @@ HopperMenu::HopperMenu(boost::shared_ptr<Container> playerContainer,
                        boost::shared_ptr<Player> player)
 {
     m_container = container;
-    m_container->startOpen(player);
+    container->startOpen(player);
 
     unsigned int i;
-    for (i = 0; i < m_container->getContainerSize(); ++i) {
-        addSlot(new Slot(m_container, (int)i, 44 + (int)i * 18, 20));
+    for (i = 0; i < container->getContainerSize(); ++i) {
+        addSlot(new Slot(container, (int)i, 44 + (int)i * 18, 20));
     }
 
     int row;
@@ -40,20 +40,16 @@ not_null_ptr<ItemInstance> HopperMenu::quickMoveStack(boost::shared_ptr<Player> 
     if (slot != NULL && slot->hasItem()) {
         not_null_ptr<ItemInstance> item = slot->getItem();
         result = item->copy();
-        unsigned int containerSize = m_container->getContainerSize();
-        bool moved;
-        if ((unsigned int)index < containerSize) {
-            moved = moveItemStackTo(item, (int)containerSize + 27,
-                                    (int)m_slots.size(), false, true, true) != 0;
-            if (!moved) {
-                moved = moveItemStackTo(item, (int)containerSize,
-                                        (int)m_slots.size(), true, true, true) != 0;
+        if ((unsigned int)index < m_container->getContainerSize()) {
+            if (moveItemStackTo(item, (int)m_container->getContainerSize() + 27,
+                                (int)m_slots.size(), false, true, true) != 1) {
+                if (moveItemStackTo(item, (int)m_container->getContainerSize(),
+                                    (int)m_slots.size(), true, true, true) != 1) {
+                    return ItemInstance::EMPTY;
+                }
             }
-        } else {
-            moved = moveItemStackTo(item, 0, (int)containerSize,
-                                    false, true, true) != 0;
-        }
-        if (!moved) {
+        } else if (moveItemStackTo(item, 0, (int)m_container->getContainerSize(),
+                                   false, true, true) != 1) {
             return ItemInstance::EMPTY;
         }
         if (item->getCount() == 0) {

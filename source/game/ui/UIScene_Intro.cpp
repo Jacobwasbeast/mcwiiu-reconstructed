@@ -45,8 +45,7 @@ void UIScene_Intro::handleInput(int playerId, int action, bool repeat, bool pres
     m_inputHandled = true;
     if (gApp.HasNoSpaceForSaveQuota() == 0)
     {
-        int primaryPlayer = gProfile->GetPrimaryPad();
-        uint32_t optionsStatus = g_pApp->GetOptionsCallbackStatus(primaryPlayer);
+        uint32_t optionsStatus = gApp.GetOptionsCallbackStatus(gProfile->GetPrimaryPad());
         if (optionsStatus == 0)
         {
             m_inputHandled = false;
@@ -55,16 +54,19 @@ void UIScene_Intro::handleInput(int playerId, int action, bool repeat, bool pres
         }
         if (optionsStatus == 4 || optionsStatus == 6)
         {
-            if (GameSettings::GetGameSettings(primaryPlayer, eGameSetting_EULAAccepted) == 0)
-                gConsoleUIController.NavigateToScene(primaryPlayer, EUIScene_EULA, NULL,
+            if (GameSettings::GetGameSettings(gProfile->GetPrimaryPad(), eGameSetting_EULAAccepted) == 0)
+            {
+                gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), EUIScene_EULA, NULL,
                                                       EUILayer_Scene, EUIGroup_PlayerDefault);
-            else
-                gConsoleUIController.NavigateToScene(primaryPlayer, EUIScene_SaveMessage, NULL,
-                                                      EUILayer_Scene, EUIGroup_PlayerDefault);
+                g_introRunning = 1;
+                return;
+            }
+            gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), EUIScene_SaveMessage, NULL,
+                                                  EUILayer_Scene, EUIGroup_PlayerDefault);
             g_introRunning = 1;
             return;
         }
-        gConsoleUIController.NavigateToScene(primaryPlayer, EUIScene_EULA, NULL,
+        gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), EUIScene_EULA, NULL,
                                               EUILayer_Scene, EUIGroup_PlayerDefault);
     }
     g_introRunning = 1;
@@ -80,17 +82,18 @@ void UIScene_Intro::handleAnimationEnd()
     if (gApp.HasNoSpaceForSaveQuota() != 0)
         return;
 
-    int primaryPlayer = gProfile->GetPrimaryPad();
-    uint32_t optionsStatus = g_pApp->GetOptionsCallbackStatus(primaryPlayer);
+    uint32_t optionsStatus = gApp.GetOptionsCallbackStatus(gProfile->GetPrimaryPad());
     if (optionsStatus == 0)
     {
-        gConsoleUIController.NavigateToScene(primaryPlayer, EUIScene_SaveMessage, NULL,
+        gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), EUIScene_SaveMessage, NULL,
                                               EUILayer_Scene, EUIGroup_PlayerDefault);
         return;
     }
     if (optionsStatus == 4 || optionsStatus == 6)
     {
-        if (GameSettings::GetGameSettings(primaryPlayer, eGameSetting_EULAAccepted) == 0)
+        int eulaAccepted = GameSettings::GetGameSettings(gProfile->GetPrimaryPad(), eGameSetting_EULAAccepted);
+        int primaryPlayer = gProfile->GetPrimaryPad();
+        if (eulaAccepted == 0)
         {
             gConsoleUIController.NavigateToScene(primaryPlayer, EUIScene_EULA, NULL,
                                                   EUILayer_Scene, EUIGroup_PlayerDefault);
@@ -100,7 +103,7 @@ void UIScene_Intro::handleAnimationEnd()
                                               EUILayer_Scene, EUIGroup_PlayerDefault);
         return;
     }
-    gConsoleUIController.NavigateToScene(primaryPlayer, EUIScene_EULA, NULL,
+    gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), EUIScene_EULA, NULL,
                                           EUILayer_Scene, EUIGroup_PlayerDefault);
 }
 
@@ -129,8 +132,10 @@ void UIScene_Intro::handleTouchInput(unsigned int playerId, int, int, int, bool,
 unsigned int UIScene_Intro::mapElementsAndNames()
 {
     fuiRenderNode* root = m_movie->getRootNode();
-    std::string name("TouchToSkip");
-    m_touchControl.setupControl(this, root, name);
+    {
+        std::string name("TouchToSkip");
+        m_touchControl.setupControl(this, root, name);
+    }
     m_controls.push_back(&m_touchControl);
     return 1;
 }

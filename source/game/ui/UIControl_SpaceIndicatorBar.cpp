@@ -4,14 +4,12 @@
 #include "game/ui/fuiRenderNode.hpp"
 
 UIControl_SpaceIndicatorBar::UIControl_SpaceIndicatorBar()
-    : UIControl_Base()
-    , m_startOffset(0)
-    , m_endOffset(100)
-    , m_saveSize(0)
-    , m_totalSize(0)
-    , m_saveGameOffset(0.0f)
-    , m_saves()
 {
+    m_startOffset = 0;
+    m_endOffset = 100;
+    m_saveSize = 0;
+    m_totalSize = 0;
+    m_saveGameOffset = 0.0f;
 }
 
 void UIControl_SpaceIndicatorBar::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
@@ -23,9 +21,8 @@ void UIControl_SpaceIndicatorBar::setupControl(UIScene* scene, fuiRenderNode* no
 void UIControl_SpaceIndicatorBar::setSaveSize(long long size)
 {
     m_saveSize = size;
-    long long numerator = m_saveSize - m_startOffset;
-    long long denominator = m_endOffset - m_startOffset;
-    ((FJ_SpaceIndicatorBar*)m_fuiRenderNode->getFuiNode())->setSaveGameSize((float)numerator / (float)denominator);
+    float ratio = (float)(m_saveSize - m_startOffset) / (float)(m_endOffset - m_startOffset);
+    ((FJ_SpaceIndicatorBar*)m_fuiRenderNode->getFuiNode())->setSaveGameSize(ratio);
 }
 
 void UIControl_SpaceIndicatorBar::setSaveGameOffset(float offset)
@@ -36,9 +33,10 @@ void UIControl_SpaceIndicatorBar::setSaveGameOffset(float offset)
 
 void UIControl_SpaceIndicatorBar::selectSave(int index)
 {
-    if (index >= 0 && !m_saves.empty() && (unsigned int)index < m_saves.size()) {
-        setSaveSize(m_saves[index].first);
-        setSaveGameOffset(m_saves[index].second);
+    if (index >= 0 && (unsigned int)index < m_saves.size()) {
+        std::pair<long long, float> save = m_saves[index];
+        setSaveSize(save.first);
+        setSaveGameOffset(save.second);
     } else {
         setSaveSize(0);
         setSaveGameOffset(0.0f);
@@ -47,9 +45,8 @@ void UIControl_SpaceIndicatorBar::selectSave(int index)
 
 void UIControl_SpaceIndicatorBar::setTotalSize(long long size)
 {
-    long long numerator = m_totalSize - m_startOffset;
-    long long denominator = m_endOffset - m_startOffset;
-    ((FJ_SpaceIndicatorBar*)m_fuiRenderNode->getFuiNode())->setTotalSize((float)numerator / (float)denominator);
+    float ratio = (float)(m_totalSize - m_startOffset) / (float)(m_endOffset - m_startOffset);
+    ((FJ_SpaceIndicatorBar*)m_fuiRenderNode->getFuiNode())->setTotalSize(ratio);
 }
 
 void UIControl_SpaceIndicatorBar::reset()
@@ -63,9 +60,7 @@ void UIControl_SpaceIndicatorBar::reset()
 
 void UIControl_SpaceIndicatorBar::addSave(long long size)
 {
-    long long numerator = m_totalSize - m_startOffset;
-    long long denominator = m_endOffset - m_startOffset;
-    m_saves.push_back(std::make_pair(size, (float)numerator / (float)denominator));
+    m_saves.push_back(std::make_pair(size, (float)(m_totalSize - m_startOffset) / (float)(m_endOffset - m_startOffset)));
     m_totalSize += size;
     setTotalSize(m_totalSize);
 }
@@ -76,14 +71,14 @@ void UIControl_SpaceIndicatorBar::init(UIString label, int controlId, long long 
     m_controlId = controlId;
     m_startOffset = startOffset;
     m_endOffset = totalOffset;
-    ((FJ_SpaceIndicatorBar*)m_fuiRenderNode->getFuiNode())->Init(label.getString());
+    std::wstring& text = label.getString();
+    ((FJ_SpaceIndicatorBar*)m_fuiRenderNode->getFuiNode())->Init(text);
 }
 
 void UIControl_SpaceIndicatorBar::ReInit()
 {
     UIControl::ReInit();
-    UIString label = m_label;
-    init(label, m_controlId, m_startOffset, m_endOffset);
+    init(m_label, m_controlId, m_startOffset, m_endOffset);
     setSaveSize(m_saveSize);
     setTotalSize(m_totalSize);
     setSaveGameOffset(m_saveGameOffset);

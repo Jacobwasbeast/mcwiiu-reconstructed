@@ -11,6 +11,8 @@
 #include "game/ui/fuiFile.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/Dimension.hpp"
+#include "game/world/DimensionType.hpp"
 #include "game/world/LevelData.hpp"
 #include "game/world/generation/MultiPlayerLevel.hpp"
 
@@ -41,7 +43,7 @@ void UIComponent_Panorama::tick()
 
     Minecraft* minecraft = Minecraft::GetInstance();
     EnterCriticalSection(&minecraft->mLevelLock);
-    if (minecraft->mLevel != NULL && minecraft->mLevel->getLevelData() != NULL) {
+    if (minecraft->mLevel != NULL && minecraft->mLevel->mDimension->getType() == DimensionType::OVERWORLD) {
         long long dayTime = minecraft->mLevel->getLevelData()->getDayTime();
         if (dayTime % 24000 > 14000) {
             setPanorama(false);
@@ -61,7 +63,7 @@ std::wstring UIComponent_Panorama::getMoviePath()
 {
     C4JRender::eViewportType viewport = m_layer->getViewport();
     if (viewport == C4JRender::eViewportType_FullScreen ||
-        viewport > C4JRender::eViewportType_BottomRightQuarter) {
+        static_cast<unsigned int>(viewport) > C4JRender::eViewportType_BottomRightQuarter) {
         m_splitScreen = false;
         return L"Panorama";
     }
@@ -76,30 +78,26 @@ void UIComponent_Panorama::handleReload()
 
 void UIComponent_Panorama::render(int width, int height, C4JRender::eViewportType viewport)
 {
-    if (!m_splitScreen || viewport < C4JRender::eViewportType_TopHalf ||
-        viewport > C4JRender::eViewportType_RightHalf) {
+    bool isHalf = viewport >= C4JRender::eViewportType_TopHalf && viewport <= C4JRender::eViewportType_RightHalf;
+    if (!m_splitScreen || !isHalf) {
         UIScene::render(width, height, viewport);
         return;
     }
 
-    int screenWidth = 0;
-    int screenHeight = 0;
-    gConsoleUIController.getRenderDimensions(C4JRender::eViewportType_FullScreen,
-                                             screenWidth, screenHeight);
     if (viewport == C4JRender::eViewportType_BottomHalf)
-        gConsoleUIController.setupRenderPosition(0, screenHeight / 2);
+        gConsoleUIController.setupRenderPosition(0, static_cast<int>(gConsoleUIController.getScreenHeight() * 0.5f));
     else if (viewport == C4JRender::eViewportType_RightHalf)
-        gConsoleUIController.setupRenderPosition(screenWidth / 2, 0);
+        gConsoleUIController.setupRenderPosition(static_cast<int>(gConsoleUIController.getScreenWidth() * 0.5f), 0);
     else
         gConsoleUIController.setupRenderPosition(0, 0);
 
     if (viewport == C4JRender::eViewportType_RightHalf ||
         viewport == C4JRender::eViewportType_LeftHalf) {
         gFui->render(m_movie, 0.0f, 0.0f, static_cast<float>(width),
-                     static_cast<float>(screenHeight));
+                     static_cast<float>(static_cast<int>(gConsoleUIController.getScreenHeight())));
     } else {
-        gFui->render(m_movie, 0.0f, 0.0f, static_cast<float>(screenWidth),
-                     static_cast<float>(screenHeight), 0.5f, 0.5f);
+        gFui->render(m_movie, 0.0f, 0.0f, gConsoleUIController.getScreenWidth(),
+                     gConsoleUIController.getScreenHeight(), 0.5f, 0.5f);
     }
 }
 

@@ -24,12 +24,12 @@ UIScene_EULA::UIScene_EULA(int sceneType, void* callback, UILayer* layer)
     text.append(L"\r\n");
     std::vector<std::wstring> lines;
     std::wstring::size_type start = 0;
-    std::wstring::size_type separator = text.find(L"\r\n", start);
+    std::wstring::size_type separator = text.find(L"\r\n", start, 2);
     while (separator != std::wstring::npos)
     {
         lines.push_back(text.substr(start, separator - start) + L" ");
         start = separator + 2;
-        separator = text.find(L"\r\n", start);
+        separator = text.find(L"\r\n", start, 2);
     }
     lines.push_back(text.substr(start));
 
@@ -50,9 +50,9 @@ UIScene_EULA::~UIScene_EULA()
 unsigned int UIScene_EULA::mapElementsAndNames()
 {
     fuiRenderNode* root = m_movie->getRootNode();
-    m_acceptButton.setupControl(this, root, "AcceptButton");
+    m_acceptButton.setupControl(this, root, std::string("AcceptButton"));
     m_controls.push_back(&m_acceptButton);
-    m_eulaText.setupControl(this, root, "EULAtext");
+    m_eulaText.setupControl(this, root, std::string("EULAtext"));
     m_controls.push_back(&m_eulaText);
     return 1;
 }

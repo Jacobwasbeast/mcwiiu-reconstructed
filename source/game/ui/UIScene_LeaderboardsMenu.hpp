@@ -91,7 +91,7 @@ public:
     bool RetrieveStats();
     void SetLeaderboardHeader();
     void ReadStats(int startRank);
-    void SetLeaderboardTitleIcons();
+    int SetLeaderboardTitleIcons();
     void PopulateLeaderboard(LeaderboardManager::eStatsReturn result);
     void finishUpdatingLeaderboards();
     static void staticCtor();

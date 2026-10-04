@@ -14,6 +14,6 @@ unsigned int FJ_Label_WhiteHtml::getType()
 
 void FJ_Label_WhiteHtml::SetLabel(const std::wstring& label)
 {
-    setUseHtmlText(true);
+    m_htmlText = true;
     FJ_Label::SetLabel(label);
 }

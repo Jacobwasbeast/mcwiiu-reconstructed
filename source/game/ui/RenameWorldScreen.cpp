@@ -36,15 +36,13 @@ void RenameWorldScreen::buttonClicked(Button* button)
     if (!button->mActive)
         return;
 
-    if (button->mId == 0)
+    if (button->mId != 1)
     {
+        if (button->mId != 0)
+            return;
+
         LevelStorageSource* levelSource = mMinecraft->getLevelSource();
-        std::wstring levelName = trimString(mEditBox->getValue());
-        levelSource->renameLevel(mLevelId, levelName);
-    }
-    else if (button->mId != 1)
-    {
-        return;
+        levelSource->renameLevel(mLevelId, trimString(mEditBox->getValue()));
     }
 
     mMinecraft->setScreen(mParentScreen);
@@ -54,9 +52,9 @@ void RenameWorldScreen::keyPressed(wchar_t key, int action)
 {
     mEditBox->keyPressed(key, action);
 
-    mButtons[0]->mActive = !trimString(mEditBox->getValue()).empty();
+    mButtons[0]->mActive = trimString(mEditBox->getValue()).size() != 0;
 
-    if (action == 13)
+    if (key == 13)
         buttonClicked(mButtons[0]);
 }
 

@@ -1,5 +1,7 @@
 #include "game/ui/UIControl_Slider.hpp"
 
+#include <algorithm>
+
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/core/ConsoleUIController.hpp"
 #include "game/ui/FJ_FuiNode.hpp"
@@ -32,13 +34,18 @@ void UIControl_Slider::init(UIString label, int controlId, int minimum, int maxi
     m_repeatDelay = repeatDelay;
     m_repeat = repeat;
 
-    FJ_Slider* slider = m_fuiRenderNode->getFuiNode()->asFJ_Slider();
-    slider->Init(label.getString(), controlId, minimum, maximum, value,
-                 repeat, repeatDelay, repeatStep);
+    const std::wstring& text = label.getString();
+    static_cast<FJ_Slider*>(m_fuiRenderNode->getFuiNode())->Init(text, controlId, minimum, maximum, value,
+                                                                 repeat, repeatDelay, repeatStep);
 
-    int sceneType = m_scene->getSceneType();
-    if (sceneType == 4 || (sceneType > 5 && sceneType < 8))
+    switch (m_scene->m_layer->m_layerId)
+    {
+    case 4:
+    case 6:
+    case 7:
         gConsoleUIController.TouchBoxAdd(this, m_scene);
+        break;
+    }
 }
 
 void UIControl_Slider::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
@@ -52,7 +59,7 @@ void UIControl_Slider::setFocus(bool focus)
     if (m_focus == focus)
         return;
     m_focus = focus;
-    m_fuiRenderNode->getFuiNode()->asFJ_Slider()->ChangeState(!focus);
+    static_cast<FJ_Slider*>(m_fuiRenderNode->getFuiNode())->ChangeState(!focus);
 }
 
 void UIControl_Slider::handleSliderMove(int value)
@@ -68,19 +75,17 @@ void UIControl_Slider::handleSliderMove(int value)
 
 void UIControl_Slider::SetSliderTouchPos(float position)
 {
-    m_fuiRenderNode->getFuiNode()->asFJ_Slider()->SetRelativeSliderPos(position);
+    static_cast<FJ_Slider*>(m_fuiRenderNode->getFuiNode())->SetRelativeSliderPos(position);
 }
 
 void UIControl_Slider::SetSliderValue(int value)
 {
-    m_fuiRenderNode->getFuiNode()->asFJ_Slider()->SetSliderValue(value);
+    static_cast<FJ_Slider*>(m_fuiRenderNode->getFuiNode())->SetSliderValue(value);
 }
 
 void UIControl_Slider::MoveSliderValue(int amount)
 {
-    int value = (int)m_currentValue + amount;
-    if (value > m_maximum)
-        value = m_maximum;
+    int value = std::min(m_maximum, amount + (int)m_currentValue);
     if (value < m_minimum)
         value = m_minimum;
     SetSliderValue(value);
@@ -92,18 +97,9 @@ void UIControl_Slider::setAllPossibleLabels(int firstLabel, unsigned int labelCo
 {
     m_possibleLabels.clear();
 
-    unsigned int groupCount = labelCount / 4;
-    unsigned int remainder = labelCount & 3;
     unsigned int i;
-    for (i = 0; i < groupCount; ++i) {
-        wchar_t* group = labels[i * 4 + 1];
-        m_possibleLabels.push_back(std::wstring(group - 256));
-        m_possibleLabels.push_back(std::wstring(group));
-        m_possibleLabels.push_back(std::wstring(group + 256));
-        m_possibleLabels.push_back(std::wstring(group + 512));
-    }
-    for (i = 0; i < remainder; ++i)
-        m_possibleLabels.push_back(std::wstring(labels[groupCount * 4 + i]));
+    for (i = 0; i < labelCount; ++i)
+        m_possibleLabels.push_back(std::wstring(labels[i]));
 
     UIControl_Base::setAllPossibleLabels(firstLabel, labelCount, labels);
 }
@@ -115,13 +111,12 @@ unsigned int UIControl_Slider::getCurrentValue() const
 
 int UIControl_Slider::GetRealWidth()
 {
-    return (int)m_fuiRenderNode->getFuiNode()->asFJ_Slider()->GetRealWidth();
+    return (int)static_cast<FJ_Slider*>(m_fuiRenderNode->getFuiNode())->GetRealWidth();
 }
 
 void UIControl_Slider::ReInit()
 {
     UIControl::ReInit();
-    UIString label = m_label;
-    init(label, m_controlId, m_minimum, m_maximum, (int)m_currentValue,
+    init(m_label, m_controlId, m_minimum, m_maximum, (int)m_currentValue,
          m_repeat, m_repeatDelay, m_repeatStep);
 }

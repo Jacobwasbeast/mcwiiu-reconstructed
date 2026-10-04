@@ -101,8 +101,8 @@ public:
     bool CheckElementExists(int index);
     int GetActiveItem();
     void SetTouchFocus(int x, int y, bool focus);
-    bool CanTouchFocus(int x, int y);
-    bool CanTouchTrigger(int x, int y);
+    unsigned int CanTouchFocus(int x, int y);
+    unsigned int CanTouchTrigger(int x, int y);
     int getListDataValue(int index);
     UIString GetItemLabel(int index);
     void SetVerticalSpacing(int spacing);

@@ -150,6 +150,15 @@ private:
     friend class ConsoleUIController;
     friend class UIGroup;
     friend class UIScene_FullscreenProgress;
+    friend class UIControl_Button;
+    friend class UIControl_CheckBox;
+    friend class UIControl_DynamicLabel;
+    friend class UIControl_HTMLLabel;
+    friend class UIControl_LeaderboardList;
+    friend class UIControl_List;
+    friend class UIControl_Slider;
+    friend class UIControl_TextInput;
+    friend class UIControl_TexturePackList;
     friend class UIControl_Touch;
     friend class UIControl_GridList;
 };

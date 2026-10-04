@@ -9,7 +9,7 @@ class UIControl_MinecraftHorse : public UIControl
 {
 public:
     UIControl_MinecraftHorse();
-    virtual ~UIControl_MinecraftHorse();
+    virtual ~UIControl_MinecraftHorse() {}
     void render(fuiRect* rect);
 
 private:

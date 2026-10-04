@@ -5,9 +5,9 @@
 #include "game/ui/fuiRenderNode.hpp"
 
 FJ_List_ListButtonScoreBoard::FJ_List_ListButtonScoreBoard(fuiRenderNode* renderNode)
-    : FJ_List(renderNode), m_numColumns(0), m_buttonHeight(0)
+    : FJ_List(renderNode), m_numColumns(0)
 {
-    m_buttonHeight = static_cast<int>(getRenderNodeParent()->getHeight());
+    m_buttonHeight = static_cast<int>(getRenderNodeParent()->getWidth());
 }
 
 FJ_List* FJ_List_ListButtonScoreBoard::Create(fuiRenderNode* renderNode)

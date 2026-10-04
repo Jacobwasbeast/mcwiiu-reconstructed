@@ -15,13 +15,35 @@
 #include "game/ui/UILayer.hpp"
 #include "game/ui/fuiFile.hpp"
 #include "game/ui/fuiRect.hpp"
+#include "game/world/block/Block.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/core/GameSettings.hpp"
+
+namespace
+{
+struct DefaultPresetInfo
+{
+    unsigned int nameId;
+    int icon;
+    int preset;
+};
+
+DefaultPresetInfo s_defaultPresetInfo[] = {
+    { IDS_PRESET_CLASSIC_FLAT, 2, DefaultPresets::CLASSIC },
+    { IDS_PRESET_TUNNELERS_DREAM, 1, DefaultPresets::TUNNELERS_DREAM },
+    { IDS_PRESET_WATER_WORLD, 9, DefaultPresets::WATER_WORLD },
+    { IDS_PRESET_OVERWORLD, 31, DefaultPresets::OVERWORLD },
+    { IDS_PRESET_SNOWY_KINGDOM, 78, DefaultPresets::SNOWY_KINGDOM },
+    { IDS_PRESET_DESERT, 12, DefaultPresets::DESERT },
+    { IDS_PRESET_REDSTONE_READY, 331, DefaultPresets::REDSTONE_READY },
+    { static_cast<unsigned int>(-1), -1, -1 }
+};
+}
 
 UIScene_SuperFlatPresets::UIScene_SuperFlatPresets(int sceneType, void* data, UILayer* layer)
     : UIScene(sceneType, layer), m_generator(static_cast<SuperflatConfig*>(0)),
       m_functionPresetIds(), m_customPresets(), m_defaultPresets(), m_presetList(),
-      m_presetTitle(), m_selectedPreset(-1)
+      m_presetTitle()
 {
     SuperflatConfig* config = static_cast<SuperflatConfig**>(data)[1];
     m_generator = FlatGeneratorInfo(config, false);
@@ -30,23 +52,15 @@ UIScene_SuperFlatPresets::UIScene_SuperFlatPresets(int sceneType, void* data, UI
     m_presetList.init(0);
     m_presetList.UseIggyIcons();
 
-    const DefaultPresets::Preset presets[] = {
-        DefaultPresets::CLASSIC,
-        DefaultPresets::TUNNELERS_DREAM,
-        DefaultPresets::WATER_WORLD,
-        DefaultPresets::OVERWORLD,
-        DefaultPresets::SNOWY_KINGDOM,
-        DefaultPresets::DESERT,
-        DefaultPresets::REDSTONE_READY
-    };
-    unsigned int i;
-    for (i = 0; i < sizeof(presets) / sizeof(presets[0]); ++i)
+    const DefaultPresetInfo* info;
+    for (info = s_defaultPresetInfo; info->preset >= 0; ++info)
     {
         SuperflatConfig* preset = new SuperflatConfig();
-        preset->makePreset(presets[i]);
+        preset->makePreset(static_cast<DefaultPresets::Preset>(info->preset));
         m_defaultPresets.push_back(preset);
     }
     PopulatePresetList();
+    m_selectedPreset = -1;
     gConsoleUIController.TouchBoxRebuild(this);
 }
 
@@ -55,8 +69,10 @@ UIScene_SuperFlatPresets::~UIScene_SuperFlatPresets()
     std::vector<SuperflatConfig*>::iterator it;
     for (it = m_customPresets.begin(); it != m_customPresets.end(); ++it)
         delete *it;
+    m_customPresets.clear();
     for (it = m_defaultPresets.begin(); it != m_defaultPresets.end(); ++it)
         delete *it;
+    m_defaultPresets.clear();
 }
 
 unsigned int UIScene_SuperFlatPresets::mapElementsAndNames()
@@ -109,15 +125,8 @@ std::wstring UIScene_SuperFlatPresets::GetDisplayName(int index) const
         return L10N::GetString(0x477A886A);
     if (customId >= 0)
         return m_customPresets[customId]->getDisplayname();
-    if (defaultId < 0)
-        return L"[UNKNOWN_PRESET]";
-
-    static const unsigned int displayNames[] = {
-        IDS_PRESET_CLASSIC_FLAT, IDS_PRESET_TUNNELERS_DREAM, IDS_PRESET_WATER_WORLD, IDS_PRESET_OVERWORLD,
-        IDS_PRESET_SNOWY_KINGDOM, IDS_PRESET_DESERT, IDS_PRESET_REDSTONE_READY
-    };
-    if (defaultId < static_cast<int>(sizeof(displayNames) / sizeof(displayNames[0])))
-        return L10N::GetString(static_cast<int>(displayNames[defaultId]));
+    if (defaultId >= 0)
+        return L10N::GetString(static_cast<int>(s_defaultPresetInfo[defaultId].nameId));
     return L"[UNKNOWN_PRESET]";
 }
 
@@ -126,7 +135,7 @@ void UIScene_SuperFlatPresets::PopulatePresetList()
     m_presetList.clearList();
     int i;
     for (i = 0; i < GetPresetCount(); ++i)
-        m_presetList.AddNewItem(GetDisplayName(i), i, L"slot_0_%d");
+        m_presetList.AddNewItem(GetDisplayName(i), i, L"");
 }
 
 unsigned int UIScene_SuperFlatPresets::GetFunction(int function) const
@@ -135,31 +144,48 @@ unsigned int UIScene_SuperFlatPresets::GetFunction(int function) const
     int functionId = GetFunctionPresetId(selection);
     int customId = GetCustomPresetId(selection);
     int defaultId = GetDefaultPresetId(selection);
-    if (functionId < 0)
+    if (functionId >= 0)
     {
-        if (customId >= 0 || defaultId >= 0)
+        if (functionId == 0 && function == 0)
+            return static_cast<unsigned int>(function);
+        return static_cast<unsigned int>(-1);
+    }
+    if (customId >= 0 || defaultId >= 0)
+    {
+        if (function == 0)
+            return 1;
+        if (customId >= 0)
         {
-            if (function == 0)
-                return 1;
-            if (customId >= 0 && function > 1 && function < 4)
+            switch (function)
+            {
+            case 2:
+            case 3:
                 return static_cast<unsigned int>(function);
+            }
         }
     }
-    else if (functionId == 0 && function == 0)
-        return static_cast<unsigned int>(function);
-    return 0xFFFFFFFF;
+    return static_cast<unsigned int>(-1);
 }
 
 int UIScene_SuperFlatPresets::GetTooltip(int function) const
 {
-    static const unsigned int tooltips[] = { IDS_SUPERFLAT_SAVE_PRESET, IDS_SUPERFLAT_LOAD_PRESET, IDS_SUPERFLAT_OVERWRITE, IDS_SUPERFLAT_DELETE_PRESET };
-    unsigned int result = GetFunction(function);
-    return result < 4 ? static_cast<int>(tooltips[result]) : -1;
+    switch (GetFunction(function))
+    {
+    case 0:
+        return IDS_SUPERFLAT_SAVE_PRESET;
+    case 1:
+        return IDS_SUPERFLAT_LOAD_PRESET;
+    case 2:
+        return IDS_SUPERFLAT_OVERWRITE;
+    case 3:
+        return IDS_SUPERFLAT_DELETE_PRESET;
+    }
+    return -1;
 }
 
 void UIScene_SuperFlatPresets::updateTooltips()
 {
-    gConsoleUIController.SetTooltips(0, GetTooltip(0), 0x04F6BCF5, GetTooltip(2), GetTooltip(3),
+    gConsoleUIController.SetTooltips(0, GetTooltip(0), IDS_TOOLTIPS_BACK, GetTooltip(2), GetTooltip(3),
                                       -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, false, false);
 }
 
@@ -212,18 +238,18 @@ void UIScene_SuperFlatPresets::handleInput(int, int action, bool repeat, bool pr
     gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, pressed, released);
     switch (action)
     {
+    case EControllerActions_MenuCancel:
+        if (pressed)
+        {
+            navigateBack();
+            handled = true;
+        }
+        break;
     case EControllerActions_MenuX:
     case EControllerActions_MenuY:
         if (pressed)
         {
             HandlePresetListPress(action);
-            handled = true;
-        }
-        break;
-    case EControllerActions_MenuCancel:
-        if (pressed)
-        {
-            navigateBack();
             handled = true;
         }
         break;
@@ -252,25 +278,23 @@ int UIScene_SuperFlatPresets::GetIcon(int index) const
     int customId = GetCustomPresetId(index);
     int defaultId = GetDefaultPresetId(index);
     if (functionId == 0)
-        return Item::getBlockId(Item::byBlock(Blocks::crafting_table));
+        return Block::getId(Blocks::crafting_table);
     if (customId >= 0)
         return Item::getId(Items::painting);
-    static const int icons[] = { 2, 1, 9, 31, 78, 12, 331 };
-    if (defaultId >= 0 && defaultId < static_cast<int>(sizeof(icons) / sizeof(icons[0])))
-        return icons[defaultId];
-    return Item::getBlockId(Item::byBlock(Blocks::command_block));
+    if (defaultId >= 0)
+        return s_defaultPresetInfo[defaultId].icon;
+    return Block::getId(Blocks::command_block);
 }
 
 void UIScene_SuperFlatPresets::customDraw(const char* name, fuiRect* rect)
 {
     int slot = -1;
+    not_null_ptr<ItemInstance> item = ItemInstance::EMPTY;
     std::sscanf(name, "slot_0_%d", &slot);
     if (slot != -1)
-    {
-        not_null_ptr<ItemInstance> item(new ItemInstance(Item::byId(GetIcon(slot)), 1, 0));
-        if (!item->isEmpty())
-            customDrawSlotControlFui(rect, m_playerId, item, 1.0f, false, false, false);
-    }
+        item = not_null_ptr<ItemInstance>(new ItemInstance(Item::byId(GetIcon(slot)), 1, 0));
+    if (!item.get()->isEmpty())
+        customDrawSlotControlFui(rect, m_playerId, item, 1.0f, item.get()->getItem()->isFoil(item), false, false);
 }
 
 std::wstring UIScene_SuperFlatPresets::getMoviePath()

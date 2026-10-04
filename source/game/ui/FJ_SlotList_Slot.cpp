@@ -9,12 +9,10 @@
 #include "game/util/Math.hpp"
 
 FJ_SlotList_Slot::FJ_SlotList_Slot(fuiRenderNode* pRenderNode)
-    : FJ_FuiNode(pRenderNode), m_iSlotId(0), m_pRedBox(NULL),
-      m_pSlotControl(NULL), m_pHighlight(NULL), m_bRedBoxActive(false),
-      m_bHighlightActive(false)
+    : FJ_FuiNode(pRenderNode)
 {
     m_pRedBox = FJ_Factory::createObject("fourj.listClasses.FJ_ExlamationMark",
-        pRenderNode, true, NULL);
+        m_pRenderNode, true, NULL);
     m_pSlotControl = getChildByName("IconHolder")->asMovieClip();
     m_pHighlight = getChildByName("Highlight")->asMovieClip();
     m_pHighlight->setVisible(false);
@@ -51,9 +49,9 @@ void FJ_SlotList_Slot::SetSlotID(int iSlotId)
     renderNode->setAlpha(0.25f);
     m_pSlotControl->removeChild(oldControl, true);
     FJ_FuiNode* replacement = new FJ_FuiNode(renderNode);
-    FJ_FuiNode* parent = getParent();
-    int index = parent->getNumChildren();
-    parent->addChildAt(replacement, index);
+    renderNode->setFuiNode(replacement);
+    int index = getParent()->getNumChildren();
+    getParent()->addChildAt(replacement, index);
 }
 
 void FJ_SlotList_Slot::SetHighlightActive(bool bActive)
@@ -75,7 +73,6 @@ void FJ_SlotList_Slot::SetRedBoxActive(bool bActive)
         parent->addChild(m_pRedBox);
         m_pRedBox->setX(getX() + (float)Math::round(getScaleX()));
         m_pRedBox->setY(getY() + (float)Math::round(getScaleY()));
-        m_pRedBox->setVisible(true);
     }
     m_pRedBox->setVisible(bActive);
     m_pSlotControl->gotoAndStop(bActive ? "SlotRed" : "SlotNormal");

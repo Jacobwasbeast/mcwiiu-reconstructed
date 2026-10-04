@@ -5,10 +5,10 @@
 FJ_UpsellButton::FJ_UpsellButton(fuiRenderNode* renderNode)
     : FJ_Button(renderNode)
 {
-    m_wrapWidth = 0;
-    m_textContainerVisible = true;
-    m_textChanged = true;
-    m_resizing = true;
+    m_textOnly = false;
+    m_textContainerChanged = true;
+    m_manualWrap = true;
+    m_autoGrowHeight = true;
 }
 
 void FJ_UpsellButton::Init(const std::wstring& name, int id)

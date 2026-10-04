@@ -22,7 +22,7 @@ void FJ_List_ListButtonPlayerList::addNewItem(const std::wstring& label, int id,
     int playerIcon, int voipIcon)
 {
     FJ_ListButtonPlayerList* item;
-    if (!m_initialized)
+    if (m_checkboxTick)
     {
         item = static_cast<FJ_ListButtonPlayerList*>(FJ_Factory::createObject(
             "fourj.Buttons.FJ_ListButtonPlayerList_Small", m_pRenderNode, true, NULL));

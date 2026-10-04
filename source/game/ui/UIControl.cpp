@@ -3,14 +3,14 @@
 #include "game/ui/fuiRenderNode.hpp"
 
 UIControl::UIControl()
-    : m_controlType(eUIControlType_Unknown),
-      m_removed(false),
-      m_name(""),
-      m_fuiRenderNode(0),
-      m_scene(0),
-      m_opacity(1.0f),
-      m_visible(true)
+    : m_scene(0),
+      m_opacity(1.0f)
 {
+    m_name = "";
+    m_controlType = eUIControlType_Unknown;
+    m_removed = false;
+    m_fuiRenderNode = 0;
+    m_visible = true;
 }
 
 void UIControl::setVisible(bool visible)
@@ -65,7 +65,7 @@ void UIControl::setupControl(UIScene* scene, fuiRenderNode* node, const std::str
 {
     m_scene = scene;
     m_name.assign(name, 0, std::string::npos);
-    m_fuiRenderNode = node->findNode(m_name.c_str());
+    m_fuiRenderNode = node->findNode(name.c_str());
     if (m_fuiRenderNode != 0) {
         m_x = m_fuiRenderNode->getX();
         m_y = m_fuiRenderNode->getY();
@@ -143,6 +143,5 @@ UIControl& UIControl::operator=(const UIControl& other)
     m_height = other.m_height;
     m_opacity = other.m_opacity;
     m_visible = other.m_visible;
-    m_renderState = other.m_renderState;
     return *this;
 }

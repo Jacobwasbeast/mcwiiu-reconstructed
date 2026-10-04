@@ -22,7 +22,7 @@ void UIControl_ButtonList::setupControl(UIScene* scene, fuiRenderNode* node,
 
 void UIControl_ButtonList::addItem(const std::wstring& label, int index)
 {
-    if (m_scene->hasMovie()) {
+    if (m_scene->m_movie != NULL) {
         FJ_FuiNode* node = m_fuiRenderNode->getFuiNode();
         FJ_List_ListButton* listButton = node->asFJ_List_ListButton();
         if (listButton != NULL) {
@@ -55,7 +55,7 @@ void UIControl_ButtonList::addItem(const std::wstring& label, int index)
 
 void UIControl_ButtonList::addItem(const std::wstring& label)
 {
-    addItem(label, static_cast<int>(getItemCount()));
+    addItem(label, m_itemIndex);
 }
 
 void UIControl_ButtonList::setButtonLabel(int item, const std::wstring& label)

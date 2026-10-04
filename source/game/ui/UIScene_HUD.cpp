@@ -109,6 +109,8 @@ FJ_Hud* UIScene_HUD::getFJ_Hud()
 
 void UIScene_HUD::SetSelectedLabel(const std::wstring& label)
 {
+    if (!label.empty())
+        m_selectedLabelTicks = 60;
     if (getFJ_Hud() != 0) getFJ_Hud()->SetSelectedLabel(label, true);
 }
 
@@ -217,7 +219,11 @@ void UIScene_HUD::ShowArmorIcons(int armour, bool visible)
 
 bool UIScene_HUD::SORTBYTIMELEFT(MobEffectInstance* first, MobEffectInstance* second)
 {
-    return second->getDuration() < first->getDuration();
+    if (first->getDuration() > second->getDuration())
+        return true;
+    if (first->getDuration() < second->getDuration())
+        return false;
+    return false;
 }
 
 void UIScene_HUD::updateEffectsDisplay()
@@ -428,9 +434,9 @@ void UIScene_HUD::customDraw(const char* name, fuiRect* rect)
         if (timer == 0)
             alpha = 0.01f * (float)opacity;
         else if (timer < 10)
-            alpha = 0.01f * -((10.0f - (float)timer) * ((80.0f - (float)opacity) / 10.0f) - 80.0f);
+            alpha = (80.0f - (10.0f - (float)timer) * ((80.0f - (float)opacity) / 10.0f)) * 0.01f;
         else
-            alpha = 0.8f;
+            alpha = 80.0f * 0.01f;
     }
     else
     {
@@ -459,10 +465,11 @@ void UIScene_HUD::SetDisplayName(const std::wstring& name)
 {
     if (name.compare(m_displayNameText) != 0 && m_splitScreen)
     {
-        m_displayNameText = name;
+        m_displayNameText.assign(name);
         if (getFJ_Hud() != 0)
             getFJ_Hud()->SetGamertag(name);
-        m_displayName.setVisible(m_displayNameVisible);
+        if (m_splitScreen)
+            m_displayName.setVisible(m_displayNameVisible);
     }
 }
 
@@ -727,23 +734,31 @@ void UIScene_HUD::SetAnimatedSplashIcon(int icon)
         texture = Minecraft::GetInstance()->GetMiniGame()->getIcon();
         found = gApp.hasArchiveFile(texture, false);
     }
-    else if (icon == 2 && Minecraft::InMiniGame(eMiniGameId_Glide, true) &&
-             Minecraft::GetInstance()->mLocalPlayers[getPad()]->GetGameType() != GameType::LOBBY)
+    else if (icon == 2)
     {
-        if (Minecraft::GetInstance()->GetClientMasterGameMode()->GetMiniGame()->ArePointsActive())
+        if (Minecraft::InMiniGame(eMiniGameId_Glide, true) &&
+            Minecraft::GetInstance()->mLocalPlayers[getPad()]->GetGameType() != GameType::LOBBY)
         {
-            texture = L"Graphics\\GameModeGraphics\\ScoreIcon.png";
-            found = gApp.hasArchiveFile(texture, false);
+            if (Minecraft::GetInstance()->GetClientMasterGameMode()->GetMiniGame()->ArePointsActive())
+            {
+                texture = L"Graphics\\GameModeGraphics\\ScoreIcon.png";
+                found = gApp.hasArchiveFile(texture, false);
+            }
+            else
+            {
+                texture = L"Graphics\\GameModeGraphics\\TimeIcon.png";
+                found = gApp.hasArchiveFile(texture, false);
+            }
         }
         else
         {
-            texture = L"Graphics\\GameModeGraphics\\TimeIcon.png";
+            texture = L"Graphics\\GameModeGraphics\\AwardIcons_0029.png";
             found = gApp.hasArchiveFile(texture, false);
         }
     }
     else
     {
-        texture = L"Graphics\\GameModeGraphics\\AwardIcon.png";
+        texture = L"Graphics\\GameModeGraphics\\AwardIcons_0029.png";
         found = gApp.hasArchiveFile(texture, false);
     }
 
@@ -754,7 +769,7 @@ void UIScene_HUD::SetAnimatedSplashIcon(int icon)
     else
     {
         arrayWithLength<unsigned char> file = gApp.getArchiveFile(texture, false);
-        if (file.data != NULL && file.length != 0)
+        if (file.length != 0 && file.data != NULL)
             registerSubstitutionTexture(texture, file.data, file.length, true);
         SetAnimatedSplashTexture(texture);
     }
@@ -791,7 +806,11 @@ void UIScene_HUD::SetPercentageMapTraversed(int position, double percentage)
 void UIScene_HUD::AddCheckpointAtPercentage(double percentage) { if (getFJ_Hud() != 0) getFJ_Hud()->AddCheckpointAtPercentage((float)percentage); }
 void UIScene_HUD::ClearCheckpointPositions() { if (getFJ_Hud() != 0) getFJ_Hud()->ClearCheckpointPositions(); }
 void UIScene_HUD::AnimateCheckpoint(unsigned int index) { if (getFJ_Hud() != 0) getFJ_Hud()->AnimateCheckpoint((int)index); }
-void UIScene_HUD::SetPositions(unsigned int position, const std::wstring& label, bool visible) { if (getFJ_Hud() != 0) getFJ_Hud()->SetPosition((int)position, label, visible); }
+void UIScene_HUD::SetPositions(unsigned int position, const std::wstring& label, bool visible)
+{
+    if (position < 3 && getFJ_Hud() != 0)
+        getFJ_Hud()->SetPosition((int)position, label, visible);
+}
 void UIScene_HUD::SetSpeedometer(unsigned int value) { if (getFJ_Hud() != 0) getFJ_Hud()->SetSpeedometer((int)value); }
 void UIScene_HUD::SetScoreIcon(unsigned int value) { if (getFJ_Hud() != 0) getFJ_Hud()->SetScoreIcon((int)value); }
 unsigned int UIScene_HUD::GetStatusEffectsYOffset()
@@ -862,20 +881,21 @@ void UIScene_HUD::renderPlayerHealth()
 void UIScene_HUD::renderVehicleHealth()
 {
     Minecraft* minecraft = Minecraft::GetInstance();
-    boost::shared_ptr<MultiplayerLocalPlayer> player = minecraft->mLocalPlayers[getPad()];
-    if (player == 0)
-        return;
+    boost::shared_ptr<MultiplayerLocalPlayer>& player = minecraft->mLocalPlayers[getPad()];
     boost::shared_ptr<Entity> vehicle = player->getVehicle();
     if (vehicle == 0 || (vehicle->GetType() & EntityType::LIVING_ENTITY) != EntityType::LIVING_ENTITY)
     {
         SetRidingHorse(false, false, 0);
         ShowHorseHealth(false);
-        return;
     }
-    boost::shared_ptr<LivingEntity> livingVehicle = boost::static_pointer_cast<LivingEntity>(vehicle);
-    SetRidingHorse(true, player->isRidingJumpable(), (int)livingVehicle->getMaxHealth());
-    SetHorseHealth((int)std::ceil(livingVehicle->getHealth()), false);
-    ShowHorseHealth(true);
+    else
+    {
+        boost::shared_ptr<LivingEntity> livingVehicle = boost::static_pointer_cast<LivingEntity>(vehicle);
+        const int health = (int)std::ceil(livingVehicle->getHealth());
+        SetRidingHorse(true, player->isRidingJumpable(), (int)livingVehicle->getMaxHealth());
+        SetHorseHealth(health, false);
+        ShowHorseHealth(true);
+    }
 }
 std::wstring UIScene_HUD::formatTime(long long time, bool hundredths)
 {
@@ -902,56 +922,53 @@ std::wstring UIScene_HUD::formatTime(long long time, bool hundredths)
 }
 void UIScene_HUD::updateGameModePlayers()
 {
-    const int pad = static_cast<int>(getPad());
     Minecraft* minecraft = Minecraft::GetInstance();
+    const int pad = static_cast<int>(getPad());
     const int networkPlayerCount = CGameNetworkManager::sInstance.GetPlayerCount();
     int slotStates[8];
     for (int i = 0; i < 8; ++i)
         slotStates[i] = 8;
 
-    boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = minecraft->mLocalPlayers[pad];
+    boost::shared_ptr<MultiplayerLocalPlayer>& localPlayer = minecraft->mLocalPlayers[pad];
     bool showNumPlayers = true;
     if (localPlayer != 0 && localPlayer->GetGameType() != GameType::LOBBY)
         showNumPlayers = false;
 
     bool glideLayout = false;
-    if (Minecraft::InMiniGame(eMiniGameId_Glide, true) && showNumPlayers)
+    if (Minecraft::InMiniGame(eMiniGameId_Glide, true) && !showNumPlayers)
         glideLayout = true;
 
     bool showGhost = false;
-    const MiniGameDef* miniGame = minecraft->GetMiniGame();
-    if (miniGame->GetHostOption(eCustomGameModeHostOption_TimeTrial) != 0)
+    if (minecraft->GetMiniGame()->GetHostOption(eCustomGameModeHostOption_TimeTrial) != 0)
     {
-        GhostController* ghostController = minecraft->GetGhostController();
+        GhostController* ghostController = Minecraft::GetInstance()->GetGhostController();
         if (ghostController != 0 && !showNumPlayers && ghostController->mLoaded[pad] != 0)
         {
-            if (GameSettings::GetGameSettings(pad, eGameSetting_ShowGlideGhost) != 0)
+            if (GameSettings::GetGameSettings(gProfile->GetPrimaryPad(), eGameSetting_ShowGlideGhost) != 0)
                 showGhost = true;
         }
     }
 
     for (int index = 0; index < 8; ++index)
     {
-        boost::shared_ptr<Player> player = minecraft->GetPlayerByPlayerIndex(index);
-        if (player == 0)
-            continue;
-        if (player->isSpectator())
-            continue;
-
-        bool dead = !player->isAlive();
-        if (Minecraft::InMiniGame(eMiniGameId_Any, true) && dead)
+        boost::shared_ptr<Player> player = Minecraft::GetInstance()->GetPlayerByPlayerIndex(index);
+        if (player != 0 && !player->isSpectator())
         {
-            if (miniGame->GetLivesPerRound() != 0)
-                dead = !dead;
-        }
+            bool alive = player->isAlive();
+            if (Minecraft::InMiniGame(eMiniGameId_Any, true) && !alive)
+            {
+                if (Minecraft::GetInstance()->GetMiniGame()->GetLivesPerRound() != 0)
+                    alive = !player->isSpectator();
+            }
 
-        if (dead)
-            slotStates[player->mPlayerIndex] = 9;
-        else
-            slotStates[player->mPlayerIndex] = player->mPlayerIndex;
+            if (!alive)
+                slotStates[player->mPlayerIndex] = 9;
+            else
+                slotStates[player->mPlayerIndex] = player->mPlayerIndex;
+        }
     }
 
-    ClientMasterGameMode* gameMode = minecraft->GetClientMasterGameMode();
+    ClientMasterGameMode* gameMode = Minecraft::GetInstance()->GetClientMasterGameMode();
     SetGameModeNumPlayers(showGhost ? networkPlayerCount + 1 : networkPlayerCount, showNumPlayers);
 
     const int localIndex = localPlayer != 0 ? localPlayer->mPlayerIndex : 0;
@@ -976,7 +993,7 @@ void UIScene_HUD::updateGameModePlayers()
             if (!gameMode->IsPlayerReady(static_cast<unsigned int>(playerIndex)) && gameMode->IsInLobbyState())
                 visible = false;
 
-            boost::shared_ptr<Player> player = minecraft->GetPlayerByPlayerIndex(playerIndex);
+            boost::shared_ptr<Player> player = Minecraft::GetInstance()->GetPlayerByPlayerIndex(playerIndex);
             if (glideLayout && player != 0 && player->isSpectator())
                 visible = false;
 
@@ -999,7 +1016,7 @@ void UIScene_HUD::updateGameModePlayers()
             if (!gameMode->IsPlayerReady(static_cast<unsigned int>(playerIndex)) && gameMode->IsInLobbyState())
                 visible = false;
 
-            boost::shared_ptr<Player> player = minecraft->GetPlayerByPlayerIndex(playerIndex);
+            boost::shared_ptr<Player> player = Minecraft::GetInstance()->GetPlayerByPlayerIndex(playerIndex);
             if (glideLayout && player != 0 && player->isSpectator())
                 visible = false;
 
@@ -1042,7 +1059,15 @@ void UIScene_HUD::ClearGlideHUD(int player)
         m_checkpointsInitialised = false;
     }
 }
-void UIScene_HUD::showTimedSplash(const std::wstring& label, unsigned int duration, int icon) { ShowAnimatedSplash(label, true, (int)duration); SetAnimatedSplashIcon(icon); }
+void UIScene_HUD::showTimedSplash(const std::wstring& label, unsigned int duration, int icon)
+{
+    if (!m_timedSplashLocked)
+    {
+        m_timedSplashTicks = duration;
+        m_timedSplashText.assign(label);
+        m_timedSplashIcon = icon;
+    }
+}
 void UIScene_HUD::updateFrameTick()
 {
     const int pad = static_cast<int>(getPad());
@@ -1081,7 +1106,7 @@ void UIScene_HUD::updateFrameTick()
 
     if (!player->isSpectator())
     {
-        ShowCrosshair(!player->isUsingItem());
+        ShowCrosshair(player->GetThirdPersonView(false) == 0);
         ShowQuickSelect(true);
         if (gameMode == 0 || !gameMode->canHurtPlayer())
         {
@@ -1108,7 +1133,7 @@ void UIScene_HUD::updateFrameTick()
         if (miniGame->HasSpectatorParticipation())
         {
             if (!player->IsSpectatingOtherPlayer())
-                showCrosshair = !player->isUsingItem();
+                showCrosshair = player->GetThirdPersonView(false) == 0;
         }
         ShowCrosshair(showCrosshair);
         ShowHealth(false);
@@ -1131,7 +1156,7 @@ void UIScene_HUD::updateFrameTick()
         }
         else
         {
-            if (g_pApp->GetGameHostOption(eGameHostOption_MiniGame) == 0)
+            if (gApp.GetGameHostOption(eGameHostOption_MiniGame) == 0)
                 ShowExpBar(true);
             SetExpBarProgress(player->mExperienceProgress, player->getXpNeededForNextLevel());
             SetExpLevel(player->mExperienceLevel);
@@ -1177,7 +1202,7 @@ void UIScene_HUD::updateFrameTick()
     {
         if (gConsoleUIController.GetMenuDisplayed(pad) != 0 && hudOpacity < 0xf)
             hudOpacity = 0xf;
-        const unsigned int opacityTimer = g_pApp->GetOpacityTimer(pad);
+        const unsigned int opacityTimer = gApp.GetOpacityTimer(pad);
         if (opacityTimer == 0)
         {
             SetOpacity(static_cast<float>(hudOpacity) * 0.01f);
@@ -1198,10 +1223,10 @@ void UIScene_HUD::updateFrameTick()
         SetOpacity(static_cast<float>(hudOpacity) * 0.01f);
     }
 
-    if (g_pApp->GetGameStarted() == 0 ||
+    if (gApp.GetGameStarted() == 0 ||
         gConsoleUIController.GetMenuDisplayed(pad) != 0 ||
         gConsoleUIController.IsSceneInStack(pad, EUIScene_ConnectingProgress) != 0 ||
-        g_pApp->GetXuiAction(pad) == eXuiAction_AutoSave ||
+        gApp.GetXuiAction(pad) == eXuiAction_AutoSave ||
         GameSettings::GetGameSettings(pad, eGameSetting_DisplayHUD) == 0)
     {
         SetVisible(false);
@@ -1211,7 +1236,7 @@ void UIScene_HUD::updateFrameTick()
         SetVisible(true);
     }
 
-    if (g_pApp->GetGameHostOption(eGameHostOption_MiniGame) == 0)
+    if (gApp.GetGameHostOption(eGameHostOption_MiniGame) == 0)
     {
         m_comparisonScore = 0;
         m_personalBestTime = 0;
@@ -1225,8 +1250,7 @@ void UIScene_HUD::updateFrameTick()
     }
     else
     {
-        LevelGenerationOptions* levelOptions = g_pApp->getLevelGenerationOptions();
-        if (levelOptions == 0 || levelOptions->getUniqueId() == 0)
+        if (player->GetGameType() == GameType::LOBBY)
         {
             ClearGlideHUD(pad);
         }
@@ -1249,7 +1273,7 @@ void UIScene_HUD::updateFrameTick()
             SetRoundNumber(static_cast<unsigned int>(currentRound + 1), miniGame->GetRoundCount(), true);
 
             double speed = 0.0;
-            if (glidePlayer != 0 && glidePlayer->isAlive())
+            if (glidePlayer->isFallFlying())
             {
                 speed = std::sqrt(glidePlayer->mXd * glidePlayer->mXd +
                                   glidePlayer->mYd * glidePlayer->mYd +
@@ -1297,7 +1321,7 @@ void UIScene_HUD::updateFrameTick()
             unsigned int elapsedMs = 0;
             bool showTimer = true;
             StatsUID uid = glidePlayer->getSUID();
-            if (scoreboard != 0 && scoreboard->GetLifeSpan(uid, -1) != 0)
+            if (scoreboard != 0 && scoreboard->GetEndZoneEntered(uid, -1))
             {
                 elapsedMs = static_cast<unsigned int>(scoreboard->GetLifeSpan(uid, -1));
             }
@@ -1356,14 +1380,14 @@ void UIScene_HUD::updateFrameTick()
                 {
                     boost::shared_ptr<GhostPlayer> ghostPlayer = ghostController->getGhostPlayer(pad);
                     GhostController::GhostRecord* ghostRecord = ghostController->mLoaded[pad];
-                    const bool hasLifeSpan = scoreboard != 0 && scoreboard->GetLifeSpan(uid, -1) != 0;
+                    const bool endZoneEntered = scoreboard != 0 && scoreboard->GetEndZoneEntered(uid, -1);
                     if (ghostRecord != 0 &&
-                        (ghostPlayer != 0 || hasLifeSpan) &&
+                        (ghostPlayer != 0 || endZoneEntered) &&
                         (ghostController->mPlaybackActive[pad] ||
                          ghostController->HasFinished(ghostRecord)))
                     {
                         int comparisonDelta = 0;
-                        if (sortedPlayers.size() <= 1 || !hasLifeSpan)
+                        if (sortedPlayers.size() <= 1 || !endZoneEntered)
                         {
                             comparisonDelta = static_cast<int>(elapsedMs - ghostRecord->mElapsed);
                             m_comparisonScore = static_cast<unsigned int>(ghostRecord->mElapsed);
@@ -1421,9 +1445,9 @@ void UIScene_HUD::updateFrameTick()
             }
             else if (miniGame->ArePointsActive() && ghostController != 0)
             {
-                const int lifeSpan = scoreboard != 0 ? scoreboard->GetLifeSpan(uid, -1) : 0;
+                const bool endZoneEntered = scoreboard != 0 && scoreboard->GetEndZoneEntered(uid, -1);
                 unsigned int bestScore = m_comparisonScore;
-                if (lifeSpan == 0)
+                if (!endZoneEntered)
                 {
                     bestScore = ghostController->GetBestScore(pad);
                     m_comparisonScore = bestScore;
@@ -1474,7 +1498,7 @@ void UIScene_HUD::updateFrameTick()
                 ++positionSlot;
             }
 
-            if (g_pApp->getLevelGenerationOptions() == 0)
+            if (gApp.getLevelGenerationOptions() == 0)
             {
                 ClearGlideHUD(pad);
                 m_levelGenerationId = static_cast<unsigned int>(-1);
@@ -1494,11 +1518,11 @@ void UIScene_HUD::updateFrameTick()
                     }
                 }
                 m_checkpointsInitialised = true;
-                m_levelGenerationId = g_pApp->getLevelGenerationOptions()->getUniqueId();
+                m_levelGenerationId = gApp.getLevelGenerationOptions()->getUniqueId();
             }
             else
             {
-                const unsigned int uniqueId = g_pApp->getLevelGenerationOptions()->getUniqueId();
+                const unsigned int uniqueId = gApp.getLevelGenerationOptions()->getUniqueId();
                 if (uniqueId != m_levelGenerationId)
                 {
                     ClearGlideHUD(pad);
@@ -1527,7 +1551,7 @@ void UIScene_HUD::updateFrameTick()
             {
                 const double progress = clientGameMode->GetPlayerMapProgress(player->mXuid);
                 if (!clientGameMode->IsWaitingToStart() && !clientGameMode->IsRoundStarting() &&
-                    scoreboard != 0 && scoreboard->GetLifeSpan(uid, -1) == 0)
+                    scoreboard != 0 && !scoreboard->GetEndZoneEntered(uid, -1))
                 {
                     if (progress <= player->GetPercentageTraversed())
                     {
@@ -1535,7 +1559,7 @@ void UIScene_HUD::updateFrameTick()
                         SetWrongWay(L"");
                         m_wrongWayVisible = false;
                     }
-                    else if (player->isCreative())
+                    else if (player->isAlive())
                     {
                         ++m_wrongWayTicks;
                         if (m_wrongWayTicks < 0x3d)
@@ -1591,13 +1615,12 @@ void UIScene_HUD::updateFrameTick()
     if (level != 0)
         scoreboard = level->GetClientScoreboard();
     ClientMasterGameMode* clientGameMode = minecraft->GetClientMasterGameMode();
-    LevelGenerationOptions* levelOptions = g_pApp->getLevelGenerationOptions();
-    if (levelOptions == 0 || levelOptions->getUniqueId() == 0)
+    if (player->GetGameType() == GameType::LOBBY)
     {
         m_comparisonScore = 0;
         m_personalBestTime = 0;
         ShowAnimatedSplash(L"", false, -1);
-        m_resultSplashShown = false;
+        m_timedSplashLocked = false;
     }
     else if (clientGameMode->IsRoundStarting())
     {
@@ -1644,7 +1667,7 @@ void UIScene_HUD::updateFrameTick()
             {
                 if (scoreboard->mCurrentRound != static_cast<int>(miniGame->GetFinalRoundIndex()))
                 {
-                    if (scoreboard->GetLifeSpan(uid, -1) == 0)
+                    if (!scoreboard->GetEndZoneEntered(uid, -1))
                         ShowAnimatedSplash(L10N::GetString(IDS_DNF), true, 1);
                     else
                         showTimedSplash(formatwstr(L"%02d:%02d.%03d",
@@ -1666,7 +1689,7 @@ void UIScene_HUD::updateFrameTick()
             {
                 showTimedSplash(formatwstr(L"%d", scoreboard->GetPoints(uid, -1)), 0x3c, 2);
             }
-            else if (scoreboard->GetLifeSpan(uid, -1) == 0)
+            else if (!scoreboard->GetEndZoneEntered(uid, -1))
             {
                 ShowAnimatedSplash(L10N::GetString(IDS_DNF), true, 1);
             }
@@ -1682,8 +1705,9 @@ void UIScene_HUD::updateFrameTick()
     else
     {
         GhostController* ghostController = minecraft->GetGhostController();
-        if (Minecraft::InMiniGame(eMiniGameId_Glide, true) && scoreboard != 0 && !player->isSpectator() &&
-            scoreboard->GetLifeSpan(player->getSUID(), -1) != 0 &&
+        if (!m_resultSplashShown && clientGameMode->IsRoundPlaying() &&
+            Minecraft::InMiniGame(eMiniGameId_Glide, true) && !player->isSpectator() && scoreboard != 0 &&
+            scoreboard->GetEndZoneEntered(player->getSUID(), -1) &&
             (ghostController == 0 || !ghostController->mRecordingActive[pad]))
         {
             StatsUID uid = player->getSUID();
@@ -1696,7 +1720,7 @@ void UIScene_HUD::updateFrameTick()
                     showTimedSplash(formatwstr(L"%02d:%02d.%03d", lifeSpan / 60000, (lifeSpan / 1000) % 0x3c, lifeSpan % 1000),
                                     0x3c, 2);
                     m_resultSplashShown = true;
-                    m_displayFlag = true;
+                    m_timedSplashLocked = true;
                 }
                 else if (m_personalBestTime == 0)
                 {
@@ -1708,20 +1732,20 @@ void UIScene_HUD::updateFrameTick()
                     showTimedSplash(formatwstr(L"%02d:%02d.%03d", lifeSpan / 60000, (lifeSpan / 1000) % 0x3c, lifeSpan % 1000),
                                     0x3c, 2);
                     m_resultSplashShown = true;
-                    m_displayFlag = true;
+                    m_timedSplashLocked = true;
                 }
                 else
                 {
                     showTimedSplash(L10N::GetString(IDS_MG03_PERSONAL_BEST), 0x3c, 2);
                     m_resultSplashShown = true;
-                    m_displayFlag = true;
+                    m_timedSplashLocked = true;
                 }
             }
             else if (!scoreboard->IsPersonalBest(uid, -1))
             {
                 showTimedSplash(formatwstr(L"%d", scoreboard->GetPoints(uid, -1)), 0x3c, 2);
                 m_resultSplashShown = true;
-                m_displayFlag = true;
+                m_timedSplashLocked = true;
             }
             else if (m_personalBestTime == 0)
             {
@@ -1731,13 +1755,13 @@ void UIScene_HUD::updateFrameTick()
             {
                 showTimedSplash(formatwstr(L"%d", scoreboard->GetPoints(uid, -1)), 0x3c, 2);
                 m_resultSplashShown = true;
-                m_displayFlag = true;
+                m_timedSplashLocked = true;
             }
             else
             {
                 showTimedSplash(L10N::GetString(IDS_MG03_PERSONAL_BEST), 0x3c, 2);
                 m_resultSplashShown = true;
-                m_displayFlag = true;
+                m_timedSplashLocked = true;
             }
         }
         else
@@ -1745,7 +1769,10 @@ void UIScene_HUD::updateFrameTick()
             m_comparisonScore = 0;
             m_personalBestTime = 0;
             if (m_timedSplashTicks == 0)
+            {
                 ShowAnimatedSplash(L"", false, -1);
+                m_timedSplashLocked = false;
+            }
             else
             {
                 ShowAnimatedSplash(m_timedSplashText, true, m_animatedSplashIcon);
@@ -1836,16 +1863,16 @@ void UIScene_HUD::updateViewportTouchOffset()
     const float half = 0.5f;
     switch (m_layer->getViewport())
     {
-    case 1:
-    case 5:
+    case C4JRender::eViewportType_TopHalf:
+    case C4JRender::eViewportType_TopLeftQuarter:
         gConsoleUIController.updateViewportTouchOffset(0, -(int)(gConsoleUIController.m_screenHeight * half));
         break;
-    case 6:
+    case C4JRender::eViewportType_TopRightQuarter:
         gConsoleUIController.updateViewportTouchOffset((int)(gConsoleUIController.m_screenWidth * half),
                                                        -(int)(gConsoleUIController.m_screenHeight * half));
         break;
-    case 4:
-    case 8:
+    case C4JRender::eViewportType_RightHalf:
+    case C4JRender::eViewportType_BottomRightQuarter:
         gConsoleUIController.updateViewportTouchOffset((int)(gConsoleUIController.m_screenWidth * half), 0);
         break;
     default:

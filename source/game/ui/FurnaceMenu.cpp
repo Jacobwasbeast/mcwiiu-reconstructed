@@ -123,7 +123,7 @@ not_null_ptr<ItemInstance> FurnaceMenu::quickMoveStack(boost::shared_ptr<Player>
         itemstack = item->copy();
         if (index == 2)
         {
-            if (!moveItemStackTo(item, GetInvSlotStart(), 39, true, true, true))
+            if (moveItemStackTo(item, GetInvSlotStart(), 39, true, true, true) != 1)
             {
                 return ItemInstance::EMPTY;
             }
@@ -133,35 +133,35 @@ not_null_ptr<ItemInstance> FurnaceMenu::quickMoveStack(boost::shared_ptr<Player>
         }
         else if (index == 1 || index == 0)
         {
-            if (!moveItemStackTo(item, GetInvSlotStart(), 39, false, true, true))
+            if (moveItemStackTo(item, GetInvSlotStart(), 39, false, true, true) != 1)
             {
                 return ItemInstance::EMPTY;
             }
         }
         else if (!FurnaceRecipes::getInstance()->getResult(item)->isEmpty())
         {
-            if (!moveItemStackTo(item, 0, 1, false, true, true))
+            if (moveItemStackTo(item, 0, 1, false, true, true) != 1)
             {
                 return ItemInstance::EMPTY;
             }
         }
         else if (FurnaceBlockEntity::isFuel(item))
         {
-            if (!moveItemStackTo(item, 1, 2, false, true, true))
+            if (moveItemStackTo(item, 1, 2, false, true, true) != 1)
             {
                 return ItemInstance::EMPTY;
             }
         }
         else if (index >= GetInvSlotStart() && index < 30)
         {
-            if (!moveItemStackTo(item, 30, 39, false, true, true))
+            if (moveItemStackTo(item, 30, 39, false, true, true) != 1)
             {
                 return ItemInstance::EMPTY;
             }
         }
         else if (index >= 30 && index < 39)
         {
-            if (!moveItemStackTo(item, GetInvSlotStart(), 30, false, true, true))
+            if (moveItemStackTo(item, GetInvSlotStart(), 30, false, true, true) != 1)
             {
                 return ItemInstance::EMPTY;
             }

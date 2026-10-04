@@ -12,11 +12,22 @@
 #include "game/util/Math.hpp"
 
 FJ_LeaderboardList::FJ_LeaderboardList(fuiRenderNode* renderNode)
-    : FJ_FuiNode(renderNode), m_small(false), m_entrySpacing(4), m_visibleEntries(10),
-      m_maxCachedEntries(101), m_requestSize(15), m_leaderboard(), m_firstVisibleRank(0),
-      m_firstCachedRank(-1), m_lastCachedRank(-1), m_needsInit(true), m_dataLoading(true), m_entries(),
-      m_header(NULL), m_highlightEntry(0), m_rankTitle(), m_gamertagTitle(), m_touchEntry(0), m_touchY(0)
+    : FJ_FuiNode(renderNode), m_leaderboard(), m_entries(), m_rankTitle(), m_gamertagTitle()
 {
+    m_small = false;
+    m_entrySpacing = 4;
+    m_visibleEntries = 10;
+    m_maxCachedEntries = 101;
+    m_requestSize = 15;
+    m_firstVisibleRank = 0;
+    m_firstCachedRank = -1;
+    m_lastCachedRank = -1;
+    m_needsInit = true;
+    m_dataLoading = true;
+    m_header = NULL;
+    m_highlightEntry = 0;
+    m_touchEntry = 0;
+    m_touchY = 0;
 }
 
 FJ_LeaderboardList::~FJ_LeaderboardList()
@@ -52,17 +63,19 @@ void FJ_LeaderboardList::RequestData(bool forward)
 {
     if (!forward)
     {
-        m_firstCachedRank -= m_requestSize;
-        if (m_firstCachedRank < 0)
-            m_firstCachedRank = 0;
-        getRoot()->m_pCallbackScene->handleRequestMoreData(m_firstCachedRank, true);
+        int first = m_firstCachedRank - m_requestSize;
+        if (first < 0)
+            first = 0;
+        m_firstCachedRank = first;
+        getRoot()->m_pCallbackScene->handleRequestMoreData(m_firstCachedRank, !forward);
     }
     else
     {
-        m_lastCachedRank += m_requestSize;
-        if (m_lastCachedRank > m_totalEntries)
-            m_lastCachedRank = m_totalEntries;
-        getRoot()->m_pCallbackScene->handleRequestMoreData(m_lastCachedRank, false);
+        int last = m_lastCachedRank + m_requestSize;
+        if (m_totalEntries < last)
+            last = m_totalEntries;
+        m_lastCachedRank = last;
+        getRoot()->m_pCallbackScene->handleRequestMoreData(m_lastCachedRank, !forward);
     }
     if (m_lastCachedRank - m_firstCachedRank < m_maxCachedEntries)
         return;
@@ -106,8 +119,14 @@ void FJ_LeaderboardList::HandleScrollListArrows(bool added)
         m_upArrow->ChangeState(0);
         m_downArrow->ChangeState(3);
     }
-    m_upArrow->setVisible(m_firstVisibleRank > 0 && m_totalEntries > m_visibleEntries);
-    m_downArrow->setVisible(m_firstVisibleRank < m_totalEntries - m_visibleEntries);
+    if (m_firstVisibleRank > 0 && m_totalEntries > m_visibleEntries)
+        m_upArrow->setVisible(true);
+    else
+        m_upArrow->setVisible(false);
+    if (m_firstVisibleRank < m_totalEntries - m_visibleEntries)
+        m_downArrow->setVisible(true);
+    else
+        m_downArrow->setVisible(false);
 }
 
 void FJ_LeaderboardList::addNewItem(int index)
@@ -121,9 +140,12 @@ void FJ_LeaderboardList::addNewItem(int index)
             FJ_Factory::createObject("fourj.listClasses.FJ_LeaderboardEntrySmall", m_pRenderNode, true, NULL));
     entry->setWidth(getWidth());
     entry->setX(getX() + Math::round((getWidth() - entry->getWidth()) * 0.5f));
-    entry->setY((entry->getHeight() + m_entrySpacing) * index + (getY() + m_header->getHeight()) + m_entrySpacing);
-    entry->Init(m_numColumns, m_header->getFirstEntryPos(), m_header->getEntrySpacing(),
-                m_header->getIconHolderHalfWidth());
+    entry->setY(getY() + m_header->getHeight() + m_entrySpacing + (entry->getHeight() + m_entrySpacing) * index);
+    FJ_LeaderboardHeader* header = m_header;
+    int iconHolderHalfWidth = header->getIconHolderHalfWidth();
+    int firstEntryPos = header->getFirstEntryPos();
+    int entrySpacing = header->getEntrySpacing();
+    entry->Init(m_numColumns, firstEntryPos, entrySpacing, iconHolderHalfWidth);
     m_entries.push_back(entry);
     getParent()->addChild(entry);
     HandleScrollListArrows(true);
@@ -133,70 +155,73 @@ void FJ_LeaderboardList::UpdateVisibleLeaderboard()
 {
     if (m_needsInit)
     {
-        int count = m_visibleEntries < m_totalEntries ? m_visibleEntries : m_totalEntries;
+        int count = m_totalEntries < m_visibleEntries ? m_totalEntries : m_visibleEntries;
         addHeader();
         for (int i = 0; i < count; ++i)
             addNewItem(i);
     }
     for (unsigned int i = 0; i < m_entries.size(); ++i)
     {
-        int rank = m_firstVisibleRank + i;
-        if (m_leaderboard.find(rank) == m_leaderboard.end())
+        if (m_leaderboard.find(m_firstVisibleRank + i) == m_leaderboard.end())
             m_entries[i]->SetData(NULL);
         else
-            m_entries[i]->SetData(&m_leaderboard[rank]);
+            m_entries[i]->SetData(&m_leaderboard[m_firstVisibleRank + i]);
     }
 }
 
 void FJ_LeaderboardList::NavigateLeaderboard(bool up, bool page)
 {
-    unsigned int count = m_entries.size();
-    if (count == 0)
+    if (m_entries.size() == 0)
         return;
 
-    bool rankChanged;
+    bool rankChanged = true;
     if (!up)
     {
         unsigned int highlight;
         if (!page)
             highlight = m_highlightEntry + 1;
-        else if (static_cast<unsigned int>(m_highlightEntry) < count - 1)
-            highlight = count - 1;
         else
-            highlight = count;
-
-        if (highlight < count)
         {
-            m_highlightEntry = highlight;
-            getRoot()->m_pCallbackScene->handleSelectionChanged(m_firstVisibleRank + m_highlightEntry);
-            goto focus;
+            highlight = m_entries.size();
+            if (static_cast<unsigned int>(m_highlightEntry) < m_entries.size() - 1)
+                highlight = m_entries.size() - 1;
         }
 
-        int lastFirstRank = m_totalEntries - m_visibleEntries;
-        rankChanged = m_firstVisibleRank != lastFirstRank;
-        m_highlightEntry = count - 1;
-        if (m_visibleEntries < m_totalEntries)
+        if (highlight < m_entries.size())
         {
-            int firstRank;
-            if (!page)
-                firstRank = m_firstVisibleRank + 1;
-            else if (m_firstVisibleRank + m_visibleEntries + m_visibleEntries > m_totalEntries)
-                firstRank = lastFirstRank;
-            else
-                firstRank = m_firstVisibleRank + m_visibleEntries;
+            m_highlightEntry = highlight;
+        }
+        else
+        {
+            int lastFirstRank = m_totalEntries - m_visibleEntries;
+            if (m_firstVisibleRank == lastFirstRank)
+                rankChanged = false;
+            m_highlightEntry = m_entries.size() - 1;
+            if (m_visibleEntries < m_totalEntries)
+            {
+                int firstRank;
+                if (!page)
+                    firstRank = m_firstVisibleRank + 1;
+                else
+                {
+                    firstRank = m_firstVisibleRank + m_visibleEntries;
+                    if (m_totalEntries < m_firstVisibleRank + m_visibleEntries + m_visibleEntries)
+                        firstRank = lastFirstRank;
+                }
 
-            if (firstRank + m_visibleEntries > m_totalEntries)
-            {
-                m_firstVisibleRank = lastFirstRank;
-            }
-            else
-            {
-                m_firstVisibleRank = firstRank;
-                if (m_lastCachedRank < static_cast<int>(firstRank + (count - 1)))
-                    RequestData(true);
-                UpdateVisibleLeaderboard();
-                if (m_downArrow != NULL)
-                    m_downArrow->ChangeState(4);
+                if (firstRank + m_visibleEntries > m_totalEntries)
+                {
+                    m_firstVisibleRank = lastFirstRank;
+                }
+                else
+                {
+                    m_firstVisibleRank = firstRank;
+                    if (m_lastCachedRank < static_cast<int>(firstRank + (m_entries.size() - 1)))
+                        RequestData(true);
+                    UpdateVisibleLeaderboard();
+                    if (m_downArrow != NULL)
+                        m_downArrow->ChangeState(4);
+                }
             }
         }
     }
@@ -206,43 +231,48 @@ void FJ_LeaderboardList::NavigateLeaderboard(bool up, bool page)
         if (!page)
             highlight = m_highlightEntry - 1;
         else
-            highlight = m_highlightEntry > 0 ? 0 : -1;
+        {
+            highlight = -1;
+            if (m_highlightEntry > 0)
+                highlight = 0;
+        }
 
         if (highlight >= 0)
         {
             m_highlightEntry = highlight;
-            getRoot()->m_pCallbackScene->handleSelectionChanged(m_firstVisibleRank + m_highlightEntry);
-            goto focus;
         }
-
-        rankChanged = m_firstVisibleRank != 0;
-        m_highlightEntry = 0;
-        if (m_visibleEntries < m_totalEntries)
+        else
         {
-            int firstRank;
-            if (!page)
+            if (m_firstVisibleRank == 0)
+                rankChanged = false;
+            m_highlightEntry = 0;
+            if (m_visibleEntries < m_totalEntries)
             {
-                firstRank = m_firstVisibleRank - 1;
-            }
-            else
-            {
-                firstRank = m_firstVisibleRank - m_visibleEntries;
-                if (firstRank < 0)
-                    firstRank = 0;
-            }
+                int firstRank;
+                if (!page)
+                {
+                    firstRank = m_firstVisibleRank - 1;
+                }
+                else
+                {
+                    firstRank = m_firstVisibleRank - m_visibleEntries;
+                    if (firstRank < 0)
+                        firstRank = 0;
+                }
 
-            if (firstRank < 0)
-            {
-                m_firstVisibleRank = 0;
-            }
-            else
-            {
-                m_firstVisibleRank = firstRank;
-                if (firstRank < m_firstCachedRank)
-                    RequestData(false);
-                UpdateVisibleLeaderboard();
-                if (m_upArrow != NULL)
-                    m_upArrow->ChangeState(1);
+                if (firstRank < 0)
+                {
+                    m_firstVisibleRank = 0;
+                }
+                else
+                {
+                    m_firstVisibleRank = firstRank;
+                    if (firstRank < m_firstCachedRank)
+                        RequestData(false);
+                    UpdateVisibleLeaderboard();
+                    if (m_upArrow != NULL)
+                        m_upArrow->ChangeState(1);
+                }
             }
         }
     }
@@ -250,7 +280,6 @@ void FJ_LeaderboardList::NavigateLeaderboard(bool up, bool page)
     if (rankChanged)
         getRoot()->m_pCallbackScene->handleSelectionChanged(m_firstVisibleRank + m_highlightEntry);
 
-focus:
     if (getStage()->getFocus() != m_entries[m_highlightEntry])
     {
         getStage()->setFocus(m_entries[m_highlightEntry]);
@@ -273,7 +302,8 @@ void FJ_LeaderboardList::ASConstructor()
 {
     m_upArrow = static_cast<FJ_ScrollArrow*>(FJ_Factory::createObject("fourj.FJ_ScrollArrow", m_pRenderNode, true, NULL));
     m_downArrow = static_cast<FJ_ScrollArrow*>(FJ_Factory::createObject("fourj.FJ_ScrollArrow", m_pRenderNode, true, NULL));
-    getChildByName(std::string("Background"))->asMovieClip()->setVisible(false);
+    FJ_FuiNode* background = getChildByName(std::string("Background"))->asMovieClip();
+    background->setVisible(false);
 }
 
 void FJ_LeaderboardList::SetupTitles(std::wstring rankTitle, std::wstring gamertagTitle)
@@ -361,30 +391,7 @@ void FJ_LeaderboardList::SetTouchFocus(int x, int y, bool dragging)
     if (m_entries.empty() || static_cast<unsigned int>(m_totalEntries) <= m_entries.size())
         return;
 
-    if (m_touchY < y)
-    {
-        int rows = (y - m_touchY) / (m_entries[0]->getHeight() + m_entrySpacing);
-        if (rows >= 1)
-        {
-            int previousRank = m_firstVisibleRank;
-            m_firstVisibleRank = previousRank - rows < 0 ? 0 : previousRank - rows;
-            if (previousRank != m_firstVisibleRank)
-            {
-                if (m_firstVisibleRank < m_firstCachedRank)
-                    RequestData(false);
-                UpdateVisibleLeaderboard();
-                if (m_upArrow != NULL)
-                    m_upArrow->ChangeState(1);
-                unsigned int highlight = m_highlightEntry + rows;
-                if (highlight >= m_entries.size())
-                    highlight = m_entries.size() - 1;
-                m_highlightEntry = highlight;
-                getStage()->setFocus(m_entries[highlight]);
-            }
-            m_touchY = y;
-        }
-    }
-    else if (y < m_touchY)
+    if (y < m_touchY)
     {
         int rows = (m_touchY - y) / (m_entries[0]->getHeight() + m_entrySpacing);
         if (rows > 0)
@@ -406,6 +413,30 @@ void FJ_LeaderboardList::SetTouchFocus(int x, int y, bool dragging)
                     highlight = 0;
                 m_highlightEntry = highlight;
                 getStage()->setFocus(m_entries[highlight]);
+            }
+            m_touchY = y;
+        }
+    }
+    else if (m_touchY < y)
+    {
+        int rows = (y - m_touchY) / (m_entries[0]->getHeight() + m_entrySpacing);
+        if (rows >= 1)
+        {
+            int previousRank = m_firstVisibleRank;
+            m_firstVisibleRank = previousRank - rows < 0 ? 0 : previousRank - rows;
+            if (previousRank != m_firstVisibleRank)
+            {
+                if (m_firstVisibleRank < m_firstCachedRank)
+                    RequestData(false);
+                UpdateVisibleLeaderboard();
+                if (m_upArrow != NULL)
+                    m_upArrow->ChangeState(1);
+                unsigned int highlight = m_highlightEntry + rows;
+                if (highlight < m_entries.size())
+                    m_highlightEntry = highlight;
+                else
+                    m_highlightEntry = m_entries.size() - 1;
+                getStage()->setFocus(m_entries[m_highlightEntry]);
             }
             m_touchY = y;
         }

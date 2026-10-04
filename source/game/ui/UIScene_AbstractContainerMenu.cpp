@@ -65,25 +65,25 @@ void UIScene_AbstractContainerMenu::PlatformInitialize(bool navigateBack, int pa
         m_hotbarList.addSlots(static_cast<unsigned int>(startIndex + 27), 9);
     }
 
-    double panelWidth = m_backgroundPanel.getWidth();
-    double panelHeight = m_backgroundPanel.getHeight();
-    double panelX = m_backgroundPanel.getXPos();
-    double panelY = m_backgroundPanel.getYPos();
+    float panelWidth = m_backgroundPanel.getWidth();
+    float panelHeight = m_backgroundPanel.getHeight();
+    float panelX = m_backgroundPanel.getXPos();
+    float panelY = m_backgroundPanel.getYPos();
 
     m_pointerImageOffset.x = 0.0f;
     m_pointerImageOffset.y = 0.0f;
-    m_panelMinX = static_cast<float>(panelX);
-    m_panelMaxX = static_cast<float>(panelX + panelWidth);
-    m_panelMinY = static_cast<float>(panelY);
-    m_panelMaxY = static_cast<float>(panelY + panelHeight);
+    m_panelMinX = panelX;
+    m_panelMaxX = panelX + panelWidth;
+    m_panelMinY = panelY;
+    m_panelMaxY = panelY + panelHeight;
 
     float pointerMinY;
-    if (gApp.GetLocalPlayerCount() < 2)
-        pointerMinY = static_cast<float>(panelY - 50.0f);
-    else
+    if (gApp.GetLocalPlayerCount() > 1)
         pointerMinY = floorf(25.0f);
+    else
+        pointerMinY = panelY - 50.0f;
     m_pointerMinY = pointerMinY;
-    m_pointerMinX = static_cast<float>(panelX - 50.0f);
+    m_pointerMinX = panelX - 50.0f;
     m_pointerMaxX = m_panelMaxX + 50.0f;
     m_pointerMaxY = m_panelMaxY + 25.0f;
 
@@ -92,11 +92,9 @@ void UIScene_AbstractContainerMenu::PlatformInitialize(bool navigateBack, int pa
     _UIVec2D sectionPos;
     GetItemScreenData(m_currentSection, 0, &itemPos, &itemSize);
     GetPositionOfSection(m_currentSection, &sectionPos);
-    itemSize.x *= 0.5f;
-    itemSize.y *= 0.5f;
     m_movieWidth = m_stageWidth;
-    m_pointerPos.x = (itemSize.x + sectionPos.x + itemPos.x) - m_pointerImageOffset.x;
-    m_pointerPos.y = (itemSize.y + sectionPos.y + itemPos.y) - m_pointerImageOffset.y;
+    m_pointerPos.x = (itemSize.x * 0.5f + (sectionPos.x + itemPos.x)) - m_pointerImageOffset.x;
+    m_pointerPos.y = (itemSize.y * 0.5f + (sectionPos.y + itemPos.y)) - m_pointerImageOffset.y;
     m_movieHeight = m_stageHeight;
 
     int width;
@@ -153,9 +151,9 @@ not_null_ptr<ItemInstance> UIScene_AbstractContainerMenu::getSlotItem(
     IUIScene_AbstractContainerMenu::ESceneSection section, int slotIndex)
 {
     Slot* slot = m_menu->getSlot(getSectionStartOffset(section) + slotIndex);
-    if (slot == NULL)
-        return ItemInstance::EMPTY;
-    return slot->getItem();
+    if (slot != NULL)
+        return slot->getItem();
+    return ItemInstance::EMPTY;
 }
 
 Slot* UIScene_AbstractContainerMenu::getSlot(IUIScene_AbstractContainerMenu::ESceneSection section, int slotIndex)
@@ -201,9 +199,13 @@ void UIScene_AbstractContainerMenu::handleDestroy()
     Minecraft* minecraft = Minecraft::GetInstance();
     if (minecraft->mGameModes[m_playerId] != NULL)
     {
-        Tutorial* tutorial = minecraft->mGameModes[m_playerId]->getTutorial();
-        if (tutorial != NULL)
-            tutorial->changeTutorialState(m_previousTutorialState, NULL);
+        Minecraft* current = Minecraft::GetInstance();
+        if (current->mGameModes[m_playerId] != NULL)
+        {
+            Tutorial* tutorial = current->mGameModes[m_playerId]->getTutorial();
+            if (tutorial != NULL)
+                tutorial->changeTutorialState(m_previousTutorialState, NULL);
+        }
     }
 
     const boost::shared_ptr<MultiplayerLocalPlayer>& player = minecraft->mLocalPlayers[m_playerId];
@@ -265,6 +267,7 @@ void UIScene_AbstractContainerMenu::customDraw(const char* name, fuiRect* rect)
         return;
 
     not_null_ptr<ItemInstance> item = ItemInstance::EMPTY;
+    int slotId = -1;
     if (std::strcmp(name, "pointerIcon") == 0)
     {
         m_slotDrawPending = false;
@@ -275,28 +278,36 @@ void UIScene_AbstractContainerMenu::customDraw(const char* name, fuiRect* rect)
     }
     else
     {
-        int slotId = -1;
         std::sscanf(name, "slot_%d", &slotId);
-        if (slotId == -1)
-            return;
-
-        int slotDrawCount = static_cast<int>(GetBaseSlotCount());
-        unsigned int slotCount = static_cast<unsigned int>(m_menu->m_slots.size());
-        for (unsigned int slot = 0; slot < slotCount; ++slot)
+        if (slotId != -1)
         {
-            if (m_menu->getSlot(static_cast<int>(slot))->hasItem())
-                ++slotDrawCount;
-        }
+            int slotDrawCount = static_cast<int>(GetBaseSlotCount());
+            unsigned int slotCount = static_cast<unsigned int>(m_menu->m_slots.size());
+            for (unsigned int slot = 0; slot < slotCount; ++slot)
+            {
+                if (m_menu->getSlot(static_cast<int>(slot))->hasItem())
+                    ++slotDrawCount;
+            }
 
-        Slot* slot = m_menu->getSlot(slotId);
-        item = m_menu->GetQuickCraftItem(m_playerId, slot->mIndex);
-        if (item->isEmpty())
-            item = slot->getItem();
+            Slot* slot = m_menu->getSlot(slotId);
+            item = m_menu->GetQuickCraftItem(m_playerId, slot->mIndex);
+            if (!item->isEmpty())
+            {
+                not_null_ptr<ItemInstance> slotItem = slot->getItem();
+                not_null_ptr<ItemInstance> carried = minecraft->mLocalPlayers[m_playerId]->mInventory->getCarried();
+                m_slotDrawPending = IsSameItemAs(slotItem, carried);
+            }
+            else
+            {
+                m_slotDrawPending = true;
+                item = slot->getItem();
+            }
+        }
     }
 
     if (!item->isEmpty())
     {
-        float alpha = m_menu->isValidIngredient(item, -1) ? 1.0f : 0.5f;
+        float alpha = m_menu->isValidIngredient(item, slotId) ? 1.0f : 0.5f;
         bool foil = item->getItem()->isFoil(item);
         customDrawSlotControlFui(rect, m_playerId, item, alpha, foil, true, false);
     }

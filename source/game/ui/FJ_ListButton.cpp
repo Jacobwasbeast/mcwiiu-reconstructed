@@ -3,6 +3,7 @@
 FJ_ListButton::FJ_ListButton(fuiRenderNode* renderNode)
     : FJ_Button(renderNode), m_listButtonFlag(false), m_labelAlignment(1)
 {
+    m_textOnly = true;
 }
 
 void FJ_ListButton::Init(const std::wstring& name, int id)
@@ -17,5 +18,5 @@ void FJ_ListButton::Init(const std::wstring& name, int id)
 
 void FJ_ListButton::UseEllipsis(bool useEllipsis)
 {
-    m_manualWrap = useEllipsis;
+    m_textOnly = useEllipsis;
 }

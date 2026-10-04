@@ -1,6 +1,7 @@
 #include "game/ui/UIScene_FurnaceMenu.hpp"
 #include "game/core/StringIds.hpp"
 
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/L10N.hpp"
 #include "game/core/Minecraft.hpp"
@@ -14,7 +15,7 @@
 #include "game/world/generation/MultiPlayerGameMode.hpp"
 #include "game/ui/UILayer.hpp"
 
-extern CMinecraftApp* g_pApp;
+extern CConsoleMinecraftApp gApp;
 
 struct FurnaceMenuData
 {
@@ -33,11 +34,11 @@ UIScene_FurnaceMenu::UIScene_FurnaceMenu(int type, void* data, UILayer* layer)
     initialiseMovie();
 
     m_container = input->container;
-    const std::wstring name = m_container->getName();
-    if (name.empty())
+    m_furnaceLabel.init(UIString(m_container->getName()));
+    if (m_container->getName().empty())
         m_furnaceLabel.init(UIString(L10N::GetString(IDS_TILE_FURNACE)));
     else
-        m_furnaceLabel.init(UIString(name));
+        m_furnaceLabel.init(UIString(m_container->getName()));
 
     m_ingredientLabel.init(UIString(L10N::GetString(IDS_INGREDIENT)));
     m_fuelLabel.init(UIString(L10N::GetString(IDS_FUEL)));
@@ -61,7 +62,7 @@ UIScene_FurnaceMenu::UIScene_FurnaceMenu(int type, void* data, UILayer* layer)
     m_fuelSlot.addSlots(1, 1);
     m_ingredientSlot.addSlots(0, 1);
     m_resultSlot.addSlots(2, 1);
-    g_pApp->SetRichPresenceContext(m_playerId, 6);
+    gApp.SetRichPresenceContext(m_playerId, 6);
     delete input;
 }
 
@@ -72,20 +73,43 @@ UIScene_FurnaceMenu::~UIScene_FurnaceMenu()
 unsigned int UIScene_FurnaceMenu::getSectionColumns(
     IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    static const unsigned char columns[] = { 0, 0, 0, 0, 1, 1, 1, 1, 1 };
-    if (section < IUIScene_AbstractContainerMenu::ESceneSection_FurnaceHotbar || section > IUIScene_AbstractContainerMenu::ESceneSection_FurnaceResult)
-        return 0;
-    return columns[section];
+    unsigned int columns = 0;
+    switch (section)
+    {
+    case IUIScene_AbstractContainerMenu::ESceneSection_FurnaceHotbar:
+    case IUIScene_AbstractContainerMenu::ESceneSection_FurnaceInventory:
+        columns = 9;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_FurnaceIngredient:
+    case IUIScene_AbstractContainerMenu::ESceneSection_FurnaceFuel:
+    case IUIScene_AbstractContainerMenu::ESceneSection_FurnaceResult:
+        columns = 1;
+        break;
+    default:
+        break;
+    }
+    return columns;
 }
 
 unsigned int UIScene_FurnaceMenu::getSectionRows(
     IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    if (section < IUIScene_AbstractContainerMenu::ESceneSection_FurnaceHotbar || section > IUIScene_AbstractContainerMenu::ESceneSection_FurnaceResult)
-        return 0;
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_FurnaceInventory)
-        return GetInventoryRows();
-    return 1;
+    unsigned int rows = 0;
+    switch (section)
+    {
+    case IUIScene_AbstractContainerMenu::ESceneSection_FurnaceInventory:
+        rows = GetInventoryRows();
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_FurnaceHotbar:
+    case IUIScene_AbstractContainerMenu::ESceneSection_FurnaceIngredient:
+    case IUIScene_AbstractContainerMenu::ESceneSection_FurnaceFuel:
+    case IUIScene_AbstractContainerMenu::ESceneSection_FurnaceResult:
+        rows = 1;
+        break;
+    default:
+        break;
+    }
+    return rows;
 }
 
 unsigned int UIScene_FurnaceMenu::GetSectionAndSlotInDirection(
@@ -148,18 +172,30 @@ unsigned int UIScene_FurnaceMenu::GetSectionAndSlotInDirection(
 void UIScene_FurnaceMenu::GetPositionOfSection(
     IUIScene_AbstractContainerMenu::ESceneSection section, _UIVec2D* position)
 {
-    if (position == 0)
-        return;
-    UIControl* control = static_cast<UIControl*>(0);
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_FurnaceHotbar) control = &m_hotbarList;
-    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_FurnaceInventory) control = &m_inventoryList;
-    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_FurnaceIngredient) control = &m_ingredientSlot;
-    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_FurnaceFuel) control = &m_fuelSlot;
-    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_FurnaceResult) control = &m_resultSlot;
-    if (control != 0)
+    switch (section)
     {
-        position->x = static_cast<float>(control->getXPos());
-        position->y = static_cast<float>(control->getYPos());
+    case IUIScene_AbstractContainerMenu::ESceneSection_FurnaceResult:
+        position->x = static_cast<float>(m_resultSlot.getXPos());
+        position->y = static_cast<float>(m_resultSlot.getYPos());
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_FurnaceFuel:
+        position->x = static_cast<float>(m_fuelSlot.getXPos());
+        position->y = static_cast<float>(m_fuelSlot.getYPos());
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_FurnaceIngredient:
+        position->x = static_cast<float>(m_ingredientSlot.getXPos());
+        position->y = static_cast<float>(m_ingredientSlot.getYPos());
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_FurnaceInventory:
+        position->x = static_cast<float>(m_inventoryList.getXPos());
+        position->y = static_cast<float>(m_inventoryList.getYPos());
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_FurnaceHotbar:
+        position->x = static_cast<float>(m_hotbarList.getXPos());
+        position->y = static_cast<float>(m_hotbarList.getYPos());
+        break;
+    default:
+        break;
     }
 }
 
@@ -167,76 +203,118 @@ void UIScene_FurnaceMenu::GetItemScreenData(
     IUIScene_AbstractContainerMenu::ESceneSection section, int slot,
     _UIVec2D* position, _UIVec2D* size)
 {
-    UIControl* control = static_cast<UIControl*>(0);
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_FurnaceHotbar) control = &m_hotbarList;
-    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_FurnaceInventory) control = &m_inventoryList;
-    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_FurnaceIngredient) control = &m_ingredientSlot;
-    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_FurnaceFuel) control = &m_fuelSlot;
-    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_FurnaceResult) control = &m_resultSlot;
-    const unsigned int columns = getSectionColumns(section);
-    const unsigned int rows = getSectionRows(section);
-    if (control != 0 && position != 0 && size != 0 && columns != 0 && rows != 0)
+    _UIVec2D controlSize;
+    switch (section)
     {
-        size->x = static_cast<float>(control->getWidth() / static_cast<float>(columns));
-        size->y = static_cast<float>(control->getHeight() / static_cast<float>(rows));
-        position->x = static_cast<float>(slot % static_cast<int>(columns)) * size->x;
-        position->y = static_cast<float>(slot / static_cast<int>(columns)) * size->y;
+    case IUIScene_AbstractContainerMenu::ESceneSection_FurnaceResult:
+        controlSize.x = m_resultSlot.getWidth();
+        controlSize.y = m_resultSlot.getHeight();
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_FurnaceFuel:
+        controlSize.x = m_fuelSlot.getWidth();
+        controlSize.y = m_fuelSlot.getHeight();
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_FurnaceIngredient:
+        controlSize.x = m_ingredientSlot.getWidth();
+        controlSize.y = m_ingredientSlot.getHeight();
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_FurnaceInventory:
+        controlSize.x = m_inventoryList.getWidth();
+        controlSize.y = m_inventoryList.getHeight();
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_FurnaceHotbar:
+        controlSize.x = m_hotbarList.getWidth();
+        controlSize.y = m_hotbarList.getHeight();
+        break;
+    default:
+        break;
     }
+    const int rows = getSectionRows(section);
+    const int columns = getSectionColumns(section);
+    size->x = controlSize.x / static_cast<float>(columns);
+    size->y = controlSize.y / static_cast<float>(rows);
+    position->x = static_cast<float>(slot % columns) * size->x;
+    position->y = static_cast<float>(slot / columns) * size->y;
 }
 
 int UIScene_FurnaceMenu::getSectionStartOffset(
     IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_FurnaceHotbar) return 30;
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_FurnaceInventory) return 3;
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_FurnaceIngredient) return 0;
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_FurnaceFuel) return 1;
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_FurnaceResult) return 2;
-    return 0;
+    int offset = 0;
+    switch (section)
+    {
+    case IUIScene_AbstractContainerMenu::ESceneSection_FurnaceHotbar: offset = 30; break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_FurnaceInventory: offset = 3; break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_FurnaceIngredient: offset = 0; break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_FurnaceFuel: offset = 1; break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_FurnaceResult: offset = 2; break;
+    default: break;
+    }
+    return offset;
 }
 
 void UIScene_FurnaceMenu::setSectionSelectedSlot(
     IUIScene_AbstractContainerMenu::ESceneSection section, int slot, int direction, bool wrap)
 {
-    if (!wrap)
-        return;
-    UIControl_SlotList* list = static_cast<UIControl_SlotList*>(0);
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_FurnaceHotbar) list = &m_hotbarList;
-    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_FurnaceInventory) list = &m_inventoryList;
-    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_FurnaceIngredient) list = &m_ingredientSlot;
-    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_FurnaceFuel) list = &m_fuelSlot;
-    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_FurnaceResult) list = &m_resultSlot;
-    if (list != 0)
-        list->setHighlightSlot(slot + direction * static_cast<int>(getSectionColumns(section)));
+    const int highlightSlot = direction * getSectionColumns(section) + slot;
+    UIControl_SlotList* list = 0;
+    switch (section)
+    {
+    case IUIScene_AbstractContainerMenu::ESceneSection_FurnaceResult: list = &m_resultSlot; break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_FurnaceFuel: list = &m_fuelSlot; break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_FurnaceIngredient: list = &m_ingredientSlot; break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_FurnaceInventory: list = &m_inventoryList; break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_FurnaceHotbar: list = &m_hotbarList; break;
+    default: break;
+    }
+    if (wrap)
+        list->setHighlightSlot(highlightSlot);
 }
 
 unsigned int UIScene_FurnaceMenu::mapElementsAndNames()
 {
     UIScene_AbstractContainerMenu::mapElementsAndNames();
+    m_movie->getRootNode();
     fuiRenderNode* panel = m_mainPanel.getFuiRenderNode();
-    m_ingredientSlot.setupControl(this, panel, std::string("Ingredient"));
-    m_controls.push_back(&m_ingredientSlot);
-    m_fuelSlot.setupControl(this, panel, std::string("Fuel"));
-    m_controls.push_back(&m_fuelSlot);
-    m_resultSlot.setupControl(this, panel, std::string("Result"));
-    m_controls.push_back(&m_resultSlot);
-    m_furnaceLabel.setupControl(this, panel, std::string("Furnace_text"));
-    m_controls.push_back(&m_furnaceLabel);
-    m_ingredientLabel.setupControl(this, panel, std::string("Ingredient_Label"));
-    m_controls.push_back(&m_ingredientLabel);
-    m_fuelLabel.setupControl(this, panel, std::string("Fuel_Label"));
-    m_controls.push_back(&m_fuelLabel);
-    m_furnaceFire.setupControl(this, panel, std::string("FurnaceFire"));
-    m_controls.push_back(&m_furnaceFire);
-    m_furnaceArrow.setupControl(this, panel, std::string("FurnaceArrow"));
-    m_controls.push_back(&m_furnaceArrow);
+    {
+        m_ingredientSlot.setupControl(this, panel, std::string("Ingredient"));
+        m_controls.push_back(&m_ingredientSlot);
+    }
+    {
+        m_fuelSlot.setupControl(this, panel, std::string("Fuel"));
+        m_controls.push_back(&m_fuelSlot);
+    }
+    {
+        m_resultSlot.setupControl(this, panel, std::string("Result"));
+        m_controls.push_back(&m_resultSlot);
+    }
+    {
+        m_furnaceLabel.setupControl(this, panel, std::string("Furnace_text"));
+        m_controls.push_back(&m_furnaceLabel);
+    }
+    {
+        m_ingredientLabel.setupControl(this, panel, std::string("Ingredient_Label"));
+        m_controls.push_back(&m_ingredientLabel);
+    }
+    {
+        m_fuelLabel.setupControl(this, panel, std::string("Fuel_Label"));
+        m_controls.push_back(&m_fuelLabel);
+    }
+    {
+        m_furnaceFire.setupControl(this, panel, std::string("FurnaceFire"));
+        m_controls.push_back(&m_furnaceFire);
+    }
+    {
+        m_furnaceArrow.setupControl(this, panel, std::string("FurnaceArrow"));
+        m_controls.push_back(&m_furnaceArrow);
+    }
     return 1;
 }
 
 std::wstring UIScene_FurnaceMenu::getMoviePath()
 {
-    return g_pApp->GetLocalPlayerCount() < 2 ? std::wstring(L"FurnaceMenu") :
-        std::wstring(L"FurnaceMenuSplit");
+    return gApp.GetLocalPlayerCount() > 1 ? std::wstring(L"FurnaceMenuSplit") :
+        std::wstring(L"FurnaceMenu");
 }
 
 void UIScene_FurnaceMenu::handleReload()
@@ -251,14 +329,12 @@ void UIScene_FurnaceMenu::handleReload()
 
 void UIScene_FurnaceMenu::tick()
 {
-    int value = m_container->getContainerData(1);
-    if (m_furnaceFire.getMax() != static_cast<unsigned int>(value))
+    if (m_furnaceFire.getMax() != m_container->getContainerData(1))
     {
         m_furnaceFire.setMax(m_container->getContainerData(1));
         m_furnaceFire.ReInit();
     }
-    value = m_container->getContainerData(3);
-    if (m_furnaceArrow.getMax() != static_cast<unsigned int>(value))
+    if (m_furnaceArrow.getMax() != m_container->getContainerData(3))
     {
         m_furnaceArrow.setMax(m_container->getContainerData(3));
         m_furnaceArrow.ReInit();
@@ -271,12 +347,17 @@ void UIScene_FurnaceMenu::tick()
 UIControl* UIScene_FurnaceMenu::getSection(
     IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_FurnaceHotbar) return &m_hotbarList;
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_FurnaceInventory) return &m_inventoryList;
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_FurnaceIngredient) return &m_ingredientSlot;
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_FurnaceFuel) return &m_fuelSlot;
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_FurnaceResult) return &m_resultSlot;
-    return 0;
+    UIControl* control = 0;
+    switch (section)
+    {
+    case IUIScene_AbstractContainerMenu::ESceneSection_FurnaceResult: control = &m_resultSlot; break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_FurnaceFuel: control = &m_fuelSlot; break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_FurnaceIngredient: control = &m_ingredientSlot; break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_FurnaceInventory: control = &m_inventoryList; break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_FurnaceHotbar: control = &m_hotbarList; break;
+    default: break;
+    }
+    return control;
 }
 
 void UIScene_FurnaceMenu::handleSectionClick(

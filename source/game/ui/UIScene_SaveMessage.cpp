@@ -20,7 +20,6 @@
 UIScene_SaveMessage::UIScene_SaveMessage(int playerId, void* sceneData, UILayer* layer)
     : UIScene(playerId, layer)
 {
-    m_saveComplete = false;
     initialiseMovie();
     layer->addComponent(playerId, EUIScene_Panorama, 0);
     layer->addComponent(playerId, EUIScene_Logo, 0);
@@ -37,15 +36,7 @@ UIScene_SaveMessage::UIScene_SaveMessage(int playerId, void* sceneData, UILayer*
         m_descriptionLabel.init(UIString(L10N::GetString(0x89199462)));
     }
 
-    fuiRenderNode* root = m_movie->getRootNode();
-    if (root != 0)
-    {
-        FJ_Document* document = root->getFuiNode()->asFJ_Document();
-        if (document != 0)
-        {
-            static_cast<FJ_SaveMessage*>(document)->AutoResize();
-        }
-    }
+    static_cast<FJ_SaveMessage*>(m_movie->getRootNode()->getFuiNode())->AutoResize();
 
     for (int pad = 0; pad < 4; ++pad)
     {
@@ -62,11 +53,8 @@ UIScene_SaveMessage::UIScene_SaveMessage(int playerId, void* sceneData, UILayer*
 
 UIScene_SaveMessage::~UIScene_SaveMessage()
 {
-    if (m_layer != 0)
-    {
-        m_layer->removeComponent(EUIScene_Panorama);
-        m_layer->removeComponent(EUIScene_Logo);
-    }
+    m_layer->removeComponent(EUIScene_Panorama);
+    m_layer->removeComponent(EUIScene_Logo);
 }
 
 unsigned int UIScene_SaveMessage::mapElementsAndNames()
@@ -115,7 +103,7 @@ void UIScene_SaveMessage::handlePress(int controlId, int)
     {
         gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
         m_saveComplete = true;
-        bool ignoreInvite = gApp.getIgnoreMainMenuInputDuringInvite() != 0;
+        bool ignoreInvite = gApp.getIgnoreMainMenuInputDuringInvite();
         gConsoleUIController.NavigateToHomeMenu(true);
         gApp.setIgnoreMainMenuInputDuringInvite(ignoreInvite);
     }

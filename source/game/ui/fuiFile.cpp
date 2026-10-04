@@ -47,14 +47,15 @@ fuiFile::~fuiFile()
 {
     if (stage != NULL)
         delete stage;
+    fuiBitmap* bitmap = bitmaps;
     unsigned int i;
-    for (i = 0; i < header.bitmapCount; ++i)
+    for (i = 0; i < header.bitmapCount; ++i, ++bitmap)
     {
-        if (bitmaps[i].textureId != 0)
+        if (bitmap->textureId != 0)
         {
-            if (bitmaps[i].textureId > 0)
-                gRenderer->TextureFree(bitmaps[i].textureId);
-            gFui->removeManagedTexture(this, &bitmaps[i]);
+            if (bitmap->textureId > 0)
+                gRenderer->TextureFree(bitmap->textureId);
+            gFui->removeManagedTexture(this, bitmap);
         }
     }
     delete[] data;
@@ -99,12 +100,13 @@ unsigned int fuiFile::load(arrayWithLength<unsigned char> bytes, int value)
     frameData = (fuiTimelineFrame*)addDataRegion(header.timelineFrameCount, 0x48, &cursor, fuiTimelineFrame::EndianSwap);
     if (version == 0)
     {
-        eventData = (fuiTimelineEvent*)addDataRegion(header.timelineEventCount, 0x48, &cursor,
-            fuiTimelineEvent_version0::EndianSwap);
+        fuiTimelineEvent_version0* source = (fuiTimelineEvent_version0*)addDataRegion(header.timelineEventCount,
+            0x48, &cursor, fuiTimelineEvent_version0::EndianSwap);
+        eventData = (fuiTimelineEvent*)source;
         unsigned int i;
         for (i = 0; i < header.timelineEventCount; ++i)
         {
-            fuiTimelineEvent_version0 event = ((fuiTimelineEvent_version0*)eventData)[i];
+            fuiTimelineEvent_version0 event = source[i];
             eventData[i] = event;
         }
     }
@@ -132,18 +134,20 @@ unsigned int fuiFile::resolveReferences(fuiFile* other)
     if (other->fileIndex != fileIndex || other->stage != NULL)
         return 1;
     unsigned int unresolved = 0;
+    fuiReference* reference = referenceData;
     unsigned int i;
-    for (i = 0; i < header.referenceCount; ++i)
+    for (i = 0; i < header.referenceCount; ++i, ++reference)
     {
-        if (referenceData[i].symbolIndex == (unsigned int)-1)
+        if (reference->symbolIndex == (unsigned int)-1)
         {
+            fuiSymbol* symbol = other->symbolData;
             unsigned int j;
-            for (j = 0; j < other->header.symbolCount; ++j)
+            for (j = 0; j < other->header.symbolCount; ++j, ++symbol)
             {
-                if (std::strcmp(referenceData[i].name, other->symbolData[j].name) == 0)
+                if (std::strcmp(symbol->name, reference->name) == 0)
                 {
-                    referenceData[i].symbolIndex = j;
-                    referenceData[i].index = other->index;
+                    reference->symbolIndex = j;
+                    reference->index = other->index;
                     break;
                 }
             }
@@ -200,8 +204,11 @@ void fuiFile::initialiseRenderTexture(fuiBitmap* bitmap, bool force)
             gRenderer->TextureSetTextureLevels(1);
             gRenderer->TextureData(bitmap->width, bitmap->height, textureData, 0,
                 C4JRender::eTextureFormat_RGBA8);
-            delete textureData;
-            textureData = NULL;
+            if (textureData != NULL)
+            {
+                delete textureData;
+                textureData = NULL;
+            }
             if (force)
             {
                 gRenderer->TextureSetParam(3, 0);
@@ -221,22 +228,23 @@ int fuiFile::createNodeFromSymbol(const char* name, fuiRenderNode* parent, int v
 {
     if (fileIndex != value)
         return 0;
+    fuiSymbol* symbol = symbolData;
     unsigned int i;
-    for (i = 0; i < header.symbolCount; ++i)
+    for (i = 0; i < header.symbolCount; ++i, ++symbol)
     {
-        if (std::strcmp(symbolData[i].name, name) == 0)
+        if (std::strcmp(name, symbol->name) == 0)
         {
-            if (symbolData[i].objectType == eFuiObjectType_Timeline)
+            if (symbol->objectType == eFuiObjectType_Timeline)
             {
                 fuiRenderNodeTimeline* node = new fuiRenderNodeTimeline(parent->getStage(), NULL,
-                    &timelineData[symbolData[i].objectIndex], 0, 0, NULL, 0, false, this);
+                    &timelineData[symbol->objectIndex], 0, 0, NULL, 0, false, this);
                 node->disableCtor();
                 node->gather(false);
                 return (int)node;
             }
-            if (symbolData[i].objectType == eFuiObjectType_Bitmap)
+            if (symbol->objectType == eFuiObjectType_Bitmap)
                 return (int)new fuiRenderNodeBitmap(parent->getStage(), NULL,
-                    &bitmaps[symbolData[i].objectIndex], 0, 0, NULL, 0, false, this);
+                    &bitmaps[symbol->objectIndex], 0, 0, NULL, 0, false, this);
         }
     }
     return 0;

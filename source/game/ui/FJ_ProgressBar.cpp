@@ -6,8 +6,7 @@
 #include "game/ui/fuiRenderNodeCodeGenRect.hpp"
 
 FJ_ProgressBar::FJ_ProgressBar(fuiRenderNode* renderNode)
-    : FJ_Base(renderNode), m_pBarFiller(NULL), m_pFiller(NULL), m_progress(0.0f),
-      m_barType(true), m_reverse(false)
+    : FJ_Base(renderNode), m_pBarFiller(NULL), m_pFiller(NULL), m_progress(0.0f)
 {
     InitBarType();
 }
@@ -20,7 +19,7 @@ void FJ_ProgressBar::InitBarType()
 
 void FJ_ProgressBar::initFiller()
 {
-    m_pRenderNode->disableCtor();
+    GetBarFiller();
 
     m_fillerX = m_pFiller->getX();
     m_fillerY = m_pFiller->getY();
@@ -29,12 +28,13 @@ void FJ_ProgressBar::initFiller()
 
     fuiRect rect;
     rect.xMin = 0.0f;
-    rect.xMax = m_fillerWidth;
+    rect.xMax = m_pFiller->getWidth();
     rect.yMin = 0.0f;
-    rect.yMax = m_fillerHeight;
+    rect.yMax = m_pFiller->getHeight();
     fuiRenderNodeCodeGenRect* renderNode = new fuiRenderNodeCodeGenRect(
         getStage()->m_pRenderNode, &rect, "fillerMask");
     m_pBarFiller = new FJ_FuiNode(renderNode);
+    renderNode->setFuiNode(m_pBarFiller);
     m_pFiller->addMask(m_pBarFiller);
     setProgress(0.0f);
 }
@@ -55,8 +55,7 @@ void FJ_ProgressBar::ShowBar(bool show)
     if (m_pFiller != NULL)
         m_pFiller->setVisible(show);
 
-    FJ_FuiNode* background = getChildByName("ProgressBarBackground");
-    FJ_FuiNode* movieClip = FJ_FuiNode::asMovieClip(background);
+    FJ_FuiNode* movieClip = FJ_FuiNode::asMovieClip(getChildByName("ProgressBarBackground"));
     if (movieClip != NULL)
         movieClip->setVisible(show);
 }
@@ -68,25 +67,23 @@ float FJ_ProgressBar::getProgress()
 
 void FJ_ProgressBar::setProgress(float progress)
 {
-    if (progress > 1.0f)
-        m_progress = 1.0f;
-    else if (progress < 0.0f)
-        m_progress = 0.0f;
+    if (progress > 1.0f || progress < 0.0f)
+        m_progress = progress > 1.0f ? 1.0f : 0.0f;
     else
         m_progress = progress;
 
-    if (!m_barType)
-    {
-        m_pBarFiller->setHeight((m_fillerHeight / m_pFiller->getScaleY()) * m_progress);
-        if (m_reverse)
-            m_pBarFiller->setY((m_fillerHeight / m_pFiller->getScaleY()) *
-                               (1.0f - m_progress) + m_fillerY);
-    }
-    else
+    if (m_barType)
     {
         m_pBarFiller->setWidth((m_fillerWidth / m_pFiller->getScaleX()) * m_progress);
         if (m_reverse)
             m_pBarFiller->setX((m_fillerWidth / m_pFiller->getScaleX()) *
                                (1.0f - m_progress) + m_fillerX);
+    }
+    else
+    {
+        m_pBarFiller->setHeight((m_fillerHeight / m_pFiller->getScaleY()) * m_progress);
+        if (m_reverse)
+            m_pBarFiller->setY((m_fillerHeight / m_pFiller->getScaleY()) *
+                               (1.0f - m_progress) + m_fillerY);
     }
 }

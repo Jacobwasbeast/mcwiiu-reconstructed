@@ -362,25 +362,16 @@ void UIScene_LeaderboardsMenu::SetLeaderboardHeader()
         if (m_levelRuleGroups.empty())
             gApp.getLevelRules()->getRulesByType(LevelRules::eLevelRuleType_Glide,
                                                       &m_levelRuleGroups, false);
-        if (!m_levelRuleGroups.empty())
+        for (std::vector<LevelRules::LevelRulesetGroup*>::iterator group = m_levelRuleGroups.begin();
+             group != m_levelRuleGroups.end(); ++group)
         {
-            std::vector<LevelRules::LevelRulesetGroup*>::iterator group = m_levelRuleGroups.begin();
             LevelGenerationOptions* options = (*group)->rulesets.front()->getGenerationOptions();
-            unsigned int currentId = options->getUniqueId();
-            while (currentId != uniqueId)
+            if (options->getUniqueId() == uniqueId)
             {
-                ++group;
-                if (group == m_levelRuleGroups.end())
-                {
-                    m_leaderboardLabel.setLabel(UIString(label), false, false);
-                    return;
-                }
-                options = (*group)->rulesets.front()->getGenerationOptions();
-                currentId = options->getUniqueId();
+                label = label + L" : " + options->getWorldName();
+                m_leaderboardLabel.setLabel(UIString(label), false, false);
+                return;
             }
-            label = label + L" : " + options->getWorldName();
-            m_leaderboardLabel.setLabel(UIString(label), false, false);
-            return;
         }
     }
     m_leaderboardLabel.setLabel(UIString(label), false, false);
@@ -402,15 +393,28 @@ void UIScene_LeaderboardsMenu::ReadStats(int startRank)
         m_startRank = startRank;
     }
 
-    PlayerUID uid(0);
+    if ((m_readType == LeaderboardManager::eReadType_MyScore ||
+         m_readType == LeaderboardManager::eReadType_TopRank) && startRank != -1)
+    {
+        m_leaderboardInterface.ReadStats_TopRank(
+            this, m_leaderboardIndex, static_cast<LeaderboardManager::EStatsType>(m_statsType),
+            static_cast<unsigned int>(m_startRank), static_cast<unsigned int>(m_numRows));
+        m_infoLabel.setLabel(UIString(L10N::GetString(IDS_LEADERBOARD_LOADING)), false, false);
+        m_infoLabel.setVisible(true);
+        return;
+    }
     if (m_readType == LeaderboardManager::eReadType_Friends)
     {
+        PlayerUID uid(0);
+        gProfile->GetXUID(gProfile->GetPrimaryPad(), &uid, true);
         m_leaderboardInterface.ReadStats_Friends(
             this, m_leaderboardIndex, static_cast<LeaderboardManager::EStatsType>(m_statsType),
             uid, static_cast<unsigned int>(m_startRank), static_cast<unsigned int>(m_numRows));
     }
-    else if (m_readType == LeaderboardManager::eReadType_MyScore && startRank == -1)
+    else if (m_readType == LeaderboardManager::eReadType_MyScore)
     {
+        PlayerUID uid(0);
+        gProfile->GetXUID(gProfile->GetPrimaryPad(), &uid, true);
         m_leaderboardInterface.ReadStats_MyScore(
             this, m_leaderboardIndex, static_cast<LeaderboardManager::EStatsType>(m_statsType),
             uid, static_cast<unsigned int>(m_numRows));
@@ -418,7 +422,7 @@ void UIScene_LeaderboardsMenu::ReadStats(int startRank)
         m_infoLabel.setVisible(true);
         return;
     }
-    else
+    else if (m_readType == LeaderboardManager::eReadType_TopRank)
     {
         m_leaderboardInterface.ReadStats_TopRank(
             this, m_leaderboardIndex, static_cast<LeaderboardManager::EStatsType>(m_statsType),
@@ -579,14 +583,19 @@ std::wstring UIScene_LeaderboardsMenu::getMoviePath()
     return std::wstring(L"LeaderboardMenu");
 }
 
-void UIScene_LeaderboardsMenu::SetLeaderboardTitleIcons()
+int UIScene_LeaderboardsMenu::SetLeaderboardTitleIcons()
 {
+    int iconCount = 0;
     for (int column = 0; column < 7; ++column)
     {
         int icon = gLeaderboardIconIds[m_statsType * 7 + column];
         if (icon != 0)
+        {
+            ++iconCount;
             m_leaderboardList.setColumnIcon(column, icon);
+        }
     }
+    return iconCount;
 }
 
 void UIScene_LeaderboardsMenu::PopulateLeaderboard(LeaderboardManager::eStatsReturn result)

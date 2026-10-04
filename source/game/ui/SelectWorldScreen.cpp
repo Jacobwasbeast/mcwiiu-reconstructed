@@ -12,15 +12,23 @@
 #include "game/ui/RenameWorldScreen.hpp"
 #include "game/client/render/Tesselator.hpp"
 #include "game/world/LevelSummary.hpp"
+#include "platform/wiiu/CProfile.hpp"
 #include "platform/wiiu/WiiU_Runtime.hpp"
 
 template <typename T> std::wstring _toString(T value);
 
 SelectWorldScreen::SelectWorldScreen(Screen* parent)
-    : Screen(), mParent(parent), mTitle(L"Select world"), mSelecting(false), mSelectedWorld(0),
-      mLevelList(NULL), mWorldSelectionList(NULL), mWorldName(), mConversion(), mConfirmingDelete(false),
-      mRenameButton(NULL), mSelectButton(NULL), mDeleteButton(NULL)
+    : Screen()
 {
+    mTitle = L"Select world";
+    mParent = parent;
+    mSelecting = false;
+    mSelectedWorld = 0;
+    mWorldSelectionList = NULL;
+    mConfirmingDelete = false;
+    mRenameButton = NULL;
+    mSelectButton = NULL;
+    mDeleteButton = NULL;
 }
 
 SelectWorldScreen::~SelectWorldScreen()
@@ -36,9 +44,9 @@ void SelectWorldScreen::loadLevelList()
 void SelectWorldScreen::init()
 {
     Language* language = Language::getInstance();
-    mTitle = language->getElement(std::wstring(L"selectWorld.title"));
-    mWorldName = language->getElement(std::wstring(L"selectWorld.world"));
-    mConversion = language->getElement(std::wstring(L"selectWorld.conversion"));
+    mTitle = language->getElement(L"selectWorld.title");
+    mWorldName = language->getElement(L"selectWorld.world");
+    mConversion = language->getElement(L"selectWorld.conversion");
     loadLevelList();
     mWorldSelectionList = new WorldSelectionList(this);
     mWorldSelectionList->init(&mButtons, 4, 5);
@@ -54,26 +62,26 @@ std::wstring SelectWorldScreen::getWorldName(int index)
 {
     std::wstring name = mLevelList->at(index)->getLevelName();
     if (name.empty())
-        name = Language::getInstance()->getElement(std::wstring(L"selectWorld.world")) + L" " + _toString(index + 1);
+    {
+        Language* language = Language::getInstance();
+        name = language->getElement(L"selectWorld.world") + L" " + _toString(index + 1);
+    }
     return name;
 }
 
 void SelectWorldScreen::postInit()
 {
     Language* language = Language::getInstance();
-    mSelectButton = new Button(1, mWidth / 2 - 154, mHeight - 52, 150, 20,
-                               language->getElement(std::wstring(L"selectWorld.select")));
-    mButtons.push_back(mSelectButton);
-    mRenameButton = new Button(6, mWidth / 2 - 154, mHeight - 28, 70, 20,
-                               language->getElement(std::wstring(L"selectWorld.rename")));
-    mButtons.push_back(mRenameButton);
-    mDeleteButton = new Button(2, mWidth / 2 - 74, mHeight - 28, 70, 20,
-                               language->getElement(std::wstring(L"selectWorld.delete")));
-    mButtons.push_back(mDeleteButton);
+    mButtons.push_back(mSelectButton = new Button(1, mWidth / 2 - 154, mHeight - 52, 150, 20,
+                                                  language->getElement(L"selectWorld.select")));
+    mButtons.push_back(mRenameButton = new Button(6, mWidth / 2 - 154, mHeight - 28, 70, 20,
+                                                  language->getElement(L"selectWorld.rename")));
+    mButtons.push_back(mDeleteButton = new Button(2, mWidth / 2 - 74, mHeight - 28, 70, 20,
+                                                  language->getElement(L"selectWorld.delete")));
     mButtons.push_back(new Button(3, mWidth / 2 + 4, mHeight - 52, 150, 20,
-                                  language->getElement(std::wstring(L"selectWorld.create"))));
+                                  language->getElement(L"selectWorld.create")));
     mButtons.push_back(new Button(0, mWidth / 2 + 4, mHeight - 28, 150, 20,
-                                  language->getElement(std::wstring(L"gui.cancel"))));
+                                  language->getElement(L"gui.cancel")));
     mSelectButton->mActive = false;
     mRenameButton->mActive = false;
     mDeleteButton->mActive = false;
@@ -85,11 +93,11 @@ void SelectWorldScreen::worldSelected(int index)
     if (!mSelecting)
     {
         mSelecting = true;
-        mMinecraft->mWidth = 0;
+        mMinecraft->mGameMode = NULL;
         std::wstring worldId = getWorldId(index);
-        if (worldId.empty())
+        if (worldId == L"")
         {
-            worldId = std::wstring(L"World") + _toString(index);
+            worldId = L"World" + _toString(index);
         }
     }
 }
@@ -102,17 +110,15 @@ void SelectWorldScreen::buttonClicked(Button* button)
     if (button->mId == 2)
     {
         std::wstring name = getWorldName(mSelectedWorld);
-        if (name != mWorldName)
+        if (name != L"")
         {
             mConfirmingDelete = true;
             Language* language = Language::getInstance();
-            std::wstring message = language->getElement(std::wstring(L"selectWorld.deleteQuestion"));
-            std::wstring warning = std::wstring(L"'") + name + L"'";
-            std::wstring title = language->getElement(std::wstring(L"selectWorld.deleteWarning"));
-            std::wstring text = warning + L" " + title;
-            ConfirmScreen* confirm = new ConfirmScreen(this, message, text,
-                language->getElement(std::wstring(L"selectWorld.deleteButton")),
-                language->getElement(std::wstring(L"gui.cancel")), mSelectedWorld);
+            std::wstring message = language->getElement(L"selectWorld.deleteQuestion");
+            std::wstring text = L"'" + name + L"' " + language->getElement(L"selectWorld.deleteWarning");
+            std::wstring deleteLabel = language->getElement(L"selectWorld.deleteButton");
+            std::wstring cancelLabel = language->getElement(L"gui.cancel");
+            ConfirmScreen* confirm = new ConfirmScreen(this, message, text, deleteLabel, cancelLabel, mSelectedWorld);
             mMinecraft->setScreen(confirm);
         }
     }
@@ -122,7 +128,7 @@ void SelectWorldScreen::buttonClicked(Button* button)
     }
     else if (button->mId == 3)
     {
-        if (mMinecraft->isClientSide())
+        if (gProfile->IsFullVersion())
             mMinecraft->setScreen(new CreateWorldScreen(this));
         else
         {
@@ -152,7 +158,9 @@ void SelectWorldScreen::confirmResult(bool result, int id)
         mConfirmingDelete = false;
         if (result)
         {
-            mMinecraft->getLevelSource()->deleteLevel(getWorldId(id));
+            LevelStorageSource* levelSource = mMinecraft->getLevelSource();
+            levelSource->clearAll();
+            levelSource->deleteLevel(getWorldId(id));
             loadLevelList();
         }
         mMinecraft->setScreen(this);
@@ -164,16 +172,15 @@ void SelectWorldScreen::render(int x, int y, float partialTick)
     drawCenteredString(mFont, mTitle, mWidth / 2, 20, 0xffffff);
     Screen::render(x, y, partialTick);
     static int counter = 0;
-    ++counter;
-    if (counter > 99)
+    if (counter++ >= 100)
     {
-        if (mLevelList != NULL && !mLevelList->empty())
+        if (!mLevelList->empty())
         {
             if (mLevelList->size() > 1 && mDeleteButton->mActive)
             {
                 mSelectedWorld = 1;
                 counter = 0;
-                buttonClicked(mSelectButton);
+                buttonClicked(mDeleteButton);
                 return;
             }
             if (mSelectButton->mActive)
@@ -205,10 +212,8 @@ int SelectWorldScreen::WorldSelectionList::getNumberOfItems()
 
 void SelectWorldScreen::WorldSelectionList::selectItem(int index, bool doubleClick)
 {
-    bool valid = false;
     mScreen->mSelectedWorld = index;
-    if (index >= 0 && index < getNumberOfItems())
-        valid = true;
+    bool valid = index >= 0 && index < getNumberOfItems();
     mScreen->mSelectButton->mActive = valid;
     mScreen->mRenameButton->mActive = valid;
     mScreen->mDeleteButton->mActive = valid;
@@ -238,6 +243,7 @@ void SelectWorldScreen::WorldSelectionList::renderItem(int index, int x, int y, 
     if (name.empty())
         name = mScreen->mWorldName + L" " + _toString(index + 1);
 
+    std::wstring id = summary->getLevelId();
     FILETIME fileTime;
     SYSTEMTIME systemTime;
     long long lastPlayed = summary->getLastPlayed() * 10000;
@@ -245,17 +251,17 @@ void SelectWorldScreen::WorldSelectionList::renderItem(int index, int x, int y, 
     fileTime.dwHighDateTime = (unsigned int)(lastPlayed >> 32);
     FileTimeToSystemTime(&fileTime, &systemTime);
     wchar_t date[20];
-    swprintf(date, 20, L"%d/%d/%d %02d:%02d", systemTime.month, systemTime.day,
+    swprintf(date, 20, L"%d/%d/%d %d:%02d", systemTime.day, systemTime.month,
              systemTime.year, systemTime.hour, systemTime.minute);
 
-    std::wstring id = summary->getLevelId() + L" (" + std::wstring(date) + L")";
-    long long size = summary->getSizeOnDisk() / 1024;
-    size = size * 100 / 1024;
-    std::wstring details = id + L", " + _toString((float)size / 100.0f) + L"MB";
+    id = id + L" (" + date;
+    long long size = summary->getSizeOnDisk();
+    id = id + L", " + _toString((float)(size / 1024 * 100 / 1024) / 100.0f) + L" MB)";
+    std::wstring conversion;
     if (summary->isRequiresConversion())
-        details += L" " + mScreen->mConversion;
+        conversion = mScreen->mConversion + L" " + conversion;
 
     mScreen->drawString(mScreen->mFont, name, x + 2, y + 1, 0xffffff);
     mScreen->drawString(mScreen->mFont, id, x + 2, y + 12, 0x808080);
-    mScreen->drawString(mScreen->mFont, details, x + 2, y + 22, 0x808080);
+    mScreen->drawString(mScreen->mFont, conversion, x + 2, y + 22, 0x808080);
 }

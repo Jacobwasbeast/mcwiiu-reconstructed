@@ -46,15 +46,15 @@ void FJ_IconSlot::SetParams(int iWidth, bool bUseSmallText)
     else
     {
         removeChild(getChildByName("FJ_TextContainer"), true);
-        FJ_FuiNode* smallText = getChildByName("SmallTextContainer")->asMovieClip();
-        addChild(smallText->getChildAt(0)->asMovieClip());
+        FJ_FuiNode* smallText = FJ_FuiNode::asMovieClip(getChildByName("SmallTextContainer"))->getChildAt(0)->asMovieClip();
+        addChild(smallText);
         removeChild(getChildByName("SmallTextContainer"), true);
     }
 
     if (iWidth > 0)
     {
         setWidth((float)iWidth);
-        setWidth((float)iWidth);
+        setHeight((float)iWidth);
     }
     ShowRedSlot(false);
 }
@@ -79,10 +79,9 @@ void FJ_IconSlot::SetSlotID(const std::string& slotName, int iSlotId)
     if (oldControl == NULL)
         return;
 
-    float scale = getScaleX();
-    int roundedScale = Math::round(scale);
-    float offset = (float)roundedScale / scale;
-    float extent = offset + (float)Math::round(getWidth() - 2.0f * roundedScale) / scale;
+    int roundedScale = Math::round(getScaleX());
+    float offset = (float)Math::round((float)roundedScale / getScaleX());
+    float extent = offset + (float)Math::round(getWidth() - (float)(roundedScale * 2)) / getScaleX();
     fuiRect rect;
     rect.xMin = offset;
     rect.yMin = offset;
@@ -95,7 +94,9 @@ void FJ_IconSlot::SetSlotID(const std::string& slotName, int iSlotId)
         getStage()->m_pRenderNode, &rect, name);
     renderNode->setAlpha(0.25f);
     m_pIconHolder->removeChild(oldControl, true);
-    addChild(new FJ_FuiNode(renderNode));
+    FJ_FuiNode* slotNode = new FJ_FuiNode(renderNode);
+    renderNode->setFuiNode(slotNode);
+    addChild(slotNode);
 }
 
 void FJ_IconSlot::SetTextureName(const std::wstring& textureName)

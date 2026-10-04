@@ -16,7 +16,7 @@ FJ_ListButtonIconLeft::FJ_ListButtonIconLeft(fuiRenderNode* renderNode)
 void FJ_ListButtonIconLeft::Init(const std::wstring& name, int id)
 {
     SetLabelAlignment(4);
-    m_isLabel = true;
+    m_textOnly = true;
     FJ_Button::Init(name, id);
 }
 
@@ -44,7 +44,9 @@ void FJ_ListButtonIconLeft::SetSlotID(int slotId, bool hasSlot)
         getStage()->m_pRenderNode, &rect, name);
     renderNode->setAlpha(0.25f);
     removeChild(slotControl, true);
-    addChild(new FJ_FuiNode(renderNode));
+    FJ_FuiNode* node = new FJ_FuiNode(renderNode);
+    renderNode->setFuiNode(node);
+    addChild(node);
 }
 
 void FJ_ListButtonIconLeft::SetTextureName(const std::wstring& textureName,
@@ -73,6 +75,7 @@ void FJ_ListButtonIconLeft::SetTextureName(const std::wstring& textureName,
                 getStage()->m_pRenderNode, &rect, "CustomTexture", width, height,
                 texture, true, hasAlpha);
             m_pIconPlaceholder = new FJ_FuiNode(renderNode);
+            renderNode->setFuiNode(m_pIconPlaceholder);
             iconControl->addChild(m_pIconPlaceholder);
         }
         else
@@ -92,25 +95,29 @@ void FJ_ListButtonIconLeft::SetTextureName(const std::wstring& textureName,
         if (m_pIconPlaceholder1 == NULL)
         {
             FJ_FuiNode* iconControl = getChildByName("IconPlaceholder1")->asMovieClip();
-            iconControl->setScaleX(iconControl->getScaleX() / getScaleX());
-            iconControl->setScaleY(iconControl->getScaleY() / getScaleY());
+            if (iconControl != NULL)
+            {
+                iconControl->setScaleX(iconControl->getScaleX() / getScaleX());
+                iconControl->setScaleY(iconControl->getScaleY() / getScaleY());
 
-            fuiRect rect;
-            rect.xMin = 0.0f;
-            rect.yMin = 0.0f;
-            rect.xMax = iconControl->getWidth() / iconControl->getScaleX();
-            rect.yMax = iconControl->getHeight() / iconControl->getScaleY();
+                fuiRect rect;
+                rect.xMin = 0.0f;
+                rect.yMin = 0.0f;
+                rect.xMax = iconControl->getWidth() / iconControl->getScaleX();
+                rect.yMax = iconControl->getHeight() / iconControl->getScaleY();
 
-            unsigned int width = 0;
-            unsigned int height = 0;
-            bool hasAlpha = false;
-            unsigned int texture = gFui->getCustomTexture(
-                textureName1, &width, &height, &hasAlpha);
-            fuiRenderNodeCodeGenRect* renderNode = new fuiRenderNodeCodeGenRect(
-                getStage()->m_pRenderNode, &rect, "CustomTexture", width, height,
-                texture, true, hasAlpha);
-            m_pIconPlaceholder1 = new FJ_FuiNode(renderNode);
-            iconControl->addChild(m_pIconPlaceholder1);
+                unsigned int width = 0;
+                unsigned int height = 0;
+                bool hasAlpha = false;
+                unsigned int texture = gFui->getCustomTexture(
+                    textureName1, &width, &height, &hasAlpha);
+                fuiRenderNodeCodeGenRect* renderNode = new fuiRenderNodeCodeGenRect(
+                    getStage()->m_pRenderNode, &rect, "CustomTexture", width, height,
+                    texture, true, hasAlpha);
+                m_pIconPlaceholder1 = new FJ_FuiNode(renderNode);
+                renderNode->setFuiNode(m_pIconPlaceholder1);
+                iconControl->addChild(m_pIconPlaceholder1);
+            }
         }
         else
         {

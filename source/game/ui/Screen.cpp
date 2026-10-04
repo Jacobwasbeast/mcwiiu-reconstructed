@@ -20,7 +20,8 @@ Screen::Screen()
 
 void Screen::render(int x, int y, float partialTick)
 {
-    for (std::vector<Button*>::iterator it = mButtons.begin(); it != mButtons.end(); ++it)
+    std::vector<Button*>::iterator end = mButtons.end();
+    for (std::vector<Button*>::iterator it = mButtons.begin(); it != end; ++it)
         (*it)->render(mMinecraft, x, y);
 }
 
@@ -35,7 +36,8 @@ void Screen::mouseClicked(int x, int y, int button)
     if (button != 0)
         return;
 
-    for (std::vector<Button*>::iterator it = mButtons.begin(); it != mButtons.end(); ++it)
+    std::vector<Button*>::iterator end = mButtons.end();
+    for (std::vector<Button*>::iterator it = mButtons.begin(); it != end; ++it)
     {
         Button* current = *it;
         if (current->clicked(mMinecraft, x, y))

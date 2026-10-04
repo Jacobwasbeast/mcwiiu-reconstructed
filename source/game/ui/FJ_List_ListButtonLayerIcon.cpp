@@ -44,8 +44,8 @@ void FJ_List_ListButtonLayerIcon::addNewItem(const std::wstring& label,
     item->SetSecondaryText(secondaryText, false, false);
     item->SetSlotID(m_id, m_useIggyIcons);
 
-    std::wstring itemTextureName = m_useIggyIcons ? L"fourj.Buttons." : textureName;
-    std::wstring layerName = L"fourj.Buttons.";
+    std::wstring itemTextureName = m_useIggyIcons ? L"" : textureName;
+    std::wstring layerName = L"";
     item->SetTextureName(itemTextureName, layerName);
 }
 
@@ -62,7 +62,7 @@ void FJ_List_ListButtonLayerIcon::SetTextureName(int index,
     FJ_ListButtonLayerIcon* item = static_cast<FJ_ListButtonLayerIcon*>(ReturnItem(index));
     if (item != NULL)
     {
-        std::wstring layerName(L"fourj.Button");
+        std::wstring layerName(L"");
         item->SetTextureName(textureName, layerName);
     }
 }

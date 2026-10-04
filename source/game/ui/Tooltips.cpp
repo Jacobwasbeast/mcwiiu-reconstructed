@@ -8,6 +8,7 @@
 
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/CMinecraftApp.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/ClientMasterGameMode.hpp"
 #include "game/core/GameType.hpp"
 #include "game/core/Minecraft.hpp"
@@ -36,7 +37,8 @@
 
 namespace
 {
-int gTooltips[4][25];
+const int kTooltipsPerPlayer = 25;
+int gTooltips[4 * kTooltipsPerPlayer + EControllerActions_LookBehind + 1];
 unsigned char gTooltipsDirty[4];
 }
 
@@ -48,41 +50,37 @@ void Tooltips::staticCtor()
     for (playerId = 0; playerId < 4; ++playerId) {
         gTooltipsDirty[playerId] = 1;
         for (action = 0; action < 25; ++action)
-            gTooltips[playerId][action] = -1;
+            gTooltips[playerId * kTooltipsPerPlayer + action] = -1;
     }
 }
 
 void Tooltips::OverwriteTooltip(int playerId, EControllerActions action, int tooltip)
 {
-    int actionIndex = (int)action - 0x20;
-    if (gTooltips[playerId][actionIndex] == tooltip)
+    int index = playerId * kTooltipsPerPlayer + action;
+    if (gTooltips[index] == tooltip)
         return;
 
-    gTooltips[playerId][actionIndex] = tooltip;
+    gTooltips[index] = tooltip;
     gTooltipsDirty[playerId] = 1;
 }
 
 void Tooltips::ResetTooltip(int playerId, EControllerActions action)
 {
-    int actionIndex = (int)action - 0x20;
-    if (gTooltips[playerId][actionIndex] != -1) {
-        gTooltips[playerId][actionIndex] = -1;
-        gTooltipsDirty[playerId] = 1;
-    }
+    OverwriteTooltip(playerId, action, -1);
 }
 
 void Tooltips::SetInteractTooltips(boost::shared_ptr<MultiplayerLocalPlayer> player,
                                    MultiPlayerLevel* level, const HitResult* hitResult,
                                    InteractionResult::EInteractionResult interactionResult)
 {
-    static const EControllerActions extraTooltipActions[5] = {
+    static EControllerActions extraTooltipActions[5] = {
         EControllerActions_ConfirmReady, EControllerActions_Vote,
         EControllerActions_LookBehind, EControllerActions_RestartSection,
         EControllerActions_RestartRace
     };
     const int playerId = player->mUserIndex;
 
-    if (g_pApp->GetGameHostOption(eGameHostOption_MiniGame) == 0)
+    if (gApp.GetGameHostOption(eGameHostOption_MiniGame) == 0)
     {
         OverwriteTooltip(playerId, EControllerActions_Crafting,
                          player->mAbilities.mInstabuild ? IDS_TOOLTIPS_CREATIVE : IDS_CONTROLS_CRAFTING);
@@ -126,12 +124,21 @@ void Tooltips::SetInteractTooltips(boost::shared_ptr<MultiplayerLocalPlayer> pla
     not_null_ptr<ItemInstance> item = player->getMainHandItem();
     if (hitResult == NULL)
     {
-        if (!item->isEmpty() && player->isAllowedToUse(item))
+        if (!item->isEmpty())
         {
-            ItemTooltipDataHolder itemData(player, item, level, interactionResult);
-            OverwriteTooltip(playerId, EControllerActions_Use,
-                             item->getItem()->GetUseTooltip(itemData));
-            ResetTooltip(playerId, EControllerActions_Action);
+            uint32_t allowed = player->isAllowedToUse(item);
+            if (allowed != 0)
+            {
+                ItemTooltipDataHolder itemData(player, item, level, interactionResult);
+                OverwriteTooltip(playerId, EControllerActions_Use,
+                                 item->getItem()->GetUseTooltip(itemData));
+                ResetTooltip(playerId, EControllerActions_Action);
+            }
+            else
+            {
+                ResetTooltip(playerId, EControllerActions_Use);
+                ResetTooltip(playerId, EControllerActions_Action);
+            }
         }
         else
         {
@@ -198,7 +205,7 @@ void Tooltips::SetInteractTooltips(boost::shared_ptr<MultiplayerLocalPlayer> pla
     }
 
     boost::unordered_map<int, int> extraTooltips(0xb);
-    if (g_pApp->GetGameHostOption(eGameHostOption_MiniGame) != 0)
+    if (gApp.GetGameHostOption(eGameHostOption_MiniGame) != 0)
     {
         const int primaryPad = gProfile->GetPrimaryPad();
         Minecraft* minecraft = Minecraft::GetInstance();
@@ -225,7 +232,7 @@ void Tooltips::SetInteractTooltips(boost::shared_ptr<MultiplayerLocalPlayer> pla
                              minecraft->mLocalPlayers[playerId]->GetGameType() == GameType::LOBBY &&
                              minecraft->GetMiniGame()->HostOption_Bool(eCustomGameModeHostOption_EnableVoting))
                     {
-                        extraTooltips[0x35] = 0x66f20471;
+                        extraTooltips[0x35] = IDS_MG_SELECT_VARIANT;
                     }
                 }
             }
@@ -254,7 +261,7 @@ void Tooltips::SetInteractTooltips(boost::shared_ptr<MultiplayerLocalPlayer> pla
             ClientScoreboard* scoreboard = player->GetLevel()->GetClientScoreboard();
             for (int i = 0; i < 4; ++i)
             {
-                boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = minecraft->mLocalPlayers[i];
+                const boost::shared_ptr<MultiplayerLocalPlayer>& localPlayer = minecraft->mLocalPlayers[i];
                 if (localPlayer != NULL &&
                     (!localPlayer->isSpectator() || scoreboard->GetEndZoneEntered(localPlayer->getSUID(), -1)))
                     ++activePlayers;
@@ -283,8 +290,10 @@ void Tooltips::SetInteractTooltips(boost::shared_ptr<MultiplayerLocalPlayer> pla
     }
 
     boost::shared_ptr<Entity> vehicle = player->getVehicle();
-    if (vehicle != NULL && (vehicle->GetType() & EntityType::ABSTRACT_HORSE) == EntityType::ABSTRACT_HORSE &&
-        !boost::static_pointer_cast<AbstractHorse>(vehicle)->isTamed())
+    bool tamedOrNotHorse = true;
+    if (vehicle != NULL && (vehicle->GetType() & EntityType::ABSTRACT_HORSE) == EntityType::ABSTRACT_HORSE)
+        tamedOrNotHorse = boost::static_pointer_cast<AbstractHorse>(vehicle)->isTamed();
+    if (!tamedOrNotHorse)
     {
         ResetTooltip(playerId, EControllerActions_Inventory);
     }
@@ -304,7 +313,7 @@ void Tooltips::ResetAllTooltips(int playerId)
     int action;
     gTooltipsDirty[playerId] = 1;
     for (action = 0; action < 25; ++action)
-        gTooltips[playerId][action] = -1;
+        gTooltips[playerId * kTooltipsPerPlayer + action] = -1;
 }
 
 void Tooltips::ForceTooltipReload(int playerId)
@@ -333,7 +342,7 @@ void Tooltips::DisplayTooltips(int playerId)
     if (gTooltipsDirty[playerId] != 0) {
         if (!gConsoleUIController.GetMenuDisplayed(playerId) &&
             !gConsoleUIController.IsSceneInStack(playerId, EUIScene_ConnectingProgress)) {
-            gConsoleUIController.SetTooltips((unsigned int)playerId, gTooltips[playerId], false,
+            gConsoleUIController.SetTooltips((unsigned int)playerId, &gTooltips[playerId * kTooltipsPerPlayer], false,
                                              false);
             gTooltipsDirty[playerId] = 0;
         }

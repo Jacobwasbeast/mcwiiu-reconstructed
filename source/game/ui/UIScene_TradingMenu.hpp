@@ -72,11 +72,11 @@ private:
     UIControl_SlotList m_request2;
     UIControl_SlotList m_hotBar;
     UIControl_SlotList m_inventory;
+    UIControl_Label m_inventoryLabel;
     UIControl_Label m_villagerText;
     UIControl_Label m_requiredLabel;
     UIControl_Label m_request1Label;
     UIControl_Label m_request2Label;
-    UIControl_Label m_inventoryLabel;
 };
 
 #endif

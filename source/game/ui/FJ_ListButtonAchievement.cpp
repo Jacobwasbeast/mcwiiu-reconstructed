@@ -5,6 +5,8 @@
 #include "game/ui/FJ_FuiNode.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 
+static std::string s_buttonStateLabels[2] = { std::string("Button_Enabled"), std::string("Button_Disabled") };
+
 FJ_ListButtonAchievement::FJ_ListButtonAchievement(fuiRenderNode* pRenderNode)
     : FJ_Base(pRenderNode)
 {
@@ -17,7 +19,7 @@ FJ_ListButtonAchievement::FJ_ListButtonAchievement(fuiRenderNode* pRenderNode)
 
 void FJ_ListButtonAchievement::EnableButton(bool enabled)
 {
-    gotoAndStop(enabled ? "Button_Enabled" : "Button_Disabled");
+    gotoAndStop(s_buttonStateLabels[enabled ^ 1]);
     m_bitmapIcon->setVisible(enabled);
     m_enabled = enabled;
 }

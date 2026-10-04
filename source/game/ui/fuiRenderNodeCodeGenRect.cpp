@@ -12,41 +12,42 @@ extern Renderer* gRenderer;
 fuiRenderNodeCodeGenRect::fuiRenderNodeCodeGenRect(fuiRenderNode* parent, fuiRect* rect, const char* name,
                                                    unsigned int textureWidth, unsigned int textureHeight,
                                                    int textureId, bool customTexture, bool textureAlpha)
-    : fuiRenderNode(parent, 0, 0, 0, eFuiObjectType_CodeGenRect, 0, 0, 0, false, 0),
-      mTextureId(textureId), mCustomTexture(customTexture), mTextureAlpha(textureAlpha),
-      mTextureWidth(textureWidth), mTextureHeight(textureHeight)
+    : fuiRenderNode(parent, 0, 0, 0, eFuiObjectType_CodeGenRect, 0, 0, 0, false, 0)
 {
-    m_bounds.xMin = rect->xMin;
-    m_bounds.xMax = rect->xMax;
-    m_bounds.yMin = rect->yMin;
-    m_bounds.yMax = rect->yMax;
-    std::strncpy(m_name, name, sizeof(m_name) - 1);
-    m_name[sizeof(m_name) - 1] = 0;
+    m_bounds = *rect;
+    std::strncpy(m_name, name, sizeof(m_name));
+    mTextureWidth = textureWidth;
+    mTextureId = textureId;
+    mTextureAlpha = textureAlpha;
+    mCustomTexture = customTexture;
+    mTextureHeight = textureHeight;
 }
 
 fuiRenderNodeCodeGenRect::fuiRenderNodeCodeGenRect(fuiRenderNode* parent, fuiRect* rect, const char* name)
-    : fuiRenderNode(parent, 0, 0, 0, eFuiObjectType_CodeGenRect, 0, 0, 0, false, 0),
-      mTextureId(-1), mCustomTexture(0), mTextureAlpha(0), mTextureWidth(0), mTextureHeight(0)
+    : fuiRenderNode(parent, 0, 0, 0, eFuiObjectType_CodeGenRect, 0, 0, 0, false, 0)
 {
-    m_bounds.xMin = rect->xMin;
-    m_bounds.xMax = rect->xMax;
-    m_bounds.yMin = rect->yMin;
-    m_bounds.yMax = rect->yMax;
-    std::strncpy(m_name, name, sizeof(m_name) - 1);
-    m_name[sizeof(m_name) - 1] = 0;
+    m_bounds = *rect;
+    std::strncpy(m_name, name, sizeof(m_name));
+    mTextureHeight = 0;
+    mTextureWidth = 0;
+    mTextureId = -1;
+    mCustomTexture = 0;
 }
 
 fuiRenderNodeCodeGenRect::~fuiRenderNodeCodeGenRect()
 {
     if (mTextureId >= 0)
     {
-        if (!mCustomTexture)
+        if (mCustomTexture)
+        {
+            if (!mTextureAlpha)
+            {
+                gFui->releaseCustomTexture(mTextureId);
+            }
+        }
+        else
         {
             gRenderer->TextureFree(mTextureId);
-        }
-        else if (!mTextureAlpha)
-        {
-            gFui->releaseCustomTexture(mTextureId);
         }
     }
 }
@@ -67,38 +68,35 @@ void fuiRenderNodeCodeGenRect::render(fuiRect* bounds, fuiMatrix* matrix)
     if (!isVisible())
         return;
 
-    fuiRenderNode* root = getRoot();
-    fuiFile* rootFile = root == 0 ? 0 : root->m_file;
-    if (std::strncmp(m_name, "iggy_", 5) == 0 && rootFile != 0
-        && rootFile->customDrawCallback != 0)
+    if (std::strncmp(m_name, "iggy_", 5) == 0)
     {
-        gRenderer->StateSetFaceCull(true);
-        gRenderer->StateSetFaceCullCW(true);
-        gRenderer->StateSetAlphaTestEnable(true);
-        gRenderer->StateSetDepthTestEnable(true);
-        gRenderer->StateSetDepthMask(true);
-        gRenderer->StateSetColour(1.0f, 1.0f, 1.0f, 1.0f);
-        pushMatrix();
-        rootFile->customDrawCallback(rootFile->customDrawContext, m_name + 5, &m_bounds);
-        popMatrix();
-        gRenderer->StateSetFaceCull(false);
-        gRenderer->StateSetBlendEnable(true);
-        gRenderer->StateSetBlendFunc(1, 5);
-        gRenderer->StateSetAlphaTestEnable(false);
-        gRenderer->StateSetDepthTestEnable(false);
-        gRenderer->StateSetDepthMask(false);
+        if (getRoot()->m_file->customDrawCallback != 0)
+        {
+            gRenderer->StateSetFaceCull(true);
+            gRenderer->StateSetFaceCullCW(true);
+            gRenderer->StateSetAlphaTestEnable(true);
+            gRenderer->StateSetDepthTestEnable(true);
+            gRenderer->StateSetDepthMask(true);
+            gRenderer->StateSetColour(1.0f, 1.0f, 1.0f, 1.0f);
+            pushMatrix();
+            fuiFile* rootFile = getRoot()->m_file;
+            rootFile->customDrawCallback(rootFile->customDrawContext, m_name + 5, &m_bounds);
+            popMatrix();
+            gRenderer->StateSetFaceCull(false);
+            gRenderer->StateSetBlendEnable(true);
+            gRenderer->StateSetBlendFunc(1, 5);
+            gRenderer->StateSetAlphaTestEnable(false);
+            gRenderer->StateSetDepthTestEnable(false);
+            gRenderer->StateSetDepthMask(false);
+        }
         return;
     }
-    if (std::strncmp(m_name, "iggy_", 5) == 0)
-        return;
 
     pushMatrix();
     pushColor();
     pushFilterFlags();
-    const float width = m_bounds.xMax - m_bounds.xMin;
-    const float height = m_bounds.yMax - m_bounds.yMin;
-    const float right = m_bounds.xMin + width;
-    const float bottom = m_bounds.yMin + height;
+    const float right = m_bounds.xMin + (m_bounds.xMax - m_bounds.xMin);
+    const float bottom = m_bounds.yMin + (m_bounds.yMax - m_bounds.yMin);
     float vertices[12] =
     {
         m_bounds.xMin, m_bounds.yMin,
@@ -117,11 +115,18 @@ void fuiRenderNodeCodeGenRect::render(fuiRect* bounds, fuiMatrix* matrix)
     }
     else
     {
+        const fui::ColorState& color = gFui->m_colorStack[gFui->m_colorDepth];
+        const float redAdd = color.redAdd;
+        const float greenAdd = color.greenAdd;
+        const float blueAdd = color.blueAdd;
+        const float alphaAdd = color.alphaAdd;
+        gRenderer->StateSetColour(color.redMultiply, color.greenMultiply, color.blueMultiply, color.alphaMultiply);
+        gRenderer->StateSetColourAdd(redAdd, greenAdd, blueAdd, alphaAdd);
         gRenderer->TextureBind(mTextureId);
+        const float width = m_bounds.xMax - m_bounds.xMin;
+        const float height = m_bounds.yMax - m_bounds.yMin;
         gRenderer->StateSetTextureScaleUI(1.0f / width, 1.0f / height,
                                           -m_bounds.xMin / width, -m_bounds.yMin / height);
-        gRenderer->StateSetColour(gFui->m_colorStack[gFui->m_colorDepth].redMultiply, gFui->m_colorStack[gFui->m_colorDepth].greenMultiply, gFui->m_colorStack[gFui->m_colorDepth].blueMultiply, gFui->m_colorStack[gFui->m_colorDepth].alphaMultiply);
-        gRenderer->StateSetColourAdd(gFui->m_colorStack[gFui->m_colorDepth].redAdd, gFui->m_colorStack[gFui->m_colorDepth].greenAdd, gFui->m_colorStack[gFui->m_colorDepth].blueAdd, gFui->m_colorStack[gFui->m_colorDepth].alphaAdd);
         gRenderer->DrawVertices(C4JRender::ePrimitiveType_Triangles, 6, vertices,
                                 C4JRender::eVertexType_UI, C4JRender::ePixelShaderType_UIColourAdd, NULL);
     }
@@ -145,13 +150,16 @@ void fuiRenderNodeCodeGenRect::setTexture(unsigned int textureWidth, unsigned in
 {
     if (mTextureId >= 0)
     {
-        if (!mCustomTexture)
+        if (mCustomTexture)
+        {
+            if (!mTextureAlpha)
+            {
+                gFui->releaseCustomTexture(mTextureId);
+            }
+        }
+        else
         {
             gRenderer->TextureFree(mTextureId);
-        }
-        else if (!mTextureAlpha)
-        {
-            gFui->releaseCustomTexture(mTextureId);
         }
     }
     mTextureWidth = textureWidth;

@@ -39,7 +39,7 @@ public:
     void setItemName(const std::wstring& name, bool censored);
 
     boost::shared_ptr<ResultContainer> mResultSlots;
-    boost::shared_ptr<RepairContainer> mInputSlots;
+    boost::shared_ptr<Container> mInputSlots;
     Level* mLevel;
     BlockPos mPosition;
     int mRepairCost;

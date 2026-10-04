@@ -20,7 +20,7 @@ extern ConsoleUIController gConsoleUIController;
 extern CProfile* gProfile;
 
 UIScene_AvatarSelectMenu::TabControls::TabControls()
-    : m_tab(), m_list(), m_title(), m_timer(), m_miis()
+    : m_tab(), m_title(), m_timer(), m_miis()
 {
 }
 
@@ -83,27 +83,30 @@ unsigned int UIScene_AvatarSelectMenu::mapElementsAndNames()
     fuiRenderNode* root = m_movie->getRootNode();
     m_userControls.m_tab.setupControl(this, root, "UserTab");
     m_controls.push_back(&m_userControls.m_tab);
-    m_userControls.m_list.setupControl(this, m_userControls.m_tab.getFuiRenderNode(), "UserList");
+    fuiRenderNode* userTab = m_userControls.m_tab.getFuiRenderNode();
+    m_userControls.m_list.setupControl(this, userTab, "UserList");
     m_controls.push_back(&m_userControls.m_list);
-    m_userControls.m_timer.setupControl(this, m_userControls.m_tab.getFuiRenderNode(), "UserTimer");
+    m_userControls.m_timer.setupControl(this, userTab, "UserTimer");
     m_controls.push_back(&m_userControls.m_timer);
-    m_userTabTouch.setupControl(this, m_userControls.m_tab.getFuiRenderNode(), "TouchTabUser");
+    m_userTabTouch.setupControl(this, userTab, "TouchTabUser");
     m_controls.push_back(&m_userTabTouch);
     m_favouriteControls.m_tab.setupControl(this, root, "FavouriteTab");
     m_controls.push_back(&m_favouriteControls.m_tab);
-    m_favouriteControls.m_list.setupControl(this, m_favouriteControls.m_tab.getFuiRenderNode(), "FavouriteList");
+    fuiRenderNode* favouriteTab = m_favouriteControls.m_tab.getFuiRenderNode();
+    m_favouriteControls.m_list.setupControl(this, favouriteTab, "FavouriteList");
     m_controls.push_back(&m_favouriteControls.m_list);
-    m_favouriteControls.m_timer.setupControl(this, m_favouriteControls.m_tab.getFuiRenderNode(), "FavouriteTimer");
+    m_favouriteControls.m_timer.setupControl(this, favouriteTab, "FavouriteTimer");
     m_controls.push_back(&m_favouriteControls.m_timer);
-    m_favouriteTabTouch.setupControl(this, m_favouriteControls.m_tab.getFuiRenderNode(), "TouchTabFavourite");
+    m_favouriteTabTouch.setupControl(this, favouriteTab, "TouchTabFavourite");
     m_controls.push_back(&m_favouriteTabTouch);
     m_guestControls.m_tab.setupControl(this, root, "GuestTab");
     m_controls.push_back(&m_guestControls.m_tab);
-    m_guestControls.m_list.setupControl(this, m_guestControls.m_tab.getFuiRenderNode(), "GuestTabList");
+    fuiRenderNode* guestTab = m_guestControls.m_tab.getFuiRenderNode();
+    m_guestControls.m_list.setupControl(this, guestTab, "GuestTabList");
     m_controls.push_back(&m_guestControls.m_list);
-    m_guestControls.m_timer.setupControl(this, m_guestControls.m_tab.getFuiRenderNode(), "GuestTimer");
+    m_guestControls.m_timer.setupControl(this, guestTab, "GuestTimer");
     m_controls.push_back(&m_guestControls.m_timer);
-    m_guestTabTouch.setupControl(this, m_guestControls.m_tab.getFuiRenderNode(), "TouchTabGuest");
+    m_guestTabTouch.setupControl(this, guestTab, "TouchTabGuest");
     m_controls.push_back(&m_guestTabTouch);
     m_userControls.m_title.setupControl(this, root, "UserTabTitle");
     m_controls.push_back(&m_userControls.m_title);
@@ -145,7 +148,7 @@ void UIScene_AvatarSelectMenu::AddMiiItems()
     for (int i = 0; i < count; ++i) AddMiiItem(m_guestControls, gProfile->GetGuestMiiData(i));
 }
 
-void UIScene_AvatarSelectMenu::updateTooltips() { hasFocus(m_pad); }
+void UIScene_AvatarSelectMenu::updateTooltips() { hasFocus(m_playerId); }
 void UIScene_AvatarSelectMenu::updateComponents() {}
 void UIScene_AvatarSelectMenu::handleDestroy() {}
 void UIScene_AvatarSelectMenu::handleLoseFocus() {}
@@ -158,32 +161,46 @@ void UIScene_AvatarSelectMenu::handleGainFocus(bool hadFocus)
 
 void UIScene_AvatarSelectMenu::handleTimerComplete(int) {}
 
-unsigned int UIScene_AvatarSelectMenu::handleKeyDown(int, int action, bool)
+bool UIScene_AvatarSelectMenu::handleKeyDown(int, int action, bool)
 {
-    if (m_initialised) return 0;
-    if (action == EControllerActions_MenuB || action == EControllerActions_MenuCancel)
+    if (m_initialised) return false;
+    bool consumed = false;
+    int tab = m_currentTab;
+    switch (action)
     {
+    case EControllerActions_MenuB:
+    case EControllerActions_MenuCancel:
         gApp.RequestSignInUIWiiUReturnedSelected(NULL, m_choice, m_pad);
         gConsoleUIController.NavigateBack(GetPad(), false, EUIScene_None, EUILayer_Count);
-        return 1;
-    }
-    if (action == EControllerActions_MenuRight || action == EControllerActions_MenuLeft || action == EControllerActions_MenuRightScroll)
-    {
-        int tab = m_currentTab + ((action == EControllerActions_MenuRightScroll || action == EControllerActions_MenuRight) ? 1 : -1);
-        if (tab > 2) tab = 0;
+        consumed = true;
+        break;
+    case EControllerActions_MenuRight:
+    case EControllerActions_MenuRightScroll:
+        tab = tab + 1;
+        if (tab >= 3) tab = 0;
+        m_currentTab = tab;
+        SelectTab(tab);
+        updateTooltips();
+        break;
+    case EControllerActions_MenuLeft:
+    case EControllerActions_MenuLeftScroll:
+        tab = tab - 1;
         if (tab < 0) tab = 2;
         m_currentTab = tab;
         SelectTab(tab);
         updateTooltips();
+        break;
     }
-    return 0;
+    return consumed;
 }
 
 void UIScene_AvatarSelectMenu::handleInput(int, int action, bool repeat, bool pressed, bool released, bool& handled)
 {
-    if (m_initialised || !pressed)
+    if (m_initialised)
         return;
-    gConsoleUIController.AnimateKeyPress(m_pad, action, repeat, pressed, released);
+    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, pressed, released);
+    if (!pressed)
+        return;
     switch (action)
     {
     case EControllerActions_MenuUp:
@@ -195,7 +212,7 @@ void UIScene_AvatarSelectMenu::handleInput(int, int action, bool repeat, bool pr
         handled = true;
         break;
     default:
-        handled = handleKeyDown(m_pad, action, repeat) != 0;
+        handled = handleKeyDown(m_playerId, action, repeat);
         break;
     }
 }
@@ -223,12 +240,12 @@ void UIScene_AvatarSelectMenu::handleTouchInput(unsigned int playerId, int touch
                                                int touchBox, bool pressed, bool repeat,
                                                bool released)
 {
-    if (pressed && touchBox > 2 && touchBox < 6 && m_activeTab != touchBox - 3)
-    {
-        m_activeTab = touchBox - 3;
-        updateTooltips();
-        SelectTab(m_activeTab);
-    }
+    if (!pressed) return;
+    if (touchBox <= 2 || touchBox >= 6) return;
+    if (m_activeTab == touchBox - 3) return;
+    m_activeTab = touchBox - 3;
+    updateTooltips();
+    SelectTab(m_activeTab);
 }
 
 UIControl* UIScene_AvatarSelectMenu::GetMainPanel()
@@ -247,7 +264,7 @@ void UIScene_AvatarSelectMenu::tick()
         gConsoleUIController.NavigateBack(GetPad(), false, EUIScene_None, EUILayer_Count);
     }
     if (m_navigateBack) navigateBack();
-    if (hasFocus(m_pad) && !m_miisAdded) { AddMiiItems(); m_miisAdded = true; }
+    if (hasFocus(m_playerId) && !m_miisAdded) { AddMiiItems(); m_miisAdded = true; }
 }
 
 void UIScene_AvatarSelectMenu::SelectTab(int tab)
@@ -255,7 +272,7 @@ void UIScene_AvatarSelectMenu::SelectTab(int tab)
     m_activeTab = tab;
     gConsoleUIController.PlayUISFX(SoundEvents::UI_SCROLL);
     FJ_AvatarSelectMenu* menu = (FJ_AvatarSelectMenu*)m_movie->getRootNode()->getFuiNode();
-    if (menu != NULL) menu->SetActiveTab(tab);
+    menu->SetActiveTab(tab);
     gConsoleUIController.TouchBoxRebuild(this);
 }
 
@@ -263,23 +280,16 @@ std::wstring UIScene_AvatarSelectMenu::getMoviePath() { return std::wstring(L"Av
 
 void UIScene_AvatarSelectMenu::handlePress(int controlId, int childId)
 {
-    switch (controlId)
-    {
-    case 0:
+    if (controlId == 0)
         gApp.RequestSignInUIWiiUReturnedSelected(m_userControls.m_miis[childId], m_choice, m_pad);
-        break;
-    case 1:
+    else if (controlId == 1)
         gApp.RequestSignInUIWiiUReturnedSelected(m_favouriteControls.m_miis[childId], m_choice, m_pad);
-        break;
-    case 2:
+    else if (controlId == 2)
         gApp.RequestSignInUIWiiUReturnedSelected(m_guestControls.m_miis[childId], m_choice, m_pad);
-        break;
-    default:
+    else
         gApp.RequestSignInUIWiiUReturnedSelected(NULL, m_choice, m_pad);
-        break;
-    }
     navigateBack();
 }
 
 int UIScene_AvatarSelectMenu::getSceneType() { return EUIScene_LoadCreateJoinMenu; }
-unsigned int UIScene_AvatarSelectMenu::GetPad() { return (unsigned int)m_pad; }
+unsigned int UIScene_AvatarSelectMenu::GetPad() { return (unsigned int)m_playerId; }

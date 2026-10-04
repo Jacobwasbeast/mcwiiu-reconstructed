@@ -36,12 +36,10 @@ void NameEntryScreen::buttonClicked(Button* button)
 {
     if (button->mActive)
     {
-        if (button->mId == 0)
+        if (button->mId == 0 && trimString(mName).size() > 1)
         {
-            if (trimString(mName).size() > 1)
-            {
-                mMinecraft->setScreen(mParentScreen);
-            }
+            trimString(mName);
+            mMinecraft->setScreen(NULL);
         }
 
         if (button->mId == 1)
@@ -55,10 +53,10 @@ void NameEntryScreen::keyPressed(wchar_t key, int action)
 {
     if (action == 29 && !mName.empty())
     {
-        mName.assign(mName, 0, mName.size() - 1);
+        mName = mName.substr(0, mName.size() - 1);
     }
 
-    if (ALLOWED_CHARACTERS.find(&key, 0, 1) != std::wstring::npos
+    if (ALLOWED_CHARACTERS.find(key, 0) != std::wstring::npos
         && mName.size() < 64)
     {
         mName += key;
@@ -72,14 +70,13 @@ void NameEntryScreen::render(int x, int y, float partialTick)
     renderBackground();
     drawCenteredString(mFont, mTitle, mWidth / 2, 40, 0xffffff);
 
-    int centerX = mWidth / 2;
-    int centerY = mHeight / 2;
-    fill(centerX - 101, centerY - 11, centerX + 101, centerY + 11, 0xffa0a0a0);
-    fill(centerX - 100, centerY - 10, centerX + 100, centerY + 10, 0xff000000);
+    int left = mWidth / 2 - 100;
+    int top = mHeight / 2 - 10;
+    fill(left - 1, top - 1, left + 201, top + 21, 0xffa0a0a0);
+    fill(left, top, left + 200, top + 20, 0xff000000);
 
     const wchar_t* cursor = (mTickCount / 6 & 1) == 0 ? L"_" : L"";
-    std::wstring displayedName = mName + cursor;
-    drawString(mFont, displayedName, centerX - 96, centerY - 4, 0xe0e0e0);
+    drawString(mFont, mName + cursor, left + 4, top + 6, 0xe0e0e0);
 
     Screen::render(x, y, partialTick);
 }

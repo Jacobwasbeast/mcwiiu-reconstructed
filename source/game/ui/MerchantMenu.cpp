@@ -10,13 +10,15 @@
 #include "game/world/generation/Player.hpp"
 
 MerchantMenu::MerchantMenu(boost::shared_ptr<Inventory> inventory, boost::shared_ptr<Merchant> merchant, Level* level)
-    : AbstractContainerMenu(), mMerchant(merchant), mTradeContainer(), mLevel(level)
+    : AbstractContainerMenu()
 {
-    boost::shared_ptr<Player> player = merchant ? merchant->getTradingPlayer() : boost::shared_ptr<Player>();
-    mTradeContainer.reset(new MerchantContainer(player, merchant));
+    mMerchant = merchant;
+    mLevel = level;
+    mTradeContainer = boost::shared_ptr<MerchantContainer>(
+        new MerchantContainer(boost::dynamic_pointer_cast<Player>(inventory->m_player->shared_from_this()), merchant));
     addSlot(new Slot(mTradeContainer, 0, 36, 53));
     addSlot(new Slot(mTradeContainer, 1, 62, 53));
-    addSlot(new MerchantResultSlot(player.get(),
+    addSlot(new MerchantResultSlot(inventory->m_player,
                                    merchant, mTradeContainer, 2, 120, 53));
 
     int row;
@@ -57,82 +59,77 @@ bool MerchantMenu::stillValid(boost::shared_ptr<Player> player)
 
 not_null_ptr<ItemInstance> MerchantMenu::quickMoveStack(boost::shared_ptr<Player> player, int index)
 {
-    not_null_ptr<ItemInstance> empty = ItemInstance::EMPTY;
-    if (index < 0 || index >= (int)m_slots.size())
+    not_null_ptr<ItemInstance> result = ItemInstance::EMPTY;
+    if (static_cast<unsigned int>(index) < m_slots.size())
     {
-        return empty;
-    }
-
-    Slot* slot = m_slots[index];
-    if (slot == NULL || !slot->hasItem())
-    {
-        return empty;
-    }
-    not_null_ptr<ItemInstance> item = slot->getItem();
-    not_null_ptr<ItemInstance> original = item->copy();
-    bool moved = false;
-
-    if (index == 2)
-    {
-        moved = moveItemStackTo(item, 3, 39, true, true, true) == 1;
-        if (!moved)
+        Slot* slot = m_slots.at(index);
+        if (slot != NULL && slot->hasItem())
         {
-            return empty;
+            not_null_ptr<ItemInstance> item = slot->getItem();
+            result = item->copy();
+            if (index == 2)
+            {
+                if (moveItemStackTo(item, 3, 39, true, true, true) != 1)
+                {
+                    return ItemInstance::EMPTY;
+                }
+                slot->onQuickCraft(item, result);
+            }
+            else if (index == 0 || index == 1)
+            {
+                if (moveItemStackTo(item, 3, 39, false, true, true) != 1)
+                {
+                    return ItemInstance::EMPTY;
+                }
+            }
+            else if (index >= 3 && index < 30)
+            {
+                if (moveItemStackTo(item, 30, 39, false, true, true) != 1)
+                {
+                    return ItemInstance::EMPTY;
+                }
+            }
+            else if (index >= 30 && index < 39)
+            {
+                if (moveItemStackTo(item, 3, 30, false, true, true) != 1)
+                {
+                    return ItemInstance::EMPTY;
+                }
+            }
+            if (item->isEmpty())
+            {
+                slot->set(ItemInstance::EMPTY);
+            }
+            else
+            {
+                slot->setChanged();
+            }
+            if (item->getCount() == result->getCount())
+            {
+                return ItemInstance::EMPTY;
+            }
+            slot->onTake(player, item);
         }
-        slot->onQuickCraft(item, original);
     }
-    else if (index == 0 || index == 1)
-    {
-        moved = moveItemStackTo(item, 3, 39, false, true, true) == 1;
-    }
-    else if (index >= 3 && index < 30)
-    {
-        moved = moveItemStackTo(item, 30, 39, false, true, true) == 1;
-    }
-    else if (index >= 30 && index < 39)
-    {
-        moved = moveItemStackTo(item, 3, 30, false, true, true) == 1;
-    }
-    else
-    {
-        return empty;
-    }
-
-    if (!moved)
-    {
-        return empty;
-    }
-    if (item->isEmpty())
-    {
-        slot->set(ItemInstance::EMPTY);
-    }
-    else
-    {
-        slot->setChanged();
-    }
-    if (item->getCount() == original->getCount())
-    {
-        return empty;
-    }
-    slot->onTake(player, item);
-    return original;
+    return result;
 }
 
 void MerchantMenu::removed(boost::shared_ptr<Player> player)
 {
     AbstractContainerMenu::removed(player);
+    mMerchant->setTradingPlayer(boost::shared_ptr<Player>());
     AbstractContainerMenu::removed(player);
     if (!mLevel->mIsClientSide)
     {
-        not_null_ptr<ItemInstance> first = mTradeContainer->getItem(0);
-        if (!first->isEmpty())
+        not_null_ptr<ItemInstance> item = mTradeContainer->removeItemNoUpdate(0);
+        if (!item->isEmpty())
         {
-            player->drop(first, false);
+            player->drop(item, false);
         }
-        not_null_ptr<ItemInstance> second = mTradeContainer->getItem(1);
-        if (!second->isEmpty())
+        item = mTradeContainer->removeItemNoUpdate(1);
+        if (!item->isEmpty())
         {
-            player->drop(second, false);
+            player->drop(item, false);
         }
     }
 }

@@ -1,6 +1,7 @@
 #include "game/ui/UIScene_BrewingStandMenu.hpp"
 #include "game/core/StringIds.hpp"
 
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/L10N.hpp"
 #include "game/core/Minecraft.hpp"
@@ -13,7 +14,7 @@
 #include "game/world/generation/MultiPlayerGameMode.hpp"
 #include "game/ui/UILayer.hpp"
 
-extern CMinecraftApp* g_pApp;
+extern CConsoleMinecraftApp gApp;
 
 static const unsigned char g_brewingBubbleProgress[7] = { 0, 0x1e, 0x19, 0x14, 0x0f, 0x0a, 0x05 };
 
@@ -37,14 +38,14 @@ UIScene_BrewingStandMenu::UIScene_BrewingStandMenu(int type, void* data, UILayer
     m_brewingPlateBar.init(UIString(L""), 0, 0, 20, 0);
 
     m_container = sceneData->container;
-    if (m_container->hasCustomName())
-        m_brewingStandLabel.init(UIString(m_container->getCustomName()));
-    else
+    if (m_container->getName().empty())
         m_brewingStandLabel.init(UIString(L10N::GetString(IDS_TILE_BREWINGSTAND)));
+    else
+        m_brewingStandLabel.init(UIString(m_container->getName()));
 
     if (Minecraft::GetInstance()->mGameModes[sceneData->playerIndex] != 0)
     {
-        Tutorial* tutorial = Minecraft::GetInstance()->mGameModes[sceneData->playerIndex]->getTutorial();
+        Tutorial* tutorial = Minecraft::GetInstance()->mGameModes[type]->getTutorial();
         if (tutorial != 0)
         {
             m_previousTutorialState = tutorial->currentState;
@@ -56,15 +57,14 @@ UIScene_BrewingStandMenu::UIScene_BrewingStandMenu(int type, void* data, UILayer
     Initialize(false, sceneData->playerIndex, menu, true, 5,
                                  IUIScene_AbstractContainerMenu::ESceneSection_BrewingHotbar,
                                  IUIScene_AbstractContainerMenu::ESceneSection_BrewingMax, false);
+    m_ingredientSlot.addSlots(3, 1);
+    m_brewingPlate.addSlots(4, 1);
     m_bottleSlots[0].addSlots(0, 1);
     m_bottleSlots[1].addSlots(1, 1);
     m_bottleSlots[2].addSlots(2, 1);
-    m_ingredientSlot.addSlots(3, 1);
-    m_brewingPlate.addSlots(4, 1);
 
-    const int playerIndex = sceneData->playerIndex;
     delete sceneData;
-    g_pApp->SetRichPresenceContext(playerIndex, 0xb);
+    gApp.SetRichPresenceContext(type, 11);
 }
 
 UIScene_BrewingStandMenu::~UIScene_BrewingStandMenu()
@@ -74,22 +74,57 @@ UIScene_BrewingStandMenu::~UIScene_BrewingStandMenu()
 unsigned int UIScene_BrewingStandMenu::getSectionColumns(
     IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    if (section < IUIScene_AbstractContainerMenu::ESceneSection_BrewingHotbar ||
-        section > IUIScene_AbstractContainerMenu::ESceneSection_BrewingFuel)
-        return 0;
-    static const unsigned char columns[7] = { 9, 9, 1, 1, 1, 1, 1 };
-    return columns[static_cast<int>(section) - IUIScene_AbstractContainerMenu::ESceneSection_BrewingHotbar];
+    unsigned int columns = 0;
+    switch (section)
+    {
+    case IUIScene_AbstractContainerMenu::ESceneSection_BrewingHotbar:
+        columns = 9;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_BrewingInventory:
+        columns = 9;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_BrewingBottle1:
+        columns = 1;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_BrewingBottle2:
+        columns = 1;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_BrewingBottle3:
+        columns = 1;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_BrewingIngredient:
+        columns = 1;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_BrewingFuel:
+        columns = 1;
+        break;
+    default:
+        break;
+    }
+    return columns;
 }
 
 unsigned int UIScene_BrewingStandMenu::getSectionRows(
     IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    if (section < IUIScene_AbstractContainerMenu::ESceneSection_BrewingHotbar ||
-        section > IUIScene_AbstractContainerMenu::ESceneSection_BrewingFuel)
-        return 0;
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_BrewingInventory)
-        return GetInventoryRows();
-    return 1;
+    unsigned int rows = 0;
+    switch (section)
+    {
+    case IUIScene_AbstractContainerMenu::ESceneSection_BrewingInventory:
+        rows = GetInventoryRows();
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_BrewingHotbar:
+    case IUIScene_AbstractContainerMenu::ESceneSection_BrewingBottle1:
+    case IUIScene_AbstractContainerMenu::ESceneSection_BrewingBottle2:
+    case IUIScene_AbstractContainerMenu::ESceneSection_BrewingBottle3:
+    case IUIScene_AbstractContainerMenu::ESceneSection_BrewingIngredient:
+    case IUIScene_AbstractContainerMenu::ESceneSection_BrewingFuel:
+        rows = 1;
+        break;
+    default:
+        break;
+    }
+    return rows;
 }
 
 unsigned int UIScene_BrewingStandMenu::GetSectionAndSlotInDirection(
@@ -233,8 +268,8 @@ void UIScene_BrewingStandMenu::GetItemScreenData(
     else if (section >= IUIScene_AbstractContainerMenu::ESceneSection_BrewingBottle1 && section <= IUIScene_AbstractContainerMenu::ESceneSection_BrewingBottle3) control = static_cast<UIControl*>(&m_bottleSlots[section - IUIScene_AbstractContainerMenu::ESceneSection_BrewingBottle1]);
     else if (section == IUIScene_AbstractContainerMenu::ESceneSection_BrewingIngredient) control = static_cast<UIControl*>(&m_ingredientSlot);
     else if (section == IUIScene_AbstractContainerMenu::ESceneSection_BrewingFuel) control = static_cast<UIControl*>(&m_brewingPlate);
-    const unsigned int columns = getSectionColumns(section);
     const unsigned int rows = getSectionRows(section);
+    const unsigned int columns = getSectionColumns(section);
     if (control != 0 && position != 0 && size != 0 && columns != 0 && rows != 0)
     {
         size->x = static_cast<float>(control->getWidth() / static_cast<float>(columns));
@@ -270,44 +305,84 @@ void UIScene_BrewingStandMenu::setSectionSelectedSlot(
 int UIScene_BrewingStandMenu::getSectionStartOffset(
     IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_BrewingHotbar) return 0;
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_BrewingInventory) return 1;
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_BrewingBottle1) return 2;
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_BrewingBottle2) return 3;
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_BrewingBottle3) return 4;
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_BrewingIngredient) return 5;
-    return 0;
+    int offset = 0;
+    switch (section)
+    {
+    case IUIScene_AbstractContainerMenu::ESceneSection_BrewingHotbar:
+        offset = 32;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_BrewingInventory:
+        offset = 5;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_BrewingBottle1:
+        offset = 0;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_BrewingBottle2:
+        offset = 1;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_BrewingBottle3:
+        offset = 2;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_BrewingIngredient:
+        offset = 3;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_BrewingFuel:
+        offset = 4;
+        break;
+    default:
+        break;
+    }
+    return offset;
 }
 
 unsigned int UIScene_BrewingStandMenu::mapElementsAndNames()
 {
     UIScene_AbstractContainerMenu::mapElementsAndNames();
+    m_movie->getRootNode();
     fuiRenderNode* panel = m_mainPanel.getFuiRenderNode();
-    m_bottleSlots[0].setupControl(this, panel, std::string("Bottle1"));
-    m_bottleSlots[1].setupControl(this, panel, std::string("Bottle2"));
-    m_bottleSlots[2].setupControl(this, panel, std::string("Bottle3"));
-    m_ingredientSlot.setupControl(this, panel, std::string("Ingredient"));
-    m_brewingPlate.setupControl(this, panel, std::string("BrewingPlate"));
-    m_brewingStandLabel.setupControl(this, panel, std::string("BrewingStandText"));
-    m_brewingArrow.setupControl(this, panel, std::string("BrewingArrow"));
-    m_brewingBubbles.setupControl(this, panel, std::string("BrewingBubbles"));
-    m_brewingPlateBar.setupControl(this, panel, std::string("BrewingPlateBar"));
-    m_controls.push_back(&m_bottleSlots[0]);
-    m_controls.push_back(&m_bottleSlots[1]);
-    m_controls.push_back(&m_bottleSlots[2]);
-    m_controls.push_back(&m_ingredientSlot);
-    m_controls.push_back(&m_brewingPlate);
-    m_controls.push_back(&m_brewingStandLabel);
-    m_controls.push_back(&m_brewingArrow);
-    m_controls.push_back(&m_brewingBubbles);
-    m_controls.push_back(&m_brewingPlateBar);
+    {
+        m_bottleSlots[0].setupControl(this, panel, std::string("Bottle1"));
+        m_controls.push_back(&m_bottleSlots[0]);
+    }
+    {
+        m_bottleSlots[1].setupControl(this, panel, std::string("Bottle2"));
+        m_controls.push_back(&m_bottleSlots[1]);
+    }
+    {
+        m_bottleSlots[2].setupControl(this, panel, std::string("Bottle3"));
+        m_controls.push_back(&m_bottleSlots[2]);
+    }
+    {
+        m_ingredientSlot.setupControl(this, panel, std::string("Ingredient"));
+        m_controls.push_back(&m_ingredientSlot);
+    }
+    {
+        m_brewingPlate.setupControl(this, panel, std::string("BrewingPlate"));
+        m_controls.push_back(&m_brewingPlate);
+    }
+    {
+        m_brewingStandLabel.setupControl(this, panel, std::string("BrewingStandText"));
+        m_controls.push_back(&m_brewingStandLabel);
+    }
+    {
+        m_brewingArrow.setupControl(this, panel, std::string("BrewingArrow"));
+        m_controls.push_back(&m_brewingArrow);
+    }
+    {
+        m_brewingBubbles.setupControl(this, panel, std::string("BrewingBubbles"));
+        m_controls.push_back(&m_brewingBubbles);
+    }
+    {
+        m_brewingPlateBar.setupControl(this, panel, std::string("BrewingPlateBar"));
+        m_controls.push_back(&m_brewingPlateBar);
+    }
     return 1;
 }
 
 std::wstring UIScene_BrewingStandMenu::getMoviePath()
 {
-    return g_pApp->GetLocalPlayerCount() < 2 ? std::wstring(L"BrewingStandMenu") :
-        std::wstring(L"BrewingStandMenuSplit");
+    return gApp.GetLocalPlayerCount() > 1 ? std::wstring(L"BrewingStandMenuSplit") :
+        std::wstring(L"BrewingStandMenu");
 }
 
 void UIScene_BrewingStandMenu::handleReload()
@@ -325,12 +400,15 @@ void UIScene_BrewingStandMenu::handleReload()
 
 void UIScene_BrewingStandMenu::tick()
 {
-    const int brewTime = m_container == 0 ? 0 : m_container->getContainerData(0);
-    const int fuel = m_container == 0 ? 0 : m_container->getContainerData(1);
-    m_brewingArrow.setProgress(brewTime);
-    m_brewingPlateBar.setProgress(fuel);
-    const int bubbles = brewTime / 2 % 7;
-    m_brewingBubbles.setProgress(bubbles == 0 ? 0 : bubbles < 7 ? g_brewingBubbleProgress[bubbles] : 0);
+    m_brewingArrow.setProgress(m_container->getContainerData(0));
+    m_brewingPlateBar.setProgress(m_container->getContainerData(1));
+    const unsigned int bubbles = m_container->getContainerData(0) / 2 % 7;
+    if (bubbles == 0)
+        m_brewingBubbles.setProgress(0);
+    else if (bubbles > 6)
+        m_brewingBubbles.setProgress(0);
+    else
+        m_brewingBubbles.setProgress(g_brewingBubbleProgress[bubbles]);
     UIScene_AbstractContainerMenu::tick();
 }
 

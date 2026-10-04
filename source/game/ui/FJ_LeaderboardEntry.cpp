@@ -7,26 +7,12 @@
 #include "game/ui/fuiRenderNodeEditText.hpp"
 #include "game/core/StringConversion.hpp"
 
+static std::string s_entryStates[2] = { "Entry_Unselected", "Entry_Selected" };
+
 FJ_LeaderboardEntry::FJ_LeaderboardEntry(fuiRenderNode* pRenderNode)
-    : FJ_FuiNode(pRenderNode), m_state(0), m_rankText(NULL), m_gamertagText(NULL),
-      m_firstValuePosition(0), m_numColumns(0),
-      m_rankTextWidth(0.0f), m_gamertagTextWidth(0.0f), m_columnTextWidth(0.0f)
+    : FJ_FuiNode(pRenderNode), m_rankTextWidth(0.0f), m_gamertagTextWidth(0.0f), m_columnTextWidth(0.0f)
 {
     int i;
-    m_columnText[0] = NULL;
-    m_columnText[1] = NULL;
-    m_columnText[2] = NULL;
-    m_columnText[3] = NULL;
-    m_columnText[4] = NULL;
-    m_columnText[5] = NULL;
-    m_columnText[6] = NULL;
-    m_columnPosition[0] = 0;
-    m_columnPosition[1] = 0;
-    m_columnPosition[2] = 0;
-    m_columnPosition[3] = 0;
-    m_columnPosition[4] = 0;
-    m_columnPosition[5] = 0;
-    m_columnPosition[6] = 0;
 
     FJ_FuiNode* rankContainer = getChildByName("RankContainer")->getChildAt(0)->asMovieClip();
     FJ_FuiNode* gamertagContainer = getChildByName("GamertagContainer")->getChildAt(0)->asMovieClip();
@@ -42,10 +28,10 @@ FJ_LeaderboardEntry::FJ_LeaderboardEntry(fuiRenderNode* pRenderNode)
         FJ_FuiNode* column = getChildByName(name)->getChildAt(0)->asMovieClip();
         m_columnText[i] = column->getRenderNodeChildAt(0)->asEditText();
         addChild(m_columnText[i]);
-        m_columnText[i]->setX(column->getX());
-        m_columnText[i]->setY(column->getY());
-        m_columnTextWidth = m_columnText[i]->getWidth();
+        m_columnText[i]->setX(getChildByName(name)->getX());
+        m_columnText[i]->setY(getChildByName(name)->getY());
         column->getParent()->removeChild(column, true);
+        m_columnTextWidth = m_columnText[i]->getWidth();
     }
     ChangeState(0);
     addEventListener(eFJEventType_FocusIn, this, _focusInHandler, false);
@@ -62,78 +48,73 @@ void FJ_LeaderboardEntry::Init(int count, int firstValue, int spacing, int offse
     int i;
     for (i = 0; i < 7; ++i)
     {
-        if (i >= count)
-            m_columnText[i]->setVisibility(false);
-        else
+        if (i < count)
         {
             int x = firstValue + offset + i * spacing;
             m_columnPosition[i] = x;
             m_columnText[i]->setX((float)x);
             m_columnText[i]->setVisibility(true);
         }
+        else
+            m_columnText[i]->setVisibility(false);
     }
     m_numColumns = count;
-    m_firstValuePosition = (firstValue * 2 + offset * 2 + spacing * (count - 1)) / 2;
+    m_firstValuePosition = (firstValue + offset + (firstValue + offset + spacing * (count - 1))) / 2;
 }
 
 void FJ_LeaderboardEntry::SetData(FJ_LeaderboardList::CLeaderboardEntry* pEntry)
 {
     int i;
     float scale = 1.0f;
-    if (pEntry == NULL)
-        m_rankText->setText(L"");
-    else
-        m_rankText->setText(_toString(pEntry->rank));
+    m_rankText->setText(pEntry != NULL ? _toString(pEntry->rank) : std::wstring(L""));
     m_rankText->setAutoSize(TextFieldAutoSizeLeft);
     m_rankText->setScaleX(scale / getScaleX());
     m_rankText->setScaleY(scale / getScaleY());
-    m_rankText->setX(m_rankTextWidth * 0.5f - m_rankText->getWidth() * 0.5f);
+    m_rankText->setX(-m_rankText->getWidth() * 0.5f + m_rankTextWidth * 0.5f);
 
-    if (pEntry == NULL)
-        m_gamertagText->setText(L"");
-    else
-        m_gamertagText->setText(pEntry->gamertag);
+    m_gamertagText->setText(pEntry != NULL ? pEntry->gamertag : std::wstring(L""));
     m_gamertagText->setAutoSize(TextFieldAutoSizeLeft);
     m_gamertagText->setScaleX(scale / getScaleX());
     m_gamertagText->setScaleY(scale / getScaleY());
-    m_gamertagText->setX(m_gamertagTextWidth * 0.5f - m_gamertagText->getWidth() * 0.5f);
+    m_gamertagText->setX(-m_gamertagText->getWidth() * 0.5f + m_gamertagTextWidth * 0.5f);
 
     if (pEntry != NULL && pEntry->singleValue)
     {
-        for (i = 0; i < 7; ++i)
+        for (i = 1; i < 7; ++i)
             m_columnText[i]->setVisibility(false);
         m_columnText[0]->setText(pEntry->values[0]);
         m_columnText[0]->setAutoSize(TextFieldAutoSizeLeft);
         m_columnText[0]->setScaleX(scale / getScaleX());
         m_columnText[0]->setScaleY(scale / getScaleY());
+        m_columnText[0]->setX((float)m_firstValuePosition - m_columnText[0]->getWidth() * 0.5f);
         m_columnText[0]->setVisibility(true);
         return;
     }
     for (i = 0; i < 7; ++i)
     {
-        if (pEntry == NULL || pEntry->values[i].compare(L"") == 0 || i >= m_numColumns)
-            m_columnText[i]->setVisibility(false);
-        else
+        if (pEntry != NULL && pEntry->values[i] != L"" && i < m_numColumns)
         {
             m_columnText[i]->setText(pEntry->values[i]);
             m_columnText[i]->setAutoSize(TextFieldAutoSizeLeft);
             m_columnText[i]->setScaleX(scale / getScaleX());
             m_columnText[i]->setScaleY(scale / getScaleY());
+            m_columnText[i]->setX((float)m_columnPosition[i] - m_columnText[i]->getWidth() * 0.5f);
             m_columnText[i]->setVisibility(true);
         }
+        else
+            m_columnText[i]->setVisibility(false);
     }
 }
 
 void FJ_LeaderboardEntry::ChangeState(int state)
 {
-    gotoAndStop(state);
+    gotoAndStop(s_entryStates[state]);
     m_state = state;
 }
 
 void FJ_LeaderboardEntry::focusInHandler(FJ_Event*)
 {
-    gotoAndStop("FocusIn");
-    m_state = 1;
+    ChangeState(1);
 }
 
 void FJ_LeaderboardEntry::_focusInHandler(FJ_FuiNode* pNode, FJ_Event* pEvent)
@@ -143,8 +124,7 @@ void FJ_LeaderboardEntry::_focusInHandler(FJ_FuiNode* pNode, FJ_Event* pEvent)
 
 void FJ_LeaderboardEntry::focusOutHandler(FJ_Event*)
 {
-    gotoAndStop("FocusOut");
-    m_state = 0;
+    ChangeState(0);
 }
 
 void FJ_LeaderboardEntry::_focusOutHandler(FJ_FuiNode* pNode, FJ_Event* pEvent)

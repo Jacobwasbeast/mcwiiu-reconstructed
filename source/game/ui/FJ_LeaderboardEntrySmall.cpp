@@ -10,12 +10,12 @@ FJ_LeaderboardEntrySmall::FJ_LeaderboardEntrySmall(fuiRenderNode* pRenderNode)
     : FJ_LeaderboardEntry(pRenderNode)
 {
     addEventListener(eFJEventType_UpdateLabel, this, _HandleUpdateLabel, false);
-    getChildByName("StyleContainer")->getChildAt(0)->asMovieClip()->setVisible(false);
+    getChildByName("StyleContainer")->setVisible(false);
 }
 
 void FJ_LeaderboardEntrySmall::HandleUpdateLabel(FJ_Event*)
 {
-    getChildByName("StyleContainer")->getChildAt(0)->asMovieClip()->setVisible(false);
+    getChildByName("StyleContainer")->setVisible(false);
     UpdateHighlightColours();
 }
 

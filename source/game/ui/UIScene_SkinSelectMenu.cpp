@@ -35,7 +35,7 @@ static const int s_defaultSkinNameIds[19] = {
     IDS_DEFAULT_SKIN12, (int)0xa529561d, 0x3321e6e2, 0x5924614b, 0x0d1f6c79, (int)0xe71cf210
 };
 
-static const int s_newestSkinPackIds[12] = {
+static int s_newestSkinPackIds[12] = {
     0x22c, 0x224, 0x233, 0x222, 0x216, 0x225, 0x234, 0x207, 0x227, 0x4f9, 0x23c, 0x40e
 };
 
@@ -126,15 +126,26 @@ unsigned int UIScene_SkinSelectMenu::mapElementsAndNames()
     m_controls.push_back(&m_controlCharacters);
 
     fuiRenderNode* charactersNode = m_controlCharacters.getFuiRenderNode();
-    static const char* const characterNames[eCharacter_Count] = {
-        "iggy_Character0", "iggy_Character1", "iggy_Character2", "iggy_Character3",
-        "iggy_Character4", "iggy_Character5", "iggy_Character6"
-    };
-    for (int i = 0; i < eCharacter_Count; ++i)
-    {
-        m_characters[i].setupControl(this, charactersNode, std::string(characterNames[i]));
-        m_controls.push_back(&m_characters[i]);
-    }
+    m_characters[0].setupControl(this, charactersNode, std::string("iggy_Character0"));
+    m_controls.push_back(&m_characters[0]);
+
+    m_characters[1].setupControl(this, charactersNode, std::string("iggy_Character1"));
+    m_controls.push_back(&m_characters[1]);
+
+    m_characters[2].setupControl(this, charactersNode, std::string("iggy_Character2"));
+    m_controls.push_back(&m_characters[2]);
+
+    m_characters[3].setupControl(this, charactersNode, std::string("iggy_Character3"));
+    m_controls.push_back(&m_characters[3]);
+
+    m_characters[4].setupControl(this, charactersNode, std::string("iggy_Character4"));
+    m_controls.push_back(&m_characters[4]);
+
+    m_characters[5].setupControl(this, charactersNode, std::string("iggy_Character5"));
+    m_controls.push_back(&m_characters[5]);
+
+    m_characters[6].setupControl(this, charactersNode, std::string("iggy_Character6"));
+    m_controls.push_back(&m_characters[6]);
 
     m_packIcon.setupControl(this, root, std::string("TexturePackIcon"));
     m_controls.push_back(&m_packIcon);
@@ -212,13 +223,14 @@ unsigned int UIScene_SkinSelectMenu::registerTexture(std::wstring textureName)
 {
     wchar_t path[64];
     swprintf(path, 64, L"Graphics\\PackGraphics\\%ls.png", textureName.c_str());
-    if (!gApp.hasArchiveFile(std::wstring(path), false))
-        return 0;
-
-    arrayWithLength<unsigned char> file = gApp.getArchiveFile(std::wstring(path), false);
-    if (file.length != 0 && file.data != NULL)
-        registerSubstitutionTexture(textureName, file.data, file.length, true);
-    return 1;
+    if (gApp.hasArchiveFile(std::wstring(path), false))
+    {
+        arrayWithLength<unsigned char> file = gApp.getArchiveFile(std::wstring(path), false);
+        if (file.length != 0 && file.data != NULL)
+            registerSubstitutionTexture(textureName, file.data, file.length, true);
+        return 1;
+    }
+    return 0;
 }
 
 unsigned char UIScene_SkinSelectMenu::getTextureId(int index)
@@ -227,43 +239,56 @@ unsigned char UIScene_SkinSelectMenu::getTextureId(int index)
         0x25, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2a, 0x2b, 0x2c,
         0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77, 0xaa, 0xa9
     };
-    if (index > 0x12)
+    if (static_cast<unsigned int>(index) > 0x12)
         return 0x25;
     return textureIds[index];
 }
 
 unsigned int UIScene_SkinSelectMenu::getNextSkinIndex(unsigned int index)
 {
-    const unsigned int next = index + 1;
-    unsigned int count;
+    unsigned int next = index + 1;
     if (m_packIndex == 1)
     {
-        count = GameSettings::GetPlayerFavoriteSkinsCount(m_playerId);
+        if (next >= GameSettings::GetPlayerFavoriteSkinsCount(m_playerId))
+            next = 0;
     }
-    else
+    else if (m_packIndex == 0 && static_cast<int>(next) > 0x12)
     {
-        if (m_packIndex == 0 && static_cast<int>(next) > 0x12)
-            return 0;
-        if (m_pack == NULL)
-            return next;
-        count = static_cast<unsigned int>(m_pack->getSkinCount());
+        next = 0;
     }
-    if (next >= count)
-        return 0;
+    else if (m_pack != NULL)
+    {
+        if (next >= static_cast<unsigned int>(m_pack->getSkinCount()))
+            next = 0;
+    }
     return next;
 }
 
 int UIScene_SkinSelectMenu::getPreviousSkinIndex(unsigned int index)
 {
-    if (index != 0)
-        return static_cast<int>(index - 1);
-    if (m_packIndex == 1)
-        return static_cast<int>(GameSettings::GetPlayerFavoriteSkinsCount(m_playerId)) - 1;
-    if (m_packIndex == 0)
-        return 0x12;
-    if (m_pack == NULL)
-        return 0;
-    return m_pack->getSkinCount() - 1;
+    int result;
+    if (index == 0)
+    {
+        if (m_packIndex == 1)
+        {
+            result = static_cast<int>(GameSettings::GetPlayerFavoriteSkinsCount(m_playerId)) - 1;
+        }
+        else if (m_packIndex == 0)
+        {
+            result = 0x12;
+        }
+        else
+        {
+            result = 0;
+            if (m_pack != NULL)
+                result = m_pack->getSkinCount() - 1;
+        }
+    }
+    else
+    {
+        result = static_cast<int>(index) - 1;
+    }
+    return result;
 }
 
 void UIScene_SkinSelectMenu::handleSkinIndexChanged()
@@ -570,9 +595,9 @@ void UIScene_SkinSelectMenu::handleSkinIndexChanged()
     updateTooltips();
 }
 
-unsigned int UIScene_SkinSelectMenu::IsTrialDiscontinuedPack(int packId)
+unsigned char UIScene_SkinSelectMenu::IsTrialDiscontinuedPack(int packId)
 {
-    if (packId <= 1)
+    if (packId < 2)
         return 0;
 
     DLCPack* pack = gApp.mDLCManager.getPackFromPackID(packId);
@@ -580,9 +605,7 @@ unsigned int UIScene_SkinSelectMenu::IsTrialDiscontinuedPack(int packId)
     if (info == NULL || info->PackType != 4 ||
         GameSettings::IsDebugSettingEnabled(static_cast<eDebugSetting>(2), -1) != 0)
         return 0;
-    if (pack != NULL && !pack->hasPurchasedPack())
-        return 1;
-    return 0;
+    return pack != NULL && !pack->hasPurchasedPack();
 }
 
 unsigned int UIScene_SkinSelectMenu::GetIsNewPack(int packId)
@@ -615,7 +638,7 @@ bool UIScene_SkinSelectMenu::SORTALPHABETICALLY(int first, int second)
     DLCPack* secondPack = gApp.mDLCManager.getPackFromPackID(second);
     if (firstPack != NULL && secondPack != NULL)
         return firstPack->getLocalisedDisplayName().compare(secondPack->getLocalisedDisplayName()) < 0;
-    return second < first;
+    return first > second;
 }
 
 void UIScene_SkinSelectMenu::SetSkinPackButtonList()
@@ -890,12 +913,15 @@ void UIScene_SkinSelectMenu::updateTooltips()
             if (IsFavoriteSkin(m_playerId, static_cast<int>(m_skinIndex)) != 0)
                 favouriteTooltip = IDS_TOOLTIPS_FAVORITE_REMOVE;
         }
-        else if (m_pack != NULL)
+        else
         {
-            DLCSkinFile* skinFile = static_cast<DLCSkinFile*>(m_pack->getSkinFile(m_skinIndex));
+            DLCSkinFile* skinFile = NULL;
+            if (m_pack != NULL)
+                skinFile = static_cast<DLCSkinFile*>(m_pack->getSkinFile(m_skinIndex));
             if (skinFile != NULL)
             {
-                if (IsFavoriteSkin(m_playerId, static_cast<int>(CMinecraftApp::getSkinIdFromPath(skinFile->getPath()))) != 0)
+                std::wstring skinPath = skinFile->getPath();
+                if (IsFavoriteSkin(m_playerId, static_cast<int>(CMinecraftApp::getSkinIdFromPath(skinPath))) != 0)
                     favouriteTooltip = IDS_TOOLTIPS_FAVORITE_REMOVE;
                 if (!m_pack->hasPurchasedPack() && !skinFile->isFree())
                     favouriteTooltip = -1;
@@ -924,9 +950,9 @@ void UIScene_SkinSelectMenu::handleAnimationEnd()
 
 std::wstring UIScene_SkinSelectMenu::getMoviePath()
 {
-    if (gApp.GetLocalPlayerCount() < 2)
-        return L"SkinSelectMenu";
-    return L"SkinSelectMenuSplit";
+    if (gApp.GetLocalPlayerCount() > 1)
+        return L"SkinSelectMenuSplit";
+    return L"SkinSelectMenu";
 }
 
 void UIScene_SkinSelectMenu::InputActionOK(unsigned int player)
@@ -1254,8 +1280,12 @@ void UIScene_SkinSelectMenu::customDraw(const char* name, fuiRect* rect)
 {
     if (m_skinUpdatePending)
     {
-        FJ_FuiNode* characters = m_movie->getRootNode()->getFuiNode()->getChildByName(std::string("IggyCharacters"));
-        if (characters->currentFrame() == 1)
+        int frame;
+        {
+            std::string charactersName("IggyCharacters");
+            frame = m_movie->getRootNode()->getFuiNode()->getChildByName(charactersName)->currentFrame();
+        }
+        if (frame == 1)
         {
             m_characters[eCharacter_Current].SetFacing(UIControl_PlayerSkinPreview::eFacingFront, false);
             m_characters[eCharacter_Next1].SetFacing(UIControl_PlayerSkinPreview::eFacingRight, false);

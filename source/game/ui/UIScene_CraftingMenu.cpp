@@ -806,10 +806,10 @@ void UIScene_CraftingMenu::handleTouchInput(unsigned int, int touchX, int touchY
         if (!IUIScene_CraftingMenu::isSpinnerGroup())
         {
             const float px = static_cast<float>(touchX);
-            const float rowX =
-                static_cast<float>(m_mainPanel.getXPos() + m_craftingHSlots.getXPos());
-            if (rowX + m_craftingHSlots.getHeight() * m_horizontalSlot < px &&
-                px < rowX + m_craftingHSlots.getHeight() * (m_horizontalSlot + 1))
+            if (m_mainPanel.getXPos() + m_craftingHSlots.getXPos() +
+                        m_craftingHSlots.getHeight() * m_horizontalSlot < px &&
+                px < m_mainPanel.getXPos() + m_craftingHSlots.getXPos() +
+                         m_craftingHSlots.getHeight() * (m_horizontalSlot + 1))
             {
                 m_touchDragging = true;
                 return;
@@ -818,11 +818,19 @@ void UIScene_CraftingMenu::handleTouchInput(unsigned int, int touchX, int touchY
         else
         {
             const float px = static_cast<float>(touchX);
-            UIControl_SlotList& column = IUIScene_CraftingMenu::getNumSpinnerSlots() == 3
-                                             ? m_tripleSpinnerSlots[m_horizontalSlot]
-                                             : m_doubleSpinnerSlots[m_horizontalSlot];
-            const float columnX = static_cast<float>(m_mainPanel.getXPos() + column.getXPos());
-            if (columnX < px && px < columnX + column.getHeight())
+            if (IUIScene_CraftingMenu::getNumSpinnerSlots() == 3)
+            {
+                if (m_mainPanel.getXPos() + m_tripleSpinnerSlots[m_horizontalSlot].getXPos() < px &&
+                    px < m_mainPanel.getXPos() + m_tripleSpinnerSlots[m_horizontalSlot].getXPos() +
+                             m_tripleSpinnerSlots[m_horizontalSlot].getHeight())
+                {
+                    m_touchDragging = true;
+                    return;
+                }
+            }
+            else if (m_mainPanel.getXPos() + m_doubleSpinnerSlots[m_horizontalSlot].getXPos() < px &&
+                     px < m_mainPanel.getXPos() + m_doubleSpinnerSlots[m_horizontalSlot].getXPos() +
+                              m_doubleSpinnerSlots[m_horizontalSlot].getHeight())
             {
                 m_touchDragging = true;
                 return;
@@ -889,28 +897,28 @@ void UIScene_CraftingMenu::handleTouchInput(unsigned int, int touchX, int touchY
         column = -1;
         if (IUIScene_CraftingMenu::getNumSpinnerSlots() == 3)
         {
-            const float firstX =
-                static_cast<float>(m_mainPanel.getXPos() + m_tripleSpinnerSlots[0].getXPos());
-            const float secondX =
-                static_cast<float>(m_mainPanel.getXPos() + m_tripleSpinnerSlots[1].getXPos());
-            const float thirdX =
-                static_cast<float>(m_mainPanel.getXPos() + m_tripleSpinnerSlots[2].getXPos());
-            if (firstX < px && px <= firstX + m_tripleSpinnerSlots[0].getWidth())
+            if (m_mainPanel.getXPos() + m_tripleSpinnerSlots[0].getXPos() < px &&
+                px <= m_mainPanel.getXPos() + m_tripleSpinnerSlots[0].getXPos() +
+                          m_tripleSpinnerSlots[0].getWidth())
                 column = 0;
-            else if (secondX < px && px <= secondX + m_tripleSpinnerSlots[1].getWidth())
+            else if (m_mainPanel.getXPos() + m_tripleSpinnerSlots[1].getXPos() < px &&
+                     px <= m_mainPanel.getXPos() + m_tripleSpinnerSlots[1].getXPos() +
+                               m_tripleSpinnerSlots[1].getWidth())
                 column = 1;
-            else if (thirdX < px && px <= thirdX + m_tripleSpinnerSlots[2].getWidth())
+            else if (m_mainPanel.getXPos() + m_tripleSpinnerSlots[2].getXPos() < px &&
+                     px <= m_mainPanel.getXPos() + m_tripleSpinnerSlots[2].getXPos() +
+                               m_tripleSpinnerSlots[2].getWidth())
                 column = 2;
         }
         else
         {
-            const float firstX =
-                static_cast<float>(m_mainPanel.getXPos() + m_doubleSpinnerSlots[0].getXPos());
-            const float secondX =
-                static_cast<float>(m_mainPanel.getXPos() + m_doubleSpinnerSlots[1].getXPos());
-            if (firstX < px && px <= firstX + m_doubleSpinnerSlots[0].getWidth())
+            if (m_mainPanel.getXPos() + m_doubleSpinnerSlots[0].getXPos() < px &&
+                px <= m_mainPanel.getXPos() + m_doubleSpinnerSlots[0].getXPos() +
+                          m_doubleSpinnerSlots[0].getWidth())
                 column = 0;
-            else if (secondX < px && px <= secondX + m_doubleSpinnerSlots[1].getWidth())
+            else if (m_mainPanel.getXPos() + m_doubleSpinnerSlots[1].getXPos() < px &&
+                     px <= m_mainPanel.getXPos() + m_doubleSpinnerSlots[1].getXPos() +
+                               m_doubleSpinnerSlots[1].getWidth())
                 column = 1;
         }
 
@@ -919,8 +927,8 @@ void UIScene_CraftingMenu::handleTouchInput(unsigned int, int touchX, int touchY
         py = static_cast<float>(touchY);
     }
 
-    const float rowY = static_cast<float>(m_mainPanel.getYPos() + m_craftingHSlots.getYPos());
-    if (rowY < py && py < rowY + m_craftingHSlots.getHeight())
+    if (m_mainPanel.getYPos() + m_craftingHSlots.getYPos() < py &&
+        py < m_mainPanel.getYPos() + m_craftingHSlots.getYPos() + m_craftingHSlots.getHeight())
     {
         const int previous = m_horizontalSlot;
         if (previous != column)
@@ -951,9 +959,10 @@ void UIScene_CraftingMenu::handleTouchInput(unsigned int, int touchX, int touchY
             rows = 2;
     }
 
-    if (rows != 0 && rowY + m_craftingHSlots.getHeight() < py)
+    if (m_mainPanel.getYPos() + m_craftingHSlots.getYPos() + m_craftingHSlots.getHeight() < py &&
+        rows > 0)
         m_verticalColumn = 2;
-    else if (rows >= 2 && py < rowY)
+    else if (py < m_mainPanel.getYPos() + m_craftingHSlots.getYPos() && rows > 1)
         m_verticalColumn = 0;
     else
         m_verticalColumn = 1;

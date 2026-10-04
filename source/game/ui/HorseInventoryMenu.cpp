@@ -9,29 +9,32 @@
 #include "game/item/ItemInstance.hpp"
 #include "game/world/generation/Player.hpp"
 
-HorseInventoryMenu::HorseInventoryMenu(boost::shared_ptr<Container> horseContainer,
-                                       boost::shared_ptr<Container> playerInventory,
-                                       boost::shared_ptr<AbstractHorse> horse,
+HorseInventoryMenu::HorseInventoryMenu(boost::shared_ptr<Container> playerInventory,
+                                       boost::shared_ptr<Container> horseContainer,
+                                       boost::shared_ptr<AbstractHorse> horseEntity,
                                        boost::shared_ptr<Player> player)
-    : m_container(horseContainer), horse(horse)
 {
+    m_container = horseContainer;
+    horse = horseEntity;
+
     horseContainer->startOpen(player);
 
     addSlot(new HorseSaddleSlot(this, horseContainer, 0, 8, 18));
     addSlot(new HorseArmorSlot(this, horseContainer, 1, 8, 36));
 
-    boost::shared_ptr<AbstractChestedHorse> chestedHorse =
-        boost::static_pointer_cast<AbstractChestedHorse>(horse);
-    if (chestedHorse->hasChest())
+    if ((horseEntity->GetType() & EntityType::ABSTRACT_CHESTED_HORSE) == EntityType::ABSTRACT_CHESTED_HORSE &&
+        boost::static_pointer_cast<AbstractChestedHorse>(horseEntity)->hasChest())
     {
-        int columns = chestedHorse->getInventoryColumns();
         int row;
         int column;
         for (row = 0; row < 3; ++row)
         {
-            for (column = 0; column < columns; ++column)
+            for (column = 0;
+                 column < boost::static_pointer_cast<AbstractChestedHorse>(horseEntity)->getInventoryColumns();
+                 ++column)
             {
-                addSlot(new Slot(horseContainer, 2 + column + row * columns,
+                addSlot(new Slot(horseContainer,
+                                 2 + column + row * boost::static_pointer_cast<AbstractChestedHorse>(horseEntity)->getInventoryColumns(),
                                  80 + column * 18, 18 + row * 18));
             }
         }
@@ -53,81 +56,61 @@ HorseInventoryMenu::HorseInventoryMenu(boost::shared_ptr<Container> horseContain
 
 bool HorseInventoryMenu::stillValid(boost::shared_ptr<Player> player)
 {
-    if (!m_container->stillValid(player))
-        return false;
-    if (!horse->isAlive())
-        return false;
-
-    return horse->distanceTo(player) < 5.0;
+    return m_container->stillValid(player) && horse->isAlive() && (float)horse->distanceTo(player) < 5.0f;
 }
 
 not_null_ptr<ItemInstance> HorseInventoryMenu::quickMoveStack(boost::shared_ptr<Player> player, int index)
 {
-    if (index < 0 || index >= (int)m_slots.size())
-        return ItemInstance::EMPTY;
-
+    not_null_ptr<ItemInstance> result = ItemInstance::EMPTY;
     Slot* slot = m_slots.at(index);
-    if (slot == NULL || !slot->hasItem())
-        return ItemInstance::EMPTY;
-
-    not_null_ptr<ItemInstance> oldItem = slot->getItem();
-    not_null_ptr<ItemInstance> item = oldItem->copy();
-    int horseSize = (int)m_container->getContainerSize();
-    bool moved = false;
-
-    if (index < horseSize)
+    if (slot != NULL && slot->hasItem())
     {
-        moved = moveItemStackTo(item, horseSize + 27, (int)m_slots.size(),
-                                false, true, true) != 0;
-        if (!moved)
-            moved = moveItemStackTo(item, horseSize, (int)m_slots.size(),
-                                    true, true, true) != 0;
-    }
-    else
-    {
-        Slot* armorSlot = getSlot(1);
-        if (armorSlot->mayPlace(item))
+        not_null_ptr<ItemInstance> item = slot->getItem();
+        result = item->copy();
+        if ((unsigned int)index < m_container->getContainerSize())
         {
-            if (!armorSlot->hasItem())
-                moved = moveItemStackTo(item, 1, 2, false, true, true) != 0;
+            if (moveItemStackTo(item, m_container->getContainerSize() + 27, (int)m_slots.size(),
+                                false, true, true) != 1)
+            {
+                if (moveItemStackTo(item, m_container->getContainerSize(), (int)m_slots.size(),
+                                    true, true, true) != 1)
+                    return ItemInstance::EMPTY;
+            }
         }
+        else if (getSlot(1)->mayPlace(item) && !getSlot(1)->hasItem())
+        {
+            if (moveItemStackTo(item, 1, 2, false, true, true) != 1)
+                return ItemInstance::EMPTY;
+        }
+        else if (getSlot(0)->mayPlace(item))
+        {
+            if (moveItemStackTo(item, 0, 1, false, true, true) != 1)
+                return ItemInstance::EMPTY;
+        }
+        else if (m_container->getContainerSize() <= 2 ||
+                 !moveItemStackTo(item, 2, m_container->getContainerSize(), false, true, true))
+        {
+            int horseSize = m_container->getContainerSize();
+            int playerInventoryEnd = horseSize + 27;
+            int playerSlotsEnd = horseSize + 36;
+            if (index >= playerInventoryEnd && index < playerSlotsEnd)
+            {
+                if (moveItemStackTo(item, horseSize, playerInventoryEnd, false, true, true) != 1)
+                    return ItemInstance::EMPTY;
+            }
+            else if (index >= horseSize && index < playerInventoryEnd)
+            {
+                if (moveItemStackTo(item, playerInventoryEnd, playerSlotsEnd, false, true, true) != 1)
+                    return ItemInstance::EMPTY;
+            }
+        }
+
+        if (item->isEmpty())
+            slot->set(ItemInstance::EMPTY);
         else
-        {
-            Slot* saddleSlot = getSlot(0);
-            if (saddleSlot->mayPlace(item))
-            {
-                moved = moveItemStackTo(item, 0, 1, false, true, true) != 0;
-            }
-            else
-            {
-                if (horseSize > 2)
-                    moved = moveItemStackTo(item, 2, horseSize, false, true, true) != 0;
-
-                if (!moved)
-                {
-                    int playerInventoryEnd = horseSize + 27;
-                    int playerSlotsEnd = horseSize + 36;
-                    if (index >= playerInventoryEnd && index < playerSlotsEnd)
-                        moved = moveItemStackTo(item, horseSize, playerInventoryEnd,
-                                                false, true, true) != 0;
-                    else if (index >= horseSize && index < playerInventoryEnd)
-                        moved = moveItemStackTo(item, playerInventoryEnd, playerSlotsEnd,
-                                                false, true, true) != 0;
-                }
-            }
-        }
+            slot->setChanged();
     }
-
-    if (!moved)
-        return ItemInstance::EMPTY;
-    if (item->isEmpty())
-        slot->set(ItemInstance::EMPTY);
-    else
-        slot->setChanged();
-    if (item->getCount() == oldItem->getCount())
-        return ItemInstance::EMPTY;
-    slot->onTake(player, item);
-    return oldItem;
+    return result;
 }
 
 void HorseInventoryMenu::removed(boost::shared_ptr<Player> player)

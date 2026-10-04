@@ -17,8 +17,8 @@ public:
     struct _PlayerInfo
     {
         unsigned char smallId;
-        unsigned char voiceStatus;
-        unsigned short colour;
+        char voiceStatus;
+        short colour;
         std::wstring name;
     };
 

@@ -38,7 +38,7 @@ protected:
 
 public:
     explicit FJ_List2D(fuiRenderNode* renderNode);
-    virtual ~FJ_List2D();
+    virtual ~FJ_List2D() {}
     void HighlightItem(int index);
     void HandlePageUpDownNavigation(bool down);
     FJ_FuiNode* getActiveItem();

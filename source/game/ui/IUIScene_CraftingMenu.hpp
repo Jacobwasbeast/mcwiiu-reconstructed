@@ -144,7 +144,7 @@ protected:
     boost::shared_ptr<ItemInstance> m_baseRecipeItem;
     int m_selectedInventorySlot;
     std::vector<std::pair<int, int> > m_stackedRecipes;
-    boost::shared_ptr<ItemInstance> m_accumulatedItem;
+    not_null_ptr<ItemInstance> m_accumulatedItem;
     std::vector<std::pair<int, int> > m_usedIngredients;
     bool m_baseFromInventory;
     bool m_hasGunpowder;

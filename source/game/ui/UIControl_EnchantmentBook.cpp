@@ -21,8 +21,9 @@
 
 UIControl_EnchantmentBook::UIControl_EnchantmentBook()
 {
-    m_controlType = UIControl::eUIControlType_EnchantmentBook;
     mBookModel = NULL;
+    m_controlType = UIControl::eUIControlType_EnchantmentBook;
+    mItemInstance = ItemInstance::EMPTY;
     mBookTick = 0;
     mBookOpen = 0.0F;
     mBookOpenPrev = 0.0F;
@@ -30,7 +31,6 @@ UIControl_EnchantmentBook::UIControl_EnchantmentBook()
     mBookOpenSpeed = 0.0F;
     mBookRotation = 0.0F;
     mBookRotationPrev = 0.0F;
-    mItemInstance = ItemInstance::EMPTY;
 }
 
 void UIControl_EnchantmentBook::tickBook()
@@ -94,10 +94,10 @@ void UIControl_EnchantmentBook::tickBook()
 void UIControl_EnchantmentBook::render(fuiRect* rect)
 {
     const float partialTicks = 1.0F;
-    const float widthScale = (rect->xMax - rect->xMin) / m_width;
-    const float heightScale = (rect->yMax - rect->yMin) / m_height;
 
     GlStateManager::pushMatrix();
+    const float widthScale = (rect->xMax - rect->xMin) / m_width;
+    const float heightScale = (rect->yMax - rect->yMin) / m_height;
     GlStateManager::scalef(widthScale, heightScale, 1.0F);
     GlStateManager::translatef(m_width * 0.5F, m_height * 0.5F, 50.0F);
     GlStateManager::scalef(-57.0F / widthScale, 57.0F / widthScale, 360.0F);
@@ -106,8 +106,8 @@ void UIControl_EnchantmentBook::render(fuiRect* rect)
     GlStateManager::rotatef(-135.0F, 0.0F, 1.0F, 0.0F);
 
     Minecraft* minecraft = Minecraft::GetInstance();
-    Textures* textures = minecraft->mTextures;
-    textures->bind(textures->loadTexture(73));
+    int texture = minecraft->mTextures->loadTexture(73);
+    minecraft->mTextures->bind(texture);
     GlStateManager::rotatef(20.0F, 1.0F, 0.0F, 0.0F);
 
     const float rotation = mBookRotationPrev + (mBookRotation - mBookRotationPrev) * partialTicks;

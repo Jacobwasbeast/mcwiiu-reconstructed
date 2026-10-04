@@ -49,26 +49,25 @@ void FJ_InGamePlayerOptions::InitMenu()
     FJ_FuiNode* gamertag = getChildByName(std::string("Gamertag"));
     FJ_FuiNode* playerIcon = getChildByName(std::string("PlayerIcon"));
 
-    FJ_FuiNode* backgroundItem = background->getChildAt(0);
-    const float backgroundHeight = background->getHeight();
-    const int listHeight = list->asFJ_List_MultiList()->GetListHeight();
-    const float listHeightFloat = static_cast<float>(listHeight);
-    if (listHeightFloat < list->getHeight())
+    const int backgroundHeight = static_cast<int>(background->getChildAt(0)->getHeight());
+    const float listHeight = static_cast<float>(list->asFJ_List_MultiList()->GetListHeight());
+    if (listHeight < list->getHeight())
     {
-        backgroundItem = background->getChildAt(0);
-        FJ_FuiNode* listItem = list->getChildAt(0);
-        listItem->setY(listHeightFloat + (list->getY() - background->getY()) +
-                       ((background->getY() + background->getHeight()) -
-                        (list->getY() + list->getHeight())));
+        FJ_FuiNode* backgroundItem = background->getChildAt(0);
+        backgroundItem->setHeight(static_cast<float>(list->asFJ_List_MultiList()->GetListHeight()) +
+                                  (list->getY() - background->getY()) +
+                                  ((background->getY() + background->getHeight()) -
+                                   (list->getY() + list->getHeight())));
 
-        const float amount = static_cast<float>(Math::round((backgroundHeight -
-                                                              listItem->getHeight()) * 0.5f));
-        if (amount > 0.0f)
+        const int amount = Math::round((static_cast<float>(backgroundHeight) -
+                                        background->getChildAt(0)->getHeight()) * 0.5f);
+        if (amount > 0)
         {
-            gamertag->incY(amount);
-            playerIcon->incY(amount);
-            backgroundItem->incY(amount);
-            list->incY(amount);
+            const float offset = static_cast<float>(amount);
+            gamertag->incY(offset);
+            playerIcon->incY(offset);
+            background->getChildAt(0)->incY(offset);
+            list->incY(offset);
         }
     }
     SetFocus(-1);
@@ -77,8 +76,7 @@ void FJ_InGamePlayerOptions::InitMenu()
 void FJ_InGamePlayerOptions::SetSafeZone(int top, int bottom, int left, int right)
 {
     FJ_Document::SetSafeZone(top, bottom, left, right);
-    const float stageHeight = getStage()->getStageHeight();
-    if (stageHeight != 360.0 && stageHeight != 540.0)
+    if (getStage()->getStageHeight() != 360.0f && getStage()->getStageHeight() != 540.0f)
         return;
     setY(top);
 }

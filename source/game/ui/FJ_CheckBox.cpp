@@ -34,7 +34,8 @@ FJ_CheckBox::FJ_CheckBox(fuiRenderNode* renderNode)
 
 void FJ_CheckBox::UpdateCheckBox()
 {
-    getChildByName(std::string("CheckBoxTick"))->asMovieClip()->setVisible(m_checked);
+    FJ_FuiNode* tick = getChildByName(std::string("CheckBoxTick"))->asMovieClip();
+    tick->setVisible(m_checked);
 }
 
 void FJ_CheckBox::SetCheckBox(bool checked)
@@ -48,12 +49,12 @@ void FJ_CheckBox::SetCheckBox(bool checked)
     else if (parent->isFJ_List())
     {
         UIScene* scene = getRoot()->m_pCallbackScene;
-        scene->handleCheckboxElementToggled(static_cast<FJ_Base*>(parent)->getId(), getId(), m_checked);
+        scene->handleCheckboxElementToggled(static_cast<FJ_Base*>(getObjListParent())->getId(), getId(), m_checked);
     }
-    else if (parent->isFJ_List2D())
+    else if (getObjListParent()->isFJ_List2D())
     {
         UIScene* scene = getRoot()->m_pCallbackScene;
-        scene->handleCheckboxElementToggled(static_cast<FJ_Base*>(parent)->getId(), getId(), m_checked);
+        scene->handleCheckboxElementToggled(static_cast<FJ_Base*>(getObjListParent())->getId(), getId(), m_checked);
     }
     UpdateCheckBox();
 }
@@ -76,9 +77,9 @@ void FJ_CheckBox::EnableCheckBox(bool enabled)
     }
 }
 
-uint8_t FJ_CheckBox::getChecked()
+bool FJ_CheckBox::getChecked()
 {
-    return m_checked ? 1 : 0;
+    return m_checked;
 }
 
 uint8_t FJ_CheckBox::getEnabled()
@@ -122,7 +123,7 @@ void FJ_CheckBox::keyDownHandler(FJ_Event* event)
         static_cast<FJ_KeyboardEvent*>(event)->m_iKeyCode != 0)
         return;
     FJ_CheckBox::s_keyDown = true;
-    SetCheckBox(!m_checked);
+    SetCheckBox(m_checked ^ 1);
 }
 
 void FJ_CheckBox::_keyDownHandler(FJ_FuiNode* node, FJ_Event* event)
@@ -172,12 +173,12 @@ void FJ_CheckBox::Init(const std::wstring& name, int id, bool checked)
 
 void FJ_CheckBox::GetLabelTooWide(fuiRenderNodeEditText* textField)
 {
-    int width = static_cast<int>(textField->getWidth());
-    if (width < m_labelWidth)
-        width = m_labelWidth;
+    const float maxWidth = static_cast<float>(m_maxLabelWidth);
+    int width = maxWidth <= textField->m_textWidth ? static_cast<int>(textField->m_textWidth) : static_cast<int>(maxWidth);
+    width = width < m_labelWidth ? m_labelWidth : width;
     int required = m_oldWidth;
     if (width > m_labelWidth)
-        required += width - m_labelWidth;
+        required = m_oldWidth - m_labelWidth + width;
     if (required < m_newWidth)
         required = m_newWidth;
     m_newWidth = required;

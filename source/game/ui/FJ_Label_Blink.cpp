@@ -7,6 +7,9 @@
 #include "game/ui/fuiRenderNode.hpp"
 #include "game/ui/fuiRenderNodeEditText.hpp"
 
+static const std::string sLabelStop("Label_Stop");
+static const std::string sLabelOff("Label_Off");
+
 FJ_Label_Blink::FJ_Label_Blink(fuiRenderNode* renderNode)
     : FJ_Base(renderNode), m_blinkEnabled(false)
 {
@@ -14,7 +17,7 @@ FJ_Label_Blink::FJ_Label_Blink(fuiRenderNode* renderNode)
 
 void FJ_Label_Blink::UpdateLabel()
 {
-    setWidth(m_objectWidth);
+    SetLabel(m_label);
 }
 
 void FJ_Label_Blink::HandleUpdateLabel(FJ_Event*)
@@ -39,11 +42,11 @@ void FJ_Label_Blink::EnableBlink(bool enable)
     m_blinkEnabled = enable;
     if (enable)
     {
-        gotoAndPlay("");
+        gotoAndPlay(sLabelOff);
     }
     else
     {
-        gotoAndStop("");
+        gotoAndStop(sLabelStop);
     }
 }
 
@@ -64,7 +67,7 @@ void FJ_Label_Blink::SetLabel(const std::wstring& label)
 
 void FJ_Label_Blink::GetLabelTooWide(fuiRenderNodeEditText* textField)
 {
-    float measured = textField->getWidth();
+    float measured = textField->m_textWidth;
     float required = static_cast<float>(m_maxLabelWidth) <= measured
                          ? static_cast<float>(static_cast<int>(measured))
                          : static_cast<float>(m_maxLabelWidth);

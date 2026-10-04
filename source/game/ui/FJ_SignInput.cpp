@@ -2,9 +2,10 @@
 
 #include "game/ui/FJ_Event.hpp"
 #include "game/ui/FJ_FuiNode.hpp"
+#include "game/ui/FJ_KeyboardEvent.hpp"
 #include "game/ui/UIScene.hpp"
 
-FJ_SignInput::FJ_SignInput(fuiRenderNode* renderNode) : FJ_Base(renderNode), m_maxLength(15), m_leftArrow(0), m_rightArrow(0)
+FJ_SignInput::FJ_SignInput(fuiRenderNode* renderNode) : FJ_Base(renderNode), m_maxLength(15)
 {
 }
 
@@ -26,9 +27,13 @@ void FJ_SignInput::ChangeState(int state)
 {
     if (m_leftArrow != 0 && m_rightArrow != 0)
     {
-        const char* leftFrame = state == 0 ? "Selected_Left" : "UnSelected";
-        const char* rightFrame = state == 0 ? "Selected_Right" : "UnSelected";
+        const char* rightFrame = "UnSelected";
+        const char* leftFrame = rightFrame;
+        if (state == 0)
+            leftFrame = "Selected_Left";
         m_leftArrow->gotoAndPlay(std::string(leftFrame));
+        if (state == 0)
+            rightFrame = "Selected_Right";
         m_rightArrow->gotoAndPlay(std::string(rightFrame));
     }
 }
@@ -55,10 +60,10 @@ void FJ_SignInput::_focusOutHandler(FJ_FuiNode* node, FJ_Event* event)
 
 void FJ_SignInput::keyDownHandler(FJ_Event* event)
 {
-    if (event != 0 && !event->m_bCancelable)
+    if (static_cast<FJ_KeyboardEvent*>(event)->m_iKeyCode == 0)
     {
         FJ_FuiNode* root = getRoot();
-        root->m_pCallbackScene->handlePress(getId(), 0);
+        root->m_pCallbackScene->handlePress(m_id, 0);
     }
 }
 
@@ -70,6 +75,7 @@ void FJ_SignInput::_keyDownHandler(FJ_FuiNode* node, FJ_Event* event)
 void FJ_SignInput::Init(std::wstring name, int id)
 {
     SetLabelAlignment(4);
+    m_isLabel = false;
     InitBase(name, id);
     m_leftArrow = getChildByName(std::string("ArrowLeft"));
     m_rightArrow = getChildByName(std::string("ArrowRight"));
@@ -88,7 +94,7 @@ void FJ_SignInput::HandleDirectInput(unsigned int character)
 {
     if (m_label.size() < static_cast<std::wstring::size_type>(m_maxLength) || m_maxLength == -1)
     {
-        m_label.push_back(static_cast<wchar_t>(character));
+        m_label = m_label.substr(0, m_label.size()) + static_cast<wchar_t>(character) + m_label.substr(m_label.size());
         SetLabel(m_label);
     }
 }

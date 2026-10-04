@@ -6,20 +6,21 @@
 
 DispenserMenu::DispenserMenu(boost::shared_ptr<Container> playerInventory,
                              boost::shared_ptr<Container> dispenser)
-    : m_dispenser(dispenser)
 {
+    m_dispenser = dispenser;
+
     int row;
     int column;
 
     for (row = 0; row < 3; ++row) {
         for (column = 0; column < 3; ++column) {
-            addSlot(new Slot(m_dispenser, row * 3 + column, 62 + column * 18, 17 + row * 18));
+            addSlot(new Slot(dispenser, row * 3 + column, 62 + column * 18, 17 + row * 18));
         }
     }
 
     for (row = 0; row < 3; ++row) {
         for (column = 0; column < 9; ++column) {
-            addSlot(new Slot(playerInventory, 9 + row * 9 + column, 8 + column * 18, 84 + row * 18));
+            addSlot(new Slot(playerInventory, column + row * 9 + 9, 8 + column * 18, 84 + row * 18));
         }
     }
 

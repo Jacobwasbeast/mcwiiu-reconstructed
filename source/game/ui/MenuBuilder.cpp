@@ -80,13 +80,13 @@ void MenuBuilder::POTION(Item* item, Potion* potion)
 
         virtual not_null_ptr<ItemInstance> build() const
         {
-            return PotionUtils::setPotion(mItem.copy(), mPotion);
+            not_null_ptr<ItemInstance> copy = mItem.copy();
+            return PotionUtils::setPotion(copy, mPotion);
         }
 
     private:
         Potion* mPotion;
     };
 
-    ItemInstance instance(item);
-    mItems->push_back(new PotionItemBuilder(instance, potion));
+    mItems->push_back(new PotionItemBuilder(ItemInstance(item), potion));
 }

@@ -26,12 +26,16 @@ class fuiRenderNodeEditText : public fuiRenderNode
 {
 public:
     friend class FJ_Base;
+    friend class FJ_Button;
+    friend class FJ_CheckBox;
     friend class FJ_Slider;
     friend class FJ_TextInput;
     friend class FJ_HtmlTextPanel;
     friend class FJ_HtmlTextPanelLarge;
+    friend class FJ_Label;
     friend class FJ_LabelOutline;
     friend class FJ_LeaderboardEntry;
+    friend class FJ_Label_Blink;
 
     struct HtmlImageDrawData
     {
@@ -95,7 +99,7 @@ public:
     void htmlFontColour(const std::wstring&, RenderStringStateData&);
     std::wstring getHtmlTagAttribute(const std::wstring&, const std::wstring&);
     bool htmlImage(const std::wstring&, RenderStringStateData&);
-    bool checkForUnsupportedAttribute(const std::wstring&, const std::wstring&);
+    void checkForUnsupportedAttribute(const std::wstring&, const std::wstring&);
     bool htmlParagraph(const std::wstring&, RenderStringStateData&);
     bool renderHtmlTag(const std::wstring&, RenderStringStateData&);
     bool isCJKChar(wchar_t);
@@ -135,7 +139,7 @@ public:
     virtual void setVisibility(bool);
     float getScrollH();
     void setScrollH(float);
-    unsigned int getNumLines();
+    int getNumLines();
 
 private:
     OSFastMutex m_lock;
@@ -145,8 +149,8 @@ private:
     unsigned int m_alignment;
 
 public:
-    bool m_wordWrap;
-    bool m_multiline;
+    unsigned char m_wordWrap;
+    unsigned char m_multiline;
 
 private:
     TextFieldAutoSize m_autoSize;
@@ -163,7 +167,7 @@ private:
     bool m_textSet;
     float m_fieldWidth;
     RenderStringStateData m_renderState;
-    std::wstring m_htmlText;
+    std::wstring m_wrapBuffer;
     std::wstring m_wrappedText;
     std::wstring m_tag;
     std::wstring m_attribute;

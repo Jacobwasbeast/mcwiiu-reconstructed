@@ -5,9 +5,7 @@ void Swap4Bytes(unsigned int& value);
 
 void Swap4Bytes(eFuiFillType& value)
 {
-    unsigned int bits = static_cast<unsigned int>(value);
-    Swap4Bytes(bits);
-    value = static_cast<eFuiFillType>(bits);
+    Swap4Bytes(reinterpret_cast<unsigned int&>(value));
 }
 
 void fuiFillStyle::EndianSwap()

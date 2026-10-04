@@ -17,26 +17,26 @@ UIControl_HTMLLabel::UIControl_HTMLLabel()
 
 int UIControl_HTMLLabel::GetRealWidth()
 {
-    FJ_FuiNode* node = m_fuiRenderNode->getFuiNode();
-    if (node->isFJ_HtmlText())
-        return (int)node->asFJ_HtmlText()->GetRealWidth();
+    if (m_fuiRenderNode->getFuiNode()->isFJ_HtmlText())
+        return (int)m_fuiRenderNode->getFuiNode()->asFJ_HtmlText()->GetRealWidth();
 
-    if (node->isFJ_DynamicHtmlText())
-        return (int)node->asFJ_DynamicHtmlText()->GetRealWidth();
+    int size = 0;
+    if (m_fuiRenderNode->getFuiNode()->isFJ_DynamicHtmlText())
+        size = (int)m_fuiRenderNode->getFuiNode()->asFJ_DynamicHtmlText()->GetRealWidth();
 
-    return 0;
+    return size;
 }
 
 int UIControl_HTMLLabel::GetRealHeight()
 {
-    FJ_FuiNode* node = m_fuiRenderNode->getFuiNode();
-    if (node->isFJ_HtmlText())
-        return (int)node->asFJ_HtmlText()->GetRealHeight();
+    if (m_fuiRenderNode->getFuiNode()->isFJ_HtmlText())
+        return (int)m_fuiRenderNode->getFuiNode()->asFJ_HtmlText()->GetRealHeight();
 
-    if (node->isFJ_DynamicHtmlText())
-        return (int)node->asFJ_DynamicHtmlText()->GetRealHeight();
+    int size = 0;
+    if (m_fuiRenderNode->getFuiNode()->isFJ_DynamicHtmlText())
+        size = (int)m_fuiRenderNode->getFuiNode()->asFJ_DynamicHtmlText()->GetRealHeight();
 
-    return 0;
+    return size;
 }
 
 void UIControl_HTMLLabel::setupControl(UIScene* scene, fuiRenderNode* node,
@@ -49,25 +49,31 @@ void UIControl_HTMLLabel::setupControl(UIScene* scene, fuiRenderNode* node,
 void UIControl_HTMLLabel::ReInit()
 {
     UIControl::ReInit();
-    init(UIString(L"px != 0"));
+    init(UIString(L""));
 }
 
 void UIControl_HTMLLabel::SetupTouch()
 {
-    int sceneType = m_scene->getSceneType();
-    if (sceneType == 4 || sceneType == 6 || sceneType == 7)
+    int layerId = m_scene->m_layer->m_layerId;
+    switch (layerId) {
+    case 4:
+    case 6:
+    case 7:
         gConsoleUIController.TouchBoxAdd(this, m_scene);
+        break;
+    default:
+        break;
+    }
 }
 
 void UIControl_HTMLLabel::TouchScroll(int offset, bool active)
 {
-    FJ_FuiNode* node = m_fuiRenderNode->getFuiNode();
-    if (node->isFJ_HtmlText())
+    if (m_fuiRenderNode->getFuiNode()->isFJ_HtmlText())
     {
-        node->asFJ_HtmlText()->TouchScroll(offset, active);
+        m_fuiRenderNode->getFuiNode()->asFJ_HtmlText()->TouchScroll(offset, active);
         return;
     }
 
-    if (node->isFJ_DynamicHtmlText())
-        node->asFJ_DynamicHtmlText()->TouchScroll(offset, active);
+    if (m_fuiRenderNode->getFuiNode()->isFJ_DynamicHtmlText())
+        m_fuiRenderNode->getFuiNode()->asFJ_DynamicHtmlText()->TouchScroll(offset, active);
 }

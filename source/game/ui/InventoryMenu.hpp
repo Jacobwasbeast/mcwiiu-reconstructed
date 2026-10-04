@@ -24,10 +24,10 @@ public:
         virtual bool mayPlace(not_null_ptr<ItemInstance> item);
     };
 
-    static const int ARMOR_SLOT_START;
-    static const int INV_SLOT_START;
-    static const int INV_SLOT_END;
-    static const int USE_ROW_SLOT_START;
+    static const int ARMOR_SLOT_START = 5;
+    static const int INV_SLOT_START = 9;
+    static const int INV_SLOT_END = 36;
+    static const int USE_ROW_SLOT_START = 36;
 
     InventoryMenu(boost::shared_ptr<Inventory> inventory, bool active, Player* player);
 

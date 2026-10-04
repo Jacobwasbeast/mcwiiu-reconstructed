@@ -12,6 +12,7 @@
 
 UIControl_Base::UIControl_Base()
 {
+    m_controlId = 0;
     m_labelChanged = false;
 }
 
@@ -30,22 +31,23 @@ void UIControl_Base::setLabel(UIString label, bool update, bool force)
         m_labelChanged = true;
 
     m_label = label;
-    if (!m_labelChanged || !update || m_fuiRenderNode == 0)
+    if (!m_labelChanged || !update)
         return;
 
     m_labelChanged = false;
+    if (m_fuiRenderNode == 0)
+        return;
 
     std::wstring text;
-    if (label.isCharString() == 0)
-        text.assign(m_label.getString());
-    else
+    if (label.isCharString() != 0)
         text = convStringToWstring(std::string(label.getCharString().c_str()));
+    else
+        text.assign(m_label.getString());
 
-    FJ_FuiNode* node = m_fuiRenderNode->getFuiNode();
-    if (node->isFJ_Base())
-        node->asFJ_Base()->SetLabel(text);
-    else if (node->isFJ_Cursor())
-        node->asFJ_Cursor()->SetLabel(text);
+    if (m_fuiRenderNode->getFuiNode()->isFJ_Base())
+        m_fuiRenderNode->getFuiNode()->asFJ_Base()->SetLabel(text);
+    else if (m_fuiRenderNode->getFuiNode()->isFJ_Cursor())
+        m_fuiRenderNode->getFuiNode()->asFJ_Cursor()->SetLabel(text);
 }
 
 void UIControl_Base::tick()
@@ -59,33 +61,18 @@ void UIControl_Base::tick()
 
 const wchar_t* UIControl_Base::getLabel()
 {
-    FJ_FuiNode* node = m_fuiRenderNode->getFuiNode();
-    if (!node->isFJ_Base())
+    if (!m_fuiRenderNode->getFuiNode()->isFJ_Base())
         return L"";
-    return node->asFJ_Base()->GetLabel().c_str();
+    return m_fuiRenderNode->getFuiNode()->asFJ_Base()->GetLabel().c_str();
 }
 
 void UIControl_Base::setAllPossibleLabels(int firstLabel, unsigned int labelCount, wchar_t (*labels)[256])
 {
     std::vector<std::wstring> possibleLabels;
-    unsigned int groupCount = labelCount / 4;
-    unsigned int remainder = labelCount & 3;
-    unsigned int i;
+    for (unsigned int i = 0; i < labelCount; ++i)
+        possibleLabels.push_back(std::wstring(labels[i]));
 
-    for (i = 0; i < groupCount; ++i)
-    {
-        wchar_t* group = labels[i * 4 + 1];
-        possibleLabels.push_back(std::wstring(group - 256));
-        possibleLabels.push_back(std::wstring(group));
-        possibleLabels.push_back(std::wstring(group + 256));
-        possibleLabels.push_back(std::wstring(group + 512));
-    }
-
-    for (i = 0; i < remainder; ++i)
-        possibleLabels.push_back(std::wstring(labels[groupCount * 4 + i]));
-
-    FJ_FuiNode* node = m_fuiRenderNode->getFuiNode();
-    node->asFJ_Base()->CheckLabelWidths(possibleLabels);
+    m_fuiRenderNode->getFuiNode()->asFJ_Base()->CheckLabelWidths(possibleLabels);
 }
 
 bool UIControl_Base::hasFocus()

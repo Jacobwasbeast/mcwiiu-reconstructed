@@ -216,7 +216,6 @@ void FJ_TexturePackList::addPack(int id, const std::wstring& name)
     if (getParent() == 0) return;
     FJ_TexturePackList_Slot* slot = static_cast<FJ_TexturePackList_Slot*>(
         FJ_Factory::createObject("fourj.listClasses.FJ_TexturePackList_Slot", m_pRenderNode, true, 0));
-    if (slot == 0) return;
     slot->SetSlotID(id);
     slot->SetTextureName(name);
     if (m_visibleSlots == 0) {

@@ -29,6 +29,12 @@ public:
     virtual int getSceneType();
 
 private:
+    struct ListMenuInitData
+    {
+        int playerId;
+        int mode;
+    };
+
     UIControl_Button m_buttons[7];
     unsigned char m_language;
 };

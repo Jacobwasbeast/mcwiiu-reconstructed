@@ -70,8 +70,8 @@ void UIControl_List::init(int controlId)
     m_controlId = controlId;
     FJ_List* list = m_fuiRenderNode->getFuiNode()->asFJ_List();
     list->Init(controlId);
-    int sceneType = m_scene->getSceneType();
-    if (sceneType == 4 || (sceneType > 5 && sceneType < 8))
+    unsigned int layerId = m_scene->m_layer->m_layerId;
+    if (layerId == 4 || (5 < layerId && layerId < 8))
         gConsoleUIController.TouchBoxAdd(this, m_scene);
 }
 
@@ -199,33 +199,31 @@ int UIControl_List::GetActiveItem()
 
 void UIControl_List::UpdateControl()
 {
-    FJ_FuiNode* node = m_fuiRenderNode->getFuiNode();
-    if (node->isFJ_List())
-        node->asFJ_List()->UpdateTouchSize();
+    if (m_fuiRenderNode->getFuiNode()->isFJ_List())
+        m_fuiRenderNode->getFuiNode()->asFJ_List()->UpdateTouchSize();
     UIControl::UpdateControl();
 }
 
 void UIControl_List::SetTouchFocus(int x, int y, bool focus)
 {
-    FJ_FuiNode* node = m_fuiRenderNode->getFuiNode();
-    if (node->isFJ_List())
-        node->asFJ_List()->SetTouchFocus(x, y, focus);
+    if (m_fuiRenderNode->getFuiNode()->isFJ_List())
+        m_fuiRenderNode->getFuiNode()->asFJ_List()->SetTouchFocus(x, y, focus);
 }
 
-bool UIControl_List::CanTouchFocus(int x, int y)
+unsigned int UIControl_List::CanTouchFocus(int x, int y)
 {
-    FJ_FuiNode* node = m_fuiRenderNode->getFuiNode();
-    if (node->isFJ_List())
-        return node->asFJ_List()->CanTouchFocus(x, y);
-    return false;
+    unsigned int result = 0;
+    if (m_fuiRenderNode->getFuiNode()->isFJ_List())
+        result = m_fuiRenderNode->getFuiNode()->asFJ_List()->CanTouchFocus(x, y);
+    return result;
 }
 
-bool UIControl_List::CanTouchTrigger(int x, int y)
+unsigned int UIControl_List::CanTouchTrigger(int x, int y)
 {
-    FJ_FuiNode* node = m_fuiRenderNode->getFuiNode();
-    if (node->isFJ_List())
-        return node->asFJ_List()->CanTouchTrigger(x, y);
-    return false;
+    unsigned int result = 0;
+    if (m_fuiRenderNode->getFuiNode()->isFJ_List())
+        result = m_fuiRenderNode->getFuiNode()->asFJ_List()->CanTouchTrigger(x, y);
+    return result;
 }
 
 UIControl_List::PendingRemoveItem::~PendingRemoveItem()

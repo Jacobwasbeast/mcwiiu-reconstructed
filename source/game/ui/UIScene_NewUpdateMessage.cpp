@@ -28,14 +28,14 @@ UIScene_NewUpdateMessage::UIScene_NewUpdateMessage(int sceneType, void*, UILayer
 
     std::vector<std::wstring> lines;
     std::wstring::size_type start = 0;
-    std::wstring::size_type separator = text.find(L"\r\n", start);
+    std::wstring::size_type separator = text.find(L"\r\n", start, 2);
     while (separator != std::wstring::npos)
     {
         lines.push_back(text.substr(start, separator - start) + L" ");
         start = separator + 2;
-        separator = text.find(L"\r\n", start);
+        separator = text.find(L"\r\n", start, 2);
     }
-    lines.push_back(text.substr(start));
+    lines.push_back(text.substr(start, text.size() - start));
     for (unsigned int i = 0; i < lines.size(); ++i)
         m_eulaText.addText(lines[i], i == lines.size() - 1);
 
@@ -45,20 +45,23 @@ UIScene_NewUpdateMessage::UIScene_NewUpdateMessage(int sceneType, void*, UILayer
 
 UIScene_NewUpdateMessage::~UIScene_NewUpdateMessage()
 {
-    if (m_layer != NULL)
-    {
-        m_layer->removeComponent(EUIScene_Panorama);
-        m_layer->removeComponent(EUIScene_Logo);
-    }
+    m_layer->removeComponent(EUIScene_Panorama);
+    m_layer->removeComponent(EUIScene_Logo);
 }
 
 unsigned int UIScene_NewUpdateMessage::mapElementsAndNames()
 {
     UIScene::mapElementsAndNames();
     fuiRenderNode* root = m_movie->getRootNode();
-    m_acceptButton.setupControl(this, root, std::string("AcceptButton"));
+    {
+        std::string name("AcceptButton");
+        m_acceptButton.setupControl(this, root, name);
+    }
     m_controls.push_back(&m_acceptButton);
-    m_eulaText.setupControl(this, root, std::string("EULAtext"));
+    {
+        std::string name("EULAtext");
+        m_eulaText.setupControl(this, root, name);
+    }
     m_controls.push_back(&m_eulaText);
     return 1;
 }
@@ -84,7 +87,7 @@ void UIScene_NewUpdateMessage::handleInput(int, int action, bool repeat, bool pr
     {
     case EControllerActions_MenuB:
     {
-        unsigned int value = GameSettings::GetGameSettings(m_playerId, eGameSetting_DisplayUpdateMessage);
+        int value = GameSettings::GetGameSettings(m_playerId, eGameSetting_DisplayUpdateMessage);
         if (value > 0)
             --value;
         GameSettings::SetGameSettings(m_playerId, eGameSetting_DisplayUpdateMessage,
@@ -111,7 +114,7 @@ void UIScene_NewUpdateMessage::handlePress(int controlId, int)
     if (controlId == 0)
     {
         gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
-        unsigned int value = GameSettings::GetGameSettings(
+        int value = GameSettings::GetGameSettings(
             m_playerId, eGameSetting_DisplayUpdateMessage);
         if (value > 0)
             --value;

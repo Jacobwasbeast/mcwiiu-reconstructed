@@ -23,6 +23,7 @@ public:
 private:
     Screen* mParentScreen;
     std::wstring mTitle;
+    unsigned char mReserved[4];
     std::wstring mName;
     int mTickCount;
 };

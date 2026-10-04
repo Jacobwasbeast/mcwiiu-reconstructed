@@ -10,7 +10,6 @@ class DisconnectedScreen : public Screen
 {
 public:
     DisconnectedScreen(const std::wstring& title, std::wstring message, void* data, ...);
-    virtual ~DisconnectedScreen();
 
     virtual void tick();
     virtual void keyPressed(char key, int action);

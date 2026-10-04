@@ -88,7 +88,11 @@ fuiRenderNode* fuiRenderNode::getNodeFromPath(const char* path)
 void fuiRenderNode::generateGlobalMatrix()
 {
     if (m_parent != 0)
-        fuiMatrix::mul(m_localMatrix, m_parent->m_globalMatrix, m_globalMatrix);
+    {
+        fuiMatrix result;
+        fuiMatrix::mul(m_localMatrix, m_parent->m_globalMatrix, result);
+        m_globalMatrix = result;
+    }
     else
         m_globalMatrix = m_localMatrix;
 }
@@ -101,15 +105,18 @@ void fuiRenderNode::disableCtor()
 void fuiRenderNode::pushMatrix(fuiMatrix& matrix)
 {
     ++gFui->m_matrixDepth;
-    fuiMatrix::mul(matrix, gFui->m_matrixStack[gFui->m_matrixDepth - 1], gFui->m_matrixStack[gFui->m_matrixDepth]);
-    float rendererMatrix[16] = {
-        matrix.scaleX, matrix.rotateSkew0, 0.0f, 0.0f,
-        matrix.rotateSkew1, matrix.scaleY, 0.0f, 0.0f,
-        0.0f, 0.0f, 1.0f, 0.0f,
-        matrix.translateX, matrix.translateY, 0.0f, 1.0f
-    };
+    fuiMatrix result;
+    fuiMatrix::mul(matrix, gFui->m_matrixStack[gFui->m_matrixDepth - 1], result);
+    fui* state = gFui;
+    state->m_matrixStack[state->m_matrixDepth] = result;
+    state->m_rendererMatrix[0] = matrix.scaleX;
+    state->m_rendererMatrix[1] = matrix.rotateSkew0;
+    state->m_rendererMatrix[4] = matrix.rotateSkew1;
+    state->m_rendererMatrix[5] = matrix.scaleY;
+    state->m_rendererMatrix[12] = matrix.translateX;
+    state->m_rendererMatrix[13] = matrix.translateY;
     gRenderer->MatrixPush();
-    gRenderer->MatrixMult(rendererMatrix);
+    gRenderer->MatrixMult(gFui->m_rendererMatrix);
 }
 
 void fuiRenderNode::setScrollRectViewport()
@@ -119,10 +126,10 @@ void fuiRenderNode::setScrollRectViewport()
 
     gRenderer->StateGetScissorRect(g_fuiOldScissor[0], g_fuiOldScissor[1], g_fuiOldScissor[2], g_fuiOldScissor[3]);
 
-    int left = (int)(gFui->m_originX + m_globalMatrix.translateX);
-    int top = (int)(gFui->m_originY + m_globalMatrix.translateY);
-    int right = (int)((m_scrollRect.xMax - m_scrollRect.xMin) * m_globalMatrix.scaleX + gFui->m_originX + m_globalMatrix.translateX);
-    int bottom = (int)((m_scrollRect.yMax - m_scrollRect.yMin) * m_globalMatrix.scaleY + gFui->m_originY + m_globalMatrix.translateY);
+    unsigned int left = (unsigned int)(0.0f * m_globalMatrix.scaleX + gFui->m_originX + m_globalMatrix.translateX);
+    unsigned int top = (unsigned int)(0.0f * m_globalMatrix.scaleY + gFui->m_originY + m_globalMatrix.translateY);
+    unsigned int right = (unsigned int)((m_scrollRect.xMax - m_scrollRect.xMin) * m_globalMatrix.scaleX + gFui->m_originX + m_globalMatrix.translateX);
+    unsigned int bottom = (unsigned int)((m_scrollRect.yMax - m_scrollRect.yMin) * m_globalMatrix.scaleY + gFui->m_originY + m_globalMatrix.translateY);
     gRenderer->StateSetScissorRect(left, top, right, bottom);
 
     fuiMatrix translation = {1.0f, 0.0f, 0.0f, 1.0f, -m_scrollRect.xMin, -m_scrollRect.yMin};

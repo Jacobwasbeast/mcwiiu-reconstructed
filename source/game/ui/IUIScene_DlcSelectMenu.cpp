@@ -43,20 +43,22 @@ int IUIScene_DlcSelectMenu::UnlockPackReturned(void* context, int userIndex,
     if (result == C4JStorage::EMessageResult_Accept &&
         gProfile->IsSignedIn(userIndex))
     {
-        if (!gProfile->IsSignedInLive(userIndex))
-            menu->showNotOnlineDialog(userIndex);
-        else
+        if (gProfile->IsSignedInLive(userIndex))
         {
             cCommerce* commerce = static_cast<cCommerce*>(
                 (void*)gApp.GetCommerceInstance());
-            if (!commerce->OwnsBundleContainingPack(menu->m_pack->GetPackId()))
+            if (!commerce->PurchaseDLCByPackID(menu->m_pack->GetPackId()))
             {
                 int messageParameter = (int)IDS_CONFIRM_OK;
                 gConsoleUIController.RequestErrorMessage(IDS_DLC_ALREADY_INSTALLED_TITLE, IDS_DLC_ALREADY_INSTALLED_TEXT,
                                                          &messageParameter, 1, userIndex,
                                                          NULL, NULL, NULL, true);
+                menu->m_purchasePending = false;
+                return 0;
             }
         }
+        else
+            menu->showNotOnlineDialog(userIndex);
     }
     menu->m_purchasePending = false;
     return 0;
@@ -88,7 +90,7 @@ void IUIScene_DlcSelectMenu::tryPurchaseDlc(int userIndex, bool& handled,
     m_contentType = (eDLCContentType)info->ContentType;
     cCommerce* commerce = static_cast<cCommerce*>(
         (void*)gApp.GetCommerceInstance());
-    if (commerce->AttemptLogIn() != 0)
+    if (commerce->CheckForEmptyStore(userIndex) != 0)
         return;
 
     m_purchasePending = true;
@@ -104,17 +106,12 @@ void IUIScene_DlcSelectMenu::tryPurchaseDlc(int userIndex, bool& handled,
     }
     else
     {
-        int titleId;
-        int messageId;
+        int titleId = (int)0x8983d4db;
+        int messageId = (int)0xa9be05dc;
         if (selectedType == 3)
         {
             titleId = 0x1139ff03;
             messageId = (int)0xa78136d4;
-        }
-        else
-        {
-            titleId = (int)0x8983d4db;
-            messageId = (int)0xa9be05dc;
         }
         gConsoleUIController.RequestAlertMessage(titleId, messageId, parameters, 2,
                                                   userIndex, UnlockPackReturned, this, NULL, true);

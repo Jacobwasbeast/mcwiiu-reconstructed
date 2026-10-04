@@ -9,10 +9,11 @@
 #include "game/util/Math.hpp"
 
 FJ_MessageBox::FJ_MessageBox(fuiRenderNode* renderNode)
-    : FJ_Document(renderNode), m_buttonCount(0), m_titleHeight(0), m_contentY(0)
+    : FJ_Document(renderNode)
 {
     m_titleHeight = static_cast<int>(getChildByName(std::string("Title"))->getHeight());
     m_contentY = static_cast<int>(getChildByName(std::string("Content"))->getY());
+    m_buttonCount = 0;
 }
 
 FJ_Document* FJ_MessageBox::Create(fuiRenderNode* renderNode)
@@ -52,71 +53,61 @@ void FJ_MessageBox::Init(int buttonCount, int focusIndex)
         }
         if (buttonCount == 1)
         {
-            FJ_Base* base = button3->asFJ_Base();
-            base->m_navUpName.clear();
-            base->m_navDownName.clear();
+            button3->asFJ_Base()->m_navUpName = "";
+            button3->asFJ_Base()->m_navDownName = "";
             getStage()->setFocus(button3);
             return;
         }
     }
 
-    FJ_FuiNode* focus = NULL;
     if (buttonCount == 2)
     {
-        FJ_Base* button2Base = button2->asFJ_Base();
-        FJ_Base* button3Base = button3->asFJ_Base();
-        button2Base->m_navUpName = button3->getName();
-        button3Base->m_navDownName = button2->getName();
+        button2->asFJ_Base()->m_navUpName = button3->getName();
+        button3->asFJ_Base()->m_navDownName = button2->getName();
         if (focusIndex == 0)
         {
-            focus = button2;
+            getStage()->setFocus(button2);
         }
         else if (focusIndex == 1)
         {
-            focus = button3;
+            getStage()->setFocus(button3);
         }
     }
     else if (buttonCount == 3)
     {
-        FJ_Base* button1Base = button1->asFJ_Base();
-        FJ_Base* button3Base = button3->asFJ_Base();
-        button1Base->m_navUpName = button3->getName();
-        button3Base->m_navDownName = button1->getName();
+        button1->asFJ_Base()->m_navUpName = button3->getName();
+        button3->asFJ_Base()->m_navDownName = button1->getName();
         if (focusIndex == 0)
         {
-            focus = button1;
+            getStage()->setFocus(button1);
         }
         else if (focusIndex == 1)
         {
-            focus = button2;
+            getStage()->setFocus(button2);
         }
         else if (focusIndex == 2)
         {
-            focus = button3;
+            getStage()->setFocus(button3);
         }
     }
     else if (buttonCount == 4)
     {
         if (focusIndex == 0)
         {
-            focus = button0;
+            getStage()->setFocus(button0);
         }
         else if (focusIndex == 1)
         {
-            focus = button1;
+            getStage()->setFocus(button1);
         }
         else if (focusIndex == 2)
         {
-            focus = button2;
+            getStage()->setFocus(button2);
         }
         else if (focusIndex == 3)
         {
-            focus = button3;
+            getStage()->setFocus(button3);
         }
-    }
-    if (focus != NULL)
-    {
-        getStage()->setFocus(focus);
     }
 }
 
@@ -126,8 +117,8 @@ void FJ_MessageBox::AutoResize()
     FJ_FuiNode* button1 = getChildByName(std::string("Button1"));
     FJ_FuiNode* button2 = getChildByName(std::string("Button2"));
     FJ_FuiNode* button3 = getChildByName(std::string("Button3"));
-    FJ_Base* content = getChildByName(std::string("Content"))->asFJ_Base();
     FJ_Base* title = getChildByName(std::string("Title"))->asFJ_Base();
+    FJ_Base* content = getChildByName(std::string("Content"))->asFJ_Base();
     FJ_FuiNode* background = getChildByName(std::string("BackgroundPanel"));
 
     const int oldBackgroundWidth = static_cast<int>(background->getWidth());
@@ -135,55 +126,54 @@ void FJ_MessageBox::AutoResize()
     const int backgroundWidth = static_cast<int>(background->getWidth());
     if (oldBackgroundWidth < backgroundWidth)
     {
-        const int widthDelta = backgroundWidth - oldBackgroundWidth;
-        title->SetNewObjectWidth(static_cast<int>(title->getWidth()) + widthDelta);
-        content->SetNewObjectWidth(static_cast<int>(content->getWidth()) + widthDelta);
+        const float widthDelta = static_cast<float>(backgroundWidth - oldBackgroundWidth);
+        title->SetNewObjectWidth(static_cast<int>(title->getWidth() + widthDelta));
+        content->SetNewObjectWidth(static_cast<int>(content->getWidth() + widthDelta));
     }
 
-    const float titleHeight = title->getHeight();
-    if (titleHeight > static_cast<float>(m_titleHeight))
+    if (static_cast<float>(m_titleHeight) < title->getHeight())
     {
-        const int extraHeight = static_cast<int>(titleHeight) - m_titleHeight;
+        const int extraHeight = static_cast<int>(title->getHeight() - static_cast<float>(m_titleHeight));
         if (extraHeight > 0)
         {
             content->setY(static_cast<float>(m_contentY + extraHeight));
         }
-        m_titleHeight = static_cast<int>(titleHeight);
+        m_titleHeight = static_cast<int>(title->getHeight());
     }
 
-    float offset = 0.0f;
-    if (m_buttonCount == 1)
+    int offset = 0;
+    switch (m_buttonCount)
     {
-        offset = static_cast<float>(Math::round(button3->getHeight() * 0.5f + content->getY() + content->getHeight() - button3->getY()));
-        button3->incY(offset);
-    }
-    else if (m_buttonCount == 2)
-    {
-        offset = static_cast<float>(Math::round(button2->getHeight() * 0.5f + content->getY() + content->getHeight() - button2->getY()));
-        button2->incY(offset);
-        button3->incY(offset);
-    }
-    else if (m_buttonCount == 3)
-    {
-        offset = static_cast<float>(Math::round(button1->getHeight() * 0.5f + content->getY() + content->getHeight() - button1->getY()));
-        button1->incY(offset);
-        button2->incY(offset);
-        button3->incY(offset);
-    }
-    else if (m_buttonCount == 4)
-    {
-        offset = static_cast<float>(Math::round(button0->getHeight() * 0.5f + content->getY() + content->getHeight() - button0->getY()));
-        button0->incY(offset);
-        button1->incY(offset);
-        button2->incY(offset);
-        button3->incY(offset);
+    case 1:
+        offset = Math::round((content->getY() + content->getHeight() - button3->getY()) + button3->getHeight() * 0.5f);
+        button3->incY(static_cast<float>(offset));
+        break;
+    case 2:
+        offset = Math::round((content->getY() + content->getHeight() - button2->getY()) + button2->getHeight() * 0.5f);
+        button2->incY(static_cast<float>(offset));
+        button3->incY(static_cast<float>(offset));
+        break;
+    case 3:
+        offset = Math::round((content->getY() + content->getHeight() - button1->getY()) + button1->getHeight() * 0.5f);
+        button1->incY(static_cast<float>(offset));
+        button2->incY(static_cast<float>(offset));
+        button3->incY(static_cast<float>(offset));
+        break;
+    case 4:
+        offset = Math::round((content->getY() + content->getHeight() - button0->getY()) + button0->getHeight() * 0.5f);
+        button0->incY(static_cast<float>(offset));
+        button1->incY(static_cast<float>(offset));
+        button2->incY(static_cast<float>(offset));
+        button3->incY(static_cast<float>(offset));
+        break;
+    default:
+        break;
     }
 
-    background->getChildAt(0)->asMovieClip()->incHeight(offset);
-    const float halfOffset = static_cast<float>(Math::round(offset * 0.5f));
+    background->getChildAt(0)->asMovieClip()->incHeight(static_cast<float>(offset));
     int i;
-    for (i = 0; i < getNumChildren(); ++i)
+    for (i = 0; i < m_root->getNumChildren(); ++i)
     {
-        getChildAt(i)->decY(halfOffset);
+        getChildAt(i)->decY(static_cast<float>(Math::round(static_cast<float>(offset) * 0.5f)));
     }
 }

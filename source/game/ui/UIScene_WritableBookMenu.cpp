@@ -30,30 +30,46 @@
 #include "game/core/StringUtils.hpp"
 #include "game/core/XLanguage.hpp"
 
+static const std::wstring TAG_TITLE = L"title";
+static const std::wstring TAG_AUTHOR = L"author";
+static const std::wstring CHANNEL_EDIT = L"MC|BEdit";
+static const std::wstring CHANNEL_SIGN = L"MC|BSign";
+static const std::wstring TAG_PAGES = L"pages";
+static const std::wstring TAG_OWNER_UUID = L"ownerUUID";
+static const std::wstring TAG_CREATED_BY_RESTRICTED_PLAYER = L"createdByRestrictedPlayer";
+static const std::wstring TAG_CREATED_BY_HOST = L"createdByHost";
+
 template <typename T> std::wstring _toString(T value);
 extern ConsoleUIController gConsoleUIController;
 extern CProfile* gProfile;
 
 struct UIScene_WritableBookMenuData
 {
-    boost::shared_ptr<ItemInstance> item;
+    not_null_ptr<ItemInstance> item;
     int player;
     bool canEdit;
 };
 
 UIScene_WritableBookMenu::UIScene_WritableBookMenu(int type, void* data, UILayer* layer)
-    : UIScene(type, layer), m_book(static_cast<UIScene_WritableBookMenuData*>(data)->item), m_pages(0), m_caretPosition(0), m_currentPage(0), m_pageCount(0),
-      m_pageText(), m_titleText(), m_signText(), m_closeRequested(false), m_contentRestricted(false),
-      m_unusedWord(0), m_caretOffset(0), m_canEdit(false), m_textChanged(false), m_caretHidden(false),
-      m_controlState(0), m_keyboardOpen(false), m_signing(false), m_unusedControlByte(0)
+    : UIScene(type, layer)
 {
     UIScene_WritableBookMenuData* sceneData = static_cast<UIScene_WritableBookMenuData*>(data);
     initialiseMovie();
     m_playerId = sceneData->player;
+    m_book = sceneData->item;
     m_canEdit = sceneData->canEdit;
     m_textChanged = false;
     m_titleText = L"";
-    std::memset(m_reserved + 1, 0, 0x80);
+    m_currentPage = 0;
+    m_caretHidden = false;
+    m_signing = false;
+    m_closeRequested = false;
+    m_pages = 0;
+    m_keyboardOpen = false;
+    m_pageCount = 0;
+    m_caretOffset = 0;
+    std::memset(m_reserved, 0, sizeof(m_reserved));
+    m_contentRestricted = false;
 
     wchar_t buttonLabels[4][256];
     swprintf(buttonLabels[0], 256, L"%ls", L10N::GetString(IDS_TITLE_BOOK_SIGN));
@@ -101,17 +117,35 @@ unsigned int UIScene_WritableBookMenu::mapElementsAndNames()
 {
     UIScene::mapElementsAndNames();
     fuiRenderNode* root = m_movie->getRootNode();
-    m_pageLabel.setupControl(this, root, "PageLabel");
+    {
+        std::string name("PageLabel");
+        m_pageLabel.setupControl(this, root, name);
+    }
     m_controls.push_back(&m_pageLabel);
-    m_signButton.setupControl(this, root, "ButtonSign");
+    {
+        std::string name("ButtonSign");
+        m_signButton.setupControl(this, root, name);
+    }
     m_controls.push_back(&m_signButton);
-    m_doneButton.setupControl(this, root, "ButtonClose");
+    {
+        std::string name("ButtonClose");
+        m_doneButton.setupControl(this, root, name);
+    }
     m_controls.push_back(&m_doneButton);
-    m_bookTouch.setupControl(this, root, "TouchControlBook");
+    {
+        std::string name("TouchControlBook");
+        m_bookTouch.setupControl(this, root, name);
+    }
     m_controls.push_back(&m_bookTouch);
-    m_leftTouch.setupControl(this, root, "TouchControlScrollLeft");
+    {
+        std::string name("TouchControlScrollLeft");
+        m_leftTouch.setupControl(this, root, name);
+    }
     m_controls.push_back(&m_leftTouch);
-    m_rightTouch.setupControl(this, root, "TouchControlScrollRight");
+    {
+        std::string name("TouchControlScrollRight");
+        m_rightTouch.setupControl(this, root, name);
+    }
     m_controls.push_back(&m_rightTouch);
     return 1;
 }
@@ -167,15 +201,15 @@ void UIScene_WritableBookMenu::Init()
 {
     if (WrittenBookItem::HasBookTags(m_book))
     {
-        CompoundTag* tag = m_book->getTag();
+        CompoundTag* tag = m_book.get()->getTag();
 
         bool ownedByLocalPlayer = false;
-        if (tag->getString(L"ownerUUID").compare(L"") != 0)
+        if (tag->getString(TAG_OWNER_UUID) != L"")
         {
             for (int i = 0; i < 4; ++i)
             {
                 boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = Minecraft::GetInstance()->mLocalPlayers[i];
-                if (localPlayer != NULL && localPlayer->getUUID() == tag->getString(L"ownerUUID"))
+                if (localPlayer != NULL && localPlayer.get()->getUUID() == tag->getString(TAG_OWNER_UUID))
                 {
                     ownedByLocalPlayer = true;
                     break;
@@ -183,50 +217,43 @@ void UIScene_WritableBookMenu::Init()
             }
         }
 
-        bool chatCensored = g_pApp->IsConsoleChatCensored();
+        bool chatCensored = gApp.IsConsoleChatCensored();
         bool createdByRestrictedPlayer =
-            tag->contains(L"createdByRestrictedPlayer") && tag->getByte(L"createdByRestrictedPlayer") != 0;
+            tag->contains(TAG_CREATED_BY_RESTRICTED_PLAYER) && tag->getByte(TAG_CREATED_BY_RESTRICTED_PLAYER) != 0;
         bool createdByHost = true;
-        if (tag->contains(L"createdByHost") && tag->getByte(L"createdByHost") == 0)
+        if (tag->contains(TAG_CREATED_BY_HOST) && tag->getByte(TAG_CREATED_BY_HOST) == 0)
             createdByHost = false;
 
-        if ((!chatCensored && !createdByRestrictedPlayer) || ownedByLocalPlayer ||
-            (CGameNetworkManager::sInstance.IsHost() && createdByHost))
+        if (!((!chatCensored && !createdByRestrictedPlayer) || ownedByLocalPlayer ||
+              (CGameNetworkManager::sInstance.IsHost() && createdByHost)))
+            m_contentRestricted = true;
+
+        if (!m_contentRestricted)
         {
-            if (!m_contentRestricted)
+            ListTag* pages = tag->getList(TAG_PAGES, Tag::TAG_STRING);
+            if (pages != 0 && pages->size() > 0)
             {
-                ListTag* pages = tag->getList(L"pages", Tag::TAG_STRING);
-                if (pages != 0 && pages->size() > 0)
-                {
-                    m_pages = pages->copy();
-                    int pageCount = m_pages->size();
-                    m_pageCount = pageCount < 1 ? 1 : pageCount;
-                }
-                if (m_pages == 0 && m_canEdit)
-                {
-                    m_pages = new ListTag();
-                    m_pages->add(new StringTag(L""));
+                m_pages = pages->copy();
+                int pageCount = m_pages->size();
+                if (pageCount > 0)
+                    m_pageCount = pageCount;
+                else
                     m_pageCount = 1;
-                }
-                UpdatePageNumber();
-                return;
             }
         }
         else
         {
-            m_contentRestricted = true;
+            std::wstring censoredText = L"";
+            unsigned int language = XGetLanguage();
+            if (language == XC_LANGUAGE_JAPANESE || language == XC_LANGUAGE_KOREAN ||
+                language == XC_LANGUAGE_TCHINESE || language == XC_LANGUAGE_ZH_HANS)
+                censoredText = L"Censored";
+            else
+                censoredText = L10N::GetString(0x62950b66);
+            m_pages = new ListTag();
+            m_pages->add(new StringTag(censoredText));
+            m_pageCount = 1;
         }
-
-        std::wstring censoredText = L"";
-        unsigned int language = XGetLanguage();
-        if (language == XC_LANGUAGE_JAPANESE || language == XC_LANGUAGE_KOREAN ||
-            language == XC_LANGUAGE_TCHINESE || language == XC_LANGUAGE_ZH_HANS)
-            censoredText = L"Censored";
-        else
-            censoredText = L10N::GetString(0x62950b66);
-        m_pages = new ListTag();
-        m_pages->add(new StringTag(censoredText));
-        m_pageCount = 1;
     }
 
     if (m_pages == 0 && m_canEdit)
@@ -460,12 +487,12 @@ void UIScene_WritableBookMenu::SaveChanges(bool signing)
     if (!m_canEdit)
         return;
 
-    if (!m_book->hasTag())
-        m_book->setTag(new CompoundTag());
+    if (!m_book.get()->hasTag())
+        m_book.get()->setTag(new CompoundTag());
     boost::shared_ptr<MultiplayerLocalPlayer>& player = Minecraft::GetInstance()->mLocalPlayers[m_playerId];
-    m_book->getTag()->putString(L"ownerUUID", player->getUUID());
-    m_book->getTag()->putByte(L"createdByRestrictedPlayer", g_pApp->IsConsoleChatCensored());
-    m_book->getTag()->putByte(L"createdByHost", CGameNetworkManager::sInstance.IsHost());
+    m_book.get()->getTag()->putString(TAG_OWNER_UUID, player.get()->getUUID());
+    m_book.get()->getTag()->putByte(TAG_CREATED_BY_RESTRICTED_PLAYER, gApp.IsConsoleChatCensored());
+    m_book.get()->getTag()->putByte(TAG_CREATED_BY_HOST, CGameNetworkManager::sInstance.IsHost());
 
     if (m_pages == 0)
         return;
@@ -480,25 +507,27 @@ void UIScene_WritableBookMenu::SaveChanges(bool signing)
         pageCount = m_pages->size();
     }
 
-    if (!m_book->hasTag())
-        m_book->addTagElement(L"pages", m_pages);
+    if (!m_book.get()->hasTag())
+        m_book.get()->addTagElement(TAG_PAGES, m_pages);
     else
-        m_book->getTag()->put(L"pages", m_pages);
+        m_book.get()->getTag()->put(TAG_PAGES, m_pages);
 
-    std::wstring channel = L"MC|BEdit";
+    std::wstring channel = CHANNEL_EDIT;
     if (signing)
     {
-        channel = L"MC|BSign";
-        m_book->addTagElement(L"author",
-                              new StringTag(Minecraft::GetInstance()->mLocalPlayers[m_playerId]->getName()));
-        m_book->addTagElement(L"title", new StringTag(m_titleText));
+        channel = CHANNEL_SIGN;
+        m_book.get()->addTagElement(TAG_AUTHOR,
+                                    new StringTag(Minecraft::GetInstance()->mLocalPlayers[m_playerId].get()->getName()));
+        m_book.get()->addTagElement(TAG_TITLE, new StringTag(m_titleText));
     }
 
     ByteArrayOutputStream bytes;
     DataOutputStream output(&bytes);
     output.writeItem(m_book);
-    boost::shared_ptr<Packet> packet(new ServerboundCustomPayloadPacket(channel, bytes.toByteArray()));
-    Minecraft::GetInstance()->getConnection(m_playerId)->send(packet);
+    {
+        boost::shared_ptr<Packet> packet(new ServerboundCustomPayloadPacket(channel, bytes.toByteArray()));
+        Minecraft::GetInstance()->getConnection(m_playerId)->send(packet);
+    }
     m_textChanged = false;
 }
 

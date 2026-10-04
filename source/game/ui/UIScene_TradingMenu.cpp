@@ -54,11 +54,11 @@ UIScene_TradingMenu::UIScene_TradingMenu(int iPad, void* initData, UILayer* laye
       m_request2(),
       m_hotBar(),
       m_inventory(),
+      m_inventoryLabel(),
       m_villagerText(),
       m_requiredLabel(),
       m_request1Label(),
-      m_request2Label(),
-      m_inventoryLabel()
+      m_request2Label()
 {
     initialiseMovie();
     m_tradeCount = 0;
@@ -68,11 +68,11 @@ UIScene_TradingMenu::UIScene_TradingMenu(int iPad, void* initData, UILayer* laye
     m_tradeRow = 0;
     m_tradeOffset = 0;
     m_scrollLeftShown = true;
-    m_requiredLabel.init(UIString(L""));
-    m_villagerText.init(UIString(L10N::GetString(IDS_INVENTORY)));
-    m_request1Label.init(UIString(L10N::GetString(IDS_REQUIRED_ITEMS_FOR_TRADE)));
+    m_villagerText.init(UIString(L""));
+    m_inventoryLabel.init(UIString(L10N::GetString(IDS_INVENTORY)));
+    m_requiredLabel.init(UIString(L10N::GetString(IDS_REQUIRED_ITEMS_FOR_TRADE)));
+    m_request1Label.init(UIString(L""));
     m_request2Label.init(UIString(L""));
-    m_inventoryLabel.init(UIString(L""));
 
     TradingMenuData* sceneData = static_cast<TradingMenuData*>(initData);
     m_merchant = sceneData->merchant;
@@ -191,9 +191,9 @@ void UIScene_TradingMenu::handleDestroy()
 
 std::vector<HtmlString>* UIScene_TradingMenu::GetItemDescription(not_null_ptr<ItemInstance> item)
 {
-    std::vector<HtmlString>* lines = item->getTooltipLines(boost::shared_ptr<Player>(), false);
+    std::vector<HtmlString>* lines = item.get()->getTooltipLines(boost::shared_ptr<Player>(), false);
     if (!lines->empty())
-        lines->at(0).mColour = item->getRarity()->colour;
+        lines->at(0).mColour = item.get()->getRarity()->colour;
     return lines;
 }
 
@@ -234,8 +234,9 @@ void UIScene_TradingMenu::setTitle(const std::wstring& title)
 
 void UIScene_TradingMenu::setOfferDescription(std::vector<HtmlString>* description)
 {
+    std::wstring composed = HtmlString::Compose(description);
     fuiRenderNode* root = m_movie->getRootNode();
-    static_cast<FJ_TradingMenu*>(root->getFuiNode())->SetOfferDescription(HtmlString::Compose(description));
+    static_cast<FJ_TradingMenu*>(root->getFuiNode())->SetOfferDescription(composed);
 }
 
 void UIScene_TradingMenu::setRequest1Name(const std::wstring& name)

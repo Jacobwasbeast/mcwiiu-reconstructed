@@ -51,17 +51,18 @@ void FJ_ListButtonCheckbox::_UpdateCheckBoxScales(FJ_Button* button)
 void FJ_ListButtonCheckbox::Init(const std::wstring& name, int id)
 {
     SetLabelAlignment(4);
-    m_isLabel = true;
+    m_textOnly = true;
     FJ_FuiNode* checkBoxTick = getChildByName(std::string("CheckBoxTick"))->asMovieClip();
     checkBoxTick->setScaleX(checkBoxTick->getScaleX() / getScaleX());
     checkBoxTick->setScaleY(checkBoxTick->getScaleY() / getScaleY());
     UpdateCheckBoxScales();
+    m_updateLabelDelegate = _UpdateCheckBoxScales;
     FJ_Button::Init(name, id);
 }
 
 void FJ_ListButtonCheckbox::SetSlotID(int slotId, bool visible)
 {
-    FJ_FuiNode* slotControl = getChildByName(std::string("SlotControl"))->asMovieClip();
+    FJ_FuiNode* slotControl = FJ_FuiNode::asMovieClip(getChildByName(std::string("SlotControl")));
     if (slotControl != NULL)
     {
         if (!visible)
@@ -82,7 +83,9 @@ void FJ_ListButtonCheckbox::SetSlotID(int slotId, bool visible)
             getStage()->m_pRenderNode, &rect, name);
         renderNode->setAlpha(0.25f);
         removeChild(slotControl, true);
-        addChild(new FJ_FuiNode(renderNode));
+        FJ_FuiNode* node = new FJ_FuiNode(renderNode);
+        renderNode->setFuiNode(node);
+        addChild(node);
     }
 }
 
@@ -105,7 +108,9 @@ void FJ_ListButtonCheckbox::SetTextureName(const std::wstring& textureName)
     fuiRenderNodeCodeGenRect* renderNode = new fuiRenderNodeCodeGenRect(
         getStage()->m_pRenderNode, &rect, "CustomTexture", width, height,
         texture, true, hasTexture);
-    iconPlaceholder->addChild(new FJ_FuiNode(renderNode));
+    FJ_FuiNode* node = new FJ_FuiNode(renderNode);
+    renderNode->setFuiNode(node);
+    iconPlaceholder->addChild(node);
 }
 
 void FJ_ListButtonCheckbox::EnableButton(bool enabled)

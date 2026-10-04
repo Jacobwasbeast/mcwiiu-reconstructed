@@ -39,13 +39,14 @@ int BrewingStandMenu::PotionSlot::getMaxStackSize()
 not_null_ptr<ItemInstance> BrewingStandMenu::PotionSlot::onTake(boost::shared_ptr<Player> player,
                                                                  not_null_ptr<ItemInstance> item)
 {
-    item->onCraftedBy(player->mLevel, player, 1);
+    item->onCraftedBy(player->mLevel, boost::dynamic_pointer_cast<Player>(player->shared_from_this()), 1);
     Potion* potion = PotionUtils::getPotion(item);
-    if (potion != Potions::EMPTY && potion != Potions::WATER)
+    if (potion != Potions::WATER && potion != Potions::EMPTY)
     {
         player->awardStat(GenericStats::potion(), GenericStats::param_potion());
     }
-    return Slot::onTake(player, item);
+    Slot::onTake(player, item);
+    return item;
 }
 
 bool BrewingStandMenu::PotionSlot::mayCombine(not_null_ptr<ItemInstance> item)
@@ -103,11 +104,10 @@ int BrewingStandMenu::FuelSlot::getMaxStackSize()
 
 BrewingStandMenu::BrewingStandMenu(boost::shared_ptr<Inventory> inventory,
                                    boost::shared_ptr<Container> container)
-    : mContainer(container),
-      mIngredientSlot(NULL),
-      mLastBrewTime(0),
+    : mLastBrewTime(0),
       mLastFuel(0)
 {
+    mContainer = container;
     addSlot(new PotionSlot(container, 0, 56, 51));
     addSlot(new PotionSlot(container, 1, 79, 58));
     addSlot(new PotionSlot(container, 2, 102, 51));
@@ -133,33 +133,27 @@ BrewingStandMenu::BrewingStandMenu(boost::shared_ptr<Inventory> inventory,
 void BrewingStandMenu::addSlotListener(net_minecraft_world_inventory::ContainerListener* listener)
 {
     AbstractContainerMenu::addSlotListener(listener);
-    listener->setContainerData(this, 0, mContainer->getContainerData(0));
-    listener->setContainerData(this, 1, mContainer->getContainerData(1));
+    listener->setAllContainerData(this, mContainer);
 }
 
 void BrewingStandMenu::broadcastChanges()
 {
     AbstractContainerMenu::broadcastChanges();
-    int brewTime = mContainer->getContainerData(0);
-    int fuel = mContainer->getContainerData(1);
-    if (mLastBrewTime != brewTime)
+    for (std::vector<net_minecraft_world_inventory::ContainerListener*>::iterator it = m_listeners.begin();
+         it != m_listeners.end(); ++it)
     {
-        for (std::vector<net_minecraft_world_inventory::ContainerListener*>::iterator it = m_listeners.begin();
-             it != m_listeners.end(); ++it)
+        net_minecraft_world_inventory::ContainerListener* listener = *it;
+        if (mLastBrewTime != mContainer->getContainerData(0))
         {
-            (*it)->setContainerData(this, 0, brewTime);
+            listener->setContainerData(this, 0, mContainer->getContainerData(0));
+        }
+        if (mLastFuel != mContainer->getContainerData(1))
+        {
+            listener->setContainerData(this, 1, mContainer->getContainerData(1));
         }
     }
-    if (mLastFuel != fuel)
-    {
-        for (std::vector<net_minecraft_world_inventory::ContainerListener*>::iterator it = m_listeners.begin();
-             it != m_listeners.end(); ++it)
-        {
-            (*it)->setContainerData(this, 1, fuel);
-        }
-    }
-    mLastBrewTime = brewTime;
-    mLastFuel = fuel;
+    mLastBrewTime = mContainer->getContainerData(0);
+    mLastFuel = mContainer->getContainerData(1);
 }
 
 void BrewingStandMenu::setData(int id, int value)
@@ -174,63 +168,60 @@ bool BrewingStandMenu::stillValid(boost::shared_ptr<Player> player)
 
 not_null_ptr<ItemInstance> BrewingStandMenu::quickMoveStack(boost::shared_ptr<Player> player, int index)
 {
-    Slot* source = m_slots.at(index);
-    if (source == NULL || !source->hasItem())
-        return ItemInstance::EMPTY;
-
-    not_null_ptr<ItemInstance> item = source->getItem();
-    not_null_ptr<ItemInstance> original = item->copy();
-
-    if (index < 5)
+    not_null_ptr<ItemInstance> clicked = ItemInstance::EMPTY;
+    Slot* slot = m_slots.at(index);
+    if (slot != NULL && slot->hasItem())
     {
-        if (!moveItemStackTo(item, 5, 41, true, true, true))
-            return ItemInstance::EMPTY;
-        source->onQuickCraft(item, original);
-    }
-    else
-    {
-        bool wantsIngredient = false;
-        if (!mIngredientSlot->hasItem())
-            wantsIngredient = mIngredientSlot->mayPlace(item);
+        not_null_ptr<ItemInstance> item = slot->getItem();
+        clicked = item->copy();
 
-        if (wantsIngredient)
+        if ((index >= 0 && index <= 2) || index == 3 || index == 4)
         {
-            if (!moveItemStackTo(item, 3, 4, false, true, true))
+            if (moveItemStackTo(item, 5, 41, true, true, true) != 1)
                 return ItemInstance::EMPTY;
-        }
-        else if (PotionSlot::mayPlaceItem(item))
-        {
-            if (!moveItemStackTo(item, 0, 3, false, true, true))
-                return ItemInstance::EMPTY;
-        }
-        else if (FuelSlot::mayPlaceItem(item))
-        {
-            if (!moveItemStackTo(item, 4, 5, false, true, true))
-                return ItemInstance::EMPTY;
-        }
-        else if ((unsigned int)(index - 5) < 27)
-        {
-            if (!moveItemStackTo(item, 32, 41, false, true, true))
-                return ItemInstance::EMPTY;
-        }
-        else if ((unsigned int)(index - 32) < 9)
-        {
-            if (!moveItemStackTo(item, 5, 32, false, true, true))
-                return ItemInstance::EMPTY;
+            slot->onQuickCraft(item, clicked);
         }
         else
         {
-            if (!moveItemStackTo(item, 5, 41, false, true, true))
-                return ItemInstance::EMPTY;
+            if (!mIngredientSlot->hasItem() && mIngredientSlot->mayPlace(item))
+            {
+                if (moveItemStackTo(item, 3, 4, false, true, true) != 1)
+                    return ItemInstance::EMPTY;
+            }
+            else if (PotionSlot::mayPlaceItem(item))
+            {
+                if (moveItemStackTo(item, 0, 3, false, true, true) != 1)
+                    return ItemInstance::EMPTY;
+            }
+            else if (FuelSlot::mayPlaceItem(item))
+            {
+                if (moveItemStackTo(item, 4, 5, false, true, true) != 1)
+                    return ItemInstance::EMPTY;
+            }
+            else if (index >= 5 && index < 32)
+            {
+                if (moveItemStackTo(item, 32, 41, false, true, true) != 1)
+                    return ItemInstance::EMPTY;
+            }
+            else if (index >= 32 && index < 41)
+            {
+                if (moveItemStackTo(item, 5, 32, false, true, true) != 1)
+                    return ItemInstance::EMPTY;
+            }
+            else
+            {
+                if (moveItemStackTo(item, 5, 41, false, true, true) != 1)
+                    return ItemInstance::EMPTY;
+            }
         }
-    }
 
-    if (item->isEmpty())
-        source->set(ItemInstance::EMPTY);
-    else
-        source->setChanged();
-    if (item->getCount() == original->getCount())
-        return ItemInstance::EMPTY;
-    source->onTake(player, item);
-    return original;
+        if (item->isEmpty())
+            slot->set(ItemInstance::EMPTY);
+        else
+            slot->setChanged();
+        if (item->getCount() == clicked->getCount())
+            return ItemInstance::EMPTY;
+        slot->onTake(player, item);
+    }
+    return clicked;
 }

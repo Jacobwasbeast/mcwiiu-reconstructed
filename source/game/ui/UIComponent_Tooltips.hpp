@@ -22,7 +22,7 @@ public:
         int m_type;
         int m_subtype;
         bool m_dynamic;
-        int m_button;
+        EControllerActions m_button;
 
         _TooltipValues();
         ~_TooltipValues();

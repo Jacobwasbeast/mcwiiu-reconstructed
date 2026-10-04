@@ -32,8 +32,8 @@ public:
     virtual void tick();
     unsigned int bindTexture(const std::wstring& name, int texture);
     unsigned int bindTexture(const std::wstring& name, const std::wstring& path);
-    virtual void render(EntityRenderer* renderer, double x, double y, double z, float yaw, float partialTick);
-    virtual void render(fuiRect* rect);
+    void render(EntityRenderer* renderer, double x, double y, double z, float yaw, float partialTick);
+    void render(fuiRect* rect);
     void SetTexture(const std::wstring& texture, _TEXTURE_NAME textureName);
     void SetFacing(ESkinPreviewFacing facing, bool animate);
     void CycleNextAnimation();

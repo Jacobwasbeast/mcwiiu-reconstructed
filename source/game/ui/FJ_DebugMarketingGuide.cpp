@@ -32,7 +32,6 @@ unsigned int FJ_DebugMarketingGuide::getType()
 
 void FJ_DebugMarketingGuide::SetPlatform(int platform)
 {
-    FJ_FuiNode* child = getChildByName(platformLookup[platform]);
-    if (child != NULL)
-        child->setVisible(true);
+    if (getChildByName(platformLookup[platform]) != NULL)
+        getChildByName(platformLookup[platform])->setVisible(true);
 }

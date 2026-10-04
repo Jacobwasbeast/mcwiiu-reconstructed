@@ -15,9 +15,8 @@ UIControl_TextInput::UIControl_TextInput()
 
 void UIControl_TextInput::SetCharLimit(int limit)
 {
-    FJ_FuiNode* node = m_fuiRenderNode->getFuiNode();
-    if (node->isFJ_TextInput())
-        node->asFJ_TextInput()->SetCharLimit(limit);
+    if (m_fuiRenderNode->getFuiNode()->isFJ_TextInput())
+        static_cast<FJ_TextInput*>(m_fuiRenderNode->getFuiNode())->SetCharLimit(limit);
 }
 
 void UIControl_TextInput::init(UIString label, int id)
@@ -26,13 +25,18 @@ void UIControl_TextInput::init(UIString label, int id)
     m_controlId = id;
 
     FJ_FuiNode* node = m_fuiRenderNode->getFuiNode();
-    if (node->isFJ_TextInput())
-        node->asFJ_TextInput()->Init(label.getString(), id);
-    else if (node->isFJ_SignInput())
-        node->asFJ_SignInput()->Init(label.getString(), id);
+    if (!node->isFJ_TextInput())
+    {
+        if (m_fuiRenderNode->getFuiNode()->isFJ_SignInput())
+            m_fuiRenderNode->getFuiNode()->asFJ_SignInput()->Init(label.getString(), id);
+    }
+    else
+    {
+        m_fuiRenderNode->getFuiNode()->asFJ_TextInput()->Init(label.getString(), id);
+    }
 
-    int sceneType = m_scene->getSceneType();
-    if (sceneType == 4 || (sceneType > 5 && sceneType < 8))
+    unsigned int layerId = m_scene->m_layer->m_layerId;
+    if (layerId == EUILayer_Fullscreen || (layerId > EUILayer_Tutorial && layerId < EUILayer_Count))
         gConsoleUIController.TouchBoxAdd(this, m_scene);
 
     SetCharLimit(101);
@@ -48,8 +52,7 @@ void UIControl_TextInput::setupControl(UIScene* scene, fuiRenderNode* node,
 void UIControl_TextInput::ReInit()
 {
     UIControl::ReInit();
-    UIString label = m_label;
-    init(label, m_controlId);
+    init(m_label, m_controlId);
 }
 
 void UIControl_TextInput::setFocus(bool focus)
@@ -60,7 +63,7 @@ void UIControl_TextInput::setFocus(bool focus)
     FJ_FuiNode* node = m_fuiRenderNode->getFuiNode();
     m_focus = focus;
     if (node->isFJ_TextInput())
-        node->asFJ_TextInput()->ChangeState(focus ^ 1);
+        static_cast<FJ_TextInput*>(m_fuiRenderNode->getFuiNode())->ChangeState(focus ^ 1);
 }
 
 bool UIControl_TextInput::hasFocus()

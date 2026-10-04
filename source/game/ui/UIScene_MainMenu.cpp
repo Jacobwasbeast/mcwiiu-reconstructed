@@ -157,7 +157,7 @@ void UIScene_MainMenu::updateTooltips()
                                                           EUIGroup_PlayerDefault);
     if (!gConsoleUIController.IsShowingAlertMessage(0) &&
         !gConsoleUIController.IsShowingErrorMessage(0) && topScene != NULL &&
-        topScene->getSceneType() == 3) {
+        topScene->getSceneType() == EUIScene_MainMenu) {
         int tooltip = m_loading ? -1 : IDS_TOOLTIPS_SELECT;
         gConsoleUIController.SetTooltips(0, tooltip, -1, -1, -1, -1, -1, -1, -1, -1,
                                          -1, -1, -1, -1, -1, -1, -1, false, false);

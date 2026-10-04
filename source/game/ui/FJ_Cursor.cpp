@@ -28,14 +28,14 @@ void FJ_Cursor::AlignPanel(bool bRight)
 
     if (bRight)
     {
-        m_textPanel->setX((float)Math::round(m_textPanel->getWidth() * 0.5f * 0.8f));
+        m_textPanel->setX((float)Math::round(m_cursorImage->getWidth() * 0.5f * 0.8f));
         m_textPanel->setY((float)m_topAlignment - m_textPanel->getHeight());
         m_textField->setX((float)Math::round((float)textWidth * 0.35f + m_textPanel->getX()));
         m_textField->setY((float)Math::round((float)textWidth * 0.5f + m_textPanel->getY()));
         return;
     }
 
-    m_textPanel->setX((float)-Math::round(m_pointerTextPanel->getWidth() * 0.5f * 0.8f) -
+    m_textPanel->setX((float)-Math::round(m_cursorImage->getWidth() * 0.5f * 0.8f) -
                       m_textPanel->getChildAt(0)->getWidth());
     m_textPanel->setY((float)m_topAlignment - m_textPanel->getHeight());
     m_textField->setX((float)Math::round(textWidth * 0.35 + m_textPanel->getX()));
@@ -69,11 +69,10 @@ void FJ_Cursor::SetLabel(const std::wstring& label)
         std::pair<float, float> boundaries = m_textField->getCharBoundaries(0);
         m_textPanel->setScaleX(1.0f);
         m_textPanel->setScaleY(1.0f);
-        float textHeight = m_textField->getHeight();
-        float textWidth = boundaries.second - boundaries.first;
+        float textWidth = (float)static_cast<int>(boundaries.second - boundaries.first);
         int width = Math::round(textWidth * 0.8f + m_textField->getWidth());
         m_textPanel->getChildAt(0)->setWidth((float)width);
-        m_textPanel->getChildAt(0)->setHeight(textHeight + textWidth);
+        m_textPanel->getChildAt(0)->setHeight(m_textField->getHeight() + textWidth);
         UpdatePanelAlignment();
     }
 }
@@ -84,7 +83,7 @@ void FJ_Cursor::ASConstructor()
     FJ_FuiNode* textFieldContainer = textContainer->getChildAt(0)->asMovieClip();
     m_textField = static_cast<fuiRenderNodeEditText*>(textFieldContainer->getRenderNodeChildByName(std::string("FJ_TextField")));
     addChild(m_textField);
-    m_textField->setY(textFieldContainer->getY());
+    m_textField->setY(textContainer->getY());
     removeChild(textContainer, true);
 
     m_textPanel = getChildByName(std::string("PointerTextPanel"))->asMovieClip();

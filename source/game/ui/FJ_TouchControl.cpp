@@ -13,7 +13,8 @@ FJ_TouchControl* FJ_TouchControl::Create(fuiRenderNode* pRenderNode)
 
 void FJ_TouchControl::Init()
 {
-    getChildByName("placeholder")->asMovieClip()->setHeight(0.0f);
+    FJ_FuiNode* pPlaceholder = getChildByName("placeholder")->asMovieClip();
+    pPlaceholder->setVisible(false);
 }
 
 unsigned int FJ_TouchControl::getType()

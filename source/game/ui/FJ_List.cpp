@@ -97,13 +97,16 @@ uint32_t FJ_List::FindHighlightItem(int index, bool backward, bool wrap)
 
 void FJ_List::HighlightItem(int index, bool fromTouch)
 {
-    if (index < 0 || static_cast<unsigned int>(index) >= m_items.size()) return;
-    if (m_items[static_cast<unsigned int>(index)]->isFJ_Label())
-        index = static_cast<int>(FindHighlightItem(index, index < m_activeItem, true));
-    if (index < 0 || static_cast<unsigned int>(index) >= m_items.size()) return;
-    m_highlightFromTouch = fromTouch;
-    getStage()->setFocus(m_items[static_cast<unsigned int>(index)]);
-    dispatchEvent(new FJ_Event(eFJEventType_FocusChangeUser, true, false));
+    unsigned int item = static_cast<unsigned int>(index);
+    if (item < m_items.size())
+    {
+        int activeItem = m_activeItem;
+        if (m_items[item]->isFJ_Label())
+            item = FindHighlightItem(item, static_cast<int>(item) < activeItem, true);
+        m_highlightFromTouch = fromTouch;
+        getStage()->setFocus(m_items[item]);
+        dispatchEvent(new FJ_Event(eFJEventType_FocusChangeInit, true, false));
+    }
 }
 
 void FJ_List::HandlePageUpDownNavigation(bool up)
@@ -111,8 +114,11 @@ void FJ_List::HandlePageUpDownNavigation(bool up)
     int item = m_topItem;
     if (up)
     {
-        if (m_activeItem <= item) item = m_activeItem - m_maxItemsVisibleUp;
-        if (item < 0) item = 0;
+        if (m_activeItem <= item)
+        {
+            item = m_activeItem - m_maxItemsVisibleUp;
+            item = item < 0 ? 0 : item;
+        }
     }
     else
     {
@@ -123,7 +129,7 @@ void FJ_List::HandlePageUpDownNavigation(bool up)
             if (item >= static_cast<int>(m_items.size())) item = static_cast<int>(m_items.size()) - 1;
         }
     }
-    if (item >= 0 && static_cast<unsigned int>(item) < m_items.size()) HighlightItem(item, false);
+    HighlightItem(item, false);
 }
 
 void FJ_List::LoseListFocus()
@@ -181,7 +187,7 @@ void FJ_List::_focusInHandler(FJ_FuiNode* node, FJ_Event* event) { static_cast<F
 
 void FJ_List::focusOutHandler(FJ_Event*)
 {
-    if (m_items.empty()) return;
+    if (!m_items.empty()) return;
     if (m_background != 0) m_background->gotoAndPlay(std::string("FadeOut"));
 }
 
@@ -208,35 +214,27 @@ void FJ_List::UpdateScrollListArrows()
 
 void FJ_List::setX(float x)
 {
-    float old = getX();
-    FJ_Base::setX(x);
+    FJ_FuiNode::setX(x);
     UpdateScrollListArrows();
     for (unsigned int i = 0; i < m_items.size(); ++i)
     {
-        FJ_Base* item = static_cast<FJ_Base*>(m_items[i]);
-        item->setX(item->getX() + x - old);
-        for (std::vector<FJ_FuiNode*>::iterator child = item->m_objects.begin();
-             child != item->m_objects.end(); ++child)
-        {
-            (*child)->setX((*child)->getX() + x - old);
-        }
+        m_items[i]->setX(getX());
+        for (unsigned int j = 0; j < static_cast<FJ_Base*>(m_items[i])->m_objects.size(); ++j)
+            static_cast<FJ_Base*>(m_items[i])->m_objects[j]->setX(m_items[i]->getX());
     }
 }
 
 void FJ_List::setY(float y)
 {
     float old = getY();
-    FJ_Base::setY(y);
+    FJ_FuiNode::setY(y);
     UpdateScrollListArrows();
     for (unsigned int i = 0; i < m_items.size(); ++i)
     {
-        FJ_Base* item = static_cast<FJ_Base*>(m_items[i]);
-        item->incY(y - old);
-        for (std::vector<FJ_FuiNode*>::iterator child = item->m_objects.begin();
-             child != item->m_objects.end(); ++child)
-        {
-            (*child)->setY((*child)->getY() + y - old);
-        }
+        m_items[i]->incY(y - old);
+        for (std::vector<FJ_FuiNode*>::iterator child = static_cast<FJ_Base*>(m_items[i])->m_objects.begin();
+             child != static_cast<FJ_Base*>(m_items[i])->m_objects.end(); ++child)
+            (*child)->setY(m_items[i]->getY());
     }
 }
 
@@ -270,7 +268,7 @@ void FJ_List::GetMaxItemsVisibleUp()
 
 std::wstring FJ_List::GetItemLabel(int index)
 {
-    if (static_cast<unsigned int>(index) >= m_items.size()) return std::wstring(L" ");
+    if (static_cast<unsigned int>(index) >= m_items.size()) return std::wstring(L"");
     return m_items[index]->asFJ_Base()->GetLabel();
 }
 
@@ -386,16 +384,22 @@ void FJ_List::ScrollList(bool down, bool page, bool fromTouch)
 
 void FJ_List::ItemFocusInHandler(FJ_Event* event)
 {
-    FJ_Base* item = event->m_pTarget->asFJ_Base();
-    if (item != 0) { int old = m_activeItem; m_activeItem = item->getListId(); ScrollList(old > m_activeItem, false, false); }
+    int newItem = event->m_pTarget->asFJ_Base()->getListId();
+    int oldItem = m_activeItem;
+    m_activeItem = event->m_pTarget->asFJ_Base()->getListId();
+    ScrollList(newItem < oldItem, false, false);
 }
 void FJ_List::_ItemFocusInHandler(FJ_FuiNode* node, FJ_Event* event) { static_cast<FJ_List*>(node)->ItemFocusInHandler(event); }
 
 int FJ_List::GetListHeight()
 {
-    if ((m_upArrow != 0 && m_upArrow->isVisible()) || (m_downArrow != 0 && m_downArrow->isVisible())) return static_cast<int>(getHeight());
-    int result = 0;
-    for (unsigned int i = 0; i < m_items.size(); ++i) result += Math::round(static_cast<float>(GetListItemHeight(static_cast<int>(i)) + m_verticalSpacing));
+    int result = static_cast<int>(getHeight());
+    if (!m_upArrow->isVisible() && !m_downArrow->isVisible())
+    {
+        result = 0;
+        for (unsigned int i = 0; i < m_items.size(); ++i)
+            result += Math::round(GetListItemHeight(static_cast<int>(i)) + static_cast<float>(m_verticalSpacing));
+    }
     return result;
 }
 
@@ -524,7 +528,8 @@ void FJ_List::removeAllItems()
 
 void FJ_List::SetButtonLabel(int index, const std::wstring& label)
 {
-    SetItemLabel(index, label);
+    if (static_cast<unsigned int>(index) < m_items.size())
+        m_items[index]->asFJ_Base()->SetLabel(label);
 }
 
 void FJ_List::SetItemAlpha(int index, float alpha)
@@ -535,22 +540,17 @@ void FJ_List::SetItemAlpha(int index, float alpha)
 
 void FJ_List::SetItemLabel(int index, const std::wstring& label)
 {
-    if (index >= 0 && static_cast<unsigned int>(index) < m_items.size())
-    {
-        FJ_Base* item = m_items[index]->asFJ_Base();
-        if (item != 0)
-            item->SetLabel(label);
-    }
+    if (static_cast<unsigned int>(index) < m_items.size())
+        m_items[index]->asFJ_Base()->SetLabel(label);
 }
 
 void FJ_List::EnableItem(int index, bool enabled)
 {
-    if (index >= 0 && static_cast<unsigned int>(index) < m_items.size())
+    if (static_cast<unsigned int>(index) < m_items.size())
     {
-        FJ_FuiNode* item = m_items[index];
-        if (item->isFJ_Button()) item->asFJ_Button()->EnableButton(enabled);
-        else if (item->isFJ_CheckBox()) item->asFJ_CheckBox()->EnableCheckBox(enabled);
-        else if (item->isFJ_Slider()) item->asFJ_Slider()->EnableSlider(enabled);
+        if (m_items[index]->isFJ_Button()) m_items[index]->asFJ_Button()->EnableButton(enabled);
+        else if (m_items[index]->isFJ_CheckBox()) m_items[index]->asFJ_CheckBox()->EnableCheckBox(enabled);
+        else if (m_items[index]->isFJ_Slider()) m_items[index]->asFJ_Slider()->EnableSlider(enabled);
     }
 }
 
@@ -630,7 +630,13 @@ void FJ_List::SetTouchFocus(int x, int y, bool focus)
 
 uint32_t FJ_List::CanTouchFocus(int, int y)
 {
-    for (unsigned int i = 0; i < m_items.size(); ++i) if (y >= m_items[i]->getY() && y < m_items[i]->getY() + GetListItemHeight(static_cast<int>(i)) && m_items[i]->isFJ_Label()) return 0;
+    for (unsigned int i = 0; i < m_items.size(); ++i)
+    {
+        if (m_items[i]->getY() < static_cast<float>(y) &&
+            static_cast<float>(y) < m_items[i]->getY() + GetListItemHeight(static_cast<int>(i)) &&
+            m_items[i]->isFJ_Label())
+            return 0;
+    }
     return 1;
 }
 void FJ_List::BlockTouchTrigger(bool block) { m_blockTouchTrigger = block; }

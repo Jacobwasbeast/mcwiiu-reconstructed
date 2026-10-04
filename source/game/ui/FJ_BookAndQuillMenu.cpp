@@ -47,21 +47,21 @@ void FJ_BookAndQuillMenu::ChangePage(int page, int pageCount)
         return;
     }
 
-    if (page < m_currentPage)
-    {
-        if (page > 0)
-            left->gotoAndPlay("ArrowAnim");
-        else
-            left->gotoAndPlay("ArrowAnimEnd");
-        right->gotoAndStop("ArrowNormal");
-    }
-    else if (page > m_currentPage)
+    if (page > m_currentPage)
     {
         if (page < pageCount)
             right->gotoAndPlay("ArrowAnim");
         else
             right->gotoAndPlay("ArrowAnimEnd");
         left->gotoAndStop("ArrowNormal");
+    }
+    else if (page < m_currentPage)
+    {
+        if (page > 0)
+            left->gotoAndPlay("ArrowAnim");
+        else
+            left->gotoAndPlay("ArrowAnimEnd");
+        right->gotoAndStop("ArrowNormal");
     }
     else
     {
@@ -112,10 +112,13 @@ void FJ_BookAndQuillMenu::SetCaretPosition(int position, bool atEnd, bool force)
         if (!force)
             offset = GetCaretOffset(position);
         unsigned int index = position + offset;
-        bool pastEnd = index >= m_label->GetLabel().size();
+        bool pastEnd = false;
         unsigned int charIndex = index;
-        if (pastEnd)
+        if (index >= m_label->GetLabel().size())
+        {
+            pastEnd = true;
             charIndex = m_label->GetLabel().size() - 1;
+        }
 
         fuiRect bounds = m_label->GetTextField()->getCharBoundaries(charIndex);
         std::wstring character(m_label->GetLabel(), charIndex, 1);
@@ -134,11 +137,11 @@ void FJ_BookAndQuillMenu::SetCaretPosition(int position, bool atEnd, bool force)
         }
         else
         {
-            fuiRect start = m_label->GetTextField()->getCharBoundaries(0);
+            fuiRect start = m_caret->GetTextField()->getCharBoundaries(0);
             float lineEndAdjust = m_cursorAtLineEnd ? 0.0f : 1.0f;
             float endWidth = pastEnd ? bounds.xMax - bounds.xMin : 0.0f;
             m_caret->setX(m_label->getX() + bounds.xMin - start.xMin - lineEndAdjust + endWidth);
-            start = m_label->GetTextField()->getCharBoundaries(0);
+            start = m_caret->GetTextField()->getCharBoundaries(0);
             m_caret->setY(m_label->getY() + bounds.yMin - start.yMin);
         }
     }
@@ -260,10 +263,7 @@ void FJ_BookAndQuillMenu::SetFocusToBook(bool focus)
 
 bool FJ_BookAndQuillMenu::GetBookHasFocus()
 {
-    bool hasFocus = false;
-    if (!m_bookIsSigned && getStage()->getFocus()->isFJ_Label_Book())
-        hasFocus = true;
-    return hasFocus;
+    return !m_bookIsSigned && getStage()->getFocus()->isFJ_Label_Book();
 }
 
 void FJ_BookAndQuillMenu::OnFocusChange(bool focused)

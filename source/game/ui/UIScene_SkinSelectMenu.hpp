@@ -63,7 +63,7 @@ public:
     unsigned int getNextSkinIndex(unsigned int index);
     int getPreviousSkinIndex(unsigned int index);
     void handleSkinIndexChanged();
-    unsigned int IsTrialDiscontinuedPack(int packId);
+    unsigned char IsTrialDiscontinuedPack(int packId);
     unsigned int GetIsNewPack(int packId);
     static bool SORTNEWEST(int first, int second);
     static bool SORTALPHABETICALLY(int first, int second);

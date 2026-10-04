@@ -20,35 +20,27 @@
 #include "game/world/block/ShulkerBoxBlock.hpp"
 #include "game/world/generation/Player.hpp"
 
-const int InventoryMenu::ARMOR_SLOT_START = 5;
-const int InventoryMenu::INV_SLOT_START = 9;
-const int InventoryMenu::INV_SLOT_END = 36;
-const int InventoryMenu::USE_ROW_SLOT_START = 36;
-
-static const EquipmentSlot* gInventoryMenuHead = NULL;
-static const EquipmentSlot* gInventoryMenuLegs = NULL;
-static const EquipmentSlot* gInventoryMenuChest = NULL;
-static const EquipmentSlot* gInventoryMenuFeet = NULL;
+static const EquipmentSlot* gInventoryMenuArmorSlots[4];
 
 InventoryMenu::InventoryMenu(boost::shared_ptr<Inventory> inventory, bool active, Player* player)
-    : mPlayer(player), mActive(active)
 {
+    mPlayer = player;
     _init(inventory, active);
 }
 
 void InventoryMenu::staticCtor()
 {
-    gInventoryMenuHead = EquipmentSlot::HEAD;
-    gInventoryMenuLegs = EquipmentSlot::LEGS;
-    gInventoryMenuChest = EquipmentSlot::CHEST;
-    gInventoryMenuFeet = EquipmentSlot::FEET;
+    gInventoryMenuArmorSlots[3] = EquipmentSlot::FEET;
+    gInventoryMenuArmorSlots[1] = EquipmentSlot::CHEST;
+    gInventoryMenuArmorSlots[0] = EquipmentSlot::HEAD;
+    gInventoryMenuArmorSlots[2] = EquipmentSlot::LEGS;
 }
 
 void InventoryMenu::_init(boost::shared_ptr<Inventory> inventory, bool active)
 {
+    mCraftSlots = boost::shared_ptr<CraftingContainer>(new CraftingContainer(this, 2, 2));
+    mResultSlots = boost::shared_ptr<ResultContainer>(new ResultContainer());
     mActive = active;
-    mCraftSlots.reset(new CraftingContainer(this, 2, 2));
-    mResultSlots.reset(new ResultContainer());
 
     addSlot(new ResultSlot(mPlayer, mCraftSlots, mResultSlots, 0, 154, 28));
 
@@ -62,10 +54,10 @@ void InventoryMenu::_init(boost::shared_ptr<Inventory> inventory, bool active)
         }
     }
 
-    addSlot(new ArmorSlot(gInventoryMenuHead, inventory, 39, 62, 8));
-    addSlot(new ArmorSlot(gInventoryMenuChest, inventory, 38, 62, 26));
-    addSlot(new ArmorSlot(gInventoryMenuLegs, inventory, 37, 62, 44));
-    addSlot(new ArmorSlot(gInventoryMenuFeet, inventory, 36, 62, 62));
+    for (int armor = 0; armor < 4; ++armor)
+    {
+        addSlot(new ArmorSlot(gInventoryMenuArmorSlots[armor], inventory, 39 - armor, 8, 8 + armor * 18));
+    }
 
     for (row = 0; row < 3; ++row)
     {
@@ -141,116 +133,152 @@ bool InventoryMenu::stillValid(boost::shared_ptr<Player> player)
 
 not_null_ptr<ItemInstance> InventoryMenu::quickMoveStack(boost::shared_ptr<Player> player, int index)
 {
-    Slot* slot = getSlot(index);
-    if (slot == NULL || !slot->hasItem())
-    {
-        return ItemInstance::EMPTY;
-    }
+    not_null_ptr<ItemInstance> result = ItemInstance::EMPTY;
+    Slot* slot = m_slots.at(index);
+    Slot* headSlot = m_slots.at(5);
+    Slot* chestSlot = m_slots.at(6);
+    Slot* legsSlot = m_slots.at(7);
+    Slot* feetSlot = m_slots.at(8);
 
-    not_null_ptr<ItemInstance> item = slot->getItem();
-    not_null_ptr<ItemInstance> result = item->copy();
-    const EquipmentSlot* equipmentSlot = Mob::getEquipmentSlotForItem(result);
+    if (slot != NULL && slot->hasItem())
+    {
+        not_null_ptr<ItemInstance> item = slot->getItem();
+        result = item->copy();
+        const EquipmentSlot* equipmentSlot = Mob::getEquipmentSlotForItem(result);
 
-    bool smallInventory = false;
-    if (Minecraft::InMiniGame(eMiniGameId_Any, true) &&
-        Minecraft::GetInstance()->GetMiniGame()->IsSmallInventoryEnabled())
-    {
-        smallInventory = true;
-    }
+        bool smallInventory = false;
+        if (Minecraft::InMiniGame(eMiniGameId_Any, true) &&
+            Minecraft::GetInstance()->GetMiniGame()->IsSmallInventoryEnabled())
+        {
+            smallInventory = true;
+        }
 
-    if (index == 0)
-    {
-        if (!moveItemStackTo(item, 9, 45, true, true, true))
+        if (index == 0)
+        {
+            if (!moveItemStackTo(item, 9, 45, true, true, true))
+            {
+                return ItemInstance::EMPTY;
+            }
+            slot->onQuickCraft(item, result);
+        }
+        else if ((unsigned int)(index - 1) < 4)
+        {
+            if (!moveItemStackTo(item, smallInventory ? 36 : 9, 45, false, true, true))
+            {
+                return ItemInstance::EMPTY;
+            }
+        }
+        else if ((unsigned int)(index - 5) < 4)
+        {
+            if (!moveItemStackTo(item, smallInventory ? 36 : 9, 45, false, true, true))
+            {
+                return ItemInstance::EMPTY;
+            }
+        }
+        else if (equipmentSlot->getType() == EquipmentSlot::ARMOR && !m_slots.at(8 - equipmentSlot->getIndex())->hasItem())
+        {
+            int armorIndex = 8 - equipmentSlot->getIndex();
+            if (!moveItemStackTo(item, armorIndex, armorIndex + 1, false, true, true))
+            {
+                return ItemInstance::EMPTY;
+            }
+        }
+        else if (equipmentSlot == EquipmentSlot::OFFHAND && !m_slots.at(45)->hasItem())
+        {
+            if (!moveItemStackTo(item, 45, 46, false, true, true))
+            {
+                return ItemInstance::EMPTY;
+            }
+        }
+        else if ((unsigned int)(index - 9) < 27)
+        {
+            if (ArmorRecipes::GetArmorType(item->getItem()) == 1 && !headSlot->hasItem())
+            {
+                if (!moveItemStackTo(item, 5, 6, false, true, true))
+                {
+                    return ItemInstance::EMPTY;
+                }
+            }
+            else if (ArmorRecipes::GetArmorType(item->getItem()) == 2 && !chestSlot->hasItem())
+            {
+                if (!moveItemStackTo(item, 6, 7, false, true, true))
+                {
+                    return ItemInstance::EMPTY;
+                }
+            }
+            else if (ArmorRecipes::GetArmorType(item->getItem()) == 3 && !legsSlot->hasItem())
+            {
+                if (!moveItemStackTo(item, 7, 8, false, true, true))
+                {
+                    return ItemInstance::EMPTY;
+                }
+            }
+            else if (ArmorRecipes::GetArmorType(item->getItem()) == 4 && !feetSlot->hasItem())
+            {
+                if (!moveItemStackTo(item, 8, 9, false, true, true))
+                {
+                    return ItemInstance::EMPTY;
+                }
+            }
+            else if (!moveItemStackTo(item, 36, 45, false, true, true))
+            {
+                return ItemInstance::EMPTY;
+            }
+        }
+        else if ((unsigned int)(index - 36) < 9)
+        {
+            if (ArmorRecipes::GetArmorType(item->getItem()) == 1 && !headSlot->hasItem())
+            {
+                if (!moveItemStackTo(item, 5, 6, false, true, true))
+                {
+                    return ItemInstance::EMPTY;
+                }
+            }
+            else if (ArmorRecipes::GetArmorType(item->getItem()) == 2 && !chestSlot->hasItem())
+            {
+                if (!moveItemStackTo(item, 6, 7, false, true, true))
+                {
+                    return ItemInstance::EMPTY;
+                }
+            }
+            else if (ArmorRecipes::GetArmorType(item->getItem()) == 3 && !legsSlot->hasItem())
+            {
+                if (!moveItemStackTo(item, 7, 8, false, true, true))
+                {
+                    return ItemInstance::EMPTY;
+                }
+            }
+            else if (ArmorRecipes::GetArmorType(item->getItem()) == 4 && !feetSlot->hasItem())
+            {
+                if (!moveItemStackTo(item, 8, 9, false, true, true))
+                {
+                    return ItemInstance::EMPTY;
+                }
+            }
+            else if (!moveItemStackTo(item, smallInventory ? 36 : 9, 36, false, true, true))
+            {
+                return ItemInstance::EMPTY;
+            }
+        }
+        else if (!moveItemStackTo(item, smallInventory ? 36 : 9, 45, false, true, true))
         {
             return ItemInstance::EMPTY;
         }
-        slot->onQuickCraft(item, result);
-    }
-    else if ((unsigned int)(index - 1) < 4 || (unsigned int)(index - 5) < 4)
-    {
-        if (!moveItemStackTo(item, smallInventory ? 36 : 9, 45, false, true, true))
-        {
-            return ItemInstance::EMPTY;
-        }
-    }
-    else if (equipmentSlot->getType() == EquipmentSlot::ARMOR && !getSlot(8 - equipmentSlot->getIndex())->hasItem())
-    {
-        if (!moveItemStackTo(item, 8 - equipmentSlot->getIndex(), 9 - equipmentSlot->getIndex(), false, true, true))
-        {
-            return ItemInstance::EMPTY;
-        }
-    }
-    else if (equipmentSlot == EquipmentSlot::OFFHAND && !getSlot(45)->hasItem())
-    {
-        if (!moveItemStackTo(item, 45, 46, false, true, true))
-        {
-            return ItemInstance::EMPTY;
-        }
-    }
-    else if ((unsigned int)(index - 9) < 27)
-    {
-        int armorType = ArmorRecipes::GetArmorType(item->getItem());
-        if (armorType == 1 && !getSlot(5)->hasItem())
-        {
-            if (!moveItemStackTo(item, 5, 6, false, true, true)) return ItemInstance::EMPTY;
-        }
-        else if (armorType == 2 && !getSlot(6)->hasItem())
-        {
-            if (!moveItemStackTo(item, 6, 7, false, true, true)) return ItemInstance::EMPTY;
-        }
-        else if (armorType == 3 && !getSlot(7)->hasItem())
-        {
-            if (!moveItemStackTo(item, 7, 8, false, true, true)) return ItemInstance::EMPTY;
-        }
-        else if (armorType == 4 && !getSlot(8)->hasItem())
-        {
-            if (!moveItemStackTo(item, 8, 9, false, true, true)) return ItemInstance::EMPTY;
-        }
-        else if (!moveItemStackTo(item, 36, 45, false, true, true))
-        {
-            return ItemInstance::EMPTY;
-        }
-    }
-    else if ((unsigned int)(index - 36) < 9)
-    {
-        int armorType = ArmorRecipes::GetArmorType(item->getItem());
-        if (armorType == 1 && !getSlot(5)->hasItem())
-        {
-            if (!moveItemStackTo(item, 5, 6, false, true, true)) return ItemInstance::EMPTY;
-        }
-        else if (armorType == 2 && !getSlot(6)->hasItem())
-        {
-            if (!moveItemStackTo(item, 6, 7, false, true, true)) return ItemInstance::EMPTY;
-        }
-        else if (armorType == 3 && !getSlot(7)->hasItem())
-        {
-            if (!moveItemStackTo(item, 7, 8, false, true, true)) return ItemInstance::EMPTY;
-        }
-        else if (armorType == 4 && !getSlot(8)->hasItem())
-        {
-            if (!moveItemStackTo(item, 8, 9, false, true, true)) return ItemInstance::EMPTY;
-        }
-        else if (!moveItemStackTo(item, smallInventory ? 36 : 9, 36, false, true, true))
-        {
-            return ItemInstance::EMPTY;
-        }
-    }
-    else if (!moveItemStackTo(item, smallInventory ? 36 : 9, 45, false, true, true))
-    {
-        return ItemInstance::EMPTY;
-    }
 
-    if (item->isEmpty())
-    {
-        slot->set(ItemInstance::EMPTY);
-    }
-    else
-    {
-        slot->setChanged();
-    }
+        if (item->isEmpty())
+        {
+            slot->set(ItemInstance::EMPTY);
+        }
+        else
+        {
+            slot->setChanged();
+        }
 
-    if (item->getCount() != result->getCount())
-    {
+        if (item->getCount() == result->getCount())
+        {
+            return ItemInstance::EMPTY;
+        }
+
         not_null_ptr<ItemInstance> taken = slot->onTake(player, item);
         if (index == 0)
         {
@@ -263,12 +291,12 @@ not_null_ptr<ItemInstance> InventoryMenu::quickMoveStack(boost::shared_ptr<Playe
 
 bool InventoryMenu::mayCombine(Slot* slot, not_null_ptr<ItemInstance> item)
 {
-    return slot != NULL && slot->mayCombine(item);
+    return slot->mayCombine(item);
 }
 
 bool InventoryMenu::canTakeItemForPickAll(not_null_ptr<ItemInstance> item, Slot* slot)
 {
-    return slot != NULL && slot != getSlot(0) && AbstractContainerMenu::canTakeItemForPickAll(item, slot);
+    return slot->mContainer != mResultSlots && AbstractContainerMenu::canTakeItemForPickAll(item, slot);
 }
 
 not_null_ptr<ItemInstance> InventoryMenu::clicked(int slot, int button, ClickType::eClickType type,
@@ -276,11 +304,11 @@ not_null_ptr<ItemInstance> InventoryMenu::clicked(int slot, int button, ClickTyp
 {
     not_null_ptr<ItemInstance> result = AbstractContainerMenu::clicked(slot, button, type, player);
 
-    static Item* const ironArmor[4] = { Items::ironHelmet, Items::ironChestplate, Items::ironLeggings, Items::ironBoots };
+    static Item* ironArmor[4] = { Items::ironHelmet, Items::ironChestplate, Items::ironLeggings, Items::ironBoots };
 
     for (int armorSlot = 5; armorSlot < 9; ++armorSlot)
     {
-        Slot* armorSlotObj = getSlot(armorSlot);
+        Slot* armorSlotObj = m_slots.at(armorSlot);
         bool wearingIron = false;
         if (armorSlotObj != NULL && armorSlotObj->hasItem())
         {

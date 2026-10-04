@@ -28,22 +28,17 @@ void FJ_InGameHostOptions::InitMenu()
 {
     FJ_FuiNode* background = getChildByName(std::string("BackgroundPanel"));
     FJ_FuiNode* list = getChildByName(std::string("HostOptionsList"));
-    const float backgroundHeight = background->getChildAt(0)->getHeight();
-    FJ_List* hostOptionsList = static_cast<FJ_List*>(list->asFJ_List_MultiList());
-    const int listHeight = hostOptionsList->GetListHeight();
+    const int backgroundHeight = static_cast<int>(background->getChildAt(0)->getHeight());
+    background->getChildAt(0)->setHeight(
+        static_cast<float>(static_cast<FJ_List*>(list->asFJ_List_MultiList())->GetListHeight()) +
+        (list->getY() - background->getY()) * 2.0f);
 
-    if (static_cast<float>(listHeight) < list->getHeight())
+    const int amount = Math::round((static_cast<float>(backgroundHeight) -
+                                    background->getChildAt(0)->getHeight()) * 0.5f);
+    if (amount > 0)
     {
-        background->getChildAt(0)->setY(static_cast<float>(listHeight) +
-                                         (list->getY() - background->getY()) * 2.0f);
-
-        const float amount = static_cast<float>(Math::round((backgroundHeight -
-                                                              background->getChildAt(0)->getHeight()) * 0.5f));
-        if (amount > 0.0f)
-        {
-            background->getChildAt(0)->incY(amount);
-            list->incY(amount);
-        }
+        background->getChildAt(0)->incY(static_cast<float>(amount));
+        list->incY(static_cast<float>(amount));
     }
     SetFocus(-1);
 }
@@ -52,8 +47,7 @@ void FJ_InGameHostOptions::SetSafeZone(int top, int bottom, int left, int right)
 {
     FJ_Document::SetSafeZone(top, bottom, left, right);
 
-    const float stageHeight = getStage()->getStageHeight();
-    if (stageHeight != 360.0 && stageHeight != 540.0)
+    if (getStage()->getStageHeight() != 360.0f && getStage()->getStageHeight() != 540.0f)
         return;
 
     setY(top);

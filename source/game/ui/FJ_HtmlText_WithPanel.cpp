@@ -11,7 +11,6 @@
 FJ_HtmlText_WithPanel::FJ_HtmlText_WithPanel(fuiRenderNode* renderNode)
     : FJ_HtmlText(renderNode)
 {
-    m_panelOffset = 20;
     m_panelNode = NULL;
 }
 
@@ -19,7 +18,7 @@ FJ_HtmlText_WithPanel::~FJ_HtmlText_WithPanel()
 {
     if (m_panelNode != NULL)
     {
-        if (getParent() != NULL)
+        if (m_panelNode->getParent() != NULL)
             m_panelNode->getParent()->removeChild(m_panelNode, true);
     }
     m_panelOffset = 20;
@@ -77,8 +76,9 @@ void FJ_HtmlText_WithPanel::Init(const std::wstring& label)
     m_fScrollTop = 0.0f;
     m_bScrollingEnabled = m_bUseScrollRect;
     m_fWidth = width - static_cast<float>(m_panelOffset * 2);
-    m_fScrollBottom = m_fScrollTop
+    float scrollBottom = m_fScrollTop
         + (height - (m_pUpArrow->getHeight() * 1.4f + static_cast<float>(m_panelOffset)));
+    m_fScrollBottom = scrollBottom;
     m_iRealWidth = static_cast<int>(m_fWidth - m_fScrollLeft);
     m_iRealHeight = static_cast<int>(m_fScrollBottom - m_fScrollTop);
 
@@ -88,7 +88,7 @@ void FJ_HtmlText_WithPanel::Init(const std::wstring& label)
         scrollRect.xMin = m_fScrollLeft;
         scrollRect.xMax = m_fWidth;
         scrollRect.yMin = m_fScrollTop;
-        scrollRect.yMax = m_fScrollBottom;
+        scrollRect.yMax = scrollBottom;
         m_pText->setScrollRect(scrollRect);
     }
 

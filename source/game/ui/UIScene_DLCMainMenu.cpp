@@ -8,6 +8,8 @@
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/cCommerce.hpp"
+#include "game/network/CGameNetworkManager.hpp"
+#include "platform/wiiu/CProfile.hpp"
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/ui/UIControl.hpp"
 #include "game/ui/UIControl_DynamicButtonList.hpp"
@@ -19,39 +21,40 @@
 
 extern ConsoleUIController gConsoleUIController;
 extern CConsoleMinecraftApp gApp;
-extern CMinecraftApp* g_pApp;
+extern CProfile* gProfile;
 
 UIScene_DLCMainMenu::UIScene_DLCMainMenu(int type, void* data, UILayer* layer)
-    : UIScene(type, layer), m_offerList(), m_titleLabel(), m_timer(), m_initialized(false)
+    : UIScene(type, layer), m_titleLabel(), m_timer()
 {
     initialiseMovie();
-    g_pApp->SetLiveLinkRequired(true);
+    gApp.SetLiveLinkRequired(true);
     m_playerId = type;
     m_titleLabel.init(UIString(IDS_DOWNLOADABLE_CONTENT_OFFERS));
     m_offerList.init(0);
     gApp.LoadLocalDLCImages();
     m_timer.setVisible(true);
+    m_initialized = false;
     cCommerce* commerce = static_cast<cCommerce*>((void*)gApp.GetCommerceInstance());
-    commerce->AttemptLogIn();
+    commerce->ShowStoreIcon();
     addTimer(0, 100);
 }
 
 UIScene_DLCMainMenu::~UIScene_DLCMainMenu()
 {
-    g_pApp->SetLiveLinkRequired(false);
+    gApp.SetLiveLinkRequired(false);
     gApp.FreeLocalDLCImages();
     cCommerce* commerce = static_cast<cCommerce*>((void*)gApp.GetCommerceInstance());
-    commerce->ClearProductInfo();
+    commerce->HideStoreIcon();
 }
 
 unsigned int UIScene_DLCMainMenu::mapElementsAndNames()
 {
     fuiRenderNode* root = m_movie->getRootNode();
-    m_offerList.setupControl(this, root, std::string("OffersList"));
+    m_offerList.setupControl(this, root, "OffersList");
     m_controls.push_back(&m_offerList);
-    m_titleLabel.setupControl(this, root, std::string("OffersList_Title"));
+    m_titleLabel.setupControl(this, root, "OffersList_Title");
     m_controls.push_back(&m_titleLabel);
-    m_timer.setupControl(this, root, std::string("Timer"));
+    m_timer.setupControl(this, root, "Timer");
     m_controls.push_back(&m_timer);
     return 1;
 }
@@ -60,18 +63,19 @@ int UIScene_DLCMainMenu::ExitDLCMainMenu(void* context, int,
                                           C4JStorage::EMessageResult)
 {
     cCommerce* commerce = static_cast<cCommerce*>((void*)gApp.GetCommerceInstance());
-    commerce->ClearProductInfo();
+    commerce->HideStoreIcon();
     static_cast<UIScene*>(context)->navigateBack();
     return 0;
 }
 
 void UIScene_DLCMainMenu::handleTimerComplete(int timerId)
 {
-    if (timerId == 0 && g_pApp->DLCInstallPending() == 0)
+    if (timerId == 0 && !gProfile->IsSignedInLive(gProfile->GetPrimaryPad()))
     {
         int parameter = static_cast<int>(IDS_CONFIRM_OK);
-        gConsoleUIController.RequestErrorMessage(IDS_CONNECTION_LOST, 0x16cb58e9,
-                                                  &parameter, 1, m_playerId,
+        gConsoleUIController.RequestErrorMessage(IDS_CONNECTION_LOST,
+                                                  CGameNetworkManager::sInstance.CorrectErrorIDS(IDS_CONNECTION_LOST_LIVE_NO_EXIT),
+                                                  &parameter, 1, gProfile->GetPrimaryPad(),
                                                   ExitDLCMainMenu, this, NULL, true);
     }
 }
@@ -120,7 +124,7 @@ void UIScene_DLCMainMenu::handleInput(int playerId, int action, bool repeat, boo
         if (pressed)
         {
             cCommerce* commerce = static_cast<cCommerce*>((void*)gApp.GetCommerceInstance());
-            commerce->ClearProductInfo();
+            commerce->HideStoreIcon();
             navigateBack();
         }
         break;
@@ -144,10 +148,11 @@ void UIScene_DLCMainMenu::handlePress(int controlId, int childId)
 {
     if (controlId == 0)
     {
+        struct OffersData { int playerId; unsigned char reserved[4]; int category; };
+        OffersData* data = new OffersData();
+        data->playerId = m_playerId;
+        data->category = childId;
         killTimer(0);
-        int* data = new int[3]();
-        data[0] = m_playerId;
-        data[2] = childId;
         gConsoleUIController.NavigateToScene(m_playerId, EUIScene_DLCOffersMenu,
                                              data, EUILayer_Scene,
                                              EUIGroup_PlayerDefault);

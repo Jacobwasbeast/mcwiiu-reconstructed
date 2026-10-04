@@ -12,20 +12,14 @@
 #include "game/ui/fuiFile.hpp"
 
 UIComponent_Chat::UIComponent_Chat(int type, void* data, UILayer* layer)
-    : UIScene(type, layer), m_splitScreen(false)
+    : UIScene(type, layer)
 {
     initialiseMovie();
-    m_labels[0].init(UIString(L"ComponentChat"));
-    m_labels[1].init(UIString(L"ComponentChat"));
-    m_labels[2].init(UIString(L"ComponentChat"));
-    m_labels[3].init(UIString(L"ComponentChat"));
-    m_labels[4].init(UIString(L"ComponentChat"));
-    m_labels[5].init(UIString(L"ComponentChat"));
-    m_labels[6].init(UIString(L"ComponentChat"));
-    m_labels[7].init(UIString(L"ComponentChat"));
-    m_labels[8].init(UIString(L"ComponentChat"));
-    m_labels[9].init(UIString(L"ComponentChat"));
-    m_chatLabel.init(UIString(L"ComponentChat"));
+    for (int i = 0; i < 10; ++i)
+    {
+        m_labels[i].init(UIString(L""));
+    }
+    m_chatLabel.init(UIString(L""));
     addTimer(0, 100);
 }
 
@@ -117,33 +111,36 @@ void UIComponent_Chat::render(int width, int height, C4JRender::eViewportType vi
         break;
     }
 
+    int top = 0;
     switch (viewport)
     {
+    case C4JRender::eViewportType_FullScreen:
+        break;
     case C4JRender::eViewportType_TopHalf:
     case C4JRender::eViewportType_BottomHalf:
         gFui->render(m_movie, 0.0f, m_stageHeight / 2, static_cast<int>(gConsoleUIController.getScreenWidth()), height);
-        break;
+        return;
     case C4JRender::eViewportType_LeftHalf:
     case C4JRender::eViewportType_RightHalf:
         gFui->render(m_movie, 0.0f, 0, width, static_cast<int>(gConsoleUIController.getScreenHeight()));
-        break;
+        return;
     case C4JRender::eViewportType_TopLeftQuarter:
     case C4JRender::eViewportType_TopRightQuarter:
     case C4JRender::eViewportType_BottomLeftQuarter:
     case C4JRender::eViewportType_BottomRightQuarter:
-        gFui->render(m_movie, 0.0f, m_stageHeight / 2, width, height);
+        top = m_stageHeight / 2;
         break;
     default:
         gFui->render(m_movie, 0.0f, 0, width, height);
-        break;
+        return;
     }
+    gFui->render(m_movie, 0.0f, top, width, height);
 }
 
 void UIComponent_Chat::handleTimerComplete(int timerId)
 {
     Minecraft* minecraft = Minecraft::GetInstance();
-    int player = m_playerId;
-    if (minecraft->mLocalPlayers[player].get() == NULL)
+    if (minecraft->mLocalPlayers[m_playerId].get() == NULL)
     {
         for (int i = 0; i < 10; ++i)
         {
@@ -153,32 +150,38 @@ void UIComponent_Chat::handleTimerComplete(int timerId)
         }
         m_chatLabel.setOpacity(0.0f);
         setVisible(false);
-        return;
     }
-    Gui* gui = minecraft->mGui;
-    bool visible = false;
-    for (int i = 0; i < 10; ++i)
+    else
     {
-        double messageOpacity = gui->getOpacity(player, static_cast<unsigned int>(i));
-        if (messageOpacity > 0.0)
+        Gui* gui = minecraft->mGui;
+        bool visible = false;
+        for (unsigned int i = 0; i < 10; ++i)
         {
-            m_backgrounds[i].setOpacity(static_cast<float>(messageOpacity));
-            m_labels[i].setOpacity(static_cast<float>(messageOpacity));
-            m_labels[i].setLabel(UIString(gui->mMessages[player].at(i).message), false, false);
+            float messageOpacity = gui->getOpacity(m_playerId, i);
+            if (messageOpacity > 0.0f)
+            {
+                m_backgrounds[i].setOpacity(messageOpacity);
+                m_labels[i].setOpacity(messageOpacity);
+                std::wstring message = gui->mMessages[m_playerId].at(i).message;
+                m_labels[i].setLabel(UIString(message), false, false);
+                visible = true;
+            }
+            else
+            {
+                m_backgrounds[i].setOpacity(0.0f);
+                m_labels[i].setOpacity(0.0f);
+                m_labels[i].setLabel(UIString(L""), false, false);
+            }
+        }
+        if (gui->getJukeboxOpacity(m_playerId) > 0.0f)
             visible = true;
-        }
-        else
+        m_chatLabel.setOpacity(gui->getJukeboxOpacity(m_playerId));
         {
-            m_backgrounds[i].setOpacity(0.0f);
-            m_labels[i].setOpacity(0.0f);
-            m_labels[i].setLabel(UIString(L""), false, false);
+            std::wstring nowPlaying = gui->mNowPlaying[m_playerId];
+            m_chatLabel.setLabel(UIString(nowPlaying), false, false);
         }
+        setVisible(visible);
     }
-    if (gui->getJukeboxOpacity(player) > 0.0)
-        visible = true;
-    m_chatLabel.setOpacity(static_cast<float>(gui->getJukeboxOpacity(player)));
-    m_chatLabel.setLabel(UIString(gui->mNowPlaying[player]), false, false);
-    setVisible(visible);
 }
 
 int UIComponent_Chat::getSceneType()

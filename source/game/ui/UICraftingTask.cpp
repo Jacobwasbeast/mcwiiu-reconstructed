@@ -3,6 +3,7 @@
 #include "game/item/Item.hpp"
 #include "game/minigame/Tutorial.hpp"
 #include "game/ui/IUIScene_CraftingMenu.hpp"
+#include "game/ui/UIScene_CraftingMenu.hpp"
 
 UICraftingTask::UICraftingTask(Tutorial* tutorial, int descriptionId,
                                Recipe::_eGroupType group, bool preCompletionEnabled,
@@ -36,7 +37,7 @@ bool UICraftingTask::isCompleted()
             return false;
         }
 
-        IUIScene_CraftingMenu* craftingMenu = (IUIScene_CraftingMenu*)scene;
+        IUIScene_CraftingMenu* craftingMenu = static_cast<UIScene_CraftingMenu*>(scene);
         return craftingMenu->getCurrentGroup() == group;
     }
 
@@ -45,6 +46,6 @@ bool UICraftingTask::isCompleted()
         return false;
     }
 
-    IUIScene_CraftingMenu* craftingMenu = (IUIScene_CraftingMenu*)scene;
+    IUIScene_CraftingMenu* craftingMenu = static_cast<UIScene_CraftingMenu*>(scene);
     return craftingMenu->isItemSelected(Item::getId(item));
 }

@@ -4,6 +4,7 @@
 #include <cwchar>
 #include <string>
 
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/L10N.hpp"
 #include "game/ui/FJ_MessageBox.hpp"
@@ -14,8 +15,7 @@
 #include "platform/wiiu/CProfile.hpp"
 
 UIScene_MessageBox::UIScene_MessageBox(int sceneType, void* sceneData, UILayer* layer)
-    : UIScene(sceneType, layer), m_callback(0), m_callbackData(0), m_titleId(0),
-      m_buttonCount(0), m_alert(false)
+    : UIScene(sceneType, layer)
 {
     ConsoleUIController::_MessageBoxData* data =
         static_cast<ConsoleUIController::_MessageBoxData*>(sceneData);
@@ -23,22 +23,19 @@ UIScene_MessageBox::UIScene_MessageBox(int sceneType, void* sceneData, UILayer* 
     m_titleId = data->titleId;
     m_buttonCount = data->parameterCount;
     m_alert = data->blocking;
-    m_callback = data->callback;
-    m_callbackData = data->callbackData;
 
-    FJ_MessageBox* document = static_cast<FJ_MessageBox*>(m_movie->getRootNode()->getFuiNode());
-    document->Init(m_buttonCount, data->buttonFlags);
+    static_cast<FJ_MessageBox*>(m_movie->getRootNode()->getFuiNode())->Init(data->parameterCount, data->buttonFlags);
 
     unsigned int button = 0;
-    if (m_buttonCount > 3) {
+    if (data->parameterCount > 3) {
         m_buttons[0].init(UIString(L10N::GetString(data->messageParameters[0])), 0);
         button = 1;
     }
-    if (m_buttonCount > 2) {
+    if (data->parameterCount > 2) {
         m_buttons[1].init(UIString(L10N::GetString(data->messageParameters[button])), button);
         ++button;
     }
-    if (m_buttonCount > 1) {
+    if (data->parameterCount > 1) {
         m_buttons[2].init(UIString(L10N::GetString(data->messageParameters[button])), button);
         ++button;
     }
@@ -53,10 +50,10 @@ UIScene_MessageBox::UIScene_MessageBox(int sceneType, void* sceneData, UILayer* 
         m_content.init(UIString(text));
     }
 
-    document->AutoResize();
+    static_cast<FJ_MessageBox*>(m_movie->getRootNode()->getFuiNode())->AutoResize();
     m_callbackData = data->callbackData;
     m_callback = data->callback;
-    m_layer->addComponent(sceneType, EUIScene_MenuBackground, 0);
+    layer->addComponent(sceneType, EUIScene_MenuBackground, 0);
     gConsoleUIController.HideChestRefillAnimation();
     gConsoleUIController.TouchBoxRebuild(this);
 }
@@ -74,26 +71,44 @@ unsigned int UIScene_MessageBox::mapElementsAndNames()
 {
     UIScene::mapElementsAndNames();
     fuiRenderNode* root = m_movie->getRootNode();
-    m_buttons[0].setupControl(this, root, std::string("Button0"));
+    {
+        std::string name("Button0");
+        m_buttons[0].setupControl(this, root, name);
+    }
     m_controls.push_back(&m_buttons[0]);
-    m_buttons[1].setupControl(this, root, std::string("Button1"));
+    {
+        std::string name("Button1");
+        m_buttons[1].setupControl(this, root, name);
+    }
     m_controls.push_back(&m_buttons[1]);
-    m_buttons[2].setupControl(this, root, std::string("Button2"));
+    {
+        std::string name("Button2");
+        m_buttons[2].setupControl(this, root, name);
+    }
     m_controls.push_back(&m_buttons[2]);
-    m_buttons[3].setupControl(this, root, std::string("Button3"));
+    {
+        std::string name("Button3");
+        m_buttons[3].setupControl(this, root, name);
+    }
     m_controls.push_back(&m_buttons[3]);
-    m_title.setupControl(this, root, std::string("Title"));
+    {
+        std::string name("Title");
+        m_title.setupControl(this, root, name);
+    }
     m_controls.push_back(&m_title);
-    m_content.setupControl(this, root, std::string("Content"));
+    {
+        std::string name("Content");
+        m_content.setupControl(this, root, name);
+    }
     m_controls.push_back(&m_content);
     return 1;
 }
 
 std::wstring UIScene_MessageBox::getMoviePath()
 {
-    if (g_pApp->GetLocalPlayerCount() < 2 || m_layer->IsFullscreenGroup())
-        return std::wstring(L"MessageBox");
-    return std::wstring(L"MessageBoxSplit");
+    if (gApp.GetLocalPlayerCount() > 1 && !m_layer->IsFullscreenGroup())
+        return std::wstring(L"MessageBoxSplit");
+    return std::wstring(L"MessageBox");
 }
 
 void UIScene_MessageBox::updateTooltips()
@@ -109,9 +124,8 @@ void UIScene_MessageBox::handleReload()
     int focus = 0;
     if (getControlFocus() >= 0)
         focus = getControlFocus();
-    FJ_MessageBox* document = static_cast<FJ_MessageBox*>(m_movie->getRootNode()->getFuiNode());
-    document->Init(m_buttonCount, focus);
-    document->AutoResize();
+    static_cast<FJ_MessageBox*>(m_movie->getRootNode()->getFuiNode())->Init(m_buttonCount, focus);
+    static_cast<FJ_MessageBox*>(m_movie->getRootNode()->getFuiNode())->AutoResize();
 }
 
 void UIScene_MessageBox::handleInput(int playerId, int action, bool repeat, bool pressed,
@@ -147,11 +161,11 @@ bool UIScene_MessageBox::hasFocus(int playerId)
 void UIScene_MessageBox::handlePress(int controlId, int)
 {
     C4JStorage::EMessageResult result = C4JStorage::EMessageResult_Cancelled;
-    if (static_cast<unsigned int>(controlId) < 4) {
-        static const C4JStorage::EMessageResult results[4] = {
+    if (static_cast<unsigned int>(controlId) <= 3) {
+        static const unsigned char results[4] = {
             C4JStorage::EMessageResult_Accept, C4JStorage::EMessageResult_Decline,
             C4JStorage::EMessageResult_ThirdOption, C4JStorage::EMessageResult_FourthOption };
-        result = results[controlId];
+        result = static_cast<C4JStorage::EMessageResult>(results[controlId]);
     }
     navigateBack();
     if (m_callback != 0)

@@ -32,17 +32,13 @@ FJ_List2D::FJ_List2D(fuiRenderNode* renderNode)
     addEventListener(eFJEventType_FocusOut, this, _focusOutHandler, false);
 }
 
-FJ_List2D::~FJ_List2D()
-{
-}
-
 void FJ_List2D::HighlightItem(int index)
 {
     int row = index / m_itemsPerRow;
     int column = index - row * m_itemsPerRow;
     if (m_items[row].size() - 1 < static_cast<unsigned int>(column))
         column = static_cast<int>(m_items[row].size()) - 1;
-    if (static_cast<unsigned int>(row) < m_items.size() && !m_items[row].empty() &&
+    if (static_cast<unsigned int>(row) < m_items.size() &&
         static_cast<unsigned int>(column) < m_items[row].size())
     {
         m_activeRow = row;
@@ -131,7 +127,7 @@ void FJ_List2D::UpdateScrollListArrows()
         return;
     m_upArrow->setX(static_cast<float>(Math::round(getX() + getWidth() - m_upArrow->getWidth() * 1.5f)));
     m_upArrow->setY(static_cast<float>(Math::round(getY() + getHeight() - m_upArrow->getHeight() * 0.5f)));
-    m_downArrow->setX(static_cast<float>(Math::round(getX() + getWidth() - m_downArrow->getWidth() * 1.5f)));
+    m_downArrow->setX(static_cast<float>(Math::round(getX() + getWidth() - m_upArrow->getWidth() * 0.5f)));
     m_downArrow->setY(m_upArrow->getY());
 }
 
@@ -343,18 +339,23 @@ void FJ_List2D::addNewListItem(FJ_Base* item, int id)
     int index = 0;
     unsigned int r;
     for (r = 0; r < m_items.size(); ++r)
-        index += static_cast<int>(m_items[r].size());
+    {
+        unsigned int c;
+        for (c = 0; c < m_items[r].size(); ++c)
+            ++index;
+    }
     item->setId(id);
     item->setListId(index);
     item->setObjListParent(this);
 
     int newCount = index + 1;
     int itemWidth = static_cast<int>(item->getWidth());
-    int cellWidth = itemWidth + m_itemSpacing;
+    int itemSpacing = m_itemSpacing;
+    int cellWidth = itemWidth + itemSpacing;
     int availableWidth = Math::round(getWidth());
     int row;
     int rowStart;
-    if (availableWidth < cellWidth * newCount - m_itemSpacing)
+    if (availableWidth < cellWidth * newCount - itemSpacing)
     {
         row = index / m_itemsPerRow;
         rowStart = m_itemsPerRow * row;
@@ -376,20 +377,18 @@ void FJ_List2D::addNewListItem(FJ_Base* item, int id)
     item->m_navUpName = m_navUpName;
     item->m_navDownName = m_navDownName;
 
-    if (column == 0)
+    if (column < 1)
     {
         if (row >= 1)
         {
-            FJ_FuiNode* prevRowLast = m_items[row - 1][m_itemsPerRow - 1];
-            item->m_navLeftName = prevRowLast->getName();
-            prevRowLast->asFJ_Base()->m_navRightName = item->getName();
+            item->m_navLeftName = m_items[row - 1][m_itemsPerRow - 1]->getName();
+            m_items[row - 1][m_itemsPerRow - 1]->asFJ_Base()->m_navRightName = item->getName();
         }
     }
     else
     {
-        FJ_FuiNode* prevItem = m_items[row][column - 1];
-        item->m_navLeftName = prevItem->getName();
-        prevItem->asFJ_Base()->m_navRightName = item->getName();
+        item->m_navLeftName = m_items[row][column - 1]->getName();
+        m_items[row][column - 1]->asFJ_Base()->m_navRightName = item->getName();
     }
 
     if (row >= 1)
@@ -400,9 +399,8 @@ void FJ_List2D::addNewListItem(FJ_Base* item, int id)
             if (static_cast<int>(col) > column)
                 m_items[row - 1][col]->asFJ_Base()->m_navDownName = item->getName();
         }
-        FJ_FuiNode* above = m_items[row - 1][column];
-        item->m_navUpName = above->getName();
-        above->asFJ_Base()->m_navDownName = item->getName();
+        item->m_navUpName = m_items[row - 1][column]->getName();
+        m_items[row - 1][column]->asFJ_Base()->m_navDownName = item->getName();
     }
 
     item->addEventListener(eFJEventType_FocusIn, this, _ItemFocusInHandler, false);

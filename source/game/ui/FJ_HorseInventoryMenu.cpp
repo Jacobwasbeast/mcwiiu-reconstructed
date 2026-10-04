@@ -38,10 +38,10 @@ void FJ_HorseInventoryMenu::SetInventoryType(int type)
     {
         FJ_FuiNode* saddleType = mainPanel->getChildByName("SlotTypes.SlotSaddle");
         FJ_FuiNode* saddleSlot = mainPanel->getChildByName("SlotSaddle");
-        FJ_FuiNode* carpetIcon = mainPanel->getChildByName("SlotTypes.SlotArmour.CarpetIcon");
         saddleType->setVisible(false);
         mainPanel->removeChild(saddleSlot, true);
-        carpetIcon->setVisible(false);
+        FJ_FuiNode* horseArmorIcon = mainPanel->getChildByName("SlotTypes.SlotArmour.HorseArmorIcon");
+        horseArmorIcon->setVisible(false);
     }
 }
 
@@ -71,9 +71,9 @@ void FJ_HorseInventoryMenu::SetSafeZone(int top, int bottom, int left, int right
 
     FJ_FuiNodeStage* stage = getStage();
     float height = stage->getStageHeight();
-    if (height != 360.0 && height != 540.0)
-        return;
-
-    setX(-right);
-    setY(top);
+    if (height == 360.0f || height == 540.0f)
+    {
+        setX(-right);
+        setY(top);
+    }
 }

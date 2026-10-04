@@ -24,7 +24,7 @@ private:
     int managedTextureMemory;
     unsigned int peakTextureCount;
     unsigned int peakTextureMemory;
-    unsigned int tickCount;
+    int tickCount;
     bool initialised;
     OSFastMutex mutex;
 

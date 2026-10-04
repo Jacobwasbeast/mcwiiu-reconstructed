@@ -14,14 +14,13 @@ UIControl_BitmapIcon::UIControl_BitmapIcon()
 void UIControl_BitmapIcon::setTextureName(const std::wstring& textureName, bool immediate)
 {
     m_textureName.assign(textureName, 0, std::wstring::npos);
-    if (!immediate) {
-        m_textureNamePending = true;
-    } else {
+    if (immediate) {
         m_textureNamePending = false;
         if (m_fuiRenderNode != 0) {
-            FJ_BitmapIcon* bitmapIcon = m_fuiRenderNode->getFuiNode()->asFJ_BitmapIcon();
-            bitmapIcon->SetTextureName(textureName);
+            static_cast<FJ_BitmapIcon*>(m_fuiRenderNode->getFuiNode())->SetTextureName(textureName);
         }
+    } else {
+        m_textureNamePending = true;
     }
 }
 

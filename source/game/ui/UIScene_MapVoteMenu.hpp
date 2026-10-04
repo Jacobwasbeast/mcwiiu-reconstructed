@@ -35,7 +35,7 @@ public:
 
 private:
     bool m_splitScreen;
-    int m_votableType;
+    unsigned int m_votableType;
     std::vector<int> m_mapIds;
     int m_selectedVote;
     int m_previousSelection;

@@ -24,21 +24,21 @@ public:
     UIScene_HorseInventoryMenu(int player, void* data, UILayer* layer);
     virtual ~UIScene_HorseInventoryMenu();
 
-    virtual bool IsSectionSlotList(IUIScene_AbstractContainerMenu::ESceneSection section);
-    virtual unsigned int IsVisible(IUIScene_AbstractContainerMenu::ESceneSection section);
     virtual unsigned int getSectionColumns(IUIScene_AbstractContainerMenu::ESceneSection section);
     virtual unsigned int getSectionRows(IUIScene_AbstractContainerMenu::ESceneSection section);
-    virtual unsigned int GetSectionAndSlotInDirection(IUIScene_AbstractContainerMenu::ESceneSection section,
-                                                       IUIScene_AbstractContainerMenu::ETapState state,
-                                                       int* x, int* y);
     virtual void GetPositionOfSection(IUIScene_AbstractContainerMenu::ESceneSection section,
                                       _UIVec2D* position);
     virtual void GetItemScreenData(IUIScene_AbstractContainerMenu::ESceneSection section, int slot,
                                    _UIVec2D* position, _UIVec2D* size);
     virtual void handleSectionClick(IUIScene_AbstractContainerMenu::ESceneSection section);
-    virtual int getSectionStartOffset(IUIScene_AbstractContainerMenu::ESceneSection section);
     virtual void setSectionSelectedSlot(IUIScene_AbstractContainerMenu::ESceneSection section,
                                         int slot, int direction, bool wrap);
+    virtual unsigned int GetSectionAndSlotInDirection(IUIScene_AbstractContainerMenu::ESceneSection section,
+                                                       IUIScene_AbstractContainerMenu::ETapState state,
+                                                       int* x, int* y);
+    virtual int getSectionStartOffset(IUIScene_AbstractContainerMenu::ESceneSection section);
+    virtual bool IsSectionSlotList(IUIScene_AbstractContainerMenu::ESceneSection section);
+    virtual unsigned int IsVisible(IUIScene_AbstractContainerMenu::ESceneSection section);
 
     void SetInventoryType(int type);
     void SetHasInventory(bool hasInventory);

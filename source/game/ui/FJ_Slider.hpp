@@ -55,8 +55,8 @@ private:
     FJ_FuiNode* m_sliderMask;
     FJ_FuiNode* m_tintActiveMask;
     FJ_FuiNode* m_tintInactiveMask;
-    int m_keyPressTicks;
     int m_keyPressDelta;
+    int m_keyPressTicks;
     bool m_repeat;
     int m_repeatDelay;
     int m_repeatStep;

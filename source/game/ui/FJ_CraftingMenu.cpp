@@ -342,7 +342,10 @@ FJ_FuiNode* FJ_CraftingMenu::SetupIggySlot(FJ_FuiNode* node)
         iggy->addChildAt(slot, 0);
         return slot;
     }
-    return node->getChildByName("iggy_" + std::string(node->getName()));
+    else
+    {
+        return node->getChildByName("iggy_" + std::string(node->getName()));
+    }
 }
 
 void FJ_CraftingMenu::SetCraftingMenu(int horizontalCount, int verticalCount, bool enabled)

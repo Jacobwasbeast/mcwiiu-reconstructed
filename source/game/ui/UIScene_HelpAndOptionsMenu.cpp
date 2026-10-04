@@ -23,7 +23,7 @@ UIScene_HelpAndOptionsMenu::UIScene_HelpAndOptionsMenu(int playerId, void*, UILa
     : UIScene(playerId, layer)
 {
     initialiseMovie();
-    m_unknownFlag = Minecraft::GetInstance()->mPendingLevelChange == 0;
+    m_unknownFlag = Minecraft::GetInstance()->mLevel == NULL;
     m_buttons[0].init(UIString(IDS_CHANGE_SKIN), 0);
     m_buttons[1].init(UIString(IDS_HOW_TO_PLAY), 1);
     m_buttons[2].init(UIString(IDS_CONTROLS), 2);
@@ -100,7 +100,7 @@ void UIScene_HelpAndOptionsMenu::updateComponents()
 {
     Minecraft* minecraft = Minecraft::GetInstance();
     bool showSecond = false;
-    if (minecraft->mPendingLevelChange == 0) {
+    if (minecraft->mLevel == NULL) {
         m_layer->showComponent(m_playerId, EUIScene_Panorama, true);
         showSecond = true;
     } else {
@@ -119,8 +119,7 @@ void UIScene_HelpAndOptionsMenu::handleReload()
 {
     removeControl(&m_buttons[6], false);
     Minecraft* minecraft = Minecraft::GetInstance();
-    int pendingLevelChange = minecraft->mPendingLevelChange;
-    if (m_playerId != gProfile->GetPrimaryPad() || pendingLevelChange != 0)
+    if (m_playerId != gProfile->GetPrimaryPad() || minecraft->mLevel != NULL)
         removeControl(&m_buttons[5], false);
     if (gApp.GetLocalPlayerCount() > 1) {
         removeControl(&m_buttons[4], false);

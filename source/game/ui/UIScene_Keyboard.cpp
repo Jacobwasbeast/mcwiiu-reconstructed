@@ -1,3 +1,4 @@
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/ui/UIScene_Keyboard.hpp"
 #include "game/core/StringIds.hpp"
 
@@ -9,12 +10,12 @@
 #include "game/core/GameSettings.hpp"
 
 UIScene_Keyboard::UIScene_Keyboard(int sceneType, void* sceneData, UILayer* layer)
-    : UIScene(sceneType, layer), m_keyboardDone(false)
+    : UIScene(sceneType, layer)
 {
     initialiseMovie();
 
     m_enterTextLabel.init(UIString(L"Enter Sign Text"));
-    m_keyboardTextInput.init(UIString(L"Enter Sign Text"), -1);
+    m_keyboardTextInput.init(UIString(L""), -1);
     m_keyboardTextInput.SetCharLimit(15);
     m_spaceButton.init(UIString(L"Space"), -1);
     m_cursorLeftButton.init(UIString(L"Cursor Left"), -1);
@@ -24,7 +25,8 @@ UIScene_Keyboard::UIScene_Keyboard(int sceneType, void* sceneData, UILayer* laye
     m_symbolsButton.init(UIString(L"Symbols"), -1);
     m_backspaceButton.init(UIString(L"Backspace"), -1);
 
-    layer->addComponent(sceneType, EUIScene_MenuBackground, sceneData);
+    m_keyboardDone = false;
+    layer->addComponent(sceneType, EUIScene_MenuBackground, NULL);
 }
 
 UIScene_Keyboard::~UIScene_Keyboard()
@@ -66,7 +68,9 @@ void UIScene_Keyboard::updateTooltips()
 
 bool UIScene_Keyboard::allowRepeat(int action)
 {
-    return action >= EControllerActions_MenuX && action != EControllerActions_MenuStart && action != EControllerActions_MenuOk && action != EControllerActions_MenuCancel;
+    if (static_cast<unsigned int>(action) > EControllerActions_MenuB && action != EControllerActions_MenuStart && (action < EControllerActions_MenuOk || action > EControllerActions_MenuCancel))
+        return true;
+    return false;
 }
 
 void UIScene_Keyboard::handleInput(int, int, bool, bool, bool, bool&)
@@ -98,9 +102,9 @@ void UIScene_Keyboard::handlePress(int controlId, int)
 
 std::wstring UIScene_Keyboard::getMoviePath()
 {
-    if (g_pApp->GetLocalPlayerCount() < 2 || m_layer->IsFullscreenGroup())
-        return std::wstring(L"Keyboard");
-    return std::wstring(L"KeyboardSplit");
+    if (gApp.GetLocalPlayerCount() > 1 && !m_layer->IsFullscreenGroup())
+        return std::wstring(L"KeyboardSplit");
+    return std::wstring(L"Keyboard");
 }
 
 int UIScene_Keyboard::getSceneType()

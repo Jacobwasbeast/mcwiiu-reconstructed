@@ -5,6 +5,7 @@
 #include <cmath>
 
 #include "game/client/audio/SoundEvents.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/Minecraft.hpp"
@@ -349,13 +350,72 @@ void UIScene_CreativeMenu::GetPositionOfSection(IUIScene_AbstractContainerMenu::
 void UIScene_CreativeMenu::GetItemScreenData(IUIScene_AbstractContainerMenu::ESceneSection section, int slot,
                                               _UIVec2D* position, _UIVec2D* size)
 {
-    if (position == 0 || size == 0) return;
-    UIControl* control = getSection(section);
-    if (control == 0) { position->x = position->y = size->x = size->y = 0.0f; return; }
-    size->x = control->getWidth() / static_cast<float>(std::max(getSectionColumns(section), 1U));
-    size->y = control->getHeight() / static_cast<float>(std::max(getSectionRows(section), 1U));
-    position->x = static_cast<float>(slot % static_cast<int>(std::max(getSectionColumns(section), 1U))) * size->x;
-    position->y = static_cast<float>(slot / static_cast<int>(std::max(getSectionColumns(section), 1U))) * size->y;
+    float width;
+    float height;
+    switch (section)
+    {
+    case IUIScene_AbstractContainerMenu::ESceneSection_CreativeHotbar:
+        width = m_hotbarList.getWidth();
+        height = m_hotbarList.getHeight();
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_CreativeSelector:
+        width = m_containerList.getWidth();
+        height = m_containerList.getHeight();
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_CreativeTab0:
+        width = m_touchPanels[0].getWidth();
+        height = m_touchPanels[0].getHeight();
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_CreativeTab1:
+        width = m_touchPanels[1].getWidth();
+        height = m_touchPanels[1].getHeight();
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_CreativeTab2:
+        width = m_touchPanels[2].getWidth();
+        height = m_touchPanels[2].getHeight();
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_CreativeTab3:
+        width = m_touchPanels[3].getWidth();
+        height = m_touchPanels[3].getHeight();
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_CreativeTab4:
+        width = m_touchPanels[4].getWidth();
+        height = m_touchPanels[4].getHeight();
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_CreativeTab5:
+        width = m_touchPanels[5].getWidth();
+        height = m_touchPanels[5].getHeight();
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_CreativeTab6:
+        width = m_touchPanels[6].getWidth();
+        height = m_touchPanels[6].getHeight();
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_CreativeTab7:
+        width = m_touchPanels[7].getWidth();
+        height = m_touchPanels[7].getHeight();
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_CreativeSlider:
+        width = m_touchPanels[8].getWidth();
+        height = m_touchPanels[8].getHeight();
+        break;
+    default:
+        break;
+    }
+
+    if (!IsSectionSlotList(section))
+    {
+        GetPositionOfSection(section, position);
+        size->x = width;
+        size->y = height;
+        return;
+    }
+
+    const int rows = getSectionRows(section);
+    const int columns = getSectionColumns(section);
+    size->x = width / static_cast<float>(columns);
+    size->y = height / static_cast<float>(rows);
+    position->x = static_cast<float>(slot % columns) * size->x;
+    position->y = static_cast<float>(slot / columns) * size->y;
 }
 
 unsigned int UIScene_CreativeMenu::handleValidKeyPress(int key, int value, int)
@@ -1712,7 +1772,7 @@ unsigned int UIScene_CreativeMenu::mapElementsAndNames()
 
 std::wstring UIScene_CreativeMenu::getMoviePath()
 {
-    return std::wstring(g_pApp->GetLocalPlayerCount() < 2 ? L"CreativeMenu" : L"CreativeMenuSplit");
+    return std::wstring(gApp.GetLocalPlayerCount() < 2 ? L"CreativeMenu" : L"CreativeMenuSplit");
 }
 
 void UIScene_CreativeMenu::handleReload()

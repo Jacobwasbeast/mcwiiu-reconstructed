@@ -55,15 +55,14 @@ void FJ_TradingMenu::init(FJ_Event* event)
     offer->setY(selector->getY());
 
     fuiRect leftRect = m_scrollLeft->getRect(m_scrollLeft);
-    if (tradingBar->getX() < leftRect.xMin * m_scrollLeft->getScaleX() + m_scrollLeft->getX() + m_scrollLeft->getWidth())
+    if (m_scrollLeft->getX() + leftRect.xMin * m_scrollLeft->getScaleX() + m_scrollLeft->getWidth() > tradingBar->getX())
     {
-        fuiRect rightRect = m_scrollRight->getRect(m_scrollRight);
-        const float rightEdgeWorld = rightRect.xMin * m_scrollRight->getScaleX() + m_scrollRight->getX();
-        fuiRect leftRect2 = m_scrollLeft->getRect(m_scrollLeft);
+        fuiRect rect = m_scrollRight->getRect(m_scrollRight);
+        const float rightEdgeWorld = m_scrollRight->getX() + rect.xMin * m_scrollRight->getScaleX();
         const float tradingBarRight = tradingBar->getX() + tradingBar->getWidth();
-        const float innerLeft = leftRect2.xMin * m_scrollLeft->getScaleX() -
-                                 (tradingBar->getX() - m_scrollLeft->getWidth());
-        m_scrollLeft->setX(-innerLeft - static_cast<float>(static_cast<int>(rightEdgeWorld - tradingBarRight)));
+        rect = m_scrollLeft->getRect(m_scrollLeft);
+        m_scrollLeft->setX((tradingBar->getX() - m_scrollLeft->getWidth()) - rect.xMin * m_scrollLeft->getScaleX() -
+                           static_cast<float>(static_cast<int>(rightEdgeWorld - tradingBarRight)));
     }
 }
 

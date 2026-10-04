@@ -16,9 +16,11 @@ T _fromString(const std::wstring& value);
 
 int gCreateWorldScreenTickCount = 0;
 
+static const wchar_t illegalFileCharacters[15] = {L'/', L'\n', L'\r', L'\t', L'\0', L'\f', L'`', L'?',
+                                                   L'*', L'\\', L'<', L'>', L'|', L'\"', L':'};
+
 CreateWorldScreen::CreateWorldScreen(Screen* parentScreen)
-    : Screen(), mParentScreen(parentScreen), mNameEdit(0), mSeedEdit(0), mResultFolder(),
-      mCreatingWorld(false)
+    : Screen(), mParentScreen(parentScreen), mResultFolder(), mCreatingWorld(false)
 {
 }
 
@@ -42,29 +44,24 @@ std::wstring CreateWorldScreen::findAvailableFolderName(LevelStorageSource* leve
                                                           const std::wstring& folderName)
 {
     static_cast<void>(levelSource);
-    return folderName;
+    std::wstring name = folderName;
+    return name;
 }
 
 void CreateWorldScreen::updateResultFolder()
 {
-    std::wstring name = trimString(mNameEdit->getValue());
-    mResultFolder = name;
+    mResultFolder = trimString(mNameEdit->getValue());
 
-    const wchar_t invalidCharacters[15] = L"/\n\r\t\f<>|\":";
     int pass;
     for (pass = 0; pass < 3; ++pass)
     {
-        const wchar_t* character = invalidCharacters + pass * 5;
+        const wchar_t* character = illegalFileCharacters + pass * 5;
         int index;
         for (index = 0; index < 5; ++index)
         {
-            wchar_t invalid = character[index];
-            if (invalid == 0)
-            {
-                continue;
-            }
+            wchar_t illegal = character[index];
             std::wstring::size_type position;
-            while ((position = mResultFolder.find(&invalid, 0, 1)) != std::wstring::npos)
+            while ((position = mResultFolder.find(&illegal, 0, 1)) != std::wstring::npos)
             {
                 mResultFolder[position] = L'_';
             }
@@ -81,6 +78,7 @@ void CreateWorldScreen::updateResultFolder()
 void CreateWorldScreen::init()
 {
     Language* language = Language::getInstance();
+    mButtons.clear();
     mButtons.push_back(new Button(0, mWidth / 2 - 100, mHeight / 4 + 108,
                                   language->getElement(L"selectWorld.create")));
     mButtons.push_back(new Button(1, mWidth / 2 - 100, mHeight / 4 + 132,
@@ -88,7 +86,7 @@ void CreateWorldScreen::init()
 
     mNameEdit = new EditBox(this, mFont, mWidth / 2 - 100, 60, 200, 20,
                             language->getElement(L"testWorld"));
-    mNameEdit->focus(true);
+    mNameEdit->mFocused = true;
     mNameEdit->setMaxLength(32);
     mSeedEdit = new EditBox(this, mFont, mWidth / 2 - 100, 116, 200, 20, L"");
     updateResultFolder();
@@ -113,8 +111,8 @@ void CreateWorldScreen::buttonClicked(Button* button)
             if (!mCreatingWorld)
             {
                 mCreatingWorld = true;
-                Random random;
-                random.nextLong();
+                Random* random = new Random();
+                random->nextLong();
                 std::wstring seedText = mSeedEdit->getValue();
                 if (!seedText.empty())
                 {
@@ -133,15 +131,15 @@ void CreateWorldScreen::keyPressed(wchar_t key, int action)
     {
         buttonClicked(mButtons[0]);
     }
-    mButtons[0]->mActive = !mNameEdit->getValue().empty();
+    mButtons[0]->mActive = mNameEdit->getValue().size() != 0;
     updateResultFolder();
 }
 
 void CreateWorldScreen::mouseClicked(int x, int y, int button)
 {
     Screen::mouseClicked(x, y, button);
-    mNameEdit->mouseClicked(button, x, y);
-    mSeedEdit->mouseClicked(button, x, y);
+    mNameEdit->mouseClicked(x, y, button);
+    mSeedEdit->mouseClicked(x, y, button);
 }
 
 void CreateWorldScreen::render(int x, int y, float partialTick)
@@ -165,6 +163,14 @@ void CreateWorldScreen::render(int x, int y, float partialTick)
 
 void CreateWorldScreen::tabPressed()
 {
-    mNameEdit->focus(false);
-    mSeedEdit->focus(true);
+    if (mNameEdit->mFocused)
+    {
+        mNameEdit->focus(false);
+        mSeedEdit->focus(true);
+    }
+    else
+    {
+        mNameEdit->focus(true);
+        mSeedEdit->focus(false);
+    }
 }

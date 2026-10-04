@@ -104,9 +104,9 @@ void UIScene_PauseMenu::Init()
                     else if (!customGame && multipleVariants &&
                              ((gGameNetworkManager.IsHost() && !gGameNetworkManager.IsInPublicJoinableGame()) ||
                               miniGame->GetHostOption(eCustomGameModeHostOption_EnableVoting)))
-                        m_buttonList.AddNewMenuButton(L10N::GetString(0x66f20471), 8);
+                        m_buttonList.AddNewMenuButton(L10N::GetString(IDS_MG_SELECT_VARIANT), 8);
                     else if (buildGame)
-                        m_buttonList.AddNewMenuButton(L10N::GetString(0x66f20471), 8);
+                        m_buttonList.AddNewMenuButton(L10N::GetString(IDS_MG_SELECT_VARIANT), 8);
                 }
             }
             else if (multipleMaps)
@@ -185,8 +185,16 @@ void UIScene_PauseMenu::updateTooltips()
 {
     bool host = gGameNetworkManager.IsHost() && gProfile->GetPrimaryPad() == m_playerId;
     int saveTooltip = -1;
-    if (gProfile->IsFullVersion() && host)
-        saveTooltip = gStorage->GetSaveDisabled() ? IDS_TOOLTIPS_SELECTDEVICE : IDS_TOOLTIPS_CHANGEDEVICE;
+    if (gProfile->IsFullVersion())
+    {
+        if (!gStorage->GetSaveDisabled())
+        {
+            if (host)
+                saveTooltip = IDS_TOOLTIPS_CHANGEDEVICE;
+        }
+        else if (host)
+            saveTooltip = IDS_TOOLTIPS_SELECTDEVICE;
+    }
     if (gConsoleUIController.IsSceneInStack(m_playerId, EUIScene_FullscreenProgress))
         gConsoleUIController.SetTooltips(m_playerId, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, false, false);
     else
@@ -340,7 +348,8 @@ bool UIScene_PauseMenu::IsBanEnabled()
 unsigned int UIScene_PauseMenu::mapElementsAndNames()
 {
     UIScene::mapElementsAndNames();
-    m_buttonList.setupControl(this, m_movie->getRootNode(), std::string("ButtonList"));
+    fuiRenderNode* root = m_movie->getRootNode();
+    m_buttonList.setupControl(this, root, std::string("ButtonList"));
     m_controls.push_back(&m_buttonList);
     return 1;
 }
@@ -458,21 +467,21 @@ void UIScene_PauseMenu::_ExitWorld(void* context)
                     errorMessage = 0x5b106d79;
                     break;
                 case DisconnectPacket::eDisconnectReason_KeepAliveTimeout:
-                    errorMessage = static_cast<int>(0xad3e1729);
+                    errorMessage = static_cast<int>(IDS_DISCONNECTED_FLYING);
                     break;
                 case DisconnectPacket::eDisconnectReason_Kicked:
-                    errorMessage = static_cast<int>(0xf3a95051);
+                    errorMessage = static_cast<int>(IDS_DISCONNECTED_KICKED);
                     break;
                 case DisconnectPacket::eDisconnectReason_GameFull:
                     errorMessage = static_cast<int>(0xb86be603);
                     errorTitle = static_cast<int>(IDS_CANTJOIN_TITLE);
                     break;
                 case DisconnectPacket::eDisconnectReason_HostOutOfDate:
-                    errorMessage = static_cast<int>(0xb59cada7);
+                    errorMessage = static_cast<int>(IDS_DISCONNECTED_SERVER_OLD);
                     errorTitle = static_cast<int>(IDS_CANTJOIN_TITLE);
                     break;
                 case DisconnectPacket::eDisconnectReason_ClientOutOfDate:
-                    errorMessage = static_cast<int>(0xce44990b);
+                    errorMessage = static_cast<int>(IDS_DISCONNECTED_CLIENT_OLD);
                     errorTitle = static_cast<int>(IDS_CANTJOIN_TITLE);
                     break;
                 case DisconnectPacket::eDisconnectReason_NotFriendsWithHost:
@@ -535,18 +544,18 @@ void UIScene_PauseMenu::_ExitWorld(void* context)
             errorMessage = 0x5b106d79;
             break;
         case DisconnectPacket::eDisconnectReason_Kicked:
-            errorMessage = static_cast<int>(0xf3a95051);
+            errorMessage = static_cast<int>(IDS_DISCONNECTED_KICKED);
             break;
         case DisconnectPacket::eDisconnectReason_GameFull:
             errorMessage = static_cast<int>(0xb86be603);
             errorTitle = static_cast<int>(IDS_CANTJOIN_TITLE);
             break;
         case DisconnectPacket::eDisconnectReason_HostOutOfDate:
-            errorMessage = static_cast<int>(0xb59cada7);
+            errorMessage = static_cast<int>(IDS_DISCONNECTED_SERVER_OLD);
             errorTitle = static_cast<int>(IDS_CANTJOIN_TITLE);
             break;
         case DisconnectPacket::eDisconnectReason_ClientOutOfDate:
-            errorMessage = static_cast<int>(0xce44990b);
+            errorMessage = static_cast<int>(IDS_DISCONNECTED_CLIENT_OLD);
             errorTitle = static_cast<int>(IDS_CANTJOIN_TITLE);
             break;
         case DisconnectPacket::eDisconnectReason_HostSignedOut:
@@ -685,7 +694,7 @@ int UIScene_PauseMenu::ExitGameDialogReturned(void* context, int pad, C4JStorage
     UIScene_PauseMenu* pauseMenu = scene != NULL ? dynamic_cast<UIScene_PauseMenu*>(scene) : NULL;
     if (result == C4JStorage::EMessageResult_Decline)
     {
-        if (pauseMenu != NULL && pauseMenu->getSceneType() == 5)
+        if (pauseMenu != NULL && pauseMenu->getSceneType() == EUIScene_PauseMenu)
             pauseMenu->SetIgnoreInput(true);
         gApp.SetAction(pad, eXuiAction_ExitWorld, NULL);
     }
@@ -698,7 +707,7 @@ int UIScene_PauseMenu::ExitGameAndSaveReturned(void* context, int pad, C4JStorag
     UIScene_PauseMenu* pauseMenu = scene != NULL ? dynamic_cast<UIScene_PauseMenu*>(scene) : NULL;
     if (result == C4JStorage::EMessageResult_Decline)
     {
-        if (pauseMenu != NULL && pauseMenu->getSceneType() == 5)
+        if (pauseMenu != NULL && pauseMenu->getSceneType() == EUIScene_PauseMenu)
             pauseMenu->SetIgnoreInput(true);
         gMinecraftServer->saveOnExit = true;
         MinecraftServer::s_saveOnExitAnswered = true;
@@ -707,9 +716,18 @@ int UIScene_PauseMenu::ExitGameAndSaveReturned(void* context, int pad, C4JStorag
     else if (gConsoleUIController.IsPauseMenuDisplayed(gProfile->GetPrimaryPad()))
     {
         int parameters[3] = { IDS_CONFIRM_CANCEL, IDS_EXIT_GAME_SAVE, 0x4940e70d };
-        int message = gGameNetworkManager.GetPlayerCount() > 1 ? static_cast<int>(IDS_CONFIRM_EXIT_GAME_CONFIRM_DISCONNECT_SAVE) : static_cast<int>(IDS_CONFIRM_EXIT_GAME);
-        gConsoleUIController.RequestAlertMessage(IDS_EXIT_GAME, message, parameters, 3, gProfile->GetPrimaryPad(),
-                                                  ExitGameSaveDialogReturned, context, NULL, true);
+        if (gGameNetworkManager.GetPlayerCount() > 1)
+        {
+            gConsoleUIController.RequestAlertMessage(IDS_EXIT_GAME, IDS_CONFIRM_EXIT_GAME_CONFIRM_DISCONNECT_SAVE,
+                                                      parameters, 3, gProfile->GetPrimaryPad(),
+                                                      ExitGameSaveDialogReturned, context, NULL, true);
+        }
+        else
+        {
+            gConsoleUIController.RequestAlertMessage(IDS_EXIT_GAME, IDS_CONFIRM_EXIT_GAME, parameters, 3,
+                                                      gProfile->GetPrimaryPad(), ExitGameSaveDialogReturned,
+                                                      context, NULL, true);
+        }
     }
     return 0;
 }
@@ -720,7 +738,7 @@ int UIScene_PauseMenu::ExitGameDeclineSaveReturned(void* context, int pad, C4JSt
     UIScene_PauseMenu* pauseMenu = scene != NULL ? dynamic_cast<UIScene_PauseMenu*>(scene) : NULL;
     if (result == C4JStorage::EMessageResult_Decline)
     {
-        if (pauseMenu != NULL && pauseMenu->getSceneType() == 5)
+        if (pauseMenu != NULL && pauseMenu->getSceneType() == EUIScene_PauseMenu)
             pauseMenu->SetIgnoreInput(true);
         gMinecraftServer->saveOnExit = false;
         MinecraftServer::s_saveOnExitAnswered = true;
@@ -729,9 +747,18 @@ int UIScene_PauseMenu::ExitGameDeclineSaveReturned(void* context, int pad, C4JSt
     else if (gConsoleUIController.IsPauseMenuDisplayed(gProfile->GetPrimaryPad()))
     {
         int parameters[3] = { IDS_CONFIRM_CANCEL, IDS_EXIT_GAME_SAVE, 0x4940e70d };
-        int message = gGameNetworkManager.GetPlayerCount() > 1 ? static_cast<int>(IDS_CONFIRM_EXIT_GAME_CONFIRM_DISCONNECT_SAVE) : static_cast<int>(IDS_CONFIRM_EXIT_GAME);
-        gConsoleUIController.RequestAlertMessage(IDS_EXIT_GAME, message, parameters, 3, gProfile->GetPrimaryPad(),
-                                                  ExitGameSaveDialogReturned, context, NULL, true);
+        if (gGameNetworkManager.GetPlayerCount() > 1)
+        {
+            gConsoleUIController.RequestAlertMessage(IDS_EXIT_GAME, IDS_CONFIRM_EXIT_GAME_CONFIRM_DISCONNECT_SAVE,
+                                                      parameters, 3, gProfile->GetPrimaryPad(),
+                                                      ExitGameSaveDialogReturned, context, NULL, true);
+        }
+        else
+        {
+            gConsoleUIController.RequestAlertMessage(IDS_EXIT_GAME, IDS_CONFIRM_EXIT_GAME, parameters, 3,
+                                                      gProfile->GetPrimaryPad(), ExitGameSaveDialogReturned,
+                                                      context, NULL, true);
+        }
     }
     return 0;
 }
@@ -757,7 +784,7 @@ int UIScene_PauseMenu::ExitGameSaveDialogReturned(void* context, int pad, C4JSto
         {
             MinecraftServer::s_saveOnExitAnswered = true;
             gMinecraftServer->saveOnExit = true;
-            if (pauseMenu != NULL && pauseMenu->getSceneType() == 5)
+            if (pauseMenu != NULL && pauseMenu->getSceneType() == EUIScene_PauseMenu)
                 pauseMenu->SetIgnoreInput(true);
             gApp.SetAction(pad, eXuiAction_ExitWorld, NULL);
         }
@@ -870,7 +897,7 @@ unsigned int UIScene_PauseMenu::SaveGame_SignInReturned(void* context, bool sign
 {
     UIScene* scene = gConsoleUIController.GetSceneFromCallbackId(reinterpret_cast<unsigned int>(context));
     UIScene_PauseMenu* pauseMenu = static_cast<UIScene_PauseMenu*>(scene);
-    if (pauseMenu != NULL && pauseMenu->getSceneType() == 5)
+    if (pauseMenu != NULL && pauseMenu->getSceneType() == EUIScene_PauseMenu)
         pauseMenu->SetIgnoreInput(false);
     if (signedIn && pauseMenu != NULL)
         pauseMenu->PerformActionSaveGame();

@@ -37,7 +37,7 @@
 #include "platform/wiiu/CInput.hpp"
 
 static const int s_toolTipStringIds[] = {
-    0x387566e2, (int)IDS_TOOLTIPS_EXIT, 0x3d8502af, 0x1d6a6d67, 0x23a35725, (int)0x987f8d08,
+    IDS_TOOLTIPS_PICKUPPLACE, (int)IDS_TOOLTIPS_EXIT, IDS_TOOLTIPS_PICKUP_GENERIC, 0x1d6a6d67, 0x23a35725, (int)0x987f8d08,
     (int)IDS_TOOLTIPS_PLACE_ONE, (int)IDS_TOOLTIPS_DISTRIBUTE, (int)IDS_TOOLTIPS_PLACE_ALL, (int)0x92835202, (int)IDS_TOOLTIPS_DROP_ONE,
     (int)IDS_TOOLTIPS_DROP_ALL, (int)IDS_TOOLTIPS_SWAP, IDS_TOOLTIPS_QUICK_MOVE, (int)IDS_TOOLTIPS_QUICK_MOVE_INGREDIENT, IDS_TOOLTIPS_QUICK_MOVE_FUEL, 0x2fccdffb,
     (int)IDS_TOOLTIPS_EQUIP, (int)IDS_TOOLTIPS_CLEAR_QUICK_SELECT, IDS_TOOLTIPS_QUICK_MOVE_TOOL, (int)IDS_TOOLTIPS_QUICK_MOVE_ARMOR, (int)IDS_TOOLTIPS_QUICK_MOVE_WEAPON, IDS_TOOLTIPS_DYE,
@@ -141,7 +141,7 @@ IUIScene_AbstractContainerMenu::ETapState IUIScene_AbstractContainerMenu::GetTap
 
 void IUIScene_AbstractContainerMenu::UpdateTooltips()
 {
-    unsigned int pad = getPad();
+    unsigned char pad = getPad();
     for (int button = 0; button < eToolTipButton_Count; ++button)
     {
         if (m_toolTips[button] == eToolTipNone)
@@ -225,13 +225,19 @@ std::vector<HtmlString>* IUIScene_AbstractContainerMenu::GetItemDescription(Slot
 bool IUIScene_AbstractContainerMenu::IsSameItemAs(not_null_ptr<ItemInstance> first,
                                                   not_null_ptr<ItemInstance> second)
 {
-    if (first->isEmpty() || second->isEmpty())
-        return false;
-    if (first->getItem() != second->getItem())
-        return false;
-    if (second->isStackedByData() && second->getAuxValue() != first->getAuxValue())
-        return false;
-    return ItemInstance::tagMatches(second, first);
+    if (!first->isEmpty() && !second->isEmpty())
+    {
+        bool same = false;
+        if (first->getItem() == second->getItem())
+        {
+            if (second->isStackedByData() && second->getAuxValue() != first->getAuxValue())
+                return false;
+            if (ItemInstance::tagMatches(second, first))
+                same = true;
+        }
+        return same;
+    }
+    return false;
 }
 
 int IUIScene_AbstractContainerMenu::GetEmptyStackSpace(Slot* slot)
@@ -1033,17 +1039,15 @@ int IUIScene_AbstractContainerMenu::getCurrentIndex(ESceneSection section)
 void IUIScene_AbstractContainerMenu::slotClicked(int slotId, int buttonNum, ClickType::eClickType clickType)
 {
     Minecraft* minecraft = Minecraft::GetInstance();
-    boost::shared_ptr<Player> player = minecraft->mLocalPlayers[getPad()];
     minecraft->mGameModes[getPad()]->handleInventoryMouseClick(m_menu->m_containerId, slotId, buttonNum,
-                                                               clickType, player);
+                                                               clickType, minecraft->mLocalPlayers[getPad()]);
 }
 
 void IUIScene_AbstractContainerMenu::handleQuickCraft()
 {
-    Minecraft* minecraft = Minecraft::GetInstance();
-    boost::shared_ptr<MultiplayerLocalPlayer> player = minecraft->mLocalPlayers[getPad()];
+    boost::shared_ptr<MultiplayerLocalPlayer> player = Minecraft::GetInstance()->mLocalPlayers[getPad()];
 
-    not_null_ptr<ItemInstance> carried;
+    not_null_ptr<ItemInstance> carried = ItemInstance::EMPTY;
     if (player.get() != NULL)
         carried = player->mInventory->getCarried();
 
@@ -1051,31 +1055,28 @@ void IUIScene_AbstractContainerMenu::handleQuickCraft()
         return;
 
     m_menu->m_uiQuickCraftActive = !m_menu->m_uiQuickCraftActive;
-    if (m_menu->m_uiQuickCraftActive)
-        return;
-
-    if (!m_menu->m_uiQuickCraftSlots.empty())
+    if (!m_menu->m_uiQuickCraftActive)
     {
-        slotClicked(-999, AbstractContainerMenu::getQuickcraftMask(0, 0), ClickType::eClickType_QuickCraft);
-        if (m_menu->m_uiQuickCraftSlots.empty())
+        if (!m_menu->m_uiQuickCraftSlots.empty())
         {
-            slotClicked(-999, AbstractContainerMenu::getQuickcraftMask(2, 0), ClickType::eClickType_QuickCraft);
-        }
-        else
-        {
-            AbstractContainerMenu::SlotSet::iterator it;
-            for (it = m_menu->m_uiQuickCraftSlots.begin(); it != m_menu->m_uiQuickCraftSlots.end(); ++it)
+            slotClicked(-999, AbstractContainerMenu::getQuickcraftMask(0, 0), ClickType::eClickType_QuickCraft);
+            if (m_menu->m_uiQuickCraftSlots.empty())
             {
-                std::vector<Slot*>::iterator found =
-                    std::find(m_menu->m_slots.begin(), m_menu->m_slots.end(), *it);
-                int slotId = found != m_menu->m_slots.end() ? (int)(found - m_menu->m_slots.begin()) : -1;
-                slotClicked(slotId, AbstractContainerMenu::getQuickcraftMask(1, 0),
-                            ClickType::eClickType_QuickCraft);
+                slotClicked(-999, AbstractContainerMenu::getQuickcraftMask(2, 0), ClickType::eClickType_QuickCraft);
             }
-            slotClicked(-999, AbstractContainerMenu::getQuickcraftMask(2, 0), ClickType::eClickType_QuickCraft);
+            else
+            {
+                AbstractContainerMenu::SlotSet::iterator it;
+                for (it = m_menu->m_uiQuickCraftSlots.begin(); it != m_menu->m_uiQuickCraftSlots.end(); ++it)
+                {
+                    slotClicked((*it)->mIndex, AbstractContainerMenu::getQuickcraftMask(1, 0),
+                                ClickType::eClickType_QuickCraft);
+                }
+                slotClicked(-999, AbstractContainerMenu::getQuickcraftMask(2, 0), ClickType::eClickType_QuickCraft);
+            }
         }
+        m_menu->m_uiQuickCraftSlots.clear();
     }
-    m_menu->m_uiQuickCraftSlots.clear();
 }
 
 bool IUIScene_AbstractContainerMenu::handleKeyDown(int pad, int action, bool repeat)
@@ -1268,9 +1269,8 @@ void IUIScene_AbstractContainerMenu::handleTakeAll(int buttonNum)
     int startIndex = getSectionStartOffset(ESceneSection_ContainerChest);
 
     Minecraft* minecraft = Minecraft::GetInstance();
-    boost::shared_ptr<Player> player = minecraft->mLocalPlayers[getPad()];
     minecraft->mGameModes[getPad()]->handleTakeAllInvenetory(m_menu->m_containerId, buttonNum, startIndex,
-                                                             rows * columns, player);
+                                                             rows * columns, minecraft->mLocalPlayers[getPad()]);
     handleSectionClick(ESceneSection_ContainerChest);
 }
 

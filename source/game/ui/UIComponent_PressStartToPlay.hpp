@@ -27,6 +27,12 @@ public:
         {
         }
 
+        Toast(const std::wstring& title, const std::wstring& description, const std::wstring& gamerPic,
+              const wchar_t* achievementIcon)
+            : title(title), description(description), gamerPic(gamerPic), achievementIcon(achievementIcon)
+        {
+        }
+
         Toast(const Toast& other);
     };
 

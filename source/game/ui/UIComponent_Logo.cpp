@@ -8,7 +8,7 @@ UIComponent_Logo::UIComponent_Logo(int sceneType, void* callback, UILayer* layer
 {
     initialiseMovie();
     setLogoLanguage(0);
-    m_visible = true;
+    m_movieLoaded = true;
 }
 void UIComponent_Logo::setLogoLanguage(int language)
 {
@@ -18,9 +18,9 @@ void UIComponent_Logo::setLogoLanguage(int language)
 std::wstring UIComponent_Logo::getMoviePath()
 {
     unsigned int viewport = m_layer->getViewport();
-    if (viewport > 0 && viewport <= 8)
-        return L"ComponentLogoSplit";
-    return L"ComponentLogo";
+    if (viewport == 0 || viewport > 8)
+        return L"ComponentLogo";
+    return L"ComponentLogoSplit";
 }
 void UIComponent_Logo::handleReload() { setLogoLanguage(0); }
 int UIComponent_Logo::getSceneType() { return EUIScene_Logo; }

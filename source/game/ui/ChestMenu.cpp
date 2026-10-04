@@ -14,12 +14,14 @@
 #include "game/world/generation/LocalPlayer.hpp"
 #include "game/world/generation/Player.hpp"
 
-ChestMenu::ChestMenu(boost::shared_ptr<Container> container,
-                     boost::shared_ptr<Container> playerInventory,
+static const int CHESTFUL_OF_COBBLESTONE = 27 * 64;
+
+ChestMenu::ChestMenu(boost::shared_ptr<Container> playerInventory,
+                     boost::shared_ptr<Container> container,
                      boost::shared_ptr<Player> player)
-    : m_container(container),
-      m_numRows((int)container->getContainerSize() / 9)
 {
+    m_container = container;
+    m_numRows = container->getContainerSize() / 9;
     container->startOpen(player);
 
     int row;
@@ -27,7 +29,7 @@ ChestMenu::ChestMenu(boost::shared_ptr<Container> container,
 
     for (row = 0; row < m_numRows; ++row) {
         for (column = 0; column < 9; ++column) {
-            addSlot(new Slot(m_container, column + row * 9,
+            addSlot(new Slot(container, column + row * 9,
                              8 + column * 18, 18 + row * 18));
         }
     }
@@ -50,65 +52,86 @@ bool ChestMenu::stillValid(boost::shared_ptr<Player> player)
 
 not_null_ptr<ItemInstance> ChestMenu::quickMoveStack(boost::shared_ptr<Player> player, int index)
 {
+    not_null_ptr<ItemInstance> result = ItemInstance::EMPTY;
     Slot* slot = m_slots.at(index);
-    if (slot == NULL || !slot->hasItem())
-        return ItemInstance::EMPTY;
-
-    not_null_ptr<ItemInstance> item = slot->getItem();
-    not_null_ptr<ItemInstance> result = item->copy();
-    int containerEnd = m_numRows * 9;
-
-    if (index < containerEnd)
+    if (slot != NULL && slot->hasItem())
     {
-        if (Minecraft::InMiniGame(eMiniGameId_Any, true))
-        {
-            bool replacedExisting = false;
-            if (player->AutoEquip(result, item, replacedExisting))
-            {
-                slot->set(ItemInstance::EMPTY);
-                return ItemInstance::EMPTY;
-            }
-        }
+        not_null_ptr<ItemInstance> item = slot->getItem();
+        result = item->copy();
 
-        if (!moveItemStackTo(item, containerEnd, (int)m_slots.size(), true, true, false))
+        if (index < m_numRows * 9)
         {
-            if (!IsSmallInventory())
+            if (Minecraft::InMiniGame(eMiniGameId_Any, true))
             {
-                if (!item->getItem()->PreferInventory())
+                bool replacedExisting = false;
+                if (player->AutoEquip(result, item, replacedExisting))
                 {
-                    if (!moveItemStackTo(item, containerEnd + 27, (int)m_slots.size(), false, false, true))
-                        moveItemStackTo(item, containerEnd, containerEnd + 27, true, false, true);
+                    slot->set(ItemInstance::EMPTY);
+                    return ItemInstance::EMPTY;
+                }
+
+                bool small = IsSmallInventory();
+                int containerEnd = m_numRows * 9;
+                int hotbarStart = containerEnd + 27;
+                int slotCount = (int)m_slots.size();
+                bool moved;
+                if (!small)
+                {
+                    moved = moveItemStackTo(item, containerEnd, slotCount, true, true, false);
+                    if (!moved)
+                    {
+                        if (!item->getItem()->PreferInventory())
+                        {
+                            moved = moveItemStackTo(item, hotbarStart, slotCount, false, false, true);
+                            if (!moved)
+                                moved = moveItemStackTo(item, containerEnd, hotbarStart, true, false, true);
+                        }
+                        else
+                        {
+                            moved = moveItemStackTo(item, containerEnd, hotbarStart, true, false, true);
+                            if (!moved)
+                                moved = moveItemStackTo(item, hotbarStart, slotCount, false, false, true);
+                        }
+                    }
                 }
                 else
                 {
-                    if (!moveItemStackTo(item, containerEnd, containerEnd + 27, true, false, true))
-                        moveItemStackTo(item, containerEnd + 27, (int)m_slots.size(), false, false, true);
+                    moved = moveItemStackTo(item, hotbarStart, slotCount, false, true, true);
                 }
+
+                if (replacedExisting)
+                {
+                    if (!moved)
+                        slot->set(item);
+                    else
+                        slot->set(ItemInstance::EMPTY);
+                }
+                else if (slot->getItem()->getCount() == 0)
+                {
+                    slot->set(ItemInstance::EMPTY);
+                }
+                return ItemInstance::EMPTY;
             }
-            else
+
+            if (moveItemStackTo(item, m_numRows * 9, (int)m_slots.size(), true, true, false) == true)
             {
-                moveItemStackTo(item, containerEnd + 27, (int)m_slots.size(), false, true, true);
+                if (item->getCount() == 0)
+                    slot->set(ItemInstance::EMPTY);
+                else
+                    slot->setChanged();
+                return result;
             }
+            return ItemInstance::EMPTY;
         }
+
+        if (!moveItemStackTo(item, 0, m_numRows * 9, false, true, true))
+            return ItemInstance::EMPTY;
 
         if (item->getCount() == 0)
             slot->set(ItemInstance::EMPTY);
         else
             slot->setChanged();
-        if (item->getCount() == result->getCount())
-            return ItemInstance::EMPTY;
-        return result;
     }
-
-    if (!moveItemStackTo(item, 0, containerEnd, false, true, true))
-        return ItemInstance::EMPTY;
-
-    if (item->getCount() == 0)
-        slot->set(ItemInstance::EMPTY);
-    else
-        slot->setChanged();
-    if (item->getCount() == result->getCount())
-        return ItemInstance::EMPTY;
     return result;
 }
 
@@ -127,15 +150,10 @@ not_null_ptr<ItemInstance> ChestMenu::clicked(int slot, int button,
                                               ClickType::eClickType type,
                                               boost::shared_ptr<Player> player)
 {
-    not_null_ptr<ItemInstance> carried = player->mInventory->getCarried();
-    bool carriedIsCobblestone = Block::byItem(carried->getItem()) == Blocks::cobblestone;
+    bool carriedIsCobblestone = Block::byItem(player->mInventory->getCarried()->getItem()) == Blocks::cobblestone;
 
-    bool clickedCobblestone = false;
-    if (type == ClickType::eClickType_QuickMove && slot != -999 && m_slots[slot] != NULL)
-    {
-        not_null_ptr<ItemInstance> slotItem = m_slots[slot]->getItem();
-        clickedCobblestone = Block::byItem(slotItem->getItem()) == Blocks::cobblestone;
-    }
+    bool clickedCobblestone = type == ClickType::eClickType_QuickMove && slot != -999 && m_slots[slot] != NULL
+        && Block::byItem(m_slots[slot]->getItem()->getItem()) == Blocks::cobblestone;
 
     not_null_ptr<ItemInstance> result = AbstractContainerMenu::clicked(slot, button, type, player);
 
@@ -152,10 +170,12 @@ not_null_ptr<ItemInstance> ChestMenu::clicked(int slot, int button,
         }
 
         StatsCounter* stats = Minecraft::GetInstance()->mStats[localPlayer->mUserIndex];
-        int stoneMined = stats->getTotalValue(gStats->get_blocksMined(Block::getId(Blocks::stone)));
-        int cobblestoneMined = stats->getTotalValue(gStats->get_blocksMined(Block::getId(Blocks::cobblestone)));
+        Stat* stoneStat = gStats->get_blocksMined(Block::getId(Blocks::stone));
+        Stat* cobblestoneStat = gStats->get_blocksMined(Block::getId(Blocks::cobblestone));
+        int stoneMined = stats->getTotalValue(stoneStat);
+        int cobblestoneMined = stats->getTotalValue(cobblestoneStat);
 
-        if (cobblestoneCount > 0x6bf && stoneMined + cobblestoneMined > 0x6bf)
+        if (cobblestoneCount >= CHESTFUL_OF_COBBLESTONE && stoneMined + cobblestoneMined >= CHESTFUL_OF_COBBLESTONE)
         {
             localPlayer->awardStat(GenericStats::chestfulOfCobblestone(),
                                    GenericStats::param_chestfulOfCobblestone(cobblestoneCount));

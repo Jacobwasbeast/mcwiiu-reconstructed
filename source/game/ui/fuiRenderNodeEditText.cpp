@@ -1,6 +1,7 @@
 #include "game/ui/fuiRenderNodeEditText.hpp"
 
 #include <algorithm>
+#include <cctype>
 #include <cstdlib>
 #include <cstring>
 #include <cwctype>
@@ -19,7 +20,12 @@ static wchar_t cjkPunctuation[] = { 0x3001, 0x3002, 0x3003, 0x3006, 0x3015, 0x30
 
 unsigned int setRGBAOrder(unsigned int colour)
 {
-    return colour;
+    fuiRGBA rgba;
+    rgba.r = (colour >> 24) & 0xFF;
+    rgba.g = (colour >> 16) & 0xFF;
+    rgba.b = (colour >> 8) & 0xFF;
+    rgba.a = colour & 0xFF;
+    return rgba.rgba;
 }
 
 fuiRenderNodeEditText::RenderStringStateData::RenderStringStateData()
@@ -56,12 +62,7 @@ void fuiRenderNodeEditText::RenderStringStateData::init(fuiFontSet* fontSet, flo
 
 fuiRenderNodeEditText::fuiRenderNodeEditText(fuiRenderNode* parent, fuiRenderNode* node, fuiObject* object,
     unsigned int symbolIndex, unsigned char type, fuiRGBA* colour, unsigned char renderFlags, bool visible, fuiFile* file)
-    : fuiRenderNode(parent, node, object, symbolIndex, eFuiObjectType_EditText, type, colour, renderFlags, visible, file),
-      m_html(false), m_text(), m_scrollH(0.0f), m_alignment(0), m_wordWrap(false), m_multiline(false),
-      m_autoSize(TextFieldAutoSizeNone), m_htmlAlignment(0), m_textWidth(0.0f), m_textHeight(0.0f),
-      m_lineWidths(), m_lineHeights(), m_font(NULL), m_boldFont(NULL), m_glyphScale(0.0f),
-      m_colour(0), m_textSet(false), m_fieldWidth(0.0f), m_renderState(), m_htmlText(), m_wrappedText(),
-      m_tag(), m_attribute(), m_word(), m_dirty(false)
+    : fuiRenderNode(parent, node, object, symbolIndex, eFuiObjectType_EditText, type, colour, renderFlags, visible, file)
 {
     InitializeCriticalSection(&m_lock);
 
@@ -121,14 +122,14 @@ fuiRenderNodeEditText::fuiRenderNodeEditText(fuiRenderNode* parent, fuiRenderNod
     m_html = false;
     m_scrollH = 0.0f;
     m_colour = editText->textColor.rgba;
-    m_wordWrap = editText->wordWrap != 0;
+    m_wordWrap = editText->wordWrap;
     m_dirty = true;
     m_textSet = false;
     m_scrollRect.xMin = 0.0f;
     m_scrollRect.xMax = 0.0f;
     m_autoSize = TextFieldAutoSizeCenter;
     m_scrollRect.yMin = 0.0f;
-    m_multiline = editText->multiline != 0;
+    m_multiline = editText->multiline;
     m_htmlAlignment = 0;
     m_scrollRect.yMax = 0.0f;
     m_textWidth = getWidth();
@@ -157,7 +158,7 @@ const wchar_t* fuiRenderNodeEditText::getHtmlTag(const wchar_t* text, std::wstri
                 ++cursor;
                 break;
             }
-            content.push_back(c);
+            content += c;
         }
         if (tag != NULL)
             *tag = content;
@@ -166,7 +167,7 @@ const wchar_t* fuiRenderNodeEditText::getHtmlTag(const wchar_t* text, std::wstri
         return cursor;
     }
     if (tag != NULL)
-        tag->clear();
+        *tag = L"";
     return text;
 }
 
@@ -176,23 +177,23 @@ const wchar_t* fuiRenderNodeEditText::parseHTMLString(const wchar_t* text, std::
     {
         while (*text == L'<')
             text = getHtmlTag(text, NULL);
-        return text;
     }
-    if (*text == L'<')
-        return getHtmlTag(text, result);
-    *result = L"";
+    else if (*text == L'<')
+    {
+        text = getHtmlTag(text, result);
+    }
+    else
+    {
+        *result = L"";
+    }
     return text;
 }
 
 const wchar_t* fuiRenderNodeEditText::prepStringPtr(const std::wstring& text) const
 {
-    const wchar_t* cursor = text.c_str();
     if (m_html)
-    {
-        while (*cursor == L'<')
-            cursor = getHtmlTag(cursor, NULL);
-    }
-    return cursor;
+        return parseHTMLString(text.c_str(), NULL);
+    return text.c_str();
 }
 
 const wchar_t* fuiRenderNodeEditText::incStringPtr(const wchar_t* text) const
@@ -289,9 +290,7 @@ bool fuiRenderNodeEditText::isHtmlTagType(const std::wstring& tag, const std::ws
     for (std::wstring::size_type i = 0; i < type.size(); ++i)
     {
         wchar_t c = tag[i];
-        if (c >= L'A' && c <= L'Z')
-            c = static_cast<wchar_t>(c + (L'a' - L'A'));
-        if (c != type[i])
+        if (c + ((c >= L'A' && c <= L'Z') ? (L'a' - L'A') : 0) != type[i])
             return false;
     }
     return true;
@@ -307,30 +306,30 @@ void fuiRenderNodeEditText::htmlFontColour(const std::wstring& tag, RenderString
 
 std::wstring fuiRenderNodeEditText::getHtmlTagAttribute(const std::wstring& tag, const std::wstring& attribute)
 {
-    std::wstring key = attribute + L"=";
     std::wstring lowerTag = tag;
-    for (std::wstring::size_type i = 0; i < lowerTag.size(); ++i)
-    {
-        wchar_t c = lowerTag[i];
-        if (c >= L'A' && c <= L'Z')
-            lowerTag[i] = static_cast<wchar_t>(c + (L'a' - L'A'));
-    }
-
-    std::wstring value;
+    std::transform(lowerTag.begin(), lowerTag.end(), lowerTag.begin(), tolower);
+    std::wstring key = attribute + L"=";
     std::wstring::size_type position = lowerTag.find(key);
+    std::wstring value;
     if (position != std::wstring::npos)
     {
         position += key.size();
-        if (position < tag.size() && tag[position] == L'"')
+        if (tag[position] != L'"')
         {
-            ++position;
-            while (position < tag.size() && tag[position] != L'"')
-                value.push_back(tag[position++]);
+            while (tag[position] != L'\0' && tag[position] != L'>')
+            {
+                value += tag[position];
+                ++position;
+            }
         }
         else
         {
-            while (position < tag.size() && tag[position] != L'>')
-                value.push_back(tag[position++]);
+            ++position;
+            while (tag[position] != L'\0' && tag[position] != L'"')
+            {
+                value += tag[position];
+                ++position;
+            }
         }
     }
     return value;
@@ -418,9 +417,9 @@ bool fuiRenderNodeEditText::htmlImage(const std::wstring& tag, RenderStringState
     return true;
 }
 
-bool fuiRenderNodeEditText::checkForUnsupportedAttribute(const std::wstring& tag, const std::wstring& attribute)
+void fuiRenderNodeEditText::checkForUnsupportedAttribute(const std::wstring& tag, const std::wstring& attribute)
 {
-    return tag.find(attribute) != std::wstring::npos;
+    getHtmlTagAttribute(tag, attribute);
 }
 
 bool fuiRenderNodeEditText::htmlParagraph(const std::wstring& tag, RenderStringStateData&)
@@ -851,7 +850,10 @@ void fuiRenderNodeEditText::renderString(const std::wstring& text, float x, floa
     m_renderState.lineStartX = 1.0f * getGlyphScale() + x;
     float top = -1.0f * getGlyphScale() + y;
     m_renderState.maxY = y;
-    m_renderState.rgba.rgba = colour;
+    m_renderState.rgba.r = (colour >> 24) & 0xFF;
+    m_renderState.rgba.g = (colour >> 16) & 0xFF;
+    m_renderState.rgba.b = (colour >> 8) & 0xFF;
+    m_renderState.rgba.a = colour & 0xFF;
     m_renderState.measure = false;
     m_renderState.maxX = x;
     m_renderState.lineStartY = top;
@@ -1049,6 +1051,7 @@ void fuiRenderNodeEditText::appendText(const std::wstring& text)
 {
     m_text += text;
     m_dirty = true;
+    autoSizeBounds();
 }
 
 void fuiRenderNodeEditText::setHTMLText(const std::wstring& text)
@@ -1115,26 +1118,33 @@ fuiRect fuiRenderNodeEditText::getCharBoundaries(int index)
 
 std::wstring fuiRenderNodeEditText::createWordWrappedString(std::wstring text, fuiFontSet* font, float size, float width)
 {
-    m_font = font;
-    m_glyphScale = size;
-    RenderStringStateData state;
-    state.init(font, size, getRenderedGlyphHeight(L'M'));
-    std::wstring result;
-    std::wstring::const_iterator it;
-    for (it = text.begin(); it != text.end(); ++it)
+    std::wstring wrapped;
+    float glyphWidth = 0.0f;
+    float lineWidth = 0.0f;
+    const wchar_t* cursor = parseHTMLString(text.c_str(), NULL);
+    while (*cursor == L'\0')
     {
-        float glyphWidth = getRenderedGlyphWidth(*it, state);
-        if (*it != L'\n' && state.x + glyphWidth > width && !result.empty())
+        lineWidth = lineWidth + glyphWidth;
+        if (width < lineWidth)
         {
-            result.push_back(L'\n');
-            state.x = 0.0f;
+            lineWidth = 0.0f + glyphWidth;
+            m_wrapBuffer[0] = L'\n';
         }
-        result.push_back(*it);
-        state.x += glyphWidth;
-        if (*it == L'\n')
-            state.x = 0.0f;
+        wrapped += m_wrapBuffer;
+        m_wrapBuffer = L"";
+        if (isNewLineChar(*cursor))
+        {
+            glyphWidth = 0.0f;
+            lineWidth = 0.0f;
+        }
+        else
+        {
+            glyphWidth = 0.0f + font->getRenderedGlyphWidth(*cursor, size);
+        }
+        m_wrapBuffer += *cursor;
+        cursor = parseHTMLString(cursor + 1, NULL);
     }
-    return result;
+    return wrapped;
 }
 
 void fuiRenderNodeEditText::setWidth(float width)
@@ -1202,7 +1212,7 @@ void fuiRenderNodeEditText::setScrollH(float scroll)
     m_dirty = true;
 }
 
-unsigned int fuiRenderNodeEditText::getNumLines()
+int fuiRenderNodeEditText::getNumLines()
 {
     return m_numLines;
 }

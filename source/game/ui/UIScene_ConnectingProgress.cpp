@@ -30,7 +30,7 @@ UIScene_ConnectingProgress::UIScene_ConnectingProgress(int type, void* data, UIL
     m_tipLabel.setVisible(false);
     m_miniGameId = params->m_miniGameId;
 
-    if (!g_pApp->GetGameHostOption(eGameHostOption_MiniGame))
+    if (!gApp.GetGameHostOption(eGameHostOption_MiniGame))
     {
         m_miniGameLogoSet = false;
         SetLoadingScreenType(0);
@@ -81,25 +81,17 @@ UIScene_ConnectingProgress::~UIScene_ConnectingProgress()
 
 void UIScene_ConnectingProgress::SetLoadingScreenType(int type)
 {
-    FJ_FuiNode* root = m_movie->getRootNode()->getFuiNode();
-    static_cast<FJ_FullScreenProgress*>(root->asFJ_Document())->SetLoadingScreenType(type);
+    static_cast<FJ_FullScreenProgress*>(m_movie->getRootNode()->getFuiNode())->SetLoadingScreenType(type);
 }
 
 void UIScene_ConnectingProgress::setMiniGameLogoTexture()
 {
     const MiniGameDef* game = Minecraft::GetInstance()->GetMiniGame();
-    std::wstring icon;
     bool found;
-    if (game->GetId() == eMiniGameId_Any || game->GetId() == eMiniGameId_Lobby)
-    {
-        icon = Minecraft::GetInstance()->GetFirstMiniGame()->getIcon();
-        found = g_pApp->hasArchiveFile(icon, false);
-    }
-    else
-    {
-        icon = game->getIcon();
-        found = g_pApp->hasArchiveFile(icon, false);
-    }
+    std::wstring icon = (game->GetId() == eMiniGameId_Any || game->GetId() == eMiniGameId_Lobby)
+        ? Minecraft::GetInstance()->GetFirstMiniGame()->getIcon()
+        : game->getIcon();
+    found = gApp.hasArchiveFile(icon, false);
 
     if (!found)
     {
@@ -107,8 +99,8 @@ void UIScene_ConnectingProgress::setMiniGameLogoTexture()
     }
     else
     {
-        arrayWithLength<unsigned char> file = g_pApp->getArchiveFile(icon, false);
-        if (file.data != NULL && file.length != 0)
+        arrayWithLength<unsigned char> file = gApp.getArchiveFile(icon, false);
+        if (file.length != 0 && file.data != NULL)
             registerSubstitutionTexture(icon, file.data, file.length, true);
         m_logoControl.setTextureName(icon, false);
     }
@@ -116,8 +108,7 @@ void UIScene_ConnectingProgress::setMiniGameLogoTexture()
 
 void UIScene_ConnectingProgress::ShowConfirmationButton(bool show)
 {
-    FJ_FuiNode* root = m_movie->getRootNode()->getFuiNode();
-    static_cast<FJ_FullScreenProgress*>(root->asFJ_Document())->ShowConfirmationButton(show);
+    static_cast<FJ_FullScreenProgress*>(m_movie->getRootNode()->getFuiNode())->ShowConfirmationButton(show);
 }
 
 unsigned int UIScene_ConnectingProgress::mapElementsAndNames()
@@ -132,7 +123,8 @@ unsigned int UIScene_ConnectingProgress::mapElementsAndNames()
     m_controls.push_back(&m_tipLabel);
     m_gameModeIconControl.setupControl(this, root, "GMIcon");
     m_controls.push_back(&m_gameModeIconControl);
-    m_logoControl.setupControl(this, m_gameModeIconControl.getFuiRenderNode(), "MG_Logo");
+    fuiRenderNode* iconNode = m_gameModeIconControl.getFuiRenderNode();
+    m_logoControl.setupControl(this, iconNode, "MG_Logo");
     m_controls.push_back(&m_logoControl);
     m_confirmationButton.setupControl(this, root, "Confirm");
     m_controls.push_back(&m_confirmationButton);
@@ -172,13 +164,13 @@ void UIScene_ConnectingProgress::tick()
         setMiniGameLogoTexture();
         m_miniGameLogoSet = true;
         m_miniGameId = Minecraft::GetInstance()->GetMiniGame()->GetId();
-        g_pApp->SetFirstMiniGameType(m_miniGameId);
+        gApp.SetFirstMiniGameType(m_miniGameId);
     }
 }
 
 void UIScene_ConnectingProgress::handleReload()
 {
-    if (g_pApp->GetGameHostOption(eGameHostOption_MiniGame))
+    if (gApp.GetGameHostOption(eGameHostOption_MiniGame))
     {
         SetLoadingScreenType(1);
         setMiniGameLogoTexture();
@@ -204,11 +196,12 @@ void UIScene_ConnectingProgress::handleGainFocus(bool navigatedBack)
 
 void UIScene_ConnectingProgress::handleLoseFocus()
 {
-    const int timerId = 0;
-    m_timers[timerId];
+    int first = 0;
+    m_timers[first];
     System::processTimeInMilliSecs();
-    m_timers[timerId];
-    killTimer(timerId);
+    int second = 0;
+    m_timers[second];
+    killTimer(0);
 }
 
 void UIScene_ConnectingProgress::handleTimerComplete(int)
@@ -220,15 +213,15 @@ void UIScene_ConnectingProgress::handleTimerComplete(int)
     int message;
     switch (minecraft->mDisconnectReasons[m_playerId])
     {
-    case DisconnectPacket::eDisconnectReason_Quit:                 message = 0x5b106d79; break;
     case DisconnectPacket::eDisconnectReason_LoginTimeout:         message = 0x434f7b7f; break;
-    case DisconnectPacket::eDisconnectReason_KeepAliveTimeout:     message = 0xad3e1729; break;
-    case DisconnectPacket::eDisconnectReason_Kicked:               message = 0xf3a95051; break;
     case DisconnectPacket::eDisconnectReason_GameFull:             message = 0xb86be603; break;
-    case DisconnectPacket::eDisconnectReason_HostOutOfDate:        message = 0xb59cada7; break;
-    case DisconnectPacket::eDisconnectReason_ClientOutOfDate:      message = 0xce44990b; break;
+    case DisconnectPacket::eDisconnectReason_HostOutOfDate:        message = IDS_DISCONNECTED_SERVER_OLD; break;
+    case DisconnectPacket::eDisconnectReason_ClientOutOfDate:      message = IDS_DISCONNECTED_CLIENT_OLD; break;
+    case DisconnectPacket::eDisconnectReason_Kicked:               message = IDS_DISCONNECTED_KICKED; break;
     case DisconnectPacket::eDisconnectReason_NotFriendsWithHost:   message = 0xfb7f0496; break;
     case DisconnectPacket::eDisconnectReason_NotFriendsWithPlayer: message = 0x4d669d55; break;
+    case DisconnectPacket::eDisconnectReason_KeepAliveTimeout:     message = IDS_DISCONNECTED_FLYING; break;
+    case DisconnectPacket::eDisconnectReason_Quit:                 message = 0x5b106d79; break;
     case DisconnectPacket::eDisconnectReason_AgeRestricted:        message = 0x3103be06; break;
     case DisconnectPacket::eDisconnectReason_StorageError:         message = 0x98521f17; break;
     case DisconnectPacket::eDisconnectReason_ContentNotOwned:      message = 0xec3b3da6; break;
@@ -246,24 +239,24 @@ void UIScene_ConnectingProgress::handleTimerComplete(int)
         return;
     }
 
-    if (!m_cancelled)
+    if (m_cancelled)
+    {
+        gApp.SetDisconnectReason(static_cast<DisconnectPacket::eDisconnectReason>(0x21));
+    }
+    else
     {
         int parameter = IDS_CONFIRM_OK;
         gConsoleUIController.RequestErrorMessage(IDS_CONNECTION_FAILED, message, &parameter, 1,
                                                  gProfile->GetPrimaryPad(), NULL, NULL, NULL, true);
-    }
-    else
-    {
-        gApp.SetDisconnectReason(static_cast<DisconnectPacket::eDisconnectReason>(0x21));
     }
     gApp.SetAction(gProfile->GetPrimaryPad(), eXuiAction_ExitWorld, reinterpret_cast<void*>(1));
 }
 
 std::wstring UIScene_ConnectingProgress::getMoviePath()
 {
-    if (g_pApp->GetLocalPlayerCount() < 2 || m_layer->IsFullscreenGroup())
-        return L"FullscreenProgress";
-    return L"FullscreenProgressSplit";
+    if (gApp.GetLocalPlayerCount() > 1 && !m_layer->IsFullscreenGroup())
+        return L"FullscreenProgressSplit";
+    return L"FullscreenProgress";
 }
 
 void UIScene_ConnectingProgress::handleInput(int playerId, int action, bool repeat,

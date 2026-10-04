@@ -47,14 +47,17 @@ void UIComponent_DebugUIConsole::tick()
     if (!m_updateLabels)
         return;
 
-    m_updateLabels = false;
-    std::deque<std::string>::const_iterator text = m_text.begin();
     unsigned int index = 0;
-    while (index < m_text.size() && index < 10)
+    m_updateLabels = false;
+    if (index < m_text.size())
     {
-        m_consoleLines[index].setLabel(UIString(*text), false, false);
-        ++text;
-        ++index;
+        do
+        {
+            std::deque<std::string>::const_iterator text = m_text.begin() + index;
+            m_consoleLines[index].setLabel(UIString(*text), false, false);
+            ++index;
+        }
+        while (index < 10 && index < m_text.size());
     }
 }
 

@@ -29,27 +29,30 @@ void UIControl_Label::init(UIString label)
     if (m_fuiRenderNode == 0)
         return;
 
-    FJ_FuiNode* node = m_fuiRenderNode->getFuiNode();
-    if (node->isFJ_Label())
+    if (m_fuiRenderNode->getFuiNode()->isFJ_Label())
     {
-        node->asFJ_Label()->Init(label.getString());
+        m_fuiRenderNode->getFuiNode()->asFJ_Label()->Init(label.getString());
         return;
     }
 
-    if (node->isFJ_Label_Blink())
+    if (m_fuiRenderNode->getFuiNode()->isFJ_Label_Blink())
     {
-        node->asFJ_Label_Blink()->Init(label.getString());
+        std::wstring& text = label.getString();
+        m_fuiRenderNode->getFuiNode()->asFJ_Label_Blink()->Init(text);
         return;
     }
 
-    if (node->isFJ_HtmlText())
+    if (m_fuiRenderNode->getFuiNode()->isFJ_HtmlText())
     {
-        node->asFJ_HtmlText()->Init(label.getString());
+        m_fuiRenderNode->getFuiNode()->asFJ_HtmlText()->Init(label.getString());
         return;
     }
 
-    if (node->isFJ_LabelOutline())
-        node->asFJ_LabelOutline()->Init(label.getString());
+    if (m_fuiRenderNode->getFuiNode()->isFJ_LabelOutline())
+    {
+        std::wstring& text = label.getString();
+        m_fuiRenderNode->getFuiNode()->asFJ_LabelOutline()->Init(text);
+    }
 }
 
 void UIControl_Label::ReInit()
@@ -57,7 +60,6 @@ void UIControl_Label::ReInit()
     UIControl::ReInit();
     if (m_reinit)
     {
-        UIString label = m_label;
-        init(label);
+        init(m_label);
     }
 }

@@ -27,24 +27,21 @@
 #include "platform/wiiu/CProfile.hpp"
 #include "vendor/_TutorialPopupInfo.hpp"
 
-UIComponent_TutorialPopup::UIComponent_TutorialPopup(int sceneType, void* callback, UILayer* layer)
-    : UIScene(sceneType, layer), m_interactScene(0), m_previousInteractScene(0),
-      m_interactScenePosition(false), m_showTitleTimer(false),
-      m_showExitScreenshot(false), m_description(), m_tutorial(0), m_icon(),
-      m_showIcon(false), m_containerMenuDisplayed(false), m_hasDescription(false),
-      m_splitScreen(false), m_title(), m_iconHolder(EIcons_None),
+UIComponent_TutorialPopup::UIComponent_TutorialPopup(int sceneType, void*, UILayer* layer)
+    : UIScene(sceneType, layer), m_description(), m_icon(), m_title(),
       m_descriptionLabel(), m_titleLabel(), m_iconHolderControl(), m_exitScreenshotControl()
 {
-    m_itemRenderer = static_cast<ItemRenderer*>(callback);
     initialiseMovie();
+    m_previousInteractScene = 0;
+    m_showTitleTimer = false;
+    m_interactScenePosition = false;
+    m_showExitScreenshot = false;
     m_interactScene = 0;
-    m_icon.reset();
+    m_icon = ItemInstance::EMPTY;
     m_splitScreen = false;
     m_showIcon = false;
-    m_hasDescription = false;
-    m_showTitleTimer = false;
-    m_showExitScreenshot = false;
     m_iconHolder = EIcons_None;
+    m_containerMenuDisplayed = false;
     m_descriptionLabel.init(UIString(L""));
 }
 
@@ -236,25 +233,33 @@ std::wstring UIComponent_TutorialPopup::_SetImage(std::wstring& image)
 
 void UIComponent_TutorialPopup::ParseDescription(int, std::wstring& description)
 {
-    static const wchar_t* tokens[] = {
-        L"{*CraftingTableIcon*}", L"{*SticksIcon*}", L"{*PlanksIcon*}",
-        L"{*WoodenShovelIcon*}", L"{*WoodenHatchetIcon*}", L"{*WoodenPickaxeIcon*}",
-        L"{*FurnaceIcon*}", L"{*WoodenDoorIcon*}", L"{*TorchIcon*}",
-        L"{*MinecartIcon*}", L"{*BoatIcon*}", L"{*FishingRodIcon*}",
-        L"{*FishIcon*}", L"{*RailIcon*}", L"{*PoweredRailIcon*}",
-        L"{*StructuresIcon*}", L"{*ToolsIcon*}", L"{*StoneIcon*}",
-        L"{*BannerIcon*}", L"{*SlimeBlockIcon*}", L"{*PistonIcon*}",
-        L"{*BlazePowderIcon*}", L"{*ElytraIcon*}"
-    };
-    std::size_t i;
-    for (i = 0; i < sizeof(tokens) / sizeof(tokens[0]); ++i)
-    {
-        description = replaceAll(description, tokens[i], L"{*ICON*}");
-    }
+    description = replaceAll(description, L"{*CraftingTableIcon*}", L"");
+    description = replaceAll(description, L"{*SticksIcon*}", L"");
+    description = replaceAll(description, L"{*PlanksIcon*}", L"");
+    description = replaceAll(description, L"{*WoodenShovelIcon*}", L"");
+    description = replaceAll(description, L"{*WoodenHatchetIcon*}", L"");
+    description = replaceAll(description, L"{*WoodenPickaxeIcon*}", L"");
+    description = replaceAll(description, L"{*FurnaceIcon*}", L"");
+    description = replaceAll(description, L"{*WoodenDoorIcon*}", L"");
+    description = replaceAll(description, L"{*TorchIcon*}", L"");
+    description = replaceAll(description, L"{*MinecartIcon*}", L"");
+    description = replaceAll(description, L"{*BoatIcon*}", L"");
+    description = replaceAll(description, L"{*FishingRodIcon*}", L"");
+    description = replaceAll(description, L"{*FishIcon*}", L"");
+    description = replaceAll(description, L"{*RailIcon*}", L"");
+    description = replaceAll(description, L"{*PoweredRailIcon*}", L"");
+    description = replaceAll(description, L"{*StructuresIcon*}", L"");
+    description = replaceAll(description, L"{*ToolsIcon*}", L"");
+    description = replaceAll(description, L"{*StoneIcon*}", L"");
+    description = replaceAll(description, L"{*BannerIcon*}", L"");
+    description = replaceAll(description, L"{*SlimeBlockIcon*}", L"");
+    description = replaceAll(description, L"{*PistonIcon*}", L"");
+    description = replaceAll(description, L"{*BlazePowderIcon*}", L"");
+    description = replaceAll(description, L"{*ElytraIcon*}", L"");
 
-    bool hasExitPicture = description.find(L"{*EXIT_PICTURE*}") != std::wstring::npos;
-    description = replaceAll(description, L"{*EXIT_PICTURE*}", L"{*ICON*}");
-    m_exitScreenshotControl.setVisible(hasExitPicture);
+    std::wstring::size_type exitPicture = description.find(L"{*EXIT_PICTURE*}");
+    description = replaceAll(description, L"{*EXIT_PICTURE*}", L"");
+    m_exitScreenshotControl.setVisible(exitPicture != std::wstring::npos);
 
     m_title = description;
 }
@@ -265,7 +270,7 @@ void UIComponent_TutorialPopup::_SetDescription(UIScene* scene, const std::wstri
 {
     m_interactScene = scene;
     m_description = description;
-    if (m_interactScene != m_previousInteractScene)
+    if (scene != m_previousInteractScene)
         m_previousInteractScene = 0;
 
     if (title.empty())
@@ -281,41 +286,56 @@ void UIComponent_TutorialPopup::_SetDescription(UIScene* scene, const std::wstri
     if (!showTitle)
     {
         killTimer(0);
-        m_showTitleTimer = false;
+        m_showTitleTimer = showTitle;
         m_showExitScreenshot = showExitScreenshot;
     }
     else
     {
-        addTimer(0, displayTime < 0 ? 7000 : displayTime);
+        addTimer(0, displayTime < 0 ? gTutorialVisibleTime : displayTime);
         m_showTitleTimer = showTitle;
         m_showExitScreenshot = showExitScreenshot;
     }
 
-    std::wstring titleText;
     if (!showExitScreenshot)
     {
-        titleText = title;
+        {
+            std::wstring titleText;
+            titleText = title;
+            stripWhitespaceForHtml(titleText, true);
+
+            wchar_t colorTag[40];
+            swprintf(colorTag, 40, L"<font color=\"#%08x\">", gApp.GetHTMLColour(eMinecraftColour_HTMLColor_White));
+            titleText = colorTag + titleText;
+
+            m_descriptionLabel.setLabel(UIString(titleText), true, false);
+        }
+        m_titleLabel.setLabel(UIString(description), true, false);
+        m_titleLabel.setVisible(!description.empty());
+
+        m_splitScreen = GameSettings::GetGameSettings(gProfile->GetPrimaryPad(), eGameSetting_SplitscreenNicknames) != 0;
     }
     else
     {
-        titleText = L10N::GetString(IDS_TUTORIAL_REMINDER);
-        titleText += title;
+        {
+            std::wstring titleText;
+            titleText = L10N::GetString(IDS_TUTORIAL_REMINDER);
+            titleText += title;
+            stripWhitespaceForHtml(titleText, true);
+
+            wchar_t colorTag[40];
+            swprintf(colorTag, 40, L"<font color=\"#%08x\">", gApp.GetHTMLColour(eMinecraftColour_HTMLColor_White));
+            titleText = colorTag + titleText;
+
+            m_descriptionLabel.setLabel(UIString(titleText), true, false);
+        }
+        m_titleLabel.setLabel(UIString(description), true, false);
+        m_titleLabel.setVisible(!description.empty());
+
+        m_splitScreen = GameSettings::GetGameSettings(gProfile->GetPrimaryPad(), eGameSetting_SplitscreenNicknames) != 0;
     }
-    stripWhitespaceForHtml(titleText, true);
 
-    wchar_t colorTag[40];
-    swprintf(colorTag, 40, L"<font color=\"#%08x\">", gApp.GetHTMLColour(eMinecraftColour_HTMLColor_White));
-    std::wstring coloredTitle(colorTag);
-    coloredTitle += titleText;
-
-    m_descriptionLabel.setLabel(UIString(coloredTitle), true, false);
-    m_titleLabel.setLabel(UIString(description), true, false);
-    m_titleLabel.setVisible(!description.empty());
-
-    m_hasDescription = GameSettings::GetGameSettings(gProfile->GetPrimaryPad(), eGameSetting_SplitscreenNicknames) != 0;
-
-    FJ_TutorialPopup* popup = static_cast<FJ_TutorialPopup*>(m_movie->getRootNode()->getFuiNode());
-    popup->AdjustLayout(m_hasDescription && !m_containerMenuDisplayed);
+    bool adjustLayout = m_splitScreen && !m_containerMenuDisplayed;
+    static_cast<FJ_TutorialPopup*>(m_movie->getRootNode()->getFuiNode())->AdjustLayout(adjustLayout);
 }
 
 void UIComponent_TutorialPopup::SetTutorialDescription(_TutorialPopupInfo* info)
@@ -340,10 +360,9 @@ void UIComponent_TutorialPopup::RemoveInteractSceneReference(UIScene* scene)
 
 void UIComponent_TutorialPopup::UpdateTutorialPopup()
 {
-    bool splitScreen = GameSettings::GetGameSettings(gProfile->GetPrimaryPad(), eGameSetting_SplitscreenNicknames) != 0;
-    if (m_splitScreen != splitScreen)
+    if (m_splitScreen != (GameSettings::GetGameSettings(gProfile->GetPrimaryPad(), eGameSetting_SplitscreenNicknames) != 0))
     {
-        m_splitScreen = splitScreen;
+        m_splitScreen = GameSettings::GetGameSettings(gProfile->GetPrimaryPad(), eGameSetting_SplitscreenNicknames) != 0;
         handleReload();
     }
 }
@@ -356,16 +375,14 @@ bool UIComponent_TutorialPopup::IsVisible()
 unsigned int UIComponent_TutorialPopup::mapElementsAndNames()
 {
     UIScene::mapElementsAndNames();
-    if (m_movie == 0 || m_movie->getRootNode() == 0)
-        return 1;
     fuiRenderNode* root = m_movie->getRootNode();
     m_titleLabel.setupControl(this, root, "Title");
-    m_descriptionLabel.setupControl(this, root, "Description");
-    m_iconHolderControl.setupControl(this, root, "IconHolder");
-    m_exitScreenshotControl.setupControl(this, root, "ExitScreenShot");
     m_controls.push_back(&m_titleLabel);
+    m_descriptionLabel.setupControl(this, root, "Description");
     m_controls.push_back(&m_descriptionLabel);
+    m_iconHolderControl.setupControl(this, root, "IconHolder");
     m_controls.push_back(&m_iconHolderControl);
+    m_exitScreenshotControl.setupControl(this, root, "ExitScreenShot");
     m_controls.push_back(&m_exitScreenshotControl);
     return 1;
 }
@@ -394,7 +411,7 @@ void UIComponent_TutorialPopup::handleReload()
         }
     }
 
-    bool adjustSplit = GameSettings::GetGameSettings(m_playerId, eGameSetting_SplitscreenNicknames) != 0 &&
+    bool adjustSplit = GameSettings::GetGameSettings(gProfile->GetPrimaryPad(), eGameSetting_SplitscreenNicknames) != 0 &&
                         !m_containerMenuDisplayed;
     FJ_TutorialPopup* popup = static_cast<FJ_TutorialPopup*>(m_movie->getRootNode()->getFuiNode());
     popup->AdjustLayout(adjustSplit);
@@ -409,10 +426,56 @@ void UIComponent_TutorialPopup::render(int width, int height, C4JRender::eViewpo
         return;
     }
 
-    gConsoleUIController.setupRenderPosition(0, static_cast<int>(getSafeZoneHalfHeight()));
+    int x = 0;
+    int y = 0;
+    switch (viewport)
+    {
+    case C4JRender::eViewportType_TopHalf:
+    case C4JRender::eViewportType_RightHalf:
+    case C4JRender::eViewportType_TopRightQuarter:
+        x = static_cast<int>(gConsoleUIController.getScreenWidth() * 0.5f);
+        break;
+    case C4JRender::eViewportType_BottomHalf:
+    case C4JRender::eViewportType_BottomRightQuarter:
+        x = static_cast<int>(gConsoleUIController.getScreenWidth() * 0.5f);
+        y = static_cast<int>(gConsoleUIController.getScreenHeight() * 0.5f);
+        break;
+    case C4JRender::eViewportType_BottomLeftQuarter:
+        y = static_cast<int>(gConsoleUIController.getScreenHeight() * 0.5f);
+        break;
+    default:
+        break;
+    }
 
-    if (gFui != 0)
-        gFui->render(m_movie, 0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height));
+    switch (viewport)
+    {
+    case C4JRender::eViewportType_TopHalf:
+    case C4JRender::eViewportType_LeftHalf:
+    case C4JRender::eViewportType_RightHalf:
+    case C4JRender::eViewportType_TopLeftQuarter:
+    case C4JRender::eViewportType_TopRightQuarter:
+        y += static_cast<int>(getSafeZoneHalfHeight());
+        break;
+    default:
+        break;
+    }
+
+    switch (viewport)
+    {
+    case C4JRender::eViewportType_TopHalf:
+    case C4JRender::eViewportType_BottomHalf:
+    case C4JRender::eViewportType_RightHalf:
+    case C4JRender::eViewportType_TopRightQuarter:
+    case C4JRender::eViewportType_BottomRightQuarter:
+        x -= static_cast<int>(getSafeZoneHalfWidth());
+        break;
+    default:
+        break;
+    }
+
+    gConsoleUIController.setupRenderPosition(x, y);
+
+    gFui->render(m_movie, 0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height));
 }
 
 void UIComponent_TutorialPopup::customDraw(const char*, fuiRect* rect)
@@ -421,8 +484,7 @@ void UIComponent_TutorialPopup::customDraw(const char*, fuiRect* rect)
     {
         if (m_icon->getCount() == 0)
             m_icon->setCount(1);
-        bool highlight = m_icon->getItem()->isFoil(m_icon) || m_showIcon;
-        customDrawSlotControlFui(rect, m_playerId, m_icon, 1.0f, highlight, false, false);
+        customDrawSlotControlFui(rect, m_playerId, m_icon, 1.0f, m_icon->getItem()->isFoil(m_icon) || m_showIcon, false, false);
     }
 }
 
@@ -433,10 +495,10 @@ void UIComponent_TutorialPopup::UpdateInteractScenePosition(bool visible)
 
     bool craftingMenu = m_interactScene->getSceneType() == EUIScene_CraftingMenu2x2
         || m_interactScene->getSceneType() == EUIScene_CraftingMenu;
-    int sceneType = m_interactScene->getSceneType();
-    boost::shared_ptr<MultiplayerLocalPlayer> player = Minecraft::GetInstance()->mLocalPlayers[m_playerId];
-    if (player->mViewport >= C4JRender::eViewportType_LeftHalf
-        && (craftingMenu || sceneType == EUIScene_CreativeMenu || sceneType == EUIScene_TradingMenu))
+    bool creativeMenu = m_interactScene->getSceneType() == EUIScene_CreativeMenu;
+    bool tradingMenu = m_interactScene->getSceneType() == EUIScene_TradingMenu;
+    if (Minecraft::GetInstance()->mLocalPlayers[m_playerId]->mViewport >= C4JRender::eViewportType_LeftHalf
+        && (craftingMenu || creativeMenu || tradingMenu))
         return;
 
     if (m_previousInteractScene == m_interactScene)
@@ -463,16 +525,17 @@ void UIComponent_TutorialPopup::UpdateInteractScenePosition(bool visible)
 
 void UIComponent_TutorialPopup::handleTimerComplete(int timerId)
 {
-    if (timerId == 0)
+    switch (timerId)
     {
+    case 0:
         SetVisible(false);
         killTimer(0);
         addTimer(1, 500);
-    }
-    else if (timerId == 1)
-    {
+        break;
+    case 1:
         UpdateInteractScenePosition(IsVisible());
         killTimer(1);
+        break;
     }
 }
 

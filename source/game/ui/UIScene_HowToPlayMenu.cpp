@@ -1,3 +1,4 @@
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/ui/UIScene_HowToPlayMenu.hpp"
 #include "game/core/StringIds.hpp"
 
@@ -16,9 +17,8 @@
 #include <stdint.h>
 
 extern ConsoleUIController gConsoleUIController;
-extern CMinecraftApp* g_pApp;
 
-static const unsigned int s_howToPlayMenuLabels[33] = {
+static unsigned int s_howToPlayMenuLabels[33] = {
     IDS_HOW_TO_PLAY_MENU_WHATSNEW, IDS_HOW_TO_PLAY_MENU_BASICS, IDS_HOW_TO_PLAY_MENU_MULTIPLAYER, IDS_HOW_TO_PLAY_MENU_HUD,
     IDS_HOW_TO_PLAY_MENU_MG01, IDS_HOW_TO_PLAY_MENU_MG02, IDS_HOW_TO_PLAY_MENU_MG03, IDS_HOW_TO_PLAY_MENU_CREATIVE,
     IDS_HOW_TO_PLAY_MENU_INVENTORY, IDS_HOW_TO_PLAY_MENU_CHESTS, IDS_HOW_TO_PLAY_MENU_CRAFTING, IDS_HOW_TO_PLAY_MENU_FURNACE,
@@ -47,12 +47,8 @@ UIScene_HowToPlayMenu::UIScene_HowToPlayMenu(int sceneType, void*, UILayer* laye
 {
     initialiseMovie();
     m_buttonList.init(0);
-    for (int i = 0; i < 16; ++i)
-    {
-        m_buttonList.addItem(L10N::GetString(s_howToPlayMenuLabels[i * 2]), i * 2);
-        m_buttonList.addItem(L10N::GetString(s_howToPlayMenuLabels[i * 2 + 1]), i * 2 + 1);
-    }
-    m_buttonList.addItem(L10N::GetString(s_howToPlayMenuLabels[32]), 32);
+    for (int i = 0; i < 33; ++i)
+        m_buttonList.addItem(L10N::GetString(s_howToPlayMenuLabels[i]), i);
     doHorizontalResizeCheck();
     m_selectedItem = 0;
     gConsoleUIController.TouchBoxRebuild(this);
@@ -67,27 +63,27 @@ void UIScene_HowToPlayMenu::updateTooltips()
 
 void UIScene_HowToPlayMenu::updateComponents()
 {
-    bool showSecond = true;
-    if (Minecraft::GetInstance()->mPendingLevelChange == 0)
+    bool showSecond;
+    bool noLevel = Minecraft::GetInstance()->mLevel == NULL;
+    if (noLevel)
     {
         m_layer->showComponent(m_playerId, EUIScene_Panorama, true);
+        showSecond = true;
     }
     else
     {
         m_layer->showComponent(m_playerId, EUIScene_Panorama, false);
-        showSecond = g_pApp->GetLocalPlayerCount() == 1;
+        showSecond = false;
+        if (gApp.GetLocalPlayerCount() == 1)
+            showSecond = true;
     }
     m_layer->showComponent(m_playerId, EUIScene_Logo, showSecond);
 }
 
 void UIScene_HowToPlayMenu::handleReload()
 {
-    for (int i = 0; i < 16; ++i)
-    {
-        m_buttonList.addItem(L10N::GetString(s_howToPlayMenuLabels[i * 2]), i * 2);
-        m_buttonList.addItem(L10N::GetString(s_howToPlayMenuLabels[i * 2 + 1]), i * 2 + 1);
-    }
-    m_buttonList.addItem(L10N::GetString(s_howToPlayMenuLabels[32]), 32);
+    for (int i = 0; i < 33; ++i)
+        m_buttonList.addItem(L10N::GetString(s_howToPlayMenuLabels[i]), i);
     m_buttonList.setCurrentSelection(m_selectedItem, false, true);
     doHorizontalResizeCheck();
     gConsoleUIController.TouchBoxRebuild(this);
@@ -95,8 +91,8 @@ void UIScene_HowToPlayMenu::handleReload()
 
 std::wstring UIScene_HowToPlayMenu::getMoviePath()
 {
-    return g_pApp->GetLocalPlayerCount() < 2 ? std::wstring(L"HowToPlayMenu")
-                                             : std::wstring(L"HowToPlayMenuSplit");
+    return gApp.GetLocalPlayerCount() > 1 ? std::wstring(L"HowToPlayMenuSplit")
+                                             : std::wstring(L"HowToPlayMenu");
 }
 
 void UIScene_HowToPlayMenu::handleInput(int, int action, bool repeat, bool pressed, bool released,
@@ -105,16 +101,16 @@ void UIScene_HowToPlayMenu::handleInput(int, int action, bool repeat, bool press
     gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, pressed, released);
     switch (action)
     {
+    case EControllerActions_MenuCancel:
+        if (pressed)
+            navigateBack();
+        break;
     case EControllerActions_MenuUp:
     case EControllerActions_MenuDown:
     case EControllerActions_MenuPageUp:
     case EControllerActions_MenuPageDown:
     case EControllerActions_MenuOk:
         sendInputToMovie(action, repeat, pressed, released);
-        break;
-    case EControllerActions_MenuCancel:
-        if (pressed)
-            navigateBack();
         break;
     }
 }

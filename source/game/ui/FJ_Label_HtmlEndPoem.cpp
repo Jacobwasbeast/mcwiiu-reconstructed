@@ -12,6 +12,6 @@ unsigned int FJ_Label_HtmlEndPoem::getType()
 
 void FJ_Label_HtmlEndPoem::SetLabel(const std::wstring& label)
 {
-    setUseHtmlText(true);
+    m_htmlText = true;
     FJ_Label::SetLabel(label);
 }
