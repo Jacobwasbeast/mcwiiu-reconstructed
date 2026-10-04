@@ -5,6 +5,8 @@
 #include "game/client/render/LivingEntityRenderer.hpp"
 #include "game/client/render/Model.hpp"
 #include "game/client/render/ModelDefinition.hpp"
+#include "game/client/render/PlayerRenderer.hpp"
+#include "game/core/EntityType.hpp"
 #include "game/core/EquipmentSlot.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/entity/mob/Entity.hpp"
@@ -45,6 +47,14 @@ void ElytraLayer::render(boost::shared_ptr<LivingEntity>& entity, float limbSwin
     GlStateManager::blendFunc(1, 0);
     mRenderer->bindTexture(&ELYTRA_LOCATION);
     GlStateManager::pushMatrix();
+
+    PlayerRenderer* playerRenderer = dynamic_cast<PlayerRenderer*>(mRenderer);
+    if ((player->GetType() & EntityType::PLAYER) == EntityType::PLAYER && playerRenderer->mSpecialRenderActive)
+    {
+        GlStateManager::enableBlend();
+        GlStateManager::blendFunc(4, 5);
+        GlStateManager::color4f(1.0f, 1.0f, 1.0f, playerRenderer->mSpecialRenderAlpha);
+    }
 
     GlStateManager::translatef(0.0f, 0.0f, 0.125f);
 

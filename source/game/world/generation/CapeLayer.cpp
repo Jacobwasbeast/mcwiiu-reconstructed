@@ -29,18 +29,14 @@ void CapeLayer::render(boost::shared_ptr<LivingEntity>& entity, float limbSwing,
 {
     boost::shared_ptr<Player> player = boost::dynamic_pointer_cast<Player>(entity);
 
-    if (player->isInvisible() || !player->isModelPartShown(PlayerModelPart::CAPE))
+    if (player->isInvisible() || !player->isModelPartShown(PlayerModelPart::CAPE) || player->mCapeLocation.empty())
     {
         return;
     }
 
-    if (player->mCapeLocation.empty())
-    {
-        return;
-    }
+    const boost::shared_ptr<ItemInstance>& chestItem = player->getItemSlot(EquipmentSlot::CHEST);
 
-    if (!player->getItemSlot(EquipmentSlot::CHEST)->isEmpty()
-        && player->getItemSlot(EquipmentSlot::CHEST)->getItem() == Items::elytra)
+    if (chestItem->getItem() == Items::elytra)
     {
         return;
     }
@@ -55,12 +51,9 @@ void CapeLayer::render(boost::shared_ptr<LivingEntity>& entity, float limbSwing,
     GlStateManager::pushMatrix();
     GlStateManager::translatef(0.0f, 0.0f, 0.125f);
 
-    double x = player->mXo + (player->mX - player->mXo) * partialTicks;
-    double y = player->mYo + (player->mY - player->mYo) * partialTicks;
-    double z = player->mZo + (player->mZ - player->mZo) * partialTicks;
-    double capeX = player->mPrevChasingPosX + (player->mChasingPosX - player->mPrevChasingPosX) * partialTicks - x;
-    double capeY = player->mPrevChasingPosY + (player->mChasingPosY - player->mPrevChasingPosY) * partialTicks - y;
-    double capeZ = player->mPrevChasingPosZ + (player->mChasingPosZ - player->mPrevChasingPosZ) * partialTicks - z;
+    double capeX = (player->mPrevChasingPosX + (player->mChasingPosX - player->mPrevChasingPosX) * partialTicks) - (player->mXo + (player->mX - player->mXo) * partialTicks);
+    double capeY = (player->mPrevChasingPosY + (player->mChasingPosY - player->mPrevChasingPosY) * partialTicks) - (player->mYo + (player->mY - player->mYo) * partialTicks);
+    double capeZ = (player->mPrevChasingPosZ + (player->mChasingPosZ - player->mPrevChasingPosZ) * partialTicks) - (player->mZo + (player->mZ - player->mZo) * partialTicks);
     float bodyRot = player->mYBodyRotO + (player->mYBodyRot - player->mYBodyRotO) * partialTicks;
     double sinBody = Mth::sin(bodyRot * 0.017453292f);
     double cosBody = -Mth::cos(bodyRot * 0.017453292f);
@@ -82,7 +75,7 @@ void CapeLayer::render(boost::shared_ptr<LivingEntity>& entity, float limbSwing,
         vertical += 25.0f;
     }
 
-    float capeRotation = vertical + 6.0f + forward * 0.5f;
+    float capeRotation = forward * 0.5f + 6.0f + vertical;
 
     if (capeRotation > 64.0f)
     {
@@ -90,10 +83,10 @@ void CapeLayer::render(boost::shared_ptr<LivingEntity>& entity, float limbSwing,
     }
 
     GlStateManager::rotatef(capeRotation, 1.0f, 0.0f, 0.0f);
-    GlStateManager::rotatef(horizontal * 0.5f, 0.0f, 1.0f, 0.0f);
-    GlStateManager::rotatef(-horizontal * 0.5f, 0.0f, 0.0f, 1.0f);
+    GlStateManager::rotatef(horizontal * 0.5f, 0.0f, 0.0f, 1.0f);
+    GlStateManager::rotatef(-(horizontal * 0.5f), 0.0f, 1.0f, 0.0f);
     GlStateManager::rotatef(180.0f, 0.0f, 1.0f, 0.0f);
-    mRenderer->getModel()->renderCloak(0.0625f);
+    static_cast<PlayerModel*>(mRenderer->getModel())->renderCloak(0.0625f);
     GlStateManager::popMatrix();
 }
 

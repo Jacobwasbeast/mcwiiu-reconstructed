@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "game/core/BoundingBox.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/DataInputStream.hpp"
 #include "game/core/DataOutputStream.hpp"
@@ -60,18 +61,25 @@ std::wstring VillageFeature::getFeatureName()
 bool VillageFeature::isFeatureChunk(int chunkX, int chunkZ, bool flatWorld)
 {
     int spacing = flatWorld ? mSpacing : 0x10;
-    int regionX = chunkX < 0 ? chunkX + 1 - spacing : chunkX;
-    int regionZ = chunkZ < 0 ? chunkZ + 1 - spacing : chunkZ;
+    int regionX = chunkX;
+    int regionZ = chunkZ;
+    if (chunkX < 0)
+        regionX = chunkX + (1 - spacing);
+    if (chunkZ < 0)
+        regionZ = chunkZ + (1 - spacing);
     Random& chunkRandom = *level->getRandomFor(regionX / spacing, regionZ / spacing, 0x9E7F70);
     int offsetX = chunkRandom.nextInt(spacing - mSeparation);
     int offsetZ = chunkRandom.nextInt(spacing - mSeparation);
-    LevelGenerationOptions* options = g_pApp->getLevelGenerationOptions();
+    LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
     if ((options != NULL && options->isFeatureChunk(chunkX, chunkZ, eFeatureType_Village, NULL)) ||
         (chunkX == regionX / spacing * spacing + offsetX &&
          chunkZ == regionZ / spacing * spacing + offsetZ))
     {
-        return level->getBiomeSource()->containsOnly(chunkX * 16 + 8, chunkZ * 16 + 8, 0,
-                                                     allowedBiomes);
+        if (level->getBiomeSource()->containsOnly(chunkX * 16 + 8, chunkZ * 16 + 8, 0,
+                                                  allowedBiomes))
+        {
+            return true;
+        }
     }
     return false;
 }
@@ -87,7 +95,7 @@ BlockPos* VillageFeature::getNearestGeneratedFeature(Level* levelIn, const Block
 
 StructureStart* VillageFeature::createStructureStart(int chunkX, int chunkZ)
 {
-    g_pApp->AddTerrainFeaturePosition((_eTerrainFeatureType)3, chunkX, chunkZ);
+    gApp.AddTerrainFeaturePosition((_eTerrainFeatureType)3, chunkX, chunkZ);
     return new VillageStart(level, random, chunkX, chunkZ, mVillageSize, mSize);
 }
 
@@ -147,7 +155,7 @@ StructureStart* VillageFeature::VillageStart::Create()
 
 bool VillageFeature::VillageStart::isValid()
 {
-    BoundingBox* box = getBoundingBox();
+    BoundingBox* box = mBoundingBox;
     int min = -mDistance / 2;
     int max = mDistance / 2;
     if (min <= box->x0 && box->x1 <= max && min <= box->z0 && box->z1 <= max)

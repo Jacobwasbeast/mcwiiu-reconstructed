@@ -17,7 +17,7 @@ public:
     typedef LayerAttributeChildRuleDefinition<T>* (*CreateChildFunc)(ConsoleGameRules::EGameRuleType type);
 
     LayerAttributeRuleDefinition(ConsoleGameRules::EGameRuleType actionType, CreateChildFunc createChild);
-    virtual ~LayerAttributeRuleDefinition();
+    virtual ~LayerAttributeRuleDefinition() {}
 
     virtual ConsoleGameRules::EGameRuleType getActionType();
     virtual void writeAttributes(GameRuleSaveInterface* saveInterface, unsigned int extraAttributeCount);

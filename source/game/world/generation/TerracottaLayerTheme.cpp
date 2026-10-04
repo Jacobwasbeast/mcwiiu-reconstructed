@@ -37,15 +37,15 @@ unsigned int TerracottaLayerTheme::HASHED(int x, int z)
 
 unsigned char TerracottaLayerTheme::TARTAN(int x, int z)
 {
-    static const unsigned char values[25] = {
+    unsigned char values[25] = {
         7, 1, 2, 1, 7,
         1, 1, 2, 1, 1,
         2, 2, 3, 2, 2,
         1, 1, 2, 1, 1,
         7, 1, 2, 1, 7
     };
-    int xIndex = (x + 1275) % 5;
-    int zIndex = (z + 1275) % 5;
+    unsigned char xIndex = (x + 1275u) % 5;
+    unsigned char zIndex = (z + 1275u) % 5;
     return values[xIndex * 5 + zIndex];
 }
 
@@ -62,38 +62,27 @@ unsigned int TerracottaLayerTheme::UNIFORM(int x, int z)
 void TerracottaLayerTheme::Apply(Random& random, BlockTransaction* transaction, int& width, int& height) const
 {
     unsigned char randomColour = (unsigned char)random.nextInt(16);
-    int widthRings = width / mSize;
-    int heightRings = height / mSize;
+    int widthRings = transaction->mSize.x / mSize;
+    int heightRings = transaction->mSize.z / mSize;
     int x;
     int z;
-    for (x = 0; x < width; ++x)
+    for (x = 0; x < transaction->mSize.x; ++x)
     {
-        for (z = 0; z < height; ++z)
+        for (z = 0; z < transaction->mSize.z; ++z)
         {
             int xIndex = x % mSize;
             int zIndex = z % mSize;
             const Direction* direction = mValues[xIndex * 4 + zIndex];
             int ringX = x / mSize;
             int ringZ = z / mSize;
-            if (ringX < 0 && (x / mSize) % 2 != 0)
-            {
-                --ringX;
-            }
-            if (ringZ < 0 && (z / mSize) % 2 != 0)
-            {
-                --ringZ;
-            }
             unsigned char colour = (unsigned char)(randomColour + mFunction(ringX - widthRings / 2,
                                                                               ringZ - heightRings / 2));
             Block* block = getColour(colour);
-            TypedBoxed<const Direction*> directionValue(direction);
-            const BlockState* state = block->defaultBlockState()->setBoxedValue(
-                HorizontalDirectionalBlock::FACING, &directionValue);
-            Vec3i position(x, 0, z);
+            const BlockState* state = block->defaultBlockState()->setValue(HorizontalDirectionalBlock::FACING, direction);
             int y;
             for (y = 0; y < transaction->mSize.y; ++y)
             {
-                position.y = y;
+                Vec3i position(x, y, z);
                 if (transaction->getBlock(position) != 0)
                 {
                     transaction->setBlock(position, state);

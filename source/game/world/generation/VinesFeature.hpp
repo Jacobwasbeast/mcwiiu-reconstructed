@@ -11,7 +11,7 @@ class VinesFeature : public Feature
 {
 public:
     VinesFeature();
-    virtual ~VinesFeature();
+    virtual ~VinesFeature() {}
 
     virtual bool place(Level* level, Random& random, const BlockPos& origin);
 };

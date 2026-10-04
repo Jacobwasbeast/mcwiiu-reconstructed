@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "game/minigame/GameRuleDefinition.hpp"
+#include "game/world/generation/ConsoleGenerateStructureAction.hpp"
 #include "game/world/generation/StructurePiece.hpp"
 
 class BlockPos;
@@ -37,7 +38,7 @@ private:
     int mX;
     int mY;
     int mZ;
-    std::vector<GameRuleDefinition*> mActions;
+    std::vector<ConsoleGenerateStructureAction*> mActions;
     int mDimension;
 };
 

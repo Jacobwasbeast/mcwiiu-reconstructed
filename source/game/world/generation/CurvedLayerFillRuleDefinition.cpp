@@ -1,14 +1,9 @@
 #include "game/world/generation/CurvedLayerFillRuleDefinition.hpp"
 
+#include "game/core/StringConversion.hpp"
 #include "game/data/GameRuleSaveInterface.hpp"
 #include "game/minigame/GameRuleDefinition.hpp"
 #include "game/world/generation/BowlLayerFill.hpp"
-
-template<typename T>
-std::wstring toString(T value);
-
-template<typename T>
-T fromString(const std::wstring& text);
 
 static const std::wstring CURVE_NAMES[2] =
 {
@@ -32,8 +27,8 @@ void CurvedLayerFillRuleDefinition::writeAttributes(GameRuleSaveInterface* saveI
 {
     GameRuleDefinition::writeAttributes(saveInterface, extraAttributeCount + 3);
     saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_type, CURVE_NAMES[mCurve]);
-    saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_dY, toString(mOffset));
-    saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_thickness, toString(mThickness));
+    saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_dY, _toString<int>(mOffset));
+    saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_thickness, _toString<int>(mThickness));
 }
 
 void CurvedLayerFillRuleDefinition::addAttribute(const std::wstring& name, const std::wstring& value)
@@ -56,13 +51,13 @@ void CurvedLayerFillRuleDefinition::addAttribute(const std::wstring& name, const
 
     if (name.compare(L"dY") == 0)
     {
-        mOffset = fromString<int>(value);
+        mOffset = _fromString<int>(value);
         return;
     }
 
     if (name.compare(L"thickness") == 0)
     {
-        mThickness = fromString<int>(value);
+        mThickness = _fromString<int>(value);
         return;
     }
 

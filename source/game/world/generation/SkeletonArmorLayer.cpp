@@ -18,15 +18,14 @@ void SkeletonArmorLayer::createArmorModels()
 {
     if (mModelArmorInner != NULL)
     {
-        static_cast<HumanoidModel*>(mModelArmorInner)->mHead->compile(3.0f);
+        delete mModelArmorInner;
     }
 
     if (mModelArmor != NULL)
     {
-        static_cast<HumanoidModel*>(mModelArmor)->mHead->compile(3.0f);
+        delete mModelArmor;
     }
 
-    ModelDefinition definition;
-    mModelArmorInner = new SkeletonModel(0.5f, true, definition);
-    mModelArmor = new SkeletonModel(1.0f, true, definition);
+    mModelArmorInner = new SkeletonModel(0.5f, true, ModelDefinition());
+    mModelArmor = new SkeletonModel(1.0f, true, ModelDefinition());
 }

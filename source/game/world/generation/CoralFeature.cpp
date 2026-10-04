@@ -103,20 +103,26 @@ void CoralFeature::_starFormation(Level* level, Random& random, const BlockPos& 
 
     if (!inverted)
     {
-        if (chance < random.nextFloat()
-            && !_setBlockOnSolid(level, BlockPos(pos.x + distance, pos.y, pos.z), state, data))
+        if (chance < random.nextFloat())
         {
-            return;
+            if (!_setBlockOnSolid(level, BlockPos(pos.x + distance, pos.y, pos.z), state, data))
+            {
+                return;
+            }
         }
-        if (chance < random.nextFloat()
-            && !_setBlockOnSolid(level, BlockPos(pos.x - distance, pos.y, pos.z), state, data))
+        if (chance < random.nextFloat())
         {
-            return;
+            if (!_setBlockOnSolid(level, BlockPos(pos.x - distance, pos.y, pos.z), state, data))
+            {
+                return;
+            }
         }
-        if (chance < random.nextFloat()
-            && !_setBlockOnSolid(level, BlockPos(pos.x, pos.y, pos.z + distance), state, data))
+        if (chance < random.nextFloat())
         {
-            return;
+            if (!_setBlockOnSolid(level, BlockPos(pos.x, pos.y, pos.z + distance), state, data))
+            {
+                return;
+            }
         }
         if (chance < random.nextFloat())
         {
@@ -125,20 +131,26 @@ void CoralFeature::_starFormation(Level* level, Random& random, const BlockPos& 
     }
     else
     {
-        if (random.nextFloat() < chance
-            && !_setBlockOnSolid(level, BlockPos(pos.x + distance, pos.y, pos.z), state, data))
+        if (random.nextFloat() < chance)
         {
-            return;
+            if (!_setBlockOnSolid(level, BlockPos(pos.x + distance, pos.y, pos.z), state, data))
+            {
+                return;
+            }
         }
-        if (random.nextFloat() < chance
-            && !_setBlockOnSolid(level, BlockPos(pos.x - distance, pos.y, pos.z), state, data))
+        if (random.nextFloat() < chance)
         {
-            return;
+            if (!_setBlockOnSolid(level, BlockPos(pos.x - distance, pos.y, pos.z), state, data))
+            {
+                return;
+            }
         }
-        if (random.nextFloat() < chance
-            && !_setBlockOnSolid(level, BlockPos(pos.x, pos.y, pos.z + distance), state, data))
+        if (random.nextFloat() < chance)
         {
-            return;
+            if (!_setBlockOnSolid(level, BlockPos(pos.x, pos.y, pos.z + distance), state, data))
+            {
+                return;
+            }
         }
         if (random.nextFloat() < chance)
         {
@@ -154,20 +166,26 @@ void CoralFeature::_starCorners(Level* level, Random& random, const BlockPos& po
     const int data = state->getValue(CoralBlock::VARIANT);
     if (!inverted)
     {
-        if (chance < random.nextFloat()
-            && !_setBlockOnSolid(level, BlockPos(pos.x + distance, pos.y, pos.z + distance), state, data))
+        if (chance < random.nextFloat())
         {
-            return;
+            if (!_setBlockOnSolid(level, BlockPos(pos.x + distance, pos.y, pos.z + distance), state, data))
+            {
+                return;
+            }
         }
-        if (chance < random.nextFloat()
-            && !_setBlockOnSolid(level, BlockPos(pos.x - distance, pos.y, pos.z + distance), state, data))
+        if (chance < random.nextFloat())
         {
-            return;
+            if (!_setBlockOnSolid(level, BlockPos(pos.x - distance, pos.y, pos.z + distance), state, data))
+            {
+                return;
+            }
         }
-        if (chance < random.nextFloat()
-            && !_setBlockOnSolid(level, BlockPos(pos.x - distance, pos.y, pos.z + distance), state, data))
+        if (chance < random.nextFloat())
         {
-            return;
+            if (!_setBlockOnSolid(level, BlockPos(pos.x - distance, pos.y, pos.z + distance), state, data))
+            {
+                return;
+            }
         }
         if (chance < random.nextFloat())
         {
@@ -176,20 +194,26 @@ void CoralFeature::_starCorners(Level* level, Random& random, const BlockPos& po
     }
     else
     {
-        if (random.nextFloat() < chance
-            && !_setBlockOnSolid(level, BlockPos(pos.x + distance, pos.y, pos.z + distance), state, data))
+        if (random.nextFloat() < chance)
         {
-            return;
+            if (!_setBlockOnSolid(level, BlockPos(pos.x + distance, pos.y, pos.z + distance), state, data))
+            {
+                return;
+            }
         }
-        if (random.nextFloat() < chance
-            && !_setBlockOnSolid(level, BlockPos(pos.x - distance, pos.y, pos.z + distance), state, data))
+        if (random.nextFloat() < chance)
         {
-            return;
+            if (!_setBlockOnSolid(level, BlockPos(pos.x - distance, pos.y, pos.z + distance), state, data))
+            {
+                return;
+            }
         }
-        if (random.nextFloat() < chance
-            && !_setBlockOnSolid(level, BlockPos(pos.x - distance, pos.y, pos.z + distance), state, data))
+        if (random.nextFloat() < chance)
         {
-            return;
+            if (!_setBlockOnSolid(level, BlockPos(pos.x - distance, pos.y, pos.z + distance), state, data))
+            {
+                return;
+            }
         }
         if (random.nextFloat() < chance)
         {
@@ -527,18 +551,18 @@ void CoralFeature::_placeTopDecorations(Level* level, const BlockPos& pos, Rando
     if (!Blocks::coral->canSurvive(level, pos, level->getBlockState(pos)))
         return;
 
-    TypedBoxed<int> variant(random.nextInt(5));
-    const BlockState* state = Blocks::coral_fan->defaultBlockState()->setBoxedValue(
-        static_cast<const Property*>(CoralFan::VARIANT), &variant);
-    TypedBoxed<int> direction(random.nextInt(2));
-    state = state->setBoxedValue(static_cast<const Property*>(CoralFan::DIRECTION), &direction);
+    const BlockState* state = Blocks::coral_fan->defaultBlockState();
+    state = state->setValue(CoralFan::VARIANT, random.nextInt(5));
+    state = state->setValue(CoralFan::DIRECTION, random.nextInt(2));
     setBlock(level, pos, state, Block::UPDATE_NONE);
 }
 
 bool CoralFeature::_canPlaceHangOn(Level* level, const BlockPos& pos)
 {
     Block* block = level->getBlock(pos);
-    return block == Blocks::coral_block || block == Blocks::stone;
+    if (block != Blocks::coral_block && block != Blocks::stone)
+        return false;
+    return true;
 }
 
 int CoralFeature::_turnFacingIntoint(const Direction* direction)
@@ -559,21 +583,20 @@ const BlockState* CoralFeature::_setCoralHangData(int facing, int variant, int t
     {
         state = Blocks::coral_fan_hang->defaultBlockState();
     }
-    else if (type == 1)
-    {
-        state = Blocks::coral_fan_hang2->defaultBlockState();
-    }
     else
     {
-        TypedBoxed<int> facingValue(facing);
-        return Blocks::coral_fan_hang3->defaultBlockState()->setBoxedValue(
-            static_cast<const Property*>(CoralFanHang::DIRECTION), &facingValue);
+        if (type != 1)
+        {
+            state = Blocks::coral_fan_hang3->defaultBlockState();
+            TypedBoxed<int> facingValue(facing);
+            return state->setBoxedValue(CoralFanHang::DIRECTION, &facingValue);
+        }
+        state = Blocks::coral_fan_hang2->defaultBlockState();
     }
 
-    TypedBoxed<int> variantValue(variant);
-    state = state->setBoxedValue(static_cast<const Property*>(CoralFanHang::VARIANT), &variantValue);
+    state = state->setValue(CoralFanHang::VARIANT, variant);
     TypedBoxed<int> facingValue(facing);
-    return state->setBoxedValue(static_cast<const Property*>(CoralFanHang::DIRECTION), &facingValue);
+    return state->setBoxedValue(CoralFanHang::DIRECTION, &facingValue);
 }
 
 void CoralFeature::_placeSideDecorations(Level* level, const BlockPos& pos, Random& random, const Direction* direction)
@@ -582,13 +605,14 @@ void CoralFeature::_placeSideDecorations(Level* level, const BlockPos& pos, Rand
     const Direction* side = _randomDirectionExcept(random, direction);
     if (!level->isEmptyWaterBlock(pos.relative(side)) || !canHang)
         return;
-    if (!level->isUnderWater(pos.relative(side), Blocks::coral_fan_hang->defaultBlockState()))
-        return;
-
-    int facing = _turnFacingIntoint(side);
-    int variant = random.nextInt(2);
-    int type = random.nextInt(3);
-    setBlock(level, pos.relative(side), _setCoralHangData(facing, variant, type), Block::UPDATE_NONE);
+    if (level->isUnderWater(pos.relative(side), Blocks::coral_fan_hang->defaultBlockState()))
+    {
+        int facing = _turnFacingIntoint(side);
+        int variant = random.nextInt(2);
+        int type = random.nextInt(3);
+        const BlockState* hang = _setCoralHangData(facing, variant, type);
+        setBlock(level, pos.relative(side), hang, Block::UPDATE_NONE);
+    }
 }
 
 bool CoralFeature::place(Level* level, Random& random, const BlockPos& origin)
@@ -599,13 +623,13 @@ bool CoralFeature::place(Level* level, Random& random, const BlockPos& origin)
     BlockPos pos = origin;
     while (true)
     {
-        if (pos.y > 58)
+        if (pos.y >= 59)
             return false;
         if (level->isEmptyWaterBlock(pos))
             break;
         pos = pos.above();
     }
-    if (pos.y > 58)
+    if (pos.y >= 59)
         return false;
     if (!level->isSolidBlockingBlock(pos.below()))
         return false;

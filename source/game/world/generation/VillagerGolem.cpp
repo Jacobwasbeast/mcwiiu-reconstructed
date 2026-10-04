@@ -283,9 +283,14 @@ ResourceLocation* VillagerGolem::getDefaultLootTable()
     return &BuiltInLootTables::IRON_GOLEM;
 }
 
-unsigned int VillagerGolem::getOfferFlowerTick()
+int VillagerGolem::getOfferFlowerTick()
 {
     return mOfferFlowerTick;
+}
+
+boost::shared_ptr<Village> VillagerGolem::getVillage()
+{
+    return mVillage.lock();
 }
 
 void VillagerGolem::die(const DamageSource* source)

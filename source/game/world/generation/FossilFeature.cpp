@@ -36,10 +36,6 @@ static const eMinecraftStructureTemplate FOSSILS_COAL[8] =
     eMinecraftStructureTemplate_Fossil_Skull04Coal
 };
 
-FossilFeature::~FossilFeature()
-{
-}
-
 bool FossilFeature::place(Level* level, Random& random, const BlockPos& origin)
 {
     Random* placementRandom = level->getChunkAt(origin)->getRandom(0x3ad8025fLL);

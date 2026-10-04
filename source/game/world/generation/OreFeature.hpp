@@ -17,7 +17,6 @@ public:
     {
     public:
         virtual bool apply(const Biome::BlockPair& pair) const;
-        virtual ~NaturalStonePredicate();
     };
 
     OreFeature(const BlockState* state, int numberOfBlocks);

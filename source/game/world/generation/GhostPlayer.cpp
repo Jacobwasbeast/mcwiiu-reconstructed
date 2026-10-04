@@ -1,3 +1,5 @@
+#include <cfloat>
+
 #include "game/world/generation/GhostPlayer.hpp"
 #include "game/core/EntityType.hpp"
 
@@ -7,9 +9,15 @@ GhostPlayer::GhostPlayer(Level* level, const std::wstring& name)
     : RemotePlayer(level, name),
       mLastCheckpointId(0),
       mLapsCompleted(0),
-      mProgress(0.0),
-      mGameMode(new GhostGameMode(this))
+      mProgress(0.0)
 {
+    mX = DBL_MAX;
+    mY = DBL_MAX;
+    mZ = DBL_MAX;
+    mXOld = DBL_MAX;
+    mYOld = DBL_MAX;
+    mZOld = DBL_MAX;
+    mGameMode = new GhostGameMode(this);
 }
 
 GhostPlayer::~GhostPlayer()

@@ -47,8 +47,7 @@ bool SeaPickleFeature::place(Level* level, Random& random, const BlockPos& origi
                     && Blocks::sea_pickle->canSurvive(level, target, Blocks::sea_pickle->defaultBlockState()))
                 {
                     const BlockState* state = Blocks::sea_pickle->defaultBlockState();
-                    TypedBoxed<int> value(pickles);
-                    state = state->setBoxedValue(SeaPickle::COUNT, &value);
+                    state = state->setValue(SeaPickle::COUNT, pickles);
                     setBlock(level, target, state, Block::UPDATE_NONE);
                 }
             }

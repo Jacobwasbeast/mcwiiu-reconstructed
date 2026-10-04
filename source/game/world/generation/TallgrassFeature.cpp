@@ -13,8 +13,7 @@
 TallgrassFeature::TallgrassFeature(TallGrassBlock::Variant* variant)
     : Feature(false)
 {
-    TypedBoxed<TallGrassBlock::Variant*> value(variant);
-    mState = Blocks::tallgrass->defaultBlockState()->setBoxedValue(TallGrassBlock::VARIANT, &value);
+    mState = Blocks::tallgrass->defaultBlockState()->setValue(TallGrassBlock::VARIANT, variant);
 }
 
 TallgrassFeature::~TallgrassFeature()

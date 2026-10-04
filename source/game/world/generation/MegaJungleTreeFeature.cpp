@@ -36,9 +36,7 @@ void MegaJungleTreeFeature::placeVine(Level* level, Random& random, const BlockP
 {
     if (random.nextInt(3) > 0 && level->isEmptyBlock(pos))
     {
-        TypedBoxed<bool> value(true);
-        const BlockState* state = Blocks::vine->defaultBlockState()->setBoxedValue(property, &value);
-        setBlock(level, pos, state, Block::UPDATE_NONE);
+        setBlock(level, pos, Blocks::vine->defaultBlockState()->setValue<bool>(property, true), Block::UPDATE_NONE);
     }
 }
 

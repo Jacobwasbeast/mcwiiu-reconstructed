@@ -1,6 +1,7 @@
 #include "game/world/generation/TimeSpentOnLayerMedal.hpp"
 
-#include "game/core/CommonMasterGameMode.hpp"
+#include "game/core/MasterGameMode.hpp"
+#include "game/server/MinecraftServer.hpp"
 #include "game/world/generation/PlayerStats.hpp"
 
 TimeSpentOnLayerMedal::TimeSpentOnLayerMedal(ELayerMedal layer, int name, float target,
@@ -10,14 +11,14 @@ TimeSpentOnLayerMedal::TimeSpentOnLayerMedal(ELayerMedal layer, int name, float 
 {
 }
 
-double TimeSpentOnLayerMedal::GetScore(PlayerStats* playerStats) const
+float TimeSpentOnLayerMedal::GetScore(PlayerStats* playerStats) const
 {
     unsigned int total = 0;
     unsigned int layer = 0;
 
     if (mLayer == LAYER_MEDAL_BOTTOM)
     {
-        layer = static_cast<unsigned int>(CommonMasterGameMode::GetMasterOrClient()->GetLayerCount() - 1);
+        layer = static_cast<unsigned int>(gMinecraftServer->mMasterGameMode->GetLayerCount() - 1);
     }
 
     unsigned int round = 0;
@@ -27,7 +28,7 @@ double TimeSpentOnLayerMedal::GetScore(PlayerStats* playerStats) const
         do
         {
             PlayerStats::RoundStats* roundStats = playerStats->getRoundStats(round);
-            if (roundStats->mDeathLayer != PlayerStats::RoundStats::LAYERS_UNUSED && !roundStats->mTimeOnLayer.empty()
+            if (roundStats->mDeathLayer != PlayerStats::RoundStats::LAYERS_UNUSED
                 && layer < roundStats->mTimeOnLayer.size())
             {
                 total += roundStats->mTimeOnLayer.at(layer);

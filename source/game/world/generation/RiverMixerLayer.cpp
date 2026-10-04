@@ -2,12 +2,15 @@
 
 #include "game/core/IntCache.hpp"
 #include "game/core/PIXNamedEvents.hpp"
+#include "game/world/biome/Biome.hpp"
 
 RiverMixerLayer::RiverMixerLayer(long long seed,
                                  boost::shared_ptr<Layer> biomeLayer,
                                  boost::shared_ptr<Layer> riverLayer)
-    : Layer(seed), biomeLayer(biomeLayer), riverLayer(riverLayer)
+    : Layer(seed)
 {
+    this->biomeLayer = biomeLayer;
+    this->riverLayer = riverLayer;
 }
 
 void RiverMixerLayer::init(long long seed)
@@ -31,13 +34,13 @@ arrayWithLength<int> RiverMixerLayer::getArea(int x, int z, int width, int heigh
         int biome = biomes.data[index];
         int river = rivers.data[index];
 
-        if (!Layer::isOcean(biome) && river == 7)
+        if (!Layer::isOcean(biome) && river == Biome::RIVER->id)
         {
-            if (biome == 12)
+            if (biome == Biome::ICE_PLAINS->id)
             {
-                result.data[index] = 11;
+                result.data[index] = Biome::FROZEN_RIVER->id;
             }
-            else if (biome != 14 && biome != 15)
+            else if (biome != Biome::MUSHROOM_ISLAND->id && biome != Biome::MUSHROOM_ISLAND_SHORE->id)
             {
                 result.data[index] = river & 255;
             }

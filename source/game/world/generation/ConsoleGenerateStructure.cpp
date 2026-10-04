@@ -50,13 +50,13 @@ void ConsoleGenerateStructure::writeAttributes(GameRuleSaveInterface* saveInterf
     saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_x, _toString(mX));
     saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_y, _toString(mY));
     saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_z, _toString(mZ));
-    saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_orientation, _toString(getOrientation()));
+    saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_orientation, _toString<const Direction*>(getOrientation()));
     saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_dimension, _toString(mDimension));
 }
 
 void ConsoleGenerateStructure::getChildren(std::vector<GameRuleDefinition*>* children)
 {
-    for (std::vector<GameRuleDefinition*>::iterator it = mActions.begin();
+    for (std::vector<ConsoleGenerateStructureAction*>::iterator it = mActions.begin();
          it != mActions.end(); ++it)
     {
         children->push_back(*it);
@@ -65,27 +65,30 @@ void ConsoleGenerateStructure::getChildren(std::vector<GameRuleDefinition*>* chi
 
 GameRuleDefinition* ConsoleGenerateStructure::addChild(ConsoleGameRules::EGameRuleType type)
 {
-    GameRuleDefinition* action = NULL;
-    int value = static_cast<int>(type);
-    if (value == 4)
+    ConsoleGenerateStructureAction* action = NULL;
+    if (type == ConsoleGameRules::eGameRuleType_GenerateBox)
     {
-        action = new XboxStructureActionGenerateBox();
-        mActions.push_back(action);
+        ConsoleGenerateStructureAction* generateBox = new XboxStructureActionGenerateBox();
+        action = generateBox;
+        mActions.push_back(generateBox);
     }
-    else if (value == 5)
+    else if (type == ConsoleGameRules::eGameRuleType_PlaceBlock)
     {
-        action = new XboxStructureActionPlaceBlock();
-        mActions.push_back(action);
+        ConsoleGenerateStructureAction* placeBlock = new XboxStructureActionPlaceBlock();
+        action = placeBlock;
+        mActions.push_back(placeBlock);
     }
-    else if (value == 6)
+    else if (type == ConsoleGameRules::eGameRuleType_PlaceContainer)
     {
-        action = new PlaceContainerRuleDefinition();
-        mActions.push_back(action);
+        ConsoleGenerateStructureAction* container = new PlaceContainerRuleDefinition();
+        action = container;
+        mActions.push_back(container);
     }
-    else if (value == 7)
+    else if (type == ConsoleGameRules::eGameRuleType_PlaceSpawner)
     {
-        action = new XboxStructureActionPlaceSpawner();
-        mActions.push_back(action);
+        ConsoleGenerateStructureAction* spawner = new XboxStructureActionPlaceSpawner();
+        action = spawner;
+        mActions.push_back(spawner);
     }
     return action;
 }
@@ -115,29 +118,42 @@ void ConsoleGenerateStructure::addAttribute(const std::wstring& name, const std:
     if (name == L"dim")
     {
         int dimension = _fromString<int>(value);
-        mDimension = dimension >= -1 && dimension < 2 ? dimension : 0;
-        return;
+        if (dimension + 1U < 3)
+            mDimension = dimension;
+        else
+            mDimension = 0;
     }
-    GameRuleDefinition::addAttribute(name, value);
+    else
+    {
+        GameRuleDefinition::addAttribute(name, value);
+    }
 }
 
 bool ConsoleGenerateStructure::postProcess(Level* level, Random& random, BoundingBox* box)
 {
     if (level->mDimension->getType() == DimensionType::getById(mDimension))
     {
-        for (std::vector<GameRuleDefinition*>::iterator it = mActions.begin();
+        for (std::vector<ConsoleGenerateStructureAction*>::iterator it = mActions.begin();
              it != mActions.end(); ++it)
         {
-            GameRuleDefinition* action = *it;
-            int actionType = static_cast<int>(action->getActionType());
-            if (actionType == 4)
+            ConsoleGenerateStructureAction* action = *it;
+            switch (action->getActionType())
+            {
+            case ConsoleGameRules::eGameRuleType_GenerateBox:
                 static_cast<XboxStructureActionGenerateBox*>(action)->generateBoxInLevel(this, level, box);
-            else if (actionType == 5)
+                break;
+            case ConsoleGameRules::eGameRuleType_PlaceBlock:
                 static_cast<XboxStructureActionPlaceBlock*>(action)->placeBlockInLevel(this, level, box);
-            else if (actionType == 6)
+                break;
+            case ConsoleGameRules::eGameRuleType_PlaceContainer:
                 static_cast<PlaceContainerRuleDefinition*>(action)->placeContainerInChunk(this, level, box);
-            else if (actionType == 7)
+                break;
+            case ConsoleGameRules::eGameRuleType_PlaceSpawner:
                 static_cast<XboxStructureActionPlaceSpawner*>(action)->placeSpawnerInLevel(this, level, box);
+                break;
+            default:
+                break;
+            }
         }
     }
 
@@ -146,33 +162,18 @@ bool ConsoleGenerateStructure::postProcess(Level* level, Random& random, Boundin
 
 BoundingBox* ConsoleGenerateStructure::getBoundingBox()
 {
-    if (StructurePiece::getBoundingBox() == NULL)
+    if (mBoundingBox == NULL)
     {
         int maxX = 1;
         int maxY = 1;
         int maxZ = 1;
-        for (std::vector<GameRuleDefinition*>::iterator it = mActions.begin();
+        for (std::vector<ConsoleGenerateStructureAction*>::iterator it = mActions.begin();
              it != mActions.end(); ++it)
         {
-            GameRuleDefinition* action = *it;
-            int actionType = static_cast<int>(action->getActionType());
-            int endX = 0;
-            int endY = 0;
-            int endZ = 0;
-            if (actionType == 4)
-            {
-                XboxStructureActionGenerateBox* generateBox = static_cast<XboxStructureActionGenerateBox*>(action);
-                endX = static_cast<int>(generateBox->getEndX());
-                endY = static_cast<int>(generateBox->getEndY());
-                endZ = static_cast<int>(generateBox->getEndZ());
-            }
-            else if (actionType == 5 || actionType == 6 || actionType == 7)
-            {
-                XboxStructureActionPlaceBlock* placeBlock = static_cast<XboxStructureActionPlaceBlock*>(action);
-                endX = static_cast<int>(placeBlock->getEndX());
-                endY = static_cast<int>(placeBlock->getEndY());
-                endZ = static_cast<int>(placeBlock->getEndZ());
-            }
+            ConsoleGenerateStructureAction* action = *it;
+            int endX = static_cast<int>(action->getEndX());
+            int endY = static_cast<int>(action->getEndY());
+            int endZ = static_cast<int>(action->getEndZ());
             if (maxX < endX) maxX = endX;
             if (maxY < endY) maxY = endY;
             if (maxZ < endZ) maxZ = endZ;

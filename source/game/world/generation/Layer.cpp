@@ -31,6 +31,7 @@
 
 Layer::Layer(long long seed)
 {
+    parent = boost::shared_ptr<Layer>();
     worldGenSeed = 0;
 
     baseSeed = seed;

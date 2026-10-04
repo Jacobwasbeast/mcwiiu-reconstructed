@@ -95,6 +95,8 @@
 #include "game/item/Items.hpp"
 #include "game/item/Item.hpp"
 #include "game/item/ArmorItem.hpp"
+#include "game/world/block/BlockId.hpp"
+#include "game/item/ElytraItem.hpp"
 #include "game/item/ShieldItem.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/DoorBlock.hpp"
@@ -124,8 +126,9 @@ Player::ChatVisiblity::ChatVisiblity(int id) : mId(id)
 {
 }
 
-Player::PreventsMeFromSleeping::PreventsMeFromSleeping(boost::shared_ptr<Player> player) : mPlayer(player)
+Player::PreventsMeFromSleeping::PreventsMeFromSleeping(boost::shared_ptr<Player> player)
 {
+    mPlayer = player;
 }
 
 Player::PreventsMeFromSleeping::~PreventsMeFromSleeping()
@@ -134,10 +137,11 @@ Player::PreventsMeFromSleeping::~PreventsMeFromSleeping()
 
 bool Player::PreventsMeFromSleeping::apply(boost::shared_ptr<Entity> entity) const
 {
-    return entity.get() != mPlayer.get();
+    boost::shared_ptr<Monster> monster = boost::dynamic_pointer_cast<Monster>(entity);
+    return monster != NULL && monster->isPreventingPlayerRest(mPlayer);
 }
 
-Player::Player(Level* level, const std::wstring& name) : LivingEntity(level), mAbilities(), mField0x738(NULL), mXuid(0), mOnlineXuid(0), mSuid(StatsUID::EMPTY_SUID())
+Player::Player(Level* level, const std::wstring& name) : LivingEntity(level), mAbilities()
 {
     _init();
     mName = name;
@@ -159,6 +163,9 @@ Player::Player(Level* level, const std::wstring& name) : LivingEntity(level), mA
     SetPowerupTicks(PowerupItems::eGlide_Timed_Powerup_ID_SlowFall, 0);
     SetPowerupTicks(PowerupItems::eGlide_Timed_Powerup_ID_InvertControls, 0);
     SetPowerupTicks(PowerupItems::eGlide_Timed_Powerup_ID_Invulnerable, 0);
+    mXuid = PlayerUID(0);
+    mOnlineXuid = PlayerUID(0);
+    mSuid = StatsUID::EMPTY_SUID();
     mShowOnMaps = gApp.GetGameHostOption(eGameHostOption_Gamertags) != 0;
     mIsGuest = false;
     setUUID(name);
@@ -264,7 +271,7 @@ bool Player::shouldRenderAtSqrDistance(double distance)
 
 bool Player::checkBedExists()
 {
-    return mBedPosition != NULL && mLevel->getBlockState(*mBedPosition)->getBlock() == Blocks::bed;
+    return mLevel->getBlockState(*mBedPosition)->getBlock() == Blocks::bed;
 }
 
 void Player::moveCloak()
@@ -545,7 +552,7 @@ uint64_t Player::GetType()
     return EntityType::PLAYER;
 }
 
-uint32_t Player::GetThirdPersonView(bool)
+int Player::GetThirdPersonView(bool)
 {
     return 0;
 }
@@ -781,8 +788,8 @@ int Player::getPortalWaitTime()
 
 int Player::getXpNeededForNextLevel()
 {
-    if (mExperienceLevel > 29) return mExperienceLevel * 9 - 158;
-    if (mExperienceLevel > 14) return mExperienceLevel * 5 - 38;
+    if (mExperienceLevel >= 30) return mExperienceLevel * 9 - 158;
+    if (mExperienceLevel >= 15) return mExperienceLevel * 5 - 38;
     return mExperienceLevel * 2 + 7;
 }
 
@@ -814,9 +821,9 @@ bool Player::bedInRange(const BlockPos& position, const Direction* direction)
     return std::fabs(mX - opposite.x) <= 3.0 && std::fabs(mY - opposite.y) <= 2.0 && std::fabs(mZ - opposite.z) <= 3.0;
 }
 
-uint32_t Player::isSleepingLongEnough()
+bool Player::isSleepingLongEnough()
 {
-    return mSleeping != 0 && mSleepCounter > 99;
+    return mSleeping != 0 && mSleepCounter >= 100;
 }
 
 uint32_t Player::getSleepTimer()
@@ -840,17 +847,17 @@ BlockPos* Player::getRespawnPosition()
 
 uint8_t Player::isRespawnForced()
 {
-    return mRespawnForced != 0;
+    return mRespawnForced;
 }
 
-uint32_t Player::isModelPartShown(const PlayerModelPart*)
+bool Player::isModelPartShown(const PlayerModelPart*)
 {
-    return 1;
+    return true;
 }
 
 uint8_t Player::isReducedDebugInfo()
 {
-    return mReducedDebugInfo != 0;
+    return mReducedDebugInfo;
 }
 
 bool Player::isAlwaysExperienceDropper()
@@ -885,11 +892,11 @@ bool Player::mayBuild()
 
 uint8_t Player::getTexture()
 {
-    if (mField0x7d8 > 1 && mField0x7d8 < 0x13) {
-        static const uint8_t textures[20] = {0, 0, 0x26, 0x27, 0x28, 0x29, 0x2a, 0x2b, 0x2c, 0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77, 0xaa, 0xa9, 0};
-        return textures[mField0x7d8];
+    static const uint8_t textures[20] = {0, 0, 0x26, 0x27, 0x28, 0x29, 0x2a, 0x2b, 0x2c, 0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77, 0xaa, 0xa9, 0};
+    if (mField0x7d8 < 2 || mField0x7d8 > 0x12) {
+        return 0x25;
     }
-    return 0x25;
+    return textures[mField0x7d8];
 }
 
 void Player::UpdateSize()
@@ -1066,7 +1073,7 @@ void Player::hurtArmor(float damage)
     mInventory->hurtArmor(damage);
 }
 
-double Player::getArmorCoverPercentage()
+float Player::getArmorCoverPercentage()
 {
     int worn = 0;
     for (unsigned int slot = 0; slot < mInventory->m_armor.size(); ++slot) {
@@ -1082,29 +1089,24 @@ uint8_t Player::canUseCommandBlocks()
 
 not_null_ptr<ItemInstance> Player::getItemSlot(const EquipmentSlot* slot)
 {
-    if (!mInventory || slot == NULL) return ItemInstance::EMPTY;
-    switch (slot->getEIndex()) {
-    case EquipmentSlot::eIndex_MainHand:
-        return mInventory->getSelected();
-    case EquipmentSlot::eIndex_OffHand:
-        return mInventory->getItem(40);
-    case EquipmentSlot::eIndex_Feet:
-    case EquipmentSlot::eIndex_Legs:
-    case EquipmentSlot::eIndex_Chest:
-    case EquipmentSlot::eIndex_Head:
-        return mInventory->getArmor(slot->getIndex());
-    }
+    if (slot == EquipmentSlot::MAINHAND) return mInventory->getSelected();
+    if (slot == EquipmentSlot::OFFHAND) return mInventory->m_offhand[0];
+    if (slot->getType() == EquipmentSlot::ARMOR) return mInventory->m_armor[slot->getIndex()];
     return ItemInstance::EMPTY;
 }
 
 void Player::setItemSlot(const EquipmentSlot* slot, not_null_ptr<ItemInstance> item)
 {
-    if (!mInventory || slot == NULL) return;
-    int index = slot->getEIndex() == EquipmentSlot::eIndex_OffHand ? 40 : slot->getIndex();
-    if (slot->getType() == EquipmentSlot::ARMOR) index += 36;
-    not_null_ptr<ItemInstance> previous = mInventory->getItem(index);
-    if (!ItemInstance::matches(previous, item, false)) playEquipSound(item);
-    mInventory->setItem(index, item);
+    if (slot == EquipmentSlot::MAINHAND) {
+        playEquipSound(item);
+        mInventory->m_items[mInventory->m_selected] = item;
+    } else if (slot == EquipmentSlot::OFFHAND) {
+        playEquipSound(item);
+        mInventory->m_offhand[0] = item;
+    } else if (slot->getType() == EquipmentSlot::ARMOR) {
+        playEquipSound(item);
+        mInventory->m_armor[slot->getIndex()] = item;
+    }
 }
 
 uint32_t Player::addItem(const not_null_ptr<ItemInstance>& item)
@@ -1123,9 +1125,9 @@ float Player::getSpeed()
     return static_cast<float>(getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->getValue());
 }
 
-double Player::getLuck()
+float Player::getLuck()
 {
-    return static_cast<float>(getAttribute(SharedMonsterAttributes::LUCK)->getValue());
+    return getAttribute(SharedMonsterAttributes::LUCK)->getValue();
 }
 
 std::wstring Player::getName()
@@ -1145,12 +1147,12 @@ void Player::setName(const std::wstring& name)
 
 uint32_t Player::hash_fnct(boost::shared_ptr<Player> player)
 {
-    return player ? static_cast<uint32_t>(boost::hash<std::wstring>()(player->mName)) : 0u;
+    return static_cast<uint32_t>(boost::hash<std::wstring>()(player->mName));
 }
 
 bool Player::eq_test(boost::shared_ptr<Player> first, boost::shared_ptr<Player> second)
 {
-    return first && second && first->mName == second->mName;
+    return first->mName == second->mName;
 }
 
 bool Player::isImmobile()
@@ -1190,7 +1192,7 @@ void Player::AwardTimerAchievement(TimerAchievements achievement)
 
 void Player::onChangedBlock(const BlockPos& position)
 {
-    if (!isSwimming()) LivingEntity::onChangedBlock(position);
+    if (!isSpectator()) LivingEntity::onChangedBlock(position);
 }
 
 void Player::serverAiStep()
@@ -1205,12 +1207,13 @@ bool Player::IsCreativeFlying()
     return mAbilities.mFlying;
 }
 
-uint32_t Player::IsSpectatingOtherPlayer()
+uint8_t Player::IsSpectatingOtherPlayer()
 {
+    uint32_t spectating = 0;
     if ((mCamera || mPendingCameraId != -1) && isAlive()) {
-        return 1;
+        spectating = 1;
     }
-    return 0;
+    return spectating;
 }
 
 void Player::SetCameraController(CameraController* controller, bool owned)
@@ -1239,21 +1242,26 @@ boost::shared_ptr<Entity> Player::GetCamera()
     return mCamera ? mCamera : shared_from_this();
 }
 
-uint32_t Player::SpectateAsOtherEntity()
+uint8_t Player::SpectateAsOtherEntity()
 {
-    if (!isLocalPlayer()) return 0;
-    int mode = Minecraft::GetInstance()->GetSpectateMode();
-    return mode == MiniGameDef::eSpectateMode_Bat || mode == MiniGameDef::eSpectateMode_Parrot || mode == MiniGameDef::eSpectateMode_Vex;
+    uint32_t spectating = 0;
+    if (isAlive()) {
+        if (Minecraft::GetInstance()->GetSpectateMode() == MiniGameDef::eSpectateMode_Bat
+            || Minecraft::GetInstance()->GetSpectateMode() == MiniGameDef::eSpectateMode_Parrot
+            || Minecraft::GetInstance()->GetSpectateMode() == MiniGameDef::eSpectateMode_Vex)
+            spectating = 1;
+    }
+    return spectating;
 }
 
-uint32_t Player::SpectateAsFloatingHead()
+bool Player::SpectateAsFloatingHead()
 {
-    return isLocalPlayer() && Minecraft::GetInstance()->GetSpectateMode() == MiniGameDef::eSpectateMode_FloatingHead;
+    return isAlive() && Minecraft::GetInstance()->GetSpectateMode() == MiniGameDef::eSpectateMode_FloatingHead;
 }
 
-uint32_t Player::SpectateAsInvisible()
+bool Player::SpectateAsInvisible()
 {
-    return isLocalPlayer() && Minecraft::GetInstance()->GetSpectateMode() == MiniGameDef::eSpectateMode_Invisible;
+    return isAlive() && Minecraft::GetInstance()->GetSpectateMode() == MiniGameDef::eSpectateMode_Invisible;
 }
 
 uint64_t Player::GetSpectateEntity()
@@ -1286,7 +1294,7 @@ float Player::getDestroySpeed(const BlockState* state)
 {
     float speed = mInventory->getDestroySpeed(state);
     if (speed > 1.0f) {
-        boost::shared_ptr<LivingEntity> self = boost::static_pointer_cast<LivingEntity>(shared_from_this());
+        boost::shared_ptr<LivingEntity> self = boost::dynamic_pointer_cast<LivingEntity>(shared_from_this());
         int efficiencyLevel = static_cast<int>(EnchantmentHelper::getBlockEfficiency(self));
         not_null_ptr<ItemInstance> item = getMainHandItem();
         if (efficiencyLevel > 0 && !item->isEmpty()) {
@@ -1340,7 +1348,8 @@ void Player::jumpFromGround()
 
 void Player::awardStat(Stat*, arrayWithLength<unsigned char> parameters)
 {
-    delete[] parameters.data;
+    if (parameters.data != NULL)
+        delete[] parameters.data;
 }
 
 void Player::calculateFlapping()
@@ -1362,12 +1371,12 @@ uint32_t Player::CheckPowerup(PowerupItems::eGlide_Timed_Powerup_ID powerup)
     return 1;
 }
 
-uint32_t Player::canEat(bool alwaysEdible)
+uint8_t Player::canEat(bool alwaysEdible)
 {
-    if (alwaysEdible) return 1;
-    if (!mFoodData.needsFood()) return 0;
-    if (mAbilities.mInvulnerable) return 0;
-    return hasInvulnerablePrivilege() ? 0 : 1;
+    uint32_t result = 0;
+    if (alwaysEdible || (mFoodData.needsFood() && !mAbilities.mInvulnerable && !hasInvulnerablePrivilege()))
+        result = 1;
+    return result;
 }
 
 void Player::increaseXp(int32_t amount)
@@ -1432,29 +1441,29 @@ Team* Player::getTeam()
     return GetScoreboard()->getPlayersTeam(uid);
 }
 
-double Player::getSleepRotation()
+float Player::getSleepRotation()
 {
-    if (mBedPosition == NULL) return 0.0;
+    if (mBedPosition == NULL) return 0.0f;
     const BlockState* state = mLevel->getBlockState(*mBedPosition);
-    if (state->getBlock() != Blocks::bed) return 0.0;
+    if (state->getBlock() != Blocks::bed) return 0.0f;
     int direction = state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY)->get3DDataValue();
-    if (direction == 2) return 270.0;
-    if (direction == 3) return 90.0;
-    if (direction == 5) return 180.0;
-    return 0.0;
+    if (direction == 2) return 270.0f;
+    if (direction == 3) return 90.0f;
+    if (direction == 5) return 180.0f;
+    return 0.0f;
 }
 
 const SoundEvent* Player::getFallDamageSound(int32_t damage)
 {
     if (Minecraft::InMiniGame(eMiniGameId_Glide, true)) {
-        return damage > 1 ? SoundEvents::MG03_FALL_BIG : SoundEvents::MG03_FALL_SMALL;
+        return damage >= 2 ? SoundEvents::MG03_FALL_BIG : SoundEvents::MG03_FALL_SMALL;
     }
     return damage > 4 ? SoundEvents::PLAYER_BIG_FALL : SoundEvents::PLAYER_SMALL_FALL;
 }
 
 bool Player::canUnlock(LockCode* lock)
 {
-    if (lock == NULL || lock->isEmpty()) return true;
+    if (lock->isEmpty()) return true;
     not_null_ptr<ItemInstance> item = getMainHandItem();
     if (item->isEmpty() || item->hasCustomHoverName() == false) return false;
     return item->getHoverName() == lock->getKey();
@@ -1462,23 +1471,29 @@ bool Player::canUnlock(LockCode* lock)
 
 bool Player::isInvisibleTo(boost::shared_ptr<Player> player)
 {
-    if (!isInvisible() || !player) return false;
-    if (player->isLocalPlayer() && !isLocalPlayer()) return false;
+    if (!isInvisible()) return false;
+    Minecraft* minecraft = Minecraft::GetInstance();
+    if (player->isSpectator() && !isSpectator() && !minecraft->GetClientMasterGameMode()->IsRoundEnding()) return false;
     Team* team = getTeam();
-    if (team != NULL && team == player->getTeam() && team->canSeeFriendlyInvisibles()) return false;
+    if (team != NULL && player && player->getTeam() == team && team->canSeeFriendlyInvisibles()) return false;
     return true;
 }
 
 Vec3* Player::getAttachPos(Entity::EEntityLocation location, float partialTicks)
 {
     Vec3* position = Entity::getAttachPos(location, partialTicks);
-    if (location == Entity::ENTITY_LOCATION_CHEST_LEFT && isFallFlying()) position->y -= 1.100000023841858;
+    if (location == Entity::ENTITY_LOCATION_CHEST_LEFT && isSwimming()) position->y -= 1.100000023841858;
     return position;
 }
 
-uint32_t Player::CanRecordStats(Stat* stat, arrayWithLength<unsigned char> parameters)
+uint8_t Player::CanRecordStats(Stat* stat, arrayWithLength<unsigned char> parameters)
 {
-    return stat != NULL && gApp.CanRecordStatsAndAchievements(stat, parameters) != 0;
+    uint32_t canRecord = 0;
+    GameMode* gameMode = GetGameMode();
+    if (gameMode == NULL || gameMode->CanRecordStatsAndAchievements()) {
+        if (gApp.CanRecordStatsAndAchievements(stat, parameters) != 0 && stat != NULL) canRecord = 1;
+    }
+    return canRecord;
 }
 
 void Player::setAbsorptionAmount(float amount)
@@ -1536,10 +1551,9 @@ void Player::sendMessage(ClientboundChatPacket::EChatPacketMessage, int32_t*, ui
 {
 }
 
-uint32_t Player::isHurt()
+bool Player::isHurt()
 {
-    const float health = getHealth();
-    return health > 0.0f && health < getMaxHealth();
+    return getHealth() > 0.0f && getHealth() < getMaxHealth();
 }
 
 int32_t Player::getExperienceReward(boost::shared_ptr<Player>)
@@ -1611,7 +1625,7 @@ NonNullList<not_null_ptr<ItemInstance> > Player::getArmorSlots()
     return mInventory->m_armor;
 }
 
-double Player::getEyeHeight()
+float Player::getEyeHeight()
 {
     float height = 1.62f;
     if (isSleeping())
@@ -1652,10 +1666,17 @@ double Player::getEyeHeight()
 
 bool Player::setSlot(int slot, const not_null_ptr<ItemInstance>& item)
 {
-    if (slot >= 0 && slot < static_cast<int>(mInventory->getContainerSize())) {
+    if (slot >= 0 && slot < static_cast<int>(mInventory->m_items.size())) {
         mInventory->setItem(slot, item);
         return 1;
     }
+    const EquipmentSlot* armorSlot;
+    if (slot == EquipmentSlot::HEAD->getIndex() + 100) armorSlot = EquipmentSlot::HEAD;
+    else if (slot == EquipmentSlot::CHEST->getIndex() + 100) armorSlot = EquipmentSlot::CHEST;
+    else if (slot == EquipmentSlot::LEGS->getIndex() + 100) armorSlot = EquipmentSlot::LEGS;
+    else if (slot == EquipmentSlot::FEET->getIndex() + 100) armorSlot = EquipmentSlot::FEET;
+    else armorSlot = NULL;
+
     if (slot == 98) {
         setItemSlot(EquipmentSlot::MAINHAND, item);
         return 1;
@@ -1664,23 +1685,24 @@ bool Player::setSlot(int slot, const not_null_ptr<ItemInstance>& item)
         setItemSlot(EquipmentSlot::OFFHAND, item);
         return 1;
     }
-    for (int i = 2; i < 6; ++i) {
-        if (slot == EquipmentSlot::SLOTS[i]->getIndex() + 100) {
-            if (!item->isEmpty() && item->getItem() != NULL) {
-                const EquipmentSlot* naturalSlot = Mob::getEquipmentSlotForItem(item);
-                if (naturalSlot != EquipmentSlot::SLOTS[i]) return 0;
-            }
-            setItemSlot(EquipmentSlot::SLOTS[i], item);
-            OnEquipArmor(item);
-            return 1;
-        }
-    }
-    if (slot >= 200 && mEnderChestInventory
-        && slot - 200 < static_cast<int>(mEnderChestInventory->getContainerSize())) {
-        mEnderChestInventory->setItem(slot - 200, item);
+    if (armorSlot == NULL) {
+        slot -= 200;
+        if (slot < 0) return 0;
+        if (slot >= static_cast<int>(mEnderChestInventory->getContainerSize())) return 0;
+        mEnderChestInventory->setItem(slot, item);
         return 1;
     }
-    return 0;
+    if (!item->isEmpty() && item->getItem() != NULL) {
+        const EquipmentSlot* naturalSlot;
+        if (dynamic_cast<ArmorItem*>(item->getItem()) != NULL || dynamic_cast<ElytraItem*>(item->getItem()) != NULL)
+            naturalSlot = Mob::getEquipmentSlotForItem(item);
+        else
+            naturalSlot = EquipmentSlot::HEAD;
+        if (armorSlot != naturalSlot) return 0;
+    }
+    mInventory->setItem(armorSlot->getIndex() + mInventory->m_items.size(), item);
+    OnEquipArmor(item);
+    return 1;
 }
 
 uint32_t Player::getModelName()
@@ -1873,31 +1895,59 @@ void Player::tickCamera()
 
 void Player::PlayerRingSoundEffect(int ring)
 {
-    if (!mLevel->mIsClientSide)
-        return;
-
-    bool localPlayer = isLocalPlayer();
-    SoundEngine* soundEngine = Minecraft::GetInstance()->mSoundEngine;
-    const SoundEvent* sound;
-    if (ring > 6)
+    if (mLevel->mIsClientSide)
     {
-        sound = SoundEvents::MG03_DIAMOND_POINT;
+        bool localPlayer = isLocalPlayer();
+        SoundEngine* soundEngine = Minecraft::GetInstance()->mSoundEngine;
+        if (ring < 7)
+        {
+            if (ring < 5)
+            {
+                if (!mRingSoundAlternate)
+                {
+                    if (!localPlayer)
+                        soundEngine->play(SoundEvents::MG03_EMERALD_POINT_TICK, static_cast<float>(mX), static_cast<float>(mY), static_cast<float>(mZ), 1.0f, 1.0f, NULL);
+                    else
+                        soundEngine->playUI(SoundEvents::MG03_EMERALD_POINT_TICK, 1.0f, 1.0f);
+                    mRingSoundAlternate ^= 1;
+                }
+                else
+                {
+                    if (!localPlayer)
+                        soundEngine->play(SoundEvents::MG03_EMERALD_POINT_TOK, static_cast<float>(mX), static_cast<float>(mY), static_cast<float>(mZ), 1.0f, 1.0f, NULL);
+                    else
+                        soundEngine->playUI(SoundEvents::MG03_EMERALD_POINT_TOK, 1.0f, 1.0f);
+                    mRingSoundAlternate ^= 1;
+                }
+            }
+            else
+            {
+                if (!mRingSoundAlternate)
+                {
+                    if (!localPlayer)
+                        soundEngine->play(SoundEvents::MG03_GOLD_POINT_TICK, static_cast<float>(mX), static_cast<float>(mY), static_cast<float>(mZ), 1.0f, 1.0f, NULL);
+                    else
+                        soundEngine->playUI(SoundEvents::MG03_GOLD_POINT_TICK, 1.0f, 1.0f);
+                    mRingSoundAlternate ^= 1;
+                }
+                else
+                {
+                    if (!localPlayer)
+                        soundEngine->play(SoundEvents::MG03_GOLD_POINT_TOK, static_cast<float>(mX), static_cast<float>(mY), static_cast<float>(mZ), 1.0f, 1.0f, NULL);
+                    else
+                        soundEngine->playUI(SoundEvents::MG03_GOLD_POINT_TOK, 1.0f, 1.0f);
+                    mRingSoundAlternate ^= 1;
+                }
+            }
+        }
+        else
+        {
+            if (!localPlayer)
+                soundEngine->play(SoundEvents::MG03_DIAMOND_POINT, static_cast<float>(mX), static_cast<float>(mY), static_cast<float>(mZ), 1.0f, 1.0f, NULL);
+            else
+                soundEngine->playUI(SoundEvents::MG03_DIAMOND_POINT, 1.0f, 1.0f);
+        }
     }
-    else if (ring < 5)
-    {
-        sound = mRingSoundAlternate ? SoundEvents::MG03_EMERALD_POINT_TOK : SoundEvents::MG03_EMERALD_POINT_TICK;
-        mRingSoundAlternate ^= 1;
-    }
-    else
-    {
-        sound = mRingSoundAlternate ? SoundEvents::MG03_GOLD_POINT_TOK : SoundEvents::MG03_GOLD_POINT_TICK;
-        mRingSoundAlternate ^= 1;
-    }
-
-    if (localPlayer)
-        soundEngine->playUI(sound, 1.0f, 1.0f);
-    else
-        soundEngine->play(sound, static_cast<float>(mX), static_cast<float>(mY), static_cast<float>(mZ), 1.0f, 1.0f, NULL);
 }
 
 void Player::prepareCustomTextures()
@@ -1947,12 +1997,10 @@ void Player::_init()
     mTotalExperience = 0;
     mExperienceProgress = 0.0f;
     mFishing.reset();
-    mEnchantmentSeed = mRandom->nextInt();
     mDefaultFlySpeed = 0.02f;
     mField0x738 = NULL;
     mLastLevelUpTime = 0;
     mName = L"";
-    mDisplayName = L"";
     mReducedDebugInfo = 0;
     mEnderChestInventory.reset(new PlayerEnderChestContainer());
     mField0x7c8 = NonNullList<not_null_ptr<ItemInstance> >::withSize(5, ItemInstance::EMPTY);
@@ -1973,7 +2021,6 @@ void Player::_init()
     mPositionLocked = false;
     mField0x815 = false;
     mField0x818 = 1.0;
-    mLastLayerY = mY;
     mSpectatorSkullEquipped = 0;
     mField0x828 = 0;
     mRingSoundAlternate = 0;
@@ -2321,7 +2368,6 @@ void Player::touch(boost::shared_ptr<Entity> entity)
 
 void Player::destroyVanishingCursedItems()
 {
-    if (!mInventory) return;
     for (unsigned int i = 0; i < mInventory->getContainerSize(); ++i) {
         not_null_ptr<ItemInstance> item = mInventory->getItem(i);
         if (!item->isEmpty() && EnchantmentHelper::hasVanishingCurse(item))
@@ -2428,24 +2474,23 @@ boost::shared_ptr<ItemEntity> Player::drop(not_null_ptr<ItemInstance> item, bool
 {
     if (item->isEmpty()) return boost::shared_ptr<ItemEntity>();
 
-    boost::shared_ptr<ItemEntity> dropped(new ItemEntity(mLevel, mX, mY - 0.30000001192092896 + getEyeHeight(), mZ, item));
+    double dropY = mY - 0.30000001192092896 + getEyeHeight();
+    boost::shared_ptr<ItemEntity> dropped(new ItemEntity(mLevel, mX, dropY, mZ, item));
     dropped->setPickUpDelay(40);
     if (retainOwnership) {
         dropped->setThrower(getName());
     }
 
     if (!randomThrow) {
-        float yaw = mYRot * 0.017453292f;
-        float pitch = mXRot * 0.017453292f;
-        dropped->mXd = -static_cast<double>(sinf(yaw) * cosf(pitch)) * 0.30000001192092896;
-        dropped->mZd = static_cast<double>(cosf(yaw) * cosf(pitch)) * 0.30000001192092896;
-        dropped->mYd = -static_cast<double>(sinf(pitch)) * 0.30000001192092896 + 0.10000000149011612;
+        dropped->mXd = -(sinf(mYRot * 0.017453292f) * cosf(mXRot * 0.017453292f) * 0.3f);
+        dropped->mZd = cosf(mYRot * 0.017453292f) * cosf(mXRot * 0.017453292f) * 0.3f;
+        dropped->mYd = -(sinf(mXRot * 0.017453292f) * 0.3f - 0.1f);
 
         float randAngle = mRandom->nextFloat() * 6.2831855f;
         float randRadius = 0.02f * mRandom->nextFloat();
-        dropped->mXd = dropped->mXd + static_cast<double>(cosf(randAngle) * randRadius);
-        dropped->mZd = dropped->mZd + static_cast<double>((mRandom->nextFloat() - mRandom->nextFloat()) * 0.1f);
-        dropped->mYd = dropped->mYd + static_cast<double>(sinf(randAngle) * randRadius);
+        dropped->mXd += cosf(randAngle) * randRadius;
+        dropped->mYd += (mRandom->nextFloat() - mRandom->nextFloat()) * 0.1f;
+        dropped->mZd += sinf(randAngle) * randRadius;
     } else {
         float speed = mRandom->nextFloat() * 0.5f;
         float angle = mRandom->nextFloat() * 6.2831855f;
@@ -2518,22 +2563,25 @@ const SoundEvent* Player::getHurtSound(const DamageSource* source)
 
 bool Player::hurt(const DamageSource* source, float damage)
 {
-    boost::shared_ptr<Entity> directEntity = source->getDirectEntity();
-    if (damage == 0.0f && Minecraft::InMiniGame(eMiniGameId_Any, true) && directEntity)
     {
-        unsigned long long type = directEntity->GetType();
-        if (type == EntityType::FISHING_HOOK || type == EntityType::SNOWBALL || type == EntityType::THROWN_EGG
-            || type == EntityType::PRIMED_TNT
-            || ((type & EntityType::ARROW) == EntityType::ARROW
-                && Minecraft::GetInstance()->GetMiniGame()->HasFeatureArrowCanKnockback()))
+        boost::shared_ptr<Entity> directEntity = source->getDirectEntity();
+        if (damage == 0.0f && Minecraft::InMiniGame(eMiniGameId_Any, true) && directEntity)
         {
-            return LivingEntity::hurt(source, damage);
+            unsigned long long type = directEntity->GetType();
+            if (type == EntityType::FISHING_HOOK || type == EntityType::SNOWBALL || type == EntityType::THROWN_EGG
+                || type == EntityType::PRIMED_TNT
+                || ((type & EntityType::ARROW) == EntityType::ARROW
+                    && Minecraft::GetInstance()->GetMiniGame()->HasFeatureArrowCanKnockback()))
+            {
+                return LivingEntity::hurt(source, damage);
+            }
         }
     }
 
     if (isInvulnerableTo(source)) return false;
     if (mAbilities.mInvulnerable && !source->isBypassInvul()) return false;
     if (hasInvulnerablePrivilege()) return false;
+    if (mAbilities.mInvulnerable && !source->isBypassInvul()) return false;
     if (isSpectator()) return false;
     if (source == DamageSource::FALL && isAllowedToFly() && mAbilities.mFlying) return false;
 
@@ -2618,8 +2666,7 @@ void Player::checkRidingStatistiscs(double x, double y, double z)
     int cm = static_cast<int>(Math::round(std::sqrt(x * x + y * y + z * z) * 100.0));
     if (cm <= 0) return;
 
-    boost::shared_ptr<Entity> vehicle = getVehicle();
-    unsigned long long vehicleType = vehicle->GetType();
+    unsigned long long vehicleType = getVehicle()->GetType();
 
     if ((vehicleType & EntityType::MINECART) == EntityType::MINECART) {
         mMinecartDistanceCm += cm;
@@ -2635,13 +2682,14 @@ void Player::checkRidingStatistiscs(double x, double y, double z)
         }
 
         double distance = mStartRidingPos->dist(Mth::floor(mX), Mth::floor(mY), Mth::floor(mZ));
-        if (!mField0x781 && distance > 499.0) {
+        if (!mField0x781 && static_cast<int>(distance) >= 500) {
             awardStat(GenericStats::onARail(), GenericStats::param_onARail(static_cast<int>(distance)));
             mField0x781 = 1;
         }
         return;
     }
 
+    vehicleType = getVehicle()->GetType();
     if (vehicleType == EntityType::BOAT) {
         mBoatDistanceCm += cm;
         if (mBoatDistanceCm >= 100) {
@@ -2652,7 +2700,8 @@ void Player::checkRidingStatistiscs(double x, double y, double z)
         return;
     }
 
-    if (getVehicle()->GetType() == EntityType::PIG) {
+    vehicleType = getVehicle()->GetType();
+    if (vehicleType == EntityType::PIG) {
         mPigDistanceCm += cm;
         if (mPigDistanceCm >= 100) {
             int meters = mPigDistanceCm / 100;
@@ -2685,7 +2734,7 @@ void Player::checkMovementStatistiscs(double x, double y, double z)
                 if (gameMode != NULL) gameMode->RecordSwim(meters, underWater);
             }
             causeFoodExhaustion(static_cast<float>(FoodConstants::ExhaustionSwim() * distance) * 0.01f);
-            causeFoodExhaustion(static_cast<float>(FoodConstants::ExhaustionIdle()));
+            causeFoodExhaustion(FoodConstants::ExhaustionIdle());
             return;
         }
     } else if (isInWater()) {
@@ -2700,7 +2749,7 @@ void Player::checkMovementStatistiscs(double x, double y, double z)
                 if (gameMode != NULL) gameMode->RecordSwim(meters, false);
             }
             causeFoodExhaustion(static_cast<float>(FoodConstants::ExhaustionSwim() * distance) * 0.01f);
-            causeFoodExhaustion(static_cast<float>(FoodConstants::ExhaustionIdle()));
+            causeFoodExhaustion(FoodConstants::ExhaustionIdle());
             return;
         }
     } else if (onLadder()) {
@@ -2735,7 +2784,7 @@ void Player::checkMovementStatistiscs(double x, double y, double z)
         }
     }
 
-    causeFoodExhaustion(static_cast<float>(FoodConstants::ExhaustionIdle()));
+    causeFoodExhaustion(FoodConstants::ExhaustionIdle());
 }
 
 void Player::causeFallDamage(float distance, float multiplier)
@@ -2977,11 +3026,11 @@ BlockPos* Player::checkBedValidRespawnPosition(Level* level, const BlockPos& pos
 void Player::fjCheckSuperSonic(double oldX, double oldY, double oldZ,
                                double newX, double newY, double newZ)
 {
-    static const double MIN_SPEED_SQR = 1.0 * 2.0 * 2.0;
+    static double minSpeedSqr = std::pow(2.0, 2);
 
     double speedSqr = mYd * mYd + mXd * mXd + mZd * mZd;
     double blocksPerSecond = std::sqrt(speedSqr) * 20.0;
-    if (speedSqr <= MIN_SPEED_SQR)
+    if (speedSqr <= minSpeedSqr)
     {
         return;
     }
@@ -3006,12 +3055,14 @@ void Player::fjCheckSuperSonic(double oldX, double oldY, double oldZ,
         axis = Direction::Axis::Z;
     }
 
-    Direction::Axis* firstSideAxis = Direction::Axis::VALUES[(axis->getId() + 1) % 3];
-    Direction::Axis* secondSideAxis = Direction::Axis::VALUES[(axis->getId() + 2) % 3];
-    const Direction* firstSide = Direction::get(Direction::AxisDirection::POSITIVE, firstSideAxis);
-    const Direction* oppositeFirstSide = Direction::get(Direction::AxisDirection::NEGATIVE, firstSideAxis);
-    const Direction* secondSide = Direction::get(Direction::AxisDirection::POSITIVE, secondSideAxis);
-    const Direction* oppositeSecondSide = Direction::get(Direction::AxisDirection::NEGATIVE, secondSideAxis);
+    const Direction* firstSide =
+        Direction::get(Direction::AxisDirection::POSITIVE, Direction::Axis::VALUES[(axis->getId() + 1) % 3]);
+    const Direction* oppositeFirstSide =
+        Direction::get(Direction::AxisDirection::NEGATIVE, Direction::Axis::VALUES[(axis->getId() + 1) % 3]);
+    const Direction* secondSide =
+        Direction::get(Direction::AxisDirection::POSITIVE, Direction::Axis::VALUES[(axis->getId() + 2) % 3]);
+    const Direction* oppositeSecondSide =
+        Direction::get(Direction::AxisDirection::NEGATIVE, Direction::Axis::VALUES[(axis->getId() + 2) % 3]);
 
     BlockPos previous(0, -1, 0);
     int speed = (int)blocksPerSecond;
@@ -3126,12 +3177,15 @@ TextureAtlasSprite* Player::getItemInHandIcon(not_null_ptr<ItemInstance> item, i
     return icon;
 }
 
-uint32_t Player::mayUseItemAt(const BlockPos& position, const Direction* direction,
+bool Player::mayUseItemAt(const BlockPos& position, const Direction* direction,
                               not_null_ptr<ItemInstance> item)
 {
-    if (mayBuild()) return 1;
-    if (!item->isEmpty() && item->mayBePlacedInAdventureMode()) return 1;
-    if (direction == NULL) return 0;
+    if (mAbilities.mMayBuild) return 1;
+    if (!item->isEmpty()) {
+        GameMode* gameMode = GetGameMode();
+        if (gameMode != NULL) return gameMode->MayUse(position, item->getItem());
+        return item->mayBePlacedInAdventureMode();
+    }
     BlockPos adjacent = position.relative(direction->getOpposite());
     Block* block = mLevel->getBlockState(adjacent)->getBlock();
     return item->hasAdventureModePlaceTagForBlock(block)
@@ -3143,35 +3197,114 @@ uint32_t Player::isAllowedToUse(Block* block)
     unsigned int id = Block::getId(block);
     if (Minecraft::InMiniGame(eMiniGameId_Any, true))
         return Minecraft::GetInstance()->GetMiniGame()->MayUseBlock(static_cast<int>(id));
-    if (block == NULL || gApp.GetGameHostOption(eGameHostOption_TrustPlayers) != 0)
+    if (block == NULL)
+        return 1;
+    if (gApp.GetGameHostOption(eGameHostOption_TrustPlayers) != 0)
         return 1;
 
-    const bool isDoorOrGate = DoorBlock::isDoor(block) || FenceGateBlock::isFenceGate(block);
-    const bool p11 = getPlayerGamePrivilege(ePlayerGamePrivilege_CanUseDoorsAndSwitches) != 0;
-    const bool p12 = getPlayerGamePrivilege(ePlayerGamePrivilege_CanUseContainers) != 0;
-    const bool special = (id < 0x95 && id != 0x45 && id != 0x4d && id != 0x60 && id != 0x8f)
-        || (id > 0x97 && id != 0xa7 && id != 0xb2 && (id < 0x132 || id > 0x136));
-    bool restrictedByP11 = false;
-    if (p11)
-        restrictedByP11 = !special || isDoorOrGate;
-
-    if (p12) {
-        if (id == 0x17 || id == 0x36 || id == 0x3a || (id > 0x3c && id < 0x3f)
-            || (id > 0x73 && id < 0x76) || id == 0x82 || id == 0x8a
-            || (id > 0x90 && id < 0x93) || id == 0x9a || id == 0x9e
-            || (id > 0xda && id < 0xeb))
-            return 1;
+    bool usableBySwitchOrDoor = false;
+    if (getPlayerGamePrivilege(ePlayerGamePrivilege_CanUseDoorsAndSwitches) != 0) {
+        bool listedBlock = true;
+        if (id < BlockId::UNPOWERED_COMPARATOR) {
+            if (id != BlockId::LEVER && id != BlockId::STONE_BUTTON && id != BlockId::TRAPDOOR
+                && id != BlockId::WOODEN_BUTTON)
+                listedBlock = false;
+        } else if (id > BlockId::DAYLIGHT_DETECTOR && id != BlockId::IRON_TRAPDOOR
+                   && id != BlockId::DAYLIGHT_DETECTOR_INVERTED
+                   && (id < BlockId::ACACIA_BUTTON || id > BlockId::SPRUCE_BUTTON)) {
+            listedBlock = false;
+        }
+        if (listedBlock) {
+            usableBySwitchOrDoor = true;
+        } else {
+            usableBySwitchOrDoor = DoorBlock::isDoor(block) || FenceGateBlock::isFenceGate(block);
+        }
     }
-    if (restrictedByP11) return 1;
+
+    if (getPlayerGamePrivilege(ePlayerGamePrivilege_CanUseContainers) != 0) {
+        switch (id) {
+        case BlockId::DISPENSER:
+        case BlockId::CHEST:
+        case BlockId::CRAFTING_TABLE:
+        case BlockId::FURNACE:
+        case BlockId::LIT_FURNACE:
+        case BlockId::ENCHANTING_TABLE:
+        case BlockId::BREWING_STAND:
+        case BlockId::ENDER_CHEST:
+        case BlockId::BEACON:
+        case BlockId::ANVIL:
+        case BlockId::TRAPPED_CHEST:
+        case BlockId::HOPPER:
+        case BlockId::DROPPER:
+        case BlockId::WHITE_SHULKER_BOX:
+        case BlockId::ORANGE_SHULKER_BOX:
+        case BlockId::MAGENTA_SHULKER_BOX:
+        case BlockId::LIGHT_BLUE_SHULKER_BOX:
+        case BlockId::YELLOW_SHULKER_BOX:
+        case BlockId::LIME_SHULKER_BOX:
+        case BlockId::PINK_SHULKER_BOX:
+        case BlockId::GRAY_SHULKER_BOX:
+        case BlockId::SILVER_SHULKER_BOX:
+        case BlockId::CYAN_SHULKER_BOX:
+        case BlockId::PURPLE_SHULKER_BOX:
+        case BlockId::BLUE_SHULKER_BOX:
+        case BlockId::BROWN_SHULKER_BOX:
+        case BlockId::GREEN_SHULKER_BOX:
+        case BlockId::RED_SHULKER_BOX:
+        case BlockId::BLACK_SHULKER_BOX:
+            return 1;
+        }
+    }
+    if (usableBySwitchOrDoor) return 1;
     if (getPlayerGamePrivilege(ePlayerGamePrivilege_CannotBuild) != 0) return 0;
 
-    if (id == 0x17 || id == 0x36 || id == 0x3a || (id > 0x3c && id < 0x3f)
-        || id == 0x45 || id == 0x4d || id == 0x60 || (id > 0x73 && id < 0x76)
-        || id == 0x82 || id == 0x8a || id == 0x8f || (id > 0x90 && id < 0x93)
-        || (id > 0x94 && id < 0x98) || id == 0x9a || id == 0x9e || id == 0xa7
-        || id == 0xb2 || (id > 0xda && id < 0xeb) || (id > 0x131 && id < 0x137))
+    switch (id) {
+    case BlockId::DISPENSER:
+    case BlockId::CHEST:
+    case BlockId::CRAFTING_TABLE:
+    case BlockId::FURNACE:
+    case BlockId::LIT_FURNACE:
+    case BlockId::ENCHANTING_TABLE:
+    case BlockId::BREWING_STAND:
+    case BlockId::ENDER_CHEST:
+    case BlockId::BEACON:
+    case BlockId::ANVIL:
+    case BlockId::TRAPPED_CHEST:
+    case BlockId::HOPPER:
+    case BlockId::DROPPER:
+    case BlockId::WHITE_SHULKER_BOX:
+    case BlockId::ORANGE_SHULKER_BOX:
+    case BlockId::MAGENTA_SHULKER_BOX:
+    case BlockId::LIGHT_BLUE_SHULKER_BOX:
+    case BlockId::YELLOW_SHULKER_BOX:
+    case BlockId::LIME_SHULKER_BOX:
+    case BlockId::PINK_SHULKER_BOX:
+    case BlockId::GRAY_SHULKER_BOX:
+    case BlockId::SILVER_SHULKER_BOX:
+    case BlockId::CYAN_SHULKER_BOX:
+    case BlockId::PURPLE_SHULKER_BOX:
+    case BlockId::BLUE_SHULKER_BOX:
+    case BlockId::BROWN_SHULKER_BOX:
+    case BlockId::GREEN_SHULKER_BOX:
+    case BlockId::RED_SHULKER_BOX:
+    case BlockId::BLACK_SHULKER_BOX:
+    case BlockId::LEVER:
+    case BlockId::STONE_BUTTON:
+    case BlockId::TRAPDOOR:
+    case BlockId::WOODEN_BUTTON:
+    case BlockId::UNPOWERED_COMPARATOR:
+    case BlockId::POWERED_COMPARATOR:
+    case BlockId::DAYLIGHT_DETECTOR:
+    case BlockId::IRON_TRAPDOOR:
+    case BlockId::DAYLIGHT_DETECTOR_INVERTED:
+    case BlockId::ACACIA_BUTTON:
+    case BlockId::BIRCH_BUTTON:
+    case BlockId::DARK_OAK_BUTTON:
+    case BlockId::JUNGLE_BUTTON:
+    case BlockId::SPRUCE_BUTTON:
         return 0;
-    return isDoorOrGate ? 0 : 1;
+    }
+    return (DoorBlock::isDoor(block) || FenceGateBlock::isFenceGate(block)) ? 0 : 1;
 }
 
 uint32_t Player::isAllowedToUse(not_null_ptr<ItemInstance> item)
@@ -3288,11 +3421,11 @@ uint32_t Player::isAllowedToHurtEntity(boost::shared_ptr<Entity> entity)
     return allowed;
 }
 
-uint32_t Player::SpectateAsSkull()
+uint8_t Player::SpectateAsSkull()
 {
-    bool spectating = false;
+    uint32_t spectating = 0;
     if (SpectateAsFloatingHead()) {
-        if (std::find(sDlcSkinIds.begin(), sDlcSkinIds.end(), mCustomSkin) != sDlcSkinIds.end()) spectating = true;
+        if (std::find(sDlcSkinIds.begin(), sDlcSkinIds.end(), mCustomSkin) != sDlcSkinIds.end()) spectating = 1;
     }
     return spectating;
 }

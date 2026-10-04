@@ -1,3 +1,4 @@
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/world/generation/BuriedTreasureFeature.hpp"
 #include "game/core/EntityType.hpp"
 
@@ -52,10 +53,10 @@ void BuriedTreasureFeature::staticCtor()
 }
 
 BuriedTreasureFeature::BuriedTreasureFeature(int)
-    : StructureFeature(),
-      mFeatureChunk(&gBuriedTreasureBiomeRequirements, 40, 4, 2),
-      mReducedFeatureChunk(FjIsFeatureChunk::CreateReduced(mFeatureChunk))
+    : StructureFeature()
 {
+    mFeatureChunk = FjIsFeatureChunk(&gBuriedTreasureBiomeRequirements, 40, 4, 2);
+    mReducedFeatureChunk = FjIsFeatureChunk::CreateReduced(mFeatureChunk);
 }
 
 std::wstring BuriedTreasureFeature::getFeatureName()
@@ -88,7 +89,7 @@ bool BuriedTreasureFeature::isFeatureChunk(int chunkX, int chunkZ, bool flatWorl
                                                sizeInChunks, chunkX, chunkZ);
     result = canPlaceFeatureInChunk(result, eFeatureType_BuriedTreasure, chunkX, chunkZ);
     if (result)
-        g_pApp->AddTerrainFeaturePosition(
+        gApp.AddTerrainFeaturePosition(
             static_cast<_eTerrainFeatureType>(BURIED_TREASURE_TERRAIN_FEATURE_ID), chunkX, chunkZ);
     return result;
 }
@@ -97,7 +98,7 @@ BuriedTreasureFeature::BuriedTreasurePiece::BuriedTreasurePiece(int x, int z)
     : TemplateStructurePiece(4)
 {
     setOrientation(Direction::NORTH);
-    setBoundingBox(new BoundingBox(x, 64, z, x + 1, 73, z + 1));
+    mBoundingBox = new BoundingBox(x, 64, z, x + 1, 73, z + 1);
 }
 
 BuriedTreasureFeature::BuriedTreasurePiece::~BuriedTreasurePiece()
@@ -112,14 +113,13 @@ bool BuriedTreasureFeature::BuriedTreasurePiece::postProcess(Level* levelIn,
     if (!box->isInside(Vec3i(origin.x, origin.y, origin.z)))
         return false;
 
-    BlockPos topSolid = levelIn->getTopSolidBlockPos(origin);
-    BlockPos position(origin.x, topSolid.y, origin.z);
-    position = position.offset(0, -(randomIn.nextInt(3) + 3), 0);
-    while (levelIn->getBlock(position.below()) == Blocks::air)
-        position = position.below();
+    origin = BlockPos(origin.x, levelIn->getTopSolidBlockPos(origin).y, origin.z);
+    origin = origin.offset(0, -(randomIn.nextInt(3) + 3), 0);
+    while (levelIn->getBlock(origin.below()) == Blocks::air)
+        origin = origin.below();
 
-    levelIn->setBlock(position, Blocks::chest->defaultBlockState(), Block::UPDATE_ALL, false);
-    boost::shared_ptr<BlockEntity> blockEntity = levelIn->getBlockEntity(position);
+    levelIn->setBlock(origin, Blocks::chest->defaultBlockState(), Block::UPDATE_ALL, false);
+    boost::shared_ptr<BlockEntity> blockEntity = levelIn->getBlockEntity(origin);
     if (blockEntity != NULL && blockEntity->GetType() == BlockEntityType::CHEST)
     {
         boost::shared_ptr<ChestBlockEntity> chest =
@@ -137,24 +137,43 @@ void BuriedTreasureFeature::BuriedTreasurePiece::handleDataMarker(
     if (marker.find(L"Chest") != 0)
         return;
 
-    Rotation* rotation = getPlaceSettings()->getRotation();
+    Rotation* rotation = mPlaceSettings->getRotation();
     const BlockState* state = Blocks::chest->defaultBlockState();
-    const Direction* direction = NULL;
-    if (marker.compare(0, marker.size(), L"ChestWest", 9) == 0)
-        direction = rotation->rotate(Direction::WEST);
-    else if (marker.compare(0, marker.size(), L"ChestEast", 9) == 0)
-        direction = rotation->rotate(Direction::EAST);
-    else if (marker.compare(0, marker.size(), L"ChestSouth", 10) == 0)
-        direction = rotation->rotate(Direction::SOUTH);
-    else if (marker.compare(0, marker.size(), L"ChestNorth", 10) == 0)
-        direction = rotation->rotate(Direction::NORTH);
-
-    if (direction != NULL)
+    if (marker.compare(0, marker.size(), L"ChestWest") == 0)
     {
-        TypedBoxed<const Direction*> facing(direction);
-        state = state->setBoxedValue(static_cast<const Property*>(ChestBlock::FACING), &facing);
+        {
+            TypedBoxed<const Direction*> facing(rotation->rotate(Direction::WEST));
+            state = state->setBoxedValue(static_cast<const Property*>(ChestBlock::FACING), &facing);
+        }
+        createChest(levelIn, box, randomIn, position, &BuiltInLootTables::WOODLAND_MANSION, state);
     }
-    createChest(levelIn, box, randomIn, position, &BuiltInLootTables::WOODLAND_MANSION, state);
+    else if (marker.compare(0, marker.size(), L"ChestEast") == 0)
+    {
+        {
+            TypedBoxed<const Direction*> facing(rotation->rotate(Direction::EAST));
+            state = state->setBoxedValue(static_cast<const Property*>(ChestBlock::FACING), &facing);
+        }
+        createChest(levelIn, box, randomIn, position, &BuiltInLootTables::WOODLAND_MANSION, state);
+    }
+    else if (marker.compare(0, marker.size(), L"ChestSouth") == 0)
+    {
+        {
+            TypedBoxed<const Direction*> facing(rotation->rotate(Direction::SOUTH));
+            state = state->setBoxedValue(static_cast<const Property*>(ChestBlock::FACING), &facing);
+        }
+        createChest(levelIn, box, randomIn, position, &BuiltInLootTables::WOODLAND_MANSION, state);
+    }
+    else
+    {
+        if (marker.compare(0, marker.size(), L"ChestNorth") == 0)
+        {
+            {
+                TypedBoxed<const Direction*> facing(rotation->rotate(Direction::NORTH));
+                state = state->setBoxedValue(static_cast<const Property*>(ChestBlock::FACING), &facing);
+            }
+        }
+        createChest(levelIn, box, randomIn, position, &BuiltInLootTables::WOODLAND_MANSION, state);
+    }
 }
 
 EStructurePiece BuriedTreasureFeature::BuriedTreasurePiece::GetType()
@@ -173,7 +192,7 @@ BuriedTreasureFeature::BuriedTreasureStart::BuriedTreasureStart(
 }
 
 BuriedTreasureFeature::BuriedTreasureStart::BuriedTreasureStart()
-    : StructureStart(), mFeature(NULL)
+    : StructureStart(0, 0)
 {
 }
 

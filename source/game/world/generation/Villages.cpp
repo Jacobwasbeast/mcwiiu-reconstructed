@@ -62,7 +62,8 @@ void Villages::removeVillages()
     std::vector<boost::shared_ptr<Village> >::iterator it = mVillages.begin();
     while (it != mVillages.end())
     {
-        if ((*it)->canRemove())
+        boost::shared_ptr<Village> village = *it;
+        if (village->canRemove())
         {
             it = mVillages.erase(it);
             setDirty();
@@ -85,15 +86,16 @@ boost::shared_ptr<DoorInfo> Villages::getDoorInfo(const BlockPos& pos)
     std::vector<boost::shared_ptr<DoorInfo> >::iterator it;
     for (it = mDoorInfos.begin(); it != mDoorInfos.end(); ++it)
     {
-        BlockPos doorPos = (*it)->getPos();
-        if (doorPos.x == pos.x && doorPos.z == pos.z && std::abs(doorPos.y - pos.y) < 2)
-            return *it;
+        boost::shared_ptr<DoorInfo> doorInfo = *it;
+        if (doorInfo->getPos().x == pos.x && doorInfo->getPos().z == pos.z && std::abs(doorInfo->getPos().y - pos.y) < 2)
+            return doorInfo;
     }
 
     std::vector<boost::shared_ptr<Village> >::iterator village;
     for (village = mVillages.begin(); village != mVillages.end(); ++village)
     {
-        boost::shared_ptr<DoorInfo> info = (*village)->getDoorInfo(pos);
+        boost::shared_ptr<Village> current = *village;
+        boost::shared_ptr<DoorInfo> info = current->getDoorInfo(pos);
         if (info)
             return info;
     }
@@ -131,26 +133,19 @@ void Villages::createDoorInfo(const BlockPos& pos)
 
 void Villages::addDoorInfos(const BlockPos& pos)
 {
-    int x;
-    int y;
-    int z;
-    for (x = -16; x < 16; ++x)
-        for (y = -4; y < 4; ++y)
-            for (z = -16; z < 16; z += 2)
+    for (int x = -16; x < 16; ++x)
+        for (int y = -4; y < 4; ++y)
+            for (int z = -16; z < 16; ++z)
             {
-                BlockPos first = pos.offset(x, y, z);
-                BlockPos second = first.offset(0, 0, 1);
-                BlockPos candidates[2] = { first, second };
-                int i;
-                for (i = 0; i < 2; ++i)
-                    if (isDoor(candidates[i]))
-                    {
-                        boost::shared_ptr<DoorInfo> info = getDoorInfo(candidates[i]);
-                        if (info)
-                            info->setTimeStamp(mTick);
-                        else
-                            createDoorInfo(candidates[i]);
-                    }
+                BlockPos doorPos = pos.offset(x, y, z);
+                if (isDoor(doorPos))
+                {
+                    boost::shared_ptr<DoorInfo> info = getDoorInfo(doorPos);
+                    if (info)
+                        info->setTimeStamp(mTick);
+                    else
+                        createDoorInfo(doorPos);
+                }
             }
 }
 
@@ -171,15 +166,16 @@ boost::shared_ptr<Village> Villages::getClosestVillage(const BlockPos& pos, int 
     std::vector<boost::shared_ptr<Village> >::iterator it;
     for (it = mVillages.begin(); it != mVillages.end(); ++it)
     {
-        const BlockPos* center = (*it)->getCenter();
+        boost::shared_ptr<Village> village = *it;
+        const BlockPos* center = village->getCenter();
         float d = (float)center->distSqr(pos);
         if (d < best)
         {
-            int radius = (*it)->getRadius() + distance;
-            if (d <= (float)(radius * radius))
+            float radius = (float)(village->getRadius() + distance);
+            if (d <= radius * radius)
             {
                 best = d;
-                closest = *it;
+                closest = village;
             }
         }
     }
@@ -191,15 +187,16 @@ void Villages::cluster()
     std::vector<boost::shared_ptr<DoorInfo> >::iterator it;
     for (it = mDoorInfos.begin(); it != mDoorInfos.end(); ++it)
     {
-        BlockPos pos = (*it)->getPos();
+        boost::shared_ptr<DoorInfo> doorInfo = *it;
+        BlockPos pos = doorInfo->getPos();
         boost::shared_ptr<Village> village = getClosestVillage(pos, 32);
         if (!village)
         {
-            village.reset(new Village(mLevel));
+            village = boost::shared_ptr<Village>(new Village(mLevel));
             mVillages.push_back(village);
             setDirty();
         }
-        village->addDoorInfo(*it);
+        village->addDoorInfo(doorInfo);
     }
     mDoorInfos.clear();
 }
@@ -231,8 +228,9 @@ void Villages::load(CompoundTag* tag)
     int i;
     for (i = 0; i < list->size(); ++i)
     {
+        CompoundTag* villageTag = list->getCompound(i);
         boost::shared_ptr<Village> village(new Village());
-        village->readAdditionalSaveData(list->getCompound(i));
+        village->readAdditionalSaveData(villageTag);
         mVillages.push_back(village);
     }
 }
@@ -244,9 +242,10 @@ CompoundTag* Villages::save(CompoundTag* tag)
     std::vector<boost::shared_ptr<Village> >::iterator it;
     for (it = mVillages.begin(); it != mVillages.end(); ++it)
     {
-        CompoundTag* village = new CompoundTag();
-        (*it)->addAdditonalSaveData(village);
-        list->add(village);
+        boost::shared_ptr<Village> village = *it;
+        CompoundTag* villageTag = new CompoundTag();
+        village->addAdditonalSaveData(villageTag);
+        list->add(villageTag);
     }
     tag->put(L"Villages", list);
     return tag;

@@ -11,7 +11,6 @@ class TerracottaLayerThemeRuleDefinition : public LayerAttributeChildRuleDefinit
 {
 public:
     TerracottaLayerThemeRuleDefinition();
-    virtual ~TerracottaLayerThemeRuleDefinition();
 
     virtual ConsoleGameRules::EGameRuleType getActionType();
     virtual LayerTheme* Generate() const;

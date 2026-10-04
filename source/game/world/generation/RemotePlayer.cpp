@@ -8,14 +8,13 @@
 #include "game/world/block/BlockPos.hpp"
 
 RemotePlayer::RemotePlayer(Level* level, const std::wstring& name)
-    : AbstractClientPlayer(level, name),
-      mGameType(NULL)
+    : AbstractClientPlayer(level, name)
 {
     fjDerivedCtorCalls();
     mBedOffsetY = 0.25f;
     mNoPhysics = true;
     mMaxUpStep = 1.0f;
-    setViewScale(10.0);
+    sViewScale = 10.0;
     mField0x878 = 0;
     mField0x880 = 0.0f;
 }
@@ -42,10 +41,10 @@ void RemotePlayer::tick()
     mBedOffsetY = 0;
     AbstractClientPlayer::tick();
 
-    double horizontalDistance = std::sqrt((mX - mXo) * (mX - mXo)
-        + (mZ - mZo) * (mZ - mZo));
     mAnimationSpeedOld = mAnimationSpeed;
-    float targetSpeed = (float)(horizontalDistance * 4.0);
+    float horizontalDistance = Mth::sqrt((mX - mXo) * (mX - mXo)
+        + (mZ - mZo) * (mZ - mZo));
+    float targetSpeed = horizontalDistance * 4.0f;
     if (targetSpeed > 1.0f)
         targetSpeed = 1.0f;
     mAnimationSpeed = mAnimationSpeed
@@ -76,17 +75,15 @@ void RemotePlayer::aiStep()
 
     mPrevCameraYaw = mCameraYaw;
     updateSwingTime();
-    double horizontalSpeed = Mth::sqrt(mXd * mXd + mZd * mZd);
-    double verticalAngle = static_cast<float>(std::atan(-(mYd * 0.20000000298023224))) * 15.0f;
+    float horizontalSpeed = Mth::sqrt(mXd * mXd + mZd * mZd);
+    float verticalAngle = static_cast<float>(std::atan(-(mYd * 0.20000000298023224))) * 15.0f;
     if (horizontalSpeed > 0.1f)
         horizontalSpeed = 0.1f;
-    double cameraYawTarget = 0.0f;
-    if (mOnGround && getHealth() > 0.0f)
-        cameraYawTarget = horizontalSpeed;
+    float cameraYawTarget = (mOnGround && getHealth() > 0.0f) ? horizontalSpeed : 0.0f;
     if (mOnGround || getHealth() <= 0.0f)
         verticalAngle = 0.0f;
-    mBob = static_cast<float>(verticalAngle - mBob) * 0.8f + mBob;
-    mCameraYaw = static_cast<float>(cameraYawTarget - mCameraYaw) * 0.4f + mCameraYaw;
+    mBob = (verticalAngle - mBob) * 0.8f + mBob;
+    mCameraYaw = (cameraYawTarget - mCameraYaw) * 0.4f + mCameraYaw;
     calculateFlapping();
 }
 

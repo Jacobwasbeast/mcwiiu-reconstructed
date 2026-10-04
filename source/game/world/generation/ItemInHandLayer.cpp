@@ -18,26 +18,16 @@ ItemInHandLayer::ItemInHandLayer(LivingEntityRenderer* renderer)
 void ItemInHandLayer::render(boost::shared_ptr<LivingEntity>& entity, float, float, float, float, float, float,
                              float, bool)
 {
-    not_null_ptr<ItemInstance> rightHandItem;
-    not_null_ptr<ItemInstance> leftHandItem;
+    const bool rightMain = entity->getMainArm() == HumanoidArm::RIGHT;
+    not_null_ptr<ItemInstance> leftHandItem(rightMain ? entity->getOffhandItem() : entity->getMainHandItem());
+    not_null_ptr<ItemInstance> rightHandItem(rightMain ? entity->getMainHandItem() : entity->getOffhandItem());
 
-    if (entity->getMainArm() == HumanoidArm::RIGHT)
-    {
-        rightHandItem = entity->getMainHandItem();
-        leftHandItem = entity->getOffhandItem();
-    }
-    else
-    {
-        rightHandItem = entity->getOffhandItem();
-        leftHandItem = entity->getMainHandItem();
-    }
-
-    if (rightHandItem->isEmpty() && leftHandItem->isEmpty())
+    if (leftHandItem->isEmpty() && rightHandItem->isEmpty())
         return;
 
     GlStateManager::pushMatrix();
 
-    if (static_cast<HumanoidModel*>(mLivingEntityRenderer->getModel(entity))->mCrouching)
+    if (mLivingEntityRenderer->getModel()->mYoung)
     {
         GlStateManager::translatef(0.0f, 0.75f, 0.0f);
         GlStateManager::scalef(0.5f, 0.5f, 0.5f);
@@ -59,8 +49,12 @@ void ItemInHandLayer::renderArmWithItem(boost::shared_ptr<LivingEntity> entity, 
     translateToHand(arm);
 
     bool leftHand = arm == HumanoidArm::LEFT;
-    bool suppressSneakingTransform = (entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY
-        && entity->getFallFlyingTicks() > 4;
+    bool suppressSneakingTransform = false;
+    if (entity && (entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+    {
+        boost::shared_ptr<LivingEntity> living = boost::static_pointer_cast<LivingEntity>(entity);
+        suppressSneakingTransform = living->getFallFlyingTicks() > 4;
+    }
     if (entity->isSneaking() && !suppressSneakingTransform)
     {
         GlStateManager::translatef(0.0f, 0.175f, 0.0f);

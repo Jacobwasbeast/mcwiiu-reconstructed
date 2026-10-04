@@ -11,6 +11,7 @@ struct PlayerUID
 {
     enum Flag
     {
+        FlagShift = 28,
         FlagOnlineAccount = 0x40000000u,
         FlagDrcController = 0x10000000u,
         FlagMiiPrincipal = 0x20000000u,

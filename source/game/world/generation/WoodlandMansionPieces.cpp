@@ -530,23 +530,19 @@ void WoodlandMansionPieces::WoodlandMansionPiece::handleDataMarker(const std::ws
         const BlockState* state = Blocks::chest->defaultBlockState();
         if (marker == L"ChestWest")
         {
-            TypedBoxed<const Direction*> facing(rotation->rotate(Direction::WEST));
-            state = state->setBoxedValue(ChestBlock::FACING, &facing);
+            state = state->setValue(ChestBlock::FACING, rotation->rotate(Direction::WEST));
         }
         else if (marker == L"ChestEast")
         {
-            TypedBoxed<const Direction*> facing(rotation->rotate(Direction::EAST));
-            state = state->setBoxedValue(ChestBlock::FACING, &facing);
+            state = state->setValue(ChestBlock::FACING, rotation->rotate(Direction::EAST));
         }
         else if (marker == L"ChestSouth")
         {
-            TypedBoxed<const Direction*> facing(rotation->rotate(Direction::SOUTH));
-            state = state->setBoxedValue(ChestBlock::FACING, &facing);
+            state = state->setValue(ChestBlock::FACING, rotation->rotate(Direction::SOUTH));
         }
         else if (marker == L"ChestNorth")
         {
-            TypedBoxed<const Direction*> facing(rotation->rotate(Direction::NORTH));
-            state = state->setBoxedValue(ChestBlock::FACING, &facing);
+            state = state->setValue(ChestBlock::FACING, rotation->rotate(Direction::NORTH));
         }
         createChest(level, box, random, position, &BuiltInLootTables::WOODLAND_MANSION, state);
     }
@@ -571,7 +567,7 @@ void WoodlandMansionPieces::WoodlandMansionPiece::handleDataMarker(const std::ws
 
 StructurePiece* WoodlandMansionPieces::WoodlandMansionPiece::create()
 {
-    return new WoodlandMansionPiece();
+    return new WoodlandMansionPiece;
 }
 
 EStructurePiece WoodlandMansionPieces::WoodlandMansionPiece::GetType()
@@ -580,8 +576,9 @@ EStructurePiece WoodlandMansionPieces::WoodlandMansionPiece::GetType()
 }
 
 WoodlandMansionPieces::MansionPiecePlacer::MansionPiecePlacer(StructureManager* structureManager, Random& random)
-    : mStructureManager(structureManager), mRandom()
+    : mRandom()
 {
+    mStructureManager = structureManager;
     mRandom = random;
 }
 

@@ -54,9 +54,10 @@ private:
     bool mHasSentOpenInventory;
     bool mHasSentRidingJump;
     bool mReceivedRespawn;
+    bool mField0xa1b;
     int mLastSentStat;
     double* mBounceHeight;
-    int mFreeDiverTicks;
+    unsigned int mFreeDiverTicks;
 };
 
 #endif

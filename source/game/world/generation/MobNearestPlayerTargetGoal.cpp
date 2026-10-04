@@ -18,8 +18,9 @@
 #include "game/world/generation/Player.hpp"
 
 MobNearestPlayerTargetGoal::MobNearestPlayerTargetGoal(Mob* mob)
-    : Goal(), mMob(mob), mTargetSelector(this), mSorter(mob), mTarget()
+    : Goal(), mTargetSelector(this), mSorter(mob), mTarget()
 {
+    mMob = mob;
 }
 
 MobNearestPlayerTargetGoal::~MobNearestPlayerTargetGoal()
@@ -71,7 +72,8 @@ bool MobNearestPlayerTargetGoal::canContinueToUse()
     }
 
     Team* team = mMob->getTeam();
-    if (team != NULL && target->getTeam() == team)
+    Team* targetTeam = target->getTeam();
+    if (team != NULL && targetTeam == team)
     {
         return false;
     }
@@ -82,10 +84,12 @@ bool MobNearestPlayerTargetGoal::canContinueToUse()
         return false;
     }
 
-    if (target->GetType() == EntityType::SERVER_PLAYER
-        && boost::static_pointer_cast<ServerPlayer>(target)->mGameMode->isCreative())
+    if (target->GetType() == EntityType::SERVER_PLAYER)
     {
-        return false;
+        if (boost::static_pointer_cast<ServerPlayer>(target)->mGameMode->isCreative())
+        {
+            return false;
+        }
     }
 
     return true;

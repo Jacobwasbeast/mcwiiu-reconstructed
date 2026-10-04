@@ -92,12 +92,12 @@ public:
     virtual const GameType* GetGameType();
 
     void setLocalMode(const GameType* gameType);
-    InteractionResult::EInteractionResult _useItemOn(boost::shared_ptr<Player> player, Level* level,
+    virtual InteractionResult::EInteractionResult _useItemOn(boost::shared_ptr<Player> player, Level* level,
                                                       const BlockPos& pos, const Direction* direction,
                                                       Vec3* hit, InteractionHand::EInteractionHand hand,
                                                       bool simulate, bool* used);
     double getPickRange();
-    boost::shared_ptr<ItemInstance> handleTakeAllInvenetory(int containerId, int slot, int button,
+    void handleTakeAllInvenetory(int containerId, int slot, int button,
                                                              int mode, boost::shared_ptr<Player> player);
     boost::shared_ptr<ItemInstance> handleInventoryMouseClick(int containerId, int slot, int button,
                                                                ClickType::eClickType clickType,

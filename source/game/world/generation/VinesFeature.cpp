@@ -15,10 +15,6 @@ VinesFeature::VinesFeature()
 {
 }
 
-VinesFeature::~VinesFeature()
-{
-}
-
 bool VinesFeature::place(Level* level, Random& random, const BlockPos& origin)
 {
     BlockPos position(origin);

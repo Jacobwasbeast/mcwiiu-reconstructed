@@ -15,74 +15,79 @@
 #include "game/world/generation/StructurePlaceSettings.hpp"
 #include "game/world/generation/StructureTemplate.hpp"
 
+static StructurePlaceSettings* DEFAULT_PLACE_SETTINGS = new StructurePlaceSettings();
+
 TemplateStructurePiece::TemplateStructurePiece()
-    : StructurePiece(), mTemplate(NULL), mPlaceSettings(new StructurePlaceSettings()), mTemplatePosition()
+    : StructurePiece(), mTemplatePosition()
 {
-    mPlaceSettings->setIgnoreEntities(true);
-    mPlaceSettings->setIgnoreBlock(Blocks::air);
+    mPlaceSettings = DEFAULT_PLACE_SETTINGS->setIgnoreEntities(true)->setIgnoreBlock(Blocks::air);
+    mTemplate = NULL;
 }
 
 TemplateStructurePiece::TemplateStructurePiece(int genDepth)
-    : StructurePiece(genDepth), mTemplate(NULL), mPlaceSettings(new StructurePlaceSettings()), mTemplatePosition()
+    : StructurePiece(genDepth), mTemplatePosition()
 {
-    mPlaceSettings->setIgnoreEntities(true);
-    mPlaceSettings->setIgnoreBlock(Blocks::air);
+    mPlaceSettings = DEFAULT_PLACE_SETTINGS->setIgnoreEntities(true)->setIgnoreBlock(Blocks::air);
+    mTemplate = NULL;
 }
 
 TemplateStructurePiece::~TemplateStructurePiece()
 {
-    delete mPlaceSettings;
+    if (mPlaceSettings != DEFAULT_PLACE_SETTINGS)
+        delete mPlaceSettings;
 }
 
 void TemplateStructurePiece::setBoundingBoxFromTemplate()
 {
-    BlockPos size = mTemplate->getSize(mPlaceSettings->getRotation());
+    Rotation* rotation = mPlaceSettings->getRotation();
+    BlockPos size = mTemplate->getSize(rotation);
+    Mirror* mirror = mPlaceSettings->getMirror();
     delete mBoundingBox;
     mBoundingBox = new BoundingBox(0, 0, 0, size.x, size.y - 1, size.z);
 
-    Rotation* rotation = mPlaceSettings->getRotation();
-    Mirror* mirror = mPlaceSettings->getMirror();
-
-    if (rotation == Rotation::CLOCKWISE_90)
+    switch (rotation->getType())
+    {
+    case Rotation::eTYPE_Clockwise90:
         mBoundingBox->move(-size.x, 0, 0);
-    else if (rotation == Rotation::CLOCKWISE_180)
+        break;
+    case Rotation::eTYPE_Clockwise180:
         mBoundingBox->move(-size.x, 0, -size.z);
-    else if (rotation == Rotation::COUNTERCLOCKWISE_90)
+        break;
+    case Rotation::eTYPE_CounterClockwise90:
         mBoundingBox->move(0, 0, -size.z);
-
-    if (mirror == Mirror::LEFT_RIGHT)
-    {
-        if (rotation == Rotation::NONE || rotation == Rotation::CLOCKWISE_180)
-        {
-            BlockPos offset = mTemplatePosition.relative(rotation->rotate(Direction::NORTH), size.x);
-            mBoundingBox->move(offset.x, 0, offset.z);
-        }
-        else if (rotation == Rotation::CLOCKWISE_90)
-        {
-            BlockPos offset = mTemplatePosition.relative(Direction::NORTH);
-            mBoundingBox->move(offset.x, 0, offset.z);
-        }
-        else
-        {
-            BlockPos offset = mTemplatePosition.relative(Direction::SOUTH, size.z);
-            mBoundingBox->move(offset.x, 0, offset.z);
-        }
+        break;
+    default:
+        break;
     }
-    else if (mirror == Mirror::FRONT_BACK)
+
+    Mirror::eTYPE mirrorType = mirror->getType();
+    if (mirrorType == Mirror::eTYPE_LeftRight)
     {
-        if (rotation == Rotation::NONE || rotation == Rotation::CLOCKWISE_180)
+        BlockPos offset = BlockPos::ZERO;
+        if (rotation == Rotation::CLOCKWISE_90 || rotation == Rotation::COUNTERCLOCKWISE_90)
+            offset = offset.relative(rotation->rotate(Direction::NORTH), size.x);
+        else if (rotation == Rotation::CLOCKWISE_180)
+            offset = offset.relative(Direction::SOUTH, size.z);
+        else
+            offset = offset.relative(Direction::NORTH, size.z);
+        mBoundingBox->move(offset.x, 0, offset.z);
+    }
+    else if (mirrorType == Mirror::eTYPE_FrontBack)
+    {
+        BlockPos offset = BlockPos::ZERO;
+        if (rotation == Rotation::CLOCKWISE_90 || rotation == Rotation::COUNTERCLOCKWISE_90)
         {
-            BlockPos offset = mTemplatePosition.relative(rotation->rotate(Direction::EAST), size.z);
+            offset = offset.relative(rotation->rotate(Direction::WEST), size.z);
             mBoundingBox->move(offset.x, 0, offset.z);
         }
-        else if (rotation == Rotation::CLOCKWISE_90)
+        else if (rotation == Rotation::CLOCKWISE_180)
         {
-            BlockPos offset = mTemplatePosition.relative(Direction::EAST, size.x);
+            offset = offset.relative(Direction::EAST, size.x);
             mBoundingBox->move(offset.x, 0, offset.z);
         }
         else
         {
-            BlockPos offset = mTemplatePosition.relative(Direction::WEST);
+            offset = offset.relative(Direction::WEST, size.x);
             mBoundingBox->move(offset.x, 0, offset.z);
         }
     }
@@ -109,7 +114,10 @@ void TemplateStructurePiece::addAdditionalSaveData(DataOutputStream* output)
 
 void TemplateStructurePiece::readAdditionalSaveData(DataInputStream* input, StructureManager*)
 {
-    mTemplatePosition = BlockPos(input->readInt(), input->readInt(), input->readInt());
+    int x = input->readInt();
+    int y = input->readInt();
+    int z = input->readInt();
+    mTemplatePosition = BlockPos(x, y, z);
 }
 
 bool TemplateStructurePiece::postProcess(Level* level, Random& random, BoundingBox* box)
@@ -119,7 +127,10 @@ bool TemplateStructurePiece::postProcess(Level* level, Random& random, BoundingB
     StructureTemplate::MarkerMap markers = mTemplate->getMarkers(mTemplatePosition, mPlaceSettings);
 
     for (StructureTemplate::MarkerMap::const_iterator it = markers.begin(); it != markers.end(); ++it)
-        handleDataMarker(it->second, it->first, level, random, box);
+    {
+        std::wstring marker = it->second;
+        handleDataMarker(marker, it->first, level, random, box);
+    }
 
     return true;
 }

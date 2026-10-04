@@ -1,5 +1,6 @@
 #include "game/world/generation/IUIScene_PlayerList.hpp"
 
+#include <cstdlib>
 #include <string>
 
 #include <boost/shared_ptr.hpp>
@@ -12,6 +13,7 @@
 #include "game/network/INetworkPlayer.hpp"
 #include "game/network/KickPlayerPacket.hpp"
 #include "game/ui/UIControl_ButtonList.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
 
 IUIScene_PlayerList::PlayerChange::PlayerChange(unsigned char smallIdValue, bool addedValue)
     : smallId(smallIdValue), added(addedValue)
@@ -35,17 +37,13 @@ IUIScene_PlayerList::~IUIScene_PlayerList()
 int IUIScene_PlayerList::KickPlayerReturned(void* context, int playerIndex, C4JStorage::EMessageResult result)
 {
     unsigned char smallId = *static_cast<unsigned char*>(context);
-    delete static_cast<unsigned char*>(context);
-    if (result != C4JStorage::EMessageResult_Accept)
-        return 0;
-
-    Minecraft* minecraft = Minecraft::GetInstance();
-    if (minecraft == NULL)
-        return 0;
-
-    ClientPacketListener* listener = minecraft->getConnection(playerIndex);
-    if (listener != NULL)
-        listener->send(boost::shared_ptr<Packet>(new KickPlayerPacket(smallId)));
+    free(context);
+    if (result == C4JStorage::EMessageResult_Accept)
+    {
+        boost::shared_ptr<MultiplayerLocalPlayer> player = Minecraft::GetInstance()->mLocalPlayers[playerIndex];
+        if (player->mPacketListener != NULL)
+            player->mPacketListener->send(boost::shared_ptr<Packet>(new KickPlayerPacket(smallId)));
+    }
     return 0;
 }
 
@@ -61,58 +59,45 @@ void IUIScene_PlayerList::tick()
 {
     EnterCriticalSection(&mCriticalSection);
     unsigned int removed = 0;
-    unsigned int index;
-    for (index = 0; index < mPlayerChanges.size(); ++index)
+    for (unsigned int index = 0; index < mPlayerChanges.size(); ++index)
     {
         PlayerChange* change = mPlayerChanges[index];
-        int playerIndex = FindPlayer(change->smallId);
-        if (!change->added && playerIndex < 0)
+        UIControl_ButtonList* list = GetPlayerList();
+        bool wasRemoved = RemovePlayer(change->smallId);
+        if (!change->added)
+            AddPlayer(change->smallId);
+        if (!change->added)
         {
-            UIControl_ButtonList* list = GetPlayerList();
-            if (list != NULL)
-                list->addItem(std::wstring(L""), static_cast<int>(list->getItemCount()));
+            if (!wasRemoved)
+                list->addItem(std::wstring(L""), list->getItemCount());
         }
-        else if (playerIndex >= 0)
+        else if (wasRemoved)
         {
             ++removed;
-            UIControl_ButtonList* list = GetPlayerList();
-            if (list != NULL && removed < list->getItemCount())
-                list->setCurrentSelection(list->getItemCount() - static_cast<int>(index) - 1, false, false);
+            if (removed < static_cast<unsigned int>(list->getItemCount()))
+                list->removeItem(list->getItemCount() - (static_cast<int>(index) + 1), false);
         }
         delete change;
     }
-    mPlayerChanges.clear();
     LeaveCriticalSection(&mCriticalSection);
 
-    UIControl_ButtonList* list = GetPlayerList();
-    if (list != NULL)
+    for (unsigned int item = 0; item < static_cast<unsigned int>(GetPlayerCount()); ++item)
     {
-        unsigned int item = 0;
-        while (item < static_cast<unsigned int>(list->getItemCount()))
+        if (item >= static_cast<unsigned int>(GetPlayerList()->getItemCount()))
+            break;
+        PlayerInfo* currentInfo = GetPlayer(item);
+        INetworkPlayer* player = CGameNetworkManager::sInstance.GetPlayerBySmallId(currentInfo->smallId);
+        if (player != NULL)
         {
-            PlayerInfo* currentInfo = GetPlayer(static_cast<int>(item));
-            if (currentInfo == NULL)
-            {
-                ++item;
-                continue;
-            }
-            unsigned char smallId = currentInfo->smallId;
-            INetworkPlayer* player = CGameNetworkManager::sInstance.GetPlayerBySmallId(smallId);
-            if (player != NULL)
-            {
-                PlayerInfo* info = CreatePlayerInfo();
-                if (info != NULL)
-                {
-                    BuildPlayerInfo(player, info);
-                    UpdatePlayer(static_cast<int>(item), GetPlayer(static_cast<int>(item)), info);
-                    delete info;
-                }
-            }
-            ++item;
+            PlayerInfo* info = CreatePlayerInfo();
+            BuildPlayerInfo(player, info);
+            UpdatePlayer(item, currentInfo, info);
+            delete info;
         }
     }
 
     EnterCriticalSection(&mCriticalSection);
+    mPlayerChanges.clear();
     LeaveCriticalSection(&mCriticalSection);
 }
 

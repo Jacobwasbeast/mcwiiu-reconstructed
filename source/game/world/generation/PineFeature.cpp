@@ -1,3 +1,4 @@
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/world/generation/PineFeature.hpp"
 
 #include <cstdlib>
@@ -18,7 +19,6 @@
 #include "game/world/block/TypedBoxed.hpp"
 #include "game/core/PIXNamedEvents.hpp"
 
-extern CMinecraftApp* g_pApp;
 
 static const BlockState* pineTrunkState = NULL;
 static const BlockState* pineLeafState = NULL;
@@ -34,13 +34,10 @@ PineFeature::~PineFeature()
 
 void PineFeature::staticCtor()
 {
-    TypedBoxed<PlanksBlock::Variant*> trunkVariant(PlanksBlock::Variant::SPRUCE);
-    pineTrunkState = Blocks::log->defaultBlockState()->setBoxedValue(OldLogBlock::VARIANT, &trunkVariant);
-    TypedBoxed<PlanksBlock::Variant*> leafVariant(PlanksBlock::Variant::SPRUCE);
-    TypedBoxed<bool> decayable(false);
+    pineTrunkState = Blocks::log->defaultBlockState()->setValue(OldLogBlock::VARIANT, PlanksBlock::Variant::SPRUCE);
     pineLeafState = Blocks::leaves->defaultBlockState()
-                        ->setBoxedValue(OldLeafBlock::VARIANT, &leafVariant)
-                        ->setBoxedValue(LeafBlock::DECAYABLE, &decayable);
+                        ->setValue(OldLeafBlock::VARIANT, PlanksBlock::Variant::SPRUCE)
+                        ->setValue(LeafBlock::DECAYABLE, false);
 }
 
 bool PineFeature::place(Level* level, Random& random, const BlockPos& pos)
@@ -53,8 +50,8 @@ bool PineFeature::place(Level* level, Random& random, const BlockPos& pos)
 
     if (pos.y > 0 && pos.y + height + 1 <= 128)
     {
-        if (g_pApp->getLevelGenerationOptions() != NULL &&
-            g_pApp->getLevelGenerationOptions()->checkIntersects(
+        if (gApp.getLevelGenerationOptions() != NULL &&
+            gApp.getLevelGenerationOptions()->checkIntersects(
                 BlockPos(pos.x - leafRadius, pos.y - 1, pos.z - leafRadius),
                 BlockPos(pos.x + leafRadius, pos.y + height, pos.z + leafRadius)))
         {

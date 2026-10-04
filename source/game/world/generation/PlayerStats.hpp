@@ -146,8 +146,9 @@ public:
         std::set<int> mSpawnedCheckpoints;
         int mFinishPosition;
         int mFinishPlayerCount;
-        BlockPos mBuildAreaFrom;
-        BlockPos mBuildAreaTo;
+        unsigned char mReserved0x1bc[4];
+        int mBuildAreaFromY;
+        unsigned char mReserved0x1c4[16];
         BlockInteractionInfo mBlocksPlaced;
         BlockInteractionInfo mBlocksDestroyed;
         BlockInteractionInfo mBlocksPresent;
@@ -165,10 +166,10 @@ public:
     RoundStats* getRoundStats(unsigned int round);
     void updateTrackedStats(int round, const DamageEvent* damageEvent);
     int getTotalRounds();
-    double getDamageDealt(int round);
-    double getDamageTaken(int round);
+    float getDamageDealt(int round);
+    float getDamageTaken(int round);
     int getTotalDistanceMoved(unsigned int round);
-    double getAllDamageTaken();
+    float getAllDamageTaken();
     int getTotalJumpCount();
     int getTotalSecondaryTargets();
     int getTotalDeaths();

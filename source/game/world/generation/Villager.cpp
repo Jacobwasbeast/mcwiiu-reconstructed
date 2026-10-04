@@ -111,8 +111,7 @@ Villager::EmeraldForItems::EmeraldForItems(Item* item, PriceRange price)
 
 void Villager::EmeraldForItems::addMerchantRecipe(boost::shared_ptr<Merchant>, MerchantRecipeList* recipes, Random* random)
 {
-    not_null_ptr<ItemInstance> buy(new ItemInstance(mItem, mPrice.getValue(random), 0));
-    recipes->push_back(new MerchantRecipe(buy, Items::emerald));
+    recipes->push_back(new MerchantRecipe(not_null_ptr<ItemInstance>(new ItemInstance(mItem, mPrice.getValue(random), 0)), Items::emerald));
 }
 
 Villager::ItemForEmeralds::ItemForEmeralds(Item* item, const PriceRange& price)
@@ -172,10 +171,10 @@ void Villager::ItemAndEmeraldToItem::addMerchantRecipe(boost::shared_ptr<Merchan
 {
     int firstCount = mFirstPrice.getValue(random);
     int secondCount = mSecondPrice.getValue(random);
-    not_null_ptr<ItemInstance> buyA(new ItemInstance(mFirstItem.getItem(), firstCount, mFirstItem.getAuxValue()));
-    not_null_ptr<ItemInstance> buyB(new ItemInstance(Items::emerald));
-    not_null_ptr<ItemInstance> sell(new ItemInstance(mSecondItem.getItem(), secondCount, mSecondItem.getAuxValue()));
-    recipes->push_back(new MerchantRecipe(buyA, buyB, sell, 0, 7));
+    recipes->push_back(new MerchantRecipe(
+        not_null_ptr<ItemInstance>(new ItemInstance(mFirstItem.getItem(), firstCount, mFirstItem.getAuxValue())),
+        not_null_ptr<ItemInstance>(new ItemInstance(Items::emerald)),
+        not_null_ptr<ItemInstance>(new ItemInstance(mSecondItem.getItem(), secondCount, mSecondItem.getAuxValue())), 0, 7));
 }
 
 Villager::EnchantBookForEmeralds::EnchantBookForEmeralds()
@@ -200,9 +199,9 @@ void Villager::EnchantBookForEmeralds::addMerchantRecipe(boost::shared_ptr<Merch
         cost = 64;
     }
 
-    not_null_ptr<ItemInstance> book(new ItemInstance(Items::book));
-    not_null_ptr<ItemInstance> emerald(new ItemInstance(Items::emerald, cost));
-    recipes->push_back(new MerchantRecipe(book, emerald, enchantedBook, 0, 7));
+    recipes->push_back(new MerchantRecipe(not_null_ptr<ItemInstance>(new ItemInstance(Items::book)),
+                                          not_null_ptr<ItemInstance>(new ItemInstance(Items::emerald, cost)),
+                                          enchantedBook, 0, 7));
 }
 
 Villager::TreasureMapForEmeralds::TreasureMapForEmeralds(const PriceRange& price, std::wstring name, const MapDecoration::Type* icon)
@@ -229,19 +228,15 @@ void Villager::TreasureMapForEmeralds::addMerchantRecipe(boost::shared_ptr<Merch
 
         if (mName.compare(L"Monument") == 0)
         {
-            map->setTranslatableName(0x9ac0e2be);
-        }
-        else if (mName.compare(L"Mansion") == 0)
-        {
-            map->setTranslatableName(0x9f84bee);
+            map->setTranslatableName(IDS_ITEM_FILLED_MAP_OCEAN_MONUMENT);
         }
         else
         {
-            map->setTranslatableName(IDS_DESC_MAP);
+            map->setTranslatableName(mName.compare(L"Mansion") == 0 ? IDS_ITEM_FILLED_MAP_WOODLAND_MANSION : IDS_DESC_MAP);
         }
 
-        not_null_ptr<ItemInstance> emerald(new ItemInstance(Items::emerald, value));
-        recipes->push_back(new MerchantRecipe(emerald, map));
+        recipes->push_back(new MerchantRecipe(not_null_ptr<ItemInstance>(new ItemInstance(Items::emerald, value)),
+                                              not_null_ptr<ItemInstance>(new ItemInstance(Items::compass)), map, 0, 7));
     }
 }
 
@@ -703,47 +698,51 @@ std::wstring Villager::getDisplayName()
         return getCustomName();
     }
 
-    unsigned int profession = getProfession();
+    const wchar_t* name;
 
-    if (profession == 0)
+    switch (getProfession())
     {
-        if (getCareer() == 1) return L10N::GetString(IDS_VILLAGER_FARMER);
-        if (getCareer() == 2) return L10N::GetString(IDS_VILLAGER_FISHERMAN);
-        if (getCareer() == 3) return L10N::GetString(IDS_VILLAGER_SHEPHERD);
-        if (getCareer() == 4) return L10N::GetString(IDS_VILLAGER_FLETCHER);
-    }
-    else if (profession == 1)
-    {
-        if (getCareer() == 1) return L10N::GetString(IDS_VILLAGER_LIBRARIAN);
-        if (getCareer() == 2) return L10N::GetString(IDS_VILLAGER_CARTOGRAPHER);
-    }
-    else if (profession == 2)
-    {
-        return L10N::GetString(IDS_VILLAGER_CLERIC);
-    }
-    else if (profession == 3)
-    {
-        if (getCareer() == 1) return L10N::GetString(IDS_VILLAGER_ARMORER);
-        if (getCareer() == 2) return L10N::GetString(IDS_VILLAGER_WEAPONSMITH);
-        if (getCareer() == 3) return L10N::GetString(IDS_VILLAGER_TOOLSMITH);
-    }
-    else if (profession == 4)
-    {
-        if (getCareer() == 1) return L10N::GetString(IDS_VILLAGER_BUTCHER);
-        if (getCareer() == 2) return L10N::GetString(IDS_VILLAGER_LEATHERWORKER);
-    }
-    else if (profession == 5)
-    {
-        return L10N::GetString(IDS_VILLAGER_NITWIT);
+    case 0:
+        if (getCareer() == 1) name = L10N::GetString(IDS_VILLAGER_FARMER);
+        else if (getCareer() == 2) name = L10N::GetString(IDS_VILLAGER_FISHERMAN);
+        else if (getCareer() == 3) name = L10N::GetString(IDS_VILLAGER_SHEPHERD);
+        else if (getCareer() == 4) name = L10N::GetString(IDS_VILLAGER_FLETCHER);
+        else name = L10N::GetString(IDS_VILLAGER);
+        break;
+    case 1:
+        if (getCareer() == 1) name = L10N::GetString(IDS_VILLAGER_LIBRARIAN);
+        else if (getCareer() == 2) name = L10N::GetString(IDS_VILLAGER_CARTOGRAPHER);
+        else name = L10N::GetString(IDS_VILLAGER);
+        break;
+    case 2:
+        name = L10N::GetString(IDS_VILLAGER_CLERIC);
+        break;
+    case 3:
+        if (getCareer() == 1) name = L10N::GetString(IDS_VILLAGER_ARMORER);
+        else if (getCareer() == 2) name = L10N::GetString(IDS_VILLAGER_WEAPONSMITH);
+        else if (getCareer() == 3) name = L10N::GetString(IDS_VILLAGER_TOOLSMITH);
+        else name = L10N::GetString(IDS_VILLAGER);
+        break;
+    case 4:
+        if (getCareer() == 1) name = L10N::GetString(IDS_VILLAGER_BUTCHER);
+        else if (getCareer() == 2) name = L10N::GetString(IDS_VILLAGER_LEATHERWORKER);
+        else name = L10N::GetString(IDS_VILLAGER);
+        break;
+    case 5:
+        name = L10N::GetString(IDS_VILLAGER_NITWIT);
+        break;
+    default:
+        name = L10N::GetString(IDS_VILLAGER);
+        break;
     }
 
-    return L10N::GetString(IDS_VILLAGER);
+    return name;
 }
 
 void Villager::setTradingPlayer(const boost::shared_ptr<Player>& player)
 {
     setTrading(player.get() != NULL);
-    mTradingPlayer = player;
+    mTradingPlayer = boost::weak_ptr<Player>(player);
 }
 
 boost::shared_ptr<Player> Villager::getTradingPlayer()
@@ -764,13 +763,13 @@ void Villager::increaseMerchantCareer()
         if (careers.empty())
         {
             setCareer(1);
+            mCareerLevel = 1;
         }
         else
         {
             setCareer(mRandom->nextInt(careers.size()) + 1);
+            mCareerLevel = 1;
         }
-
-        mCareerLevel = 1;
     }
 
     if (mOffers == NULL)
@@ -797,8 +796,7 @@ void Villager::increaseMerchantCareer()
 
     for (unsigned int i = 0; i < listings.length; i++)
     {
-        boost::shared_ptr<Merchant> self = boost::dynamic_pointer_cast<Merchant>(shared_from_this());
-        listings.data[i]->addMerchantRecipe(self, mOffers, mRandom);
+        listings.data[i]->addMerchantRecipe(boost::dynamic_pointer_cast<Merchant>(shared_from_this()), mOffers, mRandom);
     }
 }
 
@@ -921,34 +919,20 @@ bool Villager::countFood(int multiplier)
     {
         not_null_ptr<ItemInstance> item = mInventory->getItem(slot);
 
-        if (item->isEmpty())
+        if (!item->isEmpty())
         {
-            continue;
-        }
+            if ((item->getItem() == Items::bread && item->getCount() >= multiplier * 3) ||
+                (item->getItem() == Items::potato && item->getCount() >= multiplier * 12) ||
+                (item->getItem() == Items::carrot && item->getCount() >= multiplier * 12) ||
+                (item->getItem() == Items::beetroot && item->getCount() >= multiplier * 12))
+            {
+                return true;
+            }
 
-        if (item->getItem() == Items::bread && item->getCount() >= multiplier * 3)
-        {
-            return true;
-        }
-
-        if (item->getItem() == Items::potato && item->getCount() >= multiplier * 12)
-        {
-            return true;
-        }
-
-        if (item->getItem() == Items::carrot && item->getCount() >= multiplier * 12)
-        {
-            return true;
-        }
-
-        if (item->getItem() == Items::beetroot && item->getCount() >= multiplier * 12)
-        {
-            return true;
-        }
-
-        if (profession == 0 && item->getItem() == Items::wheat && item->getCount() >= multiplier * 9)
-        {
-            return true;
+            if (profession == 0 && item->getItem() == Items::wheat && item->getCount() >= multiplier * 9)
+            {
+                return true;
+            }
         }
     }
 
@@ -1049,7 +1033,7 @@ void Villager::customServerAiStep()
         }
         else
         {
-            restrictTo(*village->getCenter(), village->getRadius());
+            restrictTo(*village->getCenter(), static_cast<int>(static_cast<float>(village->getRadius())));
 
             if (mRewardPlayersInVillage)
             {
@@ -1152,30 +1136,22 @@ bool Villager::hurt(const DamageSource* source, float damage)
 {
     if (source != NULL && dynamic_cast<const EntityDamageSource*>(source) != NULL)
     {
-        boost::shared_ptr<Entity> attacker = source->getEntity();
+        boost::shared_ptr<Entity> attacker = source->getDirectEntity();
 
-        if ((attacker->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+        if ((attacker->GetType() & EntityType::PLAYER) == EntityType::PLAYER &&
+            !boost::static_pointer_cast<Player>(attacker)->isAllowedToAttackAnimals())
         {
-            boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(attacker);
-
-            if (!player->isAllowedToAttackAnimals())
-            {
-                return false;
-            }
+            return false;
         }
 
         if (attacker != NULL && (attacker->GetType() & EntityType::ARROW) == EntityType::ARROW)
         {
             boost::shared_ptr<Arrow> arrow = boost::static_pointer_cast<Arrow>(attacker);
 
-            if (arrow->mOwner != NULL && (arrow->mOwner->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+            if (arrow->mOwner != NULL && (arrow->mOwner->GetType() & EntityType::PLAYER) == EntityType::PLAYER &&
+                !boost::static_pointer_cast<Player>(arrow->mOwner)->isAllowedToAttackAnimals())
             {
-                boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(arrow->mOwner);
-
-                if (!player->isAllowedToAttackAnimals())
-                {
-                    return false;
-                }
+                return false;
             }
         }
     }
@@ -1402,27 +1378,22 @@ bool Villager::isWillingToBreed(bool consumeFood)
         {
             not_null_ptr<ItemInstance> item = mInventory->getItem(slot);
 
-            if (item->isEmpty())
+            if (!item->isEmpty())
             {
-                continue;
-            }
+                if (item->getItem() == Items::bread && item->getCount() >= 3)
+                {
+                    mInventory->removeItem(slot, 3);
+                }
+                else if ((item->getItem() == Items::potato || item->getItem() == Items::carrot) &&
+                         item->getCount() >= 12)
+                {
+                    mInventory->removeItem(slot, 12);
+                }
+                else
+                {
+                    continue;
+                }
 
-            bool consumed = false;
-
-            if (item->getItem() == Items::bread && item->getCount() >= 3)
-            {
-                mInventory->removeItem(slot, 3);
-                consumed = true;
-            }
-            else if ((item->getItem() == Items::potato || item->getItem() == Items::carrot) &&
-                     item->getCount() >= 12)
-            {
-                mInventory->removeItem(slot, 12);
-                consumed = true;
-            }
-
-            if (consumed)
-            {
                 mLevel->broadcastEntityEvent(shared_from_this(), EntityEvent::IN_LOVE_HEARTS, 0);
                 mWillingToBreed = true;
                 break;
@@ -1443,7 +1414,7 @@ ResourceLocation* Villager::getDefaultLootTable()
     return &BuiltInLootTables::VILLAGER;
 }
 
-double Villager::getEyeHeight()
+float Villager::getEyeHeight()
 {
     if (isBaby())
     {
@@ -1557,13 +1528,9 @@ bool Villager::hasFarmSeeds()
     {
         not_null_ptr<ItemInstance> item = mInventory->getItem(slot);
 
-        if (item->isEmpty())
-        {
-            continue;
-        }
-
-        if (item->getItem() == Items::wheatSeeds || item->getItem() == Items::potato ||
-            item->getItem() == Items::carrot || item->getItem() == Items::beetrootSeeds)
+        if (!item->isEmpty() &&
+            (item->getItem() == Items::wheatSeeds || item->getItem() == Items::potato ||
+             item->getItem() == Items::carrot || item->getItem() == Items::beetrootSeeds))
         {
             return true;
         }

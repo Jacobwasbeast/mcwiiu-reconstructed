@@ -14,8 +14,8 @@
 SlimeOuterLayer::SlimeOuterLayer(SlimeRenderer* renderer)
     : mRenderer(renderer)
 {
-    ModelDefinition modelDefinition;
-    mModel = new SlimeModel(0, modelDefinition);
+    SlimeModel* model = new SlimeModel(0, ModelDefinition());
+    mModel = model;
     mOriginalModel = NULL;
 }
 
@@ -42,8 +42,8 @@ void SlimeOuterLayer::render(boost::shared_ptr<LivingEntity>& entity, float limb
         GlStateManager::enableBlend();
         GlStateManager::blendFunc(4, 5);
 
-        boost::shared_ptr<Entity> renderEntity = entity;
         mModel->copyPropertiesFrom(mRenderer->getModel());
+        boost::shared_ptr<Entity> renderEntity = entity;
         mModel->render(renderEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw,
                        headPitch, scale, bUseDisplayList);
 
@@ -77,12 +77,12 @@ void SlimeOuterLayer::setupForTexturePack(TexturePack* pTexturePack)
         mModel = NULL;
     }
 
-    if (!pTexturePack->HasCustomModel(L"slime.armor"))
+    if (pTexturePack->HasCustomModel(L"slime.armor"))
     {
-        mModel = mOriginalModel;
+        mModel = new SlimeModel(0, *pTexturePack->GetCustomModel(L"slime.armor"));
     }
     else
     {
-        mModel = new SlimeModel(0, *pTexturePack->GetCustomModel(L"slime.armor"));
+        mModel = mOriginalModel;
     }
 }

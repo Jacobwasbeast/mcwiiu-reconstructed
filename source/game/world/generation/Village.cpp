@@ -1,5 +1,6 @@
 #include "game/world/generation/Village.hpp"
 
+#include <climits>
 #include <cmath>
 #include <typeinfo>
 
@@ -40,8 +41,9 @@ Village::~Village()
 }
 
 Village::Aggressor::Aggressor(boost::shared_ptr<LivingEntity> entity, int timeStamp)
-    : mEntity(entity), mTimeStamp(timeStamp)
 {
+    mEntity = entity;
+    mTimeStamp = timeStamp;
 }
 
 void Village::setLevel(Level* level) { mLevel = level; }
@@ -196,7 +198,7 @@ void Village::tick(int tick)
         Vec3* pos = findRandomSpawnPos(mCenter, 2, 4, 2);
         if (pos != NULL)
         {
-            boost::shared_ptr<VillagerGolem> golem(new VillagerGolem(mLevel));
+            boost::shared_ptr<Entity> golem(new VillagerGolem(mLevel));
             golem->setPos(pos->x, pos->y, pos->z);
             mLevel->addEntity(golem);
             ++mGolems;
@@ -213,7 +215,7 @@ std::vector<boost::shared_ptr<DoorInfo> >* Village::getDoorInfos() { return &mDo
 boost::shared_ptr<DoorInfo> Village::getClosestDoorInfo(const BlockPos& pos)
 {
     boost::shared_ptr<DoorInfo> result;
-    int distance = 0x7fffffff;
+    int distance = INT_MAX;
     for (std::vector<boost::shared_ptr<DoorInfo> >::iterator it = mDoors.begin(); it != mDoors.end(); ++it)
     {
         boost::shared_ptr<DoorInfo> door = *it;
@@ -226,26 +228,26 @@ boost::shared_ptr<DoorInfo> Village::getClosestDoorInfo(const BlockPos& pos)
 boost::shared_ptr<DoorInfo> Village::getBestDoorInfo(const BlockPos& pos)
 {
     boost::shared_ptr<DoorInfo> result;
-    int score = 0x7fffffff;
+    int score = INT_MAX;
     for (std::vector<boost::shared_ptr<DoorInfo> >::iterator it = mDoors.begin(); it != mDoors.end(); ++it)
     {
-        int distance = (*it)->distanceToSqr(pos);
-        int current = distance < 257 ? (*it)->getBookingsCount() : distance * 1000;
+        boost::shared_ptr<DoorInfo> door = *it;
+        int current = door->distanceToSqr(pos);
+        if (current > 256)
+            current *= 1000;
+        else
+            current = door->getBookingsCount();
         if (current < score)
         {
-            BlockPos doorPos = (*it)->getPos();
-            const Direction* direction = (*it)->getDirection();
-            BlockPos outside = doorPos.relative(direction, 1);
-            BlockPos inside = doorPos.relative(direction, -1);
-            BlockPos outsideAbove = doorPos.above().relative(direction, 1);
-            BlockPos insideAbove = doorPos.above().relative(direction, -1);
-            if (mLevel->getBlockState(outside)->getBlock()->isPathfindable(mLevel, outside)
-                && mLevel->getBlockState(inside)->getBlock()->isPathfindable(mLevel, inside)
-                && mLevel->getBlockState(outsideAbove)->getBlock()->isPathfindable(mLevel, outsideAbove)
-                && mLevel->getBlockState(insideAbove)->getBlock()->isPathfindable(mLevel, insideAbove))
+            BlockPos doorPos = door->getPos();
+            const Direction* direction = door->getDirection();
+            if (mLevel->getBlockState(doorPos.relative(direction, 1))->getBlock()->isPathfindable(mLevel, doorPos.relative(direction, 1))
+                && mLevel->getBlockState(doorPos.relative(direction, -1))->getBlock()->isPathfindable(mLevel, doorPos.relative(direction, -1))
+                && mLevel->getBlockState(doorPos.above().relative(direction, 1))->getBlock()->isPathfindable(mLevel, doorPos.above().relative(direction, 1))
+                && mLevel->getBlockState(doorPos.above().relative(direction, -1))->getBlock()->isPathfindable(mLevel, doorPos.above().relative(direction, -1)))
             {
                 score = current;
-                result = *it;
+                result = door;
             }
         }
     }
@@ -258,7 +260,7 @@ boost::shared_ptr<DoorInfo> Village::getDoorInfo(const BlockPos& pos)
     for (std::vector<boost::shared_ptr<DoorInfo> >::iterator it = mDoors.begin(); it != mDoors.end(); ++it)
     {
         boost::shared_ptr<DoorInfo> door = *it;
-        if (door->getPos().x == pos.x && door->getPos().z == pos.z && std::abs(door->getPos().y - pos.y) < 2) return door;
+        if (door->getPos().x == pos.x && door->getPos().z == pos.z && std::abs(door->getPos().y - pos.y) <= 1) return door;
     }
     return boost::shared_ptr<DoorInfo>();
 }
@@ -268,8 +270,7 @@ bool Village::hasDoorInfo(const BlockPos& pos) { return getDoorInfo(pos).get() !
 void Village::addDoorInfo(boost::shared_ptr<DoorInfo> door)
 {
     mDoors.push_back(door);
-    BlockPos pos = door->getPos();
-    mBottom.x += pos.x; mBottom.y += pos.y; mBottom.z += pos.z;
+    mBottom = mBottom.offset(door->getPos());
     calcInfo();
     mStable = door->getTimeStamp();
 }
@@ -292,15 +293,21 @@ void Village::addAggressor(boost::shared_ptr<LivingEntity> entity)
 
 boost::shared_ptr<LivingEntity> Village::getClosestAggressor(boost::shared_ptr<LivingEntity> entity)
 {
-    boost::shared_ptr<LivingEntity> result;
+    Aggressor* closest = NULL;
     double distance = 1.7976931348623157e+308;
-    std::vector<Aggressor*>::iterator it;
-    for (it = mAggressors.begin(); it != mAggressors.end(); ++it)
+    for (std::vector<Aggressor*>::iterator it = mAggressors.begin(); it != mAggressors.end(); ++it)
     {
-        double current = (*it)->mEntity->distanceToSqr(entity);
-        if (current <= distance) { distance = current; result = (*it)->mEntity; }
+        Aggressor* aggressor = *it;
+        double current = aggressor->mEntity->distanceToSqr(entity);
+        if (current <= distance)
+        {
+            closest = aggressor;
+            distance = current;
+        }
     }
-    return result;
+    if (closest != NULL)
+        return closest->mEntity;
+    return boost::shared_ptr<LivingEntity>();
 }
 
 int Village::getStanding(const std::wstring& name)
@@ -309,7 +316,7 @@ int Village::getStanding(const std::wstring& name)
     return it == mPlayerStandings.end() ? 0 : it->second;
 }
 
-bool Village::isVeryBadStanding(std::wstring name) { return getStanding(name) < -15; }
+bool Village::isVeryBadStanding(std::wstring name) { return getStanding(name) <= -15; }
 
 boost::shared_ptr<LivingEntity> Village::getClosestBadStandingPlayer(boost::shared_ptr<LivingEntity> entity)
 {
@@ -318,9 +325,10 @@ boost::shared_ptr<LivingEntity> Village::getClosestBadStandingPlayer(boost::shar
     boost::unordered_map<std::wstring, int>::iterator it;
     for (it = mPlayerStandings.begin(); it != mPlayerStandings.end(); ++it)
     {
-        if (isVeryBadStanding(it->first))
+        std::wstring name = it->first;
+        if (isVeryBadStanding(name))
         {
-            boost::shared_ptr<Player> player = mLevel->getPlayerByName(it->first);
+            boost::shared_ptr<Player> player = mLevel->getPlayerByName(name);
             if (player)
             {
                 double current = player->distanceToSqr(entity);
@@ -356,7 +364,10 @@ void Village::readAdditionalSaveData(CompoundTag* tag)
     for (i = 0; i < players->size(); ++i)
     {
         CompoundTag* player = players->getCompound(i);
-        mPlayerStandings.insert(std::make_pair(player->getString(L"Name"), player->getInt(L"S")));
+        std::wstring name = player->getString(L"Name");
+        int standing = player->getInt(L"S");
+        std::pair<const std::wstring, int> entry(name, standing);
+        mPlayerStandings.insert(entry);
     }
 }
 
@@ -370,9 +381,10 @@ void Village::addAdditonalSaveData(CompoundTag* tag)
     std::vector<boost::shared_ptr<DoorInfo> >::iterator it;
     for (it = mDoors.begin(); it != mDoors.end(); ++it)
     {
-        CompoundTag* door = new CompoundTag(); BlockPos pos = (*it)->getPos();
-        door->putInt(L"X", pos.x); door->putInt(L"Y", pos.y); door->putInt(L"Z", pos.z);
-        door->putInt(L"IDX", (*it)->getInsideDx()); door->putInt(L"IDZ", (*it)->getInsideDz()); door->putInt(L"TS", (*it)->getTimeStamp());
+        boost::shared_ptr<DoorInfo> info = *it;
+        CompoundTag* door = new CompoundTag();
+        door->putInt(L"X", info->getPos().x); door->putInt(L"Y", info->getPos().y); door->putInt(L"Z", info->getPos().z);
+        door->putInt(L"IDX", info->getInsideDx()); door->putInt(L"IDZ", info->getInsideDz()); door->putInt(L"TS", info->getTimeStamp());
         doors->add(door);
     }
     tag->put(L"Doors", doors);

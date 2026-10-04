@@ -8,8 +8,10 @@
 #include "game/core/XmlValue.hpp"
 
 PlayersCondition::PlayersCondition(const XmlObject& object)
-    : IntegerCondition(object), m_activeOnly(object[L"activeOnly"].asBool()), m_readyOnly(object[L"readyOnly"].asBool())
+    : IntegerCondition(object)
 {
+    m_activeOnly = object[L"activeOnly"].asBool();
+    m_readyOnly = object[L"readyOnly"].asBool();
 }
 
 PlayersCondition::~PlayersCondition()
@@ -23,13 +25,12 @@ int PlayersCondition::GetValue(MasterGameMode* gameMode) const
 
 void PlayersCondition::AddIntParams(MasterGameMode* gameMode, std::vector<int>* params) const
 {
-    params->push_back(GetValue(gameMode));
+    const int threshold = GetThreshold(gameMode);
+    params->push_back(threshold);
     params->push_back(IDS_MG_PLAYERS);
 }
 
 bool PlayersCondition::IsSatisfied(MasterGameMode* gameMode) const
 {
-    if (Minecraft::GetInstance()->GetMiniGame()->GetHostOption(eCustomGameModeHostOption_TimeTrial) == 0)
-        return IntegerCondition::IsSatisfied(gameMode);
-    return true;
+    return Minecraft::GetInstance()->GetMiniGame()->GetHostOption(eCustomGameModeHostOption_TimeTrial) != 0 || IntegerCondition::IsSatisfied(gameMode);
 }

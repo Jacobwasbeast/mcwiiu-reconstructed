@@ -3,6 +3,7 @@
 #include <cmath>
 #include <limits>
 
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/StrongholdPieces.hpp"
 #include "game/util/Math.hpp"
@@ -16,8 +17,6 @@
 #include "game/world/chunk/ChunkPos.hpp"
 #include "game/world/generation/FlatGeneratorInfo.hpp"
 
-extern CMinecraftApp* g_pApp;
-
 StrongholdFeature::StrongholdFeature()
     : StructureFeature()
 {
@@ -29,7 +28,7 @@ StrongholdFeature::StrongholdFeature(SuperflatConfig* config)
 {
     _init();
     FlatGeneratorInfo info(config);
-    mDistance = static_cast<double>(info.getStrongholdDistance());
+    mDistance = static_cast<double>(static_cast<unsigned int>(info.getStrongholdDistance()));
     mPositions.clear();
     for (int i = 0; i < info.getStrongholdCount(); ++i)
     {
@@ -40,7 +39,7 @@ StrongholdFeature::StrongholdFeature(SuperflatConfig* config)
 
 void StrongholdFeature::_init()
 {
-    mAllowedBiomes.clear();
+    mAllowedBiomes = std::vector<Biome*>();
     for (int group = 0; group < 5; ++group)
     {
         for (int index = 0; index < 8; ++index)
@@ -76,69 +75,67 @@ void StrongholdFeature::generatePositions()
     restoreSavedData(level);
     Random positionRandom;
     positionRandom.setSeed(level->getSeed());
-    double angle = positionRandom.nextDouble() * 6.2831854820251465;
+    double angle = positionRandom.nextDouble() * 3.1415927f * 2.0;
     bool foundPosition = false;
 
-    for (int attempt = 0; attempt < 10; ++attempt)
+    for (int attempt = 0; !foundPosition && attempt < 10; ++attempt)
     {
         for (std::vector<ChunkPos*>::iterator it = mPositions.begin(); it != mPositions.end(); ++it)
         {
-            double distance;
+            int x;
+            int z;
+            BlockPos* biomePosition;
             if (level->getOriginalSaveVersion() < 5)
             {
-                distance = (positionRandom.nextDouble() + 1.25) *
+                double distance = (positionRandom.nextDouble() + 1.25) *
                     (static_cast<double>(positionRandom.nextInt(7)) + 5.0);
+                x = Math::round(std::cos(angle) * distance);
+                z = Math::round(std::sin(angle) * distance);
+                biomePosition = level->getBiomeSource()->findBiome(
+                    x * 16 + 8, z * 16 + 8, 112, mAllowedBiomes, &positionRandom);
             }
             else
             {
-                distance = (positionRandom.nextDouble() + 1.25) *
+                double distance = (positionRandom.nextDouble() + 1.25) *
                     static_cast<double>(positionRandom.nextInt(4) + 3);
+                x = Math::round(std::cos(angle) * distance);
+                z = Math::round(std::sin(angle) * distance);
+                biomePosition = level->getBiomeSource()->findBiome(
+                    x * 16 + 8, z * 16 + 8, 112, mAllowedBiomes, &positionRandom);
             }
-
-            int x = Math::round(std::cos(angle) * distance);
-            int z = Math::round(std::sin(angle) * distance);
-            BlockPos* biomePosition = level->getBiomeSource()->findBiome(
-                x * 16 + 8, z * 16 + 8, 112, mAllowedBiomes, &positionRandom);
             if (biomePosition != NULL)
             {
                 x = biomePosition->x >> 4;
                 z = biomePosition->z >> 4;
-                g_pApp->AddTerrainFeaturePosition(eTerrainFeatureType_Stronghold, x, z);
+                gApp.AddTerrainFeaturePosition(eTerrainFeatureType_Stronghold, x, z);
                 foundPosition = true;
                 delete biomePosition;
             }
 
             delete *it;
             *it = new ChunkPos(x, z);
-            int count = static_cast<int>(mPositions.size());
-            angle += 6.2831854820251465 / static_cast<double>(count);
-        }
-
-        if (foundPosition)
-        {
-            break;
+            angle += 3.1415927f * 2.0 / static_cast<double>(mPositions.size());
         }
     }
 
-    if (!foundPosition && !mPositions.empty() && mPositions.front() != NULL)
+    if (!foundPosition)
     {
-        g_pApp->AddTerrainFeaturePosition(eTerrainFeatureType_Stronghold,
-                                          mPositions.front()->x, mPositions.front()->z);
+        gApp.AddTerrainFeaturePosition(eTerrainFeatureType_Stronghold,
+                                      mPositions.front()->x, mPositions.front()->z);
     }
 }
 
-BlockPos* StrongholdFeature::getNearestGeneratedFeature(Level* sourceLevel,
+BlockPos* StrongholdFeature::getNearestGeneratedFeature(Level*,
                                                         const BlockPos& pos,
                                                         bool)
 {
-    LevelGenerationOptions* options = g_pApp->getLevelGenerationOptions();
+    LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
     if (options != NULL && canPlaceFeatureInChunk(false, eFeatureType_Stronghold,
                                                    pos.x >> 4, pos.z >> 4))
     {
         return options->getClosestFeature(eFeatureType_Stronghold, pos);
     }
 
-    level = sourceLevel;
     if (!mPositionsGenerated)
     {
         generatePositions();
@@ -146,25 +143,20 @@ BlockPos* StrongholdFeature::getNearestGeneratedFeature(Level* sourceLevel,
     }
 
     BlockPos* nearest = NULL;
+    BlockPos candidate(0, 0, 0);
     double nearestDistance = std::numeric_limits<double>::max();
     for (std::vector<ChunkPos*>::iterator it = mPositions.begin(); it != mPositions.end(); ++it)
     {
-        if (*it == NULL)
-        {
-            continue;
-        }
-        BlockPos candidate((*it)->x * 16 + 8, 32, (*it)->z * 16 + 8);
+        candidate = BlockPos((*it)->x * 16 + 8, 32, (*it)->z * 16 + 8);
         double distance = candidate.distSqr(pos);
-        if (nearest == NULL || distance < nearestDistance)
+        if (nearest == NULL)
         {
-            if (nearest == NULL)
-            {
-                nearest = new BlockPos(candidate);
-            }
-            else
-            {
-                *nearest = candidate;
-            }
+            nearest = new BlockPos(candidate);
+            nearestDistance = distance;
+        }
+        else if (distance < nearestDistance)
+        {
+            *nearest = candidate;
             nearestDistance = distance;
         }
     }
@@ -173,7 +165,7 @@ BlockPos* StrongholdFeature::getNearestGeneratedFeature(Level* sourceLevel,
 
 bool StrongholdFeature::isFeatureChunk(int chunkX, int chunkZ, bool)
 {
-    LevelGenerationOptions* options = g_pApp->getLevelGenerationOptions();
+    LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
     if (options != NULL && canPlaceFeatureInChunk(false, eFeatureType_Stronghold, chunkX, chunkZ))
     {
         return options->isFeatureChunk(chunkX, chunkZ, eFeatureType_Stronghold, NULL);
@@ -186,11 +178,14 @@ bool StrongholdFeature::isFeatureChunk(int chunkX, int chunkZ, bool)
     }
     for (std::vector<ChunkPos*>::iterator it = mPositions.begin(); it != mPositions.end(); ++it)
     {
-        if (options != NULL && options->isFeatureChunk(chunkX, chunkZ, eFeatureType_Stronghold, NULL))
+        int inOptions = 0;
+        LevelGenerationOptions* currentOptions = gApp.getLevelGenerationOptions();
+        if (currentOptions != NULL)
         {
-            return true;
+            inOptions = currentOptions->isFeatureChunk(chunkX, chunkZ, eFeatureType_Stronghold, NULL);
         }
-        if (*it != NULL && (*it)->x == chunkX && (*it)->z == chunkZ)
+        ChunkPos* position = *it;
+        if (inOptions != 0 || (position != NULL && chunkX == position->x && chunkZ == position->z))
         {
             return true;
         }
@@ -200,7 +195,7 @@ bool StrongholdFeature::isFeatureChunk(int chunkX, int chunkZ, bool)
 
 std::vector<BlockPos>* StrongholdFeature::getGuesstimatedFeaturePositions()
 {
-    std::vector<BlockPos>* positions = new std::vector<BlockPos>();
+    std::vector<BlockPos>* positions = new std::vector<BlockPos>;
     for (std::vector<ChunkPos*>::iterator it = mPositions.begin(); it != mPositions.end(); ++it)
     {
         if (*it != NULL)
@@ -216,7 +211,8 @@ StructureStart* StrongholdFeature::createStructureStart(int chunkX, int chunkZ)
     for (;;)
     {
         StrongholdStart* start = new StrongholdStart(level, random, chunkX, chunkZ);
-        if (!start->empty() && static_cast<StrongholdPieces::StartPiece*>(start->front())->mPortalRoom != NULL)
+        if (!start->getPieces()->empty() &&
+            static_cast<StrongholdPieces::StartPiece*>(start->getPieces()->front())->mPortalRoom != NULL)
             return start;
         delete start;
     }

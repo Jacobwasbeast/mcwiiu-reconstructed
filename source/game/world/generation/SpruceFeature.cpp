@@ -2,6 +2,7 @@
 
 #include <cstdlib>
 
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
@@ -16,7 +17,6 @@
 #include "game/world/block/OldLogBlock.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
-extern CMinecraftApp* g_pApp;
 
 static const BlockState* spruceTrunkState = NULL;
 static const BlockState* spruceLeafState = NULL;
@@ -32,13 +32,22 @@ SpruceFeature::~SpruceFeature()
 
 void SpruceFeature::staticCtor()
 {
-    TypedBoxed<PlanksBlock::Variant*> trunkVariant(PlanksBlock::Variant::SPRUCE);
-    spruceTrunkState = Blocks::log->defaultBlockState()->setBoxedValue(OldLogBlock::VARIANT, &trunkVariant);
-    TypedBoxed<PlanksBlock::Variant*> leafVariant(PlanksBlock::Variant::SPRUCE);
-    TypedBoxed<bool> decayable(false);
-    spruceLeafState = Blocks::leaves->defaultBlockState()
-                          ->setBoxedValue(OldLeafBlock::VARIANT, &leafVariant)
-                          ->setBoxedValue(LeafBlock::DECAYABLE, &decayable);
+    const BlockState* trunkState = Blocks::log->defaultBlockState();
+    {
+        TypedBoxed<PlanksBlock::Variant*> trunkVariant(PlanksBlock::Variant::SPRUCE);
+        trunkState = trunkState->setBoxedValue(OldLogBlock::VARIANT, &trunkVariant);
+    }
+    spruceTrunkState = trunkState;
+    const BlockState* leafState = Blocks::leaves->defaultBlockState();
+    {
+        TypedBoxed<PlanksBlock::Variant*> leafVariant(PlanksBlock::Variant::SPRUCE);
+        leafState = leafState->setBoxedValue(OldLeafBlock::VARIANT, &leafVariant);
+    }
+    {
+        TypedBoxed<bool> decayable(false);
+        leafState = leafState->setBoxedValue(LeafBlock::DECAYABLE, &decayable);
+    }
+    spruceLeafState = leafState;
 }
 
 bool SpruceFeature::place(Level* level, Random& random, const BlockPos& pos)
@@ -51,8 +60,8 @@ bool SpruceFeature::place(Level* level, Random& random, const BlockPos& pos)
     if (pos.y < 1 || pos.y + height + 1 > 256)
         return false;
 
-    if (g_pApp->getLevelGenerationOptions() != NULL
-        && g_pApp->getLevelGenerationOptions()->checkIntersects(pos.offset(-maxRadius, -1, -maxRadius),
+    if (gApp.getLevelGenerationOptions() != NULL
+        && gApp.getLevelGenerationOptions()->checkIntersects(pos.offset(-maxRadius, -1, -maxRadius),
                                                                 pos.offset(maxRadius, height, maxRadius)))
         return false;
 

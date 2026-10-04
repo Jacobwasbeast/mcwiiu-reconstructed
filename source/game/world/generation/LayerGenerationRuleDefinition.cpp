@@ -7,6 +7,7 @@
 #include "game/core/Minecraft.hpp"
 #include "game/minigame/MiniGameDef.hpp"
 #include "game/util/Random.hpp"
+#include "game/util/Vec3i.hpp"
 #include "game/core/LayerSize.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/generation/LayerAttributeChildRuleDefinition.hpp"
@@ -19,10 +20,8 @@
 #include "game/world/LayerGenerationRuleDefinition.hpp"
 
 LayerGenerationRuleDefinition::LayerGenerationRuleDefinition()
+    : mDefinition(NULL), mLayerHeight(10), mLayerDirection(1)
 {
-    mDefinition = NULL;
-    mLayerHeight = 10;
-    mLayerDirection = 1;
 }
 
 LayerGenerationRuleDefinition::~LayerGenerationRuleDefinition()
@@ -79,10 +78,10 @@ std::vector<LayerGenerator*>* LayerGenerationRuleDefinition::CreateLayers(Random
         metadata.m_iBottomLayerIndex = static_cast<int>(layerCount - 1);
 
         Random wholeLevelRandom(layerRandom);
-        double blend = layerCount > 1 ? 1.0 - static_cast<double>(index) /
-            static_cast<double>(layerCount - 1) : 0.0;
         AnyCombinationOfRuleDefinition* definition =
             mDefinition->GetRandomLeafChild(metadata, wholeLevelRandom, random);
+        double blend = layerCount > 1 ? 1.0 - static_cast<double>(index) /
+            static_cast<double>(layerCount - 1) : 0.0;
 
         std::vector<LayerAttributeChildRuleDefinition<LayerSize*>*> sizes;
         definition->GetPossibleLayerSizes(sizes);
@@ -105,9 +104,9 @@ std::vector<LayerGenerator*>* LayerGenerationRuleDefinition::CreateLayers(Random
         std::vector<const LayerTheme*> themes;
         static VoidLayerTheme defaultTheme;
         int themeIndex;
+        std::vector<LayerAttributeChildRuleDefinition<LayerTheme*>*> possibleThemes;
         for (themeIndex = 0; themeIndex < 4; ++themeIndex)
         {
-            std::vector<LayerAttributeChildRuleDefinition<LayerTheme*>*> possibleThemes;
             definition->GetPossibleLayerThemes(themeIndex, possibleThemes);
             if (possibleThemes.empty())
             {
@@ -118,14 +117,15 @@ std::vector<LayerGenerator*>* LayerGenerationRuleDefinition::CreateLayers(Random
                 LayerAttributeChildRuleDefinition<LayerTheme*>* themeDefinition =
                     randomUsableElement(random, possibleThemes, metadata);
                 themes.push_back(themeDefinition->GetValue());
+                possibleThemes.clear();
             }
         }
 
         int halfSize = static_cast<int>(static_cast<float>(size->GetLayerSize(random, blend)) * scale * 0.5f);
-        AABB* layerArea = AABB::newPermanent(origin.offset(-halfSize, -mLayerHeight, -halfSize),
-                                              origin.offset(halfSize, 0, halfSize));
+        AABB* layerArea = AABB::newPermanent(origin.offset(Vec3i(-halfSize, -mLayerHeight, -halfSize)),
+                                              origin.offset(Vec3i(halfSize, 0, halfSize)));
         generators->push_back(new LayerGenerator(layerArea, shape, fill, themes));
-        origin = origin.offset(0, -mLayerHeight, 0);
+        origin = origin.offset(Vec3i(0, -mLayerHeight, 0));
     }
 
     return generators;

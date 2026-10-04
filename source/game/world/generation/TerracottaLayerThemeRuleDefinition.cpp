@@ -6,70 +6,91 @@ TerracottaLayerThemeFunction getColourFunc(const std::wstring& function);
 
 TerracottaLayerTheme::Pattern getPattern(const std::wstring& pattern)
 {
-    TerracottaLayerTheme::Pattern result;
     Random random;
-    const Direction* directions[4] = {Direction::NORTH, Direction::SOUTH,
-                                      Direction::EAST, Direction::WEST};
-    const Direction* selected = directions[random.nextInt(4)];
-    for (int i = 0; i < 16; ++i)
-        result.values[i] = 0;
+    const Direction* directions[4];
 
     if (pattern == L"RANDOM:1")
     {
-        result.size = 1;
+        TerracottaLayerTheme::Pattern result = {1};
+        directions[0] = Direction::NORTH;
+        directions[1] = Direction::SOUTH;
+        directions[2] = Direction::EAST;
+        directions[3] = Direction::WEST;
+        const Direction* selected = directions[random.nextInt(4)];
         result.values[0] = selected;
+        return result;
     }
     else if (pattern == L"RANDOM:2")
     {
-        result.size = 2;
+        directions[0] = Direction::NORTH;
+        directions[1] = Direction::SOUTH;
+        directions[2] = Direction::EAST;
+        directions[3] = Direction::WEST;
+        const Direction* selected = directions[random.nextInt(4)];
+        TerracottaLayerTheme::Pattern result = {2};
         result.values[0] = selected->getClockWise();
         result.values[1] = selected->getOpposite();
         result.values[4] = selected;
         result.values[5] = selected->getCounterClockWise();
+        return result;
     }
     else if (pattern == L"RANDOM:3")
     {
-        result.size = 3;
+        directions[0] = Direction::NORTH;
+        directions[1] = Direction::SOUTH;
+        directions[2] = Direction::EAST;
+        directions[3] = Direction::WEST;
+        const Direction* selected = directions[random.nextInt(4)];
+        TerracottaLayerTheme::Pattern result = {3};
         const Direction* opposite = selected->getOpposite();
         result.values[0] = selected;
         result.values[1] = opposite;
         result.values[2] = selected;
-        result.values[5] = opposite;
-        result.values[6] = selected;
-        result.values[7] = opposite;
-        result.values[9] = selected;
-        result.values[10] = opposite;
-        result.values[11] = selected;
+        result.values[4] = opposite;
+        result.values[5] = selected;
+        result.values[6] = opposite;
+        result.values[8] = selected;
+        result.values[9] = opposite;
+        result.values[10] = selected;
+        return result;
     }
     else
     {
-        result.size = 4;
+        directions[0] = Direction::NORTH;
+        directions[1] = Direction::SOUTH;
+        directions[2] = Direction::EAST;
+        directions[3] = Direction::WEST;
+        const Direction* selected = directions[random.nextInt(4)];
         const Direction* clockwise = selected->getClockWise();
         const Direction* counterClockwise = selected->getCounterClockWise();
         const Direction* opposite = selected->getOpposite();
+        TerracottaLayerTheme::Pattern result = {4};
         result.values[0] = clockwise;
         result.values[1] = selected;
         result.values[2] = clockwise;
-        result.values[4] = counterClockwise;
-        result.values[5] = opposite;
-        result.values[6] = counterClockwise;
+        result.values[3] = opposite;
+        result.values[4] = opposite;
+        result.values[5] = counterClockwise;
+        result.values[6] = selected;
+        result.values[7] = counterClockwise;
         result.values[8] = clockwise;
-        result.values[9] = counterClockwise;
-        result.values[10] = opposite;
+        result.values[9] = opposite;
+        result.values[10] = clockwise;
+        result.values[11] = selected;
+        result.values[12] = selected;
+        result.values[13] = counterClockwise;
+        result.values[14] = opposite;
+        result.values[15] = counterClockwise;
+        return result;
     }
-    return result;
 }
 
 TerracottaLayerThemeRuleDefinition::TerracottaLayerThemeRuleDefinition()
+    : mPattern(L"RANDOM:2")
+    , mColourFunction(L"UNIFORM")
 {
-    mPattern.assign(L"RANDOM:2");
-    mColourFunction.assign(L"UNIFORM");
     addStringAttribute(ConsoleGameRules::eGameRuleAttr_colour, &mColourFunction);
     addStringAttribute(ConsoleGameRules::eGameRuleAttr_pattern, &mPattern);
-}
-
-TerracottaLayerThemeRuleDefinition::~TerracottaLayerThemeRuleDefinition()
-{
 }
 
 ConsoleGameRules::EGameRuleType TerracottaLayerThemeRuleDefinition::getActionType()

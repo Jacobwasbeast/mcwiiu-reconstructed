@@ -31,10 +31,9 @@ static ResourceLocation LLAMA_DECOR_TEXTURES[16] = {
 };
 
 LlamaDecorLayer::LlamaDecorLayer(LlamaRenderer* renderer)
-    : mRenderer(renderer)
+    : mModel(new LlamaModel(0.5f, ModelDefinition()))
 {
-    ModelDefinition modelDefinition;
-    mModel = new LlamaModel(0.5f, modelDefinition);
+    mRenderer = renderer;
 }
 
 LlamaDecorLayer::~LlamaDecorLayer()
@@ -54,7 +53,7 @@ void LlamaDecorLayer::render(boost::shared_ptr<LivingEntity>& entity, float limb
 
     mRenderer->bindTexture(&LLAMA_DECOR_TEXTURES[llama->getSwag()->getBlockData()]);
     mModel->copyPropertiesFrom(mRenderer->getModel());
-    boost::shared_ptr<Entity> renderEntity = boost::static_pointer_cast<Entity>(entity);
+    boost::shared_ptr<Entity> renderEntity(llama);
     mModel->render(renderEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw,
                    headPitch, scale, bUseDisplayList);
 }
@@ -83,7 +82,6 @@ void LlamaDecorLayer::setupForTexturePack(TexturePack* texturePack)
     }
     else
     {
-        ModelDefinition modelDefinition;
-        mModel = new LlamaModel(0.5f, modelDefinition);
+        mModel = new LlamaModel(0.5f, ModelDefinition());
     }
 }

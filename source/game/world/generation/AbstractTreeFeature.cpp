@@ -29,6 +29,10 @@ AbstractTreeFeature::AbstractTreeFeature(bool doBlockNotify, int baseHeight,
 {
 }
 
+AbstractTreeFeature::~AbstractTreeFeature()
+{
+}
+
 bool AbstractTreeFeature::isFree(Block* block)
 {
     Material* material = block->defaultBlockState()->getMaterial();
@@ -46,7 +50,7 @@ void AbstractTreeFeature::setDirtAt(Level* level, const BlockPos& pos)
 {
     if (level->getBlockState(pos)->getBlock() != Blocks::dirt)
     {
-        setBlock(level, pos, Blocks::dirt->defaultBlockState(), Block::UPDATE_NONE);
+        Feature::setBlock(level, pos, Blocks::dirt->defaultBlockState(), Block::UPDATE_NONE);
     }
 }
 
@@ -95,10 +99,14 @@ void AbstractTreeFeature::placeFallenTrunk(Level* level, const BlockPos& pos,
     {
         cursor.move(direction, 1);
 
-        LogBlock::LogAxis* logAxis = direction->getAxis()->getId() == Direction::Axis::eAxis_X ?
-                LogBlock::X : LogBlock::Z;
-        TypedBoxed<LogBlock::LogAxis*> axisValue(logAxis);
-        setBlock(level, cursor, mTrunkState->setBoxedValue(LogBlock::AXIS, &axisValue), Block::UPDATE_NONE);
+        if (direction->getAxis()->getId() == Direction::Axis::eAxis_X)
+        {
+            setBlock(level, cursor, mTrunkState->setValue(LogBlock::AXIS, LogBlock::X), Block::UPDATE_NONE);
+        }
+        else
+        {
+            setBlock(level, cursor, mTrunkState->setValue(LogBlock::AXIS, LogBlock::Z), Block::UPDATE_NONE);
+        }
 
         if (random.nextInt(10) == 0 &&
             level->getBlockState(cursor.above())->getMaterial() == Material::AIR)
@@ -118,9 +126,7 @@ void AbstractTreeFeature::placeFallenTrunk(Level* level, const BlockPos& pos,
 void AbstractTreeFeature::addVine(Level* level, const BlockPos& pos,
                                   const BooleanProperty* property)
 {
-    TypedBoxed<bool> value(true);
-    const BlockState* state = Blocks::vine->defaultBlockState()->setBoxedValue(property, &value);
-    setBlock(level, pos, state, Block::UPDATE_NONE);
+    setBlock(level, pos, Blocks::vine->defaultBlockState()->setValue(property, true), Block::UPDATE_NONE);
 }
 
 bool AbstractTreeFeature::placeTrunk(Level* level, const BlockPos& pos,

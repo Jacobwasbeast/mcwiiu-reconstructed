@@ -32,14 +32,16 @@ void PigSaddleLayer::render(boost::shared_ptr<LivingEntity>& entity, float limbS
 {
     boost::shared_ptr<Pig> pig = boost::dynamic_pointer_cast<Pig>(entity);
 
-    if (pig->hasSaddle())
+    if (!pig->hasSaddle())
     {
-        mRenderer->bindTexture(getSaddleTextureLocation());
-        mModel->copyPropertiesFrom(mRenderer->getModel());
-
-        boost::shared_ptr<Entity> renderEntity = pig;
-        mModel->render(renderEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, bUseDisplayList);
+        return;
     }
+
+    mRenderer->bindTexture(&PIG_SADDLE_LOCATION);
+    mModel->copyPropertiesFrom(mRenderer->getModel());
+
+    boost::shared_ptr<Entity> renderEntity = pig;
+    mModel->render(renderEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, bUseDisplayList);
 }
 
 bool PigSaddleLayer::colorsOnDamage()

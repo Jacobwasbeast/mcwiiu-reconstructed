@@ -48,8 +48,9 @@ unsigned int StructureStart::getChunkZ()
     return (unsigned int)mChunkZ;
 }
 
-void StructureStart::getPieces()
+std::vector<StructurePiece*>* StructureStart::getPieces()
 {
+    return this;
 }
 
 void StructureStart::clearDirty()
@@ -139,8 +140,8 @@ void StructureStart::readAdditionalSaveData(DataInputStream* input)
 
 void StructureStart::moveBelowSeaLevel(Level* level, Random& random, int offset)
 {
-    int y = mBoundingBox->getYSpan() + 1;
     int seaLevel = level->getSeaLevel();
+    int y = mBoundingBox->getYSpan() + 1;
     if (y < seaLevel - offset)
     {
         y += random.nextInt(seaLevel - offset - y);
@@ -157,13 +158,13 @@ void StructureStart::moveInsideHeights(Level* level, Random& random, int minHeig
 {
     int span = mBoundingBox->getYSpan();
     int delta;
-    if (maxHeight - minHeight + 1 - span < 2)
+    if (maxHeight - minHeight + 1 - span > 1)
     {
-        delta = minHeight - mBoundingBox->y0;
+        delta = minHeight + random.nextInt(maxHeight - minHeight + 1 - span) - mBoundingBox->y0;
     }
     else
     {
-        delta = minHeight + random.nextInt(maxHeight - minHeight + 1 - span) - mBoundingBox->y0;
+        delta = minHeight - mBoundingBox->y0;
     }
     mBoundingBox->move(0, delta, 0);
     for (std::vector<StructurePiece*>::iterator it = begin(); it != end(); ++it)

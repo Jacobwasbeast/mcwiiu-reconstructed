@@ -205,9 +205,10 @@ enum eMinecraftStructureTemplate
     eMinecraftStructureTemplate_Count
 };
 
-class StructureManager : public boost::unordered_map<int, const StructureTemplate*>
+class StructureManager
 {
 private:
+    boost::unordered_map<int, const StructureTemplate*> templates;
     DataFixerUpper* fixerUpper;
 
 public:

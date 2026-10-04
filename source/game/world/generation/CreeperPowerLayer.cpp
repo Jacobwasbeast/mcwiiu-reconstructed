@@ -20,8 +20,7 @@ static ResourceLocation CREEPER_ARMOR_LOCATION(TN_ARMOR_POWER);
 CreeperPowerLayer::CreeperPowerLayer(CreeperRenderer* renderer)
     : mRenderer(renderer), mOriginalModel(NULL)
 {
-    ModelDefinition modelDefinition;
-    mModel = new CreeperModel(2.0f, modelDefinition);
+    mModel = new CreeperModel(2.0f, ModelDefinition());
 }
 
 CreeperPowerLayer::~CreeperPowerLayer()
@@ -34,6 +33,7 @@ void CreeperPowerLayer::render(boost::shared_ptr<LivingEntity>& entity, float li
                                bool bUseDisplayList)
 {
     boost::shared_ptr<Creeper> creeper = boost::dynamic_pointer_cast<Creeper>(entity);
+    boost::shared_ptr<Entity> renderEntity(creeper);
 
     if (!creeper->isPowered())
     {
@@ -56,7 +56,6 @@ void CreeperPowerLayer::render(boost::shared_ptr<LivingEntity>& entity, float li
     GlStateManager::blendFunc(1, 1);
 
     mModel->copyPropertiesFrom(mRenderer->getModel());
-    boost::shared_ptr<Entity> renderEntity = boost::static_pointer_cast<Entity>(entity);
     mModel->render(renderEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw,
                    headPitch, scale, bUseDisplayList);
 
@@ -89,13 +88,12 @@ void CreeperPowerLayer::setupForTexturePack(TexturePack* pTexturePack)
         mModel = NULL;
     }
 
-    std::wstring modelName = L"creeper";
-    if (!pTexturePack->HasCustomModel(modelName))
+    if (pTexturePack->HasCustomModel(std::wstring(L"creeper")))
     {
-        mModel = mOriginalModel;
+        mModel = new CreeperModel(2.0f, *pTexturePack->GetCustomModel(std::wstring(L"creeper")));
     }
     else
     {
-        mModel = new CreeperModel(2.0f, *pTexturePack->GetCustomModel(modelName));
+        mModel = mOriginalModel;
     }
 }

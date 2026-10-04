@@ -4,6 +4,7 @@
 #include "game/core/AttributeInstance.hpp"
 #include "game/core/GameType.hpp"
 #include "game/core/Minecraft.hpp"
+#include "game/core/Mth.hpp"
 #include "game/minigame/MiniGameDef.hpp"
 #include "game/entity/mob/SharedMonsterAttributes.hpp"
 #include "game/item/BowItem.hpp"
@@ -13,9 +14,9 @@
 
 AbstractClientPlayer::AbstractClientPlayer(Level* level, const std::wstring& name)
     : Player(level, name),
-      mElytraRotX(15.0f * 0.017453292f),
+      mElytraRotX(15.0f * Mth::DEG_TO_RAD),
       mElytraRotY(0.0f),
-      mElytraRotZ(-15.0f * 0.017453292f)
+      mElytraRotZ(-15.0f * Mth::DEG_TO_RAD)
 {
     mField0x738 = new ItemCooldowns();
 }
@@ -27,15 +28,10 @@ void AbstractClientPlayer::tick()
 
 bool AbstractClientPlayer::isPickable()
 {
-    bool allowPvP = true;
-    Minecraft* minecraft = Minecraft::GetInstance();
+    const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
+    bool allowPvP = Minecraft::InMiniGame(eMiniGameId_Any, true) ? miniGame->AllowPvP() : true;
 
-    if (Minecraft::InMiniGame(eMiniGameId_Any, true))
-    {
-        allowPvP = minecraft->GetMiniGame()->AllowPvP();
-    }
-
-    return allowPvP && !isSpectator();
+    return allowPvP && isSpectator() != true;
 }
 
 bool AbstractClientPlayer::isSpectator()
@@ -66,8 +62,7 @@ float AbstractClientPlayer::getFieldOfViewModifier()
 
     if (isUsingItem())
     {
-        not_null_ptr<ItemInstance> useItem = getUseItem();
-        Item* item = useItem->getItem();
+        Item* item = getUseItem().get()->getItem();
 
         if (item == Items::bow || item == Items::arrow || item == Items::tippedArrow)
         {

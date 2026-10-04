@@ -19,7 +19,11 @@ CoralHangFeature::~CoralHangFeature()
 bool CoralHangFeature::canPlaceHangOn(Level* level, const BlockPos& pos)
 {
     Block* block = level->getBlock(pos);
-    return block == Blocks::coral_block || block == Blocks::stone;
+    if (block != Blocks::coral_block && block != Blocks::stone)
+    {
+        return false;
+    }
+    return true;
 }
 
 const Direction* CoralHangFeature::randomDirection(Level* level, Random& random,
@@ -29,15 +33,16 @@ const Direction* CoralHangFeature::randomDirection(Level* level, Random& random,
     while (faces.length != 0)
     {
         const unsigned int index = (unsigned int)random.nextInt(0, (int)faces.length);
-        const Direction* direction = faces.data[index];
-        if (level->isEmptyWaterBlock(pos.relative(direction)))
+        const Direction** slot = &faces.data[index];
+        if (level->isEmptyWaterBlock(pos.relative(*slot)))
         {
-            return direction;
+            return *slot;
         }
 
-        faces.data[index] = faces.data[faces.length - 1];
+        const Direction* direction = *slot;
+        *slot = faces.data[faces.length - 1];
+        faces.data[faces.length - 1] = direction;
         --faces.length;
-        faces.data[faces.length] = direction;
     }
 
     return Direction::NORTH;
@@ -53,11 +58,11 @@ int CoralHangFeature::turnFacingIntoint(const Direction* direction)
     {
         return 1;
     }
-    if (direction != Direction::SOUTH)
+    if (direction == Direction::SOUTH)
     {
-        return 0;
+        return 3;
     }
-    return 3;
+    return 0;
 }
 
 bool CoralHangFeature::place(Level* level, Random& random, const BlockPos& origin)
@@ -81,17 +86,22 @@ bool CoralHangFeature::place(Level* level, Random& random, const BlockPos& origi
             && level->isUnderWater(target, 266, 0))
         {
             const BlockState* state = Blocks::coral_fan_hang->defaultBlockState();
-            TypedBoxed<int> variant(random.nextInt(CoralFanHang::VARIANT->getValueCount()));
-            state = state->setBoxedValue(CoralFanHang::VARIANT, &variant);
-            TypedBoxed<bool> dead(random.nextBoolean());
-            state = state->setBoxedValue(CoralFanHang::DEAD, &dead);
-            TypedBoxed<int> facing(turnFacingIntoint(direction));
-            state = state->setBoxedValue(CoralFanHang::DIRECTION, &facing);
-            if (!level->reallyHasChunkAt(target))
             {
-                return true;
+                TypedBoxed<int> variant(random.nextInt(CoralFanHang::VARIANT->getValueCount()));
+                state = state->setBoxedValue(CoralFanHang::VARIANT, &variant);
             }
-            setBlock(level, target, state, Block::UPDATE_NONE);
+            {
+                TypedBoxed<bool> dead(random.nextBoolean());
+                state = state->setBoxedValue(CoralFanHang::DEAD, &dead);
+            }
+            {
+                TypedBoxed<int> facing(turnFacingIntoint(direction));
+                state = state->setBoxedValue(CoralFanHang::DIRECTION, &facing);
+            }
+            if (level->reallyHasChunkAt(target))
+            {
+                setBlock(level, target, state, Block::UPDATE_NONE);
+            }
             return true;
         }
     }

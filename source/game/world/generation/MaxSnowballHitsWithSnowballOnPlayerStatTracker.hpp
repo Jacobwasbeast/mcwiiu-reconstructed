@@ -18,7 +18,7 @@ public:
     virtual void update(const DamageEvent* damageEvent);
 
 private:
-    PlayerUID mPlayerUID;
+    StatsUID mPlayerUID;
     boost::unordered_map<StatsUID, unsigned int, boost::hash<StatsUID>, std::equal_to<StatsUID> > mSnowballHits;
 };
 

@@ -1,6 +1,7 @@
 #include "game/world/generation/SmoothZoomLayer.hpp"
 #include "game/core/IntCache.hpp"
 #include "game/core/PIXNamedEvents.hpp"
+#include "game/core/System.hpp"
 
 SmoothZoomLayer::SmoothZoomLayer(long long seed, boost::shared_ptr<Layer> parent)
     : Layer(seed)
@@ -30,7 +31,7 @@ arrayWithLength<int> SmoothZoomLayer::getArea(int x, int z, int width, int heigh
     PIXBeginNamedEvent(0.0f, "SmoothZoomLayer::getArea");
 
     int zoomedWidth = parentWidth * 2;
-    arrayWithLength<int> zoomedArea = IntCache::allocate(zoomedWidth * (parentHeight * 2));
+    arrayWithLength<int> zoomedArea = IntCache::allocate(parentWidth * parentHeight * 4);
     for (int i = 0; i < parentHeight - 1; ++i)
     {
         int dest = i * zoomedWidth * 2;
@@ -59,10 +60,7 @@ arrayWithLength<int> SmoothZoomLayer::getArea(int x, int z, int width, int heigh
     for (int i = 0; i < height; ++i)
     {
         int source = (i + (z & 1)) * zoomedWidth + (x & 1);
-        for (int j = 0; j < width; ++j)
-        {
-            area.data[i * width + j] = zoomedArea.data[source + j];
-        }
+        System::arraycopy(zoomedArea, source, &area, i * width, width);
     }
 
     PIXEndNamedEvent();

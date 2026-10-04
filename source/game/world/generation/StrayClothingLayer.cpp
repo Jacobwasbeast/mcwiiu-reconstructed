@@ -18,11 +18,10 @@
 static ResourceLocation STRAY_CLOTHING_LOCATION(TN_MOB_SKELETON_STRAY_OVERLAY);
 
 StrayClothingLayer::StrayClothingLayer(LivingEntityRenderer* renderer)
-    : mRenderer(renderer)
+    : mModel(new SkeletonModel(0.25f, true, ModelDefinition()))
+    , mOriginalModel(NULL)
 {
-    ModelDefinition modelDefinition;
-    mModel = new SkeletonModel(0.25f, true, modelDefinition);
-    mOriginalModel = NULL;
+    mRenderer = renderer;
 }
 
 StrayClothingLayer::~StrayClothingLayer()
@@ -35,11 +34,12 @@ void StrayClothingLayer::render(boost::shared_ptr<LivingEntity>& entity,
                                 float netHeadYaw, float headPitch, float scale,
                                 bool bUseDisplayList)
 {
-    mModel->copyPropertiesFrom(mRenderer->getModel(entity));
+    mModel->copyPropertiesFrom(mRenderer->getModel());
+    mModel->prepareMobModel(entity, limbSwing, limbSwingAmount, partialTicks);
     GlStateManager::color4f(1.0f, 1.0f, 1.0f, 1.0f);
     mRenderer->bindTexture(&STRAY_CLOTHING_LOCATION);
 
-    boost::shared_ptr<Entity> renderEntity = boost::static_pointer_cast<Entity>(entity);
+    boost::shared_ptr<Entity> renderEntity = entity;
     mModel->render(renderEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw,
                    headPitch, scale, bUseDisplayList);
 }
@@ -65,13 +65,12 @@ void StrayClothingLayer::setupForTexturePack(TexturePack* pTexturePack)
         mModel = NULL;
     }
 
-    const std::wstring modelName = L"stray.armor";
-    if (!pTexturePack->HasCustomModel(modelName))
+    if (pTexturePack->HasCustomModel(L"stray.armor"))
     {
-        mModel = mOriginalModel;
+        mModel = new ZombieModel(*pTexturePack->GetCustomModel(L"stray.armor"));
     }
     else
     {
-        mModel = new ZombieModel(*pTexturePack->GetCustomModel(modelName));
+        mModel = mOriginalModel;
     }
 }

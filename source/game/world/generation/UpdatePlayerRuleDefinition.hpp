@@ -35,8 +35,8 @@ public:
 
 private:
     std::vector<AddItemRuleDefinition*> mItems;
-    int mFoodLevel;
     int mHealth;
+    int mFoodLevel;
     MutableBlockPos* mSpawnPosition;
     int mDimension;
     float mYRot;

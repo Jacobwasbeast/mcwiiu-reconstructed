@@ -1,5 +1,6 @@
 #include "game/world/generation/FlowerFeature.hpp"
 
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Dimension.hpp"
@@ -22,16 +23,29 @@ FlowerFeature::~FlowerFeature()
 void FlowerFeature::setNextFlower(FlowerBlock* block, FlowerBlock::Flower* flower)
 {
     mFlowerBlock = block;
-    TypedBoxed<FlowerBlock::Flower*> value(flower);
-    mState = mFlowerBlock->defaultBlockState()->setBoxedValue(mFlowerBlock->getFlowerProperty(), &value);
+    const BlockState* base = block->defaultBlockState();
+    const Property* property = block->getFlowerProperty();
+    const BlockState* state;
+    {
+        TypedBoxed<FlowerBlock::Flower*> value(flower);
+        state = base->setBoxedValue(property, &value);
+    }
+    mState = state;
 }
 
 bool FlowerFeature::place(Level* level, Random& random, const BlockPos& origin)
 {
-    if (g_pApp->getLevelGenerationOptions() != NULL
-        && g_pApp->getLevelGenerationOptions()->checkIntersects(origin.offset(-8, -4, -8), origin.offset(8, 4, 8)))
+    if (gApp.getLevelGenerationOptions() != NULL)
     {
-        return false;
+        LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
+        BlockPos minPos;
+        BlockPos maxPos;
+        minPos = origin.offset(-8, -4, -8);
+        maxPos = origin.offset(8, 4, 8);
+        if (options->checkIntersects(minPos, maxPos))
+        {
+            return false;
+        }
     }
 
     for (int attempt = 0; attempt < 64; ++attempt)

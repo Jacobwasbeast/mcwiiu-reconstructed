@@ -6,6 +6,7 @@
 #include "game/client/render/PlayerModel.hpp"
 #include "game/client/render/PlayerRenderer.hpp"
 #include "game/core/CMinecraftApp.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/world/generation/Player.hpp"
 
@@ -24,26 +25,27 @@ void Deadmau5EarsLayer::render(boost::shared_ptr<LivingEntity>& entity, float li
 {
     boost::shared_ptr<Player> player = boost::dynamic_pointer_cast<Player>(entity);
 
-    if (!g_pApp->isXuidDeadmau5(player->mXuid) || player->isInvisible())
+    if (!gApp.isXuidDeadmau5(player->mXuid) || player->isInvisible())
         return;
 
-    PlayerModel* model = mRenderer->getModel();
-    float yRot = player->mYRotO + (player->mYRot - player->mYRotO) * partialTicks;
-    float yBodyRot = player->mYBodyRotO + (player->mYBodyRot - player->mYBodyRotO) * partialTicks;
-    float yaw = yRot - yBodyRot;
-    float xRot = player->mXRotO + (player->mXRot - player->mXRotO) * partialTicks;
+    mRenderer->bindTexture(player->mSkinLocation, L"");
 
-    for (int side = -1; side <= 1; side += 2)
+    for (int i = 0; i < 2; i++)
     {
+        float yRot = player->mYRotO + (player->mYRot - player->mYRotO) * partialTicks;
+        float yBodyRot = player->mYBodyRotO + (player->mYBodyRot - player->mYBodyRotO) * partialTicks;
+        float yaw = yRot - yBodyRot;
+        float xRot = player->mXRotO + (player->mXRot - player->mXRotO) * partialTicks;
+
         GlStateManager::pushMatrix();
         GlStateManager::rotatef(yaw, 0.0f, 1.0f, 0.0f);
         GlStateManager::rotatef(xRot, 1.0f, 0.0f, 0.0f);
-        GlStateManager::translatef(0.375f * (float)side, 0.0f, 0.0f);
+        GlStateManager::translatef(0.375f * (float)(i * 2 - 1), 0.0f, 0.0f);
         GlStateManager::translatef(0.0f, -0.375f, 0.0f);
         GlStateManager::rotatef(-xRot, 1.0f, 0.0f, 0.0f);
         GlStateManager::rotatef(-yaw, 0.0f, 1.0f, 0.0f);
         GlStateManager::scalef(1.3333334f, 1.3333334f, 1.3333334f);
-        model->renderEars(0.0625f);
+        static_cast<PlayerModel*>(mRenderer->getModel())->renderEars(0.0625f);
         GlStateManager::popMatrix();
     }
 }

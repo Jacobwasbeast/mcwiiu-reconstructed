@@ -60,8 +60,7 @@ BlockPos* OceanRuinFeature::getNearestGeneratedFeature(Level* sourceLevel, const
 
 StructureStart* OceanRuinFeature::createStructureStart(int chunkX, int chunkZ)
 {
-    BlockPos pos(chunkX << 4, 64, chunkZ << 4);
-    OceanRuinConfiguration configuration = level->getBiome(pos)->getOceanRuinConfig();
+    OceanRuinConfiguration configuration = level->getBiome(BlockPos(chunkX << 4, 64, chunkZ << 4))->getOceanRuinConfig();
     return new OceanRuinStart(level, random, chunkX, chunkZ, configuration);
 }
 
@@ -81,8 +80,10 @@ bool OceanRuinFeature::isFeatureChunk(int chunkX, int chunkZ, bool)
     regionX /= mSpacing;
     regionZ /= mSpacing;
     Random& chunkRandom = *level->getRandomFor(regionX, regionZ, 0xdb1471);
-    int featureX = regionX * mSpacing + chunkRandom.nextInt(mSpacing - mSeparation);
-    int featureZ = regionZ * mSpacing + chunkRandom.nextInt(mSpacing - mSeparation);
+    int featureX = regionX * mSpacing;
+    int featureZ = regionZ * mSpacing;
+    featureX += chunkRandom.nextInt(mSpacing - mSeparation);
+    featureZ += chunkRandom.nextInt(mSpacing - mSeparation);
     bool featureChunk = chunkX == featureX && chunkZ == featureZ;
 
     if (!canPlaceFeatureInChunk(featureChunk, eFeatureType_OceanRuin, chunkX, chunkZ))
@@ -107,7 +108,7 @@ OceanRuinFeature::OceanRuinStart::~OceanRuinStart()
 std::vector<BlockPos>* OceanRuinFeature::OceanRuinStart::allPositions(
     Random& random, int x, int z)
 {
-    std::vector<BlockPos>* positions = new std::vector<BlockPos>();
+    std::vector<BlockPos>* positions = new std::vector<BlockPos>;
     int west = x - 16;
     int east = x + 16;
     int north = z - 16;
@@ -182,18 +183,21 @@ void OceanRuinFeature::OceanRuinStart::create(
     bool warm = configuration.biomeType == OceanRuin::eRuinType_Warm;
     bool large = random.nextFloat() <= configuration.smallProbability;
 
-    if (large)
+    OceanRuin* ruin;
+    if (!large)
     {
-        push_back(new OceanRuin(mLevel, random, x, z, 16, 16, 16, warm, true));
-        if (random.nextFloat() <= configuration.clusterProbability)
-        {
-            addClusterRuins(random, Direction::Plane::HORIZONTAL->getRandomDirection(random),
-                            x, z, warm, *this);
-        }
+        ruin = new OceanRuin(mLevel, random, x, z, 7, 7, 7, warm, false);
     }
     else
     {
-        push_back(new OceanRuin(mLevel, random, x, z, 7, 7, 7, warm, false));
+        ruin = new OceanRuin(mLevel, random, x, z, 16, 16, 16, warm, true);
+    }
+    push_back(ruin);
+
+    if (large && random.nextFloat() <= configuration.clusterProbability)
+    {
+        addClusterRuins(random, Direction::Plane::HORIZONTAL->getRandomDirection(random),
+                        x, z, warm, *this);
     }
 
     calculateBoundingBox();

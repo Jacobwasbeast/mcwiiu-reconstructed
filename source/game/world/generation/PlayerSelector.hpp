@@ -17,7 +17,7 @@ public:
     }
 
     virtual bool apply(boost::shared_ptr<Player> player) const;
-    virtual ~PlayerSelector();
+    virtual ~PlayerSelector() {}
 
     Entity* mEntity;
 };

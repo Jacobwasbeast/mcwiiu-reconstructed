@@ -121,6 +121,7 @@ private:
     friend class EntityTracker;
     friend class MapItemSavedData;
     friend class TrackedEntity;
+    friend class DefaultGameModeCommand;
     std::vector<boost::shared_ptr<ServerPlayer> > mPlayers;
     MinecraftServer* mServer;
     MasterGameMode* mGameMode;

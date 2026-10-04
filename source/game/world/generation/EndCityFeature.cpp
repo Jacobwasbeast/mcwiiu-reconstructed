@@ -1,3 +1,4 @@
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/world/generation/EndCityFeature.hpp"
 
 #include <vector>
@@ -14,7 +15,6 @@
 #include "game/world/chunk/ChunkPrimer.hpp"
 #include "game/core/EndCityPieces.hpp"
 
-extern CMinecraftApp* g_pApp;
 
 EndCityFeature::EndCityFeature(TheEndLevelSource* source)
     : StructureFeature(), mSource(source)
@@ -96,7 +96,7 @@ EndCityFeature::EndCityStart::EndCityStart(Level* levelIn, TheEndLevelSource* so
                                            Random& random, int chunkX, int chunkZ)
     : StructureStart(chunkX, chunkZ)
 {
-    g_pApp->AddTerrainFeaturePosition((_eTerrainFeatureType)8,
+    gApp.AddTerrainFeaturePosition((_eTerrainFeatureType)8,
                                        (chunkX * 16 + 8) / 16,
                                        (chunkZ * 16 + 8) / 16);
     create(levelIn, source, random, chunkX, chunkZ);

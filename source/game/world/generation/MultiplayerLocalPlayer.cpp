@@ -39,19 +39,28 @@
 #include "game/ui/AbstractContainerMenu.hpp"
 
 MultiplayerLocalPlayer::MultiplayerLocalPlayer(Minecraft* minecraft, Level* level, User* user, ClientPacketListener* packetListener)
-    : LocalPlayer(minecraft, level, user, level->mDimension->getType()->getId()),
-      mHurt(false), mScoreboardWait(-1), mHasSentOpenInventory(false),
-      mHasSentRidingJump(false), mReceivedRespawn(false), mLastSentStat(0),
-      mBounceHeight(0), mFreeDiverTicks(0)
+    : LocalPlayer(minecraft, level, user, level->mDimension->getType()->getId())
 {
     LivingEntity::fjDerivedCtorCalls();
     mPacketListener = packetListener;
+    mHurt = false;
+    mScoreboardWait = -1;
+    mHasSentOpenInventory = false;
+    mHasSentRidingJump = false;
+    mReceivedRespawn = false;
+    mField0xa1b = false;
+    mLastSentStat = 0;
+    mBounceHeight = 0;
+    mFreeDiverTicks = 0;
 }
 
 MultiplayerLocalPlayer::~MultiplayerLocalPlayer()
 {
-    delete mBounceHeight;
-    mBounceHeight = 0;
+    if (mBounceHeight != 0)
+    {
+        delete mBounceHeight;
+        mBounceHeight = 0;
+    }
 }
 
 MultiPlayerLevel* MultiplayerLocalPlayer::GetLevel()
@@ -90,8 +99,9 @@ void MultiplayerLocalPlayer::tick()
                                        SoundSource::eSoundSource_Ambient, 1.0f, 1.0f, false, 16.0f);
             }
             ++mFreeDiverTicks;
-            if (mFreeDiverTicks / 20 > 120)
-                awardStat(GenericStats::freeDiver(), GenericStats::param_freeDiver(mFreeDiverTicks / 20));
+            int seconds = mFreeDiverTicks / 20;
+            if (seconds > 120)
+                awardStat(GenericStats::freeDiver(), GenericStats::param_freeDiver(seconds));
         }
         else
         {
@@ -136,8 +146,11 @@ void MultiplayerLocalPlayer::tick()
 
 boost::shared_ptr<ItemEntity> MultiplayerLocalPlayer::drop()
 {
-    mPacketListener->send(boost::shared_ptr<Packet>(new ServerboundPlayerActionPacket(
-        ServerboundPlayerActionPacket::DROP_ITEM, BlockPos(0, 0, 0), Direction::DOWN, 0)));
+    {
+        boost::shared_ptr<Packet> packet(new ServerboundPlayerActionPacket(
+            ServerboundPlayerActionPacket::DROP_ITEM, BlockPos(0, 0, 0), Direction::DOWN, 0));
+        mPacketListener->send(packet);
+    }
     return boost::shared_ptr<ItemEntity>();
 }
 
@@ -178,24 +191,36 @@ void MultiplayerLocalPlayer::completeUsingItem()
 void MultiplayerLocalPlayer::onEffectAdded(MobEffectInstance* effect)
 {
     Minecraft* minecraft = Minecraft::GetInstance();
-    if (minecraft->mGameModes[mUserIndex] != NULL && minecraft->mGameModes[mUserIndex]->getTutorial() != NULL)
-        minecraft->mGameModes[mUserIndex]->getTutorial()->onEffectChanged(effect->getEffect(), false);
+    if (minecraft->mGameModes[mUserIndex] != NULL)
+    {
+        Tutorial* tutorial = minecraft->mGameModes[mUserIndex]->getTutorial();
+        if (tutorial != NULL)
+            tutorial->onEffectChanged(effect->getEffect(), false);
+    }
     LivingEntity::onEffectAdded(effect);
 }
 
 void MultiplayerLocalPlayer::onEffectUpdated(MobEffectInstance* effect, bool attributesChanged)
 {
     Minecraft* minecraft = Minecraft::GetInstance();
-    if (minecraft->mGameModes[mUserIndex] != NULL && minecraft->mGameModes[mUserIndex]->getTutorial() != NULL)
-        minecraft->mGameModes[mUserIndex]->getTutorial()->onEffectChanged(effect->getEffect(), false);
+    if (minecraft->mGameModes[mUserIndex] != NULL)
+    {
+        Tutorial* tutorial = minecraft->mGameModes[mUserIndex]->getTutorial();
+        if (tutorial != NULL)
+            tutorial->onEffectChanged(effect->getEffect(), false);
+    }
     LivingEntity::onEffectUpdated(effect, attributesChanged);
 }
 
 void MultiplayerLocalPlayer::onEffectRemoved(MobEffectInstance* effect)
 {
     Minecraft* minecraft = Minecraft::GetInstance();
-    if (minecraft->mGameModes[mUserIndex] != NULL && minecraft->mGameModes[mUserIndex]->getTutorial() != NULL)
-        minecraft->mGameModes[mUserIndex]->getTutorial()->onEffectChanged(effect->getEffect(), true);
+    if (minecraft->mGameModes[mUserIndex] != NULL)
+    {
+        Tutorial* tutorial = minecraft->mGameModes[mUserIndex]->getTutorial();
+        if (tutorial != NULL)
+            tutorial->onEffectChanged(effect->getEffect(), true);
+    }
     LivingEntity::onEffectRemoved(effect);
 }
 
@@ -207,7 +232,10 @@ void MultiplayerLocalPlayer::clientSideCloseContainer()
 
 void MultiplayerLocalPlayer::closeContainer()
 {
-    mPacketListener->send(boost::shared_ptr<Packet>(new ServerboundContainerClosePacket(mContainerMenu->m_containerId)));
+    {
+        boost::shared_ptr<Packet> packet(new ServerboundContainerClosePacket(mContainerMenu->m_containerId));
+        mPacketListener->send(packet);
+    }
     MultiplayerLocalPlayer::clientSideCloseContainer();
 }
 
@@ -224,14 +252,20 @@ void MultiplayerLocalPlayer::hurtTo(float amount, TelemetryDamageSource source)
 
 void MultiplayerLocalPlayer::awardStat(Stat* stat, arrayWithLength<unsigned char> params)
 {
-    if (stat != 0 && !stat->isAwardedFromServer())
+    if (stat != 0 && !stat->isAwardedFromServer()) {
         LocalPlayer::awardStat(stat, params);
+        return;
+    }
+    delete[] params.data;
 }
 
 void MultiplayerLocalPlayer::awardStatFromServer(Stat* stat, arrayWithLength<unsigned char> params)
 {
-    if (stat != 0 && stat->isAwardedFromServer())
+    if (stat != 0 && stat->isAwardedFromServer()) {
         LocalPlayer::awardStat(stat, params);
+        return;
+    }
+    delete[] params.data;
 }
 
 bool MultiplayerLocalPlayer::isLocalPlayer()
@@ -247,18 +281,14 @@ void MultiplayerLocalPlayer::onSlimeBlockBounce()
 
 void MultiplayerLocalPlayer::sendRidingJump()
 {
-    boost::shared_ptr<Entity> entity = shared_from_this();
-    boost::shared_ptr<Packet> packet(new ServerboundPlayerCommandPacket(
-        entity, ServerboundPlayerCommandPacket::RIDING_JUMP, static_cast<int>(getJumpRidingScale() * 100.0f)));
-    mPacketListener->send(packet);
+    mPacketListener->send(boost::shared_ptr<Packet>(new ServerboundPlayerCommandPacket(
+        shared_from_this(), ServerboundPlayerCommandPacket::RIDING_JUMP, static_cast<int>(getJumpRidingScale() * 100.0f))));
 }
 
 void MultiplayerLocalPlayer::sendOpenInventory()
 {
-    boost::shared_ptr<Entity> entity = shared_from_this();
-    boost::shared_ptr<Packet> packet(new ServerboundPlayerCommandPacket(
-        entity, ServerboundPlayerCommandPacket::OPEN_INVENTORY));
-    mPacketListener->send(packet);
+    mPacketListener->send(boost::shared_ptr<Packet>(new ServerboundPlayerCommandPacket(
+        shared_from_this(), ServerboundPlayerCommandPacket::OPEN_INVENTORY)));
 }
 
 bool MultiplayerLocalPlayer::startRiding(boost::shared_ptr<Entity> vehicle, bool force)
@@ -294,9 +324,12 @@ bool MultiplayerLocalPlayer::startRiding(boost::shared_ptr<Entity> vehicle, bool
     {
         if (!wasRiding)
         {
-            Tutorial* tutorial = riding ? minecraft->mGameModes[mUserIndex]->getTutorial() : NULL;
-            if (tutorial != NULL)
-                tutorial->onRideEntity(vehicle);
+            if (riding)
+            {
+                Tutorial* tutorial = minecraft->mGameModes[mUserIndex]->getTutorial();
+                if (tutorial != NULL)
+                    tutorial->onRideEntity(vehicle);
+            }
         }
         else if (!riding)
         {
@@ -310,10 +343,8 @@ bool MultiplayerLocalPlayer::startRiding(boost::shared_ptr<Entity> vehicle, bool
 
 void MultiplayerLocalPlayer::StopSleeping()
 {
-    boost::shared_ptr<Entity> entity = shared_from_this();
-    boost::shared_ptr<Packet> packet(new ServerboundPlayerCommandPacket(
-        entity, ServerboundPlayerCommandPacket::STOP_SLEEPING));
-    mPacketListener->send(packet);
+    mPacketListener->send(boost::shared_ptr<Packet>(new ServerboundPlayerCommandPacket(
+        shared_from_this(), ServerboundPlayerCommandPacket::STOP_SLEEPING)));
 }
 
 void MultiplayerLocalPlayer::setAndBroadcastCustomSkin(unsigned int skin)
@@ -323,9 +354,8 @@ void MultiplayerLocalPlayer::setAndBroadcastCustomSkin(unsigned int skin)
     if (mCustomSkin == oldSkin)
         return;
 
-    boost::shared_ptr<Entity> entity = shared_from_this();
     mPacketListener->send(boost::shared_ptr<Packet>(
-        new TextureAndGeometryChangePacket(entity, GameSettings::GetPlayerSkinName(mUserIndex))));
+        new TextureAndGeometryChangePacket(shared_from_this(), GameSettings::GetPlayerSkinName(mUserIndex))));
 }
 
 void MultiplayerLocalPlayer::setAndBroadcastCustomCape(unsigned int cape)
@@ -335,7 +365,6 @@ void MultiplayerLocalPlayer::setAndBroadcastCustomCape(unsigned int cape)
     if (mCustomCape == oldCape)
         return;
 
-    boost::shared_ptr<Entity> entity = shared_from_this();
     mPacketListener->send(boost::shared_ptr<Packet>(new TextureChangePacket(
-        entity, TextureChangePacket::eTextureChangeType_Cape, GameSettings::GetPlayerCapeName(mUserIndex))));
+        shared_from_this(), TextureChangePacket::eTextureChangeType_Cape, GameSettings::GetPlayerCapeName(mUserIndex))));
 }

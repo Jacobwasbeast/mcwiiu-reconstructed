@@ -1,3 +1,4 @@
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/world/generation/SpringFeature.hpp"
 #include "game/world/block/BlockId.hpp"
 
@@ -20,8 +21,8 @@ SpringFeature::~SpringFeature()
 
 bool SpringFeature::place(Level* level, Random& random, const BlockPos& origin)
 {
-    if (g_pApp->getLevelGenerationOptions() != NULL
-        && g_pApp->getLevelGenerationOptions()->checkIntersects(origin, origin))
+    if (gApp.getLevelGenerationOptions() != NULL
+        && gApp.getLevelGenerationOptions()->checkIntersects(origin, origin))
     {
         return false;
     }

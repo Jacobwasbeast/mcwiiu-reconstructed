@@ -18,25 +18,19 @@ static Predicate<const BlockState*>* gDesertWellSandPredicate = NULL;
 
 DesertWellFeature::DesertWellFeature() : Feature(false)
 {
-    TypedBoxed<StoneSlabBlock::Variant*> variant(StoneSlabBlock::Variant::SAND);
-    TypedBoxed<HalfSlabBlock::Half*> half(HalfSlabBlock::BOTTOM);
     mSlabState = Blocks::stone_slab->defaultBlockState()
-                     ->setBoxedValue(StoneSlabBlock::VARIANT, &variant)
-                     ->setBoxedValue(HalfSlabBlock::TYPE, &half);
+                     ->setValue(StoneSlabBlock::VARIANT, StoneSlabBlock::Variant::SAND)
+                     ->setValue(HalfSlabBlock::TYPE, HalfSlabBlock::BOTTOM);
     mSandstoneState = Blocks::sandstone->defaultBlockState();
     mWaterState = Blocks::flowing_water->defaultBlockState();
 }
 
-DesertWellFeature::~DesertWellFeature()
-{
-}
-
 void DesertWellFeature::staticCtor()
 {
-    gDesertWellSandPredicate = BlockStatePredicate::forBlock(Blocks::sand)
-                                   ->where(SandBlock::TYPE, new BlockStatePredicate::PredicateConversion<SandBlock::Variant*>(
-                                                                new Predicates<SandBlock::Variant*>::EqualToValuePredicate(
-                                                                    SandBlock::Variant::SAND)));
+    BlockStatePredicate* sandPredicate = BlockStatePredicate::forBlock(Blocks::sand);
+    AbstractProperty<SandBlock::Variant*>* type = SandBlock::TYPE;
+    Predicate<SandBlock::Variant*>* isSand = new Predicates<SandBlock::Variant*>::EqualToValuePredicate(SandBlock::Variant::SAND);
+    gDesertWellSandPredicate = sandPredicate->where(type, new BlockStatePredicate::PredicateConversion<SandBlock::Variant*>(isSand));
 }
 
 bool DesertWellFeature::place(Level* level, Random& random, const BlockPos& origin)

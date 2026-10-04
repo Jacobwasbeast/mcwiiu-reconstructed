@@ -12,7 +12,7 @@ class Random;
 class MonsterRoomFeature : public Feature
 {
 public:
-    virtual ~MonsterRoomFeature();
+    virtual ~MonsterRoomFeature() {}
     virtual bool place(Level* level, Random& random, const BlockPos& origin);
 
     std::wstring randomEntityId(Random& random);

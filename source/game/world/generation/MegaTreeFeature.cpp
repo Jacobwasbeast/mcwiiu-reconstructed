@@ -16,10 +16,6 @@ MegaTreeFeature::MegaTreeFeature(bool doBlockNotify, int baseHeight, int extraRa
 {
 }
 
-MegaTreeFeature::~MegaTreeFeature()
-{
-}
-
 int MegaTreeFeature::calcTreeHeigth(Random& random)
 {
     int height = random.nextInt(3) + mBaseHeight;
@@ -40,7 +36,15 @@ bool MegaTreeFeature::checkIsFree(Level* level, const BlockPos& pos, int height)
     bool free = true;
     for (int y = 0; y <= height + 1; ++y)
     {
-        int radius = y == 0 ? 1 : 2;
+        int radius = 2;
+        if (y == 0)
+        {
+            radius = 1;
+        }
+        else if (y >= height - 1)
+        {
+            radius = 2;
+        }
         for (int x = -radius; x <= radius && free; ++x)
         {
             for (int z = -radius; z <= radius && free; ++z)
@@ -61,7 +65,7 @@ bool MegaTreeFeature::makeDirtFloor(const BlockPos& pos, Level* level)
 {
     BlockPos below = pos.below();
     Block* block = level->getBlockState(below)->getBlock();
-    if ((block == Blocks::grass || block == Blocks::dirt) && pos.y > 1)
+    if ((block == Blocks::grass || block == Blocks::dirt) && pos.y >= 2)
     {
         setDirtAt(level, below);
         setDirtAt(level, below.east());

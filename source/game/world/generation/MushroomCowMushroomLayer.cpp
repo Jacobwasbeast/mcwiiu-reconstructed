@@ -27,7 +27,7 @@ MushroomCowMushroomLayer::~MushroomCowMushroomLayer()
 void MushroomCowMushroomLayer::render(boost::shared_ptr<LivingEntity>& entity, float, float, float,
                                       float, float, float, float, bool)
 {
-    if (!entity->isInvisible() && !entity->isBaby())
+    if (!entity->isBaby() && !entity->isInvisible())
     {
         mRenderer->bindTexture(&MUSHROOM_LOCATION);
         GlStateManager::enableCull();

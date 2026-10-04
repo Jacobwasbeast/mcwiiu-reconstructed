@@ -2,6 +2,7 @@
 
 #include "game/core/IntCache.hpp"
 #include "game/core/PIXNamedEvents.hpp"
+#include "game/core/System.hpp"
 
 ZoomLayer::ZoomLayer(long long seed, boost::shared_ptr<Layer> parent)
     : Layer(seed)
@@ -66,13 +67,7 @@ arrayWithLength<int> ZoomLayer::getArea(int x, int z, int width, int height)
 
     for (int i = 0; i < height; i++)
     {
-        int sourceIndex = (i + (z & 1)) * zoomedWidth + (x & 1);
-        int destinationIndex = i * width;
-
-        for (int j = 0; j < width; j++)
-        {
-            area.data[destinationIndex + j] = zoomedArea.data[sourceIndex + j];
-        }
+        System::arraycopy(zoomedArea, (i + (z & 1)) * zoomedWidth + (x & 1), &area, i * width, width);
     }
 
     PIXEndNamedEvent();

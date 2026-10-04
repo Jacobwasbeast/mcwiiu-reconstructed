@@ -4,6 +4,7 @@
 
 #include "game/core/BoundingBox.hpp"
 #include "game/core/CMinecraftApp.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/data/ByteArrayTag.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/data/SavedData.hpp"
@@ -19,10 +20,10 @@
 #include "game/world/generation/StructureFeatureSavedData.hpp"
 #include "game/world/generation/StructureStart.hpp"
 
-extern CMinecraftApp* g_pApp;
 
 StructureFeature::StructureFeature()
 {
+    mSavedData = boost::shared_ptr<StructureFeatureSavedData>();
 }
 
 StructureFeature::~StructureFeature()
@@ -46,11 +47,10 @@ void StructureFeature::addFeature(Level* level, int chunkX, int chunkZ, int orig
     }
 
     random.nextInt();
-    bool flatWorld = level->getLevelData()->getGeneratorType() == LevelType::FLAT;
-    if (isFeatureChunk(chunkX, chunkZ, flatWorld))
+    if (isFeatureChunk(chunkX, chunkZ, level->getLevelData()->getGeneratorType() == LevelType::FLAT))
     {
         StructureStart* start = createStructureStart(chunkX, chunkZ);
-        mStructureMap[key] = start;
+        mStructureMap[ChunkPos::asLong(chunkX, chunkZ)] = start;
         if (start->isValid())
         {
             saveFeature(chunkX, chunkZ, start);
@@ -91,6 +91,7 @@ bool StructureFeature::postProcess(Level* level, Random& randomSource, ChunkPos*
 
 bool StructureFeature::isIntersection(int x, int z)
 {
+    restoreSavedData(level);
     if (mStructureMap.empty())
     {
         return false;
@@ -102,9 +103,8 @@ bool StructureFeature::isIntersection(int x, int z)
         StructureStart* start = it->second;
         if (start->isValid() && start->getBoundingBox()->intersects(x, z, x, z))
         {
-            start->getPieces();
-            for (std::vector<StructurePiece*>::iterator piece = start->begin();
-                 piece != start->end(); ++piece)
+            for (std::vector<StructurePiece*>::iterator piece = start->getPieces()->begin();
+                 piece != start->getPieces()->end(); ++piece)
             {
                 if ((*piece)->getBoundingBox()->intersects(x, z, x, z))
                 {
@@ -122,13 +122,13 @@ StructureStart* StructureFeature::getStructureAt(const BlockPos& pos)
          it != mStructureMap.end(); ++it)
     {
         StructureStart* start = it->second;
-        if (start->isValid() && start->getBoundingBox()->isInside(Vec3i(pos.x, pos.y, pos.z)))
+        if (start->isValid() && start->getBoundingBox()->isInside(pos))
         {
-            start->getPieces();
-            for (std::vector<StructurePiece*>::iterator piece = start->begin();
-                 piece != start->end(); ++piece)
+            std::vector<StructurePiece*>* pieces = start->getPieces();
+            for (std::vector<StructurePiece*>::iterator piece = pieces->begin();
+                 piece != pieces->end(); ++piece)
             {
-                if ((*piece)->getBoundingBox()->isInside(Vec3i(pos.x, pos.y, pos.z)))
+                if ((*piece)->getBoundingBox()->isInside(pos))
                 {
                     return start;
                 }
@@ -140,6 +140,11 @@ StructureStart* StructureFeature::getStructureAt(const BlockPos& pos)
 
 bool StructureFeature::isInsideFeature(const BlockPos& pos)
 {
+    if (level == NULL)
+    {
+        return false;
+    }
+    restoreSavedData(level);
     return getStructureAt(pos) != NULL;
 }
 
@@ -150,7 +155,7 @@ bool StructureFeature::isInsideBoundingFeature(Level* level, const BlockPos& pos
          it != mStructureMap.end(); ++it)
     {
         StructureStart* start = it->second;
-        if (start->isValid() && start->getBoundingBox()->isInside(Vec3i(pos.x, pos.y, pos.z)))
+        if (start->isValid() && start->getBoundingBox()->isInside(pos))
         {
             return true;
         }
@@ -170,12 +175,12 @@ void StructureFeature::restoreSavedData(Level* levelToRestore)
         return;
     }
 
-    boost::shared_ptr<SavedData> saved =
-        levelToRestore->getSavedData(typeid(StructureFeatureSavedData), getFeatureName());
-    mSavedData = boost::dynamic_pointer_cast<StructureFeatureSavedData>(saved);
+    mSavedData = boost::dynamic_pointer_cast<StructureFeatureSavedData>(
+        levelToRestore->getSavedData(typeid(StructureFeatureSavedData), getFeatureName()));
     if (!mSavedData)
     {
-        mSavedData.reset(new StructureFeatureSavedData(getFeatureName()));
+        mSavedData = boost::shared_ptr<StructureFeatureSavedData>(
+            new StructureFeatureSavedData(getFeatureName()));
         levelToRestore->setSavedData(getFeatureName(), mSavedData);
         return;
     }
@@ -244,7 +249,7 @@ BlockPos* StructureFeature::findNearestFeaturePositionBySpacing(
 
 bool StructureFeature::canPlaceFeatureInChunk(bool defaultValue, EFeatureTypes type, int chunkX, int chunkZ)
 {
-    LevelGenerationOptions* options = g_pApp->getLevelGenerationOptions();
+    LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
     if (options != NULL && options->hasFeature(type) && chunkX > -27 && chunkZ < 27)
     {
         return options->isFeatureChunk(chunkX, chunkZ, type, NULL);

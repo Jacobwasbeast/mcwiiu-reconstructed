@@ -10,7 +10,7 @@ class Random;
 class FossilFeature : public Feature
 {
 public:
-    virtual ~FossilFeature();
+    virtual ~FossilFeature() {}
     virtual bool place(Level* level, Random& random, const BlockPos& origin);
 };
 

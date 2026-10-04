@@ -163,7 +163,7 @@ public:
     virtual void handleEntityEvent(unsigned char event, int data);
     virtual void thunderHit(const LightningBolt* lightningBolt);
     virtual std::wstring getDisplayName();
-    virtual double getEyeHeight();
+    virtual float getEyeHeight();
     virtual bool setSlot(int slot, const not_null_ptr<ItemInstance>& item);
     virtual bool canBeLeashed(const boost::shared_ptr<Player>& player);
     virtual void registerAttributes();

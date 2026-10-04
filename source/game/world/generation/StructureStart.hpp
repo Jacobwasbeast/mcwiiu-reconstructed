@@ -27,7 +27,7 @@ public:
     bool isDirty();
     unsigned int getChunkX();
     unsigned int getChunkZ();
-    void getPieces();
+    std::vector<StructurePiece*>* getPieces();
     void clearDirty();
     void setDirty();
     virtual void postProcess(Level* level, Random& random, BoundingBox* box);
@@ -43,8 +43,10 @@ public:
     virtual void notifyPostProcessAt(ChunkPos* chunkPos);
     virtual EStructureStart GetType() = 0;
 
-private:
+protected:
     BoundingBox* mBoundingBox;
+
+private:
     int mChunkX;
     int mChunkZ;
     bool mDirty;

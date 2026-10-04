@@ -9,17 +9,9 @@ WarpedLayerFillRuleDefinition::WarpedLayerFillRuleDefinition()
     , mOffset(4)
     , mThickness(1)
 {
-    GameRules_FloatAttribute* noiseScaleAttribute = addFloatAttribute(ConsoleGameRules::eGameRuleAttr_scale, &mNoiseScale);
-    noiseScaleAttribute->setMin(1.0f);
-    noiseScaleAttribute->setMax(254.0f);
-
-    GameRules_IntAttribute* offsetAttribute = addIntAttribute(ConsoleGameRules::eGameRuleAttr_dY, &mOffset);
-    offsetAttribute->setMin(0);
-    offsetAttribute->setMax(9);
-
-    GameRules_IntAttribute* thicknessAttribute = addIntAttribute(ConsoleGameRules::eGameRuleAttr_thickness, &mThickness);
-    thicknessAttribute->setMin(1);
-    thicknessAttribute->setMax(9);
+    addFloatAttribute(ConsoleGameRules::eGameRuleAttr_scale, &mNoiseScale)->setMin(1.0f)->setMax(254.0f);
+    addIntAttribute(ConsoleGameRules::eGameRuleAttr_dY, &mOffset)->setMin(0)->setMax(9);
+    addIntAttribute(ConsoleGameRules::eGameRuleAttr_thickness, &mThickness)->setMin(1)->setMax(9);
 }
 
 WarpedLayerFillRuleDefinition::~WarpedLayerFillRuleDefinition()

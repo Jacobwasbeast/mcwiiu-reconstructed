@@ -65,8 +65,8 @@ void UnderwaterCanyonFeature::addTunnel(Level* level, long long seed, int chunkX
     for (; startIndex < endIndex; ++startIndex)
     {
         float radius = sinf((float)startIndex * 3.1415927F / (float)endIndex) * thickness + 1.5F;
-        double horizontalRadius = radius * (random.nextFloat() * 0.25F + 0.75F);
-        double verticalRadius = radius * (float)yScale * (random.nextFloat() * 0.25F + 0.75F);
+        float horizontalRadius = radius * (random.nextFloat() * 0.25F + 0.75F);
+        float verticalRadius = radius * (float)yScale * (random.nextFloat() * 0.25F + 0.75F);
         float cosPitch = cosf(pitch);
         float sinPitch = sinf(pitch);
         x += cosf(yaw) * cosPitch;
@@ -91,7 +91,7 @@ void UnderwaterCanyonFeature::addTunnel(Level* level, long long seed, int chunkX
         if (dx * dx + dz * dz - remaining * remaining > maxDistance * maxDistance)
             return;
 
-        float doubleRadius = (float)(horizontalRadius + horizontalRadius);
+        float doubleRadius = horizontalRadius + horizontalRadius;
         if (x < centerX - 16.0F - doubleRadius || z < centerZ - 16.0F - doubleRadius
             || x > centerX + 16.0F + doubleRadius || z > centerZ + 16.0F + doubleRadius)
             continue;
@@ -120,17 +120,17 @@ void UnderwaterCanyonFeature::addTunnel(Level* level, long long seed, int chunkX
         bool carved = false;
         for (int localX = minX; localX < maxX; ++localX)
         {
-            float xd = (float)(((float)(localX + chunkX * 16) + 0.5F - (float)x) / horizontalRadius);
+            float xd = ((float)(localX + chunkX * 16) + 0.5F - (float)x) / horizontalRadius;
             for (int localZ = minZ; localZ < maxZ; ++localZ)
             {
-                float zd = (float)(((float)(localZ + chunkZ * 16) + 0.5F - (float)z) / horizontalRadius);
+                float zd = ((float)(localZ + chunkZ * 16) + 0.5F - (float)z) / horizontalRadius;
                 float horizontalDistance = zd * zd + xd * xd;
                 if (horizontalDistance >= 1.0F)
                     continue;
 
                 for (int localY = maxY - 1; localY >= minY; --localY)
                 {
-                    float yd = (float)(((float)localY + 0.5F - (float)y) / verticalRadius);
+                    float yd = ((float)localY + 0.5F - (float)y) / verticalRadius;
                     int index = (localX << 11) | (localZ << 7) | localY;
                     if (horizontalDistance * rs[localY - 1] + yd * yd / 6.0F >= 1.0F || localY >= 62)
                         continue;
@@ -152,25 +152,41 @@ void UnderwaterCanyonFeature::addTunnel(Level* level, long long seed, int chunkX
                     else
                     {
                         bool water = false;
-                        if (localX < 15 && primer->getBlockId(index + 0x800) == BlockId::AIR)
+                        if (localX < 15)
                         {
-                            primer->setBlockAndData(index + 0x800, BlockId::FLOWING_WATER, flowingWaterData);
-                            water = true;
+                            int neighbor = ((localX << 11) + 0x800) | (localZ << 7) | localY;
+                            if (primer->getBlockId(neighbor) == BlockId::AIR)
+                            {
+                                primer->setBlockAndData(neighbor, BlockId::FLOWING_WATER, flowingWaterData);
+                                water = true;
+                            }
                         }
-                        if (localX > 0 && primer->getBlockId(index - 0x800) == BlockId::AIR)
+                        if (localX > 0)
                         {
-                            primer->setBlockAndData(index - 0x800, BlockId::FLOWING_WATER, flowingWaterData);
-                            water = true;
+                            int neighbor = ((localX << 11) - 0x800) | (localZ << 7) | localY;
+                            if (primer->getBlockId(neighbor) == BlockId::AIR)
+                            {
+                                primer->setBlockAndData(neighbor, BlockId::FLOWING_WATER, flowingWaterData);
+                                water = true;
+                            }
                         }
-                        if (localZ < 15 && primer->getBlockId(index + 0x80) == BlockId::AIR)
+                        if (localZ < 15)
                         {
-                            primer->setBlockAndData(index + 0x80, BlockId::FLOWING_WATER, flowingWaterData);
-                            water = true;
+                            int neighbor = (localX << 11) | ((localZ << 7) + 0x80) | localY;
+                            if (primer->getBlockId(neighbor) == BlockId::AIR)
+                            {
+                                primer->setBlockAndData(neighbor, BlockId::FLOWING_WATER, flowingWaterData);
+                                water = true;
+                            }
                         }
-                        if (localZ > 0 && primer->getBlockId(index - 0x80) == BlockId::AIR)
+                        if (localZ > 0)
                         {
-                            primer->setBlockAndData(index - 0x80, BlockId::FLOWING_WATER, flowingWaterData);
-                            water = true;
+                            int neighbor = (localX << 11) | ((localZ << 7) - 0x80) | localY;
+                            if (primer->getBlockId(neighbor) == BlockId::AIR)
+                            {
+                                primer->setBlockAndData(neighbor, BlockId::FLOWING_WATER, flowingWaterData);
+                                water = true;
+                            }
                         }
                         if (!water)
                             primer->setBlockAndData(index, BlockId::WATER, waterData);

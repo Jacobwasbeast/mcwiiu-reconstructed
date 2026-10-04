@@ -25,7 +25,7 @@ void WarpedLayerFill::ExtrudeLayer(Random& random, const Shape& shape, const Vec
         for (unsigned int z = 0; z < shape.depth; ++z)
         {
             float value = shape.at(x, z);
-            if (value >= 0.0f && value < 1.0f)
+            if (value >= 0.0f && value < 1.0)
             {
                 double noiseValue = noise.getValue((double)x / mNoiseScale,
                                                     (double)z / mNoiseScale);

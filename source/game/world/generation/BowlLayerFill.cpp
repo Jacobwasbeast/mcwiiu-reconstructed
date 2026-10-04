@@ -33,7 +33,7 @@ void BowlLayerFill::ExtrudeLayer(Random&, const Shape& shape, const Vec3i&,
         for (unsigned int z = 0; z < shape.depth; ++z)
         {
             float value = shape.at(x, z);
-            if (value >= 0.0f && value < 1.0f)
+            if (value >= 0.0f && value < 1.0)
             {
                 int startY = (int)std::floor(height * mCurve(value));
                 for (int layer = 0; layer < mThickness; ++layer)

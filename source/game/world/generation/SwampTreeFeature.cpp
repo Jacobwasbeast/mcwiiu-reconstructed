@@ -1,3 +1,4 @@
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/world/generation/SwampTreeFeature.hpp"
 
 #include <cstdlib>
@@ -21,7 +22,6 @@
 #include "game/world/block/TypedBoxed.hpp"
 #include "game/world/block/VineBlock.hpp"
 
-extern CMinecraftApp* g_pApp;
 
 static const BlockState* swampTrunkState = NULL;
 static const BlockState* swampLeafState = NULL;
@@ -37,20 +37,16 @@ SwampTreeFeature::~SwampTreeFeature()
 
 void SwampTreeFeature::staticCtor()
 {
-    TypedBoxed<PlanksBlock::Variant*> trunkVariant(PlanksBlock::Variant::OAK);
-    swampTrunkState = Blocks::log->defaultBlockState()->setBoxedValue(OldLogBlock::VARIANT, &trunkVariant);
-    TypedBoxed<PlanksBlock::Variant*> leafVariant(PlanksBlock::Variant::OAK);
-    TypedBoxed<bool> decayable(false);
+    swampTrunkState = Blocks::log->defaultBlockState()->setValue(OldLogBlock::VARIANT, PlanksBlock::Variant::OAK);
     swampLeafState = Blocks::leaves->defaultBlockState()
-                         ->setBoxedValue(OldLeafBlock::VARIANT, &leafVariant)
-                         ->setBoxedValue(LeafBlock::DECAYABLE, &decayable);
+                         ->setValue(OldLeafBlock::VARIANT, PlanksBlock::Variant::OAK)
+                         ->setValue(LeafBlock::DECAYABLE, false);
 }
 
 void SwampTreeFeature::addVine(Level* level, const BlockPos& pos,
                                const BooleanProperty* property)
 {
-    TypedBoxed<bool> value(true);
-    const BlockState* state = Blocks::vine->defaultBlockState()->setBoxedValue(property, &value);
+    const BlockState* state = Blocks::vine->defaultBlockState()->setValue(property, true);
     BlockPos vinePos = pos;
     setBlock(level, vinePos, state, Block::UPDATE_NONE);
     int length = 4;
@@ -68,8 +64,11 @@ bool SwampTreeFeature::place(Level* level, Random& random, const BlockPos& pos)
     PIXBeginNamedEvent(0.0f, "SwampTreeFeature::place");
     BlockPos origin = pos;
     int height = random.nextInt(4) + mBaseHeight;
-    while (level->getBlockState(origin.below())->getMaterial() == Material::WATER)
-        origin = origin.below();
+    for (; level->getBlockState(origin.below())->getMaterial() == Material::WATER; origin = origin.below())
+    {
+    }
+
+    bool free = true;
 
     if (origin.y < 1 || origin.y + height + 1 > 128)
     {
@@ -77,19 +76,22 @@ bool SwampTreeFeature::place(Level* level, Random& random, const BlockPos& pos)
         return false;
     }
 
-    if (g_pApp->getLevelGenerationOptions() != NULL
-        && g_pApp->getLevelGenerationOptions()->checkIntersects(origin.offset(-3, -1, -3),
-                                                                origin.offset(3, height, 3)))
+    if (gApp.getLevelGenerationOptions() != NULL)
     {
-        PIXEndNamedEvent();
-        return false;
+        LevelGenerationOptions* levelGenerationOptions = gApp.getLevelGenerationOptions();
+        if (levelGenerationOptions->checkIntersects(origin.offset(-3, -1, -3), origin.offset(3, height, 3)))
+        {
+            PIXEndNamedEvent();
+            return false;
+        }
     }
 
-    bool free = true;
     MutableBlockPos checkPos(0, 0, 0);
     for (int y = origin.y; y <= origin.y + height + 1; ++y)
     {
-        int radius = y == origin.y ? 0 : 1;
+        int radius = 1;
+        if (y == origin.y)
+            radius = 0;
         if (y >= origin.y + height - 1)
             radius = 3;
         for (int x = origin.x - radius; x <= origin.x + radius && free; ++x)
@@ -136,9 +138,11 @@ bool SwampTreeFeature::place(Level* level, Random& random, const BlockPos& pos)
         int radius = 2 - yOffset / 2;
         for (int x = origin.x - radius; x <= origin.x + radius; ++x)
         {
+            int xOffset = x - origin.x;
             for (int z = origin.z - radius; z <= origin.z + radius; ++z)
             {
-                if (abs(x - origin.x) != radius || abs(z - origin.z) != radius
+                int zOffset = z - origin.z;
+                if (!(abs(xOffset) == radius && abs(zOffset) == radius)
                     || (random.nextInt(2) != 0 && yOffset != 0))
                 {
                     leafPos.set(x, y, z);

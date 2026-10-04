@@ -10,7 +10,7 @@ class Random;
 class LightGemFeature : public Feature
 {
 public:
-    virtual ~LightGemFeature();
+    virtual ~LightGemFeature() {}
     virtual bool place(Level* level, Random& random, const BlockPos& origin);
 };
 

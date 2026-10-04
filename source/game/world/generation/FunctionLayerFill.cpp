@@ -19,9 +19,9 @@ int FunctionLayerFill::ISLAND(float value)
 {
     if (value < 0.1)
         return 3;
-    if (value >= 0.5f)
-        return 1;
-    return 2;
+    if (value < 0.5)
+        return 2;
+    return 1;
 }
 
 void FunctionLayerFill::ExtrudeLayer(Random& random, const Shape& shape, const Vec3i&,
@@ -32,16 +32,15 @@ void FunctionLayerFill::ExtrudeLayer(Random& random, const Shape& shape, const V
         for (unsigned int z = 0; z < shape.depth; ++z)
         {
             float value = shape.at(x, z);
-            if (value >= 0.0f && value < 1.0f)
+            if (0.0f <= value && value < 1.0)
             {
-                int count = random.nextInt(mFunction(value));
-                int y = transaction->mSize.y - 3;
-                for (int layer = 0; layer < count; ++layer, --y)
+                int top = transaction->mSize.y;
+                int count = mFunction(value);
+                for (int layer = 0; layer < count; ++layer)
                 {
-                    if (*maxY < y)
-                        *maxY = y;
-                    if (*minY > y)
-                        *minY = y;
+                    int y = top - 3 - layer;
+                    *maxY = *maxY < y ? y : *maxY;
+                    *minY = *minY < y ? *minY : y;
                     transaction->setBlock(Vec3i((int)x, y, (int)z), 1, 0);
                 }
             }

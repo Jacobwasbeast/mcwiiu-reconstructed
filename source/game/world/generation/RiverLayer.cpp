@@ -12,7 +12,11 @@ RiverLayer::RiverLayer(long long seed, boost::shared_ptr<Layer> parent)
 
 int RiverLayer::riverFilter(int biomeId)
 {
-    return biomeId >= 2 ? 2 + (biomeId & 1) : biomeId;
+    if (biomeId >= 2)
+    {
+        return (biomeId & 1) + 2;
+    }
+    return biomeId;
 }
 
 arrayWithLength<int> RiverLayer::getArea(int x, int z, int width, int height)

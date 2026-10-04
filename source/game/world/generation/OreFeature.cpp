@@ -4,6 +4,7 @@
 #include <cstring>
 
 #include "game/core/CMinecraftApp.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/Mth.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
@@ -36,10 +37,11 @@ OreFeature::~OreFeature()
 void OreFeature::_init(const BlockState* state, int numberOfBlocks,
                        const Predicate<const Biome::BlockPair&>* predicate)
 {
-    mBlockId = Block::getId(state->getBlock());
-    mBlockData = state->getBlock()->getSpawnResourcesAuxValue(state);
+    const int blockId = Block::getId(state->getBlock());
+    mBlockData = state->getBlock()->convertBlockStateToLegacyData(state);
     mNumberOfBlocks = numberOfBlocks;
     mPredicate = predicate;
+    mBlockId = blockId;
 }
 
 bool OreFeature::place(Level* level, Random& random, const BlockPos& origin)
@@ -59,9 +61,9 @@ bool OreFeature::place(Level* level, Random& random, const BlockPos& origin)
 
     PIXBeginNamedEvent(0.0f, "Level generation options");
     const double radius = (2.0 * (mNumberOfBlocks * 0.0625) + 1.0) * 0.5;
-    const int minX = Mth::floor(std::min(x0, x1) - radius);
-    const int minY = Mth::floor(std::min(y0, y1) - radius);
-    const int minZ = Mth::floor(std::min(z0, z1) - radius);
+    const int minX = Mth::floor((x0 > x1 ? x1 : x0) - radius);
+    const int minY = Mth::floor((y0 > y1 ? y1 : y0) - radius);
+    const int minZ = Mth::floor((z0 > z1 ? z1 : z0) - radius);
     const int maxX = Mth::floor(std::max(x0, x1) + radius);
     const int maxY = Mth::floor(std::max(y0, y1) + radius);
     const int maxZ = Mth::floor(std::max(z0, z1) + radius);
@@ -72,9 +74,9 @@ bool OreFeature::place(Level* level, Random& random, const BlockPos& origin)
 
     LevelGenerationOptions* options = NULL;
     bool intersects = false;
-    if (g_pApp->getLevelGenerationOptions() != NULL)
+    if (gApp.getLevelGenerationOptions() != NULL)
     {
-        options = g_pApp->getLevelGenerationOptions();
+        options = gApp.getLevelGenerationOptions();
         intersects = options->checkIntersects(BlockPos(minX, minY, minZ), BlockPos(maxX, maxY, maxZ));
     }
     PIXEndNamedEvent();
@@ -149,23 +151,22 @@ bool OreFeature::place(Level* level, Random& random, const BlockPos& origin)
                     if (dx * dx + dy * dy + dz * dz < radiusSquared)
                     {
                         const unsigned char bit = (unsigned char)(1 << (index & 7));
-                        if ((mask[index >> 3] & bit) != 0)
+                        if ((mask[index >> 3] & bit) == 0)
                         {
-                            continue;
-                        }
-                        mask[index >> 3] |= bit;
+                            mask[index >> 3] |= bit;
 
-                        PIXBeginNamedEvent(0.0f, "Applying");
-                        const int element = level->getElement(blockX, blockY, blockZ);
-                        if ((element >> 4) != 0)
-                        {
-                            Biome::BlockPair pair(element >> 4, element & 15);
-                            if (mPredicate->apply(pair))
+                            PIXBeginNamedEvent(0.0f, "Applying");
+                            const int element = level->getElement(blockX, blockY, blockZ);
+                            if ((element >> 4) != 0)
                             {
-                                level->setBlockAndData(blockX, blockY, blockZ, mBlockId, mBlockData, Block::UPDATE_INVISIBLE | Block::UPDATE_NO_OBSERVERS | Block::UPDATE_LIGHT_IF_CHANGED | Block::UPDATE_CHUNK_ONLY);
+                                Biome::BlockPair pair(element >> 4, element & 15);
+                                if (mPredicate->apply(pair))
+                                {
+                                    level->setBlockAndData(blockX, blockY, blockZ, mBlockId, mBlockData, Block::UPDATE_INVISIBLE | Block::UPDATE_NO_OBSERVERS | Block::UPDATE_LIGHT_IF_CHANGED | Block::UPDATE_CHUNK_ONLY);
+                                }
                             }
+                            PIXEndNamedEvent();
                         }
-                        PIXEndNamedEvent();
                     }
                     ++index;
                 }
@@ -186,8 +187,4 @@ bool OreFeature::NaturalStonePredicate::apply(const Biome::BlockPair& pair) cons
         return false;
     }
     return StoneBlock::Variant::BY_DATA[pair.blockData]->isNatural();
-}
-
-OreFeature::NaturalStonePredicate::~NaturalStonePredicate()
-{
 }

@@ -1,5 +1,7 @@
 #include "game/world/generation/FilterRuleDefinition.hpp"
 
+#include "game/core/StringConversion.hpp"
+
 #include <string>
 #include <vector>
 
@@ -11,12 +13,6 @@
 #include "game/world/generation/LayerMetadata.hpp"
 #include "game/world/generation/LayerShape.hpp"
 #include "game/world/generation/LayerTheme.hpp"
-
-template <typename T>
-std::wstring toString(T value);
-
-template <typename T>
-T fromString(const std::wstring& text);
 
 template <class T>
 FilterRuleDefinition<T>::FilterRuleDefinition(CreateChildFunc createChild)
@@ -43,7 +39,7 @@ void FilterRuleDefinition<T>::writeAttributes(GameRuleSaveInterface* saveInterfa
 {
     GameRuleDefinition::writeAttributes(saveInterface, extraAttributeCount + 2);
 
-    saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_variant, toString(mVariant));
+    saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_variant, _toString<int>(mVariant));
     saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_type, LayerMetadata::toStringFilter(mFilter));
 }
 
@@ -76,7 +72,7 @@ void FilterRuleDefinition<T>::addAttribute(const std::wstring& name, const std::
 {
     if (name.compare(L"variant") == 0)
     {
-        mVariant = fromString<int>(value);
+        mVariant = _fromString<int>(value);
     }
     else if (name.compare(L"type") == 0)
     {

@@ -35,47 +35,45 @@ PlayersEnteredVolumeCondition::~PlayersEnteredVolumeCondition()
 
 int PlayersEnteredVolumeCondition::GetValue(MasterGameMode* gameMode) const
 {
+    int entered = 0;
     std::vector<boost::shared_ptr<ServerPlayer> > players;
     if (CommonMasterGameMode::GetMiniGame()->GetId() == 3)
         players = gameMode->GetGlidePlayers();
     else
         players = gameMode->GetPlayers(true, false);
 
-    int entered = 0;
     for (std::vector<boost::shared_ptr<ServerPlayer> >::const_iterator it = players.begin(); it != players.end(); ++it)
     {
-        const StatsUID uid = (*it)->getSUID();
-        if (gameMode->mGameStats.GetEndZoneEntered(uid) != 0)
+        boost::shared_ptr<ServerPlayer> player = *it;
+        if (gameMode->mGameStats.GetEndZoneEntered(player->getSUID()) != 0)
         {
             ++entered;
-            continue;
         }
-
-        if (!m_useTargetAreas.isSet() || !m_useTargetAreas.get())
+        else if (player->getHealth() > 0.0F)
         {
-            LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
-            const std::wstring volumeName = m_volumeName.isSet() ? m_volumeName.get() : std::wstring();
-            AABB* area = options->getRequiredGameRules()->getNamedArea(volumeName);
-            if (area != NULL && (*it)->getBoundingBoxForCulling()->intersects(area->mMinX, area->mMinY, area->mMinZ,
-                                                                     area->mMaxX, area->mMaxY, area->mMaxZ))
-                ++entered;
-        }
-        else
-        {
-            std::vector<TargetAreaRuleDefinition*> areas;
-            LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
-            options->getRequiredGameRules()->getTargetAreas(&areas);
-            for (std::vector<TargetAreaRuleDefinition*>::const_iterator area = areas.begin(); area != areas.end(); ++area)
+            if (!m_useTargetAreas.isSet() || !m_useTargetAreas.get())
             {
-                if (!(*area)->mPrimary || gameMode->mGameStats.GetLapsCompleted(uid) < static_cast<unsigned int>((*area)->getSize()))
-                    continue;
-                AABB* volume = (*area)->getArea();
-                if (volume != NULL && (*it)->getBoundingBoxForCulling()->intersects(volume->mMinX, volume->mMinY, volume->mMinZ,
-                                                                           volume->mMaxX, volume->mMaxY, volume->mMaxZ) &&
-                    gameMode->mGameStats.GetLastCheckpointSequenceID(uid) == gameMode->mFinalCheckpointSequenceID)
-                {
+                AABB* area = gApp.getLevelGenerationOptions()->getRequiredGameRules()->getNamedArea(GetVolumeName());
+                AABB* swept = gameMode->GetSweptVolumeFromLastKnownPosition(player);
+                if (area->intersects(swept->mMinX, swept->mMinY, swept->mMinZ, swept->mMaxX, swept->mMaxY, swept->mMaxZ))
                     ++entered;
-                    break;
+            }
+            else
+            {
+                std::vector<TargetAreaRuleDefinition*> areas;
+                gApp.getLevelGenerationOptions()->getRequiredGameRules()->getTargetAreas(&areas);
+                for (std::vector<TargetAreaRuleDefinition*>::const_iterator area = areas.begin(); area != areas.end(); ++area)
+                {
+                    if (!(*area)->mPrimary || (*area)->mLaps > static_cast<int>(gameMode->mGameStats.GetLapsCompleted(player->getSUID())))
+                        continue;
+                    bool atFinalCheckpoint = false;
+                    AABB* volume = (*area)->getArea();
+                    AABB* swept = gameMode->GetSweptVolumeFromLastKnownPosition(player);
+                    if (volume->intersects(swept->mMinX, swept->mMinY, swept->mMinZ, swept->mMaxX, swept->mMaxY, swept->mMaxZ) &&
+                        gameMode->mGameStats.GetLastCheckpointSequenceID(player->getSUID()) == gameMode->mFinalCheckpointSequenceID)
+                        atFinalCheckpoint = true;
+                    if (atFinalCheckpoint)
+                        ++entered;
                 }
             }
         }
@@ -99,18 +97,21 @@ int PlayersEnteredVolumeCondition::GetThresholdPlayerOverride(MasterGameMode* ga
 
 unsigned int PlayersEnteredVolumeCondition::GetThreshold(MasterGameMode* gameMode) const
 {
-    int playerCount;
     if (CommonMasterGameMode::GetMiniGame()->GetId() == 3)
-        playerCount = static_cast<int>(gameMode->GetGlidePlayers().size());
-    else
-        playerCount = static_cast<int>(gameMode->GetPlayers(true, false).size());
-    return static_cast<unsigned int>(GetThresholdPlayerOverride(gameMode, playerCount));
+    {
+        std::vector<boost::shared_ptr<ServerPlayer> > glidePlayers = gameMode->GetGlidePlayers();
+        return static_cast<unsigned int>(GetThresholdPlayerOverride(gameMode, static_cast<int>(glidePlayers.size())));
+    }
+    std::vector<boost::shared_ptr<ServerPlayer> > players = gameMode->GetPlayers(true, false);
+    return static_cast<unsigned int>(GetThresholdPlayerOverride(gameMode, static_cast<int>(players.size())));
 }
 
 void PlayersEnteredVolumeCondition::AddIntParams(MasterGameMode* gameMode, std::vector<int>* params) const
 {
-    params->push_back(GetValue(gameMode));
-    params->push_back(IDS_MG_PLAYERS);
+    const int threshold = GetThreshold(gameMode);
+    params->push_back(threshold);
+    const int playersString = IDS_MG_PLAYERS;
+    params->push_back(playersString);
 }
 
 bool PlayersEnteredVolumeCondition::IsUsingPrimaryTargetAreas() const

@@ -57,35 +57,35 @@ BlockPos CoralCrustFeature::getOffsetFromRot(Rotation* rotation, int type) const
         }
         return BlockPos(6, 0, -7);
     }
-    if (type > 3)
+    if (type < 4)
     {
         if (rotation == Rotation::NONE)
         {
-            return BlockPos(3, 0, 6);
+            return BlockPos(4, 0, 4);
         }
         if (rotation == Rotation::CLOCKWISE_90)
         {
-            return BlockPos(-7, 0, 3);
+            return BlockPos(-4, 0, 4);
         }
         if (rotation == Rotation::CLOCKWISE_180)
         {
-            return BlockPos(-2, 0, -7);
+            return BlockPos(-4, 0, -4);
         }
-        return BlockPos(7, 0, -3);
+        return BlockPos(4, 0, -4);
     }
     if (rotation == Rotation::NONE)
     {
-        return BlockPos(4, 0, 4);
+        return BlockPos(3, 0, 6);
     }
     if (rotation == Rotation::CLOCKWISE_90)
     {
-        return BlockPos(-4, 0, 4);
+        return BlockPos(-7, 0, 3);
     }
     if (rotation == Rotation::CLOCKWISE_180)
     {
-        return BlockPos(-4, 0, -4);
+        return BlockPos(-2, 0, -7);
     }
-    return BlockPos(4, 0, -4);
+    return BlockPos(7, 0, -3);
 }
 
 BlockPos CoralCrustFeature::getCropOffsetFromRot(Rotation* rotation, int type) const
@@ -191,8 +191,7 @@ BlockPos CoralCrustFeature::getCropOffsetFromRot(Rotation* rotation, int type) c
 
 const BlockState* CoralCrustFeature::setColorData(Level* level, const BlockState* state, int color) const
 {
-    TypedBoxed<int> value(color);
-    return state->setBoxedValue(CoralBlock::VARIANT, &value);
+    return state->setValue(CoralBlock::VARIANT, color);
 }
 
 bool CoralCrustFeature::canOverwrite(Level* level, const BlockPos& pos)
@@ -313,23 +312,32 @@ void CoralCrustFeature::placeTopDecorations(Level* level, const BlockPos& pos, R
     }
 
     const BlockState* state = Blocks::coral_fan->defaultBlockState();
-    TypedBoxed<int> variant(random.nextInt(CoralFan::VARIANT->getValueCount()));
-    state = state->setBoxedValue(CoralFan::VARIANT, &variant);
-    TypedBoxed<int> direction(random.nextInt(CoralFan::DIRECTION->getValueCount()));
-    state = state->setBoxedValue(CoralFan::DIRECTION, &direction);
+    state = state->setValue(CoralFan::VARIANT, random.nextInt(CoralFan::VARIANT->getValueCount()));
+    state = state->setValue(CoralFan::DIRECTION, random.nextInt(CoralFan::DIRECTION->getValueCount()));
     setBlock(level, pos, state, Block::UPDATE_NONE);
 }
 
 bool CoralCrustFeature::canPlaceHangOn(Level* level, const BlockPos& pos)
 {
     Block* block = level->getBlock(pos);
-    return block == Blocks::coral_block || block == Blocks::stone;
+    if (block == Blocks::coral_block || block == Blocks::stone)
+    {
+        return true;
+    }
+    return false;
 }
 
 const Direction* CoralCrustFeature::randomDirectionExcept(Random& random, const Direction* except) const
 {
+    const Direction* result;
     switch (except->getOrdinal())
     {
+    default:
+    {
+        const Direction* notWest[3] = { Direction::EAST, Direction::SOUTH, Direction::NORTH };
+        result = notWest[random.nextInt(3)];
+        break;
+    }
     case 2:
     {
         const Direction* notNorth[3] = { Direction::EAST, Direction::SOUTH, Direction::WEST };
@@ -343,14 +351,11 @@ const Direction* CoralCrustFeature::randomDirectionExcept(Random& random, const 
     case 5:
     {
         const Direction* notEast[3] = { Direction::NORTH, Direction::SOUTH, Direction::WEST };
-        return notEast[random.nextInt(3)];
-    }
-    default:
-    {
-        const Direction* notWest[3] = { Direction::EAST, Direction::SOUTH, Direction::NORTH };
-        return notWest[random.nextInt(3)];
+        result = notEast[random.nextInt(3)];
+        break;
     }
     }
+    return result;
 }
 
 int CoralCrustFeature::turnFacingIntoint(const Direction* direction) const
@@ -363,11 +368,7 @@ int CoralCrustFeature::turnFacingIntoint(const Direction* direction) const
     {
         return 1;
     }
-    if (direction != Direction::SOUTH)
-    {
-        return 0;
-    }
-    return 3;
+    return direction == Direction::SOUTH ? 3 : 0;
 }
 
 const BlockState* CoralCrustFeature::setCoralHangData(int facing, int variant, int type) const
@@ -376,22 +377,19 @@ const BlockState* CoralCrustFeature::setCoralHangData(int facing, int variant, i
     if (type == 0)
     {
         state = Blocks::coral_fan_hang->defaultBlockState();
-        TypedBoxed<int> variantValue(variant);
-        state = state->setBoxedValue(CoralFanHang::VARIANT, &variantValue);
+        state = state->setValue(CoralFanHang::VARIANT, variant);
     }
     else if (type == 1)
     {
         state = Blocks::coral_fan_hang2->defaultBlockState();
-        TypedBoxed<int> variantValue(variant);
-        state = state->setBoxedValue(CoralFanHang::VARIANT, &variantValue);
+        state = state->setValue(CoralFanHang::VARIANT, variant);
     }
     else
     {
         state = Blocks::coral_fan_hang3->defaultBlockState();
     }
 
-    TypedBoxed<int> facingValue(facing);
-    return state->setBoxedValue(CoralFanHang::DIRECTION, &facingValue);
+    return state->setValue(CoralFanHang::DIRECTION, facing);
 }
 
 void CoralCrustFeature::placeSideDecorations(Level* level, const BlockPos& pos, Random& random,
@@ -483,19 +481,11 @@ bool CoralCrustFeature::place(Level* level, Random& random, const BlockPos& orig
     rotations.push_back(rotation);
 
     BlockPos position = origin + getOffsetFromRot(rotations[0], types[0]);
-    while (true)
+    while (position.y < 54 && !level->isEmptyWaterBlock(position))
     {
-        if (position.y > 53)
-        {
-            return false;
-        }
-        if (level->isEmptyWaterBlock(position))
-        {
-            break;
-        }
         position = position.above();
     }
-    if (position.y > 53)
+    if (position.y >= 54)
     {
         return false;
     }
@@ -525,8 +515,8 @@ bool CoralCrustFeature::place(Level* level, Random& random, const BlockPos& orig
         return true;
     }
 
-    const int count = random.nextInt(4, 9);
-    for (int i = 0; i < count; ++i)
+    int count = random.nextInt(4, 9);
+    for (int i = 1; i < count + 1; ++i)
     {
         type = random.nextInt(5);
         rotation = Rotation::getRandom(random);
@@ -544,9 +534,10 @@ bool CoralCrustFeature::place(Level* level, Random& random, const BlockPos& orig
         const BlockPos candidate = position + BlockPos(x, 0, z) + getOffsetFromRot(rotation, type);
         if (level->isSolidBlockingBlock(candidate.below()))
         {
+            const BlockPos start = candidate - getOffsetFromRot(rotation, type);
             types.push_back(type);
             rotations.push_back(rotation);
-            positions.push_back(candidate - getOffsetFromRot(rotation, type));
+            positions.push_back(start);
         }
     }
 

@@ -10,10 +10,12 @@
 
 PistonStructureResolver::PistonStructureResolver(Level* level, const BlockPos& pistonPos,
                                                  const Direction* direction, bool extending)
-    : mLevel(level), mPistonPos(pistonPos), mMoveDirection(direction)
 {
+    mLevel = level;
+    mPistonPos = pistonPos;
     if (extending)
     {
+        mMoveDirection = direction;
         mBlockPos = pistonPos.relative(direction);
     }
     else
@@ -28,12 +30,11 @@ void PistonStructureResolver::reorderListAtCollision(int collisionIndex, int dis
     std::vector<BlockPos> before;
     std::vector<BlockPos> collided;
     std::vector<BlockPos> after;
-    std::vector<BlockPos>::iterator begin = mToPush.begin();
-    std::vector<BlockPos>::iterator end = mToPush.end();
-
-    before.insert(before.end(), begin, begin + distance);
-    collided.insert(collided.end(), end - collisionIndex, end);
-    after.insert(after.end(), begin + distance, end - collisionIndex);
+    before.insert(before.end(), mToPush.begin(), mToPush.begin() + distance);
+    collided.insert(collided.end(), mToPush.begin() + mToPush.size() - collisionIndex,
+                    mToPush.begin() + mToPush.size());
+    after.insert(after.end(), mToPush.begin() + distance,
+                 mToPush.begin() + mToPush.size() - collisionIndex);
 
     mToPush.clear();
     mToPush.insert(mToPush.end(), before.begin(), before.end());
@@ -46,9 +47,10 @@ bool PistonStructureResolver::addBranchingBlocks(const BlockPos& pos)
     std::vector<const Direction*>::const_iterator direction = Direction::VALUES.begin();
     while (direction != Direction::VALUES.end())
     {
-        if ((*direction)->getAxis() != mMoveDirection->getAxis())
+        const Direction* side = *direction;
+        if (side->getAxis() != mMoveDirection->getAxis())
         {
-            if (!addBlockLine(pos.relative(*direction), *direction))
+            if (!addBlockLine(pos.relative(side), side))
             {
                 return false;
             }
@@ -79,7 +81,7 @@ bool PistonStructureResolver::addBlockLine(const BlockPos& pos, const Direction*
     }
 
     int length = 1;
-    if (!mToPush.empty() && mToPush.size() + length > 12)
+    if (mToPush.size() + length > 12)
     {
         return false;
     }

@@ -1,6 +1,7 @@
 #include "game/world/generation/AddIslandLayer.hpp"
 
 #include "game/core/IntCache.hpp"
+#include "game/core/PIXNamedEvents.hpp"
 
 AddIslandLayer::AddIslandLayer(long long seed, boost::shared_ptr<Layer> parentLayer)
     : Layer(seed)
@@ -14,6 +15,7 @@ arrayWithLength<int> AddIslandLayer::getArea(int x, int z, int width, int height
     int parentHeight = height + 2;
     arrayWithLength<int> parentArea = parent->getArea(x - 1, z - 1, parentWidth, parentHeight);
 
+    PIXBeginNamedEvent(0.0f, "AddIslandLayer::getArea");
     arrayWithLength<int> area = IntCache::allocate(width * height);
 
     for (int i = 0; i < height; i++)
@@ -41,19 +43,47 @@ arrayWithLength<int> AddIslandLayer::getArea(int x, int z, int width, int height
                 }
                 else if (isShallowOcean(northWest))
                 {
-                    area.data[j + i * width] = centre == 4 ? 4 : northWest;
+                    if (centre == 4)
+                    {
+                        area.data[j + i * width] = centre;
+                    }
+                    else
+                    {
+                        area.data[j + i * width] = northWest;
+                    }
                 }
                 else if (isShallowOcean(northEast))
                 {
-                    area.data[j + i * width] = centre == 4 ? 4 : northEast;
+                    if (centre == 4)
+                    {
+                        area.data[j + i * width] = centre;
+                    }
+                    else
+                    {
+                        area.data[j + i * width] = northEast;
+                    }
                 }
                 else if (isShallowOcean(southWest))
                 {
-                    area.data[j + i * width] = centre == 4 ? 4 : southWest;
+                    if (centre == 4)
+                    {
+                        area.data[j + i * width] = centre;
+                    }
+                    else
+                    {
+                        area.data[j + i * width] = southWest;
+                    }
                 }
-                else
+                else if (isShallowOcean(southEast))
                 {
-                    area.data[j + i * width] = centre == 4 ? 4 : southEast;
+                    if (centre == 4)
+                    {
+                        area.data[j + i * width] = centre;
+                    }
+                    else
+                    {
+                        area.data[j + i * width] = southEast;
+                    }
                 }
             }
             else
@@ -93,17 +123,19 @@ arrayWithLength<int> AddIslandLayer::getArea(int x, int z, int width, int height
                     selected = southEast;
                 }
 
-                if (nextRandom(3) != 0 && selected != 4)
+                if (nextRandom(3) == 0 || selected == 4)
                 {
-                    area.data[j + i * width] = 0;
+                    area.data[j + i * width] = selected;
                 }
                 else
                 {
-                    area.data[j + i * width] = selected;
+                    area.data[j + i * width] = 0;
                 }
             }
         }
     }
+
+    PIXEndNamedEvent();
 
     return area;
 }

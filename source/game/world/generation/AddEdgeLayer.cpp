@@ -1,5 +1,6 @@
 #include "game/world/generation/AddEdgeLayer.hpp"
 #include "game/core/IntCache.hpp"
+#include "game/core/PIXNamedEvents.hpp"
 
 AddEdgeLayer::AddEdgeLayer(long long seed, boost::shared_ptr<Layer> parentLayer, Mode mode)
     : Layer(seed), mMode(mode)
@@ -13,13 +14,13 @@ AddEdgeLayer::~AddEdgeLayer()
 
 arrayWithLength<int> AddEdgeLayer::getArea(int x, int z, int width, int height)
 {
-    if (mMode == COOL_WARM)
-    {
-        return coolWarm(x, z, width, height);
-    }
     if (mMode == HEAT_ICE)
     {
         return heatIce(x, z, width, height);
+    }
+    if (mMode != SPECIAL)
+    {
+        return coolWarm(x, z, width, height);
     }
     return introduceSpecial(x, z, width, height);
 }
@@ -28,6 +29,7 @@ arrayWithLength<int> AddEdgeLayer::coolWarm(int x, int z, int width, int height)
 {
     int parentWidth = width + 2;
     arrayWithLength<int> source = parent->getArea(x - 1, z - 1, parentWidth, height + 2);
+    PIXBeginNamedEvent(0.0f, "AddEdgeLayer::getArea");
     arrayWithLength<int> result = IntCache::allocate(width * height);
     for (int row = 0; row < height; ++row)
     {
@@ -41,11 +43,9 @@ arrayWithLength<int> AddEdgeLayer::coolWarm(int x, int z, int width, int height)
             int south = source.data[column + 1 + (row + 2) * parentWidth];
             if (center == 1)
             {
-                if (north == 3 || west == 3 || east == 3 || south == 3)
-                {
-                    center = 2;
-                }
-                if (north == 4 || west == 4 || east == 4 || south == 4)
+                bool nearCold = north == 3 || east == 3 || west == 3 || south == 3;
+                bool nearIce = north == 4 || east == 4 || west == 4 || south == 4;
+                if (nearCold || nearIce)
                 {
                     center = 2;
                 }
@@ -53,6 +53,7 @@ arrayWithLength<int> AddEdgeLayer::coolWarm(int x, int z, int width, int height)
             result.data[column + row * width] = center;
         }
     }
+    PIXEndNamedEvent();
     return result;
 }
 

@@ -11,18 +11,20 @@
 #include "game/world/generation/Player.hpp"
 
 LookAtPlayerGoal::LookAtPlayerGoal(Mob* mob, const std::type_info& lookAtType, float lookDistance)
-    : mMob(mob), mLookAt(), mLookDistance(lookDistance), mLookTime(0), mProbability(0.02f),
+    : mMob(mob), mLookAt(), mLookDistance(lookDistance), mProbability(0.02f),
       mLookAtType(&lookAtType)
 {
     setRequiredControlFlags(2);
+    mLookTime = 0;
 }
 
 LookAtPlayerGoal::LookAtPlayerGoal(Mob* mob, const std::type_info& lookAtType, float lookDistance,
                                    float probability)
-    : mMob(mob), mLookAt(), mLookDistance(lookDistance), mLookTime(0), mProbability(probability),
+    : mMob(mob), mLookAt(), mLookDistance(lookDistance), mProbability(probability),
       mLookAtType(&lookAtType)
 {
     setRequiredControlFlags(2);
+    mLookTime = 0;
 }
 
 bool LookAtPlayerGoal::canUse()
@@ -89,7 +91,7 @@ void LookAtPlayerGoal::start()
 
 void LookAtPlayerGoal::stop()
 {
-    mLookAt.reset();
+    mLookAt = boost::weak_ptr<Entity>();
 }
 
 void LookAtPlayerGoal::tick()

@@ -52,7 +52,9 @@ void ShoreLayer::replaceIfNeighborOcean(arrayWithLength<int> parentArea,
 bool ShoreLayer::isMesa(int biomeId)
 {
     Biome* biome = Biome::getBiome(biomeId);
-    return biome != NULL && dynamic_cast<MesaBiome*>(biome) != NULL;
+    if (biome != NULL)
+        biome = dynamic_cast<MesaBiome*>(biome);
+    return biome != NULL;
 }
 
 arrayWithLength<int> ShoreLayer::getArea(int x, int z, int width, int height)

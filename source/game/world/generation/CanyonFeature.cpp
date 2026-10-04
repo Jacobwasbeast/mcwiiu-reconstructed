@@ -1,6 +1,7 @@
 #include "game/world/generation/CanyonFeature.hpp"
 #include "game/world/block/BlockId.hpp"
 
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/MemSect.hpp"
 #include "game/core/Mth.hpp"
@@ -141,7 +142,7 @@ void CanyonFeature::addTunnel(Level* level, long long seed, int chunkX, int chun
 
                     if (primer->getState(bx, by, bz)->getBlock() == Blocks::grass)
                         foundTop = true;
-                    int aboveBlockId = primer->getBlockId(index + 1);
+                    int aboveBlockId = primer->getBlockId((bx << 11) | (bz << 7) | (by + 1));
                     int blockId = primer->getBlockId(index);
                     if (!LargeCaveFeature::canReplaceBlock(blockId, aboveBlockId))
                         continue;
@@ -160,7 +161,9 @@ void CanyonFeature::addTunnel(Level* level, long long seed, int chunkX, int chun
                         primer->setBlockAndData(index, BlockId::AIR, 0);
                         if (foundTop && primer->getState(bx, by - 1, bz)->getBlock() == Blocks::dirt)
                         {
-                            biomePos = BlockPos(bx + chunkX * 16, 0, bz + chunkZ * 16);
+                            biomePos.y = 0;
+                            biomePos.x = bx + chunkX * 16;
+                            biomePos.z = bz + chunkZ * 16;
                             Biome* biome = level->getBiome(biomePos);
                             primer->setBlockAndData(index - 1, biome->mTopBlock.blockId, biome->mTopBlock.blockData);
                         }
@@ -187,7 +190,7 @@ void CanyonFeature::addFeature(Level* level, int chunkX, int chunkZ, int originC
     float pitch = (random.nextFloat() - 0.5F) * 2.0F * 0.125F;
     float thickness = (random.nextFloat() * 2.0F + random.nextFloat()) * 2.0F;
     addTunnel(level, random.nextLong(), originChunkX, originChunkZ, primer, x, y, z, thickness, yaw, pitch, 0, 0, 3.0);
-    g_pApp->AddTerrainFeaturePosition((_eTerrainFeatureType)4, (int)(x * 0.0625), (int)(y * 0.0625));
+    gApp.AddTerrainFeaturePosition((_eTerrainFeatureType)4, (int)(x * 0.0625), (int)(y * 0.0625));
 }
 
 CanyonFeature::~CanyonFeature()

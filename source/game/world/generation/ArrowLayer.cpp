@@ -29,12 +29,12 @@ ArrowLayer::~ArrowLayer()
 
 void ArrowLayer::render(boost::shared_ptr<LivingEntity>& entity, float, float, float partialTicks, float, float, float, float scale, bool)
 {
-    int arrowCount = entity->getArrowCount();
+    int arrowCount = entity.get()->getArrowCount();
     if (arrowCount < 1)
         return;
 
-    boost::shared_ptr<Entity> arrow(new TippableArrow(entity->mLevel, entity->mX, entity->mY, entity->mZ));
-    Random random(entity->getId());
+    boost::shared_ptr<Entity> arrow(new TippableArrow(entity.get()->mLevel, entity.get()->mX, entity.get()->mY, entity.get()->mZ));
+    Random random(entity.get()->getId());
     Lighting::turnOff();
 
     Model* model = mRenderer->getModel();
@@ -58,10 +58,10 @@ void ArrowLayer::render(boost::shared_ptr<LivingEntity>& entity, float, float, f
             float horizontalX = 1.0f - 2.0f * x;
             float horizontalZ = 1.0f - 2.0f * z;
             float horizontal = Mth::sqrt(horizontalX * horizontalX + horizontalZ * horizontalZ);
-            arrow->mYRot = static_cast<float>(std::atan2(horizontalX, horizontalZ) * 57.2957763671875);
-            arrow->mXRot = static_cast<float>(std::atan2(1.0f - 2.0f * y, horizontal) * 57.2957763671875);
-            arrow->mYRotO = arrow->mYRot;
-            arrow->mXRotO = arrow->mXRot;
+            arrow.get()->mYRot = static_cast<float>(std::atan2(horizontalX, horizontalZ) * 57.2957763671875);
+            arrow.get()->mXRot = static_cast<float>(std::atan2(1.0f - 2.0f * y, horizontal) * 57.2957763671875);
+            arrow.get()->mYRotO = arrow.get()->mYRot;
+            arrow.get()->mXRotO = arrow.get()->mXRot;
 
             mRenderer->getDispatcher()->render(arrow, 0.0, 0.0, 0.0, 0.0f, partialTicks, false, false, true, false);
             GlStateManager::popMatrix();

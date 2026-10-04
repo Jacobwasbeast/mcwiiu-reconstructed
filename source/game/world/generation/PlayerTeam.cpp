@@ -112,8 +112,8 @@ int PlayerTeam::packOptions()
 
 void PlayerTeam::unpackOptions(int options)
 {
-    setAllowFriendlyFire((options & 1) != 0);
-    setSeeFriendlyInvisibles((options & 2) != 0);
+    setAllowFriendlyFire((options & 1) > 0);
+    setSeeFriendlyInvisibles((options & 2) > 0);
     mTeamIndex = (options >> 28) & 0xFF;
 }
 

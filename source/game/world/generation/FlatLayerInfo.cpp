@@ -37,9 +37,9 @@ int FlatLayerInfo::getEnd() const { return getStart() + getHeight() - 1; }
 void FlatLayerInfo::_init(int height, Block* block) { mHeight = height; mVersion = 3; mBlockState = block->defaultBlockState(); mStart = 0; }
 void FlatLayerInfo::setHeight(int height) { mHeight = height; }
 void FlatLayerInfo::setBlockState(const BlockState* state) { mBlockState = state; }
-Block* FlatLayerInfo::getBlock() const { return mBlockState ? mBlockState->getBlock() : NULL; }
+Block* FlatLayerInfo::getBlock() const { return mBlockState->getBlock(); }
 int FlatLayerInfo::getId() const { return Block::getId(getBlock()); }
-int FlatLayerInfo::getData() const { Block* block = getBlock(); return block ? block->convertBlockStateToLegacyData(mBlockState) : 0; }
+int FlatLayerInfo::getData() const { return mBlockState->getBlock()->convertBlockStateToLegacyData(mBlockState); }
 void FlatLayerInfo::setStart(int start) { mStart = start; }
 std::wstring FlatLayerInfo::toString()
 {
@@ -52,7 +52,8 @@ std::wstring FlatLayerInfo::toString()
     }
     else
     {
-        result = Block::blockRegistry->getKey(getBlock()).toString();
+        ResourceLocation key = Block::blockRegistry->getKey(getBlock());
+        result = key.toString();
         if (mHeight > 1)
             result = _toString<int>(mHeight) + L"*" + result;
     }
@@ -69,22 +70,24 @@ std::wstring FlatLayerInfo::getHeightText() const
 
 std::wstring FlatLayerInfo::getNameText() const
 {
-    Block* block = getBlock();
-    if (block == Blocks::air)
+    if (getBlock() == Blocks::air)
         return std::wstring(L10N::GetString(IDS_SUPERFLAT_AIR_LAYER));
-    if (block == NULL)
-        return std::wstring();
-    not_null_ptr<ItemInstance> item(new ItemInstance(block));
-    item->setAuxValue(getData());
-    return item->getHoverName();
+    Block* block = getBlock();
+    if (block)
+    {
+        not_null_ptr<ItemInstance> item(new ItemInstance(block));
+        item->setAuxValue(getData());
+        return item->getHoverName();
+    }
+    return std::wstring(L"");
 }
 
 std::wstring FlatLayerInfo::getDescriptionText() const
 {
-    Block* block = getBlock();
-    if (block == Blocks::air)
+    if (getBlock() == Blocks::air)
         return std::wstring(L10N::GetString(IDS_SUPERFLAT_DESC_AIR_LAYER));
+    Block* block = getBlock();
     if (block == NULL)
-        return std::wstring();
-    return std::wstring(L10N::GetString(block->getDescriptionId(-1)));
+        return std::wstring(L"");
+    return std::wstring(L10N::GetString(block->getUseDescriptionId(-1)));
 }

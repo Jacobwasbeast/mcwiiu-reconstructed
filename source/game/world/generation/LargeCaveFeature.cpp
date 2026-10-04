@@ -12,18 +12,15 @@
 
 unsigned int LargeCaveFeature::canReplaceBlock(int blockId, int data)
 {
-    if (blockId == BlockId::STONE || blockId == BlockId::DIRT || blockId == BlockId::GRASS
-        || blockId == BlockId::HARDENED_CLAY || blockId == BlockId::STAINED_HARDENED_CLAY
-        || blockId == BlockId::SANDSTONE || blockId == BlockId::RED_SANDSTONE || blockId == BlockId::MYCELIUM
-        || blockId == BlockId::SNOW_LAYER)
-        return 1;
-    if (blockId == BlockId::SAND || blockId == BlockId::GRAVEL)
-    {
-        Block* block = Block::byId(data);
-        if (block != NULL && block->getCraftingMaterial() != Material::WATER)
-            return 1;
-    }
-    return 0;
+    Block* block;
+    if (blockId != BlockId::STONE && blockId != BlockId::DIRT && blockId != BlockId::GRASS
+        && blockId != BlockId::HARDENED_CLAY && blockId != BlockId::STAINED_HARDENED_CLAY
+        && blockId != BlockId::SANDSTONE && blockId != BlockId::RED_SANDSTONE && blockId != BlockId::MYCELIUM
+        && blockId != BlockId::SNOW_LAYER
+        && ((blockId != BlockId::SAND && blockId != BlockId::GRAVEL)
+            || (block = Block::byId(data)) == NULL || block->getCraftingMaterial() == Material::WATER))
+        return 0;
+    return 1;
 }
 
 void LargeCaveFeature::setCaveBlocks(Level* level, int minX, int maxX, int minY, int maxY, int minZ, int maxZ, int chunkX, int chunkZ, double centerX, double centerY, double centerZ, bool hasWater, double radiusX, double radiusZ, ChunkPrimer* primer)
@@ -40,7 +37,9 @@ void LargeCaveFeature::setCaveBlocks(Level* level, int minX, int maxX, int minY,
         {
             bool frozen = false;
             int worldZ = localZ + chunkZ * 16;
-            columnPos = BlockPos(worldX, 0, worldZ);
+            columnPos.x = worldX;
+            columnPos.y = 0;
+            columnPos.z = worldZ;
             Biome* biome = level->getBiome(columnPos);
             if (biome->getDepth() < -0.9F && biome->isSnowCovered())
                 frozen = true;
@@ -96,9 +95,9 @@ void LargeCaveFeature::setCaveBlocks(Level* level, int minX, int maxX, int minY,
 
 void LargeCaveFeature::addTunnel(Level* level, long long seed, int chunkX, int chunkZ, ChunkPrimer* primer, double x, double y, double z, float width, float yaw, float pitch, int start, int length, double scale)
 {
-    Random tunnelRandom(seed);
     const double originX = chunkX * 16 + 8;
     const double originZ = chunkZ * 16 + 8;
+    Random tunnelRandom(seed);
     const BlockPos startPos(x, y, z);
     if (length < 1)
     {
@@ -113,7 +112,7 @@ void LargeCaveFeature::addTunnel(Level* level, long long seed, int chunkX, int c
     float pitchVariance = 0.0f;
     for (int step = start; step < length; ++step)
     {
-        const double radius = 1.5 + Mth::sin(step * 3.1415927f / length) * width;
+        const double radius = 1.5 + Mth::sin(step * 3.1415927f / length) * width * 1.0f;
         const double verticalRadius = radius * scale;
         const float horizontal = Mth::cos(pitch);
         x += Mth::cos(yaw) * horizontal;

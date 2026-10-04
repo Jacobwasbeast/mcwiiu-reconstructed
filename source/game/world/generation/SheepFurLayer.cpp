@@ -2,6 +2,7 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include "game/client/render/LivingEntityRenderer.hpp"
 #include "game/client/render/Model.hpp"
 #include "game/client/render/SheepFurModel.hpp"
 #include "game/client/render/SheepRenderer.hpp"
@@ -31,9 +32,10 @@ void SheepFurLayer::render(boost::shared_ptr<LivingEntity>& entity, float limbSw
     {
         mRenderer->bindTexture(&SHEEP_FUR_LOCATION);
         mRenderer->setColourState(sheep, partialTicks);
-        mRenderer->mFurModel->copyPropertiesFrom(mRenderer->getModel(entity));
+        mRenderer->mFurModel->copyPropertiesFrom(static_cast<LivingEntityRenderer*>(mRenderer)->getModel());
+        mRenderer->mFurModel->prepareMobModel(entity, limbSwing, limbSwingAmount, partialTicks);
 
-        boost::shared_ptr<Entity> renderEntity = boost::static_pointer_cast<Entity>(entity);
+        boost::shared_ptr<Entity> renderEntity = sheep;
         mRenderer->mFurModel->render(renderEntity, limbSwing, limbSwingAmount, ageInTicks,
                                      netHeadYaw, headPitch, scale, bUseDisplayList);
     }

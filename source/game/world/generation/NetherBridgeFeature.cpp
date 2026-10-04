@@ -1,3 +1,4 @@
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/world/generation/NetherBridgeFeature.hpp"
 #include "game/core/EntityType.hpp"
 
@@ -10,19 +11,22 @@
 #include "game/core/NetherBridgePieces.hpp"
 
 NetherBridgeFeature::NetherBridgeFeature()
-    : StructureFeature(), mCachedBuildings(false), mCachedChunk(NULL)
+    : StructureFeature()
 {
     mBridgeEnemies.push_back(new Biome::MobSpawnerData(10, EntityType::BLAZE, 2, 3));
     mBridgeEnemies.push_back(new Biome::MobSpawnerData(5, EntityType::PIG_ZOMBIE, 4, 4));
     mBridgeEnemies.push_back(new Biome::MobSpawnerData(8, EntityType::WITHER_SKELETON, 5, 5));
     mBridgeEnemies.push_back(new Biome::MobSpawnerData(2, EntityType::SKELETON, 5, 5));
     mBridgeEnemies.push_back(new Biome::MobSpawnerData(3, EntityType::MAGMA_CUBE, 4, 4));
+    mCachedBuildings = false;
+    mCachedChunk = NULL;
 }
 
 NetherBridgeFeature::~NetherBridgeFeature()
 {
+    std::vector<Biome::MobSpawnerData*>::iterator end = mBridgeEnemies.end();
     for (std::vector<Biome::MobSpawnerData*>::iterator it = mBridgeEnemies.begin();
-         it != mBridgeEnemies.end(); ++it)
+         it != end; ++it)
     {
         delete *it;
     }
@@ -51,7 +55,7 @@ bool NetherBridgeFeature::isFeatureChunk(int chunkX, int chunkZ, bool flatWorld)
         mCachedBuildings = true;
     }
 
-    LevelGenerationOptions* options = g_pApp->getLevelGenerationOptions();
+    LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
     if ((options == NULL || !options->isFeatureChunk(chunkX, chunkZ,
                                                       eFeatureType_NetherBridge, NULL)) &&
         (chunkX != mCachedChunk->x || chunkZ != mCachedChunk->z))
@@ -81,14 +85,14 @@ BlockPos* NetherBridgeFeature::getNearestGeneratedFeature(Level* levelIn, const 
             for (int offsetZ = -radius; offsetZ <= radius; ++offsetZ)
             {
                 bool edgeZ = offsetZ == -radius || offsetZ == radius;
-                if (!edgeX && !edgeZ)
-                    continue;
-
-                int candidateX = chunkX + offsetX;
-                int candidateZ = chunkZ + offsetZ;
-                if (isFeatureChunk(candidateX, candidateZ, false) &&
-                    (!skipExistingChunks || !levelIn->isChunkGeneratedAt(candidateX, candidateZ)))
-                    return new BlockPos(candidateX * 16 + 8, 64, candidateZ * 16 + 8);
+                if (edgeX || edgeZ)
+                {
+                    int candidateX = chunkX + offsetX;
+                    int candidateZ = chunkZ + offsetZ;
+                    if (isFeatureChunk(candidateX, candidateZ, false) &&
+                        (!skipExistingChunks || !levelIn->isChunkGeneratedAt(candidateX, candidateZ)))
+                        return new BlockPos(candidateX * 16 + 8, 64, candidateZ * 16 + 8);
+                }
             }
         }
 
@@ -109,10 +113,9 @@ NetherBridgeFeature::NetherBridgeStart::NetherBridgeStart(Level* levelIn, Random
 
     while (!startPiece->mPendingChildren.empty())
     {
-        std::vector<StructurePiece*>::iterator it = startPiece->mPendingChildren.begin();
-        std::advance(it, random.nextInt((int)startPiece->mPendingChildren.size()));
-        StructurePiece* piece = *it;
-        startPiece->mPendingChildren.erase(it);
+        int index = random.nextInt((int)startPiece->mPendingChildren.size());
+        StructurePiece* piece = startPiece->mPendingChildren[index];
+        startPiece->mPendingChildren.erase(startPiece->mPendingChildren.begin() + index);
         piece->addChildren(startPiece, this, random);
     }
 

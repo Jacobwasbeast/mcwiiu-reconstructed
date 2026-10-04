@@ -15,6 +15,7 @@
 
 bool UnderwaterLargeCaveFeature::isDiggable(int blockId)
 {
+    bool diggable = true;
     switch (blockId)
     {
     case BlockId::AIR:
@@ -33,9 +34,12 @@ bool UnderwaterLargeCaveFeature::isDiggable(int blockId)
     case BlockId::STAINED_HARDENED_CLAY:
     case BlockId::HARDENED_CLAY:
     case BlockId::RED_SANDSTONE:
-        return true;
+        break;
+    default:
+        diggable = false;
+        break;
     }
-    return false;
+    return diggable;
 }
 
 void UnderwaterLargeCaveFeature::apply(Level* level, int chunkX, int chunkZ, ChunkPrimer* primer)
@@ -71,7 +75,7 @@ void UnderwaterLargeCaveFeature::addTunnel(Level* level, long long seed, int chu
     if (length < 1)
         length = 0x70 - tunnelRandom.nextInt(0x1c);
     int start = originChunkX;
-    const bool room = originChunkX == -1;
+    const bool room = start == -1;
     if (room) start = length / 2;
     const int branchPoint = tunnelRandom.nextInt(length / 2) + length / 4;
 

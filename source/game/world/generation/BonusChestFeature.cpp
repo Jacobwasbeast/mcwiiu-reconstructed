@@ -29,13 +29,8 @@ bool BonusChestFeature::place(Level* level, Random& random, const BlockPos& orig
     if (!useOrigin)
     {
         const BlockState* state = level->getBlockState(position);
-        while (state->getMaterial() == Material::AIR || state->getMaterial() == Material::LEAVES)
+        while ((state->getMaterial() == Material::AIR || state->getMaterial() == Material::LEAVES) && position.y > 1)
         {
-            if (position.y < 2)
-            {
-                break;
-            }
-
             position = position.below();
             state = level->getBlockState(position);
         }
@@ -51,7 +46,11 @@ bool BonusChestFeature::place(Level* level, Random& random, const BlockPos& orig
     for (int attempt = 0; attempt < 4; ++attempt)
     {
         BlockPos candidate(0, 0, 0);
-        if (!useOrigin)
+        if (useOrigin)
+        {
+            candidate = position.offset(0, -1, 0);
+        }
+        else
         {
             const int xOffsetStart = random.nextInt(4);
             const int xOffsetEnd = random.nextInt(4);
@@ -63,61 +62,55 @@ bool BonusChestFeature::place(Level* level, Random& random, const BlockPos& orig
                                         yOffsetStart - yOffsetEnd,
                                         zOffsetStart - zOffsetEnd);
         }
-        else
-        {
-            candidate = position.offset(0, -1, 0);
-        }
 
-        if (!level->isEmptyBlock(candidate))
+        if (level->isEmptyBlock(candidate))
         {
-            continue;
-        }
-
-        if (!level->getBlockState(candidate.below())->isTopSolidBlocking())
-        {
-            continue;
-        }
-
-        level->setBlock(candidate, Blocks::chest->defaultBlockState(), Block::UPDATE_CLIENTS, false);
-
-        boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(candidate);
-        if (blockEntity->GetType() == BlockEntityType::CHEST)
-        {
-            boost::shared_ptr<ChestBlockEntity> chest =
-                boost::dynamic_pointer_cast<ChestBlockEntity>(blockEntity);
-            if (chest)
+            const BlockPos support = candidate.below();
+            if (level->getBlockState(support)->isTopSolidBlocking())
             {
-                chest->setLootTable(&BuiltInLootTables::SPAWN_BONUS_CHEST, random.nextLong());
-                chest->mIsBonusChest = true;
+                level->setBlock(candidate, Blocks::chest->defaultBlockState(), Block::UPDATE_CLIENTS, false);
+
+                boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(candidate);
+                const bool isChest = blockEntity->GetType() == BlockEntityType::CHEST;
+                if (isChest)
+                {
+                    boost::shared_ptr<ChestBlockEntity> chest =
+                        boost::dynamic_pointer_cast<ChestBlockEntity>(blockEntity);
+                    if (chest)
+                    {
+                        chest->setLootTable(&BuiltInLootTables::SPAWN_BONUS_CHEST, random.nextLong());
+                        chest->mIsBonusChest = true;
+                    }
+                }
+
+                const BlockPos east = candidate.east();
+                const BlockPos west = candidate.west();
+                const BlockPos north = candidate.north();
+                const BlockPos south = candidate.south();
+
+                if (level->isEmptyBlock(west) && level->getBlockState(west.below())->isTopSolidBlocking())
+                {
+                    level->setBlock(west, Blocks::torch->defaultBlockState(), Block::UPDATE_CLIENTS, false);
+                }
+
+                if (level->isEmptyBlock(east) && level->getBlockState(east.below())->isTopSolidBlocking())
+                {
+                    level->setBlock(east, Blocks::torch->defaultBlockState(), Block::UPDATE_CLIENTS, false);
+                }
+
+                if (level->isEmptyBlock(north) && level->getBlockState(north.below())->isTopSolidBlocking())
+                {
+                    level->setBlock(north, Blocks::torch->defaultBlockState(), Block::UPDATE_CLIENTS, false);
+                }
+
+                if (level->isEmptyBlock(south) && level->getBlockState(south.below())->isTopSolidBlocking())
+                {
+                    level->setBlock(south, Blocks::torch->defaultBlockState(), Block::UPDATE_CLIENTS, false);
+                }
+
+                return true;
             }
         }
-
-        const BlockPos east = candidate.east();
-        const BlockPos west = candidate.west();
-        const BlockPos north = candidate.north();
-        const BlockPos south = candidate.south();
-
-        if (level->isEmptyBlock(west) && level->getBlockState(west.below())->isTopSolidBlocking())
-        {
-            level->setBlock(west, Blocks::torch->defaultBlockState(), Block::UPDATE_CLIENTS, false);
-        }
-
-        if (level->isEmptyBlock(east) && level->getBlockState(east.below())->isTopSolidBlocking())
-        {
-            level->setBlock(east, Blocks::torch->defaultBlockState(), Block::UPDATE_CLIENTS, false);
-        }
-
-        if (level->isEmptyBlock(north) && level->getBlockState(north.below())->isTopSolidBlocking())
-        {
-            level->setBlock(north, Blocks::torch->defaultBlockState(), Block::UPDATE_CLIENTS, false);
-        }
-
-        if (level->isEmptyBlock(south) && level->getBlockState(south.below())->isTopSolidBlocking())
-        {
-            level->setBlock(south, Blocks::torch->defaultBlockState(), Block::UPDATE_CLIENTS, false);
-        }
-
-        return true;
     }
 
     return false;

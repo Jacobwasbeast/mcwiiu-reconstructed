@@ -16,7 +16,7 @@ public:
 
     TimeSpentOnLayerMedal(ELayerMedal layer, int name, float target, unsigned int weight, GameMedal::EOperator op);
 
-    virtual double GetScore(PlayerStats* playerStats) const;
+    virtual float GetScore(PlayerStats* playerStats) const;
 
 private:
     int mLayer;

@@ -247,7 +247,7 @@ InteractionResult::EInteractionResult MultiPlayerGameMode::useItemOn(
         }
     }
     const InteractionResult::EInteractionResult result =
-        _useItemOn(player, level, pos, direction, hit, hand, simulate, used);
+        MultiPlayerGameMode::_useItemOn(player, level, pos, direction, hit, hand, simulate, used);
     if (!simulate && !mTutorial->tasksChecked)
     {
         if (GetTutorialsEnabled() && result != InteractionResult::eInteractionResult_Success
@@ -300,7 +300,7 @@ InteractionResult::EInteractionResult MultiPlayerGameMode::interactAt(
                                     hit->mLocation->z - entity->mZ);
     mConnection->send(boost::shared_ptr<Packet>(new ServerboundInteractPacket(entity, hand, relative)));
     if (mGameType != GameType::SPECTATOR)
-        return static_cast<InteractionResult::EInteractionResult>(entity->interactAt(player, relative, hand));
+        return entity->interactAt(player, relative, hand);
     return InteractionResult::eInteractionResult_Pass;
 }
 bool MultiPlayerGameMode::hasInfiniteItems() { return isCreative(); }
@@ -774,14 +774,13 @@ double MultiPlayerGameMode::getPickRange()
         return creativeRange;
     return survivalRange;
 }
-boost::shared_ptr<ItemInstance> MultiPlayerGameMode::handleTakeAllInvenetory(
+void MultiPlayerGameMode::handleTakeAllInvenetory(
     int containerId, int button, int start, int count, boost::shared_ptr<Player> player)
 {
     int uid = player->mContainerMenu->backup(player->mInventory);
     AbstractContainerMenu::ItemList items = player->mContainerMenu->getAllItems(start, count);
     mConnection->send(boost::shared_ptr<Packet>(new ServerboundContainerClickPacket(
         containerId, start, button, ClickType::eClickType_QuickMove, items, static_cast<short>(uid), count)));
-    return boost::shared_ptr<ItemInstance>();
 }
 boost::shared_ptr<ItemInstance> MultiPlayerGameMode::handleInventoryMouseClick(
     int containerId, int slot, int button, ClickType::eClickType clickType, boost::shared_ptr<Player> player)

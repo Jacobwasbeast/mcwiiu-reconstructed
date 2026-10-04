@@ -2,6 +2,7 @@
 
 #include "game/util/Random.hpp"
 #include "game/core/CMinecraftApp.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/LevelGenerationOptions.hpp"
 #include "game/world/block/Block.hpp"
@@ -18,7 +19,6 @@
 
 #include <cstdlib>
 
-extern CMinecraftApp* g_pApp;
 static const BlockState* birchTrunkState = NULL;
 static const BlockState* birchLeafState = NULL;
 
@@ -34,13 +34,10 @@ BirchFeature::~BirchFeature()
 
 void BirchFeature::staticCtor()
 {
-    TypedBoxed<PlanksBlock::Variant*> trunkVariant(PlanksBlock::Variant::BIRCH);
-    birchTrunkState = Blocks::log->defaultBlockState()->setBoxedValue(OldLogBlock::VARIANT, &trunkVariant);
-    TypedBoxed<PlanksBlock::Variant*> leafVariant(PlanksBlock::Variant::BIRCH);
-    TypedBoxed<bool> decayable(false);
+    birchTrunkState = Blocks::log->defaultBlockState()->setValue(OldLogBlock::VARIANT, PlanksBlock::Variant::BIRCH);
     birchLeafState = Blocks::leaves->defaultBlockState()
-                         ->setBoxedValue(OldLeafBlock::VARIANT, &leafVariant)
-                         ->setBoxedValue(LeafBlock::DECAYABLE, &decayable);
+                         ->setValue(OldLeafBlock::VARIANT, PlanksBlock::Variant::BIRCH)
+                         ->setValue(LeafBlock::DECAYABLE, false);
 }
 
 bool BirchFeature::place(Level* level, Random& random, const BlockPos& origin)
@@ -53,7 +50,7 @@ bool BirchFeature::place(Level* level, Random& random, const BlockPos& origin)
     }
 
     bool free = true;
-    if (origin.y > 0 && origin.y + height + 1 < 257)
+    if (origin.y > 0 && origin.y + height + 1 <= 256)
     {
         MutableBlockPos check(0, 0, 0);
         for (int y = origin.y; y <= origin.y + height + 1; ++y)
@@ -95,12 +92,16 @@ bool BirchFeature::place(Level* level, Random& random, const BlockPos& origin)
         if ((ground == Blocks::grass || ground == Blocks::dirt || ground == Blocks::farmland) &&
             origin.y < 255 - height)
         {
-            if (g_pApp->getLevelGenerationOptions() != NULL &&
-                g_pApp->getLevelGenerationOptions()->checkIntersects(origin.offset(-3, -1, -3),
-                                                                     origin.offset(3, height, 3)))
+            if (gApp.getLevelGenerationOptions() != NULL)
             {
-                PIXEndNamedEvent();
-                return false;
+                LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
+                BlockPos from = origin.offset(-3, -1, -3);
+                BlockPos to = origin.offset(3, height, 3);
+                if (options->checkIntersects(from, to))
+                {
+                    PIXEndNamedEvent();
+                    return false;
+                }
             }
 
             setDirtAt(level, origin.below());
@@ -108,17 +109,16 @@ bool BirchFeature::place(Level* level, Random& random, const BlockPos& origin)
                 return true;
 
             MutableBlockPos leaves(0, 0, 0);
-            const int top = origin.y + height;
-            for (int y = origin.y + height - 3; y <= top; ++y)
+            for (int y = origin.y + height - 3; y <= origin.y + height; ++y)
             {
-                const int radius = 1 - (y - top) / 2;
+                const int radius = 1 - (y - (origin.y + height)) / 2;
                 for (int x = origin.x - radius; x <= origin.x + radius; ++x)
                 {
                     for (int z = origin.z - radius; z <= origin.z + radius; ++z)
                     {
                         if (std::abs(x - origin.x) != radius ||
                             std::abs(z - origin.z) != radius ||
-                            (random.nextInt(2) != 0 && y != top))
+                            (random.nextInt(2) != 0 && y - (origin.y + height) != 0))
                         {
                             leaves.set(x, y, z);
                             Material* material = level->getBlockState(leaves)->getMaterial();

@@ -41,7 +41,7 @@ void SnowManHeadLayer::render(boost::shared_ptr<LivingEntity>& entity, float lim
     Minecraft::GetInstance()->getItemInHandRenderer()->renderItem(
         snowMan,
         not_null_ptr<ItemInstance>(new ItemInstance(Blocks::carved_pumpkin, 1)),
-        ItemTransforms::HEAD,
+        ItemTransforms::NONE,
         false,
         0,
         true);

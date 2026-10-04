@@ -17,9 +17,17 @@
 #include "game/world/generation/Villages.hpp"
 
 VillageSiege::VillageSiege(Level* level)
-    : mLevel(level), mHasSetupSiege(false), mSiegeState(-1), mSiegeCount(0), mNextSpawnTime(0),
-      mVillage(), mSpawnX(0), mSpawnY(0), mSpawnZ(0)
+    : mVillage()
 {
+    mHasSetupSiege = false;
+    mSiegeState = -1;
+    mSiegeCount = 0;
+    mNextSpawnTime = 0;
+    mVillage = boost::weak_ptr<Village>();
+    mSpawnX = 0;
+    mSpawnY = 0;
+    mSpawnZ = 0;
+    mLevel = level;
 }
 
 Vec3* VillageSiege::findRandomSpawnPos(const BlockPos& pos)
@@ -59,7 +67,7 @@ bool VillageSiege::tryToSetupSiege()
         }
 
         boost::shared_ptr<Village> village =
-            mLevel->getVillages()->getClosestVillage(BlockPos(*it), 1);
+            mLevel->mVillages->getClosestVillage(BlockPos(*it), 1);
         mVillage = village;
 
         if (!village)
@@ -98,7 +106,7 @@ bool VillageSiege::tryToSetupSiege()
             spawnPos.set(mSpawnX, mSpawnY, mSpawnZ);
 
             bool insideOtherVillage = false;
-            std::vector<boost::shared_ptr<Village> >* villages = mLevel->getVillages()->getVillages();
+            std::vector<boost::shared_ptr<Village> >* villages = mLevel->mVillages->getVillages();
             for (std::vector<boost::shared_ptr<Village> >::iterator villageIt = villages->begin();
                  villageIt != villages->end(); ++villageIt)
             {
@@ -140,7 +148,8 @@ bool VillageSiege::trySpawn()
         return false;
     }
 
-    boost::shared_ptr<Zombie> zombie(new Zombie(mLevel));
+    boost::shared_ptr<Zombie> zombie;
+    zombie = boost::shared_ptr<Zombie>(new Zombie(mLevel));
     zombie->finalizeMobSpawn(mLevel->getCurrentDifficultyAt(BlockPos(zombie)), NULL,
                              std::wstring(L""));
     zombie->moveTo(spawnPos->x, spawnPos->y, spawnPos->z,
@@ -205,12 +214,13 @@ void VillageSiege::tick()
 
     mNextSpawnTime = 2;
 
-    if (mSiegeCount < 1)
+    if (mSiegeCount > 0)
+    {
+        trySpawn();
+        --mSiegeCount;
+    }
+    else
     {
         mSiegeState = 2;
-        return;
     }
-
-    trySpawn();
-    --mSiegeCount;
 }

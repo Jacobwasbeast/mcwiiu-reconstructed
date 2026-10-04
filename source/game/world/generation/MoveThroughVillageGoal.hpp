@@ -33,7 +33,7 @@ private:
     PathfinderMob* mMob;
     double mSpeedModifier;
     Path* mPath;
-    boost::shared_ptr<DoorInfo> mDoorInfo;
+    boost::weak_ptr<DoorInfo> mDoorInfo;
     bool mOnlyAtNight;
     std::vector<boost::weak_ptr<DoorInfo> > mVisited;
 };

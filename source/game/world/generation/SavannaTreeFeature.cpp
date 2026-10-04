@@ -32,13 +32,10 @@ SavannaTreeFeature::~SavannaTreeFeature()
 
 void SavannaTreeFeature::staticCtor()
 {
-    TypedBoxed<PlanksBlock::Variant*> trunkVariant(PlanksBlock::Variant::ACACIA);
-    savannaTrunkState = Blocks::log2->defaultBlockState()->setBoxedValue(NewLogBlock::VARIANT, &trunkVariant);
-    TypedBoxed<PlanksBlock::Variant*> leafVariant(PlanksBlock::Variant::ACACIA);
-    TypedBoxed<bool> decayable(false);
+    savannaTrunkState = Blocks::log2->defaultBlockState()->setValue(NewLogBlock::VARIANT, PlanksBlock::Variant::ACACIA);
     savannaLeafState = Blocks::leaves2->defaultBlockState()
-                           ->setBoxedValue(NewLeafBlock::VARIANT, &leafVariant)
-                           ->setBoxedValue(LeafBlock::DECAYABLE, &decayable);
+                           ->setValue(NewLeafBlock::VARIANT, PlanksBlock::Variant::ACACIA)
+                           ->setValue(LeafBlock::DECAYABLE, false);
 }
 
 void SavannaTreeFeature::placeLogAt(Level* level, const BlockPos& pos)
@@ -59,16 +56,18 @@ bool SavannaTreeFeature::place(Level* level, Random& random, const BlockPos& ori
 {
     PIXBeginNamedEvent(0.0f, "SavannaTreeFeature::place");
     int height = random.nextInt(3) + random.nextInt(3) + mBaseHeight;
+    bool free = true;
     if (origin.y < 1 || origin.y + height + 1 > 256)
     {
         PIXEndNamedEvent();
         return false;
     }
 
-    bool free = true;
     for (int y = origin.y; y <= origin.y + height + 1; ++y)
     {
-        int radius = y == origin.y ? 0 : 1;
+        int radius = 1;
+        if (y == origin.y)
+            radius = 0;
         if (y >= origin.y + height - 1)
             radius = 2;
         for (int x = origin.x - radius; x <= origin.x + radius && free; ++x)

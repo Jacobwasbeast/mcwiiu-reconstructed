@@ -9,10 +9,6 @@
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/Material.hpp"
 
-LightGemFeature::~LightGemFeature()
-{
-}
-
 bool LightGemFeature::place(Level* level, Random& random, const BlockPos& origin)
 {
     if (!level->isEmptyBlock(origin))

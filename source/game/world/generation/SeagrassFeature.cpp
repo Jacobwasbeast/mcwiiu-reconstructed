@@ -24,7 +24,9 @@ SeagrassFeature::~SeagrassFeature()
 bool SeagrassFeature::isNotIce(Level* level, const BlockPos& pos)
 {
     Block* block = level->getBlock(pos.below());
-    return block != Blocks::ice && block != Blocks::blue_ice && block != Blocks::packed_ice;
+    if (block != Blocks::ice && block != Blocks::blue_ice && block != Blocks::packed_ice)
+        return true;
+    return false;
 }
 
 bool SeagrassFeature::place(Level* level, Random& random, const BlockPos& origin)
@@ -62,7 +64,7 @@ bool SeagrassFeature::place(Level* level, Random& random, const BlockPos& origin
 
             if (level->getBlockId(target.x, target.y, target.z) != BlockId::AIR
                 && level->isEmptyWaterBlock(target)
-                && static_cast<SeaGrass*>(Blocks::sea_grass)->canSurvive(level, target, seagrassState, true)
+                && static_cast<SeaGrass*>(Blocks::sea_grass)->SeaGrass::canSurvive(level, target, seagrassState, true)
                 && isNotIce(level, target))
             {
                 level->setBlock(target, seagrassState, Block::UPDATE_CLIENTS | Block::UPDATE_NO_OBSERVERS, false);
@@ -74,7 +76,6 @@ bool SeagrassFeature::place(Level* level, Random& random, const BlockPos& origin
 
     if (random.nextInt(20) == 0)
     {
-        const Property* property = Blocks::sea_grass->getBlockStateDefinition()->getProperties()[0];
         for (int attempt = 0; attempt < 8; ++attempt)
         {
             const int dz = random.nextGaussianInt(8);
@@ -86,30 +87,22 @@ bool SeagrassFeature::place(Level* level, Random& random, const BlockPos& origin
                 target = target.above();
             }
 
-            if (!(level->getBlockId(target.x, target.y, target.z) != BlockId::AIR
+            if (level->getBlockId(target.x, target.y, target.z) != BlockId::AIR
                 && level->isEmptyWaterBlock(target)
-                && static_cast<SeaGrass*>(Blocks::sea_grass)->canSurvive(level, target, seagrassState, true)
-                && isNotIce(level, target)))
+                && static_cast<SeaGrass*>(Blocks::sea_grass)->SeaGrass::canSurvive(level, target, seagrassState, true)
+                && isNotIce(level, target))
             {
-                continue;
-            }
-
-            if (!level->isEmptyWaterBlock(target.above(2)))
-            {
-                level->setBlock(target, seagrassState, Block::UPDATE_CLIENTS | Block::UPDATE_NO_OBSERVERS, false);
-            }
-            else if (!level->isEmptyWaterBlock(target.above()) || random.nextInt(9) == 0)
-            {
-                level->setBlock(target, seagrassState, Block::UPDATE_CLIENTS | Block::UPDATE_NO_OBSERVERS, false);
-            }
-            else
-            {
-                TypedBoxed<int> lowerValue(2);
-                const BlockState* lowerState = seagrassState->setBoxedValue(property, &lowerValue);
-                TypedBoxed<int> upperValue(1);
-                const BlockState* upperState = seagrassState->setBoxedValue(property, &upperValue);
-                level->setBlock(target, lowerState, Block::UPDATE_CLIENTS | Block::UPDATE_NO_OBSERVERS, false);
-                level->setBlock(target.above(), upperState, Block::UPDATE_CLIENTS | Block::UPDATE_NO_OBSERVERS, false);
+                if (level->isEmptyWaterBlock(target.above(2)) && level->isEmptyWaterBlock(target.above()) && random.nextInt(9) != 0)
+                {
+                    const BlockState* lowerState = seagrassState->setValue(SeaGrass::TYPE, static_cast<int>(SeaGrass::TYPE_TALL_BOTTOM));
+                    const BlockState* upperState = seagrassState->setValue(SeaGrass::TYPE, static_cast<int>(SeaGrass::TYPE_TALL_TOP));
+                    level->setBlock(target, lowerState, Block::UPDATE_CLIENTS | Block::UPDATE_NO_OBSERVERS, false);
+                    level->setBlock(target.above(), upperState, Block::UPDATE_CLIENTS | Block::UPDATE_NO_OBSERVERS, false);
+                }
+                else
+                {
+                    level->setBlock(target, seagrassState, Block::UPDATE_CLIENTS | Block::UPDATE_NO_OBSERVERS, false);
+                }
             }
         }
         mGenerating = false;
@@ -129,7 +122,7 @@ bool SeagrassFeature::place(Level* level, Random& random, const BlockPos& origin
 
         if (level->getBlockId(target.x, target.y, target.z) != BlockId::AIR
             && level->isEmptyWaterBlock(target)
-            && static_cast<SeaGrass*>(Blocks::sea_grass)->canSurvive(level, target, seagrassState, true))
+            && static_cast<SeaGrass*>(Blocks::sea_grass)->SeaGrass::canSurvive(level, target, seagrassState, true))
         {
             level->setBlock(target, seagrassState, Block::UPDATE_CLIENTS | Block::UPDATE_NO_OBSERVERS, false);
         }

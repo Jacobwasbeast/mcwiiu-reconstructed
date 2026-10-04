@@ -9,7 +9,7 @@
 #include "game/client/render/WitchRenderer.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/core/Minecraft.hpp"
-#include "game/entity/mob/Mob.hpp"
+#include "game/core/Witch.hpp"
 #include "game/item/Item.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/ItemTransforms.hpp"
@@ -28,8 +28,8 @@ WitchItemLayer::~WitchItemLayer()
 
 void WitchItemLayer::render(boost::shared_ptr<LivingEntity>& entity, float, float, float, float, float, float, float, bool)
 {
-    boost::shared_ptr<Mob> mob = boost::static_pointer_cast<Mob>(entity);
-    not_null_ptr<ItemInstance> itemInstance = mob->getMainHandItem();
+    boost::shared_ptr<Witch> witch = boost::static_pointer_cast<Witch>(entity);
+    not_null_ptr<ItemInstance> itemInstance = witch->getMainHandItem();
 
     if (itemInstance->isEmpty())
         return;
@@ -37,16 +37,14 @@ void WitchItemLayer::render(boost::shared_ptr<LivingEntity>& entity, float, floa
     GlStateManager::color3f(1.0f, 1.0f, 1.0f);
     GlStateManager::pushMatrix();
 
-    WitchModel* model = static_cast<WitchModel*>(mWitchRenderer->getModel());
-
-    if (model->mYoung)
+    if (static_cast<WitchModel*>(mWitchRenderer->getModel())->mYoung)
     {
         GlStateManager::translatef(0.0f, 0.625f, 0.0f);
         GlStateManager::rotatef(-20.0f, -1.0f, 0.0f, 0.0f);
         GlStateManager::scalef(0.5f, 0.5f, 0.5f);
     }
 
-    model->mWitchNose->translateTo(0.0625f);
+    static_cast<WitchModel*>(mWitchRenderer->getModel())->mNose->translateTo(0.0625f);
     GlStateManager::translatef(-0.0625f, 0.53125f, 0.21875f);
 
     Item* item = itemInstance->getItem();

@@ -16,19 +16,11 @@ const BlockState* BasicPatchesLayerTheme::BlockAt(Random&, float noise, int heig
     {
         return 0;
     }
-    if (mBlocks.empty())
-    {
-        return 0;
-    }
     int index = static_cast<int>(mBlocks.size()) - 1;
     const int depth = mDepth - heightAboveSurface;
     if (depth < index)
     {
         index = depth;
-    }
-    if (index < 0)
-    {
-        return 0;
     }
     return mBlocks.at(static_cast<std::vector<const BlockState*>::size_type>(index));
 }

@@ -16,11 +16,6 @@ LayerAttributeRuleDefinition<T>::LayerAttributeRuleDefinition(ConsoleGameRules::
 }
 
 template <class T>
-LayerAttributeRuleDefinition<T>::~LayerAttributeRuleDefinition()
-{
-}
-
-template <class T>
 ConsoleGameRules::EGameRuleType LayerAttributeRuleDefinition<T>::getActionType()
 {
     return mActionType;

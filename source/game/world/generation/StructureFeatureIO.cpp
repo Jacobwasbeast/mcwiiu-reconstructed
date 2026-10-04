@@ -29,17 +29,27 @@ boost::unordered_map<std::wstring, StructureFeatureIO::StructurePieceFactory> St
 boost::unordered_map<unsigned int, std::wstring> StructureFeatureIO::pieceIds;
 int StructureFeatureIO::version = 0;
 
+static const std::wstring kMineshaftName(L"Mineshaft");
+static const std::wstring kVillageName(L"Village");
+static const std::wstring kFortressName(L"Fortress");
+static const std::wstring kStrongholdName(L"StrongHold");
+static const std::wstring kTempleName(L"Temple");
+static const std::wstring kMonumentName(L"Monument");
+static const std::wstring kMansionName(L"Mansion");
+static const std::wstring kBuriedTreasureName(L"BuriedTreasure");
+static const std::wstring kShipwreckName(L"Shipwreck");
+
 void StructureFeatureIO::staticCtor()
 {
-    setStartId(eStructureStart_MineShaft, MineShaftStart::Create, L"Mineshaft");
-    setStartId(eStructureStart_Village, VillageFeature::VillageStart::Create, L"Village");
-    setStartId(eStructureStart_NetherBridge, NetherBridgeFeature::NetherBridgeStart::Create, L"Fortress");
-    setStartId(eStructureStart_Stronghold, StrongholdFeature::StrongholdStart::Create, L"StrongHold");
-    setStartId(eStructureStart_ScatteredFeature, RandomScatteredLargeFeature::ScatteredFeatureStart::Create, L"Temple");
-    setStartId(eStructureStart_OceanMonument, OceanMonumentFeature::OceanMonumentStart::Create, L"Monument");
-    setStartId(eStructureStart_WoodlandMansion, WoodlandMansionFeature::WoodlandMansionStart::Create, L"Mansion");
-    setStartId(eStructureStart_BuriedTreasure, BuriedTreasureFeature::BuriedTreasureStart::Create, L"BuriedTreasure");
-    setStartId(eStructureStart_Shipwreck, ShipwreckFeature::ShipwreckStart::Create, L"Shipwreck");
+    setStartId(eStructureStart_MineShaft, MineShaftStart::Create, kMineshaftName);
+    setStartId(eStructureStart_Village, VillageFeature::VillageStart::Create, kVillageName);
+    setStartId(eStructureStart_NetherBridge, NetherBridgeFeature::NetherBridgeStart::Create, kFortressName);
+    setStartId(eStructureStart_Stronghold, StrongholdFeature::StrongholdStart::Create, kStrongholdName);
+    setStartId(eStructureStart_ScatteredFeature, RandomScatteredLargeFeature::ScatteredFeatureStart::Create, kTempleName);
+    setStartId(eStructureStart_OceanMonument, OceanMonumentFeature::OceanMonumentStart::Create, kMonumentName);
+    setStartId(eStructureStart_WoodlandMansion, WoodlandMansionFeature::WoodlandMansionStart::Create, kMansionName);
+    setStartId(eStructureStart_BuriedTreasure, BuriedTreasureFeature::BuriedTreasureStart::Create, kBuriedTreasureName);
+    setStartId(eStructureStart_Shipwreck, ShipwreckFeature::ShipwreckStart::Create, kShipwreckName);
 
     MineShaftPieces::loadStatic();
     VillagePieces::loadStatic();
@@ -71,23 +81,23 @@ int StructureFeatureIO::getVersion()
 std::wstring StructureFeatureIO::getEncodeId(StructureStart* start)
 {
     boost::unordered_map<unsigned int, std::wstring>::iterator entry = startIds.find(start->GetType());
-    if (entry == startIds.end())
+    if (entry != startIds.end())
     {
-        return L"";
+        return entry->second;
     }
 
-    return entry->second;
+    return L"";
 }
 
 std::wstring StructureFeatureIO::getEncodeId(StructurePiece* piece)
 {
     boost::unordered_map<unsigned int, std::wstring>::iterator entry = pieceIds.find(piece->GetType());
-    if (entry == pieceIds.end())
+    if (entry != pieceIds.end())
     {
-        return L"";
+        return entry->second;
     }
 
-    return entry->second;
+    return L"";
 }
 
 StructureStart* StructureFeatureIO::loadStaticStart(ByteArrayTag* tag, Level* level)
@@ -106,22 +116,22 @@ StructureStart* StructureFeatureIO::loadStaticStart(ByteArrayTag* tag, Level* le
         start = (entry->second)();
         if (start != NULL)
         {
+            bool discard = false;
             if (version == 0)
             {
                 EStructureStart type = start->GetType();
-                if (type == eStructureStart_Village || type == eStructureStart_ScatteredFeature)
-                {
-                    delete start;
-                    buffer.mBuffer.data = NULL;
-                    buffer.mBuffer.length = 0;
-                    buffer.mCount = 0;
-                    buffer.mMark = 0;
-                    buffer.mPosition = 0;
-                    return NULL;
-                }
+                discard = type == eStructureStart_Village || type == eStructureStart_ScatteredFeature;
             }
 
-            start->load(level, &input);
+            if (discard)
+            {
+                delete start;
+                start = NULL;
+            }
+            else
+            {
+                start->load(level, &input);
+            }
         }
     }
 

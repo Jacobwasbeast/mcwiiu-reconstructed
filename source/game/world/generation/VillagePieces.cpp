@@ -34,7 +34,7 @@
 
 std::list<VillagePieces::PieceWeight*>* VillagePieces::createPieceSet(Random& random, int size)
 {
-    std::list<PieceWeight*>* pieces = new std::list<PieceWeight*>();
+    std::list<PieceWeight*>* pieces = new std::list<PieceWeight*>;
     pieces->push_back(new PieceWeight(ePieceClass_SimpleHouse, 4, Mth::nextInt(&random, size + 2, size * 2 + 4)));
     pieces->push_back(new PieceWeight(ePieceClass_SmallTemple, 20, Mth::nextInt(&random, size, size + 1)));
     pieces->push_back(new PieceWeight(ePieceClass_BookHouse, 20, Mth::nextInt(&random, size, size + 2)));
@@ -378,32 +378,35 @@ int VillagePieces::VillagePiece::getAverageGroundHeight(Level* level, BoundingBo
 
 void VillagePieces::VillagePiece::spawnVillagers(Level* level, BoundingBox* box, int x, int y, int z, int count)
 {
-    for (int i = mVillagerCount; i < count; ++i)
+    if (mVillagerCount < count)
     {
-        int worldX = getWorldX(x + i, z);
-        int worldY = getWorldY(y);
-        int worldZ = getWorldZ(x + i, z);
-        if (!box->isInside(BlockPos(worldX, worldY, worldZ)))
-            break;
+        for (int i = mVillagerCount; i < count; ++i)
+        {
+            int worldX = getWorldX(x + i, z);
+            int worldY = getWorldY(y);
+            int worldZ = getWorldZ(x + i, z);
+            if (!box->isInside(BlockPos(worldX, worldY, worldZ)))
+                break;
 
-        ++mVillagerCount;
-        if (mIsZombieVillage)
-        {
-            boost::shared_ptr<ZombieVillager> zombie(new ZombieVillager(level));
-            zombie->moveTo(worldX + 0.5, worldY, worldZ + 0.5, 0.0f, 0.0f);
-            zombie->finalizeMobSpawn(level->getCurrentDifficultyAt(BlockPos(zombie)), NULL, L"");
-            zombie->setProfession(getVillagerProfession(i, 0));
-            zombie->setPersistenceRequired(true);
-            level->addEntity(zombie);
-        }
-        else
-        {
-            boost::shared_ptr<Villager> villager(new Villager(level));
-            villager->moveTo(worldX + 0.5, worldY, worldZ + 0.5, 0.0f, 0.0f);
-            villager->setProfession(getVillagerProfession(i, level->mRandom->nextInt(6)));
-            villager->finalizeMobSpawn(level->getCurrentDifficultyAt(BlockPos(villager)), NULL, L"");
-            villager->setPersistenceRequired(true);
-            level->addEntity(villager);
+            ++mVillagerCount;
+            if (mIsZombieVillage)
+            {
+                boost::shared_ptr<ZombieVillager> zombie(new ZombieVillager(level));
+                zombie->moveTo(worldX + 0.5, worldY, worldZ + 0.5, 0.0f, 0.0f);
+                zombie->finalizeMobSpawn(level->getCurrentDifficultyAt(BlockPos(zombie)), NULL, L"");
+                zombie->setProfession(getVillagerProfession(i, 0));
+                zombie->setPersistenceRequired(true);
+                level->addEntity(zombie);
+            }
+            else
+            {
+                boost::shared_ptr<Villager> villager(new Villager(level));
+                villager->moveTo(worldX + 0.5, worldY, worldZ + 0.5, 0.0f, 0.0f);
+                villager->setProfession(getVillagerProfession(i, level->mRandom->nextInt(6)));
+                villager->finalizeMobSpawn(level->getCurrentDifficultyAt(BlockPos(villager)), NULL, L"");
+                villager->setPersistenceRequired(true);
+                level->addEntity(villager);
+            }
         }
     }
 }
@@ -425,13 +428,15 @@ const BlockState* VillagePieces::VillagePiece::biomeBlock(const BlockState* stat
             return Blocks::sandstone->getBlockState(SandStoneBlock::SMOOTH->getData());
         if (state->getBlock() == Blocks::oak_stairs)
         {
-            TypedBoxed<const Direction*> facing(state->getValue<const Direction*>(StairBlock::FACING));
-            return Blocks::sandstone_stairs->defaultBlockState()->setBoxedValue(StairBlock::FACING, &facing);
+            const BlockState* stairs = Blocks::sandstone_stairs->defaultBlockState();
+            DirectionProperty* facing = StairBlock::FACING;
+            return stairs->setValue(facing, state->getValue(facing));
         }
         if (state->getBlock() == Blocks::stone_stairs)
         {
-            TypedBoxed<const Direction*> facing(state->getValue<const Direction*>(StairBlock::FACING));
-            return Blocks::sandstone_stairs->defaultBlockState()->setBoxedValue(StairBlock::FACING, &facing);
+            const BlockState* stairs = Blocks::sandstone_stairs->defaultBlockState();
+            DirectionProperty* facing = StairBlock::FACING;
+            return stairs->setValue(facing, state->getValue(facing));
         }
         if (state->getBlock() == Blocks::grass_path)
             return Blocks::sandstone->defaultBlockState();
@@ -440,21 +445,18 @@ const BlockState* VillagePieces::VillagePiece::biomeBlock(const BlockState* stat
     {
         if (state->getBlock() == Blocks::log || state->getBlock() == Blocks::log2)
         {
-            TypedBoxed<PlanksBlock::Variant*> variant(PlanksBlock::Variant::SPRUCE);
-            TypedBoxed<LogBlock::LogAxis*> axis(state->getValue(LogBlock::AXIS));
-            return Blocks::log->defaultBlockState()
-                ->setBoxedValue(OldLogBlock::VARIANT, &variant)
-                ->setBoxedValue(LogBlock::AXIS, &axis);
+            const BlockState* logState = Blocks::log->defaultBlockState();
+            logState = logState->setValue(OldLogBlock::VARIANT, PlanksBlock::Variant::SPRUCE);
+            EnumProperty<LogBlock::LogAxis*>* axis = LogBlock::AXIS;
+            return logState->setValue(axis, state->getValue(axis));
         }
         if (state->getBlock() == Blocks::planks)
-        {
-            TypedBoxed<PlanksBlock::Variant*> variant(PlanksBlock::Variant::SPRUCE);
-            return Blocks::planks->defaultBlockState()->setBoxedValue(PlanksBlock::VARIANT, &variant);
-        }
+            return Blocks::planks->defaultBlockState()->setValue(PlanksBlock::VARIANT, PlanksBlock::Variant::SPRUCE);
         if (state->getBlock() == Blocks::oak_stairs)
         {
-            TypedBoxed<const Direction*> facing(state->getValue<const Direction*>(StairBlock::FACING));
-            return Blocks::spruce_stairs->defaultBlockState()->setBoxedValue(StairBlock::FACING, &facing);
+            const BlockState* stairs = Blocks::spruce_stairs->defaultBlockState();
+            DirectionProperty* facing = StairBlock::FACING;
+            return stairs->setValue(facing, state->getValue(facing));
         }
         if (state->getBlock() == Blocks::fence)
             return Blocks::spruce_fence->defaultBlockState();
@@ -463,21 +465,18 @@ const BlockState* VillagePieces::VillagePiece::biomeBlock(const BlockState* stat
     {
         if (state->getBlock() == Blocks::log || state->getBlock() == Blocks::log2)
         {
-            TypedBoxed<PlanksBlock::Variant*> variant(PlanksBlock::Variant::ACACIA);
-            TypedBoxed<LogBlock::LogAxis*> axis(state->getValue(LogBlock::AXIS));
-            return Blocks::log2->defaultBlockState()
-                ->setBoxedValue(NewLogBlock::VARIANT, &variant)
-                ->setBoxedValue(LogBlock::AXIS, &axis);
+            const BlockState* logState = Blocks::log2->defaultBlockState();
+            logState = logState->setValue(NewLogBlock::VARIANT, PlanksBlock::Variant::ACACIA);
+            EnumProperty<LogBlock::LogAxis*>* axis = LogBlock::AXIS;
+            return logState->setValue(axis, state->getValue(axis));
         }
         if (state->getBlock() == Blocks::planks)
-        {
-            TypedBoxed<PlanksBlock::Variant*> variant(PlanksBlock::Variant::ACACIA);
-            return Blocks::planks->defaultBlockState()->setBoxedValue(PlanksBlock::VARIANT, &variant);
-        }
+            return Blocks::planks->defaultBlockState()->setValue(PlanksBlock::VARIANT, PlanksBlock::Variant::ACACIA);
         if (state->getBlock() == Blocks::oak_stairs)
         {
-            TypedBoxed<const Direction*> facing(state->getValue<const Direction*>(StairBlock::FACING));
-            return Blocks::acacia_stairs->defaultBlockState()->setBoxedValue(StairBlock::FACING, &facing);
+            const BlockState* stairs = Blocks::acacia_stairs->defaultBlockState();
+            DirectionProperty* facing = StairBlock::FACING;
+            return stairs->setValue(facing, state->getValue(facing));
         }
         if (state->getBlock() == Blocks::fence)
             return Blocks::acacia_fence->defaultBlockState();
@@ -512,13 +511,7 @@ void VillagePieces::VillagePiece::placeTorch(Level* level, const Direction* dire
 {
     if (!mIsZombieVillage)
     {
-        const BlockState* torch = Blocks::torch->defaultBlockState();
-        const BlockState* state;
-        {
-            TypedBoxed<const Direction*> facing(direction);
-            state = torch->setBoxedValue(TorchBlock::FACING, &facing);
-        }
-        placeBlock(level, state, x, y, z, box);
+        placeBlock(level, Blocks::torch->defaultBlockState()->setValue(TorchBlock::FACING, direction), x, y, z, box);
     }
 }
 
@@ -526,15 +519,13 @@ void VillagePieces::VillagePiece::placeBlock(Level* level, Random& random, const
                                              StructurePiece::BlockSelector* selector, int x, int y, int z,
                                              BoundingBox* box)
 {
-    if (selector == NULL)
-    {
-        StructurePiece::placeBlock(level, state, x, y, z, box);
-    }
-    else
+    if (selector != NULL)
     {
         selector->next(random, x, y, z, false);
         StructurePiece::placeBlock(level, selector->getNext(), x, y, z, box);
+        return;
     }
+    StructurePiece::placeBlock(level, state, x, y, z, box);
 }
 
 VillagePieces::Well::Well(StartPiece* startPiece, int depth, Random& random, int x, int z)
@@ -877,9 +868,8 @@ bool VillagePieces::SimpleHouse::postProcess(Level* level, Random& random, Bound
 
     const BlockState* cobblestone = biomeBlock(Blocks::cobblestone->defaultBlockState());
     const BlockState* planks = biomeBlock(Blocks::planks->defaultBlockState());
-    TypedBoxed<const Direction*> north(Direction::NORTH);
     const BlockState* stairsNorth =
-        biomeBlock(Blocks::stone_stairs->defaultBlockState()->setBoxedValue(StairBlock::FACING, &north));
+        biomeBlock(Blocks::stone_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::NORTH));
     const BlockState* log = biomeBlock(Blocks::log->defaultBlockState());
     const BlockState* fence = biomeBlock(Blocks::fence->defaultBlockState());
     Random selectorRandom = random;
@@ -950,9 +940,7 @@ bool VillagePieces::SimpleHouse::postProcess(Level* level, Random& random, Bound
 
     if (mIsRoofAccessible)
     {
-        TypedBoxed<const Direction*> ladderFacing(Direction::SOUTH);
-        const BlockState* ladder =
-            Blocks::ladder->defaultBlockState()->setBoxedValue(LadderBlock::FACING, &ladderFacing);
+        const BlockState* ladder = Blocks::ladder->defaultBlockState()->setValue(LadderBlock::FACING, Direction::SOUTH);
         placeBlock(level, ladder, 3, 1, 3, box);
         placeBlock(level, ladder, 3, 2, 3, box);
         placeBlock(level, ladder, 3, 3, 3, box);
@@ -1026,15 +1014,12 @@ bool VillagePieces::SmallTemple::postProcess(Level* level, Random& random, Bound
     }
 
     const BlockState* cobblestone = biomeBlock(Blocks::cobblestone->defaultBlockState());
-    TypedBoxed<const Direction*> north(Direction::NORTH);
     const BlockState* stairsNorth =
-        biomeBlock(Blocks::stone_stairs->defaultBlockState()->setBoxedValue(StairBlock::FACING, &north));
-    TypedBoxed<const Direction*> west(Direction::WEST);
+        biomeBlock(Blocks::stone_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::NORTH));
     const BlockState* stairsWest =
-        biomeBlock(Blocks::stone_stairs->defaultBlockState()->setBoxedValue(StairBlock::FACING, &west));
-    TypedBoxed<const Direction*> east(Direction::EAST);
+        biomeBlock(Blocks::stone_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::WEST));
     const BlockState* stairsEast =
-        biomeBlock(Blocks::stone_stairs->defaultBlockState()->setBoxedValue(StairBlock::FACING, &east));
+        biomeBlock(Blocks::stone_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::EAST));
     Random selectorRandom = random;
 
     generateBox(level, box, 1, 1, 1, 3, 3, 7, Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(),
@@ -1086,8 +1071,7 @@ bool VillagePieces::SmallTemple::postProcess(Level* level, Random& random, Bound
     placeTorch(level, Direction::WEST, 3, 4, 6, box);
     placeTorch(level, Direction::NORTH, 2, 4, 5, box);
 
-    TypedBoxed<const Direction*> ladderFacing(Direction::WEST);
-    const BlockState* ladder = Blocks::ladder->defaultBlockState()->setBoxedValue(LadderBlock::FACING, &ladderFacing);
+    const BlockState* ladder = Blocks::ladder->defaultBlockState()->setValue(LadderBlock::FACING, Direction::WEST);
     for (int y = 1; y <= 9; ++y)
         placeBlock(level, ladder, 3, y, 3, box);
 
@@ -1165,19 +1149,15 @@ bool VillagePieces::BookHouse::postProcess(Level* level, Random& random, Boundin
     }
 
     const BlockState* cobblestone = biomeBlock(Blocks::cobblestone->defaultBlockState());
-    TypedBoxed<const Direction*> north(Direction::NORTH);
     const BlockState* stairsNorth =
-        biomeBlock(Blocks::oak_stairs->defaultBlockState()->setBoxedValue(StairBlock::FACING, &north));
-    TypedBoxed<const Direction*> south(Direction::SOUTH);
+        biomeBlock(Blocks::oak_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::NORTH));
     const BlockState* stairsSouth =
-        biomeBlock(Blocks::oak_stairs->defaultBlockState()->setBoxedValue(StairBlock::FACING, &south));
-    TypedBoxed<const Direction*> east(Direction::EAST);
+        biomeBlock(Blocks::oak_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::SOUTH));
     const BlockState* stairsEast =
-        biomeBlock(Blocks::oak_stairs->defaultBlockState()->setBoxedValue(StairBlock::FACING, &east));
+        biomeBlock(Blocks::oak_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::EAST));
     const BlockState* planks = biomeBlock(Blocks::planks->defaultBlockState());
-    TypedBoxed<const Direction*> stepFacing(Direction::NORTH);
     const BlockState* stoneStairsNorth =
-        biomeBlock(Blocks::stone_stairs->defaultBlockState()->setBoxedValue(StairBlock::FACING, &stepFacing));
+        biomeBlock(Blocks::stone_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::NORTH));
     const BlockState* fence = biomeBlock(Blocks::fence->defaultBlockState());
     Random selectorRandom = random;
 
@@ -1329,9 +1309,8 @@ bool VillagePieces::SmallHut::postProcess(Level* level, Random& random, Bounding
 
     const BlockState* cobblestone = biomeBlock(Blocks::cobblestone->defaultBlockState());
     const BlockState* planks = biomeBlock(Blocks::planks->defaultBlockState());
-    TypedBoxed<const Direction*> north(Direction::NORTH);
     const BlockState* stairsNorth =
-        biomeBlock(Blocks::stone_stairs->defaultBlockState()->setBoxedValue(StairBlock::FACING, &north));
+        biomeBlock(Blocks::stone_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::NORTH));
     const BlockState* log = biomeBlock(Blocks::log->defaultBlockState());
     const BlockState* fence = biomeBlock(Blocks::fence->defaultBlockState());
     Random selectorRandom = random;
@@ -1479,15 +1458,12 @@ bool VillagePieces::PigHouse::postProcess(Level* level, Random& random, Bounding
     }
 
     const BlockState* cobblestone = biomeBlock(Blocks::cobblestone->defaultBlockState());
-    TypedBoxed<const Direction*> north(Direction::NORTH);
     const BlockState* stairsNorth =
-        biomeBlock(Blocks::oak_stairs->defaultBlockState()->setBoxedValue(StairBlock::FACING, &north));
-    TypedBoxed<const Direction*> south(Direction::SOUTH);
+        biomeBlock(Blocks::oak_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::NORTH));
     const BlockState* stairsSouth =
-        biomeBlock(Blocks::oak_stairs->defaultBlockState()->setBoxedValue(StairBlock::FACING, &south));
-    TypedBoxed<const Direction*> west(Direction::WEST);
+        biomeBlock(Blocks::oak_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::SOUTH));
     const BlockState* stairsWest =
-        biomeBlock(Blocks::oak_stairs->defaultBlockState()->setBoxedValue(StairBlock::FACING, &west));
+        biomeBlock(Blocks::oak_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::WEST));
     const BlockState* planks = biomeBlock(Blocks::planks->defaultBlockState());
     const BlockState* log = biomeBlock(Blocks::log->defaultBlockState());
     const BlockState* fence = biomeBlock(Blocks::fence->defaultBlockState());
@@ -1630,18 +1606,14 @@ bool VillagePieces::TwoRoomHouse::postProcess(Level* level, Random& random, Boun
     }
 
     const BlockState* cobblestone = biomeBlock(Blocks::cobblestone->defaultBlockState());
-    TypedBoxed<const Direction*> north(Direction::NORTH);
     const BlockState* stairsNorth =
-        biomeBlock(Blocks::oak_stairs->defaultBlockState()->setBoxedValue(StairBlock::FACING, &north));
-    TypedBoxed<const Direction*> south(Direction::SOUTH);
+        biomeBlock(Blocks::oak_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::NORTH));
     const BlockState* stairsSouth =
-        biomeBlock(Blocks::oak_stairs->defaultBlockState()->setBoxedValue(StairBlock::FACING, &south));
-    TypedBoxed<const Direction*> east(Direction::EAST);
+        biomeBlock(Blocks::oak_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::SOUTH));
     const BlockState* stairsEast =
-        biomeBlock(Blocks::oak_stairs->defaultBlockState()->setBoxedValue(StairBlock::FACING, &east));
-    TypedBoxed<const Direction*> west(Direction::WEST);
+        biomeBlock(Blocks::oak_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::EAST));
     const BlockState* stairsWest =
-        biomeBlock(Blocks::oak_stairs->defaultBlockState()->setBoxedValue(StairBlock::FACING, &west));
+        biomeBlock(Blocks::oak_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::WEST));
     const BlockState* planks = biomeBlock(Blocks::planks->defaultBlockState());
     const BlockState* log = biomeBlock(Blocks::log->defaultBlockState());
     Random selectorRandom = random;
@@ -1823,16 +1795,13 @@ bool VillagePieces::Smithy::postProcess(Level* level, Random& random, BoundingBo
     }
 
     const BlockState* cobblestone = biomeBlock(Blocks::cobblestone->defaultBlockState());
-    TypedBoxed<const Direction*> north(Direction::NORTH);
     const BlockState* stairsNorth =
-        biomeBlock(Blocks::oak_stairs->defaultBlockState()->setBoxedValue(StairBlock::FACING, &north));
-    TypedBoxed<const Direction*> west(Direction::WEST);
+        biomeBlock(Blocks::oak_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::NORTH));
     const BlockState* stairsWest =
-        biomeBlock(Blocks::oak_stairs->defaultBlockState()->setBoxedValue(StairBlock::FACING, &west));
+        biomeBlock(Blocks::oak_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::WEST));
     const BlockState* planks = biomeBlock(Blocks::planks->defaultBlockState());
-    TypedBoxed<const Direction*> stepFacing(Direction::NORTH);
     const BlockState* stoneStairsNorth =
-        biomeBlock(Blocks::stone_stairs->defaultBlockState()->setBoxedValue(StairBlock::FACING, &stepFacing));
+        biomeBlock(Blocks::stone_stairs->defaultBlockState()->setValue(StairBlock::FACING, Direction::NORTH));
     const BlockState* log = biomeBlock(Blocks::log->defaultBlockState());
     const BlockState* fence = biomeBlock(Blocks::fence->defaultBlockState());
     Random selectorRandom = random;
@@ -2012,8 +1981,13 @@ void VillagePieces::Farmland::readAdditionalSaveData(DataInputStream* input, Str
     VillagePiece::readAdditionalSaveData(input, manager);
     if (StructureFeatureIO::getVersion() == 1)
     {
-        mCropA = mFirstInts.size() < 2 ? Blocks::wheat : selectOldCrops(mFirstInts[0]);
-        mCropB = mFirstInts.size() < 2 ? Blocks::wheat : selectOldCrops(mFirstInts[1]);
+        std::vector<int>::iterator first = mFirstInts.begin();
+        mCropA = &*first != NULL && static_cast<unsigned int>(mFirstInts.end() - first) > 1
+                     ? selectOldCrops(first[0])
+                     : Blocks::wheat;
+        mCropB = &*first != NULL && static_cast<unsigned int>(mFirstInts.end() - first) > 1
+                     ? selectOldCrops(first[1])
+                     : Blocks::wheat;
     }
     else
     {
@@ -2158,10 +2132,19 @@ void VillagePieces::DoubleFarmland::readAdditionalSaveData(DataInputStream* inpu
     VillagePiece::readAdditionalSaveData(input, manager);
     if (StructureFeatureIO::getVersion() == 1)
     {
-        mCropA = mFirstInts.size() < 4 ? Blocks::wheat : selectOldCrops(mFirstInts[0]);
-        mCropB = mFirstInts.size() < 4 ? Blocks::wheat : selectOldCrops(mFirstInts[1]);
-        mCropC = mFirstInts.size() < 4 ? Blocks::wheat : selectOldCrops(mFirstInts[2]);
-        mCropD = mFirstInts.size() < 4 ? Blocks::wheat : selectOldCrops(mFirstInts[3]);
+        std::vector<int>::iterator first = mFirstInts.begin();
+        mCropA = &*first != NULL && static_cast<unsigned int>(mFirstInts.end() - first) > 3
+                     ? selectOldCrops(first[0])
+                     : Blocks::wheat;
+        mCropB = &*first != NULL && static_cast<unsigned int>(mFirstInts.end() - first) > 3
+                     ? selectOldCrops(first[1])
+                     : Blocks::wheat;
+        mCropC = &*first != NULL && static_cast<unsigned int>(mFirstInts.end() - first) > 3
+                     ? selectOldCrops(first[2])
+                     : Blocks::wheat;
+        mCropD = &*first != NULL && static_cast<unsigned int>(mFirstInts.end() - first) > 3
+                     ? selectOldCrops(first[3])
+                     : Blocks::wheat;
         return;
     }
 
@@ -2318,12 +2301,21 @@ void VillagePieces::CobbleStoneSelector::next(Random& random, int x, int y, int 
 {
     if (mMossy && random.nextFloat() >= 0.4f)
     {
-        mNext = mType == 1 ? Blocks::sandstone->getBlockState(SandStoneBlock::SANDSTONE->getData())
-                           : Blocks::mossy_cobblestone->defaultBlockState();
+        if (mType == 1)
+        {
+            mNext = Blocks::sandstone->getBlockState(SandStoneBlock::SANDSTONE->getData());
+        }
+        else
+        {
+            mNext = Blocks::mossy_cobblestone->defaultBlockState();
+        }
+    }
+    else if (mType == 1)
+    {
+        mNext = Blocks::sandstone->getBlockState(SandStoneBlock::SANDSTONE->getData());
     }
     else
     {
-        mNext = mType == 1 ? Blocks::sandstone->getBlockState(SandStoneBlock::SANDSTONE->getData())
-                           : Blocks::cobblestone->defaultBlockState();
+        mNext = Blocks::cobblestone->defaultBlockState();
     }
 }

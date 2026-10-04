@@ -31,7 +31,7 @@ void SpiderEyesLayer::render(boost::shared_ptr<LivingEntity>& entity, float limb
     GlStateManager::multiTexCoord2f(61680.0f, 0.0f);
     GlStateManager::color4f(1.0f, 1.0f, 1.0f, 1.0f);
 
-    boost::shared_ptr<Entity> renderEntity = boost::static_pointer_cast<Entity>(entity);
+    boost::shared_ptr<Entity> renderEntity(entity);
     mRenderer->getModel()->render(renderEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch,
                                    scale, bUseDisplayList);
 

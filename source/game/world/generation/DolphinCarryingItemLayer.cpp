@@ -25,11 +25,13 @@ void DolphinCarryingItemLayer::renderItemOnNose(const boost::shared_ptr<LivingEn
 {
     if (item->isEmpty())
         return;
+    if (item->isEmpty())
+        return;
 
     Block* block = Block::byItem(item->getItem());
     GlStateManager::pushMatrix();
 
-    bool depthMask = mItemRenderer->isGui3d(item) && block->hasInHandRenderOffset();
+    bool depthMask = mItemRenderer->isGui3d(item) && block->getRenderLayer() == 1;
     if (depthMask)
         GlStateManager::depthMask(false);
 
@@ -49,19 +51,9 @@ void DolphinCarryingItemLayer::renderItemOnNose(const boost::shared_ptr<LivingEn
 void DolphinCarryingItemLayer::render(boost::shared_ptr<LivingEntity>& entity, float, float, float, float, float,
                                       float, float, bool)
 {
-    not_null_ptr<ItemInstance> leftHandItem;
-    not_null_ptr<ItemInstance> rightHandItem;
-
-    if (entity->getMainArm() == HumanoidArm::RIGHT)
-    {
-        leftHandItem = entity->getOffhandItem();
-        rightHandItem = entity->getMainHandItem();
-    }
-    else
-    {
-        leftHandItem = entity->getMainHandItem();
-        rightHandItem = entity->getOffhandItem();
-    }
+    const bool rightHanded = entity->getMainArm() == HumanoidArm::RIGHT;
+    not_null_ptr<ItemInstance> leftHandItem = rightHanded ? entity->getOffhandItem() : entity->getMainHandItem();
+    not_null_ptr<ItemInstance> rightHandItem = rightHanded ? entity->getMainHandItem() : entity->getOffhandItem();
 
     if (leftHandItem->isEmpty() && rightHandItem->isEmpty())
         return;

@@ -7,8 +7,7 @@ UniformLayerSizeRuleDefinition::UniformLayerSizeRuleDefinition()
     : mSize(-1)
 {
     GameRules_IntAttribute* size = addIntAttribute(ConsoleGameRules::eGameRuleAttr_size, &mSize);
-    size->setMin(0);
-    size->setMax(254);
+    size->setMin(0)->setMax(254);
 }
 
 UniformLayerSizeRuleDefinition::~UniformLayerSizeRuleDefinition()

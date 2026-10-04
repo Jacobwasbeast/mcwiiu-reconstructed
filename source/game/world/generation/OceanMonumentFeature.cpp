@@ -4,6 +4,7 @@
 #include <algorithm>
 
 #include "game/core/BoundingBox.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/DataInputStream.hpp"
 #include "game/core/DataOutputStream.hpp"
@@ -67,9 +68,11 @@ OceanMonumentFeature::OceanMonumentFeature(SuperflatConfig* config)
 {
     FlatGeneratorInfo generatorInfo(config);
     int separation = generatorInfo.getOceanMonuemntSeparation();
-    mSeparation = separation < 5 ? 5 : separation;
+    if (separation < 5)
+        separation = 5;
+    mSeparation = separation;
     int spacing = generatorInfo.getOceanMonumentSpacing();
-    mSpacing = spacing > mSeparation + 1 ? spacing : mSeparation + 1;
+    mSpacing = spacing > separation + 1 ? spacing : separation + 1;
     mFeatureChunk = FjIsFeatureChunk(&gOceanMonumentBiomeRequirements, 40,
                                      mSpacing, mSeparation);
     mReducedFeatureChunk = FjIsFeatureChunk::CreateReduced(mFeatureChunk);
@@ -98,7 +101,7 @@ bool OceanMonumentFeature::isFeatureChunk(int chunkX, int chunkZ, bool flatWorld
     result = canPlaceFeatureInChunk(result, eFeatureType_OceanMonument, chunkX, chunkZ);
     if (result)
     {
-        g_pApp->AddTerrainFeaturePosition((_eTerrainFeatureType)7, chunkX, chunkZ);
+        gApp.AddTerrainFeaturePosition((_eTerrainFeatureType)7, chunkX, chunkZ);
     }
     return result;
 }
@@ -113,7 +116,7 @@ BlockPos* OceanMonumentFeature::getNearestGeneratedFeature(Level* levelIn,
                                                             bool skipExistingChunks)
 {
     level = levelIn;
-    LevelGenerationOptions* options = g_pApp->getLevelGenerationOptions();
+    LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
     if (options != NULL &&
         canPlaceFeatureInChunk(false, eFeatureType_OceanMonument, pos.x >> 4, pos.z >> 4))
     {
@@ -142,14 +145,13 @@ void OceanMonumentFeature::OceanMonumentStart::Init()
 void OceanMonumentFeature::OceanMonumentStart::create(Level* level, Random& random,
                                                        int chunkX, int chunkZ)
 {
-    long long seed = level->getSeed();
-    random.setSeed(seed);
+    random.setSeed(level->getSeed());
     long long xSeed = random.nextLong();
     long long zSeed = random.nextLong();
-    random.setSeed((long long)chunkX * xSeed ^ (long long)chunkZ * zSeed ^ seed);
+    random.setSeed((long long)chunkX * xSeed ^ (long long)chunkZ * zSeed ^ level->getSeed());
 
     const Direction* direction = Direction::Plane::HORIZONTAL->getRandomDirection(random);
-    LevelGenerationOptions* options = g_pApp->getLevelGenerationOptions();
+    LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
     if (options != NULL)
     {
         const Direction* featureDirection = NULL;
@@ -198,9 +200,12 @@ void OceanMonumentFeature::OceanMonumentStart::postProcess(Level* level, Random&
 
 bool OceanMonumentFeature::OceanMonumentStart::isValidForPostProcess(ChunkPos* chunkPos)
 {
-    return std::find(mProcessedChunks.begin(), mProcessedChunks.end(), *chunkPos) ==
-               mProcessedChunks.end() &&
-           StructureStart::isValidForPostProcess(chunkPos);
+    if (std::find(mProcessedChunks.begin(), mProcessedChunks.end(), *chunkPos) ==
+        mProcessedChunks.end())
+    {
+        return StructureStart::isValidForPostProcess(chunkPos);
+    }
+    return false;
 }
 
 void OceanMonumentFeature::OceanMonumentStart::notifyPostProcessAt(ChunkPos* chunkPos)

@@ -36,9 +36,9 @@ static int _standardTests(void*)
 {
     IntCache::CreateNewThreadStorage();
 
-    StructureFrequencyAnalyser analyser(54, false, false);
-    analyser.run(1000);
-    analyser.print();
+    StructureFrequencyAnalyser analysers[1] = {StructureFrequencyAnalyser(54, false, false)};
+    analysers[0].run(1000);
+    analysers[0].print();
 
     IntCache::ReleaseThreadStorage();
     return 0;
@@ -47,11 +47,9 @@ static int _standardTests(void*)
 StructureFrequencyAnalyser::StructureFrequencyAnalyser(int sizeInChunks,
                                                        bool printResults,
                                                        bool printAverages)
+    : mSizeInChunks(sizeInChunks), mAreaInChunks(sizeInChunks * sizeInChunks),
+      mPrintResults(printResults), mPrintAverages(printAverages)
 {
-    mPrintAverages = printAverages;
-    mPrintResults = printResults;
-    mSizeInChunks = sizeInChunks;
-    mAreaInChunks = sizeInChunks * sizeInChunks;
 }
 
 StructureFrequencyAnalyser::~StructureFrequencyAnalyser()

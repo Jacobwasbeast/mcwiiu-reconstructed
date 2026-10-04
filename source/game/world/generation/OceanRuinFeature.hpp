@@ -17,6 +17,11 @@ class SuperflatConfig;
 
 struct OceanRuinConfiguration
 {
+    OceanRuinConfiguration()
+        : biomeType(OceanRuin::eRuinType_Cold), smallProbability(0.0f), clusterProbability(0.0f), enabled(false)
+    {
+    }
+
     OceanRuin::ERuinType biomeType;
     float smallProbability;
     float clusterProbability;

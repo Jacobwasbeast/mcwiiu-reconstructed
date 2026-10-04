@@ -36,22 +36,21 @@ void IcebergFeature::setLargestOffset(int largestOffset)
 int IcebergFeature::heightDependentRadiusEllipse(int height, int totalHeight, int radius)
 {
     float y = (float)height;
-    return (int)ceilf((1.0f - 1.0f * y * y / (float)totalHeight) * (float)radius * 0.5f);
+    return (int)ceilf((1.0f - pow(y, 2) / (float)totalHeight) * (float)radius * 0.5f);
 }
 
 int IcebergFeature::heightDependentRadiusRound(Random& random, int height, int totalHeight, int radius)
 {
     float spread = 3.5f - random.nextFloat();
     float scaledHeight = (float)totalHeight * spread;
-    float y = (float)height;
-    float falloff = 1.0f * y * y / scaledHeight;
+    float scaledRadius = (1.0f - pow((float)height, 2) / scaledHeight) * (float)radius;
     if (totalHeight > random.nextInt(5) + 15)
     {
         if (height < random.nextInt(6) + 3)
             height /= 2;
-        falloff = (float)height / (scaledHeight * 0.4f);
+        scaledRadius = (1.0f - (float)height / (scaledHeight * 0.4f)) * (float)radius;
     }
-    return (int)ceilf((1.0f - falloff) * (float)radius * 0.5f);
+    return (int)ceilf(scaledRadius * 0.5f);
 }
 
 int IcebergFeature::heightDependentRadiusSteep(Random& random, int height, int totalHeight, int radius)
@@ -74,16 +73,16 @@ void IcebergFeature::initEllipse(Random& random)
 
 double IcebergFeature::signedDistanceEllipse(int x, int z, const BlockPos& origin, int radius, int c, double angle)
 {
-    double first = ((double)(x - origin.x) * cos(angle) - (double)(z - origin.z) * sin(angle)) / (double)radius;
-    double second = ((double)(x - origin.x) * sin(angle) + (double)(z - origin.z) * cos(angle)) / (double)c;
-    return 1.0 * first * first + 1.0 * second * second - 1.0;
+    return pow(((double)(x - origin.x) * cos(angle) - (double)(z - origin.z) * sin(angle)) / (double)radius, 2)
+        + pow(((double)(x - origin.x) * sin(angle) + (double)(z - origin.z) * cos(angle)) / (double)c, 2) - 1.0;
 }
 
 int IcebergFeature::getEllipseC(int height, int totalHeight)
 {
-    if (height < 1 || totalHeight - height > 3)
-        return mEllipseC;
-    return mEllipseC + (totalHeight - height) - 4;
+    int c = mEllipseC;
+    if (height > 0 && totalHeight - height <= 3)
+        c += totalHeight - height - 4;
+    return c;
 }
 
 double IcebergFeature::signedDistanceCircle(int x, int z, const BlockPos& origin, int radius, Random& random)
@@ -92,7 +91,7 @@ double IcebergFeature::signedDistanceCircle(int x, int z, const BlockPos& origin
     float r = (float)radius;
     float dx = (float)(x - origin.x);
     float dz = (float)(z - origin.z);
-    return (double)(10.0f * wobble / r + 1.0f * dx * dx + 1.0f * dz * dz - 1.0f * r * r);
+    return (double)(10.0f * wobble / r + pow(dx, 2) + pow(dz, 2) - pow(r, 2));
 }
 
 void IcebergFeature::setIcebergBlock(const BlockPos& pos, Level* level, Random& random, int height, int totalHeight)
@@ -103,13 +102,12 @@ void IcebergFeature::setIcebergBlock(const BlockPos& pos, Level* level, Random& 
         && block != Blocks::water && block != Blocks::flowing_water)
         return;
 
-    bool placeSnow = true;
-    if (mIsEllipse && random.nextDouble() <= 0.05)
-        placeSnow = false;
-    int divisor = mIsEllipse ? 3 : 2;
+    bool placeSnow = !mIsEllipse || random.nextDouble() > 0.05;
     if (mSnowOnTop && block != Blocks::water)
     {
-        int bound = std::max(totalHeight / divisor, 1);
+        int bound = totalHeight / (mIsEllipse ? 3 : 2);
+        if (bound < 1)
+            bound = 1;
         if ((double)height <= (double)totalHeight * 0.6 + (double)random.nextInt(bound) && placeSnow)
         {
             setBlock(level, pos, Blocks::snow->defaultBlockState(), Block::UPDATE_NONE);
@@ -193,7 +191,10 @@ void IcebergFeature::removeFloatingSnowLayer(Level* level, const BlockPos& pos)
 void IcebergFeature::carve(int radius, int y, const BlockPos& origin, Level* level, bool placeWater, double angle, const BlockPos& cutCentre)
 {
     int extent = radius + 1 + mEllipseRadius / 3;
-    int c = std::min(radius - 3, 3) + mEllipseC / 2 - 1;
+    int cutRadius = radius - 3;
+    if (cutRadius > 3)
+        cutRadius = 3;
+    int c = cutRadius + mEllipseC / 2 - 1;
     for (int x = -extent; x < extent; ++x)
     {
         for (int z = -extent; z < extent; ++z)
@@ -224,16 +225,16 @@ void IcebergFeature::generateCutOut(Random& random, Level* level, int radius, in
     int xSign = random.nextBoolean() ? -1 : 1;
     int zSign = random.nextBoolean() ? -1 : 1;
     int half = radius / 2;
-    int innerBound = std::max(half - 2, 1);
+    int innerBound = half - 2 < 1 ? 1 : half - 2;
     int x = random.nextInt(innerBound);
     if (random.nextBoolean())
-        x = half + 1 - random.nextInt(std::max(radius - half - 1, 1));
+        x = half + 1 - random.nextInt(radius - half - 1 < 1 ? 1 : radius - half - 1);
     int z = random.nextInt(innerBound);
     if (random.nextBoolean())
-        z = half + 1 - random.nextInt(std::max(radius - half - 1, 1));
+        z = half + 1 - random.nextInt(radius - half - 1 < 1 ? 1 : radius - half - 1);
     if (mIsEllipse)
     {
-        x = random.nextInt(std::max(mEllipseRadius - 5, 1));
+        x = random.nextInt(mEllipseRadius - 5 < 1 ? 1 : mEllipseRadius - 5);
         z = x;
     }
 
@@ -260,9 +261,13 @@ bool IcebergFeature::place(Level* level, Random& random, const BlockPos& origin)
     int height = mIsEllipse ? random.nextInt(4) + 6 : random.nextInt(11) + 3;
     if (!mIsEllipse && random.nextDouble() > 0.9)
         height += random.nextInt(15) + 7;
-    int depth = std::min(height + random.nextInt(11), 18);
+    int depth = height + random.nextInt(11);
+    if (depth > 18)
+        depth = 18;
     const int radiusOffsetStart = random.nextInt(7);
-    int radius = std::min(height + radiusOffsetStart - random.nextInt(5), 11);
+    int radius = height + radiusOffsetStart - random.nextInt(5);
+    if (radius > 11)
+        radius = 11;
     int extent = mIsEllipse ? mEllipseRadius : 11;
 
     for (int x = -extent; x < extent; ++x)
@@ -287,12 +292,7 @@ bool IcebergFeature::place(Level* level, Random& random, const BlockPos& origin)
         {
             for (int y = -1; y > -depth; --y)
             {
-                int ellipseRadius = extent;
-                if (mIsEllipse)
-                {
-                    float fy = (float)y;
-                    ellipseRadius = (int)ceilf((float)extent * (1.0f - 1.0f * fy * fy / ((float)depth * 8.0f)));
-                }
+                int ellipseRadius = mIsEllipse ? (int)ceilf((float)extent * (1.0f - pow((float)y, 2) / ((float)depth * 8.0f))) : extent;
                 int layerRadius = heightDependentRadiusSteep(random, -y, depth, radius);
                 if (x < layerRadius)
                     generateIcebergBlock(level, random, pos, depth, x, y, z, layerRadius, ellipseRadius);

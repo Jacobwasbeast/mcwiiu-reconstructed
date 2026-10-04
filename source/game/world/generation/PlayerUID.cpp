@@ -3,10 +3,11 @@
 #include <cstring>
 #include <cwchar>
 
+#include <boost/functional/hash.hpp>
+
 #include <nn/ffl/FFLCreateID.h>
 
-template<typename T> T _fromHEXString(const std::wstring& text);
-template<> int _fromHEXString<int>(const std::wstring& text);
+#include "game/core/StringConversion.hpp"
 
 PlayerUID::PlayerUID(int)
 {
@@ -16,43 +17,41 @@ PlayerUID::PlayerUID(int)
 PlayerUID::PlayerUID(ACTUuid uuid, bool onlineAccount, bool drcController)
 {
     this->uuid = uuid;
-    flags = (FlagUuid | (onlineAccount ? FlagOnlineAccount : 0) |
-             (drcController ? FlagDrcController : 0)) | (flags & FlagPayloadMask);
+    flags = (((onlineAccount & 1u) | 2u) << 2 | (drcController & 1u)) << FlagShift | (flags & FlagPayloadMask);
 }
 
 PlayerUID::PlayerUID(FFLCreateID createId, unsigned int principalId, bool hasPrincipalId, bool drcController)
 {
     std::memcpy(mii.createId, &createId, sizeof(mii.createId));
     mii.principalId = hasPrincipalId ? principalId : 0;
-    flags = (hasPrincipalId ? FlagMiiPrincipal : 0u) |
-            (drcController ? FlagDrcController : 0u) | (flags & FlagPayloadMask);
+    flags = ((hasPrincipalId & 1u) << 1 | (drcController & 1u)) << FlagShift | (flags & FlagPayloadMask);
 }
 
 PlayerUID::PlayerUID(std::wstring uidString)
 {
-    if (uidString.length() < 0x1d)
-    {
-        if (uidString.length() < 0x15)
-        {
-            for (int i = 0; i < 10; ++i)
-                mii.createId[i] = (unsigned char)_fromHEXString<int>(uidString.substr(i * 2, 2));
-            mii.principalId = 0;
-            flags &= FlagMiiMask;
-        }
-        else
-        {
-            for (int i = 0; i < 10; ++i)
-                mii.createId[i] = (unsigned char)_fromHEXString<int>(uidString.substr(i * 2, 2));
-            for (int i = 0; i < 4; ++i)
-                mii.principalIdBytes[i] = (unsigned char)_fromHEXString<int>(uidString.substr(20 + i * 2, 2));
-            flags = (flags & FlagMiiMask) | FlagMiiPrincipal;
-        }
-    }
-    else
+    if (uidString.length() > 0x1c)
     {
         for (int i = 0; i < 16; ++i)
             uuid.data[i] = (unsigned char)_fromHEXString<int>(uidString.substr(i * 2, 2));
         flags = (flags & FlagUuidMask) | FlagUuid;
+    }
+    else if (uidString.length() > 0x14)
+    {
+        for (int i = 0; i < 10; ++i)
+            mii.createId[i] = (unsigned char)_fromHEXString<int>(uidString.substr(i * 2, 2));
+        for (int i = 0; i < 4; ++i)
+        {
+            mii.principalId = 0;
+            mii.principalIdBytes[i] = (unsigned char)_fromHEXString<int>(uidString.substr(20 + i * 2, 2));
+        }
+        flags = (flags & FlagMiiMask) | FlagMiiPrincipal;
+    }
+    else
+    {
+        for (int i = 0; i < 10; ++i)
+            mii.createId[i] = (unsigned char)_fromHEXString<int>(uidString.substr(i * 2, 2));
+        mii.principalId = 0;
+        flags &= FlagMiiMask;
     }
 }
 
@@ -113,18 +112,15 @@ unsigned int hash_value(const PlayerUID& uid)
     {
         for (int i = 0; i < 10; ++i)
         {
-            seed ^= static_cast<unsigned int>(uid.mii.createId[i]) +
-                    seed * 0x40u + (seed >> 2) + 0x9e3779b9u;
+            boost::hash_combine(seed, uid.mii.createId[i]);
         }
-        seed ^= uid.mii.principalId +
-                seed * 0x40u + (seed >> 2) + 0x9e3779b9u;
+        boost::hash_combine(seed, uid.mii.principalId);
     }
     else
     {
         for (int i = 0; i < 16; ++i)
         {
-            seed ^= static_cast<unsigned int>(uid.uuid.data[i]) +
-                    seed * 0x40u + (seed >> 2) + 0x9e3779b9u;
+            boost::hash_combine(seed, uid.uuid.data[i]);
         }
     }
     return seed;

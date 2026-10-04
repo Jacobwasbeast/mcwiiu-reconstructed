@@ -9,6 +9,8 @@
 #include "game/data/DataFixerUpper.hpp"
 #include "game/world/generation/StructureTemplate.hpp"
 
+static const std::wstring DATA_VERSION_TAG = L"DataVersion";
+
 static const wchar_t* STRUCTURE_TEMPLATE_NAMES[eMinecraftStructureTemplate_Count] =
 {
     L"igloo/igloo_top",
@@ -202,13 +204,13 @@ static const wchar_t* STRUCTURE_TEMPLATE_NAMES[eMinecraftStructureTemplate_Count
 };
 
 StructureManager::StructureManager(DataFixerUpper* fixer)
-    : boost::unordered_map<int, const StructureTemplate*>(11), fixerUpper(fixer)
+    : templates(11), fixerUpper(fixer)
 {
 }
 
 StructureManager::~StructureManager()
 {
-    for (iterator it = begin(); it != end(); ++it)
+    for (boost::unordered_map<int, const StructureTemplate*>::iterator it = templates.begin(); it != templates.end(); ++it)
         delete it->second;
 }
 
@@ -219,23 +221,23 @@ void StructureManager::staticCtor()
 std::wstring StructureManager::fjGetStructureTemplatePath(eMinecraftStructureTemplate type) const
 {
     std::wstring name = STRUCTURE_TEMPLATE_NAMES[type];
-    return std::wstring(L"Structures\\") + replaceAll(name, L"/", L"\\");
+    return L"Structures\\" + replaceAll(name, L"/", L"\\");
 }
 
 void StructureManager::readStructure(eMinecraftStructureTemplate type, ByteArrayInputStream* input)
 {
     CompoundTag* tag = NbtIo::readCompressed(input);
-    if (!tag->contains(L"DataVersion", Tag::TAG_ANY_NUMERIC))
-        tag->putInt(L"DataVersion", 500);
+    if (!tag->contains(DATA_VERSION_TAG, Tag::TAG_ANY_NUMERIC))
+        tag->putInt(DATA_VERSION_TAG, 500);
 
     StructureTemplate* structureTemplate = new StructureTemplate();
     structureTemplate->load(fixerUpper->updateData(DataFixTypes::eDataFixTypes_Structure, tag));
     delete tag;
 
-    iterator it = find(type);
-    if (it != end())
+    boost::unordered_map<int, const StructureTemplate*>::iterator it = templates.find(type);
+    if (it != templates.end())
         delete it->second;
-    (*this)[type] = structureTemplate;
+    templates[type] = structureTemplate;
 }
 
 bool StructureManager::load(eMinecraftStructureTemplate type)
@@ -244,7 +246,7 @@ bool StructureManager::load(eMinecraftStructureTemplate type)
     if (gApp.hasArchiveFile(path, false))
     {
         arrayWithLength<unsigned char> data = gApp.getArchiveFile(path, false);
-        if (data.data != NULL && data.length != 0)
+        if (data.length != 0 && data.data != NULL)
         {
             ByteArrayInputStream input(data);
             readStructure(type, &input);
@@ -258,13 +260,18 @@ bool StructureManager::load(eMinecraftStructureTemplate type)
 
 const StructureTemplate* StructureManager::get(eMinecraftStructureTemplate type)
 {
-    if (find(type) != end())
-        return find(type)->second;
-
-    load(type);
-    if (find(type) != end())
-        return find(type)->second;
-
+    if (templates.find(type) != templates.end())
+    {
+        return templates.find(type)->second;
+    }
+    else
+    {
+        load(type);
+        if (templates.find(type) != templates.end())
+        {
+            return templates.find(type)->second;
+        }
+    }
     return new StructureTemplate();
 }
 
@@ -274,7 +281,7 @@ const StructureTemplate* StructureManager::getOrCreate(eMinecraftStructureTempla
     if (structureTemplate == NULL)
     {
         structureTemplate = new StructureTemplate();
-        (*this)[type] = structureTemplate;
+        templates[type] = structureTemplate;
     }
     return structureTemplate;
 }

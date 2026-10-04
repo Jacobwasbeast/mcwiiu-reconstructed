@@ -2,6 +2,7 @@
 
 #include <climits>
 #include <cmath>
+#include <cstring>
 
 #include "game/core/AmphibiousKillStatTracker.hpp"
 #include "game/core/DamageDealtStatTracker.hpp"
@@ -91,21 +92,6 @@ PlayerStats::~PlayerStats()
 }
 
 PlayerStats::RoundStats::RoundStats(const StatsUID& statsUID)
-    : mTrackers()
-    , mItems()
-    , mContainers()
-    , mItemsUsed()
-    , mFatalWeapon()
-    , mTimeOnLayer()
-    , mBankedTargets()
-    , mUnbankedTargets()
-    , mCheckpointTimes()
-    , mSpawnedCheckpoints()
-    , mBlocksPlaced()
-    , mBlocksDestroyed()
-    , mBlocksPresent()
-    , mThemeVote()
-    , mLifeStats()
 {
     mParticipated = false;
     mWon = false;
@@ -141,16 +127,10 @@ PlayerStats::RoundStats::RoundStats(const StatsUID& statsUID)
     mFatalDamage = NULL;
     mField0x94 = 0;
 
-    for (int ring = 0; ring < RING_SIZE_COUNT; ++ring)
-    {
-        mBankedRings[ring] = 0;
-        mUnbankedRings[ring] = 0;
-    }
-    for (int category = 0; category < eTimeSpentCategory_Count; ++category)
-    {
-        mTimeSpent[category] = 0;
-        mTimestamps[category] = 0;
-    }
+    memset(mBankedRings, 0, sizeof(mBankedRings));
+    memset(mUnbankedRings, 0, sizeof(mUnbankedRings));
+    memset(mTimeSpent, 0, sizeof(mTimeSpent));
+    memset(mTimestamps, 0, sizeof(mTimestamps));
 
     mLastCheckpointSequenceID = 0;
     mLastBankedPoints = 0;
@@ -186,12 +166,13 @@ PlayerStats::RoundStats::~RoundStats()
 PlayerStats::RoundStats* PlayerStats::getRoundStats(unsigned int round)
 {
     boost::unordered_map<int, RoundStats*>::iterator found = mRoundStats.find(round);
-    if (found != mRoundStats.end())
-        return found->second;
-
-    RoundStats* stats = new RoundStats(mStatsUID);
-    mRoundStats[round] = stats;
-    return stats;
+    if (found == mRoundStats.end())
+    {
+        RoundStats* stats = new RoundStats(mStatsUID);
+        mRoundStats[round] = stats;
+        return stats;
+    }
+    return found->second;
 }
 
 void PlayerStats::updateTrackedStats(int round, const DamageEvent* damageEvent)
@@ -218,12 +199,12 @@ int PlayerStats::getTotalRounds()
     return highestRound + 1;
 }
 
-double PlayerStats::getDamageDealt(int round)
+float PlayerStats::getDamageDealt(int round)
 {
     return getRoundStats(round)->mDamageDealt->getValue();
 }
 
-double PlayerStats::getDamageTaken(int round)
+float PlayerStats::getDamageTaken(int round)
 {
     return getRoundStats(round)->mDamageReceived->getValue();
 }
@@ -237,7 +218,7 @@ int PlayerStats::getTotalDistanceMoved(unsigned int round)
         + stats->mUnderwaterDistance + stats->mWalkDistance;
 }
 
-double PlayerStats::getAllDamageTaken()
+float PlayerStats::getAllDamageTaken()
 {
     return mDamageReceived->getValue();
 }
@@ -260,9 +241,9 @@ int PlayerStats::getTotalDeaths()
 
 int PlayerStats::getDeaths(unsigned int round)
 {
-    if (mRoundStats.find(round) == mRoundStats.end())
-        return 0;
-    return mRoundStats[round]->mDeaths;
+    if (mRoundStats.find(round) != mRoundStats.end())
+        return mRoundStats[round]->mDeaths;
+    return 0;
 }
 
 int PlayerStats::getDeathsInAnyRound(int deaths)
@@ -342,7 +323,11 @@ int PlayerStats::getTotalClimbDistance()
 void PlayerStats::getAllItemsUsed(std::vector<Item*>& items)
 {
     for (boost::unordered_map<int, RoundStats*>::iterator round = mRoundStats.begin(); round != mRoundStats.end(); ++round)
-        items.insert(items.end(), round->second->mItemsUsed.begin(), round->second->mItemsUsed.end());
+    {
+        std::vector<Item*>::iterator first = round->second->mItemsUsed.begin();
+        std::vector<Item*>::iterator last = round->second->mItemsUsed.end();
+        items.insert(items.end(), first, last);
+    }
 }
 
 int PlayerStats::getTotalRoundsWon()
@@ -358,9 +343,9 @@ int PlayerStats::getTotalRoundsWon()
 
 bool PlayerStats::getRoundWon(unsigned int round)
 {
-    if (mRoundStats.find(round) == mRoundStats.end())
-        return false;
-    return mRoundStats[round]->mWon;
+    if (mRoundStats.find(round) != mRoundStats.end())
+        return mRoundStats[round]->mWon;
+    return false;
 }
 
 int PlayerStats::getTotalBlocksDestroyed()
@@ -397,9 +382,10 @@ int PlayerStats::getTotalLifeSpan()
 
 unsigned int PlayerStats::getLifeSpan(unsigned int round)
 {
-    if (mRoundStats.find(round) == mRoundStats.end())
-        return 0;
-    return mRoundStats[round]->mLifeSpan;
+    unsigned int lifeSpan = 0;
+    if (mRoundStats.find(round) != mRoundStats.end())
+        lifeSpan = mRoundStats[round]->mLifeSpan;
+    return lifeSpan;
 }
 
 unsigned int PlayerStats::getBestLifeSpan(bool highest, bool reachedEndOnly)
@@ -408,12 +394,21 @@ unsigned int PlayerStats::getBestLifeSpan(bool highest, bool reachedEndOnly)
     for (boost::unordered_map<int, RoundStats*>::iterator round = mRoundStats.begin(); round != mRoundStats.end(); ++round)
     {
         RoundStats* stats = round->second;
-        if (reachedEndOnly && !stats->mReachedEnd)
-            continue;
+        if (highest)
+        {
+            if (reachedEndOnly && !stats->mReachedEnd)
+                continue;
 
-        const unsigned int lifeSpan = stats->mLifeSpan;
-        if (highest ? best < lifeSpan : lifeSpan < best)
-            best = lifeSpan;
+            const unsigned int lifeSpan = stats->mLifeSpan;
+            if (best < lifeSpan)
+                best = lifeSpan;
+        }
+        else if (!reachedEndOnly || stats->mReachedEnd)
+        {
+            const unsigned int lifeSpan = stats->mLifeSpan;
+            if (lifeSpan < best)
+                best = lifeSpan;
+        }
     }
     return best;
 }
@@ -428,9 +423,13 @@ int PlayerStats::getTotalPoints()
 
 int PlayerStats::getPoints(unsigned int round)
 {
-    if (mRoundStats.find(round) == mRoundStats.end())
-        return 0;
-    return mRoundStats[round]->mPoints + mRoundStats[round]->mUnbankedPoints;
+    int points = 0;
+    if (mRoundStats.find(round) != mRoundStats.end())
+    {
+        points = mRoundStats[round]->mPoints;
+        points += mRoundStats[round]->mUnbankedPoints;
+    }
+    return points;
 }
 
 unsigned int PlayerStats::getBestPoints(bool highest, bool reachedEndOnly)
@@ -443,7 +442,12 @@ unsigned int PlayerStats::getBestPoints(bool highest, bool reachedEndOnly)
             continue;
 
         const unsigned int points = stats->mPoints + stats->mUnbankedPoints;
-        if (highest ? best < points : points < best)
+        if (!highest)
+        {
+            if (points < best)
+                best = points;
+        }
+        else if (best < points)
             best = points;
     }
     return best;
@@ -451,9 +455,9 @@ unsigned int PlayerStats::getBestPoints(bool highest, bool reachedEndOnly)
 
 bool PlayerStats::getReachedEnd(unsigned int round)
 {
-    if (mRoundStats.find(round) == mRoundStats.end())
-        return false;
-    return mRoundStats[round]->mReachedEnd;
+    if (mRoundStats.find(round) != mRoundStats.end())
+        return mRoundStats[round]->mReachedEnd;
+    return false;
 }
 
 int PlayerStats::getTotalThermalsEntered()
@@ -467,10 +471,12 @@ int PlayerStats::getTotalThermalsEntered()
 bool PlayerStats::hasSpawnedAtCheckpoint(int checkpoint, unsigned int round)
 {
     boost::unordered_map<int, RoundStats*>::iterator found = mRoundStats.find(round);
-    if (found == mRoundStats.end())
-        return false;
-    RoundStats* stats = found->second;
-    return stats->mSpawnedCheckpoints.find(checkpoint) != stats->mSpawnedCheckpoints.end();
+    if (found != mRoundStats.end())
+    {
+        const RoundStats* stats = found->second;
+        return stats->mSpawnedCheckpoints.find(checkpoint) != stats->mSpawnedCheckpoints.end();
+    }
+    return false;
 }
 
 bool PlayerStats::hasSpawnedAtAllCheckpointsInOneRound()
@@ -482,10 +488,10 @@ bool PlayerStats::hasSpawnedAtAllCheckpointsInOneRound()
     for (unsigned int round = 0; round < static_cast<unsigned int>(getTotalRounds()); ++round)
     {
         bool spawnedAtAll = true;
-        for (std::vector<CheckpointRuleDefinition*>::iterator checkpoint = gameMode->mCheckpoints.begin();
-             checkpoint != gameMode->mCheckpoints.end(); ++checkpoint)
+        for (unsigned int index = 0; index < gameMode->mCheckpoints.size(); ++index)
         {
-            if ((*checkpoint)->hasSpawnPoint() && !hasSpawnedAtCheckpoint((*checkpoint)->getSequenceID(), round))
+            CheckpointRuleDefinition* checkpoint = gameMode->mCheckpoints[index];
+            if (checkpoint->hasSpawnPoint() && !hasSpawnedAtCheckpoint(checkpoint->getSequenceID(), round))
             {
                 spawnedAtAll = false;
                 break;
@@ -502,8 +508,9 @@ double PlayerStats::getTopSpeed()
     double topSpeed = 0.0;
     for (boost::unordered_map<int, RoundStats*>::iterator round = mRoundStats.begin(); round != mRoundStats.end(); ++round)
     {
-        if (topSpeed < round->second->mTopSpeed)
-            topSpeed = round->second->mTopSpeed;
+        const double speed = round->second->mTopSpeed;
+        if (topSpeed < speed)
+            topSpeed = speed;
     }
     return topSpeed;
 }
@@ -514,10 +521,22 @@ int PlayerStats::getImprovement()
     int lastRound = miniGame->GetFinalRoundIndex();
     int firstRound = 0;
 
-    while (firstRound <= lastRound && !hasRoundStats(firstRound))
-        ++firstRound;
-    while (firstRound <= lastRound && !hasRoundStats(lastRound))
-        --lastRound;
+    for (int round = 0; round <= lastRound; ++round)
+    {
+        if (mRoundStats.find(round) != mRoundStats.end())
+        {
+            firstRound = round;
+            break;
+        }
+    }
+    for (int round = lastRound; firstRound <= round; --round)
+    {
+        if (mRoundStats.find(round) != mRoundStats.end())
+        {
+            lastRound = round;
+            break;
+        }
+    }
 
     if (firstRound == lastRound)
         return 0;
@@ -583,12 +602,16 @@ int getBlocksPresent(const PlayerStats::RoundStats& roundStats)
 
 int wasWinnerWithoutDestroyingBlocks(const PlayerStats::RoundStats& roundStats)
 {
-    return roundStats.mWon && roundStats.mBlocksDestroyed.mCount == 0;
+    if (roundStats.mWon && roundStats.mBlocksDestroyed.mCount == 0)
+        return 1;
+    return 0;
 }
 
 int lostFirstWithoutDestroyingBlocks(const PlayerStats::RoundStats& roundStats)
 {
-    return roundStats.mDeathOrder == 1 && roundStats.mBlocksDestroyed.mCount == 0;
+    if (roundStats.mDeathOrder == 1 && roundStats.mBlocksDestroyed.mCount == 0)
+        return 1;
+    return 0;
 }
 
 void writeBlockInteractionData(PlayerStats::RoundStats& roundStats, PlayerStats::RoundStats::BlockInteractionInfo& info,
@@ -596,7 +619,7 @@ void writeBlockInteractionData(PlayerStats::RoundStats& roundStats, PlayerStats:
 {
     ++info.mCount;
     ++info.mByBlock[blockId];
-    ++info.mByHeight[pos.y - roundStats.mBuildAreaFrom.y];
+    ++info.mByHeight[pos.y - roundStats.mBuildAreaFromY];
     const double elapsed = std::floor(static_cast<double>(System::processTimeInMilliSecs() - roundStartTime));
     ++info.mByTime[static_cast<int>(elapsed / BLOCK_INTERACTION_TIME_BUCKET_MS)];
 }

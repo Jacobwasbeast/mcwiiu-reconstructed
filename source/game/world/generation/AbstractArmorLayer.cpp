@@ -1,7 +1,7 @@
 #include "game/world/generation/AbstractArmorLayer.hpp"
 
 #include <map>
-#include <sstream>
+#include <string>
 
 #include <boost/shared_ptr.hpp>
 
@@ -11,14 +11,16 @@
 #include "game/core/EquipmentSlot.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/core/Minecraft.hpp"
+#include "game/core/StringConversion.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/item/ArmorItem.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/util/ResourceLocation.hpp"
 
-static std::map<std::wstring, ResourceLocation> sArmorLocations;
 static ResourceLocation ENCHANT_LOCATION(TN_BLUR_MISC_GLINT);
+static std::wstring MATERIAL_NAMES[6] = { L"cloth", L"chain", L"iron", L"diamond", L"gold", L"turtle" };
+static std::map<std::wstring, ResourceLocation> sArmorLocations;
 
 AbstractArmorLayer::AbstractArmorLayer(LivingEntityRenderer* renderer)
     : mRenderer(renderer)
@@ -37,19 +39,18 @@ bool AbstractArmorLayer::usesInnerModel(const EquipmentSlot* slot)
 
 not_null_ptr<ItemInstance> AbstractArmorLayer::getSlot(boost::shared_ptr<LivingEntity>& entity, const EquipmentSlot* slot)
 {
-    return entity->getItemSlot(slot);
+    return entity.get()->getItemSlot(slot);
 }
 
 ResourceLocation* AbstractArmorLayer::getArmorLocation(ArmorItem* armor, bool inner, bool overlay)
 {
-    std::wstringstream name;
-    name << L"armor/" << armor->GetArmorType() << L"_" << (inner ? 2 : 1);
-    if (overlay)
-        name << L"_b";
-    std::wstring key = name.str();
+    std::wstring key = (L"armor/" + MATERIAL_NAMES[armor->mRenderIndex]).append(L"_").append(_toString<int>(inner ? 2 : 1)).append(overlay ? L"_b" : L"");
     std::map<std::wstring, ResourceLocation>::iterator found = sArmorLocations.find(key);
     if (found == sArmorLocations.end())
-        found = sArmorLocations.insert(std::make_pair(key, ResourceLocation(key))).first;
+    {
+        sArmorLocations.insert(std::pair<std::wstring, ResourceLocation>(key, ResourceLocation(key)));
+        found = sArmorLocations.find(key);
+    }
     return &found->second;
 }
 
@@ -57,19 +58,18 @@ void AbstractArmorLayer::renderFoil(LivingEntityRenderer* renderer, boost::share
 {
     Minecraft::GetInstance()->mGameRenderer->resetFogColor(true);
 
-    float ticks = (float)entity->mTickCount + partialTicks;
+    float ticks = (float)entity.get()->mTickCount + partialTicks;
 
     renderer->bindTexture(&ENCHANT_LOCATION);
     GlStateManager::enableBlend();
     GlStateManager::depthFunc(2);
     GlStateManager::depthMask(false);
     GlStateManager::color4f(0.5f, 0.5f, 0.5f, 1.0f);
-    GlStateManager::disableLighting();
-    GlStateManager::blendFunc(2, 1);
 
-    boost::shared_ptr<Entity> renderEntity = entity;
     for (int pass = 0; pass < 2; ++pass)
     {
+        GlStateManager::disableLighting();
+        GlStateManager::blendFunc(2, 1);
         GlStateManager::color4f(0.38f, 0.19f, 0.608f, 1.0f);
         GlStateManager::matrixMode(2);
         GlStateManager::loadIdentity();
@@ -77,6 +77,7 @@ void AbstractArmorLayer::renderFoil(LivingEntityRenderer* renderer, boost::share
         GlStateManager::rotatef(30.0f - (float)pass * 60.0f, 0.0f, 0.0f, 1.0f);
         GlStateManager::translatef(0.0f, ticks * (0.001f + (float)pass * 0.003f) * 20.0f, 0.0f);
         GlStateManager::matrixMode(0);
+        boost::shared_ptr<Entity> renderEntity = entity;
         model->render(renderEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch,
                       scale, bUseDisplayList);
     }
@@ -97,21 +98,17 @@ void AbstractArmorLayer::renderArmorPiece(boost::shared_ptr<LivingEntity>& entit
     not_null_ptr<ItemInstance> itemInstance = getSlot(entity, slot);
     boost::shared_ptr<Entity> renderEntity = entity;
 
-    if (itemInstance->isEmpty())
+    if (itemInstance.get()->isEmpty() || dynamic_cast<ArmorItem*>(itemInstance.get()->getItem()) == NULL)
     {
         return;
     }
 
-    ArmorItem* armor = dynamic_cast<ArmorItem*>(itemInstance->getItem());
-    if (armor == NULL)
+    if ((entity.get()->getSkinAdjustments().mAnimFlags & 0x100) != 0)
     {
         return;
     }
 
-    if ((entity->getSkinAdjustments().mAnimFlags & 0x100) != 0)
-    {
-        return;
-    }
+    ArmorItem* armor = static_cast<ArmorItem*>(itemInstance.get()->getItem());
 
     if (armor->getSlot() != slot)
     {
@@ -142,7 +139,7 @@ void AbstractArmorLayer::renderArmorPiece(boost::shared_ptr<LivingEntity>& entit
     model->render(renderEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch,
                   scale, bUseDisplayList);
 
-    if (!mColorSet && itemInstance->isEnchanted())
+    if (!mColorSet && itemInstance.get()->isEnchanted())
     {
         renderFoil(mRenderer, entity, model, limbSwing, limbSwingAmount, partialTicks, ageInTicks,
                    netHeadYaw, headPitch, scale, true);

@@ -1,4 +1,5 @@
 #include "game/world/generation/ZombieVillager.hpp"
+
 #include "game/entity/mob/EntityEvent.hpp"
 #include "game/core/StringIds.hpp"
 #include "game/world/LevelEvent.hpp"
@@ -28,9 +29,10 @@ const EntityDataAccessor<bool>* ZombieVillager::DATA_CONVERTING_ID = NULL;
 const EntityDataAccessor<int>* ZombieVillager::DATA_PROFESSION_ID = NULL;
 
 ZombieVillager::ZombieVillager(Level* level)
-    : Zombie(level, false), mConversionTime(0), mConversionPlayer()
+    : Zombie(level, false)
 {
     fjDerivedCtorCalls();
+    mConversionTime = 0;
     mCategories |= EntityCategory::eEntityCategory_Undead | EntityCategory::eEntityCategory_Monster;
 }
 
@@ -95,9 +97,8 @@ void ZombieVillager::startConverting(const std::wstring& player, int conversionT
     getEntityData()->set(DATA_CONVERTING_ID, true, true);
     removeEffect(MobEffects::WEAKNESS);
     int amplifier = mLevel->getDifficulty()->getId() - 1;
-    if (amplifier <= 0)
-        amplifier = 0;
-    addEffect(new MobEffectInstance(MobEffects::DAMAGE_BOOST, conversionTime, amplifier), boost::shared_ptr<Entity>());
+    addEffect(new MobEffectInstance(MobEffects::DAMAGE_BOOST, conversionTime, amplifier > 0 ? 0 : amplifier),
+              boost::shared_ptr<Entity>());
     mLevel->broadcastEntityEvent(shared_from_this(), EntityEvent::ZOMBIE_CONVERTING, 0);
 }
 
@@ -108,10 +109,10 @@ void ZombieVillager::readAdditionalSaveData(CompoundTag* tag)
     if (tag->contains(std::wstring(L"ConversionTime"), 99) &&
         tag->getInt(std::wstring(L"ConversionTime")) >= 0)
     {
-        std::wstring player;
-        if (tag->contains(std::wstring(L"ConversionPlayer")))
-            player = tag->getString(std::wstring(L"ConversionPlayer"));
-        startConverting(player, tag->getInt(std::wstring(L"ConversionTime")));
+        startConverting(tag->contains(std::wstring(L"ConversionPlayer"))
+                            ? tag->getString(std::wstring(L"ConversionPlayer"))
+                            : std::wstring(L""),
+                        tag->getInt(std::wstring(L"ConversionTime")));
     }
 }
 
@@ -127,20 +128,27 @@ int ZombieVillager::getConversionProgress()
     int progress = 1;
     if (mRandom->nextFloat() < 0.01f)
     {
+        BlockPos pos(0, 0, 0);
         int checked = 0;
-        for (int x = mX - 4; x < mX + 4 && checked < 14; ++x)
-            for (int y = mY - 4; y < mY + 4 && checked < 14; ++y)
-                for (int z = mZ - 4; z < mZ + 4 && checked < 14; ++z)
+        for (int x = (int)mX - 4; x < (int)mX + 4 && checked < 14; ++x)
+        {
+            for (int y = (int)mY - 4; y < (int)mY + 4 && checked < 14; ++y)
+            {
+                for (int z = (int)mZ - 4; z < (int)mZ + 4 && checked < 14; ++z)
                 {
-                    const BlockState* state = mLevel->getBlockState(BlockPos(x, y, z));
-                    if (state != NULL && (state->getBlock() == Blocks::iron_bars ||
-                                           state->getBlock() == Blocks::bed))
+                    pos.x = x;
+                    pos.y = y;
+                    pos.z = z;
+                    const Block* block = mLevel->getBlockState(pos)->getBlock();
+                    if (block == Blocks::iron_bars || block == Blocks::bed)
                     {
                         if (mRandom->nextFloat() < 0.3f)
                             ++progress;
                         ++checked;
                     }
                 }
+            }
+        }
     }
     return progress;
 }
@@ -158,16 +166,16 @@ void ZombieVillager::tick()
 
 bool ZombieVillager::mobInteract(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand)
 {
-    LivingEntity* interactingPlayer = (LivingEntity*)(void*)player.get();
-    not_null_ptr<ItemInstance> item = interactingPlayer->getItemInHand(hand);
-    if (item->getItem() == Items::goldenApple && item->getAuxValue() == 0 &&
-        hasEffect(MobEffects::WEAKNESS) && !mLevel->mIsClientSide && !isConverting())
+    not_null_ptr<ItemInstance> item = player->getItemInHand(hand);
+    if (item->getItem() == Items::goldenApple && item->getAuxValue() == 0 && hasEffect(MobEffects::WEAKNESS))
     {
-        item->shrink(1);
-        startConverting(interactingPlayer->getStringUUID(), mRandom->nextInt(2400) + 3600);
+        if (!player->mAbilities.mInstabuild)
+            item->shrink(1);
+        if (!mLevel->mIsClientSide)
+            startConverting(player->getUUID(), mRandom->nextInt(2401) + 3600);
         return true;
     }
-    return Mob::mobInteract(player, hand);
+    return false;
 }
 
 unsigned int ZombieVillager::GetInteractTooltip(const EntityTooltipDataHolder& holder)
@@ -204,12 +212,12 @@ void ZombieVillager::finishConversion()
 {
     boost::shared_ptr<Villager> villager(new Villager(mLevel));
     villager->copyPosition(shared_from_this());
-    villager->setArrowCount(getArrowCount());
     villager->setProfession(getProfession());
     villager->finalizeMobSpawn(mLevel->getCurrentDifficultyAt(BlockPos(villager)), NULL, false, std::wstring(L""));
     villager->setRewardPlayersInVillage();
     if (isBaby())
         villager->setAge(-24000);
+    mLevel->removeEntity(shared_from_this());
     villager->setNoAi(isNoAi());
     if (hasCustomName())
     {
@@ -218,16 +226,21 @@ void ZombieVillager::finishConversion()
     }
     mLevel->addEntity(villager);
     boost::shared_ptr<Player> player = mLevel->getPlayerByUUID(mConversionPlayer);
-    if (player && player->GetType() == EntityType::SERVER_PLAYER)
-        player->awardStat(GenericStats::zombieDoctor(), GenericStats::param_zombieDoctor());
+    if (player != NULL)
+    {
+        bool isServerPlayer = player->GetType() == EntityType::SERVER_PLAYER;
+        if (isServerPlayer)
+            player->awardStat(GenericStats::zombieDoctor(), GenericStats::param_zombieDoctor());
+    }
     villager->addEffect(new MobEffectInstance(MobEffects::CONFUSION, 200, 0), boost::shared_ptr<Entity>());
-    mLevel->levelEvent(boost::shared_ptr<Player>(), LevelEvent::SOUND_ZOMBIE_CONVERTED, BlockPos(mX, mY, mZ), 0);
+    mLevel->levelEvent(boost::shared_ptr<Player>(), LevelEvent::SOUND_ZOMBIE_CONVERTED, BlockPos((int)mX, (int)mY, (int)mZ), 0);
 }
 
 float ZombieVillager::getVoicePitch()
 {
-    float variation = mRandom->nextFloat() - mRandom->nextFloat();
-    return variation * 0.2f + (isBaby() ? 2.0f : 1.0f);
+    if (isBaby())
+        return (mRandom->nextFloat() - mRandom->nextFloat()) * 0.2f + 2.0f;
+    return (mRandom->nextFloat() - mRandom->nextFloat()) * 0.2f + 1.0f;
 }
 
 const SoundEvent* ZombieVillager::getAmbientSound()

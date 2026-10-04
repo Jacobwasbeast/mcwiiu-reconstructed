@@ -17,13 +17,14 @@
 
 MoveThroughVillageGoal::MoveThroughVillageGoal(PathfinderMob* mob, double speedModifier, bool onlyAtNight)
     : Goal(),
-      mMob(mob),
-      mSpeedModifier(speedModifier),
-      mPath(NULL),
       mDoorInfo(),
-      mOnlyAtNight(onlyAtNight),
       mVisited()
 {
+    mPath = NULL;
+    mDoorInfo = boost::weak_ptr<DoorInfo>();
+    mSpeedModifier = speedModifier;
+    mOnlyAtNight = onlyAtNight;
+    mMob = mob;
     setRequiredControlFlags(1);
 }
 
@@ -61,13 +62,12 @@ boost::shared_ptr<DoorInfo> MoveThroughVillageGoal::getNextDoorInfo(boost::share
 {
     boost::shared_ptr<DoorInfo> result;
     int closestDistance = INT_MAX;
-    BlockPos mobPos(Mth::floor(mMob->mX), Mth::floor(mMob->mY), Mth::floor(mMob->mZ));
     std::vector<boost::shared_ptr<DoorInfo> >* doors = village->getDoorInfos();
     for (std::vector<boost::shared_ptr<DoorInfo> >::iterator it = doors->begin();
          it != doors->end(); ++it)
     {
         boost::shared_ptr<DoorInfo> door = *it;
-        int distance = door->distanceToSqr(mobPos.x, mobPos.y, mobPos.z);
+        int distance = door->distanceToSqr(Mth::floor(mMob->mX), Mth::floor(mMob->mY), Mth::floor(mMob->mZ));
         if (distance < closestDistance && !hasVisited(door))
         {
             closestDistance = distance;
@@ -83,39 +83,38 @@ bool MoveThroughVillageGoal::canUse()
     if (mOnlyAtNight && mMob->mLevel->isDay())
         return false;
 
-    boost::shared_ptr<Villages> villages = mMob->mLevel->getVillages();
-    boost::shared_ptr<Entity> entity = mMob->shared_from_this();
-    BlockPos mobPos(entity);
-    boost::shared_ptr<Village> village = villages->getClosestVillage(mobPos, 0);
+    boost::shared_ptr<Village> village =
+        mMob->mLevel->getVillages()->getClosestVillage(BlockPos(mMob->shared_from_this()), 0);
     if (!village)
         return false;
 
-    mDoorInfo = getNextDoorInfo(village);
-    if (!mDoorInfo)
+    boost::shared_ptr<DoorInfo> doorInfo = getNextDoorInfo(village);
+    if (!doorInfo)
         return false;
+
+    mDoorInfo = doorInfo;
 
     PathNavigation* navigation = mMob->getNavigation();
     GroundPathNavigation* groundNavigation = static_cast<GroundPathNavigation*>(navigation);
     bool canOpenDoors = groundNavigation->canOpenDoors();
     groundNavigation->setCanOpenDoors(false);
     delete mPath;
-    mPath = navigation->createPath(mDoorInfo->getPos());
+    mPath = navigation->createPath(doorInfo->getPos());
     groundNavigation->setCanOpenDoors(canOpenDoors);
     if (mPath != NULL)
         return true;
 
-    boost::shared_ptr<PathfinderMob> mob =
-        boost::static_pointer_cast<PathfinderMob>(entity);
-    Vec3* target = Vec3::newTemp((double)mDoorInfo->getPos().x,
-                                 (double)mDoorInfo->getPos().y,
-                                 (double)mDoorInfo->getPos().z);
-    Vec3* position = RandomPos::getPosTowards(mob, 10, 7, target);
+    Vec3* position = RandomPos::getPosTowards(
+        boost::static_pointer_cast<PathfinderMob>(mMob->shared_from_this()), 10, 7,
+        Vec3::newTemp((double)doorInfo->getPos().x,
+                      (double)doorInfo->getPos().y,
+                      (double)doorInfo->getPos().z));
     if (position == NULL)
         return false;
 
     groundNavigation->setCanOpenDoors(false);
     delete mPath;
-    mPath = navigation->createPath(position->x, position->y, position->z);
+    mPath = mMob->getNavigation()->createPath(position->x, position->y, position->z);
     groundNavigation->setCanOpenDoors(canOpenDoors);
     return mPath != NULL;
 }
@@ -124,12 +123,13 @@ bool MoveThroughVillageGoal::canContinueToUse()
 {
     if (mMob->getNavigation()->isDone())
         return false;
-    if (!mDoorInfo)
+    boost::shared_ptr<DoorInfo> doorInfo = mDoorInfo.lock();
+    if (!doorInfo)
         return false;
 
-    double distance = mMob->distanceToSqr(mDoorInfo->getPos());
+    double distance = mMob->distanceToSqr(doorInfo->getPos());
     float limit = mMob->mBbWidth + 4.0f;
-    return (double)(limit * limit) < distance;
+    return distance > (double)(limit * limit);
 }
 
 void MoveThroughVillageGoal::start()
@@ -140,12 +140,13 @@ void MoveThroughVillageGoal::start()
 
 void MoveThroughVillageGoal::stop()
 {
-    if (!mDoorInfo)
+    boost::shared_ptr<DoorInfo> doorInfo = mDoorInfo.lock();
+    if (!doorInfo)
         return;
 
     if (mMob->getNavigation()->isDone() ||
-        mMob->distanceToSqr(mDoorInfo->getPos()) < 16.0)
-        mVisited.push_back(boost::weak_ptr<DoorInfo>(mDoorInfo));
+        mMob->distanceToSqr(doorInfo->getPos()) < 16.0)
+        mVisited.push_back(mDoorInfo);
 }
 
 std::wstring MoveThroughVillageGoal::getName()

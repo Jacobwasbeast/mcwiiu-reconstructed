@@ -10,7 +10,7 @@ class Random;
 class HellFireFeature : public Feature
 {
 public:
-    virtual ~HellFireFeature();
+    virtual ~HellFireFeature() {}
     virtual bool place(Level* level, Random& random, const BlockPos& origin);
 };
 

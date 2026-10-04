@@ -24,17 +24,12 @@ static const BlockState* megaPinePodzolState = NULL;
 
 void MegaPineTreeFeature::staticCtor()
 {
-    TypedBoxed<PlanksBlock::Variant*> trunkVariant(PlanksBlock::Variant::SPRUCE);
-    megaPineTrunkState = Blocks::log->defaultBlockState()->setBoxedValue(
-        OldLogBlock::VARIANT, &trunkVariant);
-
-    TypedBoxed<PlanksBlock::Variant*> leafVariant(PlanksBlock::Variant::SPRUCE);
-    megaPineLeafState = Blocks::leaves->defaultBlockState()->setBoxedValue(
-        OldLeafBlock::VARIANT, &leafVariant);
-
-    TypedBoxed<DirtBlock::Variant*> podzolVariant(DirtBlock::Variant::PODZOL);
-    megaPinePodzolState = Blocks::dirt->defaultBlockState()->setBoxedValue(
-        DirtBlock::VARIANT, &podzolVariant);
+    megaPineTrunkState = Blocks::log->defaultBlockState()->setValue<PlanksBlock::Variant*>(
+        OldLogBlock::VARIANT, PlanksBlock::Variant::SPRUCE);
+    megaPineLeafState = Blocks::leaves->defaultBlockState()->setValue<PlanksBlock::Variant*>(
+        OldLeafBlock::VARIANT, PlanksBlock::Variant::SPRUCE);
+    megaPinePodzolState = Blocks::dirt->defaultBlockState()->setValue<DirtBlock::Variant*>(
+        DirtBlock::VARIANT, DirtBlock::Variant::PODZOL);
 }
 
 MegaPineTreeFeature::MegaPineTreeFeature(bool doBlockNotify, bool useHeight)

@@ -2,6 +2,7 @@
 
 #include "game/util/Random.hpp"
 #include "game/core/CMinecraftApp.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/world/LevelGenerationOptions.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
@@ -11,7 +12,6 @@
 #include "game/world/block/Material.hpp"
 #include "game/world/block/MutableBlockPos.hpp"
 
-extern CMinecraftApp* g_pApp;
 
 SandFeature::SandFeature(Block* block, int numberOfBlocks)
     : Feature(false), mBlock(block), mNumberOfBlocks(numberOfBlocks)
@@ -32,8 +32,8 @@ bool SandFeature::place(Level* level, Random& random, const BlockPos& origin)
     Level::setInstaTick(true);
     const int radius = random.nextInt(mNumberOfBlocks - 2) + 2;
 
-    if (g_pApp->getLevelGenerationOptions() != NULL
-        && g_pApp->getLevelGenerationOptions()->checkIntersects(origin.offset(-radius, -2, -radius),
+    if (gApp.getLevelGenerationOptions() != NULL
+        && gApp.getLevelGenerationOptions()->checkIntersects(origin.offset(-radius, -2, -radius),
                                                                 origin.offset(radius, 2, radius)))
     {
         Level::setInstaTick(false);

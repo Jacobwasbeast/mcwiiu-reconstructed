@@ -37,7 +37,7 @@ bool TradeWithPlayerGoal::canUse()
     {
         return false;
     }
-    if (mVillager->distanceToSqr(boost::static_pointer_cast<Entity>(tradingPlayer)) > 16.0)
+    if (mVillager->distanceToSqr(tradingPlayer) > 16.0)
     {
         return false;
     }

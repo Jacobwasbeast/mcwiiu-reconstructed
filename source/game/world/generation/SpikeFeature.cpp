@@ -110,7 +110,7 @@ bool SpikeFeature::place(Level* level, Random& random, const BlockPos& origin)
 void SpikeFeature::setCrystalBeamTarget(const BlockPos& pos)
 {
     delete mCrystalBeamTarget;
-    mCrystalBeamTarget = new BlockPos(pos);
+    mCrystalBeamTarget = new BlockPos(pos.x, pos.y, pos.z);
 }
 
 SpikeFeature::EndSpike::EndSpike()

@@ -83,7 +83,7 @@ public:
     virtual unsigned long long sendPosition();
     virtual void displayClientMessage(int message, bool force);
     virtual void awardStat(Stat* stat, arrayWithLength<unsigned char> params);
-    virtual unsigned int GetThirdPersonView(bool);
+    virtual int GetThirdPersonView(bool);
     virtual void SetThirdPersonView(int);
     virtual unsigned int CanChangeThirdPersonView();
     virtual void onCrafted(not_null_ptr<ItemInstance> item);
@@ -128,7 +128,7 @@ public:
     virtual void setPermissionLevel(int);
     virtual int openFireworks(int x, int y, int z);
     bool freeAtAndAbove(const BlockPos&);
-    unsigned int freeAt(const BlockPos&);
+    unsigned char freeAt(const BlockPos&);
     bool checkInBlock(double, double, double);
     void setExperienceValues(float progress, int total, int level);
     void playSound(const SoundEvent*, float, float);
@@ -166,6 +166,9 @@ public:
 
 private:
     friend class Boat;
+    friend class ChangeStateConstraint;
+    friend class ClientPacketListener;
+    friend class IUIScene_PlayerList;
     friend class ClientMasterGameMode;
     friend class GhostController;
     friend class Minecraft;
@@ -173,6 +176,8 @@ private:
     friend class PlayerRenderer;
     friend class ItemInHandRenderer;
     friend class UIScene_HUD;
+    friend class UIScene_InGamePlayerOptionsMenu;
+    friend class UIScene_SignEntryMenu;
     friend class Voteable;
     friend class Tooltips;
     friend class MultiplayerLocalPlayer;
@@ -273,7 +278,7 @@ private:
     float mWaterVisionClarityO;
     float mWaterVisionClarityTarget;
     int mUnderwaterTicks[2];
-    unsigned char mAwardedAchievements[0x14];
+    unsigned char mAwardedAchievements[0x10];
     double mPercentageTraversed;
     bool mDamageNearbyMobs;
 };

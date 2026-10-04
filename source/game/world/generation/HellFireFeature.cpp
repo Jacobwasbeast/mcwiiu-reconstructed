@@ -7,10 +7,6 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
 
-HellFireFeature::~HellFireFeature()
-{
-}
-
 bool HellFireFeature::place(Level* level, Random& random, const BlockPos& origin)
 {
     for (int i = 0; i < 64; ++i)

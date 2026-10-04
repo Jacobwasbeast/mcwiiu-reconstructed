@@ -14,10 +14,8 @@ void LevelGenerators::removeLevelGenerator(LevelGenerationOptions* levelGenerato
     std::vector<LevelGenerationOptions*>::iterator it;
     for (;;)
     {
-        it = mLevelGenerators.begin();
-        while (it != mLevelGenerators.end() && *it != levelGenerator)
+        for (it = mLevelGenerators.begin(); it != mLevelGenerators.end() && *it != levelGenerator; ++it)
         {
-            ++it;
         }
         if (it == mLevelGenerators.end())
         {
@@ -34,8 +32,8 @@ std::vector<LevelGenerationOptions*>* LevelGenerators::getLevelGenerators()
 
 bool LevelGenerators::SortLevelGenerators(const LevelGenerationOptions* first, const LevelGenerationOptions* second)
 {
-    const unsigned int firstPackId = const_cast<LevelGenerationOptions*>(first)->getParentPackId();
-    const unsigned int secondPackId = const_cast<LevelGenerationOptions*>(second)->getParentPackId();
+    const unsigned int firstPackId = first->getPack()->GetPackId();
+    const unsigned int secondPackId = second->getPack()->GetPackId();
     if (firstPackId == 4)
     {
         const unsigned int themeId = first->getThemeId();
@@ -44,11 +42,14 @@ bool LevelGenerators::SortLevelGenerators(const LevelGenerationOptions* first, c
             return true;
         }
     }
-    bool compareSortIndex = secondPackId != 4;
-    if (!compareSortIndex)
+    bool compareSortIndex = true;
+    if (secondPackId == 4)
     {
         const unsigned int themeId = second->getThemeId();
-        compareSortIndex = themeId != 0 && themeId != static_cast<unsigned int>(-1);
+        if (themeId == 0 || themeId == static_cast<unsigned int>(-1))
+        {
+            compareSortIndex = false;
+        }
     }
     if (compareSortIndex)
     {

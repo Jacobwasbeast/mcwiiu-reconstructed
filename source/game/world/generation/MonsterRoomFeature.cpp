@@ -19,10 +19,6 @@
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/MobSpawnerBlockEntity.hpp"
 
-MonsterRoomFeature::~MonsterRoomFeature()
-{
-}
-
 std::wstring MonsterRoomFeature::randomEntityId(Random& random)
 {
     static std::wstring entityIds[] = {

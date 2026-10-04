@@ -1,6 +1,7 @@
 #include "game/world/generation/AddMushroomIslandLayer.hpp"
 
 #include "game/core/IntCache.hpp"
+#include "game/core/PIXNamedEvents.hpp"
 #include "game/world/biome/Biome.hpp"
 
 AddMushroomIslandLayer::AddMushroomIslandLayer(long long seed, boost::shared_ptr<Layer> parentLayer)
@@ -13,6 +14,8 @@ arrayWithLength<int> AddMushroomIslandLayer::getArea(int x, int z, int width, in
 {
     int parentWidth = width + 2;
     arrayWithLength<int> parentArea = parent->getArea(x - 1, z - 1, parentWidth, height + 2);
+
+    PIXBeginNamedEvent(0.0f, "AddMushroomIslandLayer::getArea");
 
     arrayWithLength<int> area = IntCache::allocate(width * height);
 
@@ -40,6 +43,8 @@ arrayWithLength<int> AddMushroomIslandLayer::getArea(int x, int z, int width, in
             }
         }
     }
+
+    PIXEndNamedEvent();
 
     return area;
 }

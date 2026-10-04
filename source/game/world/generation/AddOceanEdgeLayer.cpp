@@ -1,6 +1,7 @@
 #include "game/world/generation/AddOceanEdgeLayer.hpp"
 
 #include "game/core/IntCache.hpp"
+#include "game/core/PIXNamedEvents.hpp"
 #include "game/world/biome/Biome.hpp"
 
 AddOceanEdgeLayer::AddOceanEdgeLayer(long long seed, boost::shared_ptr<Layer> parent, bool useOceanTemperatures)
@@ -16,6 +17,8 @@ arrayWithLength<int> AddOceanEdgeLayer::getArea(int x, int z, int width, int hei
     int parentHeight = height + 2;
 
     arrayWithLength<int> parentArea = parent->getArea(x - 1, z - 1, parentWidth, parentHeight);
+
+    PIXBeginNamedEvent(0.0f, "AddOceanEdgeLayer::getArea");
 
     arrayWithLength<int> area = IntCache::allocate(width * height);
 
@@ -49,6 +52,8 @@ arrayWithLength<int> AddOceanEdgeLayer::getArea(int x, int z, int width, int hei
             area.data[column + row * width] = centre;
         }
     }
+
+    PIXEndNamedEvent();
 
     return area;
 }

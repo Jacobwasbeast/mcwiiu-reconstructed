@@ -2,7 +2,7 @@
 
 #include "game/world/generation/PlayerStats.hpp"
 
-double WinningOnTopLayerMedal::GetScore(PlayerStats* playerStats) const
+float WinningOnTopLayerMedal::GetScore(PlayerStats* playerStats) const
 {
     int count = 0;
 

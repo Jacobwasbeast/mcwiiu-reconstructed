@@ -29,9 +29,9 @@ WallGenerator::Wall::~Wall()
 WallGenerator::WallGenerator(Random random, std::vector<AABB*>* areas,
                              std::vector<AABB*>* walls)
     : MapGenerator(random)
-    , mAreas(*areas)
-    , mBounds(NULL)
 {
+    mAreas = *areas;
+    mBounds = NULL;
     std::vector<AABB*>::iterator area = mAreas.begin();
     while (area != mAreas.end())
     {
@@ -90,9 +90,8 @@ bool WallGenerator::IsPointInternal(int x, int z, int size)
 void WallGenerator::StartGeneration(Level* level)
 {
     AABB* grown = mBounds->grow(2.0, 1.0, 2.0);
-    BlockPos max(grown->mMaxX, grown->mMaxY, grown->mMaxZ);
-    BlockPos min(grown->mMinX, grown->mMinY, grown->mMinZ);
-    BlockTransaction* transaction = BlockTransaction::CreateTransaction(min, max);
+    BlockTransaction* transaction = BlockTransaction::CreateTransaction(BlockPos(grown->mMinX, grown->mMinY, grown->mMinZ),
+                                                                        BlockPos(grown->mMaxX, grown->mMaxY, grown->mMaxZ));
 
     if (mWalls.empty())
     {
@@ -126,14 +125,14 @@ void WallGenerator::StartGeneration(Level* level)
             }
         }
 
+        const BlockState* voidState = Blocks::structure_void->defaultBlockState();
         SetArea(level, transaction,
                 AABB::newTemp(grown->mMinX, grown->mMinY, grown->mMinZ, grown->mMaxX, grown->mMinY + 1.0, grown->mMaxZ),
-                Blocks::structure_void->defaultBlockState());
+                voidState);
 
         for (std::vector<AABB*>::iterator area = mAreas.begin(); area != mAreas.end(); ++area)
         {
-            TypedBoxed<PlanksBlock::Variant*> variant(PlanksBlock::Variant::SPRUCE);
-            const BlockState* floor = Blocks::planks->defaultBlockState()->setBoxedValue(PlanksBlock::VARIANT, &variant);
+            const BlockState* floor = Blocks::planks->defaultBlockState()->setValue(PlanksBlock::VARIANT, PlanksBlock::Variant::SPRUCE);
             AABB* bounds = *area;
             SetArea(level, transaction,
                     AABB::newTemp(bounds->mMinX, bounds->mMinY - 1.0, bounds->mMinZ, bounds->mMaxX, bounds->mMinY,

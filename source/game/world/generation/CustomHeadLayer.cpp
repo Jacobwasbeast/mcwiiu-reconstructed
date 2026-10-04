@@ -44,8 +44,7 @@ void CustomHeadLayer::render(boost::shared_ptr<LivingEntity>& entity, float limb
         && boost::static_pointer_cast<Player>(entity)->isSpectator();
 
     if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER
-        && bSpectating
-        && boost::static_pointer_cast<Player>(entity)->SpectateAsSkull()
+        && !(bSpectating && boost::static_pointer_cast<Player>(entity)->SpectateAsSkull())
         && (boost::static_pointer_cast<Player>(entity)->getSkinAdjustments().mAnimFlags & 0x100) != 0)
     {
         return;

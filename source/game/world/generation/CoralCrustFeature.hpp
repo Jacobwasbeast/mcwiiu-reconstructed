@@ -18,7 +18,6 @@ class StructureTemplate;
 class CoralCrustFeature : public Feature
 {
 public:
-    CoralCrustFeature() : Feature(false) {}
     virtual ~CoralCrustFeature();
     BlockPos getOffsetFromRot(Rotation* rotation, int type) const;
     BlockPos getCropOffsetFromRot(Rotation* rotation, int type) const;

@@ -27,21 +27,18 @@ const BlockState* FunctionPatchesLayerTheme::GRASS_PATCHES(Random&, float noise,
 
     if (heightAboveSurface == ABOVE_SURFACE(1) || heightAboveSurface == ABOVE_SURFACE(2))
     {
-        TypedBoxed<DoublePlantBlock::Variant*> variant(DoublePlantBlock::VARIANTS[2]);
         DoublePlantBlock::Half* plantHalf = heightAboveSurface == ABOVE_SURFACE(2)
             ? DoublePlantBlock::HALVES[DoublePlantBlock::Half::UPPER]
             : DoublePlantBlock::HALVES[DoublePlantBlock::Half::LOWER];
-        TypedBoxed<DoublePlantBlock::Half*> half(plantHalf);
         const BlockState* state = Blocks::double_plant->defaultBlockState();
-        state = state->setBoxedValue(DoublePlantBlock::VARIANT, &variant);
-        return state->setBoxedValue(DoublePlantBlock::HALF, &half);
+        state = state->setValue(DoublePlantBlock::VARIANT, DoublePlantBlock::VARIANTS[2]);
+        return state->setValue(DoublePlantBlock::HALF, plantHalf);
     }
 
     if (heightAboveSurface == 0)
     {
         const BlockState* state = Blocks::dirt->defaultBlockState();
-        TypedBoxed<DirtBlock::Variant*> variant(DirtBlock::Variant::PODZOL);
-        return state->setBoxedValue(DirtBlock::VARIANT, &variant);
+        return state->setValue(DirtBlock::VARIANT, DirtBlock::Variant::PODZOL);
     }
 
     return NULL;
@@ -49,7 +46,7 @@ const BlockState* FunctionPatchesLayerTheme::GRASS_PATCHES(Random&, float noise,
 
 const BlockState* FunctionPatchesLayerTheme::HELLFIRE_PATCHES(Random&, float noise, int heightAboveSurface, bool isAir)
 {
-    if (noise >= 0.5f)
+    if (noise >= 0.5)
     {
         if (!isAir && heightAboveSurface == 0)
         {
@@ -67,12 +64,11 @@ const BlockState* FunctionPatchesLayerTheme::HELLFIRE_PATCHES(Random&, float noi
 
 const BlockState* FunctionPatchesLayerTheme::SNOWLAYER_PATCHES(Random&, float noise, int heightAboveSurface, bool)
 {
-    if (noise > 0.4f && heightAboveSurface == ABOVE_SURFACE(1))
+    if (noise > 0.4 && heightAboveSurface == ABOVE_SURFACE(1))
     {
         int layers = static_cast<int>((5.0 * (static_cast<double>(noise) - 0.4)) / 0.6) + 1;
         const BlockState* state = Blocks::snow_layer->defaultBlockState();
-        TypedBoxed<int> value(layers);
-        return state->setBoxedValue(SnowLayerBlock::LAYERS, &value);
+        return state->setValue(SnowLayerBlock::LAYERS, layers);
     }
 
     return NULL;
@@ -83,25 +79,27 @@ const BlockState* FunctionPatchesLayerTheme::TNT_TRAPS(Random&, float noise, int
     if (noise >= 0.6)
     {
         int aboveSurface = ABOVE_SURFACE(1);
-        if (heightAboveSurface < aboveSurface)
+        if (heightAboveSurface >= aboveSurface)
         {
-            if (heightAboveSurface == 0)
+            if (heightAboveSurface == aboveSurface)
             {
-                return Blocks::gravel->defaultBlockState();
+                return Blocks::stone_pressure_plate->defaultBlockState();
             }
 
-            if (heightAboveSurface == BELOW_SURFACE(1))
-            {
-                return Blocks::tnt->defaultBlockState();
-            }
-
-            return Blocks::air->defaultBlockState();
+            return NULL;
         }
 
-        if (heightAboveSurface <= aboveSurface)
+        if (heightAboveSurface == 0)
         {
-            return Blocks::stone_pressure_plate->defaultBlockState();
+            return Blocks::gravel->defaultBlockState();
         }
+
+        if (heightAboveSurface == BELOW_SURFACE(1))
+        {
+            return Blocks::tnt->defaultBlockState();
+        }
+
+        return Blocks::air->defaultBlockState();
     }
 
     return NULL;
@@ -113,9 +111,7 @@ const BlockState* FunctionPatchesLayerTheme::CARPET_TRAP(Random&, float noise, i
     {
         if (heightAboveSurface == ABOVE_SURFACE(1))
         {
-            const BlockState* state = Blocks::carpet->defaultBlockState();
-            TypedBoxed<const DyeColor*> color(DyeColor::byBlockData(14));
-            return state->setBoxedValue(gWoolCarpetColorProperty, &color);
+            return Blocks::carpet->getBlockState(14);
         }
 
         if (noise < -0.43f && heightAboveSurface < 1)

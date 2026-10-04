@@ -39,5 +39,5 @@ LayerTheme* SimplePatchesLayerThemeRuleDefinition::Generate() const
 {
     Block* block = Block::byId(mBlockId);
     const BlockState* blockState = block->getBlockState(mBlockAux);
-    return new SimplePatchesLayerTheme(0, static_cast<double>(mNoiseScale), blockState, mPatchThreshold);
+    return new SimplePatchesLayerTheme(5, static_cast<double>(mNoiseScale), blockState, mPatchThreshold);
 }

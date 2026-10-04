@@ -219,14 +219,17 @@ void StructureTemplate::placeEntities(Level* level, const BlockPos& pos, Mirror*
 
         nbt->put(L"Pos", posTag);
 
-        boost::shared_ptr<Entity> entity = EntityIO::newEntity(nbt, level);
+        boost::shared_ptr<Entity> entity;
+        entity = EntityIO::newEntity(nbt, level);
 
-        if (entity)
+        Entity* placedEntity = entity.get();
+
+        if (placedEntity != NULL)
         {
-            float yRot = entity->mirror(mirror);
-            yRot = yRot + (entity->mYRot - entity->rotate(rotation));
+            float yRot = placedEntity->mirror(mirror);
+            yRot = yRot + (placedEntity->mYRot - placedEntity->rotate(rotation));
 
-            entity->moveTo(entityPos->x, entityPos->y, entityPos->z, yRot, entity->mXRot);
+            placedEntity->moveTo(entityPos->x, entityPos->y, entityPos->z, yRot, placedEntity->mXRot);
 
             level->addEntity(entity);
         }
@@ -461,8 +464,8 @@ void StructureTemplate::load(CompoundTag* tag)
         delete *entity;
     }
 
-    mPalette.clear();
     mEntities.clear();
+    mPalette.clear();
     mBlocks.clear();
 
     ListTag* sizeTag = tag->getList(SIZE_TAG, Tag::TAG_INT);
@@ -491,7 +494,7 @@ void StructureTemplate::load(CompoundTag* tag)
 
         const BlockState* state;
 
-        if (mPalette.empty() || paletteIndex >= mPalette.size())
+        if (paletteIndex >= mPalette.size())
         {
             state = Blocks::air->defaultBlockState();
         }

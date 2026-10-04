@@ -3,6 +3,7 @@
 
 #include <cstring>
 
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/world/LevelGenerationOptions.hpp"
 #include "game/world/Level.hpp"
@@ -35,8 +36,8 @@ bool LakeFeature::place(Level* level, Random& random, const BlockPos& origin)
     bool fill[2048];
     memset(fill, 0, sizeof(fill));
 
-    if (g_pApp->getLevelGenerationOptions() != NULL
-        && g_pApp->getLevelGenerationOptions()->checkIntersects(BlockPos(pos.x, pos.y, pos.z),
+    if (gApp.getLevelGenerationOptions() != NULL
+        && gApp.getLevelGenerationOptions()->checkIntersects(BlockPos(pos.x, pos.y, pos.z),
                                                                 BlockPos(pos.x + 16, pos.y + 8, pos.z + 16)))
         return false;
 

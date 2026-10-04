@@ -2,6 +2,7 @@
 
 #include <cstdlib>
 
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/Direction.hpp"
 #include "game/util/Random.hpp"
@@ -27,7 +28,6 @@
 #include "game/world/block/VineBlock.hpp"
 #include "game/core/PIXNamedEvents.hpp"
 
-extern CMinecraftApp* g_pApp;
 
 static const BlockState* treeTrunkState = NULL;
 static const BlockState* treeLeafState = NULL;
@@ -46,13 +46,10 @@ TreeFeature::TreeFeature(bool doBlockNotify, int baseHeight,
 
 void TreeFeature::staticCtor()
 {
-    TypedBoxed<PlanksBlock::Variant*> trunkVariant(PlanksBlock::Variant::OAK);
-    treeTrunkState = Blocks::log->defaultBlockState()->setBoxedValue(OldLogBlock::VARIANT, &trunkVariant);
-    TypedBoxed<PlanksBlock::Variant*> leafVariant(PlanksBlock::Variant::OAK);
-    TypedBoxed<bool> decayable(false);
+    treeTrunkState = Blocks::log->defaultBlockState()->setValue(OldLogBlock::VARIANT, PlanksBlock::Variant::OAK);
     treeLeafState = Blocks::leaves->defaultBlockState()
-                        ->setBoxedValue(OldLeafBlock::VARIANT, &leafVariant)
-                        ->setBoxedValue(LeafBlock::DECAYABLE, &decayable);
+                        ->setValue(OldLeafBlock::VARIANT, PlanksBlock::Variant::OAK)
+                        ->setValue(LeafBlock::DECAYABLE, false);
 }
 
 int TreeFeature::prepareSpawn(Level* level, const BlockPos& pos, int height)
@@ -61,10 +58,10 @@ int TreeFeature::prepareSpawn(Level* level, const BlockPos& pos, int height)
     int free = 1;
     if (pos.y > 0 && pos.y + height + 1 <= 256)
     {
-        if (g_pApp->getLevelGenerationOptions() != NULL)
+        if (gApp.getLevelGenerationOptions() != NULL)
         {
             PIXBeginNamedEvent(0.0f, "TreeFeature checking intersects");
-            bool intersects = g_pApp->getLevelGenerationOptions()->checkIntersects(
+            bool intersects = gApp.getLevelGenerationOptions()->checkIntersects(
                 pos.offset(-2, -1, -2), pos.offset(2, height, 2));
             PIXEndNamedEvent();
             if (intersects)
@@ -77,7 +74,7 @@ int TreeFeature::prepareSpawn(Level* level, const BlockPos& pos, int height)
         BlockPos check(0, 0, 0);
         for (int y = pos.y; y <= pos.y + height + 1; ++y)
         {
-            int radius = y == pos.y ? 0 : 1;
+            int radius = y != pos.y;
             if (y >= pos.y + height - 1)
                 radius = 2;
             for (int x = pos.x - radius; x <= pos.x + radius && free; ++x)
@@ -86,7 +83,9 @@ int TreeFeature::prepareSpawn(Level* level, const BlockPos& pos, int height)
                 {
                     if (y >= 0 && y < 256)
                     {
-                        check = BlockPos(x, y, z);
+                        check.x = x;
+                        check.y = y;
+                        check.z = z;
                         if (!isFree(level->getBlockState(check)->getBlock()))
                             free = 0;
                     }
@@ -138,12 +137,11 @@ void TreeFeature::addHangingVine(Level* level, const BlockPos& pos,
 void TreeFeature::placeCocoa(Level* level, int age, const BlockPos& pos,
                              const Direction* direction)
 {
-    TypedBoxed<int> ageValue(age);
-    const BlockState* state = Blocks::cocoa->defaultBlockState();
-    state = state->setBoxedValue(CocoaBlock::AGE, &ageValue);
-    TypedBoxed<const Direction*> directionValue(direction);
-    state = state->setBoxedValue(HorizontalDirectionalBlock::FACING_PROPERTY, &directionValue);
-    setBlock(level, pos, state, Block::UPDATE_NONE);
+    setBlock(level, pos,
+             Blocks::cocoa->defaultBlockState()
+                 ->setValue(CocoaBlock::AGE, age)
+                 ->setValue(HorizontalDirectionalBlock::FACING_PROPERTY, direction),
+             Block::UPDATE_NONE);
 }
 
 bool TreeFeature::place(Level* level, Random& random, const BlockPos& pos)

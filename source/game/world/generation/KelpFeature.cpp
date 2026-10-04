@@ -16,8 +16,7 @@ KelpFeature::KelpFeature()
     int age;
     for (age = 0; age < 16; ++age)
     {
-        TypedBoxed<int> value(age);
-        mStates[age] = Blocks::kelp->defaultBlockState()->setBoxedValue(KelpBlock::AGE, &value);
+        mStates[age] = Blocks::kelp->defaultBlockState()->setValue(KelpBlock::AGE, age);
     }
 }
 
@@ -54,31 +53,33 @@ bool KelpFeature::place(Level* level, Random& random, const BlockPos& origin)
                 candidate = candidate.above();
             }
 
-            if (level->getBlockId(candidate.x, candidate.y, candidate.z) != BlockId::AIR
-                && !level->isEmptyWaterBlock(candidate.below())
-                && level->getBlockId(candidate.x, candidate.y, candidate.z) != BlockId::KELP)
+            if (level->getBlockId(candidate.x, candidate.y, candidate.z) != BlockId::AIR)
             {
-                int height = 0;
-                while (level->isEmptyWaterBlock(candidate.above(height)) && height < 16)
+                if (!level->isEmptyWaterBlock(candidate.below())
+                    && level->getBlockId(candidate.x, candidate.y, candidate.z) != BlockId::KELP)
                 {
-                    ++height;
-                }
-
-                if (height >= 3)
-                {
-                    int growth = random.nextInt(3, height);
-                    if (Blocks::kelp->mayPlace(level, candidate))
+                    int height = 0;
+                    while (level->isEmptyWaterBlock(candidate.above(height)) && height < 16)
                     {
-                        int y;
-                        setBlock(level, candidate, mStates[15 - growth], Block::UPDATE_NO_OBSERVERS | Block::UPDATE_LIGHT_IF_CHANGED);
-                        for (y = 1; y < growth; ++y)
+                        ++height;
+                    }
+
+                    if (height >= 3)
+                    {
+                        int growth = random.nextInt(3, height);
+                        if (Blocks::kelp->mayPlace(level, candidate))
                         {
-                            if (!level->isEmptyWaterBlock(candidate.above(y))
-                                || !Blocks::kelp->mayPlace(level, candidate.above(y)))
+                            int y;
+                            setBlock(level, candidate, mStates[15 - growth], Block::UPDATE_NO_OBSERVERS | Block::UPDATE_LIGHT_IF_CHANGED);
+                            for (y = 1; y < growth; ++y)
                             {
-                                break;
+                                if (!level->isEmptyWaterBlock(candidate.above(y))
+                                    || !Blocks::kelp->mayPlace(level, candidate.above(y)))
+                                {
+                                    break;
+                                }
+                                setBlock(level, candidate.above(y), mStates[15 - growth + y], Block::UPDATE_NO_OBSERVERS | Block::UPDATE_LIGHT_IF_CHANGED);
                             }
-                            setBlock(level, candidate.above(y), mStates[15 - growth + y], Block::UPDATE_NO_OBSERVERS | Block::UPDATE_LIGHT_IF_CHANGED);
                         }
                     }
                 }

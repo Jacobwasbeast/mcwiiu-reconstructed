@@ -1,6 +1,7 @@
 #include "game/world/generation/RandomScatteredLargeFeature.hpp"
 #include "game/core/EntityType.hpp"
 
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/SuperflatConfig.hpp"
 #include "game/util/Random.hpp"
@@ -24,13 +25,18 @@ RandomScatteredLargeFeature::RandomScatteredLargeFeature(SuperflatConfig* config
 {
     _init();
     int spacing = (int)config->maybeOption(0x21, 0, (unsigned char)mSpacing);
-    mSpacing = spacing > mSeparation + 1 ? spacing : mSeparation + 1;
+    int minimum = mSeparation + 1;
+    if (minimum < spacing)
+    {
+        minimum = spacing;
+    }
+    mSpacing = minimum;
 }
 
 RandomScatteredLargeFeature::~RandomScatteredLargeFeature()
 {
-    for (std::vector<Biome::MobSpawnerData*>::iterator it = mSwamphutEnemies.begin();
-         it != mSwamphutEnemies.end(); ++it)
+    for (std::vector<Biome::MobSpawnerData*>::iterator it = mSwamphutEnemies.begin(), last = mSwamphutEnemies.end();
+         it != last; ++it)
     {
         delete *it;
     }
@@ -71,18 +77,26 @@ bool RandomScatteredLargeFeature::isFeatureChunk(int chunkX, int chunkZ, bool fl
     {
         spacing = mSpacing;
     }
-    int regionX = chunkX < 0 ? chunkX + 1 - spacing : chunkX;
-    int regionZ = chunkZ < 0 ? chunkZ + 1 - spacing : chunkZ;
-    Random& random = *level->getRandomFor(regionX / spacing, regionZ / spacing, 0xDB1471);
-    int offsetX = random.nextInt(mSpacing - mSeparation);
-    int offsetZ = random.nextInt(mSpacing - mSeparation);
-    LevelGenerationOptions* options = g_pApp->getLevelGenerationOptions();
-    if ((options != NULL && options->isFeatureChunk(chunkX, chunkZ, eFeatureType_ScatteredFeature, NULL)) ||
-        (chunkX == regionX / spacing * mSpacing + offsetX &&
-         chunkZ == regionZ / spacing * mSpacing + offsetZ))
+    int regionX = chunkX;
+    if (chunkX < 0)
     {
-        BlockPos pos(chunkX * 16 + 8, 0, chunkZ * 16 + 8);
-        Biome* biome = level->getBiomeSource()->getBiome(pos);
+        regionX = chunkX + (1 - spacing);
+    }
+    int regionZ = chunkZ;
+    if (chunkZ < 0)
+    {
+        regionZ = chunkZ + (1 - spacing);
+    }
+    Random& random = *level->getRandomFor(regionX / spacing, regionZ / spacing, 0xDB1471);
+    int cellSpacing = mSpacing;
+    int offsetX = random.nextInt(cellSpacing - mSeparation);
+    int offsetZ = random.nextInt(mSpacing - mSeparation);
+    LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
+    if ((options != NULL && options->isFeatureChunk(chunkX, chunkZ, eFeatureType_ScatteredFeature, NULL)) ||
+        (chunkX == regionX / spacing * cellSpacing + offsetX &&
+         chunkZ == regionZ / spacing * cellSpacing + offsetZ))
+    {
+        Biome* biome = level->getBiomeSource()->getBiome(BlockPos(chunkX * 16 + 8, 0, chunkZ * 16 + 8));
         for (std::vector<Biome*>::const_iterator it = gRandomScatteredLargeFeatureBiomes.begin();
              it != gRandomScatteredLargeFeatureBiomes.end(); ++it)
         {
@@ -114,12 +128,14 @@ StructureStart* RandomScatteredLargeFeature::createStructureStart(int chunkX, in
 bool RandomScatteredLargeFeature::isSwamphut(const BlockPos& pos)
 {
     StructureStart* start = getStructureAt(pos);
-    ScatteredFeatureStart* scattered = dynamic_cast<ScatteredFeatureStart*>(start);
-    if (scattered == NULL || scattered->empty())
+    if (start == NULL || dynamic_cast<ScatteredFeatureStart*>(start) == NULL || start->empty())
     {
         return false;
     }
-    return dynamic_cast<ScatteredFeaturePieces::SwamplandHut*>((*scattered)[0]) != NULL;
+    StructureStart::iterator first = start->begin();
+    ScatteredFeaturePieces::SwamplandHut* hut = first != start->end() && *first != NULL
+        ? dynamic_cast<ScatteredFeaturePieces::SwamplandHut*>(*first) : NULL;
+    return hut != NULL;
 }
 
 std::vector<Biome::MobSpawnerData*>* RandomScatteredLargeFeature::getSwamphutEnemies()
@@ -133,8 +149,7 @@ RandomScatteredLargeFeature::ScatteredFeatureStart::ScatteredFeatureStart(Level*
                                                                             int chunkZ)
     : StructureStart(chunkX, chunkZ)
 {
-    BlockPos pos(chunkX * 16 + 8, 0, chunkZ * 16 + 8);
-    Biome* biome = levelIn->getBiome(pos);
+    Biome* biome = levelIn->getBiome(BlockPos(chunkX * 16 + 8, 0, chunkZ * 16 + 8));
     int x = chunkX * 16;
     int z = chunkZ * 16;
     if (biome == Biome::JUNGLE || biome == Biome::JUNGLE_HILLS)

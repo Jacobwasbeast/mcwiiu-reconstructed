@@ -8,10 +8,11 @@ RainbowLayerTheme::RainbowLayerTheme(unsigned int seed, double noiseScale, const
 
 const BlockState* RainbowLayerTheme::BlockAt(Random&, float noise, int heightAboveSurface, bool isAir) const
 {
-    if (heightAboveSurface < 1 && !isAir && !mBlocks.empty())
+    if (heightAboveSurface < 1 && !isAir)
     {
-        const double scaledIndex = (static_cast<double>(mBlocks.size() - 1) * 0.5) * (static_cast<double>(noise) + 1.0);
-        return mBlocks.at(static_cast<std::size_t>(std::floor(scaledIndex)));
+        const float shifted = noise + 1.0f;
+        const double scaledIndex = (static_cast<double>(static_cast<int>(mBlocks.size())) * 0.5) * shifted;
+        return mBlocks.at(static_cast<int>(std::floor(scaledIndex)));
     }
     return NULL;
 }

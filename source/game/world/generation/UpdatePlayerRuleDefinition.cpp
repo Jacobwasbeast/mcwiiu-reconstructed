@@ -1,5 +1,7 @@
 #include "game/world/generation/UpdatePlayerRuleDefinition.hpp"
 
+#include "game/core/StringConversion.hpp"
+
 #include <string>
 
 #include "game/core/FoodData.hpp"
@@ -21,12 +23,6 @@
 #include "game/minigame/EMiniGameId.hpp"
 #include "game/core/StringFormat.hpp"
 
-template<typename T>
-std::wstring toString(T value);
-
-template<typename T>
-T fromString(const std::wstring& text);
-
 UpdatePlayerRuleDefinition::UpdatePlayerRuleDefinition()
 {
     mHealth = 0;
@@ -39,8 +35,8 @@ UpdatePlayerRuleDefinition::UpdatePlayerRuleDefinition()
     addIntAttribute(ConsoleGameRules::eGameRuleAttr_dimension, &mDimension);
     addFloatAttribute(ConsoleGameRules::eGameRuleAttr_yRot, &mYRot)->setOptional(true);
     addFloatAttribute(ConsoleGameRules::eGameRuleAttr_xRot, &mXRot)->setOptional(true);
-    addIntAttribute(ConsoleGameRules::eGameRuleAttr_food, &mFoodLevel)->setOptional(true);
-    addIntAttribute(ConsoleGameRules::eGameRuleAttr_health, &mHealth)->setOptional(true);
+    addIntAttribute(ConsoleGameRules::eGameRuleAttr_food, &mHealth)->setOptional(true);
+    addIntAttribute(ConsoleGameRules::eGameRuleAttr_health, &mFoodLevel)->setOptional(true);
 }
 
 UpdatePlayerRuleDefinition::UpdatePlayerRuleDefinition(boost::shared_ptr<Player> player)
@@ -71,33 +67,20 @@ double UpdatePlayerRuleDefinition::SanitisedYPos(double x, double y, double z,
     ServerLevel* level = gMinecraftServer->getLevel(0);
     double halfHeight = static_cast<double>(player->mBbHeight) * 0.5;
     double testY = y;
-    const BlockState* state = level->getBlockState(BlockPos(x, y + halfHeight, z));
 
-    while (state->getMaterial() != Material::AIR)
+    while (level->getBlockState(BlockPos(x, testY + halfHeight, z))->getMaterial() != Material::AIR)
     {
         testY -= 0.1;
-        state = level->getBlockState(BlockPos(x, testY + halfHeight, z));
     }
 
-    state = level->getBlockState(BlockPos(x, testY - halfHeight, z));
-    while (state->getMaterial() != Material::AIR)
+    while (level->getBlockState(BlockPos(x, testY - halfHeight, z))->getMaterial() != Material::AIR)
     {
         testY += 0.1;
-        state = level->getBlockState(BlockPos(x, testY - halfHeight, z));
     }
 
-    double lower = testY;
-    double upper = y;
-    if (y < testY)
-    {
-        lower = y;
-        upper = testY;
-    }
-    if (5.0 - (upper - lower) < 0.0)
-    {
-        testY = y;
-    }
-    return testY;
+    double upper = (y - testY >= 0.0) ? y : testY;
+    double lower = (y - testY >= 0.0) ? testY : y;
+    return (5.0 - (upper - lower) >= 0.0) ? testY : y;
 }
 
 void UpdatePlayerRuleDefinition::getChildren(std::vector<GameRuleDefinition*>* children)
@@ -110,22 +93,22 @@ void UpdatePlayerRuleDefinition::getChildren(std::vector<GameRuleDefinition*>* c
 
 GameRuleDefinition* UpdatePlayerRuleDefinition::addChild(ConsoleGameRules::EGameRuleType type)
 {
-    AddItemRuleDefinition* item = NULL;
+    GameRuleDefinition* rule = NULL;
     if (type == ConsoleGameRules::eGameRuleType_AddItem)
     {
-        item = new AddItemRuleDefinition();
-        mItems.push_back(item);
+        rule = new AddItemRuleDefinition();
+        mItems.push_back(static_cast<AddItemRuleDefinition*>(rule));
     }
-    return item;
+    return rule;
 }
 
 void UpdatePlayerRuleDefinition::writeAttributes(GameRuleSaveInterface* saveInterface,
                                                  unsigned int extraAttributeCount)
 {
     GameRuleDefinition::writeAttributes(saveInterface, extraAttributeCount + 3);
-    saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_spawnX, toString(mSpawnPosition->x));
-    saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_spawnY, toString(mSpawnPosition->y));
-    saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_spawnZ, toString(mSpawnPosition->z));
+    saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_spawnX, _toString<int>(mSpawnPosition->x));
+    saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_spawnY, _toString<int>(mSpawnPosition->y));
+    saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_spawnZ, _toString<int>(mSpawnPosition->z));
 }
 
 void UpdatePlayerRuleDefinition::addAttribute(const std::wstring& name, const std::wstring& value)
@@ -136,7 +119,7 @@ void UpdatePlayerRuleDefinition::addAttribute(const std::wstring& name, const st
         {
             mSpawnPosition = new MutableBlockPos(0, 0, 0);
         }
-        mSpawnPosition->setX(fromString<int>(value));
+        mSpawnPosition->setX(_fromString<int>(value));
         return;
     }
     if (name.compare(L"spawnY") == 0)
@@ -145,7 +128,7 @@ void UpdatePlayerRuleDefinition::addAttribute(const std::wstring& name, const st
         {
             mSpawnPosition = new MutableBlockPos(0, 0, 0);
         }
-        mSpawnPosition->setY(fromString<int>(value));
+        mSpawnPosition->setY(_fromString<int>(value));
         return;
     }
     if (name.compare(L"spawnZ") == 0)
@@ -154,7 +137,7 @@ void UpdatePlayerRuleDefinition::addAttribute(const std::wstring& name, const st
         {
             mSpawnPosition = new MutableBlockPos(0, 0, 0);
         }
-        mSpawnPosition->setZ(fromString<int>(value));
+        mSpawnPosition->setZ(_fromString<int>(value));
         return;
     }
     GameRuleDefinition::addAttribute(name, value);
@@ -190,12 +173,12 @@ void UpdatePlayerRuleDefinition::postProcessPlayer(boost::shared_ptr<Player> pla
         else if (!Minecraft::InMiniGame(eMiniGameId_Lobby, true)
                  && !Minecraft::InMiniGame(eMiniGameId_Battle, true))
         {
-            y = SanitisedYPos(x, static_cast<double>(mSpawnPosition->y) + 0.5
-                              + static_cast<double>(player->mBbHeight) * 0.5, z, player);
+            y = SanitisedYPos(x, static_cast<double>(mSpawnPosition->y), z, player);
         }
         else
         {
-            y = SanitisedYPos(x, static_cast<double>(mSpawnPosition->y), z, player);
+            y = SanitisedYPos(x, static_cast<double>(mSpawnPosition->y) + 0.5
+                              + static_cast<double>(player->mBbHeight) * 0.5, z, player);
         }
     }
 

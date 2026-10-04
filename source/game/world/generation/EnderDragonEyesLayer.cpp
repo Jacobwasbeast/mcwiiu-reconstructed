@@ -31,7 +31,7 @@ void EnderDragonEyesLayer::render(boost::shared_ptr<LivingEntity>& entity, float
     GlStateManager::enableLighting();
     GlStateManager::color4f(1.0f, 1.0f, 1.0f, 1.0f);
 
-    boost::shared_ptr<Entity> renderEntity = boost::static_pointer_cast<Entity>(entity);
+    boost::shared_ptr<Entity> renderEntity = entity;
     mRenderer->getModel()->render(renderEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, bUseDisplayList);
     mRenderer->setLightColor(renderEntity);
 

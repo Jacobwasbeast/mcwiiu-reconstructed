@@ -30,12 +30,12 @@ public:
     virtual ~BigTreeFeature();
     virtual bool place(Level* level, Random& random, const BlockPos& origin);
     virtual void init();
-    double treeShape(int height);
+    float treeShape(int height);
     int getSteps(const BlockPos& pos);
     int checkLine(const BlockPos& from, const BlockPos& to);
     void prepare();
     void crossection(const BlockPos& pos, float radius, const BlockState* state);
-    double foliageShape(int layer);
+    float foliageShape(int layer);
     void foliageCluster(const BlockPos& pos);
     LogBlock::LogAxis* getLogAxis(const BlockPos& from, const BlockPos& to);
     void limb(const BlockPos& from, const BlockPos& to, Block* block);

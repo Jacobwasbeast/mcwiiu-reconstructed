@@ -336,7 +336,8 @@ const BlockState* StructurePiece::getBlock(Level* level, int x, int y, int z, Bo
 
 bool StructurePiece::isAboveGround(Level* level, int x, int y, int z)
 {
-    return level->canSeeSky(BlockPos(getWorldX(x, z), getWorldY(y + 1), getWorldZ(x, z)));
+    BlockPos pos(getWorldX(x, z), getWorldY(y + 1), getWorldZ(x, z));
+    return level->canSeeSky(pos);
 }
 
 int StructurePiece::getSkyBrightness(Level* level, int x, int y, int z, BoundingBox* box)
@@ -608,8 +609,8 @@ void StructurePiece::fillBoxDown(Level* level, const BlockState* state, int x0, 
 bool StructurePiece::createChest(Level* level, BoundingBox* box, Random& random, int x, int y, int z,
     ResourceLocation* lootTable)
 {
-    return createChest(level, box, random,
-        BlockPos(getWorldX(x, z), getWorldY(y), getWorldZ(x, z)), lootTable, NULL);
+    BlockPos pos(getWorldX(x, z), getWorldY(y), getWorldZ(x, z));
+    return createChest(level, box, random, pos, lootTable, NULL);
 }
 
 bool StructurePiece::createChest(Level* level, BoundingBox* box, Random& random, const BlockPos& pos,
@@ -640,20 +641,16 @@ bool StructurePiece::createChest(Level* level, BoundingBox* box, Random& random,
 bool StructurePiece::createDispenser(Level* level, BoundingBox* box, Random& random, int x, int y, int z,
     const Direction* facing, ResourceLocation* lootTable)
 {
-    BlockPos pos(getWorldX(x, z), getWorldY(y), getWorldZ(x, z));
+    const BlockPos& pos = BlockPos(getWorldX(x, z), getWorldY(y), getWorldZ(x, z));
     if (!box->isInside(pos) || level->getBlockState(pos)->getBlock() == Blocks::dispenser)
     {
         return false;
     }
 
-    TypedBoxed<const Direction*> facingValue(facing);
-    placeBlock(level,
-        Blocks::dispenser->defaultBlockState()->setBoxedValue(
-            static_cast<const Property*>(DispenserBlock::FACING), &facingValue),
-        x, y, z, box);
+    placeBlock(level, Blocks::dispenser->defaultBlockState()->setValue(DispenserBlock::FACING, facing), x, y, z, box);
 
     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
-    if (blockEntity && (blockEntity->GetType() & BlockEntityType::DISPENSER) == BlockEntityType::DISPENSER)
+    if ((blockEntity->GetType() & BlockEntityType::DISPENSER) == BlockEntityType::DISPENSER)
     {
         boost::shared_ptr<DispenserBlockEntity> dispenser =
             boost::static_pointer_cast<DispenserBlockEntity>(blockEntity);
@@ -705,7 +702,8 @@ std::vector<bool> StructurePiece::readBoolSaveData(DataInputStream* input)
     std::wstring text = input->readUTF();
     if (!text.empty())
     {
-        std::vector<std::wstring> parts = stringSplit(text, L',');
+        std::vector<std::wstring> parts;
+        parts = stringSplit(text, L',');
 
         for (unsigned int i = 0; i < parts.size(); ++i)
         {
@@ -740,7 +738,8 @@ std::vector<int> StructurePiece::readIntSaveData(DataInputStream* input)
     std::wstring text = input->readUTF();
     if (!text.empty())
     {
-        std::vector<std::wstring> parts = stringSplit(text, L',');
+        std::vector<std::wstring> parts;
+        parts = stringSplit(text, L',');
 
         for (unsigned int i = 0; i < parts.size(); ++i)
         {
@@ -754,17 +753,9 @@ std::vector<int> StructurePiece::readIntSaveData(DataInputStream* input)
 void StructurePiece::createDoor(Level* level, BoundingBox* box, Random& random, int x, int y, int z,
     const Direction* facing, DoorBlock* door)
 {
-    TypedBoxed<const Direction*> lowerFacingValue(facing);
-    placeBlock(level, door->defaultBlockState()->setBoxedValue(
-        static_cast<const Property*>(DoorBlock::FACING), &lowerFacingValue),
-        x, y, z, box);
-
-    TypedBoxed<const Direction*> upperFacingValue(facing);
-    TypedBoxed<DoorBlock::DoorHalf*> upperHalfValue(DoorBlock::UPPER);
+    placeBlock(level, door->defaultBlockState()->setValue(DoorBlock::FACING, facing), x, y, z, box);
     placeBlock(level,
-        door->defaultBlockState()->setBoxedValue(
-            static_cast<const Property*>(DoorBlock::FACING), &upperFacingValue)
-            ->setBoxedValue(static_cast<const Property*>(DoorBlock::HALF), &upperHalfValue),
+        door->defaultBlockState()->setValue(DoorBlock::FACING, facing)->setValue(DoorBlock::HALF, DoorBlock::UPPER),
         x, y + 1, z, box);
 }
 
