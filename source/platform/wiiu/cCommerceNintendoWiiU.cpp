@@ -46,6 +46,8 @@ namespace nn
             asm("__ct__Q3_2nn2ec5QueryFv");
         extern "C" void Query_import_dtor(Query*, unsigned int)
             asm("__dt__Q3_2nn2ec5QueryFv");
+        extern "C" void DateTime_import_ctor(DateTime*)
+            asm("__ct__Q3_2nn2ec8DateTimeFv");
 
         Money::Money(const char* currency, const char* amount, const char* unit)
         {
@@ -70,6 +72,11 @@ namespace nn
         Query::~Query()
         {
             Query_import_dtor(this, 2);
+        }
+
+        DateTime::DateTime()
+        {
+            DateTime_import_ctor(this);
         }
     }
 }

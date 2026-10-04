@@ -33,8 +33,7 @@ namespace nn
         class DateTime
         {
         public:
-            DateTime()
-                asm("__ct__Q3_2nn2ec8DateTimeFv");
+            DateTime();
             long long operator-(const DateTime&) const
                 asm("__mi__Q3_2nn2ec8DateTimeCFRCQ3_2nn2ec8DateTime");
         private:
