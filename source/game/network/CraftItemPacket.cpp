@@ -10,9 +10,11 @@ CraftItemPacket::CraftItemPacket()
 }
 
 CraftItemPacket::CraftItemPacket(int recipe, int craftType, short containerId)
-    : mStackedItems(), mItemIds(), mContainerId(containerId), mCraftType(static_cast<unsigned char>(craftType))
+    : mStackedItems(), mItemIds()
 {
     mStackedItems.push_back(std::make_pair(recipe, -1));
+    mCraftType = static_cast<unsigned char>(craftType);
+    mContainerId = containerId;
 }
 
 CraftItemPacket::CraftItemPacket(std::vector<std::pair<int, int> >& stackedItems, int craftType, short containerId)
@@ -21,8 +23,13 @@ CraftItemPacket::CraftItemPacket(std::vector<std::pair<int, int> >& stackedItems
 }
 
 CraftItemPacket::CraftItemPacket(std::vector<int>& itemIds, short containerId)
-    : mStackedItems(), mItemIds(itemIds), mContainerId(containerId), mCraftType(0)
+    : mStackedItems(), mItemIds()
 {
+    for (std::vector<int>::const_iterator it = itemIds.begin(); it != itemIds.end(); ++it)
+    {
+        mItemIds.push_back(*it);
+    }
+    mContainerId = containerId;
 }
 
 CraftItemPacket::~CraftItemPacket()
@@ -39,17 +46,14 @@ void CraftItemPacket::read(DataInputStream* input)
     mContainerId = input->readShort();
     mCraftType = input->read();
     const bool stackedItems = input->readBoolean();
-    int itemCount = input->readInt();
-    if (!stackedItems)
+    unsigned int itemCount = input->readInt();
+    for (unsigned int index = 0; index < itemCount; ++index)
     {
-        for (int index = 0; index < itemCount; ++index)
+        if (!stackedItems)
         {
             mItemIds.push_back(input->readInt());
         }
-    }
-    else
-    {
-        for (int index = 0; index < itemCount; ++index)
+        else
         {
             int itemId = input->readInt();
             int itemCountValue = input->readInt();
@@ -62,10 +66,12 @@ void CraftItemPacket::write(DataOutputStream* output)
 {
     output->writeShort(mContainerId);
     output->write(mCraftType);
+    int count;
     if (!mStackedItems.empty())
     {
+        count = static_cast<int>(mStackedItems.size());
         output->writeBoolean(true);
-        output->writeInt(static_cast<int>(mStackedItems.size()));
+        output->writeInt(count);
         for (std::vector<std::pair<int, int> >::const_iterator it = mStackedItems.begin(); it != mStackedItems.end(); ++it)
         {
             output->writeInt(it->first);
@@ -74,8 +80,9 @@ void CraftItemPacket::write(DataOutputStream* output)
     }
     else
     {
+        count = static_cast<int>(mItemIds.size());
         output->writeBoolean(false);
-        output->writeInt(static_cast<int>(mItemIds.size()));
+        output->writeInt(count);
         for (std::vector<int>::const_iterator it = mItemIds.begin(); it != mItemIds.end(); ++it)
         {
             output->writeInt(*it);

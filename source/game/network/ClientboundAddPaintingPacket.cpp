@@ -13,7 +13,6 @@ ClientboundAddPaintingPacket::ClientboundAddPaintingPacket()
 {
     id = -1;
     pos = BlockPos();
-    direction = NULL;
     motive = L"";
 }
 
@@ -21,7 +20,7 @@ ClientboundAddPaintingPacket::ClientboundAddPaintingPacket(boost::shared_ptr<Pai
 {
     id = painting->getId();
     pos = painting->getPos();
-    direction = painting->getDirection();
+    direction = painting->mDirection;
     motive = painting->motive->name;
 }
 

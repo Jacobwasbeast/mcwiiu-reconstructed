@@ -50,11 +50,14 @@ void ClientboundExplodePacket::read(DataInputStream* input)
         z = input->readFloat();
         power = input->readFloat();
         int count = input->readInt();
+        int baseX = (int)x;
+        int baseY = (int)y;
+        int baseZ = (int)z;
         for (int i = 0; i < count; ++i)
         {
-            int blockX = (signed char)input->readByte() + (int)x;
-            int blockY = (signed char)input->readByte() + (int)y;
-            int blockZ = (signed char)input->readByte() + (int)z;
+            int blockX = (signed char)input->readByte() + baseX;
+            int blockY = (signed char)input->readByte() + baseY;
+            int blockZ = (signed char)input->readByte() + baseZ;
             toBlow.push_back(BlockPos(blockX, blockY, blockZ));
         }
     }
@@ -73,11 +76,17 @@ void ClientboundExplodePacket::write(DataOutputStream* output)
         output->writeFloat((float)z);
         output->writeFloat(power);
         output->writeInt((int)toBlow.size());
+        double baseX = x;
+        double baseY = y;
+        double baseZ = z;
         for (std::vector<BlockPos, std::allocator<BlockPos> >::const_iterator it = toBlow.begin(); it != toBlow.end(); ++it)
         {
-            output->writeByte((unsigned char)(it->x - (int)x));
-            output->writeByte((unsigned char)(it->y - (int)y));
-            output->writeByte((unsigned char)(it->z - (int)z));
+            int offsetX = it->x - (int)baseX;
+            int offsetY = it->y - (int)baseY;
+            int offsetZ = it->z - (int)baseZ;
+            output->writeByte((unsigned char)offsetX);
+            output->writeByte((unsigned char)offsetY);
+            output->writeByte((unsigned char)offsetZ);
         }
     }
     output->writeFloat(knockbackX);

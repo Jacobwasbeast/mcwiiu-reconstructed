@@ -46,8 +46,9 @@ void ServerConnection::handleTextureReceived(const std::wstring& request)
         mPendingTextureRequests.erase(requestIterator);
     }
     for (unsigned int playerIndex = 0; playerIndex < mPlayers.size(); ++playerIndex) {
-        if (!mPlayers[playerIndex]->mDisconnected) {
-            mPlayers[playerIndex]->handleTextureReceived(request);
+        boost::shared_ptr<ServerGamePacketListenerImpl> player = mPlayers[playerIndex];
+        if (!player->mDisconnected) {
+            player->handleTextureReceived(request);
         }
     }
 }
@@ -60,8 +61,9 @@ void ServerConnection::handleTextureAndGeometryReceived(const std::wstring& requ
         mPendingTextureRequests.erase(requestIterator);
     }
     for (unsigned int playerIndex = 0; playerIndex < mPlayers.size(); ++playerIndex) {
-        if (!mPlayers[playerIndex]->mDisconnected) {
-            mPlayers[playerIndex]->handleTextureAndGeometryReceived(request);
+        boost::shared_ptr<ServerGamePacketListenerImpl> player = mPlayers[playerIndex];
+        if (!player->mDisconnected) {
+            player->handleTextureAndGeometryReceived(request);
         }
     }
 }

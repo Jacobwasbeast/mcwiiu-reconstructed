@@ -7,6 +7,8 @@
 
 ClientboundSetHealthPacket::ClientboundSetHealthPacket()
 {
+    damageSource.challenges = eTelemetryChallenges_None;
+    damageSource.causeOfDeathId = -1;
     health = 0.0f;
     food = 0;
     saturation = 0.0f;

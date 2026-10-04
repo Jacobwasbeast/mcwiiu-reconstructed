@@ -10,10 +10,15 @@ ClientboundLoginPacket::ClientboundLoginPacket()
     mLevelName = L"";
     mEntityId = 0;
     mSeed = 0;
+    mGameType = 0;
+    mDimension = -1;
+    mDifficulty = -1;
     mGameMode = 0;
+    mDifficultyValue = 0;
+    mMaxPlayers = 0;
+    mPlayerFlag = 1;
     mPlayerUID = PlayerUID(0);
     mPlayerUID2 = PlayerUID(0);
-    mPlayerFlag = 1;
     mHardcore = false;
     mViewDistance = 0;
     mChunkDistance = 0;
@@ -33,11 +38,6 @@ ClientboundLoginPacket::ClientboundLoginPacket()
     mSimulationDistance = 0;
     mHasAchievements = false;
     mUnknownValue3 = -1;
-    mGameType = 0;
-    mDifficultyValue = 0;
-    mMaxPlayers = 0;
-    mDimension = -1;
-    mDifficulty = -1;
 }
 
 ClientboundLoginPacket::ClientboundLoginPacket(const std::wstring& levelName, int entityId, LevelType* levelType,
@@ -132,11 +132,12 @@ void ClientboundLoginPacket::read(DataInputStream* input)
     mEntityId = input->readInt();
     mLevelName = Packet::readUtf(input, 20);
     std::wstring generatorName = Packet::readUtf(input, 16);
-    mLevelType = LevelType::getLevelType(generatorName);
-    if (mLevelType == NULL)
+    LevelType* levelType = LevelType::getLevelType(generatorName);
+    if (levelType == NULL)
     {
-        mLevelType = LevelType::DEFAULT;
+        levelType = LevelType::DEFAULT;
     }
+    mLevelType = levelType;
     mSeed = input->readLong();
     mGameType = input->readInt();
     mDimension = input->readInt();

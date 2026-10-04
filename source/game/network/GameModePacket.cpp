@@ -149,10 +149,6 @@ GameModePacket::UpdateStartTimeData::UpdateStartTimeData(long long startTime)
 {
 }
 
-GameModePacket::UpdateStartTimeData::~UpdateStartTimeData()
-{
-}
-
 void GameModePacket::UpdateStartTimeData::ReadPacket(boost::shared_ptr<GameModePacket> packet)
 {
     startTime = packet->ints[0];

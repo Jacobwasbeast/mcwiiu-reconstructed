@@ -7,23 +7,31 @@
 #include "game/network/PacketListener.hpp"
 
 UpdateGameRuleProgressPacket::UpdateGameRuleProgressPacket()
-    : mRuleType(ConsoleGameRules::eGameRuleType_LevelRules), mDescription(), mItemId(0), mAuxValue(0), mDataTag(0), mPayload()
 {
+    mDescription = L"";
+    mAuxValue = 0;
+    mDataTag = 0;
+    mRuleType = ConsoleGameRules::eGameRuleType_LevelRules;
+    mItemId = -1;
 }
 
 UpdateGameRuleProgressPacket::UpdateGameRuleProgressPacket(ConsoleGameRules::EGameRuleType ruleType, const std::wstring& description, int itemId, int auxValue, int dataTag, void* payload, int payloadLength)
-    : mRuleType(ruleType), mDescription(description), mItemId(itemId), mAuxValue(static_cast<unsigned char>(auxValue)), mDataTag(dataTag), mPayload()
+    : mRuleType(ruleType), mDescription(description), mItemId(itemId), mAuxValue(auxValue), mDataTag(dataTag)
 {
     if (payloadLength > 0)
     {
         mPayload = arrayWithLength<unsigned char>(static_cast<unsigned int>(payloadLength), true);
         std::memcpy(mPayload.data, payload, payloadLength);
     }
+    else
+    {
+        mPayload.data = NULL;
+        mPayload.length = 0;
+    }
 }
 
 UpdateGameRuleProgressPacket::~UpdateGameRuleProgressPacket()
 {
-    delete[] mPayload.data;
 }
 
 boost::shared_ptr<Packet> UpdateGameRuleProgressPacket::create()
@@ -43,14 +51,16 @@ void UpdateGameRuleProgressPacket::read(DataInputStream* input)
     mItemId = input->readInt();
     mAuxValue = input->readByte();
     mDataTag = input->readInt();
-    delete[] mPayload.data;
-    mPayload.data = NULL;
-    mPayload.length = 0;
     int payloadLength = input->readInt();
     if (payloadLength > 0)
     {
         mPayload = arrayWithLength<unsigned char>(static_cast<unsigned int>(payloadLength), true);
         input->readBytes(mPayload);
+    }
+    else
+    {
+        mPayload.data = NULL;
+        mPayload.length = 0;
     }
 }
 
@@ -72,5 +82,5 @@ void UpdateGameRuleProgressPacket::handle(PacketListener* listener)
 
 int UpdateGameRuleProgressPacket::getEstimatedSize()
 {
-    return static_cast<int>(mDescription.size() * 2 + 4 + mPayload.length);
+    return static_cast<int>(mDescription.size() + 4 + mPayload.length);
 }

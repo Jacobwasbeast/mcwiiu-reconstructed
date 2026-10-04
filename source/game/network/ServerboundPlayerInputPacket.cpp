@@ -35,9 +35,9 @@ void ServerboundPlayerInputPacket::read(DataInputStream* input)
     xxa = input->readFloat();
     zza = input->readFloat();
 
-    unsigned char flags = input->readByte();
-    jumping = (flags & 1) != 0;
-    sneaking = (flags & 2) != 0;
+    int flags = input->readByte();
+    jumping = (flags & 1) > 0;
+    sneaking = (flags & 2) > 0;
 }
 
 void ServerboundPlayerInputPacket::write(DataOutputStream* output)
@@ -45,7 +45,11 @@ void ServerboundPlayerInputPacket::write(DataOutputStream* output)
     output->writeFloat(xxa);
     output->writeFloat(zza);
 
-    unsigned char flags = jumping ? 1 : 0;
+    unsigned char flags = 0;
+    if (jumping)
+    {
+        flags = 1;
+    }
     if (sneaking)
     {
         flags |= 2;

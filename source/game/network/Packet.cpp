@@ -311,7 +311,6 @@ boost::shared_ptr<Packet> Packet::getPacket(int packetId)
 
 bool Packet::canSendToAnyClient(boost::shared_ptr<Packet> packet)
 {
-    BOOST_ASSERT(packet);
     return sSendToAnyClientPacketIds.count(packet->getPacketId()) != 0;
 }
 
@@ -323,25 +322,16 @@ boost::shared_ptr<Packet> Packet::readPacket(DataInputStream* input, bool isServ
         return boost::shared_ptr<Packet>();
     }
 
-    bool known;
-    if (isServer)
-    {
-        known = sServerboundPacketIds.find(packetId) != sServerboundPacketIds.end();
-    }
-    else
-    {
-        known = sClientboundPacketIds.find(packetId) != sClientboundPacketIds.end();
-    }
-
-    if (!known)
+    if (isServer ? sServerboundPacketIds.find(packetId) == sServerboundPacketIds.end()
+                 : sClientboundPacketIds.find(packetId) == sClientboundPacketIds.end())
     {
         protocolError = true;
         gApp.SetAction(gProfile->GetPrimaryPad(), eXuiAction_ConnectionLost, NULL);
         return boost::shared_ptr<Packet>();
     }
 
-    boost::shared_ptr<Packet> packet = getPacket(packetId);
-    BOOST_ASSERT(packet);
+    boost::shared_ptr<Packet> packet;
+    packet = getPacket(packetId);
     packet->read(input);
     ++packetsRead;
 
@@ -350,7 +340,6 @@ boost::shared_ptr<Packet> Packet::readPacket(DataInputStream* input, bool isServ
 
 void Packet::writePacket(boost::shared_ptr<Packet> packet, DataOutputStream* output, bool isServer, unsigned int& packetsWritten)
 {
-    BOOST_ASSERT(packet);
     output->write(packet->getPacketId());
     packet->write(output);
     ++packetsWritten;
@@ -364,7 +353,7 @@ void Packet::writeUtf(const std::wstring& text, DataOutputStream* output)
 
 std::wstring Packet::readUtf(DataInputStream* input, int maxLength)
 {
-    int length = input->readShort();
+    short length = input->readShort();
     if (length > maxLength)
     {
         std::wstringstream message;
@@ -417,13 +406,11 @@ uint32_t packInt(int32_t value, uint32_t offset, uint32_t width)
 
 int32_t unpackSigned(uint32_t value, uint32_t offset, uint32_t width)
 {
-    uint32_t rightShift = (0x20U - width) & 0x3f;
-    uint32_t leftShift = (rightShift - offset) & 0x3f;
-    return static_cast<int32_t>(value << leftShift) >> rightShift;
+    return static_cast<int32_t>(value << ((32 - width) - offset)) >> (32 - width);
 }
 
 uint32_t unpackUnsigned(uint32_t value, uint32_t offset, uint32_t width)
 {
     uint32_t mask = static_cast<uint32_t>(getMaskInt(offset, width));
-    return (value >> (offset & 0x3f)) & mask;
+    return (value >> offset) & mask;
 }

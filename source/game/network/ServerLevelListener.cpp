@@ -68,7 +68,8 @@ void ServerLevelListener::entityAdded(boost::shared_ptr<Entity> entity)
     mLevel->getTracker()->addEntity(entity);
     MemSect(0);
 
-    if (entity->GetType() == EntityType::SERVER_PLAYER)
+    const bool isServerPlayer = entity->GetType() == EntityType::SERVER_PLAYER;
+    if (isServerPlayer)
         mLevel->mDimension->onPlayerJoin(boost::static_pointer_cast<ServerPlayer>(entity));
 }
 
@@ -76,7 +77,8 @@ void ServerLevelListener::entityRemoved(boost::shared_ptr<Entity> entity)
 {
     mLevel->getTracker()->removeEntity(entity);
 
-    if (entity->GetType() == EntityType::SERVER_PLAYER)
+    const bool isServerPlayer = entity->GetType() == EntityType::SERVER_PLAYER;
+    if (isServerPlayer)
         mLevel->mDimension->onPlayerLeave(boost::static_pointer_cast<ServerPlayer>(entity));
 }
 
@@ -91,10 +93,10 @@ void ServerLevelListener::playSoundToAllPlayers(const SoundEvent* sound,
                                                  SoundSource::ESoundSource, double, double,
                                                  double, float volume, float pitch, float)
 {
-    boost::shared_ptr<Packet> packet(new ClientboundSoundPacket(sound, volume, pitch));
+    boost::shared_ptr<Packet> packet = boost::shared_ptr<ClientboundSoundPacket>(new ClientboundSoundPacket(sound, volume, pitch));
 
-    std::vector<boost::shared_ptr<ServerPlayer> > sentPlayers;
     std::vector<boost::shared_ptr<ServerPlayer> >* players = mServer->getPlayers()->getPlayers();
+    std::vector<boost::shared_ptr<ServerPlayer> > sentPlayers;
 
     for (unsigned int i = 0; i < players->size(); ++i)
     {
@@ -131,34 +133,29 @@ void ServerLevelListener::playSound(boost::shared_ptr<Player> player, const Soun
     if (volume <= 0.02f)
         return;
 
-    double radius = 16.0;
-    if (volume > 1.0f)
-        radius = 16.0f * volume;
-
-    boost::shared_ptr<Packet> packet(new ClientboundSoundPacket(sound, source, x, y, z,
-                                                                 volume, pitch));
-    gMinecraftServer->getPlayers()->broadcast(player, x, y, z, radius,
-                                              mLevel->mDimension->getType()->getId(), packet);
+    (gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers)->broadcast(player, x, y, z, volume > 1.0f ? 16.0f * volume : 16.0,
+                                              mLevel->mDimension->getType()->getId(),
+                                              boost::shared_ptr<ClientboundSoundPacket>(new ClientboundSoundPacket(sound, source, x, y, z, volume, pitch)));
 }
 
 void ServerLevelListener::levelEvent(boost::shared_ptr<Player> player, int type,
                                      const BlockPos& pos, int data)
 {
-    boost::shared_ptr<Packet> packet(new ClientboundLevelEventPacket(type, pos, data, false));
-    gMinecraftServer->getPlayers()->broadcast(player, pos.x, pos.y, pos.z, 64.0,
-                                              mLevel->mDimension->getType()->getId(), packet);
+    (gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers)->broadcast(player, pos.x, pos.y, pos.z, 64.0,
+                                              mLevel->mDimension->getType()->getId(),
+                                              boost::shared_ptr<ClientboundLevelEventPacket>(new ClientboundLevelEventPacket(type, pos, data, false)));
 }
 
 void ServerLevelListener::globalLevelEvent(int type, const BlockPos& pos, int data)
 {
-    boost::shared_ptr<Packet> packet(new ClientboundLevelEventPacket(type, pos, data, true));
-    gMinecraftServer->getPlayers()->broadcastAll(packet);
+    (gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers)->broadcastAll(
+        boost::shared_ptr<ClientboundLevelEventPacket>(new ClientboundLevelEventPacket(type, pos, data, true)));
 }
 
 void ServerLevelListener::destroyBlockProgress(int breakerId, const BlockPos& pos, int progress)
 {
     std::vector<boost::shared_ptr<ServerPlayer> >* players =
-        gMinecraftServer->getPlayers()->getPlayers();
+        (gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers)->getPlayers();
 
     INetworkPlayer* breakerNetworkPlayer = NULL;
     for (unsigned int i = 0; i < players->size(); ++i)
@@ -179,11 +176,11 @@ void ServerLevelListener::destroyBlockProgress(int breakerId, const BlockPos& po
         if (target == NULL || target->mLevel != mLevel || target->getId() == breakerId)
             continue;
 
-        INetworkPlayer* networkPlayer = target->mConnection->getNetworkPlayer();
-        if (networkPlayer == NULL)
+        if (target->mConnection->getNetworkPlayer() == NULL)
             continue;
 
-        if (breakerNetworkPlayer != NULL && breakerNetworkPlayer->IsSameSystem(networkPlayer))
+        if (breakerNetworkPlayer != NULL
+            && breakerNetworkPlayer->IsSameSystem(target->mConnection->getNetworkPlayer()))
             continue;
 
         double dx = pos.x - target->mX;
@@ -192,9 +189,8 @@ void ServerLevelListener::destroyBlockProgress(int breakerId, const BlockPos& po
 
         if (dx * dx + dy * dy + dz * dz < 1024.0)
         {
-            boost::shared_ptr<Packet> packet(
-                new ClientboundBlockDestructionPacket(breakerId, pos, progress));
-            target->mConnection->send(packet);
+            target->mConnection->send(boost::shared_ptr<ClientboundBlockDestructionPacket>(
+                new ClientboundBlockDestructionPacket(breakerId, pos, progress)));
         }
     }
 }

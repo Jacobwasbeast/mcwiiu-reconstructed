@@ -6,7 +6,7 @@
 #include "game/network/PacketListener.hpp"
 
 ServerboundPlayerActionPacket::ServerboundPlayerActionPacket()
-    : mPos(), mDirection(NULL), mAction(START_DESTROY_BLOCK), mUseTime(0)
+    : mPos(), mDirection(NULL), mUseTime(0)
 {
 }
 

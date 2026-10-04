@@ -1,7 +1,6 @@
 #include "game/network/ClientboundAddGlobalEntityPacket.hpp"
 #include "game/core/EntityType.hpp"
-
-#include <cmath>
+#include "game/core/Mth.hpp"
 
 #include "game/core/DataInputStream.hpp"
 #include "game/core/DataOutputStream.hpp"
@@ -15,9 +14,9 @@ ClientboundAddGlobalEntityPacket::ClientboundAddGlobalEntityPacket()
 
 ClientboundAddGlobalEntityPacket::ClientboundAddGlobalEntityPacket(boost::shared_ptr<Entity> entity)
     : mId(entity->getId()),
-      mX((int)std::floor(entity->mX * 32.0)),
-      mY((int)std::floor(entity->mY * 32.0)),
-      mZ((int)std::floor(entity->mZ * 32.0)),
+      mX(Mth::floor(entity->mX * 32.0)),
+      mY(Mth::floor(entity->mY * 32.0)),
+      mZ(Mth::floor(entity->mZ * 32.0)),
       mType(entity->GetType() == EntityType::LIGHTNING_BOLT ? 1 : 0)
 {
 }

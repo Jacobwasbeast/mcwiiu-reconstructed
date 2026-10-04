@@ -55,7 +55,7 @@ void ClientboundMapItemDataPacket::read(DataInputStream* input)
     mDecorations = std::vector<MapDecoration>(decorationCount);
     for (int i = 0; i < decorationCount; i++)
     {
-        unsigned char icon = input->readByte();
+        char icon = input->readByte();
         char x = (char)input->readByte();
         char y = (char)input->readByte();
         unsigned int packed = (unsigned int)input->readByte();
@@ -91,10 +91,10 @@ void ClientboundMapItemDataPacket::write(DataOutputStream* output)
     output->writeVarInt((int)mDecorations.size());
     for (std::vector<MapDecoration>::const_iterator it = mDecorations.begin(); it != mDecorations.end(); ++it)
     {
+        int id = it->id;
         output->writeByte(it->getImg());
         output->writeByte((unsigned char)it->getX());
         output->writeByte((unsigned char)it->getY());
-        int id = it->id;
         output->writeByte((unsigned char)id);
         output->writeByte((unsigned char)(id >> 8));
         output->writeByte((unsigned char)(id >> 16));
@@ -122,9 +122,9 @@ void ClientboundMapItemDataPacket::applyToMap(MapItemSavedData* mapData)
     mapData->mScale = mScale;
     mapData->mTrackingPosition = mTrackingPosition;
     mapData->mDecorations.clear();
-    for (std::vector<MapDecoration>::const_iterator it = mDecorations.begin(); it != mDecorations.end(); ++it)
+    for (unsigned int i = 0; i < mDecorations.size(); i++)
     {
-        mapData->mDecorations[(int)(it - mDecorations.begin())] = *it;
+        mapData->mDecorations[i] = mDecorations[i];
     }
     if (mWidth > 0)
     {

@@ -35,7 +35,7 @@ void ClientboundContainerSetSlotPacket::handle(PacketListener* listener)
 
 void ClientboundContainerSetSlotPacket::read(DataInputStream* input)
 {
-    containerId = input->readByte();
+    containerId = static_cast<signed char>(input->readByte());
     slot = input->readShort();
     item = input->readItem();
 }

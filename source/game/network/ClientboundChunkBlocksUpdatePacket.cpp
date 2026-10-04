@@ -16,7 +16,6 @@ ClientboundChunkBlocksUpdatePacket::ClientboundChunkBlocksUpdatePacket()
     x = 0;
     z = 0;
     count = 0;
-    dimension = 0;
 }
 
 ClientboundChunkBlocksUpdatePacket::ClientboundChunkBlocksUpdatePacket(
@@ -29,30 +28,32 @@ ClientboundChunkBlocksUpdatePacket::ClientboundChunkBlocksUpdatePacket(
     positions = arrayWithLength<short>(count, true);
     elements = arrayWithLength<unsigned int>(count, true);
 
-    for (unsigned int i = 0; i < count; ++i)
+    LevelChunk* chunk = level->getChunk(x, z);
+
+    short* sortedPositions = positions.data;
+    for (int i = 0; i < count; ++i)
     {
-        positions.data[i] = changes.data[i];
+        sortedPositions[i] = changes.data[i];
     }
 
-    qsort(positions.data, count, sizeof(short), PositionSortFunction);
+    qsort(sortedPositions, count, sizeof(short), PositionSortFunction);
 
-    LevelChunk* chunk = level->getChunk(x, z);
-    for (unsigned int i = 0; i < count; ++i)
+    for (int i = 0; i < count; ++i)
     {
-        unsigned short packedPosition = static_cast<unsigned short>(positions.data[i]);
+        int packedPosition = positions.data[i];
         int localX = (packedPosition >> 12) & 15;
         int localZ = (packedPosition >> 8) & 15;
         int y = packedPosition & 255;
-        elements.data[i] = chunk->getElement(localX, y, localZ)
-            | (static_cast<unsigned int>(chunk->getExtraElement(localX, y, localZ)) << 16);
+        unsigned int element = chunk->getElement(localX, y, localZ);
+        int extraElement = chunk->getExtraElement(localX, y, localZ);
+        elements.data[i] = element | (extraElement << 16);
     }
 
-    const DimensionType* type = level->mDimension->getType();
-    if (type == DimensionType::OVERWORLD)
+    if (level->mDimension->getType() == DimensionType::OVERWORLD)
     {
         dimension = 0;
     }
-    else if (type == DimensionType::NETHER)
+    else if (level->mDimension->getType() == DimensionType::NETHER)
     {
         dimension = 1;
     }
@@ -89,12 +90,12 @@ void ClientboundChunkBlocksUpdatePacket::read(DataInputStream* input)
     unsigned int previousElement = 0;
     unsigned short previousPosition = 0;
 
-    for (unsigned int i = 0; i < count; ++i)
+    for (int i = 0; i < static_cast<int>(count); ++i)
     {
         unsigned int value = input->readByte();
-        bool newY = (value & 128) != 0;
+        unsigned int newY = (value >> 7) & 1;
 
-        if ((value & 64) != 0)
+        if (((value >> 6) & 1) != 0)
         {
             unsigned int shift = 6;
             previousElement = value & 63;
@@ -107,24 +108,21 @@ void ClientboundChunkBlocksUpdatePacket::read(DataInputStream* input)
             }
             while ((part & 128) != 0);
         }
-        else if ((value & 32) != 0)
-        {
-            previousElement = value & 15;
-        }
         else
         {
-            previousElement = (previousElement & 0xfffffff0) | (value & 15);
+            previousElement = (value & 15) | (((value >> 5) & 1) != 0 ? 0 : (previousElement & 0xfffffff0));
         }
 
         elements.data[i] = previousElement;
 
-        unsigned int xz = input->readByte();
         if (newY)
         {
+            unsigned int xz = input->readByte();
             previousPosition = static_cast<unsigned short>((xz << 8) | input->readByte());
         }
         else
         {
+            unsigned int xz = input->readByte();
             previousPosition = static_cast<unsigned short>((xz << 8) | (previousPosition & 255));
         }
         positions.data[i] = static_cast<short>(previousPosition);
@@ -133,32 +131,34 @@ void ClientboundChunkBlocksUpdatePacket::read(DataInputStream* input)
 
 void ClientboundChunkBlocksUpdatePacket::write(DataOutputStream* output)
 {
-    unsigned int header = (static_cast<unsigned int>(dimension) << 28)
-        | (count << 20)
-        | ((static_cast<unsigned int>(x) & 1023) << 10)
-        | (static_cast<unsigned int>(z) & 1023);
+    int header = ((x & 1023) << 10) | (z & 1023) | (count << 20) | (dimension << 28);
     output->writeInt(header);
 
     unsigned int previousY = static_cast<unsigned int>(-1);
     unsigned int previousElement = static_cast<unsigned int>(-1);
 
-    for (unsigned int i = 0; i < count; ++i)
+    for (int i = 0; i < static_cast<int>(count); ++i)
     {
-        unsigned short packedPosition = static_cast<unsigned short>(positions.data[i]);
+        int packedPosition = positions.data[i];
         unsigned int y = packedPosition & 255;
+        unsigned int xz = (packedPosition >> 8) & 255;
         unsigned int element = elements.data[i];
-        unsigned int value = y == previousY ? 0 : 128;
-
-        if (element == 0)
+        bool newY = y != previousY;
+        unsigned int value = 0;
+        if (newY)
         {
-            value |= 32;
-            output->write(value | (element & 15));
-            output->write(packedPosition >> 8);
+            value = 128;
         }
-        else if (((element ^ previousElement) & 0xfffffff0) == 0)
+
+        if (element == 0 || ((element ^ previousElement) & 0xfffffff0) == 0)
         {
+            if (element == 0)
+            {
+                value |= 32;
+            }
+
             output->write(value | (element & 15));
-            output->write(packedPosition >> 8);
+            output->write(xz);
         }
         else
         {
@@ -175,10 +175,10 @@ void ClientboundChunkBlocksUpdatePacket::write(DataOutputStream* output)
                 output->write(part);
             }
             while (remaining != 0);
-            output->write(packedPosition >> 8);
+            output->write(xz);
         }
 
-        if (y != previousY)
+        if (newY)
         {
             output->write(y);
         }

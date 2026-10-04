@@ -44,7 +44,10 @@ private:
     friend class PlayerList;
     friend class ServerConnectionListener;
 
+public:
     Socket* m_socket;
+
+private:
     unsigned int m_address;
     DataInputStream* m_input;
     DataOutputStream* m_bufferedOutput;

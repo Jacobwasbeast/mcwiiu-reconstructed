@@ -37,7 +37,7 @@ public:
     static boost::shared_ptr<Packet> create();
 
 private:
-    Type type;
+    unsigned int type;
     std::wstring text;
     int fadeIn;
     int stay;

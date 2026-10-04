@@ -37,11 +37,11 @@ int ServerboundPlayerAbilitiesPacket::getPacketId()
 
 void ServerboundPlayerAbilitiesPacket::read(DataInputStream* input)
 {
-    unsigned char flags = input->readByte();
-    setInvulnerable((flags & 1) != 0);
-    setFlying((flags & 2) != 0);
-    setCanFly((flags & 4) != 0);
-    setInstabuild((flags & 8) != 0);
+    int flags = input->readByte();
+    setInvulnerable((flags & 1) > 0);
+    setFlying((flags & 2) > 0);
+    setCanFly((flags & 4) > 0);
+    setInstabuild((flags & 8) > 0);
     setFlyingSpeed(input->readFloat());
     setWalkingSpeed(input->readFloat());
 }

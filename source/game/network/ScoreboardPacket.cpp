@@ -15,8 +15,7 @@ ScoreboardPacket::~ScoreboardPacket()
 
 boost::shared_ptr<Packet> ScoreboardPacket::create()
 {
-    boost::shared_ptr<ScoreboardPacket> packet(new ScoreboardPacket());
-    return packet;
+    return boost::shared_ptr<Packet>(new ScoreboardPacket());
 }
 
 ScoreboardPacket::EMessage ScoreboardPacket::GetMessage()
@@ -27,16 +26,23 @@ ScoreboardPacket::EMessage ScoreboardPacket::GetMessage()
 void ScoreboardPacket::read(DataInputStream* input)
 {
     mMessage = static_cast<EMessage>(input->readByte());
-    if (mMessage == ADD_PLAYER_STATS)
+    switch (GetMessage())
+    {
+    case ADD_PLAYER_STATS:
         mData = new AddPlayerStatsData();
-    else if (mMessage == UPDATE_PLAYER_STATS)
+        break;
+    case UPDATE_PLAYER_STATS:
         mData = new UpdatePlayerStatsData();
-    else if (mMessage == REMOVE_PLAYER_STATS)
+        break;
+    case REMOVE_PLAYER_STATS:
         mData = new RemovePlayerStatsData();
-    else if (mMessage == CLEAR_PLAYER_STATS)
+        break;
+    case CLEAR_PLAYER_STATS:
         mData = new Data();
-    else
+        break;
+    default:
         return;
+    }
     mData->read(input);
 }
 
@@ -118,7 +124,7 @@ void ScoreboardPacket::UpdatePlayerStatsData::read(DataInputStream* input)
     mChanged = static_cast<unsigned long long>(input->readLong());
     int record;
     for (record = 0; record < Scoreboard::PlayerStats::eRecord_Count; ++record)
-        if ((mChanged & (1ULL << record)) != 0)
+        if (((mChanged >> record) & 1ULL) != 0)
             mStats->readRecord(input, record, mRound, mLife);
 }
 
@@ -129,13 +135,19 @@ void ScoreboardPacket::UpdatePlayerStatsData::write(DataOutputStream* output) co
     output->writeLong(static_cast<long long>(mChanged));
     int record;
     for (record = 0; record < Scoreboard::PlayerStats::eRecord_Count; ++record)
-        if ((mChanged & (1ULL << record)) != 0)
+        if (((mChanged >> record) & 1ULL) != 0)
             mStats->writeRecord(output, record, mRound, mLife);
 }
 
-ScoreboardPacket::RemovePlayerStatsData::RemovePlayerStatsData() : mUID(StatsUID::EMPTY_SUID()) {}
+ScoreboardPacket::RemovePlayerStatsData::RemovePlayerStatsData()
+{
+    mUID = StatsUID::EMPTY_SUID();
+}
 
-ScoreboardPacket::RemovePlayerStatsData::RemovePlayerStatsData(StatsUID uid) : mUID(uid) {}
+ScoreboardPacket::RemovePlayerStatsData::RemovePlayerStatsData(StatsUID uid)
+{
+    mUID = uid;
+}
 
 ScoreboardPacket::RemovePlayerStatsData::~RemovePlayerStatsData() {}
 

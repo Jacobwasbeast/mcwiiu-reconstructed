@@ -38,7 +38,7 @@ void ClientboundCooldownPacket::write(DataOutputStream* output)
 
 void ClientboundCooldownPacket::handle(PacketListener* listener)
 {
-    listener->handleItemCooldown(shared_from_this());
+    listener->handleItemCooldown(boost::static_pointer_cast<ClientboundCooldownPacket>(shared_from_this()));
 }
 
 Item* ClientboundCooldownPacket::getItem()

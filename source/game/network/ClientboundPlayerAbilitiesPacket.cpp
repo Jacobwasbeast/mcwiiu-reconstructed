@@ -6,12 +6,11 @@
 #include "game/network/PacketListener.hpp"
 
 ClientboundPlayerAbilitiesPacket::ClientboundPlayerAbilitiesPacket()
-    : mInvulnerable(false), mFlying(false), mCanFly(false), mInstabuild(false), mFlyingSpeed(0.0f), mWalkingSpeed(0.0f), mCanBuild(false), mPlayerId(0)
+    : mInvulnerable(false), mFlying(false), mCanFly(false), mInstabuild(false), mFlyingSpeed(0.0f), mWalkingSpeed(0.0f), mCanBuild(true), mPlayerId(0)
 {
 }
 
 ClientboundPlayerAbilitiesPacket::ClientboundPlayerAbilitiesPacket(Abilities* abilities, int playerId)
-    : mInvulnerable(false), mFlying(false), mCanFly(false), mInstabuild(false), mFlyingSpeed(0.0f), mWalkingSpeed(0.0f), mCanBuild(false), mPlayerId(playerId)
 {
     setInvulnerable(abilities->mInvulnerable);
     setFlying(abilities->mFlying);
@@ -20,6 +19,7 @@ ClientboundPlayerAbilitiesPacket::ClientboundPlayerAbilitiesPacket(Abilities* ab
     setFlyingSpeed(abilities->getFlyingSpeed());
     setWalkingSpeed(abilities->getWalkingSpeed());
     setCanBuild(abilities->mMayBuild);
+    mPlayerId = playerId;
 }
 
 ClientboundPlayerAbilitiesPacket::~ClientboundPlayerAbilitiesPacket()
@@ -36,12 +36,12 @@ void ClientboundPlayerAbilitiesPacket::setCanBuild(bool value) { mCanBuild = val
 
 void ClientboundPlayerAbilitiesPacket::read(DataInputStream* input)
 {
-    unsigned char flags = input->readByte();
-    setInvulnerable((flags & 1) != 0);
-    setFlying((flags & 2) != 0);
-    setCanFly((flags & 4) != 0);
-    setInstabuild((flags & 8) != 0);
-    setCanBuild((flags & 16) != 0);
+    int flags = input->readByte();
+    setInvulnerable((flags & 1) > 0);
+    setFlying((flags & 2) > 0);
+    setCanFly((flags & 4) > 0);
+    setInstabuild((flags & 8) > 0);
+    setCanBuild((flags & 16) > 0);
     setFlyingSpeed(input->readFloat());
     setWalkingSpeed(input->readFloat());
     mPlayerId = input->readInt();

@@ -4,7 +4,7 @@
 #include "game/entity/mob/Entity.hpp"
 #include "game/network/PacketListener.hpp"
 
-ServerboundPlayerCommandPacket::ServerboundPlayerCommandPacket() : id(0), action(PRESS_SHIFT_KEY), data(0) {}
+ServerboundPlayerCommandPacket::ServerboundPlayerCommandPacket() : id(-1), action(PRESS_SHIFT_KEY), data(0) {}
 ServerboundPlayerCommandPacket::ServerboundPlayerCommandPacket(boost::shared_ptr<Entity> entity, Action action) : id(entity->getId()), action(action), data(0) {}
 ServerboundPlayerCommandPacket::ServerboundPlayerCommandPacket(boost::shared_ptr<Entity> entity, Action action, int data) : id(entity->getId()), action(action), data(data) {}
 ServerboundPlayerCommandPacket::~ServerboundPlayerCommandPacket() {}

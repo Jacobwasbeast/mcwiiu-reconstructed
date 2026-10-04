@@ -22,6 +22,7 @@ ClientboundAddPlayerPacket::ClientboundAddPlayerPacket()
     mCapeId = 0;
     mPlayerPrivilege = 0;
     mGameType = GameType::NOT_SET;
+    mEntityData = boost::shared_ptr<SynchedEntityData>();
     mUnpackedData = NULL;
 }
 
@@ -150,12 +151,14 @@ void ClientboundAddPlayerPacket::handle(PacketListener* listener)
 
 int ClientboundAddPlayerPacket::getEstimatedSize()
 {
-    if (mEntityData == NULL)
+    int size = 0x5c;
+
+    if (mEntityData)
     {
-        return 0x5c;
+        size += mEntityData->getItemCount() * 8;
     }
 
-    return (unsigned int)(mEntityData->getItemCount() * 8 + 0x5c);
+    return size;
 }
 
 std::vector<DataItem*>* ClientboundAddPlayerPacket::getUnpackedData()

@@ -23,35 +23,19 @@ void ChunkVisibilityAreaPacket::read(DataInputStream* input)
 {
     unsigned int first = static_cast<unsigned int>(input->readInt());
     unsigned int second = static_cast<unsigned int>(input->readInt());
-    minX = static_cast<int>((first >> 15) & 0x7fff);
-    minZ = static_cast<int>(first & 0x7fff);
-    if (minX & 0x4000)
-        minX -= 0x8000;
-    if (minZ & 0x4000)
-        minZ -= 0x8000;
-    visible = (first & 0x40000000u) != 0;
-    loaded = (first & 0x80000000u) != 0;
-    maxX = static_cast<int>((second >> 15) & 0x7fff);
-    maxZ = static_cast<int>(second & 0x7fff);
-    if (maxX & 0x4000)
-        maxX -= 0x8000;
-    if (maxZ & 0x4000)
-        maxZ -= 0x8000;
-    outside = (second & 0x40000000u) != 0;
+    minZ = static_cast<int>(first << 17) >> 17;
+    minX = static_cast<int>(first << 2) >> 17;
+    visible = ((first >> 30) & 1) != 0;
+    loaded = (first >> 31) & 1;
+    maxX = static_cast<int>(second << 2) >> 17;
+    maxZ = static_cast<int>(second << 17) >> 17;
+    outside = ((second >> 30) & 1) != 0;
 }
 
 void ChunkVisibilityAreaPacket::write(DataOutputStream* output)
 {
-    unsigned int first = (static_cast<unsigned int>(minX) & 0x7fff) << 15;
-    first |= static_cast<unsigned int>(minZ) & 0x7fff;
-    if (visible)
-        first |= 0x40000000u;
-    if (loaded)
-        first |= 0x80000000u;
-    unsigned int second = (static_cast<unsigned int>(maxX) & 0x7fff) << 15;
-    second |= static_cast<unsigned int>(maxZ) & 0x7fff;
-    if (outside)
-        second |= 0x40000000u;
+    unsigned int first = ((minX & 0x7fff) << 15) | (minZ & 0x7fff) | (visible << 30) | (loaded << 31);
+    unsigned int second = ((maxX & 0x7fff) << 15) | (maxZ & 0x7fff) | (outside << 30);
     output->writeInt(static_cast<int>(first));
     output->writeInt(static_cast<int>(second));
 }

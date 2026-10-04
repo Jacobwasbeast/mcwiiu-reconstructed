@@ -7,9 +7,6 @@
 
 ServerboundUseItemOnPacket::ServerboundUseItemOnPacket()
 {
-    clickX = 0.0f;
-    clickY = 0.0f;
-    clickZ = 0.0f;
 }
 
 ServerboundUseItemOnPacket::ServerboundUseItemOnPacket(const BlockPos& pos, const Direction* face,

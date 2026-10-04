@@ -25,8 +25,8 @@ boost::unordered_set<AttributeModifier*>* ClientboundUpdateAttributesPacket::Att
 eATTRIBUTE_ID ClientboundUpdateAttributesPacket::AttributeSnapshot::getId() { return id; }
 double ClientboundUpdateAttributesPacket::AttributeSnapshot::getBase() { return base; }
 
-ClientboundUpdateAttributesPacket::ClientboundUpdateAttributesPacket()
-    : entityId(0), entityType(0), values() {
+ClientboundUpdateAttributesPacket::ClientboundUpdateAttributesPacket() {
+    entityId = 0;
 }
 
 ClientboundUpdateAttributesPacket::ClientboundUpdateAttributesPacket(
@@ -74,19 +74,21 @@ void ClientboundUpdateAttributesPacket::write(DataOutputStream* output) {
     output->writeByte(static_cast<unsigned char>(values.size()));
     for (boost::unordered_set<AttributeSnapshot*>::iterator it = values.begin(); it != values.end(); ++it) {
         AttributeSnapshot* value = *it;
+        boost::unordered_set<AttributeModifier*>* modifiers = value->getModifiers();
         output->writeByte(static_cast<unsigned char>(value->getId()));
         output->writeDouble(value->getBase());
-        output->writeByte(static_cast<unsigned char>(value->getModifiers()->size()));
-        for (boost::unordered_set<AttributeModifier*>::iterator modifier = value->getModifiers()->begin(); modifier != value->getModifiers()->end(); ++modifier) {
-            output->writeByte(static_cast<unsigned char>((*modifier)->getId()));
-            output->writeDouble((*modifier)->getAmount());
-            output->writeByte(static_cast<unsigned char>((*modifier)->getOperation()));
+        output->writeByte(static_cast<unsigned char>(modifiers->size()));
+        for (boost::unordered_set<AttributeModifier*>::iterator modifier = modifiers->begin(); modifier != modifiers->end(); ++modifier) {
+            AttributeModifier* entry = *modifier;
+            output->writeByte(static_cast<unsigned char>(entry->getId()));
+            output->writeDouble(entry->getAmount());
+            output->writeByte(static_cast<unsigned char>(entry->getOperation()));
         }
     }
 }
 
 void ClientboundUpdateAttributesPacket::handle(PacketListener* listener) { listener->handleUpdateAttributes(shared_from_this()); }
-int ClientboundUpdateAttributesPacket::getEstimatedSize() { return 44; }
+int ClientboundUpdateAttributesPacket::getEstimatedSize() { return values.size() * 24 + 8; }
 int ClientboundUpdateAttributesPacket::getEntityId() { return entityId; }
 int ClientboundUpdateAttributesPacket::getEntityType() { return entityType; }
 boost::unordered_set<ClientboundUpdateAttributesPacket::AttributeSnapshot*>* ClientboundUpdateAttributesPacket::getValues() { return &values; }

@@ -14,6 +14,7 @@ class ClientPacketListener;
 class ClientboundPreLoginPacket;
 class C4JEventImpl;
 struct FriendSessionInfo;
+namespace nn { namespace fp { struct FriendPresence; } }
 class GameSessionData;
 class Minecraft;
 
@@ -32,12 +33,12 @@ public:
     void Terminate();
     static int GetLocalPlayerMask(int userIndex);
     bool IsInSession();
-    bool JoinGameFromInviteInfo(int userIndex, int userIndexMask, const FriendPresence* presence);
+    bool JoinGameFromInviteInfo(int userIndex, int userIndexMask, const nn::fp::FriendPresence* presence);
     bool SetLocalGame(bool localGame);
     static int JoinFromInvite_SignInReturned(void* data, bool result, int error);
-    void HandleInviteWhenInMenus(int userIndex, const FriendPresence* presence);
-    void ProcessInvite(unsigned int userIndex, unsigned int flags, FriendPresence* presence);
-    void GameInviteReceived(int userIndex, FriendPresence* presence);
+    void HandleInviteWhenInMenus(int userIndex, const nn::fp::FriendPresence* presence);
+    void ProcessInvite(unsigned int userIndex, unsigned int flags, nn::fp::FriendPresence* presence);
+    void GameInviteReceived(int userIndex, nn::fp::FriendPresence* presence);
     bool TickInvitePending();
     void DoWork();
     bool IsHost();
@@ -88,7 +89,7 @@ public:
     void UpdateAndSetGameSessionData(INetworkPlayer* player);
     void SendInviteGUI(int userIndex);
     void ResetLeavingGame();
-    bool AlreadyInSession(const FriendPresence* presence);
+    bool AlreadyInSession(const nn::fp::FriendPresence* presence);
     bool IsNetworkThreadRunning();
     static int RunNetworkGameThreadProc(void* data);
     static int ExitAndJoinFromInviteThreadProc(void* data);
@@ -144,7 +145,7 @@ public:
     bool IsFriendsOnlyUGC(int userIndex);
     void CheckFriendsCanPlay(int userIndex, int& friendCount, boost::shared_ptr<ClientboundPreLoginPacket> packet, int titleVersion, int& canPlayCount, int& cannotPlayCount, int& blockedCount, int& unknownCount);
     unsigned int GetMaxPlayers(EMiniGameId miniGameId, unsigned int worldId);
-    unsigned int GetMaxPlayers(GameSessionData* data);
+    int GetMaxPlayers(GameSessionData* data);
     unsigned int GetMaxPlayers();
     void AttemptPSNSignIn(int (*callback)(void*, bool, int), void* data, bool showProgress, int userIndex);
     void RecvInviteGUI();
@@ -163,7 +164,7 @@ private:
     unsigned char m_initialisedPadding[3];
     int m_pendingInviteUserIndex;
     unsigned int m_pendingInviteUserMask;
-    FriendPresence* m_pendingInvitePresence;
+    nn::fp::FriendPresence* m_pendingInvitePresence;
     int m_unknown18;
     unsigned char m_pendingInvitePresenceData[0x38];
     bool m_networkThreadRunning;

@@ -149,13 +149,17 @@ private:
     friend class PlayerList;
     friend class ServerPlayer;
     friend class ServerConnection;
+    friend class ServerConnectionListener;
     static const int TELEPORT_RESEND_TICKS = 100;
     static const int INVENTORY_MENU_FIRST_SLOT = 1;
     static const int INVENTORY_MENU_LAST_SLOT = 45;
     static const int DROP_SPAM_LIMIT = 200;
     static const int DROP_SPAM_STEP = 20;
 
+public:
     Connection* mConnection;
+
+private:
     bool mDisconnected;
     OSFastMutex mDisconnectMutex;
     PlayerUID mPlayerUID;

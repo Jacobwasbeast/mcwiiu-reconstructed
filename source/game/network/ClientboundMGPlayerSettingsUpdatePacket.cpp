@@ -5,7 +5,9 @@
 
 maybe<float> readMaybeFloat(DataInputStream* input)
 {
-    return input->readBoolean() ? maybe<float>(input->readFloat()) : maybe<float>();
+    if (input->readBoolean())
+        return maybe<float>(input->readFloat());
+    return maybe<float>();
 }
 
 ClientboundMGPlayerSettingsUpdatePacket::ClientboundMGPlayerSettingsUpdatePacket() : mSettings() {}
@@ -64,25 +66,26 @@ void ClientboundMGPlayerSettingsUpdatePacket::write(DataOutputStream* output)
     output->writeBoolean(mSettings.mTakeEverythingEnabled);
     output->writeBoolean(mSettings.mChestRefillEnabled);
 
-    const unsigned char tntFlags = mSettings.mCanTntDestroyBlocks.isSet()
-        ? (mSettings.mCanTntDestroyBlocks.get() ? 3 : 1) : 0;
-    output->writeByte(tntFlags);
+    int tntFlags = mSettings.mCanTntDestroyBlocks.isSet();
+    if (tntFlags && mSettings.mCanTntDestroyBlocks.get())
+        output->writeByte(tntFlags | 2);
+    else
+        output->writeByte(tntFlags);
 
-    const bool hasMap = mSettings.mMapSizeOverride.isSet();
-    output->writeBoolean(hasMap);
-    if (hasMap)
+    output->writeBoolean(mSettings.mMapSizeOverride.isSet());
+    if (mSettings.mMapSizeOverride.isSet())
         output->writeVarInt(mSettings.mMapSizeOverride.get());
     output->writeBoolean(mSettings.mRandomMapSize);
 
-    const bool hasArenaSize = mSettings.mArenaSizeMultiplier.isSet();
-    output->writeBoolean(hasArenaSize);
-    if (hasArenaSize)
+    output->writeBoolean(mSettings.mArenaSizeMultiplier.isSet());
+    if (mSettings.mArenaSizeMultiplier.isSet())
         output->writeFloat(mSettings.mArenaSizeMultiplier.get());
 
     const bool hasLayers = mSettings.mLayerCount.isSet();
+    const unsigned int layerCount = hasLayers ? mSettings.mLayerCount.get() : 0;
     output->writeBoolean(hasLayers);
     if (hasLayers)
-        output->writeVarInt(mSettings.mLayerCount.get());
+        output->writeVarInt(layerCount);
 
     output->writeInt(mSettings.mRoundCount);
     output->writeBoolean(mSettings.mSmallInventoryEnabled);

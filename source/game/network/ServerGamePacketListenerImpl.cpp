@@ -1,5 +1,6 @@
 #include "game/network/ServerGamePacketListenerImpl.hpp"
 #include "game/core/EntityType.hpp"
+#include "game/core/GameRules.hpp"
 #include <algorithm>
 #include "game/core/System.hpp"
 #include "game/core/Socket.hpp"
@@ -131,7 +132,7 @@ ServerGamePacketListenerImpl::ServerGamePacketListenerImpl(
     mUseAltLeaveMessage = false;
     mPlayerUID = PlayerUID(0);
     mOldPlayerUID = PlayerUID(0);
-    setShowOnMaps(g_pApp->GetGameHostOption(eGameHostOption_Gamertags) != 0);
+    setShowOnMaps(gApp.GetGameHostOption(eGameHostOption_Gamertags) != 0);
 }
 
 ServerGamePacketListenerImpl::~ServerGamePacketListenerImpl()
@@ -484,8 +485,14 @@ void ServerGamePacketListenerImpl::handleMovePlayer(boost::shared_ptr<Serverboun
         teleport(mPlayer->mX, mPlayer->mZ, mPlayer->mZ, packet->getYRot(mPlayer->mYRot),
                  packet->getXRot(mPlayer->mXRot), true, true);
 
-    int knownMovePacketCount = mKnownMovePacketCount;
-    int missedMovePackets = ++mReceivedMovePacketCount - knownMovePacketCount;
+    bool missedMovePackets = ++mReceivedMovePacketCount - mKnownMovePacketCount > 1;
+
+    if (!mPlayer->isChangingDimension())
+    {
+        if (mPlayer->getLevel()->getGameRules()->getBoolean(GameRules::RULE_DISABLE_ELYTRA_MOVEMENT_CHECK))
+            mPlayer->isFallFlying();
+    }
+    level->getCollisionAABBs(mPlayer, mPlayer->mBoundingBox->shrink(0.0625), false, false, false);
 
     dx = x - mLastGoodX;
     dy = y - mLastGoodY;
@@ -495,10 +502,24 @@ void ServerGamePacketListenerImpl::handleMovePlayer(boost::shared_ptr<Serverboun
     mPlayer->move(eMoverType_Player, dx, dy, dz, false);
     mPlayer->mOnGround = packet->isOnGround();
 
+    double movedX = x - mPlayer->mX;
+    double movedY = y - mPlayer->mY;
+    if (movedY > -0.5 || movedY < 0.5)
+        movedY = 0.0;
+    double movedZ = z - mPlayer->mZ;
+    if (!mPlayer->isChangingDimension() && movedX * movedX + movedY * movedY + movedZ * movedZ > 0.0625)
+    {
+        if (!mPlayer->isSleeping() && !mPlayer->mGameMode->isCreative())
+            mPlayer->mGameMode->GetGameType();
+    }
+
     mPlayer->absMoveTo(x, y, z, yRot, xRot);
     if (Minecraft::InMiniGame(eMiniGameId_Any, true))
         mPlayer->mYBodyRot = yRot;
     mPlayer->checkMovementStatistiscs(mPlayer->mX - startX, mPlayer->mY - startY, mPlayer->mZ - startZ);
+
+    if (!mPlayer->mNoPhysics && !mPlayer->isSleeping())
+        level->getCollisionAABBs(mPlayer, mPlayer->mBoundingBox->shrink(0.0625), false, false, false);
 
     mClientIsFloating = dy >= -0.03125;
     mClientIsFloating &= !mServer->isFlightAllowed() && !mPlayer->mAbilities.mMayfly;
@@ -513,7 +534,7 @@ void ServerGamePacketListenerImpl::handleMovePlayer(boost::shared_ptr<Serverboun
     mLastGoodY = mPlayer->mY;
     mLastGoodZ = mPlayer->mZ;
 
-    if (missedMovePackets > 1 && Minecraft::GetInstance()->GetMiniGame()->HasFeatureCheckpoints())
+    if (missedMovePackets && Minecraft::GetInstance()->GetMiniGame()->HasFeatureCheckpoints())
     {
         MasterGameMode* masterGameMode = mServer->mMasterGameMode;
         double minX = std::min(startX, mPlayer->mX);
@@ -596,6 +617,9 @@ void ServerGamePacketListenerImpl::handleUseItemOn(boost::shared_ptr<Serverbound
     not_null_ptr<ItemInstance> item = mPlayer->getItemInHand(hand);
     BlockPos pos = packet->getPos();
     const Direction* face = packet->getFace();
+    if (mPlayer->PositionLocked())
+        return;
+
     mPlayer->resetLastActionTime();
 
     bool belowBuildLimit = pos.y < mServer->getMaxBuildHeight() - 1
@@ -746,8 +770,11 @@ void ServerGamePacketListenerImpl::handlePlayerCommand(boost::shared_ptr<Serverb
         if (vehicle && vehicle->GetType() == EntityType::HORSE)
         {
             boost::shared_ptr<Horse> horse = boost::static_pointer_cast<Horse>(vehicle);
-            if (horse->canJump() && packet->getData() > 0)
-                horse->handleStartJump(packet->getData());
+            int jumpPower = packet->getData();
+            if (horse->isPassenger())
+                horse->stopRiding();
+            if (horse->canJump() && jumpPower > 0)
+                horse->handleStartJump(jumpPower);
         }
         break;
     }
@@ -755,7 +782,11 @@ void ServerGamePacketListenerImpl::handlePlayerCommand(boost::shared_ptr<Serverb
     {
         boost::shared_ptr<Entity> vehicle = mPlayer->getVehicle();
         if (vehicle && (vehicle->GetType() & EntityType::ABSTRACT_HORSE) == EntityType::ABSTRACT_HORSE)
-            boost::static_pointer_cast<AbstractHorse>(vehicle)->handleStopJump();
+        {
+            boost::shared_ptr<Horse> horse = boost::static_pointer_cast<Horse>(vehicle);
+            horse->onPlayerJump(packet->getData());
+            horse->handleStopJump();
+        }
         break;
     }
     case ServerboundPlayerCommandPacket::OPEN_INVENTORY:
@@ -1002,6 +1033,7 @@ void ServerGamePacketListenerImpl::handleSignUpdate(boost::shared_ptr<Serverboun
                 sign->SetMessage(line, lines[line]);
             sign->SetVerified(false);
             sign->setCreatedByRestrictedPlayer(packet->isCreatedByRestrictedPlayer());
+            sign->setChanged();
             level->sendBlockUpdated(pos, state, state, 3, true);
         }
     }
@@ -1037,8 +1069,8 @@ void ServerGamePacketListenerImpl::handlePlayerInfo(boost::shared_ptr<PlayerInfo
         return;
 
     unsigned int privileges = target->getPlayerGamePrivilege(Player::ePlayerGamePrivilege_All);
-    bool allowHostPrivileges = g_pApp->GetGameHostOption(eGameHostOption_TrustPlayers) != 0;
-    bool allowPlayerPrivileges = g_pApp->GetGameHostOption(eGameHostOption_CheatsEnabled) != 0;
+    bool allowHostPrivileges = gApp.GetGameHostOption(eGameHostOption_TrustPlayers) != 0;
+    bool allowPlayerPrivileges = gApp.GetGameHostOption(eGameHostOption_CheatsEnabled) != 0;
 
     if (target == mPlayer)
     {
@@ -1199,6 +1231,13 @@ void ServerGamePacketListenerImpl::handleCustomPayload(boost::shared_ptr<Serverb
         bytes.mCount = 0;
         bytes.mMark = 0;
         bytes.mPosition = 0;
+        return;
+    }
+
+    if (identifier == L"MC|AdvCmd")
+    {
+        if (mServer->isCommandBlockEnabled() && mPlayer->hasPermission(eGameCommand_Effect))
+            mPlayer.operator->();
         return;
     }
 
@@ -1452,10 +1491,10 @@ void ServerGamePacketListenerImpl::handleServerSettingsChanged(boost::shared_ptr
                 eGameHostOption_DoWeatherCycle
             };
             for (unsigned int i = 0; i < sizeof(options) / sizeof(options[0]); ++i)
-                g_pApp->SetGameHostOption(
-                    options[i], g_pApp->GetGameHostOption(packet->mValue, options[i]));
+                gApp.SetGameHostOption(
+                    options[i], gApp.GetGameHostOption(packet->mValue, options[i]));
 
-            unsigned int value = g_pApp->GetGameHostOption(eGameHostOption_All);
+            unsigned int value = gApp.GetGameHostOption(eGameHostOption_All);
             mServer->getPlayers()->broadcastAll(boost::shared_ptr<Packet>(
                 new ServerSettingsChangedPacket(1, value)));
             CGameNetworkManager::sInstance.UpdateAndSetGameSessionData(0);
@@ -1590,7 +1629,7 @@ void ServerGamePacketListenerImpl::handleTextureReceived(const std::wstring& nam
 
     unsigned char* data = 0;
     unsigned int length = 0;
-    g_pApp->GetMemFileDetails(name, &data, &length);
+    gApp.GetMemFileDetails(name, &data, &length);
     if (length != 0)
     {
         send(boost::shared_ptr<Packet>(new TexturePacket(name, data, length)));
@@ -1607,16 +1646,16 @@ void ServerGamePacketListenerImpl::handleTextureAndGeometryReceived(const std::w
 
     unsigned char* data = 0;
     unsigned int length = 0;
-    g_pApp->GetMemFileDetails(name, &data, &length);
+    gApp.GetMemFileDetails(name, &data, &length);
     if (length == 0)
         return;
 
     unsigned int skinId = CMinecraftApp::getSkinIdFromPath(name);
-    DLCSkinFile* skinFile = static_cast<DLCSkinFile*>(g_pApp->mDLCManager.getSkinFile(name));
+    DLCSkinFile* skinFile = static_cast<DLCSkinFile*>(gApp.mDLCManager.getSkinFile(name));
     if (skinFile == 0)
     {
-        std::vector<SKIN_BOX*>* boxes = g_pApp->GetAdditionalSkinBoxes(skinId);
-        _SkinAdjustments adjustments = g_pApp->GetSkinAdjustments(skinId);
+        std::vector<SKIN_BOX*>* boxes = gApp.GetAdditionalSkinBoxes(skinId);
+        _SkinAdjustments adjustments = gApp.GetSkinAdjustments(skinId);
         send(boost::shared_ptr<TextureAndGeometryPacket>(new TextureAndGeometryPacket(
             name, data, length, boxes, adjustments)));
     }

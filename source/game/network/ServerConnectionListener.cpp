@@ -9,7 +9,9 @@
 #include "game/server/ServerPlayer.hpp"
 #include "game/world/generation/Player.hpp"
 #include "game/core/HumanoidArm.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
+#include "game/core/StringConversion.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/minigame/MiniGameDef.hpp"
 #include "game/network/CGameNetworkManager.hpp"
@@ -18,14 +20,16 @@
 #include "game/network/INetworkPlayer.hpp"
 #include "game/world/LevelData.hpp"
 #include "platform/wiiu/CProfile.hpp"
+#include "platform/wiiu/CStorage.hpp"
 #include <cstring>
 #include <vector>
 
-extern CMinecraftApp* g_pApp;
-
 ServerConnectionListener::ServerConnectionListener(MinecraftServer* server, Socket* socket, const std::wstring& name)
-    : PacketListener(), m_disconnected(false), m_tickCount(0), m_name(L"")
+    : PacketListener()
 {
+    m_disconnected = false;
+    m_tickCount = 0;
+    m_name = L"";
     m_acceptedLogin = boost::shared_ptr<ClientboundLoginPacket>();
     m_loginKey = L"";
     m_server = server;
@@ -36,13 +40,14 @@ ServerConnectionListener::ServerConnectionListener(MinecraftServer* server, Sock
 ServerConnectionListener::~ServerConnectionListener()
 {
     delete m_connection;
-    m_connection = 0;
 }
 
 void ServerConnectionListener::disconnect(DisconnectPacket::eDisconnectReason reason)
 {
-    boost::shared_ptr<Packet> packet(new DisconnectPacket(reason));
-    m_connection->send(packet);
+    {
+        boost::shared_ptr<Packet> packet(new DisconnectPacket(reason));
+        m_connection->send(packet);
+    }
     m_connection->sendAndQuit();
     m_disconnected = true;
 }
@@ -52,15 +57,15 @@ void ServerConnectionListener::tick()
     if (m_acceptedLogin != NULL)
     {
         handleAcceptedLogin(m_acceptedLogin);
-        m_acceptedLogin = boost::shared_ptr<ClientboundLoginPacket>();
+        boost::shared_ptr<ClientboundLoginPacket> none;
+        m_acceptedLogin = none;
     }
 
     int previousTickCount = m_tickCount;
     ++m_tickCount;
     if (previousTickCount != 600)
     {
-        if (m_connection != 0)
-            m_connection->tick();
+        m_connection->tick();
         return;
     }
     disconnect(DisconnectPacket::eDisconnectReason(3));
@@ -68,99 +73,67 @@ void ServerConnectionListener::tick()
 
 void ServerConnectionListener::sendPreLoginResponse()
 {
-    if (m_connection == NULL || m_server == NULL || m_server->getPlayers() == NULL)
-        return;
-
-    std::vector<boost::shared_ptr<ServerPlayer> >* players = m_server->getPlayers()->getPlayers();
-    if (players == NULL)
-        return;
-
-    std::vector<PlayerUID> onlinePlayers;
-    unsigned char guestFlags = 0;
+    PlayerUID* playerUids = new PlayerUID[8];
+    unsigned int playerCount = 0;
     unsigned int hostPlayerIndex = 0;
-    unsigned int playerIndex = 0;
-    const PlayerUID emptyUid(0);
+    unsigned int guestFlags = 0;
+    char uniqueMapName[16];
+    std::memset(uniqueMapName, 0, 14);
+    gStorage->GetSaveUniqueFilename(uniqueMapName);
 
+    std::vector<boost::shared_ptr<ServerPlayer> >* players = gMinecraftServer->getPlayers()->getPlayers();
     for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator it = players->begin();
-         it != players->end(); ++it, ++playerIndex)
+         it != players->end(); ++it)
     {
         boost::shared_ptr<ServerPlayer> serverPlayer = *it;
-        if (!serverPlayer || serverPlayer->mConnection == NULL)
-            continue;
-
-        ServerGamePacketListenerImpl* listener = serverPlayer->mConnection.get();
-        INetworkPlayer* networkPlayer = listener->getNetworkPlayer();
-        if (networkPlayer == NULL)
-            continue;
-
-        const PlayerUID playerUid = networkPlayer->GetUID();
-        if (playerUid == emptyUid)
-            continue;
-
-        if (listener->isGuest())
-            guestFlags = static_cast<unsigned char>(guestFlags | (1U << (playerIndex & 0x3fU)));
-
-        onlinePlayers.push_back(playerUid);
-        if (networkPlayer->IsLocal())
-            hostPlayerIndex = playerIndex;
-    }
-
-    std::wstring accountName;
-    if (gProfile != NULL)
-    {
-        const char* accountId = gProfile->GetNetworkAccountID();
-        if (accountId != NULL)
+        if (serverPlayer != NULL)
         {
-            while (*accountId != 0)
-                accountName.push_back(static_cast<unsigned char>(*accountId++));
+            if (serverPlayer->mConnection->mPlayerUID != PlayerUID(0))
+            {
+                if (serverPlayer->mConnection->mOldPlayerUID != PlayerUID(0))
+                {
+                    if (serverPlayer->mConnection->mFriendsOnly)
+                        guestFlags = guestFlags | ((1 << playerCount) & 0xFF);
+                    playerUids[playerCount] = serverPlayer->mConnection->mOldPlayerUID;
+                    if (serverPlayer->mConnection->getNetworkPlayer() != NULL)
+                    {
+                        if (serverPlayer->mConnection->getNetworkPlayer()->IsHost())
+                            hostPlayerIndex = playerCount;
+                    }
+                    ++playerCount;
+                }
+            }
         }
     }
 
-    char uniqueMapName[16];
-    std::memset(uniqueMapName, 0, sizeof(uniqueMapName));
+    std::wstring accountName(L"-");
+    accountName = convStringToWstring(std::string(gProfile->GetNetworkAccountID()));
 
-    PlayerUID* playerUidArray = NULL;
-    if (!onlinePlayers.empty())
-    {
-        playerUidArray = new PlayerUID[onlinePlayers.size()];
-        for (size_t index = 0; index < onlinePlayers.size(); ++index)
-            playerUidArray[index] = onlinePlayers[index];
-    }
-
-    const unsigned int hostOption = g_pApp != NULL
-        ? g_pApp->GetGameHostOption(eGameHostOption_All) : 0;
-    unsigned int maxPlayers = CGameNetworkManager::sInstance.GetMaxPlayers();
-    const MiniGameDef* miniGame = Minecraft::GetInstance() != NULL
-        ? Minecraft::GetInstance()->GetMiniGame() : NULL;
-    if (miniGame != NULL)
-        maxPlayers = miniGame->GetHostOption(eCustomGameModeHostOption_All);
-
-    const bool matchmakingEnabled = CGameNetworkManager::sInstance.IsMatchmakingEnabled();
-    const EMiniGameId miniGameId = miniGame != NULL
-        ? static_cast<EMiniGameId>(miniGame->GetId()) : eMiniGameId_Any;
-
-    ClientboundPreLoginPacket* packet = new ClientboundPreLoginPacket(
+    m_connection->send(boost::shared_ptr<ClientboundPreLoginPacket>(new ClientboundPreLoginPacket(
         accountName,
-        playerUidArray,
-        static_cast<unsigned int>(onlinePlayers.size()),
+        playerUids,
+        playerCount,
         guestFlags,
-        static_cast<unsigned int>(m_server->ugcPlayersVersion),
+        m_server->ugcPlayersVersion,
         uniqueMapName,
-        hostOption,
-        maxPlayers,
-        static_cast<unsigned char>(hostPlayerIndex),
-        static_cast<unsigned int>(m_server->getGameModeId()),
-        matchmakingEnabled,
-        miniGameId);
-    send(boost::shared_ptr<Packet>(packet));
+        gApp.GetGameHostOption(eGameHostOption_All),
+        Minecraft::GetInstance()->GetMiniGame()->GetHostOption(eCustomGameModeHostOption_All),
+        hostPlayerIndex,
+        m_server->getGameModeId(),
+        CGameNetworkManager::sInstance.IsMatchmakingEnabled(),
+        Minecraft::GetInstance()->GetMiniGame()->GetId())));
 }
 
 void ServerConnectionListener::handlePreLogin(boost::shared_ptr<ServerboundPreLoginPacket> packet)
 {
     if (packet->protocolVersion != 0x881)
     {
-        disconnect(static_cast<DisconnectPacket::eDisconnectReason>(
-            packet->protocolVersion < 0x882 ? 0x0F : 0x0E));
+        if (packet->protocolVersion > 0x881)
+        {
+            disconnect(static_cast<DisconnectPacket::eDisconnectReason>(0x0E));
+            return;
+        }
+        disconnect(static_cast<DisconnectPacket::eDisconnectReason>(0x0F));
         return;
     }
 
@@ -172,8 +145,12 @@ void ServerConnectionListener::handleLogin(boost::shared_ptr<ClientboundLoginPac
 {
     if (packet->mEntityId != 0x13C)
     {
-        disconnect(static_cast<DisconnectPacket::eDisconnectReason>(
-            packet->mEntityId < 0x13D ? 0x0F : 0x0E));
+        if (packet->mEntityId > 0x13C)
+        {
+            disconnect(static_cast<DisconnectPacket::eDisconnectReason>(0x0E));
+            return;
+        }
+        disconnect(static_cast<DisconnectPacket::eDisconnectReason>(0x0F));
         return;
     }
 
@@ -207,7 +184,7 @@ void ServerConnectionListener::handleAcceptedLogin(boost::shared_ptr<Clientbound
         m_connection = 0;
     }
     if (packet->mDifficulty != -1)
-        g_pApp->SetFirstMiniGameType(static_cast<EMiniGameId>(packet->mDifficulty));
+        gApp.SetFirstMiniGameType(static_cast<EMiniGameId>(packet->mDifficulty));
     m_disconnected = true;
 }
 
@@ -218,9 +195,11 @@ void ServerConnectionListener::onDisconnect(DisconnectPacket::eDisconnectReason,
 
 void ServerConnectionListener::handleGetInfo(boost::shared_ptr<GetInfoPacket>)
 {
-    boost::shared_ptr<Packet> packet(new DisconnectPacket(
-        DisconnectPacket::eDisconnectReason_GameFull));
-    m_connection->send(packet);
+    {
+        boost::shared_ptr<Packet> packet(new DisconnectPacket(
+            DisconnectPacket::eDisconnectReason_GameFull));
+        m_connection->send(packet);
+    }
     m_connection->sendAndQuit();
     m_disconnected = true;
 }
@@ -236,8 +215,7 @@ void ServerConnectionListener::onUnhandledPacket(boost::shared_ptr<Packet>)
 
 void ServerConnectionListener::send(boost::shared_ptr<Packet> packet)
 {
-    if (m_connection != 0 && packet)
-        m_connection->send(packet);
+    m_connection->send(packet);
 }
 
 bool ServerConnectionListener::isServerPacketListener()

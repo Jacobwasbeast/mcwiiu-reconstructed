@@ -8,50 +8,51 @@
 #include "game/network/PacketListener.hpp"
 
 TextureAndGeometryPacket::TextureAndGeometryPacket()
-    : textureName(L""), geometryId(0), data(NULL), length(0), additionalBoxes(NULL), additionalBoxCount(0),
-      skinAdjustments()
 {
     shouldDelay = true;
+    textureName = L"";
+    length = 0;
+    additionalBoxCount = 0;
+    additionalBoxes = NULL;
+    data = NULL;
 }
 
 TextureAndGeometryPacket::TextureAndGeometryPacket(const std::wstring& textureName, unsigned char* data,
                                                    unsigned int length)
-    : textureName(textureName), geometryId(0), data(data), length(length), additionalBoxes(NULL),
-      additionalBoxCount(0), skinAdjustments()
 {
     shouldDelay = true;
+    this->textureName = textureName;
 
-    std::wstring identifier = textureName.substr(7, textureName.length());
-    std::wstring::size_type separator = identifier.find(L'.');
-    if (separator != std::wstring::npos)
-    {
-        identifier = identifier.substr(0, separator);
-    }
+    std::wstring identifier(textureName, 7, textureName.length());
+    identifier = identifier.substr(0, identifier.find(L'.'));
 
     std::wstringstream stream;
-    stream << identifier;
+    stream.setf(std::ios_base::dec, std::ios_base::basefield);
+    stream << identifier.c_str();
     stream >> geometryId;
+    additionalBoxes = NULL;
+    this->data = data;
     geometryId |= 0x80000000u;
+    this->length = length;
+    additionalBoxCount = 0;
 }
 
 TextureAndGeometryPacket::TextureAndGeometryPacket(const std::wstring& textureName, unsigned char* data,
                                                    unsigned int length, DLCSkinFile* skinFile)
-    : textureName(textureName), geometryId(0), data(data), length(length), additionalBoxes(NULL),
-      additionalBoxCount(0), skinAdjustments()
 {
     shouldDelay = true;
+    this->textureName = textureName;
 
-    std::wstring identifier = textureName.substr(7, textureName.length());
-    std::wstring::size_type separator = identifier.find(L'.');
-    if (separator != std::wstring::npos)
-    {
-        identifier = identifier.substr(0, separator);
-    }
+    std::wstring identifier(textureName, 7, textureName.length());
+    identifier = identifier.substr(0, identifier.find(L'.'));
 
     std::wstringstream stream;
-    stream << identifier;
+    stream.setf(std::ios_base::dec, std::ios_base::basefield);
+    stream << identifier.c_str();
     stream >> geometryId;
+    this->data = data;
     geometryId |= 0x80000000u;
+    this->length = length;
 
     skinAdjustments = skinFile->getSkinAdjustments();
     additionalBoxCount = skinFile->getAdditionalBoxesCount();
@@ -59,40 +60,52 @@ TextureAndGeometryPacket::TextureAndGeometryPacket(const std::wstring& textureNa
     {
         additionalBoxes = new SKIN_BOX[additionalBoxCount];
         std::vector<SKIN_BOX*>* boxes = skinFile->getAdditionalBoxes();
-        for (unsigned int index = 0; index < additionalBoxCount; ++index)
+        SKIN_BOX* destination = additionalBoxes;
+        for (std::vector<SKIN_BOX*>::iterator it = boxes->begin(); it != boxes->end(); ++it)
         {
-            additionalBoxes[index] = *(*boxes)[index];
+            *destination = **it;
+            ++destination;
         }
+    }
+    else
+    {
+        additionalBoxes = NULL;
     }
 }
 
 TextureAndGeometryPacket::TextureAndGeometryPacket(const std::wstring& textureName, unsigned char* data,
                                                    unsigned int length, std::vector<SKIN_BOX*>* additionalBoxes,
                                                    _SkinAdjustments skinAdjustments)
-    : textureName(textureName), geometryId(0), data(data), length(length), additionalBoxes(NULL),
-      additionalBoxCount(0), skinAdjustments(skinAdjustments)
 {
     shouldDelay = true;
+    this->textureName = textureName;
 
-    std::wstring identifier = textureName.substr(7, textureName.length());
-    std::wstring::size_type separator = identifier.find(L'.');
-    if (separator != std::wstring::npos)
-    {
-        identifier = identifier.substr(0, separator);
-    }
+    std::wstring identifier(textureName, 7, textureName.length());
+    identifier = identifier.substr(0, identifier.find(L'.'));
 
     std::wstringstream stream;
-    stream << identifier;
+    stream.setf(std::ios_base::dec, std::ios_base::basefield);
+    stream << identifier.c_str();
     stream >> geometryId;
+    this->data = data;
     geometryId |= 0x80000000u;
+    this->length = length;
+    this->skinAdjustments = skinAdjustments;
 
-    if (additionalBoxes != NULL)
+    if (additionalBoxes == NULL)
+    {
+        additionalBoxCount = 0;
+        this->additionalBoxes = NULL;
+    }
+    else
     {
         additionalBoxCount = static_cast<unsigned int>(additionalBoxes->size());
         this->additionalBoxes = new SKIN_BOX[additionalBoxCount];
-        for (unsigned int index = 0; index < additionalBoxCount; ++index)
+        SKIN_BOX* destination = this->additionalBoxes;
+        for (std::vector<SKIN_BOX*>::iterator it = additionalBoxes->begin(); it != additionalBoxes->end(); ++it)
         {
-            this->additionalBoxes[index] = *(*additionalBoxes)[index];
+            *destination = **it;
+            ++destination;
         }
     }
 }
@@ -143,22 +156,23 @@ void TextureAndGeometryPacket::read(DataInputStream* input)
     if (additionalBoxCount != 0)
     {
         additionalBoxes = new SKIN_BOX[additionalBoxCount];
-        unsigned int index = 0;
-        while (index < additionalBoxCount)
-        {
-            additionalBoxes[index].id = input->readShort();
-            additionalBoxes[index].x = input->readFloat();
-            additionalBoxes[index].y = input->readFloat();
-            additionalBoxes[index].z = input->readFloat();
-            additionalBoxes[index].height = input->readFloat();
-            additionalBoxes[index].width = input->readFloat();
-            additionalBoxes[index].depth = input->readFloat();
-            additionalBoxes[index].xTexOffs = input->readFloat();
-            additionalBoxes[index].yTexOffs = input->readFloat();
-            additionalBoxes[index].armourFlags = input->readInt();
-            additionalBoxes[index].mirror = input->readShort();
-            ++index;
-        }
+    }
+
+    unsigned int index = 0;
+    while (index < additionalBoxCount)
+    {
+        additionalBoxes[index].id = input->readShort();
+        additionalBoxes[index].x = input->readFloat();
+        additionalBoxes[index].y = input->readFloat();
+        additionalBoxes[index].z = input->readFloat();
+        additionalBoxes[index].height = input->readFloat();
+        additionalBoxes[index].width = input->readFloat();
+        additionalBoxes[index].depth = input->readFloat();
+        additionalBoxes[index].xTexOffs = input->readFloat();
+        additionalBoxes[index].yTexOffs = input->readFloat();
+        additionalBoxes[index].armourFlags = input->readInt();
+        additionalBoxes[index].mirror = input->readShort();
+        ++index;
     }
 }
 

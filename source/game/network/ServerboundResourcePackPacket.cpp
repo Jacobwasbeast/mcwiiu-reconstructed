@@ -5,7 +5,6 @@
 #include "game/network/PacketListener.hpp"
 
 ServerboundResourcePackPacket::ServerboundResourcePackPacket()
-    : mAction(SUCCESSFULLY_LOADED)
 {
 }
 

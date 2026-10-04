@@ -14,19 +14,21 @@
 
 BlockRegionUpdatePacket::BlockRegionUpdatePacket()
     : mX(0), mY(0), mZ(0), mWidth(0), mHeight(0), mDepth(0),
-      mFullChunk(false), mChanges(new std::vector<LevelChunk::BlockChange>())
+      mFullChunk(false)
 {
     shouldDelay = true;
+    mChanges = new std::vector<LevelChunk::BlockChange>;
 }
 
 BlockRegionUpdatePacket::BlockRegionUpdatePacket(int x, int y, int z, int width, int height, int depth,
                                                  Level* level, bool hasBlockChanges,
                                                  const std::vector<short>* blockChanges)
     : mX(x), mY(y), mZ(z), mWidth(width), mHeight(height), mDepth(depth),
-      mFullChunk(false), mHasBlockChanges(false),
-      mChanges(new std::vector<LevelChunk::BlockChange>())
+      mFullChunk(false)
 {
     shouldDelay = true;
+    mChanges = new std::vector<LevelChunk::BlockChange>;
+    mHasBlockChanges = false;
 
     if (level->mDimension->getType() == DimensionType::OVERWORLD)
         mDimension = 0;
@@ -64,9 +66,10 @@ BlockRegionUpdatePacket::BlockRegionUpdatePacket(int x, int y, int z, int width,
             unsigned int rleSize = 0;
             Compression::getCompression()->CompressLZXRLE(compressedData, &compressedSize,
                                                            rawData.data, rawData.length, &rleSize);
-            mData.data = new unsigned char[compressedSize];
-            std::memcpy(mData.data, compressedData, compressedSize);
+            unsigned char* copy = new unsigned char[compressedSize];
+            std::memcpy(copy, compressedData, compressedSize);
             delete[] compressedData;
+            mData.data = copy;
             mData.length = compressedSize;
             delete[] rawData.data;
             mSize = compressedSize;
@@ -89,9 +92,10 @@ BlockRegionUpdatePacket::BlockRegionUpdatePacket(int x, int y, int z, int width,
             {
                 BlockPos pos = LevelChunk::UnpackBlockPos(*it);
                 LevelChunk* chunk = level->getChunkAt(x, z);
-                unsigned int element = Block::getId(chunk->getBlock(pos));
-                unsigned int extraElement = Block::getId(chunk->getExtraBlock(pos));
-                mChanges->push_back(LevelChunk::BlockChange(*it, element | (extraElement << 16)));
+                unsigned int element = Block::blockStateRegistry->getId(chunk->getBlockState(pos));
+                unsigned int extraElement = Block::blockStateRegistry->getId(chunk->getExtraBlockState(pos));
+                LevelChunk::BlockChange change(*it, element | (extraElement << 16));
+                mChanges->push_back(change);
             }
         }
     }
@@ -120,7 +124,7 @@ void BlockRegionUpdatePacket::read(DataInputStream* input)
     mDimension = packedSize >> 30;
     mSize = packedSize & 0x3fffffff;
 
-    unsigned int changeCount;
+    int changeCount;
     if (mSize == 0)
     {
         mData.data = NULL;
@@ -145,7 +149,7 @@ void BlockRegionUpdatePacket::read(DataInputStream* input)
         mChanges->reserve(changeCount);
     }
 
-    for (unsigned int i = 0; i < changeCount; ++i)
+    for (int i = 0; i < changeCount; ++i)
     {
         short packedPos = input->readShort();
         unsigned int element = (unsigned int)input->readInt();
@@ -155,12 +159,12 @@ void BlockRegionUpdatePacket::read(DataInputStream* input)
 
 void BlockRegionUpdatePacket::write(DataOutputStream* output)
 {
-    unsigned int flags = mFullChunk ? 1 : 0;
+    unsigned char flags = mFullChunk;
     if (mHasBlockChanges)
         flags |= 4;
     if (mHeight == 0)
         flags |= 2;
-    output->writeByte(static_cast<unsigned char>(flags));
+    output->writeByte(flags);
     output->writeInt(mX);
     output->writeShort(static_cast<short>(mY));
     output->writeInt(mZ);
@@ -169,8 +173,8 @@ void BlockRegionUpdatePacket::write(DataOutputStream* output)
     output->writeByte(static_cast<unsigned char>((mDepth - 1) & 0xff));
     output->writeInt(mSize | (mDimension << 30));
     output->write(mData, 0, mSize);
-    const unsigned char changeCount = static_cast<unsigned char>(mChanges->size());
-    output->writeChar(changeCount);
+    char changeCount = static_cast<char>(mChanges->size());
+    output->writeChar(static_cast<short>(changeCount));
     for (std::vector<LevelChunk::BlockChange>::const_iterator it = mChanges->begin();
          it != mChanges->end(); ++it)
     {

@@ -6,7 +6,7 @@
 #include "game/network/PacketListener.hpp"
 
 ClientboundSetTitlesPacket::ClientboundSetTitlesPacket()
-    : type(TITLE), text(), fadeIn(0), stay(0), fadeOut(0)
+    : text()
 {
 }
 
@@ -30,9 +30,9 @@ int ClientboundSetTitlesPacket::getPacketId()
 
 void ClientboundSetTitlesPacket::read(DataInputStream* input)
 {
-    type = static_cast<Type>(input->readInt());
+    type = input->readInt();
 
-    if (type < TIMES)
+    if (type <= ACTIONBAR)
     {
         text = Packet::readUtf(input, 32767);
     }
@@ -47,9 +47,9 @@ void ClientboundSetTitlesPacket::read(DataInputStream* input)
 
 void ClientboundSetTitlesPacket::write(DataOutputStream* output)
 {
-    output->writeInt(static_cast<int>(type));
+    output->writeInt(type);
 
-    if (type < TIMES)
+    if (type <= ACTIONBAR)
     {
         Packet::writeUtf(text, output);
     }

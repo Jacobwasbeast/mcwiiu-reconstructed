@@ -3,9 +3,9 @@
 #include "game/core/DataOutputStream.hpp"
 #include "game/network/PacketListener.hpp"
 
-ClientboundSetSpawnPositionPacket::ClientboundSetSpawnPositionPacket() : mPos() {}
-ClientboundSetSpawnPositionPacket::ClientboundSetSpawnPositionPacket(int x, int y, int z) : mPos(x, y, z) {}
-ClientboundSetSpawnPositionPacket::ClientboundSetSpawnPositionPacket(const BlockPos& pos) : mPos(pos) {}
+ClientboundSetSpawnPositionPacket::ClientboundSetSpawnPositionPacket() { mPos = BlockPos(); }
+ClientboundSetSpawnPositionPacket::ClientboundSetSpawnPositionPacket(int x, int y, int z) { mPos = BlockPos(x, y, z); }
+ClientboundSetSpawnPositionPacket::ClientboundSetSpawnPositionPacket(const BlockPos& pos) { mPos = pos; }
 ClientboundSetSpawnPositionPacket::~ClientboundSetSpawnPositionPacket() {}
 void ClientboundSetSpawnPositionPacket::read(DataInputStream* input) { mPos = input->readBlockPos(); }
 void ClientboundSetSpawnPositionPacket::write(DataOutputStream* output) { output->writeBlockPos(mPos); }

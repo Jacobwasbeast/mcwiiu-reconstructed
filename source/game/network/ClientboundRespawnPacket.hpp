@@ -60,7 +60,7 @@ private:
     double m_z;
     float m_yRot;
     float m_xRot;
-    bool m_keepOldEntityData;
+    unsigned char m_keepOldEntityData;
     char m_dimension;
     const Difficulty* m_difficulty;
     const GameType* m_playerGameType;

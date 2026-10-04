@@ -19,12 +19,16 @@ unsigned char NetworkPlayerStub::GetSmallId()
 void NetworkPlayerStub::SendData(INetworkPlayer* pTo, const void* pData, int iSize, bool bReliable, bool bRequiresAck)
 {
     unsigned char* data = static_cast<unsigned char*>(std::malloc(static_cast<size_t>(iSize) + 1));
-    data[0] = bRequiresAck ? 1 : 0;
     if (bRequiresAck)
     {
+        data[0] = 1;
         NetworkPlayerStub* destination = static_cast<NetworkPlayerStub*>(pTo);
         destination->m_acksOutstanding++;
         System::processTimeInMilliSecs();
+    }
+    else
+    {
+        data[0] = 0;
     }
     std::memcpy(data + 1, pData, static_cast<size_t>(iSize));
     m_qNetPlayer->SendData(static_cast<NetworkPlayerStub*>(pTo)->m_qNetPlayer, data, static_cast<unsigned int>(iSize + 1), 0);
@@ -33,7 +37,7 @@ void NetworkPlayerStub::SendData(INetworkPlayer* pTo, const void* pData, int iSi
 
 bool NetworkPlayerStub::IsSameSystem(INetworkPlayer* pOther)
 {
-    return m_qNetPlayer->IsSameSystem(static_cast<NetworkPlayerStub*>(pOther)->m_qNetPlayer);
+    return m_qNetPlayer->IsSameSystem(static_cast<NetworkPlayerStub*>(pOther)->m_qNetPlayer) != false;
 }
 
 int NetworkPlayerStub::GetOutstandingAckCount()
@@ -43,21 +47,13 @@ int NetworkPlayerStub::GetOutstandingAckCount()
 
 int NetworkPlayerStub::GetSendQueueSizeBytes(INetworkPlayer* pTo, bool bReliable)
 {
-    IQNetPlayer* destination = NULL;
-    if (pTo != NULL)
-    {
-        destination = static_cast<NetworkPlayerStub*>(pTo)->m_qNetPlayer;
-    }
+    IQNetPlayer* destination = pTo ? static_cast<NetworkPlayerStub*>(pTo)->m_qNetPlayer : NULL;
     return static_cast<int>(m_qNetPlayer->GetSendQueueSize(destination, 0));
 }
 
 int NetworkPlayerStub::GetSendQueueSizeMessages(INetworkPlayer* pTo, bool bReliable)
 {
-    IQNetPlayer* destination = NULL;
-    if (pTo != NULL)
-    {
-        destination = static_cast<NetworkPlayerStub*>(pTo)->m_qNetPlayer;
-    }
+    IQNetPlayer* destination = pTo ? static_cast<NetworkPlayerStub*>(pTo)->m_qNetPlayer : NULL;
     return static_cast<int>(m_qNetPlayer->GetSendQueueSize(destination, 0));
 }
 
@@ -68,17 +64,17 @@ int NetworkPlayerStub::GetCurrentRtt()
 
 bool NetworkPlayerStub::IsHost()
 {
-    return m_qNetPlayer->IsHost();
+    return m_qNetPlayer->IsHost() != false;
 }
 
 bool NetworkPlayerStub::IsGuest()
 {
-    return m_qNetPlayer->IsGuest();
+    return m_qNetPlayer->IsGuest() != false;
 }
 
 bool NetworkPlayerStub::IsLocal()
 {
-    return m_qNetPlayer->IsLocal();
+    return m_qNetPlayer->IsLocal() != false;
 }
 
 int NetworkPlayerStub::GetSessionIndex()
@@ -88,22 +84,22 @@ int NetworkPlayerStub::GetSessionIndex()
 
 bool NetworkPlayerStub::IsTalking()
 {
-    return m_qNetPlayer->IsTalking();
+    return m_qNetPlayer->IsTalking() != false;
 }
 
 bool NetworkPlayerStub::IsMutedByLocalUser(int iUserIndex)
 {
-    return m_qNetPlayer->IsMutedByLocalUser(static_cast<unsigned int>(iUserIndex));
+    return m_qNetPlayer->IsMutedByLocalUser(static_cast<unsigned int>(iUserIndex)) != false;
 }
 
 bool NetworkPlayerStub::HasVoice()
 {
-    return m_qNetPlayer->HasVoice();
+    return m_qNetPlayer->HasVoice() != false;
 }
 
 bool NetworkPlayerStub::HasCamera()
 {
-    return m_qNetPlayer->HasCamera();
+    return m_qNetPlayer->HasCamera() != false;
 }
 
 int NetworkPlayerStub::GetUserIndex()

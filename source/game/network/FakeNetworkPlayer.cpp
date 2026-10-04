@@ -28,14 +28,13 @@ void FakeNetworkPlayer::UpdateBRUPQueue()
     {
         unsigned int size = mBRUPQueue.front();
         uint64_t now = System::processTimeInMilliSecs();
-        int elapsed = static_cast<int>(static_cast<unsigned int>(now >> 32) -
-            (static_cast<unsigned int>(mLastBRUPTime >> 32) +
-             static_cast<unsigned int>(static_cast<unsigned int>(now) < static_cast<unsigned int>(mLastBRUPTime))));
-        if (elapsed < 0)
+        uint64_t elapsed = now - mLastBRUPTime;
+        int elapsedHigh = static_cast<int>(elapsed >> 32);
+        if (elapsedHigh < 0)
         {
             return;
         }
-        if (elapsed < 1 && static_cast<unsigned int>(now) - static_cast<unsigned int>(mLastBRUPTime) < size / 9)
+        if (elapsedHigh < 1 && static_cast<unsigned int>(elapsed) < size / 9)
         {
             return;
         }
@@ -161,11 +160,11 @@ void FakeNetworkPlayer::SentChunkPacket()
 
 int FakeNetworkPlayer::GetTimeSinceLastChunkPacket_ms()
 {
-    if (mLastChunkPacketTime == 0)
+    if (mLastChunkPacketTime != 0)
     {
-        return INT_MAX;
+        return static_cast<int>(System::processTimeInMilliSecs() - mLastChunkPacketTime);
     }
-    return static_cast<int>(System::processTimeInMilliSecs() - mLastChunkPacketTime);
+    return INT_MAX;
 }
 
 bool FakeNetworkPlayer::isFake()

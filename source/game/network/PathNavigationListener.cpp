@@ -1,7 +1,11 @@
 #include "game/network/PathNavigationListener.hpp"
+#include <algorithm>
 #include "game/core/EntityType.hpp"
 
 #include "game/core/Path.hpp"
+#include "game/core/PathFinder.hpp"
+#include "game/entity/ai/NodeEvaluator.hpp"
+#include "game/entity/ai/PathNavigation.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/Mob.hpp"
 #include "game/world/LevelSource.hpp"
@@ -21,11 +25,12 @@ PathNavigationListener::~PathNavigationListener()
 
 bool PathNavigationListener::didBlockChange(Level* level, const BlockPos& pos, const BlockState* oldState, const BlockState* newState)
 {
-    const AABB* oldShape = oldState->getShape((LevelSource*)level, pos);
-    const AABB* newShape = newState->getShape((LevelSource*)level, pos);
-    if (oldShape == newShape)
-        return false;
-    return oldShape == NULL || !oldShape->equals(newShape);
+    const AABB* oldShape = oldState->getClipAABB((LevelSource*)level, pos);
+    const AABB* newShape = newState->getClipAABB((LevelSource*)level, pos);
+    int same = 1;
+    if (oldShape != newShape && (oldShape == NULL || !oldShape->equals(newShape)))
+        same = 0;
+    return !same;
 }
 
 void PathNavigationListener::blockChanged(Level* level, const BlockPos& pos, const BlockState* oldState, const BlockState* newState, int, bool)
@@ -38,13 +43,21 @@ void PathNavigationListener::blockChanged(Level* level, const BlockPos& pos, con
         PathNavigation* navigation = *it;
         if (navigation == NULL)
             continue;
-        if (!navigation->hasDelayedRecomputation() && navigation->getPath() != NULL && !navigation->getPath()->isDone() && navigation->getPath()->getSize() != 0)
+        if (navigation->getNodeEvaluator() != NULL)
+            navigation->getNodeEvaluator()->blockChanged(pos);
+        PathFinder* finder = navigation->getPathFinder();
+        if (finder != NULL && finder->mNodeEvaluator != NULL)
+            finder->mNodeEvaluator->blockChanged(pos);
+        if (navigation->hasDelayedRecomputation())
+            continue;
+        Path* path = navigation->getPath();
+        if (path != NULL && !path->isDone() && path->getSize() != 0)
         {
-            Node* last = navigation->getPath()->last();
-            double distance = pos.distSqr((last->x + navigation->mMob->mX - 0.5) * 0.5,
-                                          (last->y + navigation->mMob->mY - 0.5) * 0.5,
-                                          (last->z + navigation->mMob->mZ - 0.5) * 0.5);
-            int remaining = navigation->getPath()->getSize() - navigation->getPath()->getIndex();
+            Node* last = navigation->mPath->last();
+            double distance = pos.distSqr((last->x + navigation->mMob->mX) * 0.5,
+                                          (last->y + navigation->mMob->mY) * 0.5,
+                                          (last->z + navigation->mMob->mZ) * 0.5);
+            int remaining = path->getSize() - path->getIndex();
             if (distance < static_cast<double>(remaining * remaining))
                 navigation->recomputePath();
         }
@@ -57,10 +70,11 @@ void PathNavigationListener::entityAdded(boost::shared_ptr<Entity> entity)
     if (entity && (entity->GetType() & EntityType::MOB) == EntityType::MOB)
     {
         EnterCriticalSection(&mMutex);
-        Mob* mob = static_cast<Mob*>(entity.get());
-        PathNavigation* navigation = mob->getNavigation();
-        if (navigation != NULL)
+        {
+            boost::shared_ptr<Mob> mob = boost::static_pointer_cast<Mob>(entity);
+            PathNavigation* navigation = mob->getNavigation();
             mPathNavigations.push_back(navigation);
+        }
         LeaveCriticalSection(&mMutex);
     }
 }
@@ -70,10 +84,12 @@ void PathNavigationListener::entityRemoved(boost::shared_ptr<Entity> entity)
     if (entity && (entity->GetType() & EntityType::MOB) == EntityType::MOB)
     {
         EnterCriticalSection(&mMutex);
-        PathNavigation* navigation = static_cast<Mob*>(entity.get())->getNavigation();
+        std::vector<PathNavigation*>::iterator last = mPathNavigations.end();
         std::vector<PathNavigation*>::iterator it = mPathNavigations.begin();
-        while (it != mPathNavigations.end() && *it != navigation)
-            ++it;
+        {
+            boost::shared_ptr<Mob> mob = boost::static_pointer_cast<Mob>(entity);
+            it = std::find(it, last, mob->getNavigation());
+        }
         if (it != mPathNavigations.end())
             mPathNavigations.erase(it);
         LeaveCriticalSection(&mMutex);

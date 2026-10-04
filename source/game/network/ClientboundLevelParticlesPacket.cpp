@@ -38,7 +38,10 @@ ClientboundLevelParticlesPacket::ClientboundLevelParticlesPacket(const ParticleT
 
 ClientboundLevelParticlesPacket::~ClientboundLevelParticlesPacket()
 {
-    delete[] params.data;
+    if (params.data != NULL)
+    {
+        delete[] params.data;
+    }
 }
 
 void ClientboundLevelParticlesPacket::Init(const ParticleType* type, bool overrideLimiter, float x, float y, float z, float xDist, float yDist, float zDist, float maxSpeed, int count, arrayWithLength<int> params, bool hasAux, float xAux, float yAux, float zAux)
@@ -54,7 +57,6 @@ void ClientboundLevelParticlesPacket::Init(const ParticleType* type, bool overri
     this->count = count;
     this->overrideLimiter = overrideLimiter;
 
-    delete[] this->params.data;
     this->params.length = params.length;
 
     if (params.length == 0)
@@ -80,12 +82,14 @@ int ClientboundLevelParticlesPacket::getPacketId()
 
 void ClientboundLevelParticlesPacket::read(DataInputStream* input)
 {
-    type = ParticleType::byId((ePARTICLE_TYPE)input->readInt());
+    const ParticleType* particleType = ParticleType::byId((ePARTICLE_TYPE)input->readInt());
 
-    if (type == NULL)
+    if (particleType == NULL)
     {
-        type = PARTICLE_BARRIER;
+        particleType = PARTICLE_BARRIER;
     }
+
+    type = particleType;
 
     overrideLimiter = input->readBoolean();
     x = input->readFloat();
@@ -98,10 +102,6 @@ void ClientboundLevelParticlesPacket::read(DataInputStream* input)
     count = input->readInt();
 
     int paramCount = type->getParamCount();
-
-    delete[] params.data;
-    params.data = NULL;
-    params.length = 0;
 
     if (paramCount > 0)
     {

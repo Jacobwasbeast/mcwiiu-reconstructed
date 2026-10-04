@@ -21,7 +21,7 @@ void ClientboundBlockCollectionDestructionPacket::read(DataInputStream* input)
     const unsigned int count = input->readUnsignedShort();
     if (count == 0)
         return;
-    positions = arrayWithLength<BlockPos>(new BlockPos[count], count);
+    positions = arrayWithLength<BlockPos>(count, true);
     for (unsigned short i = 0; i < count; ++i)
         positions.data[i] = input->readBlockPos();
 }
@@ -31,8 +31,15 @@ void ClientboundBlockCollectionDestructionPacket::write(DataOutputStream* output
     output->writeInt(sourceId);
     output->writeByte(static_cast<unsigned char>(progress));
     output->writeShort(static_cast<short>(positions.length));
-    for (unsigned short i = 0; i < positions.length; ++i)
-        output->writeBlockPos(positions.data[i]);
+    if (positions.length != 0)
+    {
+        unsigned short i = 0;
+        do
+        {
+            output->writeBlockPos(positions.data[i]);
+            ++i;
+        } while (i < positions.length);
+    }
 }
 
 void ClientboundBlockCollectionDestructionPacket::handle(PacketListener* listener)

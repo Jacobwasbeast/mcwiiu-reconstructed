@@ -21,6 +21,7 @@ ClientboundAddMobPacket::ClientboundAddMobPacket()
     z = 0;
     yRot = 0;
     xRot = 0;
+    entityData = boost::shared_ptr<SynchedEntityData>();
     additionalContructionDataTag = NULL;
     unpackedData = NULL;
 }
@@ -54,7 +55,7 @@ void ClientboundAddMobPacket::init(boost::shared_ptr<LivingEntity> entity, int y
 {
     id = entity->getId();
     uuid = entity->getUUID();
-    type = EntityIO::eTypeToIoid(entity->GetType());
+    type = EntityIO::sRegistry.getId(entity->GetType());
 
     this->yRot = yRot;
     this->xRot = xRot;

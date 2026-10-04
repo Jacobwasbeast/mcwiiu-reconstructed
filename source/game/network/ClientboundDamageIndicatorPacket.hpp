@@ -28,7 +28,7 @@ public:
 private:
     float x;
     float z;
-    unsigned char allDirections;
+    bool allDirections;
 };
 
 #endif

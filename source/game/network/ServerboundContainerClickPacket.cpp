@@ -39,6 +39,7 @@ ServerboundContainerClickPacket::ServerboundContainerClickPacket(int containerId
 
 ServerboundContainerClickPacket::~ServerboundContainerClickPacket()
 {
+    items.clear();
 }
 
 int ServerboundContainerClickPacket::getPacketId()

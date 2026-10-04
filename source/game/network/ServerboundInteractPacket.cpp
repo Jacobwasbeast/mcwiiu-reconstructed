@@ -36,13 +36,16 @@ ServerboundInteractPacket::ServerboundInteractPacket(boost::shared_ptr<Entity> t
 {
     entityId = target->getId();
     action = INTERACT_AT;
-    this->location = Vec3::newPermanent(location->x, location->y, location->z);
     this->hand = hand;
+    this->location = Vec3::newPermanent(location->x, location->y, location->z);
 }
 
 ServerboundInteractPacket::~ServerboundInteractPacket()
 {
-    delete location;
+    if (location != NULL)
+    {
+        delete location;
+    }
 }
 
 int ServerboundInteractPacket::getPacketId()

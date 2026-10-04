@@ -13,7 +13,7 @@ class FlexiblePacket : public Packet
 {
 public:
     FlexiblePacket();
-    virtual ~FlexiblePacket();
+    virtual ~FlexiblePacket() {}
 
     virtual void read(DataInputStream* input);
     virtual void write(DataOutputStream* output);

@@ -1,3 +1,4 @@
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/network/ClientboundContainerOpenPacket.hpp"
 
 #include "game/core/CMinecraftApp.hpp"
@@ -7,13 +8,13 @@
 #include "game/network/PacketListener.hpp"
 
 ClientboundContainerOpenPacket::ClientboundContainerOpenPacket()
-    : mContainerId(0),
-      mType(0),
-      mSize(0),
-      mHasCustomName(false),
-      mEntityId(0),
-      mNameData(L"", L"", true, false)
+    : mNameData(L"", L"", true, false)
 {
+    mHasCustomName = false;
+    mContainerId = 0;
+    mSize = 0;
+    mEntityId = 0;
+    mType = 0;
 }
 
 ClientboundContainerOpenPacket::ClientboundContainerOpenPacket(int containerId, int type, InteractionObject::NameData data)
@@ -48,7 +49,7 @@ void ClientboundContainerOpenPacket::_init(int containerId, int type, Interactio
     mNameData.createdOnHost = data.createdOnHost;
     mEntityId = entityId;
     mNameData.createdByRestrictedPlayer = data.createdByRestrictedPlayer;
-    mHasCustomName = !data.name.empty();
+    mHasCustomName = data.name.length() > 0;
 }
 
 void ClientboundContainerOpenPacket::handle(PacketListener* listener)
@@ -119,8 +120,8 @@ uint32_t ClientboundContainerOpenPacket::hasCustomName()
     {
         return 0;
     }
-    if ((!g_pApp->IsConsoleChatCensored() && !mNameData.createdByRestrictedPlayer) ||
-        g_pApp->IsUUIDLocal(mNameData.ownerUuid) ||
+    if ((!gApp.IsConsoleChatCensored() && !mNameData.createdByRestrictedPlayer) ||
+        gApp.IsUUIDLocal(mNameData.ownerUuid) ||
         (CGameNetworkManager::sInstance.IsHost() && mNameData.createdOnHost))
     {
         return 1;
@@ -130,15 +131,15 @@ uint32_t ClientboundContainerOpenPacket::hasCustomName()
 
 std::wstring ClientboundContainerOpenPacket::getTitle()
 {
-    if (!hasCustomName())
+    if (hasCustomName())
     {
+        if ((!gApp.IsConsoleChatCensored() && !mNameData.createdByRestrictedPlayer) ||
+            gApp.IsUUIDLocal(mNameData.ownerUuid) ||
+            (CGameNetworkManager::sInstance.IsHost() && mNameData.createdOnHost))
+        {
+            return mNameData.name;
+        }
         return L"";
-    }
-    if ((!g_pApp->IsConsoleChatCensored() && !mNameData.createdByRestrictedPlayer) ||
-        g_pApp->IsUUIDLocal(mNameData.ownerUuid) ||
-        (CGameNetworkManager::sInstance.IsHost() && mNameData.createdOnHost))
-    {
-        return mNameData.name;
     }
     return L"";
 }

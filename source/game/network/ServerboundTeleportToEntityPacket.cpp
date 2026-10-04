@@ -9,6 +9,7 @@
 ServerboundTeleportToEntityPacket::ServerboundTeleportToEntityPacket()
     : mPlayerUID(0)
 {
+    mPlayerUID = PlayerUID(0);
 }
 
 ServerboundTeleportToEntityPacket::~ServerboundTeleportToEntityPacket()

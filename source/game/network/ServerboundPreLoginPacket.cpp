@@ -5,13 +5,15 @@
 #include "game/network/PacketListener.hpp"
 
 ServerboundPreLoginPacket::ServerboundPreLoginPacket()
-    : protocolVersion(0), name(L"")
+    : name(L"")
 {
+    protocolVersion = 0;
 }
 
 ServerboundPreLoginPacket::ServerboundPreLoginPacket(const std::wstring& name)
-    : protocolVersion(0), name(name)
+    : name(name)
 {
+    protocolVersion = 0;
 }
 
 ServerboundPreLoginPacket::~ServerboundPreLoginPacket()

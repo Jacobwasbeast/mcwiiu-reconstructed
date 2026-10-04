@@ -156,7 +156,7 @@ public:
     public:
         UpdateStartTimeData();
         UpdateStartTimeData(long long startTime);
-        virtual ~UpdateStartTimeData();
+        virtual ~UpdateStartTimeData() {}
         virtual void ReadPacket(boost::shared_ptr<GameModePacket> packet);
         virtual void WritePacket(boost::shared_ptr<GameModePacket> packet) const;
 

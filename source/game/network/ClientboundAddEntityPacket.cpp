@@ -15,8 +15,8 @@ ClientboundAddEntityPacket::ClientboundAddEntityPacket()
 ClientboundAddEntityPacket::ClientboundAddEntityPacket(boost::shared_ptr<Entity> entity, int type, int data)
 {
     _init(entity, type, data, (int)entity->mXp, (int)entity->mYp, (int)entity->mZp,
-          (int)std::floor(entity->mXRot * 256.0f / 360.0f),
-          (int)std::floor(entity->mYRot * 256.0f / 360.0f));
+          (unsigned char)std::floor(entity->mXRot * 256.0f / 360.0f),
+          (unsigned char)std::floor(entity->mYRot * 256.0f / 360.0f));
 }
 
 ClientboundAddEntityPacket::ClientboundAddEntityPacket(boost::shared_ptr<Entity> entity, int type, int yRot, int xRot, int xa, int ya, int za)

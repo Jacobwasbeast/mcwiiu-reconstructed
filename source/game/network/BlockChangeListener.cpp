@@ -25,8 +25,8 @@ BlockChangeListener::~BlockChangeListener()
 
 long long BlockChangeListener::GetChunkKey(int x, int z)
 {
-    return (static_cast<long long>(x) + 0x7fffffffLL << 32) |
-           (static_cast<unsigned int>(z) + 0x7fffffffU);
+    return (static_cast<long long>(x) + 0x7fffffffLL) |
+           ((static_cast<long long>(z) + 0x7fffffffLL) << 32);
 }
 
 bool BlockChangeListener::HasChunk(long long key) const
@@ -54,19 +54,22 @@ std::vector<short>* BlockChangeListener::GetChangesForChunk(int x, int z) const
 
 bool BlockChangeListener::ShouldLoadOnClient(int x, int z) const
 {
+    Chunk* chunk = NULL;
     long long key = GetChunkKey(x, z);
-    if (!HasChunk(key))
-        return true;
-    return GetChunk(key).GetChangeCount() <= MAX_CLIENT_LOADED_CHANGES;
+    if (HasChunk(key))
+        chunk = &GetChunk(key);
+    return chunk == NULL || chunk->GetChangeCount() <= MAX_CLIENT_LOADED_CHANGES;
 }
 
 BlockChangeListener::Chunk& BlockChangeListener::GetChunk(int x, int z, bool create)
 {
     long long key = GetChunkKey(x, z);
-    boost::unordered_map<long long, Chunk>::iterator it = mChunks->find(key);
-    if (create && it == mChunks->end())
-        it = mChunks->insert(std::make_pair(key, Chunk(x, z))).first;
-    return it->second;
+    if (create && !HasChunk(key))
+    {
+        boost::unordered_map<long long, Chunk>* chunks = mChunks;
+        chunks->insert(std::make_pair(key, Chunk(x, z)));
+    }
+    return mChunks->at(key);
 }
 
 int BlockChangeListener::GetBlockKey(const BlockPos& pos)
@@ -77,20 +80,22 @@ int BlockChangeListener::GetBlockKey(const BlockPos& pos)
 void BlockChangeListener::blockChanged(Level*, const BlockPos& pos, const BlockState*, const BlockState* newState, int, bool)
 {
     GetChunk(pos.x >> 4, pos.z >> 4, true).AddBlockChange(pos);
-    if (gMinecraftServer != NULL && newState != NULL && newState->getBlock() == Blocks::air)
-        gMinecraftServer->mMasterGameMode->BlockDestroyedAt(pos);
+    MinecraftServer* server = gMinecraftServer;
+    if (server != NULL && newState != NULL && newState->getBlock() == Blocks::air)
+        server->mMasterGameMode->BlockDestroyedAt(pos);
 }
 
 void BlockChangeListener::invalidateChunksOutsideArea(int minChunkX, int minChunkZ, int maxChunkX, int maxChunkZ)
 {
-    boost::unordered_map<long long, Chunk>::iterator it = mChunks->begin();
+    boost::unordered_map<long long, Chunk>::const_iterator it = mChunks->begin();
     while (it != mChunks->end())
     {
-        const Chunk& chunk = it->second;
-        if (chunk.GetX() < minChunkX || chunk.GetX() > maxChunkX || chunk.GetZ() < minChunkZ || chunk.GetZ() > maxChunkZ)
-            it = mChunks->erase(it);
-        else
+        int chunkX = it->second.GetX();
+        int chunkZ = it->second.GetZ();
+        if (minChunkX <= chunkX && chunkX <= maxChunkX && minChunkZ <= chunkZ && chunkZ <= maxChunkZ)
             ++it;
+        else
+            it = mChunks->erase(it);
     }
 }
 
@@ -126,17 +131,21 @@ int BlockChangeListener::Chunk::GetChangeCount()
 
 bool BlockChangeListener::Chunk::HasBlockChange(short blockKey)
 {
-    for (std::vector<short>::const_iterator it = mChanges.begin(); it != mChanges.end(); ++it)
+    std::vector<short>::iterator it = mChanges.begin();
+    for (; it != mChanges.end(); ++it)
+    {
         if (*it == blockKey)
-            return true;
-    return false;
+            break;
+    }
+    return it != mChanges.end();
 }
 
 void BlockChangeListener::Chunk::AddBlockChange(const BlockPos& pos)
 {
-    if (mChangeCount < 21)
+    int changeCount = mChangeCount;
+    if (changeCount <= MAX_CLIENT_LOADED_CHANGES)
     {
-        if (mChangeCount < 20)
+        if (changeCount < MAX_CLIENT_LOADED_CHANGES)
         {
             short blockKey = static_cast<short>(BlockChangeListener::GetBlockKey(pos));
             if (HasBlockChange(blockKey))
@@ -147,7 +156,7 @@ void BlockChangeListener::Chunk::AddBlockChange(const BlockPos& pos)
         }
         mChanges.clear();
     }
-    ++mChangeCount;
+    mChangeCount = changeCount + 1;
 }
 
 int BlockChangeListener::Chunk::GetX() const

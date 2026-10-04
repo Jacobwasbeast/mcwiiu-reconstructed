@@ -35,6 +35,7 @@ void ClientboundContainerSetContentPacket::read(DataInputStream* input)
     containerId = input->readByte();
 
     int count = input->readShort();
+    delete[] items.items;
     items = NonNullList<not_null_ptr<ItemInstance> >::withSize(count, ItemInstance::EMPTY);
 
     for (int i = 0; i < count; ++i)

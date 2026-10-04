@@ -6,42 +6,39 @@
 #include "game/network/PacketListener.hpp"
 
 ClientboundSetPassengersPacket::ClientboundSetPassengersPacket()
-    : mVehicle(0), mPassengers(NULL), mPassengerCount(0)
 {
 }
 
 ClientboundSetPassengersPacket::ClientboundSetPassengersPacket(boost::shared_ptr<Entity> vehicle)
-    : mVehicle(0), mPassengers(NULL), mPassengerCount(0)
 {
-    if (vehicle)
+    mVehicle = vehicle->getId();
+    const std::vector<boost::weak_ptr<Entity> >* riders = vehicle->getPassengers();
+    std::vector<boost::shared_ptr<Entity> > riderList;
+
+    for (unsigned int i = 0; i < riders->size(); i++)
     {
-        mVehicle = vehicle->getId();
-        std::vector<boost::weak_ptr<Entity> >* passengers = vehicle->getPassengers();
-        if (passengers != NULL)
+        boost::shared_ptr<Entity> rider = riders->at(i).lock();
+
+        if (rider)
         {
-            std::vector<int> ids;
-            for (std::vector<boost::weak_ptr<Entity> >::iterator it = passengers->begin(); it != passengers->end(); ++it)
-            {
-                boost::shared_ptr<Entity> passenger = it->lock();
-                if (passenger)
-                {
-                    ids.push_back(passenger->getId());
-                }
-            }
-            mPassengerCount = ids.size();
-            if (mPassengerCount != 0)
-            {
-                mPassengers = new int[mPassengerCount];
-                for (unsigned int i = 0; i < mPassengerCount; ++i)
-                    mPassengers[i] = ids[i];
-            }
+            riderList.push_back(rider);
         }
+    }
+
+    if (!riderList.empty())
+    {
+        mPassengers = arrayWithLength<int>(riderList.size(), true);
+    }
+
+    for (unsigned int i = 0; i < riderList.size(); i++)
+    {
+        mPassengers.data[i] = riderList.at(i)->getId();
     }
 }
 
 ClientboundSetPassengersPacket::~ClientboundSetPassengersPacket()
 {
-    delete[] mPassengers;
+    delete mPassengers.data;
 }
 
 int ClientboundSetPassengersPacket::getPacketId()
@@ -52,19 +49,13 @@ int ClientboundSetPassengersPacket::getPacketId()
 void ClientboundSetPassengersPacket::read(DataInputStream* input)
 {
     mVehicle = input->readVarInt();
-    arrayWithLength<int> values = input->readVarIntArray();
-    delete[] mPassengers;
-    mPassengers = values.data;
-    mPassengerCount = values.length;
+    mPassengers = input->readVarIntArray();
 }
 
 void ClientboundSetPassengersPacket::write(DataOutputStream* output)
 {
     output->writeVarInt(mVehicle);
-    arrayWithLength<int> values;
-    values.data = mPassengers;
-    values.length = mPassengerCount;
-    output->writeVarIntArray(values);
+    output->writeVarIntArray(mPassengers);
 }
 
 void ClientboundSetPassengersPacket::handle(PacketListener* listener)
@@ -74,7 +65,7 @@ void ClientboundSetPassengersPacket::handle(PacketListener* listener)
 
 arrayWithLength<int> ClientboundSetPassengersPacket::getPassengers()
 {
-    return *reinterpret_cast<arrayWithLength<int>*>(&mPassengers);
+    return mPassengers;
 }
 
 int ClientboundSetPassengersPacket::getVehicle()

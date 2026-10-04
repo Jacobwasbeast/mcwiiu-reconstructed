@@ -9,8 +9,15 @@ ServerboundChatPacket::ServerboundChatPacket()
 }
 
 ServerboundChatPacket::ServerboundChatPacket(const std::wstring& message)
-    : message(message.substr(0, 256))
 {
+    if (message.length() > 256)
+    {
+        this->message = message.substr(0, 256);
+    }
+    else
+    {
+        this->message = message;
+    }
 }
 
 ServerboundChatPacket::~ServerboundChatPacket()

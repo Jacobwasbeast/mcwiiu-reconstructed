@@ -5,12 +5,12 @@
 #include "game/network/PacketListener.hpp"
 
 ClientIntentionPacket::ClientIntentionPacket()
-    : Packet(), hostName(), protocolVersion(0), port(0), intention(NULL)
+    : Packet(), protocolVersion(0), hostName(), port(0), intention(NULL)
 {
 }
 
 ClientIntentionPacket::ClientIntentionPacket(int protocolVersionValue, std::wstring hostNameValue, int portValue, ConnectionProtocol* intentionValue)
-    : Packet(), hostName(hostNameValue), protocolVersion(protocolVersionValue), port(portValue), intention(intentionValue)
+    : Packet(), protocolVersion(protocolVersionValue), hostName(hostNameValue), port(portValue), intention(intentionValue)
 {
 }
 

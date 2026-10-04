@@ -6,41 +6,41 @@
 
 FlexiblePacket::FlexiblePacket()
 {
-}
-
-FlexiblePacket::~FlexiblePacket()
-{
+    strings = std::vector<std::wstring>();
+    ints = std::vector<int>();
+    bools = std::vector<bool>();
+    floats = std::vector<float>();
 }
 
 void FlexiblePacket::read(DataInputStream* input)
 {
     unsigned int header = input->readInt();
-    unsigned int stringCount = header & 0xFF;
-    unsigned int intCount = (header >> 8) & 0xFFF;
-    unsigned int boolCount = (header >> 20) & 0xFF;
-    unsigned int floatCount = header >> 28;
+    int stringCount = header & 0xFF;
+    int intCount = (header >> 8) & 0xFFF;
+    int boolCount = (header >> 20) & 0xFF;
+    int floatCount = header >> 28;
 
-    for (unsigned int i = 0; i < stringCount; ++i)
+    for (int i = 0; i < stringCount; ++i)
     {
         strings.push_back(Packet::readUtf(input, 123));
     }
 
-    for (unsigned int i = 0; i < intCount; ++i)
+    for (int i = 0; i < intCount; ++i)
     {
         ints.push_back(input->readVarInt());
     }
 
-    if (boolCount != 0)
+    if (boolCount > 0)
     {
         unsigned int bits = input->readByte();
 
-        for (unsigned int i = 0; i < boolCount; ++i)
+        for (int i = 0; i < boolCount; ++i)
         {
             bools.push_back(((bits >> i) & 1) != 0);
         }
     }
 
-    for (unsigned int i = 0; i < floatCount; ++i)
+    for (int i = 0; i < floatCount; ++i)
     {
         floats.push_back(input->readFloat());
     }
@@ -48,10 +48,12 @@ void FlexiblePacket::read(DataInputStream* input)
 
 void FlexiblePacket::write(DataOutputStream* output)
 {
-    output->writeInt((strings.size() & 0xFF)
-        | ((ints.size() & 0xFFF) << 8)
-        | ((bools.size() & 0xFF) << 20)
-        | (floats.size() << 28));
+    unsigned int header = strings.size() & 0xFF;
+    header |= (ints.size() & 0xFFF) << 8;
+    int floatCount = floats.size();
+    header |= static_cast<unsigned char>(bools.size()) << 20;
+    header |= floatCount << 28;
+    output->writeInt(header);
 
     for (unsigned int i = 0; i < strings.size(); ++i)
     {
@@ -69,7 +71,10 @@ void FlexiblePacket::write(DataOutputStream* output)
 
         for (unsigned int i = 0; i < bools.size(); ++i)
         {
-            if (bools[i])
+            std::vector<bool>::const_iterator bit = bools.begin();
+            bit += i;
+
+            if (*bit)
             {
                 bits |= (1 << i);
             }
@@ -86,7 +91,7 @@ void FlexiblePacket::write(DataOutputStream* output)
 
 int FlexiblePacket::getEstimatedSize()
 {
-    int size = 5;
+    int size = 0;
 
     for (unsigned int i = 0; i < strings.size(); ++i)
     {
@@ -94,13 +99,8 @@ int FlexiblePacket::getEstimatedSize()
     }
 
     size += ints.size() * 4;
-
-    if (!bools.empty())
-    {
-        size -= 1;
-    }
-
+    size += !bools.empty();
     size += floats.size() * 4;
 
-    return size;
+    return size + 4;
 }

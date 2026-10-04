@@ -70,9 +70,9 @@ Connection::Connection(Socket* socket, const std::wstring& name, PacketListener*
 
     char readThreadName[256];
     char writeThreadName[256];
-    wstringtofilename(name, sConnectionName);
-    std::sprintf(readThreadName, "%s read\n", sConnectionName);
-    std::sprintf(writeThreadName, "%s write\n", sConnectionName);
+    char* connectionName = wstringtofilename(name, sConnectionName);
+    std::sprintf(readThreadName, "%s read\n", connectionName);
+    std::sprintf(writeThreadName, "%s write\n", connectionName);
     m_readThread = new C4JThreadImpl(&Connection::runRead, this, readThreadName, 0);
     m_writeThread = new C4JThreadImpl(&Connection::runWrite, this, writeThreadName, 0);
     m_readThread->SetProcessor(CONNECTION_THREAD_PROCESSOR);
@@ -162,6 +162,10 @@ bool Connection::readTick()
         LeaveCriticalSection(&m_incomingLock);
         didSomething = true;
     }
+    else if (m_readError)
+    {
+        return false;
+    }
     return didSomething;
 }
 
@@ -195,11 +199,16 @@ bool Connection::writeTick()
 {
     bool didSomething = false;
 
+    if (m_bufferedOutput == NULL || m_byteArrayOutput == NULL)
+        return didSomething;
+
     if (!m_outgoing.empty() &&
-        (m_fakeLag == 0 || System::processTimeInMilliSecs() - m_outgoing.front()->creationTime >= m_fakeLag))
+        (m_fakeLag == 0 ||
+         static_cast<long long>(System::processTimeInMilliSecs()) - m_outgoing.front()->creationTime >= m_fakeLag))
     {
+        boost::shared_ptr<Packet> packet;
         EnterCriticalSection(&m_writeLock);
-        boost::shared_ptr<Packet> packet = m_outgoing.front();
+        packet = m_outgoing.front();
         m_outgoing.pop_front();
         m_estimatedRemaining -= packet->getEstimatedSize() + 1;
         LeaveCriticalSection(&m_writeLock);
@@ -210,10 +219,12 @@ bool Connection::writeTick()
     }
 
     if (m_slowWriteDelay-- <= 0 && !m_outgoingSlow.empty() &&
-        (m_fakeLag == 0 || System::processTimeInMilliSecs() - m_outgoingSlow.front()->creationTime >= m_fakeLag))
+        (m_fakeLag == 0 ||
+         static_cast<long long>(System::processTimeInMilliSecs()) - m_outgoingSlow.front()->creationTime >= m_fakeLag))
     {
+        boost::shared_ptr<Packet> packet;
         EnterCriticalSection(&m_writeLock);
-        boost::shared_ptr<Packet> packet = m_outgoingSlow.front();
+        packet = m_outgoingSlow.front();
         m_outgoingSlow.pop_front();
         m_estimatedRemaining -= packet->getEstimatedSize() + 1;
         LeaveCriticalSection(&m_writeLock);
@@ -254,10 +265,15 @@ int Connection::runWrite(void* argument)
                ShutdownManager::ShouldRun(ShutdownManager::eThreadId_ConnectionWrite))
         {
             long long start = System::processTimeInMilliSecs();
-            while (connection->writeTick() && System::processTimeInMilliSecs() - start < WRITE_BURST_MS &&
-                   connection->m_bufferedOutput->mWritten < INT_MAX)
+            bool keepWriting;
+            do
             {
-            }
+                bool wrote = connection->writeTick();
+                long long elapsed = System::processTimeInMilliSecs() - start;
+                bool inBurst = elapsed < WRITE_BURST_MS;
+                bool underLimit = connection->m_bufferedOutput->mWritten < INT_MAX;
+                keepWriting = wrote && inBurst && underLimit;
+            } while (keepWriting);
             waitResult = connection->m_writeEvent->WaitForSignal(THREAD_WAIT_MS);
             if (connection->m_bufferedOutput != NULL)
                 connection->m_bufferedOutput->flush();
@@ -279,6 +295,9 @@ void Connection::setListener(PacketListener* listener)
 
 void Connection::send(boost::shared_ptr<Packet> packet)
 {
+    if (m_quitting)
+        return;
+
     m_lastSendTime = System::processTimeInMilliSecs();
     MemSect(15);
     EnterCriticalSection(&m_writeLock);
@@ -372,8 +391,7 @@ void Connection::tick()
     if (s_altMainStopRequested)
         m_noInputTicks = 0;
 
-    if (static_cast<unsigned int>(System::processTimeInMilliSecs()) - static_cast<unsigned int>(m_lastSendTime) >
-        static_cast<unsigned int>(KEEP_ALIVE_INTERVAL_MS))
+    if (static_cast<int>(System::processTimeInMilliSecs()) - static_cast<int>(m_lastSendTime) > KEEP_ALIVE_INTERVAL_MS)
     {
         if (!m_listener->isServerPacketListener())
             send(boost::shared_ptr<Packet>(new ServerboundKeepAlivePacket()));
@@ -399,12 +417,23 @@ void Connection::tick()
                 {
                     packets.push_front(packet);
                     m_incoming.pop_front();
-                    continue;
+                }
+                else
+                {
+                    packets.push_back(packet);
+                    m_incoming.pop_front();
                 }
             }
-            packets.push_back(packet);
+            else
+            {
+                packets.push_back(packet);
+                m_incoming.pop_front();
+            }
         }
-        m_incoming.pop_front();
+        else
+        {
+            m_incoming.pop_front();
+        }
     }
     LeaveCriticalSection(&m_incomingLock);
 

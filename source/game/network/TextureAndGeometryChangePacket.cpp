@@ -14,17 +14,16 @@ TextureAndGeometryChangePacket::TextureAndGeometryChangePacket()
 
 TextureAndGeometryChangePacket::TextureAndGeometryChangePacket(boost::shared_ptr<Entity> entity,
                                                                const std::wstring& geometryName)
-    : entityId(entity->getId()), geometryName(geometryName), geometryId(0)
 {
+    entityId = entity->getId();
+    this->geometryName = geometryName;
+
     std::wstring identifier = geometryName.substr(7, geometryName.length());
-    std::wstring::size_type separator = identifier.find(L'.');
-    if (separator != std::wstring::npos)
-    {
-        identifier = identifier.substr(0, separator);
-    }
+    identifier = identifier.substr(0, identifier.find(L'.'));
 
     std::wstringstream stream;
-    stream << identifier;
+    stream.setf(std::ios_base::dec, std::ios_base::basefield);
+    stream << identifier.c_str();
     stream >> geometryId;
     geometryId |= 0x80000000u;
 }

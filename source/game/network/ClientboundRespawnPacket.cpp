@@ -59,9 +59,11 @@ void ClientboundRespawnPacket::read(DataInputStream* input)
 {
     m_dimension = input->readByte();
     m_playerGameType = GameType::byId(input->readUnsignedByte());
-    m_levelType = LevelType::getLevelType(Packet::readUtf(input, 16));
-    if (m_levelType == NULL)
-        m_levelType = LevelType::DEFAULT;
+    std::wstring levelTypeName = Packet::readUtf(input, 16);
+    LevelType* levelType = LevelType::getLevelType(levelTypeName);
+    if (levelType == NULL)
+        levelType = LevelType::DEFAULT;
+    m_levelType = levelType;
     m_mapSeed = input->readLong();
     m_difficulty = Difficulty::byId(input->readUnsignedByte());
     m_newSeaLevel = input->readBoolean();
@@ -126,7 +128,7 @@ int ClientboundRespawnPacket::getDimension() { return m_dimension; }
 const Difficulty* ClientboundRespawnPacket::getDifficulty() { return m_difficulty; }
 const GameType* ClientboundRespawnPacket::getPlayerGameType() { return m_playerGameType; }
 LevelType* ClientboundRespawnPacket::getLevelType() { return m_levelType; }
-bool ClientboundRespawnPacket::shouldKeepOldEntityData() const { return m_keepOldEntityData; }
+bool ClientboundRespawnPacket::shouldKeepOldEntityData() const { return m_keepOldEntityData == 1; }
 bool ClientboundRespawnPacket::hasPositionAndRotation() const { return m_hasPositionAndRotation; }
 int ClientboundRespawnPacket::getPacketId() { return 9; }
 

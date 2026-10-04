@@ -125,9 +125,9 @@ void FakeClientPacketListener::handleEntityActionAtPosition(boost::shared_ptr<Cl
 void FakeClientPacketListener::handlePreLogin(boost::shared_ptr<ClientboundPreLoginPacket> packet)
 {
     PlayerUID playerUid(0);
-    PlayerUID playerUid2(0);
-    std::wstring name(L"FakeName");
-    ClientboundLoginPacket* login = new ClientboundLoginPacket(name, 316, playerUid, playerUid2, false,
+    std::wstring name;
+    name.assign(L"FakeName");
+    ClientboundLoginPacket* login = new ClientboundLoginPacket(name, 316, playerUid, playerUid, false,
         packet->mSeed, GameSettings::GetPlayerSkinId(0), GameSettings::GetPlayerCapeId(0), false, false);
     boost::shared_ptr<Packet> loginPacket(login);
     ClientPacketListener::send(loginPacket);

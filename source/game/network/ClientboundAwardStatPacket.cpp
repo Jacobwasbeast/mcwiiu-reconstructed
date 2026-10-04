@@ -23,8 +23,11 @@ ClientboundAwardStatPacket::ClientboundAwardStatPacket(int statId, arrayWithLeng
 
 ClientboundAwardStatPacket::~ClientboundAwardStatPacket()
 {
-    delete[] paramData.data;
-    paramData.data = NULL;
+    if (paramData.data != NULL)
+    {
+        delete[] paramData.data;
+        paramData.data = NULL;
+    }
 }
 
 int ClientboundAwardStatPacket::getPacketId()
@@ -35,7 +38,7 @@ int ClientboundAwardStatPacket::getPacketId()
 void ClientboundAwardStatPacket::read(DataInputStream* input)
 {
     statId = input->readInt();
-    unsigned int length = input->readInt();
+    int length = input->readInt();
     if (length > 0)
     {
         paramData = arrayWithLength<unsigned char>(length, true);

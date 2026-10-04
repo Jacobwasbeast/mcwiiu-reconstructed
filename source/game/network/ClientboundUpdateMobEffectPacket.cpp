@@ -20,12 +20,7 @@ ClientboundUpdateMobEffectPacket::ClientboundUpdateMobEffectPacket(int entityId,
     this->entityId = entityId;
     effectId = (unsigned char)MobEffect::getId(effect->getEffect());
     effectAmplifier = (unsigned char)effect->getAmplifier();
-    effectDurationTicks = 32767;
-
-    if (effect->getDuration() < 32767)
-    {
-        effectDurationTicks = (short)effect->getDuration();
-    }
+    effectDurationTicks = effect->getDuration() <= 32767 ? (short)effect->getDuration() : 32767;
 
     effectFlags = 0;
 

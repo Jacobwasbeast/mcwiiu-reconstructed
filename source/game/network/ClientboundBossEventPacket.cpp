@@ -7,9 +7,9 @@
 #include "game/network/PacketListener.hpp"
 
 ClientboundBossEventPacket::ClientboundBossEventPacket()
+    : operation(ADD)
 {
     id = L"";
-    operation = ADD;
     name = L"";
     nameId = -1;
     percent = 0.0F;
@@ -45,14 +45,14 @@ int ClientboundBossEventPacket::getPacketId()
 
 void ClientboundBossEventPacket::decodeProperties(int properties)
 {
-    darkenScreen = (properties & 1) != 0;
-    playMusic = (properties & 2) != 0;
-    createWorldFog = (properties & 4) != 0;
+    darkenScreen = (properties & 1) > 0;
+    playMusic = (properties & 2) > 0;
+    createWorldFog = (properties & 2) > 0;
 }
 
-unsigned char ClientboundBossEventPacket::encodeProperties()
+int ClientboundBossEventPacket::encodeProperties()
 {
-    unsigned char properties = 0;
+    int properties = 0;
 
     if (darkenScreen)
     {
@@ -61,7 +61,7 @@ unsigned char ClientboundBossEventPacket::encodeProperties()
 
     if (playMusic)
     {
-        properties |= 4;
+        properties |= 2;
     }
 
     if (createWorldFog)
@@ -214,7 +214,7 @@ int ClientboundBossEventPacket::getEstimatedSize()
         return id.size() * 3 + 5;
 
     case UPDATE_NAME:
-        return id.size() * 3 + name.size() * 3 + 1;
+        return (int)(id.size() * 3) + (int)(name.size() * 3) + 1;
 
     case UPDATE_STYLE:
         return id.size() * 3 + 3;

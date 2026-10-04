@@ -6,34 +6,34 @@
 #include "game/world/generation/PlayerTeam.hpp"
 
 ClientboundSetPlayerTeamPacket::ClientboundSetPlayerTeamPacket()
-    : mName(), mPlayers(), mMethod(0), mOptions(0), mNameTagVisibility(0)
+    : mName(), mPlayers()
 {
+    mName = L"";
+    mMethod = 0;
+    mNameTagVisibility = 0;
+    mOptions = 0;
 }
 
 ClientboundSetPlayerTeamPacket::ClientboundSetPlayerTeamPacket(PlayerTeam* team, int method)
-    : mName(), mPlayers(), mMethod(method), mOptions(0), mNameTagVisibility(0)
+    : mName(), mPlayers()
 {
     mName = team->getName();
+    mMethod = method;
     if (method == 0 || method == 2)
     {
         mOptions = team->packOptions();
         mNameTagVisibility = team->getNameTagVisibility();
         if (method == 0)
-        {
-            boost::unordered_set<PlayerUID, boost::hash<PlayerUID>, std::equal_to<PlayerUID> >* members = team->getPlayers();
-            boost::unordered_set<PlayerUID, boost::hash<PlayerUID>, std::equal_to<PlayerUID> >::const_iterator it;
-            for (it = members->begin(); it != members->end(); ++it)
-                mPlayers.push_back(*it);
-        }
+            mPlayers.insert(mPlayers.end(), team->getPlayers()->begin(), team->getPlayers()->end());
     }
 }
 
 ClientboundSetPlayerTeamPacket::ClientboundSetPlayerTeamPacket(PlayerTeam* team, std::vector<PlayerUID>* players, int method)
-    : mName(), mPlayers(), mMethod(method), mOptions(0), mNameTagVisibility(0)
+    : mName(), mPlayers()
 {
+    mMethod = method;
     mName = team->getName();
-    if (players != NULL)
-        mPlayers = *players;
+    mPlayers.insert(mPlayers.end(), players->begin(), players->end());
 }
 
 ClientboundSetPlayerTeamPacket::~ClientboundSetPlayerTeamPacket()
@@ -74,7 +74,6 @@ void ClientboundSetPlayerTeamPacket::read(DataInputStream* input)
 {
     mName = Packet::readUtf(input, 256);
     mMethod = input->readByte();
-    mPlayers.clear();
     if (mMethod == 0 || mMethod == 2)
     {
         mOptions = input->readInt();
@@ -82,8 +81,8 @@ void ClientboundSetPlayerTeamPacket::read(DataInputStream* input)
     }
     if (mMethod == 0 || mMethod == 3 || mMethod == 4)
     {
-        unsigned int count = input->readByte();
-        for (unsigned int i = 0; i < count; ++i)
+        int count = input->readByte();
+        for (int i = 0; i < count; ++i)
             mPlayers.push_back(input->readPlayerUID());
     }
 }

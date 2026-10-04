@@ -26,8 +26,7 @@ public:
 
 private:
     int mVehicle;
-    int* mPassengers;
-    unsigned int mPassengerCount;
+    arrayWithLength<int> mPassengers;
 };
 
 #endif

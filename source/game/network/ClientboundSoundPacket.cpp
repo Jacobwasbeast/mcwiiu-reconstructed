@@ -1,5 +1,7 @@
 #include "game/network/ClientboundSoundPacket.hpp"
 
+#include <climits>
+
 #include "game/client/audio/SoundEvent.hpp"
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/core/DataInputStream.hpp"
@@ -7,7 +9,7 @@
 #include "game/network/PacketListener.hpp"
 
 ClientboundSoundPacket::ClientboundSoundPacket()
-    : sound(NULL), source(SoundSource::eSoundSource_Master), x(0), y(0), z(0), volume(0.0f), pitch(0.0f), playUI(false), looping(false), soundInstance(eSoundInstances_None), entityId(-1)
+    : sound(NULL), source(SoundSource::eSoundSource_Neutral), x(0), y(INT_MAX), z(0), volume(0.0f), pitch(0.0f), playUI(false), looping(false), soundInstance(eSoundInstances_None), entityId(-1)
 {
 }
 
@@ -17,7 +19,7 @@ ClientboundSoundPacket::ClientboundSoundPacket(const SoundEvent* sound, SoundSou
 }
 
 ClientboundSoundPacket::ClientboundSoundPacket(const SoundEvent* sound, float volume, float pitch)
-    : sound(sound), source(SoundSource::eSoundSource_Master), x(0), y(0), z(0), volume(volume), pitch(pitch), playUI(true), looping(false), soundInstance(eSoundInstances_None), entityId(-1)
+    : sound(sound), volume(volume), pitch(pitch), playUI(true), looping(false), soundInstance(eSoundInstances_None), entityId(-1)
 {
 }
 
@@ -48,7 +50,7 @@ void ClientboundSoundPacket::read(DataInputStream* input)
 
 void ClientboundSoundPacket::write(DataOutputStream* output)
 {
-    output->writeVarInt(sound == NULL ? -1 : sound->getIndex());
+    output->writeVarInt(SoundEvents::soundEventRegistry.getId(sound));
     output->writeVarInt((int)source);
     output->writeInt(x);
     output->writeInt(y);
@@ -63,9 +65,9 @@ void ClientboundSoundPacket::write(DataOutputStream* output)
 
 const SoundEvent* ClientboundSoundPacket::getSound() { return sound; }
 SoundSource::ESoundSource ClientboundSoundPacket::getSource() { return source; }
-double ClientboundSoundPacket::getX() { return (double)x * 0.125; }
-double ClientboundSoundPacket::getY() { return (double)y * 0.125; }
-double ClientboundSoundPacket::getZ() { return (double)z * 0.125; }
+double ClientboundSoundPacket::getX() { return (float)x * 0.125f; }
+double ClientboundSoundPacket::getY() { return (float)y * 0.125f; }
+double ClientboundSoundPacket::getZ() { return (float)z * 0.125f; }
 double ClientboundSoundPacket::getVolume() { return (double)volume; }
 double ClientboundSoundPacket::getPitch() { return (double)pitch; }
 bool ClientboundSoundPacket::getPlayUI() { return playUI; }

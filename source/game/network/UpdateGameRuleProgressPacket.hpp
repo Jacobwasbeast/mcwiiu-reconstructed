@@ -33,7 +33,7 @@ private:
     ConsoleGameRules::EGameRuleType mRuleType;
     std::wstring mDescription;
     int mItemId;
-    unsigned char mAuxValue;
+    int mAuxValue;
     int mDataTag;
     arrayWithLength<unsigned char> mPayload;
 };

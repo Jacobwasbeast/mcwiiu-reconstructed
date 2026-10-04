@@ -10,8 +10,9 @@ ClientboundRemoveEntitiesPacket::ClientboundRemoveEntitiesPacket()
 }
 
 ClientboundRemoveEntitiesPacket::ClientboundRemoveEntitiesPacket(int entityId)
-    : entityIds(1, false)
+    : entityIds()
 {
+    entityIds = arrayWithLength<int>(1, true);
     entityIds.data[0] = entityId;
 }
 
@@ -22,14 +23,15 @@ ClientboundRemoveEntitiesPacket::ClientboundRemoveEntitiesPacket(arrayWithLength
 
 ClientboundRemoveEntitiesPacket::~ClientboundRemoveEntitiesPacket()
 {
-    delete[] entityIds.data;
+    delete entityIds.data;
+    entityIds.data = NULL;
 }
 
 void ClientboundRemoveEntitiesPacket::read(DataInputStream* input)
 {
     unsigned int count = static_cast<unsigned int>(input->readVarInt());
-    entityIds.resize(count);
-    for (unsigned int i = 0; i < count; ++i)
+    entityIds = arrayWithLength<int>(count, true);
+    for (unsigned int i = 0; i < entityIds.length; ++i)
         entityIds.data[i] = input->readInt();
 }
 

@@ -52,7 +52,7 @@ public:
 
 private:
     void decodeProperties(int properties);
-    unsigned char encodeProperties();
+    int encodeProperties();
 
     std::wstring id;
     Operation operation;

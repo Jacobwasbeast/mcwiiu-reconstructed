@@ -59,11 +59,14 @@ void ClientboundSetEntityMotionPacket::_init(int id, double xa, double ya, doubl
         za = 3.9;
     }
 
-    this->xa = (int)(xa * 8000.0);
-    this->ya = (int)(ya * 8000.0);
-    this->za = (int)(za * 8000.0);
+    int scaledX = (int)(xa * 8000.0);
+    int scaledY = (int)(ya * 8000.0);
+    int scaledZ = (int)(za * 8000.0);
+    this->xa = scaledX;
+    this->ya = scaledY;
+    this->za = scaledZ;
 
-    if (this->xa < -2048 || this->ya < -2048 || this->za < -2048 || this->xa > 2047 || this->ya > 2047 || this->za > 2047)
+    if (scaledX < -2048 || scaledY < -2048 || scaledZ < -2048 || scaledX >= 2048 || scaledY >= 2048 || scaledZ >= 2048)
     {
         compact = false;
     }
@@ -86,9 +89,12 @@ void ClientboundSetEntityMotionPacket::read(DataInputStream* input)
 
     if ((header & 0x800) != 0)
     {
-        xa = (signed char)input->readByte() * 16;
-        ya = (signed char)input->readByte() * 16;
-        za = (signed char)input->readByte() * 16;
+        xa = input->readByte();
+        ya = input->readByte();
+        int rawZ = input->readByte();
+        xa = (xa << 24) >> 20;
+        ya = (ya << 24) >> 20;
+        za = (rawZ << 24) >> 20;
         compact = true;
     }
     else

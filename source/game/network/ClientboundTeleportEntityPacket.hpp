@@ -38,6 +38,6 @@ private:
     int mZ;
     unsigned char myRot;
     unsigned char mxRot;
-    unsigned char mOnGround;
+    bool mOnGround;
 };
 #endif

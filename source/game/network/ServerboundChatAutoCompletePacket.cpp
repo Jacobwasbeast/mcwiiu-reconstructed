@@ -5,7 +5,7 @@
 #include "game/network/PacketListener.hpp"
 
 ServerboundChatAutoCompletePacket::ServerboundChatAutoCompletePacket()
-    : command(false), lookAtPos(NULL)
+    : lookAtPos(NULL)
 {
 }
 
@@ -48,9 +48,10 @@ void ServerboundChatAutoCompletePacket::write(DataOutputStream* output)
 {
     Packet::writeUtf(message, output);
     output->writeBoolean(command);
-    output->writeBoolean(lookAtPos != NULL);
+    bool hasLookAtPos = lookAtPos != NULL;
+    output->writeBoolean(hasLookAtPos);
 
-    if (lookAtPos != NULL)
+    if (hasLookAtPos)
     {
         output->writeBlockPos(*lookAtPos);
     }
