@@ -185,7 +185,7 @@ unsigned int RandomMatchmakeJob::WaitCreateMesh()
     if (result == 0)
     {
         g_piaSession->m_matchmakeStatus = Session::cMatchmakeStatusMatched;
-        g_piaSession->m_disconnectStatus = Session::cConnectionStatusConnecting;
+        g_piaSession->m_disconnectStatus = Session::cConnectionStatusConnected;
         if (g_piaSession->UpdateStationIdToBecomeHost())
         {
             g_piaSession->m_postponeNotice = false;
@@ -257,7 +257,7 @@ unsigned int RandomMatchmakeJob::JoinMesh()
         setStep(&RandomMatchmakeJob::WaitJoinMesh, "RandomMatchmakeJob::WaitJoinMesh");
         return cExecuteResultNextStep;
     }
-    common::g_sessionBeginMonitoringContent.m_metric131 =
+    common::g_sessionBeginMonitoringContent.m_joinMeshState =
         static_cast<unsigned char>(g_piaSession->GetJoinMeshState());
     g_piaSession->m_meshLayerController->MeshCleanup();
     return SetNextStepAtFailedJoinMesh(result);
@@ -379,11 +379,11 @@ unsigned int RandomMatchmakeJob::CompleteProcess()
     g_piaSession->m_matchmakeStatus = Session::cMatchmakeStatusMatched;
     transport::g_piaTransport->m_stationIdTable->SetAvailableEntryNum(
         g_piaSession->m_fieldc2[g_piaSession->m_currentSessionIndex]);
-    g_piaSession->m_disconnectStatus = Session::cConnectionStatusConnecting;
+    g_piaSession->m_disconnectStatus = Session::cConnectionStatusConnected;
     if (!g_piaSession->UpdateStationIdToBecomeClient())
     {
         m_result = cResultJoinFailed;
-        common::g_sessionBeginMonitoringContent.m_metric131 =
+        common::g_sessionBeginMonitoringContent.m_joinMeshState =
             static_cast<unsigned char>(g_piaSession->GetJoinMeshState());
         setStep(&RandomMatchmakeJob::LeaveMesh, "RandomMatchmakeJob::LeaveMesh");
         return cExecuteResultContinue;
@@ -392,12 +392,12 @@ unsigned int RandomMatchmakeJob::CompleteProcess()
     g_piaSession->m_stationIdStatusTable->ClearDisconnectedStationId();
     g_piaSession->m_stationIdStatusTable->CallJoinEventNotYetNotified();
     CalcProcessingTimeOfJoin();
-    common::g_sessionBeginMonitoringContent.m_metric131 = cMonitoringByteUnset;
+    common::g_sessionBeginMonitoringContent.m_joinMeshState = cMonitoringByteUnset;
     if (!m_unknown4c)
         common::g_sessionBeginMonitoringContent.m_joinResult = 0;
     else
         common::g_sessionBeginMonitoringContent.m_joinResult = 0xffffffff;
-    common::g_sessionBeginMonitoringContent.m_metric125 = 0xffffffff;
+    common::g_sessionBeginMonitoringContent.m_joinTargetIdHash = 0xffffffff;
     g_piaMesh->SetSkipReport(m_unknown4c);
     g_piaMesh->SendReport(0);
     m_joinState = cJoinStateComplete;
@@ -431,7 +431,7 @@ unsigned int RandomMatchmakeJob::CompleteFailure()
     CalcProcessingTimeOfJoin();
     common::g_sessionBeginMonitoringContent.m_metric130 =
         static_cast<unsigned char>(g_piaSession->GetJoinRandomSessionStateForDebug());
-    common::g_sessionBeginMonitoringContent.m_metric131 =
+    common::g_sessionBeginMonitoringContent.m_joinMeshState =
         static_cast<unsigned char>(g_piaSession->GetJoinMeshState());
     common::g_sessionBeginMonitoringContent.m_joinResult = m_result;
     m_joinState = cJoinStateComplete;

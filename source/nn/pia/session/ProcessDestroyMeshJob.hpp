@@ -17,11 +17,10 @@ public:
     void Cleanup();
     virtual void Trace(unsigned long long value) const;
 
-private:
     unsigned int m_endTick;
     unsigned int m_endTickHigh;
     unsigned int m_timeout;
-    unsigned char m_processing;
+    unsigned char m_started;
 };
 
 }}}

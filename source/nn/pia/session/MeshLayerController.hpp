@@ -39,22 +39,33 @@ public:
 
     void UpdateCryptoSetting(const common::CryptoSetting& cryptoSetting);
 
+protected:
+    void ResetPlayerInfo()
+    {
+        m_playerInfo[0].m_name.Clear();
+        m_playerInfo[0].m_language = 0xff;
+        m_playerInfo[0].m_field70 = 0;
+        m_playerInfo[0].m_field78 = 0;
+    }
+
+public:
+
     transport::Station::PlayerInfo m_playerInfo[1];
     unsigned char m_playerInfoSize;
-    unsigned char m_registeredPlayerInfo;
-    unsigned char m_playersCountedAsParticipants;
+    bool m_registeredPlayerInfo;
+    bool m_playersCountedAsParticipants;
     unsigned int m_field84;
     unsigned int m_field88;
-    unsigned char m_hostMigrationEnabled;
+    bool m_hostMigrationEnabled;
     int m_bandwidthCheckMeasurementTime;
     unsigned int m_bandwidthCheckIpPacketSize;
-    unsigned char m_skipBandwidthCheck;
+    bool m_skipBandwidthCheck;
     int m_bandwidthCheckMeasurementCount;
     common::CryptoSetting m_cryptoSetting;
     unsigned int m_payloadSize;
     transport::Station::IdentificationToken m_identificationToken;
-    unsigned char m_recentPlayRecordEnabled;
-    unsigned char m_startedUp;
+    bool m_recentPlayRecordEnabled;
+    bool m_startedUp;
     unsigned long long m_fielde0;
 };
 

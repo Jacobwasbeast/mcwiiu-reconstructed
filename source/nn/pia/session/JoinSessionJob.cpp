@@ -1,10 +1,70 @@
 #include "nn/pia/session/JoinSessionJob.hpp"
 
+#include "nn/pia/StationIdTable.hpp"
+#include "nn/pia/Transport.hpp"
 #include "nn/pia/common/Scheduler.hpp"
 #include "nn/pia/common/SessionBeginMonitoringContent.hpp"
+#include "nn/pia/common/SessionStateMonitoringContent.hpp"
+#include "nn/pia/common/TimeSpan.hpp"
 #include "nn/pia/session/JoinSessionSetting.hpp"
+#include "nn/pia/session/Mesh.hpp"
+#include "nn/pia/session/MeshLayerController.hpp"
+#include "nn/pia/session/StationIdStatusTable.hpp"
 
 namespace nn { namespace pia { namespace session {
+
+namespace
+{
+enum
+{
+    cResultSessionDisconnected = 0xc406,
+    cResultNetworkDisconnected = 0xa471,
+    cResultSessionFull = 0xc420,
+    cResultSessionClosed = 0xc421,
+    cResultJoinFailed = 0x6439,
+    cResultCancelled = 0x6c05,
+    cResultInvalidState = 0x10c08
+};
+
+enum
+{
+    cStatusDisconnectedSession = 5,
+    cStatusDisconnectedNetwork = 6,
+    cStatusSessionFull = 7,
+    cStatusSessionClosed = 8,
+    cJoinMeshStateCompleted = 3,
+    cJoinStateMeshJoining = 4,
+    cJoinStateFinished = 9,
+    cStepContinue = 0,
+    cStepFinished = 1,
+    cStepNextStep = 5
+};
+
+const unsigned char cMonitoringUnset = 0xff;
+const unsigned int cMonitoringSessionIdUnset = 0xffffffff;
+
+inline JoinSessionJob::StepResult makeResult(unsigned char kind)
+{
+    JoinSessionJob::StepResult result;
+    result.m_kind = kind;
+    result.m_value = 0;
+    return result;
+}
+
+inline void setStep(common::StepSequenceJob::Step& slot,
+             JoinSessionJob::StepResult (JoinSessionJob::*function)(),
+             const char* name)
+{
+    union
+    {
+        JoinSessionJob::StepResult (JoinSessionJob::*derived)();
+        unsigned int (common::StepSequenceJob::*base)();
+    } step;
+    step.derived = function;
+    slot.m_function = step.base;
+    slot.m_name = name;
+}
+}
 
 JoinSessionJob::JoinSessionJob()
     : common::StepSequenceJob(),
@@ -13,7 +73,7 @@ JoinSessionJob::JoinSessionJob()
       m_stationConnectionInfo(),
       m_joinState(0),
       m_sessionId(0),
-      m_joinOption(false),
+      m_joined(false),
       m_result(0),
       m_startTime()
 {
@@ -32,11 +92,9 @@ Result JoinSessionJob::Startup(common::CallContext* callerContext,
 {
     if (callerContext == 0 || setting == 0)
         return 0x10c07;
-
     const Result result = StartupImpl(setting);
     if (result != 0)
         return result;
-
     m_callerContext = callerContext;
     callerContext->InitiateCall();
     m_sessionInvalidated = false;
@@ -46,7 +104,6 @@ Result JoinSessionJob::Startup(common::CallContext* callerContext,
     m_retryCount = 0;
     Reset(true);
     m_startTime = common::g_piaJobScheduler->m_dispatchTime;
-
     common::SessionBeginMonitoringContent& monitoring = common::g_sessionBeginMonitoringContent;
     monitoring.m_retryReasonBCount = 0xff;
     monitoring.m_retryReasonACount = 0xff;
@@ -74,12 +131,13 @@ void JoinSessionJob::Cleanup()
     m_result = 0;
     m_connectionInfoRetry = false;
     m_sessionInfoRetry = false;
-    m_joinOption = false;
+    m_joined = false;
     m_retryReasonA = false;
     m_joinState = 0;
     m_sessionInvalidated = false;
     m_retryReasonB = false;
-    m_stationConnectionInfo.SetStationConnectionInfo(transport::StationConnectionInfo());
+    transport::StationConnectionInfo connectionInfo;
+    m_stationConnectionInfo.SetStationConnectionInfo(connectionInfo);
 }
 
 void JoinSessionJob::CleanupInternalContexts()
@@ -90,7 +148,9 @@ void JoinSessionJob::CleanupInternalContexts()
 
 bool JoinSessionJob::CheckContextCallCancelled()
 {
-    return m_callerContext != 0 && m_callerContext->m_cancelRequested;
+    if (m_callerContext != 0 && m_callerContext->m_cancelRequested)
+        return true;
+    return false;
 }
 
 unsigned int JoinSessionJob::GetJoinSessionStateForDebug() const
@@ -108,6 +168,310 @@ void JoinSessionJob::NoticeUnregisterEvent(unsigned int)
 
 void JoinSessionJob::CleanupImpl()
 {
+}
+
+void JoinSessionJob::SetMatchmakeStatus(Session::MatchmakeStatus status)
+{
+    g_piaSession->m_matchmakeStatus = status;
+}
+
+void JoinSessionJob::SetConnectionStatus(Session::ConnectionStatus status)
+{
+    g_piaSession->m_disconnectStatus = status;
+}
+
+void JoinSessionJob::SetNextStepAtWaitJoinMesh()
+{
+    setStep(m_currentStep, &JoinSessionJob::CompleteProcess, "JoinSessionJob::CompleteProcess");
+}
+
+JoinSessionJob::StepResult JoinSessionJob::MeshStartup()
+{
+    const unsigned int status = g_piaSession->GetStatus();
+    Session* session = g_piaSession;
+    switch (status)
+    {
+    case cStatusDisconnectedSession:
+        setStep(m_currentStep, &JoinSessionJob::CompleteFailure,
+                "nn::pia::session::JoinSessionJob::CompleteFailure");
+        m_result = cResultSessionDisconnected;
+        return makeResult(cStepContinue);
+    case cStatusDisconnectedNetwork:
+        setStep(m_currentStep, &JoinSessionJob::CompleteFailure,
+                "nn::pia::session::JoinSessionJob::CompleteFailure");
+        m_result = cResultNetworkDisconnected;
+        return makeResult(cStepContinue);
+    case cStatusSessionFull:
+        setStep(m_currentStep, &JoinSessionJob::CompleteFailure,
+                "nn::pia::session::JoinSessionJob::CompleteFailure");
+        m_result = cResultSessionFull;
+        return makeResult(cStepContinue);
+    case cStatusSessionClosed:
+        setStep(m_currentStep, &JoinSessionJob::CompleteFailure,
+                "nn::pia::session::JoinSessionJob::CompleteFailure");
+        m_result = cResultSessionClosed;
+        return makeResult(cStepContinue);
+    default:
+        break;
+    }
+    if (m_sessionInvalidated)
+        return SetNextStepAtFailedJoinMesh(cResultJoinFailed);
+    m_sessionInfoRetry = false;
+    m_retryReasonB = false;
+    m_retryReasonA = false;
+    m_ownerChanged = false;
+    const Result result = session->m_meshLayerController->MeshStartup(
+        session->m_matchmakeSession[session->m_currentSessionIndex], false);
+    if (result != 0)
+        return SetNextStepAtFailedJoinMesh(result);
+    session->m_postponeNotice = true;
+    setStep(m_currentStep, &JoinSessionJob::JoinMesh, "JoinSessionJob::JoinMesh");
+    return makeResult(cStepContinue);
+}
+
+JoinSessionJob::StepResult JoinSessionJob::JoinMesh()
+{
+    if (CheckContextCallCancelled())
+    {
+        SetNextStepAtFailedJoinMesh(cResultCancelled);
+        return makeResult(cStepContinue);
+    }
+    const Result result = g_piaMesh->JoinMeshAsync(m_stationConnectionInfo);
+    if (result != 0)
+    {
+        common::g_sessionBeginMonitoringContent.m_joinMeshState = g_piaSession->GetJoinMeshState();
+        g_piaSession->m_meshLayerController->MeshCleanup();
+        return SetNextStepAtFailedJoinMesh(result);
+    }
+    m_joinState = cJoinStateMeshJoining;
+    g_piaMesh->SetSkipReport(true);
+    setStep(m_currentStep, &JoinSessionJob::WaitJoinMesh, "JoinSessionJob::WaitJoinMesh");
+    return makeResult(cStepNextStep);
+}
+
+JoinSessionJob::StepResult JoinSessionJob::WaitJoinMesh()
+{
+    switch (g_piaSession->GetStatus())
+    {
+    case cStatusDisconnectedSession:
+        setStep(m_currentStep, &JoinSessionJob::CompleteFailure,
+                "nn::pia::session::JoinSessionJob::CompleteFailure");
+        m_result = cResultSessionDisconnected;
+        return makeResult(cStepContinue);
+    case cStatusDisconnectedNetwork:
+        setStep(m_currentStep, &JoinSessionJob::CompleteFailure,
+                "nn::pia::session::JoinSessionJob::CompleteFailure");
+        m_result = cResultNetworkDisconnected;
+        return makeResult(cStepContinue);
+    case cStatusSessionFull:
+        setStep(m_currentStep, &JoinSessionJob::CompleteFailure,
+                "nn::pia::session::JoinSessionJob::CompleteFailure");
+        m_result = cResultSessionFull;
+        return makeResult(cStepContinue);
+    case cStatusSessionClosed:
+        setStep(m_currentStep, &JoinSessionJob::CompleteFailure,
+                "nn::pia::session::JoinSessionJob::CompleteFailure");
+        m_result = cResultSessionClosed;
+        return makeResult(cStepContinue);
+    default:
+        break;
+    }
+    if (!g_piaMesh->IsJoinMeshCompleted())
+    {
+        if (!m_sessionInvalidated && !m_ownerChanged && !m_sessionInfoRetry && !m_retryReasonB &&
+            !m_retryReasonA && !CheckContextCallCancelled())
+        {
+            if (g_piaMesh->IsHostMigrationEnabled() &&
+                (g_piaMesh->IsHostMigrationStarted() || g_piaMesh->IsProcessingHostMigration()) &&
+                g_piaMesh->GetJoinMeshState() != cJoinMeshStateCompleted)
+            {
+                m_ownerChanged = true;
+                g_piaMesh->CancelJoinMeshAsync();
+            }
+        }
+        else
+        {
+            g_piaMesh->CancelJoinMeshAsync();
+        }
+        return makeResult(cStepNextStep);
+    }
+    Result joinResult = g_piaMesh->GetJoinMeshResult();
+    if (joinResult == 0)
+    {
+        if (g_piaMesh->CheckConnectionError() != 0)
+        {
+            m_result = cResultJoinFailed;
+            return SetNextStepAtFailedJoinMesh(cResultJoinFailed);
+        }
+        SetNextStepAtWaitJoinMesh();
+        return makeResult(cStepContinue);
+    }
+    if (joinResult == cResultCancelled &&
+        (m_sessionInvalidated || m_ownerChanged || m_sessionInfoRetry || m_retryReasonB ||
+         m_retryReasonA))
+        joinResult = cResultJoinFailed;
+    return SetNextStepAtFailedJoinMesh(joinResult);
+}
+
+JoinSessionJob::StepResult JoinSessionJob::LeaveMesh()
+{
+    Result result;
+    if (!g_piaMesh->IsHost())
+    {
+        result = g_piaMesh->LeaveMeshAsync();
+        setStep(m_currentStep, &JoinSessionJob::WaitLeaveMesh, "JoinSessionJob::WaitLeaveMesh");
+    }
+    else if (!g_piaMesh->IsHostMigrationEnabled())
+    {
+        result = g_piaMesh->DestroyMeshAsync();
+        setStep(m_currentStep, &JoinSessionJob::WaitDestroyMesh, "JoinSessionJob::WaitDestroyMesh");
+    }
+    else
+    {
+        result = g_piaMesh->LeaveMeshWithHostMigrationAsync();
+        setStep(m_currentStep, &JoinSessionJob::WaitLeaveMeshWithHostMigration,
+                "JoinSessionJob::WaitLeaveMeshWithHostMigration");
+    }
+    if (result != 0)
+        return SetNextStepAtWaitLeaveMesh();
+    return makeResult(cStepNextStep);
+}
+
+JoinSessionJob::StepResult JoinSessionJob::WaitLeaveMesh()
+{
+    if (g_piaMesh->IsLeaveMeshCompleted())
+    {
+        g_piaMesh->GetLeaveMeshResult();
+        return SetNextStepAtWaitLeaveMesh();
+    }
+    return makeResult(cStepNextStep);
+}
+
+JoinSessionJob::StepResult JoinSessionJob::WaitLeaveMeshWithHostMigration()
+{
+    if (g_piaMesh->IsLeaveMeshWithHostMigrationCompleted())
+    {
+        g_piaMesh->GetLeaveMeshWithHostMigrationResult();
+        return SetNextStepAtWaitLeaveMesh();
+    }
+    return makeResult(cStepNextStep);
+}
+
+JoinSessionJob::StepResult JoinSessionJob::WaitDestroyMesh()
+{
+    if (g_piaMesh->IsDestroyMeshCompleted())
+    {
+        g_piaMesh->GetDestroyMeshResult();
+        return SetNextStepAtWaitLeaveMesh();
+    }
+    return makeResult(cStepNextStep);
+}
+
+JoinSessionJob::StepResult JoinSessionJob::MeshCleanup()
+{
+    g_piaSession->m_meshLayerController->MeshCleanup();
+    return SetNextStepAtMeshCleanup();
+}
+
+void JoinSessionJob::CalcProcessingTimeOfJoin() const
+{
+    const long long elapsed =
+        static_cast<long long>(common::g_piaJobScheduler->m_dispatchTime.m_tick - m_startTime.m_tick);
+    const int processingTime = static_cast<int>(elapsed / common::TimeSpan::GetTicksPerMSec().m_tick);
+    if (processingTime >= 0)
+        common::g_sessionBeginMonitoringContent.m_joinProcessingTime = processingTime;
+}
+
+JoinSessionJob::StepResult JoinSessionJob::CompleteProcess()
+{
+    if (CheckContextCallCancelled())
+    {
+        setStep(m_currentStep, &JoinSessionJob::LeaveMesh, "JoinSessionJob::LeaveMesh");
+        m_result = cResultCancelled;
+        return makeResult(cStepContinue);
+    }
+    if (m_sessionInvalidated || m_ownerChanged || m_sessionInfoRetry ||
+        (g_piaMesh->IsHostMigrationEnabled() &&
+         (g_piaMesh->IsHostMigrationStarted() || g_piaMesh->IsProcessingHostMigration())))
+    {
+        setStep(m_currentStep, &JoinSessionJob::LeaveMesh, "JoinSessionJob::LeaveMesh");
+        m_result = cResultJoinFailed;
+        return makeResult(cStepContinue);
+    }
+    if (g_piaMesh->GetMeshState() == Mesh::cStateNone)
+    {
+        m_result = cResultJoinFailed;
+        return SetNextStepAtWaitLeaveMesh();
+    }
+    m_joined = true;
+    Session* session = g_piaSession;
+    session->m_matchmakeStatus = Session::cMatchmakeStatusMatched;
+    transport::g_piaTransport->m_stationIdTable->SetAvailableEntryNum(
+        session->m_fieldc2[session->m_currentSessionIndex]);
+    session->m_disconnectStatus = Session::cConnectionStatusConnected;
+    if (!session->UpdateStationIdToBecomeClient())
+    {
+        m_result = cResultJoinFailed;
+        common::g_sessionBeginMonitoringContent.m_joinMeshState = g_piaSession->GetJoinMeshState();
+        setStep(m_currentStep, &JoinSessionJob::LeaveMesh, "JoinSessionJob::LeaveMesh");
+        return makeResult(cStepNextStep);
+    }
+    session->m_postponeNotice = false;
+    session->m_stationIdStatusTable->ClearDisconnectedStationId();
+    session->m_stationIdStatusTable->CallJoinEventNotYetNotified();
+    m_callerContext->SignalSuccess(0);
+    m_callerContext = 0;
+    CalcProcessingTimeOfJoin();
+    common::g_sessionBeginMonitoringContent.m_joinResult = 0;
+    common::g_sessionBeginMonitoringContent.m_joinTargetIdHash = cMonitoringSessionIdUnset;
+    common::g_sessionBeginMonitoringContent.m_joinMeshState = cMonitoringUnset;
+    m_joinState = cJoinStateFinished;
+    g_piaMesh->SetSkipReport(false);
+    g_piaMesh->SendReport(0);
+    return makeResult(cStepFinished);
+}
+
+JoinSessionJob::StepResult JoinSessionJob::CompleteFailure()
+{
+    g_piaSession->m_meshLayerController->MeshCleanup();
+    if (!CheckContextCallCancelled() && m_result != cResultCancelled)
+    {
+        if (m_result == cResultInvalidState || m_result == cResultSessionDisconnected)
+        {
+            g_piaSession->ChangeStatusToDisconnectedNetwork();
+            m_callerContext->SignalFailure(cResultSessionDisconnected);
+            m_result = cResultSessionDisconnected;
+            m_callerContext = 0;
+        }
+        else if (m_result == cResultNetworkDisconnected)
+        {
+            g_piaSession->ChangeStatusToDisconnectedNetwork();
+            m_callerContext->SignalFailure(m_result);
+            m_callerContext = 0;
+        }
+        else
+        {
+            m_callerContext->SignalFailure(m_result);
+            m_callerContext = 0;
+        }
+    }
+    else
+    {
+        m_callerContext->SignalCancel();
+        m_result = cResultCancelled;
+        m_callerContext = 0;
+    }
+    CalcProcessingTimeOfJoin();
+    common::g_sessionBeginMonitoringContent.m_joinSessionState = g_piaSession->GetJoinSessionStateForDebug();
+    common::g_sessionBeginMonitoringContent.m_joinMeshState = g_piaSession->GetJoinMeshState();
+    common::g_sessionBeginMonitoringContent.m_joinResult = m_result;
+    m_joinState = cJoinStateFinished;
+    g_piaMesh->SetSkipReport(false);
+    g_piaMesh->SendReport(0);
+    common::g_sessionBeginMonitoringContent.Cleanup();
+    common::g_sessionStateMonitoringContent.Cleanup();
+    Cleanup();
+    return makeResult(cStepFinished);
 }
 
 }}}

@@ -61,13 +61,42 @@ public:
     virtual void NoticeUnregisterEventImpl(unsigned int sessionId);
     virtual void CleanupImpl() = 0;
 
+    Result StartupJoinRandomJointSession(common::CallContext* callerContext,
+                                         const JoinRandomSessionSetting* setting);
+    Result StartupCreateJointSession(common::CallContext* callerContext,
+                                     const CreateSessionSetting* setting);
+    Result StartupJoinJointSession(common::CallContext* callerContext,
+                                   const JoinSessionSetting* setting);
+    Result StartupLeaveJointSession(common::CallContext* callerContext);
+    Result StartupDestroyJointSession(common::CallContext* callerContext);
+    Result StartupPassiveProcess(Session::ProcessType processType,
+                                 SessionProtocol::MessageType messageType,
+                                 const unsigned long long* stationIds,
+                                 unsigned short stationIdNum,
+                                 unsigned long long senderStationId);
+    Result ReceiveNextSessionId(Session::ProcessType processType,
+                                unsigned int sessionId,
+                                unsigned long long matchmakeOwnerUniqueId,
+                                const unsigned char* applicationData,
+                                unsigned char applicationDataSize,
+                                unsigned long long senderStationId);
+    Result ReceiveLeaveInvitation(Session::ProcessType processType,
+                                  const unsigned long long* stationIds,
+                                  unsigned short stationIdNum,
+                                  unsigned long long senderStationId);
+    Result ReceiveLeaveMeshInvitation(Session::ProcessType processType,
+                                      unsigned long long senderStationId);
+    Result ReceiveCompletionResponse(Session::ProcessType processType,
+                                     unsigned long long senderStationId);
     void Cleanup();
     bool AcceptLeaveStationId(unsigned long long stationId);
     bool IsMigrateSessionToJointSession() const;
     bool IsMigrateJointSessionToSession() const;
     void NoticeStartingEventByProcessType();
-    void ClearProcessTypeAndNoticeEndingEvent();
+    bool ClearProcessTypeAndNoticeEndingEvent();
     void ClearProcessTypeAndNoticeFailureEvent();
+    void RemoveNotCompanionStationId();
+    void RecordMonitoringDataWhenProcessFailure();
 
     common::CallContext* m_callerContext;
     common::CallContext m_callContext;

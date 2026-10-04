@@ -1,5 +1,7 @@
 #include "nn/pia/session/MeshProtocol.hpp"
 
+#include <limits>
+
 #include <cstring>
 #include <new>
 
@@ -9,13 +11,20 @@
 #include "nn/pia/common/TimeSpan.hpp"
 #include "nn/pia/common/WatermarkManager.hpp"
 #include "nn/pia/session/DestroyMeshJob.hpp"
+#include "nn/pia/session/JoinMeshJob.hpp"
 #include "nn/pia/session/KickoutManageJob.hpp"
+#include "nn/pia/session/LeaveMeshJob.hpp"
+#include "nn/pia/session/LeaveWithHostMigrationJob.hpp"
 #include "nn/pia/session/Mesh.hpp"
 #include "nn/pia/session/MeshEventListener.hpp"
 #include "nn/pia/session/ProcessDestroyMeshJob.hpp"
 #include "nn/pia/session/ProcessHostMigrationJob.hpp"
 #include "nn/pia/session/ProcessJoinRequestJob.hpp"
+#include "nn/pia/session/ProcessUpdateMeshJob.hpp"
+#include "nn/pia/session/RelayRouteManageJob.hpp"
 #include "nn/pia/session/Session.hpp"
+#include "nn/pia/transport/IdentificationInfoTable.hpp"
+#include "nn/pia/transport/NetworkRttManager.hpp"
 #include "nn/pia/transport/PacketHandler.hpp"
 #include "nn/pia/transport/ProtocolEvent.hpp"
 #include "nn/pia/transport/ProtocolMessageWriter.hpp"
@@ -71,12 +80,33 @@ enum
     cStationIndexBroadcast = 0xff,
     cSlidingWindowSendCapacity = 4,
     cSlidingWindowReceiveCapacity = 4,
-    cStationReconnectState = 6
+    cStationReconnectState = 6,
+    cStationConnectedState = 5,
+    cConnectionFailureNoticeSize = 9,
+    cConnectionReportHeaderSize = 0x10,
+    cKickoutReasonRelayFailureBase = 3,
+    cDisconnectReason6 = 6,
+    cDisconnectReason8 = 8,
+    cDisconnectReason9 = 9,
+    cResultJoinMeshCancelled = 0x6439,
+    cSecondaryProtocolIdSuffix = 1,
+    cHostMigrationModeMulti = 2
 };
+
+const unsigned int cUnlimitedDispatchSize = std::numeric_limits<unsigned int>::max();
 
 inline transport::StationPacketHandler* handlerOf(unsigned int value)
 {
     return reinterpret_cast<transport::StationPacketHandler*>(static_cast<uintptr_t>(value));
+}
+
+inline void updateReceiveWatermark(const transport::ReliableSlidingWindow& window)
+{
+    if (transport::g_piaWatermarkManager != 0)
+    {
+        unsigned int receiveCount = window.m_receiveBuffer.m_count;
+        transport::g_piaWatermarkManager->GetWatermark(cWatermarkReceiveBuffer)->Update(receiveCount);
+    }
 }
 
 inline void updateSendWatermark(const transport::ReliableSlidingWindow& window)
@@ -1087,7 +1117,7 @@ void MeshProtocol::ParseKickoutNotice(const transport::ReceivedMessageAccessor& 
         if (stationIndex <= cStationIndexMax && stationIndex == g_piaMesh->GetHostStationIndex())
         {
             KickoutManageJob* job = g_piaMesh->m_kickoutManageJob;
-            if (job->StartupClient(data[2]))
+            if (job->StartupClient(static_cast<KickoutManageJob::KickoutReason>(data[2])))
                 job->Ready(false);
         }
     }
@@ -1607,6 +1637,620 @@ void MeshProtocol::ParseHelper(const transport::ReceivedMessageAccessor& message
         break;
     }
     }
+}
+
+Result MeshProtocol::Dispatch()
+{
+    transport::ReceivedMessageAccessor message;
+    const StationIndex localIndex = g_piaMesh->GetLocalStationIndex();
+    transport::ProtocolId protocolId(mProtocolId);
+    transport::PacketHandler* handler = handlerOf(mStationPacketHandler);
+    transport::PacketHandler::Iterator& iterator = handler->GetIterator(protocolId);
+    handler->BeginIteration();
+    while (!handler->IsEndIteration())
+    {
+        transport::ProtocolMessageReader* reader = iterator.GetMessageReader();
+        message.m_message = reader->m_message + transport::ProtocolMessageReader::cMessageHeaderSize;
+        message.m_messageSize = reader->m_messageSize;
+        message.m_sourceStationId = reader->m_header.m_source;
+        message.m_stationAddress = reader->m_stationAddress;
+        message.m_field1c = reader->m_sendingPassId;
+        ParseHelper(message);
+        handler->NextIteration();
+    }
+
+    transport::ProtocolId secondaryProtocolId(static_cast<unsigned short>(
+        (static_cast<unsigned char>(GetProtocolType()) << 8) | cSecondaryProtocolIdSuffix));
+    transport::PacketHandler::Iterator& secondaryIterator = handler->GetIterator(secondaryProtocolId);
+    handler->BeginIteration();
+    while (!handler->IsEndIteration())
+    {
+        transport::ProtocolMessageReader* reader = secondaryIterator.GetMessageReader();
+        transport::Station* station =
+            transport::g_piaStationManager->GetStationByStationIdWithoutConvert(reader->m_header.m_source);
+        if (station != 0)
+        {
+            int windowIndex = static_cast<int>(station->m_field10);
+            if (localIndex < cStationNumMax && windowIndex < cStationNumMax)
+            {
+                if (localIndex <= windowIndex)
+                    --windowIndex;
+                transport::ReliableSlidingWindow* window = m_windows + windowIndex;
+                if (window->IsInCommunication())
+                {
+                    Result result = window->AnalyzeProtocolMessage(*reader);
+                    if (result == 0)
+                    {
+                        updateSendWatermark(*window);
+                        updateReceiveWatermark(*window);
+                    }
+                }
+            }
+        }
+        handler->NextIteration();
+    }
+
+    for (unsigned short index = 0; index < m_windowNum; ++index)
+    {
+        transport::ReliableSlidingWindow* window = m_windows + index;
+        if (window->IsInCommunication())
+        {
+            transport::Station* station =
+                transport::g_piaStationManager->GetStationByStationIdWithoutConvert(window->m_remoteStationId);
+            if (station != 0)
+            {
+                unsigned int size;
+                while (window->PopData(m_buffer, &size, m_bufferSize) == 0)
+                {
+                    updateReceiveWatermark(*window);
+                    message.m_message = m_buffer;
+                    message.m_messageSize = size;
+                    message.m_sourceStationId =
+                        (static_cast<unsigned long long>(station->m_field18) << 32) | station->m_field1c;
+                    const common::StationAddress stationAddress(station->m_stationAddress);
+                    message.m_stationAddress = stationAddress;
+                    message.m_field1c = 0;
+                    ParseHelper(message);
+                }
+            }
+        }
+    }
+
+    for (unsigned short index = 0; index < m_windowNum; ++index)
+    {
+        if (m_windows[index].IsInCommunication())
+            m_windows[index].Dispatch(handlerOf(GetStationPacketHandler()), 0, cUnlimitedDispatchSize);
+    }
+
+    bool updateMeshRequired = false;
+    bool hostLost = false;
+    const common::Time now = transport::g_piaTransport->m_time;
+    transport::StationManager* stationManager = transport::g_piaStationManager;
+    transport::Station* localStation = stationManager->m_localStation;
+    if (localStation == 0)
+        return 0;
+
+    if (g_piaMesh->IsHost() && g_piaMesh->m_unknown24 != 0)
+    {
+        RelayRouteManageJob* relayRouteManageJob = g_piaMesh->m_unknown24;
+        unsigned int refusedBitmap = relayRouteManageJob->m_refusedStationBitmap;
+        if (refusedBitmap != 0)
+        {
+            unsigned int remainingBitmap = 0;
+            unsigned int index = 0;
+            unsigned int bit = 1;
+            for (int count = cStationIndexMax; count != 0; --count)
+            {
+                if ((refusedBitmap & 1) != 0)
+                {
+                    Result result = g_piaMesh->m_kickoutManageJob->StartKickout(
+                        static_cast<StationIndex>(index),
+                        static_cast<KickoutManageJob::KickoutReason>(
+                            relayRouteManageJob->m_failureReasons[static_cast<unsigned short>(index)] +
+                            cKickoutReasonRelayFailureBase));
+                    if (result != 0 && result != transport::cResultAlreadyExists)
+                        remainingBitmap |= bit;
+                }
+                refusedBitmap >>= 1;
+                if (refusedBitmap == 0)
+                    break;
+                ++index;
+                bit <<= 1;
+            }
+            relayRouteManageJob->m_refusedStationBitmap = remainingBitmap;
+        }
+    }
+
+    for (unsigned int stationOrder = 0; stationOrder < stationManager->m_stations.size; ++stationOrder)
+    {
+        transport::Station* station = stationManager->m_stations.data[stationOrder];
+        if (station == localStation)
+            continue;
+
+        bool timedOut = false;
+        if (station->m_field20 == cStationConnectedState)
+        {
+            int timeoutMsec = m_unknown24;
+            transport::RelayRouteManager* relayRouteManager = transport::g_piaTransport->m_relayRouteManager;
+            if (relayRouteManager != 0 && station->m_field10 < cStationNumMax &&
+                localStation->m_field10 < cStationNumMax)
+            {
+                StationIndex relay;
+                Result result = relayRouteManager->GetRelayRoute(
+                    static_cast<StationIndex>(localStation->m_field10),
+                    static_cast<StationIndex>(station->m_field10), &relay);
+                if (result == 0 && relay != static_cast<StationIndex>(station->m_field10))
+                    timeoutMsec += transport::g_piaTransport->GetKeepAliveInterval() * 2;
+            }
+            const unsigned long long lastReceivedTime =
+                (static_cast<unsigned long long>(static_cast<unsigned int>(station->m_field60)) << 32) |
+                static_cast<unsigned int>(station->m_field64);
+            const long long timeoutTicks = common::TimeSpan::GetTicksPerMSec().m_tick * timeoutMsec;
+            timedOut = lastReceivedTime + timeoutTicks < now.m_tick;
+        }
+
+        if (station->m_field68 == 0)
+        {
+            if (!timedOut && station->m_field20 != cStationReconnectState)
+                continue;
+        }
+        else
+        {
+            timedOut = true;
+        }
+
+        const StationIndex stationIndex = static_cast<StationIndex>(station->m_field10);
+        if (g_piaMesh->IsValidStationIndex(stationIndex))
+        {
+            g_piaMesh->IsHost();
+            if (stationIndex == g_piaMesh->GetHostStationIndex() && timedOut)
+                hostLost = true;
+            g_piaMesh->UnfixDisconnectedId(stationIndex);
+            if (g_piaMesh->m_unknown0c->m_stationIndex != stationIndex)
+                updateMeshRequired = true;
+            else
+                g_piaMesh->m_unknown0c->CancellationNotice(stationIndex);
+        }
+
+        transport::RelayRouteManager* relayRouteManager = transport::g_piaTransport->m_relayRouteManager;
+        if (relayRouteManager != 0 && stationIndex < cStationNumMax && !hostLost)
+            relayRouteManager->SearchRefugeRelayRoute(stationIndex);
+
+        station->m_disconnectStationJob->ProcessDisconnection(station);
+        transport::g_stationConnectionInfoTable->EraseFromTable(station);
+        transport::IdentificationInfoTable::GetInstance()->EraseFromTable(station);
+        station->CleanupJobs();
+        station->Cleanup();
+        stationManager->DestroyStation(station);
+        g_piaMesh->m_processUpdateMeshJob->ClearStationIndex(stationIndex);
+        transport::g_piaTransport->OutputStreamUpdateEvent();
+    }
+
+    if (g_piaMesh->IsHost())
+    {
+        unsigned int validBitmap = g_piaMesh->m_validStationBitmap;
+        unsigned int index = 0;
+        for (int count = cStationIndexMax; count != 0; --count)
+        {
+            if ((validBitmap & 1) != 0 &&
+                stationManager->GetStation(static_cast<StationIndex>(index)) == 0)
+            {
+                g_piaMesh->UnfixDisconnectedId(static_cast<StationIndex>(index));
+                transport::RelayRouteManager* relayRouteManager;
+                if (g_piaMesh->m_unknown0c->m_stationIndex == static_cast<StationIndex>(index))
+                {
+                    g_piaMesh->m_unknown0c->CancellationNotice(static_cast<StationIndex>(index));
+                    relayRouteManager = transport::g_piaTransport->m_relayRouteManager;
+                }
+                else
+                {
+                    relayRouteManager = transport::g_piaTransport->m_relayRouteManager;
+                    updateMeshRequired = true;
+                }
+                if (relayRouteManager != 0)
+                    relayRouteManager->SearchRefugeRelayRoute(static_cast<StationIndex>(index));
+            }
+            validBitmap >>= 1;
+            if (validBitmap == 0)
+                break;
+            ++index;
+        }
+    }
+
+    if (updateMeshRequired)
+    {
+        if (!g_piaMesh->IsHost())
+        {
+            if (hostLost)
+            {
+                const unsigned int validBitmap = g_piaMesh->m_validStationBitmap;
+                for (unsigned int index = 0; index < cStationIndexMax; ++index)
+                {
+                    if ((validBitmap & (1 << index)) != 0 &&
+                        stationManager->GetStation(static_cast<StationIndex>(index)) == 0)
+                    {
+                        g_piaMesh->UnfixDisconnectedId(static_cast<StationIndex>(index));
+                        transport::g_piaTransport->OutputStreamUpdateEvent();
+                    }
+                }
+                if (!g_piaMesh->IsHostMigrationEnabled())
+                {
+                    g_piaMesh->CleanupStationsJobs();
+                    if (!g_piaMesh->m_joinMeshJob->IsRunning())
+                    {
+                        g_piaMesh->m_disconnectReason = cDisconnectReason8;
+                        g_piaMesh->ProcessingAtMeshEnd(static_cast<Mesh::DisconnectReason>(cDisconnectReason8));
+                        g_piaMesh->CleanupStatus();
+                    }
+                    else
+                    {
+                        const Result cancelResult = cResultJoinMeshCancelled;
+                        g_piaMesh->m_joinMeshJob->Cleanup(cancelResult);
+                        g_piaMesh->m_joinMeshJob->Reset(true);
+                        g_piaMesh->CleanupStatus();
+                    }
+                }
+                else
+                {
+                    bool started;
+                    if (g_piaMesh->m_hostMigrationMode == cHostMigrationModeMulti)
+                        started = g_piaMesh->m_processHostMigrationJob->StartupMulti(false, 0, 0, 0);
+                    else
+                        started = g_piaMesh->m_processHostMigrationJob->Startup(
+                            false, static_cast<StationIndex>(cStationIndexNone));
+                    if (started)
+                        g_piaMesh->m_processHostMigrationJob->Ready(false);
+                }
+            }
+        }
+        else if (!g_piaMesh->IsHostMigrationEnabled() || !g_piaMesh->m_processHostMigrationJob->m_started)
+        {
+            SendUpdateMesh(true, 1);
+        }
+        else
+        {
+            m_unknown38 = 1;
+        }
+    }
+    else if (!g_piaMesh->IsHost())
+    {
+        if (g_piaMesh->IsHostMigrationEnabled() && g_piaMesh->IsHostMigrationStarted())
+        {
+            if (!g_piaMesh->m_processHostMigrationJob->m_started)
+            {
+                transport::Station* hostStation =
+                    stationManager->GetStation(g_piaMesh->GetHostStationIndex());
+                if (hostStation != 0)
+                {
+                    if (g_piaMesh->IsValidStationIndex(static_cast<StationIndex>(hostStation->m_field10)))
+                        g_piaMesh->UnfixDisconnectedId(static_cast<StationIndex>(hostStation->m_field10));
+                    hostStation->m_disconnectStationJob->ProcessDisconnection(hostStation);
+                    transport::g_stationConnectionInfoTable->EraseFromTable(hostStation);
+                    transport::IdentificationInfoTable::GetInstance()->EraseFromTable(hostStation);
+                    hostStation->CleanupJobs();
+                    hostStation->Cleanup();
+                    stationManager->DestroyStation(hostStation);
+                    transport::g_piaTransport->OutputStreamUpdateEvent();
+                }
+                if (g_piaMesh->m_processHostMigrationJob->Startup(
+                        false, static_cast<StationIndex>(cStationIndexNone)))
+                    g_piaMesh->m_processHostMigrationJob->Ready(false);
+            }
+            g_piaMesh->SetHostMigrationStarted(false);
+        }
+    }
+    else
+    {
+        if (g_piaMesh->GetStationNum() > 1 &&
+            (!g_piaMesh->IsHostMigrationEnabled() || !g_piaMesh->m_processHostMigrationJob->m_started))
+        {
+            if (!m_broadcastSupported)
+            {
+                if (m_unknown38)
+                {
+                    m_unknown38 = 0;
+                    SendUpdateMesh(true, 1);
+                }
+                if (!g_piaMesh->IsProcessingLeaveMesh() && m_windowNum != 0)
+                {
+                    for (unsigned short index = 0; index < m_windowNum; ++index)
+                    {
+                        if (m_windows[index].IsInCommunication() && m_nextTimes[index] <= now)
+                        {
+                            transport::StationConnectionInfo connectionInfo;
+                            const unsigned int infoSize = connectionInfo.GetSerializedSize();
+                            Result result = m_windows[index].PushData(
+                                m_updateMeshBuffer,
+                                (infoSize + (cStationEntryAlignMask + 1 -
+                                             (connectionInfo.GetSerializedSize() & cStationEntryAlignMask))) *
+                                        g_piaMesh->m_unknown54 +
+                                    cUpdateMeshHeaderSize);
+                            if (result == 0)
+                                updateSendWatermark(m_windows[index]);
+                            m_nextTimes[index].m_tick =
+                                now.m_tick + common::TimeSpan::GetTicksPerMSec().m_tick * static_cast<int>(m_unknown28);
+                        }
+                    }
+                }
+            }
+            else if (!m_unknown38)
+            {
+                const unsigned long long deadline =
+                    m_unknown30 + common::TimeSpan::GetTicksPerMSec().m_tick * static_cast<int>(m_unknown28);
+                if (deadline < now.m_tick)
+                    SendUpdateMesh(false, 1);
+            }
+            else
+            {
+                m_unknown38 = 0;
+                SendUpdateMesh(true, 1);
+            }
+        }
+        if (g_piaMesh->IsHostMigrationEnabled() && !g_piaMesh->m_processHostMigrationJob->m_started &&
+            g_piaMesh->m_processHostMigrationJob->IsFatalErrorOccur() &&
+            g_piaMesh->m_destroyMeshJob->Startup(0, true))
+        {
+            g_piaMesh->m_destroyMeshJob->Ready(false);
+            g_piaMesh->m_disconnectReason = cDisconnectReason9;
+        }
+    }
+    return 0;
+}
+
+void MeshProtocol::ParseUpdateMesh(const transport::ReceivedMessageAccessor& message)
+{
+    transport::StationManager* stationManager = transport::g_piaStationManager;
+    if (stationManager->m_localStation == 0)
+        return;
+    if (g_piaMesh->m_leaveMeshJob->IsRunning())
+        return;
+    if (g_piaMesh->m_processDestroyMeshJob->m_started)
+        return;
+
+    const unsigned char* data = message.m_message;
+    const unsigned int size = message.m_messageSize;
+    transport::Station* hostStation = stationManager->GetStation(g_piaMesh->GetHostStationIndex());
+    if (hostStation == 0 || !(hostStation->m_stationAddress == message.m_stationAddress))
+    {
+        if (!g_piaMesh->m_processHostMigrationJob->m_started)
+        {
+            g_piaMesh->SetFatalError(static_cast<Mesh::DisconnectReason>(cDisconnectReason6));
+            return;
+        }
+        g_piaMesh->SetFatalError(static_cast<Mesh::DisconnectReason>(cDisconnectReason9));
+        return;
+    }
+
+    bool stationCountMismatch = false;
+    bool unassignedStationFound = false;
+    const unsigned char stationCount = data[1];
+    const unsigned int version = common::deserializeU32(data + 4);
+    if (!g_piaMesh->m_unknowncc && version <= g_piaMesh->m_unknownc8)
+        return;
+
+    if (g_piaMesh->m_unknown88 == 0 || g_piaMesh->m_unknown88 == message.m_sourceStationId)
+    {
+        if (version < g_piaMesh->m_unknown80)
+            return;
+        if (version <= g_piaMesh->m_unknown80)
+        {
+            if (stationCount == stationManager->GetValidStationNum())
+            {
+                bool found = false;
+                for (unsigned int index = 0; index < stationManager->m_stations.size; ++index)
+                {
+                    transport::Station* station = stationManager->m_stations.data[index];
+                    if (station->m_field10 == cStationIndexNone)
+                    {
+                        station->Trace(cTraceStationLevel);
+                        found = true;
+                    }
+                }
+                if (!found)
+                    return;
+                unassignedStationFound = true;
+            }
+            else
+            {
+                stationCountMismatch = true;
+            }
+        }
+    }
+    else
+    {
+        unassignedStationFound = true;
+    }
+
+    g_piaMesh->m_unknownc8 = 0;
+    g_piaMesh->m_unknowncc = 1;
+    ProcessUpdateMeshJob* job = g_piaMesh->m_processUpdateMeshJob;
+    int result;
+    if (!job->m_started)
+    {
+        result = job->Startup(data, size, stationCountMismatch);
+        if (result == ProcessUpdateMeshJob::cStartupResultStarted)
+            job->Ready(false);
+    }
+    else
+    {
+        if (version <= job->m_updateVersion && !unassignedStationFound)
+            return;
+        result = job->UpdateStationDataList(data, size, unassignedStationFound);
+    }
+    if (result != ProcessUpdateMeshJob::cStartupResultStarted)
+        return;
+    g_piaMesh->m_unknown80 = version;
+    g_piaMesh->m_unknown88 = message.m_sourceStationId;
+}
+
+void MeshProtocol::ParseConnectionFailureNotice(const transport::ReceivedMessageAccessor& message)
+{
+    if (message.m_sourceStationId == 0)
+        return;
+    if (message.m_messageSize != cConnectionFailureNoticeSize)
+        return;
+
+    const unsigned char* data = message.m_message;
+    const unsigned char failedIndex = data[3];
+    const unsigned char reason = data[4];
+    const unsigned char reporterIndex = data[2];
+    const unsigned char senderIndex = data[1];
+    const unsigned int version = common::deserializeU32(data + 5);
+    if (!g_piaMesh->IsHost())
+    {
+        if (senderIndex == g_piaMesh->GetHostStationIndex() &&
+            reporterIndex == g_piaMesh->GetLocalStationIndex())
+        {
+            ProcessUpdateMeshJob* job = g_piaMesh->m_processUpdateMeshJob;
+            if (job->m_started && job->m_updateVersion == version)
+                job->SetConnectionFailureNotice(static_cast<StationIndex>(failedIndex), reason);
+        }
+    }
+    else if (senderIndex == failedIndex)
+    {
+        if (g_piaMesh->m_unknown80 <= version && reporterIndex != g_piaMesh->GetLocalStationIndex())
+        {
+            SendConnectionFailureNotice(static_cast<StationIndex>(reporterIndex),
+                                        static_cast<StationIndex>(reporterIndex),
+                                        static_cast<StationIndex>(failedIndex), reason, version);
+        }
+    }
+}
+
+void MeshProtocol::ParseMigrationResponse(const transport::ReceivedMessageAccessor& message)
+{
+    if (g_piaMesh->IsHostMigrationEnabled() && transport::g_piaStationManager->m_localStation != 0)
+    {
+        LeaveWithHostMigrationJob* job = g_piaMesh->m_leaveWithHostMigrationJob;
+        if (job->m_migrationStarted)
+            job->ReceiveMigrationResponse(static_cast<StationIndex>(message.m_message[1]));
+    }
+}
+
+void MeshProtocol::ParseConnectionReport(const transport::ReceivedMessageAccessor& message)
+{
+    if (transport::g_piaStationManager->m_localStation == 0 || !g_piaMesh->IsHost())
+        return;
+
+    RelayRouteManageJob* job = g_piaMesh->m_unknown24;
+    if (job == 0)
+        return;
+
+    const unsigned char* data = message.m_message;
+    const unsigned int size = message.m_messageSize;
+    const unsigned char hostIndex = data[1];
+    if (hostIndex != g_piaMesh->GetHostStationIndex())
+        return;
+
+    const unsigned char reporterIndex = data[2];
+    if (data[0xd] != 0 || data[0xe] != 0 || data[0xf] != 0)
+        return;
+
+    const unsigned int generation = common::deserializeU32(data + 4);
+    const unsigned int reportSerial = common::deserializeU32(data + 8);
+    if (!job->IsRunning())
+    {
+        if (!job->Startup(static_cast<StationIndex>(reporterIndex), generation, reportSerial))
+            return;
+        job->Ready(false);
+    }
+    job->UpdateConnectionReport(static_cast<StationIndex>(reporterIndex), data, size);
+}
+
+bool MeshProtocol::SendConnectionReport(StationIndex stationIndex, unsigned int versionHigh,
+                                        unsigned int versionLow, unsigned int* stationBitmap)
+{
+    transport::StationManager* stationManager = transport::g_piaStationManager;
+    transport::Station* localStation = stationManager->m_localStation;
+    if (localStation == 0)
+        return false;
+    const int localIndex = static_cast<int>(g_piaMesh->GetLocalStationIndex());
+    if (localIndex > cStationIndexMax || localIndex != static_cast<int>(localStation->m_field10))
+        return false;
+    if (stationManager->GetStation(stationIndex) == 0)
+        return false;
+
+    const unsigned char hostIndex = g_piaMesh->GetHostStationIndex();
+    int windowIndex = static_cast<int>(stationIndex);
+    if (localIndex <= windowIndex)
+        --windowIndex;
+    transport::ReliableSlidingWindow* window = m_windows + windowIndex;
+    if (!window->IsInCommunication())
+        return false;
+
+    unsigned char* buffer = m_buffer;
+    buffer[2] = static_cast<unsigned char>(localIndex);
+    buffer[1] = hostIndex;
+    buffer[0] = cMessageTypeConnectionReport;
+    common::serializeU32(buffer + 4, versionHigh);
+    common::serializeU32(buffer + 8, versionLow);
+    buffer[0xe] = 0;
+    buffer[0xc] = 0;
+    buffer[0xf] = 0;
+    buffer[0xd] = 0;
+
+    unsigned char directCount = 0;
+    unsigned int unmeasuredBitmap = 0;
+    bool measuring = false;
+    int offset = cConnectionReportHeaderSize;
+    for (int index = 0; index < static_cast<int>(g_piaMesh->m_unknown54); ++index)
+    {
+        unsigned int rtt = 0;
+        unsigned char value;
+        transport::Station* station = stationManager->GetStation(static_cast<StationIndex>(index));
+        if (station == 0 || station == localStation || station->m_field20 != cStationConnectedState)
+        {
+            value = 0xff;
+            if (rtt >> 2 < 0xff)
+                value = rtt >> 2;
+        }
+        else
+        {
+            rtt = transport::NetworkRttManager::sInstance->GetAverage(station->m_stationAddress) & 0xffff;
+            if (rtt == 0)
+            {
+                if (!station->IsConnectionRouteRelay())
+                {
+                    measuring = true;
+                    unmeasuredBitmap |= 1 << index;
+                }
+                value = 0xff;
+                if (rtt >> 2 < 0xff)
+                    value = rtt >> 2;
+            }
+            else if (!station->IsConnectionRouteDirect())
+            {
+                value = 0;
+            }
+            else
+            {
+                ++directCount;
+                if (static_cast<int>(rtt) >> 2 != 0)
+                {
+                    value = 0xff;
+                    if (rtt >> 2 < 0xff)
+                        value = rtt >> 2;
+                }
+                else
+                {
+                    value = 1;
+                }
+            }
+        }
+        buffer[offset] = value;
+        ++offset;
+    }
+    buffer[3] = directCount;
+    if (measuring)
+    {
+        *stationBitmap = unmeasuredBitmap;
+        return false;
+    }
+
+    Result result = window->PushData(m_buffer, offset);
+    if (result == 0)
+        updateSendWatermark(*window);
+    return result == 0;
 }
 
 }}}

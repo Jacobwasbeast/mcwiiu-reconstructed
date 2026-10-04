@@ -46,8 +46,12 @@ public:
     enum ConnectionStatus
     {
         cConnectionStatusNone = 0,
-        cConnectionStatusConnecting = 1,
-        cConnectionStatusConnected = 2
+        cConnectionStatusConnected = 1,
+        cConnectionStatusDisconnectedSession = 2,
+        cConnectionStatusDisconnectedNetwork = 3,
+        cConnectionStatusUnknown4 = 4,
+        cConnectionStatusUnknown5 = 5,
+        cConnectionStatusUnknown6 = 6
     };
 
     enum ProcessType
@@ -66,6 +70,7 @@ public:
         cEventTypeLeave = 1,
         cEventTypeUnknown02 = 2,
         cEventTypeUnknown03 = 3,
+        cEventTypeUnknown04 = 4,
         cEventTypeUnknown15 = 0x15
     };
 
@@ -122,6 +127,8 @@ public:
 
     static Result CreateInstance(const Setting& setting);
 
+    typedef bool (*DisconnectionEventListener)(void* event);
+
     typedef bool (*JoiningApprovalCallback)(
         const transport::Station::IdentificationToken* identificationToken);
 
@@ -132,12 +139,29 @@ public:
     bool IsJointSessionHost() const;
     unsigned int GetStatus() const;
     unsigned int GetJoinMeshState() const;
+    unsigned int GetJoinSessionStateForDebug() const;
     unsigned int GetSessionOpenStatus() const;
     void SetCurrentSessionOpenStatus(SessionOpenStatus status);
     void SetBufferSessionOpenStatus(SessionOpenStatus status);
     bool UpdateStationIdToBecomeClient();
     bool UpdateStationIdToBecomeHost();
     void ChangeStatusToDisconnectedSession();
+    unsigned short GetParticipantNum() const;
+    bool IsHostMigrationEnabled() const;
+    unsigned int GetMatchmakeSessionStationNum() const;
+    DisconnectionEventListener GetDisconnectionEventListener();
+    MeshEventListener* GetMeshEventListenerPtr();
+    static unsigned char CheckHostCandidateRankingCallback(StationIndex index, bool checkHost);
+    static unsigned int GetSessionIdCallback();
+    unsigned short GetValidStationIdNum() const;
+    unsigned short GetStationNum() const;
+    unsigned long long GetJointSessionHostStationId() const;
+    void NotifyOwnershipChange(unsigned int sessionId, unsigned long long stationId);
+    void CancelJoinProcessByFatalError();
+    void invalidateStationId(unsigned long long stationId);
+    void UpdateSessionStationInfo();
+    void ChangeStationIdConvertEnableFlag(bool enable);
+    unsigned int GetJointSessionStateForDebug() const;
     void CheckStatusAtChangeMeshState();
     void ChangeStatusToDisconnectedNetwork();
     bool IsProcessingJoin() const;
@@ -221,6 +245,8 @@ public:
     unsigned char m_field148;
 };
 
+
+bool DisconnectionEventListenerForSession(void* event);
 
 extern Session* g_piaSession;
 extern unsigned char g_piaMatchmakeAnalysisEnabled;

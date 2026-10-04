@@ -90,7 +90,7 @@ public:
     unsigned char GetSessionIdArray(unsigned int* sessionIds) const;
     void SetStationIndex(unsigned long long stationId, StationIndex index);
     bool GetStationIndex(unsigned long long stationId, StationIndex* index) const;
-    virtual void Trace(unsigned long long value) const;
+    void Trace(unsigned long long value) const;
     unsigned int GetValidStationIdNum() const;
     void SetSessionId(unsigned long long stationId, unsigned int sessionId);
     bool CheckSessionHost(unsigned int sessionId) const;

@@ -15,17 +15,15 @@ template <>
 class SessionInfoList<lan::LanSessionInfoPrivate> : public ISessionInfoList
 {
 public:
-    ~SessionInfoList();
+    virtual ~SessionInfoList();
+    virtual ISessionInfo* const* Begin() const;
+    virtual ISessionInfo** Begin();
+    virtual ISessionInfo* const* End() const;
+    virtual ISessionInfo** End();
+    virtual unsigned short GetSize() const;
+    virtual unsigned short GetMaxSize() const;
+    virtual void Clear();
 
-    ISessionInfo* const* Begin() const;
-    ISessionInfo** Begin();
-    ISessionInfo* const* End() const;
-    ISessionInfo** End();
-    unsigned short GetSize() const;
-    unsigned short GetMaxSize() const;
-    void Clear();
-
-private:
     unsigned short m_size;
     unsigned short m_maxSize;
     ISessionInfo** m_items;

@@ -4,16 +4,22 @@
 #include "nn/pia/Common.hpp"
 #include "nn/pia/common/CallContext.hpp"
 #include "nn/pia/common/StepSequenceJob.hpp"
+#include "nn/pia/common/Time.hpp"
 
 namespace nn { namespace pia { namespace session {
 
 class LeaveWithHostMigrationJob : public common::StepSequenceJob
 {
 public:
+    enum
+    {
+        cStationNumMax = 32
+    };
+
     LeaveWithHostMigrationJob();
     virtual ~LeaveWithHostMigrationJob();
 
-    Result Startup(common::CallContext* context);
+    bool Startup(common::CallContext* context);
     unsigned int SendStartMigrationMessage();
     unsigned int WaitMigrationResponse();
     unsigned int CleanupMesh();
@@ -25,17 +31,28 @@ public:
     void ReceiveMigrationResponse(StationIndex station);
     void Cleanup();
     virtual void Trace(unsigned long long value) const;
-    void CleanupStatus();
+    virtual int DecideNextHost() = 0;
+    virtual void CleanupStatus();
 
-private:
+    void setStep(unsigned int (LeaveWithHostMigrationJob::*function)(), const char* name)
+    {
+        union
+        {
+            unsigned int (LeaveWithHostMigrationJob::*derived)();
+            unsigned int (common::StepSequenceJob::*base)();
+        } step;
+        step.derived = function;
+        m_currentStep.m_function = step.base;
+        m_currentStep.m_name = name;
+    }
+
     common::CallContext* m_callerContext;
-    unsigned int m_deadlineHigh;
-    unsigned int m_deadlineLow;
-    unsigned int m_timeoutMsec;
+    common::Time m_deadline;
+    int m_timeoutMsec;
     bool m_started;
-    unsigned int m_newHost;
-    unsigned char m_stationResponses[32];
-    bool m_multiMigration;
+    StationIndex m_newHost;
+    bool m_stationResponses[cStationNumMax];
+    bool m_migrationStarted;
 };
 
 }}}

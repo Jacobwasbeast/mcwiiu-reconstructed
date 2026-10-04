@@ -5,6 +5,7 @@
 #include "nn/pia/common/CallContext.hpp"
 #include "nn/pia/common/StepSequenceJob.hpp"
 #include "nn/pia/common/Time.hpp"
+#include "nn/pia/session/Session.hpp"
 #include "nn/pia/transport/StationConnectionInfo.hpp"
 
 namespace nn { namespace pia { namespace session {
@@ -14,6 +15,13 @@ class JoinSessionSetting;
 class JoinSessionJob : public common::StepSequenceJob
 {
 public:
+    struct StepResult
+    {
+        unsigned char m_kind;
+        unsigned char m_reserved;
+        unsigned short m_value;
+    };
+
     JoinSessionJob();
     virtual ~JoinSessionJob();
     virtual void Trace(unsigned long long value) const;
@@ -29,15 +37,32 @@ public:
 protected:
     virtual Result StartupImpl(const JoinSessionSetting* setting) = 0;
     virtual void CleanupImpl();
+    virtual void SetNextStepAtWaitJoinMesh();
+    virtual StepResult SetNextStepAtFailedJoinMesh(Result result) = 0;
+    virtual StepResult SetNextStepAtWaitLeaveMesh() = 0;
+    virtual StepResult SetNextStepAtMeshCleanup() = 0;
 
 public:
+    StepResult MeshStartup();
+    StepResult JoinMesh();
+    StepResult WaitJoinMesh();
+    StepResult LeaveMesh();
+    StepResult WaitLeaveMesh();
+    StepResult WaitLeaveMeshWithHostMigration();
+    StepResult WaitDestroyMesh();
+    StepResult MeshCleanup();
+    void CalcProcessingTimeOfJoin() const;
+    StepResult CompleteProcess();
+    StepResult CompleteFailure();
+    void SetMatchmakeStatus(Session::MatchmakeStatus status);
+    void SetConnectionStatus(Session::ConnectionStatus status);
 
     common::CallContext* m_callerContext;
     common::CallContext m_callContext;
     transport::StationConnectionInfo m_stationConnectionInfo;
     unsigned int m_joinState;
     unsigned int m_sessionId;
-    bool m_joinOption;
+    bool m_joined;
     bool m_connectionInfoRetry;
     bool m_sessionInfoRetry;
     bool m_retryReasonB;

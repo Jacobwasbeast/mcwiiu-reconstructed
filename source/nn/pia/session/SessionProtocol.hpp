@@ -52,7 +52,7 @@ public:
     Result SendPreparedForMigrateSession(unsigned char processType, unsigned long long stationId,
                                          unsigned int sessionId, bool value);
     Result SendNextSessionId(unsigned char processType, unsigned int sessionId,
-                             unsigned int ownerId, unsigned long long stationId,
+                             unsigned int nextSessionId, unsigned long long matchmakeOwnerUniqueId,
                              const unsigned char* applicationData, unsigned int applicationDataSize,
                              unsigned long long* stationIds, unsigned short stationIdNum);
     Result SendAnswerToInvitation(unsigned char processType, unsigned long long stationId,

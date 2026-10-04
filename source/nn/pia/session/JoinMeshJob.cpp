@@ -211,7 +211,7 @@ unsigned int JoinMeshJob::SetupLocalStation()
             m_callerContext->m_state > common::CallContext::cStateCancelled)
             m_callerContext->SignalFailure(cResultJoinFailed);
         common::g_sessionBeginMonitoringContent.m_joinResult = cResultJoinFailed;
-        common::g_sessionBeginMonitoringContent.m_metric125 = common::hashWithMd5(m_principalId);
+        common::g_sessionBeginMonitoringContent.m_joinTargetIdHash = common::hashWithMd5(m_principalId);
         g_piaMesh->ProcessingAtMeshBegin();
         m_callerContext = 0;
         return cExecuteResultFinished;
@@ -225,7 +225,7 @@ unsigned int JoinMeshJob::SetupLocalStation()
             m_callerContext->m_state > common::CallContext::cStateCancelled)
             m_callerContext->SignalFailure(cResultJoinFailed);
         common::g_sessionBeginMonitoringContent.m_joinResult = cResultJoinFailed;
-        common::g_sessionBeginMonitoringContent.m_metric125 = common::hashWithMd5(m_principalId);
+        common::g_sessionBeginMonitoringContent.m_joinTargetIdHash = common::hashWithMd5(m_principalId);
         g_piaMesh->ProcessingAtMeshBegin();
         m_callerContext = 0;
         return cExecuteResultFinished;
@@ -264,7 +264,7 @@ void JoinMeshJob::CalcProcessingTimeOfJoin() const
         common::TimeSpan::GetTicksPerMSec().m_tick);
     if (elapsedMsec >= 0)
     {
-        common::g_sessionBeginMonitoringContent.m_metric131 = static_cast<unsigned char>(m_joinState);
+        common::g_sessionBeginMonitoringContent.m_joinMeshState = static_cast<unsigned char>(m_joinState);
         common::g_sessionBeginMonitoringContent.m_joinProcessingTime = elapsedMsec;
     }
 }
@@ -285,8 +285,8 @@ unsigned int JoinMeshJob::CheckContextCallCancelled()
         CalcProcessingTimeOfJoin();
         CheckRelayConnectionForMonitoring();
         common::g_sessionBeginMonitoringContent.m_joinResult = cResultCancelled;
-        common::g_sessionBeginMonitoringContent.m_metric125 = common::hashWithMd5(m_principalId);
-        common::g_sessionBeginMonitoringContent.m_metric131 = static_cast<unsigned char>(m_joinState);
+        common::g_sessionBeginMonitoringContent.m_joinTargetIdHash = common::hashWithMd5(m_principalId);
+        common::g_sessionBeginMonitoringContent.m_joinMeshState = static_cast<unsigned char>(m_joinState);
         g_piaMesh->ProcessingAtMeshBegin();
         return 1;
     }
@@ -334,7 +334,7 @@ unsigned int JoinMeshJob::CheckTransportConnectionStatus()
             m_callerContext->m_state > common::CallContext::cStateCancelled)
             m_callerContext->SignalFailure(cResultJoinFailed);
         common::g_sessionBeginMonitoringContent.m_joinResult = cResultJoinFailed;
-        common::g_sessionBeginMonitoringContent.m_metric125 = common::hashWithMd5(m_principalId);
+        common::g_sessionBeginMonitoringContent.m_joinTargetIdHash = common::hashWithMd5(m_principalId);
         g_piaMesh->ProcessingAtMeshBegin();
         m_callerContext = 0;
     }
@@ -366,7 +366,7 @@ unsigned int JoinMeshJob::WaitUntilConnectToHost()
                     m_callerContext->m_state > common::CallContext::cStateCancelled)
                     m_callerContext->SignalFailure(cResultJoinFailed);
                 common::g_sessionBeginMonitoringContent.m_joinResult = cResultJoinFailed;
-                common::g_sessionBeginMonitoringContent.m_metric125 = common::hashWithMd5(m_principalId);
+                common::g_sessionBeginMonitoringContent.m_joinTargetIdHash = common::hashWithMd5(m_principalId);
                 g_piaMesh->ProcessingAtMeshBegin();
                 m_callerContext = 0;
             }
@@ -427,7 +427,7 @@ unsigned int JoinMeshJob::WaitUntilConnectToHost()
             m_callerContext->m_state > common::CallContext::cStateCancelled)
             m_callerContext->SignalFailure(result);
         common::g_sessionBeginMonitoringContent.m_joinResult = result;
-        common::g_sessionBeginMonitoringContent.m_metric125 = common::hashWithMd5(m_principalId);
+        common::g_sessionBeginMonitoringContent.m_joinTargetIdHash = common::hashWithMd5(m_principalId);
         g_piaMesh->ProcessingAtMeshBegin();
         m_callerContext = 0;
     }
@@ -446,7 +446,7 @@ unsigned int JoinMeshJob::SendJoinRequest()
             m_callerContext->m_state > common::CallContext::cStateCancelled)
             m_callerContext->SignalFailure(cResultJoinFailed);
         common::g_sessionBeginMonitoringContent.m_joinResult = cResultJoinFailed;
-        common::g_sessionBeginMonitoringContent.m_metric125 = common::hashWithMd5(m_principalId);
+        common::g_sessionBeginMonitoringContent.m_joinTargetIdHash = common::hashWithMd5(m_principalId);
         g_piaMesh->ProcessingAtMeshBegin();
         m_callerContext = 0;
     }
@@ -467,7 +467,7 @@ unsigned int JoinMeshJob::CheckConnectionStateWithHostStation()
             m_callerContext->m_state > common::CallContext::cStateCancelled)
             m_callerContext->SignalFailure(cResultJoinFailed);
         common::g_sessionBeginMonitoringContent.m_joinResult = cResultJoinFailed;
-        common::g_sessionBeginMonitoringContent.m_metric125 = common::hashWithMd5(m_principalId);
+        common::g_sessionBeginMonitoringContent.m_joinTargetIdHash = common::hashWithMd5(m_principalId);
         g_piaMesh->ProcessingAtMeshBegin();
         m_callerContext = 0;
     }
@@ -738,7 +738,7 @@ unsigned int JoinMeshJob::AnalyzeJoinResponse()
             m_callerContext->m_state > common::CallContext::cStateCancelled)
             m_callerContext->SignalFailure(result);
         common::g_sessionBeginMonitoringContent.m_joinResult = result;
-        common::g_sessionBeginMonitoringContent.m_metric125 = common::hashWithMd5(m_principalId);
+        common::g_sessionBeginMonitoringContent.m_joinTargetIdHash = common::hashWithMd5(m_principalId);
         g_piaMesh->ProcessingAtMeshBegin();
         m_callerContext = 0;
     }
@@ -786,7 +786,7 @@ unsigned int JoinMeshJob::WaitAllConnection()
                 m_callerContext->m_state > common::CallContext::cStateCancelled)
                 m_callerContext->SignalFailure(result);
             common::g_sessionBeginMonitoringContent.m_joinResult = result;
-            common::g_sessionBeginMonitoringContent.m_metric125 = common::hashWithMd5(m_principalId);
+            common::g_sessionBeginMonitoringContent.m_joinTargetIdHash = common::hashWithMd5(m_principalId);
             g_piaMesh->ProcessingAtMeshBegin();
             m_callerContext = 0;
         }
@@ -846,8 +846,8 @@ unsigned int JoinMeshJob::CompleteProcess()
     CalcProcessingTimeOfJoin();
     CheckRelayConnectionForMonitoring();
     common::g_sessionBeginMonitoringContent.m_joinResult = 0;
-    common::g_sessionBeginMonitoringContent.m_metric125 = 0xffffffff;
-    common::g_sessionBeginMonitoringContent.m_metric131 = cMonitoringByteUnset;
+    common::g_sessionBeginMonitoringContent.m_joinTargetIdHash = 0xffffffff;
+    common::g_sessionBeginMonitoringContent.m_joinMeshState = cMonitoringByteUnset;
     transport::g_piaTransport->SetMonitoringNetworkRtt(true);
     g_piaMesh->ProcessingAtMeshBegin();
     return cExecuteResultFinished;
@@ -859,7 +859,7 @@ unsigned int JoinMeshJob::SetupLocalPlayerInfoFailure()
         m_callerContext->m_state > common::CallContext::cStateCancelled)
         m_callerContext->SignalFailure(cResultSetupLocalPlayerInfoFailed);
     common::g_sessionBeginMonitoringContent.m_joinResult = cResultSetupLocalPlayerInfoFailed;
-    common::g_sessionBeginMonitoringContent.m_metric125 = common::hashWithMd5(m_principalId);
+    common::g_sessionBeginMonitoringContent.m_joinTargetIdHash = common::hashWithMd5(m_principalId);
     g_piaMesh->ProcessingAtMeshBegin();
     return cExecuteResultFinished;
 }
@@ -958,8 +958,8 @@ unsigned int JoinMeshJob::CompleteCancelWithLeaveMesh()
     CalcProcessingTimeOfJoin();
     CheckRelayConnectionForMonitoring();
     common::g_sessionBeginMonitoringContent.m_joinResult = cResultCancelled;
-    common::g_sessionBeginMonitoringContent.m_metric125 = common::hashWithMd5(m_principalId);
-    common::g_sessionBeginMonitoringContent.m_metric131 = static_cast<unsigned char>(m_joinState);
+    common::g_sessionBeginMonitoringContent.m_joinTargetIdHash = common::hashWithMd5(m_principalId);
+    common::g_sessionBeginMonitoringContent.m_joinMeshState = static_cast<unsigned char>(m_joinState);
     g_piaMesh->ProcessingAtMeshBegin();
     return cExecuteResultFinished;
 }
@@ -1013,7 +1013,7 @@ void JoinMeshJob::Cleanup(Result result)
                     m_callerContext->SignalFailure(result);
                 common::g_sessionBeginMonitoringContent.m_joinResult = result;
             }
-            common::g_sessionBeginMonitoringContent.m_metric125 = common::hashWithMd5(m_principalId);
+            common::g_sessionBeginMonitoringContent.m_joinTargetIdHash = common::hashWithMd5(m_principalId);
             g_piaMesh->ProcessingAtMeshBegin();
         }
         m_callerContext = 0;

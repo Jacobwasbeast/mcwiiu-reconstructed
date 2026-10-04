@@ -3,6 +3,7 @@
 #include "nn/pia.h"
 #include "nn/pia/common/CallContext.hpp"
 #include "nn/pia/common/StepSequenceJob.hpp"
+#include "nn/pia/common/Time.hpp"
 namespace nn
 {
 namespace pia
@@ -12,24 +13,43 @@ namespace session
 class DestroyMeshJob : public common::StepSequenceJob
 {
 public:
+    enum
+    {
+        cStationNumMax = 32,
+        cResponseTimeoutMsec = 5000
+    };
+
     DestroyMeshJob();
     virtual ~DestroyMeshJob();
-    Result Startup(common::CallContext*, bool);
-    unsigned int AssociateSystemWith(common::CallContext*);
+    bool Startup(common::CallContext* callContext, bool systemDestroy);
+    bool AssociateSystemWith(common::CallContext* callContext);
     unsigned int SendDestroyMesh();
     unsigned int WaitDestroyResponse();
     void CleanupStatus();
     unsigned int CleanupMesh();
-    void ReceiveDestroyResponse(StationIndex);
+    void ReceiveDestroyResponse(StationIndex stationIndex);
     void Cleanup();
-    virtual void Trace(unsigned long long) const;
+    virtual void Trace(unsigned long long value) const;
+
+    void setStep(unsigned int (DestroyMeshJob::*function)(), const char* name)
+    {
+        union
+        {
+            unsigned int (DestroyMeshJob::*derived)();
+            unsigned int (common::StepSequenceJob::*base)();
+        } step;
+        step.derived = function;
+        m_currentStep.m_function = step.base;
+        m_currentStep.m_name = name;
+    }
+
     common::CallContext* m_callerContext;
-    common::CallContext m_callContext;
-    unsigned int m_step;
-    unsigned int m_timeout;
+    common::Time m_deadline;
+    int m_timeoutMsec;
+    unsigned char m_stationResponses[cStationNumMax];
+    bool m_waitingResponses;
     bool m_started;
     bool m_systemDestroy;
-    unsigned char m_stationResponses[32];
 };
 }
 }

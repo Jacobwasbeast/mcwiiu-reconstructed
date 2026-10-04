@@ -8,14 +8,33 @@
 #include "nn/pia/session/LeaveWithHostMigrationJob.hpp"
 #include "nn/pia/session/MeshEventListener.hpp"
 #include "nn/pia/session/CreateMeshJob.hpp"
+#include "nn/pia/session/MeshProtocol.hpp"
+#include "nn/pia/session/ProcessDestroyMeshJob.hpp"
+#include "nn/pia/session/ProcessHostMigrationJob.hpp"
+#include "nn/pia/session/ProcessJoinRequestJob.hpp"
+#include "nn/pia/session/ProcessUpdateMeshJob.hpp"
+#include "nn/pia/session/RelayRouteManageJob.hpp"
 #include "nn/pia/session/SyncClockProtocol.hpp"
 #include "nn/pia/transport/BandwidthCheckProtocol.hpp"
+#include "nn/pia/transport/IdentificationInfoTable.hpp"
+#include "nn/pia/transport/RelayRouteManager.hpp"
 #include "nn/pia/transport/Station.hpp"
 #include "nn/pia/transport/StationManager.hpp"
+#include "nn/pia/transport/StationProtocol.hpp"
 #include "nn/pia/common/Scheduler.hpp"
+#include "nn/pia/common/SessionBeginMonitoringContent.hpp"
+#include "nn/pia/common/SessionStateMonitoringContent.hpp"
 #include "nn/pia/transport/ThreadStreamManager.hpp"
 #include "nn/pia/transport/TransportAnalyzer.hpp"
 
+#include "nn/pia/HeapManager.hpp"
+#include "nn/pia/session/SessionNetworkFactory.hpp"
+#include "nn/pia/session/SessionSupport.hpp"
+#include "nn/pia/common/Memory.hpp"
+#include "nn/pia/transport/StationProtocolManager.hpp"
+#include "platform/wiiu/pead.hpp"
+#include <nn/act/client_cpp.h>
+#include <coreinit/memory.h>
 #include <new>
 
 namespace nn { namespace pia { namespace session {
@@ -26,6 +45,61 @@ namespace
 {
 
 unsigned int sDebugSetting = 0;
+unsigned char* sMeshStorage = 0;
+
+
+template <typename T>
+T* allocateHeapObject()
+{
+    void* storage = pead::allocateFromSeadHeap(sizeof(T), common::HeapManager::GetHeap());
+    if (storage == 0)
+        return 0;
+    return new (storage) T();
+}
+
+const long long cTimeTransportUnavailable = -3;
+const long long cTimeSyncClockUnavailable = -2;
+
+enum
+{
+    cMonitoringReasonKickout = 4,
+    cMonitoringReasonKickoutRequested = 5,
+    cDisconnectReasonNormal = 1,
+    cKickoutReasonRequested = 2,
+    cMonitoringUnset8 = 0xff,
+    cMonitoringSessionBeginReport = 1,
+    cMonitoringBeginDataType = 0,
+    cMiiNameBufferSize = 11,
+    cMeshProtocolId = 0x1800,
+    cSyncClockProtocolId = 0x1c00,
+    cBandwidthCheckProtocolId = 0x5402,
+    cBandwidthCheckProtocolType = 0x54,
+    cNetworkTopologyRelay = 1,
+    cRelayRttMax = 500,
+    cHostMigrationModeSingle = 1,
+    cHostMigrationModeMulti = 2,
+    cKeepAliveIntervalMsec = 1000,
+    cStationNumMax = 32,
+    cMonitoringBeginIntervalCount = 15,
+    cMonitoringBeginStatCount = 8,
+    cResultInvalidArgument = 0x10c07,
+    cResultInvalidState = 0x10c08,
+    cResultAlreadyInitialized = 0x10c0f,
+    cResultNotInitialized = 0x10c0c,
+    cResultOutOfMemory = 0x10c01,
+    cStationTimeoutMsecMin = 1000,
+    cStationTimeoutMsecMax = 30000,
+    cJoinRequestTimeoutMsec = 10000,
+    cStationProtocolTimeoutMsec = 10000,
+    cUpdateMeshExtraTimeMsec = 5000,
+    cIdentificationInfoPlayersCounted = 3,
+    cSyncClockProtocolType = 0x1c,
+    cDisconnectReasonDestroyed = 0x10c08,
+    cLocalPlayerNameUnset = 0xff,
+    cStationUnused = 0xfd
+};
+
+const unsigned int cMonitoringUnset32 = 0xffffffffu;
 
 }
 
@@ -62,25 +136,24 @@ Mesh::Mesh(const Setting&)
       m_hostMigrationEnabled(1),
       m_unknown75(0),
       m_recentPlayRecordEnabled(0),
-      m_unknown77(0),
+      m_multiplayerPermitted(0),
       m_connectedStationBitmap(0),
       m_validStationBitmap(0),
       m_unknown80(0xffffffffu),
       m_unknown88(0),
-      m_unknown8c(0),
       m_syncClockProtocolId(0),
       m_meshStartTime(0),
       m_meshStartTimeValid(0),
-      m_unknowna1(0),
+      m_startedUp(0),
       m_hostMigrationStarted(0),
-      m_unknowna3(1),
+      m_recentPlayRecordRequested(1),
       m_monitoringDataSender(0),
       m_asyncProcess(0),
       m_meshEventListener(0),
       m_skipReport(0),
       m_skipCleanupReport(0),
-      m_unknownc6(1),
-      m_unknownc7(1),
+      m_playersCountedAsParticipants(1),
+      m_localPlayerCount(1),
       m_unknownc8(0xffffffffu),
       m_unknowncc(0),
       m_denyJoinRequestByInvalidState(0),
@@ -90,43 +163,357 @@ Mesh::Mesh(const Setting&)
 
 Mesh::~Mesh()
 {
-    Cleanup();
+    transport::Transport* transport = transport::g_piaTransport;
+    SessionNetworkFactory* factory = static_cast<SessionNetworkFactory*>(transport->GetNetworkFactory());
+    if (m_createMeshJob != 0)
+    {
+        factory->DeleteCreateMeshJob(m_createMeshJob);
+        m_createMeshJob = 0;
+    }
+    if (m_joinMeshJob != 0)
+    {
+        factory->DeleteJoinMeshJob(m_joinMeshJob);
+        m_joinMeshJob = 0;
+    }
+    if (m_leaveMeshJob != 0)
+    {
+        factory->DeleteLeaveMeshJob(m_leaveMeshJob);
+        m_leaveMeshJob = 0;
+    }
+    if (m_unknown0c != 0)
+    {
+        m_unknown0c->~ProcessJoinRequestJob();
+        pead::freeToSeadHeap(m_unknown0c);
+        m_unknown0c = 0;
+    }
+    if (m_processUpdateMeshJob != 0)
+    {
+        m_processUpdateMeshJob->~ProcessUpdateMeshJob();
+        pead::freeToSeadHeap(m_processUpdateMeshJob);
+        m_processUpdateMeshJob = 0;
+    }
+    if (m_destroyMeshJob != 0)
+    {
+        m_destroyMeshJob->~DestroyMeshJob();
+        pead::freeToSeadHeap(m_destroyMeshJob);
+        m_destroyMeshJob = 0;
+    }
+    if (m_processDestroyMeshJob != 0)
+    {
+        m_processDestroyMeshJob->~ProcessDestroyMeshJob();
+        pead::freeToSeadHeap(m_processDestroyMeshJob);
+        m_processDestroyMeshJob = 0;
+    }
+    if (m_processHostMigrationJob != 0)
+    {
+        factory->DeleteProcessHostMigrationJob(m_processHostMigrationJob);
+        m_processHostMigrationJob = 0;
+    }
+    if (m_leaveWithHostMigrationJob != 0)
+    {
+        factory->DeleteLeaveWithHostMigrationJob(m_leaveWithHostMigrationJob);
+        m_leaveWithHostMigrationJob = 0;
+    }
+    if (m_unknown24 != 0)
+    {
+        m_unknown24->~RelayRouteManageJob();
+        pead::freeToSeadHeap(m_unknown24);
+        m_unknown24 = 0;
+    }
+
+    transport::RelayRouteManager* relayRouteManager = transport::g_piaTransport->m_relayRouteManager;
+    if (relayRouteManager != 0)
+    {
+        transport::g_piaTransport->m_relayRouteManager = 0;
+        relayRouteManager->Finalize();
+        relayRouteManager->~RelayRouteManager();
+        pead::freeToSeadHeap(relayRouteManager);
+    }
+    if (m_kickoutManageJob != 0)
+    {
+        factory->DeleteKickoutManageJob(m_kickoutManageJob);
+        m_kickoutManageJob = 0;
+    }
+    if (m_unknown2c != 0)
+    {
+        factory->DeleteMissingStationHandler(m_unknown2c);
+        m_unknown2c = 0;
+    }
+    if (m_syncClockProtocolId != 0)
+    {
+        transport::g_piaTransport->m_protocolManager.DestroyProtocol(m_syncClockProtocolId);
+        m_syncClockProtocolId = 0;
+    }
+    if (m_bitRateCheckMode != 0 && m_bandwidthCheckProtocolId != 0)
+    {
+        m_bandwidthCheckProtocol->Finalize();
+        transport::g_piaTransport->m_protocolManager.DestroyProtocol(m_bandwidthCheckProtocolId);
+        m_bandwidthCheckProtocol = 0;
+        m_bandwidthCheckProtocolId = 0;
+    }
+    if (m_meshProtocol != 0)
+        m_meshProtocol->Finalize();
+    if (transport::g_piaTransport != 0)
+    {
+        transport::g_piaTransport->m_protocolManager.DestroyProtocol(m_meshProtocolId);
+        transport::g_piaTransport->m_protocolManager.CleanupProtocolsWithStationAddress();
+        transport::g_piaTransport->SetTransportStatus(Result(cResultInvalidState));
+    }
+    m_meshProtocolId = 0;
+    m_stationProtocol = 0;
+    m_meshProtocol = 0;
+    if (m_bandwidthCheckProtocolId == 0)
+    {
+        m_bandwidthCheckProtocolId = 0;
+        m_bandwidthCheckProtocol = 0;
+    }
+    if (m_monitoringDataSender != 0)
+    {
+        factory->DeleteMonitoringDataSender(m_monitoringDataSender);
+        m_monitoringDataSender = 0;
+    }
+    m_unknown75 = 0;
 }
 
-Result Mesh::Initialize(const Setting& setting, bool)
+Result Mesh::Initialize(const Setting& setting, bool isHost)
 {
-    m_networkTopologyType = setting.m_field04;
-    m_bitRateCheckMode = setting.m_field08;
+    transport::Transport* transport = transport::g_piaTransport;
+    SessionNetworkFactory* factory = setting.m_networkFactory;
+    if (!transport->m_protocolManager.m_started)
+    {
+        void* storage = transport->m_protocolManager.AllocProtocol(sizeof(MeshProtocol));
+        transport::Protocol* protocol = 0;
+        if (storage != 0)
+            protocol = new (storage) MeshProtocol();
+        m_meshProtocolId = transport->m_protocolManager.CreateProtocolImpl(
+            protocol, transport::ProtocolId(cMeshProtocolId));
+    }
+    else
+    {
+        m_meshProtocolId = 0;
+    }
+    m_stationProtocol = transport::g_piaStationProtocolManager->GetStationProtocol();
+    m_meshProtocol = static_cast<MeshProtocol*>(transport->m_protocolManager.SearchProtocol(
+        m_meshProtocolId, MeshProtocol::cProtocolType));
+    m_meshProtocol->Initialize();
+
+    if (!transport->m_protocolManager.m_started)
+    {
+        void* storage = transport->m_protocolManager.AllocProtocol(sizeof(SyncClockProtocol));
+        transport::Protocol* protocol = 0;
+        if (storage != 0)
+            protocol = new (storage) SyncClockProtocol();
+        m_syncClockProtocolId = transport->m_protocolManager.CreateProtocolImpl(
+            protocol, transport::ProtocolId(cSyncClockProtocolId));
+    }
+    else
+    {
+        m_syncClockProtocolId = 0;
+    }
+    m_bitRateCheckMode = setting.m_bitRateCheckMode;
+    common::g_sessionBeginMonitoringContent.m_metric132 =
+        static_cast<unsigned char>(m_bitRateCheckMode);
+
+    if (m_bitRateCheckMode != 0)
+    {
+        if (!transport->m_protocolManager.m_started)
+        {
+            void* storage =
+                transport->m_protocolManager.AllocProtocol(sizeof(transport::BandwidthCheckProtocol));
+            transport::Protocol* protocol = 0;
+            if (storage != 0)
+                protocol = new (storage) transport::BandwidthCheckProtocol();
+            m_bandwidthCheckProtocolId = transport->m_protocolManager.CreateProtocolImpl(
+                protocol, transport::ProtocolId(cBandwidthCheckProtocolId));
+        }
+        else
+        {
+            m_bandwidthCheckProtocolId = 0;
+        }
+        m_bandwidthCheckProtocol =
+            static_cast<transport::BandwidthCheckProtocol*>(transport->m_protocolManager.SearchProtocol(
+                m_bandwidthCheckProtocolId, cBandwidthCheckProtocolType));
+        m_bandwidthCheckProtocol->Initialize();
+    }
+
+    if (transport->m_stationNum <= cStationNumMax)
+        m_unknown54 = transport->m_stationNum;
+    else
+        m_unknown54 = cStationNumMax;
+    m_unknown75 = factory->IsServerRequired();
+
+    if (m_createMeshJob == 0)
+        m_createMeshJob = static_cast<CreateMeshJob*>(factory->CreateCreateMeshJob());
+    if (m_joinMeshJob == 0)
+        m_joinMeshJob = static_cast<JoinMeshJob*>(factory->CreateJoinMeshJob());
+    if (m_leaveMeshJob == 0)
+        m_leaveMeshJob = static_cast<LeaveMeshJob*>(factory->CreateLeaveMeshJob());
+    if (m_unknown0c == 0)
+        m_unknown0c = allocateHeapObject<ProcessJoinRequestJob>();
+    if (m_processUpdateMeshJob == 0)
+        m_processUpdateMeshJob = allocateHeapObject<ProcessUpdateMeshJob>();
+    if (m_destroyMeshJob == 0)
+        m_destroyMeshJob = allocateHeapObject<DestroyMeshJob>();
+    if (m_processDestroyMeshJob == 0)
+        m_processDestroyMeshJob = allocateHeapObject<ProcessDestroyMeshJob>();
+
+    m_networkTopologyType = setting.m_networkTopologyType;
+    if (m_networkTopologyType == cNetworkTopologyRelay)
+    {
+        transport::RelayRouteManager* relayRouteManager = transport->m_relayRouteManager;
+        if (relayRouteManager == 0)
+        {
+            relayRouteManager = allocateHeapObject<transport::RelayRouteManager>();
+            if (relayRouteManager != 0)
+                relayRouteManager->Initialize(m_unknown54, isHost);
+            transport->m_relayRouteManager = relayRouteManager;
+        }
+        relayRouteManager->SetRelayNumMax(m_unknown54 * m_unknown54);
+        relayRouteManager->SetRttMax(cRelayRttMax);
+        m_unknown24 = allocateHeapObject<RelayRouteManageJob>();
+    }
+    else
+    {
+        transport->m_relayRouteManager = 0;
+        m_unknown24 = 0;
+    }
+    m_hostMigrationMode = factory->GetHostMigrationMode();
+
+    if (m_hostMigrationMode == cHostMigrationModeSingle || m_hostMigrationMode == cHostMigrationModeMulti)
+    {
+        m_processHostMigrationJob =
+            static_cast<ProcessHostMigrationJob*>(factory->CreateProcessHostMigrationJob());
+        m_leaveWithHostMigrationJob =
+            static_cast<LeaveWithHostMigrationJob*>(factory->CreateLeaveWithHostMigrationJob());
+    }
+    else
+    {
+        m_processHostMigrationJob = 0;
+        m_leaveWithHostMigrationJob = 0;
+    }
+    if (m_kickoutManageJob == 0)
+        m_kickoutManageJob = static_cast<KickoutManageJob*>(factory->CreateKickoutManageJob());
+    if (m_unknown2c == 0)
+        m_unknown2c = factory->CreateMissingStationHandler();
+
+    transport->SetKeepAliveInterval(cKeepAliveIntervalMsec);
+    if (m_monitoringDataSender == 0)
+        m_monitoringDataSender = factory->CreateMonitoringDataSender();
+    transport->SetTransportStatus(Result(0));
+    m_recentPlayRecordEnabled = factory->IsRecentPlayRecordPermitted();
+    m_multiplayerPermitted = factory->IsMultiplayerPermitted();
     return 0;
 }
 
 Result Mesh::CreateInstance(const Setting& setting)
 {
+    if (!IsInitialized())
+        return static_cast<Result>(cResultNotInitialized);
+    if (!IsDuringSetup())
+        return static_cast<Result>(cResultInvalidState);
+    if (transport::g_piaTransport == 0)
+        return static_cast<Result>(cResultInvalidState);
+    if (setting.m_networkFactory == 0)
+        return static_cast<Result>(cResultInvalidArgument);
+    if (setting.m_networkTopologyType != 0 && setting.m_networkTopologyType != cNetworkTopologyRelay)
+        return static_cast<Result>(cResultInvalidArgument);
+
+    bool topologyAllowed = true;
+    if (setting.m_networkTopologyType != cNetworkTopologyRelay && (sDebugSetting >> 24) != 0)
+        topologyAllowed = false;
+    const bool relayPermitted = setting.m_networkFactory->IsClientRelayConnectionPermitted();
+    if ((!relayPermitted && setting.m_networkTopologyType != 0) || !topologyAllowed)
+        return static_cast<Result>(cResultInvalidArgument);
+
     if (g_piaMesh != 0)
-        return static_cast<Result>(0x10c0f);
-    g_piaMesh = new (std::nothrow) Mesh(setting);
+        return static_cast<Result>(cResultAlreadyInitialized);
+
+    sMeshStorage = common::NewArray<unsigned char>(sizeof(Mesh));
+    if (sMeshStorage == 0)
+        return static_cast<Result>(cResultOutOfMemory);
+
+    g_piaMesh = new (sMeshStorage) Mesh(setting);
     if (g_piaMesh == 0)
-        return static_cast<Result>(0x10c01);
-    return g_piaMesh->Initialize(setting, false);
+    {
+        common::DeleteArray<unsigned char>(sMeshStorage);
+        sMeshStorage = 0;
+        return static_cast<Result>(cResultOutOfMemory);
+    }
+
+    const Result result = g_piaMesh->Initialize(setting, (sDebugSetting >> 24) != 0);
+    if (result == 0)
+    {
+        common::g_sessionBeginMonitoringContent.m_metric45 =
+            static_cast<unsigned char>(setting.m_networkTopologyType);
+        return 0;
+    }
+
+    g_piaMesh->~Mesh();
+    g_piaMesh = 0;
+    common::DeleteArray<unsigned char>(sMeshStorage);
+    sMeshStorage = 0;
+    return result;
 }
 
 void Mesh::DestroyInstance()
 {
-    delete g_piaMesh;
-    g_piaMesh = 0;
+    if (g_piaMesh != 0)
+    {
+        g_piaMesh->Cleanup();
+        g_piaMesh->~Mesh();
+        g_piaMesh = 0;
+    }
+    if (sMeshStorage != 0)
+    {
+        common::DeleteArray<unsigned char>(sMeshStorage);
+        sMeshStorage = 0;
+    }
 }
 
 void Mesh::CleanupStationsJobs()
 {
-    m_connectedStationBitmap = 0;
-    m_validStationBitmap = 0;
+    transport::Station** station = transport::g_piaStationManager->m_stations.data;
+    transport::Station** const end = station + transport::g_piaStationManager->m_stations.size;
+    for (; station != end; ++station)
+        (*station)->CleanupJobs();
 }
 
 void Mesh::CleanupJobs()
 {
-    m_kickoutManageJob = 0;
-    m_meshProtocol = 0;
-    m_bandwidthCheckProtocol = 0;
+    m_createMeshJob->Cleanup();
+    m_createMeshJob->Reset(false);
+    m_joinMeshJob->Cleanup(Result(0));
+    m_joinMeshJob->Reset(false);
+    m_leaveMeshJob->Cleanup();
+    m_leaveMeshJob->Reset(false);
+    m_unknown0c->Cleanup();
+    m_unknown0c->Reset(false);
+    m_processUpdateMeshJob->Cleanup();
+    m_processUpdateMeshJob->Reset(false);
+    m_destroyMeshJob->Cleanup();
+    m_destroyMeshJob->Reset(false);
+    m_processDestroyMeshJob->Cleanup();
+    m_processDestroyMeshJob->Reset(false);
+    if (m_processHostMigrationJob != 0)
+    {
+        m_processHostMigrationJob->Cleanup();
+        m_processHostMigrationJob->Reset(false);
+    }
+    if (m_leaveWithHostMigrationJob != 0)
+    {
+        m_leaveWithHostMigrationJob->Cleanup();
+        m_leaveWithHostMigrationJob->Reset(false);
+    }
+    if (m_unknown24 != 0)
+    {
+        m_unknown24->Cleanup();
+        m_unknown24->Reset(false);
+    }
+    m_kickoutManageJob->Cleanup();
+    m_kickoutManageJob->Reset(false);
+    CleanupStationsJobs();
+    m_callContext.Reset();
+    m_asyncProcess = 0;
 }
 
 bool Mesh::IsValidStationIndex(StationIndex index) const
@@ -176,18 +563,74 @@ void Mesh::SetMeshState(State state)
 
 void Mesh::CleanupStatus()
 {
-    m_disconnectReason = 0;
-    SetMeshState(cStateNone);
+    for (int index = 0; index < cStationNumMax; ++index)
+    {
+        if (index != m_unknown5c && IsValidStationIndex(static_cast<StationIndex>(index)))
+            UnfixDisconnectedId(static_cast<StationIndex>(index));
+    }
     ResetStationIndexUsage();
+    transport::g_piaTransport->m_protocolManager.CleanupProtocolsWithStationAddress();
+    transport::g_stationConnectionInfoTable->ClearTable();
+    transport::IdentificationInfoTable::GetInstance()->ClearTable();
+    transport::IdentificationInfoTable::GetInstance()->ClearLocalIdentificationInfo();
+    m_localPlayerCount = 1;
+    m_playersCountedAsParticipants = true;
+
+    transport::StationManager* stationManager = transport::g_piaStationManager;
+    while (stationManager->m_stations.size != 0)
+    {
+        transport::Station* station = stationManager->m_stations.data[0];
+        station->Cleanup();
+        station->CleanupJobs();
+        stationManager->DestroyStation(station);
+    }
+    transport::g_piaTransport->OutputStreamUpdateEvent();
+
+    m_unknowncc = 0;
+    m_unknown88 = 0;
+    m_unknownc8 = 0xffffffffu;
+    m_unknown80 = 0xffffffffu;
+    SetMeshState(cStateNone);
+    if (static_cast<int>(m_unknown5c) < cStationNumMax)
+        NoticeMeshEvent(cEventTypeLeave, m_unknown5c);
+
+    const transport::ProtocolId syncClockProtocolId = m_syncClockProtocolId;
+    m_unknown5c = static_cast<StationIndex>(cStationUnused);
+    m_unknown58 = static_cast<StationIndex>(cStationUnused);
+    SyncClockProtocol* syncClockProtocol = static_cast<SyncClockProtocol*>(
+        transport::g_piaTransport->m_protocolManager.SearchProtocol(syncClockProtocolId,
+                                                                    cSyncClockProtocolType));
+    if (syncClockProtocol != 0)
+        syncClockProtocol->m_syncClock.ClearBaseTime();
+
+    m_hostMigrationEnabled = true;
+    if (!m_skipCleanupReport)
+    {
+        common::g_sessionBeginMonitoringContent.Cleanup();
+        common::g_sessionStateMonitoringContent.Cleanup();
+        if (m_monitoringDataSender != 0)
+            m_monitoringDataSender->Cleanup();
+    }
+    m_denyJoinRequestByInvalidState = 0;
+    m_skipReport = false;
+    m_denyJoinRequestBySessionIsFull = 0;
 }
 
 void Mesh::Cleanup()
 {
-    CleanupJobs();
-    CleanupStationsJobs();
-    CleanupStatus();
-    m_callContext.Reset();
-    m_asyncProcess = 0;
+    m_playerInfo[0].m_name.Clear();
+    m_playerInfo[0].m_language = cLocalPlayerNameUnset;
+    m_playerInfo[0].m_field70 = 0;
+    m_playerInfo[0].m_field78 = 0;
+    if (m_startedUp)
+    {
+        if (m_bitRateCheckMode != 0)
+            m_bandwidthCheckProtocol->Inactivate();
+        CleanupJobs();
+        CleanupStatus();
+        transport::g_piaTransport->m_connectionRouteRelay = true;
+        m_startedUp = false;
+    }
 }
 
 Result Mesh::CheckPlayerInfo(const transport::Station::PlayerInfo& info) const
@@ -228,11 +671,140 @@ Result Mesh::CheckPlayerInfoSetting(const transport::Station::PlayerInfo* infos,
 
 Result Mesh::Startup(StartupSetting& setting)
 {
-    const Result result = CheckPlayerInfoSetting(setting.m_playerInfo,
-                                                  setting.m_playerCount);
+    if (IsDuringSetup())
+        return static_cast<Result>(cResultInvalidState);
+    if (m_startedUp)
+        return static_cast<Result>(cResultInvalidState);
+    transport::Transport* transport = transport::g_piaTransport;
+    if (transport == 0)
+        return static_cast<Result>(cResultInvalidState);
+    if (transport::IdentificationInfoTable::GetInstance() == 0)
+        return static_cast<Result>(cResultInvalidState);
+    if (((sDebugSetting >> 16) & 0xff) != 0 &&
+        setting.m_field00 - cStationTimeoutMsecMin > cStationTimeoutMsecMax - cStationTimeoutMsecMin)
+        return static_cast<Result>(cResultInvalidArgument);
+
+    if (m_bitRateCheckMode != 0)
+    {
+        const Result result = m_bandwidthCheckProtocol->Activate(
+            setting.m_bandwidthCheckMeasurementTime, setting.m_bandwidthCheckIpPacketSize,
+            setting.m_skipBandwidthCheck, setting.m_bandwidthCheckMeasurementCount);
+        if (result != 0)
+            return result;
+    }
+
+    m_recentPlayRecordRequested = setting.m_recentPlayRecordEnabled;
+    if (m_recentPlayRecordRequested && m_recentPlayRecordEnabled)
+    {
+        const Result result = CheckPlayerInfoSetting(setting.m_playerInfo, setting.m_playerInfoSize);
+        if (result != 0)
+            return result;
+    }
+
+    if (!setting.m_hostMigrationEnabled)
+    {
+        common::g_sessionBeginMonitoringContent.m_metric46 = 0;
+        m_hostMigrationEnabled = setting.m_hostMigrationEnabled;
+    }
+    else
+    {
+        if (m_processHostMigrationJob != 0 && !m_processHostMigrationJob->IsValidHostMigrationSetting())
+            return static_cast<Result>(cResultInvalidState);
+        common::g_sessionBeginMonitoringContent.m_metric46 =
+            static_cast<unsigned char>(m_hostMigrationMode);
+        m_hostMigrationEnabled = setting.m_hostMigrationEnabled;
+    }
+
+    transport::IdentificationInfo info;
+    if (setting.m_identificationToken != 0)
+        OSBlockMove(&info.m_field00, setting.m_identificationToken,
+                    sizeof(transport::Station::IdentificationToken), 0);
+    else
+        OSBlockSet(&info.m_field00, 0, sizeof(transport::Station::IdentificationToken));
+
+    if (!m_multiplayerPermitted && setting.m_playerInfoSize > 1)
+        return static_cast<Result>(cResultInvalidArgument);
+
+    info.m_field60[0].Clear();
+    info.m_fieldC8[0].Clear();
+    info.m_field108 = cLocalPlayerNameUnset;
+    OSBlockSet(&info.m_field20, 0, sizeof(info.m_field20));
+    info.m_principalId[0] = 0;
+
+    m_playerInfo[0].m_name.Clear();
+    m_playerInfo[0].m_language = cLocalPlayerNameUnset;
+    m_playerInfo[0].m_field70 = 0;
+    m_playerInfo[0].m_field78 = 0;
+    m_playerInfoCount = 0;
+    if (setting.m_playerInfo != 0)
+    {
+        const transport::Station::PlayerInfo* playerInfo = setting.m_playerInfo;
+        const unsigned long long* principalIds = setting.m_field14;
+        for (unsigned char index = 0; index < setting.m_playerInfoSize; ++index)
+        {
+            if (CheckPlayerInfo(*playerInfo) == 0)
+            {
+                m_playerInfo[m_playerInfoCount].m_name.Copy(playerInfo->m_name);
+                m_playerInfo[m_playerInfoCount].m_language = playerInfo->m_language;
+                m_playerInfo[m_playerInfoCount].m_field70 = playerInfo->m_field70;
+                m_playerInfo[m_playerInfoCount].m_field78 = playerInfo->m_field78;
+                if (principalIds != 0)
+                    info.m_principalId[m_playerInfoCount] = *principalIds;
+                ++m_playerInfoCount;
+            }
+            ++playerInfo;
+            ++principalIds;
+        }
+    }
+    info.m_field109 = cIdentificationInfoPlayersCounted;
+    transport::IdentificationInfoTable::GetInstance()->SetLocalIdentificationInfo(&info);
+
+    m_localPlayerCount = setting.m_playerInfoSize;
+    m_playersCountedAsParticipants = setting.m_playersCountedAsParticipants;
+    m_unknown0c->m_timeoutMsec = cJoinRequestTimeoutMsec;
+    m_processUpdateMeshJob->m_updateExtraTimeMsec = setting.m_field00 + cUpdateMeshExtraTimeMsec;
+
+    unsigned int stationTimeout = setting.m_field00;
+    if (((sDebugSetting >> 16) & 0xff) != 0)
+    {
+        if (stationTimeout < cStationTimeoutMsecMin)
+            stationTimeout = cStationTimeoutMsecMin;
+        else if (stationTimeout > cStationTimeoutMsecMax)
+            stationTimeout = cStationTimeoutMsecMax;
+    }
+    m_meshProtocol->m_unknown24 = stationTimeout;
+    m_meshProtocol->m_unknown28 = static_cast<int>(stationTimeout) / 2;
+    static_cast<transport::StationProtocol*>(m_stationProtocol)->m_timeoutMsec =
+        cStationProtocolTimeoutMsec;
+    transport->SetKeepAliveInterval(setting.m_field04);
+    common::g_sessionBeginMonitoringContent.m_metric43 = static_cast<unsigned short>(setting.m_field00);
+    common::g_sessionBeginMonitoringContent.m_metric44 = setting.m_field04;
+    m_kickoutManageJob->Startup();
+    if (transport->m_relayRouteManager != 0)
+        transport->m_relayRouteManager->InitRelayRouteManagerData();
+
+    Result result;
+    if (!transport->m_connectionRouteRelay)
+    {
+        result = transport->UpdateSetting(setting.m_cryptoSetting);
+    }
+    else
+    {
+        result = transport->Restartup(0);
+        if (result != 0)
+            return result;
+        result = transport->UpdateSetting(setting.m_cryptoSetting);
+    }
     if (result != 0)
         return result;
-    SetMeshState(cStateStarted);
+
+    m_meshStartTimeValid = false;
+    m_meshStartTime = 0;
+    m_processUpdateMeshJob->InitializeMonitoringDataVar();
+    if (m_processHostMigrationJob != 0)
+        m_processHostMigrationJob->InitializeMonitoringDataVar();
+    m_startedUp = true;
+    m_disconnectReason = cDisconnectReasonNormal;
     return 0;
 }
 
@@ -551,12 +1123,12 @@ bool Mesh::IsProcessingLeaveMesh() const
 
 unsigned int Mesh::GetLocalPlayerCount() const
 {
-    return m_unknownc7;
+    return m_localPlayerCount;
 }
 
 bool Mesh::IsPlayersCountedAsParticipants() const
 {
-    return m_unknownc6;
+    return m_playersCountedAsParticipants;
 }
 
 common::MonitoringDataSender* Mesh::GetMonitoringDataSender()
@@ -633,7 +1205,7 @@ void Mesh::NoticeMeshEvent(EventType type, StationIndex index)
     if (type == cEventTypeJoin)
     {
         transport::Station* station = transport::g_piaStationManager->GetStation(index);
-        if (station != 0 && m_unknowna3 != 0 && m_recentPlayRecordEnabled != 0)
+        if (station != 0 && m_recentPlayRecordRequested != 0 && m_recentPlayRecordEnabled != 0)
             AddPlayHistory(station, m_playerInfo, 1);
     }
     if (m_meshEventCallback != 0)
@@ -811,7 +1383,6 @@ Result Mesh::JoinMeshCore(const transport::StationConnectionInfo& info,
     m_unknown58 = static_cast<StationIndex>(0xfe);
     m_unknown80 = 0;
     m_unknowncc = 0;
-    m_unknown8c = 0;
     m_unknownc8 = 0;
     if (m_joinMeshJob->GetState() != common::Job::cStateNotEntried &&
         m_joinMeshJob->GetState() != common::Job::cStateCompleted)
@@ -851,6 +1422,14 @@ void Mesh::SetDebugSettingForInternal(const DebugSetting& setting)
 
 void Mesh::TraceStationConnectionInfoList(unsigned long long)
 {
+}
+
+void Mesh::NotifyLeaveStationAddress(const common::StationAddress& address)
+{
+    transport::Station* station = transport::g_piaStationManager->GetStation(address);
+    address.Trace(0);
+    if (station != 0)
+        station->m_field20 = 6;
 }
 
 void Mesh::SetSkipReport(bool skip)
@@ -897,6 +1476,153 @@ bool Mesh::IsBandwidthCheckProtocolSetupParamValid(int measurementTime,
     if (m_bitRateCheckMode == 0)
         return true;
     return m_bandwidthCheckProtocol->IsSetupParamValid(measurementTime, ipPacketSize, measurementCount);
+}
+
+void Mesh::SetupProtocols()
+{
+    m_meshProtocol->StartupNative();
+}
+
+void Mesh::SetupSendReport()
+{
+    if (m_monitoringDataSender != 0)
+        m_monitoringDataSender->Startup();
+}
+
+unsigned char Mesh::IsProcessedAtMeshBegin() const
+{
+    if (m_monitoringDataSender != 0)
+        return m_monitoringDataSender->IsSendSessionBeginReportRequested();
+    return 0;
+}
+
+bool Mesh::IsProcessingHostMigration() const
+{
+    if (m_processHostMigrationJob == 0)
+        return false;
+    return m_processHostMigrationJob->m_started;
+}
+
+void Mesh::ProcessingAtMeshBegin()
+{
+    if (m_stationProtocol != 0)
+    {
+        common::g_sessionBeginMonitoringContent.m_metric126 =
+            static_cast<transport::StationProtocol*>(m_stationProtocol)->m_reconnectionCount;
+    }
+    if (m_skipReport)
+        return;
+    SendReport(cMonitoringBeginDataType);
+}
+
+void Mesh::CleanupMonitoringBeginData()
+{
+    common::SessionBeginMonitoringContent& content = common::g_sessionBeginMonitoringContent;
+    content.m_metric47 = cMonitoringUnset8;
+    content.m_joinResult = cMonitoringUnset32;
+    content.m_joinProcessingTime = cMonitoringUnset32;
+    content.m_metric50 = cMonitoringUnset8;
+    for (int index = 0; index < cMonitoringBeginIntervalCount; ++index)
+        content.m_metric51[index] = cMonitoringUnset32;
+    content.m_metric52 = cMonitoringUnset8;
+    for (int index = 0; index < cMonitoringBeginStatCount; ++index)
+        content.m_metric53[index] = cMonitoringUnset32;
+    content.m_joinMeshState = cMonitoringUnset8;
+    content.m_joinTargetIdHash = cMonitoringUnset32;
+    content.m_metric126 = cMonitoringUnset32;
+}
+
+common::Time Mesh::GetTime() const
+{
+    if (transport::g_piaTransport == 0)
+        return common::Time::Create(static_cast<unsigned long long>(cTimeTransportUnavailable));
+
+    transport::Protocol* protocol =
+        transport::g_piaTransport->m_protocolManager.SearchProtocol(
+            m_syncClockProtocolId, SyncClockProtocol::cProtocolType);
+    if (protocol == 0)
+        return common::Time::Create(static_cast<unsigned long long>(cTimeSyncClockUnavailable));
+    return common::Time::Create(static_cast<SyncClockProtocol*>(protocol)->m_syncClock.GetTime());
+}
+
+void Mesh::MonitoringProcess(DisconnectReason reason, unsigned char dataType)
+{
+    if (!IsMeshStartTimeValid())
+        return;
+
+    const common::Time now = common::g_piaJobScheduler->m_dispatchTime;
+    const common::TimeSpan elapsed = CalcDiffWithMeshStartTime(now);
+    unsigned int monitoredReason = reason;
+    if (reason != cDisconnectReasonNormal)
+    {
+        if (m_kickoutManageJob->m_kickoutReason != 0)
+        {
+            monitoredReason = cMonitoringReasonKickoutRequested;
+            if (m_kickoutManageJob->m_kickoutReason == cKickoutReasonRequested)
+                monitoredReason = cMonitoringReasonKickout;
+        }
+    }
+
+    unsigned char stationNum = static_cast<unsigned char>(GetStationNum());
+    unsigned int version = m_unknown80;
+    if (stationNum == 0)
+        stationNum = cMonitoringUnset8;
+    if (version == 0)
+        version = cMonitoringUnset32;
+
+    transport::RelayRouteManager* relayRouteManager = transport::g_piaTransport->m_relayRouteManager;
+    unsigned int relayVersion;
+    if (relayRouteManager == 0 || (relayVersion = relayRouteManager->m_unknown1c) == 0)
+        relayVersion = cMonitoringUnset32;
+
+    common::SessionStateMonitoringContent& content = common::g_sessionStateMonitoringContent;
+    content.m_metric179 =
+        static_cast<unsigned int>(elapsed.m_tick / common::TimeSpan::GetTicksPerMSec().m_tick);
+    content.m_metric180 = static_cast<unsigned char>(monitoredReason);
+    content.m_metric181 = stationNum;
+    content.m_metric182 = version;
+    content.m_metric183 = relayVersion;
+    m_processUpdateMeshJob->SetMonitoringData();
+    if (m_processHostMigrationJob != 0)
+        m_processHostMigrationJob->SetMonitoringData();
+    if (m_stationProtocol != 0)
+        content.m_metric222 = static_cast<transport::StationProtocol*>(m_stationProtocol)->m_reconnectionCount;
+    common::g_piaJobScheduler->SetMonitoringData();
+    transport::g_piaTransport->SetMonitoringNetworkRtt(false);
+    transport::g_piaTransportAnalyzer->SetMonitoringData();
+    transport::g_piaThreadStreamManager->SetMonitoringData();
+    if (!m_skipReport && m_monitoringDataSender != 0)
+    {
+        m_monitoringDataSender->RequestSendReport(
+            static_cast<common::MonitoringDataSender::DataType>(dataType));
+    }
+    if (dataType == cMonitoringSessionBeginReport)
+        m_meshStartTimeValid = false;
+}
+
+Result Mesh::SetupLocalPlayerInfo()
+{
+    transport::IdentificationInfo info;
+    Result result = transport::IdentificationInfoTable::GetInstance()->GetLocalIdentificationInfo(&info);
+    if (result != 0)
+        return result;
+
+    for (unsigned char index = 0; index < m_playerInfoCount; ++index)
+    {
+        info.m_field60[index].Copy(m_playerInfo[index].m_name);
+        info.m_field108 = m_playerInfo[index].m_language;
+    }
+
+    int16_t miiName[cMiiNameBufferSize];
+    OSBlockSet(miiName, 0, sizeof(miiName));
+    nn::act::Initialize();
+    nn::act::GetMiiName(miiName);
+    nn::act::Finalize();
+    for (unsigned char index = 0; index < m_playerInfoCount; ++index)
+        info.m_fieldC8[index].Copy(common::String(reinterpret_cast<const wchar_t*>(miiName)));
+
+    transport::IdentificationInfoTable::GetInstance()->SetLocalIdentificationInfo(&info);
+    return 0;
 }
 
 }}}

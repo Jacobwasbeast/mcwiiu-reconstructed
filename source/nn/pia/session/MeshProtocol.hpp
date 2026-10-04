@@ -23,6 +23,7 @@ class ProcessJoinRequestJob;
 class MeshProtocol : public transport::Protocol
 {
     friend class ProcessJoinRequestJob;
+    friend class Mesh;
 
 public:
     enum { cProtocolType = 0x18 };
