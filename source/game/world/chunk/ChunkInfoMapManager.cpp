@@ -40,19 +40,15 @@ void ChunkInfoMapManager::renderStatusMap(BufferBuilder* bufferBuilder, float wi
     int xzSize = sLevel->mDimension->getXZSize();
     int halfXZSize = xzSize / 2;
 
-    PlayerList* players = NULL;
-    if (gMinecraftServer != NULL)
-    {
-        players = gMinecraftServer->getPlayers();
-    }
+    PlayerList* players = gMinecraftServer->mPlayers;
     int playerCount = players->getPlayerCount();
     int size;
     int centreChunkX;
     int centreChunkZ;
     if (playerCount < 2 && xzSize >= CHUNK_INFO_MAP_SPLIT_SCREEN_SIZE)
     {
-        boost::shared_ptr<Player> player =
-            boost::static_pointer_cast<Player>(Minecraft::GetInstance()->mPlayer);
+        Minecraft* minecraft = Minecraft::GetInstance();
+        boost::shared_ptr<MultiplayerLocalPlayer> player = minecraft->mPlayer;
         centreChunkX = Mth::clamp(player->mChunkX, CHUNK_INFO_MAP_SPLIT_SCREEN_SIZE / 2 - halfXZSize,
                                   halfXZSize - CHUNK_INFO_MAP_SPLIT_SCREEN_SIZE / 2);
         centreChunkZ = Mth::clamp(player->mChunkZ, CHUNK_INFO_MAP_SPLIT_SCREEN_SIZE / 2 - halfXZSize,

@@ -38,7 +38,7 @@ extern long InterlockedCompareExchangeRelease(volatile long* destination, long e
 
 static const int SAVE_THREAD_STACK_SIZE = 0x100000;
 static const int MAX_DROPS_PER_TICK = 100;
-static const unsigned long long CHUNK_TICK_BUDGET_MS = 4;
+static const long long CHUNK_TICK_BUDGET_MS = 5;
 static const int MAX_LOCAL_PLAYERS = 4;
 
 ClientChunkCache::QueuedAction::QueuedAction(const boost::shared_ptr<ClientboundBlockEntityDataPacket>& packet)
@@ -90,8 +90,8 @@ ClientChunkCache::~ClientChunkCache()
             m_cache[i] = NULL;
         }
     }
-    delete[] m_cache;
-    delete[] m_hasData;
+    delete m_cache;
+    delete m_hasData;
     DeleteCriticalSection(&m_csLoadCreate);
 
     if (m_storage != NULL)
@@ -234,49 +234,67 @@ void ClientChunkCache::MultiPlayerChunkCacheInit(Level* level, ChunkStorage* sto
         static const int CHUNK_WIDTH = 16;
         static const int CHUNK_HEIGHT = 128;
         static const int FLAT_GRASS_Y = 3;
-        const bool flat = level->getLevelData()->getGeneratorType() == LevelType::FLAT;
-
         unsigned short* elementIds = new unsigned short[CHUNK_WIDTH * CHUNK_WIDTH * CHUNK_HEIGHT];
-        for (int x = 0; x < CHUNK_WIDTH; ++x)
-            for (int y = 0; y < CHUNK_HEIGHT; ++y)
-                for (int z = 0; z < CHUNK_WIDTH; ++z)
-                {
-                    unsigned short element = 0;
-                    if (flat)
+        for (int i = 0; i < CHUNK_WIDTH * CHUNK_WIDTH * CHUNK_HEIGHT; ++i)
+            elementIds[i] = 0;
+
+        if (level->getLevelData()->getGeneratorType() == LevelType::FLAT)
+        {
+            for (int x = 0; x < CHUNK_WIDTH; ++x)
+                for (int y = 0; y < CHUNK_HEIGHT; ++y)
+                    for (int z = 0; z < CHUNK_WIDTH; ++z)
                     {
+                        int element = 0;
                         if (y == FLAT_GRASS_Y)
                             element = Block::getElementId(Blocks::grass);
                         else if (y < FLAT_GRASS_Y)
                             element = Block::getElementId(Blocks::dirt);
+                        elementIds[x << 11 | z << 7 | y] = element;
                     }
-                    else
+        }
+        else
+        {
+            for (int x = 0; x < CHUNK_WIDTH; ++x)
+                for (int y = 0; y < CHUNK_HEIGHT; ++y)
+                    for (int z = 0; z < CHUNK_WIDTH; ++z)
                     {
+                        unsigned short element = 0;
                         if (y <= level->getSeaLevel() - 10)
                             element = Block::getElementId(Blocks::stone);
                         else if (y < level->getSeaLevel())
                             element = Block::getElementId(Blocks::water);
+                        elementIds[x << 11 | z << 7 | y] = element;
                     }
-                    elementIds[x << 11 | z << 7 | y] = element;
-                }
+        }
 
         ChunkPrimer primer(false, arrayWithLength<unsigned short>(elementIds, CHUNK_WIDTH * CHUNK_WIDTH * CHUNK_HEIGHT));
         WaterLevelChunk* waterChunk = new WaterLevelChunk(level, &primer, 0, 0);
         m_waterChunk = waterChunk;
         delete[] elementIds;
 
-        for (int x = 0; x < CHUNK_WIDTH; ++x)
-            for (int y = 0; y < CHUNK_HEIGHT; ++y)
-            {
-                if (flat && y < FLAT_GRASS_Y)
-                    continue;
-                for (int z = 0; z < CHUNK_WIDTH; ++z)
+        if (level->getLevelData()->getGeneratorType() == LevelType::FLAT)
+        {
+            for (int x = 0; x < CHUNK_WIDTH; ++x)
+                for (int y = 0; y < CHUNK_HEIGHT; ++y)
                 {
-                    int brightness = 15;
-                    if (!flat && y < level->getSeaLevel() - 1)
-                        brightness = 2;
-                    waterChunk->setLevelChunkBrightness(LightLayer::SKY, x, y, z, brightness);
+                    if (y < FLAT_GRASS_Y)
+                        continue;
+                    for (int z = 0; z < CHUNK_WIDTH; ++z)
+                        waterChunk->setLevelChunkBrightness(LightLayer::SKY, x, y, z, 15);
                 }
-            }
+        }
+        else
+        {
+            for (int x = 0; x < CHUNK_WIDTH; ++x)
+                for (int y = 0; y < CHUNK_HEIGHT; ++y)
+                    for (int z = 0; z < CHUNK_WIDTH; ++z)
+                    {
+                        int brightness = 15;
+                        if (y < level->getSeaLevel() - 1)
+                            brightness = 2;
+                        waterChunk->setLevelChunkBrightness(LightLayer::SKY, x, y, z, brightness);
+                    }
+        }
     }
     else
     {
@@ -338,7 +356,7 @@ LevelChunk* ClientChunkCache::getOrCreateChunk(int x, int z, bool)
     LevelChunk* chunk = getChunkIfLoaded(x, z);
     if (chunk == NULL)
     {
-        return m_emptyChunk;
+        chunk = m_emptyChunk;
     }
     return chunk;
 }
@@ -380,11 +398,12 @@ bool ClientChunkCache::reallyHasChunk(int x, int z)
 void ClientChunkCache::unqueueForReLoad(int x, int z)
 {
     EnterCriticalSection(&m_csLoadCreate);
-    for (std::vector<QueuedAction>::iterator it = m_queuedActions.begin(); it != m_queuedActions.end(); ++it)
+    for (unsigned int i = 0; i < m_queuedActions.size(); ++i)
     {
-        if (it->type == QueuedAction::eType_ReLoad && it->pos.x == x && it->pos.z == z)
+        QueuedAction action = m_queuedActions[i];
+        if (action.type == QueuedAction::eType_ReLoad && action.pos.x == x && action.pos.z == z)
         {
-            m_queuedActions.erase(it);
+            m_queuedActions.erase(m_queuedActions.begin() + i);
             break;
         }
     }
@@ -401,42 +420,39 @@ void ClientChunkCache::drop(int x, int z, bool force)
         {
             chunk->dropLighting();
         }
-        chunk->setLoaded(true);
+        chunk->mLoaded = true;
     }
 
-    if (!force)
+    if (force)
     {
-        if (chunk != NULL)
+        if (!m_dimension->containsChunk(x, z))
         {
-            m_toDrop.push_back(chunk);
+            return;
         }
-        return;
-    }
-
-    if (!m_dimension->containsChunk(x, z))
-    {
-        return;
-    }
-
-    unqueueForReLoad(x, z);
-    int idx = (x + m_xzOffset) * m_xzSize + (z + m_xzOffset);
-    EnterCriticalSection(&m_csLoadCreate);
-    if (InterlockedCompareExchangeRelease(reinterpret_cast<volatile long*>(&m_cache[idx]), 0,
-                                          reinterpret_cast<long>(chunk)) == reinterpret_cast<long>(chunk))
-    {
-        std::vector<LevelChunk*>::iterator it = std::find(m_loadedChunkList.begin(), m_loadedChunkList.end(), chunk);
-        if (it != m_loadedChunkList.end())
+        unqueueForReLoad(x, z);
+        int idx = (x + m_xzOffset) * m_xzSize + (z + m_xzOffset);
+        EnterCriticalSection(&m_csLoadCreate);
+        if (InterlockedCompareExchangeRelease(reinterpret_cast<volatile long*>(&m_cache[idx]), 0,
+                                              reinterpret_cast<long>(chunk)) == reinterpret_cast<long>(chunk))
         {
-            m_loadedChunkList.erase(it);
+            std::vector<LevelChunk*>::iterator it = std::find(m_loadedChunkList.begin(), m_loadedChunkList.end(), chunk);
+            if (it != m_loadedChunkList.end())
+            {
+                m_loadedChunkList.erase(it);
+            }
+            GameRenderer::AddForDelete(chunk);
+            GameRenderer::FinishedReassigning();
+            LeaveCriticalSection(&m_csLoadCreate);
+            m_level->setBlocksDirty(BlockPos(x * 16, 0, z * 16), BlockPos(x * 16 + 15, 255, z * 16 + 15));
+            m_hasData[idx] = false;
+            return;
         }
-        GameRenderer::AddForDelete(chunk);
-        GameRenderer::FinishedReassigning();
         LeaveCriticalSection(&m_csLoadCreate);
-        m_level->setBlocksDirty(BlockPos(x * 16, 0, z * 16), BlockPos(x * 16 + 15, 255, z * 16 + 15));
-        m_hasData[idx] = false;
-        return;
     }
-    LeaveCriticalSection(&m_csLoadCreate);
+    else if (chunk != NULL)
+    {
+        m_toDrop.push_back(chunk);
+    }
 }
 
 void ClientChunkCache::dropOutsideArea(int minX, int minZ, int maxX, int maxZ, bool force)
@@ -461,8 +477,9 @@ LevelChunk* ClientChunkCache::create(int x, int z)
     }
 
     int idx = (x + m_xzOffset) * m_xzSize + (z + m_xzOffset);
-    LevelChunk* chunk = m_cache[idx];
-    if (chunk == NULL)
+    LevelChunk* previous = m_cache[idx];
+    LevelChunk* chunk = previous;
+    if (m_cache[idx] == NULL)
     {
         EnterCriticalSection(&m_csLoadCreate);
         if (!CGameNetworkManager::sInstance.IsHost())
@@ -490,9 +507,10 @@ LevelChunk* ClientChunkCache::create(int x, int z)
             m_level->setBlocksDirty(BlockPos(x * 16, 0, z * 16), BlockPos(x * 16 + 15, 255, z * 16 + 15));
             m_hasData[idx] = true;
         }
-        chunk->setLoaded(true);
+        chunk->mLoaded = true;
         if (InterlockedCompareExchangeRelease(reinterpret_cast<volatile long*>(&m_cache[idx]),
-                                              reinterpret_cast<long>(chunk), 0) != 0)
+                                              reinterpret_cast<long>(chunk),
+                                              reinterpret_cast<long>(previous)) != reinterpret_cast<long>(previous))
         {
             LeaveCriticalSection(&m_csLoadCreate);
             delete chunk;
@@ -501,7 +519,7 @@ LevelChunk* ClientChunkCache::create(int x, int z)
         m_loadedChunkList.push_back(chunk);
         LeaveCriticalSection(&m_csLoadCreate);
     }
-    else if (!chunk->isLoaded() || chunk->mUnloaded)
+    else if (!chunk->mLoaded || chunk->mUnloaded)
     {
         chunk->load(false);
     }
@@ -547,7 +565,7 @@ bool ClientChunkCache::save(bool, ProgressListener*)
     return true;
 }
 
-void ClientChunkCache::tick()
+bool ClientChunkCache::tick()
 {
     EnterCriticalSection(&m_csLoadCreate);
 
@@ -617,10 +635,10 @@ void ClientChunkCache::tick()
         }
     }
 
-    unsigned long long start = System::processTimeInMilliSecs();
+    long long start = System::processTimeInMilliSecs();
     std::vector<LevelChunk*>::iterator it = m_loadedChunkList.begin();
     std::vector<LevelChunk*>::iterator end = m_loadedChunkList.end();
-    for (; it != end && System::processTimeInMilliSecs() - start <= CHUNK_TICK_BUDGET_MS; ++it)
+    for (; static_cast<long long>(System::processTimeInMilliSecs()) - start < CHUNK_TICK_BUDGET_MS && it != end; ++it)
     {
         (*it)->tick(false);
     }
@@ -630,6 +648,7 @@ void ClientChunkCache::tick()
     }
 
     LeaveCriticalSection(&m_csLoadCreate);
+    return false;
 }
 
 bool ClientChunkCache::shouldSave()

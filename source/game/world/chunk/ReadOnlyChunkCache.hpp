@@ -25,7 +25,7 @@ public:
     virtual LevelChunk* getChunk(int x, int z);
     virtual void postProcess(ChunkSource* source, int x, int z);
     virtual bool save(bool force, ProgressListener* listener);
-    virtual void tick();
+    virtual bool tick();
     virtual bool shouldSave();
     virtual std::wstring gatherStats();
     virtual std::vector<Biome::MobSpawnerData*>* getMobsAt(MobCategory* category, const BlockPos& pos);
@@ -34,7 +34,7 @@ public:
 
 private:
     LevelChunk** m_chunks;
-    int m_chunkCount;
+    unsigned int m_chunkCount;
     Level* m_level;
     ChunkStorage* m_storage;
     unsigned char* m_data;

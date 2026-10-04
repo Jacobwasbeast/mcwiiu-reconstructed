@@ -44,11 +44,10 @@ PlayerChunkMap::~PlayerChunkMap()
 
 void PlayerChunkMap::flagEntitiesToBeRemoved(unsigned int* count, bool* removed)
 {
-    PlayerVector::iterator it = mPlayers.begin();
-    while (it != mPlayers.end())
+    for (PlayerVector::iterator it = mPlayers.begin(); it != mPlayers.end(); ++it)
     {
-        (*it)->flagEntitiesToBeRemoved(count, removed);
-        ++it;
+        boost::shared_ptr<ServerPlayer> player = *it;
+        player->flagEntitiesToBeRemoved(count, removed);
     }
 }
 
@@ -65,6 +64,8 @@ long long PlayerChunkMap::tickAddRequests(boost::shared_ptr<ServerPlayer> player
     int32_t playerX = static_cast<int32_t>(player->mX);
     int32_t playerZ = static_cast<int32_t>(player->mZ);
 
+    int bestDistance = -1;
+    RequestVector::iterator best = mAddRequests.end();
     if (!force)
     {
         RequestVector::iterator request = mAddRequests.begin();
@@ -74,35 +75,31 @@ long long PlayerChunkMap::tickAddRequests(boost::shared_ptr<ServerPlayer> player
                 return static_cast<long long>(System::processTimeInMilliSecs() - player->mChunkRequestTime);
             ++request;
         }
-        return 0;
     }
-
-    RequestVector::iterator best = mAddRequests.end();
-    bool haveBest = false;
-    int bestDistance = 0;
-    RequestVector::iterator request = mAddRequests.begin();
-    while (request != mAddRequests.end())
+    else
     {
-        if (request->player.get() == player.get())
+        RequestVector::iterator request = mAddRequests.begin();
+        while (request != mAddRequests.end())
         {
-            int dx = (request->x * 16 + 8) - playerX;
-            int dz = (request->z * 16 + 8) - playerZ;
-            int distance = dx * dx + dz * dz;
-            if (!haveBest || distance < bestDistance)
+            if (request->player.get() == player.get())
             {
-                bestDistance = distance;
-                best = request;
-                haveBest = true;
+                int dx = (request->x * 16 + 8) - playerX;
+                int dz = (request->z * 16 + 8) - playerZ;
+                int distance = dx * dx + dz * dz;
+                if (bestDistance == -1 || distance < bestDistance)
+                {
+                    bestDistance = distance;
+                    best = request;
+                }
             }
+            ++request;
         }
-        ++request;
     }
 
-    if (haveBest)
+    if (best != mAddRequests.end())
     {
         player->mChunkRequestTime = System::processTimeInMilliSecs();
-        PlayerChunkContainer* chunk = this->getOrCreateChunk(best->x, best->z);
-        chunk->add(player, best->add);
+        getOrCreateChunk(best->x, best->z)->add(best->player, best->add);
         mAddRequests.erase(best);
     }
     return 0;
@@ -110,8 +107,10 @@ long long PlayerChunkMap::tickAddRequests(boost::shared_ptr<ServerPlayer> player
 
 bool PlayerChunkMap::chunkInRange(int x, int z, int centerX, int centerZ)
 {
-    return x - centerX >= -mViewDistance && x - centerX <= mViewDistance &&
-           z - centerZ >= -mViewDistance && z - centerZ <= mViewDistance;
+    if (x - centerX >= -mViewDistance && x - centerX <= mViewDistance &&
+        z - centerZ >= -mViewDistance && z - centerZ <= mViewDistance)
+        return true;
+    return false;
 }
 
 bool PlayerChunkMap::shouldActuallyDropChunks()
@@ -131,7 +130,7 @@ void PlayerChunkMap::setViewDistance(int distance)
             boost::shared_ptr<ServerPlayer> player = *it;
             const int chunkX = static_cast<int32_t>(player->mX) >> 4;
             const int chunkZ = static_cast<int32_t>(player->mZ) >> 4;
-            if (newDistance > oldDistance)
+            if (newDistance - oldDistance > 0)
             {
                 for (int x = chunkX - newDistance; x <= chunkX + newDistance; ++x)
                 {
@@ -227,37 +226,44 @@ long long PlayerChunkMap::getKeyForChunk(int x, int z)
 PlayerChunkContainer* PlayerChunkMap::getChunkIfLoaded(int x, int z)
 {
     ContainerMap::iterator it = mChunks.find(getKeyForChunk(x, z));
-    return it == mChunks.end() ? NULL : it->second;
+    PlayerChunkContainer* chunk = NULL;
+    if (it != mChunks.end())
+        chunk = it->second;
+    return chunk;
 }
 
 PlayerChunkContainer* PlayerChunkMap::getOrCreateChunk(int x, int z)
 {
     long long key = getKeyForChunk(x, z);
     ContainerMap::iterator it = mChunks.find(key);
-    if (it != mChunks.end())
-        return it->second;
-    PlayerChunkContainer* chunk = new PlayerChunkContainer(this, x, z);
-    mChunks[key] = chunk;
-    mAllChunks.push_back(chunk);
+    PlayerChunkContainer* chunk = NULL;
+    if (it == mChunks.end())
+    {
+        chunk = new PlayerChunkContainer(this, x, z);
+        mChunks[key] = chunk;
+        mAllChunks.push_back(chunk);
+    }
+    else
+    {
+        chunk = it->second;
+    }
     return chunk;
 }
 
-PlayerChunkContainer* PlayerChunkMap::getChunkAndAddPlayer(int x, int z,
-                                                            boost::shared_ptr<ServerPlayer> player,
-                                                            bool send)
+void PlayerChunkMap::getChunkAndAddPlayer(int x, int z,
+                                          boost::shared_ptr<ServerPlayer> player,
+                                          bool send)
 {
     MasterGameMode* gameMode = gMinecraftServer->mMasterGameMode;
-    if (Minecraft::InMiniGame(eMiniGameId_Any, true) && gameMode->IsRoundPlaying()
-        && !MasterGameMode::IsChunkWithinActiveBounds(gameMode, x, z))
-        return NULL;
-    ContainerMap::iterator it = mChunks.find(getKeyForChunk(x, z));
-    if (it == mChunks.end())
+    if (!Minecraft::InMiniGame(eMiniGameId_Any, true) || !gameMode->IsRoundPlaying()
+        || MasterGameMode::IsChunkWithinActiveBounds(gameMode, x, z))
     {
+        ContainerMap::iterator it = mChunks.find(getKeyForChunk(x, z));
+        if (it == mChunks.end())
             mAddRequests.push_back(PlayerChunkAddRequest(x, z, player, send));
-        return NULL;
+        else
+            it->second->add(player, send);
     }
-    it->second->add(player, send);
-    return it->second;
 }
 
 void PlayerChunkMap::getChunkAndRemovePlayer(int x, int z,
@@ -392,9 +398,8 @@ void PlayerChunkMap::add(boost::shared_ptr<ServerPlayer> player)
     INetworkPlayer* networkPlayer = player->mConnection->getNetworkPlayer();
     if (networkPlayer != NULL && !networkPlayer->IsLocal())
     {
-        boost::shared_ptr<Packet> packet(new ChunkVisibilityAreaPacket(
-            minX, maxX, minZ, maxZ, true, shouldActuallyDropChunks(), false));
-        player->mConnection->send(packet);
+        player->mConnection->send(boost::shared_ptr<Packet>(new ChunkVisibilityAreaPacket(
+            minX, maxX, minZ, maxZ, true, shouldActuallyDropChunks(), false)));
     }
 
     static_cast<ServerChunkCache*>(static_cast<ServerLevel*>(getLevel())->getChunkSource())->dontDrop(chunkX, chunkZ);
@@ -416,8 +421,8 @@ void PlayerChunkMap::remove(boost::shared_ptr<ServerPlayer> player)
     }
 
     PlayerVector::iterator it = std::find(mPlayers.begin(), mPlayers.end(), player);
-    if (it != mPlayers.end())
-        mPlayers.erase(it);
+    if (!mPlayers.empty() && it != mPlayers.end())
+        mPlayers.erase(std::find(mPlayers.begin(), mPlayers.end(), player));
 
     RequestVector::iterator request = mAddRequests.begin();
     while (request != mAddRequests.end())
@@ -447,13 +452,12 @@ void PlayerChunkMap::removeOutsideArea(boost::shared_ptr<ServerPlayer> player,
         }
     }
 
-    boost::shared_ptr<Packet> packet(new ChunkVisibilityAreaPacket(
-        minX, maxX, minZ, maxZ, false, shouldActuallyDropChunks(), true));
-    player->mConnection->send(packet);
+    player->mConnection->send(boost::shared_ptr<Packet>(new ChunkVisibilityAreaPacket(
+        minX, maxX, minZ, maxZ, false, shouldActuallyDropChunks(), true)));
 
     PlayerVector::iterator it = std::find(mPlayers.begin(), mPlayers.end(), player);
-    if (it != mPlayers.end())
-        mPlayers.erase(it);
+    if (!mPlayers.empty() && it != mPlayers.end())
+        mPlayers.erase(std::find(mPlayers.begin(), mPlayers.end(), player));
 
     RequestVector::iterator request = mAddRequests.begin();
     while (request != mAddRequests.end())
@@ -530,9 +534,8 @@ void PlayerChunkMap::move(boost::shared_ptr<ServerPlayer> player)
                     else
                         ++it;
                 }
-                boost::shared_ptr<Packet> packet(new ChunkVisibilityAreaPacket(
-                    firstX, firstX + sameRow, firstZ, firstZ, true, shouldActuallyDropChunks(), false));
-                player->mConnection->send(packet);
+                player->mConnection->send(boost::shared_ptr<Packet>(new ChunkVisibilityAreaPacket(
+                    firstX, firstX + sameRow, firstZ, firstZ, true, shouldActuallyDropChunks(), false)));
             }
             else
             {
@@ -544,9 +547,8 @@ void PlayerChunkMap::move(boost::shared_ptr<ServerPlayer> player)
                     else
                         ++it;
                 }
-                boost::shared_ptr<Packet> packet(new ChunkVisibilityAreaPacket(
-                    firstX, firstX, firstZ, firstZ + sameColumn, true, shouldActuallyDropChunks(), false));
-                player->mConnection->send(packet);
+                player->mConnection->send(boost::shared_ptr<Packet>(new ChunkVisibilityAreaPacket(
+                    firstX, firstX, firstZ, firstZ + sameColumn, true, shouldActuallyDropChunks(), false)));
             }
         }
     }
@@ -576,7 +578,8 @@ void PlayerChunkMap::setRadius(int radius)
     if (radius <= mViewDistance)
         return;
 
-    PlayerList* players = static_cast<ServerLevel*>(mLevel)->getServer()->getPlayers();
+    static_cast<ServerLevel*>(mLevel)->getServer();
+    PlayerList* players = gMinecraftServer != NULL ? gMinecraftServer->mPlayers : NULL;
     for (unsigned int i = 0; i < players->mPlayers.size(); ++i)
     {
         boost::shared_ptr<ServerPlayer> player = players->mPlayers[i];

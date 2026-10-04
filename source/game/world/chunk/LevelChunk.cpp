@@ -46,18 +46,20 @@
 #include "game/world/DimensionType.hpp"
 #include "game/server/MinecraftServer.hpp"
 #include "game/server/ServerLevel.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/XMem.hpp"
 #include "game/core/PIXNamedEvents.hpp"
 #include "platform/wiiu/TLSStorageCafe.hpp"
+#include <algorithm>
 #include <cstring>
 #include <cstdlib>
 
 
 extern MinecraftServer* gMinecraftServer;
-extern CMinecraftApp* g_pApp;
 
 static unsigned int sLevelChunkThreadStorage = TlsAlloc();
+static bool sEntityRemovalFlag = true;
 OSFastMutex LevelChunk::m_csLighting;
 OSFastMutex LevelChunk::m_csEntities;
 OSFastMutex LevelChunk::m_csTileEntities;
@@ -1047,63 +1049,101 @@ void LevelChunk::recheckGaps(bool onlyOne)
 }
 void LevelChunk::recalcHeight(int localX, int y, int localZ)
 {
-    int oldHeight = getHeightmap(localX, localZ);
+    int index = (localZ << 4) | localX;
+    int oldHeight = mHeightmap.data[index];
     int height = y > oldHeight ? y : oldHeight;
-    while (height > 0 && getChunkBlockLightBlock(localX, height - 1, localZ) == 0)
+    while (height > 0)
+    {
+        Block* block = Block::byId(getBlockId(localX, height - 1, localZ));
+        Block* extraBlock = Block::byId(getExtraBlockId(localX, height - 1, localZ));
+        int lightBlock = block->defaultBlockState()->getLightBlock();
+        int extraLightBlock = extraBlock->defaultBlockState()->getLightBlock();
+        if (lightBlock < extraLightBlock)
+            lightBlock = extraLightBlock;
+        if (lightBlock != 0)
+            break;
         --height;
+    }
     if (height == oldHeight)
         return;
-    mHeightmap.data[(localZ << 4) | localX] = (unsigned char)height;
-    recalcMinAndMaxHeights();
-    int worldX = x * 16 + localX;
-    int worldZ = z * 16 + localZ;
-    int lightColumnLow = height;
-    if (level->mDimension->isHasSkyLight())
+    mHeightmap.data[index] = (unsigned char)height;
+    bool recalculate = true;
+    if (height < mMinHeight)
     {
-        int lightY;
-        if (height < oldHeight)
+        recalculate = false;
+        mMinHeight = height;
+    }
+    int maxHeight = mMaxHeight;
+    bool aboveMax = height > maxHeight;
+    if (aboveMax)
+        height = maxHeight;
+    if (!aboveMax || recalculate)
+    {
+        int runningMin = 255;
+        int runningMax = 0;
+        for (int columnX = 0; columnX < 16; ++columnX)
         {
-            for (lightY = height; lightY < oldHeight; ++lightY)
+            for (int columnZ = 0; columnZ < 16; ++columnZ)
             {
-                if (lightY < 128)
-                    mSkyLight->set(localX, lightY & 127, localZ, 15);
-                else
-                    mSkyLightUpper->set(localX, lightY & 127, localZ, 15);
+                int columnHeight = mHeightmap.data[(columnZ << 4) | columnX];
+                if (columnHeight < runningMin)
+                    runningMin = columnHeight;
+                if (runningMax < columnHeight)
+                    runningMax = columnHeight;
             }
         }
-        else if (oldHeight < height)
+        mMaxHeight = runningMax;
+        mMinHeight = runningMin;
+    }
+    int worldX = x * 16 + localX;
+    int worldZ = z * 16 + localZ;
+    if (level->mDimension->isHasSkyLight())
+    {
+        if (oldHeight < height)
         {
-            for (lightY = oldHeight; lightY < height; ++lightY)
+            for (int lightY = oldHeight; lightY < height; ++lightY)
             {
                 if (lightY < 128)
-                    mSkyLight->set(localX, lightY & 127, localZ, 0);
+                    mSkyLight->set(localX, lightY % 128, localZ, 0);
                 else
-                    mSkyLightUpper->set(localX, lightY & 127, localZ, 0);
+                    mSkyLightUpper->set(localX, lightY % 128, localZ, 0);
+            }
+        }
+        else if (height < oldHeight)
+        {
+            for (int lightY = height; lightY < oldHeight; ++lightY)
+            {
+                if (lightY < 128)
+                    mSkyLight->set(localX, lightY % 128, localZ, 15);
+                else
+                    mSkyLightUpper->set(localX, lightY % 128, localZ, 15);
             }
         }
         int remaining = 15;
-        int endY = height;
-        while (endY > 0 && remaining > 0)
+        while (height > 0 && remaining > 0)
         {
-            --endY;
-            int lightBlock = getChunkBlockLightBlock(localX, endY, localZ);
+            --height;
+            SparseLightStorage* storage = height < 128 ? mSkyLight : mSkyLightUpper;
+            Block* block = Block::byId(getBlockId(localX, height, localZ));
+            Block* extraBlock = Block::byId(getExtraBlockId(localX, height, localZ));
+            int lightBlock = block->defaultBlockState()->getLightBlock();
+            int extraLightBlock = extraBlock->defaultBlockState()->getLightBlock();
+            if (lightBlock < extraLightBlock)
+                lightBlock = extraLightBlock;
             if (lightBlock == 0)
                 lightBlock = 1;
             remaining -= lightBlock;
             if (remaining < 0)
                 remaining = 0;
-            if (endY < 128)
-                mSkyLight->set(localX, endY & 127, localZ, remaining);
-            else
-                mSkyLightUpper->set(localX, endY & 127, localZ, remaining);
+            storage->set(localX, height % 128, localZ, remaining);
         }
-        lightColumnLow = endY;
     }
-    level->lightColumnChanged(worldX, worldZ, lightColumnLow, oldHeight);
-    int lowY = height < oldHeight ? height : oldHeight;
-    int highY = height < oldHeight ? oldHeight : height;
-    if (height < mLowestHeightmap)
-        mLowestHeightmap = height;
+    level->lightColumnChanged(worldX, worldZ, height, oldHeight);
+    int newHeight = mHeightmap.data[index];
+    int lowY = newHeight < oldHeight ? newHeight : oldHeight;
+    int highY = newHeight < oldHeight ? oldHeight : newHeight;
+    if (newHeight < mLowestHeightmap)
+        mLowestHeightmap = newHeight;
     if (level->mDimension->isHasSkyLight())
     {
         PIXBeginNamedEvent(0.0f, "Light gaps");
@@ -1606,6 +1646,8 @@ void LevelChunk::addEntity(boost::shared_ptr<Entity> entity)
     int chunkZ = (int)(entity->mZ * 0.0625);
     if (entity->mZ * 0.0625 < chunkZ)
         --chunkZ;
+    if (chunkX != x || chunkZ != z)
+        entity->remove();
     int section = (int)(entity->mY * 0.0625);
     if (entity->mY * 0.0625 < section)
         --section;
@@ -1633,13 +1675,14 @@ void LevelChunk::removeEntity(boost::shared_ptr<Entity> entity, int section)
         section = mEntitySectionCount - 1;
     EnterCriticalSection(&m_csEntities);
     std::vector<boost::shared_ptr<Entity> >& entities = *mEntitySections[section];
-    for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities.begin(); it != entities.end(); ++it)
+    std::vector<boost::shared_ptr<Entity> >::iterator it = std::find(entities.begin(), entities.end(), entity);
+    if (it != entities.end())
     {
-        if (it->get() == entity.get())
-        {
-            entities.erase(it);
-            break;
-        }
+        entities.erase(it);
+        MemSect(0x1f);
+        if (sEntityRemovalFlag)
+            sEntityRemovalFlag = false;
+        MemSect(0);
     }
     LeaveCriticalSection(&m_csEntities);
 }
@@ -2113,9 +2156,14 @@ int LevelChunk::setBlocksAndData(arrayWithLength<unsigned char> input, int x, in
                 mSkyLightUpper->setDataRegion(input, x, y < 128 ? 0 : y - 128, z, width, height - 128, depth, offset);
         std::memcpy(mBiomes.data, input.data + offset, mBiomes.length);
         offset += mBiomes.length;
-        recalcHeightmap();
-        lightLava();
-        recalcMinAndMaxHeights();
+    }
+    for (BlockEntityMap::iterator it = mBlockEntityMap.begin(); it != mBlockEntityMap.end(); ++it)
+        it->second->clearCache();
+    if (includeLight)
+    {
+        compressLighting();
+        compressBlocks();
+        compressData();
     }
     mChunkFlags = TERRAIN_POPULATED_FULL;
     mPostProcess = true;
@@ -2155,7 +2203,7 @@ void LevelChunk::flagPostProcessComplete(short value)
     }
     if (mChunkFlags == TERRAIN_POPULATED_ALL_NEIGHBOURS)
     {
-        g_pApp->processSchematicsLighting(this);
+        gApp.processSchematicsLighting(this);
         PIXBeginNamedEvent(0.0f, "Recheck gaps");
         if (level->mDimension->getType() != DimensionType::NETHER)
             recheckGaps(true);
@@ -2354,6 +2402,8 @@ void LevelChunk::updateBiomePresentFlags()
 }
 void LevelChunk::setBiomes(arrayWithLength<unsigned char> biomes)
 {
+    if (mBiomes.data != NULL)
+        delete[] mBiomes.data;
     mBiomes = biomes;
     updateBiomePresentFlags();
 }
@@ -2439,6 +2489,10 @@ void LevelChunk::recalcMinAndMaxHeights()
     }
     mMinHeight = minHeight;
     mMaxHeight = maxHeight;
+}
+LevelChunk::BlockEntityMap* LevelChunk::getBlockEntities()
+{
+    return &mBlockEntityMap;
 }
 void LevelChunk::setLastSaveHadEntities(bool value)
 {

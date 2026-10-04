@@ -425,15 +425,15 @@ boost::shared_ptr<Entity> OldChunkStorage::loadEntity(CompoundTag* tag, Level* l
 
 void OldChunkStorage::addEntityToWorld(boost::shared_ptr<Entity> entity, Level* level)
 {
-    if (!level->addEntity(entity))
-        return;
-
-    if (entity->isVehicle())
+    if (level->addEntity(entity))
     {
-        std::vector<boost::weak_ptr<Entity> >* passengers = entity->getPassengers();
-        std::vector<boost::weak_ptr<Entity> >::iterator it;
-        for (it = passengers->begin(); it != passengers->end(); ++it)
-            addEntityToWorld(it->lock(), level);
+        if (entity->isVehicle())
+        {
+            std::vector<boost::weak_ptr<Entity> >* passengers = entity->getPassengers();
+            std::vector<boost::weak_ptr<Entity> >::iterator it;
+            for (it = passengers->begin(); it != passengers->end(); ++it)
+                addEntityToWorld(it->lock(), level);
+        }
     }
 }
 

@@ -15,8 +15,7 @@ LevelChunk* ChunkStorageProfilerDecorator::load(Level* level, int x, int z, Leve
 {
     unsigned long long startTime = System::processTimeInNanoSecs();
     LevelChunk* result = mChunkStorage->load(level, x, z, chunk);
-    unsigned long long elapsedTime = System::processTimeInNanoSecs() - startTime;
-    mLoadTime += elapsedTime;
+    mLoadTime += System::processTimeInNanoSecs() - startTime;
     ++mLoadCount;
     return result;
 }
@@ -25,8 +24,7 @@ void ChunkStorageProfilerDecorator::save(Level* level, LevelChunk* chunk)
 {
     unsigned long long startTime = System::processTimeInNanoSecs();
     mChunkStorage->save(level, chunk);
-    unsigned long long elapsedTime = System::processTimeInNanoSecs() - startTime;
-    mSaveTime += elapsedTime;
+    mSaveTime += System::processTimeInNanoSecs() - startTime;
     ++mSaveCount;
 }
 

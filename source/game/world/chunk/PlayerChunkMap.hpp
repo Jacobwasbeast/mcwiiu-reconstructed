@@ -43,7 +43,7 @@ public:
         bool add;
 
         PlayerChunkAddRequest(int chunkX, int chunkZ,
-                              const boost::shared_ptr<ServerPlayer>& chunkPlayer,
+                              boost::shared_ptr<ServerPlayer> chunkPlayer,
                               bool shouldAdd)
             : x(chunkX), z(chunkZ), player(chunkPlayer), add(shouldAdd) {}
     };
@@ -57,9 +57,9 @@ public:
     virtual ~PlayerChunkMap();
 
     virtual PlayerChunkContainer* getOrCreateChunk(int x, int z);
-    virtual PlayerChunkContainer* getChunkAndAddPlayer(int x, int z,
-                                                         boost::shared_ptr<ServerPlayer> player,
-                                                         bool send);
+    virtual void getChunkAndAddPlayer(int x, int z,
+                                      boost::shared_ptr<ServerPlayer> player,
+                                      bool send);
     virtual void add(boost::shared_ptr<ServerPlayer> player);
     virtual void remove(boost::shared_ptr<ServerPlayer> player);
     virtual void removeOutsideArea(boost::shared_ptr<ServerPlayer> player,

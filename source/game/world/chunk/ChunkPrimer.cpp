@@ -6,9 +6,8 @@
 #include "game/world/block/IdMapper.hpp"
 #include "game/world/block/Material.hpp"
 
-ChunkPrimer::ChunkPrimer(bool ownsElementIds, arrayWithLength<unsigned short> elementIds)
+ChunkPrimer::ChunkPrimer(bool ownsElementIds, arrayWithLength<unsigned short> elementIds) : mElementIds(elementIds)
 {
-    mElementIds = elementIds;
     mDefaultState = Blocks::air->defaultBlockState();
     mOwnsElementIds = ownsElementIds;
     mEmissiveMaxHeight = 0;

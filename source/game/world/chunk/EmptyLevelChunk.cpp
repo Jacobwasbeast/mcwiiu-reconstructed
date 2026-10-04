@@ -61,7 +61,12 @@ int EmptyLevelChunk::getBrightness(LightLayer::variety layer, const BlockPos&)
 
 void EmptyLevelChunk::getNeighbourBrightnesses(int* brightnesses, LightLayer::variety, int, int, int)
 {
-    std::memset(brightnesses, 0, sizeof(int) * 6);
+    brightnesses[0] = 0;
+    brightnesses[1] = 0;
+    brightnesses[2] = 0;
+    brightnesses[3] = 0;
+    brightnesses[4] = 0;
+    brightnesses[5] = 0;
 }
 
 bool EmptyLevelChunk::setBrightness(LightLayer::variety, const BlockPos&, int)
@@ -146,26 +151,27 @@ int EmptyLevelChunk::getBlocksAndData(arrayWithLength<unsigned char>* output, in
                                       int width, int height, int depth, int offset, bool includeLight)
 {
     int volume = (width - x) * (height - y) * (depth - z);
-    int half = volume / 2;
-    if (volume < 0 && (volume & 1) != 0)
-        ++half;
-    int length = volume + half;
+    int length;
     if (includeLight)
-        length += volume + half;
-    std::memset(output->data + offset, 0, length);
-    return offset + length;
+        length = volume + (volume / 2) * 3;
+    else
+        length = volume + volume / 2;
+    unsigned char* begin = output->data + offset;
+    unsigned char* end = output->data + offset + length;
+    for (unsigned char* p = begin; p != end; ++p)
+        *p = 0;
+    return length;
 }
 
 int EmptyLevelChunk::setBlocksAndData(arrayWithLength<unsigned char>, int x, int y, int z,
                                       int width, int height, int depth, int, bool includeLight)
 {
     int volume = (width - x) * (height - y) * (depth - z);
-    int half = volume / 2;
-    if (volume < 0 && (volume & 1) != 0)
-        ++half;
-    int length = volume + half;
+    int length;
     if (includeLight)
-        length += volume + half;
+        length = volume + (volume / 2) * 3;
+    else
+        length = volume + volume / 2;
     return length;
 }
 

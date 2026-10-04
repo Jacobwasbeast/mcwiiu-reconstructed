@@ -17,6 +17,8 @@ class PlayerChunkContainer
     friend class PlayerChunkMap;
 
 public:
+    static const int MAX_BLOCK_CHANGES = 64;
+
     PlayerChunkContainer(PlayerChunkMap* map, int x, int z);
     ~PlayerChunkContainer();
 

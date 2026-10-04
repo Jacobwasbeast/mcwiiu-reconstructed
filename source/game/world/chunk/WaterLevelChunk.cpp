@@ -67,8 +67,7 @@ bool WaterLevelChunk::setBrightness(LightLayer::variety, const BlockPos&, int)
 
 void WaterLevelChunk::setLevelChunkBrightness(LightLayer::variety layer, int x, int y, int z, int brightness)
 {
-    BlockPos pos(x, y, z);
-    LevelChunk::setBrightness(layer, pos, brightness);
+    LevelChunk::setBrightness(layer, BlockPos(x, y, z), brightness);
 }
 
 void WaterLevelChunk::addEntity(boost::shared_ptr<Entity>)
@@ -144,12 +143,9 @@ int WaterLevelChunk::setBlocksAndData(arrayWithLength<unsigned char>, int x, int
 {
     int volume = (width - x) * (height - y) * (depth - z);
     int half = volume / 2;
-    if (volume < 0 && (volume & 1) != 0)
-        ++half;
-    int result = volume + half;
     if (extra)
-        result += volume + half;
-    return result;
+        return volume + half * 3;
+    return volume + half;
 }
 
 Random* WaterLevelChunk::getRandom(long long seed)

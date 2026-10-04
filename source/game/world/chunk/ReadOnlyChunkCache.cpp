@@ -5,21 +5,15 @@
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/chunk/ChunkStorage.hpp"
+#include "game/world/chunk/EmptyLevelChunk.hpp"
 #include "game/world/chunk/LevelChunk.hpp"
 
 ReadOnlyChunkCache::~ReadOnlyChunkCache()
 {
-    if (m_chunkCount == 0)
-    {
-        delete[] m_chunks;
-        delete[] m_data;
-        return;
-    }
-
-    for (int i = 0; i < m_chunkCount; ++i)
+    for (unsigned int i = 0; i < m_chunkCount; ++i)
     {
         if (m_chunks[i])
-            m_chunks[i]->unload(true, true);
+            delete m_chunks[i];
     }
 
     delete[] m_chunks;
@@ -28,7 +22,7 @@ ReadOnlyChunkCache::~ReadOnlyChunkCache()
 
 bool ReadOnlyChunkCache::hasChunk(int x, int z)
 {
-    LevelChunk* chunk = m_chunks[((z & 15) << 4) | (x & 15)];
+    LevelChunk* chunk = m_chunks[(x & 15) | ((z & 15) << 4)];
     return chunk != 0 && chunk->isAt(x, z);
 }
 
@@ -44,13 +38,17 @@ LevelChunk* ReadOnlyChunkCache::load(int x, int z)
 
 LevelChunk* ReadOnlyChunkCache::getChunk(int x, int z)
 {
-    const unsigned int chunkIndex = ((z & 15) << 4) | (x & 15);
-    LevelChunk* chunk = m_chunks[chunkIndex];
-    if (!chunk)
+    const unsigned int chunkIndex = (x & 15) | ((z & 15) << 4);
+    LevelChunk* chunk;
+    if (hasChunk(x, z))
+    {
+        chunk = m_chunks[chunkIndex];
+    }
+    else
     {
         chunk = load(x, z);
         if (!chunk)
-            return 0;
+            chunk = new EmptyLevelChunk(m_level, x, z);
         m_chunks[chunkIndex] = chunk;
     }
     return chunk;
@@ -65,8 +63,9 @@ bool ReadOnlyChunkCache::save(bool, ProgressListener*)
     return true;
 }
 
-void ReadOnlyChunkCache::tick()
+bool ReadOnlyChunkCache::tick()
 {
+    return false;
 }
 
 bool ReadOnlyChunkCache::shouldSave()

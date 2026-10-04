@@ -21,11 +21,11 @@ public:
     virtual ~ChunkSource() {}
     virtual LevelChunk* getChunkIfLoaded(int chunkX, int chunkZ) = 0;
     virtual LevelChunk* getOrCreateChunk(int chunkX, int chunkZ, bool allowEmpty) = 0;
-    virtual void tick() = 0;
+    virtual bool tick() = 0;
     virtual std::wstring gatherStats() = 0;
     virtual int getLoadedChunksCount() = 0;
     virtual void flagPostProcessComplete(short index, int chunkX, int chunkZ);
-    virtual bool isChunkGeneratedAt(int chunkX, int chunkZ) = 0;
+    virtual bool isChunkGeneratedAt(int chunkX, int chunkZ);
     virtual bool hasChunk(int chunkX, int chunkZ) = 0;
     virtual bool reallyHasChunk(int chunkX, int chunkZ);
     virtual LevelChunk* getChunk(int chunkX, int chunkZ) = 0;
@@ -34,7 +34,7 @@ public:
     virtual LevelChunk* getChunkIfHasChunk(int chunkX, int chunkZ) = 0;
     virtual void lightChunk(LevelChunk* chunk);
     virtual LevelChunk* create(int chunkX, int chunkZ) = 0;
-    virtual void saveAllEntities();
+    virtual bool saveAllEntities();
     virtual bool save(bool force, ProgressListener* progressListener) = 0;
     virtual bool shouldSave() = 0;
     virtual LevelChunk** getCache();

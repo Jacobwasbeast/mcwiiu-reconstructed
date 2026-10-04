@@ -64,7 +64,7 @@ public:
     virtual LevelChunk* getChunk(int x, int z);
     virtual LevelChunk* getChunkAt(const BlockPos& pos);
     virtual bool save(bool force, ProgressListener* listener);
-    virtual void tick();
+    virtual bool tick();
     virtual bool shouldSave();
     virtual std::wstring gatherStats();
     virtual std::vector<Biome::MobSpawnerData*>* getMobsAt(MobCategory* category, const BlockPos& pos);

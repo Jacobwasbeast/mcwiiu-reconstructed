@@ -1,3 +1,4 @@
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/world/chunk/Chunk.hpp"
 
 #include "game/client/render/GameRenderer.hpp"
@@ -248,7 +249,7 @@ void Chunk::rebuild(unsigned int* count)
         std::vector<GlideRingGenerator::eGlideRingSize> ringSizes;
         if (Minecraft::InMiniGame(eMiniGameId_Glide, false))
         {
-            LevelRuleset* ruleset = g_pApp->getGameRuleDefinitions();
+            LevelRuleset* ruleset = gApp.getGameRuleDefinitions();
             std::vector<TargetAreaRuleDefinition*> rings;
             AABB* chunkArea = AABB::newTemp(mX, mZ, mDimension,
                                             mX + 16, mZ + 16, mDimension + 16);

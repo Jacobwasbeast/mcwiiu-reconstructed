@@ -25,8 +25,9 @@ void ChunkSource::lightChunk(LevelChunk* chunk)
 {
 }
 
-void ChunkSource::saveAllEntities()
+bool ChunkSource::saveAllEntities()
 {
+    return false;
 }
 
 LevelChunk** ChunkSource::getCache()

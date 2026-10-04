@@ -26,30 +26,36 @@ void SetThreadName(unsigned int threadId, const char* name);
 
 static OSFastMutex sSaveMutex;
 static std::deque<DataOutputStream*> sSaveQueue;
-static unsigned int sActiveSaves = 0;
+static int sActiveSaves = 0;
 static C4JThreadImpl* sSaveThreads[3] = { NULL, NULL, NULL };
 
 McRegionChunkStorage::McRegionChunkStorage(ConsoleSaveFile* saveFile,
     const std::wstring& directory, DataFixerUpper* fixer)
-    : mFixer(fixer), mDirectory(directory), mSaveFile(saveFile), mRegionData()
+    : mDirectory(directory), mRegionData()
 {
+    mSaveFile = saveFile;
+    mFixer = fixer;
     if (directory == L"DIM-1r")
     {
-        const wchar_t* paths[] = {
-            L"DIM-1r.-1.-1.mcr", L"DIM-1r.0.-1.mcr", L"DIM-1r.0.0.mcr",
-            L"DIM-1r.-1.0.mcr", L"DIM1/r.-1.-1.mcr", L"DIM1/r.0.-1.mcr",
-            L"DIM1/r.0.0.mcr", L"DIM1/r.-1.0.mcr", L"r.-1.-1.mcr",
-            L"r.0.-1.mcr", L"r.0.0.mcr", L"r.-1.0.mcr" };
-        int i;
-        for (i = 0; i < 12; ++i)
-            saveFile->createFile(ConsoleSavePath(paths[i]));
+        mSaveFile->createFile(ConsoleSavePath(L"DIM-1r.-1.-1.mcr"));
+        mSaveFile->createFile(ConsoleSavePath(L"DIM-1r.0.-1.mcr"));
+        mSaveFile->createFile(ConsoleSavePath(L"DIM-1r.0.0.mcr"));
+        mSaveFile->createFile(ConsoleSavePath(L"DIM-1r.-1.0.mcr"));
+        mSaveFile->createFile(ConsoleSavePath(L"DIM1/r.-1.-1.mcr"));
+        mSaveFile->createFile(ConsoleSavePath(L"DIM1/r.0.-1.mcr"));
+        mSaveFile->createFile(ConsoleSavePath(L"DIM1/r.0.0.mcr"));
+        mSaveFile->createFile(ConsoleSavePath(L"DIM1/r.-1.0.mcr"));
+        mSaveFile->createFile(ConsoleSavePath(L"r.-1.-1.mcr"));
+        mSaveFile->createFile(ConsoleSavePath(L"r.0.-1.mcr"));
+        mSaveFile->createFile(ConsoleSavePath(L"r.0.0.mcr"));
+        mSaveFile->createFile(ConsoleSavePath(L"r.-1.0.mcr"));
     }
 }
 
 McRegionChunkStorage::~McRegionChunkStorage()
 {
     for (RegionDataMap::iterator it = mRegionData.begin(); it != mRegionData.end(); ++it)
-        delete[] it->second.data;
+        delete it->second.data;
 }
 
 void McRegionChunkStorage::runSaveThreadProc(void*)
@@ -95,11 +101,11 @@ void McRegionChunkStorage::staticCtor()
     int i;
     for (i = 0; i < 3; ++i)
     {
-        std::sprintf(name, "McRegion_Save_thread_%d", i);
+        std::sprintf(name, "McRegion Save thread %d\n", i);
         SetThreadName(0, name);
         sSaveThreads[i] = new C4JThreadImpl(
             (int (*)(void*))McRegionChunkStorage::runSaveThreadProc, NULL, name, 0);
-        sSaveThreads[i]->SetDeleteOnExit(false);
+        sSaveThreads[i]->SetProcessor(0);
         sSaveThreads[i]->Run();
     }
 }
@@ -109,45 +115,51 @@ LevelChunk* McRegionChunkStorage::load(Level* level, int x, int z, LevelChunk* c
     bool newSaveFormat = false;
     DataInputStream* stream = gRegionFileCache._getChunkDataInputStream(
         mSaveFile, mDirectory, x, z, &newSaveFormat);
-    if (mSaveFile->getOriginalSaveVersion() > 7 || newSaveFormat)
+    if (mSaveFile->getOriginalSaveVersion() < 8 && !newSaveFormat)
     {
         if (stream == NULL)
-            return chunk;
-        MemSect(9);
-        LevelChunk* result = OldChunkStorage::load(level, stream, mFixer, chunk);
+            return NULL;
+        char message[260];
+        MemSect(8);
+        CompoundTag* tag = mFixer->updateData(DataFixTypes::eDataFixTypes_Chunk, NbtIo::read(stream));
         MemSect(0);
         stream->deleteChildStream();
         delete stream;
-        return result;
-    }
-    if (stream == NULL)
-        return NULL;
-    MemSect(8);
-    CompoundTag* tag = NbtIo::read(stream);
-    tag = mFixer->updateData(DataFixTypes::eDataFixTypes_Chunk, tag);
-    MemSect(0);
-    stream->deleteChildStream();
-    delete stream;
-    if (tag == NULL)
-        return NULL;
-    LevelChunk* result = NULL;
-    if (tag->contains(L"Level", Tag::TAG_COMPOUND))
-    {
-        CompoundTag* levelTag = tag->getCompound(L"Level");
-        if (levelTag != NULL && levelTag->contains(L"Blocks", Tag::TAG_BYTE_ARRAY))
+        if (!tag->contains(L"Level"))
         {
-            MemSect(9);
-            result = OldChunkStorage::load(level, levelTag, chunk);
-            MemSect(0);
+            std::sprintf(message, "Chunk file at %d, %d is missing level data, skipping\n", x, z);
+            delete tag;
+            return NULL;
         }
+        if (!tag->getCompound(L"Level")->contains(L"Blocks"))
+        {
+            std::sprintf(message, "Chunk file at %d, %d is missing block data, skipping\n", x, z);
+            delete tag;
+            return NULL;
+        }
+        MemSect(9);
+        chunk = OldChunkStorage::load(level, tag->getCompound(L"Level"), chunk);
+        MemSect(0);
+        if (!chunk->isAt(x, z))
+        {
+            std::sprintf(message, "Chunk file at %d, %d is in the wrong location; relocating. Expected %d, %d, got %d, %d\n",
+                x, z, x, z, chunk->x, chunk->z);
+            delete chunk;
+            delete tag;
+            return NULL;
+        }
+        delete tag;
     }
-    delete tag;
-    if (result != NULL && !result->isAt(x, z))
+    else if (stream != NULL)
     {
-        delete result;
-        return NULL;
+        MemSect(9);
+        chunk = OldChunkStorage::load(level, stream, mFixer, NULL);
+        loadEntities(level, chunk);
+        MemSect(0);
+        stream->deleteChildStream();
+        delete stream;
     }
-    return result;
+    return chunk;
 }
 
 void McRegionChunkStorage::save(Level* level, LevelChunk* chunk)
@@ -206,14 +218,15 @@ void McRegionChunkStorage::WaitForAllSaves()
         count = (unsigned int)sSaveQueue.size();
         LeaveCriticalSection(&sSaveMutex);
     }
+    int active;
     EnterCriticalSection(&sSaveMutex);
-    count = sActiveSaves;
+    active = sActiveSaves;
     LeaveCriticalSection(&sSaveMutex);
-    while (count != 0)
+    while (active > 0)
     {
         Sleep(10);
         EnterCriticalSection(&sSaveMutex);
-        count = sActiveSaves;
+        active = sActiveSaves;
         LeaveCriticalSection(&sSaveMutex);
     }
 }

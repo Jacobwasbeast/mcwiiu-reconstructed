@@ -24,20 +24,22 @@ void MinigamePlayerChunkMap::updatePlayerReferences(boost::shared_ptr<ServerPlay
 {
     for (unsigned int i = 0; i < mPlayers.size(); ++i)
     {
-        if (mPlayers[i]->mXuid == player->mXuid)
+        boost::shared_ptr<ServerPlayer> existing = mPlayers[i];
+        if (existing->getXuid() == player->getXuid())
         {
             mPlayers[i] = player;
             break;
         }
     }
 
-    ContainerVector chunks(mAllChunks.begin(), mAllChunks.end());
+    ContainerVector chunks;
+    chunks.assign(mAllChunks.begin(), mAllChunks.end());
     for (ContainerVector::iterator it = chunks.begin(); it != chunks.end(); ++it)
         (*it)->updatePlayerReference(player);
 
     for (RequestVector::iterator it = mAddRequests.begin(); it != mAddRequests.end(); ++it)
     {
-        if (it->player->mXuid == player->mXuid)
+        if (it->player->getXuid() == player->getXuid())
             it->player = player;
     }
 }
@@ -84,11 +86,10 @@ void MinigamePlayerChunkMap::loadPlayerInActiveArea(boost::shared_ptr<ServerPlay
             getChunkAndAddPlayer(x, z, player, false);
     }
 
-    if (gMinecraftServer->getPlayers()->canReceiveAllPackets(player))
+    if ((gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers)->canReceiveAllPackets(player))
     {
-        boost::shared_ptr<Packet> packet(new ChunkVisibilityAreaPacket(
-            minX, maxX, minZ, maxZ, true, shouldActuallyDropChunks(), false));
-        player->mConnection->send(packet);
+        player->mConnection->send(boost::shared_ptr<Packet>(new ChunkVisibilityAreaPacket(
+            minX, maxX, minZ, maxZ, true, shouldActuallyDropChunks(), false)));
     }
 }
 
@@ -108,7 +109,7 @@ void MinigamePlayerChunkMap::reloadAllPlayers(int minX, int minZ, int maxX, int 
     for (unsigned int i = 0; i < mPlayers.size(); ++i)
     {
         boost::shared_ptr<ServerPlayer> player = mPlayers[i];
-        if (gMinecraftServer->getPlayers()->canReceiveAllPackets(player))
+        if ((gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers)->canReceiveAllPackets(player))
         {
             boost::shared_ptr<Packet> packet(new ChunkVisibilityAreaPacket(
                 minX, maxX, minZ, maxZ, false, shouldActuallyDropChunks(), true));
@@ -136,14 +137,16 @@ void MinigamePlayerChunkMap::onPlayerLeave(boost::shared_ptr<ServerPlayer> playe
 {
     for (unsigned int i = 0; i < mPlayers.size(); ++i)
     {
-        if (mPlayers[i]->mXuid == player->mXuid)
+        boost::shared_ptr<ServerPlayer> existing = mPlayers[i];
+        if (existing->getXuid() == player->getXuid())
         {
             mPlayers.erase(mPlayers.begin() + i);
             break;
         }
     }
 
-    ContainerVector chunks(mAllChunks.begin(), mAllChunks.end());
+    ContainerVector chunks;
+    chunks.assign(mAllChunks.begin(), mAllChunks.end());
     for (ContainerVector::iterator it = chunks.begin(); it != chunks.end(); ++it)
     {
         (*it)->updatePlayerReference(player);
@@ -153,7 +156,7 @@ void MinigamePlayerChunkMap::onPlayerLeave(boost::shared_ptr<ServerPlayer> playe
     RequestVector::iterator request = mAddRequests.begin();
     while (request != mAddRequests.end())
     {
-        if (request->player->mXuid == player->mXuid)
+        if (request->player->getXuid() == player->getXuid())
             request = mAddRequests.erase(request);
         else
             ++request;
@@ -162,10 +165,15 @@ void MinigamePlayerChunkMap::onPlayerLeave(boost::shared_ptr<ServerPlayer> playe
 
 uint32_t MinigamePlayerChunkMap::containsPlayer(boost::shared_ptr<ServerPlayer> player)
 {
+    uint32_t contained = 0;
     for (unsigned int i = 0; i < mPlayers.size(); ++i)
     {
-        if (mPlayers[i]->mXuid == player->mXuid)
-            return 1;
+        boost::shared_ptr<ServerPlayer> existing = mPlayers[i];
+        if (existing->getXuid() == player->getXuid())
+        {
+            contained = 1;
+            break;
+        }
     }
-    return 0;
+    return contained;
 }
