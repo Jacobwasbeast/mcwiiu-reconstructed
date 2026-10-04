@@ -21,7 +21,6 @@ extern "C" void AIL_listener_3D_position(_LISTENER* listener, float* x, float* y
 
 namespace
 {
-const int MAX_BLEND_POINTS = 10;
 const int QUEUE_RECORD_ALIGNMENT_MASK = 7;
 const int QUEUE_HANDLE_SHIFT = 16;
 const int QUEUE_TOKEN_MASK = 0xffff;
@@ -117,20 +116,6 @@ struct QueuedEvent
     unsigned char data[1];
 };
 
-struct EVENT_STEP_INFO
-{
-    unsigned int reserved0;
-    const char* name;
-    int nameLength;
-    float rangeStart[MAX_BLEND_POINTS];
-    float fadeInEnd[MAX_BLEND_POINTS];
-    float fadeOutStart[MAX_BLEND_POINTS];
-    float rangeEnd[MAX_BLEND_POINTS];
-    float pitchAtStart[MAX_BLEND_POINTS];
-    float pitchAtEnd[MAX_BLEND_POINTS];
-    unsigned char pointCount;
-};
-
 struct BlendNode
 {
     Handle next;
@@ -159,54 +144,11 @@ struct SoundLimitEntry
     char query[1];
 };
 
-struct StateVar
-{
-    void* key;
-    int value;
-};
-
 struct SoundEntry
 {
     Handle name;
     unsigned char reserved0[8];
     unsigned int nameLength;
-};
-
-struct EventSystemState
-{
-    unsigned char reserved0[8];
-    PODHandleArray<Handle> sounds;
-    PODHandleArray<Handle> instances;
-    PODHandleArray<StateVar> stateVars;
-    unsigned char reserved1[0x60 - 0x50];
-    Handle blends;
-    unsigned char reserved2[0x70 - 0x68];
-    Handle limits;
-    unsigned char reserved3[0x90 - 0x78];
-    _LISTENER* listener;
-};
-
-struct SoundInstanceState
-{
-    unsigned char reserved0[0x10];
-    unsigned long long eventId;
-    _SAMPLE* sample;
-    unsigned char reserved1[4];
-    EventSystem* eventSystem;
-    Handle self;
-    Handle source;
-    Handle name;
-    Handle labels;
-    unsigned char reserved2[8];
-    Handle context;
-    Handle blend;
-    unsigned char reserved3[0x78 - 0x5c];
-    int state;
-    int startTime;
-    unsigned char reserved4[0xaa - 0x80];
-    unsigned char priority;
-    unsigned char flags;
-    signed char blendIndex;
 };
 
 EventQueue g_eventQueue;
@@ -356,8 +298,7 @@ int DoLabelsMatchQuery(const char* labels, const char* query)
 
 SoundLimitEntry* IsLabelLimited(EventSystem* eventSystem, _MSSSTRINGC label)
 {
-    EventSystemState* state = reinterpret_cast<EventSystemState*>(eventSystem);
-    SoundLimitList* limits = static_cast<SoundLimitList*>(Handle_Get(state->limits));
+    SoundLimitList* limits = static_cast<SoundLimitList*>(Handle_Get(eventSystem->m_limits));
     if (limits != NULL && label.length != 0)
     {
         SoundLimitEntry* entry = static_cast<SoundLimitEntry*>(Handle_Get(limits->entries));
@@ -375,8 +316,7 @@ SoundLimitEntry* IsLabelLimited(EventSystem* eventSystem, _MSSSTRINGC label)
 
 int Blend_Exists(EventSystem* eventSystem, const char* name)
 {
-    EventSystemState* state = reinterpret_cast<EventSystemState*>(eventSystem);
-    BlendNode* blend = static_cast<BlendNode*>(Handle_Get(state->blends));
+    BlendNode* blend = static_cast<BlendNode*>(Handle_Get(eventSystem->m_blends));
     while (blend != NULL)
     {
         if (AIL_stricmp(blend->name, name) == 0)
@@ -390,11 +330,10 @@ int Blend_Exists(EventSystem* eventSystem, const char* name)
 
 int Blend_Add(EventSystem* eventSystem, const EVENT_STEP_INFO* step)
 {
-    EventSystemState* state = reinterpret_cast<EventSystemState*>(eventSystem);
-    BlendNode* blend = static_cast<BlendNode*>(Handle_Get(state->blends));
+    BlendNode* blend = static_cast<BlendNode*>(Handle_Get(eventSystem->m_blends));
     while (blend != NULL)
     {
-        if (AIL_stricmp(blend->name, step->name) == 0)
+        if (AIL_stricmp(blend->name, step->m_data.m_blend.m_name) == 0)
         {
             break;
         }
@@ -403,44 +342,43 @@ int Blend_Add(EventSystem* eventSystem, const EVENT_STEP_INFO* step)
 
     if (blend == NULL)
     {
-        const Handle allocated = Handle_AllocateInfo(sizeof(BlendNode) + step->nameLength,
+        const Handle allocated = Handle_AllocateInfo(sizeof(BlendNode) + step->m_data.m_blend.m_nameLength,
                                                      MILES_EVENT_SUPPORT_FILE, 174);
         blend = static_cast<BlendNode*>(Handle_Get(allocated));
         if (blend == NULL)
         {
             return 0;
         }
-        memcpy(blend->name, step->name, step->nameLength + 1);
+        memcpy(blend->name, step->m_data.m_blend.m_name, step->m_data.m_blend.m_nameLength + 1);
         blend->self = allocated;
-        blend->next = state->blends;
-        state->blends = allocated;
+        blend->next = eventSystem->m_blends;
+        eventSystem->m_blends = allocated;
     }
 
-    const int byteCount = step->pointCount * sizeof(float);
-    memcpy(blend->fadeInEnd, step->fadeInEnd, byteCount);
-    memcpy(blend->rangeStart, step->rangeStart, byteCount);
-    memcpy(blend->rangeEnd, step->rangeEnd, byteCount);
-    memcpy(blend->fadeOutStart, step->fadeOutStart, byteCount);
-    memcpy(blend->pitchAtStart, step->pitchAtStart, byteCount);
-    memcpy(blend->pitchAtEnd, step->pitchAtEnd, byteCount);
+    const int byteCount = step->m_data.m_blend.m_pointCount * sizeof(float);
+    memcpy(blend->fadeInEnd, step->m_data.m_blend.m_fadeInEnd, byteCount);
+    memcpy(blend->rangeStart, step->m_data.m_blend.m_rangeStart, byteCount);
+    memcpy(blend->rangeEnd, step->m_data.m_blend.m_rangeEnd, byteCount);
+    memcpy(blend->fadeOutStart, step->m_data.m_blend.m_fadeOutStart, byteCount);
+    memcpy(blend->pitchAtStart, step->m_data.m_blend.m_pitchAtStart, byteCount);
+    memcpy(blend->pitchAtEnd, step->m_data.m_blend.m_pitchAtEnd, byteCount);
     return 1;
 }
 
 void DestroySoundInstance(EventSystem* eventSystem, SoundInstance* instance)
 {
-    SoundInstanceState* sound = reinterpret_cast<SoundInstanceState*>(instance);
-    if (sound->state == SOUND_STATE_DESTROYED)
+    SoundInstanceData* sound = reinterpret_cast<SoundInstanceData*>(instance);
+    if (sound->m_state == SOUND_STATE_DESTROYED)
     {
         return;
     }
 
-    AIL_end_sample(sound->sample);
-    const Handle labelsHandle = sound->labels;
-    sound->state = SOUND_STATE_DESTROYED;
+    AIL_end_sample(sound->m_sample);
+    const Handle labelsHandle = sound->m_labels;
+    sound->m_state = SOUND_STATE_DESTROYED;
     const char* labels = static_cast<const char*>(Handle_Get(labelsHandle));
 
-    EventSystemState* state = reinterpret_cast<EventSystemState*>(eventSystem);
-    SoundLimitList* limits = static_cast<SoundLimitList*>(Handle_Get(state->limits));
+    SoundLimitList* limits = static_cast<SoundLimitList*>(Handle_Get(eventSystem->m_limits));
     if (limits != NULL)
     {
         SoundLimitEntry* entry = static_cast<SoundLimitEntry*>(Handle_Get(limits->entries));
@@ -459,30 +397,30 @@ void DestroySoundInstance(EventSystem* eventSystem, SoundInstance* instance)
 
 void Blend_Apply(SoundInstance* instance, float* volume, float* pitch)
 {
-    SoundInstanceState* sound = reinterpret_cast<SoundInstanceState*>(instance);
+    SoundInstanceData* sound = reinterpret_cast<SoundInstanceData*>(instance);
 
     *volume = 1.0f;
     *pitch = 1.0f;
-    if (sound->blendIndex == BLEND_NO_INDEX)
+    if (sound->m_blendIndex == BLEND_NO_INDEX)
     {
         return;
     }
 
-    BlendNode* blend = static_cast<BlendNode*>(Handle_Get(sound->blend));
+    BlendNode* blend = static_cast<BlendNode*>(Handle_Get(sound->m_blend));
     float value = 0.0f;
-    Var_LookupWithContext(sound->eventSystem, sound->context, blend->name, 1, &value);
+    Var_LookupWithContext(sound->m_eventSystem, sound->m_context, blend->name, 1, &value);
 
-    if (fabs(static_cast<double>(blend->rangeEnd[sound->blendIndex] -
-                                 blend->rangeStart[sound->blendIndex])) <= SOUND_VALUE_EPSILON)
+    if (fabs(static_cast<double>(blend->rangeEnd[sound->m_blendIndex] -
+                                 blend->rangeStart[sound->m_blendIndex])) <= SOUND_VALUE_EPSILON)
     {
         return;
     }
 
     float level;
-    if (value < blend->fadeInEnd[sound->blendIndex])
+    if (value < blend->fadeInEnd[sound->m_blendIndex])
     {
-        level = (value - blend->rangeStart[sound->blendIndex]) /
-                (blend->fadeInEnd[sound->blendIndex] - blend->rangeStart[sound->blendIndex]);
+        level = (value - blend->rangeStart[sound->m_blendIndex]) /
+                (blend->fadeInEnd[sound->m_blendIndex] - blend->rangeStart[sound->m_blendIndex]);
         if (level >= 0.0f)
         {
             if (1.0f < level)
@@ -495,10 +433,10 @@ void Blend_Apply(SoundInstance* instance, float* volume, float* pitch)
             level = 0.0f;
         }
     }
-    else if (value > blend->fadeOutStart[sound->blendIndex])
+    else if (value > blend->fadeOutStart[sound->m_blendIndex])
     {
-        level = 1.0f - (value - blend->fadeOutStart[sound->blendIndex]) /
-                           (blend->rangeEnd[sound->blendIndex] - blend->fadeOutStart[sound->blendIndex]);
+        level = 1.0f - (value - blend->fadeOutStart[sound->m_blendIndex]) /
+                           (blend->rangeEnd[sound->m_blendIndex] - blend->fadeOutStart[sound->m_blendIndex]);
         if (level >= 0.0f)
         {
             if (1.0f < level)
@@ -518,22 +456,22 @@ void Blend_Apply(SoundInstance* instance, float* volume, float* pitch)
 
     const float attenuation = static_cast<float>(pow(level, BLEND_VOLUME_CURVE_EXPONENT));
     *volume = attenuation;
-    AIL_set_sample_volume_levels(sound->sample, attenuation, attenuation);
+    AIL_set_sample_volume_levels(sound->m_sample, attenuation, attenuation);
 
     if (attenuation > 0.0f)
     {
-        if (fabs(static_cast<double>(blend->pitchAtStart[sound->blendIndex] -
-                                     blend->pitchAtEnd[sound->blendIndex])) > SOUND_VALUE_EPSILON)
+        if (fabs(static_cast<double>(blend->pitchAtStart[sound->m_blendIndex] -
+                                     blend->pitchAtEnd[sound->m_blendIndex])) > SOUND_VALUE_EPSILON)
         {
             const float lower =
-                static_cast<float>(pow(2.0, blend->pitchAtStart[sound->blendIndex] / SEMITONES_PER_OCTAVE));
+                static_cast<float>(pow(2.0, blend->pitchAtStart[sound->m_blendIndex] / SEMITONES_PER_OCTAVE));
             const float upper =
-                static_cast<float>(pow(2.0, blend->pitchAtEnd[sound->blendIndex] / SEMITONES_PER_OCTAVE));
-            *pitch = ((value - blend->rangeStart[sound->blendIndex]) /
-                      (blend->rangeEnd[sound->blendIndex] - blend->rangeStart[sound->blendIndex])) *
+                static_cast<float>(pow(2.0, blend->pitchAtEnd[sound->m_blendIndex] / SEMITONES_PER_OCTAVE));
+            *pitch = ((value - blend->rangeStart[sound->m_blendIndex]) /
+                      (blend->rangeEnd[sound->m_blendIndex] - blend->rangeStart[sound->m_blendIndex])) *
                          (upper - lower) +
                      lower;
-            AIL_set_sample_playback_rate_factor(sound->sample, *pitch);
+            AIL_set_sample_playback_rate_factor(sound->m_sample, *pitch);
         }
     }
 }
@@ -541,12 +479,11 @@ void Blend_Apply(SoundInstance* instance, float* volume, float* pitch)
 int EvictSound(EventSystem* eventSystem, unsigned long long eventId, unsigned char policy,
                int priority, SoundLimitEntry* limit, SoundSource* source, const char* name)
 {
-    EventSystemState* state = reinterpret_cast<EventSystemState*>(eventSystem);
 
     float listenerX;
     float listenerY;
     float listenerZ;
-    AIL_listener_3D_position(state->listener, &listenerX, &listenerY, &listenerZ);
+    AIL_listener_3D_position(eventSystem->m_listener, &listenerX, &listenerY, &listenerZ);
 
     int bestIndex = -1;
     float farthestDistance = 0.0f;
@@ -554,24 +491,24 @@ int EvictSound(EventSystem* eventSystem, unsigned long long eventId, unsigned ch
     int lowestPriority = 0xff;
     int oldestTime = AIL_ms_count();
 
-    const int count = state->instances.Count();
+    const int count = eventSystem->m_instances.Count();
     for (int index = 0; index < count; ++index)
     {
-        SoundInstanceState* sound =
-            reinterpret_cast<SoundInstanceState*>(Handle_Get(state->instances[index]));
-        if (sound->state != SOUND_STATE_DESTROYED &&
-            (policy != EVICT_LOWER_PRIORITY || sound->priority < priority) &&
-            (source == NULL || source == Handle_Get(sound->source)) &&
-            (name == NULL || AIL_stricmp(name, static_cast<const char*>(Handle_Get(sound->name))) == 0) &&
+        SoundInstanceData* sound =
+            reinterpret_cast<SoundInstanceData*>(Handle_Get(eventSystem->m_instances[index]));
+        if (sound->m_state != SOUND_STATE_DESTROYED &&
+            (policy != EVICT_LOWER_PRIORITY || sound->m_priority < priority) &&
+            (source == NULL || source == Handle_Get(sound->m_source)) &&
+            (name == NULL || AIL_stricmp(name, static_cast<const char*>(Handle_Get(sound->m_name))) == 0) &&
             (limit == NULL ||
-             DoLabelsMatchQuery(static_cast<const char*>(Handle_Get(sound->labels)), limit->query) != 0))
+             DoLabelsMatchQuery(static_cast<const char*>(Handle_Get(sound->m_labels)), limit->query) != 0))
         {
             if (policy == EVICT_LOWER_PRIORITY)
             {
-                Handle_Free(sound->self);
-                sound->flags |= SOUND_FLAG_EVICTED;
+                Handle_Free(sound->m_self);
+                sound->m_flags |= SOUND_FLAG_EVICTED;
                 DestroySoundInstance(eventSystem, reinterpret_cast<SoundInstance*>(sound));
-                Audition_SoundEvicted(sound->eventId, eventId, 0);
+                Audition_SoundEvicted(sound->m_eventId, eventId, 0);
                 return 1;
             }
 
@@ -582,7 +519,7 @@ int EvictSound(EventSystem* eventSystem, unsigned long long eventId, unsigned ch
                 float x;
                 float y;
                 float z;
-                AIL_sample_3D_position(sound->sample, &x, &y, &z);
+                AIL_sample_3D_position(sound->m_sample, &x, &y, &z);
                 const float distance = (z - listenerZ) * (z - listenerZ) +
                                        (x - listenerX) * (x - listenerX) +
                                        (y - listenerY) * (y - listenerY);
@@ -595,28 +532,28 @@ int EvictSound(EventSystem* eventSystem, unsigned long long eventId, unsigned ch
             }
             case EVICT_QUIETEST:
             {
-                const float volume = sound->sample->volume;
+                const float volume = sound->m_sample->volume;
                 if (fabs(static_cast<double>(volume - quietestVolume)) >= SOUND_VALUE_EPSILON)
                 {
                     if (volume < quietestVolume)
                     {
-                        lowestPriority = sound->priority;
+                        lowestPriority = sound->m_priority;
                         bestIndex = index;
                         quietestVolume = volume;
                     }
                 }
-                else if (sound->priority < lowestPriority)
+                else if (sound->m_priority < lowestPriority)
                 {
-                    lowestPriority = sound->priority;
+                    lowestPriority = sound->m_priority;
                     bestIndex = index;
                     quietestVolume = volume;
                 }
                 break;
             }
             case EVICT_OLDEST:
-                if (sound->startTime < oldestTime)
+                if (sound->m_startTime < oldestTime)
                 {
-                    oldestTime = sound->startTime;
+                    oldestTime = sound->m_startTime;
                     bestIndex = index;
                 }
                 break;
@@ -626,12 +563,12 @@ int EvictSound(EventSystem* eventSystem, unsigned long long eventId, unsigned ch
 
     if (policy != EVICT_LOWER_PRIORITY && bestIndex != -1)
     {
-        SoundInstanceState* sound =
-            reinterpret_cast<SoundInstanceState*>(Handle_Get(state->instances[bestIndex]));
-        Handle_Free(sound->self);
-        sound->flags |= SOUND_FLAG_EVICTED;
+        SoundInstanceData* sound =
+            reinterpret_cast<SoundInstanceData*>(Handle_Get(eventSystem->m_instances[bestIndex]));
+        Handle_Free(sound->m_self);
+        sound->m_flags |= SOUND_FLAG_EVICTED;
         DestroySoundInstance(eventSystem, reinterpret_cast<SoundInstance*>(sound));
-        Audition_SoundEvicted(sound->eventId, eventId, policy);
+        Audition_SoundEvicted(sound->m_eventId, eventId, policy);
         return 1;
     }
     return 0;
@@ -1118,9 +1055,8 @@ int StateVar_KeyLB(StateVar* vars, int count, void* key)
 
 int StateVar_Lookup(EventSystem* eventSystem, void* key)
 {
-    EventSystemState* state = reinterpret_cast<EventSystemState*>(eventSystem);
-    StateVar* vars = state->stateVars.Data();
-    const int count = state->stateVars.Count();
+    StateVar* vars = eventSystem->m_stateVars.Data();
+    const int count = eventSystem->m_stateVars.Count();
     const int index = StateVar_KeyLB(vars, count, key);
     if (index < count && vars[index].key == key)
     {
@@ -1131,9 +1067,8 @@ int StateVar_Lookup(EventSystem* eventSystem, void* key)
 
 void StateVar_Set(EventSystem* eventSystem, void* key, int value)
 {
-    EventSystemState* state = reinterpret_cast<EventSystemState*>(eventSystem);
-    StateVar* vars = state->stateVars.Data();
-    const int count = state->stateVars.Count();
+    StateVar* vars = eventSystem->m_stateVars.Data();
+    const int count = eventSystem->m_stateVars.Count();
     const int index = StateVar_KeyLB(vars, count, key);
     if (index < count && vars[index].key == key)
     {
@@ -1144,15 +1079,14 @@ void StateVar_Set(EventSystem* eventSystem, void* key, int value)
     StateVar entry;
     entry.key = key;
     entry.value = value;
-    state->stateVars.Insert(index, entry);
+    eventSystem->m_stateVars.Insert(index, entry);
 }
 
 Handle Sound_Find(EventSystem* eventSystem, const char* name)
 {
-    EventSystemState* state = reinterpret_cast<EventSystemState*>(eventSystem);
     const size_t length = strlen(name);
-    int count = state->sounds.Count();
-    Handle* handles = state->sounds.Data();
+    int count = eventSystem->m_sounds.Count();
+    Handle* handles = eventSystem->m_sounds.Data();
     while (count != 0)
     {
         SoundEntry* sound = static_cast<SoundEntry*>(Handle_Get(*handles));
