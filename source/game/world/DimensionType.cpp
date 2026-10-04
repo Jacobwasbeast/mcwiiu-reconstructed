@@ -10,10 +10,10 @@ const DimensionType* DimensionType::NETHER = new DimensionType(-1, L"Nether", L"
 const DimensionType* DimensionType::THE_END = new DimensionType(1, L"The End", L"_end");
 
 DimensionType::DimensionType(int id, const std::wstring& name, const std::wstring& fileSuffix)
-    : id(id),
-      name(name),
-      fileSuffix(fileSuffix)
 {
+    this->id = id;
+    this->name = name;
+    this->fileSuffix = fileSuffix;
 }
 
 int DimensionType::getId() const

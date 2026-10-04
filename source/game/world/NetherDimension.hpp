@@ -13,7 +13,7 @@ public:
     virtual ChunkGenerator* createRandomLevelGenerator() const;
     virtual bool isNaturalDimension();
     virtual bool isValidSpawn(int x, int z) const;
-    virtual double getTimeOfDay(long long time, float partialTick) const;
+    virtual float getTimeOfDay(long long time, float partialTick) const;
     virtual bool mayRespawn() const;
     virtual bool isFoggyAt(int x, int z);
     virtual WorldBorder* createWorldBorder(Level* level);

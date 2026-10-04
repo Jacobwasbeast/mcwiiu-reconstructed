@@ -35,16 +35,15 @@ void LevelRules::removeLevelRule(LevelRuleset* ruleset)
     std::vector<LevelRulesetGroup*>::iterator group = m_ruleGroups.begin();
     while (group != m_ruleGroups.end())
     {
-        LevelRulesetGroup* current = *group;
         std::vector<LevelRuleset*>::iterator member;
-        while ((member = std::find(current->rulesets.begin(), current->rulesets.end(), ruleset)) != current->rulesets.end())
+        while ((member = std::find((*group)->rulesets.begin(), (*group)->rulesets.end(), ruleset)) != (*group)->rulesets.end())
         {
-            current->rulesets.erase(member);
+            (*group)->rulesets.erase(member);
         }
 
-        if (current->rulesets.empty())
+        if ((*group)->rulesets.size() == 0)
         {
-            delete current;
+            delete *group;
             group = m_ruleGroups.erase(group);
         }
         else
@@ -80,16 +79,20 @@ void LevelRules::populateRulesets()
         LevelRuleset* ruleset = *rule;
         LevelRulesetGroup* group = NULL;
         std::vector<LevelRulesetGroup*>::iterator existing = m_ruleGroups.begin();
-        while (existing != m_ruleGroups.end())
+        const std::vector<LevelRulesetGroup*>::iterator end = m_ruleGroups.end();
+        if (existing != end)
         {
-            LevelRulesetGroup* candidate = *existing;
-            if (candidate->rulesets.front()->getRuleType() == ruleset->getRuleType() &&
-                candidate->rulesets.front()->getThemeId() == ruleset->getThemeId())
+            const ELevelRuleType type = (*rule)->getRuleType();
+            do
             {
-                group = candidate;
-                break;
-            }
-            ++existing;
+                LevelRuleset* const& front = (*existing)->rulesets.front();
+                if (front->getRuleType() == type && front->getThemeId() == (*rule)->getThemeId())
+                {
+                    group = *existing;
+                    break;
+                }
+                ++existing;
+            } while (existing != end);
         }
 
         if (group == NULL)
@@ -97,6 +100,7 @@ void LevelRules::populateRulesets()
             group = new LevelRulesetGroup();
             m_ruleGroups.push_back(group);
         }
+
         group->rulesets.push_back(ruleset);
         ++rule;
     }
@@ -134,17 +138,17 @@ void LevelRules::getRulesByType(ELevelRuleType type, std::vector<LevelRulesetGro
 
 LevelGenerationOptions* LevelRules::getLevelGenFromUniqueId(ELevelRuleType type, int uniqueId) const
 {
-    const unsigned short theme = LevelGenerationOptions::GetThemeFromUniqueId(uniqueId);
+    const short theme = LevelGenerationOptions::GetThemeFromUniqueId(uniqueId);
     std::vector<LevelRulesetGroup*>::const_iterator group = m_ruleGroups.begin();
-    while (group != m_ruleGroups.end())
+    const std::vector<LevelRulesetGroup*>::const_iterator end = m_ruleGroups.end();
+    while (group != end)
     {
-        LevelRuleset* ruleset = (*group)->rulesets.front();
+        LevelRuleset* const& ruleset = (*group)->rulesets.front();
         if (ruleset->getRuleType() == type)
         {
-            LevelGenerationOptions* options = ruleset->getGenerationOptions();
-            if (theme == LevelGenerationOptions::GetThemeFromUniqueId(options->getUniqueId()))
+            if (theme == LevelGenerationOptions::GetThemeFromUniqueId(ruleset->getGenerationOptions()->getUniqueId()))
             {
-                return options;
+                return ruleset->getGenerationOptions();
             }
         }
         ++group;

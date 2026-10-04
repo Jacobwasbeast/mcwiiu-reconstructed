@@ -113,10 +113,11 @@ LevelType* LevelType::getLevelType(const std::wstring& generatorName)
     }
     for (i = 0; i < 16; ++i)
     {
-        LevelType* levelType = levelTypes[i];
-        if (levelType != NULL && levelType->getGeneratorName().compare(generatorName) == 0)
+        std::wstring name;
+        name.assign(levelTypes[i]->mGeneratorName, 0, std::wstring::npos);
+        if (levelTypes[i] != NULL && name.compare(generatorName) == 0)
         {
-            return levelType;
+            return levelTypes[i];
         }
     }
     return NULL;

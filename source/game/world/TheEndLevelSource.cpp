@@ -1,6 +1,5 @@
 #include "game/world/TheEndLevelSource.hpp"
 
-#include <algorithm>
 #include <cmath>
 
 #include "game/core/Mth.hpp"
@@ -19,7 +18,10 @@
 #include "game/world/chunk/LevelChunk.hpp"
 #include "game/world/generation/EndCityFeature.hpp"
 #include "game/world/generation/EndIslandFeature.hpp"
+#include "game/world/generation/EndPodiumFeature.hpp"
 #include "game/world/TheEndDimension.hpp"
+
+static const std::wstring END_CITY_FEATURE = L"EndCity";
 
 TheEndLevelSource::TheEndLevelSource(Level* level, bool generateStructures, long long seed,
                                      const BlockPos& origin)
@@ -65,7 +67,7 @@ double TheEndLevelSource::fjIslandProximity(int x, int z)
 
     const double xDistance = std::fabs(static_cast<double>(x) + 0.5 - area->x);
     const double zDistance = std::fabs(static_cast<double>(z) + 0.5 - area->z);
-    return std::max(xDistance, zDistance);
+    return xDistance - zDistance < 0.0 ? zDistance : xDistance;
 }
 
 bool TheEndLevelSource::fjIslandCheck(int x, int z)
@@ -73,20 +75,20 @@ bool TheEndLevelSource::fjIslandCheck(int x, int z)
     return fjIslandProximity(x, z) < 3.0;
 }
 
-double TheEndLevelSource::getIslandHeightValue(int x, int z, int xOffset, int zOffset)
+float TheEndLevelSource::getIslandHeightValue(int x, int z, int xOffset, int zOffset)
 {
     ChunkPos* area = TheEndDimension::closestAreaToPoint(x, z);
 
     if (area == &TheEndDimension::AREAS[0])
     {
-        const float sampleX = x * 2.0f + xOffset;
         const float sampleZ = z * 2.0f + zOffset;
+        const float sampleX = x * 2.0f + xOffset;
         return -(std::sqrt(sampleX * sampleX + sampleZ * sampleZ) * 9.0f - 100.0f);
     }
 
-    const int sampleX = x * 2 + xOffset;
     const int sampleZ = z * 2 + zOffset;
-    double height = -(std::sqrt(static_cast<float>(sampleX * sampleX + sampleZ * sampleZ)) * 8.0f - 100.0f);
+    const int sampleX = x * 2 + xOffset;
+    float height = -(std::sqrt(static_cast<float>(sampleX * sampleX + sampleZ * sampleZ)) * 8.0f - 100.0f);
     if (height > 80.0f)
     {
         height = 80.0f;
@@ -107,7 +109,7 @@ double TheEndLevelSource::getIslandHeightValue(int x, int z, int xOffset, int zO
                 const float scale = static_cast<int>(std::fabs(islandX) * 3439.0 + std::fabs(islandZ) * 147.0) % 6 + 18;
                 const int distanceX = xOffset - offsetX * 2;
                 const int distanceZ = zOffset - offsetZ * 2;
-                double islandHeight =
+                float islandHeight =
                     -(std::sqrt(static_cast<float>(distanceX * distanceX + distanceZ * distanceZ)) * scale - 100.0f);
                 if (islandHeight > 80.0f)
                 {
@@ -157,7 +159,7 @@ arrayWithLength<double> TheEndLevelSource::getHeights(arrayWithLength<double> va
     {
         for (int localZ = 0; localZ < zSize; ++localZ)
         {
-            double islandHeight = getIslandHeightValue(x / 2, z / 2, localX, localZ);
+            float islandHeight = getIslandHeightValue(x / 2, z / 2, localX, localZ);
             if (islandHeight > 80.0f)
             {
                 islandHeight = 80.0f;
@@ -201,8 +203,8 @@ arrayWithLength<double> TheEndLevelSource::getHeights(arrayWithLength<double> va
 
                 const int worldY = (y + localY) * 4;
                 const double originFade = Mth::clamp(
-                    (19.0 - BlockPos::ZERO.dist((x + localX) * 8, worldY, (z + localZ) * 8)) / 16.0, 0.0, 1.0);
-                if (BlockPos::ZERO.y < worldY + 1)
+                    (19.0 - EndPodiumFeature::END_PODIUM_LOCATION.dist((x + localX) * 8, worldY, (z + localZ) * 8)) / 16.0, 0.0, 1.0);
+                if (EndPodiumFeature::END_PODIUM_LOCATION.y < worldY + 1)
                 {
                     values.data[index] = originFade * -50.0 + (1.0 - originFade) * density;
                 }
@@ -345,7 +347,7 @@ LevelChunk* TheEndLevelSource::createChunk(int chunkX, int chunkZ)
 void TheEndLevelSource::postProcess(int chunkX, int chunkZ)
 {
     FallingBlock::fallInstantly = true;
-    const BlockPos origin(chunkX << 4, 0, chunkZ << 4);
+    const BlockPos& origin = BlockPos(chunkX << 4, 0, chunkZ << 4);
     mPopulationRandom->setSeed(mLevel->getSeed());
     const long long xSeed = mPopulationRandom->nextLong() / 2LL * 2LL + 1LL;
     const long long zSeed = mPopulationRandom->nextLong() / 2LL * 2LL + 1LL;
@@ -365,16 +367,16 @@ void TheEndLevelSource::postProcess(int chunkX, int chunkZ)
         if (getIslandHeightValue(chunkX, chunkZ, 1, 1) < -20.0f &&
             mPopulationRandom->nextInt(14) == 0)
         {
-            int islandX = mPopulationRandom->nextInt(16) + 8;
-            int islandY = mPopulationRandom->nextInt(16) + 55;
-            int islandZ = mPopulationRandom->nextInt(16) + 8;
-            mEndIslandFeature->place(mLevel, *mPopulationRandom, origin.offset(islandX, islandY, islandZ));
+            mEndIslandFeature->place(mLevel, *mPopulationRandom,
+                                     origin.offset(mPopulationRandom->nextInt(16) + 8,
+                                                   mPopulationRandom->nextInt(16) + 55,
+                                                   mPopulationRandom->nextInt(16) + 8));
             if (mPopulationRandom->nextInt(4) == 0)
             {
-                islandX = mPopulationRandom->nextInt(16) + 8;
-                islandY = mPopulationRandom->nextInt(16) + 55;
-                islandZ = mPopulationRandom->nextInt(16) + 8;
-                mEndIslandFeature->place(mLevel, *mPopulationRandom, origin.offset(islandX, islandY, islandZ));
+                mEndIslandFeature->place(mLevel, *mPopulationRandom,
+                                         origin.offset(mPopulationRandom->nextInt(16) + 8,
+                                                       mPopulationRandom->nextInt(16) + 55,
+                                                       mPopulationRandom->nextInt(16) + 8));
             }
         }
 
@@ -385,7 +387,8 @@ void TheEndLevelSource::postProcess(int chunkX, int chunkZ)
             {
                 const int x = mPopulationRandom->nextInt(16) + 8;
                 const int z = mPopulationRandom->nextInt(16) + 8;
-                const BlockPos top = mLevel->getHeightmapPos(origin.offset(x, 0, z));
+                const BlockPos column = origin.offset(x, 0, z);
+                const BlockPos top = mLevel->getHeightmapPos(column);
                 if (top.y > 0 && mLevel->isEmptyBlock(origin.offset(x, top.y, z)) &&
                     mLevel->getBlockState(origin.offset(x, top.y - 1, z))->getBlock() == Blocks::end_stone)
                 {
@@ -412,7 +415,7 @@ std::vector<Biome::MobSpawnerData*>* TheEndLevelSource::getMobsAt(
 BlockPos* TheEndLevelSource::findNearestMapFeature(Level* level, const std::wstring& feature,
                                                     const BlockPos& pos, bool findUnexplored)
 {
-    if (feature == L"EndCity" && mEndCityFeature != NULL)
+    if (END_CITY_FEATURE == feature && mEndCityFeature != NULL)
     {
         return mEndCityFeature->getNearestGeneratedFeature(level, pos, findUnexplored);
     }
@@ -425,6 +428,9 @@ void TheEndLevelSource::recreateLogicStructuresForChunk(LevelChunk*, int, int)
 
 bool TheEndLevelSource::isPosInFeature(Level*, const std::wstring& feature, const BlockPos& pos)
 {
-    return feature == L"EndCity" && mEndCityFeature != NULL &&
-           mEndCityFeature->isInsideFeature(pos);
+    if (END_CITY_FEATURE == feature && mEndCityFeature != NULL)
+    {
+        return mEndCityFeature->isInsideFeature(pos);
+    }
+    return false;
 }

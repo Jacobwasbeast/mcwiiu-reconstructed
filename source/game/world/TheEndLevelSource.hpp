@@ -27,7 +27,7 @@ public:
 
     double fjIslandProximity(int x, int z);
     bool fjIslandCheck(int x, int z);
-    double getIslandHeightValue(int x, int z, int xOffset, int zOffset);
+    float getIslandHeightValue(int x, int z, int xOffset, int zOffset);
     arrayWithLength<double> getHeights(arrayWithLength<double> values, int x, int y, int z,
                                        int xSize, int ySize, int zSize);
     void prepareHeights(int chunkX, int chunkZ, ChunkPrimer* primer);

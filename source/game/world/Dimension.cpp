@@ -22,10 +22,12 @@
 #include "game/world/chunk/OldChunkStorage.hpp"
 
 Dimension::Dimension()
-    : mLevel(NULL), mSuperflatConfig(NULL), mUltraWarm(0), mHasCeiling(0),
-      mHasSkyLight(0), mBrightnessRamp(new float[16])
+    : mUltraWarm(0), mHasCeiling(0), mBrightnessRamp(new float[16])
 {
+    mHasSkyLight = 0;
     mSeaLevel = 0;
+    mSuperflatConfig = NULL;
+    mLevel = NULL;
 }
 
 Dimension::~Dimension()
@@ -106,19 +108,19 @@ bool Dimension::isValidSpawn(int x, int z) const
     return mLevel->getTopBlockState(pos)->getBlock() == Blocks::grass;
 }
 
-double Dimension::getTimeOfDay(long long time, float partialTick) const
+float Dimension::getTimeOfDay(long long time, float partialTick) const
 {
-    float value = (float)(((double)(time % 24000) + partialTick) / 24000.0) - 0.25f;
+    float value = ((float)(int)(time % 24000) + partialTick) / 24000.0f - 0.25f;
     if (value < 0.0f) value += 1.0f;
     if (value > 1.0f) value -= 1.0f;
     float cosine = cosf(value * 3.1415927f);
-    return (double)(value + (-((cosine + 1.0f) * 0.5f - 1.0f) - value) / 3.0f);
+    return value + (-((cosine + 1.0f) * 0.5f - 1.0f) - value) / 3.0f;
 }
 
 int Dimension::getMoonPhase(long long time) const
 {
     int phase = (int)((time / 24000) % 8);
-    return phase < 0 ? phase + 8 : phase;
+    return (phase + 8) % 8;
 }
 
 bool Dimension::isNaturalDimension() { return true; }

@@ -23,11 +23,6 @@
 #include "game/world/block/Material.hpp"
 #include "game/world/chunk/ChunkPos.hpp"
 
-static bool gTheEndSpawnPosInitialized = false;
-static bool gTheEndLegacySpawnPosInitialized = false;
-static BlockPos gTheEndSpawnPos(0, 0, 0);
-static BlockPos gTheEndLegacySpawnPos(0, 0, 0);
-
 int aaDistance(int x, int z, const ChunkPos* pos)
 {
     const int xDistance = Mth::abs(x - pos->x);
@@ -38,11 +33,11 @@ int aaDistance(int x, int z, const ChunkPos* pos)
 ChunkPos TheEndDimension::AREAS[2] = { ChunkPos(0, 0), ChunkPos(0, 25) };
 
 TheEndDimension::TheEndDimension()
-    : Dimension(), mDragonFight(NULL), mChunkData(NULL), mModernEnd(true)
+    : Dimension(), mDragonFight(NULL), mModernEnd(true)
 {
     const int size = getXZSize();
-    mChunkData = new unsigned char[size * size];
-    std::memset(mChunkData, 0xff, size * size);
+    mChunkData = new char[size * size];
+    std::memset(mChunkData, -1, size * size);
 }
 
 TheEndDimension::~TheEndDimension()
@@ -64,35 +59,25 @@ int TheEndDimension::getXZSize()
 void TheEndDimension::init()
 {
     mBiomeSource = new FixedBiomeSource(Biome::THE_END, 0.5f);
-    LevelData* levelData = mLevel->getLevelData();
-    mModernEnd = levelData->getModernEnd();
-    if (!mLevel->mIsClientSide)
-    {
-        CompoundTag* data = levelData->getDimensionData(DimensionType::THE_END);
-        mDragonFight = new EndDragonFight(static_cast<ServerLevel*>(mLevel), data);
-    }
-    else
-    {
-        mDragonFight = NULL;
-    }
+    CompoundTag* data = mLevel->getLevelData()->getDimensionData(DimensionType::THE_END);
+    mModernEnd = mLevel->getLevelData()->getModernEnd();
+    mDragonFight = !mLevel->mIsClientSide ? new EndDragonFight(static_cast<ServerLevel*>(mLevel),
+                                                               data->getCompound(L"DragonFight"))
+                                          : NULL;
     gApp.SetExtraGameData(eGameExtraData_ModernEnd, mModernEnd);
 }
 
 ChunkGenerator* TheEndDimension::createRandomLevelGenerator() const
 {
     LevelData* levelData = mLevel->getLevelData();
-    if (mModernEnd)
-    {
-        return new TheEndLevelSource(mLevel, levelData->isGenerateMapFeatures(),
-                                     mLevel->getSeed(), BlockPos(0, 0, 0));
-    }
-    return new TheEndLevelSource(mLevel, levelData->isGenerateMapFeatures(),
-                                 mLevel->getSeed(), *getSpawnPos());
+    return new TheEndLevelSource(mLevel, levelData->isGenerateMapFeatures(), mLevel->getSeed(),
+                                 getSpawnPos() == NULL ? BlockPos(0, 0, 0)
+                                                                  : *getSpawnPos());
 }
 
-double TheEndDimension::getTimeOfDay(long long time, float partialTick) const
+float TheEndDimension::getTimeOfDay(long long time, float partialTick) const
 {
-    return 0.0;
+    return 0.0f;
 }
 
 float* TheEndDimension::getSunriseColor(float celestialAngle, float timeOfDay)
@@ -104,8 +89,9 @@ Vec3* TheEndDimension::getFogColor(float celestialAngle, float timeOfDay)
 {
     float brightness = Mth::clamp(Mth::cos(celestialAngle * 6.2831855f) * 2.0f + 0.5f,
                                   0.0f, 1.0f);
-    float scale = brightness * 2.0f + 0.15f;
-    return Vec3::newTemp(0.627451f * scale, 0.5019608f * scale, scale);
+    float scale = brightness * 0.0f + 0.15f;
+    float red = 0.627451f * scale;
+    return Vec3::newTemp(red, 0.5019608f * scale, red);
 }
 
 bool TheEndDimension::hasGround() { return false; }
@@ -115,24 +101,15 @@ float TheEndDimension::getCloudHeight() { return 8.0f; }
 
 bool TheEndDimension::isValidSpawn(int x, int z) const
 {
-    BlockPos pos(x, 0, z);
-    const BlockState* state = mLevel->getTopBlockState(pos);
-    return state->getMaterial()->isSolid();
+    const BlockState* state = mLevel->getTopBlockState(BlockPos(x, 0, z));
+    return state->getMaterial()->blocksMotion();
 }
 
 BlockPos* TheEndDimension::getSpawnPos() const
 {
-    if (!gTheEndSpawnPosInitialized)
-    {
-        gTheEndSpawnPosInitialized = true;
-        gTheEndSpawnPos = BlockPos(60, 50, 60);
-    }
-    if (!gTheEndLegacySpawnPosInitialized)
-    {
-        gTheEndLegacySpawnPosInitialized = true;
-        gTheEndLegacySpawnPos = BlockPos(100, 50, 0);
-    }
-    return mModernEnd ? &gTheEndSpawnPos : &gTheEndLegacySpawnPos;
+    static BlockPos modernSpawnPos(60, 50, 60);
+    static BlockPos legacySpawnPos(100, 50, 0);
+    return mModernEnd ? &modernSpawnPos : &legacySpawnPos;
 }
 
 int TheEndDimension::getSpawnYPosition() { return 50; }
@@ -185,8 +162,8 @@ bool TheEndDimension::containsChunk(int x, int z)
         return result;
     const int size = getXZSize();
     const int index = (x + size / 2) * size + z + size / 2;
-    unsigned char& cached = mChunkData[index];
-    if (cached == 0xff)
+    char& cached = mChunkData[index];
+    if (cached == -1)
     {
         ChunkPos* area = closestAreaToPoint(x, z);
         cached = (x - area->x >= -6 && x - area->x < 6 &&

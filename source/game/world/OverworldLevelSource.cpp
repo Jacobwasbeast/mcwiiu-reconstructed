@@ -539,18 +539,15 @@ void OverworldLevelSource::calcWaterDepths(int chunkX, int chunkZ)
                             const BlockState* state = mLevel->getBlockState(pos);
                             if (state->getBlock() == mOceanBlock->getBlock() && state->getValue(LiquidBlock::LEVEL) < depth)
                             {
-                                TypedBoxed<int> level(depth);
-                                mLevel->setBlock(pos, state->setBoxedValue(LiquidBlock::LEVEL, &level), Block::UPDATE_ALL, false);
+                                mLevel->setBlock(pos, state->setValue(LiquidBlock::LEVEL, depth), Block::UPDATE_ALL, false);
                             }
                         }
                     }
 
-                    TypedBoxed<int> surfaceLevel(7);
-                    mLevel->setBlock(center, mOceanBlock->setBoxedValue(LiquidBlock::LEVEL, &surfaceLevel), Block::UPDATE_CLIENTS, false);
+                    mLevel->setBlock(center, mOceanBlock->setValue(LiquidBlock::LEVEL, 7), Block::UPDATE_CLIENTS, false);
                     for (BlockPos pos = center.below(); pos.y >= 0; pos = pos.below())
                     {
-                        TypedBoxed<int> fallingLevel(8);
-                        mLevel->setBlock(pos, mOceanBlock->setBoxedValue(LiquidBlock::LEVEL, &fallingLevel), Block::UPDATE_CLIENTS, false);
+                        mLevel->setBlock(pos, mOceanBlock->setValue(LiquidBlock::LEVEL, 8), Block::UPDATE_CLIENTS, false);
                     }
                 }
             }

@@ -1,5 +1,7 @@
 #include "game/world/LayerGenerationRuleDefinition.hpp"
 
+#include <algorithm>
+
 #include "game/core/LayerSize.hpp"
 #include "game/world/generation/LayerAttributeChildRuleDefinition.hpp"
 #include "game/world/generation/LayerMetadata.hpp"
@@ -15,13 +17,10 @@ T* randomUsableElement(Random& random, std::vector<T*>& definitions,
 {
     while (true)
     {
-        T* definition = definitions.at(static_cast<unsigned int>(
+        T* definition = static_cast<const std::vector<T*>&>(definitions).at(static_cast<unsigned int>(
             random.nextInt(static_cast<int>(definitions.size()))));
 
-        typename std::vector<T*>::iterator it = definitions.begin();
-        for (; it != definitions.end() && *it != definition; ++it)
-        {
-        }
+        typename std::vector<T*>::iterator it = std::find(definitions.begin(), definitions.end(), definition);
 
         definitions.erase(it);
         if (definition->CanUse(metadata))

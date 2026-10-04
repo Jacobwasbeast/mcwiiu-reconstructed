@@ -22,8 +22,9 @@
 
 NetherFlatLevelSource::NetherFlatLevelSource(Level* level, bool generateStructures, long long seed)
 {
-    int levelSize = static_cast<int>(std::ceil(static_cast<float>(level->getLevelData()->getXZSize()) /
-                                               static_cast<float>(level->getLevelData()->getHellScale())));
+    int xzSize = level->getLevelData()->getXZSize();
+    int hellScale = level->getLevelData()->getHellScale();
+    int levelSize = static_cast<int>(std::ceil(static_cast<float>(xzSize) / static_cast<float>(hellScale)));
     mLevel = level;
     mGenerateStructures = generateStructures;
     mLevelSize = levelSize;
@@ -62,9 +63,9 @@ void NetherFlatLevelSource::buildSurfaces(int chunkX, int chunkZ, ChunkPrimer* p
     {
         for (int x = 0; x < 16; ++x)
         {
-            int blockIndex = (x << 11) | (z << 7) | 127;
-            for (int y = 127; y >= 0; --y, --blockIndex)
+            for (int y = 127; y >= 0; --y)
             {
+                int blockIndex = (x * 16 + z) * 128 + y;
                 bool placed = false;
 
                 if (chunkX <= -(mLevelSize / 2))

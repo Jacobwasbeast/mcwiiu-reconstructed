@@ -31,7 +31,7 @@ public:
     virtual ChunkGenerator* createFlatLevelSource() const;
     virtual OldChunkStorage* createStorage(File file);
     virtual bool isValidSpawn(int x, int z) const;
-    virtual double getTimeOfDay(long long time, float partialTick) const;
+    virtual float getTimeOfDay(long long time, float partialTick) const;
     virtual int getMoonPhase(long long time) const;
     virtual bool isNaturalDimension();
     virtual float* getSunriseColor(float celestialAngle, float timeOfDay);

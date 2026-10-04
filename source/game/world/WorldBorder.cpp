@@ -15,6 +15,10 @@ WorldBorder::WorldBorder(Level*)
 {
 }
 
+WorldBorder::~WorldBorder()
+{
+}
+
 BorderStatus* WorldBorder::GROWING = new BorderStatus(0x40ff80);
 BorderStatus* WorldBorder::SHRINKING = new BorderStatus(0xff3030);
 BorderStatus* WorldBorder::STATIONARY = new BorderStatus(0x20a0ff);
@@ -96,17 +100,23 @@ bool WorldBorder::isWithinBounds(const BlockPos& pos)
 
 bool WorldBorder::isWithinBounds(AABB* box)
 {
-    return box != NULL && box->mMaxX > getMinX() && box->mMinX < getMaxX() && box->mMaxZ > getMinZ() && box->mMinZ < getMaxZ();
+    return box->mMaxX > getMinX() && box->mMinX < getMaxX() && box->mMaxZ > getMinZ() && box->mMinZ < getMaxZ();
 }
 
 double WorldBorder::getDistanceToBorder(double x, double z)
 {
-    return std::min(std::min(x - getMinX(), getMaxX() - x), std::min(z - getMinZ(), getMaxZ() - z));
+    double fromMinZ = z - getMinZ();
+    double toMaxZ = getMaxZ() - z;
+    double fromMinX = x - getMinX();
+    double toMaxX = getMaxX() - x;
+    double distanceX = fromMinX < toMaxX ? fromMinX : toMaxX;
+    double distanceXZ = distanceX < fromMinZ ? distanceX : fromMinZ;
+    return distanceXZ < toMaxZ ? distanceXZ : toMaxZ;
 }
 
 double WorldBorder::getDistanceToBorder(boost::shared_ptr<Entity> entity)
 {
-    return entity ? getDistanceToBorder(entity->mX, entity->mZ) : 0.0;
+    return getDistanceToBorder(entity->mX, entity->mZ);
 }
 
 double WorldBorder::getCenterX() { return m_centerX; }

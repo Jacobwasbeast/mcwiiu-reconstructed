@@ -45,29 +45,27 @@ unsigned int ReadFile(int file, void* buffer, unsigned int bytesToRead, unsigned
 
 LevelGenerationOptions::LevelGenerationOptions(DLCPack* pack)
 {
-    mPack = pack;
-    mSource = eSrc_Unknown;
-    mGameRulesSource = NULL;
     mLoadedData = false;
     mBaseSaveData = NULL;
     mBaseSaveDataSize = 0;
-    mBaseSaveRoot = L"";
     mHasLevelSeed = false;
     mLevelSeed = 0;
     mUseFlatWorld = false;
     mSpawnPos = NULL;
     mLevelHasBeenInCreative = true;
-    mMapSize = -1;
-    mThemeId = -1;
-    mCloudHeight = 128;
-    mFogDistance = -1;
-    mDayTime = 6000;
     mMinYCalculated = false;
     mMinY = INT_MAX;
     mRequiresGameRules = false;
     mRequiredGameRules = NULL;
     mStringTable = NULL;
+    mPack = pack;
     mPackMountPending = false;
+    mBaseSaveRoot = L"";
+    mMapSize = -1;
+    mThemeId = -1;
+    mCloudHeight = 128;
+    mFogDistance = -1;
+    mDayTime = 6000;
     mCRCValid = false;
 }
 
@@ -174,18 +172,19 @@ unsigned int LevelGenerationOptions::getTexturePackId()
 
 const wchar_t* LevelGenerationOptions::getString(const std::wstring& key)
 {
-    if (mStringTable == NULL)
+    const wchar_t* result = L"";
+    if (mStringTable != NULL)
     {
-        return L"";
+        std::wstring value(mStringTable->getString(key));
+        if (key == L"IDS_DISPLAY_NAME" && value == L"")
+        {
+            return mStringTable->getString(std::wstring(L"title"));
+        }
+
+        result = mStringTable->getString(key);
     }
 
-    const wchar_t* value = mStringTable->getString(key);
-    if (key == L"IDS_DISPLAY_NAME" && value[0] == L'\0')
-    {
-        return mStringTable->getString(L"title");
-    }
-
-    return value;
+    return result;
 }
 
 std::wstring LevelGenerationOptions::getDefaultSaveName()
@@ -193,7 +192,9 @@ std::wstring LevelGenerationOptions::getDefaultSaveName()
     switch (getSrc())
     {
     case eSrc_Save:
+        return getString(info()->getDefaultSaveName());
     case eSrc_DLC:
+        return getString(info()->getDefaultSaveName());
     case eSrc_Local:
         return getString(info()->getDefaultSaveName());
     case eSrc_Tutorial:
@@ -208,7 +209,9 @@ const wchar_t* LevelGenerationOptions::getWorldName()
     switch (getSrc())
     {
     case eSrc_Save:
+        return getString(info()->getWorldName());
     case eSrc_DLC:
+        return getString(info()->getWorldName());
     case eSrc_Local:
         return getString(info()->getWorldName());
     case eSrc_Tutorial:
@@ -223,7 +226,9 @@ std::wstring LevelGenerationOptions::getWorldNameKey()
     switch (getSrc())
     {
     case eSrc_Save:
+        return info()->getWorldName();
     case eSrc_DLC:
+        return info()->getWorldName();
     case eSrc_Local:
         return info()->getWorldName();
     default:
@@ -236,7 +241,9 @@ const wchar_t* LevelGenerationOptions::getDisplayName()
     switch (getSrc())
     {
     case eSrc_Save:
+        return getString(info()->getDisplayName());
     case eSrc_DLC:
+        return getString(info()->getDisplayName());
     case eSrc_Local:
         return getString(info()->getDisplayName());
     default:
@@ -458,7 +465,10 @@ void LevelGenerationOptions::loadBaseSaveData()
 
 void LevelGenerationOptions::deleteBaseSaveData()
 {
-    delete[] mBaseSaveData;
+    if (mBaseSaveData != NULL)
+    {
+        delete mBaseSaveData;
+    }
     mBaseSaveData = NULL;
     mBaseSaveDataSize = 0;
 }
@@ -482,7 +492,8 @@ void LevelGenerationOptions::setBaseSaveData(File file)
     }
 
     char fileName[256];
-    int handle = CreateFileA(wstringtofilename(file.getPath(), fileName), 0x80000000, 0, NULL, 3, 0x8000000, 0);
+    char* path = wstringtofilename(file.getPath(), fileName);
+    int handle = CreateFileA(path, 0x80000000, 0, NULL, 3, 0x8000000, 0);
     if (handle != -1)
     {
         unsigned int size = GetFileSize(handle, NULL);
@@ -490,7 +501,7 @@ void LevelGenerationOptions::setBaseSaveData(File file)
         unsigned int bytesRead;
         if (ReadFile(handle, data, size, &bytesRead, NULL) == 0)
         {
-            gApp.FatalLoadError(L"<LevelGenerationOptions@%d> Failed to read %s", __LINE__, fileName);
+            gApp.FatalLoadError(L"<LevelGenerationOptions@%d> Failed to read %s", __LINE__, path);
         }
         CloseHandle(handle);
         setBaseSaveData(data, size);
@@ -602,27 +613,23 @@ GameRuleDefinition* LevelGenerationOptions::addChild(ConsoleGameRules::EGameRule
 
     if (type == ConsoleGameRules::eGameRuleType_ApplySchematic)
     {
-        ApplySchematicRuleDefinition* rule = new ApplySchematicRuleDefinition(this);
-        mSchematicRules.push_back(rule);
-        child = rule;
+        child = new ApplySchematicRuleDefinition(this);
+        mSchematicRules.push_back(static_cast<ApplySchematicRuleDefinition*>(child));
     }
     else if (type == ConsoleGameRules::eGameRuleType_GenerateStructure)
     {
-        ConsoleGenerateStructure* structure = new ConsoleGenerateStructure();
-        mStructures.push_back(structure);
-        child = structure;
+        child = new ConsoleGenerateStructure();
+        mStructures.push_back(static_cast<ConsoleGenerateStructure*>(child));
     }
     else if (type == ConsoleGameRules::eGameRuleType_BiomeOverride)
     {
-        BiomeOverride* biomeOverride = new BiomeOverride();
-        mBiomeOverrides.push_back(biomeOverride);
-        child = biomeOverride;
+        child = new BiomeOverride();
+        mBiomeOverrides.push_back(static_cast<BiomeOverride*>(child));
     }
     else if (type == ConsoleGameRules::eGameRuleType_StartFeature)
     {
-        StartFeature* feature = new StartFeature();
-        mFeatures.push_back(feature);
-        child = feature;
+        child = new StartFeature();
+        mFeatures.push_back(static_cast<StartFeature*>(child));
     }
 
     return child;
@@ -637,7 +644,7 @@ void LevelGenerationOptions::addAttribute(const std::wstring& name, const std::w
         return;
     }
 
-    if (name == L"spawnX" || name == L"spawnY" || name == L"spawnZ")
+    if (name == L"spawnX")
     {
         BlockPos spawn;
         if (mSpawnPos != NULL)
@@ -645,11 +652,31 @@ void LevelGenerationOptions::addAttribute(const std::wstring& name, const std::w
             spawn = *mSpawnPos;
             delete mSpawnPos;
         }
+        mSpawnPos = new BlockPos(_fromString<int>(value), spawn.y, spawn.z);
+        return;
+    }
 
-        if (name == L"spawnX") spawn.x = _fromString<int>(value);
-        if (name == L"spawnY") spawn.y = _fromString<int>(value);
-        if (name == L"spawnZ") spawn.z = _fromString<int>(value);
-        mSpawnPos = new BlockPos(spawn);
+    if (name == L"spawnY")
+    {
+        BlockPos spawn;
+        if (mSpawnPos != NULL)
+        {
+            spawn = *mSpawnPos;
+            delete mSpawnPos;
+        }
+        mSpawnPos = new BlockPos(spawn.x, _fromString<int>(value), spawn.z);
+        return;
+    }
+
+    if (name == L"spawnZ")
+    {
+        BlockPos spawn;
+        if (mSpawnPos != NULL)
+        {
+            spawn = *mSpawnPos;
+            delete mSpawnPos;
+        }
+        mSpawnPos = new BlockPos(spawn.x, spawn.y, _fromString<int>(value));
         return;
     }
 
@@ -660,27 +687,32 @@ void LevelGenerationOptions::addAttribute(const std::wstring& name, const std::w
     }
     if (name == L"saveName")
     {
-        setDefaultSaveName(value);
+        std::wstring saveName(value);
+        setDefaultSaveName(saveName);
         return;
     }
     if (name == L"worldName")
     {
-        setWorldName(value);
+        std::wstring worldName(value);
+        setWorldName(worldName);
         return;
     }
     if (name == L"displayName")
     {
-        setDisplayName(value);
+        std::wstring displayName(value);
+        setDisplayName(displayName);
         return;
     }
     if (name == L"worldDescription")
     {
-        setWorldDescription(value);
+        std::wstring worldDescription(value);
+        setWorldDescription(worldDescription);
         return;
     }
     if (name == L"worldPreviewImage")
     {
-        setWorldPreviewImage(value);
+        std::wstring previewImage(value);
+        setWorldPreviewImage(previewImage);
         return;
     }
     if (name == L"texturePackId")
@@ -778,9 +810,9 @@ int LevelGenerationOptions::getDayTime()
     return mDayTime;
 }
 
-short LevelGenerationOptions::GetMapSizeFromUniqueId(int uniqueId)
+unsigned short LevelGenerationOptions::GetMapSizeFromUniqueId(int uniqueId)
 {
-    return uniqueId >> 16;
+    return static_cast<unsigned int>(uniqueId) >> 16;
 }
 
 ConsoleSchematicFile* LevelGenerationOptions::getSchematicFile(const std::wstring& name) const
@@ -802,13 +834,15 @@ void LevelGenerationOptions::processSchematics(LevelChunk* chunk)
         (*it)->processSchematic(chunkBox, chunk);
     }
 
+    int chunkMinX = chunk->x * 16;
+    int chunkMinZ = chunk->z * 16;
     for (std::vector<ConsoleGenerateStructure*>::iterator it = mStructures.begin(); it != mStructures.end(); ++it)
     {
         ConsoleGenerateStructure* structure = *it;
-        if (structure->getBoundingBox()->intersects(minX, minZ, minX + 15, minZ + 15))
+        if (structure->getBoundingBox()->intersects(chunkMinX, chunkMinZ, chunkMinX + 15, chunkMinZ + 15))
         {
             Random random;
-            BoundingBox* box = new BoundingBox(minX, minZ, minX + 15, minZ + 15);
+            BoundingBox* box = new BoundingBox(chunkMinX, chunkMinZ, chunkMinX + 15, chunkMinZ + 15);
             structure->postProcess(chunk->level, random, box);
             delete box;
         }
@@ -858,13 +892,24 @@ bool LevelGenerationOptions::checkIntersects(const BlockPos& min, const BlockPos
     }
 
     bool intersects = false;
-    for (std::vector<ApplySchematicRuleDefinition*>::iterator it = mSchematicRules.begin(); it != mSchematicRules.end() && !intersects; ++it)
+    for (std::vector<ApplySchematicRuleDefinition*>::iterator it = mSchematicRules.begin(); it != mSchematicRules.end(); ++it)
     {
         intersects = (*it)->checkIntersects(min, max);
+        if (intersects)
+        {
+            break;
+        }
     }
-    for (std::vector<ConsoleGenerateStructure*>::iterator it = mStructures.begin(); it != mStructures.end() && !intersects; ++it)
+    if (!intersects)
     {
-        intersects = (*it)->checkIntersects(min, max);
+        for (std::vector<ConsoleGenerateStructure*>::iterator it = mStructures.begin(); it != mStructures.end(); ++it)
+        {
+            intersects = (*it)->checkIntersects(min, max);
+            if (intersects)
+            {
+                break;
+            }
+        }
     }
 
     PIXEndNamedEvent();
@@ -914,11 +959,13 @@ void LevelGenerationOptions::setRequiredGameRules(LevelRuleset* ruleset)
 
 void LevelGenerationOptions::getBiomeOverride(int biome, Biome::BlockPair* top, Biome::BlockPair* filler)
 {
-    for (std::vector<BiomeOverride*>::iterator it = mBiomeOverrides.begin(); it != mBiomeOverrides.end(); ++it)
+    std::vector<BiomeOverride*>::iterator end = mBiomeOverrides.end();
+    for (std::vector<BiomeOverride*>::iterator it = mBiomeOverrides.begin(); it != end; ++it)
     {
-        if ((*it)->isBiome(biome))
+        BiomeOverride* biomeOverride = *it;
+        if (biomeOverride->isBiome(biome))
         {
-            (*it)->getBlockValues(top, filler);
+            biomeOverride->getBlockValues(top, filler);
             return;
         }
     }
@@ -926,26 +973,31 @@ void LevelGenerationOptions::getBiomeOverride(int biome, Biome::BlockPair* top, 
 
 bool LevelGenerationOptions::isFeatureChunk(int chunkX, int chunkZ, StructureFeature::EFeatureTypes type, const Direction** direction)
 {
+    bool found = false;
     for (std::vector<StartFeature*>::iterator it = mFeatures.begin(); it != mFeatures.end(); ++it)
     {
         if ((*it)->isFeatureChunk(chunkX, chunkZ, type, direction))
         {
-            return true;
+            found = true;
+            break;
         }
     }
-    return false;
+    return found;
 }
 
 bool LevelGenerationOptions::hasFeature(StructureFeature::EFeatureTypes type)
 {
-    for (std::vector<StartFeature*>::iterator it = mFeatures.begin(); it != mFeatures.end(); ++it)
+    bool found = false;
+    std::vector<StartFeature*>::iterator end = mFeatures.end();
+    for (std::vector<StartFeature*>::iterator it = mFeatures.begin(); it != end; ++it)
     {
         if ((*it)->getFeatureType() == type)
         {
-            return true;
+            found = true;
+            break;
         }
     }
-    return false;
+    return found;
 }
 
 BlockPos* LevelGenerationOptions::getClosestFeature(StructureFeature::EFeatureTypes type, const BlockPos& pos)
@@ -956,17 +1008,21 @@ BlockPos* LevelGenerationOptions::getClosestFeature(StructureFeature::EFeatureTy
     int closestZ = 0;
     int closestDistance = INT_MAX;
 
-    for (std::vector<StartFeature*>::iterator it = mFeatures.begin(); it != mFeatures.end(); ++it)
+    std::vector<StartFeature*>::iterator end = mFeatures.end();
+    for (std::vector<StartFeature*>::iterator it = mFeatures.begin(); it != end; ++it)
     {
-        if ((*it)->getFeatureType() == type)
+        StartFeature* feature = *it;
+        if (feature->getFeatureType() == type)
         {
-            int xDistance = (*it)->getChunkX() - chunkX;
-            int zDistance = (*it)->getChunkZ() - chunkZ;
+            int featureChunkX = feature->getChunkX();
+            int xDistance = chunkX - featureChunkX;
+            int featureChunkZ = feature->getChunkZ();
+            int zDistance = chunkZ - featureChunkZ;
             int distance = xDistance * xDistance + zDistance * zDistance;
             if (distance < closestDistance)
             {
-                closestX = (*it)->getChunkX();
-                closestZ = (*it)->getChunkZ();
+                closestX = featureChunkX;
+                closestZ = featureChunkZ;
                 closestDistance = distance;
             }
         }

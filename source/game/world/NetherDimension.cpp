@@ -24,7 +24,7 @@ void NetherDimension::init()
 
 Vec3* NetherDimension::getFogColor(float celestialAngle, float timeOfDay)
 {
-    return Vec3::newTemp(0.2, 0.03, 0.03);
+    return Vec3::newTemp(0.2f, 0.03f, 0.03f);
 }
 
 void NetherDimension::updateLightRamp()
@@ -32,19 +32,19 @@ void NetherDimension::updateLightRamp()
     const float base = 1.0f;
     const float scale = 15.0f;
     const float ambient = 3.0f;
+    float* ramp = mBrightnessRamp;
     for (int i = 0; i < 16; ++i)
     {
         float light = base - (float)i / scale;
-        mBrightnessRamp[i] = (base - light) / (light * ambient + base) * 0.9f + 0.1f;
+        ramp[i] = (base - light) / (light * ambient + base) * 0.9f + 0.1f;
     }
 }
 
 ChunkGenerator* NetherDimension::createRandomLevelGenerator() const
 {
-    LevelData* levelData = mLevel->getLevelData();
     if (mLevelType == LevelType::FLAT)
-        return new NetherFlatLevelSource(mLevel, levelData->isGenerateMapFeatures(), mLevel->getSeed());
-    return new NetherLevelSource(mLevel, levelData->isGenerateMapFeatures(), mLevel->getSeed());
+        return new NetherFlatLevelSource(mLevel, mLevel->getLevelData()->isGenerateMapFeatures(), mLevel->getSeed());
+    return new NetherLevelSource(mLevel, mLevel->getLevelData()->isGenerateMapFeatures(), mLevel->getSeed());
 }
 
 bool NetherDimension::isNaturalDimension()
@@ -57,9 +57,9 @@ bool NetherDimension::isValidSpawn(int x, int z) const
     return false;
 }
 
-double NetherDimension::getTimeOfDay(long long time, float partialTick) const
+float NetherDimension::getTimeOfDay(long long time, float partialTick) const
 {
-    return 0.5;
+    return 0.5f;
 }
 
 bool NetherDimension::mayRespawn() const

@@ -34,6 +34,15 @@
 #include "game/world/generation/WoodlandMansionFeature.hpp"
 #include "game/core/XMem.hpp"
 
+static const std::wstring kStrongholdName(L"StrongHold");
+static const std::wstring kVillageName(L"Village");
+static const std::wstring kMonumentName(L"Monument");
+static const std::wstring kMansionName(L"Mansion");
+static const std::wstring kTempleName(L"Temple");
+static const std::wstring kMineshaftName(L"Mineshaft");
+static const std::wstring kBuriedTreasureName(L"BuriedTreasure");
+static const std::wstring kShipwreckName(L"Shipwreck");
+static const std::wstring kRuinName(L"Ruin");
 
 FlatLevelSource::FlatLevelSource(Level* level, long long seed, bool generateStructures, SuperflatConfig* config)
     : mRandom(),
@@ -57,33 +66,33 @@ FlatLevelSource::FlatLevelSource(Level* level, long long seed, bool generateStru
 
         if (generatorInfo.hasVillage())
         {
-            mStructureFeatures[L"Village"] = generatorInfo.getVillage(mLevelSize);
+            mStructureFeatures[kVillageName] = generatorInfo.getVillage(mLevelSize);
         }
         if (generatorInfo.hasBiomeSpecific())
         {
-            mStructureFeatures[L"Temple"] = generatorInfo.getBiomeSpecific();
-            mStructureFeatures[L"Ruin"] = new OceanRuinFeature(config);
+            mStructureFeatures[kTempleName] = generatorInfo.getBiomeSpecific();
+            mStructureFeatures[kRuinName] = new OceanRuinFeature(config);
         }
         if (generatorInfo.hasMineshaft())
         {
-            mStructureFeatures[L"Mineshaft"] = generatorInfo.getMineshaft();
+            mStructureFeatures[kMineshaftName] = generatorInfo.getMineshaft();
         }
         if (generatorInfo.hasStronghold())
         {
-            mStructureFeatures[L"StrongHold"] = generatorInfo.getStronghold();
+            mStructureFeatures[kStrongholdName] = generatorInfo.getStronghold();
         }
         if (generatorInfo.hasOceanMonument())
         {
             mOceanMonument = generatorInfo.getOceanMonument();
-            mStructureFeatures[L"Monument"] = mOceanMonument;
+            mStructureFeatures[kMonumentName] = mOceanMonument;
         }
         if (generatorInfo.hasWoodlandMansion())
         {
-            mStructureFeatures[L"Mansion"] = new WoodlandMansionFeature(this, config);
+            mStructureFeatures[kMansionName] = new WoodlandMansionFeature(this, config);
         }
         if (generatorInfo.hasShipwrecks())
         {
-            mStructureFeatures[L"Shipwreck"] = generatorInfo.getShipwreck(this, mOceanMonument);
+            mStructureFeatures[kShipwreckName] = generatorInfo.getShipwreck(this, mOceanMonument);
         }
     }
 
@@ -184,14 +193,14 @@ LevelChunk* FlatLevelSource::createChunk(int chunkX, int chunkZ)
 
     for (StructureMap::iterator feature = mStructureFeatures.begin(); feature != mStructureFeatures.end(); ++feature)
     {
-        if (feature->first != L"Shipwreck")
+        if (feature->first != kShipwreckName)
         {
             feature->second->apply(mLevel, chunkX, chunkZ, &primer);
         }
     }
     for (StructureMap::iterator feature = mStructureFeatures.begin(); feature != mStructureFeatures.end(); ++feature)
     {
-        if (feature->first == L"Shipwreck")
+        if (feature->first == kShipwreckName)
         {
             feature->second->apply(mLevel, chunkX, chunkZ, &primer);
         }
@@ -260,7 +269,7 @@ void FlatLevelSource::postProcess(int chunkX, int chunkZ)
     {
         for (int index = 0; index < 8; ++index)
         {
-            MonsterRoomFeature feature;
+            MonsterRoomFeature feature = MonsterRoomFeature();
             BlockPos pos = origin.offset(mPopulationRandom.nextInt(16) + 8,
                                          mPopulationRandom.nextInt(128),
                                          mPopulationRandom.nextInt(16) + 8);
@@ -294,47 +303,45 @@ std::vector<Biome::MobSpawnerData*>* FlatLevelSource::getMobsAt(MobCategory* cat
 
 BlockPos* FlatLevelSource::findNearestMapFeature(Level* level, const std::wstring& featureName, const BlockPos& pos, bool findUnexplored)
 {
-    StructureMap::iterator feature;
-
-    if (featureName == L"StrongHold" && (feature = mStructureFeatures.find(featureName)) != mStructureFeatures.end())
+    if (kStrongholdName == featureName && mStructureFeatures.find(kStrongholdName) != mStructureFeatures.end())
     {
-        return feature->second->getNearestGeneratedFeature(level, pos, findUnexplored);
+        return mStructureFeatures.find(kStrongholdName)->second->getNearestGeneratedFeature(level, pos, findUnexplored);
     }
-    if (featureName == L"StrongHold" && mStructureFeatures.find(L"StrongHold") != mStructureFeatures.end())
+    if (kStrongholdName == featureName && mStructureFeatures.find(kStrongholdName) != mStructureFeatures.end())
     {
-        return mStructureFeatures.find(L"StrongHold")->second->getNearestGeneratedFeature(level, pos, findUnexplored);
+        return mStructureFeatures.find(kStrongholdName)->second->getNearestGeneratedFeature(level, pos, findUnexplored);
     }
-    if (featureName == L"Shipwreck" && mStructureFeatures.find(L"Shipwreck") != mStructureFeatures.end())
+    if (kShipwreckName == featureName && mStructureFeatures.find(kShipwreckName) != mStructureFeatures.end())
     {
-        return mStructureFeatures.find(L"Shipwreck")->second->getNearestGeneratedFeature(level, pos, findUnexplored);
+        return mStructureFeatures.find(kShipwreckName)->second->getNearestGeneratedFeature(level, pos, findUnexplored);
     }
-    if (featureName == L"Mansion" && mStructureFeatures.find(L"Mansion") != mStructureFeatures.end())
+    if (kMansionName == featureName && mStructureFeatures.find(kMansionName) != mStructureFeatures.end())
     {
-        return mStructureFeatures.find(L"Mansion")->second->getNearestGeneratedFeature(level, pos, findUnexplored);
+        return mStructureFeatures.find(kMansionName)->second->getNearestGeneratedFeature(level, pos, findUnexplored);
     }
-    if (featureName == L"Monument" && mStructureFeatures.find(L"Monument") != mStructureFeatures.end())
+    if (kMonumentName == featureName && mStructureFeatures.find(kMonumentName) != mStructureFeatures.end())
     {
-        return mStructureFeatures.find(L"Monument")->second->getNearestGeneratedFeature(level, pos, findUnexplored);
+        return mStructureFeatures.find(kMonumentName)->second->getNearestGeneratedFeature(level, pos, findUnexplored);
     }
-    if (featureName == L"Village" && mStructureFeatures.find(L"Village") != mStructureFeatures.end())
+    if (kVillageName == featureName && mStructureFeatures.find(kVillageName) != mStructureFeatures.end())
     {
-        return mStructureFeatures.find(L"Village")->second->getNearestGeneratedFeature(level, pos, findUnexplored);
+        return mStructureFeatures.find(kVillageName)->second->getNearestGeneratedFeature(level, pos, findUnexplored);
     }
-    if (featureName == L"Mineshaft" && mStructureFeatures.find(L"Mineshaft") != mStructureFeatures.end())
+    if (kMineshaftName == featureName && mStructureFeatures.find(kMineshaftName) != mStructureFeatures.end())
     {
-        return mStructureFeatures.find(L"Mineshaft")->second->getNearestGeneratedFeature(level, pos, findUnexplored);
+        return mStructureFeatures.find(kMineshaftName)->second->getNearestGeneratedFeature(level, pos, findUnexplored);
     }
-    if (featureName == L"Temple" && mStructureFeatures.find(L"Temple") != mStructureFeatures.end())
+    if (kTempleName == featureName && mStructureFeatures.find(kTempleName) != mStructureFeatures.end())
     {
-        return mStructureFeatures.find(L"Temple")->second->getNearestGeneratedFeature(level, pos, findUnexplored);
+        return mStructureFeatures.find(kTempleName)->second->getNearestGeneratedFeature(level, pos, findUnexplored);
     }
-    if (featureName == L"BuriedTreasure" && mStructureFeatures.find(L"BuriedTreasure") != mStructureFeatures.end())
+    if (kBuriedTreasureName == featureName && mStructureFeatures.find(kBuriedTreasureName) != mStructureFeatures.end())
     {
-        return mStructureFeatures.find(L"BuriedTreasure")->second->getNearestGeneratedFeature(level, pos, findUnexplored);
+        return mStructureFeatures.find(kBuriedTreasureName)->second->getNearestGeneratedFeature(level, pos, findUnexplored);
     }
-    if (featureName == L"Ruin" && mStructureFeatures.find(L"Ruin") != mStructureFeatures.end())
+    if (kRuinName == featureName && mStructureFeatures.find(kRuinName) != mStructureFeatures.end())
     {
-        return mStructureFeatures.find(L"Ruin")->second->getNearestGeneratedFeature(level, pos, findUnexplored);
+        return mStructureFeatures.find(kRuinName)->second->getNearestGeneratedFeature(level, pos, findUnexplored);
     }
     return NULL;
 }

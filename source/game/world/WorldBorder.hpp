@@ -35,7 +35,7 @@ public:
     static BorderStatus* STATIONARY;
 
     explicit WorldBorder(Level* level);
-    virtual ~WorldBorder() {}
+    virtual ~WorldBorder();
     BorderStatus* getStatus();
     std::vector<BorderChangeListener*>& getListeners();
     void setSize(double size);

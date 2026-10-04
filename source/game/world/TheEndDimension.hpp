@@ -19,7 +19,7 @@ public:
     virtual int getXZSize();
     virtual void init();
     virtual ChunkGenerator* createRandomLevelGenerator() const;
-    virtual double getTimeOfDay(long long time, float partialTick) const;
+    virtual float getTimeOfDay(long long time, float partialTick) const;
     virtual float* getSunriseColor(float celestialAngle, float timeOfDay);
     virtual Vec3* getFogColor(float celestialAngle, float timeOfDay);
     virtual bool hasGround();
@@ -41,7 +41,7 @@ public:
 
 private:
     EndDragonFight* mDragonFight;
-    unsigned char* mChunkData;
+    char* mChunkData;
     bool mModernEnd;
 };
 

@@ -70,6 +70,8 @@ class Level : public LevelSource
     friend class LevelChunk;
     friend class ServerLevel;
     friend class DynamicLiquidBlock;
+    friend class GenerationWriteTask;
+    friend class VillageSiege;
 public:
     enum ESPAWN_TYPE
     {
@@ -80,7 +82,7 @@ public:
     class RangeModifier
     {
     public:
-        virtual ~RangeModifier();
+        virtual ~RangeModifier() {}
         virtual double apply(boost::shared_ptr<Player> player) const = 0;
     };
 
@@ -193,15 +195,15 @@ public:
     virtual const BlockState* getBlockState(const BlockPos& pos);
     virtual const BlockState* getBlockState(EntityTickCache& tickCache, const BlockPos& pos);
     virtual const BlockState* getBlockState(LevelChunk* chunk, EntityTickCache& tickCache, const BlockPos& pos);
-    int getBlockId(int x, int y, int z);
-    int getBlockId(EntityTickCache& tickCache, int x, int y, int z);
-    unsigned short getElement(EntityTickCache& tickCache, int x, int y, int z);
-    unsigned short getElement(int x, int y, int z);
+    virtual int getBlockId(int x, int y, int z);
+    virtual int getBlockId(EntityTickCache& tickCache, int x, int y, int z);
+    virtual void getBlockAndExtraBlockId(int x, int y, int z, int* blockId, int* extraBlockId);
+    virtual unsigned short getElement(EntityTickCache& tickCache, int x, int y, int z);
+    virtual unsigned short getElement(int x, int y, int z);
     unsigned short getExtraElement(int x, int y, int z);
     void getElementAndExtraElement(int x, int y, int z, unsigned short* element, unsigned short* extraElement);
     bool sectionContainsBlockId(int x, int y, int z, int blockId);
     int getExtraBlockId(int x, int y, int z);
-    void getBlockAndExtraBlockId(int x, int y, int z, int* blockId, int* extraBlockId);
     Block* getExtraBlock(const BlockPos& pos);
     void getBlockAndExtraBlock(const BlockPos& pos, Block** block, Block** extraBlock);
     Block* getLiquidBlock(const BlockPos& pos);
@@ -303,7 +305,7 @@ public:
     bool isTouchingMaterial(const BlockPos& pos, const Material* material);
     double getSeenPercent(Vec3* source, AABB* box);
     bool extinguishFire(boost::shared_ptr<Player> player, const BlockPos& pos, const Direction* direction);
-    void gatherChunkSourceStats();
+    std::wstring gatherChunkSourceStats();
     boost::shared_ptr<BlockEntity> getPendingBlockEntityAt(const BlockPos& pos);
     virtual boost::shared_ptr<BlockEntity> getBlockEntity(const BlockPos& pos);
     void setBlockEntity(const BlockPos& pos, boost::shared_ptr<BlockEntity> entity);
@@ -361,7 +363,7 @@ public:
                                                bool includeCreative, double maxYDistance);
     std::vector<boost::shared_ptr<Player> >* getNearbyPlayers(boost::shared_ptr<Entity> entity, double distance);
     bool hasNearPlayer(double x, double y, double z, double distance);
-    boost::shared_ptr<Player> getNearestPlayer(double x, double y, double z);
+    boost::shared_ptr<Player> getNearestPlayer(double x, double z, double distance);
     boost::shared_ptr<Player> getNearestAttackablePlayer(double x, double y, double z, double distance,
         double maxYDistance, const RangeModifier* modifier,
         const Predicate<boost::shared_ptr<Entity> >* predicate);

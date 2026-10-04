@@ -5,6 +5,8 @@
 #include "game/data/DataFixer.hpp"
 #include "game/data/ListTag.hpp"
 
+static const std::wstring RIDING_TAG(L"Riding");
+
 LEVELDATA_DataWalker::~LEVELDATA_DataWalker()
 {
 }
@@ -21,11 +23,9 @@ CompoundTag* LEVELDATA_DataWalker::walk(DataFixer* fixer, CompoundTag* tag, int 
 
             for (int i = 0; i < entities->size(); i++)
             {
-                CompoundTag* entity = (CompoundTag*)entities->get(i);
-
-                if (entity->contains(L"Riding", Tag::TAG_LIST))
+                if (((CompoundTag*)entities->get(i))->contains(RIDING_TAG, Tag::TAG_LIST))
                 {
-                    ListTag* passengers = entity->getList(L"Riding", Tag::TAG_COMPOUND);
+                    ListTag* passengers = ((CompoundTag*)entities->get(i))->getList(RIDING_TAG, Tag::TAG_COMPOUND);
 
                     for (int j = 0; j < passengers->size(); j++)
                     {
@@ -36,7 +36,7 @@ CompoundTag* LEVELDATA_DataWalker::walk(DataFixer* fixer, CompoundTag* tag, int 
                 }
 
                 entities->set(i,
-                    fixer->update(DataFixTypes::eDataFixTypes_Entity, entity, version));
+                    fixer->update(DataFixTypes::eDataFixTypes_Entity, (CompoundTag*)entities->get(i), version));
             }
         }
 

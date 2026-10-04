@@ -31,12 +31,13 @@
 
 
 static FjNetherrackBlockPred sNetherrackPredicate;
+static const std::wstring FORTRESS_NAME(L"Fortress");
 
 NetherLevelSource::NetherLevelSource(Level* level, bool generateStructures, long long seed)
 {
-    mLevelSize = static_cast<int>(std::ceil(
-        static_cast<float>(level->getLevelData()->getXZSize()) /
-        static_cast<float>(level->getLevelData()->getHellScale())));
+    int xzSize = level->getLevelData()->getXZSize();
+    int hellScale = level->getLevelData()->getHellScale();
+    mLevelSize = static_cast<int>(std::ceil(static_cast<float>(xzSize) / static_cast<float>(hellScale)));
     mGenerateStructures = generateStructures;
     mLevel = level;
     mRandom = Random(seed);
@@ -102,17 +103,15 @@ void NetherLevelSource::prepareHeights(int chunkX, int chunkZ, ChunkPrimer* prim
                 double s1 = buffer.data[((xc + 0) * 5 + zc + 1) * 17 + yc + 0];
                 double s2 = buffer.data[((xc + 1) * 5 + zc + 0) * 17 + yc + 0];
                 double s3 = buffer.data[((xc + 1) * 5 + zc + 1) * 17 + yc + 0];
-                const double s0a = (buffer.data[((xc + 0) * 5 + zc + 0) * 17 + yc + 1] - s0) * 0.125;
-                const double s1a = (buffer.data[((xc + 0) * 5 + zc + 1) * 17 + yc + 1] - s1) * 0.125;
-                const double s2a = (buffer.data[((xc + 1) * 5 + zc + 0) * 17 + yc + 1] - s2) * 0.125;
-                const double s3a = (buffer.data[((xc + 1) * 5 + zc + 1) * 17 + yc + 1] - s3) * 0.125;
+                const double s0Rise = buffer.data[((xc + 0) * 5 + zc + 0) * 17 + yc + 1] - s0;
+                const double s1Rise = buffer.data[((xc + 0) * 5 + zc + 1) * 17 + yc + 1] - s1;
+                const double s2Rise = buffer.data[((xc + 1) * 5 + zc + 0) * 17 + yc + 1] - s2;
+                const double s3Rise = buffer.data[((xc + 1) * 5 + zc + 1) * 17 + yc + 1] - s3;
 
                 for (int y = 0; y < 8; ++y)
                 {
                     double x0 = s0;
                     double x1 = s1;
-                    const double xStep0 = (s2 - s0) * 0.25;
-                    const double xStep1 = (s3 - s1) * 0.25;
 
                     for (int x = 0; x < 4; ++x)
                     {
@@ -134,14 +133,14 @@ void NetherLevelSource::prepareHeights(int chunkX, int chunkZ, ChunkPrimer* prim
                             value += zStep;
                         }
 
-                        x0 += xStep0;
-                        x1 += xStep1;
+                        x0 += (s2 - s0) * 0.25;
+                        x1 += (s3 - s1) * 0.25;
                     }
 
-                    s0 += s0a;
-                    s1 += s1a;
-                    s2 += s2a;
-                    s3 += s3a;
+                    s0 += s0Rise * 0.125;
+                    s1 += s1Rise * 0.125;
+                    s2 += s2Rise * 0.125;
+                    s3 += s3Rise * 0.125;
                 }
             }
         }
@@ -176,20 +175,20 @@ void NetherLevelSource::buildSurfaces(int chunkX, int chunkZ, ChunkPrimer* prime
 
             for (int y = 127; y >= 0; --y)
             {
-                const int offs = ((x << 11) | (z << 7)) + y;
+                const int offs = (x * 16 + z) * 128 + y;
                 bool edge = false;
 
-                if (chunkX <= -mLevelSize / 2)
+                if (chunkX <= -(mLevelSize / 2))
                 {
-                    if (x - mRandom.nextInt(4) <= 0 || chunkX < -mLevelSize / 2)
+                    if (x - mRandom.nextInt(4) <= 0 || chunkX < -(mLevelSize / 2))
                     {
                         primer->setState(offs, Blocks::bedrock->defaultBlockState());
                         edge = true;
                     }
                 }
-                if (chunkZ <= -mLevelSize / 2)
+                if (chunkZ <= -(mLevelSize / 2))
                 {
-                    if (z - mRandom.nextInt(4) <= 0 || chunkZ < -mLevelSize / 2)
+                    if (z - mRandom.nextInt(4) <= 0 || chunkZ < -(mLevelSize / 2))
                     {
                         primer->setState(offs, Blocks::bedrock->defaultBlockState());
                         edge = true;
@@ -257,7 +256,7 @@ void NetherLevelSource::buildSurfaces(int chunkX, int chunkZ, ChunkPrimer* prime
                                     {
                                         wartY = 127;
                                     }
-                                    const int wartOffs = ((x << 11) | (z << 7)) + wartY;
+                                    const int wartOffs = (x * 16 + z) * 128 + wartY;
                                     if (primer->getState(wartOffs)->getBlock() != Blocks::bedrock)
                                     {
                                         primer->setState(wartOffs, Blocks::nether_wart->defaultBlockState());
@@ -452,75 +451,48 @@ void NetherLevelSource::postProcess(int chunkX, int chunkZ)
 
     for (int i = 0; i < 8; ++i)
     {
-        const int x = mPopulationRandom.nextInt(16) + 8;
-        const int y = mPopulationRandom.nextInt(120) + 4;
-        const int z = mPopulationRandom.nextInt(16) + 8;
-        mLavaSpringOpen->place(mLevel, mPopulationRandom, origin.offset(x, y, z));
+        mLavaSpringOpen->place(mLevel, mPopulationRandom, origin.offset(mPopulationRandom.nextInt(16) + 8, mPopulationRandom.nextInt(120) + 4, mPopulationRandom.nextInt(16) + 8));
     }
 
     for (int i = 0; i < mPopulationRandom.nextInt(mPopulationRandom.nextInt(10) + 1) + 1; ++i)
     {
-        const int x = mPopulationRandom.nextInt(16) + 8;
-        const int y = mPopulationRandom.nextInt(120) + 4;
-        const int z = mPopulationRandom.nextInt(16) + 8;
-        mFireFeature->place(mLevel, mPopulationRandom, origin.offset(x, y, z));
+        mFireFeature->place(mLevel, mPopulationRandom, origin.offset(mPopulationRandom.nextInt(16) + 8, mPopulationRandom.nextInt(120) + 4, mPopulationRandom.nextInt(16) + 8));
     }
 
     for (int i = 0; i < mPopulationRandom.nextInt(mPopulationRandom.nextInt(10) + 1); ++i)
     {
-        const int x = mPopulationRandom.nextInt(16) + 8;
-        const int y = mPopulationRandom.nextInt(120) + 4;
-        const int z = mPopulationRandom.nextInt(16) + 8;
-        mLightGemFeature->place(mLevel, mPopulationRandom, origin.offset(x, y, z));
+        mLightGemFeature->place(mLevel, mPopulationRandom, origin.offset(mPopulationRandom.nextInt(16) + 8, mPopulationRandom.nextInt(120) + 4, mPopulationRandom.nextInt(16) + 8));
     }
 
     for (int i = 0; i < 10; ++i)
     {
-        const int x = mPopulationRandom.nextInt(16) + 8;
-        const int y = mPopulationRandom.nextInt(128);
-        const int z = mPopulationRandom.nextInt(16) + 8;
-        mHellPortalFeature->place(mLevel, mPopulationRandom, origin.offset(x, y, z));
+        mHellPortalFeature->place(mLevel, mPopulationRandom, origin.offset(mPopulationRandom.nextInt(16) + 8, mPopulationRandom.nextInt(128), mPopulationRandom.nextInt(16) + 8));
     }
 
     if (mPopulationRandom.nextBoolean())
     {
-        const int x = mPopulationRandom.nextInt(16) + 8;
-        const int y = mPopulationRandom.nextInt(128);
-        const int z = mPopulationRandom.nextInt(16) + 8;
-        mBrownMushroom->place(mLevel, mPopulationRandom, origin.offset(x, y, z));
+        mBrownMushroom->place(mLevel, mPopulationRandom, origin.offset(mPopulationRandom.nextInt(16) + 8, mPopulationRandom.nextInt(128), mPopulationRandom.nextInt(16) + 8));
     }
 
     if (mPopulationRandom.nextBoolean())
     {
-        const int x = mPopulationRandom.nextInt(16) + 8;
-        const int y = mPopulationRandom.nextInt(128);
-        const int z = mPopulationRandom.nextInt(16) + 8;
-        mRedMushroom->place(mLevel, mPopulationRandom, origin.offset(x, y, z));
+        mRedMushroom->place(mLevel, mPopulationRandom, origin.offset(mPopulationRandom.nextInt(16) + 8, mPopulationRandom.nextInt(128), mPopulationRandom.nextInt(16) + 8));
     }
 
     for (int i = 0; i < 16; ++i)
     {
-        const int x = mPopulationRandom.nextInt(16);
-        const int y = mPopulationRandom.nextInt(108) + 10;
-        const int z = mPopulationRandom.nextInt(16);
-        mQuartzOre->place(mLevel, mPopulationRandom, origin.offset(x, y, z));
+        mQuartzOre->place(mLevel, mPopulationRandom, origin.offset(mPopulationRandom.nextInt(16), mPopulationRandom.nextInt(108) + 10, mPopulationRandom.nextInt(16)));
     }
 
     const int magmaLevel = mLevel->getSeaLevel() / 2 - 4;
     for (int i = 0; i < 4; ++i)
     {
-        const int x = mPopulationRandom.nextInt(16);
-        const int y = magmaLevel + mPopulationRandom.nextInt(10);
-        const int z = mPopulationRandom.nextInt(16);
-        mMagmaOre->place(mLevel, mPopulationRandom, origin.offset(x, y, z));
+        mMagmaOre->place(mLevel, mPopulationRandom, origin.offset(mPopulationRandom.nextInt(16), magmaLevel + mPopulationRandom.nextInt(10), mPopulationRandom.nextInt(16)));
     }
 
     for (int i = 0; i < 16; ++i)
     {
-        const int x = mPopulationRandom.nextInt(16);
-        const int y = mPopulationRandom.nextInt(108) + 10;
-        const int z = mPopulationRandom.nextInt(16);
-        mLavaSpring->place(mLevel, mPopulationRandom, origin.offset(x, y, z));
+        mLavaSpring->place(mLevel, mPopulationRandom, origin.offset(mPopulationRandom.nextInt(16), mPopulationRandom.nextInt(108) + 10, mPopulationRandom.nextInt(16)));
     }
 
     biome->decorate(mLevel, mPopulationRandom, BlockPos(chunkX * 16, 0, chunkZ * 16));
@@ -557,7 +529,7 @@ std::vector<Biome::MobSpawnerData*>* NetherLevelSource::getMobsAt(MobCategory* c
 BlockPos* NetherLevelSource::findNearestMapFeature(Level* level, const std::wstring& feature,
                                                     const BlockPos& pos, bool findUnexplored)
 {
-    if (feature == L"Fortress" && mNetherBridgeFeature != NULL)
+    if (FORTRESS_NAME == feature && mNetherBridgeFeature != NULL)
     {
         return mNetherBridgeFeature->getNearestGeneratedFeature(level, pos, findUnexplored);
     }
@@ -571,7 +543,7 @@ void NetherLevelSource::recreateLogicStructuresForChunk(LevelChunk* chunk, int c
 
 bool NetherLevelSource::isPosInFeature(Level* level, const std::wstring& feature, const BlockPos& pos)
 {
-    if (feature == L"Fortress" && mNetherBridgeFeature != NULL)
+    if (FORTRESS_NAME == feature && mNetherBridgeFeature != NULL)
     {
         return mNetherBridgeFeature->isInsideFeature(pos);
     }

@@ -2,6 +2,7 @@
 
 #include <cstdio>
 
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/core/OnGameStartSpawnPositions.hpp"
@@ -80,23 +81,20 @@ LevelRuleset::~LevelRuleset()
     {
         delete *it;
     }
-    for (boost::unordered_map<ConsoleGameRules::EGameRuleType, GameRuleDefinition*>::iterator it = mRules.begin();
-         it != mRules.end(); ++it)
-    {
-        delete it->second;
-    }
 }
 
 RandomItemSetRuleDefinition* LevelRuleset::getRandomItemSet(const std::wstring& name)
 {
+    RandomItemSetRuleDefinition* itemSet = NULL;
     for (std::vector<RandomItemSetRuleDefinition*>::iterator it = mRandomItemSets.begin(); it != mRandomItemSets.end(); ++it)
     {
         if ((*it)->getId() == name)
         {
-            return *it;
+            itemSet = *it;
+            break;
         }
     }
-    return NULL;
+    return itemSet;
 }
 
 LevelGenerationOptions* LevelRuleset::getGenerationOptions()
@@ -325,7 +323,11 @@ void LevelRuleset::getActiveChunkAreas(std::vector<AABB*>* areas)
 {
     for (std::vector<NamedAreaRuleDefinition*>::iterator it = mNamedAreas.begin(); it != mNamedAreas.end(); ++it)
     {
-        if ((*it)->getActionType() == ConsoleGameRules::eGameRuleType_ActiveChunkArea || (*it)->getName() == L"ActiveArea")
+        if ((*it)->getActionType() == ConsoleGameRules::eGameRuleType_ActiveChunkArea)
+        {
+            areas->push_back((*it)->getArea());
+        }
+        else if ((*it)->getName() == L"ActiveArea")
         {
             areas->push_back((*it)->getArea());
         }
@@ -452,7 +454,7 @@ std::vector<CheckpointRuleDefinition*>* LevelRuleset::getCheckpoints()
 
 CheckpointRuleDefinition* LevelRuleset::getCheckpointByID(int id)
 {
-    if (id < static_cast<int>(mCheckpoints.size()))
+    if (static_cast<unsigned int>(id) < mCheckpoints.size())
     {
         return mCheckpoints.at(id);
     }
@@ -464,9 +466,10 @@ std::vector<CheckpointRuleDefinition*> LevelRuleset::getCheckpointsBySequenceID(
     std::vector<CheckpointRuleDefinition*> checkpoints;
     for (std::vector<CheckpointRuleDefinition*>::iterator it = mCheckpoints.begin(); it != mCheckpoints.end(); ++it)
     {
-        if ((*it)->getSequenceID() == sequenceId)
+        CheckpointRuleDefinition* checkpoint = *it;
+        if (checkpoint->getSequenceID() == sequenceId)
         {
-            checkpoints.push_back(*it);
+            checkpoints.push_back(checkpoint);
         }
     }
     return checkpoints;
@@ -565,7 +568,7 @@ void LevelRuleset::WriteRulesetXMLData()
 
     xml += "</LevelRules>\n";
 
-    std::wstring path = g_pApp->GetDebugRootPath() + L"LevelRules.xml";
+    std::wstring path = gApp.GetDebugRootPath() + L"LevelRules.xml";
     int file = CreateFileA(wstringtofilename(path, s_levelRulesFileName), GENERIC_WRITE, 0, NULL,
                            CREATE_ALWAYS, FILE_FLAG_RANDOM_ACCESS, 0);
     if (file == INVALID_HANDLE_VALUE)
