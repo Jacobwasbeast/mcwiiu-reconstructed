@@ -7,11 +7,13 @@ class BlockPos;
 class BlockState;
 class BlockStateDefinition;
 class Direction;
+class DyeColor;
 class IconRegister;
 class Level;
 class LevelSource;
 class MaterialColor;
 class TextureAtlasSprite;
+template <typename T> class EnumProperty;
 
 class ConcretePowderBlock : public FallingBlock
 {
@@ -19,6 +21,9 @@ public:
     ConcretePowderBlock();
     virtual ~ConcretePowderBlock();
     static void blockStaticCtor();
+
+    static EnumProperty<const DyeColor*>* COLOR;
+
     virtual void onLand(Level* level, const BlockPos& pos, const BlockState* state, const BlockState* replacedState);
     virtual void neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block, const BlockPos& fromPos);
     virtual void onPlace(Level* level, const BlockPos& pos, const BlockState* state);

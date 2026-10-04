@@ -34,12 +34,16 @@ bool BlockStatePredicate::apply(const BlockState* state) const
     {
         return false;
     }
-    for (boost::unordered_map<Property*, const Predicate<Boxed*>*>::const_iterator it = mPredicates.begin();
-         it != mPredicates.end(); ++it)
+    if (!mPredicates.empty())
     {
-        if (!it->second->apply(state->getBoxedValue(it->first)))
+        for (boost::unordered_map<Property*, const Predicate<Boxed*>*>::const_iterator it = mPredicates.begin();
+             it != mPredicates.end(); ++it)
         {
-            return false;
+            Boxed* value = state->getBoxedValue(it->first);
+            if (!it->second->apply(value))
+            {
+                return false;
+            }
         }
     }
     return true;
@@ -48,8 +52,6 @@ bool BlockStatePredicate::apply(const BlockState* state) const
 BlockStatePredicate* BlockStatePredicate::where(Property* property,
                                                 const Predicate<Boxed*>* predicate)
 {
-    const std::vector<const Property*>& properties = mDefinition->getProperties();
-    assert(std::find(properties.begin(), properties.end(), property) != properties.end());
     mPredicates[property] = predicate;
     return this;
 }

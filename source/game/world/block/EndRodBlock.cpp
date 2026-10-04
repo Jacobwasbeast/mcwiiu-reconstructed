@@ -22,9 +22,7 @@ static const AABB* END_ROD_SHAPE_X = AABB::newPermanent(0.0, 0.375, 0.375, 1.0, 
 
 static inline const AABB* endRodPart(double x0, double y0, double z0, double x1, double y1, double z1)
 {
-    AABB* part = AABB::newPermanent(x0, y0, z0, x1, y1, z1);
-    part->divideInternalsBy(16.0);
-    return part;
+    return AABB::newPermanent(x0, y0, z0, x1, y1, z1)->divideInternalsBy(16.0);
 }
 
 static const AABB* END_ROD_UP_ROD = endRodPart(7.0, 1.0, 7.0, 9.0, 16.0, 9.0);
@@ -49,30 +47,27 @@ EndRodBlock::EndRodBlock()
 void EndRodBlock::DerivedInit()
 {
     Block::DerivedInit();
-    TypedBoxed<const Direction*> facing(Direction::UP);
-    registerDefaultState(mStateDefinition->any()->setBoxedValue(DirectionalBlock::FACING_PROPERTY, &facing));
+    registerDefaultState(mStateDefinition->any()->setValue(DirectionalBlock::FACING_PROPERTY, Direction::UP));
 }
 
 const BlockState* EndRodBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    TypedBoxed<const Direction*> facing(rotation->rotate(state->getValue(DirectionalBlock::FACING_PROPERTY)));
-    return state->setBoxedValue(DirectionalBlock::FACING_PROPERTY, &facing);
+    DirectionProperty* property = DirectionalBlock::FACING_PROPERTY;
+    return state->setValue(property, rotation->rotate(state->getValue(property)));
 }
 
 const BlockState* EndRodBlock::mirror(const BlockState* state, Mirror* mirror)
 {
-    TypedBoxed<const Direction*> facing(mirror->mirror(state->getValue(DirectionalBlock::FACING_PROPERTY)));
-    return state->setBoxedValue(DirectionalBlock::FACING_PROPERTY, &facing);
+    DirectionProperty* property = DirectionalBlock::FACING_PROPERTY;
+    return state->setValue(property, mirror->mirror(state->getValue(property)));
 }
 
 const AABB* EndRodBlock::getShape(const BlockState* state, LevelSource*, const BlockPos&)
 {
-    switch (state->getValue(DirectionalBlock::FACING_PROPERTY)->getAxis()->getId())
-    {
-    case Direction::Axis::eAxis_Y: return END_ROD_SHAPE_Y;
-    case Direction::Axis::eAxis_Z: return END_ROD_SHAPE_Z;
-    default: return END_ROD_SHAPE_X;
-    }
+    int axis = state->getValue(DirectionalBlock::FACING_PROPERTY)->getAxis()->getId();
+    if (axis == Direction::Axis::eAxis_Y) return END_ROD_SHAPE_Y;
+    if (axis == Direction::Axis::eAxis_Z) return END_ROD_SHAPE_Z;
+    return END_ROD_SHAPE_X;
 }
 
 bool EndRodBlock::isSolidRender(const BlockState*) const { return false; }
@@ -85,11 +80,9 @@ const BlockState* EndRodBlock::getStateForPlacement(Level* level, const BlockPos
     const BlockState* neighbor = level->getBlockState(pos.relative(direction->getOpposite()));
     if (neighbor->getBlock() == Blocks::end_rod && neighbor->getValue(DirectionalBlock::FACING_PROPERTY) == direction)
     {
-        TypedBoxed<const Direction*> facing(direction->getOpposite());
-        return defaultBlockState()->setBoxedValue(DirectionalBlock::FACING_PROPERTY, &facing);
+        return defaultBlockState()->setValue(DirectionalBlock::FACING_PROPERTY, direction->getOpposite());
     }
-    TypedBoxed<const Direction*> facing(direction);
-    return defaultBlockState()->setBoxedValue(DirectionalBlock::FACING_PROPERTY, &facing);
+    return defaultBlockState()->setValue(DirectionalBlock::FACING_PROPERTY, direction);
 }
 
 void EndRodBlock::animateTick(const BlockState* state, Level* level, const BlockPos& pos, Random* random)
@@ -102,9 +95,9 @@ void EndRodBlock::animateTick(const BlockState* state, Level* level, const Block
     if (random->nextInt(5) == 0)
     {
         level->addParticle(PARTICLE_END_ROD,
-                           x + static_cast<double>(direction->getNormal().x) * spread,
-                           y + static_cast<double>(direction->getNormal().y) * spread,
-                           z + static_cast<double>(direction->getNormal().z) * spread,
+                           x + static_cast<double>(direction->getStepX()) * spread,
+                           y + static_cast<double>(direction->getStepY()) * spread,
+                           z + static_cast<double>(direction->getStepZ()) * spread,
                            random->nextGaussian() * 0.005, random->nextGaussian() * 0.005,
                            random->nextGaussian() * 0.005, arrayWithLength<int>());
     }
@@ -114,8 +107,7 @@ int EndRodBlock::getRenderLayer() { return 0; }
 
 const BlockState* EndRodBlock::getBlockState(int data)
 {
-    TypedBoxed<const Direction*> facing(Direction::from3DDataValue(data));
-    return defaultBlockState()->setBoxedValue(DirectionalBlock::FACING_PROPERTY, &facing);
+    return defaultBlockState()->setValue(DirectionalBlock::FACING_PROPERTY, Direction::from3DDataValue(data));
 }
 
 int EndRodBlock::convertBlockStateToLegacyData(const BlockState* state)
@@ -158,7 +150,7 @@ const AABB* EndRodBlock::getShapeBase(const BlockState* state)
 
 BlockStateDefinition* EndRodBlock::createBlockStateDefinition()
 {
-    const Property* properties[] = { DirectionalBlock::FACING_PROPERTY };
+    static const Property* properties[] = { DirectionalBlock::FACING_PROPERTY };
     return new BlockStateDefinition(this, properties, 1);
 }
 

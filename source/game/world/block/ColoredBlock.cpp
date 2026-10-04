@@ -3,7 +3,6 @@
 
 #include <typeinfo>
 #include <vector>
-#include <boost/unordered_set.hpp>
 
 #include "game/core/DyeColor.hpp"
 #include "game/core/IconRegister.hpp"
@@ -19,25 +18,14 @@ EnumProperty<const DyeColor*>* ColoredBlock::COLOR = NULL;
 
 void ColoredBlock::blockStaticCtor()
 {
-    boost::unordered_set<const DyeColor*> colors;
-    for (int i = 0; i < 16; ++i)
-    {
-        colors.insert(DyeColor::byBlockData(i));
-    }
-
-    COLOR = EnumProperty<const DyeColor*>::create(L"color", typeid(DyeColor), colors, Predicates<const DyeColor*>::alwaysTrue);
+    COLOR = EnumProperty<const DyeColor*>::create(L"color", typeid(DyeColor), DyeColor::COLORS, Predicates<const DyeColor*>::alwaysTrue);
 }
 
 ColoredBlock::ColoredBlock(Material* material)
     : Block(material)
 {
     DerivedInit();
-    TypedBoxed<const DyeColor*> color(DyeColor::WHITE);
-    registerDefaultState(mStateDefinition->any()->setBoxedValue(COLOR, &color));
-    for (int i = 0; i < 16; ++i)
-    {
-        mIcons[i] = NULL;
-    }
+    registerDefaultState(mStateDefinition->any()->setValue(COLOR, DyeColor::WHITE));
 }
 
 int ColoredBlock::getSpawnResourcesAuxValue(const BlockState* state)
@@ -52,8 +40,7 @@ const MaterialColor* ColoredBlock::getMapColor(const BlockState* state, LevelSou
 
 const BlockState* ColoredBlock::getBlockState(int data)
 {
-    TypedBoxed<const DyeColor*> color(DyeColor::byBlockData(data));
-    return defaultBlockState()->setBoxedValue(COLOR, &color);
+    return defaultBlockState()->setValue(COLOR, DyeColor::byBlockData(data));
 }
 
 int ColoredBlock::convertBlockStateToLegacyData(const BlockState* state)
@@ -68,16 +55,14 @@ TextureAtlasSprite* ColoredBlock::getTexture(const Direction* direction, const B
 
 BlockStateDefinition* ColoredBlock::createBlockStateDefinition()
 {
-    const Property* properties[] = { COLOR };
+    static const Property* properties[] = { COLOR };
     return new BlockStateDefinition(this, properties, 1);
 }
 
 void ColoredBlock::registerIcons(IconRegister* iconRegister)
 {
-    std::wstring base = getIconName();
     for (int i = 0; i < 16; ++i)
     {
-        const DyeColor* color = DyeColor::byBlockData(i);
-        mIcons[i] = iconRegister->registerIcon(base + L"_" + color->getTexture());
+        mIcons[i] = iconRegister->registerIcon(getIconName() + L"_" + DyeColor::TEXTURE_NAMES[DyeColor::byBlockData(i)->getItemData()]);
     }
 }

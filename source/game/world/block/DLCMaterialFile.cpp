@@ -11,7 +11,10 @@ DLCMaterialFile::DLCMaterialFile(const std::wstring& path)
 
 DLCMaterialFile::~DLCMaterialFile()
 {
-    delete m_pMaterialTable;
+    if (m_pMaterialTable)
+    {
+        delete m_pMaterialTable;
+    }
 }
 
 void DLCMaterialFile::addData(unsigned char* pData, unsigned int size)

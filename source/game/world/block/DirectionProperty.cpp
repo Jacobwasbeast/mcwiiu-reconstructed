@@ -21,10 +21,11 @@ DirectionProperty* DirectionProperty::create(const std::wstring& name,
 DirectionProperty* DirectionProperty::create(const std::wstring& name,
                                              const Predicate<const Direction*>* filter)
 {
+    boost::unordered_set<const Direction*> directions(Direction::VALUES.begin(), Direction::VALUES.end());
     boost::unordered_set<const Direction*> allowedValues;
 
-    for (std::vector<const Direction*>::const_iterator it = Direction::VALUES.begin();
-         it != Direction::VALUES.end();
+    for (boost::unordered_set<const Direction*>::const_iterator it = directions.begin();
+         it != directions.end();
          ++it)
     {
         if (filter->apply(*it))

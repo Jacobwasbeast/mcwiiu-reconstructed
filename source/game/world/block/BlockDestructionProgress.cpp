@@ -3,10 +3,10 @@
 #include "game/world/block/BlockPos.hpp"
 
 BlockDestructionProgress::BlockDestructionProgress(int id, const BlockPos& pos)
-    : mId(id)
-    , mProgress(0)
+    : mProgress(0)
     , mUpdatedRenderTick(0)
 {
+    mId = id;
     mPos = pos;
 }
 

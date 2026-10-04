@@ -55,7 +55,7 @@ unsigned int CommandBlock::getMode()
 
 boost::shared_ptr<BlockEntity> CommandBlock::newBlockEntity(Level* level, int)
 {
-    boost::shared_ptr<BlockEntity> entity(new CommandBlockEntity(static_cast<CommandBlock::Mode>(mMode)));
+    boost::shared_ptr<BlockEntity> entity = boost::shared_ptr<CommandBlockEntity>(new CommandBlockEntity(static_cast<CommandBlock::Mode>(getMode())));
     entity->setLevel(level);
     return entity;
 }
@@ -96,10 +96,14 @@ bool CommandBlock::hasAnalogOutputSignal(const BlockState*)
 int CommandBlock::getAnalogOutputSignal(const BlockState*, Level* level, const BlockPos& pos)
 {
     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
-    if (blockEntity && blockEntity->GetType() == BlockEntityType::COMMAND)
+    if (blockEntity)
     {
-        boost::shared_ptr<CommandBlockEntity> commandBlockEntity = boost::dynamic_pointer_cast<CommandBlockEntity>(blockEntity);
-        return static_cast<int>(commandBlockEntity->getCommandBlock()->getSuccessCount());
+        bool isCommandBlock = blockEntity->GetType() == BlockEntityType::COMMAND;
+        if (isCommandBlock)
+        {
+            boost::shared_ptr<CommandBlockEntity> commandBlockEntity = boost::dynamic_pointer_cast<CommandBlockEntity>(blockEntity);
+            return static_cast<int>(commandBlockEntity->getCommandBlock()->getSuccessCount());
+        }
     }
     return 0;
 }
@@ -107,13 +111,15 @@ int CommandBlock::getAnalogOutputSignal(const BlockState*, Level* level, const B
 void CommandBlock::setPlacedBy(Level* level, const BlockPos& pos, const BlockState*, boost::shared_ptr<LivingEntity>, not_null_ptr<ItemInstance> itemInstance)
 {
     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
-    if (blockEntity->GetType() == BlockEntityType::COMMAND)
+    bool isCommandBlock = blockEntity->GetType() == BlockEntityType::COMMAND;
+    if (!isCommandBlock)
     {
-        boost::shared_ptr<CommandBlockEntity> commandBlockEntity = boost::dynamic_pointer_cast<CommandBlockEntity>(blockEntity);
-        if (itemInstance->hasCustomHoverName())
-        {
-            commandBlockEntity->getCommandBlock()->setName(itemInstance->getHoverName(), true);
-        }
+        return;
+    }
+    BaseCommandBlock* commandBlock = boost::dynamic_pointer_cast<CommandBlockEntity>(blockEntity)->getCommandBlock();
+    if (itemInstance->hasCustomHoverName())
+    {
+        commandBlock->setName(itemInstance->getHoverName(), true);
     }
 }
 
@@ -129,11 +135,9 @@ EBlockRenderShape CommandBlock::getRenderShape(const BlockState*)
 
 const BlockState* CommandBlock::getBlockState(int data)
 {
-    TypedBoxed<const Direction*> facing(Direction::from3DDataValue(data & 7));
-    TypedBoxed<bool> conditional((data & 8) != 0);
-    const BlockState* state = defaultBlockState();
-    state = state->setBoxedValue(FACING, &facing);
-    return state->setBoxedValue(CONDITIONAL, &conditional);
+    return defaultBlockState()
+        ->setValue(FACING, Direction::from3DDataValue(data & 7))
+        ->setValue(CONDITIONAL, (data & 8) != 0);
 }
 
 int CommandBlock::convertBlockStateToLegacyData(const BlockState* state)
@@ -148,8 +152,9 @@ int CommandBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 const BlockState* CommandBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    TypedBoxed<const Direction*> facing(rotation->rotate(state->getValue(FACING)));
-    return state->setBoxedValue(FACING, &facing);
+    AbstractProperty<const Direction*>* property = FACING;
+    TypedBoxed<const Direction*> facing(rotation->rotate(state->getValue(property)));
+    return state->setBoxedValue(property, &facing);
 }
 
 const BlockState* CommandBlock::mirror(const BlockState* state, Mirror* mirror)
@@ -159,18 +164,15 @@ const BlockState* CommandBlock::mirror(const BlockState* state, Mirror* mirror)
 
 BlockStateDefinition* CommandBlock::createBlockStateDefinition()
 {
-    const Property* properties[] = { FACING, CONDITIONAL };
+    static const Property* properties[] = { FACING, CONDITIONAL };
     return new BlockStateDefinition(this, properties, 2);
 }
 
 const BlockState* CommandBlock::getStateForPlacement(Level*, const BlockPos& pos, const Direction*, float, float, float, int, boost::shared_ptr<LivingEntity> placer)
 {
-    const Direction* facing = Direction::getDirectionFromLivingEntity(pos, placer)->getOpposite();
-    TypedBoxed<const Direction*> boxedFacing(facing);
-    TypedBoxed<bool> conditional(false);
-    const BlockState* state = defaultBlockState();
-    state = state->setBoxedValue(FACING, &boxedFacing);
-    return state->setBoxedValue(CONDITIONAL, &conditional);
+    return defaultBlockState()
+        ->setValue(FACING, Direction::getDirectionFromLivingEntity(pos, placer)->getOpposite())
+        ->setValue(CONDITIONAL, false);
 }
 
 bool CommandBlock::isCommandBlock(Block* block)
@@ -181,11 +183,12 @@ bool CommandBlock::isCommandBlock(Block* block)
 
 TextureAtlasSprite* CommandBlock::getTexture(const Direction* direction, const BlockState* state)
 {
-    if (direction == state->getValue(FACING))
+    const Direction* facing = state->getValue(FACING);
+    if (direction == facing)
     {
         return mBackIcon;
     }
-    if (direction == state->getValue(FACING)->getOpposite())
+    if (direction == facing->getOpposite())
     {
         return mFrontIcon;
     }

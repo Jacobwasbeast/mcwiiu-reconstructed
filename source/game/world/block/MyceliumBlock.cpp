@@ -13,26 +13,24 @@
 #include "game/world/block/BooleanProperty.hpp"
 #include "game/world/block/DirtBlock.hpp"
 #include "game/world/block/EnumProperty.hpp"
+#include "game/world/block/GrassBlock.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/block/MaterialColor.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
-static AbstractProperty<bool>* MYCELIUM_SNOWY = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"snowy"));
-
 MyceliumBlock::MyceliumBlock()
-    : Block(Material::GRASS, MaterialColor::PODZOL)
+    : Block(Material::GRASS, MaterialColor::COLOR_PURPLE)
 {
     DerivedInit();
-    TypedBoxed<bool> snowy(false);
-    registerDefaultState(mStateDefinition->any()->setBoxedValue(MYCELIUM_SNOWY, &snowy));
+    registerDefaultState(mStateDefinition->any()->setValue(GrassBlock::SNOWY, false));
     setTicking(true);
 }
 
 const BlockState* MyceliumBlock::fillVirtualBlockStateProperties(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
 {
     const BlockState* above = levelSource->getBlockState(pos.above());
-    TypedBoxed<bool> snowy(above->getBlock() == Blocks::snow || above->getBlock() == Blocks::snow_layer);
-    return state->setBoxedValue(MYCELIUM_SNOWY, &snowy);
+    Block* aboveBlock = above->getBlock();
+    return state->setValue(GrassBlock::SNOWY, aboveBlock == Blocks::snow || aboveBlock == Blocks::snow_layer);
 }
 
 void MyceliumBlock::tick(Level* level, const BlockPos& pos, const BlockState*, Random* random)
@@ -42,30 +40,30 @@ void MyceliumBlock::tick(Level* level, const BlockPos& pos, const BlockState*, R
         return;
     }
 
-    BlockPos above = pos.above();
-    int lightBlock = level->getBlockState(above)->getLightBlock();
-    int extraLightBlock = level->getExtraBlockState(above)->getLightBlock();
+    int lightBlock = level->getBlockState(pos.above())->getLightBlock();
+    int extraLightBlock = level->getExtraBlockState(pos.above())->getLightBlock();
     if (lightBlock < extraLightBlock)
     {
         lightBlock = extraLightBlock;
     }
 
-    int brightness = level->getRawBrightness(above);
+    int brightness = level->getRawBrightness(pos.above());
     if (brightness < 4 && lightBlock > 2)
     {
-        level->setBlockAndUpdate(pos, Blocks::dirt->defaultBlockState());
+        level->setBlockAndUpdate(pos, Blocks::dirt->defaultBlockState()->setValue(DirtBlock::VARIANT, DirtBlock::Variant::DIRT));
         return;
     }
 
-    brightness = level->getRawBrightness(above);
+    brightness = level->getRawBrightness(pos.above());
     if (brightness > 8)
     {
         for (int i = 0; i < 4; ++i)
         {
             BlockPos target = pos.offset(random->nextInt(3) - 1, random->nextInt(5) - 3, random->nextInt(3) - 1);
             const BlockState* targetState = level->getBlockState(target);
-            int targetLightBlock = level->getBlockState(above)->getLightBlock();
-            int targetExtraLightBlock = level->getExtraBlockState(above)->getLightBlock();
+            BlockPos aboveBase = pos.above();
+            int targetLightBlock = level->getBlockState(aboveBase)->getLightBlock();
+            int targetExtraLightBlock = level->getExtraBlockState(pos.above())->getLightBlock();
             if (targetLightBlock < targetExtraLightBlock)
             {
                 targetLightBlock = targetExtraLightBlock;
@@ -97,7 +95,8 @@ void MyceliumBlock::animateTick(const BlockState* state, Level* level, const Blo
 
 Item* MyceliumBlock::getResource(const BlockState*, Random* random, int lootBonus)
 {
-    return Blocks::dirt->getResource(Blocks::dirt->defaultBlockState(), random, lootBonus);
+    return Blocks::dirt->getResource(
+        Blocks::dirt->defaultBlockState()->setValue(DirtBlock::VARIANT, DirtBlock::Variant::DIRT), random, lootBonus);
 }
 
 int MyceliumBlock::convertBlockStateToLegacyData(const BlockState*)
@@ -107,7 +106,7 @@ int MyceliumBlock::convertBlockStateToLegacyData(const BlockState*)
 
 BlockStateDefinition* MyceliumBlock::createBlockStateDefinition()
 {
-    const Property* properties[] = { MYCELIUM_SNOWY };
+    static const Property* properties[] = { GrassBlock::SNOWY };
     return new BlockStateDefinition(this, properties, 1);
 }
 

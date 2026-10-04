@@ -23,12 +23,15 @@ EnumProperty<Direction::Axis*>* gRotatedPillarBlockAxisProperty = NULL;
 
 void RotatedPillarBlock::blockStaticCtor()
 {
-    boost::unordered_set<Direction::Axis*> values;
-    values.insert(Direction::Axis::X);
-    values.insert(Direction::Axis::Y);
-    values.insert(Direction::Axis::Z);
-    gRotatedPillarBlockAxisProperty = EnumProperty<Direction::Axis*>::create(
-        L"axis", typeid(Direction::Axis*), values, Predicates<Direction::Axis*>::alwaysTrue);
+    std::wstring name(L"axis");
+    EnumProperty<Direction::Axis*>* property;
+    {
+        boost::unordered_set<Direction::Axis*> values;
+        for (int i = 0; i < 3; ++i) values.insert(Direction::Axis::VALUES[i]);
+        property = EnumProperty<Direction::Axis*>::create(
+            name, typeid(Direction::Axis), values, Predicates<Direction::Axis*>::alwaysTrue);
+    }
+    gRotatedPillarBlockAxisProperty = property;
 }
 
 RotatedPillarBlock::RotatedPillarBlock(Material* material)
@@ -49,13 +52,11 @@ const BlockState* RotatedPillarBlock::rotate(const BlockState* state, Rotation* 
         int axis = state->getValue(gRotatedPillarBlockAxisProperty)->getId();
         if (axis == Direction::Axis::eAxis_X)
         {
-            TypedBoxed<Direction::Axis*> value(Direction::Axis::Z);
-            return state->setBoxedValue(gRotatedPillarBlockAxisProperty, &value);
+            return state->setValue(gRotatedPillarBlockAxisProperty, Direction::Axis::Z);
         }
         if (axis == Direction::Axis::eAxis_Z)
         {
-            TypedBoxed<Direction::Axis*> value(Direction::Axis::X);
-            return state->setBoxedValue(gRotatedPillarBlockAxisProperty, &value);
+            return state->setValue(gRotatedPillarBlockAxisProperty, Direction::Axis::X);
         }
     }
 
@@ -74,22 +75,22 @@ const BlockState* RotatedPillarBlock::getBlockState(int data)
         axis = Direction::Axis::Z;
     }
 
-    TypedBoxed<Direction::Axis*> value(axis);
-    return defaultBlockState()->setBoxedValue(gRotatedPillarBlockAxisProperty, &value);
+    return defaultBlockState()->setValue(gRotatedPillarBlockAxisProperty, axis);
 }
 
 int RotatedPillarBlock::convertBlockStateToLegacyData(const BlockState* state)
 {
+    int data = 0;
     Direction::Axis* axis = state->getValue(gRotatedPillarBlockAxisProperty);
     if (axis == Direction::Axis::X)
     {
-        return 4;
+        data = 4;
     }
-    if (axis == Direction::Axis::Z)
+    else if (axis == Direction::Axis::Z)
     {
-        return 8;
+        data = 8;
     }
-    return 0;
+    return data;
 }
 
 BlockStateDefinition* RotatedPillarBlock::createBlockStateDefinition()
@@ -105,9 +106,7 @@ not_null_ptr<ItemInstance> RotatedPillarBlock::getSilkTouchItemInstance(const Bl
 
 const BlockState* RotatedPillarBlock::getStateForPlacement(Level* level, const BlockPos& pos, const Direction* direction, float hitX, float hitY, float hitZ, int auxValue, boost::shared_ptr<LivingEntity> placer)
 {
-    const BlockState* state = Block::getStateForPlacement(level, pos, direction, hitX, hitY, hitZ, auxValue, placer);
-    TypedBoxed<Direction::Axis*> value(direction->getAxis());
-    return state->setBoxedValue(gRotatedPillarBlockAxisProperty, &value);
+    return Block::getStateForPlacement(level, pos, direction, hitX, hitY, hitZ, auxValue, placer)->setValue(gRotatedPillarBlockAxisProperty, direction->getAxis());
 }
 
 TextureAtlasSprite* RotatedPillarBlock::getTexture(const Direction* direction, const BlockState* state)

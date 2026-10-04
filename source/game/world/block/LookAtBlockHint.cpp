@@ -1,5 +1,7 @@
 #include "game/world/block/LookAtBlockHint.hpp"
 
+#include <algorithm>
+
 #include "game/item/Item.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
@@ -50,10 +52,12 @@ unsigned int LookAtBlockHint::onLookAt(const BlockState* state)
 {
     const BlockState* matchingState = NULL;
     Block* block;
+    Block* matchedBlock = NULL;
     Item* item;
     Tutorial::PopupMessageDetails* details;
     int auxValue;
     unsigned int i;
+    unsigned int j;
 
     block = state->getBlock();
     if (block == NULL)
@@ -62,13 +66,42 @@ unsigned int LookAtBlockHint::onLookAt(const BlockState* state)
     }
     for (i = 0; i < mStateCount; ++i)
     {
-        if (mStates[i] != NULL && mStateIds[i] == block)
+        if (mStateIds[i] != block)
+        {
+            continue;
+        }
+        matchedBlock = mStateIds[i];
+        if (mPropertyCount == 0)
         {
             matchingState = mStates[i];
             break;
         }
+        for (j = 0; j < mPropertyCount; ++j)
+        {
+            const Property* property = mPropertyValues[j];
+            const BlockState* candidate = mStates[i];
+            if (std::find(candidate->getProperties().begin(), candidate->getProperties().end(), property)
+                    == candidate->getProperties().end())
+            {
+                continue;
+            }
+            if (std::find(state->getProperties().begin(), state->getProperties().end(), property)
+                    == state->getProperties().end())
+            {
+                continue;
+            }
+            if (candidate->getBoxedValue(property) == state->getBoxedValue(property))
+            {
+                matchingState = candidate;
+                break;
+            }
+        }
+        if (matchingState != NULL)
+        {
+            break;
+        }
     }
-    if (matchingState == NULL)
+    if (matchedBlock == NULL || matchingState == NULL)
     {
         return 0;
     }
@@ -77,21 +110,39 @@ unsigned int LookAtBlockHint::onLookAt(const BlockState* state)
         matchingState = state;
     }
 
-    item = Item::byBlock(block);
+    item = Item::byBlock(matchedBlock) != NULL ? Item::byBlock(matchedBlock)
+                                                : matchedBlock->getResource(matchingState, NULL, 0);
     details = new Tutorial::PopupMessageDetails();
     details->isItem = true;
-    details->itemId = mDescriptionId == -2 ? -1 :
-        (mDescriptionId < 0 ? (item == NULL ? Block::getId(block) : Item::getId(item)) : mDescriptionId);
+    if (mDescriptionId < 0)
+    {
+        if (mDescriptionId == -2)
+        {
+            details->itemId = -1;
+        }
+        else if (item == NULL)
+        {
+            details->itemId = Block::getId(matchedBlock);
+        }
+        else
+        {
+            details->itemId = Item::getId(item);
+        }
+    }
+    else
+    {
+        details->itemId = mDescriptionId;
+    }
     auxValue = mAuxValue;
     if (auxValue < 0)
     {
-        auxValue = block->convertBlockStateToLegacyData(matchingState);
+        auxValue = matchedBlock->convertBlockStateToLegacyData(matchingState);
     }
     details->itemAuxValue = auxValue;
     if (item == NULL)
     {
-        details->titleId = block->getUseDescriptionId(-1);
-        details->itemDescriptionId = block->getDescriptionId(auxValue);
+        details->titleId = matchedBlock->getUseDescriptionId(-1);
+        details->itemDescriptionId = matchedBlock->getDescriptionId(auxValue);
     }
     else
     {
@@ -100,7 +151,10 @@ unsigned int LookAtBlockHint::onLookAt(const BlockState* state)
         {
             BannerBlockEntity::addTags(itemInstance, 0xf, NULL);
         }
-        details->itemInstance = itemInstance;
+        if (mDescriptionId < 0)
+        {
+            details->itemInstance = itemInstance;
+        }
         details->titleId = itemInstance->getUseDescriptionId();
         details->itemDescriptionId = itemInstance->getDescriptionId(-1);
     }
@@ -113,8 +167,6 @@ unsigned int LookAtBlockHint::onLookAtSkull(Level* level, const BlockPos& pos,
     Block* block;
     bool found;
     unsigned int i;
-    not_null_ptr<ItemInstance> itemInstance;
-    Tutorial::PopupMessageDetails* details;
 
     block = state->getBlock();
     if (block == NULL || block != Blocks::skull)
@@ -127,25 +179,24 @@ unsigned int LookAtBlockHint::onLookAtSkull(Level* level, const BlockPos& pos,
         if (mStateIds[i] == block)
         {
             found = true;
-            break;
         }
     }
     if (!found)
     {
         return 0;
     }
-    itemInstance = block->getCloneItemInstance(level, pos, state);
+    not_null_ptr<ItemInstance> itemInstance = block->getCloneItemInstance(level, pos, state);
     if (itemInstance->getAuxValue() == -1)
     {
         return 0;
     }
-    details = new Tutorial::PopupMessageDetails();
+    Tutorial::PopupMessageDetails* details = new Tutorial::PopupMessageDetails;
     details->titleId = itemInstance->getUseDescriptionId();
-    details->itemDescriptionId = itemInstance->getDescriptionId(-1);
     if (itemInstance->getItem() != NULL)
     {
         details->itemDescription = itemInstance->getHoverName();
     }
+    details->itemDescriptionId = itemInstance->getDescriptionId(-1);
     details->itemInstance = itemInstance;
     details->itemId = Item::VALIDgetId(itemInstance->getItem());
     details->itemAuxValue = itemInstance->getAuxValue();

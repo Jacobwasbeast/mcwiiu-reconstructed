@@ -71,7 +71,7 @@ void DragonEggBlock::teleport(Level* level, const BlockPos& pos)
     const BlockState* state = level->getBlockState(pos);
     if (state->getBlock() != this)
         return;
-    for (int attempt = 0; attempt < 500; ++attempt)
+    for (int attempt = 0; attempt < 1000; ++attempt)
     {
         int x0 = level->mRandom->nextInt(16);
         int x1 = level->mRandom->nextInt(16);
@@ -87,9 +87,9 @@ void DragonEggBlock::teleport(Level* level, const BlockPos& pos)
             level->setBlock(target, state, Block::UPDATE_CLIENTS, false);
             level->removeBlock(pos);
             level->levelEvent(LevelEvent::DRAGON_EGG_TELEPORT, target,
-                              ((pos.z - target.z) & 0xff) << 16 |
-                              ((pos.y - target.y) & 0xff) << 8 |
-                              (pos.x - target.x) & 0xff);
+                              ((pos.x - target.x) & 0xff) |
+                              (unsigned char)(char)(pos.y - target.y) << 8 |
+                              ((pos.z - target.z) << 16 & 0xff0000));
             return;
         }
     }
@@ -138,9 +138,9 @@ void DragonEggBlock::generateTeleportParticles(Level* level, int x, int y, int z
             double jitterZ = level->mRandom->nextDouble();
             arrayWithLength<int> params;
             level->addParticle(PARTICLE_PORTAL,
-                               (double)x + 0.5 + (double)dx * along + (jitterX - 0.5),
-                               (double)y - 0.5 + (double)dy * along + jitterY,
-                               (double)z + 0.5 + (double)dz * along + (jitterZ - 0.5),
+                               0.5 + ((jitterX - 0.5) * 1.0 + ((double)dx * along + (double)x)),
+                               jitterY * 1.0 + ((double)dy * along + (double)y) - 0.5,
+                               0.5 + ((jitterZ - 0.5) * 1.0 + ((double)dz * along + (double)z)),
                                (double)((xa - 0.5f) * 0.2f),
                                (double)((ya - 0.5f) * 0.2f),
                                (double)((za - 0.5f) * 0.2f), params);

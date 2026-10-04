@@ -26,14 +26,14 @@ CactusBlock::CactusBlock()
     : Block(Material::CACTUS)
 {
     DerivedInit();
-    TypedBoxed<int> age(0);
-    registerDefaultState(mStateDefinition->any()->setBoxedValue(AGE, &age));
+    registerDefaultState(mStateDefinition->any()->setValue(AGE, 0));
     setTicking(true);
 }
 
 void CactusBlock::tick(Level* level, const BlockPos& pos, const BlockState* state, Random*)
 {
-    if (level->isEmptyBlock(pos.above()))
+    BlockPos abovePos = pos.above();
+    if (level->isEmptyBlock(abovePos))
     {
         int height = 1;
         while (level->getBlockState(pos.below(height))->getBlock() == this)
@@ -43,16 +43,14 @@ void CactusBlock::tick(Level* level, const BlockPos& pos, const BlockState* stat
             int age = state->getValue(AGE);
             if (age == 15)
             {
-                level->setBlockAndUpdate(pos.above(), defaultBlockState());
-                TypedBoxed<int> reset(0);
-                const BlockState* resetState = state->setBoxedValue(AGE, &reset);
+                level->setBlockAndUpdate(abovePos, defaultBlockState());
+                const BlockState* resetState = state->setValue(AGE, 0);
                 level->setBlock(pos, resetState, Block::UPDATE_INVISIBLE, false);
-                resetState->neighborChanged(level, pos.above(), this, pos);
+                resetState->neighborChanged(level, abovePos, this, pos);
             }
             else
             {
-                TypedBoxed<int> next(age + 1);
-                level->setBlock(pos, state->setBoxedValue(AGE, &next), Block::UPDATE_INVISIBLE, false);
+                level->setBlock(pos, state->setValue(AGE, age + 1), Block::UPDATE_INVISIBLE, false);
             }
         }
     }
@@ -80,7 +78,9 @@ bool CactusBlock::isSolidRender(const BlockState*) const
 
 bool CactusBlock::mayPlace(Level* level, const BlockPos& pos)
 {
-    return Block::mayPlace(level, pos) && canSurvive(level, pos, NULL);
+    if (Block::mayPlace(level, pos))
+        return canSurvive(level, pos, NULL);
+    return false;
 }
 
 void CactusBlock::neighborChanged(const BlockState*, Level* level, const BlockPos& pos, Block*, const BlockPos&)
@@ -100,9 +100,8 @@ bool CactusBlock::canSurvive(Level* level, const BlockPos& pos, const BlockState
     }
 
     Block* below = level->getBlockState(pos.below())->getBlock();
-    if (below != Blocks::cactus && below != Blocks::sand)
-        return false;
-    return !level->getBlockState(pos.above())->getMaterial()->isLiquid();
+    bool survives = (below == Blocks::cactus || below == Blocks::sand) && !level->getBlockState(pos.above())->getMaterial()->isLiquid();
+    return survives;
 }
 
 void CactusBlock::entityInside(Level*, const BlockPos&, const BlockState*, const boost::shared_ptr<Entity>& entity)
@@ -117,8 +116,7 @@ int CactusBlock::getRenderLayer()
 
 const BlockState* CactusBlock::getBlockState(int data)
 {
-    TypedBoxed<int> age(data);
-    return defaultBlockState()->setBoxedValue(AGE, &age);
+    return defaultBlockState()->setValue(AGE, data);
 }
 
 int CactusBlock::convertBlockStateToLegacyData(const BlockState* state)
@@ -128,7 +126,7 @@ int CactusBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 BlockStateDefinition* CactusBlock::createBlockStateDefinition()
 {
-    const Property* properties[] = { AGE };
+    static const Property* properties[] = { AGE };
     return new BlockStateDefinition(this, properties, 1);
 }
 

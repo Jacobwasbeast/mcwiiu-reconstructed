@@ -16,7 +16,7 @@ class RotatedPillarBlockImpl : public RotatedPillarBlock
 public:
     RotatedPillarBlockImpl(Material* material);
     RotatedPillarBlockImpl(Material* material, const MaterialColor* materialColor);
-    virtual ~RotatedPillarBlockImpl();
+    virtual ~RotatedPillarBlockImpl() {}
 
     virtual void DerivedInit();
     virtual Direction::Axis* getAxis(const BlockState* state);

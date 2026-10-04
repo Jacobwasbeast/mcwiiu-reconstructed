@@ -23,15 +23,13 @@ WallBannerBlock::WallBannerBlock()
     : BannerBlock()
 {
     DerivedInit();
-    TypedBoxed<const Direction*> facing(Direction::NORTH);
-    registerDefaultState(mStateDefinition->any()->setBoxedValue(BannerBlock::FACING, &facing));
+    registerDefaultState(mStateDefinition->any()->setValue(BannerBlock::FACING, Direction::NORTH));
 }
 
 const BlockState* WallBannerBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    const Direction* direction = state->getValue(BannerBlock::FACING);
-    TypedBoxed<const Direction*> facing(rotation->rotate(direction));
-    return state->setBoxedValue(BannerBlock::FACING, &facing);
+    DirectionProperty* facing = BannerBlock::FACING;
+    return state->setValue(facing, rotation->rotate(state->getValue(facing)));
 }
 
 const BlockState* WallBannerBlock::mirror(const BlockState* state, Mirror* mirror)
@@ -42,12 +40,17 @@ const BlockState* WallBannerBlock::mirror(const BlockState* state, Mirror* mirro
 const AABB* WallBannerBlock::getShape(const BlockState* state, LevelSource*, const BlockPos&)
 {
     const Direction* direction = state->getValue(BannerBlock::FACING);
-    if (direction == Direction::SOUTH)
+    switch (direction->get3DDataValue())
+    {
+    case 3:
         return WALL_BANNER_SHAPE_SOUTH;
-    if (direction == Direction::WEST)
+    case 4:
         return WALL_BANNER_SHAPE_WEST;
-    if (direction == Direction::EAST)
+    case 5:
         return WALL_BANNER_SHAPE_EAST;
+    default:
+        break;
+    }
     return WALL_BANNER_SHAPE_NORTH;
 }
 
@@ -55,10 +58,9 @@ void WallBannerBlock::neighborChanged(const BlockState* state, Level* level, con
                                       Block* block, const BlockPos& fromPos)
 {
     const Direction* direction = state->getValue(BannerBlock::FACING);
-    const BlockPos supportPos = pos.relative(direction->getOpposite());
-    if (!level->getBlockState(supportPos)->getMaterial()->isSolid())
+    if (!level->getBlockState(pos.relative(direction->getOpposite()))->getMaterial()->isSolid())
     {
-        spawnResources(level, pos, state, 0.0f, 0);
+        static_cast<Block*>(this)->spawnResources(level, pos, state, 0);
         level->removeBlock(pos);
     }
     Block::neighborChanged(state, level, pos, block, fromPos);
@@ -69,8 +71,7 @@ const BlockState* WallBannerBlock::getBlockState(int data)
     const Direction* direction = Direction::from3DDataValue(data);
     if (direction->getAxis() == Direction::Axis::Y)
         direction = Direction::NORTH;
-    TypedBoxed<const Direction*> facing(direction);
-    return defaultBlockState()->setBoxedValue(BannerBlock::FACING, &facing);
+    return defaultBlockState()->setValue(BannerBlock::FACING, direction);
 }
 
 int WallBannerBlock::convertBlockStateToLegacyData(const BlockState* state)

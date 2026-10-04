@@ -49,7 +49,7 @@ void LeafBlock::DerivedInit()
     mIgnoreSimilarity = false;
     mLeafDistance = NULL;
     setTicking(true);
-    setLightEmission(0.2f);
+    setDestroyTime(0.2f);
     setLightBlock(1);
     setSoundType(SoundType::GRASS);
 }
@@ -76,7 +76,10 @@ int LeafBlock::getColor(LevelSource* levelSource, const BlockPos& pos, const Blo
 
 void LeafBlock::onRemove(Level* level, const BlockPos& pos, const BlockState*)
 {
-    if (!level->hasChunksAt(BlockPos(pos.x - 2, pos.y - 2, pos.z - 2), BlockPos(pos.x + 2, pos.y + 2, pos.z + 2)))
+    int px = pos.x;
+    int py = pos.y;
+    int pz = pos.z;
+    if (!level->hasChunksAt(BlockPos(px - 2, py - 2, pz - 2), BlockPos(px + 2, py + 2, pz + 2)))
         return;
 
     for (int x = -1; x <= 1; ++x)
@@ -89,8 +92,7 @@ void LeafBlock::onRemove(Level* level, const BlockPos& pos, const BlockState*)
                 const BlockState* neighborState = level->getBlockState(neighborPos);
                 if (neighborState->getMaterial() == Material::LEAVES && !neighborState->getValue(CHECK_DECAY))
                 {
-                    TypedBoxed<bool> checkDecay(true);
-                    level->setBlock(neighborPos, neighborState->setBoxedValue(CHECK_DECAY, &checkDecay), Block::UPDATE_INVISIBLE, false);
+                    level->setBlock(neighborPos, neighborState->setValue(CHECK_DECAY, true), Block::UPDATE_INVISIBLE, false);
                 }
             }
         }
@@ -109,6 +111,10 @@ void LeafBlock::tick(Level* level, const BlockPos& pos, const BlockState* state,
     if (level->mIsClientSide || !state->getValue(CHECK_DECAY) || !state->getValue(DECAYABLE))
         return;
 
+    int px = pos.x;
+    int pz = pos.z;
+    int py = pos.y;
+
     if (mLeafDistance == NULL)
         mLeafDistance = new int[32768];
 
@@ -118,15 +124,19 @@ void LeafBlock::tick(Level* level, const BlockPos& pos, const BlockState* state,
     int distance;
     const int center = 16 * 1024 + 16 * 32 + 16;
 
-    if (level->hasChunksAt(pos.offset(-5, -5, -5), pos.offset(5, 5, 5)))
+    if (level->hasChunksAt(BlockPos(px - 5, py - 5, pz - 5), BlockPos(px + 5, py + 5, pz + 5)))
     {
+        BlockPos checkPos(0, 0, 0);
         for (x = -4; x <= 4; ++x)
         {
-            for (y = -4; y <= 4; ++y)
+            for (z = -4; z <= 4; ++z)
             {
-                for (z = -4; z <= 4; ++z)
+                for (y = -4; y <= 4; ++y)
                 {
-                    const BlockState* nearbyState = level->getBlockState(pos.offset(x, y, z));
+                    checkPos.x = px + x;
+                    checkPos.y = py + y;
+                    checkPos.z = pz + z;
+                    const BlockState* nearbyState = level->getBlockState(checkPos);
                     Block* nearbyBlock = nearbyState->getBlock();
                     int index = (x + 16) * 1024 + (y + 16) * 32 + z + 16;
                     if (nearbyBlock == Blocks::log || nearbyBlock == Blocks::log2)
@@ -140,6 +150,7 @@ void LeafBlock::tick(Level* level, const BlockPos& pos, const BlockState* state,
         }
     }
 
+    int* leafDistance = mLeafDistance;
     for (distance = 1; distance <= 4; ++distance)
     {
         for (x = -4; x <= 4; ++x)
@@ -149,30 +160,29 @@ void LeafBlock::tick(Level* level, const BlockPos& pos, const BlockState* state,
                 for (z = -4; z <= 4; ++z)
                 {
                     int index = (x + 16) * 1024 + (y + 16) * 32 + z + 16;
-                    if (mLeafDistance[index] == distance - 1)
+                    if (leafDistance[index] == distance - 1)
                     {
-                        if (mLeafDistance[index - 1024] == -2)
-                            mLeafDistance[index - 1024] = distance;
-                        if (mLeafDistance[index + 1024] == -2)
-                            mLeafDistance[index + 1024] = distance;
-                        if (mLeafDistance[index - 32] == -2)
-                            mLeafDistance[index - 32] = distance;
-                        if (mLeafDistance[index + 32] == -2)
-                            mLeafDistance[index + 32] = distance;
-                        if (mLeafDistance[index - 1] == -2)
-                            mLeafDistance[index - 1] = distance;
-                        if (mLeafDistance[index + 1] == -2)
-                            mLeafDistance[index + 1] = distance;
+                        if (leafDistance[index - 1024] == -2)
+                            leafDistance[index - 1024] = distance;
+                        if (leafDistance[index + 1024] == -2)
+                            leafDistance[index + 1024] = distance;
+                        if (leafDistance[index - 32] == -2)
+                            leafDistance[index - 32] = distance;
+                        if (leafDistance[index + 32] == -2)
+                            leafDistance[index + 32] = distance;
+                        if (leafDistance[index - 1] == -2)
+                            leafDistance[index - 1] = distance;
+                        if (leafDistance[index + 1] == -2)
+                            leafDistance[index + 1] = distance;
                     }
                 }
             }
         }
     }
 
-    if (mLeafDistance[center] >= 0)
+    if (leafDistance[center] >= 0)
     {
-        TypedBoxed<bool> checkDecay(false);
-        level->setBlock(pos, state->setBoxedValue(CHECK_DECAY, &checkDecay), Block::UPDATE_INVISIBLE, false);
+        level->setBlock(pos, state->setValue(CHECK_DECAY, false), Block::UPDATE_INVISIBLE, false);
     }
     else
     {
@@ -182,7 +192,7 @@ void LeafBlock::tick(Level* level, const BlockPos& pos, const BlockState* state,
 
 void LeafBlock::animateTick(const BlockState* state, Level* level, const BlockPos& pos, Random* random)
 {
-    if (level->isRainingAt(pos.above()) && !level->getBlockState(pos.below())->isSolidRender()
+    if (level->isRainingAt(pos.above()) && !level->getBlockState(pos.below())->isTopSolidBlocking()
         && random->nextInt(15) == 1)
     {
         arrayWithLength<int> parameters;
@@ -269,7 +279,7 @@ bool LeafBlock::isViewBlocking(const BlockState* state)
 
 bool LeafBlock::shouldRenderFace(const BlockState* state, LevelSource* levelSource, const BlockPos& pos, const Direction* direction)
 {
-    if (!mIgnoreSimilarity && levelSource->getBlock(pos.relative(direction)) == this)
+    if (!mIgnoreSimilarity && levelSource->getBlockState(pos.relative(direction))->getBlock() == this)
         return false;
     return Block::shouldRenderFace(state, levelSource, pos, direction);
 }
@@ -291,8 +301,9 @@ int LeafBlock::getDescriptionId(int auxValue)
 
 TextureAtlasSprite* LeafBlock::getTexture(const Direction* direction, const BlockState* state)
 {
+    int woodType = getWoodType(state);
     Block::ThreadStorage* storage = static_cast<Block::ThreadStorage*>(TlsGetValue(THREAD_STORAGE_INDEX));
-    return mIcons[(storage->mFastGraphics ? 6 : 0) + getWoodType(state)];
+    return mIcons[storage->mFastGraphics * 6 + woodType];
 }
 
 void LeafBlock::registerIcons(IconRegister* iconRegister)

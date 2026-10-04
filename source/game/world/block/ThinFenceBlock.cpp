@@ -48,18 +48,18 @@ static const AABB* thinFenceShapes[16] = {
 };
 
 ThinFenceBlock::ThinFenceBlock(const std::wstring& name, const std::wstring& edgeTexture, Material* material, bool extraBlock)
-    : Block(material), mDropsOnBreak(extraBlock), mEdgeTexture(edgeTexture), mName(name), mEdgeTextureId(0)
+    : Block(material)
 {
     DerivedInit();
-    TypedBoxed<bool> north(false);
-    TypedBoxed<bool> east(false);
-    TypedBoxed<bool> south(false);
-    TypedBoxed<bool> west(false);
-    const BlockState* state = mStateDefinition->any();
-    state = state->setBoxedValue(THIN_FENCE_NORTH, &north);
-    state = state->setBoxedValue(THIN_FENCE_EAST, &east);
-    state = state->setBoxedValue(THIN_FENCE_SOUTH, &south);
-    registerDefaultState(state->setBoxedValue(THIN_FENCE_WEST, &west));
+    registerDefaultState(mStateDefinition->any()
+        ->setValue(THIN_FENCE_NORTH, false)
+        ->setValue(THIN_FENCE_EAST, false)
+        ->setValue(THIN_FENCE_SOUTH, false)
+        ->setValue(THIN_FENCE_WEST, false));
+    mEdgeTextureId = 0;
+    mEdgeTexture = edgeTexture;
+    mDropsOnBreak = extraBlock;
+    mName = name;
 }
 
 ThinFenceBlock::~ThinFenceBlock()
@@ -76,11 +76,11 @@ void ThinFenceBlock::addCollisionAABBs(const BlockState* state, Level* level, co
 {
     if (!isActualState)
         state = fillVirtualBlockStateProperties(state, level, pos);
-    addCollisionAABB(pos, entityBox, collidingBoxes, AABB::newTemp(0.375, 0.0, 0.375, 0.625, 1.0, 0.625));
-    if (state->getValue(THIN_FENCE_NORTH)) addCollisionAABB(pos, entityBox, collidingBoxes, AABB::newTemp(0.375, 0.0, 0.0, 0.625, 1.0, 0.625));
-    if (state->getValue(THIN_FENCE_EAST)) addCollisionAABB(pos, entityBox, collidingBoxes, AABB::newTemp(0.375, 0.0, 0.375, 1.0, 1.0, 0.625));
-    if (state->getValue(THIN_FENCE_SOUTH)) addCollisionAABB(pos, entityBox, collidingBoxes, AABB::newTemp(0.375, 0.0, 0.375, 0.625, 1.0, 1.0));
-    if (state->getValue(THIN_FENCE_WEST)) addCollisionAABB(pos, entityBox, collidingBoxes, AABB::newTemp(0.0, 0.0, 0.375, 0.625, 1.0, 0.625));
+    addCollisionAABB(pos, entityBox, collidingBoxes, thinFenceShapes[0]);
+    if (state->getValue(THIN_FENCE_NORTH)) addCollisionAABB(pos, entityBox, collidingBoxes, thinFenceShapes[indexFor(Direction::NORTH)]);
+    if (state->getValue(THIN_FENCE_SOUTH)) addCollisionAABB(pos, entityBox, collidingBoxes, thinFenceShapes[indexFor(Direction::SOUTH)]);
+    if (state->getValue(THIN_FENCE_EAST)) addCollisionAABB(pos, entityBox, collidingBoxes, thinFenceShapes[indexFor(Direction::EAST)]);
+    if (state->getValue(THIN_FENCE_WEST)) addCollisionAABB(pos, entityBox, collidingBoxes, thinFenceShapes[indexFor(Direction::WEST)]);
 }
 
 int ThinFenceBlock::getAABBIndex(const BlockState* state)
@@ -141,8 +141,9 @@ bool ThinFenceBlock::isCubeShaped(const BlockState*) { return false; }
 
 bool ThinFenceBlock::shouldRenderFace(const BlockState* state, LevelSource* levelSource, const BlockPos& pos, const Direction* direction)
 {
-    return levelSource->getBlockState(pos.relative(direction))->getBlock() != this
-        && Block::shouldRenderFace(state, levelSource, pos, direction);
+    if (levelSource->getBlockState(pos)->getBlock() != this)
+        return Block::shouldRenderFace(state, levelSource, pos, direction);
+    return false;
 }
 
 bool ThinFenceBlock::canContainLiquid(const BlockState*) const { return true; }
@@ -221,7 +222,7 @@ BlockStateDefinition* ThinFenceBlock::createBlockStateDefinition()
 
 EBlockFaceShape ThinFenceBlock::getBlockFaceShape(LevelSource*, const BlockState*, const BlockPos&, const Direction* direction)
 {
-    return direction == Direction::DOWN || direction == Direction::UP ? BLOCK_FACE_CENTER_SMALL : BLOCK_FACE_MIDDLE_POLE_THIN;
+    return direction == Direction::UP || direction == Direction::DOWN ? BLOCK_FACE_CENTER_SMALL : BLOCK_FACE_MIDDLE_POLE_THIN;
 }
 
 void ThinFenceBlock::registerIcons(IconRegister* iconRegister)

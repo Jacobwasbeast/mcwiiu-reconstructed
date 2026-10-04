@@ -21,7 +21,8 @@ BlockTransaction* BlockTransaction::CreateTransaction(const BlockPos& min, const
 {
     Vec3i size(max.x - min.x, max.y - min.y, max.z - min.z);
     unsigned int elementCount = size.x * size.y * size.z;
-    Element* elements = new Element[elementCount]();
+    Element* elements = new Element[elementCount];
+    memset(elements, 0, elementCount * sizeof(Element));
     return new BlockTransaction(min, max, size, elements, elementCount);
 }
 
@@ -88,7 +89,9 @@ void BlockTransaction::setElement(const Vec3i& position, unsigned short element)
 void BlockTransaction::setBlock(const Vec3i& position, const BlockState* state)
 {
     Block* block = state->getBlock();
-    setBlock(position, Block::getId(block), block->convertBlockStateToLegacyData(state) & 0xf);
+    int id = Block::getId(block);
+    int data = block->convertBlockStateToLegacyData(state) & 0xf;
+    setBlock(position, id, data);
 }
 
 int BlockTransaction::getBlock(const Vec3i& position) const

@@ -60,7 +60,7 @@ void BaseEntityBlock::playerDestroy(Level* level, boost::shared_ptr<Player> play
     boost::shared_ptr<Nameable> nameable = boost::dynamic_pointer_cast<Nameable>(blockEntity);
     if (nameable.get() == NULL || !nameable->hasCustomName())
     {
-        Block::playerDestroy(level, player, pos, state, blockEntity, tool);
+        Block::playerDestroy(level, player, pos, state, boost::shared_ptr<BlockEntity>(), tool);
         return;
     }
 

@@ -42,15 +42,13 @@ bool RandomizableLockableContainerBlockEntity::hasCustomName()
 
 not_null_ptr<ItemInstance> RandomizableLockableContainerBlockEntity::getItem(unsigned int slot)
 {
-    boost::shared_ptr<Player> player;
-    unpackLootTable(player);
+    unpackLootTable(boost::shared_ptr<Player>());
     return getItems()[slot];
 }
 
 not_null_ptr<ItemInstance> RandomizableLockableContainerBlockEntity::removeItem(unsigned int slot, int count)
 {
-    boost::shared_ptr<Player> player;
-    unpackLootTable(player);
+    unpackLootTable(boost::shared_ptr<Player>());
     not_null_ptr<ItemInstance> item =
         ContainerHelper::removeItem(getItems(), slot, static_cast<unsigned int>(count));
     if (!item->isEmpty())
@@ -62,15 +60,13 @@ not_null_ptr<ItemInstance> RandomizableLockableContainerBlockEntity::removeItem(
 
 not_null_ptr<ItemInstance> RandomizableLockableContainerBlockEntity::removeItemNoUpdate(int slot)
 {
-    boost::shared_ptr<Player> player;
-    unpackLootTable(player);
+    unpackLootTable(boost::shared_ptr<Player>());
     return ContainerHelper::takeItem(getItems(), static_cast<unsigned int>(slot));
 }
 
 void RandomizableLockableContainerBlockEntity::setItem(unsigned int slot, not_null_ptr<ItemInstance> itemInstance)
 {
-    boost::shared_ptr<Player> player;
-    unpackLootTable(player);
+    unpackLootTable(boost::shared_ptr<Player>());
     getItems()[slot] = itemInstance;
     if (itemInstance->getCount() > getMaxStackSize())
     {
@@ -85,7 +81,11 @@ bool RandomizableLockableContainerBlockEntity::stillValid(boost::shared_ptr<Play
     {
         return false;
     }
-    return player->distanceAsIfHitscanned(mPos, *player->mBoundingBox) <= 30.25;
+    if (player->distanceAsIfHitscanned(mPos, *player->mBoundingBox) > 30.25f)
+    {
+        return false;
+    }
+    return true;
 }
 
 void RandomizableLockableContainerBlockEntity::startOpen(boost::shared_ptr<Player> player)
@@ -117,13 +117,11 @@ int RandomizableLockableContainerBlockEntity::getContainerDataCount()
 
 void RandomizableLockableContainerBlockEntity::clearContent()
 {
-    boost::shared_ptr<Player> player;
-    unpackLootTable(player);
+    unpackLootTable(boost::shared_ptr<Player>());
     NonNullList<not_null_ptr<ItemInstance> > items = getItems();
-    not_null_ptr<ItemInstance> empty;
     for (unsigned int slot = 0; slot < items.size(); ++slot)
     {
-        items[slot] = empty;
+        items[slot] = items.defaultValue;
     }
 }
 
@@ -154,17 +152,15 @@ void RandomizableLockableContainerBlockEntity::unpackLootTable(const boost::shar
 
     Random* random = mLootTableSeed == 0 ? new Random() : new Random(mLootTableSeed);
 
-    float luck = 0.0f;
+    LootTableContext::Builder* builder = new LootTableContext::Builder(static_cast<ServerLevel*>(mLevel));
+    builder->mThisEntity = boost::weak_ptr<Entity>(player);
     if (player)
     {
-        luck = player->getLuck();
+        builder->mLuck = player->getLuck();
     }
-
-    LootTableContext context(luck, static_cast<ServerLevel*>(mLevel),
-                             static_cast<LootTables*>(mLevel->getLootTables()),
-                             player, boost::shared_ptr<Player>(), NULL);
+    LootTableContext context = builder->build();
     lootTable->fill(this, random, context);
-    delete random;
+    delete builder;
 }
 
 void RandomizableLockableContainerBlockEntity::setLootTable(ResourceLocation* lootTable, long long seed)

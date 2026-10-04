@@ -8,6 +8,7 @@ const unsigned int kDoorTooltipUnavailable = 0xffffffff;
 const unsigned int kDoorTooltipInteract = IDS_TOOLTIPS_USE;
 }
 
+#include <cstring>
 #include <typeinfo>
 #include <boost/unordered_set.hpp>
 
@@ -66,28 +67,20 @@ std::wstring DoorBlock::HingeSide::toString() const { return getSerializedName()
 std::wstring DoorBlock::HingeSide::getSerializedName() const { return this == DoorBlock::LEFT ? L"left" : L"right"; }
 
 DoorBlock::DoorBlock(Material* material)
-    : Block(material),
-      mDoorData(0)
+    : Block(material)
 {
     mIsDoor = true;
     mBlockType = EBLOCK_TYPE_DOOR;
     DerivedInit();
     const BlockState* state = mStateDefinition->any();
-    TypedBoxed<const Direction*> facing(Direction::NORTH);
-    state = state->setBoxedValue(FACING, &facing);
-    TypedBoxed<bool> open(false);
-    state = state->setBoxedValue(OPEN, &open);
-    TypedBoxed<HingeSide*> hinge(LEFT);
-    state = state->setBoxedValue(HINGE, &hinge);
-    TypedBoxed<bool> powered(false);
-    state = state->setBoxedValue(POWERED, &powered);
-    TypedBoxed<DoorHalf*> half(LOWER);
-    state = state->setBoxedValue(HALF, &half);
+    state = state->setValue(FACING, Direction::NORTH);
+    state = state->setValue(OPEN, false);
+    state = state->setValue(HINGE, LEFT);
+    state = state->setValue(POWERED, false);
+    state = state->setValue(HALF, LOWER);
     registerDefaultState(state);
-    mUpperIcons[0] = NULL;
-    mUpperIcons[1] = NULL;
-    mLowerIcons[0] = NULL;
-    mLowerIcons[1] = NULL;
+    memset(mUpperIcons, 0, sizeof(mUpperIcons));
+    memset(mLowerIcons, 0, sizeof(mLowerIcons));
 }
 
 DoorBlock::~DoorBlock() {}
@@ -95,36 +88,40 @@ DoorBlock::~DoorBlock() {}
 void DoorBlock::blockStaticCtor()
 {
     FACING = HorizontalDirectionalBlock::FACING_PROPERTY;
-    boost::unordered_set<HingeSide*> hinges;
-    hinges.insert(LEFT);
-    hinges.insert(RIGHT);
-    HINGE = EnumProperty<HingeSide*>::create(L"hinge", typeid(HingeSide*), hinges, Predicates<HingeSide*>::alwaysTrue);
-    boost::unordered_set<DoorHalf*> halves;
-    halves.insert(LOWER);
-    halves.insert(UPPER);
-    HALF = EnumProperty<DoorHalf*>::create(L"half", typeid(DoorHalf*), halves, Predicates<DoorHalf*>::alwaysTrue);
+    std::wstring name;
+    name = L"hinge";
+    {
+        boost::unordered_set<HingeSide*> hinges;
+        hinges.insert(LEFT);
+        hinges.insert(RIGHT);
+        HINGE = EnumProperty<HingeSide*>::create(name, typeid(HingeSide*), hinges, Predicates<HingeSide*>::alwaysTrue);
+    }
+    name = L"half";
+    {
+        boost::unordered_set<DoorHalf*> halves;
+        halves.insert(LOWER);
+        halves.insert(UPPER);
+        HALF = EnumProperty<DoorHalf*>::create(name, typeid(DoorHalf*), halves, Predicates<DoorHalf*>::alwaysTrue);
+    }
 }
 
 const AABB* DoorBlock::getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
 {
     state = state->fillVirtualBlockStateProperties(levelSource, pos);
     const Direction* facing = state->getValue(FACING);
-    bool open = state->getValue(OPEN);
+    bool closed = !state->getValue(OPEN);
     bool rightHinge = state->getValue(HINGE) == RIGHT;
     switch (facing->get3DDataValue())
     {
-    case 2:
-        if (!open) return gDoorNorthShape;
-        return rightHinge ? gDoorWestShape : gDoorEastShape;
-    case 3:
-        if (!open) return gDoorSouthShape;
-        return rightHinge ? gDoorEastShape : gDoorWestShape;
-    case 4:
-        if (!open) return gDoorWestShape;
-        return rightHinge ? gDoorSouthShape : gDoorNorthShape;
+    case 5:
     default:
-        if (!open) return gDoorEastShape;
-        return rightHinge ? gDoorNorthShape : gDoorSouthShape;
+        return closed ? gDoorEastShape : (rightHinge ? gDoorNorthShape : gDoorSouthShape);
+    case 2:
+        return closed ? gDoorNorthShape : (rightHinge ? gDoorWestShape : gDoorEastShape);
+    case 3:
+        return closed ? gDoorSouthShape : (rightHinge ? gDoorEastShape : gDoorWestShape);
+    case 4:
+        return closed ? gDoorWestShape : (rightHinge ? gDoorSouthShape : gDoorNorthShape);
     }
 }
 
@@ -207,8 +204,7 @@ void DoorBlock::setOpen(Level* level, const BlockPos& pos, bool open)
     if (!(pos == lowerPos)) lowerState = level->getBlockState(lowerPos);
     if (lowerState->getBlock() != this) return;
     if (lowerState->getValue(OPEN) == open) return;
-    TypedBoxed<bool> value(open);
-    level->setBlock(lowerPos, lowerState->setBoxedValue(OPEN, &value), Block::UPDATE_CLIENTS | Block::UPDATE_IMMEDIATE, false);
+    level->setBlock(lowerPos, lowerState->setValue(OPEN, open), Block::UPDATE_CLIENTS | Block::UPDATE_IMMEDIATE, false);
     BlockPos upperPos = lowerPos.above();
     level->updateObservingBlocksAt(upperPos, level->getBlock(upperPos));
     level->setBlocksDirty(lowerPos, pos);
@@ -246,15 +242,14 @@ void DoorBlock::neighborChanged(const BlockState* state, Level* level, const Blo
         if (!level->mIsClientSide) spawnResources(level, pos, state, 0);
         return;
     }
-    bool powered = level->hasNeighborSignal(pos) || level->hasNeighborSignal(pos.above());
+    bool powered = level->hasNeighborSignal(pos) || level->hasNeighborSignal(upperPos);
     if (block == this || (!powered && !block->defaultBlockState()->isSignalSource())) return;
     if (powered != upperState->getValue(POWERED))
     {
-        TypedBoxed<bool> value(powered);
-        level->setBlock(upperPos, upperState->setBoxedValue(POWERED, &value), Block::UPDATE_ALL, false);
+        level->setBlock(upperPos, upperState->setValue(POWERED, powered), Block::UPDATE_ALL, false);
         if (powered != state->getValue(OPEN))
         {
-            level->setBlock(pos, state->setBoxedValue(OPEN, &value), Block::UPDATE_ALL, false);
+            level->setBlock(pos, state->setValue(OPEN, powered), Block::UPDATE_ALL, false);
             level->setBlocksDirty(pos, pos);
             level->levelEvent(boost::shared_ptr<Player>(), powered ? getOpenSound() : getCloseSound(), pos, 0);
         }
@@ -271,7 +266,11 @@ Item* DoorBlock::getItem()
     return Items::woodenDoor;
 }
 Item* DoorBlock::getResource(const BlockState*, Random*, int) { return getItem(); }
-bool DoorBlock::mayPlace(Level* level, const BlockPos& pos) { return pos.y <= 254 && Block::mayPlace(level, pos) && Block::mayPlace(level, pos.above()) && CanSurvive(level->getBlockState(pos.below())); }
+bool DoorBlock::mayPlace(Level* level, const BlockPos& pos)
+{
+    if (pos.y >= 255) return false;
+    return Block::mayPlace(level, pos) && Block::mayPlace(level, pos.above()) && CanSurvive(level->getBlockState(pos.below()));
+}
 EPistonPushReaction DoorBlock::getPistonPushReaction(const BlockState*) { return PISTON_PUSH_DESTROY; }
 not_null_ptr<ItemInstance> DoorBlock::getCloneItemInstance(Level*, const BlockPos&, const BlockState*) { return not_null_ptr<ItemInstance>(new ItemInstance(getItem())); }
 bool DoorBlock::playerWillDestroy(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<Player> player)
@@ -298,10 +297,8 @@ const BlockState* DoorBlock::fillVirtualBlockStateProperties(const BlockState* s
         const BlockState* upperState = levelSource->getBlockState(pos.above());
         if (upperState->getBlock() == this)
         {
-            TypedBoxed<HingeSide*> hinge(upperState->getValue(HINGE));
-            state = state->setBoxedValue(HINGE, &hinge);
-            TypedBoxed<bool> powered(upperState->getValue(POWERED));
-            state = state->setBoxedValue(POWERED, &powered);
+            state = state->setValue(HINGE, upperState->getValue(HINGE));
+            state = state->setValue(POWERED, upperState->getValue(POWERED));
         }
     }
     else
@@ -309,10 +306,8 @@ const BlockState* DoorBlock::fillVirtualBlockStateProperties(const BlockState* s
         const BlockState* lowerState = levelSource->getBlockState(pos.below());
         if (lowerState->getBlock() == this)
         {
-            TypedBoxed<const Direction*> facing(lowerState->getValue(FACING));
-            state = state->setBoxedValue(FACING, &facing);
-            TypedBoxed<bool> open(lowerState->getValue(OPEN));
-            state = state->setBoxedValue(OPEN, &open);
+            state = state->setValue(FACING, lowerState->getValue(FACING));
+            state = state->setValue(OPEN, lowerState->getValue(OPEN));
         }
     }
     return state;
@@ -322,39 +317,28 @@ const BlockState* DoorBlock::getBlockState(int data)
     const BlockState* state = defaultBlockState();
     if ((data & 8) == 0)
     {
-        {
-            TypedBoxed<DoorHalf*> half(LOWER);
-            state = state->setBoxedValue(HALF, &half);
-        }
-        {
-            TypedBoxed<const Direction*> facing(Direction::from2DDataValue(data & 3)->getCounterClockWise());
-            state = state->setBoxedValue(FACING, &facing);
-        }
-        TypedBoxed<bool> open((data & 4) != 0);
-        return state->setBoxedValue(OPEN, &open);
+        state = state->setValue(HALF, LOWER);
+        state = state->setValue(FACING, Direction::from2DDataValue(data & 3)->getCounterClockWise());
+        return state->setValue(OPEN, (data & 4) != 0);
     }
-    {
-        TypedBoxed<DoorHalf*> half(UPPER);
-        state = state->setBoxedValue(HALF, &half);
-    }
-    {
-        TypedBoxed<HingeSide*> hinge((data & 1) != 0 ? RIGHT : LEFT);
-        state = state->setBoxedValue(HINGE, &hinge);
-    }
-    TypedBoxed<bool> powered((data & 2) != 0);
-    return state->setBoxedValue(POWERED, &powered);
+    state = state->setValue(HALF, UPPER);
+    state = state->setValue(HINGE, (data & 1) != 0 ? RIGHT : LEFT);
+    return state->setValue(POWERED, (data & 2) != 0);
 }
 int DoorBlock::convertBlockStateToLegacyData(const BlockState* state)
 {
+    int data = 0;
     if (state->getValue(HALF) == UPPER)
     {
-        int data = 8;
+        data = 8;
         if (state->getValue(HINGE) == RIGHT) data |= 1;
         if (state->getValue(POWERED)) data |= 2;
-        return data;
     }
-    int data = state->getValue(FACING)->getClockWise()->get2DDataValue();
-    if (state->getValue(OPEN)) data |= 4;
+    else
+    {
+        data = state->getValue(FACING)->getClockWise()->get2DDataValue();
+        if (state->getValue(OPEN)) data |= 4;
+    }
     return data;
 }
 unsigned int DoorBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
@@ -372,8 +356,7 @@ unsigned int DoorBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltip
 const BlockState* DoorBlock::rotate(const BlockState* state, Rotation* rotation)
 {
     if (state->getValue(HALF) == UPPER) return state;
-    TypedBoxed<const Direction*> facing(rotation->rotate(state->getValue(FACING)));
-    return state->setBoxedValue(FACING, &facing);
+    return state->setValue(FACING, rotation->rotate(state->getValue(FACING)));
 }
 const BlockState* DoorBlock::mirror(const BlockState* state, Mirror* mirror)
 {
@@ -383,7 +366,7 @@ const BlockState* DoorBlock::mirror(const BlockState* state, Mirror* mirror)
 bool DoorBlock::isOpen(LevelSource* levelSource, const BlockPos& pos) { return isOpenFromData(getCompositeData(levelSource, pos)); }
 const Direction* DoorBlock::getFacingFromData(int data) { return Direction::from2DDataValue(data & 3)->getCounterClockWise(); }
 const Direction* DoorBlock::getFacing(LevelSource* levelSource, const BlockPos& pos) { return getFacingFromData(getCompositeData(levelSource, pos)); }
-BlockStateDefinition* DoorBlock::createBlockStateDefinition() { const Property* properties[] = { HALF, FACING, OPEN, HINGE, POWERED }; return new BlockStateDefinition(this, properties, 5); }
+BlockStateDefinition* DoorBlock::createBlockStateDefinition() { static const Property* properties[] = { HALF, FACING, OPEN, HINGE, POWERED }; return new BlockStateDefinition(this, properties, 5); }
 EBlockFaceShape DoorBlock::getBlockFaceShape(LevelSource*, const BlockState*, const BlockPos&, const Direction*) { return BLOCK_FACE_UNDEFINED; }
 bool DoorBlock::isDoor(Block* block)
 {
@@ -396,7 +379,7 @@ TextureAtlasSprite* DoorBlock::getTexture(LevelSource* levelSource, const BlockP
     state = fillVirtualBlockStateProperties(state, levelSource, pos);
     const Direction* facing = state->getValue(FACING)->getClockWise();
     bool open = state->getValue(OPEN);
-    DoorHalf* half = state->getValue(HALF);
+    bool lower = state->getValue(HALF) != UPPER;
     int flip = 0;
     if (!open)
     {
@@ -416,8 +399,8 @@ TextureAtlasSprite* DoorBlock::getTexture(LevelSource* levelSource, const BlockP
     {
         flip ^= 1;
     }
-    if (half == UPPER) return mUpperIcons[flip];
-    return mLowerIcons[flip];
+    if (lower) return mLowerIcons[flip];
+    return mUpperIcons[flip];
 }
 void DoorBlock::registerIcons(IconRegister* iconRegister)
 {

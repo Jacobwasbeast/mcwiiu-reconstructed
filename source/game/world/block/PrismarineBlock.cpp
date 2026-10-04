@@ -38,12 +38,12 @@ int PrismarineBlock::DARK_DATA;
 
 PrismarineBlock::Variant::Variant(int data, const std::wstring& name, int nameId,
                                   int descriptionId, const std::wstring& serializedName)
-    : mData(data),
-      mName(name),
-      mNameId(nameId),
-      mDescriptionId(descriptionId),
-      mSerializedName(serializedName)
+    : mData(data)
 {
+    mName = name;
+    mNameId = nameId;
+    mDescriptionId = descriptionId;
+    mSerializedName = serializedName;
 }
 
 std::wstring PrismarineBlock::Variant::toString() const
@@ -93,12 +93,18 @@ int PrismarineBlock::Variant::getDescriptionId()
 
 void PrismarineBlock::blockStaticCtor()
 {
-    std::wstring name = L"variant";
-    boost::unordered_set<Variant*> values;
-    values.insert(gPrismarineVariants[0]);
-    values.insert(gPrismarineVariants[1]);
-    values.insert(gPrismarineVariants[2]);
-    VARIANT = EnumProperty<Variant*>::create(name, typeid(Variant), values, gPrismarineVariantPredicate);
+    {
+        std::wstring name = L"variant";
+        EnumProperty<Variant*>* variant;
+        {
+            boost::unordered_set<Variant*> values;
+            values.insert(gPrismarineVariants[0]);
+            values.insert(gPrismarineVariants[1]);
+            values.insert(gPrismarineVariants[2]);
+            variant = EnumProperty<Variant*>::create(name, typeid(Variant), values, gPrismarineVariantPredicate);
+        }
+        VARIANT = variant;
+    }
     ROUGH_DATA = gPrismarineVariants[0]->getData();
     BRICKS_DATA = gPrismarineVariants[1]->getData();
     DARK_DATA = gPrismarineVariants[2]->getData();
@@ -108,8 +114,7 @@ PrismarineBlock::PrismarineBlock()
     : Block(Material::STONE)
 {
     DerivedInit();
-    TypedBoxed<Variant*> value(Variant::ROUGH);
-    registerDefaultState(mStateDefinition->any()->setBoxedValue(VARIANT, &value));
+    registerDefaultState(mStateDefinition->any()->setValue(VARIANT, Variant::ROUGH));
 }
 
 std::wstring PrismarineBlock::getName()
@@ -136,14 +141,13 @@ int PrismarineBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 BlockStateDefinition* PrismarineBlock::createBlockStateDefinition()
 {
-    const Property* properties[] = { VARIANT };
+    static const Property* properties[] = { VARIANT };
     return new BlockStateDefinition(this, properties, 1);
 }
 
 const BlockState* PrismarineBlock::getBlockState(int data)
 {
-    TypedBoxed<Variant*> value(Variant::byData(data));
-    return defaultBlockState()->setBoxedValue(VARIANT, &value);
+    return defaultBlockState()->setValue(VARIANT, Variant::byData(data));
 }
 
 TextureAtlasSprite* PrismarineBlock::getTexture(const Direction*, const BlockState* state)

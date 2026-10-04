@@ -15,7 +15,7 @@ public:
     HarvestFarmBlockGoal(Villager* villager, double speedModifier);
     virtual ~HarvestFarmBlockGoal();
 
-    unsigned int fjGetNextFarmTarget();
+    bool fjGetNextFarmTarget();
     virtual bool canUse();
     virtual bool canContinueToUse();
     int findInventorySlotForFarmSeeds();

@@ -27,10 +27,6 @@ IceBlock::IceBlock(bool isClientSide)
     setTicking(true);
 }
 
-IceBlock::~IceBlock()
-{
-}
-
 int IceBlock::getRenderLayer()
 {
     return 1;
@@ -40,7 +36,9 @@ void IceBlock::playerDestroy(Level* level, boost::shared_ptr<Player> player, con
                              const BlockState* state, boost::shared_ptr<BlockEntity> blockEntity,
                              not_null_ptr<ItemInstance> tool)
 {
-    player->awardStat(gStats->get_blocksMined(Block::getId(this)), GenericStats::param_blocksMined(state, 1));
+    Player* awardee = player.operator->();
+    Stat* stat = gStats->get_blocksMined(Block::getId(this));
+    awardee->awardStat(stat, GenericStats::param_blocksMined(state, 1));
     player->causeFoodExhaustion((float)FoodConstants::ExhaustionMine());
 
     if (!isSilkTouchable() || EnchantmentHelper::getItemEnchantmentLevel(Enchantments::SILK_TOUCH, tool) < 1)
@@ -97,5 +95,5 @@ EPistonPushReaction IceBlock::getPistonPushReaction(const BlockState* state)
 
 bool IceBlock::shouldBlockTick(Level* level, const BlockPos& pos, const BlockState* state)
 {
-    return 11 - state->getLightBlock() < level->getBrightness(LightLayer::BLOCK, pos);
+    return level->getBrightness(LightLayer::BLOCK, pos) > 11 - state->getLightBlock();
 }

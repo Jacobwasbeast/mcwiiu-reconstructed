@@ -13,10 +13,10 @@
 
 CraftingTableBlock::CraftingTableBlock()
     : Block(Material::WOOD)
-    , mTopTexture(NULL)
-    , mFrontTexture(NULL)
 {
     DerivedInit();
+    mTopTexture = NULL;
+    mFrontTexture = NULL;
 }
 
 CraftingTableBlock::~CraftingTableBlock()
@@ -81,9 +81,9 @@ unsigned int CraftingTableBlock::GetInteractTooltip(const BlockTooltipDataHolder
 
 CraftingTableBlock::CraftingTable::CraftingTable(Level* level, const BlockPos& pos)
     : InteractionObject()
-    , mLevel(level)
-    , mBlockPos(pos)
 {
+    mLevel = level;
+    mBlockPos = pos;
 }
 
 AbstractContainerMenu* CraftingTableBlock::CraftingTable::createMenu(boost::shared_ptr<Inventory> inventory,

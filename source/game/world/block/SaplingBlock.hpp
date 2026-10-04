@@ -12,6 +12,7 @@ class SaplingBlock : public Bush, public BonemealableBlock
 {
 public:
     SaplingBlock();
+    virtual void advanceTree(Level*, const BlockPos&, const BlockState*, Random*);
     virtual bool isValidBonemealTarget(Level*, const BlockPos&, const BlockState*, bool);
     virtual bool isBonemealSuccess(Level*, Random*, const BlockPos&, const BlockState*);
     bool isSapling(Level*, const BlockPos&, PlanksBlock::Variant*);
@@ -22,7 +23,6 @@ public:
     virtual std::wstring getName();
     virtual const AABB* getShape(const BlockState*, LevelSource*, const BlockPos&);
     virtual void tick(Level*, const BlockPos&, const BlockState*, Random*);
-    virtual void advanceTree(Level*, const BlockPos&, const BlockState*, Random*);
     virtual int getSpawnResourcesAuxValue(const BlockState*);
     virtual const BlockState* getBlockState(int);
     virtual int convertBlockStateToLegacyData(const BlockState*);

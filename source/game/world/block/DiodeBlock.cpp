@@ -1,5 +1,6 @@
 #include "game/world/block/DiodeBlock.hpp"
 #include "game/core/Direction.hpp"
+#include "game/entity/mob/LivingEntity.hpp"
 #include "game/item/not_null_ptr.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/LevelSource.hpp"
@@ -9,6 +10,7 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/DirectionProperty.hpp"
+#include "game/world/block/RedStoneWireBlock.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 #include "game/client/render/TextureAtlasSprite.hpp"
@@ -21,12 +23,12 @@ bool DiodeBlock::isCubeShaped(const BlockState*) { return false; }
 
 bool DiodeBlock::mayPlace(Level* level, const BlockPos& pos)
 {
-    return level->getBlockState(pos.below())->isSolidBlockingCube() && Block::mayPlace(level, pos);
+    return level->getBlockState(pos.below())->isTopSolidBlocking() && Block::mayPlace(level, pos);
 }
 
 bool DiodeBlock::canSurvive(Level* level, const BlockPos& pos, const BlockState*)
 {
-    return level->getBlockState(pos.below())->isSolidBlockingCube();
+    return level->getBlockState(pos.below())->isTopSolidBlocking();
 }
 
 void DiodeBlock::randomTick(Level*, const BlockPos&, const BlockState*, Random*) {}
@@ -109,8 +111,7 @@ int DiodeBlock::getInputSignal(Level* level, const BlockPos& pos, const BlockSta
         const BlockState* inputState = level->getBlockState(inputPos);
         if (inputState->getBlock() == Blocks::redstone_wire)
         {
-            const AbstractProperty<int>* powerProperty = static_cast<const AbstractProperty<int>*>(inputState->getProperties().back());
-            int wireSignal = inputState->getValue(powerProperty);
+            int wireSignal = inputState->getValue(RedStoneWireBlock::POWER);
             if (signal < wireSignal) signal = wireSignal;
         }
         else if (signal < 0)
@@ -124,29 +125,28 @@ int DiodeBlock::getInputSignal(Level* level, const BlockPos& pos, const BlockSta
 int DiodeBlock::getAlternateSignal(LevelSource* levelSource, const BlockPos& pos, const BlockState* state)
 {
     const Direction* direction = state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY);
-    int first = getAlternateSignalAt(levelSource, pos.relative(direction->getClockWise()), direction->getClockWise());
-    int second = getAlternateSignalAt(levelSource, pos.relative(direction->getCounterClockWise()), direction->getCounterClockWise());
+    const Direction* clockWise = direction->getClockWise();
+    const Direction* counterClockWise = direction->getCounterClockWise();
+    int first = getAlternateSignalAt(levelSource, pos.relative(clockWise), clockWise);
+    int second = getAlternateSignalAt(levelSource, pos.relative(counterClockWise), counterClockWise);
     return first > second ? first : second;
 }
 
 int DiodeBlock::getAlternateSignalAt(LevelSource* levelSource, const BlockPos& pos, const Direction* direction)
 {
     const BlockState* state = levelSource->getBlockState(pos);
+    Block* block = state->getBlock();
     if (!isAlternateInput(state)) return 0;
-    if (state->getBlock() == Blocks::redstone_block) return 15;
-    if (state->getBlock() == Blocks::redstone_wire)
-    {
-        const AbstractProperty<int>* powerProperty = static_cast<const AbstractProperty<int>*>(state->getProperties().back());
-        return state->getValue(powerProperty);
-    }
+    if (block == Blocks::redstone_block) return 15;
+    if (block == Blocks::redstone_wire) return state->getValue(RedStoneWireBlock::POWER);
     return levelSource->getDirectSignal(pos, direction);
 }
 
 bool DiodeBlock::isSignalSource(const BlockState*) { return true; }
 
-const BlockState* DiodeBlock::getStateForPlacement(Level*, const BlockPos& pos, const Direction*, float, float, float, int, boost::shared_ptr<LivingEntity> placer)
+const BlockState* DiodeBlock::getStateForPlacement(Level*, const BlockPos&, const Direction*, float, float, float, int, boost::shared_ptr<LivingEntity> placer)
 {
-    const Direction* direction = Direction::getDirectionFromLivingEntity(pos, placer);
+    const Direction* direction = placer->getDirection();
     TypedBoxed<const Direction*> facing(direction->getOpposite());
     return defaultBlockState()->setBoxedValue(HorizontalDirectionalBlock::FACING_PROPERTY, &facing);
 }

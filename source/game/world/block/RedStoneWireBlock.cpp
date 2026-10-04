@@ -96,28 +96,44 @@ RedStoneWireBlock::RedStoneWireBlock()
 {
     Block::DerivedInit();
     mSignalSource = true;
-    TypedBoxed<ConnectingSide*> none(RedStoneWireBlock::NONE);
-    TypedBoxed<int> power(0);
-    const BlockState* state = mStateDefinition->any()->setBoxedValue(NORTH, &none);
-    state = state->setBoxedValue(EAST, &none);
-    state = state->setBoxedValue(SOUTH, &none);
-    state = state->setBoxedValue(WEST, &none);
-    registerDefaultState(state->setBoxedValue(POWER, &power));
+    const BlockState* state = mStateDefinition->any()->setValue(NORTH, NONE);
+    state = state->setValue(EAST, NONE);
+    state = state->setValue(SOUTH, NONE);
+    state = state->setValue(WEST, NONE);
+    registerDefaultState(state->setValue(POWER, 0));
     setThickness(0.07f);
 }
 
 void RedStoneWireBlock::blockStaticCtor()
 {
-    boost::unordered_set<ConnectingSide*> values;
-    for (int i = 0; i < 3; ++i) values.insert(gRedStoneWireConnectingSides[i]);
-    NORTH = EnumProperty<ConnectingSide*>::create(
-        L"north", typeid(ConnectingSide*), values, Predicates<ConnectingSide*>::alwaysTrue);
-    EAST = EnumProperty<ConnectingSide*>::create(
-        L"east", typeid(ConnectingSide*), values, Predicates<ConnectingSide*>::alwaysTrue);
-    SOUTH = EnumProperty<ConnectingSide*>::create(
-        L"south", typeid(ConnectingSide*), values, Predicates<ConnectingSide*>::alwaysTrue);
-    WEST = EnumProperty<ConnectingSide*>::create(
-        L"west", typeid(ConnectingSide*), values, Predicates<ConnectingSide*>::alwaysTrue);
+    {
+        std::wstring name(L"north");
+        boost::unordered_set<ConnectingSide*> values;
+        for (int i = 0; i < 3; ++i) values.insert(gRedStoneWireConnectingSides[i]);
+        NORTH = EnumProperty<ConnectingSide*>::create(name, typeid(ConnectingSide*), values,
+                                                   Predicates<ConnectingSide*>::alwaysTrue);
+    }
+    {
+        std::wstring name(L"east");
+        boost::unordered_set<ConnectingSide*> values;
+        for (int i = 0; i < 3; ++i) values.insert(gRedStoneWireConnectingSides[i]);
+        EAST = EnumProperty<ConnectingSide*>::create(name, typeid(ConnectingSide*), values,
+                                                   Predicates<ConnectingSide*>::alwaysTrue);
+    }
+    {
+        std::wstring name(L"south");
+        boost::unordered_set<ConnectingSide*> values;
+        for (int i = 0; i < 3; ++i) values.insert(gRedStoneWireConnectingSides[i]);
+        SOUTH = EnumProperty<ConnectingSide*>::create(name, typeid(ConnectingSide*), values,
+                                                   Predicates<ConnectingSide*>::alwaysTrue);
+    }
+    {
+        std::wstring name(L"west");
+        boost::unordered_set<ConnectingSide*> values;
+        for (int i = 0; i < 3; ++i) values.insert(gRedStoneWireConnectingSides[i]);
+        WEST = EnumProperty<ConnectingSide*>::create(name, typeid(ConnectingSide*), values,
+                                                   Predicates<ConnectingSide*>::alwaysTrue);
+    }
 }
 
 int RedStoneWireBlock::getAABBIndex(const BlockState* state)
@@ -205,14 +221,10 @@ RedStoneWireBlock::ConnectingSide* RedStoneWireBlock::getConnectingSide(LevelSou
 
 const BlockState* RedStoneWireBlock::fillVirtualBlockStateProperties(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
 {
-    TypedBoxed<ConnectingSide*> west(getConnectingSide(levelSource, pos, Direction::WEST));
-    state = state->setBoxedValue(WEST, &west);
-    TypedBoxed<ConnectingSide*> east(getConnectingSide(levelSource, pos, Direction::EAST));
-    state = state->setBoxedValue(EAST, &east);
-    TypedBoxed<ConnectingSide*> north(getConnectingSide(levelSource, pos, Direction::NORTH));
-    state = state->setBoxedValue(NORTH, &north);
-    TypedBoxed<ConnectingSide*> south(getConnectingSide(levelSource, pos, Direction::SOUTH));
-    return state->setBoxedValue(SOUTH, &south);
+    state = state->setValue(WEST, getConnectingSide(levelSource, pos, Direction::WEST));
+    state = state->setValue(EAST, getConnectingSide(levelSource, pos, Direction::EAST));
+    state = state->setValue(NORTH, getConnectingSide(levelSource, pos, Direction::NORTH));
+    return state->setValue(SOUTH, getConnectingSide(levelSource, pos, Direction::SOUTH));
 }
 
 const AABB* RedStoneWireBlock::getClipAABB(const BlockState*, LevelSource*, const BlockPos&)
@@ -283,15 +295,16 @@ const BlockState* RedStoneWireBlock::updatePowerStrength(Level* level, const Blo
         {
             wirePower = checkTarget(level, neighbourPos, wirePower);
         }
-        if (level->getBlockState(neighbourPos)->isSolidBlockingCubeAndNotSignalSource())
+        if (level->getBlockState(neighbourPos)->isSolidBlockingCubeAndNotSignalSource()
+            && !level->getBlockState(pos.above())->isSolidBlockingCubeAndNotSignalSource())
         {
-            if (!level->getBlockState(pos.above())->isSolidBlockingCubeAndNotSignalSource()
-                && offAxis && pos.y >= sourcePos.y)
+            if (offAxis && pos.y >= sourcePos.y)
             {
                 wirePower = checkTarget(level, neighbourPos.above(), wirePower);
             }
         }
-        else if (offAxis && pos.y <= sourcePos.y)
+        else if (!level->getBlockState(neighbourPos)->isSolidBlockingCubeAndNotSignalSource()
+                 && offAxis && pos.y <= sourcePos.y)
         {
             wirePower = checkTarget(level, neighbourPos.below(), wirePower);
         }
@@ -310,15 +323,14 @@ const BlockState* RedStoneWireBlock::updatePowerStrength(Level* level, const Blo
         power = 0;
     }
 
-    if (neighbourSignal > power)
+    if (neighbourSignal > power - 1)
     {
         power = neighbourSignal;
     }
 
     if (previousPower != power)
     {
-        TypedBoxed<int> boxedPower(power);
-        state = state->setBoxedValue(POWER, &boxedPower);
+        state = state->setValue(POWER, power);
         if (level->getBlockState(pos) == placedState)
         {
             int flags = gApp.GetGameHostOption(eGameHostOption_MiniGame) ? 0x24 : 2;
@@ -486,7 +498,11 @@ bool RedStoneWireBlock::isPowerSourceAt(LevelSource* levelSource, const BlockPos
     {
         return true;
     }
-    return !solid && shouldConnectTo(levelSource, neighbourPos.below());
+    if (!solid && shouldConnectTo(levelSource, neighbourPos.below()))
+    {
+        return true;
+    }
+    return false;
 }
 
 int RedStoneWireBlock::getSignal(const BlockState* state, LevelSource* levelSource, const BlockPos& pos, const Direction* direction)
@@ -614,38 +630,20 @@ const BlockState* RedStoneWireBlock::rotate(const BlockState* state, Rotation* r
     switch (rotation->getType())
     {
     case Rotation::eTYPE_Clockwise180:
-    {
-        TypedBoxed<ConnectingSide*> north(state->getValue(SOUTH));
-        TypedBoxed<ConnectingSide*> east(state->getValue(WEST));
-        TypedBoxed<ConnectingSide*> south(state->getValue(NORTH));
-        TypedBoxed<ConnectingSide*> west(state->getValue(EAST));
-        return state->setBoxedValue(NORTH, &north)
-            ->setBoxedValue(EAST, &east)
-            ->setBoxedValue(SOUTH, &south)
-            ->setBoxedValue(WEST, &west);
-    }
+        return state->setValue(NORTH, state->getValue(SOUTH))
+            ->setValue(EAST, state->getValue(WEST))
+            ->setValue(SOUTH, state->getValue(NORTH))
+            ->setValue(WEST, state->getValue(EAST));
     case Rotation::eTYPE_CounterClockwise90:
-    {
-        TypedBoxed<ConnectingSide*> north(state->getValue(EAST));
-        TypedBoxed<ConnectingSide*> east(state->getValue(SOUTH));
-        TypedBoxed<ConnectingSide*> south(state->getValue(WEST));
-        TypedBoxed<ConnectingSide*> west(state->getValue(NORTH));
-        return state->setBoxedValue(NORTH, &north)
-            ->setBoxedValue(EAST, &east)
-            ->setBoxedValue(SOUTH, &south)
-            ->setBoxedValue(WEST, &west);
-    }
+        return state->setValue(NORTH, state->getValue(EAST))
+            ->setValue(EAST, state->getValue(SOUTH))
+            ->setValue(SOUTH, state->getValue(WEST))
+            ->setValue(WEST, state->getValue(NORTH));
     case Rotation::eTYPE_Clockwise90:
-    {
-        TypedBoxed<ConnectingSide*> north(state->getValue(WEST));
-        TypedBoxed<ConnectingSide*> east(state->getValue(NORTH));
-        TypedBoxed<ConnectingSide*> south(state->getValue(EAST));
-        TypedBoxed<ConnectingSide*> west(state->getValue(SOUTH));
-        return state->setBoxedValue(NORTH, &north)
-            ->setBoxedValue(EAST, &east)
-            ->setBoxedValue(SOUTH, &south)
-            ->setBoxedValue(WEST, &west);
-    }
+        return state->setValue(NORTH, state->getValue(WEST))
+            ->setValue(EAST, state->getValue(NORTH))
+            ->setValue(SOUTH, state->getValue(EAST))
+            ->setValue(WEST, state->getValue(SOUTH));
     default:
         return state;
     }
@@ -656,17 +654,11 @@ const BlockState* RedStoneWireBlock::mirror(const BlockState* state, Mirror* mir
     switch (mirror->getType())
     {
     case Mirror::eTYPE_LeftRight:
-    {
-        TypedBoxed<ConnectingSide*> north(state->getValue(SOUTH));
-        TypedBoxed<ConnectingSide*> south(state->getValue(NORTH));
-        return state->setBoxedValue(NORTH, &north)->setBoxedValue(SOUTH, &south);
-    }
+        return state->setValue(NORTH, state->getValue(SOUTH))
+            ->setValue(SOUTH, state->getValue(NORTH));
     case Mirror::eTYPE_FrontBack:
-    {
-        TypedBoxed<ConnectingSide*> east(state->getValue(WEST));
-        TypedBoxed<ConnectingSide*> west(state->getValue(EAST));
-        return state->setBoxedValue(EAST, &east)->setBoxedValue(WEST, &west);
-    }
+        return state->setValue(EAST, state->getValue(WEST))
+            ->setValue(WEST, state->getValue(EAST));
     default:
         return Block::mirror(state, mirror);
     }
@@ -694,22 +686,21 @@ void RedStoneWireBlock::registerIcons(IconRegister* iconRegister)
 
 TextureAtlasSprite* RedStoneWireBlock::getTexture(const std::wstring& name)
 {
-    RedStoneWireBlock* wire = static_cast<RedStoneWireBlock*>(Blocks::redstone_wire);
     if (name == gRedStoneWireCrossSuffix)
     {
-        return wire->mCrossIcon;
+        return static_cast<RedStoneWireBlock*>(Blocks::redstone_wire)->mCrossIcon;
     }
     if (name == gRedStoneWireLineSuffix)
     {
-        return wire->mLineIcon;
+        return static_cast<RedStoneWireBlock*>(Blocks::redstone_wire)->mLineIcon;
     }
     if (name == gRedStoneWireCrossOverlaySuffix)
     {
-        return wire->mCrossOverlayIcon;
+        return static_cast<RedStoneWireBlock*>(Blocks::redstone_wire)->mCrossOverlayIcon;
     }
     if (name == gRedStoneWireLineOverlaySuffix)
     {
-        return wire->mLineOverlayIcon;
+        return static_cast<RedStoneWireBlock*>(Blocks::redstone_wire)->mLineOverlayIcon;
     }
     return NULL;
 }

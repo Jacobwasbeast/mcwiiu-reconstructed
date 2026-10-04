@@ -35,17 +35,25 @@ DirtBlock::Variant* DirtBlock::Variant::DIRT = NULL;
 DirtBlock::Variant* DirtBlock::Variant::COARSE_DIRT = NULL;
 DirtBlock::Variant* DirtBlock::Variant::PODZOL = NULL;
 EnumProperty<DirtBlock::Variant*>* DirtBlock::VARIANT = NULL;
-static DirtBlock::Variant* gVariantsByData[3] = { NULL, NULL, NULL };
+static DirtBlock::Variant* gVariantsByData[3];
 static AbstractProperty<bool>* gSnowyProperty =
     static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"snowy"));
 
 DirtBlock::Variant::Variant(int data, const std::wstring& name, int nameId, int descriptionId,
                             const MaterialColor* materialColor, const std::wstring& texture,
                             const std::wstring& topTexture, const std::wstring& sideTexture)
-    : mData(data), mName(name), mNameId(nameId), mDescriptionId(descriptionId),
-      mMaterialColor(materialColor), mTexture(texture), mTopTexture(topTexture),
-      mSideTexture(sideTexture), mIcon(NULL), mSideIcon(NULL), mTopIcon(NULL)
+    : mData(data)
 {
+    mName = name;
+    mNameId = nameId;
+    mDescriptionId = descriptionId;
+    mMaterialColor = materialColor;
+    mTexture = texture;
+    mTopTexture = topTexture;
+    mSideTexture = sideTexture;
+    mIcon = NULL;
+    mTopIcon = NULL;
+    mSideIcon = NULL;
 }
 
 const MaterialColor* DirtBlock::Variant::getMaterialColor()

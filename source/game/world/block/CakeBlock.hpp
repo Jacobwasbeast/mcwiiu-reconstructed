@@ -24,8 +24,8 @@ public:
     virtual bool isCubeShaped(const BlockState* state);
     virtual bool isSolidRender(const BlockState* state) const;
     virtual bool TestUse();
-    virtual bool eat(Level* level, const BlockPos& pos, const BlockState* state,
-                     const boost::shared_ptr<Player>& player);
+    bool eat(Level* level, const BlockPos& pos, const BlockState* state,
+             const boost::shared_ptr<Player>& player);
     virtual bool use(Level* level, const BlockPos& pos, const BlockState* state,
                      boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand,
                      const Direction* direction, float hitX, float hitY, float hitZ, bool clientSide);

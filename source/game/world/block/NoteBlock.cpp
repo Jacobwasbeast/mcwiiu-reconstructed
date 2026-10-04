@@ -26,21 +26,27 @@ NoteBlock::NoteBlock()
     DerivedInit();
 }
 
-boost::shared_ptr<BlockEntity> NoteBlock::newBlockEntity(Level*, int)
+boost::shared_ptr<BlockEntity> NoteBlock::newBlockEntity(Level* level, int)
 {
-    return boost::shared_ptr<BlockEntity>(new MusicBlockEntity());
+    boost::shared_ptr<BlockEntity> entity = boost::shared_ptr<MusicBlockEntity>(new MusicBlockEntity());
+    entity->setLevel(level);
+    return entity;
 }
 
 void NoteBlock::neighborChanged(const BlockState*, Level* level, const BlockPos& pos, Block*, const BlockPos&)
 {
     bool powered = level->hasNeighborSignal(pos);
     boost::shared_ptr<BlockEntity> entity = level->getBlockEntity(pos);
-    if (entity && entity->GetType() == BlockEntityType::MUSIC)
+    if (entity->GetType() == BlockEntityType::MUSIC)
     {
         boost::shared_ptr<MusicBlockEntity> music = boost::dynamic_pointer_cast<MusicBlockEntity>(entity);
-        if (powered)
+        if (music->mPowered != powered)
         {
-            music->playNote(level, BlockPos(pos));
+            if (powered)
+            {
+                music->playNote(level, BlockPos(pos));
+            }
+            music->mPowered = powered;
         }
     }
 }
@@ -57,12 +63,15 @@ bool NoteBlock::use(Level* level, const BlockPos& pos, const BlockState*, boost:
     {
         return false;
     }
-    boost::shared_ptr<BlockEntity> entity = level->getBlockEntity(pos);
-    if (entity && entity->GetType() == BlockEntityType::MUSIC)
+    if (!level->mIsClientSide)
     {
-        boost::shared_ptr<MusicBlockEntity> music = boost::dynamic_pointer_cast<MusicBlockEntity>(entity);
-        music->tune();
-        music->playNote(level, BlockPos(pos));
+        boost::shared_ptr<BlockEntity> entity = level->getBlockEntity(pos);
+        if (entity->GetType() == BlockEntityType::MUSIC)
+        {
+            boost::shared_ptr<MusicBlockEntity> music = boost::dynamic_pointer_cast<MusicBlockEntity>(entity);
+            music->tune();
+            music->playNote(level, BlockPos(pos));
+        }
     }
     return true;
 }
@@ -72,7 +81,7 @@ void NoteBlock::attack(Level* level, const BlockPos& pos, boost::shared_ptr<Play
     if (!level->mIsClientSide)
     {
         boost::shared_ptr<BlockEntity> entity = level->getBlockEntity(pos);
-        if (entity && entity->GetType() == BlockEntityType::MUSIC)
+        if (entity->GetType() == BlockEntityType::MUSIC)
         {
             boost::shared_ptr<MusicBlockEntity> music = boost::dynamic_pointer_cast<MusicBlockEntity>(entity);
             music->playNote(level, BlockPos(pos));
@@ -91,12 +100,13 @@ unsigned int NoteBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltip
 
 unsigned int NoteBlock::GetHitTooltip(const BlockTooltipDataHolder& tooltipData)
 {
+    MultiplayerLocalPlayer* player = tooltipData.m_pPlayer.operator->();
     if (!tooltipData.m_bCanDestroy)
     {
         if (!Minecraft::InMiniGame(eMiniGameId_Lobby, true))
             return IDS_NONE;
     }
-    else if (tooltipData.m_pPlayer->mAbilities.mInstabuild)
+    else if (player->mAbilities.mInstabuild)
     {
         return IDS_TOOLTIPS_MINE;
     }
@@ -105,7 +115,7 @@ unsigned int NoteBlock::GetHitTooltip(const BlockTooltipDataHolder& tooltipData)
 
 const SoundEvent* NoteBlock::getInstrument(int instrument)
 {
-    if (instrument < 0 || noteBlockInstruments.empty() || instrument >= (int)noteBlockInstruments.size())
+    if (instrument < 0 || (unsigned int)instrument >= noteBlockInstruments.size())
     {
         instrument = 0;
     }
@@ -114,8 +124,8 @@ const SoundEvent* NoteBlock::getInstrument(int instrument)
 
 bool NoteBlock::triggerEvent(const BlockState*, Level* level, const BlockPos& pos, int instrument, int eventParam)
 {
-    double pitch = std::pow(2.0, ((double)eventParam - 12.0) / 12.0);
-    level->playSound(boost::shared_ptr<Player>(), pos, getInstrument(instrument), SoundSource::eSoundSource_Blocks,
+    double pitch = std::pow(2.0, (double)(eventParam - 12) / 12.0);
+    level->playSound(boost::shared_ptr<Player>(), pos, getInstrument(instrument), SoundSource::eSoundSource_Records,
                                  3.0f, (float)pitch, 64.0f);
     arrayWithLength<int> params;
     level->addParticle(PARTICLE_NOTE, (double)pos.x + 0.5, (double)pos.y + 1.2,
@@ -130,15 +140,17 @@ EBlockRenderShape NoteBlock::getRenderShape(const BlockState*)
 
 void NoteBlock::blockStaticCtor()
 {
-    noteBlockInstruments.clear();
-    noteBlockInstruments.push_back(SoundEvents::NOTE_HARP);
-    noteBlockInstruments.push_back(SoundEvents::NOTE_BASS);
-    noteBlockInstruments.push_back(SoundEvents::NOTE_BASEDRUM);
-    noteBlockInstruments.push_back(SoundEvents::NOTE_SNARE);
-    noteBlockInstruments.push_back(SoundEvents::NOTE_HAT);
-    noteBlockInstruments.push_back(SoundEvents::NOTE_PLING);
-    noteBlockInstruments.push_back(SoundEvents::NOTE_BELL);
-    noteBlockInstruments.push_back(SoundEvents::NOTE_CHIME);
-    noteBlockInstruments.push_back(SoundEvents::NOTE_FLUTE);
-    noteBlockInstruments.push_back(SoundEvents::NOTE_GUITAR);
+    const SoundEvent* instruments[] = {
+        SoundEvents::NOTE_HARP,
+        SoundEvents::NOTE_BASEDRUM,
+        SoundEvents::NOTE_SNARE,
+        SoundEvents::NOTE_HAT,
+        SoundEvents::NOTE_BASS,
+        SoundEvents::NOTE_FLUTE,
+        SoundEvents::NOTE_BELL,
+        SoundEvents::NOTE_GUITAR,
+        SoundEvents::NOTE_CHIME,
+        SoundEvents::NOTE_XYLOPHONE
+    };
+    noteBlockInstruments = std::vector<const SoundEvent*>(instruments, instruments + sizeof(instruments) / sizeof(instruments[0]));
 }

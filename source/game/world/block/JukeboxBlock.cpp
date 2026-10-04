@@ -22,18 +22,19 @@
 #include "game/world/block/TypedBoxed.hpp"
 #include "game/util/Random.hpp"
 #include "game/ui/BlockTooltipDataHolder.hpp"
+#include "game/core/InteractionResult.hpp"
+#include <boost/pointer_cast.hpp>
 static AbstractProperty<bool>* gJukeboxHasRecord = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"has_record"));
 JukeboxBlock::JukeboxBlock()
-    : BaseEntityBlock(Material::WOOD, MaterialColor::DIRT), mTopIcon(NULL)
+    : BaseEntityBlock(Material::WOOD, MaterialColor::DIRT)
 {
     DerivedInit();
-    TypedBoxed<bool> value(false);
-    registerDefaultState(mStateDefinition->any()->setBoxedValue(gJukeboxHasRecord, &value));
+    registerDefaultState(mStateDefinition->any()->setValue(gJukeboxHasRecord, false));
 }
 
 boost::shared_ptr<BlockEntity> JukeboxBlock::newBlockEntity(Level* level, int)
 {
-    boost::shared_ptr<Entity> result(new Entity());
+    boost::shared_ptr<BlockEntity> result = boost::shared_ptr<Entity>(new Entity());
     result->setLevel(level);
     return result;
 }
@@ -50,43 +51,85 @@ bool JukeboxBlock::TestUse(Level*, const BlockPos&, const BlockState* state, boo
 }
 void JukeboxBlock::dropRecording(Level* level, const BlockPos& pos, const BlockState*)
 {
-    if (level->mIsClientSide) return;
+    if (level->mIsClientSide)
+    {
+        return;
+    }
+
     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
-    boost::shared_ptr<Entity> entity = boost::dynamic_pointer_cast<Entity>(blockEntity);
-    if (entity.get() == NULL) return;
+
+    if (blockEntity.get() == NULL)
+    {
+        return;
+    }
+
+    bool isJukebox = blockEntity->GetType() == BlockEntityType::JUKEBOX;
+
+    if (!isJukebox)
+    {
+        return;
+    }
+
+    boost::shared_ptr<Entity> entity = boost::static_pointer_cast<Entity>(blockEntity);
     not_null_ptr<ItemInstance> record = entity->getRecord();
-    if (record->isEmpty()) return;
+
+    if (record->isEmpty())
+    {
+        return;
+    }
+
     level->levelEvent(LevelEvent::SOUND_PLAY_RECORDING, pos, 0);
     entity->setRecord(ItemInstance::EMPTY);
+
     Random* random = level->mRandom;
     const float spread = 0.7f;
     double xOffset = (double)(random->nextFloat() * spread) + (double)(1.0f - spread) * 0.5;
-    double yOffset = (double)(random->nextFloat() * spread) + 0.06f + 0.6;
+    double yOffset = (double)(random->nextFloat() * spread) + 0.06f;
+    yOffset += 0.6;
     double zOffset = (double)(random->nextFloat() * spread) + (double)(1.0f - spread) * 0.5;
+
     boost::shared_ptr<ItemEntity> item(
         new ItemEntity(level, pos.x + xOffset, pos.y + yOffset, pos.z + zOffset, record->copy()));
     item->setDefaultPickUpDelay();
     level->addEntity(item);
 }
-bool JukeboxBlock::use(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand, const Direction*, float, float, float, bool clientSide)
+
+bool JukeboxBlock::use(Level* level, const BlockPos& pos, const BlockState* state,
+                       boost::shared_ptr<Player> player, InteractionHand::EInteractionHand,
+                       const Direction*, float, float, float, bool clientSide)
 {
-    if (!clientSide && TestUse(level, pos, state, player)) { dropRecording(level, pos, state); TypedBoxed<bool> value(false); level->setBlock(pos, state->setBoxedValue(gJukeboxHasRecord, &value), Block::UPDATE_CLIENTS, false); return true; } return false;
+    if (!clientSide && state->getValue(gJukeboxHasRecord))
+    {
+        dropRecording(level, pos, state);
+        level->setBlock(pos, state->setValue(gJukeboxHasRecord, false), Block::UPDATE_CLIENTS, false);
+        return true;
+    }
+
+    return false;
 }
+
 void JukeboxBlock::setRecord(Level* level, const BlockPos& pos, const BlockState* state,
                              not_null_ptr<ItemInstance> record)
 {
-    boost::shared_ptr<Entity> entity =
-        boost::dynamic_pointer_cast<Entity>(level->getBlockEntity(pos));
-    if (entity.get() == NULL)
-        return;
+    boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
 
-    not_null_ptr<ItemInstance> stored(
-        new ItemInstance(record->getItem(), 1, record->getAuxValue()));
-    if (record->hasTag())
-        stored->setTag(record->getTag()->copy());
-    entity->setRecord(stored);
-    TypedBoxed<bool> value(true);
-    level->setBlock(pos, state->setBoxedValue(gJukeboxHasRecord, &value), Block::UPDATE_CLIENTS, false);
+    if (blockEntity.get() != NULL)
+    {
+        bool isJukebox = blockEntity->GetType() == BlockEntityType::JUKEBOX;
+
+        if (isJukebox)
+        {
+            not_null_ptr<ItemInstance> stored(new ItemInstance(record->getItem(), 1, record->getAuxValue()));
+
+            if (record->hasTag())
+            {
+                stored->setTag(record->getTag()->copy());
+            }
+
+            boost::static_pointer_cast<Entity>(blockEntity)->setRecord(stored);
+            level->setBlock(pos, state->setValue(gJukeboxHasRecord, true), Block::UPDATE_CLIENTS, false);
+        }
+    }
 }
 
 void JukeboxBlock::onRemove(Level* level, const BlockPos& pos, const BlockState* state)
@@ -99,21 +142,26 @@ void JukeboxBlock::spawnResources(Level* level, const BlockPos& pos,
                                   const BlockState* state, float chance, int lootBonus)
 {
     if (!level->mIsClientSide)
-        Block::spawnResources(level, pos, state, chance, lootBonus);
+        Block::spawnResources(level, pos, state, chance, 0);
 }
 bool JukeboxBlock::hasAnalogOutputSignal(const BlockState*) { return true; }
 int JukeboxBlock::getAnalogOutputSignal(const BlockState*, Level* level, const BlockPos& pos)
 {
-    boost::shared_ptr<Entity> entity =
-        boost::dynamic_pointer_cast<Entity>(level->getBlockEntity(pos));
-    if (entity.get() == NULL)
-        return 0;
+    boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
 
-    not_null_ptr<ItemInstance> record = entity->getRecord();
-    if (record->isEmpty())
-        return 0;
+    bool isJukebox = blockEntity->GetType() == BlockEntityType::JUKEBOX;
 
-    return Item::getId(record->getItem()) + 1 - Item::getId(Items::record13);
+    if (isJukebox)
+    {
+        not_null_ptr<ItemInstance> record = boost::static_pointer_cast<Entity>(blockEntity)->getRecord();
+
+        if (!record->isEmpty())
+        {
+            return Item::getId(record->getItem()) + 1 - Item::getId(Items::record13);
+        }
+    }
+
+    return 0;
 }
 EBlockRenderShape JukeboxBlock::getRenderShape(const BlockState*)
 {
@@ -122,8 +170,7 @@ EBlockRenderShape JukeboxBlock::getRenderShape(const BlockState*)
 
 const BlockState* JukeboxBlock::getBlockState(int data)
 {
-    TypedBoxed<bool> value((data & 1) != 0);
-    return defaultBlockState()->setBoxedValue(gJukeboxHasRecord, &value);
+    return defaultBlockState()->setValue(gJukeboxHasRecord, data > 0);
 }
 
 int JukeboxBlock::convertBlockStateToLegacyData(const BlockState* state)
@@ -132,22 +179,36 @@ int JukeboxBlock::convertBlockStateToLegacyData(const BlockState* state)
 }
 unsigned int JukeboxBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
-    if (tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Success &&
-        tooltipData.m_pItemInstance.get() != NULL &&
-        !tooltipData.m_pItemInstance->isEmpty())
+    if (tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Fail)
     {
-        int id = Item::VALIDgetId(tooltipData.m_pItemInstance->getItem());
-        if (id >= 2256 && id < 2268 && tooltipData.m_bUseBlock && tooltipData.m_bCanPlace)
-            return IDS_TOOLTIPS_PLAY;
+        const not_null_ptr<ItemInstance>& heldItem = tooltipData.m_pItemInstance;
+        if (!heldItem->isEmpty())
+        {
+            int id = Item::VALIDgetId(heldItem->getItem());
+
+            if (id >= 2256 && id < 2268 && tooltipData.m_bUseBlock && tooltipData.m_bCanPlace)
+            {
+                return IDS_TOOLTIPS_PLAY;
+            }
+
+            return Block::GetInteractTooltip(tooltipData);
+        }
     }
 
-    if (tooltipData.m_pBlockState != NULL &&
-        tooltipData.m_pBlockState->getValue(gJukeboxHasRecord) && tooltipData.m_bCanPlace)
+    if (tooltipData.m_pBlockState->getValue(gJukeboxHasRecord) && tooltipData.m_bCanPlace)
+    {
         return IDS_TOOLTIPS_EJECT;
+    }
 
     return Block::GetInteractTooltip(tooltipData);
 }
-BlockStateDefinition* JukeboxBlock::createBlockStateDefinition() { const Property* properties[] = { gJukeboxHasRecord }; return new BlockStateDefinition(this, properties, 1); }
+
+BlockStateDefinition* JukeboxBlock::createBlockStateDefinition()
+{
+    static const Property* properties[] = { gJukeboxHasRecord };
+    return new BlockStateDefinition(this, properties, 1);
+}
+
 TextureAtlasSprite* JukeboxBlock::getTexture(const Direction* direction, const BlockState*) { return direction == Direction::UP ? mTopIcon : mIcon; }
 void JukeboxBlock::registerIcons(IconRegister* iconRegister) { mIcon = iconRegister->registerIcon(getIconName() + L"_side"); mTopIcon = iconRegister->registerIcon(getIconName() + L"_top"); }
 JukeboxBlock::Entity::Entity() : BlockEntity(), mRecord() { mRecord = ItemInstance::EMPTY; }

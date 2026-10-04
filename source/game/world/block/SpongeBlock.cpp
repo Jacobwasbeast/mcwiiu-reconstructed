@@ -23,11 +23,18 @@ AbstractProperty<bool>* SpongeBlock::WET =
     static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"wet"));
 
 SpongeBlock::SpongeBlock()
-    : Block(Material::SPONGE), mWetIcon(NULL)
+    : Block(Material::SPONGE)
 {
     DerivedInit();
-    TypedBoxed<bool> wet(false);
-    registerDefaultState(mStateDefinition->any()->setBoxedValue(WET, &wet));
+    const BlockState* defaultState;
+    {
+        const BlockState* anyState = mStateDefinition->any();
+        AbstractProperty<bool>* wetProperty = WET;
+        TypedBoxed<bool> wet(false);
+        defaultState = anyState->setBoxedValue(wetProperty, &wet);
+    }
+    registerDefaultState(defaultState);
+    mWetIcon = NULL;
 }
 
 std::wstring SpongeBlock::getName()
@@ -43,16 +50,17 @@ int SpongeBlock::getSpawnResourcesAuxValue(const BlockState* state)
 int SpongeBlock::removeWaterBreadthFirstSearch(Level* level, const BlockPos& pos)
 {
     std::deque<std::pair<BlockPos, int> > queue;
-    queue.push_back(std::make_pair(pos, 0));
+    std::pair<BlockPos, int> start(pos, 0);
+    queue.push_back(start);
     int removed = 0;
     const BlockState* air = Blocks::air->defaultBlockState();
     while (!queue.empty())
     {
         std::pair<BlockPos, int> current = queue.front();
         queue.pop_front();
-        for (unsigned int i = 0; i < Direction::VALUES.size(); ++i)
+        for (std::vector<const Direction*>::const_iterator it = Direction::VALUES.begin(); it != Direction::VALUES.end(); ++it)
         {
-            BlockPos adjacent = current.first.relative(Direction::VALUES[i]);
+            BlockPos adjacent = current.first.relative(*it);
             const BlockState* adjacentState = level->getBlockState(adjacent);
             Block* extraBlock = level->getExtraBlock(adjacent);
             if (adjacentState->getMaterial() == Material::WATER)
@@ -74,7 +82,10 @@ int SpongeBlock::removeWaterBreadthFirstSearch(Level* level, const BlockPos& pos
             }
             ++removed;
             if (current.second < 6)
-                queue.push_back(std::make_pair(adjacent, current.second + 1));
+            {
+                std::pair<BlockPos, int> next(adjacent, current.second + 1);
+                queue.push_back(next);
+            }
         }
         if (removed > 64)
             break;
@@ -87,8 +98,7 @@ void SpongeBlock::tryAbsorbWater(Level* level, const BlockPos& pos, const BlockS
 {
     if (!state->getValue(WET) && removeWaterBreadthFirstSearch(level, pos))
     {
-        TypedBoxed<bool> wet(true);
-        level->setBlock(pos, state->setBoxedValue(WET, &wet), Block::UPDATE_ALL, false);
+        level->setBlock(pos, state->setValue(WET, true), Block::UPDATE_ALL, false);
         level->levelEvent(LevelEvent::PARTICLES_DESTROY_BLOCK, pos, Block::getId(Blocks::water));
     }
 }
@@ -107,8 +117,10 @@ void SpongeBlock::neighborChanged(const BlockState* state, Level* level, const B
 
 const BlockState* SpongeBlock::getBlockState(int data)
 {
+    const BlockState* state = defaultBlockState();
+    AbstractProperty<bool>* wetProperty = WET;
     TypedBoxed<bool> wet((data & 1) != 0);
-    return defaultBlockState()->setBoxedValue(WET, &wet);
+    return state->setBoxedValue(wetProperty, &wet);
 }
 
 int SpongeBlock::convertBlockStateToLegacyData(const BlockState* state)
@@ -131,8 +143,7 @@ void SpongeBlock::animateTick(const BlockState* state, Level* level, const Block
     if (direction == Direction::UP)
         return;
 
-    BlockPos adjacent = pos.relative(direction);
-    if (level->getBlockState(adjacent)->isTopSolidBlocking())
+    if (level->getBlockState(pos.relative(direction))->isTopSolidBlocking())
         return;
 
     double x = pos.x;

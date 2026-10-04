@@ -49,17 +49,20 @@ static const AABB* SINGLE_CHEST_SHAPE = AABB::newPermanent(1.0 / 16.0, 0.0, 1.0 
                                                            15.0 / 16.0, 14.0 / 16.0, 15.0 / 16.0);
 
 ChestBlock::ChestBlock(Type type)
-    : BaseEntityBlock(Material::WOOD), mType(type)
+    : BaseEntityBlock(Material::WOOD)
 {
     DerivedInit();
-    TypedBoxed<const Direction*> facing(Direction::NORTH);
-    registerDefaultState(mStateDefinition->any()->setBoxedValue(FACING, &facing));
+    registerDefaultState(mStateDefinition->any()->setValue(FACING, Direction::NORTH));
+    mType = type;
 }
 
-boost::shared_ptr<BlockEntity> ChestBlock::newBlockEntity(Level*, int)
+boost::shared_ptr<BlockEntity> ChestBlock::newBlockEntity(Level* level, int)
 {
     MemSect(0x32);
-    return boost::shared_ptr<BlockEntity>(new ChestBlockEntity(false));
+    boost::shared_ptr<ChestBlockEntity> blockEntity(new ChestBlockEntity());
+    blockEntity->setLevel(level);
+    MemSect(0);
+    return blockEntity;
 }
 
 void ChestBlock::blockStaticCtor()
@@ -88,15 +91,15 @@ const AABB* ChestBlock::getShape(const BlockState*, LevelSource* levelSource, co
     {
         return NORTH_CHEST_SHAPE;
     }
-    if (levelSource->getBlockState(pos.south())->getBlock() == this)
+    else if (levelSource->getBlockState(pos.south())->getBlock() == this)
     {
         return SOUTH_CHEST_SHAPE;
     }
-    if (levelSource->getBlockState(pos.west())->getBlock() == this)
+    else if (levelSource->getBlockState(pos.west())->getBlock() == this)
     {
         return WEST_CHEST_SHAPE;
     }
-    if (levelSource->getBlockState(pos.east())->getBlock() == this)
+    else if (levelSource->getBlockState(pos.east())->getBlock() == this)
     {
         return EAST_CHEST_SHAPE;
     }
@@ -111,8 +114,8 @@ const BlockState* ChestBlock::getStateForPlacement(Level*, const BlockPos&, cons
                                                    float, float, float, int,
                                                    boost::shared_ptr<LivingEntity> placer)
 {
-    TypedBoxed<const Direction*> facing(placer->getDirection());
-    return defaultBlockState()->setBoxedValue(FACING, &facing);
+    const BlockState* state = defaultBlockState();
+    return state->setValue(FACING, placer->getDirection());
 }
 
 const BlockState* ChestBlock::recalcLockDir(Level* level, const BlockPos& pos, const BlockState* state)
@@ -144,46 +147,50 @@ const BlockState* ChestBlock::recalcLockDir(Level* level, const BlockPos& pos, c
             facing = Direction::WEST;
         }
     }
-    else if (west->getBlock() == this || east->getBlock() == this)
+    else
     {
-        BlockPos other = west->getBlock() == this ? pos.west() : pos.east();
-        const BlockState* otherNorth = level->getBlockState(other.north());
-        const BlockState* otherSouth = level->getBlockState(other.south());
-        facing = Direction::SOUTH;
-        const Direction* otherFacing = west->getBlock() == this ? west->getValue(FACING)
-                                                                : east->getValue(FACING);
-        if (otherFacing == Direction::NORTH)
+        bool northSolid = north->isSolid();
+        bool southSolid = south->isSolid();
+        if (west->getBlock() == this || east->getBlock() == this)
         {
-            facing = Direction::NORTH;
-        }
-        if ((north->isSolid() || otherNorth->isSolid()) && !south->isSolid() && !otherSouth->isSolid())
-        {
+            BlockPos other = west->getBlock() == this ? pos.west() : pos.east();
+            const BlockState* otherNorth = level->getBlockState(other.north());
+            const BlockState* otherSouth = level->getBlockState(other.south());
             facing = Direction::SOUTH;
-        }
-        if ((south->isSolid() || otherSouth->isSolid()) && !north->isSolid() && !otherNorth->isSolid())
-        {
-            facing = Direction::NORTH;
+            const Direction* otherFacing = west->getBlock() == this ? west->getValue(FACING)
+                                                                    : east->getValue(FACING);
+            if (otherFacing == Direction::NORTH)
+            {
+                facing = Direction::NORTH;
+            }
+            if ((northSolid || otherNorth->isSolid()) && !southSolid && !otherSouth->isSolid())
+            {
+                facing = Direction::SOUTH;
+            }
+            if ((southSolid || otherSouth->isSolid()) && !northSolid && !otherNorth->isSolid())
+            {
+                facing = Direction::NORTH;
+            }
         }
     }
 
-    TypedBoxed<const Direction*> boxedFacing(facing);
-    const BlockState* placed = state->setBoxedValue(FACING, &boxedFacing);
+    const BlockState* placed = state->setValue(FACING, facing);
     level->setBlock(pos, placed, Block::UPDATE_ALL, false);
     if (north->getBlock() == this)
     {
-        level->setBlock(pos.north(), north->setBoxedValue(FACING, &boxedFacing), Block::UPDATE_ALL, false);
+        level->setBlock(pos.north(), north->setValue(FACING, facing), Block::UPDATE_ALL, false);
     }
     else if (south->getBlock() == this)
     {
-        level->setBlock(pos.south(), south->setBoxedValue(FACING, &boxedFacing), Block::UPDATE_ALL, false);
+        level->setBlock(pos.south(), south->setValue(FACING, facing), Block::UPDATE_ALL, false);
     }
     else if (east->getBlock() == this)
     {
-        level->setBlock(pos.east(), east->setBoxedValue(FACING, &boxedFacing), Block::UPDATE_ALL, false);
+        level->setBlock(pos.east(), east->setValue(FACING, facing), Block::UPDATE_ALL, false);
     }
     else if (west->getBlock() == this)
     {
-        level->setBlock(pos.west(), west->setBoxedValue(FACING, &boxedFacing), Block::UPDATE_ALL, false);
+        level->setBlock(pos.west(), west->setValue(FACING, facing), Block::UPDATE_ALL, false);
     }
     return placed;
 }
@@ -193,8 +200,7 @@ void ChestBlock::setPlacedBy(Level* level, const BlockPos& pos, const BlockState
 {
     const Direction* facing =
         Direction::from2DDataValue(Mth::absFloor((double)(placer->mYRot * 4.0f / 360.0f) + 0.5) & 3)->getOpposite();
-    TypedBoxed<const Direction*> boxedFacing(facing);
-    const BlockState* placed = state->setBoxedValue(FACING, &boxedFacing);
+    const BlockState* placed = state->setValue(FACING, facing);
 
     BlockPos north = pos.north();
     BlockPos south = pos.south();
@@ -209,24 +215,28 @@ void ChestBlock::setPlacedBy(Level* level, const BlockPos& pos, const BlockState
     {
         level->setBlock(pos, placed, Block::UPDATE_ALL, false);
     }
-    else if (facing->getAxis() == Direction::Axis::X && northIsChest)
+    else if (facing->getAxis() == Direction::Axis::X && (northIsChest || southIsChest))
     {
-        level->setBlock(north, placed, Block::UPDATE_ALL, false);
+        if (northIsChest)
+        {
+            level->setBlock(north, placed, Block::UPDATE_ALL, false);
+        }
+        else
+        {
+            level->setBlock(south, placed, Block::UPDATE_ALL, false);
+        }
         level->setBlock(pos, placed, Block::UPDATE_ALL, false);
     }
-    else if (facing->getAxis() == Direction::Axis::X && southIsChest)
+    else if (facing->getAxis() == Direction::Axis::Z && (westIsChest || eastIsChest))
     {
-        level->setBlock(south, placed, Block::UPDATE_ALL, false);
-        level->setBlock(pos, placed, Block::UPDATE_ALL, false);
-    }
-    else if (facing->getAxis() == Direction::Axis::Z && westIsChest)
-    {
-        level->setBlock(west, placed, Block::UPDATE_ALL, false);
-        level->setBlock(pos, placed, Block::UPDATE_ALL, false);
-    }
-    else if (facing->getAxis() == Direction::Axis::Z && eastIsChest)
-    {
-        level->setBlock(east, placed, Block::UPDATE_ALL, false);
+        if (westIsChest)
+        {
+            level->setBlock(west, placed, Block::UPDATE_ALL, false);
+        }
+        else
+        {
+            level->setBlock(east, placed, Block::UPDATE_ALL, false);
+        }
         level->setBlock(pos, placed, Block::UPDATE_ALL, false);
     }
     else
@@ -237,7 +247,8 @@ void ChestBlock::setPlacedBy(Level* level, const BlockPos& pos, const BlockState
     if (itemInstance->hasCustomHoverName())
     {
         boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
-        if (blockEntity->GetType() == BlockEntityType::CHEST)
+        bool isChest = blockEntity->GetType() == BlockEntityType::CHEST;
+        if (isChest)
         {
             boost::shared_ptr<ChestBlockEntity> chest =
                 boost::dynamic_pointer_cast<ChestBlockEntity>(blockEntity);
@@ -272,8 +283,7 @@ const BlockState* ChestBlock::reorient(Level* level, const BlockPos& pos, const 
 
     if (open != NULL)
     {
-        TypedBoxed<const Direction*> boxedOpen(open->getOpposite());
-        return state->setBoxedValue(FACING, &boxedOpen);
+        return state->setValue(FACING, open->getOpposite());
     }
 
     const Direction* facing = state->getValue(FACING);
@@ -289,8 +299,7 @@ const BlockState* ChestBlock::reorient(Level* level, const BlockPos& pos, const 
     {
         facing = facing->getOpposite();
     }
-    TypedBoxed<const Direction*> boxedFacing(facing);
-    return state->setBoxedValue(FACING, &boxedFacing);
+    return state->setValue(FACING, facing);
 }
 
 bool ChestBlock::isFullChest(Level* level, const BlockPos& pos)
@@ -312,7 +321,7 @@ bool ChestBlock::isFullChest(Level* level, const BlockPos& pos)
 
 bool ChestBlock::mayPlace(Level* level, const BlockPos& pos)
 {
-    unsigned int count = 0;
+    int count = 0;
     BlockPos west = pos.west();
     BlockPos east = pos.east();
     BlockPos north = pos.north();
@@ -350,7 +359,7 @@ bool ChestBlock::mayPlace(Level* level, const BlockPos& pos)
         }
         ++count;
     }
-    return count < 2;
+    return count <= 1;
 }
 
 void ChestBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos,
@@ -358,7 +367,8 @@ void ChestBlock::neighborChanged(const BlockState* state, Level* level, const Bl
 {
     Block::neighborChanged(state, level, pos, block, fromPos);
     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
-    if (blockEntity->GetType() == BlockEntityType::CHEST)
+    bool isChest = blockEntity->GetType() == BlockEntityType::CHEST;
+    if (isChest)
     {
         blockEntity->clearCache();
     }
@@ -388,12 +398,12 @@ bool ChestBlock::isBlockedChestByBlock(Level* level, const BlockPos& pos)
 bool ChestBlock::isEntityOnChest(Level* level, const BlockPos& pos)
 {
     Block* block = level->getBlock(pos);
-    if (block != Blocks::chest && block != Blocks::trapped_chest && block != Blocks::ender_chest)
+    if (block != Blocks::chest && block != Blocks::ender_chest && block != Blocks::trapped_chest)
     {
         return false;
     }
     const AABB* box = block->getShape(level->getBlockState(pos), level, pos)->move(pos.above());
-    std::vector<boost::shared_ptr<Entity> >* entities = level->getEntitiesOfClass(typeid(Entity), box);
+    std::vector<boost::shared_ptr<Entity> >* entities = level->getEntitiesOfClass(typeid(LivingEntity), box);
     bool occupied = !entities->empty();
     delete entities;
     return occupied;
@@ -407,7 +417,8 @@ bool ChestBlock::isChestBlockedAt(Level* level, const BlockPos& pos)
 boost::shared_ptr<LockableContainer> ChestBlock::getContainer(Level* level, const BlockPos& pos, bool force)
 {
     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
-    if (blockEntity->GetType() != BlockEntityType::CHEST)
+    bool isChest = blockEntity->GetType() == BlockEntityType::CHEST;
+    if (!isChest)
     {
         return boost::shared_ptr<LockableContainer>();
     }
@@ -433,19 +444,20 @@ boost::shared_ptr<LockableContainer> ChestBlock::getContainer(Level* level, cons
             return boost::shared_ptr<LockableContainer>();
         }
         boost::shared_ptr<BlockEntity> neighbourEntity = level->getBlockEntity(neighbourPos);
-        if (neighbourEntity->GetType() != BlockEntityType::CHEST)
+        bool neighbourIsChest = neighbourEntity->GetType() == BlockEntityType::CHEST;
+        if (!neighbourIsChest)
         {
             continue;
         }
-        boost::shared_ptr<LockableContainer> neighbour =
-            boost::static_pointer_cast<ChestBlockEntity>(neighbourEntity);
         if (direction == Direction::WEST || direction == Direction::NORTH)
         {
-            container = boost::shared_ptr<LockableContainer>(new CompoundContainer(-1, neighbour, container));
+            container = boost::shared_ptr<LockableContainer>(
+                new CompoundContainer(-1, boost::static_pointer_cast<ChestBlockEntity>(neighbourEntity), container));
         }
         else
         {
-            container = boost::shared_ptr<LockableContainer>(new CompoundContainer(-1, container, neighbour));
+            container = boost::shared_ptr<LockableContainer>(
+                new CompoundContainer(-1, container, boost::static_pointer_cast<ChestBlockEntity>(neighbourEntity)));
         }
     }
     return container;
@@ -490,7 +502,8 @@ int ChestBlock::getSignal(const BlockState* state, LevelSource* levelSource, con
     }
     int openCount = 0;
     boost::shared_ptr<BlockEntity> blockEntity = levelSource->getBlockEntity(pos);
-    if (blockEntity->GetType() == BlockEntityType::CHEST)
+    bool isChest = blockEntity->GetType() == BlockEntityType::CHEST;
+    if (isChest)
     {
         boost::shared_ptr<ChestBlockEntity> chest =
             boost::dynamic_pointer_cast<ChestBlockEntity>(blockEntity);
@@ -526,8 +539,7 @@ const BlockState* ChestBlock::getBlockState(int data)
     {
         facing = Direction::NORTH;
     }
-    TypedBoxed<const Direction*> boxedFacing(facing);
-    return defaultBlockState()->setBoxedValue(FACING, &boxedFacing);
+    return defaultBlockState()->setValue(FACING, facing);
 }
 
 int ChestBlock::convertBlockStateToLegacyData(const BlockState* state)
@@ -546,8 +558,7 @@ unsigned int ChestBlock::GetInteractTooltip(const BlockTooltipDataHolder& toolti
 
 const BlockState* ChestBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    TypedBoxed<const Direction*> facing(rotation->rotate(state->getValue(FACING)));
-    return state->setBoxedValue(FACING, &facing);
+    return state->setValue(FACING, rotation->rotate(state->getValue(FACING)));
 }
 
 const BlockState* ChestBlock::mirror(const BlockState* state, Mirror* mirror)
@@ -557,7 +568,7 @@ const BlockState* ChestBlock::mirror(const BlockState* state, Mirror* mirror)
 
 BlockStateDefinition* ChestBlock::createBlockStateDefinition()
 {
-    const Property* properties[] = { FACING };
+    static const Property* properties[] = { FACING };
     return new BlockStateDefinition(this, properties, 1);
 }
 

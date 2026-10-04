@@ -2,7 +2,6 @@
 #include "game/world/block/WoolCarpetBlock.hpp"
 
 #include <typeinfo>
-#include <boost/unordered_set.hpp>
 
 #include "game/core/DyeColor.hpp"
 #include "game/core/Direction.hpp"
@@ -24,22 +23,15 @@ static const AABB* WOOL_CARPET_SHAPE = AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.
 
 void WoolCarpetBlock::blockStaticCtor()
 {
-    boost::unordered_set<const DyeColor*> colors;
-    for (int data = 0; data < 16; ++data)
-    {
-        colors.insert(DyeColor::byBlockData(data));
-    }
-
     gWoolCarpetColorProperty = EnumProperty<const DyeColor*>::create(
-        L"color", typeid(DyeColor), colors, Predicates<const DyeColor*>::alwaysTrue);
+        L"color", typeid(DyeColor), DyeColor::COLORS, Predicates<const DyeColor*>::alwaysTrue);
 }
 
 WoolCarpetBlock::WoolCarpetBlock()
     : Block(Material::CLOTH_DECORATION)
 {
     DerivedInit();
-    TypedBoxed<const DyeColor*> color(DyeColor::WHITE);
-    registerDefaultState(mStateDefinition->any()->setBoxedValue(gWoolCarpetColorProperty, &color));
+    registerDefaultState(mStateDefinition->any()->setValue(gWoolCarpetColorProperty, DyeColor::WHITE));
     setTicking(true);
     setThickness(0.07f);
 }
@@ -82,7 +74,7 @@ bool WoolCarpetBlock::mayPlace(Level* level, const BlockPos& pos)
 
 bool WoolCarpetBlock::checkCanSurvive(Level* level, const BlockPos& pos, const BlockState* state)
 {
-    if (!canSurvive(level, pos, state))
+    if (!canSurvive(level, pos, NULL))
     {
         spawnResources(level, pos, state, 0);
         level->removeBlock(pos);
@@ -105,9 +97,9 @@ bool WoolCarpetBlock::canSurvive(Level* level, const BlockPos& pos, const BlockS
 bool WoolCarpetBlock::shouldRenderFace(const BlockState* state, LevelSource* levelSource,
                                        const BlockPos& pos, const Direction* direction)
 {
-    if (direction != Direction::DOWN)
+    if (direction != Direction::UP)
     {
-        Block* neighbour = levelSource->getBlock(pos.relative(direction));
+        Block* neighbour = levelSource->getBlockState(pos.relative(direction))->getBlock();
         if (neighbour != this)
         {
             return Block::shouldRenderFace(state, levelSource, pos, direction);
@@ -123,8 +115,7 @@ int WoolCarpetBlock::getSpawnResourcesAuxValue(const BlockState* state)
 
 const BlockState* WoolCarpetBlock::getBlockState(int data)
 {
-    TypedBoxed<const DyeColor*> color(DyeColor::byBlockData(data));
-    return defaultBlockState()->setBoxedValue(gWoolCarpetColorProperty, &color);
+    return defaultBlockState()->setValue(gWoolCarpetColorProperty, DyeColor::byBlockData(data));
 }
 
 int WoolCarpetBlock::convertBlockStateToLegacyData(const BlockState* state)
@@ -134,7 +125,7 @@ int WoolCarpetBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 BlockStateDefinition* WoolCarpetBlock::createBlockStateDefinition()
 {
-    const Property* properties[] = { gWoolCarpetColorProperty };
+    static const Property* properties[] = { gWoolCarpetColorProperty };
     return new BlockStateDefinition(this, properties, 1);
 }
 

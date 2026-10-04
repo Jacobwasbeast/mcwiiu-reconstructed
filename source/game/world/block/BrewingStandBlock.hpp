@@ -64,7 +64,7 @@ public:
     virtual EBlockFaceShape getBlockFaceShape(LevelSource* levelSource, const BlockState* state,
                                               const BlockPos& pos, const Direction* direction);
     virtual void registerIcons(IconRegister* iconRegister);
-    virtual TextureAtlasSprite* getBaseTexture();
+    TextureAtlasSprite* getBaseTexture();
     virtual EBlockRenderShape getRenderShape(const BlockState* state);
 
 private:

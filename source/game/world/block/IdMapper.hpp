@@ -15,13 +15,9 @@ public:
     virtual int getId(T value)
     {
         typename boost::unordered_map<T, int>::iterator found = mIds.find(value);
-        int id = -1;
-        if (found != mIds.end())
-        {
-            id = found->second;
-        }
-
-        return id;
+        if (found == mIds.end())
+            return -1;
+        return found->second;
     }
 
     virtual T byId(int id)

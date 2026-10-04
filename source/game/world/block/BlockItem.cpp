@@ -18,6 +18,7 @@
 #include "game/world/generation/Player.hpp"
 #include "game/core/IconRegister.hpp"
 
+static const std::wstring BLOCK_ENTITY_TAG = L"BlockEntityTag";
 static boost::shared_ptr<Player> currentlyPlacingBlockPlayer;
 
 BlockItem::BlockItem(Block* block)
@@ -51,7 +52,7 @@ bool BlockItem::updateCustomBlockEntityTag(Level* level, boost::shared_ptr<Playe
         return false;
     }
 
-    CompoundTag* tag = (CompoundTag*)itemInstance->getTagElement(L"BlockEntityTag");
+    CompoundTag* tag = (CompoundTag*)itemInstance->getTagElement(BLOCK_ENTITY_TAG);
     if (tag == NULL)
     {
         return true;
@@ -69,7 +70,7 @@ bool BlockItem::updateCustomBlockEntityTag(Level* level, boost::shared_ptr<Playe
         return true;
     }
 
-    CompoundTag* entityTag = new CompoundTag;
+    CompoundTag* entityTag = new CompoundTag();
     CompoundTag* savedTag = blockEntity->save(entityTag);
     CompoundTag* originalTag = savedTag->copy();
     entityTag->merge(tag);
@@ -142,9 +143,9 @@ InteractionResult::EInteractionResult BlockItem::useOn(boost::shared_ptr<Player>
         }
         else
         {
-            player->awardStat(gStats->get_blocksPlaced(Block::getId(mBlock)),
-                              GenericStats::param_blocksPlaced(placedState, 1));
-            player->swing(hand);
+            player->awardStat(gStats->get_blocksPlaced(Block::getId(block)),
+                              GenericStats::param_blocksPlaced(state, 1));
+            player->swing(InteractionHand::eInteractionHand_MainHand);
 
             const BlockState* actualState = level->getBlockState(placePos);
             if (actualState->getBlock() == mBlock)
@@ -154,12 +155,12 @@ InteractionResult::EInteractionResult BlockItem::useOn(boost::shared_ptr<Player>
             }
 
             boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(placePos);
-            boost::shared_ptr<ConduitBlockEntity> conduit =
-                boost::dynamic_pointer_cast<ConduitBlockEntity>(blockEntity);
-            if (conduit.get() != NULL)
+            if (blockEntity != NULL && blockEntity->GetType() == BlockEntityType::CONDUIT)
             {
-                int rotation = Mth::absFloor((double)(player->mYRot * 16.0f / 360.0f) + 0.5) & 15;
-                conduit->mActiveRotation = (float)rotation * 360.0f / 16.0f;
+                boost::shared_ptr<ConduitBlockEntity> conduit =
+                    boost::static_pointer_cast<ConduitBlockEntity>(blockEntity);
+                int rotation = Mth::floor(player->mYRot * 16.0f / 360.0f + 0.5f) & 15;
+                conduit->mActiveRotation = (float)rotation * 360.0f * 0.0625f;
             }
 
             const SoundType* soundType = mBlock->getSoundType();
@@ -180,9 +181,9 @@ int BlockItem::getDescriptionId(not_null_ptr<ItemInstance>)
     return mBlock->getDescriptionId(-1);
 }
 
-int BlockItem::getDescriptionId(int)
+int BlockItem::getDescriptionId(int auxValue)
 {
-    return mBlock->getDescriptionId(-1);
+    return mBlock->getDescriptionId(auxValue);
 }
 
 int BlockItem::getUseDescriptionId(not_null_ptr<ItemInstance>)

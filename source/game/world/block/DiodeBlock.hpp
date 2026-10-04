@@ -56,6 +56,8 @@ public:
     virtual bool isSameDiode(const BlockState*);
     virtual bool shouldPrioritize(Level*, const BlockPos&, const BlockState*);
     virtual int getTurnOffDelay(const BlockState*);
+    virtual Item* getResource(const BlockState*, Random*, int) = 0;
+    virtual not_null_ptr<ItemInstance> getCloneItemInstance(Level*, const BlockPos&, const BlockState*) = 0;
     virtual int getTurnOnDelay(const BlockState*) = 0;
     virtual const BlockState* getOnBlock(const BlockState*) = 0;
     virtual const BlockState* getOffBlock(const BlockState*) = 0;

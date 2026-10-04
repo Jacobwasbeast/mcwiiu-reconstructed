@@ -9,7 +9,7 @@ BarrierBlock::BarrierBlock()
     setIndestructible();
     setExplodeable(6000001.0f);
     setNotCollectStatistics();
-    mBlockData = 1;
+    mTranslucent = true;
 }
 
 EBlockRenderShape BarrierBlock::getRenderShape(const BlockState* state)

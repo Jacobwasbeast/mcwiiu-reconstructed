@@ -26,57 +26,56 @@
 #include "game/world/block/TripWireHookBlock.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
+AbstractProperty<bool>* TripWireBlock::POWERED = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"powered"));
+AbstractProperty<bool>* TripWireBlock::SUSPENDED = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"suspended"));
+AbstractProperty<bool>* TripWireBlock::ATTACHED = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"attached"));
+AbstractProperty<bool>* TripWireBlock::DISARMED = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"disarmed"));
 AbstractProperty<bool>* TripWireBlock::NORTH = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"north"));
 AbstractProperty<bool>* TripWireBlock::EAST = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"east"));
 AbstractProperty<bool>* TripWireBlock::SOUTH = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"south"));
 AbstractProperty<bool>* TripWireBlock::WEST = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"west"));
-AbstractProperty<bool>* TripWireBlock::POWERED = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"powered"));
-AbstractProperty<bool>* TripWireBlock::ATTACHED = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"attached"));
-AbstractProperty<bool>* TripWireBlock::DISARMED = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"disarmed"));
-AbstractProperty<bool>* TripWireBlock::SUSPENDED = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"suspended"));
 
-static const AABB* TRIPWIRE_UNPOWERED = AABB::newPermanent(0.0, 0.0625, 0.0, 1.0, 0.09375, 1.0);
-static const AABB* TRIPWIRE_POWERED = AABB::newPermanent(0.0, 0.0625, 0.0, 1.0, 0.15625, 1.0);
+static const AABB* TRIPWIRE_ATTACHED = AABB::newPermanent(0.0, 0.0625, 0.0, 1.0, 0.15625, 1.0);
+static const AABB* TRIPWIRE_DETACHED = AABB::newPermanent(0.0, 0.0625, 0.0, 1.0, 0.09375, 1.0);
 
 TripWireBlock::TripWireBlock() : Block(Material::DECORATION)
 {
     DerivedInit();
     const BlockState* state = mStateDefinition->any();
-    TypedBoxed<bool> falseValue(false);
-    state = state->setBoxedValue(NORTH, &falseValue);
-    state = state->setBoxedValue(EAST, &falseValue);
-    state = state->setBoxedValue(SOUTH, &falseValue);
-    state = state->setBoxedValue(WEST, &falseValue);
-    state = state->setBoxedValue(POWERED, &falseValue);
-    state = state->setBoxedValue(ATTACHED, &falseValue);
-    registerDefaultState(state->setBoxedValue(DISARMED, &falseValue));
+    state = state->setValue(POWERED, false);
+    state = state->setValue(ATTACHED, false);
+    state = state->setValue(DISARMED, false);
+    state = state->setValue(NORTH, false);
+    state = state->setValue(EAST, false);
+    state = state->setValue(SOUTH, false);
+    registerDefaultState(state->setValue(WEST, false));
     setTicking(true);
 }
 
 const AABB* TripWireBlock::getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
 {
-    const BlockState* actual = levelSource == NULL ? state : fillVirtualBlockStateProperties(state, levelSource, pos);
-    return actual->getValue(POWERED) ? TRIPWIRE_POWERED : TRIPWIRE_UNPOWERED;
+    return state->getValue(ATTACHED) ? TRIPWIRE_ATTACHED : TRIPWIRE_DETACHED;
 }
 
 bool TripWireBlock::shouldConnectTo(LevelSource* levelSource, const BlockPos& pos, const BlockState*, const Direction* direction)
 {
-    const BlockState* state = levelSource->getBlockState(pos.relative(direction));
-    if (state->getBlock() == Blocks::tripwire_hook)
-        return state->getValue(static_cast<AbstractProperty<const Direction*>*>(TripWireHookBlock::FACING)) == direction->getOpposite();
-    return state->getBlock() == Blocks::tripwire;
+    BlockPos neighbourPos = pos.relative(direction);
+    const BlockState* neighbour = levelSource->getBlockState(neighbourPos);
+    Block* block = neighbour->getBlock();
+    if (block == Blocks::tripwire_hook)
+    {
+        const Direction* opposite = direction->getOpposite();
+        return neighbour->getValue(static_cast<AbstractProperty<const Direction*>*>(TripWireHookBlock::FACING)) == opposite;
+    }
+    return block == Blocks::tripwire;
 }
 
 const BlockState* TripWireBlock::fillVirtualBlockStateProperties(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
 {
-    TypedBoxed<bool> north(shouldConnectTo(levelSource, pos, state, Direction::NORTH));
-    TypedBoxed<bool> east(shouldConnectTo(levelSource, pos, state, Direction::EAST));
-    TypedBoxed<bool> south(shouldConnectTo(levelSource, pos, state, Direction::SOUTH));
-    TypedBoxed<bool> west(shouldConnectTo(levelSource, pos, state, Direction::WEST));
-    const BlockState* result = state->setBoxedValue(NORTH, &north);
-    result = result->setBoxedValue(EAST, &east);
-    result = result->setBoxedValue(SOUTH, &south);
-    return result->setBoxedValue(WEST, &west);
+    const BlockState* result = state->setValue(NORTH, shouldConnectTo(levelSource, pos, state, Direction::NORTH));
+    result = result->setValue(EAST, shouldConnectTo(levelSource, pos, state, Direction::EAST));
+    result = result->setValue(SOUTH, shouldConnectTo(levelSource, pos, state, Direction::SOUTH));
+    return result->setValue(WEST, shouldConnectTo(levelSource, pos, state, Direction::WEST));
 }
 
 const AABB* TripWireBlock::getClipAABB(const BlockState*, LevelSource*, const BlockPos&) { return NULL; }
@@ -119,8 +118,7 @@ void TripWireBlock::onPlace(Level* level, const BlockPos& pos, const BlockState*
 
 void TripWireBlock::onRemove(Level* level, const BlockPos& pos, const BlockState* state)
 {
-    TypedBoxed<bool> powered(true);
-    updateSource(level, pos, state->setBoxedValue(POWERED, &powered));
+    updateSource(level, pos, state->setValue(POWERED, true));
 }
 
 bool TripWireBlock::playerWillDestroy(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<Player> player)
@@ -128,15 +126,13 @@ bool TripWireBlock::playerWillDestroy(Level* level, const BlockPos& pos, const B
     if (!level->mIsClientSide)
     {
         bool wasShears = false;
-        not_null_ptr<ItemInstance> mainHand = player->getMainHandItem();
-        if (!mainHand->isEmpty() && mainHand->getItem() == Items::shears)
+        if (!player->getMainHandItem()->isEmpty() && player->getMainHandItem()->getItem() == Items::shears)
         {
             wasShears = true;
         }
         if (wasShears)
         {
-            TypedBoxed<bool> disarmed(true);
-            level->setBlock(pos, state->setBoxedValue(DISARMED, &disarmed), Block::UPDATE_INVISIBLE, false);
+            level->setBlock(pos, state->setValue(DISARMED, true), Block::UPDATE_INVISIBLE, false);
         }
     }
     return false;
@@ -167,8 +163,7 @@ void TripWireBlock::checkPressed(Level* level, const BlockPos& pos)
 
     if (pressed != wasPressed)
     {
-        TypedBoxed<bool> poweredValue(pressed);
-        state = state->setBoxedValue(POWERED, &poweredValue);
+        state = state->setValue(POWERED, pressed);
         level->setBlock(pos, state, Block::UPDATE_ALL, false);
         updateSource(level, pos, state);
     }
@@ -184,20 +179,21 @@ void TripWireBlock::entityInside(Level* level, const BlockPos& pos, const BlockS
 void TripWireBlock::randomTick(Level*, const BlockPos&, const BlockState*, Random*) {}
 void TripWireBlock::tick(Level* level, const BlockPos& pos, const BlockState* state, Random*)
 {
-    if (!level->mIsClientSide && state->getValue(POWERED)) checkPressed(level, pos);
+    if (!level->mIsClientSide && level->getBlockState(pos)->getValue(POWERED)) checkPressed(level, pos);
 }
 
 const BlockState* TripWireBlock::getBlockState(int data)
 {
-    TypedBoxed<bool> powered((data & 1) != 0);
-    TypedBoxed<bool> attached((data & 4) != 0);
-    TypedBoxed<bool> disarmed((data & 8) != 0);
-    return defaultBlockState()->setBoxedValue(POWERED, &powered)->setBoxedValue(ATTACHED, &attached)->setBoxedValue(DISARMED, &disarmed);
+    const BlockState* state = defaultBlockState();
+    state = state->setValue(POWERED, (data & 1) != 0);
+    state = state->setValue(ATTACHED, (data & 4) != 0);
+    return state->setValue(DISARMED, (data & 8) != 0);
 }
 
 int TripWireBlock::convertBlockStateToLegacyData(const BlockState* state)
 {
-    int data = state->getValue(POWERED) ? 1 : 0;
+    int data = 0;
+    if (state->getValue(POWERED)) data |= 1;
     if (state->getValue(ATTACHED)) data |= 4;
     if (state->getValue(DISARMED)) data |= 8;
     return data;
@@ -208,38 +204,20 @@ const BlockState* TripWireBlock::rotate(const BlockState* state, Rotation* rotat
     switch (rotation->getType())
     {
     case Rotation::eTYPE_Clockwise180:
-    {
-        TypedBoxed<bool> north(state->getValue(SOUTH));
-        TypedBoxed<bool> east(state->getValue(WEST));
-        TypedBoxed<bool> south(state->getValue(NORTH));
-        TypedBoxed<bool> west(state->getValue(EAST));
-        return state->setBoxedValue(NORTH, &north)
-            ->setBoxedValue(EAST, &east)
-            ->setBoxedValue(SOUTH, &south)
-            ->setBoxedValue(WEST, &west);
-    }
+        return state->setValue(NORTH, state->getValue(SOUTH))
+            ->setValue(EAST, state->getValue(WEST))
+            ->setValue(SOUTH, state->getValue(NORTH))
+            ->setValue(WEST, state->getValue(EAST));
     case Rotation::eTYPE_CounterClockwise90:
-    {
-        TypedBoxed<bool> north(state->getValue(EAST));
-        TypedBoxed<bool> east(state->getValue(SOUTH));
-        TypedBoxed<bool> south(state->getValue(WEST));
-        TypedBoxed<bool> west(state->getValue(NORTH));
-        return state->setBoxedValue(NORTH, &north)
-            ->setBoxedValue(EAST, &east)
-            ->setBoxedValue(SOUTH, &south)
-            ->setBoxedValue(WEST, &west);
-    }
+        return state->setValue(NORTH, state->getValue(EAST))
+            ->setValue(EAST, state->getValue(SOUTH))
+            ->setValue(SOUTH, state->getValue(WEST))
+            ->setValue(WEST, state->getValue(NORTH));
     case Rotation::eTYPE_Clockwise90:
-    {
-        TypedBoxed<bool> north(state->getValue(WEST));
-        TypedBoxed<bool> east(state->getValue(NORTH));
-        TypedBoxed<bool> south(state->getValue(EAST));
-        TypedBoxed<bool> west(state->getValue(SOUTH));
-        return state->setBoxedValue(NORTH, &north)
-            ->setBoxedValue(EAST, &east)
-            ->setBoxedValue(SOUTH, &south)
-            ->setBoxedValue(WEST, &west);
-    }
+        return state->setValue(NORTH, state->getValue(WEST))
+            ->setValue(EAST, state->getValue(NORTH))
+            ->setValue(SOUTH, state->getValue(EAST))
+            ->setValue(WEST, state->getValue(SOUTH));
     default:
         return state;
     }
@@ -251,15 +229,11 @@ const BlockState* TripWireBlock::mirror(const BlockState* state, Mirror* mirror)
     {
     case Mirror::eTYPE_LeftRight:
     {
-        TypedBoxed<bool> north(state->getValue(SOUTH));
-        TypedBoxed<bool> south(state->getValue(NORTH));
-        return state->setBoxedValue(NORTH, &north)->setBoxedValue(SOUTH, &south);
+        return state->setValue(NORTH, state->getValue(SOUTH))->setValue(SOUTH, state->getValue(NORTH));
     }
     case Mirror::eTYPE_FrontBack:
     {
-        TypedBoxed<bool> east(state->getValue(WEST));
-        TypedBoxed<bool> west(state->getValue(EAST));
-        return state->setBoxedValue(EAST, &east)->setBoxedValue(WEST, &west);
+        return state->setValue(EAST, state->getValue(WEST))->setValue(WEST, state->getValue(EAST));
     }
     default:
         return Block::mirror(state, mirror);
@@ -268,7 +242,7 @@ const BlockState* TripWireBlock::mirror(const BlockState* state, Mirror* mirror)
 
 BlockStateDefinition* TripWireBlock::createBlockStateDefinition()
 {
-    const Property* properties[] = { NORTH, EAST, SOUTH, WEST, POWERED, ATTACHED, DISARMED, SUSPENDED };
+    static const Property* properties[] = { POWERED, SUSPENDED, ATTACHED, DISARMED, NORTH, EAST, WEST, SOUTH };
     return new BlockStateDefinition(this, properties, 8);
 }
 

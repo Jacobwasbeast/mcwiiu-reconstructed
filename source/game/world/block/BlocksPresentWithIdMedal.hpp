@@ -17,7 +17,7 @@ public:
 
     virtual ~BlocksPresentWithIdMedal();
 
-    virtual double GetScore(PlayerStats* playerStats) const;
+    virtual float GetScore(PlayerStats* playerStats) const;
 
     static float ABSOLUTE_VALUE(int value, int total);
     static float PERCENTAGE_OF_TOTAL(int value, int total);

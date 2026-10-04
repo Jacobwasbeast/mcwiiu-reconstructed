@@ -45,8 +45,8 @@ public:
     virtual unsigned int GetInteractTooltip(const BlockTooltipDataHolder& tooltipData);
 
 private:
-    TextureAtlasSprite* mBottomTexture;
     TextureAtlasSprite* mTopTexture;
+    TextureAtlasSprite* mBottomTexture;
 };
 
 #endif

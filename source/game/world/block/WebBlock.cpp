@@ -23,7 +23,7 @@ void WebBlock::entityInside(Level* level, const BlockPos& pos, const BlockState*
     if (entity->GetType() == EntityType::FIREWORKS_ROCKET_ENTITY
         && Minecraft::GetInstance()->GetMiniGame()->HasFeatureDirectionalFireworks())
     {
-        entity->mIsInWeb = true;
+        entity->mCollision = true;
     }
 }
 

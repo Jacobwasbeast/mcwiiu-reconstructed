@@ -10,11 +10,14 @@ class BlockStateDefinition;
 class BlockPos;
 class Level;
 class Material;
+template <class T> class AbstractProperty;
 
 class PressurePlateBlock : public BasePressurePlateBlock
 {
 public:
     enum Sensitivity { EVERYTHING, MOBS };
+
+    static AbstractProperty<bool>* POWERED;
 
     PressurePlateBlock(const std::wstring& name, Material* material, Sensitivity sensitivity);
     virtual ~PressurePlateBlock();

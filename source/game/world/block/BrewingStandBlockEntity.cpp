@@ -34,12 +34,13 @@ arrayWithLength<int> BrewingStandBlockEntity::SLOTS_FOR_SIDES(brewingSideSlots, 
 
 BrewingStandBlockEntity::BrewingStandBlockEntity()
     : mItems(NonNullList<not_null_ptr<ItemInstance> >::withSize(5, ItemInstance::EMPTY)),
-      mBrewTime(0),
       mLastPotionBits(),
       mLastIngredientItem(NULL),
-      mFuel(0),
-      mCustomName(new CensoredString())
+      mFuel(0)
 {
+    mBrewTime = 0;
+    mLastPotionBits = arrayWithLength<unsigned char>();
+    mCustomName = boost::shared_ptr<CensoredString>(new CensoredString());
 }
 
 BrewingStandBlockEntity::~BrewingStandBlockEntity()
@@ -127,11 +128,15 @@ int BrewingStandBlockEntity::getMaxStackSize()
 
 bool BrewingStandBlockEntity::stillValid(boost::shared_ptr<Player> player)
 {
-    if (mLevel->getBlockEntity(mPos).get() != this)
+    if (mLevel->getBlockEntity(mPos) != shared_from_this())
     {
         return false;
     }
-    return player->distanceAsIfHitscanned(mPos, *player->mBoundingBox) <= 30.25;
+    if (player->distanceAsIfHitscanned(mPos, *player->mBoundingBox) <= 30.25f)
+    {
+        return true;
+    }
+    return false;
 }
 
 void BrewingStandBlockEntity::startOpen(boost::shared_ptr<Player> player)
@@ -153,12 +158,9 @@ bool BrewingStandBlockEntity::canPlaceItem(int slot, not_null_ptr<ItemInstance> 
     {
         return item == Items::blazePowder;
     }
-    if (item == Items::potion || item == Items::splashPotion || item == Items::lingeringPotion ||
-        item == Items::glassBottle)
-    {
-        return getItem(slot)->isEmpty();
-    }
-    return false;
+    return (item == Items::potion || item == Items::splashPotion || item == Items::lingeringPotion ||
+            item == Items::glassBottle) &&
+           getItem(slot)->isEmpty();
 }
 
 int BrewingStandBlockEntity::getContainerData(int id)
@@ -202,9 +204,7 @@ void BrewingStandBlockEntity::clearContent()
 
 AbstractContainerMenu* BrewingStandBlockEntity::createMenu(boost::shared_ptr<Inventory> inventory, boost::shared_ptr<Player> player)
 {
-    (void)player;
-    boost::shared_ptr<Container> self = boost::dynamic_pointer_cast<Container>(shared_from_this());
-    return new BrewingStandMenu(inventory, self);
+    return new BrewingStandMenu(inventory, boost::dynamic_pointer_cast<Container>(shared_from_this()));
 }
 
 int BrewingStandBlockEntity::getTypeId(bool large)
@@ -257,13 +257,22 @@ void BrewingStandBlockEntity::addDataWalkers(DataFixerUpper* fixer)
 
 bool BrewingStandBlockEntity::isBrewable()
 {
-    if (mItems[3]->isEmpty() || !PotionBrewing::isIngredient(mItems[3]))
+    not_null_ptr<ItemInstance> ingredient = mItems[3];
+    if (ingredient->isEmpty())
+    {
+        return false;
+    }
+    if (!PotionBrewing::isIngredient(ingredient))
     {
         return false;
     }
     for (unsigned int i = 0; i < 3; ++i)
     {
-        if (!mItems[i]->isEmpty() && PotionBrewing::hasMix(mItems[i], mItems[3]))
+        if (mItems[i]->isEmpty())
+        {
+            continue;
+        }
+        if (PotionBrewing::hasMix(mItems[i], ingredient))
         {
             return true;
         }
@@ -309,18 +318,21 @@ void BrewingStandBlockEntity::doBrew()
 
 void BrewingStandBlockEntity::tick()
 {
+    not_null_ptr<ItemInstance> fuel = mItems[4];
     if (mFuel < 1)
     {
-        if (mItems[4]->getItem() != NULL && mItems[4]->getItem() == Items::blazePowder)
+        if (fuel->getItem() != NULL && fuel->getItem() == Items::blazePowder)
         {
             mFuel = 20;
-            mItems[4]->shrink(1);
+            fuel->shrink(1);
             setChanged();
         }
     }
 
     bool brewable = isBrewable();
-    if (mBrewTime != 0)
+    bool brewing = mBrewTime > 0;
+    not_null_ptr<ItemInstance> ingredient = mItems[3];
+    if (brewing)
     {
         if (!brewable)
         {
@@ -345,38 +357,34 @@ void BrewingStandBlockEntity::tick()
     else if (brewable && mFuel > 0)
     {
         mBrewTime = 400;
-        mLastIngredientItem = mItems[3]->getItem();
+        mLastIngredientItem = ingredient->getItem();
         setChanged();
     }
 
-    if (mLevel->mIsClientSide)
+    if (!mLevel->mIsClientSide)
     {
-        return;
-    }
+        arrayWithLength<unsigned char> potionBits = getPotionBits();
+        if (potionBits.length == mLastPotionBits.length
+            && memcmp(potionBits.data, mLastPotionBits.data, potionBits.length) == 0)
+        {
+            delete[] potionBits.data;
+            return;
+        }
 
-    arrayWithLength<unsigned char> potionBits = getPotionBits();
-    if (potionBits.length == mLastPotionBits.length
-        && memcmp(potionBits.data, mLastPotionBits.data, potionBits.length) == 0)
-    {
-        delete[] potionBits.data;
-        return;
+        delete[] mLastPotionBits.data;
+        mLastPotionBits = potionBits;
+        const BlockState* state = mLevel->getBlockState(getBlockPos());
+        if (dynamic_cast<BrewingStandBlock*>(state->getBlock()) != NULL)
+        {
+            TypedBoxed<bool> bottle0(potionBits.data[0] != 0);
+            state = state->setBoxedValue(BrewingStandBlock::HAS_BOTTLE_0, &bottle0);
+            TypedBoxed<bool> bottle1(potionBits.data[1] != 0);
+            state = state->setBoxedValue(BrewingStandBlock::HAS_BOTTLE_1, &bottle1);
+            TypedBoxed<bool> bottle2(potionBits.data[2] != 0);
+            state = state->setBoxedValue(BrewingStandBlock::HAS_BOTTLE_2, &bottle2);
+            mLevel->setBlock(mPos, state, 2, false);
+        }
     }
-
-    delete[] mLastPotionBits.data;
-    mLastPotionBits = potionBits;
-    const BlockState* state = mLevel->getBlockState(getBlockPos());
-    if (dynamic_cast<BrewingStandBlock*>(state->getBlock()) == NULL)
-    {
-        return;
-    }
-
-    TypedBoxed<bool> bottle0(potionBits.data[0] != 0);
-    state = state->setBoxedValue(BrewingStandBlock::HAS_BOTTLE_0, &bottle0);
-    TypedBoxed<bool> bottle1(potionBits.data[1] != 0);
-    state = state->setBoxedValue(BrewingStandBlock::HAS_BOTTLE_1, &bottle1);
-    TypedBoxed<bool> bottle2(potionBits.data[2] != 0);
-    state = state->setBoxedValue(BrewingStandBlock::HAS_BOTTLE_2, &bottle2);
-    mLevel->setBlock(mPos, state, 2, false);
 }
 
 void BrewingStandBlockEntity::load(CompoundTag* tag)

@@ -49,7 +49,8 @@ void BlockRemover::Tick()
 
             for (unsigned int areaIndex = 0; areaIndex < mAreas.size(); ++areaIndex)
             {
-                removing |= RemoveBlocks(areaIndex, mBlocksPerRemoval);
+                bool removed = RemoveBlocks(areaIndex, mBlocksPerRemoval);
+                removing = removing || removed;
             }
 
             if (!removing)

@@ -37,8 +37,9 @@ void FallingBlock::neighborChanged(const BlockState* state, Level* level, const 
 
 bool FallingBlock::isFree(const BlockState* state)
 {
+    Block* block = state->getBlock();
     Material* material = state->getMaterial();
-    return state->getBlock() == Blocks::fire || material == Material::AIR || material->isLiquid();
+    return block == Blocks::fire || material == Material::AIR || material->isLiquid();
 }
 
 void FallingBlock::checkSlide(Level* level, const BlockPos& pos)
@@ -112,16 +113,19 @@ void FallingBlock::onBroken(Level* level, const BlockPos& pos)
 
 void FallingBlock::animateTick(const BlockState* state, Level* level, const BlockPos& pos, Random* random)
 {
-    if (random->nextInt(16) == 0 && isFree(level->getBlockState(pos.below())))
+    if (random->nextInt(16) == 0)
     {
-        arrayWithLength<int> params(1, true);
-        params.data[0] = Block::getIdWithData(state);
-        level->addParticle(PARTICLE_FALLING_DUST,
-                           (double)pos.x + (double)random->nextFloat(),
-                           (double)pos.y - 0.05,
-                           (double)pos.z + (double)random->nextFloat(),
-                           0.0, 0.0, 0.0, params);
-        delete[] params.data;
+        BlockPos below = pos.below();
+        if (isFree(level->getBlockState(below)))
+        {
+            float x = (float)pos.x + random->nextFloat();
+            double y = (double)pos.y - 0.05;
+            float z = (float)pos.z + random->nextFloat();
+            arrayWithLength<int> params(1, true);
+            params.data[0] = Block::getIdWithData(state);
+            level->addParticle(PARTICLE_FALLING_DUST, x, y, z, 0.0, 0.0, 0.0, params);
+            delete params.data;
+        }
     }
 }
 

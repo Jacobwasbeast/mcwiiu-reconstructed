@@ -42,7 +42,7 @@ bool WaterLilyBlockItem::TestUse(Level* level, boost::shared_ptr<Player> player,
 
     BlockPos pos = hitResult->getBlockPos();
     if (level->mayInteract(player, pos, mBlock) != 1
-        || player->mayUseItemAt(pos.relative(hitResult->mDirection), hitResult->mDirection, itemInstance) != 1)
+        || !player->mayUseItemAt(pos.relative(hitResult->mDirection), hitResult->mDirection, itemInstance))
     {
         delete hitResult;
         return false;

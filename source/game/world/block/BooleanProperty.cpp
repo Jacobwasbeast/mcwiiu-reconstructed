@@ -82,7 +82,7 @@ unsigned int BooleanProperty::getIndexForValue(Boxed* value) const
     const std::vector<Boxed*>& possibleValues = getPossibleValues();
     for (std::vector<Boxed*>::const_iterator it = possibleValues.begin(); it != possibleValues.end(); ++it)
     {
-        const Boxed* possibleValue = *it;
+        Boxed* possibleValue = *it;
         if (*value == possibleValue)
         {
             return index;

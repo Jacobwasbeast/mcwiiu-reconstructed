@@ -2,6 +2,7 @@
 
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/client/audio/SoundSource.hpp"
+#include "game/core/Mth.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
@@ -11,19 +12,23 @@
 #include "game/world/block/TypedBoxed.hpp"
 #include "game/entity/mob/Entity.hpp"
 
-#include <cmath>
 #include <typeinfo>
 #include <vector>
 
-static AbstractProperty<int>* POWER = static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"power", 0, 15));
+AbstractProperty<int>* WeightedPressurePlateBlock::POWER = static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"power", 0, 15));
 
 WeightedPressurePlateBlock::WeightedPressurePlateBlock(const std::wstring& name, Material* material, int maxWeight,
                                                        const MaterialColor* materialColor)
     : BasePressurePlateBlock(name, material, materialColor != NULL ? materialColor : material->getColor())
 {
     DerivedInit();
-    TypedBoxed<int> power(0);
-    registerDefaultState(mStateDefinition->any()->setBoxedValue(POWER, &power));
+    const BlockState* state = mStateDefinition->any();
+    const BlockState* defaultState;
+    {
+        TypedBoxed<int> power(0);
+        defaultState = state->setBoxedValue(POWER, &power);
+    }
+    registerDefaultState(defaultState);
     mMaxWeight = maxWeight;
 }
 
@@ -42,14 +47,13 @@ int WeightedPressurePlateBlock::getSignalStrength(Level* level, const BlockPos& 
     if (count <= 0)
         return 0;
 
-    float strength = 15.0f * static_cast<float>(count) / static_cast<float>(mMaxWeight);
-    return static_cast<int>(std::ceil(strength));
+    return Mth::ceil(static_cast<float>(count) / static_cast<float>(mMaxWeight) * 15.0f);
 }
 
 void WeightedPressurePlateBlock::playOnSound(Level* level, const BlockPos& pos)
 {
     level->playSound(boost::shared_ptr<Player>(), pos, SoundEvents::METAL_PRESSUREPLATE_CLICK_ON,
-                     SoundSource::eSoundSource_Blocks, 0.3f, 0.9f, 16.0f);
+                     SoundSource::eSoundSource_Blocks, 0.3f, 0.90000004f, 16.0f);
 }
 
 void WeightedPressurePlateBlock::playOffSound(Level* level, const BlockPos& pos)
@@ -76,8 +80,9 @@ int WeightedPressurePlateBlock::getTickDelay(Level*)
 
 const BlockState* WeightedPressurePlateBlock::getBlockState(int data)
 {
+    const BlockState* state = defaultBlockState();
     TypedBoxed<int> power(data);
-    return defaultBlockState()->setBoxedValue(POWER, &power);
+    return state->setBoxedValue(POWER, &power);
 }
 
 int WeightedPressurePlateBlock::convertBlockStateToLegacyData(const BlockState* state)
@@ -87,6 +92,6 @@ int WeightedPressurePlateBlock::convertBlockStateToLegacyData(const BlockState* 
 
 BlockStateDefinition* WeightedPressurePlateBlock::createBlockStateDefinition()
 {
-    const Property* properties[] = { POWER };
+    static const Property* properties[] = { POWER };
     return new BlockStateDefinition(this, properties, 1);
 }

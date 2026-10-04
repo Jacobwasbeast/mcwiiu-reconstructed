@@ -16,10 +16,9 @@
 #include "game/world/block/MaterialColor.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
-#include <string>
+#include "game/core/StringConversion.hpp"
 
-template <typename T>
-std::wstring toString(T value);
+#include <string>
 
 static AbstractProperty<int>* AGE = static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"age", 0, 3));
 static const AABB* SHAPE_BY_AGE[4] = {
@@ -30,11 +29,10 @@ static const AABB* SHAPE_BY_AGE[4] = {
 };
 
 NetherWartBlock::NetherWartBlock()
-    : Bush(Material::PLANT, MaterialColor::PLANT)
+    : Bush(Material::PLANT, MaterialColor::COLOR_RED)
 {
     DerivedInit();
-    TypedBoxed<int> age(0);
-    registerDefaultState(mStateDefinition->any()->setBoxedValue(AGE, &age));
+    registerDefaultState(mStateDefinition->any()->setValue<int>(AGE, 0));
     setTicking(true);
 }
 
@@ -58,8 +56,7 @@ void NetherWartBlock::tick(Level* level, const BlockPos& pos, const BlockState* 
     int age = state->getValue(AGE);
     if (age < 3 && random->nextInt(10) == 0)
     {
-        TypedBoxed<int> nextAge(age + 1);
-        state = state->setBoxedValue(AGE, &nextAge);
+        state = state->setValue<int>(AGE, age + 1);
         level->setBlock(pos, state, Block::UPDATE_CLIENTS, false);
     }
     Bush::tick(level, pos, state, random);
@@ -71,18 +68,15 @@ void NetherWartBlock::spawnResources(Level* level, const BlockPos& pos, const Bl
         return;
 
     int count = 1;
-    if (state->getValue(AGE) > 2)
+    if (state->getValue(AGE) >= 3)
     {
         count = level->mRandom->nextInt(3) + 2;
         if (lootBonus > 0)
             count += level->mRandom->nextInt(lootBonus + 1);
     }
 
-    while (count > 0)
-    {
+    for (int i = 0; i < count; ++i)
         Block::popResource(level, pos, not_null_ptr<ItemInstance>(new ItemInstance(Items::netherWart)));
-        --count;
-    }
 }
 
 Item* NetherWartBlock::getResource(const BlockState*, Random*, int)
@@ -102,8 +96,7 @@ not_null_ptr<ItemInstance> NetherWartBlock::getCloneItemInstance(Level*, const B
 
 const BlockState* NetherWartBlock::getBlockState(int data)
 {
-    TypedBoxed<int> age(data);
-    return defaultBlockState()->setBoxedValue(AGE, &age);
+    return defaultBlockState()->setValue<int>(AGE, data);
 }
 
 int NetherWartBlock::convertBlockStateToLegacyData(const BlockState* state)
@@ -118,16 +111,15 @@ bool NetherWartBlock::canContainLiquid(const BlockState*) const
 
 BlockStateDefinition* NetherWartBlock::createBlockStateDefinition()
 {
-    const Property* properties[] = { AGE };
+    static const Property* properties[] = { AGE };
     return new BlockStateDefinition(this, properties, 1);
 }
 
 TextureAtlasSprite* NetherWartBlock::getTexture(const Direction*, const BlockState* state)
 {
-    int age = state->getValue(AGE);
-    if (age > 2)
+    if (state->getValue(AGE) >= 3)
         return mStageIcons[2];
-    if (age > 0)
+    if (state->getValue(AGE) > 0)
         return mStageIcons[1];
     return mStageIcons[0];
 }
@@ -135,7 +127,7 @@ TextureAtlasSprite* NetherWartBlock::getTexture(const Direction*, const BlockSta
 void NetherWartBlock::registerIcons(IconRegister* iconRegister)
 {
     for (int i = 0; i < 3; ++i)
-        mStageIcons[i] = iconRegister->registerIcon(getIconName() + L"_stage_" + ::toString(i));
+        mStageIcons[i] = iconRegister->registerIcon(getIconName() + L"_stage_" + _toString<int>(i));
 }
 
 EBlockRenderShape NetherWartBlock::getRenderShape(const BlockState*)

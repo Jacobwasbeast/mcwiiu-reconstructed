@@ -26,21 +26,21 @@ HarvestFarmBlockGoal::~HarvestFarmBlockGoal()
 {
 }
 
-unsigned int HarvestFarmBlockGoal::fjGetNextFarmTarget()
+bool HarvestFarmBlockGoal::fjGetNextFarmTarget()
 {
     mTargetType = -1;
     mHasFarmSeeds = mVillager->hasFarmSeeds();
     mWantsMoreFood = mVillager->wantsMoreFood();
     if (!findNearestBlock())
     {
-        return 0;
+        return false;
     }
-    return isValidTarget(mVillager->getLevel(), mBlockPos);
+    return isValidTarget(mVillager->mLevel, mBlockPos);
 }
 
 bool HarvestFarmBlockGoal::canUse()
 {
-    if (!mVillager->getLevel()->getGameRules()->getBoolean(GameRules::RULE_MOBGRIEFING))
+    if (!mVillager->mLevel->getGameRules()->getBoolean(GameRules::RULE_MOBGRIEFING))
     {
         return false;
     }
@@ -50,7 +50,7 @@ bool HarvestFarmBlockGoal::canUse()
         return false;
     }
     mNextStartTick = mVillager->getRandom()->nextInt(200);
-    return fjGetNextFarmTarget() != 0;
+    return fjGetNextFarmTarget();
 }
 
 bool HarvestFarmBlockGoal::canContinueToUse()
@@ -61,18 +61,29 @@ bool HarvestFarmBlockGoal::canContinueToUse()
 int HarvestFarmBlockGoal::findInventorySlotForFarmSeeds()
 {
     SimpleContainer* inventory = mVillager->getInventory();
-    for (int slot = 0; slot < (int)inventory->getContainerSize(); ++slot)
+    int size = inventory->getContainerSize();
+    for (int slot = 0; slot < size; ++slot)
     {
         not_null_ptr<ItemInstance> item = inventory->getItem(slot);
-        if (item->isEmpty())
+        Item* itemType = item->isEmpty() ? NULL : item->getItem();
+        if (itemType != NULL)
         {
-            continue;
-        }
-        Item* itemType = item->getItem();
-        if (itemType == Items::wheatSeeds || itemType == Items::carrot ||
-            itemType == Items::potato || itemType == Items::beetrootSeeds)
-        {
-            return slot;
+            if (itemType == Items::wheatSeeds)
+            {
+                return slot;
+            }
+            if (itemType == Items::potato)
+            {
+                return slot;
+            }
+            if (itemType == Items::carrot)
+            {
+                return slot;
+            }
+            if (itemType == Items::beetrootSeeds)
+            {
+                return slot;
+            }
         }
     }
     return -1;
@@ -90,7 +101,7 @@ void HarvestFarmBlockGoal::tick()
         return;
     }
 
-    Level* level = mVillager->getLevel();
+    Level* level = mVillager->mLevel;
     BlockPos above = mBlockPos.above();
     const BlockState* state = level->getBlockState(above);
     CropBlock* crop = dynamic_cast<CropBlock*>(state->getBlock());
@@ -112,34 +123,38 @@ void HarvestFarmBlockGoal::tick()
             return;
         }
         SimpleContainer* inventory = mVillager->getInventory();
-        not_null_ptr<ItemInstance> item = inventory->getItem(slot);
-        Item* itemType = item->getItem();
-        if (itemType == Items::wheatSeeds)
         {
-            level->setBlock(above, Blocks::wheat->defaultBlockState(), Block::UPDATE_ALL,
-                            false);
+            not_null_ptr<ItemInstance> item = inventory->getItem(slot);
+            if (!item->isEmpty())
+            {
+                if (item->getItem() == Items::wheatSeeds)
+                {
+                    level->setBlock(above, Blocks::wheat->defaultBlockState(), Block::UPDATE_ALL,
+                                    false);
+                }
+                else if (item->getItem() == Items::potato)
+                {
+                    level->setBlock(above, Blocks::potatoes->defaultBlockState(), Block::UPDATE_ALL,
+                                    false);
+                }
+                else if (item->getItem() == Items::carrot)
+                {
+                    level->setBlock(above, Blocks::carrots->defaultBlockState(), Block::UPDATE_ALL,
+                                    false);
+                }
+                else if (item->getItem() == Items::beetrootSeeds)
+                {
+                    level->setBlock(above, Blocks::beetroots->defaultBlockState(), Block::UPDATE_ALL,
+                                    false);
+                }
+            }
+            item->shrink(1);
+            if (item->isEmpty())
+            {
+                inventory->setItem(slot, ItemInstance::EMPTY);
+            }
         }
-        else if (itemType == Items::carrot)
-        {
-            level->setBlock(above, Blocks::carrots->defaultBlockState(), Block::UPDATE_ALL,
-                            false);
-        }
-        else if (itemType == Items::potato)
-        {
-            level->setBlock(above, Blocks::potatoes->defaultBlockState(), Block::UPDATE_ALL,
-                            false);
-        }
-        else if (itemType == Items::beetrootSeeds)
-        {
-            level->setBlock(above, Blocks::beetroots->defaultBlockState(), Block::UPDATE_ALL,
-                            false);
-        }
-        item->shrink(1);
-        if (item->isEmpty())
-        {
-            inventory->setItem(slot, ItemInstance::EMPTY);
-        }
-        if (fjGetNextFarmTarget() != 0)
+        if (fjGetNextFarmTarget())
         {
             start();
             return;

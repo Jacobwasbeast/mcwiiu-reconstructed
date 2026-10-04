@@ -28,23 +28,28 @@ ReedsBlock::ReedsBlock()
     : Block(Material::PLANT)
 {
     DerivedInit();
-    TypedBoxed<int> age(0);
-    registerDefaultState(mStateDefinition->any()->setBoxedValue(AGE, &age));
+    registerDefaultState(mStateDefinition->any()->setValue(AGE, 0));
     setTicking(true);
 }
 
 bool ReedsBlock::isValidBonemealTarget(Level* level, const BlockPos& pos, const BlockState*, bool)
 {
-    int bottom = pos.y;
-    int lower = bottom - 4;
-    while (lower < bottom - 1 && bottom - 1 > 0 && level->getBlockId(pos.x, bottom - 1, pos.z) == BlockId::REEDS)
+    int y = pos.y;
+    int bottom = y;
+    int lower = y - 4;
+    for (;;)
     {
+        int next = bottom - 1;
+        if (!(lower < next && next > 0 && level->getBlockId(pos.x, next, pos.z) == BlockId::REEDS))
+        {
+            break;
+        }
         --lower;
-        --bottom;
+        bottom = next;
     }
 
-    int upper = pos.y + 4;
-    int top = pos.y;
+    int upper = y + 4;
+    int top = y;
     while (top + 1 < upper && top + 1 < level->getMaxBuildHeight() && level->getBlockId(pos.x, top + 1, pos.z) == BlockId::REEDS)
     {
         ++upper;
@@ -61,17 +66,22 @@ bool ReedsBlock::isBonemealSuccess(Level*, Random*, const BlockPos&, const Block
 
 void ReedsBlock::performBonemeal(Level* level, Random*, const BlockPos& pos, const BlockState*)
 {
-    int bottom = pos.y;
-    int lower = bottom - 4;
-    while (lower < bottom - 1 && bottom - 1 > 0
-           && level->getBlockId(pos.x, bottom - 1, pos.z) == BlockId::REEDS)
+    int y = pos.y;
+    int bottom = y;
+    int lower = y - 4;
+    for (;;)
     {
+        int next = bottom - 1;
+        if (!(lower < next && next > 0 && level->getBlockId(pos.x, next, pos.z) == BlockId::REEDS))
+        {
+            break;
+        }
         --lower;
-        --bottom;
+        bottom = next;
     }
 
-    int upper = pos.y + 4;
-    int top = pos.y;
+    int upper = y + 4;
+    int top = y;
     while (top + 1 < upper && top + 1 < level->getMaxBuildHeight()
            && level->getBlockId(pos.x, top + 1, pos.z) == BlockId::REEDS)
     {
@@ -80,14 +90,14 @@ void ReedsBlock::performBonemeal(Level* level, Random*, const BlockPos& pos, con
     }
 
     int targetTop = top + (2 - (top - bottom));
-    for (int y = top + 1; y <= targetTop; ++y)
+    for (int placeY = top + 1; placeY <= targetTop; ++placeY)
     {
-        BlockPos placement(pos.x, y, pos.z);
+        BlockPos placement(pos.x, placeY, pos.z);
         if (!level->isEmptyBlock(placement))
         {
             return;
         }
-        level->setBlockAndData(pos.x, y, pos.z, BlockId::REEDS, 0, Block::UPDATE_ALL);
+        level->setBlockAndData(pos.x, placeY, pos.z, BlockId::REEDS, 0, Block::UPDATE_ALL);
     }
 }
 
@@ -98,7 +108,7 @@ const AABB* ReedsBlock::getShape(const BlockState*, LevelSource*, const BlockPos
 
 bool ReedsBlock::checkAlive(Level* level, const BlockPos& pos, const BlockState* state)
 {
-    if (canSurvive(level, pos, state))
+    if (canSurvive(level, pos, NULL))
     {
         return true;
     }
@@ -114,35 +124,26 @@ void ReedsBlock::tick(Level* level, const BlockPos& pos, const BlockState* state
     {
         return;
     }
-    if (!level->isEmptyBlock(pos.above()))
+    if (level->isEmptyBlock(pos.above()))
     {
-        return;
-    }
-
-    int height = 1;
-    if (level->getBlockState(pos.below(1))->getBlock() == this)
-    {
-        do
+        int height = 1;
+        while (level->getBlockState(pos.below(height))->getBlock() == this)
         {
             ++height;
-        } while (level->getBlockState(pos.below(height))->getBlock() == this);
-        if (height > 2)
-        {
-            return;
         }
-    }
-
-    int age = state->getValue(AGE);
-    if (age == 15)
-    {
-        level->setBlockAndUpdate(pos.above(), defaultBlockState());
-        TypedBoxed<int> reset(0);
-        level->setBlock(pos, state->setBoxedValue(AGE, &reset), Block::UPDATE_INVISIBLE, false);
-    }
-    else
-    {
-        TypedBoxed<int> next(age + 1);
-        level->setBlock(pos, state->setBoxedValue(AGE, &next), Block::UPDATE_INVISIBLE, false);
+        if (height < 3)
+        {
+            int age = state->getValue(AGE);
+            if (age == 15)
+            {
+                level->setBlockAndUpdate(pos.above(), defaultBlockState());
+                level->setBlock(pos, state->setValue(AGE, 0), Block::UPDATE_INVISIBLE, false);
+            }
+            else
+            {
+                level->setBlock(pos, state->setValue(AGE, ++age), Block::UPDATE_INVISIBLE, false);
+            }
+        }
     }
 }
 
@@ -183,11 +184,7 @@ bool ReedsBlock::mayPlace(Level* level, const BlockPos& pos)
 void ReedsBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos,
                                  Block*, const BlockPos&)
 {
-    if (!canSurvive(level, pos, state))
-    {
-        spawnResources(level, pos, state, 0);
-        level->removeBlock(pos);
-    }
+    checkAlive(level, pos, state);
 }
 
 bool ReedsBlock::canSurvive(Level* level, const BlockPos& pos, const BlockState*)
@@ -232,8 +229,7 @@ int ReedsBlock::getRenderLayer()
 
 const BlockState* ReedsBlock::getBlockState(int data)
 {
-    TypedBoxed<int> age(data);
-    return defaultBlockState()->setBoxedValue(AGE, &age);
+    return defaultBlockState()->setValue(AGE, data);
 }
 
 int ReedsBlock::convertBlockStateToLegacyData(const BlockState* state)
@@ -253,7 +249,7 @@ bool ReedsBlock::canContainLiquid(const BlockState*) const
 
 BlockStateDefinition* ReedsBlock::createBlockStateDefinition()
 {
-    const Property* properties[] = { AGE };
+    static const Property* properties[] = { AGE };
     return new BlockStateDefinition(this, properties, 1);
 }
 
@@ -275,12 +271,11 @@ EBlockRenderShape ReedsBlock::getRenderShape(const BlockState*)
 unsigned int ReedsBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
     if (Item::getId(tooltipData.m_pItemInstance->getItem()) == ItemId::DYE
-        && tooltipData.m_eInteractionResult != InteractionResult::eInteractionResult_Fail)
+        && tooltipData.m_eInteractionResult != InteractionResult::eInteractionResult_Fail
+        && DyeColor::byItemData(tooltipData.m_pItemInstance->getAuxValue())->getBlockData() == 0
+        && isValidBonemealTarget((Level*)tooltipData.m_pLevel, tooltipData.m_blockPos, tooltipData.m_pBlockState, true))
     {
-        if (DyeColor::byItemData(tooltipData.m_pItemInstance->getAuxValue())->getBlockData() == 0)
-        {
-            return IDS_TOOLTIPS_GROW;
-        }
+        return IDS_TOOLTIPS_GROW;
     }
     return Block::GetInteractTooltip(tooltipData);
 }

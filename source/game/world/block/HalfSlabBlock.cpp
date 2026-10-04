@@ -51,13 +51,16 @@ void HalfSlabBlock::blockStaticCtor()
     std::wstring name = L"half";
     Predicate<Half*>* filter = Predicates<Half*>::alwaysTrue;
 
-    boost::unordered_set<Half*> values;
-    for (int i = 0; i < Half::HALF_COUNT; ++i)
+    AbstractProperty<Half*>* type;
     {
-        values.insert(HALVES[i]);
-    }
+        boost::unordered_set<Half*> values;
+        for (int i = 0; i < Half::HALF_COUNT; ++i)
+        {
+            values.insert(HALVES[i]);
+        }
 
-    AbstractProperty<Half*>* type = EnumProperty<Half*>::create(name, typeid(Half), values, filter);
+        type = EnumProperty<Half*>::create(name, typeid(Half), values, filter);
+    }
     TYPE = type;
 }
 
@@ -142,15 +145,18 @@ const BlockState* HalfSlabBlock::getStateForPlacement(Level* level, const BlockP
 {
     const BlockState* state = Block::getStateForPlacement(level, pos, direction, hitX, hitY, hitZ, auxValue, placer);
 
-    TypedBoxed<Half*> bottom(BOTTOM);
-
-    state = state->setBoxedValue(TYPE, &bottom);
-
-    if (!isFullSize() && (direction == Direction::DOWN || (direction != Direction::UP && hitY > 0.5f)))
+    AbstractProperty<Half*>* property = TYPE;
     {
+        TypedBoxed<Half*> bottom(BOTTOM);
+        state = state->setBoxedValue(property, &bottom);
+    }
+
+    if (!isFullSize() && (direction == Direction::DOWN || (direction != Direction::UP && hitY > 0.5)))
+    {
+        AbstractProperty<Half*>* topProperty = TYPE;
         TypedBoxed<Half*> top(TOP);
 
-        return state->setBoxedValue(TYPE, &top);
+        return state->setBoxedValue(topProperty, &top);
     }
 
     return state;

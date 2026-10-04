@@ -27,7 +27,7 @@
 
 BlockColors::BlockColors()
 {
-    mBlockColorIds = new IdMapper<BlockColor*>();
+    mBlockColorIds = new IdMapper<BlockColor*>;
 }
 
 void BlockColors::registerColor(BlockColor* color, arrayWithLength<Block*> blocks)
@@ -54,9 +54,12 @@ BlockColors* BlockColors::createDefault()
                 return -1;
             }
 
-            BlockPos plantPos = state->getValue(DoublePlantBlock::HALF) == DoublePlantBlock::HALVES[DoublePlantBlock::Half::UPPER]
-                                    ? pos->below()
-                                    : *pos;
+            BlockPos plantPos = *pos;
+            if (state->getValue(DoublePlantBlock::HALF) == DoublePlantBlock::HALVES[DoublePlantBlock::Half::UPPER])
+            {
+                plantPos = pos->below();
+                return BiomeColors::getAverageGrassColor(levelSource, plantPos);
+            }
             return BiomeColors::getAverageGrassColor(levelSource, plantPos);
         }
     };
@@ -78,8 +81,9 @@ BlockColors* BlockColors::createDefault()
         {
             if (levelSource != NULL && pos != NULL)
             {
+                boost::shared_ptr<BlockEntity> blockEntity = levelSource->getBlockEntity(*pos);
                 boost::shared_ptr<FlowerPotBlockEntity> flowerPot =
-                    boost::dynamic_pointer_cast<FlowerPotBlockEntity>(levelSource->getBlockEntity(*pos));
+                    boost::dynamic_pointer_cast<FlowerPotBlockEntity>(blockEntity);
 
                 if (flowerPot)
                 {
@@ -242,17 +246,19 @@ BlockColors* BlockColors::createDefault()
     public:
         virtual int getColor(const BlockState* state, LevelSource* levelSource, const BlockPos* pos, int tintIndex)
         {
-            if (levelSource != NULL && pos != NULL)
+            if (levelSource == NULL || pos == NULL)
+            {
+                if (state->getValue(TallGrassBlock::VARIANT) != TallGrassBlock::Variant::DEAD_BUSH)
+                {
+                    return GrassColor::get(0.5, 1.0);
+                }
+            }
+            else
             {
                 return BiomeColors::getAverageGrassColor(levelSource, *pos);
             }
 
-            if (state->getValue(TallGrassBlock::VARIANT) == TallGrassBlock::Variant::DEAD_BUSH)
-            {
-                return 0xFFFFFF;
-            }
-
-            return GrassColor::get(0.5, 1.0);
+            return 0xFFFFFF;
         }
     };
 
@@ -300,8 +306,10 @@ BlockColors* BlockColors::createDefault()
         virtual int getColor(const BlockState* state, LevelSource* levelSource, const BlockPos* pos, int tintIndex)
         {
             ShulkerBoxBlock* shulkerBox = static_cast<ShulkerBoxBlock*>(state->getBlock());
+            const DyeColor* dyeColor = shulkerBox->getDyeColor();
+            ColourTable* colourTable = Minecraft::GetInstance()->getColourTable();
 
-            return Minecraft::GetInstance()->getColourTable()->getColour(shulkerBox->getDyeColor()->getShulkerColor());
+            return colourTable->getColour(dyeColor->getShulkerColor());
         }
     };
 

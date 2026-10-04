@@ -45,9 +45,13 @@ namespace
 }
 
 BlockEntity::BlockEntity()
-    : mRemoved(false), mRenderRemoveStage(0), mLevel(NULL), mData(-1), mBlock(NULL)
 {
+    mLevel = NULL;
     mPos = BlockPos::ZERO;
+    mBlock = NULL;
+    mRemoved = false;
+    mData = -1;
+    mRenderRemoveStage = 0;
 }
 
 void BlockEntity::rotate(Rotation* rotation)
@@ -98,7 +102,7 @@ void BlockEntity::load(CompoundTag* tag)
 
 CompoundTag* BlockEntity::saveMetadata(CompoundTag* tag)
 {
-    ResourceLocation key = getKey(GetType());
+    ResourceLocation key = gTypes.getKey(GetType());
     tag->putString(L"id", key.toString());
     tag->putInt(L"x", mPos.x);
     tag->putInt(L"y", mPos.y);

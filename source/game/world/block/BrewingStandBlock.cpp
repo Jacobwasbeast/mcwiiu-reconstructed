@@ -39,15 +39,14 @@ static const AABB* gBrewingStandShape = AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0
 static const AABB* gBrewingStandBaseShape = AABB::newPermanent(0.125, 0.0, 0.125, 0.875, 0.125, 0.875);
 
 BrewingStandBlock::BrewingStandBlock()
-    : BaseEntityBlock(Material::STONE),
-      mBaseTexture(0)
+    : BaseEntityBlock(Material::METAL)
 {
     DerivedInit();
 }
 
 boost::shared_ptr<BlockEntity> BrewingStandBlock::newBlockEntity(Level* level, int)
 {
-    boost::shared_ptr<BrewingStandBlockEntity> blockEntity(new BrewingStandBlockEntity());
+    boost::shared_ptr<BlockEntity> blockEntity = boost::shared_ptr<BrewingStandBlockEntity>(new BrewingStandBlockEntity());
     blockEntity->setLevel(level);
     return blockEntity;
 }
@@ -86,22 +85,23 @@ bool BrewingStandBlock::use(Level* level, const BlockPos& pos, const BlockState*
 {
     if (clientSide)
         return false;
-    boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
-    boost::shared_ptr<BrewingStandBlockEntity> brewingStand =
-        boost::dynamic_pointer_cast<BrewingStandBlockEntity>(blockEntity);
-    if (brewingStand.get() != NULL)
-        player->openContainer(brewingStand);
+    if (!level->mIsClientSide)
+    {
+        boost::shared_ptr<BrewingStandBlockEntity> brewingStand =
+            boost::dynamic_pointer_cast<BrewingStandBlockEntity>(level->getBlockEntity(pos));
+        if (brewingStand.get() != NULL)
+            player->openContainer(brewingStand);
+    }
     return true;
 }
 
 void BrewingStandBlock::setPlacedBy(Level* level, const BlockPos& pos, const BlockState* state,
                                     boost::shared_ptr<LivingEntity>, not_null_ptr<ItemInstance> itemInstance)
 {
-    if (itemInstance.get() == NULL || !itemInstance->hasCustomHoverName())
+    if (!itemInstance->hasCustomHoverName())
         return;
-    boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
     boost::shared_ptr<BrewingStandBlockEntity> brewingStand =
-        boost::dynamic_pointer_cast<BrewingStandBlockEntity>(blockEntity);
+        boost::dynamic_pointer_cast<BrewingStandBlockEntity>(level->getBlockEntity(pos));
     if (brewingStand.get() != NULL)
     {
         brewingStand->setCustomName(itemInstance->getHoverNameUnfiltered(), itemInstance->getOwnerUUID(),
@@ -120,7 +120,7 @@ void BrewingStandBlock::animateTick(const BlockState*, Level* level, const Block
 void BrewingStandBlock::onRemove(Level* level, const BlockPos& pos, const BlockState* state)
 {
     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
-    if (boost::dynamic_pointer_cast<BrewingStandBlockEntity>(blockEntity).get() != NULL)
+    if (blockEntity.get() != NULL && boost::dynamic_pointer_cast<BrewingStandBlockEntity>(blockEntity).get() != NULL)
     {
         Containers::dropContents(level, pos, boost::dynamic_pointer_cast<BrewingStandBlockEntity>(blockEntity));
     }
@@ -154,17 +154,17 @@ int BrewingStandBlock::getRenderLayer()
 
 const BlockState* BrewingStandBlock::getBlockState(int data)
 {
-    TypedBoxed<bool> bottle0((data & 1) != 0);
-    TypedBoxed<bool> bottle1((data & 2) != 0);
-    TypedBoxed<bool> bottle2((data & 4) != 0);
-    const BlockState* state = defaultBlockState()->setBoxedValue(HAS_BOTTLE_0, &bottle0);
-    state = state->setBoxedValue(HAS_BOTTLE_1, &bottle1);
-    return state->setBoxedValue(HAS_BOTTLE_2, &bottle2);
+    const BlockState* state = defaultBlockState();
+    state = state->setValue(HAS_BOTTLE_0, (data & 1) != 0);
+    state = state->setValue(HAS_BOTTLE_1, (data & 2) != 0);
+    return state->setValue(HAS_BOTTLE_2, (data & 4) != 0);
 }
 
 int BrewingStandBlock::convertBlockStateToLegacyData(const BlockState* state)
 {
-    int data = state->getValue(HAS_BOTTLE_0) ? 1 : 0;
+    int data = 0;
+    if (state->getValue(HAS_BOTTLE_0))
+        data |= 1;
     if (state->getValue(HAS_BOTTLE_1))
         data |= 2;
     if (state->getValue(HAS_BOTTLE_2))
@@ -181,10 +181,7 @@ unsigned int BrewingStandBlock::GetInteractTooltip(const BlockTooltipDataHolder&
 
 BlockStateDefinition* BrewingStandBlock::createBlockStateDefinition()
 {
-    const Property* properties[3];
-    properties[0] = HAS_BOTTLE_0;
-    properties[1] = HAS_BOTTLE_1;
-    properties[2] = HAS_BOTTLE_2;
+    static const Property* properties[] = { HAS_BOTTLE_0, HAS_BOTTLE_1, HAS_BOTTLE_2 };
     return new BlockStateDefinition(this, properties, 3);
 }
 

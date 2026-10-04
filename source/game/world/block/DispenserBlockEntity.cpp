@@ -40,7 +40,7 @@ std::wstring DispenserBlockEntity::getName()
     {
         return mCustomName->get();
     }
-    return std::wstring(L"container.dispenser");
+    return std::wstring(L"");
 }
 
 std::wstring DispenserBlockEntity::getCustomName()
@@ -49,7 +49,7 @@ std::wstring DispenserBlockEntity::getCustomName()
     {
         return mCustomName->get();
     }
-    return std::wstring();
+    return std::wstring(L"");
 }
 
 unsigned int DispenserBlockEntity::getContainerSize()
@@ -61,7 +61,8 @@ bool DispenserBlockEntity::isEmpty()
 {
     for (unsigned int slot = 0; slot < mItems.size(); ++slot)
     {
-        if (!mItems[slot]->isEmpty())
+        not_null_ptr<ItemInstance> item = mItems[slot];
+        if (!item->isEmpty())
         {
             return false;
         }
@@ -83,10 +84,7 @@ AbstractContainerMenu* DispenserBlockEntity::createMenu(boost::shared_ptr<Invent
                                                           boost::shared_ptr<Player> player)
 {
     unpackLootTable(player);
-    boost::shared_ptr<DispenserBlockEntity> self =
-        boost::static_pointer_cast<DispenserBlockEntity>(shared_from_this());
-    return new DispenserMenu(boost::static_pointer_cast<Container>(inventory),
-                             boost::static_pointer_cast<Container>(self));
+    return new DispenserMenu(inventory, boost::static_pointer_cast<DispenserBlockEntity>(shared_from_this()));
 }
 
 int DispenserBlockEntity::getTypeId(bool large)
@@ -96,8 +94,10 @@ int DispenserBlockEntity::getTypeId(bool large)
 
 int DispenserBlockEntity::getRandomSlot()
 {
-    boost::shared_ptr<Player> player;
-    unpackLootTable(player);
+    {
+        boost::shared_ptr<Player> player;
+        unpackLootTable(player);
+    }
 
     int count = 1;
     int selected = -1;
@@ -105,11 +105,10 @@ int DispenserBlockEntity::getRandomSlot()
     {
         if (!mItems[slot]->isEmpty())
         {
-            if (gDispenserRandom.nextInt(count) == 0)
+            if (gDispenserRandom.nextInt(count++) == 0)
             {
                 selected = static_cast<int>(slot);
             }
-            ++count;
         }
     }
     return selected;
@@ -137,6 +136,7 @@ void DispenserBlockEntity::addDataWalkers(DataFixerUpper* fixer)
 void DispenserBlockEntity::load(CompoundTag* tag)
 {
     BlockEntity::load(tag);
+    delete[] mItems.items;
     mItems = NonNullList<not_null_ptr<ItemInstance> >::withSize(getContainerSize(), ItemInstance::EMPTY);
     if (!tryLoadLootTable(tag))
     {
@@ -163,6 +163,7 @@ NonNullList<not_null_ptr<ItemInstance> > DispenserBlockEntity::getItems()
 
 void DispenserBlockEntity::setItems(NonNullList<not_null_ptr<ItemInstance> > items)
 {
+    delete[] mItems.items;
     mItems = items;
 }
 
@@ -170,7 +171,7 @@ boost::shared_ptr<BlockEntity> DispenserBlockEntity::clone()
 {
     boost::shared_ptr<DispenserBlockEntity> result(new DispenserBlockEntity());
     BlockEntity::clone(result);
-    result->mCustomName->set(mCustomName->raw(), mCustomName->getUUID(), mCustomName->isChatCensored(), mCustomName->isUUIDLocal());
+    result->mCustomName->set(mCustomName->raw(), std::wstring(mCustomName->getUUID()), mCustomName->isChatCensored(), mCustomName->isUUIDLocal());
     for (unsigned int slot = 0; slot < mItems.size(); ++slot)
     {
         if (!mItems[slot]->isEmpty())

@@ -33,6 +33,14 @@ LogBlock::LogAxis* LogBlock::LogAxis::Y = LogBlock::Y;
 LogBlock::LogAxis* LogBlock::LogAxis::Z = LogBlock::Z;
 LogBlock::LogAxis* LogBlock::LogAxis::NONE = LogBlock::NONE;
 EnumProperty<LogBlock::LogAxis*>* LogBlock::AXIS = NULL;
+static std::wstring TEXTURE_NAMES[6] = {
+    std::wstring(L"oak"),
+    std::wstring(L"spruce"),
+    std::wstring(L"birch"),
+    std::wstring(L"jungle"),
+    std::wstring(L"acacia"),
+    std::wstring(L"big_oak")
+};
 static const int gLogDescriptionIds[4] = { IDS_TILE_LOG_OAK, (int)IDS_TILE_LOG_SPRUCE, (int)IDS_TILE_LOG_BIRCH, IDS_TILE_LOG_JUNGLE };
 
 LogBlock::LogAxis::LogAxis(const std::wstring& name)
@@ -111,12 +119,7 @@ void LogBlock::onRemove(Level* level, const BlockPos& pos, const BlockState* sta
         const BlockState* neighbourState = level->getBlockState(neighbour);
         if (neighbourState->getBlock()->mMaterial == Material::LEAVES && !neighbourState->getValue(LeafBlock::CHECK_DECAY))
         {
-            const BlockState* decayState;
-            {
-                TypedBoxed<bool> checkDecay(true);
-                decayState = neighbourState->setBoxedValue(LeafBlock::CHECK_DECAY, &checkDecay);
-            }
-            level->setBlock(neighbour, decayState, Block::UPDATE_INVISIBLE, false);
+            level->setBlock(neighbour, neighbourState->setValue(LeafBlock::CHECK_DECAY, true), Block::UPDATE_INVISIBLE, false);
         }
     }
     delete positions;
@@ -124,9 +127,7 @@ void LogBlock::onRemove(Level* level, const BlockPos& pos, const BlockState* sta
 
 const BlockState* LogBlock::getStateForPlacement(Level* level, const BlockPos& pos, const Direction* direction, float hitX, float hitY, float hitZ, int auxValue, boost::shared_ptr<LivingEntity> placer)
 {
-    const BlockState* result = getBlockState(auxValue);
-    TypedBoxed<LogAxis*> axis(LogAxis::fromAxis(direction->getAxis()));
-    return result->setBoxedValue(AXIS, &axis);
+    return getBlockState(auxValue)->setValue(AXIS, LogAxis::fromAxis(direction->getAxis()));
 }
 
 const BlockState* LogBlock::rotate(const BlockState* state, Rotation* rotation)
@@ -135,15 +136,9 @@ const BlockState* LogBlock::rotate(const BlockState* state, Rotation* rotation)
     {
         LogAxis* axis = state->getValue(AXIS);
         if (axis->getId() == 0)
-        {
-            TypedBoxed<LogAxis*> value(Z);
-            return state->setBoxedValue(AXIS, &value);
-        }
+            return state->setValue(AXIS, Z);
         if (axis->getId() == 2)
-        {
-            TypedBoxed<LogAxis*> value(X);
-            return state->setBoxedValue(AXIS, &value);
-        }
+            return state->setValue(AXIS, X);
     }
     return state;
 }
@@ -174,28 +169,18 @@ const BlockState* LogBlock::getStrippedBlock(const BlockState* state)
     if (stripped == NULL)
         return state;
 
-    const BlockState* result;
     unsigned int axisId = state->getValue(AXIS)->getId();
     if (axisId == 0)
-    {
-        TypedBoxed<Direction::Axis*> boxedAxis(Direction::Axis::X);
-        result = stripped->setBoxedValue(gRotatedPillarBlockAxisProperty, &boxedAxis);
-    }
+        stripped = stripped->setValue(gRotatedPillarBlockAxisProperty, Direction::Axis::X);
     else if (axisId == 1)
-    {
-        TypedBoxed<Direction::Axis*> boxedAxis(Direction::Axis::Y);
-        result = stripped->setBoxedValue(gRotatedPillarBlockAxisProperty, &boxedAxis);
-    }
-    else if (axisId == 2)
-    {
-        TypedBoxed<Direction::Axis*> boxedAxis(Direction::Axis::Z);
-        result = stripped->setBoxedValue(gRotatedPillarBlockAxisProperty, &boxedAxis);
-    }
+        stripped = stripped->setValue(gRotatedPillarBlockAxisProperty, Direction::Axis::Y);
     else
     {
-        return stripped;
+        if (axisId != 2)
+            return stripped;
+        stripped = stripped->setValue(gRotatedPillarBlockAxisProperty, Direction::Axis::Z);
     }
-    return result;
+    return stripped;
 }
 
 unsigned int LogBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
@@ -220,9 +205,8 @@ void LogBlock::registerIcons(IconRegister* iconRegister)
     int i;
     for (i = 0; i < 6; ++i)
     {
-        std::wstring name = getIconName() + L"_" + (i == 0 ? L"oak" : i == 1 ? L"spruce" : i == 2 ? L"birch" : i == 3 ? L"jungle" : i == 4 ? L"acacia" : L"big_oak");
-        mTypeTextures[i] = iconRegister->registerIcon(name);
-        mTopTextures[i] = iconRegister->registerIcon(name + L"_top");
+        mTypeTextures[i] = iconRegister->registerIcon(getIconName() + L"_" + TEXTURE_NAMES[i]);
+        mTopTextures[i] = iconRegister->registerIcon(getIconName() + L"_" + TEXTURE_NAMES[i] + L"_top");
     }
 }
 

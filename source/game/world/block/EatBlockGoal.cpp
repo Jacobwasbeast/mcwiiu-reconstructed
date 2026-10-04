@@ -23,10 +23,9 @@ static Predicate<const BlockState*>* sTallGrassPredicate;
 
 bool tallGrassPredicate(Boxed* value)
 {
-    const TypedBoxed<TallGrassBlock::Variant*>* boxed = value != NULL &&
-        value->isA(typeid(TallGrassBlock::Variant*))
+    const TypedBoxed<TallGrassBlock::Variant*>* boxed = value->isA(typeid(TallGrassBlock::Variant*))
         ? static_cast<const TypedBoxed<TallGrassBlock::Variant*>*>(value) : NULL;
-    return boxed != NULL && boxed->getValue() == TallGrassBlock::Variant::GRASS;
+    return boxed->getValue() == TallGrassBlock::Variant::GRASS;
 }
 
 EatBlockGoal::EatBlockGoal(Mob* mob)
@@ -47,15 +46,16 @@ void EatBlockGoal::staticCtor()
 
 bool EatBlockGoal::canUse()
 {
-    int interval = mMob->isBaby() ? 50 : 1000;
-    if (mMob->getRandom()->nextInt(interval) != 0)
+    if (mMob->getRandom()->nextInt(mMob->isBaby() ? 50 : 1000) != 0)
         return false;
 
     BlockPos pos(mMob->mX, mMob->mY, mMob->mZ);
-    if (sTallGrassPredicate->apply(mLevel->getBlockState(pos)))
-        return true;
-
-    return mLevel->getBlockState(pos.below())->getBlock() == Blocks::grass;
+    if (!sTallGrassPredicate->apply(mLevel->getBlockState(pos)))
+    {
+        if (mLevel->getBlockState(pos.below())->getBlock() != Blocks::grass)
+            return false;
+    }
+    return true;
 }
 
 void EatBlockGoal::start()
@@ -72,7 +72,7 @@ void EatBlockGoal::stop()
 
 bool EatBlockGoal::canContinueToUse()
 {
-    return mEatAnimationTick != 0;
+    return mEatAnimationTick > 0;
 }
 
 int EatBlockGoal::getEatAnimationTick()
@@ -82,9 +82,10 @@ int EatBlockGoal::getEatAnimationTick()
 
 void EatBlockGoal::tick()
 {
-    mEatAnimationTick = mEatAnimationTick - 1;
-    if (mEatAnimationTick < 0)
-        mEatAnimationTick = 0;
+    int remaining = mEatAnimationTick - 1;
+    if (remaining < 0)
+        remaining = 0;
+    mEatAnimationTick = remaining;
 
     if (mEatAnimationTick != 4)
         return;

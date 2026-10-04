@@ -79,7 +79,7 @@ not_null_ptr<ItemInstance> BannerBlock::getItemInstanceFromBlockEntity(Level* le
     boost::shared_ptr<BannerBlockEntity> bannerEntity =
         boost::dynamic_pointer_cast<BannerBlockEntity>(blockEntity);
     if (bannerEntity.get() == NULL)
-        return not_null_ptr<ItemInstance>();
+        return ItemInstance::EMPTY;
     return bannerEntity->getItem();
 }
 
@@ -96,10 +96,10 @@ void BannerBlock::spawnResources(Level* level, const BlockPos& pos, const BlockS
                                  float chance, int lootBonus)
 {
     not_null_ptr<ItemInstance> item = getItemInstanceFromBlockEntity(level, pos, state);
-    if (item.get() != NULL && !item->isEmpty())
-        Block::popResource(level, pos, item);
-    else
+    if (item->isEmpty())
         Block::spawnResources(level, pos, state, chance, lootBonus);
+    else
+        Block::popResource(level, pos, item);
 }
 
 bool BannerBlock::mayPlace(Level* level, const BlockPos& pos)
@@ -120,7 +120,7 @@ void BannerBlock::playerDestroy(Level* level, boost::shared_ptr<Player> player, 
         boost::dynamic_pointer_cast<BannerBlockEntity>(blockEntity);
     if (bannerEntity.get() == NULL)
     {
-        BaseEntityBlock::playerDestroy(level, player, pos, state, blockEntity, tool);
+        BaseEntityBlock::playerDestroy(level, player, pos, state, boost::shared_ptr<BlockEntity>(), tool);
         return;
     }
     Block::popResource(level, pos, bannerEntity->getItem());

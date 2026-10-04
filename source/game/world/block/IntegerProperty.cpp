@@ -19,15 +19,7 @@ T _fromString(const std::wstring& text);
 IntegerProperty::IntegerProperty(const std::wstring& name, int minValue, int maxValue)
     : AbstractProperty<int>(name, typeid(int))
 {
-    for (int value = minValue; value <= maxValue - 3; value += 4)
-    {
-        mPossibleValues.push_back(new TypedBoxed<int>(value));
-        mPossibleValues.push_back(new TypedBoxed<int>(value + 1));
-        mPossibleValues.push_back(new TypedBoxed<int>(value + 2));
-        mPossibleValues.push_back(new TypedBoxed<int>(value + 3));
-    }
-
-    for (int value = minValue + ((maxValue - minValue + 1) & ~3); value <= maxValue; ++value)
+    for (int value = minValue; value <= maxValue; ++value)
     {
         mPossibleValues.push_back(new TypedBoxed<int>(value));
     }

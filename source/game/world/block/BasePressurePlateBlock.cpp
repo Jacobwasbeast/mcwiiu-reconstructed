@@ -21,7 +21,7 @@ BasePressurePlateBlock::BasePressurePlateBlock(const std::wstring& name, Materia
 }
 
 BasePressurePlateBlock::BasePressurePlateBlock(const std::wstring& name, Material* material, const MaterialColor* materialColor)
-    : Block(material, materialColor), mTextureName(name)
+    : Block(material), mTextureName(name)
 {
     setTicking(true);
 }
@@ -70,10 +70,8 @@ bool BasePressurePlateBlock::isPossibleToRespawnInThis()
 
 bool BasePressurePlateBlock::canPlaceOn(Level* level, const BlockPos& pos)
 {
-    const BlockState* state = level->getBlockState(pos);
-    if (state->isSolidBlockingBlock())
-        return true;
-    return dynamic_cast<FenceBlock*>(state->getBlock()) != NULL;
+    return level->getBlockState(pos)->isTopSolidBlocking() ||
+           dynamic_cast<FenceBlock*>(level->getBlockState(pos)->getBlock()) != NULL;
 }
 
 bool BasePressurePlateBlock::mayPlace(Level* level, const BlockPos& pos)
@@ -83,9 +81,8 @@ bool BasePressurePlateBlock::mayPlace(Level* level, const BlockPos& pos)
 
 void BasePressurePlateBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block, const BlockPos& fromPos)
 {
-    BlockPos below = pos.below();
-    Block* supportingBlock = level->getBlockState(below)->getBlock();
-    if (!canPlaceOn(level, below) && !Block::isExceptionForPistonAttaching(supportingBlock))
+    Block* supportingBlock = level->getBlockState(pos.below())->getBlock();
+    if (!canPlaceOn(level, pos.below()) && !Block::isExceptionForPistonAttaching(supportingBlock))
     {
         spawnResources(level, pos, state, 0);
         level->removeBlock(pos);
@@ -142,8 +139,8 @@ void BasePressurePlateBlock::checkPressed(Level* level, const BlockPos& pos, con
 
 const AABB* BasePressurePlateBlock::getSensitiveAABB(const BlockPos& pos)
 {
-    return AABB::newTemp(pos.x + 0.125, pos.y, pos.z + 0.125,
-                         pos.x + 0.875, pos.y + 0.25, pos.z + 0.875);
+    return AABB::newTemp(pos.x + 0.125f, pos.y, pos.z + 0.125f,
+                         pos.x + 1 - 0.125f, pos.y + 0.25, pos.z + 1 - 0.125f);
 }
 
 void BasePressurePlateBlock::onRemove(Level* level, const BlockPos& pos, const BlockState* state)

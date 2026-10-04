@@ -12,6 +12,7 @@
 #include "game/world/block/BlockStateDefinition.hpp"
 #include "game/world/block/DirectionProperty.hpp"
 #include "game/world/block/HorizontalDirectionalBlock.hpp"
+#include "game/world/block/Material.hpp"
 #include "game/world/block/Property.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
@@ -26,8 +27,9 @@ WallSignBlock::WallSignBlock()
     : SignBlock()
 {
     DerivedInit();
+    const BlockState* state = mStateDefinition->any();
     TypedBoxed<const Direction*> facing(Direction::NORTH);
-    registerDefaultState(mStateDefinition->any()->setBoxedValue(FACING, &facing));
+    registerDefaultState(state->setBoxedValue(FACING, &facing));
 }
 
 void WallSignBlock::blockStaticCtor()
@@ -51,7 +53,7 @@ void WallSignBlock::neighborChanged(const BlockState* state, Level* level, const
 {
     const Direction* facing = state->getValue(FACING);
     const BlockState* support = level->getBlockState(pos.relative(facing->getOpposite()));
-    if (!support->isSolid())
+    if (!support->getBlock()->getCraftingMaterial()->isSolid())
     {
         spawnResources(level, pos, state, 0);
         level->removeBlock(pos);
@@ -64,8 +66,9 @@ const BlockState* WallSignBlock::getBlockState(int data)
     const Direction* facing = Direction::from3DDataValue(data);
     if (facing->getAxis() == Direction::Axis::Y)
         facing = Direction::NORTH;
+    const BlockState* state = defaultBlockState();
     TypedBoxed<const Direction*> boxedFacing(facing);
-    return defaultBlockState()->setBoxedValue(FACING, &boxedFacing);
+    return state->setBoxedValue(FACING, &boxedFacing);
 }
 
 int WallSignBlock::convertBlockStateToLegacyData(const BlockState* state)

@@ -3,7 +3,6 @@
 
 #include <typeinfo>
 #include <vector>
-#include <boost/unordered_set.hpp>
 
 #include "game/core/DyeColor.hpp"
 #include "game/core/IconRegister.hpp"
@@ -14,33 +13,24 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/BlockStateDefinition.hpp"
 #include "game/world/block/Blocks.hpp"
+#include "game/world/block/ColoredBlock.hpp"
 #include "game/world/block/EnumProperty.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/block/MaterialColor.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
-static EnumProperty<const DyeColor*>* gConcretePowderBlockColorProperty = NULL;
+EnumProperty<const DyeColor*>* ConcretePowderBlock::COLOR = NULL;
 
 void ConcretePowderBlock::blockStaticCtor()
 {
-    boost::unordered_set<const DyeColor*> colors;
-    for (int i = 0; i < 16; ++i)
-    {
-        colors.insert(DyeColor::byBlockData(i));
-    }
-    gConcretePowderBlockColorProperty = EnumProperty<const DyeColor*>::create(L"color", typeid(DyeColor), colors, Predicates<const DyeColor*>::alwaysTrue);
+    COLOR = EnumProperty<const DyeColor*>::create(L"color", typeid(DyeColor), DyeColor::COLORS, Predicates<const DyeColor*>::alwaysTrue);
 }
 
 ConcretePowderBlock::ConcretePowderBlock()
     : FallingBlock(Material::SAND)
 {
     DerivedInit();
-    TypedBoxed<const DyeColor*> color(DyeColor::WHITE);
-    registerDefaultState(mStateDefinition->any()->setBoxedValue(gConcretePowderBlockColorProperty, &color));
-    for (int i = 0; i < 16; ++i)
-    {
-        mIcons[i] = NULL;
-    }
+    registerDefaultState(mStateDefinition->any()->setValue(COLOR, DyeColor::WHITE));
 }
 
 ConcretePowderBlock::~ConcretePowderBlock()
@@ -51,24 +41,30 @@ void ConcretePowderBlock::onLand(Level* level, const BlockPos& pos, const BlockS
 {
     if (replacedState->getMaterial()->isLiquid())
     {
-        level->setBlock(pos, Blocks::concrete->getBlockState(
-            state->getValue(gConcretePowderBlockColorProperty)->getBlockData()), Block::UPDATE_ALL, false);
+        const BlockState* concreteState = Blocks::concrete->defaultBlockState();
+        level->setBlock(pos, concreteState->setValue(ColoredBlock::COLOR, state->getValue(COLOR)), Block::UPDATE_ALL, false);
     }
 }
 
 unsigned int ConcretePowderBlock::tryTouchWater(Level* level, const BlockPos& pos, const BlockState* state)
 {
+    unsigned int touched = 0;
     for (std::vector<const Direction*>::const_iterator it = Direction::VALUES.begin(); it != Direction::VALUES.end(); ++it)
     {
         const Direction* direction = *it;
-        if (direction != Direction::DOWN && level->getBlockState(pos.relative(direction))->getMaterial() == Material::WATER)
+        if (direction == Direction::DOWN)
+            continue;
+
+        BlockPos neighbor = pos.relative(direction);
+        if (level->getBlockState(neighbor)->getMaterial() == Material::WATER)
         {
-            level->setBlock(pos, Blocks::concrete->getBlockState(
-                state->getValue(gConcretePowderBlockColorProperty)->getBlockData()), Block::UPDATE_ALL, false);
-            return 1;
+            const BlockState* concreteState = Blocks::concrete->defaultBlockState();
+            level->setBlock(pos, concreteState->setValue(ColoredBlock::COLOR, state->getValue(COLOR)), Block::UPDATE_ALL, false);
+            touched = 1;
+            break;
         }
     }
-    return 0;
+    return touched;
 }
 
 void ConcretePowderBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block, const BlockPos& fromPos)
@@ -89,42 +85,39 @@ void ConcretePowderBlock::onPlace(Level* level, const BlockPos& pos, const Block
 
 int ConcretePowderBlock::getSpawnResourcesAuxValue(const BlockState* state)
 {
-    return state->getValue(gConcretePowderBlockColorProperty)->getBlockData();
+    return state->getValue(COLOR)->getBlockData();
 }
 
 const MaterialColor* ConcretePowderBlock::getMapColor(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
 {
-    return MaterialColor::getDyeMaterial(state->getValue(gConcretePowderBlockColorProperty));
+    return MaterialColor::getDyeMaterial(state->getValue(COLOR));
 }
 
 const BlockState* ConcretePowderBlock::getBlockState(int data)
 {
-    TypedBoxed<const DyeColor*> color(DyeColor::byBlockData(data));
-    return defaultBlockState()->setBoxedValue(gConcretePowderBlockColorProperty, &color);
+    return defaultBlockState()->setValue(COLOR, DyeColor::byBlockData(data));
 }
 
 int ConcretePowderBlock::convertBlockStateToLegacyData(const BlockState* state)
 {
-    return state->getValue(gConcretePowderBlockColorProperty)->getBlockData();
+    return state->getValue(COLOR)->getBlockData();
 }
 
 BlockStateDefinition* ConcretePowderBlock::createBlockStateDefinition()
 {
-    const Property* properties[] = { gConcretePowderBlockColorProperty };
+    static const Property* properties[] = { COLOR };
     return new BlockStateDefinition(this, properties, 1);
 }
 
 TextureAtlasSprite* ConcretePowderBlock::getTexture(const Direction* direction, const BlockState* state)
 {
-    return mIcons[state->getValue(gConcretePowderBlockColorProperty)->getBlockData()];
+    return mIcons[state->getValue(COLOR)->getBlockData()];
 }
 
 void ConcretePowderBlock::registerIcons(IconRegister* iconRegister)
 {
-    std::wstring base = getIconName();
     for (int i = 0; i < 16; ++i)
     {
-        const DyeColor* color = DyeColor::byBlockData(i);
-        mIcons[color->getItemData()] = iconRegister->registerIcon(base + L"_" + color->getTexture());
+        mIcons[i] = iconRegister->registerIcon(getIconName() + L"_" + DyeColor::TEXTURE_NAMES[DyeColor::byBlockData(i)->getItemData()]);
     }
 }

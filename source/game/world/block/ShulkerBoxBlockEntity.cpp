@@ -98,7 +98,8 @@ bool ShulkerBoxBlockEntity::isEmpty()
 {
     for (unsigned int i = 0; i < mItems.size(); ++i)
     {
-        if (!mItems[i]->isEmpty())
+        not_null_ptr<ItemInstance> item = mItems[i];
+        if (!item->isEmpty())
         {
             return false;
         }
@@ -164,8 +165,7 @@ void ShulkerBoxBlockEntity::clearContent()
 AbstractContainerMenu* ShulkerBoxBlockEntity::createMenu(boost::shared_ptr<Inventory> inventory,
                                                           boost::shared_ptr<Player> player)
 {
-    boost::shared_ptr<Container> container = boost::static_pointer_cast<ShulkerBoxBlockEntity>(shared_from_this());
-    return new ShulkerBoxMenu(inventory, container, player);
+    return new ShulkerBoxMenu(inventory, boost::static_pointer_cast<ShulkerBoxBlockEntity>(shared_from_this()), player);
 }
 
 int ShulkerBoxBlockEntity::getTypeId(bool large)

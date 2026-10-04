@@ -3,6 +3,7 @@
 
 #include <typeinfo>
 
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/Direction.hpp"
 #include "game/core/L10N.hpp"
@@ -38,12 +39,9 @@ RepeaterBlock::RepeaterBlock(bool on) : DiodeBlock(on)
 {
     DerivedInit();
     const BlockState* state = mStateDefinition->any();
-    TypedBoxed<const Direction*> facing(Direction::NORTH);
-    state = state->setBoxedValue(HorizontalDirectionalBlock::FACING_PROPERTY, &facing);
-    TypedBoxed<bool> locked(false);
-    state = state->setBoxedValue(LOCKED, &locked);
-    TypedBoxed<int> delay(1);
-    registerDefaultState(state->setBoxedValue(DELAY, &delay));
+    registerDefaultState(state->setValue(HorizontalDirectionalBlock::FACING_PROPERTY, Direction::NORTH)
+                              ->setValue(DELAY, 1)
+                              ->setValue(LOCKED, false));
 }
 
 std::wstring RepeaterBlock::getName()
@@ -53,30 +51,31 @@ std::wstring RepeaterBlock::getName()
 
 const BlockState* RepeaterBlock::fillVirtualBlockStateProperties(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
 {
+    AbstractProperty<bool>* lockedProperty = LOCKED;
     TypedBoxed<bool> locked(isLocked(levelSource, pos, state));
-    return state->setBoxedValue(LOCKED, &locked);
+    return state->setBoxedValue(lockedProperty, &locked);
 }
 
 const BlockState* RepeaterBlock::rotate(const BlockState* state, Rotation* rotation)
 {
+    const Property* facingProperty = HorizontalDirectionalBlock::FACING_PROPERTY;
     TypedBoxed<const Direction*> facing(rotation->rotate(state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY)));
-    return state->setBoxedValue(HorizontalDirectionalBlock::FACING_PROPERTY, &facing);
+    return state->setBoxedValue(facingProperty, &facing);
 }
 
 const BlockState* RepeaterBlock::mirror(const BlockState* state, Mirror* mirror)
 {
-    return rotate(state, mirror->getRotation(state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY)));
+    return state->rotate(mirror->getRotation(state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY)));
 }
 
 bool RepeaterBlock::use(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand, const Direction*, float, float, float, bool clientSide)
 {
-    if (!clientSide && player && !player->isSneaking())
+    if (!clientSide && player->mAbilities.mMayBuild)
     {
         int priority = 3;
-        if (g_pApp->GetGameHostOption(REPEATER_INTERACTION_HOST_OPTION) != 0)
+        if (gApp.GetGameHostOption(REPEATER_INTERACTION_HOST_OPTION) != 0)
             priority = 0x25;
-        TypedBoxed<int> delay(state->getValue(DELAY) == 4 ? 1 : state->getValue(DELAY) + 1);
-        level->setBlock(pos, state->setBoxedValue(DELAY, &delay), priority, false);
+        level->setBlock(pos, state->cycle(DELAY), priority, false);
         return true;
     }
     return false;
@@ -89,24 +88,24 @@ int RepeaterBlock::getTurnOnDelay(const BlockState* state)
 
 const BlockState* RepeaterBlock::getOnBlock(const BlockState* state)
 {
+    int delayValue = state->getValue(DELAY);
+    bool lockedValue = state->getValue(LOCKED);
+    const Direction* facingValue = state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY);
     const BlockState* result = Blocks::powered_repeater->defaultBlockState();
-    TypedBoxed<const Direction*> facing(state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY));
-    result = result->setBoxedValue(HorizontalDirectionalBlock::FACING_PROPERTY, &facing);
-    TypedBoxed<int> delay(state->getValue(DELAY));
-    result = result->setBoxedValue(DELAY, &delay);
-    TypedBoxed<bool> locked(state->getValue(LOCKED));
-    return result->setBoxedValue(LOCKED, &locked);
+    return result->setValue(HorizontalDirectionalBlock::FACING_PROPERTY, facingValue)
+        ->setValue(DELAY, delayValue)
+        ->setValue(LOCKED, lockedValue);
 }
 
 const BlockState* RepeaterBlock::getOffBlock(const BlockState* state)
 {
+    int delayValue = state->getValue(DELAY);
+    bool lockedValue = state->getValue(LOCKED);
+    const Direction* facingValue = state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY);
     const BlockState* result = Blocks::unpowered_repeater->defaultBlockState();
-    TypedBoxed<const Direction*> facing(state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY));
-    result = result->setBoxedValue(HorizontalDirectionalBlock::FACING_PROPERTY, &facing);
-    TypedBoxed<int> delay(state->getValue(DELAY));
-    result = result->setBoxedValue(DELAY, &delay);
-    TypedBoxed<bool> locked(state->getValue(LOCKED));
-    return result->setBoxedValue(LOCKED, &locked);
+    return result->setValue(HorizontalDirectionalBlock::FACING_PROPERTY, facingValue)
+        ->setValue(DELAY, delayValue)
+        ->setValue(LOCKED, lockedValue);
 }
 
 Item* RepeaterBlock::getResource(const BlockState*, Random*, int)
@@ -138,10 +137,13 @@ void RepeaterBlock::animateTick(const BlockState* state, Level* level, const Blo
     double y = (double)((float)pos.y + 0.4f) + (double)(random->nextFloat() - 0.5f) * 0.2;
     double z = (double)((float)pos.z + 0.5f) + (double)(random->nextFloat() - 0.5f) * 0.2;
     float offset = -5.0f;
-    if (random->nextBoolean()) offset = (float)(state->getValue(DELAY) * 2 - 1);
-    offset /= 16.0f;
-    double xOffset = (double)(offset * (float)facing->getNormal().x);
-    double zOffset = (double)(offset * (float)facing->getNormal().z);
+    if (random->nextBoolean())
+    {
+        float delay = (float)state->getValue(DELAY);
+        offset = (delay + delay) - 1.0f;
+    }
+    double xOffset = (double)(offset * 0.0625f * (float)facing->getStepX());
+    double zOffset = (double)(offset * 0.0625f * (float)facing->getStepZ());
     level->addParticle(PARTICLE_RED_DUST, x + xOffset, y, z + zOffset, 0.0, 0.0, 0.0, arrayWithLength<int>());
 }
 
@@ -153,19 +155,15 @@ void RepeaterBlock::onRemove(Level* level, const BlockPos& pos, const BlockState
 
 const BlockState* RepeaterBlock::getBlockState(int data)
 {
-    const BlockState* state = defaultBlockState();
-    TypedBoxed<const Direction*> facing(Direction::from2DDataValue(data));
-    state = state->setBoxedValue(HorizontalDirectionalBlock::FACING_PROPERTY, &facing);
-    TypedBoxed<bool> locked(false);
-    state = state->setBoxedValue(LOCKED, &locked);
-    TypedBoxed<int> delay((data >> 2) + 1);
-    return state->setBoxedValue(DELAY, &delay);
+    return defaultBlockState()->setValue(HorizontalDirectionalBlock::FACING_PROPERTY, Direction::from2DDataValue(data))
+        ->setValue(LOCKED, false)
+        ->setValue(DELAY, (data >> 2) + 1);
 }
 
 int RepeaterBlock::convertBlockStateToLegacyData(const BlockState* state)
 {
-    return state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY)->get2DDataValue() +
-           (state->getValue(DELAY) * 4 - 4);
+    int facing = state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY)->get2DDataValue();
+    return facing | (state->getValue(DELAY) * 4 - 4);
 }
 
 unsigned int RepeaterBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
@@ -177,7 +175,7 @@ unsigned int RepeaterBlock::GetInteractTooltip(const BlockTooltipDataHolder& too
 
 BlockStateDefinition* RepeaterBlock::createBlockStateDefinition()
 {
-    const Property* properties[] = { HorizontalDirectionalBlock::FACING_PROPERTY, LOCKED, DELAY };
+    static const Property* properties[] = { HorizontalDirectionalBlock::FACING_PROPERTY, DELAY, LOCKED };
     return new BlockStateDefinition(this, properties, 3);
 }
 

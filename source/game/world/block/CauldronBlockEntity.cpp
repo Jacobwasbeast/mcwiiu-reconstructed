@@ -127,7 +127,11 @@ bool CauldronBlockEntity::stillValid(boost::shared_ptr<Player> player)
     {
         return false;
     }
-    return player->distanceAsIfHitscanned(mPos, *player->mBoundingBox) <= 30.25;
+    if (player->distanceAsIfHitscanned(mPos, *player->mBoundingBox) <= 30.25f)
+    {
+        return true;
+    }
+    return false;
 }
 
 void CauldronBlockEntity::startOpen(boost::shared_ptr<Player>)

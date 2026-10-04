@@ -1,7 +1,6 @@
 #include "game/world/block/MoveToBlockGoal.hpp"
 
-#include <cmath>
-
+#include "game/core/Mth.hpp"
 #include "game/core/Node.hpp"
 #include "game/core/Path.hpp"
 #include "game/entity/ai/PathNavigation.hpp"
@@ -19,7 +18,7 @@ MoveToBlockGoal::MoveToBlockGoal(PathfinderMob* mob, double speedModifier,
       mNextStartTick(0),
       mTicksStayingStill(0),
       mMaxStayDuration(0),
-      mBlockPos(),
+      mBlockPos(BlockPos::ZERO),
       mReachedTarget(false),
       mSearchRange(searchRange),
       mVerticalSearchStart(verticalSearchStart),
@@ -31,58 +30,28 @@ MoveToBlockGoal::MoveToBlockGoal(PathfinderMob* mob, double speedModifier,
 
 bool MoveToBlockGoal::findNearestBlock()
 {
+    int range = mSearchRange;
+    int vertical = mVerticalSearchStart;
     BlockPos origin(mMob);
-    BlockPos minPos = origin.offset(-mSearchRange, -(mVerticalSearchStart + 1),
-                                     -mSearchRange);
-    BlockPos maxPos = origin.offset(mSearchRange, mVerticalSearchStart,
-                                     mSearchRange);
+    BlockPos minPos = origin.offset(-range, -(vertical + 1), -range);
+    BlockPos maxPos = origin.offset(range, vertical, range);
 
-    if (!isValidTargetArea(mMob->mLevel, minPos, maxPos) ||
-        mVerticalSearchStart < 0)
+    if (!isValidTargetArea(mMob->mLevel, minPos, maxPos) || vertical < 0)
     {
         return false;
     }
 
-    for (int yIndex = 0; yIndex <= mVerticalSearchStart * 2 + 1; ++yIndex)
+    for (int y = 0; y <= vertical; y = y > 0 ? -y : 1 - y)
     {
-        int y = (yIndex & 1) == 0 ? -(yIndex / 2 + 1) : yIndex / 2;
-        for (int radius = 0; radius <= mSearchRange; ++radius)
+        for (int radius = 0; radius < range; ++radius)
         {
-            for (int x = -radius; x <= radius; ++x)
+            for (int x = 0; x <= radius; x = x > 0 ? -x : 1 - x)
             {
-                int z = radius;
-                BlockPos candidate = origin.offset(x, y - 1, z);
-                if (mMob->mLevel->isEmptyBlock(candidate) &&
-                    isValidTarget(mMob->mLevel, candidate))
+                for (int z = x < radius && x > -radius ? radius : 0;
+                     z <= radius; z = z > 0 ? -z : 1 - z)
                 {
-                    mBlockPos = candidate;
-                    return true;
-                }
-                if (radius != 0)
-                {
-                    candidate = origin.offset(x, y - 1, -z);
-                    if (mMob->mLevel->isEmptyBlock(candidate) &&
-                        isValidTarget(mMob->mLevel, candidate))
-                    {
-                        mBlockPos = candidate;
-                        return true;
-                    }
-                }
-            }
-            for (int z = radius - 1; z > -radius; --z)
-            {
-                int x = radius;
-                BlockPos candidate = origin.offset(x, y - 1, z);
-                if (mMob->mLevel->isEmptyBlock(candidate) &&
-                    isValidTarget(mMob->mLevel, candidate))
-                {
-                    mBlockPos = candidate;
-                    return true;
-                }
-                if (radius != 0)
-                {
-                    candidate = origin.offset(-x, y - 1, z);
-                    if (mMob->mLevel->isEmptyBlock(candidate) &&
+                    BlockPos candidate = origin.offset(x, y - 1, z);
+                    if (mMob->isWithinRestriction(candidate) &&
                         isValidTarget(mMob->mLevel, candidate))
                     {
                         mBlockPos = candidate;
@@ -111,7 +80,8 @@ bool MoveToBlockGoal::canUse()
 bool MoveToBlockGoal::canContinueToUse()
 {
     return mTicksStayingStill >= -mMaxStayDuration &&
-           mTicksStayingStill < 1200 && canReach(mBlockPos);
+           mTicksStayingStill <= 1200 &&
+           isValidTarget(mMob->mLevel, mBlockPos);
 }
 
 void MoveToBlockGoal::start()
@@ -133,22 +103,22 @@ int MoveToBlockGoal::yOff()
 void MoveToBlockGoal::tick()
 {
     BlockPos above = mBlockPos.above();
-    if (mMob->distanceSqrToBlockPosCenter(above) <= mSpeedModifierSquared)
-    {
-        mReachedTarget = true;
-        --mTicksStayingStill;
-    }
-    else
+    if (mMob->distanceSqrToBlockPosCenter(above) > mSpeedModifierSquared)
     {
         ++mTicksStayingStill;
         mReachedTarget = false;
         if (mTicksStayingStill % 40 == 0)
         {
-            mMob->getNavigation()->moveTo((double)mBlockPos.x + 0.5,
-                                          (double)mBlockPos.y + (double)yOff(),
-                                          (double)mBlockPos.z + 0.5,
-                                          mSpeedModifier);
+            mMob->getNavigation()->moveTo(
+                (double)mBlockPos.x + 0.5,
+                (double)mBlockPos.y + (double)MoveToBlockGoal::yOff(),
+                (double)mBlockPos.z + 0.5, mSpeedModifier);
         }
+    }
+    else
+    {
+        mReachedTarget = true;
+        --mTicksStayingStill;
     }
 }
 
@@ -164,23 +134,26 @@ int MoveToBlockGoal::GetNextStartTick(PathfinderMob* mob)
 
 bool MoveToBlockGoal::canReach(const BlockPos& pos)
 {
-    Vec3* target = Vec3::newTemp((double)pos.x, (double)pos.y + 1.0,
+    Vec3* target = Vec3::newTemp((double)pos.x, (double)(pos.y + 1),
                                  (double)pos.z);
     Path* path = mMob->getNavigation()->createPath(BlockPos(target));
-    if (path == NULL || path->last() == NULL)
+    if (path == NULL)
     {
         return false;
     }
 
     Node* last = path->last();
-    double halfWidth = (double)mMob->mBbWidth * 0.5;
+    if (last == NULL)
+    {
+        return false;
+    }
+
+    double halfWidth = (double)(mMob->mBbWidth * 0.5f);
     double x = target->x + 0.5 - halfWidth;
     double z = target->z + 0.5 - halfWidth;
-    int targetX = (int)std::floor(x);
-    int targetZ = (int)std::floor(z);
-    bool result = (last->x - targetX) * (last->x - targetX) +
-                  (last->z - targetZ) * (last->z - targetZ) < 2 &&
-                  (double)last->y == target->y;
+    int dx = last->x - Mth::floor(x);
+    int dz = last->z - Mth::floor(z);
+    bool result = dx * dx + dz * dz <= 1 && (double)last->y == target->y;
     delete path;
     return result;
 }

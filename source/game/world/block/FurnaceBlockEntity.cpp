@@ -33,7 +33,7 @@ arrayWithLength<int> FurnaceBlockEntity::SLOTS_FOR_SIDES(furnaceSideSlots, 1);
 FurnaceBlockEntity::FurnaceBlockEntity()
     : LockableContainerBlockEntity(), WorldlyContainer(),
       mItems(NonNullList<not_null_ptr<ItemInstance> >::withSize(3, ItemInstance::EMPTY)),
-      mOpeners(), mOpenersThisTick(), mLitTime(0), mLitDuration(0),
+      mOpenersThisTick(), mOpeners(), mLitTime(0), mLitDuration(0),
       mCookingProgress(0), mCookingTotalTime(0),
       mName(new CensoredString()), mCharcoalUsed(false)
 {
@@ -76,7 +76,8 @@ bool FurnaceBlockEntity::isEmpty()
 {
     for (unsigned int i = 0; i < mItems.size(); ++i)
     {
-        if (!mItems[i]->isEmpty()) return false;
+        not_null_ptr<ItemInstance> item = mItems[i];
+        if (!item->isEmpty()) return false;
     }
     return true;
 }
@@ -103,15 +104,16 @@ int FurnaceBlockEntity::getTotalCookTime(not_null_ptr<ItemInstance> item)
 
 void FurnaceBlockEntity::setItem(unsigned int slot, not_null_ptr<ItemInstance> item)
 {
-    bool same = !item->isEmpty() && !mItems[slot]->isEmpty() && mItems[slot]->sameItem(item) && ItemInstance::tagMatches(mItems[slot], item);
+    not_null_ptr<ItemInstance> previous = mItems[slot];
+    bool same = !item->isEmpty() && item->sameItem(previous) && ItemInstance::tagMatches(item, previous);
     mItems[slot] = item;
-    if (!item->isEmpty() && item->getCount() > getMaxStackSize()) item->setCount(getMaxStackSize());
+    if (item->getCount() > getMaxStackSize()) item->setCount(getMaxStackSize());
     if (slot == 0 && !same)
     {
         mCookingTotalTime = getTotalCookTime(item);
         mCookingProgress = 0;
+        setChanged();
     }
-    setChanged();
 }
 
 int FurnaceBlockEntity::getMaxStackSize()
@@ -130,17 +132,22 @@ bool FurnaceBlockEntity::stillValid(boost::shared_ptr<Player> player)
     {
         return false;
     }
-    return player->distanceAsIfHitscanned(mPos, *player->mBoundingBox) <= 30.25;
+    if (player->distanceAsIfHitscanned(mPos, *player->mBoundingBox) <= 30.25f)
+    {
+        return true;
+    }
+    return false;
 }
 
 void FurnaceBlockEntity::startOpen(boost::shared_ptr<Player> player)
 {
     mOpeners.insert(player);
+    mOpenersThisTick.insert(player);
 }
 
 void FurnaceBlockEntity::stopOpen(boost::shared_ptr<Player> player)
 {
-    mOpeners.erase(player);
+    mOpeners.erase(mOpeners.find(player));
 }
 
 int FurnaceBlockEntity::getBurnDuration(not_null_ptr<ItemInstance> item)
@@ -198,7 +205,8 @@ bool FurnaceBlockEntity::canPlaceItem(int slot, not_null_ptr<ItemInstance> item)
 {
     if (slot == 2) return false;
     if (slot != 1) return true;
-    return isFuel(item) || (FurnaceFuelSlot::isBucket(item) && mItems[1]->getItem() != Items::bucket);
+    not_null_ptr<ItemInstance> fuel = mItems[1];
+    return isFuel(item) || (FurnaceFuelSlot::isBucket(item) && fuel->getItem() != Items::bucket);
 }
 
 int FurnaceBlockEntity::getContainerData(int id)
@@ -293,7 +301,7 @@ bool FurnaceBlockEntity::canTakeItemThroughFace(int slot, not_null_ptr<ItemInsta
 
 void FurnaceBlockEntity::setCustomName(const std::wstring& name, const std::wstring& uuid, bool chatCensored, bool uuidLocal)
 {
-    if (mName != NULL) mName->set(name, uuid, chatCensored, uuidLocal);
+    mName->set(name, uuid, chatCensored, uuidLocal);
 }
 
 void FurnaceBlockEntity::addDataWalkers(DataFixerUpper* fixer)
@@ -336,7 +344,7 @@ bool FurnaceBlockEntity::isLit()
 
 bool FurnaceBlockEntity::isLit(boost::shared_ptr<Container> container)
 {
-    return container != NULL && container->getContainerData(0) > 0;
+    return container->getContainerData(0) > 0;
 }
 
 bool FurnaceBlockEntity::canBurn()
@@ -378,67 +386,80 @@ void FurnaceBlockEntity::tick()
     if (mLevel == NULL) return;
     if (mLevel->mIsClientSide) return;
 
-    if (!isLit() && !mItems[1]->isEmpty() && !mItems[0]->isEmpty() && canBurn())
     {
-        mLitDuration = mLitTime = getBurnDuration(mItems[1]);
-        if (isLit())
+        not_null_ptr<ItemInstance> fuel = mItems[1];
+        if (isLit() || (!fuel->isEmpty() && !mItems[0]->isEmpty()))
         {
-            changed = true;
-            Item* fuelItem = mItems[1]->getItem();
-            if (fuelItem == Items::coal)
+            if (!isLit() && canBurn())
             {
-                if (mItems[1]->getAuxValue() == 1) mCharcoalUsed = true;
-            }
-            else if (fuelItem == Items::lavaBucket)
-            {
-                for (std::set<boost::shared_ptr<Player> >::iterator it = mOpeners.begin(); it != mOpeners.end(); ++it)
+                mLitTime = getBurnDuration(fuel);
+                mLitDuration = mLitTime;
+                if (isLit())
                 {
-                    (*it)->awardStat(GenericStats::superFuel(), GenericStats::param_superFuel());
+                    changed = true;
+                    if (!fuel->isEmpty())
+                    {
+                        Item* fuelItem = fuel->getItem();
+                        if (fuelItem == Items::coal && fuel->getAuxValue() == 1)
+                        {
+                            mCharcoalUsed = true;
+                        }
+                        else if (fuelItem == Items::lavaBucket)
+                        {
+                            for (std::set<boost::shared_ptr<Player> >::iterator it = mOpenersThisTick.begin(); it != mOpenersThisTick.end(); ++it)
+                            {
+                                boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(*it);
+                                player->awardStat(GenericStats::superFuel(), GenericStats::param_superFuel());
+                            }
+                        }
+                        else if (fuelItem == Item::byBlock(Blocks::dried_kelp_block))
+                        {
+                            for (std::set<boost::shared_ptr<Player> >::iterator it = mOpenersThisTick.begin(); it != mOpenersThisTick.end(); ++it)
+                            {
+                                boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(*it);
+                                player->awardStat(GenericStats::alternativeFuel(), GenericStats::param_alternativeFuel());
+                            }
+                        }
+                        fuel->shrink(1);
+                        if (fuel->isEmpty())
+                        {
+                            Item* remainder = fuelItem->getCraftingRemainingItem();
+                            mItems[1] = (remainder != NULL) ? not_null_ptr<ItemInstance>(new ItemInstance(remainder)) : ItemInstance::EMPTY;
+                        }
+                    }
                 }
+                mOpenersThisTick = mOpeners;
             }
-            else if (fuelItem == Item::byBlock(Blocks::dried_kelp_block))
-            {
-                for (std::set<boost::shared_ptr<Player> >::iterator it = mOpeners.begin(); it != mOpeners.end(); ++it)
-                {
-                    (*it)->awardStat(GenericStats::alternativeFuel(), GenericStats::param_alternativeFuel());
-                }
-            }
-            mItems[1]->shrink(1);
-            if (mItems[1]->isEmpty())
-            {
-                Item* remainder = fuelItem->getCraftingRemainingItem();
-                mItems[1] = (remainder != NULL) ? not_null_ptr<ItemInstance>(new ItemInstance(remainder)) : ItemInstance::EMPTY;
-            }
-            mOpenersThisTick = mOpeners;
-        }
-    }
 
-    if (isLit())
-    {
-        if (canBurn())
-        {
-            if (++mCookingProgress == mCookingTotalTime)
+            if (isLit() && canBurn())
+            {
+                if (mCookingProgress + 1 == mCookingTotalTime)
+                {
+                    mCookingProgress = 0;
+                    mCookingTotalTime = getTotalCookTime(mItems[0]);
+                    burn();
+                    changed = true;
+                }
+                else
+                {
+                    ++mCookingProgress;
+                }
+            }
+            else
             {
                 mCookingProgress = 0;
-                mCookingTotalTime = getTotalCookTime(mItems[0]);
-                burn();
-                changed = true;
             }
         }
-        else
+        else if (!isLit() && mCookingProgress > 0)
         {
-            mCookingProgress = 0;
+            mCookingProgress = Mth::clamp(mCookingProgress - 2, 0, mCookingTotalTime);
         }
-    }
-    else if (mCookingProgress > 0)
-    {
-        mCookingProgress = Mth::clamp(mCookingProgress - 2, 0, mCookingTotalTime);
-    }
-
-    if (wasLit != isLit())
-    {
-        changed = true;
-        FurnaceBlock::setLit(isLit(), mLevel, mPos);
+        bool nowLit = isLit();
+        if (wasLit != nowLit)
+        {
+            changed = true;
+            FurnaceBlock::setLit(nowLit, mLevel, mPos);
+        }
     }
     if (changed) setChanged();
 }

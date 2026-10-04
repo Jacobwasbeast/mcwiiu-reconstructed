@@ -6,10 +6,5 @@ float BowItem_Pulling_ItemPropertyFunction::call(not_null_ptr<ItemInstance> item
                                                  Level* level,
                                                  boost::shared_ptr<LivingEntity> entity)
 {
-    if (entity && entity->mUseItem && entity->getUseItem() == itemInstance)
-    {
-        return 1.0f;
-    }
-
-    return 0.6f;
+    return (entity && entity->isUsingItem() && entity->getUseItem() == itemInstance) ? 1.0f : 0.0f;
 }

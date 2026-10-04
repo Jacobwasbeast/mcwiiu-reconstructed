@@ -21,18 +21,17 @@
 PrismarineSlabBlock::Variant* PrismarineSlabBlock::Variant::ROUGH = NULL;
 PrismarineSlabBlock::Variant* PrismarineSlabBlock::Variant::BRICKS = NULL;
 PrismarineSlabBlock::Variant* PrismarineSlabBlock::Variant::DARK = NULL;
-static PrismarineSlabBlock::Variant* gPrismarineSlabVariants[3] = { NULL, NULL, NULL };
+static PrismarineSlabBlock::Variant* gPrismarineSlabVariants[3];
 EnumProperty<PrismarineSlabBlock::Variant*>* PrismarineSlabBlock::VARIANT = NULL;
 
 PrismarineSlabBlock::Variant::Variant(int data, const std::wstring& name, int nameId,
                                       int descriptionId, const std::wstring& serializedName)
-    : mData(data),
-      mName(name),
-      mNameId(nameId),
-      mDescriptionId(descriptionId),
-      mSerializedName(serializedName),
-      mTexture(NULL)
+    : mData(data)
 {
+    mName = name;
+    mNameId = nameId;
+    mDescriptionId = descriptionId;
+    mSerializedName = serializedName;
 }
 
 int PrismarineSlabBlock::Variant::getData()
@@ -42,7 +41,7 @@ int PrismarineSlabBlock::Variant::getData()
 
 PrismarineSlabBlock::Variant* PrismarineSlabBlock::Variant::byData(int data)
 {
-    if (data > 2)
+    if (static_cast<unsigned int>(data) >= 3)
     {
         data = 0;
     }
@@ -97,11 +96,9 @@ void PrismarineSlabBlock::DerivedInit()
     const BlockState* state = mStateDefinition->any();
     if (!isFullSize())
     {
-        TypedBoxed<Half*> half(BOTTOM);
-        state = state->setBoxedValue(TYPE, &half);
+        state = state->setValue(TYPE, BOTTOM);
     }
-    TypedBoxed<Variant*> variant(Variant::ROUGH);
-    registerDefaultState(state->setBoxedValue(VARIANT, &variant));
+    registerDefaultState(state->setValue(VARIANT, Variant::ROUGH));
 }
 
 Item* PrismarineSlabBlock::getResource(const BlockState*, Random*, int)
@@ -127,12 +124,18 @@ not_null_ptr<ItemInstance> PrismarineSlabBlock::getCloneItemInstance(Level*, con
 
 const BlockState* PrismarineSlabBlock::getBlockState(int data)
 {
-    TypedBoxed<Variant*> variant(Variant::byData(data & 7));
-    const BlockState* state = defaultBlockState()->setBoxedValue(VARIANT, &variant);
+    const BlockState* state = defaultBlockState();
+    state = state->setValue(VARIANT, Variant::byData(data & 7));
     if (!isFullSize())
     {
-        TypedBoxed<Half*> half((data & 8) == 0 ? BOTTOM : TOP);
-        state = state->setBoxedValue(TYPE, &half);
+        if ((data & 8) == 0)
+        {
+            state = state->setValue(TYPE, BOTTOM);
+        }
+        else
+        {
+            state = state->setValue(TYPE, TOP);
+        }
     }
     return state;
 }
@@ -166,18 +169,19 @@ BlockStateDefinition* PrismarineSlabBlock::createBlockStateDefinition()
 {
     if (isFullSize())
     {
-        const Property* properties[] = { VARIANT };
+        static const Property* properties[] = { VARIANT };
         return new BlockStateDefinition(this, properties, 1);
     }
 
-    const Property* properties[] = { TYPE, VARIANT };
+    static const Property* properties[] = { TYPE, VARIANT };
     return new BlockStateDefinition(this, properties, 2);
 }
 
 TextureAtlasSprite* PrismarineSlabBlock::getTexture(const Direction* direction, const BlockState* state)
 {
-    return Blocks::prismarine->getTexture(direction,
-        Blocks::prismarine->getBlockState(state->getValue(VARIANT)->getData()));
+    Variant* variant = state->getValue(VARIANT);
+    Block* prismarine = Blocks::prismarine;
+    return prismarine->getTexture(direction, prismarine->getBlockState(variant->getData()));
 }
 
 void PrismarineSlabBlock::registerIcons(IconRegister* iconRegister)

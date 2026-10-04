@@ -36,18 +36,13 @@ Item* FlowerPotBlockEntity::getPlantItem()
 
 not_null_ptr<ItemInstance> FlowerPotBlockEntity::getPlantItemInstance()
 {
-    if (mPlantItem == NULL)
-    {
-        return ItemInstance::EMPTY;
-    }
-    return not_null_ptr<ItemInstance>(new ItemInstance(mPlantItem, 1, mItemData));
+    return mPlantItem == NULL ? ItemInstance::EMPTY : not_null_ptr<ItemInstance>(boost::shared_ptr<ItemInstance>(new ItemInstance(mPlantItem, 1, mItemData)));
 }
 
 void FlowerPotBlockEntity::setItemInstance(const not_null_ptr<ItemInstance>& item)
 {
     mPlantItem = item->getItem();
     mItemData = item->getAuxValue();
-    setChanged();
 }
 
 int FlowerPotBlockEntity::getItemData()
@@ -90,18 +85,15 @@ boost::shared_ptr<Packet> FlowerPotBlockEntity::getUpdatePacket()
 
 CompoundTag* FlowerPotBlockEntity::getUpdateTag()
 {
-    CompoundTag* tag = new CompoundTag();
-    save(tag);
-    return tag;
+    return save(new CompoundTag());
 }
 
 boost::shared_ptr<BlockEntity> FlowerPotBlockEntity::clone()
 {
-    boost::shared_ptr<BlockEntity> result(new FlowerPotBlockEntity());
+    boost::shared_ptr<FlowerPotBlockEntity> result(new FlowerPotBlockEntity());
     BlockEntity::clone(result);
-    FlowerPotBlockEntity* clone = static_cast<FlowerPotBlockEntity*>(result.get());
-    clone->mPlantItem = mPlantItem;
-    clone->mItemData = mItemData;
+    result->mPlantItem = mPlantItem;
+    result->mItemData = mItemData;
     return result;
 }
 

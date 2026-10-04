@@ -29,14 +29,20 @@ static const int gWoodSlabDescriptionIds[6] = {
 
 void WoodSlabBlock::blockStaticCtor()
 {
-    boost::unordered_set<PlanksBlock::Variant*> values;
-    for (int i = 0; i < 6; ++i)
+    std::wstring name(L"variant");
+    Predicate<PlanksBlock::Variant*>* filter = Predicates<PlanksBlock::Variant*>::alwaysTrue;
+    EnumProperty<PlanksBlock::Variant*>* variant;
     {
-        values.insert(PlanksBlock::Variant::byData(i));
-    }
+        boost::unordered_set<PlanksBlock::Variant*> values;
+        for (int i = 0; i < 6; ++i)
+        {
+            values.insert(PlanksBlock::Variant::BY_DATA[i]);
+        }
 
-    VARIANT = EnumProperty<PlanksBlock::Variant*>::create(
-        L"variant", typeid(PlanksBlock::Variant*), values, Predicates<PlanksBlock::Variant*>::alwaysTrue);
+        variant = EnumProperty<PlanksBlock::Variant*>::create(
+            name, typeid(PlanksBlock::Variant), values, filter);
+    }
+    VARIANT = variant;
 }
 
 WoodSlabBlock::WoodSlabBlock()
@@ -51,12 +57,10 @@ void WoodSlabBlock::DerivedInit()
     const BlockState* state = mStateDefinition->any();
     if (!isFullSize())
     {
-        TypedBoxed<Half*> half(BOTTOM);
-        state = state->setBoxedValue(TYPE, &half);
+        state = state->setValue(TYPE, BOTTOM);
     }
 
-    TypedBoxed<PlanksBlock::Variant*> variant(PlanksBlock::Variant::byData(0));
-    registerDefaultState(state->setBoxedValue(VARIANT, &variant));
+    registerDefaultState(state->setValue(VARIANT, PlanksBlock::Variant::OAK));
 }
 
 const MaterialColor* WoodSlabBlock::getMapColor(const BlockState* state, LevelSource*, const BlockPos&)
@@ -93,14 +97,11 @@ Boxed* WoodSlabBlock::getTypeForItem(not_null_ptr<ItemInstance> itemInstance)
 
 const BlockState* WoodSlabBlock::getBlockState(int data)
 {
-    TypedBoxed<PlanksBlock::Variant*> variant(
-        PlanksBlock::Variant::byData(data & 7));
-    const BlockState* state = defaultBlockState()->setBoxedValue(VARIANT, &variant);
+    const BlockState* state = defaultBlockState()->setValue(VARIANT, PlanksBlock::Variant::byData(data & 7));
 
     if (!isFullSize())
     {
-        TypedBoxed<Half*> half((data & 8) == 0 ? BOTTOM : TOP);
-        state = state->setBoxedValue(TYPE, &half);
+        state = state->setValue(TYPE, (data & 8) == 0 ? BOTTOM : TOP);
     }
 
     return state;
@@ -122,11 +123,11 @@ BlockStateDefinition* WoodSlabBlock::createBlockStateDefinition()
 {
     if (isFullSize())
     {
-        const Property* properties[1] = { VARIANT };
+        static const Property* properties[1] = { VARIANT };
         return new BlockStateDefinition(this, properties, 1);
     }
 
-    const Property* properties[2] = { TYPE, VARIANT };
+    static const Property* properties[2] = { TYPE, VARIANT };
     return new BlockStateDefinition(this, properties, 2);
 }
 
@@ -147,7 +148,7 @@ void WoodSlabBlock::registerIcons(IconRegister*)
 
 int WoodSlabBlock::getDescriptionId(int auxValue)
 {
-    const BlockState* state = getBlockState(-1);
+    const BlockState* state = getBlockState(auxValue);
     int data = state->getValue(VARIANT)->getData();
     if (data == -1)
     {

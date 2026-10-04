@@ -1,6 +1,7 @@
 #include "game/world/block/SaplingBlock.hpp"
 #include "game/core/StringIds.hpp"
 #include <typeinfo>
+#include <cstring>
 #include <boost/unordered_set.hpp>
 #include "game/core/DyeColor.hpp"
 #include "game/core/GameMode.hpp"
@@ -17,8 +18,8 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/BlockStateDefinition.hpp"
 #include "game/world/block/Blocks.hpp"
-#include "game/world/block/BooleanProperty.hpp"
 #include "game/world/block/EnumProperty.hpp"
+#include "game/world/block/IntegerProperty.hpp"
 #include "game/world/block/LeafBlock.hpp"
 #include "game/world/block/OldLeafBlock.hpp"
 #include "game/world/block/OldLogBlock.hpp"
@@ -36,7 +37,7 @@
 #include "game/item/ItemId.hpp"
 
 EnumProperty<PlanksBlock::Variant*>* SaplingBlock::TYPE = NULL;
-static AbstractProperty<bool>* gSaplingStage;
+static AbstractProperty<int>* gSaplingStage = static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"stage", 0, 1));
 static const AABB* SAPLING_SHAPE = AABB::newPermanent(0.09999999403953552, 0.0, 0.09999999403953552, 0.8999999761581421, 0.800000011920929, 0.8999999761581421);
 static const unsigned int SAPLING_DESCRIPTION_IDS[4] = { IDS_TILE_SAPLING_OAK, IDS_TILE_SAPLING_SPRUCE, IDS_TILE_SAPLING_BIRCH, IDS_TILE_SAPLING_JUNGLE };
 
@@ -44,12 +45,9 @@ static const std::wstring SAPLING_ICON_NAMES[6] = { L"sapling", L"sapling_spruce
 
 SaplingBlock::SaplingBlock()
 {
-    blockStaticCtor();
     DerivedInit();
-    TypedBoxed<PlanksBlock::Variant*> variant(PlanksBlock::Variant::byData(0));
-    TypedBoxed<bool> stage(false);
-    registerDefaultState(mStateDefinition->any()->setBoxedValue(TYPE, &variant)->setBoxedValue(gSaplingStage, &stage));
-    for (int i = 0; i < 6; ++i) mIcons[i] = NULL;
+    registerDefaultState(mStateDefinition->any()->setValue(TYPE, PlanksBlock::Variant::OAK)->setValue(gSaplingStage, 0));
+    memset(mIcons, 0, sizeof(mIcons));
 }
 
 bool SaplingBlock::isValidBonemealTarget(Level*, const BlockPos&, const BlockState*, bool) { return true; }
@@ -253,11 +251,14 @@ void SaplingBlock::performBonemeal(Level* level, Random* random, const BlockPos&
 
 void SaplingBlock::blockStaticCtor()
 {
-    if (TYPE != NULL) return;
-    boost::unordered_set<PlanksBlock::Variant*> values;
-    for (int i = 0; i < 6; ++i) values.insert(PlanksBlock::Variant::byData(i));
-    TYPE = EnumProperty<PlanksBlock::Variant*>::create(L"type", typeid(PlanksBlock::Variant), values, Predicates<PlanksBlock::Variant*>::alwaysTrue);
-    gSaplingStage = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"stage"));
+    std::wstring name(L"type");
+    EnumProperty<PlanksBlock::Variant*>* type;
+    {
+        boost::unordered_set<PlanksBlock::Variant*> values;
+        for (int i = 0; i < 6; ++i) values.insert(PlanksBlock::Variant::BY_DATA[i]);
+        type = EnumProperty<PlanksBlock::Variant*>::create(name, typeid(PlanksBlock::Variant), values, Predicates<PlanksBlock::Variant*>::alwaysTrue);
+    }
+    TYPE = type;
 }
 
 std::wstring SaplingBlock::getName() { return std::wstring(L10N::GetString(IDS_TILE_SAPLING)); }
@@ -265,28 +266,30 @@ const AABB* SaplingBlock::getShape(const BlockState*, LevelSource*, const BlockP
 
 void SaplingBlock::tick(Level* level, const BlockPos& pos, const BlockState* state, Random* random)
 {
-    Bush::tick(level, pos, state, random);
-    if (!level->mIsClientSide && level->getRawBrightness(pos.above()) > 8 && random->nextInt(7) == 0) advanceTree(level, pos, state, random);
+    if (!level->mIsClientSide)
+    {
+        Bush::tick(level, pos, state, random);
+        if (level->getRawBrightness(pos.above()) >= 9 && random->nextInt(7) == 0) advanceTree(level, pos, state, random);
+    }
 }
 
 void SaplingBlock::advanceTree(Level* level, const BlockPos& pos, const BlockState* state, Random* random)
 {
-    if (state->getValue(gSaplingStage)) growTree(level, pos, state, random, false);
-    else { TypedBoxed<bool> stage(true); level->setBlock(pos, state->setBoxedValue(gSaplingStage, &stage), Block::UPDATE_INVISIBLE, false); }
+    if (state->getValue(gSaplingStage) == 0) level->setBlock(pos, state->cycle(gSaplingStage), Block::UPDATE_INVISIBLE, false);
+    else growTree(level, pos, state, random, false);
 }
 
 int SaplingBlock::getSpawnResourcesAuxValue(const BlockState* state) { return state->getValue(TYPE)->getData(); }
 
 const BlockState* SaplingBlock::getBlockState(int data)
 {
-    TypedBoxed<PlanksBlock::Variant*> variant(PlanksBlock::Variant::byData(data & 7));
-    TypedBoxed<bool> stage((data & 8) != 0);
-    return defaultBlockState()->setBoxedValue(TYPE, &variant)->setBoxedValue(gSaplingStage, &stage);
+    return defaultBlockState()->setValue(TYPE, PlanksBlock::Variant::byData(data & 7))->setValue(gSaplingStage, (data >> 3) & 1);
 }
 
 int SaplingBlock::convertBlockStateToLegacyData(const BlockState* state)
 {
-    return state->getValue(TYPE)->getData() | (state->getValue(gSaplingStage) ? 8 : 0);
+    int data = state->getValue(TYPE)->getData();
+    return data | (state->getValue(gSaplingStage) << 3);
 }
 
 unsigned int SaplingBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)

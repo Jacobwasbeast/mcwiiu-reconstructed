@@ -15,6 +15,7 @@
 #include "game/item/Containers.hpp"
 #include "game/item/DefaultDispenseItemBehavior.hpp"
 #include "game/item/DispenseItemBehavior.hpp"
+#include "game/item/NoOpDispenseItemBehavior.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/not_null_ptr.hpp"
 #include "game/ui/AbstractContainerMenu.hpp"
@@ -40,6 +41,7 @@
 namespace
 {
 const unsigned int DISPENSER_INTERACT_TOOLTIP = IDS_TOOLTIPS_USE;
+DispenseItemBehavior* NO_OP_BEHAVIOR = new NoOpDispenseItemBehavior();
 }
 
 AbstractProperty<bool>* DispenserBlock::TRIGGERED = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"triggered"));
@@ -50,28 +52,23 @@ DispenserBlock::DispenserBlock()
     : BaseEntityBlock(Material::STONE), mRandom()
 {
     Block::DerivedInit();
-    TypedBoxed<bool> triggered(false);
-    registerDefaultState(mStateDefinition->any()->setBoxedValue(TRIGGERED, &triggered));
+    registerDefaultState(mStateDefinition->any()->setValue(TRIGGERED, false));
 }
 
-DispenserBlock::~DispenserBlock()
-{
-}
-
-boost::shared_ptr<BlockEntity> DispenserBlock::newBlockEntity(Level*, int data)
+boost::shared_ptr<BlockEntity> DispenserBlock::newBlockEntity(Level* level, int)
 {
     boost::shared_ptr<DispenserBlockEntity> entity(new DispenserBlockEntity());
-    entity->setData(data);
-    return boost::static_pointer_cast<BlockEntity>(entity);
+    entity->setLevel(level);
+    return entity;
 }
 
 Position* DispenserBlock::getDispensePosition(BlockSource* blockSource)
 {
     const Direction* direction = blockSource->getBlockState()->getValue(FACING);
-    Vec3i normal = direction->getNormal();
-    return new PositionImpl(blockSource->getX() + 0.7 * normal.x,
-                            blockSource->getY() + 0.7 * normal.y,
-                            blockSource->getZ() + 0.7 * normal.z);
+    double x = blockSource->getX() + 0.7 * direction->getStepX();
+    double y = blockSource->getY() + 0.7 * direction->getStepY();
+    double z = blockSource->getZ() + 0.7 * direction->getStepZ();
+    return new PositionImpl(x, y, z);
 }
 
 void DispenserBlock::blockStaticCtor()
@@ -91,21 +88,19 @@ void DispenserBlock::recalcLockDir(Level* level, const BlockPos& pos, const Bloc
         return;
     }
     const Direction* facing = state->getValue(FACING);
-    const BlockState* north = level->getBlockState(pos.north());
-    const BlockState* south = level->getBlockState(pos.south());
+    bool northSolid = level->getBlockState(pos.north())->isSolid();
+    bool southSolid = level->getBlockState(pos.south())->isSolid();
     const Direction* next = facing;
-    if (facing == Direction::NORTH && north->isSolid() && !south->isSolid()) next = Direction::SOUTH;
-    else if (facing == Direction::SOUTH && south->isSolid() && !north->isSolid()) next = Direction::NORTH;
+    if (facing == Direction::NORTH && northSolid && !southSolid) next = Direction::SOUTH;
+    else if (facing == Direction::SOUTH && southSolid && !northSolid) next = Direction::NORTH;
     else
     {
-        const BlockState* west = level->getBlockState(pos.west());
-        const BlockState* east = level->getBlockState(pos.east());
-        if (facing == Direction::WEST && west->isSolid() && !east->isSolid()) next = Direction::EAST;
-        else if (facing == Direction::EAST && east->isSolid() && !west->isSolid()) next = Direction::WEST;
+        bool westSolid = level->getBlockState(pos.west())->isSolid();
+        bool eastSolid = level->getBlockState(pos.east())->isSolid();
+        if (facing == Direction::WEST && westSolid && !eastSolid) next = Direction::EAST;
+        else if (facing == Direction::EAST && eastSolid && !westSolid) next = Direction::WEST;
     }
-    TypedBoxed<const Direction*> boxed(next);
-    TypedBoxed<bool> triggered(false);
-    level->setBlock(pos, state->setBoxedValue(FACING, &boxed)->setBoxedValue(TRIGGERED, &triggered), Block::UPDATE_CLIENTS, false);
+    level->setBlock(pos, state->setValue(FACING, next)->setValue(TRIGGERED, false), Block::UPDATE_CLIENTS, false);
 }
 
 void DispenserBlock::onPlace(Level* level, const BlockPos& pos, const BlockState* state)
@@ -132,8 +127,7 @@ bool DispenserBlock::use(Level* level, const BlockPos& pos, const BlockState*,
         boost::shared_ptr<BlockEntity> entity = level->getBlockEntity(pos);
         if ((entity->GetType() & BlockEntityType::DISPENSER) == BlockEntityType::DISPENSER)
         {
-            player->openContainer(boost::static_pointer_cast<Container>(
-                boost::static_pointer_cast<DispenserBlockEntity>(entity)));
+            player->openContainer(boost::static_pointer_cast<DispenserBlockEntity>(entity));
         }
     }
     return true;
@@ -146,7 +140,6 @@ void DispenserBlock::dispenseFrom(Level* level, const BlockPos& pos)
         boost::dynamic_pointer_cast<DispenserBlockEntity>(source.getEntity());
     if (!dispenser)
     {
-        level->levelEvent(LevelEvent::SOUND_DISPENSER_FAIL, pos, 0);
         return;
     }
     int slot = dispenser->getRandomSlot();
@@ -157,10 +150,9 @@ void DispenserBlock::dispenseFrom(Level* level, const BlockPos& pos)
     }
     not_null_ptr<ItemInstance> item = dispenser->getItem(static_cast<unsigned int>(slot));
     DispenseItemBehavior* behavior = getDispenseMethod(item);
-    if (behavior != NULL)
+    if (behavior != NO_OP_BEHAVIOR)
     {
-        not_null_ptr<ItemInstance> result = behavior->dispense(&source, item);
-        dispenser->setItem(static_cast<unsigned int>(slot), result);
+        dispenser->setItem(static_cast<unsigned int>(slot), behavior->dispense(&source, item));
     }
 }
 
@@ -177,13 +169,11 @@ void DispenserBlock::neighborChanged(const BlockState* state, Level* level, cons
     if (signal && !triggered)
     {
         level->addToTickNextTick(pos, this, getTickDelay(level));
-        TypedBoxed<bool> value(true);
-        level->setBlock(pos, state->setBoxedValue(TRIGGERED, &value), Block::UPDATE_INVISIBLE, false);
+        level->setBlock(pos, state->setValue(TRIGGERED, true), Block::UPDATE_INVISIBLE, false);
     }
     else if (!signal && triggered)
     {
-        TypedBoxed<bool> value(false);
-        level->setBlock(pos, state->setBoxedValue(TRIGGERED, &value), Block::UPDATE_INVISIBLE, false);
+        level->setBlock(pos, state->setValue(TRIGGERED, false), Block::UPDATE_INVISIBLE, false);
     }
 }
 
@@ -199,19 +189,16 @@ const BlockState* DispenserBlock::getStateForPlacement(Level*, const BlockPos& p
                                                        float, float, float, int,
                                                        boost::shared_ptr<LivingEntity> placer)
 {
-    const Direction* facing = Direction::getDirectionFromLivingEntity(pos, placer);
-    TypedBoxed<const Direction*> boxed(facing);
-    TypedBoxed<bool> triggered(false);
-    return defaultBlockState()->setBoxedValue(FACING, &boxed)->setBoxedValue(TRIGGERED, &triggered);
+    const BlockState* state = defaultBlockState();
+    state = state->setValue(FACING, Direction::getDirectionFromLivingEntity(pos, placer));
+    return state->setValue(TRIGGERED, false);
 }
 
 void DispenserBlock::setPlacedBy(Level* level, const BlockPos& pos, const BlockState* state,
                                  boost::shared_ptr<LivingEntity> placer,
                                  not_null_ptr<ItemInstance> itemInstance)
 {
-    const Direction* facing = Direction::getDirectionFromLivingEntity(pos, placer);
-    TypedBoxed<const Direction*> boxed(facing);
-    level->setBlock(pos, state->setBoxedValue(FACING, &boxed), Block::UPDATE_CLIENTS, false);
+    level->setBlock(pos, state->setValue(FACING, Direction::getDirectionFromLivingEntity(pos, placer)), Block::UPDATE_CLIENTS, false);
     if (itemInstance->hasCustomHoverName())
     {
         boost::shared_ptr<BlockEntity> entity = level->getBlockEntity(pos);
@@ -228,10 +215,9 @@ void DispenserBlock::setPlacedBy(Level* level, const BlockPos& pos, const BlockS
 void DispenserBlock::onRemove(Level* level, const BlockPos& pos, const BlockState* state)
 {
     boost::shared_ptr<BlockEntity> entity = level->getBlockEntity(pos);
-    if ((entity->GetType() & BlockEntityType::DISPENSER) == BlockEntityType::DISPENSER)
+    if (entity && (entity->GetType() & BlockEntityType::DISPENSER) == BlockEntityType::DISPENSER)
     {
-        Containers::dropContents(level, pos, boost::static_pointer_cast<Container>(
-            boost::static_pointer_cast<DispenserBlockEntity>(entity)));
+        Containers::dropContents(level, pos, boost::static_pointer_cast<DispenserBlockEntity>(entity));
         level->updateNeighbourForOutputSignal(pos, this);
     }
     BaseEntityBlock::onRemove(level, pos, state);
@@ -254,9 +240,7 @@ EBlockRenderShape DispenserBlock::getRenderShape(const BlockState*)
 
 const BlockState* DispenserBlock::getBlockState(int data)
 {
-    TypedBoxed<const Direction*> facing(Direction::from3DDataValue(data & 7));
-    TypedBoxed<bool> triggered((data & 8) != 0);
-    return defaultBlockState()->setBoxedValue(FACING, &facing)->setBoxedValue(TRIGGERED, &triggered);
+    return defaultBlockState()->setValue(FACING, Direction::from3DDataValue(data & 7))->setValue(TRIGGERED, (data & 8) != 0);
 }
 
 int DispenserBlock::convertBlockStateToLegacyData(const BlockState* state)
@@ -277,8 +261,8 @@ unsigned int DispenserBlock::GetInteractTooltip(const BlockTooltipDataHolder& to
 
 const BlockState* DispenserBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    TypedBoxed<const Direction*> facing(rotation->rotate(state->getValue(FACING)));
-    return state->setBoxedValue(FACING, &facing);
+    DirectionProperty* property = FACING;
+    return state->setValue(property, rotation->rotate(state->getValue(property)));
 }
 
 const BlockState* DispenserBlock::mirror(const BlockState* state, Mirror* mirror)
@@ -288,7 +272,7 @@ const BlockState* DispenserBlock::mirror(const BlockState* state, Mirror* mirror
 
 BlockStateDefinition* DispenserBlock::createBlockStateDefinition()
 {
-    const Property* properties[] = { FACING, TRIGGERED };
+    static const Property* properties[] = { FACING, TRIGGERED };
     return new BlockStateDefinition(this, properties, 2);
 }
 

@@ -34,8 +34,7 @@ CakeBlock::CakeBlock()
     : Block(Material::CAKE)
 {
     DerivedInit();
-    TypedBoxed<int> bites(0);
-    registerDefaultState(mStateDefinition->any()->setBoxedValue(BITES, &bites));
+    registerDefaultState(mStateDefinition->any()->setValue(BITES, 0));
     setTicking(true);
 }
 
@@ -57,8 +56,7 @@ bool CakeBlock::eat(Level* level, const BlockPos& pos, const BlockState* state,
     int bites = state->getValue(BITES);
     if (bites < 6)
     {
-        TypedBoxed<int> next(bites + 1);
-        level->setBlock(pos, state->setBoxedValue(BITES, &next), Block::UPDATE_ALL, false);
+        level->setBlock(pos, state->setValue(BITES, bites + 1), Block::UPDATE_ALL, false);
     }
     else
         level->removeBlock(pos);
@@ -84,7 +82,9 @@ bool CakeBlock::use(Level* level, const BlockPos& pos, const BlockState* state,
 
 bool CakeBlock::mayPlace(Level* level, const BlockPos& pos)
 {
-    return Block::mayPlace(level, pos) && canSurvive(level, pos, NULL);
+    if (Block::mayPlace(level, pos))
+        return canSurvive(level, pos, NULL);
+    return false;
 }
 
 void CakeBlock::neighborChanged(const BlockState*, Level* level, const BlockPos& pos,
@@ -111,8 +111,7 @@ int CakeBlock::getRenderLayer() { return 0; }
 
 const BlockState* CakeBlock::getBlockState(int data)
 {
-    TypedBoxed<int> bites(data);
-    return defaultBlockState()->setBoxedValue(BITES, &bites);
+    return defaultBlockState()->setValue(BITES, data);
 }
 
 int CakeBlock::convertBlockStateToLegacyData(const BlockState* state)
@@ -131,7 +130,7 @@ unsigned int CakeBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltip
 
 BlockStateDefinition* CakeBlock::createBlockStateDefinition()
 {
-    const Property* properties[] = { BITES };
+    static const Property* properties[] = { BITES };
     return new BlockStateDefinition(this, properties, 1);
 }
 

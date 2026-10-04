@@ -12,6 +12,7 @@
 #include "game/world/block/BlockStateDefinition.hpp"
 #include "game/world/block/DirectionProperty.hpp"
 #include "game/world/block/IntegerProperty.hpp"
+#include "game/world/block/Material.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
 static AbstractProperty<int>* gStandingBannerRotation =
@@ -22,8 +23,7 @@ StandingBannerBlock::StandingBannerBlock()
     : BannerBlock()
 {
     DerivedInit();
-    TypedBoxed<int> rotation(0);
-    registerDefaultState(mStateDefinition->any()->setBoxedValue(gStandingBannerRotation, &rotation));
+    registerDefaultState(mStateDefinition->any()->setValue(gStandingBannerRotation, 0));
 }
 
 const AABB* StandingBannerBlock::getShape(const BlockState*, LevelSource*, const BlockPos&)
@@ -33,8 +33,8 @@ const AABB* StandingBannerBlock::getShape(const BlockState*, LevelSource*, const
 
 const BlockState* StandingBannerBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    TypedBoxed<const Direction*> facing(rotation->rotate(state->getValue(BannerBlock::FACING)));
-    return state->setBoxedValue(BannerBlock::FACING, &facing);
+    DirectionProperty* facing = BannerBlock::FACING;
+    return state->setValue(facing, rotation->rotate(state->getValue(facing)));
 }
 
 const BlockState* StandingBannerBlock::mirror(const BlockState* state, Mirror* mirror)
@@ -46,9 +46,9 @@ void StandingBannerBlock::neighborChanged(const BlockState* state, Level* level,
                                           Block* block, const BlockPos& fromPos)
 {
     const BlockState* below = level->getBlockState(pos.below());
-    if (!below->isSolidBlockingCube() && !Block::isExceptionForTopSolidBlocking(below->getBlock()))
+    if (!below->getMaterial()->isSolid())
     {
-        Block::spawnResources(level, pos, state, 0);
+        static_cast<Block*>(this)->spawnResources(level, pos, state, 0);
         level->removeBlock(pos);
     }
     Block::neighborChanged(state, level, pos, block, fromPos);
@@ -56,8 +56,7 @@ void StandingBannerBlock::neighborChanged(const BlockState* state, Level* level,
 
 const BlockState* StandingBannerBlock::getBlockState(int data)
 {
-    TypedBoxed<int> rotation(data);
-    return defaultBlockState()->setBoxedValue(gStandingBannerRotation, &rotation);
+    return defaultBlockState()->setValue(gStandingBannerRotation, data);
 }
 
 int StandingBannerBlock::convertBlockStateToLegacyData(const BlockState* state)
@@ -67,6 +66,6 @@ int StandingBannerBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 BlockStateDefinition* StandingBannerBlock::createBlockStateDefinition()
 {
-    const Property* properties[] = { gStandingBannerRotation };
+    static const Property* properties[] = { gStandingBannerRotation };
     return new BlockStateDefinition(this, properties, 1);
 }

@@ -4,6 +4,7 @@
 #include "game/core/Direction.hpp"
 #include "game/core/IconRegister.hpp"
 #include "game/item/Item.hpp"
+#include "game/item/ItemId.hpp"
 #include "game/ui/BlockTooltipDataHolder.hpp"
 #include "game/util/AABB.hpp"
 #include "game/world/Level.hpp"
@@ -27,7 +28,7 @@ GrassPathBlock::GrassPathBlock()
 
 bool GrassPathBlock::shouldRenderFace(const BlockState* state, LevelSource* levelSource, const BlockPos& pos, const Direction* direction)
 {
-    int dataValue = direction->get3DDataValue();
+    unsigned int dataValue = direction->get3DDataValue();
     if (dataValue == Direction::eDirection_Down)
     {
         return Block::shouldRenderFace(state, levelSource, pos, direction);
@@ -40,9 +41,7 @@ bool GrassPathBlock::shouldRenderFace(const BlockState* state, LevelSource* leve
     {
         const BlockState* neighbourState = levelSource->getBlockState(pos.relative(direction));
         Block* neighbour = neighbourState->getBlock();
-        return !neighbourState->isSolidRender()
-            && neighbour != Blocks::farmland
-            && neighbour != Blocks::grass_path;
+        return !(neighbourState->isSolidRender() || neighbour == Blocks::farmland || neighbour == Blocks::grass_path);
     }
     return Block::shouldRenderFace(state, levelSource, pos, direction);
 }
@@ -84,9 +83,7 @@ bool GrassPathBlock::isCubeShaped(const BlockState*)
 
 Item* GrassPathBlock::getResource(const BlockState*, Random* random, int lootBonus)
 {
-    TypedBoxed<DirtBlock::Variant*> variant(DirtBlock::Variant::DIRT);
-    const BlockState* state = Blocks::dirt->defaultBlockState()->setBoxedValue(DirtBlock::VARIANT, &variant);
-    return Blocks::dirt->getResource(state, random, lootBonus);
+    return Blocks::dirt->getResource(Blocks::dirt->defaultBlockState()->setValue(DirtBlock::VARIANT, DirtBlock::Variant::DIRT), random, lootBonus);
 }
 
 not_null_ptr<ItemInstance> GrassPathBlock::getCloneItemInstance(Level*, const BlockPos&, const BlockState*)
@@ -107,8 +104,8 @@ EBlockFaceShape GrassPathBlock::getBlockFaceShape(LevelSource*, const BlockState
 
 unsigned int GrassPathBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
-    int itemId = Item::getId(tooltipData.m_pItemInstance->getItem());
-    if (itemId > 0x121 && itemId < 0x127
+    unsigned int itemId = Item::getId(tooltipData.m_pItemInstance->getItem());
+    if (itemId >= ItemId::WOODEN_HOE && itemId <= ItemId::GOLDEN_HOE
         && tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Success
         && tooltipData.m_bCanPlace)
     {

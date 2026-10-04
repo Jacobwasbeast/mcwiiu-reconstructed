@@ -57,8 +57,7 @@ public:
 private:
     boost::unordered_map<Block*, int> mFlameOdds;
     boost::unordered_map<Block*, int> mBurnOdds;
-    TextureAtlasSprite* mFireIcon;
-    TextureAtlasSprite* mFireIconAlt;
+    TextureAtlasSprite* mFireIcons[2];
 };
 
 #endif

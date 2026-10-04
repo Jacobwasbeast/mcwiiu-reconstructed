@@ -100,14 +100,18 @@ int ComparatorBlock::getTurnOnDelay(const BlockState*) { return 2; }
 
 const BlockState* ComparatorBlock::getOnBlock(const BlockState* state)
 {
-    TypedBoxed<ComparatorMode*> mode(ComparatorMode::COMPARE);
-    return Blocks::powered_comparator->defaultBlockState()->setBoxedValue(MODE, &mode)->setBoxedValue(HorizontalDirectionalBlock::FACING_PROPERTY, state->getBoxedValue(HorizontalDirectionalBlock::FACING_PROPERTY));
+    bool powered = state->getValue(sPoweredProperty);
+    ComparatorMode* mode = state->getValue(MODE);
+    const Direction* facing = state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY);
+    return Blocks::powered_comparator->defaultBlockState()->setValue(HorizontalDirectionalBlock::FACING_PROPERTY, facing)->setValue(sPoweredProperty, powered)->setValue(MODE, mode);
 }
 
 const BlockState* ComparatorBlock::getOffBlock(const BlockState* state)
 {
-    TypedBoxed<ComparatorMode*> mode(state->getValue(MODE));
-    return Blocks::unpowered_comparator->defaultBlockState()->setBoxedValue(MODE, &mode)->setBoxedValue(HorizontalDirectionalBlock::FACING_PROPERTY, state->getBoxedValue(HorizontalDirectionalBlock::FACING_PROPERTY));
+    bool powered = state->getValue(sPoweredProperty);
+    ComparatorMode* mode = state->getValue(MODE);
+    const Direction* facing = state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY);
+    return Blocks::unpowered_comparator->defaultBlockState()->setValue(HorizontalDirectionalBlock::FACING_PROPERTY, facing)->setValue(sPoweredProperty, powered)->setValue(MODE, mode);
 }
 
 bool ComparatorBlock::isOn(const BlockState* state)

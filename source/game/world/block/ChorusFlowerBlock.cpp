@@ -20,13 +20,13 @@
 #include "game/world/block/MaterialColor.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
+#include <cstdlib>
+
 static AbstractProperty<int>* CHORUS_AGE = static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"age", 0, 5));
 
 static inline AABB* createChorusShape(double minX, double minY, double minZ, double maxX, double maxY, double maxZ)
 {
-    AABB* shape = AABB::newPermanent(minX, minY, minZ, maxX, maxY, maxZ);
-    shape->divideInternalsBy(16.0);
-    return shape;
+    return AABB::newPermanent(minX, minY, minZ, maxX, maxY, maxZ)->divideInternalsBy(16.0);
 }
 
 static const AABB* CHORUS_UP_SHAPE = createChorusShape(2.0, 14.0, 2.0, 14.0, 16.0, 14.0);
@@ -52,8 +52,7 @@ const AABB* ChorusFlowerBlock::getWestShape() { return CHORUS_WEST_SHAPE; }
 void ChorusFlowerBlock::DerivedInit()
 {
     Block::DerivedInit();
-    TypedBoxed<int> age(0);
-    registerDefaultState(mStateDefinition->any()->setBoxedValue(CHORUS_AGE, &age));
+    registerDefaultState(mStateDefinition->any()->setValue(CHORUS_AGE, 0));
     setTicking(true);
     mCulledFace = NULL;
 }
@@ -65,16 +64,16 @@ Item* ChorusFlowerBlock::getResource(const BlockState*, Random*, int)
 
 bool ChorusFlowerBlock::isDead(int age)
 {
-    return age > 4;
+    return age >= 5;
 }
 
 bool ChorusFlowerBlock::allNeighborsEmpty(Level* level, const BlockPos& pos, const Direction* excluded)
 {
     arrayWithLength<const Direction*> directions = Direction::Plane::HORIZONTAL->iterator();
-    for (unsigned int i = 0; i < directions.length; ++i)
+    const Direction** end = directions.data + directions.length;
+    for (const Direction** it = directions.data; it != end; ++it)
     {
-        const Direction* direction = directions.data[i];
-        if (direction != excluded && !level->isEmptyBlock(pos.relative(direction)))
+        if (*it != excluded && !level->isEmptyBlock(pos.relative(*it)))
         {
             return false;
         }
@@ -84,28 +83,26 @@ bool ChorusFlowerBlock::allNeighborsEmpty(Level* level, const BlockPos& pos, con
 
 void ChorusFlowerBlock::placeGrownFlower(Level* level, const BlockPos& pos, int age)
 {
-    TypedBoxed<int> value(age);
-    level->setBlock(pos, defaultBlockState()->setBoxedValue(CHORUS_AGE, &value), Block::UPDATE_CLIENTS, false);
+    level->setBlock(pos, defaultBlockState()->setValue(CHORUS_AGE, age), Block::UPDATE_CLIENTS, false);
     level->levelEvent(LevelEvent::SOUND_CHORUS_GROW, pos, 0);
 }
 
 void ChorusFlowerBlock::placeDeadFlower(Level* level, const BlockPos& pos)
 {
-    TypedBoxed<int> value(5);
-    level->setBlock(pos, defaultBlockState()->setBoxedValue(CHORUS_AGE, &value), Block::UPDATE_CLIENTS, false);
+    level->setBlock(pos, defaultBlockState()->setValue(CHORUS_AGE, 5), Block::UPDATE_CLIENTS, false);
     level->levelEvent(LevelEvent::SOUND_CHORUS_DEATH, pos, 0);
 }
 
 void ChorusFlowerBlock::tick(Level* level, const BlockPos& pos, const BlockState* state, Random* random)
 {
-    if (!canSurvive(level, pos, state))
+    if (!canSurvive(level, pos, NULL))
     {
         level->destroyBlock(pos, true);
         return;
     }
 
     BlockPos above = pos.above();
-    if (!level->isEmptyBlock(above) || above.y > 255)
+    if (!level->isEmptyBlock(above) || above.y >= 256)
     {
         return;
     }
@@ -126,8 +123,8 @@ void ChorusFlowerBlock::tick(Level* level, const BlockPos& pos, const BlockState
         if (belowBlock == Blocks::chorus_plant)
         {
             int stemHeight = 1;
-            Block* support = Blocks::chorus_plant;
-            while (stemHeight < 5)
+            Block* support = NULL;
+            for (int i = 0; i < 4; ++i)
             {
                 support = level->getBlock(pos.below(stemHeight + 1));
                 if (support != Blocks::chorus_plant)
@@ -136,9 +133,17 @@ void ChorusFlowerBlock::tick(Level* level, const BlockPos& pos, const BlockState
                 }
                 ++stemHeight;
             }
+            if (support == Blocks::end_stone)
+            {
+                rooted = true;
+            }
 
-            rooted = support == Blocks::end_stone;
-            if (stemHeight > 1 && random->nextInt(rooted ? 5 : 4) < stemHeight)
+            int limit = 4;
+            if (rooted)
+            {
+                ++limit;
+            }
+            if (stemHeight > 1 && random->nextInt(limit) < stemHeight)
             {
                 growUp = false;
             }
@@ -156,28 +161,35 @@ void ChorusFlowerBlock::tick(Level* level, const BlockPos& pos, const BlockState
         return;
     }
 
-    if (age < 4)
+    if (age <= 4)
     {
-        int branches = random->nextInt(4) + (rooted ? 1 : 0);
-        bool grew = false;
-        for (int i = 0; i < branches; ++i)
+        if (age < 4)
         {
-            const Direction* direction = Direction::Plane::HORIZONTAL->getRandomDirection(*random);
-            BlockPos branch = pos.relative(direction);
-            if (level->isEmptyBlock(branch) && level->isEmptyBlock(branch.below())
-                && allNeighborsEmpty(level, branch, direction->getOpposite()))
+            int branches = random->nextInt(4);
+            if (rooted)
             {
-                placeGrownFlower(level, branch, age + 1);
-                grew = true;
+                ++branches;
+            }
+            bool grew = false;
+            for (int i = 0; i < branches; ++i)
+            {
+                const Direction* direction = Direction::Plane::HORIZONTAL->getRandomDirection(*random);
+                BlockPos branch = pos.relative(direction);
+                if (level->isEmptyBlock(branch) && level->isEmptyBlock(branch.below())
+                    && allNeighborsEmpty(level, branch, direction->getOpposite()))
+                {
+                    placeGrownFlower(level, branch, age + 1);
+                    grew = true;
+                }
+            }
+            if (grew)
+            {
+                level->setBlock(pos, Blocks::chorus_plant->defaultBlockState(), Block::UPDATE_CLIENTS, false);
+                return;
             }
         }
-        if (grew)
-        {
-            level->setBlock(pos, Blocks::chorus_plant->defaultBlockState(), Block::UPDATE_CLIENTS, false);
-            return;
-        }
+        placeDeadFlower(level, pos);
     }
-    placeDeadFlower(level, pos);
 }
 
 bool ChorusFlowerBlock::isCubeShaped(const BlockState*) { return false; }
@@ -210,10 +222,11 @@ bool ChorusFlowerBlock::canSurvive(Level* level, const BlockPos& pos, const Bloc
     }
 
     arrayWithLength<const Direction*> directions = Direction::Plane::HORIZONTAL->iterator();
+    const Direction** end = directions.data + directions.length;
     int neighbors = 0;
-    for (unsigned int i = 0; i < directions.length; ++i)
+    for (const Direction** it = directions.data; it != end; ++it)
     {
-        const BlockState* neighbor = level->getBlockState(pos.relative(directions.data[i]));
+        const BlockState* neighbor = level->getBlockState(pos.relative(*it));
         if (neighbor->getBlock() == Blocks::chorus_plant)
         {
             ++neighbors;
@@ -238,8 +251,7 @@ int ChorusFlowerBlock::getRenderLayer() { return 0; }
 
 const BlockState* ChorusFlowerBlock::getBlockState(int data)
 {
-    TypedBoxed<int> age(data);
-    return defaultBlockState()->setBoxedValue(CHORUS_AGE, &age);
+    return defaultBlockState()->setValue(CHORUS_AGE, data);
 }
 
 int ChorusFlowerBlock::convertBlockStateToLegacyData(const BlockState* state)
@@ -255,25 +267,29 @@ void ChorusFlowerBlock::growTreeRecursive(Level* level, const BlockPos& pos, Ran
     {
         ++height;
     }
-    for (int i = 1; i <= height; ++i)
+    for (int i = 0; i < height; ++i)
     {
-        BlockPos branch = pos.above(i);
+        BlockPos branch = pos.above(i + 1);
         if (!allNeighborsEmpty(level, branch, NULL))
         {
             return;
         }
         level->setBlock(branch, Blocks::chorus_plant->defaultBlockState(), Block::UPDATE_CLIENTS, false);
     }
+    bool grew = false;
     if (depth < 4)
     {
-        int branches = random->nextInt(4) + (depth == 0 ? 1 : 0);
-        bool grew = false;
+        int branches = random->nextInt(4);
+        if (depth == 0)
+        {
+            ++branches;
+        }
         for (int i = 0; i < branches; ++i)
         {
             const Direction* direction = Direction::Plane::HORIZONTAL->getRandomDirection(*random);
             BlockPos branch = pos.above(height).relative(direction);
-            if (Mth::abs(branch.x - origin.x) < radius
-                && Mth::abs(branch.z - origin.z) < radius
+            if (abs(branch.x - origin.x) < radius
+                && abs(branch.z - origin.z) < radius
                 && level->isEmptyBlock(branch) && level->isEmptyBlock(branch.below())
                 && allNeighborsEmpty(level, branch, direction->getOpposite()))
             {
@@ -287,8 +303,7 @@ void ChorusFlowerBlock::growTreeRecursive(Level* level, const BlockPos& pos, Ran
             return;
         }
     }
-    TypedBoxed<int> dead(5);
-    level->setBlock(pos.above(height), Blocks::chorus_flower->defaultBlockState()->setBoxedValue(CHORUS_AGE, &dead), Block::UPDATE_CLIENTS, false);
+    level->setBlock(pos.above(height), Blocks::chorus_flower->defaultBlockState()->setValue(CHORUS_AGE, 5), Block::UPDATE_CLIENTS, false);
 }
 
 void ChorusFlowerBlock::generatePlant(Level* level, BlockPos pos, Random* random, int radius)
@@ -324,7 +339,7 @@ not_null_ptr<ItemInstance> ChorusFlowerBlock::getSilkTouchItemInstance(const Blo
 
 BlockStateDefinition* ChorusFlowerBlock::createBlockStateDefinition()
 {
-    const Property* properties[] = { CHORUS_AGE };
+    static const Property* properties[] = { CHORUS_AGE };
     return new BlockStateDefinition(this, properties, 1);
 }
 

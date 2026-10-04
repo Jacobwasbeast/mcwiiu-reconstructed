@@ -4,6 +4,7 @@
 #include "game/world/LevelSource.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
+#include "game/world/block/EnumProperty.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/block/MaterialColor.hpp"
 
@@ -30,12 +31,12 @@ void StainedHardenedClayBlock::staticCtor()
 }
 
 StainedHardenedClayBlock::StainedHardenedClayBlock()
-    : ColoredBlock(Material::CLAY)
+    : ColoredBlock(Material::STONE)
 {
 }
 
 const MaterialColor* StainedHardenedClayBlock::getMapColor(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
 {
-    return gStainedHardenedClayColors[getSpawnResourcesAuxValue(state)];
+    return gStainedHardenedClayColors[state->getValue(ColoredBlock::COLOR)->getBlockData()];
 }
 

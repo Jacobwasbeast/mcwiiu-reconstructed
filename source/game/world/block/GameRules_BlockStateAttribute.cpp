@@ -8,15 +8,11 @@
 #include "game/core/StringFormat.hpp"
 #include "game/core/StringUtils.hpp"
 
+#include "game/core/StringConversion.hpp"
+
 #include <string>
 #include <vector>
 
-
-template<typename T>
-std::wstring _toString(T value);
-
-template<typename T>
-T fromString(const std::wstring& text);
 
 GameRules_BlockStateAttribute::GameRules_BlockStateAttribute(const BlockState** value)
     : mValue(value)
@@ -37,18 +33,7 @@ void GameRules_BlockStateAttribute::setValue(const std::wstring& value)
         return;
     }
 
-    if (value.find(L':') == std::wstring::npos)
-    {
-        Block* block = Block::byString(value);
-
-        if (block == NULL)
-        {
-            block = Block::byId(fromString<int>(value));
-        }
-
-        *mValue = block->defaultBlockState();
-    }
-    else
+    if (value.find(L':') != std::wstring::npos)
     {
         std::vector<std::wstring> parts = stringSplit(value, L':');
 
@@ -56,10 +41,21 @@ void GameRules_BlockStateAttribute::setValue(const std::wstring& value)
 
         if (block == NULL)
         {
-            block = Block::byId(fromString<int>(parts[0]));
+            block = Block::byId(_fromString<int>(parts[0]));
         }
 
-        *mValue = block->getBlockState(fromString<int>(parts[1]));
+        *mValue = block->getBlockState(_fromString<int>(parts[1]));
+    }
+    else
+    {
+        Block* block = Block::byString(value);
+
+        if (block == NULL)
+        {
+            block = Block::byId(_fromString<int>(value));
+        }
+
+        *mValue = block->defaultBlockState();
     }
 }
 
@@ -78,6 +74,8 @@ void GameRules_BlockStateAttribute::writeAsXml(ConsoleGameRules::EGameRuleAttr a
     {
         Block* block = (*mValue)->getBlock();
 
-        xml.append(formatstr(" %ls=\"%i:%i\"", gRuleAttributeNames[attribute], Block::getId(block), block->getSpawnResourcesAuxValue(*mValue)));
+        int id = Block::getId(block);
+        int aux = block->getSpawnResourcesAuxValue(*mValue);
+        xml.append(formatstr(" %ls=\"%i:%i\"", gRuleAttributeNames[attribute], id, aux));
     }
 }

@@ -11,6 +11,7 @@
 #include "game/world/block/BlockStateDefinition.hpp"
 #include "game/world/block/DirectionalBlock.hpp"
 #include "game/world/block/DirectionProperty.hpp"
+#include "game/world/block/HorizontalDirectionalBlock.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
@@ -30,7 +31,7 @@ LadderBlock::LadderBlock()
 
 void LadderBlock::blockStaticCtor()
 {
-    FACING = DirectionalBlock::FACING;
+    FACING = HorizontalDirectionalBlock::FACING_PROPERTY;
 }
 
 const AABB* LadderBlock::getShape(const BlockState* state, LevelSource*, const BlockPos&)
@@ -53,14 +54,16 @@ bool LadderBlock::canAttachTo(Level* level, const BlockPos& pos, const Direction
     const BlockState* state = level->getBlockState(pos);
     Block* block = state->getBlock();
     return !Block::isExceptionBlockForAttachingPlusPiston(block) &&
-           block->isSolidFace(level, pos, direction) &&
-           !block->canContainLiquid(state);
+           state->getBlockFaceShape(level, pos, direction) == BLOCK_FACE_SOLID &&
+           !state->isSignalSource();
 }
 
 bool LadderBlock::mayPlace(Level* level, const BlockPos& pos, const Direction* direction)
 {
-    return canAttachTo(level, pos.west(), direction) || canAttachTo(level, pos.east(), direction) ||
-           canAttachTo(level, pos.north(), direction) || canAttachTo(level, pos.south(), direction);
+    if (canAttachTo(level, pos.west(), direction) || canAttachTo(level, pos.east(), direction) ||
+        canAttachTo(level, pos.north(), direction) || canAttachTo(level, pos.south(), direction))
+        return true;
+    return false;
 }
 
 bool LadderBlock::canContainLiquid(const BlockState*) const { return true; }
@@ -70,8 +73,10 @@ const BlockState* LadderBlock::getStateForPlacement(Level* level, const BlockPos
 {
     if (direction->getAxis()->isHorizontal() && canAttachTo(level, pos.relative(direction->getOpposite()), direction))
     {
+        const BlockState* defaultState = defaultBlockState();
+        DirectionProperty* property = FACING;
         TypedBoxed<const Direction*> facing(direction);
-        return defaultBlockState()->setBoxedValue(FACING, &facing);
+        return defaultState->setBoxedValue(property, &facing);
     }
 
     arrayWithLength<const Direction*> directions = Direction::Plane::HORIZONTAL->iterator();
@@ -80,8 +85,10 @@ const BlockState* LadderBlock::getStateForPlacement(Level* level, const BlockPos
         const Direction* candidate = directions.data[i];
         if (canAttachTo(level, pos.relative(candidate->getOpposite()), candidate))
         {
+            const BlockState* defaultState = defaultBlockState();
+            DirectionProperty* property = FACING;
             TypedBoxed<const Direction*> facing(candidate);
-            return defaultBlockState()->setBoxedValue(FACING, &facing);
+            return defaultState->setBoxedValue(property, &facing);
         }
     }
     return defaultBlockState();
@@ -104,8 +111,10 @@ const BlockState* LadderBlock::getBlockState(int data)
 {
     const Direction* direction = Direction::from3DDataValue(data);
     if (direction->getAxis() == Direction::Axis::Y) direction = Direction::DOWN;
+    const BlockState* defaultState = defaultBlockState();
+    DirectionProperty* property = FACING;
     TypedBoxed<const Direction*> facing(direction);
-    return defaultBlockState()->setBoxedValue(FACING, &facing);
+    return defaultState->setBoxedValue(property, &facing);
 }
 
 int LadderBlock::convertBlockStateToLegacyData(const BlockState* state)
@@ -115,8 +124,9 @@ int LadderBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 const BlockState* LadderBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    TypedBoxed<const Direction*> facing(rotation->rotate(state->getValue(FACING)));
-    return state->setBoxedValue(FACING, &facing);
+    DirectionProperty* property = FACING;
+    TypedBoxed<const Direction*> facing(rotation->rotate(state->getValue(property)));
+    return state->setBoxedValue(property, &facing);
 }
 
 const BlockState* LadderBlock::mirror(const BlockState* state, Mirror* mirror)
@@ -126,7 +136,7 @@ const BlockState* LadderBlock::mirror(const BlockState* state, Mirror* mirror)
 
 BlockStateDefinition* LadderBlock::createBlockStateDefinition()
 {
-    const Property* properties[] = { FACING };
+    static const Property* properties[] = { FACING };
     return new BlockStateDefinition(this, properties, 1);
 }
 

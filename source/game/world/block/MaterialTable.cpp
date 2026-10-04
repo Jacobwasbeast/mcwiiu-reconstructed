@@ -90,10 +90,12 @@ void MaterialTable::loadMaterialData(unsigned char* materialData, unsigned int m
 
         eMinecraftEntityMaterial material = getMobMaterialFromName(mobName);
 
-        if (material != eMinecraftEntityMaterial_Invalid)
+        if (material == eMinecraftEntityMaterial_Invalid)
         {
-            mMaterialShaders[material] = getMaterialShadersFromDataName(materialName);
+            continue;
         }
+
+        mMaterialShaders[material] = getMaterialShadersFromDataName(materialName);
     }
     byteStream.mBuffer.data = NULL;
     byteStream.mBuffer.length = 0;

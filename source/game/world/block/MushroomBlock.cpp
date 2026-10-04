@@ -75,13 +75,14 @@ void MushroomBlock::tick(Level* level, const BlockPos& pos, const BlockState* st
     if (random->nextInt(25) != 0)
         return;
 
+    BlockPos currentPos = pos;
     int count = 5;
-    Iterator<MutableBlockPos*>* positions = BlockPos::mutablesBetween(pos.offset(-4, -1, -4),
-                                                                       pos.offset(4, 1, 4));
+    Iterator<MutableBlockPos*>* positions = BlockPos::mutablesBetween(currentPos.offset(-4, -1, -4),
+                                                                       currentPos.offset(4, 1, 4));
     while (positions->hasNext())
     {
         MutableBlockPos* current = positions->next();
-        if (level->getBlockState(*current)->getBlock() == this)
+        if (level->getBlockState(BlockPos(*current))->getBlock() == this)
         {
             --count;
             if (count < 1)
@@ -93,21 +94,25 @@ void MushroomBlock::tick(Level* level, const BlockPos& pos, const BlockState* st
     }
     delete positions;
 
-    BlockPos currentPos = pos;
-    for (int attempt = 0; attempt < 5; ++attempt)
+    BlockPos target = currentPos;
+    for (int attempt = 0; attempt < 4; ++attempt)
     {
         int dx = random->nextInt(3) - 1;
         int dy1 = random->nextInt(2);
         int dy2 = random->nextInt(2);
         int dz = random->nextInt(3) - 1;
-        BlockPos target = currentPos.offset(dx, dy1 - dy2, dz);
+        target = currentPos.offset(dx, dy1 - dy2, dz);
         if (level->isEmptyBlock(target) && canSurvive(level, target, defaultBlockState()))
-        {
             currentPos = target;
-            if (attempt == 4)
-                level->setBlock(currentPos, defaultBlockState(), Block::UPDATE_CLIENTS, false);
-        }
     }
+
+    int dx = random->nextInt(3) - 1;
+    int dy1 = random->nextInt(2);
+    int dy2 = random->nextInt(2);
+    int dz = random->nextInt(3) - 1;
+    target = currentPos.offset(dx, dy1 - dy2, dz);
+    if (level->isEmptyBlock(target) && canSurvive(level, target, defaultBlockState()))
+        level->setBlock(target, defaultBlockState(), Block::UPDATE_CLIENTS, false);
 }
 
 bool MushroomBlock::mayPlace(Level* level, const BlockPos& pos)
@@ -117,25 +122,23 @@ bool MushroomBlock::mayPlace(Level* level, const BlockPos& pos)
 
 bool MushroomBlock::mayPlaceOn(Level*, const BlockPos&, const BlockState* state)
 {
-    return state->getBlock()->isSolidBlockingCube(state);
+    return state->isSolid();
 }
 
 bool MushroomBlock::canSurvive(Level* level, const BlockPos& pos, const BlockState* state)
 {
-    if (pos.y >= 255)
+    if (static_cast<unsigned int>(pos.y) >= 256)
         return false;
 
-    const BlockPos below = pos.below();
-    const BlockState* belowState = level->getBlockState(below);
-    Block* belowBlock = belowState->getBlock();
-    if (belowBlock == Blocks::mycelium)
+    const BlockState* belowState = level->getBlockState(pos.below());
+    if (belowState->getBlock() == Blocks::mycelium)
         return true;
 
-    if (belowBlock == Blocks::dirt && belowState->getValue(DirtBlock::VARIANT) == DirtBlock::Variant::PODZOL)
+    if (belowState->getBlock() == Blocks::dirt && belowState->getValue(DirtBlock::VARIANT) == DirtBlock::Variant::PODZOL)
         return true;
 
     return level->getDaytimeRawBrightness(pos) < 13
-        && mayPlaceOn(level, below, belowState);
+        && mayPlaceOn(level, pos.below(), belowState);
 }
 
 unsigned int MushroomBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)

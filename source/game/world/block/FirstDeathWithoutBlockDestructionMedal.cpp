@@ -2,7 +2,7 @@
 
 #include "game/world/generation/PlayerStats.hpp"
 
-double FirstDeathWithoutBlockDestructionMedal::GetScore(PlayerStats* playerStats) const
+float FirstDeathWithoutBlockDestructionMedal::GetScore(PlayerStats* playerStats) const
 {
     return GameMedal::totalOfAllRounds(playerStats, lostFirstWithoutDestroyingBlocks);
 }

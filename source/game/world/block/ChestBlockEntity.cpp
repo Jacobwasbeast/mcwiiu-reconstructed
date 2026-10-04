@@ -111,11 +111,7 @@ void ChestBlockEntity::setChanged()
 
 bool ChestBlockEntity::stillValid(boost::shared_ptr<Player> player)
 {
-    if (mNeighbourRemoved)
-    {
-        return false;
-    }
-    return RandomizableLockableContainerBlockEntity::stillValid(player);
+    return !mNeighbourRemoved && RandomizableLockableContainerBlockEntity::stillValid(player);
 }
 
 void ChestBlockEntity::startOpen(boost::shared_ptr<Player> player)
@@ -481,6 +477,7 @@ NonNullList<not_null_ptr<ItemInstance> > ChestBlockEntity::getItems()
 
 void ChestBlockEntity::setItems(NonNullList<not_null_ptr<ItemInstance> > items)
 {
+    delete[] mItems.items;
     mItems = items;
 }
 

@@ -32,11 +32,12 @@ CoralFanBlockItem::~CoralFanBlockItem()
 
 int CoralFanBlockItem::getDescriptionId(not_null_ptr<ItemInstance> itemInstance)
 {
+    int auxValue = itemInstance->getAuxValue();
     if (mIsDead)
     {
-        return Blocks::coral_fan_dead->getDescriptionId(-1);
+        return Blocks::coral_fan_dead->getDescriptionId(auxValue);
     }
-    return Blocks::coral_fan->getDescriptionId(itemInstance->getAuxValue());
+    return Blocks::coral_fan->getDescriptionId(auxValue);
 }
 
 int CoralFanBlockItem::getUseDescriptionId(not_null_ptr<ItemInstance>)
@@ -66,12 +67,13 @@ InteractionResult::EInteractionResult CoralFanBlockItem::useOn(boost::shared_ptr
         return InteractionResult::eInteractionResult_Fail;
     }
 
+    bool isUp = direction == Direction::UP;
     bool underWater = level->isUnderWater(placePos, 0x108, 0);
     const BlockState* state;
-    if (direction == Direction::UP)
+    if (isUp)
     {
         state = Blocks::coral_fan->defaultBlockState();
-        if (!state->getBlock()->mayPlaceOn(level, pos, state))
+        if (direction != Direction::UP || !state->getBlock()->mayPlaceOn(level, pos, state))
             return InteractionResult::eInteractionResult_Fail;
 
         Vec3* facing = (pos - player->getPos(0.0f))->normalize();

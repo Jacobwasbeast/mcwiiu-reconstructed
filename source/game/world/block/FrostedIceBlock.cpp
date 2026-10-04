@@ -21,8 +21,13 @@ FrostedIceBlock::FrostedIceBlock()
 {
     Block::DerivedInit();
     const BlockState* state = mStateDefinition->any();
-    TypedBoxed<int> age(0);
-    registerDefaultState(state->setBoxedValue(AGE, &age));
+    const BlockState* defaultState;
+    {
+        AbstractProperty<int>* property = AGE;
+        TypedBoxed<int> age(0);
+        defaultState = state->setBoxedValue(property, &age);
+    }
+    registerDefaultState(defaultState);
     mIcon1 = NULL;
     mIcon2 = NULL;
     mIcon3 = NULL;
@@ -39,8 +44,8 @@ int FrostedIceBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 const BlockState* FrostedIceBlock::getBlockState(int data)
 {
-    TypedBoxed<int> age(Mth::clamp(data, 0, 3));
-    return defaultBlockState()->setBoxedValue(AGE, &age);
+    const BlockState* state = defaultBlockState();
+    return state->setValue(AGE, Mth::clamp(data, 0, 3));
 }
 
 int FrostedIceBlock::countNeighbours(Level* level, const BlockPos& pos)
@@ -53,7 +58,7 @@ int FrostedIceBlock::countNeighbours(Level* level, const BlockPos& pos)
         if (state->getBlock() == this)
         {
             ++count;
-            if (count > 3)
+            if (count >= 4)
             {
                 return count;
             }
@@ -68,8 +73,7 @@ void FrostedIceBlock::slightlyMelt(Level* level, const BlockPos& pos, const Bloc
     int age = state->getValue(AGE);
     if (age < 3)
     {
-        TypedBoxed<int> nextAge(age + 1);
-        level->setBlock(pos, state->setBoxedValue(AGE, &nextAge), Block::UPDATE_CLIENTS, false);
+        level->setBlock(pos, state->setValue(AGE, age + 1), Block::UPDATE_CLIENTS, false);
         level->addToTickNextTick(pos, this, Mth::nextInt(random, 20, 40));
         return;
     }
@@ -94,7 +98,8 @@ void FrostedIceBlock::tick(Level* level, const BlockPos& pos, const BlockState* 
 {
     if (random->nextInt(3) == 0 || countNeighbours(level, pos) < 4)
     {
-        if (11 - state->getLightBlock() < level->getRawBrightness(pos))
+        int age = state->getValue(AGE);
+        if (level->getRawBrightness(pos) > 11 - age - state->getLightBlock())
         {
             slightlyMelt(level, pos, state, random, true);
             return;
@@ -119,17 +124,23 @@ void FrostedIceBlock::neighborChanged(const BlockState*, Level* level, const Blo
 
 BlockStateDefinition* FrostedIceBlock::createBlockStateDefinition()
 {
-    const Property* properties[] = { AGE };
+    static const Property* properties[] = { AGE };
     return new BlockStateDefinition(this, properties, 1);
 }
 
 TextureAtlasSprite* FrostedIceBlock::getTexture(const Direction*, const BlockState* state)
 {
-    int age = state->getValue(AGE);
-    if (age == 0) return mIcon;
-    if (age == 1) return mIcon1;
-    if (age < 3) return mIcon2;
-    if (age == 3) return mIcon3;
+    switch (state->getValue(AGE))
+    {
+    case 0:
+        return mIcon;
+    case 1:
+        return mIcon1;
+    case 2:
+        return mIcon2;
+    case 3:
+        return mIcon3;
+    }
     return mIcon;
 }
 

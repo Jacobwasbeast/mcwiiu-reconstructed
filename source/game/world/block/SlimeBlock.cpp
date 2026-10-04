@@ -28,7 +28,7 @@ int SlimeBlock::getRenderLayer()
 
 void SlimeBlock::fallOn(Level* level, const BlockPos& pos, boost::shared_ptr<Entity> entity, float fallDistance)
 {
-    if (entity->mOnGround)
+    if (entity->isSneaking())
     {
         Block::fallOn(level, pos, entity, fallDistance);
     }
@@ -66,7 +66,7 @@ void SlimeBlock::updateEntityAfterFallOn(Level* level, boost::shared_ptr<Entity>
 
 void SlimeBlock::stepOn(Level* level, const BlockPos& pos, boost::shared_ptr<Entity> entity)
 {
-    if (std::abs(entity->mYd) < 0.1)
+    if (std::abs(entity->mYd) < 0.1 && !entity->isSneaking())
     {
         double speed = std::abs(entity->mYd) * 0.2 + 0.4;
         entity->mXd *= speed;

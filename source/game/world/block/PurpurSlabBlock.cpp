@@ -38,10 +38,15 @@ std::wstring PurpurSlabBlock::Variant::getSerializedName() const
 
 void PurpurSlabBlock::blockStaticCtor()
 {
-    boost::unordered_set<Variant*> values;
-    values.insert(gPurpurSlabVariants[0]);
-    VARIANT = EnumProperty<Variant*>::create(
-        L"variant", typeid(Variant*), values, Predicates<Variant*>::alwaysTrue);
+    std::wstring name(L"variant");
+    EnumProperty<Variant*>* variant;
+    Predicate<Variant*>* filter = Predicates<Variant*>::alwaysTrue;
+    {
+        boost::unordered_set<Variant*> values;
+        values.insert(gPurpurSlabVariants[0]);
+        variant = EnumProperty<Variant*>::create(name, typeid(Variant), values, filter);
+    }
+    VARIANT = variant;
 }
 
 PurpurSlabBlock::PurpurSlabBlock()
@@ -55,11 +60,9 @@ void PurpurSlabBlock::DerivedInit()
     const BlockState* state = mStateDefinition->any();
     if (!isFullSize())
     {
-        TypedBoxed<Half*> half(BOTTOM);
-        state = state->setBoxedValue(TYPE, &half);
+        state = state->setValue(TYPE, BOTTOM);
     }
-    TypedBoxed<Variant*> variant(Variant::DEFAULT);
-    registerDefaultState(state->setBoxedValue(VARIANT, &variant));
+    registerDefaultState(state->setValue(VARIANT, Variant::DEFAULT));
 }
 
 Item* PurpurSlabBlock::getResource(const BlockState*, Random*, int)
@@ -74,12 +77,10 @@ not_null_ptr<ItemInstance> PurpurSlabBlock::getCloneItemInstance(Level*, const B
 
 const BlockState* PurpurSlabBlock::getBlockState(int data)
 {
-    TypedBoxed<Variant*> variant(Variant::DEFAULT);
-    const BlockState* state = defaultBlockState()->setBoxedValue(VARIANT, &variant);
+    const BlockState* state = defaultBlockState()->setValue(VARIANT, Variant::DEFAULT);
     if (!isFullSize())
     {
-        TypedBoxed<Half*> half((data & 8) == 0 ? BOTTOM : TOP);
-        state = state->setBoxedValue(TYPE, &half);
+        state = state->setValue(TYPE, (data & 8) == 0 ? BOTTOM : TOP);
     }
     return state;
 }

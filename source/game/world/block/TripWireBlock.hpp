@@ -8,14 +8,14 @@ template <class T> class AbstractProperty;
 class TripWireBlock : public Block
 {
 public:
+    static AbstractProperty<bool>* POWERED;
+    static AbstractProperty<bool>* SUSPENDED;
+    static AbstractProperty<bool>* ATTACHED;
+    static AbstractProperty<bool>* DISARMED;
     static AbstractProperty<bool>* NORTH;
     static AbstractProperty<bool>* EAST;
     static AbstractProperty<bool>* SOUTH;
     static AbstractProperty<bool>* WEST;
-    static AbstractProperty<bool>* POWERED;
-    static AbstractProperty<bool>* ATTACHED;
-    static AbstractProperty<bool>* DISARMED;
-    static AbstractProperty<bool>* SUSPENDED;
 
     TripWireBlock();
 

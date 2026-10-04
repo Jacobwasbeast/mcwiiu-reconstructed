@@ -23,13 +23,17 @@ class LiquidBlock : public Block
 {
 public:
     static AbstractProperty<int>* LEVEL;
+    static const std::wstring TEXTURE_LAVA_STILL;
+    static const std::wstring TEXTURE_WATER_STILL;
+    static const std::wstring TEXTURE_WATER_FLOW;
+    static const std::wstring TEXTURE_LAVA_FLOW;
 
     LiquidBlock(Material* material);
     virtual ~LiquidBlock() {}
 
     virtual bool isLiquidBlock();
-    static double getHeightFromData(int data);
-    static short getLiquidElement(LevelSource* levelSource, const BlockPos& pos);
+    static float getHeightFromData(int data);
+    static unsigned short getLiquidElement(LevelSource* levelSource, const BlockPos& pos);
     virtual void DerivedInit();
     virtual const AABB* getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
     virtual const AABB* getClipAABB(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
@@ -65,12 +69,12 @@ public:
     virtual const BlockState* getBlockState(int data);
     virtual int convertBlockStateToLegacyData(const BlockState* state);
     virtual BlockStateDefinition* createBlockStateDefinition();
-    static unsigned int getDynamicLiquidElementId(unsigned short elementId);
-    static unsigned int getStaticLiquidElementId(unsigned short elementId);
+    static unsigned short getDynamicLiquidElementId(unsigned short elementId);
+    static unsigned short getStaticLiquidElementId(unsigned short elementId);
     virtual void registerIcons(IconRegister* iconRegister);
     virtual TextureAtlasSprite* getTexture(const Direction* direction, const BlockState* state);
-    static double getBlockLiquidHeight(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
-    static double getLiquidHeight(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
+    static float getBlockLiquidHeight(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
+    static float getLiquidHeight(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
     virtual EBlockFaceShape getBlockFaceShape(LevelSource* levelSource, const BlockState* state, const BlockPos& pos, const Direction* direction);
     static void setLiquidElement(Level* level, const BlockPos& pos, unsigned short elementId, bool extraLayer, int flags);
     void trySpreadFire(Level* level, const BlockPos& pos, Random* random);

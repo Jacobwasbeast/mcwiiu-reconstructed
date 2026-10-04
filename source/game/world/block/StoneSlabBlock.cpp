@@ -35,8 +35,10 @@ static AbstractProperty<bool>* gStoneSlabSeamlessProperty =
     static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"seamless"));
 
 StoneSlabBlock::Variant::Variant(int data, const MaterialColor* materialColor, const std::wstring& name, int translationKey)
-    : mData(data), mName(name), mTranslationKey(translationKey), mColor(materialColor)
+    : mData(data), mColor(materialColor)
 {
+    mName = name;
+    mTranslationKey = translationKey;
 }
 
 int StoneSlabBlock::Variant::getData() { return mData; }
@@ -75,13 +77,14 @@ void StoneSlabBlock::blockStaticCtor()
     gStoneSlabVariants[6] = Variant::NETHERBRICK;
     gStoneSlabVariants[7] = Variant::QUARTZ;
 
+    std::wstring variantName(L"variant");
     boost::unordered_set<Variant*> values;
     for (int i = 0; i < 8; ++i)
     {
         values.insert(gStoneSlabVariants[i]);
     }
     VARIANT = EnumProperty<Variant*>::create(
-        L"variant", typeid(Variant*), values, Predicates<Variant*>::alwaysTrue);
+        variantName, typeid(Variant*), values, Predicates<Variant*>::alwaysTrue);
 }
 
 StoneSlabBlock::StoneSlabBlock()
@@ -95,16 +98,14 @@ void StoneSlabBlock::DerivedInit()
     const BlockState* state = mStateDefinition->any();
     if (isFullSize())
     {
-        TypedBoxed<bool> seamless(false);
-        state = state->setBoxedValue(gStoneSlabSeamlessProperty, &seamless);
+        state = state->setValue(gStoneSlabSeamlessProperty, false);
     }
     else
     {
-        TypedBoxed<Half*> half(BOTTOM);
-        state = state->setBoxedValue(TYPE, &half);
+        state = state->setValue(TYPE, BOTTOM);
     }
-    TypedBoxed<Variant*> variant(gStoneSlabVariants[0]);
-    registerDefaultState(state->setBoxedValue(VARIANT, &variant));
+    state = state->setValue(VARIANT, Variant::STONE);
+    registerDefaultState(state);
 }
 
 Item* StoneSlabBlock::getResource(const BlockState* state, Random*, int)
@@ -135,13 +136,24 @@ Boxed* StoneSlabBlock::getTypeForItem(not_null_ptr<ItemInstance> itemInstance)
 
 const BlockState* StoneSlabBlock::getBlockState(int data)
 {
-    TypedBoxed<Variant*> variant(Variant::byData(data & 7));
-    const BlockState* state = defaultBlockState()->setBoxedValue(VARIANT, &variant);
+    const BlockState* state = defaultBlockState();
+    state = state->setValue(VARIANT, Variant::byData(data & 7));
     if (!isFullSize())
     {
-        Half* halfValue = (data & 8) == 0 ? BOTTOM : TOP;
-        TypedBoxed<Half*> half(halfValue);
-        state = state->setBoxedValue(TYPE, &half);
+        if ((data & 8) == 0)
+        {
+            TypedBoxed<Half*> half(BOTTOM);
+            state = state->setBoxedValue(TYPE, &half);
+        }
+        else
+        {
+            TypedBoxed<Half*> half(TOP);
+            state = state->setBoxedValue(TYPE, &half);
+        }
+    }
+    else
+    {
+        state = state->setValue(gStoneSlabSeamlessProperty, (data & 8) != 0);
     }
     return state;
 }
@@ -165,12 +177,13 @@ int StoneSlabBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 BlockStateDefinition* StoneSlabBlock::createBlockStateDefinition()
 {
-    const Property* properties[2] = {
-        isFullSize() ? static_cast<const Property*>(gStoneSlabSeamlessProperty)
-                     : static_cast<const Property*>(HalfSlabBlock::TYPE),
-        VARIANT
-    };
-    return new BlockStateDefinition(this, properties, 2);
+    if (isFullSize())
+    {
+        static const Property* fullProperties[2] = { gStoneSlabSeamlessProperty, VARIANT };
+        return new BlockStateDefinition(this, fullProperties, 2);
+    }
+    static const Property* halfProperties[2] = { HalfSlabBlock::TYPE, VARIANT };
+    return new BlockStateDefinition(this, halfProperties, 2);
 }
 
 int StoneSlabBlock::getSpawnResourcesAuxValue(const BlockState* state)

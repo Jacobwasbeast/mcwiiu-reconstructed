@@ -2,7 +2,7 @@
 
 #include <set>
 
-double BlockTypesUsed::GetScore(PlayerStats* playerStats) const
+float BlockTypesUsed::GetScore(PlayerStats* playerStats) const
 {
     std::set<int> blockTypes;
 

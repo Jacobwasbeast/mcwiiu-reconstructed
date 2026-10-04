@@ -28,8 +28,7 @@ DropperBlock::DropperBlock()
 {
     Block::ClearDerivedInit();
     Block::DerivedInit();
-    TypedBoxed<bool> triggered(false);
-    registerDefaultState(mStateDefinition->any()->setBoxedValue(TRIGGERED, &triggered));
+    registerDefaultState(mStateDefinition->any()->setValue(TRIGGERED, false));
     mDropperBehavior = new DefaultDispenseItemBehavior();
 }
 
@@ -37,11 +36,11 @@ DropperBlock::~DropperBlock()
 {
 }
 
-boost::shared_ptr<BlockEntity> DropperBlock::newBlockEntity(Level*, int data)
+boost::shared_ptr<BlockEntity> DropperBlock::newBlockEntity(Level* level, int)
 {
     boost::shared_ptr<DropperBlockEntity> entity(new DropperBlockEntity());
-    entity->setData(data);
-    return boost::static_pointer_cast<BlockEntity>(entity);
+    entity->setLevel(level);
+    return entity;
 }
 
 DispenseItemBehavior* DropperBlock::getDispenseMethod(not_null_ptr<ItemInstance>)
@@ -76,18 +75,25 @@ void DropperBlock::dispenseFrom(Level* level, const BlockPos& pos)
         level, static_cast<double>(destinationPos.x), static_cast<double>(destinationPos.y),
         static_cast<double>(destinationPos.z));
 
+    not_null_ptr<ItemInstance> result = ItemInstance::EMPTY;
     if (!container)
     {
-        not_null_ptr<ItemInstance> result = getDispenseMethod(item)->dispense(&source, item);
-        dispenser->setItem(static_cast<unsigned int>(slot), result);
-        return;
+        result = mDropperBehavior->dispense(&source, item);
     }
-
-    not_null_ptr<ItemInstance> remainder = HopperBlockEntity::addItem(
-        NULL, container.get(), item->copy()->split(1), direction->getOpposite());
-    not_null_ptr<ItemInstance> result = item->copy();
-    if (remainder->isEmpty())
-        result->shrink(1);
+    else
+    {
+        result = HopperBlockEntity::addItem(dispenser.get(), container.get(),
+                                            item->copy()->split(1), direction->getOpposite());
+        if (result->isEmpty())
+        {
+            result = item->copy();
+            result->shrink(1);
+        }
+        else
+        {
+            result = item->copy();
+        }
+    }
     dispenser->setItem(static_cast<unsigned int>(slot), result);
 }
 

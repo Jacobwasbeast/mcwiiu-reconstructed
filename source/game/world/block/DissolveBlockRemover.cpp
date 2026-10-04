@@ -30,11 +30,11 @@ bool DissolveBlockRemover::RemoveBlocks(int areaIndex, int maxBlocks)
     Area& area = mAreas[areaIndex];
     int phase = -mRemovalCount;
 
-    for (int y = (int)area.mBounds->mMinY; y < (int)area.mBounds->mMaxY; ++y)
+    for (int y = (int)area.mBounds->mMinY; y < area.mBounds->mMaxY; ++y)
     {
-        for (int z = (int)area.mBounds->mMinZ; z < (int)area.mBounds->mMaxZ; ++z)
+        for (int z = (int)area.mBounds->mMinZ; z < area.mBounds->mMaxZ; ++z)
         {
-            for (int x = (int)area.mBounds->mMinX; x < (int)area.mBounds->mMaxX; ++x)
+            for (int x = (int)area.mBounds->mMinX; x < area.mBounds->mMaxX; ++x)
             {
                 if (phase >= 0 && phase % mPassCount == 0)
                 {

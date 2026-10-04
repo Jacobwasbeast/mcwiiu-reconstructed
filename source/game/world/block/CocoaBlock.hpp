@@ -45,6 +45,7 @@ public:
                                                    boost::shared_ptr<LivingEntity> placer);
     virtual void neighborChanged(const BlockState* state, Level* level, const BlockPos& pos,
                                  Block* block, const BlockPos& fromPos);
+    using Block::spawnResources;
     virtual void spawnResources(Level* level, const BlockPos& pos, const BlockState* state,
                                 float chance, int lootBonus);
     virtual not_null_ptr<ItemInstance> getCloneItemInstance(Level* level, const BlockPos& pos,

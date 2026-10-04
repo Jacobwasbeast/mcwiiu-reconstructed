@@ -2,9 +2,9 @@
 
 LocalBlockInteraction::LocalBlockInteraction(int typeId, const std::wstring& name)
     : InteractionObject()
-    , mTypeId(typeId)
     , mName()
 {
+    mTypeId = typeId;
     mName.assign(name);
 }
 

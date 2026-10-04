@@ -1,5 +1,7 @@
 #include "game/world/block/RemoveBlockGoal.hpp"
 
+#include <vector>
+
 #include "game/client/audio/SoundEvent.hpp"
 #include "game/client/render/ParticleType.hpp"
 #include "game/core/GameRules.hpp"
@@ -21,7 +23,6 @@ RemoveBlockGoal::RemoveBlockGoal(Block* block, PathfinderMob* mob,
                       maxStayDistance),
       mBlock(block),
       mMob(mob),
-      mTicks(0),
       mStartSound(startSound),
       mEndSound(endSound)
 {
@@ -70,13 +71,19 @@ BlockPos* RemoveBlockGoal::getPosWithBlock(BlockPos pos, Level* level)
         return new BlockPos(pos);
     }
 
-    BlockPos positions[6] = {pos.below(), pos.west(), pos.east(),
-                             pos.north(), pos.south(), pos.below().below()};
-    for (int i = 0; i < 6; ++i)
+    std::vector<BlockPos> positions;
+    positions.push_back(pos.below());
+    positions.push_back(pos.west());
+    positions.push_back(pos.east());
+    positions.push_back(pos.north());
+    positions.push_back(pos.south());
+    positions.push_back(pos.below().below());
+    for (std::vector<BlockPos>::iterator it = positions.begin(); it != positions.end(); ++it)
     {
-        if (level->getBlockState(positions[i])->getBlock() == mBlock)
+        BlockPos candidate = *it;
+        if (level->getBlockState(candidate)->getBlock() == mBlock)
         {
-            return new BlockPos(positions[i]);
+            return new BlockPos(candidate);
         }
     }
     return NULL;
@@ -89,77 +96,82 @@ void RemoveBlockGoal::tick()
     BlockPos origin(mMob);
     BlockPos* position = getPosWithBlock(origin, level);
     Random* random = mMob->getRandom();
-    if (!isReachedTarget() || position == NULL)
+    if (isReachedTarget())
+    {
+        if (position != NULL)
+        {
+            if (mTicks % 6 == 0 && mMob->mVerticalCollision)
+            {
+                mMob->mYd = 0.3f;
+            }
+            if (mTicks % 6 == 3)
+            {
+                mMob->mYd = -0.3f;
+            }
+
+            if (mTicks > 0)
+            {
+                if (!level->mIsClientSide)
+                {
+                    int params[2] = { Block::getId(mBlock), 0 };
+                    if (mStartSound != NULL && mTicks % 6 == 0)
+                    {
+                        mMob->playSound(mStartSound, 0.65f, 1.0f);
+                    }
+                    double xDist = (random->nextFloat() - 0.5) * 0.08;
+                    double yDist = (random->nextFloat() - 0.5) * 0.08;
+                    double zDist = (random->nextFloat() - 0.5) * 0.08;
+                    static_cast<ServerLevel*>(level)->sendParticles(PARTICLE_ICON_CRACK, position->x + 0.5, position->y + 0.7,
+                                                                    position->z + 0.5, 3, xDist, yDist, zDist, 0.15f,
+                                                                    arrayWithLength<int>(params, 2));
+                }
+
+                if (mTicks > 60)
+                {
+                    level->removeBlock(*position);
+                    if (!level->mIsClientSide)
+                    {
+                        if (mEndSound != NULL)
+                        {
+                            mMob->playSound(mEndSound, 0.65f, 1.0f);
+                        }
+                        for (int i = 0; i < 20; ++i)
+                        {
+                            double xDist = random->nextGaussian() * 0.02;
+                            double yDist = random->nextGaussian() * 0.02;
+                            double zDist = random->nextGaussian() * 0.02;
+                            static_cast<ServerLevel*>(level)->sendParticles(PARTICLE_EXPLODE, position->x + 0.5, position->y,
+                                                                            position->z + 0.5, 1, xDist, yDist,
+                                                                            zDist, 0.15f, arrayWithLength<int>());
+                        }
+                    }
+                }
+            }
+            ++mTicks;
+            delete position;
+        }
+    }
+    else if (position != NULL)
     {
         delete position;
-        return;
     }
-
-    if (mTicks % 6 == 0 && mMob->mVerticalCollision)
-    {
-        mMob->mYd = 0.3f;
-    }
-    if (mTicks % 6 == 3)
-    {
-        mMob->mYd = -0.3f;
-    }
-
-    if (mTicks > 0)
-    {
-        if (!level->mIsClientSide)
-        {
-            int params[2] = { Block::getId(mBlock), 0 };
-            if (mStartSound != NULL && mTicks % 6 == 0)
-            {
-                mMob->playSound(mStartSound, 0.65f, 1.0f);
-            }
-            double xDist = (random->nextFloat() - 0.5) * 0.08;
-            double yDist = (random->nextFloat() - 0.5) * 0.08;
-            double zDist = (random->nextFloat() - 0.5) * 0.08;
-            static_cast<ServerLevel*>(level)->sendParticles(PARTICLE_ICON_CRACK, position->x + 0.5, position->y + 0.7,
-                                                            position->z + 0.5, 3, xDist, yDist, zDist, 0.15f,
-                                                            arrayWithLength<int>(params, 2));
-        }
-
-        if (mTicks > 60)
-        {
-            level->removeBlock(*position);
-            if (!level->mIsClientSide)
-            {
-                if (mEndSound != NULL)
-                {
-                    mMob->playSound(mEndSound, 0.65f, 1.0f);
-                }
-                for (int i = 0; i < 20; ++i)
-                {
-                    double xDist = random->nextGaussian() * 0.02;
-                    double yDist = random->nextGaussian() * 0.02;
-                    double zDist = random->nextGaussian() * 0.02;
-                    static_cast<ServerLevel*>(level)->sendParticles(PARTICLE_EXPLODE, position->x + 0.5, position->y,
-                                                                    position->z + 0.5, 1, xDist, yDist,
-                                                                    zDist, 0.15f, arrayWithLength<int>());
-                }
-            }
-        }
-    }
-    ++mTicks;
-    delete position;
 }
 
 bool RemoveBlockGoal::isValidTarget(Level* level, const BlockPos& pos)
 {
-    return level->getBlockState(pos)->getBlock() == mBlock;
+    return level->getBlock(pos) == mBlock;
 }
 
 bool RemoveBlockGoal::isValidTargetArea(Level* level, const BlockPos& from,
                                         const BlockPos& to)
 {
     int blockId = Block::getId(mBlock);
-    for (int x = from.x; x < to.x; x += 4)
+    BlockPos end = to.offset(4, 4, 4);
+    for (int x = from.x; x < end.x; x += 4)
     {
-        for (int y = from.y; y < to.y; y += 4)
+        for (int y = from.y; y < end.y; y += 4)
         {
-            for (int z = from.z; z < to.z; z += 4)
+            for (int z = from.z; z < end.z; z += 4)
             {
                 if (level->sectionContainsBlockId(x, y, z, blockId))
                 {

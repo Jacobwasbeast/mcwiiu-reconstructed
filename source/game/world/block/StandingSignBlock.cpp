@@ -8,6 +8,7 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/BlockStateDefinition.hpp"
 #include "game/world/block/IntegerProperty.hpp"
+#include "game/world/block/Material.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
 AbstractProperty<int>* StandingSignBlock::ROTATION =
@@ -17,14 +18,13 @@ StandingSignBlock::StandingSignBlock()
     : SignBlock()
 {
     DerivedInit();
-    TypedBoxed<int> rotation(0);
-    registerDefaultState(mStateDefinition->any()->setBoxedValue(ROTATION, &rotation));
+    registerDefaultState(mStateDefinition->any()->setValue(ROTATION, 0));
 }
 
 void StandingSignBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos,
                                         Block* block, const BlockPos& fromPos)
 {
-    if (!level->getBlockState(pos.below())->isSolid())
+    if (!level->getBlockState(pos.below())->getBlock()->mMaterial->isSolid())
     {
         spawnResources(level, pos, state, 0);
         level->removeBlock(pos);
@@ -35,8 +35,7 @@ void StandingSignBlock::neighborChanged(const BlockState* state, Level* level, c
 
 const BlockState* StandingSignBlock::getBlockState(int data)
 {
-    TypedBoxed<int> rotation(data);
-    return defaultBlockState()->setBoxedValue(ROTATION, &rotation);
+    return defaultBlockState()->setValue(ROTATION, data);
 }
 
 int StandingSignBlock::convertBlockStateToLegacyData(const BlockState* state)
@@ -46,18 +45,16 @@ int StandingSignBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 const BlockState* StandingSignBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    TypedBoxed<int> value(rotation->rotate(state->getValue(ROTATION), 16));
-    return state->setBoxedValue(ROTATION, &value);
+    return state->setValue(ROTATION, rotation->rotate(state->getValue(ROTATION), 16));
 }
 
 const BlockState* StandingSignBlock::mirror(const BlockState* state, Mirror* mirror)
 {
-    TypedBoxed<int> value(mirror->mirror(state->getValue(ROTATION), 16));
-    return state->setBoxedValue(ROTATION, &value);
+    return state->setValue(ROTATION, mirror->mirror(state->getValue(ROTATION), 16));
 }
 
 BlockStateDefinition* StandingSignBlock::createBlockStateDefinition()
 {
-    const Property* properties[] = { ROTATION };
+    static const Property* properties[] = { ROTATION };
     return new BlockStateDefinition(this, properties, 1);
 }

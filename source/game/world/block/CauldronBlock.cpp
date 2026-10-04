@@ -42,6 +42,11 @@
 const std::wstring CauldronBlock::TEXTURE_INNER = L"cauldron_inner";
 const std::wstring CauldronBlock::TEXTURE_BOTTOM = L"cauldron_bottom";
 const std::wstring CauldronBlock::TEXTURE_WATER = L"cauldron_water";
+static const AABB* AABB_LEGS = AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.3125, 1.0);
+static const AABB* AABB_WALL_NORTH = AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 1.0, 0.125);
+static const AABB* AABB_WALL_SOUTH = AABB::newPermanent(0.0, 0.0, 0.875, 1.0, 1.0, 1.0);
+static const AABB* AABB_WALL_EAST = AABB::newPermanent(0.875, 0.0, 0.125, 1.0, 1.0, 0.875);
+static const AABB* AABB_WALL_WEST = AABB::newPermanent(0.0, 0.0, 0.125, 0.125, 1.0, 0.875);
 AbstractProperty<int>* CauldronBlock::LEVEL =
     static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"level", 0, 6));
 
@@ -61,16 +66,11 @@ boost::shared_ptr<BlockEntity> CauldronBlock::newBlockEntity(Level* level, int)
 
 void CauldronBlock::addCollisionAABBs(const BlockState*, Level*, const BlockPos& pos, const AABB* box, std::vector<AABB*>* boxes, boost::shared_ptr<Entity>, bool)
 {
-    static const AABB inner(0.0, 0.0, 0.0, 1.0, 0.3125, 1.0);
-    static const AABB north(0.0, 0.0, 0.0, 1.0, 1.0, 0.125);
-    static const AABB south(0.0, 0.0, 0.875, 1.0, 1.0, 1.0);
-    static const AABB west(0.0, 0.0, 0.125, 0.125, 1.0, 0.875);
-    static const AABB east(0.875, 0.0, 0.125, 1.0, 1.0, 0.875);
-    addCollisionAABB(pos, box, boxes, &inner);
-    addCollisionAABB(pos, box, boxes, &north);
-    addCollisionAABB(pos, box, boxes, &south);
-    addCollisionAABB(pos, box, boxes, &west);
-    addCollisionAABB(pos, box, boxes, &east);
+    addCollisionAABB(pos, box, boxes, AABB_LEGS);
+    addCollisionAABB(pos, box, boxes, AABB_WALL_WEST);
+    addCollisionAABB(pos, box, boxes, AABB_WALL_NORTH);
+    addCollisionAABB(pos, box, boxes, AABB_WALL_EAST);
+    addCollisionAABB(pos, box, boxes, AABB_WALL_SOUTH);
 }
 const AABB* CauldronBlock::getShape(const BlockState* state, LevelSource* levelSource,
                                     const BlockPos& pos)
@@ -91,11 +91,11 @@ bool CauldronBlock::isCubeShaped(const BlockState*)
 void CauldronBlock::entityInside(Level* level, const BlockPos& pos, const BlockState* state,
                                  const boost::shared_ptr<Entity>& entity)
 {
-    int waterLevel = convertBlockStateToLegacyData(state);
-    float waterHeight = ((float)(waterLevel * 2) + 5.0f) * 0.0625f;
+    int waterLevel = state->getValue(LEVEL);
+    float waterTop = ((float)(waterLevel * 2) + 5.0f) * 0.0625f + (float)pos.y;
     if (!level->mIsClientSide && entity->isOnFire() && 0 < waterLevel)
     {
-        if (entity->mBoundingBox->mMinY <= (double)(waterHeight + (float)pos.y))
+        if (entity->mBoundingBox->mMinY <= (double)waterTop)
         {
             entity->clearFire();
             setWaterLevel(level, pos, state, waterLevel - 1);
@@ -657,11 +657,9 @@ void CauldronBlock::registerIcons(IconRegister* icons)
 }
 TextureAtlasSprite* CauldronBlock::getTexture(const std::wstring& name)
 {
-    CauldronBlock* cauldron = dynamic_cast<CauldronBlock*>(Blocks::cauldron);
-    if (cauldron == NULL) return NULL;
-    if (name == TEXTURE_INNER) return cauldron->mInnerIcon;
-    if (name == TEXTURE_BOTTOM) return cauldron->mBottomIcon;
-    if (name == TEXTURE_WATER) return cauldron->mWaterIcon;
+    if (name == TEXTURE_INNER) return static_cast<CauldronBlock*>(Blocks::cauldron)->mInnerIcon;
+    if (name == TEXTURE_BOTTOM) return static_cast<CauldronBlock*>(Blocks::cauldron)->mBottomIcon;
+    if (name == TEXTURE_WATER) return static_cast<CauldronBlock*>(Blocks::cauldron)->mWaterIcon;
     return NULL;
 }
 EBlockRenderShape CauldronBlock::getRenderShape(const BlockState*)

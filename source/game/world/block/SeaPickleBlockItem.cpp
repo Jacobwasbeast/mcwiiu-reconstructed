@@ -65,8 +65,11 @@ InteractionResult::EInteractionResult SeaPickleBlockItem::useOn(boost::shared_pt
         int count = targetState->getValue(SeaPickle::COUNT) + 1;
         if (count > 3)
             return InteractionResult::eInteractionResult_Fail;
-        TypedBoxed<int> countValue(count);
-        const BlockState* stacked = newState->setBoxedValue(SeaPickle::COUNT, &countValue);
+        const BlockState* stacked = NULL;
+        {
+            TypedBoxed<int> countValue(count);
+            stacked = newState->setBoxedValue(SeaPickle::COUNT, &countValue);
+        }
         placePos = targetPos;
         bool underWater = level->isUnderWater(targetPos, newState);
         newState = stacked;

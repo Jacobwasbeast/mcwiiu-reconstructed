@@ -28,7 +28,7 @@ public:
     virtual CompoundTag* save(CompoundTag* tag);
     virtual void load(CompoundTag* tag);
     virtual void tick();
-    double getMouthAnimation(float partialTick);
+    float getMouthAnimation(float partialTick);
     virtual boost::shared_ptr<Packet> getUpdatePacket();
     virtual CompoundTag* getUpdateTag();
     bool isRenderReady();

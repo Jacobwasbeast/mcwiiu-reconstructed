@@ -310,7 +310,8 @@ Block* Blocks::bark_oak = NULL;
 
 Block* Blocks::get(const std::wstring& name)
 {
-    return Block::blockRegistry->get(ResourceLocation(name));
+    ResourceLocation location(name);
+    return Block::blockRegistry->get(location);
 }
 
 void Blocks::staticInit()

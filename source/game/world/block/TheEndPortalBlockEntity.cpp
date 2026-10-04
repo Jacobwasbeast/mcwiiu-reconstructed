@@ -17,7 +17,7 @@ boost::shared_ptr<BlockEntity> TheEndPortalBlockEntity::clone()
 
 bool TheEndPortalBlockEntity::shouldRenderFace(const Direction* direction)
 {
-    return direction == Direction::DOWN;
+    return direction == Direction::UP;
 }
 
 unsigned long long TheEndPortalBlockEntity::GetType()

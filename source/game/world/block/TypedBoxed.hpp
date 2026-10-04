@@ -7,20 +7,27 @@
 #include <boost/functional/hash.hpp>
 
 #include "game/core/Boxed.hpp"
+#include "game/core/StringRepresentable.hpp"
 
 template <class T> std::wstring _toString(T value);
 
 template <class T>
-std::wstring _toString(T* value)
+inline std::wstring _toString(T* value)
 {
-    return value->toString();
+    const StringRepresentable* representable = value;
+    if (representable == NULL)
+    {
+        return std::wstring(L"NULL");
+    }
+
+    return representable->toString();
 }
 
 template <class T>
 class TypedBoxed : public Boxed
 {
 public:
-    TypedBoxed(T value) : Boxed(&typeid(T)), mValue(value) {}
+    TypedBoxed(const T& value) : Boxed(&typeid(T)), mValue(value) {}
     virtual ~TypedBoxed() {}
 
     const T& getValue() const { return this->mValue; }
@@ -44,17 +51,7 @@ unsigned int TypedBoxed<T>::hashOf() const
 template <class T>
 bool TypedBoxed<T>::operator==(const Boxed* other) const
 {
-    bool result = false;
-    if (other->isA(this->mValueClass))
-    {
-        const TypedBoxed<T>* boxed = other->isA(typeid(T)) ? static_cast<const TypedBoxed<T>*>(other) : NULL;
-        if (this->mValue == boxed->mValue)
-        {
-            result = true;
-        }
-    }
-
-    return result;
+    return other->isA(this->mValueClass) && this->mValue == (other->isA(typeid(T)) ? static_cast<const TypedBoxed<T>*>(other) : NULL)->mValue;
 }
 
 template <class T>

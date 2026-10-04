@@ -39,14 +39,13 @@ EnderChestBlock::EnderChestBlock()
     : BaseEntityBlock(Material::STONE)
 {
     DerivedInit();
-    TypedBoxed<const Direction*> facing(Direction::NORTH);
-    registerDefaultState(mStateDefinition->any()->setBoxedValue(FACING, &facing));
+    registerDefaultState(mStateDefinition->any()->setValue(FACING, Direction::NORTH));
 }
 
-boost::shared_ptr<BlockEntity> EnderChestBlock::newBlockEntity(Level*, int data)
+boost::shared_ptr<BlockEntity> EnderChestBlock::newBlockEntity(Level* level, int)
 {
-    boost::shared_ptr<EnderChestBlockEntity> entity(new EnderChestBlockEntity());
-    entity->setData(data);
+    boost::shared_ptr<BlockEntity> entity = boost::shared_ptr<EnderChestBlockEntity>(new EnderChestBlockEntity());
+    entity->setLevel(level);
     return entity;
 }
 
@@ -93,24 +92,22 @@ bool EnderChestBlock::isSilkTouchable()
 const BlockState* EnderChestBlock::getStateForPlacement(Level*, const BlockPos&, const Direction*, float, float,
                                                          float, int, boost::shared_ptr<LivingEntity> placer)
 {
-    const Direction* facing = placer->getDirection()->getOpposite();
-    TypedBoxed<const Direction*> boxedFacing(facing);
-    return defaultBlockState()->setBoxedValue(FACING, &boxedFacing);
+    const BlockState* state = defaultBlockState();
+    DirectionProperty* facing = FACING;
+    return state->setValue(facing, placer->getDirection()->getOpposite());
 }
 
 void EnderChestBlock::setPlacedBy(Level* level, const BlockPos& pos, const BlockState* state,
                                   boost::shared_ptr<LivingEntity> placer,
                                   not_null_ptr<ItemInstance> itemInstance)
 {
-    const Direction* facing = placer->getDirection()->getOpposite();
-    TypedBoxed<const Direction*> boxedFacing(facing);
-    level->setBlock(pos, state->setBoxedValue(FACING, &boxedFacing), Block::UPDATE_CLIENTS, false);
+    DirectionProperty* facing = FACING;
+    level->setBlock(pos, state->setValue(facing, placer->getDirection()->getOpposite()), Block::UPDATE_CLIENTS, false);
 
     if (itemInstance->hasCustomHoverName())
     {
-        boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
         boost::shared_ptr<EnderChestBlockEntity> enderChest =
-            boost::dynamic_pointer_cast<EnderChestBlockEntity>(blockEntity);
+            boost::dynamic_pointer_cast<EnderChestBlockEntity>(level->getBlockEntity(pos));
         if (enderChest)
         {
             enderChest->setCustomName(itemInstance->getHoverNameUnfiltered(), itemInstance->getOwnerUUID(),
@@ -120,18 +117,22 @@ void EnderChestBlock::setPlacedBy(Level* level, const BlockPos& pos, const Block
 }
 
 bool EnderChestBlock::use(Level* level, const BlockPos& pos, const BlockState*, boost::shared_ptr<Player> player,
-                          InteractionHand::EInteractionHand, const Direction*, float, float, float, bool clientSide)
+                          InteractionHand::EInteractionHand, const Direction*, float, float, float, bool)
 {
     boost::shared_ptr<PlayerEnderChestContainer> inventory = player->getEnderChestInventory();
     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
     if (inventory)
     {
-        boost::shared_ptr<EnderChestBlockEntity> chest =
-            boost::dynamic_pointer_cast<EnderChestBlockEntity>(blockEntity);
-        if (chest && !ChestBlock::isChestBlockedAt(level, pos) && !clientSide)
+        if (blockEntity->GetType() == BlockEntityType::ENDER_CHEST)
         {
-            inventory->setActiveChest(chest);
+            if (level->getBlockState(pos.above())->isSolidBlockingCubeAndNotSignalSource()
+                || ChestBlock::isChestBlockedAt(level, pos))
+                return true;
+            if (level->mIsClientSide)
+                return true;
+            inventory->setActiveChest(boost::dynamic_pointer_cast<EnderChestBlockEntity>(blockEntity));
             player->openContainer(inventory);
+            return true;
         }
     }
     return true;
@@ -141,14 +142,14 @@ void EnderChestBlock::animateTick(const BlockState*, Level* level, const BlockPo
 {
     for (int i = 0; i < 3; ++i)
     {
-        double xSign = (double)(random->nextInt(2) * 2 - 1);
-        double zSign = (double)(random->nextInt(2) * 2 - 1);
+        int xSign = random->nextInt(2) * 2 - 1;
+        int zSign = random->nextInt(2) * 2 - 1;
         double x = (double)pos.x + 0.5 + xSign * 0.25;
-        double y = (double)pos.y + (double)random->nextFloat();
+        double y = (float)pos.y + random->nextFloat();
         double z = (double)pos.z + 0.5 + zSign * 0.25;
-        double xa = (double)random->nextFloat() * xSign;
+        double xa = random->nextFloat() * (float)xSign;
         double ya = ((double)random->nextFloat() - 0.5) * 0.125;
-        double za = (double)random->nextFloat() * zSign;
+        double za = random->nextFloat() * (float)zSign;
         level->addParticle(PARTICLE_PORTAL, x, y, z, xa, ya, za, arrayWithLength<int>());
     }
 }
@@ -160,8 +161,7 @@ const BlockState* EnderChestBlock::getBlockState(int data)
     {
         facing = Direction::NORTH;
     }
-    TypedBoxed<const Direction*> boxedFacing(facing);
-    return defaultBlockState()->setBoxedValue(FACING, &boxedFacing);
+    return defaultBlockState()->setValue(FACING, facing);
 }
 
 int EnderChestBlock::convertBlockStateToLegacyData(const BlockState* state)
@@ -180,8 +180,8 @@ unsigned int EnderChestBlock::GetInteractTooltip(const BlockTooltipDataHolder& t
 
 const BlockState* EnderChestBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    TypedBoxed<const Direction*> facing(rotation->rotate(state->getValue(FACING)));
-    return state->setBoxedValue(FACING, &facing);
+    DirectionProperty* facing = FACING;
+    return state->setValue(facing, rotation->rotate(state->getValue(facing)));
 }
 
 const BlockState* EnderChestBlock::mirror(const BlockState* state, Mirror* mirror)
@@ -191,7 +191,7 @@ const BlockState* EnderChestBlock::mirror(const BlockState* state, Mirror* mirro
 
 BlockStateDefinition* EnderChestBlock::createBlockStateDefinition()
 {
-    const Property* properties[] = { FACING };
+    static const Property* properties[] = { FACING };
     return new BlockStateDefinition(this, properties, 1);
 }
 

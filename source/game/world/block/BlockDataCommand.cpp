@@ -37,8 +37,5 @@ boost::shared_ptr<GameCommandPacket> BlockDataCommand::preparePacket(unsigned ch
     ByteArrayOutputStream byteStream;
     DataOutputStream stream(&byteStream);
 
-    stream.writeByte(mode);
-
-    return boost::shared_ptr<GameCommandPacket>(
-        new GameCommandPacket(eGameCommand_BlockData, byteStream.toByteArray()));
+    return boost::shared_ptr<GameCommandPacket>(new GameCommandPacket());
 }

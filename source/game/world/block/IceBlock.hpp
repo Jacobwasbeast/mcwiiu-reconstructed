@@ -17,7 +17,7 @@ class IceBlock : public HalfTransparentBlock
 {
 public:
     IceBlock(bool isClientSide);
-    virtual ~IceBlock();
+    virtual ~IceBlock() {}
 
     virtual void tick(Level* level, const BlockPos& pos, const BlockState* state, Random* random);
     virtual int getResourceCount(Random* random);

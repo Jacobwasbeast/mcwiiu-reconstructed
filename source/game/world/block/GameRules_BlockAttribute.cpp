@@ -6,14 +6,10 @@
 #include "game/world/block/Block.hpp"
 #include "game/core/StringFormat.hpp"
 
+#include "game/core/StringConversion.hpp"
+
 #include <string>
 
-
-template<typename T>
-std::wstring _toString(T value);
-
-template<typename T>
-T fromString(const std::wstring& text);
 
 GameRules_BlockAttribute::GameRules_BlockAttribute(Block** value)
     : mValue(value)
@@ -28,7 +24,7 @@ void GameRules_BlockAttribute::setValue(const std::wstring& value)
 {
     mHasValue = true;
 
-    *mValue = Block::byId(fromString<int>(value));
+    *mValue = Block::byId(_fromString<int>(value));
 }
 
 void GameRules_BlockAttribute::save(ConsoleGameRules::EGameRuleAttr attribute, GameRuleSaveInterface* saveInterface)

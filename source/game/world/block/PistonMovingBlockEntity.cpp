@@ -249,8 +249,8 @@ void PistonMovingBlockEntity::fixEntityWithinPistonBase(boost::shared_ptr<Entity
 {
     AABB* entityBox = entity->mBoundingBox;
     AABB* pistonBox = Block::FULL_BLOCK_SHAPE->move(mPos);
-    if (!pistonBox->intersects(entityBox->mMinX, entityBox->mMinY, entityBox->mMinZ, entityBox->mMaxX,
-                               entityBox->mMaxY, entityBox->mMaxZ))
+    if (!entityBox->intersects(pistonBox->mMinX, pistonBox->mMinY, pistonBox->mMinZ, pistonBox->mMaxX,
+                               pistonBox->mMaxY, pistonBox->mMaxZ))
     {
         return;
     }
@@ -260,7 +260,7 @@ void PistonMovingBlockEntity::fixEntityWithinPistonBase(boost::shared_ptr<Entity
     double overlapMovement = getMovement(pistonBox, opposite, entityBox->intersect(pistonBox)) + 0.01;
     if (fabs(movement - overlapMovement) < 0.01)
     {
-        movement = std::min(movement, distance) + 0.01;
+        movement = (movement - distance < 0.0 ? movement : distance) + 0.01;
         NOCLIP_set(direction);
         entity->move(eMoverType_Piston, movement * opposite->getStepX(), movement * opposite->getStepY(),
                      movement * opposite->getStepZ(), false);
@@ -405,20 +405,24 @@ void PistonMovingBlockEntity::addCollissionAABBs(Level* level, const BlockPos& p
     float zOff;
     if (isSourcePiston())
     {
-        TypedBoxed<const Direction*> facing(mDirection);
-        TypedBoxed<bool> shortArm(mExtending != (1.0f - mProgress < 0.25f));
-        state = Blocks::piston_head->defaultBlockState()
-                    ->setBoxedValue(PistonHeadBlock::FACING, &facing)
-                    ->setBoxedValue(PistonHeadBlock::SHORT, &shortArm);
+        state = Blocks::piston_head->defaultBlockState();
+        {
+            TypedBoxed<const Direction*> facing(mDirection);
+            state = state->setBoxedValue(PistonHeadBlock::FACING, &facing);
+        }
+        {
+            TypedBoxed<bool> shortArm(mExtending != (1.0f - mProgress < 0.25f));
+            state = state->setBoxedValue(PistonHeadBlock::SHORT, &shortArm);
+        }
     }
     else
     {
         state = mMovedState;
     }
-    double progress = getExtendedProgress(mProgress);
-    xOff = static_cast<float>(mDirection->getStepX() * progress);
-    yOff = static_cast<float>(mDirection->getStepY() * progress);
-    zOff = static_cast<float>(mDirection->getStepZ() * progress);
+    float progress = getExtendedProgress(mProgress);
+    xOff = mDirection->getStepX() * progress;
+    yOff = mDirection->getStepY() * progress;
+    zOff = mDirection->getStepZ() * progress;
 
     state->addCollissionAABBs(level, pos, entityBox->move(-xOff, -yOff, -zOff), boxes, entity, true);
     for (unsigned int i = firstNew; i < boxes->size(); ++i)

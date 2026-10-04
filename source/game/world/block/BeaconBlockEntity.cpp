@@ -190,7 +190,7 @@ bool BeaconBlockEntity::stillValid(boost::shared_ptr<Player> player)
     {
         return false;
     }
-    if (player->distanceAsIfHitscanned(mPos, *player->mBoundingBox) <= 30.25F)
+    if (player->distanceAsIfHitscanned(mPos, *player->mBoundingBox) <= 30.25f)
     {
         return true;
     }

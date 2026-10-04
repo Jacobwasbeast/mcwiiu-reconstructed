@@ -6,10 +6,5 @@ float TridentItem_Throwing_ItemPropertyFunction::call(not_null_ptr<ItemInstance>
                                                       Level*,
                                                       boost::shared_ptr<LivingEntity> entity)
 {
-    if (entity && entity->mUseItem && entity->getUseItem() == itemInstance)
-    {
-        return 1.0f;
-    }
-
-    return 0.0f;
+    return (float)(entity && entity->isUsingItem() && entity->getUseItem() == itemInstance);
 }

@@ -1,5 +1,6 @@
 #include "game/world/block/Block.hpp"
 #include "game/core/StringIds.hpp"
+#include "game/core/Integer.hpp"
 #include "game/world/block/BlockId.hpp"
 #include "game/item/ItemId.hpp"
 #include "game/core/EntityType.hpp"
@@ -251,8 +252,6 @@ Block::ThreadStorage::ThreadStorage()
 {
     mCacheIndex = 0;
     mFastGraphics = false;
-    mShapes.data = NULL;
-    mShapes.length = 0;
 
     const AABB** shapes = new const AABB*[3];
     shapes[0] = NULL;
@@ -285,7 +284,6 @@ void Block::_init(Material* material, const MaterialColor* materialColor)
     mSoundType = SoundType::STONE;
     mFriction = 0.6f;
     mBlockType = EBLOCK_TYPE_NONE;
-    mUseNeighbourBrightness = false;
     mLightEmission = 0;
     mMaterial = material;
     mCollectStatistics = true;
@@ -293,18 +291,19 @@ void Block::_init(Material* material, const MaterialColor* materialColor)
     mExplosionResistance = 0.0f;
     mDestroyTime = 0.0f;
     mTicking = false;
-    mIsRail = false;
-    mBaseItemType = 0;
-    mMipmap = true;
-    mIsDoor = false;
+    mTranslucent = !material->blocksLight();
     mIcon = NULL;
-    mIsFenceGate = false;
+    mBaseItemMaterial = 0;
+    mBaseItemType = 0;
+    mIsDoor = false;
     mIsFence = false;
     mSemiTransparent = false;
-    mBaseItemMaterial = 0;
-    mDerivedInitDone = false;
-    mTranslucent = !material->blocksLight();
+    mIsRail = false;
+    mMipmap = true;
     mIsWall = false;
+    mDerivedInitDone = false;
+    mUseNeighbourBrightness = false;
+    mIsFenceGate = false;
 
     setThickness(0.0f);
 }
@@ -408,7 +407,7 @@ Block* Block::byString(const std::wstring& name)
         return blockRegistry->get(ResourceLocation(location));
     }
 
-    return blockRegistry->byId((int)wcstol(name.c_str(), NULL, 10));
+    return blockRegistry->byId(Integer::parseInt(name, 10));
 }
 
 Block* Block::setBaseItemTypeAndMaterial(int baseItemType, int baseItemMaterial)
@@ -437,7 +436,15 @@ Block* Block::setDestroyTime(float destroyTime)
 
 bool Block::calculateIsWaterBlocking() const
 {
-    return mThickness <= 0.0f && (mMaterial->blocksMotion() || mMaterial->isSolid());
+    if (mThickness <= 0.0f)
+    {
+        if (mMaterial->blocksMotion() || mMaterial->isSolid())
+        {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 void Block::setThickness(float thickness)
@@ -733,8 +740,8 @@ const BlockState* Block::mirror(const BlockState* state, Mirror* mirror)
 
 bool Block::isExceptionBlockForAttaching(Block* block)
 {
-    return block == NULL || dynamic_cast<ShulkerBoxBlock*>(block) != NULL || dynamic_cast<LeafBlock*>(block) != NULL
-        || dynamic_cast<TrapDoorBlock*>(block) != NULL || block == Blocks::cauldron || block == Blocks::turtle_egg;
+    return (block != NULL && (dynamic_cast<ShulkerBoxBlock*>(block) != NULL || dynamic_cast<LeafBlock*>(block) != NULL
+        || dynamic_cast<TrapDoorBlock*>(block) != NULL)) || block == Blocks::cauldron || block == Blocks::turtle_egg;
 }
 
 bool Block::isExceptionBlockForAttachingPlusPiston(Block* block)
@@ -875,7 +882,9 @@ int Block::getLightColor(const BlockState* state, LevelSource* levelSource, cons
         BlockPos below = pos.below();
         const BlockState* belowState = levelSource->getBlockState(below);
 
-        return levelSource->getLightColor(below, belowState->getBlock()->getLightEmission(belowState), -1);
+        Block* belowBlock = belowState->getBlock();
+
+        return levelSource->getLightColor(below, belowBlock->getLightEmission(belowState), -1);
     }
 
     return lightColor;
@@ -962,10 +971,12 @@ bool Block::shouldRenderFace(const BlockState* state, LevelSource* levelSource, 
 const arrayWithLength<const AABB*>* Block::getShapes(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
 {
     ThreadStorage* storage = (ThreadStorage*)TlsGetValue(THREAD_STORAGE_INDEX);
+    const AABB* shape = getShape(state, levelSource, pos);
+    const AABB** shapes = storage->mShapes.data;
 
-    storage->mShapes.data[0] = getShape(state, levelSource, pos);
-    storage->mShapes.data[1] = NULL;
-    storage->mShapes.data[2] = NULL;
+    shapes[0] = shape;
+    shapes[2] = NULL;
+    shapes[1] = NULL;
 
     return &storage->mShapes;
 }
@@ -999,7 +1010,9 @@ void Block::addCollisionAABB(const BlockPos& pos, const AABB* entityBox, std::ve
 
     AABB* movedBox = blockBox->move(pos);
 
-    if (entityBox->intersects(movedBox->mMinX, movedBox->mMinY, movedBox->mMinZ, movedBox->mMaxX, movedBox->mMaxY, movedBox->mMaxZ))
+    bool intersects = entityBox->intersects(movedBox->mMinX, movedBox->mMinY, movedBox->mMinZ, movedBox->mMaxX, movedBox->mMaxY, movedBox->mMaxZ);
+
+    if (intersects)
     {
         collidingBoxes->push_back(movedBox);
     }
@@ -1457,7 +1470,7 @@ EPistonPushReaction Block::getPistonPushReaction(const BlockState* state)
 
 float Block::getShadeBrightness(const BlockState* state)
 {
-    if (state->isSolidRender())
+    if (state->isSolidBlockingCube())
     {
         return 0.2f;
     }
@@ -1561,18 +1574,25 @@ TextureAtlasSprite* Block::getTexture(LevelSource* levelSource, const BlockPos& 
         return getTexture(direction, state);
     }
 
-    static const int OFFSETS_X[6] = { 1, 0, 0, 0, 0, -1 };
-    static const int OFFSETS_Y[6] = { 0, 1, 0, 0, -1, 0 };
-    static const int OFFSETS_Z[6] = { 0, 0, 1, -1, 0, 0 };
+    int OFFSETS_X[6] = { 1, -1, 0, 0, 0, 0 };
+    int OFFSETS_Y[6] = { 0, 0, 1, -1, 0, 0 };
+    int OFFSETS_Z[6] = { 0, 0, 0, 0, 1, -1 };
 
-    for (int index = 0; index < 6; index++)
+    bool surrounded = true;
+
+    for (int index = 0; index < 6 && surrounded; index++)
     {
         const BlockState* neighbour = levelSource->getBlockState(pos.offset(OFFSETS_X[index], OFFSETS_Y[index], OFFSETS_Z[index]));
 
         if (!LeafBlock::isLeaves(neighbour->getBlock()) && !neighbour->isSolidRender())
         {
-            return getTexture(direction, state);
+            surrounded = false;
         }
+    }
+
+    if (!surrounded)
+    {
+        return getTexture(direction, state);
     }
 
     static_cast<LeafBlock*>(Blocks::leaves)->setFancy(false);
@@ -1636,44 +1656,61 @@ int Block::getFaceFlagsFast(LevelSource* levelSource, const BlockPos& pos)
 
 int Block::getFaceFlags(const BlockState* state, LevelSource* levelSource, const BlockPos& pos, bool forceAll)
 {
-    if (forceAll)
-    {
-        return 0x3F;
-    }
-
     Block* block = state->getBlock();
-    int id = getId(block);
+    int flags;
 
-    if (id < 8 || (unsigned int)(id - 12) < 6)
+    if (!forceAll)
     {
-        return block->getFaceFlagsFast(levelSource, pos);
+        int id = getId(block);
+
+        if (id > 7 && (unsigned int)(id - 12) >= 6)
+        {
+            int down = block->shouldRenderFace(state, levelSource, pos, Direction::DOWN) ? 1 : 0;
+            int up = 0;
+
+            if (block->shouldRenderFace(state, levelSource, pos, Direction::UP))
+            {
+                up = 2;
+            }
+
+            int north = 0;
+
+            if (block->shouldRenderFace(state, levelSource, pos, Direction::NORTH))
+            {
+                north = 4;
+            }
+
+            int south = 0;
+
+            if (block->shouldRenderFace(state, levelSource, pos, Direction::SOUTH))
+            {
+                south = 8;
+            }
+
+            int west = 0;
+
+            if (block->shouldRenderFace(state, levelSource, pos, Direction::WEST))
+            {
+                west = 16;
+            }
+
+            int east = 0;
+
+            if (block->shouldRenderFace(state, levelSource, pos, Direction::EAST))
+            {
+                east = 32;
+            }
+
+            flags = down | up | north | south | west | east;
+        }
+        else
+        {
+            flags = block->getFaceFlagsFast(levelSource, pos);
+        }
     }
-
-    int flags = block->shouldRenderFace(state, levelSource, pos, Direction::DOWN) ? 1 : 0;
-
-    if (block->shouldRenderFace(state, levelSource, pos, Direction::UP))
+    else
     {
-        flags |= 2;
-    }
-
-    if (block->shouldRenderFace(state, levelSource, pos, Direction::NORTH))
-    {
-        flags |= 4;
-    }
-
-    if (block->shouldRenderFace(state, levelSource, pos, Direction::SOUTH))
-    {
-        flags |= 8;
-    }
-
-    if (block->shouldRenderFace(state, levelSource, pos, Direction::WEST))
-    {
-        flags |= 16;
-    }
-
-    if (block->shouldRenderFace(state, levelSource, pos, Direction::EAST))
-    {
-        flags |= 32;
+        flags = 0x3F;
     }
 
     return flags;
@@ -1735,7 +1772,7 @@ const SoundType* Block::getSoundType()
 
 std::wstring Block::toString()
 {
-    return std::wstring(L"Block{") + blockRegistry->getKey(this).toString() + L"}";
+    return L"Block{" + blockRegistry->getKey(this).toString() + L"}";
 }
 
 void Block::appendHoverText(not_null_ptr<ItemInstance> itemInstance, boost::shared_ptr<Player> player, std::vector<HtmlString>* lines, bool advanced)
@@ -2117,7 +2154,7 @@ void Block::staticCtor()
     registerBlock(97, L"monster_egg",
         (new MonsterEggBlock())->setIconName(L"monsterStoneEgg")->setDestroyTime(0.75f)->setNameAndDescriptionId(IDS_TILE_STONE_SILVERFISH, IDS_DESC_STONE_SILVERFISH));
 
-    Block* stonebrick = (new StoneBrickBlock())->setIconName(L"stonebrick")->setDestroyTime(1.5f)->setExplodeable(10.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(0xC34CAFF7, 0x8FD75DCA)->setBaseItemTypeAndMaterial(14, 31);
+    Block* stonebrick = (new StoneBrickBlock())->setIconName(L"stonebrick")->setDestroyTime(1.5f)->setExplodeable(10.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(IDS_TILE_STONE_BRICK_SMOOTH, 0x8FD75DCA)->setBaseItemTypeAndMaterial(14, 31);
     registerBlock(98, L"stonebrick", stonebrick);
 
     registerBlock(99, L"brown_mushroom_block",
@@ -2759,7 +2796,7 @@ void Block::staticCtor()
         {
             const BlockState* state = states.data[i];
             if (state != NULL)
-                blockStateRegistry->addMapping(state, (getId(block) << 4) | block->convertBlockStateToLegacyData(state));
+                blockStateRegistry->addMapping(state, (blockRegistry->getId(block) << 4) | block->convertBlockStateToLegacyData(state));
         }
     }
 

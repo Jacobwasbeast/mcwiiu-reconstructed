@@ -5,9 +5,16 @@
 int javaStringHashCode(const std::wstring& value)
 {
     int hash = 0;
-    for (std::wstring::const_iterator it = value.begin(); it != value.end(); ++it)
+    for (unsigned int i = 0; i < value.length(); ++i)
     {
-        hash = hash * 31 + static_cast<unsigned short>(*it);
+        if (i < value.length() - 1)
+        {
+            hash += static_cast<unsigned short>(value[i]) * 31 ^ (value.length() - 1 - i);
+        }
+        else
+        {
+            hash += static_cast<unsigned short>(value[i]);
+        }
     }
     return hash;
 }

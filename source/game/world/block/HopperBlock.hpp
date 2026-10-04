@@ -91,8 +91,8 @@ public:
                                    EBlockSupportType supportType);
 
 private:
-    TextureAtlasSprite* mTopTexture;
     TextureAtlasSprite* mSideTexture;
+    TextureAtlasSprite* mTopTexture;
     TextureAtlasSprite* mBottomTexture;
 };
 

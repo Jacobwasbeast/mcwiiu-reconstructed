@@ -180,7 +180,8 @@ void FallingBlockEntity::tick()
             {
                 if (mDropItem && mLevel->getGameRules()->getBoolean(GameRules::RULE_DOENTITYDROPS))
                 {
-                    spawnAtLocation(not_null_ptr<ItemInstance>(new ItemInstance(block, 1, block->getSpawnResourcesAuxValue(mBlockState))), 0.0f);
+                    not_null_ptr<ItemInstance> dropped(new ItemInstance(block, 1, block->getSpawnResourcesAuxValue(mBlockState)));
+                    spawnAtLocation(dropped, 0.0f);
                 }
                 remove();
             }
@@ -202,15 +203,9 @@ void FallingBlockEntity::tick()
                 remove();
                 if (!mCancelDrop)
                 {
-                    bool placed = false;
                     if (mLevel->mayPlace(block, pos, true, Direction::UP, boost::shared_ptr<Entity>())
                         && (inWater || !FallingBlock::isFree(mLevel->getBlockState(pos.below())))
                         && mLevel->setBlock(pos, mBlockState, Block::UPDATE_ALL, false))
-                    {
-                        placed = true;
-                    }
-
-                    if (placed)
                     {
                         FallingBlock* fallingBlock = dynamic_cast<FallingBlock*>(block);
                         if (fallingBlock != NULL)
@@ -241,7 +236,8 @@ void FallingBlockEntity::tick()
                     }
                     else if (mDropItem && mLevel->getGameRules()->getBoolean(GameRules::RULE_DOENTITYDROPS))
                     {
-                        spawnAtLocation(not_null_ptr<ItemInstance>(new ItemInstance(block, 1, block->getSpawnResourcesAuxValue(mBlockState))), 0.0f);
+                        not_null_ptr<ItemInstance> dropped(new ItemInstance(block, 1, block->getSpawnResourcesAuxValue(mBlockState)));
+                        spawnAtLocation(dropped, 0.0f);
                     }
                 }
                 else
@@ -271,7 +267,7 @@ void FallingBlockEntity::causeFallDamage(float fallDistance, float damageMultipl
     }
 
     int distance = (int)(fallDistance - 1.0f);
-    if ((float)distance < fallDistance - 1.0f)
+    if (fallDistance - 1.0f > (float)distance)
     {
         ++distance;
     }
@@ -301,8 +297,12 @@ void FallingBlockEntity::causeFallDamage(float fallDistance, float damageMultipl
         }
         else
         {
-            TypedBoxed<int> boxedDamage(anvilDamage);
-            mBlockState = mBlockState->setBoxedValue(AnvilBlock::DAMAGE, &boxedDamage);
+            const BlockState* damagedState;
+            {
+                TypedBoxed<int> boxedDamage(anvilDamage);
+                damagedState = mBlockState->setBoxedValue(AnvilBlock::DAMAGE, &boxedDamage);
+            }
+            mBlockState = damagedState;
         }
     }
 }
@@ -315,16 +315,16 @@ void FallingBlockEntity::addAdditonalSaveData(CompoundTag* tag)
 {
     Block* block = mBlockState == NULL ? Blocks::air : mBlockState->getBlock();
     ResourceLocation location = Block::blockRegistry->getKey(block);
-    tag->putString(std::wstring(L"Block"), location.toString());
-    tag->putByte(std::wstring(L"Data"), (unsigned char)block->convertBlockStateToLegacyData(mBlockState));
-    tag->putInt(std::wstring(L"Time"), (unsigned char)mTime);
-    tag->putBoolean(std::wstring(L"DropItem"), mDropItem);
-    tag->putBoolean(std::wstring(L"HurtEntities"), mHurtsEntities);
-    tag->putFloat(std::wstring(L"FallHurtAmount"), mFallHurtAmount);
-    tag->putInt(std::wstring(L"FallHurtMax"), mFallHurtMax);
+    tag->putString(L"Block", location.toString());
+    tag->putByte(L"Data", (unsigned char)block->convertBlockStateToLegacyData(mBlockState));
+    tag->putInt(L"Time", (unsigned char)mTime);
+    tag->putBoolean(L"DropItem", mDropItem);
+    tag->putBoolean(L"HurtEntities", mHurtsEntities);
+    tag->putFloat(L"FallHurtAmount", mFallHurtAmount);
+    tag->putInt(L"FallHurtMax", mFallHurtMax);
     if (mBlockEntityData != NULL)
     {
-        tag->put(std::wstring(L"TileEntityData"), mBlockEntityData);
+        tag->put(L"TileEntityData", mBlockEntityData);
     }
 }
 

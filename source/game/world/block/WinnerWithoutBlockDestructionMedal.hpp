@@ -11,7 +11,7 @@ public:
     {
     }
 
-    virtual double GetScore(PlayerStats* playerStats) const;
+    virtual float GetScore(PlayerStats* playerStats) const;
 };
 
 #endif

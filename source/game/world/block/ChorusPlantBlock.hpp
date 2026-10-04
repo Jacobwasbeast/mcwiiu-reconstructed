@@ -1,6 +1,7 @@
 #ifndef GAME_WORLD_BLOCK_CHORUSPLANTBLOCK_HPP
 #define GAME_WORLD_BLOCK_CHORUSPLANTBLOCK_HPP
 
+#include "game/world/block/AbstractProperty.hpp"
 #include "game/world/block/Block.hpp"
 
 class AABB;
@@ -15,6 +16,13 @@ class Random;
 class ChorusPlantBlock : public Block
 {
 public:
+    static AbstractProperty<bool>* NORTH_PROPERTY;
+    static AbstractProperty<bool>* EAST_PROPERTY;
+    static AbstractProperty<bool>* SOUTH_PROPERTY;
+    static AbstractProperty<bool>* WEST_PROPERTY;
+    static AbstractProperty<bool>* UP_PROPERTY;
+    static AbstractProperty<bool>* DOWN_PROPERTY;
+
     ChorusPlantBlock();
     virtual void DerivedInit();
     virtual const BlockState* fillVirtualBlockStateProperties(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);

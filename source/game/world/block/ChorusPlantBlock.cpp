@@ -15,31 +15,28 @@
 #include "game/world/block/MaterialColor.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
-static AbstractProperty<bool>* CHORUS_DOWN = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"down"));
-static AbstractProperty<bool>* CHORUS_UP = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"up"));
-static AbstractProperty<bool>* CHORUS_NORTH = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"north"));
-static AbstractProperty<bool>* CHORUS_EAST = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"east"));
-static AbstractProperty<bool>* CHORUS_SOUTH = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"south"));
-static AbstractProperty<bool>* CHORUS_WEST = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"west"));
+AbstractProperty<bool>* ChorusPlantBlock::NORTH_PROPERTY = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"north"));
+AbstractProperty<bool>* ChorusPlantBlock::EAST_PROPERTY = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"east"));
+AbstractProperty<bool>* ChorusPlantBlock::SOUTH_PROPERTY = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"south"));
+AbstractProperty<bool>* ChorusPlantBlock::WEST_PROPERTY = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"west"));
+AbstractProperty<bool>* ChorusPlantBlock::UP_PROPERTY = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"up"));
+AbstractProperty<bool>* ChorusPlantBlock::DOWN_PROPERTY = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"down"));
 
 static inline AABB* createChorusShape(double minX, double minY, double minZ, double maxX, double maxY, double maxZ)
 {
-    AABB* shape = AABB::newPermanent(minX, minY, minZ, maxX, maxY, maxZ);
-    shape->divideInternalsBy(16.0);
-    return shape;
+    return AABB::newPermanent(minX, minY, minZ, maxX, maxY, maxZ)->divideInternalsBy(16.0);
 }
 
 static inline AABB* createTempChorusShape(double minX, double minY, double minZ, double maxX, double maxY, double maxZ)
 {
-    AABB* shape = AABB::newTemp(minX, minY, minZ, maxX, maxY, maxZ);
-    shape->divideInternalsBy(16.0);
-    return shape;
+    return AABB::newTemp(minX, minY, minZ, maxX, maxY, maxZ)->divideInternalsBy(16.0);
 }
 
 static const AABB* CHORUS_NORTH_SHAPE = createChorusShape(4.0, 4.0, 0.0, 12.0, 12.0, 4.0);
 static const AABB* CHORUS_SOUTH_SHAPE = createChorusShape(4.0, 4.0, 12.0, 12.0, 12.0, 16.0);
 static const AABB* CHORUS_EAST_SHAPE = createChorusShape(12.0, 4.0, 4.0, 16.0, 12.0, 12.0);
 static const AABB* CHORUS_WEST_SHAPE = createChorusShape(0.0, 4.0, 4.0, 4.0, 12.0, 12.0);
+static const AABB* CHORUS_CENTER_SHAPE = createChorusShape(4.0, 4.0, 4.0, 12.0, 12.0, 12.0);
 
 ChorusPlantBlock::ChorusPlantBlock()
     : Block(Material::PLANT, MaterialColor::COLOR_PURPLE)
@@ -50,19 +47,13 @@ ChorusPlantBlock::ChorusPlantBlock()
 void ChorusPlantBlock::DerivedInit()
 {
     Block::DerivedInit();
-    TypedBoxed<bool> down(true);
-    TypedBoxed<bool> up(true);
-    TypedBoxed<bool> north(true);
-    TypedBoxed<bool> east(true);
-    TypedBoxed<bool> south(true);
-    TypedBoxed<bool> west(true);
     const BlockState* state = mStateDefinition->any();
-    state = state->setBoxedValue(CHORUS_DOWN, &down);
-    state = state->setBoxedValue(CHORUS_UP, &up);
-    state = state->setBoxedValue(CHORUS_NORTH, &north);
-    state = state->setBoxedValue(CHORUS_EAST, &east);
-    state = state->setBoxedValue(CHORUS_SOUTH, &south);
-    registerDefaultState(state->setBoxedValue(CHORUS_WEST, &west));
+    state = state->setValue(NORTH_PROPERTY, false);
+    state = state->setValue(EAST_PROPERTY, false);
+    state = state->setValue(SOUTH_PROPERTY, false);
+    state = state->setValue(WEST_PROPERTY, false);
+    state = state->setValue(UP_PROPERTY, false);
+    registerDefaultState(state->setValue(DOWN_PROPERTY, false));
 }
 
 const BlockState* ChorusPlantBlock::fillVirtualBlockStateProperties(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
@@ -73,29 +64,23 @@ const BlockState* ChorusPlantBlock::fillVirtualBlockStateProperties(const BlockS
     Block* east = levelSource->getBlock(pos.east());
     Block* south = levelSource->getBlock(pos.south());
     Block* west = levelSource->getBlock(pos.west());
-    TypedBoxed<bool> down(below == this || below == Blocks::chorus_flower || below == Blocks::end_stone);
-    TypedBoxed<bool> up(above == this || above == Blocks::chorus_flower);
-    TypedBoxed<bool> northValue(north == this || north == Blocks::chorus_flower);
-    TypedBoxed<bool> eastValue(east == this || east == Blocks::chorus_flower);
-    TypedBoxed<bool> southValue(south == this || south == Blocks::chorus_flower);
-    TypedBoxed<bool> westValue(west == this || west == Blocks::chorus_flower);
-    const BlockState* result = state->setBoxedValue(CHORUS_DOWN, &down);
-    result = result->setBoxedValue(CHORUS_UP, &up);
-    result = result->setBoxedValue(CHORUS_NORTH, &northValue);
-    result = result->setBoxedValue(CHORUS_EAST, &eastValue);
-    result = result->setBoxedValue(CHORUS_SOUTH, &southValue);
-    return result->setBoxedValue(CHORUS_WEST, &westValue);
+    const BlockState* result = state->setValue(DOWN_PROPERTY, below == this || below == Blocks::chorus_flower || below == Blocks::end_stone);
+    result = result->setValue(UP_PROPERTY, above == this || above == Blocks::chorus_flower);
+    result = result->setValue(NORTH_PROPERTY, north == this || north == Blocks::chorus_flower);
+    result = result->setValue(EAST_PROPERTY, east == this || east == Blocks::chorus_flower);
+    result = result->setValue(SOUTH_PROPERTY, south == this || south == Blocks::chorus_flower);
+    return result->setValue(WEST_PROPERTY, west == this || west == Blocks::chorus_flower);
 }
 
 const AABB* ChorusPlantBlock::getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
 {
     const BlockState* actual = levelSource == NULL ? state : state->fillVirtualBlockStateProperties(levelSource, pos);
-    double minX = actual->getValue(CHORUS_WEST) ? 0.0 : 0.1875;
-    double minY = actual->getValue(CHORUS_DOWN) ? 0.0 : 0.1875;
-    double minZ = actual->getValue(CHORUS_NORTH) ? 0.0 : 0.1875;
-    double maxX = actual->getValue(CHORUS_EAST) ? 1.0 : 0.8125;
-    double maxY = actual->getValue(CHORUS_UP) ? 1.0 : 0.8125;
-    double maxZ = actual->getValue(CHORUS_SOUTH) ? 1.0 : 0.8125;
+    float minX = actual->getValue(WEST_PROPERTY) ? 0.0f : 0.1875f;
+    float minY = actual->getValue(DOWN_PROPERTY) ? 0.0f : 0.1875f;
+    float minZ = actual->getValue(NORTH_PROPERTY) ? 0.0f : 0.1875f;
+    float maxX = actual->getValue(EAST_PROPERTY) ? 1.0f : 0.8125f;
+    float maxY = actual->getValue(UP_PROPERTY) ? 1.0f : 0.8125f;
+    float maxZ = actual->getValue(SOUTH_PROPERTY) ? 1.0f : 0.8125f;
     return AABB::newTemp(minX, minY, minZ, maxX, maxY, maxZ);
 }
 
@@ -105,19 +90,19 @@ void ChorusPlantBlock::addCollisionAABBs(const BlockState* state, Level* level, 
     if (!isActualState)
         state = state->fillVirtualBlockStateProperties(level, pos);
     addCollisionAABB(pos, entityBox, collidingBoxes, AABB::newTemp(0.1875, 0.1875, 0.1875, 0.8125, 0.8125, 0.8125));
-    if (state->getValue(CHORUS_WEST)) addCollisionAABB(pos, entityBox, collidingBoxes, AABB::newTemp(0.0, 0.1875, 0.1875, 0.1875, 0.8125, 0.8125));
-    if (state->getValue(CHORUS_EAST)) addCollisionAABB(pos, entityBox, collidingBoxes, AABB::newTemp(0.8125, 0.1875, 0.1875, 1.0, 0.8125, 0.8125));
-    if (state->getValue(CHORUS_UP)) addCollisionAABB(pos, entityBox, collidingBoxes, AABB::newTemp(0.1875, 0.8125, 0.1875, 0.8125, 1.0, 0.8125));
-    if (state->getValue(CHORUS_DOWN)) addCollisionAABB(pos, entityBox, collidingBoxes, AABB::newTemp(0.1875, 0.0, 0.1875, 0.8125, 0.1875, 0.8125));
-    if (state->getValue(CHORUS_NORTH)) addCollisionAABB(pos, entityBox, collidingBoxes, AABB::newTemp(0.1875, 0.1875, 0.0, 0.8125, 0.8125, 0.1875));
-    if (state->getValue(CHORUS_SOUTH)) addCollisionAABB(pos, entityBox, collidingBoxes, AABB::newTemp(0.1875, 0.1875, 0.8125, 0.8125, 0.8125, 1.0));
+    if (state->getValue(WEST_PROPERTY)) addCollisionAABB(pos, entityBox, collidingBoxes, AABB::newTemp(0.0, 0.1875, 0.1875, 0.1875, 0.8125, 0.8125));
+    if (state->getValue(EAST_PROPERTY)) addCollisionAABB(pos, entityBox, collidingBoxes, AABB::newTemp(0.8125, 0.1875, 0.1875, 1.0, 0.8125, 0.8125));
+    if (state->getValue(UP_PROPERTY)) addCollisionAABB(pos, entityBox, collidingBoxes, AABB::newTemp(0.1875, 0.8125, 0.1875, 0.8125, 1.0, 0.8125));
+    if (state->getValue(DOWN_PROPERTY)) addCollisionAABB(pos, entityBox, collidingBoxes, AABB::newTemp(0.1875, 0.0, 0.1875, 0.8125, 0.1875, 0.8125));
+    if (state->getValue(NORTH_PROPERTY)) addCollisionAABB(pos, entityBox, collidingBoxes, AABB::newTemp(0.1875, 0.1875, 0.0, 0.8125, 0.8125, 0.1875));
+    if (state->getValue(SOUTH_PROPERTY)) addCollisionAABB(pos, entityBox, collidingBoxes, AABB::newTemp(0.1875, 0.1875, 0.8125, 0.8125, 0.8125, 1.0));
 }
 
 int ChorusPlantBlock::convertBlockStateToLegacyData(const BlockState*) { return 0; }
 
 void ChorusPlantBlock::tick(Level* level, const BlockPos& pos, const BlockState* state, Random*)
 {
-    if (!canSurvive(level, pos, state)) level->destroyBlock(pos, true);
+    if (!canSurvive(level, pos, NULL)) level->destroyBlock(pos, true);
 }
 
 Item* ChorusPlantBlock::getResource(const BlockState*, Random*, int) { return Items::chorusFruit; }
@@ -127,7 +112,9 @@ bool ChorusPlantBlock::isSolidRender(const BlockState*) const { return false; }
 
 bool ChorusPlantBlock::mayPlace(Level* level, const BlockPos& pos)
 {
-    return Block::mayPlace(level, pos) && canSurvive(level, pos, NULL);
+    if (!Block::mayPlace(level, pos))
+        return false;
+    return canSurvive(level, pos, NULL);
 }
 
 void ChorusPlantBlock::neighborChanged(const BlockState*, Level* level, const BlockPos& pos, Block*, const BlockPos&)
@@ -141,9 +128,10 @@ bool ChorusPlantBlock::canSurvive(Level* level, const BlockPos& pos, const Block
     bool belowEmpty = level->isEmptyBlock(pos.below());
 
     arrayWithLength<const Direction*> directions = Direction::Plane::HORIZONTAL->iterator();
-    for (unsigned int i = 0; i < directions.length; ++i)
+    const Direction** end = directions.data + directions.length;
+    for (const Direction** it = directions.data; it != end; ++it)
     {
-        BlockPos side = pos.relative(directions.data[i]);
+        BlockPos side = pos.relative(*it);
         if (level->getBlock(side) == this)
         {
             if (!aboveEmpty && !belowEmpty)
@@ -169,19 +157,21 @@ EBlockRenderShape ChorusPlantBlock::getRenderShape(const BlockState*) { return B
 
 const AABB* ChorusPlantBlock::getVerticalShape(const BlockState* state, LevelSource*, const BlockPos&)
 {
-    if (state->getValue(CHORUS_DOWN))
+    bool down = state->getValue(DOWN_PROPERTY);
+    bool up = state->getValue(UP_PROPERTY);
+    if (down)
     {
-        if (state->getValue(CHORUS_UP))
+        if (up)
         {
             return createTempChorusShape(4.0, 0.0, 4.0, 12.0, 16.0, 12.0);
         }
         return createTempChorusShape(4.0, 0.0, 4.0, 12.0, 12.0, 12.0);
     }
-    if (state->getValue(CHORUS_UP))
+    if (up)
     {
         return createTempChorusShape(4.0, 4.0, 4.0, 12.0, 16.0, 12.0);
     }
-    return NULL;
+    return CHORUS_CENTER_SHAPE;
 }
 
 const AABB* ChorusPlantBlock::getHorizontalShape(const BlockState*, const Direction* direction)
@@ -224,6 +214,6 @@ bool ChorusPlantBlock::canProvideSupport(const BlockState*, const Direction*, EB
 
 BlockStateDefinition* ChorusPlantBlock::createBlockStateDefinition()
 {
-    const Property* properties[] = { CHORUS_DOWN, CHORUS_UP, CHORUS_NORTH, CHORUS_EAST, CHORUS_SOUTH, CHORUS_WEST };
+    static const Property* properties[] = { NORTH_PROPERTY, EAST_PROPERTY, SOUTH_PROPERTY, WEST_PROPERTY, UP_PROPERTY, DOWN_PROPERTY };
     return new BlockStateDefinition(this, properties, 6);
 }

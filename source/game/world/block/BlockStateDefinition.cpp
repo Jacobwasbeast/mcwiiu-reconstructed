@@ -1,5 +1,6 @@
 #include "game/world/block/BlockStateDefinition.hpp"
 #include "game/world/block/Block.hpp"
+#include "game/world/block/Material.hpp"
 #include "game/world/block/Property.hpp"
 #include "game/core/Boxed.hpp"
 #include "game/core/Cartesian__Product.hpp"
@@ -57,13 +58,15 @@ void BlockStateDefinition::_init(Block* block, const Property** properties, unsi
         stateCount *= valueCount;
     }
 
-    mStates.data = new BlockStateImpl*[stateCount];
-    mStates.length = stateCount;
+    BlockStateImpl** states = new BlockStateImpl*[stateCount];
 
     for (unsigned int i = 0; i < stateCount; i++)
     {
-        mStates.data[i] = NULL;
+        states[i] = NULL;
     }
+
+    mStates.data = states;
+    mStates.length = stateCount;
 
     boost::unordered_map<std::map<const Property*, Boxed*>, BlockStateImpl*> statesByValues(11);
 
@@ -88,7 +91,7 @@ void BlockStateDefinition::_init(Block* block, const Property** properties, unsi
 
             unsigned int index = properties[i]->getIndexForValue(combination.data[i]);
 
-            data = (unsigned short)(data | (index << mBitOffsets[i]));
+            data |= index << mBitOffsets[i];
         }
 
         BlockStateImpl* state = new BlockStateImpl(this, data);
@@ -151,9 +154,11 @@ bool BlockStateDefinition::hasProperty(const Property* property) const
 
 Boxed* BlockStateDefinition::getPropertyValue(const Property* property, unsigned short data) const
 {
-    for (unsigned int i = 0; i < mProperties.size(); i++)
+    unsigned int i = 0;
+
+    for (std::vector<const Property*>::const_iterator it = mProperties.begin(); it != mProperties.end(); ++it, ++i)
     {
-        if (mProperties[i] == property)
+        if (*it == property)
         {
             return property->getValueAtIndex((data >> mBitOffsets[i]) & mBitMasks[i]);
         }
@@ -166,18 +171,16 @@ BlockStateDefinition::BlockStateImpl* BlockStateDefinition::getNeighbour(const P
                                                                         unsigned short data) const
 {
     unsigned int i = 0;
+    unsigned short index = 0;
 
-    while (i < mProperties.size() && mProperties[i] != property)
+    for (std::vector<const Property*>::const_iterator it = mProperties.begin(); it != mProperties.end(); ++it, ++i)
     {
-        i++;
+        if (*it == property)
+        {
+            index = property->getIndexForValue(value);
+            break;
+        }
     }
-
-    if (i == mProperties.size())
-    {
-        return mStates.data[data & ~(mBitMasks[i] << mBitOffsets[i])];
-    }
-
-    unsigned int index = property->getIndexForValue(value);
 
     return mStates.data[(data & ~(mBitMasks[i] << mBitOffsets[i])) | ((index & mBitMasks[i]) << mBitOffsets[i])];
 }
@@ -185,11 +188,13 @@ BlockStateDefinition::BlockStateImpl* BlockStateDefinition::getNeighbour(const P
 boost::unordered_map<const Property*, Boxed*>* BlockStateDefinition::getValues(unsigned short data) const
 {
     boost::unordered_map<const Property*, Boxed*>* values =
-        new boost::unordered_map<const Property*, Boxed*>(11);
+        new boost::unordered_map<const Property*, Boxed*>();
 
-    for (unsigned int i = 0; i < mProperties.size(); i++)
+    unsigned int i = 0;
+
+    for (std::vector<const Property*>::const_iterator it = mProperties.begin(); it != mProperties.end(); ++it, ++i)
     {
-        const Property* property = mProperties[i];
+        const Property* property = *it;
 
         values->insert(std::make_pair(property, property->getValueAtIndex((data >> mBitOffsets[i]) & mBitMasks[i])));
     }
@@ -212,9 +217,7 @@ BlockStateDefinition::BlockStateImpl::BlockStateImpl(BlockStateDefinition* defin
 
 bool BlockStateDefinition::BlockStateImpl::valuesContainsKey(const Property* property) const
 {
-    const std::vector<const Property*>& properties = mDefinition->getProperties();
-
-    return std::find(properties.begin(), properties.end(), property) != properties.end();
+    return mDefinition->hasProperty(property);
 }
 
 const std::vector<const Property*>& BlockStateDefinition::BlockStateImpl::getProperties() const
@@ -224,9 +227,7 @@ const std::vector<const Property*>& BlockStateDefinition::BlockStateImpl::getPro
 
 bool BlockStateDefinition::BlockStateImpl::hasProperty(const Property* property) const
 {
-    const std::vector<const Property*>& properties = mDefinition->getProperties();
-
-    return std::find(properties.begin(), properties.end(), property) != properties.end();
+    return mDefinition->hasProperty(property);
 }
 
 Boxed* BlockStateDefinition::BlockStateImpl::getBoxedValue(const Property* property) const
@@ -366,8 +367,7 @@ bool BlockStateDefinition::BlockStateImpl::isSolidBlockingCubeAndNotSignalSource
 
 bool BlockStateDefinition::BlockStateImpl::isSolidBlockingBlock() const
 {
-    return isSolid() &&
-        (mBlock->isSolidBlockingCube(this) || mBlock->isSolidBlockingCubeAndNotSignalSource(this));
+    return getMaterial()->isSolidBlocking() && (isCubeShaped() || isSolidBlockingCube());
 }
 
 bool BlockStateDefinition::BlockStateImpl::canProvideSupport(const Direction* direction,

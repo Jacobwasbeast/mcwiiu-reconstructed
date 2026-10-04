@@ -44,8 +44,7 @@ private:
 template <typename T>
 bool BlockStatePredicate::PredicateConversion<T>::apply(Boxed* value) const
 {
-    TypedBoxed<T>* boxed = value->isA(typeid(T)) ? static_cast<TypedBoxed<T>*>(value) : NULL;
-    return mPredicate->apply(boxed->getValue());
+    return mPredicate->apply((value->isA(typeid(T)) ? static_cast<TypedBoxed<T>*>(value) : NULL)->getValue());
 }
 
 template <typename T>

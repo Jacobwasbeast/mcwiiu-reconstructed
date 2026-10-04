@@ -57,10 +57,14 @@ void TrapDoorBlock::blockStaticCtor()
 {
     FACING = HorizontalDirectionalBlock::FACING_PROPERTY;
     std::wstring name(L"half");
-    boost::unordered_set<Half*> halves;
-    halves.insert(TOP);
-    halves.insert(BOTTOM);
-    HALF = EnumProperty<Half*>::create(name, typeid(Half*), halves, Predicates<Half*>::alwaysTrue);
+    EnumProperty<Half*>* half;
+    {
+        boost::unordered_set<Half*> halves;
+        halves.insert(TOP);
+        halves.insert(BOTTOM);
+        half = EnumProperty<Half*>::create(name, typeid(Half*), halves, Predicates<Half*>::alwaysTrue);
+    }
+    HALF = half;
 }
 
 const AABB* TrapDoorBlock::getShape(const BlockState* state, LevelSource*, const BlockPos&)
@@ -219,7 +223,8 @@ unsigned int TrapDoorBlock::GetInteractTooltip(const BlockTooltipDataHolder& too
 
 const BlockState* TrapDoorBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    return state->setValue(FACING, rotation->rotate(state->getValue(FACING)));
+    AbstractProperty<const Direction*>* property = FACING;
+    return state->setValue(property, rotation->rotate(state->getValue(property)));
 }
 
 const BlockState* TrapDoorBlock::mirror(const BlockState* state, Mirror* mirror)

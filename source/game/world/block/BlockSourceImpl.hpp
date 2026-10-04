@@ -10,7 +10,7 @@ class BlockSourceImpl : public BlockSource
 {
 public:
     BlockSourceImpl(Level* level, const BlockPos& pos);
-    virtual ~BlockSourceImpl();
+    virtual ~BlockSourceImpl() {}
 
     virtual double getX();
     virtual double getY();

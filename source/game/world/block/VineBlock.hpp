@@ -45,7 +45,7 @@ public:
     bool canAttachTo(Level* level, const BlockPos& pos, const Direction* direction);
     virtual bool mayPlace(Level* level, const BlockPos& pos, const Direction* direction);
     static AbstractProperty<bool>* getPropertyForFace(const Direction* direction);
-    static unsigned char countFaces(const BlockState* state);
+    static int countFaces(const BlockState* state);
     bool updateSurvival(Level* level, const BlockPos& pos, const BlockState* state);
     virtual int getColor() const;
     virtual int getColor(const BlockState* state);

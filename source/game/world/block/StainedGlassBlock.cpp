@@ -2,7 +2,6 @@
 
 #include <typeinfo>
 #include <vector>
-#include <boost/unordered_set.hpp>
 
 #include "game/core/DyeColor.hpp"
 #include "game/core/IconRegister.hpp"
@@ -23,22 +22,15 @@ static TextureAtlasSprite* gStainedGlassBlockIcons[16] = { NULL };
 
 void StainedGlassBlock::blockStaticCtor()
 {
-    boost::unordered_set<const DyeColor*> colors;
-    for (int data = 0; data < 16; ++data)
-    {
-        colors.insert(DyeColor::byBlockData(data));
-    }
-
     COLOR = EnumProperty<const DyeColor*>::create(
-        L"color", typeid(DyeColor), colors, Predicates<const DyeColor*>::alwaysTrue);
+        L"color", typeid(DyeColor), DyeColor::COLORS, Predicates<const DyeColor*>::alwaysTrue);
 }
 
 StainedGlassBlock::StainedGlassBlock(Material* material)
     : HalfTransparentBlock(L"glass", material, false)
 {
     DerivedInit();
-    TypedBoxed<const DyeColor*> color(DyeColor::WHITE);
-    registerDefaultState(mStateDefinition->any()->setBoxedValue(COLOR, &color));
+    registerDefaultState(mStateDefinition->any()->setValue(COLOR, DyeColor::WHITE));
 }
 
 StainedGlassBlock::~StainedGlassBlock()
@@ -87,8 +79,7 @@ bool StainedGlassBlock::isTransparent(const BlockState*)
 
 const BlockState* StainedGlassBlock::getBlockState(int data)
 {
-    TypedBoxed<const DyeColor*> color(DyeColor::byBlockData(data));
-    return defaultBlockState()->setBoxedValue(COLOR, &color);
+    return defaultBlockState()->setValue(COLOR, DyeColor::byBlockData(data));
 }
 
 void StainedGlassBlock::onPlace(Level* level, const BlockPos& pos, const BlockState*)
@@ -118,7 +109,7 @@ int StainedGlassBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 BlockStateDefinition* StainedGlassBlock::createBlockStateDefinition()
 {
-    const Property* properties[] = { COLOR };
+    static const Property* properties[] = { COLOR };
     return new BlockStateDefinition(this, properties, 1);
 }
 
@@ -129,10 +120,8 @@ TextureAtlasSprite* StainedGlassBlock::getTexture(const Direction*, const BlockS
 
 void StainedGlassBlock::registerIcons(IconRegister* iconRegister)
 {
-    std::wstring base = getIconName();
     for (int data = 0; data < 16; ++data)
     {
-        const DyeColor* color = DyeColor::byBlockData(data);
-        gStainedGlassBlockIcons[data] = iconRegister->registerIcon(base + L"_" + color->getTexture());
+        gStainedGlassBlockIcons[data] = iconRegister->registerIcon(getIconName() + L"_" + DyeColor::TEXTURE_NAMES[DyeColor::byBlockData(data)->getItemData()]);
     }
 }

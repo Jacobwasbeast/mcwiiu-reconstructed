@@ -3,6 +3,7 @@
 #include "game/core/StringIds.hpp"
 #include "game/world/LevelEvent.hpp"
 
+#include <cstring>
 #include <string>
 
 #include "game/core/Direction.hpp"
@@ -44,15 +45,16 @@ namespace
 }
 
 AnvilBlock::AnvilBlock()
-    : FallingBlock(Material::HEAVY_METAL), mTextureType(0), mTopIcons()
+    : FallingBlock(Material::HEAVY_METAL)
 {
     Block::DerivedInit();
     const BlockState* state = mStateDefinition->any();
-    TypedBoxed<const Direction*> facing(Direction::NORTH);
-    state = state->setBoxedValue(FACING, &facing);
-    TypedBoxed<int> damage(0);
-    registerDefaultState(state->setBoxedValue(DAMAGE, &damage));
+    state = state->setValue(FACING, Direction::NORTH);
+    state = state->setValue(DAMAGE, 0);
+    registerDefaultState(state);
+    mTextureType = 0;
     setLightBlock(0);
+    memset(mTopIcons, 0, sizeof(mTopIcons));
 }
 
 void AnvilBlock::blockStaticCtor()
@@ -80,11 +82,9 @@ const BlockState* AnvilBlock::getStateForPlacement(Level* level, const BlockPos&
                                                     boost::shared_ptr<LivingEntity> placer)
 {
     const Direction* facing = placer->getDirection()->getClockWise();
-    TypedBoxed<const Direction*> boxedFacing(facing);
-    TypedBoxed<int> damage(auxValue >> 2);
-    const BlockState* state = Block::getStateForPlacement(level, pos, direction, hitX, hitY, hitZ, auxValue, placer);
-    state = state->setBoxedValue(FACING, &boxedFacing);
-    return state->setBoxedValue(DAMAGE, &damage);
+    return Block::getStateForPlacement(level, pos, direction, hitX, hitY, hitZ, auxValue, placer)
+        ->setValue(FACING, facing)
+        ->setValue(DAMAGE, auxValue >> 2);
 }
 
 bool AnvilBlock::use(Level* level, const BlockPos& pos, const BlockState*, boost::shared_ptr<Player> player,
@@ -135,16 +135,15 @@ bool AnvilBlock::shouldRenderFace(const BlockState*, LevelSource*, const BlockPo
 
 const BlockState* AnvilBlock::getBlockState(int data)
 {
-    const Direction* facing = Direction::from2DDataValue(data & 3);
-    TypedBoxed<const Direction*> boxedFacing(facing);
-    TypedBoxed<int> damage((data & 0xf) >> 2);
-    const BlockState* state = defaultBlockState()->setBoxedValue(FACING, &boxedFacing);
-    return state->setBoxedValue(DAMAGE, &damage);
+    const BlockState* state = defaultBlockState();
+    state = state->setValue(FACING, Direction::from2DDataValue(data & 3));
+    return state->setValue(DAMAGE, (data & 0xf) >> 2);
 }
 
 int AnvilBlock::convertBlockStateToLegacyData(const BlockState* state)
 {
-    return state->getValue(FACING)->get2DDataValue() | (state->getValue(DAMAGE) << 2);
+    int facing = state->getValue(FACING)->get2DDataValue();
+    return facing | (state->getValue(DAMAGE) << 2);
 }
 
 unsigned int AnvilBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
@@ -158,8 +157,8 @@ const BlockState* AnvilBlock::rotate(const BlockState* state, Rotation* rotation
 {
     if (state->getBlock() == this)
     {
-        TypedBoxed<const Direction*> facing(rotation->rotate(state->getValue(FACING)));
-        state = state->setBoxedValue(FACING, &facing);
+        const AbstractProperty<const Direction*>* facingProperty = FACING;
+        state = state->setValue(facingProperty, rotation->rotate(state->getValue(facingProperty)));
     }
     return state;
 }
@@ -191,8 +190,10 @@ EBlockRenderShape AnvilBlock::getRenderShape(const BlockState*)
 }
 
 AnvilBlock::Anvil::Anvil(Level* level, const BlockPos& pos)
-    : InteractionObject(), mLevel(level), mBlockPos(pos)
+    : InteractionObject()
 {
+    mLevel = level;
+    mBlockPos = pos;
 }
 
 AbstractContainerMenu* AnvilBlock::Anvil::createMenu(boost::shared_ptr<Inventory> inventory,

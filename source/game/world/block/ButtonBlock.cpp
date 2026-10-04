@@ -37,9 +37,10 @@ const AABB* ButtonBlock::AABB_WEST_ON = AABB::newPermanent(0.9375, 0.375, 0.3125
 const AABB* ButtonBlock::AABB_EAST_ON = AABB::newPermanent(0.0, 0.375, 0.3125, 0.0625, 0.625, 0.6875);
 
 ButtonBlock::ButtonBlock(bool wooden, Material* material)
-    : Block(material), mWooden(wooden)
+    : Block(material)
 {
     setTicking(true);
+    mWooden = wooden;
 }
 
 void ButtonBlock::blockStaticCtor()
@@ -50,11 +51,7 @@ void ButtonBlock::blockStaticCtor()
 void ButtonBlock::DerivedInit()
 {
     Block::DerivedInit();
-    const BlockState* state = mStateDefinition->any();
-    TypedBoxed<const Direction*> facing(Direction::NORTH);
-    state = state->setBoxedValue(FACING, &facing);
-    TypedBoxed<bool> powered(false);
-    registerDefaultState(state->setBoxedValue(POWERED, &powered));
+    registerDefaultState(mStateDefinition->any()->setValue(FACING, Direction::NORTH)->setValue(POWERED, false));
 }
 
 const AABB* ButtonBlock::getClipAABB(const BlockState*, LevelSource*, const BlockPos&)
@@ -74,16 +71,18 @@ bool ButtonBlock::canAttachTo(Level* level, const BlockPos& pos, const Direction
 {
     BlockPos supportPos = pos.relative(direction->getOpposite());
     const BlockState* supportState = level->getBlockState(supportPos);
-    EBlockFaceShape faceShape = supportState->getBlockFaceShape(level, supportPos, direction);
+    bool solidFace = supportState->getBlockFaceShape(level, supportPos, direction) == BLOCK_FACE_SOLID;
     Block* support = supportState->getBlock();
     if (direction == Direction::UP)
     {
-        if (support != Blocks::hopper && (Block::isExceptionBlockForAttaching(support) || faceShape != BLOCK_FACE_SOLID) &&
-            !Block::isExceptionForPistonAttaching(support) && !support->mIsFence) return false;
-        return true;
+        bool canAttach = true;
+        if (support != Blocks::hopper && (Block::isExceptionBlockForAttaching(support) || !solidFace) &&
+            !Block::isExceptionForPistonAttaching(support) && !support->mIsFence) canAttach = false;
+        return canAttach;
     }
-    if ((Block::isExceptionBlockForAttaching(support) || faceShape != BLOCK_FACE_SOLID) && !Block::isExceptionForPistonAttaching(support)) return false;
-    return true;
+    bool canAttach = true;
+    if ((Block::isExceptionBlockForAttaching(support) || !solidFace) && !Block::isExceptionForPistonAttaching(support)) canAttach = false;
+    return canAttach;
 }
 
 bool ButtonBlock::mayPlace(Level* level, const BlockPos& pos, const Direction* direction)
@@ -100,12 +99,10 @@ bool ButtonBlock::mayPlace(Level* level, const BlockPos& pos)
 
 const BlockState* ButtonBlock::getStateForPlacement(Level* level, const BlockPos& pos, const Direction* direction, float, float, float, int, boost::shared_ptr<LivingEntity>)
 {
-    TypedBoxed<const Direction*> facing(direction);
-    TypedBoxed<bool> powered(false);
+    bool canAttach = canAttachTo(level, pos, direction);
     const BlockState* state = defaultBlockState();
-    if (!canAttachTo(level, pos, direction)) facing = TypedBoxed<const Direction*>(Direction::DOWN);
-    state = state->setBoxedValue(FACING, &facing);
-    return state->setBoxedValue(POWERED, &powered);
+    if (canAttach) return state->setValue(FACING, direction)->setValue(POWERED, false);
+    return state->setValue(FACING, Direction::DOWN)->setValue(POWERED, false);
 }
 
 bool ButtonBlock::checkCanSurvive(Level* level, const BlockPos& pos, const BlockState* state)
@@ -131,12 +128,21 @@ const AABB* ButtonBlock::getShape(const BlockState* state, LevelSource*, const B
 {
     const Direction* direction = state->getValue(FACING);
     bool powered = state->getValue(POWERED);
-    if (direction == Direction::DOWN) return powered ? AABB_DOWN_ON : AABB_DOWN_OFF;
-    if (direction == Direction::UP) return powered ? AABB_UP_ON : AABB_UP_OFF;
-    if (direction == Direction::SOUTH) return powered ? AABB_SOUTH_ON : AABB_SOUTH_OFF;
-    if (direction == Direction::WEST) return powered ? AABB_WEST_ON : AABB_WEST_OFF;
-    if (direction == Direction::EAST) return powered ? AABB_EAST_ON : AABB_EAST_OFF;
-    return powered ? AABB_NORTH_ON : AABB_NORTH_OFF;
+    switch (direction->get3DDataValue())
+    {
+    case 0:
+        return powered ? AABB_DOWN_ON : AABB_DOWN_OFF;
+    case 1:
+        return powered ? AABB_UP_ON : AABB_UP_OFF;
+    case 3:
+        return powered ? AABB_SOUTH_ON : AABB_SOUTH_OFF;
+    case 4:
+        return powered ? AABB_WEST_ON : AABB_WEST_OFF;
+    case 5:
+        return powered ? AABB_EAST_ON : AABB_EAST_OFF;
+    default:
+        return powered ? AABB_NORTH_ON : AABB_NORTH_OFF;
+    }
 }
 bool ButtonBlock::TestUse() { return true; }
 
@@ -154,8 +160,7 @@ bool ButtonBlock::use(Level* level, const BlockPos& pos, const BlockState* state
         return false;
     }
     if (state->getValue(POWERED)) return true;
-    TypedBoxed<bool> powered(true);
-    level->setBlock(pos, state->setBoxedValue(POWERED, &powered), Block::UPDATE_ALL, false);
+    level->setBlock(pos, state->setValue(POWERED, true), Block::UPDATE_ALL, false);
     level->setBlocksDirty(pos, pos);
     playOnSound(player, level, pos);
     updateNeighbours(level, pos, state->getValue(FACING));
@@ -170,12 +175,14 @@ void ButtonBlock::onRemove(Level* level, const BlockPos& pos, const BlockState* 
 
 int ButtonBlock::getSignal(const BlockState* state, LevelSource*, const BlockPos&, const Direction*)
 {
-    return state->getValue(POWERED) ? 15 : 0;
+    if (state->getValue(POWERED)) return 15;
+    return 0;
 }
 
 int ButtonBlock::getDirectSignal(const BlockState* state, LevelSource*, const BlockPos&, const Direction* direction)
 {
-    return state->getValue(POWERED) && direction == state->getValue(FACING) ? 15 : 0;
+    if (state->getValue(POWERED) && direction == state->getValue(FACING)) return 15;
+    return 0;
 }
 
 bool ButtonBlock::isSignalSource(const BlockState*) { return true; }
@@ -197,8 +204,7 @@ void ButtonBlock::checkPressed(const BlockState* state, Level* level, const Bloc
     {
         if (!powered)
         {
-            TypedBoxed<bool> poweredValue(true);
-            level->setBlockAndUpdate(pos, state->setBoxedValue(POWERED, &poweredValue));
+            level->setBlockAndUpdate(pos, state->setValue(POWERED, true));
             updateNeighbours(level, pos, state->getValue(FACING));
             level->setBlocksDirty(pos, pos);
             playOnSound(boost::shared_ptr<Player>(), level, pos);
@@ -207,8 +213,7 @@ void ButtonBlock::checkPressed(const BlockState* state, Level* level, const Bloc
     }
     else if (powered)
     {
-        TypedBoxed<bool> poweredValue(false);
-        level->setBlockAndUpdate(pos, state->setBoxedValue(POWERED, &poweredValue));
+        level->setBlockAndUpdate(pos, state->setValue(POWERED, false));
         updateNeighbours(level, pos, state->getValue(FACING));
         level->setBlocksDirty(pos, pos);
         playOffSound(level, pos);
@@ -222,8 +227,7 @@ void ButtonBlock::tick(Level* level, const BlockPos& pos, const BlockState* stat
         if (mWooden) checkPressed(state, level, pos);
         else
         {
-            TypedBoxed<bool> powered(false);
-            level->setBlockAndUpdate(pos, state->setBoxedValue(POWERED, &powered));
+            level->setBlockAndUpdate(pos, state->setValue(POWERED, false));
             updateNeighbours(level, pos, state->getValue(FACING));
             playOffSound(level, pos);
             level->setBlocksDirty(pos, pos);
@@ -238,28 +242,57 @@ void ButtonBlock::entityInside(Level* level, const BlockPos& pos, const BlockSta
 
 const BlockState* ButtonBlock::getBlockState(int data)
 {
-    static const Direction* const legacyFacing[] = {
-        Direction::DOWN, Direction::EAST, Direction::WEST,
-        Direction::SOUTH, Direction::NORTH, Direction::UP
-    };
-    unsigned int facingIndex = static_cast<unsigned int>(data) & 7u;
-    const Direction* direction = facingIndex < 6u ? legacyFacing[facingIndex] : Direction::UP;
-    TypedBoxed<const Direction*> facing(direction);
-    TypedBoxed<bool> powered((data & 8) != 0);
-    return defaultBlockState()->setBoxedValue(FACING, &facing)->setBoxedValue(POWERED, &powered);
+    const Direction* direction;
+    switch (data & 7)
+    {
+    case 0:
+        direction = Direction::DOWN;
+        break;
+    case 1:
+        direction = Direction::EAST;
+        break;
+    case 2:
+        direction = Direction::WEST;
+        break;
+    case 3:
+        direction = Direction::SOUTH;
+        break;
+    case 4:
+        direction = Direction::NORTH;
+        break;
+    default:
+        direction = Direction::UP;
+        break;
+    }
+    return defaultBlockState()->setValue(FACING, direction)->setValue(POWERED, (data & 8) != 0);
 }
 
 int ButtonBlock::convertBlockStateToLegacyData(const BlockState* state)
 {
-    const Direction* direction = state->getValue(FACING);
     int data;
-    if (direction == Direction::DOWN) data = 0;
-    else if (direction == Direction::UP) data = 5;
-    else if (direction == Direction::NORTH) data = 4;
-    else if (direction == Direction::SOUTH) data = 3;
-    else if (direction == Direction::WEST) data = 2;
-    else data = 1;
-    return data | (state->getValue(POWERED) ? 8 : 0);
+    switch (state->getValue(FACING)->get3DDataValue())
+    {
+    case 0:
+        data = 0;
+        break;
+    case 2:
+        data = 4;
+        break;
+    case 3:
+        data = 3;
+        break;
+    case 4:
+        data = 2;
+        break;
+    case 5:
+        data = 1;
+        break;
+    default:
+        data = 5;
+        break;
+    }
+    if (state->getValue(POWERED)) data |= 8;
+    return data;
 }
 
 unsigned int ButtonBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
@@ -270,8 +303,7 @@ unsigned int ButtonBlock::GetInteractTooltip(const BlockTooltipDataHolder& toolt
 
 const BlockState* ButtonBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    TypedBoxed<const Direction*> facing(rotation->rotate(state->getValue(FACING)));
-    return state->setBoxedValue(FACING, &facing);
+    return state->setValue(FACING, rotation->rotate(state->getValue(FACING)));
 }
 
 const BlockState* ButtonBlock::mirror(const BlockState* state, Mirror* mirror)
@@ -281,7 +313,7 @@ const BlockState* ButtonBlock::mirror(const BlockState* state, Mirror* mirror)
 
 BlockStateDefinition* ButtonBlock::createBlockStateDefinition()
 {
-    const Property* properties[] = { FACING, POWERED };
+    static const Property* properties[] = { FACING, POWERED };
     return new BlockStateDefinition(this, properties, 2);
 }
 

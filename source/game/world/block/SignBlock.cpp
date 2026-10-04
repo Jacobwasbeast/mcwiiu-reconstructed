@@ -28,7 +28,7 @@ SignBlock::SignBlock()
 
 boost::shared_ptr<BlockEntity> SignBlock::newBlockEntity(Level* level, int)
 {
-    boost::shared_ptr<SignBlockEntity> entity(new SignBlockEntity());
+    boost::shared_ptr<BlockEntity> entity = boost::shared_ptr<SignBlockEntity>(new SignBlockEntity());
     entity->setLevel(level);
     return entity;
 }
@@ -79,13 +79,14 @@ not_null_ptr<ItemInstance> SignBlock::getCloneItemInstance(Level*, const BlockPo
 }
 
 bool SignBlock::use(Level* level, const BlockPos& pos, const BlockState*, boost::shared_ptr<Player> player,
-                    InteractionHand::EInteractionHand, const Direction*, float, float, float, bool clientSide)
+                    InteractionHand::EInteractionHand, const Direction*, float, float, float, bool)
 {
-    if (clientSide)
+    if (level->mIsClientSide)
         return true;
 
     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
-    if (blockEntity.get() == NULL || blockEntity->GetType() != BlockEntityType::SIGN)
+    bool isSign = blockEntity->GetType() == BlockEntityType::SIGN;
+    if (!isSign)
         return false;
 
     boost::shared_ptr<SignBlockEntity> sign = boost::static_pointer_cast<SignBlockEntity>(blockEntity);
@@ -110,7 +111,7 @@ EBlockFaceShape SignBlock::getBlockFaceShape(LevelSource*, const BlockState*, co
 unsigned int SignBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
     unsigned int result = Block::GetInteractTooltip(tooltipData);
-    if (tooltipData.m_pPlayer != NULL && !tooltipData.m_pPlayer->isSneaking()
+    if (!tooltipData.m_pPlayer->isSneaking()
         && (result == IDS_TOOLTIPS_PLACE || result == IDS_TOOLTIPS_HANG))
         return IDS_NONE;
     return result;

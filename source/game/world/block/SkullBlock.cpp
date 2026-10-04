@@ -74,10 +74,10 @@ SkullBlock::SkullBlock()
     mWitherFull = NULL;
 }
 
-boost::shared_ptr<BlockEntity> SkullBlock::newBlockEntity(Level*, int data)
+boost::shared_ptr<BlockEntity> SkullBlock::newBlockEntity(Level* level, int)
 {
     boost::shared_ptr<SkullBlockEntity> entity = boost::shared_ptr<SkullBlockEntity>(new SkullBlockEntity());
-    entity->setData(data);
+    entity->setLevel(level);
     return entity;
 }
 
@@ -121,11 +121,10 @@ const AABB* SkullBlock::getShape(const BlockState* state, LevelSource*, const Bl
 const BlockState* SkullBlock::getStateForPlacement(Level*, const BlockPos& pos, const Direction*, float, float,
                                                     float, int, boost::shared_ptr<LivingEntity> placer)
 {
-    const Direction* facing = Direction::getDirectionFromLivingEntity(pos, placer);
-    TypedBoxed<const Direction*> boxedFacing(facing);
-    TypedBoxed<bool> noDrop(false);
-    const BlockState* state = defaultBlockState()->setBoxedValue(FACING, &boxedFacing);
-    return state->setBoxedValue(NODROP, &noDrop);
+    const BlockState* state = defaultBlockState();
+    DirectionProperty* facing = FACING;
+    state = state->setValue(facing, placer->getDirection());
+    return state->setValue(NODROP, false);
 }
 
 not_null_ptr<ItemInstance> SkullBlock::getCloneItemInstance(Level* level, const BlockPos& pos,
@@ -147,10 +146,10 @@ void SkullBlock::spawnResources(Level* level, const BlockPos& pos, const BlockSt
 bool SkullBlock::playerWillDestroy(Level* level, const BlockPos& pos, const BlockState* state,
                                    boost::shared_ptr<Player> player)
 {
-    if (player && player->mAbilities.mInstabuild)
+    if (player->mAbilities.mInstabuild)
     {
-        TypedBoxed<bool> noDrop(true);
-        level->setBlock(pos, state->setBoxedValue(NODROP, &noDrop), Block::UPDATE_INVISIBLE, false);
+        state = state->setValue(NODROP, true);
+        level->setBlock(pos, state, Block::UPDATE_INVISIBLE, false);
     }
     return Block::playerWillDestroy(level, pos, state, player);
 }
@@ -207,7 +206,7 @@ BlockPattern* SkullBlock::getOrCreateWitherFull()
 
 bool SkullBlock::canSpawnMob(Level* level, const BlockPos& pos, not_null_ptr<ItemInstance> item)
 {
-    if (item->getAuxValue() != 1 || pos.y <= 1 || level->getDifficulty() == Difficulty::PEACEFUL
+    if (item->getAuxValue() != 1 || pos.y < 2 || level->getDifficulty() == Difficulty::PEACEFUL
         || level->mIsClientSide)
         return false;
     BlockPattern::BlockPatternMatch* match = getOrCreateWitherBase()->find(level, pos);
@@ -225,73 +224,70 @@ void SkullBlock::checkMobSpawn(Level* level, const BlockPos& pos,
 
     BlockPattern* pattern = getOrCreateWitherFull();
     BlockPattern::BlockPatternMatch* match = pattern->find(level, pos);
-    if (match == NULL)
-        return;
-
-    if (level->getDifficulty() == Difficulty::PEACEFUL)
+    if (match != NULL)
     {
-        if (player)
-            player->displayClientMessage(IDS_CANT_SPAWN_IN_PEACEFUL, true);
-        return;
-    }
+        if (level->getDifficulty() == Difficulty::PEACEFUL)
+        {
+            if (player)
+                player->displayClientMessage(IDS_CANT_SPAWN_IN_PEACEFUL, true);
+            return;
+        }
 
-    bool canCreate = level->canCreateMore(EntityType::WITHER_BOSS, Level::eSpawnType_Egg);
-    for (int i = 0; i < 3; ++i)
-    {
-        BlockInWorld* block = match->getBlock(i, 0, 0);
-        const BlockState* state = block->getState();
+        bool canCreate = level->canCreateMore(EntityType::WITHER_BOSS, Level::eSpawnType_Egg);
+        for (int i = 0; i < 3; ++i)
+        {
+            BlockInWorld* block = match->getBlock(i, 0, 0);
+            if (canCreate)
+                level->setBlock(block->getPos(), block->getState()->setValue(NODROP, true), Block::UPDATE_CLIENTS, false);
+            else
+                level->setBlock(block->getPos(), block->getState(), Block::UPDATE_CLIENTS, false);
+        }
+
+        for (int x = 0; x < static_cast<int>(pattern->getWidth()); ++x)
+        {
+            for (int y = 0; y < static_cast<int>(pattern->getHeight()); ++y)
+            {
+                BlockInWorld* block = match->getBlock(x, y, 0);
+                if (!canCreate)
+                    block->getState()->getBlock()->spawnResources(level, block->getPos(), block->getState(), 0);
+                level->setBlock(block->getPos(), Blocks::air->defaultBlockState(), Block::UPDATE_CLIENTS, false);
+            }
+        }
+
         if (canCreate)
         {
-            TypedBoxed<bool> noDrop(true);
-            state = state->setBoxedValue(NODROP, &noDrop);
-        }
-        level->setBlock(block->getPos(), state, Block::UPDATE_CLIENTS, false);
-    }
+            boost::shared_ptr<WitherBoss> wither(new WitherBoss(level));
+            BlockPos spawnPos = match->getBlock(1, 2, 0)->getPos();
+            wither->moveTo(spawnPos.x + 0.5, spawnPos.y + 0.55, spawnPos.z + 0.5,
+                           match->getForwards()->getAxis() == Direction::Axis::X ? 0.0f : 90.0f, 0.0f);
+            wither->mYBodyRot = match->getForwards()->getAxis() == Direction::Axis::X ? 0.0f : 90.0f;
+            wither->makeInvulnerable();
 
-    for (int x = 0; x < static_cast<int>(pattern->getWidth()); ++x)
-    {
-        for (int y = 0; y < static_cast<int>(pattern->getHeight()); ++y)
+            std::vector<boost::shared_ptr<Entity> >* players =
+                level->getEntitiesOfClass(typeid(Player), wither->mBoundingBox->grow(50.0, 50.0, 50.0));
+            for (std::vector<boost::shared_ptr<Entity> >::iterator it = players->begin(); it != players->end(); ++it)
+            {
+                boost::shared_ptr<Player> nearby = boost::static_pointer_cast<Player>(*it);
+                nearby->awardStat(GenericStats::spawnWither(), GenericStats::param_spawnWither());
+            }
+            delete players;
+            level->addEntity(wither);
+        }
+
+        for (int i = 0; i < 120; ++i)
         {
-            BlockInWorld* block = match->getBlock(x, y, 0);
-            if (!canCreate)
-                block->getState()->getBlock()->spawnResources(level, block->getPos(), block->getState(), 0);
-            level->setBlock(block->getPos(), Blocks::air->defaultBlockState(), Block::UPDATE_CLIENTS, false);
+            BlockPos particlePos = match->getBlock(1, 0, 0)->getPos();
+            double x = particlePos.x + level->mRandom->nextDouble();
+            double y = (particlePos.y - 2) + level->mRandom->nextDouble() * 3.9;
+            double z = particlePos.z + level->mRandom->nextDouble();
+            level->addParticle(PARTICLE_SNOWBALL_POOF, x, y, z, 0.0, 0.0, 0.0, arrayWithLength<int>());
         }
-    }
 
-    if (canCreate)
-    {
-        boost::shared_ptr<WitherBoss> wither(new WitherBoss(level));
-        BlockPos spawnPos = match->getBlock(1, 2, 0)->getPos();
-        wither->moveTo(spawnPos.x + 0.5, spawnPos.y + 0.55, spawnPos.z + 0.5,
-                       match->getForwards()->getAxis() == Direction::Axis::X ? 0.0f : 90.0f, 0.0f);
-        wither->mYBodyRot = match->getForwards()->getAxis() == Direction::Axis::X ? 0.0f : 90.0f;
-        wither->makeInvulnerable();
-
-        std::vector<boost::shared_ptr<Entity> >* players =
-            level->getEntitiesOfClass(typeid(Player), wither->mBoundingBox->grow(50.0, 50.0, 50.0));
-        for (std::vector<boost::shared_ptr<Entity> >::iterator it = players->begin(); it != players->end(); ++it)
+        for (int x = 0; x < static_cast<int>(pattern->getWidth()); ++x)
         {
-            boost::shared_ptr<Player> nearby = boost::static_pointer_cast<Player>(*it);
-            nearby->awardStat(GenericStats::spawnWither(), GenericStats::param_spawnWither());
+            for (int y = 0; y < static_cast<int>(pattern->getHeight()); ++y)
+                level->blockUpdated(match->getBlock(x, y, 0)->getPos(), Blocks::air, false);
         }
-        delete players;
-        level->addEntity(wither);
-    }
-
-    for (int i = 0; i < 120; ++i)
-    {
-        BlockPos particlePos = match->getBlock(1, 0, 0)->getPos();
-        double x = particlePos.x + level->mRandom->nextDouble();
-        double y = (particlePos.y - 2) + level->mRandom->nextDouble() * 3.9;
-        double z = particlePos.z + level->mRandom->nextDouble();
-        level->addParticle(PARTICLE_SNOWBALL_POOF, x, y, z, 0.0, 0.0, 0.0, arrayWithLength<int>());
-    }
-
-    for (int x = 0; x < static_cast<int>(pattern->getWidth()); ++x)
-    {
-        for (int y = 0; y < static_cast<int>(pattern->getHeight()); ++y)
-            level->blockUpdated(match->getBlock(x, y, 0)->getPos(), Blocks::air, false);
     }
 
     delete match;

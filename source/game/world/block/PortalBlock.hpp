@@ -14,6 +14,7 @@ class Random;
 class Rotation;
 class ItemInstance;
 class Entity;
+template <typename T> class EnumProperty;
 
 class PortalBlock : public HalfTransparentBlock
 {
@@ -43,6 +44,8 @@ public:
 
     PortalBlock();
     virtual ~PortalBlock();
+
+    static EnumProperty<Direction::Axis*>* AXIS;
 
     static void blockStaticCtor();
     BlockPattern::BlockPatternMatch* getPortalShape(Level* level, const BlockPos& pos);

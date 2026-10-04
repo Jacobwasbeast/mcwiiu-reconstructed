@@ -4,6 +4,7 @@
 #include "game/client/render/ParticleType.hpp"
 #include "game/client/render/BlockEntityRenderDispatcher.hpp"
 #include "game/entity/mob/TheEndGatewayEntity.hpp"
+#include "game/item/ItemInstance.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/LevelSource.hpp"
@@ -25,19 +26,19 @@ EndGatewayBlock::EndGatewayBlock(Material* material)
     setLightEmission(1.0f);
 }
 
-boost::shared_ptr<BlockEntity> EndGatewayBlock::newBlockEntity(Level*, int data)
+boost::shared_ptr<BlockEntity> EndGatewayBlock::newBlockEntity(Level* level, int)
 {
-    boost::shared_ptr<TheEndGatewayEntity> entity(new TheEndGatewayEntity());
-    entity->setData(data);
+    boost::shared_ptr<BlockEntity> entity = boost::shared_ptr<TheEndGatewayEntity>(new TheEndGatewayEntity());
+    entity->setLevel(level);
     return entity;
 }
 
 bool EndGatewayBlock::shouldRenderFace(const BlockState*, LevelSource* levelSource,
                                        const BlockPos& pos, const Direction* direction)
 {
-    const BlockPos neighbor = pos.relative(direction);
-    const BlockState* state = levelSource->getBlockState(neighbor);
-    return !state->isSolidRender() && state->getBlock() != Blocks::end_gateway;
+    const BlockState* state = levelSource->getBlockState(pos.relative(direction));
+    const Block* block = state->getBlock();
+    return !state->isSolidRender() && block != Blocks::end_gateway;
 }
 
 const AABB* EndGatewayBlock::getClipAABB(const BlockState*, LevelSource*, const BlockPos&)
@@ -63,17 +64,16 @@ int EndGatewayBlock::getResourceCount(Random*)
 void EndGatewayBlock::animateTick(const BlockState*, Level* level, const BlockPos& pos, Random* random)
 {
     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
-    if (blockEntity.get() == NULL
-        || blockEntity->GetType() != BlockEntityType::THE_END_GATEWAY_ENTITY)
+    bool isGateway = blockEntity->GetType() == BlockEntityType::THE_END_GATEWAY_ENTITY;
+    if (!isGateway)
         return;
 
-    boost::shared_ptr<TheEndGatewayEntity> gateway = boost::static_pointer_cast<TheEndGatewayEntity>(blockEntity);
-    int amount = gateway->getParticleAmount();
+    int amount = boost::static_pointer_cast<TheEndGatewayEntity>(blockEntity)->getParticleAmount();
     for (int i = 0; i < amount; ++i)
     {
-        double x = static_cast<double>(pos.x) + random->nextFloat();
-        double y = static_cast<double>(pos.y) + random->nextFloat();
-        double z = static_cast<double>(pos.z) + random->nextFloat();
+        double x = pos.x + random->nextFloat();
+        double y = pos.y + random->nextFloat();
+        double z = pos.z + random->nextFloat();
         double velocityX = (random->nextFloat() - 0.5) * 0.5;
         double velocityY = (random->nextFloat() - 0.5) * 0.5;
         double velocityZ = (random->nextFloat() - 0.5) * 0.5;
@@ -81,12 +81,12 @@ void EndGatewayBlock::animateTick(const BlockState*, Level* level, const BlockPo
         if (random->nextBoolean())
         {
             z = static_cast<double>(pos.z) + 0.5 + 0.25 * sign;
-            velocityZ = static_cast<double>(random->nextFloat() + random->nextFloat()) * sign;
+            velocityZ = random->nextFloat() * 2.0f * sign;
         }
         else
         {
             x = static_cast<double>(pos.x) + 0.5 + 0.25 * sign;
-            velocityX = static_cast<double>(random->nextFloat() + random->nextFloat()) * sign;
+            velocityX = random->nextFloat() * 2.0f * sign;
         }
         level->addParticle(PARTICLE_PORTAL, x, y, z, velocityX, velocityY, velocityZ,
                            arrayWithLength<int>());
@@ -95,7 +95,7 @@ void EndGatewayBlock::animateTick(const BlockState*, Level* level, const BlockPo
 
 not_null_ptr<ItemInstance> EndGatewayBlock::getCloneItemInstance(Level*, const BlockPos&, const BlockState*)
 {
-    return not_null_ptr<ItemInstance>();
+    return ItemInstance::EMPTY;
 }
 
 const MaterialColor* EndGatewayBlock::getMapColor(const BlockState*, LevelSource*, const BlockPos&)
@@ -131,8 +131,7 @@ BlockStateDefinition* EndGatewayBlock::createBlockStateDefinition()
 
 const BlockState* EndGatewayBlock::getBlockState(int data)
 {
-    TypedBoxed<int> value(data);
-    return defaultBlockState()->setBoxedValue(PORTAL_NUMBER, &value);
+    return defaultBlockState()->setValue(PORTAL_NUMBER, data);
 }
 
 int EndGatewayBlock::convertBlockStateToLegacyData(const BlockState* state)

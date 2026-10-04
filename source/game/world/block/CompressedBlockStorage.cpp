@@ -85,7 +85,8 @@ void CompressedBlockStorage::getDataSection(unsigned char* blocks, int x, int y,
     const unsigned short* headers = (const unsigned short*)mData;
     const unsigned char* sections = mData + 1024;
 
-    unsigned short header = headers[(x << 7) | (z << 5) | y];
+    const unsigned short* headerPtr = &headers[(x << 7) | (z << 5) | y];
+    unsigned short header = *headerPtr;
     unsigned int format = header & 3;
 
     if (format != 3)
@@ -103,22 +104,25 @@ void CompressedBlockStorage::getDataSection(unsigned char* blocks, int x, int y,
         {
             blocks[i] = palette[(indices[(i >> shift) & indexMask] >> ((i & slotMask) * bitsPerBlock)) & valueMask];
         }
-    }
-    else if ((header & 4) != 0)
-    {
-        for (int i = 0; i < 64; i++)
-        {
-            blocks[i] = (unsigned char)(header >> 8);
-        }
-    }
-    else
-    {
-        const unsigned char* section = sections + ((header >> 1) & 0x7FFE);
 
+        return;
+    }
+
+    if ((header & 4) != 0)
+    {
         for (int i = 0; i < 64; i++)
         {
-            blocks[i] = section[i];
+            blocks[i] = (*headerPtr >> 8) & 0xFF;
         }
+
+        return;
+    }
+
+    const unsigned char* section = sections + ((header >> 1) & 0x7FFE);
+
+    for (int i = 0; i < 64; i++)
+    {
+        blocks[i] = section[i];
     }
 }
 
@@ -244,7 +248,7 @@ void CompressedBlockStorage::compress(int sectionIndex)
             else
             {
                 newHeaders[i] = 3;
-                newSize = ((newSize + 3) & ~3) + 64;
+                newSize = ((newSize + 3) & 0xFFFC) + 64;
             }
         }
     }
@@ -286,7 +290,7 @@ void CompressedBlockStorage::compress(int sectionIndex)
             }
             else if (format == 3)
             {
-                newSize = ((newSize + 3) & ~3) + 64;
+                newSize = ((newSize + 3) & 0xFFFC) + 64;
             }
         }
     }
@@ -362,7 +366,7 @@ void CompressedBlockStorage::compress(int sectionIndex)
                 }
                 else
                 {
-                    XMemSet(blocks, header >> 8, 64);
+                    XMemSet(blocks, (header >> 8) & 0xFF, 64);
 
                     section = blocks;
                 }
@@ -457,7 +461,12 @@ void CompressedBlockStorage::write(DataOutputStream* out)
 
     if (mData != NULL)
     {
-        unsigned char* headers = new unsigned char[1024]();
+        unsigned char* headers = new unsigned char[1024];
+
+        for (int i = 0; i < 1024; i++)
+        {
+            headers[i] = 0;
+        }
 
         memcpy(headers, mData, 1024);
 

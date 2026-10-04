@@ -29,7 +29,7 @@ void SnowBlock::tick(Level* level, const BlockPos& pos, const BlockState* state,
 {
     if (level->getBrightness(LightLayer::BLOCK, pos) > 11)
     {
-        spawnResources(level, pos, state, 0);
+        spawnResources(level, pos, level->getBlockState(pos), 0);
         level->removeBlock(pos);
     }
 }

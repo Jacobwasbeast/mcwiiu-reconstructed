@@ -7,7 +7,5 @@ float ItemPropertyFunction_Damage::call(not_null_ptr<ItemInstance> itemInstance,
                                         Level*,
                                         boost::shared_ptr<LivingEntity>)
 {
-    const float damage = (float)itemInstance->getDamageValue();
-    const float maxDamage = (float)itemInstance->getMaxDamage();
-    return Mth::clamp(damage / maxDamage, 0.0f, 1.0f);
+    return Mth::clamp((float)itemInstance->getDamageValue() / (float)itemInstance->getMaxDamage(), 0.0f, 1.0f);
 }

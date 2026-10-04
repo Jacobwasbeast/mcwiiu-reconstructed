@@ -34,18 +34,13 @@ AABB* FenceGateBlock::Z_AXIS_COLLISION_AABB = AABB::newPermanent(0.0, 0.0, 0.375
 AABB* FenceGateBlock::X_AXIS_COLLISION_AABB = AABB::newPermanent(0.375, 0.0, 0.0, 0.625, 1.5, 1.0);
 
 FenceGateBlock::FenceGateBlock(const std::wstring& name, PlanksBlock::Variant* variant)
-    : HorizontalDirectionalBlock(Material::WOOD, variant->getMaterialColor()), mTextureName(name)
+    : HorizontalDirectionalBlock(Material::WOOD, variant->getMaterialColor())
 {
     mIsFenceGate = true;
     mBlockType = EBLOCK_TYPE_FENCE_GATE;
     DerivedInit();
-    TypedBoxed<bool> open(false);
-    TypedBoxed<bool> powered(false);
-    TypedBoxed<bool> inWall(false);
-    registerDefaultState(mStateDefinition->any()
-                             ->setBoxedValue(OPEN, &open)
-                             ->setBoxedValue(POWERED, &powered)
-                             ->setBoxedValue(IN_WALL, &inWall));
+    registerDefaultState(mStateDefinition->any()->setValue(OPEN, false)->setValue(POWERED, false)->setValue(IN_WALL, false));
+    mTextureName = name;
 }
 
 FenceGateBlock::~FenceGateBlock()
@@ -77,16 +72,15 @@ const BlockState* FenceGateBlock::fillVirtualBlockStateProperties(const BlockSta
         || (axis == Direction::Axis::X
             && (levelSource->getBlockState(pos.north())->getBlock() == Blocks::cobblestone_wall
                 || levelSource->getBlockState(pos.south())->getBlock() == Blocks::cobblestone_wall));
-    if (!inWall)
-        return state;
-    TypedBoxed<bool> value(true);
-    return state->setBoxedValue(IN_WALL, &value);
+    if (inWall)
+        state = state->setValue(IN_WALL, true);
+    return state;
 }
 
 const BlockState* FenceGateBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    TypedBoxed<const Direction*> facing(rotation->rotate(state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY)));
-    return state->setBoxedValue(HorizontalDirectionalBlock::FACING_PROPERTY, &facing);
+    const AbstractProperty<const Direction*>* facingProperty = HorizontalDirectionalBlock::FACING_PROPERTY;
+    return state->setValue(facingProperty, rotation->rotate(state->getValue(facingProperty)));
 }
 
 const BlockState* FenceGateBlock::mirror(const BlockState* state, Mirror* mirror)
@@ -120,20 +114,11 @@ const BlockState* FenceGateBlock::getStateForPlacement(Level* level, const Block
 {
     bool powered = level->hasNeighborSignal(pos);
     const BlockState* state = defaultBlockState();
-    {
-        TypedBoxed<const Direction*> facingValue(placer->getDirection());
-        state = state->setBoxedValue(HorizontalDirectionalBlock::FACING_PROPERTY, &facingValue);
-    }
-    {
-        TypedBoxed<bool> openValue(powered);
-        state = state->setBoxedValue(OPEN, &openValue);
-    }
-    {
-        TypedBoxed<bool> poweredValue(powered);
-        state = state->setBoxedValue(POWERED, &poweredValue);
-    }
-    TypedBoxed<bool> inWallValue(false);
-    return state->setBoxedValue(IN_WALL, &inWallValue);
+    const AbstractProperty<const Direction*>* facingProperty = HorizontalDirectionalBlock::FACING_PROPERTY;
+    return state->setValue(facingProperty, placer->getDirection())
+        ->setValue(OPEN, powered)
+        ->setValue(POWERED, powered)
+        ->setValue(IN_WALL, false);
 }
 
 bool FenceGateBlock::use(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<Player> player,
@@ -146,16 +131,13 @@ bool FenceGateBlock::use(Level* level, const BlockPos& pos, const BlockState* st
             const Direction* facing = Direction::fromYRot((double)player->mYRot);
             if (state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY) == facing->getOpposite())
             {
-                TypedBoxed<const Direction*> facingValue(facing);
-                state = state->setBoxedValue(HorizontalDirectionalBlock::FACING_PROPERTY, &facingValue);
+                state = state->setValue(HorizontalDirectionalBlock::FACING_PROPERTY, facing);
             }
-            TypedBoxed<bool> openValue(true);
-            state = state->setBoxedValue(OPEN, &openValue);
+            state = state->setValue(OPEN, true);
         }
         else
         {
-            TypedBoxed<bool> openValue(false);
-            state = state->setBoxedValue(OPEN, &openValue);
+            state = state->setValue(OPEN, false);
         }
         level->setBlock(pos, state, Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false);
         level->levelEvent(player, state->getValue(OPEN) ? LevelEvent::SOUND_OPEN_FENCE_GATE : LevelEvent::SOUND_CLOSE_FENCE_GATE, pos, 0);
@@ -172,8 +154,7 @@ void FenceGateBlock::neighborChanged(const BlockState* state, Level* level, cons
     const bool powered = level->hasNeighborSignal(pos);
     if (state->getValue(POWERED) != powered)
     {
-        TypedBoxed<bool> value(powered);
-        level->setBlock(pos, state->setBoxedValue(POWERED, &value)->setBoxedValue(OPEN, &value), Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false);
+        level->setBlock(pos, state->setValue(POWERED, powered)->setValue(OPEN, powered), Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false);
         if (state->getValue(OPEN) != powered)
         {
             level->levelEvent(boost::shared_ptr<Player>(),
@@ -186,18 +167,24 @@ bool FenceGateBlock::shouldRenderFace(const BlockState*, LevelSource*, const Blo
 
 const BlockState* FenceGateBlock::getBlockState(int data)
 {
-    const Direction* direction = Direction::from2DDataValue(data);
-    TypedBoxed<const Direction*> facing(direction);
-    TypedBoxed<bool> open((data & 4) != 0);
-    TypedBoxed<bool> powered((data & 8) != 0);
-    const BlockState* state = defaultBlockState()->setBoxedValue(HorizontalDirectionalBlock::FACING_PROPERTY, &facing);
-    state = state->setBoxedValue(OPEN, &open);
-    return state->setBoxedValue(POWERED, &powered);
+    return defaultBlockState()
+        ->setValue(HorizontalDirectionalBlock::FACING_PROPERTY, Direction::from2DDataValue(data))
+        ->setValue(OPEN, (data & 4) != 0)
+        ->setValue(POWERED, (data & 8) != 0);
 }
 
 int FenceGateBlock::convertBlockStateToLegacyData(const BlockState* state)
 {
-    return state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY)->get2DDataValue() | (state->getValue(OPEN) ? 8 : 0) | (state->getValue(POWERED) ? 4 : 0);
+    int data = state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY)->get2DDataValue();
+    if (state->getValue(POWERED))
+    {
+        data |= 8;
+    }
+    if (state->getValue(OPEN))
+    {
+        data |= 4;
+    }
+    return data;
 }
 
 unsigned int FenceGateBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)

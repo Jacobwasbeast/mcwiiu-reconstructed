@@ -6,5 +6,5 @@
 boost::shared_ptr<ItemInstance> createItem(const BlockState* state)
 {
     Block* block = state->getBlock();
-    return boost::shared_ptr<ItemInstance>(new ItemInstance(block, 1, block->getSpawnResourcesAuxValue(state)));
+    return boost::shared_ptr<ItemInstance>(new ItemInstance(block, 1, block->convertBlockStateToLegacyData(state)));
 }

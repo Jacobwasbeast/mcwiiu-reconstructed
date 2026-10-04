@@ -25,16 +25,16 @@ ConduitBlock::~ConduitBlock()
 {
 }
 
-boost::shared_ptr<BlockEntity> ConduitBlock::newBlockEntity(Level* level, int data)
+boost::shared_ptr<BlockEntity> ConduitBlock::newBlockEntity(Level* level, int)
 {
-    boost::shared_ptr<ConduitBlockEntity> entity(new ConduitBlockEntity());
-    entity->setData(data);
-    return entity;
+    boost::shared_ptr<BlockEntity> blockEntity = boost::shared_ptr<ConduitBlockEntity>(new ConduitBlockEntity());
+    blockEntity->setLevel(level);
+    return blockEntity;
 }
 
 bool ConduitBlock::mayPlace(Level* level, const BlockPos& pos, const Direction* direction)
 {
-    if (direction == Direction::DOWN && level->getBlock(pos.below())->mMaterial->isSolid())
+    if (direction == Direction::UP && level->getBlock(pos.below())->mMaterial->isSolid())
     {
         return Block::mayPlace(level, pos);
     }

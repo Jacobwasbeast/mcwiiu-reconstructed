@@ -38,7 +38,7 @@
 #include <typeinfo>
 
 BedBlock::Part& gBedHead = *new BedBlock::Part(0, L"head");
-static BedBlock::Part& gBedFoot = *new BedBlock::Part(1, L"foot");
+BedBlock::Part& gBedFoot = *new BedBlock::Part(1, L"foot");
 static const AABB* gBedShape = AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.5625, 1.0);
 
 AbstractProperty<const BedBlock::Part*>* BedBlock::PART = NULL;
@@ -109,7 +109,8 @@ bool BedBlock::TestUse(Level* level, const BlockPos& pos, const BlockState* stat
 {
     if (state->getValue(PART) != &gBedHead)
     {
-        state = level->getBlockState(pos.relative(state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY)));
+        BlockPos neighbour = pos.relative(state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY));
+        state = level->getBlockState(neighbour);
         if (state->getBlock() != this)
             return true;
     }

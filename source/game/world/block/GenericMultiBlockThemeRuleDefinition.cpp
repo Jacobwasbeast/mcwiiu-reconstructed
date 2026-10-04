@@ -60,7 +60,7 @@ int GenericMultiBlockThemeRuleDefinition::BlockRuleDefinition::getBlockAux() con
 
     if (mBlockState != NULL)
     {
-        return mBlockState->getBlock()->convertBlockStateToLegacyData(mBlockState);
+        return mBlockState->getBlock()->getSpawnResourcesAuxValue(mBlockState);
     }
 
     return -1;

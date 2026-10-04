@@ -8,7 +8,6 @@ class DataFixerUpper;
 class DropperBlockEntity : public DispenserBlockEntity
 {
 public:
-    DropperBlockEntity();
     virtual ~DropperBlockEntity();
 
     static BlockEntity* create();

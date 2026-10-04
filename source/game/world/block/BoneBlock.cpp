@@ -3,6 +3,7 @@
 #include "game/client/audio/SoundType.hpp"
 #include "game/core/IconRegister.hpp"
 #include "game/world/block/AbstractProperty.hpp"
+#include "game/world/block/EnumProperty.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/BlockStateDefinition.hpp"
 #include "game/world/block/Material.hpp"
@@ -11,13 +12,18 @@
 #include "game/world/block/TypedBoxed.hpp"
 
 BoneBlock::BoneBlock()
-    : RotatedPillarBlock(Material::STONE, MaterialColor::SNOW)
+    : RotatedPillarBlock(Material::STONE, MaterialColor::SAND)
 {
     DerivedInit();
 
-    BlockStateDefinition* definition = mStateDefinition;
-    TypedBoxed<Direction::Axis*> value(Direction::Axis::Y);
-    registerDefaultState(definition->any()->setBoxedValue(definition->getProperties()[0], &value));
+    BlockState* state = mStateDefinition->any();
+    const BlockState* defaultState;
+    {
+        const Property* axisProperty = gRotatedPillarBlockAxisProperty;
+        TypedBoxed<Direction::Axis*> value(Direction::Axis::Y);
+        defaultState = state->setBoxedValue(axisProperty, &value);
+    }
+    registerDefaultState(defaultState);
     setDestroyTime(2.0f);
     setSoundType(SoundType::STONE);
 }
@@ -40,6 +46,5 @@ EBlockRenderShape BoneBlock::getRenderShape(const BlockState*)
 
 Direction::Axis* BoneBlock::getAxis(const BlockState* state)
 {
-    const std::vector<const Property*>& properties = state->getProperties();
-    return state->getValue(static_cast<const AbstractProperty<Direction::Axis*>*>(properties[0]));
+    return state->getValue(gRotatedPillarBlockAxisProperty);
 }

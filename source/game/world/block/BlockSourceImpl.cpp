@@ -8,10 +8,6 @@ BlockSourceImpl::BlockSourceImpl(Level* level, const BlockPos& pos)
     mPos = pos;
 }
 
-BlockSourceImpl::~BlockSourceImpl()
-{
-}
-
 Level* BlockSourceImpl::getWorld()
 {
     return mLevel;

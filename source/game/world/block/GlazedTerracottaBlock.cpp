@@ -24,13 +24,14 @@ GlazedTerracottaBlock::GlazedTerracottaBlock(const DyeColor* dyeColor)
 
 const BlockState* GlazedTerracottaBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    TypedBoxed<const Direction*> facing(rotation->rotate(state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY)));
-    return state->setBoxedValue(HorizontalDirectionalBlock::FACING_PROPERTY, &facing);
+    DirectionProperty* facingProperty = HorizontalDirectionalBlock::FACING_PROPERTY;
+    TypedBoxed<const Direction*> facing(rotation->rotate(state->getValue(facingProperty)));
+    return state->setBoxedValue(facingProperty, &facing);
 }
 
 const BlockState* GlazedTerracottaBlock::mirror(const BlockState* state, Mirror* mirror)
 {
-    return rotate(state, mirror->getRotation(state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY)));
+    return state->rotate(mirror->getRotation(state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY)));
 }
 
 const BlockState* GlazedTerracottaBlock::getStateForPlacement(Level*, const BlockPos&, const Direction*,
@@ -38,9 +39,10 @@ const BlockState* GlazedTerracottaBlock::getStateForPlacement(Level*, const Bloc
                                                                boost::shared_ptr<LivingEntity> placer)
 {
     const BlockState* state = defaultBlockState();
+    DirectionProperty* facingProperty = HorizontalDirectionalBlock::FACING_PROPERTY;
     const Direction* facing = placer->getDirection()->getOpposite();
     TypedBoxed<const Direction*> boxedFacing(facing);
-    return state->setBoxedValue(HorizontalDirectionalBlock::FACING_PROPERTY, &boxedFacing);
+    return state->setBoxedValue(facingProperty, &boxedFacing);
 }
 
 int GlazedTerracottaBlock::convertBlockStateToLegacyData(const BlockState* state)
@@ -50,8 +52,10 @@ int GlazedTerracottaBlock::convertBlockStateToLegacyData(const BlockState* state
 
 const BlockState* GlazedTerracottaBlock::getBlockState(int data)
 {
+    const BlockState* state = defaultBlockState();
+    DirectionProperty* facingProperty = HorizontalDirectionalBlock::FACING_PROPERTY;
     TypedBoxed<const Direction*> facing(Direction::from2DDataValue(data));
-    return defaultBlockState()->setBoxedValue(HorizontalDirectionalBlock::FACING_PROPERTY, &facing);
+    return state->setBoxedValue(facingProperty, &facing);
 }
 
 EPistonPushReaction GlazedTerracottaBlock::getPistonPushReaction(const BlockState*)
@@ -66,8 +70,6 @@ EBlockRenderShape GlazedTerracottaBlock::getRenderShape(const BlockState*)
 
 BlockStateDefinition* GlazedTerracottaBlock::createBlockStateDefinition()
 {
-    static const Property* properties[1] = { NULL };
-    if (properties[0] == NULL)
-        properties[0] = HorizontalDirectionalBlock::FACING_PROPERTY;
+    static const Property* properties[] = { HorizontalDirectionalBlock::FACING_PROPERTY };
     return new BlockStateDefinition(this, properties, 1);
 }

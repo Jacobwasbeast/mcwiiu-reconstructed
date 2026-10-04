@@ -10,6 +10,8 @@
 #include "game/util/AABB.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/LevelSource.hpp"
+#include "game/world/generation/MultiPlayerLevel.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/BlockStateDefinition.hpp"
@@ -64,12 +66,11 @@ void FenceBlock::_init()
     mBlockType = EBLOCK_TYPE_FENCE;
     mIsFence = true;
     DerivedInit();
-    TypedBoxed<bool> falseValue(false);
     const BlockState* state = mStateDefinition->any();
-    state = state->setBoxedValue(NORTH, &falseValue);
-    state = state->setBoxedValue(EAST, &falseValue);
-    state = state->setBoxedValue(SOUTH, &falseValue);
-    registerDefaultState(state->setBoxedValue(WEST, &falseValue));
+    state = state->setValue(NORTH, false);
+    state = state->setValue(EAST, false);
+    state = state->setValue(SOUTH, false);
+    registerDefaultState(state->setValue(WEST, false));
 }
 
 unsigned int FenceBlock::getAABBIndex(const BlockState* state)
@@ -136,61 +137,40 @@ bool FenceBlock::canProvideSupport(const BlockState*, const Direction* direction
 }
 
 bool FenceBlock::use(Level* level, const BlockPos& pos, const BlockState*, boost::shared_ptr<Player> player,
-                     InteractionHand::EInteractionHand, const Direction*, float, float, float, bool clientSide)
+                     InteractionHand::EInteractionHand, const Direction*, float, float, float, bool)
 {
-    if (!clientSide) return LeadItem::bindPlayerMobs(player, level, pos);
+    if (!level->mIsClientSide) return LeadItem::bindPlayerMobs(player, level, pos);
     return LeadItem::bindPlayerMobsTest(player, level, pos);
 }
 
 const BlockState* FenceBlock::fillVirtualBlockStateProperties(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
 {
-    TypedBoxed<bool> north(connectsTo(levelSource, pos.north(), Direction::SOUTH));
-    TypedBoxed<bool> east(connectsTo(levelSource, pos.east(), Direction::WEST));
-    TypedBoxed<bool> south(connectsTo(levelSource, pos.south(), Direction::NORTH));
-    TypedBoxed<bool> west(connectsTo(levelSource, pos.west(), Direction::EAST));
-    const BlockState* result = state->setBoxedValue(NORTH, &north);
-    result = result->setBoxedValue(EAST, &east);
-    result = result->setBoxedValue(SOUTH, &south);
-    return result->setBoxedValue(WEST, &west);
+    state = state->setValue(NORTH, connectsTo(levelSource, pos.north(), Direction::SOUTH));
+    state = state->setValue(EAST, connectsTo(levelSource, pos.east(), Direction::WEST));
+    state = state->setValue(SOUTH, connectsTo(levelSource, pos.south(), Direction::NORTH));
+    return state->setValue(WEST, connectsTo(levelSource, pos.west(), Direction::EAST));
 }
 
 const BlockState* FenceBlock::rotate(const BlockState* state, Rotation* rotation)
 {
+    const BlockState* result;
     switch (rotation->getType())
     {
     case Rotation::eTYPE_Clockwise180:
-    {
-        TypedBoxed<bool> north(state->getValue(SOUTH));
-        TypedBoxed<bool> east(state->getValue(WEST));
-        TypedBoxed<bool> south(state->getValue(NORTH));
-        TypedBoxed<bool> west(state->getValue(EAST));
-        return state->setBoxedValue(NORTH, &north)
-            ->setBoxedValue(EAST, &east)
-            ->setBoxedValue(SOUTH, &south)
-            ->setBoxedValue(WEST, &west);
-    }
+        result = state->setValue(NORTH, state->getValue(SOUTH));
+        result = result->setValue(EAST, state->getValue(WEST));
+        result = result->setValue(SOUTH, state->getValue(NORTH));
+        return result->setValue(WEST, state->getValue(EAST));
     case Rotation::eTYPE_CounterClockwise90:
-    {
-        TypedBoxed<bool> north(state->getValue(EAST));
-        TypedBoxed<bool> east(state->getValue(SOUTH));
-        TypedBoxed<bool> south(state->getValue(WEST));
-        TypedBoxed<bool> west(state->getValue(NORTH));
-        return state->setBoxedValue(NORTH, &north)
-            ->setBoxedValue(EAST, &east)
-            ->setBoxedValue(SOUTH, &south)
-            ->setBoxedValue(WEST, &west);
-    }
+        result = state->setValue(NORTH, state->getValue(EAST));
+        result = result->setValue(EAST, state->getValue(SOUTH));
+        result = result->setValue(SOUTH, state->getValue(WEST));
+        return result->setValue(WEST, state->getValue(NORTH));
     case Rotation::eTYPE_Clockwise90:
-    {
-        TypedBoxed<bool> north(state->getValue(WEST));
-        TypedBoxed<bool> east(state->getValue(NORTH));
-        TypedBoxed<bool> south(state->getValue(EAST));
-        TypedBoxed<bool> west(state->getValue(SOUTH));
-        return state->setBoxedValue(NORTH, &north)
-            ->setBoxedValue(EAST, &east)
-            ->setBoxedValue(SOUTH, &south)
-            ->setBoxedValue(WEST, &west);
-    }
+        result = state->setValue(NORTH, state->getValue(WEST));
+        result = result->setValue(EAST, state->getValue(NORTH));
+        result = result->setValue(SOUTH, state->getValue(EAST));
+        return result->setValue(WEST, state->getValue(SOUTH));
     default:
         return state;
     }
@@ -198,20 +178,15 @@ const BlockState* FenceBlock::rotate(const BlockState* state, Rotation* rotation
 
 const BlockState* FenceBlock::mirror(const BlockState* state, Mirror* mirror)
 {
+    const BlockState* result;
     switch (mirror->getType())
     {
     case Mirror::eTYPE_LeftRight:
-    {
-        TypedBoxed<bool> north(state->getValue(SOUTH));
-        TypedBoxed<bool> south(state->getValue(NORTH));
-        return state->setBoxedValue(NORTH, &north)->setBoxedValue(SOUTH, &south);
-    }
+        result = state->setValue(NORTH, state->getValue(SOUTH));
+        return result->setValue(SOUTH, state->getValue(NORTH));
     case Mirror::eTYPE_FrontBack:
-    {
-        TypedBoxed<bool> east(state->getValue(WEST));
-        TypedBoxed<bool> west(state->getValue(EAST));
-        return state->setBoxedValue(EAST, &east)->setBoxedValue(WEST, &west);
-    }
+        result = state->setValue(EAST, state->getValue(WEST));
+        return result->setValue(WEST, state->getValue(EAST));
     default:
         return Block::mirror(state, mirror);
     }
@@ -219,7 +194,7 @@ const BlockState* FenceBlock::mirror(const BlockState* state, Mirror* mirror)
 
 BlockStateDefinition* FenceBlock::createBlockStateDefinition()
 {
-    const Property* properties[] = { NORTH, EAST, SOUTH, WEST };
+    static const Property* properties[] = { NORTH, EAST, WEST, SOUTH };
     return new BlockStateDefinition(this, properties, 4);
 }
 
@@ -237,7 +212,7 @@ EBlockRenderShape FenceBlock::getRenderShape(const BlockState*) { return BLOCK_R
 
 unsigned int FenceBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
-    boost::shared_ptr<Player> player = (boost::shared_ptr<Player>&)tooltipData.m_pPlayer;
-    return LeadItem::bindPlayerMobsTest(player, (Level*)tooltipData.m_pLevel, tooltipData.m_blockPos)
-        ? IDS_TOOLTIPS_ATTACH : Block::GetInteractTooltip(tooltipData);
+    if (LeadItem::bindPlayerMobsTest(tooltipData.m_pPlayer, tooltipData.m_pLevel, tooltipData.m_blockPos))
+        return IDS_TOOLTIPS_ATTACH;
+    return Block::GetInteractTooltip(tooltipData);
 }

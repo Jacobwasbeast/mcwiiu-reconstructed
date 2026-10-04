@@ -2,7 +2,7 @@
 
 #include "game/world/generation/PlayerStats.hpp"
 
-double WinnerWithoutBlockDestructionMedal::GetScore(PlayerStats* playerStats) const
+float WinnerWithoutBlockDestructionMedal::GetScore(PlayerStats* playerStats) const
 {
     return GameMedal::totalOfAllRounds(playerStats, wasWinnerWithoutDestroyingBlocks);
 }

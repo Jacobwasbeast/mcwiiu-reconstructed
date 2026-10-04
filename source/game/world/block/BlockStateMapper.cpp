@@ -31,9 +31,9 @@ boost::unordered_map<const BlockState*, ModelResourceLocation*>* BlockStateMappe
     boost::unordered_map<const BlockState*, ModelResourceLocation*>* mapping =
         new boost::unordered_map<const BlockState*, ModelResourceLocation*>();
 
-    DefaultedMappedRegistry<ResourceLocation, Block*>::iterator it;
+    boost::unordered_map<Block*, ResourceLocation>::const_iterator it;
 
-    for (it = Block::blockRegistry->begin(); it != Block::blockRegistry->end(); ++it)
+    for (it = Block::blockRegistry->mInverseRegistry.begin(); it != Block::blockRegistry->mInverseRegistry.end(); ++it)
     {
         Block* block = it->first;
 

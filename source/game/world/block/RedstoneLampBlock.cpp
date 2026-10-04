@@ -11,9 +11,10 @@
 #include "game/world/block/Material.hpp"
 
 RedstoneLampBlock::RedstoneLampBlock(bool lit)
-    : Block(Material::BUILDABLE_GLASS), mLit(lit)
+    : Block(Material::BUILDABLE_GLASS)
 {
     DerivedInit();
+    mLit = lit;
     if (lit)
         setLightEmission(1.0f);
 }

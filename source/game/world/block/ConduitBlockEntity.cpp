@@ -41,7 +41,6 @@ ConduitBlockEntity::ConduitBlockEntity()
       mActiveRotation(0.0f),
       mRotationTick(0),
       mWindLevel(0),
-      mEffectRange(0),
       mTargetId(-1),
       mBlocks()
 {
@@ -104,7 +103,7 @@ void ConduitBlockEntity::_animateTick()
 
 void ConduitBlockEntity::setEffectRange(int range)
 {
-    setChanged();
+    BlockEntity::setChanged();
     mEffectRange = range;
 }
 
@@ -200,7 +199,7 @@ void ConduitBlockEntity::_checkShape()
                 if (!mLevel->mIsClientSide)
                 {
                     int range = mEffectRange;
-                    PlayerList* playerList = gMinecraftServer != NULL ? gMinecraftServer->getPlayers() : NULL;
+                    PlayerList* playerList = gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers;
                     std::vector<boost::shared_ptr<ServerPlayer> >* players = playerList->getPlayers();
                     for (unsigned int i = 0; i < players->size(); ++i)
                     {
@@ -231,13 +230,13 @@ void ConduitBlockEntity::_applyEffects()
 {
     if (mActive && !mLevel->mIsClientSide)
     {
+        double maxBuildHeight = mLevel->getMaxBuildHeight();
         AABB* area = AABB::newTemp((double)mPos.x, (double)mPos.y, (double)mPos.z,
                                     (double)(mPos.x + 1), (double)(mPos.y + 1), (double)(mPos.z + 1));
         area = area->grow((double)mEffectRange);
-        area = area->expand(0.0, (double)mLevel->getMaxBuildHeight(), 0.0);
+        area = area->expand(0.0, maxBuildHeight, 0.0);
         std::vector<boost::shared_ptr<Entity> >* entities = mLevel->getEntitiesOfClass(typeid(Player), area);
-        std::vector<boost::shared_ptr<Entity> >::iterator it;
-        for (it = entities->begin(); it != entities->end(); ++it)
+        for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != entities->end(); ++it)
         {
             boost::shared_ptr<Player> player = boost::dynamic_pointer_cast<Player>(*it);
             if (player->isInWaterOrRain())
@@ -268,13 +267,13 @@ void ConduitBlockEntity::_updateTarget()
                               SoundSource::eSoundSource_Blocks, 1.0f, 1.0f, 16.0f);
             target->hurt(DamageSource::MAGIC, 4.0f);
             if (mTargetId != previousTarget)
-                setChanged();
+                BlockEntity::setChanged();
         }
         else
         {
             mTargetId = -1;
             if (previousTarget != -1)
-                setChanged();
+                BlockEntity::setChanged();
         }
         return;
     }
@@ -282,9 +281,10 @@ void ConduitBlockEntity::_updateTarget()
     if (mHunting)
     {
         std::vector<boost::shared_ptr<Entity> > candidates;
+        double maxBuildHeight = mLevel->getMaxBuildHeight();
         const AABB* area = AABB::newTemp(mPos.x, mPos.y, mPos.z, mPos.x + 1, mPos.y + 1, mPos.z + 1)
                                ->grow(8.0)
-                               ->expand(0.0, mLevel->getMaxBuildHeight(), 0.0);
+                               ->expand(0.0, maxBuildHeight, 0.0);
         std::vector<boost::shared_ptr<Entity> >* monsters = mLevel->getEntitiesOfClass(typeid(Monster), area);
         for (std::vector<boost::shared_ptr<Entity> >::iterator it = monsters->begin(); it != monsters->end(); ++it)
         {
@@ -297,7 +297,7 @@ void ConduitBlockEntity::_updateTarget()
             mTargetId = candidates[mLevel->mRandom->nextInt(candidates.size())]->getId();
     }
     if (mTargetId != previousTarget)
-        setChanged();
+        BlockEntity::setChanged();
 }
 
 void ConduitBlockEntity::tick()
@@ -361,14 +361,14 @@ CompoundTag* ConduitBlockEntity::save(CompoundTag* tag)
 
 boost::shared_ptr<Packet> ConduitBlockEntity::getUpdatePacket()
 {
-    return boost::shared_ptr<Packet>(new ClientboundBlockEntityDataPacket(mPos, 13, mLevel->mDimension->getType()->getId(), getUpdateTag()));
+    boost::shared_ptr<ClientboundBlockEntityDataPacket> packet(new ClientboundBlockEntityDataPacket(
+        mPos, 13, mLevel->mDimension->getType()->getId(), getUpdateTag()));
+    return packet;
 }
 
 CompoundTag* ConduitBlockEntity::getUpdateTag()
 {
-    CompoundTag* tag = new CompoundTag();
-    save(tag);
-    return tag;
+    return save(new CompoundTag());
 }
 
 void ConduitBlockEntity::incrementAnimationValue(float amount)

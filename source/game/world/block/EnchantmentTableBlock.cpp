@@ -18,19 +18,22 @@
 #include "game/world/block/Material.hpp"
 #include "game/world/block/MaterialColor.hpp"
 
+static const std::wstring gEnchantmentSideIconName(L"enchantment_side");
+static const std::wstring gEnchantmentTopIconName(L"enchantment_top");
+static const std::wstring gEnchantmentBottomIconName(L"enchantment_bottom");
 static const AABB* gEnchantmentTableShape = AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.75, 1.0);
 
 EnchantmentTableBlock::EnchantmentTableBlock()
-    : BaseEntityBlock(Material::STONE, MaterialColor::STONE)
+    : BaseEntityBlock(Material::STONE, MaterialColor::COLOR_RED)
 {
     DerivedInit();
     setLightBlock(0);
 }
 
-boost::shared_ptr<BlockEntity> EnchantmentTableBlock::newBlockEntity(Level*, int data)
+boost::shared_ptr<BlockEntity> EnchantmentTableBlock::newBlockEntity(Level* level, int)
 {
-    boost::shared_ptr<EnchantmentTableEntity> entity(new EnchantmentTableEntity());
-    entity->setData(data);
+    boost::shared_ptr<BlockEntity> entity = boost::shared_ptr<EnchantmentTableEntity>(new EnchantmentTableEntity());
+    entity->setLevel(level);
     return entity;
 }
 
@@ -64,7 +67,8 @@ void EnchantmentTableBlock::animateTick(const BlockState* state, Level* level, c
 
             for (int y = 0; y <= 1; ++y)
             {
-                if (level->getBlockState(pos.offset(x, y, z))->getBlock() != Blocks::bookshelf)
+                BlockPos bookPos = pos.offset(x, y, z);
+                if (level->getBlockState(bookPos)->getBlock() != Blocks::bookshelf)
                 {
                     continue;
                 }
@@ -104,12 +108,16 @@ bool EnchantmentTableBlock::use(Level* level, const BlockPos& pos, const BlockSt
         return false;
     }
 
-    boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
-    boost::shared_ptr<EnchantmentTableEntity> table =
-        boost::dynamic_pointer_cast<EnchantmentTableEntity>(blockEntity);
-    if (table.get() != NULL)
+    if (!level->mIsClientSide)
     {
-        player->startBlockInteraction(*table);
+        boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
+        bool isTable = blockEntity->GetType() == BlockEntityType::ENCHANTMENT_TABLE_ENTITY;
+        if (isTable)
+        {
+            EnchantmentTableEntity& table =
+                *boost::dynamic_pointer_cast<EnchantmentTableEntity>(blockEntity).get();
+            player->startBlockInteraction(table);
+        }
     }
     return true;
 }
@@ -122,10 +130,11 @@ void EnchantmentTableBlock::setPlacedBy(Level* level, const BlockPos& pos, const
     if (itemInstance->hasCustomHoverName())
     {
         boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
-        boost::shared_ptr<EnchantmentTableEntity> table =
-            boost::dynamic_pointer_cast<EnchantmentTableEntity>(blockEntity);
-        if (table.get() != NULL)
+        bool isTable = blockEntity->GetType() == BlockEntityType::ENCHANTMENT_TABLE_ENTITY;
+        if (isTable)
         {
+            boost::shared_ptr<EnchantmentTableEntity> table =
+                boost::dynamic_pointer_cast<EnchantmentTableEntity>(blockEntity);
             table->setCustomName(itemInstance->getHoverNameUnfiltered(), itemInstance->getOwnerUUID(),
                                  itemInstance->wasCreatedByRestrictedPlayer(), itemInstance->wasCreatedOnHost());
         }
@@ -140,22 +149,22 @@ EBlockFaceShape EnchantmentTableBlock::getBlockFaceShape(LevelSource*, const Blo
 
 TextureAtlasSprite* EnchantmentTableBlock::getTexture(const Direction* direction, const BlockState*)
 {
-    if (direction == Direction::UP)
-    {
-        return mTopTexture;
-    }
     if (direction == Direction::DOWN)
     {
         return mBottomTexture;
+    }
+    if (direction == Direction::UP)
+    {
+        return mTopTexture;
     }
     return mIcon;
 }
 
 void EnchantmentTableBlock::registerIcons(IconRegister* iconRegister)
 {
-    mIcon = iconRegister->registerIcon(L"enchantment_side");
-    mTopTexture = iconRegister->registerIcon(L"enchantment_top");
-    mBottomTexture = iconRegister->registerIcon(L"enchantment_bottom");
+    mIcon = iconRegister->registerIcon(gEnchantmentSideIconName);
+    mTopTexture = iconRegister->registerIcon(gEnchantmentTopIconName);
+    mBottomTexture = iconRegister->registerIcon(gEnchantmentBottomIconName);
 }
 
 unsigned int EnchantmentTableBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)

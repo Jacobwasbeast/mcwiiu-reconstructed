@@ -2,7 +2,7 @@
 
 #include "game/world/generation/PlayerStats.hpp"
 
-double BlocksDestroyedFromBelowMedal::GetScore(PlayerStats* playerStats) const
+float BlocksDestroyedFromBelowMedal::GetScore(PlayerStats* playerStats) const
 {
-    return static_cast<double>(static_cast<float>(playerStats->getTotalBlocksDestroyed()));
+    return static_cast<double>(static_cast<float>(static_cast<unsigned int>(playerStats->mBlocksDestroyedFromBelow)));
 }

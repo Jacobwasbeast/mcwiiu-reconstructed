@@ -10,10 +10,9 @@
 #include "game/world/block/IntegerProperty.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
-#include <string>
+#include "game/core/StringConversion.hpp"
 
-template <typename T>
-std::wstring toString(T value);
+#include <string>
 
 static const AABB* SHAPE_BY_AGE[8] =
 {
@@ -36,7 +35,7 @@ void CarrotBlock::registerIcons(IconRegister* iconRegister)
 {
     for (int i = 0; i < 4; ++i)
     {
-        mStageIcons[i] = iconRegister->registerIcon(getIconName() + L"_stage_" + ::toString(i));
+        mStageIcons[i] = iconRegister->registerIcon(getIconName() + L"_stage_" + _toString<int>(i));
     }
 }
 

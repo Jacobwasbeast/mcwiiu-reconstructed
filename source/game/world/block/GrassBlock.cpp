@@ -24,6 +24,7 @@
 #include "game/world/block/EnumProperty.hpp"
 #include "game/world/block/FlowerBlock.hpp"
 #include "game/world/block/Material.hpp"
+#include "game/world/block/TallGrassBlock.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
 AbstractProperty<bool>* GrassBlock::SNOWY = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"snowy"));
@@ -66,40 +67,39 @@ void GrassBlock::performBonemeal(Level* level, Random* random, const BlockPos& p
                                  const BlockState*)
 {
     BlockPos target = pos.above();
-    int attempts = 48;
-    int distance = 16;
-    while (attempts-- != 0)
+    for (int distance = 16; distance < 64; ++distance)
     {
         BlockPos candidate = target;
         if (!randomWalk(level, random, candidate, distance))
-        {
-            ++distance;
             continue;
-        }
-        const BlockState* state = level->getBlockState(candidate);
-        if (state->getBlock() != this)
+        if (level->getBlockState(candidate)->getBlock()->mMaterial != Material::AIR)
             continue;
 
-        Block* block;
-        const BlockState* generatedState;
-        if (random->nextInt(8) != 0)
+        if (random->nextInt(8) == 0)
         {
-            block = Blocks::tallgrass;
-            generatedState = block->defaultBlockState();
+            FlowerBlock::Flower* flower = level->getBiome(candidate)->getRandomFlower(*random, candidate);
+            Block* block = flower->getCategory()->getBlock();
+
+            const BlockState* baseState = block->defaultBlockState();
+            const Property* flowerProperty = static_cast<FlowerBlock*>(block)->getFlowerProperty();
+            const BlockState* generatedState;
+            {
+                TypedBoxed<FlowerBlock::Flower*> boxedFlower(flower);
+                generatedState = baseState->setBoxedValue(flowerProperty, &boxedFlower);
+            }
+            if (block->canSurvive(level, candidate, generatedState))
+            {
+                level->setBlock(candidate, generatedState, Block::UPDATE_ALL, false);
+            }
         }
         else
         {
-            FlowerBlock::Flower* flower = level->getBiome(candidate)->getRandomFlower(*random, candidate);
-            block = flower->getCategory()->getBlock();
-
-            TypedBoxed<FlowerBlock::Flower*> boxedFlower(flower);
-            generatedState = block->defaultBlockState()->setBoxedValue(
-                static_cast<FlowerBlock*>(block)->getFlowerProperty(), &boxedFlower);
-        }
-
-        if (block->canSurvive(level, candidate, generatedState))
-        {
-            level->setBlock(candidate, generatedState, Block::UPDATE_ALL, false);
+            const BlockState* generatedState = Blocks::tallgrass->defaultBlockState()->setValue(
+                TallGrassBlock::VARIANT, TallGrassBlock::Variant::GRASS);
+            if (Blocks::tallgrass->canSurvive(level, candidate, generatedState))
+            {
+                level->setBlock(candidate, generatedState, Block::UPDATE_ALL, false);
+            }
         }
     }
 }
@@ -129,28 +129,26 @@ void GrassBlock::tick(Level* level, const BlockPos& pos, const BlockState*, Rand
     if (level->mIsClientSide)
         return;
 
-    int brightness = level->getRawBrightness(pos.above());
+    BlockPos above = pos.above();
+    int brightness = level->getRawBrightness(above);
     if (brightness < 4)
     {
-        int lightBlock = level->getBlockState(pos.above())->getLightBlock();
-        int extraLightBlock = level->getExtraBlockState(pos.above())->getLightBlock();
+        int lightBlock = level->getBlockState(above)->getLightBlock();
+        int extraLightBlock = level->getExtraBlockState(above)->getLightBlock();
         if (lightBlock < extraLightBlock)
             lightBlock = extraLightBlock;
         if (lightBlock > 2)
             level->setBlock(pos, Blocks::dirt->defaultBlockState(), Block::UPDATE_CLIENTS, false);
         return;
     }
-    if (brightness <= 8)
+    if (brightness < 9)
         return;
 
     for (int i = 0; i < 4; ++i)
     {
-        int zOffset = random->nextInt(3) - 1;
-        int yOffset = random->nextInt(2);
-        int xOffset = random->nextInt(3) - 1;
-        BlockPos target(pos.x + xOffset, pos.y + yOffset, pos.z + zOffset);
+        BlockPos target(pos.x + random->nextInt(3) - 1, pos.y + random->nextInt(2), pos.z + random->nextInt(3) - 1);
         Block* block = level->getBlock(target);
-        if (target.y < 256 && !level->hasChunkAt(target))
+        if (target.y >= 0 && target.y < 256 && !level->hasChunkAt(target))
             return;
         if (block != Blocks::dirt)
             continue;
@@ -162,23 +160,27 @@ void GrassBlock::tick(Level* level, const BlockPos& pos, const BlockState*, Rand
 
         const BlockState* aboveState = level->getBlockState(target.above());
         const BlockState* aboveExtraState = level->getExtraBlockState(target.above());
-        Material* aboveMaterial = aboveState->getBlock()->mMaterial;
-        Material* aboveExtraMaterial = aboveExtraState->getBlock()->mMaterial;
+        Block* aboveBlock = aboveState->getBlock();
+        Block* aboveExtraBlock = aboveExtraState->getBlock();
+        Material* aboveMaterial = aboveBlock->mMaterial;
+        Material* aboveExtraMaterial = aboveExtraBlock->mMaterial;
         int lightBlock = aboveState->getLightBlock();
         int extraLightBlock = aboveExtraState->getLightBlock();
         if (lightBlock < extraLightBlock)
             lightBlock = extraLightBlock;
         if (level->getRawBrightness(target.above()) >= 4 && !aboveState->isSolid() && !aboveMaterial->isLiquid()
-            && !aboveExtraMaterial->isLiquid() && lightBlock < 3)
+            && !aboveExtraMaterial->isLiquid() && lightBlock <= 2)
         {
             level->setBlock(target, Blocks::grass->defaultBlockState(), Block::UPDATE_CLIENTS, false);
         }
     }
 }
 
-Item* GrassBlock::getResource(const BlockState*, Random*, int)
+Item* GrassBlock::getResource(const BlockState*, Random* random, int lootBonus)
 {
-    return Item::byBlock(Blocks::dirt);
+    return Blocks::dirt->getResource(
+        Blocks::dirt->defaultBlockState()->setValue(DirtBlock::VARIANT, DirtBlock::Variant::DIRT), random,
+        lootBonus);
 }
 
 int GrassBlock::getRenderLayer()
@@ -235,14 +237,17 @@ BlockStateDefinition* GrassBlock::createBlockStateDefinition()
 
 bool GrassBlock::shouldBlockTick(Level* level, const BlockPos& pos, const BlockState*)
 {
-    BlockPos above = pos.above();
-    int lightBlock = level->getBlockState(above)->getLightBlock();
-    int extraLightBlock = level->getExtraBlockState(above)->getLightBlock();
-    if (extraLightBlock > lightBlock)
-        lightBlock = extraLightBlock;
-    if (lightBlock > 2 && level->getRawBrightness(above) < 4)
+    int lightBlock = level->getBlockState(pos.above())->getLightBlock();
+    {
+        int extraLightBlock = level->getExtraBlockState(pos.above())->getLightBlock();
+        if (extraLightBlock > lightBlock)
+            lightBlock = extraLightBlock;
+        if (lightBlock > 2 && level->getRawBrightness(pos.above()) < 4)
+            return true;
+    }
+    if (level->getRawBrightness(pos.above()) >= 9)
         return true;
-    return level->getRawBrightness(above) > 8;
+    return false;
 }
 
 TextureAtlasSprite* GrassBlock::getTexture(const Direction* direction, const BlockState*)

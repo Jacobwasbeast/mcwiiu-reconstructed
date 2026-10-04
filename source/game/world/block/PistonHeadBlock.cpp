@@ -101,7 +101,8 @@ PistonHeadBlock::PistonHeadBlock()
 const AABB* PistonHeadBlock::getShape(const BlockState* state, LevelSource*, const BlockPos&)
 {
     const Direction* facing = state->getValue(FACING);
-    switch (facing->get3DDataValue())
+    unsigned int data = facing->get3DDataValue();
+    switch (data)
     {
     case 1: return pistonHeadShapes[4];
     case 2: return pistonHeadShapes[3];
@@ -208,21 +209,11 @@ not_null_ptr<ItemInstance> PistonHeadBlock::getCloneItemInstance(Level*, const B
 
 const BlockState* PistonHeadBlock::getBlockState(int data)
 {
-    const BlockState* state = defaultBlockState();
-    {
-        TypedBoxed<const Direction*> facing(getFacing(data));
-        state = state->setBoxedValue(FACING, &facing);
-    }
+    const BlockState* state = defaultBlockState()->setValue<const Direction*>(FACING, getFacing(data));
     if ((data & 8) > 0)
-    {
-        TypedBoxed<PistonType*> type(pistonTypeSticky);
-        state = state->setBoxedValue(TYPE, &type);
-    }
+        state = state->setValue<PistonType*>(TYPE, pistonTypeSticky);
     else
-    {
-        TypedBoxed<PistonType*> type(pistonTypeNormal);
-        state = state->setBoxedValue(TYPE, &type);
-    }
+        state = state->setValue<PistonType*>(TYPE, pistonTypeNormal);
     return state;
 }
 

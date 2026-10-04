@@ -43,7 +43,7 @@ public:
     class EqualToValuePredicate : public Predicate<T>
     {
     public:
-        EqualToValuePredicate(T value);
+        EqualToValuePredicate(T value) : mValue(value) {}
 
         virtual bool apply(T input) const;
         virtual ~EqualToValuePredicate();
@@ -102,12 +102,6 @@ bool Predicates<T>::FunctionPredicate::apply(T input) const
 
 template <class T>
 Predicates<T>::FunctionPredicate::~FunctionPredicate()
-{
-}
-
-template <class T>
-Predicates<T>::EqualToValuePredicate::EqualToValuePredicate(T value)
-    : mValue(value)
 {
 }
 

@@ -72,24 +72,27 @@ bool ShulkerBoxBlock::isEntityOnChest(Level* level, const AABB* box)
 
 bool ShulkerBoxBlock::use(Level* level, const BlockPos& pos, const BlockState* state,
                           boost::shared_ptr<Player> player, InteractionHand::EInteractionHand,
-                          const Direction* direction, float, float, float, bool clientSide)
+                          const Direction* direction, float, float, float, bool)
 {
-    if (clientSide)
+    if (level->mIsClientSide)
         return true;
-    boost::shared_ptr<BlockEntity> entity = level->getBlockEntity(pos);
-    boost::shared_ptr<ShulkerBoxBlockEntity> box = boost::dynamic_pointer_cast<ShulkerBoxBlockEntity>(entity);
+    if (player->isSpectator())
+        return true;
+    boost::shared_ptr<ShulkerBoxBlockEntity> box = boost::dynamic_pointer_cast<ShulkerBoxBlockEntity>(level->getBlockEntity(pos));
     if (box.get() == NULL)
         return false;
     const Direction* facing = state->getValue(DirectionalBlock::FACING);
+    bool canOpen = true;
     if (box->getAnimationStatus() == 0)
     {
-        AABB* bounds = box->getBoundingBox(state);
+        AABB* shape = FULL_BLOCK_SHAPE->expand(0.5f * facing->getStepX(), 0.5f * facing->getStepY(), 0.5f * facing->getStepZ())
+                          ->contract(facing->getStepX(), facing->getStepY(), facing->getStepZ());
         BlockPos adjacent = pos.relative(facing);
-        AABB* expanded = bounds->expand(0.5, 0.5, 0.5)->contract(0.5, 0.5, 0.5)->move(adjacent);
-        if (level->hasBlockCubes(expanded) || isEntityOnChest(level, expanded))
-            return true;
+        AABB* expanded = shape->move(adjacent);
+        canOpen = !level->hasBlockCubes(expanded) && !isEntityOnChest(level, expanded);
     }
-    player->openContainer(boost::static_pointer_cast<Container>(box));
+    if (canOpen)
+        player->openContainer(box);
     return true;
 }
 
@@ -97,8 +100,7 @@ const BlockState* ShulkerBoxBlock::getStateForPlacement(Level*, const BlockPos&,
                                                          float, float, float, int,
                                                          boost::shared_ptr<LivingEntity>)
 {
-    TypedBoxed<const Direction*> facing(direction);
-    return defaultBlockState()->setBoxedValue(DirectionalBlock::FACING, &facing);
+    return defaultBlockState()->setValue(DirectionalBlock::FACING, direction);
 }
 
 BlockStateDefinition* ShulkerBoxBlock::createBlockStateDefinition()
@@ -121,10 +123,14 @@ const BlockState* ShulkerBoxBlock::getBlockState(int data)
 bool ShulkerBoxBlock::playerWillDestroy(Level* level, const BlockPos& pos, const BlockState*,
                                         boost::shared_ptr<Player> player)
 {
-    boost::shared_ptr<ShulkerBoxBlockEntity> box = boost::dynamic_pointer_cast<ShulkerBoxBlockEntity>(level->getBlockEntity(pos));
-    if (box.get() != NULL)
+    boost::shared_ptr<BlockEntity> entity = level->getBlockEntity(pos);
+    bool isShulkerBox = false;
+    if (entity != NULL)
+        isShulkerBox = entity->GetType() == BlockEntityType::SHULKER_BOX;
+    if (isShulkerBox)
     {
-        box->setDestroyedByCreativePlayer(player->isCreative());
+        boost::shared_ptr<ShulkerBoxBlockEntity> box = boost::static_pointer_cast<ShulkerBoxBlockEntity>(entity);
+        box->setDestroyedByCreativePlayer(player->mAbilities.mInstabuild);
         box->unpackLootTable(player);
     }
     return false;
@@ -139,7 +145,6 @@ void ShulkerBoxBlock::setPlacedBy(Level* level, const BlockPos& pos, const Block
                                   boost::shared_ptr<LivingEntity> placer,
                                   not_null_ptr<ItemInstance> itemInstance)
 {
-    Block::setPlacedBy(level, pos, state, placer, itemInstance);
     if (itemInstance->hasCustomHoverName())
     {
         boost::shared_ptr<ShulkerBoxBlockEntity> box = boost::dynamic_pointer_cast<ShulkerBoxBlockEntity>(level->getBlockEntity(pos));
@@ -202,27 +207,29 @@ void ShulkerBoxBlock::appendHoverText(not_null_ptr<ItemInstance> itemInstance,
     int totalItems = 0;
     for (unsigned int index = 0; index < items.size(); ++index)
     {
-        if (!items[index]->isEmpty())
+        not_null_ptr<ItemInstance> item = items[index];
+        if (!item->isEmpty())
         {
             ++totalItems;
             if (displayedItems < 5)
             {
                 ++displayedItems;
-                std::wstring itemText =
-                    formatwstr(L"%ls x%d", items[index]->getHoverName().c_str(),
-                               items[index]->getCount());
-                lines->push_back(HtmlString(itemText, eMinecraftColour_NOTSET,
-                                            false, false, 0));
+                lines->push_back(HtmlString(formatwstr(L"%ls x%d", item->getHoverName().c_str(),
+                                                       item->getCount()),
+                                            eMinecraftColour_NOTSET, false, false, 0));
             }
         }
     }
+
+    delete[] items.items;
 
     if (totalItems - displayedItems > 0)
     {
         std::wstring moreText = L10N::GetString(IDS_SHULKER_BOX_MORE);
         moreText = replaceAll(moreText, L"%s", L"%d");
-        moreText = formatwstr(moreText.c_str(), totalItems - displayedItems);
-        lines->push_back(HtmlString(moreText, eMinecraftColour_NOTSET, true, false, 0));
+        HtmlString moreLine(formatwstr(moreText.c_str(), totalItems - displayedItems),
+                            eMinecraftColour_NOTSET, true, false, 0);
+        lines->push_back(moreLine);
     }
 }
 

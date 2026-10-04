@@ -81,8 +81,8 @@ private:
 
     NonNullList<not_null_ptr<ItemInstance> > mItems;
     bool mCharcoalUsed;
-    std::set<boost::shared_ptr<Player> > mOpeners;
     std::set<boost::shared_ptr<Player> > mOpenersThisTick;
+    std::set<boost::shared_ptr<Player> > mOpeners;
     int mLitTime;
     int mLitDuration;
     int mCookingProgress;

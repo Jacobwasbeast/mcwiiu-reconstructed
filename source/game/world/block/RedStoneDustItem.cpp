@@ -28,11 +28,9 @@ InteractionResult::EInteractionResult RedStoneDustItem::useOn(boost::shared_ptr<
                                                                float hitZ,
                                                                bool simulate)
 {
-    BlockPos placePos = pos;
-    if (!level->getBlockState(pos)->getBlock()->mayReplaceWithPlace(level, pos))
-    {
-        placePos = pos.relative(direction);
-    }
+    BlockPos placePos = level->getBlockState(pos)->getBlock()->mayReplaceWithPlace(level, pos)
+                            ? pos
+                            : pos.relative(direction);
 
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
     if (!player->mayUseItemAt(placePos, direction, itemInstance)

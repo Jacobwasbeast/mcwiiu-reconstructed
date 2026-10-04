@@ -26,6 +26,7 @@ public:
 
     explicit StemBlock(Block* fruitType = NULL);
 
+    virtual void growCrops(Level* level, const BlockPos& pos, const BlockState* state);
     virtual bool isValidBonemealTarget(Level* level, const BlockPos& pos, const BlockState* state,
                                        bool isClientSide);
     virtual bool isBonemealSuccess(Level* level, Random* random, const BlockPos& pos,
@@ -42,12 +43,11 @@ public:
                                                               const BlockPos& pos);
     virtual bool mayPlaceOn(Level* level, const BlockPos& pos, const BlockState* state);
     virtual void tick(Level* level, const BlockPos& pos, const BlockState* state, Random* random);
-    virtual void growCrops(Level* level, const BlockPos& pos, const BlockState* state);
     virtual int getColor(const BlockState* state);
     virtual int getColor(LevelSource* levelSource, const BlockPos& pos);
     virtual int getColor(LevelSource* levelSource, const BlockPos& pos, const BlockState* state);
     virtual bool canContainLiquid(const BlockState* state) const;
-    virtual Item* getSeedItem();
+    Item* getSeedItem();
     virtual void spawnResources(Level* level, const BlockPos& pos, const BlockState* state,
                                 float chance, int lootBonus);
     virtual Item* getResource(const BlockState* state, Random* random, int lootBonus);

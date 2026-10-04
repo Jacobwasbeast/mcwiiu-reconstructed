@@ -234,12 +234,16 @@ bool FlowerPotBlock::isCubeShaped(const BlockState*) { return false; }
 int FlowerPotBlock::getColor(LevelSource* levelSource, const BlockPos& pos, int tintIndex)
 {
     boost::shared_ptr<BlockEntity> blockEntity = levelSource->getBlockEntity(pos);
-    if (blockEntity != NULL && blockEntity->GetType() == BlockEntityType::FLOWER_POT)
+    if (blockEntity != NULL)
     {
-        Item* item = boost::static_pointer_cast<FlowerPotBlockEntity>(blockEntity)->getPlantItem();
-        if (item != NULL && dynamic_cast<BlockItem*>(item) != NULL)
+        bool isFlowerPot = blockEntity->GetType() == BlockEntityType::FLOWER_POT;
+        if (isFlowerPot)
         {
-            return Block::byItem(item)->getColor(levelSource, pos, tintIndex);
+            Item* item = boost::static_pointer_cast<FlowerPotBlockEntity>(blockEntity)->getPlantItem();
+            if (item != NULL && dynamic_cast<BlockItem*>(item) != NULL)
+            {
+                return Block::byItem(item)->getColor(levelSource, pos, tintIndex);
+            }
         }
     }
     return 0xFFFFFF;
@@ -248,11 +252,15 @@ int FlowerPotBlock::getColor(LevelSource* levelSource, const BlockPos& pos, int 
 boost::shared_ptr<FlowerPotBlockEntity> FlowerPotBlock::getFlowerPotEntity(Level* level, const BlockPos& pos)
 {
     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
-    if (blockEntity == NULL || blockEntity->GetType() != BlockEntityType::FLOWER_POT)
+    if (blockEntity != NULL)
     {
-        return boost::shared_ptr<FlowerPotBlockEntity>();
+        bool isFlowerPot = blockEntity->GetType() == BlockEntityType::FLOWER_POT;
+        if (isFlowerPot)
+        {
+            return boost::dynamic_pointer_cast<FlowerPotBlockEntity>(blockEntity);
+        }
     }
-    return boost::dynamic_pointer_cast<FlowerPotBlockEntity>(blockEntity);
+    return boost::shared_ptr<FlowerPotBlockEntity>();
 }
 
 bool FlowerPotBlock::canBePotted(const not_null_ptr<ItemInstance>& item)
@@ -470,10 +478,14 @@ unsigned int FlowerPotBlock::GetInteractTooltip(const BlockTooltipDataHolder& to
 {
     bool plantEmpty = false;
     boost::shared_ptr<BlockEntity> blockEntity = tooltipData.m_pLevel->getBlockEntity(tooltipData.m_blockPos);
-    if (blockEntity != NULL && blockEntity->GetType() == BlockEntityType::FLOWER_POT)
+    if (blockEntity != NULL)
     {
-        boost::shared_ptr<FlowerPotBlockEntity> pot = boost::dynamic_pointer_cast<FlowerPotBlockEntity>(blockEntity);
-        plantEmpty = pot->getPlantItemInstance()->isEmpty();
+        bool isFlowerPot = blockEntity->GetType() == BlockEntityType::FLOWER_POT;
+        if (isFlowerPot)
+        {
+            boost::shared_ptr<FlowerPotBlockEntity> pot = boost::dynamic_pointer_cast<FlowerPotBlockEntity>(blockEntity);
+            plantEmpty = pot->getPlantItemInstance()->isEmpty();
+        }
     }
 
     if (tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Fail
@@ -495,7 +507,9 @@ unsigned int FlowerPotBlock::GetInteractTooltip(const BlockTooltipDataHolder& to
             case 39:
             case 40:
             case 81:
-                return plantEmpty ? IDS_TOOLTIPS_PLANT : 0x3d8502afu;
+                if (plantEmpty)
+                    return IDS_TOOLTIPS_PLANT;
+                return IDS_TOOLTIPS_PICKUP_GENERIC;
             default:
                 break;
             }
@@ -504,7 +518,7 @@ unsigned int FlowerPotBlock::GetInteractTooltip(const BlockTooltipDataHolder& to
     }
 
     if (tooltipData.m_pItemInstance->isEmpty() && !plantEmpty)
-        return 0x3d8502afu;
+        return IDS_TOOLTIPS_PICKUP_GENERIC;
     return Block::GetInteractTooltip(tooltipData);
 }
 

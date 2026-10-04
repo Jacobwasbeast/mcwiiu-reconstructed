@@ -7,7 +7,7 @@ BlockPlacedMedal::BlockPlacedMedal(int name, float target, unsigned int weight, 
 {
 }
 
-double BlockPlacedMedal::GetScore(PlayerStats* playerStats) const
+float BlockPlacedMedal::GetScore(PlayerStats* playerStats) const
 {
     return GameMedal::totalOfAllRounds(playerStats, getBlocksPlaced);
 }

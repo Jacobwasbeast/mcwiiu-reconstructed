@@ -64,22 +64,22 @@ BlockPos::BlockPos(const Vec3i& other)
 
 bool BlockPos::equals(const BlockPos& other) const
 {
-    return x == other.x && y == other.y && z == other.z;
-}
-
-bool BlockPos::equals(const BlockPos* other) const
-{
-    if (this == other)
+    if (x == other.x && y == other.y && z == other.z)
     {
         return true;
     }
 
-    if (other == NULL)
+    return false;
+}
+
+bool BlockPos::equals(const BlockPos* other) const
+{
+    if (this != other && (other == NULL || x != other->x || y != other->y || z != other->z))
     {
         return false;
     }
 
-    return x == other->x && y == other->y && z == other->z;
+    return true;
 }
 
 int BlockPos::hashCode() const
@@ -240,6 +240,9 @@ BlockPos BlockPos::rotate(Rotation* rotation) const
 {
     switch (rotation->getType())
     {
+    default:
+        return *this;
+
     case Rotation::eTYPE_Clockwise90:
         return BlockPos(-z, y, x);
 
@@ -249,8 +252,6 @@ BlockPos BlockPos::rotate(Rotation* rotation) const
     case Rotation::eTYPE_CounterClockwise90:
         return BlockPos(z, y, -x);
 
-    default:
-        return *this;
     }
 }
 
@@ -305,8 +306,18 @@ Iterator<MutableBlockPos*>* BlockPos::mutablesBetween(int minX, int minY, int mi
 
 Iterator<MutableBlockPos*>* BlockPos::mutablesBetween(const BlockPos& from, const BlockPos& to)
 {
-    return mutablesBetween(std::min(from.x, to.x), std::min(from.y, to.y), std::min(from.z, to.z),
-                           std::max(from.x, to.x), std::max(from.y, to.y), std::max(from.z, to.z));
+    int minX = to.x < from.x ? to.x : from.x;
+    int minY = to.y < from.y ? to.y : from.y;
+    int minZ = to.z < from.z ? to.z : from.z;
+    int maxX = to.x;
+    if (maxX < from.x)
+    {
+        maxX = from.x;
+    }
+    int maxY = from.y < to.y ? to.y : from.y;
+    int maxZ = from.z < to.z ? to.z : from.z;
+
+    return mutablesBetween(minX, minY, minZ, maxX, maxY, maxZ);
 }
 
 Iterator<MutableBlockPos*>* BlockPos::pooledMutablesBetween(const BlockPos& from, const BlockPos& to)

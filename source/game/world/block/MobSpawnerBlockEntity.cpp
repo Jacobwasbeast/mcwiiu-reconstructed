@@ -64,7 +64,7 @@ void MobSpawnerBlockEntity::tick()
 boost::shared_ptr<Packet> MobSpawnerBlockEntity::getUpdatePacket()
 {
     return boost::shared_ptr<Packet>(new ClientboundBlockEntityDataPacket(
-        getBlockPos(), 1, mLevel->mDimension->getType()->getId(), getUpdateTag()));
+        mPos, 1, mLevel->mDimension->getType()->getId(), getUpdateTag()));
 }
 
 CompoundTag* MobSpawnerBlockEntity::getUpdateTag()
@@ -98,8 +98,7 @@ boost::shared_ptr<BlockEntity> MobSpawnerBlockEntity::clone()
 
 void MobSpawnerBlockEntity::setEntityId(const std::wstring& entityId)
 {
-    ResourceLocation location(entityId);
-    mSpawner->setEntityId(location);
+    mSpawner->setEntityId(ResourceLocation(entityId));
 }
 
 MobSpawnerBlockEntity::BlockEntityMobSpawner::BlockEntityMobSpawner(MobSpawnerBlockEntity* blockEntity)
@@ -131,8 +130,8 @@ void MobSpawnerBlockEntity::BlockEntityMobSpawner::setNextSpawnData(SpawnData* d
     BaseMobSpawner::setNextSpawnData(data);
     if (getLevel() != NULL)
     {
-        BlockPos pos = getPos();
-        const BlockState* state = getLevel()->getBlockState(pos);
-        getLevel()->sendBlockUpdated(pos, state, state, 4, true);
+        Level* level = mBlockEntity->getLevel();
+        const BlockState* state = level->getBlockState(getPos());
+        getLevel()->sendBlockUpdated(mBlockEntity->mPos, state, state, 4, true);
     }
 }

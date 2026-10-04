@@ -32,10 +32,20 @@ struct _STRING_VERIFY_RESPONSE
 };
 
 SignBlockEntity::SignBlockEntity()
-    : mCreatedPlayer(), mEditable(true), mVerified(true), mCensored(false),
-      mCreatedByRestrictedPlayer(false), mCreatedByHostPlayer(true),
-      mSelectedLine(-1), mUniqueId(0), mTextCacheIndex(0), mTextCacheEnabled(true)
 {
+    mMessages[0] = L"";
+    mMessages[1] = L"";
+    mMessages[2] = L"";
+    mMessages[3] = L"";
+    mEditable = true;
+    mVerified = true;
+    mCensored = false;
+    mCreatedByRestrictedPlayer = false;
+    mCreatedByHostPlayer = true;
+    mSelectedLine = -1;
+    mCreatedPlayer = L"";
+    mTextCacheIndex = 0;
+    mTextCacheEnabled = true;
     setUniqueId();
 }
 
@@ -141,12 +151,12 @@ void SignBlockEntity::load(CompoundTag* tag)
     BlockEntity::load(tag);
     for (int line = 0; line < 4; ++line)
     {
-        wchar_t key[16];
-        swprintf(key, 16, L"Text%d", line + 1);
+        wchar_t key[256];
+        swprintf(key, 256, L"Text%d", line + 1);
         mMessages[line] = tag->getString(key);
         if (mMessages[line].size() > 15)
         {
-            mMessages[line].resize(15);
+            mMessages[line] = mMessages[line].substr(0, 15);
         }
     }
     if (tag->contains(L"Verified"))
@@ -174,15 +184,13 @@ void SignBlockEntity::load(CompoundTag* tag)
 
 boost::shared_ptr<Packet> SignBlockEntity::getUpdatePacket()
 {
-    int dimensionId = mLevel->mDimension->getType()->getId();
-    return boost::shared_ptr<Packet>(new ClientboundBlockEntityDataPacket(getBlockPos(), 9, dimensionId, getUpdateTag()));
+    boost::shared_ptr<ClientboundBlockEntityDataPacket> packet(new ClientboundBlockEntityDataPacket(mPos, 9, mLevel->mDimension->getType()->getId(), getUpdateTag()));
+    return packet;
 }
 
 CompoundTag* SignBlockEntity::getUpdateTag()
 {
-    CompoundTag* tag = new CompoundTag();
-    save(tag);
-    return tag;
+    return save(new CompoundTag());
 }
 
 bool SignBlockEntity::onlyOpCanSetNbt()
@@ -208,24 +216,20 @@ unsigned int SignBlockEntity::StringVerifyCallback(void* context, _STRING_VERIFY
     {
         sign->mVerified = true;
         sign->mCensored = false;
-        if (response != NULL)
+        for (unsigned int i = 0; i < response->count; ++i)
         {
-            for (unsigned int i = 0; i < response->count; ++i)
+            if (response->results[i] != 0)
             {
-                if (response->results[i] != 0)
-                {
-                    sign->mCensored = true;
-                }
+                sign->mCensored = true;
             }
         }
         if (sign->mLevel != NULL && !sign->mLevel->mIsClientSide)
         {
             Level* level = sign->mLevel;
-            BlockPos pos = sign->getBlockPos();
-            if (level->hasChunkAt(pos, false))
+            if (level->hasChunkAt(sign->getBlockPos(), false))
             {
-                BlockState* state = const_cast<BlockState*>(level->getBlockState(pos));
-                static_cast<ServerLevel*>(level)->queueSendBlockUpdate(pos.x, pos.y, pos.z, state, state);
+                BlockState* state = const_cast<BlockState*>(level->getBlockState(sign->getBlockPos()));
+                static_cast<ServerLevel*>(level)->queueSendBlockUpdate(sign->getBlockPos().x, sign->getBlockPos().y, sign->getBlockPos().z, state, state);
             }
         }
         sign->setUniqueId();
@@ -245,15 +249,14 @@ void SignBlockEntity::setChanged()
 
 boost::shared_ptr<BlockEntity> SignBlockEntity::clone()
 {
-    boost::shared_ptr<BlockEntity> result(new SignBlockEntity());
+    boost::shared_ptr<SignBlockEntity> result = boost::shared_ptr<SignBlockEntity>(new SignBlockEntity());
     BlockEntity::clone(result);
-    boost::shared_ptr<SignBlockEntity> sign = boost::static_pointer_cast<SignBlockEntity>(result);
-    for (int line = 0; line < 4; ++line)
-    {
-        sign->mMessages[line] = mMessages[line];
-    }
-    sign->mVerified = mVerified;
-    sign->mCensored = mCensored;
+    result->mMessages[0] = mMessages[0];
+    result->mMessages[1] = mMessages[1];
+    result->mMessages[2] = mMessages[2];
+    result->mMessages[3] = mMessages[3];
+    result->mVerified = mVerified;
+    result->mCensored = mCensored;
     return result;
 }
 

@@ -19,7 +19,7 @@ MobSpawnerBlock::MobSpawnerBlock()
 
 boost::shared_ptr<BlockEntity> MobSpawnerBlock::newBlockEntity(Level* level, int)
 {
-    boost::shared_ptr<BlockEntity> blockEntity(MobSpawnerBlockEntity::create());
+    boost::shared_ptr<BlockEntity> blockEntity = boost::shared_ptr<MobSpawnerBlockEntity>(new MobSpawnerBlockEntity());
     blockEntity->setLevel(level);
     return blockEntity;
 }
@@ -38,7 +38,8 @@ void MobSpawnerBlock::spawnResources(Level* level, const BlockPos& pos, const Bl
                                      float chance, int lootBonus)
 {
     Block::spawnResources(level, pos, state, chance, lootBonus);
-    popExperience(level, pos, level->mRandom->nextInt(15) + 15 + level->mRandom->nextInt(15));
+    int experience = level->mRandom->nextInt(15) + 15 + level->mRandom->nextInt(15);
+    popExperience(level, pos, experience);
 }
 
 bool MobSpawnerBlock::isSolidRender(const BlockState*) const

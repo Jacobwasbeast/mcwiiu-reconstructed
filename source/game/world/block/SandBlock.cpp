@@ -24,7 +24,7 @@
 #include "game/world/block/TypedBoxed.hpp"
 #include "game/item/ItemId.hpp"
 
-static SandBlock::Variant* gSandVariants[2] = { NULL, NULL };
+static SandBlock::Variant* gSandVariants[2];
 
 SandBlock::Variant* SandBlock::Variant::SAND = NULL;
 SandBlock::Variant* SandBlock::Variant::RED_SAND = NULL;
@@ -90,8 +90,7 @@ SandBlock::SandBlock()
     : FallingBlock()
 {
     DerivedInit();
-    TypedBoxed<Variant*> value(Variant::SAND);
-    registerDefaultState(mStateDefinition->any()->setBoxedValue(TYPE, &value));
+    registerDefaultState(mStateDefinition->any()->setValue<Variant*>(TYPE, Variant::SAND));
     memset(mTextures, 0, sizeof(mTextures));
 }
 
@@ -122,11 +121,15 @@ void SandBlock::blockStaticCtor()
     gSandVariants[1] = Variant::RED_SAND;
 
     std::wstring name(L"variant");
-    boost::unordered_set<Variant*> variants;
-    variants.insert(gSandVariants[0]);
-    variants.insert(gSandVariants[1]);
-    TYPE = EnumProperty<Variant*>::create(name, typeid(Variant), variants,
-                                          Predicates<Variant*>::alwaysTrue);
+    EnumProperty<Variant*>* type;
+    {
+        boost::unordered_set<Variant*> variants;
+        variants.insert(gSandVariants[0]);
+        variants.insert(gSandVariants[1]);
+        type = EnumProperty<Variant*>::create(name, typeid(Variant), variants,
+                                              Predicates<Variant*>::alwaysTrue);
+    }
+    TYPE = type;
 }
 
 int SandBlock::getSpawnResourcesAuxValue(const BlockState* state)
@@ -141,8 +144,7 @@ const MaterialColor* SandBlock::getMapColor(const BlockState* state, LevelSource
 
 const BlockState* SandBlock::getBlockState(int data)
 {
-    TypedBoxed<Variant*> value(Variant::byData(data));
-    return defaultBlockState()->setBoxedValue(TYPE, &value);
+    return defaultBlockState()->setValue<Variant*>(TYPE, Variant::byData(data));
 }
 
 int SandBlock::convertBlockStateToLegacyData(const BlockState* state)

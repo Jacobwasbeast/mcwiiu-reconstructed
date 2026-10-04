@@ -21,12 +21,12 @@ MutableBlockPosIterator::~MutableBlockPosIterator()
 
 bool MutableBlockPosIterator::hasNext()
 {
+    bool result = true;
     if (this->currentPos != NULL && this->currentPos->equals(BlockPos(this->maxX, this->maxY, this->maxZ)))
     {
-        return false;
+        result = false;
     }
-
-    return true;
+    return result;
 }
 
 MutableBlockPos* MutableBlockPosIterator::next()

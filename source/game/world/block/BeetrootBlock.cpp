@@ -13,10 +13,10 @@
 #include "game/world/block/IntegerProperty.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
-#include <string>
+#include "game/core/StringConversion.hpp"
 
-template <typename T>
-std::wstring toString(T value);
+#include <cstring>
+#include <string>
 
 AbstractProperty<int>* BeetrootBlock::AGE = static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"age", 0, 3));
 
@@ -28,9 +28,10 @@ static const AABB* SHAPE_BY_AGE[4] = {
 };
 
 BeetrootBlock::BeetrootBlock()
-    : CropBlock(true), mStageIcons()
+    : CropBlock(true)
 {
     CropBlock::DerivedInit();
+    memset(mStageIcons, 0, sizeof(mStageIcons));
 }
 
 AbstractProperty<int>* BeetrootBlock::getAgeProperty()
@@ -87,6 +88,6 @@ TextureAtlasSprite* BeetrootBlock::getTexture(const Direction*, const BlockState
 
 void BeetrootBlock::registerIcons(IconRegister* iconRegister)
 {
-    for (int i = 0; i <= getMaxAge(); ++i)
-        mStageIcons[i] = iconRegister->registerIcon(L"beetroots_stage_" + ::toString(i));
+    for (int i = 0; i < getMaxAge() + 1; ++i)
+        mStageIcons[i] = iconRegister->registerIcon(L"beetroots_stage_" + _toString<int>(i));
 }

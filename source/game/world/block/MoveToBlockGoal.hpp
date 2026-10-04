@@ -29,8 +29,8 @@ public:
 
 protected:
     bool findNearestBlock();
-    virtual int yOff();
-    virtual bool isReachedTarget();
+    int yOff();
+    bool isReachedTarget();
 
     PathfinderMob* mMob;
     int mNextStartTick;

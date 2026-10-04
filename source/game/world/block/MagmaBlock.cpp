@@ -51,13 +51,14 @@ int MagmaBlock::getLightColor(const BlockState*, LevelSource*, const BlockPos&, 
 
 void MagmaBlock::addToTickQueue(Level* level, const BlockPos& pos, Random* random)
 {
-    const int delay = getTickDelay(level);
-    level->addToTickNextTick(pos, this, delay + random->nextInt(delay));
+    level->addToTickNextTick(pos, this, getTickDelay(level) + random->nextInt(getTickDelay(level)));
 }
 
 void MagmaBlock::tick(Level* level, const BlockPos& pos, const BlockState*, Random* random)
 {
-    if (level->getBlock(pos.above().above()) == Blocks::air && level->isEmptyWaterBlock(pos.above()))
+    Block* blockAbove = level->getBlock(pos.above().above());
+    bool emptyWater = level->isEmptyWaterBlock(pos.above());
+    if (emptyWater && blockAbove == Blocks::air)
     {
         int liquidLevel = level->getLiquidBlockState(pos.above())->getValue(LiquidBlock::LEVEL);
         if (!level->isEmptyWaterBlock(pos.above()) || liquidLevel != 0)
@@ -82,7 +83,7 @@ void MagmaBlock::tick(Level* level, const BlockPos& pos, const BlockState*, Rand
 void MagmaBlock::neighborChanged(const BlockState*, Level* level, const BlockPos& pos,
                                  Block*, const BlockPos& fromPos)
 {
-    if (pos.above() == fromPos && level->isEmptyWaterBlock(pos.above()))
+    if (fromPos == pos.above() && level->isEmptyWaterBlock(pos.above()))
         level->addToTickNextTick(pos, this, level->mRandom->nextInt(2, 3));
 
     Block* block = level->getBlock(fromPos);
@@ -98,7 +99,9 @@ int MagmaBlock::getTickDelay(Level*)
 
 void MagmaBlock::onPlace(Level* level, const BlockPos& pos, const BlockState*)
 {
-    if (level->getBlock(pos.above().above()) == Blocks::air && level->isEmptyWaterBlock(pos.above()))
+    Block* blockAbove = level->getBlock(pos.above().above());
+    bool emptyWater = level->isEmptyWaterBlock(pos.above());
+    if (emptyWater && blockAbove == Blocks::air)
     {
         int liquidLevel = level->getLiquidBlockState(pos.above())->getValue(LiquidBlock::LEVEL);
         if (!level->isEmptyWaterBlock(pos.above()) || liquidLevel != 0)
@@ -119,12 +122,11 @@ void MagmaBlock::animateTick(const BlockState*, Level* level, const BlockPos& po
     if (!level->isRainingAt(pos.above()))
         return;
 
-    level->addParticle(PARTICLE_SMOKE, pos.x + random->nextDouble(), pos.above().y,
-                       pos.z + random->nextDouble(), 0.0, 0.0, 0.0, arrayWithLength<int>());
-    level->addParticle(PARTICLE_SMOKE, pos.x + random->nextDouble(), pos.above().y,
-                       pos.z + random->nextDouble(), 0.0, 0.0, 0.0, arrayWithLength<int>());
-    level->addParticle(PARTICLE_SMOKE, pos.x + random->nextDouble(), pos.above().y,
-                       pos.z + random->nextDouble(), 0.0, 0.0, 0.0, arrayWithLength<int>());
-    level->addParticle(PARTICLE_SMOKE, pos.x + random->nextDouble(), pos.above().y,
-                       pos.z + random->nextDouble(), 0.0, 0.0, 0.0, arrayWithLength<int>());
+    for (int i = 0; i < 4; ++i)
+    {
+        double x = pos.x + random->nextDouble();
+        double y = pos.above().y;
+        double z = pos.z + random->nextDouble();
+        level->addParticle(PARTICLE_SMOKE, x, y, z, 0.0, 0.0, 0.0, arrayWithLength<int>());
+    }
 }

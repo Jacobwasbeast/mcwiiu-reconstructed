@@ -11,10 +11,13 @@ class BlockStateDefinition;
 class Level;
 class Material;
 class MaterialColor;
+template <class T> class AbstractProperty;
 
 class WeightedPressurePlateBlock : public BasePressurePlateBlock
 {
 public:
+    static AbstractProperty<int>* POWER;
+
     WeightedPressurePlateBlock(const std::wstring& name, Material* material, int maxWeight,
                                const MaterialColor* materialColor);
     virtual ~WeightedPressurePlateBlock();

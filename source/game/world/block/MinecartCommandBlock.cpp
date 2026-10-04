@@ -42,7 +42,7 @@ void MinecartCommandBlock::readAdditionalSaveData(CompoundTag* tag)
 {
     Minecart::readAdditionalSaveData(tag);
     mCommandBlock->load(tag);
-    getEntityData()->set(DATA_COMMAND_ID, mCommandBlock->getCommand(), true);
+    getEntityData()->set(DATA_COMMAND_ID, getCommandBlock()->getCommand(), true);
 }
 
 void MinecartCommandBlock::addAdditonalSaveData(CompoundTag* tag)
@@ -63,9 +63,9 @@ const BlockState* MinecartCommandBlock::getDefaultDisplayBlockState()
 
 void MinecartCommandBlock::activateMinecart(int x, int y, int z, bool powered)
 {
-    if (powered && mTickCount - mLastActivatedTick > 3)
+    if (powered && mTickCount - mLastActivatedTick >= 4)
     {
-        mCommandBlock->performCommand(mLevel);
+        getCommandBlock()->performCommand(mLevel);
         mLastActivatedTick = mTickCount;
     }
 }
@@ -117,8 +117,7 @@ unsigned int MinecartCommandBlock::MinecartBaseCommandBlock::getType()
 
 void MinecartCommandBlock::MinecartBaseCommandBlock::writeCoordinates(DataOutputStream* output)
 {
-    boost::shared_ptr<MinecartCommandBlock> minecart(mMinecart.lock());
-    output->writeInt(minecart->getId());
+    output->writeInt(mMinecart.lock()->getId());
 }
 
 BlockPos MinecartCommandBlock::MinecartBaseCommandBlock::getCommandSenderBlockPosition()

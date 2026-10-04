@@ -2,6 +2,7 @@
 #include "game/item/ItemId.hpp"
 #include "game/core/StringIds.hpp"
 
+#include <cstring>
 #include <string>
 
 #include "game/core/Direction.hpp"
@@ -70,9 +71,7 @@ CocoaBlock::CocoaBlock()
 {
     DerivedInit();
     setTicking(true);
-    mIcons[0] = NULL;
-    mIcons[1] = NULL;
-    mIcons[2] = NULL;
+    memset(mIcons, 0, sizeof(mIcons));
 }
 
 CocoaBlock::~CocoaBlock()
@@ -92,14 +91,13 @@ bool CocoaBlock::isBonemealSuccess(Level*, Random*, const BlockPos&, const Block
 
 void CocoaBlock::performBonemeal(Level* level, Random*, const BlockPos& pos, const BlockState* state)
 {
-    TypedBoxed<int> age(state->getValue(AGE) + 1);
-    level->setBlock(pos, state->setBoxedValue(AGE, &age), Block::UPDATE_CLIENTS, false);
+    level->setBlock(pos, state->setValue(AGE, state->getValue(AGE) + 1), Block::UPDATE_CLIENTS, false);
 }
 
 void CocoaBlock::removeAndSpawn(Level* level, const BlockPos& pos, const BlockState* state)
 {
     level->setBlock(pos, Blocks::air->defaultBlockState(), Block::UPDATE_ALL, false);
-    spawnResources(level, pos, state, 0.0f, 0);
+    spawnResources(level, pos, state, 0);
 }
 
 void CocoaBlock::tick(Level* level, const BlockPos& pos, const BlockState* state, Random*)
@@ -114,8 +112,7 @@ void CocoaBlock::tick(Level* level, const BlockPos& pos, const BlockState* state
         int age = state->getValue(AGE);
         if (age < 2)
         {
-            TypedBoxed<int> nextAge(age + 1);
-            level->setBlock(pos, state->setBoxedValue(AGE, &nextAge), Block::UPDATE_CLIENTS, false);
+            level->setBlock(pos, state->setValue(AGE, age + 1), Block::UPDATE_CLIENTS, false);
         }
     }
 }
@@ -145,8 +142,8 @@ const AABB* CocoaBlock::getShape(const BlockState* state, LevelSource*, const Bl
 
 const BlockState* CocoaBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    TypedBoxed<const Direction*> facing(rotation->rotate(state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY)));
-    return state->setBoxedValue(HorizontalDirectionalBlock::FACING_PROPERTY, &facing);
+    DirectionProperty* property = HorizontalDirectionalBlock::FACING_PROPERTY;
+    return state->setValue(property, rotation->rotate(state->getValue(property)));
 }
 
 const BlockState* CocoaBlock::mirror(const BlockState* state, Mirror* mirror)
@@ -158,8 +155,7 @@ void CocoaBlock::setPlacedBy(Level* level, const BlockPos& pos, const BlockState
                              boost::shared_ptr<LivingEntity> placer, not_null_ptr<ItemInstance>)
 {
     const Direction* facing = Direction::fromYRot(placer->mYRot);
-    TypedBoxed<const Direction*> boxed(facing);
-    level->setBlock(pos, state->setBoxedValue(HorizontalDirectionalBlock::FACING_PROPERTY, &boxed), Block::UPDATE_CLIENTS, false);
+    level->setBlock(pos, state->setValue(HorizontalDirectionalBlock::FACING_PROPERTY, facing), Block::UPDATE_CLIENTS, false);
 }
 
 const BlockState* CocoaBlock::getStateForPlacement(Level*, const BlockPos&, const Direction* direction,
@@ -167,10 +163,8 @@ const BlockState* CocoaBlock::getStateForPlacement(Level*, const BlockPos&, cons
                                                    boost::shared_ptr<LivingEntity>)
 {
     if (!direction->getAxis()->isHorizontal())
-        return NULL;
-    TypedBoxed<const Direction*> facing(direction->getOpposite());
-    TypedBoxed<int> age((auxValue & 0xf) >> 2);
-    return defaultBlockState()->setBoxedValue(HorizontalDirectionalBlock::FACING_PROPERTY, &facing)->setBoxedValue(AGE, &age);
+        direction = Direction::NORTH;
+    return defaultBlockState()->setValue(HorizontalDirectionalBlock::FACING_PROPERTY, direction->getOpposite())->setValue(AGE, 0);
 }
 
 void CocoaBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block*, const BlockPos&)
@@ -181,8 +175,8 @@ void CocoaBlock::neighborChanged(const BlockState* state, Level* level, const Bl
 
 void CocoaBlock::spawnResources(Level* level, const BlockPos& pos, const BlockState* state, float, int)
 {
-    int count = state->getValue(AGE) > 1 ? 3 : 1;
-    while (count-- > 0)
+    int count = state->getValue(AGE) < 2 ? 1 : 3;
+    for (int i = 0; i < count; ++i)
         Block::popResource(level, pos, not_null_ptr<ItemInstance>(new ItemInstance(Items::dye, 1, DyeColor::BROWN->getItemData())));
 }
 
@@ -195,14 +189,13 @@ int CocoaBlock::getRenderLayer() { return 0; }
 
 const BlockState* CocoaBlock::getBlockState(int data)
 {
-    TypedBoxed<const Direction*> facing(Direction::from2DDataValue(data));
-    TypedBoxed<int> age((data & 0xf) >> 2);
-    return defaultBlockState()->setBoxedValue(HorizontalDirectionalBlock::FACING_PROPERTY, &facing)->setBoxedValue(AGE, &age);
+    return defaultBlockState()->setValue(HorizontalDirectionalBlock::FACING_PROPERTY, Direction::from2DDataValue(data))->setValue(AGE, (data & 0xf) >> 2);
 }
 
 int CocoaBlock::convertBlockStateToLegacyData(const BlockState* state)
 {
-    return state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY)->get2DDataValue() | (state->getValue(AGE) << 2);
+    int facing = state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY)->get2DDataValue();
+    return facing | (state->getValue(AGE) << 2);
 }
 
 unsigned int CocoaBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
@@ -216,7 +209,7 @@ unsigned int CocoaBlock::GetInteractTooltip(const BlockTooltipDataHolder& toolti
 
 BlockStateDefinition* CocoaBlock::createBlockStateDefinition()
 {
-    const Property* properties[] = { HorizontalDirectionalBlock::FACING_PROPERTY, AGE };
+    static const Property* properties[] = { HorizontalDirectionalBlock::FACING_PROPERTY, AGE };
     return new BlockStateDefinition(this, properties, 2);
 }
 
@@ -232,7 +225,7 @@ TextureAtlasSprite* CocoaBlock::getTexture(const Direction*, const BlockState*)
 
 TextureAtlasSprite* CocoaBlock::getTextureForAge(int age)
 {
-    if (age > 2)
+    if (static_cast<unsigned int>(age) >= 3)
         age = 2;
     return mIcons[age];
 }

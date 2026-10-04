@@ -4,6 +4,7 @@
 #include "game/core/IconRegister.hpp"
 #include "game/core/Mirror.hpp"
 #include "game/core/Rotation.hpp"
+#include "game/entity/mob/LivingEntity.hpp"
 #include "game/util/AABB.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
@@ -36,15 +37,10 @@ static const AABB* END_PORTAL_FRAME_EYE_SHAPE = AABB::newPermanent(0.25, 0.8125,
 static BlockPattern* END_PORTAL_SHAPE = NULL;
 
 EndPortalFrameBlock::EndPortalFrameBlock()
-    : Block(Material::STONE, MaterialColor::COLOR_GREEN),
-      mTopIcon(NULL),
-      mEyeIcon(NULL)
+    : Block(Material::STONE, MaterialColor::COLOR_GREEN)
 {
     DerivedInit();
-    TypedBoxed<const Direction*> facing(Direction::NORTH);
-    TypedBoxed<bool> eye(false);
-    registerDefaultState(
-        mStateDefinition->any()->setBoxedValue(FACING, &facing)->setBoxedValue(EYE, &eye));
+    registerDefaultState(mStateDefinition->any()->setValue(FACING, Direction::NORTH)->setValue(EYE, false));
 }
 
 void EndPortalFrameBlock::blockStaticCtor()
@@ -86,9 +82,9 @@ const BlockState* EndPortalFrameBlock::getStateForPlacement(Level* level, const 
                                                              float hitZ, int auxValue,
                                                              boost::shared_ptr<LivingEntity> placer)
 {
-    TypedBoxed<const Direction*> facing(direction->getOpposite());
-    TypedBoxed<bool> eye(false);
-    return defaultBlockState()->setBoxedValue(FACING, &facing)->setBoxedValue(EYE, &eye);
+    const BlockState* state = defaultBlockState();
+    state = state->setValue(FACING, placer->getDirection()->getOpposite());
+    return state->setValue(EYE, false);
 }
 
 bool EndPortalFrameBlock::hasAnalogOutputSignal(const BlockState* state)
@@ -98,25 +94,31 @@ bool EndPortalFrameBlock::hasAnalogOutputSignal(const BlockState* state)
 
 int EndPortalFrameBlock::getAnalogOutputSignal(const BlockState* state, Level* level, const BlockPos& pos)
 {
-    return state->getValue(EYE) ? 15 : 0;
+    if (state->getValue(EYE))
+    {
+        return 15;
+    }
+    return 0;
 }
 
 const BlockState* EndPortalFrameBlock::getBlockState(int data)
 {
-    TypedBoxed<bool> eye((data >> 2) & 1);
-    TypedBoxed<const Direction*> facing(Direction::from2DDataValue(data & 3));
-    return defaultBlockState()->setBoxedValue(EYE, &eye)->setBoxedValue(FACING, &facing);
+    return defaultBlockState()->setValue(EYE, ((data >> 2) & 1) != 0)->setValue(FACING, Direction::from2DDataValue(data & 3));
 }
 
 int EndPortalFrameBlock::convertBlockStateToLegacyData(const BlockState* state)
 {
-    return state->getValue(FACING)->get2DDataValue() | (state->getValue(EYE) ? 4 : 0);
+    int data = state->getValue(FACING)->get2DDataValue();
+    if (state->getValue(EYE))
+    {
+        data |= 4;
+    }
+    return data;
 }
 
 const BlockState* EndPortalFrameBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    TypedBoxed<const Direction*> facing(rotation->rotate(state->getValue(FACING)));
-    return state->setBoxedValue(FACING, &facing);
+    return state->setValue(FACING, rotation->rotate(state->getValue(FACING)));
 }
 
 const BlockState* EndPortalFrameBlock::mirror(const BlockState* state, Mirror* mirror)
@@ -126,9 +128,7 @@ const BlockState* EndPortalFrameBlock::mirror(const BlockState* state, Mirror* m
 
 BlockStateDefinition* EndPortalFrameBlock::createBlockStateDefinition()
 {
-    const Property* properties[2];
-    properties[0] = FACING;
-    properties[1] = EYE;
+    static const Property* properties[2] = { FACING, EYE };
     return new BlockStateDefinition(this, properties, 2);
 }
 
@@ -142,30 +142,26 @@ BlockPattern* EndPortalFrameBlock::getOrCreatePortalShape()
     if (END_PORTAL_SHAPE == NULL)
     {
         std::wstring rows[5] = { L"?vvv?", L">???<", L">???<", L">???<", L"?^^^?" };
-        BlockStatePredicate* south =
-            BlockStatePredicate::forBlock(Blocks::end_portal_frame)
-                ->where(EYE, new BlockStatePredicate::PredicateConversion<bool>(
-                                 new Predicates<bool>::EqualToValuePredicate(true)))
-                ->where(FACING, new BlockStatePredicate::PredicateConversion<const Direction*>(
-                                    new Predicates<const Direction*>::EqualToValuePredicate(Direction::SOUTH)));
-        BlockStatePredicate* west =
-            BlockStatePredicate::forBlock(Blocks::end_portal_frame)
-                ->where(EYE, new BlockStatePredicate::PredicateConversion<bool>(
-                                 new Predicates<bool>::EqualToValuePredicate(true)))
-                ->where(FACING, new BlockStatePredicate::PredicateConversion<const Direction*>(
-                                    new Predicates<const Direction*>::EqualToValuePredicate(Direction::WEST)));
-        BlockStatePredicate* north =
-            BlockStatePredicate::forBlock(Blocks::end_portal_frame)
-                ->where(EYE, new BlockStatePredicate::PredicateConversion<bool>(
-                                 new Predicates<bool>::EqualToValuePredicate(true)))
-                ->where(FACING, new BlockStatePredicate::PredicateConversion<const Direction*>(
-                                    new Predicates<const Direction*>::EqualToValuePredicate(Direction::NORTH)));
-        BlockStatePredicate* east =
-            BlockStatePredicate::forBlock(Blocks::end_portal_frame)
-                ->where(EYE, new BlockStatePredicate::PredicateConversion<bool>(
-                                 new Predicates<bool>::EqualToValuePredicate(true)))
-                ->where(FACING, new BlockStatePredicate::PredicateConversion<const Direction*>(
-                                    new Predicates<const Direction*>::EqualToValuePredicate(Direction::EAST)));
+        BlockStatePredicate* south = BlockStatePredicate::forBlock(Blocks::end_portal_frame);
+        south = south->where(EYE, new BlockStatePredicate::PredicateConversion<bool>(
+                                  new Predicates<bool>::EqualToValuePredicate(true)));
+        south = south->where(FACING, new BlockStatePredicate::PredicateConversion<const Direction*>(
+                                     new Predicates<const Direction*>::EqualToValuePredicate(Direction::SOUTH)));
+        BlockStatePredicate* west = BlockStatePredicate::forBlock(Blocks::end_portal_frame);
+        west = west->where(EYE, new BlockStatePredicate::PredicateConversion<bool>(
+                                  new Predicates<bool>::EqualToValuePredicate(true)));
+        west = west->where(FACING, new BlockStatePredicate::PredicateConversion<const Direction*>(
+                                     new Predicates<const Direction*>::EqualToValuePredicate(Direction::WEST)));
+        BlockStatePredicate* north = BlockStatePredicate::forBlock(Blocks::end_portal_frame);
+        north = north->where(EYE, new BlockStatePredicate::PredicateConversion<bool>(
+                                  new Predicates<bool>::EqualToValuePredicate(true)));
+        north = north->where(FACING, new BlockStatePredicate::PredicateConversion<const Direction*>(
+                                     new Predicates<const Direction*>::EqualToValuePredicate(Direction::NORTH)));
+        BlockStatePredicate* east = BlockStatePredicate::forBlock(Blocks::end_portal_frame);
+        east = east->where(EYE, new BlockStatePredicate::PredicateConversion<bool>(
+                                  new Predicates<bool>::EqualToValuePredicate(true)));
+        east = east->where(FACING, new BlockStatePredicate::PredicateConversion<const Direction*>(
+                                     new Predicates<const Direction*>::EqualToValuePredicate(Direction::EAST)));
         END_PORTAL_SHAPE = BlockPatternBuilder::start()
                                ->aisle(rows)
                                ->where(L'?', BlockInWorld::hasState(Predicates<const BlockState*>::alwaysTrue))

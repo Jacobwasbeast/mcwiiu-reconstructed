@@ -86,9 +86,7 @@ int WallBlock::Variant::getData() { return mData; }
 
 WallBlock::Variant* WallBlock::Variant::byData(int data)
 {
-    if ((unsigned int)data > 1)
-        data = 0;
-    return VALUES[data];
+    return VALUES[(unsigned int)data < 2 ? data : 0];
 }
 
 std::wstring WallBlock::Variant::toString() const { return mName; }
@@ -97,10 +95,15 @@ int WallBlock::Variant::getTranslationKey() { return mTranslationKey; }
 
 void WallBlock::blockStaticCtor()
 {
-    boost::unordered_set<Variant*> values;
-    values.insert(Variant::VALUES[0]);
-    values.insert(Variant::VALUES[1]);
-    VARIANT = EnumProperty<Variant*>::create(L"variant", typeid(Variant), values, Predicates<Variant*>::alwaysTrue);
+    std::wstring name(L"variant");
+    EnumProperty<Variant*>* variant;
+    {
+        boost::unordered_set<Variant*> values;
+        values.insert(Variant::VALUES[0]);
+        values.insert(Variant::VALUES[1]);
+        variant = EnumProperty<Variant*>::create(name, typeid(Variant), values, Predicates<Variant*>::alwaysTrue);
+    }
+    VARIANT = variant;
 }
 
 WallBlock::WallBlock(Block* block)
@@ -109,15 +112,12 @@ WallBlock::WallBlock(Block* block)
     mBlockType = EBLOCK_TYPE_WALL;
     mIsWall = true;
     DerivedInit();
-    TypedBoxed<bool> falseValue(false);
-    TypedBoxed<Variant*> variant(Variant::COBBLESTONE);
-    const BlockState* state = mStateDefinition->any();
-    state = state->setBoxedValue(UP, &falseValue);
-    state = state->setBoxedValue(NORTH, &falseValue);
-    state = state->setBoxedValue(EAST, &falseValue);
-    state = state->setBoxedValue(SOUTH, &falseValue);
-    state = state->setBoxedValue(WEST, &falseValue);
-    registerDefaultState(state->setBoxedValue(VARIANT, &variant));
+    const BlockState* state = mStateDefinition->any()->setValue(UP, false);
+    state = state->setValue(NORTH, false);
+    state = state->setValue(EAST, false);
+    state = state->setValue(SOUTH, false);
+    state = state->setValue(WEST, false);
+    registerDefaultState(state->setValue(VARIANT, Variant::COBBLESTONE));
     setDestroyTime(block->mDestroyTime);
     setExplodeable(block->mExplosionResistance / 3.0f);
     setSoundType(block->mSoundType);
@@ -192,8 +192,7 @@ bool WallBlock::shouldRenderFace(const BlockState* state, LevelSource* levelSour
 
 const BlockState* WallBlock::getBlockState(int data)
 {
-    TypedBoxed<Variant*> variant(Variant::byData(data));
-    return defaultBlockState()->setBoxedValue(VARIANT, &variant);
+    return defaultBlockState()->setValue(VARIANT, Variant::byData(data));
 }
 
 int WallBlock::convertBlockStateToLegacyData(const BlockState* state) { return state->getValue(VARIANT)->getData(); }
@@ -207,17 +206,11 @@ const BlockState* WallBlock::fillVirtualBlockStateProperties(const BlockState* s
     bool west = connectsTo(levelSource, pos.west(), Direction::EAST);
     bool straight = (north && !east && south && !west) || (!north && east && !south && west);
     bool up = !straight || !levelSource->isEmptyBlock(pos.above());
-
-    TypedBoxed<bool> upValue(up);
-    TypedBoxed<bool> northValue(north);
-    TypedBoxed<bool> eastValue(east);
-    TypedBoxed<bool> southValue(south);
-    TypedBoxed<bool> westValue(west);
-    state = state->setBoxedValue(UP, &upValue);
-    state = state->setBoxedValue(NORTH, &northValue);
-    state = state->setBoxedValue(EAST, &eastValue);
-    state = state->setBoxedValue(SOUTH, &southValue);
-    return state->setBoxedValue(WEST, &westValue);
+    state = state->setValue(UP, up);
+    state = state->setValue(NORTH, north);
+    state = state->setValue(EAST, east);
+    state = state->setValue(SOUTH, south);
+    return state->setValue(WEST, west);
 }
 
 BlockStateDefinition* WallBlock::createBlockStateDefinition()

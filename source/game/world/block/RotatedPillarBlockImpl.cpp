@@ -4,6 +4,7 @@
 #include "game/core/IconRegister.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/BlockStateDefinition.hpp"
+#include "game/world/block/EnumProperty.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/block/MaterialColor.hpp"
 #include "game/world/block/TypedBoxed.hpp"
@@ -20,24 +21,16 @@ RotatedPillarBlockImpl::RotatedPillarBlockImpl(Material* material, const Materia
     DerivedInit();
 }
 
-RotatedPillarBlockImpl::~RotatedPillarBlockImpl()
-{
-}
-
 void RotatedPillarBlockImpl::DerivedInit()
 {
     Block::DerivedInit();
     const BlockState* state = mStateDefinition->any();
-    TypedBoxed<Direction::Axis*> axis(Direction::Axis::Y);
-    registerDefaultState(state->setBoxedValue(state->getProperties()[0], &axis));
+    registerDefaultState(state->setValue(gRotatedPillarBlockAxisProperty, Direction::Axis::Y));
 }
 
 Direction::Axis* RotatedPillarBlockImpl::getAxis(const BlockState* state)
 {
-    const std::vector<const Property*>& properties = state->getProperties();
-    const TypedBoxed<Direction::Axis*>* axis =
-        static_cast<const TypedBoxed<Direction::Axis*>*>(state->getBoxedValue(properties[0]));
-    return axis->getValue();
+    return state->getValue(gRotatedPillarBlockAxisProperty);
 }
 
 RotatedPillarBlockImpl* RotatedPillarBlockImpl::setIconTopName(const std::wstring& name)

@@ -187,8 +187,9 @@ void TallGrassBlock::playerDestroy(Level* level, boost::shared_ptr<Player> playe
 {
     if (!level->mIsClientSide && tool->getItem() == Items::shears)
     {
-        player->awardStat(Stats::blockMinedStats.data[Block::getId(this)],
-                          GenericStats::param_blocksMined(state, 1));
+        Player* awardee = player.operator->();
+        Stat* stat = gStats->get_blocksMined(Block::getId(this));
+        awardee->awardStat(stat, GenericStats::param_blocksMined(state, 1));
         Variant* variant = state->getValue(VARIANT);
         Block::popResource(level, pos, not_null_ptr<ItemInstance>(new ItemInstance(Blocks::tallgrass, 1, variant->getData())));
         return;

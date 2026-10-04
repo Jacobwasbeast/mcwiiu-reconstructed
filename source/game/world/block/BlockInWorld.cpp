@@ -3,8 +3,11 @@
 #include "game/world/Level.hpp"
 
 BlockInWorld::BlockInWorld(Level* level, const BlockPos& pos, bool loadChunks)
-    : mLevel(level), mPos(pos), mLoadChunks(loadChunks), mState(NULL), mEntity(), mEntityCached(false)
+    : mLevel(level), mPos(pos), mLoadChunks(loadChunks), mEntity()
 {
+    mState = NULL;
+    mEntity = boost::shared_ptr<BlockEntity>();
+    mEntityCached = false;
 }
 
 const BlockState* BlockInWorld::getState()

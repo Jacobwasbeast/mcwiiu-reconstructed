@@ -30,8 +30,14 @@ EnumProperty<StoneBlock::Variant*>* StoneBlock::VARIANT = NULL;
 StoneBlock::Variant* StoneBlock::Variant::BY_DATA[7] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL };
 
 StoneBlock::Variant::Variant(int data, const MaterialColor* materialColor, const std::wstring& name, int nameId, int descriptionId, const std::wstring& serializedName, bool natural)
-    : mData(data), mName(name), mNameId(nameId), mDescriptionId(descriptionId), mMaterialColor(materialColor), mNatural(natural), mSerializedName(serializedName), mTexture(NULL)
+    : mData(data), mMaterialColor(materialColor)
 {
+    mName = name;
+    mNameId = nameId;
+    mDescriptionId = descriptionId;
+    mSerializedName = serializedName;
+    mNatural = natural;
+    mTexture = NULL;
 }
 
 const MaterialColor* StoneBlock::Variant::getMaterialColor() { return mMaterialColor; }
@@ -73,9 +79,14 @@ void StoneBlock::blockStaticCtor()
     Variant::BY_DATA[4] = Variant::SMOOTH_DIORITE;
     Variant::BY_DATA[5] = Variant::ANDESITE;
     Variant::BY_DATA[6] = Variant::SMOOTH_ANDESITE;
-    boost::unordered_set<Variant*> values;
-    for (int i = 0; i < 7; ++i) values.insert(Variant::BY_DATA[i]);
-    VARIANT = EnumProperty<Variant*>::create(L"variant", typeid(Variant*), values, Predicates<Variant*>::alwaysTrue);
+    std::wstring name(L"variant");
+    EnumProperty<Variant*>* variant;
+    {
+        boost::unordered_set<Variant*> values;
+        for (int i = 0; i < 7; ++i) values.insert(Variant::BY_DATA[i]);
+        variant = EnumProperty<Variant*>::create(name, typeid(Variant*), values, Predicates<Variant*>::alwaysTrue);
+    }
+    VARIANT = variant;
 }
 
 StoneBlock::StoneBlock() : Block(Material::STONE)
@@ -93,7 +104,11 @@ const MaterialColor* StoneBlock::getMapColor(const BlockState* state, LevelSourc
 
 Item* StoneBlock::getResource(const BlockState* state, Random*, int)
 {
-    return Item::byBlock(state->getValue(VARIANT) == Variant::STONE ? Blocks::stone : Blocks::cobblestone);
+    if (state->getValue(VARIANT) == Variant::STONE)
+    {
+        return Item::byBlock(Blocks::cobblestone);
+    }
+    return Item::byBlock(Blocks::stone);
 }
 
 int StoneBlock::getSpawnResourcesAuxValue(const BlockState* state) { return state->getValue(VARIANT)->getData(); }

@@ -30,10 +30,9 @@ void DaylightDetectorBlockEntity::tick()
     if (mLevel != NULL && !mLevel->mIsClientSide && mLevel->getGameTime() % 20LL == 0LL)
     {
         mBlock = getBlock();
-        DaylightDetectorBlock* daylightDetector = dynamic_cast<DaylightDetectorBlock*>(mBlock);
-        if (daylightDetector != NULL)
+        if (dynamic_cast<DaylightDetectorBlock*>(mBlock) != NULL)
         {
-            daylightDetector->updateSignalStrength(mLevel, mPos);
+            static_cast<DaylightDetectorBlock*>(mBlock)->updateSignalStrength(mLevel, mPos);
         }
     }
 }

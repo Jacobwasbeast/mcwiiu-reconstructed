@@ -3,7 +3,7 @@
 #include "game/world/block/Material.hpp"
 
 StructureBlock::StructureBlock()
-    : Block(Material::STRUCTURAL_AIR)
+    : Block(Material::AIR)
 {
     DerivedInit();
 }

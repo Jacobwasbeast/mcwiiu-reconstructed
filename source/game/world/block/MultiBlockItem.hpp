@@ -14,7 +14,7 @@ public:
     MultiBlockItem(Block* block, Block* blockForAuxValue,
                    ItemInstanceResolver nameFunction,
                    ItemInstanceResolver descriptionFunction);
-    virtual ~MultiBlockItem();
+    virtual ~MultiBlockItem() {}
 
     virtual int getLevelDataForAuxValue(int auxValue);
     virtual int getDescriptionId(not_null_ptr<ItemInstance> itemInstance);

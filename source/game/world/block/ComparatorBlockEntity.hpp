@@ -8,7 +8,6 @@
 class ComparatorBlockEntity : public BlockEntity
 {
 public:
-    ComparatorBlockEntity() : BlockEntity(), mOutputSignal(0) {}
     virtual ~ComparatorBlockEntity();
 
     static BlockEntity* create();

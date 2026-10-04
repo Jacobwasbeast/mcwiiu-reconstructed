@@ -64,7 +64,7 @@ bool RedStoneOreBlock::use(Level* level, const BlockPos& pos, const BlockState* 
 void RedStoneOreBlock::spawnParticles(Level* level, const BlockPos& pos)
 {
     Random* random = level->mRandom;
-    const double edge = 0.0625;
+    double edge = 0.0625;
 
     for (int i = 0; i < 6; ++i)
     {
@@ -145,7 +145,8 @@ void RedStoneOreBlock::spawnResources(Level* level, const BlockPos& pos, const B
     Block::spawnResources(level, pos, state, chance, lootBonus);
     if (getResource(state, level->mRandom, lootBonus) != Item::byBlock(this))
     {
-        popExperience(level, pos, level->mRandom->nextInt(5) + 1);
+        int amount = level->mRandom->nextInt(5) + 1;
+        popExperience(level, pos, amount);
     }
 }
 

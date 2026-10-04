@@ -1,6 +1,8 @@
 #include "game/world/block/ClockItem_ItemPropertyFunction.hpp"
 
 #include "game/core/Mth.hpp"
+#include "game/entity/mob/Entity.hpp"
+#include "game/entity/mob/LivingEntity.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/ItemFrame.hpp"
 #include "game/util/Math.hpp"
@@ -25,12 +27,11 @@ float ClockItem_ItemPropertyFunction::call(not_null_ptr<ItemInstance> itemInstan
                                            Level* level,
                                            boost::shared_ptr<LivingEntity> entity)
 {
-    if (level == NULL)
-    {
-        boost::shared_ptr<ItemFrame> frame = itemInstance->getFrame();
-        if (frame)
-            level = frame->mLevel;
-    }
+    boost::shared_ptr<Entity> holder = entity ? boost::shared_ptr<Entity>(entity)
+                                              : boost::static_pointer_cast<Entity>(itemInstance->getFrame());
+
+    if (level == NULL && holder)
+        level = holder->mLevel;
 
     if (level == NULL)
         return 0.0f;

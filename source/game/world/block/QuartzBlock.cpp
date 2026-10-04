@@ -18,6 +18,9 @@
 #include "game/world/block/Predicates.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
+static const int LINES_X_DATA = 3;
+static const int LINES_Z_DATA = 4;
+
 static const std::wstring gQuartzTopTexture = L"top";
 static const std::wstring gQuartzChiseledTopTexture = L"chiseled_top";
 static const std::wstring gQuartzLinesTopTexture = L"lines_top";
@@ -52,8 +55,10 @@ static QuartzBlock::Variant* gQuartzVariants[5] = {
 EnumProperty<QuartzBlock::Variant*>* QuartzBlock::VARIANT = NULL;
 
 QuartzBlock::Variant::Variant(int data, const std::wstring& serializedName, const std::wstring& name)
-    : mData(data), mSerializedName(serializedName), mName(name)
 {
+    mData = data;
+    mSerializedName = serializedName;
+    mName = name;
 }
 
 int QuartzBlock::Variant::getData()
@@ -83,23 +88,27 @@ std::wstring QuartzBlock::Variant::getSerializedName() const
 
 void QuartzBlock::blockStaticCtor()
 {
-    boost::unordered_set<Variant*> values;
-    values.insert(gQuartzVariants[0]);
-    values.insert(gQuartzVariants[1]);
-    values.insert(gQuartzVariants[2]);
-    values.insert(gQuartzVariants[3]);
-    values.insert(gQuartzVariants[4]);
+    std::wstring name = L"variant";
+    EnumProperty<Variant*>* property;
+    {
+        boost::unordered_set<Variant*> values;
+        for (int i = 0; i < 5; ++i)
+        {
+            values.insert(gQuartzVariants[i]);
+        }
 
-    VARIANT = EnumProperty<Variant*>::create(L"variant", typeid(Variant*), values,
-                                             Predicates<Variant*>::alwaysTrue);
+        property = EnumProperty<Variant*>::create(name, typeid(Variant*), values,
+                                                  Predicates<Variant*>::alwaysTrue);
+    }
+
+    VARIANT = property;
 }
 
 QuartzBlock::QuartzBlock()
     : Block(Material::STONE)
 {
     DerivedInit();
-    TypedBoxed<Variant*> variant(Variant::DEFAULT);
-    registerDefaultState(mStateDefinition->any()->setBoxedValue(VARIANT, &variant));
+    registerDefaultState(mStateDefinition->any()->setValue(VARIANT, Variant::DEFAULT));
 }
 
 const BlockState* QuartzBlock::getStateForPlacement(Level*, const BlockPos&, const Direction* direction,
@@ -109,29 +118,27 @@ const BlockState* QuartzBlock::getStateForPlacement(Level*, const BlockPos&, con
     if (auxValue == Variant::LINES_Y->getData())
     {
         int axis = direction->getAxis()->getId();
+        const BlockState* state = defaultBlockState();
         if (axis == Direction::Axis::eAxis_X)
         {
-            TypedBoxed<Variant*> linesX(Variant::LINES_X);
-            return defaultBlockState()->setBoxedValue(VARIANT, &linesX);
+            return state->setValue(VARIANT, Variant::LINES_X);
         }
         if (axis == Direction::Axis::eAxis_Z)
         {
-            TypedBoxed<Variant*> linesZ(Variant::LINES_Z);
-            return defaultBlockState()->setBoxedValue(VARIANT, &linesZ);
+            return state->setValue(VARIANT, Variant::LINES_Z);
         }
 
-        TypedBoxed<Variant*> linesY(Variant::LINES_Y);
-        return defaultBlockState()->setBoxedValue(VARIANT, &linesY);
+        return state->setValue(VARIANT, Variant::LINES_Y);
     }
 
-    if (auxValue == Variant::CHISELED->getData())
+    int chiseledData = Variant::CHISELED->getData();
+    const BlockState* state = defaultBlockState();
+    if (auxValue == chiseledData)
     {
-        TypedBoxed<Variant*> chiseled(Variant::CHISELED);
-        return defaultBlockState()->setBoxedValue(VARIANT, &chiseled);
+        return state->setValue(VARIANT, Variant::CHISELED);
     }
 
-    TypedBoxed<Variant*> defaultVariant(Variant::DEFAULT);
-    return defaultBlockState()->setBoxedValue(VARIANT, &defaultVariant);
+    return state->setValue(VARIANT, Variant::DEFAULT);
 }
 
 int QuartzBlock::getSpawnResourcesAuxValue(const BlockState* state)
@@ -164,8 +171,7 @@ const MaterialColor* QuartzBlock::getMapColor(const BlockState*, LevelSource*, c
 
 const BlockState* QuartzBlock::getBlockState(int data)
 {
-    TypedBoxed<Variant*> variant(Variant::byData(data));
-    return defaultBlockState()->setBoxedValue(VARIANT, &variant);
+    return defaultBlockState()->setValue(VARIANT, Variant::byData(data));
 }
 
 int QuartzBlock::convertBlockStateToLegacyData(const BlockState* state)
@@ -179,15 +185,13 @@ const BlockState* QuartzBlock::rotate(const BlockState* state, Rotation* rotatio
         || rotation->getType() == Rotation::eTYPE_CounterClockwise90)
     {
         int data = state->getValue(VARIANT)->getData();
-        if (data == Variant::LINES_X->getData())
+        if (data == LINES_X_DATA)
         {
-            TypedBoxed<Variant*> linesZ(Variant::LINES_Z);
-            return state->setBoxedValue(VARIANT, &linesZ);
+            return state->setValue(VARIANT, Variant::LINES_Z);
         }
-        if (data == Variant::LINES_Z->getData())
+        if (data == LINES_Z_DATA)
         {
-            TypedBoxed<Variant*> linesX(Variant::LINES_X);
-            return state->setBoxedValue(VARIANT, &linesX);
+            return state->setValue(VARIANT, Variant::LINES_X);
         }
     }
 

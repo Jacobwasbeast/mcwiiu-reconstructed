@@ -87,5 +87,6 @@ public:
 };
 
 extern BedBlock::Part& gBedHead;
+extern BedBlock::Part& gBedFoot;
 
 #endif

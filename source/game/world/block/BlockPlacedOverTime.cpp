@@ -68,7 +68,7 @@ float BlockPlacedOverTime::IN_LAST_10SECS(int lastRound, const std::map<int, int
     return (float)found->second;
 }
 
-double BlockPlacedOverTime::GetScore(PlayerStats* playerStats) const
+float BlockPlacedOverTime::GetScore(PlayerStats* playerStats) const
 {
     float score = 0.0f;
 

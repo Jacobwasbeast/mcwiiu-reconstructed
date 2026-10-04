@@ -24,9 +24,9 @@ void ComparatorBlockEntity::setOutputSignal(int signal)
 
 boost::shared_ptr<BlockEntity> ComparatorBlockEntity::clone()
 {
-    boost::shared_ptr<BlockEntity> result(new ComparatorBlockEntity());
+    boost::shared_ptr<ComparatorBlockEntity> result(new ComparatorBlockEntity());
     BlockEntity::clone(result);
-    static_cast<ComparatorBlockEntity*>(result.get())->mOutputSignal = mOutputSignal;
+    result->mOutputSignal = mOutputSignal;
     return result;
 }
 

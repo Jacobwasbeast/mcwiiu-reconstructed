@@ -25,7 +25,6 @@ public:
     DaylightDetectorBlock(bool inverted);
     virtual ~DaylightDetectorBlock();
 
-    virtual boost::shared_ptr<BlockEntity> newBlockEntity(Level* level, int data);
     virtual const AABB* getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
     virtual int getSignal(const BlockState* state, LevelSource* levelSource, const BlockPos& pos,
                           const Direction* direction);
@@ -37,6 +36,7 @@ public:
     virtual not_null_ptr<ItemInstance> getCloneItemInstance(Level* level, const BlockPos& pos,
                                                              const BlockState* state);
     virtual bool isInverted();
+    virtual boost::shared_ptr<BlockEntity> newBlockEntity(Level* level, int data);
     virtual bool isCubeShaped(const BlockState* state);
     virtual bool isSolidRender(const BlockState* state) const;
     virtual EBlockRenderShape getRenderShape(const BlockState* state);

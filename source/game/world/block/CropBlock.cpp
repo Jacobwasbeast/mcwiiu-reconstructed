@@ -25,9 +25,10 @@
 #include "game/client/audio/SoundType.hpp"
 #include "game/ui/BlockTooltipDataHolder.hpp"
 
+#include "game/core/StringConversion.hpp"
+
 #include <string>
 
-template <typename T> std::wstring toString(T value);
 
 static const AABB* SHAPE_BY_AGE[8] =
 {
@@ -79,9 +80,7 @@ void CropBlock::DerivedInit()
 {
     Block::DerivedInit();
     const BlockState* state = mStateDefinition->any();
-    AbstractProperty<int>* property = getAgeProperty();
-    TypedBoxed<int> age(0);
-    registerDefaultState(state->setBoxedValue(property, &age));
+    registerDefaultState(state->setValue(getAgeProperty(), 0));
     setTicking(true);
 }
 
@@ -269,7 +268,7 @@ void CropBlock::registerIcons(IconRegister* iconRegister)
 {
     for (int i = 0; i < 8; ++i)
     {
-        mStageIcons[i] = iconRegister->registerIcon(L"crops_" + ::toString(i));
+        mStageIcons[i] = iconRegister->registerIcon(L"crops_" + _toString<int>(i));
     }
 }
 

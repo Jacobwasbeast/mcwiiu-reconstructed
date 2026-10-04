@@ -13,52 +13,80 @@ PodiumPlaceMostBlocksDestroyedMedal::PodiumPlaceMostBlocksDestroyedMedal(EPodium
 {
 }
 
-double PodiumPlaceMostBlocksDestroyedMedal::GetScore(PlayerStats* playerStats) const
+float PodiumPlaceMostBlocksDestroyedMedal::GetScore(PlayerStats* playerStats) const
 {
     GameStats* gameStats = getGameStats();
+    PlayerList* playerList = (gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers);
     boost::shared_ptr<ServerPlayer> player =
-        gMinecraftServer->getPlayers()->getPlayerFromStatsUID(*(StatsUID*)playerStats);
+        playerList->getPlayerFromStatsUID(*(StatsUID*)playerStats);
     boost::shared_ptr<ServerPlayer> firstPlace = gameStats->GetFirstPlace();
     boost::shared_ptr<ServerPlayer> secondPlace = gameStats->GetSecondPlace();
     boost::shared_ptr<ServerPlayer> thirdPlace = gameStats->GetThirdPlace();
     int mostBlocksDestroyed = gameStats->GetMostBlocksDestroyed();
-    int secondMostBlocksDestroyed = gameStats->GetSecondMostBlocksDestroyed();
-    int thirdMostBlocksDestroyed = gameStats->GetThirdMostBlocksDestroyed();
-    int blocksDestroyed = 0;
+    unsigned int secondMostBlocksDestroyed = gameStats->GetSecondMostBlocksDestroyed();
+    unsigned int thirdMostBlocksDestroyed = gameStats->GetThirdMostBlocksDestroyed();
+    unsigned int score = 0;
 
     if (player)
     {
-        blocksDestroyed = playerStats->getTotalBlocksDestroyed();
-
         if (mPodium == PODIUM_FIRST)
         {
             if (player.get() == firstPlace.get())
             {
-                return static_cast<double>(static_cast<float>(blocksDestroyed));
+                score = playerStats->getTotalBlocksDestroyed();
             }
         }
         else if (mPodium == PODIUM_SECOND)
         {
-            if ((player.get() == secondPlace.get() || player.get() == firstPlace.get()) &&
-                blocksDestroyed >= secondMostBlocksDestroyed &&
-                (player.get() != firstPlace.get() || blocksDestroyed != mostBlocksDestroyed))
+            if ((player.get() != firstPlace.get() ||
+                 playerStats->getTotalBlocksDestroyed() != mostBlocksDestroyed) &&
+                (player.get() == secondPlace.get() || player.get() == firstPlace.get()))
             {
-                return static_cast<double>(static_cast<float>(blocksDestroyed - secondMostBlocksDestroyed));
+                unsigned int blocksDestroyed = playerStats->getTotalBlocksDestroyed();
+
+                if (secondMostBlocksDestroyed <= blocksDestroyed)
+                {
+                    score = blocksDestroyed - secondMostBlocksDestroyed;
+                }
             }
         }
         else if (mPodium == PODIUM_THIRD)
         {
-            bool placed = player.get() == firstPlace.get() ||
-                player.get() == secondPlace.get() || player.get() == thirdPlace.get();
+            bool eligible = true;
 
-            if (placed && blocksDestroyed >= thirdMostBlocksDestroyed &&
-                ((player.get() != firstPlace.get() && player.get() != secondPlace.get()) ||
-                 blocksDestroyed < secondMostBlocksDestroyed))
+            if (player.get() == firstPlace.get() || player.get() == secondPlace.get())
             {
-                return static_cast<double>(static_cast<float>(blocksDestroyed - thirdMostBlocksDestroyed));
+                unsigned int blocksDestroyed = playerStats->getTotalBlocksDestroyed();
+
+                if (secondMostBlocksDestroyed <= blocksDestroyed)
+                {
+                    eligible = false;
+                }
+                else if (player.get() != secondPlace.get() && player.get() != firstPlace.get())
+                {
+                    eligible = player.get() == thirdPlace.get();
+                }
             }
+            else
+            {
+                eligible = player.get() == thirdPlace.get();
+            }
+
+            if (eligible)
+            {
+                unsigned int blocksDestroyed = playerStats->getTotalBlocksDestroyed();
+
+                if (thirdMostBlocksDestroyed <= blocksDestroyed)
+                {
+                    score = blocksDestroyed - thirdMostBlocksDestroyed;
+                }
+            }
+        }
+        else
+        {
+            score = 0;
         }
     }
 
-    return 0.0;
+    return static_cast<double>(static_cast<float>(static_cast<int>(score)));
 }

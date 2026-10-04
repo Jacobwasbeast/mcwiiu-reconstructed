@@ -11,9 +11,9 @@
 #include "game/world/generation/Player.hpp"
 
 EnderChestBlockEntity::EnderChestBlockEntity()
-    : BlockEntity(), mOpen(0.0F), mOpenOld(0.0F), mOpenCount(0), mTickCount(0),
-      mName(new CensoredString())
+    : BlockEntity(), mOpen(0.0F), mOpenOld(0.0F), mOpenCount(0), mTickCount(0)
 {
+    mName = boost::shared_ptr<CensoredString>(new CensoredString());
 }
 
 EnderChestBlockEntity::~EnderChestBlockEntity()
@@ -28,15 +28,12 @@ BlockEntity* EnderChestBlockEntity::create()
 void EnderChestBlockEntity::setCustomName(const std::wstring& name, const std::wstring& uuid,
                                           bool chatCensored, bool uuidLocal)
 {
-    if (mName)
-    {
-        mName->set(name, uuid, chatCensored, uuidLocal);
-    }
+    mName->set(name, uuid, chatCensored, uuidLocal);
 }
 
 void EnderChestBlockEntity::tick()
 {
-    if (++mTickCount % 20 == 0)
+    if (++mTickCount % 20 * 4 == 0)
         mLevel->blockEvent(mPos, Blocks::ender_chest, 1, mOpenCount);
 
     mOpenOld = mOpen;
@@ -45,7 +42,8 @@ void EnderChestBlockEntity::tick()
     const int z = mPos.z;
     if (mOpenCount > 0 && mOpen == 0.0f)
     {
-        mLevel->playSound(boost::shared_ptr<Player>(), BlockPos(x + 0.5, y + 0.5, z + 0.5),
+        BlockPos soundPos(x + 0.5, y + 0.5, z + 0.5);
+        mLevel->playSound(boost::shared_ptr<Player>(), soundPos,
                           SoundEvents::ENDERCHEST_OPEN, SoundSource::eSoundSource_Blocks, 0.5f,
                           mLevel->mRandom->nextFloat() * 0.1f + 0.9f, 16.0f);
     }
@@ -98,12 +96,15 @@ void EnderChestBlockEntity::stopOpen()
 
 bool EnderChestBlockEntity::stillValid(boost::shared_ptr<Player> player)
 {
-    if (player.get() == NULL || mLevel == NULL)
+    if (mLevel->getBlockEntity(mPos) != shared_from_this())
     {
         return false;
     }
-    Entity* entity = static_cast<Entity*>(player.get());
-    return entity->distanceAsIfHitscanned(mPos, *entity->mBoundingBox) <= 30.25;
+    if (player->distanceAsIfHitscanned(mPos, *player->mBoundingBox) <= 30.25f)
+    {
+        return true;
+    }
+    return false;
 }
 
 InteractionObject::NameData EnderChestBlockEntity::GetNetworkNameData()
@@ -113,7 +114,7 @@ InteractionObject::NameData EnderChestBlockEntity::GetNetworkNameData()
 
 boost::shared_ptr<BlockEntity> EnderChestBlockEntity::clone()
 {
-    boost::shared_ptr<BlockEntity> result(new EnderChestBlockEntity());
+    boost::shared_ptr<EnderChestBlockEntity> result(new EnderChestBlockEntity());
     BlockEntity::clone(result);
     return result;
 }

@@ -118,7 +118,7 @@ PlanksBlock::Variant* OldLeafBlock::getWoodVariantForData(int data)
 
 BlockStateDefinition* OldLeafBlock::createBlockStateDefinition()
 {
-    static const Property* properties[3] = { VARIANT, DECAYABLE, CHECK_DECAY };
+    static const Property* properties[3] = { VARIANT, CHECK_DECAY, DECAYABLE };
     return new BlockStateDefinition(this, properties, 3);
 }
 
@@ -136,7 +136,9 @@ void OldLeafBlock::playerDestroy(Level* level, boost::shared_ptr<Player> player,
         Block::playerDestroy(level, player, pos, state, blockEntity, tool);
         return;
     }
-    player->awardStat(gStats->get_blocksMined(Block::getId(this)), GenericStats::param_blocksMined(state, 1));
+    Player* attacker = player.operator->();
+    Stat* stat = gStats->get_blocksMined(Block::getId(this));
+    attacker->awardStat(stat, GenericStats::param_blocksMined(state, 1));
     Block::popResource(level, pos, not_null_ptr<ItemInstance>(new ItemInstance(Item::byBlock(this), 1,
         state->getValue(VARIANT)->getData())));
 }

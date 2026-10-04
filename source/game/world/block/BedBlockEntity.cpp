@@ -11,9 +11,10 @@
 #include "game/world/Dimension.hpp"
 #include "game/world/DimensionType.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/block/BedBlock.hpp"
 
 BedBlockEntity::BedBlockEntity()
-    : BlockEntity(), mColor(DyeColor::WHITE)
+    : BlockEntity(), mColor(DyeColor::RED)
 {
 }
 
@@ -44,19 +45,18 @@ not_null_ptr<ItemInstance> BedBlockEntity::getItem()
 
 boost::shared_ptr<BlockEntity> BedBlockEntity::clone()
 {
-    boost::shared_ptr<BlockEntity> result(new BedBlockEntity());
+    boost::shared_ptr<BedBlockEntity> result(new BedBlockEntity());
     BlockEntity::clone(result);
-    static_cast<BedBlockEntity*>(result.get())->mColor = mColor;
+    result->mColor = mColor;
     return result;
 }
 
 void BedBlockEntity::load(CompoundTag* tag)
 {
     BlockEntity::load(tag);
-    const std::wstring name(L"color");
-    if (tag->contains(name))
+    if (tag->contains(L"color"))
     {
-        mColor = DyeColor::byBlockData(tag->getInt(name));
+        mColor = DyeColor::byBlockData(tag->getInt(L"color"));
     }
 }
 
@@ -69,20 +69,18 @@ CompoundTag* BedBlockEntity::save(CompoundTag* tag)
 
 CompoundTag* BedBlockEntity::getUpdateTag()
 {
-    CompoundTag* tag = new CompoundTag();
-    save(tag);
-    return tag;
+    return save(new CompoundTag());
 }
 
 boost::shared_ptr<Packet> BedBlockEntity::getUpdatePacket()
 {
-    int dimension = mLevel->mDimension->getType()->getId();
-    return boost::shared_ptr<Packet>(new ClientboundBlockEntityDataPacket(mPos, 11, dimension, getUpdateTag()));
+    boost::shared_ptr<ClientboundBlockEntityDataPacket> packet(new ClientboundBlockEntityDataPacket(mPos, 11, mLevel->mDimension->getType()->getId(), getUpdateTag()));
+    return packet;
 }
 
 bool BedBlockEntity::isHeadPiece()
 {
-    return (getData() & 8) != 0;
+    return BedBlock::isHeadPiece(getData());
 }
 
 unsigned long long BedBlockEntity::GetType()

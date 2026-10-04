@@ -27,10 +27,10 @@ public:
     virtual const std::vector<Boxed*>& getPossibleValues() const;
     virtual bool equals(const Property* other) const;
     virtual int hashCode() const;
-    virtual unsigned int getValueCount() const;
+    virtual unsigned int getValueCount() const { return mPossibleValues.size(); }
     virtual Boxed* getValueAtIndex(unsigned int index) const;
     virtual unsigned int getIndexForValue(Boxed* value) const;
-    virtual std::wstring getName(const T& value) const;
+    virtual std::wstring getName(const T& value) const { return value->getSerializedName(); }
     virtual T getUnboxedValue(const std::wstring& name) const;
 
 protected:
@@ -52,6 +52,7 @@ EnumProperty<T>::EnumProperty(const std::wstring& name, const std::type_info& va
     {
         std::wstring valueName = getName(*it);
 
+        mValuesByName.find(valueName);
         mValuesByName[valueName] = *it;
 
         mPossibleValues.push_back(new TypedBoxed<T>(*it));
@@ -138,16 +139,6 @@ int EnumProperty<T>::hashCode() const
 }
 
 template <class T>
-unsigned int EnumProperty<T>::getValueCount() const
-{
-    if (mPossibleValues.begin() == std::vector<Boxed*>::const_iterator())
-    {
-        return 0;
-    }
-    return mPossibleValues.end() - mPossibleValues.begin();
-}
-
-template <class T>
 Boxed* EnumProperty<T>::getValueAtIndex(unsigned int index) const
 {
     return mPossibleValues.at(index);
@@ -169,12 +160,6 @@ unsigned int EnumProperty<T>::getIndexForValue(Boxed* value) const
     }
 
     return 0;
-}
-
-template <class T>
-std::wstring EnumProperty<T>::getName(const T& value) const
-{
-    return value->getSerializedName();
 }
 
 template <class T>

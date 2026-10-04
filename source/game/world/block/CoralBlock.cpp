@@ -1,6 +1,7 @@
 #include "game/world/block/CoralBlock.hpp"
 #include "game/core/StringIds.hpp"
 
+#include <cstring>
 #include <cwchar>
 #include <string>
 
@@ -38,14 +39,10 @@ CoralBlock::CoralBlock()
     : Block(Material::STONE)
 {
     DerivedInit();
-    for (int i = 0; i < 10; ++i)
-    {
-        mIcons[i] = NULL;
-    }
+    memset(mIcons, 0, sizeof(mIcons));
 
-    TypedBoxed<int> variant(0);
-    TypedBoxed<bool> dead(false);
-    registerDefaultState(mStateDefinition->any()->setBoxedValue(VARIANT, &variant)->setBoxedValue(DEAD, &dead));
+    const BlockState* state = mStateDefinition->any()->setValue(VARIANT, 0);
+    registerDefaultState(state->setValue(DEAD, false));
     setTicking(true);
 }
 
@@ -76,8 +73,8 @@ void CoralBlock::tick(Level* level, const BlockPos& pos, const BlockState* state
     if (!level->mIsClientSide && !level->isTouchingMaterial(pos, Material::WATER)
         && level->isTouchingMaterial(pos, Material::AIR))
     {
-        TypedBoxed<bool> dead(true);
-        level->setBlock(pos, state->setBoxedValue(DEAD, &dead), Block::UPDATE_ALL, false);
+        const BlockState* deadState = state->setValue(DEAD, true);
+        level->setBlock(pos, deadState, Block::UPDATE_ALL, false);
     }
 }
 
@@ -115,9 +112,8 @@ int CoralBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 const BlockState* CoralBlock::getBlockState(int data)
 {
-    TypedBoxed<int> variant(data & 7);
-    TypedBoxed<bool> dead((data >> 3 & 1) != 0);
-    return defaultBlockState()->setBoxedValue(VARIANT, &variant)->setBoxedValue(DEAD, &dead);
+    const BlockState* state = defaultBlockState()->setValue(VARIANT, data & 7);
+    return state->setValue(DEAD, (data >> 3 & 1) != 0);
 }
 
 const BlockState* CoralBlock::setPropertyValueFromString(const BlockState* state, const Property* property,
@@ -125,33 +121,47 @@ const BlockState* CoralBlock::setPropertyValueFromString(const BlockState* state
 {
     if (property == VARIANT && value.compare(L"dead_coral") == 0)
     {
-        TypedBoxed<bool> dead(true);
-        TypedBoxed<int> variant(Math::randomInt(5));
-        return state->setBoxedValue(DEAD, &dead)->setBoxedValue(VARIANT, &variant);
+        const BlockState* deadState = state->setValue(DEAD, true);
+        return deadState->setValue(VARIANT, Math::randomInt(5));
     }
     return Block::setPropertyValueFromString(state, property, value);
 }
 
 int CoralBlock::getDescriptionId(int auxValue)
 {
-    if (auxValue > 0 && auxValue < 5)
+    unsigned int aux = auxValue;
+    switch (aux)
     {
-        return DESCRIPTION_IDS[auxValue - 1];
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+        return DESCRIPTION_IDS[aux - 1];
+    case 8:
+    case 9:
+    case 10:
+    case 11:
+    case 12:
+        return DESCRIPTION_IDS[aux - 4];
+    default:
+        return IDS_TILE_CORAL_BLOCK_BLUE;
     }
-    if (auxValue > 7 && auxValue < 13)
-    {
-        return DESCRIPTION_IDS[auxValue - 4];
-    }
-    return IDS_TILE_CORAL_BLOCK_BLUE;
 }
 
 int CoralBlock::getUseDescriptionId(int auxValue)
 {
-    if (auxValue > 7 && auxValue < 13)
+    unsigned int aux = auxValue;
+    switch (aux)
     {
+    case 8:
+    case 9:
+    case 10:
+    case 11:
+    case 12:
         return IDS_DESC_TILE_CORAL_BLOCK_DEAD;
+    default:
+        return IDS_DESC_TILE_CORAL_BLOCK;
     }
-    return IDS_DESC_TILE_CORAL_BLOCK;
 }
 
 int CoralBlock::getTickDelay(Level* level)

@@ -40,7 +40,7 @@
 #include "game/world/block/Property.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
-static EnumProperty<Direction::Axis*>* gPortalAxis = NULL;
+EnumProperty<Direction::Axis*>* PortalBlock::AXIS = NULL;
 static Direction::Axis* gPortalAxes[2];
 static const AABB* gPortalShapeX = AABB::newPermanent(0.0, 0.0, 0.375, 1.0, 1.0, 0.625);
 static const AABB* gPortalShapeZ = AABB::newPermanent(0.375, 0.0, 0.0, 0.625, 1.0, 1.0);
@@ -51,7 +51,7 @@ PortalBlock::PortalBlock()
 {
     DerivedInit();
     TypedBoxed<Direction::Axis*> axis(Direction::Axis::X);
-    registerDefaultState(mStateDefinition->any()->setBoxedValue(gPortalAxis, &axis));
+    registerDefaultState(mStateDefinition->any()->setBoxedValue(AXIS, &axis));
     setTicking(true);
 }
 
@@ -72,7 +72,7 @@ void PortalBlock::blockStaticCtor()
         values.insert(gPortalAxes[1]);
         axis = EnumProperty<Direction::Axis*>::create(name, typeid(Direction::Axis*), values, filter);
     }
-    gPortalAxis = axis;
+    AXIS = axis;
 }
 
 BlockPattern::BlockPatternMatch* PortalBlock::getPortalShape(Level* level, const BlockPos& pos)
@@ -139,7 +139,7 @@ BlockPattern::BlockPatternMatch* PortalBlock::getPortalShape(Level* level, const
 
 const AABB* PortalBlock::getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
 {
-    Direction::Axis* axis = state->getValue(gPortalAxis);
+    Direction::Axis* axis = state->getValue(AXIS);
     Direction::Axis::EAxis id = axis->getId();
     if (id == Direction::Axis::eAxis_X)
         return gPortalShapeX;
@@ -214,7 +214,7 @@ bool PortalBlock::trySpawnPortal(Level* level, const BlockPos& pos, bool create)
 
 void PortalBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block, const BlockPos& fromPos)
 {
-    Direction::Axis* axis = state->getValue(gPortalAxis);
+    Direction::Axis* axis = state->getValue(AXIS);
     if (axis == Direction::Axis::X)
     {
         PortalShape shape(level, pos, Direction::Axis::X);
@@ -240,7 +240,7 @@ bool PortalBlock::shouldRenderFace(const BlockState* state, LevelSource* levelSo
 
     if (state->getBlock() == this)
     {
-        axis = state->getValue(gPortalAxis);
+        axis = state->getValue(AXIS);
         if (axis == NULL)
         {
             return false;
@@ -376,26 +376,26 @@ bool PortalBlock::waterSpreadCausesSpawn() { return false; }
 const BlockState* PortalBlock::getBlockState(int data)
 {
     const BlockState* state = defaultBlockState();
-    return state->setValue(gPortalAxis, (data & 3) == 2 ? Direction::Axis::Z : Direction::Axis::X);
+    return state->setValue(AXIS, (data & 3) == 2 ? Direction::Axis::Z : Direction::Axis::X);
 }
 
 int PortalBlock::convertBlockStateToLegacyData(const BlockState* state)
 {
-    return getDataForAxis(state->getValue(gPortalAxis));
+    return getDataForAxis(state->getValue(AXIS));
 }
 
 const BlockState* PortalBlock::rotate(const BlockState* state, Rotation* rotation)
 {
     if (rotation->getType() != Rotation::eTYPE_Clockwise90 && rotation->getType() != Rotation::eTYPE_CounterClockwise90)
         return state;
-    Direction::Axis::EAxis id = state->getValue(gPortalAxis)->getId();
+    Direction::Axis::EAxis id = state->getValue(AXIS)->getId();
     if (id == Direction::Axis::eAxis_X)
     {
-        return state->setValue(gPortalAxis, Direction::Axis::Z);
+        return state->setValue(AXIS, Direction::Axis::Z);
     }
     if (id == Direction::Axis::eAxis_Z)
     {
-        return state->setValue(gPortalAxis, Direction::Axis::X);
+        return state->setValue(AXIS, Direction::Axis::X);
     }
     return state;
 }
@@ -404,7 +404,7 @@ bool PortalBlock::canContainLiquid(const BlockState* state) const { return false
 
 BlockStateDefinition* PortalBlock::createBlockStateDefinition()
 {
-    static const Property* properties[1] = { gPortalAxis };
+    static const Property* properties[1] = { AXIS };
     return new BlockStateDefinition(this, properties, 1);
 }
 
@@ -577,7 +577,7 @@ void PortalBlock::PortalShape::createPortalBlocks()
         for (int height = 0; height < mHeight; ++height)
         {
             mLevel->setBlock(column.above(height),
-                             Blocks::portal->defaultBlockState()->setValue(gPortalAxis, mAxis),
+                             Blocks::portal->defaultBlockState()->setValue(AXIS, mAxis),
                              Block::UPDATE_CLIENTS, false);
         }
     }

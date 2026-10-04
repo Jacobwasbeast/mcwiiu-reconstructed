@@ -35,7 +35,7 @@ public:
     static AbstractProperty<bool>* TRIGGERED;
 
     DispenserBlock();
-    virtual ~DispenserBlock();
+    virtual ~DispenserBlock() {}
 
     static Position* getDispensePosition(BlockSource* blockSource);
     static void blockStaticCtor();

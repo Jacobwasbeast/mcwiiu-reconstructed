@@ -6,10 +6,6 @@
 #include "game/data/DataFixerUpper.hpp"
 #include "game/item/ItemListDataWalker.hpp"
 
-DropperBlockEntity::DropperBlockEntity()
-{
-}
-
 DropperBlockEntity::~DropperBlockEntity()
 {
 }
@@ -34,7 +30,7 @@ boost::shared_ptr<BlockEntity> DropperBlockEntity::clone()
 {
     boost::shared_ptr<DropperBlockEntity> result(new DropperBlockEntity());
     BlockEntity::clone(result);
-    result->mCustomName->set(mCustomName->raw(), mCustomName->getUUID(), mCustomName->isChatCensored(), mCustomName->isUUIDLocal());
+    result->mCustomName->set(mCustomName->raw(), std::wstring(mCustomName->getUUID()), mCustomName->isChatCensored(), mCustomName->isUUIDLocal());
     return result;
 }
 

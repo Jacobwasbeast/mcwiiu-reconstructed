@@ -39,9 +39,9 @@ public:
 
     static BlockEntity* create();
     BaseCommandBlock* getCommandBlock();
-    unsigned char isPowered();
-    unsigned char wasConditionMet();
-    unsigned char isAutomatic();
+    bool isPowered();
+    bool wasConditionMet();
+    bool isAutomatic();
     virtual CompoundTag* save(CompoundTag* tag);
     void setAutomatic(bool automatic);
     virtual void load(CompoundTag* tag);
@@ -59,9 +59,9 @@ public:
     void markConditionMet();
 
 private:
-    unsigned char mPowered;
+    bool mPowered;
     bool mAutomatic;
-    unsigned char mConditionMet;
+    bool mConditionMet;
     BaseCommandBlock* mCommandBlock;
 };
 

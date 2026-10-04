@@ -23,7 +23,7 @@ void UseBlockTask::useItemOn(Level* level, not_null_ptr<ItemInstance>,
 {
     if (!cancelled && (preCompletionEnabled || activated)
         && (!mHasPosition || mPos.equals(pos))
-        && level->getBlock(pos) == mBlock)
+        && level->getBlockState(pos)->getBlock() == mBlock)
     {
         completed = true;
     }

@@ -6,7 +6,7 @@ BlocksPresentWithIdMedal::~BlocksPresentWithIdMedal()
 {
 }
 
-double BlocksPresentWithIdMedal::GetScore(PlayerStats* playerStats) const
+float BlocksPresentWithIdMedal::GetScore(PlayerStats* playerStats) const
 {
     float score = 0.0f;
 

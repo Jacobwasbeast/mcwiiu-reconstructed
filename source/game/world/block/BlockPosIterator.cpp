@@ -6,9 +6,39 @@
 
 BlockPosIterator::BlockPosIterator(const BlockPos& from, const BlockPos& to)
 {
+    int minX = from.x;
+    int minY = from.y;
+    int minZ = from.z;
+    if (to.x < minX)
+    {
+        minX = to.x;
+    }
+    if (to.y < minY)
+    {
+        minY = to.y;
+    }
+    if (to.z < minZ)
+    {
+        minZ = to.z;
+    }
     this->currentPos = NULL;
-    this->minPos = new BlockPos(std::min(from.x, to.x), std::min(from.y, to.y), std::min(from.z, to.z));
-    this->maxPos = new BlockPos(std::max(from.x, to.x), std::max(from.y, to.y), std::max(from.z, to.z));
+    this->minPos = new BlockPos(minX, minY, minZ);
+    int maxX = from.x;
+    int maxY = to.y;
+    int maxZ = to.z;
+    if (maxX < to.x)
+    {
+        maxX = to.x;
+    }
+    if (to.y < from.y)
+    {
+        maxY = from.y;
+    }
+    if (to.z < from.z)
+    {
+        maxZ = from.z;
+    }
+    this->maxPos = new BlockPos(maxX, maxY, maxZ);
 }
 
 BlockPosIterator::~BlockPosIterator()
@@ -20,12 +50,7 @@ BlockPosIterator::~BlockPosIterator()
 
 bool BlockPosIterator::hasNext()
 {
-    if (this->currentPos != NULL && this->currentPos->equals(this->maxPos))
-    {
-        return false;
-    }
-
-    return true;
+    return this->currentPos == NULL || !this->currentPos->equals(this->maxPos);
 }
 
 BlockPos* BlockPosIterator::next()
@@ -34,21 +59,28 @@ BlockPos* BlockPosIterator::next()
     {
         this->currentPos = new BlockPos(*this->minPos);
     }
-    else if (this->currentPos->x < this->maxPos->x)
-    {
-        *this->currentPos = BlockPos(this->currentPos->x + 1, this->currentPos->y, this->currentPos->z);
-    }
-    else if (this->currentPos->y < this->maxPos->y)
-    {
-        *this->currentPos = BlockPos(this->minPos->x, this->currentPos->y + 1, this->currentPos->z);
-    }
-    else if (this->currentPos->z < this->maxPos->z)
-    {
-        *this->currentPos = BlockPos(this->minPos->x, this->minPos->y, this->currentPos->z + 1);
-    }
     else
     {
-        *this->currentPos = BlockPos(this->currentPos->x, this->currentPos->y, this->currentPos->z);
+        int x = this->currentPos->x;
+        int y = this->currentPos->y;
+        int z = this->currentPos->z;
+        if (x < this->maxPos->x)
+        {
+            x = x + 1;
+        }
+        else if (y < this->maxPos->y)
+        {
+            x = this->minPos->x;
+            y = y + 1;
+        }
+        else if (z < this->maxPos->z)
+        {
+            x = this->minPos->x;
+            y = this->minPos->y;
+            z = z + 1;
+        }
+        const BlockPos& moved = BlockPos(x, y, z);
+        *this->currentPos = moved;
     }
 
     return this->currentPos;

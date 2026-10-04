@@ -125,19 +125,17 @@ std::wstring ItemInstanceBlockEntityTagWalker::getBlockEntityId(int version, con
 {
     if (version < 515)
     {
-        ResourceLocation location(itemId);
-        return fjSafeGet(sOldBlockEntityIds, location.toString());
+        return fjSafeGet(sOldBlockEntityIds, ResourceLocation(itemId).toString());
     }
     else
     {
-        ResourceLocation location(itemId);
-        return fjSafeGet(sNewBlockEntityIds, location.toString());
+        return fjSafeGet(sNewBlockEntityIds, ResourceLocation(itemId).toString());
     }
 }
 
 CompoundTag* ItemInstanceBlockEntityTagWalker::walk(DataFixer* fixer, CompoundTag* tag, int version)
 {
-    if (tag->contains(L"tag", Tag::TAG_COMPOUND))
+    if (tag->contains(L"tag", Tag::TAG_COMPOUND) == 1)
     {
         CompoundTag* itemTag = tag->getCompound(L"tag");
 

@@ -1,10 +1,13 @@
 #include "game/world/block/EndPortalBlock.hpp"
+#include "game/core/Direction.hpp"
 #include "game/core/EntityType.hpp"
 
 #include "game/client/render/ParticleType.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/entity/mob/Entity.hpp"
+#include "game/item/ItemInstance.hpp"
 #include "game/minigame/MiniGameDef.hpp"
 #include "game/util/AABB.hpp"
 #include "game/util/Random.hpp"
@@ -34,10 +37,10 @@ EndPortalBlock::EndPortalBlock(Material* material)
     setLightEmission(1.0f);
 }
 
-boost::shared_ptr<BlockEntity> EndPortalBlock::newBlockEntity(Level*, int data)
+boost::shared_ptr<BlockEntity> EndPortalBlock::newBlockEntity(Level* level, int)
 {
-    boost::shared_ptr<TheEndPortalBlockEntity> entity(new TheEndPortalBlockEntity());
-    entity->setData(data);
+    boost::shared_ptr<BlockEntity> entity = boost::shared_ptr<TheEndPortalBlockEntity>(new TheEndPortalBlockEntity());
+    entity->setLevel(level);
     return entity;
 }
 
@@ -49,7 +52,7 @@ const AABB* EndPortalBlock::getShape(const BlockState*, LevelSource*, const Bloc
 bool EndPortalBlock::shouldRenderFace(const BlockState* state, LevelSource* levelSource,
                                       const BlockPos& pos, const Direction* direction)
 {
-    if (direction == NULL)
+    if (direction == Direction::DOWN)
         return Block::shouldRenderFace(state, levelSource, pos, direction);
     return false;
 }
@@ -109,7 +112,7 @@ void EndPortalBlock::entityInside(Level* level, const BlockPos& pos, const Block
         int x = 0;
         int z = 0;
         if (level->mDimension == NULL && !level->getLevelData()->getHasStrongholdEndPortal()
-            && g_pApp->GetTerrainFeaturePosition(STRONGHOLD_END_PORTAL_FEATURE, &x, &z))
+            && gApp.GetTerrainFeaturePosition(STRONGHOLD_END_PORTAL_FEATURE, &x, &z))
         {
             level->getLevelData()->setXStrongholdEndPortal(x);
             level->getLevelData()->setZStrongholdEndPortal(z);
@@ -133,7 +136,7 @@ void EndPortalBlock::animateTick(const BlockState*, Level* level, const BlockPos
 not_null_ptr<ItemInstance> EndPortalBlock::getCloneItemInstance(Level*, const BlockPos&,
                                                                   const BlockState*)
 {
-    return not_null_ptr<ItemInstance>();
+    return ItemInstance::EMPTY;
 }
 
 const MaterialColor* EndPortalBlock::getMapColor(const BlockState*, LevelSource*, const BlockPos&)

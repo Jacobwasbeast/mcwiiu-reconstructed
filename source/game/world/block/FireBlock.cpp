@@ -3,8 +3,10 @@
 #include "game/client/audio/SoundEvents.hpp"
 
 #include <algorithm>
+#include <cstring>
 
 #include "game/core/CMinecraftApp.hpp"
+#include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/Difficulty.hpp"
 #include "game/core/GameRules.hpp"
 #include "game/core/IconRegister.hpp"
@@ -39,22 +41,15 @@ FireBlock::FireBlock()
     : Block(Material::FIRE), mFlameOdds(), mBurnOdds()
 {
     DerivedInit();
-    TypedBoxed<int> age(0);
-    TypedBoxed<bool> north(false);
-    TypedBoxed<bool> east(false);
-    TypedBoxed<bool> south(false);
-    TypedBoxed<bool> west(false);
-    TypedBoxed<bool> up(false);
     registerDefaultState(mStateDefinition->any()
-                             ->setBoxedValue(AGE, &age)
-                             ->setBoxedValue(NORTH, &north)
-                             ->setBoxedValue(EAST, &east)
-                             ->setBoxedValue(SOUTH, &south)
-                             ->setBoxedValue(WEST, &west)
-                             ->setBoxedValue(UP, &up));
+                             ->setValue(AGE, 0)
+                             ->setValue(NORTH, false)
+                             ->setValue(EAST, false)
+                             ->setValue(SOUTH, false)
+                             ->setValue(WEST, false)
+                             ->setValue(UP, false));
     setTicking(true);
-    mFireIcon = NULL;
-    mFireIconAlt = NULL;
+    memset(mFireIcons, 0, sizeof(mFireIcons));
 }
 
 int FireBlock::getFlameOdds(Block* block)
@@ -65,25 +60,20 @@ int FireBlock::getFlameOdds(Block* block)
 
 bool FireBlock::canBurn(LevelSource* levelSource, const BlockPos& pos)
 {
-    return getFlameOdds(levelSource->getBlock(pos)) > 0;
+    return getFlameOdds(levelSource->getBlockState(pos)->getBlock()) > 0;
 }
 
 const BlockState* FireBlock::fillVirtualBlockStateProperties(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
 {
-    if (levelSource->getBlockState(pos.below())->isTopSolidBlocking())
+    if (levelSource->getBlockState(pos.below())->isTopSolidBlocking()
+        || static_cast<FireBlock*>(Blocks::fire)->canBurn(levelSource, pos.below()))
         return defaultBlockState();
-    if (static_cast<FireBlock*>(Blocks::fire)->canBurn(levelSource, pos.below()))
-        return defaultBlockState();
-    TypedBoxed<bool> north(canBurn(levelSource, pos.north()));
-    TypedBoxed<bool> east(canBurn(levelSource, pos.east()));
-    TypedBoxed<bool> south(canBurn(levelSource, pos.south()));
-    TypedBoxed<bool> west(canBurn(levelSource, pos.west()));
-    TypedBoxed<bool> up(canBurn(levelSource, pos.above()));
-    const BlockState* result = state->setBoxedValue(NORTH, &north);
-    result = result->setBoxedValue(EAST, &east);
-    result = result->setBoxedValue(SOUTH, &south);
-    result = result->setBoxedValue(WEST, &west);
-    return result->setBoxedValue(UP, &up);
+    AbstractProperty<bool>* northProperty = NORTH;
+    return state->setValue(northProperty, canBurn(levelSource, pos.north()))
+        ->setValue(EAST, canBurn(levelSource, pos.east()))
+        ->setValue(SOUTH, canBurn(levelSource, pos.south()))
+        ->setValue(WEST, canBurn(levelSource, pos.west()))
+        ->setValue(UP, canBurn(levelSource, pos.above()));
 }
 
 FireBlock* FireBlock::setFlammable(Block* block, int flameOdds, int burnOdds)
@@ -95,52 +85,51 @@ FireBlock* FireBlock::setFlammable(Block* block, int flameOdds, int burnOdds)
 
 void FireBlock::staticCtor()
 {
-    FireBlock* fire = static_cast<FireBlock*>(Blocks::fire);
-    fire->setFlammable(Blocks::planks, 5, 20);
-    fire->setFlammable(Blocks::double_wooden_slab, 5, 20);
-    fire->setFlammable(Blocks::wooden_slab, 5, 20);
-    fire->setFlammable(Blocks::fence_gate, 5, 20);
-    fire->setFlammable(Blocks::spruce_fence_gate, 5, 20);
-    fire->setFlammable(Blocks::birch_fence_gate, 5, 20);
-    fire->setFlammable(Blocks::jungle_fence_gate, 5, 20);
-    fire->setFlammable(Blocks::dark_oak_fence_gate, 5, 20);
-    fire->setFlammable(Blocks::acacia_fence_gate, 5, 20);
-    fire->setFlammable(Blocks::fence, 5, 20);
-    fire->setFlammable(Blocks::spruce_fence, 5, 20);
-    fire->setFlammable(Blocks::birch_fence, 5, 20);
-    fire->setFlammable(Blocks::jungle_fence, 5, 20);
-    fire->setFlammable(Blocks::dark_oak_fence, 5, 20);
-    fire->setFlammable(Blocks::acacia_fence, 5, 20);
-    fire->setFlammable(Blocks::oak_stairs, 5, 20);
-    fire->setFlammable(Blocks::birch_stairs, 5, 20);
-    fire->setFlammable(Blocks::spruce_stairs, 5, 20);
-    fire->setFlammable(Blocks::jungle_stairs, 5, 20);
-    fire->setFlammable(Blocks::acacia_stairs, 5, 20);
-    fire->setFlammable(Blocks::dark_oak_stairs, 5, 20);
-    fire->setFlammable(Blocks::log, 5, 5);
-    fire->setFlammable(Blocks::log2, 5, 5);
-    fire->setFlammable(Blocks::leaves, 30, 60);
-    fire->setFlammable(Blocks::leaves2, 30, 60);
-    fire->setFlammable(Blocks::bookshelf, 30, 20);
-    fire->setFlammable(Blocks::tnt, 15, 100);
-    fire->setFlammable(Blocks::tallgrass, 60, 100);
-    fire->setFlammable(Blocks::double_plant, 60, 100);
-    fire->setFlammable(Blocks::yellow_flower, 60, 100);
-    fire->setFlammable(Blocks::red_flower, 60, 100);
-    fire->setFlammable(Blocks::deadbush, 60, 100);
-    fire->setFlammable(Blocks::wool, 30, 60);
-    fire->setFlammable(Blocks::vine, 15, 100);
-    fire->setFlammable(Blocks::coal_block, 5, 5);
-    fire->setFlammable(Blocks::dried_kelp_block, 30, 5);
-    fire->setFlammable(Blocks::hay_block, 60, 20);
-    fire->setFlammable(Blocks::carpet, 60, 20);
-    fire->setFlammable(Blocks::sea_pickle, 15, 100);
-    fire->setFlammable(Blocks::stripped_log_oak, 5, 5);
-    fire->setFlammable(Blocks::stripped_log_spruce, 5, 5);
-    fire->setFlammable(Blocks::stripped_log_birch, 5, 5);
-    fire->setFlammable(Blocks::stripped_log_jungle, 5, 5);
-    fire->setFlammable(Blocks::stripped_log_acacia, 5, 5);
-    fire->setFlammable(Blocks::stripped_log_dark_oak, 5, 5);
+    static_cast<FireBlock*>(Blocks::fire)->setFlammable(Blocks::planks, 5, 20);
+    static_cast<FireBlock*>(Blocks::fire)->setFlammable(Blocks::double_wooden_slab, 5, 20);
+    static_cast<FireBlock*>(Blocks::fire)->setFlammable(Blocks::wooden_slab, 5, 20);
+    static_cast<FireBlock*>(Blocks::fire)->setFlammable(Blocks::fence_gate, 5, 20);
+    static_cast<FireBlock*>(Blocks::fire)->setFlammable(Blocks::spruce_fence_gate, 5, 20);
+    static_cast<FireBlock*>(Blocks::fire)->setFlammable(Blocks::birch_fence_gate, 5, 20);
+    static_cast<FireBlock*>(Blocks::fire)->setFlammable(Blocks::jungle_fence_gate, 5, 20);
+    static_cast<FireBlock*>(Blocks::fire)->setFlammable(Blocks::dark_oak_fence_gate, 5, 20);
+    static_cast<FireBlock*>(Blocks::fire)->setFlammable(Blocks::acacia_fence_gate, 5, 20);
+    static_cast<FireBlock*>(Blocks::fire)->setFlammable(Blocks::fence, 5, 20);
+    static_cast<FireBlock*>(Blocks::fire)->setFlammable(Blocks::spruce_fence, 5, 20);
+    static_cast<FireBlock*>(Blocks::fire)->setFlammable(Blocks::birch_fence, 5, 20);
+    static_cast<FireBlock*>(Blocks::fire)->setFlammable(Blocks::jungle_fence, 5, 20);
+    static_cast<FireBlock*>(Blocks::fire)->setFlammable(Blocks::dark_oak_fence, 5, 20);
+    static_cast<FireBlock*>(Blocks::fire)->setFlammable(Blocks::acacia_fence, 5, 20);
+    static_cast<FireBlock*>(Blocks::fire)->setFlammable(Blocks::oak_stairs, 5, 20);
+    static_cast<FireBlock*>(Blocks::fire)->setFlammable(Blocks::birch_stairs, 5, 20);
+    static_cast<FireBlock*>(Blocks::fire)->setFlammable(Blocks::spruce_stairs, 5, 20);
+    static_cast<FireBlock*>(Blocks::fire)->setFlammable(Blocks::jungle_stairs, 5, 20);
+    static_cast<FireBlock*>(Blocks::fire)->setFlammable(Blocks::acacia_stairs, 5, 20);
+    static_cast<FireBlock*>(Blocks::fire)->setFlammable(Blocks::dark_oak_stairs, 5, 20);
+    static_cast<FireBlock*>(Blocks::fire)->setFlammable(Blocks::log, 5, 5);
+    static_cast<FireBlock*>(Blocks::fire)->setFlammable(Blocks::log2, 5, 5);
+    static_cast<FireBlock*>(Blocks::fire)->setFlammable(Blocks::leaves, 30, 60);
+    static_cast<FireBlock*>(Blocks::fire)->setFlammable(Blocks::leaves2, 30, 60);
+    static_cast<FireBlock*>(Blocks::fire)->setFlammable(Blocks::bookshelf, 30, 20);
+    static_cast<FireBlock*>(Blocks::fire)->setFlammable(Blocks::tnt, 15, 100);
+    static_cast<FireBlock*>(Blocks::fire)->setFlammable(Blocks::tallgrass, 60, 100);
+    static_cast<FireBlock*>(Blocks::fire)->setFlammable(Blocks::double_plant, 60, 100);
+    static_cast<FireBlock*>(Blocks::fire)->setFlammable(Blocks::yellow_flower, 60, 100);
+    static_cast<FireBlock*>(Blocks::fire)->setFlammable(Blocks::red_flower, 60, 100);
+    static_cast<FireBlock*>(Blocks::fire)->setFlammable(Blocks::deadbush, 60, 100);
+    static_cast<FireBlock*>(Blocks::fire)->setFlammable(Blocks::wool, 30, 60);
+    static_cast<FireBlock*>(Blocks::fire)->setFlammable(Blocks::vine, 15, 100);
+    static_cast<FireBlock*>(Blocks::fire)->setFlammable(Blocks::coal_block, 5, 5);
+    static_cast<FireBlock*>(Blocks::fire)->setFlammable(Blocks::dried_kelp_block, 30, 5);
+    static_cast<FireBlock*>(Blocks::fire)->setFlammable(Blocks::hay_block, 60, 20);
+    static_cast<FireBlock*>(Blocks::fire)->setFlammable(Blocks::carpet, 60, 20);
+    static_cast<FireBlock*>(Blocks::fire)->setFlammable(Blocks::sea_pickle, 15, 100);
+    static_cast<FireBlock*>(Blocks::fire)->setFlammable(Blocks::stripped_log_oak, 5, 5);
+    static_cast<FireBlock*>(Blocks::fire)->setFlammable(Blocks::stripped_log_spruce, 5, 5);
+    static_cast<FireBlock*>(Blocks::fire)->setFlammable(Blocks::stripped_log_birch, 5, 5);
+    static_cast<FireBlock*>(Blocks::fire)->setFlammable(Blocks::stripped_log_jungle, 5, 5);
+    static_cast<FireBlock*>(Blocks::fire)->setFlammable(Blocks::stripped_log_acacia, 5, 5);
+    static_cast<FireBlock*>(Blocks::fire)->setFlammable(Blocks::stripped_log_dark_oak, 5, 5);
 }
 
 const AABB* FireBlock::getClipAABB(const BlockState*, LevelSource*, const BlockPos&)
@@ -155,13 +144,15 @@ int FireBlock::getTickDelay(Level*) { return 30; }
 
 int FireBlock::getFireOdds(Level* level, const BlockPos& pos)
 {
-    if (level->isEmptyBlock(pos))
+    if (!level->isEmptyBlock(pos))
         return 0;
     int odds = 0;
-    static const Direction* directions[6] = { Direction::DOWN, Direction::UP, Direction::NORTH, Direction::SOUTH, Direction::WEST, Direction::EAST };
-    int i;
-    for (i = 0; i < 6; ++i)
-        odds = std::max(odds, getFlameOdds(level->getBlock(pos.relative(directions[i]))));
+    for (std::vector<const Direction*>::iterator it = Direction::VALUES.begin(); it != Direction::VALUES.end(); ++it)
+    {
+        int flameOdds = getFlameOdds(level->getBlockState(pos.relative(*it))->getBlock());
+        if (odds < flameOdds)
+            odds = flameOdds;
+    }
     return odds;
 }
 
@@ -173,10 +164,8 @@ bool FireBlock::isNearRain(Level* level, const BlockPos& pos)
 
 bool FireBlock::isValidFireLocation(Level* level, const BlockPos& pos)
 {
-    static const Direction* directions[6] = { Direction::DOWN, Direction::UP, Direction::NORTH, Direction::SOUTH, Direction::WEST, Direction::EAST };
-    int i;
-    for (i = 0; i < 6; ++i)
-        if (canBurn(level, pos.relative(directions[i])))
+    for (std::vector<const Direction*>::iterator it = Direction::VALUES.begin(); it != Direction::VALUES.end(); ++it)
+        if (canBurn(level, pos.relative(*it)))
             return true;
     return false;
 }
@@ -195,13 +184,12 @@ void FireBlock::checkBurnOut(Level* level, const BlockPos& pos, int odds, Random
 
     const BlockState* burning = level->getBlockState(pos);
     if (random->nextInt(age + 10) < 5 && !level->isRainingAt(pos)
-        && g_pApp->GetGameHostOption(eGameHostOption_FireSpreads))
+        && gApp.GetGameHostOption(eGameHostOption_FireSpreads))
     {
         int newAge = age + random->nextInt(5) / 4;
         if (newAge > 15)
             newAge = 15;
-        TypedBoxed<int> ageValue(newAge);
-        level->setBlock(pos, defaultBlockState()->setBoxedValue(AGE, &ageValue), Block::UPDATE_ALL, false);
+        level->setBlock(pos, defaultBlockState()->setValue(AGE, newAge), Block::UPDATE_ALL, false);
     }
     else
     {
@@ -210,8 +198,7 @@ void FireBlock::checkBurnOut(Level* level, const BlockPos& pos, int odds, Random
 
     if (burning->getBlock() == Blocks::tnt)
     {
-        TypedBoxed<bool> explode(true);
-        Blocks::tnt->destroy(level, pos, burning->setBoxedValue(TntBlock::EXPLODE, &explode));
+        Blocks::tnt->destroy(level, pos, burning->setValue(TntBlock::EXPLODE, true));
     }
 }
 
@@ -243,8 +230,7 @@ void FireBlock::tick(Level* level, const BlockPos& pos, const BlockState* state,
 
     if (age < 15)
     {
-        TypedBoxed<int> ageValue(age + random->nextInt(3) / 2);
-        state = state->setBoxedValue(AGE, &ageValue);
+        state = state->setValue(AGE, age + random->nextInt(3) / 2);
         level->setBlock(pos, state, Block::UPDATE_INVISIBLE, false);
     }
     level->addToTickNextTick(pos, this, getTickDelay(level) + random->nextInt(10));
@@ -274,7 +260,7 @@ void FireBlock::tick(Level* level, const BlockPos& pos, const BlockState* state,
     checkBurnOut(level, pos.north(), humidity + 300, random, age);
     checkBurnOut(level, pos.south(), humidity + 300, random, age);
 
-    if (!g_pApp->GetGameHostOption(eGameHostOption_FireSpreads))
+    if (!gApp.GetGameHostOption(eGameHostOption_FireSpreads))
         return;
 
     for (int x = -1; x <= 1; ++x)
@@ -301,8 +287,7 @@ void FireBlock::tick(Level* level, const BlockPos& pos, const BlockState* state,
                 int newAge = age + random->nextInt(5) / 4;
                 if (newAge > 15)
                     newAge = 15;
-                TypedBoxed<int> ageValue(newAge);
-                level->setBlock(target, state->setBoxedValue(AGE, &ageValue), Block::UPDATE_ALL, false);
+                level->setBlock(target, state->setValue(AGE, newAge), Block::UPDATE_ALL, false);
             }
         }
     }
@@ -312,19 +297,18 @@ bool FireBlock::canInstantlyTick() { return false; }
 bool FireBlock::mayPick() { return false; }
 bool FireBlock::mayPlace(Level* level, const BlockPos& pos)
 {
-    return level->getBlockState(pos.below())->isSolidBlockingCube() || isValidFireLocation(level, pos);
+    return level->getBlockState(pos.below())->isTopSolidBlocking() || isValidFireLocation(level, pos);
 }
 
 void FireBlock::neighborChanged(const BlockState*, Level* level, const BlockPos& pos, Block*, const BlockPos&)
 {
-    if (!level->getBlockState(pos.below())->isSolidBlockingCube() && !isValidFireLocation(level, pos))
+    if (!level->getBlockState(pos.below())->isTopSolidBlocking() && !isValidFireLocation(level, pos))
         level->removeBlock(pos);
 }
 
 void FireBlock::onPlace(Level* level, const BlockPos& pos, const BlockState*)
 {
-    const DimensionType* type = level->mDimension->getType();
-    if ((type == DimensionType::OVERWORLD || type == DimensionType::NETHER)
+    if ((level->mDimension->getType() == DimensionType::NETHER || level->mDimension->getType() == DimensionType::OVERWORLD)
         && static_cast<PortalBlock*>(Blocks::portal)->trySpawnPortal(level, pos, true))
     {
         return;
@@ -344,85 +328,81 @@ void FireBlock::animateTick(const BlockState*, Level* level, const BlockPos& pos
                               SoundSource::eSoundSource_Blocks, 1.0f + random->nextFloat(),
                               random->nextFloat() * 0.7f + 0.3f, false, 16.0f);
 
-    if (!level->getBlockState(pos.below())->isTopSolidBlocking())
+    if (!level->getBlockState(pos.below())->isTopSolidBlocking()
+        && !static_cast<FireBlock*>(Blocks::fire)->canBurn(level, pos.below()))
     {
-        if (!static_cast<FireBlock*>(Blocks::fire)->canBurn(level, pos.below()))
+        if (static_cast<FireBlock*>(Blocks::fire)->canBurn(level, pos.west()))
         {
-            if (static_cast<FireBlock*>(Blocks::fire)->canBurn(level, pos.west()))
-            {
-                level->addParticle(PARTICLE_LARGE_SMOKE, pos.x + random->nextDouble() * 0.1,
-                                   pos.y + random->nextDouble(), pos.z + random->nextDouble(),
-                                   0.0, 0.0, 0.0, arrayWithLength<int>());
-                level->addParticle(PARTICLE_LARGE_SMOKE, pos.x + random->nextDouble() * 0.1,
-                                   pos.y + random->nextDouble(), pos.z + random->nextDouble(),
-                                   0.0, 0.0, 0.0, arrayWithLength<int>());
-            }
-            if (static_cast<FireBlock*>(Blocks::fire)->canBurn(level, pos.east()))
-            {
-                level->addParticle(PARTICLE_LARGE_SMOKE, pos.x + 1.0 - random->nextDouble() * 0.1,
-                                   pos.y + random->nextDouble(), pos.z + random->nextDouble(),
-                                   0.0, 0.0, 0.0, arrayWithLength<int>());
-                level->addParticle(PARTICLE_LARGE_SMOKE, pos.x + 1.0 - random->nextDouble() * 0.1,
-                                   pos.y + random->nextDouble(), pos.z + random->nextDouble(),
-                                   0.0, 0.0, 0.0, arrayWithLength<int>());
-            }
-            if (static_cast<FireBlock*>(Blocks::fire)->canBurn(level, pos.north()))
-            {
-                level->addParticle(PARTICLE_LARGE_SMOKE, pos.x + random->nextDouble(),
-                                   pos.y + random->nextDouble(), pos.z + random->nextDouble() * 0.1,
-                                   0.0, 0.0, 0.0, arrayWithLength<int>());
-                level->addParticle(PARTICLE_LARGE_SMOKE, pos.x + random->nextDouble(),
-                                   pos.y + random->nextDouble(), pos.z + random->nextDouble() * 0.1,
-                                   0.0, 0.0, 0.0, arrayWithLength<int>());
-            }
-            if (static_cast<FireBlock*>(Blocks::fire)->canBurn(level, pos.south()))
-            {
-                level->addParticle(PARTICLE_LARGE_SMOKE, pos.x + random->nextDouble(),
-                                   pos.y + random->nextDouble(), pos.z + 1.0 - random->nextDouble() * 0.1,
-                                   0.0, 0.0, 0.0, arrayWithLength<int>());
-                level->addParticle(PARTICLE_LARGE_SMOKE, pos.x + random->nextDouble(),
-                                   pos.y + random->nextDouble(), pos.z + 1.0 - random->nextDouble() * 0.1,
-                                   0.0, 0.0, 0.0, arrayWithLength<int>());
-            }
-            if (static_cast<FireBlock*>(Blocks::fire)->canBurn(level, pos.above()))
-            {
-                level->addParticle(PARTICLE_LARGE_SMOKE, pos.x + random->nextDouble(),
-                                   pos.y + 1.0 - random->nextDouble() * 0.1, pos.z + random->nextDouble(),
-                                   0.0, 0.0, 0.0, arrayWithLength<int>());
-                level->addParticle(PARTICLE_LARGE_SMOKE, pos.x + random->nextDouble(),
-                                   pos.y + 1.0 - random->nextDouble() * 0.1, pos.z + random->nextDouble(),
-                                   0.0, 0.0, 0.0, arrayWithLength<int>());
-            }
-            return;
+            level->addParticle(PARTICLE_LARGE_SMOKE, pos.x + random->nextDouble() * 0.1f,
+                               pos.y + random->nextDouble(), pos.z + random->nextDouble(),
+                               0.0, 0.0, 0.0, arrayWithLength<int>());
+            level->addParticle(PARTICLE_LARGE_SMOKE, pos.x + random->nextDouble() * 0.1f,
+                               pos.y + random->nextDouble(), pos.z + random->nextDouble(),
+                               0.0, 0.0, 0.0, arrayWithLength<int>());
+        }
+        if (static_cast<FireBlock*>(Blocks::fire)->canBurn(level, pos.east()))
+        {
+            level->addParticle(PARTICLE_LARGE_SMOKE, pos.x + 1 - random->nextDouble() * 0.1f,
+                               pos.y + random->nextDouble(), pos.z + random->nextDouble(),
+                               0.0, 0.0, 0.0, arrayWithLength<int>());
+            level->addParticle(PARTICLE_LARGE_SMOKE, pos.x + 1 - random->nextDouble() * 0.1f,
+                               pos.y + random->nextDouble(), pos.z + random->nextDouble(),
+                               0.0, 0.0, 0.0, arrayWithLength<int>());
+        }
+        if (static_cast<FireBlock*>(Blocks::fire)->canBurn(level, pos.north()))
+        {
+            level->addParticle(PARTICLE_LARGE_SMOKE, pos.x + random->nextDouble(),
+                               pos.y + random->nextDouble(), pos.z + random->nextDouble() * 0.1f,
+                               0.0, 0.0, 0.0, arrayWithLength<int>());
+            level->addParticle(PARTICLE_LARGE_SMOKE, pos.x + random->nextDouble(),
+                               pos.y + random->nextDouble(), pos.z + random->nextDouble() * 0.1f,
+                               0.0, 0.0, 0.0, arrayWithLength<int>());
+        }
+        if (static_cast<FireBlock*>(Blocks::fire)->canBurn(level, pos.south()))
+        {
+            level->addParticle(PARTICLE_LARGE_SMOKE, pos.x + random->nextDouble(),
+                               pos.y + random->nextDouble(), pos.z + 1 - random->nextDouble() * 0.1f,
+                               0.0, 0.0, 0.0, arrayWithLength<int>());
+            level->addParticle(PARTICLE_LARGE_SMOKE, pos.x + random->nextDouble(),
+                               pos.y + random->nextDouble(), pos.z + 1 - random->nextDouble() * 0.1f,
+                               0.0, 0.0, 0.0, arrayWithLength<int>());
+        }
+        if (static_cast<FireBlock*>(Blocks::fire)->canBurn(level, pos.above()))
+        {
+            level->addParticle(PARTICLE_LARGE_SMOKE, pos.x + random->nextDouble(),
+                               pos.y + 1 - random->nextDouble() * 0.1f, pos.z + random->nextDouble(),
+                               0.0, 0.0, 0.0, arrayWithLength<int>());
+            level->addParticle(PARTICLE_LARGE_SMOKE, pos.x + random->nextDouble(),
+                               pos.y + 1 - random->nextDouble() * 0.1f, pos.z + random->nextDouble(),
+                               0.0, 0.0, 0.0, arrayWithLength<int>());
         }
     }
-
-    level->addParticle(PARTICLE_LARGE_SMOKE, pos.x + random->nextDouble(), pos.y + random->nextDouble() * 0.5 + 0.5,
-                       pos.z + random->nextDouble(), 0.0, 0.0, 0.0, arrayWithLength<int>());
-    level->addParticle(PARTICLE_LARGE_SMOKE, pos.x + random->nextDouble(), pos.y + random->nextDouble() * 0.5 + 0.5,
-                       pos.z + random->nextDouble(), 0.0, 0.0, 0.0, arrayWithLength<int>());
-    level->addParticle(PARTICLE_LARGE_SMOKE, pos.x + random->nextDouble(), pos.y + random->nextDouble() * 0.5 + 0.5,
-                       pos.z + random->nextDouble(), 0.0, 0.0, 0.0, arrayWithLength<int>());
+    else
+    {
+        for (int i = 0; i < 3; ++i)
+        {
+            level->addParticle(PARTICLE_LARGE_SMOKE, pos.x + random->nextDouble(), pos.y + random->nextDouble() * 0.5 + 0.5,
+                               pos.z + random->nextDouble(), 0.0, 0.0, 0.0, arrayWithLength<int>());
+        }
+    }
 }
 
 const MaterialColor* FireBlock::getMapColor(const BlockState*, LevelSource*, const BlockPos&) { return MaterialColor::FIRE; }
 int FireBlock::getRenderLayer() { return 0; }
 const BlockState* FireBlock::getBlockState(int data)
 {
-    TypedBoxed<int> age(data);
-    return defaultBlockState()->setBoxedValue(AGE, &age);
+    return defaultBlockState()->setValue(AGE, data);
 }
 int FireBlock::convertBlockStateToLegacyData(const BlockState* state)
 {
-    const TypedBoxed<int>* age = static_cast<const TypedBoxed<int>*>(state->getBoxedValue(AGE));
-    return age == NULL ? 0 : age->getValue();
+    return state->getValue(AGE);
 }
 bool FireBlock::waterSpreadCausesSpawn() { return true; }
 bool FireBlock::canContainLiquid(const BlockState*) const { return false; }
 
 BlockStateDefinition* FireBlock::createBlockStateDefinition()
 {
-    const Property* properties[6] = { AGE, NORTH, EAST, SOUTH, WEST, UP };
+    static const Property* properties[6] = { AGE, NORTH, EAST, SOUTH, WEST, UP };
     return new BlockStateDefinition(this, properties, 6);
 }
 
@@ -431,13 +411,13 @@ EBlockFaceShape FireBlock::getBlockFaceShape(LevelSource*, const BlockState*, co
     return BLOCK_FACE_UNDEFINED;
 }
 
-TextureAtlasSprite* FireBlock::getTexture(const Direction*, const BlockState*) { return mFireIcon; }
-TextureAtlasSprite* FireBlock::getTextureLayer(int layer) { return layer == 0 ? mFireIcon : mFireIconAlt; }
+TextureAtlasSprite* FireBlock::getTexture(const Direction*, const BlockState*) { return mFireIcons[0]; }
+TextureAtlasSprite* FireBlock::getTextureLayer(int layer) { return mFireIcons[layer]; }
 
 void FireBlock::registerIcons(IconRegister* iconRegister)
 {
-    mFireIcon = iconRegister->registerIcon(L"fire_0");
-    mFireIconAlt = iconRegister->registerIcon(L"fire_1");
+    mFireIcons[0] = iconRegister->registerIcon(L"fire_0");
+    mFireIcons[1] = iconRegister->registerIcon(L"fire_1");
 }
 
 EBlockRenderShape FireBlock::getRenderShape(const BlockState*) { return BLOCK_RENDER_FIRE; }
