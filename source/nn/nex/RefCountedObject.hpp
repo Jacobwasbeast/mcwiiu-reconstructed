@@ -30,6 +30,7 @@ public:
     }
 
 private:
+    uint32_t m_unknown0;
     volatile int32_t m_refCount;
     bool m_disposing;
 };

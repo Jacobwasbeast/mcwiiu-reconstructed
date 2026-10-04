@@ -91,6 +91,7 @@ private:
     CompletionCallback m_pCompletionCallback;
     UserContext m_userContext;
     JobType m_jobType;
+    uint32_t m_unknown28;
     State m_state;
     int m_waitContext;
     uint32_t m_nbExecutions;

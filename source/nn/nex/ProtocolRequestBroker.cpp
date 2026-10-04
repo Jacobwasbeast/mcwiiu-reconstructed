@@ -51,7 +51,7 @@ ProtocolRegistry& ProtocolRequestBroker::GetRegistry()
     return StateFor(this)->registry;
 }
 
-Operation* ProtocolRequestBroker::GetCurrentOperation() const
+Operation* ProtocolRequestBroker::GetCurrentOperation()
 {
     return m_operationManager.GetCurrentOperation();
 }

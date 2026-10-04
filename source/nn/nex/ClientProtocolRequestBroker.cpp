@@ -48,7 +48,7 @@ ClientProtocolRequestBroker::~ClientProtocolRequestBroker()
     }
 }
 
-Operation* ClientProtocolRequestBroker::GetCurrentOperation() const
+Operation* ClientProtocolRequestBroker::GetCurrentOperation()
 {
     return m_operationManager.GetCurrentOperation();
 }

@@ -7,6 +7,7 @@
 namespace nn { namespace nex {
 
 class ServerProtocol;
+class JobProcessProtocolMessage;
 
 class CallProtocolMethodOperation : public Operation
 {
@@ -25,6 +26,7 @@ public:
 
 private:
     friend class ServerProtocol;
+    friend class JobProcessProtocolMessage;
 
     unsigned int m_attemptCount;
     bool m_postponed;

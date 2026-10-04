@@ -3,7 +3,7 @@
 namespace nn { namespace nex {
 
 Operation::Operation(unsigned int flags)
-    : m_state(false), m_signalState(false), m_userContext(), m_flags(flags)
+    : QEvent(), m_signalState(false), m_userContext(), m_flags(flags)
 {
 }
 

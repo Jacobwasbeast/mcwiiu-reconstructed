@@ -50,7 +50,7 @@ void* ProtocolCallContext::GetReturnValuePtr(unsigned int uiIndex)
     return 0;
 }
 
-void ProtocolCallContext::BeginTransition(State state, const qResult& result, bool publishResult)
+void ProtocolCallContext::BeginTransition(State state, qResult result, bool publishResult)
 {
     if (state == Ready)
     {

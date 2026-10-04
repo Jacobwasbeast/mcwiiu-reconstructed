@@ -27,7 +27,7 @@ public:
     virtual qResult DispatchThreadSafeLocalRMC(Message*, ClientProtocol*, ServerProtocol*, EndPoint*);
     virtual void PeerDisconnected(EndPoint*);
     virtual void FaultDetection(EndPoint*, unsigned int);
-    Operation* GetCurrentOperation() const;
+    Operation* GetCurrentOperation();
     static bool SystemStateIsValid(bool);
 
 private:

@@ -29,7 +29,7 @@ public:
     }
 
 protected:
-    virtual void BeginTransition(State state, const qResult& result, bool publishResult);
+    virtual void BeginTransition(State state, qResult result, bool publishResult);
 
     std::vector<void*> m_returnValues;
     bool* m_completionFlag;

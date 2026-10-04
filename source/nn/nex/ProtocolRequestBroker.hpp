@@ -35,7 +35,7 @@ protected:
     void ProcessMessageCore(CallProtocolMethodOperation*, EndPoint*, Buffer*);
     void DispatchCallToProtocol(ServerProtocol*, Message*, Message*, bool*, EndPoint*);
     void ProcessLocalCallRequest(ServerProtocol*, Message*, Message*, bool*, EndPoint*);
-    Operation* GetCurrentOperation() const;
+    Operation* GetCurrentOperation();
     void TraceProtocols(unsigned long long);
     static bool SystemStateIsValid(bool);
     uint32_t m_field44;
