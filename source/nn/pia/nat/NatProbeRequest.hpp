@@ -8,7 +8,7 @@
 
 namespace nn { namespace pia { namespace nat {
 
-class NatProbeRequest : public transport::StationLocation
+class NatProbeRequest
 {
 public:
     NatProbeRequest(const transport::StationLocation& location,
@@ -19,6 +19,7 @@ public:
 
     virtual void Trace(unsigned long long value) const;
 
+    transport::StationLocation m_stationLocation;
     transport::StationConnectionInfo m_stationConnectionInfo;
     bool m_probeRequested;
     bool m_addressValid;

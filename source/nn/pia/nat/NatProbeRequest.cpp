@@ -6,7 +6,7 @@ NatProbeRequest::NatProbeRequest(const transport::StationLocation& location,
                                  const transport::StationConnectionInfo& connectionInfo,
                                  bool probeRequested, bool addressValid,
                                  common::CallContext* callContext)
-    : transport::StationLocation(location),
+    : m_stationLocation(location),
       m_stationConnectionInfo(connectionInfo),
       m_probeRequested(probeRequested),
       m_addressValid(addressValid),
@@ -16,7 +16,7 @@ NatProbeRequest::NatProbeRequest(const transport::StationLocation& location,
 }
 
 NatProbeRequest::NatProbeRequest(const transport::StationLocation& location)
-    : transport::StationLocation(location),
+    : m_stationLocation(location),
       m_stationConnectionInfo(),
       m_probeRequested(false),
       m_addressValid(location.m_inetAddress.IsValid() != 0),

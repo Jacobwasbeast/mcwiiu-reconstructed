@@ -18,8 +18,8 @@ bool sameLocation(const transport::StationLocation& left,
 {
     if (left.m_field1c == right.m_field1c)
         return true;
-    const unsigned long long key = right.GetKey();
-    const unsigned long long recordKey = left.GetKey();
+    const unsigned long long key = right.m_stationAddress.GetKey();
+    const unsigned long long recordKey = left.m_stationAddress.GetKey();
     return key == recordKey;
 }
 }

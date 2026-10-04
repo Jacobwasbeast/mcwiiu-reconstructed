@@ -7,7 +7,7 @@
 
 namespace nn { namespace pia { namespace nat {
 
-class NatProbe : public transport::StationLocation
+class NatProbe
 {
 public:
     NatProbe(const transport::StationLocation& location, const common::Time& start,
@@ -24,13 +24,15 @@ public:
     virtual void Trace(unsigned long long value) const;
 
 private:
-    NatProbe();
+    NatProbe()
+        : m_stationLocation(), m_startTime(), m_deadline(), m_ticksPerTimeout(0)
+    {
+    }
     friend class NatProbeList;
 
-    unsigned int m_startTick;
-    unsigned int m_startTickHigh;
-    unsigned int m_deadlineTick;
-    unsigned int m_deadlineTickHigh;
+    transport::StationLocation m_stationLocation;
+    common::Time m_startTime;
+    common::Time m_deadline;
     unsigned char m_received;
     unsigned char m_sent;
     unsigned char m_replied;
@@ -40,8 +42,7 @@ private:
     unsigned int m_probeLimit;
     short m_firstPort;
     short m_lastPort;
-    unsigned int m_ticksPerTimeout;
-    unsigned int m_ticksPerTimeoutHigh;
+    unsigned long long m_ticksPerTimeout;
 };
 
 }}}

@@ -105,8 +105,8 @@ void NatProbeList::Retire(ProbeRecord* record)
 bool NatProbeList::IsSameAddressPortAndConnectionId(
     const transport::StationLocation& a, const transport::StationLocation& b)
 {
-    const unsigned long long bKey = b.GetKey();
-    const unsigned long long aKey = a.GetKey();
+    const unsigned long long bKey = b.m_stationAddress.GetKey();
+    const unsigned long long aKey = a.m_stationAddress.GetKey();
     return bKey == aKey &&
            a.m_field1c == b.m_field1c;
 }
@@ -114,7 +114,8 @@ bool NatProbeList::IsSameAddressPortAndConnectionId(
 bool NatProbeList::IsDifferentPortSameAddressAndConnectionId(
     const transport::StationLocation& a, const transport::StationLocation& b)
 {
-    return a.m_address == b.m_address && a.m_field1c == b.m_field1c;
+    return a.m_stationAddress.m_address == b.m_stationAddress.m_address &&
+           a.m_field1c == b.m_field1c;
 }
 
 NatProbe* NatProbeList::FindByAddressPortAndConnectionId(
@@ -124,7 +125,7 @@ NatProbe* NatProbeList::FindByAddressPortAndConnectionId(
          node != m_active.Sentinel(); node = node->next)
     {
         ProbeRecord* record = RecordFromNode(node);
-        if (IsSameAddressPortAndConnectionId(*record->Probe(), location))
+        if (IsSameAddressPortAndConnectionId(record->Probe()->m_stationLocation, location))
             return record->Probe();
     }
     return 0;
@@ -137,7 +138,7 @@ NatProbe* NatProbeList::FindByAddressAndConnectionId(
          node != m_active.Sentinel(); node = node->next)
     {
         ProbeRecord* record = RecordFromNode(node);
-        if (IsDifferentPortSameAddressAndConnectionId(*record->Probe(), location))
+        if (IsDifferentPortSameAddressAndConnectionId(record->Probe()->m_stationLocation, location))
             return record->Probe();
     }
     return 0;
@@ -149,7 +150,7 @@ NatProbe* NatProbeList::FindByConnectionId(unsigned int connectionId)
          node != m_active.Sentinel(); node = node->next)
     {
         ProbeRecord* record = RecordFromNode(node);
-        if (record->Probe()->m_field1c == static_cast<int>(connectionId))
+        if (record->Probe()->m_stationLocation.m_field1c == static_cast<int>(connectionId))
             return record->Probe();
     }
     return 0;
@@ -163,8 +164,8 @@ void NatProbeList::RemoveNotReceivedProbes(unsigned int connectionId)
         common::ListNode* next = node->next;
         ProbeRecord* record = RecordFromNode(node);
         NatProbe* probe = record->Probe();
-        if (probe->m_startTick == 0 && probe->m_startTickHigh == 0 &&
-            probe->m_field1c == static_cast<int>(connectionId))
+        if (probe->m_startTime.m_tick == 0 &&
+            probe->m_stationLocation.m_field1c == static_cast<int>(connectionId))
             Retire(record);
         node = next;
     }
@@ -179,10 +180,10 @@ void NatProbeList::RemoveDifferentConnectionIdAndSameAddressPortProbes(
         common::ListNode* next = node->next;
         ProbeRecord* record = RecordFromNode(node);
         NatProbe* probe = record->Probe();
-        if (probe->m_field1c != location.m_field1c)
+        if (probe->m_stationLocation.m_field1c != location.m_field1c)
         {
-            const unsigned long long locationKey = location.GetKey();
-            const unsigned long long probeKey = probe->GetKey();
+            const unsigned long long locationKey = location.m_stationAddress.GetKey();
+            const unsigned long long probeKey = probe->m_stationLocation.m_stationAddress.GetKey();
             if (locationKey == probeKey)
                 Retire(record);
         }
@@ -199,7 +200,7 @@ void NatProbeList::RemoveDifferentPortAndSameAddressAndConnectionIdProbes(
         common::ListNode* next = node->next;
         ProbeRecord* record = RecordFromNode(node);
         NatProbe* probe = record->Probe();
-        if (IsDifferentPortSameAddressAndConnectionId(*probe, location))
+        if (IsDifferentPortSameAddressAndConnectionId(probe->m_stationLocation, location))
             Retire(record);
         node = next;
     }
@@ -208,30 +209,31 @@ void NatProbeList::RemoveDifferentPortAndSameAddressAndConnectionIdProbes(
 bool NatProbeList::AddProbe(const NatProbe& probe)
 {
     probe.Trace(0x800);
-    if (probe.m_startTick == 0 && probe.m_startTickHigh == 0)
+    if (probe.m_startTime.m_tick == 0)
     {
-        RemoveDifferentConnectionIdAndSameAddressPortProbes(probe);
-        if (FindByAddressPortAndConnectionId(probe) != 0)
+        RemoveDifferentConnectionIdAndSameAddressPortProbes(probe.m_stationLocation);
+        if (FindByAddressPortAndConnectionId(probe.m_stationLocation) != 0)
             return true;
 
-        NatProbe* sameAddress = FindByAddressAndConnectionId(probe);
+        NatProbe* sameAddress = FindByAddressAndConnectionId(probe.m_stationLocation);
         if (sameAddress == 0)
         {
             NatProbe* sameConnection = FindByConnectionId(
-                static_cast<unsigned int>(probe.m_field1c));
+                static_cast<unsigned int>(probe.m_stationLocation.m_field1c));
             if (sameConnection != 0 && sameConnection->m_rtt != -1 &&
-                sameConnection->IsPrivate() != 0 && probe.IsPrivate() == 0)
+                sameConnection->m_stationLocation.m_stationAddress.IsPrivate() != 0 &&
+                probe.m_stationLocation.m_stationAddress.IsPrivate() == 0)
                 return true;
         }
         else
         {
-            RemoveDifferentPortAndSameAddressAndConnectionIdProbes(probe);
+            RemoveDifferentPortAndSameAddressAndConnectionIdProbes(probe.m_stationLocation);
         }
     }
     else
     {
-        RemoveNotReceivedProbes(static_cast<unsigned int>(probe.m_field1c));
-        RemoveDifferentConnectionIdAndSameAddressPortProbes(probe);
+        RemoveNotReceivedProbes(static_cast<unsigned int>(probe.m_stationLocation.m_field1c));
+        RemoveDifferentConnectionIdAndSameAddressPortProbes(probe.m_stationLocation);
     }
 
     common::ListNode* node = m_free.PopBackNode();
@@ -240,23 +242,14 @@ bool NatProbeList::AddProbe(const NatProbe& probe)
 
     ProbeRecord* record = RecordFromNode(node);
     NatProbe* target = ::new (static_cast<void*>(record->Probe())) NatProbe;
-    target->m_startTick = 0;
-    target->m_startTickHigh = 0;
-    target->m_deadlineTick = 0;
-    target->m_deadlineTickHigh = 0;
-    target->m_ticksPerTimeout = 0;
-    target->m_ticksPerTimeoutHigh = 0;
     if (!probe.m_received)
         m_active.InsertBeforeNode(m_active.Sentinel(), node);
     else
         m_active.InsertAfterNode(m_active.Sentinel(), node);
 
-    static_cast<transport::StationLocation&>(*target) =
-        static_cast<const transport::StationLocation&>(probe);
-    target->m_startTick = probe.m_startTick;
-    target->m_startTickHigh = probe.m_startTickHigh;
-    target->m_deadlineTick = probe.m_deadlineTick;
-    target->m_deadlineTickHigh = probe.m_deadlineTickHigh;
+    target->m_stationLocation = probe.m_stationLocation;
+    target->m_startTime = probe.m_startTime;
+    target->m_deadline = probe.m_deadline;
     target->m_received = probe.m_received;
     target->m_sent = probe.m_sent;
     target->m_replied = probe.m_replied;
@@ -267,7 +260,6 @@ bool NatProbeList::AddProbe(const NatProbe& probe)
     target->m_firstPort = probe.m_firstPort;
     target->m_lastPort = probe.m_lastPort;
     target->m_ticksPerTimeout = probe.m_ticksPerTimeout;
-    target->m_ticksPerTimeoutHigh = probe.m_ticksPerTimeoutHigh;
     return true;
 }
 
@@ -281,8 +273,8 @@ bool NatProbeList::RemoveSameConnectionIdOtherProbes(
         common::ListNode* next = node->next;
         ProbeRecord* record = RecordFromNode(node);
         NatProbe* probe = record->Probe();
-        if (probe->m_field1c == location.m_field1c &&
-            !IsSameAddressPortAndConnectionId(*probe, location))
+        if (probe->m_stationLocation.m_field1c == location.m_field1c &&
+            !IsSameAddressPortAndConnectionId(probe->m_stationLocation, location))
         {
             Retire(record);
             removed = true;
@@ -311,11 +303,10 @@ bool NatProbeList::ProcessProbe(const transport::StationLocation& location,
     }
 
     const bool updated = probe->UpdateTargetAddress(location);
-    RemoveDifferentConnectionIdAndSameAddressPortProbes(*probe);
-    probe->m_startTick = static_cast<unsigned int>(now.m_tick);
-    probe->m_startTickHigh = static_cast<unsigned int>(now.m_tick >> 32);
-    RemoveNotReceivedProbes(static_cast<unsigned int>(probe->m_field1c));
-    RemoveSameConnectionIdOtherProbes(*probe);
+    RemoveDifferentConnectionIdAndSameAddressPortProbes(probe->m_stationLocation);
+    probe->m_startTime = now;
+    RemoveNotReceivedProbes(static_cast<unsigned int>(probe->m_stationLocation.m_field1c));
+    RemoveSameConnectionIdOtherProbes(probe->m_stationLocation);
     return updated;
 }
 
@@ -330,16 +321,15 @@ void NatProbeList::ProcessProbeReply(const transport::StationLocation& location,
     }
 
     probe->UpdateTargetPort(location);
-    RemoveDifferentConnectionIdAndSameAddressPortProbes(*probe);
+    RemoveDifferentConnectionIdAndSameAddressPortProbes(probe->m_stationLocation);
     common::Time now;
     now.SetNow();
     if (sent.m_tick != 0)
         probe->UpdateRtt(now, sent);
-    probe->m_startTick = static_cast<unsigned int>(now.m_tick);
-    probe->m_startTickHigh = static_cast<unsigned int>(now.m_tick >> 32);
+    probe->m_startTime = now;
     probe->m_timeout = timeout;
-    RemoveNotReceivedProbes(static_cast<unsigned int>(probe->m_field1c));
-    RemoveSameConnectionIdOtherProbes(*probe);
+    RemoveNotReceivedProbes(static_cast<unsigned int>(probe->m_stationLocation.m_field1c));
+    RemoveSameConnectionIdOtherProbes(probe->m_stationLocation);
 }
 
 bool NatProbeList::RemoveSameAddressAndConnectionIdProbes(
@@ -351,7 +341,7 @@ bool NatProbeList::RemoveSameAddressAndConnectionIdProbes(
     {
         common::ListNode* next = node->next;
         ProbeRecord* record = RecordFromNode(node);
-        if (IsDifferentPortSameAddressAndConnectionId(*record->Probe(), location))
+        if (IsDifferentPortSameAddressAndConnectionId(record->Probe()->m_stationLocation, location))
         {
             Retire(record);
             removed = true;
@@ -370,7 +360,7 @@ bool NatProbeList::RemoveSameAddressPortAndConnectionIdProbes(
     {
         common::ListNode* next = node->next;
         ProbeRecord* record = RecordFromNode(node);
-        if (IsSameAddressPortAndConnectionId(*record->Probe(), location))
+        if (IsSameAddressPortAndConnectionId(record->Probe()->m_stationLocation, location))
         {
             Retire(record);
             removed = true;
@@ -387,7 +377,7 @@ bool NatProbeList::RemoveProbesByConnectionId(unsigned int connectionId)
     while (node != m_active.Sentinel())
     {
         common::ListNode* next = node->next;
-        if (RecordFromNode(node)->Probe()->m_field1c == static_cast<int>(connectionId))
+        if (RecordFromNode(node)->Probe()->m_stationLocation.m_field1c == static_cast<int>(connectionId))
         {
             Retire(RecordFromNode(node));
             removed = true;
