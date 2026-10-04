@@ -43,7 +43,7 @@ namespace __N_19_OnlineCore_Blob_cpp_9428d484
     uint32_t PRUDPVersionCheck(const nn::nex::ByteStream*);
     bool PRUDPUnpackCheck(const nn::nex::ByteStream*, unsigned int*);
     uint32_t RelayProtocolCheck(const nn::nex::ByteStream*);
-    uint64_t DisconnectCallback(nn::nex::EndPoint*, nn::nex::qResult, const nn::nex::UserContext*);
+    void DisconnectCallback(nn::nex::EndPoint*, nn::nex::qResult, const nn::nex::UserContext*);
     uint32_t CalcDataPacketSignature(const nn::nex::Packet*, nn::nex::Stream::Type, const unsigned char*, int,
                                      bool);
     void DefaultRecvFromCallback(nn::nex::SocketDriver::_Result, const unsigned char*, unsigned int,
