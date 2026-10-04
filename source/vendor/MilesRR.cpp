@@ -661,7 +661,7 @@ extern "C" int rrThreadCreate(rrThread* pThread, int (*pEntry)(void*), int iStac
         pOSThread = (OSThread*)(((size_t)pThread + RR_THREAD_NATIVE_OFFSET) &
                                 ~(size_t)(RR_THREAD_STACK_ALIGNMENT - 1));
         pStack = (unsigned char*)pOSThread +
-                 ((sizeof(OSThread) + (RR_THREAD_STACK_ALIGNMENT - 1)) &
+                 ((sizeof(OSThread) + RR_THREAD_STACK_ALIGNMENT) &
                   ~(RR_THREAD_STACK_ALIGNMENT - 1));
         uStackSize = (unsigned int)(((size_t)((unsigned char*)pNative + iStackSize - pStack)) &
                                     ~(size_t)(RR_THREAD_STACK_ALIGNMENT - 1));

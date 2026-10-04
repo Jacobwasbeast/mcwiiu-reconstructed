@@ -2,6 +2,7 @@
 #define SOURCE_VENDOR_N_19_ONLINECORE_BLOB_CPP_9428D484_HPP
 
 #include <stdint.h>
+#include "nn/nex/String.hpp"
 #include "nn/nex/qResult.hpp"
 
 namespace nn
@@ -15,7 +16,9 @@ class UserContext;
 class SocketDriver
 {
 public:
-    typedef int _Result;
+    enum _Result
+    {
+    };
     class InetAddress
     {
     };
@@ -30,66 +33,9 @@ enum Type
 }
 }
 
-class __N_19_OnlineCore_Blob_cpp_9428d484
+namespace __N_19_OnlineCore_Blob_cpp_9428d484
 {
-public:
-    wchar_t* m_data;
-    uint32_t m_field04;
-    uint32_t m_field08;
-    uint32_t m_field0c;
-    uint32_t m_field10;
-    uint32_t m_field14;
-    uint32_t m_field18;
-    uint32_t m_field1c;
-    uint32_t m_field20;
-    uint32_t m_field24;
-    uint32_t m_field28;
-    uint32_t m_field2c;
-    uint32_t m_field30;
-    uint32_t m_field34;
-    uint32_t m_field38;
-    uint32_t m_field3c;
-    uint32_t m_field40;
-    uint32_t m_field44;
-    uint32_t m_field48;
-    uint32_t m_field4c;
-    uint32_t m_field50;
-    uint32_t m_field54;
-    uint32_t m_field58;
-    uint32_t m_field5c;
-    uint32_t m_field60;
-    uint32_t m_field64;
-    uint32_t m_field68;
-    uint32_t m_field6c;
-    uint32_t m_field70;
-    uint32_t m_field74;
-    uint32_t m_field78;
-    uint32_t m_field7c;
-    uint32_t m_field80;
-    uint32_t m_field84;
-    uint32_t m_field88;
-    uint32_t m_field8c;
-    uint32_t m_field90;
-    uint32_t m_field94;
-    uint32_t m_field98;
-    uint32_t m_field9c;
-    uint32_t m_fielda0;
-    uint32_t m_fielda4;
-    uint32_t m_fielda8;
-    uint32_t m_fieldac;
-    uint32_t m_fieldb0;
-    uint32_t m_fieldb4;
-    uint32_t m_fieldb8;
-    uint32_t m_fieldbc;
-    uint32_t m_fieldc0;
-    uint32_t m_fieldc4;
-    uint32_t m_fieldc8;
-    uint32_t m_fieldcc;
-    uint32_t m_fieldd0;
-    uint32_t m_fieldd4;
-    uint32_t m_fieldd8;
-    uint32_t m_fielddc;
-    void _Copy(const wchar_t*, unsigned int, const wchar_t*, unsigned int);
+    nn::nex::String _Copy(const wchar_t*, unsigned int, const wchar_t*, unsigned int);
     int UnicodeToUtf8(const wchar_t*, char*, unsigned int);
     int Utf8ToUnicode(const char*, wchar_t*, unsigned int);
     int GetNeededUtf8BufferSize(const wchar_t*);
@@ -115,6 +61,6 @@ public:
     int GetChar8ToUtf8BufferSize(const char*);
     int Utf8ToLatin1(const char*, char*, unsigned int);
     bool IsRunningAsBackEnd();
-};
+}
 
 #endif

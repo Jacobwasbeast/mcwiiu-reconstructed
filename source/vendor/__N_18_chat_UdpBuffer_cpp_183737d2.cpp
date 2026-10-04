@@ -20,15 +20,18 @@ namespace
     OSFastMutex packetBufferMutex;
 }
 
-void __N_18_chat_UdpBuffer_cpp_183737d2::initImpl()
+namespace __N_18_chat_UdpBuffer_cpp_183737d2
 {
-    std::memset(packetBuffer, 0, packetBufferSize);
-    for (unsigned int index = 0; index < packetCount - 1; ++index)
+    void initImpl()
     {
-        packetBuffer[index].m_pNextFree = &packetBuffer[index + 1];
+        std::memset(packetBuffer, 0, packetBufferSize);
+        for (unsigned int index = 0; index < packetCount - 1; ++index)
+        {
+            packetBuffer[index].m_pNextFree = &packetBuffer[index + 1];
+        }
+        packetBuffer[packetCount - 1].m_pNextFree = 0;
+        freePacketBuffer = packetBuffer;
     }
-    packetBuffer[packetCount - 1].m_pNextFree = 0;
-    freePacketBuffer = packetBuffer;
 }
 
 int vct_init_packet_buffer(void* pBuffer, unsigned int uiSize)

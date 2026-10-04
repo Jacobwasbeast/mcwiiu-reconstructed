@@ -1,7 +1,6 @@
 #include "vendor/nn__nex.hpp"
 
-#include <cstring>
-
+#include "nn/nex/BadEvents.hpp"
 #include "nn/nex/Buffer.hpp"
 #include "nn/nex/DebugString.hpp"
 #include "nn/nex/EndPoint.hpp"
@@ -11,35 +10,9 @@
 
 namespace nn { namespace nex {
 
-class BadEvents
-{
-public:
-    enum Event
-    {
-        SYSTEM_CHECK_FAILURE = 0
-    };
-
-    static void Signal(Event event);
-};
+BadEvents* BadEvents::s_pInstance = NULL;
 
 bool g_jobProcessProtocolEventCloseGuard = false;
-
-namespace
-{
-bool OperationPostponed(const CallProtocolMethodOperation& operation)
-{
-    const uint8_t* bytes = reinterpret_cast<const uint8_t*>(&operation);
-    return bytes[0x18] != 0;
-}
-
-int OperationWaitContext(const CallProtocolMethodOperation& operation)
-{
-    const uint8_t* bytes = reinterpret_cast<const uint8_t*>(&operation);
-    int result = 0;
-    std::memcpy(&result, bytes + 0x1C, sizeof(result));
-    return result;
-}
-}
 
 JobProcessProtocolEvent::JobProcessProtocolEvent(ProtocolRequestBrokerInterface* pBroker,
                                                  EndPoint* pEndPoint,
@@ -87,8 +60,8 @@ void JobProcessProtocolMessage::Execute()
 {
     m_pBroker->ProcessMessage(&m_operation, m_pEndPoint, m_pBuffer);
 
-    if (OperationPostponed(m_operation))
-        SetToWaiting(OperationWaitContext(m_operation));
+    if (m_operation.m_postponed)
+        SetToWaiting(m_operation.m_postponementDelay);
     else
         SetToComplete();
 }
@@ -97,9 +70,16 @@ void JobProcessProtocolMessage::Trace(uint64_t)
 {
 }
 
-void BadEvents::Signal(Event event)
+void BadEvents::Signal(_ID id)
 {
-    (void)event;
+    if (s_pInstance == NULL)
+        return;
+    s_pInstance->SignalEvent(id);
+}
+
+void BadEvents::SignalEvent(_ID id)
+{
+    ++m_eventCounts[id];
 }
 
 }}

@@ -112,17 +112,17 @@ static void adpcm_decode_codes(const unsigned char* input, short* output, unsign
     }
 }
 
-void AdpcmCodec::vct_decode_adpcm_16(const unsigned char* input, short* output, unsigned int count, nn::pia::chat::Adpcm::State* state)
+void __N_14_chat_Adpcm_cpp_f2b530af::vct_decode_adpcm_16(const unsigned char* input, short* output, unsigned int count, nn::pia::chat::Adpcm::State* state)
 {
     adpcm_decode_codes(input, output, count * 4, 2, state);
 }
 
-void AdpcmCodec::vct_decode_adpcm_32(const unsigned char* input, short* output, unsigned int count, nn::pia::chat::Adpcm::State* state)
+void __N_14_chat_Adpcm_cpp_f2b530af::vct_decode_adpcm_32(const unsigned char* input, short* output, unsigned int count, nn::pia::chat::Adpcm::State* state)
 {
     adpcm_decode_codes(input, output, count * 2, 4, state);
 }
 
-void AdpcmCodec::vct_decode_adpcm_24(const unsigned char* input, short* output, unsigned int count, nn::pia::chat::Adpcm::State* state)
+void __N_14_chat_Adpcm_cpp_f2b530af::vct_decode_adpcm_24(const unsigned char* input, short* output, unsigned int count, nn::pia::chat::Adpcm::State* state)
 {
     for (unsigned int group = 0; group < count / 3; ++group)
     {
@@ -158,13 +158,13 @@ void nn::pia::chat::Adpcm::Decode(const unsigned char* pData, short* pOut, unsig
     switch (codec)
     {
     case VCT_CODEC_2:
-        AdpcmCodec::vct_decode_adpcm_16(pData + headerSize, pOut, uiSize - headerSize, &state);
+        __N_14_chat_Adpcm_cpp_f2b530af::vct_decode_adpcm_16(pData + headerSize, pOut, uiSize - headerSize, &state);
         break;
     case VCT_CODEC_3:
-        AdpcmCodec::vct_decode_adpcm_24(pData + headerSize, pOut, uiSize - headerSize, &state);
+        __N_14_chat_Adpcm_cpp_f2b530af::vct_decode_adpcm_24(pData + headerSize, pOut, uiSize - headerSize, &state);
         break;
     case VCT_CODEC_4:
-        AdpcmCodec::vct_decode_adpcm_32(pData + headerSize, pOut, uiSize - headerSize, &state);
+        __N_14_chat_Adpcm_cpp_f2b530af::vct_decode_adpcm_32(pData + headerSize, pOut, uiSize - headerSize, &state);
         break;
     default:
         break;
@@ -186,16 +186,16 @@ static void adpcm_encode_codes(unsigned char* output, const short* input, unsign
         output[byteIndex] = packed;
     }
 }
-void AdpcmCodec::vct_encode_adpcm_16(unsigned char* output, const short* input, unsigned int count, nn::pia::chat::Adpcm::State* state)
+void __N_14_chat_Adpcm_cpp_f2b530af::vct_encode_adpcm_16(unsigned char* output, const short* input, unsigned int count, nn::pia::chat::Adpcm::State* state)
 {
     adpcm_encode_codes(output, input, count, 2, state);
 }
 
-void AdpcmCodec::vct_encode_adpcm_32(unsigned char* output, const short* input, unsigned int count, nn::pia::chat::Adpcm::State* state)
+void __N_14_chat_Adpcm_cpp_f2b530af::vct_encode_adpcm_32(unsigned char* output, const short* input, unsigned int count, nn::pia::chat::Adpcm::State* state)
 {
     adpcm_encode_codes(output, input, count, 4, state);
 }
-void AdpcmCodec::vct_encode_adpcm_24(unsigned char* output, const short* input, unsigned int count, nn::pia::chat::Adpcm::State* state)
+void __N_14_chat_Adpcm_cpp_f2b530af::vct_encode_adpcm_24(unsigned char* output, const short* input, unsigned int count, nn::pia::chat::Adpcm::State* state)
 {
     for (unsigned int group = 0; group < count / 8; ++group)
     {
@@ -221,13 +221,13 @@ void nn::pia::chat::Adpcm::Encode(unsigned char* pOut, const short* pAudio, unsi
     switch (codec)
     {
     case VCT_CODEC_2:
-        AdpcmCodec::vct_encode_adpcm_16(pOut + headerSize, pAudio, uiSize, pState);
+        __N_14_chat_Adpcm_cpp_f2b530af::vct_encode_adpcm_16(pOut + headerSize, pAudio, uiSize, pState);
         break;
     case VCT_CODEC_3:
-        AdpcmCodec::vct_encode_adpcm_24(pOut + headerSize, pAudio, uiSize, pState);
+        __N_14_chat_Adpcm_cpp_f2b530af::vct_encode_adpcm_24(pOut + headerSize, pAudio, uiSize, pState);
         break;
     case VCT_CODEC_4:
-        AdpcmCodec::vct_encode_adpcm_32(pOut + headerSize, pAudio, uiSize, pState);
+        __N_14_chat_Adpcm_cpp_f2b530af::vct_encode_adpcm_32(pOut + headerSize, pAudio, uiSize, pState);
         break;
     default:
         break;

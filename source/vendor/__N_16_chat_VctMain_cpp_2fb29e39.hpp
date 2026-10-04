@@ -3,10 +3,9 @@
 
 struct VCTResult;
 
-class __N_16_chat_VctMain_cpp_2fb29e39
+namespace __N_16_chat_VctMain_cpp_2fb29e39
 {
-public:
-    static int VCTi_HandleData(unsigned short connectionId, unsigned char *data, unsigned int dataSize, VCTResult *result);
-};
+    int VCTi_HandleData(unsigned short connectionId, unsigned char *data, unsigned int dataSize, VCTResult *result);
+}
 
 #endif

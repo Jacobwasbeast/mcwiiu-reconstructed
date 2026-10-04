@@ -3,12 +3,12 @@
 
 #include <stdint.h>
 #include "nn/pia.h"
+#include "nn/pia/Common.hpp"
 #include "nn/pia/Reconstruction.hpp"
 #include "vendor/__N_18_chat_HandsFree_cpp_120265b3.hpp"
 #include "vendor/VCTAudio.hpp"
 
 namespace nn { namespace pia {
-typedef int Result;
 namespace transport {
 StationIndex Conv2StationIndex(unsigned long long stationId);
 unsigned char IsInitialized();
@@ -104,19 +104,18 @@ extern unsigned int g_voiceAudioDataSize;
 extern unsigned char g_voiceVadActivity;
 extern nn::pia::chat::VoiceProtocol* g_voiceProtocolInstance;
 
-class __N_22_chat_VoiceProtocol_cpp_bf22a0fe
+namespace __N_22_chat_VoiceProtocol_cpp_bf22a0fe
 {
-public:
-    static void lock_();
-    static void unlock_();
-    static bool isOpus(nn::pia::chat::Codec codec);
-    static TMC_HF_EC_MODE convertEcMode(nn::pia::chat::EcMode mode);
-    static int convertCid(unsigned short cid);
-    static nn::pia::StationIndex convertStationIndex(nn::pia::StationIndex index);
-    static nn::pia::Result createProtocol(nn::pia::transport::UnreliableProtocol** protocol, unsigned short* protocolId, unsigned char channel);
-    static void destroyProtocol(nn::pia::transport::UnreliableProtocol** protocol, unsigned short* protocolId);
-    static VCTCodec convertCodec(nn::pia::chat::Codec codec);
-    static nn::pia::chat::Codec convertCodec(VCTCodec codec);
-    static nn::pia::chat::EcMode convertEcMode(TMC_HF_EC_MODE mode);
-};
+void lock_();
+void unlock_();
+bool isOpus(nn::pia::chat::Codec codec);
+TMC_HF_EC_MODE convertEcMode(nn::pia::chat::EcMode mode);
+int convertCid(unsigned short cid);
+nn::pia::StationIndex convertStationIndex(nn::pia::StationIndex index);
+nn::pia::Result createProtocol(nn::pia::transport::UnreliableProtocol** protocol, unsigned short* protocolId, unsigned char channel);
+void destroyProtocol(nn::pia::transport::UnreliableProtocol** protocol, unsigned short* protocolId);
+VCTCodec convertCodec(nn::pia::chat::Codec codec);
+nn::pia::chat::Codec convertCodec(VCTCodec codec);
+nn::pia::chat::EcMode convertEcMode(TMC_HF_EC_MODE mode);
+}
 #endif

@@ -19,40 +19,12 @@ AIL_FILE_CLOSE_CALLBACK AIL_file_close = DefaultFileClose;
 AIL_FILE_SEEK_CALLBACK AIL_file_seek = DefaultFileSeek;
 AIL_FILE_READ_CALLBACK AIL_file_read = DefaultFileRead;
 
-static const char* ParseSubFileNumber(const char* pCursor, unsigned int* puValue)
-{
-    unsigned int uValue;
-    int bNegative;
-    int iCharacter;
-
-    iCharacter = (int)*++pCursor;
-
-    bNegative = iCharacter == '-';
-    if (bNegative)
-    {
-        iCharacter = (int)*++pCursor;
-    }
-
-    uValue = 0;
-    while ((unsigned int)(iCharacter - '0') < 10)
-    {
-        uValue = uValue * 10 + (unsigned int)(iCharacter - '0');
-        iCharacter = (int)*++pCursor;
-    }
-
-    if (bNegative)
-    {
-        uValue = (unsigned int)(-(int)uValue);
-    }
-
-    *puValue = uValue;
-    return pCursor;
-}
-
 unsigned int DefaultFileOpen(const char* pFileName, unsigned int* puFileHandle)
 {
     MilesFile* pFile;
     const char* pCursor;
+    const char* pNumber;
+    int bNegative;
     char* pOutput;
     char szName[512];
     unsigned int uLength;
@@ -93,11 +65,51 @@ unsigned int DefaultFileOpen(const char* pFileName, unsigned int* puFileHandle)
 
         if (*pCursor == '*')
         {
-            pCursor = ParseSubFileNumber(pCursor, &uLength);
-
-            if (*pCursor == '*')
+            pNumber = pCursor + 1;
+            iCharacter = (int)*pNumber;
+            bNegative = iCharacter == '-';
+            if (bNegative)
             {
-                pCursor = ParseSubFileNumber(pCursor, &uOffset);
+                pNumber = pCursor + 2;
+                iCharacter = (int)*pNumber;
+            }
+
+            uLength = 0;
+            while ((unsigned int)(iCharacter - '0') < 10)
+            {
+                pNumber = pNumber + 1;
+                uLength = uLength * 10 + (unsigned int)(iCharacter - '0');
+                iCharacter = (int)*pNumber;
+            }
+
+            if (bNegative)
+            {
+                uLength = (unsigned int)(-(int)uLength);
+            }
+
+            if (iCharacter == '*')
+            {
+                pCursor = pNumber + 1;
+                iCharacter = (int)*pCursor;
+                bNegative = iCharacter == '-';
+                if (bNegative)
+                {
+                    pCursor = pNumber + 2;
+                    iCharacter = (int)*pCursor;
+                }
+
+                uOffset = 0;
+                while ((unsigned int)(iCharacter - '0') < 10)
+                {
+                    pCursor = pCursor + 1;
+                    uOffset = uOffset * 10 + (unsigned int)(iCharacter - '0');
+                    iCharacter = (int)*pCursor;
+                }
+
+                if (bNegative)
+                {
+                    uOffset = (unsigned int)(-(int)uOffset);
+                }
             }
         }
 

@@ -114,7 +114,7 @@ static ILIST_ENTRY* RIB_last_entry;
 
 static char RIB_error_text[256];
 
-static unsigned int ILE_set(const INTERFACE_DESCRIPTOR* pDescriptor)
+static unsigned int ILE_set(INTERFACE_DESCRIPTOR* pDescriptor)
 {
     const unsigned char* pName;
     unsigned int uHash;
@@ -266,7 +266,7 @@ static void IL_dealloc(InterfaceList* pList, ILIST_ENTRY* pEntry)
     pList->pFree = pEntry;
 }
 
-static ILIST_ENTRY* IL_lookup(InterfaceList* pList, const INTERFACE_DESCRIPTOR* pDescriptor)
+static ILIST_ENTRY* IL_lookup(InterfaceList* pList, INTERFACE_DESCRIPTOR* pDescriptor)
 {
     ILIST_ENTRY* pEntry;
 

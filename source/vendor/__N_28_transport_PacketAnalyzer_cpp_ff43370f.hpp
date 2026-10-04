@@ -3,10 +3,9 @@
 
 #include <stdint.h>
 
-class __N_28_transport_PacketAnalyzer_cpp_ff43370f
+namespace __N_28_transport_PacketAnalyzer_cpp_ff43370f
 {
-public:
-    static uint64_t getTime();
-};
+    uint64_t getTime();
+}
 
 #endif

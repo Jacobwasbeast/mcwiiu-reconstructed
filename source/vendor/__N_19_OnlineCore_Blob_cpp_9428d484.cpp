@@ -2,10 +2,14 @@
 #include <string.h>
 #include <wchar.h>
 
-void __N_19_OnlineCore_Blob_cpp_9428d484::_Copy(const wchar_t* first, unsigned int firstLength, const wchar_t* second, unsigned int secondLength)
+nn::nex::String __N_19_OnlineCore_Blob_cpp_9428d484::_Copy(const wchar_t* first, unsigned int firstLength, const wchar_t* second, unsigned int secondLength)
 {
-    wcscpy(m_data, first);
-    wcscpy(m_data + firstLength, second);
+    nn::nex::String result;
+    result.Reserve(firstLength + secondLength + 1);
+    wchar_t* data = result;
+    wcscpy(data, first);
+    wcscpy(data + firstLength, second);
+    return result;
 }
 
 int __N_19_OnlineCore_Blob_cpp_9428d484::UnicodeToUtf8(const wchar_t* input, char* output, unsigned int capacity)
@@ -48,43 +52,49 @@ int __N_19_OnlineCore_Blob_cpp_9428d484::Utf8ToUnicode(const char* input, wchar_
 {
     int written = 0;
     int remaining = static_cast<int>(capacity) - 1;
-    while (remaining != 0)
+    bool invalid = false;
+    wchar_t* cursor = output;
+    do
     {
-        const unsigned int lead = static_cast<unsigned char>(*input);
-        if (lead == 0)
+        const unsigned char lead = *reinterpret_cast<const unsigned char*>(input);
+        if (lead == 0 || remaining == 0)
         {
-            output[written] = 0;
+            *cursor = 0;
             return written + 1;
         }
-        if (lead < 0x80)
+        const unsigned int value = lead;
+        if (value < 0x80)
         {
-            output[written++] = static_cast<wchar_t>(static_cast<signed char>(lead));
             --remaining;
+            ++written;
+            *cursor++ = static_cast<wchar_t>(static_cast<signed char>(lead));
+        }
+        else if (value - 0xc2 < 0x1e)
+        {
+            const unsigned char first = *reinterpret_cast<const unsigned char*>(input);
             ++input;
-        }
-        else if (lead - 0xc2 < 0x1e)
-        {
-            output[written++] = static_cast<wchar_t>(lead * 0x40 +
-                static_cast<unsigned char>(input[1]) - 0x3080);
             --remaining;
+            ++written;
+            *cursor++ = static_cast<wchar_t>(first * 0x40 +
+                *reinterpret_cast<const unsigned char*>(input) - 0x3080);
+        }
+        else if (value - 0xe0 < 0x10)
+        {
+            const unsigned char* second = reinterpret_cast<const unsigned char*>(input) + 1;
+            const unsigned char first = *reinterpret_cast<const unsigned char*>(input);
             input += 2;
-        }
-        else if (lead - 0xe0 < 0x10)
-        {
-            output[written++] = static_cast<wchar_t>(lead * 0x1000 +
-                static_cast<unsigned char>(input[1]) * 0x40 +
-                static_cast<unsigned char>(input[2]) - 0x2080);
             --remaining;
-            input += 3;
+            ++written;
+            *cursor++ = static_cast<wchar_t>(first * 0x1000 + *second * 0x40 +
+                *reinterpret_cast<const unsigned char*>(input) - 0x2080);
         }
         else
-        {
-            output[0] = 0;
-            return -1;
-        }
+            invalid = true;
+        ++input;
     }
-    output[written] = 0;
-    return written + 1;
+    while (!invalid);
+    *output = 0;
+    return -1;
 }
 
 int __N_19_OnlineCore_Blob_cpp_9428d484::GetNeededUtf8BufferSize(const wchar_t* input)

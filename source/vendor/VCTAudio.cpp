@@ -76,24 +76,14 @@ unsigned short g_vctLocalCid = 0;
 VCTSession* g_vctFreeSessions = 0;
 VCTSession* g_vctSessions = 0;
 
-unsigned int sendSlotIndex()
-{
-    return (g_vctSendPacketCount & 1) ^ 1;
-}
-
-unsigned int timerClock()
-{
-    return OSGetSystemInfo()->busClockSpeed >> 2;
-}
-
 }
 
 unsigned char g_vctInitialized = 0;
 unsigned int g_vctMode = 0;
 
-bool VCT_IsInitialized()
+unsigned char VCT_IsInitialized()
 {
-    return g_vctInitialized != 0;
+    return g_vctInitialized;
 }
 
 unsigned int VCTi_GetAudioFrameLength()
@@ -128,43 +118,36 @@ void VCT_EnableVAD(bool bEnabled)
 
 bool vct_is_adpcm(VCTCodec codec)
 {
-    return static_cast<unsigned int>(codec) - VCT_CODEC_2 < 3;
+    return codec >= VCT_CODEC_2 && codec <= VCT_CODEC_4;
 }
 
 bool vct_is_opus(VCTCodec codec)
 {
-    return static_cast<unsigned int>(codec) - VCT_CODEC_5 < 2;
+    return codec == VCT_CODEC_5 || codec == VCT_CODEC_6;
 }
 
 unsigned int HPFFilter2(const void* pAudio, unsigned int uiSize)
 {
-    const unsigned int uiSamples = uiSize >> 1;
+    const short* pSamples = static_cast<const short*>(pAudio);
     unsigned long long ullEnergy = 0;
+    unsigned int uiSamples = uiSize >> 1;
+    const unsigned int uiCount = uiSamples;
 
     if (uiSamples != 0)
     {
-        const short* pSamples = static_cast<const short*>(pAudio);
-        int iFeedForward = g_vctHpfFeedForward;
-        int iPrevious = g_vctHpfPrevious;
-        unsigned int uiRemaining = uiSamples;
-
         do
         {
-            const int iScaled = static_cast<int>(*pSamples) * 3743;
+            g_vctHpfPrevious =
+                (*pSamples * 3743 + g_vctHpfFeedForward + g_vctHpfPrevious * 3390) >> 12;
+            const int iSquare = g_vctHpfPrevious * g_vctHpfPrevious;
+            g_vctHpfFeedForward = *pSamples * -3743;
             ++pSamples;
-            iFeedForward = iScaled + iFeedForward;
-            iPrevious = (iFeedForward + iPrevious * 3390) >> 12;
-            ullEnergy += static_cast<unsigned long long>(
-                static_cast<long long>(iPrevious * iPrevious));
-            iFeedForward = -iScaled;
-            --uiRemaining;
-        } while (uiRemaining != 0);
-
-        g_vctHpfFeedForward = iFeedForward;
-        g_vctHpfPrevious = iPrevious;
+            ullEnergy += static_cast<unsigned long long>(static_cast<long long>(iSquare));
+            --uiSamples;
+        } while (uiSamples != 0);
     }
 
-    return static_cast<unsigned int>(ullEnergy / uiSamples);
+    return static_cast<unsigned int>(ullEnergy / uiCount);
 }
 
 unsigned int VCT_GetAudioScale(const void* pAudio, unsigned int uiSize)
@@ -178,16 +161,16 @@ unsigned int VCT_GetAudioScale(const void* pAudio, unsigned int uiSize)
 
 int VCT_SendAudioEx(const void* pAudio, unsigned int uiAudioScale)
 {
-    const unsigned int uiDataSize = VCTi_GetAudioDataSize();
+    const unsigned int uiDataSize = g_vctAudioDataSize;
 
     g_vctAudioScaleSpecified = 0;
-    g_vctSendAudioScale[sendSlotIndex()] = uiAudioScale;
+    g_vctSendAudioScale[(g_vctSendPacketCount & 1) ^ 1] = uiAudioScale;
 
     if (!VCT_IsInitialized())
     {
         return VCT_RESULT_NOT_INITIALIZED;
     }
-    if (uiDataSize != VCTi_GetAudioDataSize())
+    if (uiDataSize != g_vctAudioDataSize)
     {
         return VCT_RESULT_INVALID_ARGUMENT;
     }
@@ -204,7 +187,7 @@ int VCT_SendAudioEx(const void* pAudio, unsigned int uiAudioScale)
             continue;
         }
 
-        VCTAudioPacket* pPacket = &g_vctSendPacketBuffer[sendSlotIndex()];
+        VCTAudioPacket* pPacket = &g_vctSendPacketBuffer[(g_vctSendPacketCount & 1) ^ 1];
         pPacket->m_Signature = VCT_AUDIO_SIGNATURE;
         memcpy(pPacket->m_Data + (vct_is_adpcm(g_vctCodec) ? VCT_ADPCM_STATE_SIZE : 0),
                pAudio, uiDataSize);
@@ -223,9 +206,7 @@ int VCT_SendAudioEx(const void* pAudio, unsigned int uiAudioScale)
 
 void vct_mix_audio(const short* pLeft, const short* pRight, short* pOut, unsigned int uiSize)
 {
-    const unsigned int uiSamples = uiSize >> 1;
-
-    for (unsigned int uiSample = 0; uiSample < uiSamples; ++uiSample)
+    for (unsigned int uiSample = 0; uiSample < (uiSize >> 1); ++uiSample)
     {
         int iMixed = static_cast<int>(pLeft[uiSample]) + static_cast<int>(pRight[uiSample]);
         if (iMixed >= 0x8000)
@@ -318,24 +299,6 @@ nn::pia::chat::AudioStream* VCTi_GetStreamFromCid(unsigned short usCid)
     return 0;
 }
 
-namespace
-{
-    unsigned short read_be16(const unsigned char* pData)
-    {
-        return static_cast<unsigned short>(
-            (static_cast<unsigned short>(pData[0]) << 8) |
-            static_cast<unsigned short>(pData[1]));
-    }
-
-    unsigned int read_be32(const unsigned char* pData)
-    {
-        return (static_cast<unsigned int>(pData[0]) << 24) |
-               (static_cast<unsigned int>(pData[1]) << 16) |
-               (static_cast<unsigned int>(pData[2]) << 8) |
-               static_cast<unsigned int>(pData[3]);
-    }
-}
-
 unsigned int vct_handle_audio(unsigned short usCid, unsigned char* pData,
                                unsigned int uiDataSize, long long llReceiveTick)
 {
@@ -355,11 +318,12 @@ unsigned int vct_handle_audio(unsigned short usCid, unsigned char* pData,
         pStream->UpdateSkew(llReceiveTick);
     }
 
-    const unsigned char ucType = pData[4];
+    const VCTAudioPacket* pHeader = reinterpret_cast<const VCTAudioPacket*>(pData);
+    const unsigned char ucType = pHeader->m_Type;
     if (ucType == 0x41)
     {
         pStream->m_SequenceUninitialized = 1;
-        pStream->m_audioState = read_be16(pData + 6);
+        pStream->m_audioState = pHeader->m_Sequence;
         pStream->m_BaseSendTick = 0;
         return 0;
     }
@@ -460,8 +424,8 @@ unsigned int vct_handle_audio(unsigned short usCid, unsigned char* pData,
     pPacket->m_ReceiveTick = llReceiveTick;
     pPacket->m_Cid = usCid;
     pPacket->m_IsSpare = pData[5] & 0x80;
-    pPacket->m_SendTick = static_cast<long long>(read_be32(pData + 8));
-    pPacket->m_Sequence = read_be16(pData + 6);
+    pPacket->m_SendTick = static_cast<long long>(pHeader->m_Timestamp);
+    pPacket->m_Sequence = pHeader->m_Sequence;
 
     ++pStream->m_Info.m_Unknown4C;
     const unsigned int uiSamplingPacketNum = VCT_GetQualityAlertSamplingPacketNum();
@@ -526,7 +490,7 @@ void VCT_GetAudioInfoFromCid(unsigned short usCid, VCTAudioInfo* pAudioInfo)
     }
 
     pStream->m_DropFrequency = VCT_GetDropFrequency(usCid);
-    *pAudioInfo = pStream->m_Info;
+    memcpy(pAudioInfo, &pStream->m_Info, sizeof(VCTAudioInfo));
 }
 
 VCTSession* vct_find_session(unsigned short usCid)
@@ -762,7 +726,7 @@ int VCTi_ReceiveAudioData(void* pData, unsigned int uiSize, unsigned int uiStrea
                 }
             }
 
-            const unsigned long long ullGuard = static_cast<unsigned long long>(timerClock()) *
+            const unsigned long long ullGuard = static_cast<unsigned long long>(OSGetSystemInfo()->busClockSpeed >> 2) *
                                                 VCT_PLAY_GUARD_MICROSECONDS / 1000000;
             if (static_cast<unsigned long long>(llNow) + ullGuard <
                 static_cast<unsigned long long>(pPacket->m_PlayTick))

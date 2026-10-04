@@ -5,11 +5,10 @@
 
 #include "nn/pia/Reconstruction.hpp"
 
-class __N_32_transport_PacketAnalysisData_cpp_3279541b
+namespace __N_32_transport_PacketAnalysisData_cpp_3279541b
 {
-public:
-    static bool isInternalProtocol(nn::pia::transport::ProtocolId protocolId);
-    static const char *getProtocolName(nn::pia::transport::ProtocolId protocolId);
-};
+    bool isInternalProtocol(nn::pia::transport::ProtocolId protocolId);
+    const char *getProtocolName(nn::pia::transport::ProtocolId protocolId);
+}
 
 #endif

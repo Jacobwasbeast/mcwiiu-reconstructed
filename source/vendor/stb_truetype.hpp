@@ -395,13 +395,13 @@ int main(int arg, char **argv)
    // #define your own STBTT_ifloor/STBTT_iceil() to avoid math.h
    #ifndef STBTT_ifloor
    #include <math.h>
-   #define STBTT_ifloor(x)   ((int) floor(x))
-   #define STBTT_iceil(x)    ((int) ceil(x))
+   #define STBTT_ifloor(x)   ((int) floorf(x))
+   #define STBTT_iceil(x)    ((int) ceilf(x))
    #endif
 
    #ifndef STBTT_sqrt
    #include <math.h>
-   #define STBTT_sqrt(x)      sqrt(x)
+   #define STBTT_sqrt(x)      sqrtf(x)
    #endif
 
    #ifndef STBTT_fabs

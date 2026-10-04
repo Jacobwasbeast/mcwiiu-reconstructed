@@ -3,11 +3,10 @@
 
 struct _udp_packet;
 
-class __N_18_chat_UdpBuffer_cpp_183737d2
+namespace __N_18_chat_UdpBuffer_cpp_183737d2
 {
-public:
-    static void initImpl();
-    static void trace_udp_packet(unsigned long long ullTag, const _udp_packet& packet);
-};
+    void initImpl();
+    void trace_udp_packet(unsigned long long ullTag, const _udp_packet& packet);
+}
 
 #endif

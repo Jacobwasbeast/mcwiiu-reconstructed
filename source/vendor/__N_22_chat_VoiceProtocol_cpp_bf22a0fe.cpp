@@ -33,7 +33,7 @@ int __N_22_chat_VoiceProtocol_cpp_bf22a0fe::convertCid(unsigned short cid)
 
 nn::pia::StationIndex __N_22_chat_VoiceProtocol_cpp_bf22a0fe::convertStationIndex(nn::pia::StationIndex index)
 {
-    return (nn::pia::StationIndex)(index + 1);
+    return static_cast<nn::pia::StationIndex>(static_cast<unsigned short>(index + 1));
 }
 
 nn::pia::Result __N_22_chat_VoiceProtocol_cpp_bf22a0fe::createProtocol(nn::pia::transport::UnreliableProtocol **protocol, unsigned short *protocolId, unsigned char channel)
