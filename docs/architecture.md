@@ -47,9 +47,9 @@ file under `game/` does.
 ## `source/vendor/` - third-party internals
 
 Internals of libraries the title links against and that the build exposes
-with full names: the Mii face library (`FFLi*`), the NEX and Pia online
-transport (`transport`, `RendezVous`, `chat`, `crypto`), and small
-SDK-facing structures. They are kept apart so that game code is never
+with full names: the NEX and Pia online transport (`transport`,
+`RendezVous`, `chat`, `crypto`), the Miles audio and voice-chat layers,
+and small SDK-facing structures. They are kept apart so that game code is never
 mistaken for library code.
 
 ## `source/nn/` - NEX and Pia library internals
@@ -63,6 +63,25 @@ exposes, kept apart from the game so the boundary stays explicit, and to be
 replaced by a maintained upstream if one ever becomes available. Includes
 are spelled from the `source/` root, for example
 `#include "nn/nex/Buffer.hpp"`.
+
+## `source/nn/ffl/` - the Mii face library (submodule)
+
+The title draws Mii icons with FFL, Nintendo's Face Library, at version
+1.5.6. Its source comes from aboood40091's public FFL decompilation
+(https://github.com/aboood40091/ffl, version 1.3.10), raised to 1.5.6 by
+this reconstruction. That code is not copied into this repository.
+`source/nn/ffl` is a git submodule pointing at the `wiiu-recon` branch of
+the fork https://github.com/Jacobwasbeast/ffl, where upstream's
+`include/nn/ffl/` and `src/` trees are flattened into one directory and the
+reconstruction's changes are committed on top. Includes keep the
+`<nn/ffl/...>` spelling, and `source/nn/ffl.h` is the umbrella header.
+
+## `source/cafe/` - Cafe SDK pieces
+
+Declarations of the GX2 graphics and GFD shader-file APIs the renderer
+uses, and the GFD reader and the matrix library (`mtx`, `mtx44`, `vec`,
+`quat`) rebuilt from the functions linked into the title. Includes use the
+SDK spelling, for example `#include <cafe/gx2.h>`.
 
 ## `source/nex.h` and `source/nn/pia.h` - SDK interface headers
 

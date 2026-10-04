@@ -41,6 +41,12 @@ game so that the boundary is explicit. If a maintained upstream for any of
 them becomes available, the reconstructed copy should be replaced by that
 upstream rather than maintained here.
 
+The Mii face library is the one case where such an upstream exists:
+aboood40091's FFL decompilation. Its code is never copied into this
+repository. It is referenced as the `source/nn/ffl` submodule, a fork of
+that project that carries this reconstruction's changes as separate
+commits, so upstream's authorship stays with upstream.
+
 ## Contributions
 
 Contributions must follow the same rule: source written from understanding,

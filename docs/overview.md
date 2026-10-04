@@ -26,7 +26,10 @@ people direct the campaign, set the rules in `conventions.md`, and review.
   (threads, storage, profiles, input, online sessions).
 - `source/vendor/` - reconstructed internals of third-party libraries the
   title links against.
-- `source/nn/` - reconstructed internals of the NEX and Pia online libraries.
+- `source/nn/` - reconstructed internals of the NEX and Pia online libraries,
+  plus the Mii face library in the `source/nn/ffl` submodule.
+- `source/cafe/` - reconstructed Cafe SDK pieces: GX2 and GFD declarations
+  and the matrix library.
 - `docs/` - these notes.
 
 ## What is not here

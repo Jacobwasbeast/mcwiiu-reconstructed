@@ -9,6 +9,10 @@ AI-constructed: two dispatcher AIs, Sol and Fable, hand out class families
 to Luna and Opus 5 worker agents respectively, and review what comes back.
 See `docs/overview.md`.
 
+```
+git clone --recurse-submodules https://github.com/Jacobwasbeast/WiiUConsoleEditionRecon.git
+```
+
 - [docs/overview.md](docs/overview.md) - what is here, what is not, and status
 - [docs/architecture.md](docs/architecture.md) - directory layout and the platform seam
 - [docs/conventions.md](docs/conventions.md) - language level, naming and file rules
