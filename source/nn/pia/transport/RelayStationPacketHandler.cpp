@@ -2,6 +2,16 @@
 
 namespace nn { namespace pia { namespace transport {
 
+bool RelayStationPacketHandler::checkDerivedRuntimeTypeInfo(const pead::RuntimeTypeInfo::Interface* type) const
+{
+    return checkDerivedRuntimeTypeInfoStatic(type);
+}
+
+const pead::RuntimeTypeInfo::Interface* RelayStationPacketHandler::getRuntimeTypeInfo() const
+{
+    return getRuntimeTypeInfoStatic();
+}
+
 Result RelayStationPacketHandler::Startup(PacketStream::Writer* writer,
                                           PacketStream::Reader* reader,
                                           common::IPacketInput* packetInput,

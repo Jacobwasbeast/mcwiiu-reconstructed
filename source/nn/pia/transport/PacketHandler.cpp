@@ -38,6 +38,16 @@ PacketHandler::PacketHandler()
 {
 }
 
+bool PacketHandler::checkDerivedRuntimeTypeInfo(const pead::RuntimeTypeInfo::Interface* type) const
+{
+    return checkDerivedRuntimeTypeInfoStatic(type);
+}
+
+const pead::RuntimeTypeInfo::Interface* PacketHandler::getRuntimeTypeInfo() const
+{
+    return getRuntimeTypeInfoStatic();
+}
+
 PacketHandler::~PacketHandler()
 {
 }

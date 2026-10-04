@@ -12,6 +12,16 @@ StationPacketHandler::StationPacketHandler()
 {
 }
 
+bool StationPacketHandler::checkDerivedRuntimeTypeInfo(const pead::RuntimeTypeInfo::Interface* type) const
+{
+    return checkDerivedRuntimeTypeInfoStatic(type);
+}
+
+const pead::RuntimeTypeInfo::Interface* StationPacketHandler::getRuntimeTypeInfo() const
+{
+    return getRuntimeTypeInfoStatic();
+}
+
 StationPacketHandler::~StationPacketHandler()
 {
 }

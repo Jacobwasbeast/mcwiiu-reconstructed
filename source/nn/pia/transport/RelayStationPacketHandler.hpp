@@ -11,7 +11,21 @@ class RelayRouteManager;
 class RelayStationPacketHandler : public StationPacketHandler
 {
 public:
+    static const pead::RuntimeTypeInfo::Interface* getRuntimeTypeInfoStatic()
+    {
+        static const pead::RuntimeTypeInfo::Derive<StationPacketHandler> typeInfo;
+        return &typeInfo;
+    }
+    static bool checkDerivedRuntimeTypeInfoStatic(const pead::RuntimeTypeInfo::Interface* type)
+    {
+        if (type == getRuntimeTypeInfoStatic())
+            return true;
+        return StationPacketHandler::checkDerivedRuntimeTypeInfoStatic(type);
+    }
+
     RelayStationPacketHandler();
+    virtual bool checkDerivedRuntimeTypeInfo(const pead::RuntimeTypeInfo::Interface* type) const;
+    virtual const pead::RuntimeTypeInfo::Interface* getRuntimeTypeInfo() const;
     virtual ~RelayStationPacketHandler();
     virtual void Finalize();
     virtual void Cleanup();

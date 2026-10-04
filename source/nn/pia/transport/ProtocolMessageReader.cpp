@@ -5,7 +5,7 @@
 namespace nn { namespace pia { namespace transport {
 
 ProtocolMessageReader::ProtocolMessageReader()
-    : m_message(0), m_isTerminator(false)
+    : m_message(0), m_header(), m_isTerminator(false)
 {
 }
 
@@ -76,7 +76,8 @@ unsigned long long ProtocolMessageReader::GetDestination() const
 
 unsigned short ProtocolMessageReader::GetProtocolIdPort() const
 {
-    return static_cast<unsigned short>(m_header.m_protocolId.value() & 0xff);
+    const unsigned short protocolId = m_header.m_protocolId;
+    return protocolId & 0xff;
 }
 
 void ProtocolMessageReader::Trace(unsigned long long value) const

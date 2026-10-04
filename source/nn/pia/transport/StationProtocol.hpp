@@ -33,6 +33,7 @@ public:
     };
 
     enum { cConnectionRequestHeaderSize = 17 };
+    enum { cStationIndexInvalid = 0xfd };
 
     StationProtocol();
     virtual ~StationProtocol();
@@ -50,7 +51,7 @@ public:
     void MakeConnectionRequestData(unsigned char* buffer, unsigned char nonce,
                                    unsigned long long principalId, unsigned int infoField,
                                    unsigned char field55, bool relay, bool secure) const;
-    void MakeConnectionResponseData(unsigned char* buffer, unsigned char nonce,
+    void MakeConnectionResponseData(unsigned char* buffer, unsigned char section,
                                     unsigned long long principalId, unsigned int infoField,
                                     bool relay) const;
 

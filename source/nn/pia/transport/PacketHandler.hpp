@@ -6,6 +6,7 @@
 #include "nn/pia/transport/PacketStream.hpp"
 #include "nn/pia/transport/ProtocolMessageReader.hpp"
 #include "nn/pia/transport/ProtocolMessageWriter.hpp"
+#include "platform/wiiu/pead.hpp"
 
 namespace nn { namespace pia { namespace common {
 class Packet;
@@ -34,7 +35,19 @@ public:
         PacketHandler* m_handler;
     };
 
+    static const pead::RuntimeTypeInfo::Interface* getRuntimeTypeInfoStatic()
+    {
+        static const pead::RuntimeTypeInfo::Root typeInfo;
+        return &typeInfo;
+    }
+    static bool checkDerivedRuntimeTypeInfoStatic(const pead::RuntimeTypeInfo::Interface* type)
+    {
+        return type == getRuntimeTypeInfoStatic();
+    }
+
     PacketHandler();
+    virtual bool checkDerivedRuntimeTypeInfo(const pead::RuntimeTypeInfo::Interface* type) const;
+    virtual const pead::RuntimeTypeInfo::Interface* getRuntimeTypeInfo() const;
     virtual ~PacketHandler();
     virtual void Finalize();
     virtual void Cleanup();

@@ -33,6 +33,8 @@ public:
     bool SendRelayConnectionRequestMessage();
     unsigned int SendRelayConnectionRequest();
 
+    friend class StationProtocol;
+
 protected:
     common::Time m_connectionDeadline;
     int m_timeoutMsec;

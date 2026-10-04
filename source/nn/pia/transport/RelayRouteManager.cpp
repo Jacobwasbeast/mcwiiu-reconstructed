@@ -91,11 +91,9 @@ Result RelayRouteManager::Initialize(unsigned int stationNum, bool relayEmulatio
         return 0x10c01;
 
     unsigned int routeIndex = 0;
-    for (unsigned int source = 0, sourceCount = stationNum; sourceCount != 0;
-         --sourceCount, ++source)
+    for (unsigned int source = 0; source < stationNum; ++source)
     {
-        for (unsigned int destination = 0, destinationCount = stationNum; destinationCount != 0;
-             --destinationCount, ++destination)
+        for (unsigned int destination = 0; destination < stationNum; ++destination)
             m_routeTable[routeIndex++] = static_cast<unsigned char>(source);
     }
 
@@ -180,15 +178,13 @@ void RelayRouteManager::CalcStationType(unsigned int stationBitmap,
     const unsigned int stationNum = g_piaTransport->m_stationNum;
     *stayStationBitmap = 0;
     *leaveStationBitmap = 0;
-    for (unsigned int station = 0, stationCount = stationNum; stationCount != 0;
-         --stationCount, ++station)
+    for (unsigned int station = 0; station < stationNum; ++station)
     {
         const unsigned int stationFlag = 1 << station;
         const bool isJoining = (m_joiningStationBitmap & stationFlag) != 0;
         const bool isAbsent = (stationBitmap & stationFlag) == 0;
         bool hasRtt = false;
-        for (unsigned int other = 0, otherCount = stationNum; otherCount != 0;
-             --otherCount, ++other)
+        for (unsigned int other = 0; other < stationNum; ++other)
         {
             if (m_rttTable[station * stationNum + other] != 0)
             {
@@ -219,8 +215,7 @@ void RelayRouteManager::CalcStationType(unsigned int stationBitmap,
         }
         else if (m_relayEmulationEnabled)
         {
-            for (unsigned int other = 0, otherCount = stationNum; otherCount != 0;
-                 --otherCount, ++other)
+            for (unsigned int other = 0; other < stationNum; ++other)
             {
                 if (m_relayEmulationTable[station * stationNum + other] == 1)
                 {
@@ -235,13 +230,11 @@ void RelayRouteManager::CalcStationType(unsigned int stationBitmap,
 void RelayRouteManager::ProcLeaveStation(unsigned int leaveStationBitmap)
 {
     const unsigned int stationNum = g_piaTransport->m_stationNum;
-    for (unsigned int station = 0, stationCount = stationNum; stationCount != 0;
-         --stationCount, ++station)
+    for (unsigned int station = 0; station < stationNum; ++station)
     {
         if ((leaveStationBitmap & (1 << station)) != 0)
         {
-            for (unsigned int other = 0, otherCount = stationNum; otherCount != 0;
-                 --otherCount, ++other)
+            for (unsigned int other = 0; other < stationNum; ++other)
             {
                 m_routeTable[station * stationNum + other] = static_cast<unsigned char>(station);
                 m_routeTable[other * stationNum + station] = static_cast<unsigned char>(other);
@@ -249,11 +242,9 @@ void RelayRouteManager::ProcLeaveStation(unsigned int leaveStationBitmap)
         }
     }
 
-    for (unsigned int source = 0, sourceCount = stationNum; sourceCount != 0;
-         --sourceCount, ++source)
+    for (unsigned int source = 0; source < stationNum; ++source)
     {
-        for (unsigned int destination = 0, destinationCount = stationNum; destinationCount != 0;
-             --destinationCount, ++destination)
+        for (unsigned int destination = 0; destination < stationNum; ++destination)
         {
             const unsigned int relay = m_routeTable[source * stationNum + destination];
             if (source != relay && destination != relay &&
@@ -267,11 +258,9 @@ void RelayRouteManager::CalcRelayNumTable()
 {
     const unsigned int stationNum = g_piaTransport->m_stationNum;
     std::memset(m_relayNumTable, 0, stationNum);
-    for (unsigned int source = 0, sourceCount = stationNum; sourceCount != 0;
-         --sourceCount, ++source)
+    for (unsigned int source = 0; source < stationNum; ++source)
     {
-        for (unsigned int destination = 0, destinationCount = stationNum; destinationCount != 0;
-             --destinationCount, ++destination)
+        for (unsigned int destination = 0; destination < stationNum; ++destination)
         {
             const unsigned int relay = m_routeTable[source * stationNum + destination];
             if (relay != source && relay != destination && relay < stationNum)
@@ -286,21 +275,18 @@ bool RelayRouteManager::SwitchRelay(unsigned int relayStation, unsigned int stat
     const unsigned int stationNum = g_piaTransport->m_stationNum;
     if (stationNum > 1)
     {
-        for (unsigned int source = 1, sourceCount = stationNum - 1; sourceCount != 0;
-             --sourceCount, ++source)
+        for (unsigned int source = 1; source < stationNum; ++source)
         {
             if (source == relayStation)
                 continue;
 
-            for (unsigned int destination = 0, destinationCount = source; destinationCount != 0;
-                 --destinationCount, ++destination)
+            for (unsigned int destination = 0; destination < source; ++destination)
             {
                 if (destination == relayStation ||
                     m_routeTable[source * stationNum + destination] != relayStation)
                     continue;
 
-                for (unsigned int relay = 0, relayCount = stationNum; relayCount != 0;
-                     --relayCount, ++relay)
+                for (unsigned int relay = 0; relay < stationNum; ++relay)
                 {
                     if ((stationBitmap & (1 << relay)) != 0 && relay != source &&
                         relay != destination && relay != relayStation &&
@@ -331,7 +317,7 @@ bool RelayRouteManager::CalcRelayRouteWithSwitchingRelay(unsigned int source,
 {
     const unsigned int stationNum = g_piaTransport->m_stationNum;
     unsigned int candidateBitmap = 0;
-    for (unsigned int relay = 0, relayCount = stationNum; relayCount != 0; --relayCount, ++relay)
+    for (unsigned int relay = 0; relay < stationNum; ++relay)
     {
         const unsigned int relayFlag = 1 << relay;
         if ((stationBitmap & relayFlag) != 0)
@@ -352,7 +338,7 @@ bool RelayRouteManager::CalcRelayRouteWithSwitchingRelay(unsigned int source,
         }
     }
 
-    for (unsigned int relay = 0, relayCount = stationNum; relayCount != 0; --relayCount, ++relay)
+    for (unsigned int relay = 0; relay < stationNum; ++relay)
     {
         if ((candidateBitmap & (1 << relay)) != 0 &&
             SwitchRelay(relay, stationBitmap, m_rttMax, m_relayNumMax))
@@ -372,12 +358,10 @@ bool RelayRouteManager::DecideBrokenRouteRelayStation(unsigned int stationBitmap
     const unsigned int stationNum = g_piaTransport->m_stationNum;
     StationRank ranks[32];
     StationRank relayCandidates[32];
-    for (unsigned int station = 0, stationCount = stationNum; stationCount != 0;
-         --stationCount, ++station)
+    for (unsigned int station = 0; station < stationNum; ++station)
     {
         unsigned char brokenRouteCount = 0;
-        for (unsigned int other = 0, otherCount = stationNum; otherCount != 0;
-             --otherCount, ++other)
+        for (unsigned int other = 0; other < stationNum; ++other)
         {
             if (m_routeTable[station * stationNum + other] == m_invalidRoute)
                 ++brokenRouteCount;
@@ -389,7 +373,7 @@ bool RelayRouteManager::DecideBrokenRouteRelayStation(unsigned int stationBitmap
     }
 
     sortStationRanks(ranks, stationNum);
-    for (unsigned int index = 0, indexCount = stationNum; indexCount != 0; --indexCount, ++index)
+    for (unsigned int index = 0; index < stationNum; ++index)
     {
         relayCandidates[index].station = ranks[index].station;
         relayCandidates[index].brokenRouteCount = ranks[index].brokenRouteCount;
@@ -410,8 +394,7 @@ bool RelayRouteManager::DecideBrokenRouteRelayStation(unsigned int stationBitmap
 
             unsigned int failureReason = cRelayFailureReasonNoRtt;
             bool relayFound = false;
-            for (unsigned int candidateIndex = 0, candidateCount = stationNum;
-                 candidateCount != 0; --candidateCount, ++candidateIndex)
+            for (unsigned int candidateIndex = 0; candidateIndex < stationNum; ++candidateIndex)
             {
                 const unsigned int relay = relayCandidates[candidateIndex].station;
                 const unsigned int relayFlag = 1 << relay;
@@ -426,8 +409,7 @@ bool RelayRouteManager::DecideBrokenRouteRelayStation(unsigned int stationBitmap
                         static_cast<unsigned char>(relay);
                     m_routeTable[destination * stationNum + source] =
                         static_cast<unsigned char>(relay);
-                    for (unsigned int index = 0, indexCount = stationNum; indexCount != 0;
-                         --indexCount, ++index)
+                    for (unsigned int index = 0; index < stationNum; ++index)
                     {
                         if (relayCandidates[index].station == source ||
                             relayCandidates[index].station == destination)
@@ -458,8 +440,7 @@ bool RelayRouteManager::DecideBrokenRouteRelayStation(unsigned int stationBitmap
             }
             else
             {
-                for (unsigned int index = 0, indexCount = stationNum; indexCount != 0;
-                     --indexCount, ++index)
+                for (unsigned int index = 0; index < stationNum; ++index)
                 {
                     if (relayCandidates[index].station == source)
                     {
@@ -476,8 +457,7 @@ bool RelayRouteManager::DecideBrokenRouteRelayStation(unsigned int stationBitmap
 
             *refusedStationBitmap |= 1 << refusedStation;
             m_failureReasonTable[refusedStation] = static_cast<unsigned char>(failureReason);
-            for (unsigned int other = 0, otherCount = stationNum; otherCount != 0;
-                 --otherCount, ++other)
+            for (unsigned int other = 0; other < stationNum; ++other)
             {
                 unsigned int first = refusedStation;
                 unsigned int second = other;
@@ -492,10 +472,9 @@ bool RelayRouteManager::DecideBrokenRouteRelayStation(unsigned int stationBitmap
                 }
             }
 
-            for (unsigned int row = 0, rowCount = stationNum; rowCount != 0; --rowCount, ++row)
+            for (unsigned int row = 0; row < stationNum; ++row)
             {
-                for (unsigned int column = 0, columnCount = stationNum; columnCount != 0;
-                     --columnCount, ++column)
+                for (unsigned int column = 0; column < stationNum; ++column)
                 {
                     const unsigned int relay = m_routeTable[row * stationNum + column];
                     if (relay != row && relay != column && relay == refusedStation)
@@ -512,14 +491,12 @@ void RelayRouteManager::ProcStayStation(unsigned int stayStationBitmap,
                                         unsigned int* refusedStationBitmap)
 {
     const unsigned int stationNum = g_piaTransport->m_stationNum;
-    for (unsigned int source = 0, sourceCount = stationNum; sourceCount != 0;
-         --sourceCount, ++source)
+    for (unsigned int source = 0; source < stationNum; ++source)
     {
         if ((stayStationBitmap & (1 << source)) == 0)
             continue;
 
-        for (unsigned int destination = 0, destinationCount = stationNum; destinationCount != 0;
-             --destinationCount, ++destination)
+        for (unsigned int destination = 0; destination < stationNum; ++destination)
         {
             if (source == destination || (stayStationBitmap & (1 << destination)) == 0 ||
                 m_rttTable[source * stationNum + destination] != 0)
@@ -569,8 +546,7 @@ bool RelayRouteManager::ProcNewStationOne(unsigned int station, unsigned int sta
 
         unsigned int failureReason = cRelayFailureReasonNoRtt;
         bool relayFound = false;
-        for (unsigned int relay = 0, relayCount = stationNum; relayCount != 0;
-             --relayCount, ++relay)
+        for (unsigned int relay = 0; relay < stationNum; ++relay)
         {
             if ((stationBitmap & (1 << relay)) != 0 && relay != station && relay != destination)
             {
@@ -594,8 +570,7 @@ bool RelayRouteManager::ProcNewStationOne(unsigned int station, unsigned int sta
             continue;
 
         m_failureReasonTable[station] = static_cast<unsigned char>(failureReason);
-        for (unsigned int other = 0, otherCount = destination; otherCount != 0;
-             --otherCount, ++other)
+        for (unsigned int other = 0; other < destination; ++other)
         {
             const unsigned int relay = m_routeTable[station * stationNum + other];
             if (relay != station && relay != other)
@@ -625,8 +600,7 @@ void RelayRouteManager::ProcNewStation(unsigned int newStationBitmap,
     do
     {
         accepted = false;
-        for (unsigned int station = 0, stationCount = stationNum; stationCount != 0;
-             --stationCount, ++station)
+        for (unsigned int station = 0; station < stationNum; ++station)
         {
             const unsigned int stationFlag = 1 << station;
             if ((newStationBitmap & stationFlag) != 0 &&
@@ -639,8 +613,7 @@ void RelayRouteManager::ProcNewStation(unsigned int newStationBitmap,
         }
     } while (accepted);
 
-    for (unsigned int station = 0, stationCount = stationNum; stationCount != 0;
-         --stationCount, ++station)
+    for (unsigned int station = 0; station < stationNum; ++station)
     {
         const unsigned int stationFlag = 1 << station;
         if ((newStationBitmap & stationFlag) != 0)
@@ -655,14 +628,12 @@ bool RelayRouteManager::RelayRouteOptimizationRTTOne(unsigned int stationBitmap)
     unsigned int longestSource = 0;
     unsigned int longestDestination = 0;
     unsigned int longestRelay = 0;
-    for (unsigned int source = 0, sourceCount = stationNum; sourceCount != 0;
-         --sourceCount, ++source)
+    for (unsigned int source = 0; source < stationNum; ++source)
     {
         if ((stationBitmap & (1 << source)) == 0)
             continue;
 
-        for (unsigned int destination = source + 1, destinationCount = stationNum - destination;
-             destinationCount != 0; --destinationCount, ++destination)
+        for (unsigned int destination = source + 1; destination < stationNum; ++destination)
         {
             if ((stationBitmap & (1 << destination)) == 0)
                 continue;
@@ -687,14 +658,13 @@ bool RelayRouteManager::RelayRouteOptimizationRTTOne(unsigned int stationBitmap)
         return false;
 
     RttCandidate candidates[32];
-    for (unsigned int index = 0, indexCount = 32; indexCount != 0; --indexCount, ++index)
+    for (unsigned int index = 0; index < 32; ++index)
     {
         candidates[index].station = 0;
         candidates[index].rtt = 0;
     }
     unsigned int candidateNum = 0;
-    for (unsigned int station = 0, stationCount = stationNum; stationCount != 0;
-         --stationCount, ++station)
+    for (unsigned int station = 0; station < stationNum; ++station)
     {
         if ((stationBitmap & (1 << station)) == 0)
             continue;
@@ -721,7 +691,7 @@ bool RelayRouteManager::RelayRouteOptimizationRTTOne(unsigned int stationBitmap)
 
     for (unsigned int pass = candidateNum - 1; pass != 0; --pass)
     {
-        for (unsigned int index = 0, indexCount = pass; indexCount != 0; --indexCount, ++index)
+        for (unsigned int index = 0; index < pass; ++index)
         {
             if (candidates[index + 1].rtt < candidates[index].rtt)
             {
@@ -732,7 +702,7 @@ bool RelayRouteManager::RelayRouteOptimizationRTTOne(unsigned int stationBitmap)
         }
     }
 
-    for (unsigned int index = 0, indexCount = candidateNum; indexCount != 0; --indexCount, ++index)
+    for (unsigned int index = 0; index < candidateNum; ++index)
     {
         const unsigned int relay = candidates[index].station;
         bool switched = m_relayNumTable[relay] + 2 <= m_relayNumMax;
@@ -770,14 +740,12 @@ bool RelayRouteManager::RelayRouteOptimizationRelayNumOne(unsigned int stationBi
     const unsigned int stationNum = g_piaTransport->m_stationNum;
     unsigned int longestRtt = 0;
     unsigned int busiestStation;
-    for (unsigned int source = 0, sourceCount = stationNum; sourceCount != 0;
-         --sourceCount, ++source)
+    for (unsigned int source = 0; source < stationNum; ++source)
     {
         if ((stationBitmap & (1 << source)) == 0)
             continue;
 
-        for (unsigned int destination = source + 1, destinationCount = stationNum - destination;
-             destinationCount != 0; --destinationCount, ++destination)
+        for (unsigned int destination = source + 1; destination < stationNum; ++destination)
         {
             if ((stationBitmap & (1 << destination)) == 0)
                 continue;
@@ -796,8 +764,7 @@ bool RelayRouteManager::RelayRouteOptimizationRelayNumOne(unsigned int stationBi
     unsigned short busiestRelayNum = 0;
     if (stationNum != 0)
     {
-        for (unsigned int station = 0, stationCount = stationNum; stationCount != 0;
-             --stationCount, ++station)
+        for (unsigned int station = 0; station < stationNum; ++station)
         {
             if (busiestRelayNum < m_relayNumTable[station])
             {
@@ -831,14 +798,12 @@ void RelayRouteManager::ProcRefusedStation(unsigned int refusedStationBitmap,
                                            unsigned int acceptedStationBitmap)
 {
     const unsigned int stationNum = g_piaTransport->m_stationNum;
-    for (unsigned int refused = 0, refusedCount = stationNum; refusedCount != 0;
-         --refusedCount, ++refused)
+    for (unsigned int refused = 0; refused < stationNum; ++refused)
     {
         if ((refusedStationBitmap & (1 << refused)) == 0)
             continue;
 
-        for (unsigned int destination = 0, destinationCount = stationNum; destinationCount != 0;
-             --destinationCount, ++destination)
+        for (unsigned int destination = 0; destination < stationNum; ++destination)
         {
             if (((acceptedStationBitmap | refusedStationBitmap) & (1 << destination)) == 0 ||
                 refused == destination)
@@ -854,8 +819,7 @@ void RelayRouteManager::ProcRefusedStation(unsigned int refusedStationBitmap,
             }
 
             bool relayFound = false;
-            for (unsigned int relay = 0, relayCount = stationNum; relayCount != 0;
-                 --relayCount, ++relay)
+            for (unsigned int relay = 0; relay < stationNum; ++relay)
             {
                 if ((acceptedStationBitmap & (1 << relay)) != 0 &&
                     IsRelayEnabled(refused, relay, destination, 0))
@@ -872,8 +836,7 @@ void RelayRouteManager::ProcRefusedStation(unsigned int refusedStationBitmap,
             if (relayFound)
                 continue;
 
-            for (unsigned int relay = 0, relayCount = stationNum; relayCount != 0;
-                 --relayCount, ++relay)
+            for (unsigned int relay = 0; relay < stationNum; ++relay)
             {
                 if ((acceptedStationBitmap & (1 << relay)) != 0 &&
                     m_rttTable[refused * stationNum + relay] != 0 &&
@@ -896,11 +859,9 @@ void RelayRouteManager::UpdateJoiningStationBitmap()
     const unsigned int stationNum = g_piaTransport->m_stationNum;
     unsigned int joiningStationBitmap = 0;
     m_joiningStationBitmap = 0;
-    for (unsigned int station = 0, stationCount = stationNum; stationCount != 0;
-         --stationCount, ++station)
+    for (unsigned int station = 0; station < stationNum; ++station)
     {
-        for (unsigned int other = 0, otherCount = stationNum; otherCount != 0;
-             --otherCount, ++other)
+        for (unsigned int other = 0; other < stationNum; ++other)
         {
             if (m_routeTable[station * stationNum + other] != station)
             {
@@ -934,21 +895,17 @@ Result RelayRouteManager::UpdateDirectConnectionData(const unsigned char* rttBuf
     if (failureReasons == 0)
         return 0x10c07;
 
-    for (unsigned int source = 0, sourceCount = stationNum; sourceCount != 0;
-         --sourceCount, ++source)
+    for (unsigned int source = 0; source < stationNum; ++source)
     {
-        for (unsigned int destination = 0, destinationCount = stationNum; destinationCount != 0;
-             --destinationCount, ++destination)
+        for (unsigned int destination = 0; destination < stationNum; ++destination)
             m_rttTable[source * stationNum + destination] =
                 static_cast<unsigned short>(rttBuffer[source * stationNum + destination] << 2);
     }
 
-    for (unsigned int source = 0, sourceCount = stationNum; sourceCount != 0;
-         --sourceCount, ++source)
+    for (unsigned int source = 0; source < stationNum; ++source)
     {
         unsigned int directStationBitmap = 0;
-        for (unsigned int destination = 0, destinationCount = stationNum; destinationCount != 0;
-             --destinationCount, ++destination)
+        for (unsigned int destination = 0; destination < stationNum; ++destination)
         {
             if (m_rttTable[source * stationNum + destination] != 0)
                 directStationBitmap |= 1 << destination;
@@ -958,11 +915,9 @@ Result RelayRouteManager::UpdateDirectConnectionData(const unsigned char* rttBuf
 
     if (m_relayEmulationEnabled)
     {
-        for (unsigned int source = 0, sourceCount = stationNum; sourceCount != 0;
-             --sourceCount, ++source)
+        for (unsigned int source = 0; source < stationNum; ++source)
         {
-            for (unsigned int destination = 0, destinationCount = stationNum; destinationCount != 0;
-                 --destinationCount, ++destination)
+            for (unsigned int destination = 0; destination < stationNum; ++destination)
             {
                 if (m_relayEmulationTable[source * stationNum + destination] == 1)
                     m_rttTable[source * stationNum + destination] = 0;
@@ -995,8 +950,7 @@ Result RelayRouteManager::UpdateDirectConnectionData(const unsigned char* rttBuf
     unsigned int leaveStationBitmap = 0;
     unsigned int stayStationBitmap = 0;
     CalcStationType(stationBitmap, &stayStationBitmap, &leaveStationBitmap);
-    for (unsigned int station = 0, stationCount = stationNum; stationCount != 0;
-         --stationCount, ++station)
+    for (unsigned int station = 0; station < stationNum; ++station)
     {
         const unsigned int stationFlag = 1 << station;
         if ((stayStationBitmap & stationFlag) != 0 && (m_unknown30 & stationFlag) != 0)
@@ -1014,8 +968,7 @@ Result RelayRouteManager::UpdateDirectConnectionData(const unsigned char* rttBuf
     *refusedStationBitmap = 0;
     unsigned int acceptedStationBitmap = stayStationBitmap & ~refusedByStay;
     ProcNewStation(stationBitmap | refusedByStay, refusedStationBitmap, &acceptedStationBitmap);
-    for (unsigned int station = 0, stationCount = stationNum; stationCount != 0;
-         --stationCount, ++station)
+    for (unsigned int station = 0; station < stationNum; ++station)
     {
         unsigned char failureReason = 0;
         if ((*refusedStationBitmap & (1 << station)) != 0)
@@ -1051,11 +1004,9 @@ Result RelayRouteManager::WriteRelayRouteDirectionsToBuffer(unsigned char* buffe
         return 0x10c07;
 
     std::memset(buffer, 0, size);
-    for (unsigned int source = 0, sourceCount = stationNum; sourceCount != 0;
-         --sourceCount, ++source)
+    for (unsigned int source = 0; source < stationNum; ++source)
     {
-        for (unsigned int destination = 0, destinationCount = stationNum;
-             destinationCount != 0; --destinationCount, ++destination)
+        for (unsigned int destination = 0; destination < stationNum; ++destination)
         {
             const char freeBits = static_cast<char>(8 - bitsUsed - m_routeBitCount);
             unsigned int shift = freeBits;
@@ -1079,8 +1030,7 @@ Result RelayRouteManager::WriteRelayRouteDirectionsToBuffer(unsigned char* buffe
     }
 
     offset = routeBytes;
-    for (unsigned int station = 0, stationCount = stationNum; stationCount != 0;
-         --stationCount, ++station)
+    for (unsigned int station = 0; station < stationNum; ++station)
     {
         unsigned int directStationBitmap = m_directStationBitmaps[station];
         for (unsigned int byteCount = 4, shift = 24; byteCount != 0; --byteCount, shift -= 8)
@@ -1112,11 +1062,9 @@ Result RelayRouteManager::ReadRelayRouteDirectionsFromBuffer(const unsigned char
     if (buffer == 0)
         return 0x10c07;
 
-    for (unsigned int source = 0, sourceCount = stationNum; sourceCount != 0;
-         --sourceCount, ++source)
+    for (unsigned int source = 0; source < stationNum; ++source)
     {
-        for (unsigned int destination = 0, destinationCount = stationNum;
-             destinationCount != 0; --destinationCount, ++destination)
+        for (unsigned int destination = 0; destination < stationNum; ++destination)
         {
             const char freeBits = static_cast<char>(8 - bitsUsed - m_routeBitCount);
             unsigned int shift = freeBits;
@@ -1144,8 +1092,7 @@ Result RelayRouteManager::ReadRelayRouteDirectionsFromBuffer(const unsigned char
     }
 
     offset = routeBytes;
-    for (unsigned int station = 0, stationCount = stationNum; stationCount != 0;
-         --stationCount, ++station)
+    for (unsigned int station = 0; station < stationNum; ++station)
     {
         unsigned int directStationBitmap = 0;
         for (unsigned int byteCount = 4, shift = 24; byteCount != 0; --byteCount, shift -= 8)
@@ -1271,15 +1218,13 @@ void RelayRouteManager::SetRelayNumMax(unsigned short relayNumMax)
 void RelayRouteManager::UpdateRelayTable(unsigned int stationBitmap)
 {
     const unsigned int stationNum = g_piaTransport->m_stationNum;
-    for (unsigned int station = 0, stationCount = stationNum; stationCount != 0;
-         --stationCount, ++station)
+    for (unsigned int station = 0; station < stationNum; ++station)
     {
         const unsigned int stationFlag = 1 << station;
         unsigned int joiningStationBitmap = m_joiningStationBitmap;
         if ((joiningStationBitmap & stationFlag) == 0 && (stationBitmap & stationFlag) != 0)
         {
-            for (unsigned int other = 0, otherCount = stationNum; otherCount != 0;
-                 --otherCount, ++other)
+            for (unsigned int other = 0; other < stationNum; ++other)
             {
                 if (((joiningStationBitmap | stationBitmap) & (1 << other)) != 0)
                 {
@@ -1293,11 +1238,9 @@ void RelayRouteManager::UpdateRelayTable(unsigned int stationBitmap)
         }
     }
 
-    for (unsigned int source = 0, sourceCount = stationNum; sourceCount != 0;
-         --sourceCount, ++source)
+    for (unsigned int source = 0; source < stationNum; ++source)
     {
-        for (unsigned int destination = source, destinationCount = stationNum - source;
-             destinationCount != 0; --destinationCount, ++destination)
+        for (unsigned int destination = source; destination < stationNum - source; ++destination)
         {
             if (((m_joiningStationBitmap & (1 << source)) == 0 ||
                  (m_joiningStationBitmap & (1 << destination)) == 0) &&
@@ -1323,14 +1266,12 @@ Result RelayRouteManager::SearchRefugeRelayRoute(::nn::pia::StationIndex station
     bool found = true;
     if (stationNum != 0)
     {
-        for (unsigned int source = 0, sourceCount = stationNum; sourceCount != 0;
-             --sourceCount, ++source)
+        for (unsigned int source = 0; source < stationNum; ++source)
         {
             if (source == station)
                 continue;
 
-            for (unsigned int destination = source + 1, destinationCount = stationNum - destination;
-                 destinationCount != 0; --destinationCount, ++destination)
+            for (unsigned int destination = source + 1; destination < stationNum; ++destination)
             {
                 if (destination == station ||
                     m_routeTable[source * stationNum + destination] != station)
@@ -1338,8 +1279,7 @@ Result RelayRouteManager::SearchRefugeRelayRoute(::nn::pia::StationIndex station
 
                 unsigned int bestRelay = stationNum;
                 unsigned int bestRelayNum = stationNum * stationNum;
-                for (unsigned int relay = 0, relayCount = stationNum; relayCount != 0;
-                     --relayCount, ++relay)
+                for (unsigned int relay = 0; relay < stationNum; ++relay)
                 {
                     if (relay != source && relay != destination && relay != station &&
                         m_routeTable[source * stationNum + relay] == relay &&
@@ -1375,11 +1315,9 @@ Result RelayRouteManager::SearchRefugeRelayRoute(::nn::pia::StationIndex station
 void RelayRouteManager::InitRelayRouteManagerData()
 {
     const unsigned int stationNum = g_piaTransport->m_stationNum;
-    for (unsigned int source = 0, sourceCount = stationNum; sourceCount != 0;
-         --sourceCount, ++source)
+    for (unsigned int source = 0; source < stationNum; ++source)
     {
-        for (unsigned int destination = 0, destinationCount = stationNum; destinationCount != 0;
-             --destinationCount, ++destination)
+        for (unsigned int destination = 0; destination < stationNum; ++destination)
             m_routeTable[source * stationNum + destination] = static_cast<unsigned char>(source);
     }
     m_joiningStationBitmap = 0;

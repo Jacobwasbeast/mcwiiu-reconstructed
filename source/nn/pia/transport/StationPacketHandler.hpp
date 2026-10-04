@@ -13,7 +13,21 @@ class StationManager;
 class StationPacketHandler : public PacketHandler
 {
 public:
+    static const pead::RuntimeTypeInfo::Interface* getRuntimeTypeInfoStatic()
+    {
+        static const pead::RuntimeTypeInfo::Derive<PacketHandler> typeInfo;
+        return &typeInfo;
+    }
+    static bool checkDerivedRuntimeTypeInfoStatic(const pead::RuntimeTypeInfo::Interface* type)
+    {
+        if (type == getRuntimeTypeInfoStatic())
+            return true;
+        return PacketHandler::checkDerivedRuntimeTypeInfoStatic(type);
+    }
+
     StationPacketHandler();
+    virtual bool checkDerivedRuntimeTypeInfo(const pead::RuntimeTypeInfo::Interface* type) const;
+    virtual const pead::RuntimeTypeInfo::Interface* getRuntimeTypeInfo() const;
     virtual ~StationPacketHandler();
     virtual void Finalize();
     virtual void Cleanup();

@@ -3,6 +3,7 @@
 
 #include "nn/pia.h"
 #include "nn/pia/common/StepSequenceJob.hpp"
+#include "nn/pia/common/Time.hpp"
 
 namespace nn { namespace pia { namespace transport {
 
@@ -12,25 +13,26 @@ public:
     DisconnectStationJob();
     virtual ~DisconnectStationJob();
 
-    void Startup(Station* station);
+    Result Startup(Station* station);
     unsigned int SendDisconnectionRequest();
     unsigned int WaitForDisconnection();
     unsigned int DisconnectionSucceeded();
     unsigned int CutRouteOfRelayConnection();
     void Cleanup();
     virtual void Trace(unsigned long long value) const;
-    virtual unsigned int StartupImpl(Station* station);
-    void ProcessDisconnection(Station* station);
+    virtual void ProcessDisconnection(Station* station);
+    virtual Result StartupImpl(Station* station);
     void DisconnectionFailed();
 
 private:
+    common::Time m_deadline;
+    int m_timeoutMsec;
     Station* m_station;
-    unsigned int m_deadline;
-    unsigned int m_retryDeadline;
-    unsigned int m_timeout;
-    unsigned int m_retryInterval;
-    unsigned char m_waiting;
-    unsigned char m_padding[3];
+    common::Time m_retryDeadline;
+    int m_retryIntervalMsec;
+
+public:
+    bool m_waiting;
 };
 
 }}}
