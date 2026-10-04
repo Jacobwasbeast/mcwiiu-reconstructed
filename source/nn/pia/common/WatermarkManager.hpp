@@ -2,10 +2,9 @@
 #define LEGACY_CONSOLE_WIIU_NN_PIA_COMMON_WATERMARKMANAGER_HPP
 
 #include <stdint.h>
+#include "nn/pia/Common.hpp"
 
 namespace nn { namespace pia { namespace common {
-
-typedef int Result;
 
 class Watermark
 {

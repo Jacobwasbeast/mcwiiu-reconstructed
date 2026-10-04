@@ -9,18 +9,18 @@ namespace nn { namespace pia { namespace common {
 
 unsigned int Crypto::GetBlockSize(Mode mode)
 {
-    if (mode != 1)
-        return 0;
-    return 16;
+    if (mode == cModeAesGcm)
+        return 16;
+    return 0;
 }
 
 Result Crypto::Encrypt(void* destination, const void* source, unsigned int size,
                        void* signature, unsigned int signatureSize,
                        const Setting& setting)
 {
-    if (setting.m_mode == 0)
+    if (setting.m_mode == cModeNone)
         return 0;
-    if (setting.m_mode != 1 || setting.m_keyLength != 0x10)
+    if (setting.m_mode != cModeAesGcm || setting.m_keyLength != 0x10)
         return 0x10C07;
 
     AesImpl<XCUiL_2_16> aes;
@@ -41,9 +41,9 @@ Result Crypto::Decrypt(void* destination, const void* source, unsigned int size,
                        void* signature, unsigned int signatureSize,
                        const Setting& setting)
 {
-    if (setting.m_mode == 0)
+    if (setting.m_mode == cModeNone)
         return 0;
-    if (setting.m_mode != 1 || setting.m_keyLength != 0x10)
+    if (setting.m_mode != cModeAesGcm || setting.m_keyLength != 0x10)
         return 0x10C07;
 
     AesImpl<XCUiL_2_16> aes;

@@ -8,7 +8,11 @@ namespace nn { namespace pia { namespace common {
 class Crypto
 {
 public:
-    typedef unsigned int Mode;
+    enum Mode
+    {
+        cModeNone = 0,
+        cModeAesGcm = 1
+    };
 
     class Setting
     {
