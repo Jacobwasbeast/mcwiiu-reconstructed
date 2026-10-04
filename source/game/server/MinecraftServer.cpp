@@ -99,28 +99,27 @@ boost::unordered_map<std::wstring, int> MinecraftServer::s_countdownTimers;
 MinecraftServer::MinecraftServer()
 {
     mPlayers = 0;
-    mLevels.length = 0;
     tickCount = 0;
     shuttingDown = false;
     unusedValue0 = 0;
     initialised = false;
     mSettings = 0;
     running = true;
-    mLevels.data = 0;
     mConnection = 0;
     progress = 0;
     motd = L"";
-    ugcPlayersVersion = 0;
-    texturePackId = 0;
     serverPaused = false;
+    serverPauseTime = 0;
     serverPausedEvent = new C4JEventImpl(C4JEvent::Mode0);
-    suspending = false;
     maxBuildHeight = 256;
-    defaultGameType = 0;
     playerIdleTimeout = 0;
     forceGameType = true;
-    saveOnExit = false;
+    defaultGameType = 0;
+    ugcPlayersVersion = 0;
+    texturePackId = 0;
     postProcessThread = 0;
+    suspending = false;
+    saveOnExit = false;
     commandDispatcher = new ServerCommandDispatcher();
     for (int i = 0; i < 8; ++i)
     {
@@ -177,7 +176,8 @@ void MinecraftServer::setDifficulty(const Difficulty* difficulty)
         if (level != 0)
             setLevelDifficulty(level, difficulty);
     }
-    mPlayers->broadcastAll(boost::shared_ptr<Packet>(new ClientboundChangeDifficultyPacket(difficulty, false)));
+    boost::shared_ptr<ClientboundChangeDifficultyPacket> packet(new ClientboundChangeDifficultyPacket(difficulty, false));
+    mPlayers->broadcastAll(boost::shared_ptr<Packet>(packet));
 }
 
 int MinecraftServer::runPostUpdate(void* argument)
@@ -209,7 +209,7 @@ int MinecraftServer::runPostUpdate(void* argument)
             postProcessRequest request = server->postProcessRequests.back();
             server->postProcessRequests.pop_back();
             LeaveCriticalSection(&server->postProcessCritSec);
-            PIXBeginNamedEvent(0.0f, "Post processing %d", (postProcessEventCount++) % 8);
+            PIXBeginNamedEvent(0.0f, "Post processing %d ", (postProcessEventCount++) % 8);
             LevelChunk* chunk = request.chunkSource->getChunk(request.x, request.z);
             if (chunk != 0)
                 chunk->doPostProcess(request.chunkSource, request.chunkGenerator);
@@ -352,17 +352,17 @@ bool MinecraftServer::loadLevel(LevelStorageSource* storageSource, const std::ws
         levelSettings = new LevelSettings(levelData);
     }
 
-    std::wstring gameRulesPath = L"requiredGameRules.grf";
+    ConsoleSavePath gameRulesPath(std::wstring(L"requiredGameRules.grf"));
     ConsoleSaveFile* saveFile = storage->getSaveFile();
-    if (saveFile->doesFileExist(ConsoleSavePath(gameRulesPath)))
+    if (saveFile->doesFileExist(gameRulesPath))
     {
-        FileEntry* entry = saveFile->createFile(ConsoleSavePath(gameRulesPath));
+        FileEntry* entry = saveFile->createFile(gameRulesPath);
         unsigned int size = entry->m_fileSize;
-        unsigned char* data = new unsigned char[size]();
+        arrayWithLength<unsigned char> ruleData(size, true);
         saveFile->setFilePointer(entry, 0, 0, 0);
         unsigned int read;
-        saveFile->readFile(entry, data, size, &read);
-        gApp.mGameRuleManager.loadGameRules(data, size);
+        saveFile->readFile(entry, ruleData.data, size, &read);
+        gApp.mGameRuleManager.loadGameRules(ruleData.data, size);
         saveFile->closeHandle(entry);
         if (saveFile->getSaveVersion() < 10)
         {
@@ -389,7 +389,7 @@ bool MinecraftServer::loadLevel(LevelStorageSource* storageSource, const std::ws
         bool inMiniGame;
         if (i == 0)
         {
-            mLevels.data[i] = (new ServerLevel(this, storage, levelData, 0))->postConstruct();
+            mLevels.data[i] = static_cast<ServerLevel*>((new ServerLevel(this, storage, levelData, 0))->postConstruct());
             setLevelDifficulty(mLevels.data[i], Difficulty::byId(gApp.GetGameHostOption(eGameHostOption_Difficulty)));
             if (gApp.getLevelGenerationOptions() == 0)
             {
@@ -411,7 +411,7 @@ bool MinecraftServer::loadLevel(LevelStorageSource* storageSource, const std::ws
         }
         else
         {
-            mLevels.data[i] = (new DerivedServerLevel(this, storage, dimension, mLevels.data[0]))->postConstruct();
+            mLevels.data[i] = static_cast<ServerLevel*>((new DerivedServerLevel(this, storage, dimension, mLevels.data[0]))->postConstruct());
             setLevelDifficulty(mLevels.data[i], Difficulty::byId(gApp.GetGameHostOption(eGameHostOption_Difficulty)));
             inMiniGame = Minecraft::InMiniGame(eMiniGameId_Any, true);
         }
@@ -618,7 +618,7 @@ void MinecraftServer::saveAllChunks()
     {
         if (s_primaryPlayerSignedOut)
             return;
-        ServerLevel* level = mLevels.data[mLevels.length - i - 1];
+        ServerLevel* level = mLevels.data[mLevels.length - 1 - i];
         if (level != 0)
         {
             level->save(true, Minecraft::GetInstance()->mProgressRenderer, false);
@@ -661,11 +661,13 @@ void MinecraftServer::stopServer(bool didInit)
     mConnection = 0;
     delete mPlayers;
     mPlayers = 0;
-    for (unsigned int i = 0; i < mLevels.length; ++i)
+    unsigned int levelCount = mLevels.length;
+    for (unsigned int i = 0; i < levelCount; ++i)
     {
-        if (mLevels.data[i] != 0)
+        ServerLevel* level = mLevels.data[i];
+        if (level != 0)
         {
-            delete mLevels.data[i];
+            delete level;
             mLevels.data[i] = 0;
         }
     }
@@ -742,7 +744,8 @@ void MinecraftServer::fjSetServerPaused(bool paused)
     }
     else if (mMasterGameMode != 0)
     {
-        mMasterGameMode->OnServerResume(System::processTimeInMilliSecs() - serverPauseTime);
+        long long pausedTime = System::processTimeInMilliSecs() - serverPauseTime;
+        mMasterGameMode->OnServerResume(pausedTime);
     }
 }
 
@@ -962,7 +965,7 @@ void MinecraftServer::run(long long seed, void* argument)
                         bool halted = false;
                         for (unsigned int i = 0; i < mLevels.length; ++i)
                         {
-                            mLevels.data[mLevels.length - i - 1]->save(true, Minecraft::GetInstance()->mProgressRenderer,
+                            mLevels.data[mLevels.length - 1 - i]->save(true, Minecraft::GetInstance()->mProgressRenderer,
                                                                    action == eXuiServerAction_AutoSaveGame);
                             mPlayers->broadcastAll(boost::shared_ptr<Packet>(new UpdateProgressPacket(saveProgress)));
                             saveProgress += 33;
@@ -1027,14 +1030,16 @@ void MinecraftServer::run(long long seed, void* argument)
 
 void MinecraftServer::broadcastStartSavingPacket()
 {
-    mPlayers->broadcastAll(boost::shared_ptr<Packet>(new ClientboundGameEventPacket(ClientboundGameEventPacket::START_SAVING, 0.0f)));
+    boost::shared_ptr<ClientboundGameEventPacket> packet(new ClientboundGameEventPacket(ClientboundGameEventPacket::START_SAVING, 0.0f));
+    mPlayers->broadcastAll(boost::shared_ptr<Packet>(packet));
 }
 
 void MinecraftServer::broadcastStopSavingPacket()
 {
     if (s_haltRequested)
         return;
-    mPlayers->broadcastAll(boost::shared_ptr<Packet>(new ClientboundGameEventPacket(ClientboundGameEventPacket::STOP_SAVING, 0.0f)));
+    boost::shared_ptr<ClientboundGameEventPacket> packet(new ClientboundGameEventPacket(ClientboundGameEventPacket::STOP_SAVING, 0.0f));
+    mPlayers->broadcastAll(boost::shared_ptr<Packet>(packet));
 }
 
 unsigned long long MinecraftServer::main(long long seed, void* argument)
@@ -1053,7 +1058,7 @@ void MinecraftServer::HaltServer(bool primaryPlayerSignedOut)
     if (gMinecraftServer != 0)
     {
         s_primaryPlayerSignedOut = primaryPlayerSignedOut;
-        gMinecraftServer->running = false;
+        gMinecraftServer->halt();
     }
 }
 
@@ -1109,7 +1114,7 @@ bool MinecraftServer::chunkPacketManagement_CanSendTo(INetworkPlayer* player)
 
 void MinecraftServer::chunkPacketManagement_DidSendTo(INetworkPlayer* player)
 {
-    if (System::processTimeInMilliSecs() - s_chunkPacketTickStart > 34)
+    if (static_cast<long long>(System::processTimeInMilliSecs()) - s_chunkPacketTickStart >= 35)
         s_chunkPacketBudgetSpent = true;
     if (player != 0)
     {
@@ -1135,7 +1140,7 @@ void MinecraftServer::Suspend()
             bool halted = false;
             for (unsigned int i = 0; i < mLevels.length; ++i)
             {
-                mLevels.data[mLevels.length - i - 1]->Suspend();
+                mLevels.data[mLevels.length - 1 - i]->Suspend();
                 if (s_haltRequested)
                 {
                     halted = true;

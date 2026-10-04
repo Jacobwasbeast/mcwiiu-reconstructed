@@ -95,7 +95,7 @@ public:
     static void staticCtor();
     static int runUpdate(void* param);
 
-    virtual ServerLevel* postConstruct();
+    virtual Level* postConstruct();
     virtual ChunkSource* createChunkSource();
     virtual void initializeLevel(LevelSettings* settings);
     virtual MinecraftServer* getServer();

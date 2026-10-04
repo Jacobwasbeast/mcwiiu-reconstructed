@@ -177,7 +177,10 @@ private:
     bool postProcessTerminating;
     std::vector<postProcessRequest> postProcessRequests;
     OSFastMutex postProcessCritSec;
+public:
     C4JEventImpl* serverPausedEvent;
+
+private:
     bool serverPaused;
     long long serverPauseTime;
 public:

@@ -1,6 +1,7 @@
 #include "game/server/ServerLevel.hpp"
 #include "game/core/StringIds.hpp"
 #include "game/core/EntityType.hpp"
+#include "game/client/render/DLCTexturePack.hpp"
 #include "game/client/render/TexturePack.hpp"
 #include "game/client/render/TexturePackRepository.hpp"
 #include "game/core/BoundingBox.hpp"
@@ -379,7 +380,7 @@ ChunkSource* ServerLevel::createChunkSource()
     return new ServerChunkCache(this, storage, mDimension->createRandomLevelGenerator());
 }
 
-ServerLevel* ServerLevel::postConstruct()
+Level* ServerLevel::postConstruct()
 {
     mSavedDataStorage = new SavedDataStorage(mLevelStorage.get());
     std::wstring id = Villages::getFileId(mDimension);
@@ -1205,7 +1206,7 @@ void ServerLevel::saveToDisc(ProgressListener* progressListener, bool autosave)
     if (gStorage->GetSaveDisabled())
         return;
     TexturePack* selected = Minecraft::GetInstance()->mTexturePackRepository->getSelected();
-    if (selected != TexturePackRepository::defaultTexturePack && !selected->getDLCPack()->hasPurchasedPack())
+    if (selected != TexturePackRepository::defaultTexturePack && !static_cast<DLCTexturePack*>(selected)->getDLCInfoParentPack()->hasPurchasedPack())
         return;
     if (progressListener != NULL)
         progressListener->progressStage(static_cast<int>(0xaebf0574u));

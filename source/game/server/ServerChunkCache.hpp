@@ -50,9 +50,9 @@ public:
     void saveEntities(LevelChunk* chunk);
     void save(LevelChunk* chunk);
     virtual void flagPostProcessComplete(short index, int x, int z);
-    virtual void saveAllEntities();
+    virtual bool saveAllEntities();
     virtual bool save(bool force, ProgressListener* listener);
-    virtual void tick();
+    virtual bool tick();
     virtual bool shouldSave();
     virtual std::wstring gatherStats();
     virtual std::vector<Biome::MobSpawnerData*>* getMobsAt(MobCategory* category, const BlockPos& pos);

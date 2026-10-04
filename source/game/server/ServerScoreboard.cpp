@@ -16,8 +16,9 @@
 #include <vector>
 
 ServerScoreboard::ServerScoreboard(MinecraftServer* server)
-    : Scoreboard(), mServer(server), mPlayerStats()
+    : Scoreboard(), mPlayerStats()
 {
+    mServer = server;
     mPlayerStats = PlayerStatsMap();
 }
 
@@ -27,12 +28,12 @@ Scoreboard::PlayerStats* ServerScoreboard::GetPlayerStats(const StatsUID& suid, 
     GameStats& gameStats = mServer->mMasterGameMode->mGameStats;
     ::PlayerStats* source = gameStats.GetPlayerStats(suid);
     if (round == -1)
-        round = gameStats.mCurrentRound;
+        round = mServer->mMasterGameMode->mGameStats.mCurrentRound;
     if (source == NULL)
         return stats;
 
     stats->mName = source->mName;
-    stats->setRecordSUID(source->mStatsUID);
+    stats->StatsUID::operator=(source->mStatsUID);
     stats->mMedal = source->mAwardedMedal;
     stats->mFavouriteWeapon = source->mWeaponDamage[0]->getValue();
     stats->mWeaknessWeapon = source->mWeaponDamage[1]->getValue();
@@ -48,7 +49,10 @@ Scoreboard::PlayerStats* ServerScoreboard::GetPlayerStats(const StatsUID& suid, 
     for (int life = 0; life < lives; ++life)
     {
         if (life == (int)roundStats.mPerLife.size())
-            roundStats.mPerLife.push_back(Scoreboard::PlayerStats::_PerLife());
+        {
+            Scoreboard::PlayerStats::_PerLife perLife;
+            roundStats.mPerLife.push_back(perLife);
+        }
         roundStats.mPerLife[life].mKillerName = sourceRound->getLifeStats(life)->mKillerName;
     }
 
@@ -122,7 +126,7 @@ void ServerScoreboard::OnPlayerStatsRemoved(const StatsUID& suid, const std::wst
 {
     boost::shared_ptr<Packet> packet(new ScoreboardPacket(ScoreboardPacket::REMOVE_PLAYER_STATS,
         new ScoreboardPacket::RemovePlayerStatsData(suid)));
-    mServer->getPlayers()->broadcastAll(packet);
+    gMinecraftServer->getPlayers()->broadcastAll(packet);
 
     Scoreboard::PlayerStats*& stats = mPlayerStats[suid];
     if (stats != NULL)
@@ -160,7 +164,7 @@ void ServerScoreboard::ResetPlayerScores()
 {
     boost::shared_ptr<Packet> packet(
         new ScoreboardPacket(ScoreboardPacket::CLEAR_PLAYER_STATS, new ScoreboardPacket::Data()));
-    mServer->getPlayers()->broadcastAll(packet);
+    gMinecraftServer->getPlayers()->broadcastAll(packet);
 
     boost::unordered_map<StatsUID, Scoreboard::PlayerStats*, boost::hash<StatsUID>,
                          std::equal_to<StatsUID> >::iterator it = mPlayerStats.begin();
@@ -178,8 +182,7 @@ void ServerScoreboard::removePlayerFromTeam(PlayerUID uid, PlayerTeam* pTeam)
 
     std::vector<PlayerUID> players;
     players.push_back(uid);
-    boost::shared_ptr<Packet> packet(new ClientboundSetPlayerTeamPacket(pTeam, &players, 4));
-    mServer->getPlayers()->broadcastAll(packet);
+    mServer->getPlayers()->broadcastAll(boost::shared_ptr<Packet>(new ClientboundSetPlayerTeamPacket(pTeam, &players, 4)));
 }
 
 void ServerScoreboard::addPlayerToTeam(PlayerUID uid, PlayerTeam* pTeam)
@@ -193,15 +196,13 @@ void ServerScoreboard::addPlayerToTeam(PlayerUID uid, PlayerTeam* pTeam)
 
     std::vector<PlayerUID> players;
     players.push_back(uid);
-    boost::shared_ptr<Packet> packet(new ClientboundSetPlayerTeamPacket(pTeam, &players, 3));
-    mServer->getPlayers()->broadcastAll(packet);
+    mServer->getPlayers()->broadcastAll(boost::shared_ptr<Packet>(new ClientboundSetPlayerTeamPacket(pTeam, &players, 3)));
 }
 
 void ServerScoreboard::onTeamAdded(PlayerTeam* pTeam)
 {
     Scoreboard::onTeamAdded(pTeam);
-    boost::shared_ptr<Packet> packet(new ClientboundSetPlayerTeamPacket(pTeam, 0));
-    mServer->getPlayers()->broadcastAll(packet);
+    mServer->getPlayers()->broadcastAll(boost::shared_ptr<Packet>(new ClientboundSetPlayerTeamPacket(pTeam, 0)));
 }
 
 void ServerScoreboard::onTeamChanged(PlayerTeam* pTeam)
@@ -212,14 +213,12 @@ void ServerScoreboard::onTeamChanged(PlayerTeam* pTeam)
 void ServerScoreboard::onTeamRemoved(PlayerTeam* pTeam)
 {
     Scoreboard::onTeamRemoved(pTeam);
-    boost::shared_ptr<Packet> packet(new ClientboundSetPlayerTeamPacket(pTeam, 1));
-    mServer->getPlayers()->broadcastAll(packet);
+    mServer->getPlayers()->broadcastAll(boost::shared_ptr<Packet>(new ClientboundSetPlayerTeamPacket(pTeam, 1)));
 }
 
 void ServerScoreboard::syncTeamChanges(PlayerTeam* pTeam)
 {
-    boost::shared_ptr<Packet> packet(new ClientboundSetPlayerTeamPacket(pTeam, 2));
-    mServer->getPlayers()->broadcastAll(packet);
+    mServer->getPlayers()->broadcastAll(boost::shared_ptr<Packet>(new ClientboundSetPlayerTeamPacket(pTeam, 2)));
 }
 
 int ServerScoreboard::GetLastCheckpointID(const StatsUID& suid, int round)

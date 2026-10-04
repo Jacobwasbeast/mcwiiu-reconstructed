@@ -194,7 +194,7 @@ InteractionResult::EInteractionResult ServerPlayerGameMode::useItemOn(
     const BlockState* state = level->getBlockState(pos);
     Block* block = state->getBlock();
 
-    if (isSpectator())
+    if (GetGameType() == GameType::SPECTATOR)
     {
         boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
         if (blockEntity)
@@ -376,8 +376,7 @@ InteractionResult::EInteractionResult ServerPlayerGameMode::useItem(boost::share
 
     if (Minecraft::InMiniGame(eMiniGameId_Glide, false))
     {
-        const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
-        if (miniGame == NULL || !miniGame->ArePowerupsActive())
+        if (!mMinecraft->GetMiniGame()->ArePowerupsActive())
             return InteractionResult::eInteractionResult_Fail;
 
         PowerupItems::UsePowerupItem(player, Item::getId(item->getItem()));
@@ -393,13 +392,13 @@ InteractionResult::EInteractionResult ServerPlayerGameMode::useItem(boost::share
     if (!player->isAllowedToUse(item))
         return InteractionResult::eInteractionResult_Pass;
 
-    if (isSpectator() || mGameType == GameType::LOBBY)
+    if (isSpectator() || GetGameType() == GameType::SPECTATOR)
         return InteractionResult::eInteractionResult_Pass;
 
     int savedCount = item->getCount();
     int savedAux = item->getAuxValue();
 
-    InteractionResultHolder holder = item->getItem()->use(level, player, hand);
+    InteractionResultHolder holder = item->use(level, player, hand);
     InteractionResult::EInteractionResult result = holder.getResult();
     not_null_ptr<ItemInstance> resultItem = holder.getObject();
 

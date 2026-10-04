@@ -59,15 +59,14 @@ void ServerCommandDispatcher::logAdminCommand(boost::shared_ptr<CommandSender> s
     std::vector<boost::shared_ptr<ServerPlayer> >::iterator it;
     for (it = playerList->begin(); it != playerList->end(); ++it)
     {
-        if (message == ClientboundChatPacket::eChatPacketMessage_GameModeSuccessSelf)
+        boost::shared_ptr<ServerPlayer> player = *it;
+        if (message == ClientboundChatPacket::eChatPacketMessage_GameModeSuccessSelf &&
+            player != NULL && static_cast<CommandSender*>(player.get()) != sender.get())
         {
-            if ((*it)->getId() != *intParams)
-            {
-                (*it)->sendMessage(ClientboundChatPacket::eChatPacketMessage_GameModeSuccessOther,
-                                   intParams, numIntParams, stringParams, numStringParams);
-                continue;
-            }
+            player->sendMessage(ClientboundChatPacket::eChatPacketMessage_GameModeSuccessOther,
+                                intParams, numIntParams, stringParams, numStringParams);
+            continue;
         }
-        (*it)->sendMessage(message, intParams, numIntParams, stringParams, numStringParams);
+        player->sendMessage(message, intParams, numIntParams, stringParams, numStringParams);
     }
 }

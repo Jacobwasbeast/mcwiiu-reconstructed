@@ -54,16 +54,16 @@ ServerChunkCache::~ServerChunkCache()
     m_storage->WaitForAll();
     delete m_storage;
     delete m_emptyChunk;
-    delete[] m_cache;
+    delete m_cache;
     delete m_source;
 
     for (int i = 0; i < m_xzSize * m_xzSize; ++i)
     {
         delete m_unloadedCache[i];
     }
-    delete[] m_unloadedCache;
+    delete m_unloadedCache;
 
-    for (std::vector<LevelChunk*>::iterator it = m_loadedChunkList.begin(); it != m_loadedChunkList.end(); ++it)
+    for (std::vector<LevelChunk*>::iterator it = m_loadedChunkList.begin(), end = m_loadedChunkList.end(); it != end; ++it)
     {
         delete *it;
     }
@@ -405,34 +405,34 @@ LevelChunk* ServerChunkCache::create(int x, int z, bool allowEmpty)
     }
 
     LevelChunk* previous = m_cache[computeIdx(x, z)];
-    if (previous != NULL && previous->x == x && previous->z == z && !previous->mInvalid)
+    LevelChunk* result = previous;
+    if (previous == NULL || previous->x != x || previous->z != z || previous->mInvalid)
     {
-        return previous;
-    }
-
-    EnterCriticalSection(&m_csLoadCreate);
-    PIXBeginNamedEvent(0.0f, "Loading chunk");
-    LevelChunk* chunk = load(x, z, previous);
-    PIXEndNamedEvent();
-    if (chunk == NULL)
-    {
-        if (m_source == NULL)
+        EnterCriticalSection(&m_csLoadCreate);
+        PIXBeginNamedEvent(0.0f, "Loading chunk");
+        LevelChunk* chunk = load(x, z, previous);
+        PIXEndNamedEvent();
+        if (chunk == NULL)
         {
-            chunk = m_emptyChunk;
+            if (m_source == NULL)
+            {
+                chunk = m_emptyChunk;
+            }
+            else
+            {
+                PIXBeginNamedEvent(0.0f, "Getting chunk from source");
+                chunk = m_source->createChunk(x, z);
+                PIXEndNamedEvent();
+            }
         }
-        else
+        if (chunk != NULL)
         {
-            PIXBeginNamedEvent(0.0f, "Getting chunk from source");
-            chunk = m_source->createChunk(x, z);
-            PIXEndNamedEvent();
+            chunk->load(false);
         }
+        LeaveCriticalSection(&m_csLoadCreate);
+        result = updateCacheAndPostProcess(x, z, chunk, previous, allowEmpty);
     }
-    if (chunk != NULL)
-    {
-        chunk->load(false);
-    }
-    LeaveCriticalSection(&m_csLoadCreate);
-    return updateCacheAndPostProcess(x, z, chunk, previous, allowEmpty);
+    return result;
 }
 
 LevelChunk* ServerChunkCache::create(int x, int z)
@@ -508,7 +508,7 @@ void ServerChunkCache::flagPostProcessComplete(short flag, int x, int z)
     }
 }
 
-void ServerChunkCache::saveAllEntities()
+bool ServerChunkCache::saveAllEntities()
 {
     PIXBeginNamedEvent(0.0f, "Save all entities");
 
@@ -526,6 +526,7 @@ void ServerChunkCache::saveAllEntities()
     PIXEndNamedEvent();
 
     PIXEndNamedEvent();
+    return true;
 }
 
 bool ServerChunkCache::save(bool force, ProgressListener* progressListener)
@@ -535,7 +536,8 @@ bool ServerChunkCache::save(bool force, ProgressListener* progressListener)
     int saveTotal = 0;
     if (progressListener != NULL)
     {
-        for (std::vector<LevelChunk*>::iterator it = m_loadedChunkList.begin(); it != m_loadedChunkList.end(); ++it)
+        std::vector<LevelChunk*>::iterator end = m_loadedChunkList.end();
+        for (std::vector<LevelChunk*>::iterator it = m_loadedChunkList.begin(); it != end; ++it)
         {
             if ((*it)->shouldSave(force))
             {
@@ -561,61 +563,63 @@ bool ServerChunkCache::save(bool force, ProgressListener* progressListener)
     }
     else
     {
-        std::vector<LevelChunk*> sortedChunkList;
-        for (unsigned int i = 0; i < m_loadedChunkList.size(); ++i)
         {
-            if (m_loadedChunkList[i]->x < 0 && m_loadedChunkList[i]->z < 0)
+            std::vector<LevelChunk*> sortedChunkList;
+            for (unsigned int i = 0; i < m_loadedChunkList.size(); ++i)
             {
-                sortedChunkList.push_back(m_loadedChunkList[i]);
-            }
-        }
-        for (unsigned int i = 0; i < m_loadedChunkList.size(); ++i)
-        {
-            if (m_loadedChunkList[i]->x >= 0 && m_loadedChunkList[i]->z < 0)
-            {
-                sortedChunkList.push_back(m_loadedChunkList[i]);
-            }
-        }
-        for (unsigned int i = 0; i < m_loadedChunkList.size(); ++i)
-        {
-            if (m_loadedChunkList[i]->x >= 0 && m_loadedChunkList[i]->z >= 0)
-            {
-                sortedChunkList.push_back(m_loadedChunkList[i]);
-            }
-        }
-        for (unsigned int i = 0; i < m_loadedChunkList.size(); ++i)
-        {
-            if (m_loadedChunkList[i]->x < 0 && m_loadedChunkList[i]->z >= 0)
-            {
-                sortedChunkList.push_back(m_loadedChunkList[i]);
-            }
-        }
-
-        int progress = 0;
-        for (unsigned int i = 0; i < sortedChunkList.size(); ++i)
-        {
-            LevelChunk* chunk = sortedChunkList[i];
-            if (!chunk->mDontSave)
-            {
-                saveEntities(chunk);
-            }
-            if (chunk->shouldSave(force))
-            {
-                save(chunk);
-                chunk->setUnsaved(false);
-                if (progressListener != NULL)
+                if (m_loadedChunkList[i]->x < 0 && m_loadedChunkList[i]->z < 0)
                 {
-                    ++saveCount;
-                    progress += 100;
-                    if (saveCount % SAVE_PROGRESS_INTERVAL == 0)
-                    {
-                        progressListener->progressStagePercentage(progress / saveTotal);
-                    }
+                    sortedChunkList.push_back(m_loadedChunkList[i]);
                 }
             }
-            m_storage->WaitIfTooManyQueuedChunks();
+            for (unsigned int i = 0; i < m_loadedChunkList.size(); ++i)
+            {
+                if (m_loadedChunkList[i]->x >= 0 && m_loadedChunkList[i]->z < 0)
+                {
+                    sortedChunkList.push_back(m_loadedChunkList[i]);
+                }
+            }
+            for (unsigned int i = 0; i < m_loadedChunkList.size(); ++i)
+            {
+                if (m_loadedChunkList[i]->x >= 0 && m_loadedChunkList[i]->z >= 0)
+                {
+                    sortedChunkList.push_back(m_loadedChunkList[i]);
+                }
+            }
+            for (unsigned int i = 0; i < m_loadedChunkList.size(); ++i)
+            {
+                if (m_loadedChunkList[i]->x < 0 && m_loadedChunkList[i]->z >= 0)
+                {
+                    sortedChunkList.push_back(m_loadedChunkList[i]);
+                }
+            }
+
+            int progress = 0;
+            for (unsigned int i = 0; i < sortedChunkList.size(); ++i)
+            {
+                LevelChunk* chunk = sortedChunkList[i];
+                if (!chunk->mDontSave)
+                {
+                    saveEntities(chunk);
+                }
+                if (chunk->shouldSave(force))
+                {
+                    save(chunk);
+                    chunk->setUnsaved(false);
+                    if (progressListener != NULL)
+                    {
+                        ++saveCount;
+                        progress += 100;
+                        if (saveCount % SAVE_PROGRESS_INTERVAL == 0)
+                        {
+                            progressListener->progressStagePercentage(progress / saveTotal);
+                        }
+                    }
+                }
+                m_storage->WaitIfTooManyQueuedChunks();
+            }
+            m_storage->WaitForAll();
         }
-        m_storage->WaitForAll();
 
         if (m_storage != NULL)
         {
@@ -627,11 +631,11 @@ bool ServerChunkCache::save(bool force, ProgressListener* progressListener)
     return true;
 }
 
-void ServerChunkCache::tick()
+bool ServerChunkCache::tick()
 {
     if (m_level->noSave)
     {
-        return;
+        return true;
     }
 
     for (int i = 0; i < MAX_DROPS_PER_TICK; ++i)
@@ -654,7 +658,7 @@ void ServerChunkCache::tick()
                 m_loadedChunkList.erase(it);
             }
 
-            int idx = computeIdx(chunk->x, chunk->z);
+            int idx = (chunk->x + m_xzOffset) * m_xzSize + (chunk->z + m_xzOffset);
             m_unloadedCache[idx] = chunk;
             m_cache[idx] = NULL;
         }
@@ -665,6 +669,7 @@ void ServerChunkCache::tick()
     {
         m_storage->tick();
     }
+    return true;
 }
 
 bool ServerChunkCache::shouldSave()

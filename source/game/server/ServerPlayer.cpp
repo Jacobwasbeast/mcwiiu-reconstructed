@@ -655,7 +655,7 @@ void ServerPlayer::resetChunkFlagsOutsideArea(int32_t minX, int32_t minZ, int32_
 {
     const int width = maxZ - minZ;
     const int height = maxX - minX;
-    std::vector<unsigned char> snapshot(static_cast<size_t>(width) * static_cast<size_t>(height));
+    unsigned char* snapshot = new unsigned char[width * height];
 
     for (int x = minX; x < maxX; ++x)
     {
@@ -678,6 +678,8 @@ void ServerPlayer::resetChunkFlagsOutsideArea(int32_t minX, int32_t minZ, int32_
                 CGameNetworkManager::sInstance.SystemFlagSet(mConnection->getNetworkPlayer(), flagIndex);
         }
     }
+
+    delete[] snapshot;
 }
 
 void ServerPlayer::readAdditionalSaveData(CompoundTag* tag)
@@ -1131,7 +1133,7 @@ boost::shared_ptr<Entity> ServerPlayer::changeDimension(int dimension)
 
     mChangingDimension = 1;
 
-    if (isSleeping())
+    if (mSleeping != 0)
         stopSleepInBed(true, false, false);
 
     const int oldDimension = mDimension;
@@ -1145,9 +1147,9 @@ boost::shared_ptr<Entity> ServerPlayer::changeDimension(int dimension)
             mLevel->removeEntity(shared_from_this());
             mRespawnState = true;
             mWonGame = true;
-            const float playerIndex = static_cast<float>(networkPlayer->GetSmallId());
-            mConnection->send(boost::shared_ptr<Packet>(
-                new ClientboundGameEventPacket(ClientboundGameEventPacket::WIN_GAME, playerIndex)));
+                        mConnection->send(boost::shared_ptr<Packet>(
+                new ClientboundGameEventPacket(ClientboundGameEventPacket::WIN_GAME,
+                    static_cast<float>(networkPlayer->GetUserIndex()))));
 
             PlayerList* playerList = mServer->getPlayers();
             std::vector<boost::shared_ptr<ServerPlayer> >* players = playerList->getPlayers();
@@ -1160,13 +1162,14 @@ boost::shared_ptr<Entity> ServerPlayer::changeDimension(int dimension)
                 INetworkPlayer* otherNetworkPlayer = player->mConnection->getNetworkPlayer();
                 if (otherNetworkPlayer == NULL || otherNetworkPlayer == networkPlayer)
                     continue;
-                if (!networkPlayer->GetSendQueueSizeMessages(otherNetworkPlayer, false))
+                if (!networkPlayer->IsSameSystem(otherNetworkPlayer))
                     continue;
                 if (player->mRespawnState != false)
                     continue;
                 player->mRespawnState = true;
                 player->mConnection->send(boost::shared_ptr<Packet>(
-                    new ClientboundGameEventPacket(ClientboundGameEventPacket::WIN_GAME, playerIndex)));
+                    new ClientboundGameEventPacket(ClientboundGameEventPacket::WIN_GAME,
+                    static_cast<float>(networkPlayer->GetUserIndex()))));
             }
         }
         return shared_from_this();
@@ -1228,10 +1231,9 @@ uint32_t ServerPlayer::startSleepInBed(const BlockPos& position, bool force)
     if (result != BED_SLEEPING_OK)
         return result;
 
-    boost::shared_ptr<Entity> self = shared_from_this();
-    boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(self);
-    boost::shared_ptr<Packet> packet(new ClientboundPlayerSleepPacket(player, position));
-    getLevel()->getTracker()->broadcast(player, packet);
+    boost::shared_ptr<Packet> packet(new ClientboundPlayerSleepPacket(
+        boost::dynamic_pointer_cast<Player>(shared_from_this()), position));
+    getLevel()->getTracker()->broadcast(shared_from_this(), packet);
     mConnection->teleport(mX, mY, mZ, mYRot, mXRot, true, true);
     mConnection->send(packet);
     return BED_SLEEPING_OK;
@@ -1512,7 +1514,7 @@ int ServerPlayer::openTrading(boost::shared_ptr<Merchant> merchant, const std::w
 int ServerPlayer::openHorseInventory(boost::shared_ptr<AbstractHorse> horse, boost::shared_ptr<Container> container)
 {
     if (mContainerMenu != mInventoryMenu)
-        doCloseContainer();
+        closeContainer();
 
     nextContainerCounter();
 
@@ -1789,19 +1791,9 @@ void ServerPlayer::completeUsingItem()
 
 void ServerPlayer::restoreFrom(boost::shared_ptr<Player> oldPlayer, bool keepEverything)
 {
-    bool copyInventory = false;
-    if (keepEverything)
-        copyInventory = true;
-    else if (mLevel->getGameRules()->getBoolean(GameRules::RULE_KEEPINVENTORY))
-        copyInventory = true;
-    else if (oldPlayer->isSpectator())
-        copyInventory = true;
-
-    if (copyInventory)
-        mInventory->replaceWith(oldPlayer->mInventory);
-
     if (keepEverything)
     {
+        mInventory->replaceWith(oldPlayer->mInventory);
         setHealth(oldPlayer->getHealth());
         mFoodData = oldPlayer->mFoodData;
         mExperienceLevel = oldPlayer->mExperienceLevel;
@@ -1809,8 +1801,9 @@ void ServerPlayer::restoreFrom(boost::shared_ptr<Player> oldPlayer, bool keepEve
         mExperienceProgress = oldPlayer->mExperienceProgress;
         setScore(static_cast<int32_t>(oldPlayer->getScore()));
     }
-    else if (copyInventory)
+    else if (mLevel->getGameRules()->getBoolean(GameRules::RULE_KEEPINVENTORY) || oldPlayer->isSpectator())
     {
+        mInventory->replaceWith(oldPlayer->mInventory);
         mExperienceLevel = oldPlayer->mExperienceLevel;
         mTotalExperience = oldPlayer->mTotalExperience;
         mExperienceProgress = oldPlayer->mExperienceProgress;
@@ -1822,8 +1815,8 @@ void ServerPlayer::restoreFrom(boost::shared_ptr<Player> oldPlayer, bool keepEve
 
     mEnderChestInventory = oldPlayer->mEnderChestInventory;
 
-    getEntityData()->set(Entity::DATA_SHARED_FLAGS_ID,
-                     oldPlayer->getEntityData()->get(Entity::DATA_SHARED_FLAGS_ID), true);
+    getEntityData()->set(DATA_PLAYER_MODE_CUSTOMISATION,
+                         oldPlayer->getEntityData()->get(DATA_PLAYER_MODE_CUSTOMISATION), true);
 
     mLastSentHealth = -1.0f;
     mLastSentFood = -1;
@@ -1994,7 +1987,7 @@ uint32_t ServerPlayer::getPlayerViewDistanceModifier()
     INetworkPlayer* networkPlayer = mConnection->getNetworkPlayer();
     if (networkPlayer == NULL)
         return 0;
-    uint32_t modifier = static_cast<uint32_t>(networkPlayer->GetTimeSinceLastChunkPacket_ms()) >> 6;
+    int modifier = networkPlayer->GetCurrentRtt() >> 6;
     return modifier > 4 ? 4 : modifier;
 }
 

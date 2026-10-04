@@ -16,10 +16,9 @@ void ServerItemCooldowns::onCooldownStarted(Item* item, int duration)
 {
     ItemCooldowns::onCooldownStarted(item, duration);
 
-    if (mPlayer != 0 && mPlayer->mConnection != 0)
+    if (mPlayer != 0)
     {
-        boost::shared_ptr<Packet> packet(new ClientboundCooldownPacket(item, duration));
-        mPlayer->mConnection->send(packet);
+        mPlayer->mConnection->send(boost::shared_ptr<ClientboundCooldownPacket>(new ClientboundCooldownPacket(item, duration)));
     }
 }
 
@@ -27,9 +26,8 @@ void ServerItemCooldowns::onCooldownEnded(Item* item)
 {
     ItemCooldowns::onCooldownEnded(item);
 
-    if (mPlayer != 0 && mPlayer->mConnection != 0)
+    if (mPlayer != 0)
     {
-        boost::shared_ptr<Packet> packet(new ClientboundCooldownPacket(item, 0));
-        mPlayer->mConnection->send(packet);
+        mPlayer->mConnection->send(boost::shared_ptr<ClientboundCooldownPacket>(new ClientboundCooldownPacket(item, 0)));
     }
 }

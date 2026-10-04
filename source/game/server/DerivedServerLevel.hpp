@@ -32,7 +32,7 @@ public:
     virtual ~DerivedServerLevel();
 
     virtual void saveLevelData();
-    virtual ServerLevel* postConstruct();
+    virtual Level* postConstruct();
     void saveDimensionData();
 
 private:
