@@ -32,22 +32,37 @@ public:
         cStateCompleted = 5
     };
 
-    enum ExecuteResult
+    enum ExecuteKind
     {
-        cExecuteResultContinue = 0x00000000,
-        cExecuteResultFinished = 0x01000000,
-        cExecuteResultCancelled = 0x02000000,
-        cExecuteResultSuspend = 0x03000000,
-        cExecuteResultWait = 0x04000000,
-        cExecuteResultNextStep = 0x05000000,
-        cExecuteResultEntryForeground = 0x06000000,
-        cExecuteResultEntryBackground = 0x07000000
+        cExecuteKindContinue = 0,
+        cExecuteKindFinished = 1,
+        cExecuteKindCancelled = 2,
+        cExecuteKindSuspend = 3,
+        cExecuteKindWait = 4,
+        cExecuteKindNextStep = 5,
+        cExecuteKindEntryForeground = 6,
+        cExecuteKindEntryBackground = 7
     };
+
+    struct ExecuteResult
+    {
+        unsigned char m_kind;
+        unsigned char m_unset;
+        unsigned short m_value;
+    };
+
+    static ExecuteResult MakeExecuteResult(ExecuteKind kind, unsigned short value = 0)
+    {
+        ExecuteResult result;
+        result.m_kind = kind;
+        result.m_value = value;
+        return result;
+    }
 
     Job();
     virtual ~Job();
     virtual void Reset(bool isBackground);
-    virtual unsigned int ExecuteCore() = 0;
+    virtual ExecuteResult ExecuteCore() = 0;
     void Ready(bool isBackground);
     void Resume(bool isBackground);
     State GetState() const;

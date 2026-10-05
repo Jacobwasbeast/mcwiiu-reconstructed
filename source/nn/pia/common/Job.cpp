@@ -98,48 +98,48 @@ void Job::Execute(bool isBackground)
                                 : cInnerStateForegroundRunning;
     CriticalSection& criticalSection = g_piaJobScheduler->m_criticalSection;
     criticalSection.Unlock();
-    const unsigned int result = ExecuteCore();
+    const ExecuteResult result = ExecuteCore();
     criticalSection.Lock();
     m_executeCount = m_executeCount + 1;
 
-    switch (result & 0xff000000u)
+    switch (result.m_kind)
     {
-    case cExecuteResultFinished:
-    case cExecuteResultCancelled:
+    case cExecuteKindFinished:
+    case cExecuteKindCancelled:
         m_innerState = cInnerStateCompleted;
         return;
-    case cExecuteResultSuspend:
+    case cExecuteKindSuspend:
         m_innerState = cInnerStateSuspended;
         return;
-    case cExecuteResultWait:
+    case cExecuteKindWait:
         m_time.SetNow();
-        m_time.m_tick += TimeSpan::GetTicksPerMSec().m_tick * (result & 0xffff);
+        m_time.m_tick += TimeSpan::GetTicksPerMSec().m_tick * result.m_value;
         g_piaJobScheduler->EntryJob(this, isBackground);
         m_innerState = isBackground ? cInnerStateBackgroundWaiting
                                     : cInnerStateForegroundWaiting;
         return;
-    case cExecuteResultNextStep:
+    case cExecuteKindNextStep:
         m_time.SetNow();
         g_piaJobScheduler->EntryJobNext(this);
         m_innerState = isBackground ? cInnerStateBackgroundWaiting
                                     : cInnerStateForegroundWaiting;
         return;
-    case cExecuteResultContinue:
-    case cExecuteResultEntryForeground:
-    case cExecuteResultEntryBackground:
+    case cExecuteKindContinue:
+    case cExecuteKindEntryForeground:
+    case cExecuteKindEntryBackground:
         break;
     default:
         return;
     }
 
     m_time.SetNow();
-    if ((result & 0xff000000u) == cExecuteResultEntryForeground)
+    if (result.m_kind == cExecuteKindEntryForeground)
     {
         g_piaJobScheduler->EntryJob(this, false);
         m_innerState = cInnerStateForegroundReady;
         return;
     }
-    if ((result & 0xff000000u) == cExecuteResultEntryBackground)
+    if (result.m_kind == cExecuteKindEntryBackground)
     {
         g_piaJobScheduler->EntryJob(this, true);
         m_innerState = cInnerStateBackgroundReady;

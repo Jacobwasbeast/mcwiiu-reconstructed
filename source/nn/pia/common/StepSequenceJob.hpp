@@ -16,14 +16,14 @@ public:
         virtual ~Step();
         virtual void Trace(unsigned long long value) const;
 
-        unsigned int (StepSequenceJob::*m_function)();
+        ExecuteResult (StepSequenceJob::*m_function)();
         const char* m_name;
     };
 
     StepSequenceJob();
     virtual ~StepSequenceJob();
     virtual void Reset(bool isBackground);
-    virtual unsigned int ExecuteCore();
+    virtual ExecuteResult ExecuteCore();
     virtual void CancelCleanup();
     virtual void Trace(unsigned long long value) const;
     void WaitForCompletion(unsigned int intervalMsec);

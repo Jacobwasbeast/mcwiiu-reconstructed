@@ -26,7 +26,7 @@ void StepSequenceJob::Reset(bool isBackground)
     m_cancelRequested = false;
 }
 
-unsigned int StepSequenceJob::ExecuteCore()
+Job::ExecuteResult StepSequenceJob::ExecuteCore()
 {
     for (;;)
     {
@@ -34,10 +34,10 @@ unsigned int StepSequenceJob::ExecuteCore()
         {
             CancelCleanup();
             m_cancelRequested = false;
-            return cExecuteResultCancelled;
+            return MakeExecuteResult(cExecuteKindCancelled);
         }
-        const unsigned int result = (this->*m_currentStep.m_function)();
-        if ((result & 0xff000000u) != cExecuteResultContinue)
+        const ExecuteResult result = (this->*m_currentStep.m_function)();
+        if (result.m_kind != cExecuteKindContinue)
             return result;
     }
 }
