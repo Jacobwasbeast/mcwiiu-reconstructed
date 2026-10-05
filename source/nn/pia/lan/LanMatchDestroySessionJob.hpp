@@ -10,8 +10,8 @@ class LanMatchDestroySessionJob : public session::DestroySessionJob
 public:
     LanMatchDestroySessionJob();
     ~LanMatchDestroySessionJob();
-    uint32_t UnregisterCurrentMatchmakeSession();
-    uint32_t WaitUnregisterCurrentMatchmakeSession();
+    ExecuteResult UnregisterCurrentMatchmakeSession();
+    ExecuteResult WaitUnregisterCurrentMatchmakeSession();
     void Cleanup();
     void Trace(unsigned long long value) const;
     Result StartupImpl();

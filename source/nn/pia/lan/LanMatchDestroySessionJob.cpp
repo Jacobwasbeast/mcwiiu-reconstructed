@@ -14,7 +14,7 @@ LanMatchDestroySessionJob::~LanMatchDestroySessionJob()
 {
 }
 
-uint32_t LanMatchDestroySessionJob::UnregisterCurrentMatchmakeSession()
+LanMatchDestroySessionJob::ExecuteResult LanMatchDestroySessionJob::UnregisterCurrentMatchmakeSession()
 {
     const unsigned int index = session::g_piaSession->m_currentSessionIndex;
     session::IMatchmakeSession* matchmake = session::g_piaSession->m_matchmakeSession[index];
@@ -24,23 +24,23 @@ uint32_t LanMatchDestroySessionJob::UnregisterCurrentMatchmakeSession()
     {
         setStep(&session::DestroySessionJob::SendMonitoringData,
                 "DestroySessionJob::SendMonitoringData");
-        return static_cast<unsigned int>(session::g_piaSession->m_sessionId[index] & 0xff0000u);
+        return MakeExecuteResult(cExecuteKindContinue);
     }
-    setStep(static_cast<unsigned int (session::DestroySessionJob::*)()>(&LanMatchDestroySessionJob::WaitUnregisterCurrentMatchmakeSession),
+    setStep(static_cast<common::Job::ExecuteResult (session::DestroySessionJob::*)()>(&LanMatchDestroySessionJob::WaitUnregisterCurrentMatchmakeSession),
             "LanMatchDestroySessionJob::WaitUnregisterCurrentMatchmakeSession");
-    return (session::g_piaSession->m_sessionId[index] & 0xff0000u) | common::Job::cExecuteResultNextStep;
+    return MakeExecuteResult(cExecuteKindNextStep);
 }
 
-uint32_t LanMatchDestroySessionJob::WaitUnregisterCurrentMatchmakeSession()
+LanMatchDestroySessionJob::ExecuteResult LanMatchDestroySessionJob::WaitUnregisterCurrentMatchmakeSession()
 {
     const unsigned int index = session::g_piaSession->m_currentSessionIndex;
     session::IMatchmakeSession* matchmake = session::g_piaSession->m_matchmakeSession[index];
     if (!matchmake->WaitUnregisterMatchmakeSession())
-        return common::Job::cExecuteResultNextStep;
+        return MakeExecuteResult(cExecuteKindNextStep);
     session::g_piaSession->m_sessionId[index] = 0;
     setStep(&session::DestroySessionJob::SendMonitoringData,
             "DestroySessionJob::SendMonitoringData");
-    return 0;
+    return MakeExecuteResult(cExecuteKindContinue);
 }
 
 void LanMatchDestroySessionJob::Cleanup()
@@ -73,7 +73,7 @@ void LanMatchDestroySessionJob::SetNextStepAtWaitDestroyMesh()
 
 void LanMatchDestroySessionJob::SetNextStepAtMeshCleanup()
 {
-    setStep(static_cast<unsigned int (session::DestroySessionJob::*)()>(&LanMatchDestroySessionJob::UnregisterCurrentMatchmakeSession),
+    setStep(static_cast<common::Job::ExecuteResult (session::DestroySessionJob::*)()>(&LanMatchDestroySessionJob::UnregisterCurrentMatchmakeSession),
             "LanMatchDestroySessionJob::UnregisterCurrentMatchmakeSession");
 }
 

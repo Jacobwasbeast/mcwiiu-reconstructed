@@ -2,7 +2,7 @@
 
 namespace nn { namespace pia { namespace lan {
 namespace {
-typedef unsigned int (LanMatchJointSessionJob::*Step)();
+typedef common::Job::ExecuteResult (LanMatchJointSessionJob::*Step)();
 
 enum LanMatchResult
 {
@@ -18,7 +18,7 @@ enum
 
 inline void SelectStep(common::StepSequenceJob::Step& slot, Step step)
 {
-    union { Step derived; unsigned int (common::StepSequenceJob::*base)(); } value;
+    union { Step derived; common::Job::ExecuteResult (common::StepSequenceJob::*base)(); } value;
     value.derived = step;
     slot.m_function = value.base;
 }
@@ -46,7 +46,7 @@ LanMatchJointSessionJob::~LanMatchJointSessionJob()
 {
 }
 
-unsigned int LanMatchJointSessionJob::CallSessionEvent()
+LanMatchJointSessionJob::ExecuteResult LanMatchJointSessionJob::CallSessionEvent()
 {
     NoticeStartingEventByProcessType();
     session::g_piaSession->m_postponeNotice = true;
@@ -84,160 +84,160 @@ unsigned int LanMatchJointSessionJob::CallSessionEvent()
     default:
         break;
     }
-    return cExecuteResultContinue;
+    return MakeExecuteResult(cExecuteKindContinue);
 }
 
-unsigned int LanMatchJointSessionJob::SendInvitationAsCompanion()
+LanMatchJointSessionJob::ExecuteResult LanMatchJointSessionJob::SendInvitationAsCompanion()
 {
     if (FinishIfSessionDisconnected(*this))
-        return cExecuteResultFinished;
+        return MakeExecuteResult(cExecuteKindFinished);
     SelectStep(m_currentStep, &LanMatchJointSessionJob::WaitForAnswerToInvitation);
     m_currentStep.m_name = "LanMatchJointSessionJob::WaitForAnswerToInvitation";
-    return cExecuteResultContinue;
+    return MakeExecuteResult(cExecuteKindContinue);
 }
 
-unsigned int LanMatchJointSessionJob::WaitForAnswerToInvitation()
+LanMatchJointSessionJob::ExecuteResult LanMatchJointSessionJob::WaitForAnswerToInvitation()
 {
     if (FinishIfSessionDisconnected(*this))
-        return cExecuteResultFinished;
-    return cExecuteResultContinue;
+        return MakeExecuteResult(cExecuteKindFinished);
+    return MakeExecuteResult(cExecuteKindContinue);
 }
 
-unsigned int LanMatchJointSessionJob::StartRandomMatchmake()
+LanMatchJointSessionJob::ExecuteResult LanMatchJointSessionJob::StartRandomMatchmake()
 {
     SelectStep(m_currentStep, &LanMatchJointSessionJob::WaitRandomMatchmake);
     m_currentStep.m_name = "LanMatchJointSessionJob::WaitRandomMatchmake";
-    return cExecuteResultNextStep;
+    return MakeExecuteResult(cExecuteKindNextStep);
 }
 
-unsigned int LanMatchJointSessionJob::WaitRandomMatchmake()
+LanMatchJointSessionJob::ExecuteResult LanMatchJointSessionJob::WaitRandomMatchmake()
 {
     if (FinishIfSessionDisconnected(*this))
-        return cExecuteResultFinished;
+        return MakeExecuteResult(cExecuteKindFinished);
     SelectStep(m_currentStep, &LanMatchJointSessionJob::SendNextSessionId);
     m_currentStep.m_name = "LanMatchJointSessionJob::SendNextSessionId";
-    return cExecuteResultContinue;
+    return MakeExecuteResult(cExecuteKindContinue);
 }
 
-unsigned int LanMatchJointSessionJob::StartJoinMatchmakeSession()
+LanMatchJointSessionJob::ExecuteResult LanMatchJointSessionJob::StartJoinMatchmakeSession()
 {
     SelectStep(m_currentStep, &LanMatchJointSessionJob::WaitJoinMatchmakeSession);
     m_currentStep.m_name = "LanMatchJointSessionJob::WaitJoinMatchmakeSession";
-    return cExecuteResultContinue;
+    return MakeExecuteResult(cExecuteKindContinue);
 }
 
-unsigned int LanMatchJointSessionJob::WaitJoinMatchmakeSession()
+LanMatchJointSessionJob::ExecuteResult LanMatchJointSessionJob::WaitJoinMatchmakeSession()
 {
     if (FinishIfSessionDisconnected(*this))
-        return cExecuteResultFinished;
+        return MakeExecuteResult(cExecuteKindFinished);
     SelectStep(m_currentStep, &LanMatchJointSessionJob::SendNextSessionId);
     m_currentStep.m_name = "LanMatchJointSessionJob::SendNextSessionId";
-    return cExecuteResultContinue;
+    return MakeExecuteResult(cExecuteKindContinue);
 }
 
-unsigned int LanMatchJointSessionJob::SendNextSessionId()
+LanMatchJointSessionJob::ExecuteResult LanMatchJointSessionJob::SendNextSessionId()
 {
     if (FinishIfSessionDisconnected(*this))
-        return cExecuteResultFinished;
+        return MakeExecuteResult(cExecuteKindFinished);
     SelectStep(m_currentStep, &LanMatchJointSessionJob::WaitCompanionStationPrepared);
     m_currentStep.m_name = "LanMatchJointSessionJob::WaitCompanionStationPrepared";
-    return cExecuteResultContinue;
+    return MakeExecuteResult(cExecuteKindContinue);
 }
 
-unsigned int LanMatchJointSessionJob::WaitCompanionStationPrepared()
+LanMatchJointSessionJob::ExecuteResult LanMatchJointSessionJob::WaitCompanionStationPrepared()
 {
     if (FinishIfSessionDisconnected(*this))
-        return cExecuteResultFinished;
+        return MakeExecuteResult(cExecuteKindFinished);
     SelectStep(m_currentStep, &LanMatchJointSessionJob::StartLeavePreviousMesh);
     m_currentStep.m_name = "LanMatchJointSessionJob::StartLeavePreviousMesh";
-    return cExecuteResultContinue;
+    return MakeExecuteResult(cExecuteKindContinue);
 }
 
-unsigned int LanMatchJointSessionJob::SendAnswerToInvitation()
+LanMatchJointSessionJob::ExecuteResult LanMatchJointSessionJob::SendAnswerToInvitation()
 {
     if (FinishIfSessionDisconnected(*this))
-        return cExecuteResultFinished;
+        return MakeExecuteResult(cExecuteKindFinished);
     SelectStep(m_currentStep, &LanMatchJointSessionJob::WaitNextSessionId);
     m_currentStep.m_name = "LanMatchJointSessionJob::WaitNextSessionId";
-    return cExecuteResultNextStep;
+    return MakeExecuteResult(cExecuteKindNextStep);
 }
 
-unsigned int LanMatchJointSessionJob::WaitNextSessionId()
+LanMatchJointSessionJob::ExecuteResult LanMatchJointSessionJob::WaitNextSessionId()
 {
     if (FinishIfSessionDisconnected(*this))
-        return cExecuteResultFinished;
+        return MakeExecuteResult(cExecuteKindFinished);
     SelectStep(m_currentStep, &LanMatchJointSessionJob::StartUpdateSessionKey);
     m_currentStep.m_name = "LanMatchJointSessionJob::StartUpdateSessionKey";
-    return cExecuteResultContinue;
+    return MakeExecuteResult(cExecuteKindContinue);
 }
 
-unsigned int LanMatchJointSessionJob::StartUpdateSessionKey()
+LanMatchJointSessionJob::ExecuteResult LanMatchJointSessionJob::StartUpdateSessionKey()
 {
     SelectStep(m_currentStep, &LanMatchJointSessionJob::WaitUpdateSessionKey);
     m_currentStep.m_name = "LanMatchJointSessionJob::WaitUpdateSessionKey";
-    return cExecuteResultNextStep;
+    return MakeExecuteResult(cExecuteKindNextStep);
 }
 
-unsigned int LanMatchJointSessionJob::WaitUpdateSessionKey()
+LanMatchJointSessionJob::ExecuteResult LanMatchJointSessionJob::WaitUpdateSessionKey()
 {
     if (FinishIfSessionDisconnected(*this))
-        return cExecuteResultFinished;
+        return MakeExecuteResult(cExecuteKindFinished);
     SelectStep(m_currentStep, &LanMatchJointSessionJob::SendPreparedForMigrateSession);
     m_currentStep.m_name = "LanMatchJointSessionJob::SendPreparedForMigrateSession";
-    return cExecuteResultContinue;
+    return MakeExecuteResult(cExecuteKindContinue);
 }
 
-unsigned int LanMatchJointSessionJob::SendPreparedForMigrateSession()
+LanMatchJointSessionJob::ExecuteResult LanMatchJointSessionJob::SendPreparedForMigrateSession()
 {
     if (FinishIfSessionDisconnected(*this))
-        return cExecuteResultFinished;
+        return MakeExecuteResult(cExecuteKindFinished);
     SelectStep(m_currentStep, &LanMatchJointSessionJob::WaitUntilLeaderLeavesMesh);
     m_currentStep.m_name = "LanMatchJointSessionJob::WaitUntilLeaderLeavesMesh";
-    return cExecuteResultContinue;
+    return MakeExecuteResult(cExecuteKindContinue);
 }
 
-unsigned int LanMatchJointSessionJob::WaitUntilLeaderLeavesMesh()
+LanMatchJointSessionJob::ExecuteResult LanMatchJointSessionJob::WaitUntilLeaderLeavesMesh()
 {
     if (FinishIfSessionDisconnected(*this))
-        return cExecuteResultFinished;
+        return MakeExecuteResult(cExecuteKindFinished);
     SelectStep(m_currentStep, &LanMatchJointSessionJob::StartLeavePreviousMesh);
     m_currentStep.m_name = "LanMatchJointSessionJob::StartLeavePreviousMesh";
-    return cExecuteResultContinue;
+    return MakeExecuteResult(cExecuteKindContinue);
 }
 
-unsigned int LanMatchJointSessionJob::StartLeavePreviousMesh()
+LanMatchJointSessionJob::ExecuteResult LanMatchJointSessionJob::StartLeavePreviousMesh()
 {
     SelectStep(m_currentStep, &LanMatchJointSessionJob::WaitLeavePreviousMesh);
     m_currentStep.m_name = "LanMatchJointSessionJob::WaitLeavePreviousMesh";
-    return cExecuteResultNextStep;
+    return MakeExecuteResult(cExecuteKindNextStep);
 }
 
-unsigned int LanMatchJointSessionJob::WaitLeavePreviousMesh()
+LanMatchJointSessionJob::ExecuteResult LanMatchJointSessionJob::WaitLeavePreviousMesh()
 {
     if (FinishIfSessionDisconnected(*this))
-        return cExecuteResultFinished;
+        return MakeExecuteResult(cExecuteKindFinished);
     SelectStep(m_currentStep, &LanMatchJointSessionJob::StartLeavePreviousMatchmakeSession);
     m_currentStep.m_name = "LanMatchJointSessionJob::StartLeavePreviousMatchmakeSession";
-    return cExecuteResultContinue;
+    return MakeExecuteResult(cExecuteKindContinue);
 }
 
-unsigned int LanMatchJointSessionJob::StartLeavePreviousMatchmakeSession()
+LanMatchJointSessionJob::ExecuteResult LanMatchJointSessionJob::StartLeavePreviousMatchmakeSession()
 {
     SelectStep(m_currentStep, &LanMatchJointSessionJob::WaitLeavePreviousMatchmakeSession);
     m_currentStep.m_name = "LanMatchJointSessionJob::WaitLeavePreviousMatchmakeSession";
-    return cExecuteResultContinue;
+    return MakeExecuteResult(cExecuteKindContinue);
 }
 
-unsigned int LanMatchJointSessionJob::WaitLeavePreviousMatchmakeSession()
+LanMatchJointSessionJob::ExecuteResult LanMatchJointSessionJob::WaitLeavePreviousMatchmakeSession()
 {
     if (FinishIfSessionDisconnected(*this))
-        return cExecuteResultFinished;
+        return MakeExecuteResult(cExecuteKindFinished);
     SelectStep(m_currentStep, &LanMatchJointSessionJob::MeshRestart);
     m_currentStep.m_name = "LanMatchJointSessionJob::MeshRestart";
-    return cExecuteResultContinue;
+    return MakeExecuteResult(cExecuteKindContinue);
 }
 
-unsigned int LanMatchJointSessionJob::MeshRestart()
+LanMatchJointSessionJob::ExecuteResult LanMatchJointSessionJob::MeshRestart()
 {
     if (m_field9d == 0)
     {
@@ -249,76 +249,76 @@ unsigned int LanMatchJointSessionJob::MeshRestart()
         SelectStep(m_currentStep, &LanMatchJointSessionJob::StartCreateNextMesh);
         m_currentStep.m_name = "LanMatchJointSessionJob::StartCreateNextMesh";
     }
-    return cExecuteResultContinue;
+    return MakeExecuteResult(cExecuteKindContinue);
 }
 
-unsigned int LanMatchJointSessionJob::StartCreateNextMesh()
+LanMatchJointSessionJob::ExecuteResult LanMatchJointSessionJob::StartCreateNextMesh()
 {
     SelectStep(m_currentStep, &LanMatchJointSessionJob::WaitCreateNextMesh);
     m_currentStep.m_name = "LanMatchJointSessionJob::WaitCreateNextMesh";
-    return cExecuteResultNextStep;
+    return MakeExecuteResult(cExecuteKindNextStep);
 }
 
-unsigned int LanMatchJointSessionJob::WaitCreateNextMesh()
+LanMatchJointSessionJob::ExecuteResult LanMatchJointSessionJob::WaitCreateNextMesh()
 {
     if (FinishIfSessionDisconnected(*this))
-        return cExecuteResultFinished;
+        return MakeExecuteResult(cExecuteKindFinished);
     SelectStep(m_currentStep, &LanMatchJointSessionJob::WaitCompanionStation);
     m_currentStep.m_name = "LanMatchJointSessionJob::WaitCompanionStation";
-    return cExecuteResultContinue;
+    return MakeExecuteResult(cExecuteKindContinue);
 }
 
-unsigned int LanMatchJointSessionJob::StartGetNextMeshHostStationConnectionInfo()
+LanMatchJointSessionJob::ExecuteResult LanMatchJointSessionJob::StartGetNextMeshHostStationConnectionInfo()
 {
     SelectStep(m_currentStep, &LanMatchJointSessionJob::WaitGetNextMeshHostStationConnectionInfo);
     m_currentStep.m_name = "LanMatchJointSessionJob::WaitGetNextMeshHostStationConnectionInfo";
-    return cExecuteResultContinue;
+    return MakeExecuteResult(cExecuteKindContinue);
 }
 
-unsigned int LanMatchJointSessionJob::WaitGetNextMeshHostStationConnectionInfo()
+LanMatchJointSessionJob::ExecuteResult LanMatchJointSessionJob::WaitGetNextMeshHostStationConnectionInfo()
 {
     if (FinishIfSessionDisconnected(*this))
-        return cExecuteResultFinished;
+        return MakeExecuteResult(cExecuteKindFinished);
     SelectStep(m_currentStep, &LanMatchJointSessionJob::StartJoinNextMesh);
     m_currentStep.m_name = "LanMatchJointSessionJob::StartJoinNextMesh";
-    return cExecuteResultContinue;
+    return MakeExecuteResult(cExecuteKindContinue);
 }
 
-unsigned int LanMatchJointSessionJob::StartJoinNextMesh()
+LanMatchJointSessionJob::ExecuteResult LanMatchJointSessionJob::StartJoinNextMesh()
 {
     SelectStep(m_currentStep, &LanMatchJointSessionJob::WaitJoinNextMesh);
     m_currentStep.m_name = "LanMatchJointSessionJob::WaitJoinNextMesh";
-    return cExecuteResultContinue;
+    return MakeExecuteResult(cExecuteKindContinue);
 }
 
-unsigned int LanMatchJointSessionJob::WaitJoinNextMesh()
+LanMatchJointSessionJob::ExecuteResult LanMatchJointSessionJob::WaitJoinNextMesh()
 {
     if (FinishIfSessionDisconnected(*this))
-        return cExecuteResultFinished;
+        return MakeExecuteResult(cExecuteKindFinished);
     SelectStep(m_currentStep, &LanMatchJointSessionJob::WaitCompanionStation);
     m_currentStep.m_name = "LanMatchJointSessionJob::WaitCompanionStation";
-    return cExecuteResultContinue;
+    return MakeExecuteResult(cExecuteKindContinue);
 }
 
-unsigned int LanMatchJointSessionJob::WaitCompanionStation()
+LanMatchJointSessionJob::ExecuteResult LanMatchJointSessionJob::WaitCompanionStation()
 {
     if (FinishIfSessionDisconnected(*this))
-        return cExecuteResultFinished;
+        return MakeExecuteResult(cExecuteKindFinished);
     SelectStep(m_currentStep, &LanMatchJointSessionJob::WaitHostStationId);
     m_currentStep.m_name = "LanMatchJointSessionJob::WaitHostStationId";
-    return cExecuteResultContinue;
+    return MakeExecuteResult(cExecuteKindContinue);
 }
 
-unsigned int LanMatchJointSessionJob::WaitHostStationId()
+LanMatchJointSessionJob::ExecuteResult LanMatchJointSessionJob::WaitHostStationId()
 {
     if (FinishIfSessionDisconnected(*this))
-        return cExecuteResultFinished;
+        return MakeExecuteResult(cExecuteKindFinished);
     SelectStep(m_currentStep, &LanMatchJointSessionJob::ProcessComplete);
     m_currentStep.m_name = "LanMatchJointSessionJob::ProcessComplete";
-    return cExecuteResultContinue;
+    return MakeExecuteResult(cExecuteKindContinue);
 }
 
-unsigned int LanMatchJointSessionJob::ProcessComplete()
+LanMatchJointSessionJob::ExecuteResult LanMatchJointSessionJob::ProcessComplete()
 {
     ClearProcessTypeAndNoticeEndingEvent();
     session::g_piaSession->m_postponeNotice = false;
@@ -327,7 +327,7 @@ unsigned int LanMatchJointSessionJob::ProcessComplete()
         m_callerContext->SignalSuccess(0);
         m_callerContext = 0;
     }
-    return cExecuteResultFinished;
+    return MakeExecuteResult(cExecuteKindFinished);
 }
 
 void LanMatchJointSessionJob::Trace(unsigned long long value) const

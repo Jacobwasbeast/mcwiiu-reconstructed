@@ -15,7 +15,7 @@ int LanLeaveWithHostMigrationJob::DecideNextHost()
             if (candidate != local && session::g_piaMesh->IsValidStationIndex(static_cast<StationIndex>(candidate)))
                 return candidate;
     }
-    return 0xfd;
+    return cStationIndexInvalid;
 }
 
 }}}

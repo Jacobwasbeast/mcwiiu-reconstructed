@@ -36,7 +36,7 @@ public:
                                   unsigned int tokenSize, bool isAuthenticated,
                                   bool omitSessionParam);
     Result SendBrowseMessage(unsigned char index);
-    unsigned int Update();
+    ExecuteResult Update();
     bool RequestBrowseMessage(unsigned char count);
     bool IsBrowseMessageCompleted() const;
     void RequestGenerateRandomSeed() { m_randomSeedPending = true; }

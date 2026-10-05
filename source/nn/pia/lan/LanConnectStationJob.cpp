@@ -39,7 +39,7 @@ int LanConnectStationJob::StartupImpl(common::CallContext* context,
     const int result = transport::ConnectStationJob::StartupImpl(context, station, currentInfo, secure);
     if (result != 0)
         return result;
-    m_currentStep.m_function = static_cast<unsigned int (common::StepSequenceJob::*)()>(
+    m_currentStep.m_function = static_cast<common::Job::ExecuteResult (common::StepSequenceJob::*)()>(
         &LanConnectStationJob::TryCurrentAddress);
     m_currentStep.m_name = "LanConnectStationJob::TryCurrentAddress";
     return 0;
@@ -49,14 +49,14 @@ void LanConnectStationJob::Trace(unsigned long long) const
 {
 }
 
-unsigned int LanConnectStationJob::TryCurrentAddress()
+LanConnectStationJob::ExecuteResult LanConnectStationJob::TryCurrentAddress()
 {
     m_station->m_stationAddress = m_currentLocation.m_stationAddress;
     m_station->Trace(0x0200000000000000ULL);
-    m_currentStep.m_function = static_cast<unsigned int (common::StepSequenceJob::*)()>(
+    m_currentStep.m_function = static_cast<common::Job::ExecuteResult (common::StepSequenceJob::*)()>(
         &transport::ConnectStationJob::SendConnectionRequest);
     m_currentStep.m_name = "ConnectStationJob::SendConnectionRequest";
-    return cExecuteResultContinue;
+    return MakeExecuteResult(cExecuteKindContinue);
 }
 
 }}}

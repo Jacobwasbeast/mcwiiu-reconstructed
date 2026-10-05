@@ -89,8 +89,8 @@ Result LanMatchmakeUpdateJob::Startup(unsigned short* port)
     Reset(true);
     union
     {
-        unsigned int (LanMatchmakeUpdateJob::*derived)();
-        unsigned int (common::StepSequenceJob::*base)();
+        common::Job::ExecuteResult (LanMatchmakeUpdateJob::*derived)();
+        common::Job::ExecuteResult (common::StepSequenceJob::*base)();
     } step;
     step.derived = &LanMatchmakeUpdateJob::Update;
     m_currentStep.m_function = step.base;
@@ -279,7 +279,7 @@ Result LanMatchmakeUpdateJob::SendBrowseMessage(unsigned char index)
     return result;
 }
 
-unsigned int LanMatchmakeUpdateJob::Update()
+LanMatchmakeUpdateJob::ExecuteResult LanMatchmakeUpdateJob::Update()
 {
     common::InetAddress sender;
     if (m_randomSeedPending)
@@ -293,7 +293,7 @@ unsigned int LanMatchmakeUpdateJob::Update()
 
     LanMatchmakeSession* matchmake = GetCurrentMatchmakeSession();
     if (matchmake == 0)
-        return cExecuteResultWait | cWaitMsec;
+        return MakeExecuteResult(cExecuteKindWait, cWaitMsec);
 
     const bool isLeavingMesh = session::g_piaMesh->IsProcessingLeaveMesh();
     bool isCryptoActive = false;
@@ -311,7 +311,7 @@ unsigned int LanMatchmakeUpdateJob::Update()
     {
         if (common::InetAddress(m_protocol->m_address, m_protocol->m_filterPort).GetKey() ==
             sender.GetKey())
-            return cExecuteResultWait | cWaitMsec;
+            return MakeExecuteResult(cExecuteKindWait, cWaitMsec);
 
         const unsigned char type = m_receiveBuffer[0];
         const unsigned int payloadSize = common::deserializeU32(m_receiveBuffer + 1);
@@ -485,7 +485,7 @@ unsigned int LanMatchmakeUpdateJob::Update()
         deadline.SetNow();
         deadline.m_tick += ticksPerMsec.m_tick * cBrowseTimeoutMsec;
         m_browseDeadline = deadline;
-        return cExecuteResultWait | cWaitMsec;
+        return MakeExecuteResult(cExecuteKindWait, cWaitMsec);
     }
 
     if (m_browseContext.m_state == common::CallContext::cStateInProgress)
@@ -495,7 +495,7 @@ unsigned int LanMatchmakeUpdateJob::Update()
         if (m_browseDeadline < now)
             m_browseContext.SignalSuccess(0);
     }
-    return cExecuteResultWait | cWaitMsec;
+    return MakeExecuteResult(cExecuteKindWait, cWaitMsec);
 }
 
 bool LanMatchmakeUpdateJob::RequestBrowseMessage(unsigned char count)

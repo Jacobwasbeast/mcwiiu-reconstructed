@@ -1,38 +1,40 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_PIA_LAN_LANMATCHJOINSESSIONJOB_HPP
 #define LEGACY_CONSOLE_WIIU_NN_PIA_LAN_LANMATCHJOINSESSIONJOB_HPP
 
-#include <stdint.h>
-
-#include "nn/pia/Common.hpp"
-
-namespace nn { namespace pia { namespace session { class JoinSessionSetting; }}}
+#include "nn/pia/common/Time.hpp"
+#include "nn/pia/session/JoinSessionJob.hpp"
 
 namespace nn { namespace pia { namespace lan {
 
-class LanMatchJoinSessionJob
+class LanMatchmakeSession;
+
+class LanMatchJoinSessionJob : public session::JoinSessionJob
 {
 public:
     LanMatchJoinSessionJob();
-    ~LanMatchJoinSessionJob();
-    uint32_t JoinMatchmakeSession();
-    uint32_t WaitJoinMatchmake();
-    uint32_t GetStationConnectionInfo();
-    uint32_t WaitGetStationConnectionInfo();
-    uint32_t LeaveMatchmakeSession();
-    uint32_t WaitLeaveMatchmakeSession();
-    uint32_t WaitForRetryJoinMatchmakeSession();
-    uint32_t WaitRequestSessionInfo();
-    void Cleanup();
-    void NoticeOwnerChangeEvent(unsigned int sessionId, unsigned long long ownerId);
-    void Trace(unsigned long long value) const;
-    void SetNextStepAtWaitJoinMesh();
-    uint32_t SetNextStepAtFailedJoinMesh(Result result);
-    uint32_t SetNextStepAtWaitLeaveMesh();
-    uint32_t SetNextStepAtMeshCleanup();
-    Result StartupImpl(const session::JoinSessionSetting* setting);
+    virtual ~LanMatchJoinSessionJob();
+    virtual void Trace(unsigned long long value) const;
+    virtual void NoticeOwnerChangeEvent(unsigned int sessionId, unsigned long long ownerId);
+    virtual void Cleanup();
+    virtual Result StartupImpl(const session::JoinSessionSetting* setting);
+    virtual void SetNextStepAtWaitJoinMesh();
+    virtual ExecuteResult SetNextStepAtFailedJoinMesh(Result result);
+    virtual ExecuteResult SetNextStepAtWaitLeaveMesh();
+    virtual ExecuteResult SetNextStepAtMeshCleanup();
+
+    ExecuteResult JoinMatchmakeSession();
+    ExecuteResult WaitJoinMatchmake();
+    ExecuteResult GetStationConnectionInfo();
+    ExecuteResult WaitGetStationConnectionInfo();
+    ExecuteResult LeaveMatchmakeSession();
+    ExecuteResult WaitLeaveMatchmakeSession();
+    ExecuteResult WaitForRetryJoinMatchmakeSession();
+    ExecuteResult WaitRequestSessionInfo();
 
 private:
-    unsigned char m_storage[1];
+    LanMatchmakeSession* m_matchmakeSession;
+    common::Time m_retryTime;
+    Result m_startupResult;
 };
 
 }}}

@@ -14,7 +14,7 @@ public:
     int StartupImpl(common::CallContext* context, transport::Station* station,
                     const transport::StationConnectionInfo& info, bool secure);
     void Trace(unsigned long long value) const;
-    unsigned int TryCurrentAddress();
+    ExecuteResult TryCurrentAddress();
 
 private:
     transport::StationLocation m_currentLocation;
