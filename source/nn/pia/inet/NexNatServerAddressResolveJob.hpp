@@ -16,11 +16,11 @@ public:
     virtual void CancelCleanup();
     Result Startup(common::CallContext* callContext);
     void Cleanup();
-    unsigned int StepResolveNatServerAddress();
-    unsigned int StepRequestRelayServerSetting();
-    unsigned int StepWaitRequestRelayServerSetting();
-    unsigned int StepResolveRelayServerSetting();
-    unsigned int StepComplete();
+    ExecuteResult StepResolveNatServerAddress();
+    ExecuteResult StepRequestRelayServerSetting();
+    ExecuteResult StepWaitRequestRelayServerSetting();
+    ExecuteResult StepResolveRelayServerSetting();
+    ExecuteResult StepComplete();
 
 private:
     common::CallContext* m_callContext;

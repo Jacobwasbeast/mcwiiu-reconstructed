@@ -15,7 +15,7 @@ public:
     MonitoringServerAddressResolveJob();
     virtual ~MonitoringServerAddressResolveJob();
     void Cleanup();
-    void StepResolveMonitoringServerAddress();
+    ExecuteResult StepResolveMonitoringServerAddress();
     Result Startup(unsigned int monitoringServerId, common::InetAddress* address, MonitoringDataSender* sender);
 
 private:

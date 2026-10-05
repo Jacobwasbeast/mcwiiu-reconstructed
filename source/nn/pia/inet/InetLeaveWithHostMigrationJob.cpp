@@ -17,7 +17,7 @@ int InetLeaveWithHostMigrationJob::DecideNextHost()
             if (candidate != local && mesh->IsValidStationIndex(static_cast<StationIndex>(candidate)))
                 return candidate;
     }
-    return -3;
+    return cStationIndexInvalid;
 }
 
 }}}

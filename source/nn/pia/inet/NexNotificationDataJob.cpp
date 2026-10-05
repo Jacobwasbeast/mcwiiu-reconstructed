@@ -8,7 +8,7 @@
 namespace nn { namespace pia { namespace inet {
 
 namespace {
-typedef unsigned int (NexNotificationDataJob::*Step)();
+typedef common::Job::ExecuteResult (NexNotificationDataJob::*Step)();
 
 enum
 {
@@ -24,7 +24,7 @@ enum
 
 inline void SelectStep(common::StepSequenceJob::Step& slot, Step step)
 {
-    union { Step derived; unsigned int (common::StepSequenceJob::*base)(); } value;
+    union { Step derived; common::Job::ExecuteResult (common::StepSequenceJob::*base)(); } value;
     value.derived = step;
     slot.m_function = value.base;
 }
@@ -100,7 +100,7 @@ void NexNotificationDataJob::Cleanup()
     }
 }
 
-unsigned int NexNotificationDataJob::WaitUpdateNotificationData()
+NexNotificationDataJob::ExecuteResult NexNotificationDataJob::WaitUpdateNotificationData()
 {
     common::CallContext* callContext = m_callContext;
     if (callContext != 0 && callContext->m_cancelRequested)
@@ -108,7 +108,7 @@ unsigned int NexNotificationDataJob::WaitUpdateNotificationData()
         callContext->SignalFailure(cResultCancelled);
         m_callContext = 0;
         Cleanup();
-        return cExecuteResultFinished;
+        return MakeExecuteResult(cExecuteKindFinished);
     }
     if (m_protocolCallContext.GetState() != nex::CallContext::CallFailed)
     {
@@ -118,9 +118,9 @@ unsigned int NexNotificationDataJob::WaitUpdateNotificationData()
             m_callContext = 0;
             m_protocolCallContext.Reset();
             Cleanup();
-            return cExecuteResultFinished;
+            return MakeExecuteResult(cExecuteKindFinished);
         }
-        return cExecuteResultNextStep;
+        return MakeExecuteResult(cExecuteKindNextStep);
     }
     nex::qResult result = m_protocolCallContext.GetResult();
     if (result.Equals(static_cast<int>(0x8001000Au)))
@@ -129,17 +129,17 @@ unsigned int NexNotificationDataJob::WaitUpdateNotificationData()
         m_callContext = 0;
         m_protocolCallContext.Reset();
         Cleanup();
-        return cExecuteResultFinished;
+        return MakeExecuteResult(cExecuteKindFinished);
     }
     Result::SetNexNetworkErrorCode(nex::ErrorCodeConverter::ConvertToNetworkErrorCode(result));
     m_callContext->SignalFailure(cResultNexError);
     m_callContext = 0;
     m_protocolCallContext.Reset();
     Cleanup();
-    return cExecuteResultFinished;
+    return MakeExecuteResult(cExecuteKindFinished);
 }
 
-unsigned int NexNotificationDataJob::WaitRetrieveNotificationData()
+NexNotificationDataJob::ExecuteResult NexNotificationDataJob::WaitRetrieveNotificationData()
 {
     common::CallContext* callContext = m_callContext;
     if (callContext != 0 && callContext->m_cancelRequested)
@@ -147,7 +147,7 @@ unsigned int NexNotificationDataJob::WaitRetrieveNotificationData()
         callContext->SignalFailure(cResultCancelled);
         m_callContext = 0;
         Cleanup();
-        return cExecuteResultFinished;
+        return MakeExecuteResult(cExecuteKindFinished);
     }
     if (m_protocolCallContext.GetState() != nex::CallContext::CallFailed)
     {
@@ -157,9 +157,9 @@ unsigned int NexNotificationDataJob::WaitRetrieveNotificationData()
             m_callContext = 0;
             m_protocolCallContext.Reset();
             Cleanup();
-            return cExecuteResultFinished;
+            return MakeExecuteResult(cExecuteKindFinished);
         }
-        return cExecuteResultNextStep;
+        return MakeExecuteResult(cExecuteKindNextStep);
     }
     nex::qResult result = m_protocolCallContext.GetResult();
     if (result.Equals(static_cast<int>(0x8001000Au)))
@@ -168,14 +168,14 @@ unsigned int NexNotificationDataJob::WaitRetrieveNotificationData()
         m_callContext = 0;
         m_protocolCallContext.Reset();
         Cleanup();
-        return cExecuteResultFinished;
+        return MakeExecuteResult(cExecuteKindFinished);
     }
     Result::SetNexNetworkErrorCode(nex::ErrorCodeConverter::ConvertToNetworkErrorCode(result));
     m_callContext->SignalFailure(cResultNexError);
     m_callContext = 0;
     m_protocolCallContext.Reset();
     Cleanup();
-    return cExecuteResultFinished;
+    return MakeExecuteResult(cExecuteKindFinished);
 }
 
 }}}

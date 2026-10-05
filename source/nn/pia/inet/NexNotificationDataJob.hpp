@@ -21,8 +21,8 @@ public:
     virtual Result Startup(common::CallContext* callContext, unsigned char typeMask,
                            nex::qList<nex::NotificationEvent>* events);
     virtual void Cleanup();
-    unsigned int WaitUpdateNotificationData();
-    unsigned int WaitRetrieveNotificationData();
+    ExecuteResult WaitUpdateNotificationData();
+    ExecuteResult WaitRetrieveNotificationData();
 
 private:
     common::CallContext* m_callContext;

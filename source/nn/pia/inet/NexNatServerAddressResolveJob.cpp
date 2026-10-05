@@ -17,11 +17,11 @@ enum
     cResultNatServerAddressUnavailable = 0x6436
 };
 
-typedef unsigned int (NexNatServerAddressResolveJob::*Step)();
+typedef common::Job::ExecuteResult (NexNatServerAddressResolveJob::*Step)();
 
 inline void SelectStep(common::StepSequenceJob::Step& slot, Step step)
 {
-    union { Step derived; unsigned int (common::StepSequenceJob::*base)(); } value;
+    union { Step derived; common::Job::ExecuteResult (common::StepSequenceJob::*base)(); } value;
     value.derived = step;
     slot.m_function = value.base;
 }
@@ -69,20 +69,20 @@ void NexNatServerAddressResolveJob::CancelCleanup()
     Cleanup();
 }
 
-unsigned int NexNatServerAddressResolveJob::StepResolveNatServerAddress()
+NexNatServerAddressResolveJob::ExecuteResult NexNatServerAddressResolveJob::StepResolveNatServerAddress()
 {
     if (m_callContext != 0 && m_callContext->m_cancelRequested)
     {
         m_currentStep.m_name = "NexNatServerAddressResolveJob::StepComplete";
         SelectStep(m_currentStep, &NexNatServerAddressResolveJob::StepComplete);
-        return cExecuteResultEntryForeground;
+        return MakeExecuteResult(cExecuteKindEntryForeground);
     }
     if (GetDebugSetting()->options[3] != 0)
     {
         m_currentStep.m_name = "NexNatServerAddressResolveJob::StepComplete";
         m_result = cResultNatServerAddressUnavailable;
         SelectStep(m_currentStep, &NexNatServerAddressResolveJob::StepComplete);
-        return cExecuteResultEntryForeground;
+        return MakeExecuteResult(cExecuteKindEntryForeground);
     }
     SetDeadline(m_deadline, 30000);
     m_result = NexFacade::s_instance->UpdateNatServerAddress();
@@ -90,55 +90,55 @@ unsigned int NexNatServerAddressResolveJob::StepResolveNatServerAddress()
     {
         m_currentStep.m_name = "NexNatServerAddressResolveJob::StepComplete";
         SelectStep(m_currentStep, &NexNatServerAddressResolveJob::StepComplete);
-        return cExecuteResultEntryForeground;
+        return MakeExecuteResult(cExecuteKindEntryForeground);
     }
     m_currentStep.m_name = "NexNatServerAddressResolveJob::StepRequestRelayServerSetting";
     SelectStep(m_currentStep, &NexNatServerAddressResolveJob::StepRequestRelayServerSetting);
-    return cExecuteResultEntryForeground;
+    return MakeExecuteResult(cExecuteKindEntryForeground);
 }
 
-unsigned int NexNatServerAddressResolveJob::StepRequestRelayServerSetting()
+NexNatServerAddressResolveJob::ExecuteResult NexNatServerAddressResolveJob::StepRequestRelayServerSetting()
 {
     if (m_callContext != 0 && m_callContext->m_cancelRequested)
     {
         m_currentStep.m_name = "NexNatServerAddressResolveJob::StepComplete";
         SelectStep(m_currentStep, &NexNatServerAddressResolveJob::StepComplete);
-        return cExecuteResultContinue;
+        return MakeExecuteResult(cExecuteKindContinue);
     }
     SetDeadline(m_deadline, 10000);
     NexFacade::s_instance->m_natRelay->RequestRelayServerSettingAsync();
     SelectStep(m_currentStep, &NexNatServerAddressResolveJob::StepWaitRequestRelayServerSetting);
     m_currentStep.m_name = "NexNatServerAddressResolveJob::StepWaitRequestRelayServerSetting";
-    return cExecuteResultNextStep;
+    return MakeExecuteResult(cExecuteKindNextStep);
 }
 
-unsigned int NexNatServerAddressResolveJob::StepWaitRequestRelayServerSetting()
+NexNatServerAddressResolveJob::ExecuteResult NexNatServerAddressResolveJob::StepWaitRequestRelayServerSetting()
 {
     NexFacade* facade = NexFacade::s_instance;
     if (facade->IsRelayServiceEnabled() && common::g_piaJobScheduler->m_dispatchTime <= m_deadline)
     {
         if (!facade->m_natRelay->IsRequestRelayServerSettingCompleted())
-            return cExecuteResultNextStep;
+            return MakeExecuteResult(cExecuteKindNextStep);
         const Result result = facade->m_natRelay->GetRequestRelayServerSettingResult();
         if (result == 0 && m_callContext != 0 && !m_callContext->m_cancelRequested)
         {
             SelectStep(m_currentStep, &NexNatServerAddressResolveJob::StepResolveRelayServerSetting);
             m_currentStep.m_name = "NexNatServerAddressResolveJob::StepResolveRelayServerSetting";
-            return cExecuteResultEntryBackground;
+            return MakeExecuteResult(cExecuteKindEntryBackground);
         }
     }
     SelectStep(m_currentStep, &NexNatServerAddressResolveJob::StepComplete);
     m_currentStep.m_name = "NexNatServerAddressResolveJob::StepComplete";
-    return cExecuteResultNextStep;
+    return MakeExecuteResult(cExecuteKindNextStep);
 }
 
-unsigned int NexNatServerAddressResolveJob::StepResolveRelayServerSetting()
+NexNatServerAddressResolveJob::ExecuteResult NexNatServerAddressResolveJob::StepResolveRelayServerSetting()
 {
     if (m_callContext != 0 && m_callContext->m_cancelRequested)
     {
         SelectStep(m_currentStep, &NexNatServerAddressResolveJob::StepComplete);
         m_currentStep.m_name = "NexNatServerAddressResolveJob::StepComplete";
-        return cExecuteResultEntryForeground;
+        return MakeExecuteResult(cExecuteKindEntryForeground);
     }
     if (NexFacade::s_instance->IsRelayServiceEnabled())
     {
@@ -147,10 +147,10 @@ unsigned int NexNatServerAddressResolveJob::StepResolveRelayServerSetting()
     }
     SelectStep(m_currentStep, &NexNatServerAddressResolveJob::StepComplete);
     m_currentStep.m_name = "NexNatServerAddressResolveJob::StepComplete";
-    return cExecuteResultEntryForeground;
+    return MakeExecuteResult(cExecuteKindEntryForeground);
 }
 
-unsigned int NexNatServerAddressResolveJob::StepComplete()
+NexNatServerAddressResolveJob::ExecuteResult NexNatServerAddressResolveJob::StepComplete()
 {
     if (m_callContext != 0)
     {
@@ -168,7 +168,7 @@ unsigned int NexNatServerAddressResolveJob::StepComplete()
         }
     }
     Cleanup();
-    return cExecuteResultFinished;
+    return MakeExecuteResult(cExecuteKindFinished);
 }
 
 }}}
