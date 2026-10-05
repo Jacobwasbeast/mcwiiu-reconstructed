@@ -1,28 +1,46 @@
 #include "platform/wiiu/TLSStorageCafe.hpp"
 
-static unsigned int s_tlsAllocated[64];
-static __thread void* s_tlsValues[64];
+#include <coreinit/thread.h>
+#include <string.h>
+
+static const unsigned int TLS_SLOT_COUNT = 64;
+static const OSThreadSpecificID TLS_VALUES_SLOT = OS_THREAD_SPECIFIC_13;
+
+static unsigned int s_tlsAllocated[TLS_SLOT_COUNT];
+
+static void** threadValues()
+{
+    void** values = static_cast<void**>(OSGetThreadSpecific(TLS_VALUES_SLOT));
+    if (values == 0)
+    {
+        values = new void*[TLS_SLOT_COUNT];
+        memset(values, 0, sizeof(void*) * TLS_SLOT_COUNT);
+        OSSetThreadSpecific(TLS_VALUES_SLOT, values);
+    }
+    return values;
+}
 
 TLSStorageCafe* TLSStorageCafe::m_instance = 0;
 
 TLSStorageCafe::TLSStorageCafe()
 {
     unsigned int index;
-    for (index = 0; index < 64; ++index)
+    void** values = threadValues();
+    for (index = 0; index < TLS_SLOT_COUNT; ++index)
     {
         s_tlsAllocated[index] = 0;
-        s_tlsValues[index] = 0;
+        values[index] = 0;
     }
 }
 
 int TLSStorageCafe::Alloc()
 {
     unsigned int index;
-    for (index = 0; index < 64; ++index)
+    for (index = 0; index < TLS_SLOT_COUNT; ++index)
     {
         if (s_tlsAllocated[index] == 0)
         {
-            s_tlsValues[index] = 0;
+            threadValues()[index] = 0;
             s_tlsAllocated[index] = 1;
             return (int)index;
         }
@@ -53,7 +71,7 @@ unsigned int TLSStorageCafe::GetValue(unsigned int index)
     {
         return 0;
     }
-    return (unsigned int)s_tlsValues[index];
+    return (unsigned int)threadValues()[index];
 }
 
 unsigned int TLSStorageCafe::SetValue(unsigned int index, void* value)
@@ -62,7 +80,7 @@ unsigned int TLSStorageCafe::SetValue(unsigned int index, void* value)
     {
         return 0;
     }
-    s_tlsValues[index] = value;
+    threadValues()[index] = value;
     return 1;
 }
 

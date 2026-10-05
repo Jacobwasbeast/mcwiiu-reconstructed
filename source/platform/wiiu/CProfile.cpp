@@ -582,6 +582,7 @@ void CProfile::SetSignInChoicesComplete(bool accepted, int choice, int extra)
 void CProfile::ResetProfileProcessState()
 {
     mProfileProcessState = eProfileProcessState_Idle;
+    gStorage->SetSaveDisabled(false);
 }
 
 bool CProfile::GetSignInChange()
@@ -591,10 +592,10 @@ bool CProfile::GetSignInChange()
 
 void CProfile::CheckForSignInChange()
 {
-    if (mSignInChange)
+    if (GetSignInChange())
     {
         SetSignInChange(false);
-        if (!IsFullVersion())
+        if (QuerySigninStatus() == 0)
             CallSignInChangeCallback(mPrimaryPlayerChanged);
         else
         {
@@ -832,7 +833,7 @@ bool CProfile::IsHasAchievementsFile(int quadrant)
 
 void CProfile::ShowSigninUI()
 {
-    if (GetNumSysUserMiis() == 0)
+    if (!IsSystemUIDisplayed())
     {
         SetSignInChange(false);
         SetSysUIShowing(true);
@@ -851,7 +852,7 @@ bool CProfile::ProcessSignIn()
         return false;
     if (GetPrimaryPad() != -1 && IsValidPlayer(GetPrimaryPad()) && IsSignedIn(GetPrimaryPad()))
         return true;
-    SetLockedProfile(-1);
+    SetPrimaryPad(-1);
     return false;
 }
 

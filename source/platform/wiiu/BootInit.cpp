@@ -29,6 +29,13 @@ static void RunInitArray(void (**first)(), void (**last)())
     }
 }
 
+static void MarkInitArrayDone(void (**first)(), void (**last)())
+{
+    void (**entry)() = first;
+    for (; entry != last; ++entry)
+        *entry = (void (*)())0xffffffffu;
+}
+
 extern "C" void __init_wut()
 {
     __init_wut_newlib();
@@ -37,4 +44,5 @@ extern "C" void __init_wut()
     RunInitArray(__preinit_array_start, __preinit_array_end);
     _init();
     RunInitArray(__init_array_start, __init_array_end);
+    MarkInitArrayDone(__init_array_start, __init_array_end);
 }

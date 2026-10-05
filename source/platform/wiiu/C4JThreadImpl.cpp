@@ -16,7 +16,8 @@ static C4JThreadImpl s_mainThread("Main thread");
 static OSFastMutex s_createSection;
 static OSFastMutex s_threadSection;
 static bool s_createSectionInitialized = false;
-static __thread uint32_t s_specialThreadIDForFS_MilesStreamThread;
+static const OSThreadSpecificID SPECIAL_THREAD_ID_FOR_FS_SLOT = OS_THREAD_SPECIFIC_12;
+static const uint32_t SPECIAL_THREAD_ID_FOR_FS_MILES_STREAM_THREAD = 0x40000000u;
 static const unsigned char s_processorAffinity[3] = { 1, 2, 4 };
 static const unsigned char s_priorities[] = { 0x10, 0x0F, 0x0E, 0x00 };
 
@@ -232,7 +233,8 @@ void C4JThreadImpl::Sleep(int milliseconds)
 
 void SetSpecialThreadIDForFS_MilesStreamThread()
 {
-    s_specialThreadIDForFS_MilesStreamThread = 0x40000000u;
+    OSSetThreadSpecific(SPECIAL_THREAD_ID_FOR_FS_SLOT,
+                        reinterpret_cast<void*>(SPECIAL_THREAD_ID_FOR_FS_MILES_STREAM_THREAD));
 }
 
 static void insertThreads(
