@@ -1370,9 +1370,3 @@ void closeSocketForLockedProfile()
         }
     }
 }
-
-void closesocket(int socket)
-{
-    ::shutdown(socket, 2);
-    ::close(socket);
-}
