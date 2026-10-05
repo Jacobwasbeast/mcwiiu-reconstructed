@@ -19,13 +19,13 @@ public:
                            NatTraverser* traverser);
     void Cleanup();
     virtual void CancelCleanup();
-    unsigned int StepPreTest();
-    unsigned int StepStart();
+    ExecuteResult StepPreTest();
+    ExecuteResult StepStart();
     void StopReceivingMessage();
-    unsigned int StepSend();
-    unsigned int StepWait();
-    unsigned int StepEnd();
-    unsigned int StepComplete();
+    ExecuteResult StepSend();
+    ExecuteResult StepWait();
+    ExecuteResult StepEnd();
+    ExecuteResult StepComplete();
 
 private:
     common::CallContext* m_context;
