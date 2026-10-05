@@ -30,7 +30,7 @@ Result DisconnectStationJob::Startup(Station* station)
     return StartupImpl(station);
 }
 
-unsigned int DisconnectStationJob::SendDisconnectionRequest()
+DisconnectStationJob::ExecuteResult DisconnectStationJob::SendDisconnectionRequest()
 {
     if (static_cast<int>(m_station->m_field10) <= StationManager::cStationNumMax - 1)
     {
@@ -41,31 +41,31 @@ unsigned int DisconnectStationJob::SendDisconnectionRequest()
     {
         if (!m_station->m_stationAddress.IsValid())
         {
-            m_currentStep.m_function = static_cast<unsigned int (common::StepSequenceJob::*)()>(
+            m_currentStep.m_function = static_cast<common::Job::ExecuteResult (common::StepSequenceJob::*)()>(
                 &DisconnectStationJob::DisconnectionSucceeded);
             m_currentStep.m_name = "DisconnectStationJob::DisconnectionSucceeded";
-            return cExecuteResultContinue;
+            return MakeExecuteResult(cExecuteKindContinue);
         }
         m_station->m_field28->SendDisconnectionRequest(m_station->m_stationAddress);
     }
     m_waiting = true;
     m_retryDeadline.m_tick = common::g_piaJobScheduler->m_dispatchTime.m_tick +
         common::TimeSpan::GetTicksPerMSec().m_tick * m_retryIntervalMsec;
-    m_currentStep.m_function = static_cast<unsigned int (common::StepSequenceJob::*)()>(
+    m_currentStep.m_function = static_cast<common::Job::ExecuteResult (common::StepSequenceJob::*)()>(
         &DisconnectStationJob::WaitForDisconnection);
     m_currentStep.m_name = "DisconnectStationJob::WaitForDisconnection";
-    return cExecuteResultNextStep;
+    return MakeExecuteResult(cExecuteKindNextStep);
 }
 
-unsigned int DisconnectStationJob::WaitForDisconnection()
+DisconnectStationJob::ExecuteResult DisconnectStationJob::WaitForDisconnection()
 {
     if (!m_waiting)
     {
         m_station->m_field20 = 6;
-        m_currentStep.m_function = static_cast<unsigned int (common::StepSequenceJob::*)()>(
+        m_currentStep.m_function = static_cast<common::Job::ExecuteResult (common::StepSequenceJob::*)()>(
             &DisconnectStationJob::DisconnectionSucceeded);
         m_currentStep.m_name = "DisconnectStationJob::DisconnectionSucceeded";
-        return cExecuteResultContinue;
+        return MakeExecuteResult(cExecuteKindContinue);
     }
     if (m_deadline <= common::g_piaJobScheduler->m_dispatchTime ||
         (static_cast<int>(m_station->m_field10) > StationManager::cStationNumMax - 1 &&
@@ -73,13 +73,13 @@ unsigned int DisconnectStationJob::WaitForDisconnection()
     {
         m_waiting = false;
         m_station->m_field20 = 6;
-        m_currentStep.m_function = static_cast<unsigned int (common::StepSequenceJob::*)()>(
+        m_currentStep.m_function = static_cast<common::Job::ExecuteResult (common::StepSequenceJob::*)()>(
             &DisconnectStationJob::DisconnectionSucceeded);
         m_currentStep.m_name = "DisconnectStationJob::DisconnectionSucceeded";
-        return cExecuteResultContinue;
+        return MakeExecuteResult(cExecuteKindContinue);
     }
     if (common::g_piaJobScheduler->m_dispatchTime < m_retryDeadline)
-        return cExecuteResultNextStep;
+        return MakeExecuteResult(cExecuteKindNextStep);
     if (static_cast<int>(m_station->m_field10) <= StationManager::cStationNumMax - 1)
     {
         m_station->m_field28->SendDisconnectionRequest(
@@ -91,10 +91,10 @@ unsigned int DisconnectStationJob::WaitForDisconnection()
     }
     m_retryDeadline.m_tick = common::g_piaJobScheduler->m_dispatchTime.m_tick +
         common::TimeSpan::GetTicksPerMSec().m_tick * m_retryIntervalMsec;
-    return cExecuteResultNextStep;
+    return MakeExecuteResult(cExecuteKindNextStep);
 }
 
-unsigned int DisconnectStationJob::DisconnectionSucceeded()
+DisconnectStationJob::ExecuteResult DisconnectStationJob::DisconnectionSucceeded()
 {
     m_station->m_disconnectStationJob->ProcessDisconnection(m_station);
     g_stationConnectionInfoTable->EraseFromTable(m_station);
@@ -113,10 +113,10 @@ unsigned int DisconnectStationJob::DisconnectionSucceeded()
     }
     m_station->Cleanup();
     g_piaStationManager->DestroyStation(m_station);
-    return cExecuteResultFinished;
+    return MakeExecuteResult(cExecuteKindFinished);
 }
 
-unsigned int DisconnectStationJob::CutRouteOfRelayConnection()
+DisconnectStationJob::ExecuteResult DisconnectStationJob::CutRouteOfRelayConnection()
 {
     if (static_cast<int>(m_station->m_field10) <= StationManager::cStationNumMax - 1)
     {
@@ -126,10 +126,10 @@ unsigned int DisconnectStationJob::CutRouteOfRelayConnection()
             static_cast<StationIndex>(m_station->m_field10), true);
     }
     m_station->m_field20 = 6;
-    m_currentStep.m_function = static_cast<unsigned int (common::StepSequenceJob::*)()>(
+    m_currentStep.m_function = static_cast<common::Job::ExecuteResult (common::StepSequenceJob::*)()>(
         &DisconnectStationJob::DisconnectionSucceeded);
     m_currentStep.m_name = "DisconnectStationJob::DisconnectionSucceeded";
-    return cExecuteResultContinue;
+    return MakeExecuteResult(cExecuteKindContinue);
 }
 
 void DisconnectStationJob::Cleanup()
@@ -159,7 +159,7 @@ Result DisconnectStationJob::StartupImpl(Station* station)
     now.SetNow();
     m_deadline.m_tick = now.m_tick + m_timeoutMsec * common::TimeSpan::GetTicksPerMSec().m_tick;
     Reset(true);
-    m_currentStep.m_function = static_cast<unsigned int (common::StepSequenceJob::*)()>(
+    m_currentStep.m_function = static_cast<common::Job::ExecuteResult (common::StepSequenceJob::*)()>(
         &DisconnectStationJob::SendDisconnectionRequest);
     m_currentStep.m_name = "DisconnectStationJob::SendDisconnectionRequest";
     if (g_piaTransport->m_relayRouteManager && g_piaStationManager->m_localStation)
@@ -170,7 +170,7 @@ Result DisconnectStationJob::StartupImpl(Station* station)
             static_cast<StationIndex>(m_station->m_field10), &relay);
         if (result == 0 && static_cast<unsigned int>(relay) != m_station->m_field10)
         {
-            m_currentStep.m_function = static_cast<unsigned int (common::StepSequenceJob::*)()>(
+            m_currentStep.m_function = static_cast<common::Job::ExecuteResult (common::StepSequenceJob::*)()>(
                 &DisconnectStationJob::CutRouteOfRelayConnection);
             m_currentStep.m_name = "DisconnectStationJob::CutRouteOfRelayConnection";
         }

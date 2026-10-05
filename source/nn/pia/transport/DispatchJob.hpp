@@ -9,7 +9,7 @@ class DispatchJob : public common::Job
 {
 public:
     virtual ~DispatchJob();
-    virtual unsigned int ExecuteCore();
+    virtual ExecuteResult ExecuteCore();
 };
 
 }}}

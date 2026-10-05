@@ -14,10 +14,10 @@ public:
     virtual ~DisconnectStationJob();
 
     Result Startup(Station* station);
-    unsigned int SendDisconnectionRequest();
-    unsigned int WaitForDisconnection();
-    unsigned int DisconnectionSucceeded();
-    unsigned int CutRouteOfRelayConnection();
+    ExecuteResult SendDisconnectionRequest();
+    ExecuteResult WaitForDisconnection();
+    ExecuteResult DisconnectionSucceeded();
+    ExecuteResult CutRouteOfRelayConnection();
     void Cleanup();
     virtual void Trace(unsigned long long value) const;
     virtual void ProcessDisconnection(Station* station);

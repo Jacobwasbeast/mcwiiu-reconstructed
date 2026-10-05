@@ -8,10 +8,10 @@ DispatchJob::~DispatchJob()
 {
 }
 
-unsigned int DispatchJob::ExecuteCore()
+DispatchJob::ExecuteResult DispatchJob::ExecuteCore()
 {
     g_piaTransport->dispatch();
-    return common::Job::cExecuteResultNextStep;
+    return MakeExecuteResult(cExecuteKindNextStep);
 }
 
 }}}

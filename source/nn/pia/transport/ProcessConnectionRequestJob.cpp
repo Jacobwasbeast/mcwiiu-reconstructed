@@ -1,5 +1,7 @@
 #include "nn/pia/transport/ProcessConnectionRequestJob.hpp"
 
+#include "nn/pia/common/Scheduler.hpp"
+
 namespace nn { namespace pia { namespace transport {
 
 ProcessConnectionRequestJob::ProcessConnectionRequestJob()
@@ -16,10 +18,10 @@ ProcessConnectionRequestJob::~ProcessConnectionRequestJob()
     m_callContext = NULL;
 }
 
-unsigned int ProcessConnectionRequestJob::Startup(Station* station, int timeoutMsec, bool relay)
+bool ProcessConnectionRequestJob::Startup(Station* station, int timeoutMsec, bool relay)
 {
     if (station == NULL)
-        return common::Job::cExecuteResultFinished;
+        return false;
     m_station = station;
     m_timeoutMsec = timeoutMsec;
     m_relay = relay;
@@ -30,41 +32,48 @@ unsigned int ProcessConnectionRequestJob::Startup(Station* station, int timeoutM
         m_callContext->Reset();
         m_callContext->SignalSuccess(0);
     }
-    return common::Job::cExecuteResultNextStep;
+    return true;
 }
 
-unsigned int ProcessConnectionRequestJob::StartupRelayConnection(Station* station, int timeoutMsec,
-                                                                   bool relay)
+bool ProcessConnectionRequestJob::StartupRelayConnection(Station* station, int timeoutMsec,
+                                                           bool relay)
 {
     return Startup(station, timeoutMsec, relay);
 }
 
-unsigned int ProcessConnectionRequestJob::ConnectToRequesterStation()
+ProcessConnectionRequestJob::ExecuteResult ProcessConnectionRequestJob::ConnectToRequesterStation()
 {
     if (m_station == NULL)
-        return common::Job::cExecuteResultFinished;
-    return common::Job::cExecuteResultNextStep;
+        return MakeExecuteResult(cExecuteKindFinished);
+    return MakeExecuteResult(cExecuteKindNextStep);
 }
 
-unsigned int ProcessConnectionRequestJob::WaitInverseConnection()
+ProcessConnectionRequestJob::ExecuteResult ProcessConnectionRequestJob::WaitInverseConnection()
 {
-    return common::Job::cExecuteResultNextStep;
+    return MakeExecuteResult(cExecuteKindNextStep);
 }
 
-unsigned int ProcessConnectionRequestJob::TimeOutCheck()
+bool ProcessConnectionRequestJob::TimeOutCheck()
 {
-    return common::Job::cExecuteResultNextStep;
+    const unsigned long long deadline =
+        (static_cast<unsigned long long>(m_deadlineHigh) << 32) | m_deadlineLow;
+    if (deadline <= common::g_piaJobScheduler->m_dispatchTime.m_tick)
+    {
+        m_callContext->Cancel();
+        return true;
+    }
+    return false;
 }
 
-unsigned int ProcessConnectionRequestJob::SendConnectionResponse()
+ProcessConnectionRequestJob::ExecuteResult ProcessConnectionRequestJob::SendConnectionResponse()
 {
-    return common::Job::cExecuteResultNextStep;
+    return MakeExecuteResult(cExecuteKindNextStep);
 }
 
-unsigned int ProcessConnectionRequestJob::WaitResponseAck()
+ProcessConnectionRequestJob::ExecuteResult ProcessConnectionRequestJob::WaitResponseAck()
 {
     Cleanup();
-    return common::Job::cExecuteResultFinished;
+    return MakeExecuteResult(cExecuteKindFinished);
 }
 
 void ProcessConnectionRequestJob::Cleanup()

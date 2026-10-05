@@ -26,14 +26,14 @@ public:
     bool CheckContextCallCancelled();
     bool CheckErrorOccurred();
     bool SendConnectionRequestMessage();
-    unsigned int SendConnectionRequest();
+    ExecuteResult SendConnectionRequest();
     bool CheckTimeout();
-    unsigned int WaitRequestAck();
-    unsigned int WaitForConnection();
-    unsigned int ConnectionFailed();
-    unsigned int ConnectionSucceeded();
+    ExecuteResult WaitRequestAck();
+    ExecuteResult WaitForConnection();
+    ExecuteResult ConnectionFailed();
+    ExecuteResult ConnectionSucceeded();
     bool SendRelayConnectionRequestMessage();
-    unsigned int SendRelayConnectionRequest();
+    ExecuteResult SendRelayConnectionRequest();
 
     friend class StationProtocol;
 

@@ -12,13 +12,13 @@ class ProcessConnectionRequestJob : public common::StepSequenceJob
 public:
     ProcessConnectionRequestJob();
     virtual ~ProcessConnectionRequestJob();
-    unsigned int Startup(Station* station, int timeoutMsec, bool relay);
-    unsigned int StartupRelayConnection(Station* station, int timeoutMsec, bool relay);
-    unsigned int ConnectToRequesterStation();
-    unsigned int WaitInverseConnection();
-    unsigned int TimeOutCheck();
-    unsigned int SendConnectionResponse();
-    unsigned int WaitResponseAck();
+    bool Startup(Station* station, int timeoutMsec, bool relay);
+    bool StartupRelayConnection(Station* station, int timeoutMsec, bool relay);
+    ExecuteResult ConnectToRequesterStation();
+    ExecuteResult WaitInverseConnection();
+    bool TimeOutCheck();
+    ExecuteResult SendConnectionResponse();
+    ExecuteResult WaitResponseAck();
     void Cleanup();
     virtual void Trace(unsigned long long value) const;
 
