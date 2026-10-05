@@ -5,6 +5,7 @@
 #include "game/core/QueueToken.hpp"
 #include "game/util/LegacyUtilityFunctions.hpp"
 #include "vendor/MilesEventError.hpp"
+#include "vendor/MilesMem.hpp"
 #include "vendor/MilesRR.hpp"
 
 #include <math.h>
@@ -16,8 +17,6 @@ extern "C" int AIL_ms_count();
 extern "C" void AIL_end_sample(_SAMPLE* sample);
 extern "C" void AIL_set_sample_volume_levels(_SAMPLE* sample, float left, float right);
 extern "C" void AIL_set_sample_playback_rate_factor(_SAMPLE* sample, float factor);
-extern "C" int AIL_sample_3D_position(_SAMPLE* sample, float* x, float* y, float* z);
-extern "C" void AIL_listener_3D_position(_LISTENER* listener, float* x, float* y, float* z);
 
 namespace
 {
@@ -157,9 +156,9 @@ static volatile long long sEventSerial = 1;
 
 static const char MILES_EVENT_SUPPORT_FILE[] = "C:\\devel\\projects\\mss\\src\\sdk\\shared\\mileseventsupport.cpp";
 
-void AIL_set_sample_3D_volume_falloff(_SAMPLE* sample, const FalloffGraphPoint* points, int count);
-void AIL_set_sample_3D_lowpass_falloff(_SAMPLE* sample, const FalloffGraphPoint* points, int count);
-void AIL_set_sample_3D_exclusion_falloff(_SAMPLE* sample, const FalloffGraphPoint* points, int count);
+extern "C" void AIL_set_sample_3D_volume_falloff(_SAMPLE* sample, const FalloffGraphPoint* points, int count);
+extern "C" void AIL_set_sample_3D_lowpass_falloff(_SAMPLE* sample, const FalloffGraphPoint* points, int count);
+extern "C" void AIL_set_sample_3D_exclusion_falloff(_SAMPLE* sample, const FalloffGraphPoint* points, int count);
 
 void FalloffGraph_Set(_SAMPLE* sample, int flags, FalloffGraph* graph)
 {

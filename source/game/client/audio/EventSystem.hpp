@@ -2,10 +2,15 @@
 #define GAME_CLIENT_AUDIO_EVENTSYSTEM_HPP
 
 #include "game/core/Handle.hpp"
+#include "vendor/MilesMarker.hpp"
 #include "game/core/PODHandleArray.hpp"
 
 struct _SAMPLE;
+struct _STREAM;
 struct _LISTENER;
+struct _DIG_DRIVER;
+
+const unsigned int EVENT_SYSTEM_MAGIC = 0x45535953;
 
 struct StateVar
 {
@@ -16,7 +21,8 @@ struct StateVar
 class EventSystem
 {
 public:
-    unsigned char m_reserved0[8];
+    unsigned int m_magic;
+    EventSystem* m_next;
     PODHandleArray<Handle> m_sounds;
     PODHandleArray<Handle> m_instances;
     PODHandleArray<StateVar> m_stateVars;
@@ -26,20 +32,38 @@ public:
     Handle m_persists;
     Handle m_limits;
     Handle m_lfos;
-    unsigned char m_reserved1[0x90 - 0x80];
-    _LISTENER* m_listener;
-    unsigned char m_reserved2[0xa0 - 0x94];
+    Handle m_tweens;
+    Handle m_buses;
+    union
+    {
+        _LISTENER* m_listener;
+        _DIG_DRIVER* m_driver;
+    };
+    Handle m_environment;
+    int m_environmentActive;
     int m_soundBytes;
 };
 
 class SoundInstance;
 
+const int SOUND_STATE_PENDING = 1;
+const int SOUND_STATE_PLAYING = 2;
+const int SOUND_STATE_FINISHED = 4;
+
+const unsigned char SOUND_INSTANCE_FLAG_UNNAMED = 1;
+const unsigned char SOUND_INSTANCE_FLAG_EVICTED = 2;
+const unsigned char SOUND_INSTANCE_FLAG_WAITING_FOR_DATA = 4;
+const unsigned char SOUND_INSTANCE_FLAG_WAITING_FOR_STREAM = 8;
+const unsigned char SOUND_INSTANCE_FLAG_SILENT = 0x10;
+const unsigned char SOUND_INSTANCE_FLAG_FAILED = 0x20;
+
 struct SoundInstanceData
 {
-    unsigned char m_reserved0[0x10];
+    unsigned long long m_serial;
+    unsigned long long m_selection;
     unsigned long long m_eventId;
     _SAMPLE* m_sample;
-    unsigned char m_reserved1[4];
+    _STREAM* m_stream;
     EventSystem* m_eventSystem;
     Handle m_self;
     Handle m_source;
@@ -48,15 +72,30 @@ struct SoundInstanceData
     Handle m_ramps;
     Handle m_context;
     Handle m_blend;
-    unsigned char m_reserved3[0x78 - 0x5c];
+    Handle m_preset;
+    Handle m_initBlock;
+    int m_initBlockSize;
+    int m_selectionOffset;
+    int m_nameLength;
     int m_state;
     int m_startTime;
-    unsigned char m_reserved4[0x9c - 0x80];
+    int m_startPosition;
+    int m_startPositionType;
+    int m_loopStart;
+    int m_loopEnd;
+    float m_pitch;
+    float m_gain;
+    int m_delay;
     float m_volume;
-    unsigned char m_reserved5[0xaa - 0xa0];
+    float m_fadeRate;
+    float m_delayRemaining;
+    unsigned short m_markerFlags;
     unsigned char m_priority;
     unsigned char m_flags;
     signed char m_blendIndex;
+    unsigned char m_externalSample;
+    unsigned char m_paused;
+    unsigned char m_reserved0;
 };
 
 const int MAX_BLEND_POINTS = 10;
@@ -84,7 +123,7 @@ struct RampStep
     int m_valueLength;
     float m_duration;
     unsigned char m_target;
-    unsigned char m_reserved0;
+    unsigned char m_global;
     unsigned char m_curve;
 };
 
@@ -96,8 +135,8 @@ struct LfoStep
     int m_centerLength;
     const char* m_amplitude;
     int m_amplitudeLength;
-    const char* m_phase;
-    int m_phaseLength;
+    const char* m_frequency;
+    int m_frequencyLength;
     int m_inverted;
     int m_flip;
     int m_mode;
@@ -123,16 +162,110 @@ struct LimitStep
     int m_nameLength;
 };
 
+struct PlayStep
+{
+    const char* m_sounds;
+    int m_soundsLength;
+    const char* m_preset;
+    int m_presetLength;
+    const char* m_completionEvent;
+    int m_completionEventLength;
+    const char* m_labels;
+    int m_labelsLength;
+    const char* m_loopStartMarker;
+    int m_loopStartMarkerLength;
+    const char* m_loopEndMarker;
+    int m_loopEndMarkerLength;
+    const char* m_positionMarker;
+    int m_positionMarkerLength;
+    const char* m_selector;
+    int m_selectorLength;
+    const char* m_variables;
+    int m_variablesLength;
+    int m_stream;
+    float m_volumeMinimum;
+    float m_volumeMaximum;
+    float m_pitchMinimum;
+    float m_pitchMaximum;
+    float m_fadeTime;
+    unsigned short m_delayMinimum;
+    unsigned short m_delayMaximum;
+    unsigned char m_loadOnDemand;
+    unsigned char m_priority;
+    signed char m_loopCount;
+    unsigned char m_limitPolicy;
+    unsigned char m_modeFlags;
+    unsigned char m_presetPersistent;
+};
+
+struct ControlStep
+{
+    const char* m_labels;
+    int m_labelsLength;
+    const char* m_loopStartMarker;
+    int m_loopStartMarkerLength;
+    const char* m_loopEndMarker;
+    int m_loopEndMarkerLength;
+    const char* m_positionMarker;
+    int m_positionMarkerLength;
+    const char* m_preset;
+    int m_presetLength;
+    float m_fadeTime;
+    unsigned char m_presetPersistent;
+    signed char m_loopCount;
+    unsigned char m_action;
+};
+
+struct EnvironmentStep
+{
+    const char* m_name;
+    int m_nameLength;
+    unsigned char m_enabled;
+};
+
+struct CacheStep
+{
+    const char* m_bank;
+    int m_bankLength;
+    const char** m_names;
+    int m_nameCount;
+};
+
+struct NameStep
+{
+    const char* m_name;
+    int m_nameLength;
+};
+
+struct TweenStep
+{
+    const char* m_name;
+    int m_nameLength;
+    float m_firstTime;
+    float m_secondTime;
+    int m_firstCurve;
+    int m_secondCurve;
+    float m_start;
+    float m_middle;
+    float m_end;
+};
+
 struct EVENT_STEP_INFO
 {
-    unsigned int m_reserved0;
+    unsigned int m_kind;
     union
     {
+        PlayStep m_play;
+        ControlStep m_control;
+        EnvironmentStep m_environment;
+        CacheStep m_cache;
+        NameStep m_name;
         BlendStep m_blend;
         RampStep m_ramp;
         LfoStep m_lfo;
         PersistStep m_persist;
         LimitStep m_limit;
+        TweenStep m_tween;
     } m_data;
 };
 
@@ -141,7 +274,7 @@ struct Ramp;
 int Var_LookupWithContext(EventSystem* eventSystem, Handle handle, const char* name, int flags,
                           void* value);
 
-int FindMarker(EventSystem* eventSystem, SoundInstance* soundInstance, int markerList, const char* markerName,
+int FindMarker(EventSystem* eventSystem, SoundInstance* soundInstance, const MilesMarkerList* markerList, const char* markerName,
                int* markerIndex, int* markerType);
 
 Handle Sound_Load(EventSystem* eventSystem, unsigned long long eventId, const char* name);

@@ -37,6 +37,8 @@ struct _MSSSTRINGC
 
 struct _SAMPLE;
 struct _DIG_DRIVER;
+struct _STREAM;
+struct _RadSoundSystem;
 struct FLT_INSTANCE;
 
 const int SAMPLE_BUFFER_COUNT = 8;
@@ -48,6 +50,17 @@ const int SAMPLE_STAGE_MERGE = 9;
 const int SAMPLE_STAGE_ALL = 11;
 const int DRIVER_BUS_COUNT = 4;
 const int DRIVER_OUTPUT_COUNT = 8;
+const int DRIVER_PROCESSOR_COUNT = 6;
+const int DRIVER_REVERB_POINTER_COUNT = 6;
+const int DRIVER_PROFILE_TIMER_COUNT = 16;
+const int DRIVER_PROFILE_SLOT_COUNT = 11;
+const int SPEAKER_MAXIMUM_COUNT = 8;
+const int SPEAKER_DIRECTION_COUNT = 32;
+const int SPEAKER_PLAIN_COUNT = 9;
+const int SPEAKER_MEMBER_COUNT = 8;
+const int SAMPLE_PATH_POINT_COUNT = 10;
+const int SAMPLE_FALLOFF_POINT_COUNT = 5;
+const int SAMPLE_FALLOFF_GRAPH_COUNT = 4;
 
 typedef int (*FilterPropertyFunc)(unsigned int property, void* before, const void* newValue,
                                   void* after);
@@ -59,19 +72,38 @@ typedef void (*MssFreeFunc)(void* block);
 typedef void* (*FilterOpenDriverFunc)(MssAllocFunc allocator, MssFreeFunc deallocator,
                                       unsigned int reserved, _DIG_DRIVER* driver, void* state);
 typedef void (*FilterCloseDriverFunc)(void* driverState);
-typedef void (*FilterProcessFunc)();
+typedef void (*FilterPremixFunc)(void* driverState);
+typedef int (*FilterPostmixFunc)(void* driverState, void* buffer);
 typedef void* (*FilterOpenSampleFunc)(void* driverState, _SAMPLE* sample, void* state);
 typedef void (*FilterCloseSampleFunc)(void* handle);
+typedef int (*FilterSampleProcessFunc)(void* handle, void* source, void* destination,
+                                       unsigned int count, int channel);
 typedef int (*FilterSamplePropertyFunc)(void* handle, unsigned int property, void* before,
                                         const void* newValue, void* after);
 typedef int (*AsiStreamCallback)(unsigned int user, void* destination, int count, int offset);
 typedef void* (*AsiStreamOpenFunc)(MssAllocFunc allocator, MssFreeFunc deallocator,
                                    unsigned int user, AsiStreamCallback callback,
                                    unsigned int totalSize);
+typedef int (*AsiStreamProcessFunc)(void* stream, void* destination, int size);
+typedef void (*AsiStreamSeekFunc)(void* stream, int offset);
 typedef void (*AsiStreamCloseFunc)(void* stream);
 typedef int (*AsiStreamPropertyFunc)(void* stream, unsigned int property, void* before,
                                      const void* newValue, void* after);
-typedef void (*MixerMergeFunc)();
+typedef void (*MixerMergeFunc)(void* source, unsigned int* fraction, void* sourceEnd,
+                               void** destination, void* destinationEnd, int* left, int* right,
+                               unsigned int step, int leftVolume, int rightVolume,
+                               unsigned int flags);
+typedef void (*DriverFlushFunc)(void* buffer, unsigned int length);
+typedef void (*DriverCopyFunc)(void* source, unsigned int length, void* destination,
+                               unsigned int flags, int suppressSwap);
+typedef void (*DriverMultiChannelCopyFunc)(void* channels, int channelCount, void* destination,
+                                           unsigned int flags, unsigned int frames,
+                                           int stride);
+typedef int (*DriverAdpcmDecodeFunc)(void** source, void** destination, int sourceBytes,
+                                     int destinationBytes, unsigned int flags, void* state);
+typedef void (*DriverFillCallback)(_DIG_DRIVER* driver);
+typedef float (*FalloffFunc)(_SAMPLE* sample, float distance, float rolloff, float minimum,
+                             float maximum);
 
 struct FLT_INSTANCE
 {
@@ -84,11 +116,11 @@ struct FLT_INSTANCE
     FilterShutdownFunc shutdown;
     FilterOpenDriverFunc openDriver;
     FilterCloseDriverFunc closeDriver;
-    FilterProcessFunc premixProcess;
-    FilterProcessFunc postmixProcess;
+    FilterPremixFunc premixProcess;
+    FilterPostmixFunc postmixProcess;
     FilterOpenSampleFunc openSample;
     FilterCloseSampleFunc closeSample;
-    void* sampleProcess;
+    FilterSampleProcessFunc sampleProcess;
     FilterSamplePropertyFunc sampleProperty;
     unsigned char reserved0[0x54 - 0x3c];
     _DIG_DRIVER* driver;
@@ -105,13 +137,17 @@ struct FilterStage
     void* handles[SAMPLE_FILTER_HANDLE_COUNT];
 };
 
-struct DecoderStage
+struct StageHeader
 {
     int active;
     unsigned int provider;
+};
+
+struct ASISTAGE
+{
     AsiStreamOpenFunc open;
-    void* process;
-    void* seek;
+    AsiStreamProcessFunc process;
+    AsiStreamSeekFunc seek;
     AsiStreamCloseFunc close;
     AsiStreamPropertyFunc property;
     unsigned int inputBitRate;
@@ -144,6 +180,10 @@ struct DecoderStage
     void* stream;
 };
 
+struct DecoderStage : StageHeader, ASISTAGE
+{
+};
+
 struct MergeStage
 {
     int active;
@@ -160,63 +200,179 @@ union SampleStage
 
 struct SampleBuffer
 {
-    unsigned char* data;
+    const unsigned char* data;
     int size;
     int position;
     int done;
     int reset;
-    int reserved0;
+    int resetPosition;
+};
+
+struct LOWPASS_INFO
+{
+    int sampleA;
+    int sampleB;
+    int historyA;
+    int historyB;
+    int coefficientA;
+    int coefficientB;
+    int coefficientC;
+    int mode;
 };
 
 struct ChannelState
 {
-    unsigned char reserved0[0x10];
-    int limitA;
-    unsigned char reserved1[0x20 - 0x14];
+    LOWPASS_INFO lowPassInfo;
     int limitB;
-    unsigned char reserved2[4];
-    float busLevel;
+    int pendingCoefficients;
+    float appliedLowPass;
     float lowPass;
 };
 
-struct DriverOutput
+struct _MSS_BB
 {
-    int mode;
-    int reserved0[3];
+    unsigned char* buffer;
+    int bytes;
+    int chans;
+    int speaker;
+};
+
+union ProcessorFunction
+{
+    void* raw;
+    DriverFlushFunc flush;
+    DriverCopyFunc copy;
+    DriverMultiChannelCopyFunc multiChannelCopy;
+    DriverAdpcmDecodeFunc adpcmDecode;
+    MixerMergeFunc merge;
+};
+
+struct DriverProcessor
+{
+    int active;
+    unsigned int provider;
+    ProcessorFunction function;
+};
+
+struct ReverbState
+{
+    float* lines[DRIVER_REVERB_POINTER_COUNT];
+    float state[4];
+    float* starts[DRIVER_REVERB_POINTER_COUNT];
+    float* ends[DRIVER_REVERB_POINTER_COUNT];
+    float coefficients[DRIVER_REVERB_POINTER_COUNT];
+    float lowPass[3];
 };
 
 struct DriverBus
 {
+    int roomType;
     float sendLevel;
-    unsigned char reserved0[0x94 - 4];
+    float returnGain;
+    ReverbState reverb;
+    unsigned char* buffer;
+    unsigned int bufferBytes;
+    unsigned int chunkBytes;
+    int length;
     int update;
     int updateValue;
-    unsigned char reserved1[4];
+    int tail;
     float returnLevel;
-    unsigned char reserved2[0xb8 - 0xa4];
+    float predelay;
+    float damping;
+    int writeOffset;
+    int readOffset;
+};
+
+struct MixTimer
+{
+    unsigned int high;
+    unsigned int low;
+};
+
+struct SpeakerDirection
+{
+    float x;
+    float y;
+    float z;
+    int members[SPEAKER_MEMBER_COUNT];
+    float gains[SPEAKER_MEMBER_COUNT];
+    int memberCount;
+};
+
+struct SpeakerState
+{
+    int active;
+    float listenerPosition[3];
+    float listenerFace[3];
+    float listenerUp[3];
+    float listenerCross[3];
+    float listenerVelocity[3];
+    float rolloffFactor;
+    float dopplerFactor;
+    float distanceFactor;
+    float panExponent;
+    int lowFrequencySpeakers[SPEAKER_MAXIMUM_COUNT];
+    int lowFrequencyCount;
+    int speakerChannels[SPEAKER_PLAIN_COUNT];
+    float speakerDirections[SPEAKER_PLAIN_COUNT][3];
+    int speakerCount;
+    SpeakerDirection directions[SPEAKER_DIRECTION_COUNT];
+    int directionCount;
+    float positions[SPEAKER_MAXIMUM_COUNT][3];
 };
 
 struct _DIG_DRIVER
 {
-    unsigned char reserved2[8];
+    unsigned int magic;
+    int timer;
     int sharedState;
-    unsigned char reserved3[0x14 - 0xc];
+    int fillPeriod;
+    float masterVolume;
     int outputRate;
     unsigned int flags;
-    unsigned char reserved4[0xbec - 0x1c];
+    int activeSamples;
+    unsigned int requestedSpeakerConfig;
+    SpeakerState speakers;
+    float reverbSendA[SPEAKER_MAXIMUM_COUNT];
+    float reverbSendB[SPEAKER_MAXIMUM_COUNT];
+    _RadSoundSystem* output;
+    void* outputMemory;
+    unsigned char reserved3[0xbdc - 0xbd8];
+    int started;
+    int bufferCount;
+    int framesPerBuffer;
+    int hardwareChannels;
     int speakerConfig;
-    unsigned char reserved0[4];
+    _SAMPLE* samples;
     int* sampleStatus;
-    unsigned char reserved1[0xc1c - 0xbf8];
+    int sampleCount;
+    unsigned char reserved1[0xc1c - 0xbfc];
     _SAMPLE* busSamples[DRIVER_BUS_COUNT];
-    unsigned char reserved5[0xc68 - 0xc2c];
-    DriverOutput outputs[DRIVER_OUTPUT_COUNT];
-    unsigned char reserved6[0xcf0 - 0xce8];
+    int busActive[DRIVER_BUS_COUNT];
+    unsigned char* busBuffers[DRIVER_BUS_COUNT];
+    unsigned char reserved5[0xc5c - 0xc4c];
+    unsigned char phase;
+    unsigned char reserved9[3];
+    _MSS_BB outputs[DRIVER_OUTPUT_COUNT];
+    _MSS_BB mix;
     int outputCount;
-    unsigned char reserved7[0xd68 - 0xcf4];
+    int fillBytes;
+    int limiterEnabled;
+    int limiterLevel;
+    int pendingStarts;
+    DriverFillCallback fillCallback;
+    unsigned int fillTimeHigh;
+    unsigned int fillTimeLow;
+    unsigned char reserved7[0xd1c - 0xd10];
+    unsigned char* interleaveBuffer;
+    DriverProcessor processors[DRIVER_PROCESSOR_COUNT];
     FLT_INSTANCE* matrixFilter;
-    unsigned char reserved8[4];
     DriverBus buses[DRIVER_BUS_COUNT];
+    _DIG_DRIVER* next;
+    MixTimer timers[DRIVER_PROFILE_TIMER_COUNT];
+    _SAMPLE* profileSamples[DRIVER_PROFILE_SLOT_COUNT];
+    int profileCounts[DRIVER_PROFILE_SLOT_COUNT];
 };
 
 struct _LISTENER
@@ -229,16 +385,23 @@ struct _LISTENER
 
 typedef void (*AIL_SAMPLE_CALLBACK)(_SAMPLE* sample);
 
+struct FalloffGraphPoint
+{
+    float values[8];
+};
+
 struct _SAMPLE
 {
-    unsigned char reserved5[4];
+    unsigned int magic;
     _DIG_DRIVER* driver;
     int index;
     SampleBuffer buffers[SAMPLE_BUFFER_COUNT];
-    int bufferReset;
-    unsigned char reserved0[0xd4 - 0xd0];
+    unsigned int resampleFraction;
+    int playbackDelay;
     float volume;
-    unsigned char reserved4[0xe4 - 0xd8];
+    unsigned int playedHigh;
+    unsigned int playedLow;
+    unsigned char reserved4[4];
     unsigned int channelBufferCapacity;
     unsigned int channelBufferSize;
     unsigned char* channelBuffer;
@@ -247,13 +410,13 @@ struct _SAMPLE
     int* channelHeader;
     ChannelState* channelStates;
     float** levels;
-    float** levelsB;
-    float** levelsC;
-    float** levelsD;
+    int** levelsB;
+    int** levelsC;
+    int** levelsD;
     float* speakerLevelsA;
     float* speakerScales;
     signed char* channelMap;
-    unsigned char reserved11[4];
+    int lowPassActive;
     int userLevels;
     int bufferCount;
     int lastBuffer;
@@ -261,21 +424,23 @@ struct _SAMPLE
     int starved;
     int bufferRewind;
     int loopState;
-    unsigned char reserved6[0x140 - 0x13c];
+    int loopStart;
     unsigned int loopEnd;
-    unsigned char reserved12[0x150 - 0x144];
+    int loopCount;
+    unsigned int loopStartRequest;
+    unsigned int loopEndRequest;
     unsigned int channelFlags;
     int channelCount;
     int channelMask;
     int playbackRate;
-    unsigned char reserved13[0x164 - 0x160];
+    float playbackRateFactor;
     float volumeCurve;
     float pan;
     float panLevelA;
     float panLevelB;
     float reverbSecond;
     float reverbFirst;
-    unsigned char reserved8[0x180 - 0x17c];
+    float levelD;
     float levelA;
     float levelB;
     float rate;
@@ -284,26 +449,44 @@ struct _SAMPLE
     int reverbBus;
     unsigned int compressorSources;
     unsigned int compressorLink;
-    unsigned char reserved14[0x1a4 - 0x1a0];
+    unsigned int busPeak;
     int reverbDirty;
-    unsigned char reserved9[0x1c6 - 0x1a8];
+    unsigned int peak;
+    int limiterEnabled;
+    int limiterLevel;
+    int endMode;
+    unsigned int startTimeHigh;
+    unsigned int startTimeLow;
+    short fadeSamples;
+    short fadePosition;
+    char fadeEnds;
+    unsigned char phaseMask;
     bool outputToDRC;
     unsigned char reserved7a[0x1c8 - 0x1c7];
     float obstruction;
     float occlusion;
     float exclusion;
     int loopMode;
-    unsigned char reserved7b[0x1dc - 0x1d8];
+    AIL_SAMPLE_CALLBACK startOfBuffer;
     AIL_SAMPLE_CALLBACK endOfBuffer;
     AIL_SAMPLE_CALLBACK endOfSample;
     unsigned char reserved1[0x208 - 0x1e4];
     Handle falloffHandle;
-    unsigned char reserved2[0x22c - 0x210];
+    unsigned int vocRepeatCount;
+    int vocMarker;
+    int vocMarkerFound;
+    _STREAM* stream;
+    unsigned char reserved2[0x228 - 0x220];
+    int adpcmBlockSize;
     int resetA;
     int resetB;
     unsigned char reserved15[0x270 - 0x234];
     int endCounter;
-    unsigned char reserved16[0x288 - 0x274];
+    int startCounter;
+    int sampleEndCounter;
+    int rampLength;
+    int resampleTolerance;
+    int resampleFilter;
     SampleStage stages[SAMPLE_STAGE_COUNT];
     int filterCount;
     int is3D;
@@ -319,15 +502,31 @@ struct _SAMPLE
     float velocityX;
     float velocityY;
     float velocityZ;
-    unsigned char reserved3[0x840 - 0x838];
+    int dopplerActive;
+    float dopplerScale;
     float coneInner;
     float coneOuter;
     float coneOuterVolume;
     int coneEnabled;
-    int falloffMode;
-    unsigned char reserved10[0x864 - 0x854];
+    union
+    {
+        int falloffMode;
+        float maximumDistance;
+    };
+    float minimumDistance;
+    int distancesChanged;
+    int automaticWetAttenuation;
+    float distanceVolume;
     float presetValue;
-    unsigned char reserved17[0xb7c - 0x868];
+    float falloffVolume;
+    float falloffLowPass;
+    float falloffExclusion;
+    _SAMPLE* falloffUser;
+    FalloffFunc falloffFunction;
+    float pathPoints[SAMPLE_PATH_POINT_COUNT][3];
+    int pathPointCount;
+    FalloffGraphPoint falloffPoints[SAMPLE_FALLOFF_GRAPH_COUNT][SAMPLE_FALLOFF_POINT_COUNT];
+    char falloffPointCounts[4];
     float mixLevel0;
     float mixLevel1;
     float mixLevel2;
@@ -335,11 +534,6 @@ struct _SAMPLE
     float mixInput0;
     float mixInput1;
     float mixInput2;
-};
-
-struct FalloffGraphPoint
-{
-    float values[8];
 };
 
 struct FalloffGraph

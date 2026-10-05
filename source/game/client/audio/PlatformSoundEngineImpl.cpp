@@ -5,27 +5,6 @@
 
 #include "platform/wiiu/C4JThreadImpl.hpp"
 
-struct _MILESSOUNDINSTANCEINFO
-{
-    int iSoundIndex;
-    int iSoundSerial;
-    int iSoundBankIndex;
-    int iSoundBankSerial;
-    int iEventIndex;
-    int iEventSerial;
-    _SAMPLE* pSample;
-    _STREAM* pStream;
-    void* pSoundInstance;
-    int iSoundInstanceSize;
-    unsigned int uiType;
-    unsigned int uiPaused;
-    unsigned int uiSampleRate;
-    unsigned int uiLength;
-    unsigned int uiPosition;
-    const char* pName;
-    int iActive;
-};
-
 #include "vendor/MilesRib.hpp"
 
 extern "C" void AXInit();
@@ -35,40 +14,18 @@ extern "C" int BinkADec_RIB_Main(unsigned int uiProvider, int iUpDown, RIB_ALLOC
 
 #include "platform/wiiu/WiiUMilesFileSystem.hpp"
 #include "game/client/audio/FalloffGraph.hpp"
+#include "vendor/MilesApi.hpp"
+#include "vendor/MilesEventExec.hpp"
 
 extern "C" void AIL_startup();
 extern "C" void AIL_shutdown();
 extern "C" const char* AIL_last_error();
-extern "C" void AIL_set_file_callbacks(unsigned int (*pOpen)(const char*, unsigned int*), void (*pClose)(unsigned int), int (*pSeek)(unsigned int, int, unsigned int), int (*pRead)(unsigned int, void*, unsigned int));
-extern "C" unsigned int AIL_output_ax(int iDevice);
-extern "C" _DIG_DRIVER* AIL_open_generic_digital_driver(unsigned int uiFrequency, int iBits, int iChannels, unsigned int uiFlags, unsigned int uiProvider);
-extern "C" void AIL_close_digital_driver(_DIG_DRIVER* pDriver);
-extern "C" void AIL_set_3D_rolloff_factor(_DIG_DRIVER* pDriver, float fRolloffFactor);
-extern "C" void AIL_set_listener_3D_position(_DIG_DRIVER* pDriver, float fX, float fY, float fZ);
-extern "C" void AIL_set_listener_3D_orientation(_DIG_DRIVER* pDriver, float fFaceX, float fFaceY, float fFaceZ, float fUpX, float fUpY, float fUpZ);
-extern "C" void AIL_register_falloff_function_callback(_SAMPLE* pSample, float (*pCallback)(_SAMPLE*, float, float, float, float));
-extern "C" void AIL_set_sample_is_3D(_SAMPLE* pSample, int iIs3D);
-extern "C" void AIL_set_sample_3D_distances(_SAMPLE* pSample, float fMaxDistance, float fMinDistance, int iAutoWetAttenuation);
-extern "C" void AIL_set_sample_3D_position(_SAMPLE* pSample, float fX, float fY, float fZ);
-extern "C" void AIL_set_sample_playback_rate_factor(_SAMPLE* pSample, float fFactor);
-extern "C" void AIL_set_sample_volume_levels(_SAMPLE* pSample, float fLeftLevel, float fRightLevel);
-extern "C" _STREAM* AIL_open_stream(_DIG_DRIVER* pDriver, const char* pFileName, int iStreamMem);
-extern "C" void AIL_start_stream(_STREAM* pStream);
-extern "C" void AIL_pause_stream(_STREAM* pStream, int iOnOff);
-extern "C" void AIL_close_stream(_STREAM* pStream);
-extern "C" int AIL_stream_status(_STREAM* pStream);
-extern "C" _SAMPLE* AIL_stream_sample_handle(_STREAM* pStream);
+extern "C" int AIL_set_sample_is_3D(_SAMPLE* pSample, int iIs3D);
 extern "C" unsigned int AIL_enqueue_event_start();
 extern "C" unsigned int AIL_enqueue_event_buffer(unsigned int* puiQueue, void* pData, int iDataSize, int iFlags);
 extern "C" void AIL_enqueue_event_end_named(unsigned int uiQueue, const char* pEventName);
 
 extern "C" void MilesSetEventErrorCallback(void (*pCallback)(long long, const char*));
-extern "C" int MilesStartupEventSystem(_DIG_DRIVER* pDriver, int iEventMemory, int iFlags, int iStreamMemory);
-extern "C" SoundBank* MilesAddSoundBank(const char* pFileName, int iFlags);
-extern "C" void MilesEnqueueEventByName(const char* pEventName);
-extern "C" void MilesBeginEventQueueProcessing();
-extern "C" void MilesCompleteEventQueueProcessing();
-extern "C" int MilesEnumerateSoundInstances(SoundBank* pSoundBank, unsigned int* puiNext, unsigned int uiTypeMask, const char* pLabels, int iEventIndex, int iEventSerial, _MILESSOUNDINSTANCEINFO* pInfo);
 
 static char szSoundPath[] = "WiiU/Sound/";
 
@@ -133,7 +90,7 @@ float PlatformSoundEngineImpl::custom_falloff_function(_SAMPLE* pSample, float f
 void PlatformSoundEngineImpl::init(char* pSoundBankPath, SoundBankLoadedCallback pSoundBankLoaded)
 {
     C4JThreadImpl* pAXInitThread;
-    unsigned int uiProvider;
+    RADSS_OPEN_DRIVER_CALLBACK pProvider;
     char szSoundBankFile[256];
 
     RIB_load_static_provider_library(BinkADec_RIB_Main, "BinkADec");
@@ -149,9 +106,9 @@ void PlatformSoundEngineImpl::init(char* pSoundBankPath, SoundBankLoadedCallback
     AIL_set_file_callbacks(file_open_callback, file_close_callback, file_seek_callback, file_read_callback);
     AIL_startup();
 
-    uiProvider = AIL_output_ax(3);
+    pProvider = AIL_output_ax(3);
 
-    m_pDigitalDriver = AIL_open_generic_digital_driver(32000, 16, 128, 0, uiProvider);
+    m_pDigitalDriver = AIL_open_generic_digital_driver(32000, 16, 128, 0, pProvider);
 
     if (m_pDigitalDriver == NULL)
     {
@@ -187,7 +144,7 @@ void PlatformSoundEngineImpl::init(char* pSoundBankPath, SoundBankLoadedCallback
 
 void PlatformSoundEngineImpl::tick(void* pUserData, float fListenerX, float fListenerY, float fListenerZ, float fListenerForwardX, float fListenerForwardY, float fListenerForwardZ, ConfigureSoundCallback pConfigureSound, UpdateSoundCallback pUpdateSound, RouteToDRCCallback pRouteToDRC, bool* pbSystemMusicPlaying)
 {
-    _MILESSOUNDINSTANCEINFO info;
+    SoundInstanceInfo info;
     unsigned int uiNext;
 
     *pbSystemMusicPlaying = false;
@@ -201,9 +158,9 @@ void PlatformSoundEngineImpl::tick(void* pUserData, float fListenerX, float fLis
 
     while (MilesEnumerateSoundInstances(NULL, &uiNext, 0, NULL, 0, 0, &info) != 0)
     {
-        info.pSample->outputToDRC = pRouteToDRC(pUserData, info.pSoundInstance);
+        info.m_sample->outputToDRC = pRouteToDRC(pUserData, const_cast<void*>(info.m_selectionData));
 
-        if (info.uiType == 1)
+        if (info.m_state == 1)
         {
             bool bIs3D;
             float fMinDistance;
@@ -213,31 +170,31 @@ void PlatformSoundEngineImpl::tick(void* pUserData, float fListenerX, float fLis
             float fZ;
             float fVolume;
 
-            pConfigureSound(pUserData, info.pSoundInstance, &bIs3D, &fMinDistance, &fPlaybackRate, &fX, &fY, &fZ, &fVolume);
+            pConfigureSound(pUserData, const_cast<void*>(info.m_selectionData), &bIs3D, &fMinDistance, &fPlaybackRate, &fX, &fY, &fZ, &fVolume);
 
-            AIL_register_falloff_function_callback(info.pSample, custom_falloff_function);
+            AIL_register_falloff_function_callback(info.m_sample, custom_falloff_function);
 
             if (fPlaybackRate != 0.0f)
             {
-                AIL_set_sample_playback_rate_factor(info.pSample, fPlaybackRate);
+                AIL_set_sample_playback_rate_factor(info.m_sample, fPlaybackRate);
             }
 
             if (bIs3D)
             {
-                AIL_set_sample_is_3D(info.pSample, 1);
-                AIL_set_sample_3D_distances(info.pSample, fMinDistance, 1.0f, 0);
-                AIL_set_sample_3D_position(info.pSample, fX, fY, fZ);
+                AIL_set_sample_is_3D(info.m_sample, 1);
+                AIL_set_sample_3D_distances(info.m_sample, fMinDistance, 1.0f, 0);
+                AIL_set_sample_3D_position(info.m_sample, fX, fY, fZ);
             }
             else
             {
-                AIL_set_sample_is_3D(info.pSample, 0);
+                AIL_set_sample_is_3D(info.m_sample, 0);
             }
 
-            AIL_set_sample_volume_levels(info.pSample, fVolume, fVolume);
+            AIL_set_sample_volume_levels(info.m_sample, fVolume, fVolume);
 
-            pUpdateSound(pUserData, info.pSoundInstance, &bIs3D, 0, &fX, &fY, &fZ, &fVolume);
+            pUpdateSound(pUserData, const_cast<void*>(info.m_selectionData), &bIs3D, 0, &fX, &fY, &fZ, &fVolume);
         }
-        else if (info.uiType == 4)
+        else if (info.m_state == 4)
         {
             bool bIs3D;
             float fX;
@@ -245,7 +202,7 @@ void PlatformSoundEngineImpl::tick(void* pUserData, float fListenerX, float fLis
             float fZ;
             float fVolume;
 
-            pUpdateSound(pUserData, info.pSoundInstance, &bIs3D, 2, &fX, &fY, &fZ, &fVolume);
+            pUpdateSound(pUserData, const_cast<void*>(info.m_selectionData), &bIs3D, 2, &fX, &fY, &fZ, &fVolume);
         }
         else
         {
@@ -255,14 +212,14 @@ void PlatformSoundEngineImpl::tick(void* pUserData, float fListenerX, float fLis
             float fZ;
             float fVolume;
 
-            pUpdateSound(pUserData, info.pSoundInstance, &bIs3D, 1, &fX, &fY, &fZ, &fVolume);
+            pUpdateSound(pUserData, const_cast<void*>(info.m_selectionData), &bIs3D, 1, &fX, &fY, &fZ, &fVolume);
 
             if (bIs3D)
             {
-                AIL_set_sample_3D_position(info.pSample, fX, fY, fZ);
+                AIL_set_sample_3D_position(info.m_sample, fX, fY, fZ);
             }
 
-            AIL_set_sample_volume_levels(info.pSample, fVolume, fVolume);
+            AIL_set_sample_volume_levels(info.m_sample, fVolume, fVolume);
         }
     }
 

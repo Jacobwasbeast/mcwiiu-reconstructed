@@ -1,5 +1,7 @@
 #include "game/client/audio/EventSystem.hpp"
+#include "vendor/MilesMarker.hpp"
 #include "vendor/MilesEventError.hpp"
+#include "vendor/MilesEventExec.hpp"
 
 #include "game/client/audio/SoundInstance.hpp"
 #include "game/core/Handle.hpp"
@@ -17,13 +19,6 @@
 
 namespace
 {
-const int SOUND_LOAD_SLOT_COUNT = 4;
-const int SOUND_ENTRY_SIZE = 0x3c;
-const int SOUND_EXTENSION_LIMIT = 8;
-const int RAMP_NAME_SIZE = 0x40;
-const int RAMP_LABELS_SIZE = 0x100;
-const int RAMP_VALUE_SIZE = 0x40;
-const int RAMP_SIZE = 0x1ac;
 const int PERSIST_HEADER_SIZE = 0x28;
 const int LIMIT_LIST_HEADER_SIZE = 0x1d;
 const int LIMIT_ENTRY_HEADER_SIZE = 0x19;
@@ -73,8 +68,6 @@ const char NO_PROVIDER_ERROR[] =
     "Couldn't find provider for this file type -- check your AIL_set_redist_directory() call.";
 const char MILES_EVENT_SUPPORT_FILE[] = "C:\\devel\\projects\\mss\\src\\sdk\\shared\\mileseventsupport.cpp";
 
-const ErrorType ERROR_TYPE_NO_PROVIDER = static_cast<ErrorType>(2);
-const ErrorType ERROR_TYPE_SOUND_NOT_FOUND = static_cast<ErrorType>(6);
 
 enum RampTarget
 {
@@ -90,20 +83,6 @@ struct SoundSourceData
     float m_volume;
 };
 
-struct EventSystemVariable
-{
-    Handle m_parent;
-    Handle m_self;
-    union
-    {
-        int m_intValue;
-        float m_floatValue;
-    } m_value;
-    int m_isFloat;
-    Handle m_curve;
-    char m_name[1];
-};
-
 struct VariableCurve
 {
     float m_start;
@@ -114,96 +93,17 @@ struct VariableCurve
     GraphPoint m_points[1];
 };
 
-struct SoundEntry
-{
-    Handle m_name;
-    unsigned int m_provider;
-    void* m_data;
-    unsigned int m_nameLength;
-    int m_size;
-    unsigned char m_reserved0[4];
-    int m_refCount;
-    int m_loadSlot;
-    int m_auditionId;
-    int m_param;
-    unsigned char m_reserved1[4];
-    int m_extraParam;
-    char m_extension[SOUND_EXTENSION_LIMIT];
-};
-
-struct PersistNode
-{
-    Handle m_next;
-    Handle m_self;
-    Handle m_preset;
-    Handle m_labels;
-    int m_active;
-    char m_name[1];
-};
-
-struct LimitList
-{
-    Handle m_next;
-    Handle m_self;
-    Handle m_entries;
-    char m_name[1];
-};
-
-struct LimitEntry
-{
-    Handle m_next;
-    Handle m_self;
-    short m_limit;
-    short m_count;
-    char m_query[1];
-};
-
-struct LfoNode
-{
-    Handle m_next;
-    Handle m_self;
-    float m_center;
-    float m_amplitude;
-    float m_phase;
-    Handle m_centerText;
-    Handle m_amplitudeText;
-    Handle m_phaseText;
-    unsigned char m_reserved0[4];
-    unsigned char m_inverted;
-    unsigned char m_mode;
-    unsigned char m_flip;
-    unsigned char m_offset;
-    char m_name[1];
-};
-
 }
-
-struct Ramp
-{
-    Handle m_next;
-    Handle m_self;
-    float m_elapsed;
-    float m_duration;
-    float m_startValue;
-    float m_cachedValue;
-    int m_cacheValid;
-    int m_curve;
-    int m_target;
-    char m_value[RAMP_VALUE_SIZE];
-    char m_name[RAMP_NAME_SIZE];
-    char m_labels[RAMP_LABELS_SIZE];
-};
 
 int DoLabelsMatchQuery(const char* labels, const char* query);
 
-extern "C" int AIL_find_marker_in_list(int markerList, const char* markerName, int* markerType);
 extern int strtoi(const char* value, const char** end);
 
 MilesAsyncRead g_soundLoadRequests[SOUND_LOAD_SLOT_COUNT];
 int g_soundLoadBusy[SOUND_LOAD_SLOT_COUNT];
 int g_soundLoadCancelled[SOUND_LOAD_SLOT_COUNT];
 EventSystem* g_soundLoadOwners[SOUND_LOAD_SLOT_COUNT];
-static int sNextAuditionId = FIRST_AUDITION_ID;
+int g_nextAuditionId = FIRST_AUDITION_ID;
 
 int strtoi(const char* value, const char** end)
 {
@@ -264,7 +164,7 @@ int Var_LookupWithContext(EventSystem* eventSystem, Handle handle, const char* n
                 return 1;
             }
 
-            variable = static_cast<EventSystemVariable*>(Handle_Get(variable->m_parent));
+            variable = static_cast<EventSystemVariable*>(Handle_Get(variable->m_next));
         }
 
         if (context.index == eventSystem->m_variables.index &&
@@ -278,7 +178,7 @@ int Var_LookupWithContext(EventSystem* eventSystem, Handle handle, const char* n
     }
 }
 
-int FindMarker(EventSystem* eventSystem, SoundInstance* soundInstance, int markerList, const char* markerName,
+int FindMarker(EventSystem* eventSystem, SoundInstance* soundInstance, const MilesMarkerList* markerList, const char* markerName,
                int* markerIndex, int* markerType)
 {
     if (AIL_stricmp(markerName, "SampleStart") == 0)
@@ -333,14 +233,15 @@ int FindMarker(EventSystem* eventSystem, SoundInstance* soundInstance, int marke
         return 1;
     }
 
-    int foundIndex = AIL_find_marker_in_list(markerList, markerName, &variableType);
-    if (foundIndex == -1)
+    unsigned int markerKind = 0;
+    unsigned int foundIndex = AIL_find_marker_in_list(markerList, markerName, &markerKind);
+    if (foundIndex == 0xffffffff)
     {
         return 0;
     }
 
     *markerIndex = foundIndex;
-    *markerType = variableType != 0 ? 4 : 1;
+    *markerType = markerKind != 0 ? 4 : 1;
     return 1;
 }
 
@@ -362,7 +263,7 @@ Handle Sound_Load(EventSystem* eventSystem, unsigned long long eventId, const ch
     }
 
     Handle sound = Handle_AllocateInfo(SOUND_ENTRY_SIZE, MILES_EVENT_SUPPORT_FILE, 0x2a3);
-    SoundEntry* entry = static_cast<SoundEntry*>(Handle_Get(sound));
+    LoadedSound* entry = static_cast<LoadedSound*>(Handle_Get(sound));
     if (entry == NULL)
     {
         ErrorHandler(ERROR_TYPE_OUT_OF_EVENT_SYSTEM_MEMORY, eventId, name);
@@ -391,7 +292,7 @@ Handle Sound_Load(EventSystem* eventSystem, unsigned long long eventId, const ch
         return Handle();
     }
 
-    entry->m_param = info.m_param;
+    entry->m_maxInstances = info.m_maxInstances;
     entry->m_extraParam = info.m_extraParam;
     entry->m_nameLength = strlen(name);
     entry->m_name = Handle_AllocateInfo(entry->m_nameLength + 1, MILES_EVENT_SUPPORT_FILE, 0x2c6);
@@ -404,7 +305,7 @@ Handle Sound_Load(EventSystem* eventSystem, unsigned long long eventId, const ch
         return Handle();
     }
 
-    entry->m_auditionId = sNextAuditionId++;
+    entry->m_auditionId = g_nextAuditionId++;
     Audition_AsyncQueued(eventId, entry->m_auditionId, name);
     strcpy(nameCopy, name);
     entry->m_refCount = 1;
@@ -456,7 +357,7 @@ Handle Sound_Load(EventSystem* eventSystem, unsigned long long eventId, const ch
     int count = eventSystem->m_sounds.Count();
     for (int i = 0; i < count - 1; ++i)
     {
-        SoundEntry* other = static_cast<SoundEntry*>(Handle_Get(eventSystem->m_sounds[i]));
+        LoadedSound* other = static_cast<LoadedSound*>(Handle_Get(eventSystem->m_sounds[i]));
         if (other->m_loadSlot == NO_LOAD_SLOT)
         {
             Handle swapped = eventSystem->m_sounds[i];
@@ -471,7 +372,7 @@ Handle Sound_Load(EventSystem* eventSystem, unsigned long long eventId, const ch
 
 void Sound_Free(EventSystem* eventSystem, Handle sound)
 {
-    SoundEntry* entry = static_cast<SoundEntry*>(Handle_Get(sound));
+    LoadedSound* entry = static_cast<LoadedSound*>(Handle_Get(sound));
     if (entry == NULL)
     {
         return;
@@ -775,18 +676,18 @@ int LFO_Add(EventSystem* eventSystem, const EVENT_STEP_INFO* step)
         lfo->m_amplitude = atof_with_len(source.m_amplitude, 0);
     }
 
-    if (OnlyNum(source.m_phase) == 0)
+    if (OnlyNum(source.m_frequency) == 0)
     {
-        lfo->m_phaseText = Handle_AllocateInfo(source.m_phaseLength + 1, MILES_EVENT_SUPPORT_FILE, 0x1f6);
-        char* text = static_cast<char*>(Handle_Get(lfo->m_phaseText));
+        lfo->m_frequencyText = Handle_AllocateInfo(source.m_frequencyLength + 1, MILES_EVENT_SUPPORT_FILE, 0x1f6);
+        char* text = static_cast<char*>(Handle_Get(lfo->m_frequencyText));
         if (text != NULL)
         {
-            memcpy(text, source.m_phase, source.m_phaseLength + 1);
+            memcpy(text, source.m_frequency, source.m_frequencyLength + 1);
         }
     }
     else
     {
-        lfo->m_phase = atof_with_len(source.m_phase, 0);
+        lfo->m_frequency = atof_with_len(source.m_frequency, 0);
     }
 
     lfo->m_inverted = source.m_inverted;
@@ -1108,7 +1009,7 @@ void Var_SetInstance(Handle* variables, const char* name, void* value, int isFlo
     EventSystemVariable* variable = static_cast<EventSystemVariable*>(Handle_Get(*variables));
     while (variable != NULL && AIL_stricmp(variable->m_name, name) != 0)
     {
-        variable = static_cast<EventSystemVariable*>(Handle_Get(variable->m_parent));
+        variable = static_cast<EventSystemVariable*>(Handle_Get(variable->m_next));
     }
 
     if (variable == NULL)
@@ -1117,7 +1018,7 @@ void Var_SetInstance(Handle* variables, const char* name, void* value, int isFlo
         variable = static_cast<EventSystemVariable*>(Handle_Get(self));
         if (variable != NULL)
         {
-            variable->m_parent = *variables;
+            variable->m_next = *variables;
             *variables = self;
             if (isFloat == 0)
             {
