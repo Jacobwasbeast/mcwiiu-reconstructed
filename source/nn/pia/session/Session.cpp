@@ -219,8 +219,8 @@ bool Session::UpdateStationIdToBecomeHost()
 
 void Session::CheckStatusAtChangeMeshState()
 {
-    const unsigned int result = m_sessionStatusCheckJob->CheckSessionStatus4JointSession();
-    if ((result >> 24) != 5)
+    const common::Job::ExecuteResult result = m_sessionStatusCheckJob->CheckSessionStatus4JointSession();
+    if (result.m_kind != common::Job::cExecuteKindNextStep)
         m_sessionStatusCheckJob->Reset(false);
 }
 

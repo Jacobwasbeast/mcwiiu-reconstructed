@@ -17,17 +17,17 @@ public:
     bool Startup(StationIndex stationIndex, unsigned int generation, unsigned int reportSerial);
     void UpdateConnectionReport(StationIndex stationIndex, const unsigned char* report,
                                 unsigned int size);
-    unsigned int WaitAllDirectConnectionReport();
-    unsigned int SendRelayRouteDirections();
+    ExecuteResult WaitAllDirectConnectionReport();
+    ExecuteResult SendRelayRouteDirections();
     void Cleanup();
     void PrepareForBecomingNewHost();
 
-    void setStep(unsigned int (RelayRouteManageJob::*function)(), const char* name)
+    void setStep(ExecuteResult (RelayRouteManageJob::*function)(), const char* name)
     {
         union
         {
-            unsigned int (RelayRouteManageJob::*derived)();
-            unsigned int (common::StepSequenceJob::*base)();
+            ExecuteResult (RelayRouteManageJob::*derived)();
+            ExecuteResult (common::StepSequenceJob::*base)();
         } step;
         step.derived = function;
         m_currentStep.m_function = step.base;

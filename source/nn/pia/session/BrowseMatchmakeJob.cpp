@@ -56,12 +56,12 @@ Result BrowseMatchmakeJob::Startup(common::CallContext* callerContext,
     return 0;
 }
 
-unsigned int BrowseMatchmakeJob::CompleteProcess()
+BrowseMatchmakeJob::ExecuteResult BrowseMatchmakeJob::CompleteProcess()
 {
     Result result = 0;
     m_callContext->SignalSuccess(result);
     m_callContext = 0;
-    return common::Job::cExecuteResultFinished;
+    return MakeExecuteResult(cExecuteKindFinished);
 }
 
 void BrowseMatchmakeJob::Cleanup()

@@ -73,6 +73,7 @@ public:
     void SetWaitingLeaveRequestJob(common::StepSequenceJob* job) { m_waitingLeaveRequestJob = job; }
     void SetWaitingLeaveResponseJob(common::StepSequenceJob* job);
 
+    unsigned int GetUnknown24() const { return m_unknown24; }
     unsigned int GetJoinRequestDataSize() const;
     void MakeJoinRequestData(unsigned char* buffer);
     unsigned char GetSystemMessagePartitionNum(unsigned char messageType,

@@ -102,7 +102,7 @@ bool ProcessJoinRequestJob::Startup()
     return true;
 }
 
-unsigned int ProcessJoinRequestJob::InitialStep()
+ProcessJoinRequestJob::ExecuteResult ProcessJoinRequestJob::InitialStep()
 {
     m_unknown4c = 0;
     for (unsigned int part = 0; part < cResponsePartMax; ++part)
@@ -112,10 +112,10 @@ unsigned int ProcessJoinRequestJob::InitialStep()
     setStep(&ProcessJoinRequestJob::CheckApprovalJoin, "ProcessJoinRequestJob::CheckApprovalJoin");
     m_stationIndex = static_cast<StationIndex>(cStationIndexInvalid);
     m_denyReason = cDenyReasonNone;
-    return cExecuteResultSuspend;
+    return MakeExecuteResult(cExecuteKindSuspend);
 }
 
-unsigned int ProcessJoinRequestJob::CheckApprovalJoin()
+ProcessJoinRequestJob::ExecuteResult ProcessJoinRequestJob::CheckApprovalJoin()
 {
     m_joiningStationAddress.Trace(cTraceStationLevel);
     m_unknown78 = true;
@@ -123,24 +123,24 @@ unsigned int ProcessJoinRequestJob::CheckApprovalJoin()
     if (station == 0)
     {
         setStep(&ProcessJoinRequestJob::InitialStep, "ProcessJoinRequestJob::InitialStep");
-        return cExecuteResultContinue;
+        return MakeExecuteResult(cExecuteKindContinue);
     }
     if (station->m_field20 != cConnectedStationState)
     {
         setStep(&ProcessJoinRequestJob::InitialStep, "ProcessJoinRequestJob::InitialStep");
-        return cExecuteResultContinue;
+        return MakeExecuteResult(cExecuteKindContinue);
     }
     Result approval = g_piaMesh->CheckApprovalJoin(station);
     if (approval != cApprovedResult)
     {
         m_denyReason = static_cast<unsigned char>(approval.m_code);
         setStep(&ProcessJoinRequestJob::SendDenyingJoinResponse, "ProcessJoinRequestJob::SendDenyingJoinResponse");
-        return cExecuteResultContinue;
+        return MakeExecuteResult(cExecuteKindContinue);
     }
     if (g_piaMesh->m_joiningMeshApprovalCallback == 0)
     {
         setStep(&ProcessJoinRequestJob::SendJoinResponse, "ProcessJoinRequestJob::SendJoinResponse");
-        return cExecuteResultContinue;
+        return MakeExecuteResult(cExecuteKindContinue);
     }
     {
         transport::IdentificationInfo identificationInfo;
@@ -149,7 +149,7 @@ unsigned int ProcessJoinRequestJob::CheckApprovalJoin()
         if (identificationResult != 0)
         {
             setStep(&ProcessJoinRequestJob::InitialStep, "ProcessJoinRequestJob::InitialStep");
-            return cExecuteResultContinue;
+            return MakeExecuteResult(cExecuteKindContinue);
         }
         if (!g_piaMesh->m_joiningMeshApprovalCallback(&identificationInfo.m_field00))
         {
@@ -157,46 +157,46 @@ unsigned int ProcessJoinRequestJob::CheckApprovalJoin()
             s_refusedJoinCount = s_refusedJoinCount == cRefusedJoinCountWrap ? 1 : s_refusedJoinCount + 1;
             setStep(&ProcessJoinRequestJob::SendDenyingJoinResponse,
                     "ProcessJoinRequestJob::SendDenyingJoinResponse");
-            return cExecuteResultContinue;
+            return MakeExecuteResult(cExecuteKindContinue);
         }
     }
     setStep(&ProcessJoinRequestJob::SendJoinResponse, "ProcessJoinRequestJob::SendJoinResponse");
-    return cExecuteResultContinue;
+    return MakeExecuteResult(cExecuteKindContinue);
 }
 
-unsigned int ProcessJoinRequestJob::SendDenyingJoinResponse()
+ProcessJoinRequestJob::ExecuteResult ProcessJoinRequestJob::SendDenyingJoinResponse()
 {
     if (transport::g_piaStationManager->m_localStation == 0)
     {
         setStep(&ProcessJoinRequestJob::InitialStep, "ProcessJoinRequestJob::InitialStep");
-        return cExecuteResultContinue;
+        return MakeExecuteResult(cExecuteKindContinue);
     }
     g_piaMesh->GetMeshProtocol()->SendDenyingJoinResponse(m_joiningStationAddress, m_denyReason);
     transport::Station* station = transport::g_piaStationManager->GetStation(m_joiningStationAddress);
     if (station != 0)
         station->m_field20 = cStationState6;
     setStep(&ProcessJoinRequestJob::InitialStep, "ProcessJoinRequestJob::InitialStep");
-    return cExecuteResultContinue;
+    return MakeExecuteResult(cExecuteKindContinue);
 }
 
-unsigned int ProcessJoinRequestJob::SendJoinResponse()
+ProcessJoinRequestJob::ExecuteResult ProcessJoinRequestJob::SendJoinResponse()
 {
     if (transport::g_piaStationManager->m_localStation == 0)
     {
         setStep(&ProcessJoinRequestJob::InitialStep, "ProcessJoinRequestJob::InitialStep");
-        return cExecuteResultContinue;
+        return MakeExecuteResult(cExecuteKindContinue);
     }
     transport::Station* station = transport::g_piaStationManager->GetStation(m_joiningStationAddress);
     if (station == 0)
     {
         setStep(&ProcessJoinRequestJob::InitialStep, "ProcessJoinRequestJob::InitialStep");
-        return cExecuteResultContinue;
+        return MakeExecuteResult(cExecuteKindContinue);
     }
     m_stationIndex = g_piaMesh->GetUsableStationIndex();
     if (m_stationIndex == cStationIndexInvalid)
     {
         setStep(&ProcessJoinRequestJob::SendDenyingJoinResponse, "ProcessJoinRequestJob::SendDenyingJoinResponse");
-        return cExecuteResultContinue;
+        return MakeExecuteResult(cExecuteKindContinue);
     }
     transport::Station* staleStations[transport::StationManager::cStationNumMax] = {};
     unsigned short staleCount = 0;
@@ -271,7 +271,7 @@ unsigned int ProcessJoinRequestJob::SendJoinResponse()
     if (partCount < 1 || partCount > cResponsePartMax)
     {
         setStep(&ProcessJoinRequestJob::InitialStep, "ProcessJoinRequestJob::InitialStep");
-        return cExecuteResultContinue;
+        return MakeExecuteResult(cExecuteKindContinue);
     }
     for (unsigned char part = 0; part < partCount; ++part)
     {
@@ -283,16 +283,16 @@ unsigned int ProcessJoinRequestJob::SendJoinResponse()
             for (unsigned int stopped = part; stopped != 0; --stopped)
                 transport::g_piaResendingMessageManager->StopResending(m_responseAckIds[stopped - 1]);
             setStep(&ProcessJoinRequestJob::InitialStep, "ProcessJoinRequestJob::InitialStep");
-            return cExecuteResultContinue;
+            return MakeExecuteResult(cExecuteKindContinue);
         }
     }
     for (unsigned int part = partCount; part < cResponsePartMax; ++part)
         m_responseAckIds[part] = 0;
     setStep(&ProcessJoinRequestJob::WaitResponseAck, "ProcessJoinRequestJob::WaitResponseAck");
-    return cExecuteResultNextStep;
+    return MakeExecuteResult(cExecuteKindNextStep);
 }
 
-unsigned int ProcessJoinRequestJob::WaitResponseAck()
+ProcessJoinRequestJob::ExecuteResult ProcessJoinRequestJob::WaitResponseAck()
 {
     unsigned int resending = 0;
     for (unsigned int part = 0; part < cResponsePartMax; ++part)
@@ -302,7 +302,7 @@ unsigned int ProcessJoinRequestJob::WaitResponseAck()
         common::Time now;
         now.SetNow();
         if (!(m_deadline <= now) && !m_joinCancelRequested)
-            return cExecuteResultNextStep;
+            return MakeExecuteResult(cExecuteKindNextStep);
         for (unsigned int part = 0; part < cResponsePartMax; ++part)
         {
             transport::g_piaResendingMessageManager->StopResending(m_responseAckIds[part]);
@@ -310,13 +310,13 @@ unsigned int ProcessJoinRequestJob::WaitResponseAck()
         }
         m_deadline.m_tick = 0;
         setStep(&ProcessJoinRequestJob::InitialStep, "ProcessJoinRequestJob::InitialStep");
-        return cExecuteResultContinue;
+        return MakeExecuteResult(cExecuteKindContinue);
     }
     setStep(&ProcessJoinRequestJob::JoinSucceeded, "ProcessJoinRequestJob::JoinSucceeded");
-    return cExecuteResultContinue;
+    return MakeExecuteResult(cExecuteKindContinue);
 }
 
-unsigned int ProcessJoinRequestJob::JoinSucceeded()
+ProcessJoinRequestJob::ExecuteResult ProcessJoinRequestJob::JoinSucceeded()
 {
     if (!m_joinCancelRequested)
     {
@@ -324,7 +324,7 @@ unsigned int ProcessJoinRequestJob::JoinSucceeded()
         g_piaMesh->GetMeshProtocol()->SendUpdateMesh(true, 1);
     }
     setStep(&ProcessJoinRequestJob::InitialStep, "ProcessJoinRequestJob::InitialStep");
-    return cExecuteResultContinue;
+    return MakeExecuteResult(cExecuteKindContinue);
 }
 
 void ProcessJoinRequestJob::SetJoiningStationData(const common::StationAddress& stationAddress)

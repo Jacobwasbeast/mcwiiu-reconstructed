@@ -23,20 +23,20 @@ public:
     virtual ~DestroyMeshJob();
     bool Startup(common::CallContext* callContext, bool systemDestroy);
     bool AssociateSystemWith(common::CallContext* callContext);
-    unsigned int SendDestroyMesh();
-    unsigned int WaitDestroyResponse();
+    ExecuteResult SendDestroyMesh();
+    ExecuteResult WaitDestroyResponse();
     void CleanupStatus();
-    unsigned int CleanupMesh();
+    ExecuteResult CleanupMesh();
     void ReceiveDestroyResponse(StationIndex stationIndex);
     void Cleanup();
     virtual void Trace(unsigned long long value) const;
 
-    void setStep(unsigned int (DestroyMeshJob::*function)(), const char* name)
+    void setStep(ExecuteResult (DestroyMeshJob::*function)(), const char* name)
     {
         union
         {
-            unsigned int (DestroyMeshJob::*derived)();
-            unsigned int (common::StepSequenceJob::*base)();
+            ExecuteResult (DestroyMeshJob::*derived)();
+            ExecuteResult (common::StepSequenceJob::*base)();
         } step;
         step.derived = function;
         m_currentStep.m_function = step.base;

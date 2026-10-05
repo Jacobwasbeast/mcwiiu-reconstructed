@@ -33,19 +33,19 @@ Result ClearMatchmakeSystemPasswordJob::Startup(common::CallContext* callerConte
     return 0;
 }
 
-unsigned int ClearMatchmakeSystemPasswordJob::CompleteProcess()
+ClearMatchmakeSystemPasswordJob::ExecuteResult ClearMatchmakeSystemPasswordJob::CompleteProcess()
 {
     m_callerContext->SignalSuccess(0);
     m_callerContext = 0;
-    return common::Job::cExecuteResultFinished;
+    return MakeExecuteResult(cExecuteKindFinished);
 }
 
-unsigned int ClearMatchmakeSystemPasswordJob::FailureProcess()
+ClearMatchmakeSystemPasswordJob::ExecuteResult ClearMatchmakeSystemPasswordJob::FailureProcess()
 {
     if (m_callerContext->m_result == static_cast<Result>(0x8c56))
         g_piaSession->ChangeStatusToDisconnectedSession();
     m_callerContext = 0;
-    return common::Job::cExecuteResultFinished;
+    return MakeExecuteResult(cExecuteKindFinished);
 }
 
 void ClearMatchmakeSystemPasswordJob::Cleanup()

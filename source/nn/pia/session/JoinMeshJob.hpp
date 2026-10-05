@@ -20,31 +20,31 @@ public:
     JoinMeshJob();
     virtual ~JoinMeshJob();
     bool Startup(const transport::StationConnectionInfo&, common::CallContext*);
-    unsigned int SetupLocalPlayerInfo();
-    unsigned int SetupLocalStation();
+    ExecuteResult SetupLocalPlayerInfo();
+    ExecuteResult SetupLocalStation();
     void CleanupStations();
     void CalcProcessingTimeOfJoin() const;
     void CheckRelayConnectionForMonitoring() const;
     unsigned int CheckContextCallCancelled();
-    unsigned int StartConnectingToHost();
+    ExecuteResult StartConnectingToHost();
     unsigned int CheckTransportConnectionStatus();
-    unsigned int WaitUntilConnectToHost();
-    unsigned int SendJoinRequest();
+    ExecuteResult WaitUntilConnectToHost();
+    ExecuteResult SendJoinRequest();
     unsigned int CheckConnectionStateWithHostStation();
-    unsigned int WaitRequestAck();
-    unsigned int WaitJoinResponse();
+    ExecuteResult WaitRequestAck();
+    ExecuteResult WaitJoinResponse();
     unsigned int UpdateLocalAndHostInformation(StationIndex, StationIndex);
     unsigned int SetStationDataList(const unsigned char*, unsigned int);
-    unsigned int AnalyzeJoinResponse();
-    unsigned int WaitAllConnection();
-    unsigned int CompleteProcess();
-    unsigned int SetupLocalPlayerInfoFailure();
-    unsigned int StartDisconnectStations();
-    unsigned int WaitDisconnectStations();
-    unsigned int LeaveMeshWithHostMigration();
-    unsigned int LeaveMesh();
-    unsigned int WaitLeaveMesh();
-    unsigned int CompleteCancelWithLeaveMesh();
+    ExecuteResult AnalyzeJoinResponse();
+    ExecuteResult WaitAllConnection();
+    ExecuteResult CompleteProcess();
+    ExecuteResult SetupLocalPlayerInfoFailure();
+    ExecuteResult StartDisconnectStations();
+    ExecuteResult WaitDisconnectStations();
+    ExecuteResult LeaveMeshWithHostMigration();
+    ExecuteResult LeaveMesh();
+    ExecuteResult WaitLeaveMesh();
+    ExecuteResult CompleteCancelWithLeaveMesh();
     void Cleanup(Result);
     unsigned int GetJoinMeshState() const;
     virtual void Trace(unsigned long long) const;
@@ -52,15 +52,15 @@ public:
     virtual void CleanupImpl();
     virtual void SetHostInfoToMonitoringData(const transport::StationConnectionInfo&);
     virtual void SetNextStepAtSetupLocalPlayerInfoImpl();
-    virtual unsigned int SetNextStepAfterWaitAllConnection();
+    virtual ExecuteResult SetNextStepAfterWaitAllConnection();
     void CleanupInternalContexts();
 
-    void setStep(unsigned int (JoinMeshJob::*function)(), const char* name)
+    void setStep(ExecuteResult (JoinMeshJob::*function)(), const char* name)
     {
         union
         {
-            unsigned int (JoinMeshJob::*derived)();
-            unsigned int (common::StepSequenceJob::*base)();
+            ExecuteResult (JoinMeshJob::*derived)();
+            ExecuteResult (common::StepSequenceJob::*base)();
         } step;
         step.derived = function;
         m_currentStep.m_function = step.base;

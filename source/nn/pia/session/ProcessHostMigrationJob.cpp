@@ -202,26 +202,26 @@ unsigned int ProcessHostMigrationJob::CleanupOldHostInfoCommonProc()
     return 1;
 }
 
-unsigned int ProcessHostMigrationJob::SendGreetingMessage()
+ProcessHostMigrationJob::ExecuteResult ProcessHostMigrationJob::SendGreetingMessage()
 {
     m_hostMigrationSequence = cSequenceSendGreeting;
     if (g_piaMesh->CheckConnectionError() == cResultConnectionError6c50)
     {
         setStep(&ProcessHostMigrationJob::HostMigrationFailure, cStepNameHostMigrationFailure);
-        return cExecuteResultContinue;
+        return MakeExecuteResult(cExecuteKindContinue);
     }
     const StationIndex localIndex = g_piaMesh->GetLocalStationIndex();
     transport::Station* localStation = transport::g_piaStationManager->m_localStation;
     if (localStation == 0)
     {
         setStep(&ProcessHostMigrationJob::HostMigrationFailure, cStepNameHostMigrationFailure);
-        return cExecuteResultContinue;
+        return MakeExecuteResult(cExecuteKindContinue);
     }
     if (!UpdateHostStationConnectionInfo(localStation))
     {
         localStation->Trace(cTraceStation);
         setStep(&ProcessHostMigrationJob::HostMigrationFailure, cStepNameHostMigrationFailure);
-        return cExecuteResultContinue;
+        return MakeExecuteResult(cExecuteKindContinue);
     }
     transport::Station* oldHost = transport::g_piaStationManager->GetStation(m_oldHostIndex);
     if (oldHost != 0)
@@ -271,31 +271,31 @@ unsigned int ProcessHostMigrationJob::SendGreetingMessage()
         common::TimeSpan::GetTicksPerMSec().m_tick * cGreetingResendIntervalMsec;
     m_greetingSent = true;
     setStep(&ProcessHostMigrationJob::WaitGreetingResponse, cStepNameWaitGreetingResponse);
-    return cExecuteResultNextStep;
+    return MakeExecuteResult(cExecuteKindNextStep);
 }
 
-unsigned int ProcessHostMigrationJob::SendMigrationFinish()
+ProcessHostMigrationJob::ExecuteResult ProcessHostMigrationJob::SendMigrationFinish()
 {
     m_hostMigrationSequence = cSequenceSendMigrationFinish;
     if (g_piaMesh->CheckConnectionError() == cResultConnectionError6c50)
     {
         setStep(&ProcessHostMigrationJob::HostMigrationFailure, cStepNameHostMigrationFailure);
-        return cExecuteResultContinue;
+        return MakeExecuteResult(cExecuteKindContinue);
     }
     g_piaMesh->GetMeshProtocol()->SendMigrationFinish(m_unknownBB);
     m_greetingSent = false;
     g_piaMesh->GetMeshProtocol()->SendUpdateMesh(true, 1);
     setStep(&ProcessHostMigrationJob::HostMigrationSuccess, cStepNameHostMigrationSuccess);
-    return cExecuteResultContinue;
+    return MakeExecuteResult(cExecuteKindContinue);
 }
 
-unsigned int ProcessHostMigrationJob::WaitGreetingResponse()
+ProcessHostMigrationJob::ExecuteResult ProcessHostMigrationJob::WaitGreetingResponse()
 {
     m_hostMigrationSequence = cSequenceWaitGreetingResponse;
     if (g_piaMesh->CheckConnectionError() == cResultConnectionError6c50)
     {
         setStep(&ProcessHostMigrationJob::HostMigrationFailure, cStepNameHostMigrationFailure);
-        return cExecuteResultContinue;
+        return MakeExecuteResult(cExecuteKindContinue);
     }
     for (int index = 0; index < cStationNumMax; ++index)
     {
@@ -331,25 +331,25 @@ unsigned int ProcessHostMigrationJob::WaitGreetingResponse()
                     m_greetingDeadline.m_tick = now.m_tick +
                         common::TimeSpan::GetTicksPerMSec().m_tick * cGreetingResendIntervalMsec;
                 }
-                return cExecuteResultNextStep;
+                return MakeExecuteResult(cExecuteKindNextStep);
             }
             m_unknownBB = false;
             PreprocessForSendingMigrationFinish();
-            return cExecuteResultContinue;
+            return MakeExecuteResult(cExecuteKindContinue);
         }
     }
     m_unknownBB = true;
     PreprocessForSendingMigrationFinish();
-    return cExecuteResultContinue;
+    return MakeExecuteResult(cExecuteKindContinue);
 }
 
-unsigned int ProcessHostMigrationJob::WaitNewHostGreeting()
+ProcessHostMigrationJob::ExecuteResult ProcessHostMigrationJob::WaitNewHostGreeting()
 {
     m_hostMigrationSequence = cSequenceWaitNewHostGreeting;
     if (g_piaMesh->CheckConnectionError() == cResultConnectionError6c50)
     {
         setStep(&ProcessHostMigrationJob::HostMigrationFailure, cStepNameHostMigrationFailure);
-        return cExecuteResultContinue;
+        return MakeExecuteResult(cExecuteKindContinue);
     }
     if (m_greetingSenderIndex == cStationIndexInvalid)
     {
@@ -357,9 +357,9 @@ unsigned int ProcessHostMigrationJob::WaitNewHostGreeting()
         {
             if (CheckWhetherReselectNewHost() == 0)
                 setStep(&ProcessHostMigrationJob::HostMigrationFailure, cStepNameHostMigrationFailure);
-            return cExecuteResultContinue;
+            return MakeExecuteResult(cExecuteKindContinue);
         }
-        return cExecuteResultNextStep;
+        return MakeExecuteResult(cExecuteKindNextStep);
     }
     transport::Station* newHost;
     if (!m_unknownBC)
@@ -367,7 +367,7 @@ unsigned int ProcessHostMigrationJob::WaitNewHostGreeting()
         if (m_greetingSenderIndex != m_newHostIndex)
         {
             setStep(&ProcessHostMigrationJob::HostMigrationFailure, cStepNameHostMigrationFailure);
-            return cExecuteResultContinue;
+            return MakeExecuteResult(cExecuteKindContinue);
         }
         g_piaMesh->m_unknown58 = m_newHostIndex;
         transport::g_piaStationManager->m_invalidStationIndex = m_newHostIndex;
@@ -383,13 +383,13 @@ unsigned int ProcessHostMigrationJob::WaitNewHostGreeting()
     if (newHost == 0)
     {
         setStep(&ProcessHostMigrationJob::HostMigrationFailure, cStepNameHostMigrationFailure);
-        return cExecuteResultContinue;
+        return MakeExecuteResult(cExecuteKindContinue);
     }
     if (!UpdateHostStationConnectionInfo(newHost))
     {
         newHost->Trace(cTraceStation);
         setStep(&ProcessHostMigrationJob::HostMigrationFailure, cStepNameHostMigrationFailure);
-        return cExecuteResultContinue;
+        return MakeExecuteResult(cExecuteKindContinue);
     }
     if (m_oldHostIndex != m_newHostIndex)
     {
@@ -401,38 +401,38 @@ unsigned int ProcessHostMigrationJob::WaitNewHostGreeting()
     m_unknownA5 = false;
     m_unknownB8 = true;
     setStep(&ProcessHostMigrationJob::WaitNewHostFinished, cStepNameWaitNewHostFinished);
-    return cExecuteResultNextStep;
+    return MakeExecuteResult(cExecuteKindNextStep);
 }
 
-unsigned int ProcessHostMigrationJob::WaitNewHostFinished()
+ProcessHostMigrationJob::ExecuteResult ProcessHostMigrationJob::WaitNewHostFinished()
 {
     m_hostMigrationSequence = cSequenceWaitNewHostFinished;
     if (g_piaMesh->CheckConnectionError() == cResultConnectionError6c50)
     {
         setStep(&ProcessHostMigrationJob::HostMigrationFailure, cStepNameHostMigrationFailure);
-        return cExecuteResultContinue;
+        return MakeExecuteResult(cExecuteKindContinue);
     }
     if (!m_finishReceived)
     {
         if (common::g_piaJobScheduler->m_dispatchTime < m_waitDeadline && !m_restartRequested &&
             g_piaMesh->IsValidStationIndex(m_newHostIndex))
-            return cExecuteResultNextStep;
+            return MakeExecuteResult(cExecuteKindNextStep);
         if (CheckWhetherReselectNewHost() == 0)
             setStep(&ProcessHostMigrationJob::HostMigrationFailure, cStepNameHostMigrationFailure);
         m_restartRequested = false;
-        return cExecuteResultContinue;
+        return MakeExecuteResult(cExecuteKindContinue);
     }
     setStep(&ProcessHostMigrationJob::HostMigrationSuccess, cStepNameHostMigrationSuccess);
     m_finishSuccess = false;
-    return cExecuteResultContinue;
+    return MakeExecuteResult(cExecuteKindContinue);
 }
 
-unsigned int ProcessHostMigrationJob::HostMigrationSuccess()
+ProcessHostMigrationJob::ExecuteResult ProcessHostMigrationJob::HostMigrationSuccess()
 {
     if (g_piaMesh->CheckConnectionError() == cResultConnectionError6c50)
     {
         setStep(&ProcessHostMigrationJob::HostMigrationFailure, cStepNameHostMigrationFailure);
-        return cExecuteResultContinue;
+        return MakeExecuteResult(cExecuteKindContinue);
     }
     if (g_piaMesh->IsHost())
     {
@@ -443,10 +443,10 @@ unsigned int ProcessHostMigrationJob::HostMigrationSuccess()
     ProcessingAtEndHM(true);
     CleanupStatus();
     g_piaMesh->ProcessingAtEndHM();
-    return cExecuteResultFinished;
+    return MakeExecuteResult(cExecuteKindFinished);
 }
 
-unsigned int ProcessHostMigrationJob::HostMigrationFailure()
+ProcessHostMigrationJob::ExecuteResult ProcessHostMigrationJob::HostMigrationFailure()
 {
     g_piaMesh->NoticeMeshEvent(static_cast<Mesh::EventType>(cMeshEventKind3),
                                static_cast<StationIndex>(cStationIndexInvalid));
@@ -455,7 +455,7 @@ unsigned int ProcessHostMigrationJob::HostMigrationFailure()
     g_piaMesh->ProcessingAtMeshEnd(static_cast<Mesh::DisconnectReason>(cDisconnectReason7));
     g_piaMesh->CleanupStatus();
     CleanupStatus();
-    return cExecuteResultFinished;
+    return MakeExecuteResult(cExecuteKindFinished);
 }
 
 void ProcessHostMigrationJob::ReceiveGreetingResponse(StationIndex station)

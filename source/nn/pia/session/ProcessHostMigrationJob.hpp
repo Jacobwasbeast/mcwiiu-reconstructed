@@ -44,13 +44,13 @@ public:
     unsigned int DecideNextHostCommonProc();
     unsigned int PreprocessForBecomingHostCommon();
     void PostprocessForBecomingHostCommon();
-    unsigned int SendGreetingMessage();
-    unsigned int SendMigrationFinish();
-    unsigned int WaitNewHostGreeting();
-    unsigned int WaitGreetingResponse();
-    unsigned int WaitNewHostFinished();
-    unsigned int HostMigrationSuccess();
-    unsigned int HostMigrationFailure();
+    ExecuteResult SendGreetingMessage();
+    ExecuteResult SendMigrationFinish();
+    ExecuteResult WaitNewHostGreeting();
+    ExecuteResult WaitGreetingResponse();
+    ExecuteResult WaitNewHostFinished();
+    ExecuteResult HostMigrationSuccess();
+    ExecuteResult HostMigrationFailure();
     void ReceiveGreetingResponse(StationIndex station);
     void ReceiveGreeting(StationIndex station);
     void ReceiveFinish(bool success);
@@ -79,12 +79,12 @@ public:
         m_unknownE4 = valueE4;
     }
 
-    void setStep(unsigned int (ProcessHostMigrationJob::*function)(), const char* name)
+    void setStep(ExecuteResult (ProcessHostMigrationJob::*function)(), const char* name)
     {
         union
         {
-            unsigned int (ProcessHostMigrationJob::*derived)();
-            unsigned int (common::StepSequenceJob::*base)();
+            ExecuteResult (ProcessHostMigrationJob::*derived)();
+            ExecuteResult (common::StepSequenceJob::*base)();
         } step;
         step.derived = function;
         m_currentStep.m_function = step.base;

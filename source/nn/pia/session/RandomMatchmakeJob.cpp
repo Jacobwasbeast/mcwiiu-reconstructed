@@ -121,10 +121,10 @@ Result RandomMatchmakeJob::Startup(common::CallContext* callerContext,
     return 0;
 }
 
-unsigned int RandomMatchmakeJob::MeshStartup()
+RandomMatchmakeJob::ExecuteResult RandomMatchmakeJob::MeshStartup()
 {
     if (FailForSessionStatus(*this))
-        return cExecuteResultContinue;
+        return MakeExecuteResult(cExecuteKindContinue);
 
     if (m_unknown57)
     {
@@ -150,7 +150,7 @@ unsigned int RandomMatchmakeJob::MeshStartup()
     {
         g_piaSession->m_postponeNotice = true;
         SetNextStepAtMeshStartup();
-        return cExecuteResultContinue;
+        return MakeExecuteResult(cExecuteKindContinue);
     }
 
     const bool createMesh = m_unknown4c;
@@ -160,7 +160,7 @@ unsigned int RandomMatchmakeJob::MeshStartup()
     return SetNextStepAtFailedJoinMesh(result);
 }
 
-unsigned int RandomMatchmakeJob::CreateMesh()
+RandomMatchmakeJob::ExecuteResult RandomMatchmakeJob::CreateMesh()
 {
     const Result result = g_piaMesh->CreateMeshAsync();
     if (result != 0)
@@ -170,16 +170,16 @@ unsigned int RandomMatchmakeJob::CreateMesh()
     }
     g_piaMesh->SetSkipReport(true);
     setStep(&RandomMatchmakeJob::WaitCreateMesh, "RandomMatchmakeJob::WaitCreateMesh");
-    return cExecuteResultNextStep;
+    return MakeExecuteResult(cExecuteKindNextStep);
 }
 
-unsigned int RandomMatchmakeJob::WaitCreateMesh()
+RandomMatchmakeJob::ExecuteResult RandomMatchmakeJob::WaitCreateMesh()
 {
     if (FailForSessionStatus(*this))
-        return cExecuteResultContinue;
+        return MakeExecuteResult(cExecuteKindContinue);
 
     if (!g_piaMesh->IsCreateMeshCompleted())
-        return cExecuteResultNextStep;
+        return MakeExecuteResult(cExecuteKindNextStep);
 
     const Result result = g_piaMesh->GetCreateMeshResult();
     if (result == 0)
@@ -191,7 +191,7 @@ unsigned int RandomMatchmakeJob::WaitCreateMesh()
             g_piaSession->m_postponeNotice = false;
             g_piaSession->m_stationIdStatusTable->CallJoinEventNotYetNotified();
             SetNextStepAtWaitCreateMesh();
-            return cExecuteResultContinue;
+            return MakeExecuteResult(cExecuteKindContinue);
         }
         g_piaSession->m_meshLayerController->MeshCleanup();
         return SetNextStepAtFailedCreateMesh(cResultCreateFailed);
@@ -200,10 +200,10 @@ unsigned int RandomMatchmakeJob::WaitCreateMesh()
     return SetNextStepAtFailedCreateMesh(result);
 }
 
-unsigned int RandomMatchmakeJob::GetStationConnection()
+RandomMatchmakeJob::ExecuteResult RandomMatchmakeJob::GetStationConnection()
 {
     if (FailForSessionStatus(*this))
-        return cExecuteResultContinue;
+        return MakeExecuteResult(cExecuteKindContinue);
 
     const unsigned int index = g_piaSession->m_currentSessionIndex;
     IMatchmakeSession* matchmakeSession = g_piaSession->m_matchmakeSession[index];
@@ -214,16 +214,16 @@ unsigned int RandomMatchmakeJob::GetStationConnection()
     if (result == 0)
     {
         setStep(&RandomMatchmakeJob::WaitGetStationConnection, "RandomMatchmakeJob::WaitGetStationConnection");
-        return cExecuteResultNextStep;
+        return MakeExecuteResult(cExecuteKindNextStep);
     }
     g_piaSession->m_meshLayerController->MeshCleanup();
     return SetNextStepAtFailedJoinMesh(result);
 }
 
-unsigned int RandomMatchmakeJob::WaitGetStationConnection()
+RandomMatchmakeJob::ExecuteResult RandomMatchmakeJob::WaitGetStationConnection()
 {
     if (FailForSessionStatus(*this))
-        return cExecuteResultContinue;
+        return MakeExecuteResult(cExecuteKindContinue);
 
     IMatchmakeSession* matchmakeSession =
         g_piaSession->m_matchmakeSession[g_piaSession->m_currentSessionIndex];
@@ -238,16 +238,16 @@ unsigned int RandomMatchmakeJob::WaitGetStationConnection()
         {
             m_principalId = m_stationConnectionInfo.m_stationLocation.m_principalId;
             setStep(&RandomMatchmakeJob::JoinMesh, "RandomMatchmakeJob::JoinMesh");
-            return cExecuteResultContinue;
+            return MakeExecuteResult(cExecuteKindContinue);
         }
     }
-    return cExecuteResultNextStep;
+    return MakeExecuteResult(cExecuteKindNextStep);
 }
 
-unsigned int RandomMatchmakeJob::JoinMesh()
+RandomMatchmakeJob::ExecuteResult RandomMatchmakeJob::JoinMesh()
 {
     if (FailForSessionStatus(*this))
-        return cExecuteResultContinue;
+        return MakeExecuteResult(cExecuteKindContinue);
 
     const Result result = g_piaMesh->JoinMeshAsync(m_stationConnectionInfo);
     if (result == 0)
@@ -255,7 +255,7 @@ unsigned int RandomMatchmakeJob::JoinMesh()
         g_piaMesh->SetSkipReport(true);
         m_joinState = cJoinStateWaitJoinMesh;
         setStep(&RandomMatchmakeJob::WaitJoinMesh, "RandomMatchmakeJob::WaitJoinMesh");
-        return cExecuteResultNextStep;
+        return MakeExecuteResult(cExecuteKindNextStep);
     }
     common::g_sessionBeginMonitoringContent.m_joinMeshState =
         static_cast<unsigned char>(g_piaSession->GetJoinMeshState());
@@ -270,10 +270,10 @@ bool RandomMatchmakeJob::CheckContextCallCancelled()
     return false;
 }
 
-unsigned int RandomMatchmakeJob::WaitJoinMesh()
+RandomMatchmakeJob::ExecuteResult RandomMatchmakeJob::WaitJoinMesh()
 {
     if (FailForSessionStatus(*this))
-        return cExecuteResultContinue;
+        return MakeExecuteResult(cExecuteKindContinue);
 
     if (!g_piaMesh->IsJoinMeshCompleted())
     {
@@ -292,7 +292,7 @@ unsigned int RandomMatchmakeJob::WaitJoinMesh()
         {
             g_piaMesh->CancelJoinMeshAsync();
         }
-        return cExecuteResultNextStep;
+        return MakeExecuteResult(cExecuteKindNextStep);
     }
 
     Result result = g_piaMesh->GetJoinMeshResult();
@@ -306,7 +306,7 @@ unsigned int RandomMatchmakeJob::WaitJoinMesh()
             return SetNextStepAtFailedJoinMesh(m_result);
         }
         SetNextStepAtWaitJoinMesh();
-        return cExecuteResultContinue;
+        return MakeExecuteResult(cExecuteKindContinue);
     }
     if (result == cResultCancelled &&
         (m_unknown57 || m_unknown58 || m_unknown55 || m_unknown56 || m_unknown59))
@@ -315,7 +315,7 @@ unsigned int RandomMatchmakeJob::WaitJoinMesh()
     return SetNextStepAtFailedJoinMesh(result);
 }
 
-unsigned int RandomMatchmakeJob::LeaveMesh()
+RandomMatchmakeJob::ExecuteResult RandomMatchmakeJob::LeaveMesh()
 {
     Result result;
     if (!g_piaMesh->IsHost())
@@ -330,17 +330,17 @@ unsigned int RandomMatchmakeJob::LeaveMesh()
         return SetNextStepAtWaitLeaveMesh();
     }
     setStep(&RandomMatchmakeJob::WaitLeaveMesh, "RandomMatchmakeJob::WaitLeaveMesh");
-    return cExecuteResultNextStep;
+    return MakeExecuteResult(cExecuteKindNextStep);
 }
 
-unsigned int RandomMatchmakeJob::WaitLeaveMesh()
+RandomMatchmakeJob::ExecuteResult RandomMatchmakeJob::WaitLeaveMesh()
 {
     if (m_callContext.m_state != common::CallContext::cStateInProgress)
     {
         g_piaSession->m_meshLayerController->MeshCleanup();
         return SetNextStepAtWaitLeaveMesh();
     }
-    return cExecuteResultNextStep;
+    return MakeExecuteResult(cExecuteKindNextStep);
 }
 
 void RandomMatchmakeJob::CalcProcessingTimeOfJoin() const
@@ -352,13 +352,13 @@ void RandomMatchmakeJob::CalcProcessingTimeOfJoin() const
         common::g_sessionBeginMonitoringContent.m_joinProcessingTime = elapsedMsec;
 }
 
-unsigned int RandomMatchmakeJob::CompleteProcess()
+RandomMatchmakeJob::ExecuteResult RandomMatchmakeJob::CompleteProcess()
 {
     if (CheckContextCallCancelled())
     {
         setStep(&RandomMatchmakeJob::LeaveMesh, "RandomMatchmakeJob::LeaveMesh");
         m_result = cResultCancelled;
-        return cExecuteResultContinue;
+        return MakeExecuteResult(cExecuteKindContinue);
     }
     if (m_unknown57 || m_unknown58 || m_unknown55 ||
         (g_piaMesh->IsHostMigrationEnabled() &&
@@ -366,7 +366,7 @@ unsigned int RandomMatchmakeJob::CompleteProcess()
     {
         setStep(&RandomMatchmakeJob::LeaveMesh, "RandomMatchmakeJob::LeaveMesh");
         m_result = cResultJoinFailed;
-        return cExecuteResultContinue;
+        return MakeExecuteResult(cExecuteKindContinue);
     }
     if (g_piaMesh->GetMeshState() == 0)
     {
@@ -386,7 +386,7 @@ unsigned int RandomMatchmakeJob::CompleteProcess()
         common::g_sessionBeginMonitoringContent.m_joinMeshState =
             static_cast<unsigned char>(g_piaSession->GetJoinMeshState());
         setStep(&RandomMatchmakeJob::LeaveMesh, "RandomMatchmakeJob::LeaveMesh");
-        return cExecuteResultContinue;
+        return MakeExecuteResult(cExecuteKindContinue);
     }
     g_piaSession->m_postponeNotice = false;
     g_piaSession->m_stationIdStatusTable->ClearDisconnectedStationId();
@@ -403,10 +403,10 @@ unsigned int RandomMatchmakeJob::CompleteProcess()
     m_joinState = cJoinStateComplete;
     m_callerContext->SignalSuccess(0);
     m_callerContext = 0;
-    return cExecuteResultFinished;
+    return MakeExecuteResult(cExecuteKindFinished);
 }
 
-unsigned int RandomMatchmakeJob::CompleteFailure()
+RandomMatchmakeJob::ExecuteResult RandomMatchmakeJob::CompleteFailure()
 {
     g_piaSession->m_meshLayerController->MeshCleanup();
     if (!CheckContextCallCancelled() && m_result != cResultCancelled)
@@ -440,7 +440,7 @@ unsigned int RandomMatchmakeJob::CompleteFailure()
     common::g_sessionBeginMonitoringContent.Cleanup();
     common::g_sessionStateMonitoringContent.Cleanup();
     Cleanup();
-    return cExecuteResultFinished;
+    return MakeExecuteResult(cExecuteKindFinished);
 }
 
 void RandomMatchmakeJob::SetNextStepAtMeshStartup()

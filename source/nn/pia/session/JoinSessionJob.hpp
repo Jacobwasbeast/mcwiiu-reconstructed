@@ -1,7 +1,7 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_PIA_SESSION_JOIN_SESSION_JOB_HPP
 #define LEGACY_CONSOLE_WIIU_NN_PIA_SESSION_JOIN_SESSION_JOB_HPP
 
-#include "nn/pia.h"
+#include "nn/pia/Common.hpp"
 #include "nn/pia/common/CallContext.hpp"
 #include "nn/pia/common/StepSequenceJob.hpp"
 #include "nn/pia/common/Time.hpp"
@@ -15,13 +15,6 @@ class JoinSessionSetting;
 class JoinSessionJob : public common::StepSequenceJob
 {
 public:
-    struct StepResult
-    {
-        unsigned char m_kind;
-        unsigned char m_reserved;
-        unsigned short m_value;
-    };
-
     JoinSessionJob();
     virtual ~JoinSessionJob();
     virtual void Trace(unsigned long long value) const;
@@ -38,22 +31,22 @@ protected:
     virtual Result StartupImpl(const JoinSessionSetting* setting) = 0;
     virtual void CleanupImpl();
     virtual void SetNextStepAtWaitJoinMesh();
-    virtual StepResult SetNextStepAtFailedJoinMesh(Result result) = 0;
-    virtual StepResult SetNextStepAtWaitLeaveMesh() = 0;
-    virtual StepResult SetNextStepAtMeshCleanup() = 0;
+    virtual ExecuteResult SetNextStepAtFailedJoinMesh(Result result) = 0;
+    virtual ExecuteResult SetNextStepAtWaitLeaveMesh() = 0;
+    virtual ExecuteResult SetNextStepAtMeshCleanup() = 0;
 
 public:
-    StepResult MeshStartup();
-    StepResult JoinMesh();
-    StepResult WaitJoinMesh();
-    StepResult LeaveMesh();
-    StepResult WaitLeaveMesh();
-    StepResult WaitLeaveMeshWithHostMigration();
-    StepResult WaitDestroyMesh();
-    StepResult MeshCleanup();
+    ExecuteResult MeshStartup();
+    ExecuteResult JoinMesh();
+    ExecuteResult WaitJoinMesh();
+    ExecuteResult LeaveMesh();
+    ExecuteResult WaitLeaveMesh();
+    ExecuteResult WaitLeaveMeshWithHostMigration();
+    ExecuteResult WaitDestroyMesh();
+    ExecuteResult MeshCleanup();
     void CalcProcessingTimeOfJoin() const;
-    StepResult CompleteProcess();
-    StepResult CompleteFailure();
+    ExecuteResult CompleteProcess();
+    ExecuteResult CompleteFailure();
     void SetMatchmakeStatus(Session::MatchmakeStatus status);
     void SetConnectionStatus(Session::ConnectionStatus status);
 

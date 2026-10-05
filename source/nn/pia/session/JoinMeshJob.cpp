@@ -194,14 +194,14 @@ bool JoinMeshJob::Startup(const transport::StationConnectionInfo& info, common::
     return true;
 }
 
-unsigned int JoinMeshJob::SetupLocalPlayerInfo()
+JoinMeshJob::ExecuteResult JoinMeshJob::SetupLocalPlayerInfo()
 {
     g_piaMesh->SetupLocalPlayerInfo();
     SetNextStepAtSetupLocalPlayerInfoImpl();
-    return cExecuteResultEntryForeground;
+    return MakeExecuteResult(cExecuteKindEntryForeground);
 }
 
-unsigned int JoinMeshJob::SetupLocalStation()
+JoinMeshJob::ExecuteResult JoinMeshJob::SetupLocalStation()
 {
     g_piaMesh->SetupProtocols();
     transport::Station* station = transport::g_piaStationManager->CreateLocalStation();
@@ -214,7 +214,7 @@ unsigned int JoinMeshJob::SetupLocalStation()
         common::g_sessionBeginMonitoringContent.m_joinTargetIdHash = common::hashWithMd5(m_principalId);
         g_piaMesh->ProcessingAtMeshBegin();
         m_callerContext = 0;
-        return cExecuteResultFinished;
+        return MakeExecuteResult(cExecuteKindFinished);
     }
     g_piaMesh->ResetStationIndexUsage();
     station->m_stationAddress = transport::g_stationConnectionInfoTable->m_stationLocation.m_stationAddress;
@@ -228,10 +228,10 @@ unsigned int JoinMeshJob::SetupLocalStation()
         common::g_sessionBeginMonitoringContent.m_joinTargetIdHash = common::hashWithMd5(m_principalId);
         g_piaMesh->ProcessingAtMeshBegin();
         m_callerContext = 0;
-        return cExecuteResultFinished;
+        return MakeExecuteResult(cExecuteKindFinished);
     }
     setStep(&JoinMeshJob::StartConnectingToHost, "JoinMeshJob::StartConnectingToHost");
-    return cExecuteResultContinue;
+    return MakeExecuteResult(cExecuteKindContinue);
 }
 
 void JoinMeshJob::CleanupStations()
@@ -293,10 +293,10 @@ unsigned int JoinMeshJob::CheckContextCallCancelled()
     return 0;
 }
 
-unsigned int JoinMeshJob::StartConnectingToHost()
+JoinMeshJob::ExecuteResult JoinMeshJob::StartConnectingToHost()
 {
     if (CheckContextCallCancelled() != 0)
-        return cExecuteResultFinished;
+        return MakeExecuteResult(cExecuteKindFinished);
     m_joinState = 1;
     transport::Station* station = transport::g_piaStationManager->CreateStation();
     if (station->Startup())
@@ -319,7 +319,7 @@ unsigned int JoinMeshJob::StartConnectingToHost()
     station->m_field20 = cConnectingStationState;
     connectJob->Ready(false);
     setStep(&JoinMeshJob::WaitUntilConnectToHost, "JoinMeshJob::WaitUntilConnectToHost");
-    return cExecuteResultNextStep;
+    return MakeExecuteResult(cExecuteKindNextStep);
 }
 
 unsigned int JoinMeshJob::CheckTransportConnectionStatus()
@@ -342,17 +342,17 @@ unsigned int JoinMeshJob::CheckTransportConnectionStatus()
     return 1;
 }
 
-unsigned int JoinMeshJob::WaitUntilConnectToHost()
+JoinMeshJob::ExecuteResult JoinMeshJob::WaitUntilConnectToHost()
 {
     if (CheckContextCallCancelled() != 0)
-        return cExecuteResultFinished;
+        return MakeExecuteResult(cExecuteKindFinished);
     common::CallContext* context = m_internalContext;
     if (context->m_state < common::CallContext::cStateSuccess ||
         context->m_state > common::CallContext::cStateCancelled)
     {
         if (CheckTransportConnectionStatus() != 0)
-            return cExecuteResultFinished;
-        return cExecuteResultNextStep;
+            return MakeExecuteResult(cExecuteKindFinished);
+        return MakeExecuteResult(cExecuteKindNextStep);
     }
     if (context->m_result == 0)
     {
@@ -371,7 +371,7 @@ unsigned int JoinMeshJob::WaitUntilConnectToHost()
                 m_callerContext = 0;
             }
             CleanupInternalContexts();
-            return cExecuteResultFinished;
+            return MakeExecuteResult(cExecuteKindFinished);
         }
         if (!(transport::g_stationConnectionInfoTable->m_hostStationAddress == station->m_stationAddress))
         {
@@ -383,7 +383,7 @@ unsigned int JoinMeshJob::WaitUntilConnectToHost()
         transport::g_stationConnectionInfoTable->m_hostStationConnectionInfo = hostInfo;
         transport::g_stationConnectionInfoTable->m_hostStationAddress = station->m_stationAddress;
         setStep(&JoinMeshJob::SendJoinRequest, "JoinMeshJob::SendJoinRequest");
-        return cExecuteResultContinue;
+        return MakeExecuteResult(cExecuteKindContinue);
     }
     Result result;
     bool notifyEvent = false;
@@ -432,13 +432,13 @@ unsigned int JoinMeshJob::WaitUntilConnectToHost()
         m_callerContext = 0;
     }
     CleanupInternalContexts();
-    return cExecuteResultFinished;
+    return MakeExecuteResult(cExecuteKindFinished);
 }
 
-unsigned int JoinMeshJob::SendJoinRequest()
+JoinMeshJob::ExecuteResult JoinMeshJob::SendJoinRequest()
 {
     if (CheckContextCallCancelled() != 0)
-        return cExecuteResultFinished;
+        return MakeExecuteResult(cExecuteKindFinished);
     CalcProcessingTimeOfJoin();
     if (m_callerContext != 0)
     {
@@ -451,7 +451,7 @@ unsigned int JoinMeshJob::SendJoinRequest()
         m_callerContext = 0;
     }
     CleanupInternalContexts();
-    return cExecuteResultFinished;
+    return MakeExecuteResult(cExecuteKindFinished);
 }
 
 unsigned int JoinMeshJob::CheckConnectionStateWithHostStation()
@@ -475,13 +475,13 @@ unsigned int JoinMeshJob::CheckConnectionStateWithHostStation()
     return 1;
 }
 
-unsigned int JoinMeshJob::WaitRequestAck()
+JoinMeshJob::ExecuteResult JoinMeshJob::WaitRequestAck()
 {
     if (!transport::g_piaResendingMessageManager->CheckNowResending(m_requestAckId))
     {
         m_requestAckId = 0;
         setStep(&JoinMeshJob::WaitJoinResponse, "JoinMeshJob::WaitJoinResponse");
-        return cExecuteResultContinue;
+        return MakeExecuteResult(cExecuteKindContinue);
     }
     if (CheckContextCallCancelled() != 0)
     {
@@ -490,7 +490,7 @@ unsigned int JoinMeshJob::WaitRequestAck()
         m_waitingJoinResponse = false;
         for (int index = 0; index < cReceivedFlagNum; ++index)
             m_received[index] = false;
-        return cExecuteResultFinished;
+        return MakeExecuteResult(cExecuteKindFinished);
     }
     if (CheckTransportConnectionStatus() == 0 && CheckConnectionStateWithHostStation() == 0)
     {
@@ -499,34 +499,34 @@ unsigned int JoinMeshJob::WaitRequestAck()
             transport::g_piaResendingMessageManager->StopResending(m_requestAckId);
             setStep(&JoinMeshJob::AnalyzeJoinResponse, "JoinMeshJob::AnalyzeJoinResponse");
             m_requestAckId = 0;
-            return cExecuteResultContinue;
+            return MakeExecuteResult(cExecuteKindContinue);
         }
-        return cExecuteResultNextStep;
+        return MakeExecuteResult(cExecuteKindNextStep);
     }
     transport::g_piaResendingMessageManager->StopResending(m_requestAckId);
     m_requestAckId = 0;
     m_waitingJoinResponse = false;
     for (int index = 0; index < cReceivedFlagNum; ++index)
         m_received[index] = false;
-    return cExecuteResultFinished;
+    return MakeExecuteResult(cExecuteKindFinished);
 }
 
-unsigned int JoinMeshJob::WaitJoinResponse()
+JoinMeshJob::ExecuteResult JoinMeshJob::WaitJoinResponse()
 {
     if (!m_waitingJoinResponse)
     {
         setStep(&JoinMeshJob::AnalyzeJoinResponse, "JoinMeshJob::AnalyzeJoinResponse");
-        return cExecuteResultContinue;
+        return MakeExecuteResult(cExecuteKindContinue);
     }
     if (CheckContextCallCancelled() != 0)
     {
         m_waitingJoinResponse = false;
-        return cExecuteResultFinished;
+        return MakeExecuteResult(cExecuteKindFinished);
     }
     if (CheckTransportConnectionStatus() == 0 && CheckConnectionStateWithHostStation() == 0)
-        return cExecuteResultNextStep;
+        return MakeExecuteResult(cExecuteKindNextStep);
     m_waitingJoinResponse = false;
-    return cExecuteResultFinished;
+    return MakeExecuteResult(cExecuteKindFinished);
 }
 
 unsigned int JoinMeshJob::UpdateLocalAndHostInformation(StationIndex localIndex, StationIndex hostIndex)
@@ -692,17 +692,17 @@ unsigned int JoinMeshJob::SetStationDataList(const unsigned char* data, unsigned
     return 1;
 }
 
-unsigned int JoinMeshJob::AnalyzeJoinResponse()
+JoinMeshJob::ExecuteResult JoinMeshJob::AnalyzeJoinResponse()
 {
     if (CheckContextCallCancelled() != 0)
-        return cExecuteResultFinished;
+        return MakeExecuteResult(cExecuteKindFinished);
     if (m_stationCount != 0)
     {
         common::g_sessionBeginMonitoringContent.m_metric47 = static_cast<unsigned char>(m_stationCount);
         m_principalId = 0xffffffffULL;
         setStep(&JoinMeshJob::WaitAllConnection, "JoinMeshJob::WaitAllConnection");
         m_joinState = 2;
-        return cExecuteResultContinue;
+        return MakeExecuteResult(cExecuteKindContinue);
     }
     CalcProcessingTimeOfJoin();
     if (m_callerContext != 0)
@@ -743,20 +743,20 @@ unsigned int JoinMeshJob::AnalyzeJoinResponse()
         m_callerContext = 0;
     }
     CleanupInternalContexts();
-    return cExecuteResultFinished;
+    return MakeExecuteResult(cExecuteKindFinished);
 }
 
-unsigned int JoinMeshJob::WaitAllConnection()
+JoinMeshJob::ExecuteResult JoinMeshJob::WaitAllConnection()
 {
     if (CheckContextCallCancelled() != 0)
     {
         setStep(&JoinMeshJob::StartDisconnectStations, "JoinMeshJob::StartDisconnectStations");
-        return cExecuteResultContinue;
+        return MakeExecuteResult(cExecuteKindContinue);
     }
     if (g_piaMesh->m_leaveMeshJob->IsRunning())
-        return cExecuteResultNextStep;
+        return MakeExecuteResult(cExecuteKindNextStep);
     if (g_piaMesh->m_kickoutManageJob->IsRunning())
-        return cExecuteResultNextStep;
+        return MakeExecuteResult(cExecuteKindNextStep);
     const int localStationIndex = g_piaMesh->GetLocalStationIndex();
     if (localStationIndex >= transport::StationManager::cStationNumMax)
     {
@@ -792,7 +792,7 @@ unsigned int JoinMeshJob::WaitAllConnection()
         }
         CleanupInternalContexts();
         setStep(&JoinMeshJob::StartDisconnectStations, "JoinMeshJob::StartDisconnectStations");
-        return cExecuteResultContinue;
+        return MakeExecuteResult(cExecuteKindContinue);
     }
     unsigned short connectedCount = 0;
     bool waiting = false;
@@ -819,22 +819,22 @@ unsigned int JoinMeshJob::WaitAllConnection()
     if (waiting || (m_stationCount != 0 && connectedCount == cLocalAndHostStationCount))
     {
         if (CheckTransportConnectionStatus() != 0)
-            return cExecuteResultFinished;
+            return MakeExecuteResult(cExecuteKindFinished);
         if (CheckConnectionStateWithHostStation() != 0)
         {
             setStep(&JoinMeshJob::StartDisconnectStations, "JoinMeshJob::StartDisconnectStations");
-            return cExecuteResultContinue;
+            return MakeExecuteResult(cExecuteKindContinue);
         }
-        return cExecuteResultNextStep;
+        return MakeExecuteResult(cExecuteKindNextStep);
     }
     if (static_cast<long long>(g_piaMesh->GetTime().m_tick) < 0)
-        return cExecuteResultNextStep;
+        return MakeExecuteResult(cExecuteKindNextStep);
     g_piaMesh->SetMeshState(Mesh::cStateCreated);
     g_piaMesh->m_disconnectReason = 0;
     return SetNextStepAfterWaitAllConnection();
 }
 
-unsigned int JoinMeshJob::CompleteProcess()
+JoinMeshJob::ExecuteResult JoinMeshJob::CompleteProcess()
 {
     if (m_callerContext != 0)
     {
@@ -850,10 +850,10 @@ unsigned int JoinMeshJob::CompleteProcess()
     common::g_sessionBeginMonitoringContent.m_joinMeshState = cMonitoringByteUnset;
     transport::g_piaTransport->SetMonitoringNetworkRtt(true);
     g_piaMesh->ProcessingAtMeshBegin();
-    return cExecuteResultFinished;
+    return MakeExecuteResult(cExecuteKindFinished);
 }
 
-unsigned int JoinMeshJob::SetupLocalPlayerInfoFailure()
+JoinMeshJob::ExecuteResult JoinMeshJob::SetupLocalPlayerInfoFailure()
 {
     if (m_callerContext->m_state < common::CallContext::cStateSuccess ||
         m_callerContext->m_state > common::CallContext::cStateCancelled)
@@ -861,14 +861,14 @@ unsigned int JoinMeshJob::SetupLocalPlayerInfoFailure()
     common::g_sessionBeginMonitoringContent.m_joinResult = cResultSetupLocalPlayerInfoFailed;
     common::g_sessionBeginMonitoringContent.m_joinTargetIdHash = common::hashWithMd5(m_principalId);
     g_piaMesh->ProcessingAtMeshBegin();
-    return cExecuteResultFinished;
+    return MakeExecuteResult(cExecuteKindFinished);
 }
 
-unsigned int JoinMeshJob::StartDisconnectStations()
+JoinMeshJob::ExecuteResult JoinMeshJob::StartDisconnectStations()
 {
     transport::Station* localStation = transport::g_piaStationManager->m_localStation;
     if (localStation == 0)
-        return cExecuteResultFinished;
+        return MakeExecuteResult(cExecuteKindFinished);
     transport::Station** station = transport::g_piaStationManager->m_stations.data;
     if (station != station + transport::g_piaStationManager->m_stations.size)
     {
@@ -897,10 +897,10 @@ unsigned int JoinMeshJob::StartDisconnectStations()
     m_disconnectDeadline.m_tick = common::g_piaJobScheduler->m_dispatchTime.m_tick +
         common::TimeSpan::GetTicksPerMSec().m_tick * cDisconnectTimeoutMsec;
     setStep(&JoinMeshJob::WaitDisconnectStations, "JoinMeshJob::WaitDisconnectStations");
-    return cExecuteResultContinue;
+    return MakeExecuteResult(cExecuteKindContinue);
 }
 
-unsigned int JoinMeshJob::WaitDisconnectStations()
+JoinMeshJob::ExecuteResult JoinMeshJob::WaitDisconnectStations()
 {
     transport::Station** station = transport::g_piaStationManager->m_stations.data;
     if (station != station + transport::g_piaStationManager->m_stations.size)
@@ -910,46 +910,46 @@ unsigned int JoinMeshJob::WaitDisconnectStations()
             if ((*station)->m_field20 == cConnectedStationState && *station != transport::g_piaStationManager->m_localStation)
             {
                 if (common::g_piaJobScheduler->m_dispatchTime < m_disconnectDeadline)
-                    return cExecuteResultNextStep;
+                    return MakeExecuteResult(cExecuteKindNextStep);
                 break;
             }
             ++station;
         } while (station != transport::g_piaStationManager->m_stations.data + transport::g_piaStationManager->m_stations.size);
     }
-    return cExecuteResultFinished;
+    return MakeExecuteResult(cExecuteKindFinished);
 }
 
-unsigned int JoinMeshJob::LeaveMeshWithHostMigration()
+JoinMeshJob::ExecuteResult JoinMeshJob::LeaveMeshWithHostMigration()
 {
     if (g_piaMesh->GetStationNum() > 1)
     {
         g_piaMesh->LeaveMeshWithHostMigration(&m_callContext);
         setStep(&JoinMeshJob::WaitLeaveMesh, "JoinMeshJob::WaitLeaveMesh");
-        return cExecuteResultNextStep;
+        return MakeExecuteResult(cExecuteKindNextStep);
     }
     setStep(&JoinMeshJob::CompleteCancelWithLeaveMesh, "JoinMeshJob::CompleteCancelWithLeaveMesh");
-    return cExecuteResultContinue;
+    return MakeExecuteResult(cExecuteKindContinue);
 }
 
-unsigned int JoinMeshJob::LeaveMesh()
+JoinMeshJob::ExecuteResult JoinMeshJob::LeaveMesh()
 {
     g_piaMesh->LeaveMesh(&m_callContext);
     setStep(&JoinMeshJob::WaitLeaveMesh, "JoinMeshJob::WaitLeaveMesh");
-    return cExecuteResultNextStep;
+    return MakeExecuteResult(cExecuteKindNextStep);
 }
 
-unsigned int JoinMeshJob::WaitLeaveMesh()
+JoinMeshJob::ExecuteResult JoinMeshJob::WaitLeaveMesh()
 {
     if (m_callContext.m_state >= common::CallContext::cStateSuccess &&
         m_callContext.m_state <= common::CallContext::cStateCancelled)
     {
         setStep(&JoinMeshJob::CompleteCancelWithLeaveMesh, "JoinMeshJob::CompleteCancelWithLeaveMesh");
-        return cExecuteResultContinue;
+        return MakeExecuteResult(cExecuteKindContinue);
     }
-    return cExecuteResultNextStep;
+    return MakeExecuteResult(cExecuteKindNextStep);
 }
 
-unsigned int JoinMeshJob::CompleteCancelWithLeaveMesh()
+JoinMeshJob::ExecuteResult JoinMeshJob::CompleteCancelWithLeaveMesh()
 {
     g_piaMesh->m_disconnectReason = 2;
     CleanupInternalContexts();
@@ -961,7 +961,7 @@ unsigned int JoinMeshJob::CompleteCancelWithLeaveMesh()
     common::g_sessionBeginMonitoringContent.m_joinTargetIdHash = common::hashWithMd5(m_principalId);
     common::g_sessionBeginMonitoringContent.m_joinMeshState = static_cast<unsigned char>(m_joinState);
     g_piaMesh->ProcessingAtMeshBegin();
-    return cExecuteResultFinished;
+    return MakeExecuteResult(cExecuteKindFinished);
 }
 
 void JoinMeshJob::Cleanup(Result result)
@@ -1050,10 +1050,10 @@ void JoinMeshJob::SetNextStepAtSetupLocalPlayerInfoImpl()
     setStep(&JoinMeshJob::SetupLocalStation, "JoinMeshJob::SetupLocalStation");
 }
 
-unsigned int JoinMeshJob::SetNextStepAfterWaitAllConnection()
+JoinMeshJob::ExecuteResult JoinMeshJob::SetNextStepAfterWaitAllConnection()
 {
     setStep(&JoinMeshJob::CompleteProcess, "JoinMeshJob::CompleteProcess");
-    return cExecuteResultContinue;
+    return MakeExecuteResult(cExecuteKindContinue);
 }
 
 void JoinMeshJob::CleanupInternalContexts()

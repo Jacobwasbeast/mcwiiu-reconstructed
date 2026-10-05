@@ -9,12 +9,6 @@ namespace nn { namespace pia { namespace session {
 
 namespace
 {
-const unsigned int kRun = 0x1000000;
-const unsigned int kWait = 0x5000000;
-const unsigned int kStep = 0x4d0000;
-const unsigned int kCloseWait = 0x54d0000;
-const unsigned int kDone = 0x14d0000;
-
 unsigned int SessionFailureResult(unsigned int status)
 {
     if (status == 5) return 0xc406;
@@ -63,52 +57,52 @@ Result CloseParticipationJob::Startup(common::CallContext* callerContext,
     m_matchmakeSession = matchmakeSession;
     m_sessionId = sessionId;
     Reset(true);
-    m_currentStep.m_function = static_cast<unsigned int (common::StepSequenceJob::*)()>(&CloseParticipationJob::CloseParticipation);
+    m_currentStep.m_function = static_cast<common::Job::ExecuteResult (common::StepSequenceJob::*)()>(&CloseParticipationJob::CloseParticipation);
     m_currentStep.m_name = "CloseParticipationJob::CloseParticipation";
     return 0;
 }
 
-unsigned int CloseParticipationJob::CloseParticipation()
+CloseParticipationJob::ExecuteResult CloseParticipationJob::CloseParticipation()
 {
     const unsigned int failure = SessionFailureResult(g_piaSession->GetStatus());
     if (failure != 0)
     {
         m_callerContext->SignalFailure(static_cast<Result>(failure));
         m_callerContext = 0;
-        return kDone;
+        return MakeExecuteResult(cExecuteKindFinished);
     }
     if (m_callerContext != 0 && m_callerContext->m_cancelRequested)
     {
         m_callerContext->SignalCancel();
         m_callerContext = 0;
-        return kDone;
+        return MakeExecuteResult(cExecuteKindFinished);
     }
 
     const Result result = m_matchmakeSession->CloseParticipate(&m_callContext, m_sessionId);
     if (result == 0)
     {
-        m_currentStep.m_function = static_cast<unsigned int (common::StepSequenceJob::*)()>(&CloseParticipationJob::WaitCloseParticipation);
+        m_currentStep.m_function = static_cast<common::Job::ExecuteResult (common::StepSequenceJob::*)()>(&CloseParticipationJob::WaitCloseParticipation);
         m_currentStep.m_name = "CloseParticipationJob::WaitCloseParticipation";
-        return kCloseWait;
+        return MakeExecuteResult(cExecuteKindNextStep);
     }
     if (result == static_cast<Result>(0x4c11))
-        return kCloseWait;
+        return MakeExecuteResult(cExecuteKindNextStep);
     m_callerContext->SignalFailure(result);
     m_callerContext = 0;
-    return kDone;
+    return MakeExecuteResult(cExecuteKindFinished);
 }
 
-unsigned int CloseParticipationJob::WaitCloseParticipation()
+CloseParticipationJob::ExecuteResult CloseParticipationJob::WaitCloseParticipation()
 {
     const unsigned int failure = SessionFailureResult(g_piaSession->GetStatus());
     if (failure != 0)
     {
         m_callerContext->SignalFailure(static_cast<Result>(failure));
         m_callerContext = 0;
-        return kDone;
+        return MakeExecuteResult(cExecuteKindFinished);
     }
     if (!m_matchmakeSession->WaitCloseParticipate())
-        return kWait;
+        return MakeExecuteResult(cExecuteKindNextStep);
 
     if (m_callContext.m_state == common::CallContext::cStateFailure)
     {
@@ -125,26 +119,25 @@ unsigned int CloseParticipationJob::WaitCloseParticipation()
     if (m_callContext.m_state != common::CallContext::cStateSuccess)
     {
         m_callerContext = 0;
-        return kRun;
+        return MakeExecuteResult(cExecuteKindFinished);
     }
-    m_currentStep.m_function = static_cast<unsigned int (common::StepSequenceJob::*)()>(&CloseParticipationJob::WaitP2pStable);
+    m_currentStep.m_function = static_cast<common::Job::ExecuteResult (common::StepSequenceJob::*)()>(&CloseParticipationJob::WaitP2pStable);
     m_currentStep.m_name = "CloseParticipationJob::WaitP2pStable";
     m_startTime.SetNow();
-    return kStep;
+    return MakeExecuteResult(cExecuteKindContinue);
 }
 
-unsigned int CloseParticipationJob::WaitP2pStable()
+CloseParticipationJob::ExecuteResult CloseParticipationJob::WaitP2pStable()
 {
     const unsigned int failure = SessionFailureResult(g_piaSession->GetStatus());
     if (failure != 0)
     {
         m_callerContext->SignalFailure(static_cast<Result>(failure));
         m_callerContext = 0;
-        return kRun;
+        return MakeExecuteResult(cExecuteKindFinished);
     }
 
     const unsigned int elapsed = ElapsedMilliseconds(m_startTime);
-    const unsigned int schedulerBits = elapsed & 0xff0000;
     if (elapsed > 1000 && IsP2pStable(m_sessionId))
     {
         if (g_piaSession->m_sessionId[g_piaSession->m_currentSessionIndex] == m_sessionId)
@@ -155,16 +148,16 @@ unsigned int CloseParticipationJob::WaitP2pStable()
                 static_cast<Session::SessionOpenStatus>(2));
         m_callerContext->SignalSuccess(0);
         m_callerContext = 0;
-        return kRun;
+        return MakeExecuteResult(cExecuteKindFinished);
     }
     const unsigned int finalElapsed = ElapsedMilliseconds(m_startTime);
     if (finalElapsed > 15000)
     {
         m_callerContext->SignalFailure(static_cast<Result>(0x2c18));
         m_callerContext = 0;
-        return (finalElapsed & 0xff0000) | kRun;
+        return MakeExecuteResult(cExecuteKindFinished);
     }
-    return schedulerBits | kWait;
+    return MakeExecuteResult(cExecuteKindNextStep);
 }
 
 void CloseParticipationJob::Cleanup()

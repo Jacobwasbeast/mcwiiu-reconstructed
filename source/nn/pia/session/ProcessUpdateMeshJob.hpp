@@ -32,16 +32,16 @@ public:
     unsigned int UpdateMesh();
     int Startup(const unsigned char* data, unsigned int size, bool relay);
     void UpdateJoinMeshFailureResult(StationIndex stationIndex, unsigned char failure, bool relay);
-    unsigned int WaitDirectConnection();
+    ExecuteResult WaitDirectConnection();
     bool SendConnectionReport(StationIndex stationIndex, unsigned int version,
                               unsigned int* stationBitmap);
-    unsigned int SendConnectionReport();
-    unsigned int StartRelayConnection();
-    unsigned int CheckConnectionAll();
-    unsigned int UpdateFailed();
-    unsigned int WaitLeaveMesh();
+    ExecuteResult SendConnectionReport();
+    ExecuteResult StartRelayConnection();
+    ExecuteResult CheckConnectionAll();
+    ExecuteResult UpdateFailed();
+    ExecuteResult WaitLeaveMesh();
     void CleanupInternalContexts();
-    unsigned int CleanupByProcessFailure();
+    ExecuteResult CleanupByProcessFailure();
     void UpdateDataTakeover(unsigned short stationCount);
     int UpdateStationDataList(const unsigned char* data, unsigned int size, bool relay);
     void Cleanup();
@@ -54,12 +54,12 @@ public:
     void GetStepSequence() const;
     void CheckDuplicationDataInUpdateMeshDataList() const;
 
-    void setStep(unsigned int (ProcessUpdateMeshJob::*function)(), const char* name)
+    void setStep(ExecuteResult (ProcessUpdateMeshJob::*function)(), const char* name)
     {
         union
         {
-            unsigned int (ProcessUpdateMeshJob::*derived)();
-            unsigned int (common::StepSequenceJob::*base)();
+            ExecuteResult (ProcessUpdateMeshJob::*derived)();
+            ExecuteResult (common::StepSequenceJob::*base)();
         } step;
         step.derived = function;
         m_currentStep.m_function = step.base;

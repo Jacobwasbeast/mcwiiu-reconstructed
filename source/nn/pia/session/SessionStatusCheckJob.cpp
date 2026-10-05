@@ -33,21 +33,21 @@ Result SessionStatusCheckJob::Startup()
     if (g_piaSession->m_jointSessionJob == 0)
     {
         m_currentStep.m_function =
-            static_cast<unsigned int (common::StepSequenceJob::*)()>(
+            static_cast<common::Job::ExecuteResult (common::StepSequenceJob::*)()>(
                 &SessionStatusCheckJob::CheckSessionStatus);
         m_currentStep.m_name = "SessionStatusCheckJob::CheckSessionStatus";
     }
     else
     {
         m_currentStep.m_function =
-            static_cast<unsigned int (common::StepSequenceJob::*)()>(
+            static_cast<common::Job::ExecuteResult (common::StepSequenceJob::*)()>(
                 &SessionStatusCheckJob::CheckSessionStatus4JointSession);
         m_currentStep.m_name = "SessionStatusCheckJob::CheckSessionStatus4JointSession";
     }
     return 0;
 }
 
-unsigned int SessionStatusCheckJob::CheckSessionStatus()
+SessionStatusCheckJob::ExecuteResult SessionStatusCheckJob::CheckSessionStatus()
 {
     const Result connectedStatus =
         g_piaSession->m_meshLayerController->CheckConnectedStatus();
@@ -56,28 +56,28 @@ unsigned int SessionStatusCheckJob::CheckSessionStatus()
         g_piaSession->m_disconnectStatus = 3;
         if (g_piaSession->m_sessionDisconnectReason != 2)
             g_piaSession->m_sessionDisconnectReason = 8;
-        return cExecuteResultFinished;
+        return MakeExecuteResult(cExecuteKindFinished);
     }
     if (connectedStatus == static_cast<Result>(0xa471))
     {
         g_piaSession->m_disconnectStatus = 4;
         if (g_piaSession->m_sessionDisconnectReason != 2)
             g_piaSession->m_sessionDisconnectReason = 8;
-        return cExecuteResultFinished;
+        return MakeExecuteResult(cExecuteKindFinished);
     }
     if (connectedStatus == static_cast<Result>(0xc420))
     {
         g_piaSession->m_disconnectStatus = 5;
         if (g_piaSession->m_sessionDisconnectReason != 2)
             g_piaSession->m_sessionDisconnectReason = 8;
-        return cExecuteResultFinished;
+        return MakeExecuteResult(cExecuteKindFinished);
     }
     if (connectedStatus == static_cast<Result>(0xc421))
     {
         g_piaSession->m_disconnectStatus = 6;
         if (g_piaSession->m_sessionDisconnectReason != 2)
             g_piaSession->m_sessionDisconnectReason = 8;
-        return cExecuteResultFinished;
+        return MakeExecuteResult(cExecuteKindFinished);
     }
     if (connectedStatus == static_cast<Result>(0x8c56))
     {
@@ -90,7 +90,7 @@ unsigned int SessionStatusCheckJob::CheckSessionStatus()
             if (g_piaSession->m_sessionDisconnectReason == 0)
                 g_piaSession->m_sessionDisconnectReason = disconnectReason;
         }
-        return cExecuteResultFinished;
+        return MakeExecuteResult(cExecuteKindFinished);
     }
 
     if (transport::g_piaTransport->m_connectionError != 0)
@@ -98,7 +98,7 @@ unsigned int SessionStatusCheckJob::CheckSessionStatus()
         g_piaSession->m_disconnectStatus = 3;
         if (g_piaSession->m_sessionDisconnectReason != 2)
             g_piaSession->m_sessionDisconnectReason = 8;
-        return cExecuteResultFinished;
+        return MakeExecuteResult(cExecuteKindFinished);
     }
 
     if (g_piaSession->m_matchmakeStatus == 2 &&
@@ -109,7 +109,7 @@ unsigned int SessionStatusCheckJob::CheckSessionStatus()
             g_piaSession->m_disconnectStatus = 2;
         if (g_piaSession->m_sessionDisconnectReason == 0)
             g_piaSession->m_sessionDisconnectReason = disconnectReason;
-        return cExecuteResultFinished;
+        return MakeExecuteResult(cExecuteKindFinished);
     }
 
     if (g_piaMatchmakeAnalysisEnabled != 0 && g_piaSession->IsHost())
@@ -119,10 +119,10 @@ unsigned int SessionStatusCheckJob::CheckSessionStatus()
         if (!Session::SessionJoiningApprovalCallback(0))
             matchmakeSession->GetSessionInfo()->IsOpened();
     }
-    return cExecuteResultNextStep;
+    return MakeExecuteResult(cExecuteKindNextStep);
 }
 
-unsigned int SessionStatusCheckJob::CheckSessionStatus4JointSession()
+SessionStatusCheckJob::ExecuteResult SessionStatusCheckJob::CheckSessionStatus4JointSession()
 {
     const unsigned int matchmakeStatus = g_piaSession->m_matchmakeStatus;
     const Result connectedStatus =
@@ -132,28 +132,28 @@ unsigned int SessionStatusCheckJob::CheckSessionStatus4JointSession()
         g_piaSession->m_disconnectStatus = 3;
         if (g_piaSession->m_sessionDisconnectReason != 2)
             g_piaSession->m_sessionDisconnectReason = 8;
-        return cExecuteResultSuspend;
+        return MakeExecuteResult(cExecuteKindSuspend);
     }
     if (connectedStatus == static_cast<Result>(0xa471))
     {
         g_piaSession->m_disconnectStatus = 4;
         if (g_piaSession->m_sessionDisconnectReason != 2)
             g_piaSession->m_sessionDisconnectReason = 8;
-        return cExecuteResultSuspend;
+        return MakeExecuteResult(cExecuteKindSuspend);
     }
     if (connectedStatus == static_cast<Result>(0xc420))
     {
         g_piaSession->m_disconnectStatus = 5;
         if (g_piaSession->m_sessionDisconnectReason != 2)
             g_piaSession->m_sessionDisconnectReason = 8;
-        return cExecuteResultSuspend;
+        return MakeExecuteResult(cExecuteKindSuspend);
     }
     if (connectedStatus == static_cast<Result>(0xc421))
     {
         g_piaSession->m_disconnectStatus = 6;
         if (g_piaSession->m_sessionDisconnectReason != 2)
             g_piaSession->m_sessionDisconnectReason = 8;
-        return cExecuteResultSuspend;
+        return MakeExecuteResult(cExecuteKindSuspend);
     }
 
     if (transport::g_piaTransport->m_connectionError != 0)
@@ -161,11 +161,11 @@ unsigned int SessionStatusCheckJob::CheckSessionStatus4JointSession()
         g_piaSession->m_disconnectStatus = 3;
         if (g_piaSession->m_sessionDisconnectReason != 2)
             g_piaSession->m_sessionDisconnectReason = 8;
-        return cExecuteResultSuspend;
+        return MakeExecuteResult(cExecuteKindSuspend);
     }
 
     if (g_piaSession->m_disconnectStatus != 1)
-        return cExecuteResultNextStep;
+        return MakeExecuteResult(cExecuteKindNextStep);
 
     const unsigned char sessionIndex = g_piaSession->m_currentSessionIndex;
     const unsigned char bufferSessionIndex = sessionIndex == 0 ? 1 : 0;
@@ -178,20 +178,20 @@ unsigned int SessionStatusCheckJob::CheckSessionStatus4JointSession()
         {
             if (g_piaSession->m_jointSessionJob != 0 &&
                 g_piaSession->m_jointSessionJob->m_sessionDisconnectDetected)
-                return cExecuteResultNextStep;
+                return MakeExecuteResult(cExecuteKindNextStep);
             if (currentSessionId != 0 || bufferSessionId != 0)
-                return cExecuteResultNextStep;
+                return MakeExecuteResult(cExecuteKindNextStep);
             g_piaSession->m_disconnectStatus = 3;
             if (g_piaSession->m_sessionDisconnectReason != 2)
                 g_piaSession->m_sessionDisconnectReason = 8;
-            return cExecuteResultSuspend;
+            return MakeExecuteResult(cExecuteKindSuspend);
         }
         if (connectedStatus != static_cast<Result>(0x8c56))
-            return cExecuteResultNextStep;
+            return MakeExecuteResult(cExecuteKindNextStep);
         g_piaSession->m_disconnectStatus = 2;
         if (g_piaSession->m_sessionDisconnectReason != 2)
             g_piaSession->m_sessionDisconnectReason = 8;
-        return cExecuteResultNextStep;
+        return MakeExecuteResult(cExecuteKindNextStep);
     }
 
     if (g_piaMesh->CheckConnectionError() != static_cast<Result>(0x6c50))
@@ -207,18 +207,18 @@ unsigned int SessionStatusCheckJob::CheckSessionStatus4JointSession()
                     g_piaSession->m_sessionDisconnectReason = 8;
             }
             if (g_piaMatchmakeAnalysisEnabled == 0)
-                return cExecuteResultNextStep;
+                return MakeExecuteResult(cExecuteKindNextStep);
             if (!g_piaSession->IsHost())
-                return cExecuteResultNextStep;
+                return MakeExecuteResult(cExecuteKindNextStep);
             if (Session::SessionJoiningApprovalCallback(
                     g_piaSession->GetMatchmakeAnalysisToken()))
-                return cExecuteResultNextStep;
+                return MakeExecuteResult(cExecuteKindNextStep);
             g_piaSession->m_matchmakeSession[sessionIndex]->GetSessionInfo()->IsOpened();
-            return cExecuteResultNextStep;
+            return MakeExecuteResult(cExecuteKindNextStep);
         }
 
         if (matchmakeStatus != 4)
-            return cExecuteResultNextStep;
+            return MakeExecuteResult(cExecuteKindNextStep);
         if (currentSessionId == 0 || bufferSessionId == 0 ||
             g_piaSession->m_meshLayerController->IsJoinedUnknownSession(
                 currentSessionId, bufferSessionId))
@@ -228,18 +228,18 @@ unsigned int SessionStatusCheckJob::CheckSessionStatus4JointSession()
                 g_piaSession->m_sessionDisconnectReason = 8;
         }
         if (g_piaMatchmakeAnalysisEnabled == 0)
-            return cExecuteResultNextStep;
+            return MakeExecuteResult(cExecuteKindNextStep);
         if (!g_piaSession->IsJointSessionHost())
-            return cExecuteResultNextStep;
+            return MakeExecuteResult(cExecuteKindNextStep);
         if (Session::SessionJoiningApprovalCallback(
                 g_piaSession->GetMatchmakeAnalysisToken()))
-            return cExecuteResultNextStep;
+            return MakeExecuteResult(cExecuteKindNextStep);
         g_piaSession->m_matchmakeSession[bufferSessionIndex]->GetSessionInfo()->IsOpened();
-        return cExecuteResultNextStep;
+        return MakeExecuteResult(cExecuteKindNextStep);
     }
 
     const unsigned int disconnectReason = g_piaMesh->GetDisconnectReason();
-    unsigned int executeResult = cExecuteResultNextStep;
+    ExecuteResult executeResult = MakeExecuteResult(cExecuteKindNextStep);
     if (disconnectReason < 2 || (disconnectReason > 2 && disconnectReason < 10))
     {
         g_piaSession->m_disconnectStatus = 2;
@@ -247,7 +247,7 @@ unsigned int SessionStatusCheckJob::CheckSessionStatus4JointSession()
     else if (disconnectReason != 2)
     {
         g_piaSession->m_disconnectStatus = 3;
-        executeResult = cExecuteResultSuspend;
+        executeResult = MakeExecuteResult(cExecuteKindSuspend);
     }
     if (g_piaSession->m_sessionDisconnectReason == 0)
         g_piaSession->m_sessionDisconnectReason = disconnectReason;

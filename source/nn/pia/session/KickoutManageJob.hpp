@@ -35,18 +35,18 @@ public:
     void Cleanup();
     bool StartupClient(KickoutReason kickoutReason);
     Result StartKickout(StationIndex stationIndex, KickoutReason kickoutReason);
-    unsigned int ClientStartLeaveMesh();
-    unsigned int ClientWaitLeaveMesh();
-    unsigned int ClientFinalize();
+    ExecuteResult ClientStartLeaveMesh();
+    ExecuteResult ClientWaitLeaveMesh();
+    ExecuteResult ClientFinalize();
     void SetLeaveEventStationIndex(StationIndex stationIndex);
     bool AssociateKickoutWith(common::CallContext* callContext);
 
-    void setStep(unsigned int (KickoutManageJob::*function)(), const char* name)
+    void setStep(ExecuteResult (KickoutManageJob::*function)(), const char* name)
     {
         union
         {
-            unsigned int (KickoutManageJob::*derived)();
-            unsigned int (common::StepSequenceJob::*base)();
+            ExecuteResult (KickoutManageJob::*derived)();
+            ExecuteResult (common::StepSequenceJob::*base)();
         } step;
         step.derived = function;
         m_currentStep.m_function = step.base;

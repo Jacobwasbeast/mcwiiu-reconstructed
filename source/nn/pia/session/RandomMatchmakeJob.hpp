@@ -27,34 +27,34 @@ public:
     virtual void SetNextStepAtMeshStartup();
     virtual void SetNextStepAtWaitCreateMesh() = 0;
     virtual void SetNextStepAtWaitJoinMesh() = 0;
-    virtual unsigned int SetNextStepAtFailedCreateMesh(Result result) = 0;
-    virtual unsigned int SetNextStepAtFailedJoinMesh(Result result) = 0;
-    virtual unsigned int SetNextStepAtWaitLeaveMesh() = 0;
+    virtual ExecuteResult SetNextStepAtFailedCreateMesh(Result result) = 0;
+    virtual ExecuteResult SetNextStepAtFailedJoinMesh(Result result) = 0;
+    virtual ExecuteResult SetNextStepAtWaitLeaveMesh() = 0;
 
     Result Startup(common::CallContext* callerContext, const JoinRandomSessionSetting* setting);
-    unsigned int MeshStartup();
-    unsigned int CreateMesh();
-    unsigned int WaitCreateMesh();
-    unsigned int GetStationConnection();
-    unsigned int WaitGetStationConnection();
-    unsigned int JoinMesh();
+    ExecuteResult MeshStartup();
+    ExecuteResult CreateMesh();
+    ExecuteResult WaitCreateMesh();
+    ExecuteResult GetStationConnection();
+    ExecuteResult WaitGetStationConnection();
+    ExecuteResult JoinMesh();
     bool CheckContextCallCancelled();
-    unsigned int WaitJoinMesh();
-    unsigned int LeaveMesh();
-    unsigned int WaitLeaveMesh();
+    ExecuteResult WaitJoinMesh();
+    ExecuteResult LeaveMesh();
+    ExecuteResult WaitLeaveMesh();
     void CalcProcessingTimeOfJoin() const;
-    unsigned int CompleteProcess();
-    unsigned int CompleteFailure();
+    ExecuteResult CompleteProcess();
+    ExecuteResult CompleteFailure();
     void CleanupInternalContexts();
     void SetMatchmakeStatus(Session::MatchmakeStatus status);
     void SetConnectionStatus(Session::ConnectionStatus status);
 
-    void setStep(unsigned int (RandomMatchmakeJob::*function)(), const char* name)
+    void setStep(ExecuteResult (RandomMatchmakeJob::*function)(), const char* name)
     {
         union
         {
-            unsigned int (RandomMatchmakeJob::*derived)();
-            unsigned int (common::StepSequenceJob::*base)();
+            ExecuteResult (RandomMatchmakeJob::*derived)();
+            ExecuteResult (common::StepSequenceJob::*base)();
         } step;
         step.derived = function;
         m_currentStep.m_function = step.base;

@@ -17,9 +17,9 @@ public:
 
     Result Startup(common::CallContext* callerContext, unsigned int sessionId,
                    IMatchmakeSession* matchmakeSession);
-    unsigned int CloseParticipation();
-    unsigned int WaitCloseParticipation();
-    unsigned int WaitP2pStable();
+    ExecuteResult CloseParticipation();
+    ExecuteResult WaitCloseParticipation();
+    ExecuteResult WaitP2pStable();
     void Cleanup();
     virtual void Trace(unsigned long long value) const;
 

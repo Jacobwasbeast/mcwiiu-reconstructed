@@ -14,14 +14,14 @@ public:
     virtual ~CreateMeshJob();
 
     void SetHostInfoToMonitoringData();
-    void Startup(common::CallContext* callerContext);
-    unsigned int SetupLocalPlayerInfo();
+    Result Startup(common::CallContext* callerContext);
+    ExecuteResult SetupLocalPlayerInfo();
     void Cleanup();
-    unsigned int CompleteFailure();
-    unsigned int SetupLocalStation();
+    ExecuteResult CompleteFailure();
+    ExecuteResult SetupLocalStation();
 
     virtual void Trace(unsigned long long value) const;
-    virtual unsigned int StartupImpl();
+    virtual Result StartupImpl();
     virtual void SetNextStepAtSetupLocalPlayerInfoImpl();
     virtual void CleanupImpl();
     virtual void SetHostInfoToMonitoringDataImpl();

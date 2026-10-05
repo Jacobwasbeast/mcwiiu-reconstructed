@@ -22,7 +22,7 @@ public:
     Result Startup(common::CallContext* callerContext,
                    IMatchmakeSession* matchmakeSession,
                    unsigned int sessionId);
-    unsigned int CompleteProcess();
+    ExecuteResult CompleteProcess();
     virtual void Cleanup();
     virtual void Trace(unsigned long long value) const;
 

@@ -13,11 +13,11 @@ public:
     CreateSessionJob();
     virtual ~CreateSessionJob();
     Result Startup(common::CallContext* callerContext, const CreateSessionSetting* setting);
-    unsigned int MeshStartup();
-    unsigned int CreateMesh();
-    unsigned int WaitCreateMesh();
-    unsigned int CompleteFailure();
-    unsigned int CompleteProcess();
+    ExecuteResult MeshStartup();
+    ExecuteResult CreateMesh();
+    ExecuteResult WaitCreateMesh();
+    ExecuteResult CompleteFailure();
+    ExecuteResult CompleteProcess();
     void Cleanup();
     virtual void Trace(unsigned long long value) const;
     void SetMatchmakeStatus(Session::MatchmakeStatus status);

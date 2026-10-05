@@ -11,9 +11,9 @@ public:
     ProcessDestroyMeshJob();
     virtual ~ProcessDestroyMeshJob();
 
-    unsigned int Startup();
-    unsigned int SendDestroyResponse();
-    unsigned int CleanupMesh();
+    bool Startup();
+    ExecuteResult SendDestroyResponse();
+    ExecuteResult CleanupMesh();
     void Cleanup();
     virtual void Trace(unsigned long long value) const;
 

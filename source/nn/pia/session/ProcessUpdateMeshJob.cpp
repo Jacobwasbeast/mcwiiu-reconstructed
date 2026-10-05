@@ -792,20 +792,20 @@ void ProcessUpdateMeshJob::UpdateJoinMeshFailureResult(StationIndex stationIndex
             transport::g_stationConnectionInfoTable->GetPrincipalIdByStation(station);
 }
 
-unsigned int ProcessUpdateMeshJob::WaitDirectConnection()
+ProcessUpdateMeshJob::ExecuteResult ProcessUpdateMeshJob::WaitDirectConnection()
 {
     const common::Time now = common::g_piaJobScheduler->m_dispatchTime;
     if (m_updateDeadline <= now)
     {
         g_piaMesh->m_joinMeshJob->m_joinResult = cResultUpdateTimeout;
         setStep(&ProcessUpdateMeshJob::UpdateFailed, cStepNameUpdateFailed);
-        return cExecuteResultContinue;
+        return MakeExecuteResult(cExecuteKindContinue);
     }
     const int localIndex = g_piaMesh->GetLocalStationIndex();
     if (localIndex > cStationIndexMax)
     {
         setStep(&ProcessUpdateMeshJob::UpdateFailed, cStepNameUpdateFailed);
-        return cExecuteResultContinue;
+        return MakeExecuteResult(cExecuteKindContinue);
     }
 
     const common::Time noticeTime = m_failureNoticeTime;
@@ -881,13 +881,13 @@ unsigned int ProcessUpdateMeshJob::WaitDirectConnection()
     if (changed)
         transport::g_piaTransport->OutputStreamUpdateEvent();
     if (waiting)
-        return cExecuteResultNextStep;
+        return MakeExecuteResult(cExecuteKindNextStep);
     if (missing && now < m_reportDeadline)
-        return cExecuteResultNextStep;
+        return MakeExecuteResult(cExecuteKindNextStep);
 
     m_reportDeadline = now;
     setStep(&ProcessUpdateMeshJob::SendConnectionReport, cStepNameSendConnectionReport);
-    return cExecuteResultContinue;
+    return MakeExecuteResult(cExecuteKindContinue);
 }
 
 bool ProcessUpdateMeshJob::SendConnectionReport(StationIndex stationIndex, unsigned int version,
@@ -903,21 +903,21 @@ bool ProcessUpdateMeshJob::SendConnectionReport(StationIndex stationIndex, unsig
     return false;
 }
 
-unsigned int ProcessUpdateMeshJob::SendConnectionReport()
+ProcessUpdateMeshJob::ExecuteResult ProcessUpdateMeshJob::SendConnectionReport()
 {
     const common::Time now = common::g_piaJobScheduler->m_dispatchTime;
     if (m_updateDeadline <= now)
     {
         g_piaMesh->m_joinMeshJob->m_joinResult = cResultUpdateTimeout;
         setStep(&ProcessUpdateMeshJob::UpdateFailed, cStepNameUpdateFailed);
-        return cExecuteResultContinue;
+        return MakeExecuteResult(cExecuteKindContinue);
     }
     const int localIndex = g_piaMesh->GetLocalStationIndex();
     const int hostIndex = g_piaMesh->GetHostStationIndex();
     if (localIndex > cStationIndexMax || hostIndex > cStationIndexMax)
     {
         setStep(&ProcessUpdateMeshJob::UpdateFailed, cStepNameUpdateFailed);
-        return cExecuteResultContinue;
+        return MakeExecuteResult(cExecuteKindContinue);
     }
 
     unsigned int unmeasuredBitmap = 0;
@@ -941,23 +941,23 @@ unsigned int ProcessUpdateMeshJob::SendConnectionReport()
     {
         setStep(&ProcessUpdateMeshJob::StartRelayConnection, cStepNameStartRelayConnection);
     }
-    return cExecuteResultNextStep;
+    return MakeExecuteResult(cExecuteKindNextStep);
 }
 
-unsigned int ProcessUpdateMeshJob::StartRelayConnection()
+ProcessUpdateMeshJob::ExecuteResult ProcessUpdateMeshJob::StartRelayConnection()
 {
     const common::Time now = common::g_piaJobScheduler->m_dispatchTime;
     if (m_updateDeadline <= now)
     {
         g_piaMesh->m_joinMeshJob->m_joinResult = cResultUpdateTimeout;
         setStep(&ProcessUpdateMeshJob::UpdateFailed, cStepNameUpdateFailed);
-        return cExecuteResultContinue;
+        return MakeExecuteResult(cExecuteKindContinue);
     }
     const int localIndex = g_piaMesh->GetLocalStationIndex();
     if (localIndex > cStationIndexMax)
     {
         setStep(&ProcessUpdateMeshJob::UpdateFailed, cStepNameUpdateFailed);
-        return cExecuteResultContinue;
+        return MakeExecuteResult(cExecuteKindContinue);
     }
 
     transport::RelayRouteManager* relayRouteManager = transport::g_piaTransport->m_relayRouteManager;
@@ -987,7 +987,7 @@ unsigned int ProcessUpdateMeshJob::StartRelayConnection()
                 m_failureNoticeTime = timeAfterNow(cFailureNoticeIntervalMsec);
             }
         }
-        return cExecuteResultNextStep;
+        return MakeExecuteResult(cExecuteKindNextStep);
     }
 
     for (unsigned short entry = 0; entry < m_stationCount; ++entry)
@@ -1055,7 +1055,7 @@ unsigned int ProcessUpdateMeshJob::StartRelayConnection()
                 if (g_piaMesh->m_joinMeshJob->IsRunning())
                     g_piaMesh->m_joinMeshJob->Cleanup(Result(cResultJoinFailed));
                 setStep(&ProcessUpdateMeshJob::UpdateFailed, cStepNameUpdateFailed);
-                return cExecuteResultContinue;
+                return MakeExecuteResult(cExecuteKindContinue);
             }
             destroyStation(station);
             changed = true;
@@ -1110,23 +1110,23 @@ unsigned int ProcessUpdateMeshJob::StartRelayConnection()
     m_relayRouteVersion = relayRouteManager->m_unknown1c;
     g_piaMesh->m_joinMeshJob->m_principalId = cPrincipalIdInvalid;
     setStep(&ProcessUpdateMeshJob::CheckConnectionAll, cStepNameCheckConnectionAll);
-    return cExecuteResultContinue;
+    return MakeExecuteResult(cExecuteKindContinue);
 }
 
-unsigned int ProcessUpdateMeshJob::CheckConnectionAll()
+ProcessUpdateMeshJob::ExecuteResult ProcessUpdateMeshJob::CheckConnectionAll()
 {
     const common::Time now = common::g_piaJobScheduler->m_dispatchTime;
     if (m_updateDeadline <= now)
     {
         g_piaMesh->m_joinMeshJob->m_joinResult = cResultUpdateTimeout;
         setStep(&ProcessUpdateMeshJob::UpdateFailed, cStepNameUpdateFailed);
-        return cExecuteResultContinue;
+        return MakeExecuteResult(cExecuteKindContinue);
     }
     const int localIndex = g_piaMesh->GetLocalStationIndex();
     if (localIndex > cStationIndexMax)
     {
         setStep(&ProcessUpdateMeshJob::UpdateFailed, cStepNameUpdateFailed);
-        return cExecuteResultContinue;
+        return MakeExecuteResult(cExecuteKindContinue);
     }
 
     const common::Time noticeTime = m_failureNoticeTime;
@@ -1201,13 +1201,13 @@ unsigned int ProcessUpdateMeshJob::CheckConnectionAll()
     if (m_leaveMeshOnFailure && failed)
     {
         setStep(&ProcessUpdateMeshJob::UpdateFailed, cStepNameUpdateFailed);
-        return cExecuteResultContinue;
+        return MakeExecuteResult(cExecuteKindContinue);
     }
     if (waiting)
     {
         if (changed)
             transport::g_piaTransport->OutputStreamUpdateEvent();
-        return cExecuteResultNextStep;
+        return MakeExecuteResult(cExecuteKindNextStep);
     }
 
     for (unsigned short entry = 0; entry < m_stationCount; ++entry)
@@ -1223,10 +1223,10 @@ unsigned int ProcessUpdateMeshJob::CheckConnectionAll()
     m_partHostSlot = 0;
     m_updateVersion = 0;
     m_partReceived[1] = false;
-    return cExecuteResultFinished;
+    return MakeExecuteResult(cExecuteKindFinished);
 }
 
-unsigned int ProcessUpdateMeshJob::UpdateFailed()
+ProcessUpdateMeshJob::ExecuteResult ProcessUpdateMeshJob::UpdateFailed()
 {
     if (!m_leaveMeshOnFailure)
     {
@@ -1246,17 +1246,17 @@ unsigned int ProcessUpdateMeshJob::UpdateFailed()
         g_piaMesh->m_leaveMeshJob->Ready(false);
         setStep(&ProcessUpdateMeshJob::WaitLeaveMesh, cStepNameWaitLeaveMesh);
     }
-    return cExecuteResultContinue;
+    return MakeExecuteResult(cExecuteKindContinue);
 }
 
-unsigned int ProcessUpdateMeshJob::WaitLeaveMesh()
+ProcessUpdateMeshJob::ExecuteResult ProcessUpdateMeshJob::WaitLeaveMesh()
 {
     if (m_callContext.m_state != common::CallContext::cStateInProgress)
     {
         setStep(&ProcessUpdateMeshJob::CleanupByProcessFailure, cStepNameCleanupByProcessFailure);
-        return cExecuteResultContinue;
+        return MakeExecuteResult(cExecuteKindContinue);
     }
-    return cExecuteResultNextStep;
+    return MakeExecuteResult(cExecuteKindNextStep);
 }
 
 void ProcessUpdateMeshJob::CleanupInternalContexts()
@@ -1272,7 +1272,7 @@ void ProcessUpdateMeshJob::CleanupInternalContexts()
     m_callContext.Reset();
 }
 
-unsigned int ProcessUpdateMeshJob::CleanupByProcessFailure()
+ProcessUpdateMeshJob::ExecuteResult ProcessUpdateMeshJob::CleanupByProcessFailure()
 {
     g_piaMesh->CleanupStationsJobs();
     g_piaMesh->CleanupStatus();
@@ -1285,7 +1285,7 @@ unsigned int ProcessUpdateMeshJob::CleanupByProcessFailure()
     m_partVersion = 0;
     m_partReceived[0] = false;
     CleanupInternalContexts();
-    return cExecuteResultFinished;
+    return MakeExecuteResult(cExecuteKindFinished);
 }
 
 void ProcessUpdateMeshJob::UpdateDataTakeover(unsigned short stationCount)

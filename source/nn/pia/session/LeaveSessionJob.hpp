@@ -12,19 +12,19 @@ public:
     LeaveSessionJob();
     virtual ~LeaveSessionJob();
     Result Startup(common::CallContext* callerContext);
-    unsigned int WaitForcedTerminatingOfJointSessionJob();
-    unsigned int LeaveMesh();
-    unsigned int WaitLeaveMesh();
-    unsigned int WaitLeaveMeshWithHostMigration();
-    unsigned int WaitHostMigrated();
-    unsigned int LeaveCurrentMatchmakeSession();
-    unsigned int WaitLeaveCurrentMatchmakeSession();
+    ExecuteResult WaitForcedTerminatingOfJointSessionJob();
+    ExecuteResult LeaveMesh();
+    ExecuteResult WaitLeaveMesh();
+    ExecuteResult WaitLeaveMeshWithHostMigration();
+    ExecuteResult WaitHostMigrated();
+    ExecuteResult LeaveCurrentMatchmakeSession();
+    ExecuteResult WaitLeaveCurrentMatchmakeSession();
     void CalcProcessingTimeOfLeave() const;
-    unsigned int SendMonitoringData();
-    unsigned int MeshCleanup();
-    unsigned int CompleteProcess();
-    unsigned int LeaveBufferMatchmakeSession();
-    unsigned int WaitLeaveBufferMatchmakeSession();
+    ExecuteResult SendMonitoringData();
+    ExecuteResult MeshCleanup();
+    ExecuteResult CompleteProcess();
+    ExecuteResult LeaveBufferMatchmakeSession();
+    ExecuteResult WaitLeaveBufferMatchmakeSession();
     virtual void SetNextStepAtWaitForcedTerminatingOfJointSessionJob();
     virtual void SetNextStepAtWaitLeaveMesh();
     virtual void SetNextStepAtMeshCleanup();
@@ -49,7 +49,7 @@ protected:
     unsigned int m_field64;
     int m_migrationStartTick;
     int m_migrationEndTick;
-    void setStep(unsigned int (LeaveSessionJob::*function)(), const char* name);
+    void setStep(ExecuteResult (LeaveSessionJob::*function)(), const char* name);
 };
 
 }}} 

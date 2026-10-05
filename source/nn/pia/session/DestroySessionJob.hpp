@@ -12,13 +12,13 @@ public:
     DestroySessionJob();
     virtual ~DestroySessionJob();
     Result Startup(common::CallContext* callerContext);
-    unsigned int WaitForcedTerminatingOfJointSessionJob();
-    unsigned int DestroyMesh();
-    unsigned int WaitDestroyMesh();
-    unsigned int MeshCleanup();
+    ExecuteResult WaitForcedTerminatingOfJointSessionJob();
+    ExecuteResult DestroyMesh();
+    ExecuteResult WaitDestroyMesh();
+    ExecuteResult MeshCleanup();
     void CalcProcessingTimeOfLeave() const;
-    unsigned int SendMonitoringData();
-    unsigned int CompleteProcess();
+    ExecuteResult SendMonitoringData();
+    ExecuteResult CompleteProcess();
     virtual void Cleanup();
     virtual void Trace(unsigned long long value) const;
 
@@ -31,7 +31,7 @@ protected:
     unsigned char m_padding[7];
     virtual void SetNextStepAtWaitDestroyMesh() = 0;
     virtual void SetNextStepAtMeshCleanup() = 0;
-    void setStep(unsigned int (DestroySessionJob::*function)(), const char* name);
+    void setStep(ExecuteResult (DestroySessionJob::*function)(), const char* name);
 };
 
 }}} 

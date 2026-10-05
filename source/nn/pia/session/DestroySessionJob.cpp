@@ -18,9 +18,9 @@ DestroySessionJob::~DestroySessionJob()
 {
 }
 
-void DestroySessionJob::setStep(unsigned int (DestroySessionJob::*function)(), const char* name)
+void DestroySessionJob::setStep(common::Job::ExecuteResult (DestroySessionJob::*function)(), const char* name)
 {
-    m_currentStep.m_function = static_cast<unsigned int (common::StepSequenceJob::*)()>(function);
+    m_currentStep.m_function = static_cast<common::Job::ExecuteResult (common::StepSequenceJob::*)()>(function);
     m_currentStep.m_name = name;
 }
 
@@ -51,7 +51,7 @@ Result DestroySessionJob::Startup(common::CallContext* callerContext)
     return 0;
 }
 
-unsigned int DestroySessionJob::WaitForcedTerminatingOfJointSessionJob()
+DestroySessionJob::ExecuteResult DestroySessionJob::WaitForcedTerminatingOfJointSessionJob()
 {
     if (g_piaSession != 0 && g_piaSession->GetStatus() == 5)
         return SendMonitoringData();
@@ -60,13 +60,13 @@ unsigned int DestroySessionJob::WaitForcedTerminatingOfJointSessionJob()
     {
         m_isSingleStation = true;
         setStep(&DestroySessionJob::DestroyMesh, "DestroySessionJob::DestroyMesh");
-        return common::Job::cExecuteResultNextStep;
+        return MakeExecuteResult(cExecuteKindNextStep);
     }
     setStep(&DestroySessionJob::DestroyMesh, "DestroySessionJob::DestroyMesh");
-    return common::Job::cExecuteResultNextStep;
+    return MakeExecuteResult(cExecuteKindNextStep);
 }
 
-unsigned int DestroySessionJob::DestroyMesh()
+DestroySessionJob::ExecuteResult DestroySessionJob::DestroyMesh()
 {
     if (g_piaSession != 0 && g_piaSession->GetStatus() == 5)
         return SendMonitoringData();
@@ -74,31 +74,31 @@ unsigned int DestroySessionJob::DestroyMesh()
     if (m_isSingleStation)
     {
         setStep(&DestroySessionJob::MeshCleanup, "DestroySessionJob::MeshCleanup");
-        return common::Job::cExecuteResultNextStep;
+        return MakeExecuteResult(cExecuteKindNextStep);
     }
     Result result = 0;
     result = g_piaMesh->DestroyMesh(&m_callContext);
     if (result != 0)
         return SendMonitoringData();
     setStep(&DestroySessionJob::WaitDestroyMesh, "DestroySessionJob::WaitDestroyMesh");
-    return common::Job::cExecuteResultWait | 5;
+    return MakeExecuteResult(cExecuteKindWait, 5);
 }
 
-unsigned int DestroySessionJob::WaitDestroyMesh()
+DestroySessionJob::ExecuteResult DestroySessionJob::WaitDestroyMesh()
 {
     if (g_piaSession != 0 && g_piaSession->GetStatus() == 5)
         return SendMonitoringData();
     if (m_callContext.m_state == common::CallContext::cStateInProgress)
-        return common::Job::cExecuteResultWait | 5;
+        return MakeExecuteResult(cExecuteKindWait, 5);
     if (m_callContext.m_state == common::CallContext::cStateFailure)
     {
         return SendMonitoringData();
     }
     setStep(&DestroySessionJob::MeshCleanup, "DestroySessionJob::MeshCleanup");
-    return common::Job::cExecuteResultNextStep;
+    return MakeExecuteResult(cExecuteKindNextStep);
 }
 
-unsigned int DestroySessionJob::MeshCleanup()
+DestroySessionJob::ExecuteResult DestroySessionJob::MeshCleanup()
 {
     g_piaMesh->ResetInternalAsyncState();
     g_piaMesh->SetSkipReport(false);
@@ -120,16 +120,16 @@ void DestroySessionJob::CalcProcessingTimeOfLeave() const
             static_cast<int>(elapsed / static_cast<unsigned long long>(ticksPerMSec));
 }
 
-unsigned int DestroySessionJob::SendMonitoringData()
+DestroySessionJob::ExecuteResult DestroySessionJob::SendMonitoringData()
 {
     CalcProcessingTimeOfLeave();
     g_piaMesh->SetSkipReport(false);
     g_piaMesh->SendReport(1);
     setStep(&DestroySessionJob::CompleteProcess, "DestroySessionJob::CompleteProcess");
-    return common::Job::cExecuteResultWait | 0x32;
+    return MakeExecuteResult(cExecuteKindWait, 0x32);
 }
 
-unsigned int DestroySessionJob::CompleteProcess()
+DestroySessionJob::ExecuteResult DestroySessionJob::CompleteProcess()
 {
     if (g_piaMesh != 0)
         g_piaMesh->CleanupStatus();
@@ -143,7 +143,7 @@ unsigned int DestroySessionJob::CompleteProcess()
     m_callerContext = 0;
     if (g_piaMesh != 0)
         g_piaMesh->SetSkipReport(false);
-    return common::Job::cExecuteResultFinished;
+    return MakeExecuteResult(cExecuteKindFinished);
 }
 
 void DestroySessionJob::Cleanup()

@@ -8,14 +8,14 @@ namespace nn { namespace pia { namespace session {
 
 namespace
 {
-typedef unsigned int (CreateMeshJob::*CreateStep)();
+typedef common::Job::ExecuteResult (CreateMeshJob::*CreateStep)();
 
 void SelectStep(common::StepSequenceJob::Step& slot, CreateStep step)
 {
     union
     {
         CreateStep derived;
-        unsigned int (common::StepSequenceJob::*base)();
+        common::Job::ExecuteResult (common::StepSequenceJob::*base)();
     } value;
     value.derived = step;
     slot.m_function = value.base;
@@ -36,7 +36,7 @@ void CreateMeshJob::SetHostInfoToMonitoringData()
     SetHostInfoToMonitoringDataImpl();
 }
 
-void CreateMeshJob::Startup(common::CallContext* callerContext)
+Result CreateMeshJob::Startup(common::CallContext* callerContext)
 {
     if (callerContext != 0)
     {
@@ -44,21 +44,22 @@ void CreateMeshJob::Startup(common::CallContext* callerContext)
         callerContext->InitiateCall();
     }
 
-    const unsigned int result = StartupImpl();
-    if (result == cExecuteResultContinue && g_piaMesh != 0)
+    const Result result = StartupImpl();
+    if (result == 0 && g_piaMesh != 0)
     {
         g_piaMesh->CleanupMonitoringBeginData();
         SetHostInfoToMonitoringData();
     }
+    return result;
 }
 
-unsigned int CreateMeshJob::SetupLocalPlayerInfo()
+CreateMeshJob::ExecuteResult CreateMeshJob::SetupLocalPlayerInfo()
 {
     if (g_piaMesh == 0)
         return CompleteFailure();
     g_piaMesh->SetupLocalPlayerInfo();
     SetNextStepAtSetupLocalPlayerInfoImpl();
-    return cExecuteResultEntryForeground;
+    return MakeExecuteResult(cExecuteKindEntryForeground);
 }
 
 void CreateMeshJob::Cleanup()
@@ -81,7 +82,7 @@ void CreateMeshJob::Cleanup()
     CleanupImpl();
 }
 
-unsigned int CreateMeshJob::CompleteFailure()
+CreateMeshJob::ExecuteResult CreateMeshJob::CompleteFailure()
 {
     if (m_callerContext != 0)
     {
@@ -89,10 +90,10 @@ unsigned int CreateMeshJob::CompleteFailure()
         m_callerContext = 0;
     }
     Cleanup();
-    return cExecuteResultFinished;
+    return MakeExecuteResult(cExecuteKindFinished);
 }
 
-unsigned int CreateMeshJob::SetupLocalStation()
+CreateMeshJob::ExecuteResult CreateMeshJob::SetupLocalStation()
 {
     if (g_piaMesh == 0 || transport::g_piaStationManager == 0)
         return CompleteFailure();
@@ -108,20 +109,20 @@ unsigned int CreateMeshJob::SetupLocalStation()
         m_callerContext = 0;
     }
     Cleanup();
-    return cExecuteResultFinished;
+    return MakeExecuteResult(cExecuteKindFinished);
 }
 
 void CreateMeshJob::Trace(unsigned long long) const
 {
 }
 
-unsigned int CreateMeshJob::StartupImpl()
+Result CreateMeshJob::StartupImpl()
 {
     Reset(true);
     m_state = 0xffff;
     m_currentStep.m_name = "CreateMeshJob::SetupLocalPlayerInfo";
     SetNextStepAtSetupLocalPlayerInfoImpl();
-    return cExecuteResultContinue;
+    return 0;
 }
 
 void CreateMeshJob::SetNextStepAtSetupLocalPlayerInfoImpl()

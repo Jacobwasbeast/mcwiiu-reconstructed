@@ -130,7 +130,7 @@ bool KickoutManageJob::StartupClient(KickoutReason kickoutReason)
     return true;
 }
 
-unsigned int KickoutManageJob::ClientStartLeaveMesh()
+KickoutManageJob::ExecuteResult KickoutManageJob::ClientStartLeaveMesh()
 {
     Mesh* mesh = g_piaMesh;
     if (mesh->GetLocalStationIndex() < cLocalStationIndexMax)
@@ -141,32 +141,32 @@ unsigned int KickoutManageJob::ClientStartLeaveMesh()
             if (mesh->m_leaveMeshJob->Startup(&m_callContext) == 0)
             {
                 if (mesh->m_leaveMeshJob->RegisterExtraCallback(&m_callContext) == 0)
-                    return cExecuteResultNextStep;
+                    return MakeExecuteResult(cExecuteKindNextStep);
             }
             else
             {
                 mesh->m_leaveMeshJob->Ready(false);
             }
             setStep(&KickoutManageJob::ClientWaitLeaveMesh, "KickoutManageJob::ClientWaitLeaveMesh");
-            return cExecuteResultNextStep;
+            return MakeExecuteResult(cExecuteKindNextStep);
         }
     }
 
     setStep(&KickoutManageJob::ClientFinalize, "KickoutManageJob::ClientFinalize");
-    return cExecuteResultContinue;
+    return MakeExecuteResult(cExecuteKindContinue);
 }
 
-unsigned int KickoutManageJob::ClientWaitLeaveMesh()
+KickoutManageJob::ExecuteResult KickoutManageJob::ClientWaitLeaveMesh()
 {
     const unsigned int state = static_cast<unsigned int>(m_callContext.m_state);
     if (state - cCallStateMin > cCallStateMax - cCallStateMin)
-        return cExecuteResultNextStep;
+        return MakeExecuteResult(cExecuteKindNextStep);
 
     setStep(&KickoutManageJob::ClientFinalize, "KickoutManageJob::ClientFinalize");
-    return cExecuteResultContinue;
+    return MakeExecuteResult(cExecuteKindContinue);
 }
 
-unsigned int KickoutManageJob::ClientFinalize()
+KickoutManageJob::ExecuteResult KickoutManageJob::ClientFinalize()
 {
     g_piaMesh->m_disconnectReason = cDisconnectReasonKickedOut;
     g_piaMesh->ProcessingAtMeshEnd(static_cast<Mesh::DisconnectReason>(cDisconnectReasonKickedOut));
@@ -176,7 +176,7 @@ unsigned int KickoutManageJob::ClientFinalize()
         g_piaMesh->m_joinMeshJob->Reset(true);
     }
     Cleanup();
-    return cExecuteResultFinished;
+    return MakeExecuteResult(cExecuteKindFinished);
 }
 
 Result KickoutManageJob::StartKickout(StationIndex stationIndex, KickoutReason kickoutReason)

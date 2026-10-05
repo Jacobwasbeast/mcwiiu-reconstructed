@@ -20,22 +20,22 @@ public:
     virtual ~ProcessJoinRequestJob();
     virtual void Trace(unsigned long long) const;
     bool Startup();
-    unsigned int InitialStep();
-    unsigned int CheckApprovalJoin();
-    unsigned int SendDenyingJoinResponse();
-    unsigned int SendJoinResponse();
-    unsigned int WaitResponseAck();
-    unsigned int JoinSucceeded();
+    ExecuteResult InitialStep();
+    ExecuteResult CheckApprovalJoin();
+    ExecuteResult SendDenyingJoinResponse();
+    ExecuteResult SendJoinResponse();
+    ExecuteResult WaitResponseAck();
+    ExecuteResult JoinSucceeded();
     void SetJoiningStationData(const common::StationAddress&);
     void CancellationNotice(StationIndex);
     void Cleanup();
 
-    void setStep(unsigned int (ProcessJoinRequestJob::*function)(), const char* name)
+    void setStep(ExecuteResult (ProcessJoinRequestJob::*function)(), const char* name)
     {
         union
         {
-            unsigned int (ProcessJoinRequestJob::*derived)();
-            unsigned int (common::StepSequenceJob::*base)();
+            ExecuteResult (ProcessJoinRequestJob::*derived)();
+            ExecuteResult (common::StepSequenceJob::*base)();
         } step;
         step.derived = function;
         m_currentStep.m_function = step.base;

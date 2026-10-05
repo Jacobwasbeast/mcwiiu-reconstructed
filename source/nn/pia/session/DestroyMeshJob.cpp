@@ -65,13 +65,13 @@ bool DestroyMeshJob::AssociateSystemWith(common::CallContext* callContext)
     return true;
 }
 
-unsigned int DestroyMeshJob::SendDestroyMesh()
+DestroyMeshJob::ExecuteResult DestroyMeshJob::SendDestroyMesh()
 {
     const int localStationIndex = g_piaMesh->GetLocalStationIndex();
     if (localStationIndex >= cStationNumMax)
     {
         setStep(&DestroyMeshJob::CleanupMesh, "DestroyMeshJob::CleanupMesh");
-        return cExecuteResultContinue;
+        return MakeExecuteResult(cExecuteKindContinue);
     }
 
     for (int i = 0; i < cStationNumMax; ++i)
@@ -89,10 +89,10 @@ unsigned int DestroyMeshJob::SendDestroyMesh()
 
     m_waitingResponses = true;
     setStep(&DestroyMeshJob::WaitDestroyResponse, "DestroyMeshJob::WaitDestroyResponse");
-    return cExecuteResultNextStep;
+    return MakeExecuteResult(cExecuteKindNextStep);
 }
 
-unsigned int DestroyMeshJob::WaitDestroyResponse()
+DestroyMeshJob::ExecuteResult DestroyMeshJob::WaitDestroyResponse()
 {
     bool pending = false;
     for (int i = 0; i < cStationNumMax; ++i)
@@ -105,11 +105,11 @@ unsigned int DestroyMeshJob::WaitDestroyResponse()
     }
 
     if (pending && common::g_piaJobScheduler->m_dispatchTime < m_deadline)
-        return cExecuteResultNextStep;
+        return MakeExecuteResult(cExecuteKindNextStep);
 
     setStep(&DestroyMeshJob::CleanupMesh, "DestroyMeshJob::CleanupMesh");
     m_waitingResponses = false;
-    return cExecuteResultContinue;
+    return MakeExecuteResult(cExecuteKindContinue);
 }
 
 void DestroyMeshJob::CleanupStatus()
@@ -121,7 +121,7 @@ void DestroyMeshJob::CleanupStatus()
     m_systemDestroy = false;
 }
 
-unsigned int DestroyMeshJob::CleanupMesh()
+DestroyMeshJob::ExecuteResult DestroyMeshJob::CleanupMesh()
 {
     transport::Station** station = transport::g_piaStationManager->m_stations.data;
     transport::Station** const end = station + transport::g_piaStationManager->m_stations.size;
@@ -139,7 +139,7 @@ unsigned int DestroyMeshJob::CleanupMesh()
         m_callerContext = 0;
     }
     CleanupStatus();
-    return cExecuteResultFinished;
+    return MakeExecuteResult(cExecuteKindFinished);
 }
 
 void DestroyMeshJob::ReceiveDestroyResponse(StationIndex stationIndex)

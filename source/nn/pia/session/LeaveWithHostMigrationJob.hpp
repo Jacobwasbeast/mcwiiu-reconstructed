@@ -20,26 +20,26 @@ public:
     virtual ~LeaveWithHostMigrationJob();
 
     bool Startup(common::CallContext* context);
-    unsigned int SendStartMigrationMessage();
-    unsigned int WaitMigrationResponse();
-    unsigned int CleanupMesh();
-    unsigned int SendStartMultiMigrationMessage();
-    unsigned int CheckHostMigrationProcess();
-    unsigned int WaitHostMigrationProcess();
-    unsigned int StartDisconnectStations();
-    unsigned int WaitDisconnectStations();
+    ExecuteResult SendStartMigrationMessage();
+    ExecuteResult WaitMigrationResponse();
+    ExecuteResult CleanupMesh();
+    ExecuteResult SendStartMultiMigrationMessage();
+    ExecuteResult CheckHostMigrationProcess();
+    ExecuteResult WaitHostMigrationProcess();
+    ExecuteResult StartDisconnectStations();
+    ExecuteResult WaitDisconnectStations();
     void ReceiveMigrationResponse(StationIndex station);
     void Cleanup();
     virtual void Trace(unsigned long long value) const;
     virtual int DecideNextHost() = 0;
     virtual void CleanupStatus();
 
-    void setStep(unsigned int (LeaveWithHostMigrationJob::*function)(), const char* name)
+    void setStep(ExecuteResult (LeaveWithHostMigrationJob::*function)(), const char* name)
     {
         union
         {
-            unsigned int (LeaveWithHostMigrationJob::*derived)();
-            unsigned int (common::StepSequenceJob::*base)();
+            ExecuteResult (LeaveWithHostMigrationJob::*derived)();
+            ExecuteResult (common::StepSequenceJob::*base)();
         } step;
         step.derived = function;
         m_currentStep.m_function = step.base;

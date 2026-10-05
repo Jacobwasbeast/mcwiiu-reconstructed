@@ -15,8 +15,8 @@ public:
     virtual void Trace(unsigned long long value) const;
     Result Startup();
     void Cleanup();
-    unsigned int CheckSessionStatus();
-    unsigned int CheckSessionStatus4JointSession();
+    ExecuteResult CheckSessionStatus();
+    ExecuteResult CheckSessionStatus4JointSession();
 
     common::CallContext m_callContext;
     bool m_field54;

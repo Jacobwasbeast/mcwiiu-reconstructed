@@ -15,11 +15,11 @@ public:
     LeaveMeshJob();
     virtual ~LeaveMeshJob();
     Result Startup(common::CallContext*);
-    unsigned int SendLeaveRequest();
-    unsigned int WaitLeaveResponse();
-    unsigned int StartDisconnectStations();
-    unsigned int WaitLeavingProcess();
-    unsigned int LeaveSuccess();
+    ExecuteResult SendLeaveRequest();
+    ExecuteResult WaitLeaveResponse();
+    ExecuteResult StartDisconnectStations();
+    ExecuteResult WaitLeavingProcess();
+    ExecuteResult LeaveSuccess();
     void Cleanup();
     unsigned int RegisterExtraCallback(common::CallContext*);
     virtual void Trace(unsigned long long) const;

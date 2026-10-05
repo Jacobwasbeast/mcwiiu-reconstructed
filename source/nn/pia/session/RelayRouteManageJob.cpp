@@ -139,11 +139,11 @@ void RelayRouteManageJob::UpdateConnectionReport(StationIndex stationIndex,
     m_reportSerials[stationIndex] = reportSerial;
 }
 
-unsigned int RelayRouteManageJob::WaitAllDirectConnectionReport()
+RelayRouteManageJob::ExecuteResult RelayRouteManageJob::WaitAllDirectConnectionReport()
 {
     const StationIndex localStation = g_piaMesh->GetLocalStationIndex();
     if (localStation > cStationIndexMax)
-        return cExecuteResultFinished;
+        return MakeExecuteResult(cExecuteKindFinished);
 
     bool allReported = true;
     const unsigned short localIndex = localStation;
@@ -167,7 +167,7 @@ unsigned int RelayRouteManageJob::WaitAllDirectConnectionReport()
             }
         }
         if (!allReported)
-            return cExecuteResultNextStep;
+            return MakeExecuteResult(cExecuteKindNextStep);
     }
 
     const common::Time now = common::g_piaJobScheduler->m_dispatchTime;
@@ -218,18 +218,18 @@ unsigned int RelayRouteManageJob::WaitAllDirectConnectionReport()
             m_connectionReports[reportIndex] = value;
         }
         if (!allReported)
-            return cExecuteResultNextStep;
+            return MakeExecuteResult(cExecuteKindNextStep);
     }
 
     setStep(&RelayRouteManageJob::SendRelayRouteDirections, cStepNameSendRelayRouteDirections);
-    return cExecuteResultContinue;
+    return MakeExecuteResult(cExecuteKindContinue);
 }
 
-unsigned int RelayRouteManageJob::SendRelayRouteDirections()
+RelayRouteManageJob::ExecuteResult RelayRouteManageJob::SendRelayRouteDirections()
 {
     const StationIndex localStation = g_piaMesh->GetLocalStationIndex();
     if (localStation > cStationIndexMax)
-        return cExecuteResultFinished;
+        return MakeExecuteResult(cExecuteKindFinished);
 
     Trace(cTraceRelayRouteLevel);
     transport::RelayRouteManager* manager = transport::g_piaTransport->m_relayRouteManager;
@@ -247,11 +247,11 @@ unsigned int RelayRouteManageJob::SendRelayRouteDirections()
         {
             setStep(&RelayRouteManageJob::WaitAllDirectConnectionReport,
                     cStepNameWaitAllDirectConnectionReport);
-            return cExecuteResultNextStep;
+            return MakeExecuteResult(cExecuteKindNextStep);
         }
         ++m_sequenceNumber;
     }
-    return cExecuteResultFinished;
+    return MakeExecuteResult(cExecuteKindFinished);
 }
 
 void RelayRouteManageJob::Cleanup()

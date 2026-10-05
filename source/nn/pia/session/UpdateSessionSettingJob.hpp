@@ -21,7 +21,7 @@ public:
     Result Startup(common::CallContext* callerContext, unsigned int sessionId,
                    IMatchmakeSession* matchmakeSession, const UpdateSessionSetting* setting,
                    bool isJointSession);
-    void CompleteProcess();
+    ExecuteResult CompleteProcess();
     virtual void Cleanup();
     virtual void SetCurrentSessionOpenStatus(Session::SessionOpenStatus status);
     virtual void SetBufferSessionOpenStatus(Session::SessionOpenStatus status);

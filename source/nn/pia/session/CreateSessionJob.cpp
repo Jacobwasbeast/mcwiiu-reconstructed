@@ -14,10 +14,10 @@ unsigned int FailureForStatus(unsigned int status)
     if (status == 8) return 0xc421;
     return 0;
 }
-typedef unsigned int (CreateSessionJob::*Step)();
+typedef common::Job::ExecuteResult (CreateSessionJob::*Step)();
 void SelectStep(common::StepSequenceJob::Step& slot, Step step)
 {
-    union { Step derived; unsigned int (common::StepSequenceJob::*base)(); } value;
+    union { Step derived; common::Job::ExecuteResult (common::StepSequenceJob::*base)(); } value;
     value.derived = step;
     slot.m_function = value.base;
 }
@@ -46,7 +46,7 @@ Result CreateSessionJob::Startup(common::CallContext* callerContext, const Creat
     return 0;
 }
 
-unsigned int CreateSessionJob::MeshStartup()
+CreateSessionJob::ExecuteResult CreateSessionJob::MeshStartup()
 {
     if (g_piaSession == 0)
         return CompleteFailure();
@@ -57,20 +57,20 @@ unsigned int CreateSessionJob::MeshStartup()
         m_result = failure;
         SelectStep(m_currentStep, &CreateSessionJob::CompleteFailure);
         m_currentStep.m_name = "CreateSessionJob__CompleteFailure";
-        return cExecuteResultNextStep;
+        return MakeExecuteResult(cExecuteKindNextStep);
     }
     if (status < 5)
     {
         SelectStep(m_currentStep, &CreateSessionJob::CreateMesh);
         m_currentStep.m_name = "CreateSessionJob::CreateMesh";
-        return cExecuteResultNextStep;
+        return MakeExecuteResult(cExecuteKindNextStep);
     }
     SelectStep(m_currentStep, &CreateSessionJob::CreateMesh);
     m_currentStep.m_name = "CreateSessionJob::CreateMesh";
-    return cExecuteResultNextStep;
+    return MakeExecuteResult(cExecuteKindNextStep);
 }
 
-unsigned int CreateSessionJob::CreateMesh()
+CreateSessionJob::ExecuteResult CreateSessionJob::CreateMesh()
 {
     if (g_piaMesh == 0)
         return CompleteFailure();
@@ -79,15 +79,15 @@ unsigned int CreateSessionJob::CreateMesh()
     {
         m_result = result;
         SelectStep(m_currentStep, &CreateSessionJob::CompleteFailure);
-        return cExecuteResultNextStep;
+        return MakeExecuteResult(cExecuteKindNextStep);
     }
     g_piaMesh->SetSkipReport(true);
     SelectStep(m_currentStep, &CreateSessionJob::WaitCreateMesh);
     m_currentStep.m_name = "CreateSessionJob::WaitCreateMesh";
-    return cExecuteResultNextStep;
+    return MakeExecuteResult(cExecuteKindNextStep);
 }
 
-unsigned int CreateSessionJob::WaitCreateMesh()
+CreateSessionJob::ExecuteResult CreateSessionJob::WaitCreateMesh()
 {
     if (g_piaSession == 0)
         return CompleteFailure();
@@ -99,7 +99,7 @@ unsigned int CreateSessionJob::WaitCreateMesh()
         return CompleteFailure();
     }
     if (m_callContext.m_state == common::CallContext::cStateInProgress)
-        return cExecuteResultWait;
+        return MakeExecuteResult(cExecuteKindWait);
     if (m_callContext.m_state == common::CallContext::cStateFailure)
     {
         m_result = m_callContext.m_result;
@@ -107,7 +107,7 @@ unsigned int CreateSessionJob::WaitCreateMesh()
     }
     if (m_callContext.m_state != common::CallContext::cStateSuccess &&
         m_callContext.m_state != common::CallContext::cStateCancelled)
-        return cExecuteResultWait;
+        return MakeExecuteResult(cExecuteKindWait);
     if (m_callContext.m_state == common::CallContext::cStateCancelled)
     {
         m_result = 0x10c08;
@@ -126,7 +126,7 @@ unsigned int CreateSessionJob::WaitCreateMesh()
     return CompleteFailure();
 }
 
-unsigned int CreateSessionJob::CompleteFailure()
+CreateSessionJob::ExecuteResult CreateSessionJob::CompleteFailure()
 {
     if (m_result == 0x10c08 || m_result == 0xc406)
         if (g_piaSession != 0) g_piaSession->ChangeStatusToDisconnectedNetwork();
@@ -136,10 +136,10 @@ unsigned int CreateSessionJob::CompleteFailure()
         m_callerContext = 0;
     }
     Cleanup();
-    return cExecuteResultFinished;
+    return MakeExecuteResult(cExecuteKindFinished);
 }
 
-unsigned int CreateSessionJob::CompleteProcess()
+CreateSessionJob::ExecuteResult CreateSessionJob::CompleteProcess()
 {
     if (m_callerContext != 0)
     {
@@ -151,7 +151,7 @@ unsigned int CreateSessionJob::CompleteProcess()
         g_piaMesh->SetSkipReport(m_result != 0);
         g_piaMesh->SendReport(0);
     }
-    return cExecuteResultFinished;
+    return MakeExecuteResult(cExecuteKindFinished);
 }
 
 void CreateSessionJob::Cleanup()

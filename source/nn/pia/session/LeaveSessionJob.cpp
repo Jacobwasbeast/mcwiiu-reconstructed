@@ -13,11 +13,10 @@ extern Session* g_piaSession;
 
 namespace
 {
-static unsigned int finishIfSessionFailed(Session* session)
+static bool hasSessionFailed(Session* session)
 {
     const unsigned int status = session != 0 ? session->GetStatus() : 0;
-    return (status == 5 || status == 6 || status == 7 || status == 8) ?
-        common::Job::cExecuteResultFinished : common::Job::cExecuteResultContinue;
+    return status == 5 || status == 6 || status == 7 || status == 8;
 }
 }
 
@@ -32,9 +31,9 @@ LeaveSessionJob::~LeaveSessionJob()
 {
 }
 
-void LeaveSessionJob::setStep(unsigned int (LeaveSessionJob::*function)(), const char* name)
+void LeaveSessionJob::setStep(common::Job::ExecuteResult (LeaveSessionJob::*function)(), const char* name)
 {
-    m_currentStep.m_function = static_cast<unsigned int (common::StepSequenceJob::*)()>(function);
+    m_currentStep.m_function = static_cast<common::Job::ExecuteResult (common::StepSequenceJob::*)()>(function);
     m_currentStep.m_name = name;
 }
 
@@ -65,20 +64,20 @@ Result LeaveSessionJob::Startup(common::CallContext* callerContext)
     return 0;
 }
 
-unsigned int LeaveSessionJob::WaitForcedTerminatingOfJointSessionJob()
+LeaveSessionJob::ExecuteResult LeaveSessionJob::WaitForcedTerminatingOfJointSessionJob()
 {
-    if (finishIfSessionFailed(g_piaSession) != common::Job::cExecuteResultContinue)
+    if (hasSessionFailed(g_piaSession))
         return SendMonitoringData();
     if (g_piaSession != 0 && g_piaSession->m_jointSessionJob != 0 &&
         g_piaSession->m_jointSessionJob->IsRunning())
-        return common::Job::cExecuteResultWait | 5;
+        return MakeExecuteResult(cExecuteKindWait, 5);
     setStep(&LeaveSessionJob::LeaveMesh, "LeaveSessionJob::LeaveMesh");
-    return common::Job::cExecuteResultNextStep;
+    return MakeExecuteResult(cExecuteKindNextStep);
 }
 
-unsigned int LeaveSessionJob::LeaveMesh()
+LeaveSessionJob::ExecuteResult LeaveSessionJob::LeaveMesh()
 {
-    if (finishIfSessionFailed(g_piaSession) != common::Job::cExecuteResultContinue)
+    if (hasSessionFailed(g_piaSession))
         return SendMonitoringData();
     Result result = 0;
     const bool migrate = g_piaMesh->IsHost() && g_piaMesh->IsHostMigrationEnabled();
@@ -96,42 +95,45 @@ unsigned int LeaveSessionJob::LeaveMesh()
     }
     if (result != 0)
         return SendMonitoringData();
-    return common::Job::cExecuteResultWait | 5;
+    return MakeExecuteResult(cExecuteKindWait, 5);
 }
 
-unsigned int LeaveSessionJob::WaitLeaveMesh()
+LeaveSessionJob::ExecuteResult LeaveSessionJob::WaitLeaveMesh()
 {
-    if (finishIfSessionFailed(g_piaSession) != common::Job::cExecuteResultContinue)
+    if (hasSessionFailed(g_piaSession))
         return SendMonitoringData();
     if (m_callContext.m_state == common::CallContext::cStateInProgress)
-        return common::Job::cExecuteResultWait | 5;
+        return MakeExecuteResult(cExecuteKindWait, 5);
     if (m_callContext.m_state == common::CallContext::cStateFailure)
     {
         return SendMonitoringData();
     }
     SetNextStepAtWaitLeaveMesh();
-    return common::Job::cExecuteResultNextStep;
+    return MakeExecuteResult(cExecuteKindNextStep);
 }
 
-unsigned int LeaveSessionJob::WaitLeaveMeshWithHostMigration()
+LeaveSessionJob::ExecuteResult LeaveSessionJob::WaitLeaveMeshWithHostMigration()
 {
-    if (finishIfSessionFailed(g_piaSession) != common::Job::cExecuteResultContinue)
+    if (hasSessionFailed(g_piaSession))
         return SendMonitoringData();
     if (m_isSingleStation)
-        return SetNextStepAtWaitHostMigratedTimeout(), common::Job::cExecuteResultWait | 5;
+    {
+        SetNextStepAtWaitHostMigratedTimeout();
+        return MakeExecuteResult(cExecuteKindWait, 5);
+    }
     if (m_callContext.m_state == common::CallContext::cStateInProgress)
-        return common::Job::cExecuteResultWait | 5;
+        return MakeExecuteResult(cExecuteKindWait, 5);
     if (m_callContext.m_state == common::CallContext::cStateFailure)
     {
         return SendMonitoringData();
     }
     SetNextStepAtWaitHostMigratedTimeout();
-    return common::Job::cExecuteResultNextStep;
+    return MakeExecuteResult(cExecuteKindNextStep);
 }
 
-unsigned int LeaveSessionJob::WaitHostMigrated()
+LeaveSessionJob::ExecuteResult LeaveSessionJob::WaitHostMigrated()
 {
-    if (finishIfSessionFailed(g_piaSession) != common::Job::cExecuteResultContinue)
+    if (hasSessionFailed(g_piaSession))
         return SendMonitoringData();
     if (common::g_piaJobScheduler != 0 && GetWaitHostMigrationTimeout() != 0)
     {
@@ -140,13 +142,13 @@ unsigned int LeaveSessionJob::WaitHostMigrated()
             (static_cast<unsigned long long>(static_cast<unsigned int>(m_migrationStartTick)) << 32) |
             static_cast<unsigned int>(m_migrationEndTick);
         if (now - start < GetWaitHostMigrationTimeout())
-            return common::Job::cExecuteResultWait | 5;
+            return MakeExecuteResult(cExecuteKindWait, 5);
     }
     SetNextStepAtWaitLeaveCurrentMatchmakeSession();
-    return common::Job::cExecuteResultNextStep;
+    return MakeExecuteResult(cExecuteKindNextStep);
 }
 
-unsigned int LeaveSessionJob::LeaveCurrentMatchmakeSession()
+LeaveSessionJob::ExecuteResult LeaveSessionJob::LeaveCurrentMatchmakeSession()
 {
     if (g_piaSession == 0)
         return SendMonitoringData();
@@ -160,26 +162,26 @@ unsigned int LeaveSessionJob::LeaveCurrentMatchmakeSession()
     {
         m_callContext.SetResult(result);
         SetNextStepAtLeaveCurrentMatchmakeSessionFailure();
-        return common::Job::cExecuteResultNextStep;
+        return MakeExecuteResult(cExecuteKindNextStep);
     }
     SetNextStepAtWaitLeaveCurrentMatchmakeSession();
-    return common::Job::cExecuteResultWait | 5;
+    return MakeExecuteResult(cExecuteKindWait, 5);
 }
 
-unsigned int LeaveSessionJob::WaitLeaveCurrentMatchmakeSession()
+LeaveSessionJob::ExecuteResult LeaveSessionJob::WaitLeaveCurrentMatchmakeSession()
 {
     if (m_callContext.m_state == common::CallContext::cStateInProgress)
-        return common::Job::cExecuteResultWait | 5;
+        return MakeExecuteResult(cExecuteKindWait, 5);
     if (m_callContext.m_state == common::CallContext::cStateFailure ||
         m_callContext.m_state == common::CallContext::cStateCancelled)
     {
         SetNextStepAtLeaveCurrentMatchmakeSessionFailure();
-        return common::Job::cExecuteResultNextStep;
+        return MakeExecuteResult(cExecuteKindNextStep);
     }
     const unsigned int index = g_piaSession->m_currentSessionIndex;
     IMatchmakeSession* matchmake = g_piaSession->m_matchmakeSession[index];
     if (matchmake == 0 || !matchmake->WaitLeaveMatchmakeSession())
-        return common::Job::cExecuteResultWait | 5;
+        return MakeExecuteResult(cExecuteKindWait, 5);
     const Result result = m_callContext.m_result;
     if (result != 0)
         SetNextStepAtLeaveCurrentMatchmakeSessionFailure();
@@ -189,7 +191,7 @@ unsigned int LeaveSessionJob::WaitLeaveCurrentMatchmakeSession()
         g_piaSession->m_sessionId[index] = 0;
         SetNextStepAtWaitLeaveCurrentMatchmakeSession();
     }
-    return common::Job::cExecuteResultNextStep;
+    return MakeExecuteResult(cExecuteKindNextStep);
 }
 
 void LeaveSessionJob::CalcProcessingTimeOfLeave() const
@@ -206,7 +208,7 @@ void LeaveSessionJob::CalcProcessingTimeOfLeave() const
             static_cast<unsigned int>(elapsed / static_cast<unsigned long long>(ticksPerMSec));
 }
 
-unsigned int LeaveSessionJob::SendMonitoringData()
+LeaveSessionJob::ExecuteResult LeaveSessionJob::SendMonitoringData()
 {
     if (g_piaMesh != 0)
     {
@@ -214,18 +216,18 @@ unsigned int LeaveSessionJob::SendMonitoringData()
         g_piaMesh->SendReport(1);
     }
     setStep(&LeaveSessionJob::CompleteProcess, "LeaveSessionJob::CompleteProcess");
-    return common::Job::cExecuteResultWait | 0x32;
+    return MakeExecuteResult(cExecuteKindWait, 0x32);
 }
 
-unsigned int LeaveSessionJob::MeshCleanup()
+LeaveSessionJob::ExecuteResult LeaveSessionJob::MeshCleanup()
 {
     if (g_piaMesh != 0)
         g_piaMesh->ResetInternalAsyncState();
     SetNextStepAtMeshCleanup();
-    return common::Job::cExecuteResultNextStep;
+    return MakeExecuteResult(cExecuteKindNextStep);
 }
 
-unsigned int LeaveSessionJob::CompleteProcess()
+LeaveSessionJob::ExecuteResult LeaveSessionJob::CompleteProcess()
 {
     if (g_piaSession != 0)
         g_piaMesh->CleanupStatus();
@@ -239,10 +241,10 @@ unsigned int LeaveSessionJob::CompleteProcess()
     m_callerContext = 0;
     if (g_piaMesh != 0)
         g_piaMesh->SetSkipReport(false);
-    return common::Job::cExecuteResultFinished;
+    return MakeExecuteResult(cExecuteKindFinished);
 }
 
-unsigned int LeaveSessionJob::LeaveBufferMatchmakeSession()
+LeaveSessionJob::ExecuteResult LeaveSessionJob::LeaveBufferMatchmakeSession()
 {
     if (g_piaSession == 0)
         return SendMonitoringData();
@@ -255,19 +257,19 @@ unsigned int LeaveSessionJob::LeaveBufferMatchmakeSession()
     if (result != 0)
         return SendMonitoringData();
     SetNextStepAtWaitLeaveBufferMatchmakeSession();
-    return common::Job::cExecuteResultWait | 5;
+    return MakeExecuteResult(cExecuteKindWait, 5);
 }
 
-unsigned int LeaveSessionJob::WaitLeaveBufferMatchmakeSession()
+LeaveSessionJob::ExecuteResult LeaveSessionJob::WaitLeaveBufferMatchmakeSession()
 {
     const unsigned int index = g_piaSession->m_currentSessionIndex == 0 ? 1 : 0;
     IMatchmakeSession* matchmake = g_piaSession->m_matchmakeSession[index];
     if (matchmake == 0 || !matchmake->WaitLeaveMatchmakeSession())
-        return common::Job::cExecuteResultWait | 5;
+        return MakeExecuteResult(cExecuteKindWait, 5);
     matchmake->Cleanup();
     g_piaSession->m_sessionId[index] = 0;
     SetNextStepAtWaitLeaveBufferMatchmakeSession();
-    return common::Job::cExecuteResultNextStep;
+    return MakeExecuteResult(cExecuteKindNextStep);
 }
 
 void LeaveSessionJob::SetNextStepAtWaitForcedTerminatingOfJointSessionJob() { setStep(&LeaveSessionJob::LeaveMesh, "LeaveSessionJob::LeaveMesh"); }

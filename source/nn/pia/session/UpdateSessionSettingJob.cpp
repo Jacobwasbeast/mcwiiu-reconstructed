@@ -54,11 +54,12 @@ void UpdateSessionSettingJob::Cleanup()
     m_sessionId = 0;
 }
 
-void UpdateSessionSettingJob::CompleteProcess()
+UpdateSessionSettingJob::ExecuteResult UpdateSessionSettingJob::CompleteProcess()
 {
     Result result = 0;
     m_callerContext->SignalSuccess(result);
     m_callerContext = 0;
+    return MakeExecuteResult(cExecuteKindFinished);
 }
 
 void UpdateSessionSettingJob::SetCurrentSessionOpenStatus(Session::SessionOpenStatus status)

@@ -14,8 +14,8 @@ public:
     virtual ~GenerateMatchmakeSystemPasswordJob();
     Result Startup(common::CallContext* callerContext, unsigned int sessionId,
                    IMatchmakeSession* session);
-    unsigned int CompleteProcess();
-    unsigned int FailureProcess();
+    ExecuteResult CompleteProcess();
+    ExecuteResult FailureProcess();
     virtual void Cleanup();
     virtual void Trace(unsigned long long value) const;
     virtual Result GenerateMatchmakeSystemPassword() = 0;
