@@ -815,6 +815,7 @@ int CMinecraftApp::DefaultOptionsCallback(void* context, C4JStorage::PROFILESETT
 }
 int CMinecraftApp::OptionsDataCallback(void* context, int profile, unsigned short size, C4JStorage::eOptionsCallback status)
 {
+    static_cast<CMinecraftApp*>(context)->mOptionsCallbackStatus[profile] = status;
     return 0;
 }
 void CMinecraftApp::EnterSaveNotificationSection()
