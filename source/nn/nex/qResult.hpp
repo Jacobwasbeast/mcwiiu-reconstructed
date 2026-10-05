@@ -16,6 +16,14 @@ public:
     bool Equals(const bool&) const;
     operator bool() const;
     bool operator!() const;
+    bool IsError() const
+    {
+        return (m_code >> 31) != 0;
+    }
+    bool operator==(const qResult& rOther) const
+    {
+        return m_code == rOther.m_code;
+    }
     qResult& operator=(const qResult&);
     qResult& operator=(const bool&);
     int GetFacility() const;

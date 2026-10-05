@@ -22,8 +22,7 @@ public:
     explicit DateTime(const OSCalendarTime& calendarTime);
 
     explicit DateTime(uint64_t value)
-        : m_flags(static_cast<uint32_t>(value >> 32))
-        , m_packed(static_cast<uint32_t>(value))
+        : m_value(value)
     {
     }
 
@@ -40,11 +39,11 @@ public:
     bool operator>=(const DateTime& other) const;
     uint64_t operator-(const DateTime& other) const;
 
-    uint32_t GetYear() const;
-    uint32_t GetMonth() const;
-    uint32_t GetDay() const;
-    uint32_t GetHour() const;
-    uint32_t GetMinute() const;
+    uint16_t GetYear() const;
+    uint8_t GetMonth() const;
+    uint8_t GetDay() const;
+    uint8_t GetHour() const;
+    uint8_t GetMinute() const;
     uint8_t GetSecond() const;
 
     uint32_t IsLeapYear(int32_t year) const;
@@ -55,7 +54,7 @@ public:
     int64_t ToUnixEpochTime() const;
     OSCalendarTime ToCafeDateTime() const;
 
-    bool IsValid() const;
+    uint32_t IsValid() const;
     bool IsNever() const;
     void Trace(uint64_t flags);
 
@@ -65,8 +64,9 @@ public:
     static DateTime FromCustomEpochTime(int64_t epochTime, int32_t dayOffset);
 
 private:
-    uint32_t m_flags;
-    uint32_t m_packed;
+    static const DateTime& s_never;
+
+    unsigned long long m_value;
 };
 
 }

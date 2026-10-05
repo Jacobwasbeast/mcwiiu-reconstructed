@@ -1,0 +1,84 @@
+#ifndef LEGACY_CONSOLE_WIIU_NN_NEX_BERKELEYSOCKETDRIVER_HPP
+#define LEGACY_CONSOLE_WIIU_NN_NEX_BERKELEYSOCKETDRIVER_HPP
+
+#include <netinet/in.h>
+
+#include "nn/nex/CriticalSection.hpp"
+#include "nn/nex/InetAddress.hpp"
+#include "nn/nex/PseudoSingleton.hpp"
+#include "nn/nex/SocketDriver.hpp"
+
+namespace nn
+{
+namespace nex
+{
+
+class BerkeleySocketDriver : public SocketDriver
+{
+public:
+    enum
+    {
+        PEER_ADDRESS_CAPACITY = 15
+    };
+
+    struct PeerAddressTable
+    {
+        PeerAddressTable()
+            : m_criticalSection(0x20000000)
+        {
+        }
+
+        unsigned int m_unknown0;
+        CriticalSection m_criticalSection;
+        unsigned int m_uiCount;
+        sockaddr_in m_addresses[PEER_ADDRESS_CAPACITY];
+        unsigned int m_unknown144;
+    };
+
+    class BerkeleySocket : public SocketDriver::Socket
+    {
+    public:
+        BerkeleySocket();
+
+        virtual bool Open(_TrafficType type);
+        virtual void Close();
+        virtual bool Bind(unsigned short& rPort);
+        virtual _Result RecvFrom(unsigned char* pBuffer, unsigned int uiSize,
+            SocketDriver::InetAddress* pAddress, unsigned int* pReceived, _SocketFlag flag);
+        virtual _Result SendTo(unsigned char* pBuffer, unsigned int uiSize,
+            const SocketDriver::InetAddress& rAddress, unsigned int* pSent);
+        virtual bool Shutdown();
+        virtual _Result Connect(const SocketDriver::InetAddress& rAddress);
+        virtual _Result Recv(unsigned char* pBuffer, unsigned int uiSize,
+            unsigned int* pReceived);
+        virtual _Result Send(unsigned char* pBuffer, unsigned int uiSize, unsigned int* pSent);
+        virtual bool SetMulticastAddress(unsigned int uiAddress);
+        virtual bool SetTTL(unsigned char uiTTL);
+        virtual ~BerkeleySocket();
+        virtual bool SetAsync(bool bAsync);
+
+        unsigned int GetLastSocketError(int iResult);
+        _Result LastSocketErrorToResult(const wchar_t* pContext, int iResult);
+
+    private:
+        friend class BerkeleySocketDriver;
+
+        int m_iHandle;
+        PeerAddressTable* m_pPeerAddressTable;
+    };
+
+    virtual ~BerkeleySocketDriver();
+    virtual Socket* Create();
+    virtual void Delete(Socket* pSocket);
+    virtual bool Poll(PollInfo* pInfo, unsigned int uiCount, unsigned int uiTimeout);
+
+    static void GetPeerAddress(nn::nex::InetAddress* pAddresses, unsigned int uiCapacity,
+        unsigned int* pCount);
+    static void SetPeerAddress(const nn::nex::InetAddress* pAddresses, unsigned int uiCount);
+    static void ResetAnalyzeInfo();
+};
+
+}
+}
+
+#endif

@@ -23,6 +23,12 @@ public:
     void SetRelativeExpirationTime(int iRelativeExpirationTime);
     Time GetAwaitedTime();
     bool IsAwaited() const;
+    bool IsExpired() const;
+
+    Time GetExpirationTime() const
+    {
+        return m_expirationTime;
+    }
 
     unsigned int GetRTO()
     {

@@ -14,7 +14,7 @@ public:
     };
 
     explicit Operation(unsigned int flags);
-    virtual ~Operation();
+    virtual ~Operation() {}
     virtual unsigned short GetSignal() const;
     virtual unsigned int GetType() const = 0;
     virtual const wchar_t* GetClassNameString() const = 0;

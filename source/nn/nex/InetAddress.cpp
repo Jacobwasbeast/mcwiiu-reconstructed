@@ -25,6 +25,7 @@ const unsigned int NARROW_ADDRESS_BUFFER_LENGTH = 256;
 const unsigned int LOOKUP_BUFFER_LENGTH = 64;
 const unsigned int TRACE_BUFFER_LENGTH = 132;
 const unsigned int MINIMUM_ADDRESS_BUFFER_LENGTH = 32;
+const unsigned int STREAM_BUFFER_LENGTH = 101;
 
 }
 
@@ -202,6 +203,15 @@ unsigned int InetAddress::String2Address(const char* pAddress)
 void InetAddress::EnableAutoLookup(bool bEnable)
 {
     g_autoLookupEnabled = bEnable;
+}
+
+StringStream& operator<<(StringStream& rStream, const InetAddress& rAddress)
+{
+    wchar_t buffer[STREAM_BUFFER_LENGTH];
+
+    rAddress.ToStr(buffer);
+    rStream << buffer;
+    return rStream;
 }
 
 }

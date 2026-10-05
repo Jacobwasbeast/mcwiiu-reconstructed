@@ -89,9 +89,9 @@ bool ByteStream::ValidateBufferLimit(unsigned int uiSize)
     return false;
 }
 
-void ByteStream::AppendRaw(const unsigned char* pData, unsigned int uiSize)
+bool ByteStream::AppendRaw(const unsigned char* pData, unsigned int uiSize)
 {
-    m_pBuffer->AppendData(pData, uiSize, APPEND_AT_END);
+    return m_pBuffer->AppendData(pData, uiSize, APPEND_AT_END);
 }
 
 bool ByteStream::Append(const unsigned char* pData, unsigned int uiSize, unsigned int uiCount)
@@ -134,12 +134,11 @@ bool ByteStream::ExtractRaw(unsigned char* pData, unsigned int uiSize)
     return bComplete;
 }
 
-void ByteStream::Extract(unsigned char* pData, unsigned int uiSize, unsigned int uiCount)
+bool ByteStream::Extract(unsigned char* pData, unsigned int uiSize, unsigned int uiCount)
 {
     if (uiSize == 1)
     {
-        ExtractRaw(pData, uiCount);
-        return;
+        return ExtractRaw(pData, uiCount);
     }
 
     bool bComplete = true;
@@ -151,6 +150,8 @@ void ByteStream::Extract(unsigned char* pData, unsigned int uiSize, unsigned int
             bComplete = ExtractRaw(pData + uiIndex * uiSize + iByte, 1);
         }
     }
+
+    return bComplete;
 }
 
 void ByteStream::Extract(Time* pTime)

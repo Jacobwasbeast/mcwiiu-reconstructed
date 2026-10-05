@@ -52,7 +52,7 @@ public:
 
     static PacketBufferManager* GetInstance()
     {
-        unsigned int contextId = 0;
+        unsigned int contextId = g_usingInstantiationContext;
         if (g_usingInstantiationContext)
             contextId = g_instantiationContextVariable->GetRef();
 
@@ -91,6 +91,17 @@ public:
     unsigned int GetUnitNum(unsigned int uiUnitSize, unsigned int uiUnitNum);
     bool IsAllocatable(unsigned int uiSize, unsigned int uiUnitNum);
     unsigned int GetMaxUnitSize();
+
+    unsigned int GetUnitHeaderSize() const
+    {
+        return m_uiUnitHeaderSize;
+    }
+
+    unsigned int GetUnitAlignment() const
+    {
+        return m_uiUnitAlignment;
+    }
+
     unsigned int GetProperUnitSize(unsigned int uiSize);
 
     void* Allocate(unsigned int uiSize);

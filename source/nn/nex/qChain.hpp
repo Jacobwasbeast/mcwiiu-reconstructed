@@ -50,6 +50,11 @@ public:
         {
         }
 
+        iterator(const iterator& other)
+            : m_element(other.m_element)
+        {
+        }
+
         T& operator*()
         {
             return m_element;

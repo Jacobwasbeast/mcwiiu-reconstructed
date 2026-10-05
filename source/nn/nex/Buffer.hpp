@@ -15,13 +15,18 @@ class String;
 class Buffer : public RefCountedObject
 {
 public:
+    enum
+    {
+        BUFFER_FLAG_POOLED = 0x04
+    };
+
     Buffer(const Buffer& rBuffer);
     explicit Buffer(const String& rString);
     virtual ~Buffer();
 
     Buffer()
     {
-        Initialize(GetDefaultBufferSize(), 0);
+        Initialize(s_uiDefaultBufferSize, 0);
     }
 
     Buffer(unsigned int uiRealSize, unsigned char uiFlags)
@@ -65,6 +70,21 @@ public:
         return m_pData + m_uiHeadShiftSize;
     }
 
+    bool IsPooled() const
+    {
+        return (m_uiFlags & BUFFER_FLAG_POOLED) != 0;
+    }
+
+    unsigned char GetTTL() const
+    {
+        return m_uiTTL;
+    }
+
+    void SetTTL(unsigned char uiTTL)
+    {
+        m_uiTTL = uiTTL;
+    }
+
     unsigned int GetLength() const
     {
         return m_uiLength;
@@ -100,7 +120,7 @@ private:
     unsigned int m_uiRealSize;
     unsigned int m_uiHeadShiftSize;
     unsigned char m_uiFlags;
-    unsigned char m_uiFlags2;
+    unsigned char m_uiTTL;
     unsigned char m_uiFlags3;
 };
 

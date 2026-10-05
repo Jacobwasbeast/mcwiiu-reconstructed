@@ -20,6 +20,53 @@ public:
     {
     }
 
+    ValueType GetValue() const
+    {
+        return m_value;
+    }
+
+    LogicalClockTmpl& operator=(ValueType value)
+    {
+        m_value = value;
+        return *this;
+    }
+
+    LogicalClockTmpl& operator++()
+    {
+        ++m_value;
+        return *this;
+    }
+
+    DifferenceType operator-(const LogicalClockTmpl& other) const
+    {
+        return static_cast<DifferenceType>(m_value - other.m_value);
+    }
+
+    bool operator==(const LogicalClockTmpl& other) const
+    {
+        return m_value == other.m_value;
+    }
+
+    bool operator!=(const LogicalClockTmpl& other) const
+    {
+        return m_value != other.m_value;
+    }
+
+    bool operator>(const LogicalClockTmpl& other) const
+    {
+        return *this - other > 0;
+    }
+
+    bool operator>=(const LogicalClockTmpl& other) const
+    {
+        return *this == other || *this > other;
+    }
+
+    bool operator<(const LogicalClockTmpl& other) const
+    {
+        return other - *this > 0;
+    }
+
 private:
     ValueType m_value;
 };

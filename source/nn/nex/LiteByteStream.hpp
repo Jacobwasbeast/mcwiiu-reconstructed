@@ -13,7 +13,7 @@ template <int Capacity>
 class LiteByteStream : public RootObject
 {
 public:
-    LiteByteStream() : m_field0(0), m_buffer(), m_field40(false)
+    LiteByteStream() : m_uiPosition(0), m_buffer(), m_bError(false)
     {
     }
 
@@ -26,10 +26,22 @@ public:
         return m_buffer;
     }
 
+    const LiteBuffer<Capacity>& GetBuffer() const
+    {
+        return m_buffer;
+    }
+
+    void Clear()
+    {
+        m_buffer.Clear();
+        m_bError = false;
+        m_uiPosition = 0;
+    }
+
 private:
-    unsigned int m_field0;
+    unsigned int m_uiPosition;
     LiteBuffer<Capacity> m_buffer;
-    bool m_field40;
+    bool m_bError;
 };
 
 }

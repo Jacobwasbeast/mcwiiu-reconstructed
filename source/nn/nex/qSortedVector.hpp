@@ -19,7 +19,17 @@ public:
     typedef std::pair<K, V> value_type;
     typedef qVector<value_type> VectorType;
     typedef typename VectorType::iterator iterator;
+    typedef typename VectorType::const_iterator const_iterator;
     typedef typename VectorType::size_type size_type;
+
+    qSortedVector()
+    {
+    }
+
+    explicit qSortedVector(size_type count)
+    {
+        m_elements.reserve(count);
+    }
 
     iterator begin()
     {
@@ -27,6 +37,16 @@ public:
     }
 
     iterator end()
+    {
+        return m_elements.end();
+    }
+
+    const_iterator begin() const
+    {
+        return m_elements.begin();
+    }
+
+    const_iterator end() const
     {
         return m_elements.end();
     }
@@ -58,6 +78,19 @@ public:
             position = m_elements.end();
 
         return position;
+    }
+
+    std::pair<iterator, bool> insert(const value_type& rElement)
+    {
+        iterator position = std::lower_bound(m_elements.begin(), m_elements.end(), rElement.first,
+            KeyLess());
+        if (position == m_elements.end() || rElement.first < position->first)
+        {
+            position = m_elements.insert(position, rElement);
+            return std::pair<iterator, bool>(position, true);
+        }
+
+        return std::pair<iterator, bool>(position, false);
     }
 
     size_type erase(const K& rKey)

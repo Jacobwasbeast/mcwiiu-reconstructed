@@ -27,6 +27,11 @@ unsigned int EmulationDevice::GetBandwidth()
     return m_bandwidth;
 }
 
+float EmulationDevice::GetPacketDropProbability()
+{
+    return m_packetDropProbability;
+}
+
 unsigned int EmulationDevice::GetJitter()
 {
     return m_jitter;

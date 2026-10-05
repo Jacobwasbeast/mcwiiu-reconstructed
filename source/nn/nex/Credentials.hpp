@@ -29,6 +29,13 @@ public:
     void SetSecureConnection(EndPoint* connection);
 
 private:
+    friend class BackEndServices;
+    friend class JobBackEndServicesLogin;
+    friend class JobBackEndServicesLoginWithData;
+    friend class JobBackEndServicesLogout;
+    friend class SecureConnectionClient;
+    friend class SecureStream;
+    friend class KerberosAuthentication;
     uint32_t m_value;
     uint32_t m_state;
     String m_name;

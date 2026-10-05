@@ -93,16 +93,17 @@ public:
 
 private:
     friend class PacketBufferManager;
+    friend class JobCafeLogin;
 
     String m_broadcastAddress;
     ThreadVariable<unsigned int> m_errorCode;
     ThreadVariable<unsigned int> m_errorDetail;
     ThreadVariable<ObjectThreadRoot*> m_currentThread;
     BinaryDataMap m_binaryDataMap;
-    StringMap m_protocolNameMap;
-    StringMap m_methodNameMap;
-    StringMap m_errorNameMap;
-    VersionMap m_protocolVersionMap;
+    StringMap m_nexTokenMap;
+    StringMap m_nexPasswordMap;
+    StringMap m_nexHostMap;
+    VersionMap m_nexPortMap;
     EventLog m_eventLog;
     unsigned int m_field1a4;
     TraceLog m_traceLog;

@@ -30,6 +30,7 @@ public:
     bool HasNotOwnership() const;
 
 protected:
+    friend class Condition;
     friend class Core;
 
     MutexPrimitive m_mutex;
@@ -46,9 +47,20 @@ public:
 
     virtual ~ForcedCriticalSection() {}
 
-    virtual void Enter();
-    virtual void Leave();
-    virtual bool IsForce() const;
+    virtual void Enter()
+    {
+        m_mutex.Lock();
+    }
+
+    virtual void Leave()
+    {
+        m_mutex.Unlock();
+    }
+
+    virtual bool IsForce() const
+    {
+        return true;
+    }
 };
 
 class ScopedCS : public RootObject

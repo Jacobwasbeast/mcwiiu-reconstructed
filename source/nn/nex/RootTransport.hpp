@@ -31,6 +31,7 @@ class PacketRecognizer;
 class Relay;
 class Router;
 class StationURL;
+class VirtualFilterDevice;
 class VirtualNATDevice;
 
 extern std::vector<unsigned int, MemAllocator<unsigned int> > g_blockedAddresses;
@@ -43,9 +44,9 @@ public:
 
     virtual qResult Initialize();
     virtual bool StartListen(unsigned short uiPort, unsigned short* pPortOut, bool bFlag,
-        unsigned int uiFirst, unsigned int uiSecond) = 0;
+        unsigned int uiFirst, bool bSecond) = 0;
     virtual bool StartListenReuse(unsigned short uiPort, unsigned short* pPortOut, bool bFlag,
-        unsigned int uiFirst, unsigned int uiSecond) = 0;
+        unsigned int uiFirst, bool bSecond) = 0;
     virtual bool StopListen(unsigned short uiPort) = 0;
     virtual void StopListen() = 0;
     virtual unsigned int GetNbListeningPorts() = 0;
@@ -82,6 +83,16 @@ public:
 
     void StopTransportThread();
 
+    OutputEmulationDevice* GetOutputEmulationDevice()
+    {
+        return &m_outputEmulation;
+    }
+
+    InputEmulationDevice* GetInputEmulationDevice()
+    {
+        return &m_inputEmulation;
+    }
+
     void AttachVNATDevice(VirtualNATDevice* pDevice);
     void DetachVNATDevice(VirtualNATDevice* pDevice);
     bool RegisterPacketRecognizer(PacketRecognizer* pRecognizer);
@@ -96,6 +107,21 @@ public:
     void SetIsNATCheckServerAddressesSet();
     bool SetUpDefaultNATCheckServerInternal();
 
+    unsigned int GetBufferSize() const
+    {
+        return m_uiBufferSize;
+    }
+
+    unsigned short GetPortNumber() const
+    {
+        return m_uiPortNumber;
+    }
+
+    bool IsStopped() const
+    {
+        return m_reserved4;
+    }
+
     NATProperties GetNATProperties() const;
     void SetNATProperties(const NATProperties& rProperties);
 
@@ -106,7 +132,12 @@ public:
     void SetRelayNameAddress(String& rName);
 
 private:
+    friend class BackEndServices;
+    friend class ConnectionOrientedStream;
+    friend class JobPerformNATCheck;
+    friend class Relay;
     friend class Router;
+    friend class SocketTransport;
 
     CriticalSection m_criticalSection;
     CriticalSection m_recognizerCriticalSection;
@@ -116,7 +147,7 @@ private:
     InputEmulationDevice m_inputEmulation;
     TransportStreamManager m_streamManager;
     VirtualNATDevice* m_pVirtualNATDevice;
-    unsigned short m_reserved1;
+    unsigned short m_uiPortNumber;
     std::list<PacketRecognizer*, MemAllocator<PacketRecognizer*> > m_packetRecognizers;
     NATProperties m_natProperties;
     UPnPProperties m_upnpProperties;
@@ -127,7 +158,7 @@ private:
     bool m_bNATCheckServerAddressesSet;
     bool m_bRelayAddressSet;
     bool m_reserved4;
-    qSet<InetAddress>* m_pInetAddressSet;
+    VirtualFilterDevice* m_pInetAddressSet;
     qVector<StringStream*> m_natCheckServerAddresses;
     InetAddress m_relayAddress;
     String m_relayName;

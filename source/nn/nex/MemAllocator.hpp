@@ -79,23 +79,23 @@ public:
         position->~T();
     }
 
+    template <typename U>
+    bool operator==(const MemAllocator<U>&) const
+    {
+        return true;
+    }
+
+    template <typename U>
+    bool operator!=(const MemAllocator<U>&) const
+    {
+        return false;
+    }
+
     size_type max_size() const
     {
         return static_cast<size_type>(-1) / sizeof(T);
     }
 };
-
-template <typename T, typename U>
-inline bool operator==(const MemAllocator<T>&, const MemAllocator<U>&)
-{
-    return true;
-}
-
-template <typename T, typename U>
-inline bool operator!=(const MemAllocator<T>&, const MemAllocator<U>&)
-{
-    return false;
-}
 
 }
 }

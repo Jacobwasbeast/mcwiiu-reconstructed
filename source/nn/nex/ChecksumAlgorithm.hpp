@@ -2,6 +2,7 @@
 #define LEGACY_CONSOLE_WIIU_NN_NEX_CHECKSUMALGORITHM_HPP
 
 #include "nn/nex/Buffer.hpp"
+#include "nn/nex/Job.hpp"
 #include "nn/nex/Key.hpp"
 #include "nn/nex/PolymorphicRootObject.hpp"
 #include "nn/nex/SignatureBytes.hpp"
@@ -10,6 +11,9 @@ namespace nn
 {
 namespace nex
 {
+
+class CallContext;
+class KeyCache;
 
 class ChecksumAlgorithm : public PolymorphicRootObject
 {
@@ -39,6 +43,13 @@ public:
     bool RemoveChecksum(Buffer* pBuffer);
     Key DeriveKey(const Buffer& rBuffer, unsigned int uiIterations);
     Key DeriveKey(const char* pString, unsigned int uiIterations);
+
+    static bool DeriveKey(CallContext* pCallContext, ChecksumAlgorithm* pChecksumAlgorithm,
+        const Buffer& rBuffer, unsigned int uiIterations, Key* pKey, KeyCache* pKeyCache,
+        Job::JobType jobType);
+    static bool DeriveKey(CallContext* pCallContext, ChecksumAlgorithm* pChecksumAlgorithm,
+        const char* pString, unsigned int uiIterations, Key* pKey, KeyCache* pKeyCache,
+        Job::JobType jobType);
 
 protected:
     unsigned char m_uiChecksumLength;

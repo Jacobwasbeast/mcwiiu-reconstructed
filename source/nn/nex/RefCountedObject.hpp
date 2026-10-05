@@ -3,7 +3,11 @@
 
 #include <stdint.h>
 
+#ifdef __ghs__
+#include <ppc_ghs.h>
+#else
 #include <coreinit/atomic.h>
+#endif
 
 #include "nn/nex/RootObject.hpp"
 
@@ -20,7 +24,7 @@ public:
 
     void AddRef()
     {
-        OSAddAtomic(&m_refCount, 1);
+        AddAndFetch(&m_refCount, 1);
     }
     void ReleaseRef();
 
@@ -30,6 +34,24 @@ public:
     }
 
 private:
+    static int32_t AddAndFetch(volatile int32_t* pValue, int32_t iDelta)
+    {
+#ifdef __ghs__
+        unsigned int uiPrevious;
+        do
+        {
+            unsigned int* pWord = reinterpret_cast<unsigned int*>(const_cast<int32_t*>(pValue));
+            uiPrevious = __LWARX(pWord, 0);
+            __DCBST(pWord, 0);
+        } while (!__STWCX(reinterpret_cast<unsigned int*>(const_cast<int32_t*>(pValue)), 0,
+                          uiPrevious + iDelta));
+
+        return static_cast<int32_t>(uiPrevious + iDelta);
+#else
+        return OSAddAtomic(pValue, iDelta) + iDelta;
+#endif
+    }
+
     uint32_t m_unknown0;
     volatile int32_t m_refCount;
     bool m_disposing;

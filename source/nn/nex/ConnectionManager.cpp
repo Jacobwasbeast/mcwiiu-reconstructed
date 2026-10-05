@@ -62,7 +62,7 @@ ConnectionManager::ConnectionManager(EndPointEventHandler* pEndPointEventHandler
     , m_pEndPointEventHandler(pEndPointEventHandler)
 {
     m_pConnectionFilter = 0;
-    m_flag48 = false;
+    m_bFilterEnabled = false;
     m_flag64 = bFlag;
     m_jobType = jobType;
     m_bRoutingEnabled = bRoutingEnabled;
@@ -112,7 +112,7 @@ bool ConnectionManager::ConnectionRequest(ConnectionOrientedStream* pStream,
     const StationURL* pStationURL, Buffer* pBuffer, EndPoint* pEndPoint)
 {
     PseudoSingleton::SetContextIfRequired(m_uiContextId);
-    if (m_flag48 && FilterConnectionRequest(pStream, pStationURL, pBuffer, pEndPoint))
+    if (m_bFilterEnabled && FilterConnectionRequest(pStream, pStationURL, pBuffer, pEndPoint))
     {
         pEndPoint->RegisterEventHandler(m_pEndPointEventHandler);
         return true;

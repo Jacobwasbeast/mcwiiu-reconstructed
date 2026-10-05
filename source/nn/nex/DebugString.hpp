@@ -14,6 +14,10 @@ public:
     DebugString(const String&)
     {
     }
+
+    DebugString(const wchar_t*)
+    {
+    }
 };
 
 }

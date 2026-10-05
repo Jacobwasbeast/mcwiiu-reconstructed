@@ -11,6 +11,8 @@ namespace nn
 namespace nex
 {
 
+class StringStream;
+
 class InetAddress : public RootObject
 {
 public:
@@ -64,6 +66,8 @@ public:
 private:
     sockaddr_in m_address;
 };
+
+StringStream& operator<<(StringStream& rStream, const InetAddress& rAddress);
 
 }
 }

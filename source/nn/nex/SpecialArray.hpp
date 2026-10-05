@@ -11,7 +11,7 @@ namespace nex
 {
 
 template<class T>
-T* SpecialNew(const wchar_t*, unsigned int)
+T* SpecialNew(wchar_t*, unsigned int)
 {
     T* object;
 
@@ -34,7 +34,7 @@ void SpecialDelete(T* object)
 }
 
 template<class T>
-T* SpecialNewArray(unsigned int count, const wchar_t*, unsigned int)
+T* SpecialNewArray(unsigned int count, wchar_t*, unsigned int)
 {
     unsigned int* block;
     T* elements;

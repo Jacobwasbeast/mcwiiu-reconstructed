@@ -20,6 +20,11 @@ public:
     Router();
     virtual ~Router();
 
+    bool IsEnabled() const
+    {
+        return m_bEnabled;
+    }
+
     void EnableRouting(bool bEnable);
     void SetTransport(RootTransport* pTransport);
     void UnregisterStream();

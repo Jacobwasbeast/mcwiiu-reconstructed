@@ -67,6 +67,8 @@ public:
     NATTraversalResult GetNATTraversalResult(unsigned int uiConnectionID);
 
 private:
+    friend class Relay;
+
     typedef std::map<unsigned int, std::pair<Time, StationURL>, std::less<unsigned int>,
         MemAllocator<std::pair<const unsigned int, std::pair<Time, StationURL> > > >
         ProbeRequestMap;

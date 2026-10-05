@@ -13,12 +13,18 @@ class NATProperties : public RootObject
 {
 public:
     enum MappingProperties
-{
-};
+    {
+        MAPPING_UNKNOWN = 0,
+        MAPPING_ENDPOINT_INDEPENDENT = 1,
+        MAPPING_ENDPOINT_DEPENDENT = 2
+    };
 
     enum FilteringProperties
-{
-};
+    {
+        FILTERING_UNKNOWN = 0,
+        FILTERING_ENDPOINT_INDEPENDENT = 1,
+        FILTERING_ENDPOINT_DEPENDENT = 2
+    };
 
     enum PortIncreaseProperties
 {
@@ -62,6 +68,8 @@ public:
     static AllProperties ConvertIntegerToAllProperties(unsigned int uiValue);
 
 private:
+    friend class JobPerformNATCheck;
+
     PortIncreaseProperties m_portIncrease;
     String m_interfaceAddress;
     unsigned short m_uiInterfacePort;

@@ -1,9 +1,17 @@
 #include "nn/nex/Stream.hpp"
 
+#include "nn/nex/StreamSettings.hpp"
+
 namespace nn
 {
 namespace nex
 {
+
+Stream::Stream(Type type)
+    : m_Type(type)
+{
+    g_streamSettings[m_Type].Get().SetStreamType(m_Type);
+}
 
 Stream::~Stream()
 {

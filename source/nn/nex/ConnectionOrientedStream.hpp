@@ -51,6 +51,11 @@ public:
     virtual void AddCIDEndPointAssociation(unsigned int uiConnectionID, EndPoint* pEndPoint);
     virtual bool RemoveCIDEndPointAssociation(unsigned int uiConnectionID, EndPoint* pEndPoint);
 
+    unsigned char GetStreamID() const
+    {
+        return m_uiStreamID;
+    }
+
 protected:
     TransportEventHandler* m_pEventHandler;
     RootTransport* m_pTransport;

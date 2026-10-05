@@ -16,7 +16,6 @@ namespace nex
 namespace
 {
 
-const unsigned char BUFFER_FLAG_POOLED = 0x04;
 const unsigned int APPEND_AT_END = 0xFFFFFFFFu;
 
 }
@@ -34,7 +33,7 @@ Buffer::Buffer(const Buffer& rBuffer)
     *this = rBuffer;
 
     m_uiFlags = static_cast<unsigned char>(rBuffer.m_uiFlags & ~BUFFER_FLAG_POOLED);
-    m_uiFlags2 = rBuffer.m_uiFlags2;
+    m_uiTTL = rBuffer.m_uiTTL;
     m_uiFlags3 = rBuffer.m_uiFlags3;
 }
 
@@ -49,7 +48,7 @@ Buffer::Buffer(const String& rString)
     if (uiLength == 0)
     {
         m_uiRealSize = 0;
-        m_uiFlags2 = 0;
+        m_uiTTL = 0;
         m_uiFlags3 = 0;
         m_pData = 0;
         m_uiLength = 0;
@@ -63,7 +62,7 @@ Buffer::Buffer(const String& rString)
     StringConversion::StringToHex(rString, m_pData, m_uiRealSize);
 
     m_uiFlags3 = 0;
-    m_uiFlags2 = 0;
+    m_uiTTL = 0;
 }
 
 Buffer::~Buffer()
@@ -90,7 +89,7 @@ Buffer& Buffer::operator=(const Buffer& rBuffer)
 
         m_uiFlags = static_cast<unsigned char>((rBuffer.m_uiFlags & ~BUFFER_FLAG_POOLED)
             | (m_uiFlags & BUFFER_FLAG_POOLED));
-        m_uiFlags2 = rBuffer.m_uiFlags2;
+        m_uiTTL = rBuffer.m_uiTTL;
     }
 
     return *this;
@@ -142,7 +141,7 @@ void Buffer::Initialize(unsigned int uiRealSize, unsigned char uiFlags)
     m_uiLength = 0;
     m_pData = AllocateDataBuffer(uiRealSize);
     m_uiFlags3 = 0;
-    m_uiFlags2 = 0;
+    m_uiTTL = 0;
 }
 
 bool Buffer::IsValid() const

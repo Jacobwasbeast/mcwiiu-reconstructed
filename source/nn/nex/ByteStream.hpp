@@ -29,7 +29,7 @@ public:
     bool SetLength(unsigned int uiLength);
     bool ValidateBufferLimit(unsigned int uiSize);
 
-    void AppendRaw(const unsigned char* pData, unsigned int uiSize);
+    bool AppendRaw(const unsigned char* pData, unsigned int uiSize);
     bool Append(const unsigned char* pData, unsigned int uiSize, unsigned int uiCount);
     bool Append(const Time* pTime);
     bool AppendString(const wchar_t* pString, unsigned int uiSize, unsigned int uiCount);
@@ -37,7 +37,7 @@ public:
     bool AppendString(const wchar_t* pString, unsigned int uiLength);
 
     bool ExtractRaw(unsigned char* pData, unsigned int uiSize);
-    void Extract(unsigned char* pData, unsigned int uiSize, unsigned int uiCount);
+    bool Extract(unsigned char* pData, unsigned int uiSize, unsigned int uiCount);
     void Extract(Time* pTime);
     bool ExtractString(wchar_t* pString, unsigned short uiLength);
 
@@ -73,6 +73,11 @@ public:
 
         m_uiPosition += sizeof(T);
         return true;
+    }
+
+    Buffer* GetBuffer() const
+    {
+        return m_pBuffer;
     }
 
     bool HasError() const

@@ -13,6 +13,7 @@ namespace nex
 
 class CallContext;
 class InterfaceInfo;
+class SocketDriver;
 class StationURL;
 
 template <typename T>
@@ -22,8 +23,10 @@ class TransportAdapter : public RootObject
 {
 public:
     enum ETransportMode
-{
-};
+    {
+        TRANSPORT_MODE_0 = 0,
+        TRANSPORT_MODE_1 = 1
+    };
 
     TransportAdapter();
     virtual ~TransportAdapter();
@@ -42,6 +45,31 @@ public:
     virtual bool SetPortNumber(unsigned short uiPortNumber);
 
     void SetTransportMode(ETransportMode mode);
+
+    ETransportMode GetTransportMode() const
+    {
+        return m_transportMode;
+    }
+
+    const InetAddress& GetBroadcastAddress() const
+    {
+        return m_broadcastAddress;
+    }
+
+    const InetAddress& GetMulticastAddress() const
+    {
+        return m_multicastAddress;
+    }
+
+    const InetAddress& GetLocalAddress() const
+    {
+        return m_localAddress;
+    }
+
+    SocketDriver* GetSocketDriver() const
+    {
+        return m_pSocketDriver;
+    }
     void Trace(unsigned long long uiFilter);
 
     static bool IsSendMultiAddress(const InetAddress* pAddress);
@@ -52,9 +80,10 @@ protected:
     InetAddress m_broadcastAddress;
     InetAddress m_multicastAddress;
     InetAddress m_localAddress;
-    unsigned int m_uiFlags;
+    SocketDriver* m_pSocketDriver;
 };
 
+extern TransportAdapter g_defaultTransportAdapter;
 extern TransportAdapter* g_transportAdapter;
 
 }

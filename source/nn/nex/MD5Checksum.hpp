@@ -14,6 +14,9 @@ class MD5Checksum : public ChecksumAlgorithm
 {
 public:
     MD5Checksum();
+    virtual ~MD5Checksum()
+    {
+    }
 
     virtual bool ComputeChecksum(const Buffer& rBuffer, Buffer* pChecksum);
     virtual bool ComputeChecksum(const unsigned char** ppData, const unsigned int* pLengths,

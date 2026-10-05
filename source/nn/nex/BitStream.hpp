@@ -41,6 +41,9 @@ public:
     static void TraceBits(uint64_t uiFilter, unsigned char* pData, unsigned int uiBits);
 
 protected:
+    friend class Ticket;
+    friend class KerberosEncryption;
+    friend class KerberosAuthentication;
     bool m_bError;
     Buffer* m_pBuffer;
     unsigned int m_uiBytePosition;

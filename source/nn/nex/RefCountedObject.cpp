@@ -18,7 +18,7 @@ RefCountedObject::~RefCountedObject()
 
 void RefCountedObject::ReleaseRef()
 {
-    if (OSAddAtomic(&m_refCount, -1) != 1 || m_disposing)
+    if (AddAndFetch(&m_refCount, -1) != 0 || m_disposing)
         return;
 
     m_disposing = true;

@@ -53,7 +53,10 @@ public:
     bool InitiateCall();
     bool InitiateSpecialCall();
 
-    void SignalSuccess(qResult result);
+    void SignalSuccess(qResult result)
+    {
+        SetStateImpl(CallSucceeded, result, true);
+    }
     void SignalFailure(qResult result);
     void SignalCompletion(qResult result);
 
@@ -88,7 +91,21 @@ private:
     friend class CallContextRegister;
     friend class ClientProtocol;
     friend class JobConnectEndPoint;
+    friend class JobPerformNATCheck;
     friend class ConnectionManager;
+    friend class BackEndServices;
+    friend class JobBackEndServicesTerminate;
+    friend class JobBackEndServicesLogin;
+    friend class JobBackEndServicesLoginWithData;
+    friend class JobBackEndServicesLogout;
+    friend class TicketManager;
+    friend class AuthenticationClient;
+    friend class JobTicketManagerLogin;
+    friend class JobDeriveKey;
+    friend class NgsFacade;
+    friend class ChecksumAlgorithm;
+    friend class JobTicketManagerLoginWithData;
+    friend class JobTicketManagerAcquireTicket;
     class InternalData
     {
     public:

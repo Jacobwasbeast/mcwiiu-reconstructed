@@ -14,7 +14,6 @@ PacketOut::PacketOut(PRUDPEndPoint* pEndPoint, PacketType type, unsigned short u
     , m_unknown120(0)
     , m_unknown124(0)
     , m_unknown138(0)
-    , m_unknown13c(0)
 {
     Initialize(pEndPoint, type, uiFlags, pPayload, uiSize,
         (uiFlags & PACKET_FLAG_NEED_ACK) ? new Timeout() : 0);
@@ -32,7 +31,6 @@ PacketOut::~PacketOut()
 void PacketOut::Initialize(PRUDPEndPoint* pEndPoint, PacketType type, unsigned short uiFlags,
     Buffer* pPayload, unsigned int uiSize, Timeout* pTimeout)
 {
-    m_unknown13c = 0;
     m_unknown11a = 0;
     m_unknown120 = 0;
     m_uiTypeAndFlags = m_uiTypeAndFlags | (type & PACKET_TYPE_MASK) |

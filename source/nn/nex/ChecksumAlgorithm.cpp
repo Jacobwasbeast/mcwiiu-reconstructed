@@ -2,6 +2,12 @@
 
 #include <string.h>
 
+#include "nn/nex/CallContext.hpp"
+#include "nn/nex/Core.hpp"
+#include "nn/nex/CriticalSection.hpp"
+#include "nn/nex/JobDeriveKey.hpp"
+#include "nn/nex/Scheduler.hpp"
+
 namespace nn
 {
 namespace nex
@@ -113,6 +119,37 @@ Key ChecksumAlgorithm::DeriveKey(const char* pString, unsigned int uiIterations)
     Buffer buffer;
     buffer.AppendData(pString, static_cast<unsigned int>(strlen(pString)), APPEND_AT_END);
     return DeriveKey(buffer, uiIterations);
+}
+
+bool ChecksumAlgorithm::DeriveKey(CallContext* pCallContext,
+    ChecksumAlgorithm* pChecksumAlgorithm, const Buffer& rBuffer, unsigned int uiIterations,
+    Key* pKey, KeyCache* pKeyCache, Job::JobType jobType)
+{
+    CriticalSection& csScheduler = Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    csScheduler.Enter();
+    if (!pCallContext->InitiateCall())
+    {
+        csScheduler.Leave();
+        return false;
+    }
+
+    Buffer buffer(rBuffer);
+    JobDeriveKey* pJob = new JobDeriveKey(jobType, pCallContext->m_uiCallId, pChecksumAlgorithm,
+        &buffer, uiIterations, pKey);
+    pJob->m_pKeyCache = pKeyCache;
+    Core::GetInstance()->GetScheduler()->Queue(pJob, false);
+    csScheduler.Leave();
+    return true;
+}
+
+bool ChecksumAlgorithm::DeriveKey(CallContext* pCallContext,
+    ChecksumAlgorithm* pChecksumAlgorithm, const char* pString, unsigned int uiIterations,
+    Key* pKey, KeyCache* pKeyCache, Job::JobType jobType)
+{
+    Buffer buffer;
+    buffer.AppendData(pString, static_cast<unsigned int>(strlen(pString)), APPEND_AT_END);
+    return DeriveKey(pCallContext, pChecksumAlgorithm, buffer, uiIterations, pKey, pKeyCache,
+        jobType);
 }
 
 }

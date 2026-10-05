@@ -44,30 +44,5 @@ bool MatchmakeExtensionClient::Unbind()
     return bUnbound;
 }
 
-bool BackEndServices::RegisterNotificationEventHandler(
-    NotificationEventHandler* handler)
-{
-    if (m_notificationEventManager == 0)
-    {
-        return 0;
-    }
-    return m_notificationEventManager->RegisterNotificationEventHandler(handler);
-}
-
-bool BackEndServices::UnregisterNotificationEventHandler(
-    NotificationEventHandler* handler)
-{
-    if (m_notificationEventManager == 0)
-    {
-        return 0;
-    }
-    return m_notificationEventManager->UnregisterNotificationEventHandler(handler);
-}
-
-Credentials* BackEndServices::GetCredentials()
-{
-    return m_credentials;
-}
-
 }
 }

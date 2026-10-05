@@ -21,7 +21,7 @@ ConnectivityManager* ConnectivityManager::GetInstance()
 
 ConnectivityManager* ConnectivityManager::GetInstanceWithoutNetworkCheck()
 {
-    unsigned int contextId = 0;
+    unsigned int contextId = g_usingInstantiationContext;
     if (g_usingInstantiationContext)
         contextId = g_instantiationContextVariable->GetRef();
 

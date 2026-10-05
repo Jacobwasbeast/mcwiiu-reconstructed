@@ -4,9 +4,11 @@
 #include <map>
 #include <utility>
 
+#include "nn/nex/InstanceTable.hpp"
 #include "nn/nex/ProtocolRegistry.hpp"
 #include "nn/nex/PseudoSingleton.hpp"
 #include "nn/nex/RefCountedObject.hpp"
+#include "nn/nex/ThreadVariable.hpp"
 
 namespace nn
 {
@@ -22,6 +24,24 @@ class RVClientCore : public RefCountedObject
 public:
     RVClientCore();
     virtual ~RVClientCore();
+
+    enum
+    {
+        ClassID = 12
+    };
+
+    static RVClientCore* GetInstance()
+    {
+        unsigned int uiContextId = g_usingInstantiationContext;
+        if (g_usingInstantiationContext)
+            uiContextId = g_instantiationContextVariable->GetRef();
+
+        InstanceControl* pInstanceControl = g_instanceTable.FindInstance(ClassID, uiContextId);
+        if (pInstanceControl == 0)
+            return 0;
+
+        return static_cast<RVClientCore*>(pInstanceControl->GetDelegatorInstance());
+    }
 
     static RVClientCore* AcquireInstance();
     static void ReleaseInstance();

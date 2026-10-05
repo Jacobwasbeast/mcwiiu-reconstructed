@@ -27,6 +27,7 @@ public:
     uint32_t IsEventValid(const NotificationEvent& rEvent);
 
 private:
+    friend class BackEndServices;
     std::set<NotificationEventHandler*> m_handlers;
     NotificationEventManager* m_pParent;
     std::list<NotificationEvent> m_events;

@@ -4,6 +4,7 @@
 
 #include "nn/nex/Buffer.hpp"
 #include "nn/nex/Core.hpp"
+#include "nn/nex/Network.hpp"
 #include "nn/nex/PacketRecognizer.hpp"
 #include "nn/nex/Platform.hpp"
 #include "nn/nex/PseudoSingleton.hpp"
@@ -11,6 +12,7 @@
 #include "nn/nex/Scheduler.hpp"
 #include "nn/nex/StationURL.hpp"
 #include "nn/nex/ThreadVariable.hpp"
+#include "nn/nex/VirtualFilterDevice.hpp"
 
 namespace nn
 {
@@ -48,7 +50,7 @@ wchar_t* RootTransport::s_pInterfaceAddress = 0;
 RootTransport::RootTransport()
     : m_criticalSection(0x20000000), m_recognizerCriticalSection(0x20000000),
       m_uiBufferSize(DEFAULT_BUFFER_SIZE), m_reserved0(false), m_pVirtualNATDevice(0),
-      m_reserved1(0), m_bNATCheckEnabled(true), m_bUPnPSupported(false), m_reserved2(false),
+      m_uiPortNumber(0), m_bNATCheckEnabled(true), m_bUPnPSupported(false), m_reserved2(false),
       m_reserved3(false), m_bNATCheckServerAddressesSet(false), m_bRelayAddressSet(false),
       m_reserved4(false)
 {
@@ -58,7 +60,7 @@ RootTransport::RootTransport()
     for (unsigned int i = 0; i < NAT_CHECK_SERVER_COUNT; ++i)
         m_natCheckServerAddresses[i] = new StringStream();
 
-    m_pInetAddressSet = new qSet<InetAddress>();
+    m_pInetAddressSet = new VirtualFilterDevice();
 }
 
 RootTransport::~RootTransport()
@@ -67,6 +69,15 @@ RootTransport::~RootTransport()
         delete m_natCheckServerAddresses[i];
 
     delete m_pInetAddressSet;
+}
+
+RootTransport* RootTransport::GetInstance()
+{
+    Network* pNetwork = Network::GetInstance();
+    if (pNetwork == 0)
+        return 0;
+
+    return pNetwork->GetTransport();
 }
 
 qResult RootTransport::Initialize()

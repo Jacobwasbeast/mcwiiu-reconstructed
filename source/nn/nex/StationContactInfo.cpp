@@ -1,0 +1,118 @@
+#include "nn/nex/StationContactInfo.hpp"
+
+#include "nn/nex/String.hpp"
+#include "nn/nex/TraceLog.hpp"
+
+namespace nn
+{
+namespace nex
+{
+
+namespace
+{
+
+const unsigned int STATION_URL_PUBLIC_TYPE_BIT = 1;
+const unsigned int TRACE_INDENT = 2;
+
+bool IsPublicURL(const StationURL& rStationURL)
+{
+    return ((rStationURL.GetType() >> STATION_URL_PUBLIC_TYPE_BIT) & 1) != 0;
+}
+
+}
+
+StationContactInfo::StationContactInfo()
+    : m_uiConnectionID(0)
+{
+}
+
+StationContactInfo::StationContactInfo(const qList<StationURL>& rURLs)
+    : m_uiConnectionID(0)
+{
+    for (qList<StationURL>::const_iterator url = rURLs.begin(); url != rURLs.end(); ++url)
+    {
+        AddURL(*url);
+    }
+}
+
+StationContactInfo::~StationContactInfo()
+{
+}
+
+bool StationContactInfo::SetConnectionID(unsigned int uiConnectionID)
+{
+    if (m_uiConnectionID != 0 && uiConnectionID != m_uiConnectionID)
+        return false;
+    m_uiConnectionID = uiConnectionID;
+    return true;
+}
+
+unsigned int StationContactInfo::GetConnectionID() const
+{
+    return m_uiConnectionID;
+}
+
+bool StationContactInfo::AddURL(const StationURL& rStationURL)
+{
+    if (rStationURL.GetRVConnectionID() == 0)
+    {
+        m_urls.push_back(rStationURL);
+        return true;
+    }
+    if (!SetConnectionID(rStationURL.GetRVConnectionID()))
+        return false;
+    m_urls.push_back(rStationURL);
+    return true;
+}
+
+void StationContactInfo::SortAndFilterTarget(StationContactInfo& rTarget) const
+{
+    bool bMatch = false;
+    int nbPublic = 0;
+    for (qList<StationURL>::iterator target = rTarget.m_urls.begin();
+         target != rTarget.m_urls.end() && !bMatch; ++target)
+    {
+        if (IsPublicURL(*target))
+        {
+            for (qList<StationURL>::const_iterator url = m_urls.begin();
+                 url != m_urls.end() && !bMatch; ++url)
+            {
+                if (String::IsEqual(url->GetAddress(), target->GetAddress()))
+                    bMatch = true;
+            }
+            ++nbPublic;
+        }
+    }
+    if (nbPublic == 0)
+        return;
+    qList<StationURL> sorted;
+    if (bMatch)
+    {
+        for (qList<StationURL>::iterator target = rTarget.m_urls.begin();
+             target != rTarget.m_urls.end(); ++target)
+        {
+            if (!IsPublicURL(*target))
+                sorted.push_back(*target);
+        }
+    }
+    for (qList<StationURL>::iterator target = rTarget.m_urls.begin();
+         target != rTarget.m_urls.end(); ++target)
+    {
+        if (IsPublicURL(*target))
+            sorted.push_back(*target);
+    }
+    rTarget.m_urls = sorted;
+}
+
+void StationContactInfo::Trace(unsigned long long uiFilter)
+{
+    TraceLog::GetInstance()->GetOutputFormat()->IncreaseIndent(TRACE_INDENT);
+    for (qList<StationURL>::iterator url = m_urls.begin(); url != m_urls.end(); ++url)
+    {
+        url->Trace(uiFilter);
+    }
+    TraceLog::GetInstance()->GetOutputFormat()->DecreaseIndent(TRACE_INDENT);
+}
+
+}
+}

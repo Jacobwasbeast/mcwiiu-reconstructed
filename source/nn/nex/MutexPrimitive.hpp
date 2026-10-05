@@ -27,6 +27,8 @@ public:
     }
 
 private:
+    friend class Condition;
+
     OSMutex m_mutex;
 };
 

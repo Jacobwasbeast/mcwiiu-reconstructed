@@ -9,6 +9,7 @@
 #include "nn/nex/CriticalSection.hpp"
 #include "nn/nex/InetAddress.hpp"
 #include "nn/nex/MemAllocator.hpp"
+#include "nn/nex/Packet.hpp"
 #include "nn/nex/RoutingTable.hpp"
 #include "nn/nex/Stream.hpp"
 #include "nn/nex/Time.hpp"
@@ -18,7 +19,9 @@ namespace nn
 namespace nex
 {
 
+class Buffer;
 class Packet;
+class PacketOut;
 class RootTransport;
 
 class RoutingStream : public Stream
@@ -40,6 +43,9 @@ public:
     virtual bool ReceiveIncomingPacket(unsigned short uiPort, unsigned char uiStreamID,
         Packet* pPacket);
     virtual void DoWork();
+
+    static PacketOut* BuildRoutingPacket(Buffer* pPayload, PacketType type,
+        const InetAddress& rAddress);
 
     void CleanHostRoutingHistory();
     unsigned int GetHistoryCount(const InetAddress* pAddress);

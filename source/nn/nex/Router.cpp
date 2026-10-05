@@ -2,6 +2,7 @@
 
 #include "nn/nex/Core.hpp"
 #include "nn/nex/InetAddress.hpp"
+#include "nn/nex/PacketOut.hpp"
 #include "nn/nex/RootTransport.hpp"
 #include "nn/nex/RoutingAddressResolver.hpp"
 #include "nn/nex/RoutingStream.hpp"
@@ -11,6 +12,14 @@ namespace nn
 {
 namespace nex
 {
+
+namespace
+{
+
+const PacketType ROUTING_PACKET_TYPE = static_cast<PacketType>(6);
+const unsigned char ROUTING_STREAM_ID = 1;
+
+}
 
 Router::Router()
     : m_bEnabled(false)
@@ -87,6 +96,27 @@ bool Router::HasRoute(const InetAddress* pAddress, const InetAddress* pSource)
 void Router::AddRoute(const InetAddress& rAddress, const InetAddress& rRoute, bool bReplace)
 {
     m_pRoutingStream->m_routingTable.Add(rAddress, rRoute, bReplace);
+}
+
+bool Router::RouteMessage(Buffer* pBuffer, const InetAddress* pAddress, unsigned short uiPort)
+{
+    InetAddress route;
+    m_pRoutingStream->m_routingTable.Find(*pAddress, route);
+    PacketOut* pPacket = RoutingStream::BuildRoutingPacket(pBuffer, ROUTING_PACKET_TYPE, *pAddress);
+    if (pPacket != 0)
+    {
+        if (pPacket->IsValid())
+        {
+            pPacket->m_address = route;
+            RoutingStream* pStream = m_pRoutingStream;
+            const bool bSent = pStream->m_pTransport->Send(uiPort, pStream->m_Type,
+                ROUTING_STREAM_ID, ROUTING_STREAM_ID, pPacket, true);
+            pPacket->ReleaseRef();
+            return bSent;
+        }
+        delete pPacket;
+    }
+    return false;
 }
 
 void Router::Clean()

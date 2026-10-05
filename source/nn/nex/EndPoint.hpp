@@ -22,6 +22,7 @@ class FirstErrorHolder;
 class Key;
 class UserContext;
 class Protocol;
+class SecureEndPoint;
 
 class EndPointInfoInterface
 {
@@ -44,7 +45,8 @@ public:
     enum _BroadcastState
     {
         BroadcastDisabled = 0,
-        BroadcastEnabled = 1
+        BroadcastEnabled = 1,
+        BroadcastUnrestricted = 2
     };
 
     typedef void (*ConnectionCallback)(EndPoint* pEndPoint, qResult result,
@@ -57,7 +59,7 @@ public:
     virtual bool GetEndPointInfo(EndPointInfo* pEndPointInfo) const = 0;
     virtual unsigned int GetReliableBufferPacketCount() const = 0;
     virtual void GetReliableBufferPacketCounts(qVector<unsigned int>& rCounts) const = 0;
-    virtual unsigned int GetMaxSubStreamID() const = 0;
+    virtual unsigned char GetMaxSubStreamID() const = 0;
     virtual bool IsNotConnected() = 0;
     virtual bool IsConnecting() = 0;
     virtual bool IsDisconnecting() = 0;
@@ -83,14 +85,14 @@ public:
         ConnectionCallback pCallback, const UserContext& rUserContext, unsigned int uiTimeout) = 0;
     virtual qResult _Disconnect(ConnectionCallback pCallback, const UserContext& rUserContext,
         unsigned int uiTimeout) = 0;
-    virtual bool _Send(Buffer* pBuffer, unsigned int uiSize, bool bReliable,
+    virtual qResult _Send(Buffer* pBuffer, unsigned int uiSize, bool bReliable,
         unsigned char uiSubStreamID, unsigned int uiFlags) = 0;
     virtual unsigned long long GetSupportedFunctionsFlags() const = 0;
     virtual void SetErrorHolder(FirstErrorHolder* pErrorHolder);
     virtual void UnsetErrorHolder();
     virtual void SignalFaultEvent(unsigned int uiError, bool bDisconnected);
     virtual void SetEncryptionKey(const Key& rKey) = 0;
-    virtual const Key& GetEncryptionKey() = 0;
+    virtual Key& GetEncryptionKey() = 0;
 
     void Open();
     void Close();
@@ -109,14 +111,20 @@ public:
         return m_uiConnectionID;
     }
 
+    ConnectionOrientedStream* GetStream() const
+    {
+        return m_pStream;
+    }
+
 protected:
     friend class Protocol;
+    friend class SecureEndPoint;
     friend class ConnectionManager;
 
     ConnectionOrientedStream* m_pStream;
     StationURL m_stationURL;
     EndPointEventHandler* m_pEventHandler;
-    unsigned int m_uiEventHandlerState;
+    SecureEndPoint* m_pSecureEndPoint;
     unsigned int m_uiConnectionID;
     unsigned int m_uiPrincipalID;
     int m_iOpenCount;

@@ -44,6 +44,8 @@ public:
     StreamManager* GetStreamManager() const;
 
 protected:
+    friend class BackEndServices;
+    friend class AuthenticationClient;
     unsigned int m_uiServiceID;
     Credentials* m_pCredentials;
     bool m_bLocalLoopback;

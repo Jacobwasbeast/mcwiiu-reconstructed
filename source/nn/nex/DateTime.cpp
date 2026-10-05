@@ -9,60 +9,91 @@ namespace nex
 namespace
 {
 
-const DateTime s_never;
+enum
+{
+    SECOND_SHIFT = 0,
+    MINUTE_SHIFT = 6,
+    HOUR_SHIFT = 12,
+    DAY_SHIFT = 17,
+    MONTH_SHIFT = 22,
+    YEAR_SHIFT = 26,
+    STATUS_SHIFT = 40
+};
+
+enum
+{
+    SECOND_MASK = 0x3f,
+    MINUTE_MASK = 0x3f,
+    HOUR_MASK = 0x1f,
+    DAY_MASK = 0x1f,
+    MONTH_MASK = 0xf,
+    YEAR_MASK = 0x3fff,
+    STATUS_MASK = 3
+};
+
+const unsigned long long SECOND_FIELD = static_cast<unsigned long long>(SECOND_MASK) << SECOND_SHIFT;
+const unsigned long long MINUTE_FIELD = static_cast<unsigned long long>(MINUTE_MASK) << MINUTE_SHIFT;
+const unsigned long long HOUR_FIELD = static_cast<unsigned long long>(HOUR_MASK) << HOUR_SHIFT;
+const unsigned long long DAY_FIELD = static_cast<unsigned long long>(DAY_MASK) << DAY_SHIFT;
+const unsigned long long MONTH_FIELD = static_cast<unsigned long long>(MONTH_MASK) << MONTH_SHIFT;
+const unsigned long long YEAR_FIELD = static_cast<unsigned long long>(YEAR_MASK) << YEAR_SHIFT;
+const unsigned long long STATUS_PRE_EPOCH = 1ULL << STATUS_SHIFT;
+const unsigned long long STATUS_BITS = static_cast<unsigned long long>(STATUS_MASK) << STATUS_SHIFT;
 
 }
 
+const DateTime& DateTime::s_never = DateTime();
+
 DateTime::DateTime()
-    : m_flags(0)
-    , m_packed(0)
+    : m_value(0)
 {
 }
 
 DateTime::DateTime(const DateTime& other)
-    : m_flags(other.m_flags)
-    , m_packed(other.m_packed)
+    : m_value(other.m_value)
 {
 }
 
 DateTime::DateTime(uint16_t year, uint8_t month, uint8_t day,
     uint8_t hour, uint8_t minute, uint8_t second)
 {
-    m_flags = (static_cast<uint32_t>(year) >> 6) & 0xff;
-    m_packed = (static_cast<uint32_t>(second) & 0x3f)
-        | ((static_cast<uint32_t>(minute) & 0x3f) << 6)
-        | ((static_cast<uint32_t>(hour) & 0x1f) << 12)
-        | ((static_cast<uint32_t>(day) & 0x1f) << 17)
-        | ((static_cast<uint32_t>(month) & 0xf) << 22)
-        | (static_cast<uint32_t>(year) << 26);
+    m_value = ((static_cast<unsigned long long>(year) << YEAR_SHIFT) & YEAR_FIELD)
+        | ((static_cast<unsigned long long>(month) & MONTH_MASK) << MONTH_SHIFT)
+        | ((static_cast<unsigned long long>(day) & DAY_MASK) << DAY_SHIFT)
+        | ((static_cast<unsigned long long>(hour) & HOUR_MASK) << HOUR_SHIFT)
+        | ((static_cast<unsigned long long>(minute) & MINUTE_MASK) << MINUTE_SHIFT)
+        | (static_cast<unsigned long long>(second) & SECOND_MASK);
+
+    bool yearOutOfRange = false;
 
     if (year < 1900)
-        m_flags |= 0x100;
+        m_value |= STATUS_PRE_EPOCH;
+    else if (year > 9999)
+        yearOutOfRange = true;
 
-    if (year > 9999
+    if (yearOutOfRange
         || static_cast<uint32_t>(month) - 1 >= 12
         || static_cast<uint32_t>(day) - 1 >= 31)
     {
-        m_flags = (m_flags & 0xfffffcffu) | 0x100;
+        m_value = (m_value & ~STATUS_BITS) | STATUS_PRE_EPOCH;
         *this = s_never;
     }
 }
 
 DateTime& DateTime::operator=(const DateTime& other)
 {
-    m_flags = other.m_flags;
-    m_packed = other.m_packed;
+    m_value = other.m_value;
     return *this;
 }
 
 DateTime::operator unsigned long long()
 {
-    return (static_cast<uint64_t>(m_flags) << 32) | m_packed;
+    return m_value;
 }
 
 DateTime::operator unsigned long long() const
 {
-    return (static_cast<uint64_t>(m_flags) << 32) | m_packed;
+    return m_value;
 }
 
 uint64_t DateTime::operator-(const DateTime& other) const
@@ -70,34 +101,34 @@ uint64_t DateTime::operator-(const DateTime& other) const
     return (ToEpochTime() - other.ToEpochTime()) * 1000;
 }
 
-uint32_t DateTime::GetYear() const
+uint16_t DateTime::GetYear() const
 {
-    return ((m_flags & 0xff) << 6) | (m_packed >> 26);
+    return static_cast<uint16_t>((m_value & YEAR_FIELD) >> YEAR_SHIFT);
 }
 
-uint32_t DateTime::GetMonth() const
+uint8_t DateTime::GetMonth() const
 {
-    return (m_packed >> 22) & 0xf;
+    return static_cast<uint8_t>((m_value & MONTH_FIELD) >> MONTH_SHIFT);
 }
 
-uint32_t DateTime::GetDay() const
+uint8_t DateTime::GetDay() const
 {
-    return (m_packed >> 17) & 0x1f;
+    return static_cast<uint8_t>((m_value & DAY_FIELD) >> DAY_SHIFT);
 }
 
-uint32_t DateTime::GetHour() const
+uint8_t DateTime::GetHour() const
 {
-    return (m_packed >> 12) & 0x1f;
+    return static_cast<uint8_t>((m_value & HOUR_FIELD) >> HOUR_SHIFT);
 }
 
-uint32_t DateTime::GetMinute() const
+uint8_t DateTime::GetMinute() const
 {
-    return (m_packed >> 6) & 0x3f;
+    return static_cast<uint8_t>((m_value & MINUTE_FIELD) >> MINUTE_SHIFT);
 }
 
 uint8_t DateTime::GetSecond() const
 {
-    return static_cast<uint8_t>(m_packed & 0x3f);
+    return static_cast<uint8_t>((m_value & SECOND_FIELD) >> SECOND_SHIFT);
 }
 
 uint32_t DateTime::IsLeapYear(int32_t year) const
@@ -113,28 +144,29 @@ uint32_t DateTime::IsLeapYear(int32_t year) const
 
 int32_t DateTime::DateToDays(int32_t year, int32_t month, int32_t day) const
 {
-    int32_t shiftedYear = year - 2000;
-    int32_t shiftedMonth;
     int32_t leapAdjustment;
 
-    if (month < 3)
+    year -= 2000;
+    day -= 1;
+
+    if (month > 2)
     {
-        shiftedYear = year - 2001;
-        shiftedMonth = month + 9;
+        month -= 3;
     }
     else
     {
-        shiftedMonth = month - 3;
+        year -= 1;
+        month += 9;
     }
 
-    leapAdjustment = shiftedYear < 0 ? static_cast<int32_t>(IsLeapYear(shiftedYear)) : 1;
+    leapAdjustment = year < 0 ? static_cast<int32_t>(IsLeapYear(year)) : 1;
 
-    return ((shiftedYear / 100) * 146097) / 4
-        + ((shiftedYear % 100) * 1461) / 4
-        + (shiftedMonth * 153 + 2) / 5
-        + (day - 1)
-        + 59
-        + leapAdjustment;
+    return ((year / 100) * 146097) / 4
+        + ((year % 100) * 1461) / 4
+        + (month * 153 + 2) / 5
+        + day
+        + leapAdjustment
+        + 59;
 }
 
 void DateTime::DaysToDate(int32_t days)
@@ -149,33 +181,28 @@ void DateTime::DaysToDate(int32_t days)
     int32_t month = monthIndex + 2 - (monthIndex / 11) * 12;
     int32_t year = century * 100 - 4900 + yearOfCentury + monthIndex / 11;
 
-    m_packed = (m_packed & 0x1ffff)
-        | ((static_cast<uint32_t>(day) << 17) & 0x3e0000)
-        | ((static_cast<uint32_t>(month) << 22) & 0x3c00000)
-        | (static_cast<uint32_t>(year) << 26);
-    m_flags = (m_flags & 0xffffff00u) | ((static_cast<uint32_t>(year) >> 6) & 0xff);
+    m_value = (m_value & ~(DAY_FIELD | MONTH_FIELD | YEAR_FIELD))
+        | ((static_cast<unsigned long long>(day) & DAY_MASK) << DAY_SHIFT)
+        | ((static_cast<unsigned long long>(month) & MONTH_MASK) << MONTH_SHIFT)
+        | ((static_cast<unsigned long long>(year) << YEAR_SHIFT) & YEAR_FIELD);
 }
 
 uint64_t DateTime::ToEpochTime() const
 {
-    int32_t days = DateToDays(static_cast<int32_t>(GetYear()),
-        static_cast<int32_t>(GetMonth()), static_cast<int32_t>(GetDay()));
-
-    return static_cast<uint64_t>(static_cast<int64_t>(days) * 86400)
-        + GetHour() * 3600
-        + GetMinute() * 60
-        + GetSecond();
+    return GetSecond()
+        + GetMinute() * 60ULL
+        + GetHour() * 3600ULL
+        + DateToDays(GetYear(), GetMonth(), GetDay()) * 86400LL;
 }
 
-bool DateTime::IsValid() const
+uint32_t DateTime::IsValid() const
 {
-    return ((m_flags >> 8) & 3) == 0;
+    return ((m_value >> STATUS_SHIFT) & STATUS_MASK) == 0;
 }
 
 bool DateTime::IsNever() const
 {
-    return ((static_cast<uint64_t>(m_flags & 0xfffffcffu) << 32) | m_packed)
-        == static_cast<unsigned long long>(s_never);
+    return static_cast<unsigned long long>(s_never) == (m_value & ~STATUS_BITS);
 }
 
 void DateTime::Trace(uint64_t)
@@ -188,14 +215,13 @@ void DateTime::GetSystemTime(DateTime& dateTime)
 
     OSTicksToCalendarTime(OSGetTime(), &calendarTime);
 
-    dateTime.m_flags = (dateTime.m_flags & 0xffffff00u)
-        | (static_cast<uint32_t>(calendarTime.tm_year >> 6) & 0xff);
-    dateTime.m_packed = (static_cast<uint32_t>(calendarTime.tm_sec) & 0x3f)
-        | ((static_cast<uint32_t>(calendarTime.tm_min) & 0x3f) << 6)
-        | ((static_cast<uint32_t>(calendarTime.tm_hour) & 0x1f) << 12)
-        | ((static_cast<uint32_t>(calendarTime.tm_mday) & 0x1f) << 17)
-        | ((static_cast<uint32_t>(calendarTime.tm_mon + 1) << 22) & 0x3c00000)
-        | (static_cast<uint32_t>(calendarTime.tm_year) << 26);
+    dateTime.m_value = (dateTime.m_value & ~(YEAR_FIELD | MONTH_FIELD | DAY_FIELD | HOUR_FIELD | MINUTE_FIELD | SECOND_FIELD))
+        | ((static_cast<unsigned long long>(calendarTime.tm_year) << YEAR_SHIFT) & YEAR_FIELD)
+        | ((static_cast<unsigned long long>(calendarTime.tm_mon + 1) << MONTH_SHIFT) & MONTH_FIELD)
+        | ((static_cast<unsigned long long>(calendarTime.tm_mday) << DAY_SHIFT) & DAY_FIELD)
+        | ((static_cast<unsigned long long>(calendarTime.tm_hour) << HOUR_SHIFT) & HOUR_FIELD)
+        | ((static_cast<unsigned long long>(calendarTime.tm_min) << MINUTE_SHIFT) & MINUTE_FIELD)
+        | (static_cast<unsigned long long>(calendarTime.tm_sec) & SECOND_FIELD);
 }
 
 DateTime DateTime::FromCustomEpochTime(int64_t epochTime, int32_t dayOffset)
@@ -204,10 +230,10 @@ DateTime DateTime::FromCustomEpochTime(int64_t epochTime, int32_t dayOffset)
     uint64_t seconds = static_cast<uint64_t>(epochTime);
 
     dateTime.DaysToDate(static_cast<int32_t>(epochTime / 86400) + dayOffset);
-    dateTime.m_packed = (dateTime.m_packed & 0xfffe0000u)
-        | ((static_cast<uint32_t>((seconds / 3600) % 24) & 0x1f) << 12)
-        | ((static_cast<uint32_t>((seconds / 60) % 60) & 0x3f) << 6)
-        | (static_cast<uint32_t>(seconds % 60) & 0x3f);
+    dateTime.m_value = (dateTime.m_value & ~((1ULL << DAY_SHIFT) - 1))
+        | (static_cast<unsigned long long>((seconds / 3600) % 24 & HOUR_MASK) << HOUR_SHIFT)
+        | (static_cast<unsigned long long>((seconds / 60) % 60 & MINUTE_MASK) << MINUTE_SHIFT)
+        | (static_cast<unsigned long long>(seconds % 60 & SECOND_MASK) << SECOND_SHIFT);
 
     return dateTime;
 }

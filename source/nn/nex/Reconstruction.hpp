@@ -3,12 +3,17 @@
 
 #include <stdint.h>
 
+#include "nn/nex/BackEndServices.hpp"
 #include "nn/nex/ConnectivityManager.hpp"
 #include "nn/nex/ProviderSupport.hpp"
+#include "nn/nex/RendezVous.hpp"
+#include "nn/nex/SecureConnectionClient.hpp"
 #include "nn/nex/ServiceClient.hpp"
 #include "nn/nex/GlobalVariables.hpp"
+#include "nn/nex/MatchmakeExtensionProtocolClient.hpp"
 #include "nn/nex/NotificationEvent.hpp"
 #include "nn/nex/NotificationEventManager.hpp"
+#include "nn/nex/NgsFacade.hpp"
 #include "nn/nex/NotificationEvents.hpp"
 #include "nn/nex/ProtocolCallContext.hpp"
 #include "nn/nex/StationURL.hpp"
@@ -34,16 +39,6 @@ public:
 protected:
     MatchMakingProtocolClient m_matchMakingProtocolClient;
     MatchMakingProtocolExtClient m_matchMakingProtocolExtClient;
-};
-
-class MatchmakeExtensionProtocolClient : public ClientProtocol
-{
-public:
-    explicit MatchmakeExtensionProtocolClient(unsigned short protocolId);
-    virtual ~MatchmakeExtensionProtocolClient();
-
-    virtual void ExtractCallSpecificResults(Message* pMessage, ProtocolCallContext* pCallContext);
-    virtual Protocol* CreateResponder() const;
 };
 
 class MatchmakeExtensionClient : public MatchMakingClient
@@ -72,40 +67,6 @@ class ErrorCodeConverter
 {
 public:
     static unsigned int ConvertToNetworkErrorCode(const qResult& rResult);
-};
-
-class SecureConnectionClient
-{
-public:
-    bool ReplaceURL(ProtocolCallContext* pCallContext, const StationURL& rCurrentURL,
-                    const StationURL& rNewURL);
-    void SendReport(unsigned int uiReportId, const void* pData, unsigned int uiSize);
-};
-
-class BackEndServices
-{
-public:
-    SecureConnectionClient* GetSecureConnectionClient() const;
-    qResult IsConnected() const;
-    bool RegisterNotificationEventHandler(NotificationEventHandler* handler);
-    bool UnregisterNotificationEventHandler(NotificationEventHandler* handler);
-    Credentials* GetCredentials();
-
-private:
-    NotificationEventManager* m_notificationEventManager;
-    Credentials* m_credentials;
-};
-
-class RendezVous : public BackEndServices
-{
-public:
-    RendezVous();
-    virtual ~RendezVous();
-};
-
-class NgsFacade : public RendezVous
-{
-public:
 };
 
 }

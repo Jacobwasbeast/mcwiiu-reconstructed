@@ -22,6 +22,13 @@ public:
     {
     }
 
+    ObjectThread(const String& name, uint32_t priority)
+        : ObjectThreadRoot(name, priority)
+        , m_method(0)
+        , m_pObject(0)
+    {
+    }
+
     virtual ~ObjectThread()
     {
     }
@@ -36,8 +43,11 @@ public:
 protected:
     virtual void CallObjectMethod()
     {
+        Method method = m_method;
+        TObject* pObject = m_pObject;
+        TParam param = m_param;
         ReadyToRun();
-        (m_pObject->*m_method)(m_param);
+        (pObject->*method)(param);
     }
 
 private:

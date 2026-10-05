@@ -17,6 +17,7 @@ public:
     virtual void Enable();
 
     unsigned int GetBandwidth();
+    float GetPacketDropProbability();
     unsigned int GetJitter();
     unsigned int GetLatency();
     void SetPacketDropProbability(float probability);
@@ -26,6 +27,11 @@ public:
     void SetProtocolHeaderSize(unsigned int size);
     void SetBandwidth(unsigned int bandwidth);
     unsigned int GetProtocolHeaderSize();
+
+    bool IsEnabled() const
+    {
+        return m_enabled;
+    }
 
 private:
     bool m_enabled;

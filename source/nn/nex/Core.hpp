@@ -14,9 +14,11 @@ namespace nex
 {
 
 class CallContextRegister;
+class JobConnectEndPoint;
 class Scheduler;
 class SecurityContextManager;
 class SystemComponents;
+class Timeout;
 
 extern bool g_dispatcherThreadEnabled;
 extern bool g_transportThreadEnabled;
@@ -50,7 +52,7 @@ public:
 
     static Core* GetInstance()
     {
-        unsigned int uiContextId = 0;
+        unsigned int uiContextId = g_usingInstantiationContext;
         if (g_usingInstantiationContext)
             uiContextId = g_instantiationContextVariable->GetRef();
 
@@ -92,6 +94,16 @@ public:
         return m_pSecurityContextManager;
     }
 
+    bool GetTerminateImmediately() const
+    {
+        return m_bTerminateImmediately;
+    }
+
+    Time GetTerminateImmediatelyTime() const
+    {
+        return m_terminateImmediatelyTime;
+    }
+
     void SetTerminateImmediately(bool bTerminateImmediately);
     void SetTerminateImmediatelyCallback(TerminateImmediatelyCallback cbCallback, void* pContext);
     void ResetTerminateImmediatelyCallback();
@@ -100,6 +112,9 @@ public:
     void DeleteGlobals();
 
 private:
+    friend class JobConnectEndPoint;
+    friend class Timeout;
+
     Scheduler* m_pScheduler;
     CallContextRegister* m_pCallContextRegister;
     SystemComponents* m_pSystemComponents;

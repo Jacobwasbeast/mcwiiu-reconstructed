@@ -14,6 +14,11 @@ public:
         MaxLength = 16
     };
 
+    SignatureBytes()
+        : m_uiLength(0)
+    {
+    }
+
     unsigned char m_bytes[MaxLength];
     unsigned int m_uiLength;
 };

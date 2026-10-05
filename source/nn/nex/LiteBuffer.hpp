@@ -11,7 +11,7 @@ namespace nn
 namespace nex
 {
 
-template <unsigned int Capacity>
+template <int Capacity>
 class LiteBuffer : public RootObject
 {
 public:
@@ -41,7 +41,7 @@ public:
             length = offset + size;
         }
 
-        if (length > Capacity)
+        if (length > static_cast<unsigned int>(Capacity))
         {
             static wchar_t file[] = L"D:\\home\\jenkins\\workspace\\Master\\Pack\\d4f027b8\\.\\OnlineCore/src/Core/LiteBuffer.h";
             SystemError::SignalError(file, 79, 0xE0000019u, 0);
@@ -51,6 +51,26 @@ public:
         m_length = length;
         std::memcpy(m_data + offset, data, size);
         return true;
+    }
+
+    unsigned char* GetData()
+    {
+        return m_data;
+    }
+
+    const unsigned char* GetData() const
+    {
+        return m_data;
+    }
+
+    unsigned int GetLength() const
+    {
+        return m_length;
+    }
+
+    void Clear()
+    {
+        m_length = 0;
     }
 
 private:

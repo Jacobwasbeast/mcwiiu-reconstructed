@@ -52,5 +52,21 @@ bool Timeout::IsAwaited() const
     return static_cast<long long>(m_awaitedTime) < static_cast<long long>(g_lastTime);
 }
 
+bool Timeout::IsExpired() const
+{
+    if (static_cast<long long>(m_expirationTime) != 0
+        && static_cast<long long>(Time::GetTime()) > static_cast<long long>(m_expirationTime))
+        return true;
+
+    if (m_pCore->m_bTerminateImmediately)
+    {
+        long long terminateTime = static_cast<long long>(m_pCore->m_terminateImmediatelyTime);
+        if (static_cast<long long>(Time::GetTime()) > terminateTime)
+            return true;
+    }
+
+    return false;
+}
+
 }
 }

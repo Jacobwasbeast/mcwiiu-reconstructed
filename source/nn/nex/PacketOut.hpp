@@ -39,8 +39,7 @@ public:
     unsigned int m_unknown12c;
     unsigned int m_unknown130;
     unsigned int m_unknown134;
-    unsigned int m_unknown138;
-    unsigned int m_unknown13c;
+    unsigned long long m_unknown138;
     unsigned int m_unknown140;
     unsigned int m_unknown144;
 };

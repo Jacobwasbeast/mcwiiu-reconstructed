@@ -8,6 +8,8 @@ namespace nn
 namespace nex
 {
 
+class String;
+
 class StringStream : public RootObject
 {
 public:
@@ -44,6 +46,8 @@ public:
 
 private:
     friend void zerohex(StringStream& rStream);
+StringStream& noshowbase(StringStream& rStream);
+    friend StringStream& noshowbase(StringStream& rStream);
 
     void FreeBuffer(wchar_t* pBuffer);
     void FreeBuffer();
@@ -62,6 +66,8 @@ private:
 };
 
 void zerohex(StringStream& rStream);
+
+StringStream& operator<<(StringStream& rStream, const String& rString);
 
 }
 }

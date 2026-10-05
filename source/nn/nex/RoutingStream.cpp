@@ -1,5 +1,11 @@
 #include "nn/nex/RoutingStream.hpp"
 
+#include "nn/nex/Buffer.hpp"
+#include "nn/nex/ByteStream.hpp"
+#include "nn/nex/PacketBuffer.hpp"
+#include "nn/nex/PacketBufferPacketOut.hpp"
+#include "nn/nex/PacketOut.hpp"
+
 namespace nn
 {
 namespace nex
@@ -8,6 +14,8 @@ namespace nex
 namespace
 {
 
+const unsigned int ROUTING_HEADER_SIZE = 6;
+
 unsigned int s_uiHistoryCleaningPeriod = 0;
 unsigned int s_uiHistoryLifetime = 10000;
 
@@ -15,6 +23,52 @@ unsigned int s_uiHistoryLifetime = 10000;
 
 RoutingStream::~RoutingStream()
 {
+}
+
+PacketOut* RoutingStream::BuildRoutingPacket(Buffer* pPayload, PacketType type,
+    const InetAddress& rAddress)
+{
+    Buffer* pBuffer;
+    if (pPayload == 0 || !pPayload->IsPooled())
+    {
+        pBuffer = new Buffer(Buffer::s_uiDefaultBufferSize, 0);
+    }
+    else
+    {
+        pBuffer = new (RootObject::TARGET_POOL_PACKET_MANAGEMENT)
+            PacketBuffer(pPayload->GetLength() + ROUTING_HEADER_SIZE, Buffer::BUFFER_FLAG_POOLED);
+        if (pBuffer == 0)
+            return 0;
+        if (!pBuffer->IsValid())
+        {
+            delete pBuffer;
+            return 0;
+        }
+    }
+    ByteStream stream(pBuffer);
+    pBuffer->ReleaseRef();
+    unsigned int uiAddress = rAddress.GetAddress();
+    stream.Append(reinterpret_cast<const unsigned char*>(&uiAddress), 4, 1);
+    unsigned short uiPort = rAddress.GetPortNumber();
+    stream.Append(reinterpret_cast<const unsigned char*>(&uiPort), 2, 1);
+    stream << *pPayload;
+    PacketOut* pPacket;
+    if (pPayload != 0 && pPayload->IsPooled())
+    {
+        pPacket = new (RootObject::TARGET_POOL_PACKET_MANAGEMENT)
+            PacketBufferPacketOut(0, type, 0, stream.GetBuffer(), 0);
+        if (pPacket == 0 || !pPacket->IsValid())
+        {
+            delete pPacket;
+            return 0;
+        }
+    }
+    else
+    {
+        pPacket = new PacketOut(0, type, 0, stream.GetBuffer(), 0);
+    }
+    pPacket->m_uiVersion = 0;
+    return pPacket;
 }
 
 void RoutingStream::DoWork()

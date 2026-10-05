@@ -4,6 +4,7 @@
 #include <cwchar>
 
 #include "nn/nex/SpecialArray.hpp"
+#include "nn/nex/String.hpp"
 
 namespace nn
 {
@@ -275,6 +276,17 @@ void zerohex(StringStream& rStream)
 {
     rStream.m_bHex = true;
     rStream.m_bZeroPadded = true;
+}
+
+StringStream& noshowbase(StringStream& rStream)
+{
+    rStream.m_bAddBase = false;
+    return rStream;
+}
+
+StringStream& operator<<(StringStream& rStream, const String& rString)
+{
+    return rStream << static_cast<const wchar_t*>(rString);
 }
 
 }

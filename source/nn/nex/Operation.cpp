@@ -7,10 +7,6 @@ Operation::Operation(unsigned int flags)
 {
 }
 
-Operation::~Operation()
-{
-}
-
 unsigned short Operation::GetSignal() const
 {
     return static_cast<unsigned short>(GetType());

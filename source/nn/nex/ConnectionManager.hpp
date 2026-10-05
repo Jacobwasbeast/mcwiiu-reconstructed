@@ -51,13 +51,19 @@ public:
         const qList<StationURL>& rURLs, EndPoint** ppEndPoint, unsigned int uiTimeout,
         bool bFlag, JobConnectEndPoint** ppJob);
 
+    StreamTable& GetStreamTable()
+    {
+        return m_streamTable;
+    }
+
 private:
+    friend class StreamManager;
     unsigned int m_uiContextId;
     ComponentState m_component;
     InetAddress m_routerAddress;
     ConnectionFilter m_pConnectionFilter;
     UserContext m_connectionFilterContext;
-    bool m_flag48;
+    bool m_bFilterEnabled;
     EndPointEventHandler* m_pEndPointEventHandler;
     StreamTable m_streamTable;
     bool m_flag64;

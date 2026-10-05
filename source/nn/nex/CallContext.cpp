@@ -184,11 +184,6 @@ bool CallContext::SetCallInProgressState()
     return true;
 }
 
-void CallContext::SignalSuccess(qResult result)
-{
-    SetStateImpl(CallSucceeded, result, true);
-}
-
 void CallContext::SignalFailure(qResult result)
 {
     SetStateImpl(CallFailed, result, true);

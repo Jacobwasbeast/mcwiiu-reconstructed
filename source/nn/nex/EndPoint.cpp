@@ -37,7 +37,7 @@ EndPoint::EndPoint(ConnectionOrientedStream* pStream, const StationURL* pStation
     : m_pStream(pStream)
     , m_stationURL(*pStationURL)
     , m_pEventHandler(0)
-    , m_uiEventHandlerState(0)
+    , m_pSecureEndPoint(0)
     , m_uiConnectionID(0)
     , m_uiPrincipalID(0)
     , m_iOpenCount(0)

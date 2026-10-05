@@ -1,5 +1,8 @@
 #include "nn/nex/ConnectionOrientedStream.hpp"
 
+#include "nn/nex/Network.hpp"
+#include "nn/nex/RootTransport.hpp"
+
 namespace nn
 {
 namespace nex
@@ -8,10 +11,48 @@ namespace nex
 namespace
 {
 
-const int STREAM_RESULT_SUCCESS = 0x00010001;
-const int STREAM_RESULT_NOT_IMPLEMENTED = 0x80010002;
-const int STREAM_RESULT_ALREADY_REGISTERED = 0x8001000E;
+enum StreamResult
+{
+    STREAM_RESULT_SUCCESS = 0x00010001,
+    STREAM_RESULT_NOT_IMPLEMENTED = static_cast<int>(0x80010002u),
+    STREAM_RESULT_ALREADY_REGISTERED = static_cast<int>(0x8001000Eu)
+};
 
+}
+
+ConnectionOrientedStream::ConnectionOrientedStream(Stream::Type type, RootTransport* pTransport)
+    : Stream(type)
+{
+    Network::AcquireInstance();
+    m_pTransport = pTransport;
+    m_uiStreamID = 0;
+    m_pEventHandler = 0;
+}
+
+ConnectionOrientedStream::~ConnectionOrientedStream()
+{
+    Network::ReleaseInstance();
+}
+
+bool ConnectionOrientedStream::StartListen(unsigned char uiStreamID, unsigned char* pAssignedStreamID)
+{
+    if (m_pTransport->m_streamManager.RegisterStream(this, uiStreamID, &m_uiStreamID))
+    {
+        if (pAssignedStreamID != 0)
+            *pAssignedStreamID = m_uiStreamID;
+        return true;
+    }
+    return false;
+}
+
+bool ConnectionOrientedStream::StopListen()
+{
+    if (m_pTransport->m_streamManager.UnregisterStream(m_Type, m_uiStreamID))
+    {
+        m_uiStreamID = 0;
+        return true;
+    }
+    return false;
 }
 
 bool ConnectionOrientedStream::OpenEndPoint(EndPoint*)
@@ -63,7 +104,6 @@ qResult ConnectionOrientedStream::RegisterEventHandler(TransportEventHandler* pE
     {
         return qResult(STREAM_RESULT_ALREADY_REGISTERED);
     }
-
     m_pEventHandler = pEventHandler;
     return qResult(STREAM_RESULT_SUCCESS);
 }

@@ -41,6 +41,12 @@ public:
     bool Remove(const InetAddress& rKey);
     bool Find(const InetAddress& rKey, InetAddress& rAddress) const;
     void Clean();
+
+    unsigned int GetSize() const
+    {
+        return m_entries.size();
+    }
+
     void PeriodicHouseCleaning();
 
 private:

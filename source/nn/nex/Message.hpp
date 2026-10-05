@@ -42,6 +42,7 @@ public:
 
 protected:
     friend class ClientProtocol;
+    friend class AnyDataAdapter;
 
     qResult m_Result;
     unsigned int m_uiBufferStateA;
@@ -53,7 +54,7 @@ protected:
     unsigned char m_uiBufferFlag;
     unsigned int m_uiCommonStateD;
     unsigned char m_uiCommonFlag;
-    unsigned char m_bCompactFormat;
+    bool m_bCompactFormat;
 };
 
 }
