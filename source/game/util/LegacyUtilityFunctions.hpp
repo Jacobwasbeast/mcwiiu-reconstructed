@@ -6,7 +6,7 @@
 struct _SAMPLE;
 struct _DIG_DRIVER;
 
-extern "C" void outresfloat();
+extern "C" void outresfloat(float fResult);
 extern "C" void outresint64(uint32_t low, uint32_t high);
 extern "C" void outresuint(uint32_t value);
 int32_t ourtoupper(char value);

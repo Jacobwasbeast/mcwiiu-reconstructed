@@ -11,9 +11,9 @@ static const char PROVIDER_PROPERTY_ENTRY[] = "PROVIDER_property";
 static const char OUT_OF_MEMORY_ERROR[] = "Out of memory.";
 static const unsigned int RIB_FUNCTION = 0;
 
-extern "C" void outresfloat()
+extern "C" void outresfloat(float fResult)
 {
-    AIL_debug_log("!-Result = %f");
+    AIL_debug_log("!-Result = %f", fResult);
 }
 
 extern "C" void outresint64(uint32_t low, uint32_t high)
