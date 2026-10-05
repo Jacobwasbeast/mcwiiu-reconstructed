@@ -2,6 +2,18 @@
 #include <string.h>
 #include <wchar.h>
 
+extern "C"
+{
+int shutdown(int handle, int how);
+int socketclose(int handle);
+}
+
+void closesocket(int handle)
+{
+    shutdown(handle, 2);
+    socketclose(handle);
+}
+
 nn::nex::String __N_19_OnlineCore_Blob_cpp_9428d484::_Copy(const wchar_t* first, unsigned int firstLength, const wchar_t* second, unsigned int secondLength)
 {
     nn::nex::String result;

@@ -1,6 +1,7 @@
 #ifndef SOURCE_VENDOR_MILES_MEM_HPP
 #define SOURCE_VENDOR_MILES_MEM_HPP
 
+#include "game/client/audio/FalloffGraph.hpp"
 #include "game/client/audio/SoundBank.hpp"
 
 extern "C" void AIL_debug_log(const char* pFormat, ...);
@@ -58,7 +59,66 @@ extern "C" int AIL_sound_asset_info(SoundBank* bank, const char* name, char* pat
 extern "C" const char* AIL_get_soundbank_name(SoundBank* bank);
 
 
-extern "C" void AIL_set_sample_is_3D(_SAMPLE* pSample, int iEnabled);
+extern "C" int AIL_set_sample_is_3D(_SAMPLE* pSample, int iEnabled);
+struct _AILSOUNDINFO
+{
+    int format;
+    const void* data;
+    unsigned int dataLength;
+    unsigned int rate;
+    int bits;
+    int channels;
+    unsigned int channelMask;
+    unsigned int samples;
+    unsigned int blockSize;
+    const void* initial;
+};
+
+extern "C" unsigned int RIB_find_file_dec_provider(const char* pInterfaceName,
+                                                   const char* pInputAttribute,
+                                                   unsigned int uInputValue,
+                                                   const char* pOutputAttribute,
+                                                   const char* pOutputValue);
+extern "C" void FLT_call_premix_processors(_DIG_DRIVER* pDriver);
+extern "C" int FLT_call_postmix_processors(_DIG_DRIVER* pDriver, short* pBuffer);
+
+unsigned int AIL_VOC_block_len(void* pBlock);
+void reset_asi(_SAMPLE* pSample, int iSeekOffset, int iPosition);
+extern "C" void SS_start_DIG_driver_playback(_SAMPLE* pSample);
+void SS_start_playback(_SAMPLE* pSample);
+int nibbles_per_sample(int iFormat);
+void set_lp_info(LOWPASS_INFO* pInfo, int iFirst, int iSecond, int iThird);
+unsigned int slow_ramp_mix(int iStereoSource, int iStereoDestination, void** ppSource,
+                           void* pSourceEnd, void** ppDestination, void* pDestinationEnd,
+                           int* piLeft, int* piRight, int iLeftStep, int iRightStep, int iCount);
+unsigned int SS_limiter(_MSS_BB* pBuffers, int iCount, int iSamples, int iPrevious);
+int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination, int iSize);
+
+extern "C" int AIL_API_sample_loaded_len(_SAMPLE* pSample);
+extern "C" void AIL_API_end_sample(_SAMPLE* pSample);
+extern "C" void AIL_end_sample(_SAMPLE* pSample);
+extern "C" void SS_update_driver_reverb_state(_DIG_DRIVER* pDriver);
+extern "C" int AIL_process_WAV_image(_AILSOUNDINFO* pInfo, _SAMPLE* pSample);
+extern "C" void SS_set_speaker_configuration(SpeakerState* pState, const float* pPositions,
+                                             unsigned int uProvided, unsigned int uSpeakers);
+extern "C" float SS_default_falloff_function_callback(_SAMPLE* pSample, float fDistance,
+                                                      float fRolloffFactor, float fMinimumDistance,
+                                                      float fMaximumDistance);
+extern "C" void SS_calculate_3D_channel_levels(SpeakerState* pSpeakers, unsigned int uCount,
+                                               _SAMPLE* pSample, float* pLevels);
+extern "C" void AIL_request_EOB_ASI_reset(_SAMPLE* pSample, int iBuffer, int iPosition);
+extern "C" int AIL_allocate_reverb_buffers(_DIG_DRIVER* pDriver, int iBus);
+extern "C" unsigned int SS_granularity(_SAMPLE* pSample);
+extern "C" int AIL_set_sample_loop_samples(_SAMPLE* pSample, int iLoopStart, int iLoopEnd);
+extern "C" void* SS_execute_filter_chain(_SAMPLE* pSample, void* pSource, void* pDestination,
+                                         unsigned int uBytes, int iChannel, void* pFinal);
+extern "C" void SS_flush(_DIG_DRIVER* pDriver, int iBus);
+extern "C" void SS_copy(_DIG_DRIVER* pDriver, int iBus, short* pDestination);
+extern "C" unsigned int SS_stream_to_buffer(_SAMPLE* pSample, short* pDestination, int iSize);
+extern "C" void SS_fill(_DIG_DRIVER* pDriver, short* pDestination);
+extern "C" int AIL_sample_3D_position(_SAMPLE* pSample, float* pX, float* pY, float* pZ);
+extern "C" void AIL_listener_3D_position(_LISTENER* pListener, float* pX, float* pY, float* pZ);
+
 extern "C" void AIL_set_sample_3D_position(_SAMPLE* pSample, float fX, float fY, float fZ);
 extern "C" void AIL_set_sample_3D_distances(_SAMPLE* pSample, float fMaximum, float fMinimum,
                                             int iAutomaticWetAttenuation);

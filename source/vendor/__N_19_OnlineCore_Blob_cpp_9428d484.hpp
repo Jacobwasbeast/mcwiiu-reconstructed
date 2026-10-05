@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include "nn/nex/String.hpp"
+#include "nn/nex/SocketDriver.hpp"
 #include "nn/nex/qResult.hpp"
 
 namespace nn
@@ -13,16 +14,6 @@ class ByteStream;
 class EndPoint;
 class Packet;
 class UserContext;
-class SocketDriver
-{
-public:
-    enum _Result
-    {
-    };
-    class InetAddress
-    {
-    };
-};
 namespace Stream
 {
 enum Type
@@ -32,6 +23,8 @@ enum Type
 }
 }
 }
+
+void closesocket(int handle);
 
 namespace __N_19_OnlineCore_Blob_cpp_9428d484
 {

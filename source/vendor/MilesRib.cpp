@@ -999,3 +999,67 @@ extern "C" unsigned int RIB_find_file_provider(const char* pInterfaceName,
 
     return 0;
 }
+
+extern "C" unsigned int RIB_find_file_dec_provider(const char* pInterfaceName,
+                                                   const char* pInputAttribute, unsigned int uInputValue,
+                                                   const char* pOutputAttribute,
+                                                   const char* pOutputValue)
+{
+    ILIST_ENTRY* pEntry;
+    RIB_PROVIDER_PROPERTY_CALLBACK pProperty;
+    unsigned int uIdAttribute;
+    unsigned int uExtensionAttribute;
+    unsigned int uProviderValue;
+    char* pExtensions;
+    int iSet;
+
+    for (iSet = 0; iSet < RIB_INTERFACE_SET_COUNT; iSet++)
+    {
+        for (pEntry = RIB_interfaces.pSet[iSet]; pEntry != NULL; pEntry = pEntry->pSetNext)
+        {
+            if (pEntry->iIndex == -1 || pEntry->descriptor.uType != RIB_FUNCTION)
+            {
+                continue;
+            }
+
+            if (strcmp(pInterfaceName, pEntry->descriptor.pInterfaceName) != 0)
+            {
+                continue;
+            }
+
+            if (strcmp(pEntry->descriptor.pEntryName, RIB_PROVIDER_PROPERTY_ENTRY) != 0)
+            {
+                continue;
+            }
+
+            pProperty = (RIB_PROVIDER_PROPERTY_CALLBACK)pEntry->descriptor.pToken;
+
+            if (RIB_request_interface_entry(pEntry->descriptor.uProvider,
+                                            pEntry->descriptor.pInterfaceName, RIB_PROPERTY,
+                                            pInputAttribute, &uIdAttribute) != 0)
+            {
+                continue;
+            }
+
+            if (RIB_request_interface_entry(pEntry->descriptor.uProvider,
+                                            pEntry->descriptor.pInterfaceName, RIB_PROPERTY,
+                                            pOutputAttribute, &uExtensionAttribute) != 0)
+            {
+                continue;
+            }
+
+            uProviderValue = RIB_ENTRY_NOT_FOUND;
+            pProperty(uIdAttribute, &uProviderValue, NULL, NULL);
+
+            pExtensions = "";
+            pProperty(uExtensionAttribute, &pExtensions, NULL, NULL);
+
+            if (uInputValue == uProviderValue && match_suffix(pExtensions, const_cast<char*>(pOutputValue)) != 0)
+            {
+                return pEntry->descriptor.uProvider;
+            }
+        }
+    }
+
+    return 0;
+}

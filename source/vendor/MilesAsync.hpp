@@ -21,6 +21,8 @@ typedef void (*MilesProfileFreeFunc)(MilesProfile* pProfile, void* pBlock, const
 typedef unsigned int (*MilesProfileCallStackFunc)(MilesProfile* pProfile, unsigned int uSkip, unsigned int uFlags);
 typedef void (*MilesProfileMessageFunc)(MilesProfile* pProfile, unsigned int uContext, unsigned int uFlags, MilesProfileSite* pSite, const char* pFormat, ...);
 
+typedef void (*MilesProfilePlotFunc)(MilesProfile* pProfile, unsigned long long uContext, unsigned int uType, unsigned int uFlags, double dValue, MilesProfileSite* pSite, const char* pFormat, ...);
+
 struct MilesProfile
 {
     void* pFunction00;
@@ -56,7 +58,7 @@ struct MilesProfile
     void* pFunction78;
     void* pFunction7C;
     void* pFunction80;
-    void* pFunction84;
+    MilesProfilePlotFunc pPlot;
     void* pFunction88;
     void* pFunction8C;
     void* pFunction90;
@@ -74,6 +76,9 @@ struct MilesProfile
 };
 
 extern MilesProfile* MSS_profile;
+
+const int MILES_ASYNC_READ_FIELDS_SIZE = 332;
+const int MILES_ASYNC_READ_SIZE = 488;
 
 struct MilesAsyncRead
 {
@@ -96,6 +101,7 @@ struct MilesAsyncRead
     int iSeekDone;
     int iCancel;
     int iBufferOwned;
+    unsigned char reserved[MILES_ASYNC_READ_SIZE - MILES_ASYNC_READ_FIELDS_SIZE];
 };
 
 extern "C" int MilesAsyncFileRead(MilesAsyncRead* pRead);
