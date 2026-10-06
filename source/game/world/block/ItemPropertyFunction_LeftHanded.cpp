@@ -7,5 +7,10 @@ float ItemPropertyFunction_LeftHanded::call(not_null_ptr<ItemInstance> itemInsta
                                             Level* level,
                                             boost::shared_ptr<LivingEntity> entity)
 {
-    return entity && entity->getMainArm() != HumanoidArm::RIGHT ? 1.0f : 0.0f;
+    if (!entity || entity->getMainArm() == HumanoidArm::RIGHT)
+    {
+        return 0.0f;
+    }
+
+    return 1.0f;
 }

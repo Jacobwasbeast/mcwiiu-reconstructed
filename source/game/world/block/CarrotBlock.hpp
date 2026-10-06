@@ -15,7 +15,10 @@ class TextureAtlasSprite;
 class CarrotBlock : public CropBlock
 {
 public:
-    CarrotBlock();
+    CarrotBlock()
+        : CropBlock()
+    {
+    }
 
     virtual const AABB* getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
     virtual void registerIcons(IconRegister* iconRegister);

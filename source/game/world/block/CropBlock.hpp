@@ -24,7 +24,7 @@ class CropBlock : public Bush, public BonemealableBlock
 public:
     static AbstractProperty<int>* AGE;
 
-    explicit CropBlock(bool derivedInit);
+    explicit CropBlock(bool derivedInit = false);
     virtual ~CropBlock() {}
 
     virtual const BlockState* getBlockState(int data);

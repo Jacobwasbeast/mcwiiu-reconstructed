@@ -137,6 +137,7 @@
 #include "game/world/block/BeaconBlock.hpp"
 #include "game/world/block/BeetrootBlock.hpp"
 #include "game/world/block/BrewingStandBlock.hpp"
+#include "game/world/block/CarrotBlock.hpp"
 #include "game/world/block/CauldronBlock.hpp"
 #include "game/world/block/ChestBlock.hpp"
 #include "game/world/block/CommandBlock.hpp"
@@ -1974,11 +1975,11 @@ void Block::staticCtor()
     registerBlock(38, L"red_flower",
         (new RedFlowerBlock())->setDestroyTime(0.0f)->setSoundType(SoundType::GRASS)->setIconName(L"flower_rose")->setNameAndDescriptionId(IDS_TILE_POPPY, IDS_DESC_FLOWER)->disableMipmap());
 
-    registerBlock(39, L"brown_mushroom",
-        (new MushroomBlock())->setDestroyTime(0.0f)->setSoundType(SoundType::GRASS)->setLightEmission(0.125f)->setIconName(L"mushroom_brown")->setNameAndDescriptionId(IDS_TILE_MUSHROOM, IDS_DESC_MUSHROOM)->disableMipmap());
+    Block* brownMushroom = (new MushroomBlock())->setDestroyTime(0.0f)->setSoundType(SoundType::GRASS)->setLightEmission(0.125f)->setIconName(L"mushroom_brown")->setNameAndDescriptionId(IDS_TILE_MUSHROOM, IDS_DESC_MUSHROOM)->disableMipmap();
+    registerBlock(39, L"brown_mushroom", brownMushroom);
 
-    registerBlock(40, L"red_mushroom",
-        (new MushroomBlock())->setDestroyTime(0.0f)->setSoundType(SoundType::GRASS)->setIconName(L"mushroom_red")->setNameAndDescriptionId(IDS_TILE_MUSHROOM, IDS_DESC_MUSHROOM)->disableMipmap());
+    Block* redMushroom = (new MushroomBlock())->setDestroyTime(0.0f)->setSoundType(SoundType::GRASS)->setIconName(L"mushroom_red")->setNameAndDescriptionId(IDS_TILE_MUSHROOM, IDS_DESC_MUSHROOM)->disableMipmap();
+    registerBlock(40, L"red_mushroom", redMushroom);
 
     registerBlock(41, L"gold_block",
         (new BlockImpl(Material::METAL, MaterialColor::GOLD))->setDestroyTime(3.0f)->setExplodeable(10.0f)->setSoundType(SoundType::METAL)->setIconName(L"gold_block")->setNameAndDescriptionId(IDS_TILE_BLOCK_GOLD, IDS_DESC_BLOCK_GOLD)->setBaseItemTypeAndMaterial(32, 4));
@@ -2017,7 +2018,7 @@ void Block::staticCtor()
         (new MobSpawnerBlock())->setDestroyTime(5.0f)->setSoundType(SoundType::METAL)->setIconName(L"mob_spawner")->setNotCollectStatistics()->setNameAndDescriptionId(IDS_TILE_MOB_SPAWNER, IDS_DESC_MOB_SPAWNER));
 
     registerBlock(53, L"oak_stairs",
-        (new StairBlock(planks->defaultBlockState()->setBoxedValue(PlanksBlock::VARIANT, new TypedBoxed<PlanksBlock::Variant*>(PlanksBlock::Variant::OAK))))->setIconName(L"stairsWood")->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_STAIRS_WOOD, IDS_DESC_STAIRS)->setBaseItemTypeAndMaterial(16, 1));
+        (new StairBlock(planks->defaultBlockState()->setValue(PlanksBlock::VARIANT, PlanksBlock::Variant::OAK)))->setIconName(L"stairsWood")->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_STAIRS_WOOD, IDS_DESC_STAIRS)->setBaseItemTypeAndMaterial(16, 1));
 
     registerBlock(54, L"chest",
         (new ChestBlock(ChestBlock::TYPE_SINGLE))->setDestroyTime(2.5f)->setSoundType(SoundType::WOOD)->setIconName(L"chest")->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_CHEST, IDS_DESC_CHEST)->setBaseItemTypeAndMaterial(36, 1));
@@ -2035,7 +2036,7 @@ void Block::staticCtor()
         (new CraftingTableBlock())->setDestroyTime(2.5f)->setSoundType(SoundType::WOOD)->setIconName(L"crafting_table")->setNameAndDescriptionId(0xE2E6E91C, IDS_DESC_CRAFTINGTABLE)->setBaseItemTypeAndMaterial(30, 1));
 
     registerBlock(59, L"wheat",
-        (new CropBlock(0))->setIconName(L"wheat")->setNotCollectStatistics()->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_CROPS, IDS_DESC_CROPS)->disableMipmap());
+        (new CropBlock())->setIconName(L"wheat")->setNotCollectStatistics()->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_CROPS, IDS_DESC_CROPS)->disableMipmap());
 
     Block* farmland = (new FarmBlock())->setDestroyTime(0.6f)->setSoundType(SoundType::GRAVEL)->setIconName(L"farmland")->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_FARMLAND, IDS_DESC_FARMLAND);
     registerBlock(60, L"farmland", farmland);
@@ -2095,7 +2096,7 @@ void Block::staticCtor()
         (new SnowLayerBlock())->setIconName(L"snow")->setDestroyTime(0.1f)->setSoundType(SoundType::SNOW)->sendBlockData(15)->setLightBlock(0)->setNameAndDescriptionId(IDS_TILE_SNOW, IDS_DESC_TOP_SNOW)->setBaseItemTypeAndMaterial(13, 16));
 
     registerBlock(79, L"ice",
-        (new IceBlock(0))->setIconName(L"ice")->setDestroyTime(0.5f)->setLightBlock(3)->setSoundType(SoundType::GLASS)->setSemiTransparent()->setNameAndDescriptionId(IDS_TILE_ICE, IDS_DESC_ICE));
+        (new IceBlock())->setIconName(L"ice")->setDestroyTime(0.5f)->setLightBlock(3)->setSoundType(SoundType::GLASS)->setSemiTransparent()->setNameAndDescriptionId(IDS_TILE_ICE, IDS_DESC_ICE));
 
     registerBlock(80, L"snow",
         (new SnowBlock())->setIconName(L"snow")->setDestroyTime(0.2f)->setSoundType(SoundType::CLOTH)->setNameAndDescriptionId(IDS_TILE_SNOW, IDS_DESC_SNOW)->setBaseItemTypeAndMaterial(13, 16));
@@ -2158,10 +2159,10 @@ void Block::staticCtor()
     registerBlock(98, L"stonebrick", stonebrick);
 
     registerBlock(99, L"brown_mushroom_block",
-        (new HugeMushroomBlock(Material::WOOD, MaterialColor::DIRT, byId(39)))->setIconName(L"mushroom_block")->setDestroyTime(0.2f)->setSoundType(SoundType::WOOD)->setNameAndDescriptionId(IDS_TILE_HUGE_MUSHROOM_1, IDS_DESC_MUSHROOM_BLOCK)->sendBlockData(15));
+        (new HugeMushroomBlock(Material::WOOD, MaterialColor::DIRT, brownMushroom))->setIconName(L"mushroom_block")->setDestroyTime(0.2f)->setSoundType(SoundType::WOOD)->setNameAndDescriptionId(IDS_TILE_HUGE_MUSHROOM_1, IDS_DESC_MUSHROOM_BLOCK)->sendBlockData(15));
 
     registerBlock(100, L"red_mushroom_block",
-        (new HugeMushroomBlock(Material::WOOD, MaterialColor::COLOR_RED, byId(40)))->setIconName(L"mushroom_block")->setDestroyTime(0.2f)->setSoundType(SoundType::WOOD)->setNameAndDescriptionId(IDS_TILE_HUGE_MUSHROOM_2, IDS_DESC_MUSHROOM_BLOCK)->sendBlockData(15));
+        (new HugeMushroomBlock(Material::WOOD, MaterialColor::COLOR_RED, redMushroom))->setIconName(L"mushroom_block")->setDestroyTime(0.2f)->setSoundType(SoundType::WOOD)->setNameAndDescriptionId(IDS_TILE_HUGE_MUSHROOM_2, IDS_DESC_MUSHROOM_BLOCK)->sendBlockData(15));
 
     registerBlock(101, L"iron_bars",
         (new ThinFenceBlock(L"iron_bars", L"iron_bars", Material::METAL, true))->setDestroyTime(5.0f)->setExplodeable(10.0f)->setSoundType(SoundType::METAL)->setNameAndDescriptionId(IDS_TILE_IRON_FENCE, IDS_DESC_IRON_FENCE)->setBaseItemTypeAndMaterial(29, 3));
@@ -2188,7 +2189,7 @@ void Block::staticCtor()
         (new StairBlock(brickBlock->defaultBlockState()))->setIconName(L"stairsBrick")->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_STAIRS_BRICKS, IDS_DESC_STAIRS)->setBaseItemTypeAndMaterial(16, 14));
 
     registerBlock(109, L"stone_brick_stairs",
-        (new StairBlock(stonebrick->defaultBlockState()->setBoxedValue(StoneBrickBlock::VARIANT, new TypedBoxed<StoneBrickBlock::Variant*>(StoneBrickBlock::Variant::DEFAULT))))->setIconName(L"stairsStoneBrickSmooth")->sendBlockData(15)->setNameAndDescriptionId(0xF103AC8D, IDS_DESC_STAIRS)->setBaseItemTypeAndMaterial(16, 31));
+        (new StairBlock(stonebrick->defaultBlockState()->setValue(StoneBrickBlock::VARIANT, StoneBrickBlock::Variant::DEFAULT)))->setIconName(L"stairsStoneBrickSmooth")->sendBlockData(15)->setNameAndDescriptionId(0xF103AC8D, IDS_DESC_STAIRS)->setBaseItemTypeAndMaterial(16, 31));
 
     registerBlock(110, L"mycelium",
         (new MyceliumBlock())->setIconName(L"mycelium")->setDestroyTime(0.6f)->setSoundType(SoundType::GRASS)->setNameAndDescriptionId(0x48412839, 0x6218A6EC));
@@ -2245,7 +2246,7 @@ void Block::staticCtor()
         (new CocoaBlock())->setIconName(L"cocoa")->setDestroyTime(0.2f)->setExplodeable(5.0f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_COCOA, IDS_DESC_COCOA));
 
     registerBlock(128, L"sandstone_stairs",
-        (new StairBlock(sandstone->defaultBlockState()->setBoxedValue(SandStoneBlock::TYPE, new TypedBoxed<SandStoneBlock::Type*>(SandStoneBlock::SMOOTH))))->setIconName(L"stairsSandstone")->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_STAIRS_SANDSTONE, IDS_DESC_STAIRS)->setBaseItemTypeAndMaterial(16, 13));
+        (new StairBlock(sandstone->defaultBlockState()->setValue(SandStoneBlock::TYPE, SandStoneBlock::SMOOTH)))->setIconName(L"stairsSandstone")->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_STAIRS_SANDSTONE, IDS_DESC_STAIRS)->setBaseItemTypeAndMaterial(16, 13));
 
     registerBlock(129, L"emerald_ore",
         (new OreBlock())->setIconName(L"emerald_ore")->setDestroyTime(3.0f)->setExplodeable(5.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(IDS_TILE_EMERALDORE, IDS_DESC_EMERALDORE));
@@ -2263,13 +2264,13 @@ void Block::staticCtor()
         (new BlockImpl(Material::METAL, MaterialColor::EMERALD))->setIconName(L"emerald_block")->setDestroyTime(5.0f)->setExplodeable(10.0f)->setSoundType(SoundType::METAL)->setNameAndDescriptionId(IDS_TILE_EMERALDBLOCK, IDS_DESC_EMERALDBLOCK)->setBaseItemTypeAndMaterial(32, 44));
 
     registerBlock(134, L"spruce_stairs",
-        (new StairBlock(planks->defaultBlockState()->setBoxedValue(PlanksBlock::VARIANT, new TypedBoxed<PlanksBlock::Variant*>(PlanksBlock::Variant::SPRUCE))))->setIconName(L"stairsWoodSpruce")->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_STAIRS_SPRUCEWOOD, IDS_DESC_STAIRS)->setBaseItemTypeAndMaterial(16, 39));
+        (new StairBlock(planks->defaultBlockState()->setValue(PlanksBlock::VARIANT, PlanksBlock::Variant::SPRUCE)))->setIconName(L"stairsWoodSpruce")->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_STAIRS_SPRUCEWOOD, IDS_DESC_STAIRS)->setBaseItemTypeAndMaterial(16, 39));
 
     registerBlock(135, L"birch_stairs",
-        (new StairBlock(planks->defaultBlockState()->setBoxedValue(PlanksBlock::VARIANT, new TypedBoxed<PlanksBlock::Variant*>(PlanksBlock::Variant::BIRCH))))->setIconName(L"stairsWoodBirch")->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_STAIRS_BIRCHWOOD, IDS_DESC_STAIRS)->setBaseItemTypeAndMaterial(16, 40));
+        (new StairBlock(planks->defaultBlockState()->setValue(PlanksBlock::VARIANT, PlanksBlock::Variant::BIRCH)))->setIconName(L"stairsWoodBirch")->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_STAIRS_BIRCHWOOD, IDS_DESC_STAIRS)->setBaseItemTypeAndMaterial(16, 40));
 
     registerBlock(136, L"jungle_stairs",
-        (new StairBlock(planks->defaultBlockState()->setBoxedValue(PlanksBlock::VARIANT, new TypedBoxed<PlanksBlock::Variant*>(PlanksBlock::Variant::JUNGLE))))->setIconName(L"stairsWoodJungle")->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_STAIRS_JUNGLEWOOD, IDS_DESC_STAIRS)->setBaseItemTypeAndMaterial(16, 41));
+        (new StairBlock(planks->defaultBlockState()->setValue(PlanksBlock::VARIANT, PlanksBlock::Variant::JUNGLE)))->setIconName(L"stairsWoodJungle")->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_STAIRS_JUNGLEWOOD, IDS_DESC_STAIRS)->setBaseItemTypeAndMaterial(16, 41));
 
     registerBlock(137, L"command_block",
         (new CommandBlock(MaterialColor::COLOR_BROWN, CommandBlock::IMPULSE))->setIconName(L"command_block")->setIndestructible()->setExplodeable(6000000.0f)->setNameAndDescriptionId(IDS_TILE_COMMAND_BLOCK, IDS_DESC_COMMAND_BLOCK));
@@ -2284,7 +2285,7 @@ void Block::staticCtor()
         (new FlowerPotBlock())->setDestroyTime(0.0f)->setIconName(L"flower_pot")->setSoundType(SoundType::STONE)->setNameAndDescriptionId(IDS_TILE_FLOWERPOT, IDS_DESC_FLOWERPOT));
 
     registerBlock(141, L"carrots",
-        (new CropBlock(0))->setIconName(L"carrots")->setNameAndDescriptionId(IDS_TILE_CARROTS, IDS_DESC_CARROTS)->disableMipmap());
+        (new CarrotBlock())->setIconName(L"carrots")->setNameAndDescriptionId(IDS_TILE_CARROTS, IDS_DESC_CARROTS)->disableMipmap());
 
     registerBlock(142, L"potatoes",
         (new PotatoBlock())->setIconName(L"potatoes")->setNameAndDescriptionId(IDS_TILE_POTATOES, IDS_DESC_POTATO)->disableMipmap());
@@ -2329,7 +2330,7 @@ void Block::staticCtor()
     registerBlock(155, L"quartz_block", quartzBlock);
 
     registerBlock(156, L"quartz_stairs",
-        (new StairBlock(quartzBlock->defaultBlockState()->setBoxedValue(QuartzBlock::VARIANT, new TypedBoxed<QuartzBlock::Variant*>(QuartzBlock::Variant::DEFAULT))))->setIconName(L"stairsQuartz")->setNameAndDescriptionId(IDS_TILE_STAIRS_QUARTZ, IDS_DESC_STAIRS)->setBaseItemTypeAndMaterial(16, 45));
+        (new StairBlock(quartzBlock->defaultBlockState()->setValue(QuartzBlock::VARIANT, QuartzBlock::Variant::DEFAULT)))->setIconName(L"stairsQuartz")->setNameAndDescriptionId(IDS_TILE_STAIRS_QUARTZ, IDS_DESC_STAIRS)->setBaseItemTypeAndMaterial(16, 45));
 
     registerBlock(157, L"activator_rail",
         (new PoweredRailBlock())->setIconName(L"rail_activator")->setDestroyTime(0.7f)->setSoundType(SoundType::METAL)->setNameAndDescriptionId(IDS_TILE_ACTIVATOR_RAIL, IDS_DESC_ACTIVATOR_RAIL)->setBaseItemTypeAndMaterial(12, 9));
@@ -2350,10 +2351,10 @@ void Block::staticCtor()
         (new NewLogBlock())->setIconName(L"log")->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_LOG, IDS_DESC_LOG));
 
     registerBlock(163, L"acacia_stairs",
-        (new StairBlock(planks->defaultBlockState()->setBoxedValue(PlanksBlock::VARIANT, new TypedBoxed<PlanksBlock::Variant*>(PlanksBlock::Variant::ACACIA))))->setIconName(L"stairsWoodAcacia")->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_STAIRS_ACACIAWOOD, IDS_DESC_STAIRS)->setBaseItemTypeAndMaterial(16, 42));
+        (new StairBlock(planks->defaultBlockState()->setValue(PlanksBlock::VARIANT, PlanksBlock::Variant::ACACIA)))->setIconName(L"stairsWoodAcacia")->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_STAIRS_ACACIAWOOD, IDS_DESC_STAIRS)->setBaseItemTypeAndMaterial(16, 42));
 
     registerBlock(164, L"dark_oak_stairs",
-        (new StairBlock(planks->defaultBlockState()->setBoxedValue(PlanksBlock::VARIANT, new TypedBoxed<PlanksBlock::Variant*>(PlanksBlock::Variant::DARK_OAK))))->setIconName(L"stairsWoodDarkOak")->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_STAIRS_DARKOAKWOOD, IDS_DESC_STAIRS)->setBaseItemTypeAndMaterial(16, 43));
+        (new StairBlock(planks->defaultBlockState()->setValue(PlanksBlock::VARIANT, PlanksBlock::Variant::DARK_OAK)))->setIconName(L"stairsWoodDarkOak")->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_STAIRS_DARKOAKWOOD, IDS_DESC_STAIRS)->setBaseItemTypeAndMaterial(16, 43));
 
     registerBlock(165, L"slime",
         (new SlimeBlock())->setSoundType(SoundType::SLIME)->setNameAndDescriptionId(IDS_TILE_BLOCK_SLIME, IDS_DESC_BLOCK_SLIME)->setBaseItemTypeAndMaterial(32, 57)->setSemiTransparent());
@@ -2401,7 +2402,7 @@ void Block::staticCtor()
     registerBlock(179, L"red_sandstone", redSandstone);
 
     registerBlock(180, L"red_sandstone_stairs",
-        (new StairBlock(redSandstone->defaultBlockState()->setBoxedValue(RedSandStoneBlock::TYPE, new TypedBoxed<RedSandStoneBlock::Type*>(RedSandStoneBlock::Type::SMOOTH))))->setIconName(L"red_sandstone")->setNameAndDescriptionId(IDS_TILE_STAIRS_REDSANDSTONE, IDS_DESC_STAIRS_REDSANDSTONE)->setBaseItemTypeAndMaterial(16, 48));
+        (new StairBlock(redSandstone->defaultBlockState()->setValue(RedSandStoneBlock::TYPE, RedSandStoneBlock::Type::SMOOTH)))->setIconName(L"red_sandstone")->setNameAndDescriptionId(IDS_TILE_STAIRS_REDSANDSTONE, IDS_DESC_STAIRS_REDSANDSTONE)->setBaseItemTypeAndMaterial(16, 48));
 
     registerBlock(181, L"double_stone_slab2",
         (new FullNewStoneSlabBlock())->setIconName(L"double_stone_slab2")->setDestroyTime(2.0f)->setExplodeable(10.0f)->setSoundType(SoundType::STONE)->setNameAndDescriptionId(IDS_TILE_STONESLAB_REDSANDSTONE, IDS_DESC_STONESLAB_REDSANDSTONE)->setBaseItemTypeAndMaterial(21, 48));
@@ -2683,13 +2684,13 @@ void Block::staticCtor()
         (new TurtleEggBlock())->setSoundType(SoundType::STONE)->setIconName(L"turtle_egg_hatch_0")->setDestroyTime(0.4f)->setNameAndDescriptionId(IDS_TILE_TURTLE_EGG, IDS_DESC_TILE_TURTLE_EGG));
 
     registerBlock(291, L"prismarine_stairs",
-        (new StairBlock(prismarine->defaultBlockState()->setBoxedValue(PrismarineBlock::VARIANT, new TypedBoxed<PrismarineBlock::Variant*>(PrismarineBlock::Variant::ROUGH))))->setIconName(L"prismarine_stairs")->setNameAndDescriptionId(IDS_TILE_STAIRS_PRISMARINE, IDS_DESC_STAIRS_PRISMARINE)->setBaseItemTypeAndMaterial(16, 54));
+        (new StairBlock(prismarine->defaultBlockState()->setValue(PrismarineBlock::VARIANT, PrismarineBlock::Variant::ROUGH)))->setIconName(L"prismarine_stairs")->setNameAndDescriptionId(IDS_TILE_STAIRS_PRISMARINE, IDS_DESC_STAIRS_PRISMARINE)->setBaseItemTypeAndMaterial(16, 54));
 
     registerBlock(292, L"prismarine_bricks_stairs",
-        (new StairBlock(prismarine->defaultBlockState()->setBoxedValue(PrismarineBlock::VARIANT, new TypedBoxed<PrismarineBlock::Variant*>(PrismarineBlock::Variant::BRICKS))))->setIconName(L"prismarine_bricks")->setNameAndDescriptionId(IDS_TILE_STAIRS_PRISMARINE_BRICKS, IDS_DESC_STAIRS_PRISMARINE_BRICKS)->setBaseItemTypeAndMaterial(16, 54));
+        (new StairBlock(prismarine->defaultBlockState()->setValue(PrismarineBlock::VARIANT, PrismarineBlock::Variant::BRICKS)))->setIconName(L"prismarine_bricks")->setNameAndDescriptionId(IDS_TILE_STAIRS_PRISMARINE_BRICKS, IDS_DESC_STAIRS_PRISMARINE_BRICKS)->setBaseItemTypeAndMaterial(16, 54));
 
     registerBlock(293, L"dark_prismarine_stairs",
-        (new StairBlock(prismarine->defaultBlockState()->setBoxedValue(PrismarineBlock::VARIANT, new TypedBoxed<PrismarineBlock::Variant*>(PrismarineBlock::Variant::DARK))))->setIconName(L"dark_prismarine")->setNameAndDescriptionId(IDS_TILE_STAIRS_DARK_PRISMARINE, IDS_DESC_STAIRS_DARK_PRISMARINE)->setBaseItemTypeAndMaterial(16, 54));
+        (new StairBlock(prismarine->defaultBlockState()->setValue(PrismarineBlock::VARIANT, PrismarineBlock::Variant::DARK)))->setIconName(L"dark_prismarine")->setNameAndDescriptionId(IDS_TILE_STAIRS_DARK_PRISMARINE, IDS_DESC_STAIRS_DARK_PRISMARINE)->setBaseItemTypeAndMaterial(16, 54));
 
     registerBlock(295, L"stripped_log_spruce",
         (new StrippedLogBlock())->setIconTopName(L"stripped_log_spruce_top")->setIconName(L"stripped_log_spruce")->setDestroyTime(2.0f)->setSoundType(SoundType::WOOD)->setNameAndDescriptionId(IDS_TILE_STRIPPED_LOG_SPRUCE, IDS_DESC_STRIPPED_LOG_SPRUCE));
@@ -2763,11 +2764,11 @@ void Block::staticCtor()
     registerBlock(318, L"bark_oak",
         (new RotatedPillarBlockImpl(Material::WOOD))->setIconTopName(L"log_oak")->setIconName(L"log_oak")->setDestroyTime(2.0f)->setSoundType(SoundType::WOOD)->sendBlockData(15)->setNameAndDescriptionId(IDS_TILE_LOG, IDS_DESC_LOG));
 
-    DefaultedMappedRegistry<ResourceLocation, Block*>::iterator it;
+    const boost::unordered_map<ResourceLocation, Block*>& registry = blockRegistry->keySet();
 
-    for (it = blockRegistry->begin(); it != blockRegistry->end(); ++it)
+    for (boost::unordered_map<ResourceLocation, Block*>::const_iterator it = registry.begin(); it != registry.end(); ++it)
     {
-        Block* block = it->first;
+        Block* block = it->second;
 
         if (block->mMaterial == Material::AIR)
         {
@@ -2786,9 +2787,9 @@ void Block::staticCtor()
         }
     }
 
-    for (it = blockRegistry->begin(); it != blockRegistry->end(); ++it)
+    for (boost::unordered_map<ResourceLocation, Block*>::const_iterator it = registry.begin(); it != registry.end(); ++it)
     {
-        Block* block = it->first;
+        Block* block = it->second;
         arrayWithLength<BlockStateDefinition::BlockStateImpl*> states =
             *block->getBlockStateDefinition()->getPossibleBlockStates();
 

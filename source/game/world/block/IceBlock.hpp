@@ -16,7 +16,7 @@ class ItemInstance;
 class IceBlock : public HalfTransparentBlock
 {
 public:
-    IceBlock(bool isClientSide);
+    IceBlock(bool isClientSide = false);
     virtual ~IceBlock() {}
 
     virtual void tick(Level* level, const BlockPos& pos, const BlockState* state, Random* random);
