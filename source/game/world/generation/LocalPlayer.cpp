@@ -266,7 +266,24 @@ void LocalPlayer::tick()
     Player::tick();
 
     Vec3* newPos = Vec3::newTemp(mX, mY, mZ);
-    if (!canMoveOrBeMovedFromTo(oldX, oldY, oldZ, mX, mY, mZ, newPos))
+    if (canMoveOrBeMovedFromTo(oldX, oldY, oldZ, mX, mY, mZ, newPos))
+    {
+        if (isPassenger())
+        {
+            mPacketListener->send(boost::shared_ptr<Packet>(
+                new ServerboundMovePlayerPacket::Rot(mYRot, mXRot, mOnGround, false)));
+            mPacketListener->send(boost::shared_ptr<Packet>(
+                new ServerboundPlayerInputPacket(mXxa, mZza, mInput->mJumping, mInput->mSneaking)));
+            boost::shared_ptr<Entity> rootVehicle = getRootVehicle();
+            if (rootVehicle != shared_from_this() && rootVehicle->isControlledByLocalInstance())
+                mPacketListener->send(boost::shared_ptr<Packet>(new ServerboundMoveVehiclePacket(rootVehicle)));
+        }
+        else
+        {
+            sendPosition();
+        }
+    }
+    else
     {
         if (!gApp.DebugDevToolsOn())
         {
@@ -294,20 +311,6 @@ void LocalPlayer::tick()
             mY = mBoundingBox->mMinY;
             mZ = (mBoundingBox->mMinZ + mBoundingBox->mMaxZ) * 0.5;
         }
-        sendPosition();
-    }
-    else if (isPassenger())
-    {
-        mPacketListener->send(boost::shared_ptr<Packet>(
-            new ServerboundMovePlayerPacket::Rot(mYRot, mXRot, mOnGround, false)));
-        mPacketListener->send(boost::shared_ptr<Packet>(
-            new ServerboundPlayerInputPacket(mXxa, mZza, mInput->mJumping, mInput->mSneaking)));
-        boost::shared_ptr<Entity> rootVehicle = getRootVehicle();
-        if (rootVehicle != shared_from_this() && rootVehicle->isControlledByLocalInstance())
-            mPacketListener->send(boost::shared_ptr<Packet>(new ServerboundMoveVehiclePacket(rootVehicle)));
-    }
-    else
-    {
         sendPosition();
     }
     mDamageIndicatorAllDirections = false;
@@ -1458,10 +1461,12 @@ bool LocalPlayer::doesLevelAllowBlockToBreak(const BlockPos& pos)
 unsigned int LocalPlayer::pickBlock(bool select)
 {
     Minecraft* minecraft = Minecraft::GetInstance();
-    if (minecraft->mHitResult == NULL)
+    HitResult* hitResult = minecraft->mHitResult;
+    if (hitResult == NULL)
+        return 0;
+    if (hitResult->mType == HitResult::MISS)
         return 0;
 
-    HitResult* hitResult = minecraft->mHitResult;
     not_null_ptr<ItemInstance> pickedItem;
     boost::shared_ptr<BlockEntity> blockEntity;
 
@@ -1469,38 +1474,34 @@ unsigned int LocalPlayer::pickBlock(bool select)
     {
         const BlockPos pos = hitResult->getBlockPos();
         const BlockState* state = mLevel->getBlockState(pos);
+        Block* block = state->getBlock();
         if (state->getMaterial() == Material::AIR)
             return 0;
-
-        Block* block = state->getBlock();
         pickedItem = block->getCloneItemInstance(mLevel, pos, state);
-        blockEntity = mLevel->getBlockEntity(pos);
     }
-    else if (hitResult->mType == HitResult::ENTITY)
+    else if (hitResult->mType == HitResult::ENTITY && hitResult->mEntity)
     {
         const unsigned long long entityType = hitResult->mEntity->GetType();
         if (entityType == EntityType::PAINTING)
         {
-            pickedItem.reset(new ItemInstance(Items::painting));
+            pickedItem = not_null_ptr<ItemInstance>(new ItemInstance(Items::painting));
         }
         else if (entityType == EntityType::LEASH_FENCE_KNOT_ENTITY)
         {
-            pickedItem.reset(new ItemInstance(Items::lead));
+            pickedItem = not_null_ptr<ItemInstance>(new ItemInstance(Items::lead));
         }
         else if (entityType == EntityType::ITEM_FRAME)
         {
-            boost::shared_ptr<ItemFrame> itemFrame =
-                boost::static_pointer_cast<ItemFrame>(hitResult->mEntity);
+            boost::shared_ptr<ItemFrame> itemFrame = boost::static_pointer_cast<ItemFrame>(hitResult->mEntity);
             not_null_ptr<ItemInstance> frameItem = itemFrame->getItem();
             if (!frameItem->isEmpty())
                 pickedItem = frameItem->copy();
             else
-                pickedItem.reset(new ItemInstance(Items::itemFrame));
+                pickedItem = not_null_ptr<ItemInstance>(new ItemInstance(Items::itemFrame));
         }
         else if ((entityType & EntityType::MINECART) == EntityType::MINECART)
         {
-            boost::shared_ptr<Minecart> minecart =
-                boost::static_pointer_cast<Minecart>(hitResult->mEntity);
+            boost::shared_ptr<Minecart> minecart = boost::dynamic_pointer_cast<Minecart>(hitResult->mEntity);
             const int type = minecart->getType()->mId;
             Item* item = Items::minecart;
             if (type == 1)
@@ -1513,27 +1514,27 @@ unsigned int LocalPlayer::pickBlock(bool select)
                 item = Items::hopperMinecart;
             else if (type == 6)
                 item = Items::commandBlockMinecart;
-            pickedItem.reset(new ItemInstance(item));
+            pickedItem = not_null_ptr<ItemInstance>(new ItemInstance(item));
         }
-        else if (eTYPE_DERIVED_FROM(EntityType::BOAT, entityType))
+        else if (eTYPE_DERIVED_FROM(EntityType::BOAT, hitResult->mEntity->GetType()))
         {
             boost::shared_ptr<Boat> boat = boost::static_pointer_cast<Boat>(hitResult->mEntity);
-            pickedItem.reset(new ItemInstance(boat->getDropItem()));
+            pickedItem = not_null_ptr<ItemInstance>(new ItemInstance(boat->getDropItem()));
         }
-        else if (eTYPE_DERIVED_FROM(EntityType::ARMOR_STAND, entityType))
+        else if (eTYPE_DERIVED_FROM(EntityType::ARMOR_STAND, hitResult->mEntity->GetType()))
         {
-            pickedItem.reset(new ItemInstance(Items::armorStand));
+            pickedItem = not_null_ptr<ItemInstance>(new ItemInstance(Items::armorStand));
         }
-        else if (eTYPE_DERIVED_FROM(EntityType::ENDER_CRYSTAL, entityType))
+        else if (eTYPE_DERIVED_FROM(EntityType::ENDER_CRYSTAL, hitResult->mEntity->GetType()))
         {
-            pickedItem.reset(new ItemInstance(Items::endCrystal));
+            pickedItem = not_null_ptr<ItemInstance>(new ItemInstance(Items::endCrystal));
         }
         else
         {
             const ResourceLocation key = EntityIO::getKey(hitResult->mEntity);
             if (EntityIO::sSpawnInfo.find(key) == EntityIO::sSpawnInfo.end())
                 return 0;
-            pickedItem.reset(new ItemInstance(Items::spawnEgg));
+            pickedItem = not_null_ptr<ItemInstance>(new ItemInstance(Items::spawnEgg));
             SpawnEggItem::addSpawnEntity(pickedItem, key);
         }
     }
@@ -1542,15 +1543,16 @@ unsigned int LocalPlayer::pickBlock(bool select)
         return 0;
     }
 
-    if (blockEntity && boost::dynamic_pointer_cast<FlowerPotBlockEntity>(blockEntity))
-        blockEntity.reset();
-    if (blockEntity)
-        pickedItem = Minecraft::addCustomNbtData(pickedItem, blockEntity);
-
     if (pickedItem->isEmpty())
         return 0;
 
-    Inventory* inventory = mInventory.get();
+    if (blockEntity && boost::dynamic_pointer_cast<FlowerPotBlockEntity>(blockEntity))
+        blockEntity = boost::shared_ptr<BlockEntity>();
+
+    boost::shared_ptr<Inventory> inventory = mInventory;
+    if (blockEntity)
+        Minecraft::addCustomNbtData(pickedItem, blockEntity);
+
     if (!select)
     {
         inventory->setPickedItem(pickedItem);
@@ -1558,178 +1560,188 @@ unsigned int LocalPlayer::pickBlock(bool select)
         return 1;
     }
 
-    if (!mAbilities.mInstabuild)
-        return inventory->findSlotMatchingItem(pickedItem, false) != -1;
-    return 1;
+    return mAbilities.mInstabuild || inventory->findSlotMatchingItem(pickedItem, false) != -1;
 }
 
 unsigned char LocalPlayer::handleMouseClick(int button)
 {
-    MultiPlayerGameMode* gameMode = mMinecraft->mGameModes[mUserIndex];
     boost::shared_ptr<LocalPlayer> player = boost::static_pointer_cast<LocalPlayer>(shared_from_this());
     HitResult* hitResult = mMinecraft->mHitResult;
+    MultiPlayerGameMode* gameMode = mMinecraft->mGameModes[mUserIndex];
     const InteractionHand::EInteractionHand hand = InteractionHand::eInteractionHand_MainHand;
 
-    if (isUsingItem())
-        return 0;
-
-    if (button == 0)
+    if (!isUsingItem())
     {
-        if (mMissTime > 0)
-            return 0;
+        if (button == 0)
+        {
+            if (mMissTime > 0)
+                return 0;
 
-        if (hitResult == NULL)
-        {
-            if (gameMode->hasMissTime())
-                mMissTime = 10;
-            player->resetAttackStrengthTicker();
-            if (swing(hand))
-            {
-                playSound(SoundEvents::PLAYER_ATTACK_WEAK, 0.6f, 1.0f);
-                player->mPacketListener->send(boost::shared_ptr<Packet>(new ClientboundSoundPacket(
-                    SoundEvents::PLAYER_ATTACK_WEAK, SoundSource::eSoundSource_Players, player->mX, player->mY,
-                    player->mZ, 0.6f, 1.0f)));
-            }
-            return 0;
-        }
-
-        if (hitResult->mType == HitResult::MISS)
-        {
-            if (gameMode->hasMissTime())
-                mMissTime = 10;
-            player->resetAttackStrengthTicker();
-            if (swing(hand))
-            {
-                playSound(SoundEvents::PLAYER_ATTACK_WEAK, 0.6f, 1.0f);
-                player->mPacketListener->send(boost::shared_ptr<Packet>(new ClientboundSoundPacket(
-                    SoundEvents::PLAYER_ATTACK_WEAK, SoundSource::eSoundSource_Players, player->mX, player->mY,
-                    player->mZ, 0.6f, 1.0f)));
-            }
-        }
-        else if (hitResult->mType == HitResult::BLOCK)
-        {
-            const BlockPos pos = hitResult->getBlockPos();
-            if (!doesLevelAllowBlockToBreak(pos))
+            if (hitResult == NULL)
             {
                 if (gameMode->hasMissTime())
                     mMissTime = 10;
                 player->resetAttackStrengthTicker();
-            }
-            else
-            {
-                gameMode->startDestroyBlock(pos, hitResult->mDirection);
-            }
-            swing(hand);
-        }
-        else if (hitResult->mType == HitResult::ENTITY)
-        {
-            gameMode->attack(player, hitResult->mEntity);
-            swing(hand);
-        }
-        return 0;
-    }
-
-    if (button == 1)
-    {
-        mRightClickDelay = 4;
-        if (isHandsBusy())
-            return 0;
-
-        if (isSleeping() && mLevel != NULL && mLevel->mIsClientSide)
-        {
-            if (mCreativeRepeatState == 4)
-                return 0;
-            boost::shared_ptr<MultiplayerLocalPlayer> multiplayerPlayer =
-                boost::dynamic_pointer_cast<MultiplayerLocalPlayer>(shared_from_this());
-            if (multiplayerPlayer && multiplayerPlayer->mPacketListener != NULL)
-                multiplayerPlayer->StopSleeping();
-        }
-        if (isSleeping() && mLevel != NULL && mLevel->mIsClientSide)
-            return 0;
-
-        if (Minecraft::InMiniGame(eMiniGameId_Glide, false))
-        {
-            const MiniGameDef* miniGame = mMinecraft->GetMiniGame();
-            if (miniGame->ArePowerupsActive())
-            {
-                boost::shared_ptr<MultiplayerLocalPlayer> multiplayerPlayer =
-                    boost::dynamic_pointer_cast<MultiplayerLocalPlayer>(shared_from_this());
-                if (multiplayerPlayer)
+                if (swing(hand))
                 {
-                    not_null_ptr<ItemInstance> item = player->getMainHandItem();
-                    if (!item->isEmpty())
-                    {
-                        PowerupItems::UsePowerupItem(multiplayerPlayer, Item::getId(item->getItem()));
-                        boost::shared_ptr<ServerboundUseItemPacket> packet(new ServerboundUseItemPacket(hand));
-                        multiplayerPlayer->mPacketListener->send(packet);
-                        item->shrink(1);
-                        if (item->getCount() == 0)
-                            mMinecraft->mPlayer->setItemInHand(hand, ItemInstance::EMPTY);
-                    }
-                    return 1;
+                    playSound(SoundEvents::PLAYER_ATTACK_WEAK, 0.6f, 1.0f);
+                    player->mPacketListener->send(boost::shared_ptr<Packet>(new ClientboundSoundPacket(
+                        SoundEvents::PLAYER_ATTACK_WEAK, SoundSource::eSoundSource_Players, player->mX, player->mY,
+                        player->mZ, 0.6f, 1.0f)));
                 }
+                return 0;
             }
-            return 0;
-        }
 
-        for (int handIndex = 0; handIndex < 1; ++handIndex)
-        {
-            const InteractionHand::EInteractionHand useHand =
-                static_cast<InteractionHand::EInteractionHand>(handIndex);
-            not_null_ptr<ItemInstance> heldItem = player->getItemInHand(useHand);
+            if (isHandsBusy())
+                return 0;
 
-            if (hitResult != NULL && hitResult->mType == HitResult::BLOCK)
+            if (isSleeping() && mLevel != NULL && mLevel->mIsClientSide)
+                return 0;
+
+            switch (hitResult->mType)
+            {
+            case HitResult::MISS:
+                if (gameMode->hasMissTime())
+                    mMissTime = 10;
+                player->resetAttackStrengthTicker();
+                if (swing(hand))
+                {
+                    playSound(SoundEvents::PLAYER_ATTACK_WEAK, 0.6f, 1.0f);
+                    player->mPacketListener->send(boost::shared_ptr<Packet>(new ClientboundSoundPacket(
+                        SoundEvents::PLAYER_ATTACK_WEAK, SoundSource::eSoundSource_Players, player->mX, player->mY,
+                        player->mZ, 0.6f, 1.0f)));
+                }
+                break;
+            case HitResult::ENTITY:
+                gameMode->attack(player, hitResult->mEntity);
+                swing(hand);
+                break;
+            case HitResult::BLOCK:
             {
                 const BlockPos pos = hitResult->getBlockPos();
-                if (mLevel->getBlockState(pos)->getMaterial() != Material::AIR)
+                if (doesLevelAllowBlockToBreak(pos))
                 {
-                    bool used = false;
-                    const int oldCount = heldItem->isEmpty() ? 0 : heldItem->getCount();
-                    const InteractionResult::EInteractionResult result = gameMode->useItemOn(
-                        player, mLevel, pos, hitResult->mDirection, hitResult->mLocation,
-                        useHand, false, &used);
-                    if (result == InteractionResult::eInteractionResult_Success)
+                    gameMode->startDestroyBlock(pos, hitResult->mDirection);
+                    swing(hand);
+                }
+                else
+                {
+                    if (gameMode->hasMissTime())
+                        mMissTime = 10;
+                    player->resetAttackStrengthTicker();
+                    swing(hand);
+                }
+                break;
+            }
+            }
+        }
+        else if (button == 1)
+        {
+            mRightClickDelay = 4;
+            if (isHandsBusy())
+                return 0;
+
+            if (isSleeping() && mLevel != NULL && mLevel->mIsClientSide)
+            {
+                if (mCreativeRepeatState == 4)
+                    return 0;
+                boost::shared_ptr<MultiplayerLocalPlayer> multiplayerPlayer =
+                    boost::dynamic_pointer_cast<MultiplayerLocalPlayer>(shared_from_this());
+                if (multiplayerPlayer && multiplayerPlayer->mPacketListener != NULL)
+                    multiplayerPlayer->StopSleeping();
+            }
+            if (isSleeping() && mLevel != NULL && mLevel->mIsClientSide)
+                return 0;
+
+            if (Minecraft::InMiniGame(eMiniGameId_Glide, false))
+            {
+                const MiniGameDef* miniGame = mMinecraft->GetMiniGame();
+                if (miniGame->ArePowerupsActive())
+                {
+                    boost::shared_ptr<MultiplayerLocalPlayer> multiplayerPlayer =
+                        boost::dynamic_pointer_cast<MultiplayerLocalPlayer>(shared_from_this());
+                    if (multiplayerPlayer)
                     {
-                        swing(useHand);
-                        if (!heldItem->isEmpty())
+                        not_null_ptr<ItemInstance> item = player->getMainHandItem();
+                        if (!item->isEmpty())
                         {
-                            if (heldItem->getCount() == 0)
-                                player->setItemInHand(useHand, ItemInstance::EMPTY);
-                            else if (heldItem->getCount() != oldCount || gameMode->hasInfiniteItems())
-                                mMinecraft->mLocalItemInHandRenderers[mUserIndex]->itemUsed(useHand);
+                            PowerupItems::UsePowerupItem(multiplayerPlayer, Item::getId(item->getItem()));
+                            boost::shared_ptr<ServerboundUseItemPacket> packet(new ServerboundUseItemPacket(hand));
+                            multiplayerPlayer->mPacketListener->send(packet);
+                            item->shrink(1);
+                            if (item->getCount() == 0)
+                                mMinecraft->mPlayer->setItemInHand(hand, ItemInstance::EMPTY);
                         }
-                        return used;
+                        return 1;
+                    }
+                }
+                return 0;
+            }
+
+            for (int handIndex = 0; handIndex < 1; ++handIndex)
+            {
+                const InteractionHand::EInteractionHand useHand =
+                    static_cast<InteractionHand::EInteractionHand>(handIndex);
+                not_null_ptr<ItemInstance> heldItem = player->getItemInHand(useHand);
+
+                if (hitResult != NULL)
+                {
+                    switch (hitResult->mType)
+                    {
+                    case HitResult::ENTITY:
+                        if (gameMode->interact(player, hitResult->mEntity, player->getItemInHand(useHand), useHand) ==
+                            InteractionResult::eInteractionResult_Success)
+                            return 0;
+                        if (gameMode->interactAt(player, hitResult->mEntity, hitResult,
+                                                 player->getItemInHand(useHand), useHand) ==
+                            InteractionResult::eInteractionResult_Success)
+                            return 0;
+                        break;
+                    case HitResult::BLOCK:
+                    {
+                        const BlockPos pos = hitResult->getBlockPos();
+                        if (mLevel->getBlockState(pos)->getMaterial() != Material::AIR)
+                        {
+                            bool used = false;
+                            const int oldCount = heldItem->isEmpty() ? 0 : heldItem->getCount();
+                            const InteractionResult::EInteractionResult result = gameMode->useItemOn(
+                                player, mLevel, pos, hitResult->mDirection, hitResult->mLocation, useHand, false,
+                                &used);
+                            if (result == InteractionResult::eInteractionResult_Success)
+                            {
+                                swing(useHand);
+                                if (!heldItem->isEmpty())
+                                {
+                                    if (heldItem->getCount() == 0)
+                                        mMinecraft->mPlayer->setItemInHand(useHand, ItemInstance::EMPTY);
+                                    else if (heldItem->getCount() != oldCount || gameMode->hasInfiniteItems())
+                                        mMinecraft->mLocalItemInHandRenderers[mUserIndex]->itemUsed(useHand);
+                                }
+                                return used;
+                            }
+                        }
+                        break;
+                    }
+                    }
+                }
+
+                not_null_ptr<ItemInstance> item = getItemInHand(useHand);
+                if (!item->isEmpty())
+                {
+                    if (gameMode->useItem(player, mLevel, useHand, false) ==
+                        InteractionResult::eInteractionResult_Success)
+                    {
+                        mMinecraft->mLocalItemInHandRenderers[mUserIndex]->itemUsed(useHand);
+                        return 0;
                     }
                 }
             }
-            else if (hitResult != NULL && hitResult->mType == HitResult::ENTITY)
-            {
-                if (gameMode->interact(player, hitResult->mEntity, player->getItemInHand(useHand), useHand) ==
-                    InteractionResult::eInteractionResult_Success)
-                    return 0;
-                if (gameMode->interactAt(player, hitResult->mEntity, hitResult, player->getItemInHand(useHand), useHand) ==
-                    InteractionResult::eInteractionResult_Success)
-                    return 0;
-            }
-
-            not_null_ptr<ItemInstance> item = getItemInHand(useHand);
-            if (!item->isEmpty())
-            {
-                const InteractionResult::EInteractionResult result =
-                    gameMode->useItem(player, mLevel, useHand, false);
-                if (result == InteractionResult::eInteractionResult_Success)
-                {
-                    mMinecraft->mLocalItemInHandRenderers[mUserIndex]->itemUsed(useHand);
-                    return 0;
-                }
-            }
         }
-
-        return 0;
+        else if (button == 2 && !Minecraft::InMiniGame(eMiniGameId_Any, true))
+        {
+            pickBlock(false);
+        }
     }
-
-    if (button == 2 && !Minecraft::InMiniGame(eMiniGameId_Any, true))
-        pickBlock(false);
     return 0;
 }
 
@@ -2077,45 +2089,57 @@ unsigned long long LocalPlayer::sendPosition()
     bool sprinting = isSprinting();
     if (sprinting != mWasSprinting)
     {
-        ServerboundPlayerCommandPacket::Action action =
-            sprinting ? ServerboundPlayerCommandPacket::START_SPRINTING : ServerboundPlayerCommandPacket::STOP_SPRINTING;
-        mPacketListener->send(boost::shared_ptr<Packet>(new ServerboundPlayerCommandPacket(shared_from_this(), action)));
+        if (sprinting)
+            mPacketListener->send(boost::shared_ptr<Packet>(
+                new ServerboundPlayerCommandPacket(shared_from_this(), ServerboundPlayerCommandPacket::START_SPRINTING)));
+        else
+            mPacketListener->send(boost::shared_ptr<Packet>(
+                new ServerboundPlayerCommandPacket(shared_from_this(), ServerboundPlayerCommandPacket::STOP_SPRINTING)));
         mWasSprinting = sprinting;
     }
 
     bool sneaking = isSneaking();
     if (sneaking != mWasSneaking)
     {
-        ServerboundPlayerCommandPacket::Action action =
-            sneaking ? ServerboundPlayerCommandPacket::PRESS_SHIFT_KEY : ServerboundPlayerCommandPacket::RELEASE_SHIFT_KEY;
-        mPacketListener->send(boost::shared_ptr<Packet>(new ServerboundPlayerCommandPacket(shared_from_this(), action)));
+        if (sneaking)
+            mPacketListener->send(boost::shared_ptr<Packet>(
+                new ServerboundPlayerCommandPacket(shared_from_this(), ServerboundPlayerCommandPacket::PRESS_SHIFT_KEY)));
+        else
+            mPacketListener->send(boost::shared_ptr<Packet>(
+                new ServerboundPlayerCommandPacket(shared_from_this(), ServerboundPlayerCommandPacket::RELEASE_SHIFT_KEY)));
         mWasSneaking = sneaking;
     }
 
     bool swimming = isSwimming();
     if (swimming != mWasSwimming)
     {
-        ServerboundPlayerCommandPacket::Action action =
-            swimming ? ServerboundPlayerCommandPacket::START_SWIMMING : ServerboundPlayerCommandPacket::STOP_SWIMMING;
-        mPacketListener->send(boost::shared_ptr<Packet>(new ServerboundPlayerCommandPacket(shared_from_this(), action)));
+        if (swimming)
+            mPacketListener->send(boost::shared_ptr<Packet>(
+                new ServerboundPlayerCommandPacket(shared_from_this(), ServerboundPlayerCommandPacket::START_SWIMMING)));
+        else
+            mPacketListener->send(boost::shared_ptr<Packet>(
+                new ServerboundPlayerCommandPacket(shared_from_this(), ServerboundPlayerCommandPacket::STOP_SWIMMING)));
         mWasSwimming = swimming;
     }
 
     bool damagingNearbyMobs = getDamageNearbyMobs();
     if (damagingNearbyMobs != mWasDamagingNearbyMobs)
     {
-        ServerboundPlayerCommandPacket::Action action = damagingNearbyMobs
-                                                            ? ServerboundPlayerCommandPacket::START_SPIN_ATTACK
-                                                            : ServerboundPlayerCommandPacket::STOP_SPIN_ATTACK;
-        mPacketListener->send(boost::shared_ptr<Packet>(new ServerboundPlayerCommandPacket(shared_from_this(), action)));
+        if (damagingNearbyMobs)
+            mPacketListener->send(boost::shared_ptr<Packet>(
+                new ServerboundPlayerCommandPacket(shared_from_this(), ServerboundPlayerCommandPacket::START_SPIN_ATTACK)));
+        else
+            mPacketListener->send(boost::shared_ptr<Packet>(
+                new ServerboundPlayerCommandPacket(shared_from_this(), ServerboundPlayerCommandPacket::STOP_SPIN_ATTACK)));
         mWasDamagingNearbyMobs = damagingNearbyMobs;
     }
 
     if (!isControlledCamera())
         return 0;
 
+    AABB* box = mBoundingBox;
     double xd = mX - mLastSentX;
-    double yd = mBoundingBox->mMinY - mLastSentY;
+    double yd = box->mMinY - mLastSentY;
     double zd = mZ - mLastSentZ;
     ++mPositionSendCounter;
     bool move = xd * xd + yd * yd + zd * zd > 0.0009 || mPositionSendCounter >= 20 || mPreviousOnGround != mOnGround;
@@ -2132,12 +2156,12 @@ unsigned long long LocalPlayer::sendPosition()
         if (move && rot)
         {
             mPacketListener->send(boost::shared_ptr<Packet>(new ServerboundMovePlayerPacket::PosRot(
-                mX, mBoundingBox->mMinY, mZ, mYRot, mXRot, mOnGround, flying)));
+                mX, box->mMinY, mZ, mYRot, mXRot, mOnGround, flying)));
         }
         else if (move)
         {
             mPacketListener->send(boost::shared_ptr<Packet>(new ServerboundMovePlayerPacket::Pos(
-                mX, mBoundingBox->mMinY, mBoundingBox->mMinY, mZ, mOnGround, flying)));
+                mX, box->mMinY, box->mMinY, mZ, mOnGround, flying)));
         }
         else if (rot)
         {
@@ -2152,7 +2176,7 @@ unsigned long long LocalPlayer::sendPosition()
         if (move)
         {
             mLastSentX = mX;
-            mLastSentY = mBoundingBox->mMinY;
+            mLastSentY = box->mMinY;
             mLastSentZ = mZ;
             mPositionSendCounter = 0;
         }

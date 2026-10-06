@@ -2474,29 +2474,30 @@ boost::shared_ptr<ItemEntity> Player::drop(not_null_ptr<ItemInstance> item, bool
 {
     if (item->isEmpty()) return boost::shared_ptr<ItemEntity>();
 
-    double dropY = mY - 0.30000001192092896 + getEyeHeight();
+    double dropY = mY - 0.3f + getEyeHeight();
     boost::shared_ptr<ItemEntity> dropped(new ItemEntity(mLevel, mX, dropY, mZ, item));
     dropped->setPickUpDelay(40);
     if (retainOwnership) {
         dropped->setThrower(getName());
     }
 
-    if (!randomThrow) {
-        dropped->mXd = -(sinf(mYRot * 0.017453292f) * cosf(mXRot * 0.017453292f) * 0.3f);
-        dropped->mZd = cosf(mYRot * 0.017453292f) * cosf(mXRot * 0.017453292f) * 0.3f;
-        dropped->mYd = -(sinf(mXRot * 0.017453292f) * 0.3f - 0.1f);
+    if (randomThrow) {
+        float speed = mRandom->nextFloat() * 0.5f;
+        float angle = mRandom->nextFloat() * 6.2831855f;
+        dropped->mXd = -static_cast<double>(sinf(angle) * speed);
+        dropped->mZd = static_cast<double>(cosf(angle) * speed);
+        dropped->mYd = 0.2f;
+    } else {
+        float power = 0.3f;
+        dropped->mXd = -(sinf(mYRot * 0.017453292f) * cosf(mXRot * 0.017453292f) * power);
+        dropped->mZd = cosf(mYRot * 0.017453292f) * cosf(mXRot * 0.017453292f) * power;
+        dropped->mYd = 0.1f - sinf(mXRot * 0.017453292f) * power;
 
         float randAngle = mRandom->nextFloat() * 6.2831855f;
         float randRadius = 0.02f * mRandom->nextFloat();
         dropped->mXd += cosf(randAngle) * randRadius;
         dropped->mYd += (mRandom->nextFloat() - mRandom->nextFloat()) * 0.1f;
         dropped->mZd += sinf(randAngle) * randRadius;
-    } else {
-        float speed = mRandom->nextFloat() * 0.5f;
-        float angle = mRandom->nextFloat() * 6.2831855f;
-        dropped->mXd = -static_cast<double>(sinf(angle) * speed);
-        dropped->mZd = static_cast<double>(cosf(angle) * speed);
-        dropped->mYd = 0.20000000298023224;
     }
 
     not_null_ptr<ItemInstance> droppedItem = reallyDrop(dropped);
@@ -3085,7 +3086,8 @@ void Player::fjCheckSuperSonic(double oldX, double oldY, double oldZ,
 
 void Player::killed(boost::shared_ptr<LivingEntity> entity)
 {
-    if ((entity->GetType() & EntityType::ENEMY) != EntityType::ENEMY && entity->GetType() != EntityType::GHAST
+    bool isEnemy = (EntityType::ENEMY & entity->GetType()) == EntityType::ENEMY;
+    if (!isEnemy && entity->GetType() != EntityType::GHAST
         && entity->GetType() != EntityType::SLIME && entity->GetType() != EntityType::MAGMA_CUBE
         && entity->GetType() != EntityType::ENDER_DRAGON) {
         return;
@@ -3093,63 +3095,99 @@ void Player::killed(boost::shared_ptr<LivingEntity> entity)
 
     awardStat(GenericStats::killEnemy(), GenericStats::param_noArgs());
     not_null_ptr<ItemInstance> helmet = getItemSlot(EquipmentSlot::HEAD);
-    unsigned long long type = entity->GetType();
-    if (type == EntityType::EVOCATION_ILLAGER) {
-        awardStat(GenericStats::feelingIll(), GenericStats::param_noArgs());
-    } else if (type == EntityType::ELDER_GUARDIAN) {
-        awardStat(GenericStats::theDeepEnd(), GenericStats::param_noArgs());
-    } else if (type == EntityType::ENDER_DRAGON) {
-        awardStat(gStats->get_killsEnderdragon(), GenericStats::param_noArgs());
-    } else if (type == EntityType::SLIME) {
-        awardStat(gStats->get_killsSlime(), GenericStats::param_noArgs());
-    } else if (type == EntityType::GHAST) {
-        awardStat(gStats->get_killsGhast(), GenericStats::param_noArgs());
-    } else if (type == EntityType::PIG_ZOMBIE) {
-        if (mLevel->mDimension->getType() == DimensionType::OVERWORLD) {
-            awardStat(gStats->get_killsZombiePigman(), GenericStats::param_noArgs());
-        } else {
-            awardStat(gStats->get_killsNetherZombiePigman(), GenericStats::param_noArgs());
+    switch (entity->GetType()) {
+    case EntityType::CREEPER:
+    {
+        Stat* stat = gStats->get_killsCreeper();
+        awardStat(stat, GenericStats::param_noArgs());
+        if (helmet && helmet->getItem() == Items::skull) {
+            if (helmet->getItem()->getDescriptionId(getItemSlot(EquipmentSlot::HEAD)) == IDS_ITEM_SKULL_CREEPER) {
+                awardStat(GenericStats::camouflage(), GenericStats::param_camouflage());
+            }
         }
-    } else if (type == EntityType::ZOMBIE) {
-        awardStat(gStats->get_killsZombie(), GenericStats::param_noArgs());
-        if (helmet->getItem() == Items::skull
-            && helmet->getItem()->getDescriptionId(getItemSlot(EquipmentSlot::HEAD)) == IDS_ITEM_SKULL_ZOMBIE) {
-            awardStat(GenericStats::camouflage(), GenericStats::param_camouflage());
-        }
-    } else if (type == EntityType::SPIDER) {
+        break;
+    }
+    case EntityType::SKELETON:
+    case EntityType::WITHER_SKELETON:
+    case EntityType::STRAY:
+    {
         bool jockey = false;
-        if (entity->getControllingPassenger()
-            && entity->getControllingPassenger()->GetType() == EntityType::SKELETON) {
+        if (entity->isPassenger() && (EntityType::SPIDER & entity->getVehicle()->GetType()) == EntityType::SPIDER) {
             jockey = true;
         }
         if (jockey) {
-            awardStat(gStats->get_killsSpiderJockey(), GenericStats::param_noArgs());
+            Stat* stat = gStats->get_killsSpiderJockey();
+            awardStat(stat, GenericStats::param_noArgs());
         } else {
-            awardStat(gStats->get_killsSpider(), GenericStats::param_noArgs());
+            Stat* stat = gStats->get_killsSkeleton();
+            awardStat(stat, GenericStats::param_noArgs());
         }
-    } else if (type == EntityType::STRAY || type == EntityType::WITHER_SKELETON || type == EntityType::SKELETON) {
-        bool jockey = false;
-        if (entity->isPassenger() && (entity->getVehicle()->GetType() & EntityType::SPIDER) == EntityType::SPIDER) {
-            jockey = true;
-        }
-        if (jockey) {
-            awardStat(gStats->get_killsSpiderJockey(), GenericStats::param_noArgs());
-        } else {
-            awardStat(gStats->get_killsSkeleton(), GenericStats::param_noArgs());
-        }
-        if (helmet->getItem() == Items::skull) {
+        if (helmet && helmet->getItem() == Items::skull) {
             int skullName = IDS_ITEM_SKULL_SKELETON;
-            if (entity->GetType() == EntityType::WITHER_SKELETON) skullName = IDS_ITEM_SKULL_WITHER;
+            if (EntityType::WITHER_SKELETON == entity->GetType()) skullName = IDS_ITEM_SKULL_WITHER;
             if (helmet->getItem()->getDescriptionId(getItemSlot(EquipmentSlot::HEAD)) == skullName) {
                 awardStat(GenericStats::camouflage(), GenericStats::param_camouflage());
             }
         }
-    } else if (type == EntityType::CREEPER) {
-        awardStat(gStats->get_killsCreeper(), GenericStats::param_noArgs());
-        if (helmet->getItem() == Items::skull
-            && helmet->getItem()->getDescriptionId(getItemSlot(EquipmentSlot::HEAD)) == IDS_ITEM_SKULL_CREEPER) {
-            awardStat(GenericStats::camouflage(), GenericStats::param_camouflage());
+        break;
+    }
+    case EntityType::SPIDER:
+    {
+        bool jockey = entity->getControllingPassenger()
+            && entity->getControllingPassenger()->GetType() == EntityType::SKELETON;
+        if (jockey) {
+            Stat* stat = gStats->get_killsSpiderJockey();
+            awardStat(stat, GenericStats::param_noArgs());
+        } else {
+            Stat* stat = gStats->get_killsSpider();
+            awardStat(stat, GenericStats::param_noArgs());
         }
+        break;
+    }
+    case EntityType::ZOMBIE:
+    {
+        Stat* stat = gStats->get_killsZombie();
+        awardStat(stat, GenericStats::param_noArgs());
+        if (helmet && helmet->getItem() == Items::skull) {
+            if (helmet->getItem()->getDescriptionId(getItemSlot(EquipmentSlot::HEAD)) == IDS_ITEM_SKULL_ZOMBIE) {
+                awardStat(GenericStats::camouflage(), GenericStats::param_camouflage());
+            }
+        }
+        break;
+    }
+    case EntityType::PIG_ZOMBIE:
+        if (mLevel->mDimension->getType() == DimensionType::OVERWORLD) {
+            Stat* stat = gStats->get_killsZombiePigman();
+            awardStat(stat, GenericStats::param_noArgs());
+        } else {
+            Stat* stat = gStats->get_killsNetherZombiePigman();
+            awardStat(stat, GenericStats::param_noArgs());
+        }
+        break;
+    case EntityType::GHAST:
+    {
+        Stat* stat = gStats->get_killsGhast();
+        awardStat(stat, GenericStats::param_noArgs());
+        break;
+    }
+    case EntityType::SLIME:
+    {
+        Stat* stat = gStats->get_killsSlime();
+        awardStat(stat, GenericStats::param_noArgs());
+        break;
+    }
+    case EntityType::ENDER_DRAGON:
+    {
+        Stat* stat = gStats->get_killsEnderdragon();
+        awardStat(stat, GenericStats::param_noArgs());
+        break;
+    }
+    case EntityType::ELDER_GUARDIAN:
+        awardStat(GenericStats::theDeepEnd(), GenericStats::param_noArgs());
+        break;
+    case EntityType::EVOCATION_ILLAGER:
+        awardStat(GenericStats::feelingIll(), GenericStats::param_noArgs());
+        break;
     }
 }
 
