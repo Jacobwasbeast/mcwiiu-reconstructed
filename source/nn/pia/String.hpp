@@ -61,8 +61,8 @@ public:
         m_bufferSize = LengthT * 4;
         for (unsigned int index = 0; index < LengthT * 4 + 1; ++index)
             m_buffer[index] = 0;
-        m_bytes = 0;
         m_text = m_buffer;
+        m_bytes = 0;
         m_encoding = EncodingType();
     }
 
@@ -85,21 +85,21 @@ public:
             return 0x10c07;
 
         unsigned int bufferSize = m_bufferSize;
-        if (bufferSize < length)
+        if (length > bufferSize)
             return 0x10c07;
 
         if (encoding == EncodingType_Utf16)
         {
-            if (((bufferSize >> 1) & 0x7ffffffe) < length)
+            if (length > ((bufferSize >> 1) & 0x7ffffffe))
                 return 0x10c07;
         }
         else if (encoding == EncodingType_Ascii)
         {
             const unsigned char* value = static_cast<const unsigned char*>(text);
             unsigned int characters = 0;
-            while (*value != 0)
+            unsigned int code = *value;
+            while (code != 0)
             {
-                unsigned int code = *value;
                 if (code - 1 < 0x7f)
                 {
                     value += 1;
@@ -134,8 +134,9 @@ public:
                 {
                     value += 1;
                 }
+                code = *value;
             }
-            if ((bufferSize >> 2) < characters)
+            if (characters > (bufferSize >> 2))
                 return 0x10c07;
         }
         else
