@@ -67,7 +67,8 @@ unsigned int MD5ChecksumWithKey::ComputeChecksumForTransportArray(const unsigned
     MD5 md5;
     ChecksumComputeHelper(ppData, pLengths, iCount, md5);
     const unsigned char* pDigest = md5.GetDigest();
-    return pDigest[0] | (pDigest[1] << 8) | (pDigest[2] << 16) | (pDigest[3] << 24);
+    unsigned int uiChecksum = pDigest[0] | (pDigest[1] << 8) | (pDigest[2] << 16) | (pDigest[3] << 24);
+    return uiChecksum;
 }
 
 }

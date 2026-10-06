@@ -176,9 +176,10 @@ int StringConversion::GetTToUtf8BufferSize(const wchar_t* source)
 void StringConversion::T2Char8Alloc(const wchar_t* source, char** destination)
 {
     std::size_t length = std::wcslen(source);
+    char* buffer = SpecialNewArray<char>(length + 1, L"", 0);
 
-    *destination = SpecialNewArray<char>(static_cast<unsigned int>(length + 1), L"", 0);
-    UnicodeToUtf8(source, *destination, static_cast<unsigned int>(length + 1));
+    *destination = buffer;
+    UnicodeToUtf8(source, buffer, length + 1);
 }
 
 void StringConversion::T2Char8Release(char* buffer)
@@ -188,7 +189,7 @@ void StringConversion::T2Char8Release(char* buffer)
 
 unsigned char StringConversion::GetCharValue(wchar_t character)
 {
-    if (character > L'@' && character < L'G')
+    if (character >= L'A' && character <= L'F')
         return kHexLetterValues[character - L'A'];
 
     return static_cast<unsigned char>(character - L'0');

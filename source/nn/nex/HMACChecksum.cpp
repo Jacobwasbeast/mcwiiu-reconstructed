@@ -67,9 +67,9 @@ bool HMACChecksum::ComputeChecksum(const unsigned char** ppData, const unsigned 
 unsigned int HMACChecksum::ComputeChecksumForTransportArray(const unsigned char** ppData,
     const unsigned int* pLengths, int iCount)
 {
+    unsigned int uiChecksum;
     MD5 md5;
     ChecksumComputeHelper(ppData, pLengths, iCount, md5);
-    unsigned int uiChecksum;
     memcpy(&uiChecksum, md5.GetDigest(), sizeof(uiChecksum));
     return (uiChecksum >> 24) | ((uiChecksum >> 8) & 0xFF00) | ((uiChecksum & 0xFF00) << 8) |
         (uiChecksum << 24);
@@ -84,8 +84,8 @@ void HMACChecksum::KeyHasChanged()
         MD5 md5;
         md5.update(pKey, iKeyLength);
         md5.finalize();
-        iKeyLength = MD5::DigestSize;
         pKey = md5.GetDigest();
+        iKeyLength = MD5::DigestSize;
     }
 
     memset(m_innerPad, 0, sizeof(m_innerPad));

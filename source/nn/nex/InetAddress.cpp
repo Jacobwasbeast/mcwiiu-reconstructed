@@ -23,9 +23,10 @@ const unsigned int ADDRESS_BUFFER_LENGTH = 128;
 const unsigned int PORT_BUFFER_LENGTH = 16;
 const unsigned int NARROW_ADDRESS_BUFFER_LENGTH = 256;
 const unsigned int LOOKUP_BUFFER_LENGTH = 64;
-const unsigned int TRACE_BUFFER_LENGTH = 132;
+const unsigned int LOOKUP_STORAGE_LENGTH = 32;
+const unsigned int TRACE_BUFFER_LENGTH = 128;
 const unsigned int MINIMUM_ADDRESS_BUFFER_LENGTH = 32;
-const unsigned int STREAM_BUFFER_LENGTH = 101;
+const unsigned int STREAM_BUFFER_LENGTH = 202;
 
 }
 
@@ -93,8 +94,8 @@ String InetAddress::GetAddressStr() const
 
 bool InetAddress::SetAddress(const wchar_t* pAddress)
 {
+    wchar_t resolvedAddress[LOOKUP_STORAGE_LENGTH];
     char narrowAddress[NARROW_ADDRESS_BUFFER_LENGTH];
-    wchar_t resolvedAddress[LOOKUP_BUFFER_LENGTH];
 
     if (std::wcscmp(pAddress, L"255.255.255.255") == 0)
     {
@@ -174,9 +175,7 @@ void InetAddress::ToStr(wchar_t* pBuffer) const
     GetPortNumber(portBuffer, PORT_BUFFER_LENGTH);
 
     StringStream stream;
-    const String portNumber = GetPortNumberStr();
-
-    stream << addressBuffer << L":" << portNumber;
+    stream << addressBuffer << L":" << GetPortNumberStr();
 
     std::wcscpy(pBuffer, stream.GetBuffer());
 }
@@ -190,14 +189,7 @@ void InetAddress::Trace(unsigned long long) const
 
 unsigned int InetAddress::String2Address(const char* pAddress)
 {
-    in_addr address;
-
-    if (inet_pton(AF_INET, pAddress, &address) > 0)
-    {
-        return address.s_addr;
-    }
-
-    return 0xFFFFFFFF;
+    return inet_addr(pAddress);
 }
 
 void InetAddress::EnableAutoLookup(bool bEnable)
