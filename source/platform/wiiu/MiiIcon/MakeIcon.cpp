@@ -25,15 +25,15 @@ void* CreateModel(FFLCharModel* model, FFLDataSource dataSource, FFLStoreData* s
     MII_ICON_ASSERT_POINTER(model);
 
     FFLCharModelDesc desc;
-    desc.resolution = FFL_RESOLUTION_TEX_256;
     desc.expressionFlag = 1 << FFL_EXPRESSION_NORMAL;
-    desc.modelFlag = 1 << FFL_MODEL_TYPE_0;
+    desc.resolution = FFL_RESOLUTION_TEX_256;
     desc.resourceType = FFL_RESOURCE_TYPE_MIDDLE;
+    desc.modelFlag = 1 << FFL_MODEL_TYPE_0;
     desc.compressTexture = FALSE;
 
     FFLCharModelSource source;
-    source.dataSource = dataSource;
     source.pBuffer = storeData;
+    source.dataSource = dataSource;
     source.index = index;
 
     FFLCharModelBuffer buffer;
@@ -58,8 +58,10 @@ void* CreateIconTexture(GX2Texture* texture, const FFLCharModel* model)
     MII_ICON_ASSERT_POINTER(texture);
     MII_ICON_ASSERT_POINTER(model);
 
-    void* buffer = malloc(FFLGetIconBufferSize(&ICON_SETTING));
-    void* tempBuffer = malloc(FFLGetIconTempBufferSize(&ICON_SETTING));
+    size_t bufferSize = FFLGetIconBufferSize(&ICON_SETTING);
+    size_t tempBufferSize = FFLGetIconTempBufferSize(&ICON_SETTING);
+    void* buffer = malloc(bufferSize);
+    void* tempBuffer = malloc(tempBufferSize);
 
     SetupIconShaderForDrawTexture(ICON_SETTING.width, ICON_SETTING.height);
 
