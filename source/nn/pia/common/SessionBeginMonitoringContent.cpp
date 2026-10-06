@@ -6,33 +6,6 @@
 
 namespace nn { namespace pia { namespace common {
 
-namespace
-{
-void WriteMetric(unsigned char*& cursor, unsigned char value)
-{
-    *cursor++ = value;
-}
-
-void WriteMetric(unsigned char*& cursor, unsigned short value)
-{
-    serializeU16(cursor, value);
-    cursor += 2;
-}
-
-void WriteMetric(unsigned char*& cursor, unsigned int value)
-{
-    serializeU32(cursor, value);
-    cursor += 4;
-}
-
-void WriteMetric(unsigned char*& cursor, unsigned long long value)
-{
-    serializeU32(cursor, static_cast<unsigned int>(value >> 32));
-    serializeU32(cursor + 4, static_cast<unsigned int>(value));
-    cursor += 8;
-}
-}
-
 SessionBeginMonitoringContent g_sessionBeginMonitoringContent;
 
 void SessionBeginMonitoringContent::Initialize()
@@ -171,238 +144,510 @@ unsigned int SessionBeginMonitoringContent::GetSerializedSize()
 Result SessionBeginMonitoringContent::Serialize(unsigned char* buffer, unsigned int* size,
                                                unsigned int maxSize) const
 {
-    if (buffer == 0 || size == 0 || maxSize < GetSerializedSize())
-        return 0x10c07;
+    Result result(0x10c07);
+    if (buffer == 0)
+        return result;
+    if (size == 0)
+        return result;
+    if (maxSize < GetSerializedSize())
+        return result;
 
     unsigned int headerSize;
     MonitoringContentHeader::Serialize(buffer, &headerSize, maxSize);
     unsigned char* cursor = buffer + headerSize;
-    WriteMetric(cursor, m_piaVersion);
-    WriteMetric(cursor, m_sdkVersion);
-    WriteMetric(cursor, m_nexVersion);
-    WriteMetric(cursor, m_environment);
-    WriteMetric(cursor, m_platform);
-    WriteMetric(cursor, m_platformRevision);
-    WriteMetric(cursor, m_country);
-    WriteMetric(cursor, m_region);
-    WriteMetric(cursor, m_metric9);
-    WriteMetric(cursor, m_metric10);
-    WriteMetric(cursor, m_metric11);
-    WriteMetric(cursor, m_metric12);
-    WriteMetric(cursor, m_metric13);
-    WriteMetric(cursor, m_metric14);
-    WriteMetric(cursor, m_metric15);
-    WriteMetric(cursor, m_metric16);
-    WriteMetric(cursor, m_metric17);
-    WriteMetric(cursor, m_metric18);
-    WriteMetric(cursor, m_metric19);
-    WriteMetric(cursor, m_metric20);
-    WriteMetric(cursor, m_metric21);
-    WriteMetric(cursor, m_metric22);
-    WriteMetric(cursor, m_metric23);
-    WriteMetric(cursor, m_metric24);
-    WriteMetric(cursor, m_metric25);
-    WriteMetric(cursor, m_metric26);
-    WriteMetric(cursor, m_metric27);
-    WriteMetric(cursor, m_metric28);
-    WriteMetric(cursor, m_metric29);
-    WriteMetric(cursor, m_metric30);
-    WriteMetric(cursor, m_metric31);
-    WriteMetric(cursor, m_metric32);
-    WriteMetric(cursor, m_metric33);
-    WriteMetric(cursor, m_metric34);
-    WriteMetric(cursor, m_metric35);
-    WriteMetric(cursor, m_metric36);
-    WriteMetric(cursor, m_metric37);
-    WriteMetric(cursor, m_metric38);
-    WriteMetric(cursor, m_metric39);
-    WriteMetric(cursor, m_metric40);
-    WriteMetric(cursor, m_metric41);
-    WriteMetric(cursor, m_metric42);
-    WriteMetric(cursor, m_metric43);
-    WriteMetric(cursor, m_metric44);
-    WriteMetric(cursor, m_metric45);
-    WriteMetric(cursor, m_metric46);
-    WriteMetric(cursor, m_metric47);
-    WriteMetric(cursor, m_joinResult);
-    WriteMetric(cursor, m_joinProcessingTime);
-    WriteMetric(cursor, m_metric50);
+    serializeU32(cursor, m_piaVersion);
+    cursor += 4;
+    serializeU32(cursor, m_sdkVersion);
+    cursor += 4;
+    serializeU32(cursor, m_nexVersion);
+    cursor += 4;
+    serializeU8(cursor, m_environment);
+    cursor += 1;
+    serializeU8(cursor, m_platform);
+    cursor += 1;
+    serializeU8(cursor, m_platformRevision);
+    cursor += 1;
+    serializeU8(cursor, m_country);
+    cursor += 1;
+    serializeU8(cursor, m_region);
+    cursor += 1;
+    serializeU32(cursor, m_metric9);
+    cursor += 4;
+    serializeU32(cursor, m_metric10);
+    cursor += 4;
+    serializeU64(cursor, m_metric11);
+    cursor += 8;
+    serializeU8(cursor, m_metric12);
+    cursor += 1;
+    serializeU32(cursor, m_metric13);
+    cursor += 4;
+    serializeU32(cursor, m_metric14);
+    cursor += 4;
+    serializeU8(cursor, m_metric15);
+    cursor += 1;
+    serializeU8(cursor, m_metric16);
+    cursor += 1;
+    serializeU32(cursor, m_metric17);
+    cursor += 4;
+    serializeU32(cursor, m_metric18);
+    cursor += 4;
+    serializeU8(cursor, m_metric19);
+    cursor += 1;
+    serializeU8(cursor, m_metric20);
+    cursor += 1;
+    serializeU8(cursor, m_metric21);
+    cursor += 1;
+    serializeU8(cursor, m_metric22);
+    cursor += 1;
+    serializeU16(cursor, m_metric23);
+    cursor += 2;
+    serializeU16(cursor, m_metric24);
+    cursor += 2;
+    serializeU16(cursor, m_metric25);
+    cursor += 2;
+    serializeU32(cursor, m_metric26);
+    cursor += 4;
+    serializeU32(cursor, m_metric27);
+    cursor += 4;
+    serializeU32(cursor, m_metric28);
+    cursor += 4;
+    serializeU32(cursor, m_metric29);
+    cursor += 4;
+    serializeU8(cursor, m_metric30);
+    cursor += 1;
+    serializeU16(cursor, m_metric31);
+    cursor += 2;
+    serializeU32(cursor, m_metric32);
+    cursor += 4;
+    serializeU32(cursor, m_metric33);
+    cursor += 4;
+    serializeU32(cursor, m_metric34);
+    cursor += 4;
+    serializeU32(cursor, m_metric35);
+    cursor += 4;
+    serializeU32(cursor, m_metric36);
+    cursor += 4;
+    serializeU16(cursor, m_metric37);
+    cursor += 2;
+    serializeU32(cursor, m_metric38);
+    cursor += 4;
+    serializeU16(cursor, m_metric39);
+    cursor += 2;
+    serializeU32(cursor, m_metric40);
+    cursor += 4;
+    serializeU16(cursor, m_metric41);
+    cursor += 2;
+    serializeU16(cursor, m_metric42);
+    cursor += 2;
+    serializeU16(cursor, m_metric43);
+    cursor += 2;
+    serializeU32(cursor, m_metric44);
+    cursor += 4;
+    serializeU8(cursor, m_metric45);
+    cursor += 1;
+    serializeU8(cursor, m_metric46);
+    cursor += 1;
+    serializeU8(cursor, m_metric47);
+    cursor += 1;
+    serializeU32(cursor, m_joinResult);
+    cursor += 4;
+    serializeU32(cursor, m_joinProcessingTime);
+    cursor += 4;
+    serializeU8(cursor, m_metric50);
+    cursor += 1;
     for (unsigned int index = 0; index < 15; ++index)
-        WriteMetric(cursor, m_metric51[index]);
-    WriteMetric(cursor, m_metric52);
+        {
+        serializeU32(cursor, m_metric51[index]);
+        cursor += 4;
+    }
+    serializeU8(cursor, m_metric52);
+    cursor += 1;
     for (unsigned int index = 0; index < 8; ++index)
-        WriteMetric(cursor, m_metric53[index]);
-    WriteMetric(cursor, m_metric54);
-    WriteMetric(cursor, m_metric55);
-    WriteMetric(cursor, m_metric56);
-    WriteMetric(cursor, m_metric57);
-    WriteMetric(cursor, m_metric58);
-    WriteMetric(cursor, m_metric59);
-    WriteMetric(cursor, m_metric60);
-    WriteMetric(cursor, m_metric61);
-    WriteMetric(cursor, m_metric62);
-    WriteMetric(cursor, m_metric63);
-    WriteMetric(cursor, m_metric64);
-    WriteMetric(cursor, m_metric65);
-    WriteMetric(cursor, m_metric66);
-    WriteMetric(cursor, m_metric67);
-    WriteMetric(cursor, m_metric68);
-    WriteMetric(cursor, m_metric69);
-    WriteMetric(cursor, m_metric70);
-    WriteMetric(cursor, m_metric71);
-    WriteMetric(cursor, m_metric72);
-    WriteMetric(cursor, m_metric73);
-    WriteMetric(cursor, m_metric74);
-    WriteMetric(cursor, m_metric75);
-    WriteMetric(cursor, m_metric76);
-    WriteMetric(cursor, m_metric77);
-    WriteMetric(cursor, m_metric78);
-    WriteMetric(cursor, m_metric79);
-    WriteMetric(cursor, m_metric80);
-    WriteMetric(cursor, m_metric81);
+        {
+        serializeU32(cursor, m_metric53[index]);
+        cursor += 4;
+    }
+    serializeU16(cursor, m_metric54);
+    cursor += 2;
+    serializeU8(cursor, m_metric55);
+    cursor += 1;
+    serializeU8(cursor, m_metric56);
+    cursor += 1;
+    serializeU32(cursor, m_metric57);
+    cursor += 4;
+    serializeU16(cursor, m_metric58);
+    cursor += 2;
+    serializeU16(cursor, m_metric59);
+    cursor += 2;
+    serializeU16(cursor, m_metric60);
+    cursor += 2;
+    serializeU16(cursor, m_metric61);
+    cursor += 2;
+    serializeU16(cursor, m_metric62);
+    cursor += 2;
+    serializeU16(cursor, m_metric63);
+    cursor += 2;
+    serializeU16(cursor, m_metric64);
+    cursor += 2;
+    serializeU16(cursor, m_metric65);
+    cursor += 2;
+    serializeU8(cursor, m_metric66);
+    cursor += 1;
+    serializeU16(cursor, m_metric67);
+    cursor += 2;
+    serializeU16(cursor, m_metric68);
+    cursor += 2;
+    serializeU16(cursor, m_metric69);
+    cursor += 2;
+    serializeU8(cursor, m_metric70);
+    cursor += 1;
+    serializeU32(cursor, m_metric71);
+    cursor += 4;
+    serializeU8(cursor, m_metric72);
+    cursor += 1;
+    serializeU8(cursor, m_metric73);
+    cursor += 1;
+    serializeU8(cursor, m_metric74);
+    cursor += 1;
+    serializeU32(cursor, m_metric75);
+    cursor += 4;
+    serializeU32(cursor, m_metric76);
+    cursor += 4;
+    serializeU32(cursor, m_metric77);
+    cursor += 4;
+    serializeU8(cursor, m_metric78);
+    cursor += 1;
+    serializeU8(cursor, m_metric79);
+    cursor += 1;
+    serializeU32(cursor, m_metric80);
+    cursor += 4;
+    serializeU32(cursor, m_metric81);
+    cursor += 4;
     for (unsigned int index = 0; index < 6; ++index)
-        WriteMetric(cursor, m_metric82[index]);
-    WriteMetric(cursor, m_metric83);
-    WriteMetric(cursor, m_metric84);
-    WriteMetric(cursor, m_metric85);
-    WriteMetric(cursor, m_metric86);
-    WriteMetric(cursor, m_metric87);
-    WriteMetric(cursor, m_metric88);
+        {
+        serializeU32(cursor, m_metric82[index]);
+        cursor += 4;
+    }
+    serializeU16(cursor, m_metric83);
+    cursor += 2;
+    serializeU32(cursor, m_metric84);
+    cursor += 4;
+    serializeU8(cursor, m_metric85);
+    cursor += 1;
+    serializeU8(cursor, m_metric86);
+    cursor += 1;
+    serializeU8(cursor, m_metric87);
+    cursor += 1;
+    serializeU8(cursor, m_metric88);
+    cursor += 1;
     for (unsigned int index = 0; index < 6; ++index)
-        WriteMetric(cursor, m_metric89[index]);
+        {
+        serializeU8(cursor, m_metric89[index]);
+        cursor += 1;
+    }
     for (unsigned int index = 0; index < 6; ++index)
-        WriteMetric(cursor, m_metric90[index]);
+        {
+        serializeU32(cursor, m_metric90[index]);
+        cursor += 4;
+    }
     for (unsigned int index = 0; index < 6; ++index)
-        WriteMetric(cursor, m_metric91[index]);
-    WriteMetric(cursor, m_metric92);
-    WriteMetric(cursor, m_metric93);
-    WriteMetric(cursor, m_metric94);
-    WriteMetric(cursor, m_metric95);
-    WriteMetric(cursor, m_metric96);
-    WriteMetric(cursor, m_metric97);
-    WriteMetric(cursor, m_metric98);
-    WriteMetric(cursor, m_metric99);
+        {
+        serializeU32(cursor, m_metric91[index]);
+        cursor += 4;
+    }
+    serializeU8(cursor, m_metric92);
+    cursor += 1;
+    serializeU8(cursor, m_metric93);
+    cursor += 1;
+    serializeU8(cursor, m_metric94);
+    cursor += 1;
+    serializeU32(cursor, m_metric95);
+    cursor += 4;
+    serializeU8(cursor, m_metric96);
+    cursor += 1;
+    serializeU8(cursor, m_metric97);
+    cursor += 1;
+    serializeU8(cursor, m_metric98);
+    cursor += 1;
+    serializeU8(cursor, m_metric99);
+    cursor += 1;
     for (unsigned int index = 0; index < 6; ++index)
-        WriteMetric(cursor, m_metric100[index]);
+        {
+        serializeU8(cursor, m_metric100[index]);
+        cursor += 1;
+    }
     for (unsigned int index = 0; index < 6; ++index)
-        WriteMetric(cursor, m_metric101[index]);
+        {
+        serializeU32(cursor, m_metric101[index]);
+        cursor += 4;
+    }
     for (unsigned int index = 0; index < 6; ++index)
-        WriteMetric(cursor, m_metric102[index]);
-    WriteMetric(cursor, m_metric103);
-    WriteMetric(cursor, m_metric104);
-    WriteMetric(cursor, m_metric105);
-    WriteMetric(cursor, m_joinRetryCount);
-    WriteMetric(cursor, m_metric107);
-    WriteMetric(cursor, m_metric108);
-    WriteMetric(cursor, m_metric109);
-    WriteMetric(cursor, m_metric110);
-    WriteMetric(cursor, m_metric111);
-    WriteMetric(cursor, m_metric112);
-    WriteMetric(cursor, m_metric113);
-    WriteMetric(cursor, m_metric114);
-    WriteMetric(cursor, m_metric115);
-    WriteMetric(cursor, m_metric116);
-    WriteMetric(cursor, m_metric117);
-    WriteMetric(cursor, m_metric118);
-    WriteMetric(cursor, m_metric119);
-    WriteMetric(cursor, m_retryReasonACount);
-    WriteMetric(cursor, m_connectionInfoRetryCount);
-    WriteMetric(cursor, m_ownerChangeRetryCount);
-    WriteMetric(cursor, m_sessionInfoRetryCount);
-    WriteMetric(cursor, m_retryReasonBCount);
-    WriteMetric(cursor, m_joinTargetIdHash);
-    WriteMetric(cursor, m_metric126);
-    WriteMetric(cursor, m_metric127);
-    WriteMetric(cursor, m_metric128);
-    WriteMetric(cursor, m_joinSessionState);
-    WriteMetric(cursor, m_metric130);
-    WriteMetric(cursor, m_joinMeshState);
-    WriteMetric(cursor, m_metric132);
-    WriteMetric(cursor, m_metric133);
-    WriteMetric(cursor, m_metric134);
-    WriteMetric(cursor, m_metric135);
-    WriteMetric(cursor, m_metric136);
-    WriteMetric(cursor, m_metric137);
-    WriteMetric(cursor, m_metric138);
+        {
+        serializeU32(cursor, m_metric102[index]);
+        cursor += 4;
+    }
+    serializeU8(cursor, m_metric103);
+    cursor += 1;
+    serializeU8(cursor, m_metric104);
+    cursor += 1;
+    serializeU8(cursor, m_metric105);
+    cursor += 1;
+    serializeU8(cursor, m_joinRetryCount);
+    cursor += 1;
+    serializeU8(cursor, m_metric107);
+    cursor += 1;
+    serializeU8(cursor, m_metric108);
+    cursor += 1;
+    serializeU32(cursor, m_metric109);
+    cursor += 4;
+    serializeU32(cursor, m_metric110);
+    cursor += 4;
+    serializeU32(cursor, m_metric111);
+    cursor += 4;
+    serializeU8(cursor, m_metric112);
+    cursor += 1;
+    serializeU8(cursor, m_metric113);
+    cursor += 1;
+    serializeU32(cursor, m_metric114);
+    cursor += 4;
+    serializeU32(cursor, m_metric115);
+    cursor += 4;
+    serializeU32(cursor, m_metric116);
+    cursor += 4;
+    serializeU8(cursor, m_metric117);
+    cursor += 1;
+    serializeU8(cursor, m_metric118);
+    cursor += 1;
+    serializeU8(cursor, m_metric119);
+    cursor += 1;
+    serializeU8(cursor, m_retryReasonACount);
+    cursor += 1;
+    serializeU8(cursor, m_connectionInfoRetryCount);
+    cursor += 1;
+    serializeU8(cursor, m_ownerChangeRetryCount);
+    cursor += 1;
+    serializeU8(cursor, m_sessionInfoRetryCount);
+    cursor += 1;
+    serializeU8(cursor, m_retryReasonBCount);
+    cursor += 1;
+    serializeU32(cursor, m_joinTargetIdHash);
+    cursor += 4;
+    serializeU32(cursor, m_metric126);
+    cursor += 4;
+    serializeU8(cursor, m_metric127);
+    cursor += 1;
+    serializeU8(cursor, m_metric128);
+    cursor += 1;
+    serializeU8(cursor, m_joinSessionState);
+    cursor += 1;
+    serializeU8(cursor, m_metric130);
+    cursor += 1;
+    serializeU8(cursor, m_joinMeshState);
+    cursor += 1;
+    serializeU8(cursor, m_metric132);
+    cursor += 1;
+    serializeU16(cursor, m_metric133);
+    cursor += 2;
+    serializeU16(cursor, m_metric134);
+    cursor += 2;
+    serializeU32(cursor, m_metric135);
+    cursor += 4;
+    serializeU32(cursor, m_metric136);
+    cursor += 4;
+    serializeU16(cursor, m_metric137);
+    cursor += 2;
+    serializeU16(cursor, m_metric138);
+    cursor += 2;
     for (unsigned int index = 0; index < 15; ++index)
-        WriteMetric(cursor, m_metric139[index]);
+        {
+        serializeU32(cursor, m_metric139[index]);
+        cursor += 4;
+    }
     for (unsigned int index = 0; index < 15; ++index)
-        WriteMetric(cursor, m_metric140[index]);
+        {
+        serializeU32(cursor, m_metric140[index]);
+        cursor += 4;
+    }
     for (unsigned int index = 0; index < 15; ++index)
-        WriteMetric(cursor, m_metric141[index]);
+        {
+        serializeU32(cursor, m_metric141[index]);
+        cursor += 4;
+    }
     for (unsigned int index = 0; index < 15; ++index)
-        WriteMetric(cursor, m_metric142[index]);
+        {
+        serializeU32(cursor, m_metric142[index]);
+        cursor += 4;
+    }
     for (unsigned int index = 0; index < 15; ++index)
-        WriteMetric(cursor, m_metric143[index]);
+        {
+        serializeU32(cursor, m_metric143[index]);
+        cursor += 4;
+    }
     for (unsigned int index = 0; index < 15; ++index)
-        WriteMetric(cursor, m_metric144[index]);
+        {
+        serializeU8(cursor, m_metric144[index]);
+        cursor += 1;
+    }
     for (unsigned int index = 0; index < 15; ++index)
-        WriteMetric(cursor, m_metric145[index]);
+        {
+        serializeU8(cursor, m_metric145[index]);
+        cursor += 1;
+    }
     for (unsigned int index = 0; index < 15; ++index)
-        WriteMetric(cursor, m_metric146[index]);
+        {
+        serializeU8(cursor, m_metric146[index]);
+        cursor += 1;
+    }
     for (unsigned int index = 0; index < 15; ++index)
-        WriteMetric(cursor, m_metric147[index]);
-    WriteMetric(cursor, m_metric148);
-    WriteMetric(cursor, m_metric149);
-    WriteMetric(cursor, m_metric150);
-    WriteMetric(cursor, m_metric151);
-    WriteMetric(cursor, m_metric152);
-    WriteMetric(cursor, m_metric153);
-    WriteMetric(cursor, m_metric154);
+        {
+        serializeU8(cursor, m_metric147[index]);
+        cursor += 1;
+    }
+    serializeU8(cursor, m_metric148);
+    cursor += 1;
+    serializeU8(cursor, m_metric149);
+    cursor += 1;
+    serializeU16(cursor, m_metric150);
+    cursor += 2;
+    serializeU16(cursor, m_metric151);
+    cursor += 2;
+    serializeU16(cursor, m_metric152);
+    cursor += 2;
+    serializeU16(cursor, m_metric153);
+    cursor += 2;
+    serializeU16(cursor, m_metric154);
+    cursor += 2;
     for (unsigned int index = 0; index < 15; ++index)
-        WriteMetric(cursor, m_metric155[index]);
-    WriteMetric(cursor, m_metric156);
-    WriteMetric(cursor, m_metric157);
-    WriteMetric(cursor, m_metric158);
-    WriteMetric(cursor, m_metric159);
-    WriteMetric(cursor, m_metric160);
+        {
+        serializeU8(cursor, m_metric155[index]);
+        cursor += 1;
+    }
+    serializeU32(cursor, m_metric156);
+    cursor += 4;
+    serializeU16(cursor, m_metric157);
+    cursor += 2;
+    serializeU8(cursor, m_metric158);
+    cursor += 1;
+    serializeU8(cursor, m_metric159);
+    cursor += 1;
+    serializeU8(cursor, m_metric160);
+    cursor += 1;
     for (unsigned int index = 0; index < 16; ++index)
-        WriteMetric(cursor, m_metric161[index]);
+        {
+        serializeU8(cursor, m_metric161[index]);
+        cursor += 1;
+    }
     for (unsigned int index = 0; index < 16; ++index)
-        WriteMetric(cursor, m_metric162[index]);
+        {
+        serializeU8(cursor, m_metric162[index]);
+        cursor += 1;
+    }
     for (unsigned int index = 0; index < 16; ++index)
-        WriteMetric(cursor, m_metric163[index]);
+        {
+        serializeU8(cursor, m_metric163[index]);
+        cursor += 1;
+    }
     for (unsigned int index = 0; index < 16; ++index)
-        WriteMetric(cursor, m_metric164[index]);
+        {
+        serializeU8(cursor, m_metric164[index]);
+        cursor += 1;
+    }
     for (unsigned int index = 0; index < 150; ++index)
-        WriteMetric(cursor, m_metric165[index]);
+        {
+        serializeU8(cursor, m_metric165[index]);
+        cursor += 1;
+    }
     for (unsigned int index = 0; index < 150; ++index)
-        WriteMetric(cursor, m_metric166[index]);
+        {
+        serializeU8(cursor, m_metric166[index]);
+        cursor += 1;
+    }
     for (unsigned int index = 0; index < 16; ++index)
-        WriteMetric(cursor, m_metric167[index]);
+        {
+        serializeU8(cursor, m_metric167[index]);
+        cursor += 1;
+    }
     for (unsigned int index = 0; index < 16; ++index)
-        WriteMetric(cursor, m_metric168[index]);
+        {
+        serializeU8(cursor, m_metric168[index]);
+        cursor += 1;
+    }
     for (unsigned int index = 0; index < 150; ++index)
-        WriteMetric(cursor, m_metric169[index]);
+        {
+        serializeU8(cursor, m_metric169[index]);
+        cursor += 1;
+    }
     for (unsigned int index = 0; index < 16; ++index)
-        WriteMetric(cursor, m_metric170[index]);
+        {
+        serializeU8(cursor, m_metric170[index]);
+        cursor += 1;
+    }
     for (unsigned int index = 0; index < 16; ++index)
-        WriteMetric(cursor, m_metric171[index]);
+        {
+        serializeU8(cursor, m_metric171[index]);
+        cursor += 1;
+    }
     for (unsigned int index = 0; index < 16; ++index)
-        WriteMetric(cursor, m_metric172[index]);
+        {
+        serializeU8(cursor, m_metric172[index]);
+        cursor += 1;
+    }
     for (unsigned int index = 0; index < 16; ++index)
-        WriteMetric(cursor, m_metric173[index]);
+        {
+        serializeU8(cursor, m_metric173[index]);
+        cursor += 1;
+    }
     for (unsigned int index = 0; index < 16; ++index)
-        WriteMetric(cursor, m_metric174[index]);
+        {
+        serializeU8(cursor, m_metric174[index]);
+        cursor += 1;
+    }
     for (unsigned int index = 0; index < 16; ++index)
-        WriteMetric(cursor, m_metric175[index]);
+        {
+        serializeU8(cursor, m_metric175[index]);
+        cursor += 1;
+    }
     for (unsigned int index = 0; index < 16; ++index)
-        WriteMetric(cursor, m_metric176[index]);
+        {
+        serializeU8(cursor, m_metric176[index]);
+        cursor += 1;
+    }
     for (unsigned int index = 0; index < 16; ++index)
-        WriteMetric(cursor, m_metric177[index]);
+        {
+        serializeU8(cursor, m_metric177[index]);
+        cursor += 1;
+    }
     for (unsigned int index = 0; index < 16; ++index)
-        WriteMetric(cursor, m_metric178[index]);
+        {
+        serializeU8(cursor, m_metric178[index]);
+        cursor += 1;
+    }
     for (unsigned int index = 0; index < 16; ++index)
-        WriteMetric(cursor, m_metric179[index]);
+        {
+        serializeU8(cursor, m_metric179[index]);
+        cursor += 1;
+    }
     for (unsigned int index = 0; index < 16; ++index)
-        WriteMetric(cursor, m_metric180[index]);
-    WriteMetric(cursor, m_metric181);
-    WriteMetric(cursor, m_metric182);
+        {
+        serializeU8(cursor, m_metric180[index]);
+        cursor += 1;
+    }
+    serializeU32(cursor, m_metric181);
+    cursor += 4;
+    serializeU32(cursor, m_metric182);
+    cursor += 4;
     for (unsigned int index = 0; index < 300; ++index)
-        WriteMetric(cursor, m_metric183[index]);
+        {
+        serializeU8(cursor, m_metric183[index]);
+        cursor += 1;
+    }
     for (unsigned int index = 0; index < 8; ++index)
-        WriteMetric(cursor, m_metric184[index]);
-    WriteMetric(cursor, m_integrityMarker);
+        {
+        serializeU8(cursor, m_metric184[index]);
+        cursor += 1;
+    }
+    serializeU32(cursor, m_integrityMarker);
+    cursor += 4;
     *size = static_cast<unsigned int>(cursor - buffer);
     return 0;
 }
