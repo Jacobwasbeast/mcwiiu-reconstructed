@@ -14,7 +14,7 @@ void TransportAnalysisData::Print(bool isDetail, bool skipIntermediate) const
     }
     m_retransmittedPacketAnalysisData.Print(isDetail);
     m_connectionAnalysisData.Print(isDetail);
-    AnalysisPrinter::Write(" Analysis       DispatchCount : %d\n", m_dispatchCount);
+    AnalysisPrinter::Write("[Analysis] ------ DispatchCount:%d ------", m_dispatchCount);
 }
 
 }}}
