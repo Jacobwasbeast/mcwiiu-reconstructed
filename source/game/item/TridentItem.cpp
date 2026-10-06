@@ -59,7 +59,9 @@ void TridentItem::releaseUsing(not_null_ptr<ItemInstance> itemInstance,
                                boost::shared_ptr<LivingEntity> entity,
                                int timeLeft)
 {
-    if ((entity->GetType() & EntityType::PLAYER) != EntityType::PLAYER)
+    bool isPlayer = (entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER;
+
+    if (!isPlayer)
     {
         return;
     }
@@ -67,64 +69,19 @@ void TridentItem::releaseUsing(not_null_ptr<ItemInstance> itemInstance,
     boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
     int riptide = EnchantmentHelper::getEnchantmentLevel(Enchantments::RIPTIDE, entity);
 
-    if (riptide <= 0)
+    if (riptide > 0)
     {
-        int useDuration = getUseDuration(itemInstance);
+        int useTime = getUseDuration(itemInstance) - timeLeft;
 
-        if (useDuration - timeLeft < 10)
+        if (!player->isInWaterOrRain() || player->isPassenger() || useTime < 10)
         {
             return;
         }
 
-        if (!level->mIsClientSide)
-        {
-            itemInstance->hurtAndBreak(1, player);
-
-            boost::shared_ptr<ThrownTrident> trident(new ThrownTrident(level, player, itemInstance));
-
-            trident->shootFromRotation(player,
-                                       player->mXRot,
-                                       player->mYHeadRot,
-                                       0.0f,
-                                       2.5f + (float)riptide * 0.5f,
-                                       1.0f);
-
-            if (player->mAbilities.mInstabuild)
-            {
-                trident->setPickup(AbstractRotatedItemProjectile::ePickup_CreativeOnly);
-            }
-
-            EnchantmentHelper::getEnchantmentLevel(Enchantments::LOYALTY, entity);
-
-            level->addEntity(trident);
-        }
-
-        if (!player->mAbilities.mInstabuild)
-        {
-            player->mInventory->removeItem(itemInstance);
-        }
-
-        level->playSound(player,
-                         player->mX,
-                         player->mY,
-                         player->mZ,
-                         SoundEvents::TRIDENT_THROW,
-                         SoundSource::eSoundSource_Players,
-                         1.0f,
-                         1.0f / (random->nextFloat() * 0.4f + 1.2f) + 0.5f,
-                         16.0f);
-    }
-    else
-    {
-        int useDuration = getUseDuration(itemInstance);
-
-        if (!player->isInWaterOrRain() || player->isPassenger() || useDuration - timeLeft < 10)
-        {
-            return;
-        }
-
-        float yRot = player->mYRot * 0.017453292f;
-        float xRot = player->mXRot * 0.017453292f;
+        float yRot = player->mYRot;
+        float xRot = player->mXRot;
+        yRot *= 0.017453292f;
+        xRot *= 0.017453292f;
         float dirX = -Mth::sin(yRot) * Mth::cos(xRot);
         float dirY = -Mth::sin(xRot);
         float dirZ = Mth::cos(yRot) * Mth::cos(xRot);
@@ -171,9 +128,57 @@ void TridentItem::releaseUsing(not_null_ptr<ItemInstance> itemInstance,
                              16.0f);
         }
     }
+    else
+    {
+        int useTime = getUseDuration(itemInstance) - timeLeft;
 
+        if (useTime < 10)
+        {
+            return;
+        }
+
+        if (!level->mIsClientSide)
+        {
+            itemInstance->hurtAndBreak(1, player);
+
+            boost::shared_ptr<ThrownTrident> trident(new ThrownTrident(level, player, itemInstance));
+
+            trident->shootFromRotation(player,
+                                       player->mXRot,
+                                       player->mYHeadRot,
+                                       0.0f,
+                                       2.5f + (float)riptide * 0.5f,
+                                       1.0f);
+
+            if (player->mAbilities.mInstabuild)
+            {
+                trident->setPickup(AbstractRotatedItemProjectile::ePickup_CreativeOnly);
+            }
+
+            EnchantmentHelper::getEnchantmentLevel(Enchantments::LOYALTY, entity);
+
+            level->addEntity(trident);
+        }
+
+        if (!player->mAbilities.mInstabuild)
+        {
+            player->mInventory->removeItem(itemInstance);
+        }
+
+        level->playSound(player,
+                         player->mX,
+                         player->mY,
+                         player->mZ,
+                         SoundEvents::TRIDENT_THROW,
+                         SoundSource::eSoundSource_Players,
+                         1.0f,
+                         1.0f / (random->nextFloat() * 0.4f + 1.2f) + 0.5f,
+                         16.0f);
+    }
+
+    Player* awardee = player.operator->();
     Stat* stat = gStats->get_itemsUsed(Item::VALIDgetId(this));
-    player->awardStat(stat, GenericStats::param_itemsUsed(player, itemInstance));
+    awardee->awardStat(stat, GenericStats::param_itemsUsed(player, itemInstance));
 }
 
 InteractionResultHolder TridentItem::use(Level* level,

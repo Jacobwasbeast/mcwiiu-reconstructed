@@ -359,7 +359,7 @@ ItemTransforms* ItemTransforms::getTransforms(const ItemInstance* item, LivingEn
 {
     if (entity != NULL)
     {
-        const bool isArmourStand = entity->GetType() == EntityType::ARMOR_STAND;
+        bool isArmourStand = entity->GetType() == EntityType::ARMOR_STAND;
         if (isArmourStand)
         {
             ItemTransforms* armourStandTransforms = getArmourStandTransforms(item, entity);
@@ -380,40 +380,6 @@ ItemTransforms* ItemTransforms::getTransforms(const ItemInstance* item, LivingEn
                 ->set_firstperson_lefthand(0.0f, 90.0f, -25.0f, 1.13f, 3.2f, 1.13f, 0.68f, 0.68f, 0.68f);
         return bow;
     }
-    case 281:
-    {
-        static ItemTransforms* bowl = (new ItemTransforms(*GetDefaultTransforms()))
-                                          ->set_thirdperson_hands(0.0f, 0.0f, 0.0f, 0.0f, 2.7f, 1.0f, 0.55f, 0.55f,
-                                                                  0.55f);
-        return bowl;
-    }
-    case 346:
-    case 398:
-    {
-        static ItemTransforms* rod =
-            (new ItemTransforms())
-                ->set_thirdperson_righthand(0.0f, 90.0f, 55.0f, 0.0f, 4.0f, 2.5f, 0.85f, 0.85f, 0.85f)
-                ->set_thirdperson_lefthand(0.0f, -90.0f, -55.0f, 0.0f, 4.0f, 2.5f, 0.85f, 0.85f, 0.85f)
-                ->set_firstperson_righthand(0.0f, 90.0f, 25.0f, 0.0f, 1.6f, 0.8f, 0.68f, 0.68f, 0.68f)
-                ->set_firstperson_lefthand(0.0f, -90.0f, -25.0f, 0.0f, 1.6f, 0.8f, 0.68f, 0.68f, 0.68f)
-                ->set_ground(0.0f, 0.0f, 0.0f, 0.0f, 2.0f, 0.0f, 0.5f, 0.5f, 0.5f)
-                ->set_head(0.0f, 180.0f, 0.0f, 0.0f, 13.0f, 7.0f, 1.0f, 1.0f, 1.0f);
-        return rod;
-    }
-    case 371:
-    {
-        static ItemTransforms* goldNugget = (new ItemTransforms(*GetDefaultTransforms()))
-                                                ->set_thirdperson_hands(0.0f, 0.0f, 0.0f, 0.0f, 2.2f, 1.0f, 0.55f,
-                                                                        0.55f, 0.55f);
-        return goldNugget;
-    }
-    case 390:
-    {
-        static ItemTransforms* flowerPot = (new ItemTransforms(*GetDefaultTransforms()))
-                                               ->set_thirdperson_hands(0.0f, 0.0f, 0.0f, 0.0f, 2.75f, 1.0f, 0.55f,
-                                                                       0.55f, 0.55f);
-        return flowerPot;
-    }
     case 397:
     {
         static ItemTransforms* skull =
@@ -422,31 +388,20 @@ ItemTransforms* ItemTransforms::getTransforms(const ItemInstance* item, LivingEn
                 ->set_fixed(0.0f, 180.0f, 0.0f, 0.0f, 4.0f, 0.0f, 1.0f, 1.0f, 1.0f)
                 ->set_ground(0.0f, 0.0f, 0.0f, 0.0f, 3.0f, 0.0f, 0.5f, 0.5f, 0.5f)
                 ->set_thirdperson_hands(45.0f, 45.0f, 0.0f, 0.0f, 3.0f, 0.0f, 0.5f, 0.5f, 0.5f);
-        if (item->getAuxValue() != 5)
-            return skull;
-
-        static ItemTransforms* dragonHead =
-            (new ItemTransforms(*skull))->set_gui(30.0f, 45.0f, 0.0f, -2.0f, 2.0f, 0.0f, 0.6f, 0.6f, 0.6f);
-        if (!SkullBlockRenderer::instance->dragonJawCheck())
+        if (item->getAuxValue() == 5)
         {
-            dragonHead->set_gui(30.0f, 45.0f, 0.0f, 0.0f, -0.5f, 0.0f, 0.6f, 0.6f, 0.6f)
-                ->set_fixed(0.0f, 180.0f, 0.0f, 0.0f, 2.0f, -3.0f, 1.0f, 1.0f, 1.0f);
+            static ItemTransforms* dragonHead =
+                (new ItemTransforms(*skull))->set_gui(30.0f, 45.0f, 0.0f, -2.0f, 2.0f, 0.0f, 0.6f, 0.6f, 0.6f);
+            if (!SkullBlockRenderer::instance->dragonJawCheck())
+            {
+                dragonHead->set_gui(30.0f, 45.0f, 0.0f, 0.0f, -0.5f, 0.0f, 0.6f, 0.6f, 0.6f)
+                    ->set_fixed(0.0f, 180.0f, 0.0f, 0.0f, 2.0f, -3.0f, 1.0f, 1.0f, 1.0f);
+                return dragonHead;
+            }
+            dragonHead->set_gui(30.0f, 45.0f, 0.0f, -2.0f, 2.0f, 0.0f, 0.6f, 0.6f, 0.6f);
             return dragonHead;
         }
-        dragonHead->set_gui(30.0f, 45.0f, 0.0f, -2.0f, 2.0f, 0.0f, 0.6f, 0.6f, 0.6f);
-        return dragonHead;
-    }
-    case 425:
-    {
-        static ItemTransforms* banner =
-            (new ItemTransforms())
-                ->set_thirdperson_hands(0.0f, 90.0f, 0.0f, 0.0f, 2.0f, 0.5f, 0.375f, 0.375f, 0.375f)
-                ->set_firstperson_hands(0.0f, 90.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.375f, 0.375f, 0.375f)
-                ->set_gui(30.0f, 20.0f, 0.0f, 0.0f, -3.25f, 0.0f, 0.5325f, 0.5325f, 0.5325f)
-                ->set_ground(0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.25f, 0.25f, 0.25f)
-                ->set_head(0.0f, 180.0f, 0.0f, 0.0f, 16.0f, 7.0f, 1.5f, 1.5f, 1.5f)
-                ->set_fixed(0.0f, 180.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.5f, 0.5f, 0.5f);
-        return banner;
+        return skull;
     }
     case 442:
     {
@@ -470,12 +425,58 @@ ItemTransforms* ItemTransforms::getTransforms(const ItemInstance* item, LivingEn
             return blockingShield;
         return shield;
     }
+    case 425:
+    {
+        static ItemTransforms* banner =
+            (new ItemTransforms())
+                ->set_thirdperson_hands(0.0f, 90.0f, 0.0f, 0.0f, 2.0f, 0.5f, 0.375f, 0.375f, 0.375f)
+                ->set_firstperson_hands(0.0f, 90.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.375f, 0.375f, 0.375f)
+                ->set_gui(30.0f, 20.0f, 0.0f, 0.0f, -3.25f, 0.0f, 0.5325f, 0.5325f, 0.5325f)
+                ->set_ground(0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.25f, 0.25f, 0.25f)
+                ->set_head(0.0f, 180.0f, 0.0f, 0.0f, 16.0f, 7.0f, 1.5f, 1.5f, 1.5f)
+                ->set_fixed(0.0f, 180.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.5f, 0.5f, 0.5f);
+        return banner;
+    }
+    case 346:
+    case 398:
+    {
+        static ItemTransforms* rod =
+            (new ItemTransforms())
+                ->set_thirdperson_righthand(0.0f, 90.0f, 55.0f, 0.0f, 4.0f, 2.5f, 0.85f, 0.85f, 0.85f)
+                ->set_thirdperson_lefthand(0.0f, -90.0f, -55.0f, 0.0f, 4.0f, 2.5f, 0.85f, 0.85f, 0.85f)
+                ->set_firstperson_righthand(0.0f, 90.0f, 25.0f, 0.0f, 1.6f, 0.8f, 0.68f, 0.68f, 0.68f)
+                ->set_firstperson_lefthand(0.0f, -90.0f, -25.0f, 0.0f, 1.6f, 0.8f, 0.68f, 0.68f, 0.68f)
+                ->set_ground(0.0f, 0.0f, 0.0f, 0.0f, 2.0f, 0.0f, 0.5f, 0.5f, 0.5f)
+                ->set_head(0.0f, 180.0f, 0.0f, 0.0f, 13.0f, 7.0f, 1.0f, 1.0f, 1.0f);
+        return rod;
+    }
+    case 390:
+    {
+        static ItemTransforms* flowerPot = (new ItemTransforms(*GetDefaultTransforms()))
+                                               ->set_thirdperson_hands(0.0f, 0.0f, 0.0f, 0.0f, 2.75f, 1.0f, 0.55f,
+                                                                       0.55f, 0.55f);
+        return flowerPot;
+    }
+    case 371:
+    {
+        static ItemTransforms* goldNugget = (new ItemTransforms(*GetDefaultTransforms()))
+                                                ->set_thirdperson_hands(0.0f, 0.0f, 0.0f, 0.0f, 2.2f, 1.0f, 0.55f,
+                                                                        0.55f, 0.55f);
+        return goldNugget;
+    }
     case 452:
     {
         static ItemTransforms* ironNugget = (new ItemTransforms(*GetDefaultTransforms()))
                                                 ->set_thirdperson_hands(0.0f, 0.0f, 0.0f, 0.0f, 1.65f, 1.0f, 0.55f,
                                                                         0.55f, 0.55f);
         return ironNugget;
+    }
+    case 281:
+    {
+        static ItemTransforms* bowl = (new ItemTransforms(*GetDefaultTransforms()))
+                                          ->set_thirdperson_hands(0.0f, 0.0f, 0.0f, 0.0f, 2.7f, 1.0f, 0.55f, 0.55f,
+                                                                  0.55f);
+        return bowl;
     }
     case 454:
     {

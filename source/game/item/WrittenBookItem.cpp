@@ -24,14 +24,14 @@
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/world/generation/Player.hpp"
 
-static const std::wstring TAG_TITLE = L"title";
-static const std::wstring TAG_AUTHOR = L"author";
-static const std::wstring TAG_PAGES = L"pages";
-static const std::wstring TAG_GENERATION = L"generation";
-static const std::wstring TAG_RESOLVED = L"resolved";
-static const std::wstring TAG_OWNER_UUID = L"ownerUUID";
-static const std::wstring TAG_CREATED_BY_RESTRICTED_PLAYER = L"createdByRestrictedPlayer";
-static const std::wstring TAG_CREATED_BY_HOST = L"createdByHost";
+const std::wstring WrittenBookItem::TAG_TITLE = L"title";
+const std::wstring WrittenBookItem::TAG_AUTHOR = L"author";
+const std::wstring WrittenBookItem::TAG_PAGES = L"pages";
+const std::wstring WrittenBookItem::TAG_GENERATION = L"generation";
+const std::wstring WrittenBookItem::TAG_RESOLVED = L"resolved";
+const std::wstring WrittenBookItem::TAG_OWNER_UUID = L"ownerUUID";
+const std::wstring WrittenBookItem::TAG_CREATED_BY_RESTRICTED_PLAYER = L"createdByRestrictedPlayer";
+const std::wstring WrittenBookItem::TAG_CREATED_BY_HOST = L"createdByHost";
 
 WrittenBookItem::WrittenBookItem()
     : Item()

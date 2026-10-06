@@ -1762,7 +1762,7 @@ void Item::staticCtor()
         (new BucketItem(BucketItem::LAVA))->setIconName(L"bucketLava")->setDescriptionId(IDS_ITEM_BUCKET_LAVA, IDS_DESC_BUCKET_LAVA)->setCraftingRemainingItem(bucket));
 
     registerItem(328, L"minecart",
-        (new MinecartItem(new Minecart::Type(0)))->setIconName(L"minecart")->setDescriptionId(IDS_ITEM_MINECART, IDS_DESC_MINECART));
+        (new MinecartItem(Minecart::Type::RIDEABLE))->setIconName(L"minecart")->setDescriptionId(IDS_ITEM_MINECART, IDS_DESC_MINECART));
 
     registerItem(329, L"saddle",
         (new SaddleItem())->setIconName(L"saddle")->setDescriptionId(IDS_ITEM_SADDLE, IDS_DESC_SADDLE));
@@ -1804,10 +1804,10 @@ void Item::staticCtor()
         (new Item())->setBaseItemTypeAndMaterial(31, 57)->setIconName(L"slimeball")->setDescriptionId(IDS_ITEM_SLIMEBALL, IDS_DESC_SLIMEBALL));
 
     registerItem(342, L"chest_minecart",
-        (new MinecartItem(new Minecart::Type(1)))->setIconName(L"minecart_chest")->setDescriptionId(IDS_ITEM_MINECART_CHEST, IDS_DESC_MINECARTWITHCHEST));
+        (new MinecartItem(Minecart::Type::CHEST))->setIconName(L"minecart_chest")->setDescriptionId(IDS_ITEM_MINECART_CHEST, IDS_DESC_MINECARTWITHCHEST));
 
     registerItem(343, L"furnace_minecart",
-        (new MinecartItem(new Minecart::Type(2)))->setIconName(L"minecart_furnace")->setDescriptionId(IDS_ITEM_MINECART_FURNACE, IDS_DESC_MINECARTWITHFURNACE));
+        (new MinecartItem(Minecart::Type::FURNACE))->setIconName(L"minecart_furnace")->setDescriptionId(IDS_ITEM_MINECART_FURNACE, IDS_DESC_MINECARTWITHFURNACE));
 
     registerItem(344, L"egg",
         (new EggItem())->setIconName(L"egg")->setDescriptionId(IDS_ITEM_EGG, IDS_DESC_EGG));
@@ -2000,10 +2000,10 @@ void Item::staticCtor()
         (new Item())->setIconName(L"netherquartz")->setDescriptionId(IDS_ITEM_NETHER_QUARTZ, IDS_DESC_NETHER_QUARTZ));
 
     registerItem(407, L"tnt_minecart",
-        (new MinecartItem(new Minecart::Type(3)))->setIconName(L"minecart_tnt")->setDescriptionId(IDS_ITEM_MINECART_TNT, IDS_DESC_MINECART_TNT));
+        (new MinecartItem(Minecart::Type::TNT))->setIconName(L"minecart_tnt")->setDescriptionId(IDS_ITEM_MINECART_TNT, IDS_DESC_MINECART_TNT));
 
     registerItem(408, L"hopper_minecart",
-        (new MinecartItem(new Minecart::Type(5)))->setIconName(L"minecart_hopper")->setDescriptionId(IDS_ITEM_MINECART_HOPPER, IDS_DESC_MINECART_HOPPER)->setBaseItemTypeAndMaterial(51, 2));
+        (new MinecartItem(Minecart::Type::HOPPER))->setIconName(L"minecart_hopper")->setDescriptionId(IDS_ITEM_MINECART_HOPPER, IDS_DESC_MINECART_HOPPER)->setBaseItemTypeAndMaterial(51, 2));
 
     registerItem(409, L"prismarine_shard",
         (new Item())->setIconName(L"prismarine_shard")->setDescriptionId(IDS_ITEM_PRISMARINE_SHARD, IDS_DESC_PRISMARINE_SHARD)->setBaseItemTypeAndMaterial(13, 0));
@@ -2045,7 +2045,7 @@ void Item::staticCtor()
         (new NameTagItem())->setIconName(L"name_tag")->setDescriptionId(IDS_ITEM_NAME_TAG, IDS_DESC_NAME_TAG));
 
     registerItem(422, L"command_block_minecart",
-        (new MinecartItem(new Minecart::Type(6)))->setIconName(L"minecart_command_block")->setDescriptionId(IDS_ITEM_MINECART_COMMAND));
+        (new MinecartItem(Minecart::Type::COMMAND_BLOCK))->setIconName(L"minecart_command_block")->setDescriptionId(IDS_ITEM_MINECART_COMMAND));
 
     registerItem(423, L"mutton",
         (new FoodItem(2, 0.3f, true))->setIconName(L"mutton_raw")->setDescriptionId(IDS_ITEM_MUTTON_RAW, IDS_DESC_MUTTON_RAW));

@@ -4,7 +4,7 @@
 
 WaterWorkerEnchantment::WaterWorkerEnchantment(const Rarity* rarity,
     arrayWithLength<const EquipmentSlot*> slots)
-    : Enchantment(rarity, EnchantmentCategory::ARMOR, slots)
+    : Enchantment(rarity, EnchantmentCategory::ARMOR_HEAD, slots)
 {
     setDescriptionId(IDS_ENCHANTMENT_WATER_WORKER);
 }

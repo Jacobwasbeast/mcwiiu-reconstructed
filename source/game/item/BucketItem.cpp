@@ -671,54 +671,130 @@ InteractionResultHolder BucketItem::use(Level* level, boost::shared_ptr<Player> 
     if (hitResult == NULL || !level->mDimension->inPlayerConstraints(BlockPos(hitResult->mLocation)))
         return InteractionResultHolder(InteractionResult::eInteractionResult_Pass, itemInstance);
 
-    const Direction* direction = hitResult->mDirection;
     if (hitResult->getBlockPos().y >= level->getMaxBuildHeight() - 1
-        && (direction == Direction::UP || hitResult->getBlockPos().y >= level->getMaxBuildHeight()))
+        && (hitResult->mDirection == Direction::UP || hitResult->getBlockPos().y >= level->getMaxBuildHeight()))
     {
         delete hitResult;
         return InteractionResultHolder(InteractionResult::eInteractionResult_Fail, itemInstance);
     }
 
-    if (hitResult->mType != HitResult::BLOCK)
+    if (hitResult->mType == HitResult::BLOCK)
     {
-        delete hitResult;
-        return InteractionResultHolder(InteractionResult::eInteractionResult_Pass, itemInstance);
-    }
-
-    BlockPos pos = hitResult->getBlockPos();
-    Block* block = level->getBlock(pos);
-    Block* liquidBlock = level->getLiquidBlock(pos);
-    const AABB* shape = block->getClipAABB(block->defaultBlockState(), level, pos);
-    bool liquid = true;
-    if (!block->defaultBlockState()->getMaterial()->isLiquid()
-        && !liquidBlock->defaultBlockState()->getMaterial()->isLiquid())
-    {
-        liquid = false;
-    }
-    if (shape == NULL && !liquid && !block->canContainLiquid(block->defaultBlockState()))
-    {
-        delete hitResult;
-        return InteractionResultHolder(InteractionResult::eInteractionResult_Fail, itemInstance);
-    }
-
-    bool mayNotInteract = true;
-    if (level->mayInteract(player, pos, mBlock) && level->mayInteract(player, pos.relative(direction), mBlock))
-        mayNotInteract = false;
-
-    if (mayNotInteract)
-    {
-        boost::shared_ptr<ServerPlayer> serverPlayer = boost::dynamic_pointer_cast<ServerPlayer>(player);
-        if (serverPlayer != NULL)
+        BlockPos pos = hitResult->getBlockPos();
+        Block* block = level->getBlock(pos);
+        Block* liquidBlock = level->getLiquidBlock(pos);
+        const AABB* shape = block->getClipAABB(block->defaultBlockState(), level, pos);
+        bool liquid = true;
+        if (!block->defaultBlockState()->getMaterial()->isLiquid()
+            && !liquidBlock->defaultBlockState()->getMaterial()->isLiquid())
         {
-            serverPlayer->mConnection->send(boost::shared_ptr<Packet>(new ClientboundChatPacket(
-                L"", ClientboundChatPacket::eChatPacketMessage_InteractionNotAllowed, -1)));
+            liquid = false;
         }
-        delete hitResult;
-        return InteractionResultHolder(InteractionResult::eInteractionResult_Fail, itemInstance);
-    }
+        if (shape == NULL && !liquid && !block->canContainLiquid(block->defaultBlockState()))
+        {
+            delete hitResult;
+            return InteractionResultHolder(InteractionResult::eInteractionResult_Fail, itemInstance);
+        }
 
-    if (!pickUp || mBlock != Blocks::air)
-    {
+        bool mayNotInteract = true;
+        if (level->mayInteract(player, pos, mBlock)
+            && level->mayInteract(player, pos.relative(hitResult->mDirection), mBlock))
+            mayNotInteract = false;
+
+        if (mayNotInteract)
+        {
+            boost::shared_ptr<ServerPlayer> serverPlayer = boost::dynamic_pointer_cast<ServerPlayer>(player);
+            if (serverPlayer != NULL)
+            {
+                serverPlayer->mConnection->send(boost::shared_ptr<ClientboundChatPacket>(new ClientboundChatPacket(
+                    L"", ClientboundChatPacket::eChatPacketMessage_InteractionNotAllowed, -1)));
+            }
+            delete hitResult;
+            return InteractionResultHolder(InteractionResult::eInteractionResult_Fail, itemInstance);
+        }
+
+        if (pickUp && mBlock == Blocks::air)
+        {
+            if (!player->mayUseItemAt(pos.relative(hitResult->mDirection), hitResult->mDirection, itemInstance))
+            {
+                delete hitResult;
+                return InteractionResultHolder(InteractionResult::eInteractionResult_Fail, itemInstance);
+            }
+
+            const BlockState* state = level->getBlockState(pos);
+            const BlockState* liquidState = level->getLiquidBlockState(pos);
+            Material* material = state->getMaterial();
+            Material* liquidMaterial = liquidState->getMaterial();
+            const BlockState* liquidAbove = level->getLiquidBlock(pos.above())->defaultBlockState();
+            Block* blockAbove = level->getBlock(pos.above());
+            bool waterSourceAbove = false;
+            if (liquidAbove->getMaterial() == Material::WATER && liquidAbove->getValue(LiquidBlock::LEVEL) == 0)
+                waterSourceAbove = true;
+
+            bool removeLiquid = true;
+            if ((blockAbove->defaultBlockState()->isSolid() || waterSourceAbove) && liquidMaterial == Material::WATER)
+            {
+                removeLiquid = false;
+                for (std::vector<const Direction*>::const_iterator it = Direction::VALUES.begin();
+                     it != Direction::VALUES.end(); ++it)
+                {
+                    if (*it == Direction::UP)
+                        continue;
+                    Block* neighbour = level->getLiquidBlock(pos.relative(*it));
+                    bool water = neighbour->defaultBlockState()->getMaterial() == Material::WATER;
+                    if (!neighbour->defaultBlockState()->isSolid())
+                    {
+                        if (!water || neighbour->defaultBlockState()->getValue(LiquidBlock::LEVEL) != 0)
+                        {
+                            removeLiquid = true;
+                            break;
+                        }
+                    }
+                    else if (water && neighbour->defaultBlockState()->getValue(LiquidBlock::LEVEL) != 0)
+                    {
+                        removeLiquid = true;
+                        break;
+                    }
+                }
+            }
+
+            if ((material == Material::WATER && state->getValue(LiquidBlock::LEVEL) == 0)
+                || (liquidMaterial == Material::WATER && liquidState->getValue(LiquidBlock::LEVEL) == 0))
+            {
+                if (liquidMaterial == Material::WATER && removeLiquid)
+                    level->setExtraBlock(pos, Blocks::air->defaultBlockState(), Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE,
+                                         false);
+                if ((material == Material::WATER || material == Material::BUBBLE_COLUMN) && removeLiquid)
+                    level->setBlock(pos, Blocks::air->defaultBlockState(), Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE,
+                                    false);
+                player->playSound(SoundEvents::BUCKET_FILL, 1.0f, 1.0f);
+                delete hitResult;
+                return InteractionResultHolder(InteractionResult::eInteractionResult_Success,
+                                               createResultItem(itemInstance, player, Items::waterBucket,
+                                                                boost::shared_ptr<Entity>()));
+            }
+
+            if ((material == Material::LAVA && state->getValue(LiquidBlock::LEVEL) == 0)
+                || (liquidMaterial == Material::LAVA && liquidState->getValue(LiquidBlock::LEVEL) == 0))
+            {
+                if (liquidMaterial == Material::LAVA)
+                    level->setExtraBlock(pos, Blocks::air->defaultBlockState(), Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE,
+                                         false);
+                if (material == Material::LAVA)
+                    level->setBlock(pos, Blocks::air->defaultBlockState(), Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE,
+                                    false);
+                player->playSound(SoundEvents::BUCKET_FILL_LAVA, 1.0f, 1.0f);
+                if (level->mDimension->getType() == DimensionType::NETHER)
+                    player->awardStat(gStats->get_netherLavaCollected(), GenericStats::param_noArgs());
+                delete hitResult;
+                return InteractionResultHolder(InteractionResult::eInteractionResult_Success,
+                                               createResultItem(itemInstance, player, Items::lavaBucket,
+                                                                boost::shared_ptr<Entity>()));
+            }
+
+            return InteractionResultHolder(InteractionResult::eInteractionResult_Fail, itemInstance);
+        }
+
         if (level->getBlock(pos) == Blocks::cauldron && mFillType != EMPTY && mFillType != WATER)
         {
             delete hitResult;
@@ -734,7 +810,7 @@ InteractionResultHolder BucketItem::use(Level* level, boost::shared_ptr<Player> 
         if (!fishIntoWater
             && (!level->getBlock(pos)->canContainLiquid(level->getBlockState(pos)) || mBlock != Blocks::flowing_water))
         {
-            placePos = pos.relative(direction);
+            placePos = pos.relative(hitResult->mDirection);
         }
         if (level->getBlock(placePos.below()) == Blocks::snow_layer)
         {
@@ -742,7 +818,7 @@ InteractionResultHolder BucketItem::use(Level* level, boost::shared_ptr<Player> 
             placePos = placePos.below();
         }
 
-        if (!player->mayUseItemAt(placePos, direction, itemInstance))
+        if (!player->mayUseItemAt(placePos, hitResult->mDirection, itemInstance))
         {
             delete hitResult;
             return InteractionResultHolder(InteractionResult::eInteractionResult_Fail, itemInstance);
@@ -764,80 +840,8 @@ InteractionResultHolder BucketItem::use(Level* level, boost::shared_ptr<Player> 
         return InteractionResultHolder(InteractionResult::eInteractionResult_Success, bucketItem);
     }
 
-    if (!player->mayUseItemAt(pos.relative(direction), direction, itemInstance))
-    {
-        delete hitResult;
-        return InteractionResultHolder(InteractionResult::eInteractionResult_Fail, itemInstance);
-    }
-
-    const BlockState* state = level->getBlockState(pos);
-    const BlockState* liquidState = level->getLiquidBlockState(pos);
-    Material* material = state->getMaterial();
-    Material* liquidMaterial = liquidState->getMaterial();
-    const BlockState* liquidAbove = level->getLiquidBlock(pos.above())->defaultBlockState();
-    Block* blockAbove = level->getBlock(pos.above());
-    bool waterSourceAbove = false;
-    if (liquidAbove->getMaterial() == Material::WATER && liquidAbove->getValue(LiquidBlock::LEVEL) == 0)
-        waterSourceAbove = true;
-
-    bool removeLiquid = true;
-    if ((blockAbove->defaultBlockState()->isSolid() || waterSourceAbove) && liquidMaterial == Material::WATER)
-    {
-        removeLiquid = false;
-        for (std::vector<const Direction*>::const_iterator it = Direction::VALUES.begin(); it != Direction::VALUES.end();
-             ++it)
-        {
-            if (*it == Direction::UP)
-                continue;
-            Block* neighbour = level->getLiquidBlock(pos.relative(*it));
-            bool water = neighbour->defaultBlockState()->getMaterial() == Material::WATER;
-            if (!neighbour->defaultBlockState()->isSolid())
-            {
-                if (!water || neighbour->defaultBlockState()->getValue(LiquidBlock::LEVEL) != 0)
-                {
-                    removeLiquid = true;
-                    break;
-                }
-            }
-            else if (water && neighbour->defaultBlockState()->getValue(LiquidBlock::LEVEL) != 0)
-            {
-                removeLiquid = true;
-                break;
-            }
-        }
-    }
-
-    if ((material == Material::WATER && state->getValue(LiquidBlock::LEVEL) == 0)
-        || (liquidMaterial == Material::WATER && liquidState->getValue(LiquidBlock::LEVEL) == 0))
-    {
-        if (liquidMaterial == Material::WATER && removeLiquid)
-            level->setExtraBlock(pos, Blocks::air->defaultBlockState(), Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false);
-        if ((material == Material::WATER || material == Material::BUBBLE_COLUMN) && removeLiquid)
-            level->setBlock(pos, Blocks::air->defaultBlockState(), Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false);
-        player->playSound(SoundEvents::BUCKET_FILL, 1.0f, 1.0f);
-        delete hitResult;
-        return InteractionResultHolder(InteractionResult::eInteractionResult_Success,
-                                       createResultItem(itemInstance, player, Items::waterBucket,
-                                                        boost::shared_ptr<Entity>()));
-    }
-
-    if ((material == Material::LAVA && state->getValue(LiquidBlock::LEVEL) == 0)
-        || (liquidMaterial == Material::LAVA && liquidState->getValue(LiquidBlock::LEVEL) == 0))
-    {
-        if (liquidMaterial == Material::LAVA)
-            level->setExtraBlock(pos, Blocks::air->defaultBlockState(), Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false);
-        if (material == Material::LAVA)
-            level->setBlock(pos, Blocks::air->defaultBlockState(), Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false);
-        player->playSound(SoundEvents::BUCKET_FILL_LAVA, 1.0f, 1.0f);
-        if (level->mDimension->getType() == DimensionType::NETHER)
-            player->awardStat(gStats->get_netherLavaCollected(), GenericStats::param_noArgs());
-        delete hitResult;
-        return InteractionResultHolder(InteractionResult::eInteractionResult_Success,
-                                       createResultItem(itemInstance, player, Items::lavaBucket,
-                                                        boost::shared_ptr<Entity>()));
-    }
-
-    return InteractionResultHolder(InteractionResult::eInteractionResult_Fail, itemInstance);
+    delete hitResult;
+    return InteractionResultHolder(InteractionResult::eInteractionResult_Pass, itemInstance);
 }
 
 not_null_ptr<ItemInstance> BucketItem::finishUsingItem(not_null_ptr<ItemInstance> itemInstance, Level* level,
