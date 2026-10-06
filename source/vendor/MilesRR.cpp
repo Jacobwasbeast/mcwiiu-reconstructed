@@ -707,15 +707,11 @@ extern "C" int rrThreadCreate(rrThread* pThread, int (*pEntry)(void*), int iStac
 
 extern "C" void rrThreadSetCPUCore(rrThread* pThread, unsigned int uCore)
 {
-    rrThread* pFound;
-
-    pFound = find_rrthread_in_tls(pThread);
-    if (pFound == NULL || uCore >= 3)
+    rrThread* pFound = find_rrthread_in_tls(pThread);
+    if (pFound != NULL && uCore <= 2)
     {
-        return;
+        OSSetThreadAffinity(((rriThread*)pFound->pNative)->pOSThread, rrThreadCoreAffinity[uCore]);
     }
-
-    OSSetThreadAffinity(((rriThread*)pFound->pNative)->pOSThread, rrThreadCoreAffinity[uCore]);
 }
 
 extern "C" void rrThreadSetPriority(rrThread* pThread, unsigned int uPriority)
@@ -741,6 +737,10 @@ extern "C" void rrThreadSetPriority(rrThread* pThread, unsigned int uPriority)
         OSSetThreadPriority(pNative->pOSThread, rrThreadPriorityLevel[uPriority + 2]);
         break;
 
+    case RR_THREAD_PRIORITY_CALLER:
+        OSSetThreadPriority(pNative->pOSThread, OSGetThreadPriority(OSGetCurrentThread()));
+        break;
+
     case RR_THREAD_PRIORITY_RAISE:
     case RR_THREAD_PRIORITY_RAISE_RELATIVE:
         OSSetThreadPriority(pNative->pOSThread, OSGetThreadPriority(pNative->pOSThread) - 1);
@@ -749,10 +749,6 @@ extern "C" void rrThreadSetPriority(rrThread* pThread, unsigned int uPriority)
     case RR_THREAD_PRIORITY_LOWER:
     case RR_THREAD_PRIORITY_LOWER_RELATIVE:
         OSSetThreadPriority(pNative->pOSThread, OSGetThreadPriority(pNative->pOSThread) + 1);
-        break;
-
-    case RR_THREAD_PRIORITY_CALLER:
-        OSSetThreadPriority(pNative->pOSThread, OSGetThreadPriority(OSGetCurrentThread()));
         break;
 
     default:

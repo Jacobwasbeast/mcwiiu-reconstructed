@@ -1518,7 +1518,7 @@ extern "C" void BinkAudioDecompressLE(BINKAUDIODECOMP* pState, void* pOutput,
     unsigned int uChannels = pState->uChannels;
     unsigned int uOverlapBytes = pState->uOverlapBytes;
     unsigned int uFade = 0;
-    unsigned int uConsumed;
+    unsigned int uConsumed = 0;
     unsigned int uOutputBytes;
     unsigned int uSkipBytes;
     unsigned int uSample;
@@ -1536,111 +1536,95 @@ extern "C" void BinkAudioDecompressLE(BINKAUDIODECOMP* pState, void* pOutput,
         uFade = pState->uOverlapShift;
     }
 
-    if ((uFlags & BINKAUDIO_FLAG_DCT) != 0)
+    if ((uFlags & BINKAUDIO_FLAG_DCT) == 0 || reader.pCursor < reader.pLimit)
     {
-        if (reader.pCursor >= reader.pLimit)
+        if ((uFlags & BINKAUDIO_FLAG_DCT) != 0)
         {
-            pState->bFirstBlock = 0;
-            uOutputBytes = pState->uFrameBytes - pState->uOverlapBytes;
-            uOutputBytes = BinkApplySkip(pState, pDestination, piSkipSamples, uOutputBytes);
-            if (puOutputBytes != NULL)
-            {
-                *puOutputBytes = uOutputBytes;
-            }
-
-            if (ppInputEnd != NULL)
-            {
-                *ppInputEnd = pStart;
-            }
-
-            return;
+            reader.uBuffer = BinkLoadLE32(reader.pCursor) >> BINKAUDIO_HEADER_BITS;
+            reader.pCursor += 4;
+            reader.uBitCount = 32 - BINKAUDIO_HEADER_BITS;
         }
 
-        reader.uBuffer = BinkLoadLE32(reader.pCursor) >> BINKAUDIO_HEADER_BITS;
-        reader.pCursor += 4;
-        reader.uBitCount = 32 - BINKAUDIO_HEADER_BITS;
-    }
-
-    uChannelsLeft = uChannels;
-    if (uChannelsLeft != 0)
-    {
-        do
+        uChannelsLeft = uChannels;
+        if (uChannelsLeft != 0)
         {
-            if (!BinkReadChannel(reader, pState, afCoefficients))
+            do
             {
-                memset(pChannel, 0, uFrameLength * sizeof(float));
-            }
-            else if ((uFlags & BINKAUDIO_FLAG_DCT) != 0)
-            {
-                radfft_idct(pChannel, afCoefficients, uFrameLength);
-            }
+                if (!BinkReadChannel(reader, pState, afCoefficients))
+                {
+                    memset(pChannel, 0, uFrameLength * sizeof(float));
+                }
+                else if ((uFlags & BINKAUDIO_FLAG_DCT) != 0)
+                {
+                    radfft_idct(pChannel, afCoefficients, uFrameLength);
+                }
 
-            pChannel += uFrameLength;
-            uChannelsLeft = uChannelsLeft - 1;
-        } while (uChannelsLeft != 0);
-    }
+                pChannel += uFrameLength;
+                uChannelsLeft = uChannelsLeft - 1;
+            } while (uChannelsLeft != 0);
+        }
 
-    if ((uFlags & BINKAUDIO_FLAG_PLANAR) == 0)
-    {
-        if (uChannels == 1)
+        if ((uFlags & BINKAUDIO_FLAG_PLANAR) == 0)
         {
-            ClampToS16_c(dRoot, pTarget, pWork, uFrameLength);
+            if (uChannels == 1)
+            {
+                ClampToS16_c(dRoot, pTarget, pWork, uFrameLength);
+            }
+            else
+            {
+                pLeft = pWork;
+                pRight = pWork + uFrameLength;
+                for (uSample = 0; uSample < uFrameLength; ++uSample)
+                {
+                    BinkStoreSample(&pTarget[2 * uSample], pLeft[uSample], dRoot);
+                    BinkStoreSample(&pTarget[2 * uSample + 1], pRight[uSample], dRoot);
+                }
+            }
+
+            if (uFade != 0)
+            {
+                CrossFade(pTarget, pOverlap, uOverlapBytes, uFade);
+            }
+
+            if (uOverlapBytes != 0)
+            {
+                memmove(pOverlap,
+                        reinterpret_cast<unsigned char*>(pTarget) +
+                            (uChannels * uFrameLength * 2 - uOverlapBytes),
+                        uOverlapBytes);
+            }
         }
         else
         {
-            pLeft = pWork;
-            pRight = pWork + uFrameLength;
-            for (uSample = 0; uSample < uFrameLength; ++uSample)
+            uOverlapBytes = uOverlapBytes >> 1;
+            ClampToS16_c(dRoot, pTarget, pWork, uFrameLength);
+            if (uFade != 0)
             {
-                BinkStoreSample(&pTarget[2 * uSample], pLeft[uSample], dRoot);
-                BinkStoreSample(&pTarget[2 * uSample + 1], pRight[uSample], dRoot);
+                uFade = uFade - 1;
+                CrossFade(pTarget, pOverlap, uOverlapBytes, uFade);
             }
-        }
 
-        if (uFade != 0)
-        {
-            CrossFade(pTarget, pOverlap, uOverlapBytes, uFade);
-        }
+            uSkipBytes = uFrameLength * 2 - uOverlapBytes;
+            pTarget = reinterpret_cast<short*>(reinterpret_cast<unsigned char*>(pTarget) +
+                                               uSkipBytes);
+            if (uOverlapBytes != 0)
+            {
+                memmove(pOverlap, pTarget, uOverlapBytes);
+            }
 
-        if (uOverlapBytes != 0)
-        {
-            memmove(pOverlap,
-                    reinterpret_cast<unsigned char*>(pTarget) +
-                        (uChannels * uFrameLength * 2 - uOverlapBytes),
-                    uOverlapBytes);
-        }
+            pOverlap = reinterpret_cast<short*>(reinterpret_cast<unsigned char*>(pOverlap) +
+                                                uOverlapBytes);
+            ClampToS16_c(dRoot, pTarget, pWork + uFrameLength, uFrameLength);
+            if (uFade != 0)
+            {
+                CrossFade(pTarget, pOverlap, uOverlapBytes, uFade);
+            }
 
-        uConsumed = (unsigned int)(reader.pCursor - pStart) & BINKAUDIO_BYTE_COUNT_MASK;
-    }
-    else
-    {
-        uOverlapBytes = uOverlapBytes >> 1;
-        ClampToS16_c(dRoot, pTarget, pWork, uFrameLength);
-        if (uFade != 0)
-        {
-            uFade = uFade - 1;
-            CrossFade(pTarget, pOverlap, uOverlapBytes, uFade);
-        }
-
-        uSkipBytes = uFrameLength * 2 - uOverlapBytes;
-        pTarget = reinterpret_cast<short*>(reinterpret_cast<unsigned char*>(pTarget) + uSkipBytes);
-        if (uOverlapBytes != 0)
-        {
-            memmove(pOverlap, pTarget, uOverlapBytes);
-        }
-
-        pOverlap = reinterpret_cast<short*>(reinterpret_cast<unsigned char*>(pOverlap) +
-                                            uOverlapBytes);
-        ClampToS16_c(dRoot, pTarget, pWork + uFrameLength, uFrameLength);
-        if (uFade != 0)
-        {
-            CrossFade(pTarget, pOverlap, uOverlapBytes, uFade);
-        }
-
-        if (uOverlapBytes != 0)
-        {
-            memmove(pOverlap, reinterpret_cast<unsigned char*>(pTarget) + uSkipBytes,
-                    uOverlapBytes);
+            if (uOverlapBytes != 0)
+            {
+                memmove(pOverlap, reinterpret_cast<unsigned char*>(pTarget) + uSkipBytes,
+                        uOverlapBytes);
+            }
         }
 
         uConsumed = (unsigned int)(reader.pCursor - pStart) & BINKAUDIO_BYTE_COUNT_MASK;

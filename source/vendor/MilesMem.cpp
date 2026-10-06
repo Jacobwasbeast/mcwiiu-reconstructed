@@ -6,6 +6,9 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <coreinit/time.h>
+#ifdef __ghs__
+#include <ppc_ghs.h>
+#endif
 #include <string.h>
 
 #include "game/client/audio/FalloffGraph.hpp"
@@ -5700,38 +5703,60 @@ const ProfilePlot PROFILE_PLOTS[] = {
     {9, PROFILE_PLOT_MP3},     {10, PROFILE_PLOT_OGG}};
 const int PROFILE_PLOT_COUNT = sizeof(PROFILE_PLOTS) / sizeof(PROFILE_PLOTS[0]);
 
+const unsigned int TIME_BASE_RETRY_LIMIT = 500;
+
 MilesProfileSite PROFILE_SITES[DRIVER_PROFILE_TIMER_COUNT];
 MilesProfileSite PROFILE_PLOT_SITES[DRIVER_PROFILE_SLOT_COUNT];
 
-void StartTimer(MixTimer* pTimer)
+#ifdef __ghs__
+inline unsigned long long ReadTimeBase()
+{
+    unsigned int uLow = __MFTB();
+    unsigned int uHigh = __MFTBU();
+    if (uLow < TIME_BASE_RETRY_LIMIT)
+    {
+        uLow = __MFTB();
+        uHigh = __MFTBU();
+    }
+
+    return (static_cast<unsigned long long>(uHigh) << 32) | uLow;
+}
+#else
+inline unsigned long long ReadTimeBase()
+{
+    return OSGetSystemTime();
+}
+#endif
+
+inline void StartTimer(MixTimer* pTimer)
 {
     if (MSS_profile == NULL)
     {
         return;
     }
 
-    unsigned long long uNow = OSGetSystemTime();
-    unsigned int uHigh = static_cast<unsigned int>(uNow >> 32);
-    unsigned int uLow = static_cast<unsigned int>(uNow);
-    pTimer->high = pTimer->high - (uHigh + (pTimer->low < uLow));
-    pTimer->low = pTimer->low - uLow;
+    unsigned long long uNow = ReadTimeBase();
+    unsigned long long uTotal = (static_cast<unsigned long long>(pTimer->high) << 32) | pTimer->low;
+    uTotal = uTotal - uNow;
+    pTimer->high = static_cast<unsigned int>(uTotal >> 32);
+    pTimer->low = static_cast<unsigned int>(uTotal);
 }
 
-void StopTimer(MixTimer* pTimer)
+inline void StopTimer(MixTimer* pTimer)
 {
     if (MSS_profile == NULL)
     {
         return;
     }
 
-    unsigned long long uNow = OSGetSystemTime();
-    unsigned int uHigh = static_cast<unsigned int>(uNow >> 32);
-    unsigned int uLow = static_cast<unsigned int>(uNow);
-    pTimer->high = pTimer->high + uHigh + (pTimer->low + uLow < pTimer->low);
-    pTimer->low = pTimer->low + uLow;
+    unsigned long long uNow = ReadTimeBase();
+    unsigned long long uTotal = (static_cast<unsigned long long>(pTimer->high) << 32) | pTimer->low;
+    uTotal = uTotal + uNow;
+    pTimer->high = static_cast<unsigned int>(uTotal >> 32);
+    pTimer->low = static_cast<unsigned int>(uTotal);
 }
 
-void MarkProfileSample(_SAMPLE* pSample, int iSlot)
+inline void MarkProfileSample(_SAMPLE* pSample, int iSlot)
 {
     if (MSS_profile == NULL)
     {
@@ -5746,12 +5771,21 @@ void MarkProfileSample(_SAMPLE* pSample, int iSlot)
     }
 }
 
-short ReadSample(const unsigned char* pBytes)
+#ifdef __ghs__
+inline short ReadSample(const unsigned char* pBytes)
+{
+    short sValue;
+    __lhbrx(pBytes, sValue);
+    return sValue;
+}
+#else
+inline short ReadSample(const unsigned char* pBytes)
 {
     return static_cast<short>(ReadLittleEndian16(pBytes));
 }
+#endif
 
-short ConvertOutputSample(int iValue)
+inline short ConvertOutputSample(int iValue)
 {
     int iScaled = iValue >> OUTPUT_SAMPLE_SHIFT;
     if (iScaled <= OUTPUT_SAMPLE_MINIMUM - 1)
@@ -6995,13 +7029,13 @@ const int OUTPUT_LEVEL_SOURCES[SPEAKER_CONFIG_COUNT][OUTPUT_LEVEL_COLUMNS] = {
     {0, 1, 2, 3, 4, 5, 4, 5, 0, 0},
     {0, 1, 2, 3, 4, 5, 6, 4, 5, 0}};
 
-unsigned short EncodeSample(int iValue)
+inline unsigned short EncodeSample(int iValue)
 {
     return static_cast<unsigned short>((static_cast<unsigned short>(iValue) >> 8) |
                                        (static_cast<unsigned char>(iValue) << 8));
 }
 
-int ClampSample(int iValue)
+inline int ClampSample(int iValue)
 {
     if (iValue < LOW_PASS_SAMPLE_MINIMUM)
     {
@@ -7020,50 +7054,53 @@ int ClampSample(int iValue)
 int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination, int iSize)
 {
     _DIG_DRIVER* pDriver = pSample->driver;
-    DecoderStage& decoder = pSample->stages[SAMPLE_STAGE_DECODER].decoder;
-    MergeStage& mixer = pSample->stages[SAMPLE_STAGE_MERGE].merge;
     unsigned char* pDestinationBytes = reinterpret_cast<unsigned char*>(pDestination);
-    unsigned int* pFraction = &pSample->resampleFraction;
-    int** ppLevelsB = pSample->levelsB;
-    int** ppLevelsC = pSample->levelsC;
-    int** ppLevelsD = pSample->levelsD;
 
-    bool bHasFilters = pSample->filterCount > 0;
-    bool bLowPassActive = pSample->lowPassActive != 0;
+    int iFilterActive = 0;
+    if (pSample->filterCount > 0)
+    {
+        iFilterActive = 1;
+    }
+
+    if (pSample->lowPassActive != 0)
+    {
+        iFilterActive = 1;
+    }
+
     unsigned int uFormat = pSample->channelFlags;
-    bool bSource16 = (uFormat & (SAMPLE_FORMAT_16_BITS | SAMPLE_FORMAT_ADPCM)) != 0 ||
-                     decoder.active != 0;
-    bool bPerChannel = (uFormat & SAMPLE_FORMAT_MULTICHANNEL) != 0 ||
-                       ((uFormat & SAMPLE_FORMAT_STEREO) != 0 && pDestination == NULL &&
-                        (pSample->is3D != 0 || bLowPassActive || bHasFilters ||
-                         pSample->userLevels != 0));
+    int iSource16 = (uFormat & (SAMPLE_FORMAT_16_BITS | SAMPLE_FORMAT_ADPCM)) != 0 ||
+                    pSample->stages[SAMPLE_STAGE_DECODER].decoder.active != 0;
+    int iPerChannel = (uFormat & SAMPLE_FORMAT_MULTICHANNEL) != 0 ||
+                      ((uFormat & SAMPLE_FORMAT_STEREO) != 0 &&
+                       (pSample->is3D != 0 || iFilterActive != 0 || pSample->userLevels != 0) &&
+                       pDestination == NULL);
 
     unsigned int uFlags = 0;
     int iFrameBytes = 1;
-    if (bPerChannel)
+    if (iPerChannel)
     {
         uFlags = MIX_FLAG_16_BITS;
         iFrameBytes = 2;
-        if (bSource16)
+        if (iSource16)
         {
             iFrameBytes = pSample->channelCount << 1;
         }
     }
     else
     {
-        bool bStereoOutput =
-            pDestination == NULL && (pDriver->flags & DRIVER_FLAG_STEREO_OR_MULTICHANNEL) != 0;
-        if ((uFormat & SAMPLE_FORMAT_STEREO) != 0)
+        if (pDestination == NULL && (pDriver->flags & DRIVER_FLAG_STEREO_OR_MULTICHANNEL) != 0 &&
+            (uFormat & SAMPLE_FORMAT_STEREO) != 0 && iFilterActive == 0)
         {
-            uFlags = MIX_FLAG_STEREO_SOURCE;
             iFrameBytes = 2;
-            if (bStereoOutput && !bLowPassActive && !bHasFilters)
-            {
-                uFlags |= MIX_FLAG_STEREO_DESTINATION;
-            }
+            uFlags = MIX_FLAG_STEREO_SOURCE | MIX_FLAG_STEREO_DESTINATION;
+        }
+        else if ((uFormat & SAMPLE_FORMAT_STEREO) != 0)
+        {
+            iFrameBytes = 2;
+            uFlags |= MIX_FLAG_STEREO_SOURCE;
         }
 
-        if (bSource16)
+        if (iSource16)
         {
             iFrameBytes <<= 1;
             uFlags |= MIX_FLAG_16_BITS;
@@ -7077,7 +7114,7 @@ int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination,
         pDriver->outputRate = static_cast<int>(static_cast<float>(pSample->playbackRate) *
                                                pSample->playbackRateFactor * pSample->levelC);
         uFraction = 0;
-        *pFraction = 0;
+        pSample->resampleFraction = 0;
     }
     else
     {
@@ -7093,7 +7130,7 @@ int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination,
         if (iStep <= iTolerance + MERGE_UNITY && MERGE_UNITY - iTolerance <= iStep)
         {
             uFraction = MERGE_SNAP_FRACTION;
-            *pFraction = MERGE_SNAP_FRACTION;
+            pSample->resampleFraction = MERGE_SNAP_FRACTION;
             iStep = MERGE_UNITY;
         }
         else
@@ -7104,7 +7141,7 @@ int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination,
                 uFlags |= MERGE_FLAG_FILTERED;
             }
 
-            uFraction = *pFraction;
+            uFraction = pSample->resampleFraction;
             if (iStep < MERGE_MINIMUM_STEP)
             {
                 iStep = MERGE_MINIMUM_STEP;
@@ -7125,7 +7162,7 @@ int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination,
 
     unsigned int uFrames = static_cast<unsigned int>(iDestBytes >> iShift);
     unsigned int uRemainder = MERGE_UNITY - (uFraction & MERGE_FRACTION_MASK);
-    if (pDestination == NULL && (uFlags & MERGE_FLAG_RESAMPLE) != 0 && bPerChannel)
+    if (pDestination == NULL && (uFlags & MERGE_FLAG_RESAMPLE) != 0 && iPerChannel)
     {
         unsigned long long uDividend =
             (static_cast<unsigned long long>(pDriver->framesPerBuffer) << MERGE_FRACTION_SHIFT) +
@@ -7164,47 +7201,49 @@ int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination,
     unsigned short aScratch[MERGE_SCRATCH_SHORTS];
     unsigned char* pScratch = reinterpret_cast<unsigned char*>(aScratch + MERGE_HISTORY_SHORTS);
     int iChunkBytes = (MERGE_CHUNK_BYTES / iFrameBytes) * iFrameBytes;
-    unsigned char* pSource = NULL;
+    unsigned char* pSource;
     unsigned char* pSourceEnd;
 
-    if (decoder.active == 0 && (uFormat & SAMPLE_FORMAT_ADPCM) == 0)
+    if (pSample->stages[SAMPLE_STAGE_DECODER].decoder.active == 0)
     {
         SampleBuffer* pBuffer = &pSample->buffers[pSample->currentBuffer];
         pSource = const_cast<unsigned char*>(pBuffer->data) + pBuffer->position;
-        if (iAvailable < iSourceBytes)
+        pSourceEnd = pSource + iAvailable;
+        if ((pSample->channelFlags & SAMPLE_FORMAT_ADPCM) == 0)
         {
-            iSourceBytes = iAvailable;
-        }
-
-        pSourceEnd = pSource + iSourceBytes;
-    }
-    else
-    {
-        int iHistoryBytes = 0;
-        if (*pSample->channelHeader != CHANNEL_HEADER_UNITY)
-        {
-            pScratch -= iFrameBytes;
-            iHistoryBytes = iFrameBytes;
-            short* pHistory = reinterpret_cast<short*>(pScratch);
-            for (int iHistory = 0; iHistory < pSample->channelCount; ++iHistory)
+            if (iSourceBytes > 0 ||
+                (iSourceBytes = iFrameBytes, (uFraction & MERGE_FRACTION_MASK) + iStep >= MERGE_UNITY))
             {
-                pHistory[iHistory] = static_cast<short>(pSample->channelHeader[iHistory]);
+                if (iAvailable < iSourceBytes)
+                {
+                    iSourceBytes = iAvailable;
+                }
             }
-        }
 
-        int iDecodeBytes = iSourceBytes - iHistoryBytes;
-        if (decoder.active == 0)
+            pSourceEnd = pSource + iSourceBytes;
+        }
+        else
         {
-            SampleBuffer* pBuffer = &pSample->buffers[pSample->currentBuffer];
-            pSource = const_cast<unsigned char*>(pBuffer->data) + pBuffer->position;
-            pSourceEnd = pSource + iAvailable;
+            int iHistoryBytes = 0;
+            if (*pSample->channelHeader != CHANNEL_HEADER_UNITY)
+            {
+                pScratch -= iFrameBytes;
+                iHistoryBytes = iFrameBytes;
+                short* pHistory = reinterpret_cast<short*>(pScratch);
+                for (int iHistory = 0; iHistory < pSample->channelCount; ++iHistory)
+                {
+                    pHistory[iHistory] = static_cast<short>(pSample->channelHeader[iHistory]);
+                }
+            }
+
+            int iDecodeBytes = iSourceBytes - iHistoryBytes;
             if (iDecodeBytes > 0)
             {
                 unsigned char* pDecoded = pScratch + iHistoryBytes;
                 MarkProfileSample(pSample, MERGE_PROFILE_ADPCM);
                 StartTimer(&pDriver->timers[TIMER_ADPCM]);
                 unsigned int uDecodeFlags = MERGE_ADPCM_MONO;
-                if ((uFormat & SAMPLE_FORMAT_STEREO) != 0)
+                if ((pSample->channelFlags & SAMPLE_FORMAT_STEREO) != 0)
                 {
                     uDecodeFlags = MERGE_ADPCM_STEREO;
                 }
@@ -7228,43 +7267,67 @@ int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination,
                 pSource = pScratch;
             }
         }
-        else
+    }
+    else
+    {
+        int iHistoryBytes = 0;
+        if (*pSample->channelHeader != CHANNEL_HEADER_UNITY)
         {
-            if (iDecodeBytes > 0)
+            pScratch -= iFrameBytes;
+            iHistoryBytes = iFrameBytes;
+            short* pHistory = reinterpret_cast<short*>(pScratch);
+            for (int iHistory = 0; iHistory < pSample->channelCount; ++iHistory)
             {
-                int iType = decoder.active;
-                MarkProfileSample(pSample, MERGE_PROFILE_DECODER_BASE + iType);
-                StartTimer(&pDriver->timers[MERGE_DECODER_TIMER_BASE + iType]);
-                if (iDecodeBytes > iChunkBytes)
-                {
-                    iDecodeBytes = iChunkBytes;
-                }
-
-                iSourceBytes = decoder.process(decoder.stream, pScratch + iHistoryBytes,
-                                               iDecodeBytes);
-                StopTimer(&pDriver->timers[MERGE_DECODER_TIMER_BASE + iType]);
-                iSourceBytes += iHistoryBytes;
+                pHistory[iHistory] = static_cast<short>(pSample->channelHeader[iHistory]);
             }
-
-            SampleBuffer* pBuffer = &pSample->buffers[pSample->currentBuffer];
-            if (iSourceBytes != 0 && pBuffer->position == pBuffer->size &&
-                decoder.outputReservoir != RIB_ENTRY_NOT_FOUND)
-            {
-                int iReservoir = -1;
-                decoder.property(decoder.stream, decoder.outputReservoir, &iReservoir, NULL,
-                                 NULL);
-                if (iReservoir > 0)
-                {
-                    pBuffer->position = pBuffer->size - 1;
-                    pSample->bufferRewind = 1;
-                }
-            }
-
-            pSourceEnd = pScratch + iSourceBytes;
-            pLastFrame = pScratch + (iSourceBytes - iFrameBytes);
-            bHistory = true;
-            pSource = pScratch;
         }
+
+        int iDecodeBytes = iSourceBytes - iHistoryBytes;
+        if (iDecodeBytes > 0)
+        {
+            int iType = pSample->stages[SAMPLE_STAGE_DECODER].decoder.active;
+            MarkProfileSample(pSample, MERGE_PROFILE_DECODER_BASE + iType);
+            StartTimer(&pDriver->timers[MERGE_DECODER_TIMER_BASE + iType]);
+            if (iDecodeBytes > iChunkBytes)
+            {
+                iDecodeBytes = iChunkBytes;
+            }
+
+            iSourceBytes = pSample->stages[SAMPLE_STAGE_DECODER].decoder.process(
+                pSample->stages[SAMPLE_STAGE_DECODER].decoder.stream, pScratch + iHistoryBytes,
+                iDecodeBytes);
+            StopTimer(&pDriver->timers[MERGE_DECODER_TIMER_BASE + iType]);
+            iSourceBytes += iHistoryBytes;
+        }
+
+        SampleBuffer* pBuffer = &pSample->buffers[pSample->currentBuffer];
+        if (iSourceBytes == 0)
+        {
+            if (pBuffer->reset != 0)
+            {
+                return 0;
+            }
+        }
+        else if (pBuffer->position == pBuffer->size &&
+                 pSample->stages[SAMPLE_STAGE_DECODER].decoder.outputReservoir !=
+                     RIB_ENTRY_NOT_FOUND)
+        {
+            int iReservoir = -1;
+            pSample->stages[SAMPLE_STAGE_DECODER].decoder.property(
+                pSample->stages[SAMPLE_STAGE_DECODER].decoder.stream,
+                pSample->stages[SAMPLE_STAGE_DECODER].decoder.outputReservoir, &iReservoir, NULL,
+                NULL);
+            if (iReservoir > 0)
+            {
+                pBuffer->position = pBuffer->size - 1;
+                pSample->bufferRewind = 1;
+            }
+        }
+
+        pSourceEnd = pScratch + iSourceBytes;
+        pLastFrame = pScratch + (iSourceBytes - iFrameBytes);
+        bHistory = true;
+        pSource = pScratch;
     }
 
     if (iSourceBytes < 1)
@@ -7277,7 +7340,7 @@ int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination,
         return iSize;
     }
 
-    unsigned int uNextRemainder = MERGE_UNITY - (*pFraction & MERGE_FRACTION_MASK);
+    unsigned int uNextRemainder = MERGE_UNITY - (pSample->resampleFraction & MERGE_FRACTION_MASK);
     unsigned int uSourceFrames = iSourceBytes / iFrameBytes + 1;
     unsigned long long uSourceSpan =
         (static_cast<unsigned long long>(uSourceFrames) << MERGE_FRACTION_SHIFT) +
@@ -7296,11 +7359,10 @@ int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination,
         }
     }
 
-    unsigned int uMask = pSample->cacheState;
     pSample->volume = ZERO;
     for (int iChannel = 0; iChannel < MERGE_CHANNEL_MASK_BITS; ++iChannel)
     {
-        if ((uMask & 1) != 0 && iChannel < pSample->channelCount)
+        if ((pSample->cacheState & 1) != 0 && iChannel < pSample->channelCount)
         {
             ChannelState* pChannelState = &pSample->channelStates[iChannel];
             float fCutOff = pSample->falloffLowPass;
@@ -7380,8 +7442,19 @@ int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination,
                 {
                     pChannelState->appliedLowPass = fApplied;
                     pSample->lowPassActive = 1;
-                    bool bCoefficients = false;
-                    if (LOW_PASS_ENABLE_RATIO <= fApplied)
+                    if (fApplied < LOW_PASS_ENABLE_RATIO)
+                    {
+                        if (uMode == 0)
+                        {
+                            set_lp_info(&pChannelState->lowPassInfo, 0, 0, 0);
+                        }
+                        else
+                        {
+                            pChannelState->limitB = 0;
+                            pChannelState->pendingCoefficients = 0;
+                        }
+                    }
+                    else
                     {
                         float fTangent =
                             ONE / static_cast<float>(
@@ -7392,7 +7465,6 @@ int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination,
                         int iFirst = static_cast<int>(fNumerator);
                         if (fNumerator != ZERO)
                         {
-                            bCoefficients = true;
                             float fScale = static_cast<float>(iFirst) * LOW_PASS_COEFFICIENT_UNIT;
                             float fRoot = static_cast<float>(
                                 sqrt(static_cast<double>(LOW_PASS_FOUR / fScale - LOW_PASS_TWO)));
@@ -7416,11 +7488,7 @@ int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination,
                                 set_lp_info(&pChannelState->lowPassInfo, iFirst, iSecond, iThird);
                             }
                         }
-                    }
-
-                    if (!bCoefficients)
-                    {
-                        if (uMode == 0)
+                        else if (uMode == 0)
                         {
                             set_lp_info(&pChannelState->lowPassInfo, 0, 0, 0);
                         }
@@ -7435,11 +7503,7 @@ int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination,
         }
 
 
-        uMask >>= 1;
-        if (iChannel < MERGE_CHANNEL_MASK_BITS - 1)
-        {
-            pSample->cacheState = uMask;
-        }
+        pSample->cacheState >>= 1;
     }
 
     pSample->cacheState = 0;
@@ -7530,7 +7594,7 @@ int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination,
             (aMixLevels[MIX_LEVEL_E] + aMixLevels[MIX_LEVEL_F]) * HALF;
     }
 
-    unsigned int uInitialFraction = *pFraction;
+    unsigned int uInitialFraction = pSample->resampleFraction;
     int iSourceFrames = iSourceBytes / iFrameBytes;
     int iDummyState = 0;
     int iMixedOffset = 0;
@@ -7547,14 +7611,14 @@ int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination,
 
     for (;;)
     {
-        if (bPerChannel)
+        if (iPerChannel)
         {
             pSource = pDriver->interleaveBuffer;
             iStride = pSample->channelCount;
             MarkProfileSample(pSample, MERGE_PROFILE_DEINTERLEAVE);
             StartTimer(&pDriver->timers[TIMER_DEINTERLEAVE]);
             unsigned short* pPacked = reinterpret_cast<unsigned short*>(pSource);
-            if (bSource16)
+            if (iSource16)
             {
                 const unsigned short* pFrame =
                     reinterpret_cast<const unsigned short*>(pInterleaved) + iChannel;
@@ -7611,8 +7675,8 @@ int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination,
                     fLeft = fRight;
                 }
 
-                ppLevelsC[iLeftRow][iChannel] = ppLevelsB[iLeftRow][iChannel];
-                ppLevelsC[iLeftRow + 1][iChannel] = ppLevelsB[iLeftRow + 1][iChannel];
+                pSample->levelsC[iLeftRow][iChannel] = pSample->levelsB[iLeftRow][iChannel];
+                pSample->levelsC[iLeftRow + 1][iChannel] = pSample->levelsB[iLeftRow + 1][iChannel];
                 float fLevelLeft;
                 float fLevelRight;
                 if (pSample->is3D == 0)
@@ -7636,10 +7700,10 @@ int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination,
                     pSample->outputToDRC && pDriver->speakerConfig == MERGE_OUTPUT_DRC_CONFIG;
                 if (bDrcOutput && iLeftRow <= MERGE_DRC_DOWNMIX_ROW)
                 {
-                    ppLevelsB[iLeftRow][iChannel] = static_cast<int>(
+                    pSample->levelsB[iLeftRow][iChannel] = static_cast<int>(
                         MERGE_VOLUME_SCALE * fLeft * pSample->speakerScales[iLeftRow] * ZERO +
                         HALF);
-                    ppLevelsB[iLeftRow + 1][iChannel] = static_cast<int>(
+                    pSample->levelsB[iLeftRow + 1][iChannel] = static_cast<int>(
                         MERGE_VOLUME_SCALE * fRight * pSample->speakerScales[iRightRow] * ZERO +
                         HALF);
                 }
@@ -7659,28 +7723,28 @@ int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination,
                         }
                     }
 
-                    ppLevelsB[iLeftRow][iChannel] = static_cast<int>(
+                    pSample->levelsB[iLeftRow][iChannel] = static_cast<int>(
                         MERGE_VOLUME_SCALE * fLeft * pSample->speakerScales[iLeftRow] *
                             fLevelLeft +
                         HALF);
-                    ppLevelsB[iLeftRow + 1][iChannel] = static_cast<int>(
+                    pSample->levelsB[iLeftRow + 1][iChannel] = static_cast<int>(
                         MERGE_VOLUME_SCALE * fRight * pSample->speakerScales[iRightRow] *
                             fLevelRight +
                         HALF);
                 }
 
-                if (ppLevelsB[iLeftRow][iChannel] >= MERGE_VOLUME_MAXIMUM)
+                if (pSample->levelsB[iLeftRow][iChannel] >= MERGE_VOLUME_MAXIMUM)
                 {
-                    ppLevelsB[iLeftRow][iChannel] = MERGE_VOLUME_MAXIMUM;
+                    pSample->levelsB[iLeftRow][iChannel] = MERGE_VOLUME_MAXIMUM;
                 }
 
-                if (ppLevelsB[iLeftRow + 1][iChannel] >= MERGE_VOLUME_MAXIMUM)
+                if (pSample->levelsB[iLeftRow + 1][iChannel] >= MERGE_VOLUME_MAXIMUM)
                 {
-                    ppLevelsB[iLeftRow + 1][iChannel] = MERGE_VOLUME_MAXIMUM;
+                    pSample->levelsB[iLeftRow + 1][iChannel] = MERGE_VOLUME_MAXIMUM;
                 }
 
-                if (ppLevelsB[iLeftRow][iChannel] == 0 && ppLevelsB[iLeftRow + 1][iChannel] == 0 &&
-                    ppLevelsC[iLeftRow][iChannel] == 0 && ppLevelsC[iLeftRow + 1][iChannel] == 0 &&
+                if (pSample->levelsB[iLeftRow][iChannel] == 0 && pSample->levelsB[iLeftRow + 1][iChannel] == 0 &&
+                    pSample->levelsC[iLeftRow][iChannel] == 0 && pSample->levelsC[iLeftRow + 1][iChannel] == 0 &&
                     pSample->reverbSecond * pDriver->buses[pSample->reverbBus].sendLevel *
                             pSample->levelD <
                         LEVEL_EPSILON)
@@ -7703,14 +7767,14 @@ int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination,
             *piRight = 0;
             iEndOffset = iOffset + iDestBytes;
             *pSample->channelHeader = CHANNEL_HEADER_UNITY;
-            *pFraction = 0;
+            pSample->resampleFraction = 0;
             pSource = pSourceEnd;
         }
         else
         {
-            if (*pFraction == MERGE_SNAP_FRACTION && (uFlags & MERGE_FLAG_FILTERED) != 0)
+            if (pSample->resampleFraction == MERGE_SNAP_FRACTION && (uFlags & MERGE_FLAG_FILTERED) != 0)
             {
-                *pFraction = 0;
+                pSample->resampleFraction = 0;
                 if ((uFlags & MIX_FLAG_16_BITS) == 0)
                 {
                     *piLeft = pSource[0] - MERGE_BYTE_BIAS;
@@ -7722,23 +7786,23 @@ int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination,
                 }
                 else
                 {
-                    *piLeft = ReadLittleEndian16(pSource);
+                    *piLeft = ReadSample(pSource);
                     *piRight = *piLeft;
                     if ((uFlags & MIX_FLAG_STEREO_SOURCE) != 0)
                     {
-                        *piRight = ReadLittleEndian16(pSource + 2);
+                        *piRight = ReadSample(pSource + 2);
                     }
                 }
             }
 
-            if (bLowPassActive || bHasFilters || pDestination == NULL)
+            if (iFilterActive != 0 || pDestination == NULL)
             {
                 unsigned int uStereo = uFlags & MIX_FLAG_STEREO_SOURCE;
                 int iFrames = iDestBytes >> iShift;
                 unsigned char* pData;
                 unsigned int uBytes;
                 if ((uFlags & MIX_FLAG_16_BITS) == 0 || (uFlags & MERGE_FLAG_RESAMPLE) != 0 ||
-                    (uStereo != 0 && (bLowPassActive || bHasFilters)))
+                    (uStereo != 0 && (iFilterActive != 0)))
                 {
                     pData = pDriver->mix.buffer;
                     int iConvertBytes = iFrames << 1;
@@ -7751,7 +7815,7 @@ int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination,
                     MarkProfileSample(pSample, MERGE_PROFILE_CONVERSION);
                     StartTimer(&pDriver->timers[TIMER_CONVERSION]);
                     unsigned char* pConverted = pData;
-                    mixer.merge(&pSource, pFraction, pSourceEnd,
+                    pSample->stages[SAMPLE_STAGE_MERGE].merge.merge(&pSource, &pSample->resampleFraction, pSourceEnd,
                                 reinterpret_cast<void**>(&pConverted), pData + iConvertBytes,
                                 piLeft, piRight, iStep, 0, 0, uFlags | MERGE_FLAG_CONVERT);
                     StopTimer(&pDriver->timers[TIMER_CONVERSION]);
@@ -8023,7 +8087,7 @@ int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination,
                         StartTimer(&pDriver->timers[TIMER_REVERB]);
                         unsigned int uReverbFraction = 0;
                         int iReverbState = 0;
-                        mixer.merge(&pMixSource, &uReverbFraction, pFilteredEnd,
+                        pSample->stages[SAMPLE_STAGE_MERGE].merge.merge(&pMixSource, &uReverbFraction, pFilteredEnd,
                                     reinterpret_cast<void**>(&pReverbCursor), pReverbEnd,
                                     &iReverbState, &iReverbState, MERGE_UNITY, iReverbLevel,
                                     iReverbLevel, uReverbFlags);
@@ -8053,21 +8117,21 @@ int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination,
 
                         pMixSource = pFiltered;
                         unsigned char* pEnd = output.buffer + output.bytes;
-                        int iLeftTarget = ppLevelsB[iLeftRow][iChannel];
-                        int iLeftCurrent = ppLevelsC[iLeftRow][iChannel];
+                        int iLeftTarget = pSample->levelsB[iLeftRow][iChannel];
+                        int iLeftCurrent = pSample->levelsC[iLeftRow][iChannel];
                         unsigned int uDestinationStereo = output.chans >= 2 ? 1 : 0;
                         int iDestinationShift = uDestinationStereo + MERGE_SHIFT_MONO;
-                        int iRightCurrent = ppLevelsC[iLeftRow + 1][iChannel];
+                        int iRightCurrent = pSample->levelsC[iLeftRow + 1][iChannel];
                         int iDestinationFrames =
                             static_cast<int>(pEnd - pCursor) >> iDestinationShift;
-                        int iRightTarget = ppLevelsB[iLeftRow + 1][iChannel];
+                        int iRightTarget = pSample->levelsB[iLeftRow + 1][iChannel];
                         if ((iLeftTarget != iLeftCurrent || iRightTarget != iRightCurrent) &&
-                            ppLevelsD[iOutput][iChannel] == 0)
+                            pSample->levelsD[iOutput][iChannel] == 0)
                         {
-                            ppLevelsD[iOutput][iChannel] = pSample->rampLength;
+                            pSample->levelsD[iOutput][iChannel] = pSample->rampLength;
                         }
 
-                        int iCount = ppLevelsD[iOutput][iChannel];
+                        int iCount = pSample->levelsD[iOutput][iChannel];
                         int iSourceFramesLeft = static_cast<int>(uBytes) >> iSourceShift;
                         if (iSourceFramesLeft < iCount)
                         {
@@ -8084,8 +8148,8 @@ int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination,
                             pFilteredEnd, reinterpret_cast<void**>(&pCursor), pEnd, &iLeftCurrent,
                             &iRightCurrent, iLeftTarget - iLeftCurrent,
                             iRightTarget - iRightCurrent, iCount);
-                        ppLevelsD[iOutput][iChannel] -= iCount;
-                        if (ppLevelsD[iOutput][iChannel] == 0)
+                        pSample->levelsD[iOutput][iChannel] -= iCount;
+                        if (pSample->levelsD[iOutput][iChannel] == 0)
                         {
                             if (pSample->endMode != 0)
                             {
@@ -8094,8 +8158,8 @@ int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination,
                         }
                         else
                         {
-                            ppLevelsB[iLeftRow][iChannel] = iLeftCurrent;
-                            ppLevelsB[iLeftRow + 1][iChannel] = iRightCurrent;
+                            pSample->levelsB[iLeftRow][iChannel] = iLeftCurrent;
+                            pSample->levelsB[iLeftRow + 1][iChannel] = iRightCurrent;
                         }
 
                         if (pMixSource != pFilteredEnd && pCursor != pEnd)
@@ -8135,7 +8199,7 @@ int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination,
                                 StartTimer(&pDriver->timers[TIMER_MIX]);
                                 unsigned int uRampFraction = 0;
                                 int iRampState = 0;
-                                mixer.merge(&pMixSource, &uRampFraction, pFilteredEnd,
+                                pSample->stages[SAMPLE_STAGE_MERGE].merge.merge(&pMixSource, &uRampFraction, pFilteredEnd,
                                             reinterpret_cast<void**>(&pCursor), pEnd, &iRampState,
                                             &iRampState, MERGE_UNITY, iLeftTarget, iRightTarget,
                                             uMixFlags);
@@ -8145,7 +8209,7 @@ int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination,
                                     unsigned int uSecondFraction = 0;
                                     int iSecondState = 0;
                                     StartTimer(&pDriver->timers[TIMER_MIX]);
-                                    mixer.merge(&pMixSource, &uSecondFraction, pFilteredEnd,
+                                    pSample->stages[SAMPLE_STAGE_MERGE].merge.merge(&pMixSource, &uSecondFraction, pFilteredEnd,
                                                 reinterpret_cast<void**>(&pCursor), pEnd,
                                                 &iSecondState, &iSecondState, MERGE_UNITY,
                                                 iLeftTarget, iRightTarget,
@@ -8173,19 +8237,19 @@ int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination,
                 unsigned char* pCursor = pDestinationBytes + iOffset;
                 MarkProfileSample(pSample, MERGE_PROFILE_MIX);
                 StartTimer(&pDriver->timers[TIMER_MIX]);
-                mixer.merge(&pSource, pFraction, pSourceEnd, reinterpret_cast<void**>(&pCursor),
+                pSample->stages[SAMPLE_STAGE_MERGE].merge.merge(&pSource, &pSample->resampleFraction, pSourceEnd, reinterpret_cast<void**>(&pCursor),
                             pDestinationBytes + iOffset + iDestBytes, piLeft, piRight, iStep, 0, 0,
                             (uFlags & ~MIX_FLAG_STEREO_DESTINATION) | MERGE_FLAG_CONVERT);
                 StopTimer(&pDriver->timers[TIMER_MIX]);
                 iEndOffset = static_cast<int>(pCursor - pDestinationBytes);
             }
 
-            uOutputFraction = *pFraction;
+            uOutputFraction = pSample->resampleFraction;
             pConsumed = pSource;
             iMixedOffset = iEndOffset;
         }
 
-        if (!bPerChannel)
+        if (!iPerChannel)
         {
             iConsumedBytes = static_cast<int>(pSource - pBlockStart);
             break;
@@ -8197,7 +8261,7 @@ int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination,
             if (iMixedOffset != 0)
             {
                 iConsumedBytes = (static_cast<int>(pConsumed - pBlockStart) >> 1) * iFrameBytes;
-                *pFraction = uOutputFraction;
+                pSample->resampleFraction = uOutputFraction;
                 pSource = pConsumed;
                 iEndOffset = iMixedOffset;
             }
@@ -8205,7 +8269,7 @@ int SS_merge(_SAMPLE* pSample, int iAvailable, int iOffset, short* pDestination,
             break;
         }
 
-        *pFraction = uInitialFraction;
+        pSample->resampleFraction = uInitialFraction;
         if ((iChannel & 1) == 0)
         {
             piLeft = pSample->channelPositionA + (iChannel >> 1);

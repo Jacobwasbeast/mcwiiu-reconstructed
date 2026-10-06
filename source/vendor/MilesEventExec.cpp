@@ -1351,8 +1351,6 @@ int StartSingle(const EVENT_STEP_INFO* step, EventSystem* eventSystem, const cha
 
 extern int strtoi(const char* value, const char** end);
 
-namespace
-{
 const int BEGIN_ASYNC_LOAD_LINE = 0x2f0;
 const int BEGIN_ASYNC_OWNER_LINE = 0x2ec;
 const int BUS_PRESET_LINE = 0xb57;
@@ -1380,19 +1378,19 @@ const int CONTROL_MARKER_MILLISECONDS = 2;
 const int CONTROL_MARKER_CONVERTED = 4;
 const int CONTROL_MARKER_SAMPLES = 1;
 
-bool InstanceMatchesTarget(const SoundInstanceData* instance, unsigned long long target)
+static inline bool InstanceMatchesTarget(const SoundInstanceData* instance, unsigned long long target)
 {
     return instance->m_state != SOUND_STATE_FINISHED &&
            ((target == 0) || instance->m_serial == target || instance->m_eventId == target ||
             instance->m_selection == target);
 }
 
-bool SameHandle(const Handle& first, const Handle& second)
+static bool SameHandle(const Handle& first, const Handle& second)
 {
     return first.index == second.index && first.generation == second.generation;
 }
 
-void FreeNodeList(Handle* head)
+static void FreeNodeList(Handle* head)
 {
     EventListNode* node = static_cast<EventListNode*>(Handle_Get(*head));
     while (node != NULL)
@@ -1403,23 +1401,7 @@ void FreeNodeList(Handle* head)
     }
 }
 
-void ClearEnvironment(EventSystem* eventSystem)
-{
-    if (eventSystem->m_environment.index != 0)
-    {
-        const char* name = static_cast<const char*>(Handle_Get(eventSystem->m_environment));
-        void* preset = Container_GetEnvironment(name);
-        if (preset != NULL)
-        {
-            AIL_unapply_raw_environment_preset(eventSystem->m_driver, preset);
-        }
-
-        Handle_Free(eventSystem->m_environment);
-        eventSystem->m_environment = Handle();
-    }
-}
-
-void PlayStepSelect(const EVENT_STEP_INFO* step, EventSystem* eventSystem, QueuedEvent* event,
+static void PlayStepSelect(const EVENT_STEP_INFO* step, EventSystem* eventSystem, QueuedEvent* event,
                     const unsigned char* stepKey)
 {
     const PlayStep& play = step->m_data.m_play;
@@ -1459,10 +1441,13 @@ void PlayStepSelect(const EVENT_STEP_INFO* step, EventSystem* eventSystem, Queue
     {
         if (*cursor != ':')
         {
-            cursor = strchr(cursor, ':');
+            cursor = strchr(cursor, ':') + 1;
+        }
+        else
+        {
+            ++cursor;
         }
 
-        ++cursor;
         const int weight = strtoi(cursor, NULL);
         totalWeight += weight;
         if ((pickMask & (1 << (entryCount & 0x3f))) != 0)
@@ -1474,8 +1459,7 @@ void PlayStepSelect(const EVENT_STEP_INFO* step, EventSystem* eventSystem, Queue
             availableWeight += weight;
         }
 
-        cursor = strchr(cursor, ':');
-        ++cursor;
+        cursor = strchr(cursor, ':') + 1;
         ++entryCount;
     }
 
@@ -1578,7 +1562,7 @@ void PlayStepSelect(const EVENT_STEP_INFO* step, EventSystem* eventSystem, Queue
                 event->selection, -1);
 }
 
-void PlayStepBlend(const EVENT_STEP_INFO* step, EventSystem* eventSystem, QueuedEvent* event)
+static void PlayStepBlend(const EVENT_STEP_INFO* step, EventSystem* eventSystem, QueuedEvent* event)
 {
     const PlayStep& play = step->m_data.m_play;
     if (Blend_Exists(eventSystem, play.m_selector) == 0)
@@ -1620,7 +1604,7 @@ void PlayStepBlend(const EVENT_STEP_INFO* step, EventSystem* eventSystem, Queued
     }
 }
 
-void ControlBus(const ControlStep& control, EventSystem* eventSystem, const char* busName,
+static void ControlBus(const ControlStep& control, EventSystem* eventSystem, const char* busName,
                 unsigned long long serial)
 {
     if (control.m_presetLength == 0)
@@ -1667,7 +1651,7 @@ void ControlBus(const ControlStep& control, EventSystem* eventSystem, const char
     }
 }
 
-void ControlInstance(const ControlStep& control, EventSystem* eventSystem, SoundInstanceData* instance,
+static void ControlInstance(const ControlStep& control, EventSystem* eventSystem, SoundInstanceData* instance,
                      unsigned long long serial)
 {
     _SAMPLE* sample = instance->m_sample;
@@ -1707,13 +1691,13 @@ void ControlInstance(const ControlStep& control, EventSystem* eventSystem, Sound
 
     if (action == ACTION_PAUSE)
     {
-        if (instance->m_stream == NULL)
+        if (instance->m_stream != NULL)
         {
-            AIL_stop_sample(sample);
+            AIL_pause_stream(instance->m_stream, 1);
         }
         else
         {
-            AIL_pause_stream(instance->m_stream, 1);
+            AIL_stop_sample(sample);
         }
 
         instance->m_paused = 1;
@@ -1792,13 +1776,13 @@ void ControlInstance(const ControlStep& control, EventSystem* eventSystem, Sound
 
         if (position != LOOP_POINT_UNCHANGED)
         {
-            if (positionType != CONTROL_MARKER_MILLISECONDS)
+            if (positionType == CONTROL_MARKER_MILLISECONDS)
             {
-                AIL_set_stream_position(stream, position);
+                AIL_set_stream_ms_position(stream, position);
             }
             else
             {
-                AIL_set_stream_ms_position(stream, position);
+                AIL_set_stream_position(stream, position);
             }
         }
 
@@ -1840,13 +1824,13 @@ void ControlInstance(const ControlStep& control, EventSystem* eventSystem, Sound
 
         if (position != LOOP_POINT_UNCHANGED)
         {
-            if (positionType != CONTROL_MARKER_MILLISECONDS)
+            if (positionType == CONTROL_MARKER_MILLISECONDS)
             {
-                AIL_set_sample_position(sample, position);
+                AIL_set_sample_ms_position(sample, position);
             }
             else
             {
-                AIL_set_sample_ms_position(sample, position);
+                AIL_set_sample_position(sample, position);
             }
         }
 
@@ -1859,11 +1843,7 @@ void ControlInstance(const ControlStep& control, EventSystem* eventSystem, Sound
     if (control.m_presetLength != 0)
     {
         void* preset = Container_GetPreset(control.m_preset);
-        if (preset == NULL)
-        {
-            ErrorHandler(ERROR_TYPE_SOUND_NOT_FOUND, serial, control.m_preset);
-        }
-        else
+        if (preset != NULL)
         {
             AIL_resolve_raw_sound_preset(preset, instance, EvalFunc);
             AIL_apply_raw_sound_preset(sample, preset);
@@ -1888,24 +1868,28 @@ void ControlInstance(const ControlStep& control, EventSystem* eventSystem, Sound
                 }
             }
         }
+        else
+        {
+            ErrorHandler(ERROR_TYPE_SOUND_NOT_FOUND, serial, control.m_preset);
+        }
     }
 
     if (action == ACTION_RESUME)
     {
-        if (instance->m_stream == NULL)
+        if (instance->m_stream != NULL)
         {
-            AIL_resume_sample(sample);
+            AIL_pause_stream(instance->m_stream, 0);
         }
         else
         {
-            AIL_pause_stream(instance->m_stream, 0);
+            AIL_resume_sample(sample);
         }
 
         instance->m_paused = 0;
     }
 }
 
-void StepControl(const EVENT_STEP_INFO* step, EventSystem* eventSystem, QueuedEvent* event)
+static void StepControl(const EVENT_STEP_INFO* step, EventSystem* eventSystem, QueuedEvent* event)
 {
     const ControlStep& control = step->m_data.m_control;
     if ((event->flags & QUEUED_EVENT_AUDITIONED) != 0)
@@ -1932,12 +1916,24 @@ void StepControl(const EVENT_STEP_INFO* step, EventSystem* eventSystem, QueuedEv
     }
 }
 
-void StepEnvironment(const EVENT_STEP_INFO* step, EventSystem* eventSystem, QueuedEvent* event)
+static void StepEnvironment(const EVENT_STEP_INFO* step, EventSystem* eventSystem, QueuedEvent* event)
 {
     const EnvironmentStep& environment = step->m_data.m_environment;
     if (environment.m_nameLength == 0)
     {
-        ClearEnvironment(eventSystem);
+        if (eventSystem->m_environment.index != 0)
+        {
+            const char* name = static_cast<const char*>(Handle_Get(eventSystem->m_environment));
+            void* preset = Container_GetEnvironment(name);
+            if (preset != NULL)
+            {
+                AIL_unapply_raw_environment_preset(eventSystem->m_driver, preset);
+            }
+
+            Handle_Free(eventSystem->m_environment);
+            eventSystem->m_environment = Handle();
+        }
+
         eventSystem->m_environmentActive = 0;
         return;
     }
@@ -1971,7 +1967,7 @@ void StepEnvironment(const EVENT_STEP_INFO* step, EventSystem* eventSystem, Queu
     AIL_apply_raw_environment_preset(eventSystem->m_driver, preset);
 }
 
-void StepRamp(const EVENT_STEP_INFO* step, EventSystem* eventSystem, QueuedEvent* event)
+static void StepRamp(const EVENT_STEP_INFO* step, EventSystem* eventSystem, QueuedEvent* event)
 {
     const RampStep& ramp = step->m_data.m_ramp;
     if (event->context == 0 && ramp.m_global == 1)
@@ -1999,7 +1995,7 @@ void StepRamp(const EVENT_STEP_INFO* step, EventSystem* eventSystem, QueuedEvent
     }
 }
 
-void StepReset(EventSystem* eventSystem, QueuedEvent* event)
+static void StepReset(EventSystem* eventSystem, QueuedEvent* event)
 {
     PersistNode* persist = static_cast<PersistNode*>(Handle_Get(eventSystem->m_persists));
     while (persist != NULL)
@@ -2024,11 +2020,23 @@ void StepReset(EventSystem* eventSystem, QueuedEvent* event)
         ramp = static_cast<EventListNode*>(Handle_Get(eventSystem->m_ramps));
     }
 
-    ClearEnvironment(eventSystem);
+    if (eventSystem->m_environment.index != 0)
+    {
+        const char* name = static_cast<const char*>(Handle_Get(eventSystem->m_environment));
+        void* preset = Container_GetEnvironment(name);
+        if (preset != NULL)
+        {
+            AIL_unapply_raw_environment_preset(eventSystem->m_driver, preset);
+        }
+
+        Handle_Free(eventSystem->m_environment);
+        eventSystem->m_environment = Handle();
+    }
+
     Audition_ClearState();
 }
 
-void StepLimitSelect(const EVENT_STEP_INFO* step, EventSystem* eventSystem, QueuedEvent* event)
+static void StepLimitSelect(const EVENT_STEP_INFO* step, EventSystem* eventSystem, QueuedEvent* event)
 {
     const NameStep& name = step->m_data.m_name;
     Handle current = eventSystem->m_limits;
@@ -2081,7 +2089,7 @@ void StepLimitSelect(const EVENT_STEP_INFO* step, EventSystem* eventSystem, Queu
     }
 }
 
-void SetTweenSegments(TweenNode* node, const TweenStep& tween)
+static inline void SetTweenSegments(TweenNode* node, const TweenStep& tween)
 {
     node->m_curves[0] = tween.m_firstCurve;
     node->m_curves[1] = tween.m_secondCurve;
@@ -2092,7 +2100,7 @@ void SetTweenSegments(TweenNode* node, const TweenStep& tween)
     node->m_times[1] = tween.m_secondTime;
 }
 
-void StepTween(const EVENT_STEP_INFO* step, EventSystem* eventSystem)
+static void StepTween(const EVENT_STEP_INFO* step, EventSystem* eventSystem)
 {
     const TweenStep& tween = step->m_data.m_tween;
     TweenNode* node = static_cast<TweenNode*>(Handle_Get(eventSystem->m_tweens));
@@ -2122,9 +2130,9 @@ void StepTween(const EVENT_STEP_INFO* step, EventSystem* eventSystem)
     }
 }
 
-void PollSoundLoads(EventSystem* eventSystem)
+static void UpdateSoundLoads(EventSystem* eventSystem)
 {
-    const int count = eventSystem->m_sounds.Count();
+    int count = eventSystem->m_sounds.Count();
     for (int index = 0; index < count; ++index)
     {
         LoadedSound* sound = static_cast<LoadedSound*>(Handle_Get(eventSystem->m_sounds[index]));
@@ -2162,13 +2170,14 @@ void PollSoundLoads(EventSystem* eventSystem)
 
         for (int next = index + 1; next < count; ++next)
         {
-            const Handle following = eventSystem->m_sounds[next];
+            Handle& current = eventSystem->m_sounds[next];
+            const Handle following = current;
             if (static_cast<LoadedSound*>(Handle_Get(following))->m_loadSlot == 0)
             {
                 break;
             }
 
-            eventSystem->m_sounds[next] = eventSystem->m_sounds[next - 1];
+            current = eventSystem->m_sounds[next - 1];
             eventSystem->m_sounds[next - 1] = following;
         }
 
@@ -2178,10 +2187,7 @@ void PollSoundLoads(EventSystem* eventSystem)
             ErrorHandler(ERROR_TYPE_ASYNC_LOAD_FAILED, 0, static_cast<const char*>(Handle_Get(sound->m_name)));
         }
     }
-}
 
-void StartPendingSoundLoads(EventSystem* eventSystem)
-{
     int freeSlots = 0;
     for (int slot = 0; slot < SOUND_LOAD_SLOT_COUNT; ++slot)
     {
@@ -2191,8 +2197,7 @@ void StartPendingSoundLoads(EventSystem* eventSystem)
         }
     }
 
-    int count = eventSystem->m_sounds.Count();
-    if (freeSlots == 0 || count <= 0)
+    if (freeSlots == 0)
     {
         return;
     }
@@ -2217,12 +2222,7 @@ void StartPendingSoundLoads(EventSystem* eventSystem)
             request->iOwnerLine = BEGIN_ASYNC_OWNER_LINE;
             g_soundLoadOwners[slot] = eventSystem;
             request->pOwnerName = EVENT_EXEC_FILE;
-            if (info.m_unbuffered != 0)
-            {
-                request->iLengthHigh = -1;
-                request->iLength = -1;
-            }
-            else
+            if (info.m_unbuffered == 0)
             {
                 sound->m_data = AIL_mem_alloc_lock_info(info.m_dataSize, EVENT_EXEC_FILE, BEGIN_ASYNC_LOAD_LINE);
                 if (sound->m_data == NULL)
@@ -2238,6 +2238,11 @@ void StartPendingSoundLoads(EventSystem* eventSystem)
                 request->iLength = info.m_dataSize;
                 request->iLengthHigh = info.m_dataSize >> 31;
             }
+            else
+            {
+                request->iLengthHigh = -1;
+                request->iLength = -1;
+            }
 
             Audition_AsyncLoad(sound->m_auditionId, info.m_dataSize);
             g_soundLoadBusy[slot] = 1;
@@ -2246,10 +2251,11 @@ void StartPendingSoundLoads(EventSystem* eventSystem)
             MilesAsyncFileRead(request);
             for (int earlier = 0; earlier < index; ++earlier)
             {
-                if (static_cast<LoadedSound*>(Handle_Get(eventSystem->m_sounds[earlier]))->m_loadSlot == 0)
+                Handle& candidate = eventSystem->m_sounds[earlier];
+                if (static_cast<LoadedSound*>(Handle_Get(candidate))->m_loadSlot == 0)
                 {
-                    const Handle swapped = eventSystem->m_sounds[earlier];
-                    eventSystem->m_sounds[earlier] = eventSystem->m_sounds[index];
+                    const Handle swapped = candidate;
+                    candidate = eventSystem->m_sounds[index];
                     eventSystem->m_sounds[index] = swapped;
                     break;
                 }
@@ -2266,7 +2272,7 @@ void StartPendingSoundLoads(EventSystem* eventSystem)
     }
 }
 
-void ReloadAllSounds(EventSystem* eventSystem)
+static void ReloadAllSounds(EventSystem* eventSystem)
 {
     const int instanceCount = eventSystem->m_instances.Count();
     for (int index = 0; index < instanceCount; ++index)
@@ -2300,7 +2306,7 @@ void ReloadAllSounds(EventSystem* eventSystem)
     sounds.FreeMem();
 }
 
-void FinishCompletedSounds(EventSystem* eventSystem)
+static void FinishCompletedSounds(EventSystem* eventSystem)
 {
     const int count = eventSystem->m_instances.Count();
     for (int index = 0; index < count; ++index)
@@ -2313,14 +2319,14 @@ void FinishCompletedSounds(EventSystem* eventSystem)
         }
 
         bool finished;
-        if (instance->m_stream == NULL)
-        {
-            finished = AIL_sample_status(instance->m_sample) == SAMPLE_DONE;
-        }
-        else
+        if (instance->m_stream != NULL)
         {
             const int status = AIL_stream_status(instance->m_stream);
             finished = status == STREAM_DONE || status == SAMPLE_DONE;
+        }
+        else
+        {
+            finished = AIL_sample_status(instance->m_sample) == SAMPLE_DONE;
         }
 
         if (!finished)
@@ -2339,7 +2345,6 @@ void FinishCompletedSounds(EventSystem* eventSystem)
 
         DestroySoundInstance(eventSystem, reinterpret_cast<SoundInstance*>(instance));
     }
-}
 }
 
 extern "C" int MilesBeginEventQueueProcessingInternal()
@@ -2364,8 +2369,7 @@ extern "C" int MilesBeginEventQueueProcessingInternal()
 
     for (EventSystem* eventSystem = g_eventSystemList; eventSystem != NULL; eventSystem = eventSystem->m_next)
     {
-        PollSoundLoads(eventSystem);
-        StartPendingSoundLoads(eventSystem);
+        UpdateSoundLoads(eventSystem);
     }
 
     const unsigned long long queueStart = Queue_EnumCreate();
@@ -2381,25 +2385,27 @@ extern "C" int MilesBeginEventQueueProcessingInternal()
         }
 
         const unsigned char* steps = static_cast<const unsigned char*>(event->event);
+        const char* auditionName = NULL;
+        bool fromBank = false;
         if ((event->flags & QUEUED_EVENT_NAMED) != 0)
         {
-            const char* name = static_cast<const char*>(event->event);
-            steps = Container_GetEvent(name);
-            const bool fromBank = steps != NULL;
+            auditionName = static_cast<const char*>(event->event);
+            steps = Container_GetEvent(auditionName);
+            fromBank = steps != NULL;
             if (!fromBank && Audition_Status() == 0)
             {
-                ErrorHandler(ERROR_TYPE_SOUND_NOT_FOUND, event->serial, name);
-            }
-            else
-            {
-                Audition_Event(name, event->serial, event->context, fromBank, event->data, event->dataSize);
+                ErrorHandler(ERROR_TYPE_SOUND_NOT_FOUND, event->serial, auditionName);
             }
         }
         else if (steps != NULL && *steps == AUDITION_EVENT_PREFIX)
         {
-            Audition_Event(reinterpret_cast<const char*>(steps + 1), event->serial, event->context, 0,
-                           event->data, event->dataSize);
+            auditionName = reinterpret_cast<const char*>(steps + 1);
             steps = NULL;
+        }
+
+        if (auditionName != NULL)
+        {
+            Audition_Event(auditionName, event->serial, event->context, fromBank, event->data, event->dataSize);
         }
 
         const unsigned char* cursor = steps;
@@ -2417,19 +2423,8 @@ extern "C" int MilesBeginEventQueueProcessingInternal()
 
             switch (step->m_kind)
             {
-            case EVENT_STEP_PLAY:
-                if ((step->m_data.m_play.m_modeFlags & MODE_MASK) == MODE_BLEND)
-                {
-                    PlayStepBlend(step, eventSystem, event);
-                }
-                else
-                {
-                    PlayStepSelect(step, eventSystem, event, stepKey);
-                }
-
-                break;
-            case EVENT_STEP_CONTROL:
-                StepControl(step, eventSystem, event);
+            case EVENT_STEP_RESET:
+                StepReset(eventSystem, event);
                 break;
             case EVENT_STEP_ENVIRONMENT:
                 StepEnvironment(step, eventSystem, event);
@@ -2454,11 +2449,25 @@ extern "C" int MilesBeginEventQueueProcessingInternal()
                 }
 
                 break;
+            case EVENT_STEP_LIMIT_SELECT:
+                StepLimitSelect(step, eventSystem, event);
+                break;
+            case EVENT_STEP_CONTROL:
+                StepControl(step, eventSystem, event);
+                break;
             case EVENT_STEP_RAMP:
                 StepRamp(step, eventSystem, event);
                 break;
-            case EVENT_STEP_RESET:
-                StepReset(eventSystem, event);
+            case EVENT_STEP_PLAY:
+                if ((step->m_data.m_play.m_modeFlags & MODE_MASK) == MODE_BLEND)
+                {
+                    PlayStepBlend(step, eventSystem, event);
+                }
+                else
+                {
+                    PlayStepSelect(step, eventSystem, event, stepKey);
+                }
+
                 break;
             case EVENT_STEP_ENQUEUE:
                 if (step->m_data.m_name.m_nameLength != 0)
@@ -2467,9 +2476,6 @@ extern "C" int MilesBeginEventQueueProcessingInternal()
                                                       event->dataSize, event->serial);
                 }
 
-                break;
-            case EVENT_STEP_LIMIT_SELECT:
-                StepLimitSelect(step, eventSystem, event);
                 break;
             case EVENT_STEP_TWEEN:
                 StepTween(step, eventSystem);
@@ -2501,8 +2507,6 @@ extern "C" int MilesBeginEventQueueProcessingInternal()
 }
 
 
-namespace
-{
 const float BUS_GAIN_SCALE = 32767.0f;
 const float BUS_GAIN_FLOOR = 1.0e-5f;
 const float BUS_DECIBEL_FLOOR = -96.0f;
@@ -2521,8 +2525,6 @@ const int DAC_NAME_DIGIT = 10;
 const int DECIBEL_NAME_DIGIT = 9;
 const char MAIN_BUS_DAC_NAME[] = "_MainBusDAC";
 const char MAIN_BUS_DECIBEL_NAME[] = "_MainBusDb";
-const char AUX_BUS_DAC_NAME[] = "_AuxBusDAC0";
-const char AUX_BUS_DECIBEL_NAME[] = "_AuxBusDb0";
 const int BUS_NAME_BUFFER_SIZE = 12;
 const int LFO_SINE = 0;
 const int LFO_TRIANGLE = 1;
@@ -2536,30 +2538,32 @@ const int POSITION_BYTES_SHIFT = 3;
 const int POSITION_PREFETCH_BYTES = 0x10000;
 const unsigned char SOUND_FLAG_PENDING_DATA_MASK = 4;
 
-void SetBusVariables(EventSystem* eventSystem, const BusNode* bus, float gain)
+static void SetBusVariables(EventSystem* eventSystem, const BusNode* bus, float gain)
 {
-    char name[BUS_NAME_BUFFER_SIZE];
-    const char* variableName = MAIN_BUS_DAC_NAME;
-    if (bus->m_index != MAIN_BUS_INDEX)
-    {
-        strcpy(name, AUX_BUS_DAC_NAME);
-        name[DAC_NAME_DIGIT] = static_cast<char>(bus->m_index + '0');
-        variableName = name;
-    }
-
     float value = gain;
-    Var_SetInstance(&eventSystem->m_variables, variableName, &value, 1);
-    char decibelName[BUS_NAME_BUFFER_SIZE];
-    variableName = MAIN_BUS_DECIBEL_NAME;
-    if (bus->m_index != MAIN_BUS_INDEX)
+    char dacName[BUS_NAME_BUFFER_SIZE] = "_AuxBusDAC0";
+    dacName[DAC_NAME_DIGIT] = static_cast<char>(bus->m_index + '0');
+    const char* variableName = dacName;
+    if (bus->m_index == MAIN_BUS_INDEX)
     {
-        strcpy(decibelName, AUX_BUS_DECIBEL_NAME);
-        decibelName[DECIBEL_NAME_DIGIT] = static_cast<char>(bus->m_index + '0');
-        variableName = decibelName;
+        variableName = MAIN_BUS_DAC_NAME;
     }
 
-    float decibels = BUS_DECIBEL_FLOOR;
-    if (BUS_GAIN_FLOOR <= gain)
+    Var_SetInstance(&eventSystem->m_variables, variableName, &value, 1);
+    char decibelName[BUS_NAME_BUFFER_SIZE] = "_AuxBusDb0";
+    decibelName[DECIBEL_NAME_DIGIT] = static_cast<char>(bus->m_index + '0');
+    variableName = decibelName;
+    if (bus->m_index == MAIN_BUS_INDEX)
+    {
+        variableName = MAIN_BUS_DECIBEL_NAME;
+    }
+
+    float decibels;
+    if (gain < BUS_GAIN_FLOOR)
+    {
+        decibels = BUS_DECIBEL_FLOOR;
+    }
+    else
     {
         decibels = static_cast<float>(BUS_DECIBEL_FACTOR * log10(static_cast<double>(gain)));
     }
@@ -2567,7 +2571,7 @@ void SetBusVariables(EventSystem* eventSystem, const BusNode* bus, float gain)
     Var_SetInstance(&eventSystem->m_variables, variableName, &decibels, 1);
 }
 
-void ApplyBusPreset(EventSystem* eventSystem, BusNode* bus)
+static void ApplyBusPreset(EventSystem* eventSystem, BusNode* bus)
 {
     bus->m_presetApplied = 1;
     const char* presetName = static_cast<const char*>(Handle_Get(bus->m_preset));
@@ -2589,7 +2593,7 @@ void ApplyBusPreset(EventSystem* eventSystem, BusNode* bus)
     AIL_apply_raw_sound_preset(bus->m_sample, preset);
 }
 
-void UpdateBuses(EventSystem* eventSystem)
+static void UpdateBuses(EventSystem* eventSystem)
 {
     BusNode* bus = static_cast<BusNode*>(Handle_Get(eventSystem->m_buses));
     while (bus != NULL)
@@ -2611,17 +2615,17 @@ void UpdateBuses(EventSystem* eventSystem)
                 ramp->m_labels[BUS_NAME_PREFIX_LENGTH] - '0' == bus->m_index)
             {
                 const float value = Ramp_GetCurrentValue(eventSystem, ramp, 1);
-                if (ramp->m_target == 0)
+                switch (ramp->m_target)
                 {
+                case 0:
                     levelA = levelA * value;
-                }
-                else if (ramp->m_target == 1)
-                {
+                    break;
+                case 1:
                     levelB = levelB * value;
-                }
-                else if (ramp->m_target == 2)
-                {
+                    break;
+                case 2:
                     rate = value;
+                    break;
                 }
             }
 
@@ -2641,18 +2645,17 @@ void UpdateBuses(EventSystem* eventSystem)
     }
 }
 
-void ReapplyEnvironment(EventSystem* eventSystem)
+static void ReapplyEnvironment(EventSystem* eventSystem)
 {
     if (eventSystem->m_environment.index == 0 || eventSystem->m_environmentActive == 0)
     {
         return;
     }
 
-    const char* name = static_cast<const char*>(Handle_Get(eventSystem->m_environment));
-    void* preset = Container_GetEnvironment(name);
+    void* preset = Container_GetEnvironment(static_cast<const char*>(Handle_Get(eventSystem->m_environment)));
     if (preset == NULL)
     {
-        ErrorHandler(ERROR_TYPE_SOUND_NOT_FOUND, 0, name);
+        ErrorHandler(ERROR_TYPE_SOUND_NOT_FOUND, 0, static_cast<const char*>(Handle_Get(eventSystem->m_environment)));
         return;
     }
 
@@ -2661,73 +2664,7 @@ void ReapplyEnvironment(EventSystem* eventSystem)
     AIL_apply_raw_environment_preset(eventSystem->m_driver, preset);
 }
 
-float EvaluateLfo(const LfoNode* lfo, float period)
-{
-    float value = 0.0f;
-    float shape;
-    if (lfo->m_mode == LFO_SINE)
-    {
-        const float angle = static_cast<float>(lfo->m_inverted) * LFO_HALF_TURN +
-                            static_cast<float>(static_cast<double>(LFO_FULL_TURN * lfo->m_time) / period);
-        const float sine = sinf(angle);
-        if (lfo->m_flip == 0)
-        {
-            return static_cast<float>((0.0 + sine) * lfo->m_amplitude + lfo->m_center);
-        }
-
-        return static_cast<float>((1.0 + sine) * lfo->m_amplitude + lfo->m_center);
-    }
-
-    if (lfo->m_mode == LFO_TRIANGLE)
-    {
-        shape = (lfo->m_time + lfo->m_time) / period;
-        if (period * 0.5f < lfo->m_time)
-        {
-            shape = 2.0f - shape;
-        }
-
-        if (lfo->m_inverted != 0)
-        {
-            shape = 1.0f - shape;
-        }
-    }
-    else if (lfo->m_mode == LFO_RAMP)
-    {
-        shape = lfo->m_time / period;
-        if (lfo->m_inverted != 0)
-        {
-            shape = 1.0f - shape;
-        }
-    }
-    else if (lfo->m_mode == LFO_SQUARE)
-    {
-        float high = 0.0f;
-        if (LFO_PERCENT * lfo->m_time / period - static_cast<float>(lfo->m_offset) < 0.0f)
-        {
-            high = 1.0f;
-        }
-
-        shape = high;
-        if (lfo->m_inverted != 0)
-        {
-            shape = high != 0.0f ? 0.0f : 1.0f;
-        }
-    }
-    else
-    {
-        return static_cast<float>(value * lfo->m_amplitude + lfo->m_center);
-    }
-
-    if (lfo->m_flip == 0)
-    {
-        shape = shape - 0.5f;
-    }
-
-    value = shape * lfo->m_amplitude + lfo->m_center;
-    return value;
-}
-
-void UpdateLfos(EventSystem* eventSystem, float elapsed)
+static void UpdateLfos(EventSystem* eventSystem, float elapsed)
 {
     LfoNode* lfo = static_cast<LfoNode*>(Handle_Get(eventSystem->m_lfos));
     while (lfo != NULL)
@@ -2750,12 +2687,68 @@ void UpdateLfos(EventSystem* eventSystem, float elapsed)
             Var_LookupWithContext(eventSystem, eventSystem->m_variables, amplitudeText, 1, &lfo->m_amplitude);
         }
 
-        const float period = static_cast<float>(1.0 / static_cast<double>(lfo->m_frequency));
-        float value = EvaluateLfo(lfo, period);
-        float time = static_cast<float>(static_cast<double>(lfo->m_time) + elapsed);
+        const float period = 1.0f / lfo->m_frequency;
+        float value = 0.0f;
+        switch (lfo->m_mode)
+        {
+        case LFO_SINE:
+            value = lfo->m_flip != 0
+                        ? 1.0f + sinf(static_cast<float>(lfo->m_inverted) * LFO_HALF_TURN +
+                                      LFO_FULL_TURN * lfo->m_time / period)
+                        : 0.0f + sinf(static_cast<float>(lfo->m_inverted) * LFO_HALF_TURN +
+                                      LFO_FULL_TURN * lfo->m_time / period);
+            break;
+        case LFO_TRIANGLE:
+            value = (lfo->m_time + lfo->m_time) / period;
+            if (period * 0.5f < lfo->m_time)
+            {
+                value = 2.0f - value;
+            }
+
+            if (lfo->m_inverted != 0)
+            {
+                value = 1.0f - value;
+            }
+
+            if (lfo->m_flip == 0)
+            {
+                value = value - 0.5f;
+            }
+
+            break;
+        case LFO_RAMP:
+            value = lfo->m_time / period;
+            if (lfo->m_inverted != 0)
+            {
+                value = 1.0f - value;
+            }
+
+            if (lfo->m_flip == 0)
+            {
+                value = value - 0.5f;
+            }
+
+            break;
+        case LFO_SQUARE:
+            value = LFO_PERCENT * lfo->m_time / period - static_cast<float>(lfo->m_offset) < 0.0f ? 1.0f : 0.0f;
+            if (lfo->m_inverted != 0)
+            {
+                value = value != 0.0f ? 0.0f : 1.0f;
+            }
+
+            if (lfo->m_flip == 0)
+            {
+                value = value - 0.5f;
+            }
+
+            break;
+        }
+
+        value = value * lfo->m_amplitude + lfo->m_center;
+        float time = lfo->m_time + elapsed;
         if (period <= time)
         {
-            time = static_cast<float>(time - period);
+            time = time - period;
         }
 
         lfo->m_time = time;
@@ -2764,7 +2757,7 @@ void UpdateLfos(EventSystem* eventSystem, float elapsed)
     }
 }
 
-float EvaluateTween(const TweenNode* tween, int segment)
+static float EvaluateTween(const TweenNode* tween, int segment)
 {
     float time = tween->m_elapsed;
     float duration = tween->m_times[0];
@@ -2774,32 +2767,29 @@ float EvaluateTween(const TweenNode* tween, int segment)
         duration = tween->m_times[1] - duration;
     }
 
-    const double fraction = time / duration;
-    const float from = tween->m_values[segment];
-    const float to = tween->m_values[segment + 1];
-    const int curve = tween->m_curves[segment];
-    if (curve == TWEEN_CURVE_DECELERATE)
+    const float fraction = time / duration;
+    switch (tween->m_curves[segment])
     {
-        return static_cast<float>(-((1.0 - fraction) * (1.0 - fraction) - 1.0)) * (to - from) + from;
+    default:
+        return fraction * (tween->m_values[segment + 1] - tween->m_values[segment]) + tween->m_values[segment];
+    case TWEEN_CURVE_DECELERATE:
+        return (1.0f - (1.0f - fraction) * (1.0f - fraction)) *
+                   (tween->m_values[segment + 1] - tween->m_values[segment]) +
+               tween->m_values[segment];
+    case TWEEN_CURVE_ACCELERATE:
+        return fraction * fraction * (tween->m_values[segment + 1] - tween->m_values[segment]) +
+               tween->m_values[segment];
+    case TWEEN_CURVE_SMOOTHSTEP:
+        {
+            const float offset = fraction - 0.5f;
+            return (offset * offset * offset * TWEEN_CUBIC_SCALE + 0.5f) *
+                       (tween->m_values[segment + 1] - tween->m_values[segment]) +
+                   tween->m_values[segment];
+        }
     }
-
-    if (curve == TWEEN_CURVE_ACCELERATE)
-    {
-        return static_cast<float>(fraction * fraction) * (to - from) + from;
-    }
-
-    if (curve == TWEEN_CURVE_SMOOTHSTEP)
-    {
-        const float offset = static_cast<float>(fraction - 0.5);
-        return static_cast<float>(static_cast<double>(offset * offset * offset) * TWEEN_CUBIC_SCALE + 0.5) *
-                   (to - from) +
-               from;
-    }
-
-    return static_cast<float>(fraction * static_cast<double>(to - from) + from);
 }
 
-void UpdateTweens(EventSystem* eventSystem, float elapsed)
+static void UpdateTweens(EventSystem* eventSystem, float elapsed)
 {
     TweenNode* previous = NULL;
     TweenNode* tween = static_cast<TweenNode*>(Handle_Get(eventSystem->m_tweens));
@@ -2809,7 +2799,7 @@ void UpdateTweens(EventSystem* eventSystem, float elapsed)
         float value = EvaluateTween(tween, segment);
         Var_SetInstance(&eventSystem->m_variables, tween->m_name, &value, 1);
         TweenNode* next;
-        if (tween->m_times[1] <= tween->m_elapsed)
+        if (tween->m_elapsed >= tween->m_times[1])
         {
             next = static_cast<TweenNode*>(Handle_Get(tween->m_next));
             if (previous != NULL)
@@ -2834,7 +2824,7 @@ void UpdateTweens(EventSystem* eventSystem, float elapsed)
     }
 }
 
-void AuditVariables(EventSystem* eventSystem)
+static void AuditVariables(EventSystem* eventSystem)
 {
     EventSystemVariable* variable = static_cast<EventSystemVariable*>(Handle_Get(eventSystem->m_variables));
     while (variable != NULL)
@@ -2844,7 +2834,7 @@ void AuditVariables(EventSystem* eventSystem)
     }
 }
 
-void UpdateRamps(EventSystem* eventSystem, float elapsed, int auditing)
+static void UpdateRamps(EventSystem* eventSystem, float elapsed, int auditing)
 {
     Ramp* ramp = static_cast<Ramp*>(Handle_Get(eventSystem->m_ramps));
     while (ramp != NULL)
@@ -2866,7 +2856,7 @@ void UpdateRamps(EventSystem* eventSystem, float elapsed, int auditing)
     }
 }
 
-void AuditSoundVariables(SoundInstanceData* instance)
+static void AuditSoundVariables(SoundInstanceData* instance)
 {
     EventSystemVariable* variable = static_cast<EventSystemVariable*>(Handle_Get(instance->m_context));
     while (variable != NULL)
@@ -2876,7 +2866,7 @@ void AuditSoundVariables(SoundInstanceData* instance)
     }
 }
 
-void FreeNodes(Handle head)
+static inline void FreeNodes(Handle head)
 {
     EventListNode* node = static_cast<EventListNode*>(Handle_Get(head));
     while (node != NULL)
@@ -2887,7 +2877,7 @@ void FreeNodes(Handle head)
     }
 }
 
-void ApplyInstancePreset(SoundInstanceData* instance)
+static inline void ApplyInstancePreset(SoundInstanceData* instance)
 {
     if (instance->m_preset.index == 0)
     {
@@ -2906,25 +2896,22 @@ void ApplyInstancePreset(SoundInstanceData* instance)
     AIL_apply_raw_sound_preset(instance->m_sample, preset);
 }
 
-void ReleaseFinishedInstance(EventSystem* eventSystem, SoundInstanceData* instance, int index)
+static void ReleaseFinishedInstance(EventSystem* eventSystem, SoundInstanceData* instance, int index)
 {
     Audition_SoundComplete(instance->m_eventId);
     Handle_Free(instance->m_initBlock);
     Handle_Free(instance->m_self);
-    if (instance->m_externalSample == 0)
+    if (instance->m_externalSample != 0)
     {
-        if (instance->m_stream == NULL)
-        {
-            AIL_release_sample_handle(instance->m_sample);
-        }
-        else
-        {
-            AIL_close_stream(instance->m_stream);
-        }
+        g_externalSampleRelease(instance->m_sample);
+    }
+    else if (instance->m_stream != NULL)
+    {
+        AIL_close_stream(instance->m_stream);
     }
     else
     {
-        g_externalSampleRelease(instance->m_sample);
+        AIL_release_sample_handle(instance->m_sample);
     }
 
     FreeNodes(instance->m_ramps);
@@ -2943,29 +2930,26 @@ void ReleaseFinishedInstance(EventSystem* eventSystem, SoundInstanceData* instan
     eventSystem->m_instances.RemoveUnsorted(index);
 }
 
-void FailInstance(EventSystem* eventSystem, SoundInstanceData* instance, unsigned char waitingFlag)
+static inline void FailInstance(EventSystem* eventSystem, SoundInstanceData* instance, unsigned char waitingFlag)
 {
     DestroySoundInstance(eventSystem, reinterpret_cast<SoundInstance*>(instance));
     instance->m_flags = (instance->m_flags ^ waitingFlag) | SOUND_INSTANCE_FLAG_FAILED;
     Audition_SoundFlags(instance->m_eventId, instance->m_flags);
 }
 
-void UpdatePlayingInstance(EventSystem* eventSystem, SoundInstanceData* instance, float elapsed, int auditing)
+static void UpdatePlayingInstance(EventSystem* eventSystem, SoundInstanceData* instance, float elapsed, int auditing)
 {
     LoadedSound* sound = static_cast<LoadedSound*>(Handle_Get(instance->m_source));
     if (sound != NULL)
     {
-        if (sound->m_loadFailed == 0)
-        {
-            if ((instance->m_flags & SOUND_FLAG_PENDING_DATA_MASK) != 0 && sound->m_loadSlot == 0)
-            {
-                instance->m_flags = instance->m_flags ^ SOUND_FLAG_PENDING_DATA_MASK;
-                Audition_SoundFlags(instance->m_eventId, instance->m_flags);
-            }
-        }
-        else
+        if (sound->m_loadFailed != 0)
         {
             FailInstance(eventSystem, instance, SOUND_FLAG_PENDING_DATA_MASK);
+        }
+        else if ((instance->m_flags & SOUND_FLAG_PENDING_DATA_MASK) != 0 && sound->m_loadSlot == 0)
+        {
+            instance->m_flags = instance->m_flags ^ SOUND_FLAG_PENDING_DATA_MASK;
+            Audition_SoundFlags(instance->m_eventId, instance->m_flags);
         }
     }
 
@@ -2979,27 +2963,28 @@ void UpdatePlayingInstance(EventSystem* eventSystem, SoundInstanceData* instance
     Ramp_ApplyAll(eventSystem, reinterpret_cast<SoundInstance*>(instance), elapsed);
     if (instance->m_fadeRate != 0.0f)
     {
-        float volume;
-        if (instance->m_delayRemaining <= 0.0f)
-        {
-            volume = instance->m_fadeRate * elapsed + instance->m_volume;
-        }
-        else
+        float fadeTime;
+        if (instance->m_delayRemaining > 0.0f)
         {
             const float remaining = instance->m_delayRemaining - elapsed;
-            if (remaining <= 0.0f)
+            if (remaining > 0.0f)
             {
-                volume = instance->m_fadeRate * -remaining + instance->m_volume;
-                instance->m_delayRemaining = 0.0f;
+                fadeTime = 0.0f;
+                instance->m_delayRemaining = remaining;
             }
             else
             {
-                volume = instance->m_fadeRate * 0.0f + instance->m_volume;
-                instance->m_delayRemaining = remaining;
+                fadeTime = -remaining;
+                instance->m_delayRemaining = 0.0f;
             }
         }
+        else
+        {
+            fadeTime = elapsed;
+        }
 
-        if (1.0f < volume)
+        float volume = instance->m_fadeRate * fadeTime + instance->m_volume;
+        if (volume > 1.0f)
         {
             instance->m_fadeRate = 0.0f;
             volume = 1.0f;
@@ -3023,89 +3008,84 @@ void UpdatePlayingInstance(EventSystem* eventSystem, SoundInstanceData* instance
     }
 }
 
-int ApplyLoopPoints(SoundInstanceData* instance)
+static void ApplyLoopPoints(SoundInstanceData* instance)
 {
-    _SAMPLE* sample = instance->m_sample;
-    _STREAM* stream = instance->m_stream;
     const unsigned int startKind = instance->m_markerFlags & MARKER_KIND_MASK;
     const unsigned int endKind = (instance->m_markerFlags >> MARKER_FLAG_SHIFT) & MARKER_KIND_MASK;
     if (instance->m_markerFlags == 0)
     {
-        return instance->m_startPosition;
+        return;
     }
 
-    if (startKind != MARKER_TYPE_CONVERTED)
+    if (startKind == MARKER_TYPE_CONVERTED)
     {
-        if (endKind == MARKER_TYPE_CONVERTED)
+        if (instance->m_stream == NULL)
         {
-            if (stream == NULL)
+            if (endKind == MARKER_TYPE_CONVERTED)
             {
-                AIL_set_sample_loop_samples(sample, LOOP_POINT_UNCHANGED, instance->m_loopEnd);
-                AIL_set_sample_loop_block(sample, instance->m_loopStart, LOOP_POINT_UNCHANGED);
-            }
-        }
-        else if (stream != NULL)
-        {
-            AIL_set_stream_loop_block(stream, instance->m_loopStart, instance->m_loopEnd);
-        }
-        else
-        {
-            AIL_set_sample_loop_block(sample, instance->m_loopStart, instance->m_loopEnd);
-        }
-    }
-    else if (stream == NULL)
-    {
-        if (endKind != MARKER_TYPE_CONVERTED)
-        {
-            AIL_set_sample_loop_samples(sample, instance->m_loopStart, LOOP_POINT_UNCHANGED);
-            AIL_set_sample_loop_block(sample, LOOP_POINT_UNCHANGED, instance->m_loopEnd);
-        }
-        else
-        {
-            AIL_set_sample_loop_samples(sample, instance->m_loopStart, instance->m_loopEnd);
-        }
-    }
-
-    return instance->m_startPosition;
-}
-
-void StartInstancePlayback(EventSystem* eventSystem, SoundInstanceData* instance)
-{
-    _SAMPLE* sample = instance->m_sample;
-    _STREAM* stream = instance->m_stream;
-    if (ApplyLoopPoints(instance) != 0)
-    {
-        if (instance->m_startPositionType != 0)
-        {
-            if (stream != NULL)
-            {
-                AIL_set_stream_ms_position(stream, instance->m_startPosition);
+                AIL_set_sample_loop_samples(instance->m_sample, instance->m_loopStart, instance->m_loopEnd);
             }
             else
             {
-                AIL_set_sample_ms_position(sample, instance->m_startPosition);
+                AIL_set_sample_loop_samples(instance->m_sample, instance->m_loopStart, LOOP_POINT_UNCHANGED);
+                AIL_set_sample_loop_block(instance->m_sample, LOOP_POINT_UNCHANGED, instance->m_loopEnd);
             }
         }
-        else if (stream != NULL)
+    }
+    else if (endKind == MARKER_TYPE_CONVERTED)
+    {
+        if (instance->m_stream == NULL)
         {
-            AIL_set_stream_position(stream, instance->m_startPosition);
+            AIL_set_sample_loop_samples(instance->m_sample, LOOP_POINT_UNCHANGED, instance->m_loopEnd);
+            AIL_set_sample_loop_block(instance->m_sample, instance->m_loopStart, LOOP_POINT_UNCHANGED);
+        }
+    }
+    else if (instance->m_stream != NULL)
+    {
+        AIL_set_stream_loop_block(instance->m_stream, instance->m_loopStart, instance->m_loopEnd);
+    }
+    else
+    {
+        AIL_set_sample_loop_block(instance->m_sample, instance->m_loopStart, instance->m_loopEnd);
+    }
+}
+
+static void StartInstancePlayback(EventSystem* eventSystem, SoundInstanceData* instance)
+{
+    ApplyLoopPoints(instance);
+    if (instance->m_startPosition != 0)
+    {
+        if (instance->m_startPositionType == 0)
+        {
+            if (instance->m_stream != NULL)
+            {
+                AIL_set_stream_position(instance->m_stream, instance->m_startPosition);
+            }
+            else
+            {
+                AIL_set_sample_position(instance->m_sample, instance->m_startPosition);
+            }
+        }
+        else if (instance->m_stream != NULL)
+        {
+            AIL_set_stream_ms_position(instance->m_stream, instance->m_startPosition);
         }
         else
         {
-            AIL_set_sample_position(sample, instance->m_startPosition);
+            AIL_set_sample_ms_position(instance->m_sample, instance->m_startPosition);
         }
     }
 
     ApplyInstancePreset(instance);
     if (instance->m_paused == 0)
     {
-        if (stream != NULL)
+        if (instance->m_stream != NULL)
         {
-            AIL_pause_stream(stream, 0);
+            AIL_pause_stream(instance->m_stream, 0);
         }
         else
         {
-            AIL_resume_sample(sample);
+            AIL_resume_sample(instance->m_sample);
         }
     }
 
@@ -3113,7 +3093,7 @@ void StartInstancePlayback(EventSystem* eventSystem, SoundInstanceData* instance
     instance->m_state = SOUND_STATE_PLAYING;
 }
 
-bool AttachSoundData(EventSystem* eventSystem, SoundInstanceData* instance, LoadedSound* sound)
+static bool AttachSoundData(EventSystem* eventSystem, SoundInstanceData* instance)
 {
     int position = instance->m_startPosition;
     if (instance->m_startPositionType != 0)
@@ -3127,6 +3107,13 @@ bool AttachSoundData(EventSystem* eventSystem, SoundInstanceData* instance, Load
     }
 
     const int needed = position + POSITION_PREFETCH_BYTES;
+    LoadedSound* sound = static_cast<LoadedSound*>(Handle_Get(instance->m_source));
+    if (sound->m_loadFailed != 0)
+    {
+        FailInstance(eventSystem, instance, SOUND_FLAG_PENDING_DATA_MASK);
+        return false;
+    }
+
     const int slot = sound->m_loadSlot;
     if (slot == 0)
     {
@@ -3146,37 +3133,42 @@ bool AttachSoundData(EventSystem* eventSystem, SoundInstanceData* instance, Load
         size = g_soundLoadRequests[slot - 1].iLength;
     }
 
-    if (sound->m_provider == 0)
+    if (sound->m_provider != 0)
     {
-        _AILSOUNDINFO wave;
-        if (AIL_WAV_info(data, &wave) != 0)
+        AIL_set_sample_address(instance->m_sample, data, size);
+        if (AIL_set_sample_processor(instance->m_sample, 0, sound->m_provider) == -1)
         {
-            AIL_set_sample_address(instance->m_sample, wave.data, wave.dataLength);
-            return true;
+            ErrorHandler(ERROR_TYPE_NO_PROVIDER, instance->m_eventId,
+                         static_cast<const char*>(Handle_Get(sound->m_name)));
+            DestroySoundInstance(eventSystem, reinterpret_cast<SoundInstance*>(instance));
+            return false;
         }
     }
     else
     {
-        AIL_set_sample_address(instance->m_sample, data, size);
-        if (AIL_set_sample_processor(instance->m_sample, 0, sound->m_provider) != -1)
+        _AILSOUNDINFO wave;
+        if (AIL_WAV_info(data, &wave) == 0)
         {
-            return true;
+            ErrorHandler(ERROR_TYPE_NO_PROVIDER, instance->m_eventId,
+                         static_cast<const char*>(Handle_Get(sound->m_name)));
+            DestroySoundInstance(eventSystem, reinterpret_cast<SoundInstance*>(instance));
+            return false;
         }
+
+        AIL_set_sample_address(instance->m_sample, wave.data, wave.dataLength);
     }
 
-    ErrorHandler(ERROR_TYPE_NO_PROVIDER, instance->m_eventId, static_cast<const char*>(Handle_Get(sound->m_name)));
-    DestroySoundInstance(eventSystem, reinterpret_cast<SoundInstance*>(instance));
-    return false;
+    return true;
 }
 
-bool UpdatePendingInstance(EventSystem* eventSystem, SoundInstanceData* instance)
+static bool UpdatePendingInstance(EventSystem* eventSystem, SoundInstanceData* instance)
 {
     const unsigned char flags = instance->m_flags;
     if ((flags & SOUND_INSTANCE_FLAG_UNNAMED) == 0 && instance->m_nameLength != 0)
     {
-        LoadedSound* sound = static_cast<LoadedSound*>(Handle_Get(instance->m_source));
         if ((flags & SOUND_INSTANCE_FLAG_WAITING_FOR_STREAM) != 0)
         {
+            LoadedSound* sound = static_cast<LoadedSound*>(Handle_Get(instance->m_source));
             if (sound->m_loadFailed != 0)
             {
                 FailInstance(eventSystem, instance, SOUND_INSTANCE_FLAG_WAITING_FOR_STREAM);
@@ -3193,13 +3185,7 @@ bool UpdatePendingInstance(EventSystem* eventSystem, SoundInstanceData* instance
 
         if ((instance->m_flags & SOUND_INSTANCE_FLAG_WAITING_FOR_DATA) != 0)
         {
-            if (sound->m_loadFailed != 0)
-            {
-                FailInstance(eventSystem, instance, SOUND_INSTANCE_FLAG_WAITING_FOR_DATA);
-                return false;
-            }
-
-            if (!AttachSoundData(eventSystem, instance, sound))
+            if (!AttachSoundData(eventSystem, instance))
             {
                 return false;
             }
@@ -3210,7 +3196,7 @@ bool UpdatePendingInstance(EventSystem* eventSystem, SoundInstanceData* instance
     return true;
 }
 
-void UpdateInstances(EventSystem* eventSystem, float elapsed, int auditing)
+static void UpdateInstances(EventSystem* eventSystem, float elapsed, int auditing)
 {
     int count = eventSystem->m_instances.Count();
     int index = 0;
@@ -3233,25 +3219,23 @@ void UpdateInstances(EventSystem* eventSystem, float elapsed, int auditing)
         }
 
         const int state = instance->m_state;
-        if (state == SOUND_STATE_FINISHED)
+        if (state == SOUND_STATE_PENDING)
+        {
+            UpdatePendingInstance(eventSystem, instance);
+        }
+        else if (state == SOUND_STATE_FINISHED)
         {
             ReleaseFinishedInstance(eventSystem, instance, index);
             --count;
             continue;
         }
-
-        if (state == SOUND_STATE_PLAYING)
+        else if (state == SOUND_STATE_PLAYING)
         {
             UpdatePlayingInstance(eventSystem, instance, elapsed, auditing);
-        }
-        else if (state == SOUND_STATE_PENDING)
-        {
-            UpdatePendingInstance(eventSystem, instance);
         }
 
         ++index;
     }
-}
 }
 
 extern "C" int MilesCompleteEventQueueProcessingInternal()
