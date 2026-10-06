@@ -1609,94 +1609,118 @@ float BlockRenderer::getShadeBrightness(LevelSource* levelSource, const BlockPos
 bool BlockRenderer::tesselateBlockInWorld(const BlockState* state, const BlockPos& pos,
                                           float red, float green, float blue)
 {
-    BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
-    Block* block = state->getBlock();
-    float downRed = block == Blocks::grass ? 0.5f : red * 0.5f;
-    float downGreen = block == Blocks::grass ? 0.5f : green * 0.5f;
-    float downBlue = block == Blocks::grass ? 0.5f : blue * 0.5f;
-    float northRed = block == Blocks::grass ? 0.8f : red * 0.8f;
-    float northGreen = block == Blocks::grass ? 0.8f : green * 0.8f;
-    float northBlue = block == Blocks::grass ? 0.8f : blue * 0.8f;
-    float westRed = block == Blocks::grass ? 0.6f : red * 0.6f;
-    float westGreen = block == Blocks::grass ? 0.6f : green * 0.6f;
-    float westBlue = block == Blocks::grass ? 0.6f : blue * 0.6f;
-    int blockLight = hasLightOverride() ? mLightOverride : getLightColor(block, mLevelSource, pos);
     bool rendered = false;
+    mEnableAO = false;
+    BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
+    float downShade = 0.5f;
+    float upShade = 1.0f;
+    float northShade = 0.8f;
+    float westShade = 0.6f;
+    float upRed = upShade * red;
+    float upGreen = upShade * green;
+    float upBlue = upShade * blue;
+    float downRed = downShade;
+    float downGreen = downShade;
+    float downBlue = downShade;
+    float northRed = northShade;
+    float northGreen = northShade;
+    float northBlue = northShade;
+    float westRed = westShade;
+    float westGreen = westShade;
+    float westBlue = westShade;
+    Block* block = state->getBlock();
+    if (block != Blocks::grass)
+    {
+        downRed = downShade * red;
+        downGreen = downShade * green;
+        downBlue = downShade * blue;
+        northRed = northShade * red;
+        northGreen = northShade * green;
+        northBlue = northShade * blue;
+        westRed = westShade * red;
+        westGreen = westShade * green;
+        westBlue = westShade * blue;
+    }
+    int blockLight = hasLightOverride() ? mLightOverride : getLightColor(block, mLevelSource, pos);
 
-    if (mRenderAllFaces || state->shouldRenderFace(mLevelSource, pos, Direction::DOWN))
+    if (mRenderAllFaces || block->shouldRenderFace(state, mLevelSource, pos, Direction::DOWN))
     {
-        BlockPos lightPos = mMinY <= 0.0f ? pos.below() : pos;
-        builder->tex2(hasLightOverride() ? mLightOverride :
-                      (mMinY <= 0.0f ? getLightColor(block, mLevelSource, lightPos) : blockLight));
+        int light = mMinY > 0.0f ? blockLight : getLightColor(block, mLevelSource, pos.offset(0, -1, 0));
+        if (hasLightOverride())
+            light = mLightOverride;
+        builder->tex2(light);
         builder->color(downRed, downGreen, downBlue);
-        renderFaceDown(state, pos.x, pos.y, pos.z,
-                       getTexture(state, mLevelSource, pos, Direction::DOWN));
+        renderFaceDown(state, pos.x, pos.y, pos.z, getTexture(state, mLevelSource, pos, Direction::DOWN));
         rendered = true;
     }
-    if (mRenderAllFaces || state->shouldRenderFace(mLevelSource, pos, Direction::UP))
+    if (mRenderAllFaces || block->shouldRenderFace(state, mLevelSource, pos, Direction::UP))
     {
-        BlockPos lightPos = mMaxY >= 1.0f ? pos.above() : pos;
-        builder->tex2(hasLightOverride() ? mLightOverride :
-                      (mMaxY >= 1.0f ? getLightColor(block, mLevelSource, lightPos) : blockLight));
-        builder->color(red, green, blue);
-        renderFaceUp(state, pos.x, pos.y, pos.z,
-                     getTexture(state, mLevelSource, pos, Direction::UP));
+        int light = mMaxY < 1.0f ? blockLight : getLightColor(block, mLevelSource, pos.offset(0, 1, 0));
+        if (hasLightOverride())
+            light = mLightOverride;
+        builder->tex2(light);
+        builder->color(upRed, upGreen, upBlue);
+        renderFaceUp(state, pos.x, pos.y, pos.z, getTexture(state, mLevelSource, pos, Direction::UP));
         rendered = true;
     }
-    if (mRenderAllFaces || state->shouldRenderFace(mLevelSource, pos, Direction::NORTH))
+    if (mRenderAllFaces || block->shouldRenderFace(state, mLevelSource, pos, Direction::NORTH))
     {
-        BlockPos lightPos = mMinZ <= 0.0f ? pos.north() : pos;
-        builder->tex2(hasLightOverride() ? mLightOverride :
-                      (mMinZ <= 0.0f ? getLightColor(block, mLevelSource, lightPos) : blockLight));
+        int light = mMinZ > 0.0f ? blockLight : getLightColor(block, mLevelSource, pos.offset(0, 0, -1));
+        if (hasLightOverride())
+            light = mLightOverride;
+        builder->tex2(light);
         builder->color(northRed, northGreen, northBlue);
         TextureAtlasSprite* texture = getTexture(state, mLevelSource, pos, Direction::NORTH);
         renderNorth(state, pos.x, pos.y, pos.z, texture);
-        if (mMinecraft->mOptions->mFancyGraphics && texture->getFlags() == 1 && !hasFixedTexture())
+        if (gFancyGraphics && texture->getFlags() == 1 && !hasFixedTexture())
         {
             builder->color(northRed * red, northGreen * green, northBlue * blue);
             renderNorth(state, pos.x, pos.y, pos.z, GrassBlock::getSideTextureOverlay());
         }
         rendered = true;
     }
-    if (mRenderAllFaces || state->shouldRenderFace(mLevelSource, pos, Direction::SOUTH))
+    if (mRenderAllFaces || block->shouldRenderFace(state, mLevelSource, pos, Direction::SOUTH))
     {
-        BlockPos lightPos = mMaxZ >= 1.0f ? pos.south() : pos;
-        builder->tex2(hasLightOverride() ? mLightOverride :
-                      (mMaxZ >= 1.0f ? getLightColor(block, mLevelSource, lightPos) : blockLight));
+        int light = mMaxZ < 1.0f ? blockLight : getLightColor(block, mLevelSource, pos.offset(0, 0, 1));
+        if (hasLightOverride())
+            light = mLightOverride;
+        builder->tex2(light);
         builder->color(northRed, northGreen, northBlue);
         TextureAtlasSprite* texture = getTexture(state, mLevelSource, pos, Direction::SOUTH);
         renderSouth(state, pos.x, pos.y, pos.z, texture);
-        if (mMinecraft->mOptions->mFancyGraphics && texture->getFlags() == 1 && !hasFixedTexture())
+        if (gFancyGraphics && texture->getFlags() == 1 && !hasFixedTexture())
         {
             builder->color(northRed * red, northGreen * green, northBlue * blue);
             renderSouth(state, pos.x, pos.y, pos.z, GrassBlock::getSideTextureOverlay());
         }
         rendered = true;
     }
-    if (mRenderAllFaces || state->shouldRenderFace(mLevelSource, pos, Direction::WEST))
+    if (mRenderAllFaces || block->shouldRenderFace(state, mLevelSource, pos, Direction::WEST))
     {
-        BlockPos lightPos = mMinX <= 0.0f ? pos.west() : pos;
-        builder->tex2(hasLightOverride() ? mLightOverride :
-                      (mMinX <= 0.0f ? getLightColor(block, mLevelSource, lightPos) : blockLight));
+        int light = mMinX > 0.0f ? blockLight : getLightColor(block, mLevelSource, pos.offset(-1, 0, 0));
+        if (hasLightOverride())
+            light = mLightOverride;
+        builder->tex2(light);
         builder->color(westRed, westGreen, westBlue);
         TextureAtlasSprite* texture = getTexture(state, mLevelSource, pos, Direction::WEST);
         renderWest(state, pos.x, pos.y, pos.z, texture);
-        if (mMinecraft->mOptions->mFancyGraphics && texture->getFlags() == 1 && !hasFixedTexture())
+        if (gFancyGraphics && texture->getFlags() == 1 && !hasFixedTexture())
         {
             builder->color(westRed * red, westGreen * green, westBlue * blue);
             renderWest(state, pos.x, pos.y, pos.z, GrassBlock::getSideTextureOverlay());
         }
         rendered = true;
     }
-    if (mRenderAllFaces || state->shouldRenderFace(mLevelSource, pos, Direction::EAST))
+    if (mRenderAllFaces || block->shouldRenderFace(state, mLevelSource, pos, Direction::EAST))
     {
-        BlockPos lightPos = mMaxX >= 1.0f ? pos.east() : pos;
-        builder->tex2(hasLightOverride() ? mLightOverride :
-                      (mMaxX >= 1.0f ? getLightColor(block, mLevelSource, lightPos) : blockLight));
+        int light = mMaxX < 1.0f ? blockLight : getLightColor(block, mLevelSource, pos.offset(1, 0, 0));
+        if (hasLightOverride())
+            light = mLightOverride;
+        builder->tex2(light);
         builder->color(westRed, westGreen, westBlue);
         TextureAtlasSprite* texture = getTexture(state, mLevelSource, pos, Direction::EAST);
         renderEast(state, pos.x, pos.y, pos.z, texture);
-        if (mMinecraft->mOptions->mFancyGraphics && texture->getFlags() == 1 && !hasFixedTexture())
+        if (gFancyGraphics && texture->getFlags() == 1 && !hasFixedTexture())
         {
             builder->color(westRed * red, westGreen * green, westBlue * blue);
             renderEast(state, pos.x, pos.y, pos.z, GrassBlock::getSideTextureOverlay());
@@ -1845,11 +1869,11 @@ bool BlockRenderer::tesselateInWorld(const BlockState* state, const BlockPos& po
 {
     BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
     Block* block = state->getBlock();
-    const BlockState* renderState = block->fillVirtualBlockStateProperties(state, mLevelSource, pos);
-    int renderShape = renderState->getRenderShape();
+    state = block->fillVirtualBlockStateProperties(state, mLevelSource, pos);
+    int renderShape = state->getRenderShape();
 
     if (renderShape != BLOCK_RENDER_MODEL)
-        setShape(block->getShape(renderState, mLevelSource, pos));
+        setShape(block->getShape(state, mLevelSource, pos));
 
     bool oldMipmap = builder->setMipmapEnable(block->mMipmap);
     bool rendered = false;
@@ -1858,72 +1882,76 @@ bool BlockRenderer::tesselateInWorld(const BlockState* state, const BlockPos& po
     {
     case BLOCK_RENDER_MODEL:
     {
-        int faces = block->getFaceFlags(renderState, mLevelSource, pos, mRenderAllFaces);
-        if (faces != 0)
+        int faces = block->getFaceFlags(state, mLevelSource, pos, mRenderAllFaces);
+        if (faces == 0)
         {
-            setShape(block->getShape(renderState, mLevelSource, pos));
-            rendered = tesselateBlockInWorld(renderState, pos, faces);
+            rendered = false;
+        }
+        else
+        {
+            setShape(block->getShape(state, mLevelSource, pos));
+            rendered = tesselateBlockInWorld(state, pos, faces);
         }
         break;
     }
-    case BLOCK_RENDER_CROSS: rendered = tesselateCrossInWorld(renderState, pos); break;
-    case BLOCK_RENDER_TORCH: rendered = tesselateTorchInWorld(renderState, pos); break;
-    case BLOCK_RENDER_FIRE: rendered = tesselateFireInWorld(renderState, pos); break;
-    case BLOCK_RENDER_WATER: rendered = tesselateWaterInWorld(renderState, pos); break;
-    case BLOCK_RENDER_DUST: rendered = tesselateDustInWorld(renderState, pos); break;
-    case BLOCK_RENDER_ROW: rendered = tesselateRowInWorld(renderState, pos); break;
-    case BLOCK_RENDER_DOOR: rendered = tesselateDoorInWorld(renderState, pos); break;
-    case BLOCK_RENDER_LADDER: rendered = tesselateLadderInWorld(renderState, pos); break;
-    case BLOCK_RENDER_RAIL: rendered = tesselateRailInWorld(renderState, pos); break;
-    case BLOCK_RENDER_STAIRS: rendered = tesselateStairsInWorld(renderState, pos); break;
-    case BLOCK_RENDER_FENCE: rendered = tesselateFenceInWorld(renderState, pos); break;
-    case BLOCK_RENDER_LEVER: rendered = tesselateLeverInWorld(renderState, pos); break;
-    case BLOCK_RENDER_CACTUS: rendered = tesselateCactusInWorld(renderState, pos); break;
-    case BLOCK_RENDER_BED: rendered = tesselateBedInWorld(renderState, pos); break;
-    case BLOCK_RENDER_REPEATER: rendered = tesselateRepeaterInWorld(renderState, pos); break;
-    case BLOCK_RENDER_PISTON_BASE: rendered = tesselatePistonBaseInWorld(renderState, pos, false, actualState); break;
-    case BLOCK_RENDER_PISTON_EXTENSION: rendered = tesselatePistonExtensionInWorld(renderState, pos, true, actualState); break;
-    case BLOCK_RENDER_THIN_FENCE:
-    case BLOCK_RENDER_GLASS_PANE: rendered = tesselateThinFenceInWorld(renderState, pos); break;
-    case BLOCK_RENDER_STEM: rendered = tesselateStemInWorld(renderState, pos); break;
-    case BLOCK_RENDER_VINE: rendered = tesselateVineInWorld(renderState, pos); break;
-    case BLOCK_RENDER_FENCE_GATE: rendered = tesselateFenceGateInWorld(renderState, pos); break;
-    case BLOCK_RENDER_LILYPAD: rendered = tesselateLilypadInWorld(renderState, pos); break;
-    case BLOCK_RENDER_CAULDRON: rendered = tesselateCauldronInWorld(renderState, pos); break;
-    case BLOCK_RENDER_BREWING_STAND: rendered = tesselateBrewingStandInWorld(renderState, pos); break;
-    case BLOCK_RENDER_AIR_PORTAL_FRAME: rendered = tesselateAirPortalFrameInWorld(renderState, pos); break;
-    case BLOCK_RENDER_EGG: rendered = tesselateEggInWorld(renderState, pos); break;
-    case BLOCK_RENDER_COCOA: rendered = tesselateCocoaInWorld(renderState, pos); break;
-    case BLOCK_RENDER_TRIPWIRE_SOURCE: rendered = tesselateTripwireSourceInWorld(renderState, pos); break;
-    case BLOCK_RENDER_TRIPWIRE: rendered = tesselateTripwireInWorld(renderState, pos); break;
-    case BLOCK_RENDER_TREE: rendered = tesselateTreeInWorld(renderState, pos); break;
-    case BLOCK_RENDER_WALL: rendered = tesselateWallInWorld(renderState, pos); break;
-    case BLOCK_RENDER_FLOWER_POT: rendered = tesselateFlowerPotInWorld(renderState, pos); break;
-    case BLOCK_RENDER_BEACON: rendered = tesselateBeaconInWorld(renderState, pos); break;
-    case BLOCK_RENDER_ANVIL: rendered = tesselateAnvilInWorld(renderState, pos); break;
-    case BLOCK_RENDER_DIODE: rendered = tesselateDiodeInWorld(renderState, pos); break;
-    case BLOCK_RENDER_COMPARATOR: rendered = tesselateComparatorInWorld(renderState, pos); break;
-    case BLOCK_RENDER_HOPPER: rendered = tesselateHopperInWorld(renderState, pos); break;
-    case BLOCK_RENDER_QUARTZ: rendered = tesselateQuartzInWorld(renderState, pos); break;
-    case BLOCK_RENDER_DOUBLE_PLANT: rendered = tesselateDoublePlantInWorld(renderState, pos); break;
-    case BLOCK_RENDER_SLIME_BLOCK: rendered = tesselateSlimeBlockInWorld(renderState, pos); break;
-    case BLOCK_RENDER_TRAPDOOR: rendered = tesselateTrapDoorInWorld(renderState, pos); break;
-    case BLOCK_RENDER_END_ROD: rendered = tesselateEndRodInWorld(renderState, pos); break;
-    case BLOCK_RENDER_CHORUS_FLOWER: rendered = tesselateChorusFlowerInWorld(renderState, pos); break;
-    case BLOCK_RENDER_CHORUS_PLANT: rendered = tesselateChorusPlantInWorld(renderState, pos); break;
-    case BLOCK_RENDER_HORIZONTAL_DIRECTIONAL: rendered = tesselateHorizontalDirectionalInWorld(renderState, pos); break;
-    case BLOCK_RENDER_OBSERVER: rendered = tesselateObserverInWorld(renderState, pos); break;
-    case BLOCK_RENDER_KELP: rendered = tesselateKelpInWorld(renderState, pos); break;
-    case BLOCK_RENDER_TURTLE_EGG: rendered = tesselateTurtleEggInWorld(renderState, pos); break;
+    case BLOCK_RENDER_TRAPDOOR: rendered = tesselateTrapDoorInWorld(state, pos); break;
+    case BLOCK_RENDER_SLIME_BLOCK: rendered = tesselateSlimeBlockInWorld(state, pos); break;
+    case BLOCK_RENDER_TREE: rendered = tesselateTreeInWorld(state, pos); break;
+    case BLOCK_RENDER_QUARTZ: rendered = tesselateQuartzInWorld(state, pos); break;
+    case BLOCK_RENDER_HORIZONTAL_DIRECTIONAL: rendered = tesselateHorizontalDirectionalInWorld(state, pos); break;
+    case BLOCK_RENDER_WATER: rendered = tesselateWaterInWorld(state, pos); break;
+    case BLOCK_RENDER_CACTUS: rendered = tesselateCactusInWorld(state, pos); break;
+    case BLOCK_RENDER_CROSS: rendered = tesselateCrossInWorld(state, pos); break;
+    case BLOCK_RENDER_DOUBLE_PLANT: rendered = tesselateDoublePlantInWorld(state, pos); break;
+    case BLOCK_RENDER_KELP: rendered = tesselateKelpInWorld(state, pos); break;
     case BLOCK_RENDER_CORAL_FAN:
         if (block == Blocks::coral_fan || block == Blocks::coral_fan_dead)
-            rendered = tessellateCoralFanInWorld(renderState, pos);
+            rendered = tessellateCoralFanInWorld(state, pos);
         else
-            rendered = tessellateCoralFanHangInWorld(renderState, pos);
+            rendered = tessellateCoralFanHangInWorld(state, pos);
         break;
-    case BLOCK_RENDER_SEAGRASS: rendered = tessellateSeagrassInWorld(renderState, pos); break;
-    case BLOCK_RENDER_SEA_PICKLE: rendered = tessellateSeaPickleInWorld(renderState, pos); break;
-    case BLOCK_RENDER_COMMAND_BLOCK: rendered = tesselateCommandBlockInWorld(renderState, pos); break;
+    case BLOCK_RENDER_STEM: rendered = tesselateStemInWorld(state, pos); break;
+    case BLOCK_RENDER_LILYPAD: rendered = tesselateLilypadInWorld(state, pos); break;
+    case BLOCK_RENDER_ROW: rendered = tesselateRowInWorld(state, pos); break;
+    case BLOCK_RENDER_TORCH: rendered = tesselateTorchInWorld(state, pos); break;
+    case BLOCK_RENDER_FIRE: rendered = tesselateFireInWorld(state, pos); break;
+    case BLOCK_RENDER_DUST: rendered = tesselateDustInWorld(state, pos); break;
+    case BLOCK_RENDER_LADDER: rendered = tesselateLadderInWorld(state, pos); break;
+    case BLOCK_RENDER_DOOR: rendered = tesselateDoorInWorld(state, pos); break;
+    case BLOCK_RENDER_RAIL: rendered = tesselateRailInWorld(state, pos); break;
+    case BLOCK_RENDER_STAIRS: rendered = tesselateStairsInWorld(state, pos); break;
+    case BLOCK_RENDER_EGG: rendered = tesselateEggInWorld(state, pos); break;
+    case BLOCK_RENDER_FENCE: rendered = tesselateFenceInWorld(state, pos); break;
+    case BLOCK_RENDER_WALL: rendered = tesselateWallInWorld(state, pos); break;
+    case BLOCK_RENDER_LEVER: rendered = tesselateLeverInWorld(state, pos); break;
+    case BLOCK_RENDER_TRIPWIRE_SOURCE: rendered = tesselateTripwireSourceInWorld(state, pos); break;
+    case BLOCK_RENDER_TRIPWIRE: rendered = tesselateTripwireInWorld(state, pos); break;
+    case BLOCK_RENDER_BED: rendered = tesselateBedInWorld(state, pos); break;
+    case BLOCK_RENDER_REPEATER: rendered = tesselateRepeaterInWorld(state, pos); break;
+    case BLOCK_RENDER_DIODE: rendered = tesselateDiodeInWorld(state, pos); break;
+    case BLOCK_RENDER_COMPARATOR: rendered = tesselateComparatorInWorld(state, pos); break;
+    case BLOCK_RENDER_PISTON_BASE: rendered = tesselatePistonBaseInWorld(state, pos, false, actualState); break;
+    case BLOCK_RENDER_PISTON_EXTENSION: rendered = tesselatePistonExtensionInWorld(state, pos, true, actualState); break;
+    case BLOCK_RENDER_THIN_FENCE:
+    case BLOCK_RENDER_GLASS_PANE: rendered = tesselateThinFenceInWorld(state, pos); break;
+    case BLOCK_RENDER_VINE: rendered = tesselateVineInWorld(state, pos); break;
+    case BLOCK_RENDER_FENCE_GATE: rendered = tesselateFenceGateInWorld(state, pos); break;
+    case BLOCK_RENDER_CAULDRON: rendered = tesselateCauldronInWorld(state, pos); break;
+    case BLOCK_RENDER_FLOWER_POT: rendered = tesselateFlowerPotInWorld(state, pos); break;
+    case BLOCK_RENDER_ANVIL: rendered = tesselateAnvilInWorld(state, pos); break;
+    case BLOCK_RENDER_BREWING_STAND: rendered = tesselateBrewingStandInWorld(state, pos); break;
+    case BLOCK_RENDER_AIR_PORTAL_FRAME: rendered = tesselateAirPortalFrameInWorld(state, pos); break;
+    case BLOCK_RENDER_COCOA: rendered = tesselateCocoaInWorld(state, pos); break;
+    case BLOCK_RENDER_BEACON: rendered = tesselateBeaconInWorld(state, pos); break;
+    case BLOCK_RENDER_HOPPER: rendered = tesselateHopperInWorld(state, pos); break;
+    case BLOCK_RENDER_END_ROD: rendered = tesselateEndRodInWorld(state, pos); break;
+    case BLOCK_RENDER_CHORUS_FLOWER: rendered = tesselateChorusFlowerInWorld(state, pos); break;
+    case BLOCK_RENDER_CHORUS_PLANT: rendered = tesselateChorusPlantInWorld(state, pos); break;
+    case BLOCK_RENDER_OBSERVER: rendered = tesselateObserverInWorld(state, pos); break;
+    case BLOCK_RENDER_TURTLE_EGG: rendered = tesselateTurtleEggInWorld(state, pos); break;
+    case BLOCK_RENDER_SEAGRASS: rendered = tessellateSeagrassInWorld(state, pos); break;
+    case BLOCK_RENDER_SEA_PICKLE: rendered = tessellateSeaPickleInWorld(state, pos); break;
+    case BLOCK_RENDER_COMMAND_BLOCK: rendered = tesselateCommandBlockInWorld(state, pos); break;
     }
 
     builder->setMipmapEnable(oldMipmap);
@@ -4585,119 +4613,8 @@ bool BlockRenderer::tesselateFireInWorld(const BlockState* state, const BlockPos
     int x = pos.x;
     int y = pos.y;
     int z = pos.z;
-    FireBlock* fire = static_cast<FireBlock*>(Blocks::fire);
 
-    if (!mLevelSource->getBlockState(pos.below())->isTopSolidBlocking() && !fire->canBurn(mLevelSource, pos.below()))
-    {
-        float r = 0.2f;
-        float yo = 1.0f / 16.0f;
-        if (((x + y + z) & 1) == 1)
-        {
-            u0 = secondTex->getU0(true);
-            v0 = secondTex->getV0(true);
-            u1 = secondTex->getU1(true);
-            v1 = secondTex->getV1(true);
-        }
-        if (((x / 2 + y / 2 + z / 2) & 1) == 1)
-        {
-            float tmp = u1;
-            u1 = u0;
-            u0 = tmp;
-        }
-
-        if (fire->canBurn(mLevelSource, pos.west()))
-        {
-            builder->vertexUV(x + r, y + h + yo, z + 1.0f, u1, v0);
-            builder->vertexUV(x + 0.0f, y + 0.0f + yo, z + 1.0f, u1, v1);
-            builder->vertexUV(x + 0.0f, y + 0.0f + yo, z + 0.0f, u0, v1);
-            builder->vertexUV(x + r, y + h + yo, z + 0.0f, u0, v0);
-
-            builder->vertexUV(x + r, y + h + yo, z + 0.0f, u0, v0);
-            builder->vertexUV(x + 0.0f, y + 0.0f + yo, z + 0.0f, u0, v1);
-            builder->vertexUV(x + 0.0f, y + 0.0f + yo, z + 1.0f, u1, v1);
-            builder->vertexUV(x + r, y + h + yo, z + 1.0f, u1, v0);
-        }
-        if (fire->canBurn(mLevelSource, pos.east()))
-        {
-            builder->vertexUV(x + 1 - r, y + h + yo, z + 0.0f, u0, v0);
-            builder->vertexUV(x + 1 - 0.0f, y + 0.0f + yo, z + 0.0f, u0, v1);
-            builder->vertexUV(x + 1 - 0.0f, y + 0.0f + yo, z + 1.0f, u1, v1);
-            builder->vertexUV(x + 1 - r, y + h + yo, z + 1.0f, u1, v0);
-
-            builder->vertexUV(x + 1.0f - r, y + h + yo, z + 1.0f, u1, v0);
-            builder->vertexUV(x + 1.0f - 0.0f, y + 0.0f + yo, z + 1.0f, u1, v1);
-            builder->vertexUV(x + 1.0f - 0.0f, y + 0.0f + yo, z + 0.0f, u0, v1);
-            builder->vertexUV(x + 1.0f - r, y + h + yo, z + 0.0f, u0, v0);
-        }
-        if (fire->canBurn(mLevelSource, pos.north()))
-        {
-            builder->vertexUV(x + 0.0f, y + h + yo, z + r, u1, v0);
-            builder->vertexUV(x + 0.0f, y + 0.0f + yo, z + 0.0f, u1, v1);
-            builder->vertexUV(x + 1.0f, y + 0.0f + yo, z + 0.0f, u0, v1);
-            builder->vertexUV(x + 1.0f, y + h + yo, z + r, u0, v0);
-
-            builder->vertexUV(x + 1.0f, y + h + yo, z + r, u0, v0);
-            builder->vertexUV(x + 1.0f, y + 0.0f + yo, z + 0.0f, u0, v1);
-            builder->vertexUV(x + 0.0f, y + 0.0f + yo, z + 0.0f, u1, v1);
-            builder->vertexUV(x + 0.0f, y + h + yo, z + r, u1, v0);
-        }
-        if (fire->canBurn(mLevelSource, pos.south()))
-        {
-            builder->vertexUV(x + 1.0f, y + h + yo, z + 1.0f - r, u0, v0);
-            builder->vertexUV(x + 1.0f, y + 0.0f + yo, z + 1.0f - 0.0f, u0, v1);
-            builder->vertexUV(x + 0.0f, y + 0.0f + yo, z + 1.0f - 0.0f, u1, v1);
-            builder->vertexUV(x + 0.0f, y + h + yo, z + 1.0f - r, u1, v0);
-
-            builder->vertexUV(x + 0.0f, y + h + yo, z + 1.0f - r, u1, v0);
-            builder->vertexUV(x + 0.0f, y + 0.0f + yo, z + 1.0f - 0.0f, u1, v1);
-            builder->vertexUV(x + 1.0f, y + 0.0f + yo, z + 1.0f - 0.0f, u0, v1);
-            builder->vertexUV(x + 1.0f, y + h + yo, z + 1.0f - r, u0, v0);
-        }
-        if (fire->canBurn(mLevelSource, pos.above()))
-        {
-            float x0 = x + 1.0f;
-            float x1 = x + 0.0f;
-            float z0 = z + 0.0f;
-            float z1 = z + 1.0f;
-            u0 = firstTex->getU0(true);
-            v0 = firstTex->getV0(true);
-            u1 = firstTex->getU1(true);
-            v1 = firstTex->getV1(true);
-            float yt = y + 1;
-            float yb = yt + -0.2f;
-            if (((x + (y + 1) + z) & 1) == 0)
-            {
-                builder->vertexUV(x1, yb, z0, u1, v0);
-                builder->vertexUV(x0, yt, z0, u1, v1);
-                builder->vertexUV(x0, yt, z + 1, u0, v1);
-                builder->vertexUV(x1, yb, z + 1, u0, v0);
-                u0 = secondTex->getU0(true);
-                v0 = secondTex->getV0(true);
-                u1 = secondTex->getU1(true);
-                v1 = secondTex->getV1(true);
-                builder->vertexUV(x0, yb, z1, u1, v0);
-                builder->vertexUV(x1, yt, z1, u1, v1);
-                builder->vertexUV(x1, yt, z0, u0, v1);
-                builder->vertexUV(x0, yb, z0, u0, v0);
-            }
-            else
-            {
-                builder->vertexUV(x1, yb, z1, u1, v0);
-                builder->vertexUV(x1, yt, z0, u1, v1);
-                builder->vertexUV(x0, yt, z0, u0, v1);
-                builder->vertexUV(x0, yb, z1, u0, v0);
-                u0 = secondTex->getU0(true);
-                v0 = secondTex->getV0(true);
-                u1 = secondTex->getU1(true);
-                v1 = secondTex->getV1(true);
-                builder->vertexUV(x0, yb, z0, u1, v0);
-                builder->vertexUV(x0, yt, z1, u1, v1);
-                builder->vertexUV(x1, yt, z1, u0, v1);
-                builder->vertexUV(x1, yb, z0, u0, v0);
-            }
-        }
-    }
-    else
+    if (mLevelSource->getBlockState(pos.below())->isTopSolidBlocking() || static_cast<FireBlock*>(Blocks::fire)->canBurn(mLevelSource, pos.below()))
     {
         float x0 = x + (0.5f + 0.2f);
         float x1 = x + (0.5f - 0.2f);
@@ -4761,6 +4678,116 @@ bool BlockRenderer::tesselateFireInWorld(const BlockState* state, const BlockPos
         builder->vertexUV(x + 1, y + 0.0f, z + 0, u0, v1);
         builder->vertexUV(x + 0, y + 0.0f, z + 0, u1, v1);
         builder->vertexUV(x + 0, y + h, z0, u1, v0);
+    }
+    else
+    {
+        float r = 0.2f;
+        float yo = 1.0f / 16.0f;
+        if (((x + y + z) & 1) == 1)
+        {
+            u0 = secondTex->getU0(true);
+            v0 = secondTex->getV0(true);
+            u1 = secondTex->getU1(true);
+            v1 = secondTex->getV1(true);
+        }
+        if (((x / 2 + y / 2 + z / 2) & 1) == 1)
+        {
+            float tmp = u1;
+            u1 = u0;
+            u0 = tmp;
+        }
+
+        if (static_cast<FireBlock*>(Blocks::fire)->canBurn(mLevelSource, pos.west()))
+        {
+            builder->vertexUV(x + r, y + h + yo, z + 1.0f, u1, v0);
+            builder->vertexUV(x + 0.0f, y + 0.0f + yo, z + 1.0f, u1, v1);
+            builder->vertexUV(x + 0.0f, y + 0.0f + yo, z + 0.0f, u0, v1);
+            builder->vertexUV(x + r, y + h + yo, z + 0.0f, u0, v0);
+
+            builder->vertexUV(x + r, y + h + yo, z + 0.0f, u0, v0);
+            builder->vertexUV(x + 0.0f, y + 0.0f + yo, z + 0.0f, u0, v1);
+            builder->vertexUV(x + 0.0f, y + 0.0f + yo, z + 1.0f, u1, v1);
+            builder->vertexUV(x + r, y + h + yo, z + 1.0f, u1, v0);
+        }
+        if (static_cast<FireBlock*>(Blocks::fire)->canBurn(mLevelSource, pos.east()))
+        {
+            builder->vertexUV(x + 1 - r, y + h + yo, z + 0.0f, u0, v0);
+            builder->vertexUV(x + 1 - 0.0f, y + 0.0f + yo, z + 0.0f, u0, v1);
+            builder->vertexUV(x + 1 - 0.0f, y + 0.0f + yo, z + 1.0f, u1, v1);
+            builder->vertexUV(x + 1 - r, y + h + yo, z + 1.0f, u1, v0);
+
+            builder->vertexUV(x + 1.0f - r, y + h + yo, z + 1.0f, u1, v0);
+            builder->vertexUV(x + 1.0f - 0.0f, y + 0.0f + yo, z + 1.0f, u1, v1);
+            builder->vertexUV(x + 1.0f - 0.0f, y + 0.0f + yo, z + 0.0f, u0, v1);
+            builder->vertexUV(x + 1.0f - r, y + h + yo, z + 0.0f, u0, v0);
+        }
+        if (static_cast<FireBlock*>(Blocks::fire)->canBurn(mLevelSource, pos.north()))
+        {
+            builder->vertexUV(x + 0.0f, y + h + yo, z + r, u1, v0);
+            builder->vertexUV(x + 0.0f, y + 0.0f + yo, z + 0.0f, u1, v1);
+            builder->vertexUV(x + 1.0f, y + 0.0f + yo, z + 0.0f, u0, v1);
+            builder->vertexUV(x + 1.0f, y + h + yo, z + r, u0, v0);
+
+            builder->vertexUV(x + 1.0f, y + h + yo, z + r, u0, v0);
+            builder->vertexUV(x + 1.0f, y + 0.0f + yo, z + 0.0f, u0, v1);
+            builder->vertexUV(x + 0.0f, y + 0.0f + yo, z + 0.0f, u1, v1);
+            builder->vertexUV(x + 0.0f, y + h + yo, z + r, u1, v0);
+        }
+        if (static_cast<FireBlock*>(Blocks::fire)->canBurn(mLevelSource, pos.south()))
+        {
+            builder->vertexUV(x + 1.0f, y + h + yo, z + 1.0f - r, u0, v0);
+            builder->vertexUV(x + 1.0f, y + 0.0f + yo, z + 1.0f - 0.0f, u0, v1);
+            builder->vertexUV(x + 0.0f, y + 0.0f + yo, z + 1.0f - 0.0f, u1, v1);
+            builder->vertexUV(x + 0.0f, y + h + yo, z + 1.0f - r, u1, v0);
+
+            builder->vertexUV(x + 0.0f, y + h + yo, z + 1.0f - r, u1, v0);
+            builder->vertexUV(x + 0.0f, y + 0.0f + yo, z + 1.0f - 0.0f, u1, v1);
+            builder->vertexUV(x + 1.0f, y + 0.0f + yo, z + 1.0f - 0.0f, u0, v1);
+            builder->vertexUV(x + 1.0f, y + h + yo, z + 1.0f - r, u0, v0);
+        }
+        if (static_cast<FireBlock*>(Blocks::fire)->canBurn(mLevelSource, pos.above()))
+        {
+            float x0 = x + 1.0f;
+            float x1 = x + 0.0f;
+            float z0 = z + 0.0f;
+            float z1 = z + 1.0f;
+            u0 = firstTex->getU0(true);
+            v0 = firstTex->getV0(true);
+            u1 = firstTex->getU1(true);
+            v1 = firstTex->getV1(true);
+            float yt = y + 1;
+            float yb = yt + -0.2f;
+            if (((x + (y + 1) + z) & 1) == 0)
+            {
+                builder->vertexUV(x1, yb, z0, u1, v0);
+                builder->vertexUV(x0, yt, z0, u1, v1);
+                builder->vertexUV(x0, yt, z + 1, u0, v1);
+                builder->vertexUV(x1, yb, z + 1, u0, v0);
+                u0 = secondTex->getU0(true);
+                v0 = secondTex->getV0(true);
+                u1 = secondTex->getU1(true);
+                v1 = secondTex->getV1(true);
+                builder->vertexUV(x0, yb, z1, u1, v0);
+                builder->vertexUV(x1, yt, z1, u1, v1);
+                builder->vertexUV(x1, yt, z0, u0, v1);
+                builder->vertexUV(x0, yb, z0, u0, v0);
+            }
+            else
+            {
+                builder->vertexUV(x1, yb, z1, u1, v0);
+                builder->vertexUV(x1, yt, z0, u1, v1);
+                builder->vertexUV(x0, yt, z0, u0, v1);
+                builder->vertexUV(x0, yb, z1, u0, v0);
+                u0 = secondTex->getU0(true);
+                v0 = secondTex->getV0(true);
+                u1 = secondTex->getU1(true);
+                v1 = secondTex->getV1(true);
+                builder->vertexUV(x0, yb, z0, u1, v0);
+                builder->vertexUV(x0, yt, z1, u1, v1);
+                builder->vertexUV(x1, yt, z1, u0, v1);
+                builder->vertexUV(x1, yb, z0, u0, v0);
+            }
+        }
     }
     return true;
 }

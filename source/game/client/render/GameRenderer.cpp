@@ -1592,7 +1592,7 @@ void GameRenderer::renderItemInHand(float partialTick, int eyeIndex)
     }
 }
 
-double GameRenderer::getNightVisionScale(boost::shared_ptr<LivingEntity> living, float partialTick)
+float GameRenderer::getNightVisionScale(boost::shared_ptr<LivingEntity> living, float partialTick)
 {
     MobEffectInstance* nightVision = living->getEffect(MobEffects::NIGHT_VISION);
     MobEffectInstance* conduitPower = living->getEffect(MobEffects::CONDUIT_POWER);
@@ -1623,7 +1623,7 @@ double GameRenderer::getNightVisionScale(boost::shared_ptr<LivingEntity> living,
     return Mth::sin(remaining * 3.1415927f * 0.05f) * 0.3f + 0.7f;
 }
 
-double GameRenderer::getUnderWaterVisionScale(const boost::shared_ptr<Player>& player,
+float GameRenderer::getUnderWaterVisionScale(const boost::shared_ptr<Player>& player,
                                              float partialTick)
 {
     static const float kMinSkyDarken = 0.13333334f;
@@ -1661,61 +1661,23 @@ double GameRenderer::getUnderWaterVisionScale(const boost::shared_ptr<Player>& p
 
     entity->setUnderwaterVisionScale(result);
     entity->setUnderwaterLightLevel(lightLevel);
-    return static_cast<double>(result);
+    return result;
 }
 
 void GameRenderer::updateLightTexture(float partialTick)
 {
-    static const float kZero = 0.0f;
-    static const float kOne = 1.0f;
-    static const float kLightmapGamma = 0.0f;
-    static const float kGreyBoost = 0.7f;
-    static const float kLightBase = 0.03f;
-    static const float kLightScale = 0.96f;
-    static const float k255 = 255.0f;
-    static const float kSkyDarkenScale = 0.95f;
-    static const float kSkyDarkenAdd = 0.05f;
-    static const float kSecondarySkyScale = 0.65f;
-    static const float kSecondarySkyAdd = 0.35f;
-    static const float kGammaSlope = 0.1f;
-    static const float kGammaBase = 1.5f;
-    static const float kWaterMixA = 0.4f;
-    static const float kWaterMixC = 0.6f;
-    static const float kNetherRed = 0.75f;
-    static const float kNetherGreen = 0.25f;
-    static const float kNetherBlueScale = 0.28f;
-    static const float kNetherBlueAdd = 0.22f;
-
     if (!mLightTextureDirty || mMinecraft->mLevel == NULL)
         return;
-
 
     for (int playerIndex = 0; playerIndex < 4; ++playerIndex)
     {
         boost::shared_ptr<MultiplayerLocalPlayer> player =
             Minecraft::GetInstance()->mLocalPlayers[playerIndex];
-        MultiplayerLocalPlayer* localPlayer = player.get();
-        if (localPlayer == NULL)
+        if (player == NULL)
             continue;
 
-        Level* level = localPlayer->mLevel;
-        if (level == NULL)
-            continue;
-
-        int* pixelBuffer = mLightPixels[playerIndex].data;
-
-        Dimension* dimension = level->mDimension;
-        float* brightnessRamp = dimension->getBrightnessRamp();
-        const float skyDarken = level->getSkyDarken(kOne);
-        const unsigned int blockLightColor = dimension->getBlockLightColour();
-
-        const float lightRed = static_cast<float>((blockLightColor >> 16) & 0xff) / k255;
-        const float lightGreen = static_cast<float>((blockLightColor >> 8) & 0xff) / k255;
-        const float lightBlue = static_cast<float>(blockLightColor & 0xff) / k255;
-
-        const bool isNether = dimension->getType() == DimensionType::NETHER;
-        boost::shared_ptr<LivingEntity> living =
-            boost::static_pointer_cast<LivingEntity>(player);
+        Level* level = player->mLevel;
+        const float skyDarken = level->getSkyDarken(1.0f);
 
         for (int lightIndex = 0; lightIndex < 0x100; ++lightIndex)
         {
@@ -1725,119 +1687,104 @@ void GameRenderer::updateLightTexture(float partialTick)
             const unsigned int skyLight = lightIndex & 0xfu;
 
             float blockBrightness =
-                brightnessRamp[blockLight]
-                * (skyDarken * kSkyDarkenScale + kSkyDarkenAdd);
-            if (level->getSkyFlashTime() > 0)
-                blockBrightness = brightnessRamp[blockLight];
-
+                level->mDimension->getBrightnessRamp()[blockLight] * (skyDarken * 0.95f + 0.05f);
             const float skyBrightness =
-                brightnessRamp[skyLight] * (mBlockLightRedFlicker * kGammaSlope + kGammaBase);
+                level->mDimension->getBrightnessRamp()[skyLight] * (mBlockLightRedFlicker * 0.1f + 1.5f);
+            if (level->getSkyFlashTime() > 0)
+                blockBrightness = level->mDimension->getBrightnessRamp()[blockLight];
 
-            float redComponent = blockBrightness;
-            float greenBase =
-                blockBrightness * (skyDarken * kSecondarySkyScale + kSecondarySkyAdd);
+            const float greenBase = blockBrightness * (skyDarken * 0.65f + 0.35f);
+            const float greenFactor = skyBrightness * ((skyBrightness * 0.6f + 0.4f) * 0.6f + 0.4f);
+            const float blueFactor = skyBrightness * (skyBrightness * skyBrightness * 0.6f + 0.4f);
+            const unsigned int blockLightColor = level->mDimension->getBlockLightColour();
+            const float lightRed = static_cast<float>((blockLightColor >> 16) & 0xff) / 255.0f;
+            const float lightGreen = static_cast<float>((blockLightColor >> 8) & 0xff) / 255.0f;
+            const float lightBlue = static_cast<float>(blockLightColor & 0xff) / 255.0f;
             const float redLight = skyBrightness * lightRed;
-            const float blueLight =
-                skyBrightness
-                * (static_cast<float>(skyBrightness * skyBrightness) * kWaterMixC + kWaterMixA)
-                * lightBlue;
-            const float greenLight =
-                skyBrightness
-                * (static_cast<float>(skyBrightness * kWaterMixC + kWaterMixA) * kWaterMixC
-                   + kWaterMixA)
-                * lightGreen;
+            const float blueLight = blueFactor * lightBlue;
+            const float greenLight = greenFactor * lightGreen;
 
-            double red = static_cast<double>((greenBase + redLight) * kLightScale + kLightBase);
-            double green =
-                static_cast<double>((greenBase + greenLight) * kLightScale + kLightBase);
-            double blue =
-                static_cast<double>((redComponent + blueLight) * kLightScale + kLightBase);
+            float red = (greenBase + redLight) * 0.96f + 0.03f;
+            float green = (greenBase + greenLight) * 0.96f + 0.03f;
+            float blue = (blockBrightness + blueLight) * 0.96f + 0.03f;
 
-            if (mDarkenWorldAmount > kZero)
+            if (mDarkenWorldAmount > 0.0f)
             {
                 const float flashAmount =
                     (mDarkenWorldAmount - mDarkenWorldAmountO) * partialTick + mDarkenWorldAmountO;
-                const float keep = kOne - flashAmount;
-                red = red * keep + red * kGreyBoost * flashAmount;
-                green = green * keep + green * kWaterMixC * flashAmount;
-                blue = blue * keep + blue * kWaterMixC * flashAmount;
+                const float keep = 1.0f - flashAmount;
+                red = red * keep + red * 0.7f * flashAmount;
+                green = green * keep + green * 0.6f * flashAmount;
+                blue = blue * keep + blue * 0.6f * flashAmount;
             }
 
-            if (isNether)
+            if (level->mDimension->getType() == DimensionType::NETHER)
             {
-                red = static_cast<double>(redLight * kNetherRed + kNetherBlueAdd);
-                green = static_cast<double>(greenLight * kNetherRed + kNetherBlueScale);
-                blue = static_cast<double>(blueLight * kNetherRed + kNetherGreen);
+                red = redLight * 0.75f + 0.22f;
+                green = greenLight * 0.75f + 0.28f;
+                blue = blueLight * 0.75f + 0.25f;
             }
 
-            if (living->hasEffect(MobEffects::NIGHT_VISION)
-                || living->hasEffect(MobEffects::CONDUIT_POWER))
+            if (player->hasEffect(MobEffects::NIGHT_VISION)
+                || player->hasEffect(MobEffects::CONDUIT_POWER))
             {
-                const double nightVision =
-                    getNightVisionScale(living, partialTick);
-                double minScale = kOne / red;
-                if (kOne / green < minScale)
-                    minScale = kOne / green;
-                if (kOne / blue < minScale)
-                    minScale = kOne / blue;
-                const double keep = kOne - nightVision;
+                const float nightVision = getNightVisionScale(player, partialTick);
+                float minScale = 1.0f / red;
+                if (minScale > 1.0f / green)
+                    minScale = 1.0f / green;
+                if (minScale > 1.0f / blue)
+                    minScale = 1.0f / blue;
+                const float keep = 1.0f - nightVision;
                 red = red * keep + red * minScale * nightVision;
                 green = green * keep + green * minScale * nightVision;
                 blue = blue * keep + blue * minScale * nightVision;
             }
 
-            if (living->isUnderLiquid(Material::WATER))
+            if (player->isUnderLiquid(Material::WATER))
             {
-                boost::shared_ptr<Player> visionPlayer =
-                    boost::static_pointer_cast<Player>(player);
-                const double underwaterScale =
-                    getUnderWaterVisionScale(visionPlayer, partialTick);
-                double minScale = kOne / red;
-                if (kOne / green < minScale)
-                    minScale = kOne / green;
-                if (kOne / blue < minScale)
-                    minScale = kOne / blue;
-                const double keep = kOne - underwaterScale;
+                const float underwaterScale = getUnderWaterVisionScale(player, partialTick);
+                float minScale = 1.0f / red;
+                if (minScale > 1.0f / green)
+                    minScale = 1.0f / green;
+                if (minScale > 1.0f / blue)
+                    minScale = 1.0f / blue;
+                const float keep = 1.0f - underwaterScale;
                 red = red * keep + red * minScale * underwaterScale;
                 green = green * keep + green * minScale * underwaterScale;
                 blue = blue * keep + blue * minScale * underwaterScale;
             }
 
-            if (red > kOne)
-                red = kOne;
-            if (green > kOne)
-                green = kOne;
-            if (blue > kOne)
-                blue = kOne;
+            if (red > 1.0f)
+                red = 1.0f;
+            if (green > 1.0f)
+                green = 1.0f;
+            if (blue > 1.0f)
+                blue = 1.0f;
 
-            const double redCurve = kOne - red;
-            const double greenCurve = kOne - green;
-            const double blueCurve = kOne - blue;
-            red = (-(redCurve * redCurve * redCurve * redCurve - kOne) * kLightmapGamma + red) * kLightScale + kLightBase;
-            green =
-                (-(greenCurve * greenCurve * greenCurve * greenCurve - kOne) * kLightmapGamma + green) * kLightScale
-                + kLightBase;
-            blue =
-                (-(blueCurve * blueCurve * blueCurve * blueCurve - kOne) * kLightmapGamma + blue) * kLightScale
-                + kLightBase;
+            const float redCurve = 1.0f - red;
+            const float greenCurve = 1.0f - green;
+            const float blueCurve = 1.0f - blue;
+            red = ((1.0f - redCurve * redCurve * redCurve * redCurve) * 0.0f + red) * 0.96f + 0.03f;
+            green = ((1.0f - greenCurve * greenCurve * greenCurve * greenCurve) * 0.0f + green) * 0.96f + 0.03f;
+            blue = ((1.0f - blueCurve * blueCurve * blueCurve * blueCurve) * 0.0f + blue) * 0.96f + 0.03f;
 
-            if (red > kOne)
-                red = kOne;
-            if (green > kOne)
-                green = kOne;
-            if (blue > kOne)
-                blue = kOne;
-            if (red < kZero)
-                red = kZero;
-            if (green < kZero)
-                green = kZero;
-            if (blue < kZero)
-                blue = kZero;
+            if (red > 1.0f)
+                red = 1.0f;
+            if (green > 1.0f)
+                green = 1.0f;
+            if (blue > 1.0f)
+                blue = 1.0f;
+            if (red < 0.0f)
+                red = 0.0f;
+            if (green < 0.0f)
+                green = 0.0f;
+            if (blue < 0.0f)
+                blue = 0.0f;
 
-            pixelBuffer[lightIndex] =
-                static_cast<int>(red * k255) << 24
-                | static_cast<int>(green * k255) << 16
-                | static_cast<int>(blue * k255) << 8
+            mLightPixels[playerIndex].data[lightIndex] =
+                static_cast<int>(red * 255.0f) << 24
+                | static_cast<int>(green * 255.0f) << 16
+                | static_cast<int>(blue * 255.0f) << 8
                 | 0xff;
         }
 
@@ -2324,7 +2271,6 @@ static float sHeadZ[8];
 static double sEdgeLengths[8];
 static const float COLUMN_ALPHAS[4] = { 0.0f, 1.0f, 1.0f, 0.0f };
 static const float COLUMN_BAND_HEIGHTS[3] = { 0.125f, 0.5f, 0.375f };
-static const float ARROW_ALPHAS[4] = { 0.0f, 1.0f, 0.5f, 0.0f };
 
 void GameRenderer::renderThermal(Culler* culler, float partialTick)
 {
@@ -2381,23 +2327,221 @@ void GameRenderer::renderThermal(Culler* culler, float partialTick)
             continue;
         }
 
-        if (rule->getElytraSpeedBoost() <= 0.0 && rule->getLiftSpeed() >= 0.0)
+        if (rule->getElytraSpeedBoost() > 0.0 || rule->getLiftSpeed() < 0.0)
+        {
+            const float width = static_cast<float>((area->mMaxX - area->mMinX) - 0.0625);
+            const float halfHeight = static_cast<float>((area->mMaxY - area->mMinY) - 0.0625) * 0.5f;
+            const float depth = static_cast<float>((area->mMaxZ - area->mMinZ) - 0.0625);
+            const float halfDepth = depth * 0.5f;
+            const float halfWidth = width * 0.5f;
+            const float centerX = static_cast<float>(area->getCenter()->x);
+            const float centerY = static_cast<float>(area->getCenter()->y);
+            const float centerZ = static_cast<float>(area->getCenter()->z);
+            const float arrowAlphas[4] = { 0.0f, 1.0f, 0.5f, 0.0f };
+            const unsigned int boostDirection = rule->getBoostDirection();
+            const bool alongX = boostDirection <= 1 || (boostDirection >= 4 && boostDirection <= 5);
+            const bool alongZ = (boostDirection >= 2 && boostDirection <= 3) || (boostDirection >= 6 && boostDirection <= 7);
+
+            if (alongX || alongZ)
+            {
+                sOutlineY[0] = centerY - halfHeight;
+                sOutlineY[1] = centerY - halfHeight;
+                sOutlineY[2] = centerY + halfHeight;
+                sOutlineY[3] = centerY + halfHeight;
+                sHeadY[0] = centerY - halfHeight;
+                sHeadY[1] = centerY - halfHeight;
+                sHeadY[2] = halfHeight * 1.5f + centerY;
+                sHeadY[3] = halfHeight * 1.5f + centerY;
+            }
+            if (alongX)
+            {
+                sOutlineZ[0] = centerZ - halfDepth;
+                sOutlineZ[1] = centerZ + halfDepth;
+                sOutlineZ[2] = centerZ + halfDepth;
+                sOutlineZ[3] = centerZ - halfDepth;
+                sHeadZ[0] = centerZ - halfDepth * 1.5f;
+                sHeadZ[1] = centerZ + halfDepth * 1.5f;
+                sHeadZ[2] = centerZ + halfDepth * 1.5f;
+                sHeadZ[3] = centerZ - halfDepth * 1.5f;
+            }
+            else if (alongZ)
+            {
+                sOutlineX[0] = centerX - halfWidth;
+                sOutlineX[1] = centerX + halfWidth;
+                sOutlineX[2] = centerX + halfWidth;
+                sOutlineX[3] = centerX - halfWidth;
+                sHeadX[0] = centerX - halfWidth * 1.5f;
+                sHeadX[1] = centerX + halfWidth * 1.5f;
+                sHeadX[2] = centerX + halfWidth * 1.5f;
+                sHeadX[3] = centerX - halfWidth * 1.5f;
+            }
+
+            double perimeter = 0.0;
+            for (int side = 0; side < 4; ++side)
+            {
+                unsigned int next = side + 1;
+                if (next > 3)
+                    next = 0;
+                if (boostDirection < 2 || (boostDirection >= 6 && boostDirection < 8))
+                {
+                    const double dy = sOutlineY[next] - sOutlineY[side];
+                    const double dz = sOutlineZ[next] - sOutlineZ[side];
+                    sEdgeLengths[side] = sqrt(dy * dy + dz * dz);
+                }
+                else if (boostDirection >= 2 && boostDirection < 6)
+                {
+                    const double dx = sOutlineX[next] - sOutlineX[side];
+                    const double dy = sOutlineY[next] - sOutlineY[side];
+                    sEdgeLengths[side] = sqrt(dx * dx + dy * dy);
+                }
+                perimeter += sEdgeLengths[side];
+            }
+            Math::round(perimeter * 0.25);
+
+            const int seedX = static_cast<int>(area->mMinX + 0.03125);
+            const int seedZ = static_cast<int>(area->mMinZ + 0.03125);
+            mRandom.setSeed(static_cast<long long>((seedX * seedX * 0xC31 + seedX * 0x2B24ABB)
+                                                   ^ (seedZ * seedZ * 0x66397 + seedZ * 0x35C1)));
+            const float time = static_cast<float>(static_cast<int>(mTickCount)) + partialTick;
+            const double scroll = mRandom.nextDouble() + time * 0.033333335f;
+            builder->begin();
+
+            ColourTable* colourTable = Minecraft::GetInstance()->getColourTable();
+            int colour;
+            if (boostDirection >= 4 && boostDirection <= 7)
+            {
+                colour = colourTable->getColour(eMinecraftColour_Thermal_Speedboost2);
+            }
+            else
+            {
+                colour = colourTable->getColour(eMinecraftColour_Thermal_Speedboost);
+            }
+            if (boundTexture != &sBoostArrowTexture)
+            {
+                boundTexture = &sBoostArrowTexture;
+                mMinecraft->mTextures->bindTexture(&sBoostArrowTexture);
+            }
+            const float red = static_cast<float>((colour >> 16) & 0xFF) / 255.0f;
+            const float green = static_cast<float>((colour >> 8) & 0xFF) / 255.0f;
+            const float blue = static_cast<float>(colour & 0xFF) / 255.0f;
+
+            const int lightColor = mMinecraft->mLevel->getLightColor(BlockPos(area->mMinX, area->mMinY, area->mMinZ), 0, -1);
+            const int light = (lightColor * 3 + 0xF000F0) / 4;
+            const bool forwards = boostDirection == 1 || boostDirection == 3 || boostDirection == 5 || boostDirection == 7;
+            const float scrollStep = forwards ? 1.0f : -1.0f;
+            const bool headAtStart = boostDirection == 0 || boostDirection == 2 || (boostDirection >= 4 && boostDirection <= 7);
+            const bool headAtEnd = boostDirection == 1 || boostDirection == 3 || (boostDirection >= 4 && boostDirection <= 7);
+
+            const float length = (alongX ? width : depth) + 8.0f;
+            if (alongX || alongZ)
+            {
+                for (int side = 0; side < 4; ++side)
+                {
+                    unsigned int next = side + 1;
+                    if (next > 3)
+                        next = 0;
+                    float start = static_cast<float>((alongX ? area->mMinX : area->mMinZ) - 4.0);
+                    float v0 = static_cast<float>(scroll);
+                    for (int segment = 0; segment < 3; ++segment)
+                    {
+                        const float end = start + (segment == 1 ? length - 8.0f : 4.0f);
+                        const float v1 = v0 + scrollStep;
+                        const int alphaStart = forwards ? 3 - segment : segment;
+                        const int alphaEnd = forwards ? 3 - (segment + 1) : segment + 1;
+                        const bool headStart = headAtStart && segment == 0;
+                        const bool headEnd = headAtEnd && segment == 2;
+                        if (alongX)
+                        {
+                            float endY0 = sOutlineY[side];
+                            float endZ0 = sOutlineZ[side];
+                            float endY1 = sOutlineY[next];
+                            float endZ1 = sOutlineZ[next];
+                            if (headStart)
+                            {
+                                builder->blockRainQuad(start, sHeadY[side], sHeadZ[side], 0.0f, v0,
+                                                       start, sHeadY[next], sHeadZ[next], 1.0f, v0,
+                                                       end, endY1, endZ1, 1.0f, v1,
+                                                       end, endY0, endZ0, 0.0f, v1,
+                                                       red, green, blue, arrowAlphas[alphaStart],
+                                                       red, green, blue, arrowAlphas[alphaEnd], light);
+                            }
+                            else
+                            {
+                                if (headEnd)
+                                {
+                                    endY0 = sHeadY[side];
+                                    endZ0 = sHeadZ[side];
+                                    endY1 = sHeadY[next];
+                                    endZ1 = sHeadZ[next];
+                                }
+                                builder->blockRainQuad(start, sOutlineY[side], sOutlineZ[side], 0.0f, v0,
+                                                       start, sOutlineY[next], sOutlineZ[next], 1.0f, v0,
+                                                       end, endY1, endZ1, 1.0f, v1,
+                                                       end, endY0, endZ0, 0.0f, v1,
+                                                       red, green, blue, arrowAlphas[alphaStart],
+                                                       red, green, blue, arrowAlphas[alphaEnd], light);
+                            }
+                        }
+                        else
+                        {
+                            float endX0 = sOutlineX[side];
+                            float endY0 = sOutlineY[side];
+                            float endX1 = sOutlineX[next];
+                            float endY1 = sOutlineY[next];
+                            if (headStart)
+                            {
+                                builder->blockRainQuad(sHeadX[side], sHeadY[side], start, 0.0f, v0,
+                                                       sHeadX[next], sHeadY[next], start, 1.0f, v0,
+                                                       endX1, endY1, end, 1.0f, v1,
+                                                       endX0, endY0, end, 0.0f, v1,
+                                                       red, green, blue, arrowAlphas[alphaStart],
+                                                       red, green, blue, arrowAlphas[alphaEnd], light);
+                            }
+                            else
+                            {
+                                if (headEnd)
+                                {
+                                    endX0 = sHeadX[side];
+                                    endY0 = sHeadY[side];
+                                    endX1 = sHeadX[next];
+                                    endY1 = sHeadY[next];
+                                }
+                                builder->blockRainQuad(sOutlineX[side], sOutlineY[side], start, 0.0f, v0,
+                                                       sOutlineX[next], sOutlineY[next], start, 1.0f, v0,
+                                                       endX1, endY1, end, 1.0f, v1,
+                                                       endX0, endY0, end, 0.0f, v1,
+                                                       red, green, blue, arrowAlphas[alphaStart],
+                                                       red, green, blue, arrowAlphas[alphaEnd], light);
+                            }
+                        }
+                        start = end;
+                        v0 = v1;
+                    }
+                }
+            }
+            builder->end();
+        }
+        else
         {
             const float radiusX = static_cast<float>(static_cast<int>(area->mMaxX - area->mMinX)) * 0.5f;
             const float radiusZ = static_cast<float>(static_cast<int>(area->mMaxZ - area->mMinZ)) * 0.5f;
             const float centerX = static_cast<float>(area->mMinX + radiusX);
             const float centerZ = static_cast<float>(area->mMinZ + radiusZ);
-            for (int corner = 0; corner < 8; ++corner)
+            for (unsigned int corner = 0; corner < 8; ++corner)
             {
                 const float angle = Mth::PI * 2.0f * static_cast<float>(corner) * 0.125f;
-                sOutlineX[corner] = radiusX * cosf(angle) + centerX;
-                sOutlineZ[corner] = radiusZ * sinf(angle) + centerZ;
+                const float cosine = cosf(angle);
+                const float sine = sinf(angle);
+                sOutlineX[corner] = radiusX * cosine + centerX;
+                sOutlineZ[corner] = radiusZ * sine + centerZ;
             }
 
             double perimeter = 0.0;
             for (int corner = 0; corner < 8; ++corner)
             {
-                const int next = corner + 1 < 8 ? corner + 1 : 0;
+                unsigned int next = corner + 1;
+                if (next > 7)
+                    next = 0;
                 const double dx = sOutlineX[next] - sOutlineX[corner];
                 const double dz = sOutlineZ[next] - sOutlineZ[corner];
                 sEdgeLengths[corner] = sqrt(dx * dx + dz * dz);
@@ -2447,7 +2591,9 @@ void GameRenderer::renderThermal(Culler* culler, float partialTick)
 
             for (int corner = 0; corner < 8; ++corner)
             {
-                const int next = corner + 1 < 8 ? corner + 1 : 0;
+                unsigned int next = corner + 1;
+                if (next > 7)
+                    next = 0;
                 const double nextU = u + sEdgeLengths[corner] / segmentLength;
                 const float u0 = static_cast<float>(u);
                 const float u1 = static_cast<float>(nextU);
@@ -2469,135 +2615,7 @@ void GameRenderer::renderThermal(Culler* culler, float partialTick)
                 u = nextU;
             }
             builder->end();
-            continue;
         }
-
-        const float width = static_cast<float>((area->mMaxX - area->mMinX) - 0.0625);
-        const float halfHeight = static_cast<float>((area->mMaxY - area->mMinY) - 0.0625) * 0.5f;
-        const float depth = static_cast<float>((area->mMaxZ - area->mMinZ) - 0.0625);
-        const float halfDepth = depth * 0.5f;
-        const float halfWidth = width * 0.5f;
-        const float centerX = static_cast<float>(area->getCenter()->x);
-        const float centerY = static_cast<float>(area->getCenter()->y);
-        const float centerZ = static_cast<float>(area->getCenter()->z);
-        const unsigned int boostDirection = rule->getBoostDirection();
-        const bool alongX = boostDirection <= 1 || (boostDirection >= 4 && boostDirection <= 5);
-        const bool alongZ = (boostDirection >= 2 && boostDirection <= 3) || (boostDirection >= 6 && boostDirection <= 7);
-
-        if (alongX || alongZ)
-        {
-            sOutlineY[0] = centerY - halfHeight;
-            sOutlineY[1] = centerY - halfHeight;
-            sOutlineY[2] = centerY + halfHeight;
-            sOutlineY[3] = centerY + halfHeight;
-            sHeadY[0] = centerY - halfHeight;
-            sHeadY[1] = centerY - halfHeight;
-            sHeadY[2] = halfHeight * 1.5f + centerY;
-            sHeadY[3] = halfHeight * 1.5f + centerY;
-        }
-        if (alongX)
-        {
-            sOutlineZ[0] = centerZ - halfDepth;
-            sOutlineZ[1] = centerZ + halfDepth;
-            sOutlineZ[2] = centerZ + halfDepth;
-            sOutlineZ[3] = centerZ - halfDepth;
-            sHeadZ[0] = centerZ - halfDepth * 1.5f;
-            sHeadZ[1] = centerZ + halfDepth * 1.5f;
-            sHeadZ[2] = centerZ + halfDepth * 1.5f;
-            sHeadZ[3] = centerZ - halfDepth * 1.5f;
-        }
-        else if (alongZ)
-        {
-            sOutlineX[0] = centerX - halfWidth;
-            sOutlineX[1] = centerX + halfWidth;
-            sOutlineX[2] = centerX + halfWidth;
-            sOutlineX[3] = centerX - halfWidth;
-            sHeadX[0] = centerX - halfWidth * 1.5f;
-            sHeadX[1] = centerX + halfWidth * 1.5f;
-            sHeadX[2] = centerX + halfWidth * 1.5f;
-            sHeadX[3] = centerX - halfWidth * 1.5f;
-        }
-
-        const int seedX = static_cast<int>(area->mMinX + 0.03125);
-        const int seedZ = static_cast<int>(area->mMinZ + 0.03125);
-        mRandom.setSeed(static_cast<long long>((seedX * seedX * 0xC31 + seedX * 0x2B24ABB)
-                                               ^ (seedZ * seedZ * 0x66397 + seedZ * 0x35C1)));
-        const float time = static_cast<float>(static_cast<int>(mTickCount)) + partialTick;
-        const double scroll = mRandom.nextDouble() + time * 0.033333335f;
-        builder->begin();
-
-        int colour;
-        if (boostDirection >= 4 && boostDirection <= 7)
-        {
-            colour = Minecraft::GetInstance()->getColourTable()->getColour(eMinecraftColour_Thermal_Speedboost2);
-        }
-        else
-        {
-            colour = Minecraft::GetInstance()->getColourTable()->getColour(eMinecraftColour_Thermal_Speedboost);
-        }
-        if (boundTexture != &sBoostArrowTexture)
-        {
-            boundTexture = &sBoostArrowTexture;
-            mMinecraft->mTextures->bindTexture(&sBoostArrowTexture);
-        }
-        const float red = static_cast<float>((colour >> 16) & 0xFF) / 255.0f;
-        const float green = static_cast<float>((colour >> 8) & 0xFF) / 255.0f;
-        const float blue = static_cast<float>(colour & 0xFF) / 255.0f;
-
-        const int lightColor = mMinecraft->mLevel->getLightColor(BlockPos(area->mMinX, area->mMinY, area->mMinZ), 0, -1);
-        const int light = (lightColor * 3 + 0xF000F0) / 4;
-        const bool forwards = boostDirection == 1 || boostDirection == 3 || boostDirection == 5 || boostDirection == 7;
-        const float scrollStep = forwards ? 1.0f : -1.0f;
-        const bool headAtStart = boostDirection == 0 || boostDirection == 2 || (boostDirection >= 4 && boostDirection <= 7);
-        const bool headAtEnd = boostDirection == 1 || boostDirection == 3 || (boostDirection >= 4 && boostDirection <= 7);
-
-        if (alongX || alongZ)
-        {
-            for (int side = 0; side < 4; ++side)
-            {
-                const int next = side + 1 < 4 ? side + 1 : 0;
-                float start = static_cast<float>((alongX ? area->mMinX : area->mMinZ) - 4.0);
-                float v0 = static_cast<float>(scroll);
-                for (int segment = 0; segment < 3; ++segment)
-                {
-                    const float end = start + (segment == 1 ? (alongX ? width : depth) : 4.0f);
-                    const float v1 = v0 + scrollStep;
-                    const int alphaStart = forwards ? 3 - segment : segment;
-                    const int alphaEnd = forwards ? 3 - (segment + 1) : segment + 1;
-                    const bool headStart = headAtStart && segment == 0;
-                    const bool headEnd = headAtEnd && segment == 2;
-                    if (alongX)
-                    {
-                        const float* startY = headStart ? sHeadY : sOutlineY;
-                        const float* startZ = headStart ? sHeadZ : sOutlineZ;
-                        const float* endY = headEnd ? sHeadY : sOutlineY;
-                        const float* endZ = headEnd ? sHeadZ : sOutlineZ;
-                        builder->blockRainQuad(start, startY[side], startZ[side], 0.0f, v0,
-                                               start, startY[next], startZ[next], 1.0f, v0,
-                                               end, endY[next], endZ[next], 1.0f, v1,
-                                               end, endY[side], endZ[side], 0.0f, v1,
-                                               red, green, blue, ARROW_ALPHAS[alphaStart],
-                                               red, green, blue, ARROW_ALPHAS[alphaEnd], light);
-                    }
-                    else
-                    {
-                        const float* startX = headStart ? sHeadX : sOutlineX;
-                        const float* startY = headStart ? sHeadY : sOutlineY;
-                        const float* endX = headEnd ? sHeadX : sOutlineX;
-                        const float* endY = headEnd ? sHeadY : sOutlineY;
-                        builder->blockRainQuad(startX[side], startY[side], start, 0.0f, v0,
-                                               startX[next], startY[next], start, 1.0f, v0,
-                                               endX[next], endY[next], end, 1.0f, v1,
-                                               endX[side], endY[side], end, 0.0f, v1,
-                                               red, green, blue, ARROW_ALPHAS[alphaStart],
-                                               red, green, blue, ARROW_ALPHAS[alphaEnd], light);
-                    }
-                    start = end;
-                    v0 = v1;
-                }
-            }
-        }
-        builder->end();
     }
 
     builder->offset(0.0f, 0.0f, 0.0f);

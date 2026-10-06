@@ -19,6 +19,8 @@ class Minecraft;
 class TextureAtlasSprite;
 class Vec3;
 
+extern bool gFancyGraphics;
+
 class BlockRenderer
 {
 public:

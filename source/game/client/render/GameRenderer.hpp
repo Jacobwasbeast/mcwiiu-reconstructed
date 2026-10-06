@@ -84,8 +84,8 @@ public:
     void turnOnLightLayer(double);
     void turnOffLightLayer(double);
     void renderItemInHand(float, int);
-    double getNightVisionScale(boost::shared_ptr<LivingEntity>, float);
-    double getUnderWaterVisionScale(const boost::shared_ptr<Player>&, float);
+    float getNightVisionScale(boost::shared_ptr<LivingEntity>, float);
+    float getUnderWaterVisionScale(const boost::shared_ptr<Player>&, float);
     void updateLightTexture(float);
     static unsigned int fjGetFpsCap(int);
     static bool anaglyph3d;

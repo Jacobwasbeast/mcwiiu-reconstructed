@@ -3358,158 +3358,6 @@ void LevelRenderer::levelEvent(boost::shared_ptr<Player> player, int type, const
 
     switch (type)
     {
-    case LevelEvent::SOUND_DISPENSER_DISPENSE:
-        level->playLocalSound(x, y, z, SoundEvents::DISPENSER_DISPENSE, SoundSource::eSoundSource_Blocks, 1.0f, 1.0f,
-                              false, 16.0f);
-        break;
-    case LevelEvent::SOUND_DISPENSER_FAIL:
-        level->playLocalSound(x, y, z, SoundEvents::DISPENSER_FAIL, SoundSource::eSoundSource_Blocks, 1.0f, 1.2f,
-                              false, 16.0f);
-        break;
-    case LevelEvent::SOUND_DISPENSER_PROJECTILE_LAUNCH:
-        level->playLocalSound(x, y, z, SoundEvents::DISPENSER_LAUNCH, SoundSource::eSoundSource_Blocks, 1.0f, 1.2f,
-                              false, 16.0f);
-        break;
-    case LevelEvent::SOUND_ENDER_EYE_LAUNCH:
-        level->playLocalSound(x, y, z, SoundEvents::ENDEREYE_LAUNCH, SoundSource::eSoundSource_Neutral, 1.0f, 1.2f,
-                              false, 16.0f);
-        break;
-    case LevelEvent::SOUND_FIREWORK_SHOOT:
-        level->playLocalSound(x, y, z, SoundEvents::FIREWORK_SHOOT, SoundSource::eSoundSource_Neutral, 1.0f, 1.2f,
-                              false, 16.0f);
-        break;
-    case LevelEvent::SOUND_OPEN_IRON_DOOR:
-        level->playLocalSound(x + 0.5, y + 0.5, z + 0.5, SoundEvents::IRON_DOOR_OPEN, SoundSource::eSoundSource_Blocks,
-                              1.0f, random->nextFloat() * 0.1f + 0.9f, false, 16.0f);
-        break;
-    case LevelEvent::SOUND_OPEN_WOODEN_DOOR:
-        level->playLocalSound(x + 0.5, y + 0.5, z + 0.5, SoundEvents::WOODEN_DOOR_OPEN,
-                              SoundSource::eSoundSource_Blocks, 1.0f, random->nextFloat() * 0.1f + 0.9f, false, 16.0f);
-        break;
-    case LevelEvent::SOUND_OPEN_WOODEN_TRAP_DOOR:
-        level->playLocalSound(x + 0.5, y + 0.5, z + 0.5, SoundEvents::WOODEN_TRAPDOOR_OPEN,
-                              SoundSource::eSoundSource_Blocks, 1.0f, random->nextFloat() * 0.1f + 0.9f, false, 16.0f);
-        break;
-    case LevelEvent::SOUND_OPEN_FENCE_GATE:
-        level->playLocalSound(x + 0.5, y + 0.5, z + 0.5, SoundEvents::FENCE_GATE_OPEN, SoundSource::eSoundSource_Blocks,
-                              1.0f, random->nextFloat() * 0.1f + 0.9f, false, 16.0f);
-        break;
-    case LevelEvent::SOUND_EXTINGUISH_FIRE:
-    {
-        const float first = random->nextFloat();
-        const float second = random->nextFloat();
-        level->playLocalSound(static_cast<float>(x) + 0.5f, static_cast<float>(y) + 0.5f,
-                              static_cast<float>(z) + 0.5f, SoundEvents::FIRE_EXTINGUISH,
-                              SoundSource::eSoundSource_Blocks, 0.5f, (first - second) * 0.8f + 2.6f, false, 16.0f);
-        break;
-    }
-    case LevelEvent::SOUND_PLAY_RECORDING:
-    {
-        Item* item = Item::byId(data);
-        RecordItem* record = item != NULL ? dynamic_cast<RecordItem*>(item) : NULL;
-        if (record != NULL)
-            level->playStreamingMusic(pos, record->getSound(), true);
-        else if (!mMinecraft->mSoundEngine->GetIsPlayingStreamingGameMusic())
-            level->playStreamingMusic(pos, NULL, true);
-        mMinecraft->mLocalPlayers[playerIndex]->updateRichPresence();
-        break;
-    }
-    case LevelEvent::SOUND_CLOSE_IRON_DOOR:
-        level->playLocalSound(x + 0.5, y + 0.5, z + 0.5, SoundEvents::IRON_DOOR_CLOSE,
-                              SoundSource::eSoundSource_Blocks, 1.0f, random->nextFloat() * 0.1f + 0.9f, false, 16.0f);
-        break;
-    case LevelEvent::SOUND_CLOSE_WOODEN_DOOR:
-        level->playLocalSound(x + 0.5, y + 0.5, z + 0.5, SoundEvents::WOODEN_DOOR_CLOSE,
-                              SoundSource::eSoundSource_Blocks, 1.0f, random->nextFloat() * 0.1f + 0.9f, false, 16.0f);
-        break;
-    case LevelEvent::SOUND_CLOSE_WOODEN_TRAP_DOOR:
-        level->playLocalSound(x + 0.5, y + 0.5, z + 0.5, SoundEvents::WOODEN_TRAPDOOR_CLOSE,
-                              SoundSource::eSoundSource_Blocks, 1.0f, random->nextFloat() * 0.1f + 0.9f, false, 16.0f);
-        break;
-    case LevelEvent::SOUND_CLOSE_FENCE_GATE:
-        level->playLocalSound(x + 0.5, y + 0.5, z + 0.5, SoundEvents::FENCE_GATE_CLOSE,
-                              SoundSource::eSoundSource_Blocks, 1.0f, random->nextFloat() * 0.1f + 0.9f, false, 16.0f);
-        break;
-    case LevelEvent::SOUND_GHAST_WARNING:
-    {
-        const float first = random->nextFloat();
-        const float second = random->nextFloat();
-        level->playLocalSound(x + 0.5, y + 0.5, z + 0.5, SoundEvents::GHAST_WARN, SoundSource::eSoundSource_Hostile,
-                              2.0f, (first - second) * 0.2f + 1.0f, false, 80.0f);
-        break;
-    }
-    case LevelEvent::SOUND_GHAST_FIREBALL:
-    {
-        const float first = random->nextFloat();
-        const float second = random->nextFloat();
-        level->playLocalSound(x + 0.5, y + 0.5, z + 0.5, SoundEvents::GHAST_SHOOT, SoundSource::eSoundSource_Hostile,
-                              2.0f, (first - second) * 0.2f + 1.0f, false, 80.0f);
-        break;
-    }
-    case LevelEvent::SOUND_BLAZE_FIREBALL:
-    {
-        const float first = random->nextFloat();
-        const float second = random->nextFloat();
-        level->playLocalSound(x + 0.5, y + 0.5, z + 0.5, SoundEvents::BLAZE_SHOOT, SoundSource::eSoundSource_Hostile,
-                              2.0f, (first - second) * 0.2f + 1.0f, false, 16.0f);
-        break;
-    }
-    case LevelEvent::SOUND_ZOMBIE_WOODEN_DOOR:
-    {
-        const float first = random->nextFloat();
-        const float second = random->nextFloat();
-        level->playLocalSound(x + 0.5, y + 0.5, z + 0.5, SoundEvents::ZOMBIE_ATTACK_DOOR_WOOD,
-                              SoundSource::eSoundSource_Hostile, 2.0f, (first - second) * 0.2f + 1.0f, false, 16.0f);
-        break;
-    }
-    case LevelEvent::SOUND_ZOMBIE_IRON_DOOR:
-    {
-        const float first = random->nextFloat();
-        const float second = random->nextFloat();
-        level->playLocalSound(x + 0.5, y + 0.5, z + 0.5, SoundEvents::ZOMBIE_ATTACK_IRON_DOOR,
-                              SoundSource::eSoundSource_Hostile, 2.0f, (first - second) * 0.2f + 1.0f, false, 16.0f);
-        break;
-    }
-    case LevelEvent::SOUND_ZOMBIE_DOOR_CRASH:
-    {
-        const float first = random->nextFloat();
-        const float second = random->nextFloat();
-        level->playLocalSound(x + 0.5, y + 0.5, z + 0.5, SoundEvents::ZOMBIE_BREAK_DOOR_WOOD,
-                              SoundSource::eSoundSource_Hostile, 2.0f, (first - second) * 0.2f + 1.0f, false, 16.0f);
-        break;
-    }
-    case LevelEvent::SOUND_WITHER_BOSS_SHOOT:
-    {
-        const float first = random->nextFloat();
-        const float second = random->nextFloat();
-        level->playLocalSound(x + 0.5, y + 0.5, z + 0.5, SoundEvents::WITHER_SHOOT, SoundSource::eSoundSource_Hostile,
-                              2.0f, (first - second) * 0.2f + 1.0f, false, 16.0f);
-        break;
-    }
-    case LevelEvent::SOUND_BAT_LIFTOFF:
-    {
-        const float first = random->nextFloat();
-        const float second = random->nextFloat();
-        level->playLocalSound(x + 0.5, y + 0.5, z + 0.5, SoundEvents::BAT_TAKEOFF, SoundSource::eSoundSource_Neutral,
-                              0.05f, (first - second) * 0.2f + 1.0f, false, 16.0f);
-        break;
-    }
-    case LevelEvent::SOUND_ZOMBIE_INFECTED:
-    {
-        const float first = random->nextFloat();
-        const float second = random->nextFloat();
-        level->playLocalSound(x + 0.5, y + 0.5, z + 0.5, SoundEvents::ZOMBIE_INFECT, SoundSource::eSoundSource_Hostile,
-                              2.0f, (first - second) * 0.2f + 1.0f, false, 16.0f);
-        break;
-    }
-    case LevelEvent::SOUND_ZOMBIE_CONVERTED:
-    {
-        const float first = random->nextFloat();
-        const float second = random->nextFloat();
-        level->playLocalSound(x + 0.5, y + 0.5, z + 0.5, SoundEvents::ZOMBIE_VILLAGER_CURE,
-                              SoundSource::eSoundSource_Hostile, 2.0f, (first - second) * 0.2f + 1.0f, false, 16.0f);
-        break;
-    }
     case LevelEvent::SOUND_DRAGON_DEATH:
         if (mMinecraft->getCameraEntity() != NULL)
         {
@@ -3530,23 +3378,9 @@ void LevelRenderer::levelEvent(boost::shared_ptr<Player> player, int type, const
                                                  SoundSource::eSoundSource_Hostile, 5.0f, 1.0f, false, 16.0f);
         }
         break;
-    case LevelEvent::SOUND_ANVIL_BROKEN:
-        level->playLocalSound(static_cast<float>(x) + 0.5f, static_cast<float>(y) + 0.5f,
-                              static_cast<float>(z) + 0.5f, SoundEvents::ANVIL_BREAK, SoundSource::eSoundSource_Blocks,
-                              1.0f, random->nextFloat() * 0.1f + 0.9f, false, 16.0f);
-        break;
-    case LevelEvent::SOUND_ANVIL_USED:
-        level->playLocalSound(static_cast<float>(x) + 0.5f, static_cast<float>(y) + 0.5f,
-                              static_cast<float>(z) + 0.5f, SoundEvents::ANVIL_USE, SoundSource::eSoundSource_Blocks,
-                              1.0f, random->nextFloat() * 0.1f + 0.9f, false, 16.0f);
-        break;
-    case LevelEvent::SOUND_ANVIL_LAND:
-        level->playLocalSound(static_cast<float>(x) + 0.5f, static_cast<float>(y) + 0.5f,
-                              static_cast<float>(z) + 0.5f, SoundEvents::ANVIL_LAND, SoundSource::eSoundSource_Blocks,
-                              0.3f, random->nextFloat() * 0.1f + 0.9f, false, 16.0f);
-        break;
-    case LevelEvent::SOUND_PORTAL_TRAVEL:
-        mMinecraft->mSoundEngine->playUI(SoundEvents::PORTAL_TRAVEL, 1.0f, random->nextFloat() * 0.4f + 0.8f);
+    case LevelEvent::SOUND_BREWING_STAND_BREW:
+        level->playLocalSound(x, y, z, SoundEvents::BREWING_STAND_BREW, SoundSource::eSoundSource_Blocks, 1.0f, 1.0f,
+                              false, 16.0f);
         break;
     case LevelEvent::SOUND_CHORUS_GROW:
         level->playLocalSound(x, y, z, SoundEvents::CHORUS_FLOWER_GROW, SoundSource::eSoundSource_Blocks, 1.0f, 1.0f,
@@ -3556,17 +3390,28 @@ void LevelRenderer::levelEvent(boost::shared_ptr<Player> player, int type, const
         level->playLocalSound(x, y, z, SoundEvents::CHORUS_FLOWER_DEATH, SoundSource::eSoundSource_Blocks, 1.0f, 1.0f,
                               false, 16.0f);
         break;
-    case LevelEvent::SOUND_BREWING_STAND_BREW:
-        level->playLocalSound(x, y, z, SoundEvents::BREWING_STAND_BREW, SoundSource::eSoundSource_Blocks, 1.0f, 1.0f,
+    case LevelEvent::SOUND_PORTAL_TRAVEL:
+        mMinecraft->mSoundEngine->playUI(SoundEvents::PORTAL_TRAVEL, 1.0f, random->nextFloat() * 0.4f + 0.8f);
+        break;
+    case LevelEvent::SOUND_DISPENSER_FAIL:
+        level->playLocalSound(x, y, z, SoundEvents::DISPENSER_FAIL, SoundSource::eSoundSource_Blocks, 1.0f, 1.2f,
                               false, 16.0f);
         break;
-    case LevelEvent::SOUND_CLOSE_IRON_TRAP_DOOR:
-        level->playLocalSound(x + 0.5, y + 0.5, z + 0.5, SoundEvents::IRON_TRAPDOOR_CLOSE,
-                              SoundSource::eSoundSource_Blocks, 1.0f, random->nextFloat() * 0.1f + 0.9f, false, 16.0f);
+    case LevelEvent::SOUND_DISPENSER_DISPENSE:
+        level->playLocalSound(x, y, z, SoundEvents::DISPENSER_DISPENSE, SoundSource::eSoundSource_Blocks, 1.0f, 1.0f,
+                              false, 16.0f);
         break;
-    case LevelEvent::SOUND_OPEN_IRON_TRAP_DOOR:
-        level->playLocalSound(x + 0.5, y + 0.5, z + 0.5, SoundEvents::IRON_TRAPDOOR_OPEN,
-                              SoundSource::eSoundSource_Blocks, 1.0f, random->nextFloat() * 0.1f + 0.9f, false, 16.0f);
+    case LevelEvent::SOUND_ENDER_EYE_LAUNCH:
+        level->playLocalSound(x, y, z, SoundEvents::ENDEREYE_LAUNCH, SoundSource::eSoundSource_Neutral, 1.0f, 1.2f,
+                              false, 16.0f);
+        break;
+    case LevelEvent::SOUND_FIREWORK_SHOOT:
+        level->playLocalSound(x, y, z, SoundEvents::FIREWORK_SHOOT, SoundSource::eSoundSource_Neutral, 1.0f, 1.2f,
+                              false, 16.0f);
+        break;
+    case LevelEvent::SOUND_DISPENSER_PROJECTILE_LAUNCH:
+        level->playLocalSound(x, y, z, SoundEvents::DISPENSER_LAUNCH, SoundSource::eSoundSource_Blocks, 1.0f, 1.2f,
+                              false, 16.0f);
         break;
     case LevelEvent::PARTICLES_SHOOT:
     {
@@ -3584,21 +3429,33 @@ void LevelRenderer::levelEvent(boost::shared_ptr<Player> player, int type, const
             const double xa = xStep * speed + random->nextGaussian() * 0.01;
             const double ya = -0.03 + random->nextGaussian() * 0.01;
             const double za = zStep * speed + random->nextGaussian() * 0.01;
-            addParticle(level, PARTICLE_SMOKE, particleX, particleY, particleZ, xa, ya, za, arrayWithLength<int>());
+            addParticle(mLevels[playerIndex], PARTICLE_SMOKE, particleX, particleY, particleZ, xa, ya, za, arrayWithLength<int>());
         }
         break;
     }
-    case LevelEvent::PARTICLES_DESTROY_BLOCK:
+    case LevelEvent::PARTICLES_EYE_OF_ENDER_DEATH:
     {
-        Block* block = Block::byId(data & 0xFFF);
-        if (block->mMaterial != Material::AIR)
+        const double originX = x + 0.5;
+        const double originY = y;
+        const double originZ = z + 0.5;
+        for (int i = 0; i < 8; ++i)
         {
-            const SoundType* soundType = block->getSoundType();
-            static_cast<MultiPlayerLevel*>(level)->playLocalSound(
-                BlockPos(x, y, z), soundType->getBreakSound(), SoundSource::eSoundSource_Blocks,
-                (soundType->getVolume() + 1.0f) * 0.5f, soundType->getPitch() * 0.8f, false, 16.0f);
+            int itemId[1] = { Item::getId(Items::enderEye) };
+            const double xa = random->nextGaussian() * 0.15;
+            const double ya = random->nextDouble() * 0.2;
+            const double za = random->nextGaussian() * 0.15;
+            addParticle(mLevels[playerIndex], PARTICLE_ICON_CRACK, originX, originY, originZ, xa, ya, za,
+                        arrayWithLength<int>(itemId, 1));
         }
-        mMinecraft->mParticleEngine->destroy(BlockPos(x, y, z), block->getBlockState(data >> 12 & 0xFF));
+        for (double angle = 0.0; angle < 6.2831854820251465; angle += 0.15707963705062866)
+        {
+            addParticle(mLevels[playerIndex], PARTICLE_ENDER, originX + std::cos(angle) * 5.0, originY - 0.4,
+                        originZ + std::sin(angle) * 5.0, std::cos(angle) * -5.0, 0.0, std::sin(angle) * -5.0,
+                        arrayWithLength<int>());
+            addParticle(mLevels[playerIndex], PARTICLE_ENDER, originX + std::cos(angle) * 5.0, originY - 0.4,
+                        originZ + std::sin(angle) * 5.0, std::cos(angle) * -7.0, 0.0, std::sin(angle) * -7.0,
+                        arrayWithLength<int>());
+        }
         break;
     }
     case LevelEvent::PARTICLES_SPELL_POTION_SPLASH:
@@ -3610,7 +3467,7 @@ void LevelRenderer::levelEvent(boost::shared_ptr<Player> player, int type, const
             const double xa = random->nextGaussian() * 0.15;
             const double ya = random->nextDouble() * 0.2;
             const double za = random->nextGaussian() * 0.15;
-            addParticle(level, PARTICLE_ICON_CRACK, x, y, z, xa, ya, za, arrayWithLength<int>(itemId, 1));
+            addParticle(mLevels[playerIndex], PARTICLE_ICON_CRACK, x, y, z, xa, ya, za, arrayWithLength<int>(itemId, 1));
         }
         int particleCount = 100;
         if (Minecraft::GetInstance()->GetMiniGame()->HasFeatureReducedParticles())
@@ -3629,7 +3486,7 @@ void LevelRenderer::levelEvent(boost::shared_ptr<Player> player, int type, const
                 const double xa = std::cos(angle) * power;
                 const double ya = random->nextDouble() * 0.5 + 0.01;
                 const double za = std::sin(angle) * power;
-                Particle* particle = addParticleInternal(level, particleType, false, x + xa * 0.1, y + 0.3, z + za * 0.1,
+                Particle* particle = addParticleInternal(mLevels[playerIndex], particleType, false, x + xa * 0.1, y + 0.3, z + za * 0.1,
                                                          xa, ya, za, arrayWithLength<int>());
                 if (particle != NULL)
                 {
@@ -3639,45 +3496,34 @@ void LevelRenderer::levelEvent(boost::shared_ptr<Player> player, int type, const
                 }
             }
         }
-        level->playLocalSound(x + 0.5, y + 0.5, z + 0.5, SoundEvents::GLASS_BREAK, SoundSource::eSoundSource_Blocks,
-                              1.0f, random->nextFloat() * 0.1f + 0.9f, false, 16.0f);
+        mLevels[playerIndex]->playLocalSound(x + 0.5, y + 0.5, z + 0.5, SoundEvents::GLASS_BREAK,
+                                             SoundSource::eSoundSource_Blocks, 1.0f,
+                                             mLevels[playerIndex]->mRandom->nextFloat() * 0.1f + 0.9f, false, 16.0f);
         break;
     }
-    case LevelEvent::PARTICLES_EYE_OF_ENDER_DEATH:
+    case LevelEvent::PARTICLES_DESTROY_BLOCK:
     {
-        const double originX = x + 0.5;
-        const double originY = y;
-        const double originZ = z + 0.5;
-        for (int i = 0; i < 8; ++i)
+        Block* block = Block::byId(data & 0xFFF);
+        if (block->mMaterial != Material::AIR)
         {
-            int itemId[1] = { Item::getId(Items::enderEye) };
-            const double xa = random->nextGaussian() * 0.15;
-            const double ya = random->nextDouble() * 0.2;
-            const double za = random->nextGaussian() * 0.15;
-            addParticle(level, PARTICLE_ICON_CRACK, originX, originY, originZ, xa, ya, za,
-                        arrayWithLength<int>(itemId, 1));
+            const SoundType* soundType = block->getSoundType();
+            static_cast<MultiPlayerLevel*>(mLevels[playerIndex])->playLocalSound(
+                BlockPos(x, y, z), soundType->getBreakSound(), SoundSource::eSoundSource_Blocks,
+                (soundType->getVolume() + 1.0f) * 0.5f, soundType->getPitch() * 0.8f, false, 16.0f);
         }
-        for (double angle = 0.0; angle < 6.2831854820251465; angle += 0.15707963705062866)
-        {
-            addParticle(level, PARTICLE_ENDER, originX + std::cos(angle) * 5.0, originY - 0.4,
-                        originZ + std::sin(angle) * 5.0, std::cos(angle) * -5.0, 0.0, std::sin(angle) * -5.0,
-                        arrayWithLength<int>());
-            addParticle(level, PARTICLE_ENDER, originX + std::cos(angle) * 5.0, originY - 0.4,
-                        originZ + std::sin(angle) * 5.0, std::cos(angle) * -7.0, 0.0, std::sin(angle) * -7.0,
-                        arrayWithLength<int>());
-        }
+        mMinecraft->mParticleEngine->destroy(BlockPos(x, y, z), block->getBlockState(data >> 12 & 0xFF));
         break;
     }
     case LevelEvent::PARTICLES_MOBBLOCK_SPAWN:
         for (int i = 0; i < 20; ++i)
         {
-            const double particleX = x + 0.5 + (random->nextFloat() - 0.5) * 2.0;
-            const double particleY = y + 0.5 + (random->nextFloat() - 0.5) * 2.0;
-            const double particleZ = z + 0.5 + (random->nextFloat() - 0.5) * 2.0;
-            level->addParticle(PARTICLE_SMOKE, particleX, particleY, particleZ, 0.0, 0.0, 0.0,
-                               arrayWithLength<int>());
-            level->addParticle(PARTICLE_FLAME, particleX, particleY, particleZ, 0.0, 0.0, 0.0,
-                               arrayWithLength<int>());
+            const double particleX = x + 0.5 + (mLevels[playerIndex]->mRandom->nextFloat() - 0.5) * 2.0;
+            const double particleY = y + 0.5 + (mLevels[playerIndex]->mRandom->nextFloat() - 0.5) * 2.0;
+            const double particleZ = z + 0.5 + (mLevels[playerIndex]->mRandom->nextFloat() - 0.5) * 2.0;
+            mLevels[playerIndex]->addParticle(PARTICLE_SMOKE, particleX, particleY, particleZ, 0.0, 0.0, 0.0,
+                                              arrayWithLength<int>());
+            mLevels[playerIndex]->addParticle(PARTICLE_FLAME, particleX, particleY, particleZ, 0.0, 0.0, 0.0,
+                                              arrayWithLength<int>());
         }
         break;
     case LevelEvent::PARTICLES_PLANT_GROWTH:
@@ -3692,27 +3538,187 @@ void LevelRenderer::levelEvent(boost::shared_ptr<Player> player, int type, const
             const double xa = std::cos(angle) * power;
             const double ya = random->nextDouble() * 0.5 + 0.01;
             const double za = std::sin(angle) * power;
-            Particle* particle = addParticleInternal(level, ePARTICLE_DRAGON_BREATH, false, x + xa * 0.1, y + 0.3,
-                                                     z + za * 0.1, xa, ya, za, arrayWithLength<int>());
+            Particle* particle = addParticleInternal(mLevels[playerIndex], ePARTICLE_DRAGON_BREATH, false,
+                                                     x + xa * 0.1, y + 0.3, z + za * 0.1, xa, ya, za,
+                                                     arrayWithLength<int>());
             if (particle != NULL)
             {
                 random->nextFloat();
                 particle->setPower(static_cast<float>(power));
             }
         }
-        level->playLocalSound(x + 0.5, y + 0.5, z + 0.5, SoundEvents::ENDERDRAGON_FIREBALL_EXPLODE,
-                              SoundSource::eSoundSource_Hostile, 1.0f, random->nextFloat() * 0.1f + 0.9f, false, 16.0f);
+        mLevels[playerIndex]->playLocalSound(x + 0.5, y + 0.5, z + 0.5, SoundEvents::ENDERDRAGON_FIREBALL_EXPLODE,
+                                             SoundSource::eSoundSource_Hostile, 1.0f,
+                                             mLevels[playerIndex]->mRandom->nextFloat() * 0.1f + 0.9f, false, 16.0f);
+        break;
+    }
+    case LevelEvent::SOUND_CLOSE_WOODEN_DOOR:
+        level->playLocalSound(x + 0.5, y + 0.5, z + 0.5, SoundEvents::WOODEN_DOOR_CLOSE,
+                              SoundSource::eSoundSource_Blocks, 1.0f, random->nextFloat() * 0.1f + 0.9f, false, 16.0f);
+        break;
+    case LevelEvent::SOUND_CLOSE_IRON_TRAP_DOOR:
+        level->playLocalSound(x + 0.5, y + 0.5, z + 0.5, SoundEvents::IRON_TRAPDOOR_CLOSE,
+                              SoundSource::eSoundSource_Blocks, 1.0f, random->nextFloat() * 0.1f + 0.9f, false, 16.0f);
+        break;
+    case LevelEvent::SOUND_CLOSE_WOODEN_TRAP_DOOR:
+        level->playLocalSound(x + 0.5, y + 0.5, z + 0.5, SoundEvents::WOODEN_TRAPDOOR_CLOSE,
+                              SoundSource::eSoundSource_Blocks, 1.0f, random->nextFloat() * 0.1f + 0.9f, false, 16.0f);
+        break;
+    case LevelEvent::SOUND_CLOSE_FENCE_GATE:
+        level->playLocalSound(x + 0.5, y + 0.5, z + 0.5, SoundEvents::FENCE_GATE_CLOSE,
+                              SoundSource::eSoundSource_Blocks, 1.0f, random->nextFloat() * 0.1f + 0.9f, false, 16.0f);
+        break;
+    case LevelEvent::SOUND_CLOSE_IRON_DOOR:
+        level->playLocalSound(x + 0.5, y + 0.5, z + 0.5, SoundEvents::IRON_DOOR_CLOSE,
+                              SoundSource::eSoundSource_Blocks, 1.0f, random->nextFloat() * 0.1f + 0.9f, false, 16.0f);
+        break;
+    case LevelEvent::SOUND_OPEN_WOODEN_DOOR:
+        level->playLocalSound(x + 0.5, y + 0.5, z + 0.5, SoundEvents::WOODEN_DOOR_OPEN,
+                              SoundSource::eSoundSource_Blocks, 1.0f, random->nextFloat() * 0.1f + 0.9f, false, 16.0f);
+        break;
+    case LevelEvent::SOUND_OPEN_WOODEN_TRAP_DOOR:
+        level->playLocalSound(x + 0.5, y + 0.5, z + 0.5, SoundEvents::WOODEN_TRAPDOOR_OPEN,
+                              SoundSource::eSoundSource_Blocks, 1.0f, random->nextFloat() * 0.1f + 0.9f, false, 16.0f);
+        break;
+    case LevelEvent::SOUND_OPEN_IRON_TRAP_DOOR:
+        level->playLocalSound(x + 0.5, y + 0.5, z + 0.5, SoundEvents::IRON_TRAPDOOR_OPEN,
+                              SoundSource::eSoundSource_Blocks, 1.0f, random->nextFloat() * 0.1f + 0.9f, false, 16.0f);
+        break;
+    case LevelEvent::SOUND_OPEN_FENCE_GATE:
+        level->playLocalSound(x + 0.5, y + 0.5, z + 0.5, SoundEvents::FENCE_GATE_OPEN, SoundSource::eSoundSource_Blocks,
+                              1.0f, random->nextFloat() * 0.1f + 0.9f, false, 16.0f);
+        break;
+    case LevelEvent::SOUND_OPEN_IRON_DOOR:
+        level->playLocalSound(x + 0.5, y + 0.5, z + 0.5, SoundEvents::IRON_DOOR_OPEN, SoundSource::eSoundSource_Blocks,
+                              1.0f, random->nextFloat() * 0.1f + 0.9f, false, 16.0f);
+        break;
+    case LevelEvent::SOUND_EXTINGUISH_FIRE:
+    {
+        const float first = random->nextFloat();
+        const float second = random->nextFloat();
+        level->playLocalSound(static_cast<float>(x) + 0.5f, static_cast<float>(y) + 0.5f,
+                              static_cast<float>(z) + 0.5f, SoundEvents::FIRE_EXTINGUISH,
+                              SoundSource::eSoundSource_Blocks, 0.5f, (first - second) * 0.8f + 2.6f, false, 16.0f);
+        break;
+    }
+    case LevelEvent::SOUND_ANVIL_BROKEN:
+        level->playLocalSound(static_cast<float>(x) + 0.5f, static_cast<float>(y) + 0.5f,
+                              static_cast<float>(z) + 0.5f, SoundEvents::ANVIL_BREAK, SoundSource::eSoundSource_Blocks,
+                              1.0f, random->nextFloat() * 0.1f + 0.9f, false, 16.0f);
+        break;
+    case LevelEvent::SOUND_ANVIL_USED:
+        level->playLocalSound(static_cast<float>(x) + 0.5f, static_cast<float>(y) + 0.5f,
+                              static_cast<float>(z) + 0.5f, SoundEvents::ANVIL_USE, SoundSource::eSoundSource_Blocks,
+                              1.0f, random->nextFloat() * 0.1f + 0.9f, false, 16.0f);
+        break;
+    case LevelEvent::SOUND_ANVIL_LAND:
+        level->playLocalSound(static_cast<float>(x) + 0.5f, static_cast<float>(y) + 0.5f,
+                              static_cast<float>(z) + 0.5f, SoundEvents::ANVIL_LAND, SoundSource::eSoundSource_Blocks,
+                              0.3f, random->nextFloat() * 0.1f + 0.9f, false, 16.0f);
+        break;
+    case LevelEvent::SOUND_PLAY_RECORDING:
+    {
+        Item* item = Item::byId(data);
+        RecordItem* record = item != NULL ? dynamic_cast<RecordItem*>(item) : NULL;
+        if (record != NULL)
+            mLevels[playerIndex]->playStreamingMusic(BlockPos(x, y, z), record->getSound(), true);
+        else if (!mMinecraft->mSoundEngine->GetIsPlayingStreamingGameMusic())
+            mLevels[playerIndex]->playStreamingMusic(BlockPos(x, y, z), NULL, true);
+        mMinecraft->mLocalPlayers[playerIndex]->updateRichPresence();
+        break;
+    }
+    case LevelEvent::SOUND_GHAST_WARNING:
+    {
+        const float first = random->nextFloat();
+        const float second = random->nextFloat();
+        level->playLocalSound(x + 0.5, y + 0.5, z + 0.5, SoundEvents::GHAST_WARN, SoundSource::eSoundSource_Hostile,
+                              2.0f, (first - second) * 0.2f + 1.0f, false, 80.0f);
+        break;
+    }
+    case LevelEvent::SOUND_GHAST_FIREBALL:
+    {
+        const float first = random->nextFloat();
+        const float second = random->nextFloat();
+        level->playLocalSound(x + 0.5, y + 0.5, z + 0.5, SoundEvents::GHAST_SHOOT, SoundSource::eSoundSource_Hostile,
+                              2.0f, (first - second) * 0.2f + 1.0f, false, 80.0f);
+        break;
+    }
+    case LevelEvent::SOUND_ZOMBIE_WOODEN_DOOR:
+    {
+        const float first = random->nextFloat();
+        const float second = random->nextFloat();
+        level->playLocalSound(x + 0.5, y + 0.5, z + 0.5, SoundEvents::ZOMBIE_ATTACK_DOOR_WOOD,
+                              SoundSource::eSoundSource_Hostile, 2.0f, (first - second) * 0.2f + 1.0f, false, 16.0f);
+        break;
+    }
+    case LevelEvent::SOUND_ZOMBIE_DOOR_CRASH:
+    {
+        const float first = random->nextFloat();
+        const float second = random->nextFloat();
+        level->playLocalSound(x + 0.5, y + 0.5, z + 0.5, SoundEvents::ZOMBIE_BREAK_DOOR_WOOD,
+                              SoundSource::eSoundSource_Hostile, 2.0f, (first - second) * 0.2f + 1.0f, false, 16.0f);
+        break;
+    }
+    case LevelEvent::SOUND_ZOMBIE_IRON_DOOR:
+    {
+        const float first = random->nextFloat();
+        const float second = random->nextFloat();
+        level->playLocalSound(x + 0.5, y + 0.5, z + 0.5, SoundEvents::ZOMBIE_ATTACK_IRON_DOOR,
+                              SoundSource::eSoundSource_Hostile, 2.0f, (first - second) * 0.2f + 1.0f, false, 16.0f);
+        break;
+    }
+    case LevelEvent::SOUND_BLAZE_FIREBALL:
+    {
+        const float first = random->nextFloat();
+        const float second = random->nextFloat();
+        level->playLocalSound(x + 0.5, y + 0.5, z + 0.5, SoundEvents::BLAZE_SHOOT, SoundSource::eSoundSource_Hostile,
+                              2.0f, (first - second) * 0.2f + 1.0f, false, 16.0f);
+        break;
+    }
+    case LevelEvent::SOUND_WITHER_BOSS_SHOOT:
+    {
+        const float first = random->nextFloat();
+        const float second = random->nextFloat();
+        level->playLocalSound(x + 0.5, y + 0.5, z + 0.5, SoundEvents::WITHER_SHOOT, SoundSource::eSoundSource_Hostile,
+                              2.0f, (first - second) * 0.2f + 1.0f, false, 16.0f);
+        break;
+    }
+    case LevelEvent::SOUND_ZOMBIE_INFECTED:
+    {
+        const float first = random->nextFloat();
+        const float second = random->nextFloat();
+        level->playLocalSound(x + 0.5, y + 0.5, z + 0.5, SoundEvents::ZOMBIE_INFECT, SoundSource::eSoundSource_Hostile,
+                              2.0f, (first - second) * 0.2f + 1.0f, false, 16.0f);
+        break;
+    }
+    case LevelEvent::SOUND_ZOMBIE_CONVERTED:
+    {
+        const float first = random->nextFloat();
+        const float second = random->nextFloat();
+        level->playLocalSound(x + 0.5, y + 0.5, z + 0.5, SoundEvents::ZOMBIE_VILLAGER_CURE,
+                              SoundSource::eSoundSource_Hostile, 2.0f, (first - second) * 0.2f + 1.0f, false, 16.0f);
+        break;
+    }
+    case LevelEvent::DRAGON_EGG_TELEPORT:
+        DragonEggBlock::generateTeleportParticles(level, x, y, z, data);
+        break;
+    case LevelEvent::SOUND_BAT_LIFTOFF:
+    {
+        const float first = random->nextFloat();
+        const float second = random->nextFloat();
+        level->playLocalSound(x + 0.5, y + 0.5, z + 0.5, SoundEvents::BAT_TAKEOFF, SoundSource::eSoundSource_Neutral,
+                              0.05f, (first - second) * 0.2f + 1.0f, false, 16.0f);
         break;
     }
     case LevelEvent::ANIMATION_END_GATEWAY_SPAWN:
     {
-        level->addParticle(PARTICLE_HUGE_EXPLOSION, true, x + 0.5, y + 0.5, z + 0.5, 0.0, 0.0, 0.0,
+        level->addParticle(PARTICLE_HUGE_EXPLOSION, true, pos.x + 0.5, pos.y + 0.5, pos.z + 0.5, 0.0, 0.0, 0.0,
                            arrayWithLength<int>());
-        const float first = random->nextFloat();
-        const float second = random->nextFloat();
-        level->playLocalSound(x + 0.5, y + 0.5, z + 0.5, SoundEvents::END_GATEWAY_SPAWN,
-                              SoundSource::eSoundSource_Blocks, 10.0f, ((first - second) * 0.2f + 1.0f) * 0.7f, false,
-                              16.0f);
+        mLevels[playerIndex]->playLocalSound(
+            x + 0.5, y + 0.5, z + 0.5, SoundEvents::END_GATEWAY_SPAWN, SoundSource::eSoundSource_Blocks, 10.0f,
+            ((mLevels[playerIndex]->mRandom->nextFloat() - mLevels[playerIndex]->mRandom->nextFloat()) * 0.2f + 1.0f) *
+                0.7f,
+            false, 16.0f);
         break;
     }
     case LevelEvent::ANIMATION_DRAGON_SUMMON_ROAR:
@@ -3723,50 +3729,47 @@ void LevelRenderer::levelEvent(boost::shared_ptr<Player> player, int type, const
         level->playLocalSound(x + 0.5, y + 0.5, z + 0.5, SoundEvents::CAULDRON_EXPLODE,
                               SoundSource::eSoundSource_Blocks, 0.5f,
                               static_cast<float>((random->nextGaussian() * 0.2f + 1.0) * 0.7f), false, 16.0f);
-        CauldronBlock::spawnExplosionParticles(level, x, y, z, level->mRandom, data, 10);
+        CauldronBlock::spawnExplosionParticles(mLevels[playerIndex], x, y, z, mLevels[playerIndex]->mRandom, data, 10);
         break;
     case LevelEvent::CAULDRON_DYE_ARMOR:
         level->playLocalSound(x + 0.5, y + 0.5, z + 0.5, SoundEvents::CAULDRON_DYE_ARMOR,
                               SoundSource::eSoundSource_Blocks, 0.5f, random->nextFloat() * 0.1f + 0.9f, false, 16.0f);
-        CauldronBlock::spawnSplashParticles(level, x, y, z, level->mRandom, data, 2);
+        CauldronBlock::spawnSplashParticles(mLevels[playerIndex], x, y, z, mLevels[playerIndex]->mRandom, data, 2);
         break;
     case LevelEvent::CAULDRON_CLEAN_ARMOR:
         level->playLocalSound(x + 0.5, y + 0.5, z + 0.5, SoundEvents::CAULDRON_CLEAN_ARMOR,
                               SoundSource::eSoundSource_Blocks, 0.5f, random->nextFloat() * 0.1f + 0.9f, false, 16.0f);
-        CauldronBlock::spawnBubbleParticles(level, x, y, z, level->mRandom, data, 2);
+        CauldronBlock::spawnBubbleParticles(mLevels[playerIndex], x, y, z, mLevels[playerIndex]->mRandom, data, 2);
         break;
     case LevelEvent::CAULDRON_FILL_POTION:
         level->playLocalSound(x + 0.5, y + 0.5, z + 0.5, SoundEvents::CAULDRON_FILL_POTION,
                               SoundSource::eSoundSource_Blocks, 0.5f, random->nextFloat() * 0.1f + 0.9f, false, 16.0f);
-        CauldronBlock::spawnPotionParticles(level, x, y, z, level->mRandom, data, 2);
+        CauldronBlock::spawnPotionParticles(mLevels[playerIndex], x, y, z, mLevels[playerIndex]->mRandom, data, 2);
         break;
     case LevelEvent::CAULDRON_TAKE_POTION:
         level->playLocalSound(x + 0.5, y + 0.5, z + 0.5, SoundEvents::CAULDRON_TAKE_POTION,
                               SoundSource::eSoundSource_Blocks, 0.5f, random->nextFloat() * 0.1f + 0.9f, false, 16.0f);
-        CauldronBlock::spawnPotionParticles(level, x, y, z, level->mRandom, data, 2);
+        CauldronBlock::spawnPotionParticles(mLevels[playerIndex], x, y, z, mLevels[playerIndex]->mRandom, data, 2);
         break;
     case LevelEvent::CAULDRON_FILL_WATER:
         level->playLocalSound(x + 0.5, y + 0.5, z + 0.5, SoundEvents::CAULDRON_FILL_WATER,
                               SoundSource::eSoundSource_Blocks, 0.5f, random->nextFloat() * 0.1f + 0.9f, false, 16.0f);
-        CauldronBlock::spawnBubbleParticles(level, x, y, z, level->mRandom, data, 2);
+        CauldronBlock::spawnBubbleParticles(mLevels[playerIndex], x, y, z, mLevels[playerIndex]->mRandom, data, 2);
         break;
     case LevelEvent::CAULDRON_TAKE_WATER:
         level->playLocalSound(x + 0.5, y + 0.5, z + 0.5, SoundEvents::CAULDRON_TAKE_WATER,
                               SoundSource::eSoundSource_Blocks, 0.5f, random->nextFloat() * 0.1f + 0.9f, false, 16.0f);
-        CauldronBlock::spawnSplashParticles(level, x, y, z, level->mRandom, data, 2);
+        CauldronBlock::spawnSplashParticles(mLevels[playerIndex], x, y, z, mLevels[playerIndex]->mRandom, data, 2);
         break;
     case LevelEvent::CAULDRON_ADD_DYE:
         level->playLocalSound(x + 0.5, y + 0.5, z + 0.5, SoundEvents::CAULDRON_ADD_DYE,
                               SoundSource::eSoundSource_Blocks, 0.5f, random->nextFloat() * 0.1f + 0.9f, false, 16.0f);
-        CauldronBlock::spawnBubbleParticles(level, x, y, z, level->mRandom, data, 2);
+        CauldronBlock::spawnBubbleParticles(mLevels[playerIndex], x, y, z, mLevels[playerIndex]->mRandom, data, 2);
         break;
     case LevelEvent::CAULDRON_CLEAN_BANNER:
         level->playLocalSound(x + 0.5, y + 0.5, z + 0.5, SoundEvents::CAULDRON_CLEAN_BANNER,
                               SoundSource::eSoundSource_Blocks, 0.5f, random->nextFloat() * 0.1f + 0.9f, false, 16.0f);
-        CauldronBlock::spawnBubbleParticles(level, x, y, z, level->mRandom, data, 2);
-        break;
-    case LevelEvent::DRAGON_EGG_TELEPORT:
-        DragonEggBlock::generateTeleportParticles(level, x, y, z, data);
+        CauldronBlock::spawnBubbleParticles(mLevels[playerIndex], x, y, z, mLevels[playerIndex]->mRandom, data, 2);
         break;
     default:
         break;

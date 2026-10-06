@@ -185,14 +185,16 @@ void LivingEntityRenderer::tearDownSolidState()
 void LivingEntityRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z, float yaw,
                                   float partialTick)
 {
-    if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+    bool isPlayer = (entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER;
+    if (isPlayer)
     {
         boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
         if (player->isSpectator() && player->IsSpectatingOtherPlayer())
             return;
     }
 
-    PIXBeginNamedEvent(16711935.0F, "LivingEntityRenderer %d", entity->GetType());
+    entity->GetType();
+    PIXBeginNamedEvent(16711935.0F, "LivingEntityRenderer %d");
     boost::shared_ptr<LivingEntity> living = boost::static_pointer_cast<LivingEntity>(entity);
 
     GlStateManager::pushMatrix();
@@ -252,28 +254,8 @@ void LivingEntityRenderer::render(boost::shared_ptr<Entity>& entity, double x, d
     model->setupAnim(limbSwing, limbSwingAmount, bob, netHeadYaw, headPitch, scale, living, _SkinAdjustments());
     PIXEndNamedEvent();
 
-    if (!mSolidRender)
-    {
-        bool overlay = setupOverlayColor(living, partialTick);
-        renderModel(living, limbSwing, limbSwingAmount, bob, netHeadYaw, headPitch, scale);
-        if (overlay)
-            teardownOverlayColor();
-        GlStateManager::depthMask(true);
-
-        PIXBeginNamedEvent(0.0F, "renderLayers");
-        bool showLayers = true;
-        if ((living->GetType() & EntityType::PLAYER) == EntityType::PLAYER &&
-            boost::static_pointer_cast<Player>(living)->isSpectator() &&
-            !boost::static_pointer_cast<Player>(living)->SpectateAsFloatingHead())
-        {
-            showLayers = false;
-        }
-        if (showLayers)
-            renderLayers(living, limbSwing, limbSwingAmount, partialTick, bob, netHeadYaw, headPitch, scale, true);
-        PIXEndNamedEvent();
-    }
-    else
-    {
+    if (mSolidRender)
+{
         bool solidState = setupSolidState(living);
         PIXBeginNamedEvent(0.0F, "solidRender");
         GlStateManager::enableColorMaterial();
@@ -287,8 +269,8 @@ void LivingEntityRenderer::render(boost::shared_ptr<Entity>& entity, double x, d
         }
 
         bool showLayers = true;
-        if ((living->GetType() & EntityType::PLAYER) == EntityType::PLAYER &&
-            boost::static_pointer_cast<Player>(living)->isSpectator() &&
+        const bool isPlayer = (living->GetType() & EntityType::PLAYER) == EntityType::PLAYER;
+        if (isPlayer && boost::static_pointer_cast<Player>(living)->isSpectator() &&
             !boost::static_pointer_cast<Player>(living)->SpectateAsFloatingHead())
         {
             showLayers = false;
@@ -301,6 +283,26 @@ void LivingEntityRenderer::render(boost::shared_ptr<Entity>& entity, double x, d
         PIXEndNamedEvent();
         if (solidState)
             tearDownSolidState();
+    }
+    else
+{
+        bool overlay = setupOverlayColor(living, partialTick);
+        renderModel(living, limbSwing, limbSwingAmount, bob, netHeadYaw, headPitch, scale);
+        if (overlay)
+            teardownOverlayColor();
+        GlStateManager::depthMask(true);
+
+        PIXBeginNamedEvent(0.0F, "renderLayers");
+        bool showLayers = true;
+        const bool isPlayer = (living->GetType() & EntityType::PLAYER) == EntityType::PLAYER;
+        if (isPlayer && boost::static_pointer_cast<Player>(living)->isSpectator() &&
+            !boost::static_pointer_cast<Player>(living)->SpectateAsFloatingHead())
+        {
+            showLayers = false;
+        }
+        if (showLayers)
+            renderLayers(living, limbSwing, limbSwingAmount, partialTick, bob, netHeadYaw, headPitch, scale, true);
+        PIXEndNamedEvent();
     }
 
     GlStateManager::disableRescaleNormal();
@@ -493,7 +495,8 @@ bool LivingEntityRenderer::shouldShowName(boost::shared_ptr<Entity>& entity)
     if (living->isInvisibleTo(localPlayer) || living.get() == mDispatcher->mCamera.get() || living->isVehicle())
         return false;
 
-    if ((living->GetType() & EntityType::PLAYER) != EntityType::PLAYER || living.get() == localPlayer.get())
+    const bool isPlayer = (living->GetType() & EntityType::PLAYER) == EntityType::PLAYER;
+    if (!isPlayer || living.get() == localPlayer.get())
     {
         bool renderNames = Minecraft::renderNames();
         bool hasCustomName = living->hasCustomName();
@@ -507,8 +510,7 @@ bool LivingEntityRenderer::shouldShowName(boost::shared_ptr<Entity>& entity)
     }
     else
     {
-        float range = 3.0F;
-        showName = living->distanceTo(localPlayer) < range && !localPlayer->isSpectator();
+        showName = living->distanceTo(localPlayer) < 3.0F && !localPlayer->isSpectator();
     }
 
     boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(living);
