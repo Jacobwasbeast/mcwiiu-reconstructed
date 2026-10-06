@@ -95,6 +95,11 @@ public:
         return mMinX < maxX && mMaxX > minX && mMinY < maxY && mMaxY > minY && mMinZ < maxZ && mMaxZ > minZ;
     }
 
+    bool intersects(const AABB* other) const
+    {
+        return intersects(other->mMinX, other->mMinY, other->mMinZ, other->mMaxX, other->mMaxY, other->mMaxZ);
+    }
+
     bool intersectsInner(const AABB* other) const;
     bool intersects(Vec3* from, Vec3* to) const;
     bool intersectsIgnoringDimensions(const AABB* other, bool ignoreX, bool ignoreY, bool ignoreZ) const;
