@@ -656,10 +656,11 @@ void ServerGamePacketListenerImpl::handleTeleportToEntityPacket(
     boost::shared_ptr<Entity> target;
     for (ServerLevel** it = mServer->mLevels.data; it != mServer->mLevels.data + mServer->mLevels.length; ++it)
     {
-        if (*it == 0)
+        ServerLevel* level = *it;
+        if (level == 0)
             continue;
 
-        target = packet->getEntity(*it);
+        target = packet->getEntity(level);
         if (!target)
             continue;
 
@@ -669,32 +670,30 @@ void ServerGamePacketListenerImpl::handleTeleportToEntityPacket(
         if (target->mLevel == mPlayer->mLevel)
         {
             mPlayer->teleportTo(target->mX, target->mY, target->mZ);
-            return;
+            break;
         }
 
         ServerLevel* oldLevel = mPlayer->getLevel();
         ServerLevel* targetLevel = static_cast<ServerLevel*>(target->mLevel);
         mPlayer->mDimension = target->mDimension;
-        LevelData* oldLevelData = oldLevel->getLevelData();
-        int seaLevel = targetLevel->useNewSeaLevel() ? targetLevel->getSeaLevel() : -1;
 
-        send(boost::shared_ptr<Packet>(new ClientboundRespawnPacket(
+        send(boost::shared_ptr<ClientboundRespawnPacket>(new ClientboundRespawnPacket(
             (char)mPlayer->mDimension,
-            oldLevelData->getSeed(),
+            oldLevel->getLevelData()->getSeed(),
             mPlayer->GetGameType(),
             oldLevel->getDifficulty(),
-            oldLevelData->getGeneratorType(),
+            oldLevel->getLevelData()->getGeneratorType(),
             targetLevel->useNewSeaLevel(),
             mPlayer->getId(),
-            oldLevelData->getXZSize(),
-            oldLevelData->getHellScale(),
-            oldLevelData->getCloudHeight(),
-            oldLevelData->getModernEnd(),
-            (unsigned char)oldLevelData->getBiomeScale(),
-            oldLevelData->getBiomeCentreXChunk(),
-            oldLevelData->getBiomeCentreZChunk(),
+            oldLevel->getLevelData()->getXZSize(),
+            oldLevel->getLevelData()->getHellScale(),
+            oldLevel->getLevelData()->getCloudHeight(),
+            oldLevel->getLevelData()->getModernEnd(),
+            (unsigned char)oldLevel->getLevelData()->getBiomeScale(),
+            oldLevel->getLevelData()->getBiomeCentreXChunk(),
+            oldLevel->getLevelData()->getBiomeCentreZChunk(),
             true,
-            seaLevel)));
+            targetLevel->useNewSeaLevel() ? targetLevel->getSeaLevel() : -1)));
 
         oldLevel->removeEntityImmediately(mPlayer);
         mPlayer->mRemoved = false;
@@ -714,7 +713,7 @@ void ServerGamePacketListenerImpl::handleTeleportToEntityPacket(
         mPlayer->mGameMode->setLevel(targetLevel);
         (gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers)->sendLevelInfo(mPlayer, targetLevel);
         (gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers)->sendAllPlayerInfo(mPlayer);
-        return;
+        break;
     }
 }
 void ServerGamePacketListenerImpl::handlePaddleBoat(boost::shared_ptr<ServerboundPaddleBoatPacket> packet)
@@ -1156,144 +1155,155 @@ void ServerGamePacketListenerImpl::handlePlayerAbilities(boost::shared_ptr<Serve
         (mPlayer->mAbilities.mMayfly || mPlayer->isAllowedToFly());
 }
 
+static const std::wstring CHANNEL_BOOK_EDIT = L"MC|BEdit";
+static const std::wstring CHANNEL_BOOK_SIGN = L"MC|BSign";
+static const std::wstring CHANNEL_TRADE_SELECT = L"MC|TrSel";
+static const std::wstring CHANNEL_ADVANCED_COMMAND = L"MC|AdvCmd";
+static const std::wstring CHANNEL_BEACON = L"MC|Beacon";
+static const std::wstring CHANNEL_ITEM_NAME = L"MC|ItemName";
+static const std::wstring CHANNEL_RENAME_ITEM = L"MC|RIName";
+static const std::wstring CHANNEL_PICK_ITEM = L"MC|PickItem";
+
 void ServerGamePacketListenerImpl::handleCustomPayload(boost::shared_ptr<ServerboundCustomPayloadPacket> packet)
 {
     std::wstring identifier = packet->getIdentifier();
-    if (identifier == L"MC|BEdit")
+    if (CHANNEL_BOOK_EDIT == identifier)
     {
         ByteArrayInputStream bytes(packet->getData());
         DataInputStream input(&bytes);
         not_null_ptr<ItemInstance> book = input.readItem();
-        input.close();
-        bytes.mBuffer.data = NULL;
-        bytes.mBuffer.length = 0;
-        bytes.mCount = 0;
-        bytes.mMark = 0;
-        bytes.mPosition = 0;
-        if (book->isEmpty() || !WritableBookItem::makeSureTagIsValid(book->getTag()))
+        if (book->isEmpty())
+        {
+            bytes.reset();
+            input.close();
             return;
+        }
+        if (!WritableBookItem::makeSureTagIsValid(book->getTag()))
+        {
+            bytes.reset();
+            input.close();
+            return;
+        }
         not_null_ptr<ItemInstance> held = mPlayer->getMainHandItem();
         if (held->isEmpty())
+        {
+            bytes.reset();
+            input.close();
             return;
+        }
         if (book->getItem() == Items::writableBook && book->getItem() == held->getItem())
         {
-            CompoundTag* bookTag = book->getTag();
-            held->addTagElement(L"pages", bookTag->getList(L"pages", Tag::TAG_STRING)->copy());
-            held->getTag()->putString(L"ownerUUID", bookTag->getString(L"ownerUUID"));
-            held->getTag()->putByte(L"createdByRestrictedPlayer", bookTag->getByte(L"createdByRestrictedPlayer"));
-            held->getTag()->putByte(L"createdByHost", bookTag->getByte(L"createdByHost"));
+            CompoundTag* bookTag = book->getTag()->copy();
+            held->addTagElement(WrittenBookItem::TAG_PAGES, bookTag->getList(WrittenBookItem::TAG_PAGES, Tag::TAG_STRING));
+            held->getTag()->putString(WrittenBookItem::TAG_OWNER_UUID, bookTag->getString(WrittenBookItem::TAG_OWNER_UUID));
+            held->getTag()->putByte(WrittenBookItem::TAG_CREATED_BY_RESTRICTED_PLAYER, bookTag->getByte(WrittenBookItem::TAG_CREATED_BY_RESTRICTED_PLAYER));
+            held->getTag()->putByte(WrittenBookItem::TAG_CREATED_BY_HOST, bookTag->getByte(WrittenBookItem::TAG_CREATED_BY_HOST));
         }
-        return;
+        bytes.reset();
+        input.close();
     }
-
-    if (identifier == L"MC|BSign")
+    else if (CHANNEL_BOOK_SIGN == identifier)
     {
         ByteArrayInputStream bytes(packet->getData());
         DataInputStream input(&bytes);
-        not_null_ptr<ItemInstance> book = input.readItem();
-        input.close();
-        bytes.mBuffer.data = NULL;
-        bytes.mBuffer.length = 0;
-        bytes.mCount = 0;
-        bytes.mMark = 0;
-        bytes.mPosition = 0;
-        if (book->isEmpty() || !WrittenBookItem::makeSureTagIsValid(book->getTag()))
-            return;
-        not_null_ptr<ItemInstance> held = mPlayer->getMainHandItem();
-        if (held->isEmpty())
-            return;
-        if (book->getItem() == Items::writableBook && held->getItem() == Items::writableBook)
         {
-            not_null_ptr<ItemInstance> signedBook(new ItemInstance(Items::writtenBook));
-            signedBook->addTagElement(L"author", new StringTag(mPlayer->getName()));
-            signedBook->addTagElement(L"title", new StringTag(book->getTag()->getString(L"title")));
-            signedBook->addTagElement(L"pages", book->getTag()->getList(L"pages", Tag::TAG_STRING)->copy());
-            mPlayer->setItemInHand(InteractionHand::eInteractionHand_MainHand, signedBook);
-            signedBook->getTag()->putString(L"ownerUUID", book->getTag()->getString(L"ownerUUID"));
-            signedBook->getTag()->putByte(L"createdByRestrictedPlayer",
-                                          book->getTag()->getByte(L"createdByRestrictedPlayer"));
-            signedBook->getTag()->putByte(L"createdByHost", book->getTag()->getByte(L"createdByHost"));
+            not_null_ptr<ItemInstance> book = input.readItem();
+            if (book->isEmpty())
+            {
+                bytes.reset();
+                input.close();
+                return;
+            }
+            if (!WrittenBookItem::makeSureTagIsValid(book->getTag()))
+            {
+                bytes.reset();
+                input.close();
+                return;
+            }
+            not_null_ptr<ItemInstance> held = mPlayer->getMainHandItem();
+            if (held->isEmpty())
+            {
+                bytes.reset();
+                input.close();
+                return;
+            }
+            if (book->getItem() == Items::writableBook && held->getItem() == Items::writableBook)
+            {
+                not_null_ptr<ItemInstance> signedBook(new ItemInstance(Items::writtenBook));
+                signedBook->addTagElement(WrittenBookItem::TAG_AUTHOR, new StringTag(mPlayer->getName()));
+                signedBook->addTagElement(WrittenBookItem::TAG_TITLE, new StringTag(book->getTag()->getString(WrittenBookItem::TAG_TITLE)));
+                Tag* pages = book->getTag()->getList(WrittenBookItem::TAG_PAGES, Tag::TAG_STRING)->copy();
+                signedBook->addTagElement(WrittenBookItem::TAG_PAGES, pages);
+                mPlayer->setItemInHand(InteractionHand::eInteractionHand_MainHand, signedBook);
+                signedBook->getTag()->putString(WrittenBookItem::TAG_OWNER_UUID, book->getTag()->getString(WrittenBookItem::TAG_OWNER_UUID));
+                signedBook->getTag()->putByte(WrittenBookItem::TAG_CREATED_BY_RESTRICTED_PLAYER,
+                                              book->getTag()->getByte(WrittenBookItem::TAG_CREATED_BY_RESTRICTED_PLAYER));
+                signedBook->getTag()->putByte(WrittenBookItem::TAG_CREATED_BY_HOST, book->getTag()->getByte(WrittenBookItem::TAG_CREATED_BY_HOST));
+            }
         }
-        return;
+        bytes.reset();
+        input.close();
     }
-
-    if (identifier == L"MC|TrSel")
+    else if (CHANNEL_TRADE_SELECT == identifier)
     {
         ByteArrayInputStream bytes(packet->getData());
         DataInputStream input(&bytes);
         int selection = input.readInt();
+        bytes.reset();
         input.close();
         AbstractContainerMenu* menu = mPlayer->mContainerMenu;
         if (menu != NULL && dynamic_cast<MerchantMenu*>(menu) != NULL)
             static_cast<MerchantMenu*>(menu)->setSelectionHint(selection);
-        bytes.mBuffer.data = NULL;
-        bytes.mBuffer.length = 0;
-        bytes.mCount = 0;
-        bytes.mMark = 0;
-        bytes.mPosition = 0;
-        return;
     }
-
-    if (identifier == L"MC|AdvCmd")
+    else if (CHANNEL_ADVANCED_COMMAND == identifier)
     {
         if (mServer->isCommandBlockEnabled() && mPlayer->hasPermission(eGameCommand_Effect))
             mPlayer.operator->();
-        return;
     }
-
-    if (identifier == L"MC|Beacon")
+    else if (CHANNEL_BEACON == identifier)
     {
         AbstractContainerMenu* menu = mPlayer->mContainerMenu;
-        if (menu == NULL)
-            return;
-        BeaconMenu* beaconMenu = dynamic_cast<BeaconMenu*>(menu);
-        if (beaconMenu == NULL)
-            return;
-        ByteArrayInputStream bytes(packet->getData());
-        DataInputStream input(&bytes);
-        int primary = input.readInt();
-        int secondary = input.readInt();
-        input.close();
-        Slot* payment = beaconMenu->getSlot(0);
-        if (payment->hasItem())
+        if (menu != NULL)
         {
-            payment->remove(1);
-            boost::shared_ptr<Container> beacon = beaconMenu->getBeaconContainer();
-            beacon->setContainerData(1, primary);
-            beacon->setContainerData(2, secondary);
-            beacon->setChanged();
+            if (dynamic_cast<BeaconMenu*>(menu) != NULL)
+            {
+                ByteArrayInputStream bytes(packet->getData());
+                DataInputStream input(&bytes);
+                int primary = input.readInt();
+                int secondary = input.readInt();
+                bytes.reset();
+                input.close();
+                BeaconMenu* beaconMenu = static_cast<BeaconMenu*>(mPlayer->mContainerMenu);
+                Slot* payment = beaconMenu->getSlot(0);
+                if (payment->hasItem())
+                {
+                    payment->remove(1);
+                    boost::shared_ptr<Container> beacon = beaconMenu->getBeaconContainer();
+                    beacon->setContainerData(1, primary);
+                    beacon->setContainerData(2, secondary);
+                    beacon->setChanged();
+                }
+            }
         }
-        bytes.mBuffer.data = NULL;
-        bytes.mBuffer.length = 0;
-        bytes.mCount = 0;
-        bytes.mMark = 0;
-        bytes.mPosition = 0;
-        return;
     }
-
-    if (identifier == L"MC|ItemName")
+    else if (CHANNEL_ITEM_NAME == identifier)
     {
         NameItemOnAnvil(packet, false);
-        return;
     }
-    if (identifier == L"MC|RIName")
+    else if (CHANNEL_RENAME_ITEM == identifier)
     {
         NameItemOnAnvil(packet, true);
-        return;
     }
-
-    if (identifier == L"MC|PickItem")
+    else if (CHANNEL_PICK_ITEM == identifier)
     {
         ByteArrayInputStream bytes(packet->getData());
         DataInputStream input(&bytes);
-        not_null_ptr<ItemInstance> item = input.readItem();
-        mPlayer->mInventory->setPickedItem(item);
+        {
+            boost::shared_ptr<ItemInstance> item = input.readItem();
+            mPlayer->mInventory->setPickedItem(item);
+        }
+        bytes.reset();
         input.close();
-        bytes.mBuffer.data = NULL;
-        bytes.mBuffer.length = 0;
-        bytes.mCount = 0;
-        bytes.mMark = 0;
-        bytes.mPosition = 0;
     }
 }
 void ServerGamePacketListenerImpl::handleCraftItem(boost::shared_ptr<CraftItemPacket> packet)
@@ -1391,7 +1401,34 @@ void ServerGamePacketListenerImpl::handleTexture(boost::shared_ptr<TexturePacket
 }
 void ServerGamePacketListenerImpl::handleTextureAndGeometry(boost::shared_ptr<TextureAndGeometryPacket> packet)
 {
-    if (packet->length != 0)
+    if (packet->length == 0)
+    {
+        unsigned char* data = 0;
+        unsigned int length = 0;
+        gApp.GetMemFileDetails(packet->textureName, &data, &length);
+        DLCSkinFile* skinFile = static_cast<DLCSkinFile*>(
+            gApp.mDLCManager.getSkinFile(packet->textureName));
+        if (length != 0)
+        {
+            if (skinFile != 0)
+            {
+                send(boost::shared_ptr<TextureAndGeometryPacket>(new TextureAndGeometryPacket(
+                    packet->textureName, data, length, skinFile)));
+            }
+            else
+            {
+                std::vector<SKIN_BOX*>* boxes = gApp.GetAdditionalSkinBoxes(packet->geometryId);
+                _SkinAdjustments adjustments = gApp.GetSkinAdjustments(packet->geometryId);
+                send(boost::shared_ptr<TextureAndGeometryPacket>(new TextureAndGeometryPacket(
+                    packet->textureName, data, length, boxes, adjustments)));
+            }
+        }
+        else
+        {
+            mNames.push_back(packet->textureName);
+        }
+    }
+    else
     {
         gApp.AddMemoryTextureFile(packet->textureName, packet->data, packet->length);
         if (packet->additionalBoxCount != 0)
@@ -1400,29 +1437,6 @@ void ServerGamePacketListenerImpl::handleTextureAndGeometry(boost::shared_ptr<Te
         gApp.SetSkinAdjustments(packet->geometryId, packet->skinAdjustments);
         mPlayer->setCustomSkin(packet->geometryId);
         mServer->mConnection->handleTextureAndGeometryReceived(packet->textureName);
-        return;
-    }
-
-    unsigned char* data = 0;
-    unsigned int length = 0;
-    gApp.GetMemFileDetails(packet->textureName, &data, &length);
-    DLCSkinFile* skinFile = static_cast<DLCSkinFile*>(
-        gApp.mDLCManager.getSkinFile(packet->textureName));
-    if (length == 0)
-    {
-        mNames.push_back(packet->textureName);
-    }
-    else if (skinFile == 0)
-    {
-        std::vector<SKIN_BOX*>* boxes = gApp.GetAdditionalSkinBoxes(packet->geometryId);
-        _SkinAdjustments adjustments = gApp.GetSkinAdjustments(packet->geometryId);
-        send(boost::shared_ptr<TextureAndGeometryPacket>(new TextureAndGeometryPacket(
-            packet->textureName, data, length, boxes, adjustments)));
-    }
-    else
-    {
-        send(boost::shared_ptr<TextureAndGeometryPacket>(new TextureAndGeometryPacket(
-            packet->textureName, data, length, skinFile)));
     }
 }
 void ServerGamePacketListenerImpl::handleTextureChange(boost::shared_ptr<TextureChangePacket> packet)

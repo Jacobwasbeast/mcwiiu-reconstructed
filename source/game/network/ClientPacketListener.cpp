@@ -489,7 +489,7 @@ void ClientPacketListener::displayPrivilegeChanges(boost::shared_ptr<Multiplayer
 }
 
 void ClientPacketListener::handleLogin(boost::shared_ptr<ClientboundLoginPacket> packet) {
-    if (m_closed || packet == 0 || m_minecraft == 0)
+    if (m_closed)
         return;
 
     PlayerUID suid(0);
@@ -499,25 +499,22 @@ void ClientPacketListener::handleLogin(boost::shared_ptr<ClientboundLoginPacket>
         mojangData = gApp.GetMojangDataForXuid(suid);
 
     if (!CGameNetworkManager::sInstance.IsHost())
-        m_minecraft->mProgressRenderer->progressStagePercentage(75);
+        Minecraft::GetInstance()->mProgressRenderer->progressStagePercentage(75);
 
-    INetworkPlayer* networkPlayer = getNetworkPlayer();
+    INetworkPlayer* networkPlayer = m_connection->m_socket->getPlayer();
     int userIndex = -1;
-    if (!IsPrimaryPlayer() && networkPlayer != 0 && !networkPlayer->IsGuest() && networkPlayer->IsLocal())
+    if (IsPrimaryPlayer())
+    {
+        userIndex = m_playerId;
+        telemetryManagerInstance->SetMultiplayerInstanceId(packet->mChunkDistance);
+    }
+    else if (!networkPlayer->IsGuest() && networkPlayer->IsLocal())
     {
         for (int i = 0; i < 4; ++i)
         {
             if (CGameNetworkManager::sInstance.GetLocalPlayerByUserIndex(i) == networkPlayer)
-            {
                 userIndex = i;
-                break;
-            }
         }
-    }
-    else if (IsPrimaryPlayer())
-    {
-        userIndex = m_playerId;
-        telemetryManagerInstance->SetMultiplayerInstanceId(packet->mChunkDistance);
     }
 
     if (userIndex != -1)
@@ -526,150 +523,177 @@ void ClientPacketListener::handleLogin(boost::shared_ptr<ClientboundLoginPacket>
             gApp.SetBanListCheck(userIndex, false);
         else
         {
-            if (mojangData->skinPath[0] != 0 && gApp.IsFileInMemoryTextures(mojangData->skinPath))
-                gApp.AddMemoryTextureFile(mojangData->skinPath, 0, 0);
-            if (mojangData->capePath[0] != 0 && gApp.IsFileInMemoryTextures(mojangData->capePath))
-                gApp.AddMemoryTextureFile(mojangData->capePath, 0, 0);
+            if (mojangData->skinPath[0] != 0)
+            {
+                std::wstring skinPath = mojangData->skinPath;
+                if (gApp.IsFileInMemoryTextures(skinPath))
+                    gApp.AddMemoryTextureFile(skinPath, 0, 0);
+            }
+            if (mojangData->capePath[0] != 0)
+            {
+                std::wstring capePath = mojangData->capePath;
+                if (gApp.IsFileInMemoryTextures(capePath))
+                    gApp.AddMemoryTextureFile(capePath, 0, 0);
+            }
             gApp.SetBanListCheck(userIndex, false);
         }
     }
 
-    boost::shared_ptr<MultiplayerLocalPlayer> localPlayer;
-    const GameType* gameType = GameType::byId(packet->mGameType);
-    const Difficulty* difficulty = Difficulty::byId(packet->mPlayerFlag);
-
-    if (!IsPrimaryPlayer())
+    if (IsPrimaryPlayer())
     {
-        MultiPlayerLevel* level = m_minecraft->getLevel(packet->mGameMode);
-        if (level == 0)
+        if (GameType::byId(packet->mGameType) == GameType::LOBBY)
+            m_minecraft->mGameMode = new MultiPlayerGameMode(gProfile->GetPrimaryPad(), this, packet->mDifficulty,
+                                                              false, true);
+        else if (gApp.GetTutorialMode(boost::shared_ptr<Player>()))
+            m_minecraft->mGameMode = new MultiPlayerGameMode(gProfile->GetPrimaryPad(), this, packet->mDifficulty,
+                                                              true, false);
+        else if (!gProfile->IsFullVersion())
+            m_minecraft->mGameMode = new TrialMode(gProfile->GetPrimaryPad(), this, packet->mDifficulty);
+        else
         {
-            level = m_minecraft->getLevel(packet->mGameMode == 0 ? -1 : 0);
-            if (level == 0)
-                level = m_minecraft->getLevel(packet->mGameMode != 0 && packet->mGameMode != -1 ? -1 : 1);
+            MemSect(13);
+            m_minecraft->mGameMode = new MultiPlayerGameMode(gProfile->GetPrimaryPad(), this, packet->mDifficulty,
+                                                              false, false);
+            MemSect(0);
+        }
+        m_minecraft->GetMiniGame()->SetDisabledEditActions(false);
+
+        if (m_minecraft->getLevel(packet->mGameMode) == 0)
+        {
+            if (Minecraft::InMiniGame(eMiniGameId_Any, true) && !CGameNetworkManager::sInstance.IsHost())
+            {
+                std::vector<LevelGenerationOptions*>* generators = gApp.getLevelGenerators();
+                for (std::vector<LevelGenerationOptions*>::iterator it = generators->begin();
+                     it != generators->end(); ++it)
+                {
+                    LevelGenerationOptions* options = *it;
+                    if (options->isGameModeLobby())
+                    {
+                        File lobbySave(options->getBaseSaveRoot() + options->getBaseSavePath());
+                        options->setBaseSaveData(lobbySave);
+                        gApp.setLevelGenerationOptions(options);
+                    }
+                }
+                ConsoleSaveFileReadOnly* saveFile = new ConsoleSaveFileReadOnly(L"", 0, 0, false, eSavePlatform_WIIU);
+                boost::shared_ptr<McRegionLevelStorage> storage(new McRegionLevelStorage(
+                    saveFile, File(L"."), L"world", true, Minecraft::GetInstance()->getFixerUpper()));
+                m_level = new MultiPlayerLevel(storage, this, new LevelSettings(
+                    packet->mSeed, GameType::byId(packet->mGameType), false, false,
+                    packet->mIsFlat, packet->mLevelType, packet->mXZSize,
+                    packet->mHellScale, packet->mMaxTick, packet->mIsFlatWorld,
+                    packet->mPlayerFlags, packet->mSpawnProtection, packet->mSimulationDistance),
+                    packet->mGameMode, Difficulty::byId(packet->mPlayerFlag), packet->mUnknownValue3);
+                gApp.setLevelGenerationOptions(0);
+            }
+            else
+            {
+                m_level = new MultiPlayerLevel(this, new LevelSettings(
+                    packet->mSeed, GameType::byId(packet->mGameType), false, false,
+                    packet->mIsFlat, packet->mLevelType, packet->mXZSize,
+                    packet->mHellScale, packet->mMaxTick, packet->mIsFlatWorld,
+                    packet->mPlayerFlags, packet->mSpawnProtection, packet->mSimulationDistance),
+                    packet->mGameMode, Difficulty::byId(packet->mPlayerFlag), packet->mUnknownValue3);
+            }
+
+            MultiPlayerLevel* otherLevel = m_minecraft->getLevel(packet->mGameMode == 0 ? -1 : 0);
+            if (otherLevel == 0)
+            {
+                if (packet->mGameMode == 0 || packet->mGameMode == -1)
+                    otherLevel = m_minecraft->getLevel(1);
+                else
+                    otherLevel = m_minecraft->getLevel(-1);
+            }
+            if (otherLevel == 0)
+                m_level->setSavedDataStorage(m_savedDataStorage);
+            else
+                m_level->setSavedDataStorage(otherLevel->getSavedDataStorage());
+            m_level->mIsClientSide = true;
+            m_minecraft->setLevel(m_level, -1, boost::shared_ptr<Player>(), true, false);
         }
 
-        if (level == 0)
+        m_minecraft->mPlayer->mPlayerIndex = packet->mReducedDebugInfo;
+        m_minecraft->mPlayer->setCustomSkin(GameSettings::GetPlayerSkinId(m_playerId));
+        m_minecraft->mPlayer->setCustomCape(GameSettings::GetPlayerCapeId(m_playerId));
+        m_minecraft->createPrimaryLocalPlayer(gProfile->GetPrimaryPad());
+        m_minecraft->mPlayer->mDimension = packet->mGameMode;
+        m_minecraft->mPlayer->setId(packet->mEntityId);
+        gApp.UpdatePlayerInfo(getSocket()->mPlayerId, packet->mReducedDebugInfo, packet->mCurrentTick,
+                              packet->mGameType);
+        m_minecraft->mPlayer->setPlayerGamePrivilege(Player::ePlayerGamePrivilege_All, packet->mCurrentTick);
+        uint32_t privileges = 0;
+        Player::enableAllPlayerPrivileges(privileges, true);
+        if (networkPlayer->IsHost())
+            Player::setPlayerGamePrivilege(privileges, Player::ePlayerGamePrivilege_Moderator, 1);
+        displayPrivilegeChanges(m_minecraft->mPlayer, privileges);
+        GameSettings::SetGameSettingsDebugMask(gProfile->GetPrimaryPad(),
+                                               GameSettings::GetGameSettingsDebugMask(-1, true));
+    }
+    else
+    {
+        m_level = m_minecraft->getLevel(packet->mGameMode);
+        boost::shared_ptr<MultiplayerLocalPlayer> localPlayer;
+        if (m_level == 0)
         {
-            LevelSettings* settings = new LevelSettings(
-                packet->mSeed, gameType, false, false,
+            MultiPlayerLevel* otherLevel = m_minecraft->getLevel(packet->mGameMode == 0 ? -1 : 0);
+            if (otherLevel == 0)
+            {
+                if (packet->mGameMode == 0 || packet->mGameMode == -1)
+                    otherLevel = m_minecraft->getLevel(1);
+                else
+                    otherLevel = m_minecraft->getLevel(-1);
+            }
+            m_level = new MultiPlayerLevel(this, new LevelSettings(
+                packet->mSeed, GameType::byId(packet->mGameType), false, false,
                 packet->mIsFlat, packet->mLevelType, packet->mXZSize,
                 packet->mHellScale, packet->mMaxTick, packet->mIsFlatWorld,
-                packet->mPlayerFlags, packet->mSpawnProtection, packet->mSimulationDistance);
-            level = new MultiPlayerLevel(this, settings, packet->mGameMode, difficulty, packet->mUnknownValue3);
-            if (m_level != 0)
-                level->setSavedDataStorage(m_level->getSavedDataStorage());
-            m_level = level;
-            std::wstring name(networkPlayer->GetOnlineName());
+                packet->mPlayerFlags, packet->mSpawnProtection, packet->mSimulationDistance),
+                packet->mGameMode, Difficulty::byId(packet->mPlayerFlag), packet->mUnknownValue3);
+            m_level->setSavedDataStorage(otherLevel->getSavedDataStorage());
+            m_level->mIsClientSide = true;
+            std::wstring name = networkPlayer->GetOnlineName();
             localPlayer = m_minecraft->createExtraLocalPlayer(
-                m_playerId, name, m_playerId, packet->mGameMode, this, level,
+                m_playerId, name, m_playerId, packet->mGameMode, this, m_level,
                 packet->mGameType, packet->mDifficulty);
-            boost::shared_ptr<Player> playerPtr = localPlayer;
-            m_minecraft->setLevel(level, -1, playerPtr, true, false);
+            boost::shared_ptr<MultiplayerLocalPlayer> currentPlayer = m_minecraft->mPlayer;
+            m_minecraft->mPlayer = m_minecraft->mLocalPlayers[m_playerId];
+            m_minecraft->setLevel(m_level, -1, boost::shared_ptr<Player>(), true, false);
+            m_minecraft->mPlayer = currentPlayer;
         }
         else
         {
-            m_level = level;
-            std::wstring name(networkPlayer->GetOnlineName());
+            std::wstring name = networkPlayer->GetOnlineName();
             localPlayer = m_minecraft->createExtraLocalPlayer(
                 m_playerId, name, m_playerId, packet->mGameMode, this, 0,
                 packet->mGameType, packet->mDifficulty);
         }
+
+        localPlayer->mDimension = packet->mGameMode;
+        localPlayer->setId(packet->mEntityId);
+        localPlayer->mPlayerIndex = packet->mReducedDebugInfo;
+        localPlayer->setCustomSkin(GameSettings::GetPlayerSkinId(m_playerId));
+        localPlayer->setCustomCape(GameSettings::GetPlayerCapeId(m_playerId));
+        gApp.UpdatePlayerInfo(getSocket()->mPlayerId, packet->mReducedDebugInfo, packet->mCurrentTick,
+                              packet->mGameType);
+        localPlayer->setPlayerGamePrivilege(Player::ePlayerGamePrivilege_All, packet->mCurrentTick);
+        uint32_t privileges = 0;
+        Player::enableAllPlayerPrivileges(privileges, true);
+        displayPrivilegeChanges(m_minecraft->mLocalPlayers[m_playerId], privileges);
     }
-    else
-    {
-        const int primaryPad = gProfile->GetPrimaryPad();
-        if (gameType == GameType::LOBBY)
-            m_minecraft->mGameMode = new MultiPlayerGameMode(primaryPad, this, packet->mDifficulty, false, true);
-        else if (gApp.GetTutorialMode(boost::shared_ptr<Player>()))
-            m_minecraft->mGameMode = new MultiPlayerGameMode(primaryPad, this, packet->mDifficulty, true, false);
-        else if (!gProfile->IsFullVersion())
-            m_minecraft->mGameMode = new TrialMode(primaryPad, this, packet->mDifficulty);
-        else
-            m_minecraft->mGameMode = new MultiPlayerGameMode(primaryPad, this, packet->mDifficulty, false, false);
-        const MiniGameDef* joiningMiniGame = m_minecraft->GetMiniGame();
-        if (joiningMiniGame != 0)
-            joiningMiniGame->SetDisabledEditActions(false);
-
-        MultiPlayerLevel* level = m_minecraft->getLevel(packet->mGameMode);
-        if (level == 0)
-        {
-            LevelSettings* settings = new LevelSettings(
-                packet->mSeed, gameType, false, false,
-                packet->mIsFlat, packet->mLevelType, packet->mXZSize,
-                packet->mHellScale, packet->mMaxTick, packet->mIsFlatWorld,
-                packet->mPlayerFlags, packet->mSpawnProtection, packet->mSimulationDistance);
-            if (Minecraft::InMiniGame(eMiniGameId_Any, true) &&
-                !CGameNetworkManager::sInstance.IsHost())
-            {
-                LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
-                if (options != 0)
-                {
-                    File saveRoot(options->getBaseSaveRoot());
-                    File savePath(options->getBaseSavePath());
-                    options->setBaseSaveData(savePath);
-                    gApp.setLevelGenerationOptions(options);
-                }
-                ConsoleSaveFileReadOnly* saveFile = new ConsoleSaveFileReadOnly(L"", 0, 0, false, eSavePlatform_WIIU);
-                File worldFolder(L"world");
-                boost::shared_ptr<McRegionLevelStorage> storage(new McRegionLevelStorage(
-                    saveFile, worldFolder, packet->mLevelName, true, m_minecraft->getFixerUpper()));
-                level = new MultiPlayerLevel(storage, this, settings, packet->mGameMode, difficulty,
-                                             packet->mUnknownValue3);
-            }
-            else
-                level = new MultiPlayerLevel(this, settings, packet->mGameMode, difficulty,
-                                             packet->mUnknownValue3);
-            m_level = level;
-            boost::shared_ptr<Player> emptyPlayer;
-            m_minecraft->setLevel(level, packet->mGameMode, emptyPlayer, true, false);
-        }
-        else
-        {
-            m_level = level;
-        }
-        m_minecraft->createPrimaryLocalPlayer(m_playerId);
-        localPlayer = m_minecraft->mLocalPlayers[m_playerId];
-    }
-
-    if (localPlayer == 0)
-        localPlayer = m_minecraft->mLocalPlayers[m_playerId];
-    if (localPlayer == 0)
-        return;
-
-    localPlayer->mDimension = packet->mGameMode;
-    localPlayer->setId(packet->mEntityId);
-    localPlayer->setCustomSkin(GameSettings::GetPlayerSkinId(m_playerId));
-    localPlayer->setCustomCape(GameSettings::GetPlayerCapeId(m_playerId));
-
-    gApp.UpdatePlayerInfo(getSocket()->mPlayerId,
-                          static_cast<short>(packet->mReducedDebugInfo),
-                          static_cast<unsigned int>(packet->mCurrentTick),
-                          static_cast<unsigned char>(packet->mGameType));
-
-    uint32_t privileges = 0;
-    Player::enableAllPlayerPrivileges(privileges, true);
-    localPlayer->setPlayerGamePrivilege(Player::ePlayerGamePrivilege_All, packet->mCurrentTick);
-    if (networkPlayer != 0 && networkPlayer->IsHost())
-        Player::setPlayerGamePrivilege(privileges, Player::ePlayerGamePrivilege_Moderator, 1);
-    displayPrivilegeChanges(localPlayer, privileges);
-
-    GameSettings::SetGameSettingsDebugMask(gProfile->GetPrimaryPad(),
-                                           GameSettings::GetGameSettingsDebugMask(-1, true));
     m_maxPlayers = packet->mMaxPlayers;
-    if (m_minecraft->mGameModes[m_playerId] != 0)
-        m_minecraft->mGameModes[m_playerId]->setLocalMode(gameType);
-    localPlayer->UpdateSize();
-    localPlayer->updateRichPresence();
-    gConsoleUIController.UpdateSelectedItemPos(static_cast<unsigned int>(m_playerId));
-
-    const MiniGameDef* miniGame = m_minecraft->GetMiniGame();
-    if (miniGame != 0)
-        miniGame->SetDisabledEditActions(false);
+    boost::shared_ptr<MultiplayerLocalPlayer> currentPlayer = m_minecraft->mPlayer;
+    m_minecraft->mPlayer = m_minecraft->mLocalPlayers[m_playerId];
+    m_minecraft->mGameModes[m_playerId]->setLocalMode(GameType::byId(packet->mGameType));
+    currentPlayer->UpdateSize();
+    m_minecraft->mPlayer = currentPlayer;
+    m_minecraft->mPlayer->updateRichPresence();
+    if (userIndex != -1)
+        gConsoleUIController.UpdateSelectedItemPos(userIndex);
 
     gApp.SetFirstMiniGameType(static_cast<EMiniGameId>(packet->mDifficulty));
     m_minecraft->GetClientMasterGameMode()->Setup(static_cast<EMiniGameId>(packet->mDifficulty));
     telemetryManagerInstance->RecordLevelStart(m_playerId, eSen_FriendOrMatch_Friend,
-        eSen_CompeteOrCoop_Both, m_level->getDifficulty()->getId(),
+        eSen_CompeteOrCoop_Both,
+        Minecraft::GetInstance()->getLevel(packet->mGameMode)->getDifficulty()->getId(),
         gApp.GetLocalPlayerCount(), CGameNetworkManager::sInstance.GetOnlinePlayerCount());
     telemetryManagerInstance->RecordMiniGameHostOptions(m_playerId,
         static_cast<EMiniGameId>(packet->mDifficulty));
@@ -727,129 +751,9 @@ void ClientPacketListener::handleAddEntity(boost::shared_ptr<ClientboundAddEntit
 
     switch (packet->getType())
     {
-    case ClientboundAddEntityPacket::BOAT:
-        entity = boost::shared_ptr<Entity>(new Boat(m_level, x, y, z));
-        break;
-    case ClientboundAddEntityPacket::ITEM:
-        entity = boost::shared_ptr<Entity>(new ItemEntity(m_level, x, y, z));
-        break;
-    case ClientboundAddEntityPacket::AREA_EFFECT_CLOUD:
-        entity = boost::shared_ptr<Entity>(new AreaEffectCloud(m_level, x, y, z));
-        break;
     case ClientboundAddEntityPacket::MINECART:
         entity = Minecart::createMinecart(m_level, x, y, z, Minecart::Type::VALUES[packet->getData()]);
         break;
-    case ClientboundAddEntityPacket::PRIMED_TNT:
-        entity = boost::shared_ptr<Entity>(new PrimedTnt(m_level, x, y, z, boost::shared_ptr<LivingEntity>()));
-        break;
-    case ClientboundAddEntityPacket::ENDER_CRYSTAL:
-        entity = boost::shared_ptr<Entity>(new EnderCrystal(m_level, x, y, z));
-        break;
-    case ClientboundAddEntityPacket::ARROW:
-        entity = boost::shared_ptr<Entity>(new TippableArrow(m_level, x, y, z));
-        break;
-    case ClientboundAddEntityPacket::SNOWBALL:
-        entity = boost::shared_ptr<Entity>(new Snowball(m_level, x, y, z));
-        break;
-    case ClientboundAddEntityPacket::EGG:
-        entity = boost::shared_ptr<Entity>(new ThrownEgg(m_level, x, y, z));
-        break;
-    case ClientboundAddEntityPacket::FIREBALL:
-        entity = boost::shared_ptr<Entity>(
-            new LargeFireball(m_level, x, y, z, packet->getXa(), packet->getYa(), packet->getZa()));
-        packet->setData(0);
-        break;
-    case ClientboundAddEntityPacket::SMALL_FIREBALL:
-        entity = boost::shared_ptr<Entity>(
-            new SmallFireball(m_level, x, y, z, packet->getXa(), packet->getYa(), packet->getZa()));
-        packet->setData(0);
-        break;
-    case ClientboundAddEntityPacket::THROWN_ENDERPEARL:
-        entity = boost::shared_ptr<Entity>(new ThrownEnderpearl(m_level, x, y, z));
-        break;
-    case ClientboundAddEntityPacket::WITHER_SKULL:
-        entity = boost::shared_ptr<Entity>(
-            new WitherSkull(m_level, x, y, z, packet->getXa(), packet->getYa(), packet->getZa()));
-        packet->setData(0);
-        break;
-    case ClientboundAddEntityPacket::SHULKER_BULLET:
-        entity = boost::shared_ptr<Entity>(
-            new ShulkerBullet(m_level, x, y, z, packet->getXa(), packet->getYa(), packet->getZa()));
-        packet->setData(0);
-        break;
-    case ClientboundAddEntityPacket::LLAMA_SPIT:
-        entity = boost::shared_ptr<Entity>(
-            new LlamaSpit(m_level, x, y, z, packet->getXa(), packet->getYa(), packet->getZa()));
-        break;
-    case ClientboundAddEntityPacket::FALLING_ALT:
-    case ClientboundAddEntityPacket::FALLING:
-        entity = boost::shared_ptr<Entity>(
-            new FallingBlockEntity(m_level, x, y, z, Block::stateByIdWithData(packet->getData())));
-        packet->setData(0);
-        break;
-    case ClientboundAddEntityPacket::ITEM_FRAME:
-        entity = boost::shared_ptr<ItemFrame>(
-            new ItemFrame(m_level, BlockPos(x, y, z), Direction::from2DDataValue(packet->getData())));
-        packet->setData(0);
-        resetRotation = false;
-        break;
-    case ClientboundAddEntityPacket::EYE_OF_ENDER:
-        entity = boost::shared_ptr<Entity>(new EyeOfEnderSignal(m_level, x, y, z));
-        break;
-    case ClientboundAddEntityPacket::POTION:
-    {
-        not_null_ptr<ItemInstance> item = ItemInstance::EMPTY;
-        const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
-        if (miniGame->HasFeatureSplashLevitatePotions() && packet->getData() == ItemId::SPLASH_POTION)
-            item = miniGame->getEquipmentForSlot(EquipmentSlot::eIndex_MainHand);
-        else
-            item = not_null_ptr<ItemInstance>(new ItemInstance(Item::byId(packet->getData())));
-        entity = boost::shared_ptr<Entity>(new ThrownPotion(m_level, x, y, z, item));
-        packet->setData(0);
-        break;
-    }
-    case ClientboundAddEntityPacket::EXPERIENCE_BOTTLE_ALT:
-    case ClientboundAddEntityPacket::EXPERIENCE_BOTTLE:
-        entity = boost::shared_ptr<Entity>(new ThrownExpBottle(m_level, x, y, z));
-        packet->setData(0);
-        break;
-    case ClientboundAddEntityPacket::FIREWORKS:
-    {
-        bool directional = Minecraft::GetInstance()->GetMiniGame()->HasFeatureDirectionalFireworks();
-        boost::shared_ptr<Entity> ownerEntity = m_level->getEntity(packet->getData());
-        boost::shared_ptr<Player> owner;
-        not_null_ptr<ItemInstance> item = ItemInstance::EMPTY;
-        if (ownerEntity != NULL && Entity::instanceof(ownerEntity, EntityType::PLAYER))
-        {
-            owner = boost::static_pointer_cast<Player>(ownerEntity);
-            if (directional)
-                item = owner->getItemInHand(InteractionHand::eInteractionHand_MainHand);
-        }
-        entity = boost::shared_ptr<Entity>(new FireworksRocketEntity(
-            m_level, x, y, z, packet->getXa(), packet->getYa(), packet->getZa(), item, true, owner));
-        break;
-    }
-    case ClientboundAddEntityPacket::LEASH_KNOT:
-        entity = boost::shared_ptr<Entity>(new LeashFenceKnotEntity(m_level, BlockPos((int)x, (int)y, (int)z)));
-        packet->setData(0);
-        break;
-    case ClientboundAddEntityPacket::ARMOR_STAND:
-        entity = boost::shared_ptr<Entity>(new ArmorStand(m_level, x, y, z));
-        break;
-    case ClientboundAddEntityPacket::EVOCATION_FANGS:
-        entity = boost::shared_ptr<Entity>(
-            new EvocationFangs(m_level, x, y, z, 0.0f, 0, boost::shared_ptr<LivingEntity>()));
-        break;
-    case ClientboundAddEntityPacket::FISHING_HOOK_FIRST:
-    case ClientboundAddEntityPacket::FISHING_HOOK_FIRST + 1:
-    case ClientboundAddEntityPacket::FISHING_HOOK_FIRST + 2:
-    case ClientboundAddEntityPacket::FISHING_HOOK_FIRST + 3:
-    case ClientboundAddEntityPacket::FISHING_HOOK_FIRST + 4:
-    case ClientboundAddEntityPacket::FISHING_HOOK_FIRST + 5:
-    case ClientboundAddEntityPacket::FISHING_HOOK_FIRST + 6:
-    case ClientboundAddEntityPacket::FISHING_HOOK_FIRST + 7:
-    case ClientboundAddEntityPacket::FISHING_HOOK_FIRST + 8:
-    case ClientboundAddEntityPacket::FISHING_HOOK_FIRST + 9:
     case ClientboundAddEntityPacket::FISHING_HOOK:
     {
         boost::shared_ptr<Entity> ownerEntity = getEntity(packet->getData());
@@ -875,19 +779,131 @@ void ClientPacketListener::handleAddEntity(boost::shared_ptr<ClientboundAddEntit
         packet->setData(0);
         break;
     }
+    case ClientboundAddEntityPacket::ARROW:
+        entity = boost::shared_ptr<Entity>(new TippableArrow(m_level, x, y, z));
+        break;
     case ClientboundAddEntityPacket::SPECTRAL_ARROW:
         entity = boost::shared_ptr<Entity>(new SpectralArrow(m_level, x, y, z));
         break;
-    case ClientboundAddEntityPacket::DRAGON_FIREBALL_ALT:
+    case ClientboundAddEntityPacket::TRIDENT:
+        entity = boost::shared_ptr<Entity>(new ThrownTrident(m_level, x, y, z));
+        break;
+    
+
+    case ClientboundAddEntityPacket::SNOWBALL:
+        entity = boost::shared_ptr<Entity>(new Snowball(m_level, x, y, z));
+        break;
+    case ClientboundAddEntityPacket::LLAMA_SPIT:
+        entity = boost::shared_ptr<Entity>(
+            new LlamaSpit(m_level, x, y, z, packet->getXa(), packet->getYa(), packet->getZa()));
+        break;
+    case ClientboundAddEntityPacket::ITEM_FRAME:
+        entity = boost::shared_ptr<ItemFrame>(
+            new ItemFrame(m_level, BlockPos(x, y, z), Direction::from2DDataValue(packet->getData())));
+        packet->setData(0);
+        resetRotation = false;
+        break;
+    case ClientboundAddEntityPacket::THROWN_ENDERPEARL:
+        entity = boost::shared_ptr<Entity>(new ThrownEnderpearl(m_level, x, y, z));
+        break;
+    case ClientboundAddEntityPacket::EYE_OF_ENDER:
+        entity = boost::shared_ptr<Entity>(new EyeOfEnderSignal(m_level, x, y, z));
+        break;
+    case ClientboundAddEntityPacket::FIREBALL:
+        entity = boost::shared_ptr<Entity>(
+            new LargeFireball(m_level, x, y, z, packet->getXa(), packet->getYa(), packet->getZa()));
+        packet->setData(0);
+        break;
+    case ClientboundAddEntityPacket::SMALL_FIREBALL:
+        entity = boost::shared_ptr<Entity>(
+            new SmallFireball(m_level, x, y, z, packet->getXa(), packet->getYa(), packet->getZa()));
+        packet->setData(0);
+        break;
     case ClientboundAddEntityPacket::DRAGON_FIREBALL:
         entity = boost::shared_ptr<Entity>(
             new DragonFireball(m_level, x, y, z, packet->getXa(), packet->getYa(), packet->getZa()));
         packet->setData(0);
         break;
-    case ClientboundAddEntityPacket::TRIDENT:
-        entity = boost::shared_ptr<Entity>(new ThrownTrident(m_level, x, y, z));
+    case ClientboundAddEntityPacket::EGG:
+        entity = boost::shared_ptr<Entity>(new ThrownEgg(m_level, x, y, z));
+        break;
+    case ClientboundAddEntityPacket::EVOCATION_FANGS:
+        entity = boost::shared_ptr<Entity>(
+            new EvocationFangs(m_level, x, y, z, 0.0f, 0, boost::shared_ptr<LivingEntity>()));
+        break;
+    case ClientboundAddEntityPacket::POTION:
+    {
+        not_null_ptr<ItemInstance> item = ItemInstance::EMPTY;
+        const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
+        if (miniGame->HasFeatureSplashLevitatePotions() && packet->getData() == ItemId::SPLASH_POTION)
+            item = miniGame->getEquipmentForSlot(EquipmentSlot::eIndex_MainHand);
+        else
+            item = not_null_ptr<ItemInstance>(new ItemInstance(Item::byId(packet->getData())));
+        entity = boost::shared_ptr<Entity>(new ThrownPotion(m_level, x, y, z, item));
+        packet->setData(0);
         break;
     }
+    case ClientboundAddEntityPacket::EXPERIENCE_BOTTLE:
+        entity = boost::shared_ptr<Entity>(new ThrownExpBottle(m_level, x, y, z));
+        packet->setData(0);
+        break;
+    case ClientboundAddEntityPacket::BOAT:
+        entity = boost::shared_ptr<Entity>(new Boat(m_level, x, y, z));
+        break;
+    case ClientboundAddEntityPacket::PRIMED_TNT:
+        entity = boost::shared_ptr<Entity>(new PrimedTnt(m_level, x, y, z, boost::shared_ptr<LivingEntity>()));
+        break;
+    case ClientboundAddEntityPacket::ARMOR_STAND:
+        entity = boost::shared_ptr<Entity>(new ArmorStand(m_level, x, y, z));
+        break;
+    case ClientboundAddEntityPacket::ENDER_CRYSTAL:
+        entity = boost::shared_ptr<Entity>(new EnderCrystal(m_level, x, y, z));
+        break;
+    case ClientboundAddEntityPacket::ITEM:
+        entity = boost::shared_ptr<Entity>(new ItemEntity(m_level, x, y, z));
+        break;
+    case ClientboundAddEntityPacket::FALLING:
+        entity = boost::shared_ptr<Entity>(
+            new FallingBlockEntity(m_level, x, y, z, Block::stateByIdWithData(packet->getData())));
+        packet->setData(0);
+        break;
+    case ClientboundAddEntityPacket::WITHER_SKULL:
+        entity = boost::shared_ptr<Entity>(
+            new WitherSkull(m_level, x, y, z, packet->getXa(), packet->getYa(), packet->getZa()));
+        packet->setData(0);
+        break;
+    case ClientboundAddEntityPacket::SHULKER_BULLET:
+        entity = boost::shared_ptr<Entity>(
+            new ShulkerBullet(m_level, x, y, z, packet->getXa(), packet->getYa(), packet->getZa()));
+        packet->setData(0);
+        break;
+    case ClientboundAddEntityPacket::FIREWORKS:
+    {
+        bool directional = Minecraft::GetInstance()->GetMiniGame()->HasFeatureDirectionalFireworks();
+        boost::shared_ptr<Entity> ownerEntity = m_level->getEntity(packet->getData());
+        boost::shared_ptr<Player> owner;
+        not_null_ptr<ItemInstance> item = ItemInstance::EMPTY;
+        if (ownerEntity != NULL && Entity::instanceof(ownerEntity, EntityType::PLAYER))
+        {
+            owner = boost::static_pointer_cast<Player>(ownerEntity);
+            if (directional)
+                item = owner->getItemInHand(InteractionHand::eInteractionHand_MainHand);
+        }
+        entity = boost::shared_ptr<Entity>(new FireworksRocketEntity(
+            m_level, x, y, z, packet->getXa(), packet->getYa(), packet->getZa(), item, true, owner));
+        break;
+    }
+    case ClientboundAddEntityPacket::LEASH_KNOT:
+        entity = boost::shared_ptr<Entity>(new LeashFenceKnotEntity(m_level, BlockPos((int)x, (int)y, (int)z)));
+        packet->setData(0);
+        break;
+    case ClientboundAddEntityPacket::AREA_EFFECT_CLOUD:
+        entity = boost::shared_ptr<Entity>(new AreaEffectCloud(m_level, x, y, z));
+        break;
+    }
+
+    if (entity == NULL)
+        return;
 
     entity->mXp = packet->getX();
     entity->mYp = packet->getY();
@@ -911,7 +927,7 @@ void ClientPacketListener::handleAddEntity(boost::shared_ptr<ClientboundAddEntit
             (*it)->setId((*it)->getId() + offset);
     }
 
-    if (packet->getType() == ClientboundAddEntityPacket::LEASH_KNOT)
+    if (packet->getType() == ClientboundAddEntityPacket::LEASH_KNOT || packet->getType() == ClientboundAddEntityPacket::BOAT)
         entity->absMoveTo(entity->mX, entity->mY, entity->mZ, yRot, xRot);
     else if (packet->getType() != ClientboundAddEntityPacket::ITEM_FRAME)
         entity->absMoveTo(x, y, z, yRot, xRot);
@@ -1119,6 +1135,7 @@ void ClientPacketListener::handleTeleportEntity(boost::shared_ptr<ClientboundTel
     boost::shared_ptr<Entity> entity = getEntity(packet->getId());
     if (entity == NULL)
         return;
+
     entity->mXp = packet->getX();
     entity->mYp = packet->getY();
     entity->mZp = packet->getZ();
@@ -1711,12 +1728,12 @@ void ClientPacketListener::handleChat(boost::shared_ptr<ClientboundChatPacket> p
     case ClientboundChatPacket::eChatPacketMessage_BedMeSleep:
         text = L10N::GetString(IDS_TILE_BED_MESLEEP);
         break;
-    case ClientboundChatPacket::eChatPacketMessage_PlayerLeft:
-        text = L10N::GetString(IDS_PLAYER_LEFT);
-        text.replace(text.find(L"%s"), 2, playerName);
-        break;
     case ClientboundChatPacket::eChatPacketMessage_PlayerJoined:
         text = L10N::GetString(IDS_PLAYER_JOINED);
+        text.replace(text.find(L"%s"), 2, playerName);
+        break;
+    case ClientboundChatPacket::eChatPacketMessage_PlayerLeft:
+        text = L10N::GetString(IDS_PLAYER_LEFT);
         text.replace(text.find(L"%s"), 2, playerName);
         break;
     case ClientboundChatPacket::eChatPacketMessage_PlayerKicked:
@@ -1734,13 +1751,13 @@ void ClientPacketListener::handleChat(boost::shared_ptr<ClientboundChatPacket> p
         showMessage = false;
         gApp.SetGlobalXuiAction(eXuiAction_LavaNearSpawn);
         break;
-    case ClientboundChatPacket::eChatPacketMessage_DeathInFire:
-        text = L10N::GetString(IDS_DEATH_INFIRE);
-        replacePlayer = true;
-        break;
     case ClientboundChatPacket::eChatPacketMessage_DeathLightningBolt:
     case ClientboundChatPacket::eChatPacketMessage_DeathLightningBoltAlternate:
         text = L10N::GetString(IDS_DEATH_LIGHTNINGBOLT);
+        replacePlayer = true;
+        break;
+    case ClientboundChatPacket::eChatPacketMessage_DeathInFire:
+        text = L10N::GetString(IDS_DEATH_INFIRE);
         replacePlayer = true;
         break;
     case ClientboundChatPacket::eChatPacketMessage_DeathOnFire:
@@ -1780,18 +1797,15 @@ void ClientPacketListener::handleChat(boost::shared_ptr<ClientboundChatPacket> p
         replacePlayer = true;
         break;
     case ClientboundChatPacket::eChatPacketMessage_DeathCustom:
-        if (packet->ints[0] == 0)
-        {
-            if (packet->strings[1].compare(L"") != 0)
-            {
-                const wchar_t* rulesText = gApp.GetGameRulesString(packet->strings[1]);
-                if (rulesText != NULL)
-                    text = std::wstring(rulesText);
-            }
-        }
-        else
+        if (packet->ints[0] != 0)
         {
             text = L10N::GetString(packet->ints[0]);
+        }
+        else if (packet->strings[1].compare(L"") != 0)
+        {
+            const wchar_t* rulesText = gApp.GetGameRulesString(packet->strings[1]);
+            if (rulesText != NULL)
+                text = std::wstring(rulesText);
         }
         replacePlayer = true;
         break;
@@ -1800,12 +1814,23 @@ void ClientPacketListener::handleChat(boost::shared_ptr<ClientboundChatPacket> p
         replacePlayer = true;
         break;
     case ClientboundChatPacket::eChatPacketMessage_DeathExplosion:
-    case ClientboundChatPacket::eChatPacketMessage_DeathExplosionAlternate:
         text = L10N::GetString(IDS_DEATH_EXPLOSION);
         replacePlayer = true;
         break;
     case ClientboundChatPacket::eChatPacketMessage_DeathMagic:
         text = L10N::GetString(IDS_DEATH_MAGIC);
+        replacePlayer = true;
+        break;
+    case ClientboundChatPacket::eChatPacketMessage_DeathAnvil:
+        text = L10N::GetString(IDS_DEATH_FALLING_ANVIL);
+        replacePlayer = true;
+        break;
+    case ClientboundChatPacket::eChatPacketMessage_DeathFallingBlock:
+        text = L10N::GetString(IDS_DEATH_FALLING_TILE);
+        replacePlayer = true;
+        break;
+    case ClientboundChatPacket::eChatPacketMessage_DeathDragonBreath:
+        text = L10N::GetString(IDS_DEATH_DRAGON_BREATH);
         replacePlayer = true;
         break;
     case ClientboundChatPacket::eChatPacketMessage_DeathMob:
@@ -1838,20 +1863,21 @@ void ClientPacketListener::handleChat(boost::shared_ptr<ClientboundChatPacket> p
         replacePlayer = true;
         replaceSource = true;
         break;
-    case ClientboundChatPacket::eChatPacketMessage_DeathDragonBreath:
-        text = L10N::GetString(IDS_DEATH_DRAGON_BREATH);
-        replacePlayer = true;
-        break;
-    case ClientboundChatPacket::eChatPacketMessage_DeathAnvil:
-        text = L10N::GetString(IDS_DEATH_FALLING_ANVIL);
-        replacePlayer = true;
-        break;
-    case ClientboundChatPacket::eChatPacketMessage_DeathFallingBlock:
-        text = L10N::GetString(IDS_DEATH_FALLING_TILE);
-        replacePlayer = true;
-        break;
     case ClientboundChatPacket::eChatPacketMessage_DeathThorns:
         text = L10N::GetString(IDS_DEATH_THORNS);
+        replacePlayer = true;
+        replaceSource = true;
+        break;
+    case ClientboundChatPacket::eChatPacketMessage_DeathHotFloor:
+        text = L10N::GetString(IDS_DEATH_HOT_FLOOR);
+        replacePlayer = true;
+        break;
+    case ClientboundChatPacket::eChatPacketMessage_DeathExplosionAlternate:
+        text = L10N::GetString(IDS_DEATH_EXPLOSION);
+        replacePlayer = true;
+        break;
+    case ClientboundChatPacket::eChatPacketMessage_DeathHotFloorEscaping:
+        text = L10N::GetString(IDS_DEATH_HOT_FLOOR_PLAYER);
         replacePlayer = true;
         replaceSource = true;
         break;
@@ -1960,15 +1986,6 @@ void ClientPacketListener::handleChat(boost::shared_ptr<ClientboundChatPacket> p
         replaceSource = true;
         replaceItem = true;
         break;
-    case ClientboundChatPacket::eChatPacketMessage_DeathHotFloor:
-        text = L10N::GetString(IDS_DEATH_HOT_FLOOR);
-        replacePlayer = true;
-        break;
-    case ClientboundChatPacket::eChatPacketMessage_DeathHotFloorEscaping:
-        text = L10N::GetString(IDS_DEATH_HOT_FLOOR_PLAYER);
-        replacePlayer = true;
-        replaceSource = true;
-        break;
     case ClientboundChatPacket::eChatPacketMessage_DeathTridentItem:
         text = L10N::GetString(IDS_DEATH_TRIDENT_ITEM);
         replacePlayer = true;
@@ -1989,6 +2006,12 @@ void ClientPacketListener::handleChat(boost::shared_ptr<ClientboundChatPacket> p
         text = L10N::GetString(IDS_PLAYER_LEFT_END);
         text.replace(text.find(L"%s"), 2, playerName);
         break;
+    case ClientboundChatPacket::eChatPacketMessage_MaxEnemies:
+        text = L10N::GetString(0xa82b5a66);
+        break;
+    case ClientboundChatPacket::eChatPacketMessage_MaxVillagers:
+        text = L10N::GetString(0x16972fbf);
+        break;
     case ClientboundChatPacket::eChatPacketMessage_MaxAnimals:
         text = L10N::GetString(0x9f8bffae);
         break;
@@ -2004,20 +2027,8 @@ void ClientPacketListener::handleChat(boost::shared_ptr<ClientboundChatPacket> p
     case ClientboundChatPacket::eChatPacketMessage_MaxWolves:
         text = L10N::GetString(0x70edc806);
         break;
-    case ClientboundChatPacket::eChatPacketMessage_MaxEnemies:
-        text = L10N::GetString(0xa82b5a66);
-        break;
-    case ClientboundChatPacket::eChatPacketMessage_MaxVillagers:
-        text = L10N::GetString(0x16972fbf);
-        break;
-    case ClientboundChatPacket::eChatPacketMessage_MaxHangingEntities:
-        text = L10N::GetString(0x1ee681ba);
-        break;
-    case ClientboundChatPacket::eChatPacketMessage_MaxArmorStands:
-        text = L10N::GetString(0x8ecd701e);
-        break;
-    case ClientboundChatPacket::eChatPacketMessage_CantSpawnInPeaceful:
-        text = L10N::GetString(IDS_CANT_SPAWN_IN_PEACEFUL);
+    case ClientboundChatPacket::eChatPacketMessage_MaxBats:
+        text = L10N::GetString(0xfab1deb6);
         break;
     case ClientboundChatPacket::eChatPacketMessage_MaxBredAnimals:
         text = L10N::GetString(0xb399bd15);
@@ -2034,14 +2045,20 @@ void ClientPacketListener::handleChat(boost::shared_ptr<ClientboundChatPacket> p
     case ClientboundChatPacket::eChatPacketMessage_CantShearMooshroom:
         text = L10N::GetString(IDS_CANT_SHEAR_MOOSHROOM);
         break;
+    case ClientboundChatPacket::eChatPacketMessage_MaxHangingEntities:
+        text = L10N::GetString(0x1ee681ba);
+        break;
+    case ClientboundChatPacket::eChatPacketMessage_MaxArmorStands:
+        text = L10N::GetString(0x8ecd701e);
+        break;
+    case ClientboundChatPacket::eChatPacketMessage_CantSpawnInPeaceful:
+        text = L10N::GetString(IDS_CANT_SPAWN_IN_PEACEFUL);
+        break;
     case ClientboundChatPacket::eChatPacketMessage_MaxBoats:
         text = L10N::GetString(IDS_MAX_BOATS);
         break;
     case ClientboundChatPacket::eChatPacketMessage_MaxMinecarts:
         text = L10N::GetString(IDS_MAX_MINECARTS);
-        break;
-    case ClientboundChatPacket::eChatPacketMessage_MaxBats:
-        text = L10N::GetString(0xfab1deb6);
         break;
     case ClientboundChatPacket::eChatPacketMessage_MaxBanners:
         text = L10N::GetString(IDS_MAX_BANNERS);
@@ -2189,14 +2206,14 @@ void ClientPacketListener::handleChat(boost::shared_ptr<ClientboundChatPacket> p
         singleMessage = true;
         break;
     case 121:
-        if (packet->ints[0] != 1)
+        if (packet->ints[0] == 1)
         {
-            text = L10N::GetString(IDS_MG_LIVES_REMAINING);
-            text.replace(text.find(L"%d"), 2, _toString<int>(packet->ints[0]));
+            text = L10N::GetString(0x989f7641);
         }
         else
         {
-            text = L10N::GetString(0x989f7641);
+            text = L10N::GetString(IDS_MG_LIVES_REMAINING);
+            text.replace(text.find(L"%d"), 2, _toString<int>(packet->ints[0]));
         }
         singleMessage = true;
         break;
@@ -2242,20 +2259,6 @@ void ClientPacketListener::handleChat(boost::shared_ptr<ClientboundChatPacket> p
         text.replace(text.find(L"%d"), 2, _toString<int>(packet->ints[0]));
         singleMessage = true;
         break;
-    case 130:
-        singleMessage = true;
-        text = L10N::GetString(0x2fb55d20);
-        replacements[L"{*QUANTITY*}"] = _toString<int>(packet->ints[1]);
-        replacements[L"{*OBJECT*}"] = L10N::GetString(packet->ints[2]);
-        replacements[L"{*EVENT*}"] = L10N::GetString(packet->ints[3]);
-        break;
-    case 131:
-        singleMessage = true;
-        text = L10N::GetString(0xb8af706d);
-        replacements[L"{*QUANTITY*}"] = _toString<int>(packet->ints[1]);
-        replacements[L"{*OBJECT*}"] = L10N::GetString(packet->ints[2]);
-        replacements[L"{*EVENT*}"] = L10N::GetString(packet->ints[3]);
-        break;
     case 132:
         singleMessage = true;
         text = L10N::GetString(0xa19c12db);
@@ -2266,6 +2269,20 @@ void ClientPacketListener::handleChat(boost::shared_ptr<ClientboundChatPacket> p
     case 133:
         singleMessage = true;
         text = L10N::GetString(0x431eeece);
+        replacements[L"{*QUANTITY*}"] = _toString<int>(packet->ints[1]);
+        replacements[L"{*OBJECT*}"] = L10N::GetString(packet->ints[2]);
+        replacements[L"{*EVENT*}"] = L10N::GetString(packet->ints[3]);
+        break;
+    case 130:
+        singleMessage = true;
+        text = L10N::GetString(0x2fb55d20);
+        replacements[L"{*QUANTITY*}"] = _toString<int>(packet->ints[1]);
+        replacements[L"{*OBJECT*}"] = L10N::GetString(packet->ints[2]);
+        replacements[L"{*EVENT*}"] = L10N::GetString(packet->ints[3]);
+        break;
+    case 131:
+        singleMessage = true;
+        text = L10N::GetString(0xb8af706d);
         replacements[L"{*QUANTITY*}"] = _toString<int>(packet->ints[1]);
         replacements[L"{*OBJECT*}"] = L10N::GetString(packet->ints[2]);
         replacements[L"{*EVENT*}"] = L10N::GetString(packet->ints[3]);
