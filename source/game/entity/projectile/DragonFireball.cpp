@@ -110,7 +110,7 @@ unsigned long long DragonFireball::GetType()
     return EntityType::DRAGON_FIREBALL;
 }
 
-void DragonFireball::create(Level* level)
+Entity* DragonFireball::create(Level* level)
 {
-    new DragonFireball(level);
+    return new DragonFireball(level);
 }

@@ -8,10 +8,6 @@
 #include "game/item/PotionUtils.hpp"
 #include "game/minigame/EMiniGameId.hpp"
 
-TippedArrowItem::~TippedArrowItem()
-{
-}
-
 not_null_ptr<ItemInstance> TippedArrowItem::getDefaultInstance()
 {
     return PotionUtils::setPotion(Item::getDefaultInstance(), Potions::POISON);

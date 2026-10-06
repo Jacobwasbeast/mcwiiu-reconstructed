@@ -17,7 +17,7 @@ public:
     LargeFireball(Level* level, double x, double y, double z, double xd, double yd, double zd);
     LargeFireball(Level* level, boost::shared_ptr<LivingEntity> owner, double xd, double yd, double zd);
 
-    static void create(Level* level);
+    static Entity* create(Level* level);
     static void addDataWalkers(DataFixerUpper* fixer);
     virtual void onHit(const HitResult* result);
     virtual void addAdditonalSaveData(CompoundTag* tag);

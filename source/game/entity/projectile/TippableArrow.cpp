@@ -39,13 +39,9 @@ TippableArrow::TippableArrow(Level* level, boost::shared_ptr<LivingEntity> owner
     init();
 }
 
-TippableArrow::~TippableArrow()
+Entity* TippableArrow::create(Level* level)
 {
-}
-
-void TippableArrow::create(Level* level)
-{
-    new TippableArrow(level);
+    return new TippableArrow(level);
 }
 
 void TippableArrow::staticCtor()

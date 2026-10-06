@@ -32,9 +32,9 @@ LargeFireball::LargeFireball(Level* level, boost::shared_ptr<LivingEntity> owner
     mExplosionPower = 1;
 }
 
-void LargeFireball::create(Level* level)
+Entity* LargeFireball::create(Level* level)
 {
-    new LargeFireball(level);
+    return new LargeFireball(level);
 }
 
 void LargeFireball::addDataWalkers(DataFixerUpper* fixer)

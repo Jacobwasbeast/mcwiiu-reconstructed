@@ -21,9 +21,8 @@ public:
     TippableArrow(Level* level);
     TippableArrow(Level* level, double x, double y, double z);
     TippableArrow(Level* level, boost::shared_ptr<LivingEntity> owner);
-    virtual ~TippableArrow();
 
-    static void create(Level* level);
+    static Entity* create(Level* level);
     static void staticCtor();
     void init();
     static int getCustomColor(const not_null_ptr<ItemInstance>& itemInstance);

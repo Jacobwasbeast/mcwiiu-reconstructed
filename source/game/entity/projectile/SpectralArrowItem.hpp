@@ -14,7 +14,6 @@ class SpectralArrowItem : public ArrowItem
 {
 public:
     SpectralArrowItem();
-    virtual ~SpectralArrowItem();
 
     virtual boost::shared_ptr<Arrow> createArrow(Level* level,
                                                   not_null_ptr<ItemInstance> itemInstance,

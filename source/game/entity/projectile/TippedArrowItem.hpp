@@ -20,7 +20,6 @@ class TextureAtlasSprite;
 class TippedArrowItem : public ArrowItem
 {
 public:
-    virtual ~TippedArrowItem();
 
     virtual not_null_ptr<ItemInstance> getDefaultInstance();
     virtual boost::shared_ptr<Arrow> createArrow(Level* level,

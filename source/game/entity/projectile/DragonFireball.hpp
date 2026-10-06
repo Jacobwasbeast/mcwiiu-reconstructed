@@ -28,7 +28,7 @@ public:
     virtual const ParticleType* getTrailParticleType();
     virtual bool shouldBurn();
     virtual unsigned long long GetType();
-    static void create(Level* level);
+    static Entity* create(Level* level);
 };
 
 #endif

@@ -7,10 +7,6 @@ SpectralArrowItem::SpectralArrowItem()
 {
 }
 
-SpectralArrowItem::~SpectralArrowItem()
-{
-}
-
 boost::shared_ptr<Arrow> SpectralArrowItem::createArrow(Level* level,
                                                         not_null_ptr<ItemInstance> itemInstance,
                                                         boost::shared_ptr<LivingEntity> entity)

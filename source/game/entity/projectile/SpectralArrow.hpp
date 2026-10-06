@@ -18,7 +18,7 @@ public:
     SpectralArrow(Level* level, boost::shared_ptr<LivingEntity> owner);
     SpectralArrow(Level* level, double x, double y, double z);
 
-    static void create(Level* level);
+    static Entity* create(Level* level);
     void init();
     virtual void tick();
     static void addDataWalkers(DataFixerUpper* fixer);

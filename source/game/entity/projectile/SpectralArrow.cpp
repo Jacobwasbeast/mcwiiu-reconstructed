@@ -31,9 +31,9 @@ SpectralArrow::SpectralArrow(Level* level, double x, double y, double z)
     init();
 }
 
-void SpectralArrow::create(Level* level)
+Entity* SpectralArrow::create(Level* level)
 {
-    new SpectralArrow(level);
+    return new SpectralArrow(level);
 }
 
 void SpectralArrow::init()
