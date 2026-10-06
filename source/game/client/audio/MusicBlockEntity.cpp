@@ -14,10 +14,6 @@ MusicBlockEntity::MusicBlockEntity()
 {
 }
 
-MusicBlockEntity::~MusicBlockEntity()
-{
-}
-
 BlockEntity* MusicBlockEntity::create()
 {
     return new MusicBlockEntity();

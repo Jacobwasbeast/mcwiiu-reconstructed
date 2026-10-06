@@ -13,7 +13,6 @@ class MusicBlockEntity : public BlockEntity
 {
 public:
     MusicBlockEntity();
-    virtual ~MusicBlockEntity();
 
     static BlockEntity* create();
     void playNote(Level* level, BlockPos pos);

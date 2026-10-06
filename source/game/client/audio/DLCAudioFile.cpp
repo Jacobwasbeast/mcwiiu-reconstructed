@@ -20,10 +20,6 @@ DLCAudioFile::DLCAudioFile(const std::wstring& path)
     m_dataSize = 0;
 }
 
-DLCAudioFile::~DLCAudioFile()
-{
-}
-
 void DLCAudioFile::addData(unsigned char* pData, unsigned int size)
 {
     m_dataSize = size;

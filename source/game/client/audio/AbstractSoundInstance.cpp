@@ -1,29 +1,14 @@
 #include "game/client/audio/AbstractSoundInstance.hpp"
 
 AbstractSoundInstance::AbstractSoundInstance(const SoundEvent* soundEvent, SoundSource::ESoundSource soundSource)
-    : source(soundSource)
-    , sound(soundEvent)
-    , volume(1.0f)
-    , pitch(1.0f)
-    , looping(false)
-    , delay(0)
-    , attenuation(SoundInstance::DEFAULT_ATTENUATION)
 {
-}
-
-AbstractSoundInstance::AbstractSoundInstance(const AbstractSoundInstance& other)
-    : SoundInstance(other)
-    , source(other.source)
-    , sound(other.sound)
-    , volume(other.volume)
-    , pitch(other.pitch)
-    , x(other.x)
-    , y(other.y)
-    , z(other.z)
-    , looping(other.looping)
-    , delay(other.delay)
-    , attenuation(other.attenuation)
-{
+    this->sound = soundEvent;
+    this->looping = false;
+    this->source = soundSource;
+    this->attenuation = SoundInstance::DEFAULT_ATTENUATION;
+    this->volume = 1.0f;
+    this->delay = 0;
+    this->pitch = 1.0f;
 }
 
 const SoundEvent* AbstractSoundInstance::getSound()

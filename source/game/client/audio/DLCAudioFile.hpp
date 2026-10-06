@@ -32,7 +32,6 @@ public:
     };
 
     DLCAudioFile(const std::wstring& path);
-    virtual ~DLCAudioFile();
 
     virtual void addData(unsigned char* pData, unsigned int size);
     virtual unsigned char* getData(unsigned int& size);

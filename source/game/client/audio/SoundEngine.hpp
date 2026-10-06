@@ -74,7 +74,6 @@ public:
         MAX_LISTENERS = 4
     };
     SoundEngine();
-    virtual ~SoundEngine();
     static int TracksSortFunction(const void*, const void*);
     void BuildTrackList(int, int, bool);
     void SetStreamingSounds(int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int,

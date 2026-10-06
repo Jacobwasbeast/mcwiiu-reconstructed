@@ -9,7 +9,6 @@ class AbstractSoundInstance : public virtual SoundInstance
 {
 public:
     AbstractSoundInstance(const SoundEvent* soundEvent, SoundSource::ESoundSource soundSource);
-    AbstractSoundInstance(const AbstractSoundInstance& other);
 
     virtual const SoundEvent* getSound();
     virtual SoundSource::ESoundSource getSource();

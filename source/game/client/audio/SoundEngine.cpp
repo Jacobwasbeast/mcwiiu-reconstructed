@@ -166,10 +166,6 @@ SoundEngine::SoundEngine()
     m_platformSoundEngine = new PlatformSoundEngineImpl();
 }
 
-SoundEngine::~SoundEngine()
-{
-}
-
 int SoundEngine::TracksSortFunction(const void* left, const void* right)
 {
     return static_cast<const SoundTrack*>(left)->sortKey - static_cast<const SoundTrack*>(right)->sortKey;

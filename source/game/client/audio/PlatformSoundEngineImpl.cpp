@@ -43,9 +43,9 @@ extern "C" void platform_free(void* pBlock)
 
 PlatformSoundEngineImpl::PlatformSoundEngineImpl()
 {
-    m_pDigitalDriver = NULL;
     m_pStream = NULL;
     m_pStreamDRC = NULL;
+    m_pDigitalDriver = NULL;
 }
 
 PlatformSoundEngineImpl::~PlatformSoundEngineImpl()
@@ -65,23 +65,20 @@ void PlatformSoundEngineImpl::ErrorCallback(long long iErrorCode, const char* pE
 
 float PlatformSoundEngineImpl::custom_falloff_function(_SAMPLE* pSample, float fDistance, float fRolloffFactor, float fMinDistance, float fMaxDistance)
 {
-    float fVolume;
-
     if (fMaxDistance == 10000.0f)
     {
         return 1.0f;
     }
 
-    fVolume = 1.0f - fDistance / fMaxDistance;
+    float fVolume = 1.0f - fDistance / fMaxDistance;
 
     if (fVolume < 0.0f)
     {
-        return 0.0f;
+        fVolume = 0.0f;
     }
-
-    if (fVolume > 1.0f)
+    else if (fVolume > 1.0f)
     {
-        return 1.0f;
+        fVolume = 1.0f;
     }
 
     return fVolume;
@@ -160,7 +157,9 @@ void PlatformSoundEngineImpl::tick(void* pUserData, float fListenerX, float fLis
     {
         info.m_sample->outputToDRC = pRouteToDRC(pUserData, const_cast<void*>(info.m_selectionData));
 
-        if (info.m_state == 1)
+        switch (info.m_state)
+        {
+        case 1:
         {
             bool bIs3D;
             float fMinDistance;
@@ -193,8 +192,9 @@ void PlatformSoundEngineImpl::tick(void* pUserData, float fListenerX, float fLis
             AIL_set_sample_volume_levels(info.m_sample, fVolume, fVolume);
 
             pUpdateSound(pUserData, const_cast<void*>(info.m_selectionData), &bIs3D, 0, &fX, &fY, &fZ, &fVolume);
+            break;
         }
-        else if (info.m_state == 4)
+        case 4:
         {
             bool bIs3D;
             float fX;
@@ -203,8 +203,9 @@ void PlatformSoundEngineImpl::tick(void* pUserData, float fListenerX, float fLis
             float fVolume;
 
             pUpdateSound(pUserData, const_cast<void*>(info.m_selectionData), &bIs3D, 2, &fX, &fY, &fZ, &fVolume);
+            break;
         }
-        else
+        default:
         {
             bool bIs3D;
             float fX;
@@ -220,6 +221,8 @@ void PlatformSoundEngineImpl::tick(void* pUserData, float fListenerX, float fLis
             }
 
             AIL_set_sample_volume_levels(info.m_sample, fVolume, fVolume);
+            break;
+        }
         }
     }
 
@@ -239,17 +242,19 @@ bool PlatformSoundEngineImpl::openStream(char* pFileName)
 {
     m_pStreamDRC = AIL_open_stream(m_pDigitalDriver, pFileName, 0);
 
-    if (m_pStreamDRC != NULL)
+    if (m_pStreamDRC == NULL)
     {
-        m_pStream = AIL_open_stream(m_pDigitalDriver, pFileName, 0);
-
-        if (m_pStream != NULL)
-        {
-            return true;
-        }
+        return false;
     }
 
-    return false;
+    m_pStream = AIL_open_stream(m_pDigitalDriver, pFileName, 0);
+
+    if (m_pStream == NULL)
+    {
+        return false;
+    }
+
+    return true;
 }
 
 void PlatformSoundEngineImpl::startStream(void* pUserData, ConfigureSoundCallback pConfigureSound)
@@ -332,7 +337,8 @@ void PlatformSoundEngineImpl::updateStreamPos(void* pUserData, UpdateSoundCallba
 
     if (bIs3D)
     {
-        AIL_set_sample_3D_position(AIL_stream_sample_handle(m_pStream), fX, fY, fZ);
+        _SAMPLE* pSample = AIL_stream_sample_handle(m_pStream);
+        AIL_set_sample_3D_position(pSample, fX, fY, fZ);
     }
 }
 

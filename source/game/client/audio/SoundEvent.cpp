@@ -2,9 +2,9 @@
 
 SoundEvent::SoundEvent(std::wstring name, EType type, float distanceScalar)
     : index(-1)
-    , type(type)
 {
     this->name = name;
+    this->type = type;
     this->distanceScalar = distanceScalar;
 }
 
