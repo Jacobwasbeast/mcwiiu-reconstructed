@@ -5,10 +5,6 @@
 #include "game/core/DataInputStream.hpp"
 #include "game/core/DataOutputStream.hpp"
 
-StatsCommand::~StatsCommand()
-{
-}
-
 EGameCommand StatsCommand::getId()
 {
     return eGameCommand_Stats;

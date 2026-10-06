@@ -13,7 +13,6 @@ class CommandSender;
 class StatsCommand : public Command
 {
 public:
-    virtual ~StatsCommand();
 
     virtual EGameCommand getId();
     virtual int getPermissionLevel();

@@ -12,7 +12,6 @@
 class TitleCommand : public Command
 {
 public:
-    virtual ~TitleCommand();
 
     virtual EGameCommand getId();
     virtual int getPermissionLevel();

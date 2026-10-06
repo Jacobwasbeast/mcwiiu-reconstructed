@@ -9,10 +9,6 @@
 #include "game/server/ServerLevel.hpp"
 #include "game/world/Level.hpp"
 
-TimeCommand::~TimeCommand()
-{
-}
-
 EGameCommand TimeCommand::getId()
 {
     return eGameCommand_Time;

@@ -13,7 +13,6 @@
 class ExecuteAtCommand : public Command
 {
 public:
-    virtual ~ExecuteAtCommand();
 
     virtual EGameCommand getId();
     virtual int getPermissionLevel();

@@ -12,7 +12,6 @@
 class FillCommand : public Command
 {
 public:
-    virtual ~FillCommand();
 
     virtual EGameCommand getId();
     virtual int getPermissionLevel();

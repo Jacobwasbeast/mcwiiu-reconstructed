@@ -8,10 +8,6 @@
 #include "game/entity/mob/Entity.hpp"
 #include "game/network/ClientboundChatPacket.hpp"
 
-KillCommand::~KillCommand()
-{
-}
-
 EGameCommand KillCommand::getId()
 {
     return eGameCommand_Kill;

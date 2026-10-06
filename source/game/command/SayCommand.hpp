@@ -12,7 +12,6 @@
 class SayCommand : public Command
 {
 public:
-    virtual ~SayCommand();
 
     virtual EGameCommand getId();
     virtual int getPermissionLevel();

@@ -20,10 +20,6 @@ static const eGameHostOption eGameHostOption_DefaultGameMode =
 static const ClientboundChatPacket::EChatPacketMessage eChatPacketMessage_AdminAction =
     ClientboundChatPacket::eChatPacketMessage_DefaultGameModeSuccess;
 
-DefaultGameModeCommand::~DefaultGameModeCommand()
-{
-}
-
 EGameCommand DefaultGameModeCommand::getId()
 {
     return eGameCommand_DefaultGameMode;

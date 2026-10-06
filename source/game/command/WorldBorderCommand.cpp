@@ -5,10 +5,6 @@
 #include "game/core/DataInputStream.hpp"
 #include "game/core/DataOutputStream.hpp"
 
-WorldBorderCommand::~WorldBorderCommand()
-{
-}
-
 EGameCommand WorldBorderCommand::getId()
 {
     return eGameCommand_WorldBorder;

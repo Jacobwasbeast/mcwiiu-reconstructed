@@ -13,7 +13,6 @@ class CommandSender;
 class AchievementCommand : public Command
 {
 public:
-    virtual ~AchievementCommand();
 
     virtual EGameCommand getId();
     virtual int getPermissionLevel();

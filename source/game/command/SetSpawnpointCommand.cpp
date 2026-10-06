@@ -12,10 +12,6 @@
 #include "game/world/DimensionType.hpp"
 #include "game/world/Level.hpp"
 
-SetSpawnpointCommand::~SetSpawnpointCommand()
-{
-}
-
 EGameCommand SetSpawnpointCommand::getId()
 {
     return eGameCommand_SetSpawnpoint;

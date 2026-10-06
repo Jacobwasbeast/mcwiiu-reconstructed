@@ -12,7 +12,6 @@ class GameType;
 class DefaultGameModeCommand : public GameModeCommand
 {
 public:
-    virtual ~DefaultGameModeCommand();
 
     virtual EGameCommand getId();
     virtual void execute(boost::shared_ptr<CommandSender> sender, arrayWithLength<unsigned char> data);

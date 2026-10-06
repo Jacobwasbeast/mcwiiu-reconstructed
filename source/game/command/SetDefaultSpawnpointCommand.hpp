@@ -10,7 +10,6 @@
 class SetDefaultSpawnpointCommand : public Command
 {
 public:
-    virtual ~SetDefaultSpawnpointCommand();
 
     virtual EGameCommand getId();
     virtual int getPermissionLevel();

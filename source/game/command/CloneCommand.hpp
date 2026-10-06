@@ -12,7 +12,6 @@
 class CloneCommand : public Command
 {
 public:
-    virtual ~CloneCommand();
 
     virtual EGameCommand getId();
     virtual int getPermissionLevel();

@@ -1,10 +1,6 @@
 #include "game/command/SayCommand.hpp"
 
 
-SayCommand::~SayCommand()
-{
-}
-
 EGameCommand SayCommand::getId()
 {
     return eGameCommand_Say;

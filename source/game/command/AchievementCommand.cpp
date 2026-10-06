@@ -5,10 +5,6 @@
 #include "game/core/DataInputStream.hpp"
 #include "game/core/DataOutputStream.hpp"
 
-AchievementCommand::~AchievementCommand()
-{
-}
-
 EGameCommand AchievementCommand::getId()
 {
     return eGameCommand_Achievement;

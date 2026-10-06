@@ -15,7 +15,6 @@ class GameCommandPacket;
 class MessageRawCommand : public Command
 {
 public:
-    virtual ~MessageRawCommand();
 
     virtual EGameCommand getId();
     virtual int getPermissionLevel();

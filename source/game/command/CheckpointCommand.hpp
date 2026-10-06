@@ -13,7 +13,6 @@
 class CheckpointCommand : public Command
 {
 public:
-    virtual ~CheckpointCommand();
 
     virtual EGameCommand getId();
     virtual int getPermissionLevel();

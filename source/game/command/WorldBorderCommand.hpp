@@ -12,7 +12,6 @@
 class WorldBorderCommand : public Command
 {
 public:
-    virtual ~WorldBorderCommand();
 
     virtual EGameCommand getId();
     virtual int getPermissionLevel();

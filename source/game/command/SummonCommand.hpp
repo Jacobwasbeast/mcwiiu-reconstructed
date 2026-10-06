@@ -11,7 +11,6 @@
 class SummonCommand : public Command
 {
 public:
-    virtual ~SummonCommand();
 
     virtual EGameCommand getId();
     virtual int getPermissionLevel();

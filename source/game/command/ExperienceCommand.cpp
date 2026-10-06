@@ -1,9 +1,5 @@
 #include "game/command/ExperienceCommand.hpp"
 
-ExperienceCommand::~ExperienceCommand()
-{
-}
-
 EGameCommand ExperienceCommand::getId()
 {
     return eGameCommand_Experience;

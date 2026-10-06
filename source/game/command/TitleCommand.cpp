@@ -5,10 +5,6 @@
 #include "game/core/DataInputStream.hpp"
 #include "game/core/DataOutputStream.hpp"
 
-TitleCommand::~TitleCommand()
-{
-}
-
 EGameCommand TitleCommand::getId()
 {
     return eGameCommand_Title;

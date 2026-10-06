@@ -13,7 +13,6 @@
 class ChangeCollisionTypeCommand : public Command
 {
 public:
-    virtual ~ChangeCollisionTypeCommand();
 
     virtual EGameCommand getId();
     virtual int getPermissionLevel();

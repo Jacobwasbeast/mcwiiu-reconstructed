@@ -11,10 +11,6 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/generation/PlayerList.hpp"
 
-SetDefaultSpawnpointCommand::~SetDefaultSpawnpointCommand()
-{
-}
-
 EGameCommand SetDefaultSpawnpointCommand::getId()
 {
     return eGameCommand_SetDefaultSpawnpoint;

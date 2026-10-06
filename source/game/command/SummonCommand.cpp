@@ -5,10 +5,6 @@
 #include "game/core/DataInputStream.hpp"
 #include "game/core/DataOutputStream.hpp"
 
-SummonCommand::~SummonCommand()
-{
-}
-
 EGameCommand SummonCommand::getId()
 {
     return eGameCommand_Summon;

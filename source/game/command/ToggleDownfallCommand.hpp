@@ -12,7 +12,6 @@
 class ToggleDownfallCommand : public Command
 {
 public:
-    virtual ~ToggleDownfallCommand();
 
     virtual EGameCommand getId();
     virtual int getPermissionLevel();

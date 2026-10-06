@@ -5,10 +5,6 @@
 #include "game/core/DataInputStream.hpp"
 #include "game/core/DataOutputStream.hpp"
 
-TriggerCommand::~TriggerCommand()
-{
-}
-
 EGameCommand TriggerCommand::getId()
 {
     return eGameCommand_Trigger;

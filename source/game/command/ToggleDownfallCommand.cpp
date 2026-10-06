@@ -8,10 +8,6 @@
 #include "game/world/Level.hpp"
 #include "game/world/LevelData.hpp"
 
-ToggleDownfallCommand::~ToggleDownfallCommand()
-{
-}
-
 EGameCommand ToggleDownfallCommand::getId()
 {
     return eGameCommand_ToggleDownfall;

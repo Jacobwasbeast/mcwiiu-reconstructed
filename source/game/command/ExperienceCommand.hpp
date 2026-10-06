@@ -12,7 +12,6 @@
 class ExperienceCommand : public Command
 {
 public:
-    virtual ~ExperienceCommand();
 
     virtual EGameCommand getId();
     virtual int getPermissionLevel();

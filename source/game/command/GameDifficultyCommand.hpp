@@ -12,7 +12,6 @@ class CommandSender;
 class GameDifficultyCommand : public Command
 {
 public:
-    virtual ~GameDifficultyCommand();
 
     virtual EGameCommand getId();
     virtual int getPermissionLevel();

@@ -5,10 +5,6 @@
 #include "game/core/DataInputStream.hpp"
 #include "game/core/DataOutputStream.hpp"
 
-FillCommand::~FillCommand()
-{
-}
-
 EGameCommand FillCommand::getId()
 {
     return eGameCommand_Fill;

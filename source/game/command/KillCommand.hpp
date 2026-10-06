@@ -16,7 +16,6 @@ class CommandSender;
 class KillCommand : public Command
 {
 public:
-    virtual ~KillCommand();
 
     virtual EGameCommand getId();
     virtual int getPermissionLevel();

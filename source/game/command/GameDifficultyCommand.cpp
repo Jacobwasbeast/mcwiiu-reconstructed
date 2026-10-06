@@ -9,10 +9,6 @@
 
 extern MinecraftServer* gMinecraftServer;
 
-GameDifficultyCommand::~GameDifficultyCommand()
-{
-}
-
 EGameCommand GameDifficultyCommand::getId()
 {
     return eGameCommand_GameDifficulty;

@@ -12,10 +12,6 @@
 #include "game/world/Level.hpp"
 #include "game/world/LevelData.hpp"
 
-WeatherCommand::~WeatherCommand()
-{
-}
-
 EGameCommand WeatherCommand::getId()
 {
     return eGameCommand_Weather;

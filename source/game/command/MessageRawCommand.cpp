@@ -6,10 +6,6 @@
 #include "game/core/DataOutputStream.hpp"
 #include "game/network/GameCommandPacket.hpp"
 
-MessageRawCommand::~MessageRawCommand()
-{
-}
-
 EGameCommand MessageRawCommand::getId()
 {
     return eGameCommand_MessageRaw;

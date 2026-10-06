@@ -27,10 +27,6 @@
 #include "game/world/generation/PlayerStats.hpp"
 #include "game/world/generation/UpdatePlayerRuleDefinition.hpp"
 
-CheckpointCommand::~CheckpointCommand()
-{
-}
-
 EGameCommand CheckpointCommand::getId()
 {
     return eGameCommand_Checkpoint;

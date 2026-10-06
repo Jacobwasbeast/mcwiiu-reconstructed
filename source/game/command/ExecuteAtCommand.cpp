@@ -5,10 +5,6 @@
 #include "game/core/DataInputStream.hpp"
 #include "game/core/DataOutputStream.hpp"
 
-ExecuteAtCommand::~ExecuteAtCommand()
-{
-}
-
 EGameCommand ExecuteAtCommand::getId()
 {
     return eGameCommand_ExecuteAt;

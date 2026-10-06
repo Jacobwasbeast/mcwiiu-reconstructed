@@ -11,7 +11,6 @@
 class TimeCommand : public Command
 {
 public:
-    virtual ~TimeCommand();
 
     virtual EGameCommand getId();
     virtual int getPermissionLevel();

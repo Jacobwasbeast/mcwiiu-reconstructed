@@ -13,7 +13,6 @@ class CommandSender;
 class WeatherCommand : public Command
 {
 public:
-    virtual ~WeatherCommand();
 
     virtual EGameCommand getId();
     virtual int getPermissionLevel();

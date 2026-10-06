@@ -16,10 +16,6 @@
 
 extern MinecraftServer* gMinecraftServer;
 
-TeleportCommand::~TeleportCommand()
-{
-}
-
 EGameCommand TeleportCommand::getId()
 {
     return eGameCommand_Teleport;

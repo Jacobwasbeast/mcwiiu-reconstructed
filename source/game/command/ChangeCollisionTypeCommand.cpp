@@ -9,10 +9,6 @@
 #include "game/server/MinecraftServer.hpp"
 #include "game/server/ServerPlayer.hpp"
 
-ChangeCollisionTypeCommand::~ChangeCollisionTypeCommand()
-{
-}
-
 EGameCommand ChangeCollisionTypeCommand::getId()
 {
     return eGameCommand_ChangeCollisionType;

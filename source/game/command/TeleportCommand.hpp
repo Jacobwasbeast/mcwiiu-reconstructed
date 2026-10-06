@@ -13,7 +13,6 @@ class CommandSender;
 class TeleportCommand : public Command
 {
 public:
-    virtual ~TeleportCommand();
     virtual EGameCommand getId();
     virtual void execute(boost::shared_ptr<CommandSender> sender, arrayWithLength<unsigned char> data);
     static boost::shared_ptr<GameCommandPacket> preparePacket(PlayerUID source, PlayerUID target);
