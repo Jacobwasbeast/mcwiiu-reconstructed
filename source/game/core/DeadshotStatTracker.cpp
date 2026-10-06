@@ -42,10 +42,8 @@ void DeadshotStatTracker::update(const DamageEvent* damageEvent)
         return;
     }
 
-    if (damageEvent->mFallCount == mFallCount && damageEvent->mFallDistance != 0.0f)
+    if (damageEvent->mFallCount != mFallCount || damageEvent->mFallDistance == 0.0f)
     {
-        return;
+        mFallCount = -1;
     }
-
-    mFallCount = -1;
 }

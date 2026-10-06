@@ -26,7 +26,7 @@ public:
     static bool SORTBYSCORE(PlayerInfo* first, PlayerInfo* second);
     void Init(int value);
     unsigned int getNumberOfColumns();
-    boost::shared_ptr<ItemInstance> getItemForSlot(int row, int column, const unsigned int& slot, const EScoreboardType& type);
+    not_null_ptr<ItemInstance> getItemForSlot(int row, int column, const unsigned int& slot, const EScoreboardType& type);
     UIString getLabel2(const StatsUID& uid);
     UIString getLabel3(const StatsUID& uid);
     UIString getLabel4(const StatsUID& uid);

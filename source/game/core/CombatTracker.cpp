@@ -112,79 +112,96 @@ boost::shared_ptr<ClientboundChatPacket> CombatTracker::getDeathMessagePacket()
 
     CombatEntry* knockoff = GetKnockoffEntry();
     CombatEntry* last = mEntries.back();
+    boost::shared_ptr<ClientboundChatPacket> result;
     boost::shared_ptr<Entity> killer = last->getSource()->getEntity();
+    boost::shared_ptr<Entity> attacker;
+    const DamageSource* source = last->getSource();
 
     if (knockoff == NULL)
     {
-        if (last->getSource()->equals(DamageSource::CREATIVE_PLAYER))
+        if (source->equals(DamageSource::CREATIVE_PLAYER))
         {
-            boost::shared_ptr<ClientboundChatPacket> packet(
-                new ClientboundChatPacket(ClientboundChatPacket::eChatPacketMessage_DeathCustom, -1));
+            ClientboundChatPacket* packet =
+                new ClientboundChatPacket(ClientboundChatPacket::eChatPacketMessage_DeathCustom, -1);
             packet->strings.push_back(mMob->getNetworkName());
             packet->strings.push_back(mMob->mDeathMessage);
             packet->ints.push_back(mMob->mDeathMessageId);
-            return packet;
+            result = boost::shared_ptr<ClientboundChatPacket>(packet);
+            return result;
         }
-        return last->getSource()->getDeathMessagePacket(
-            boost::dynamic_pointer_cast<LivingEntity>(mMob->shared_from_this()));
     }
-
-    const DamageSource* lastSource = last->getSource();
-    if (!lastSource->equals(DamageSource::FALL) && !lastSource->equals(DamageSource::OUT_OF_WORLD)
-        && !lastSource->equals(DamageSource::CREATIVE_PLAYER))
-        return lastSource->getDeathMessagePacket(boost::dynamic_pointer_cast<LivingEntity>(mMob->shared_from_this()));
-
-    boost::shared_ptr<Entity> knockoffAttacker = knockoff->getSource()->getEntity();
-    const DamageSource* knockoffSource = knockoff->getSource();
-    if (knockoffSource->equals(DamageSource::FALL) || knockoffSource->equals(DamageSource::OUT_OF_WORLD)
-        || knockoffSource->equals(DamageSource::CREATIVE_PLAYER))
+    else if (source->equals(DamageSource::FALL) || source->equals(DamageSource::OUT_OF_WORLD)
+             || source->equals(DamageSource::CREATIVE_PLAYER))
     {
-        ClientboundChatPacket::EChatPacketMessage message = ClientboundChatPacket::eChatPacketMessage_DeathFellHigh;
-        switch (getFallLocation(knockoff))
+        attacker = knockoff->getSource()->getEntity();
+        const DamageSource* knockoffSource = knockoff->getSource();
+        if (knockoffSource->equals(DamageSource::FALL) || knockoffSource->equals(DamageSource::OUT_OF_WORLD)
+            || knockoffSource->equals(DamageSource::CREATIVE_PLAYER))
         {
-        case eLOCATION_LADDER:
-            message = ClientboundChatPacket::eChatPacketMessage_DeathFellLadder;
-            break;
-        case eLOCATION_VINES:
-            message = ClientboundChatPacket::eChatPacketMessage_DeathFellVines;
-            break;
-        case eLOCATION_WATER:
-            message = ClientboundChatPacket::eChatPacketMessage_DeathFellWater;
-            break;
-        default:
-            break;
+            ClientboundChatPacket::EChatPacketMessage message = ClientboundChatPacket::eChatPacketMessage_DeathFellHigh;
+            switch (getFallLocation(knockoff))
+            {
+            case eLOCATION_LADDER:
+                message = ClientboundChatPacket::eChatPacketMessage_DeathFellLadder;
+                break;
+            case eLOCATION_VINES:
+                message = ClientboundChatPacket::eChatPacketMessage_DeathFellVines;
+                break;
+            case eLOCATION_WATER:
+                message = ClientboundChatPacket::eChatPacketMessage_DeathFellWater;
+                break;
+            default:
+                break;
+            }
+            result = boost::shared_ptr<ClientboundChatPacket>(
+                new ClientboundChatPacket(mMob->getNetworkName(), message, -1));
         }
-        return boost::shared_ptr<ClientboundChatPacket>(new ClientboundChatPacket(mMob->getNetworkName(), message, -1));
-    }
-
-    if (knockoffAttacker == NULL || knockoffAttacker == killer)
-    {
-        if (killer == NULL)
-            return boost::shared_ptr<ClientboundChatPacket>(new ClientboundChatPacket(
+        else if (attacker != NULL && (killer == NULL || attacker != killer))
+        {
+            not_null_ptr<ItemInstance> item = (attacker->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY
+                ? boost::static_pointer_cast<LivingEntity>(attacker)->getMainHandItem()
+                : ItemInstance::EMPTY;
+            if (!item->isEmpty() && item->hasCustomHoverName())
+            {
+                result = boost::shared_ptr<ClientboundChatPacket>(new ClientboundChatPacket(
+                    mMob->getNetworkName(), ClientboundChatPacket::eChatPacketMessage_DeathFellDoomedByItem, attacker,
+                    attacker->getNetworkName(), item->getHoverNameUnfiltered()));
+            }
+            else
+            {
+                result = boost::shared_ptr<ClientboundChatPacket>(new ClientboundChatPacket(
+                    mMob->getNetworkName(), ClientboundChatPacket::eChatPacketMessage_DeathFellDoomedBy, attacker,
+                    attacker->getNetworkName()));
+            }
+        }
+        else if (killer != NULL)
+        {
+            not_null_ptr<ItemInstance> item = eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, killer->GetType())
+                ? boost::static_pointer_cast<LivingEntity>(killer)->getMainHandItem()
+                : ItemInstance::EMPTY;
+            if (!item->isEmpty() && item->hasCustomHoverName())
+            {
+                result = boost::shared_ptr<ClientboundChatPacket>(new ClientboundChatPacket(
+                    mMob->getNetworkName(), ClientboundChatPacket::eChatPacketMessage_DeathFellFinishedItem, killer,
+                    killer->getNetworkName(), item->getHoverNameUnfiltered()));
+            }
+            else
+            {
+                result = boost::shared_ptr<ClientboundChatPacket>(new ClientboundChatPacket(
+                    mMob->getNetworkName(), ClientboundChatPacket::eChatPacketMessage_DeathFellFinished, killer,
+                    killer->getNetworkName()));
+            }
+        }
+        else
+        {
+            result = boost::shared_ptr<ClientboundChatPacket>(new ClientboundChatPacket(
                 mMob->getNetworkName(), ClientboundChatPacket::eChatPacketMessage_DeathFellDoomed, -1));
-
-        not_null_ptr<ItemInstance> item = eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, killer->GetType())
-            ? boost::static_pointer_cast<LivingEntity>(killer)->getMainHandItem()
-            : ItemInstance::EMPTY;
-        if (!item->isEmpty() && item->hasCustomHoverName())
-            return boost::shared_ptr<ClientboundChatPacket>(new ClientboundChatPacket(
-                mMob->getNetworkName(), ClientboundChatPacket::eChatPacketMessage_DeathFellFinishedItem, killer,
-                killer->getNetworkName(), item->getHoverNameUnfiltered()));
-        return boost::shared_ptr<ClientboundChatPacket>(new ClientboundChatPacket(
-            mMob->getNetworkName(), ClientboundChatPacket::eChatPacketMessage_DeathFellFinished, killer,
-            killer->getNetworkName()));
+        }
+        return result;
     }
 
-    not_null_ptr<ItemInstance> item = eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, knockoffAttacker->GetType())
-        ? boost::static_pointer_cast<LivingEntity>(knockoffAttacker)->getMainHandItem()
-        : ItemInstance::EMPTY;
-    if (!item->isEmpty() && item->hasCustomHoverName())
-        return boost::shared_ptr<ClientboundChatPacket>(new ClientboundChatPacket(
-            mMob->getNetworkName(), ClientboundChatPacket::eChatPacketMessage_DeathFellDoomedByItem, knockoffAttacker,
-            knockoffAttacker->getNetworkName(), item->getHoverNameUnfiltered()));
-    return boost::shared_ptr<ClientboundChatPacket>(new ClientboundChatPacket(
-        mMob->getNetworkName(), ClientboundChatPacket::eChatPacketMessage_DeathFellDoomedBy, knockoffAttacker,
-        knockoffAttacker->getNetworkName()));
+    result = source->getDeathMessagePacket(boost::dynamic_pointer_cast<LivingEntity>(mMob->shared_from_this()));
+    return result;
 }
 
 void CombatTracker::recordDamage(const DamageSource* source, float healthBeforeDamage, float damage)

@@ -146,11 +146,23 @@ unsigned int MG01ScoreboardLayout::getNumberOfColumns()
     return 3;
 }
 
-boost::shared_ptr<ItemInstance> MG01ScoreboardLayout::getItemForSlot(int column, int row, const unsigned int& slot, const EScoreboardType& type)
+not_null_ptr<ItemInstance> MG01ScoreboardLayout::getItemForSlot(int column, int row, const unsigned int& slot, const EScoreboardType& type)
 {
-    boost::shared_ptr<ItemInstance> item = ItemInstance::EMPTY;
+    not_null_ptr<ItemInstance> item = ItemInstance::EMPTY;
 
-    if (column == -1)
+    if (column != -1)
+    {
+        const unsigned int columns = getNumberOfColumns();
+        if (column == columns - 2)
+        {
+            item = not_null_ptr<ItemInstance>(new ItemInstance(Items::diamondSword, 1, 0));
+        }
+        else if (column == columns - 1 && type == EScoreboardType_Scoreboard)
+        {
+            item = not_null_ptr<ItemInstance>(new ItemInstance(Items::skull, 1, 3));
+        }
+    }
+    else
     {
         if (type == EScoreboardType_Award)
         {
@@ -166,19 +178,11 @@ boost::shared_ptr<ItemInstance> MG01ScoreboardLayout::getItemForSlot(int column,
                     CGameNetworkManager::sInstance.GetPlayerBySmallId(m_players[slot]->smallId);
                 const StatsUID uid = StatsUID::NETWORKPLAYER_SUID(networkPlayer);
 
-                if (row != 1)
+                if (row == 1)
                 {
-                    if (row == 4 && networkPlayer != 0 && scoreboard->HasStats(uid))
+                    if (networkPlayer != 0)
                     {
-                        not_null_ptr<ItemInstance> weapon;
-                        if (multiRoundOrMultiLife)
-                        {
-                            weapon = scoreboard->GetWeaknessWeapon(uid);
-                        }
-                        else
-                        {
-                            weapon = scoreboard->GetKillerWeapon(uid, -1);
-                        }
+                        not_null_ptr<ItemInstance> weapon = scoreboard->GetFavouriteWeapon(uid);
                         if (!weapon->isEmpty())
                         {
                             item = weapon;
@@ -189,9 +193,11 @@ boost::shared_ptr<ItemInstance> MG01ScoreboardLayout::getItemForSlot(int column,
                         }
                     }
                 }
-                else if (networkPlayer != 0)
+                else if (row == 4 && networkPlayer != 0 && scoreboard->HasStats(uid))
                 {
-                    not_null_ptr<ItemInstance> weapon = scoreboard->GetFavouriteWeapon(uid);
+                    not_null_ptr<ItemInstance> weapon = multiRoundOrMultiLife
+                        ? scoreboard->GetWeaknessWeapon(uid)
+                        : scoreboard->GetKillerWeapon(uid, -1);
                     if (!weapon->isEmpty())
                     {
                         item = weapon;
@@ -203,17 +209,6 @@ boost::shared_ptr<ItemInstance> MG01ScoreboardLayout::getItemForSlot(int column,
                 }
             }
         }
-        return item;
-    }
-
-    const unsigned int columns = getNumberOfColumns();
-    if (column == columns - 2)
-    {
-        item = not_null_ptr<ItemInstance>(new ItemInstance(Items::diamondSword, 1, 0));
-    }
-    else if (column == columns - 1 && type == EScoreboardType_Scoreboard)
-    {
-        item = not_null_ptr<ItemInstance>(new ItemInstance(Items::skull, 1, 3));
     }
     return item;
 }

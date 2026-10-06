@@ -20,7 +20,6 @@ class ResourceLocation;
 class AvoidEntityGoal;
 class EntityTooltipDataHolder;
 class Llama;
-extern const unsigned long long EntityType::WOLF;
 template<class T> class EntityDataAccessor;
 class Wolf : public TamableAnimal
 {

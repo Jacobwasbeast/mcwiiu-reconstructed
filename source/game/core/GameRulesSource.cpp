@@ -5,11 +5,11 @@ GameRulesSource::GameRulesSource()
     m_displayName = L"Default_DisplayName";
     m_worldName = L"Default_WorldName";
     m_defaultSaveName = L"Default_DefaultSaveName";
-    m_texturePackId = 0;
     m_requiresTexturePack = false;
+    m_texturePackId = 0;
     m_grfPath = L"__NO_GRF_PATH__";
-    m_isGameModeLobby = false;
     m_requiresBaseSave = false;
+    m_isGameModeLobby = false;
 }
 
 bool GameRulesSource::requiresTexturePack()

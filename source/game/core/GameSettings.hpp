@@ -111,7 +111,38 @@ enum EControllerActions
     EControllerActions_Vote,
     EControllerActions_RestartSection,
     EControllerActions_RestartRace,
-    EControllerActions_LookBehind
+    EControllerActions_LookBehind,
+    EControllerActions_AltFlyLeft,
+    EControllerActions_AltFlyRight,
+    EControllerActions_AltFlyUp,
+    EControllerActions_AltFlyDown
+};
+enum EJoypadButton
+{
+    EJoypadButton_Face1 = 1,
+    EJoypadButton_Face2 = 2,
+    EJoypadButton_Face3 = 4,
+    EJoypadButton_Face4 = 8,
+    EJoypadButton_Start = 16,
+    EJoypadButton_Back = 32,
+    EJoypadButton_RightBumper = 64,
+    EJoypadButton_LeftBumper = 128,
+    EJoypadButton_RightStickPress = 256,
+    EJoypadButton_LeftStickPress = 512,
+    EJoypadButton_DPadUp = 1024,
+    EJoypadButton_DPadDown = 2048,
+    EJoypadButton_DPadLeft = 4096,
+    EJoypadButton_DPadRight = 8192,
+    EJoypadButton_LeftStickRight = 16384,
+    EJoypadButton_LeftStickLeft = 32768,
+    EJoypadButton_RightStickRight = 65536,
+    EJoypadButton_RightStickLeft = 131072,
+    EJoypadButton_RightStickDown = 262144,
+    EJoypadButton_RightStickUp = 524288,
+    EJoypadButton_LeftStickDown = 1048576,
+    EJoypadButton_LeftStickUp = 2097152,
+    EJoypadButton_RightTrigger = 4194304,
+    EJoypadButton_LeftTrigger = 8388608
 };
 enum eDebugSetting
 {

@@ -293,49 +293,76 @@ std::wstring Options::getMessage(const Option* option)
     Language* language = Language::getInstance();
     std::wstring caption = language->getElement(option->getCaptionId()) + L": ";
 
-    if (!option->isProgress())
+    if (option->isProgress())
     {
-        if (option->isBoolean())
+        float value = getProgressValue(option);
+        if (option == Option::sensitivity)
         {
-            if (getBooleanValue(option))
-                return caption + language->getElement(L"options.on");
-            return caption + language->getElement(L"options.off");
+            if (value == 0.0f)
+            {
+                std::wstring key = L"options.sensitivity.min";
+                return caption + language->getElement(key);
+            }
+            if (value == 1.0f)
+            {
+                std::wstring key = L"options.sensitivity.max";
+                return caption + language->getElement(key);
+            }
+            return caption + _toString<int>(static_cast<int>(value * 200.0f)) + L"%";
         }
-        if (option == Option::renderDistance) return caption + language->getElement(renderDistanceNames[mViewDistance]);
-        if (option == Option::difficulty) return caption + language->getElement(difficultyNames[mDifficulty]);
-        if (option == Option::guiScale) return caption + language->getElement(guiScaleNames[mGuiScale]);
-        if (option == Option::particles) return caption + language->getElement(particleNames[mParticles]);
-        if (option == Option::framerateLimit) return caption + I18n::get(framerateNames[mFpsLimit]);
-        if (option == Option::graphics)
+        else if (option == Option::fov)
         {
-            if (mFancyGraphics)
-                return caption + language->getElement(L"options.graphics.fancy");
-            return caption + language->getElement(L"options.graphics.fast");
+            if (value == 0.0f)
+            {
+                std::wstring key = L"options.fov.min";
+                return caption + language->getElement(key);
+            }
+            if (value == 1.0f)
+            {
+                std::wstring key = L"options.fov.max";
+                return caption + language->getElement(key);
+            }
+            return caption + _toString<int>(static_cast<int>(value * 40.0f + 70.0f));
         }
-        return caption;
+        else if (option == Option::gamma)
+        {
+            if (value == 0.0f)
+            {
+                std::wstring key = L"options.gamma.min";
+                return caption + language->getElement(key);
+            }
+            if (value == 1.0f)
+            {
+                std::wstring key = L"options.gamma.max";
+                return caption + language->getElement(key);
+            }
+            return caption + L"+" + _toString<int>(static_cast<int>(value * 100.0f)) + L"%";
+        }
+        else
+        {
+            if (value == 0.0f) return caption + language->getElement(L"options.off");
+            return caption + _toString<int>(static_cast<int>(value * 100.0f)) + L"%";
+        }
     }
 
-    float value = getProgressValue(option);
-    if (option == Option::sensitivity)
+    if (option->isBoolean())
     {
-        if (value == 0.0f) return caption + language->getElement(L"options.sensitivity.min");
-        if (value == 1.0f) return caption + language->getElement(L"options.sensitivity.max");
-        return caption + _toString<int>(static_cast<int>(value * 200.0f)) + L"%";
+        if (getBooleanValue(option))
+            return caption + language->getElement(L"options.on");
+        return caption + language->getElement(L"options.off");
     }
-    if (option == Option::fov)
+    if (option == Option::renderDistance) return caption + language->getElement(renderDistanceNames[mViewDistance]);
+    if (option == Option::difficulty) return caption + language->getElement(difficultyNames[mDifficulty]);
+    if (option == Option::guiScale) return caption + language->getElement(guiScaleNames[mGuiScale]);
+    if (option == Option::particles) return caption + language->getElement(particleNames[mParticles]);
+    if (option == Option::framerateLimit) return caption + I18n::get(framerateNames[mFpsLimit]);
+    if (option == Option::graphics)
     {
-        if (value == 0.0f) return caption + language->getElement(L"options.fov.min");
-        if (value == 1.0f) return caption + language->getElement(L"options.fov.max");
-        return caption + _toString<int>(static_cast<int>(value * 40.0f + 70.0f));
+        if (mFancyGraphics)
+            return caption + language->getElement(L"options.graphics.fancy");
+        return caption + language->getElement(L"options.graphics.fast");
     }
-    if (option != Option::gamma)
-    {
-        if (value == 0.0f) return caption + language->getElement(L"options.off");
-        return caption + _toString<int>(static_cast<int>(value * 100.0f)) + L"%";
-    }
-    if (value == 0.0f) return caption + language->getElement(L"options.gamma.min");
-    if (value == 1.0f) return caption + language->getElement(L"options.gamma.max");
-    return caption + L"+" + _toString<int>(static_cast<int>(value * 100.0f)) + L"%";
+    return caption;
 }
 
 float Options::readFloat(std::wstring value)

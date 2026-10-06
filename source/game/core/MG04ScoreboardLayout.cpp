@@ -192,34 +192,34 @@ std::wstring MG04ScoreboardLayout::GetRowLabel(int column, const StatsUID& uid, 
     return std::wstring(L"");
 }
 
-boost::shared_ptr<ItemInstance> MG04ScoreboardLayout::getItemForSlot(int row, int, const unsigned int&, const EScoreboardType& type)
+not_null_ptr<ItemInstance> MG04ScoreboardLayout::getItemForSlot(int row, int, const unsigned int&, const EScoreboardType& type)
 {
     if (type == EScoreboardType_Scoreboard)
     {
         if (row == 3)
         {
-            return boost::shared_ptr<ItemInstance>(new ItemInstance(Items::skull, 1, 3));
+            return not_null_ptr<ItemInstance>(new ItemInstance(Items::skull, 1, 3));
         }
-        return boost::shared_ptr<ItemInstance>();
+        return ItemInstance::EMPTY;
     }
 
     if (row == 0)
     {
-        return boost::shared_ptr<ItemInstance>(new ItemInstance(Items::ironIngot));
+        return not_null_ptr<ItemInstance>(new ItemInstance(Items::ironIngot));
     }
     if (row == 1)
     {
-        return boost::shared_ptr<ItemInstance>(new ItemInstance(Items::goldIngot));
+        return not_null_ptr<ItemInstance>(new ItemInstance(Items::goldIngot));
     }
     if (row == 2)
     {
-        return boost::shared_ptr<ItemInstance>(new ItemInstance(Items::diamond));
+        return not_null_ptr<ItemInstance>(new ItemInstance(Items::diamond));
     }
     if (row == 3)
     {
-        return boost::shared_ptr<ItemInstance>(new ItemInstance(Items::skull, 1, 3));
+        return not_null_ptr<ItemInstance>(new ItemInstance(Items::skull, 1, 3));
     }
-    return boost::shared_ptr<ItemInstance>();
+    return ItemInstance::EMPTY;
 }
 
 unsigned char MG04ScoreboardLayout::GetEndBarIcon(PlayerInfo* info)

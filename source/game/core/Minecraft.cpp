@@ -2,6 +2,7 @@
 #include "game/core/StringIds.hpp"
 #include "game/ui/DeathScreen.hpp"
 #include "game/core/EntityType.hpp"
+#include "game/core/Mth.hpp"
 #include "game/core/CConsoleMinecraftApp.hpp"
 
 #include <wchar.h>
@@ -266,6 +267,13 @@ static bool sCheckForNewLocalPlayers = true;
 bool gFancyGraphics = true;
 static std::wstring sWorkingDirectory;
 static OSFastMutex sTextureRequestLock;
+
+struct ScoreboardMenuData
+{
+    int pad;
+    int type;
+};
+
 GenericStats* gStats = NULL;
 
 Minecraft::Minecraft(Component* parent, Canvas* canvas, MinecraftApplet* applet, int width, int height,
@@ -1514,7 +1522,550 @@ void Minecraft::tick(bool handleInput, bool lastTickOfFrame)
         }
     }
 
-    if (mScreen != NULL)
+    if (mScreen == NULL)
+    {
+        if (!gConsoleUIController.GetMenuDisplayed(playerIdx) && !gApp.DebugUIFocussed())
+        {
+            if ((mPlayer->mButtonsDown & 0x200) != 0 &&
+                mGameMode->isInputAllowed(EControllerActions_ChangeCameraMode) && mPlayer->CanChangeThirdPersonView())
+            {
+                mPlayer->SetThirdPersonView((mPlayer->GetThirdPersonView(false) + 1) % 3);
+            }
+
+            if (mGameMode->isInputAllowed(EControllerActions_Action))
+            {
+                if ((mPlayer->mButtonsDown & 4) != 0)
+                {
+                    mPlayer->handleMouseClick(0);
+                    mPlayer->mLastAttackTick = mTicks;
+                }
+
+                if (g_pInput->ButtonDown(playerIdx, EControllerActions_Action) &&
+                    (float)(mTicks - mPlayer->mLastAttackTick) >= mTimer->ticksPerSecond * 0.25f)
+                {
+                    mPlayer->handleMouseClick(0);
+                    mPlayer->mLastAttackTick = mTicks;
+                }
+
+                if (g_pInput->ButtonDown(playerIdx, EControllerActions_Action))
+                    mPlayer->handleMouseDown(0, true);
+                else
+                    mPlayer->handleMouseDown(0, false);
+            }
+
+            if ((mPlayer->mButtonsPressed & 0x400000) != 0)
+            {
+                gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
+                gConsoleUIController.NavigateToScene(playerIdx, EUIScene_PauseMenu, NULL, EUILayer_Scene, EUIGroup_PlayerDefault);
+            }
+
+            bool waitingForScoreboard = mPlayer->IsWaitingForScoreboard();
+            bool showScoreboard = false;
+            bool scoreboardPending = true;
+
+            if ((!mPlayer->mHasOpenedInventory || gConsoleUIController.getCleanupOnReload()) &&
+                (mClientMasterGameMode == NULL ||
+                 (!mClientMasterGameMode->getScoreboard() && !mClientMasterGameMode->IsWaitingToStart() &&
+                  !mClientMasterGameMode->IsRoundStarting())))
+            {
+                scoreboardPending = false;
+            }
+
+            if (!gConsoleUIController.IsSceneInStack(0xff, EUIScene_FullscreenProgress))
+            {
+                if (waitingForScoreboard && scoreboardPending)
+                    showScoreboard = true;
+                else if ((mPlayer->mButtonsPressed & 0x800000) != 0 &&
+                         mGameMode->isInputAllowed(EControllerActions_Scoreboard))
+                    showScoreboard = true;
+            }
+
+            if (showScoreboard)
+            {
+                mPlayer->SetWaitingForScoreboard(false);
+                if (InMiniGame(eMiniGameId_Any, true))
+                {
+                    if (!gConsoleUIController.IsSceneInStack(playerIdx, EUIScene_GameModeScoreboardMenu))
+                    {
+                        ScoreboardMenuData* sceneData = new ScoreboardMenuData();
+                        sceneData->pad = playerIdx;
+                        sceneData->type = mPlayer->GetGameType() == GameType::LOBBY;
+                        gConsoleUIController.NavigateToScene(playerIdx, EUIScene_GameModeScoreboardMenu, sceneData,
+                                                              EUILayer_Scene, EUIGroup_PlayerDefault);
+
+                        if (mGameModes[playerIdx]->getTutorial() != NULL)
+                            mGameModes[playerIdx]->getTutorial()->onGameModeChange(eTutorial_GameMode_Scoreboard);
+
+                        if (InMiniGame(eMiniGameId_Glide, true))
+                        {
+                            bool playWinnerSound = false;
+                            {
+                                std::wstring winner =
+                                    static_cast<ClientScoreboard*>(mLevel->GetScoreboard())->GetWinnerName(-1);
+                                std::wstring displayName = mPlayer->getDisplayName();
+                                if (winner.compare(0, winner.size(), displayName.c_str(), displayName.size()) == 0 &&
+                                    waitingForScoreboard)
+                                    playWinnerSound = true;
+                            }
+
+                            if (playWinnerSound)
+                                mSoundEngine->playUI(SoundEvents::MG03_WINNER, 1.0f, 1.0f);
+                        }
+                    }
+                }
+                else
+                {
+                    gConsoleUIController.NavigateToScene(playerIdx, EUIScene_InGameInfoMenu, NULL, EUILayer_Scene, EUIGroup_PlayerDefault);
+                }
+                gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
+            }
+
+            if (!mPlayer->isSpectator())
+            {
+                Tooltips::ResetTooltip(playerIdx, EControllerActions_SpectateCancel);
+                Tooltips::ResetTooltip(playerIdx, EControllerActions_SpectateNext);
+                Tooltips::ResetTooltip(playerIdx, EControllerActions_SpectatePrevious);
+                Tooltips::ResetTooltip(playerIdx, EControllerActions_SpectateNoise);
+
+                InteractionResult::EInteractionResult interaction = InteractionResult::eInteractionResult_Pass;
+                if (mHitResult == NULL || mHitResult->mType == 0)
+                {
+                    interaction = mGameMode->useItem(mPlayer, mLevel, InteractionHand::eInteractionHand_MainHand, true);
+                }
+                else if (mHitResult->mType == 1)
+                {
+                    const BlockPos blockPos = mHitResult->getBlockPos();
+                    const BlockState* blockState = mLevel->getBlockState(blockPos);
+                    Block* block = blockState->getBlock();
+                    interaction = mGameMode->useItemOn(mPlayer, mLevel, blockPos, mHitResult->mDirection,
+                                                       mHitResult->mLocation,
+                                                       InteractionHand::eInteractionHand_MainHand, true, NULL);
+
+                    if (mGameMode != NULL && mGameMode->getTutorial() != NULL)
+                    {
+                        if (block == Blocks::skull)
+                            mGameMode->getTutorial()->onLookAtSkull(
+                                mLevel, blockPos, block->fillVirtualBlockStateProperties(blockState, mLevel, blockPos));
+                        else
+                            mGameMode->getTutorial()->onLookAt(
+                                block->fillVirtualBlockStateProperties(blockState, mLevel, blockPos));
+                    }
+                }
+                else if (mHitResult->mType == 2)
+                {
+                    if (mGameMode != NULL && mGameMode->getTutorial() != NULL)
+                        mGameMode->getTutorial()->onLookAtEntity(mHitResult->mEntity);
+                    interaction = mGameMode->useItem(mPlayer, mLevel, InteractionHand::eInteractionHand_MainHand, true);
+                }
+
+                Tooltips::SetInteractTooltips(mLocalPlayers[playerIdx], mLevel, mHitResult, interaction);
+
+                int hotbarScroll = 0;
+                if (g_pInput->GetValue(playerIdx, EControllerActions_CycleHeldItemLeft, true) && mGameMode->isInputAllowed(EControllerActions_CycleHeldItemLeft))
+                    hotbarScroll = 1;
+                else if (g_pInput->GetValue(playerIdx, EControllerActions_CycleHeldItemRight, true) &&
+                         mGameMode->isInputAllowed(EControllerActions_CycleHeldItemRight))
+                    hotbarScroll = -1;
+
+                if (hotbarScroll != 0)
+                {
+                    mPlayer->mInventory->swapPaint(hotbarScroll);
+
+                    if (mGameMode != NULL && mGameMode->getTutorial() != NULL)
+                        mGameMode->getTutorial()->onSelectedItemChanged(mPlayer->mInventory->getSelected());
+
+                    mPlayer->updateRichPresence();
+
+                    if (mOptions->mScrollHotbar)
+                    {
+                        if (hotbarScroll < 0)
+                            hotbarScroll = -1;
+                        else if (hotbarScroll > 0)
+                            hotbarScroll = 1;
+
+                        mOptions->mHotbarScroll += (float)hotbarScroll * 0.25f;
+                    }
+                }
+
+                bool pickBlock = g_pInput->ButtonDown(playerIdx, EControllerActions_PickBlock);
+                if (pickBlock)
+                    mPlayer->handleMouseClick(2);
+
+                if (mPlayer->isUsingItem())
+                {
+                    if (!g_pInput->ButtonDown(playerIdx, EControllerActions_Use))
+                        mGameMode->releaseUsingItem(mPlayer);
+                }
+                else if (mGameMode->isInputAllowed(EControllerActions_Use) &&
+                         !g_pInput->ButtonDown(playerIdx, EControllerActions_Action))
+                {
+                    if (mPlayer->mAbilities.mInstabuild)
+                    {
+                        unsigned int used = mPlayer->creativeModeHandleMouseClick(1, g_pInput->ButtonDown(playerIdx, EControllerActions_Use));
+                        if (mPlayer->mCreativeRepeatState == 4)
+                        {
+                            if (used)
+                            {
+                                mPlayer->mLastUseTick = mTicks;
+                            }
+                            else if (g_pInput->ButtonDown(playerIdx, EControllerActions_Use) &&
+                                     (float)(mTicks - mPlayer->mLastUseTick) >= mTimer->ticksPerSecond * 0.25f)
+                            {
+                                mPlayer->handleMouseClick(1);
+                                mPlayer->mLastUseTick = mTicks;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        bool neverUsed = mPlayer->mLastUseTick == 0;
+                        bool useDelayElapsed =
+                            mTimer->ticksPerSecond * 0.25f <= (float)(mTicks - mPlayer->mLastUseTick);
+                        if (mPlayer->isPassenger() || mPlayer->isSprinting() || mPlayer->isSleeping())
+                            useDelayElapsed = false;
+
+                        if (g_pInput->ButtonDown(playerIdx, EControllerActions_Use))
+                        {
+                            if (mPlayer->isSleeping())
+                                mPlayer->mLastUseTick = (int)((float)mTicks + mTimer->ticksPerSecond + mTimer->ticksPerSecond);
+
+                            if (neverUsed || useDelayElapsed)
+                            {
+                                bool sleeping = mPlayer->isSleeping();
+                                mPlayer->handleMouseClick(1);
+                                if (sleeping)
+                                    mPlayer->mLastUseTick = (int)((float)mTicks + mTimer->ticksPerSecond + mTimer->ticksPerSecond);
+                                else
+                                    mPlayer->mLastUseTick = mTicks;
+                            }
+                        }
+                        else
+                        {
+                            mPlayer->mLastUseTick = 0;
+                        }
+                    }
+                }
+
+                if (mPlayer->mMissTime > 0)
+                    --mPlayer->mMissTime;
+
+                bool achievementsIdle = false;
+                if ((mPlayer->mButtonsDown & 0x20) != 0)
+                {
+                    achievementsIdle = !gConsoleUIController.GetHoldToShowAchievementsActive(true) &&
+                                       !gConsoleUIController.GetAchievementToastShowing(playerIdx);
+                }
+                bool openInventory = gConsoleUIController.GetHoldActionCancelled(playerIdx) || achievementsIdle;
+
+                if (openInventory && !(mGameMode->isInputAllowed(EControllerActions_Use) &&
+                                       g_pInput->ButtonDown(playerIdx, EControllerActions_Use)))
+                {
+                    if (mPlayer->mHasOpenedInventory && mGameMode->isInputAllowed(EControllerActions_Inventory))
+                    {
+                        boost::shared_ptr<MultiplayerLocalPlayer> player = GetInstance()->mPlayer;
+                        gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
+                        if (mGameMode->isServerControlledInventory())
+                            player->sendOpenInventory();
+                        else
+                            gApp.LoadInventoryMenu(playerIdx, player, false);
+                    }
+                }
+
+                if (!InMiniGame(eMiniGameId_Any, true) || GetInstance()->GetMiniGame()->CanCraft())
+                {
+                    if ((mPlayer->mButtonsDown & 0x100) != 0 && mGameMode->isInputAllowed(EControllerActions_Crafting))
+                    {
+                        boost::shared_ptr<MultiplayerLocalPlayer> player = GetInstance()->mPlayer;
+                        if (mGameMode->hasInfiniteItems())
+                        {
+                            gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
+                            gApp.LoadCreativeMenu(playerIdx, player, false);
+                        }
+                        else if (mHitResult != NULL && mHitResult->mType == 1 &&
+                                 mLevel->getBlockState(mHitResult->getBlockPos())->getBlock() == Blocks::crafting_table)
+                        {
+                            bool cancelled = false;
+                            mGameMode->useItemOn(player, mLevel, mHitResult->getBlockPos(), Direction::UP,
+                                                 mHitResult->mLocation, InteractionHand::eInteractionHand_MainHand, false,
+                                                 &cancelled);
+                        }
+                        else
+                        {
+                            gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
+                            gApp.LoadCrafting2x2Menu(playerIdx, player);
+                        }
+                    }
+                }
+                else if ((mPlayer->mButtonsDown & 0x100000) != 0 &&
+                         mGameMode->isInputAllowed(EControllerActions_ConfirmReady) &&
+                         mPlayer->GetGameType() == GameType::LOBBY)
+                {
+                    mPlayer->mPacketListener->send(boost::shared_ptr<PlayerReadyPacket>(new PlayerReadyPacket(
+                        mPlayer->mPlayerIndex,
+                        !GetInstance()->GetClientMasterGameMode()->IsPlayerReady(mPlayer->mPlayerIndex))));
+                }
+
+                if (!gConsoleUIController.GetMenuDisplayed(playerIdx))
+                {
+                    ClientMasterGameMode* masterGameMode = GetInstance()->GetClientMasterGameMode();
+                    if (!masterGameMode->IsInScoringState() && (mPlayer->mButtonsDown & 0x200000) != 0 &&
+                        mGameMode->isInputAllowed(EControllerActions_Vote))
+                    {
+                        std::vector<ClientMasterGameMode::MapSelectInfo> playlist;
+                        masterGameMode->GetUniquePlaylist(playlist);
+
+                        if (mPlayer->GetGameType() == GameType::LOBBY &&
+                            (playlist.size() >= 2 ||
+                             (!InMiniGame(eMiniGameId_Battle, true) && GetMiniGame()->HasMultipleVariants())))
+                        {
+                            int primaryPad = gProfile->GetPrimaryPad();
+                            if (CGameNetworkManager::sInstance.IsInPublicJoinableGame())
+                            {
+                                if (GetMiniGame()->HostOption_Bool(eCustomGameModeHostOption_EnableVoting))
+                                {
+                                    gConsoleUIController.NavigateToScene(playerIdx, EUIScene_MapVoteMenu, NULL, EUILayer_Scene,
+                                                                          EUIGroup_PlayerDefault);
+                                }
+                            }
+                            else if (primaryPad == playerIdx && CGameNetworkManager::sInstance.IsHost())
+                            {
+                                Minecraft* minecraft = GetInstance();
+                                if (minecraft != NULL &&
+                                    minecraft->mLocalPlayers[playerIdx]->GetGameType() == GameType::LOBBY &&
+                                    GetMiniGame()->HostOption_Bool(eCustomGameModeHostOption_EnableVoting))
+                                {
+                                    gConsoleUIController.NavigateToScene(playerIdx, EUIScene_MapVoteMenu, (void*)1,
+                                                                          EUILayer_Scene, EUIGroup_PlayerDefault);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if ((mPlayer->mButtonsDown & 0x40) != 0 && mGameMode->isInputAllowed(EControllerActions_Drop) &&
+                    !gConsoleUIController.GetMenuDisplayed(playerIdx))
+                {
+                    mPlayer->drop();
+                }
+
+                int touchX = 0;
+                int touchY = 0;
+                bool touching = false;
+                unsigned short* touchData = g_pInput->GetTouchPadData(playerIdx, C_4JInput::ETouchType_0, true);
+                if (touchData != NULL && touchData[2] == 1 && touchData[3] == 0)
+                {
+                    touching = gConsoleUIController.GetDRCEnabled();
+                    touchX = touchData[0];
+                    touchY = touchData[1];
+                }
+
+                InMiniGame(eMiniGameId_Tumble, true);
+                bool quickSelected = false;
+                if (touching && gConsoleUIController.GetQuickSelectVisible(playerIdx))
+                {
+                    int hotBarX = gConsoleUIController.GetHotBarX(playerIdx);
+                    int hotBarY = gConsoleUIController.GetHotBarY(playerIdx);
+                    int hotBarWidth = gConsoleUIController.GetHotBarWidth(playerIdx);
+                    int hotBarHeight = gConsoleUIController.GetHotBarHeight(playerIdx);
+                    if (touchX > hotBarX && touchX < hotBarX + hotBarWidth && touchY > hotBarY &&
+                        touchY < hotBarY + hotBarHeight)
+                    {
+                        int slot = (touchX - hotBarX) / (hotBarWidth / 9);
+                        if (slot > 8)
+                            slot = 8;
+                        mPlayer->mInventory->m_selected = slot;
+                        quickSelected = true;
+                    }
+                }
+
+                if (quickSelected || hotbarScroll != 0 || (mPlayer->mButtonsDown & 0x40) != 0 ||
+                    (pickBlock && mPlayer->mInventory->hasPickedItem()))
+                {
+                    std::wstring itemName(L"");
+                    const boost::shared_ptr<ItemInstance>& mainHandItem = mPlayer->getMainHandItem();
+                    if (!mainHandItem->isEmpty())
+                    {
+                        if ((mPlayer->mButtonsDown & 0x40) == 0 || mainHandItem->getCount() != 1)
+                            itemName = mainHandItem->getHoverName();
+                    }
+
+                    if ((mPlayer->mButtonsDown & 0x40) == 0 ||
+                        (!mainHandItem->isEmpty() && mainHandItem->getCount() < 2))
+                    {
+                        if (!mainHandItem->isEmpty())
+                        {
+                            std::vector<HtmlString>* tooltipLines = mainHandItem->getTooltipLines(mPlayer, false);
+                            if (!tooltipLines->empty())
+                            {
+                                tooltipLines->at(0).mColour = mainHandItem->getRarity()->colour;
+                                if (mainHandItem->hasCustomHoverName())
+                                    tooltipLines->at(0).mColour = eMinecraftColour_Color_RenamedItemTitle;
+                            }
+
+                            for (int line = (int)tooltipLines->size() - 1; line >= 0; --line)
+                            {
+                                tooltipLines->at(line).mIndent = false;
+                                stripWhitespaceForHtml(tooltipLines->at(line).mText, true);
+                                if (tooltipLines->at(line).mText == L"")
+                                    tooltipLines->erase(tooltipLines->begin() + line);
+                            }
+
+                            if (tooltipLines->size() > 4)
+                            {
+                                HtmlString ellipsis(L"...", eMinecraftColour_NOTSET, false, false, 0);
+                                while (tooltipLines->size() > 4)
+                                    tooltipLines->pop_back();
+                                tooltipLines->push_back(ellipsis);
+                            }
+
+                            gConsoleUIController.SetSelectedItem(playerIdx, HtmlString::Compose(tooltipLines), L"");
+                            delete tooltipLines;
+                        }
+                        else
+                        {
+                            gConsoleUIController.SetSelectedItem(playerIdx, L"", L"");
+                        }
+                    }
+                }
+
+                if (InMiniGame(eMiniGameId_Glide, false))
+                {
+                    MultiPlayerLevel* level = mPlayer->GetLevel();
+                    ClientScoreboard* scoreboard = level->GetClientScoreboard();
+                    int checkpointPlayers = 0;
+                    for (int i = 0; i < 4; ++i)
+                    {
+                        if (mLocalPlayers[i] &&
+                            (!mLocalPlayers[i]->isSpectator() ||
+                             scoreboard->GetLastCheckpointID(mLocalPlayers[i]->getSUID(), -1) != 0))
+                        {
+                            ++checkpointPlayers;
+                        }
+                    }
+
+                    if (checkpointPlayers == 1)
+                    {
+                        ClientMasterGameMode* masterGameMode = GetClientMasterGameMode();
+                        if (GetMiniGame()->GetHostOption(eCustomGameModeHostOption_TimeTrial) != 0 &&
+                            masterGameMode->getScoreboard() != NULL &&
+                            scoreboard->GetLastCheckpointID(mPlayer->getSUID(), -1) == 0)
+                        {
+                            bool resetTraversal = false;
+                            if ((mPlayer->mButtonsPressed & 0x400000) != 0)
+                            {
+                                boost::shared_ptr<Packet> packet = CheckpointCommand::preparePacket(mPlayer->getSUID(), -1);
+                                mPlayer->mPacketListener->send(packet);
+                                resetTraversal = true;
+                            }
+                            if ((mPlayer->mButtonsPressed & 0x800000) != 0)
+                            {
+                                mPlayer->mPacketListener->send(CheckpointCommand::preparePacket(mPlayer->getSUID(), 0));
+                                resetTraversal = true;
+                            }
+                            if (resetTraversal)
+                            {
+                                mPlayer->ResetPercentageTraversed();
+                                mPlayer->ResetThermalVariables();
+                            }
+                        }
+                    }
+                }
+            }
+            else
+            {
+                MultiPlayerLevel* level = mLocalPlayers[playerIdx]->GetLevel();
+                ClientScoreboard* scoreboard = NULL;
+                if (level != NULL)
+                    scoreboard = level->GetClientScoreboard();
+                if (scoreboard == NULL || !scoreboard->HasWinner(-1))
+                {
+                    int activePlayers =
+                        GetInstance()->mLevel->GetClientScoreboard()->GetActivePlayerCount(eMiniGameId_Any);
+                    if (!GetClientMasterGameMode()->IsRoundEnding() && activePlayers > 1)
+                    {
+                        Tooltips::OverwriteTooltip(playerIdx, EControllerActions_SpectatePrevious, 0x2ECE48BA);
+                        Tooltips::OverwriteTooltip(playerIdx, EControllerActions_SpectateNext, IDS_TOOLTIPS_SPECTATE_NEXT);
+
+                        if (g_pInput->GetValue(playerIdx, EControllerActions_SpectatePrevious, true) &&
+                            mGameMode->isInputAllowed(EControllerActions_SpectatePrevious))
+                        {
+                            mPlayer->SpectatePlayerPrev();
+                        }
+                        else if (g_pInput->GetValue(playerIdx, EControllerActions_SpectateNext, true) &&
+                                 mGameMode->isInputAllowed(EControllerActions_SpectateNext))
+                        {
+                            mPlayer->SpectatePlayerNext();
+                        }
+                    }
+                    else
+                    {
+                        Tooltips::ResetTooltip(playerIdx, EControllerActions_SpectatePrevious);
+                        Tooltips::ResetTooltip(playerIdx, EControllerActions_SpectateNext);
+                    }
+
+                    if (mPlayer->IsSpectatingOtherPlayer() && !GetMiniGame()->ForceSpectateModeFollow())
+                    {
+                        Tooltips::OverwriteTooltip(playerIdx, EControllerActions_SpectateCancel, IDS_TOOLTIPS_BACK);
+                        Tooltips::ResetTooltip(playerIdx, EControllerActions_Action);
+                        Tooltips::ResetTooltip(playerIdx, EControllerActions_SpectateNoise);
+                        if (g_pInput->GetValue(playerIdx, EControllerActions_SpectateCancel, true) &&
+                            mGameMode->isInputAllowed(EControllerActions_SpectateCancel))
+                        {
+                            mGui->clearSingleMessages(playerIdx);
+                            mPlayer->StopSpectatingPlayer();
+                        }
+                    }
+                    else if (mPlayer->SpectateAsOtherEntity() || mPlayer->SpectateAsInvisible() ||
+                             mPlayer->SpectateAsFloatingHead())
+                    {
+                        Tooltips::ResetTooltip(playerIdx, EControllerActions_SpectateCancel);
+
+                        if (GetInstance()->GetMiniGame()->HasSpectatorParticipation() && mHitResult != NULL &&
+                            mHitResult->mType == 1 &&
+                            GetInstance()->mGameModes[playerIdx]->MayDestroy(mHitResult->getBlockPos()) &&
+                            mPlayer->isAllowedToMine())
+                        {
+                            Tooltips::OverwriteTooltip(playerIdx, EControllerActions_Action, IDS_TOOLTIPS_MINE);
+                            Tooltips::ResetTooltip(playerIdx, EControllerActions_SpectateNoise);
+                        }
+                        else if (GetInstance()->mGameModes[playerIdx]->SpectateSoundEnabled())
+                        {
+                            Tooltips::ResetTooltip(playerIdx, EControllerActions_Action);
+                            long long spectateEntity = mPlayer->GetSpectateEntity();
+                            if (spectateEntity == EntityType::VEX)
+                                Tooltips::OverwriteTooltip(playerIdx, EControllerActions_SpectateNoise, 0x9D34B5A5);
+                            else if (spectateEntity == EntityType::PARROT)
+                                Tooltips::OverwriteTooltip(playerIdx, EControllerActions_SpectateNoise, 0xC1781F1C);
+                            else if (spectateEntity == EntityType::BAT)
+                                Tooltips::OverwriteTooltip(playerIdx, EControllerActions_SpectateNoise, 0x162E9829);
+                            else
+                                Tooltips::ResetTooltip(playerIdx, EControllerActions_SpectateNoise);
+
+                            if (GetInstance()->mGameModes[playerIdx]->CanMakeSpectateSound() &&
+                                g_pInput->GetValue(playerIdx, EControllerActions_SpectateNoise, true) &&
+                                mGameMode->isInputAllowed(EControllerActions_SpectateNoise))
+                            {
+                                GetInstance()->mGameModes[playerIdx]->MakeSpectateSound();
+                            }
+                        }
+                    }
+                    else
+                    {
+                        Tooltips::ResetTooltip(playerIdx, EControllerActions_SpectateCancel);
+                        Tooltips::ResetTooltip(playerIdx, EControllerActions_Action);
+                        Tooltips::ResetTooltip(playerIdx, EControllerActions_SpectateNoise);
+                    }
+                }
+                else
+                {
+                    Tooltips::ResetAllTooltips(playerIdx);
+                }
+            }
+
+            Tooltips::DisplayTooltips(playerIdx);
+        }
+    }
+    else
     {
         if (g_pInput->GetValue(playerIdx, EControllerActions_MenuCancel, false) && mGameMode->isInputAllowed(EControllerActions_MenuCancel))
             setScreen(NULL);
@@ -1524,585 +2075,94 @@ void Minecraft::tick(bool handleInput, bool lastTickOfFrame)
         if (mPlayer->isUsingItem())
             mGameMode->releaseUsingItem(mPlayer);
     }
-    else if (!gConsoleUIController.GetMenuDisplayed(playerIdx) && !gApp.DebugUIFocussed())
+
+    if (mLevel != NULL)
     {
-        if ((mPlayer->mButtonsDown & 0x200) != 0 &&
-            mGameMode->isInputAllowed(EControllerActions_ChangeCameraMode) && mPlayer->CanChangeThirdPersonView())
+        if (mPlayer)
         {
-            mPlayer->SetThirdPersonView((mPlayer->GetThirdPersonView(false) + 1) % 3);
+            if (++mFrameNumber == 30)
+                mFrameNumber = 0;
+            else if (mFrameNumber % 30 == playerIdx * 7 + 7)
+                mLevel->ensureAdded(mPlayer);
         }
 
-        if (mGameMode->isInputAllowed(EControllerActions_Action))
-        {
-            if ((mPlayer->mButtonsDown & 4) != 0)
-            {
-                mPlayer->handleMouseClick(0);
-                mPlayer->mLastAttackTick = mTicks;
-            }
-            else if (g_pInput->ButtonDown(playerIdx, EControllerActions_Action) &&
-                     (float)(mTicks - mPlayer->mLastAttackTick) >= mTimer->ticksPerSecond * 0.25f)
-            {
-                mPlayer->handleMouseClick(0);
-                mPlayer->mLastAttackTick = mTicks;
-            }
+        PIXBeginNamedEvent(0.0f, "Game renderer tick");
+        if (!mAppPaused)
+            mGameRenderer->tick(handleInput);
+        PIXEndNamedEvent();
 
-            mPlayer->handleMouseDown(0, g_pInput->ButtonDown(playerIdx, EControllerActions_Action));
+        static unsigned int levelTickMask = 0;
+        if (handleInput)
+        {
+            levelTickMask = 0;
+            SparseLightStorage::tick();
+            CompressedBlockStorage::tick();
+            SparseDataStorage::tick();
+            mClientMasterGameMode->Tick();
         }
 
-        if ((mPlayer->mButtonsPressed & 0x400000) != 0)
+        for (int i = 0; i < mLevelCount; ++i)
         {
-            gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
-            gConsoleUIController.NavigateToScene(playerIdx, EUIScene_PauseMenu, NULL, EUILayer_Scene, EUIGroup_PlayerDefault);
-        }
+            MultiPlayerLevel* level = mLevels[i];
+            if (level != mPlayer->mLevel)
+                continue;
 
-        bool waitingForScoreboard = mPlayer->IsWaitingForScoreboard();
-        bool showScoreboard = false;
-
-        if ((!mPlayer->mHasOpenedInventory || gConsoleUIController.getCleanupOnReload()) &&
-            (mClientMasterGameMode == NULL ||
-             (!mClientMasterGameMode->IsInScoringState() && !mClientMasterGameMode->IsWaitingToStart() &&
-              !mClientMasterGameMode->IsRoundStarting())))
-        {
-            if (!gConsoleUIController.IsSceneInStack(0xff, EUIScene_FullscreenProgress))
+            if (level != NULL && !mAppPaused)
             {
-                if (waitingForScoreboard)
-                    showScoreboard = true;
-                else if ((mPlayer->mButtonsPressed & 0x800000) != 0 &&
-                         mGameMode->isInputAllowed(EControllerActions_Scoreboard))
-                    showScoreboard = true;
+                int x = Mth::floor(mPlayer->mX);
+                int y = Mth::floor(mPlayer->mY);
+                int z = Mth::floor(mPlayer->mZ);
+                level->animateTick(x, y, z);
             }
-        }
 
-        if (showScoreboard)
-        {
-            mPlayer->SetWaitingForScoreboard(false);
-            if (!InMiniGame(eMiniGameId_Any, true))
+            unsigned int levelMask = 1u << (i & 31);
+            if ((levelTickMask & levelMask) != 0)
+                continue;
+            levelTickMask |= levelMask;
+
+            PIXBeginNamedEvent(0.0f, "Level renderer tick");
+            if (!mAppPaused)
+                mLevelRenderer->tick();
+            PIXEndNamedEvent();
+
+            if (level != NULL)
             {
-                gConsoleUIController.NavigateToScene(playerIdx, EUIScene_InGameInfoMenu, NULL, EUILayer_Scene, EUIGroup_PlayerDefault);
-            }
-            else if (!gConsoleUIController.IsSceneInStack(playerIdx, EUIScene_GameModeScoreboardMenu))
-            {
-                int* sceneData = new int[2];
-                sceneData[0] = 0;
-                sceneData[1] = (mPlayer->GetGameType() == GameType::CREATIVE) ? 1 : 0;
-                gConsoleUIController.NavigateToScene(playerIdx, EUIScene_GameModeScoreboardMenu, sceneData, EUILayer_Scene,
-                                                      EUIGroup_PlayerDefault);
-
-                if (mGameModes[playerIdx]->getTutorial() != NULL)
-                    mGameModes[playerIdx]->getTutorial()->onGameModeChange(eTutorial_GameMode_Scoreboard);
-
-                if (InMiniGame(eMiniGameId_Glide, true))
+                if (!mAppPaused)
                 {
-                    std::wstring winner = static_cast<ClientScoreboard*>(mLevel->GetScoreboard())->GetWinnerName(-1);
-                    if (winner.compare(0, winner.size(), mPlayer->getDisplayName().c_str(),
-                                       mPlayer->getDisplayName().size()) == 0 && waitingForScoreboard)
-                    {
-                        mSoundEngine->playUI(SoundEvents::MG03_WINNER, 1.0f, 1.0f);
-                    }
+                    int skyFlashTime = level->getSkyFlashTime();
+                    if (skyFlashTime > 0)
+                        level->setSkyFlashTime(skyFlashTime - 1);
+
+                    PIXBeginNamedEvent(0.0f, "Level entity tick");
+                    level->tickEntities();
+                    PIXEndNamedEvent();
                 }
-                gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
+
+                if (!mAppPaused)
+                {
+                    level->setSpawnSettings(mLevel->getDifficulty() != Difficulty::PEACEFUL, true);
+                    PIXBeginNamedEvent(0.0f, "Level tick");
+                    level->tick();
+                    PIXEndNamedEvent();
+                }
             }
             else
             {
-                gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
+                if (mGameRenderer->postEffectActive())
+                    mGameRenderer->shutdownEffect();
             }
         }
-
-        if (mPlayer->isSpectator())
+        if (handleInput)
         {
-            boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = mLocalPlayers[playerIdx];
-            MultiPlayerLevel* level = localPlayer->GetLevel();
-            if (level != NULL && level->GetClientScoreboard() != NULL &&
-                level->GetClientScoreboard()->HasWinner(-1))
-            {
-                Tooltips::ResetAllTooltips(playerIdx);
-            }
-            else
-            {
-                int activePlayers =
-                    GetInstance()->mLevel->GetClientScoreboard()->GetActivePlayerCount(eMiniGameId_Any);
-                if (!GetClientMasterGameMode()->IsRoundEnding() && activePlayers > 1)
-                {
-                    Tooltips::OverwriteTooltip(playerIdx, EControllerActions_SpectatePrevious, 0x2ECE48BA);
-                    Tooltips::OverwriteTooltip(playerIdx, EControllerActions_SpectateNext, IDS_TOOLTIPS_SPECTATE_NEXT);
-
-                    if (g_pInput->GetValue(playerIdx, EControllerActions_SpectatePrevious, true) &&
-                        mGameMode->isInputAllowed(EControllerActions_SpectatePrevious))
-                    {
-                        mPlayer->SpectatePlayerPrev();
-                    }
-                    else if (g_pInput->GetValue(playerIdx, EControllerActions_SpectateNext, true) &&
-                             mGameMode->isInputAllowed(EControllerActions_SpectateNext))
-                    {
-                        mPlayer->SpectatePlayerNext();
-                    }
-                }
-                else
-                {
-                    Tooltips::ResetTooltip(playerIdx, EControllerActions_SpectatePrevious);
-                    Tooltips::ResetTooltip(playerIdx, EControllerActions_SpectateNext);
-                }
-
-                if (mPlayer->IsSpectatingOtherPlayer() && !GetMiniGame()->ForceSpectateModeFollow())
-                {
-                    Tooltips::OverwriteTooltip(playerIdx, EControllerActions_SpectateCancel, IDS_TOOLTIPS_BACK);
-                    Tooltips::ResetTooltip(playerIdx, EControllerActions_Action);
-                    Tooltips::ResetTooltip(playerIdx, EControllerActions_SpectateNoise);
-                    if (g_pInput->GetValue(playerIdx, EControllerActions_SpectateCancel, true) &&
-                        mGameMode->isInputAllowed(EControllerActions_SpectateCancel))
-                    {
-                        mGui->clearSingleMessages(playerIdx);
-                        mPlayer->StopSpectatingPlayer();
-                    }
-                }
-                else if (mPlayer->SpectateAsOtherEntity() || mPlayer->SpectateAsInvisible() ||
-                         mPlayer->SpectateAsFloatingHead())
-                {
-                    Tooltips::ResetTooltip(playerIdx, EControllerActions_SpectateCancel);
-
-                    if (GetInstance()->GetMiniGame()->HasSpectatorParticipation() && mHitResult != NULL &&
-                        mHitResult->mType == 1 &&
-                        GetInstance()->mGameModes[playerIdx]->MayDestroy(mHitResult->getBlockPos()) &&
-                        mPlayer->isAllowedToMine())
-                    {
-                        Tooltips::OverwriteTooltip(playerIdx, EControllerActions_Action, IDS_TOOLTIPS_MINE);
-                        Tooltips::ResetTooltip(playerIdx, EControllerActions_SpectateNoise);
-                    }
-                    else if (GetInstance()->mGameModes[playerIdx]->SpectateSoundEnabled())
-                    {
-                        Tooltips::ResetTooltip(playerIdx, EControllerActions_Action);
-                        unsigned long long spectateEntity = mPlayer->GetSpectateEntity();
-                        if (spectateEntity == EntityType::VEX)
-                            Tooltips::OverwriteTooltip(playerIdx, EControllerActions_SpectateNoise, 0x9D34B5A5);
-                        else if (spectateEntity == EntityType::PARROT)
-                            Tooltips::OverwriteTooltip(playerIdx, EControllerActions_SpectateNoise, 0xC1781F1C);
-                        else if (spectateEntity == EntityType::BAT)
-                            Tooltips::OverwriteTooltip(playerIdx, EControllerActions_SpectateNoise, 0x162E9829);
-                        else
-                            Tooltips::ResetTooltip(playerIdx, EControllerActions_SpectateNoise);
-
-                        if (GetInstance()->mGameModes[playerIdx]->CanMakeSpectateSound() &&
-                            g_pInput->GetValue(playerIdx, EControllerActions_SpectateNoise, true) &&
-                            mGameMode->isInputAllowed(EControllerActions_SpectateNoise))
-                        {
-                            GetInstance()->mGameModes[playerIdx]->MakeSpectateSound();
-                        }
-                    }
-                }
-                else
-                {
-                    Tooltips::ResetTooltip(playerIdx, EControllerActions_SpectateCancel);
-                    Tooltips::ResetTooltip(playerIdx, EControllerActions_Action);
-                    Tooltips::ResetTooltip(playerIdx, EControllerActions_SpectateNoise);
-                }
-            }
-            Tooltips::DisplayTooltips(playerIdx);
-        }
-        else
-        {
-            Tooltips::ResetTooltip(playerIdx, EControllerActions_SpectateCancel);
-            Tooltips::ResetTooltip(playerIdx, EControllerActions_SpectateNext);
-            Tooltips::ResetTooltip(playerIdx, EControllerActions_SpectatePrevious);
-            Tooltips::ResetTooltip(playerIdx, EControllerActions_SpectateNoise);
-
-            InteractionResult::EInteractionResult interaction = InteractionResult::eInteractionResult_Pass;
-            if (mHitResult == NULL || mHitResult->mType == 0)
-            {
-                interaction = mGameMode->useItem(mPlayer, mLevel, InteractionHand::eInteractionHand_MainHand, true);
-            }
-            else if (mHitResult->mType == 1)
-            {
-                const BlockPos blockPos = mHitResult->getBlockPos();
-                const BlockState* blockState = mLevel->getBlockState(blockPos);
-                interaction = mGameMode->useItemOn(mPlayer, mLevel, blockPos, mHitResult->mDirection,
-                                                   mHitResult->mLocation,
-                                                   InteractionHand::eInteractionHand_MainHand, true, NULL);
-
-                if (mGameMode != NULL && mGameMode->getTutorial() != NULL)
-                {
-                    if (blockState->getBlock() == Blocks::skull)
-                        mGameMode->getTutorial()->onLookAtSkull(mLevel, blockPos, blockState);
-                    else
-                        mGameMode->getTutorial()->onLookAt(blockState);
-                }
-            }
-            else if (mHitResult->mType == 2)
-            {
-                if (mGameMode != NULL && mGameMode->getTutorial() != NULL)
-                    mGameMode->getTutorial()->onLookAtEntity(mHitResult->mEntity);
-                interaction = mGameMode->useItem(mPlayer, mLevel, InteractionHand::eInteractionHand_MainHand, true);
-            }
-
-            Tooltips::SetInteractTooltips(mLocalPlayers[playerIdx], mLevel, mHitResult, interaction);
-
-            int hotbarScroll = 0;
-            if (g_pInput->GetValue(playerIdx, EControllerActions_CycleHeldItemLeft, true) && mGameMode->isInputAllowed(EControllerActions_CycleHeldItemLeft))
-                hotbarScroll = 1;
-            else if (g_pInput->GetValue(playerIdx, EControllerActions_CycleHeldItemRight, true) &&
-                     mGameMode->isInputAllowed(EControllerActions_CycleHeldItemRight))
-                hotbarScroll = -1;
-
-            if (hotbarScroll != 0)
-            {
-                mPlayer->mInventory->swapPaint(hotbarScroll);
-
-                if (mGameMode != NULL && mGameMode->getTutorial() != NULL)
-                    mGameMode->getTutorial()->onSelectedItemChanged(mPlayer->mInventory->getSelected());
-
-                mPlayer->updateRichPresence();
-
-                if (mOptions->mScrollHotbar)
-                    mOptions->mHotbarScroll += (float)hotbarScroll * 0.25f;
-            }
-
-            bool pickBlock = g_pInput->ButtonDown(playerIdx, EControllerActions_PickBlock);
-            if (pickBlock)
-                mPlayer->handleMouseClick(2);
-
-            if (!mPlayer->isUsingItem())
-            {
-                if (mGameMode->isInputAllowed(EControllerActions_Use) &&
-                    !g_pInput->ButtonDown(playerIdx, EControllerActions_Action))
-                {
-                    if (!mPlayer->mAbilities.mInstabuild)
-                    {
-                        int lastUseTick = mPlayer->mLastUseTick;
-                        bool useDelayElapsed =
-                            mTimer->ticksPerSecond * 0.25f <= (float)(mTicks - mPlayer->mLastUseTick);
-                        if (mPlayer->isPassenger() || mPlayer->isSprinting() || mPlayer->isSleeping())
-                            useDelayElapsed = false;
-
-                        bool repeat = g_pInput->ButtonDown(playerIdx, EControllerActions_Use);
-                        if (!repeat)
-                        {
-                            mPlayer->mLastUseTick = 0;
-                        }
-                        else
-                        {
-                            if (mPlayer->isSleeping())
-                                mPlayer->mLastUseTick = mTicks + (int)(mTimer->ticksPerSecond * 2.0f);
-
-                            if (lastUseTick == 0 || useDelayElapsed)
-                            {
-                                bool sleeping = mPlayer->isSleeping();
-                                mPlayer->handleMouseClick(1);
-                                if (!sleeping)
-                                    mPlayer->mLastUseTick = mTicks;
-                                else
-                                    mPlayer->mLastUseTick = mTicks + (int)(mTimer->ticksPerSecond * 2.0f);
-                            }
-                        }
-                    }
-                    else
-                    {
-                        bool used = mPlayer->creativeModeHandleMouseClick(1, g_pInput->ButtonDown(playerIdx, EControllerActions_Use));
-                        if (mPlayer->mCreativeRepeatState == 4 && !used && g_pInput->ButtonDown(playerIdx, EControllerActions_Use) &&
-                            (float)(mTicks - mPlayer->mLastUseTick) >= mTimer->ticksPerSecond * 0.25f)
-                        {
-                            mPlayer->handleMouseClick(1);
-                            mPlayer->mLastUseTick = mTicks;
-                        }
-                    }
-                }
-            }
-            else if (!g_pInput->ButtonDown(playerIdx, EControllerActions_Use))
-            {
-                mGameMode->releaseUsingItem(mPlayer);
-            }
-
-            if (mPlayer->mMissTime > 0)
-                --mPlayer->mMissTime;
-
-            bool achievementsIdle = false;
-            if ((mPlayer->mButtonsDown & 0x20) != 0)
-            {
-                achievementsIdle = !gConsoleUIController.GetHoldToShowAchievementsActive(true) &&
-                                   !gConsoleUIController.GetAchievementToastShowing(playerIdx);
-            }
-            bool openInventory = gConsoleUIController.GetHoldActionCancelled(playerIdx) || achievementsIdle;
-
-            if (openInventory && !(mGameMode->isInputAllowed(EControllerActions_Use) &&
-                                   g_pInput->ButtonDown(playerIdx, EControllerActions_Use)))
-            {
-                if (mPlayer->mHasOpenedInventory && mGameMode->isInputAllowed(EControllerActions_Inventory))
-                {
-                    gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
-                    if (!mGameMode->isServerControlledInventory())
-                        gApp.LoadInventoryMenu(playerIdx, mPlayer, false);
-                    else
-                        mPlayer->sendOpenInventory();
-                }
-            }
-
-            bool canCraft = InMiniGame(eMiniGameId_Any, true) ||
-                            GetInstance()->GetMiniGame()->CanCraft();
-            if (canCraft && (mPlayer->mButtonsDown & 0x100) != 0 &&
-                mGameMode->isInputAllowed(EControllerActions_Crafting))
-            {
-                if (mGameMode->hasInfiniteItems())
-                {
-                    gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
-                    gApp.LoadCreativeMenu(playerIdx, mPlayer, false);
-                }
-                else if (mHitResult != NULL && mHitResult->mType == 1 &&
-                         mLevel->getBlockState(mHitResult->getBlockPos())->getBlock() == Blocks::crafting_table)
-                {
-                    bool cancelled = false;
-                    mGameMode->useItemOn(mPlayer, mLevel, mHitResult->getBlockPos(), Direction::UP,
-                                         mHitResult->mLocation, InteractionHand::eInteractionHand_MainHand, false,
-                                         &cancelled);
-                }
-                else
-                {
-                    gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
-                    gApp.LoadCrafting2x2Menu(playerIdx, mPlayer);
-                }
-            }
-
-            if ((mPlayer->mButtonsDown & 0x100000) != 0 &&
-                mGameMode->isInputAllowed(EControllerActions_ConfirmReady) &&
-                mPlayer->GetGameType() == GameType::LOBBY)
-            {
-                mPlayer->mPacketListener->send(boost::shared_ptr<Packet>(
-                    new PlayerReadyPacket(mPlayer->mPlayerIndex,
-                                          !GetClientMasterGameMode()->IsPlayerReady(mPlayer->mPlayerIndex))));
-            }
-
-            if (!gConsoleUIController.GetMenuDisplayed(playerIdx) &&
-                !GetInstance()->GetClientMasterGameMode()->IsInScoringState() &&
-                (mPlayer->mButtonsDown & 0x200000) != 0 &&
-                mGameMode->isInputAllowed(EControllerActions_Vote))
-            {
-                std::vector<ClientMasterGameMode::MapSelectInfo> playlist;
-                GetClientMasterGameMode()->GetUniquePlaylist(playlist);
-
-                bool canVote = mPlayer->GetGameType() == GameType::LOBBY;
-                if (canVote && (playlist.empty() || playlist.size() < 2))
-                    canVote = !InMiniGame(eMiniGameId_Battle, true) && GetMiniGame()->HasMultipleVariants();
-
-                if (canVote)
-                {
-                    if (CGameNetworkManager::sInstance.IsInPublicJoinableGame())
-                    {
-                        if (gProfile->GetPrimaryPad() == playerIdx &&
-                            CGameNetworkManager::sInstance.IsHost() &&
-                            GetInstance()->mLocalPlayers[playerIdx]->GetGameType() == GameType::LOBBY &&
-                            GetMiniGame()->HostOption_Bool(eCustomGameModeHostOption_EnableVoting))
-                        {
-                            gConsoleUIController.NavigateToScene(playerIdx, EUIScene_MapVoteMenu, (void*)1,
-                                                                  EUILayer_Scene, EUIGroup_PlayerDefault);
-                        }
-                    }
-                    else if (GetMiniGame()->HostOption_Bool(eCustomGameModeHostOption_EnableVoting))
-                    {
-                        gConsoleUIController.NavigateToScene(playerIdx, EUIScene_MapVoteMenu, NULL, EUILayer_Scene,
-                                                              EUIGroup_PlayerDefault);
-                    }
-                }
-            }
-
-            if ((mPlayer->mButtonsDown & 0x40) != 0 && mGameMode->isInputAllowed(EControllerActions_Drop) &&
-                !gConsoleUIController.GetMenuDisplayed(playerIdx))
-            {
-                mPlayer->drop();
-            }
-
-            int touchX = 0;
-            int touchY = 0;
-            bool touching = false;
-            unsigned short* touchData = g_pInput->GetTouchPadData(playerIdx, C_4JInput::ETouchType_0, true);
-            if (touchData != NULL && touchData[2] == 1 && touchData[3] == 0)
-            {
-                touching = gConsoleUIController.GetDRCEnabled();
-                touchX = touchData[0];
-                touchY = touchData[1];
-            }
-
-            InMiniGame(eMiniGameId_Tumble, true);
-            bool selectedItemChanged = false;
-            if (touching && gConsoleUIController.GetQuickSelectVisible(playerIdx))
-            {
-                int hotBarX = gConsoleUIController.GetHotBarX(playerIdx);
-                int hotBarY = gConsoleUIController.GetHotBarY(playerIdx);
-                int hotBarWidth = gConsoleUIController.GetHotBarWidth(playerIdx);
-                int hotBarHeight = gConsoleUIController.GetHotBarHeight(playerIdx);
-                if (touchX > hotBarX && touchX < hotBarX + hotBarWidth && touchY > hotBarY &&
-                    touchY < hotBarY + hotBarHeight)
-                {
-                    int slot = (touchX - hotBarX) / (hotBarWidth / 9);
-                    if (slot > 8)
-                        slot = 8;
-                    mPlayer->mInventory->m_selected = slot;
-                    selectedItemChanged = true;
-                }
-            }
-            if (!selectedItemChanged)
-            {
-                selectedItemChanged = hotbarScroll != 0 || (mPlayer->mButtonsDown & 0x40) != 0
-                    || (pickBlock && mPlayer->mInventory->hasPickedItem());
-            }
-
-            if (selectedItemChanged)
-            {
-                std::wstring itemName(L"");
-                boost::shared_ptr<ItemInstance> mainHandItem = mPlayer->getMainHandItem();
-                if (mainHandItem && !mainHandItem->isEmpty())
-                {
-                    if ((mPlayer->mButtonsDown & 0x40) == 0 || mainHandItem->getCount() != 1)
-                        itemName = mainHandItem->getHoverName();
-
-                    std::vector<HtmlString>* tooltipLines = mainHandItem->getTooltipLines(mPlayer, false);
-                    if (!tooltipLines->empty())
-                    {
-                        tooltipLines->at(0).mColour = mainHandItem->getRarity()->colour;
-                        if (mainHandItem->hasCustomHoverName())
-                            tooltipLines->at(0).mColour = eMinecraftColour_Color_RenamedItemTitle;
-                    }
-
-                    for (int line = (int)tooltipLines->size() - 1; line >= 0; --line)
-                    {
-                        tooltipLines->at(line).mIndent = false;
-                        stripWhitespaceForHtml(tooltipLines->at(line).mText, true);
-                        if (tooltipLines->at(line).mText == L"")
-                            tooltipLines->erase(tooltipLines->begin() + line);
-                    }
-
-                    if (tooltipLines->size() > 4)
-                        tooltipLines->push_back(HtmlString(L"...", eMinecraftColour_NOTSET, false, false, 0));
-
-                    gConsoleUIController.SetSelectedItem(playerIdx, HtmlString::Compose(tooltipLines), L"");
-                    delete tooltipLines;
-                }
-                else
-                {
-                    gConsoleUIController.SetSelectedItem(playerIdx, L"", L"");
-                }
-            }
-        }
-    }
-
-    if (mLevel != NULL && mPlayer)
-    {
-        if (++mFrameNumber == 30)
-            mFrameNumber = 0;
-        else if (mFrameNumber % 30 == playerIdx * 7 + 7)
-            mLevel->ensureAdded(mPlayer);
-    }
-
-    PIXBeginNamedEvent(0.0f, "Game renderer tick");
-    if (!mAppPaused)
-        mGameRenderer->tick(handleInput);
-    PIXEndNamedEvent();
-
-    static unsigned int levelTickMask = 0;
-    if (handleInput)
-    {
-        levelTickMask = 0;
-        SparseLightStorage::tick();
-        CompressedBlockStorage::tick();
-        SparseDataStorage::tick();
-        mClientMasterGameMode->Tick();
-    }
-
-    for (int i = 0; i < mLevelCount; ++i)
-    {
-        MultiPlayerLevel* level = mLevels[i];
-        if (level != mPlayer->mLevel)
-            continue;
-
-        if (level != NULL && !mAppPaused)
-            level->animateTick(static_cast<int>(std::floor(mPlayer->mX)),
-                               static_cast<int>(std::floor(mPlayer->mY)),
-                               static_cast<int>(std::floor(mPlayer->mZ)));
-
-        unsigned int levelMask = 1u << (i & 31);
-        if ((levelTickMask & levelMask) != 0)
-            continue;
-        levelTickMask |= levelMask;
-
-        PIXBeginNamedEvent(0.0f, "Level renderer tick");
-        if (!mAppPaused)
-            mLevelRenderer->tick();
-        PIXEndNamedEvent();
-
-        if (level == NULL)
-        {
-            if (mGameRenderer->postEffectActive())
-                mGameRenderer->shutdownEffect();
-        }
-        else
-        {
+            PIXBeginNamedEvent(0.0f, "Particle tick");
             if (!mAppPaused)
-            {
-                int skyFlashTime = level->getSkyFlashTime();
-                if (skyFlashTime > 0)
-                    level->setSkyFlashTime(skyFlashTime - 1);
-
-                PIXBeginNamedEvent(0.0f, "Level entity tick");
-                level->tickEntities();
-                PIXEndNamedEvent();
-            }
-
-            if (!mAppPaused)
-            {
-                level->setSpawnSettings(mLevel->getDifficulty() != Difficulty::PEACEFUL, true);
-                PIXBeginNamedEvent(0.0f, "Level tick");
-                level->tick();
-                PIXEndNamedEvent();
-            }
-        }
-    }
-
-    if (handleInput)
-    {
-        PIXBeginNamedEvent(0.0f, "Particle tick");
-        if (!mAppPaused)
-            mParticleEngine->tick();
-        PIXEndNamedEvent();
-    }
-
-    if (mAppPaused)
-        tickAllConnections();
-
-    if (mPlayer && InMiniGame(eMiniGameId_Glide, false))
-    {
-        MultiPlayerLevel* level = mLocalPlayers[playerIdx]->GetLevel();
-        ClientScoreboard* scoreboard = level->GetClientScoreboard();
-        int checkpointPlayers = 0;
-        for (int i = 0; i < 4; ++i)
-        {
-            if (mLocalPlayers[i] &&
-                (!mLocalPlayers[i]->isSpectator() ||
-                 scoreboard->GetLastCheckpointID(mLocalPlayers[i]->getSUID(), -1) != 0))
-            {
-                ++checkpointPlayers;
-            }
+                mParticleEngine->tick();
+            PIXEndNamedEvent();
         }
 
-        if (checkpointPlayers == 1 && GetMiniGame()->GetHostOption(eCustomGameModeHostOption_TimeTrial) != 0 &&
-            GetClientMasterGameMode()->getScoreboard() != NULL &&
-            scoreboard->GetLastCheckpointID(mPlayer->getSUID(), -1) == 0)
-        {
-            bool resetTraversal = false;
-            if ((mPlayer->mButtonsPressed & 0x400000) != 0)
-            {
-                mPlayer->mPacketListener->send(CheckpointCommand::preparePacket(mPlayer->getSUID(), -1));
-                resetTraversal = true;
-            }
-            if ((mPlayer->mButtonsPressed & 0x800000) != 0)
-            {
-                mPlayer->mPacketListener->send(CheckpointCommand::preparePacket(mPlayer->getSUID(), 0));
-                resetTraversal = true;
-            }
-            if (resetTraversal)
-            {
-                mPlayer->ResetPercentageTraversed();
-                mPlayer->ResetThermalVariables();
-            }
-        }
+        if (mAppPaused)
+            tickAllConnections();
     }
-
-    Tooltips::DisplayTooltips(playerIdx);
 }
 
 void Minecraft::renderInfoBars()

@@ -2960,95 +2960,103 @@ std::wstring CMinecraftApp::GetIconReplacement(uint32_t icon)
 }
 std::wstring CMinecraftApp::FormatHTMLString(int player, const std::wstring& value, int shadowColour)
 {
-    std::wstring result = replaceAll(value, L"{*B*}", L"<br />");
-    const wchar_t* titleTokens[] = { L"{*T1*}", L"{*T2*}", L"{*T3*}", L"{*ETB*}", L"{*ETW*}" };
+    std::wstring result = value;
+    result = replaceAll(result, L"{*B*}", L"<br />");
     wchar_t colour[64];
-    for (int i = 0; i < 5; ++i)
-    {
-        swprintf(colour, sizeof(colour) / sizeof(colour[0]),
-                 i < 3 ? L"<font color=\"#%08x\">" : L"</font><font color=\"#%08x\">",
-                 GetHTMLColour(static_cast<eMinecraftColour>(0x1b1 + i)));
-        result = replaceAll(result, titleTokens[i], colour);
-    }
+    swprintf(colour, sizeof(colour) / sizeof(colour[0]), L"<font color=\"#%08x\">", GetHTMLColour(eMinecraftColour_HTMLColor_T1));
+    result = replaceAll(result, L"{*T1*}", colour);
+    swprintf(colour, sizeof(colour) / sizeof(colour[0]), L"<font color=\"#%08x\">", GetHTMLColour(eMinecraftColour_HTMLColor_T2));
+    result = replaceAll(result, L"{*T2*}", colour);
+    swprintf(colour, sizeof(colour) / sizeof(colour[0]), L"<font color=\"#%08x\">", GetHTMLColour(eMinecraftColour_HTMLColor_T3));
+    result = replaceAll(result, L"{*T3*}", colour);
+    swprintf(colour, sizeof(colour) / sizeof(colour[0]), L"</font><font color=\"#%08x\">", GetHTMLColour(eMinecraftColour_HTMLColor_Black));
+    result = replaceAll(result, L"{*ETB*}", colour);
+    swprintf(colour, sizeof(colour) / sizeof(colour[0]), L"</font><font color=\"#%08x\">", GetHTMLColour(eMinecraftColour_HTMLColor_White));
+    result = replaceAll(result, L"{*ETW*}", colour);
     result = replaceAll(result, L"{*EF*}", L"</font>");
-
-    const wchar_t* colourTokens[] = {
-        L"{*C0*}", L"{*C1*}", L"{*C2*}", L"{*C3*}",
-        L"{*C4*}", L"{*C5*}", L"{*C6*}", L"{*C7*}",
-        L"{*C8*}", L"{*C9*}", L"{*CA*}", L"{*CB*}",
-        L"{*CC*}", L"{*CD*}", L"{*CE*}", L"{*CF*}"
-    };
-    for (int i = 0; i < 16; ++i)
+    swprintf(colour, sizeof(colour) / sizeof(colour[0]), L"<font color=\"#%08x\" shadowcolor=\"#%08x\">", GetHTMLColour(eMinecraftColour_HTMLColor_0), static_cast<unsigned int>(shadowColour));
+    result = replaceAll(result, L"{*C0*}", colour);
+    swprintf(colour, sizeof(colour) / sizeof(colour[0]), L"<font color=\"#%08x\" shadowcolor=\"#%08x\">", GetHTMLColour(eMinecraftColour_HTMLColor_1), static_cast<unsigned int>(shadowColour));
+    result = replaceAll(result, L"{*C1*}", colour);
+    swprintf(colour, sizeof(colour) / sizeof(colour[0]), L"<font color=\"#%08x\" shadowcolor=\"#%08x\">", GetHTMLColour(eMinecraftColour_HTMLColor_2), static_cast<unsigned int>(shadowColour));
+    result = replaceAll(result, L"{*C2*}", colour);
+    swprintf(colour, sizeof(colour) / sizeof(colour[0]), L"<font color=\"#%08x\" shadowcolor=\"#%08x\">", GetHTMLColour(eMinecraftColour_HTMLColor_3), static_cast<unsigned int>(shadowColour));
+    result = replaceAll(result, L"{*C3*}", colour);
+    swprintf(colour, sizeof(colour) / sizeof(colour[0]), L"<font color=\"#%08x\" shadowcolor=\"#%08x\">", GetHTMLColour(eMinecraftColour_HTMLColor_4), static_cast<unsigned int>(shadowColour));
+    result = replaceAll(result, L"{*C4*}", colour);
+    swprintf(colour, sizeof(colour) / sizeof(colour[0]), L"<font color=\"#%08x\" shadowcolor=\"#%08x\">", GetHTMLColour(eMinecraftColour_HTMLColor_5), static_cast<unsigned int>(shadowColour));
+    result = replaceAll(result, L"{*C5*}", colour);
+    swprintf(colour, sizeof(colour) / sizeof(colour[0]), L"<font color=\"#%08x\" shadowcolor=\"#%08x\">", GetHTMLColour(eMinecraftColour_HTMLColor_6), static_cast<unsigned int>(shadowColour));
+    result = replaceAll(result, L"{*C6*}", colour);
+    swprintf(colour, sizeof(colour) / sizeof(colour[0]), L"<font color=\"#%08x\" shadowcolor=\"#%08x\">", GetHTMLColour(eMinecraftColour_HTMLColor_7), static_cast<unsigned int>(shadowColour));
+    result = replaceAll(result, L"{*C7*}", colour);
+    swprintf(colour, sizeof(colour) / sizeof(colour[0]), L"<font color=\"#%08x\" shadowcolor=\"#%08x\">", GetHTMLColour(eMinecraftColour_HTMLColor_8), static_cast<unsigned int>(shadowColour));
+    result = replaceAll(result, L"{*C8*}", colour);
+    swprintf(colour, sizeof(colour) / sizeof(colour[0]), L"<font color=\"#%08x\" shadowcolor=\"#%08x\">", GetHTMLColour(eMinecraftColour_HTMLColor_9), static_cast<unsigned int>(shadowColour));
+    result = replaceAll(result, L"{*C9*}", colour);
+    swprintf(colour, sizeof(colour) / sizeof(colour[0]), L"<font color=\"#%08x\" shadowcolor=\"#%08x\">", GetHTMLColour(eMinecraftColour_HTMLColor_a), static_cast<unsigned int>(shadowColour));
+    result = replaceAll(result, L"{*CA*}", colour);
+    swprintf(colour, sizeof(colour) / sizeof(colour[0]), L"<font color=\"#%08x\" shadowcolor=\"#%08x\">", GetHTMLColour(eMinecraftColour_HTMLColor_b), static_cast<unsigned int>(shadowColour));
+    result = replaceAll(result, L"{*CB*}", colour);
+    swprintf(colour, sizeof(colour) / sizeof(colour[0]), L"<font color=\"#%08x\" shadowcolor=\"#%08x\">", GetHTMLColour(eMinecraftColour_HTMLColor_c), static_cast<unsigned int>(shadowColour));
+    result = replaceAll(result, L"{*CC*}", colour);
+    swprintf(colour, sizeof(colour) / sizeof(colour[0]), L"<font color=\"#%08x\" shadowcolor=\"#%08x\">", GetHTMLColour(eMinecraftColour_HTMLColor_d), static_cast<unsigned int>(shadowColour));
+    result = replaceAll(result, L"{*CD*}", colour);
+    swprintf(colour, sizeof(colour) / sizeof(colour[0]), L"<font color=\"#%08x\" shadowcolor=\"#%08x\">", GetHTMLColour(eMinecraftColour_HTMLColor_e), static_cast<unsigned int>(shadowColour));
+    result = replaceAll(result, L"{*CE*}", colour);
+    swprintf(colour, sizeof(colour) / sizeof(colour[0]), L"<font color=\"#%08x\" shadowcolor=\"#%08x\">", GetHTMLColour(eMinecraftColour_HTMLColor_f), static_cast<unsigned int>(shadowColour));
+    result = replaceAll(result, L"{*CF*}", colour);
+    if (GameSettings::GetGameSettings(player, eGameSetting_SouthPaw) == 0)
     {
-        swprintf(colour, sizeof(colour) / sizeof(colour[0]),
-                 L"<font color=\"#%08x\" shadowcolor=\"#%08x\">",
-                 GetHTMLColour(static_cast<eMinecraftColour>(0x191 + i)),
-                 static_cast<unsigned int>(shadowColour));
-        result = replaceAll(result, colourTokens[i], colour);
+        result = replaceAll(result, L"{*CONTROLLER_ACTION_MOVE*}", GetActionReplacement(player, 0x1b));
+        result = replaceAll(result, L"{*CONTROLLER_ACTION_LOOK*}", GetActionReplacement(player, 0x1d));
     }
-
-    const bool swapSticks = GameSettings::GetGameSettings(player, eGameSetting_SouthPaw) != 0;
-    result = replaceAll(result, L"{*CONTROLLER_ACTION_MOVE*}", GetActionReplacement(player, swapSticks ? 0x1d : 0x1b));
-    result = replaceAll(result, L"{*CONTROLLER_ACTION_LOOK*}", GetActionReplacement(player, swapSticks ? 0x1b : 0x1d));
-
-    struct ControllerToken
+    else
     {
-        const wchar_t* token;
-        unsigned int action;
-        bool virtualKey;
-    };
-    const ControllerToken controllerTokens[] = {
-        { L"{*CONTROLLER_MENU_NAVIGATE*}", VK_PAD_LTHUMB_LEFT, true },
-        { L"{*CONTROLLER_VK_A*}", VK_PAD_A, true },
-        { L"{*CONTROLLER_VK_B*}", VK_PAD_B, true },
-        { L"{*CONTROLLER_VK_X*}", VK_PAD_X, true },
-        { L"{*CONTROLLER_VK_Y*}", VK_PAD_Y, true },
-        { L"{*CONTROLLER_VK_LB*}", VK_PAD_LSHOULDER, true },
-        { L"{*CONTROLLER_VK_RB*}", VK_PAD_RSHOULDER, true },
-        { L"{*CONTROLLER_VK_LS*}", VK_PAD_LTHUMB_UP, true },
-        { L"{*CONTROLLER_VK_RS*}", VK_PAD_RTHUMB_UP, true },
-        { L"{*CONTROLLER_VK_LT*}", VK_PAD_LTRIGGER, true },
-        { L"{*CONTROLLER_VK_RT*}", VK_PAD_RTRIGGER, true },
-        { L"{*CONTROLLER_ACTION_JUMP*}", 0x20, false },
-        { L"{*CONTROLLER_ACTION_SNEAK*}", 0x27, false },
-        { L"{*CONTROLLER_ACTION_USE*}", 0x21, false },
-        { L"{*CONTROLLER_ACTION_ACTION*}", 0x22, false },
-        { L"{*CONTROLLER_ACTION_LEFT_SCROLL*}", 0x23, false },
-        { L"{*CONTROLLER_ACTION_RIGHT_SCROLL*}", 0x24, false },
-        { L"{*CONTROLLER_ACTION_INVENTORY*}", 0x25, false },
-        { L"{*CONTROLLER_ACTION_CRAFTING*}", 0x28, false },
-        { L"{*CONTROLLER_ACTION_DROP*}", 0x26, false },
-        { L"{*CONTROLLER_ACTION_CAMERA*}", 0x29, false },
-        { L"{*CONTROLLER_ACTION_MENU_PAGEDOWN*}", 9, false },
-        { L"{*CONTROLLER_ACTION_DISMOUNT*}", 0x27, false },
-        { L"{*CONTROLLER_ACTION_DPAD_UP*}", 0x2c, false },
-        { L"{*CONTROLLER_ACTION_DPAD_DOWN*}", 0x2d, false },
-        { L"{*CONTROLLER_ACTION_DPAD_RIGHT*}", 0x2b, false },
-        { L"{*CONTROLLER_ACTION_DPAD_LEFT*}", 0x2a, false },
-        { L"{*CONTROLLER_ACTION_PICKBLOCK*}", 0x2f, false },
-        { L"{*CONTROLLER_ACTION_SPECTATE_PREV*}", 0x30, false },
-        { L"{*CONTROLLER_ACTION_SPECTATE_NEXT*}", 0x31, false },
-        { L"{*CONTROLLER_ACTION_SPECTATE_NOISE*}", 0x32, false },
-        { L"{*CONTROLLER_ACTION_SPECTATE_CANCEL*}", 0x33, false },
-        { L"{*CONTROLLER_ACTION_READY*}", 0x34, false },
-        { L"{*CONTROLLER_ACTION_VOTESELECT*}", 0x35, false },
-        { L"{*CONTROLLER_ACTION_RESTART_SECTION*}", 0x36, false },
-        { L"{*CONTROLLER_ACTION_RESTART_RACE*}", 0x37, false },
-        { L"{*CONTROLLER_ACTION_LOOK_BEHIND*}", 0x38, false },
-        { L"{*CONTROLLER_VK_START*}", VK_PAD_START, true },
-    };
-    for (unsigned int i = 0; i < sizeof(controllerTokens) / sizeof(controllerTokens[0]); ++i)
-    {
-        const ControllerToken& token = controllerTokens[i];
-        const std::wstring replacement = token.virtualKey
-            ? GetVKReplacement(player, token.action, false)
-            : GetActionReplacement(player, static_cast<unsigned char>(token.action));
-        result = replaceAll(result, token.token, replacement);
+        result = replaceAll(result, L"{*CONTROLLER_ACTION_MOVE*}", GetActionReplacement(player, 0x1d));
+        result = replaceAll(result, L"{*CONTROLLER_ACTION_LOOK*}", GetActionReplacement(player, 0x1b));
     }
-
+    result = replaceAll(result, L"{*CONTROLLER_MENU_NAVIGATE*}", GetVKReplacement(player, VK_PAD_LTHUMB_LEFT, false));
+    result = replaceAll(result, L"{*CONTROLLER_VK_A*}", GetVKReplacement(player, VK_PAD_A, false));
+    result = replaceAll(result, L"{*CONTROLLER_VK_B*}", GetVKReplacement(player, VK_PAD_B, false));
+    result = replaceAll(result, L"{*CONTROLLER_VK_X*}", GetVKReplacement(player, VK_PAD_X, false));
+    result = replaceAll(result, L"{*CONTROLLER_VK_Y*}", GetVKReplacement(player, VK_PAD_Y, false));
+    result = replaceAll(result, L"{*CONTROLLER_VK_LB*}", GetVKReplacement(player, VK_PAD_LSHOULDER, false));
+    result = replaceAll(result, L"{*CONTROLLER_VK_RB*}", GetVKReplacement(player, VK_PAD_RSHOULDER, false));
+    result = replaceAll(result, L"{*CONTROLLER_VK_LS*}", GetVKReplacement(player, VK_PAD_LTHUMB_UP, false));
+    result = replaceAll(result, L"{*CONTROLLER_VK_RS*}", GetVKReplacement(player, VK_PAD_RTHUMB_UP, false));
+    result = replaceAll(result, L"{*CONTROLLER_VK_LT*}", GetVKReplacement(player, VK_PAD_LTRIGGER, false));
+    result = replaceAll(result, L"{*CONTROLLER_VK_RT*}", GetVKReplacement(player, VK_PAD_RTRIGGER, false));
+    result = replaceAll(result, L"{*CONTROLLER_ACTION_JUMP*}", GetActionReplacement(player, 0x20));
+    result = replaceAll(result, L"{*CONTROLLER_ACTION_SNEAK*}", GetActionReplacement(player, 0x27));
+    result = replaceAll(result, L"{*CONTROLLER_ACTION_USE*}", GetActionReplacement(player, 0x21));
+    result = replaceAll(result, L"{*CONTROLLER_ACTION_ACTION*}", GetActionReplacement(player, 0x22));
+    result = replaceAll(result, L"{*CONTROLLER_ACTION_LEFT_SCROLL*}", GetActionReplacement(player, 0x23));
+    result = replaceAll(result, L"{*CONTROLLER_ACTION_RIGHT_SCROLL*}", GetActionReplacement(player, 0x24));
+    result = replaceAll(result, L"{*CONTROLLER_ACTION_INVENTORY*}", GetActionReplacement(player, 0x25));
+    result = replaceAll(result, L"{*CONTROLLER_ACTION_CRAFTING*}", GetActionReplacement(player, 0x28));
+    result = replaceAll(result, L"{*CONTROLLER_ACTION_DROP*}", GetActionReplacement(player, 0x26));
+    result = replaceAll(result, L"{*CONTROLLER_ACTION_CAMERA*}", GetActionReplacement(player, 0x29));
+    result = replaceAll(result, L"{*CONTROLLER_ACTION_MENU_PAGEDOWN*}", GetActionReplacement(player, 9));
+    result = replaceAll(result, L"{*CONTROLLER_ACTION_DISMOUNT*}", GetActionReplacement(player, 0x27));
+    result = replaceAll(result, L"{*CONTROLLER_ACTION_DPAD_UP*}", GetActionReplacement(player, 0x2c));
+    result = replaceAll(result, L"{*CONTROLLER_ACTION_DPAD_DOWN*}", GetActionReplacement(player, 0x2d));
+    result = replaceAll(result, L"{*CONTROLLER_ACTION_DPAD_RIGHT*}", GetActionReplacement(player, 0x2b));
+    result = replaceAll(result, L"{*CONTROLLER_ACTION_DPAD_LEFT*}", GetActionReplacement(player, 0x2a));
+    result = replaceAll(result, L"{*CONTROLLER_ACTION_PICKBLOCK*}", GetActionReplacement(player, 0x2f));
+    result = replaceAll(result, L"{*CONTROLLER_ACTION_SPECTATE_PREV*}", GetActionReplacement(player, 0x30));
+    result = replaceAll(result, L"{*CONTROLLER_ACTION_SPECTATE_NEXT*}", GetActionReplacement(player, 0x31));
+    result = replaceAll(result, L"{*CONTROLLER_ACTION_SPECTATE_NOISE*}", GetActionReplacement(player, 0x32));
+    result = replaceAll(result, L"{*CONTROLLER_ACTION_SPECTATE_CANCEL*}", GetActionReplacement(player, 0x33));
+    result = replaceAll(result, L"{*CONTROLLER_ACTION_READY*}", GetActionReplacement(player, 0x34));
+    result = replaceAll(result, L"{*CONTROLLER_ACTION_VOTESELECT*}", GetActionReplacement(player, 0x35));
+    result = replaceAll(result, L"{*CONTROLLER_ACTION_RESTART_SECTION*}", GetActionReplacement(player, 0x36));
+    result = replaceAll(result, L"{*CONTROLLER_ACTION_RESTART_RACE*}", GetActionReplacement(player, 0x37));
+    result = replaceAll(result, L"{*CONTROLLER_ACTION_LOOK_BEHIND*}", GetActionReplacement(player, 0x38));
     result = replaceAll(result, L"{*ICON_SHANK_01*}", GetIconReplacement(1));
     result = replaceAll(result, L"{*ICON_SHANK_03*}", GetIconReplacement(3));
     result = replaceAll(result, L"{*ICON_ARMOR_01*}", GetIconReplacement(4));
+    result = replaceAll(result, L"{*CONTROLLER_VK_START*}", GetVKReplacement(player, VK_PAD_START, false));
     result = replaceAll(result, L"{*CONTROLLER_VK_BACK*}", L10N::GetString(IDS_BACK_BUTTON));
     result = replaceAll(result, L"{*PLATFORM_NAME*}", L10N::GetString(IDS_PLATFORM_NAME));
     const unsigned int language = XGetLanguage();

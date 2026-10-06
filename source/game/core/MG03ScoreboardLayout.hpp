@@ -37,7 +37,7 @@ public:
     virtual unsigned int getTitleIcon(int column, const EScoreboardType& type);
     virtual std::wstring GetRowLabel(int row, const StatsUID& uid, const EScoreboardType& type);
     virtual unsigned int getNumberOfColumns();
-    boost::shared_ptr<ItemInstance> getItemForSlot(int row, int column, const unsigned int& value, const EScoreboardType& type);
+    not_null_ptr<ItemInstance> getItemForSlot(int row, int column, const unsigned int& value, const EScoreboardType& type);
     virtual unsigned char GetEndBarIcon(PlayerInfo* info);
     virtual std::wstring GetCustomProgressDetails(const StatsUID& uid, int& value);
     virtual void BuildPlayerInfo(INetworkPlayer* player, PlayerInfo* info);

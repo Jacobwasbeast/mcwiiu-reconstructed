@@ -151,7 +151,7 @@ void IScoreboardLayout::ClearPlayersInfo()
     m_players.clear();
 }
 
-boost::shared_ptr<ItemInstance> IScoreboardLayout::getItemForSlot(const wchar_t* value, const unsigned int& slot, const EScoreboardType& type)
+not_null_ptr<ItemInstance> IScoreboardLayout::getItemForSlot(const wchar_t* value, const unsigned int& slot, const EScoreboardType& type)
 {
     int header = -1;
     int stat = -1;

@@ -33,116 +33,229 @@ extern CInput* g_pInput;
 
 void DefineActions()
 {
-    static const unsigned char defaultMappings[3][25] =
-    {
-        { 2, 0xc, 0xb, 10, 9, 4, 1, 0xd, 3, 0xe, 5, 6, 7, 8, 0, 0, 10, 9, 0xb, 1, 3, 1, 3, 1, 4 },
-        { 9, 0xb, 0xc, 5, 6, 4, 1, 0xe, 3, 10, 5, 6, 7, 8, 0, 0, 6, 6, 0xc, 1, 3, 1, 3, 1, 4 },
-        { 0xc, 0xb, 2, 5, 6, 4, 1, 10, 3, 0xe, 5, 6, 7, 8, 0, 0, 5, 6, 2, 1, 3, 1, 3, 1, 4 }
-    };
-    static const unsigned char secondaryMappings[3][25] =
-    {
-        { 2, 0xc, 0xb, 10, 9, 4, 1, 8, 3, 7, 0, 0, 0, 0, 0, 0, 10, 9, 0xb, 1, 3, 1, 3, 1, 4 },
-        { 9, 0xb, 0xc, 5, 6, 4, 1, 8, 3, 10, 0, 0, 0, 0, 0, 0, 6, 6, 0xc, 1, 3, 1, 3, 1, 4 },
-        { 0xc, 0xb, 2, 5, 6, 4, 1, 10, 3, 7, 0, 0, 0, 0, 0, 0, 5, 6, 2, 1, 3, 1, 3, 1, 4 }
-    };
-
+    GameSettings::SetDefaultActionMapping(0, 0, 2);
+    GameSettings::SetDefaultActionMapping(0, 1, 12);
+    GameSettings::SetDefaultActionMapping(0, 2, 11);
+    GameSettings::SetDefaultActionMapping(0, 3, 10);
+    GameSettings::SetDefaultActionMapping(0, 4, 9);
+    GameSettings::SetDefaultActionMapping(0, 5, 4);
+    GameSettings::SetDefaultActionMapping(0, 6, 1);
+    GameSettings::SetDefaultActionMapping(0, 7, 13);
+    GameSettings::SetDefaultActionMapping(0, 8, 3);
+    GameSettings::SetDefaultActionMapping(0, 9, 14);
+    GameSettings::SetDefaultActionMapping(0, 10, 5);
+    GameSettings::SetDefaultActionMapping(0, 11, 6);
+    GameSettings::SetDefaultActionMapping(0, 12, 7);
+    GameSettings::SetDefaultActionMapping(0, 13, 8);
+    GameSettings::SetDefaultActionMapping(0, 14, 0);
+    GameSettings::SetDefaultActionMapping(0, 15, 0);
+    GameSettings::SetDefaultActionMapping(0, 16, 10);
+    GameSettings::SetDefaultActionMapping(0, 17, 9);
+    GameSettings::SetDefaultActionMapping(0, 18, 11);
+    GameSettings::SetDefaultActionMapping(0, 19, 1);
+    GameSettings::SetDefaultActionMapping(0, 20, 3);
+    GameSettings::SetDefaultActionMapping(0, 21, 1);
+    GameSettings::SetDefaultActionMapping(0, 22, 3);
+    GameSettings::SetDefaultActionMapping(0, 23, 1);
+    GameSettings::SetDefaultActionMapping(0, 24, 4);
+    GameSettings::SetSecondaryActionMapping(0, 0, 2);
+    GameSettings::SetSecondaryActionMapping(0, 1, 12);
+    GameSettings::SetSecondaryActionMapping(0, 2, 11);
+    GameSettings::SetSecondaryActionMapping(0, 3, 10);
+    GameSettings::SetSecondaryActionMapping(0, 4, 9);
+    GameSettings::SetSecondaryActionMapping(0, 5, 4);
+    GameSettings::SetSecondaryActionMapping(0, 6, 1);
+    GameSettings::SetSecondaryActionMapping(0, 7, 8);
+    GameSettings::SetSecondaryActionMapping(0, 8, 3);
+    GameSettings::SetSecondaryActionMapping(0, 9, 7);
+    GameSettings::SetSecondaryActionMapping(0, 10, 0);
+    GameSettings::SetSecondaryActionMapping(0, 11, 0);
+    GameSettings::SetSecondaryActionMapping(0, 12, 0);
+    GameSettings::SetSecondaryActionMapping(0, 13, 0);
+    GameSettings::SetSecondaryActionMapping(0, 14, 0);
+    GameSettings::SetSecondaryActionMapping(0, 15, 0);
+    GameSettings::SetSecondaryActionMapping(0, 16, 10);
+    GameSettings::SetSecondaryActionMapping(0, 17, 9);
+    GameSettings::SetSecondaryActionMapping(0, 18, 11);
+    GameSettings::SetSecondaryActionMapping(0, 19, 1);
+    GameSettings::SetSecondaryActionMapping(0, 20, 3);
+    GameSettings::SetSecondaryActionMapping(0, 21, 1);
+    GameSettings::SetSecondaryActionMapping(0, 22, 3);
+    GameSettings::SetSecondaryActionMapping(0, 23, 1);
+    GameSettings::SetSecondaryActionMapping(0, 24, 4);
+    GameSettings::SetDefaultActionMapping(1, 0, 9);
+    GameSettings::SetDefaultActionMapping(1, 1, 11);
+    GameSettings::SetDefaultActionMapping(1, 2, 12);
+    GameSettings::SetDefaultActionMapping(1, 3, 5);
+    GameSettings::SetDefaultActionMapping(1, 4, 6);
+    GameSettings::SetDefaultActionMapping(1, 5, 4);
+    GameSettings::SetDefaultActionMapping(1, 6, 1);
+    GameSettings::SetDefaultActionMapping(1, 7, 14);
+    GameSettings::SetDefaultActionMapping(1, 8, 3);
+    GameSettings::SetDefaultActionMapping(1, 9, 10);
+    GameSettings::SetDefaultActionMapping(1, 10, 5);
+    GameSettings::SetDefaultActionMapping(1, 11, 6);
+    GameSettings::SetDefaultActionMapping(1, 12, 7);
+    GameSettings::SetDefaultActionMapping(1, 13, 8);
+    GameSettings::SetDefaultActionMapping(1, 14, 0);
+    GameSettings::SetDefaultActionMapping(1, 15, 0);
+    GameSettings::SetDefaultActionMapping(1, 16, 6);
+    GameSettings::SetDefaultActionMapping(1, 17, 6);
+    GameSettings::SetDefaultActionMapping(1, 18, 12);
+    GameSettings::SetDefaultActionMapping(1, 19, 1);
+    GameSettings::SetDefaultActionMapping(1, 20, 3);
+    GameSettings::SetDefaultActionMapping(1, 21, 1);
+    GameSettings::SetDefaultActionMapping(1, 22, 3);
+    GameSettings::SetDefaultActionMapping(1, 23, 1);
+    GameSettings::SetDefaultActionMapping(1, 24, 4);
+    GameSettings::SetSecondaryActionMapping(1, 0, 9);
+    GameSettings::SetSecondaryActionMapping(1, 1, 11);
+    GameSettings::SetSecondaryActionMapping(1, 2, 12);
+    GameSettings::SetSecondaryActionMapping(1, 3, 5);
+    GameSettings::SetSecondaryActionMapping(1, 4, 6);
+    GameSettings::SetSecondaryActionMapping(1, 5, 4);
+    GameSettings::SetSecondaryActionMapping(1, 6, 1);
+    GameSettings::SetSecondaryActionMapping(1, 7, 8);
+    GameSettings::SetSecondaryActionMapping(1, 8, 3);
+    GameSettings::SetSecondaryActionMapping(1, 9, 10);
+    GameSettings::SetSecondaryActionMapping(1, 10, 0);
+    GameSettings::SetSecondaryActionMapping(1, 11, 0);
+    GameSettings::SetSecondaryActionMapping(1, 12, 0);
+    GameSettings::SetSecondaryActionMapping(1, 13, 0);
+    GameSettings::SetSecondaryActionMapping(1, 14, 0);
+    GameSettings::SetSecondaryActionMapping(1, 15, 0);
+    GameSettings::SetSecondaryActionMapping(1, 16, 6);
+    GameSettings::SetSecondaryActionMapping(1, 17, 6);
+    GameSettings::SetSecondaryActionMapping(1, 18, 12);
+    GameSettings::SetSecondaryActionMapping(1, 19, 1);
+    GameSettings::SetSecondaryActionMapping(1, 20, 3);
+    GameSettings::SetSecondaryActionMapping(1, 21, 1);
+    GameSettings::SetSecondaryActionMapping(1, 22, 3);
+    GameSettings::SetSecondaryActionMapping(1, 23, 1);
+    GameSettings::SetSecondaryActionMapping(1, 24, 4);
+    GameSettings::SetDefaultActionMapping(2, 0, 12);
+    GameSettings::SetDefaultActionMapping(2, 1, 11);
+    GameSettings::SetDefaultActionMapping(2, 2, 2);
+    GameSettings::SetDefaultActionMapping(2, 3, 5);
+    GameSettings::SetDefaultActionMapping(2, 4, 6);
+    GameSettings::SetDefaultActionMapping(2, 5, 4);
+    GameSettings::SetDefaultActionMapping(2, 6, 1);
+    GameSettings::SetDefaultActionMapping(2, 7, 10);
+    GameSettings::SetDefaultActionMapping(2, 8, 3);
+    GameSettings::SetDefaultActionMapping(2, 9, 14);
+    GameSettings::SetDefaultActionMapping(2, 10, 5);
+    GameSettings::SetDefaultActionMapping(2, 11, 6);
+    GameSettings::SetDefaultActionMapping(2, 12, 7);
+    GameSettings::SetDefaultActionMapping(2, 13, 8);
+    GameSettings::SetDefaultActionMapping(2, 14, 0);
+    GameSettings::SetDefaultActionMapping(2, 15, 0);
+    GameSettings::SetDefaultActionMapping(2, 16, 5);
+    GameSettings::SetDefaultActionMapping(2, 17, 6);
+    GameSettings::SetDefaultActionMapping(2, 18, 2);
+    GameSettings::SetDefaultActionMapping(2, 19, 1);
+    GameSettings::SetDefaultActionMapping(2, 20, 3);
+    GameSettings::SetDefaultActionMapping(2, 21, 1);
+    GameSettings::SetDefaultActionMapping(2, 22, 3);
+    GameSettings::SetDefaultActionMapping(2, 23, 1);
+    GameSettings::SetDefaultActionMapping(2, 24, 4);
+    GameSettings::SetSecondaryActionMapping(2, 0, 12);
+    GameSettings::SetSecondaryActionMapping(2, 1, 11);
+    GameSettings::SetSecondaryActionMapping(2, 2, 2);
+    GameSettings::SetSecondaryActionMapping(2, 3, 5);
+    GameSettings::SetSecondaryActionMapping(2, 4, 6);
+    GameSettings::SetSecondaryActionMapping(2, 5, 4);
+    GameSettings::SetSecondaryActionMapping(2, 6, 1);
+    GameSettings::SetSecondaryActionMapping(2, 7, 10);
+    GameSettings::SetSecondaryActionMapping(2, 8, 3);
+    GameSettings::SetSecondaryActionMapping(2, 9, 7);
+    GameSettings::SetSecondaryActionMapping(2, 10, 0);
+    GameSettings::SetSecondaryActionMapping(2, 11, 0);
+    GameSettings::SetSecondaryActionMapping(2, 12, 0);
+    GameSettings::SetSecondaryActionMapping(2, 13, 0);
+    GameSettings::SetSecondaryActionMapping(2, 14, 0);
+    GameSettings::SetSecondaryActionMapping(2, 15, 0);
+    GameSettings::SetSecondaryActionMapping(2, 16, 5);
+    GameSettings::SetSecondaryActionMapping(2, 17, 6);
+    GameSettings::SetSecondaryActionMapping(2, 18, 2);
+    GameSettings::SetSecondaryActionMapping(2, 19, 1);
+    GameSettings::SetSecondaryActionMapping(2, 20, 3);
+    GameSettings::SetSecondaryActionMapping(2, 21, 1);
+    GameSettings::SetSecondaryActionMapping(2, 22, 3);
+    GameSettings::SetSecondaryActionMapping(2, 23, 1);
+    GameSettings::SetSecondaryActionMapping(2, 24, 4);
     int controller;
-    int action;
-    for (controller = 0; controller < 3; ++controller)
-    {
-        for (action = 0; action < 25; ++action)
-        {
-            GameSettings::SetDefaultActionMapping((unsigned char)controller, action, defaultMappings[controller][action]);
-            GameSettings::SetSecondaryActionMapping((unsigned char)controller, action, secondaryMappings[controller][action]);
-        }
-    }
-
-    static const unsigned char movementMasks[2][2] =
-    {
-        { 2, 1 },
-        { 1, 2 }
-    };
-    static const unsigned char actionIndices[4] = { EControllerActions_MenuA, EControllerActions_MenuOk,
-                                                    EControllerActions_MenuB, EControllerActions_MenuCancel };
-    static const unsigned int actionMasks[32] =
-    {
-        4, 8, 0x200400, 0x100800, 0x9000, 0x6000, 0x800000, 0x400000,
-        0x40, 0x80, 0x10, 0x20, 0x20000, 0x10000, 0x80000, 0x40000,
-        2, 0x200000, 0x100000, 0x8000, 0x4000, 0x80000, 0x40000, 0x20000,
-        0x10000, 0x800000, 0x400000, 0x40, 0x80, 8, 0x10, 1
-    };
-    static const unsigned char actionMapIndices[32] =
-    {
-        EControllerActions_MenuX,
-        EControllerActions_MenuY,
-        EControllerActions_MenuUp,
-        EControllerActions_MenuDown,
-        EControllerActions_MenuLeft,
-        EControllerActions_MenuRight,
-        EControllerActions_MenuPageUp,
-        EControllerActions_MenuPageDown,
-        EControllerActions_MenuRightScroll,
-        EControllerActions_MenuLeftScroll,
-        EControllerActions_MenuStart,
-        EControllerActions_MenuBack,
-        EControllerActions_MenuOtherStickUp,
-        EControllerActions_MenuOtherStickDown,
-        EControllerActions_MenuOtherStickLeft,
-        EControllerActions_MenuOtherStickRight,
-        EControllerActions_Jump,
-        EControllerActions_MoveForward,
-        EControllerActions_MoveBackward,
-        EControllerActions_MoveLeft,
-        EControllerActions_MoveRight,
-        EControllerActions_LookUp,
-        EControllerActions_LookDown,
-        EControllerActions_LookLeft,
-        EControllerActions_LookRight,
-        EControllerActions_Use,
-        EControllerActions_Action,
-        EControllerActions_CycleHeldItemRight,
-        EControllerActions_CycleHeldItemLeft,
-        EControllerActions_Inventory,
-        EControllerActions_Pause,
-        EControllerActions_Drop
-    };
-
     for (controller = 0; controller < 2; ++controller)
     {
-        const unsigned char* controllerMovementMasks =
-            movementMasks[g_pInput->IsCircleCrossSwapped() != 0 ? 1 : 0];
-        g_pInput->SetGameControllerTypeJoypadMaps(controller, actionIndices[0], controllerMovementMasks[0]);
-        g_pInput->SetGameControllerTypeJoypadMaps(controller, actionIndices[1], controllerMovementMasks[0]);
-        g_pInput->SetGameControllerTypeJoypadMaps(controller, actionIndices[2], controllerMovementMasks[1]);
-        g_pInput->SetGameControllerTypeJoypadMaps(controller, actionIndices[3], controllerMovementMasks[1]);
-        for (action = 0; action < 32; ++action)
+        if (g_pInput->IsCircleCrossSwapped() != 0)
         {
-            g_pInput->SetGameControllerTypeJoypadMaps(controller, actionMapIndices[action], actionMasks[action]);
-        }
-        if (controller == 0)
-        {
-            g_pInput->SetGameControllerTypeJoypadMaps(0, EControllerActions_Sneak, 0x100);
-            g_pInput->SetGameControllerTypeJoypadMaps(0, EControllerActions_ChangeCameraMode, 0x200);
-            g_pInput->SetGameControllerTypeJoypadMaps(0, EControllerActions_MenuStickPress, 0x200);
-            g_pInput->SetGameControllerTypeJoypadMaps(0, EControllerActions_MenuOtherStickPress, 0x100);
+            g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MenuA, EJoypadButton_Face1);
+            g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MenuOk, EJoypadButton_Face1);
+            g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MenuB, EJoypadButton_Face2);
+            g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MenuCancel, EJoypadButton_Face2);
         }
         else
         {
-            g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_Sneak, 0x800);
-            g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_ChangeCameraMode, 0x400);
-            g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MenuStickPress, 0x200);
-            g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MenuOtherStickPress, 0x100);
+            g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MenuA, EJoypadButton_Face2);
+            g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MenuOk, EJoypadButton_Face2);
+            g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MenuB, EJoypadButton_Face1);
+            g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MenuCancel, EJoypadButton_Face1);
         }
-        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_Crafting, 4);
-        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_Scoreboard, 0x20);
-        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_FlyLeft, 0x1000);
-        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_FlyRight, 0x2000);
-        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_FlyUp, 0x400);
-        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_FlyDown, 0x800);
-        g_pInput->SetGameControllerTypeJoypadMaps(controller, 0x39, 0x1000);
-        g_pInput->SetGameControllerTypeJoypadMaps(controller, 0x3a, 0x2000);
-        g_pInput->SetGameControllerTypeJoypadMaps(controller, 0x3b, 0x400);
-        g_pInput->SetGameControllerTypeJoypadMaps(controller, 0x3c, 0x800);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MenuX, EJoypadButton_Face3);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MenuY, EJoypadButton_Face4);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MenuUp, EJoypadButton_LeftStickUp | EJoypadButton_DPadUp);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MenuDown, EJoypadButton_LeftStickDown | EJoypadButton_DPadDown);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MenuLeft, EJoypadButton_LeftStickLeft | EJoypadButton_DPadLeft);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MenuRight, EJoypadButton_LeftStickRight | EJoypadButton_DPadRight);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MenuPageUp, EJoypadButton_LeftTrigger);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MenuPageDown, EJoypadButton_RightTrigger);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MenuRightScroll, EJoypadButton_RightBumper);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MenuLeftScroll, EJoypadButton_LeftBumper);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MenuStart, EJoypadButton_Start);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MenuBack, EJoypadButton_Back);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MenuOtherStickUp, EJoypadButton_RightStickLeft);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MenuOtherStickDown, EJoypadButton_RightStickRight);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MenuOtherStickLeft, EJoypadButton_RightStickUp);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MenuOtherStickRight, EJoypadButton_RightStickDown);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_Jump, EJoypadButton_Face2);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MoveForward, EJoypadButton_LeftStickUp);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MoveBackward, EJoypadButton_LeftStickDown);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MoveLeft, EJoypadButton_LeftStickLeft);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MoveRight, EJoypadButton_LeftStickRight);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_LookUp, EJoypadButton_RightStickUp);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_LookDown, EJoypadButton_RightStickDown);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_LookLeft, EJoypadButton_RightStickLeft);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_LookRight, EJoypadButton_RightStickRight);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_Use, EJoypadButton_LeftTrigger);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_Action, EJoypadButton_RightTrigger);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_CycleHeldItemRight, EJoypadButton_RightBumper);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_CycleHeldItemLeft, EJoypadButton_LeftBumper);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_Inventory, EJoypadButton_Face4);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_Pause, EJoypadButton_Start);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_Drop, EJoypadButton_Face1);
+        if (controller == 0)
+        {
+            g_pInput->SetGameControllerTypeJoypadMaps(0, EControllerActions_Sneak, EJoypadButton_RightStickPress);
+            g_pInput->SetGameControllerTypeJoypadMaps(0, EControllerActions_ChangeCameraMode, EJoypadButton_LeftStickPress);
+            g_pInput->SetGameControllerTypeJoypadMaps(0, EControllerActions_MenuStickPress, EJoypadButton_LeftStickPress);
+            g_pInput->SetGameControllerTypeJoypadMaps(0, EControllerActions_MenuOtherStickPress, EJoypadButton_RightStickPress);
+        }
+        else
+        {
+            g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_Sneak, EJoypadButton_DPadDown);
+            g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_ChangeCameraMode, EJoypadButton_DPadUp);
+            g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MenuStickPress, EJoypadButton_LeftStickPress);
+            g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_MenuOtherStickPress, EJoypadButton_RightStickPress);
+        }
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_Crafting, EJoypadButton_Face3);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_Scoreboard, EJoypadButton_Back);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_FlyLeft, EJoypadButton_DPadLeft);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_FlyRight, EJoypadButton_DPadRight);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_FlyUp, EJoypadButton_DPadUp);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_FlyDown, EJoypadButton_DPadDown);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_AltFlyLeft, EJoypadButton_DPadLeft);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_AltFlyRight, EJoypadButton_DPadRight);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_AltFlyUp, EJoypadButton_DPadUp);
+        g_pInput->SetGameControllerTypeJoypadMaps(controller, EControllerActions_AltFlyDown, EJoypadButton_DPadDown);
     }
 }
 
@@ -284,8 +397,8 @@ uint32_t GameSettings::GetInputButton(unsigned int value)
     {
         static const unsigned int buttons[15] =
         {
-            0, 0, 0, 4, 8, 0x1000, 0x2000, 0x400,
-            0x800, 0x40, 0x80, 0x400000, 0x800000, 0x100, 0x200
+            0, 0, 0, EJoypadButton_Face3, EJoypadButton_Face4, EJoypadButton_DPadLeft, EJoypadButton_DPadRight, EJoypadButton_DPadUp,
+            EJoypadButton_DPadDown, EJoypadButton_RightBumper, EJoypadButton_LeftBumper, EJoypadButton_RightTrigger, EJoypadButton_LeftTrigger, EJoypadButton_RightStickPress, EJoypadButton_LeftStickPress
         };
         if (value > 14)
             return 0;

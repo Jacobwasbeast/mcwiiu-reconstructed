@@ -5,6 +5,8 @@
 #include <vector>
 #include <boost/shared_ptr.hpp>
 
+#include "game/item/not_null_ptr.hpp"
+
 #include "game/ui/UIString.hpp"
 
 class INetworkPlayer;
@@ -47,8 +49,8 @@ public:
     virtual unsigned int getTitleIcon(int, const EScoreboardType&);
     virtual std::wstring GetRowLabel(int, const StatsUID&, const EScoreboardType&);
     virtual unsigned int getNumberOfColumns();
-    virtual boost::shared_ptr<ItemInstance> getItemForSlot(int, int, const unsigned int&, const EScoreboardType&) = 0;
-    virtual boost::shared_ptr<ItemInstance> getItemForSlot(const wchar_t*, const unsigned int&, const EScoreboardType&);
+    virtual not_null_ptr<ItemInstance> getItemForSlot(int, int, const unsigned int&, const EScoreboardType&) = 0;
+    virtual not_null_ptr<ItemInstance> getItemForSlot(const wchar_t*, const unsigned int&, const EScoreboardType&);
     virtual unsigned char GetEndBarIcon(PlayerInfo*) = 0;
     virtual std::wstring GetCustomProgressDetails(const StatsUID&, int&);
     virtual int GetPlayerCount();

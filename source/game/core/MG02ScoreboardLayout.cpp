@@ -203,7 +203,7 @@ std::wstring MG02ScoreboardLayout::GetRowLabel(int row, const StatsUID& uid, con
     return std::wstring(L"");
 }
 
-boost::shared_ptr<ItemInstance> MG02ScoreboardLayout::getItemForSlot(int column, int, const unsigned int&, const EScoreboardType& type)
+not_null_ptr<ItemInstance> MG02ScoreboardLayout::getItemForSlot(int column, int, const unsigned int&, const EScoreboardType& type)
 {
     if (column != -1)
     {
@@ -219,10 +219,10 @@ boost::shared_ptr<ItemInstance> MG02ScoreboardLayout::getItemForSlot(int column,
             {
                 return ItemInstance::EMPTY;
             }
-            return boost::shared_ptr<ItemInstance>(new ItemInstance(Items::skull, 1, auxValue));
+            return not_null_ptr<ItemInstance>(new ItemInstance(Items::skull, 1, auxValue));
         }
         if (getNumberOfColumns() > 2 && column == 1)
-            return boost::shared_ptr<ItemInstance>(new ItemInstance(Items::skull, 1, 0));
+            return not_null_ptr<ItemInstance>(new ItemInstance(Items::skull, 1, 0));
     }
     return ItemInstance::EMPTY;
 }
