@@ -51,9 +51,11 @@ int Decoder::RemovePacket(_udp_packet* pPacket)
     OSFastMutex_Lock(&s_decoderMutex);
 
     _udp_packet* pNext = pPacket->m_pNext;
-    _udp_packet* pPrevious = pPacket->m_pPrevious;
-
-    if (pPrevious == 0)
+    if (pPacket->m_pPrevious != 0)
+    {
+        pPacket->m_pPrevious->m_pNext = pNext;
+    }
+    else
     {
         s_decoderHead = pNext;
         if (pNext != 0)
@@ -61,29 +63,29 @@ int Decoder::RemovePacket(_udp_packet* pPacket)
             pNext->m_pPrevious = 0;
         }
     }
-    else
-    {
-        pPrevious->m_pNext = pNext;
-    }
 
-    if (pNext == 0)
+    pNext = pPacket->m_pNext;
+    _udp_packet* pPrevious = pPacket->m_pPrevious;
+    int iCount;
+    if (pNext != 0)
+    {
+        pNext->m_pPrevious = pPrevious;
+        iCount = s_decoderCounts[pPacket->m_StreamIndex] - 1;
+        s_decoderCounts[pPacket->m_StreamIndex] = iCount;
+        OSFastMutex_Unlock(&s_decoderMutex);
+    }
+    else
     {
         s_decoderTail = pPrevious;
         if (pPrevious != 0)
         {
             pPrevious->m_pNext = 0;
         }
+        iCount = s_decoderCounts[pPacket->m_StreamIndex] - 1;
+        s_decoderCounts[pPacket->m_StreamIndex] = iCount;
+        OSFastMutex_Unlock(&s_decoderMutex);
     }
-    else
-    {
-        pNext->m_pPrevious = pPrevious;
-    }
-
-    const unsigned int uiCount = s_decoderCounts[pPacket->m_StreamIndex] - 1;
-    s_decoderCounts[pPacket->m_StreamIndex] = uiCount;
-
-    OSFastMutex_Unlock(&s_decoderMutex);
-    return static_cast<int>(uiCount);
+    return iCount;
 }
 
 void Decoder::Flush(unsigned int uiStreamIndex)
@@ -109,13 +111,13 @@ void Decoder::FlushAll()
     _udp_packet* pPacket = s_decoderHead;
     while (pPacket != 0)
     {
-        _udp_packet* pNext = pPacket->m_pNext;
-        vct_free_packet_buffer(pPacket);
-        pPacket = pNext;
+        _udp_packet* pFree = pPacket;
+        pPacket = pPacket->m_pNext;
+        vct_free_packet_buffer(pFree);
     }
 
-    s_decoderTail = 0;
     s_decoderHead = 0;
+    s_decoderTail = 0;
     for (unsigned int uiStream = 0; uiStream < DECODER_QUEUE_MAX; ++uiStream)
     {
         s_decoderCounts[uiStream] = 0;
@@ -136,28 +138,28 @@ int Decoder::Insert(_udp_packet* pPacket)
 {
     OSFastMutex_Lock(&s_decoderMutex);
 
-    unsigned int uiCount;
+    int iCount;
     if (s_decoderHead == 0)
     {
         s_decoderHead = pPacket;
         pPacket->m_pPrevious = 0;
         s_decoderHead->m_pNext = 0;
         s_decoderTail = s_decoderHead;
-        uiCount = s_decoderCounts[pPacket->m_StreamIndex] + 1;
-        s_decoderCounts[pPacket->m_StreamIndex] = uiCount;
+        iCount = s_decoderCounts[pPacket->m_StreamIndex] + 1;
+        s_decoderCounts[pPacket->m_StreamIndex] = iCount;
     }
     else
     {
         pPacket->m_pNext = 0;
         pPacket->m_pPrevious = s_decoderTail;
         s_decoderTail->m_pNext = pPacket;
-        uiCount = s_decoderCounts[pPacket->m_StreamIndex] + 1;
         s_decoderTail = pPacket;
-        s_decoderCounts[pPacket->m_StreamIndex] = uiCount;
+        iCount = s_decoderCounts[pPacket->m_StreamIndex] + 1;
+        s_decoderCounts[pPacket->m_StreamIndex] = iCount;
     }
 
     OSFastMutex_Unlock(&s_decoderMutex);
-    return static_cast<int>(uiCount);
+    return iCount;
 }
 
 _udp_packet* Decoder::Top()
