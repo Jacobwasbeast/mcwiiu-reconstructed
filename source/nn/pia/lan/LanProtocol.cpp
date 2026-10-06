@@ -88,10 +88,10 @@ template <typename T> void deleteObject(T* object)
 void LanProtocol::ReceivedFragmentData::Clear()
 {
     OSBlockSet(m_data, 0, sizeof(m_data));
-    m_fragmentCount = 0;
-    m_receivedMask = 0;
-    m_sequence = 0;
     m_id = 0;
+    m_sequence = 0;
+    m_receivedMask = 0;
+    m_fragmentCount = 0;
     m_source.Clear();
 }
 
