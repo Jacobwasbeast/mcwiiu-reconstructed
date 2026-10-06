@@ -2238,8 +2238,43 @@ bool LivingEntity::isImmobile()
 
 void LivingEntity::findStandUpPosition(boost::shared_ptr<Entity> vehicle)
 {
-    if (vehicle->GetType() != EntityType::BOAT
-        && (vehicle->GetType() & EntityType::ABSTRACT_HORSE) != EntityType::ABSTRACT_HORSE)
+    if (eTYPE_DERIVED_FROM(EntityType::BOAT, vehicle->GetType())
+        || eTYPE_DERIVED_FROM(EntityType::ABSTRACT_HORSE, vehicle->GetType()))
+    {
+        double distance = (double)(mBbWidth * 0.5f + vehicle->mBbWidth * 0.5f) + 0.4;
+        float angle;
+
+        if (eTYPE_DERIVED_FROM(EntityType::BOAT, vehicle->GetType()))
+        {
+            angle = 0.0f;
+        }
+        else
+        {
+            angle = 1.5707964f * (getMainArm() == HumanoidArm::LEFT ? -1.0f : 1.0f);
+        }
+
+        double dirX = -(double)Mth::sin(-(mYRot * 0.017453292f) - 3.1415927f + angle);
+        double dirZ = -(double)Mth::cos(-(mYRot * 0.017453292f) - 3.1415927f + angle);
+        double scale = fabs(dirX) - fabs(dirZ) < 0.0 ? fabs(dirZ) : fabs(dirX);
+
+        distance = distance / scale;
+
+        double newX = mX + dirX * distance;
+        double newZ = mZ + dirZ * distance;
+
+        setPos(newX, vehicle->mY + (double)vehicle->mBbHeight + 0.001, newZ);
+
+        if (mLevel->hasBlockCubes(mBoundingBox))
+        {
+            setPos(newX, vehicle->mY + (double)vehicle->mBbHeight + 1.001, newZ);
+
+            if (mLevel->hasBlockCubes(mBoundingBox))
+            {
+                setPos(vehicle->mX, vehicle->mY + (double)mBbHeight + 0.001, vehicle->mZ);
+            }
+        }
+    }
+    else
     {
         double standX = vehicle->mX;
         double standY = vehicle->mBoundingBox->mMinY + (double)vehicle->mBbHeight;
@@ -2255,13 +2290,14 @@ void LivingEntity::findStandUpPosition(boost::shared_ptr<Entity> vehicle)
 
             double baseX = floor(mX) + 0.5;
             double baseZ = floor(mZ) + 0.5;
-            double halfWidth = (mBoundingBox->mMaxX - mBoundingBox->mMinX) * 0.5;
-            double halfDepth = (mBoundingBox->mMaxZ - mBoundingBox->mMinZ) * 0.5;
 
-            AABB* box = AABB::newPermanent(baseX - halfWidth, vehicle->mBoundingBox->mMinY,
-                                           baseZ - halfDepth, baseX + halfWidth,
+            double width = mBoundingBox->mMaxX - mBoundingBox->mMinX;
+            double depth = mBoundingBox->mMaxZ - mBoundingBox->mMinZ;
+
+            AABB* box = AABB::newPermanent(baseX - width * 0.5, vehicle->mBoundingBox->mMinY,
+                                           baseZ - depth * 0.5, baseX + width * 0.5,
                                            floor(vehicle->mBoundingBox->mMinY) + (double)mBbHeight,
-                                           baseZ + halfDepth);
+                                           baseZ + depth * 0.5);
 
             for (int i = 0; i < 9; ++i)
             {
@@ -2289,10 +2325,9 @@ void LivingEntity::findStandUpPosition(boost::shared_ptr<Entity> vehicle)
                     return;
                 }
 
-                BlockPos below(blockX, (int)mY - 1, blockZ);
-
-                if (mLevel->getBlockState(mTickCache, below)->isTopSolidBlocking()
-                    || mLevel->getBlockState(mTickCache, below)->getMaterial() == Material::WATER)
+                if (mLevel->getBlockState(mTickCache, BlockPos(blockX, (int)mY - 1, blockZ))->isTopSolidBlocking()
+                    || mLevel->getBlockState(mTickCache, BlockPos(blockX, (int)mY - 1, blockZ))->getMaterial()
+                        == Material::WATER)
                 {
                     standX = mX + dx;
                     standY = floor(mY) + 1.0;
@@ -2302,40 +2337,6 @@ void LivingEntity::findStandUpPosition(boost::shared_ptr<Entity> vehicle)
         }
 
         teleportTo(standX, standY, standZ);
-        return;
-    }
-
-    double distance = (double)(mBbWidth * 0.5f + vehicle->mBbWidth * 0.5f) + 0.4;
-    float angle;
-
-    if (vehicle->GetType() == EntityType::BOAT)
-    {
-        angle = 0.0f;
-    }
-    else
-    {
-        angle = 1.5707964f * (getMainArm() == HumanoidArm::LEFT ? -1.0f : 1.0f);
-    }
-
-    double dirX = -(double)Mth::sin(-(mYRot * 0.017453292f) - 3.1415927f + angle);
-    double dirZ = -(double)Mth::cos(-(mYRot * 0.017453292f) - 3.1415927f + angle);
-    double scale = Mth::abs(dirX) - Mth::abs(dirZ) < 0.0 ? Mth::abs(dirZ) : Mth::abs(dirX);
-
-    distance = distance / scale;
-
-    double newX = mX + dirX * distance;
-    double newZ = mZ + dirZ * distance;
-
-    setPos(newX, vehicle->mY + (double)vehicle->mBbHeight + 0.001, newZ);
-
-    if (mLevel->hasBlockCubes(mBoundingBox))
-    {
-        setPos(newX, vehicle->mY + (double)vehicle->mBbHeight + 1.001, newZ);
-
-        if (mLevel->hasBlockCubes(mBoundingBox))
-        {
-            setPos(vehicle->mX, vehicle->mY + (double)mBbHeight + 0.001, vehicle->mZ);
-        }
     }
 }
 
@@ -2442,34 +2443,29 @@ void LivingEntity::CheckThermalAreas()
 
     LevelRuleset* ruleset = options->getRequiredGameRules();
 
-    if (gApp.GetFirstMiniGameType() != eMiniGameId_Glide || ruleset == NULL)
+    const bool isGlide = gApp.GetFirstMiniGameType() == eMiniGameId_Glide;
+
+    if (!isGlide || ruleset == NULL)
     {
         return;
     }
 
     int boostMod = 0;
+    bool inside = false;
+    unsigned int boostModsSet = 0;
     int boostDirection = 0;
-    bool boostModsSet = false;
 
     std::vector<ThermalAreaRuleDefinition*> areas;
     ruleset->getThermalAreas(&areas);
-
-    ThermalAreaRuleDefinition* area = NULL;
-    bool inside = false;
 
     for (std::vector<ThermalAreaRuleDefinition*>::iterator it = areas.begin(); it != areas.end(); ++it)
     {
         bool intersecting = false;
 
-        if ((*it)->isEnabled() && (*it)->getConditionsMet(shared_from_this()))
+        if ((*it)->isEnabled() && (*it)->getConditionsMet(shared_from_this())
+            && (*it)->getArea()->intersects(getSweptVolume()))
         {
-            AABB* bounds = (*it)->getArea();
-            AABB* swept = getSweptVolume();
-
-            if (bounds->intersects(swept->mMinX, swept->mMinY, swept->mMinZ, swept->mMaxX, swept->mMaxY, swept->mMaxZ))
-            {
-                intersecting = true;
-            }
+            intersecting = true;
         }
 
         if (intersecting)
@@ -2478,71 +2474,98 @@ void LivingEntity::CheckThermalAreas()
 
             if (!mThermalAreasChecked)
             {
-                area = *it;
+                if (mThermalAreaChanged)
+                {
+                    mThermalAreaChanged = false;
+
+                    if ((*it)->getElytraSpeedBoost() == 0.0)
+                    {
+                        if (mLevel->mIsClientSide)
+                        {
+                            if (eTYPE_DERIVED_FROM(EntityType::LOCAL_PLAYER, GetType()))
+                            {
+                                Minecraft::GetInstance()->mSoundEngine->playUI(SoundEvents::MG03_THERMAL_BOOST, 1.0f, 1.0f);
+                            }
+                        }
+
+                        if (!mLevel->mIsClientSide)
+                        {
+                            if (eTYPE_DERIVED_FROM(EntityType::SERVER_PLAYER, GetType()))
+                            {
+                                boost::shared_ptr<Packet> packet(new ClientboundSoundPacket(
+                                    ClientboundSoundPacket::eSoundInstances_FollowEntity,
+                                    SoundEvents::MG03_THERMAL_BOOST, 1.0f, 1.0f, false, getId()));
+
+                                PlayerList* players = (gMinecraftServer != NULL) ? gMinecraftServer->mPlayers : NULL;
+                                players->broadcast(boost::static_pointer_cast<ServerPlayer>(shared_from_this()), mX,
+                                                   mY, mZ, 30.0, mDimension, packet);
+                            }
+                        }
+                    }
+
+                    if ((*it)->getElytraSpeedBoost() != 0.0)
+                    {
+                        if (mLevel->mIsClientSide)
+                        {
+                            if (eTYPE_DERIVED_FROM(EntityType::LOCAL_PLAYER, GetType()))
+                            {
+                                Minecraft::GetInstance()->mSoundEngine->playUI(SoundEvents::MG03_BOOST, 1.0f, 1.0f);
+                            }
+                        }
+
+                        if (!mLevel->mIsClientSide)
+                        {
+                            if (eTYPE_DERIVED_FROM(EntityType::SERVER_PLAYER, GetType()))
+                            {
+                                boost::shared_ptr<Packet> packet(new ClientboundSoundPacket(
+                                    ClientboundSoundPacket::eSoundInstances_FollowEntity, SoundEvents::MG03_BOOST,
+                                    1.0f, 1.0f, false, getId()));
+
+                                PlayerList* players = (gMinecraftServer != NULL) ? gMinecraftServer->mPlayers : NULL;
+                                players->broadcast(boost::static_pointer_cast<ServerPlayer>(shared_from_this()), mX,
+                                                   mY, mZ, 30.0, mDimension, packet);
+                            }
+                        }
+                    }
+                }
+
+                SetLiftForceModifier((*it)->getLiftForceModifier());
+
+                if (!mInThermalArea)
+                {
+                    if ((*it)->getLiftSpeed() != 0.0)
+                    {
+                        mThermalLerpTicks = 0;
+                        mThermalLerping = true;
+                    }
+
+                    mThermalTargetLiftSpeed = (*it)->getLiftSpeed();
+                }
+
+                if ((*it)->getMaxHeight() > 0.0)
+                {
+                    mInThermalArea = true;
+                    mThermalCeiling = (*it)->getMaxHeight();
+                }
+
+                mThermalLiftRising = (*it)->getLiftSpeed() >= 0.0;
+
+                if ((*it)->getElytraSpeedBoost() > 0.0)
+                {
+                    activateElytraSpeedBoost((*it)->getElytraSpeedBoost());
+                    boostModsSet = (*it)->setBoostMods(boostMod, boostDirection);
+                }
+
+                if (mThermalArea != *it && eTYPE_DERIVED_FROM(EntityType::SERVER_PLAYER, GetType()))
+                {
+                    boost::shared_ptr<ServerPlayer> player = boost::static_pointer_cast<ServerPlayer>(shared_from_this());
+                    player->GetGameMode()->RecordThermalEntered();
+                }
+
+                mThermalArea = *it;
                 break;
             }
         }
-    }
-
-    if (area != NULL)
-    {
-        if (mThermalAreaChanged)
-        {
-            mThermalAreaChanged = false;
-
-            const SoundEvent* sound = area->getElytraSpeedBoost() != 0.0 ? SoundEvents::MG03_BOOST
-                                                                          : SoundEvents::MG03_THERMAL_BOOST;
-
-            if (mLevel->mIsClientSide)
-            {
-                if (GetType() == EntityType::LOCAL_PLAYER)
-                {
-                    Minecraft::GetInstance()->mSoundEngine->playUI(sound, 1.0f, 1.0f);
-                }
-            }
-            else if (GetType() == EntityType::SERVER_PLAYER)
-            {
-                boost::shared_ptr<Packet> packet(new ClientboundSoundPacket(
-                    ClientboundSoundPacket::eSoundInstances_FollowEntity, sound, 1.0f, 1.0f, false, getId()));
-
-                gMinecraftServer->getPlayers()->broadcast(boost::static_pointer_cast<ServerPlayer>(shared_from_this()),
-                                                          mX, mY, mZ, 30.0, mDimension, packet);
-            }
-        }
-
-        SetLiftForceModifier(area->getLiftForceModifier());
-
-        if (!mInThermalArea)
-        {
-            if (area->getLiftSpeed() != 0.0)
-            {
-                mThermalLerpTicks = 0;
-                mThermalLerping = true;
-            }
-
-            mThermalTargetLiftSpeed = area->getLiftSpeed();
-        }
-
-        if (area->getMaxHeight() > 0.0)
-        {
-            mInThermalArea = true;
-            mThermalCeiling = area->getMaxHeight();
-        }
-
-        mThermalLiftRising = area->getLiftSpeed() >= 0.0;
-
-        if (area->getElytraSpeedBoost() > 0.0)
-        {
-            activateElytraSpeedBoost(area->getElytraSpeedBoost());
-            boostModsSet = area->setBoostMods(boostMod, boostDirection) != 0;
-        }
-
-        if (mThermalArea != area && GetType() == EntityType::SERVER_PLAYER)
-        {
-            boost::static_pointer_cast<ServerPlayer>(shared_from_this())->GetGameMode()->RecordThermalEntered();
-        }
-
-        mThermalArea = area;
     }
 
     if (mThermalAreasChecked)
@@ -2562,14 +2585,14 @@ void LivingEntity::CheckThermalAreas()
         }
     }
 
-    if (mInThermalArea && (mY >= mThermalCeiling || mVerticalCollision))
+    if (mInThermalArea)
     {
-        mInThermalArea = false;
-        mThermalLerping = false;
-    }
-    else if (mInThermalArea)
-    {
-        mThermalLerping = true;
+        if (mY >= mThermalCeiling || mVerticalCollision)
+        {
+            mInThermalArea = false;
+        }
+
+        mThermalLerping = mInThermalArea;
     }
 
     if (mThermalLerping)
@@ -2636,18 +2659,20 @@ void LivingEntity::CheckThermalAreas()
     {
         if (Mth::sqrt(mXd * mXd + mZd * mZd) < mElytraSpeedBoost)
         {
-            if (!boostModsSet)
+            if (boostModsSet != 0)
+            {
+                mXd += Mth::abs(mXd) * 0.1 * boostMod;
+                mZd += Mth::abs(mZd) * 0.1 * boostDirection;
+
+                if (mXd * boostMod >= 0.0 && mZd * boostDirection >= 0.0)
+                {
+                    return;
+                }
+            }
+            else
             {
                 mXd *= 1.1;
                 mZd *= 1.1;
-                return;
-            }
-
-            mXd += Mth::abs(mXd) * 0.1 * boostMod;
-            mZd += Mth::abs(mZd) * 0.1 * boostDirection;
-
-            if (mXd * boostMod >= 0.0 && mZd * boostDirection >= 0.0)
-            {
                 return;
             }
         }

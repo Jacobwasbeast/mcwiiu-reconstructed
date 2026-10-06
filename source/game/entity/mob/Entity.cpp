@@ -3111,7 +3111,7 @@ bool Entity::startRiding(boost::shared_ptr<Entity> vehicle, bool force)
     mVehicleXRotDelta = 0.0;
     mVehicleYRotDelta = 0.0;
 
-    if (mVehicle)
+    if (isPassenger())
     {
         stopRiding();
     }

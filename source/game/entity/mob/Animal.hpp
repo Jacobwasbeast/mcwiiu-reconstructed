@@ -19,7 +19,6 @@ class ItemInstance;
 class Level;
 template <class T> class EntityDataAccessor;
 
-extern const unsigned long long EntityType::ANIMAL;
 
 class Animal : public AgableMob, public Creature
 {
