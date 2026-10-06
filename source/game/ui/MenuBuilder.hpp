@@ -4,22 +4,24 @@
 #include <string>
 #include <vector>
 
+#include "game/core/BannerPattern.hpp"
+#include "game/core/DyeColor.hpp"
+#include "game/item/BannerItem.hpp"
+#include "game/item/Item.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/ItemInstanceClonerBuilder.hpp"
 #include "game/item/Items.hpp"
+#include "game/item/Potion.hpp"
+#include "game/item/PotionUtils.hpp"
 #include "game/item/SpawnEggItem.hpp"
 #include "game/item/not_null_ptr.hpp"
 #include "game/ui/UIScene_CreativeMenu.hpp"
 #include "game/util/ResourceLocation.hpp"
 #include "game/world/block/AbstractProperty.hpp"
+#include "game/world/block/BannerBlockEntity.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/TypedBoxed.hpp"
-
-class BannerPattern;
-class DyeColor;
-class Item;
-class Potion;
 
 class MenuBuilder
 {
@@ -40,9 +42,37 @@ public:
         delete copy;
     }
 
-    void BANNER(const DyeColor* color, const BannerPattern* pattern);
+    void BANNER(const DyeColor* color, const BannerPattern* pattern)
+    {
+        not_null_ptr<ItemInstance> banner(BannerItem::makeBanner(color, NULL));
+        BannerBlockEntity::addTags(banner, color->getItemData(), NULL);
+        if (pattern != NULL)
+            BannerBlockEntity::fjAddPatternToItem(banner, pattern, DyeColor::BLACK);
+        ADD(banner);
+    }
     void FIREWORK(unsigned char type, int colour, int flight, bool flicker, bool trail, int fadeColour);
-    void POTION(Item* item, Potion* potion);
+    void POTION(Item* item, Potion* potion)
+    {
+        class PotionItemBuilder : public ItemInstanceClonerBuilder
+        {
+        public:
+            PotionItemBuilder(const ItemInstance& item, Potion* potion)
+                : ItemInstanceClonerBuilder(item), mPotion(potion)
+            {
+            }
+
+            virtual not_null_ptr<ItemInstance> build() const
+            {
+                not_null_ptr<ItemInstance> copy = mItem.copy();
+                return PotionUtils::setPotion(copy, mPotion);
+            }
+
+        private:
+            Potion* mPotion;
+        };
+
+        mItems->push_back(new PotionItemBuilder(ItemInstance(item), potion));
+    }
 
     void DEBUG_SPAWN_EGG(const std::wstring& entityId, const std::wstring& debugTag)
     {

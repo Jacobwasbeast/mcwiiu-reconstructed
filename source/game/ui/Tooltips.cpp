@@ -38,6 +38,9 @@
 namespace
 {
 const int kTooltipsPerPlayer = 25;
+const unsigned int kTooltipMapVote = 0x1a66548e;
+const unsigned int kTooltipVote = 0x44c3150d;
+const unsigned int kTooltipLaunch = 0x568a07be;
 int gTooltips[4 * kTooltipsPerPlayer + EControllerActions_LookBehind + 1];
 unsigned char gTooltipsDirty[4];
 }
@@ -80,7 +83,12 @@ void Tooltips::SetInteractTooltips(boost::shared_ptr<MultiplayerLocalPlayer> pla
     };
     const int playerId = player->mUserIndex;
 
-    if (gApp.GetGameHostOption(eGameHostOption_MiniGame) == 0)
+    if (gApp.GetGameHostOption(eGameHostOption_MiniGame) != 0)
+    {
+        ResetTooltip(playerId, EControllerActions_Crafting);
+        ResetTooltip(playerId, EControllerActions_PickBlock);
+    }
+    else
     {
         OverwriteTooltip(playerId, EControllerActions_Crafting,
                          player->mAbilities.mInstabuild ? IDS_TOOLTIPS_CREATIVE : IDS_CONTROLS_CRAFTING);
@@ -88,11 +96,6 @@ void Tooltips::SetInteractTooltips(boost::shared_ptr<MultiplayerLocalPlayer> pla
             OverwriteTooltip(playerId, EControllerActions_PickBlock, IDS_CONTROLS_PICKBLOCK);
         else
             ResetTooltip(playerId, EControllerActions_PickBlock);
-    }
-    else
-    {
-        ResetTooltip(playerId, EControllerActions_Crafting);
-        ResetTooltip(playerId, EControllerActions_PickBlock);
     }
 
     if (player->isUnderLiquid(Material::WATER) && !player->isPassenger())
@@ -110,11 +113,19 @@ void Tooltips::SetInteractTooltips(boost::shared_ptr<MultiplayerLocalPlayer> pla
     if (player->isPassenger())
     {
         boost::shared_ptr<Entity> vehicle = player->getVehicle();
-        if ((vehicle->GetType() & EntityType::MINECART) == EntityType::MINECART ||
-            vehicle->GetType() == EntityType::BOAT)
+        const bool isMinecart = (vehicle->GetType() & EntityType::MINECART) == EntityType::MINECART;
+        if (isMinecart)
+        {
             OverwriteTooltip(playerId, EControllerActions_Sneak, static_cast<int>(IDS_TOOLTIPS_EXIT));
+        }
         else
-            OverwriteTooltip(playerId, EControllerActions_Sneak, static_cast<int>(IDS_TOOLTIPS_DISMOUNT));
+        {
+            const bool isBoat = vehicle->GetType() == EntityType::BOAT;
+            if (isBoat)
+                OverwriteTooltip(playerId, EControllerActions_Sneak, static_cast<int>(IDS_TOOLTIPS_EXIT));
+            else
+                OverwriteTooltip(playerId, EControllerActions_Sneak, static_cast<int>(IDS_TOOLTIPS_DISMOUNT));
+        }
     }
     else
     {
@@ -122,16 +133,87 @@ void Tooltips::SetInteractTooltips(boost::shared_ptr<MultiplayerLocalPlayer> pla
     }
 
     not_null_ptr<ItemInstance> item = player->getMainHandItem();
-    if (hitResult == NULL)
+    if (hitResult != NULL)
     {
-        if (!item->isEmpty())
+        switch (hitResult->mType)
         {
-            uint32_t allowed = player->isAllowedToUse(item);
-            if (allowed != 0)
+        case HitResult::BLOCK:
+        {
+            BlockPos pos = hitResult->getBlockPos();
+            const Direction* face = hitResult->mDirection;
+            const BlockState* state = level->getBlockState(pos);
+            Block* block = state->getBlock();
+
+            const bool useBlock = !player->isSneaking() && player->isAllowedToUse(block);
+            const bool useItemOnBlock =
+                player->isSneaking() && player->isAllowedToUse(block) && item->isEmpty();
+            const bool canPlace = pos.y < level->getMaxBuildHeight() - 1 ||
+                                  (face != Direction::UP && pos.y < level->getMaxBuildHeight());
+            const bool canDestroy = Minecraft::GetInstance()->mGameModes[playerId]->MayDestroy(pos) &&
+                                    player->isAllowedToMine();
+
+            BlockTooltipDataHolder blockData(player, level, item, state, pos, interactionResult, useBlock,
+                                             useItemOnBlock, canDestroy, canPlace);
+            int interactTooltip = static_cast<int>(block->GetInteractTooltip(blockData));
+            if (interactTooltip == -1 && !item->isEmpty())
+            {
+                ItemTooltipDataHolder itemData(player, item, level, interactionResult);
+                interactTooltip = static_cast<int>(item->getItem()->GetUseTooltip(itemData));
+            }
+            OverwriteTooltip(playerId, EControllerActions_Use, interactTooltip);
+            OverwriteTooltip(playerId, EControllerActions_Action,
+                             static_cast<int>(block->GetHitTooltip(blockData)));
+            break;
+        }
+        case HitResult::ENTITY:
+        {
+            EntityTooltipDataHolder entityData(player, item,
+                                               player->isAllowedToHurtEntity(hitResult->mEntity),
+                                               player->isAllowedToInteract(hitResult->mEntity));
+            int interactTooltip = static_cast<int>(hitResult->mEntity->GetInteractTooltip(entityData));
+            if (interactTooltip == -1 && !item->isEmpty() && !hitResult->mEntity->HideUseTooltips())
+            {
+                ItemTooltipDataHolder itemData(player, item, level, interactionResult);
+                interactTooltip = static_cast<int>(item->getItem()->GetUseTooltip(itemData));
+            }
+            OverwriteTooltip(playerId, EControllerActions_Use, interactTooltip);
+            OverwriteTooltip(playerId, EControllerActions_Action,
+                             static_cast<int>(hitResult->mEntity->GetHitTooltip(entityData)));
+            break;
+        }
+        case HitResult::MISS:
+            if (item->isEmpty())
+            {
+                ResetTooltip(playerId, EControllerActions_Use);
+                ResetTooltip(playerId, EControllerActions_Action);
+            }
+            else
             {
                 ItemTooltipDataHolder itemData(player, item, level, interactionResult);
                 OverwriteTooltip(playerId, EControllerActions_Use,
                                  item->getItem()->GetUseTooltip(itemData));
+                ResetTooltip(playerId, EControllerActions_Action);
+            }
+            break;
+        }
+    }
+    else
+    {
+        if (item->isEmpty())
+        {
+            ResetTooltip(playerId, EControllerActions_Use);
+            ResetTooltip(playerId, EControllerActions_Action);
+        }
+        else
+        {
+            uint32_t allowed = player->isAllowedToUse(item);
+            if (allowed != 0)
+            {
+                {
+                    ItemTooltipDataHolder itemData(player, item, level, interactionResult);
+                    OverwriteTooltip(playerId, EControllerActions_Use,
+                                     item->getItem()->GetUseTooltip(itemData));
+                }
                 ResetTooltip(playerId, EControllerActions_Action);
             }
             else
@@ -140,74 +222,12 @@ void Tooltips::SetInteractTooltips(boost::shared_ptr<MultiplayerLocalPlayer> pla
                 ResetTooltip(playerId, EControllerActions_Action);
             }
         }
-        else
-        {
-            ResetTooltip(playerId, EControllerActions_Use);
-            ResetTooltip(playerId, EControllerActions_Action);
-        }
-    }
-    else if (hitResult->mType == HitResult::MISS)
-    {
-        if (!item->isEmpty())
-        {
-            ItemTooltipDataHolder itemData(player, item, level, interactionResult);
-            OverwriteTooltip(playerId, EControllerActions_Use,
-                             item->getItem()->GetUseTooltip(itemData));
-            ResetTooltip(playerId, EControllerActions_Action);
-        }
-        else
-        {
-            ResetTooltip(playerId, EControllerActions_Use);
-            ResetTooltip(playerId, EControllerActions_Action);
-        }
-    }
-    else if (hitResult->mType == HitResult::BLOCK)
-    {
-        BlockPos pos = hitResult->getBlockPos();
-        const Direction* face = hitResult->mDirection;
-        const BlockState* state = level->getBlockState(pos);
-        Block* block = state->getBlock();
-
-        const bool useBlock = !player->isSneaking() && player->isAllowedToUse(block);
-        const bool useItemOnBlock = player->isSneaking() && player->isAllowedToUse(block) && item->isEmpty();
-        bool canPlace = true;
-        if (level->getMaxBuildHeight() - 1 <= pos.y &&
-            (face == Direction::UP || level->getMaxBuildHeight() <= pos.y))
-            canPlace = false;
-        const bool canDestroy = Minecraft::GetInstance()->mGameModes[playerId]->MayDestroy(pos) &&
-                                player->isAllowedToMine();
-
-        BlockTooltipDataHolder blockData(player, level, item, state, pos, interactionResult, useBlock,
-                                         useItemOnBlock, canDestroy, canPlace);
-        int interactTooltip = static_cast<int>(block->GetInteractTooltip(blockData));
-        if (interactTooltip == -1 && !item->isEmpty())
-        {
-            ItemTooltipDataHolder itemData(player, item, level, interactionResult);
-            interactTooltip = static_cast<int>(item->getItem()->GetUseTooltip(itemData));
-        }
-        OverwriteTooltip(playerId, EControllerActions_Use, interactTooltip);
-        OverwriteTooltip(playerId, EControllerActions_Action,
-                         static_cast<int>(block->GetHitTooltip(blockData)));
-    }
-    else if (hitResult->mType == HitResult::ENTITY)
-    {
-        EntityTooltipDataHolder entityData(player, item, player->isAllowedToHurtEntity(hitResult->mEntity) != 0,
-                                           player->isAllowedToInteract(hitResult->mEntity));
-        int interactTooltip = static_cast<int>(hitResult->mEntity->GetInteractTooltip(entityData));
-        if (interactTooltip == -1 && !item->isEmpty() && !hitResult->mEntity->HideUseTooltips())
-        {
-            ItemTooltipDataHolder itemData(player, item, level, interactionResult);
-            interactTooltip = static_cast<int>(item->getItem()->GetUseTooltip(itemData));
-        }
-        OverwriteTooltip(playerId, EControllerActions_Use, interactTooltip);
-        OverwriteTooltip(playerId, EControllerActions_Action,
-                         static_cast<int>(hitResult->mEntity->GetHitTooltip(entityData)));
     }
 
     boost::unordered_map<int, int> extraTooltips(0xb);
     if (gApp.GetGameHostOption(eGameHostOption_MiniGame) != 0)
     {
-        const int primaryPad = gProfile->GetPrimaryPad();
+        const bool isPrimaryPad = gProfile->GetPrimaryPad() == playerId;
         Minecraft* minecraft = Minecraft::GetInstance();
         ClientMasterGameMode* gameMode = minecraft->GetClientMasterGameMode();
         if (player->GetGameType() == GameType::LOBBY)
@@ -217,40 +237,40 @@ void Tooltips::SetInteractTooltips(boost::shared_ptr<MultiplayerLocalPlayer> pla
 
             std::vector<ClientMasterGameMode::MapSelectInfo> playlist;
             gameMode->GetUniquePlaylist(playlist);
-            if (playlist.size() < 2)
+            if (playlist.size() > 1)
             {
-                if (!Minecraft::InMiniGame(eMiniGameId_Battle, true) &&
-                    minecraft->GetMiniGame()->HasMultipleVariants())
+                if (CGameNetworkManager::sInstance.IsInPublicJoinableGame())
                 {
-                    if (CGameNetworkManager::sInstance.IsInPublicJoinableGame())
-                    {
-                        if (minecraft->GetMiniGame()->HostOption_Bool(eCustomGameModeHostOption_EnableVoting))
-                            extraTooltips[0x35] = 0x44c3150d;
-                    }
-                    else if (primaryPad == playerId && CGameNetworkManager::sInstance.IsHost() &&
-                             minecraft != NULL &&
-                             minecraft->mLocalPlayers[playerId]->GetGameType() == GameType::LOBBY &&
-                             minecraft->GetMiniGame()->HostOption_Bool(eCustomGameModeHostOption_EnableVoting))
-                    {
-                        extraTooltips[0x35] = IDS_MG_SELECT_VARIANT;
-                    }
+                    extraTooltips[0x35] = kTooltipMapVote;
+                }
+                else if (isPrimaryPad && CGameNetworkManager::sInstance.IsHost() &&
+                         minecraft != NULL && minecraft->mLocalPlayers[playerId]->GetGameType() == GameType::LOBBY)
+                {
+                    extraTooltips[0x35] = IDS_MG_SELECT_MAP;
                 }
             }
-            else if (CGameNetworkManager::sInstance.IsInPublicJoinableGame())
+            else if (!Minecraft::InMiniGame(eMiniGameId_Battle, true) &&
+                     minecraft->GetMiniGame()->HasMultipleVariants())
             {
-                extraTooltips[0x35] = 0x1a66548e;
-            }
-            else if (primaryPad == playerId && CGameNetworkManager::sInstance.IsHost() && minecraft != NULL &&
-                     minecraft->mLocalPlayers[playerId]->GetGameType() == GameType::LOBBY)
-            {
-                extraTooltips[0x35] = IDS_MG_SELECT_MAP;
+                if (CGameNetworkManager::sInstance.IsInPublicJoinableGame())
+                {
+                    if (minecraft->GetMiniGame()->HostOption_Bool(eCustomGameModeHostOption_EnableVoting))
+                        extraTooltips[0x35] = kTooltipVote;
+                }
+                else if (isPrimaryPad && CGameNetworkManager::sInstance.IsHost() &&
+                         minecraft != NULL &&
+                         minecraft->mLocalPlayers[playerId]->GetGameType() == GameType::LOBBY &&
+                         minecraft->GetMiniGame()->HostOption_Bool(eCustomGameModeHostOption_EnableVoting))
+                {
+                    extraTooltips[0x35] = static_cast<int>(IDS_MG_SELECT_VARIANT);
+                }
             }
         }
 
         if (Minecraft::InMiniGame(eMiniGameId_Tumble, false))
         {
             if (item->getItem() == Items::fireworks)
-                OverwriteTooltip(playerId, EControllerActions_Use, 0x568a07be);
+                OverwriteTooltip(playerId, EControllerActions_Use, kTooltipLaunch);
         }
         else if (Minecraft::InMiniGame(eMiniGameId_Glide, false))
         {
@@ -261,9 +281,9 @@ void Tooltips::SetInteractTooltips(boost::shared_ptr<MultiplayerLocalPlayer> pla
             ClientScoreboard* scoreboard = player->GetLevel()->GetClientScoreboard();
             for (int i = 0; i < 4; ++i)
             {
-                const boost::shared_ptr<MultiplayerLocalPlayer>& localPlayer = minecraft->mLocalPlayers[i];
-                if (localPlayer != NULL &&
-                    (!localPlayer->isSpectator() || scoreboard->GetEndZoneEntered(localPlayer->getSUID(), -1)))
+                if (minecraft->mLocalPlayers[i] != NULL &&
+                    (!minecraft->mLocalPlayers[i]->isSpectator() ||
+                     scoreboard->GetEndZoneEntered(minecraft->mLocalPlayers[i]->getSUID(), -1)))
                     ++activePlayers;
             }
             if (activePlayers == 1 && !player->isSpectator())
@@ -291,8 +311,12 @@ void Tooltips::SetInteractTooltips(boost::shared_ptr<MultiplayerLocalPlayer> pla
 
     boost::shared_ptr<Entity> vehicle = player->getVehicle();
     bool tamedOrNotHorse = true;
-    if (vehicle != NULL && (vehicle->GetType() & EntityType::ABSTRACT_HORSE) == EntityType::ABSTRACT_HORSE)
-        tamedOrNotHorse = boost::static_pointer_cast<AbstractHorse>(vehicle)->isTamed();
+    if (vehicle != NULL)
+    {
+        const bool isHorse = (vehicle->GetType() & EntityType::ABSTRACT_HORSE) == EntityType::ABSTRACT_HORSE;
+        if (isHorse)
+            tamedOrNotHorse = boost::static_pointer_cast<AbstractHorse>(vehicle)->isTamed();
+    }
     if (!tamedOrNotHorse)
     {
         ResetTooltip(playerId, EControllerActions_Inventory);

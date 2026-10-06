@@ -27,6 +27,7 @@
 #include "game/item/FireworksRecipe.hpp"
 #include "game/item/Inventory.hpp"
 #include "game/item/Item.hpp"
+#include "game/item/ItemId.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
 #include "game/item/Recipe.hpp"
@@ -36,6 +37,7 @@
 #include "game/world/biome/arrayWithLength.hpp"
 #include "game/world/block/BannerBlockEntity.hpp"
 #include "game/world/block/Block.hpp"
+#include "game/world/block/BlockId.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/ShulkerBoxBlock.hpp"
 #include "game/world/generation/MultiPlayerGameMode.hpp"
@@ -460,138 +462,161 @@ void IUIScene_CraftingMenu::DisplayCustomRecipeIngredients(int recipe)
             int gridIndex = x + y * 3;
             int slot = x + y * gridSize;
             int gridEntry = required.craftingGrid[gridIndex];
-            if (gridEntry == 0)
+            if (gridEntry != 0)
             {
-                if (std::find(m_customIngredientSlots.begin(), m_customIngredientSlots.end(), slot)
-                    == m_customIngredientSlots.end())
+                not_null_ptr<ItemInstance> item = ItemInstance::EMPTY;
+                if (!GameSettings::IsDebugSettingEnabled(static_cast<eDebugSetting>(14), -1))
+                {
+                    if ((required.missingSlotMask[getPad()] & (1 << gridIndex)) != 0)
+                    {
+                        setIngredientSlotRedBox(slot, true);
+                        m_customRecipeValid = false;
+                    }
+                    else
+                    {
+                        setIngredientSlotRedBox(slot, false);
+                    }
+                }
+                else
+                {
+                    setIngredientSlotRedBox(slot, false);
+                }
+
+                unsigned int itemId = gridEntry & 0xffffff;
+                int blockId = 0;
+                if (m_currentTab == 2)
+                {
+                    if (resultItem->getItem() == Items::fireworkCharge && m_customIngredientSlots.empty())
+                    {
+                        if (itemId == ItemId::DYE)
+                        {
+                            if (m_currentGroup == 0 || m_currentGroup == 1)
+                            {
+                                bool enabled = false;
+                                item = GetBaseItemSlot(0, m_customRecipeSlots[m_currentGroup != 0 ? 1 : 0], enabled);
+                                setIngredientSlotRedBox(slot, !enabled);
+                                m_customRecipeValid = enabled;
+                            }
+                        }
+                        else if (itemId == ItemId::FIREWORK_CHARGE && !m_recipeIngredients.empty()
+                                 && (m_currentGroup == 1 || m_currentGroup == 2))
+                        {
+                            item = m_recipeIngredients[m_customRecipeSlots[m_currentGroup != 1 ? 1 : 0]];
+                            item->setCount(1);
+                        }
+                    }
+                }
+                else if (m_currentTab == 3 && m_customIngredientSlots.empty())
+                {
+                    if (!m_recipeIngredients.empty())
+                    {
+                        Block* block = Block::byItem(m_recipeIngredients[m_customRecipeSlots[0]]->getItem());
+                        blockId = Block::getId(block);
+                        if (blockId >= BlockId::WHITE_SHULKER_BOX && blockId <= BlockId::BLACK_SHULKER_BOX)
+                            baseColour = static_cast<ShulkerBoxBlock*>(block)->getDyeColor()->getBlockData();
+                    }
+
+                    bool useBaseItem = false;
+                    if (itemId == ItemId::BED)
+                    {
+                        if (!m_recipeIngredients.empty())
+                            baseColour = m_recipeIngredients[m_customRecipeSlots[0]]->getAuxValue();
+                        useBaseItem = true;
+                    }
+                    else if (itemId == ItemId::DYE)
+                    {
+                        bool enabled = false;
+                        item = GetBaseItemSlot(0, m_customRecipeSlots[1], enabled);
+                        dyeColour = DyeColor::byItemData(item->getAuxValue())->getBlockData();
+                        setIngredientSlotRedBox(slot, !enabled);
+                        m_customRecipeValid = m_customRecipeValid && enabled;
+                        dyeSlot = slot;
+                    }
+                    else if ((itemId >= ItemId::LEATHER_HELMET && itemId <= ItemId::LEATHER_BOOTS)
+                             || (blockId >= BlockId::WHITE_SHULKER_BOX && blockId <= BlockId::BLACK_SHULKER_BOX)
+                             || itemId == ItemId::LEATHER_HORSE_ARMOR)
+                    {
+                        useBaseItem = true;
+                    }
+
+                    if (useBaseItem && !m_recipeIngredients.empty() && (m_currentGroup == 0 || m_currentGroup == 1))
+                    {
+                        item = m_recipeIngredients[m_customRecipeSlots[0]];
+                        item->setCount(1);
+                    }
+                }
+
+                if (item->isEmpty())
+                {
+                    if (m_customIngredientSlots.empty())
+                        item = not_null_ptr<ItemInstance>(
+                            new ItemInstance(Item::byId(itemId), 1, static_cast<unsigned int>(gridEntry) >> 24));
+                    else
+                        item = m_customGridItems[slot];
+                }
+                m_customGridItems[slot] = item;
+                setIngredientSlotItem(getPad(), slot, item);
+                m_craftingContainer->setItem(slot, item);
+            }
+            else
+            {
+                bool isIngredientSlot = false;
+                for (unsigned int i = 0; i < m_customIngredientSlots.size(); ++i)
+                {
+                    if (m_customIngredientSlots[i] == slot)
+                    {
+                        isIngredientSlot = true;
+                        break;
+                    }
+                }
+
+                if (isIngredientSlot)
+                {
+                    not_null_ptr<ItemInstance> item = ItemInstance::EMPTY;
+                    bool enabled = false;
+                    not_null_ptr<ItemInstance> spinnerItem =
+                        GetSpinnerSlot(m_horizontalSlot, m_customRecipeSlots[m_horizontalSlot], enabled);
+                    if (m_customIngredientSlots.back() == slot && !spinnerItem->isEmpty())
+                    {
+                        bool valid = true;
+                        if (!spinnerItem->isEmpty())
+                        {
+                            item = spinnerItem->copy();
+                            item->setCount(1);
+                            valid = isValidCustomRecipeIngredient(slot, item);
+                        }
+
+                        if (valid)
+                        {
+                            setIngredientSlotRedBox(slot, !enabled);
+                            m_customRecipeValid = enabled;
+                            m_customGridItems[slot] = item;
+                            setIngredientSlotItem(getPad(), slot, item);
+                        }
+                        else
+                        {
+                            enabled = false;
+                            setIngredientSlotRedBox(slot, true);
+                            m_customRecipeValid = enabled;
+                            m_customGridItems[slot] = item;
+                            setIngredientSlotItem(getPad(), slot, item);
+                            item = ItemInstance::EMPTY;
+                        }
+                    }
+                    else
+                    {
+                        item = m_customGridItems[slot];
+                        setIngredientSlotItem(getPad(), slot, item);
+                    }
+                    m_craftingContainer->setItem(slot, item);
+                }
+                else
                 {
                     setIngredientSlotRedBox(slot, false);
                     setIngredientSlotItem(getPad(), slot, ItemInstance::EMPTY);
                     m_craftingContainer->setItem(slot, ItemInstance::EMPTY);
-                    continue;
-                }
-
-                not_null_ptr<ItemInstance> item = ItemInstance::EMPTY;
-                bool enabled = false;
-                not_null_ptr<ItemInstance> spinnerItem =
-                    GetSpinnerSlot(m_horizontalSlot, m_customRecipeSlots[m_horizontalSlot], enabled);
-                if (m_customIngredientSlots.back() == slot && !spinnerItem->isEmpty())
-                {
-                    item = spinnerItem->copy();
-                    item->setCount(1);
-                    if (isValidCustomRecipeIngredient(slot, item))
-                    {
-                        setIngredientSlotRedBox(slot, !enabled);
-                        m_customRecipeValid = enabled;
-                        m_customGridItems[slot] = item;
-                        setIngredientSlotItem(getPad(), slot, item);
-                    }
-                    else
-                    {
-                        enabled = false;
-                        setIngredientSlotRedBox(slot, true);
-                        m_customRecipeValid = enabled;
-                        m_customGridItems[slot] = item;
-                        setIngredientSlotItem(getPad(), slot, item);
-                        item = ItemInstance::EMPTY;
-                    }
-                }
-                else
-                {
-                    item = m_customGridItems[slot];
-                    setIngredientSlotItem(getPad(), slot, item);
-                }
-                m_craftingContainer->setItem(slot, item);
-                continue;
-            }
-
-            not_null_ptr<ItemInstance> item = ItemInstance::EMPTY;
-            if (!GameSettings::IsDebugSettingEnabled(static_cast<eDebugSetting>(14), -1)
-                && (required.missingSlotMask[getPad()] & (1 << gridIndex)) != 0)
-            {
-                setIngredientSlotRedBox(slot, true);
-                m_customRecipeValid = false;
-            }
-            else
-            {
-                setIngredientSlotRedBox(slot, false);
-            }
-
-            unsigned int itemId = gridEntry & 0xffffff;
-            int blockId = 0;
-            if (m_currentTab == 2)
-            {
-                if (resultItem->getItem() == Items::fireworkCharge && m_customIngredientSlots.empty())
-                {
-                    if (itemId == static_cast<unsigned int>(Item::getId(Items::dye)))
-                    {
-                        if (m_currentGroup == 0 || m_currentGroup == 1)
-                        {
-                            bool enabled = false;
-                            item = GetBaseItemSlot(0, m_customRecipeSlots[m_currentGroup != 0 ? 1 : 0], enabled);
-                            setIngredientSlotRedBox(slot, !enabled);
-                            m_customRecipeValid = enabled;
-                        }
-                    }
-                    else if (itemId == static_cast<unsigned int>(Item::getId(Items::fireworkCharge))
-                             && !m_recipeIngredients.empty() && (m_currentGroup == 1 || m_currentGroup == 2))
-                    {
-                        item = m_recipeIngredients[m_customRecipeSlots[m_currentGroup != 1 ? 1 : 0]];
-                        item->setCount(1);
-                    }
                 }
             }
-            else if (m_currentTab == 3 && m_customIngredientSlots.empty())
-            {
-                if (!m_recipeIngredients.empty())
-                {
-                    Block* block = Block::byItem(m_recipeIngredients[m_customRecipeSlots[0]]->getItem());
-                    blockId = Block::getId(block);
-                    if (static_cast<unsigned int>(blockId - Block::getId(Blocks::white_shulker_box)) < 16)
-                        baseColour = static_cast<ShulkerBoxBlock*>(block)->getDyeColor()->getBlockData();
-                }
-
-                bool useBaseItem = false;
-                if (itemId == static_cast<unsigned int>(Item::getId(Items::bed)))
-                {
-                    if (!m_recipeIngredients.empty())
-                        baseColour = m_recipeIngredients[m_customRecipeSlots[0]]->getAuxValue();
-                    useBaseItem = true;
-                }
-                else if (itemId == static_cast<unsigned int>(Item::getId(Items::dye)))
-                {
-                    bool enabled = false;
-                    item = GetBaseItemSlot(0, m_customRecipeSlots[1], enabled);
-                    dyeColour = DyeColor::byItemData(item->getAuxValue())->getBlockData();
-                    setIngredientSlotRedBox(slot, !enabled);
-                    m_customRecipeValid = m_customRecipeValid && enabled;
-                    dyeSlot = slot;
-                }
-                else if (itemId - Item::getId(Items::leatherHelmet) < 4
-                         || static_cast<unsigned int>(blockId - Block::getId(Blocks::white_shulker_box)) < 16
-                         || itemId == static_cast<unsigned int>(Item::getId(Items::leatherHorseArmor)))
-                {
-                    useBaseItem = true;
-                }
-
-                if (useBaseItem && !m_recipeIngredients.empty() && (m_currentGroup == 0 || m_currentGroup == 1))
-                {
-                    item = m_recipeIngredients[m_customRecipeSlots[0]];
-                    item->setCount(1);
-                }
-            }
-
-            if (item->isEmpty())
-            {
-                if (m_customIngredientSlots.empty())
-                    item = not_null_ptr<ItemInstance>(
-                        new ItemInstance(Item::byId(itemId), 1, static_cast<unsigned int>(gridEntry) >> 24));
-                else
-                    item = m_customGridItems[slot];
-            }
-            m_customGridItems[slot] = item;
-            setIngredientSlotItem(getPad(), slot, item);
-            m_craftingContainer->setItem(slot, item);
         }
     }
 
@@ -1873,26 +1898,25 @@ void IUIScene_CraftingMenu::refreshBaseItemSlots(not_null_ptr<ItemInstance> item
     m_baseItemSlots.clear();
     m_duplicateItemSlots.clear();
     m_availableRecipes.clear();
-    NonNullList<not_null_ptr<ItemInstance> >& inventory = m_player->mInventory->m_items;
 
     if (m_currentTab == 1)
     {
-        for (unsigned int slot = 0; slot < inventory.size(); ++slot)
+        for (unsigned int slot = 0; slot < m_player->mInventory->m_items.size(); ++slot)
         {
-            if (inventory[slot]->getItem() != Items::banner)
+            if (m_player->mInventory->m_items[slot]->getItem() != Items::banner)
                 continue;
 
-            if (BannerBlockEntity::getPatternCount(inventory[slot]) < 6)
+            if (BannerBlockEntity::getPatternCount(m_player->mInventory->m_items[slot]) < 6)
                 m_baseItemSlots.push_back(slot);
-            if (BannerBlockEntity::getPatternCount(inventory[slot]) > 0)
+            if (BannerBlockEntity::getPatternCount(m_player->mInventory->m_items[slot]) > 0)
             {
-                const DyeColor* baseColor = BannerBlockEntity::getBaseColor(inventory[slot]);
+                const DyeColor* baseColor = BannerBlockEntity::getBaseColor(m_player->mInventory->m_items[slot]);
                 bool hasBlankBanner = false;
-                for (unsigned int other = 0; other < inventory.size(); ++other)
+                for (unsigned int other = 0; other < m_player->mInventory->m_items.size(); ++other)
                 {
-                    if (other != slot && inventory[other]->getItem() == Items::banner
-                        && BannerBlockEntity::getPatternCount(inventory[other]) < 1
-                        && BannerBlockEntity::getBaseColor(inventory[other]) == baseColor)
+                    if (other != slot && m_player->mInventory->m_items[other]->getItem() == Items::banner
+                        && BannerBlockEntity::getPatternCount(m_player->mInventory->m_items[other]) < 1
+                        && BannerBlockEntity::getBaseColor(m_player->mInventory->m_items[other]) == baseColor)
                     {
                         hasBlankBanner = true;
                         break;
@@ -1904,43 +1928,26 @@ void IUIScene_CraftingMenu::refreshBaseItemSlots(not_null_ptr<ItemInstance> item
         return;
     }
 
-    if (m_currentTab == 3)
+    if (m_currentTab == 2)
     {
-        not_null_ptr<ItemInstance> dye = ItemInstance::EMPTY;
+        not_null_ptr<ItemInstance> choice = ItemInstance::EMPTY;
         not_null_ptr<ItemInstance> selected = ItemInstance::EMPTY;
-        if ((m_currentGroup == 0 || m_currentGroup == 1) && !m_recipeIngredients.empty())
+        if ((m_currentGroup == 1 || m_currentGroup == 2) && !m_recipeIngredients.empty())
             selected = item;
 
-        m_customRecipeIngredients.clear();
+        m_customRecipes[0].clear();
+        m_customRecipes[1].clear();
+        m_customRecipes[2].clear();
         m_recipeIngredients.clear();
-        not_null_ptr<ItemInstance> ingredient(ItemInstance::EMPTY);
-        not_null_ptr<ItemInstance> existing(ItemInstance::EMPTY);
-        for (unsigned int slot = 0; slot < inventory.size(); ++slot)
+
+        not_null_ptr<ItemInstance> ingredient = ItemInstance::EMPTY;
+        not_null_ptr<ItemInstance> existing = ItemInstance::EMPTY;
+        for (unsigned int slot = 0; slot < m_player->mInventory->m_items.size(); ++slot)
         {
-            bool dyeable = false;
-            if (m_currentGroup == 0)
-            {
-                Item* armor = inventory[slot]->getItem();
-                dyeable = armor == Items::leatherHelmet || armor == Items::leatherChestplate
-                          || armor == Items::leatherLeggings || armor == Items::leatherBoots
-                          || armor == Items::leatherHorseArmor;
-            }
-            else if (m_currentGroup == 1)
-            {
-                if (inventory[slot]->getItem() == Items::bed)
-                {
-                    dyeable = true;
-                }
-                else
-                {
-                    Block* block = Block::byItem(inventory[slot]->getItem());
-                    dyeable = block != NULL && dynamic_cast<ShulkerBoxBlock*>(block) != NULL;
-                }
-            }
-            if (!dyeable)
+            if (m_player->mInventory->m_items[slot]->getItem() != Items::fireworkCharge)
                 continue;
 
-            ingredient = inventory[slot]->copy();
+            ingredient = m_player->mInventory->m_items[slot]->copy();
             ingredient->setCount(1);
             bool alreadyListed = false;
             for (unsigned int index = 0; index < m_recipeIngredients.size(); ++index)
@@ -1956,6 +1963,158 @@ void IUIScene_CraftingMenu::refreshBaseItemSlots(not_null_ptr<ItemInstance> item
             }
             if (!alreadyListed)
                 m_recipeIngredients.push_back(ingredient);
+        }
+
+        if (m_currentGroup == 1 || m_currentGroup == 2)
+        {
+            int& customSlot = m_customRecipeSlots[m_currentGroup != 1 ? 1 : 0];
+            bool found = false;
+            if (!selected->isEmpty())
+            {
+                for (unsigned int index = 0; index < m_recipeIngredients.size(); ++index)
+                {
+                    if (selected->sameItemWithTags(m_recipeIngredients[index], NULL))
+                    {
+                        customSlot = index;
+                        if ((m_currentGroup == 1 && m_horizontalSlot == 0) || (m_currentGroup == 2 && m_horizontalSlot == 1))
+                            m_verticalSlots[1] = index;
+                        found = true;
+                        break;
+                    }
+                }
+            }
+            if (!found && static_cast<unsigned int>(customSlot) >= m_recipeIngredients.size())
+            {
+                customSlot = m_recipeIngredients.empty() ? 0 : static_cast<int>(m_recipeIngredients.size()) - 1;
+                if ((m_currentGroup == 1 && m_horizontalSlot == 0) || (m_currentGroup == 2 && m_horizontalSlot == 1))
+                    m_verticalSlots[1] = customSlot;
+            }
+        }
+
+        for (std::vector<const DyeColor*>::iterator color = DyeColor::COLORS.begin(); color != DyeColor::COLORS.end(); ++color)
+        {
+            choice = not_null_ptr<ItemInstance>(new ItemInstance(Items::dye, 1, (*color)->getItemData()));
+            bool owned = false;
+            for (unsigned int slot = 0; slot < m_player->mInventory->m_items.size(); ++slot)
+            {
+                if (m_player->mInventory->m_items[slot]->getItem() == Items::dye && m_player->mInventory->m_items[slot]->getAuxValue() == (*color)->getItemData())
+                {
+                    owned = true;
+                    break;
+                }
+            }
+            m_customRecipes[0].push_back(std::make_pair(choice, owned));
+        }
+
+        std::vector<std::pair<Item*, int> > shapes;
+        shapes.push_back(std::pair<Item*, int>(Items::fireCharge, 0));
+        shapes.push_back(std::pair<Item*, int>(Items::goldNugget, 0));
+        shapes.push_back(std::pair<Item*, int>(Items::skull, 0));
+        shapes.push_back(std::pair<Item*, int>(Items::skull, 1));
+        shapes.push_back(std::pair<Item*, int>(Items::skull, 2));
+        shapes.push_back(std::pair<Item*, int>(Items::skull, 3));
+        shapes.push_back(std::pair<Item*, int>(Items::skull, 4));
+        shapes.push_back(std::pair<Item*, int>(Items::skull, 5));
+        shapes.push_back(std::pair<Item*, int>(Items::feather, 0));
+        for (unsigned int shape = 0; shape < shapes.size(); ++shape)
+        {
+            choice = not_null_ptr<ItemInstance>(new ItemInstance(shapes[shape].first, 1, shapes[shape].second));
+            bool owned = false;
+            for (unsigned int slot = 0; slot < m_player->mInventory->m_items.size(); ++slot)
+            {
+                if (m_player->mInventory->m_items[slot]->getItem() == shapes[shape].first
+                    && m_player->mInventory->m_items[slot]->getAuxValue() == shapes[shape].second)
+                {
+                    owned = true;
+                    break;
+                }
+            }
+            m_customRecipes[1].push_back(std::make_pair(choice, owned));
+        }
+
+        std::vector<Item*> effects;
+        effects.push_back(Items::glowstoneDust);
+        effects.push_back(Items::diamond);
+        for (unsigned int effect = 0; effect < effects.size(); ++effect)
+        {
+            choice = not_null_ptr<ItemInstance>(new ItemInstance(effects[effect], 1));
+            bool owned = false;
+            for (unsigned int slot = 0; slot < m_player->mInventory->m_items.size(); ++slot)
+            {
+                if (m_player->mInventory->m_items[slot]->getItem() == effects[effect])
+                {
+                    owned = true;
+                    break;
+                }
+            }
+            m_customRecipes[2].push_back(std::make_pair(choice, owned));
+        }
+
+        m_hasGunpowder = false;
+        for (unsigned int slot = 0; slot < m_player->mInventory->m_items.size(); ++slot)
+        {
+            if (m_player->mInventory->m_items[slot]->getItem() == Items::gunpowder)
+            {
+                m_hasGunpowder = true;
+                break;
+            }
+        }
+    }
+
+    if (m_currentTab == 3)
+    {
+        not_null_ptr<ItemInstance> dye = ItemInstance::EMPTY;
+        not_null_ptr<ItemInstance> selected = ItemInstance::EMPTY;
+        if ((m_currentGroup == 0 || m_currentGroup == 1) && !m_recipeIngredients.empty())
+            selected = item;
+
+        m_customRecipeIngredients.clear();
+        m_recipeIngredients.clear();
+        not_null_ptr<ItemInstance> ingredient(ItemInstance::EMPTY);
+        not_null_ptr<ItemInstance> existing(ItemInstance::EMPTY);
+        for (unsigned int slot = 0; slot < m_player->mInventory->m_items.size(); ++slot)
+        {
+            not_null_ptr<ItemInstance> current = ItemInstance::EMPTY;
+            bool dyeable = false;
+            if (m_currentGroup == 0)
+            {
+                dyeable = m_player->mInventory->m_items[slot]->getItem() == Items::leatherHelmet
+                          || m_player->mInventory->m_items[slot]->getItem() == Items::leatherChestplate
+                          || m_player->mInventory->m_items[slot]->getItem() == Items::leatherLeggings
+                          || m_player->mInventory->m_items[slot]->getItem() == Items::leatherBoots
+                          || m_player->mInventory->m_items[slot]->getItem() == Items::leatherHorseArmor;
+            }
+            else if (m_currentGroup == 1)
+            {
+                if (m_player->mInventory->m_items[slot]->getItem() == Items::bed)
+                {
+                    dyeable = true;
+                }
+                else
+                {
+                    Block* block = Block::byItem(m_player->mInventory->m_items[slot]->getItem());
+                    dyeable = block != NULL && dynamic_cast<ShulkerBoxBlock*>(block) != NULL;
+                }
+            }
+            if (dyeable)
+            {
+                ingredient = m_player->mInventory->m_items[slot]->copy();
+                ingredient->setCount(1);
+                bool alreadyListed = false;
+                for (unsigned int index = 0; index < m_recipeIngredients.size(); ++index)
+                {
+                    if (index == slot)
+                        continue;
+                    existing = m_recipeIngredients[index];
+                    if (ingredient->sameItemWithTags(existing, NULL))
+                    {
+                        alreadyListed = true;
+                        break;
+                    }
+                }
+                if (!alreadyListed)
+                    m_recipeIngredients.push_back(ingredient);
+            }
         }
 
         if (m_currentGroup == 0 || m_currentGroup == 1)
@@ -1988,150 +2147,16 @@ void IUIScene_CraftingMenu::refreshBaseItemSlots(not_null_ptr<ItemInstance> item
         {
             dye = not_null_ptr<ItemInstance>(new ItemInstance(Items::dye, 1, (*color)->getItemData()));
             bool owned = false;
-            for (unsigned int slot = 0; slot < inventory.size(); ++slot)
+            for (unsigned int slot = 0; slot < m_player->mInventory->m_items.size(); ++slot)
             {
-                if (inventory[slot]->getItem() == Items::dye
-                    && inventory[slot]->getAuxValue() == (*color)->getItemData())
+                if (m_player->mInventory->m_items[slot]->getItem() == Items::dye
+                    && m_player->mInventory->m_items[slot]->getAuxValue() == (*color)->getItemData())
                 {
                     owned = true;
                     break;
                 }
             }
-            m_customRecipeIngredients.push_back(std::pair<not_null_ptr<ItemInstance>, bool>(dye, owned));
-        }
-        return;
-    }
-
-    if (m_currentTab != 2)
-        return;
-
-    not_null_ptr<ItemInstance> choice = ItemInstance::EMPTY;
-    not_null_ptr<ItemInstance> selected = ItemInstance::EMPTY;
-    if ((m_currentGroup == 1 || m_currentGroup == 2) && !m_recipeIngredients.empty())
-        selected = item;
-
-    m_customRecipes[0].clear();
-    m_customRecipes[1].clear();
-    m_customRecipes[2].clear();
-    m_recipeIngredients.clear();
-
-    not_null_ptr<ItemInstance> ingredient = ItemInstance::EMPTY;
-    not_null_ptr<ItemInstance> existing = ItemInstance::EMPTY;
-    for (unsigned int slot = 0; slot < inventory.size(); ++slot)
-    {
-        if (inventory[slot]->getItem() != Items::fireworkCharge)
-            continue;
-
-        ingredient = inventory[slot]->copy();
-        ingredient->setCount(1);
-        bool alreadyListed = false;
-        for (unsigned int index = 0; index < m_recipeIngredients.size(); ++index)
-        {
-            if (index == slot)
-                continue;
-            existing = m_recipeIngredients[index];
-            if (ingredient->sameItemWithTags(existing, NULL))
-            {
-                alreadyListed = true;
-                break;
-            }
-        }
-        if (!alreadyListed)
-            m_recipeIngredients.push_back(ingredient);
-    }
-
-    if (m_currentGroup == 1 || m_currentGroup == 2)
-    {
-        int& customSlot = m_customRecipeSlots[m_currentGroup != 1 ? 1 : 0];
-        bool found = false;
-        if (!selected->isEmpty())
-        {
-            for (unsigned int index = 0; index < m_recipeIngredients.size(); ++index)
-            {
-                if (selected->sameItemWithTags(m_recipeIngredients[index], NULL))
-                {
-                    customSlot = index;
-                    if ((m_currentGroup == 1 && m_horizontalSlot == 0) || (m_currentGroup == 2 && m_horizontalSlot == 1))
-                        m_verticalSlots[1] = index;
-                    found = true;
-                    break;
-                }
-            }
-        }
-        if (!found && static_cast<unsigned int>(customSlot) >= m_recipeIngredients.size())
-        {
-            customSlot = m_recipeIngredients.empty() ? 0 : static_cast<int>(m_recipeIngredients.size()) - 1;
-            if ((m_currentGroup == 1 && m_horizontalSlot == 0) || (m_currentGroup == 2 && m_horizontalSlot == 1))
-                m_verticalSlots[1] = customSlot;
-        }
-    }
-
-    for (std::vector<const DyeColor*>::iterator color = DyeColor::COLORS.begin(); color != DyeColor::COLORS.end(); ++color)
-    {
-        choice = not_null_ptr<ItemInstance>(new ItemInstance(Items::dye, 1, (*color)->getItemData()));
-        bool owned = false;
-        for (unsigned int slot = 0; slot < inventory.size(); ++slot)
-        {
-            if (inventory[slot]->getItem() == Items::dye && inventory[slot]->getAuxValue() == (*color)->getItemData())
-            {
-                owned = true;
-                break;
-            }
-        }
-        m_customRecipes[0].push_back(std::pair<not_null_ptr<ItemInstance>, bool>(choice, owned));
-    }
-
-    std::vector<std::pair<Item*, int> > shapes;
-    shapes.push_back(std::pair<Item*, int>(Items::fireCharge, 0));
-    shapes.push_back(std::pair<Item*, int>(Items::goldNugget, 0));
-    shapes.push_back(std::pair<Item*, int>(Items::skull, 0));
-    shapes.push_back(std::pair<Item*, int>(Items::skull, 1));
-    shapes.push_back(std::pair<Item*, int>(Items::skull, 2));
-    shapes.push_back(std::pair<Item*, int>(Items::skull, 3));
-    shapes.push_back(std::pair<Item*, int>(Items::skull, 4));
-    shapes.push_back(std::pair<Item*, int>(Items::skull, 5));
-    shapes.push_back(std::pair<Item*, int>(Items::feather, 0));
-    for (unsigned int shape = 0; shape < shapes.size(); ++shape)
-    {
-        choice = not_null_ptr<ItemInstance>(new ItemInstance(shapes[shape].first, 1, shapes[shape].second));
-        bool owned = false;
-        for (unsigned int slot = 0; slot < inventory.size(); ++slot)
-        {
-            if (inventory[slot]->getItem() == shapes[shape].first
-                && inventory[slot]->getAuxValue() == shapes[shape].second)
-            {
-                owned = true;
-                break;
-            }
-        }
-        m_customRecipes[1].push_back(std::pair<not_null_ptr<ItemInstance>, bool>(choice, owned));
-    }
-
-    std::vector<Item*> effects;
-    effects.push_back(Items::glowstoneDust);
-    effects.push_back(Items::diamond);
-    for (unsigned int effect = 0; effect < effects.size(); ++effect)
-    {
-        choice = not_null_ptr<ItemInstance>(new ItemInstance(effects[effect], 1));
-        bool owned = false;
-        for (unsigned int slot = 0; slot < inventory.size(); ++slot)
-        {
-            if (inventory[slot]->getItem() == effects[effect])
-            {
-                owned = true;
-                break;
-            }
-        }
-        m_customRecipes[2].push_back(std::pair<not_null_ptr<ItemInstance>, bool>(choice, owned));
-    }
-
-    m_hasGunpowder = false;
-    for (unsigned int slot = 0; slot < inventory.size(); ++slot)
-    {
-        if (inventory[slot]->getItem() == Items::gunpowder)
-        {
-            m_hasGunpowder = true;
-            break;
+            m_customRecipeIngredients.push_back(std::make_pair(dye, owned));
         }
     }
 }

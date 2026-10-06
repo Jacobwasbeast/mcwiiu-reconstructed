@@ -1072,10 +1072,7 @@ void UIScene_HUD::updateFrameTick()
 {
     const int pad = static_cast<int>(getPad());
     Minecraft* minecraft = Minecraft::GetInstance();
-    boost::shared_ptr<MultiplayerLocalPlayer> player = minecraft->mLocalPlayers[pad];
-    if (player == 0)
-        return;
-
+    boost::shared_ptr<MultiplayerLocalPlayer>& player = minecraft->mLocalPlayers[pad];
     MultiPlayerGameMode* gameMode = minecraft->mGameModes[pad];
     if (player->mViewport == 0)
         SetHudSize(static_cast<int>(GameSettings::GetGameSettings(pad, eGameSetting_HUDSize)));
@@ -1104,27 +1101,7 @@ void UIScene_HUD::updateFrameTick()
         ShowOffhandSlot(false);
     }
 
-    if (!player->isSpectator())
-    {
-        ShowCrosshair(player->GetThirdPersonView(false) == 0);
-        ShowQuickSelect(true);
-        if (gameMode == 0 || !gameMode->canHurtPlayer())
-        {
-            ShowHealth(false);
-            ShowFood(false);
-            ShowAir(false);
-            ShowArmour(false);
-            ShowExpBar(false);
-            SetHealthAbsorb(0);
-            renderVehicleHealth();
-        }
-        else
-        {
-            renderPlayerHealth();
-            renderVehicleHealth();
-        }
-    }
-    else
+    if (player->isSpectator())
     {
         ShowGameModePlayers(true);
         ShowQuickSelect(false);
@@ -1146,44 +1123,65 @@ void UIScene_HUD::updateFrameTick()
         SetRegenerationEffect(false);
         SetHealthAbsorb(0);
     }
-
-    if (!player->isRidingJumpable())
+    else
     {
-        if (gameMode == 0 || !gameMode->hasExperience())
+        ShowCrosshair(player->GetThirdPersonView(false) == 0);
+        const bool canHurt = gameMode->canHurtPlayer();
+        ShowQuickSelect(true);
+        if (canHurt)
         {
-            ShowExpBar(false);
-            SetExpLevel(0);
+            renderPlayerHealth();
+            renderVehicleHealth();
         }
         else
+        {
+            ShowHealth(false);
+            ShowFood(false);
+            ShowAir(false);
+            ShowArmour(false);
+            ShowExpBar(false);
+            SetHealthAbsorb(0);
+            renderVehicleHealth();
+        }
+    }
+
+    if (player->isRidingJumpable())
+    {
+        SetHorseJumpBarProgress(static_cast<float>(player->getJumpRidingScale()));
+    }
+    else
+    {
+        if (gameMode->hasExperience())
         {
             if (gApp.GetGameHostOption(eGameHostOption_MiniGame) == 0)
                 ShowExpBar(true);
             SetExpBarProgress(player->mExperienceProgress, player->getXpNeededForNextLevel());
             SetExpLevel(player->mExperienceLevel);
         }
-    }
-    else
-    {
-        SetHorseJumpBarProgress(static_cast<float>(player->getJumpRidingScale()));
+        else
+        {
+            ShowExpBar(false);
+            SetExpLevel(0);
+        }
     }
 
     if (Minecraft::InMiniGame(eMiniGameId_Any, true))
     {
-        if (!player->mDamageIndicatorAllDirections)
+        if (player->mDamageIndicatorAllDirections)
+        {
+            const int delay = static_cast<int>(Minecraft::GetInstance()->GetMiniGame()->GetDamageIndicatorDelay());
+            ShowDirectionalDamage(8, delay, static_cast<float>(player->getDamageTaken()));
+        }
+        else
         {
             for (int segment = 0; segment < 8; ++segment)
             {
                 if (player->mDamageIndicatorSegments[segment])
                 {
-                    ShowDirectionalDamage(segment, static_cast<int>(minecraft->GetMiniGame()->GetDamageIndicatorDelay()),
-                                          static_cast<float>(player->getDamageTaken()));
+                    const int delay = static_cast<int>(Minecraft::GetInstance()->GetMiniGame()->GetDamageIndicatorDelay());
+                    ShowDirectionalDamage(segment, delay, static_cast<float>(player->getDamageTaken()));
                 }
             }
-        }
-        else
-        {
-            ShowDirectionalDamage(8, static_cast<int>(minecraft->GetMiniGame()->GetDamageIndicatorDelay()),
-                                  static_cast<float>(player->getDamageTaken()));
         }
     }
 
@@ -1227,7 +1225,8 @@ void UIScene_HUD::updateFrameTick()
         gConsoleUIController.GetMenuDisplayed(pad) != 0 ||
         gConsoleUIController.IsSceneInStack(pad, EUIScene_ConnectingProgress) != 0 ||
         gApp.GetXuiAction(pad) == eXuiAction_AutoSave ||
-        GameSettings::GetGameSettings(pad, eGameSetting_DisplayHUD) == 0)
+        GameSettings::GetGameSettings(pad, eGameSetting_DisplayHUD) == 0 ||
+        player == 0)
     {
         SetVisible(false);
     }
@@ -1236,41 +1235,29 @@ void UIScene_HUD::updateFrameTick()
         SetVisible(true);
     }
 
-    if (gApp.GetGameHostOption(eGameHostOption_MiniGame) == 0)
+    if (gApp.GetGameHostOption(eGameHostOption_MiniGame) != 0)
     {
-        m_comparisonScore = 0;
-        m_personalBestTime = 0;
-        SetHudGameMode(0);
-        ShowGameModePlayers(false);
-        ShowAnimatedSplash(L"", false, -1);
-    }
-    else if (!Minecraft::InMiniGame(eMiniGameId_Glide, true))
-    {
-        ClearGlideHUD(pad);
-    }
-    else
-    {
-        if (player->GetGameType() == GameType::LOBBY)
+        boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = player;
+        if (!Minecraft::InMiniGame(eMiniGameId_Glide, true))
+        {
+            ClearGlideHUD(pad);
+        }
+        else if (player->GetGameType() == GameType::LOBBY)
         {
             ClearGlideHUD(pad);
         }
         else
         {
-            MultiPlayerLevel* level = player->GetLevel();
-            ClientScoreboard* scoreboard = level != 0 ? level->GetClientScoreboard() : 0;
+            ClientScoreboard* scoreboard = localPlayer->GetLevel()->GetClientScoreboard();
             ClientMasterGameMode* clientGameMode = minecraft->GetClientMasterGameMode();
-            const MiniGameDef* miniGame = minecraft->GetMiniGame();
-            boost::shared_ptr<Player> glidePlayer = player;
-            if (player->isSpectator())
-            {
-                boost::shared_ptr<Entity> camera = player->GetCamera();
-                if (camera != 0 && (camera->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
-                    glidePlayer = boost::static_pointer_cast<Player>(camera);
-            }
+            const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
+            boost::shared_ptr<Player> glidePlayer = localPlayer;
+            if (localPlayer->isSpectator() && (localPlayer->GetCamera()->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+                glidePlayer = boost::static_pointer_cast<Player>(localPlayer->GetCamera());
 
             SetHudGameMode(2);
-            const int currentRound = scoreboard != 0 ? scoreboard->mCurrentRound : 0;
-            SetRoundNumber(static_cast<unsigned int>(currentRound + 1), miniGame->GetRoundCount(), true);
+            const int currentRound = scoreboard->mCurrentRound;
+            SetRoundNumber(static_cast<unsigned int>(currentRound + 1), Minecraft::GetInstance()->GetMiniGame()->GetRoundCount(), true);
 
             double speed = 0.0;
             if (glidePlayer->isFallFlying())
@@ -1281,17 +1268,13 @@ void UIScene_HUD::updateFrameTick()
             }
             speed *= 20.0;
 
-            std::wstring speedTemplate = L10N::GetString(0xc6565405);
-            std::wstring speedValue = formatwstr(L"%.2f", speed);
-            std::wstring speedText = replaceAll(speedTemplate, L"%f", speedValue);
-            SetSpeed(speedText);
+            SetSpeed(replaceAll(L10N::GetString(0xc6565405), L"%f", formatwstr(L"%.2f", speed)));
             SetSpeedometer(static_cast<unsigned int>((speed / 50.0f) * 12.0f + 0.5f));
 
             if (miniGame->ArePointsActive())
             {
-                StatsUID uid = glidePlayer->getSUID();
-                const int points = scoreboard->GetPoints(uid, -1);
-                const int lastPoints = scoreboard->GetLastPointsAdded(uid, -1);
+                const int points = scoreboard->GetPoints(glidePlayer->getSUID(), -1);
+                const int lastPoints = scoreboard->GetLastPointsAdded(glidePlayer->getSUID(), -1);
                 SetScore(formatwstr(L"%d", points));
                 ShowScore(true);
                 if (lastPoints == 7)
@@ -1319,55 +1302,46 @@ void UIScene_HUD::updateFrameTick()
             SetGlideHealth(Mth::ceil(glidePlayer->getHealth()));
 
             unsigned int elapsedMs = 0;
-            bool showTimer = true;
-            StatsUID uid = glidePlayer->getSUID();
-            if (scoreboard != 0 && scoreboard->GetEndZoneEntered(uid, -1))
+            bool showTimerIcon = true;
+            if (scoreboard->GetEndZoneEntered(glidePlayer->getSUID(), -1))
             {
-                elapsedMs = static_cast<unsigned int>(scoreboard->GetLifeSpan(uid, -1));
+                elapsedMs = static_cast<unsigned int>(scoreboard->GetLifeSpan(glidePlayer->getSUID(), -1));
+                SetTime(formatTime(static_cast<long long>(elapsedMs), true));
             }
-            else if (clientGameMode->IsRoundEnding())
+            else if (!clientGameMode->IsRoundEnding())
             {
-                showTimer = false;
-                SetTime(L10N::GetString(IDS_DNF));
-                SetTimerIcon(0, 0);
-            }
-            else if (clientGameMode->IsWaitingToStart() || clientGameMode->IsRoundStarting())
-            {
-                SetTime(formatTime(0, false));
-                SetTimerIcon(0, 0);
+                if (!clientGameMode->IsWaitingToStart() && !clientGameMode->IsRoundStarting())
+                {
+                    const unsigned long long now = System::processTimeInMilliSecs();
+                    const unsigned long long start = clientGameMode->GetLocalRoundTimeStart();
+                    elapsedMs = static_cast<unsigned int>(now - start);
+                    SetTime(formatTime(static_cast<long long>(elapsedMs), true));
+                }
+                else
+                {
+                    SetTime(formatTime(0, true));
+                }
             }
             else
             {
-                const unsigned long long now = System::processTimeInMilliSecs();
-                const unsigned long long start = clientGameMode->GetLocalRoundTimeStart();
-                elapsedMs = static_cast<unsigned int>(now - start);
-                SetTime(formatTime(static_cast<long long>(elapsedMs), true));
+                SetTime(L10N::GetString(IDS_DNF));
+                SetTimerIcon(0, 0);
+                showTimerIcon = false;
+            }
+            if (showTimerIcon)
                 SetTimerIcon(static_cast<int>((elapsedMs / 60000) % 0x3c), static_cast<int>((elapsedMs / 1000) % 0x3c));
-            }
-
-            if (showTimer && scoreboard != 0)
-            {
-                if (clientGameMode->IsRoundEnding())
-                {
-                    SetTime(L10N::GetString(IDS_DNF));
-                    SetTimerIcon(0, 0);
-                }
-                else
-                {
-                    SetTime(formatTime(static_cast<long long>(elapsedMs), true));
-                    SetTimerIcon(static_cast<int>((elapsedMs / 60000) % 0x3c), static_cast<int>((elapsedMs / 1000) % 0x3c));
-                }
-            }
 
             std::list<std::pair<std::wstring, int> > sortedPlayers;
-            if (scoreboard != 0)
+            if (!miniGame->ArePointsActive())
             {
-                if (miniGame->ArePointsActive())
-                    scoreboard->GetPlayersSortedByPoints(sortedPlayers, -1);
-                else if (clientGameMode->IsWaitingToStart() || clientGameMode->IsRoundStarting())
-                    scoreboard->GetPlayersSortedByPosition(sortedPlayers, currentRound - 1);
-                else
+                if (!clientGameMode->IsWaitingToStart() && !clientGameMode->IsRoundStarting())
                     scoreboard->GetPlayersSortedByPosition(sortedPlayers, -1);
+                else
+                    scoreboard->GetPlayersSortedByPosition(sortedPlayers, currentRound - 1);
+            }
+            else
+            {
+                scoreboard->GetPlayersSortedByPoints(sortedPlayers, -1);
             }
 
             unsigned int positionSlot = 0;
@@ -1380,7 +1354,7 @@ void UIScene_HUD::updateFrameTick()
                 {
                     boost::shared_ptr<GhostPlayer> ghostPlayer = ghostController->getGhostPlayer(pad);
                     GhostController::GhostRecord* ghostRecord = ghostController->mLoaded[pad];
-                    const bool endZoneEntered = scoreboard != 0 && scoreboard->GetEndZoneEntered(uid, -1);
+                    const bool endZoneEntered = scoreboard->GetEndZoneEntered(localPlayer->getSUID(), -1);
                     if (ghostRecord != 0 &&
                         (ghostPlayer != 0 || endZoneEntered) &&
                         (ghostController->mPlaybackActive[pad] ||
@@ -1445,7 +1419,7 @@ void UIScene_HUD::updateFrameTick()
             }
             else if (miniGame->ArePointsActive() && ghostController != 0)
             {
-                const bool endZoneEntered = scoreboard != 0 && scoreboard->GetEndZoneEntered(uid, -1);
+                const bool endZoneEntered = scoreboard->GetEndZoneEntered(localPlayer->getSUID(), -1);
                 unsigned int bestScore = m_comparisonScore;
                 if (!endZoneEntered)
                 {
@@ -1551,7 +1525,7 @@ void UIScene_HUD::updateFrameTick()
             {
                 const double progress = clientGameMode->GetPlayerMapProgress(player->mXuid);
                 if (!clientGameMode->IsWaitingToStart() && !clientGameMode->IsRoundStarting() &&
-                    scoreboard != 0 && !scoreboard->GetEndZoneEntered(uid, -1))
+                    !scoreboard->GetEndZoneEntered(localPlayer->getSUID(), -1))
                 {
                     if (progress <= player->GetPercentageTraversed())
                     {
@@ -1608,6 +1582,14 @@ void UIScene_HUD::updateFrameTick()
                     SetPercentageMapTraversed(m_ghostPlayerSlot, 0.0);
             }
         }
+    }
+    else
+    {
+        m_comparisonScore = 0;
+        m_personalBestTime = 0;
+        SetHudGameMode(0);
+        ShowGameModePlayers(false);
+        ShowAnimatedSplash(L"", false, -1);
     }
 
     ClientScoreboard* scoreboard = 0;

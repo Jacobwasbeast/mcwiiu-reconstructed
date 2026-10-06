@@ -73,15 +73,29 @@ std::wstring UIComponent_TutorialPopup::_SetIcon(not_null_ptr<ItemInstance> item
 {
     std::wstring text(image);
     bool usesIconHolderPreset = false;
-    bool parseImage = false;
+    bool useItemIcon = true;
 
     if (itemId == -1)
     {
         m_showIcon = showIcon;
-        parseImage = item->isEmpty();
+        useItemIcon = !item->isEmpty();
     }
 
-    if (parseImage)
+    if (useItemIcon)
+    {
+        m_showIcon = false;
+        m_icon = item;
+        if (m_icon->isEmpty())
+        {
+            Item* fallbackItem = Item::byId(itemId);
+            if (fallbackItem == 0)
+                m_icon = not_null_ptr<ItemInstance>(new ItemInstance(Block::byId(itemId), 1));
+            else
+                m_icon = not_null_ptr<ItemInstance>(new ItemInstance(fallbackItem, 1));
+            m_icon->setAuxValue(auxValue);
+        }
+    }
+    else
     {
         m_icon = ItemInstance::EMPTY;
         std::wstring openTag(L"{*ICON*}");
@@ -100,10 +114,10 @@ std::wstring UIComponent_TutorialPopup::_SetIcon(not_null_ptr<ItemInstance> item
                 if (idParts.size() >= 2)
                     iconAuxValue = _fromString<int>(idParts[1]);
                 ItemInstance* icon;
-                if (Item::byId(iconId) != 0)
-                    icon = new ItemInstance(Item::byId(iconId), 1);
-                else
+                if (Item::byId(iconId) == 0)
                     icon = new ItemInstance(Block::byId(iconId), 1);
+                else
+                    icon = new ItemInstance(Item::byId(iconId), 1);
                 icon->setAuxValue(iconAuxValue);
                 m_icon = not_null_ptr<ItemInstance>(icon);
                 text.replace(iconStart, (iconEnd - iconStart) + closeTag.length(), L"");
@@ -202,20 +216,6 @@ std::wstring UIComponent_TutorialPopup::_SetIcon(not_null_ptr<ItemInstance> item
         else
         {
             m_icon = ItemInstance::EMPTY;
-        }
-    }
-    else
-    {
-        m_showIcon = false;
-        m_icon = item;
-        if (m_icon->isEmpty())
-        {
-            Item* fallbackItem = Item::byId(itemId);
-            if (fallbackItem == 0)
-                m_icon = not_null_ptr<ItemInstance>(new ItemInstance(Block::byId(itemId), 1));
-            else
-                m_icon = not_null_ptr<ItemInstance>(new ItemInstance(fallbackItem, 1));
-            m_icon->setAuxValue(auxValue);
         }
     }
 

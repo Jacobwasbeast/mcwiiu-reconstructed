@@ -10,7 +10,3 @@ ItemTooltipDataHolder::ItemTooltipDataHolder(boost::shared_ptr<MultiplayerLocalP
     m_pLevel = pLevel;
     m_eInteractionResult = eInteractionResult;
 }
-
-ItemTooltipDataHolder::~ItemTooltipDataHolder()
-{
-}

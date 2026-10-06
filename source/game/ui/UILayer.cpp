@@ -364,69 +364,72 @@ bool UILayer::NavigateToScene(int player, EUIScene scene, void* data)
     UIScene* created = NULL;
     switch (static_cast<int>(scene))
     {
-    case EUIScene_Intro: created = new UIScene_Intro(player, data, this); break;
-    case EUIScene_SaveMessage: created = new UIScene_SaveMessage(player, data, this); break;
-    case EUIScene_MainMenu: created = new UIScene_MainMenu(player, data, this); break;
-    case EUIScene_FullscreenProgress: created = new UIScene_FullscreenProgress(player, data, this); break;
-    case EUIScene_PauseMenu: created = new UIScene_PauseMenu(player, data, this); break;
-    case EUIScene_CraftingMenu2x2:
-    case EUIScene_CraftingMenu: created = new UIScene_CraftingMenu(player, data, this); break;
-    case EUIScene_FurnaceMenu: created = new UIScene_FurnaceMenu(player, data, this); break;
+    case EUIScene_InventoryMenu: created = new UIScene_InventoryMenu(player, data, this); break;
+    case EUIScene_CreativeMenu: created = new UIScene_CreativeMenu(player, data, this); break;
     case EUIScene_ContainerMenu:
     case EUIScene_ContainerMenuLarge: created = new UIScene_ContainerMenu(player, data, this); break;
-    case EUIScene_InventoryMenu: created = new UIScene_InventoryMenu(player, data, this); break;
+    case EUIScene_BrewingStandMenu: created = new UIScene_BrewingStandMenu(player, data, this); break;
     case EUIScene_DispenserMenu: created = new UIScene_DispenserMenu(player, data, this); break;
-    case EUIScene_HelpAndOptionsMenu: created = new UIScene_HelpAndOptionsMenu(player, data, this); break;
-    case EUIScene_HowToPlay: created = new UIScene_HowToPlay(player, data, this); break;
-    case EUIScene_HowToPlayMenu: created = new UIScene_HowToPlayMenu(player, data, this); break;
-    case EUIScene_ControlsMenu: created = new UIScene_ControlsMenu(player, data, this); break;
-    case EUIScene_SettingsListMenu: created = new UIScene_SettingsListMenu(player, data, this); break;
-    case EUIScene_InGameSettingsListMenu: created = new UIScene_InGameSettingsListMenu(player, data, this); break;
-    case EUIScene_SettingsMenu: created = new UIScene_SettingsMenu(player, data, this); break;
-    case EUIScene_LeaderboardsMenu: created = new UIScene_LeaderboardsMenu(player, data, this); break;
-    case EUIScene_Credits: created = new UIScene_Credits(player, data, this); break;
-    case EUIScene_DeathMenu: created = new UIScene_DeathMenu(player, data, this); break;
-    case EUIScene_CreateWorldMenu: created = new UIScene_CreateWorldMenu(player, data, this); break;
-    case EUIScene_LoadCreateJoinMenu:
-        created = new UIScene_LoadCreateJoinMenu(player, data, this);
+    case EUIScene_EnchantingMenu: created = new UIScene_EnchantingMenu(player, data, this); break;
+    case EUIScene_FurnaceMenu: created = new UIScene_FurnaceMenu(player, data, this); break;
+    case EUIScene_CraftingMenu2x2:
+    case EUIScene_CraftingMenu: created = new UIScene_CraftingMenu(player, data, this); break;
+    case EUIScene_TradingMenu: created = new UIScene_TradingMenu(player, data, this); break;
+    case EUIScene_AnvilMenu: created = new UIScene_AnvilMenu(player, data, this); break;
+    case EUIScene_HopperMenu: created = new UIScene_HopperMenu(player, data, this); break;
+    case EUIScene_BeaconMenu: created = new UIScene_BeaconMenu(player, data, this); break;
+    case EUIScene_HorseInventoryMenu:
+        created = new UIScene_HorseInventoryMenu(player, data, this);
         break;
-    case EUIScene_JoinMenu: created = new UIScene_JoinMenu(player, data, this); break;
-    case EUIScene_SignEntryMenu: created = new UIScene_SignEntryMenu(player, data, this); break;
-    case EUIScene_InGameInfoMenu: created = new UIScene_InGameInfoMenu(player, data, this); break;
-    case EUIScene_ConnectingProgress: created = new UIScene_ConnectingProgress(player, data, this); break;
-    case EUIScene_DLCOffersMenu: created = new UIScene_DLCOffersMenu(player, data, this); break;
-    case EUIScene_TrialExitUpsell: created = new UIScene_TrialExitUpsell(player, data, this); break;
-    case EUIScene_LoadMenu: created = new UIScene_LoadMenu(player, data, this); break;
-    case EUIScene_ReinstallMenu: created = new UIScene_ReinstallMenu(player, data, this); break;
+    case EUIScene_ClassicCraftingMenu: created = new UIScene_ClassicCraftingMenu(player, data, this); break;
+    case EUIScene_HelpAndOptionsMenu: created = new UIScene_HelpAndOptionsMenu(player, data, this); break;
+    case EUIScene_SettingsMenu: created = new UIScene_SettingsMenu(player, data, this); break;
+    case EUIScene_SettingsListMenu: created = new UIScene_SettingsListMenu(player, data, this); break;
     case EUIScene_SkinSelectMenu: created = new UIScene_SkinSelectMenu(player, data, this); break;
+    case EUIScene_HowToPlayMenu: created = new UIScene_HowToPlayMenu(player, data, this); break;
+    case EUIScene_LanguageSelector: created = new UIScene_LanguageSelector(player, data, this); break;
+    case EUIScene_HowToPlay: created = new UIScene_HowToPlay(player, data, this); break;
+    case EUIScene_ControlsMenu: created = new UIScene_ControlsMenu(player, data, this); break;
+    case EUIScene_ReinstallMenu: created = new UIScene_ReinstallMenu(player, data, this); break;
+    case EUIScene_Credits: created = new UIScene_Credits(player, data, this); break;
+    case EUIScene_PauseMenu: created = new UIScene_PauseMenu(player, data, this); break;
+    case EUIScene_InGameSettingsListMenu: created = new UIScene_InGameSettingsListMenu(player, data, this); break;
+    case EUIScene_DeathMenu: created = new UIScene_DeathMenu(player, data, this); break;
+    case EUIScene_ConnectingProgress: created = new UIScene_ConnectingProgress(player, data, this); break;
+    case EUIScene_SignEntryMenu: created = new UIScene_SignEntryMenu(player, data, this); break;
+    case EUIScene_WritableBookMenu: created = new UIScene_WritableBookMenu(player, data, this); break;
+    case EUIScene_InGameInfoMenu: created = new UIScene_InGameInfoMenu(player, data, this); break;
+    case EUIScene_GameModeScoreboardMenu: created = new UIScene_GameModeScoreboardMenu(player, data, this); break;
     case EUIScene_InGameHostOptionsMenu: created = new UIScene_InGameHostOptionsMenu(player, data, this); break;
     case EUIScene_InGamePlayerOptionsMenu: created = new UIScene_InGamePlayerOptionsMenu(player, data, this); break;
-    case EUIScene_CreativeMenu: created = new UIScene_CreativeMenu(player, data, this); break;
-    case EUIScene_LaunchMoreOptionsMenu: created = new UIScene_LaunchMoreOptionsMenu(player, data, this); break;
-    case EUIScene_DLCMainMenu: created = new UIScene_DLCMainMenu(player, data, this); break;
-    case EUIScene_NewUpdateMessage: created = new UIScene_NewUpdateMessage(player, data, this); break;
-    case EUIScene_EnchantingMenu: created = new UIScene_EnchantingMenu(player, data, this); break;
-    case EUIScene_BrewingStandMenu: created = new UIScene_BrewingStandMenu(player, data, this); break;
+    case EUIScene_InGameSaveManagementMenu: created = new UIScene_InGameSaveManagementMenu(player, data, this); break;
+    case EUIScene_TeleportMenu: created = new UIScene_TeleportMenu(player, data, this); break;
     case EUIScene_EndPoem:
         if (IsSceneInStack(EUIScene_EndPoem))
             return false;
         created = new UIScene_EndPoem(player, data, this);
         break;
-    case EUIScene_TradingMenu: created = new UIScene_TradingMenu(player, data, this); break;
-    case EUIScene_AnvilMenu: created = new UIScene_AnvilMenu(player, data, this); break;
-    case EUIScene_TeleportMenu: created = new UIScene_TeleportMenu(player, data, this); break;
-    case EUIScene_HopperMenu: created = new UIScene_HopperMenu(player, data, this); break;
-    case EUIScene_HorseInventoryMenu:
-        created = new UIScene_HorseInventoryMenu(player, data, this);
+    case EUIScene_MapVoteMenu: created = new UIScene_MapVoteMenu(player, data, this); break;
+    case EUIScene_TrialExitUpsell: created = new UIScene_TrialExitUpsell(player, data, this); break;
+    case EUIScene_Intro: created = new UIScene_Intro(player, data, this); break;
+    case EUIScene_SaveMessage: created = new UIScene_SaveMessage(player, data, this); break;
+    case EUIScene_MainMenu: created = new UIScene_MainMenu(player, data, this); break;
+    case EUIScene_LoadCreateJoinMenu:
+        created = new UIScene_LoadCreateJoinMenu(player, data, this);
         break;
-    case EUIScene_BeaconMenu: created = new UIScene_BeaconMenu(player, data, this); break;
-    case EUIScene_ClassicCraftingMenu: created = new UIScene_ClassicCraftingMenu(player, data, this); break;
+    case EUIScene_LoadMenu: created = new UIScene_LoadMenu(player, data, this); break;
+    case EUIScene_JoinMenu: created = new UIScene_JoinMenu(player, data, this); break;
+    case EUIScene_CreateWorldMenu: created = new UIScene_CreateWorldMenu(player, data, this); break;
+    case EUIScene_LaunchMoreOptionsMenu: created = new UIScene_LaunchMoreOptionsMenu(player, data, this); break;
+    case EUIScene_FullscreenProgress: created = new UIScene_FullscreenProgress(player, data, this); break;
+    case EUIScene_LeaderboardsMenu: created = new UIScene_LeaderboardsMenu(player, data, this); break;
+    case EUIScene_DLCMainMenu: created = new UIScene_DLCMainMenu(player, data, this); break;
+    case EUIScene_DLCOffersMenu: created = new UIScene_DLCOffersMenu(player, data, this); break;
+    case EUIScene_EULA: created = new UIScene_EULA(player, data, this); break;
+    case EUIScene_NewUpdateMessage: created = new UIScene_NewUpdateMessage(player, data, this); break;
     case EUIScene_SuperFlatMenu: created = new UIScene_SuperFlatMenu(player, data, this); break;
     case EUIScene_SuperFlatEditLayer: created = new UIScene_SuperFlatEditLayer(player, data, this); break;
     case EUIScene_SuperFlatPresets: created = new UIScene_SuperFlatPresets(player, data, this); break;
-    case EUIScene_GameModeScoreboardMenu: created = new UIScene_GameModeScoreboardMenu(player, data, this); break;
-    case EUIScene_WritableBookMenu: created = new UIScene_WritableBookMenu(player, data, this); break;
-    case EUIScene_MapVoteMenu: created = new UIScene_MapVoteMenu(player, data, this); break;
     case EUIScene_MapSelectMenu: created = new UIScene_MapSelectMenu(player, data, this); break;
     case EUIScene_BiomePreviewMenu: created = new UIScene_BiomePreviewMenu(player, data, this); break;
     case EUIScene_Keyboard: created = new UIScene_Keyboard(player, data, this); break;
@@ -437,9 +440,6 @@ bool UILayer::NavigateToScene(int player, EUIScene scene, void* data)
         created = new UIScene_MessageBox(player, data, this);
         break;
     case EUIScene_Timer: created = new UIScene_Timer(player, data, this); break;
-    case EUIScene_EULA: created = new UIScene_EULA(player, data, this); break;
-    case EUIScene_InGameSaveManagementMenu: created = new UIScene_InGameSaveManagementMenu(player, data, this); break;
-    case EUIScene_LanguageSelector: created = new UIScene_LanguageSelector(player, data, this); break;
     case EUIScene_AvatarSelectMenu: created = new UIScene_AvatarSelectMenu(player, data, this); break;
     case EUIScene_AchievementsMenu: created = new UIScene_AchievementsMenu(player, data, this); break;
     default:
@@ -452,7 +452,10 @@ bool UILayer::NavigateToScene(int player, EUIScene scene, void* data)
     telemetryManagerInstance->RecordMenuShown(player, scene, created->getSubSceneType());
 
     if (!m_scenes.empty())
-        created->setBackScene(m_scenes.back());
+    {
+        UIScene*& top = m_scenes[m_scenes.size() - 1];
+        created->setBackScene(top);
+    }
     m_scenes.push_back(created);
     updateFocusState(false);
     created->tick();

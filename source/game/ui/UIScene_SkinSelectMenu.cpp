@@ -330,8 +330,9 @@ void UIScene_SkinSelectMenu::handleSkinIndexChanged()
         m_selectedCapePath = L"";
         m_additionalSkinBoxes = NULL;
 
-        if (m_packIndex == 0)
+        switch (m_packIndex)
         {
+        case 0:
             backupTexture = static_cast<_TEXTURE_NAME>(getTextureId(static_cast<int>(m_skinIndex)));
             if (m_skinIndex == 0)
                 skinName = L10N::GetString(0x9b98d7f4);
@@ -342,15 +343,9 @@ void UIScene_SkinSelectMenu::handleSkinIndexChanged()
             setCharacterLocked(false);
             setCharacterBlocked(false);
             m_characters[eCharacter_Current].setVisible(true);
-        }
-        else if (m_packIndex == 1)
-        {
-            if (GameSettings::GetPlayerFavoriteSkinsCount(m_playerId) == 0)
-            {
-                m_characters[eCharacter_Current].setVisible(false);
-                m_noSkinsToShow = true;
-            }
-            else
+            break;
+        case 1:
+            if (GameSettings::GetPlayerFavoriteSkinsCount(m_playerId) > 0)
             {
                 bool isDefaultSkin = false;
                 bool licensed = false;
@@ -366,19 +361,16 @@ void UIScene_SkinSelectMenu::handleSkinIndexChanged()
                         skinName = L10N::GetString(0x9b98d7f4);
                     else
                         skinName = L10N::GetString(s_defaultSkinNameIds[favouriteSkin]);
-                    setCharacterSelected(m_originalSkinId == static_cast<int>(GameSettings::GetPlayerFavoriteSkin(
-                                                                 m_playerId, static_cast<int>(m_skinIndex))));
+                    if (m_originalSkinId == static_cast<int>(GameSettings::GetPlayerFavoriteSkin(
+                                                m_playerId, static_cast<int>(m_skinIndex))))
+                        setCharacterSelected(true);
+                    else
+                        setCharacterSelected(false);
                     setCharacterLocked(false);
                     setCharacterBlocked(false);
                     m_characters[eCharacter_Current].setVisible(true);
                 }
-                else if (skinFile == NULL)
-                {
-                    setCharacterSelected(false);
-                    setCharacterLocked(false);
-                    setCharacterBlocked(false);
-                }
-                else
+                else if (skinFile != NULL)
                 {
                     m_selectedSkinPath = skinFile->getPath();
                     m_selectedCapePath = skinFile->getParameterAsString(DLCManager::eDLCParameterType_CapePath, L"");
@@ -398,7 +390,19 @@ void UIScene_SkinSelectMenu::handleSkinIndexChanged()
                     setCharacterLocked(!available);
                     setCharacterBlocked(available && smallSkinBlocked);
                 }
+                else
+                {
+                    setCharacterSelected(false);
+                    setCharacterLocked(false);
+                    setCharacterBlocked(false);
+                }
             }
+            else
+            {
+                m_characters[eCharacter_Current].setVisible(false);
+                m_noSkinsToShow = true;
+            }
+            break;
         }
     }
 
@@ -495,39 +499,47 @@ void UIScene_SkinSelectMenu::handleSkinIndexChanged()
         {
             otherSkinPath = L"";
             otherCapePath = L"";
-            if (m_packIndex == 0)
+            switch (m_packIndex)
             {
+            case 0:
                 backupTexture = static_cast<_TEXTURE_NAME>(getTextureId(static_cast<int>(nextIndex)));
-            }
-            else if (m_packIndex == 1)
+                break;
+            case 1:
             {
                 bool isDefaultSkin = false;
                 bool licensed = false;
                 otherSkinFile = static_cast<DLCSkinFile*>(gApp.mDLCManager.getSkinFile(
                     static_cast<int>(GameSettings::GetPlayerFavoriteSkin(m_playerId, static_cast<int>(nextIndex))),
                     isDefaultSkin, licensed));
-                if (isDefaultSkin)
+                if (!isDefaultSkin)
+                {
+                    if (otherSkinFile != NULL)
+                    {
+                        otherSkinPath = otherSkinFile->getPath();
+                        otherCapePath = otherSkinFile->getParameterAsString(DLCManager::eDLCParameterType_CapePath, L"");
+                        otherSkinBoxes = otherSkinFile->getAdditionalBoxes();
+                        backupTexture = TN_MOB_STEVE;
+                    }
+                }
+                else
                 {
                     backupTexture = static_cast<_TEXTURE_NAME>(getTextureId(static_cast<int>(
                         GameSettings::GetPlayerFavoriteSkin(m_playerId, static_cast<int>(nextIndex)))));
                 }
-                else if (otherSkinFile != NULL)
-                {
-                    otherSkinPath = otherSkinFile->getPath();
-                    otherCapePath = otherSkinFile->getParameterAsString(DLCManager::eDLCParameterType_CapePath, L"");
-                    otherSkinBoxes = otherSkinFile->getAdditionalBoxes();
-                    backupTexture = TN_MOB_STEVE;
-                }
+                break;
+            }
             }
         }
 
-        if (otherSkinBoxes != NULL && otherSkinBoxes->size() != 0 &&
-            gApp.GetAdditionalModelParts(otherSkinFile->m_fileID) == NULL)
-        {
-            gApp.SetAdditionalSkinBoxes(otherSkinFile->m_fileID, otherSkinBoxes, otherSkinFile->getSkinAdjustments());
-        }
         if (otherSkinFile != NULL)
+        {
+            if (otherSkinBoxes != NULL && otherSkinBoxes->size() != 0 &&
+                gApp.GetAdditionalModelParts(otherSkinFile->m_fileID) == NULL)
+            {
+                gApp.SetAdditionalSkinBoxes(otherSkinFile->m_fileID, otherSkinBoxes, otherSkinFile->getSkinAdjustments());
+            }
             gApp.SetSkinAdjustments(otherSkinFile->m_fileID, otherSkinFile->getSkinAdjustments());
+        }
 
         preview.SetTexture(otherSkinPath, backupTexture);
         preview.mCapePath = otherCapePath;
@@ -553,39 +565,47 @@ void UIScene_SkinSelectMenu::handleSkinIndexChanged()
         {
             otherSkinPath = L"";
             otherCapePath = L"";
-            if (m_packIndex == 0)
+            switch (m_packIndex)
             {
+            case 0:
                 backupTexture = static_cast<_TEXTURE_NAME>(getTextureId(static_cast<int>(previousIndex)));
-            }
-            else if (m_packIndex == 1)
+                break;
+            case 1:
             {
                 bool isDefaultSkin = false;
                 bool licensed = false;
                 otherSkinFile = static_cast<DLCSkinFile*>(gApp.mDLCManager.getSkinFile(
                     static_cast<int>(GameSettings::GetPlayerFavoriteSkin(m_playerId, static_cast<int>(previousIndex))),
                     isDefaultSkin, licensed));
-                if (isDefaultSkin)
+                if (!isDefaultSkin)
+                {
+                    if (otherSkinFile != NULL)
+                    {
+                        otherSkinPath = otherSkinFile->getPath();
+                        otherCapePath = otherSkinFile->getParameterAsString(DLCManager::eDLCParameterType_CapePath, L"");
+                        otherSkinBoxes = otherSkinFile->getAdditionalBoxes();
+                        backupTexture = TN_MOB_STEVE;
+                    }
+                }
+                else
                 {
                     backupTexture = static_cast<_TEXTURE_NAME>(getTextureId(static_cast<int>(
                         GameSettings::GetPlayerFavoriteSkin(m_playerId, static_cast<int>(previousIndex)))));
                 }
-                else if (otherSkinFile != NULL)
-                {
-                    otherSkinPath = otherSkinFile->getPath();
-                    otherCapePath = otherSkinFile->getParameterAsString(DLCManager::eDLCParameterType_CapePath, L"");
-                    otherSkinBoxes = otherSkinFile->getAdditionalBoxes();
-                    backupTexture = TN_MOB_STEVE;
-                }
+                break;
+            }
             }
         }
 
-        if (otherSkinBoxes != NULL && otherSkinBoxes->size() != 0 &&
-            gApp.GetAdditionalModelParts(otherSkinFile->m_fileID) == NULL)
-        {
-            gApp.SetAdditionalSkinBoxes(otherSkinFile->m_fileID, otherSkinBoxes, otherSkinFile->getSkinAdjustments());
-        }
         if (otherSkinFile != NULL)
+        {
+            if (otherSkinBoxes != NULL && otherSkinBoxes->size() != 0 &&
+                gApp.GetAdditionalModelParts(otherSkinFile->m_fileID) == NULL)
+            {
+                gApp.SetAdditionalSkinBoxes(otherSkinFile->m_fileID, otherSkinBoxes, otherSkinFile->getSkinAdjustments());
+            }
             gApp.SetSkinAdjustments(otherSkinFile->m_fileID, otherSkinFile->getSkinAdjustments());
+        }
 
         preview.SetTexture(otherSkinPath, backupTexture);
         preview.mCapePath = otherCapePath;
@@ -960,21 +980,19 @@ void UIScene_SkinSelectMenu::InputActionOK(unsigned int player)
     const int pad = static_cast<int>(player);
     gConsoleUIController.AnimateKeyPress(pad, 0x14, false, true, false);
 
-    if (m_packIndex == 0)
+    switch (m_packIndex)
     {
+    case 0:
         GameSettings::SetPlayerSkin(pad, m_skinIndex, true);
         GameSettings::SetPlayerCape(pad, 0, true);
         m_currentSkinPath = GameSettings::GetPlayerSkinName(pad);
         m_originalSkinId = static_cast<int>(GameSettings::GetPlayerSkinId(pad));
         GameSettings::SetPlayerFavoriteSkinsPos(pad, GameSettings::GetPlayerFavoriteSkinsPos(pad, m_skinIndex));
         setCharacterSelected(true);
-        gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
-        return;
-    }
+        break;
 
-    if (m_packIndex == 1)
-    {
-        if (GameSettings::GetPlayerFavoriteSkinsCount(pad) != 0)
+    case 1:
+        if (GameSettings::GetPlayerFavoriteSkinsCount(pad) > 0)
         {
             bool isDefaultSkin = false;
             bool licensed = false;
@@ -989,66 +1007,77 @@ void UIScene_SkinSelectMenu::InputActionOK(unsigned int player)
                 m_originalSkinId = static_cast<int>(GameSettings::GetPlayerSkinId(pad));
                 GameSettings::SetPlayerFavoriteSkinsPos(pad, static_cast<int>(m_skinIndex));
                 setCharacterSelected(true);
-                gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
-                return;
             }
-            if (skinFile != NULL)
+            else if (skinFile != NULL)
             {
-                if (Minecraft::GetInstance()->GetMiniGame()->AllowSmallSkins() &&
-                    (skinFile->getSkinAdjustments().mGameFlags & 1) != 0)
+                if (!Minecraft::GetInstance()->GetMiniGame()->AllowSmallSkins() ||
+                    (skinFile->getSkinAdjustments().mGameFlags & 1) == 0)
+                {
+                    GameSettings::SetPlayerSkin(pad, skinFile->getPath());
+                    GameSettings::SetPlayerCape(pad, skinFile->getParameterAsString(DLCManager::eDLCParameterType_CapePath, L""));
+                    m_currentSkinPath = GameSettings::GetPlayerSkinName(pad);
+                    m_originalSkinId = static_cast<int>(GameSettings::GetPlayerSkinId(pad));
+                    GameSettings::SetPlayerFavoriteSkinsPos(pad, static_cast<int>(m_skinIndex));
+                    setCharacterSelected(true);
+                }
+                else
                 {
                     setCharacterSelected(false);
-                    gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
-                    return;
                 }
-                GameSettings::SetPlayerSkin(pad, skinFile->getPath());
-                GameSettings::SetPlayerCape(pad, skinFile->getParameterAsString(DLCManager::eDLCParameterType_CapePath, L""));
-                m_currentSkinPath = GameSettings::GetPlayerSkinName(pad);
-                m_originalSkinId = static_cast<int>(GameSettings::GetPlayerSkinId(pad));
-                GameSettings::SetPlayerFavoriteSkinsPos(pad, static_cast<int>(m_skinIndex));
-                setCharacterSelected(true);
-                gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
-                return;
             }
         }
-        gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
-        return;
-    }
+        break;
 
-    if (m_pack == NULL)
-    {
-        gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
-        return;
-    }
-
-    m_purchasePending = true;
-    bool handled = true;
-    DLCSkinFile* skinFile = static_cast<DLCSkinFile*>(m_pack->getSkinFile(m_skinIndex));
-    if (skinFile->getParameterAsBool(DLCManager::eDLCParameterType_Free) || m_pack->hasPurchasedPack())
-    {
-        if (Minecraft::GetInstance()->GetMiniGame()->AllowSmallSkins() &&
-            (skinFile->getSkinAdjustments().mGameFlags & 1) != 0)
+    default:
+        if (m_pack != NULL)
         {
-            setCharacterSelected(false);
+            m_purchasePending = true;
+            bool handled = true;
+            DLCSkinFile* skinFile = static_cast<DLCSkinFile*>(m_pack->getSkinFile(m_skinIndex));
+            if (!skinFile->getParameterAsBool(DLCManager::eDLCParameterType_Free))
+            {
+                if (!m_pack->hasPurchasedPack())
+                {
+                    tryPurchaseDlc(m_playerId, handled, eDLCContentType_All);
+                }
+                else if (!Minecraft::GetInstance()->GetMiniGame()->AllowSmallSkins() ||
+                    (skinFile->getSkinAdjustments().mGameFlags & 1) == 0)
+                {
+                    GameSettings::SetPlayerSkin(pad, skinFile->getPath());
+                    GameSettings::SetPlayerCape(pad, skinFile->getParameterAsString(DLCManager::eDLCParameterType_CapePath, L""));
+                    setCharacterSelected(true);
+                    m_currentSkinPath = GameSettings::GetPlayerSkinName(pad);
+                    m_originalSkinId = static_cast<int>(GameSettings::GetPlayerSkinId(pad));
+                    GameSettings::SetPlayerFavoriteSkinsPos(
+                        m_playerId, GameSettings::GetPlayerFavoriteSkinsPos(m_playerId, static_cast<unsigned int>(m_originalSkinId)));
+                }
+                else
+                {
+                    setCharacterSelected(false);
+                }
+            }
+            else if (!Minecraft::GetInstance()->GetMiniGame()->AllowSmallSkins() ||
+                (skinFile->getSkinAdjustments().mGameFlags & 1) == 0)
+            {
+                GameSettings::SetPlayerSkin(pad, skinFile->getPath());
+                GameSettings::SetPlayerCape(pad, skinFile->getParameterAsString(DLCManager::eDLCParameterType_CapePath, L""));
+                setCharacterSelected(true);
+                m_currentSkinPath = GameSettings::GetPlayerSkinName(pad);
+                m_originalSkinId = static_cast<int>(GameSettings::GetPlayerSkinId(pad));
+                GameSettings::SetPlayerFavoriteSkinsPos(
+                    m_playerId, GameSettings::GetPlayerFavoriteSkinsPos(m_playerId, static_cast<unsigned int>(m_originalSkinId)));
+            }
+            else
+            {
+                setCharacterSelected(false);
+            }
+
+            if (handled)
+                m_purchasePending = false;
         }
-        else
-        {
-            GameSettings::SetPlayerSkin(pad, skinFile->getPath());
-            GameSettings::SetPlayerCape(pad, skinFile->getParameterAsString(DLCManager::eDLCParameterType_CapePath, L""));
-            setCharacterSelected(true);
-            m_currentSkinPath = GameSettings::GetPlayerSkinName(pad);
-            m_originalSkinId = static_cast<int>(GameSettings::GetPlayerSkinId(pad));
-            GameSettings::SetPlayerFavoriteSkinsPos(
-                m_playerId, GameSettings::GetPlayerFavoriteSkinsPos(m_playerId, static_cast<unsigned int>(m_originalSkinId)));
-        }
-    }
-    else
-    {
-        tryPurchaseDlc(m_playerId, handled, eDLCContentType_All);
+        break;
     }
 
-    if (handled)
-        m_purchasePending = false;
     gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
 }
 

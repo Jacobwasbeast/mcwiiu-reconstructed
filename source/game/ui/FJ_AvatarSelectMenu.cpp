@@ -121,8 +121,8 @@ void FJ_AvatarSelectMenu::SetActiveTab(int tab)
             OnFocusChange(true);
     }
 
-    m_currentTab = tab;
     m_activeTab = tab;
+    m_currentTab = tab;
 }
 
 void FJ_AvatarSelectMenu::handlePress(FJ_Event* event)

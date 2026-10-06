@@ -442,7 +442,7 @@ void UIScene_GameModeScoreboardMenu::customDraw(const char* name, fuiRect* rect)
         return;
     wchar_t slotName[64];
     mbstowcs(slotName, name, 64);
-    boost::shared_ptr<ItemInstance> item =
+    not_null_ptr<ItemInstance> item =
         m_scoreboardLayout->getItemForSlot(slotName, m_playerList.getCurrentSelection(), m_scoreboardType);
     if (!item->isEmpty())
         customDrawSlotControlFui(rect, m_playerId, item, 1.0f, item->getItem()->isFoil(item), false, false);

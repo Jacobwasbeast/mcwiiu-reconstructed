@@ -239,31 +239,34 @@ not_null_ptr<ItemInstance> AbstractContainerMenu::clicked(int index, int button,
                         m_quickcraftSlots.insert(slot);
                     }
                 }
-                else if (m_quickcraftStatus == 2 && !m_quickcraftSlots.empty())
+                else if (m_quickcraftStatus == 2)
                 {
-                    not_null_ptr<ItemInstance> dragged = inventory->getCarried()->copy();
-                    int remaining = inventory->getCarried()->getCount();
-                    SlotSet::iterator it;
-                    for (it = m_quickcraftSlots.begin(); it != m_quickcraftSlots.end(); ++it)
+                    if (!m_quickcraftSlots.empty())
                     {
-                        Slot* slot = *it;
-                        not_null_ptr<ItemInstance> carried = inventory->getCarried();
-                        if (slot != NULL && canItemQuickReplace(slot, carried, true) && slot->mayPlace(carried)
-                            && carried->getCount() >= (int)m_quickcraftSlots.size() && canDragTo(slot))
+                        not_null_ptr<ItemInstance> dragged = inventory->getCarried()->copy();
+                        int remaining = inventory->getCarried()->getCount();
+                        SlotSet::iterator it;
+                        for (it = m_quickcraftSlots.begin(); it != m_quickcraftSlots.end(); ++it)
                         {
-                            not_null_ptr<ItemInstance> placed = dragged->copy();
-                            int alreadyThere = slot->hasItem() ? slot->getItem()->getCount() : 0;
-                            getQuickCraftSlotCount(&m_quickcraftSlots, m_quickcraftType, placed, alreadyThere);
-                            int limit = placed->getMaxStackSize();
-                            int slotLimit = slot->getMaxStackSize(placed);
-                            if (slotLimit < limit) limit = slotLimit;
-                            if (placed->getCount() > limit) placed->setCount(limit);
-                            remaining -= placed->getCount() - alreadyThere;
-                            slot->set(placed);
+                            Slot* slot = *it;
+                            not_null_ptr<ItemInstance> carried = inventory->getCarried();
+                            if (slot != NULL && canItemQuickReplace(slot, carried, true) && slot->mayPlace(carried)
+                                && carried->getCount() >= (int)m_quickcraftSlots.size() && canDragTo(slot))
+                            {
+                                not_null_ptr<ItemInstance> placed = dragged->copy();
+                                int alreadyThere = slot->hasItem() ? slot->getItem()->getCount() : 0;
+                                getQuickCraftSlotCount(&m_quickcraftSlots, m_quickcraftType, placed, alreadyThere);
+                                int limit = placed->getMaxStackSize();
+                                int slotLimit = slot->getMaxStackSize(placed);
+                                if (slotLimit < limit) limit = slotLimit;
+                                if (limit < placed->getCount()) placed->setCount(limit);
+                                remaining -= placed->getCount() - alreadyThere;
+                                slot->set(placed);
+                            }
                         }
+                        dragged->setCount(remaining);
+                        inventory->setCarried(dragged);
                     }
-                    dragged->setCount(remaining);
-                    inventory->setCarried(dragged);
                     resetQuickCraft();
                 }
                 else
@@ -600,13 +603,8 @@ int AbstractContainerMenu::moveItemStackTo(not_null_ptr<ItemInstance> item, int 
     if (mergeStacks && item->isStackable())
     {
         int i = reverse ? end - 1 : start;
-        while (item->getCount() > 0)
+        while (item->getCount() > 0 && (!reverse && i < end || reverse && i >= start))
         {
-            if (reverse)
-            {
-                if (i < start) break;
-            }
-            else if (i >= end) break;
             Slot* slot = m_slots.at(i);
             not_null_ptr<ItemInstance> slotItem = slot->getItem();
             if (!slotItem->isEmpty() && stackAsdAsd(item, slotItem))
@@ -635,20 +633,15 @@ int AbstractContainerMenu::moveItemStackTo(not_null_ptr<ItemInstance> item, int 
     if ((fillEmpty || moved != 0) && item->getCount() > 0)
     {
         int i = reverse ? end - 1 : start;
-        while (true)
+        while (!reverse && i < end || reverse && i >= start)
         {
-            if (reverse)
-            {
-                if (i < start) break;
-            }
-            else if (i >= end) break;
             Slot* slot = m_slots.at(i);
             not_null_ptr<ItemInstance> slotItem = slot->getItem();
             if (slotItem->isEmpty() && slot->mayPlace(item))
             {
                 not_null_ptr<ItemInstance> placed = item->copy();
                 int limit = slot->getMaxStackSize(placed);
-                if (placed->getCount() > limit)
+                if (limit < placed->getCount())
                 {
                     placed->setCount(limit);
                     item->shrink(limit);
@@ -659,7 +652,8 @@ int AbstractContainerMenu::moveItemStackTo(not_null_ptr<ItemInstance> item, int 
                 }
                 slot->set(placed);
                 slot->setChanged();
-                return 1;
+                moved = 1;
+                break;
             }
             if (reverse) --i; else ++i;
         }
@@ -741,7 +735,7 @@ not_null_ptr<ItemInstance> AbstractContainerMenu::GetQuickCraftItem(int playerIn
                     getQuickCraftSlotCount(&m_uiQuickCraftSlots, 0, preview, slot->getItem()->getCount());
                     if (preview->getCount() > preview->getMaxStackSize())
                         preview->setCount(preview->getMaxStackSize());
-                    if (slot->getMaxStackSize(preview) < preview->getCount())
+                    if (preview->getCount() > slot->getMaxStackSize(preview))
                         preview->setCount(slot->getMaxStackSize(preview));
                 }
             }

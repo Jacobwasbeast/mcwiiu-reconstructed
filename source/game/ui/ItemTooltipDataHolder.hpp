@@ -22,7 +22,6 @@ public:
                           not_null_ptr<ItemInstance> pItemInstance,
                           MultiPlayerLevel* pLevel,
                           InteractionResult::EInteractionResult eInteractionResult);
-    ~ItemTooltipDataHolder();
 };
 
 #endif

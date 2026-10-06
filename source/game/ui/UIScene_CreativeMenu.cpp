@@ -9,6 +9,12 @@
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/Minecraft.hpp"
+#include "game/core/BannerPattern.hpp"
+#include "game/data/CompoundTag.hpp"
+#include "game/data/ListTag.hpp"
+#include "game/item/DyeItem.hpp"
+#include "game/item/FireworksItem.hpp"
+#include "game/world/biome/arrayWithLength.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Inventory.hpp"
 #include "game/item/Items.hpp"
@@ -681,25 +687,25 @@ void UIScene_CreativeMenu::handleSlotListClicked(IUIScene_AbstractContainerMenu:
         }
     }
 
+    if (found == 0 && section != IUIScene_AbstractContainerMenu::ESceneSection_CreativeHotbar)
+        return;
+
     if (found != 0)
     {
         setSectionSelectedSlot(IUIScene_AbstractContainerMenu::ESceneSection_CreativeHotbar,
-                               m_currentSlotX, m_currentSlotY, false);
+                               m_currentSlotX, m_currentSlotY,
+                               section == IUIScene_AbstractContainerMenu::ESceneSection_CreativeHotbar);
         effectiveSlot = getCurrentIndex(IUIScene_AbstractContainerMenu::ESceneSection_CreativeHotbar);
         slot = 0;
         button = 0;
     }
-    else if (section != IUIScene_AbstractContainerMenu::ESceneSection_CreativeHotbar)
-    {
-        return;
-    }
 
-    boost::shared_ptr<Player> player = minecraft->mLocalPlayers[getPad()];
-    m_menu->clicked(effectiveSlot, slot, static_cast<ClickType::eClickType>(button != 0), player);
+    m_menu->clicked(effectiveSlot, slot, static_cast<ClickType::eClickType>(button != 0), minecraft->mLocalPlayers[getPad()]);
 
+    not_null_ptr<ItemInstance> addedItem = m_menu->getSlot(effectiveSlot)->getItem();
     const int itemsSize = static_cast<int>(m_menu->m_slots.size());
     minecraft->mGameModes[getPad()]->handleCreativeModeItemAdd(
-        m_menu->getSlot(effectiveSlot)->getItem(), (effectiveSlot - itemsSize) + Inventory::INVENTORY_SIZE + 9);
+        addedItem, (effectiveSlot - itemsSize) + Inventory::INVENTORY_SIZE + 9);
 
     if (m_restoreSelectorPending)
     {
@@ -761,6 +767,46 @@ unsigned int UIScene_CreativeMenu::overrideTooltips(IUIScene_AbstractContainerMe
     return 1;
 }
 
+void MenuBuilder::ITEM_BLOCKSTATE(const BlockState* state)
+{
+    ADD(not_null_ptr<ItemInstance>(
+        new ItemInstance(state->getBlock(), 1, state->getBlock()->convertBlockStateToLegacyData(state))));
+}
+
+void MenuBuilder::FIREWORK(unsigned char type, int colour, int flight, bool flicker, bool trail, int fadeColour)
+{
+    CompoundTag* explosion = new CompoundTag();
+
+    std::vector<int> colours;
+    colours.push_back(DyeItem::DYE_COLORS[colour]);
+    if (flicker)
+        explosion->putBoolean(FireworksItem::TAG_E_FLICKER, true);
+    if (trail)
+        explosion->putBoolean(FireworksItem::TAG_E_TRAIL, true);
+    explosion->putIntArray(FireworksItem::TAG_E_COLORS, arrayWithLength<int>(colours));
+    explosion->putByte(FireworksItem::TAG_E_TYPE, type);
+
+    if (fadeColour != -1)
+    {
+        std::vector<int> fadeColours;
+        fadeColours.push_back(DyeItem::DYE_COLORS[fadeColour]);
+        explosion->putIntArray(FireworksItem::TAG_E_FADECOLORS, arrayWithLength<int>(fadeColours));
+    }
+
+    CompoundTag* tag = new CompoundTag();
+    CompoundTag* fireworks = new CompoundTag();
+    ListTag* explosions = new ListTag(0);
+    explosions->add(explosion);
+    fireworks->put(FireworksItem::TAG_EXPLOSIONS, explosions);
+    fireworks->putByte(FireworksItem::TAG_FLIGHT, static_cast<unsigned char>(flight));
+    tag->put(FireworksItem::TAG_FIREWORKS, fireworks);
+
+    ItemInstance rocket(Items::fireworks);
+    rocket.setTag(tag);
+    mItems->push_back(new ItemInstanceClonerBuilder(rocket));
+    rocket = *ItemInstance::EMPTY;
+}
+
 void UIScene_CreativeMenu::staticCtor()
 {
     MenuBuilder builder;
@@ -772,18 +818,18 @@ void UIScene_CreativeMenu::staticCtor()
     builder.ITEM_BLOCKSTATE(Blocks::cobblestone->defaultBlockState());
     builder.ITEM_BLOCKSTATE(Blocks::sand->defaultBlockState());
     builder.ITEM_BLOCKSTATE(Blocks::sandstone->defaultBlockState());
-    builder.ITEM_AUX(Blocks::sandstone, SandStoneBlock::TYPE, SandStoneBlock::SMOOTH);
-    builder.ITEM_AUX(Blocks::sandstone, SandStoneBlock::TYPE, SandStoneBlock::CHISELED);
-    builder.ITEM_AUX(Blocks::sand, SandBlock::TYPE, SandBlock::Variant::RED_SAND);
+    builder.ITEM_BLOCKSTATE(Blocks::sandstone->defaultBlockState()->setValue(SandStoneBlock::TYPE, SandStoneBlock::SMOOTH));
+    builder.ITEM_BLOCKSTATE(Blocks::sandstone->defaultBlockState()->setValue(SandStoneBlock::TYPE, SandStoneBlock::CHISELED));
+    builder.ITEM_BLOCKSTATE(Blocks::sand->defaultBlockState()->setValue(SandBlock::TYPE, SandBlock::Variant::RED_SAND));
     builder.ITEM_BLOCKSTATE(Blocks::red_sandstone->defaultBlockState());
-    builder.ITEM_AUX(Blocks::red_sandstone, RedSandStoneBlock::TYPE, RedSandStoneBlock::Variant::SMOOTH);
-    builder.ITEM_AUX(Blocks::red_sandstone, RedSandStoneBlock::TYPE, RedSandStoneBlock::Variant::CHISELED);
-    builder.ITEM_AUX(Blocks::stone, StoneBlock::VARIANT, StoneBlock::Variant::GRANITE);
-    builder.ITEM_AUX(Blocks::stone, StoneBlock::VARIANT, StoneBlock::Variant::SMOOTH_GRANITE);
-    builder.ITEM_AUX(Blocks::stone, StoneBlock::VARIANT, StoneBlock::Variant::ANDESITE);
-    builder.ITEM_AUX(Blocks::stone, StoneBlock::VARIANT, StoneBlock::Variant::SMOOTH_ANDESITE);
-    builder.ITEM_AUX(Blocks::stone, StoneBlock::VARIANT, StoneBlock::Variant::DIORITE);
-    builder.ITEM_AUX(Blocks::stone, StoneBlock::VARIANT, StoneBlock::Variant::SMOOTH_DIORITE);
+    builder.ITEM_BLOCKSTATE(Blocks::red_sandstone->defaultBlockState()->setValue(RedSandStoneBlock::TYPE, RedSandStoneBlock::Variant::SMOOTH));
+    builder.ITEM_BLOCKSTATE(Blocks::red_sandstone->defaultBlockState()->setValue(RedSandStoneBlock::TYPE, RedSandStoneBlock::Variant::CHISELED));
+    builder.ITEM_BLOCKSTATE(Blocks::stone->defaultBlockState()->setValue(StoneBlock::VARIANT, StoneBlock::Variant::GRANITE));
+    builder.ITEM_BLOCKSTATE(Blocks::stone->defaultBlockState()->setValue(StoneBlock::VARIANT, StoneBlock::Variant::SMOOTH_GRANITE));
+    builder.ITEM_BLOCKSTATE(Blocks::stone->defaultBlockState()->setValue(StoneBlock::VARIANT, StoneBlock::Variant::ANDESITE));
+    builder.ITEM_BLOCKSTATE(Blocks::stone->defaultBlockState()->setValue(StoneBlock::VARIANT, StoneBlock::Variant::SMOOTH_ANDESITE));
+    builder.ITEM_BLOCKSTATE(Blocks::stone->defaultBlockState()->setValue(StoneBlock::VARIANT, StoneBlock::Variant::DIORITE));
+    builder.ITEM_BLOCKSTATE(Blocks::stone->defaultBlockState()->setValue(StoneBlock::VARIANT, StoneBlock::Variant::SMOOTH_DIORITE));
     builder.ITEM_BLOCKSTATE(Blocks::coal_block->defaultBlockState());
     builder.ITEM_BLOCKSTATE(Blocks::dried_kelp_block->defaultBlockState());
     builder.ITEM_BLOCKSTATE(Blocks::gold_block->defaultBlockState());
@@ -791,7 +837,7 @@ void UIScene_CreativeMenu::staticCtor()
     builder.ITEM_BLOCKSTATE(Blocks::lapis_block->defaultBlockState());
     builder.ITEM_BLOCKSTATE(Blocks::diamond_block->defaultBlockState());
     builder.ITEM_BLOCKSTATE(Blocks::emerald_block->defaultBlockState());
-    builder.ITEM_AUX(Blocks::quartz_block, QuartzBlock::VARIANT, QuartzBlock::Variant::DEFAULT);
+    builder.ITEM_BLOCKSTATE(Blocks::quartz_block->defaultBlockState()->setValue(QuartzBlock::VARIANT, QuartzBlock::Variant::DEFAULT));
     builder.ITEM_BLOCKSTATE(Blocks::coal_ore->defaultBlockState());
     builder.ITEM_BLOCKSTATE(Blocks::lapis_ore->defaultBlockState());
     builder.ITEM_BLOCKSTATE(Blocks::diamond_ore->defaultBlockState());
@@ -802,18 +848,18 @@ void UIScene_CreativeMenu::staticCtor()
     builder.ITEM_BLOCKSTATE(Blocks::quartz_ore->defaultBlockState());
     builder.ITEM_BLOCKSTATE(Blocks::nether_wart_block->defaultBlockState());
     builder.ITEM_BLOCKSTATE(Blocks::bedrock->defaultBlockState());
-    builder.ITEM_AUX(Blocks::planks, PlanksBlock::VARIANT, PlanksBlock::Variant::OAK);
-    builder.ITEM_AUX(Blocks::planks, PlanksBlock::VARIANT, PlanksBlock::Variant::SPRUCE);
-    builder.ITEM_AUX(Blocks::planks, PlanksBlock::VARIANT, PlanksBlock::Variant::BIRCH);
-    builder.ITEM_AUX(Blocks::planks, PlanksBlock::VARIANT, PlanksBlock::Variant::JUNGLE);
-    builder.ITEM_AUX(Blocks::planks, PlanksBlock::VARIANT, PlanksBlock::Variant::ACACIA);
-    builder.ITEM_AUX(Blocks::planks, PlanksBlock::VARIANT, PlanksBlock::Variant::DARK_OAK);
-    builder.ITEM_AUX(Blocks::log, OldLogBlock::VARIANT, PlanksBlock::Variant::OAK);
-    builder.ITEM_AUX(Blocks::log, OldLogBlock::VARIANT, PlanksBlock::Variant::SPRUCE);
-    builder.ITEM_AUX(Blocks::log, OldLogBlock::VARIANT, PlanksBlock::Variant::BIRCH);
-    builder.ITEM_AUX(Blocks::log, OldLogBlock::VARIANT, PlanksBlock::Variant::JUNGLE);
-    builder.ITEM_AUX(Blocks::log2, NewLogBlock::VARIANT, PlanksBlock::Variant::ACACIA);
-    builder.ITEM_AUX(Blocks::log2, NewLogBlock::VARIANT, PlanksBlock::Variant::DARK_OAK);
+    builder.ITEM_BLOCKSTATE(Blocks::planks->defaultBlockState()->setValue(PlanksBlock::VARIANT, PlanksBlock::Variant::OAK));
+    builder.ITEM_BLOCKSTATE(Blocks::planks->defaultBlockState()->setValue(PlanksBlock::VARIANT, PlanksBlock::Variant::SPRUCE));
+    builder.ITEM_BLOCKSTATE(Blocks::planks->defaultBlockState()->setValue(PlanksBlock::VARIANT, PlanksBlock::Variant::BIRCH));
+    builder.ITEM_BLOCKSTATE(Blocks::planks->defaultBlockState()->setValue(PlanksBlock::VARIANT, PlanksBlock::Variant::JUNGLE));
+    builder.ITEM_BLOCKSTATE(Blocks::planks->defaultBlockState()->setValue(PlanksBlock::VARIANT, PlanksBlock::Variant::ACACIA));
+    builder.ITEM_BLOCKSTATE(Blocks::planks->defaultBlockState()->setValue(PlanksBlock::VARIANT, PlanksBlock::Variant::DARK_OAK));
+    builder.ITEM_BLOCKSTATE(Blocks::log->defaultBlockState()->setValue(OldLogBlock::VARIANT, PlanksBlock::Variant::OAK));
+    builder.ITEM_BLOCKSTATE(Blocks::log->defaultBlockState()->setValue(OldLogBlock::VARIANT, PlanksBlock::Variant::SPRUCE));
+    builder.ITEM_BLOCKSTATE(Blocks::log->defaultBlockState()->setValue(OldLogBlock::VARIANT, PlanksBlock::Variant::BIRCH));
+    builder.ITEM_BLOCKSTATE(Blocks::log->defaultBlockState()->setValue(OldLogBlock::VARIANT, PlanksBlock::Variant::JUNGLE));
+    builder.ITEM_BLOCKSTATE(Blocks::log2->defaultBlockState()->setValue(NewLogBlock::VARIANT, PlanksBlock::Variant::ACACIA));
+    builder.ITEM_BLOCKSTATE(Blocks::log2->defaultBlockState()->setValue(NewLogBlock::VARIANT, PlanksBlock::Variant::DARK_OAK));
     builder.ITEM_BLOCKSTATE(Blocks::stripped_log_oak->defaultBlockState());
     builder.ITEM_BLOCKSTATE(Blocks::stripped_log_spruce->defaultBlockState());
     builder.ITEM_BLOCKSTATE(Blocks::stripped_log_birch->defaultBlockState());
@@ -834,9 +880,9 @@ void UIScene_CreativeMenu::staticCtor()
     builder.ITEM_BLOCKSTATE(Blocks::glowstone->defaultBlockState());
     builder.ITEM_BLOCKSTATE(Blocks::magma->defaultBlockState());
     builder.ITEM_BLOCKSTATE(Blocks::sea_lantern->defaultBlockState());
-    builder.ITEM_AUX(Blocks::prismarine, PrismarineBlock::VARIANT, PrismarineBlock::Variant::ROUGH);
-    builder.ITEM_AUX(Blocks::prismarine, PrismarineBlock::VARIANT, PrismarineBlock::Variant::BRICKS);
-    builder.ITEM_AUX(Blocks::prismarine, PrismarineBlock::VARIANT, PrismarineBlock::Variant::DARK);
+    builder.ITEM_BLOCKSTATE(Blocks::prismarine->defaultBlockState()->setValue(PrismarineBlock::VARIANT, PrismarineBlock::Variant::ROUGH));
+    builder.ITEM_BLOCKSTATE(Blocks::prismarine->defaultBlockState()->setValue(PrismarineBlock::VARIANT, PrismarineBlock::Variant::BRICKS));
+    builder.ITEM_BLOCKSTATE(Blocks::prismarine->defaultBlockState()->setValue(PrismarineBlock::VARIANT, PrismarineBlock::Variant::DARK));
     builder.ITEM_BLOCKSTATE(Blocks::slime->defaultBlockState());
     builder.ITEM_BLOCKSTATE(Blocks::fence->defaultBlockState());
     builder.ITEM_BLOCKSTATE(Blocks::spruce_fence->defaultBlockState());
@@ -846,16 +892,16 @@ void UIScene_CreativeMenu::staticCtor()
     builder.ITEM_BLOCKSTATE(Blocks::dark_oak_fence->defaultBlockState());
     builder.ITEM_BLOCKSTATE(Blocks::nether_brick_fence->defaultBlockState());
     builder.ITEM_BLOCKSTATE(Blocks::iron_bars->defaultBlockState());
-    builder.ITEM_AUX(Blocks::stonebrick, StoneBrickBlock::VARIANT, StoneBrickBlock::Variant::DEFAULT);
-    builder.ITEM_AUX(Blocks::stonebrick, StoneBrickBlock::VARIANT, StoneBrickBlock::Variant::MOSSY);
-    builder.ITEM_AUX(Blocks::stonebrick, StoneBrickBlock::VARIANT, StoneBrickBlock::Variant::CRACKED);
-    builder.ITEM_AUX(Blocks::stonebrick, StoneBrickBlock::VARIANT, StoneBrickBlock::Variant::CHISELED);
-    builder.ITEM_AUX(Blocks::monster_egg, MonsterEggBlock::VARIANT, MonsterEggBlock::Variant::STONE);
-    builder.ITEM_AUX(Blocks::monster_egg, MonsterEggBlock::VARIANT, MonsterEggBlock::Variant::COBBLESTONE);
-    builder.ITEM_AUX(Blocks::monster_egg, MonsterEggBlock::VARIANT, MonsterEggBlock::Variant::STONEBRICK);
-    builder.ITEM_AUX(Blocks::monster_egg, MonsterEggBlock::VARIANT, MonsterEggBlock::Variant::MOSSY_STONEBRICK);
-    builder.ITEM_AUX(Blocks::monster_egg, MonsterEggBlock::VARIANT, MonsterEggBlock::Variant::CRACKED_STONEBRICK);
-    builder.ITEM_AUX(Blocks::monster_egg, MonsterEggBlock::VARIANT, MonsterEggBlock::Variant::CHISELED_STONEBRICK);
+    builder.ITEM_BLOCKSTATE(Blocks::stonebrick->defaultBlockState()->setValue(StoneBrickBlock::VARIANT, StoneBrickBlock::Variant::DEFAULT));
+    builder.ITEM_BLOCKSTATE(Blocks::stonebrick->defaultBlockState()->setValue(StoneBrickBlock::VARIANT, StoneBrickBlock::Variant::MOSSY));
+    builder.ITEM_BLOCKSTATE(Blocks::stonebrick->defaultBlockState()->setValue(StoneBrickBlock::VARIANT, StoneBrickBlock::Variant::CRACKED));
+    builder.ITEM_BLOCKSTATE(Blocks::stonebrick->defaultBlockState()->setValue(StoneBrickBlock::VARIANT, StoneBrickBlock::Variant::CHISELED));
+    builder.ITEM_BLOCKSTATE(Blocks::monster_egg->defaultBlockState()->setValue(MonsterEggBlock::VARIANT, MonsterEggBlock::Variant::STONE));
+    builder.ITEM_BLOCKSTATE(Blocks::monster_egg->defaultBlockState()->setValue(MonsterEggBlock::VARIANT, MonsterEggBlock::Variant::COBBLESTONE));
+    builder.ITEM_BLOCKSTATE(Blocks::monster_egg->defaultBlockState()->setValue(MonsterEggBlock::VARIANT, MonsterEggBlock::Variant::STONEBRICK));
+    builder.ITEM_BLOCKSTATE(Blocks::monster_egg->defaultBlockState()->setValue(MonsterEggBlock::VARIANT, MonsterEggBlock::Variant::MOSSY_STONEBRICK));
+    builder.ITEM_BLOCKSTATE(Blocks::monster_egg->defaultBlockState()->setValue(MonsterEggBlock::VARIANT, MonsterEggBlock::Variant::CRACKED_STONEBRICK));
+    builder.ITEM_BLOCKSTATE(Blocks::monster_egg->defaultBlockState()->setValue(MonsterEggBlock::VARIANT, MonsterEggBlock::Variant::CHISELED_STONEBRICK));
     builder.ITEM_BLOCKSTATE(Blocks::mycelium->defaultBlockState());
     builder.ITEM_AUX(Blocks::dirt, DirtBlock::VARIANT, DirtBlock::Variant::COARSE_DIRT);
     builder.ITEM_AUX(Blocks::dirt, DirtBlock::VARIANT, DirtBlock::Variant::PODZOL);
@@ -953,41 +999,41 @@ void UIScene_CreativeMenu::staticCtor()
     builder.ITEM_BLOCKSTATE(Blocks::pumpkin->defaultBlockState());
     builder.ITEM_BLOCKSTATE(Blocks::carved_pumpkin->defaultBlockState());
     builder.ITEM_BLOCKSTATE(Blocks::lit_pumpkin->defaultBlockState());
-    builder.ITEM_AUX(Blocks::sapling, SaplingBlock::TYPE, PlanksBlock::Variant::OAK);
-    builder.ITEM_AUX(Blocks::sapling, SaplingBlock::TYPE, PlanksBlock::Variant::SPRUCE);
+    builder.ITEM_BLOCKSTATE(Blocks::sapling->defaultBlockState()->setValue(SaplingBlock::TYPE, PlanksBlock::Variant::OAK));
+    builder.ITEM_BLOCKSTATE(Blocks::sapling->defaultBlockState()->setValue(SaplingBlock::TYPE, PlanksBlock::Variant::SPRUCE));
     builder.ITEM_AUX(Blocks::sapling, SaplingBlock::TYPE, PlanksBlock::Variant::BIRCH);
     builder.ITEM_AUX(Blocks::sapling, SaplingBlock::TYPE, PlanksBlock::Variant::JUNGLE);
     builder.ITEM_AUX(Blocks::sapling, SaplingBlock::TYPE, PlanksBlock::Variant::ACACIA);
     builder.ITEM_AUX(Blocks::sapling, SaplingBlock::TYPE, PlanksBlock::Variant::DARK_OAK);
-    builder.ITEM_AUX(Blocks::leaves, OldLeafBlock::VARIANT, PlanksBlock::Variant::OAK);
+    builder.ITEM_BLOCKSTATE(Blocks::leaves->defaultBlockState()->setValue(OldLeafBlock::VARIANT, PlanksBlock::Variant::OAK));
     builder.ITEM_AUX(Blocks::leaves, OldLeafBlock::VARIANT, PlanksBlock::Variant::SPRUCE);
     builder.ITEM_AUX(Blocks::leaves, OldLeafBlock::VARIANT, PlanksBlock::Variant::BIRCH);
     builder.ITEM_AUX(Blocks::leaves, OldLeafBlock::VARIANT, PlanksBlock::Variant::JUNGLE);
-    builder.ITEM_AUX(Blocks::leaves2, NewLeafBlock::VARIANT, PlanksBlock::Variant::ACACIA);
+    builder.ITEM_BLOCKSTATE(Blocks::leaves2->defaultBlockState()->setValue(NewLeafBlock::VARIANT, PlanksBlock::Variant::ACACIA));
     builder.ITEM_AUX(Blocks::leaves2, NewLeafBlock::VARIANT, PlanksBlock::Variant::DARK_OAK);
     builder.ITEM_BLOCKSTATE(Blocks::vine->defaultBlockState());
     builder.ITEM_BLOCKSTATE(Blocks::waterlily->defaultBlockState());
     builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::torch, 1, 5)));
     builder.ITEM_AUX(Blocks::tallgrass, TallGrassBlock::VARIANT, TallGrassBlock::Variant::DEAD_BUSH);
     builder.ITEM_AUX(Blocks::tallgrass, TallGrassBlock::VARIANT, TallGrassBlock::Variant::GRASS);
-    builder.ITEM_AUX(Blocks::tallgrass, TallGrassBlock::VARIANT, TallGrassBlock::Variant::FERN);
+    builder.ITEM_BLOCKSTATE(Blocks::tallgrass->defaultBlockState()->setValue(TallGrassBlock::VARIANT, TallGrassBlock::Variant::FERN));
     builder.ITEM_BLOCKSTATE(Blocks::deadbush->defaultBlockState());
     builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::flowerPot, 1, 0)));
     builder.ITEM_AUX(Blocks::yellow_flower, static_cast<FlowerBlock*>(Blocks::yellow_flower)->getFlowerProperty(), FlowerBlock::Flower::DANDELION);
     builder.ITEM_AUX(Blocks::red_flower, static_cast<FlowerBlock*>(Blocks::red_flower)->getFlowerProperty(), FlowerBlock::Flower::POPPY);
-    builder.ITEM_AUX(Blocks::red_flower, static_cast<FlowerBlock*>(Blocks::red_flower)->getFlowerProperty(), FlowerBlock::Flower::BLUE_ORCHID);
+    builder.ITEM_BLOCKSTATE(Blocks::red_flower->defaultBlockState()->setValue(static_cast<FlowerBlock*>(Blocks::red_flower)->getFlowerProperty(), FlowerBlock::Flower::BLUE_ORCHID));
     builder.ITEM_AUX(Blocks::red_flower, static_cast<FlowerBlock*>(Blocks::red_flower)->getFlowerProperty(), FlowerBlock::Flower::ALLIUM);
     builder.ITEM_AUX(Blocks::red_flower, static_cast<FlowerBlock*>(Blocks::red_flower)->getFlowerProperty(), FlowerBlock::Flower::HOUSTONIA);
     builder.ITEM_AUX(Blocks::red_flower, static_cast<FlowerBlock*>(Blocks::red_flower)->getFlowerProperty(), FlowerBlock::Flower::RED_TULIP);
-    builder.ITEM_AUX(Blocks::red_flower, static_cast<FlowerBlock*>(Blocks::red_flower)->getFlowerProperty(), FlowerBlock::Flower::ORANGE_TULIP);
+    builder.ITEM_BLOCKSTATE(Blocks::red_flower->defaultBlockState()->setValue(static_cast<FlowerBlock*>(Blocks::red_flower)->getFlowerProperty(), FlowerBlock::Flower::ORANGE_TULIP));
     builder.ITEM_AUX(Blocks::red_flower, static_cast<FlowerBlock*>(Blocks::red_flower)->getFlowerProperty(), FlowerBlock::Flower::WHITE_TULIP);
     builder.ITEM_AUX(Blocks::red_flower, static_cast<FlowerBlock*>(Blocks::red_flower)->getFlowerProperty(), FlowerBlock::Flower::PINK_TULIP);
     builder.ITEM_AUX(Blocks::red_flower, static_cast<FlowerBlock*>(Blocks::red_flower)->getFlowerProperty(), FlowerBlock::Flower::OXEYE_DAISY);
-    builder.ITEM_AUX(Blocks::double_plant, DoublePlantBlock::VARIANT, DoublePlantBlock::Variant::SUNFLOWER);
+    builder.ITEM_BLOCKSTATE(Blocks::double_plant->defaultBlockState()->setValue(DoublePlantBlock::VARIANT, DoublePlantBlock::Variant::SUNFLOWER));
     builder.ITEM_AUX(Blocks::double_plant, DoublePlantBlock::VARIANT, DoublePlantBlock::Variant::SYRINGA);
     builder.ITEM_AUX(Blocks::double_plant, DoublePlantBlock::VARIANT, DoublePlantBlock::Variant::GRASS);
     builder.ITEM_AUX(Blocks::double_plant, DoublePlantBlock::VARIANT, DoublePlantBlock::Variant::FERN);
-    builder.ITEM_AUX(Blocks::double_plant, DoublePlantBlock::VARIANT, DoublePlantBlock::Variant::ROSE);
+    builder.ITEM_BLOCKSTATE(Blocks::double_plant->defaultBlockState()->setValue(DoublePlantBlock::VARIANT, DoublePlantBlock::Variant::ROSE));
     builder.ITEM_AUX(Blocks::double_plant, DoublePlantBlock::VARIANT, DoublePlantBlock::Variant::PAEONIA);
     builder.ITEM_BLOCKSTATE(Blocks::brown_mushroom->defaultBlockState());
     builder.ITEM_BLOCKSTATE(Blocks::red_mushroom->defaultBlockState());
@@ -1005,8 +1051,8 @@ void UIScene_CreativeMenu::staticCtor()
     builder.ITEM_BLOCKSTATE(Blocks::chorus_flower->defaultBlockState());
     builder.ITEM_BLOCKSTATE(Blocks::chorus_plant->defaultBlockState());
     builder.ITEM_BLOCKSTATE(Blocks::end_rod->defaultBlockState());
-    builder.ITEM_AUX(Blocks::cobblestone_wall, WallBlock::VARIANT, WallBlock::Variant::COBBLESTONE);
-    builder.ITEM_AUX(Blocks::cobblestone_wall, WallBlock::VARIANT, WallBlock::Variant::MOSSY);
+    builder.ITEM_BLOCKSTATE(Blocks::cobblestone_wall->defaultBlockState()->setValue(WallBlock::VARIANT, WallBlock::Variant::COBBLESTONE));
+    builder.ITEM_BLOCKSTATE(Blocks::cobblestone_wall->defaultBlockState()->setValue(WallBlock::VARIANT, WallBlock::Variant::MOSSY));
     builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::concrete, 1, 15)));
     builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::concrete, 1, 11)));
     builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::concrete, 1, 3)));
@@ -1136,7 +1182,7 @@ void UIScene_CreativeMenu::staticCtor()
     builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::stained_glass_pane, 1, 8)));
     builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Blocks::stained_glass_pane, 1, 7)));
     builder.ITEM_AUX(Blocks::red_mushroom_block, HugeMushroomBlock::VARIANT, HugeMushroomBlock::Variant::ALL_OUTSIDE);
-    builder.ITEM_AUX(Blocks::brown_mushroom_block, HugeMushroomBlock::VARIANT, HugeMushroomBlock::Variant::ALL_OUTSIDE);
+    builder.ITEM_BLOCKSTATE(Blocks::brown_mushroom_block->defaultBlockState()->setValue(HugeMushroomBlock::VARIANT, HugeMushroomBlock::Variant::ALL_OUTSIDE));
     builder.ITEM_AUX(Blocks::brown_mushroom_block, HugeMushroomBlock::VARIANT, HugeMushroomBlock::Variant::ALL_INSIDE);
     builder.ITEM_AUX(Blocks::brown_mushroom_block, HugeMushroomBlock::VARIANT, HugeMushroomBlock::Variant::STEM);
     builder.ITEM_BLOCKSTATE(Blocks::sea_pickle->defaultBlockState());
