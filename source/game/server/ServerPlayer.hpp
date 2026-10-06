@@ -122,8 +122,8 @@ public:
     void initMenu();
     boost::shared_ptr<ServerPlayer> SpectatePlayerChange(bool previous);
     void updateClientsCameras();
-    void notifyPlayerRespawn(boost::shared_ptr<ServerPlayer>* oldPlayer,
-                             boost::shared_ptr<ServerPlayer>* newPlayer);
+    void notifyPlayerRespawn(boost::shared_ptr<ServerPlayer> oldPlayer,
+                             boost::shared_ptr<ServerPlayer> newPlayer);
     void flushEntitiesToRemove();
     void markAttributesDirty();
     void refreshContainer(AbstractContainerMenu* menu);

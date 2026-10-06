@@ -585,13 +585,13 @@ void ServerPlayer::updateClientsCameras()
     players->broadcastAll(GameModePacket::Create(GameModePacket::eMessage_SetCamera, data));
 }
 
-void ServerPlayer::notifyPlayerRespawn(boost::shared_ptr<ServerPlayer>* oldPlayer, boost::shared_ptr<ServerPlayer>* newPlayer)
+void ServerPlayer::notifyPlayerRespawn(boost::shared_ptr<ServerPlayer> oldPlayer, boost::shared_ptr<ServerPlayer> newPlayer)
 {
-    if (mCamera && mCamera->getId() == (*oldPlayer)->getId())
+    if (mCamera && mCamera->getId() == oldPlayer->getId())
     {
-        if (!(*newPlayer)->isSpectator())
+        if (!newPlayer->isSpectator())
         {
-            SetCamera(*newPlayer);
+            SetCamera(newPlayer);
         }
         else
         {
@@ -1614,6 +1614,19 @@ void ServerPlayer::displayClientMessage(int32_t message, bool force)
 
     switch (static_cast<uint32_t>(message))
     {
+    case IDS_TILE_BED_PLAYERSLEEP:
+        packetMessage = ClientboundChatPacket::eChatPacketMessage_BedPlayerSleep;
+        for (unsigned int i = 0; i < mServer->getPlayers()->getPlayers()->size(); ++i)
+        {
+            boost::shared_ptr<ServerPlayer> player = (*mServer->getPlayers()->getPlayers())[i];
+            if (shared_from_this() == player)
+                player->mConnection->send(boost::shared_ptr<ClientboundChatPacket>(
+                    new ClientboundChatPacket(name, ClientboundChatPacket::eChatPacketMessage_BedMeSleep, -1)));
+            else
+                player->mConnection->send(boost::shared_ptr<ClientboundChatPacket>(
+                    new ClientboundChatPacket(name, packetMessage, -1)));
+        }
+        break;
     case IDS_TILE_BED_OCCUPIED:
         packetMessage = ClientboundChatPacket::eChatPacketMessage_BedOccupied;
         mConnection->send(boost::shared_ptr<ClientboundChatPacket>(new ClientboundChatPacket(L"", packetMessage, -1)));
@@ -1638,22 +1651,6 @@ void ServerPlayer::displayClientMessage(int32_t message, bool force)
         packetMessage = ClientboundChatPacket::eChatPacketMessage_BedMeSleep;
         mConnection->send(boost::shared_ptr<ClientboundChatPacket>(new ClientboundChatPacket(L"", packetMessage, -1)));
         break;
-    case IDS_TILE_BED_PLAYERSLEEP:
-    {
-        packetMessage = ClientboundChatPacket::eChatPacketMessage_BedPlayerSleep;
-        std::vector<boost::shared_ptr<ServerPlayer> >* players = mServer->getPlayers()->getPlayers();
-        for (unsigned int i = 0; i < players->size(); ++i)
-        {
-            boost::shared_ptr<ServerPlayer> player = (*players)[i];
-            if (shared_from_this() == player)
-                player->mConnection->send(boost::shared_ptr<ClientboundChatPacket>(
-                    new ClientboundChatPacket(name, ClientboundChatPacket::eChatPacketMessage_BedMeSleep, -1)));
-            else
-                player->mConnection->send(boost::shared_ptr<ClientboundChatPacket>(
-                    new ClientboundChatPacket(name, ClientboundChatPacket::eChatPacketMessage_BedPlayerSleep, -1)));
-        }
-        return;
-    }
     case IDS_PLAYER_ENTERED_END:
         packetMessage = ClientboundChatPacket::eChatPacketMessage_PlayerEnteredEnd;
         recipients = eRecipients_All;
@@ -1674,12 +1671,16 @@ void ServerPlayer::displayClientMessage(int32_t message, bool force)
         packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxSquid;
         recipients = eRecipients_All;
         break;
-    case 0x3E35B6E8:
-        packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxMooshrooms;
+    case 0xFAB1DEB6:
+        packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxBats;
         recipients = eRecipients_All;
         break;
     case 0x70EDC806:
         packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxWolves;
+        recipients = eRecipients_All;
+        break;
+    case 0x3E35B6E8:
+        packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxMooshrooms;
         recipients = eRecipients_All;
         break;
     case 0xA82B5A66:
@@ -1688,18 +1689,6 @@ void ServerPlayer::displayClientMessage(int32_t message, bool force)
         break;
     case 0x16972FBF:
         packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxVillagers;
-        recipients = eRecipients_All;
-        break;
-    case 0x1EE681BA:
-        packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxHangingEntities;
-        recipients = eRecipients_All;
-        break;
-    case 0x8ECD701E:
-        packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxArmorStands;
-        recipients = eRecipients_All;
-        break;
-    case IDS_CANT_SPAWN_IN_PEACEFUL:
-        packetMessage = ClientboundChatPacket::eChatPacketMessage_CantSpawnInPeaceful;
         recipients = eRecipients_All;
         break;
     case 0xB399BD15:
@@ -1722,6 +1711,18 @@ void ServerPlayer::displayClientMessage(int32_t message, bool force)
         packetMessage = ClientboundChatPacket::eChatPacketMessage_CantShearMooshroom;
         recipients = eRecipients_All;
         break;
+    case 0x1EE681BA:
+        packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxHangingEntities;
+        recipients = eRecipients_All;
+        break;
+    case 0x8ECD701E:
+        packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxArmorStands;
+        recipients = eRecipients_All;
+        break;
+    case IDS_CANT_SPAWN_IN_PEACEFUL:
+        packetMessage = ClientboundChatPacket::eChatPacketMessage_CantSpawnInPeaceful;
+        recipients = eRecipients_All;
+        break;
     case IDS_MAX_BOATS:
         packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxBoats;
         recipients = eRecipients_All;
@@ -1730,20 +1731,8 @@ void ServerPlayer::displayClientMessage(int32_t message, bool force)
         packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxMinecarts;
         recipients = eRecipients_All;
         break;
-    case 0xFAB1DEB6:
-        packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxBats;
-        recipients = eRecipients_All;
-        break;
     case IDS_MAX_BANNERS:
         packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxBanners;
-        recipients = eRecipients_All;
-        break;
-    case IDS_MAX_ENDER_CRYSTALS:
-        packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxEnderCrystals;
-        recipients = eRecipients_All;
-        break;
-    case IDS_MAX_BEACONS:
-        packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxBeacons;
         recipients = eRecipients_All;
         break;
     case 0xB714E0E2:
@@ -1758,20 +1747,53 @@ void ServerPlayer::displayClientMessage(int32_t message, bool force)
         packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxFishAndSquid;
         recipients = eRecipients_All;
         break;
+    case IDS_MAX_ENDER_CRYSTALS:
+        packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxEnderCrystals;
+        recipients = eRecipients_All;
+        break;
+    case IDS_MAX_BEACONS:
+        packetMessage = ClientboundChatPacket::eChatPacketMessage_MaxBeacons;
+        recipients = eRecipients_All;
+        break;
     }
 
-    if (recipients == eRecipients_None)
-        return;
-
-    std::vector<boost::shared_ptr<ServerPlayer> >* players = mServer->getPlayers()->getPlayers();
-    for (unsigned int i = 0; i < players->size(); ++i)
+    switch (recipients)
     {
-        boost::shared_ptr<ServerPlayer> player = players->at(i);
-        bool isSelf = shared_from_this() == player;
-        if (recipients == eRecipients_All || (recipients == eRecipients_Self && isSelf)
-            || (recipients == eRecipients_Others && !isSelf))
+    case eRecipients_Self:
+    {
+        std::vector<boost::shared_ptr<ServerPlayer> >* players = mServer->getPlayers()->getPlayers();
+        for (unsigned int i = 0; i < players->size(); ++i)
+        {
+            boost::shared_ptr<ServerPlayer> player = players->at(i);
+            if (shared_from_this() == player)
+                player->mConnection->send(
+                    boost::shared_ptr<ClientboundChatPacket>(new ClientboundChatPacket(name, packetMessage, -1)));
+        }
+        break;
+    }
+    case eRecipients_Others:
+    {
+        std::vector<boost::shared_ptr<ServerPlayer> >* players = mServer->getPlayers()->getPlayers();
+        for (unsigned int i = 0; i < players->size(); ++i)
+        {
+            boost::shared_ptr<ServerPlayer> player = players->at(i);
+            if (shared_from_this() != player)
+                player->mConnection->send(
+                    boost::shared_ptr<ClientboundChatPacket>(new ClientboundChatPacket(name, packetMessage, -1)));
+        }
+        break;
+    }
+    case eRecipients_All:
+    {
+        std::vector<boost::shared_ptr<ServerPlayer> >* players = mServer->getPlayers()->getPlayers();
+        for (unsigned int i = 0; i < players->size(); ++i)
+        {
+            boost::shared_ptr<ServerPlayer> player = players->at(i);
             player->mConnection->send(
                 boost::shared_ptr<ClientboundChatPacket>(new ClientboundChatPacket(name, packetMessage, -1)));
+        }
+        break;
+    }
     }
 }
 
