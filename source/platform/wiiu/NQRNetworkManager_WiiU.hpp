@@ -12,10 +12,22 @@
 #include "game/network/INQRNetworkManagerListener.hpp"
 #include "platform/wiiu/C4JStorage.hpp"
 #include "platform/wiiu/NQRNetworkManager.hpp"
+#include "nn/pia/inet/NexSessionSearchCriteria.hpp"
 #include "nn/pia/session/Session.hpp"
 
 class C4JEventImpl;
 class C4JThreadImpl;
+
+namespace nn
+{
+    namespace nex
+    {
+        class Gathering;
+        class ProtocolCallContext;
+        class String;
+        template <typename T, typename KeyType> class AnyObjectHolder;
+    }
+}
 
 namespace nn
 {
@@ -43,6 +55,13 @@ public:
         eNEXAsyncProcess_BrowseSession,
         eNEXAsyncProcess_UpdateSession,
         eNEXAsyncProcess_JoinRandomSession
+    };
+
+    enum ENEXLoginState
+    {
+        eNEXLoginState_Pending = 0,
+        eNEXLoginState_LoggedIn = 2,
+        eNEXLoginState_Failed = 3
     };
 
     enum EJoinFailedReason
@@ -273,63 +292,109 @@ private:
     typedef std::map<std::wstring, std::wstring> PlayerNameMap;
 
     bool m_friendPresenceUpdated;
-    C4JThreadImpl* m_connectThread;
-    C4JEventImpl* m_tickEvent;
     C4JThreadImpl* m_tickThread;
+    C4JEventImpl* m_tickEvent;
+    nn::nex::AnyObjectHolder<nn::nex::Gathering, nn::nex::String>* m_gatheringHolder;
     PlayerNameMap m_miiNames;
     INQRNetworkManagerListener* m_listener;
     eNQRNetworkManagerInternalState m_internalState;
     eNQRNetworkManagerState m_state;
     bool m_initialised;
     bool m_host;
-    bool m_receiving;
-    void* m_searchCriteria;
-    int m_lastNetworkError;
-    bool m_online;
-    int m_sessionId;
+    bool m_unknownDA;
     unsigned long long m_localStationId;
     unsigned long long m_hostStationId;
-    bool m_matchmaking;
+    int m_localPlayerCount;
+    int m_localPlayersJoined;
+    nn::pia::inet::NexSessionSearchCriteria m_searchCriteria;
+    int m_unknownDC0;
+    unsigned char m_nextSmallId;
+    int m_unknownDC8;
     bool m_localGame;
-    int* m_roomAttributes;
-    int m_roomAttributeCount;
+    bool m_unknownDCD;
+    int m_unknownDD0;
+    bool m_unknownDD4;
+    unsigned char m_unknownDD5[3];
+    unsigned char m_unknownDD8[0xa0];
+    int m_unknownE78;
+    bool m_receiving;
+    int m_unknownE80;
+    bool m_unknownE84;
+    bool m_matchmaking;
     OSFastMutex m_playerMutex;
     PlayerSyncData m_roomPlayers[8];
-    NQRNetworkPlayer* m_roomSlotPlayers[8];
-    OSFastMutex m_connectedPlayerMutex;
-    OSFastMutex m_playerConnectionMutex;
+    void* m_externalData;
+    unsigned int m_externalDataSize;
+    unsigned char m_unknown1140[8];
+    int* m_roomAttributes;
+    int m_roomAttributeCount;
+    int m_matchmakeAttributes[5];
     std::vector<NQRNetworkPlayer*> m_unconnectedPlayers;
     std::deque<SendQueueItem> m_sendQueue;
     OSFastMutex m_sendQueueMutex;
-    unsigned int m_roomPlayerMask;
-    int m_roomPlayerCount;
-    int m_localPlayerCount;
-    int m_localPlayersJoined;
-    std::vector<FriendSearchResult> m_friendSearchResults;
+    NQRNetworkPlayer* m_roomSlotPlayers[8];
+    unsigned char m_unknown11D4[0xc];
+    int m_unknown11E0;
+    unsigned char m_unknown11E4[4];
+    bool m_unknown11E8;
+    unsigned char m_unknown11E9[0x1b];
+    unsigned int m_pendingSessionId;
+    int m_pendingUserMask;
+    PresenceSyncInfo m_presenceInfo;
+    OSFastMutex m_playerConnectionMutex;
+    int m_friendSearchBusy;
+    unsigned char m_unknown124C[4];
+    bool m_unknown1250;
+    unsigned char m_unknown1251[7];
+    int m_unknown1258;
+    int m_unknown125C;
     OSFastMutex m_friendSearchMutex;
-    bool m_friendSearchBusy;
-    unsigned int m_friendPresenceCount;
+    unsigned char m_unknown128C[4];
+    void (*m_extDataCallback)(bool, void*);
+    void* m_extDataCallbackData;
+    void* m_extDataBuffer;
+    std::vector<FriendSearchResult> m_friendSearchResults;
+    OSFastMutex m_connectedPlayerMutex;
     std::vector<NQRNetworkPlayer*> m_players;
     OSFastMutex m_connectedStationMutex;
     std::vector<ConnectedStation> m_connectedStations;
-    unsigned char m_nextSmallId;
-    void* m_nexContext;
+    unsigned char m_unknown1324[4];
+    unsigned char m_unknown1328[0x2c];
+    bool m_unknown1354;
+    nn::nex::ProtocolCallContext* m_nexCallContext;
     ENEXAsyncProcess m_nexAsyncProcess;
-    unsigned int m_pendingSessionId;
-    int m_pendingUserMask;
-    int m_maxPlayers;
-    unsigned char m_gameMode;
-    PresenceSyncInfo m_presenceInfo;
-    void* m_externalData;
-    unsigned int m_externalDataSize;
-    bool m_running;
-    bool m_leaveRequested;
+    unsigned char m_unknown1360[0x14];
+    int m_nexLoginState;
+    int m_unknown1378;
+    bool m_unknown137C;
+    bool m_updateRequested;
+    unsigned long long m_unknown1380;
     bool m_createRequested;
     bool m_joinRequested;
+    bool m_joinMatchmakeRequested;
+    bool m_leaveRequested;
     bool m_browseRequested;
     bool m_randomJoinRequested;
-    bool m_updateRequested;
-    unsigned int m_lastRateControlledEvent;
+    unsigned int m_unknown1390;
+    unsigned short m_unknown1394;
+    unsigned short m_unknown1396;
+    unsigned char m_unknown1398[8];
+    bool m_unknown13A0;
+    int m_unknown13A4;
+    int m_pendingAttributeIndex;
+    unsigned int m_pendingAttributeValue;
+    unsigned long long m_lastRateControlledEvent;
+    void* m_matchmakingExtData;
+    unsigned char m_gameMode;
+    int m_lastNetworkError;
+    bool m_online;
+    int m_sessionId;
+    unsigned int m_roomPlayerMask;
+    int m_roomPlayerCount;
+    int m_maxPlayers;
+    bool m_running;
+    unsigned int m_friendPresenceCount;
+    void* m_nexContext;
 };
 
 #endif

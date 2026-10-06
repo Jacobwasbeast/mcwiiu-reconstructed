@@ -18,13 +18,18 @@
 #include "platform/wiiu/CProfile.hpp"
 #include "platform/wiiu/NQRNetworkPlayer.hpp"
 #include "platform/wiiu/NintendoVoiceChat_WiiU.hpp"
+#include "nn/nex/AnyObjectHolder.hpp"
+#include "nn/nex/Core.hpp"
 #include "nn/nex/DataStoreClientInterface.hpp"
 #include "nn/nex/DataStoreSearchParam.hpp"
 #include "nn/nex/DataStoreSearchResult.hpp"
 #include "nn/nex/ProtocolCallContext.hpp"
 #include "nn/nex/Reconstruction.hpp"
+#include "nn/nex/Scheduler.hpp"
 #include "nn/nex/qResult.hpp"
+#include "nn/nex/MatchmakeSession.hpp"
 #include "nn/nex/MemoryManager.hpp"
+#include "nn/pia/common/Scheduler.hpp"
 #include "nn/pia/String.hpp"
 #include "nn/pia/inet/NexSessionStartupSetting.hpp"
 #include "nn/pia/Transport.hpp"
@@ -46,6 +51,11 @@ static int s_connectProgressUserIndex;
 static bool s_cancelConnect;
 static bool s_appSuspended;
 static bool s_handlingBootInvite;
+static int s_lastLoginErrorCode;
+static bool s_connectFailed;
+static const unsigned int s_nexDispatchTimeout = 0xFFFFFFFFu;
+static const int s_loginErrorServiceUnavailable = 0xf9bbf;
+static const int s_rateControlledEventInterval = 10000;
 
 bool NQRNetworkManager_WiiU::s_applicationConnected;
 
@@ -145,20 +155,20 @@ void NexFinalize()
     }
 }
 
-void* NexGetMatchmakeClient()
+void* Nex_GetMatchmakeClient()
 {
     return s_matchmakeClient;
 }
 
-void* NexGetNgsFacadeInstance()
+void* Nex_GetNgsFacadeInstance()
 {
     return s_ngsFacade;
 }
 
-unsigned int NexInitializeMatchmake()
+unsigned int Nex_InitializeMatchmake()
 {
     s_matchmakeClient = new nn::nex::MatchmakeExtensionClient();
-    s_ngsFacade = static_cast<nn::nex::NgsFacade*>(NexGetNgsFacadeInstance());
+    s_ngsFacade = static_cast<nn::nex::NgsFacade*>(Nex_GetNgsFacadeInstance());
     if (s_matchmakeClient == NULL || s_ngsFacade == NULL ||
         s_matchmakeClient->Bind(s_ngsFacade->GetCredentials()) == 0)
         return 0;
@@ -173,7 +183,7 @@ unsigned int NexInitialize(unsigned int runtimeSize, unsigned int reservedSize, 
     __N_20_Shared_Nex_Setup_cpp_392f2b82::InitializeRuntimeMemory(runtimeSize, reservedSize);
     nn::nex::GlobalVariables::AcquireInstance();
     NexInitializeErrorHandling();
-    s_ngsFacade = static_cast<nn::nex::NgsFacade*>(NexGetNgsFacadeInstance());
+    s_ngsFacade = static_cast<nn::nex::NgsFacade*>(Nex_GetNgsFacadeInstance());
     s_nexInitialised = true;
     return 0;
 }
@@ -266,17 +276,19 @@ NQRNetworkManager_WiiU::ClientJoinData::ClientJoinData()
 }
 
 NQRNetworkManager_WiiU::NQRNetworkManager_WiiU(INQRNetworkManagerListener* listener)
-    : m_friendPresenceUpdated(false), m_connectThread(NULL), m_tickEvent(NULL), m_tickThread(NULL),
+    : m_friendPresenceUpdated(false), m_tickThread(NULL), m_tickEvent(NULL), m_gatheringHolder(NULL),
       m_listener(listener), m_internalState(eNQRNetworkManagerInternalState_Uninitialised),
       m_state(eNQRNetworkManagerState_Uninitialised), m_initialised(false), m_host(false),
-      m_receiving(false), m_searchCriteria(NULL), m_lastNetworkError(0), m_online(false),
-      m_sessionId(0), m_localStationId(0), m_hostStationId(0), m_matchmaking(false), m_localGame(false), m_roomAttributes(NULL), m_roomAttributeCount(0), m_roomPlayerMask(0), m_roomPlayerCount(1), m_localPlayerCount(0), m_localPlayersJoined(0), m_friendSearchBusy(false),
-      m_friendPresenceCount(0), m_nextSmallId(0),
-      m_nexContext(NULL), m_nexAsyncProcess(eNEXAsyncProcess_None), m_pendingSessionId(0),
-      m_pendingUserMask(0), m_maxPlayers(8), m_gameMode(0), m_externalData(NULL),
-      m_externalDataSize(0), m_running(false), m_leaveRequested(false), m_createRequested(false),
-      m_joinRequested(false), m_browseRequested(false), m_randomJoinRequested(false),
-      m_updateRequested(false), m_lastRateControlledEvent(0)
+      m_localStationId(0), m_hostStationId(0), m_localPlayerCount(0), m_localPlayersJoined(0),
+      m_nextSmallId(0), m_localGame(false), m_receiving(false), m_matchmaking(false),
+      m_externalData(NULL), m_externalDataSize(0), m_roomAttributes(NULL), m_roomAttributeCount(0),
+      m_pendingSessionId(0), m_pendingUserMask(0), m_friendSearchBusy(false),
+      m_nexCallContext(NULL), m_nexAsyncProcess(eNEXAsyncProcess_None), m_nexLoginState(eNEXLoginState_Failed), m_createRequested(false),
+      m_joinRequested(false), m_joinMatchmakeRequested(false), m_leaveRequested(false),
+      m_browseRequested(false), m_randomJoinRequested(false), m_updateRequested(false),
+      m_lastRateControlledEvent(0), m_matchmakingExtData(NULL), m_gameMode(0), m_lastNetworkError(0),
+      m_online(false), m_sessionId(0), m_roomPlayerMask(0), m_roomPlayerCount(1), m_maxPlayers(8),
+      m_running(false), m_friendPresenceCount(0), m_nexContext(NULL)
 {
     std::memset(m_roomSlotPlayers, 0, sizeof(m_roomSlotPlayers));
     std::memset(&m_presenceInfo, 0, sizeof(m_presenceInfo));
@@ -894,11 +906,13 @@ bool NQRNetworkManager_WiiU::Pia_CreateSession()
 
 bool NQRNetworkManager_WiiU::canRunRateControlledEvent()
 {
-    unsigned int now = GetTickCount();
-    if (now - m_lastRateControlledEvent < 1000)
-        return false;
-    m_lastRateControlledEvent = now;
-    return true;
+    unsigned long long now = System::processTimeInMilliSecs();
+    if (m_lastRateControlledEvent == 0 || static_cast<int>(now - m_lastRateControlledEvent) >= s_rateControlledEventInterval)
+    {
+        m_lastRateControlledEvent = now;
+        return true;
+    }
+    return false;
 }
 
 bool NQRNetworkManager_WiiU::Pia_JoinSession()
@@ -1042,23 +1056,176 @@ void NQRNetworkManager_WiiU::ResetToIdle()
 
 void NQRNetworkManager_WiiU::TickNexAsyncProcess()
 {
-    if (m_nexAsyncProcess != eNEXAsyncProcess_None)
+    if (nn::nex::Core::GetInstance()->GetScheduler() == NULL)
+        return;
+    nn::nex::Core::GetInstance()->GetScheduler()->Dispatch(s_nexDispatchTimeout, 0);
+    nn::pia::common::g_piaJobScheduler->Dispatch(0);
+    if (m_nexAsyncProcess == eNEXAsyncProcess_None)
     {
-        SetNexAsyncProcess(eNEXAsyncProcess_None);
+        if (m_createRequested)
+        {
+            Pia_CreateSession();
+            m_createRequested = false;
+            return;
+        }
+        if (m_joinRequested)
+        {
+            if (!canRunRateControlledEvent())
+                return;
+            Pia_JoinSession();
+            m_joinRequested = false;
+            return;
+        }
+        if (m_joinMatchmakeRequested)
+        {
+            Pia_JoinMatchmakeSession();
+            m_joinMatchmakeRequested = false;
+            return;
+        }
+        if (m_leaveRequested)
+        {
+            Pia_LeaveSession();
+            m_leaveRequested = false;
+            return;
+        }
+        if (m_browseRequested)
+        {
+            if (!canRunRateControlledEvent())
+                return;
+            Pia_BrowseSession();
+            m_browseRequested = false;
+            return;
+        }
+        if (m_randomJoinRequested)
+        {
+            if (!canRunRateControlledEvent())
+                return;
+            Pia_JoinRandomSession();
+            m_randomJoinRequested = false;
+            return;
+        }
+        if (m_updateRequested)
+            UpdateExternalRoomDataFromThread();
+        else
+            UpdateMatchmakingAttributes();
         return;
     }
-    if (m_createRequested)
-        Pia_CreateSession();
-    else if (m_joinRequested)
-        Pia_JoinSession();
-    else if (m_leaveRequested)
-        Pia_LeaveSession();
-    else if (m_browseRequested)
-        Pia_BrowseSession();
-    else if (m_randomJoinRequested)
-        Pia_JoinRandomSession();
-    else if (m_updateRequested)
-        UpdateExternalRoomDataFromThread();
+    if (m_nexCallContext != NULL && m_nexCallContext->GetState() == nn::nex::CallContext::CallInProgress)
+        return;
+    switch (m_nexAsyncProcess)
+    {
+    case eNEXAsyncProcess_Login:
+    {
+        if (m_nexCallContext->GetState() == nn::nex::CallContext::CallInProgress)
+            return;
+        SetNexAsyncProcess(eNEXAsyncProcess_None);
+        nn::nex::NgsFacade* ngsFacade = static_cast<nn::nex::NgsFacade*>(Nex_GetNgsFacadeInstance());
+        nn::nex::qResult loginResult(m_nexCallContext->GetResult());
+        if (!static_cast<bool>(loginResult))
+        {
+            m_nexLoginState = eNEXLoginState_Failed;
+            if (m_internalState == eNQRNetworkManagerInternalState_HostCreatingSession)
+                SetState(eNQRNetworkManagerInternalState_HostRegisteringSession);
+            else
+                SetState(m_internalState == eNQRNetworkManagerInternalState_JoinCreatingSession ?
+                    eNQRNetworkManagerInternalState_JoinSessionJoined :
+                    eNQRNetworkManagerInternalState_Initialising);
+            nn::nex::qResult failure(m_nexCallContext->GetResult());
+            nn::nex::ErrorCodeConverter::ConvertToNetworkErrorCode(failure);
+            s_lastLoginErrorCode = ngsFacade->GetLastLoginErrorCode();
+            if (s_lastLoginErrorCode == s_loginErrorServiceUnavailable)
+            {
+                s_applicationConnected = false;
+                s_connectFailed = true;
+            }
+        }
+        else
+        {
+            nn::nex::qResult connected = ngsFacade->IsConnected();
+            if (!static_cast<bool>(connected))
+            {
+                s_lastLoginErrorCode = ngsFacade->GetLastLoginErrorCode();
+            }
+            else if (Nex_InitializeMatchmake() && Pia_StartupSession())
+            {
+                int internalState = m_internalState;
+                m_nexLoginState = eNEXLoginState_LoggedIn;
+                switch (internalState)
+                {
+                case eNQRNetworkManagerInternalState_IdleOnline:
+                    SetState(eNQRNetworkManagerInternalState_Idle);
+                    break;
+                case eNQRNetworkManagerInternalState_HostCreatingSession:
+                    Pia_SignalCreateSession();
+                    break;
+                case eNQRNetworkManagerInternalState_JoinCreatingSession:
+                    Pia_SignalJoinSession();
+                    break;
+                default:
+                    break;
+                }
+                return;
+            }
+        }
+        m_nexLoginState = eNEXLoginState_Failed;
+        Pia_Shutdown();
+        if (m_internalState == eNQRNetworkManagerInternalState_HostCreatingSession)
+        {
+            SetState(eNQRNetworkManagerInternalState_HostRegisteringSession);
+            return;
+        }
+        if (m_internalState == eNQRNetworkManagerInternalState_JoinCreatingSession)
+        {
+            SetState(eNQRNetworkManagerInternalState_JoinSessionJoined);
+            return;
+        }
+        if (!IsInSession())
+            SetState(eNQRNetworkManagerInternalState_Initialising);
+        break;
+    }
+    case eNEXAsyncProcess_Shutdown:
+        if (m_nexCallContext->GetState() != nn::nex::CallContext::CallInProgress)
+        {
+            SetNexAsyncProcess(eNEXAsyncProcess_None);
+            m_nexLoginState = eNEXLoginState_Failed;
+            nn::nex::qResult shutdownResult(m_nexCallContext->GetResult());
+            if (!static_cast<bool>(shutdownResult))
+            {
+                nn::nex::qResult failure(m_nexCallContext->GetResult());
+                nn::nex::ErrorCodeConverter::ConvertToNetworkErrorCode(failure);
+            }
+            Pia_Finalize();
+            return;
+        }
+        break;
+    case eNEXAsyncProcess_Search:
+        if (m_nexCallContext->GetState() != nn::nex::CallContext::CallInProgress)
+        {
+            SetNexAsyncProcess(eNEXAsyncProcess_None);
+            if (m_nexCallContext->GetState() != nn::nex::CallContext::CallSucceeded)
+            {
+                m_extDataCallback(false, m_extDataCallbackData);
+                delete m_gatheringHolder;
+                m_gatheringHolder = NULL;
+                return;
+            }
+            if (m_gatheringHolder->GetObject() != NULL)
+            {
+                const nn::nex::MatchmakeSession* session =
+                    static_cast<const nn::nex::MatchmakeSession*>(m_gatheringHolder->GetObject());
+                std::vector<unsigned char, nn::nex::MemAllocator<unsigned char> > applicationBuffer;
+                applicationBuffer.assign(session->m_ApplicationBuffer.begin(), session->m_ApplicationBuffer.end());
+                std::memcpy(m_extDataBuffer, &applicationBuffer[0], applicationBuffer.size());
+                m_extDataCallback(true, m_extDataCallbackData);
+            }
+            delete m_gatheringHolder;
+            m_gatheringHolder = NULL;
+            return;
+        }
+        break;
+    default:
+        break;
+    }
 }
 
 void NQRNetworkManager_WiiU::SendJoinData()

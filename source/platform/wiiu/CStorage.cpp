@@ -26,7 +26,7 @@ int strcasecmp(const char*, const char*);
 void* memalign(unsigned int, unsigned int);
 
 extern "C" int SAVEGetStatEvidence(FSClient*, FSCmdBlock*, unsigned char, const char*, FSStat*, FSErrorFlag)
-    __asm__("SAVEGetStat");
+    asm("SAVEGetStat");
 
 }
 
