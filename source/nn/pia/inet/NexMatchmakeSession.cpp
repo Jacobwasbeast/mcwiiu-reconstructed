@@ -1,51 +1,82 @@
 #include "nn/pia/inet/NexMatchmakeSession.hpp"
+#include "nn/nex/Variant.hpp"
+#include "nn/pia/inet/NexCreateSessionSetting.hpp"
+#include "nn/pia/common/SessionBeginMonitoringContent.hpp"
+#include "nn/pia/common/SessionStateMonitoringContent.hpp"
+#include "nn/pia/inet/NexFacade.hpp"
 
 namespace nn { namespace pia { namespace inet {
 
-NexMatchmakeSession::NexMatchmakeSession() : m_state(0)
-{}
+namespace
+{
+
+enum
+{
+    cResultInvalidArgument = 0x10c07
+};
+
+enum
+{
+    cGatheringFlagsHostMigration = 0x210,
+    cGatheringFlagsMatchmake = 0x800
+};
+
+const wchar_t* s_countryCodeKey = L"@NCC";
+const wchar_t* s_overrideIpAddressKey = L"@OIA";
+const wchar_t* s_useGeoIpKey = L"@UsGI";
+const wchar_t* s_ratingValueKey = L"@RV";
+const wchar_t* s_disconnectionRateKey = L"@DR";
+const wchar_t* s_violationRateKey = L"@VR";
+
+}
+
+NexMatchmakeSession::NexMatchmakeSession()
+    : m_protocolCallContext(0),
+      m_protocolCallContextB(0)
+{
+}
 
 NexMatchmakeSession::~NexMatchmakeSession()
-{}
-
-unsigned long long NexMatchmakeSession::BrowseMatchmakeSession(nn::pia::common::CallContext* callContext)
 {
-    return m_state;
-
 }
+
+Result NexMatchmakeSession::BrowseMatchmakeSession(nn::pia::common::CallContext* callContext)
+{
+    return 0;
+}
+
 void NexMatchmakeSession::Cleanup()
 {
-    m_state = 0;
-
 }
+
 unsigned long long NexMatchmakeSession::ClearSystemPassword(nn::pia::common::CallContext* callContext, unsigned int gatheringId)
 {
-    return m_state;
-
+    return 0;
 }
-unsigned long long NexMatchmakeSession::CloseParticipate(nn::pia::common::CallContext* callContext, unsigned int gatheringId)
+
+Result NexMatchmakeSession::CloseParticipate(nn::pia::common::CallContext* callContext, unsigned int gatheringId)
 {
-    return m_state;
-
+    return 0;
 }
+
 unsigned long long NexMatchmakeSession::ConvertGatheringIdToPersistentGatheringCode(unsigned int gatheringId)
 {
-    return m_state;
-
+    return 0;
 }
-unsigned int NexMatchmakeSession::ConvertMatchmakeSystemTypeToSessionType(nn::nex::MatchmakeSystemType systemType)
+
+SessionType NexMatchmakeSession::ConvertMatchmakeSystemTypeToSessionType(nn::nex::MatchmakeSystemType systemType)
 {
     if (systemType == nn::nex::cMatchmakeSystemType_2) {
-        return 1;
+        return cSessionType_Ranked;
     }
-    return 0;
-
+    return cSessionType_Normal;
 }
+
 unsigned int NexMatchmakeSession::ConvertPersistentGatheringCodeToGatheringId(unsigned long long code)
 {
-    return m_state;
-
+    return 0;
 }
+
 unsigned int NexMatchmakeSession::ConvertSelectionMethodToMatchmakeSelectionMethod(SelectionMethod method)
 {
     if (method == cSelectionMethod_1) {
@@ -55,478 +86,565 @@ unsigned int NexMatchmakeSession::ConvertSelectionMethodToMatchmakeSelectionMeth
         return 5;
     }
     return 0;
-
 }
-unsigned int NexMatchmakeSession::ConvertSessionTypeToMatchmakeSystemType(SessionType sessionType)
+
+nn::nex::MatchmakeSystemType NexMatchmakeSession::ConvertSessionTypeToMatchmakeSystemType(SessionType sessionType)
 {
     if (sessionType == cSessionType_Normal) {
-        return 1;
+        return nn::nex::cMatchmakeSystemType_1;
     }
     if (sessionType == cSessionType_Ranked) {
-        return 2;
+        return nn::nex::cMatchmakeSystemType_2;
     }
-    return 0;
-
+    return nn::nex::cMatchmakeSystemType_0;
 }
+
 void NexMatchmakeSession::CopyFoundPersistentGatheringToBrowsedCommunityInfoList(const nn::nex::PersistentGathering* gathering, NexCommunityInfo* communityInfo)
 {
-    m_state = 0;
-
 }
+
 void NexMatchmakeSession::CopyMatchmakeSessionToSessionInfo(const nn::nex::MatchmakeSession* session, NexSessionInfo* sessionInfo)
 {
-    m_state = 0;
-
 }
+
 unsigned long long NexMatchmakeSession::CreateCommunity(nn::pia::common::CallContext* callContext)
 {
-    return m_state;
-
+    return 0;
 }
-unsigned long long NexMatchmakeSession::CreateMatchmakeSession(nn::pia::common::CallContext* callContext)
+
+Result NexMatchmakeSession::CreateMatchmakeSession(nn::pia::common::CallContext* callContext)
 {
-    return m_state;
-
+    return 0;
 }
-unsigned long long NexMatchmakeSession::CreateMatchmakeSessionWithTeam(nn::pia::common::CallContext* callContext, unsigned long long* teamOwnerIds, unsigned short teamCount, unsigned int gatheringId)
+
+Result NexMatchmakeSession::CreateMatchmakeSessionWithTeam(nn::pia::common::CallContext* callContext, unsigned long long* teamOwnerIds, unsigned short teamCount, unsigned int gatheringId)
 {
-    return m_state;
-
+    return 0;
 }
+
 unsigned long long NexMatchmakeSession::Finalize()
 {
-    return m_state;
-
+    return 0;
 }
+
 unsigned long long NexMatchmakeSession::FindCommunityByGatheringId(nn::pia::common::CallContext* callContext)
 {
-    return m_state;
-
+    return 0;
 }
+
 unsigned long long NexMatchmakeSession::FindCommunityByOwner(nn::pia::common::CallContext* callContext, unsigned long long ownerId, unsigned int offset, unsigned int size)
 {
-    return m_state;
-
+    return 0;
 }
+
 unsigned long long NexMatchmakeSession::FindCommunityByParticipant(nn::pia::common::CallContext* callContext, unsigned long long participantId, unsigned int offset, unsigned int size)
 {
-    return m_state;
-
+    return 0;
 }
+
 unsigned long long NexMatchmakeSession::FindOfficialCommunity(nn::pia::common::CallContext* callContext, bool isOfficial, unsigned int offset, unsigned int size)
 {
-    return m_state;
-
+    return 0;
 }
-unsigned long long NexMatchmakeSession::FindSessionByOwner(nn::pia::common::CallContext* callContext, const NexSessionSearchCriteriaOwner& criteria)
+
+Result NexMatchmakeSession::FindSessionByOwner(nn::pia::common::CallContext* callContext, const NexSessionSearchCriteriaOwner& criteria)
 {
-    return m_state;
-
+    return 0;
 }
-unsigned long long NexMatchmakeSession::FindSessionByParticipant(nn::pia::common::CallContext* callContext, const NexSessionSearchCriteriaParticipant& criteria)
+
+Result NexMatchmakeSession::FindSessionByParticipant(nn::pia::common::CallContext* callContext, const NexSessionSearchCriteriaParticipant& criteria)
 {
-    return m_state;
-
+    return 0;
 }
-unsigned long long NexMatchmakeSession::FindSessionBySessionId(nn::pia::common::CallContext* callContext, const NexSessionSearchCriteriaSessionId& criteria)
+
+Result NexMatchmakeSession::FindSessionBySessionId(nn::pia::common::CallContext* callContext, const NexSessionSearchCriteriaSessionId& criteria)
 {
-    return m_state;
-
+    return 0;
 }
+
 unsigned long long NexMatchmakeSession::GenerateSystemPassword(nn::pia::common::CallContext* callContext, unsigned int gatheringId)
 {
-    return m_state;
-
+    return 0;
 }
+
 unsigned int NexMatchmakeSession::GetBrowsedCommunityResult()
 {
-    return m_state;
-
+    return m_browsedCommunityResult;
 }
-unsigned int NexMatchmakeSession::GetBrowseMatchmakeSessionResult()
+
+session::ISessionInfoList* NexMatchmakeSession::GetBrowseMatchmakeSessionResult()
 {
-    return m_state;
-
+    return m_browseMatchmakeSessionResult;
 }
+
 unsigned int NexMatchmakeSession::GetRandomMatchmakeScore() const
 {
-    return m_state;
-
+    return m_randomMatchmakeScore;
 }
-int NexMatchmakeSession::GetSessionInfo()
+
+Result NexMatchmakeSession::GetStationConnectionInfo(nn::pia::common::CallContext* callContext, unsigned int stationId)
 {
-    return m_state;
-
+    return 0;
 }
-unsigned long long NexMatchmakeSession::GetStationConnectionInfo(nn::pia::common::CallContext* callContext, unsigned int stationId)
-{
-    return m_state;
 
-}
 unsigned long long NexMatchmakeSession::Initialize()
 {
-    return m_state;
-
+    return 0;
 }
+
 unsigned char NexMatchmakeSession::IsMatchmakeHost() const
 {
-    return m_state;
-
+    return m_matchmakeHost;
 }
+
 unsigned char NexMatchmakeSession::IsProcessingJoinMatchmakeSession() const
 {
-    return m_state;
-
+    return m_processingJoinMatchmakeSession;
 }
+
 unsigned char NexMatchmakeSession::IsRandomMatchmakeScoreAvailable() const
 {
-    return m_state;
-
+    return m_randomMatchmakeScoreAvailable;
 }
+
 unsigned int NexMatchmakeSession::IsUpdatableSelectionPriority(unsigned char priority)
 {
-    return m_state;
-
+    return 0;
 }
+
 unsigned long long NexMatchmakeSession::JoinCommunity(nn::pia::common::CallContext* callContext)
 {
-    return m_state;
-
+    return 0;
 }
-unsigned long long NexMatchmakeSession::JoinMatchmakeSession(nn::pia::common::CallContext* callContext, unsigned int gatheringId)
+
+Result NexMatchmakeSession::JoinMatchmakeSession(nn::pia::common::CallContext* callContext, unsigned int gatheringId)
 {
-    return m_state;
-
+    return 0;
 }
-unsigned long long NexMatchmakeSession::JoinMatchmakeSessionWithTeam(nn::pia::common::CallContext* callContext, unsigned int gatheringId, unsigned long long* teamOwnerIds, unsigned short teamCount, unsigned int teamIndex)
+
+Result NexMatchmakeSession::JoinMatchmakeSessionWithTeam(nn::pia::common::CallContext* callContext, unsigned int gatheringId, unsigned long long* teamOwnerIds, unsigned short teamCount, unsigned int teamIndex)
 {
-    return m_state;
-
+    return 0;
 }
-unsigned long long NexMatchmakeSession::LeaveMatchmakeSession(nn::pia::common::CallContext* callContext, unsigned int gatheringId)
+
+Result NexMatchmakeSession::LeaveMatchmakeSession(nn::pia::common::CallContext* callContext, unsigned int gatheringId)
 {
-    return m_state;
-
+    return 0;
 }
+
 unsigned long long NexMatchmakeSession::MigrateMatchmakeSessionOwner(nn::pia::common::CallContext* callContext, unsigned int gatheringId, unsigned long long* candidateIds, unsigned short candidateCount)
 {
-    return m_state;
-
+    return 0;
 }
+
 unsigned long long NexMatchmakeSession::ModifyAttribute(nn::pia::common::CallContext* callContext, unsigned int gatheringId, unsigned int index, unsigned int value)
 {
-    return m_state;
-
+    return 0;
 }
-unsigned long long NexMatchmakeSession::OpenParticipate(nn::pia::common::CallContext* callContext, unsigned int gatheringId)
+
+Result NexMatchmakeSession::OpenParticipate(nn::pia::common::CallContext* callContext, unsigned int gatheringId)
 {
-    return m_state;
-
+    return 0;
 }
-unsigned long long NexMatchmakeSession::RandomMatchmakeSession(nn::pia::common::CallContext* callContext)
+
+Result NexMatchmakeSession::RandomMatchmakeSession(nn::pia::common::CallContext* callContext)
 {
-    return m_state;
-
+    return 0;
 }
-unsigned long long NexMatchmakeSession::RandomMatchmakeSessionWithTeam(nn::pia::common::CallContext* callContext, unsigned long long* teamOwnerIds, unsigned short teamCount, unsigned int gatheringId)
+
+Result NexMatchmakeSession::RandomMatchmakeSessionWithTeam(nn::pia::common::CallContext* callContext, unsigned long long* teamOwnerIds, unsigned short teamCount, unsigned int gatheringId)
 {
-    return m_state;
-
+    return 0;
 }
+
 unsigned long long NexMatchmakeSession::ReflectCommunityIdList(const unsigned int* idList, unsigned int count)
 {
-    return m_state;
-
+    return 0;
 }
+
 unsigned long long NexMatchmakeSession::ReflectCreateCommunitySetting(const NexCreateCommunitySetting* setting)
 {
-    return m_state;
-
+    return 0;
 }
+
 void NexMatchmakeSession::ReflectCreateSetting(const nn::pia::session::CreateSessionSetting* setting, bool isTeam)
 {
-    m_state = 0;
-
 }
+
 unsigned long long NexMatchmakeSession::ReflectJoinCommunitySetting(const NexJoinCommunitySetting* setting)
 {
-    return m_state;
-
+    return 0;
 }
+
 unsigned long long NexMatchmakeSession::ReflectJoinRandomSetting(const nn::pia::session::JoinRandomSessionSetting* setting, bool isTeam)
 {
-    return m_state;
-
+    return 0;
 }
+
 unsigned long long NexMatchmakeSession::ReflectJoinSetting(const nn::pia::session::JoinSessionSetting* setting)
 {
-    return m_state;
-
+    return 0;
 }
-unsigned long long NexMatchmakeSession::ReflectSettingToMatchmakeSession(const nn::pia::session::CreateSessionSetting* setting, bool isTeam)
+
+Result NexMatchmakeSession::ReflectSettingToMatchmakeSession(const nn::pia::session::CreateSessionSetting* setting, bool hostMigrationEnabled)
 {
-    return m_state;
-
+    if (setting == 0) {
+        return static_cast<Result>(cResultInvalidArgument);
+    }
+    const NexCreateSessionSetting* createSetting = static_cast<const NexCreateSessionSetting*>(setting);
+    m_requestSession->Reset();
+    if (createSetting->IsSetGameMode()) {
+        m_requestSession->SetGameMode(createSetting->GetGameMode());
+    }
+    if (createSetting->IsSetMaxParticipantNum()) {
+        m_requestSession->m_uiShortValue2 = createSetting->GetMaxParticipantNum();
+    }
+    if (createSetting->IsSetMinParticipantNum()) {
+        m_requestSession->m_uiShortValue1 = createSetting->GetMinParticipantNum();
+    }
+    nn::nex::MatchmakeSystemType systemType = nn::nex::cMatchmakeSystemType_1;
+    unsigned int policyArgument = 0;
+    if (createSetting->IsSetSessionType()) {
+        systemType = ConvertSessionTypeToMatchmakeSystemType(createSetting->GetSessionType());
+        if (systemType == nn::nex::cMatchmakeSystemType_1) {
+            if (createSetting->IsAutoCloseSession()) {
+                policyArgument = 1;
+            } else {
+                policyArgument = 0;
+            }
+        } else if (systemType == nn::nex::cMatchmakeSystemType_2) {
+            if (createSetting->IsAutoCloseSession()) {
+                policyArgument = 0;
+            } else {
+                policyArgument = 1;
+            }
+        }
+    }
+    m_requestSession->SetMatchmakeSystemType(systemType, policyArgument);
+    if (createSetting->IsSetSessionUserPassword()) {
+        common::String::EncodingType encoding = createSetting->GetSessionUserPassword().GetEncodingType();
+        nn::nex::MatchmakeSession* session = m_requestSession;
+        if (encoding == common::String::EncodingType_Utf16) {
+            session->m_strUserPassword = nn::nex::String(static_cast<const wchar_t*>(createSetting->GetSessionUserPassword().GetBuffer()));
+        } else {
+            session->m_strUserPassword = nn::nex::String(static_cast<const char*>(createSetting->GetSessionUserPassword().GetBuffer()));
+        }
+    }
+    if (createSetting->IsSetOpenSession()) {
+        m_requestSession->SetOpenParticipation(createSetting->IsOpenSession());
+    }
+    if (createSetting->IsSetSelectionPriority()) {
+        m_requestSession->SetProgressScore(createSetting->GetSelectionPriority());
+    }
+    if (createSetting->IsSetCommunityId()) {
+        m_requestSession->m_uiReferGatheringID = createSetting->GetCommunityId();
+    }
+    m_matchmakeParam->m_Parameters.clear();
+    if (createSetting->IsSetRatingValue()) {
+        m_matchmakeParam->m_Parameters[nn::nex::String(s_ratingValueKey)] = nn::nex::Variant(createSetting->GetRatingValue());
+    }
+    if (createSetting->IsSetDisconnectionRate()) {
+        m_matchmakeParam->m_Parameters[nn::nex::String(s_disconnectionRateKey)] = nn::nex::Variant(createSetting->GetDisconnectionRate());
+    }
+    if (createSetting->IsSetViolationRate()) {
+        m_matchmakeParam->m_Parameters[nn::nex::String(s_violationRateKey)] = nn::nex::Variant(createSetting->GetViolationRate());
+    }
+    if (createSetting->IsSetUseGeoIp()) {
+        m_matchmakeParam->m_Parameters[nn::nex::String(s_useGeoIpKey)] = nn::nex::Variant(createSetting->GetUseGeoIp());
+    }
+    if (createSetting->IsSetCountryCode()) {
+        m_matchmakeParam->m_Parameters[nn::nex::String(s_countryCodeKey)] = nn::nex::Variant(createSetting->GetCountryCode());
+    }
+    if (createSetting->IsSetOverrideIpAddress()) {
+        NexFacade::ConvertInetAddressToNexInetAddress(createSetting->GetOverrideIpAddress(), m_inetAddress);
+        m_matchmakeParam->m_Parameters[nn::nex::String(s_overrideIpAddressKey)] = nn::nex::Variant(m_inetAddress->GetAddressStr());
+    }
+    if (createSetting->GetAdditionalScoreBasedParameterStringKey(0) != 0 && createSetting->GetAdditionalScoreBasedParameterString(0) != 0) {
+        m_matchmakeParam->m_Parameters[nn::nex::String(static_cast<const wchar_t*>(createSetting->GetAdditionalScoreBasedParameterStringKey(0)->GetBuffer()))] = nn::nex::Variant(static_cast<const wchar_t*>(createSetting->GetAdditionalScoreBasedParameterString(0)->GetBuffer()));
+    }
+    if (createSetting->IsSetScoreBasedParameter()) {
+        m_requestSession->m_MatchmakeParam = *m_matchmakeParam;
+    }
+    common::g_sessionBeginMonitoringContent.m_metric81 = createSetting->GetGameMode();
+    common::g_sessionBeginMonitoringContent.m_metric83 = createSetting->GetMaxParticipantNum();
+    common::g_sessionBeginMonitoringContent.m_metric108 = createSetting->GetExtraParticipantNum();
+    common::g_sessionStateMonitoringContent.m_metric223[1] = createSetting->IsOpenSession();
+    if (createSetting->IsSetApplicationData()) {
+        nn::nex::qVector<unsigned char> applicationData;
+        createSetting->CopyApplicationDataToVector(&applicationData);
+        m_requestSession->SetApplicationBuffer(applicationData);
+    }
+    for (unsigned int i = 0; i < NexCreateSessionSetting::cAttributeNum; ++i) {
+        if (createSetting->IsSetAttribute(i)) {
+            m_requestSession->SetAttribute(i, createSetting->GetAttribute(i));
+            common::g_sessionBeginMonitoringContent.m_metric82[i] = createSetting->GetAttribute(i);
+        }
+    }
+    unsigned int flags = 0;
+    if (hostMigrationEnabled) {
+        flags = cGatheringFlagsHostMigration;
+    }
+    m_requestSession->m_uiValue4 |= flags | cGatheringFlagsMatchmake;
+    return static_cast<Result>(0);
 }
+
 unsigned long long NexMatchmakeSession::ReflectUpdateCommunitySetting(const NexUpdateCommunitySetting* setting)
 {
-    return m_state;
-
+    return 0;
 }
-unsigned long long NexMatchmakeSession::ReflectUpdateSetting(const nn::pia::session::UpdateSessionSetting* setting, bool isTeam)
+
+Result NexMatchmakeSession::ReflectUpdateSetting(const nn::pia::session::UpdateSessionSetting* setting, bool isTeam)
 {
-    return m_state;
-
+    return 0;
 }
+
 void NexMatchmakeSession::RegisterFindCommunityResult()
 {
-    m_state = 0;
-
 }
+
 void NexMatchmakeSession::RegisterFindSessionResult(nn::pia::session::SessionSearchCriteria::SearchCriteriaKey keyType)
 {
-    m_state = 0;
-
 }
+
 unsigned long long NexMatchmakeSession::RegisterSearchCriteria(const nn::pia::session::SessionSearchCriteria* criteria, unsigned char flags)
 {
-    return m_state;
-
+    return 0;
 }
-unsigned long long NexMatchmakeSession::RequestSessionInfo(nn::pia::common::CallContext* callContext, unsigned int gatheringId)
+
+Result NexMatchmakeSession::RequestSessionInfo(nn::pia::common::CallContext* callContext, unsigned int gatheringId)
 {
-    return m_state;
-
+    return 0;
 }
+
 unsigned long long NexMatchmakeSession::RequestSessionInfoWithoutPermission(nn::pia::common::CallContext* callContext, unsigned int gatheringId)
 {
-    return m_state;
-
+    return 0;
 }
+
 void NexMatchmakeSession::SetMatchmakeCurrentParticipantNum(unsigned short participantNum)
 {
-    m_state = 0;
-
 }
+
 void NexMatchmakeSession::SetMatchmakeOwnerUniqueId(unsigned long long ownerId)
 {
-    m_state = 0;
-
+    CommonMatchmakeSession::SetMatchmakeOwnerUniqueId(ownerId);
 }
+
 unsigned long long NexMatchmakeSession::SetMatchmakeSessionKey(const unsigned char* key, unsigned int keySize)
 {
-    return m_state;
-
+    return 0;
 }
+
 unsigned long long NexMatchmakeSession::SetMatchmakeSessionKey(const nn::nex::qVector<unsigned char>& key)
 {
-    return m_state;
-
+    return 0;
 }
+
 void NexMatchmakeSession::SetTemporaryOwnerChangeEvent(unsigned int gatheringId, unsigned long long ownerId)
 {
-    m_state = 0;
-
+    m_temporaryOwnerChangeGatheringId = gatheringId;
+    m_temporaryOwnerChangeOwnerId = ownerId;
 }
-unsigned long long NexMatchmakeSession::UnregisterMatchmakeSession(nn::pia::common::CallContext* callContext, unsigned int gatheringId)
+
+Result NexMatchmakeSession::UnregisterMatchmakeSession(nn::pia::common::CallContext* callContext, unsigned int gatheringId)
 {
-    return m_state;
-
+    return 0;
 }
+
 void NexMatchmakeSession::UnregisterSearchCriteria()
 {
-    m_state = 0;
-
+    m_searchCriteriaList->clear();
+    m_resultRangeList->clear();
 }
+
 unsigned long long NexMatchmakeSession::UpdateApplicationBuffer(nn::pia::common::CallContext* callContext, unsigned int gatheringId, const unsigned char* buffer, unsigned int size)
 {
-    return m_state;
-
+    return 0;
 }
+
 unsigned long long NexMatchmakeSession::UpdateAttributes(nn::pia::common::CallContext* callContext, unsigned int gatheringId, unsigned int* attributes)
 {
-    return m_state;
-
+    return 0;
 }
+
 unsigned long long NexMatchmakeSession::UpdateCommunity(nn::pia::common::CallContext* callContext)
 {
-    return m_state;
-
+    return 0;
 }
-unsigned long long NexMatchmakeSession::UpdateMatchmakeSessionHost(unsigned int stationId)
+
+Result NexMatchmakeSession::UpdateMatchmakeSessionHost(unsigned int stationId)
 {
-    return m_state;
-
+    return 0;
 }
-unsigned long long NexMatchmakeSession::UpdateSelectionPriority(unsigned int gatheringId, unsigned char priority)
+
+Result NexMatchmakeSession::UpdateSelectionPriority(unsigned int gatheringId, unsigned char priority)
 {
-    return m_state;
-
+    return 0;
 }
-unsigned long long NexMatchmakeSession::UpdateSessionSetting(nn::pia::common::CallContext* callContext, unsigned int gatheringId)
+
+Result NexMatchmakeSession::UpdateSessionSetting(nn::pia::common::CallContext* callContext, unsigned int gatheringId)
 {
-    return m_state;
-
+    return 0;
 }
-unsigned int NexMatchmakeSession::WaitBrowseMatchmakeSession()
+
+bool NexMatchmakeSession::WaitBrowseMatchmakeSession()
 {
-    return m_state;
-
+    return false;
 }
+
 unsigned int NexMatchmakeSession::WaitClearSystemPassword()
 {
-    return m_state;
-
+    return 0;
 }
-unsigned int NexMatchmakeSession::WaitCloseParticipate()
+
+bool NexMatchmakeSession::WaitCloseParticipate()
 {
-    return m_state;
-
+    return false;
 }
+
 unsigned int NexMatchmakeSession::WaitCreateCommunity()
 {
-    return m_state;
-
+    return 0;
 }
-unsigned int NexMatchmakeSession::WaitCreateMatchmakeSession(unsigned int* gatheringId)
+
+bool NexMatchmakeSession::WaitCreateMatchmakeSession(unsigned int* gatheringId)
 {
-    return m_state;
-
+    return false;
 }
-unsigned int NexMatchmakeSession::WaitCreateMatchmakeSessionWithTeam(unsigned int* gatheringId)
+
+bool NexMatchmakeSession::WaitCreateMatchmakeSessionWithTeam(unsigned int* gatheringId)
 {
-    return m_state;
-
+    return false;
 }
+
 unsigned int NexMatchmakeSession::WaitFindCommunityByGatheringId()
 {
-    return m_state;
-
+    return 0;
 }
+
 unsigned int NexMatchmakeSession::WaitFindCommunityByOwner()
 {
-    return m_state;
-
+    return 0;
 }
+
 unsigned int NexMatchmakeSession::WaitFindCommunityByParticipant()
 {
-    return m_state;
-
+    return 0;
 }
+
 unsigned int NexMatchmakeSession::WaitFindOfficialCommunity()
 {
-    return m_state;
-
+    return 0;
 }
-unsigned int NexMatchmakeSession::WaitFindSessionByOwner()
+
+bool NexMatchmakeSession::WaitFindSessionByOwner()
 {
-    return m_state;
-
+    return false;
 }
-unsigned int NexMatchmakeSession::WaitFindSessionByParticipant()
+
+bool NexMatchmakeSession::WaitFindSessionByParticipant()
 {
-    return m_state;
-
+    return false;
 }
-unsigned int NexMatchmakeSession::WaitFindSessionBySessionId()
+
+bool NexMatchmakeSession::WaitFindSessionBySessionId()
 {
-    return m_state;
-
+    return false;
 }
+
 unsigned int NexMatchmakeSession::WaitGenerateSystemPassword()
 {
-    return m_state;
-
+    return 0;
 }
-unsigned int NexMatchmakeSession::WaitGetStationConnectionInfo(nn::pia::transport::StationConnectionInfo* info)
+
+bool NexMatchmakeSession::WaitGetStationConnectionInfo(nn::pia::transport::StationConnectionInfo* info)
 {
-    return m_state;
-
+    return false;
 }
+
 unsigned int NexMatchmakeSession::WaitJoinCommunity()
 {
-    return m_state;
-
+    return 0;
 }
-unsigned int NexMatchmakeSession::WaitJoinMatchmakeSession()
+
+bool NexMatchmakeSession::WaitJoinMatchmakeSession()
 {
-    return m_state;
-
+    return false;
 }
-unsigned int NexMatchmakeSession::WaitJoinMatchmakeSessionWithTeam()
+
+bool NexMatchmakeSession::WaitJoinMatchmakeSessionWithTeam()
 {
-    return m_state;
-
+    return false;
 }
-unsigned int NexMatchmakeSession::WaitLeaveMatchmakeSession()
+
+bool NexMatchmakeSession::WaitLeaveMatchmakeSession()
 {
-    return m_state;
-
+    return false;
 }
+
 unsigned int NexMatchmakeSession::WaitLeaveMatchmakeSessionCompanion()
 {
-    return m_state;
-
+    return 0;
 }
+
 unsigned int NexMatchmakeSession::WaitMigrateMatchmakeSessionOwner()
 {
-    return m_state;
-
+    return 0;
 }
+
 unsigned int NexMatchmakeSession::WaitModifyAttribute()
 {
-    return m_state;
-
+    return 0;
 }
-unsigned int NexMatchmakeSession::WaitOpenParticipate()
+
+bool NexMatchmakeSession::WaitOpenParticipate()
 {
-    return m_state;
-
+    return false;
 }
-unsigned int NexMatchmakeSession::WaitRandomMatchmakeSession(unsigned int* gatheringId, bool* found)
+
+bool NexMatchmakeSession::WaitRandomMatchmakeSession(unsigned int* gatheringId, bool* found)
 {
-    return m_state;
-
+    return false;
 }
-unsigned int NexMatchmakeSession::WaitRandomMatchmakeSessionWithTeam(unsigned int* gatheringId, bool* found)
+
+bool NexMatchmakeSession::WaitRandomMatchmakeSessionWithTeam(unsigned int* gatheringId, bool* found)
 {
-    return m_state;
-
+    return false;
 }
-unsigned int NexMatchmakeSession::WaitRequestSessionInfo()
+
+bool NexMatchmakeSession::WaitRequestSessionInfo()
 {
-    return m_state;
-
+    return false;
 }
+
 unsigned int NexMatchmakeSession::WaitRequestSessionInfoWithoutPermission()
 {
-    return m_state;
-
+    return 0;
 }
-unsigned int NexMatchmakeSession::WaitUnregisterMatchmakeSession()
+
+bool NexMatchmakeSession::WaitUnregisterMatchmakeSession()
 {
-    return m_state;
-
+    return false;
 }
+
 unsigned int NexMatchmakeSession::WaitUpdateApplicationBuffer()
 {
-    return m_state;
-
+    return 0;
 }
+
 unsigned int NexMatchmakeSession::WaitUpdateAttributes()
 {
-    return m_state;
-
+    return 0;
 }
+
 unsigned int NexMatchmakeSession::WaitUpdateCommunity()
 {
-    return m_state;
-
+    return 0;
 }
-unsigned int NexMatchmakeSession::WaitUpdateSessionSetting()
-{
-    return m_state;
 
+bool NexMatchmakeSession::WaitUpdateSessionSetting()
+{
+    return false;
 }
 
 }}}

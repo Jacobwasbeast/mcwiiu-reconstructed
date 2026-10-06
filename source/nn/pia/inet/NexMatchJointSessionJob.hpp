@@ -1,101 +1,151 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_PIA_INET_NEXMATCHJOINTSESSIONJOB_HPP
 #define LEGACY_CONSOLE_WIIU_NN_PIA_INET_NEXMATCHJOINTSESSIONJOB_HPP
 
+#include "nn/pia/Common.hpp"
+#include "nn/pia/common/Time.hpp"
+#include "nn/pia/session/JointSessionJob.hpp"
+#include "nn/pia/transport/StationConnectionInfo.hpp"
+
 namespace nn { namespace pia { namespace inet {
 
-class NexMatchJointSessionJob
+class NexMatchJointSessionJob : public session::JointSessionJob
 {
 public:
     NexMatchJointSessionJob();
     virtual ~NexMatchJointSessionJob();
-    unsigned int CallDestroySessionEvent();
-    unsigned int CallSessionEvent();
-    void CheckJoinedOnlyCompanion();
-    void CleanupImpl();
-    void CleanupMonitoringData();
-    unsigned int CloseJointSessionParticipation();
-    unsigned int CloseMatchmakeSession();
-    unsigned int GetJointSessionStateForDebug();
-    unsigned int GetMatchmakeSessionOwners();
-    unsigned int GetNextMatchmakeSessionInfo();
-    unsigned int MeshRestart();
-    unsigned long long NoticeHostChangeEventImpl(unsigned long long p0, unsigned long long p1, unsigned long long p2);
-    unsigned long long NoticeLeaveEventImpl(unsigned long long p0, unsigned long long p1, unsigned long long p2);
-    unsigned long long NoticeOwnerChangeEventImpl(unsigned long long p0, unsigned long long p1, unsigned long long p2);
-    void NoticeUnregisterEventImpl(unsigned long long p0);
-    void PrepareBecomingToLeader();
-    unsigned int ProcessComplete();
-    unsigned int ProcessFailure();
-    void ReceiveCompletionResponseImpl(unsigned long long p0, unsigned long long p1);
-    unsigned long long ReceiveLeaveInvitationImpl(unsigned long long p0, unsigned long long p1, unsigned long long p2, unsigned long long p3, unsigned long long p4, unsigned long long p5, unsigned long long p6);
-    void ReceiveLeaveMeshInvitationImpl(unsigned long long p0, unsigned long long p1);
-    unsigned long long ReceiveNextSessionIdImpl(unsigned long long p0, unsigned long long p1, unsigned long long p2, unsigned long long p3, unsigned long long p4);
-    unsigned int ResendDestroyInvitation();
-    unsigned int ResendInvitationAsCompanion();
-    unsigned int ResendNextSessionId();
-    unsigned int SendAnswerToDestroyInvitation();
-    unsigned int SendAnswerToInvitation();
-    unsigned int SendCompletionForMigrateSession();
-    unsigned int SendCompletionInvitation();
-    unsigned int SendDestroyInvitation();
-    unsigned int SendInvitationAsCompanion();
-    unsigned int SendLeaveMeshCompanion();
-    unsigned int SendNextSessionId();
-    unsigned int SendPreparedForMigrateSession();
-    unsigned int StartCreateMatchmakeSession();
-    unsigned int StartCreateNextMesh();
-    unsigned int StartGetNextMeshHostStationConnectionInfo();
-    unsigned int StartJoinMatchmakeSession();
-    unsigned int StartJoinNextMesh();
-    unsigned int StartLeaveBufferMatchmakeSession();
-    unsigned int StartLeaveCurrentMatchmakeSession();
-    unsigned int StartLeaveMesh();
-    unsigned int StartLeavePreviousMatchmakeSession();
-    unsigned int StartLeavePreviousMesh();
-    unsigned int StartRandomMatchmake();
-    unsigned long long StartupCreateJointSessionImpl(unsigned long long p0, unsigned long long p1);
-    unsigned long long StartupDestroyJointSessionImpl();
-    unsigned long long StartupJoinJointSessionImpl(unsigned long long p0, unsigned long long p1);
-    unsigned long long StartupJoinRandomJointSessionImpl(unsigned long long p0, unsigned long long p1);
-    unsigned long long StartupLeaveJointSessionImpl();
-    unsigned long long StartupPassiveProcessImpl(unsigned long long p0, unsigned long long p1, unsigned long long p2, unsigned long long p3, unsigned long long p4, unsigned long long p5, unsigned long long p6);
-    void Trace(unsigned long long p0);
-    unsigned int UpdateJointSessionOpenStatus();
-    unsigned int WaitCloseJointSessionParticipation();
-    unsigned int WaitCloseMatchmakeSession();
-    unsigned int WaitCompanionStation();
-    unsigned int WaitCompanionStationPrepared();
-    unsigned int WaitCompletionInvitation();
-    unsigned int WaitCreateMatchmakeSession();
-    unsigned int WaitCreateNextMesh();
-    unsigned int WaitForAnswerToCompletionInvitation();
-    unsigned int WaitForAnswerToDestroyInvitation();
-    unsigned int WaitForAnswerToInvitation();
-    unsigned int WaitForInvitationAsCompanion();
-    unsigned int WaitGetMatchmakeSessionOwners();
-    unsigned int WaitGetNextMatchmakeSessionInfo();
-    unsigned int WaitGetNextMeshHostStationConnectionInfo();
-    unsigned int WaitHostMigrated();
-    unsigned int WaitHostStationId();
-    unsigned int WaitJoinMatchmakeSession();
-    unsigned int WaitJoinNextMesh();
-    unsigned int WaitLeaveBufferMatchmakeSession();
-    unsigned int WaitLeaveCurrentMatchmakeSession();
-    unsigned int WaitLeaveMesh();
-    unsigned int WaitLeavePreviousMatchmakeSession();
-    unsigned int WaitLeavePreviousMesh();
-    unsigned int WaitMeshRestart();
-    unsigned int WaitNextSessionId();
-    unsigned int WaitNotification();
-    unsigned int WaitRandomMatchmake();
-    unsigned int WaitStartRetryJoinMesh();
-    unsigned int WaitUntilCompanionCompletion();
-    unsigned int WaitUntilCompanionLeavesMesh();
-    unsigned int WaitUntilLeaderLeavesMesh();
-    unsigned int WaitUpdateJointSessionOpenStatus();
+    virtual void Trace(unsigned long long p0) const;
+    virtual unsigned int GetJointSessionStateForDebug() const;
+    virtual Result StartupJoinRandomJointSessionImpl(
+        const session::JoinRandomSessionSetting* setting);
+    virtual Result StartupCreateJointSessionImpl(const session::CreateSessionSetting* setting);
+    virtual Result StartupJoinJointSessionImpl(const session::JoinSessionSetting* setting);
+    virtual Result StartupLeaveJointSessionImpl();
+    virtual Result StartupDestroyJointSessionImpl();
+    virtual Result StartupPassiveProcessImpl(session::Session::ProcessType processType,
+                                             session::SessionProtocol::MessageType messageType,
+                                             const unsigned long long* stationIds,
+                                             unsigned short stationIdNum,
+                                             unsigned long long senderStationId);
+    virtual Result ReceiveNextSessionIdImpl(session::Session::ProcessType processType,
+                                            unsigned int sessionId,
+                                            const unsigned char* applicationData,
+                                            unsigned char applicationDataSize,
+                                            unsigned long long senderStationId);
+    virtual Result ReceiveLeaveInvitationImpl(session::Session::ProcessType processType,
+                                              const unsigned long long* stationIds,
+                                              unsigned short stationIdNum,
+                                              unsigned long long senderStationId);
+    virtual Result ReceiveLeaveMeshInvitationImpl(session::Session::ProcessType processType,
+                                                  unsigned long long senderStationId);
+    virtual Result ReceiveCompletionResponseImpl(session::Session::ProcessType processType,
+                                                 unsigned long long senderStationId);
+    virtual void NoticeHostChangeEventImpl(unsigned long long hostStationId);
+    virtual void NoticeOwnerChangeEventImpl(unsigned int sessionId,
+                                            unsigned long long ownerStationId);
+    virtual void NoticeLeaveEventImpl(unsigned int sessionId, unsigned long long stationId);
+    virtual void NoticeUnregisterEventImpl(unsigned int sessionId);
+    virtual void CleanupImpl();
 
-private:
-    unsigned int m_state;
+    ExecuteResult CallDestroySessionEvent();
+    ExecuteResult CallSessionEvent();
+    void CheckJoinedOnlyCompanion();
+    void CleanupMonitoringData();
+    ExecuteResult CloseJointSessionParticipation();
+    ExecuteResult CloseMatchmakeSession();
+    ExecuteResult GetMatchmakeSessionOwners();
+    ExecuteResult GetNextMatchmakeSessionInfo();
+    ExecuteResult MeshRestart();
+    void PrepareBecomingToLeader();
+    ExecuteResult ProcessComplete();
+    ExecuteResult ProcessFailure();
+    ExecuteResult ResendDestroyInvitation();
+    ExecuteResult ResendInvitationAsCompanion();
+    ExecuteResult ResendNextSessionId();
+    ExecuteResult SendAnswerToDestroyInvitation();
+    ExecuteResult SendAnswerToInvitation();
+    ExecuteResult SendCompletionForMigrateSession();
+    ExecuteResult SendCompletionInvitation();
+    ExecuteResult SendDestroyInvitation();
+    ExecuteResult SendInvitationAsCompanion();
+    ExecuteResult SendLeaveMeshCompanion();
+    ExecuteResult SendNextSessionId();
+    ExecuteResult SendPreparedForMigrateSession();
+    ExecuteResult StartCreateMatchmakeSession();
+    ExecuteResult StartCreateNextMesh();
+    ExecuteResult StartGetNextMeshHostStationConnectionInfo();
+    ExecuteResult StartJoinMatchmakeSession();
+    ExecuteResult StartJoinNextMesh();
+    ExecuteResult StartLeaveBufferMatchmakeSession();
+    ExecuteResult StartLeaveCurrentMatchmakeSession();
+    ExecuteResult StartLeaveMesh();
+    ExecuteResult StartLeavePreviousMatchmakeSession();
+    ExecuteResult StartLeavePreviousMesh();
+    ExecuteResult StartRandomMatchmake();
+    ExecuteResult UpdateJointSessionOpenStatus();
+    ExecuteResult WaitCloseJointSessionParticipation();
+    ExecuteResult WaitCloseMatchmakeSession();
+    ExecuteResult WaitCompanionStation();
+    ExecuteResult WaitCompanionStationPrepared();
+    ExecuteResult WaitCompletionInvitation();
+    ExecuteResult WaitCreateMatchmakeSession();
+    ExecuteResult WaitCreateNextMesh();
+    ExecuteResult WaitForAnswerToCompletionInvitation();
+    ExecuteResult WaitForAnswerToDestroyInvitation();
+    ExecuteResult WaitForAnswerToInvitation();
+    ExecuteResult WaitForInvitationAsCompanion();
+    ExecuteResult WaitGetMatchmakeSessionOwners();
+    ExecuteResult WaitGetNextMatchmakeSessionInfo();
+    ExecuteResult WaitGetNextMeshHostStationConnectionInfo();
+    ExecuteResult WaitHostMigrated();
+    ExecuteResult WaitHostStationId();
+    ExecuteResult WaitJoinMatchmakeSession();
+    ExecuteResult WaitJoinNextMesh();
+    ExecuteResult WaitLeaveBufferMatchmakeSession();
+    ExecuteResult WaitLeaveCurrentMatchmakeSession();
+    ExecuteResult WaitLeaveMesh();
+    ExecuteResult WaitLeavePreviousMatchmakeSession();
+    ExecuteResult WaitLeavePreviousMesh();
+    ExecuteResult WaitMeshRestart();
+    ExecuteResult WaitNextSessionId();
+    ExecuteResult WaitNotification();
+    ExecuteResult WaitRandomMatchmake();
+    ExecuteResult WaitStartRetryJoinMesh();
+    ExecuteResult WaitUntilCompanionCompletion();
+    ExecuteResult WaitUntilCompanionLeavesMesh();
+    ExecuteResult WaitUntilLeaderLeavesMesh();
+    ExecuteResult WaitUpdateJointSessionOpenStatus();
+
+    transport::StationConnectionInfo m_stationConnectionInfo;
+    common::Time m_time148;
+    common::Time m_time150;
+    common::Time m_time158;
+    common::Time m_time160;
+    common::Time m_time168;
+    common::Time m_time170;
+    common::Time m_time178;
+    common::Time m_time180;
+    common::Time m_time188;
+    common::Time m_time190;
+    common::Time m_time198;
+    common::Time m_time1a0;
+    common::Time m_time1a8;
+    Result m_failureResult;
+    unsigned int m_jointSessionState;
+    unsigned char m_field1b8;
+    unsigned long long m_field1c0;
+    unsigned char m_field1c8;
+    unsigned long long m_field1d0;
+    unsigned char m_field1d8;
+    unsigned long long m_field1e0;
+    unsigned char m_field1e8;
+    unsigned char m_field1e9;
+    unsigned char m_field1ea;
+    unsigned char m_field1eb;
+    unsigned char m_field1ec;
+    unsigned char m_field1ed;
+    unsigned char m_field1ee;
+    unsigned char m_field1f0[128];
+    unsigned char m_field270;
 };
 
 }}}
