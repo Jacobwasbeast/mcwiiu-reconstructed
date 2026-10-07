@@ -23,11 +23,11 @@ OceanLukewarmBiome::OceanLukewarmBiome(EBiomeIDs biomeId, bool deep, BiomeProper
     mMonsters.push_back(new MobSpawnerData(10, EntityType::DROWNED, 2, 4));
 
     mDecorator->kelpPerChunk = 20;
-    mOceanRuinConfig.smallProbability = 0.3F;
     mDecorator->seagrassPerChunk = 12;
+    mOceanRuinConfig.enabled = true;
+    mOceanRuinConfig.smallProbability = 0.3F;
     mOceanRuinConfig.clusterProbability = 0.9F;
     mOceanRuinConfig.biomeType = OceanRuin::eRuinType_Warm;
-    mOceanRuinConfig.enabled = true;
 }
 
 float OceanLukewarmBiome::getCreatureProbability()

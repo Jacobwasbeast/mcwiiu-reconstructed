@@ -57,11 +57,6 @@
 
 typedef boost::unordered_map<std::wstring, Biome*> BiomeNameMap;
 
-static const int MAX_BIOME_ID = 256;
-
-static const int STONE_BLOCK_ID = 1;
-static const int SAND_BLOCK_ID = 12;
-
 const Biome::BlockPair Biome::STONE_BLOCK(1, 0);
 static const Biome::BlockPair AIR_BLOCK(0, 0);
 static const Biome::BlockPair BEDROCK_BLOCK(7, 0);
@@ -71,7 +66,7 @@ static const Biome::BlockPair SANDSTONE_BLOCK(24, 0);
 static const Biome::BlockPair ICE_BLOCK(79, 0);
 static const Biome::BlockPair WATER_BLOCK(9, 0);
 
-static Biome* sBiomes[MAX_BIOME_ID + 1];
+Biome* Biome::biomes[Biome::MAX_BIOME_ID + 1];
 static BiomeNameMap sBiomesByName;
 PerlinSimplexNoise* Biome::TEMPERATURE_NOISE = new PerlinSimplexNoise(new Random(1234LL), 1);
 PerlinSimplexNoise* Biome::BIOME_INFO_NOISE = new PerlinSimplexNoise(new Random(2345LL), 1);
@@ -265,7 +260,7 @@ Biome::Biome(EBiomeIDs biomeId, BiomeType biomeType, BiomeProperties* properties
 
     delete properties;
 
-    sBiomes[biomeId] = this;
+    biomes[biomeId] = this;
     mWaterColour = eMinecraftColour_NOTSET;
     sBiomesByName[mBiomeName] = this;
 
@@ -855,7 +850,7 @@ int Biome::getId(Biome* biome)
 
 Biome* Biome::byId(int biomeId)
 {
-    return sBiomes[biomeId];
+    return biomes[biomeId];
 }
 
 Biome* Biome::byNameId(std::wstring name)
@@ -865,7 +860,7 @@ Biome* Biome::byNameId(std::wstring name)
 
 Biome** Biome::getBiomes()
 {
-    return sBiomes;
+    return biomes;
 }
 
 Biome* Biome::getBiome(int biomeId, Biome* fallback)
@@ -875,9 +870,9 @@ Biome* Biome::getBiome(int biomeId, Biome* fallback)
         return DEFAULT;
     }
 
-    if (sBiomes[biomeId] != NULL)
+    if (biomes[biomeId] != NULL)
     {
-        return sBiomes[biomeId];
+        return biomes[biomeId];
     }
 
     return fallback;
@@ -1229,7 +1224,7 @@ void Biome::buildSurfaceAtDefault(Level* level, Random& random, ChunkPrimer* pri
             continue;
         }
 
-        if (blockId != STONE_BLOCK_ID)
+        if (blockId != BlockId::STONE)
         {
             continue;
         }
@@ -1292,7 +1287,7 @@ void Biome::buildSurfaceAtDefault(Level* level, Random& random, ChunkPrimer* pri
 
             primer->setBlockAndData(index, filler.blockId, filler.blockData);
 
-            if (runDepth == 0 && filler.blockId == SAND_BLOCK_ID && depth > 1)
+            if (runDepth == 0 && filler.blockId == BlockId::SAND && depth > 1)
             {
                 int extra = y - 63;
 

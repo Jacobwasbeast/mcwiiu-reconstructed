@@ -309,6 +309,9 @@ public:
     static Biome* MESA_CLEAR_ROCK_MUTATED;
     static Biome* DEFAULT;
 
+    static const int MAX_BIOME_ID = 256;
+    static Biome* biomes[MAX_BIOME_ID + 1];
+
     Biome(EBiomeIDs biomeId, BiomeType biomeType, BiomeProperties* properties);
     virtual ~Biome();
 

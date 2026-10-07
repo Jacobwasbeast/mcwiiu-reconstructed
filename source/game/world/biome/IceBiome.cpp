@@ -12,10 +12,10 @@
 #include "game/world/generation/SpruceFeature.hpp"
 
 IceBiome::IceBiome(EBiomeIDs biomeId, bool hasIceSpikes, BiomeProperties* properties)
-    : Biome(biomeId, eBiomeType_Ice, properties),
-      mIceSpikeFeature(new IceSpikeFeature()),
-      mIcePatchFeature(new IcePatchFeature(4))
+    : Biome(biomeId, eBiomeType_Ice, properties)
 {
+    mIceSpikeFeature = new IceSpikeFeature();
+    mIcePatchFeature = new IcePatchFeature(4);
     mHasIceSpikes = hasIceSpikes;
 
     if (hasIceSpikes)

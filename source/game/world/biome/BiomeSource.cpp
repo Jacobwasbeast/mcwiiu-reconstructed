@@ -380,7 +380,7 @@ void BiomeSource::getRawBiomeIndices(arrayWithLength<int>& biomeIndices, int x, 
 
     for (int i = 0; i < count; i++)
     {
-        destination[i] = area.data[i];
+        destination[i] = area[i];
     }
 }
 
@@ -1291,7 +1291,7 @@ void BiomeSource::LayerOverrideSettings::RegenerateBiomeSection(int x, int width
             {
                 EnterCriticalSection(&mBiomesCriticalSection);
 
-                mBiomes.data[index] = sectionBiomes.data[source];
+                mBiomes[index] = sectionBiomes[source];
 
                 LeaveCriticalSection(&mBiomesCriticalSection);
             }
@@ -1309,7 +1309,7 @@ bool BiomeSource::LayerOverrideSettings::SectionNeedsRegen(int x, int width, int
     {
         for (int column = x; column < x + width; column++)
         {
-            if (mBiomes.data[getBiomeIndex(column, row)] == NULL)
+            if (mBiomes[getBiomeIndex(column, row)] == NULL)
             {
                 return true;
             }

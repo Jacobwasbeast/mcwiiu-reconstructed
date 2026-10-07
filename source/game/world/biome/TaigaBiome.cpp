@@ -48,12 +48,12 @@ AbstractTreeFeature* TaigaBiome::getTreeFeature(Random& random)
 {
     if ((mType == eType_MegaTaiga || mType == eType_Mutated) && random.nextInt(3) == 0)
     {
-        if (mType != eType_Mutated && random.nextInt(13) != 0)
+        if (mType == eType_Mutated || random.nextInt(13) == 0)
         {
-            return new MegaPineTreeFeature(false, false);
+            return new MegaPineTreeFeature(false, true);
         }
 
-        return new MegaPineTreeFeature(false, true);
+        return new MegaPineTreeFeature(false, false);
     }
 
     if (random.nextInt(3) == 0)

@@ -15,7 +15,6 @@ public:
     class MesaDecorator : public BiomeDecorator
     {
     public:
-        virtual ~MesaDecorator();
         virtual void decorateOres(Level* level, Random* random);
     };
     MesaBiome(EBiomeIDs id, bool brycePillars, bool hasForest, BiomeProperties* properties);

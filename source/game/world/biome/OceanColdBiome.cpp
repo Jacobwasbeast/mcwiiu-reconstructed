@@ -15,11 +15,11 @@ OceanColdBiome::OceanColdBiome(EBiomeIDs biomeId, bool deep, BiomeProperties* pr
     mWaterCreatures.push_back(new MobSpawnerData(7, EntityType::DOLPHIN, 3, 5));
     mMonsters.push_back(new MobSpawnerData(10, EntityType::DROWNED, 2, 4));
 
-    mOceanRuinConfig.biomeType = OceanRuin::eRuinType_Cold;
-    mOceanRuinConfig.enabled = true;
-
     mDecorator->kelpPerChunk = 20;
     mDecorator->seagrassPerChunk = 12;
+
+    mOceanRuinConfig.enabled = true;
+    mOceanRuinConfig.biomeType = OceanRuin::eRuinType_Cold;
 
     if (mDeep)
     {

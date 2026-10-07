@@ -28,15 +28,15 @@ arrayWithLength<int> RareBiomeSpotLayer::getArea(int x, int z, int width, int he
         {
             initRandom((long long)(x + j), (long long)(z + i));
 
-            int parentBiomeId = parentArea.data[j + 1 + (i + 1) * (width + 2)];
+            int parentBiomeId = parentArea[j + 1 + (i + 1) * (width + 2)];
 
             if (nextRandom(57) == 0 && parentBiomeId == Biome::PLAINS->id)
             {
-                area.data[j + i * width] = Biome::SUNFLOWER_PLAINS->id;
+                area[j + i * width] = Biome::SUNFLOWER_PLAINS->id;
             }
             else
             {
-                area.data[j + i * width] = parentBiomeId;
+                area[j + i * width] = parentBiomeId;
             }
         }
     }

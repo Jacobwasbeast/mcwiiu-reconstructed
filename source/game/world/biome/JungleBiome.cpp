@@ -29,9 +29,16 @@ JungleBiome::JungleBiome(EBiomeIDs biomeId, bool isEdge, BiomeProperties* proper
     : Biome(biomeId, eBiomeType_Jungle, properties),
       mIsEdge(isEdge)
 {
-    mDecorator->treesPerChunk = isEdge ? 2 : 50;
-    mDecorator->flowersPerChunk = 4;
+    if (isEdge)
+    {
+        mDecorator->treesPerChunk = 2;
+    }
+    else
+    {
+        mDecorator->treesPerChunk = 50;
+    }
     mDecorator->grassPerChunk = 25;
+    mDecorator->flowersPerChunk = 4;
 
     if (!isEdge)
     {
@@ -46,10 +53,10 @@ void JungleBiome::staticCtor()
     sJungleTrunkState = Blocks::log->defaultBlockState()->setValue(OldLogBlock::VARIANT, PlanksBlock::Variant::JUNGLE);
     sJungleLeafState = Blocks::leaves->defaultBlockState()
                            ->setValue(OldLeafBlock::VARIANT, PlanksBlock::Variant::JUNGLE)
-                           ->setValue(LeafBlock::DECAYABLE, false);
+                           ->setValue(LeafBlock::CHECK_DECAY, false);
     sOakLeafState = Blocks::leaves->defaultBlockState()
                         ->setValue(OldLeafBlock::VARIANT, PlanksBlock::Variant::OAK)
-                        ->setValue(LeafBlock::DECAYABLE, false);
+                        ->setValue(LeafBlock::CHECK_DECAY, false);
 }
 
 AbstractTreeFeature* JungleBiome::getTreeFeature(Random& random)
@@ -64,13 +71,9 @@ AbstractTreeFeature* JungleBiome::getTreeFeature(Random& random)
         return new GroundBushFeature(sJungleTrunkState, sOakLeafState);
     }
 
-    if (!mIsEdge && random.nextInt(3) == 0)
-    {
-        return new MegaJungleTreeFeature(false, 10, 20, sJungleTrunkState, sJungleLeafState);
-    }
-
-    int height = random.nextInt(7);
-    return new TreeFeature(false, height + 4, sJungleTrunkState, sJungleLeafState, true);
+    return !mIsEdge && random.nextInt(3) == 0
+        ? (AbstractTreeFeature*)new MegaJungleTreeFeature(false, 10, 20, sJungleTrunkState, sJungleLeafState)
+        : (AbstractTreeFeature*)new TreeFeature(false, 4 + random.nextInt(7), sJungleTrunkState, sJungleLeafState, true);
 }
 
 Feature* JungleBiome::getGrassFeature(Random& random)

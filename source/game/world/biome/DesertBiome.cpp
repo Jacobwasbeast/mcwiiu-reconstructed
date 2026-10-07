@@ -17,8 +17,8 @@ DesertBiome::DesertBiome(EBiomeIDs biomeId, BiomeProperties* properties)
 {
     mCreatures.clear();
     mCreatures.push_back(new MobSpawnerData(4, EntityType::RABBIT, 2, 3));
-    mWolves.clear();
     mChickens.clear();
+    mWolves.clear();
 
     mTopBlock.blockData = Blocks::sand->convertBlockStateToLegacyData(Blocks::sand->defaultBlockState());
     mTopBlock.blockId = 12;
@@ -55,9 +55,7 @@ void DesertBiome::decorate(Level* level, Random& random, const BlockPos& origin)
     {
         const int x = random.nextInt(16) + 8;
         const int z = random.nextInt(16) + 8;
-        const BlockPos position = origin.offset(x, 0, z);
-        const BlockPos heightmapPosition = level->getHeightmapPos(position);
-        const BlockPos wellPosition = heightmapPosition.above();
+        const BlockPos wellPosition = level->getHeightmapPos(origin.offset(x, 0, z)).above();
         DesertWellFeature().place(level, random, wellPosition);
     }
 

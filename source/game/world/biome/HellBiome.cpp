@@ -11,9 +11,9 @@ HellBiome::HellBiome(EBiomeIDs biomeId, BiomeProperties* properties)
 {
     mMonsters.clear();
     mCreatures.clear();
-    mWaterCreatures.clear();
     mChickens.clear();
     mWolves.clear();
+    mWaterCreatures.clear();
     mAmbientCreatures.clear();
 
     mMonsters.push_back(new MobSpawnerData(100, EntityType::GHAST, 4, 4));

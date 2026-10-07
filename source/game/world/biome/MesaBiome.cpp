@@ -338,10 +338,6 @@ Biome::EBiomeBaseClass MesaBiome::getBaseClass()
     return eBiomeBaseClass_Mesa;
 }
 
-MesaBiome::MesaDecorator::~MesaDecorator()
-{
-}
-
 void MesaBiome::MesaDecorator::decorateOres(Level* level, Random* random)
 {
     BiomeDecorator::decorateOres(level, random);

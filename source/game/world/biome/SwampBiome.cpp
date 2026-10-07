@@ -23,16 +23,16 @@ static const Biome::BlockPair WATERLILY_BLOCK(111, 0);
 SwampBiome::SwampBiome(EBiomeIDs biomeId, BiomeProperties* properties)
     : Biome(biomeId, eBiomeType_Swamp, properties)
 {
-    mDecorator->waterlilyPerChunk = 4;
     mDecorator->treesPerChunk = 2;
     mDecorator->flowersPerChunk = 1;
-    mDecorator->grassPerChunk = 5;
     mDecorator->deadBushPerChunk = 1;
     mDecorator->mushroomsPerChunk = 8;
     mDecorator->reedsPerChunk = 10;
-    mDecorator->sandPerChunk = 0;
-    mDecorator->sandPerChunk2 = 0;
     mDecorator->clayPerChunk = 1;
+    mDecorator->waterlilyPerChunk = 4;
+    mDecorator->sandPerChunk2 = 0;
+    mDecorator->sandPerChunk = 0;
+    mDecorator->grassPerChunk = 5;
     mDecorator->seagrassPerChunk = 10;
     mSlimes.push_back(new MobSpawnerData(1, EntityType::SLIME, 1, 1));
     mMonsters.push_back(new MobSpawnerData(5, EntityType::DROWNED, 2, 4));
@@ -45,7 +45,9 @@ AbstractTreeFeature* SwampBiome::getTreeFeature(Random& random)
 
 unsigned int SwampBiome::getGrassColor(const BlockPos& pos)
 {
-    double noise = BIOME_INFO_NOISE->getValue((double)pos.x * 0.0225, (double)pos.z * 0.0225);
+    int z = pos.z;
+    int x = pos.x;
+    double noise = BIOME_INFO_NOISE->getValue((double)x * 0.0225, (double)z * 0.0225);
     ColourTable* colours = Minecraft::GetInstance()->getColourTable();
 
     if (noise < -0.1)

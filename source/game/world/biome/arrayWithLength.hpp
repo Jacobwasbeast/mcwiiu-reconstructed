@@ -17,6 +17,11 @@ public:
         length = 0;
     }
 
+    T& operator[](unsigned int index)
+    {
+        return data[index];
+    }
+
     static void zero(T* values, unsigned int count)
     {
         for (unsigned int i = 0; i < count; i++)
@@ -34,8 +39,8 @@ public:
             zero(newData, count);
         }
 
-        length = count;
         data = newData;
+        length = count;
     }
 
     arrayWithLength(T* values, unsigned int count)
@@ -55,8 +60,8 @@ public:
             newData[i] = values.at(i);
         }
 
-        length = count;
         data = newData;
+        length = count;
     }
 
     void resize(unsigned int newLength)
