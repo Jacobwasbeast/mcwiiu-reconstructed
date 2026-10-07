@@ -12,8 +12,9 @@ void ListBase::Init()
 
 void ListBase::InsertBeforeNode(ListNode* node, ListNode* newNode)
 {
+    ListNode* prev = node->prev;
     newNode->next = node;
-    newNode->prev = node->prev;
+    newNode->prev = prev;
     node->prev->next = newNode;
     node->prev = newNode;
     ++mSize;

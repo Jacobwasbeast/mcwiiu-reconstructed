@@ -84,59 +84,61 @@ public:
         if (text == 0)
             return 0x10c07;
 
-        unsigned int bufferSize = m_bufferSize;
-        if (length > bufferSize)
+        if (length > m_bufferSize)
             return 0x10c07;
+
+        unsigned int index;
 
         if (encoding == EncodingType_Utf16)
         {
-            if (length > ((bufferSize >> 1) & 0x7ffffffe))
+            if (length > ((m_bufferSize >> 1) & 0x7ffffffe))
                 return 0x10c07;
         }
         else if (encoding == EncodingType_Ascii)
         {
             const unsigned char* value = static_cast<const unsigned char*>(text);
-            unsigned int characters = 0;
-            unsigned int code = *value;
-            while (code != 0)
+            index = 0;
+            unsigned char current = *value;
+            while (current != 0)
             {
+                unsigned int code = current;
                 if (code - 1 < 0x7f)
                 {
                     value += 1;
-                    ++characters;
+                    ++index;
                 }
                 else if (code - 0xc2 < 0x1e)
                 {
                     value += 2;
-                    ++characters;
+                    ++index;
                 }
                 else if (code - 0xe0 < 0x10)
                 {
                     value += 3;
-                    ++characters;
+                    ++index;
                 }
                 else if (code - 0xf0 < 8)
                 {
                     value += 4;
-                    ++characters;
+                    ++index;
                 }
                 else if (code - 0xf8 < 4)
                 {
                     value += 5;
-                    ++characters;
+                    ++index;
                 }
                 else if (code - 0xfc < 2)
                 {
                     value += 6;
-                    ++characters;
+                    ++index;
                 }
                 else
                 {
                     value += 1;
                 }
-                code = *value;
+                current = *value;
             }
-            if (characters > (bufferSize >> 2))
+            if (index > (m_bufferSize >> 2))
                 return 0x10c07;
         }
         else
@@ -144,7 +146,7 @@ public:
             return 0x10c07;
         }
 
-        unsigned int index = 0;
+        index = 0;
         while (index < m_bufferSize)
         {
             m_buffer[index] = 0;
@@ -162,9 +164,9 @@ public:
                 ++index;
             }
             m_buffer[index] = '\0';
-            m_bytes = index;
-            m_encoding = EncodingType_Ascii;
             m_text = m_buffer;
+            m_encoding = encoding;
+            m_bytes = index;
         }
         else
         {

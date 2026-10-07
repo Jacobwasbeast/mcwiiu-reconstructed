@@ -219,7 +219,7 @@ Result Transport::GetLocalStationConnectionInfo(StationConnectionInfo* stationCo
 {
     if (stationConnectionInfo == 0)
         return static_cast<Result>(cResultInvalidArgument);
-    *stationConnectionInfo = *g_stationConnectionInfoTable;
+    *stationConnectionInfo = g_stationConnectionInfoTable->m_localStationConnectionInfo;
     return 0;
 }
 

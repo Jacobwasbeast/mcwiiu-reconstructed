@@ -221,13 +221,13 @@ UnreliableProtocol* ProtocolManager::AllocProtocol(unsigned int size)
 
 Protocol* ProtocolManager::SearchProtocol(ProtocolId id, unsigned char type)
 {
-    if ((id >> 8) != type)
+    if (id.GetProtocolType() != type)
         return 0;
     common::ListNode* sentinel = m_protocols.Sentinel();
     for (common::ListNode* node = sentinel->next; node != sentinel; node = node->next)
     {
         Protocol* protocol = reinterpret_cast<Protocol*>(reinterpret_cast<char*>(node) - m_nodeOffset);
-        if (static_cast<unsigned short>(protocol->mProtocolId) == id)
+        if (protocol->GetProtocolId() == id)
             return protocol;
     }
     return 0;

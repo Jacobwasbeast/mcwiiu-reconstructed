@@ -24,17 +24,35 @@ namespace transport {
 class PacketHandler;
 class ProtocolEvent;
 
-extern unsigned short g_piaProtocolDefaultType;
-
 class ProtocolId
 {
 public:
-    ProtocolId(unsigned short value = 0) : mValue(value) {}
-    operator unsigned short() const { return mValue; }
-    unsigned short value() const { return mValue; }
-private:
-    unsigned short mValue;
+    struct Element
+    {
+        unsigned char m_protocolType;
+        unsigned char m_port;
+    };
+
+    ProtocolId() { m_value = 0; }
+    ProtocolId(unsigned char protocolType, unsigned char port)
+    {
+        m_element.m_protocolType = protocolType;
+        m_element.m_port = port;
+    }
+    ProtocolId(unsigned short value) { m_value = value; }
+    operator unsigned short() const { return m_value; }
+    unsigned short value() const { return m_value; }
+    unsigned char GetProtocolType() const { return m_element.m_protocolType; }
+    unsigned char GetPort() const { return m_element.m_port; }
+
+    union
+    {
+        Element m_element;
+        unsigned short m_value;
+    };
 };
+
+extern ProtocolId g_piaProtocolDefaultType;
 
 class Protocol : public common::ListNode
 {
@@ -52,6 +70,7 @@ public:
     virtual unsigned int IsProtocolFilteringEnabled() const;
     void SetPort(unsigned char port);
     unsigned int GetStationPacketHandler();
+    ProtocolId GetProtocolId() const { return mProtocolId; }
 protected:
     friend class ProtocolManager;
     ProtocolId mProtocolId;
