@@ -15,7 +15,6 @@ class ClientIntentionPacket : public Packet
 public:
     ClientIntentionPacket();
     ClientIntentionPacket(int protocolVersion, std::wstring hostName, int port, ConnectionProtocol* intention);
-    virtual ~ClientIntentionPacket();
 
     virtual void read(DataInputStream* input);
     virtual void write(DataOutputStream* output);

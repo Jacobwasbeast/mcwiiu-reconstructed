@@ -20,10 +20,6 @@ ClientboundBlockDestructionPacket::ClientboundBlockDestructionPacket(int id, con
     this->progress = progress;
 }
 
-ClientboundBlockDestructionPacket::~ClientboundBlockDestructionPacket()
-{
-}
-
 int ClientboundBlockDestructionPacket::getPacketId()
 {
     return 55;

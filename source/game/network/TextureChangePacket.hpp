@@ -30,7 +30,6 @@ public:
     TextureChangePacket();
     TextureChangePacket(boost::shared_ptr<Entity> entity, ETextureChangeType type,
                         const std::wstring& textureName);
-    virtual ~TextureChangePacket();
 
     static boost::shared_ptr<Packet> create();
 

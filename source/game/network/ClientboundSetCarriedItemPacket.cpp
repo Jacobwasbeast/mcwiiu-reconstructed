@@ -15,10 +15,6 @@ ClientboundSetCarriedItemPacket::ClientboundSetCarriedItemPacket(int slot)
     this->slot = slot;
 }
 
-ClientboundSetCarriedItemPacket::~ClientboundSetCarriedItemPacket()
-{
-}
-
 int ClientboundSetCarriedItemPacket::getPacketId()
 {
     return 0x10;

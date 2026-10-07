@@ -20,10 +20,6 @@ ClientboundEntityEventPacket::ClientboundEntityEventPacket(boost::shared_ptr<Ent
     this->data = data;
 }
 
-ClientboundEntityEventPacket::~ClientboundEntityEventPacket()
-{
-}
-
 int ClientboundEntityEventPacket::getPacketId()
 {
     return 38;

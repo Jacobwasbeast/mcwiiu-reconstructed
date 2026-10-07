@@ -16,10 +16,6 @@ ClientboundRotateHeadPacket::ClientboundRotateHeadPacket(boost::shared_ptr<Entit
     this->yHeadRot = yHeadRot;
 }
 
-ClientboundRotateHeadPacket::~ClientboundRotateHeadPacket()
-{
-}
-
 int ClientboundRotateHeadPacket::getPacketId()
 {
     return 35;

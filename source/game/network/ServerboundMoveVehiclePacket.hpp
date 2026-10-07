@@ -16,7 +16,6 @@ class ServerboundMoveVehiclePacket : public Packet, public boost::enable_shared_
 public:
     ServerboundMoveVehiclePacket();
     ServerboundMoveVehiclePacket(boost::shared_ptr<Entity> vehicle);
-    virtual ~ServerboundMoveVehiclePacket();
 
     virtual int getPacketId();
     virtual void read(DataInputStream* input);

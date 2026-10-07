@@ -17,7 +17,6 @@ class UpdateProgressPacket : public Packet,
 public:
     UpdateProgressPacket();
     UpdateProgressPacket(int progress);
-    virtual ~UpdateProgressPacket();
 
     static boost::shared_ptr<Packet> create();
 

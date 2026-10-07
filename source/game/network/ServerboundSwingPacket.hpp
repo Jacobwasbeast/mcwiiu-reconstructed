@@ -16,7 +16,6 @@ class ServerboundSwingPacket : public Packet, public boost::enable_shared_from_t
 public:
     ServerboundSwingPacket();
     ServerboundSwingPacket(InteractionHand::EInteractionHand hand);
-    virtual ~ServerboundSwingPacket();
 
     virtual int getPacketId();
     virtual void read(DataInputStream* input);

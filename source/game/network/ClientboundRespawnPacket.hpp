@@ -29,7 +29,6 @@ public:
                              int hellScale, int cloudHeight, bool modernEnd, unsigned char biomeScale,
                              int biomeCentreXChunk, int biomeCentreZChunk, bool keepOldEntityData,
                              int seaLevel);
-    virtual ~ClientboundRespawnPacket();
     virtual void handle(PacketListener* listener);
     virtual void read(DataInputStream* input);
     virtual void write(DataOutputStream* output);

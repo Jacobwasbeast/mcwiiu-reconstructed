@@ -16,10 +16,6 @@ ServerboundSwingPacket::ServerboundSwingPacket(InteractionHand::EInteractionHand
     this->hand = hand;
 }
 
-ServerboundSwingPacket::~ServerboundSwingPacket()
-{
-}
-
 void ServerboundSwingPacket::read(DataInputStream* input)
 {
     hand = (InteractionHand::EInteractionHand)input->read();

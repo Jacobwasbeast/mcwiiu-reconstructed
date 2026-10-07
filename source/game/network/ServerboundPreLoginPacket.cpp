@@ -16,10 +16,6 @@ ServerboundPreLoginPacket::ServerboundPreLoginPacket(const std::wstring& name)
     protocolVersion = 0;
 }
 
-ServerboundPreLoginPacket::~ServerboundPreLoginPacket()
-{
-}
-
 int ServerboundPreLoginPacket::getPacketId()
 {
     return 232;

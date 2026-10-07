@@ -16,7 +16,6 @@ class ClientboundAddGlobalEntityPacket : public Packet, public boost::enable_sha
 public:
     ClientboundAddGlobalEntityPacket();
     ClientboundAddGlobalEntityPacket(boost::shared_ptr<Entity> entity);
-    virtual ~ClientboundAddGlobalEntityPacket();
 
     virtual int getPacketId();
     virtual void read(DataInputStream* input);

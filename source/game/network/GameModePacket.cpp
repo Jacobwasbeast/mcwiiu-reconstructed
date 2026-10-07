@@ -533,10 +533,6 @@ GameModePacket::GameModePacket(EMessage message)
 {
 }
 
-GameModePacket::~GameModePacket()
-{
-}
-
 int GameModePacket::getPacketId()
 {
     return 210;

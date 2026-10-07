@@ -15,10 +15,6 @@ ServerboundUseItemPacket::ServerboundUseItemPacket(InteractionHand::EInteraction
     this->hand = hand;
 }
 
-ServerboundUseItemPacket::~ServerboundUseItemPacket()
-{
-}
-
 int ServerboundUseItemPacket::getPacketId()
 {
     return 15;

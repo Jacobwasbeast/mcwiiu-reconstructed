@@ -19,10 +19,6 @@ ClientboundContainerAckPacket::ClientboundContainerAckPacket(int containerId, sh
     this->accepted = accepted;
 }
 
-ClientboundContainerAckPacket::~ClientboundContainerAckPacket()
-{
-}
-
 int ClientboundContainerAckPacket::getPacketId()
 {
     return 106;

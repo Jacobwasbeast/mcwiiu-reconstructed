@@ -30,10 +30,6 @@ UpdateGameRuleProgressPacket::UpdateGameRuleProgressPacket(ConsoleGameRules::EGa
     }
 }
 
-UpdateGameRuleProgressPacket::~UpdateGameRuleProgressPacket()
-{
-}
-
 boost::shared_ptr<Packet> UpdateGameRuleProgressPacket::create()
 {
     return boost::shared_ptr<Packet>(new UpdateGameRuleProgressPacket());

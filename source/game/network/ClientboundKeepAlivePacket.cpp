@@ -9,10 +9,6 @@ ClientboundKeepAlivePacket::ClientboundKeepAlivePacket()
 {
 }
 
-ClientboundKeepAlivePacket::~ClientboundKeepAlivePacket()
-{
-}
-
 int ClientboundKeepAlivePacket::getPacketId()
 {
     return 0;

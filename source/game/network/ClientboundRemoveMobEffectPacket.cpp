@@ -15,10 +15,6 @@ ClientboundRemoveMobEffectPacket::ClientboundRemoveMobEffectPacket(int entityId,
 {
 }
 
-ClientboundRemoveMobEffectPacket::~ClientboundRemoveMobEffectPacket()
-{
-}
-
 void ClientboundRemoveMobEffectPacket::read(DataInputStream* input)
 {
     entityId = input->readVarInt();

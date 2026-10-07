@@ -15,10 +15,6 @@ DisconnectPacket::DisconnectPacket(eDisconnectReason reason)
     this->reason = reason;
 }
 
-DisconnectPacket::~DisconnectPacket()
-{
-}
-
 int DisconnectPacket::getPacketId()
 {
     return 255;

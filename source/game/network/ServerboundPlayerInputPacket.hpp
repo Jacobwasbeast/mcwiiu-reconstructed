@@ -15,7 +15,6 @@ class ServerboundPlayerInputPacket : public Packet, public boost::enable_shared_
 public:
     ServerboundPlayerInputPacket();
     ServerboundPlayerInputPacket(float xxa, float zza, bool jumping, bool sneaking);
-    virtual ~ServerboundPlayerInputPacket();
 
     virtual int getPacketId();
     virtual void read(DataInputStream* input);

@@ -38,10 +38,6 @@ PlayerInfoPacket::PlayerInfoPacket(boost::shared_ptr<ServerPlayer> player)
     mGameType = static_cast<unsigned char>(player->GetGameType()->getId());
 }
 
-PlayerInfoPacket::~PlayerInfoPacket()
-{
-}
-
 void PlayerInfoPacket::read(DataInputStream* input)
 {
     mPlayerId = input->readByte();

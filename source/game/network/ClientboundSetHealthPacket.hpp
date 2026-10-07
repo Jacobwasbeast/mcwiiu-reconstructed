@@ -16,7 +16,6 @@ class ClientboundSetHealthPacket : public Packet, public boost::enable_shared_fr
 public:
     ClientboundSetHealthPacket();
     ClientboundSetHealthPacket(float health, int food, float saturation, TelemetryDamageSource damageSource);
-    virtual ~ClientboundSetHealthPacket();
 
     virtual int getPacketId();
     virtual void read(DataInputStream* input);

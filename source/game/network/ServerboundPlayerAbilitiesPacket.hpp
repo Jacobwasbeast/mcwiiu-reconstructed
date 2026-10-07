@@ -16,7 +16,6 @@ class ServerboundPlayerAbilitiesPacket : public Packet, public boost::enable_sha
 public:
     ServerboundPlayerAbilitiesPacket();
     ServerboundPlayerAbilitiesPacket(Abilities* abilities);
-    virtual ~ServerboundPlayerAbilitiesPacket();
 
     virtual int getPacketId();
     virtual void read(DataInputStream* input);

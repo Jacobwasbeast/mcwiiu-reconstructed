@@ -17,7 +17,6 @@ public:
     ClientboundSetEntityLinkPacket();
     ClientboundSetEntityLinkPacket(boost::shared_ptr<Entity> source, boost::shared_ptr<Entity> dest);
     ClientboundSetEntityLinkPacket(int type, boost::shared_ptr<Entity> source, boost::shared_ptr<Entity> dest);
-    virtual ~ClientboundSetEntityLinkPacket();
 
     virtual int getPacketId();
     virtual void read(DataInputStream* input);

@@ -19,7 +19,6 @@ class ServerboundPreLoginPacket : public Packet, public boost::enable_shared_fro
 public:
     ServerboundPreLoginPacket();
     ServerboundPreLoginPacket(const std::wstring& name);
-    virtual ~ServerboundPreLoginPacket();
 
     virtual int getPacketId();
     virtual void read(DataInputStream* input);

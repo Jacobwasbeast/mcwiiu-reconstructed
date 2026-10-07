@@ -16,10 +16,6 @@ ServerboundPaddleBoatPacket::ServerboundPaddleBoatPacket(bool left, bool right)
     this->right = right;
 }
 
-ServerboundPaddleBoatPacket::~ServerboundPaddleBoatPacket()
-{
-}
-
 int ServerboundPaddleBoatPacket::getPacketId()
 {
     return 138;

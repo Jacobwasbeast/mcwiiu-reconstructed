@@ -18,10 +18,6 @@ ClientboundMoveVehiclePacket::ClientboundMoveVehiclePacket(boost::shared_ptr<Ent
     xRot = vehicle->mXRot;
 }
 
-ClientboundMoveVehiclePacket::~ClientboundMoveVehiclePacket()
-{
-}
-
 int ClientboundMoveVehiclePacket::getPacketId()
 {
     return 133;

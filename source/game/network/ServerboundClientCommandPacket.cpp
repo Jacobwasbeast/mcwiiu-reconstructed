@@ -14,10 +14,6 @@ ServerboundClientCommandPacket::ServerboundClientCommandPacket(Action action)
 {
 }
 
-ServerboundClientCommandPacket::~ServerboundClientCommandPacket()
-{
-}
-
 int ServerboundClientCommandPacket::getPacketId()
 {
     return 205;

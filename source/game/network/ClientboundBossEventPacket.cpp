@@ -34,10 +34,6 @@ ClientboundBossEventPacket::ClientboundBossEventPacket(Operation operation, Boss
     createWorldFog = bossEvent->shouldCreateWorldFog();
 }
 
-ClientboundBossEventPacket::~ClientboundBossEventPacket()
-{
-}
-
 int ClientboundBossEventPacket::getPacketId()
 {
     return 139;

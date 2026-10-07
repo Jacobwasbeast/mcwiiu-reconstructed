@@ -17,10 +17,6 @@ ServerboundSetCreativeModeSlotPacket::ServerboundSetCreativeModeSlotPacket(int s
     this->item = item->isEmpty() ? ItemInstance::EMPTY : item->copy();
 }
 
-ServerboundSetCreativeModeSlotPacket::~ServerboundSetCreativeModeSlotPacket()
-{
-}
-
 void ServerboundSetCreativeModeSlotPacket::handle(PacketListener* listener)
 {
     listener->handleSetCreativeModeSlot(shared_from_this());

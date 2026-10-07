@@ -16,7 +16,6 @@ class KickPlayerPacket : public Packet, public boost::enable_shared_from_this<Ki
 public:
     KickPlayerPacket();
     KickPlayerPacket(unsigned char reason);
-    virtual ~KickPlayerPacket();
 
     virtual int getPacketId();
     virtual void read(DataInputStream* input);

@@ -16,7 +16,6 @@ class ClientboundUpdateMobEffectPacket : public Packet, public boost::enable_sha
 public:
     ClientboundUpdateMobEffectPacket();
     ClientboundUpdateMobEffectPacket(int entityId, MobEffectInstance* effect);
-    virtual ~ClientboundUpdateMobEffectPacket();
 
     virtual int getPacketId();
     virtual void read(DataInputStream* input);

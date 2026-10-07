@@ -17,7 +17,6 @@ public:
     ServerboundPlayerCommandPacket();
     ServerboundPlayerCommandPacket(boost::shared_ptr<Entity> entity, Action action);
     ServerboundPlayerCommandPacket(boost::shared_ptr<Entity> entity, Action action, int data);
-    virtual ~ServerboundPlayerCommandPacket();
     virtual void read(DataInputStream* input);
     virtual void write(DataOutputStream* output);
     virtual void handle(PacketListener* listener);

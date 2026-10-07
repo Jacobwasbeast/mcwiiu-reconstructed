@@ -36,10 +36,6 @@ ClientboundSetPlayerTeamPacket::ClientboundSetPlayerTeamPacket(PlayerTeam* team,
     mPlayers.insert(mPlayers.end(), players->begin(), players->end());
 }
 
-ClientboundSetPlayerTeamPacket::~ClientboundSetPlayerTeamPacket()
-{
-}
-
 std::wstring ClientboundSetPlayerTeamPacket::getName()
 {
     return mName;

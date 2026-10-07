@@ -24,10 +24,6 @@ ClientboundAddExperienceOrbPacket::ClientboundAddExperienceOrbPacket(
     mValue = entity->getValue();
 }
 
-ClientboundAddExperienceOrbPacket::~ClientboundAddExperienceOrbPacket()
-{
-}
-
 void ClientboundAddExperienceOrbPacket::read(DataInputStream* input)
 {
     mId = input->readInt();

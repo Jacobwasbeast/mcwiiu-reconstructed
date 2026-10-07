@@ -19,10 +19,6 @@ ClientboundSetExperiencePacket::ClientboundSetExperiencePacket(float experienceP
     this->experienceLevel = experienceLevel;
 }
 
-ClientboundSetExperiencePacket::~ClientboundSetExperiencePacket()
-{
-}
-
 int ClientboundSetExperiencePacket::getPacketId()
 {
     return 43;

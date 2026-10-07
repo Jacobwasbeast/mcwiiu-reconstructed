@@ -46,10 +46,11 @@ BlockChangeListener::Chunk& BlockChangeListener::GetChunk(long long key)
 
 std::vector<short>* BlockChangeListener::GetChangesForChunk(int x, int z) const
 {
+    std::vector<short>* changes = NULL;
     long long key = GetChunkKey(x, z);
-    if (!HasChunk(key))
-        return NULL;
-    return &GetChunk(key).GetChanges();
+    if (HasChunk(key))
+        changes = &GetChunk(key).GetChanges();
+    return changes;
 }
 
 bool BlockChangeListener::ShouldLoadOnClient(int x, int z) const
@@ -65,10 +66,7 @@ BlockChangeListener::Chunk& BlockChangeListener::GetChunk(int x, int z, bool cre
 {
     long long key = GetChunkKey(x, z);
     if (create && !HasChunk(key))
-    {
-        boost::unordered_map<long long, Chunk>* chunks = mChunks;
-        chunks->insert(std::make_pair(key, Chunk(x, z)));
-    }
+        mChunks->insert(std::make_pair(key, Chunk(x, z)));
     return mChunks->at(key);
 }
 
@@ -79,7 +77,10 @@ int BlockChangeListener::GetBlockKey(const BlockPos& pos)
 
 void BlockChangeListener::blockChanged(Level*, const BlockPos& pos, const BlockState*, const BlockState* newState, int, bool)
 {
-    GetChunk(pos.x >> 4, pos.z >> 4, true).AddBlockChange(pos);
+    int chunkX = pos.x >> 4;
+    int chunkZ = pos.z >> 4;
+    Chunk& chunk = GetChunk(chunkX, chunkZ, true);
+    chunk.AddBlockChange(pos);
     MinecraftServer* server = gMinecraftServer;
     if (server != NULL && newState != NULL && newState->getBlock() == Blocks::air)
         server->mMasterGameMode->BlockDestroyedAt(pos);
@@ -87,15 +88,15 @@ void BlockChangeListener::blockChanged(Level*, const BlockPos& pos, const BlockS
 
 void BlockChangeListener::invalidateChunksOutsideArea(int minChunkX, int minChunkZ, int maxChunkX, int maxChunkZ)
 {
-    boost::unordered_map<long long, Chunk>::const_iterator it = mChunks->begin();
+    boost::unordered_map<long long, Chunk>::iterator it = mChunks->begin();
     while (it != mChunks->end())
     {
         int chunkX = it->second.GetX();
         int chunkZ = it->second.GetZ();
-        if (minChunkX <= chunkX && chunkX <= maxChunkX && minChunkZ <= chunkZ && chunkZ <= maxChunkZ)
-            ++it;
-        else
+        if (chunkX < minChunkX || chunkX > maxChunkX || chunkZ < minChunkZ || chunkZ > maxChunkZ)
             it = mChunks->erase(it);
+        else
+            it++;
     }
 }
 

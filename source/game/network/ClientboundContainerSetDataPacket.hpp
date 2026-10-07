@@ -15,7 +15,6 @@ class ClientboundContainerSetDataPacket : public Packet, public boost::enable_sh
 public:
     ClientboundContainerSetDataPacket();
     ClientboundContainerSetDataPacket(int containerId, int id, int value);
-    virtual ~ClientboundContainerSetDataPacket();
 
     virtual int getPacketId();
     virtual void read(DataInputStream* input);

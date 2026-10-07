@@ -17,10 +17,6 @@ ClientboundPowerupPacket::ClientboundPowerupPacket(int powerupID, int powerupTim
     this->powerupID = powerupID;
 }
 
-ClientboundPowerupPacket::~ClientboundPowerupPacket()
-{
-}
-
 int ClientboundPowerupPacket::getPacketId()
 {
     return 171;

@@ -28,10 +28,6 @@ ClientboundSoundPacket::ClientboundSoundPacket(ESoundInstances soundInstance, co
 {
 }
 
-ClientboundSoundPacket::~ClientboundSoundPacket()
-{
-}
-
 void ClientboundSoundPacket::read(DataInputStream* input)
 {
     int id = input->readVarInt();

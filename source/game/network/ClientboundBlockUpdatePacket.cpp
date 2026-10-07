@@ -35,10 +35,6 @@ ClientboundBlockUpdatePacket::ClientboundBlockUpdatePacket(Level* level, const B
     }
 }
 
-ClientboundBlockUpdatePacket::~ClientboundBlockUpdatePacket()
-{
-}
-
 void ClientboundBlockUpdatePacket::read(DataInputStream* input)
 {
     unsigned int packedPos = input->readInt();

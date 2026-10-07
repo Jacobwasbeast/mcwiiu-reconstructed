@@ -17,7 +17,6 @@ public:
     ClientboundAddExperienceOrbPacket();
     ClientboundAddExperienceOrbPacket(boost::shared_ptr<ExperienceOrb> entity, int, int,
                                       int x, int y, int z);
-    virtual ~ClientboundAddExperienceOrbPacket();
 
     virtual int getPacketId();
     virtual void read(DataInputStream* input);

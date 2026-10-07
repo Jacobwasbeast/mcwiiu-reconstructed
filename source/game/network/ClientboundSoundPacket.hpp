@@ -26,7 +26,6 @@ public:
     ClientboundSoundPacket(const SoundEvent* sound, SoundSource::ESoundSource source, double x, double y, double z, float volume, float pitch);
     ClientboundSoundPacket(const SoundEvent* sound, float volume, float pitch);
     ClientboundSoundPacket(ESoundInstances soundInstance, const SoundEvent* sound, float volume, float pitch, bool looping, int entityId);
-    virtual ~ClientboundSoundPacket();
     virtual int getPacketId();
     virtual void read(DataInputStream* input);
     virtual void write(DataOutputStream* output);

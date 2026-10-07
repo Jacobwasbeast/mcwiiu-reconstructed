@@ -19,7 +19,6 @@ class ClientboundExplodePacket : public Packet, public boost::enable_shared_from
 public:
     ClientboundExplodePacket();
     ClientboundExplodePacket(double x, double y, double z, float power, Explosion::ToBlowSet* toBlow, Vec3* knockback, bool knockbackOnly);
-    virtual ~ClientboundExplodePacket();
 
     virtual int getPacketId();
     virtual void read(DataInputStream* input);

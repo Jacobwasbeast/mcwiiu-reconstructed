@@ -32,7 +32,6 @@ public:
     ClientboundGameEventPacket();
     ClientboundGameEventPacket(int event, float param);
     ClientboundGameEventPacket(int event, float param, int playerIndex);
-    virtual ~ClientboundGameEventPacket();
 
     virtual int getPacketId();
     virtual void read(DataInputStream* input);

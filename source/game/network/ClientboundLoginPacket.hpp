@@ -26,7 +26,6 @@ public:
         unsigned char, char, int, unsigned char, bool, unsigned int, int, int, int, bool, unsigned char, int, int, int);
     ClientboundLoginPacket(const std::wstring&, int, PlayerUID, PlayerUID, bool, unsigned int, unsigned int,
         unsigned int, bool, bool);
-    virtual ~ClientboundLoginPacket();
     virtual int getPacketId();
     virtual void read(DataInputStream*);
     virtual void write(DataOutputStream*);

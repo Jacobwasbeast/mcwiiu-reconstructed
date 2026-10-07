@@ -22,7 +22,6 @@ public:
 
     ServerboundClientCommandPacket();
     ServerboundClientCommandPacket(Action action);
-    virtual ~ServerboundClientCommandPacket();
 
     virtual int getPacketId();
     virtual void read(DataInputStream* input);

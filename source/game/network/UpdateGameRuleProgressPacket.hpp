@@ -19,7 +19,6 @@ class UpdateGameRuleProgressPacket : public Packet, public boost::enable_shared_
 public:
     UpdateGameRuleProgressPacket();
     UpdateGameRuleProgressPacket(ConsoleGameRules::EGameRuleType ruleType, const std::wstring& description, int itemId, int auxValue, int dataTag, void* payload, int payloadLength);
-    virtual ~UpdateGameRuleProgressPacket();
 
     static boost::shared_ptr<Packet> create();
     virtual int getPacketId();

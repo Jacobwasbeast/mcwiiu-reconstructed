@@ -46,10 +46,6 @@ ClientboundRespawnPacket::ClientboundRespawnPacket(double x, double y, double z,
 {
 }
 
-ClientboundRespawnPacket::~ClientboundRespawnPacket()
-{
-}
-
 void ClientboundRespawnPacket::handle(PacketListener* listener)
 {
     listener->handleRespawn(shared_from_this());

@@ -21,10 +21,6 @@ ClientboundLevelEventPacket::ClientboundLevelEventPacket(int type, const BlockPo
     this->globalEvent = globalEvent;
 }
 
-ClientboundLevelEventPacket::~ClientboundLevelEventPacket()
-{
-}
-
 int ClientboundLevelEventPacket::getPacketId()
 {
     return 61;

@@ -183,7 +183,6 @@ public:
     ClientboundChatPacket(const std::wstring& text, EChatPacketMessage message, int entityType);
     ClientboundChatPacket(const std::wstring& text, EChatPacketMessage message, boost::shared_ptr<Entity> entity, const std::wstring& entityName);
     ClientboundChatPacket(const std::wstring& text, EChatPacketMessage message, boost::shared_ptr<Entity> entity, const std::wstring& entityName, const std::wstring& killerName);
-    virtual ~ClientboundChatPacket();
 
     virtual int getPacketId();
     virtual void read(DataInputStream* input);

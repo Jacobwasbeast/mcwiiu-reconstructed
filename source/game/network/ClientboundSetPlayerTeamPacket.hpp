@@ -20,7 +20,6 @@ public:
     ClientboundSetPlayerTeamPacket();
     ClientboundSetPlayerTeamPacket(PlayerTeam* team, int method);
     ClientboundSetPlayerTeamPacket(PlayerTeam* team, std::vector<PlayerUID>* players, int method);
-    virtual ~ClientboundSetPlayerTeamPacket();
 
     std::wstring getName();
     std::vector<PlayerUID>* getPlayers();

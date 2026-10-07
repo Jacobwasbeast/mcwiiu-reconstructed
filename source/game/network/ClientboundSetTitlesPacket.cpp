@@ -19,10 +19,6 @@ ClientboundSetTitlesPacket::ClientboundSetTitlesPacket(Type type, const std::wst
     this->fadeOut = fadeOut;
 }
 
-ClientboundSetTitlesPacket::~ClientboundSetTitlesPacket()
-{
-}
-
 int ClientboundSetTitlesPacket::getPacketId()
 {
     return 219;

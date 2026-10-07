@@ -15,10 +15,6 @@ ClientboundCooldownPacket::ClientboundCooldownPacket(Item* item, int duration)
 {
 }
 
-ClientboundCooldownPacket::~ClientboundCooldownPacket()
-{
-}
-
 int ClientboundCooldownPacket::getPacketId()
 {
     return 236;

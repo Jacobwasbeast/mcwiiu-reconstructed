@@ -13,7 +13,6 @@ class ClientboundTeleportEntityPacket : public Packet, public boost::enable_shar
 public:
     ClientboundTeleportEntityPacket();
     explicit ClientboundTeleportEntityPacket(boost::shared_ptr<Entity> entity);
-    virtual ~ClientboundTeleportEntityPacket();
     virtual int getPacketId();
     virtual void read(DataInputStream* input);
     virtual void write(DataOutputStream* output);

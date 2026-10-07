@@ -6,7 +6,6 @@
 ClientboundSetSpawnPositionPacket::ClientboundSetSpawnPositionPacket() { mPos = BlockPos(); }
 ClientboundSetSpawnPositionPacket::ClientboundSetSpawnPositionPacket(int x, int y, int z) { mPos = BlockPos(x, y, z); }
 ClientboundSetSpawnPositionPacket::ClientboundSetSpawnPositionPacket(const BlockPos& pos) { mPos = pos; }
-ClientboundSetSpawnPositionPacket::~ClientboundSetSpawnPositionPacket() {}
 void ClientboundSetSpawnPositionPacket::read(DataInputStream* input) { mPos = input->readBlockPos(); }
 void ClientboundSetSpawnPositionPacket::write(DataOutputStream* output) { output->writeBlockPos(mPos); }
 void ClientboundSetSpawnPositionPacket::handle(PacketListener* listener) { listener->handleSetSpawn(shared_from_this()); }

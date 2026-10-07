@@ -367,7 +367,6 @@ public:
 
     GameModePacket();
     GameModePacket(EMessage message);
-    virtual ~GameModePacket();
     virtual int getPacketId();
     virtual void read(DataInputStream* input);
     virtual void write(DataOutputStream* output);

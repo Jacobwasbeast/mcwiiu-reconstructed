@@ -13,10 +13,6 @@ ServerboundAcceptTeleportationPacket::ServerboundAcceptTeleportationPacket(int i
     this->id = id;
 }
 
-ServerboundAcceptTeleportationPacket::~ServerboundAcceptTeleportationPacket()
-{
-}
-
 int ServerboundAcceptTeleportationPacket::getPacketId()
 {
     return 135;

@@ -16,10 +16,6 @@ ServerboundPlayerActionPacket::ServerboundPlayerActionPacket(Action action, cons
 {
 }
 
-ServerboundPlayerActionPacket::~ServerboundPlayerActionPacket()
-{
-}
-
 boost::shared_ptr<Packet> ServerboundPlayerActionPacket::create()
 {
     return boost::shared_ptr<Packet>(new ServerboundPlayerActionPacket());

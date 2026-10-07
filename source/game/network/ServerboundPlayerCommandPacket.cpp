@@ -7,7 +7,6 @@
 ServerboundPlayerCommandPacket::ServerboundPlayerCommandPacket() : id(-1), action(PRESS_SHIFT_KEY), data(0) {}
 ServerboundPlayerCommandPacket::ServerboundPlayerCommandPacket(boost::shared_ptr<Entity> entity, Action action) : id(entity->getId()), action(action), data(0) {}
 ServerboundPlayerCommandPacket::ServerboundPlayerCommandPacket(boost::shared_ptr<Entity> entity, Action action, int data) : id(entity->getId()), action(action), data(data) {}
-ServerboundPlayerCommandPacket::~ServerboundPlayerCommandPacket() {}
 void ServerboundPlayerCommandPacket::read(DataInputStream* input) { id = input->readVarInt(); action = (Action)input->readInt(); data = input->readVarInt(); }
 void ServerboundPlayerCommandPacket::write(DataOutputStream* output) { output->writeVarInt(id); output->writeInt((int)action); output->writeVarInt(data); }
 void ServerboundPlayerCommandPacket::handle(PacketListener* listener) { listener->handlePlayerCommand(shared_from_this()); }

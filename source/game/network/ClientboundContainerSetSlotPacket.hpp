@@ -18,7 +18,6 @@ public:
     ClientboundContainerSetSlotPacket();
     ClientboundContainerSetSlotPacket(int containerId, int slot,
                                       not_null_ptr<ItemInstance> item);
-    virtual ~ClientboundContainerSetSlotPacket();
 
     virtual int getPacketId();
     virtual void read(DataInputStream* input);

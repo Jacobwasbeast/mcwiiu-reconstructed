@@ -40,10 +40,6 @@ ClientboundSetEntityLinkPacket::ClientboundSetEntityLinkPacket(int type, boost::
     }
 }
 
-ClientboundSetEntityLinkPacket::~ClientboundSetEntityLinkPacket()
-{
-}
-
 int ClientboundSetEntityLinkPacket::getPacketId()
 {
     return 39;

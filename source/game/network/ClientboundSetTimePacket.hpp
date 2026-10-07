@@ -15,7 +15,6 @@ class ClientboundSetTimePacket : public Packet, public boost::enable_shared_from
 public:
     ClientboundSetTimePacket();
     ClientboundSetTimePacket(long long gameTime, long long dayTime, bool daylightCycle);
-    virtual ~ClientboundSetTimePacket();
 
     virtual int getPacketId();
     virtual void read(DataInputStream* input);

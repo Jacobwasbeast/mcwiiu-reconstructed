@@ -18,7 +18,6 @@ class TextureAndGeometryChangePacket : public Packet, public boost::enable_share
 public:
     TextureAndGeometryChangePacket();
     TextureAndGeometryChangePacket(boost::shared_ptr<Entity> entity, const std::wstring& geometryName);
-    virtual ~TextureAndGeometryChangePacket();
 
     virtual int getPacketId();
     virtual void read(DataInputStream* input);

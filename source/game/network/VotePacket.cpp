@@ -14,10 +14,6 @@ VotePacket::VotePacket(int voteableId, char vote, int playerId, int voteId)
 {
 }
 
-VotePacket::~VotePacket()
-{
-}
-
 void VotePacket::read(DataInputStream* input)
 {
     voteableId = input->readInt();

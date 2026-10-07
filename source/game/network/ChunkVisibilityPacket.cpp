@@ -22,10 +22,6 @@ ChunkVisibilityPacket::ChunkVisibilityPacket(int x, int z, bool visible, bool lo
     shouldDelay = false;
 }
 
-ChunkVisibilityPacket::~ChunkVisibilityPacket()
-{
-}
-
 void ChunkVisibilityPacket::read(DataInputStream* input)
 {
     int packed = input->readInt();

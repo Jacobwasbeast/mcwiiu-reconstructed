@@ -16,7 +16,6 @@ class ServerboundSetCreativeModeSlotPacket : public Packet, public boost::enable
 public:
     ServerboundSetCreativeModeSlotPacket();
     ServerboundSetCreativeModeSlotPacket(int slot, not_null_ptr<ItemInstance> item);
-    virtual ~ServerboundSetCreativeModeSlotPacket();
     virtual void handle(PacketListener* listener);
     virtual void read(DataInputStream* input);
     virtual void write(DataOutputStream* output);

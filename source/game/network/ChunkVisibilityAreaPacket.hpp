@@ -15,7 +15,6 @@ public:
     ChunkVisibilityAreaPacket();
     ChunkVisibilityAreaPacket(int minX, int maxX, int minZ, int maxZ,
                               bool visible, bool loaded, bool outside);
-    virtual ~ChunkVisibilityAreaPacket();
     virtual void read(DataInputStream* input);
     virtual void write(DataOutputStream* output);
     virtual void handle(PacketListener* listener);

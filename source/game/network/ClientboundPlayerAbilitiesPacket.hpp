@@ -16,7 +16,6 @@ class ClientboundPlayerAbilitiesPacket : public Packet, public boost::enable_sha
 public:
     ClientboundPlayerAbilitiesPacket();
     ClientboundPlayerAbilitiesPacket(Abilities* abilities, int playerId);
-    virtual ~ClientboundPlayerAbilitiesPacket();
     virtual int getPacketId();
     virtual void read(DataInputStream* input);
     virtual void write(DataOutputStream* output);

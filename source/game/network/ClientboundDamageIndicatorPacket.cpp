@@ -13,10 +13,6 @@ ClientboundDamageIndicatorPacket::ClientboundDamageIndicatorPacket(float xValue,
 {
 }
 
-ClientboundDamageIndicatorPacket::~ClientboundDamageIndicatorPacket()
-{
-}
-
 void ClientboundDamageIndicatorPacket::read(DataInputStream* input)
 {
     x = input->readFloat();

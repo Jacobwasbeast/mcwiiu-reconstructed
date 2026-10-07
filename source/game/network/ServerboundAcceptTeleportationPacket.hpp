@@ -15,7 +15,6 @@ class ServerboundAcceptTeleportationPacket : public Packet, public boost::enable
 public:
     ServerboundAcceptTeleportationPacket();
     ServerboundAcceptTeleportationPacket(int id);
-    virtual ~ServerboundAcceptTeleportationPacket();
 
     virtual int getPacketId();
     virtual void read(DataInputStream* input);

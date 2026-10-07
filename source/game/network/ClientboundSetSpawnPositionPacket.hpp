@@ -19,7 +19,6 @@ public:
     ClientboundSetSpawnPositionPacket();
     ClientboundSetSpawnPositionPacket(int x, int y, int z);
     ClientboundSetSpawnPositionPacket(const BlockPos& pos);
-    virtual ~ClientboundSetSpawnPositionPacket();
     virtual void read(DataInputStream* input);
     virtual void write(DataOutputStream* output);
     virtual void handle(PacketListener* listener);

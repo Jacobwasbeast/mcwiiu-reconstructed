@@ -15,7 +15,6 @@ class ClientboundTakeItemEntityPacket : public Packet, public boost::enable_shar
 public:
     ClientboundTakeItemEntityPacket();
     ClientboundTakeItemEntityPacket(int itemId, int playerId, int amount);
-    virtual ~ClientboundTakeItemEntityPacket();
 
     virtual int getPacketId();
     virtual void read(DataInputStream* input);

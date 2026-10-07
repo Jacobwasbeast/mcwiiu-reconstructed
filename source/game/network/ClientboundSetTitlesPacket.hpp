@@ -27,7 +27,6 @@ public:
 
     ClientboundSetTitlesPacket();
     ClientboundSetTitlesPacket(Type type, const std::wstring& text, int fadeIn, int stay, int fadeOut);
-    virtual ~ClientboundSetTitlesPacket();
 
     virtual int getPacketId();
     virtual void read(DataInputStream* input);

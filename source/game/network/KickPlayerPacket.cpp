@@ -14,10 +14,6 @@ KickPlayerPacket::KickPlayerPacket(unsigned char reason)
 {
 }
 
-KickPlayerPacket::~KickPlayerPacket()
-{
-}
-
 void KickPlayerPacket::handle(PacketListener* listener)
 {
     listener->handleKickPlayer(shared_from_this());

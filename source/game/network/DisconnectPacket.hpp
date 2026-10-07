@@ -52,7 +52,6 @@ public:
 
     DisconnectPacket();
     DisconnectPacket(eDisconnectReason reason);
-    virtual ~DisconnectPacket();
 
     virtual int getPacketId();
     virtual void read(DataInputStream* input);

@@ -15,10 +15,6 @@ ChunkVisibilityAreaPacket::ChunkVisibilityAreaPacket(int minX, int maxX, int min
 {
 }
 
-ChunkVisibilityAreaPacket::~ChunkVisibilityAreaPacket()
-{
-}
-
 void ChunkVisibilityAreaPacket::read(DataInputStream* input)
 {
     unsigned int first = static_cast<unsigned int>(input->readInt());

@@ -17,7 +17,6 @@ class ClientboundBlockEventPacket : public Packet, public boost::enable_shared_f
 public:
     ClientboundBlockEventPacket();
     ClientboundBlockEventPacket(const BlockPos& pos, Block* block, int b0, int b1);
-    virtual ~ClientboundBlockEventPacket();
 
     virtual int getPacketId();
     virtual void read(DataInputStream* input);

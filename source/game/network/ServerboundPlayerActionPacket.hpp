@@ -29,7 +29,6 @@ public:
 
     ServerboundPlayerActionPacket();
     ServerboundPlayerActionPacket(Action action, const BlockPos& pos, const Direction* direction, int useTime);
-    virtual ~ServerboundPlayerActionPacket();
 
     static boost::shared_ptr<Packet> create();
     virtual void read(DataInputStream* input);

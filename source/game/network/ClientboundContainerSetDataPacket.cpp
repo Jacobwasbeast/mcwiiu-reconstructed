@@ -19,10 +19,6 @@ ClientboundContainerSetDataPacket::ClientboundContainerSetDataPacket(int contain
     this->value = value;
 }
 
-ClientboundContainerSetDataPacket::~ClientboundContainerSetDataPacket()
-{
-}
-
 int ClientboundContainerSetDataPacket::getPacketId()
 {
     return 105;

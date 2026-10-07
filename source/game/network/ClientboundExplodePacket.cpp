@@ -36,10 +36,6 @@ ClientboundExplodePacket::ClientboundExplodePacket(double x, double y, double z,
     }
 }
 
-ClientboundExplodePacket::~ClientboundExplodePacket()
-{
-}
-
 void ClientboundExplodePacket::read(DataInputStream* input)
 {
     knockbackOnly = input->readBoolean();

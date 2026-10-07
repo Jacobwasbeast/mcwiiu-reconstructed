@@ -15,7 +15,6 @@ class VotePacket : public Packet, public boost::enable_shared_from_this<VotePack
 public:
     VotePacket();
     VotePacket(int voteableId, char vote, int playerId, int voteId);
-    virtual ~VotePacket();
     virtual int getPacketId();
     virtual void read(DataInputStream* input);
     virtual void write(DataOutputStream* output);

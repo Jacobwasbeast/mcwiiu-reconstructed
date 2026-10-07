@@ -18,7 +18,6 @@ public:
     PlayerInfoPacket();
     PlayerInfoPacket(unsigned char playerId, short playerIndex, unsigned int privileges, unsigned char gameType);
     PlayerInfoPacket(boost::shared_ptr<ServerPlayer> player);
-    virtual ~PlayerInfoPacket();
     virtual int getPacketId();
     virtual void read(DataInputStream* input);
     virtual void write(DataOutputStream* output);

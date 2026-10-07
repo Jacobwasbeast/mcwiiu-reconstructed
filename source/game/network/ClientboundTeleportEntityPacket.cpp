@@ -22,10 +22,6 @@ ClientboundTeleportEntityPacket::ClientboundTeleportEntityPacket(boost::shared_p
 {
 }
 
-ClientboundTeleportEntityPacket::~ClientboundTeleportEntityPacket()
-{
-}
-
 int ClientboundTeleportEntityPacket::getPacketId()
 {
     return 34;

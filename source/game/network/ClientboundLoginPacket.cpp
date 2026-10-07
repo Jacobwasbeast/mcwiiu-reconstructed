@@ -118,10 +118,6 @@ ClientboundLoginPacket::ClientboundLoginPacket(const std::wstring& levelName, in
     mDifficulty = -1;
 }
 
-ClientboundLoginPacket::~ClientboundLoginPacket()
-{
-}
-
 int ClientboundLoginPacket::getPacketId()
 {
     return 1;

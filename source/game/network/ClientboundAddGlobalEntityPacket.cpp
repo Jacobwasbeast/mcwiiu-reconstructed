@@ -21,10 +21,6 @@ ClientboundAddGlobalEntityPacket::ClientboundAddGlobalEntityPacket(boost::shared
 {
 }
 
-ClientboundAddGlobalEntityPacket::~ClientboundAddGlobalEntityPacket()
-{
-}
-
 int ClientboundAddGlobalEntityPacket::getPacketId()
 {
     return 0x47;

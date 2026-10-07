@@ -16,7 +16,6 @@ class ClientboundLevelEventPacket : public Packet, public boost::enable_shared_f
 public:
     ClientboundLevelEventPacket();
     ClientboundLevelEventPacket(int type, const BlockPos& pos, int data, bool globalEvent);
-    virtual ~ClientboundLevelEventPacket();
 
     virtual int getPacketId();
     virtual void read(DataInputStream* input);

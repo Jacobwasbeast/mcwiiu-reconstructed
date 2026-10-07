@@ -15,7 +15,6 @@ class ClientboundPowerupPacket : public Packet, public boost::enable_shared_from
 public:
     ClientboundPowerupPacket();
     ClientboundPowerupPacket(int powerupID, int powerupTime);
-    virtual ~ClientboundPowerupPacket();
 
     virtual int getPacketId();
     virtual void read(DataInputStream* input);

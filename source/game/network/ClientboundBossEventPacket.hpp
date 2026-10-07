@@ -29,7 +29,6 @@ public:
 
     ClientboundBossEventPacket();
     ClientboundBossEventPacket(Operation operation, BossEvent* bossEvent);
-    virtual ~ClientboundBossEventPacket();
 
     virtual int getPacketId();
     virtual void read(DataInputStream* input);

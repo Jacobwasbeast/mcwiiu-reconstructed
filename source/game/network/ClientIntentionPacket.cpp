@@ -14,10 +14,6 @@ ClientIntentionPacket::ClientIntentionPacket(int protocolVersionValue, std::wstr
 {
 }
 
-ClientIntentionPacket::~ClientIntentionPacket()
-{
-}
-
 void ClientIntentionPacket::read(DataInputStream* input)
 {
 }

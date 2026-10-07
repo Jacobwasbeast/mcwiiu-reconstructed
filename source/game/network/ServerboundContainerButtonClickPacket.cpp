@@ -16,10 +16,6 @@ ServerboundContainerButtonClickPacket::ServerboundContainerButtonClickPacket(int
     this->buttonId = buttonId;
 }
 
-ServerboundContainerButtonClickPacket::~ServerboundContainerButtonClickPacket()
-{
-}
-
 int ServerboundContainerButtonClickPacket::getPacketId()
 {
     return 108;

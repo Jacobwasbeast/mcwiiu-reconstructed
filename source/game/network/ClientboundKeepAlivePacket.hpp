@@ -15,7 +15,6 @@ class ClientboundKeepAlivePacket : public Packet, public boost::enable_shared_fr
 public:
     ClientboundKeepAlivePacket();
     ClientboundKeepAlivePacket(int id);
-    virtual ~ClientboundKeepAlivePacket();
 
     virtual int getPacketId();
     virtual void read(DataInputStream* input);

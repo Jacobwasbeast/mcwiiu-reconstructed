@@ -21,10 +21,6 @@ TextureChangePacket::TextureChangePacket(boost::shared_ptr<Entity> entity, EText
     mEntityId = entity->getId();
 }
 
-TextureChangePacket::~TextureChangePacket()
-{
-}
-
 boost::shared_ptr<Packet> TextureChangePacket::create()
 {
     return boost::shared_ptr<Packet>(new TextureChangePacket());

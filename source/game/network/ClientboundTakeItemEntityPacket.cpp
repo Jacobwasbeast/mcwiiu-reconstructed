@@ -19,10 +19,6 @@ ClientboundTakeItemEntityPacket::ClientboundTakeItemEntityPacket(int itemId, int
     this->playerId = playerId;
 }
 
-ClientboundTakeItemEntityPacket::~ClientboundTakeItemEntityPacket()
-{
-}
-
 int ClientboundTakeItemEntityPacket::getPacketId()
 {
     return 22;

@@ -295,7 +295,7 @@ ClientPacketListener::ClientPacketListener(Minecraft* minecraft, Socket* socket,
     if (playerId < 0)
         m_playerId = gProfile->GetPrimaryPad();
     if (socket == 0)
-        socket = new Socket(false);
+        socket = new Socket();
     m_createdOk = socket->mOpen;
     if (m_createdOk)
         m_connection = new Connection(socket, std::wstring(L"Client"), this);
@@ -1407,11 +1407,11 @@ void ClientPacketListener::handleChunkBlocksUpdate(boost::shared_ptr<Clientbound
     int maxLocalZ = 0;
     for (unsigned int i = 0; i < packet->count; ++i)
     {
-        const unsigned short packed = static_cast<unsigned short>(packet->positions.data[i]);
+        const unsigned short packed = static_cast<unsigned short>(packet->positions[i]);
         const int localX = (packed >> 12) & 15;
         const int localZ = (packed >> 8) & 15;
         const int y = packed & 255;
-        const unsigned int element = packet->elements.data[i];
+        const unsigned int element = packet->elements[i];
         const int blockId = static_cast<int>((element & 0xffff) >> 4);
         const int data = static_cast<int>(element & 0xf);
         const unsigned short extra = static_cast<unsigned short>(element >> 16);
@@ -3226,7 +3226,7 @@ void ClientPacketListener::handleBlockCollectionDestruction(boost::shared_ptr<Cl
         Random random(0xABB);
         for (unsigned int i = 0; i < packet->positions.length; ++i)
         {
-            m_destroyedBlocks[i] = packet->positions.data[i];
+            m_destroyedBlocks[i] = packet->positions[i];
             m_level->destroyBlockProgress(packet->sourceId - static_cast<int>(i), m_destroyedBlocks[i],
                                           packet->progress + random.nextInt(4) - 1);
         }

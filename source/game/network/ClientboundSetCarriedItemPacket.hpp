@@ -15,7 +15,6 @@ class ClientboundSetCarriedItemPacket : public Packet, public boost::enable_shar
 public:
     ClientboundSetCarriedItemPacket();
     ClientboundSetCarriedItemPacket(int slot);
-    virtual ~ClientboundSetCarriedItemPacket();
 
     virtual int getPacketId();
     virtual void read(DataInputStream* input);

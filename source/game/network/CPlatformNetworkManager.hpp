@@ -33,6 +33,15 @@ struct FriendSessionInfo
     bool m_sessionFlag;
     GameSessionData m_gameSessionData;
     bool m_statusFlag;
+
+    FriendSessionInfo()
+        : m_gameSessionData()
+    {
+        m_displayNameLength = 0;
+        m_statusFlag = false;
+        m_displayName = 0;
+        m_sessionFlag = false;
+    }
 };
 
 class CPlatformNetworkManager

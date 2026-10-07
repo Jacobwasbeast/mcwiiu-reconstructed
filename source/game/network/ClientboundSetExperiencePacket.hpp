@@ -15,7 +15,6 @@ class ClientboundSetExperiencePacket : public Packet, public boost::enable_share
 public:
     ClientboundSetExperiencePacket();
     ClientboundSetExperiencePacket(float experienceProgress, int totalExperience, int experienceLevel);
-    virtual ~ClientboundSetExperiencePacket();
 
     virtual int getPacketId();
     virtual void read(DataInputStream* input);

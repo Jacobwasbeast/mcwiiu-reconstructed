@@ -18,10 +18,6 @@ ClientboundAnimatePacket::ClientboundAnimatePacket(boost::shared_ptr<Entity> ent
     this->action = action;
 }
 
-ClientboundAnimatePacket::~ClientboundAnimatePacket()
-{
-}
-
 int ClientboundAnimatePacket::getPacketId()
 {
     return 18;

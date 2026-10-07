@@ -16,7 +16,6 @@ class ChunkVisibilityPacket : public Packet, public boost::enable_shared_from_th
 public:
     ChunkVisibilityPacket();
     ChunkVisibilityPacket(int x, int z, bool visible, bool loaded);
-    virtual ~ChunkVisibilityPacket();
     virtual void read(DataInputStream* input);
     virtual void write(DataOutputStream* output);
     virtual void handle(PacketListener* listener);

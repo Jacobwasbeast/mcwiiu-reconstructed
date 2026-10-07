@@ -33,20 +33,20 @@ ClientboundChunkBlocksUpdatePacket::ClientboundChunkBlocksUpdatePacket(
     short* sortedPositions = positions.data;
     for (int i = 0; i < count; ++i)
     {
-        sortedPositions[i] = changes.data[i];
+        sortedPositions[i] = changes[i];
     }
 
     qsort(sortedPositions, count, sizeof(short), PositionSortFunction);
 
     for (int i = 0; i < count; ++i)
     {
-        int packedPosition = positions.data[i];
+        int packedPosition = positions[i];
         int localX = (packedPosition >> 12) & 15;
         int localZ = (packedPosition >> 8) & 15;
         int y = packedPosition & 255;
         unsigned int element = chunk->getElement(localX, y, localZ);
         int extraElement = chunk->getExtraElement(localX, y, localZ);
-        elements.data[i] = element | (extraElement << 16);
+        elements[i] = element | (extraElement << 16);
     }
 
     if (level->mDimension->getType() == DimensionType::OVERWORLD)

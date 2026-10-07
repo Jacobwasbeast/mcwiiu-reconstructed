@@ -35,10 +35,6 @@ ClientboundUpdateMobEffectPacket::ClientboundUpdateMobEffectPacket(int entityId,
     }
 }
 
-ClientboundUpdateMobEffectPacket::~ClientboundUpdateMobEffectPacket()
-{
-}
-
 void ClientboundUpdateMobEffectPacket::read(DataInputStream* input)
 {
     entityId = input->readVarInt();

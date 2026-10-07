@@ -22,10 +22,6 @@ ClientboundPlayerAbilitiesPacket::ClientboundPlayerAbilitiesPacket(Abilities* ab
     mPlayerId = playerId;
 }
 
-ClientboundPlayerAbilitiesPacket::~ClientboundPlayerAbilitiesPacket()
-{
-}
-
 void ClientboundPlayerAbilitiesPacket::setInvulnerable(bool value) { mInvulnerable = value; }
 void ClientboundPlayerAbilitiesPacket::setFlying(bool value) { mFlying = value; }
 void ClientboundPlayerAbilitiesPacket::setCanFly(bool value) { mCanFly = value; }

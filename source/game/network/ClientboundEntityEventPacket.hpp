@@ -16,7 +16,6 @@ class ClientboundEntityEventPacket : public Packet, public boost::enable_shared_
 public:
     ClientboundEntityEventPacket();
     ClientboundEntityEventPacket(boost::shared_ptr<Entity> entity, unsigned char eventId, int data);
-    virtual ~ClientboundEntityEventPacket();
 
     virtual int getPacketId();
     virtual void read(DataInputStream* input);

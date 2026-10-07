@@ -21,10 +21,6 @@ ServerboundUseItemOnPacket::ServerboundUseItemOnPacket(const BlockPos& pos, cons
     this->clickZ = clickZ;
 }
 
-ServerboundUseItemOnPacket::~ServerboundUseItemOnPacket()
-{
-}
-
 int ServerboundUseItemOnPacket::getPacketId()
 {
     return 137;

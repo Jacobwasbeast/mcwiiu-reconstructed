@@ -22,10 +22,6 @@ ClientboundSetHealthPacket::ClientboundSetHealthPacket(float health, int food, f
     this->damageSource = damageSource;
 }
 
-ClientboundSetHealthPacket::~ClientboundSetHealthPacket()
-{
-}
-
 int ClientboundSetHealthPacket::getPacketId()
 {
     return 8;

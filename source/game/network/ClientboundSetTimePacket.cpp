@@ -17,10 +17,6 @@ ClientboundSetTimePacket::ClientboundSetTimePacket(long long gameTime, long long
     this->dayTime = dayTime;
 }
 
-ClientboundSetTimePacket::~ClientboundSetTimePacket()
-{
-}
-
 int ClientboundSetTimePacket::getPacketId()
 {
     return 4;

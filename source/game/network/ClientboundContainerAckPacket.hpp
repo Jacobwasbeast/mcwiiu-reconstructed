@@ -15,7 +15,6 @@ class ClientboundContainerAckPacket : public Packet, public boost::enable_shared
 public:
     ClientboundContainerAckPacket();
     ClientboundContainerAckPacket(int containerId, short uid, bool accepted);
-    virtual ~ClientboundContainerAckPacket();
 
     virtual int getPacketId();
     virtual void read(DataInputStream* input);

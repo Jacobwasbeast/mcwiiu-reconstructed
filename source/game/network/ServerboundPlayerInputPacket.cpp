@@ -21,10 +21,6 @@ ServerboundPlayerInputPacket::ServerboundPlayerInputPacket(float xxa, float zza,
     this->sneaking = sneaking;
 }
 
-ServerboundPlayerInputPacket::~ServerboundPlayerInputPacket()
-{
-}
-
 int ServerboundPlayerInputPacket::getPacketId()
 {
     return 27;

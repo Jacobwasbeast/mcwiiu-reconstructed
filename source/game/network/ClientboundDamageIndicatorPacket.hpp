@@ -15,7 +15,6 @@ class ClientboundDamageIndicatorPacket : public Packet, public boost::enable_sha
 public:
     ClientboundDamageIndicatorPacket();
     ClientboundDamageIndicatorPacket(float x, float z);
-    virtual ~ClientboundDamageIndicatorPacket();
     virtual int getPacketId();
     virtual void read(DataInputStream* input);
     virtual void write(DataOutputStream* output);

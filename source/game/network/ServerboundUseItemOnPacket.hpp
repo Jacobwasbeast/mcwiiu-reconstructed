@@ -21,7 +21,6 @@ public:
     ServerboundUseItemOnPacket(const BlockPos& pos, const Direction* face,
                                InteractionHand::EInteractionHand hand,
                                float clickX, float clickY, float clickZ);
-    virtual ~ServerboundUseItemOnPacket();
 
     virtual int getPacketId();
     virtual void read(DataInputStream* input);

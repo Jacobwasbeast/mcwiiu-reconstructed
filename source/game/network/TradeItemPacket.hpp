@@ -15,7 +15,6 @@ class TradeItemPacket : public Packet, public boost::enable_shared_from_this<Tra
 public:
     TradeItemPacket();
     TradeItemPacket(int containerId, int itemIndex);
-    virtual ~TradeItemPacket();
     virtual void handle(PacketListener* listener);
     virtual void read(DataInputStream* input);
     virtual void write(DataOutputStream* output);

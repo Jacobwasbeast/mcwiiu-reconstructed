@@ -92,10 +92,6 @@ ClientboundChatPacket::ClientboundChatPacket(const std::wstring& text, EChatPack
     ints.push_back(entity->getId());
 }
 
-ClientboundChatPacket::~ClientboundChatPacket()
-{
-}
-
 int ClientboundChatPacket::getPacketId()
 {
     return 3;

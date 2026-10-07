@@ -19,10 +19,6 @@ ClientboundGameEventPacket::ClientboundGameEventPacket(int event, float param, i
 {
 }
 
-ClientboundGameEventPacket::~ClientboundGameEventPacket()
-{
-}
-
 int ClientboundGameEventPacket::getPacketId()
 {
     return 70;

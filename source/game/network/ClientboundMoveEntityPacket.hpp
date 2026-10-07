@@ -51,7 +51,6 @@ class ClientboundMoveEntityPacket::Pos : public ClientboundMoveEntityPacket
 public:
     Pos();
     Pos(int entityId, int xa, int ya, int za, bool onGround);
-    virtual ~Pos();
     virtual int getPacketId();
     virtual void read(DataInputStream* input);
     virtual void write(DataOutputStream* output);
@@ -64,7 +63,6 @@ class ClientboundMoveEntityPacket::Rot : public ClientboundMoveEntityPacket
 public:
     Rot();
     Rot(int entityId, unsigned char yRot, unsigned char xRot, bool onGround);
-    virtual ~Rot();
     virtual int getPacketId();
     virtual void read(DataInputStream* input);
     virtual void write(DataOutputStream* output);
@@ -77,7 +75,6 @@ class ClientboundMoveEntityPacket::PosRot : public ClientboundMoveEntityPacket
 public:
     PosRot();
     PosRot(int entityId, int xa, int ya, int za, unsigned char yRot, unsigned char xRot, bool onGround);
-    virtual ~PosRot();
     virtual int getPacketId();
     virtual void read(DataInputStream* input);
     virtual void write(DataOutputStream* output);

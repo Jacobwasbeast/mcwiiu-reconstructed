@@ -37,10 +37,6 @@ ClientboundAddEntityPacket::ClientboundAddEntityPacket(boost::shared_ptr<Entity>
     mZ = pos.z * 32;
 }
 
-ClientboundAddEntityPacket::~ClientboundAddEntityPacket()
-{
-}
-
 void ClientboundAddEntityPacket::_init(boost::shared_ptr<Entity> entity, int type, int data, int xa, int ya, int za, int yRot, int xRot)
 {
     mId = entity->getId();

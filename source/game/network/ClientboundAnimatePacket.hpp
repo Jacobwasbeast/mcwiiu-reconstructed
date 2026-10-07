@@ -16,7 +16,6 @@ class ClientboundAnimatePacket : public Packet, public boost::enable_shared_from
 public:
     ClientboundAnimatePacket();
     ClientboundAnimatePacket(boost::shared_ptr<Entity> entity, int action);
-    virtual ~ClientboundAnimatePacket();
 
     virtual int getPacketId();
     virtual void read(DataInputStream* input);

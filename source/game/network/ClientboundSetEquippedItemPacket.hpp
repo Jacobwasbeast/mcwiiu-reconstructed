@@ -17,7 +17,6 @@ class ClientboundSetEquippedItemPacket : public Packet, public boost::enable_sha
 public:
     ClientboundSetEquippedItemPacket();
     ClientboundSetEquippedItemPacket(int entity, const EquipmentSlot* slot, not_null_ptr<ItemInstance> item);
-    virtual ~ClientboundSetEquippedItemPacket();
     virtual void read(DataInputStream* input);
     virtual void write(DataOutputStream* output);
     virtual void handle(PacketListener* listener);

@@ -12,7 +12,6 @@ class ClientboundContainerClosePacket : public Packet,
 public:
     ClientboundContainerClosePacket();
     ClientboundContainerClosePacket(int containerId);
-    virtual ~ClientboundContainerClosePacket();
 
     virtual int getPacketId();
     virtual void read(DataInputStream* input);

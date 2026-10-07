@@ -13,7 +13,6 @@ class PacketListener;
 class GetInfoPacket : public Packet, public boost::enable_shared_from_this<GetInfoPacket>
 {
 public:
-    virtual ~GetInfoPacket();
 
     virtual int getPacketId();
     virtual void read(DataInputStream* input);

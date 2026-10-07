@@ -4,10 +4,6 @@
 #include "game/core/DataOutputStream.hpp"
 #include "game/network/PacketListener.hpp"
 
-GetInfoPacket::~GetInfoPacket()
-{
-}
-
 int GetInfoPacket::getPacketId()
 {
     return 254;

@@ -16,7 +16,6 @@ class ClientboundRotateHeadPacket : public Packet, public boost::enable_shared_f
 public:
     ClientboundRotateHeadPacket();
     ClientboundRotateHeadPacket(boost::shared_ptr<Entity> entity, unsigned char yHeadRot);
-    virtual ~ClientboundRotateHeadPacket();
 
     virtual int getPacketId();
     virtual void read(DataInputStream* input);

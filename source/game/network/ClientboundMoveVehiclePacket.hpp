@@ -17,7 +17,6 @@ class ClientboundMoveVehiclePacket : public Packet,
 public:
     ClientboundMoveVehiclePacket();
     ClientboundMoveVehiclePacket(boost::shared_ptr<Entity> vehicle);
-    virtual ~ClientboundMoveVehiclePacket();
 
     virtual int getPacketId();
     virtual void read(DataInputStream* input);

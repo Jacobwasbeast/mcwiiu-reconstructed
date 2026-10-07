@@ -19,10 +19,6 @@ ClientboundContainerSetSlotPacket::ClientboundContainerSetSlotPacket(int contain
     this->item = item->isEmpty() ? ItemInstance::EMPTY : item->copy();
 }
 
-ClientboundContainerSetSlotPacket::~ClientboundContainerSetSlotPacket()
-{
-}
-
 int ClientboundContainerSetSlotPacket::getPacketId()
 {
     return 103;

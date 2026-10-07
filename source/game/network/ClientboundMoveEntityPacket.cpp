@@ -81,10 +81,6 @@ ClientboundMoveEntityPacket::Pos::Pos(int entityId, int xa, int ya, int za, bool
     mOnGround = onGround;
 }
 
-ClientboundMoveEntityPacket::Pos::~Pos()
-{
-}
-
 int ClientboundMoveEntityPacket::Pos::getPacketId()
 {
     return 31;
@@ -129,10 +125,6 @@ ClientboundMoveEntityPacket::Rot::Rot(int entityId, unsigned char yRot, unsigned
     mXRot = xRot;
     mOnGround = onGround;
     mHasRotation = true;
-}
-
-ClientboundMoveEntityPacket::Rot::~Rot()
-{
 }
 
 int ClientboundMoveEntityPacket::Rot::getPacketId()
@@ -182,10 +174,6 @@ ClientboundMoveEntityPacket::PosRot::PosRot(int entityId, int xa, int ya, int za
     mOnGround = onGround;
     mHasRotation = true;
 }
-ClientboundMoveEntityPacket::PosRot::~PosRot()
-{
-}
-
 int ClientboundMoveEntityPacket::PosRot::getPacketId()
 {
     return 33;

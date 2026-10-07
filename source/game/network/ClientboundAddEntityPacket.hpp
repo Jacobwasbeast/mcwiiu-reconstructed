@@ -58,7 +58,6 @@ public:
     ClientboundAddEntityPacket(boost::shared_ptr<Entity> entity, int type, int yRot, int xRot, int xa, int ya, int za);
     ClientboundAddEntityPacket(boost::shared_ptr<Entity> entity, int type, int data, int yRot, int xRot, int xa, int ya, int za);
     ClientboundAddEntityPacket(boost::shared_ptr<Entity> entity, int type, int data, const BlockPos& pos, int yRot, int xRot, int xa, int ya, int za);
-    virtual ~ClientboundAddEntityPacket();
 
     virtual int getPacketId();
     virtual void read(DataInputStream* input);

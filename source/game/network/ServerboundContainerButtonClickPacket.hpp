@@ -15,7 +15,6 @@ class ServerboundContainerButtonClickPacket : public Packet, public boost::enabl
 public:
     ServerboundContainerButtonClickPacket();
     ServerboundContainerButtonClickPacket(int containerId, int buttonId);
-    virtual ~ServerboundContainerButtonClickPacket();
 
     virtual int getPacketId();
     virtual void read(DataInputStream* input);

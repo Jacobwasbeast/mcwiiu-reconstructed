@@ -21,10 +21,6 @@ ClientboundSetEntityMotionPacket::ClientboundSetEntityMotionPacket(int id, doubl
     _init(id, xa, ya, za);
 }
 
-ClientboundSetEntityMotionPacket::~ClientboundSetEntityMotionPacket()
-{
-}
-
 void ClientboundSetEntityMotionPacket::_init(int id, double xa, double ya, double za)
 {
     this->id = id;

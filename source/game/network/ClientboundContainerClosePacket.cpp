@@ -14,10 +14,6 @@ ClientboundContainerClosePacket::ClientboundContainerClosePacket(int containerId
 {
 }
 
-ClientboundContainerClosePacket::~ClientboundContainerClosePacket()
-{
-}
-
 int ClientboundContainerClosePacket::getPacketId()
 {
     return 101;

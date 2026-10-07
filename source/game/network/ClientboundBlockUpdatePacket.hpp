@@ -18,7 +18,6 @@ class ClientboundBlockUpdatePacket : public Packet, public boost::enable_shared_
 public:
     ClientboundBlockUpdatePacket();
     ClientboundBlockUpdatePacket(Level* level, const BlockPos& pos);
-    virtual ~ClientboundBlockUpdatePacket();
 
     virtual int getPacketId();
     virtual void read(DataInputStream* input);

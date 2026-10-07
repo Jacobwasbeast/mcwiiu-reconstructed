@@ -24,10 +24,6 @@ ClientboundAddPaintingPacket::ClientboundAddPaintingPacket(boost::shared_ptr<Pai
     motive = painting->motive->name;
 }
 
-ClientboundAddPaintingPacket::~ClientboundAddPaintingPacket()
-{
-}
-
 int ClientboundAddPaintingPacket::getPacketId()
 {
     return 25;

@@ -18,10 +18,6 @@ ClientboundSetEquippedItemPacket::ClientboundSetEquippedItemPacket(int entity, c
     m_item = item->isEmpty() ? ItemInstance::EMPTY : item->copy();
 }
 
-ClientboundSetEquippedItemPacket::~ClientboundSetEquippedItemPacket()
-{
-}
-
 void ClientboundSetEquippedItemPacket::read(DataInputStream* input)
 {
     m_entity = input->readVarInt();

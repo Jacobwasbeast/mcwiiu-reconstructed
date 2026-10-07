@@ -14,10 +14,6 @@ UpdateProgressPacket::UpdateProgressPacket(int progress)
 {
 }
 
-UpdateProgressPacket::~UpdateProgressPacket()
-{
-}
-
 boost::shared_ptr<Packet> UpdateProgressPacket::create()
 {
     return boost::shared_ptr<Packet>(new UpdateProgressPacket());

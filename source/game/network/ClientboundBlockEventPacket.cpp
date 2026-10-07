@@ -23,10 +23,6 @@ ClientboundBlockEventPacket::ClientboundBlockEventPacket(const BlockPos& pos, Bl
     this->block = block;
 }
 
-ClientboundBlockEventPacket::~ClientboundBlockEventPacket()
-{
-}
-
 int ClientboundBlockEventPacket::getPacketId()
 {
     return 54;

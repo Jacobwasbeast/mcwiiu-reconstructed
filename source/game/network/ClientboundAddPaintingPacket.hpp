@@ -20,7 +20,6 @@ class ClientboundAddPaintingPacket : public Packet,
 public:
     ClientboundAddPaintingPacket();
     ClientboundAddPaintingPacket(boost::shared_ptr<Painting> painting);
-    virtual ~ClientboundAddPaintingPacket();
 
     virtual int getPacketId();
     virtual void read(DataInputStream* input);

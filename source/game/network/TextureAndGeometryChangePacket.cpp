@@ -28,10 +28,6 @@ TextureAndGeometryChangePacket::TextureAndGeometryChangePacket(boost::shared_ptr
     geometryId |= 0x80000000u;
 }
 
-TextureAndGeometryChangePacket::~TextureAndGeometryChangePacket()
-{
-}
-
 int TextureAndGeometryChangePacket::getPacketId()
 {
     return 161;

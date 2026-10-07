@@ -16,7 +16,6 @@ class ClientboundBlockDestructionPacket : public Packet, public boost::enable_sh
 public:
     ClientboundBlockDestructionPacket();
     ClientboundBlockDestructionPacket(int id, const BlockPos& pos, int progress);
-    virtual ~ClientboundBlockDestructionPacket();
 
     virtual int getPacketId();
     virtual void read(DataInputStream* input);

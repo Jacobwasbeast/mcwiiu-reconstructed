@@ -17,7 +17,6 @@ public:
     ClientboundSetEntityMotionPacket();
     ClientboundSetEntityMotionPacket(boost::shared_ptr<Entity> entity);
     ClientboundSetEntityMotionPacket(int id, double xa, double ya, double za);
-    virtual ~ClientboundSetEntityMotionPacket();
 
     virtual int getPacketId();
     virtual void read(DataInputStream* input);

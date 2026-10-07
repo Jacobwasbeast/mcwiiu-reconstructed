@@ -26,10 +26,6 @@ ServerboundPlayerAbilitiesPacket::ServerboundPlayerAbilitiesPacket(Abilities* ab
     setWalkingSpeed(abilities->getWalkingSpeed());
 }
 
-ServerboundPlayerAbilitiesPacket::~ServerboundPlayerAbilitiesPacket()
-{
-}
-
 int ServerboundPlayerAbilitiesPacket::getPacketId()
 {
     return 227;

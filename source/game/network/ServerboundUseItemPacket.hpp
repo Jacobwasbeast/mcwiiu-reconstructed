@@ -16,7 +16,6 @@ class ServerboundUseItemPacket : public Packet, public boost::enable_shared_from
 public:
     ServerboundUseItemPacket();
     ServerboundUseItemPacket(InteractionHand::EInteractionHand hand);
-    virtual ~ServerboundUseItemPacket();
 
     virtual int getPacketId();
     virtual void read(DataInputStream* input);

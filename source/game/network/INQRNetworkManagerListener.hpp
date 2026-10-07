@@ -16,7 +16,7 @@ namespace nn
 class INQRNetworkManagerListener
 {
 public:
-    virtual ~INQRNetworkManagerListener();
+    virtual ~INQRNetworkManagerListener() {}
 
     virtual void HandleDataReceived(NQRNetworkPlayer* pFrom, NQRNetworkPlayer* pTo, unsigned char* pData, unsigned int uiSize) = 0;
     virtual void HandlePlayerJoined(NQRNetworkPlayer* pPlayer) = 0;

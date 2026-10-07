@@ -14,8 +14,6 @@ TradeItemPacket::TradeItemPacket(int containerIdValue, int itemIndexValue)
 {
 }
 
-TradeItemPacket::~TradeItemPacket() {}
-
 void TradeItemPacket::handle(PacketListener* listener)
 {
     listener->handleTradeItem(shared_from_this());

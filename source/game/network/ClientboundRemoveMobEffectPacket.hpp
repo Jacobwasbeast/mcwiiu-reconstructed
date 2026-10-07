@@ -18,7 +18,6 @@ class ClientboundRemoveMobEffectPacket : public Packet, public boost::enable_sha
 public:
     ClientboundRemoveMobEffectPacket();
     ClientboundRemoveMobEffectPacket(int entityId, MobEffect* effect);
-    virtual ~ClientboundRemoveMobEffectPacket();
 
     virtual int getPacketId();
     virtual void read(DataInputStream* input);

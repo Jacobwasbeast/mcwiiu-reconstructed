@@ -16,7 +16,6 @@ class ClientboundCooldownPacket : public Packet, public boost::enable_shared_fro
 public:
     ClientboundCooldownPacket();
     ClientboundCooldownPacket(Item* item, int duration);
-    virtual ~ClientboundCooldownPacket();
 
     virtual int getPacketId();
     virtual void read(DataInputStream* input);
