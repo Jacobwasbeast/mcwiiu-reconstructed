@@ -9,10 +9,6 @@ PatchyShapeRuleDefinition::PatchyShapeRuleDefinition()
     addDoubleAttribute(ConsoleGameRules::eGameRuleAttr_scale, &mScale)->setMin(1.0)->setMax(254.0);
 }
 
-PatchyShapeRuleDefinition::~PatchyShapeRuleDefinition()
-{
-}
-
 ConsoleGameRules::EGameRuleType PatchyShapeRuleDefinition::getActionType()
 {
     return ConsoleGameRules::eGameRuleType_PatchyShape;

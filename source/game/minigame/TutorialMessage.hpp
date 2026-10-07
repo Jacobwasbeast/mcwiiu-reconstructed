@@ -6,7 +6,7 @@ class TutorialMessage
 public:
     TutorialMessage(int messageId, bool repeatMessage, unsigned char maxDisplayCount);
 
-    bool canDisplay();
+    unsigned char canDisplay();
     const wchar_t* getMessageForDisplay();
 
 private:

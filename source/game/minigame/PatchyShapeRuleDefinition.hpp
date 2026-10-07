@@ -9,7 +9,6 @@ class PatchyShapeRuleDefinition : public LayerAttributeChildRuleDefinition<Layer
 public:
     PatchyShapeRuleDefinition();
 
-    virtual ~PatchyShapeRuleDefinition();
 
     virtual ConsoleGameRules::EGameRuleType getActionType();
 

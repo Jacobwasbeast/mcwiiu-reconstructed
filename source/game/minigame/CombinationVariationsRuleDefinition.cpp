@@ -1,7 +1,5 @@
 #include "game/minigame/CombinationVariationsRuleDefinition.hpp"
 
-#include <cwchar>
-
 #include "game/minigame/AnyCombinationOfRuleDefinition.hpp"
 #include "game/world/generation/LayerGenerationRuleDefinition.hpp"
 
@@ -10,10 +8,6 @@ CombinationVariationsRuleDefinition::CombinationVariationsRuleDefinition(
     : mParent(parent),
       mDefinition(definition),
       mForWholeLevel(false)
-{
-}
-
-CombinationVariationsRuleDefinition::~CombinationVariationsRuleDefinition()
 {
 }
 
@@ -35,9 +29,9 @@ void CombinationVariationsRuleDefinition::writeAttributes(GameRuleSaveInterface*
 
 void CombinationVariationsRuleDefinition::addAttribute(const std::wstring& name, const std::wstring& value)
 {
-    if (name.compare(0, name.size(), L"for", wcslen(L"for")) == 0)
+    if (name.compare(L"for") == 0)
     {
-        mForWholeLevel = value.compare(0, value.size(), L"WholeLevel", wcslen(L"WholeLevel")) == 0;
+        mForWholeLevel = value.compare(L"WholeLevel") == 0;
         return;
     }
 

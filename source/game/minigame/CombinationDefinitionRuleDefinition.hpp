@@ -12,7 +12,6 @@ class CombinationDefinitionRuleDefinition : public AnyCombinationOfRuleDefinitio
 public:
     CombinationDefinitionRuleDefinition(LayerGenerationRuleDefinition* parent);
 
-    virtual ~CombinationDefinitionRuleDefinition();
 
     virtual ConsoleGameRules::EGameRuleType getActionType();
 

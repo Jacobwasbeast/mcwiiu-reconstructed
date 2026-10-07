@@ -10,10 +10,6 @@ LinearBlendSizeRuleDefinition::LinearBlendSizeRuleDefinition()
     addIntAttribute(ConsoleGameRules::eGameRuleAttr_lower, &mMinSize);
 }
 
-LinearBlendSizeRuleDefinition::~LinearBlendSizeRuleDefinition()
-{
-}
-
 ConsoleGameRules::EGameRuleType LinearBlendSizeRuleDefinition::getActionType()
 {
     return ConsoleGameRules::eGameRuleType_LinearBlendSize;

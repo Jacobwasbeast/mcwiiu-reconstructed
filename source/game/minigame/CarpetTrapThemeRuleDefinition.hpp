@@ -8,7 +8,6 @@ class CarpetTrapThemeRuleDefinition : public LayerAttributeChildRuleDefinition<L
 {
 public:
     CarpetTrapThemeRuleDefinition();
-    virtual ~CarpetTrapThemeRuleDefinition();
 
     virtual ConsoleGameRules::EGameRuleType getActionType();
     virtual LayerTheme* Generate() const;

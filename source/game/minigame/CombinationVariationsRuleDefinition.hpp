@@ -13,7 +13,6 @@ class CombinationVariationsRuleDefinition : public GameRuleDefinition
 public:
     CombinationVariationsRuleDefinition(LayerGenerationRuleDefinition* parent,
         AnyCombinationOfRuleDefinition* definition);
-    virtual ~CombinationVariationsRuleDefinition();
 
     std::vector<AnyCombinationOfRuleDefinition*>* GetCombinations() const;
     bool IsForWholeLevel() const;

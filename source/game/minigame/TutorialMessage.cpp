@@ -2,18 +2,19 @@
 #include "game/core/L10N.hpp"
 
 TutorialMessage::TutorialMessage(int messageId, bool repeatMessage, unsigned char maxDisplayCount)
+    : m_messageId(messageId)
+    , m_maxDisplayCount(maxDisplayCount)
+    , m_displayCount(0)
+    , m_repeatMessage(repeatMessage)
 {
-    m_messageId = messageId;
-    m_maxDisplayCount = maxDisplayCount;
-    m_displayCount = 0;
-    m_repeatMessage = repeatMessage;
 }
 
-bool TutorialMessage::canDisplay()
+unsigned char TutorialMessage::canDisplay()
 {
-    if (m_repeatMessage && m_maxDisplayCount <= m_displayCount)
-        return false;
-    return true;
+    int canDisplay = 1;
+    if (m_repeatMessage && m_displayCount >= m_maxDisplayCount)
+        canDisplay = 0;
+    return canDisplay;
 }
 
 const wchar_t* TutorialMessage::getMessageForDisplay()

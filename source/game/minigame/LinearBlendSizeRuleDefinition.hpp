@@ -9,7 +9,6 @@ class LinearBlendSizeRuleDefinition : public LayerAttributeChildRuleDefinition<L
 {
 public:
     LinearBlendSizeRuleDefinition();
-    virtual ~LinearBlendSizeRuleDefinition();
 
     virtual ConsoleGameRules::EGameRuleType getActionType();
     virtual LayerSize* Generate() const;

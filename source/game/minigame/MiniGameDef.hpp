@@ -206,7 +206,6 @@ public:
         boost::unordered_map<std::wstring, std::wstring> mAttributes;
         boost::unordered_map<std::wstring, ModeVariationLootGroup> mGroups;
         LootSetDef();
-        ~LootSetDef();
         const ModeVariationLootGroup* getLootGroup(const std::wstring& name) const;
         std::wstring getAttribute(const std::wstring& group, std::wstring name) const;
     };
@@ -218,7 +217,6 @@ public:
         ELootDistributionMethod mDistributionMethod;
         ModeVariationLootGroup();
         ModeVariationLootGroup(const ModeVariationLootGroup& other);
-        ~ModeVariationLootGroup();
         std::vector<not_null_ptr<ItemInstance> >* GetChestItems() const;
         const std::vector<ChestItemsInfo>& GetAllChestItems() const;
         const std::vector<ChestKitInfo>& GetAllKits() const;
@@ -234,8 +232,7 @@ public:
     };
 
     MiniGameDef(const XmlObject& object);
-    MiniGameDef(EMiniGameId id);
-    ~MiniGameDef();
+    MiniGameDef(EMiniGameId id = eMiniGameId_Lobby);
     unsigned int GetHostOption(eCustomGameModeHostOption option) const;
     unsigned int GetRoundCount() const;
     int GetFinalRoundIndex() const;

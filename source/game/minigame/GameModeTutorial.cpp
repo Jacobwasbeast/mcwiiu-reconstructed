@@ -12,60 +12,69 @@ GameModeTutorial::GameModeTutorial(int playerId, GameModeConstraints* constraint
         if (!isHintCompleted(eTutorial_Hint_BattleLobby))
         {
             eTutorial_GameMode* modes = new eTutorial_GameMode(eTutorial_GameMode_Lobby);
-            addHint(eTutorial_State_Gameplay, new GameModeHint(eTutorial_Hint_BattleLobby, this,
-                                                         (int)0xe18d25cc, modes, 1, true, -1));
+            GameModeHint* hint = new GameModeHint(eTutorial_Hint_BattleLobby, this,
+                (int)0xe18d25cc, modes, 1, true, -1);
+            addHint(eTutorial_State_Gameplay, hint);
         }
         if (!isHintCompleted(eTutorial_Hint_BattleSelectMaps))
         {
             eTutorial_GameMode* modes = new eTutorial_GameMode(eTutorial_GameMode_Lobby);
-            addHint(eTutorial_State_Gameplay, new GameModeHint(eTutorial_Hint_BattleSelectMaps, this,
-                                                         (int)0x7a0c9966, modes, 1, true, -1));
+            GameModeHint* hint = new GameModeHint(eTutorial_Hint_BattleSelectMaps, this,
+                (int)0x7a0c9966, modes, 1, true, -1);
+            addHint(eTutorial_State_Gameplay, hint);
         }
         if (!isHintCompleted(eTutorial_Hint_BattleScoreboard))
         {
             eTutorial_GameMode* modes = new eTutorial_GameMode(eTutorial_GameMode_Scoreboard);
-            addHint(eTutorial_State_Gameplay, new GameModeHint(eTutorial_Hint_BattleScoreboard, this,
-                                                         (int)0x1015193c, modes, 1, true, -1));
+            GameModeHint* hint = new GameModeHint(eTutorial_Hint_BattleScoreboard, this,
+                (int)0x1015193c, modes, 1, true, -1);
+            addHint(eTutorial_State_Gameplay, hint);
         }
         if (!isHintCompleted(eTutorial_Hint_BattleGracePeriod))
         {
             eTutorial_GameMode* modes = new eTutorial_GameMode(eTutorial_GameMode_GracePeriod);
-            addHint(eTutorial_State_Gameplay, new GameModeHint(eTutorial_Hint_BattleGracePeriod, this,
-                                                         (int)0xea36abc3, modes, 1, true, -1));
+            GameModeHint* hint = new GameModeHint(eTutorial_Hint_BattleGracePeriod, this,
+                (int)0xea36abc3, modes, 1, true, -1);
+            addHint(eTutorial_State_Gameplay, hint);
         }
         if (!isHintCompleted(eTutorial_Hint_BattleExplore))
         {
             eTutorial_GameMode* modes = new eTutorial_GameMode(eTutorial_GameMode_RoundPlaying);
-            addHint(eTutorial_State_Gameplay, new GameModeHint(eTutorial_Hint_BattleExplore, this,
-                                                         (int)0x79e5667b, modes, 1, true, -1));
+            GameModeHint* hint = new GameModeHint(eTutorial_Hint_BattleExplore, this,
+                (int)0x79e5667b, modes, 1, true, -1);
+            addHint(eTutorial_State_Gameplay, hint);
         }
         if (!isHintCompleted(eTutorial_Hint_BattleShowdown))
         {
             eTutorial_GameMode* modes = new eTutorial_GameMode(eTutorial_GameMode_Showdown);
-            addHint(eTutorial_State_Gameplay, new GameModeHint(eTutorial_Hint_BattleShowdown, this,
-                                                         (int)0x2653f950, modes, 1, true, -1));
+            GameModeHint* hint = new GameModeHint(eTutorial_Hint_BattleShowdown, this,
+                (int)0x2653f950, modes, 1, true, -1);
+            addHint(eTutorial_State_Gameplay, hint);
         }
         if (!isHintCompleted(eTutorial_Hint_BattleDied))
         {
             eTutorial_GameMode* modes = new eTutorial_GameMode[2];
             modes[0] = eTutorial_GameMode_SpectatingInvisible;
             modes[1] = eTutorial_GameMode_SpectatingAsMob;
-            addHint(eTutorial_State_Gameplay, new GameModeHint(eTutorial_Hint_BattleDied, this,
-                                                         (int)0xb5800810, modes, 2, true, -1));
+            GameModeHint* hint = new GameModeHint(eTutorial_Hint_BattleDied, this,
+                (int)0xb5800810, modes, 2, true, -1);
+            addHint(eTutorial_State_Gameplay, hint);
         }
         if (!isHintCompleted(eTutorial_Hint_BattleSpectateAsMob))
         {
             eTutorial_GameMode* modes = new eTutorial_GameMode[2];
             modes[0] = eTutorial_GameMode_SpectatingInvisible;
             modes[1] = eTutorial_GameMode_SpectatingAsMob;
-            addHint(eTutorial_State_Gameplay, new GameModeHint(eTutorial_Hint_BattleSpectateAsMob, this,
-                                                         (int)0xe28e0a7c, modes, 2, true, -1));
+            GameModeHint* hint = new GameModeHint(eTutorial_Hint_BattleSpectateAsMob, this,
+                (int)0xe28e0a7c, modes, 2, true, -1);
+            addHint(eTutorial_State_Gameplay, hint);
         }
         if (!isHintCompleted(eTutorial_Hint_BattleFollowMode))
         {
             eTutorial_GameMode* modes = new eTutorial_GameMode(eTutorial_GameMode_Following);
-            addHint(eTutorial_State_Gameplay, new GameModeHint(eTutorial_Hint_BattleFollowMode, this,
-                                                         (int)0xec671466, modes, 1, true, -1));
+            GameModeHint* hint = new GameModeHint(eTutorial_Hint_BattleFollowMode, this,
+                (int)0xec671466, modes, 1, true, -1);
+            addHint(eTutorial_State_Gameplay, hint);
         }
         if (!isHintCompleted(eTutorial_Hint_BattleLastSurvivor))
         {
@@ -73,8 +82,9 @@ GameModeTutorial::GameModeTutorial(int playerId, GameModeConstraints* constraint
             modes[0] = eTutorial_GameMode_SpectatingAsMob;
             modes[1] = eTutorial_GameMode_RoundStarting;
             modes[2] = eTutorial_GameMode_Following;
-            addHint(eTutorial_State_Gameplay, new GameModeHint(eTutorial_Hint_BattleLastSurvivor, this,
-                                                         (int)0x2272922b, modes, 3, true, -1));
+            GameModeHint* hint = new GameModeHint(eTutorial_Hint_BattleLastSurvivor, this,
+                (int)0x2272922b, modes, 3, true, -1);
+            addHint(eTutorial_State_Gameplay, hint);
         }
         if (!isHintCompleted(eTutorial_Hint_BattleHunger))
         {
@@ -82,8 +92,9 @@ GameModeTutorial::GameModeTutorial(int playerId, GameModeConstraints* constraint
             modes[0] = eTutorial_GameMode_SpectatingAsMob;
             modes[1] = eTutorial_GameMode_RoundPlaying;
             modes[2] = eTutorial_GameMode_Following;
-            addHint(eTutorial_State_Gameplay, new GameModeHint(eTutorial_Hint_BattleHunger, this,
-                                                         (int)0x6f523bbe, modes, 3, true, -1));
+            GameModeHint* hint = new GameModeHint(eTutorial_Hint_BattleHunger, this,
+                (int)0x6f523bbe, modes, 3, true, -1);
+            addHint(eTutorial_State_Gameplay, hint);
         }
         if (!isHintCompleted(eTutorial_Hint_BattleLowHunger))
         {
@@ -91,8 +102,9 @@ GameModeTutorial::GameModeTutorial(int playerId, GameModeConstraints* constraint
             modes[0] = eTutorial_GameMode_SpectatingAsMob;
             modes[1] = eTutorial_GameMode_RoundPlaying;
             modes[2] = eTutorial_GameMode_Following;
-            addHint(eTutorial_State_Gameplay, new GameModeHint(eTutorial_Hint_BattleLowHunger, this,
-                                                         (int)0xa85a4173, modes, 3, true, -1));
+            GameModeHint* hint = new GameModeHint(eTutorial_Hint_BattleLowHunger, this,
+                (int)0xa85a4173, modes, 3, true, -1);
+            addHint(eTutorial_State_Gameplay, hint);
         }
         if (!isHintCompleted(eTutorial_Hint_BattleSprint))
         {
@@ -100,35 +112,40 @@ GameModeTutorial::GameModeTutorial(int playerId, GameModeConstraints* constraint
             modes[0] = eTutorial_GameMode_SpectatingAsMob;
             modes[1] = eTutorial_GameMode_RoundPlaying;
             modes[2] = eTutorial_GameMode_Following;
-            addHint(eTutorial_State_Gameplay, new GameModeHint(eTutorial_Hint_BattleSprint, this,
-                                                         (int)0x8257c70a, modes, 3, true, -1));
+            GameModeHint* hint = new GameModeHint(eTutorial_Hint_BattleSprint, this,
+                (int)0x8257c70a, modes, 3, true, -1);
+            addHint(eTutorial_State_Gameplay, hint);
         }
         if (!isHintCompleted(eTutorial_Hint_BattleChestRefill))
         {
             eTutorial_GameMode* modes = new eTutorial_GameMode(eTutorial_GameMode_ChestRefill);
-            addHint(eTutorial_State_Gameplay, new GameModeHint(eTutorial_Hint_BattleChestRefill, this,
-                                                         (int)0x92614a33, modes, 1, true, -1));
+            GameModeHint* hint = new GameModeHint(eTutorial_Hint_BattleChestRefill, this,
+                (int)0x92614a33, modes, 1, true, -1);
+            addHint(eTutorial_State_Gameplay, hint);
         }
         if (!isHintCompleted(eTutorial_Hint_BattleWaitingForLoad))
         {
-            addHint(eTutorial_State_Gameplay, new TutorialHint(eTutorial_Hint_BattleWaitingForLoad, this,
-                                                         (int)IDS_MG_WAITING_FOR_LOAD,
-                                                         TutorialHint::HINT_CREATE_ITEM_SELECTED,
-                                                         true, true, -1));
+            TutorialHint* hint = new TutorialHint(eTutorial_Hint_BattleWaitingForLoad, this,
+                (int)IDS_MG_WAITING_FOR_LOAD,
+                TutorialHint::HINT_CREATE_ITEM_SELECTED,
+                true, true, -1);
+            addHint(eTutorial_State_Gameplay, hint);
         }
         if (!isHintCompleted(eTutorial_Hint_BattleWaitingForLoad2))
         {
-            addHint(eTutorial_State_Gameplay, new TutorialHint(eTutorial_Hint_BattleWaitingForLoad2, this,
-                                                         (int)IDS_MG_WAITING_FOR_LOAD,
-                                                         TutorialHint::HINT_CREATE_ITEM_SELECTED,
-                                                         true, true, -1));
+            TutorialHint* hint = new TutorialHint(eTutorial_Hint_BattleWaitingForLoad2, this,
+                (int)IDS_MG_WAITING_FOR_LOAD,
+                TutorialHint::HINT_CREATE_ITEM_SELECTED,
+                true, true, -1);
+            addHint(eTutorial_State_Gameplay, hint);
         }
         if (!isHintCompleted(eTutorial_Hint_BattleWaitingForLoad3))
         {
-            addHint(eTutorial_State_Gameplay, new TutorialHint(eTutorial_Hint_BattleWaitingForLoad3, this,
-                                                         (int)IDS_MG_WAITING_FOR_LOAD,
-                                                         TutorialHint::HINT_CREATE_ITEM_SELECTED,
-                                                         true, true, -1));
+            TutorialHint* hint = new TutorialHint(eTutorial_Hint_BattleWaitingForLoad3, this,
+                (int)IDS_MG_WAITING_FOR_LOAD,
+                TutorialHint::HINT_CREATE_ITEM_SELECTED,
+                true, true, -1);
+            addHint(eTutorial_State_Gameplay, hint);
         }
     }
     else if (gameMode == 2)
@@ -136,36 +153,41 @@ GameModeTutorial::GameModeTutorial(int playerId, GameModeConstraints* constraint
         if (!isHintCompleted(eTutorial_Hint_TumbleLobby))
         {
             eTutorial_GameMode* modes = new eTutorial_GameMode(eTutorial_GameMode_Lobby);
-            addHint(eTutorial_State_Gameplay, new GameModeHint(eTutorial_Hint_TumbleLobby, this,
-                                                         (int)0xe18d25cc, modes, 1, true, -1));
+            GameModeHint* hint = new GameModeHint(eTutorial_Hint_TumbleLobby, this,
+                (int)0xe18d25cc, modes, 1, true, -1);
+            addHint(eTutorial_State_Gameplay, hint);
         }
         if (!isHintCompleted(eTutorial_Hint_TumbleScoreboard))
         {
             eTutorial_GameMode* modes = new eTutorial_GameMode(eTutorial_GameMode_Scoreboard);
-            addHint(eTutorial_State_Gameplay, new GameModeHint(eTutorial_Hint_TumbleScoreboard, this,
-                                                         (int)0x1015193c, modes, 1, true, -1));
+            GameModeHint* hint = new GameModeHint(eTutorial_Hint_TumbleScoreboard, this,
+                (int)0x1015193c, modes, 1, true, -1);
+            addHint(eTutorial_State_Gameplay, hint);
         }
         if (!isHintCompleted(eTutorial_Hint_TumbleDied))
         {
             eTutorial_GameMode* modes = new eTutorial_GameMode[2];
             modes[0] = eTutorial_GameMode_SpectatingInvisible;
             modes[1] = eTutorial_GameMode_SpectatingAsMob;
-            addHint(eTutorial_State_Gameplay, new GameModeHint(eTutorial_Hint_TumbleDied, this,
-                                                         (int)0xb5800810, modes, 2, true, -1));
+            GameModeHint* hint = new GameModeHint(eTutorial_Hint_TumbleDied, this,
+                (int)0xb5800810, modes, 2, true, -1);
+            addHint(eTutorial_State_Gameplay, hint);
         }
         if (!isHintCompleted(eTutorial_Hint_TumbleSpectateAsMob))
         {
             eTutorial_GameMode* modes = new eTutorial_GameMode[2];
             modes[0] = eTutorial_GameMode_SpectatingInvisible;
             modes[1] = eTutorial_GameMode_SpectatingAsMob;
-            addHint(eTutorial_State_Gameplay, new GameModeHint(eTutorial_Hint_TumbleSpectateAsMob, this,
-                                                         (int)0xe28e0a7c, modes, 2, true, -1));
+            GameModeHint* hint = new GameModeHint(eTutorial_Hint_TumbleSpectateAsMob, this,
+                (int)0xe28e0a7c, modes, 2, true, -1);
+            addHint(eTutorial_State_Gameplay, hint);
         }
         if (!isHintCompleted(eTutorial_Hint_TumbleFollowMode))
         {
             eTutorial_GameMode* modes = new eTutorial_GameMode(eTutorial_GameMode_Following);
-            addHint(eTutorial_State_Gameplay, new GameModeHint(eTutorial_Hint_TumbleFollowMode, this,
-                                                         (int)0xec671466, modes, 1, true, -1));
+            GameModeHint* hint = new GameModeHint(eTutorial_Hint_TumbleFollowMode, this,
+                (int)0xec671466, modes, 1, true, -1);
+            addHint(eTutorial_State_Gameplay, hint);
         }
         if (!isHintCompleted(eTutorial_Hint_TumbleBreakBlocks))
         {
@@ -173,12 +195,14 @@ GameModeTutorial::GameModeTutorial(int playerId, GameModeConstraints* constraint
             modes[0] = eTutorial_GameMode_SpectatingAsMob;
             modes[1] = eTutorial_GameMode_RoundPlaying;
             modes[2] = eTutorial_GameMode_Following;
-            addHint(eTutorial_State_Gameplay, new GameModeHint(eTutorial_Hint_TumbleBreakBlocks, this,
-                                                         (int)0xa086b6b3, modes, 3, true, -1));
+            GameModeHint* hint = new GameModeHint(eTutorial_Hint_TumbleBreakBlocks, this,
+                (int)0xa086b6b3, modes, 3, true, -1);
+            addHint(eTutorial_State_Gameplay, hint);
         }
         eTutorial_GameMode* modes = new eTutorial_GameMode(eTutorial_GameMode_Fireworks);
-        addHint(eTutorial_State_Gameplay, new GameModeHint(eTutorial_Hint_General, this,
-                                                     (int)0xd3c3dc8f, modes, 1, false, 15000));
+        GameModeHint* hint = new GameModeHint(eTutorial_Hint_General, this,
+                (int)0xd3c3dc8f, modes, 1, false, 15000);
+            addHint(eTutorial_State_Gameplay, hint);
     }
 }
 

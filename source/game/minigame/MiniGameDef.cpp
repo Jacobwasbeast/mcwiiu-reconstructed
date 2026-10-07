@@ -382,8 +382,6 @@ int MiniGameDef::TimerSpec::ChangeAnnounceAfterMs() const
 }
 
 MiniGameDef::LootSetDef::LootSetDef() : mAttributes(), mGroups() {}
-MiniGameDef::LootSetDef::~LootSetDef() {}
-
 const MiniGameDef::ModeVariationLootGroup* MiniGameDef::LootSetDef::getLootGroup(const std::wstring& name) const
 {
     boost::unordered_map<std::wstring, ModeVariationLootGroup>::const_iterator it = mGroups.find(name);
@@ -409,8 +407,6 @@ MiniGameDef::ModeVariationLootGroup::ModeVariationLootGroup(const ModeVariationL
     , mChestKpScore(other.mChestKpScore), mDistributionMethod(other.mDistributionMethod)
 {
 }
-
-MiniGameDef::ModeVariationLootGroup::~ModeVariationLootGroup() {}
 
 std::vector<not_null_ptr<ItemInstance> >* MiniGameDef::ModeVariationLootGroup::GetChestItems() const
 {
@@ -635,10 +631,6 @@ MiniGameDef::MiniGameDef(EMiniGameId id)
 {
 }
 
-MiniGameDef::~MiniGameDef()
-{
-}
-
 maybe<int> MiniGameDef::parseTimer(std::wstring name)
 {
     if (name == L"GameInitialise") return maybe<int>(0);
@@ -855,7 +847,7 @@ std::deque<not_null_ptr<ItemInstance> > MiniGameDef::parseItemInstance(const Xml
             }
             else if (equalsIgnoreCase(entry.mName, L"FireworkData"))
             {
-                ListTag* explosions = new ListTag(0);
+                ListTag* explosions = new ListTag();
                 CompoundTag* explosion = new CompoundTag();
                 std::vector<int> colours;
                 colours.push_back(DyeItem::DYE_COLORS[entry[L"DyeColorAux"].asInt() & 0xf]);
@@ -1141,7 +1133,7 @@ MiniGameDef* MiniGameDef::parseMiniGameDef(XmlObject* object)
         if (major == 7)
             return new MiniGameDef(*mode);
     }
-    return new MiniGameDef(eMiniGameId_Lobby);
+    return new MiniGameDef();
 }
 
 void MiniGameDef::MakeCRCTable()
@@ -1190,7 +1182,7 @@ MiniGameDef* MiniGameDef::parseMiniGameDef(std::wstring fileName)
         stream.read(data);
         return parseMiniGameDef(data);
     }
-    return new MiniGameDef(eMiniGameId_Lobby);
+    return new MiniGameDef();
 }
 
 void MiniGameDef::SetPlayerSettings(const MiniGamePlayerSettings& settings)

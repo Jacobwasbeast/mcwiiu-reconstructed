@@ -28,15 +28,14 @@ void GrantPermissionsRuleDefinition::getChildren(std::vector<GameRuleDefinition*
 
 GameRuleDefinition* GrantPermissionsRuleDefinition::addChild(ConsoleGameRules::EGameRuleType type)
 {
-    if (type != ConsoleGameRules::eGameRuleType_AllowIn)
+    if (type == ConsoleGameRules::eGameRuleType_AllowIn)
     {
-        return NULL;
+        AllowInRuleDefinition* child = new AllowInRuleDefinition();
+        mAllowInRules.push_back(child);
+        mUnsortedRules.push_back(child);
+        return child;
     }
-
-    AllowInRuleDefinition* child = new AllowInRuleDefinition();
-    mAllowInRules.push_back(child);
-    mUnsortedRules.push_back(child);
-    return child;
+    return NULL;
 }
 
 std::vector<const AllowInRuleDefinition*>* GrantPermissionsRuleDefinition::getLayers(const std::wstring& name)

@@ -17,10 +17,6 @@ BasicShapeRuleDefinition::BasicShapeRuleDefinition()
     addStringAttribute(ConsoleGameRules::eGameRuleAttr_type, &mShape);
 }
 
-BasicShapeRuleDefinition::~BasicShapeRuleDefinition()
-{
-}
-
 ConsoleGameRules::EGameRuleType BasicShapeRuleDefinition::getActionType()
 {
     return BASIC_SHAPE_ACTION_TYPE;

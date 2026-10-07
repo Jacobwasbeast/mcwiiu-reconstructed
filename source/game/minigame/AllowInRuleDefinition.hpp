@@ -12,7 +12,6 @@ class AllowInRuleDefinition : public GameRuleDefinition
 public:
     AllowInRuleDefinition();
 
-    virtual ~AllowInRuleDefinition();
 
     virtual ConsoleGameRules::EGameRuleType getActionType();
     virtual void writeAttributes(GameRuleSaveInterface* saveInterface, unsigned int extraAttributeCount);

@@ -36,21 +36,21 @@ bool WeaponMedal::IncludeDamage(const DamageEvent* damageEvent) const
 {
     Item* item = damageEvent->mWeapon.GetItem();
 
-    if (mItem == NULL && !mItemTypes->empty())
+    if (mItem != NULL || mItemTypes->empty())
     {
-        bool included = false;
-        if (item != NULL)
-        {
-            std::vector<int>::const_iterator it =
-                std::find(mItemTypes->begin(), mItemTypes->end(), item->getBaseItemType());
-            if (it != mItemTypes->end())
-            {
-                included = true;
-            }
-        }
-
-        return included;
+        return item == mItem;
     }
 
-    return item == mItem;
+    bool included = false;
+    if (item != NULL)
+    {
+        std::vector<int>::const_iterator it =
+            std::find(mItemTypes->begin(), mItemTypes->end(), item->getBaseItemType());
+        if (it != mItemTypes->end())
+        {
+            included = true;
+        }
+    }
+
+    return included;
 }

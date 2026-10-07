@@ -9,7 +9,6 @@ class RandomizeSizeRuleDefinition : public LayerAttributeChildRuleDefinition<Lay
 {
 public:
     RandomizeSizeRuleDefinition();
-    virtual ~RandomizeSizeRuleDefinition();
 
     virtual ConsoleGameRules::EGameRuleType getActionType();
 

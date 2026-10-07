@@ -42,10 +42,6 @@ AllowInRuleDefinition::AllowInRuleDefinition()
 {
 }
 
-AllowInRuleDefinition::~AllowInRuleDefinition()
-{
-}
-
 ConsoleGameRules::EGameRuleType AllowInRuleDefinition::getActionType()
 {
     return ConsoleGameRules::eGameRuleType_GrantPermissions;
@@ -66,13 +62,11 @@ void AllowInRuleDefinition::addAttribute(const std::wstring& name, const std::ws
         split(L';', value, mTargetLayers);
         return;
     }
-
     if (name.compare(L"type") == 0)
     {
         split(L';', value, mPermissions);
         return;
     }
-
     GameRuleDefinition::addAttribute(name, value);
 }
 

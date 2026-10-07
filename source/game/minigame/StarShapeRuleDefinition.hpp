@@ -8,7 +8,6 @@ class StarShapeRuleDefinition : public LayerAttributeChildRuleDefinition<LayerSh
 {
 public:
     StarShapeRuleDefinition();
-    virtual ~StarShapeRuleDefinition();
 
     virtual ConsoleGameRules::EGameRuleType getActionType();
     virtual LayerShape* Generate() const;

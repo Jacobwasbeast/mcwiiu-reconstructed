@@ -246,34 +246,33 @@ static const unsigned int WoodenShovelUi = 0x76c32bbb;
 }
 
 FullTutorial::FullTutorial(int playerId, GameModeConstraints* constraints, bool enabled)
-    : Tutorial(playerId, constraints, true, false), mEnabledForPlayer(enabled),
-      mProgressFlags(false)
+    : Tutorial(playerId, constraints, true, false), mEnabledForPlayer(enabled)
 {
     overridesGameHostOptions = true;
-    int i;
-    for (i = 0; i < 44; ++i)
+    mProgressFlags = 0;
+    for (int i = 0; i < 44; ++i)
     {
         mStateCompleted[i] = 0;
     }
     addMessage(TutorialIds::WelcomeMessage, false, 3);
 
-    if (!mEnabledForPlayer && getCompleted(0x183) == 0)
-    {
-        addTask(eTutorial_State_Gameplay,
-                new InfoTask(this, TutorialIds::TutorialStartTask, TutorialIds::DefaultMessageGroup, true, 0,
-                             eTelemetryChallenges_None));
-    }
-    else
+    if (mEnabledForPlayer || getCompleted(0x183) != 0)
     {
         addTask(eTutorial_State_Gameplay,
                 new ChoiceTask(this, TutorialIds::TutorialStartTask, TutorialIds::TutorialStartChoice, true, 0, 1,
                                eTutorial_CompletionAction_CompleteStateExceptLastTask,
                                eTelemetryChallenges_TutorialStart));
     }
+    else
+    {
+        addTask(eTutorial_State_Gameplay,
+                new InfoTask(this, TutorialIds::TutorialStartTask, TutorialIds::DefaultMessageGroup, true, 0,
+                             eTelemetryChallenges_None));
+    }
 
     int controllerMappingsA[4] = { 30, 31, 28, 29 };
-    int controllerCompletionIdsA[4] = { 10, 9, 6, 5 };
     int controllerMappingsB[4] = { 24, 25, 26, 27 };
+    int controllerCompletionIdsA[4] = { 10, 9, 6, 5 };
 
     addTask(eTutorial_State_Gameplay,
             new ControllerTask(this, TutorialIds::ControllerMove, false, false, controllerMappingsA, 4,
@@ -787,7 +786,7 @@ static std::wstring s_tutorialAreaNames[44] = {
 void FullTutorial::AddTutorialArea(eTutorial_State state)
 {
     std::wstring areaName = s_tutorialAreaNames[state];
-    std::wstring secondAreaName = L"";
+    std::wstring secondAreaName(L"");
     if (gApp.getGameRuleDefinitions() == NULL || areaName == L"")
         return;
 
@@ -820,44 +819,47 @@ void FullTutorial::AddTutorialArea(eTutorial_State state)
 
     switch (state)
     {
-    case 0xc:
-        addTask(state, new ChoiceTask(this, TutorialIds::PistonChoice, TutorialIds::PistonChoicePrompt, true, 0, 1,
-                                      eTutorial_CompletionAction_CompleteStateAndConstraints,
-                                      eTelemetryChallenges_PistonChoice));
-        addTask(state, new InfoTask(this, TutorialIds::PistonInfo1, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::PistonInfo2, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::PistonInfo3, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::PistonInfo4, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::PistonInfo5, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::PistonInfo6, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::PistonInfo7, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
+    case eTutorial_State_Piston:
+        addTask(eTutorial_State_Piston, new ChoiceTask(this, TutorialIds::PistonChoice, TutorialIds::PistonChoicePrompt,
+                                                       true, 0, 1,
+                                                       eTutorial_CompletionAction_CompleteStateAndConstraints,
+                                                       eTelemetryChallenges_PistonChoice));
+        addTask(eTutorial_State_Piston, new InfoTask(this, TutorialIds::PistonInfo1, TutorialIds::DefaultMessageGroup,
+                                                     true, 0, eTelemetryChallenges_None));
+        addTask(eTutorial_State_Piston, new InfoTask(this, TutorialIds::PistonInfo2, TutorialIds::DefaultMessageGroup,
+                                                     true, 0, eTelemetryChallenges_None));
+        addTask(eTutorial_State_Piston, new InfoTask(this, TutorialIds::PistonInfo3, TutorialIds::DefaultMessageGroup,
+                                                     true, 0, eTelemetryChallenges_None));
+        addTask(eTutorial_State_Piston, new InfoTask(this, TutorialIds::PistonInfo4, TutorialIds::DefaultMessageGroup,
+                                                     true, 0, eTelemetryChallenges_None));
+        addTask(eTutorial_State_Piston, new InfoTask(this, TutorialIds::PistonInfo5, TutorialIds::DefaultMessageGroup,
+                                                     true, 0, eTelemetryChallenges_None));
+        addTask(eTutorial_State_Piston, new InfoTask(this, TutorialIds::PistonInfo6, TutorialIds::DefaultMessageGroup,
+                                                     true, 0, eTelemetryChallenges_None));
+        addTask(eTutorial_State_Piston, new InfoTask(this, TutorialIds::PistonInfo7, TutorialIds::DefaultMessageGroup,
+                                                     true, 0, eTelemetryChallenges_None));
         break;
-    case 0xd:
-        addTask(state, new ChoiceTask(this, TutorialIds::PortalChoice, TutorialIds::PortalChoicePrompt, true, 0, 1,
-                                      eTutorial_CompletionAction_CompleteStateAndConstraints,
-                                      static_cast<ETelemetryChallenges>(12)));
-        addTask(state, new InfoTask(this, TutorialIds::PortalInfo1, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::PortalInfo2, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::PortalInfo3, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::PortalInfo4, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::PortalInfo5, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
+    case eTutorial_State_Portal:
+        addTask(eTutorial_State_Portal, new ChoiceTask(this, TutorialIds::PortalChoice, TutorialIds::PortalChoicePrompt,
+                                                       true, 0, 1,
+                                                       eTutorial_CompletionAction_CompleteStateAndConstraints,
+                                                       static_cast<ETelemetryChallenges>(12)));
+        addTask(eTutorial_State_Portal, new InfoTask(this, TutorialIds::PortalInfo1, TutorialIds::DefaultMessageGroup,
+                                                     true, 0, eTelemetryChallenges_None));
+        addTask(eTutorial_State_Portal, new InfoTask(this, TutorialIds::PortalInfo2, TutorialIds::DefaultMessageGroup,
+                                                     true, 0, eTelemetryChallenges_None));
+        addTask(eTutorial_State_Portal, new InfoTask(this, TutorialIds::PortalInfo3, TutorialIds::DefaultMessageGroup,
+                                                     true, 0, eTelemetryChallenges_None));
+        addTask(eTutorial_State_Portal, new InfoTask(this, TutorialIds::PortalInfo4, TutorialIds::DefaultMessageGroup,
+                                                     true, 0, eTelemetryChallenges_None));
+        addTask(eTutorial_State_Portal, new InfoTask(this, TutorialIds::PortalInfo5, TutorialIds::DefaultMessageGroup,
+                                                     true, 0, eTelemetryChallenges_None));
         break;
-    case 0x11:
-        addTask(state, new ChoiceTask(this, TutorialIds::BrewingChoice, TutorialIds::BrewingChoicePrompt, true, 0, 1,
-                                      eTutorial_CompletionAction_CompleteStateAndConstraints,
-                                      static_cast<ETelemetryChallenges>(22)));
+    case eTutorial_State_Brewing:
+        addTask(eTutorial_State_Brewing, new ChoiceTask(this, TutorialIds::BrewingChoice,
+                                                        TutorialIds::BrewingChoicePrompt, true, 0, 1,
+                                                        eTutorial_CompletionAction_CompleteStateAndConstraints,
+                                                        static_cast<ETelemetryChallenges>(22)));
         {
             ProcedureCompoundTask* fillBottle = new ProcedureCompoundTask(this);
             Item* bottle = Items::glassBottle;
@@ -866,260 +868,302 @@ void FullTutorial::AddTutorialArea(eTutorial_State state)
             Item* potion = Items::potion;
             fillBottle->AddTask(new PickupTask(&potion, 1, 1, 0, this, TutorialIds::BrewingPotionPickup, true, NULL,
                                                false, true, true, NULL));
-            addTask(state, fillBottle);
-            addTask(state, new InfoTask(this, TutorialIds::BrewingInfo1, TutorialIds::DefaultMessageGroup, true, 0,
-                                        eTelemetryChallenges_None));
-            addTask(state, new ProgressFlagTask(this, &mProgressFlags, 0x10, ProgressFlagTask::eProgressFlagAction_Set));
-            addTask(state, new PickupTask(&potion, 1, 1, 0, this, TutorialIds::BrewingFireResistancePickup, true, NULL,
-                                          false, true, true, MobEffects::FIRE_RESISTANCE));
+            addTask(eTutorial_State_Brewing, fillBottle);
+            addTask(eTutorial_State_Brewing, new InfoTask(this, TutorialIds::BrewingInfo1,
+                                                          TutorialIds::DefaultMessageGroup, true, 0,
+                                                          eTelemetryChallenges_None));
+            addTask(eTutorial_State_Brewing, new ProgressFlagTask(this, &mProgressFlags, 0x10,
+                                                                  ProgressFlagTask::eProgressFlagAction_Set));
+            addTask(eTutorial_State_Brewing, new PickupTask(&potion, 1, 1, 0, this,
+                                                            TutorialIds::BrewingFireResistancePickup, true, NULL, false,
+                                                            true, true, MobEffects::FIRE_RESISTANCE));
         }
-        addTask(state, new InfoTask(this, TutorialIds::BrewingInfo2, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new EffectChangedTask(this, TutorialIds::BrewingFireResistanceEffect, MobEffects::FIRE_RESISTANCE,
-                                             true, true, false, true, true));
-        addTask(state, new InfoTask(this, TutorialIds::BrewingInfo3, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
+        addTask(eTutorial_State_Brewing, new InfoTask(this, TutorialIds::BrewingInfo2, TutorialIds::DefaultMessageGroup,
+                                                      true, 0, eTelemetryChallenges_None));
+        addTask(eTutorial_State_Brewing, new EffectChangedTask(this, TutorialIds::BrewingFireResistanceEffect,
+                                                               MobEffects::FIRE_RESISTANCE, true, true, false, true,
+                                                               true));
+        addTask(eTutorial_State_Brewing, new InfoTask(this, TutorialIds::BrewingInfo3, TutorialIds::DefaultMessageGroup,
+                                                      true, 0, eTelemetryChallenges_None));
         break;
-    case 0x13:
-        addTask(state, new ChoiceTask(this, TutorialIds::EnchantingChoice, TutorialIds::EnchantingChoicePrompt, true, 0, 1,
-                                      eTutorial_CompletionAction_CompleteStateAndConstraints,
-                                      static_cast<ETelemetryChallenges>(23)));
-        addTask(state, new InfoTask(this, TutorialIds::EnchantingInfo1, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::EnchantingInfo2, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::EnchantingInfo3, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::EnchantingInfo4, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::EnchantingInfo5, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::EnchantingInfo6, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
+    case eTutorial_State_Enchanting:
+        addTask(eTutorial_State_Enchanting, new ChoiceTask(this, TutorialIds::EnchantingChoice,
+                                                           TutorialIds::EnchantingChoicePrompt, true, 0, 1,
+                                                           eTutorial_CompletionAction_CompleteStateAndConstraints,
+                                                           static_cast<ETelemetryChallenges>(23)));
+        addTask(eTutorial_State_Enchanting, new InfoTask(this, TutorialIds::EnchantingInfo1,
+                                                         TutorialIds::DefaultMessageGroup, true, 0,
+                                                         eTelemetryChallenges_None));
+        addTask(eTutorial_State_Enchanting, new InfoTask(this, TutorialIds::EnchantingInfo2,
+                                                         TutorialIds::DefaultMessageGroup, true, 0,
+                                                         eTelemetryChallenges_None));
+        addTask(eTutorial_State_Enchanting, new InfoTask(this, TutorialIds::EnchantingInfo3,
+                                                         TutorialIds::DefaultMessageGroup, true, 0,
+                                                         eTelemetryChallenges_None));
+        addTask(eTutorial_State_Enchanting, new InfoTask(this, TutorialIds::EnchantingInfo4,
+                                                         TutorialIds::DefaultMessageGroup, true, 0,
+                                                         eTelemetryChallenges_None));
+        addTask(eTutorial_State_Enchanting, new InfoTask(this, TutorialIds::EnchantingInfo5,
+                                                         TutorialIds::DefaultMessageGroup, true, 0,
+                                                         eTelemetryChallenges_None));
+        addTask(eTutorial_State_Enchanting, new InfoTask(this, TutorialIds::EnchantingInfo6,
+                                                         TutorialIds::DefaultMessageGroup, true, 0,
+                                                         eTelemetryChallenges_None));
         break;
-    case 0x15:
-        addTask(state, new ChoiceTask(this, TutorialIds::FarmingChoice, TutorialIds::FarmingChoicePrompt, true, 0, 1,
-                                      eTutorial_CompletionAction_CompleteStateAndConstraints,
-                                      static_cast<ETelemetryChallenges>(24)));
-        addTask(state, new InfoTask(this, TutorialIds::FarmingInfo1, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::FarmingInfo2, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::FarmingInfo3, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::FarmingInfo4, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::FarmingInfo5, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::FarmingInfo6, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::FarmingInfo7, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::FarmingInfo8, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::FarmingInfo9, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::FarmingInfo10, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
+    case eTutorial_State_Farming:
+        addTask(eTutorial_State_Farming, new ChoiceTask(this, TutorialIds::FarmingChoice,
+                                                        TutorialIds::FarmingChoicePrompt, true, 0, 1,
+                                                        eTutorial_CompletionAction_CompleteStateAndConstraints,
+                                                        static_cast<ETelemetryChallenges>(24)));
+        addTask(eTutorial_State_Farming, new InfoTask(this, TutorialIds::FarmingInfo1, TutorialIds::DefaultMessageGroup,
+                                                      true, 0, eTelemetryChallenges_None));
+        addTask(eTutorial_State_Farming, new InfoTask(this, TutorialIds::FarmingInfo2, TutorialIds::DefaultMessageGroup,
+                                                      true, 0, eTelemetryChallenges_None));
+        addTask(eTutorial_State_Farming, new InfoTask(this, TutorialIds::FarmingInfo3, TutorialIds::DefaultMessageGroup,
+                                                      true, 0, eTelemetryChallenges_None));
+        addTask(eTutorial_State_Farming, new InfoTask(this, TutorialIds::FarmingInfo4, TutorialIds::DefaultMessageGroup,
+                                                      true, 0, eTelemetryChallenges_None));
+        addTask(eTutorial_State_Farming, new InfoTask(this, TutorialIds::FarmingInfo5, TutorialIds::DefaultMessageGroup,
+                                                      true, 0, eTelemetryChallenges_None));
+        addTask(eTutorial_State_Farming, new InfoTask(this, TutorialIds::FarmingInfo6, TutorialIds::DefaultMessageGroup,
+                                                      true, 0, eTelemetryChallenges_None));
+        addTask(eTutorial_State_Farming, new InfoTask(this, TutorialIds::FarmingInfo7, TutorialIds::DefaultMessageGroup,
+                                                      true, 0, eTelemetryChallenges_None));
+        addTask(eTutorial_State_Farming, new InfoTask(this, TutorialIds::FarmingInfo8, TutorialIds::DefaultMessageGroup,
+                                                      true, 0, eTelemetryChallenges_None));
+        addTask(eTutorial_State_Farming, new InfoTask(this, TutorialIds::FarmingInfo9, TutorialIds::DefaultMessageGroup,
+                                                      true, 0, eTelemetryChallenges_None));
+        addTask(eTutorial_State_Farming, new InfoTask(this, TutorialIds::FarmingInfo10,
+                                                      TutorialIds::DefaultMessageGroup, true, 0,
+                                                      eTelemetryChallenges_None));
         break;
-    case 0x16:
-        addTask(state, new ChoiceTask(this, TutorialIds::BreedingChoice, TutorialIds::BreedingChoicePrompt, true, 0, 1,
-                                      eTutorial_CompletionAction_CompleteStateAndConstraints,
-                                      static_cast<ETelemetryChallenges>(43)));
-        addTask(state, new InfoTask(this, TutorialIds::BreedingInfo1, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::BreedingInfo2, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::BreedingInfo3, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::BreedingInfo4, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::BreedingInfo5, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::BreedingInfo6, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::BreedingInfo7, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::BreedingInfo8, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::BreedingInfo9, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::BreedingInfo10, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
+    case eTutorial_State_Breeding:
+        addTask(eTutorial_State_Breeding, new ChoiceTask(this, TutorialIds::BreedingChoice,
+                                                         TutorialIds::BreedingChoicePrompt, true, 0, 1,
+                                                         eTutorial_CompletionAction_CompleteStateAndConstraints,
+                                                         static_cast<ETelemetryChallenges>(43)));
+        addTask(eTutorial_State_Breeding, new InfoTask(this, TutorialIds::BreedingInfo1,
+                                                       TutorialIds::DefaultMessageGroup, true, 0,
+                                                       eTelemetryChallenges_None));
+        addTask(eTutorial_State_Breeding, new InfoTask(this, TutorialIds::BreedingInfo2,
+                                                       TutorialIds::DefaultMessageGroup, true, 0,
+                                                       eTelemetryChallenges_None));
+        addTask(eTutorial_State_Breeding, new InfoTask(this, TutorialIds::BreedingInfo3,
+                                                       TutorialIds::DefaultMessageGroup, true, 0,
+                                                       eTelemetryChallenges_None));
+        addTask(eTutorial_State_Breeding, new InfoTask(this, TutorialIds::BreedingInfo4,
+                                                       TutorialIds::DefaultMessageGroup, true, 0,
+                                                       eTelemetryChallenges_None));
+        addTask(eTutorial_State_Breeding, new InfoTask(this, TutorialIds::BreedingInfo5,
+                                                       TutorialIds::DefaultMessageGroup, true, 0,
+                                                       eTelemetryChallenges_None));
+        addTask(eTutorial_State_Breeding, new InfoTask(this, TutorialIds::BreedingInfo6,
+                                                       TutorialIds::DefaultMessageGroup, true, 0,
+                                                       eTelemetryChallenges_None));
+        addTask(eTutorial_State_Breeding, new InfoTask(this, TutorialIds::BreedingInfo7,
+                                                       TutorialIds::DefaultMessageGroup, true, 0,
+                                                       eTelemetryChallenges_None));
+        addTask(eTutorial_State_Breeding, new InfoTask(this, TutorialIds::BreedingInfo8,
+                                                       TutorialIds::DefaultMessageGroup, true, 0,
+                                                       eTelemetryChallenges_None));
+        addTask(eTutorial_State_Breeding, new InfoTask(this, TutorialIds::BreedingInfo9,
+                                                       TutorialIds::DefaultMessageGroup, true, 0,
+                                                       eTelemetryChallenges_None));
+        addTask(eTutorial_State_Breeding, new InfoTask(this, TutorialIds::BreedingInfo10,
+                                                       TutorialIds::DefaultMessageGroup, true, 0,
+                                                       eTelemetryChallenges_None));
         break;
-    case 0x17:
-        addTask(state, new ChoiceTask(this, TutorialIds::GolemChoice, TutorialIds::GolemChoicePrompt, true, 0, 1,
-                                      eTutorial_CompletionAction_CompleteStateAndConstraints,
-                                      static_cast<ETelemetryChallenges>(44)));
-        addTask(state, new InfoTask(this, TutorialIds::GolemInfo1, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::GolemInfo2, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::GolemInfo3, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::GolemInfo4, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
+    case eTutorial_State_Golem:
+        addTask(eTutorial_State_Golem, new ChoiceTask(this, TutorialIds::GolemChoice, TutorialIds::GolemChoicePrompt,
+                                                      true, 0, 1,
+                                                      eTutorial_CompletionAction_CompleteStateAndConstraints,
+                                                      static_cast<ETelemetryChallenges>(44)));
+        addTask(eTutorial_State_Golem, new InfoTask(this, TutorialIds::GolemInfo1, TutorialIds::DefaultMessageGroup,
+                                                    true, 0, eTelemetryChallenges_None));
+        addTask(eTutorial_State_Golem, new InfoTask(this, TutorialIds::GolemInfo2, TutorialIds::DefaultMessageGroup,
+                                                    true, 0, eTelemetryChallenges_None));
+        addTask(eTutorial_State_Golem, new InfoTask(this, TutorialIds::GolemInfo3, TutorialIds::DefaultMessageGroup,
+                                                    true, 0, eTelemetryChallenges_None));
+        addTask(eTutorial_State_Golem, new InfoTask(this, TutorialIds::GolemInfo4, TutorialIds::DefaultMessageGroup,
+                                                    true, 0, eTelemetryChallenges_None));
         break;
-    case 0x18:
-        addTask(state, new ChoiceTask(this, TutorialIds::TradingChoice, TutorialIds::TradingChoicePrompt, true, 0, 1,
-                                      eTutorial_CompletionAction_CompleteStateAndConstraints,
-                                      static_cast<ETelemetryChallenges>(47)));
-        addTask(state, new InfoTask(this, TutorialIds::TradingInfo1, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::TradingInfo2, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::TradingInfo3, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::TradingInfo4, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::TradingInfo5, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
+    case eTutorial_State_Trading:
+        addTask(eTutorial_State_Trading, new ChoiceTask(this, TutorialIds::TradingChoice,
+                                                        TutorialIds::TradingChoicePrompt, true, 0, 1,
+                                                        eTutorial_CompletionAction_CompleteStateAndConstraints,
+                                                        static_cast<ETelemetryChallenges>(47)));
+        addTask(eTutorial_State_Trading, new InfoTask(this, TutorialIds::TradingInfo1, TutorialIds::DefaultMessageGroup,
+                                                      true, 0, eTelemetryChallenges_None));
+        addTask(eTutorial_State_Trading, new InfoTask(this, TutorialIds::TradingInfo2, TutorialIds::DefaultMessageGroup,
+                                                      true, 0, eTelemetryChallenges_None));
+        addTask(eTutorial_State_Trading, new InfoTask(this, TutorialIds::TradingInfo3, TutorialIds::DefaultMessageGroup,
+                                                      true, 0, eTelemetryChallenges_None));
+        addTask(eTutorial_State_Trading, new InfoTask(this, TutorialIds::TradingInfo4, TutorialIds::DefaultMessageGroup,
+                                                      true, 0, eTelemetryChallenges_None));
+        addTask(eTutorial_State_Trading, new InfoTask(this, TutorialIds::TradingInfo5, TutorialIds::DefaultMessageGroup,
+                                                      true, 0, eTelemetryChallenges_None));
         break;
-    case 0x1a:
-        addTask(state, new ChoiceTask(this, TutorialIds::AnvilChoice, TutorialIds::AnvilChoicePrompt, true, 0, 1,
-                                      eTutorial_CompletionAction_CompleteStateAndConstraints,
-                                      static_cast<ETelemetryChallenges>(45)));
-        addTask(state, new InfoTask(this, TutorialIds::AnvilInfo1, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::AnvilInfo2, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::AnvilInfo3, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::AnvilInfo4, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::AnvilInfo5, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::AnvilInfo6, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
+    case eTutorial_State_Anvil:
+        addTask(eTutorial_State_Anvil, new ChoiceTask(this, TutorialIds::AnvilChoice, TutorialIds::AnvilChoicePrompt,
+                                                      true, 0, 1,
+                                                      eTutorial_CompletionAction_CompleteStateAndConstraints,
+                                                      static_cast<ETelemetryChallenges>(45)));
+        addTask(eTutorial_State_Anvil, new InfoTask(this, TutorialIds::AnvilInfo1, TutorialIds::DefaultMessageGroup,
+                                                    true, 0, eTelemetryChallenges_None));
+        addTask(eTutorial_State_Anvil, new InfoTask(this, TutorialIds::AnvilInfo2, TutorialIds::DefaultMessageGroup,
+                                                    true, 0, eTelemetryChallenges_None));
+        addTask(eTutorial_State_Anvil, new InfoTask(this, TutorialIds::AnvilInfo3, TutorialIds::DefaultMessageGroup,
+                                                    true, 0, eTelemetryChallenges_None));
+        addTask(eTutorial_State_Anvil, new InfoTask(this, TutorialIds::AnvilInfo4, TutorialIds::DefaultMessageGroup,
+                                                    true, 0, eTelemetryChallenges_None));
+        addTask(eTutorial_State_Anvil, new InfoTask(this, TutorialIds::AnvilInfo5, TutorialIds::DefaultMessageGroup,
+                                                    true, 0, eTelemetryChallenges_None));
+        addTask(eTutorial_State_Anvil, new InfoTask(this, TutorialIds::AnvilInfo6, TutorialIds::DefaultMessageGroup,
+                                                    true, 0, eTelemetryChallenges_None));
         break;
-    case 0x1c:
-        addTask(state, new ChoiceTask(this, TutorialIds::EnderChestChoice, TutorialIds::EnderChestChoicePrompt, true, 0, 1,
-                                      eTutorial_CompletionAction_CompleteStateAndConstraints,
-                                      static_cast<ETelemetryChallenges>(49)));
-        addTask(state, new InfoTask(this, TutorialIds::EnderChestInfo1, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::EnderChestInfo2, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::EnderChestInfo3, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
+    case eTutorial_State_EnderChest:
+        addTask(eTutorial_State_EnderChest, new ChoiceTask(this, TutorialIds::EnderChestChoice,
+                                                           TutorialIds::EnderChestChoicePrompt, true, 0, 1,
+                                                           eTutorial_CompletionAction_CompleteStateAndConstraints,
+                                                           static_cast<ETelemetryChallenges>(49)));
+        addTask(eTutorial_State_EnderChest, new InfoTask(this, TutorialIds::EnderChestInfo1,
+                                                         TutorialIds::DefaultMessageGroup, true, 0,
+                                                         eTelemetryChallenges_None));
+        addTask(eTutorial_State_EnderChest, new InfoTask(this, TutorialIds::EnderChestInfo2,
+                                                         TutorialIds::DefaultMessageGroup, true, 0,
+                                                         eTelemetryChallenges_None));
+        addTask(eTutorial_State_EnderChest, new InfoTask(this, TutorialIds::EnderChestInfo3,
+                                                         TutorialIds::DefaultMessageGroup, true, 0,
+                                                         eTelemetryChallenges_None));
         break;
-    case 0x1f:
-        addTask(state, new ChoiceTask(this, TutorialIds::HopperChoice, TutorialIds::HopperChoicePrompt, true, 0, 1,
-                                      eTutorial_CompletionAction_CompleteStateAndConstraints,
-                                      static_cast<ETelemetryChallenges>(56)));
-        addTask(state, new InfoTask(this, TutorialIds::HopperInfo1, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::HopperInfo2, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::HopperInfo3, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::HopperInfo4, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::HopperInfo5, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::HopperInfo6, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
+    case eTutorial_State_Hopper:
+        addTask(eTutorial_State_Hopper, new ChoiceTask(this, TutorialIds::HopperChoice, TutorialIds::HopperChoicePrompt,
+                                                       true, 0, 1,
+                                                       eTutorial_CompletionAction_CompleteStateAndConstraints,
+                                                       static_cast<ETelemetryChallenges>(56)));
+        addTask(eTutorial_State_Hopper, new InfoTask(this, TutorialIds::HopperInfo1, TutorialIds::DefaultMessageGroup,
+                                                     true, 0, eTelemetryChallenges_None));
+        addTask(eTutorial_State_Hopper, new InfoTask(this, TutorialIds::HopperInfo2, TutorialIds::DefaultMessageGroup,
+                                                     true, 0, eTelemetryChallenges_None));
+        addTask(eTutorial_State_Hopper, new InfoTask(this, TutorialIds::HopperInfo3, TutorialIds::DefaultMessageGroup,
+                                                     true, 0, eTelemetryChallenges_None));
+        addTask(eTutorial_State_Hopper, new InfoTask(this, TutorialIds::HopperInfo4, TutorialIds::DefaultMessageGroup,
+                                                     true, 0, eTelemetryChallenges_None));
+        addTask(eTutorial_State_Hopper, new InfoTask(this, TutorialIds::HopperInfo5, TutorialIds::DefaultMessageGroup,
+                                                     true, 0, eTelemetryChallenges_None));
+        addTask(eTutorial_State_Hopper, new InfoTask(this, TutorialIds::HopperInfo6, TutorialIds::DefaultMessageGroup,
+                                                     true, 0, eTelemetryChallenges_None));
         break;
-    case 0x21:
-        addTask(state, new ChoiceTask(this, TutorialIds::BeaconChoice, TutorialIds::BeaconChoicePrompt, true, 0, 1,
-                                      eTutorial_CompletionAction_CompleteStateAndConstraints,
-                                      static_cast<ETelemetryChallenges>(54)));
-        addTask(state, new InfoTask(this, TutorialIds::BeaconInfo1, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::BeaconInfo2, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::BeaconInfo3, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::BeaconInfo4, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
+    case eTutorial_State_Beacon:
+        addTask(eTutorial_State_Beacon, new ChoiceTask(this, TutorialIds::BeaconChoice, TutorialIds::BeaconChoicePrompt,
+                                                       true, 0, 1,
+                                                       eTutorial_CompletionAction_CompleteStateAndConstraints,
+                                                       static_cast<ETelemetryChallenges>(54)));
+        addTask(eTutorial_State_Beacon, new InfoTask(this, TutorialIds::BeaconInfo1, TutorialIds::DefaultMessageGroup,
+                                                     true, 0, eTelemetryChallenges_None));
+        addTask(eTutorial_State_Beacon, new InfoTask(this, TutorialIds::BeaconInfo2, TutorialIds::DefaultMessageGroup,
+                                                     true, 0, eTelemetryChallenges_None));
+        addTask(eTutorial_State_Beacon, new InfoTask(this, TutorialIds::BeaconInfo3, TutorialIds::DefaultMessageGroup,
+                                                     true, 0, eTelemetryChallenges_None));
+        addTask(eTutorial_State_Beacon, new InfoTask(this, TutorialIds::BeaconInfo4, TutorialIds::DefaultMessageGroup,
+                                                     true, 0, eTelemetryChallenges_None));
         break;
-    case 0x23:
-        addTask(state, new ChoiceTask(this, TutorialIds::FireworksChoice, TutorialIds::FireworksChoicePrompt, true, 0, 1,
-                                      eTutorial_CompletionAction_CompleteStateAndConstraints,
-                                      static_cast<ETelemetryChallenges>(47)));
-        addTask(state, new InfoTask(this, TutorialIds::FireworksInfo1, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::FireworksInfo2, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::FireworksInfo3, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
+    case eTutorial_State_Fireworks:
+        addTask(eTutorial_State_Fireworks, new ChoiceTask(this, TutorialIds::FireworksChoice,
+                                                          TutorialIds::FireworksChoicePrompt, true, 0, 1,
+                                                          eTutorial_CompletionAction_CompleteStateAndConstraints,
+                                                          static_cast<ETelemetryChallenges>(47)));
+        addTask(eTutorial_State_Fireworks, new InfoTask(this, TutorialIds::FireworksInfo1,
+                                                        TutorialIds::DefaultMessageGroup, true, 0,
+                                                        eTelemetryChallenges_None));
+        addTask(eTutorial_State_Fireworks, new InfoTask(this, TutorialIds::FireworksInfo2,
+                                                        TutorialIds::DefaultMessageGroup, true, 0,
+                                                        eTelemetryChallenges_None));
+        addTask(eTutorial_State_Fireworks, new InfoTask(this, TutorialIds::FireworksInfo3,
+                                                        TutorialIds::DefaultMessageGroup, true, 0,
+                                                        eTelemetryChallenges_None));
         break;
-    case 0x26:
-        addTask(state, new ChoiceTask(this, TutorialIds::BannerChoice, TutorialIds::BannerChoicePrompt, true, 0, 1,
-                                      eTutorial_CompletionAction_CompleteStateAndConstraints,
-                                      static_cast<ETelemetryChallenges>(76)));
-        addTask(state, new InfoTask(this, TutorialIds::BannerInfo1, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::BannerInfo2, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::BannerInfo3, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::BannerInfo4, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::BannerInfo5, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::BannerInfo6, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
+    case eTutorial_State_Banner:
+        addTask(eTutorial_State_Banner, new ChoiceTask(this, TutorialIds::BannerChoice, TutorialIds::BannerChoicePrompt,
+                                                       true, 0, 1,
+                                                       eTutorial_CompletionAction_CompleteStateAndConstraints,
+                                                       static_cast<ETelemetryChallenges>(76)));
+        addTask(eTutorial_State_Banner, new InfoTask(this, TutorialIds::BannerInfo1, TutorialIds::DefaultMessageGroup,
+                                                     true, 0, eTelemetryChallenges_None));
+        addTask(eTutorial_State_Banner, new InfoTask(this, TutorialIds::BannerInfo2, TutorialIds::DefaultMessageGroup,
+                                                     true, 0, eTelemetryChallenges_None));
+        addTask(eTutorial_State_Banner, new InfoTask(this, TutorialIds::BannerInfo3, TutorialIds::DefaultMessageGroup,
+                                                     true, 0, eTelemetryChallenges_None));
+        addTask(eTutorial_State_Banner, new InfoTask(this, TutorialIds::BannerInfo4, TutorialIds::DefaultMessageGroup,
+                                                     true, 0, eTelemetryChallenges_None));
+        addTask(eTutorial_State_Banner, new InfoTask(this, TutorialIds::BannerInfo5, TutorialIds::DefaultMessageGroup,
+                                                     true, 0, eTelemetryChallenges_None));
+        addTask(eTutorial_State_Banner, new InfoTask(this, TutorialIds::BannerInfo6, TutorialIds::DefaultMessageGroup,
+                                                     true, 0, eTelemetryChallenges_None));
         break;
-    case 0x27:
-        addTask(state, new ChoiceTask(this, TutorialIds::SlimeChoice, TutorialIds::SlimeChoicePrompt, true, 0, 1,
-                                      eTutorial_CompletionAction_CompleteStateAndConstraints,
-                                      static_cast<ETelemetryChallenges>(77)));
-        addTask(state, new InfoTask(this, TutorialIds::SlimeInfo1, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::SlimeInfo2, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
+    case eTutorial_State_Slime:
+        addTask(eTutorial_State_Slime, new ChoiceTask(this, TutorialIds::SlimeChoice, TutorialIds::SlimeChoicePrompt,
+                                                      true, 0, 1,
+                                                      eTutorial_CompletionAction_CompleteStateAndConstraints,
+                                                      static_cast<ETelemetryChallenges>(77)));
+        addTask(eTutorial_State_Slime, new InfoTask(this, TutorialIds::SlimeInfo1, TutorialIds::DefaultMessageGroup,
+                                                    true, 0, eTelemetryChallenges_None));
+        addTask(eTutorial_State_Slime, new InfoTask(this, TutorialIds::SlimeInfo2, TutorialIds::DefaultMessageGroup,
+                                                    true, 0, eTelemetryChallenges_None));
         break;
-    case 0x28:
-        addTask(state, new ChoiceTask(this, TutorialIds::ElytraChoice, TutorialIds::ElytraChoicePrompt, true, 0, 1,
-                                      eTutorial_CompletionAction_CompleteStateAndConstraints,
-                                      static_cast<ETelemetryChallenges>(78)));
-        addTask(state, new EquipItemTask(Items::elytra, -1, this, TutorialIds::ElytraEquip, false, NULL, false, true,
-                                         true));
-        addTask(state, new InfoTask(this, TutorialIds::ElytraInfo1, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new RepairItemTask(Items::elytra, -1, this, TutorialIds::ElytraRepair, false, NULL, false, true,
-                                          true));
-        addTask(state, new ChoiceTask(this, TutorialIds::ElytraSecondChoice, TutorialIds::ElytraSecondChoicePrompt,
-                                      true, 0, 1,
-                                      eTutorial_CompletionAction_CompleteStateAndConstraints,
-                                      static_cast<ETelemetryChallenges>(78)));
-        addTask(state, new InfoTask(this, TutorialIds::ElytraInfo2, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::ElytraInfo3, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
+    case eTutorial_State_Elytra:
+        addTask(eTutorial_State_Elytra, new ChoiceTask(this, TutorialIds::ElytraChoice, TutorialIds::ElytraChoicePrompt,
+                                                       true, 0, 1,
+                                                       eTutorial_CompletionAction_CompleteStateAndConstraints,
+                                                       static_cast<ETelemetryChallenges>(78)));
+        addTask(eTutorial_State_Elytra, new EquipItemTask(Items::elytra, -1, this, TutorialIds::ElytraEquip, false,
+                                                          NULL, false, true, true));
+        addTask(eTutorial_State_Elytra, new InfoTask(this, TutorialIds::ElytraInfo1, TutorialIds::DefaultMessageGroup,
+                                                     true, 0, eTelemetryChallenges_None));
+        addTask(eTutorial_State_Elytra, new RepairItemTask(Items::elytra, -1, this, TutorialIds::ElytraRepair, false,
+                                                           NULL, false, true, true));
+        addTask(eTutorial_State_Elytra, new ChoiceTask(this, TutorialIds::ElytraSecondChoice,
+                                                       TutorialIds::ElytraSecondChoicePrompt, true, 0, 1,
+                                                       eTutorial_CompletionAction_CompleteStateAndConstraints,
+                                                       static_cast<ETelemetryChallenges>(78)));
+        addTask(eTutorial_State_Elytra, new InfoTask(this, TutorialIds::ElytraInfo2, TutorialIds::DefaultMessageGroup,
+                                                     true, 0, eTelemetryChallenges_None));
+        addTask(eTutorial_State_Elytra, new InfoTask(this, TutorialIds::ElytraInfo3, TutorialIds::DefaultMessageGroup,
+                                                     true, 0, eTelemetryChallenges_None));
         break;
-    case 0x2a:
-        addTask(state, new ChoiceTask(this, TutorialIds::TridentChoice, TutorialIds::TridentChoicePrompt, true, 0, 1,
-                                      eTutorial_CompletionAction_CompleteStateAndConstraints,
-                                      static_cast<ETelemetryChallenges>(85)));
-        addTask(state, new InfoTask(this, TutorialIds::TridentInfo1, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::TridentInfo2, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::TridentInfo3, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::TridentInfo4, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::TridentInfo5, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::TridentInfo6, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
+    case eTutorial_State_Trident:
+        addTask(eTutorial_State_Trident, new ChoiceTask(this, TutorialIds::TridentChoice,
+                                                        TutorialIds::TridentChoicePrompt, true, 0, 1,
+                                                        eTutorial_CompletionAction_CompleteStateAndConstraints,
+                                                        static_cast<ETelemetryChallenges>(85)));
+        addTask(eTutorial_State_Trident, new InfoTask(this, TutorialIds::TridentInfo1, TutorialIds::DefaultMessageGroup,
+                                                      true, 0, eTelemetryChallenges_None));
+        addTask(eTutorial_State_Trident, new InfoTask(this, TutorialIds::TridentInfo2, TutorialIds::DefaultMessageGroup,
+                                                      true, 0, eTelemetryChallenges_None));
+        addTask(eTutorial_State_Trident, new InfoTask(this, TutorialIds::TridentInfo3, TutorialIds::DefaultMessageGroup,
+                                                      true, 0, eTelemetryChallenges_None));
+        addTask(eTutorial_State_Trident, new InfoTask(this, TutorialIds::TridentInfo4, TutorialIds::DefaultMessageGroup,
+                                                      true, 0, eTelemetryChallenges_None));
+        addTask(eTutorial_State_Trident, new InfoTask(this, TutorialIds::TridentInfo5, TutorialIds::DefaultMessageGroup,
+                                                      true, 0, eTelemetryChallenges_None));
+        addTask(eTutorial_State_Trident, new InfoTask(this, TutorialIds::TridentInfo6, TutorialIds::DefaultMessageGroup,
+                                                      true, 0, eTelemetryChallenges_None));
         break;
-    case 0x2b:
-        addTask(state, new ChoiceTask(this, TutorialIds::ConduitChoice, TutorialIds::ConduitChoicePrompt, true, 0, 1,
-                                      eTutorial_CompletionAction_CompleteStateAndConstraints,
-                                      static_cast<ETelemetryChallenges>(86)));
-        addTask(state, new InfoTask(this, TutorialIds::ConduitInfo1, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::ConduitInfo2, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::ConduitInfo3, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::ConduitInfo4, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
-        addTask(state, new InfoTask(this, TutorialIds::ConduitInfo5, TutorialIds::DefaultMessageGroup, true, 0,
-                                    eTelemetryChallenges_None));
+    case eTutorial_State_Conduit:
+        addTask(eTutorial_State_Conduit, new ChoiceTask(this, TutorialIds::ConduitChoice,
+                                                        TutorialIds::ConduitChoicePrompt, true, 0, 1,
+                                                        eTutorial_CompletionAction_CompleteStateAndConstraints,
+                                                        static_cast<ETelemetryChallenges>(86)));
+        addTask(eTutorial_State_Conduit, new InfoTask(this, TutorialIds::ConduitInfo1, TutorialIds::DefaultMessageGroup,
+                                                      true, 0, eTelemetryChallenges_None));
+        addTask(eTutorial_State_Conduit, new InfoTask(this, TutorialIds::ConduitInfo2, TutorialIds::DefaultMessageGroup,
+                                                      true, 0, eTelemetryChallenges_None));
+        addTask(eTutorial_State_Conduit, new InfoTask(this, TutorialIds::ConduitInfo3, TutorialIds::DefaultMessageGroup,
+                                                      true, 0, eTelemetryChallenges_None));
+        addTask(eTutorial_State_Conduit, new InfoTask(this, TutorialIds::ConduitInfo4, TutorialIds::DefaultMessageGroup,
+                                                      true, 0, eTelemetryChallenges_None));
+        addTask(eTutorial_State_Conduit, new InfoTask(this, TutorialIds::ConduitInfo5, TutorialIds::DefaultMessageGroup,
+                                                      true, 0, eTelemetryChallenges_None));
         break;
     default:
         break;

@@ -22,17 +22,17 @@ float FirstToDieMedal::GetScore(PlayerStats* playerStats) const
     {
         if (playerStats->getRoundStats(round)->mDeathOrder == FIRST_DEATH)
         {
-            score += roundScore;
             ++scoringRounds;
+            score += roundScore;
         }
 
         roundScore *= 0.95f;
     }
 
-    if (scoringRounds < 2)
+    if (scoringRounds >= 2)
     {
-        score = 0.0f;
+        return score;
     }
 
-    return score;
+    return 0.0f;
 }

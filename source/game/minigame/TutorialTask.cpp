@@ -28,19 +28,17 @@ TutorialTask::~TutorialTask()
 {
     enableConstraints(false, false);
 
-    std::vector<TutorialConstraint*>::iterator constraint = constraints.begin();
-    while (constraint != constraints.end())
+    for (std::vector<TutorialConstraint*>::iterator constraint = constraints.begin(); constraint < constraints.end(); ++constraint)
     {
         TutorialConstraint* currentConstraint = *constraint;
-        if (!currentConstraint->removalPending)
-        {
-            delete currentConstraint;
-        }
-        else
+        if (currentConstraint->removalPending)
         {
             currentConstraint->deleteWhenRemoved = true;
         }
-        ++constraint;
+        else
+        {
+            delete currentConstraint;
+        }
     }
 }
 

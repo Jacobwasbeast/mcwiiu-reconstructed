@@ -12,10 +12,6 @@ SpiralShapeRuleDefinition::SpiralShapeRuleDefinition()
     addDoubleAttribute(ConsoleGameRules::eGameRuleAttr_rot, &mAngle)->setMin(0.0)->setMax(360.0);
 }
 
-SpiralShapeRuleDefinition::~SpiralShapeRuleDefinition()
-{
-}
-
 ConsoleGameRules::EGameRuleType SpiralShapeRuleDefinition::getActionType()
 {
     return ConsoleGameRules::eGameRuleType_SpiralShape;

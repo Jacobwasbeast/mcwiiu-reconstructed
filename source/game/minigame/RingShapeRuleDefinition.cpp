@@ -8,13 +8,7 @@ RingShapeRuleDefinition::RingShapeRuleDefinition()
     : mScale(0.75)
     , mChild(NULL)
 {
-    GameRules_DoubleAttribute* scaleAttribute = addDoubleAttribute(ConsoleGameRules::eGameRuleAttr_holeSize, &mScale);
-    scaleAttribute->setMin(0.0);
-    scaleAttribute->setMax(2.0);
-}
-
-RingShapeRuleDefinition::~RingShapeRuleDefinition()
-{
+    addDoubleAttribute(ConsoleGameRules::eGameRuleAttr_holeSize, &mScale)->setMin(0.0)->setMax(2.0);
 }
 
 ConsoleGameRules::EGameRuleType RingShapeRuleDefinition::getActionType()

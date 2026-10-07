@@ -1,92 +1,12 @@
 #include "game/minigame/CheckpointRuleDefinition.hpp"
 
+#include "game/core/GameRuleManager.hpp"
 #include "game/minigame/CustomBeaconRuleDefinition.hpp"
 #include "game/network/ServerGamePacketListenerImpl.hpp"
 #include "game/server/ServerLevel.hpp"
 #include "game/server/ServerPlayer.hpp"
 #include "game/world/generation/UpdatePlayerRuleDefinition.hpp"
 #include "game/core/StringFormat.hpp"
-
-static const wchar_t* sTagNames[] =
-{
-    L"",
-    L"MapOptions",
-    L"ApplySchematic",
-    L"GenerateStructure",
-    L"GenerateBox",
-    L"PlaceBlock",
-    L"PlaceContainer",
-    L"PlaceSpawner",
-    L"BiomeOverride",
-    L"StartFeature",
-    L"AddItem",
-    L"AddEnchantment",
-    L"WeighedTreasureItem",
-    L"RandomItemSet",
-    L"DistributeItems",
-    L"WorldPosition",
-    L"LevelRules",
-    L"NamedArea",
-    L"ActiveChunkArea",
-    L"TargetArea",
-    L"ScoreRing",
-    L"ThermalArea",
-    L"PlayerBoundsVolume",
-    L"Killbox",
-    L"BlockLayer",
-    L"UseBlock",
-    L"CollectItem",
-    L"CompleteAll",
-    L"UpdatePlayer",
-    L"OnGameStartSpawnPositions",
-    L"OnInitialiseWorld",
-    L"SpawnPositionSet",
-    L"PopulateContainer",
-    L"DegradationSequence",
-    L"RandomDissolveDegrade",
-    L"DirectionalDegrade",
-    L"GrantPermissions",
-    L"AllowIn",
-    L"LayerGeneration",
-    L"LayerAsset",
-    L"AnyCombinationOf",
-    L"CombinationDefinition",
-    L"Variations",
-    L"BlockDef",
-    L"LayerSize",
-    L"UniformSize",
-    L"RandomizeSize",
-    L"LinearBlendSize",
-    L"LayerShape",
-    L"BasicShape",
-    L"StarShape",
-    L"PatchyShape",
-    L"RingShape",
-    L"SpiralShape",
-    L"LayerFill",
-    L"BasicLayerFill",
-    L"CurvedLayerFill",
-    L"WarpedLayerFill",
-    L"LayerTheme",
-    L"NullTheme",
-    L"FilterTheme",
-    L"ShaftsTheme",
-    L"BasicPatchesTheme",
-    L"BlockStackTheme",
-    L"RainbowTheme",
-    L"TerracottaTheme",
-    L"FunctionPatchesTheme",
-    L"SimplePatchesTheme",
-    L"CarpetTrapTheme",
-    L"MushroomBlockTheme",
-    L"TextureTheme",
-    L"SchematicTheme",
-    L"BlockCollisionException",
-    L"Powerup",
-    L"Checkpoint",
-    L"CustomBeacon",
-    L"ActiveViewArea"
-};
 
 CheckpointRuleDefinition::CheckpointRuleDefinition()
     : mBeacons()
@@ -191,7 +111,7 @@ void CheckpointRuleDefinition::setSpawnPoint(boost::shared_ptr<Player> player)
 void CheckpointRuleDefinition::WriteXMLData(std::string& xml)
 {
     ConsoleGameRules::EGameRuleType type = getActionType();
-    xml += formatstr("<%ls ", sTagNames[type]);
+    xml += formatstr("<%ls ", GameRuleManager::sTagNames[type]);
     WriteAttributesAsXML(xml);
 
     if (mSpawnPoint == NULL)
@@ -202,7 +122,7 @@ void CheckpointRuleDefinition::WriteXMLData(std::string& xml)
 
     xml += ">\n";
     mSpawnPoint->WriteXMLData(xml);
-    xml += formatstr("</%ls>\n", sTagNames[type]);
+    xml += formatstr("</%ls>\n", GameRuleManager::sTagNames[type]);
 }
 
 void CheckpointRuleDefinition::processBeacons(ServerLevel* level)

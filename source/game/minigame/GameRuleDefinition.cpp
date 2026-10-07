@@ -1,6 +1,7 @@
 #include "game/minigame/GameRuleDefinition.hpp"
 
 #include "game/core/GameRule.hpp"
+#include "game/core/GameRuleManager.hpp"
 #include "game/core/GameRules_BoolAttribute.hpp"
 #include "game/core/GameRules_DoubleAttribute.hpp"
 #include "game/core/GameRules_FloatAttribute.hpp"
@@ -17,87 +18,6 @@
 #include "game/minigame/CompleteAllRuleDefinition.hpp"
 #include "game/minigame/TargetAreaRuleDefinition.hpp"
 #include "game/core/StringFormat.hpp"
-
-static const wchar_t* sTagNames[] =
-{
-    L"",
-    L"MapOptions",
-    L"ApplySchematic",
-    L"GenerateStructure",
-    L"GenerateBox",
-    L"PlaceBlock",
-    L"PlaceContainer",
-    L"PlaceSpawner",
-    L"BiomeOverride",
-    L"StartFeature",
-    L"AddItem",
-    L"AddEnchantment",
-    L"WeighedTreasureItem",
-    L"RandomItemSet",
-    L"DistributeItems",
-    L"WorldPosition",
-    L"LevelRules",
-    L"NamedArea",
-    L"ActiveChunkArea",
-    L"TargetArea",
-    L"ScoreRing",
-    L"ThermalArea",
-    L"PlayerBoundsVolume",
-    L"Killbox",
-    L"BlockLayer",
-    L"UseBlock",
-    L"CollectItem",
-    L"CompleteAll",
-    L"UpdatePlayer",
-    L"OnGameStartSpawnPositions",
-    L"OnInitialiseWorld",
-    L"SpawnPositionSet",
-    L"PopulateContainer",
-    L"DegradationSequence",
-    L"RandomDissolveDegrade",
-    L"DirectionalDegrade",
-    L"GrantPermissions",
-    L"AllowIn",
-    L"LayerGeneration",
-    L"LayerAsset",
-    L"AnyCombinationOf",
-    L"CombinationDefinition",
-    L"Variations",
-    L"BlockDef",
-    L"LayerSize",
-    L"UniformSize",
-    L"RandomizeSize",
-    L"LinearBlendSize",
-    L"LayerShape",
-    L"BasicShape",
-    L"StarShape",
-    L"PatchyShape",
-    L"RingShape",
-    L"SpiralShape",
-    L"LayerFill",
-    L"BasicLayerFill",
-    L"CurvedLayerFill",
-    L"WarpedLayerFill",
-    L"LayerTheme",
-    L"NullTheme",
-    L"FilterTheme",
-    L"ShaftsTheme",
-    L"BasicPatchesTheme",
-    L"BlockStackTheme",
-    L"RainbowTheme",
-    L"TerracottaTheme",
-    L"FunctionPatchesTheme",
-    L"SimplePatchesTheme",
-    L"CarpetTrapTheme",
-    L"MushroomBlockTheme",
-    L"TextureTheme",
-    L"SchematicTheme",
-    L"BlockCollisionException",
-    L"Powerup",
-    L"Checkpoint",
-    L"CustomBeacon",
-    L"ActiveViewArea"
-};
 
 GameRuleDefinition::GameRuleDefinition()
 {
@@ -341,7 +261,7 @@ void GameRuleDefinition::WriteXMLData(std::string& xml)
         type = ConsoleGameRules::eGameRuleType_ScoreRing;
     }
 
-    xml += formatstr("<%ls", sTagNames[type]);
+    xml += formatstr("<%ls", GameRuleManager::sTagNames[type]);
 
     WriteAttributesAsXML(xml);
 

@@ -10,7 +10,7 @@ class AABB;
 class KillboxRuleDefinition : public NamedAreaRuleDefinition
 {
 public:
-    KillboxRuleDefinition(AABB* legacyArea);
+    KillboxRuleDefinition(AABB* legacyArea = NULL);
 
     virtual ~KillboxRuleDefinition();
 

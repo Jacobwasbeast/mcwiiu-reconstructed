@@ -22,8 +22,7 @@ int TutorialHint::startDestroyBlock(not_null_ptr<ItemInstance> item, const Block
     {
         if (state->getBlock() == lastBlock && active)
         {
-            ++consecutiveTicks;
-            if (consecutiveTicks > 20)
+            if (++consecutiveTicks > 20)
             {
                 result = descriptionId;
                 lastBlock = state->getBlock();

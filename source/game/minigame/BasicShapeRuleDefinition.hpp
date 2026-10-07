@@ -11,8 +11,6 @@ class BasicShapeRuleDefinition : public LayerAttributeChildRuleDefinition<LayerS
 public:
     BasicShapeRuleDefinition();
 
-    virtual ~BasicShapeRuleDefinition();
-
     virtual ConsoleGameRules::EGameRuleType getActionType();
 
     virtual LayerShape* Generate() const;

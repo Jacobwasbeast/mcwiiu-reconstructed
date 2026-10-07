@@ -66,10 +66,6 @@ SchematicThemeRuleDefinition::AssetRuleDef::AssetRuleDef()
     addIntAttribute(ConsoleGameRules::eGameRuleAttr_size, &mMinimumWidth)->setMin(0)->setMax(128);
 }
 
-SchematicThemeRuleDefinition::AssetRuleDef::~AssetRuleDef()
-{
-}
-
 ConsoleGameRules::EGameRuleType SchematicThemeRuleDefinition::AssetRuleDef::getActionType()
 {
     return ConsoleGameRules::eGameRuleType_LayerAsset;

@@ -8,7 +8,6 @@ class RingShapeRuleDefinition : public LayerAttributeChildRuleDefinition<LayerSh
 {
 public:
     RingShapeRuleDefinition();
-    virtual ~RingShapeRuleDefinition();
 
     virtual ConsoleGameRules::EGameRuleType getActionType();
     virtual GameRuleDefinition* addChild(ConsoleGameRules::EGameRuleType type);

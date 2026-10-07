@@ -8,10 +8,6 @@ RandomizeSizeRuleDefinition::RandomizeSizeRuleDefinition()
 {
 }
 
-RandomizeSizeRuleDefinition::~RandomizeSizeRuleDefinition()
-{
-}
-
 ConsoleGameRules::EGameRuleType RandomizeSizeRuleDefinition::getActionType()
 {
     return ConsoleGameRules::eGameRuleType_RandomizeSize;

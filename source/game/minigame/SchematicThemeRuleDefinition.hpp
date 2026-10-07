@@ -15,7 +15,6 @@ public:
     {
     public:
         AssetRuleDef();
-        virtual ~AssetRuleDef();
 
         virtual ConsoleGameRules::EGameRuleType getActionType();
 

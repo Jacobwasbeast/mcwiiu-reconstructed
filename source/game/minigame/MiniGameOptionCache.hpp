@@ -18,7 +18,6 @@ public:
     };
 
     MiniGameOptionCache();
-    ~MiniGameOptionCache();
 
     void updateCachedOptions(int playerIndex, EMiniGameId miniGameId, const MiniGamePlayerSettings& options);
     MiniGamePlayerSettings& getPreviousOptions(int playerIndex, EMiniGameId miniGameId);

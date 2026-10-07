@@ -12,10 +12,6 @@ CarpetTrapThemeRuleDefinition::CarpetTrapThemeRuleDefinition()
     addFloatAttribute(ConsoleGameRules::eGameRuleAttr_scale, &mNoiseScale)->setMin(0.0f)->setMax(100.0f);
 }
 
-CarpetTrapThemeRuleDefinition::~CarpetTrapThemeRuleDefinition()
-{
-}
-
 ConsoleGameRules::EGameRuleType CarpetTrapThemeRuleDefinition::getActionType()
 {
     return ConsoleGameRules::eGameRuleType_CarpetTrapTheme;

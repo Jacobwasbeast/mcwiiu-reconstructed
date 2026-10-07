@@ -8,10 +8,6 @@ StarShapeRuleDefinition::StarShapeRuleDefinition()
     addIntAttribute(ConsoleGameRules::eGameRuleAttr_points, &mPoints);
 }
 
-StarShapeRuleDefinition::~StarShapeRuleDefinition()
-{
-}
-
 ConsoleGameRules::EGameRuleType StarShapeRuleDefinition::getActionType()
 {
     return ConsoleGameRules::eGameRuleType_StarShape;

@@ -8,7 +8,6 @@ class SpiralShapeRuleDefinition : public LayerAttributeChildRuleDefinition<Layer
 {
 public:
     SpiralShapeRuleDefinition();
-    virtual ~SpiralShapeRuleDefinition();
 
     virtual ConsoleGameRules::EGameRuleType getActionType();
     virtual LayerShape* Generate() const;
