@@ -13,7 +13,6 @@ class TagUpdateWalker : public DataWalker
 {
 public:
     TagUpdateWalker(const std::wstring& name, unsigned char tagType, DataFixTypes::EDataFixTypes dataFixType);
-    virtual ~TagUpdateWalker();
 
     virtual CompoundTag* walk(DataFixer* fixer, CompoundTag* tag, int version);
 

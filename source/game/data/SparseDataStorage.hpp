@@ -7,6 +7,9 @@
 class DataInputStream;
 class DataOutputStream;
 
+template <class T>
+class XLockFreeStack;
+
 class SparseDataStorage
 {
 public:
@@ -88,6 +91,10 @@ private:
     DataAndCountValue dataAndCount;
 
     static const unsigned int DATA_SIZE_SHIFT = 16;
+
+    static int sPendingDeleteList;
+    static XLockFreeStack<unsigned char> sPendingDeleteLists[3];
+    static int sAllocatedBytes;
 };
 
 #endif

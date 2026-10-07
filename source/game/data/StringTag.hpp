@@ -18,7 +18,6 @@ public:
     virtual void load(DataInput* input, int depth);
     virtual std::wstring toString();
     virtual unsigned char getId();
-    virtual ~StringTag();
     virtual bool equals(Tag* other);
     virtual StringTag* copy();
     virtual bool isEmpty() const;

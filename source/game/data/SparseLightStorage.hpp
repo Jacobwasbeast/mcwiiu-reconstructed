@@ -30,8 +30,6 @@ public:
     unsigned int compress();
     bool isCompressed();
 
-    int getAllocatedBytes();
-
     unsigned int getRawData(unsigned char* buffer);
     void setFromRawData(unsigned char* rawData, unsigned int size);
 

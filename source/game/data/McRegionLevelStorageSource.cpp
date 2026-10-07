@@ -13,10 +13,6 @@ McRegionLevelStorageSource::McRegionLevelStorageSource(File file, DataFixerUpper
 {
 }
 
-McRegionLevelStorageSource::~McRegionLevelStorageSource()
-{
-}
-
 std::wstring McRegionLevelStorageSource::getName()
 {
     return std::wstring(L"Scaevolus' McRegion");
@@ -42,32 +38,34 @@ bool McRegionLevelStorageSource::isConvertible(ConsoleSaveFile* saveFile,
                                                const std::wstring& levelId)
 {
     LevelData* levelData = getDataTagFor(saveFile, levelId);
-    if (levelData != 0)
+    if (levelData == 0)
     {
-        if (levelData->getVersion() == 0)
-        {
-            delete levelData;
-            return true;
-        }
-        delete levelData;
+        return false;
     }
-    return false;
+    if (levelData->getVersion() != 0)
+    {
+        delete levelData;
+        return false;
+    }
+    delete levelData;
+    return true;
 }
 
 bool McRegionLevelStorageSource::requiresConversion(ConsoleSaveFile* saveFile,
                                                     const std::wstring& levelId)
 {
     LevelData* levelData = getDataTagFor(saveFile, levelId);
-    if (levelData != 0)
+    if (levelData == 0)
     {
-        if (levelData->getVersion() == 0)
-        {
-            delete levelData;
-            return true;
-        }
-        delete levelData;
+        return false;
     }
-    return false;
+    if (levelData->getVersion() != 0)
+    {
+        delete levelData;
+        return false;
+    }
+    delete levelData;
+    return true;
 }
 
 bool McRegionLevelStorageSource::convertLevel(ConsoleSaveFile* saveFile,
@@ -80,14 +78,16 @@ bool McRegionLevelStorageSource::convertLevel(ConsoleSaveFile* saveFile,
 void McRegionLevelStorageSource::eraseFolders(std::vector<File*>* folders, int current,
                                               int total, ProgressListener* progressListener)
 {
+    File* folder;
+    std::vector<File*>::iterator end;
     std::vector<File*>::iterator it;
-    std::vector<File*>::iterator end = folders->end();
-    for (it = folders->begin(); it != end; ++it)
+    for (end = folders->end(), it = folders->begin(); it != end; ++it)
     {
-        File* folder = *it;
+        folder = *it;
         deleteRecursive(folder->listFiles());
         folder->_delete();
         ++current;
-        progressListener->progressStagePercentage(Math::round(100.0 * current / total));
+        int percentage = Math::round(100.0 * current / total);
+        progressListener->progressStagePercentage(percentage);
     }
 }

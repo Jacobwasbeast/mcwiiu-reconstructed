@@ -176,10 +176,10 @@ void ElementStorage::getData(arrayWithLength<unsigned short> elements, arrayWith
     for (slice = minSlice; slice < maxSlice; ++slice)
     {
         unsigned int base = (((unsigned int)slice & 0x20) << 10) | (((unsigned int)slice & 0x1f) << 2);
-        unsigned int column;
+        int column;
         for (column = 0; column < 256; ++column)
         {
-            unsigned int y;
+            int y;
             for (y = 0; y < 4; ++y)
             {
                 unsigned int index = base | (column << 7) | y;

@@ -10,10 +10,6 @@ TagUpdateWalker::TagUpdateWalker(const std::wstring& name, unsigned char tagType
 {
 }
 
-TagUpdateWalker::~TagUpdateWalker()
-{
-}
-
 CompoundTag* TagUpdateWalker::walk(DataFixer* fixer, CompoundTag* tag, int version)
 {
     if (tag->contains(mName, mTagType))

@@ -14,10 +14,6 @@ StringTag::StringTag(const std::wstring& data)
     mData = data;
 }
 
-StringTag::~StringTag()
-{
-}
-
 void StringTag::write(DataOutput* output)
 {
     output->writeUTF(mData);
@@ -40,26 +36,13 @@ unsigned char StringTag::getId()
 
 bool StringTag::equals(Tag* other)
 {
-    if (!Tag::equals(other))
+    if (Tag::equals(other))
     {
-        return false;
+        StringTag* tag = (StringTag*)other;
+        return (mData.empty() && tag->mData.empty()) || (!mData.empty() && mData.compare(tag->mData) == 0);
     }
 
-    StringTag* tag = (StringTag*)other;
-    bool same = true;
-    if (mData.empty())
-    {
-        if (!tag->mData.empty())
-        {
-            same = false;
-        }
-    }
-    else if (mData.compare(tag->mData) != 0)
-    {
-        same = false;
-    }
-
-    return same;
+    return false;
 }
 
 StringTag* StringTag::copy()

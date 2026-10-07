@@ -14,7 +14,7 @@ ConsoleSaveFileOutputStream::ConsoleSaveFileOutputStream(ConsoleSaveFile* saveFi
 ConsoleSaveFileOutputStream::ConsoleSaveFileOutputStream(ConsoleSaveFile* saveFile, FileEntry* fileEntry)
     : m_saveFile(saveFile), m_fileEntry(fileEntry)
 {
-    saveFile->setFilePointer(m_fileEntry, 0, NULL, 0);
+    saveFile->setFilePointer(fileEntry, 0, NULL, 0);
 }
 
 void ConsoleSaveFileOutputStream::write(unsigned int value)
@@ -26,8 +26,9 @@ void ConsoleSaveFileOutputStream::write(unsigned int value)
 
 void ConsoleSaveFileOutputStream::write(arrayWithLength<unsigned char> data)
 {
+    unsigned int length = data.length;
     unsigned int bytesWritten;
-    m_saveFile->writeFile(m_fileEntry, &data, data.length, &bytesWritten);
+    m_saveFile->writeFile(m_fileEntry, &data, length, &bytesWritten);
 }
 
 void ConsoleSaveFileOutputStream::write(arrayWithLength<unsigned char> data, unsigned int offset, unsigned int length)

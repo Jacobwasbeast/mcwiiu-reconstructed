@@ -21,7 +21,6 @@ public:
     class ChunkFile;
 
     McRegionLevelStorageSource(File file, DataFixerUpper* fixer);
-    virtual ~McRegionLevelStorageSource();
 
     virtual std::wstring getName();
     virtual boost::shared_ptr<LevelStorage> selectLevel(ConsoleSaveFile* saveFile,

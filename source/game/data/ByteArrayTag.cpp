@@ -33,15 +33,15 @@ void ByteArrayTag::write(DataOutput* output)
 
 void ByteArrayTag::load(DataInput* input, int depth)
 {
-    unsigned int length = static_cast<unsigned int>(input->readInt());
+    int length = input->readInt();
 
-    if (!mOwnsData)
+    if (mOwnsData)
     {
-        mOwnsData = true;
+        delete[] mData.data;
     }
     else
     {
-        delete[] mData.data;
+        mOwnsData = true;
     }
 
     mData = arrayWithLength<unsigned char>(length, true);
@@ -62,25 +62,12 @@ std::wstring ByteArrayTag::toString()
 
 bool ByteArrayTag::equals(Tag* other)
 {
-    if (!Tag::equals(other))
+    if (Tag::equals(other))
     {
-        return false;
+        ByteArrayTag* otherArray = static_cast<ByteArrayTag*>(other);
+        return (mData.data == NULL && otherArray->mData.data == NULL) || (mData.data != NULL && mData.length == otherArray->mData.length && std::memcmp(mData.data, otherArray->mData.data, mData.length) == 0);
     }
-
-    ByteArrayTag* otherArray = static_cast<ByteArrayTag*>(other);
-    bool same = true;
-    if (mData.data == NULL)
-    {
-        if (otherArray->mData.data != NULL)
-        {
-            same = false;
-        }
-    }
-    else if (mData.length != otherArray->mData.length || std::memcmp(mData.data, otherArray->mData.data, mData.length) != 0)
-    {
-        same = false;
-    }
-    return same;
+    return false;
 }
 
 ByteArrayTag* ByteArrayTag::copy()

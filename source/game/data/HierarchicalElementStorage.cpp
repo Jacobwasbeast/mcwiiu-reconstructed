@@ -1235,13 +1235,15 @@ void HierarchicalElementStorage::getData(arrayWithLength<unsigned short> element
     for (int slice = minSlice; slice < maxSlice; ++slice)
     {
         int subChunk = slice / 4;
-        unsigned int sliceBaseIndex = (((unsigned int)slice & 0x1F) << 2) | (((unsigned int)slice & 0x20) << 10);
+        unsigned int sliceBaseIndex = (((unsigned int)slice & 0x20) << 10) | (((unsigned int)slice & 0x1F) << 2);
+
+        int sliceInSubChunk = slice - subChunk * 4;
 
         if (mSubChunkInfo.getSize(subChunk) == 0)
         {
-            for (unsigned int column = 0; column < 256; ++column)
+            for (int column = 0; column < 256; ++column)
             {
-                for (unsigned int y = 0; y < 4; ++y)
+                for (int y = 0; y < 4; ++y)
                 {
                     elements.data[sliceBaseIndex | (column << 7) | y] = 0;
                 }
@@ -1252,11 +1254,11 @@ void HierarchicalElementStorage::getData(arrayWithLength<unsigned short> element
 
         SubChunkHeader* header = (SubChunkHeader*)(mData + mSubChunkInfo.getOffset(subChunk) * SUBCHUNK_PAGE_BYTES);
 
-        for (unsigned int xSection = 0; xSection < 4; ++xSection)
+        for (int xSection = 0; xSection < 4; ++xSection)
         {
-            for (unsigned int zSection = 0; zSection < 4; ++zSection)
+            for (int zSection = 0; zSection < 4; ++zSection)
             {
-                unsigned int section = (xSection << 4) | (zSection << 2) | (unsigned int)(slice - subChunk * 4);
+                unsigned int section = (xSection << 4) | (zSection << 2) | (unsigned int)sliceInSubChunk;
                 unsigned int sectionBaseIndex = sliceBaseIndex | (xSection << 13) | (zSection << 9);
                 unsigned int planeCount = header->getType(section);
 
@@ -1287,13 +1289,16 @@ void HierarchicalElementStorage::getData(arrayWithLength<unsigned short> element
                     {
                         unsigned char bit = (unsigned char)(0x80 >> (element & 7));
                         unsigned int paletteIndex = 0;
+                        unsigned char paletteBit = 1;
 
                         for (unsigned int plane = 0; plane < planeCount; ++plane)
                         {
                             if ((planeData[plane * SECTION_PLANE_BYTES + (element >> 3)] & bit) != 0)
                             {
-                                paletteIndex |= 1u << plane;
+                                paletteIndex |= paletteBit;
                             }
+
+                            paletteBit <<= 1;
                         }
 
                         elements.data[sectionBaseIndex | ((element & 0x30) << 7) | ((element & 0xC) << 5) | (element & 3)] = sectionRef.getPaletteEntry(paletteIndex);
@@ -1309,13 +1314,13 @@ void HierarchicalElementStorage::getData(arrayWithLength<unsigned short> element
     for (int slice = minSlice; slice < maxSlice; ++slice)
     {
         int subChunk = slice / 4;
-        unsigned int sliceBaseIndex = (((unsigned int)slice & 0x1F) << 2) | (((unsigned int)slice & 0x20) << 10);
+        unsigned int sliceBaseIndex = (((unsigned int)slice & 0x20) << 10) | (((unsigned int)slice & 0x1F) << 2);
 
         if (mSubChunkInfo.getSize(subChunk) == 0)
         {
-            for (unsigned int column = 0; column < 256; ++column)
+            for (int column = 0; column < 256; ++column)
             {
-                for (unsigned int y = 0; y < 4; ++y)
+                for (int y = 0; y < 4; ++y)
                 {
                     elements.data[sliceBaseIndex | (column << 7) | y] = 0;
                 }
@@ -1326,9 +1331,9 @@ void HierarchicalElementStorage::getData(arrayWithLength<unsigned short> element
 
         SubChunkHeader* header = (SubChunkHeader*)(mData + mSubChunkInfo.getOffset(subChunk) * SUBCHUNK_PAGE_BYTES);
 
-        for (unsigned int xSection = 0; xSection < 4; ++xSection)
+        for (int xSection = 0; xSection < 4; ++xSection)
         {
-            for (unsigned int zSection = 0; zSection < 4; ++zSection)
+            for (int zSection = 0; zSection < 4; ++zSection)
             {
                 unsigned int section = (xSection << 4) | (zSection << 2) | (unsigned int)(slice - subChunk * 4);
                 unsigned int sectionBaseIndex = sliceBaseIndex | (xSection << 13) | (zSection << 9);
@@ -1373,17 +1378,21 @@ void HierarchicalElementStorage::getData(arrayWithLength<unsigned short> element
                         unsigned int paletteIndex = 0;
                         unsigned int extraPaletteIndex = 0;
 
+                        unsigned char paletteBit = 1;
+
                         for (unsigned int plane = 0; plane < planeCount; ++plane)
                         {
                             if ((planeData[plane * SECTION_PLANE_BYTES + (element >> 3)] & bit) != 0)
                             {
-                                paletteIndex |= 1u << plane;
+                                paletteIndex |= paletteBit;
                             }
 
                             if (extraPlaneData != NULL && (extraPlaneData[plane * SECTION_PLANE_BYTES + (element >> 3)] & bit) != 0)
                             {
-                                extraPaletteIndex |= 1u << plane;
+                                extraPaletteIndex |= paletteBit;
                             }
+
+                            paletteBit <<= 1;
                         }
 
                         unsigned short extraValue = 0;
@@ -2146,8 +2155,8 @@ int HierarchicalElementStorage::setDataRegion(arrayWithLength<unsigned char> dat
 
 int HierarchicalElementStorage::getDataRegion(arrayWithLength<unsigned char> data, int x0, int y0, int z0, int x1, int y1, int z1, int offset)
 {
-    unsigned short* elements = (unsigned short*)(data.data + offset);
-    unsigned short* destination = elements;
+    unsigned short* destination = (unsigned short*)(data.data + offset);
+    unsigned short* elements = destination;
 
     for (int x = x0; x < x1; ++x)
     {
