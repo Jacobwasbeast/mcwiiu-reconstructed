@@ -15,9 +15,8 @@ class ZombieHorse : public AbstractHorse
 {
 public:
     ZombieHorse(Level* level);
-    virtual ~ZombieHorse();
 
-    static void create(Level* level);
+    static Entity* create(Level* level);
     static void addDataWalkers(DataFixerUpper* fixer);
     virtual void registerAttributes();
     virtual void registerGoals();

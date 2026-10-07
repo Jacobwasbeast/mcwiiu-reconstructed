@@ -16,7 +16,7 @@ class Skeleton : public AbstractSkeleton
 public:
     Skeleton(Level* level);
 
-    static void create(Level* level);
+    static Entity* create(Level* level);
     static void addDataWalkers(DataFixerUpper* fixer);
     virtual void registerGoals();
     virtual ResourceLocation* getDefaultLootTable();

@@ -29,7 +29,6 @@ public:
     {
     public:
         SkeleteMeleeAttackGoal(AbstractSkeleton* skeleton);
-        virtual ~SkeleteMeleeAttackGoal();
         virtual void start();
         virtual void stop();
     };

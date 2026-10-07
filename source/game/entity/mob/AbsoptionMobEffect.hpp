@@ -7,7 +7,6 @@ class AbsoptionMobEffect : public MobEffect
 {
 public:
     AbsoptionMobEffect(bool harmful, eMinecraftColour color);
-    virtual ~AbsoptionMobEffect();
 
     virtual void removeAttributeModifiers(const boost::shared_ptr<LivingEntity>& entity,
                                           BaseAttributeMap* attributes, int amplifier);

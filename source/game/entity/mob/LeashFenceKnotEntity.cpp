@@ -44,9 +44,9 @@ LeashFenceKnotEntity::LeashFenceKnotEntity(Level* level, const BlockPos& pos)
                                       mY + halfHeight + yOffset, mZ + 0.1875));
 }
 
-void LeashFenceKnotEntity::create(Level* level)
+Entity* LeashFenceKnotEntity::create(Level* level)
 {
-    new LeashFenceKnotEntity(level);
+    return new LeashFenceKnotEntity(level);
 }
 
 void LeashFenceKnotEntity::_init()

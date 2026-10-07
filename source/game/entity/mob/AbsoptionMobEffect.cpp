@@ -8,10 +8,6 @@ AbsoptionMobEffect::AbsoptionMobEffect(bool harmful, eMinecraftColour color)
 {
 }
 
-AbsoptionMobEffect::~AbsoptionMobEffect()
-{
-}
-
 void AbsoptionMobEffect::removeAttributeModifiers(const boost::shared_ptr<LivingEntity>& entity,
                                                   BaseAttributeMap* attributes, int amplifier)
 {

@@ -25,10 +25,6 @@ HangingEntityItem::HangingEntityItem(unsigned long long entityType)
 {
 }
 
-HangingEntityItem::~HangingEntityItem()
-{
-}
-
 boost::shared_ptr<HangingEntity> HangingEntityItem::createEntity(Level* level, const BlockPos& pos,
                                                                   const Direction* direction, int auxValue)
 {

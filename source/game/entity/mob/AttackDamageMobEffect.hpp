@@ -7,7 +7,6 @@ class AttackDamageMobEffect : public MobEffect
 {
 public:
     AttackDamageMobEffect(bool harmful, eMinecraftColour color, double damage);
-    virtual ~AttackDamageMobEffect();
 
     virtual double getAttributeModifierValue(int amplifier, AttributeModifier* modifier);
 

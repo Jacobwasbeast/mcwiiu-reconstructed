@@ -12,7 +12,6 @@ class HealthBoostMobEffect : public MobEffect
 {
 public:
     HealthBoostMobEffect(bool harmful, eMinecraftColour color);
-    virtual ~HealthBoostMobEffect();
 
     virtual void removeAttributeModifiers(const boost::shared_ptr<LivingEntity>& entity,
                                           BaseAttributeMap* attributes, int amplifier);

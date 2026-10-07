@@ -28,13 +28,9 @@ SkeletonHorse::SkeletonHorse(Level* level)
     fjDerivedCtorCalls();
 }
 
-SkeletonHorse::~SkeletonHorse()
+Entity* SkeletonHorse::create(Level* level)
 {
-}
-
-void SkeletonHorse::create(Level* level)
-{
-    new SkeletonHorse(level);
+    return new SkeletonHorse(level);
 }
 
 void SkeletonHorse::setTrap(bool trap)

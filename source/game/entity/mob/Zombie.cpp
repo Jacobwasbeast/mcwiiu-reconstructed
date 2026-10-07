@@ -95,9 +95,9 @@ Zombie::~Zombie()
     delete mBreakDoorGoal;
 }
 
-void Zombie::create(Level* level)
+Entity* Zombie::create(Level* level)
 {
-    new Zombie(level);
+    return new Zombie(level);
 }
 
 void Zombie::staticCtor()

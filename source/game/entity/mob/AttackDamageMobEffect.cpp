@@ -5,10 +5,6 @@ AttackDamageMobEffect::AttackDamageMobEffect(bool harmful, eMinecraftColour colo
 {
 }
 
-AttackDamageMobEffect::~AttackDamageMobEffect()
-{
-}
-
 double AttackDamageMobEffect::getAttributeModifierValue(int amplifier, AttributeModifier*)
 {
     return damage * (double)(amplifier + 1);

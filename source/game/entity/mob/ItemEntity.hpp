@@ -24,8 +24,7 @@ public:
     ItemEntity(Level* level, double x, double y, double z, not_null_ptr<ItemInstance> item);
     ItemEntity(Level* level, double x, double y, double z);
     explicit ItemEntity(Level* level);
-    virtual ~ItemEntity();
-    static ItemEntity* create(Level* level);
+    static Entity* create(Level* level);
     void _init();
     void _init(Level* level, double x, double y, double z);
     void setItem(not_null_ptr<ItemInstance> item);

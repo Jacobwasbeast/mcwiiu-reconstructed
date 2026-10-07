@@ -43,7 +43,7 @@ public:
     boost::shared_ptr<LivingEntity> getOwner() const;
     virtual void updateDeltaAfterMove(Block* block, double x, double y, double z, double& movedX, double& movedY, double& movedZ);
     virtual void defineSynchedData();
-    static void create(Level* level);
+    static Entity* create(Level* level);
     virtual unsigned long long GetType();
     virtual bool shouldTick();
 

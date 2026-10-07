@@ -573,9 +573,9 @@ void FireworksRocketEntity::defineSynchedData()
     mEntityData->createDateItem(DATA_ATTACHED_TO_ENTITY, -1);
 }
 
-void FireworksRocketEntity::create(Level* level)
+Entity* FireworksRocketEntity::create(Level* level)
 {
-    new FireworksRocketEntity(level);
+    return new FireworksRocketEntity(level);
 }
 
 unsigned long long FireworksRocketEntity::GetType()

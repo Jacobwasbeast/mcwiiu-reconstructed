@@ -5,10 +5,6 @@
 #include "game/core/DataInputStream.hpp"
 #include "game/core/DataOutputStream.hpp"
 
-EntityDataCommand::~EntityDataCommand()
-{
-}
-
 EGameCommand EntityDataCommand::getId()
 {
     return eGameCommand_EntityData;

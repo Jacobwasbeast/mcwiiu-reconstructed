@@ -36,7 +36,7 @@ public:
 
     Horse(Level* level);
     virtual ~Horse();
-    static void create(Level* level);
+    static Entity* create(Level* level);
     HorseArmorItem* getArmorType();
     virtual void containerChanged(Container* container);
     static void addDataWalkers(DataFixerUpper* fixer);

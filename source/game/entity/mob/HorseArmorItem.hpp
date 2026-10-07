@@ -19,7 +19,6 @@ public:
     HorseArmorItem(int tier, int protection, int texture, const wchar_t* hash);
     HorseArmorItem(int tier, int protection, const int* textures, int textureCount, const wchar_t* hash);
     HorseArmorItem(int tier, int protection);
-    virtual ~HorseArmorItem();
 
     static bool isHorseArmor(Item* item);
     int getTier() const;

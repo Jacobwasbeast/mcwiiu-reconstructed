@@ -20,9 +20,8 @@ class SkeletonHorse : public AbstractHorse
 {
 public:
     SkeletonHorse(Level* level);
-    virtual ~SkeletonHorse();
 
-    static void create(Level* level);
+    static Entity* create(Level* level);
     void setTrap(bool trap);
     virtual void registerAttributes();
     virtual void registerGoals();

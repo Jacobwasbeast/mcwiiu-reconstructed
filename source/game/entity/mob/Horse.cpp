@@ -58,7 +58,10 @@ Horse::~Horse()
     delete[] mLayeredTextureLayers.data;
 }
 
-void Horse::create(Level* level) { new Horse(level); }
+Entity* Horse::create(Level* level)
+{
+    return new Horse(level);
+}
 
 HorseArmorItem* Horse::getArmorType()
 {
@@ -139,19 +142,19 @@ void Horse::rebuildLayeredTextureInfo()
 {
     mLayeredTextureHashName = L"horse/";
     for (unsigned int layer = 0; layer < mLayeredTextureLayers.length; ++layer)
-        mLayeredTextureLayers.data[layer] = -1;
+        mLayeredTextureLayers[layer] = -1;
 
     int variant = getVariant();
     int colour = (variant & 0xFF) % 7;
     int markings = ((variant >> 8) & 0xFF) % 5;
     HorseArmorItem* armor = getArmorType();
 
-    mLayeredTextureLayers.data[0] = VARIANT_TEXTURES[colour];
-    mLayeredTextureLayers.data[1] = MARKING_TEXTURES[markings];
-    int layerCount = mLayeredTextureLayers.data[1] == -1 ? 1 : 2;
+    mLayeredTextureLayers[0] = VARIANT_TEXTURES[colour];
+    mLayeredTextureLayers[1] = MARKING_TEXTURES[markings];
+    int layerCount = mLayeredTextureLayers[1] == -1 ? 1 : 2;
     int armorTextureCount = armor->getTextureCount();
     for (int i = 0; i < armorTextureCount; ++i)
-        mLayeredTextureLayers.data[layerCount + i] = armor->getTexture(i);
+        mLayeredTextureLayers[layerCount + i] = armor->getTexture(i);
 
     mLayeredTextureHashName = L"horse/" + VARIANT_HASHES[colour] + MARKING_HASHES[markings] + armor->getHash();
     mLayeredTextureInfoBuilt = true;

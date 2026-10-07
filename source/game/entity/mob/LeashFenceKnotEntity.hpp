@@ -32,7 +32,7 @@ public:
     virtual void dropItem(boost::shared_ptr<Entity> breaker);
     virtual void playPlacementSound();
 
-    static void create(Level* level);
+    static Entity* create(Level* level);
     void _init();
     static boost::shared_ptr<LeashFenceKnotEntity> createAndAddKnot(Level* level, const BlockPos& pos);
     static boost::shared_ptr<LeashFenceKnotEntity> findKnotAt(Level* level, const BlockPos& pos);

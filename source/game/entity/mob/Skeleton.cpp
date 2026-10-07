@@ -22,9 +22,9 @@ Skeleton::Skeleton(Level* level)
     Mob::fjDerivedCtorCalls();
 }
 
-void Skeleton::create(Level* level)
+Entity* Skeleton::create(Level* level)
 {
-    new Skeleton(level);
+    return new Skeleton(level);
 }
 
 void Skeleton::addDataWalkers(DataFixerUpper* fixer)

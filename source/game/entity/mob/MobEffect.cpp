@@ -215,19 +215,21 @@ eMinecraftColour MobEffect::getColor() const
 MobEffect* MobEffect::addAttributeModifier(Attribute* attribute, eMODIFIER_ID id,
                                             double amount, int operation)
 {
-    insert(value_type(attribute, new AttributeModifier(id, amount, operation)));
+    attributeModifiers.insert(boost::unordered_map<Attribute*, AttributeModifier*>::value_type(
+        attribute, new AttributeModifier(id, amount, operation)));
     return this;
 }
 
 boost::unordered_map<Attribute*, AttributeModifier*>* MobEffect::getAttributeModifiers()
 {
-    return this;
+    return &attributeModifiers;
 }
 
 void MobEffect::removeAttributeModifiers(const boost::shared_ptr<LivingEntity>&,
                                          BaseAttributeMap* attributes, int)
 {
-    for (iterator it = begin(); it != end(); ++it)
+    for (boost::unordered_map<Attribute*, AttributeModifier*>::iterator it = attributeModifiers.begin();
+         it != attributeModifiers.end(); ++it)
     {
         AttributeInstance* instance = attributes->getInstance(it->first);
         if (instance)
@@ -240,7 +242,8 @@ void MobEffect::removeAttributeModifiers(const boost::shared_ptr<LivingEntity>&,
 void MobEffect::addAttributeModifiers(const boost::shared_ptr<LivingEntity>&,
                                       BaseAttributeMap* attributes, int amplifier)
 {
-    for (iterator it = begin(); it != end(); ++it)
+    for (boost::unordered_map<Attribute*, AttributeModifier*>::iterator it = attributeModifiers.begin();
+         it != attributeModifiers.end(); ++it)
     {
         AttributeInstance* instance = attributes->getInstance(it->first);
         if (instance)

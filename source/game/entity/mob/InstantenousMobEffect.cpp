@@ -5,10 +5,6 @@ InstantenousMobEffect::InstantenousMobEffect(bool harmful, eMinecraftColour colo
 {
 }
 
-InstantenousMobEffect::~InstantenousMobEffect()
-{
-}
-
 bool InstantenousMobEffect::isDurationEffectTick(int duration, int)
 {
     return duration > 0;

@@ -32,9 +32,9 @@ PigZombie::PigZombie(Level* level)
     mFireImmune = true;
 }
 
-void PigZombie::create(Level* level)
+Entity* PigZombie::create(Level* level)
 {
-    new PigZombie(level);
+    return new PigZombie(level);
 }
 
 void PigZombie::_init()
@@ -185,10 +185,6 @@ unsigned long long PigZombie::GetType()
 
 PigZombie::PigZombieHurtByOtherGoal::PigZombieHurtByOtherGoal(PigZombie* mob)
     : HurtByTargetGoal(mob, true, arrayWithLength<unsigned long long>())
-{
-}
-
-PigZombie::PigZombieHurtByOtherGoal::~PigZombieHurtByOtherGoal()
 {
 }
 

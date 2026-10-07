@@ -20,7 +20,7 @@ class Entity;
 class LivingEntity;
 class MobEffectInstance;
 
-class MobEffect : public boost::unordered_map<Attribute*, AttributeModifier*>
+class MobEffect
 {
 public:
     enum EMobEffectIcon
@@ -94,6 +94,7 @@ public:
     static std::wstring formatDuration(MobEffectInstance* effect, float durationFactor);
 
 private:
+    boost::unordered_map<Attribute*, AttributeModifier*> attributeModifiers;
     int descriptionId;
     unsigned int icon;
     bool harmful;

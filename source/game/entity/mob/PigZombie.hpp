@@ -24,7 +24,6 @@ public:
     {
     public:
         PigZombieHurtByOtherGoal(PigZombie* mob);
-        virtual ~PigZombieHurtByOtherGoal();
         virtual void alertOther(boost::shared_ptr<PathfinderMob> mob,
                                 boost::shared_ptr<LivingEntity> target);
     };
@@ -33,7 +32,7 @@ public:
 
     PigZombie(Level* level);
 
-    static void create(Level* level);
+    static Entity* create(Level* level);
     void _init();
     virtual void setLastHurtByMob(boost::shared_ptr<LivingEntity> entity);
     virtual void addBehaviourGoals();

@@ -47,7 +47,7 @@ public:
     Zombie(Level* level, bool initializeGoals);
     virtual ~Zombie();
 
-    static void create(Level* level);
+    static Entity* create(Level* level);
     static void staticCtor();
     void _init();
     virtual void registerGoals();

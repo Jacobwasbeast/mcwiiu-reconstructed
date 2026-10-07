@@ -7,7 +7,6 @@ class InstantenousMobEffect : public MobEffect
 {
 public:
     InstantenousMobEffect(bool harmful, eMinecraftColour color);
-    virtual ~InstantenousMobEffect();
 
     virtual bool isDurationEffectTick(int duration, int amplifier);
     virtual bool isInstantenous();

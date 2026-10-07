@@ -118,29 +118,6 @@ namespace
     std::vector<std::wstring> sTranslationNames;
     Creators sCreators;
 
-    template <typename T>
-    Entity* createEntity(Level* level)
-    {
-        return new T(level);
-    }
-
-    template <>
-    Entity* createEntity<Guardian>(Level* level)
-    {
-        return new Guardian(level, true);
-    }
-
-    template <>
-    Entity* createEntity<Cow>(Level* level)
-    {
-        return new Cow(level, true);
-    }
-
-    template <>
-    Entity* createEntity<Fish>(Level* level)
-    {
-        return new Fish(level, false);
-    }
 }
 
 
@@ -323,97 +300,97 @@ void EntityIO::Register(Creator creator, int id, const std::wstring& name,
 
 void EntityIO::bootStrap()
 {
-    Register(createEntity<ItemEntity>, 1, L"item", EntityType::ITEM_ENTITY, L"Item");
-    Register(createEntity<ExperienceOrb>, 2, L"xp_orb", EntityType::EXPERIENCE_ORB, L"XPOrb");
-    Register(createEntity<AreaEffectCloud>, 3, L"area_effect_cloud", EntityType::AREA_EFFECT_CLOUD, L"AreaEffectCloud");
-    Register(createEntity<ElderGuardian>, 4, L"elder_guardian", EntityType::ELDER_GUARDIAN, L"ElderGuardian");
-    Register(createEntity<WitherSkeleton>, 5, L"wither_skeleton", EntityType::WITHER_SKELETON, L"WitherSkeleton");
-    Register(createEntity<Stray>, 6, L"stray", EntityType::STRAY, L"Stray");
-    Register(createEntity<ThrownEgg>, 7, L"egg", EntityType::THROWN_EGG, L"ThrownEgg");
-    Register(createEntity<LeashFenceKnotEntity>, 8, L"leash_knot", EntityType::LEASH_FENCE_KNOT_ENTITY, L"LeashKnot");
-    Register(createEntity<Painting>, 9, L"painting", EntityType::PAINTING, L"Painting");
-    Register(createEntity<TippableArrow>, 10, L"arrow", EntityType::TIPPABLE_ARROW, L"Arrow");
-    Register(createEntity<Snowball>, 11, L"snowball", EntityType::SNOWBALL, L"Snowball");
-    Register(createEntity<LargeFireball>, 12, L"fireball", EntityType::LARGE_FIREBALL, L"Fireball");
-    Register(createEntity<SmallFireball>, 13, L"small_fireball", EntityType::SMALL_FIREBALL, L"SmallFireball");
-    Register(createEntity<ThrownEnderpearl>, 14, L"ender_pearl", EntityType::THROWN_ENDERPEARL, L"ThrownEnderpearl");
-    Register(createEntity<EyeOfEnderSignal>, 15, L"eye_of_ender_signal", EntityType::EYE_OF_ENDER_SIGNAL, L"EyeOfEnderSignal");
-    Register(createEntity<ThrownPotion>, 16, L"potion", EntityType::THROWN_POTION, L"ThrownPotion");
-    Register(createEntity<ThrownExpBottle>, 17, L"xp_bottle", EntityType::THROWN_EXP_BOTTLE, L"ThrownExpBottle");
-    Register(createEntity<ItemFrame>, 18, L"item_frame", EntityType::ITEM_FRAME, L"ItemFrame");
-    Register(createEntity<WitherSkull>, 19, L"wither_skull", EntityType::WITHER_SKULL, L"WitherSkull");
-    Register(createEntity<PrimedTnt>, 20, L"tnt", EntityType::PRIMED_TNT, L"PrimedTnt");
-    Register(createEntity<FallingBlockEntity>, 21, L"falling_block", EntityType::FALLING_BLOCK_ENTITY, L"FallingSand");
-    Register(createEntity<FireworksRocketEntity>, 22, L"fireworks_rocket", EntityType::FIREWORKS_ROCKET_ENTITY, L"FireworksRocketEntity");
-    Register(createEntity<Husk>, 23, L"husk", EntityType::HUSK, L"Husk");
-    Register(createEntity<SpectralArrow>, 24, L"spectral_arrow", EntityType::SPECTRAL_ARROW, L"SpectralArrow");
-    Register(createEntity<ShulkerBullet>, 25, L"shulker_bullet", EntityType::SHULKER_BULLET, L"ShulkerBullet");
-    Register(createEntity<DragonFireball>, 26, L"dragon_fireball", EntityType::DRAGON_FIREBALL, L"DragonFireball");
-    Register(createEntity<ZombieVillager>, 27, L"zombie_villager", EntityType::ZOMBIE_VILLAGER, L"ZombieVillager");
-    Register(createEntity<SkeletonHorse>, 28, L"skeleton_horse", EntityType::SKELETON_HORSE, L"SkeletonHorse");
-    Register(createEntity<ZombieHorse>, 29, L"zombie_horse", EntityType::ZOMBIE_HORSE, L"ZombieHorse");
-    Register(createEntity<ArmorStand>, 30, L"armor_stand", EntityType::ARMOR_STAND, L"ArmorStand");
-    Register(createEntity<Donkey>, 31, L"donkey", EntityType::DONKEY, L"Donkey");
-    Register(createEntity<Mule>, 32, L"mule", EntityType::MULE, L"Mule");
-    Register(createEntity<EvocationFangs>, 33, L"evocation_fangs", EntityType::EVOCATION_FANGS, L"EvocationFangs");
-    Register(createEntity<EvocationIllager>, 34, L"evocation_illager", EntityType::EVOCATION_ILLAGER, L"EvocationIllager");
-    Register(createEntity<Vex>, 35, L"vex", EntityType::VEX, L"Vex");
-    Register(createEntity<VindicationIllager>, 36, L"vindication_illager", EntityType::VINDICATION_ILLAGER, L"VindicationIllager");
-    Register(createEntity<IllusionIllager>, 37, L"illusion_illager", EntityType::ILLUSION_ILLAGER, L"IllusionIllager");
-    Register(createEntity<ThrownTrident>, 38, L"trident", EntityType::THROWN_TRIDENT, L"Trident");
-    Register(createEntity<Dolphin>, 39, L"dolphin", EntityType::DOLPHIN, L"Dolphin");
-    Register(createEntity<Boat>, 41, L"boat", EntityType::BOAT, L"Boat");
-    Register(createEntity<MinecartRideable>, 42, L"minecart", EntityType::MINECART_RIDEABLE, Minecart::Type::RIDEABLE->getName());
-    Register(createEntity<MinecartChest>, 43, L"chest_minecart", EntityType::MINECART_CHEST, Minecart::Type::CHEST->getName());
-    Register(createEntity<MinecartFurnace>, 44, L"furnace_minecart", EntityType::MINECART_FURNACE, Minecart::Type::FURNACE->getName());
-    Register(createEntity<MinecartTNT>, 45, L"tnt_minecart", EntityType::MINECART_TNT, Minecart::Type::TNT->getName());
-    Register(createEntity<MinecartHopper>, 46, L"hopper_minecart", EntityType::MINECART_HOPPER, Minecart::Type::HOPPER->getName());
-    Register(createEntity<MinecartSpawner>, 47, L"spawner_minecart", EntityType::MINECART_SPAWNER, Minecart::Type::SPAWNER->getName());
-    Register(createEntity<Creeper>, 50, L"creeper", EntityType::CREEPER, L"Creeper");
-    Register(createEntity<Skeleton>, 51, L"skeleton", EntityType::SKELETON, L"Skeleton");
-    Register(createEntity<Spider>, 52, L"spider", EntityType::SPIDER, L"Spider");
-    Register(createEntity<Giant>, 53, L"giant", EntityType::GIANT, L"Giant");
-    Register(createEntity<Zombie>, 54, L"zombie", EntityType::ZOMBIE, L"Zombie");
-    Register(createEntity<Slime>, 55, L"slime", EntityType::SLIME, L"Slime");
-    Register(createEntity<Ghast>, 56, L"ghast", EntityType::GHAST, L"Ghast");
-    Register(createEntity<PigZombie>, 57, L"zombie_pigman", EntityType::PIG_ZOMBIE, L"PigZombie");
-    Register(createEntity<EnderMan>, 58, L"enderman", EntityType::ENDER_MAN, L"Enderman");
-    Register(createEntity<CaveSpider>, 59, L"cave_spider", EntityType::CAVE_SPIDER, L"CaveSpider");
-    Register(createEntity<Silverfish>, 60, L"silverfish", EntityType::SILVERFISH, L"Silverfish");
-    Register(createEntity<Blaze>, 61, L"blaze", EntityType::BLAZE, L"Blaze");
-    Register(createEntity<MagmaCube>, 62, L"magma_cube", EntityType::MAGMA_CUBE, L"LavaSlime");
-    Register(createEntity<EnderDragon>, 63, L"ender_dragon", EntityType::ENDER_DRAGON, L"EnderDragon");
-    Register(createEntity<WitherBoss>, 64, L"wither", EntityType::WITHER_BOSS, L"WitherBoss");
-    Register(createEntity<Bat>, 65, L"bat", EntityType::BAT, L"Bat");
-    Register(createEntity<Witch>, 66, L"witch", EntityType::WITCH, L"Witch");
-    Register(createEntity<Endermite>, 67, L"endermite", EntityType::ENDERMITE, L"Endermite");
-    Register(createEntity<Guardian>, 68, L"guardian", EntityType::GUARDIAN, L"Guardian");
-    Register(createEntity<Shulker>, 69, L"shulker", EntityType::SHULKER, L"Shulker");
-    Register(createEntity<Pig>, 90, L"pig", EntityType::PIG, L"Pig");
-    Register(createEntity<Sheep>, 91, L"sheep", EntityType::SHEEP, L"Sheep");
-    Register(createEntity<Cow>, 92, L"cow", EntityType::COW, L"Cow");
-    Register(createEntity<Chicken>, 93, L"chicken", EntityType::CHICKEN, L"Chicken");
-    Register(createEntity<Squid>, 94, L"squid", EntityType::SQUID, L"Squid");
-    Register(createEntity<Wolf>, 95, L"wolf", EntityType::WOLF, L"Wolf");
-    Register(createEntity<MushroomCow>, 96, L"mooshroom", EntityType::MUSHROOM_COW, L"MushroomCow");
-    Register(createEntity<SnowMan>, 97, L"snowman", EntityType::SNOW_MAN, L"SnowMan");
-    Register(createEntity<Ocelot>, 98, L"ocelot", EntityType::OCELOT, L"Ozelot");
-    Register(createEntity<VillagerGolem>, 99, L"villager_golem", EntityType::VILLAGER_GOLEM, L"VillagerGolem");
-    Register(createEntity<Horse>, 100, L"horse", EntityType::HORSE, L"Horse");
-    Register(createEntity<Rabbit>, 101, L"rabbit", EntityType::RABBIT, L"Rabbit");
-    Register(createEntity<PolarBear>, 102, L"polar_bear", EntityType::POLAR_BEAR, L"PolarBear");
-    Register(createEntity<Llama>, 103, L"llama", EntityType::LLAMA, L"Llama");
-    Register(createEntity<LlamaSpit>, 104, L"llama_spit", EntityType::LLAMA_SPIT, L"LlamaSpit");
-    Register(createEntity<Parrot>, 105, L"parrot", EntityType::PARROT, L"Parrot");
-    Register(createEntity<TropicalFish>, 106, L"tropicalfish", EntityType::TROPICAL_FISH, L"TropicalFish");
-    Register(createEntity<Fish>, 107, L"fish", EntityType::FISH, L"Fish");
-    Register(createEntity<Pufferfish>, 108, L"pufferfish", EntityType::PUFFERFISH, L"Pufferfish");
-    Register(createEntity<Salmon>, 109, L"salmon", EntityType::SALMON, L"Salmon");
-    Register(createEntity<Turtle>, 110, L"turtle", EntityType::TURTLE, L"Turtle");
-    Register(createEntity<Drowned>, 111, L"drowned", EntityType::DROWNED, L"Drowned");
-    Register(createEntity<Phantom>, 112, L"phantom", EntityType::PHANTOM, L"Phantom");
-    Register(createEntity<Villager>, 120, L"villager", EntityType::VILLAGER, L"Villager");
-    Register(createEntity<EnderCrystal>, 200, L"ender_crystal", EntityType::ENDER_CRYSTAL, L"EnderCrystal");
+    Register(ItemEntity::create, 1, L"item", EntityType::ITEM_ENTITY, L"Item");
+    Register(ExperienceOrb::create, 2, L"xp_orb", EntityType::EXPERIENCE_ORB, L"XPOrb");
+    Register(AreaEffectCloud::create, 3, L"area_effect_cloud", EntityType::AREA_EFFECT_CLOUD, L"AreaEffectCloud");
+    Register(ElderGuardian::create, 4, L"elder_guardian", EntityType::ELDER_GUARDIAN, L"ElderGuardian");
+    Register(WitherSkeleton::create, 5, L"wither_skeleton", EntityType::WITHER_SKELETON, L"WitherSkeleton");
+    Register(Stray::create, 6, L"stray", EntityType::STRAY, L"Stray");
+    Register(ThrownEgg::create, 7, L"egg", EntityType::THROWN_EGG, L"ThrownEgg");
+    Register(LeashFenceKnotEntity::create, 8, L"leash_knot", EntityType::LEASH_FENCE_KNOT_ENTITY, L"LeashKnot");
+    Register(Painting::create, 9, L"painting", EntityType::PAINTING, L"Painting");
+    Register(TippableArrow::create, 10, L"arrow", EntityType::TIPPABLE_ARROW, L"Arrow");
+    Register(Snowball::create, 11, L"snowball", EntityType::SNOWBALL, L"Snowball");
+    Register(LargeFireball::create, 12, L"fireball", EntityType::LARGE_FIREBALL, L"Fireball");
+    Register(SmallFireball::create, 13, L"small_fireball", EntityType::SMALL_FIREBALL, L"SmallFireball");
+    Register(ThrownEnderpearl::create, 14, L"ender_pearl", EntityType::THROWN_ENDERPEARL, L"ThrownEnderpearl");
+    Register(EyeOfEnderSignal::create, 15, L"eye_of_ender_signal", EntityType::EYE_OF_ENDER_SIGNAL, L"EyeOfEnderSignal");
+    Register(ThrownPotion::create, 16, L"potion", EntityType::THROWN_POTION, L"ThrownPotion");
+    Register(ThrownExpBottle::create, 17, L"xp_bottle", EntityType::THROWN_EXP_BOTTLE, L"ThrownExpBottle");
+    Register(ItemFrame::create, 18, L"item_frame", EntityType::ITEM_FRAME, L"ItemFrame");
+    Register(WitherSkull::create, 19, L"wither_skull", EntityType::WITHER_SKULL, L"WitherSkull");
+    Register(PrimedTnt::create, 20, L"tnt", EntityType::PRIMED_TNT, L"PrimedTnt");
+    Register(FallingBlockEntity::create, 21, L"falling_block", EntityType::FALLING_BLOCK_ENTITY, L"FallingSand");
+    Register(FireworksRocketEntity::create, 22, L"fireworks_rocket", EntityType::FIREWORKS_ROCKET_ENTITY, L"FireworksRocketEntity");
+    Register(Husk::create, 23, L"husk", EntityType::HUSK, L"Husk");
+    Register(SpectralArrow::create, 24, L"spectral_arrow", EntityType::SPECTRAL_ARROW, L"SpectralArrow");
+    Register(ShulkerBullet::create, 25, L"shulker_bullet", EntityType::SHULKER_BULLET, L"ShulkerBullet");
+    Register(DragonFireball::create, 26, L"dragon_fireball", EntityType::DRAGON_FIREBALL, L"DragonFireball");
+    Register(ZombieVillager::create, 27, L"zombie_villager", EntityType::ZOMBIE_VILLAGER, L"ZombieVillager");
+    Register(SkeletonHorse::create, 28, L"skeleton_horse", EntityType::SKELETON_HORSE, L"SkeletonHorse");
+    Register(ZombieHorse::create, 29, L"zombie_horse", EntityType::ZOMBIE_HORSE, L"ZombieHorse");
+    Register(ArmorStand::create, 30, L"armor_stand", EntityType::ARMOR_STAND, L"ArmorStand");
+    Register(Donkey::create, 31, L"donkey", EntityType::DONKEY, L"Donkey");
+    Register(Mule::create, 32, L"mule", EntityType::MULE, L"Mule");
+    Register(EvocationFangs::create, 33, L"evocation_fangs", EntityType::EVOCATION_FANGS, L"EvocationFangs");
+    Register(EvocationIllager::create, 34, L"evocation_illager", EntityType::EVOCATION_ILLAGER, L"EvocationIllager");
+    Register(Vex::create, 35, L"vex", EntityType::VEX, L"Vex");
+    Register(VindicationIllager::create, 36, L"vindication_illager", EntityType::VINDICATION_ILLAGER, L"VindicationIllager");
+    Register(IllusionIllager::create, 37, L"illusion_illager", EntityType::ILLUSION_ILLAGER, L"IllusionIllager");
+    Register(ThrownTrident::create, 38, L"trident", EntityType::THROWN_TRIDENT, L"Trident");
+    Register(Dolphin::create, 39, L"dolphin", EntityType::DOLPHIN, L"Dolphin");
+    Register(Boat::create, 41, L"boat", EntityType::BOAT, L"Boat");
+    Register(MinecartRideable::create, 42, L"minecart", EntityType::MINECART_RIDEABLE, Minecart::Type::RIDEABLE->getName());
+    Register(MinecartChest::create, 43, L"chest_minecart", EntityType::MINECART_CHEST, Minecart::Type::CHEST->getName());
+    Register(MinecartFurnace::create, 44, L"furnace_minecart", EntityType::MINECART_FURNACE, Minecart::Type::FURNACE->getName());
+    Register(MinecartTNT::create, 45, L"tnt_minecart", EntityType::MINECART_TNT, Minecart::Type::TNT->getName());
+    Register(MinecartHopper::create, 46, L"hopper_minecart", EntityType::MINECART_HOPPER, Minecart::Type::HOPPER->getName());
+    Register(MinecartSpawner::create, 47, L"spawner_minecart", EntityType::MINECART_SPAWNER, Minecart::Type::SPAWNER->getName());
+    Register(Creeper::create, 50, L"creeper", EntityType::CREEPER, L"Creeper");
+    Register(Skeleton::create, 51, L"skeleton", EntityType::SKELETON, L"Skeleton");
+    Register(Spider::create, 52, L"spider", EntityType::SPIDER, L"Spider");
+    Register(Giant::create, 53, L"giant", EntityType::GIANT, L"Giant");
+    Register(Zombie::create, 54, L"zombie", EntityType::ZOMBIE, L"Zombie");
+    Register(Slime::create, 55, L"slime", EntityType::SLIME, L"Slime");
+    Register(Ghast::create, 56, L"ghast", EntityType::GHAST, L"Ghast");
+    Register(PigZombie::create, 57, L"zombie_pigman", EntityType::PIG_ZOMBIE, L"PigZombie");
+    Register(EnderMan::create, 58, L"enderman", EntityType::ENDER_MAN, L"Enderman");
+    Register(CaveSpider::create, 59, L"cave_spider", EntityType::CAVE_SPIDER, L"CaveSpider");
+    Register(Silverfish::create, 60, L"silverfish", EntityType::SILVERFISH, L"Silverfish");
+    Register(Blaze::create, 61, L"blaze", EntityType::BLAZE, L"Blaze");
+    Register(MagmaCube::create, 62, L"magma_cube", EntityType::MAGMA_CUBE, L"LavaSlime");
+    Register(EnderDragon::create, 63, L"ender_dragon", EntityType::ENDER_DRAGON, L"EnderDragon");
+    Register(WitherBoss::create, 64, L"wither", EntityType::WITHER_BOSS, L"WitherBoss");
+    Register(Bat::create, 65, L"bat", EntityType::BAT, L"Bat");
+    Register(Witch::create, 66, L"witch", EntityType::WITCH, L"Witch");
+    Register(Endermite::create, 67, L"endermite", EntityType::ENDERMITE, L"Endermite");
+    Register(Guardian::create, 68, L"guardian", EntityType::GUARDIAN, L"Guardian");
+    Register(Shulker::create, 69, L"shulker", EntityType::SHULKER, L"Shulker");
+    Register(Pig::create, 90, L"pig", EntityType::PIG, L"Pig");
+    Register(Sheep::create, 91, L"sheep", EntityType::SHEEP, L"Sheep");
+    Register(Cow::create, 92, L"cow", EntityType::COW, L"Cow");
+    Register(Chicken::create, 93, L"chicken", EntityType::CHICKEN, L"Chicken");
+    Register(Squid::create, 94, L"squid", EntityType::SQUID, L"Squid");
+    Register(Wolf::create, 95, L"wolf", EntityType::WOLF, L"Wolf");
+    Register(MushroomCow::create, 96, L"mooshroom", EntityType::MUSHROOM_COW, L"MushroomCow");
+    Register(SnowMan::create, 97, L"snowman", EntityType::SNOW_MAN, L"SnowMan");
+    Register(Ocelot::create, 98, L"ocelot", EntityType::OCELOT, L"Ozelot");
+    Register(VillagerGolem::create, 99, L"villager_golem", EntityType::VILLAGER_GOLEM, L"VillagerGolem");
+    Register(Horse::create, 100, L"horse", EntityType::HORSE, L"Horse");
+    Register(Rabbit::create, 101, L"rabbit", EntityType::RABBIT, L"Rabbit");
+    Register(PolarBear::create, 102, L"polar_bear", EntityType::POLAR_BEAR, L"PolarBear");
+    Register(Llama::create, 103, L"llama", EntityType::LLAMA, L"Llama");
+    Register(LlamaSpit::create, 104, L"llama_spit", EntityType::LLAMA_SPIT, L"LlamaSpit");
+    Register(Parrot::create, 105, L"parrot", EntityType::PARROT, L"Parrot");
+    Register(TropicalFish::create, 106, L"tropicalfish", EntityType::TROPICAL_FISH, L"TropicalFish");
+    Register(Fish::create, 107, L"fish", EntityType::FISH, L"Fish");
+    Register(Pufferfish::create, 108, L"pufferfish", EntityType::PUFFERFISH, L"Pufferfish");
+    Register(Salmon::create, 109, L"salmon", EntityType::SALMON, L"Salmon");
+    Register(Turtle::create, 110, L"turtle", EntityType::TURTLE, L"Turtle");
+    Register(Drowned::create, 111, L"drowned", EntityType::DROWNED, L"Drowned");
+    Register(Phantom::create, 112, L"phantom", EntityType::PHANTOM, L"Phantom");
+    Register(Villager::create, 120, L"villager", EntityType::VILLAGER, L"Villager");
+    Register(EnderCrystal::create, 200, L"ender_crystal", EntityType::ENDER_CRYSTAL, L"EnderCrystal");
 
     addSpawnInfo(static_cast<int>(IDS_BAT), L"bat",
                  eMinecraftColour_Mob_Bat_Colour1, eMinecraftColour_Mob_Bat_Colour2,

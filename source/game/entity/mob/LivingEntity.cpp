@@ -877,7 +877,7 @@ void LivingEntity::addAdditonalSaveData(CompoundTag* tag)
 
     if (!mActiveEffects.empty())
     {
-        ListTag* effects = new ListTag(0);
+        ListTag* effects = new ListTag();
 
         for (boost::unordered_map<MobEffect*, MobEffectInstance*>::iterator it = mActiveEffects.begin();
              it != mActiveEffects.end();

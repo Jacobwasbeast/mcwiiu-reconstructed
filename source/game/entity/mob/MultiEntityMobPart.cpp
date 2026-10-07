@@ -14,10 +14,6 @@ MultiEntityMobPart::MultiEntityMobPart(boost::shared_ptr<MultiEntityMob> parentM
     setSize(width, height);
 }
 
-MultiEntityMobPart::~MultiEntityMobPart()
-{
-}
-
 unsigned long long MultiEntityMobPart::GetType()
 {
     return EntityType::MULTI_ENTITY_MOB_PART;

@@ -40,10 +40,6 @@ HorseArmorItem::HorseArmorItem(int tier, int protection)
     mIcon = NULL;
 }
 
-HorseArmorItem::~HorseArmorItem()
-{
-}
-
 bool HorseArmorItem::isHorseArmor(Item* item)
 {
     return item == Items::leatherHorseArmor || item == Items::ironHorseArmor || item == Items::goldenHorseArmor

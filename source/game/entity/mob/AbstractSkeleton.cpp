@@ -308,10 +308,6 @@ AbstractSkeleton::SkeleteMeleeAttackGoal::SkeleteMeleeAttackGoal(AbstractSkeleto
 {
 }
 
-AbstractSkeleton::SkeleteMeleeAttackGoal::~SkeleteMeleeAttackGoal()
-{
-}
-
 void AbstractSkeleton::SkeleteMeleeAttackGoal::start()
 {
     MeleeAttackGoal::start();

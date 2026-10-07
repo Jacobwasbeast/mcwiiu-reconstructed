@@ -35,9 +35,9 @@ WitherSkeleton::~WitherSkeleton()
 {
 }
 
-void WitherSkeleton::create(Level* level)
+Entity* WitherSkeleton::create(Level* level)
 {
-    new WitherSkeleton(level);
+    return new WitherSkeleton(level);
 }
 
 void WitherSkeleton::addDataWalkers(DataFixerUpper* fixer)

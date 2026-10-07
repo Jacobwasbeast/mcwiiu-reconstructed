@@ -100,9 +100,10 @@ int EntityIdFix::getVersion()
 
 CompoundTag* EntityIdFix::fix(CompoundTag* tag)
 {
-    boost::unordered_map<std::wstring, std::wstring>::const_iterator entry = sEntityIdMap.find(tag->getString(L"id"));
+    const boost::unordered_map<std::wstring, std::wstring>& idMap = sEntityIdMap;
+    boost::unordered_map<std::wstring, std::wstring>::const_iterator entry = idMap.find(tag->getString(L"id"));
 
-    if (entry != sEntityIdMap.end())
+    if (entry != idMap.end())
     {
         tag->putString(L"id", entry->second);
     }

@@ -26,13 +26,9 @@ ZombieHorse::ZombieHorse(Level* level)
     fjDerivedCtorCalls();
 }
 
-ZombieHorse::~ZombieHorse()
+Entity* ZombieHorse::create(Level* level)
 {
-}
-
-void ZombieHorse::create(Level* level)
-{
-    new ZombieHorse(level);
+    return new ZombieHorse(level);
 }
 
 void ZombieHorse::addDataWalkers(DataFixerUpper* fixer)

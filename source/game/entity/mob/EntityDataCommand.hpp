@@ -14,7 +14,6 @@
 class EntityDataCommand : public Command
 {
 public:
-    virtual ~EntityDataCommand();
 
     virtual EGameCommand getId();
     virtual int getPermissionLevel();

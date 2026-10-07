@@ -1536,7 +1536,7 @@ double EnderDragon::getHeadPartYRotDiff(int, arrayWithLength<double> first, arra
 unsigned int EnderDragon::GetInteractTooltip(const EntityTooltipDataHolder&) { return 0xffffffffU; }
 unsigned long long EnderDragon::GetType() { return EntityType::ENDER_DRAGON; }
 
-void EnderDragon::create(Level* level)
+Entity* EnderDragon::create(Level* level)
 {
-    new EnderDragon(level);
+    return new EnderDragon(level);
 }

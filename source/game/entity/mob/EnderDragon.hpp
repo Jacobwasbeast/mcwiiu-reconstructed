@@ -102,7 +102,7 @@ public:
     double getHeadPartYRotDiff(int part, arrayWithLength<double> first, arrayWithLength<double> second);
     virtual unsigned int GetInteractTooltip(const EntityTooltipDataHolder& holder);
     virtual unsigned long long GetType();
-    static void create(Level* level);
+    static Entity* create(Level* level);
     bool checkAttack();
 
     double mXTarget;

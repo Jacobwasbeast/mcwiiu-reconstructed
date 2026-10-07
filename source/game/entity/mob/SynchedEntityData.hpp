@@ -123,7 +123,8 @@ void SynchedEntityData::createDateItem(const EntityDataAccessor<T>* accessor, T 
 template <class T>
 void SynchedEntityData::set(const EntityDataAccessor<T>* accessor, T value, bool updateDirty)
 {
-    DataItem_Impl<T>* item = static_cast<DataItem_Impl<T>*>(mItemsById[accessor->getId()]);
+    int id = accessor->getId();
+    DataItem_Impl<T>* item = static_cast<DataItem_Impl<T>*>(mItemsById[id]);
 
     if (item->shouldUpdate(value))
     {

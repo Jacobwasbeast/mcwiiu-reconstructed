@@ -19,7 +19,6 @@ public:
     MultiEntityMobPart(boost::shared_ptr<MultiEntityMob> parentMob, const std::wstring& name, float width, float height);
 
     virtual unsigned long long GetType();
-    virtual ~MultiEntityMobPart();
     virtual void defineSynchedData();
     virtual bool hurt(const DamageSource* source, float damage);
     virtual bool isPickable();

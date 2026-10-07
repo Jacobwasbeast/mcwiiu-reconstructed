@@ -8,10 +8,6 @@ HealthBoostMobEffect::HealthBoostMobEffect(bool harmful, eMinecraftColour color)
 {
 }
 
-HealthBoostMobEffect::~HealthBoostMobEffect()
-{
-}
-
 void HealthBoostMobEffect::removeAttributeModifiers(const boost::shared_ptr<LivingEntity>& entity,
                                                     BaseAttributeMap* attributes, int amplifier)
 {

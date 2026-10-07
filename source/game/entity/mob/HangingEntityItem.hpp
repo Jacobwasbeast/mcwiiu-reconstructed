@@ -18,7 +18,6 @@ class HangingEntityItem : public Item
 {
 public:
     explicit HangingEntityItem(unsigned long long entityType);
-    virtual ~HangingEntityItem();
 
     boost::shared_ptr<HangingEntity> createEntity(Level* level, const BlockPos& pos, const Direction* direction, int auxValue);
     virtual InteractionResult::EInteractionResult useOn(boost::shared_ptr<Player> player,

@@ -24,6 +24,7 @@ class HangingEntity : public Entity
     friend class ItemFrameRenderer;
     friend class ClientboundAddPaintingPacket;
     friend class PaintingRenderer;
+    friend class MapItemSavedData;
 
 public:
     class HangingEntitySelector : public Predicate<boost::shared_ptr<Entity> >

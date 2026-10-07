@@ -20,7 +20,7 @@ public:
     explicit WitherSkeleton(Level* level);
     virtual ~WitherSkeleton();
 
-    static void create(Level* level);
+    static Entity* create(Level* level);
     static void addDataWalkers(DataFixerUpper* fixer);
 
     virtual void registerGoals();

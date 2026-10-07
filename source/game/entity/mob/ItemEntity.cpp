@@ -52,11 +52,7 @@ ItemEntity::ItemEntity(Level* level)
     setItem(ItemInstance::EMPTY);
 }
 
-ItemEntity::~ItemEntity()
-{
-}
-
-ItemEntity* ItemEntity::create(Level* level)
+Entity* ItemEntity::create(Level* level)
 {
     return new ItemEntity(level);
 }
