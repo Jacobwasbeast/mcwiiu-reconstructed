@@ -30,7 +30,6 @@ public:
     };
 
     CPlatformNetworkManagerNintendo();
-    virtual ~CPlatformNetworkManagerNintendo();
 
     static INetworkPlayer* getNetworkPlayer(NQRNetworkPlayer* player);
     INetworkPlayer* addNetworkPlayer(NQRNetworkPlayer* player);

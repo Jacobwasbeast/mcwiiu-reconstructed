@@ -7,7 +7,7 @@
 class C4JEventImpl : public C4JEvent
 {
 public:
-    C4JEventImpl(C4JEvent::EMode mode);
+    C4JEventImpl(C4JEvent::EMode mode = C4JEvent::Mode0);
     virtual ~C4JEventImpl();
     virtual void Set();
     virtual void Clear();

@@ -49,9 +49,6 @@ static FSCmdBlock s_sciCommandBlock;
 static unsigned char s_sciBuffer[0x800];
 static char s_sciPath[1024];
 
-static const unsigned int PNG_CHUNK_TYPE_IEND = 0x49454e44U;
-static const unsigned int PNG_CHUNK_TYPE_TEXT = 0x74455874U;
-
 static inline unsigned int ReadPngChunkWord(const unsigned char* data)
 {
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__

@@ -17,24 +17,16 @@ int CoreUser_DynLoad_DefaultAlloc(int32_t size, int32_t alignment, void** result
         {
             block = MEMAllocFromDefaultHeapEx((unsigned int)size, -4);
             *result = block;
-        }
-        else
-        {
-            block = MEMAllocFromDefaultHeapEx((unsigned int)size, alignment);
-            *result = block;
+            return block != 0 ? 0 : 0xbad10002;
         }
     }
-    else
+    else if (alignment < 4)
     {
-        if (alignment < 4)
-        {
-            alignment = 4;
-        }
-
-        block = MEMAllocFromDefaultHeapEx((unsigned int)size, alignment);
-        *result = block;
+        alignment = 4;
     }
 
+    block = MEMAllocFromDefaultHeapEx((unsigned int)size, alignment);
+    *result = block;
     return block != 0 ? 0 : 0xbad10002;
 }
 

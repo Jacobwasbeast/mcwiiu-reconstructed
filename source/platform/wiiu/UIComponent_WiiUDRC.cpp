@@ -13,14 +13,14 @@ UIComponent_WiiUDRC::UIComponent_WiiUDRC(int sceneType, void* param, UILayer* la
     : UIScene(sceneType, layer)
 {
     initialiseMovie();
-    m_iconX = -1;
     m_iconY = -1;
-    m_iconWidth = -1;
-    m_iconHeight = -1;
     m_drcOutputEnabled = true;
-    m_drcIconEnabled = false;
-    m_touchX = 0;
+    m_iconHeight = -1;
     m_touchY = 0;
+    m_drcIconEnabled = false;
+    m_iconWidth = -1;
+    m_touchX = 0;
+    m_iconX = -1;
     SetEnableBackground(false);
     SetDRCIcon(false, false);
     GetIconWidth();
@@ -59,43 +59,45 @@ int UIComponent_WiiUDRC::GetIconHeight()
 
 void UIComponent_WiiUDRC::handleDRCTouchInput(unsigned int playerIndex)
 {
-    unsigned short* touchData = (unsigned short*)g_pInput->GetTouchPadData(
-        playerIndex, C_4JInput::ETouchType_0, true);
     bool pressed = false;
-    unsigned int x = m_touchX;
-    unsigned int y = m_touchY;
+    int x;
+    int y;
+    unsigned short* touchData = g_pInput->GetTouchPadData(playerIndex, C_4JInput::ETouchType_0, true);
     if (touchData != NULL && touchData[2] == 1 && touchData[3] == 0)
     {
         x = touchData[0];
         y = touchData[1];
         m_touchX = x;
-        m_touchY = y;
         pressed = true;
+        m_touchY = y;
     }
-    else if (!m_touchingIcon)
+    else if (m_touchingIcon)
     {
-        m_touchPressed = false;
-        m_touchingIcon = false;
-        return;
+        x = m_touchX;
+        y = m_touchY;
     }
-    if (!gApp.GetDRCIconEnabled())
-        return;
-    if (GetIconX() < static_cast<int>(x) && static_cast<int>(x) < GetIconX() + GetIconWidth() &&
-        GetIconY() < static_cast<int>(y) && static_cast<int>(y) < GetIconY() + GetIconHeight())
+    if (pressed || m_touchingIcon)
     {
-        if (pressed)
+        if (!gApp.GetDRCIconEnabled())
+            return;
+        if (x > GetIconX() && x < GetIconX() + GetIconWidth() &&
+            y > GetIconY() && y < GetIconY() + GetIconHeight())
         {
-            if (!m_touchingIcon)
+            if (pressed)
             {
-                m_touchingIcon = true;
-                m_touchPressed = true;
-                return;
+                if (!m_touchingIcon)
+                    m_touchPressed = true;
             }
+            else if (m_touchingIcon && m_touchPressed)
+                gApp.SetDRCOuputEnabled(!gApp.GetDRCOutputEnabled());
         }
-        else if (m_touchingIcon && m_touchPressed)
-            gApp.SetDRCOuputEnabled(!gApp.GetDRCOutputEnabled());
+        m_touchingIcon = pressed;
     }
-    m_touchingIcon = pressed;
+    else
+    {
+        m_touchingIcon = false;
+        m_touchPressed = false;
+    }
 }
 
 std::wstring UIComponent_WiiUDRC::getMoviePath()
@@ -125,8 +127,8 @@ void UIComponent_WiiUDRC::tick()
             SetDRCIcon(iconEnabled, !outputEnabled);
             if (outputEnabled != m_drcOutputEnabled)
                 SetEnableBackground(!outputEnabled);
-            m_drcOutputEnabled = outputEnabled;
             m_drcIconEnabled = iconEnabled;
+            m_drcOutputEnabled = outputEnabled;
         }
     }
 }

@@ -13,7 +13,6 @@ class C4JEventQueueImpl : public C4JEventQueue
 {
 public:
     C4JEventQueueImpl(void (*eventHandler)(void*), void (*startedHandler)(), const char* name);
-    virtual ~C4JEventQueueImpl();
     virtual void setProcessor(int processor);
     virtual void setPriority(int priority);
     virtual void sendEvent(void* event);

@@ -356,66 +356,83 @@ void ListImpl::clear()
 
 void PtrArrayImpl::setBuffer(int capacity, void* buffer)
 {
-    mBuffer = static_cast<void**>(buffer);
-    mSize = 0;
-    mCapacity = capacity;
-    mAllocated = false;
+    if (capacity < 1) return;
+    if (!buffer) return;
+    mPtrNumMax = capacity;
+    mPtrs = static_cast<void**>(buffer);
+    mPtrNum = 0;
 }
 
 bool PtrArrayImpl::tryAllocBuffer(int capacity, Heap* heap, int alignment)
 {
-    freeBuffer();
-    mBuffer = static_cast<void**>(allocateFromSeadHeap(sizeof(void*) * capacity, heap, alignment));
-    if (!mBuffer) return false;
-    mSize = 0;
-    mCapacity = capacity;
-    mAllocated = true;
-    return true;
+    if (capacity > 0)
+    {
+        unsigned int size = sizeof(void*) * capacity;
+        unsigned char* buffer = static_cast<unsigned char*>(allocateFromSeadHeap(size, heap, alignment));
+        if (!buffer) return false;
+        for (unsigned char* byte = buffer; size != 0; --size, ++byte)
+            new (byte) unsigned char();
+        if (buffer)
+        {
+            setBuffer(capacity, buffer);
+            return true;
+        }
+    }
+    return false;
 }
 
-void PtrArrayImpl::allocBuffer(int capacity, Heap* heap, int alignment)
+bool PtrArrayImpl::allocBuffer(int capacity, Heap* heap, int alignment)
 {
-    tryAllocBuffer(capacity, heap, alignment);
+    return tryAllocBuffer(capacity, heap, alignment);
 }
 
 void PtrArrayImpl::freeBuffer()
 {
-    if (mAllocated && mBuffer) freeToSeadHeap(mBuffer);
-    mBuffer = 0;
-    mSize = 0;
-    mCapacity = 0;
-    mAllocated = false;
+    if (mPtrs)
+    {
+        DeleteArray(reinterpret_cast<unsigned char*>(mPtrs));
+        mPtrs = 0;
+        mPtrNum = 0;
+        mPtrNumMax = 0;
+    }
 }
 
 void PtrArrayImpl::erase(int index, int count)
 {
-    if (index < 0 || count <= 0 || index >= mSize) return;
-    if (index + count > mSize) count = mSize - index;
-    memmove(mBuffer + index, mBuffer + index + count, sizeof(void*) * (mSize - index - count));
-    mSize -= count;
+    if (index >= 0 && count >= 0)
+    {
+        int end = index + count;
+        if (end <= mPtrNum)
+        {
+            if (end < mPtrNum) memmove(mPtrs + index, mPtrs + end, sizeof(void*) * (mPtrNum - end));
+            mPtrNum -= count;
+        }
+    }
 }
 
 bool PtrArrayImpl::checkInsert(int index, int count)
 {
-    return index >= 0 && index <= mSize && count >= 0 && mSize + count <= mCapacity;
+    return index >= 0 && mPtrNum + count <= mPtrNumMax && index <= mPtrNum;
 }
 
 void PtrArrayImpl::insert(int index, void* value)
 {
-    if (!checkInsert(index, 1)) return;
-    memmove(mBuffer + index + 1, mBuffer + index, sizeof(void*) * (mSize - index));
-    mBuffer[index] = value;
-    ++mSize;
+    if (checkInsert(index, 1))
+    {
+        if (index < mPtrNum) memmove(mPtrs + index + 1, mPtrs + index, sizeof(void*) * (mPtrNum - index));
+        mPtrs[index] = value;
+        ++mPtrNum;
+    }
 }
 
 int PtrArrayImpl::binarySearch(const void* value, int (*compare)(const void*, const void*)) const
 {
     int low = 0;
-    int high = mSize;
+    int high = mPtrNum;
     while (low < high)
     {
         int middle = (low + high) / 2;
-        int result = compare(value, mBuffer[middle]);
+        int result = compare(value, mPtrs[middle]);
         if (result == 0) return middle;
         if (result < 0) high = middle;
         else low = middle + 1;

@@ -14,10 +14,6 @@ C4JEventQueueImpl::C4JEventQueueImpl(void (*eventHandler)(void*), void (*started
     }
 }
 
-C4JEventQueueImpl::~C4JEventQueueImpl()
-{
-}
-
 void C4JEventQueueImpl::setProcessor(int processor)
 {
     m_processor = processor;
@@ -81,7 +77,7 @@ int C4JEventQueueImpl::threadFunc(void* argument)
 void C4JEventQueueImpl::init()
 {
     m_eventArray = new C4JEventArrayImpl(1, C4JEventArray::Mode0);
-    m_finishEvent = new C4JEventImpl(C4JEvent::Mode0);
+    m_finishEvent = new C4JEventImpl();
     InitializeCriticalSection(&m_mutex);
     m_thread = new C4JThreadImpl(threadFunc, this, m_name, 0);
     if (m_processor >= 0)

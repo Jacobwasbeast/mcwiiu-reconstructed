@@ -16,6 +16,9 @@ class C4JThreadImpl;
 class CProfile;
 
 const unsigned int SAVE_DATA_QUOTA = 0x1E000000;
+const unsigned int PNG_CHUNK_TYPE_IEND = 0x49454e44U;
+const unsigned int PNG_CHUNK_TYPE_TEXT = 0x74455874U;
+
 struct CONTENT_DATA
 {
     unsigned int state;

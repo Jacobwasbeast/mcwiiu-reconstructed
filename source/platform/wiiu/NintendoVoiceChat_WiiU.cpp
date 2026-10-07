@@ -119,7 +119,7 @@ void NintendoVoiceChat_WiiU::stopConference()
         for (nn::pia::transport::Station** entry = first; entry != first + stationManager->m_stations.size; ++entry)
         {
             nn::pia::transport::Station* station = *entry;
-            Chat_GetVoiceProtocol()->RemoveConferenceClient(((unsigned long long)station->m_field18 << 32) | station->m_field1c);
+            Chat_GetVoiceProtocol()->RemoveConferenceClient(station->m_stationId);
         }
         s_micDeviceInstance.StopMic();
         s_micDeviceInstance.StopSnd();

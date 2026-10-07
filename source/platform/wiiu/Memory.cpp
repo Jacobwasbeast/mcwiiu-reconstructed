@@ -4,8 +4,7 @@
 #include <cstdlib>
 #include <cstring>
 
-extern "C" void OSFastMutex_Lock();
-extern "C" void OSFastMutex_Unlock();
+#include <coreinit/fastmutex.h>
 
 int XMemCreateCompressionContext(_XMEMCODEC_TYPE, const void*, unsigned int, void**)
 {
@@ -20,15 +19,15 @@ int XMemCreateDecompressionContext(_XMEMCODEC_TYPE, const void*, unsigned int, v
 void XMemDestroyCompressionContext(void*) {}
 void XMemDestroyDecompressionContext(void*) {}
 
-uint32_t AllocMutexLock()
+extern "C" uint32_t AllocMutexLock(OSFastMutex* mutex)
 {
-    OSFastMutex_Lock();
+    OSFastMutex_Lock(mutex);
     return 0;
 }
 
-uint32_t AllocMutexUnlock()
+extern "C" uint32_t AllocMutexUnlock(OSFastMutex* mutex)
 {
-    OSFastMutex_Unlock();
+    OSFastMutex_Unlock(mutex);
     return 0;
 }
 

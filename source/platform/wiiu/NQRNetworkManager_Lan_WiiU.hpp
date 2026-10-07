@@ -9,10 +9,12 @@
 
 #include "game/core/CriticalSection.hpp"
 #include "game/network/INQRNetworkManagerListener.hpp"
+#include "nn/pia/lan/LanSessionInfo.hpp"
 #include "platform/wiiu/C4JStorage.hpp"
 #include "platform/wiiu/NQRNetworkManager.hpp"
 
 class C4JEventImpl;
+class C4JThread;
 class C4JThreadImpl;
 
 
@@ -93,38 +95,28 @@ public:
         unsigned long long stationId;
         unsigned char* data;
         unsigned int size;
-
-        SendQueueItem();
-        SendQueueItem(unsigned long long station, unsigned char sendChannel, const void* sendData, unsigned int sendSize);
-        SendQueueItem(const SendQueueItem& other);
-        SendQueueItem& operator=(const SendQueueItem& other);
-        ~SendQueueItem();
     };
 
     struct FriendSearchResult
     {
+        unsigned int unknown0;
         unsigned int ownerPrincipalId;
+        unsigned int unknown8;
         unsigned int ownerLocalFriendIndex;
-        char ownerName[17];
-        PresenceSyncInfo presence;
+        char ownerName[36];
         unsigned int sessionId;
         bool joinable;
-        unsigned char status[3];
         void* extData;
-
-        FriendSearchResult();
-        FriendSearchResult(const FriendSearchResult& other);
-        FriendSearchResult& operator=(const FriendSearchResult& other);
+        void* unknown40;
+        nn::pia::lan::LanSessionInfo sessionInfo;
     };
 
     struct ConnectedStation
     {
         unsigned long long stationId;
         int state;
-        unsigned int playerMask;
 
-        ConnectedStation();
-        ConnectedStation(unsigned long long station);
+        ConnectedStation(unsigned long long station) : stationId(station), state(0) {}
     };
 
     class ClientJoinData
@@ -329,68 +321,95 @@ private:
     };
 
     bool m_friendPresenceUpdated;
-    eNQRNetworkManagerFriendSearchState m_friendSearchState;
-    C4JThreadImpl* m_connectThread;
+    C4JThread* m_tickThread;
     C4JEventImpl* m_tickEvent;
-    C4JThreadImpl* m_tickThread;
+    C4JThreadImpl* m_connectThread;
     PlayerNameMap m_miiNames;
+    int m_unknownCC;
+    bool m_applicationConnected;
+    bool m_online;
     INQRNetworkManagerListener* m_listener;
     eNQRNetworkManagerInternalState m_internalState;
     eNQRNetworkManagerState m_state;
     bool m_initialised;
     bool m_host;
-    bool m_receiving;
-    void* m_searchCriteria;
-    int m_lastNetworkError;
-    bool m_applicationConnected;
-    bool m_online;
-    int m_sessionId;
-    bool m_matchmaking;
     bool m_hostStationIdCached;
-    unsigned long long m_cachedHostStationId;
     unsigned long long m_cachedJointSessionHostStationId;
+    unsigned long long m_cachedHostStationId;
+    int m_pendingUserMask;
+    int m_maxPlayers;
+    unsigned char m_unknown100[0xdd4 - 0x100];
+    bool m_saveTransferSession;
+    unsigned char m_unknownDD5[0xe84 - 0xdd5];
+    bool m_receiving;
+    unsigned char m_unknownE85[8];
+    bool m_matchmaking;
     OSFastMutex m_playerMutex;
     PlayerSyncData m_roomPlayers[8];
+    unsigned char m_unknown1140[0x116c - 0x1140];
     std::vector<NQRNetworkPlayer*> m_unconnectedPlayers;
     std::deque<SendQueueItem> m_sendQueue;
     OSFastMutex m_sendQueueMutex;
-    unsigned int m_roomPlayerMask;
-    unsigned int m_roomSessionData;
-    std::vector<FriendSearchResult> m_friendSearchResults;
-    OSFastMutex m_friendSearchMutex;
+    unsigned char m_unknown11BC[0x1250 - 0x11bc];
+    eNQRNetworkManagerFriendSearchState m_friendSearchState;
+    unsigned char m_unknown1254[4];
     bool m_friendSearchBusy;
-    unsigned int m_friendPresenceCount;
+    unsigned char m_unknown1259[0x1268 - 0x1259];
+    OSFastMutex m_friendSearchMutex;
+    unsigned char m_unknown1294[0x12a4 - 0x1294];
+    std::vector<FriendSearchResult> m_friendSearchResults;
+    unsigned char m_unknown12B4[0x12e0 - 0x12b4];
     std::vector<NQRNetworkPlayer*> m_players;
     OSFastMutex m_connectedStationMutex;
     std::vector<ConnectedStation> m_connectedStations;
-    unsigned int m_nextSmallId;
+    unsigned char m_unknown132C[0x1360 - 0x132c];
     void* m_nexContext;
     ENEXAsyncProcess m_nexAsyncProcess;
+    unsigned char m_unknown1368[0x1381 - 0x1368];
+    bool m_updateRequested;
+    unsigned char m_unknown1382[0x1390 - 0x1382];
+    bool m_createRequested;
+    bool m_joinRequested;
+    unsigned char m_unknown1392[1];
+    bool m_leaveRequested;
+    bool m_browseRequested;
+    bool m_randomJoinRequested;
+    unsigned char m_unknown1396[0x13a8 - 0x1396];
+
+public:
+    unsigned int m_saveTransferSize;
+    unsigned char* m_saveTransferData;
+    unsigned int m_saveTransferOffset;
+
+private:
+    unsigned char m_unknown13B4[0x13fc - 0x13b4];
+
+public:
+    ESaveTransferState m_saveTransferState;
+
+private:
+    unsigned char m_unknown1400[0x143c - 0x1400];
+
+public:
+    unsigned int m_saveTransferSessionId;
+
+private:
+    unsigned char m_unknown1440[0x1bc8 - 0x1440];
+    unsigned long long m_lastRateControlledEvent;
+    unsigned char m_unknown1BD0[0x1bd8 - 0x1bd0];
+    void* m_searchCriteria;
+    int m_sessionId;
+    unsigned int m_roomPlayerMask;
+    unsigned int m_friendPresenceCount;
+    unsigned int m_nextSmallId;
     unsigned int m_pendingSessionId;
-    int m_pendingUserMask;
-    int m_maxPlayers;
     unsigned char m_gameMode;
     PresenceSyncInfo m_presenceInfo;
     void* m_externalData;
     unsigned int m_externalDataSize;
     bool m_running;
-    bool m_leaveRequested;
-    bool m_createRequested;
-    bool m_joinRequested;
-    bool m_browseRequested;
-    bool m_randomJoinRequested;
-    bool m_updateRequested;
-    unsigned int m_lastRateControlledEvent;
 
-public:
-    ESaveTransferState m_saveTransferState;
-    unsigned char* m_saveTransferData;
-    unsigned int m_saveTransferSize;
-    unsigned int m_saveTransferOffset;
-
-private:
     bool m_saveTransferPacketPending;
-    unsigned int m_saveTransferSessionId;
     SaveTransferDescriptor m_saveTransferDescriptor;
     unsigned int m_saveTransferGeneration;
     unsigned int m_saveTransferFlags;

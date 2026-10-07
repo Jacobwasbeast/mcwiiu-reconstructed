@@ -138,7 +138,7 @@ private:
     unsigned short m_usSndWriteIndex;
     unsigned short m_usSndReadIndex;
     unsigned short m_usSndStoredSamples;
-    int m_iFrameSamples;
+    unsigned int m_uiFrameSamples;
     unsigned int m_uiLastVoiceOffset;
     unsigned int m_uiSamplesSinceFrame;
     eSndRateMode m_eRateMode;

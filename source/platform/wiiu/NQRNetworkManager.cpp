@@ -18,8 +18,8 @@ NQRNetworkManager::~NQRNetworkManager()
 
 void NQRNetworkManager::SafeToRespondToGameBootInvite(int iUserIndex)
 {
-    g_iGameBootInviteUserIndex = iUserIndex;
     g_bSafeToRespondToGameBootInvite = true;
+    g_iGameBootInviteUserIndex = iUserIndex;
 }
 
 int NQRNetworkManager::GetOutstandingAckCount(NQRNetworkPlayer* pPlayer)

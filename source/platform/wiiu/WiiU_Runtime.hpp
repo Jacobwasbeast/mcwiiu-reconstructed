@@ -13,6 +13,25 @@ struct _FILETIME
     unsigned int dwHighDateTime;
 };
 
+struct _OVERLAPPED
+{
+    unsigned int Internal;
+    unsigned int InternalHigh;
+    unsigned int Offset;
+    unsigned int OffsetHigh;
+    int hEvent;
+};
+
+static const int INVALID_HANDLE_VALUE = -1;
+static const unsigned int INVALID_FILE_ATTRIBUTES = 0xFFFFFFFF;
+static const unsigned int FILE_ATTRIBUTE_DIRECTORY = 0x00000010;
+static const unsigned int FILE_ATTRIBUTE_NORMAL = 0x00000080;
+static const unsigned int FILE_FLAG_SEQUENTIAL_SCAN = 0x08000000;
+static const unsigned int GENERIC_READ = 0x80000000;
+static const unsigned int GENERIC_WRITE = 0x40000000;
+static const unsigned int OPEN_EXISTING = 3;
+static const unsigned int OPEN_ALWAYS = 4;
+
 struct MEMORYSTATUS
 {
     unsigned long dwLength;

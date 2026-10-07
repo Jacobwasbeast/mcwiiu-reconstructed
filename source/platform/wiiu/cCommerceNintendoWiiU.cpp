@@ -100,10 +100,6 @@ cCommerceNintendoWiiU::cCommerceNintendoWiiU()
     m_errorOccurred = false;
 }
 
-cCommerceNintendoWiiU::~cCommerceNintendoWiiU()
-{
-}
-
 void cCommerceNintendoWiiU::GetBalance()
 {
     nn::ec::GetBalance(&m_balance);

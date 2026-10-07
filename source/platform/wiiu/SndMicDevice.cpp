@@ -182,26 +182,32 @@ SndMicDevice::eSndMicResult SndMicDevice::InitializeMic()
         return eSndMicResult_MicInvalidState;
     }
 
+    int iError;
+
     if (m_bUSBMicEnabled)
     {
         USBMICQueryInfo queryInfo;
 
-        if (USBMICOpenQuery(m_iUSBMicHandle, &queryInfo) == 0)
+        iError = USBMICOpenQuery(m_iUSBMicHandle, &queryInfo);
+
+        if (iError == 0)
         {
             MICRingBuffer ringBuffer;
             USBMICOpenInfo openInfo;
 
-            ringBuffer.uiNumSamples = MIC_RING_BUFFER_SAMPLES;
-            openInfo.pWorkMemory = NULL;
             openInfo.uiReserved = 0;
+            openInfo.pWorkMemory = NULL;
+            ringBuffer.uiNumSamples = MIC_RING_BUFFER_SAMPLES;
             ringBuffer.pSamples = (short*)MEMAllocFromDefaultHeapEx(MIC_RING_BUFFER_BYTES, 64);
 
-            if (USBMICOpen(m_iUSBMicHandle, &openInfo, &ringBuffer) == 0)
+            iError = USBMICOpen(m_iUSBMicHandle, &openInfo, &ringBuffer);
+
+            if (iError == 0)
             {
-                m_bUSBMicOpened = true;
                 m_pMicBuffer = ringBuffer.pSamples;
                 m_pUSBMicWork = openInfo.pWorkMemory;
                 m_eMicState = eSndMicState_MicInitialised;
+                m_bUSBMicOpened = true;
                 return eSndMicResult_Success;
             }
 
@@ -211,8 +217,8 @@ SndMicDevice::eSndMicResult SndMicDevice::InitializeMic()
         }
     }
 
-    m_iVoiceSendOk = 1;
     m_bUSBMicOpened = false;
+    m_iVoiceSendOk = 1;
     m_pMicBuffer = (short*)MEMAllocFromDefaultHeapEx(MIC_RING_BUFFER_BYTES, 64);
 
     if (m_pMicBuffer == NULL)
@@ -221,7 +227,6 @@ SndMicDevice::eSndMicResult SndMicDevice::InitializeMic()
     }
 
     MICRingBuffer ringBuffer;
-    int iError;
 
     ringBuffer.uiNumSamples = MIC_RING_BUFFER_SAMPLES;
     ringBuffer.pSamples = m_pMicBuffer;
@@ -464,18 +469,17 @@ SndMicDevice::eSndMicResult SndMicDevice::ReadMic(short* pBuffer, short sSamples
 
         unsigned int uiReadPosition = status.uiReadPosition;
 
+        short* pOut = pBuffer;
+
         for (int i = 0; i < sSamples; i++)
         {
-            unsigned int uiNextPosition = uiReadPosition + 1;
+            *pOut++ = m_pMicBuffer[uiReadPosition];
+            uiReadPosition++;
 
-            *pBuffer++ = m_pMicBuffer[uiReadPosition];
-
-            if (uiNextPosition >= MIC_RING_BUFFER_SAMPLES)
+            if (uiReadPosition >= MIC_RING_BUFFER_SAMPLES)
             {
-                uiNextPosition = uiReadPosition - (MIC_RING_BUFFER_SAMPLES - 1);
+                uiReadPosition -= MIC_RING_BUFFER_SAMPLES;
             }
-
-            uiReadPosition = uiNextPosition;
         }
 
         iResult = MICSetDataConsumed(m_iMicHandle, sSamples);
@@ -496,18 +500,17 @@ SndMicDevice::eSndMicResult SndMicDevice::ReadMic(short* pBuffer, short sSamples
 
         unsigned int uiReadPosition = status.uiReadPosition;
 
+        short* pOut = pBuffer;
+
         for (int i = 0; i < sSamples; i++)
         {
-            unsigned int uiNextPosition = uiReadPosition + 1;
+            *pOut++ = m_pMicBuffer[uiReadPosition];
+            uiReadPosition++;
 
-            *pBuffer++ = m_pMicBuffer[uiReadPosition];
-
-            if (uiNextPosition >= MIC_RING_BUFFER_SAMPLES)
+            if (uiReadPosition >= MIC_RING_BUFFER_SAMPLES)
             {
-                uiNextPosition = uiReadPosition - (MIC_RING_BUFFER_SAMPLES - 1);
+                uiReadPosition -= MIC_RING_BUFFER_SAMPLES;
             }
-
-            uiReadPosition = uiNextPosition;
         }
 
         iResult = USBMICSetDataConsumed(m_iUSBMicHandle, sSamples);
@@ -563,15 +566,15 @@ SndMicDevice::eSndMicResult SndMicDevice::InitializeSnd(const SND_PARAM* pParam)
 
     if (m_eRateMode == eSndRateMode_8kHz)
     {
-        m_iFrameSamples = pParam->iFrameLengthMs * 8;
+        m_uiFrameSamples = pParam->iFrameLengthMs * 8;
     }
     else if (m_eRateMode == eSndRateMode_16kHz)
     {
-        m_iFrameSamples = pParam->iFrameLengthMs * 16;
+        m_uiFrameSamples = pParam->iFrameLengthMs * 16;
     }
     else
     {
-        m_iFrameSamples = pParam->iFrameLengthMs * 32;
+        m_uiFrameSamples = pParam->iFrameLengthMs * 32;
     }
 
     m_pAxBuffer = NULL;
@@ -585,34 +588,34 @@ SndMicDevice::eSndMicResult SndMicDevice::InitializeSnd(const SND_PARAM* pParam)
     memset(m_pAxBuffer, 0, AX_BUFFER_BYTES);
 
     m_pSndBuffer = NULL;
-    m_pSndBuffer = (short*)MEMAllocFromDefaultHeapEx(m_iFrameSamples * 6, 64);
+    m_pSndBuffer = (short*)MEMAllocFromDefaultHeapEx(m_uiFrameSamples * 6, 64);
 
     if (m_pSndBuffer == NULL)
     {
         return eSndMicResult_SndFailed;
     }
 
-    memset(m_pSndBuffer, 0, m_iFrameSamples * 6);
+    memset(m_pSndBuffer, 0, m_uiFrameSamples * 6);
 
     m_pRefBufferLeft = NULL;
-    m_pRefBufferLeft = (short*)MEMAllocFromDefaultHeapEx(m_iFrameSamples * 12, 64);
+    m_pRefBufferLeft = (short*)MEMAllocFromDefaultHeapEx(m_uiFrameSamples * 12, 64);
 
     if (m_pRefBufferLeft == NULL)
     {
         return eSndMicResult_SndFailed;
     }
 
-    memset(m_pRefBufferLeft, 0, m_iFrameSamples * 12);
+    memset(m_pRefBufferLeft, 0, m_uiFrameSamples * 12);
 
     m_pRefBufferRight = NULL;
-    m_pRefBufferRight = (short*)MEMAllocFromDefaultHeapEx(m_iFrameSamples * 12, 64);
+    m_pRefBufferRight = (short*)MEMAllocFromDefaultHeapEx(m_uiFrameSamples * 12, 64);
 
     if (m_pRefBufferRight == NULL)
     {
         return eSndMicResult_SndFailed;
     }
 
-    memset(m_pRefBufferRight, 0, m_iFrameSamples * 12);
+    memset(m_pRefBufferRight, 0, m_uiFrameSamples * 12);
 
     m_usRefReadIndex = 0;
     m_usSndReadIndex = 0;
@@ -728,16 +731,16 @@ SndMicDevice::eSndMicResult SndMicDevice::StoreDataSnd(const short* pData, short
     }
 
     if (pData == NULL
-        || sSamples != m_iFrameSamples
-        || (unsigned int)(m_usSndStoredSamples + sSamples) >= (unsigned int)(m_iFrameSamples * 3))
+        || sSamples != m_uiFrameSamples
+        || m_usSndStoredSamples + sSamples >= m_uiFrameSamples * 3)
     {
         return eSndMicResult_SndInvalidParam;
     }
 
     memcpy(&m_pSndBuffer[m_usSndWriteIndex], pData, sSamples * 2);
 
-    m_usSndStoredSamples = (unsigned short)(m_usSndStoredSamples + sSamples);
-    m_usSndWriteIndex = (unsigned short)((unsigned int)(m_usSndWriteIndex + sSamples) % (unsigned int)(m_iFrameSamples * 3));
+    m_usSndStoredSamples += sSamples;
+    m_usSndWriteIndex = (m_usSndWriteIndex + sSamples) % (m_uiFrameSamples * 3);
 
     return eSndMicResult_Success;
 }
@@ -865,14 +868,15 @@ int SndMicDevice::chatSendReceive()
         return -1;
     }
 
-    short sFrameSamples = (short)(iAudioFrameLength * 32);
+    int iFrameSamples = iAudioFrameLength * 32;
+    short sFrameSamples = (short)iFrameSamples;
 
     if (m_iPaused == 0)
     {
         ReadMic(sMicBuffer, sFrameSamples);
     }
 
-    int iSendSamples = RSMP32to8(sMicBuffer, iAudioFrameLength * 32, sSendBuffer);
+    int iSendSamples = RSMP32to8(sMicBuffer, iFrameSamples, sSendBuffer);
 
     readRefData(&m_sRefSendLeft[REF_SEND_DELAY_SAMPLES], &m_sRefSendRight[REF_SEND_DELAY_SAMPLES], sFrameSamples);
 
@@ -880,7 +884,7 @@ int SndMicDevice::chatSendReceive()
 
     if (m_iPaused == 0 && pVoiceProtocol != NULL && pVoiceProtocol->IsInCommunication())
     {
-        nn::pia::Result result = pVoiceProtocol->Send(sSendBuffer, iSendSamples, m_sRefSendLeft, m_sRefSendRight);
+        int result = pVoiceProtocol->Send(sSendBuffer, iSendSamples, m_sRefSendLeft, m_sRefSendRight);
 
         for (int i = 0; i < REF_SEND_DELAY_SAMPLES; i++)
         {
@@ -929,8 +933,8 @@ void SndMicDevice::readVoiceData(short* pBuffer, short sSamples)
 
     memcpy(pBuffer, &m_pSndBuffer[m_usSndReadIndex], sSamples * 2);
 
-    m_usSndStoredSamples = (unsigned short)(m_usSndStoredSamples - sSamples);
-    m_usSndReadIndex = (unsigned short)((unsigned int)(m_usSndReadIndex + sSamples) % (unsigned int)(m_iFrameSamples * 3));
+    m_usSndStoredSamples -= sSamples;
+    m_usSndReadIndex = (m_usSndReadIndex + sSamples) % (m_uiFrameSamples * 3);
 }
 
 void SndMicDevice::readRefData(short* pLeft, short* pRight, short sSamples)
@@ -945,8 +949,8 @@ void SndMicDevice::readRefData(short* pLeft, short* pRight, short sSamples)
     memcpy(pLeft, &m_pRefBufferLeft[m_usRefReadIndex], sSamples * 2);
     memcpy(pRight, &m_pRefBufferRight[m_usRefReadIndex], sSamples * 2);
 
-    m_usRefStoredSamples = (unsigned short)(m_usRefStoredSamples - sSamples);
-    m_usRefReadIndex = (unsigned short)((m_usRefReadIndex + sSamples) % (m_iFrameSamples * 6));
+    m_usRefStoredSamples -= sSamples;
+    m_usRefReadIndex = (m_usRefReadIndex + sSamples) % (m_uiFrameSamples * 6);
 }
 
 void SndMicDevice::storeRefData(_AX_FINAL_MIX_CB_STRUCT* pMixData)
@@ -956,7 +960,7 @@ void SndMicDevice::storeRefData(_AX_FINAL_MIX_CB_STRUCT* pMixData)
         return;
     }
 
-    if ((unsigned int)(m_usRefStoredSamples + AX_FRAME_SAMPLES) >= (unsigned int)(m_iFrameSamples * 6))
+    if (m_usRefStoredSamples + AX_FRAME_SAMPLES >= m_uiFrameSamples * 6)
     {
         return;
     }
@@ -964,17 +968,21 @@ void SndMicDevice::storeRefData(_AX_FINAL_MIX_CB_STRUCT* pMixData)
     short sLeft[AX_FRAME_SAMPLES];
     short sRight[AX_FRAME_SAMPLES];
 
+    int** ppChannelData = pMixData->ppChannelData;
+    int* pLeft = ppChannelData[0];
+    int* pRight = ppChannelData[1];
+
     for (int i = 0; i < AX_FRAME_SAMPLES; i++)
     {
-        sLeft[i] = (short)pMixData->ppChannelData[0][i];
-        sRight[i] = (short)pMixData->ppChannelData[1][i];
+        sLeft[i] = (short)*pLeft++;
+        sRight[i] = (short)*pRight++;
     }
 
     memcpy(&m_pRefBufferLeft[m_usRefWriteIndex], sLeft, pMixData->usSampleCount * 2);
     memcpy(&m_pRefBufferRight[m_usRefWriteIndex], sRight, pMixData->usSampleCount * 2);
 
     m_usRefStoredSamples = (unsigned short)(m_usRefStoredSamples + pMixData->usSampleCount);
-    m_usRefWriteIndex = (unsigned short)((m_usRefWriteIndex + pMixData->usSampleCount) % (m_iFrameSamples * 6));
+    m_usRefWriteIndex = (unsigned short)((m_usRefWriteIndex + pMixData->usSampleCount) % (m_uiFrameSamples * 6));
 }
 
 void SndMicDevice::finalMixCallback(_AX_FINAL_MIX_CB_STRUCT* pMixData)
@@ -998,46 +1006,51 @@ void SndMicDevice::axFrameCallbackImpl()
 {
     MIXUpdateSettings();
 
-    if (m_eSndState != eSndMicState_SndStarted)
+    switch (m_eSndState)
     {
-        if (m_eSndState == eSndMicState_SndStopping)
+    case eSndMicState_SndStarted:
+    {
+        AXVoiceOffsets offsets;
+
+        AXGetVoiceOffsets(m_pVoice, &offsets);
+
+        unsigned int uiCurrentOffset = offsets.uiCurrentOffset;
+
+        if ((unsigned int)m_usAxBlockIndex != uiCurrentOffset / m_usAxBlockSamples)
         {
-            m_eSndState = eSndMicState_SndStopped;
+            axSetData();
         }
 
-        return;
+        unsigned int uiLastOffset = m_uiLastVoiceOffset;
+        unsigned int uiSamplesSinceFrame;
+
+        if (uiLastOffset > uiCurrentOffset)
+        {
+            uiSamplesSinceFrame = m_uiSamplesSinceFrame + (AX_BUFFER_SAMPLES - (uiLastOffset - uiCurrentOffset));
+        }
+        else
+        {
+            uiSamplesSinceFrame = m_uiSamplesSinceFrame + (uiCurrentOffset - uiLastOffset);
+        }
+
+        m_uiLastVoiceOffset = uiCurrentOffset;
+
+        if (uiSamplesSinceFrame < m_uiFrameSamples)
+        {
+            m_uiSamplesSinceFrame = uiSamplesSinceFrame;
+            return;
+        }
+
+        m_uiSamplesSinceFrame = uiSamplesSinceFrame - m_uiFrameSamples;
+        OSSignalEvent(&m_frameEvent);
+        break;
     }
-
-    AXVoiceOffsets offsets;
-
-    AXGetVoiceOffsets(m_pVoice, &offsets);
-
-    if ((unsigned int)m_usAxBlockIndex != offsets.uiCurrentOffset / m_usAxBlockSamples)
-    {
-        axSetData();
+    case eSndMicState_SndStopping:
+        m_eSndState = eSndMicState_SndStopped;
+        break;
+    default:
+        break;
     }
-
-    unsigned int uiSamplesSinceFrame;
-
-    if (offsets.uiCurrentOffset < m_uiLastVoiceOffset)
-    {
-        uiSamplesSinceFrame = m_uiSamplesSinceFrame + (AX_BUFFER_SAMPLES - (m_uiLastVoiceOffset - offsets.uiCurrentOffset));
-    }
-    else
-    {
-        uiSamplesSinceFrame = m_uiSamplesSinceFrame + (offsets.uiCurrentOffset - m_uiLastVoiceOffset);
-    }
-
-    m_uiLastVoiceOffset = offsets.uiCurrentOffset;
-
-    if (uiSamplesSinceFrame < (unsigned int)m_iFrameSamples)
-    {
-        m_uiSamplesSinceFrame = uiSamplesSinceFrame;
-        return;
-    }
-
-    m_uiSamplesSinceFrame = uiSamplesSinceFrame - m_iFrameSamples;
-    OSSignalEvent(&m_frameEvent);
 }
 
 void SndMicDevice::axFrameCallback()

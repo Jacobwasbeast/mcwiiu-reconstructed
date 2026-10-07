@@ -150,7 +150,6 @@ class cCommerceNintendoWiiU : public cCommerceNintendo
 {
 public:
     cCommerceNintendoWiiU();
-    virtual ~cCommerceNintendoWiiU();
     void GetBalance();
     virtual unsigned int LogIn();
     void Init();

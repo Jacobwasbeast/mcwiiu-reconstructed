@@ -301,10 +301,10 @@ private:
 class PtrArrayImpl
 {
 public:
-    PtrArrayImpl() : mBuffer(0), mSize(0), mCapacity(0), mAllocated(false) {}
+    PtrArrayImpl() : mPtrNum(0), mPtrNumMax(0), mPtrs(0) {}
     void setBuffer(int, void*);
     bool tryAllocBuffer(int, Heap*, int);
-    void allocBuffer(int, Heap*, int);
+    bool allocBuffer(int, Heap*, int);
     void freeBuffer();
     void erase(int, int);
     bool checkInsert(int, int);
@@ -319,10 +319,9 @@ public:
     void uniq(int (*)(const void*, const void*));
 
 private:
-    void** mBuffer;
-    int mSize;
-    int mCapacity;
-    bool mAllocated;
+    int mPtrNum;
+    int mPtrNumMax;
+    void** mPtrs;
 };
 
 class Random
@@ -1023,7 +1022,7 @@ template<typename T> T* NewArray(unsigned int count, Heap* heap, int alignment)
     return array;
 }
 
-template<typename T> void DeleteArray(T* array)
+template<typename T> inline void DeleteArray(T* array)
 {
     if (!array)
         return;
