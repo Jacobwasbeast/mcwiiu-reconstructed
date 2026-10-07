@@ -116,23 +116,30 @@ int vct_pop_audio_queue(unsigned int uiStreamIndex)
     OSFastMutex_Lock(&audioQueueMutex);
 
     unsigned int uiCount = audioQueueCounts[uiStreamIndex];
-    if (audioQueueHeads[uiStreamIndex] != 0)
+    _udp_packet* pHead = audioQueueHeads[uiStreamIndex];
+    if (pHead != 0)
     {
         uiCount = uiCount - 1;
-        _udp_packet* pNext = audioQueueHeads[uiStreamIndex]->m_pNext;
+        _udp_packet* pNext = pHead->m_pNext;
         audioQueueCounts[uiStreamIndex] = uiCount;
         audioQueueHeads[uiStreamIndex] = pNext;
-        if (pNext == 0)
+        if (pNext != 0)
         {
-            audioQueueTails[uiStreamIndex] = 0;
+            pNext->m_pPrevious = 0;
+            uiCount = audioQueueCounts[uiStreamIndex];
+            OSFastMutex_Unlock(&audioQueueMutex);
         }
         else
         {
-            pNext->m_pPrevious = 0;
+            audioQueueTails[uiStreamIndex] = 0;
+            OSFastMutex_Unlock(&audioQueueMutex);
         }
     }
+    else
+    {
+        OSFastMutex_Unlock(&audioQueueMutex);
+    }
 
-    OSFastMutex_Unlock(&audioQueueMutex);
     return static_cast<int>(uiCount);
 }
 

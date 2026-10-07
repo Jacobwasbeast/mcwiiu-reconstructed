@@ -66,7 +66,7 @@ struct _AILSOUNDINFO
     const void* data;
     unsigned int dataLength;
     unsigned int rate;
-    int bits;
+    unsigned int bits;
     int channels;
     unsigned int channelMask;
     unsigned int samples;

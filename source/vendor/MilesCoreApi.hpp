@@ -24,7 +24,7 @@ extern "C" void AIL_API_release_timer_handle(int iTimer);
 extern "C" void AIL_API_release_all_timers();
 
 extern "C" AIL_LOG_CALLBACK AIL_configure_logging(const char* pFileName, AIL_LOG_CALLBACK pCallback,
-                                                  int iMode);
+                                                  unsigned int uMode);
 extern "C" int AIL_startup();
 extern "C" void AIL_shutdown();
 extern "C" const char* AIL_last_error();

@@ -10,9 +10,9 @@
 
 static const unsigned int DRIVER_FLAG_16_BITS = 1;
 
-static const int LOG_MODE_NONE = 0;
-static const int LOG_MODE_TOP_LEVEL = 1;
-static const int LOG_MODE_NESTED = 2;
+static const unsigned int LOG_MODE_NONE = 0;
+static const unsigned int LOG_MODE_TOP_LEVEL = 1;
+static const unsigned int LOG_MODE_NESTED = 2;
 
 static const int LOG_TIME_LENGTH = 24;
 
@@ -28,7 +28,7 @@ static const char OUTPUT_FILTER_ERROR[] = "Required output filter not found";
 static int AIL_started = 0;
 
 extern "C" AIL_LOG_CALLBACK AIL_configure_logging(const char* pFileName, AIL_LOG_CALLBACK pCallback,
-                                                  int iMode)
+                                                  unsigned int uMode)
 {
     time_t tNow;
     char szTime[LOG_TIME_LENGTH + 1];
@@ -53,37 +53,39 @@ extern "C" AIL_LOG_CALLBACK AIL_configure_logging(const char* pFileName, AIL_LOG
     pPrevious = AIL_log_callback;
     AIL_log_callback = pCallback;
 
-    if (iMode == LOG_MODE_NONE)
+    switch (uMode)
     {
+    case LOG_MODE_NONE:
         AIL_debug_nested = 0;
         AIL_debug_enabled = 0;
-        return pPrevious;
-    }
-
-    if (iMode == LOG_MODE_TOP_LEVEL)
-    {
+        break;
+    case LOG_MODE_TOP_LEVEL:
         AIL_debug_enabled = 1;
         AIL_debug_nested = 0;
-    }
-    else if (iMode == LOG_MODE_NESTED)
-    {
+        break;
+    case LOG_MODE_NESTED:
         AIL_debug_enabled = 1;
         AIL_debug_nested = 1;
+        break;
     }
 
-    AIL_debug_log(LOG_SEPARATOR);
-    AIL_debug_log(LOG_HEADER);
-    time(&tNow);
-    strcpy(szTime, asctime(localtime(&tNow)));
-    szTime[LOG_TIME_LENGTH] = '\0';
-    AIL_debug_log(LOG_START_TIME, szTime);
-    AIL_debug_log(LOG_SEPARATOR);
+    if (uMode != LOG_MODE_NONE)
+    {
+        AIL_debug_log(LOG_SEPARATOR);
+        AIL_debug_log(LOG_HEADER);
+        time(&tNow);
+        strcpy(szTime, asctime(localtime(&tNow)));
+        szTime[LOG_TIME_LENGTH] = '\0';
+        AIL_debug_log(LOG_START_TIME, szTime);
+        AIL_debug_log(LOG_SEPARATOR);
+    }
+
     return pPrevious;
 }
 
 extern "C" int AIL_startup()
 {
-    int iFirst;
+    int iFirst = 0;
 
     AIL_debug_depth = AIL_debug_depth + 1;
 
@@ -93,12 +95,11 @@ extern "C" int AIL_startup()
         AIL_debug_log("@AIL_startup()");
     }
 
-    iFirst = 0;
     if (AIL_started == 0)
     {
+        iFirst = 1;
         AIL_started = 1;
         AIL_API_startup();
-        iFirst = 1;
     }
 
     if (AIL_debug_enabled != 0 && (AIL_debug_depth == 1 || AIL_debug_nested != 0) &&
@@ -135,6 +136,18 @@ extern "C" void AIL_shutdown()
     AIL_debug_depth = AIL_debug_depth - 1;
 }
 
+static void outresstr(const char* pResult)
+{
+    if (pResult == NULL)
+    {
+        AIL_debug_log("!-Result = NULL (no error)");
+    }
+    else
+    {
+        AIL_debug_log("!-Result = %s", pResult);
+    }
+}
+
 extern "C" const char* AIL_last_error()
 {
     const char* pError;
@@ -152,14 +165,7 @@ extern "C" const char* AIL_last_error()
     if (AIL_debug_enabled != 0 && (AIL_debug_depth == 1 || AIL_debug_nested != 0) &&
         AIL_API_background() == 0)
     {
-        if (pError == NULL)
-        {
-            AIL_debug_log("!-Result = NULL (no error)");
-        }
-        else
-        {
-            AIL_debug_log("!-Result = %s", pError);
-        }
+        outresstr(pError);
     }
 
     AIL_debug_depth = AIL_debug_depth - 1;

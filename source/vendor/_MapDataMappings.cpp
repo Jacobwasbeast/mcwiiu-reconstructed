@@ -11,18 +11,18 @@ _MapDataMappings::_MapDataMappings()
 int _MapDataMappings::getDimension(int id)
 {
     int shift = (id % 4) * 2;
-    int value = (dimensions[id >> 2] & (3 << shift)) >> shift;
+    unsigned int value = (dimensions[id >> 2] & (3 << shift)) >> shift;
+    int dimension = 0;
     switch (value)
     {
-    case 0:
-        return 0;
     case 1:
-        return -1;
+        dimension = -1;
+        break;
     case 2:
-        return 1;
-    default:
-        return 0;
+        dimension = 1;
+        break;
     }
+    return dimension;
 }
 
 void _MapDataMappings::setMapping(int id, PlayerUID xuid, int dimension)

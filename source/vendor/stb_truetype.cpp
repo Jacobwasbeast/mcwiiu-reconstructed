@@ -1,2 +1,3 @@
 #define STB_TRUETYPE_IMPLEMENTATION
 #include "stb_truetype.hpp"
+#undef STB_TRUETYPE_IMPLEMENTATION

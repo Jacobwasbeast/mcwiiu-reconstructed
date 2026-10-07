@@ -1,6 +1,8 @@
 #ifndef SOURCE_VENDOR_VCT_AUDIO_HPP
 #define SOURCE_VENDOR_VCT_AUDIO_HPP
 
+#include "nn/pia/Common.hpp"
+
 enum VCTCodec
 {
     VCT_CODEC_0 = 0,
@@ -94,10 +96,10 @@ int vct_get_packet_size(unsigned char ucCodec);
 unsigned int HPFFilter2(const void* pAudio, unsigned int uiSize);
 unsigned int VCT_GetAudioScale(const void* pAudio, unsigned int uiSize);
 
-int VCT_SendAudioEx(const void* pAudio, unsigned int uiAudioScale);
+nn::pia::Result VCT_SendAudioEx(const void* pAudio, unsigned int uiAudioScale);
 unsigned int vct_handle_audio(unsigned short usCid, unsigned char* pData,
                               unsigned int uiDataSize, long long llReceiveTick);
-int VCT_ReceiveAudio(void* pData, unsigned int uiSize, unsigned short* pCids);
+nn::pia::Result VCT_ReceiveAudio(void* pData, unsigned int uiSize, unsigned short* pCids);
 int VCTi_ReceiveAudioData(void* pData, unsigned int uiSize, unsigned int uiStreamIndex,
                           unsigned short* pCid);
 void vct_mix_audio(const short* pLeft, const short* pRight, short* pOut, unsigned int uiSize);

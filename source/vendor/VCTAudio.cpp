@@ -57,24 +57,35 @@ int g_vctHpfFeedForward = 0;
 int g_vctHpfPrevious = 0;
 unsigned int g_vctConferenceClientCount = 0;
 
-nn::pia::chat::Adpcm::State g_vctAdpcmState[2];
+nn::pia::chat::Adpcm::State g_vctAdpcmState;
+nn::pia::chat::Adpcm::State g_vctSpareAdpcmState;
 unsigned short g_vctSendSequence = 0;
 unsigned short g_vctUnknown63CA = 0;
 unsigned short g_vctConferenceCids[VCT_CONFERENCE_CID_MAX] = { 0 };
 const VCTSession* g_vctStreamingSessions[VCT_STREAM_MAX] = { 0 };
-VCTAudioPacket g_vctSendPacketBuffer[2];
-unsigned int g_vctSendAudioScale[2] = { 0 };
-unsigned int g_vctSendState = 0;
-unsigned int g_vctSendPacketCount = 0;
-unsigned int g_vctSendCidCount = 0;
-unsigned short g_vctSendCids[VCT_CONFERENCE_CID_MAX] = { 0 };
-unsigned int g_vctSendUnknown26C = 0;
-unsigned int g_vctSendUnknown270 = 0;
+struct VCTSendContext
+{
+    VCTAudioPacket m_Packets[2];
+    unsigned int m_AudioScale[2];
+    unsigned int m_State;
+    unsigned int m_PacketCount;
+    unsigned int m_CidCount;
+    unsigned short m_Cids[VCT_CONFERENCE_CID_MAX];
+    unsigned int m_Unknown26C;
+    unsigned int m_Unknown270;
+};
+
+VCTSendContext g_vctSend;
 nn::pia::chat::AudioStream g_vctAudioStreams[VCT_STREAM_MAX];
 short g_vctReceiveMixBuffer[0x600];
 unsigned short g_vctLocalCid = 0;
-VCTSession* g_vctFreeSessions = 0;
-VCTSession* g_vctSessions = 0;
+struct VCTSessionLists
+{
+    VCTSession* m_Free;
+    VCTSession* m_Active;
+};
+
+VCTSessionLists g_vctSessionLists = { 0, 0 };
 
 }
 
@@ -86,16 +97,6 @@ unsigned char VCT_IsInitialized()
     return g_vctInitialized;
 }
 
-unsigned int VCTi_GetAudioFrameLength()
-{
-    return g_vctAudioFrameLength;
-}
-
-unsigned int VCTi_GetAudioDataSize()
-{
-    return g_vctAudioDataSize;
-}
-
 unsigned int VCT_GetAudioFrameLength()
 {
     return VCTi_GetAudioFrameLength();
@@ -104,6 +105,16 @@ unsigned int VCT_GetAudioFrameLength()
 unsigned int VCT_GetAudioDataSize()
 {
     return VCTi_GetAudioDataSize();
+}
+
+unsigned int VCTi_GetAudioFrameLength()
+{
+    return g_vctAudioFrameLength;
+}
+
+unsigned int VCTi_GetAudioDataSize()
+{
+    return g_vctAudioDataSize;
 }
 
 void VCT_EnableVAD(bool bEnabled)
@@ -118,7 +129,7 @@ void VCT_EnableVAD(bool bEnabled)
 
 bool vct_is_adpcm(VCTCodec codec)
 {
-    return codec >= VCT_CODEC_2 && codec <= VCT_CODEC_4;
+    return codec == VCT_CODEC_2 || codec == VCT_CODEC_3 || codec == VCT_CODEC_4;
 }
 
 bool vct_is_opus(VCTCodec codec)
@@ -130,21 +141,16 @@ unsigned int HPFFilter2(const void* pAudio, unsigned int uiSize)
 {
     const short* pSamples = static_cast<const short*>(pAudio);
     unsigned long long ullEnergy = 0;
-    unsigned int uiSamples = uiSize >> 1;
-    const unsigned int uiCount = uiSamples;
+    const unsigned int uiCount = uiSize >> 1;
 
-    if (uiSamples != 0)
+    for (unsigned int uiIndex = 0; uiIndex < uiCount; ++uiIndex)
     {
-        do
-        {
-            g_vctHpfPrevious =
-                (*pSamples * 3743 + g_vctHpfFeedForward + g_vctHpfPrevious * 3390) >> 12;
-            const int iSquare = g_vctHpfPrevious * g_vctHpfPrevious;
-            g_vctHpfFeedForward = *pSamples * -3743;
-            ++pSamples;
-            ullEnergy += static_cast<unsigned long long>(static_cast<long long>(iSquare));
-            --uiSamples;
-        } while (uiSamples != 0);
+        const int iScaled = *pSamples * 3743;
+        g_vctHpfPrevious = (iScaled + g_vctHpfFeedForward + g_vctHpfPrevious * 3390) >> 12;
+        const int iSquare = g_vctHpfPrevious * g_vctHpfPrevious;
+        g_vctHpfFeedForward = -iScaled;
+        ++pSamples;
+        ullEnergy += static_cast<unsigned long long>(static_cast<long long>(iSquare));
     }
 
     return static_cast<unsigned int>(ullEnergy / uiCount);
@@ -152,19 +158,19 @@ unsigned int HPFFilter2(const void* pAudio, unsigned int uiSize)
 
 unsigned int VCT_GetAudioScale(const void* pAudio, unsigned int uiSize)
 {
-    if (pAudio != 0 && uiSize != 0)
+    if (pAudio == 0 || uiSize == 0)
     {
-        return HPFFilter2(pAudio, uiSize);
+        return 0;
     }
-    return 0;
+    return HPFFilter2(pAudio, uiSize);
 }
 
-int VCT_SendAudioEx(const void* pAudio, unsigned int uiAudioScale)
+nn::pia::Result VCT_SendAudioEx(const void* pAudio, unsigned int uiAudioScale)
 {
     const unsigned int uiDataSize = g_vctAudioDataSize;
 
     g_vctAudioScaleSpecified = 0;
-    g_vctSendAudioScale[(g_vctSendPacketCount & 1) ^ 1] = uiAudioScale;
+    g_vctSend.m_AudioScale[(g_vctSend.m_PacketCount & 1) ^ 1] = uiAudioScale;
 
     if (!VCT_IsInitialized())
     {
@@ -187,7 +193,7 @@ int VCT_SendAudioEx(const void* pAudio, unsigned int uiAudioScale)
             continue;
         }
 
-        VCTAudioPacket* pPacket = &g_vctSendPacketBuffer[(g_vctSendPacketCount & 1) ^ 1];
+        VCTAudioPacket* pPacket = &g_vctSend.m_Packets[(g_vctSend.m_PacketCount & 1) ^ 1];
         pPacket->m_Signature = VCT_AUDIO_SIGNATURE;
         memcpy(pPacket->m_Data + (vct_is_adpcm(g_vctCodec) ? VCT_ADPCM_STATE_SIZE : 0),
                pAudio, uiDataSize);
@@ -197,7 +203,7 @@ int VCT_SendAudioEx(const void* pAudio, unsigned int uiAudioScale)
         pPacket->m_Timestamp =
             static_cast<unsigned int>(OSGetTime() / VCT_TIMESTAMP_TICK_SCALE);
         g_vctSendPending = 1;
-        ++g_vctSendPacketCount;
+        ++g_vctSend.m_PacketCount;
         return VCT_RESULT_OK;
     }
 
@@ -221,7 +227,7 @@ void vct_mix_audio(const short* pLeft, const short* pRight, short* pOut, unsigne
     }
 }
 
-int VCT_ReceiveAudio(void* pData, unsigned int uiSize, unsigned short* pCids)
+nn::pia::Result VCT_ReceiveAudio(void* pData, unsigned int uiSize, unsigned short* pCids)
 {
     if (!VCT_IsInitialized())
     {
@@ -472,12 +478,11 @@ unsigned int VCT_GetDropFrequency(unsigned short usCid)
 
     const unsigned int uiDropCount = VCT_GetDropCount(usCid);
     const unsigned long long ullNow = static_cast<unsigned long long>(OSGetTime());
-    const unsigned long long ullElapsed = ullNow - pStream->m_DropMeasureStartTick;
+    const unsigned long long ullElapsedMilliticks = (ullNow - pStream->m_DropMeasureStartTick) * 1000;
     const unsigned int uiTimerClock = OSGetSystemInfo()->busClockSpeed >> 2;
-    const unsigned int uiSeconds =
-        static_cast<unsigned int>(ullElapsed * 1000 / uiTimerClock / 1000);
 
-    return uiDropCount * 60 / uiSeconds;
+    return uiDropCount * 60 /
+           static_cast<unsigned int>(ullElapsedMilliticks / uiTimerClock / 1000);
 }
 
 void VCT_GetAudioInfoFromCid(unsigned short usCid, VCTAudioInfo* pAudioInfo)
@@ -495,62 +500,64 @@ void VCT_GetAudioInfoFromCid(unsigned short usCid, VCTAudioInfo* pAudioInfo)
 
 VCTSession* vct_find_session(unsigned short usCid)
 {
-    VCTSession* pSession = g_vctSessions;
-    while (pSession != 0 && (pSession->m_Mode == 0 || pSession->m_Cid != usCid))
+    VCTSession* pSession;
+    for (pSession = g_vctSessionLists.m_Active; pSession != 0; pSession = pSession->m_Next)
     {
-        pSession = pSession->m_Next;
+        if (pSession->m_Mode != 0 && pSession->m_Cid == usCid)
+        {
+            break;
+        }
     }
     return pSession;
 }
 
 VCTSession* VCTi_CreateSession(unsigned short usCid)
 {
-    VCTSession* pSession = g_vctFreeSessions;
+    VCTSession* pSession = g_vctSessionLists.m_Free;
     if (usCid == g_vctLocalCid || pSession == 0)
     {
         return 0;
     }
 
-    g_vctFreeSessions = pSession->m_Next;
+    g_vctSessionLists.m_Free = pSession->m_Next;
     memset(pSession, 0, sizeof(VCTSession));
     pSession->m_State = 0;
     pSession->m_Mode = g_vctMode;
     pSession->m_Cid = usCid;
-    pSession->m_Next = g_vctSessions;
-    g_vctSessions = pSession;
+    pSession->m_Next = g_vctSessionLists.m_Active;
+    g_vctSessionLists.m_Active = pSession;
     return pSession;
 }
 
 int VCT_DeleteSession(VCTSession* pSession)
 {
-    if (pSession == 0)
+    if (pSession != 0)
     {
-        return 0;
-    }
-    if (g_vctMode == VCT_MODE_PEER)
-    {
-        return 1;
-    }
-
-    VCTSession* pPrevious = 0;
-    for (VCTSession* pCurrent = g_vctSessions; pCurrent != 0; pCurrent = pCurrent->m_Next)
-    {
-        if (pCurrent == pSession)
+        if (g_vctMode == VCT_MODE_PEER)
         {
-            pSession->m_Mode = 0;
-            if (pPrevious != 0)
-            {
-                pPrevious->m_Next = pSession->m_Next;
-            }
-            else
-            {
-                g_vctSessions = pCurrent->m_Next;
-            }
-            pSession->m_Next = g_vctFreeSessions;
-            g_vctFreeSessions = pSession;
             return 1;
         }
-        pPrevious = pCurrent;
+
+        VCTSession* pPrevious = 0;
+        for (VCTSession* pCurrent = g_vctSessionLists.m_Active; pCurrent != 0; pCurrent = pCurrent->m_Next)
+        {
+            if (pCurrent == pSession)
+            {
+                pSession->m_Mode = 0;
+                if (pPrevious)
+                {
+                    pPrevious->m_Next = pSession->m_Next;
+                    pSession->m_Next = g_vctSessionLists.m_Free;
+                    g_vctSessionLists.m_Free = pSession;
+                    return 1;
+                }
+                g_vctSessionLists.m_Active = pCurrent->m_Next;
+                pSession->m_Next = g_vctSessionLists.m_Free;
+                g_vctSessionLists.m_Free = pSession;
+                return 1;
+            }
+            pPrevious = pCurrent;
+        }
     }
 
     return 0;
@@ -560,11 +567,10 @@ void VCT_ClearStreaming(const VCTSession*)
 {
     for (unsigned int uiStream = 0; uiStream < VCT_STREAM_MAX; ++uiStream)
     {
-        nn::pia::chat::AudioStream& stream = g_vctAudioStreams[uiStream];
-        if (stream.m_PreviousPacket != 0)
+        if (g_vctAudioStreams[uiStream].m_PreviousPacket != 0)
         {
-            vct_free_packet_buffer(stream.m_PreviousPacket);
-            stream.m_PreviousPacket = 0;
+            vct_free_packet_buffer(g_vctAudioStreams[uiStream].m_PreviousPacket);
+            g_vctAudioStreams[uiStream].m_PreviousPacket = 0;
         }
         vct_flush_audio_queue(uiStream);
         nn::pia::chat::Decoder::Flush(uiStream);
@@ -630,11 +636,11 @@ int VCT_RemoveConferenceClient(unsigned short usCid)
 
 int VCT_OnConferenceClient(unsigned short usCid)
 {
-    if (g_vctMode == VCT_MODE_CONFERENCE && vct_find_session(usCid) != 0)
+    if (g_vctMode != VCT_MODE_CONFERENCE || vct_find_session(usCid) == 0)
     {
-        return 1;
+        return 0;
     }
-    return 0;
+    return 1;
 }
 
 long long VCTi_GetAudioFrameTicks()
@@ -644,25 +650,30 @@ long long VCTi_GetAudioFrameTicks()
 
 void init_adpcm_state()
 {
-    g_vctAdpcmState[0].sample = 0;
-    g_vctAdpcmState[0].index = 0;
-    g_vctAdpcmState[1].sample = 0;
-    g_vctAdpcmState[1].index = 0;
+    g_vctAdpcmState.sample = 0;
+    g_vctAdpcmState.index = 0;
+    g_vctSpareAdpcmState.sample = 0;
+    g_vctSpareAdpcmState.index = 0;
 }
 
 int vct_get_packet_size(unsigned char ucCodec)
 {
-    if (ucCodec < 5)
+    switch (ucCodec)
     {
+    case VCT_CODEC_0:
+    case VCT_CODEC_1:
+    case VCT_CODEC_2:
+    case VCT_CODEC_3:
+    case VCT_CODEC_4:
         return g_vctPacketSizeTable[ucCodec][0] * g_vctAudioFrameLength +
                g_vctPacketSizeTable[ucCodec][1] + 12;
-    }
-    if (ucCodec > 6)
-    {
+    case VCT_CODEC_5:
+    case VCT_CODEC_6:
+        return g_vctPacketSizeTable[ucCodec][0] * g_vctAudioFrameLength +
+               g_vctPacketSizeTable[ucCodec][1] * (g_vctAudioFrameLength / 0x14) + 12;
+    default:
         return 0;
     }
-    return g_vctPacketSizeTable[ucCodec][0] * g_vctAudioFrameLength +
-           g_vctPacketSizeTable[ucCodec][1] * (g_vctAudioFrameLength / 0x14) + 12;
 }
 
 nn::pia::chat::AudioStream* vct_get_audio_stream(unsigned int uiStreamIndex)
@@ -866,15 +877,15 @@ int VCT_StartStreaming(const VCTSession* pSession)
         g_vctSendSequence = static_cast<unsigned short>(OSGetTime());
         init_adpcm_state();
         g_vctVadResetPending = 1;
-        g_vctSendState = 0;
-        g_vctSendPacketCount = 0;
-        g_vctSendCidCount = 0;
+        g_vctSend.m_State = 0;
+        g_vctSend.m_PacketCount = 0;
+        g_vctSend.m_CidCount = 0;
         for (unsigned int uiEntry = 0; uiEntry < VCT_CONFERENCE_CID_MAX; ++uiEntry)
         {
-            g_vctSendCids[uiEntry] = 0;
+            g_vctSend.m_Cids[uiEntry] = 0;
         }
-        g_vctSendUnknown26C = 0;
-        g_vctSendUnknown270 = 0;
+        g_vctSend.m_Unknown26C = 0;
+        g_vctSend.m_Unknown270 = 0;
     }
 
     return 1;

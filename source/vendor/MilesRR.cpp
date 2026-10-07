@@ -3,6 +3,10 @@
 #include <stddef.h>
 #include <string.h>
 
+#ifdef __ghs__
+#include <ppc_ghs.h>
+#endif
+
 #include <coreinit/atomic.h>
 #include <coreinit/atomic64.h>
 #include <coreinit/cache.h>
@@ -94,6 +98,57 @@ static int rrThreadCount;
 FSClient* MilesFsClient;
 FSCmdBlock* MilesFsCmdBlock;
 
+#ifdef __ghs__
+static inline void FullBarrier()
+{
+    __SYNC();
+}
+
+static inline void AcquireBarrier()
+{
+    __LWSYNC();
+}
+
+static inline int AddAtomic(volatile int* pTarget, int iValue)
+{
+    unsigned int uPrevious;
+
+    do
+    {
+        uPrevious = __LWARX((unsigned int*)pTarget, 0);
+        __DCBST((unsigned int*)pTarget, 0);
+    }
+    while (!__STWCX((unsigned int*)pTarget, 0, uPrevious + iValue));
+
+    return (int)uPrevious;
+}
+
+static inline unsigned int CountLeadingZeros(unsigned int uValue)
+{
+    return __CLZ32(uValue);
+}
+#else
+static inline void FullBarrier()
+{
+    OSMemoryBarrier();
+}
+
+static inline void AcquireBarrier()
+{
+    OSMemoryBarrier();
+}
+
+static inline int AddAtomic(volatile int* pTarget, int iValue)
+{
+    return OSAddAtomic(pTarget, iValue);
+}
+
+static inline unsigned int CountLeadingZeros(unsigned int uValue)
+{
+    return uValue == 0 ? 32 : (unsigned int)__builtin_clz(uValue);
+}
+#endif
+
 static rriMutex* AlignMutexStorage(rrMutex* pMutex)
 {
     return (rriMutex*)(((size_t)pMutex->ucStorage + 15) & ~(size_t)15);
@@ -137,7 +192,8 @@ extern "C" void Platform_CloseFile(MilesFile* pFile)
         return;
     }
 
-    FSCloseFile(MilesFsClient, MilesFsCmdBlock, pFile->uHandle, FS_ERROR_FLAG_NONE);
+    FSFileHandle uHandle = pFile->uHandle;
+    FSCloseFile(MilesFsClient, MilesFsCmdBlock, uHandle, FS_ERROR_FLAG_NONE);
 }
 
 extern "C" int Platform_ReadFile(MilesFile* pFile, void* pBuffer, unsigned int uBytes)
@@ -250,343 +306,68 @@ extern "C" rrThread* rrThreadCurrent()
     return find_rrthread_in_tls(NULL);
 }
 
-extern "C" void rrAtomicMemoryBarrierFull()
-{
-    OSMemoryBarrier();
-}
-
-extern "C" unsigned int rrAtomicLoadAcquire32(const volatile unsigned int* pTarget)
-{
-    unsigned int uValue;
-
-    uValue = *pTarget;
-    OSMemoryBarrier();
-    return uValue;
-}
-
-extern "C" unsigned long long rrAtomicLoadAcquire64(const volatile unsigned long long* pTarget)
-{
-    unsigned long long uValue;
-
-    uValue = *pTarget;
-    OSMemoryBarrier();
-    return uValue;
-}
-
-extern "C" void rrAtomicStoreRelease32(volatile unsigned int* pTarget, unsigned int uValue)
-{
-    OSMemoryBarrier();
-    *pTarget = uValue;
-}
-
-extern "C" unsigned int rrAtomicCmpXchg32(volatile unsigned int* pTarget, unsigned int uNewValue,
-                                          unsigned int uComparand)
-{
-    unsigned int uPrevious;
-
-    rrAtomicMemoryBarrierFull();
-    OSCompareAndSwapAtomicEx(pTarget, uComparand, uNewValue, &uPrevious);
-    OSMemoryBarrier();
-    return uPrevious;
-}
-
-extern "C" unsigned long long rrAtomicCmpXchg64(volatile unsigned long long* pTarget,
-                                                unsigned long long uNewValue,
-                                                unsigned long long uComparand)
-{
-    unsigned long long uPrevious;
-
-    rrAtomicMemoryBarrierFull();
-    OSCompareAndSwapAtomicEx64(pTarget, uComparand, uNewValue, &uPrevious);
-    OSMemoryBarrier();
-    return uPrevious;
-}
-
-extern "C" int rrAtomicAddExchange32(volatile int* pTarget, int iValue)
-{
-    int iPrevious;
-
-    OSMemoryBarrier();
-    iPrevious = OSAddAtomic(pTarget, iValue);
-    OSMemoryBarrier();
-    return iPrevious;
-}
-
-extern "C" long long rrAtomicAddExchange64(volatile long long* pTarget, long long lValue)
-{
-    long long lPrevious;
-
-    OSMemoryBarrier();
-    lPrevious = OSAddAtomic64(pTarget, lValue);
-    OSMemoryBarrier();
-    return lPrevious;
-}
-
-extern "C" void rrMutexCreate(rrMutex* pMutex, int)
-{
-    rriMutex* pNative;
-
-    pNative = AlignMutexStorage(pMutex);
-    pMutex->pNative = pNative;
-    pNative->uCreated = 0;
-    OSInitMutex(&pNative->mutex);
-    rrAtomicMemoryBarrierFull();
-    pNative->uCreated = 1;
-}
-
-extern "C" void rrMutexDestroy(rrMutex*)
-{
-}
-
-extern "C" void rrMutexLock(rrMutex* pMutex)
-{
-    if (pMutex == NULL)
-    {
-        return;
-    }
-
-    OSLockMutex(&((rriMutex*)pMutex->pNative)->mutex);
-}
-
-extern "C" void rrMutexUnlock(rrMutex* pMutex)
-{
-    if (pMutex == NULL)
-    {
-        return;
-    }
-
-    OSUnlockMutex(&((rriMutex*)pMutex->pNative)->mutex);
-}
-
-extern "C" int rrMutexLockTimeout(rrMutex* pMutex, unsigned int uTimeoutMilliseconds)
-{
-    rriMutex* pNative;
-    OSTick uTimeoutTicks;
-    OSTick uStartTick;
-
-    if (pMutex == NULL)
-    {
-        return 0;
-    }
-
-    pNative = (rriMutex*)pMutex->pNative;
-
-    if (uTimeoutMilliseconds == RR_WAIT_INFINITE)
-    {
-        OSLockMutex(&pNative->mutex);
-        return 1;
-    }
-
-    if (uTimeoutMilliseconds == 0)
-    {
-        return OSTryLockMutex(&pNative->mutex);
-    }
-
-    uTimeoutTicks = (OSTick)OSMillisecondsToTicks(uTimeoutMilliseconds);
-    uStartTick = OSGetTick();
-
-    while (OSTryLockMutex(&pNative->mutex) == 0)
-    {
-        if ((OSTick)(OSGetTick() - uStartTick) >= uTimeoutTicks)
-        {
-            return 0;
-        }
-
-        OSSleepTicks(OSMicrosecondsToTicks(RR_SPIN_SLEEP_MICROSECONDS));
-    }
-
-    return 1;
-}
-
-extern "C" int rrSemaphoreCreate(rrSemaphore* pSemaphore, int iInitialCount, int)
-{
-    rriSemaphore* pNative;
-
-    pNative = AlignSemaphoreStorage(pSemaphore);
-    pSemaphore->pNative = pNative;
-    OSInitSemaphore(&pNative->semaphore, iInitialCount);
-    rrAtomicMemoryBarrierFull();
-    pNative->uCreated = RR_SEMAPHORE_CREATED;
-    return 1;
-}
-
-extern "C" void rrSemaphoreDestroy(rrSemaphore* pSemaphore)
-{
-    rriSemaphore* pNative;
-
-    if (pSemaphore == NULL)
-    {
-        return;
-    }
-
-    pNative = (rriSemaphore*)pSemaphore->pNative;
-    if (pNative->uCreated != RR_SEMAPHORE_CREATED)
-    {
-        return;
-    }
-
-    pNative->uCreated = 0;
-}
-
-extern "C" void rrSemaphoreIncrement(rrSemaphore* pSemaphore, int iCount)
-{
-    rriSemaphore* pNative;
-
-    if (pSemaphore == NULL)
-    {
-        return;
-    }
-
-    pNative = (rriSemaphore*)pSemaphore->pNative;
-    if (pNative->uCreated != RR_SEMAPHORE_CREATED)
-    {
-        return;
-    }
-
-    while (iCount > 0)
-    {
-        OSSignalSemaphore(&pNative->semaphore);
-        iCount = iCount - 1;
-    }
-}
-
-extern "C" int rrSemaphoreDecrementOrWait(rrSemaphore* pSemaphore, unsigned int uTimeoutMilliseconds)
-{
-    rriSemaphore* pNative;
-    OSTick uTimeoutTicks;
-    OSTick uStartTick;
-
-    if (pSemaphore == NULL)
-    {
-        return 0;
-    }
-
-    pNative = (rriSemaphore*)pSemaphore->pNative;
-    if (pNative->uCreated != RR_SEMAPHORE_CREATED)
-    {
-        return 0;
-    }
-
-    if (uTimeoutMilliseconds == 0)
-    {
-        if (OSTryWaitSemaphore(&pNative->semaphore) < 1)
-        {
-            return 0;
-        }
-
-        return 1;
-    }
-
-    if (uTimeoutMilliseconds == RR_WAIT_INFINITE)
-    {
-        OSWaitSemaphore(&pNative->semaphore);
-        return 1;
-    }
-
-    uTimeoutTicks = (OSTick)OSMillisecondsToTicks(uTimeoutMilliseconds);
-    uStartTick = OSGetTick();
-
-    while (OSTryWaitSemaphore(&pNative->semaphore) == 0)
-    {
-        if ((OSTick)(OSGetTick() - uStartTick) >= uTimeoutTicks)
-        {
-            return 0;
-        }
-
-        OSSleepTicks(OSMicrosecondsToTicks(RR_SPIN_SLEEP_MICROSECONDS));
-    }
-
-    return 1;
-}
-
-extern "C" void rrThreadSleep(unsigned int uMilliseconds)
-{
-    if (uMilliseconds == RR_WAIT_INFINITE)
-    {
-        uMilliseconds = RR_DEFAULT_SLEEP_MILLISECONDS;
-    }
-
-    OSSleepTicks(OSMicrosecondsToTicks((unsigned long long)uMilliseconds * 1000));
-}
-
-static int AllocateThreadSlot(volatile unsigned int* pSlots)
+static inline int AllocateThreadSlot(volatile unsigned int* pSlots)
 {
     unsigned int uSlots;
-    unsigned int uFree;
-    unsigned int uBit;
+    unsigned int uLeading;
 
-    for (;;)
+    uSlots = *pSlots;
+    while ((uLeading = CountLeadingZeros(~uSlots)) < 32)
     {
-        uSlots = *pSlots;
-        uFree = ~uSlots;
-        if (uFree == 0)
+        if (rrAtomicCmpXchg32(pSlots, uSlots | (1u << (31 - uLeading)), uSlots) == uSlots)
         {
-            return -1;
+            return (int)(31 - uLeading);
         }
 
-        uBit = 31 - (unsigned int)__builtin_clz(uFree);
-        if (rrAtomicCmpXchg32(pSlots, uSlots | (1u << uBit), uSlots) == uSlots)
-        {
-            return (int)uBit;
-        }
-    }
-}
-
-static void ReleaseThreadSlot(unsigned int uSlot)
-{
-    volatile unsigned int* pSlots;
-    unsigned int uSlots;
-
-    pSlots = &rrThreadSlots[uSlot >> 5];
-
-    do
-    {
         uSlots = *pSlots;
     }
-    while (rrAtomicCmpXchg32(pSlots, uSlots & ~(1u << (uSlot & 31)), uSlots) != uSlots);
+
+    return -1;
 }
 
 static void thread_cleanup(rriThread* pNative)
 {
     OSThread* pOSThread;
     unsigned int uExitCode;
+    unsigned int uSlots;
     rrThread* pCurrent;
 
-    pOSThread = pNative->pOSThread;
+    unsigned int* puThread = (unsigned int*)&pNative->pOSThread;
+
+    pOSThread = (OSThread*)*puThread;
     uExitCode = pNative->uExitCode;
     pNative->uExitCode = 0xFFFFFFFF;
 
-    if (rrAtomicCmpXchg32((volatile unsigned int*)&pNative->pOSThread, 0,
-                          (unsigned int)pOSThread) != (unsigned int)pOSThread)
+    if (rrAtomicCmpXchg32(puThread, 0, (unsigned int)pOSThread) == (unsigned int)pOSThread &&
+        pOSThread != NULL)
     {
-        return;
-    }
+        rrAtomicAddExchange32(&rrThreadCount, -1);
 
-    if (pOSThread == NULL)
-    {
-        return;
-    }
+        do
+        {
+            uSlots = rrThreadSlots[pNative->uSlot >> 5];
+        }
+        while (rrAtomicCmpXchg32(&rrThreadSlots[pNative->uSlot >> 5],
+                                 uSlots & ~(1 << (pNative->uSlot & 31)), uSlots) != uSlots);
 
-    rrAtomicAddExchange32(&rrThreadCount, -1);
-    ReleaseThreadSlot(pNative->uSlot);
+        pCurrent = rrThreadCurrent();
+        if (pCurrent != NULL && (rriThread*)pCurrent->pNative == pNative)
+        {
+            TlsSetValue(RR_TLS_THREAD, NULL);
+            TlsSetValue(RR_TLS_SIGNATURE, NULL);
+        }
 
-    pCurrent = rrThreadCurrent();
-    if (pCurrent != NULL && (rriThread*)pCurrent->pNative == pNative)
-    {
-        TlsSetValue(RR_TLS_THREAD, NULL);
-        TlsSetValue(RR_TLS_SIGNATURE, NULL);
-    }
+        if (uExitCode == 0)
+        {
+            OSDetachThread(pNative->pOSThread);
+            return;
+        }
 
-    if (uExitCode == 0)
-    {
-        OSDetachThread(pNative->pOSThread);
-        return;
-    }
-
-    if ((pNative->uFlags & RR_THREAD_FLAG_USER_MEMORY) == 0)
-    {
-        MEMFreeToDefaultHeap(pNative->pStack);
-        MEMFreeToDefaultHeap(pOSThread);
+        if ((pNative->uFlags & RR_THREAD_FLAG_USER_MEMORY) == 0)
+        {
+            MEMFreeToDefaultHeap(pNative->pStack);
+            MEMFreeToDefaultHeap(pOSThread);
+        }
     }
 }
 
@@ -626,9 +407,10 @@ extern "C" int rrThreadCreate(rrThread* pThread, int (*pEntry)(void*), int iStac
     rriThread* pNative;
     long long lId;
     int iSlot;
-    OSThread* pOSThread;
     unsigned char* pStack;
     unsigned int uStackSize;
+    int iCreated;
+    unsigned int uSlots;
 
     pNative = (rriThread*)(((size_t)pThread + 31) & ~(size_t)15);
     pThread->pNative = pNative;
@@ -648,38 +430,40 @@ extern "C" int rrThreadCreate(rrThread* pThread, int (*pEntry)(void*), int iStac
     }
 
     pNative->uId = (unsigned long long)lId;
-    pNative->pEntry = pEntry;
-    pNative->pUserData = pUserData;
     pNative->pName = pName;
     pNative->uFlags = uFlags;
-    pNative->uState = RR_THREAD_STATE_RUNNING;
+    pNative->pEntry = pEntry;
     pNative->uExitCode = 0;
+    pNative->pUserData = pUserData;
     pNative->uSlot = (unsigned int)iSlot;
+    pNative->uState = RR_THREAD_STATE_RUNNING;
 
     if ((uFlags & RR_THREAD_FLAG_USER_MEMORY) != 0)
     {
-        pOSThread = (OSThread*)(((size_t)pThread + RR_THREAD_NATIVE_OFFSET) &
-                                ~(size_t)(RR_THREAD_STACK_ALIGNMENT - 1));
-        pStack = (unsigned char*)pOSThread +
-                 ((sizeof(OSThread) + RR_THREAD_STACK_ALIGNMENT) &
-                  ~(RR_THREAD_STACK_ALIGNMENT - 1));
-        uStackSize = (unsigned int)(((size_t)((unsigned char*)pNative + iStackSize - pStack)) &
-                                    ~(size_t)(RR_THREAD_STACK_ALIGNMENT - 1));
+        pNative->pOSThread =
+            (OSThread*)(((size_t)pThread + RR_THREAD_NATIVE_OFFSET) &
+                        ~(size_t)(RR_THREAD_STACK_ALIGNMENT - 1));
+        pStack = (unsigned char*)pNative->pOSThread + sizeof(OSThread) + RR_THREAD_STACK_ALIGNMENT;
+        pNative->pStack = pStack;
+        uStackSize = (unsigned int)(iStackSize + ((size_t)pNative - (size_t)pStack)) &
+                     ~(RR_THREAD_STACK_ALIGNMENT - 1);
+        iCreated = OSCreateThread(pNative->pOSThread, (OSThreadEntryPointFn)wiiu_shim, 0,
+                                  (char*)pThread, pStack + uStackSize, uStackSize,
+                                  OSGetThreadPriority(OSGetCurrentThread()),
+                                  (OSThreadAttributes)0);
     }
     else
     {
-        pOSThread = (OSThread*)MEMAllocFromDefaultHeapEx(sizeof(OSThread), 8);
+        pNative->pOSThread = (OSThread*)MEMAllocFromDefaultHeapEx(sizeof(OSThread), 8);
         pStack = (unsigned char*)MEMAllocFromDefaultHeapEx((unsigned int)iStackSize, 8);
-        uStackSize = (unsigned int)iStackSize;
+        pNative->pStack = pStack;
+        iCreated = OSCreateThread(pNative->pOSThread, (OSThreadEntryPointFn)wiiu_shim, 0,
+                                  (char*)pThread, pStack + iStackSize, iStackSize,
+                                  OSGetThreadPriority(OSGetCurrentThread()),
+                                  (OSThreadAttributes)0);
     }
 
-    pNative->pOSThread = pOSThread;
-    pNative->pStack = pStack;
-
-    if (OSCreateThread(pOSThread, (OSThreadEntryPointFn)wiiu_shim, 0, (char*)pThread,
-                       pStack + uStackSize, uStackSize,
-                       OSGetThreadPriority(OSGetCurrentThread()),
-                       (OSThreadAttributes)0) == 0)
+    if (iCreated == 0)
     {
         pNative->uState = 0;
         pNative->uExitCode = 1;
@@ -691,7 +475,14 @@ extern "C" int rrThreadCreate(rrThread* pThread, int (*pEntry)(void*), int iStac
         }
 
         pNative->pOSThread = NULL;
-        ReleaseThreadSlot((unsigned int)iSlot);
+
+        do
+        {
+            uSlots = rrThreadSlots[iSlot >> 5];
+        }
+        while (rrAtomicCmpXchg32(&rrThreadSlots[iSlot >> 5],
+                                 uSlots & ~(1 << (iSlot & 31)), uSlots) != uSlots);
+
         return 0;
     }
 
@@ -761,33 +552,36 @@ extern "C" int rrThreadWaitDone(rrThread* pThread, unsigned int, unsigned int* p
     rriThread* pNative;
     int iExitCode;
 
-    if (pThread == NULL)
+    if (pThread != NULL)
     {
-        return 0;
-    }
+        pNative = (rriThread*)pThread->pNative;
 
-    pNative = (rriThread*)pThread->pNative;
-
-    if (pNative->uExitCode == 0)
-    {
-        if (OSJoinThread(pNative->pOSThread, &iExitCode) == 0)
+        if (pNative->uExitCode != 0)
         {
-            return 0;
+            if (puExitCode != NULL)
+            {
+                *puExitCode = pNative->uExitCode;
+            }
+        }
+        else
+        {
+            if (OSJoinThread(pNative->pOSThread, &iExitCode) == 0)
+            {
+                return 0;
+            }
+
+            pNative->uExitCode = (unsigned int)iExitCode | RR_THREAD_EXIT_CODE_JOINED;
+
+            if (puExitCode != NULL)
+            {
+                *puExitCode = (unsigned int)iExitCode;
+            }
         }
 
-        pNative->uExitCode = (unsigned int)iExitCode | RR_THREAD_EXIT_CODE_JOINED;
-
-        if (puExitCode != NULL)
-        {
-            *puExitCode = (unsigned int)iExitCode;
-        }
-    }
-    else if (puExitCode != NULL)
-    {
-        *puExitCode = pNative->uExitCode;
+        return 1;
     }
 
-    return 1;
+    return 0;
 }
 
 extern "C" void rrThreadCleanUp(rrThread* pThread)
@@ -809,4 +603,301 @@ extern "C" void rrThreadCleanUp(rrThread* pThread)
     {
         thread_cleanup(pNative);
     }
+}
+
+extern "C" void rrMutexCreate(rrMutex* pMutex, int)
+{
+    rriMutex* pNative;
+
+    pNative = AlignMutexStorage(pMutex);
+    pMutex->pNative = pNative;
+    pNative->uCreated = 0;
+    OSInitMutex(&pNative->mutex);
+    rrAtomicMemoryBarrierFull();
+    pNative->uCreated = 1;
+}
+
+extern "C" void rrMutexDestroy(rrMutex*)
+{
+}
+
+extern "C" void rrMutexLock(rrMutex* pMutex)
+{
+    if (pMutex == NULL)
+    {
+        return;
+    }
+
+    OSLockMutex(&((rriMutex*)pMutex->pNative)->mutex);
+}
+
+extern "C" void rrMutexUnlock(rrMutex* pMutex)
+{
+    if (pMutex == NULL)
+    {
+        return;
+    }
+
+    OSUnlockMutex(&((rriMutex*)pMutex->pNative)->mutex);
+}
+
+extern "C" int rrMutexLockTimeout(rrMutex* pMutex, unsigned int uTimeoutMilliseconds)
+{
+    rriMutex* pNative;
+    unsigned int uTimeoutTicks;
+    unsigned int uStartTick;
+
+    if (pMutex != NULL)
+    {
+        pNative = (rriMutex*)pMutex->pNative;
+
+        if (uTimeoutMilliseconds == RR_WAIT_INFINITE)
+        {
+            OSLockMutex(&pNative->mutex);
+            return 1;
+        }
+
+        if (uTimeoutMilliseconds == 0)
+        {
+            return OSTryLockMutex(&pNative->mutex);
+        }
+
+        uTimeoutTicks = (unsigned int)OSMillisecondsToTicks(uTimeoutMilliseconds);
+        uStartTick = OSGetTick();
+
+        for (;;)
+        {
+            if (OSTryLockMutex(&pNative->mutex) != 0)
+            {
+                return 1;
+            }
+
+            if (OSGetTick() - uStartTick >= uTimeoutTicks)
+            {
+                return 0;
+            }
+
+            OSSleepTicks(OSMicrosecondsToTicks(RR_SPIN_SLEEP_MICROSECONDS));
+        }
+    }
+
+    return 0;
+}
+
+extern "C" void rrThreadSleep(unsigned int uMilliseconds)
+{
+    if (uMilliseconds == RR_WAIT_INFINITE)
+    {
+        uMilliseconds = RR_DEFAULT_SLEEP_MILLISECONDS;
+    }
+
+    OSSleepTicks(OSMicrosecondsToTicks((unsigned long long)uMilliseconds * 1000));
+}
+
+extern "C" int rrSemaphoreCreate(rrSemaphore* pSemaphore, int iInitialCount, int)
+{
+    rriSemaphore* pNative;
+
+    pNative = AlignSemaphoreStorage(pSemaphore);
+    pSemaphore->pNative = pNative;
+    OSInitSemaphore(&pNative->semaphore, iInitialCount);
+    rrAtomicMemoryBarrierFull();
+    pNative->uCreated = RR_SEMAPHORE_CREATED;
+    return 1;
+}
+
+extern "C" void rrSemaphoreDestroy(rrSemaphore* pSemaphore)
+{
+    rriSemaphore* pNative;
+
+    if (pSemaphore == NULL)
+    {
+        return;
+    }
+
+    pNative = (rriSemaphore*)pSemaphore->pNative;
+    if (pNative->uCreated != RR_SEMAPHORE_CREATED)
+    {
+        return;
+    }
+
+    pNative->uCreated = 0;
+}
+
+extern "C" int rrSemaphoreDecrementOrWait(rrSemaphore* pSemaphore, unsigned int uTimeoutMilliseconds)
+{
+    unsigned int uTimeoutTicks;
+    unsigned int uStartTick;
+
+    if (pSemaphore != NULL && ((rriSemaphore*)pSemaphore->pNative)->uCreated == RR_SEMAPHORE_CREATED)
+    {
+        if (uTimeoutMilliseconds == 0)
+        {
+            if (OSTryWaitSemaphore(&((rriSemaphore*)pSemaphore->pNative)->semaphore) < 1)
+            {
+                return 0;
+            }
+        }
+        else
+        {
+            if (uTimeoutMilliseconds == RR_WAIT_INFINITE)
+            {
+                OSWaitSemaphore(&((rriSemaphore*)pSemaphore->pNative)->semaphore);
+                return 1;
+            }
+
+            uTimeoutTicks = OSMillisecondsToTicks(uTimeoutMilliseconds);
+            uStartTick = OSGetTick();
+
+            while (OSTryWaitSemaphore(&((rriSemaphore*)pSemaphore->pNative)->semaphore) == 0)
+            {
+                if (OSGetTick() - uStartTick >= uTimeoutTicks)
+                {
+                    return 0;
+                }
+
+                OSSleepTicks(OSMicrosecondsToTicks(RR_SPIN_SLEEP_MICROSECONDS));
+            }
+        }
+
+        return 1;
+    }
+
+    return 0;
+}
+
+extern "C" void rrSemaphoreIncrement(rrSemaphore* pSemaphore, int iCount)
+{
+    if (pSemaphore == NULL)
+    {
+        return;
+    }
+
+    if (((rriSemaphore*)pSemaphore->pNative)->uCreated != RR_SEMAPHORE_CREATED)
+    {
+        return;
+    }
+
+    for (int i = 0; i < iCount; i++)
+    {
+        OSSignalSemaphore(&((rriSemaphore*)pSemaphore->pNative)->semaphore);
+    }
+}
+
+#ifdef __ghs__
+extern "C" BOOL OSCompareAndSwapAtomicEx(volatile uint32_t* pTarget, uint32_t uComparand,
+                                         uint32_t uNewValue, uint32_t* puPrevious)
+{
+    unsigned int* pWord = const_cast<unsigned int*>(pTarget);
+    unsigned int uPrevious;
+    BOOL bSwapped;
+
+    uPrevious = __LWARX(pWord, 0);
+    if (uPrevious == uComparand)
+    {
+        __DCBST(pWord, 0);
+        if (__STWCX(pWord, 0, uNewValue))
+        {
+            bSwapped = 1;
+        }
+        else
+        {
+            for (;;)
+            {
+                uPrevious = __LWARX(pWord, 0);
+                if (uPrevious == uComparand)
+                {
+                    __DCBST(pWord, 0);
+                    if (__STWCX(pWord, 0, uNewValue))
+                    {
+                        bSwapped = 1;
+                        break;
+                    }
+                }
+                else
+                {
+                    bSwapped = 0;
+                    break;
+                }
+            }
+        }
+    }
+    else
+    {
+        bSwapped = 0;
+    }
+
+    *puPrevious = uPrevious;
+    return bSwapped;
+}
+#endif
+
+extern "C" void rrAtomicMemoryBarrierFull()
+{
+    FullBarrier();
+}
+
+extern "C" unsigned int rrAtomicLoadAcquire32(const volatile unsigned int* pTarget)
+{
+    unsigned int uValue;
+
+    uValue = *pTarget;
+    AcquireBarrier();
+    return uValue;
+}
+
+extern "C" unsigned long long rrAtomicLoadAcquire64(const volatile unsigned long long* pTarget)
+{
+    unsigned long long uValue;
+
+    uValue = *pTarget;
+    AcquireBarrier();
+    return uValue;
+}
+
+extern "C" void rrAtomicStoreRelease32(volatile unsigned int* pTarget, unsigned int uValue)
+{
+    AcquireBarrier();
+    *pTarget = uValue;
+}
+
+extern "C" unsigned int rrAtomicCmpXchg32(volatile unsigned int* pTarget, unsigned int uNewValue,
+                                          unsigned int uComparand)
+{
+    unsigned int uPrevious;
+
+    rrAtomicMemoryBarrierFull();
+    OSCompareAndSwapAtomicEx(pTarget, uComparand, uNewValue, &uPrevious);
+    OSMemoryBarrier();
+    return uPrevious;
+}
+
+extern "C" unsigned long long rrAtomicCmpXchg64(volatile unsigned long long* pTarget,
+                                                unsigned long long uNewValue,
+                                                unsigned long long uComparand)
+{
+    unsigned long long uPrevious;
+
+    rrAtomicMemoryBarrierFull();
+    OSCompareAndSwapAtomicEx64(pTarget, uComparand, uNewValue, &uPrevious);
+    AcquireBarrier();
+    return uPrevious;
+}
+
+extern "C" int rrAtomicAddExchange32(volatile int* pTarget, int iValue)
+{
+    FullBarrier();
+    int iPrevious = AddAtomic(pTarget, iValue);
+    AcquireBarrier();
+    return iPrevious;
+}
+
+extern "C" long long rrAtomicAddExchange64(volatile long long* pTarget, long long lValue)
+{
+    long long lPrevious;
+
+    FullBarrier();
+    lPrevious = OSAddAtomic64(pTarget, lValue);
+    AcquireBarrier();
+    return lPrevious;
 }

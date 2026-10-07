@@ -132,32 +132,31 @@ extern "C" void AIL_API_set_listener_3D_orientation(_DIG_DRIVER* pDriver, float 
     float fRightY = fFaceX * fUpZ - fFaceZ * fUpX;
     float fRightZ = fFaceY * fUpX - fFaceX * fUpY;
 
-    SpeakerState& state = pDriver->speakers;
-    state.listenerUp[2] = fUpZ;
-    state.listenerFace[0] = fFaceX;
-    state.listenerFace[1] = fFaceY;
-    state.listenerFace[2] = fFaceZ;
-    state.listenerUp[0] = fUpX;
-    state.listenerCross[2] = fRightZ;
-    state.listenerUp[1] = fUpY;
-    state.listenerCross[0] = fRightX;
-    state.listenerCross[1] = fRightY;
+    pDriver->speakers.listenerUp[2] = fUpZ;
+    pDriver->speakers.listenerFace[0] = fFaceX;
+    pDriver->speakers.listenerFace[1] = fFaceY;
+    pDriver->speakers.listenerFace[2] = fFaceZ;
+    pDriver->speakers.listenerUp[0] = fUpX;
+    pDriver->speakers.listenerCross[2] = fRightZ;
+    pDriver->speakers.listenerUp[1] = fUpY;
+    pDriver->speakers.listenerCross[0] = fRightX;
+    pDriver->speakers.listenerCross[1] = fRightY;
 
     fLength = (float)sqrt(fRightX * fRightX + fRightY * fRightY + fRightZ * fRightZ);
-    if (fLength >= VECTOR_EPSILON)
+    if (fLength < VECTOR_EPSILON)
     {
-        state.listenerCross[0] = state.listenerCross[0] / fLength;
-        state.listenerCross[1] = state.listenerCross[1] / fLength;
-        state.listenerCross[2] = state.listenerCross[2] / fLength;
+        pDriver->speakers.listenerCross[0] = 1.0f;
+        pDriver->speakers.listenerCross[1] = 0.0f;
+        pDriver->speakers.listenerCross[2] = 0.0f;
     }
     else
     {
-        state.listenerCross[0] = 1.0f;
-        state.listenerCross[1] = 0.0f;
-        state.listenerCross[2] = 0.0f;
+        pDriver->speakers.listenerCross[0] = pDriver->speakers.listenerCross[0] / fLength;
+        pDriver->speakers.listenerCross[1] = pDriver->speakers.listenerCross[1] / fLength;
+        pDriver->speakers.listenerCross[2] = pDriver->speakers.listenerCross[2] / fLength;
     }
 
-    SS_set_speaker_configuration(&state, NULL, 0, pDriver->speakerConfig);
+    SS_set_speaker_configuration(&pDriver->speakers, NULL, 0, pDriver->speakerConfig);
 }
 
 extern "C" void AIL_API_set_sample_3D_volume_falloff(_SAMPLE* pSample,
@@ -174,7 +173,7 @@ extern "C" void AIL_API_set_sample_3D_volume_falloff(_SAMPLE* pSample,
         return;
     }
 
-    pSample->falloffPointCounts[FALLOFF_VOLUME] = (signed char)iCount;
+    pSample->falloffPointCounts[FALLOFF_VOLUME] = (char)iCount;
     memcpy(pSample->falloffPoints[FALLOFF_VOLUME], pPoints,
            iCount * sizeof(FalloffGraphPoint));
 }
@@ -193,7 +192,7 @@ extern "C" void AIL_API_set_sample_3D_lowpass_falloff(_SAMPLE* pSample,
         return;
     }
 
-    pSample->falloffPointCounts[FALLOFF_LOWPASS] = (signed char)iCount;
+    pSample->falloffPointCounts[FALLOFF_LOWPASS] = (char)iCount;
     memcpy(pSample->falloffPoints[FALLOFF_LOWPASS], pPoints,
            iCount * sizeof(FalloffGraphPoint));
 }
@@ -212,7 +211,7 @@ extern "C" void AIL_API_set_sample_3D_exclusion_falloff(_SAMPLE* pSample,
         return;
     }
 
-    pSample->falloffPointCounts[FALLOFF_EXCLUSION] = (signed char)iCount;
+    pSample->falloffPointCounts[FALLOFF_EXCLUSION] = (char)iCount;
     memcpy(pSample->falloffPoints[FALLOFF_EXCLUSION], pPoints,
            iCount * sizeof(FalloffGraphPoint));
 }

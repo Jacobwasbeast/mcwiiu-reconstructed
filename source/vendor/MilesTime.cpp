@@ -10,7 +10,7 @@ static const unsigned int RR_TIME_UNINITIALISED = 0;
 static const unsigned int RR_TIME_READY = 1;
 static const unsigned int RR_TIME_CLAIMED = 2;
 
-static const unsigned int RR_TIME_SPINS_BEFORE_SLEEP = 303;
+static const unsigned int RR_TIME_SPINS_BEFORE_SLEEP = 302;
 static const unsigned int RR_TIME_SPINS_BEFORE_YIELD = 300;
 static const unsigned long long RR_TIME_SPIN_SLEEP_MICROSECONDS = 1000;
 
@@ -19,7 +19,7 @@ static unsigned int rrTimeState = RR_TIME_UNINITIALISED;
 static unsigned long long rrTimeBase;
 static unsigned long long rrTickBase;
 
-static void GetBases()
+void GetBases()
 {
     unsigned int uSpins;
     unsigned int uPrevious;
@@ -40,7 +40,12 @@ static void GetBases()
             break;
         }
 
-        if (uSpins < RR_TIME_SPINS_BEFORE_SLEEP)
+        if (uSpins > RR_TIME_SPINS_BEFORE_SLEEP)
+        {
+            uSpins = 0;
+            OSSleepTicks((OSTime)rrMicrosToTime(RR_TIME_SPIN_SLEEP_MICROSECONDS));
+        }
+        else
         {
             uSpins = uSpins + 1;
 
@@ -49,14 +54,9 @@ static void GetBases()
                 OSYieldThread();
             }
         }
-        else
-        {
-            uSpins = 0;
-            OSSleepTicks((OSTime)rrMicrosToTime(RR_TIME_SPIN_SLEEP_MICROSECONDS));
-        }
     }
 
-    rrTickBase = OSGetTick();
+    rrTickBase = (unsigned int)OSGetTick();
     rrTimeBase = OSGetTime();
 
     rrAtomicStoreRelease32(&rrTimeState, RR_TIME_READY);

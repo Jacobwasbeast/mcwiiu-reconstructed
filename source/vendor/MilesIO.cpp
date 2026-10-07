@@ -41,228 +41,202 @@ AIL_FILE_READ_CALLBACK AIL_file_read = DefaultFileRead;
 
 unsigned int DefaultFileOpen(const char* pFileName, unsigned int* puFileHandle)
 {
-    MilesFile* pFile;
-    const char* pCursor;
-    const char* pNumber;
-    int bNegative;
-    char* pOutput;
-    char szName[512];
-    unsigned int uLength;
     unsigned int uOffset;
+    MilesFile* pFile;
+    char szName[512];
     unsigned int uSize;
-    int iCharacter;
     int iOpened;
+    unsigned int uLength;
 
     pFile = (MilesFile*)AIL_mem_alloc_lock_info((int)sizeof(MilesFile), MILES_IO_FILE, 71);
-    if (pFile == NULL)
+    if (pFile != NULL)
     {
-        return 0;
-    }
+        memset(pFile, 0, sizeof(MilesFile));
 
-    memset(pFile, 0, sizeof(MilesFile));
+        uLength = MILES_IO_WHOLE_FILE;
+        uOffset = 0;
 
-    uLength = MILES_IO_WHOLE_FILE;
-    uOffset = 0;
-
-    if (*pFileName == '*')
-    {
-        pCursor = pFileName;
-        pOutput = szName;
-
-        for (;;)
+        if (*pFileName != '*')
         {
-            iCharacter = (int)*++pCursor;
-            if (iCharacter == '\0' || iCharacter == '*')
-            {
-                break;
-            }
-
-            *pOutput = (char)iCharacter;
-            pOutput = pOutput + 1;
+            iOpened = Platform_OpenFile(pFile, pFileName);
         }
-
-        *pOutput = '\0';
-
-        if (*pCursor == '*')
+        else
         {
-            pNumber = pCursor + 1;
-            iCharacter = (int)*pNumber;
-            bNegative = iCharacter == '-';
-            if (bNegative)
+            char* pOutput = szName;
+            char cCharacter;
+            while ((cCharacter = *++pFileName) != '\0' && cCharacter != '*')
             {
-                pNumber = pCursor + 2;
-                iCharacter = (int)*pNumber;
+                *pOutput++ = cCharacter;
             }
 
-            uLength = 0;
-            while ((unsigned int)(iCharacter - '0') < 10)
-            {
-                pNumber = pNumber + 1;
-                uLength = uLength * 10 + (unsigned int)(iCharacter - '0');
-                iCharacter = (int)*pNumber;
-            }
+            *pOutput = '\0';
 
-            if (bNegative)
+            int bNegative = 0;
+            if (*pFileName == '*')
             {
-                uLength = (unsigned int)(-(int)uLength);
-            }
-
-            if (iCharacter == '*')
-            {
-                pCursor = pNumber + 1;
-                iCharacter = (int)*pCursor;
-                bNegative = iCharacter == '-';
-                if (bNegative)
+                cCharacter = *++pFileName;
+                if (cCharacter == '-')
                 {
-                    pCursor = pNumber + 2;
-                    iCharacter = (int)*pCursor;
+                    cCharacter = *++pFileName;
+                    bNegative = 1;
                 }
 
-                uOffset = 0;
-                while ((unsigned int)(iCharacter - '0') < 10)
+                unsigned int uValue = 0;
+                while (cCharacter >= '0' && cCharacter <= '9')
                 {
-                    pCursor = pCursor + 1;
-                    uOffset = uOffset * 10 + (unsigned int)(iCharacter - '0');
-                    iCharacter = (int)*pCursor;
+                    uValue = uValue * 10 + (unsigned int)(cCharacter - '0');
+                    cCharacter = *++pFileName;
                 }
 
                 if (bNegative)
                 {
-                    uOffset = (unsigned int)(-(int)uOffset);
+                    uValue = (unsigned int)(-(int)uValue);
+                }
+
+                uLength = uValue;
+
+                if (cCharacter == '*')
+                {
+                    bNegative = 0;
+                    cCharacter = *++pFileName;
+                    if (cCharacter == '-')
+                    {
+                        cCharacter = *++pFileName;
+                        bNegative = 1;
+                    }
+
+                    uValue = 0;
+                    while (cCharacter >= '0' && cCharacter <= '9')
+                    {
+                        uValue = uValue * 10 + (unsigned int)(cCharacter - '0');
+                        cCharacter = *++pFileName;
+                    }
+
+                    if (bNegative)
+                    {
+                        uValue = (unsigned int)(-(int)uValue);
+                    }
+
+                    uOffset = uValue;
                 }
             }
+
+            iOpened = Platform_OpenFile(pFile, szName);
         }
 
-        iOpened = Platform_OpenFile(pFile, szName);
-    }
-    else
-    {
-        iOpened = Platform_OpenFile(pFile, pFileName);
-    }
+        if (iOpened != 0)
+        {
+            uSize = pFile->uSize;
+            if (uOffset < uSize)
+            {
+                if (uLength > uSize - uOffset)
+                {
+                    uLength = uSize - uOffset;
+                }
+            }
+            else
+            {
+                uOffset = uSize;
+                uLength = 0;
+            }
 
-    if (iOpened == 0)
-    {
+            pFile->uLength = uLength;
+
+            if (uOffset != MILES_IO_WHOLE_FILE)
+            {
+                pFile->uBaseOffset = uOffset;
+            }
+
+            *puFileHandle = (unsigned int)pFile;
+            return 1;
+        }
+
         AIL_mem_free_lock(pFile);
-        return 0;
     }
 
-    uSize = pFile->uSize;
-    if (uOffset < uSize)
-    {
-        if (uLength > uSize - uOffset)
-        {
-            uLength = uSize - uOffset;
-        }
-    }
-    else
-    {
-        uOffset = uSize;
-        uLength = 0;
-    }
-
-    pFile->uLength = uLength;
-
-    if (uOffset != MILES_IO_WHOLE_FILE)
-    {
-        pFile->uBaseOffset = uOffset;
-    }
-
-    *puFileHandle = (unsigned int)pFile;
-    return 1;
+    return 0;
 }
 
 void DefaultFileClose(unsigned int uFileHandle)
 {
-    MilesFile* pFile;
-
-    pFile = (MilesFile*)uFileHandle;
-    if (pFile == NULL)
+    if (uFileHandle != 0)
     {
-        return;
-    }
+        if (((MilesFile*)uFileHandle)->iDoNotClose == 0)
+        {
+            Platform_CloseFile((MilesFile*)uFileHandle);
+        }
 
-    if (pFile->iDoNotClose == 0)
-    {
-        Platform_CloseFile(pFile);
+        AIL_mem_free_lock((MilesFile*)uFileHandle);
     }
-
-    AIL_mem_free_lock(pFile);
 }
 
 int DefaultFileSeek(unsigned int uFileHandle, int iOffset, unsigned int uType)
 {
-    MilesFile* pFile;
-    unsigned int uLength;
-    unsigned int uPosition;
-
-    pFile = (MilesFile*)uFileHandle;
-    if (pFile == NULL)
+    MilesFile* pFile = (MilesFile*)uFileHandle;
+    int iResult = 0;
+    if (pFile != NULL)
     {
-        return 0;
-    }
-
-    if (uType == MILES_IO_SEEK_END)
-    {
-        uLength = pFile->uLength;
-        uPosition = uLength + (unsigned int)iOffset;
-    }
-    else
-    {
-        uPosition = (unsigned int)iOffset;
-        if (uType == MILES_IO_SEEK_CURRENT)
+        unsigned int uLength;
+        unsigned int uPosition = (unsigned int)iOffset;
+        if (uType == MILES_IO_SEEK_END)
         {
-            uPosition = pFile->uPosition + uPosition;
+            uLength = pFile->uLength;
+            uPosition = uLength + uPosition;
+        }
+        else
+        {
+            if (uType == MILES_IO_SEEK_CURRENT)
+            {
+                uPosition = pFile->uPosition + uPosition;
+            }
+
+            uLength = pFile->uLength;
         }
 
-        uLength = pFile->uLength;
+        pFile->uPosition = uPosition;
+
+        if (uPosition > uLength)
+        {
+            pFile->uPosition = uLength;
+            uPosition = uLength;
+        }
+
+        Platform_SeekFromBeginning(pFile, uPosition);
+        iResult = (int)pFile->uPosition;
     }
 
-    pFile->uPosition = uPosition;
-
-    if (uPosition > uLength)
-    {
-        pFile->uPosition = uLength;
-        uPosition = uLength;
-    }
-
-    Platform_SeekFromBeginning(pFile, uPosition);
-    return (int)pFile->uPosition;
+    return iResult;
 }
 
 int DefaultFileRead(unsigned int uFileHandle, void* pBuffer, unsigned int uBytes)
 {
-    MilesFile* pFile;
-    int iBytesRead;
-
-    pFile = (MilesFile*)uFileHandle;
-    if (pFile == NULL)
+    MilesFile* pFile = (MilesFile*)uFileHandle;
+    int iBytesRead = 0;
+    if (pFile != NULL)
     {
-        return 0;
+        if (pFile->uPosition + uBytes > pFile->uLength)
+        {
+            uBytes = pFile->uLength - pFile->uPosition;
+        }
+
+        iBytesRead = Platform_ReadFile(pFile, pBuffer, uBytes);
+        pFile->uPosition = pFile->uPosition + (unsigned int)iBytesRead;
     }
 
-    if (pFile->uPosition + uBytes > pFile->uLength)
-    {
-        uBytes = pFile->uLength - pFile->uPosition;
-    }
-
-    iBytesRead = Platform_ReadFile(pFile, pBuffer, uBytes);
-    pFile->uPosition = pFile->uPosition + (unsigned int)iBytesRead;
     return iBytesRead;
 }
 
 void CloseAsync(MilesAsyncRead* pRead)
 {
-    if (pRead->uFileHandle == 0)
+    if (pRead->uFileHandle != 0)
     {
-        return;
+        pRead->iLength = 0;
+        pRead->iLengthHigh = 0;
+        pRead->uFlags = 0;
+
+        MilesAsyncFileRead(pRead);
+        MilesAsyncFileStatus(pRead, MILES_IO_WHOLE_FILE);
     }
-
-    pRead->iLength = 0;
-    pRead->iLengthHigh = 0;
-    pRead->uFlags = 0;
-
-    MilesAsyncFileRead(pRead);
-    MilesAsyncFileStatus(pRead, MILES_IO_WHOLE_FILE);
 }
 
 PODHandleArray<SoundBank*> g_soundBanks;
@@ -323,15 +297,8 @@ SoundBank* GetContainer(const char* name, const char** assetName)
 
     const unsigned int length = static_cast<unsigned int>(separator - name);
     char bankName[CONTAINER_NAME_SIZE];
-    if (length == 0)
-    {
-        bankName[0] = '\0';
-    }
-    else
-    {
-        strncpy(bankName, name, length);
-        bankName[length] = '\0';
-    }
+    strncpy(bankName, name, length);
+    bankName[length] = '\0';
 
     g_soundBanks.Reacquire();
     int count = g_soundBanks.Count();
@@ -410,19 +377,16 @@ void Default_FreeAll()
     g_soundBanks.Reacquire();
     int count = g_soundBanks.Count();
     SoundBank** banks = g_soundBanks.Data();
-    while (count != 0)
+    for (int i = 0; i < count; ++i)
     {
-        if (reinterpret_cast<SoundBankHeader*>(*banks)->magic == SOUND_BANK_MAGIC)
+        if (reinterpret_cast<SoundBankHeader*>(banks[i])->magic == SOUND_BANK_MAGIC)
         {
-            AIL_close_soundbank(*banks);
+            AIL_close_soundbank(banks[i]);
         }
         else
         {
-            Audition_CloseBank(*banks);
+            Audition_CloseBank(banks[i]);
         }
-
-        --count;
-        ++banks;
     }
 
     g_soundBanks.FreeMem();
@@ -444,13 +408,14 @@ const unsigned char* Default_GetEvent(const char* name)
 {
     const char* assetName = NULL;
     SoundBank* bank = GetContainer(name, &assetName);
-    const unsigned char* event = NULL;
     if (bank != NULL)
     {
+        const unsigned char* event = NULL;
         AIL_get_event_contents(bank, name, &event);
+        return event;
     }
 
-    return event;
+    return NULL;
 }
 
 const MilesMarkerList* Default_GetMarkerList(const char* name)
@@ -549,23 +514,20 @@ extern "C" const MilesMarkerList* Container_GetMarkerList(const char* name)
 extern "C" int Audition_Status()
 {
     if (g_milesAuditionStatusCallback)
-        return g_milesAuditionStatusCallback(0);
+        return g_milesAuditionStatusCallback();
     return 0;
 }
 
 extern "C" int Audition_Pump()
 {
     if (g_milesAuditionPumpCallback)
-        return g_milesAuditionPumpCallback(0);
+        return g_milesAuditionPumpCallback();
     return 0;
 }
 
 extern "C" SoundBank* Audition_OpenBank(const char* name)
 {
-    SoundBank* bank = NULL;
-    if (g_milesAuditionOpenBankCallback)
-        bank = g_milesAuditionOpenBankCallback(name);
-    return bank;
+    return g_milesAuditionOpenBankCallback ? g_milesAuditionOpenBankCallback(name) : NULL;
 }
 
 extern "C" int Audition_OpenComplete(SoundBank* bank)
@@ -756,11 +718,13 @@ extern "C" SoundBank* MilesAddSoundBankInternal(const char* fileName, const char
         if (bank != NULL)
         {
             g_soundBanks.Reacquire();
-            g_soundBanks.Push(bank);
+            g_soundBanks.Push(static_cast<SoundBank*>(bank));
             AIL_unlock_mutex();
-            while (Audition_OpenComplete(bank) == 0)
+            int opened = Audition_OpenComplete(bank);
+            while (opened == 0)
             {
                 AIL_sleep(AUDITION_SLEEP_MILLISECONDS);
+                opened = Audition_OpenComplete(bank);
             }
 
             AIL_lock_mutex();

@@ -30,8 +30,8 @@ typedef void (*MilesAuditionAsyncCancelCallback)(int auditionId);
 typedef void (*MilesAuditionSetPersistCallback)(unsigned long long eventId, const char* name,
                                                 const char* preset);
 typedef void (*MilesAuditionRampStateCallback)(const char* name, unsigned long long eventId, int target);
-typedef int (*MilesAuditionStatusCallback)(int argument);
-typedef int (*MilesAuditionPumpCallback)(int argument);
+typedef int (*MilesAuditionStatusCallback)();
+typedef int (*MilesAuditionPumpCallback)();
 typedef SoundBank* (*MilesAuditionOpenBankCallback)(const char* name);
 typedef int (*MilesAuditionOpenCompleteCallback)(SoundBank* bank);
 typedef void (*MilesAuditionCloseBankCallback)(SoundBank* bank);

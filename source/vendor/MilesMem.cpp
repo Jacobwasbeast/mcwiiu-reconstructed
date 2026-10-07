@@ -262,9 +262,10 @@ void* Handle_Get(Handle handle)
     {
         const HandleEntry* entry = reinterpret_cast<const HandleEntry*>(
             HandleTableEnd - handle.index * sizeof(HandleEntry));
+        void* data = entry->data;
         if (entry->generation == handle.generation)
         {
-            return entry->data;
+            return data;
         }
     }
 
@@ -406,22 +407,18 @@ static const int SAMPLE_STATUS_DONE = 2;
 
 extern "C" void AIL_API_end_sample(_SAMPLE* pSample)
 {
-    int* pStatus;
-
     if (pSample == NULL)
     {
         return;
     }
 
-    pStatus = pSample->driver->sampleStatus;
-
-    if (pStatus[pSample->index] == SAMPLE_STATUS_FREE ||
-        pStatus[pSample->index] == SAMPLE_STATUS_DONE)
+    if (pSample->driver->sampleStatus[pSample->index] == SAMPLE_STATUS_FREE ||
+        pSample->driver->sampleStatus[pSample->index] == SAMPLE_STATUS_DONE)
     {
         return;
     }
 
-    pStatus[pSample->index] = SAMPLE_STATUS_DONE;
+    pSample->driver->sampleStatus[pSample->index] = SAMPLE_STATUS_DONE;
     pSample->starved = 1;
 
     if (pSample->endOfBuffer != NULL)
@@ -437,27 +434,27 @@ extern "C" void AIL_API_end_sample(_SAMPLE* pSample)
 
 extern "C" int AIL_API_sample_3D_position(_SAMPLE* pSample, float* pX, float* pY, float* pZ)
 {
-    if (pSample == NULL)
+    if (pSample != NULL)
     {
-        return 0;
+        if (pX != NULL)
+        {
+            *pX = pSample->x;
+        }
+
+        if (pY != NULL)
+        {
+            *pY = pSample->y;
+        }
+
+        if (pZ != NULL)
+        {
+            *pZ = pSample->z;
+        }
+
+        return pSample->is3D;
     }
 
-    if (pX != NULL)
-    {
-        *pX = pSample->x;
-    }
-
-    if (pY != NULL)
-    {
-        *pY = pSample->y;
-    }
-
-    if (pZ != NULL)
-    {
-        *pZ = pSample->z;
-    }
-
-    return pSample->is3D;
+    return 0;
 }
 
 extern "C" void AIL_API_listener_3D_position(_LISTENER* pListener, float* pX, float* pY, float* pZ)
@@ -690,20 +687,20 @@ extern "C" const char* AIL_get_soundbank_name(SoundBank* bank)
 extern "C" void* AIL_find_sound_preset(SoundBank* bank, const char* name)
 {
     SoundBankHeader* header = reinterpret_cast<SoundBankHeader*>(bank);
-    if (header != NULL && name != NULL && header->magic == SOUND_BANK_MAGIC)
+    if (header == NULL || name == NULL || header->magic != SOUND_BANK_MAGIC)
     {
-        SoundBank::AssetEntry* entry = reinterpret_cast<SoundBank::AssetEntry*>(
-            static_cast<uintptr_t>(FindAsset(bank, name, header->presets, header->presetCount)));
-        if (entry == NULL)
-        {
-            AIL_set_error(PRESET_NOT_FOUND_ERROR);
-            return NULL;
-        }
-
-        return reinterpret_cast<char*>(header) + entry->value;
+        return NULL;
     }
 
-    return NULL;
+    SoundBank::AssetEntry* entry = reinterpret_cast<SoundBank::AssetEntry*>(
+        static_cast<uintptr_t>(FindAsset(bank, name, header->presets, header->presetCount)));
+    if (entry == NULL)
+    {
+        AIL_set_error(PRESET_NOT_FOUND_ERROR);
+        return NULL;
+    }
+
+    return reinterpret_cast<char*>(header) + entry->value;
 }
 
 extern "C" int AIL_sound_asset_info(SoundBank* bank, const char* name, char* path,
@@ -1571,8 +1568,8 @@ extern "C" void AIL_API_set_sample_reverb_levels(_SAMPLE* pSample, float fFirst,
     }
 
     pSample->reverbFirst = fFirst;
-    pSample->reverbDirty = 1;
     pSample->reverbSecond = fSecond;
+    pSample->reverbDirty = 1;
 
     if (pSample->driver->sampleStatus[pSample->index] != SAMPLE_STATUS_PLAYING)
     {
@@ -1694,52 +1691,51 @@ extern "C" int AIL_API_sample_processor(_SAMPLE* pSample, int iStage)
         iStage = SAMPLE_STAGE_DECODER;
     }
 
-    const SampleStage* pStage = &pSample->stages[iStage];
-    if (pStage->filter.active == 0)
+    if (pSample->stages[iStage].filter.active == 0)
     {
         return 0;
     }
 
-    return pStage->filter.provider;
+    return pSample->stages[iStage].filter.provider;
 }
 
 extern "C" int AIL_API_install_bus_compressor(_DIG_DRIVER* pDriver, int iBus, int iStage,
                                               int iInputBus)
 {
     _SAMPLE** ppBuses = pDriver->busSamples;
-    if (ppBuses[iBus] != NULL && ppBuses[iInputBus] != NULL)
+    if (ppBuses[iBus] == NULL || ppBuses[iInputBus] == NULL)
     {
-        int iProvider = 0;
-        if (AIL_find_filter("Compressor Filter", &iProvider) == 0)
-        {
-            AIL_set_error(COMPRESSOR_NOT_FOUND_ERROR);
-            return 0;
-        }
-
-        AIL_set_sample_processor(ppBuses[iBus], iStage, iProvider);
-        ppBuses[iBus]->compressorLink = (iStage << BUS_COMPRESSOR_STAGE_SHIFT) |
-                                        BUS_COMPRESSOR_LINK_FLAGS;
-        ppBuses[iInputBus]->compressorSources = ppBuses[iInputBus]->compressorSources | (1 << iBus);
-        return 1;
+        AIL_set_error(BUS_INDEX_ERROR);
+        return 0;
     }
 
-    AIL_set_error(BUS_INDEX_ERROR);
-    return 0;
+    int iProvider = 0;
+    if (AIL_find_filter("Compressor Filter", &iProvider) == 0)
+    {
+        AIL_set_error(COMPRESSOR_NOT_FOUND_ERROR);
+        return 0;
+    }
+
+    AIL_set_sample_processor(ppBuses[iBus], iStage, iProvider);
+    ppBuses[iBus]->compressorLink = (iStage << BUS_COMPRESSOR_STAGE_SHIFT) |
+                                    BUS_COMPRESSOR_LINK_FLAGS;
+    ppBuses[iInputBus]->compressorSources = ppBuses[iInputBus]->compressorSources | (1 << iBus);
+    return 1;
 }
 
 extern "C" int AIL_API_sample_channel_count(_SAMPLE* pSample, unsigned int* puMask)
 {
-    if (pSample == NULL)
+    if (pSample != NULL)
     {
-        return 0;
+        if (puMask != NULL)
+        {
+            *puMask = pSample->channelMask;
+        }
+
+        return pSample->channelCount;
     }
 
-    if (puMask != NULL)
-    {
-        *puMask = pSample->channelMask;
-    }
-
-    return pSample->channelCount;
+    return 0;
 }
 
 extern "C" int AIL_API_sample_playback_rate(_SAMPLE* pSample)
@@ -1782,12 +1778,14 @@ extern "C" void AIL_API_set_sample_3D_cone(_SAMPLE* pSample, float fInnerAngle, 
 
     pSample->coneInner = fInnerAngle / CONE_ANGLE_DIVISOR;
     pSample->coneOuterVolume = fOuterVolume;
+    int iEnabled = 0;
     pSample->coneOuter = fOuterAngle / CONE_ANGLE_DIVISOR;
-    pSample->coneEnabled = 0;
     if (fInnerAngle < CONE_FULL_ANGLE && fOuterVolume < CONE_FULL_VOLUME)
     {
-        pSample->coneEnabled = 1;
+        iEnabled = 1;
     }
+
+    pSample->coneEnabled = iEnabled;
 }
 
 extern "C" void AIL_API_set_sample_3D_orientation(_SAMPLE* pSample, float fForwardX,
@@ -1832,8 +1830,8 @@ extern "C" void AIL_API_set_sample_3D_velocity_vector(_SAMPLE* pSample, float fX
         return;
     }
 
-    pSample->velocityY = fY;
     pSample->velocityX = fX;
+    pSample->velocityY = fY;
     pSample->velocityZ = fZ;
 }
 
@@ -1896,17 +1894,19 @@ extern "C" int AIL_find_filter(const char* pName, int* piProvider)
 {
     unsigned int uIndex = RIB_ENUMERATE_FIRST;
     unsigned int uProvider;
-    const char* pProviderName;
     unsigned int uFlags;
-    RIB_PROVIDER_PROPERTY_CALLBACK pProperty = NULL;
+    RIB_PROVIDER_PROPERTY_CALLBACK pProperty;
+    const char* pPipelineName;
+    const char* pVoiceName;
     RIB_INTERFACE_ENTRY entries[2] = {{RIB_PROPERTY, "Flags", &uFlags, 0},
                                       {RIB_FUNCTION, "PROVIDER_property", &pProperty, 0}};
+    pProperty = NULL;
 
     while (RIB_enumerate_providers(PIPELINE_FILTER_INTERFACE, &uIndex, &uProvider) != 0)
     {
         RIB_request_interface(uProvider, PIPELINE_FILTER_INTERFACE, 2, entries);
-        if (pProperty(RIB_PROVIDER_NAME, &pProviderName, 0, 0) != 0 &&
-            strcmp(pProviderName, pName) == 0)
+        if (pProperty(RIB_PROVIDER_NAME, &pPipelineName, 0, 0) != 0 &&
+            strcmp(pPipelineName, pName) == 0)
         {
             if (piProvider != NULL)
             {
@@ -1920,8 +1920,8 @@ extern "C" int AIL_find_filter(const char* pName, int* piProvider)
     while (RIB_enumerate_providers(VOICE_FILTER_INTERFACE, &uIndex, &uProvider) != 0)
     {
         RIB_request_interface(uProvider, VOICE_FILTER_INTERFACE, 2, entries);
-        if (pProperty(RIB_PROVIDER_NAME, &pProviderName, 0, 0) != 0 &&
-            strcmp(pProviderName, pName) == 0)
+        if (pProperty(RIB_PROVIDER_NAME, &pVoiceName, 0, 0) != 0 &&
+            strcmp(pVoiceName, pName) == 0)
         {
             if (piProvider != NULL)
             {
@@ -3217,7 +3217,7 @@ extern "C" int AIL_API_WAV_info(const void* pData, _AILSOUNDINFO* pInfo)
 extern "C" int AIL_process_WAV_image(_AILSOUNDINFO* pInfo, _SAMPLE* pSample)
 {
     unsigned int uFormat = 0;
-    if (pInfo->channels < 3 && pInfo->channelMask == ALL_BITS_SET)
+    if (pInfo->channels <= 2 && pInfo->channelMask == ALL_BITS_SET)
     {
         if (pInfo->channels == 2)
         {
@@ -3231,14 +3231,15 @@ extern "C" int AIL_process_WAV_image(_AILSOUNDINFO* pInfo, _SAMPLE* pSample)
 
     if (pInfo->bits == WAV_IMA_ADPCM_BITS)
     {
-        uFormat = uFormat | SAMPLE_FORMAT_ADPCM | SAMPLE_FORMAT_16_BITS;
+        uFormat = uFormat | SAMPLE_FORMAT_ADPCM;
     }
-    else if (pInfo->bits == SAMPLE_WIDTH_16)
+
+    if (pInfo->bits == WAV_IMA_ADPCM_BITS || pInfo->bits == SAMPLE_WIDTH_16)
     {
         uFormat = uFormat | SAMPLE_FORMAT_16_BITS;
     }
 
-    if (SS_set_sample_type(pSample, uFormat, SAMPLE_CHANNEL_MASK_ALL) == 0)
+    if (SS_set_sample_type(pSample, uFormat, pInfo->channelMask) == 0)
     {
         return 0;
     }
@@ -3288,8 +3289,8 @@ extern "C" void AIL_request_EOB_ASI_reset(_SAMPLE* pSample, int iBuffer, int iPo
         return;
     }
 
-    pSample->buffers[iBuffer].resetPosition = iPosition;
     pSample->buffers[iBuffer].reset = 1;
+    pSample->buffers[iBuffer].resetPosition = iPosition;
 }
 
 extern "C" _SAMPLE* AIL_API_bus_sample_handle(_DIG_DRIVER* pDriver, int iBus)
@@ -3944,14 +3945,12 @@ extern "C" _SAMPLE* AIL_API_allocate_sample_handle(_DIG_DRIVER* pDriver)
 
 extern "C" void AIL_API_release_sample_handle(_SAMPLE* pSample)
 {
-    if (pSample == NULL)
+    if (pSample != NULL)
     {
-        return;
+        pSample->driver->sampleStatus[pSample->index] = SAMPLE_STATUS_FREE;
+        AIL_set_sample_processor(pSample, SAMPLE_STAGE_ALL, 0);
+        free_channel_buffers(pSample);
     }
-
-    pSample->driver->sampleStatus[pSample->index] = SAMPLE_STATUS_FREE;
-    AIL_set_sample_processor(pSample, SAMPLE_STAGE_ALL, 0);
-    free_channel_buffers(pSample);
 }
 
 extern "C" void AIL_API_set_sample_volume_levels(_SAMPLE* pSample, float fLeft, float fRight)
@@ -4374,30 +4373,28 @@ extern "C" unsigned int AIL_API_sample_position(_SAMPLE* pSample)
 
 extern "C" void AIL_API_set_sample_position(_SAMPLE* pSample, unsigned int uPosition)
 {
-    if (pSample == NULL)
+    if (pSample != NULL)
     {
-        return;
-    }
+        unsigned int uSize = pSample->buffers[pSample->currentBuffer].size;
+        if (uPosition > uSize)
+        {
+            uPosition = uSize;
+        }
 
-    unsigned int uSize = pSample->buffers[pSample->currentBuffer].size;
-    if (uSize < uPosition)
-    {
-        uPosition = uSize;
-    }
+        unsigned int uGranularity = AIL_sample_granularity(pSample);
+        uPosition = ((uPosition + (uGranularity >> 1)) / uGranularity) * uGranularity;
+        if ((pSample->channelFlags & SAMPLE_FORMAT_ADPCM) != 0)
+        {
+            pSample->resetB = 0;
+            pSample->resetA = 0;
+        }
 
-    unsigned int uGranularity = AIL_sample_granularity(pSample);
-    uPosition = ((uPosition + (uGranularity >> 1)) / uGranularity) * uGranularity;
-    if ((pSample->channelFlags & SAMPLE_FORMAT_ADPCM) != 0)
-    {
-        pSample->resetA = 0;
-        pSample->resetB = 0;
-    }
-
-    reset_asi(pSample, SAMPLE_BUFFER_CURRENT, uPosition);
-    SampleBuffer* pBuffer = &pSample->buffers[pSample->currentBuffer];
-    if (uPosition <= static_cast<unsigned int>(pBuffer->size))
-    {
-        pBuffer->position = uPosition;
+        reset_asi(pSample, SAMPLE_BUFFER_CURRENT, uPosition);
+        SampleBuffer* pBuffer = &pSample->buffers[pSample->currentBuffer];
+        if (uPosition <= static_cast<unsigned int>(pBuffer->size))
+        {
+            pBuffer->position = uPosition;
+        }
     }
 }
 
@@ -4408,8 +4405,8 @@ extern "C" void AIL_API_set_sample_loop_count(_SAMPLE* pSample, int iLoopCount)
         return;
     }
 
-    pSample->loopCount = iLoopCount;
     pSample->loopState = iLoopCount;
+    pSample->loopCount = iLoopCount;
 }
 
 int nibbles_per_sample(int iFormat)
@@ -4712,14 +4709,15 @@ extern "C" void AIL_API_start_sample(_SAMPLE* pSample)
     pSample->buffers[pSample->currentBuffer].position = 0;
     pSample->bufferRewind = 0;
 
-    DecoderStage& decoder = pSample->stages[SAMPLE_STAGE_DECODER].decoder;
-    if (decoder.active != 0)
+    DecoderStage* pDecoder = &pSample->stages[SAMPLE_STAGE_DECODER].decoder;
+    if (pDecoder->active != 0)
     {
-        decoder.seek(decoder.stream, SAMPLE_BUFFER_CURRENT);
-        if (pSample->loopMode == LOOP_MODE_ASI && decoder.streamSeekPosition != RIB_ENTRY_NOT_FOUND)
+        pDecoder->seek(pDecoder->stream, SAMPLE_BUFFER_CURRENT);
+        if (pSample->loopMode == LOOP_MODE_ASI && pDecoder->streamSeekPosition != RIB_ENTRY_NOT_FOUND)
         {
             int* pPosition = &pSample->buffers[pSample->currentBuffer].position;
-            decoder.property(decoder.stream, decoder.streamSeekPosition, 0, pPosition, pPosition);
+            pDecoder->property(pDecoder->stream, pDecoder->streamSeekPosition, 0, pPosition,
+                               pPosition);
         }
     }
 
@@ -4735,13 +4733,12 @@ extern "C" void AIL_API_stop_sample(_SAMPLE* pSample)
         return;
     }
 
-    int* pStatus = &pSample->driver->sampleStatus[pSample->index];
-    if (*pStatus != SAMPLE_STATUS_PLAYING)
+    if (pSample->driver->sampleStatus[pSample->index] != SAMPLE_STATUS_PLAYING)
     {
         return;
     }
 
-    *pStatus = SAMPLE_STATUS_STOPPED;
+    pSample->driver->sampleStatus[pSample->index] = SAMPLE_STATUS_STOPPED;
 }
 
 extern "C" void AIL_API_resume_sample(_SAMPLE* pSample)
@@ -4759,13 +4756,12 @@ extern "C" void AIL_API_resume_sample(_SAMPLE* pSample)
             return;
         }
 
-        SampleBuffer* pBuffer = &pSample->buffers[pSample->currentBuffer];
-        if (pBuffer->size == 0)
+        if (pSample->buffers[pSample->currentBuffer].size == 0)
         {
             return;
         }
 
-        if (pBuffer->data == NULL)
+        if (pSample->buffers[pSample->currentBuffer].data == NULL)
         {
             return;
         }
@@ -4822,9 +4818,9 @@ extern "C" int AIL_API_minimum_sample_buffer_size(_DIG_DRIVER* pDriver, int iPla
         iSize = iSize + 4;
     }
 
-    return ((((iSize + BUFFER_SIZE_ROUNDING) & ~BUFFER_SIZE_ROUNDING) * AIL_preference[PREFERENCE_MINIMUM_BUFFER_MARGIN]) /
-            iGranularity) *
-           iGranularity;
+    int iMinimum = ((iSize + BUFFER_SIZE_ROUNDING) & ~BUFFER_SIZE_ROUNDING) *
+                   AIL_preference[PREFERENCE_MINIMUM_BUFFER_MARGIN];
+    return iMinimum - iMinimum % iGranularity;
 }
 
 extern "C" int AIL_API_set_sample_buffer_count(_SAMPLE* pSample, int iCount)
@@ -6066,29 +6062,27 @@ extern "C" void SS_flush(_DIG_DRIVER* pDriver, int iBus)
                                                                     pDriver->outputs[iOutput].bytes);
     }
 
-    if (iBus >= FINAL_BUS + 1)
+    if (iBus <= FINAL_BUS)
     {
-        return;
-    }
-
-    if (iBus < FINAL_BUS)
-    {
-        DriverBus* pBus = &pDriver->buses[iBus];
-        if (pBus->update != 0)
+        if (iBus < FINAL_BUS)
         {
-            pDriver->processors[DRIVER_PROCESSOR_FLUSH].function.flush(
-                pBus->buffer + pBus->writeOffset, pBus->chunkBytes);
-            if (pBus->tail * BUS_TAIL_SCALE + BUS_TAIL_MARGIN <
-                static_cast<unsigned int>((pDriver->sharedState - pBus->updateValue) *
-                                          pDriver->fillPeriod))
+            DriverBus* pBus = &pDriver->buses[iBus];
+            if (pBus->update != 0)
             {
-                pBus->update = 0;
+                pDriver->processors[DRIVER_PROCESSOR_FLUSH].function.flush(
+                    pBus->buffer + pBus->writeOffset, pBus->chunkBytes);
+                if (static_cast<unsigned int>((pDriver->sharedState - pBus->updateValue) *
+                                              pDriver->fillPeriod) >
+                    pBus->tail * BUS_TAIL_SCALE + BUS_TAIL_MARGIN)
+                {
+                    pBus->update = 0;
+                }
             }
         }
-    }
-    else
-    {
-        FLT_call_premix_processors(pDriver);
+        else
+        {
+            FLT_call_premix_processors(pDriver);
+        }
     }
 }
 
