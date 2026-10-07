@@ -17,7 +17,6 @@ class ServerBossEvent : public BossEvent
 public:
     ServerBossEvent(int nameId, const std::wstring& name, BossBarColor color,
                     BossBarOverlay overlay);
-    virtual ~ServerBossEvent();
 
     void broadcast(ClientboundBossEventPacket::Operation operation);
 

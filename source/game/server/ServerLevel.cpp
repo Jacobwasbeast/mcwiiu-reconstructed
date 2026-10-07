@@ -1267,7 +1267,7 @@ void ServerLevel::saveLevelData()
     checkSession();
     for (unsigned int i = 0; i < server->mLevels.length; ++i)
     {
-        DerivedServerLevel* derived = dynamic_cast<DerivedServerLevel*>(server->mLevels.data[i]);
+        DerivedServerLevel* derived = dynamic_cast<DerivedServerLevel*>(server->mLevels[i]);
         if (derived != NULL)
             derived->saveDimensionData();
     }

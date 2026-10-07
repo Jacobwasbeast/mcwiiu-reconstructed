@@ -611,7 +611,7 @@ void ServerPlayer::flushEntitiesToRemove()
         for (std::vector<int32_t>::iterator it = mEntitiesToRemove.begin();
              it != mEntitiesToRemove.end() && index < count; ++index)
         {
-            entityIds.data[index] = *it;
+            entityIds[index] = *it;
             it = mEntitiesToRemove.erase(it);
         }
         mConnection->send(boost::shared_ptr<Packet>(new ClientboundRemoveEntitiesPacket(entityIds)));

@@ -404,13 +404,13 @@ LevelChunk* ServerChunkCache::create(int x, int z, bool allowEmpty)
         return m_emptyChunk;
     }
 
-    LevelChunk* previous = m_cache[computeIdx(x, z)];
-    LevelChunk* result = previous;
-    if (previous == NULL || previous->x != x || previous->z != z || previous->mInvalid)
+    LevelChunk* chunk = m_cache[computeIdx(x, z)];
+    LevelChunk* lastChunk = chunk;
+    if (chunk == NULL || chunk->x != x || chunk->z != z || chunk->mInvalid)
     {
         EnterCriticalSection(&m_csLoadCreate);
         PIXBeginNamedEvent(0.0f, "Loading chunk");
-        LevelChunk* chunk = load(x, z, previous);
+        chunk = load(x, z, chunk);
         PIXEndNamedEvent();
         if (chunk == NULL)
         {
@@ -430,9 +430,9 @@ LevelChunk* ServerChunkCache::create(int x, int z, bool allowEmpty)
             chunk->load(false);
         }
         LeaveCriticalSection(&m_csLoadCreate);
-        result = updateCacheAndPostProcess(x, z, chunk, previous, allowEmpty);
+        chunk = updateCacheAndPostProcess(x, z, chunk, lastChunk, allowEmpty);
     }
-    return result;
+    return chunk;
 }
 
 LevelChunk* ServerChunkCache::create(int x, int z)
@@ -536,8 +536,7 @@ bool ServerChunkCache::save(bool force, ProgressListener* progressListener)
     int saveTotal = 0;
     if (progressListener != NULL)
     {
-        std::vector<LevelChunk*>::iterator end = m_loadedChunkList.end();
-        for (std::vector<LevelChunk*>::iterator it = m_loadedChunkList.begin(); it != end; ++it)
+        for (std::vector<LevelChunk*>::iterator it = m_loadedChunkList.begin(), end = m_loadedChunkList.end(); it != end; ++it)
         {
             if ((*it)->shouldSave(force))
             {
@@ -594,7 +593,6 @@ bool ServerChunkCache::save(bool force, ProgressListener* progressListener)
                 }
             }
 
-            int progress = 0;
             for (unsigned int i = 0; i < sortedChunkList.size(); ++i)
             {
                 LevelChunk* chunk = sortedChunkList[i];
@@ -609,10 +607,9 @@ bool ServerChunkCache::save(bool force, ProgressListener* progressListener)
                     if (progressListener != NULL)
                     {
                         ++saveCount;
-                        progress += 100;
                         if (saveCount % SAVE_PROGRESS_INTERVAL == 0)
                         {
-                            progressListener->progressStagePercentage(progress / saveTotal);
+                            progressListener->progressStagePercentage(saveCount * 100 / saveTotal);
                         }
                     }
                 }

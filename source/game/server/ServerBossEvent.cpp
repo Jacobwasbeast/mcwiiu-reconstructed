@@ -17,10 +17,6 @@ ServerBossEvent::ServerBossEvent(int nameId, const std::wstring& name,
 {
 }
 
-ServerBossEvent::~ServerBossEvent()
-{
-}
-
 void ServerBossEvent::broadcast(ClientboundBossEventPacket::Operation operation)
 {
     if (!visible)
