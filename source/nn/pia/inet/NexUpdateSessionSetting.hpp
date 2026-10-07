@@ -3,6 +3,8 @@
 
 #include "nn/pia.h"
 #include "nn/pia/String.hpp"
+#include "nn/pia/common/DateTime.hpp"
+#include "nn/pia/inet/ParamVariant.hpp"
 #include "nn/pia/session/UpdateSessionSetting.hpp"
 #include "nn/pia/inet/SessionType.hpp"
 
@@ -39,10 +41,14 @@ public:
     Result SetAttribute(unsigned int index, unsigned int value);
     unsigned int GetAttribute(unsigned int index) const;
     bool IsAttributeUpdated(unsigned int index) const;
+    bool IsOnlyAttributeUpdated() const;
+    bool IsOnlyAllAttributesUpdated() const;
+    bool IsOnlyApplicationDataUpdated() const;
 
     Result SetApplicationData(const void* data, unsigned int size);
     Result GetApplicationData(void* buffer, unsigned int bufferSize) const;
     unsigned int GetApplicationDataSize() const;
+    void CopyApplicationDataToVector(void* vector) const;
 
     void SetSessionUserPassword(const common::String& password);
     const common::String& GetSessionUserPassword() const;
@@ -50,6 +56,7 @@ public:
 
     void SetSessionMatchmakeKeyword(const common::String& keyword);
     const common::String& GetSessionMatchmakeKeyword() const;
+    const common::DateTime& GetStartedTime() const;
 
     void SetRatingValue(unsigned int ratingValue);
     unsigned int GetRatingValue() const;
@@ -75,6 +82,14 @@ public:
     void SetSelectionPriority(unsigned char selectionPriority);
     unsigned char GetSelectionPriority() const;
 
+    bool IsSetScoreBaseParam() const;
+    bool IsValid() const;
+
+    const common::String* GetAdditionalScoreBasedParameterValueKey(unsigned int index) const;
+    const ParamVariant* GetAdditionalScoreBasedParameterValue(unsigned int index) const;
+    const common::String* GetAdditionalScoreBasedParameterStringKey(unsigned int index) const;
+    const common::String* GetAdditionalScoreBasedParameterString(unsigned int index) const;
+
     unsigned short m_minParticipantNum;
     unsigned short m_maxParticipantNum;
     SessionType m_sessionType;
@@ -83,8 +98,10 @@ public:
     bool m_attributeUpdated[cAttributeNum];
     unsigned char m_applicationData[512];
     unsigned int m_applicationDataSize;
+    unsigned char m_selectionPriority;
     common::FixedString<32> m_sessionUserPassword;
-    common::FixedString<56> m_sessionMatchmakeKeyword;
+    common::FixedString<32> m_sessionMatchmakeKeyword;
+    common::DateTime m_startedTime;
     unsigned int m_ratingValue;
     bool m_isSetRatingValue;
     unsigned int m_disconnectionRate;
@@ -95,7 +112,10 @@ public:
     bool m_isSetCountryCode;
     bool m_updateGeoIp;
     bool m_isSetUpdateGeoIp;
-    unsigned char m_selectionPriority;
+    common::FixedString<8> m_additionalScoreBasedParameterValueKey[3];
+    ParamVariant m_additionalScoreBasedParameterValue[3];
+    common::FixedString<8> m_additionalScoreBasedParameterStringKey;
+    common::FixedString<64> m_additionalScoreBasedParameterString;
     unsigned int m_nexModificationFlag;
 };
 

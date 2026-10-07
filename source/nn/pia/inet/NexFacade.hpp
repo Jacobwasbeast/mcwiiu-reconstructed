@@ -37,7 +37,6 @@ class NexFacade : public IFacade
 public:
     struct LoginInfo;
     NexFacade();
-    virtual ~NexFacade();
     virtual unsigned int GetRandomPortRangeMin() const;
     virtual unsigned int GetRandomPortRangeMax() const;
     virtual void RelayProbeRequest(const transport::StationLocation& source,

@@ -10,7 +10,7 @@ class NexUpdateCommunitySetting
 {
 public:
     NexUpdateCommunitySetting();
-    virtual ~NexUpdateCommunitySetting();
+    ~NexUpdateCommunitySetting();
     void Reset();
     void Trace(unsigned long long value) const;
     unsigned int GetCommunityId() const;
@@ -47,24 +47,27 @@ public:
     bool IsSetParticipationEndDate() const;
 
 private:
+    unsigned int unknown0;
     unsigned int communityId;
     unsigned short minParticipantNum;
     unsigned short maxParticipantNum;
     unsigned int attributes[6];
-    common::FixedString<128> description;
-    common::FixedString<128> communityUserPassword;
+    unsigned char applicationData[512];
+    unsigned int applicationDataSize;
+    common::FixedString<256> description;
+    common::FixedString<32> communityUserPassword;
     common::DateTime participationStartDate;
     common::DateTime participationEndDate;
-    unsigned int applicationDataSize;
-    unsigned char applicationData[512];
-    bool communityIdSet;
-    bool minParticipantNumSet;
-    bool maxParticipantNumSet;
-    bool attributesSet;
-    bool descriptionSet;
-    bool communityUserPasswordSet;
-    bool participationStartDateSet;
-    bool participationEndDateSet;
+    unsigned int communityIdSet : 1;
+    unsigned int minParticipantNumSet : 1;
+    unsigned int maxParticipantNumSet : 1;
+    unsigned int applicationDataSet : 1;
+    unsigned int attributesSet : 1;
+    unsigned int descriptionSet : 1;
+    unsigned int : 18;
+    unsigned int communityUserPasswordSet : 1;
+    unsigned int participationStartDateSet : 1;
+    unsigned int participationEndDateSet : 1;
 };
 
 }}}

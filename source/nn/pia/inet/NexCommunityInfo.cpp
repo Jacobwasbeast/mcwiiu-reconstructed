@@ -4,9 +4,10 @@
 namespace nn { namespace pia { namespace inet {
 
 NexCommunityInfo::NexCommunityInfo()
-    : m_communityId(0), m_official(false), m_restricted(false), m_participationStartDate(), m_participationEndDate(),
-      m_relatedSessionCount(0), m_attributes(), m_ownerPrincipalId(0), m_currentParticipantNum(0), m_maxParticipantNum(0),
-      m_minParticipantNum(0), m_description(""), m_applicationData(), m_applicationDataSize(0)
+    : m_communityId(0), m_official(false), m_restricted(false), m_attributes(), m_relatedSessionCount(0),
+      m_currentParticipantNum(0), m_ownerPrincipalId(0), m_maxParticipantNum(0), m_minParticipantNum(0),
+      m_description(), m_applicationData(), m_applicationDataSize(0), m_participationStartDate(),
+      m_participationEndDate()
 {
     Clear();
 }
@@ -72,8 +73,8 @@ bool NexCommunityInfo::GetApplicationDataSize(unsigned int* size)
 void NexCommunityInfo::SetCommunityId(unsigned int communityId) { m_communityId = communityId; }
 void NexCommunityInfo::SetOfficialCommunity(bool official) { m_official = official; }
 void NexCommunityInfo::SetRestrictedByPassword(bool restricted) { m_restricted = restricted; }
-void NexCommunityInfo::SetParticipationStartTime(const common::DateTime& time) { std::memcpy(&m_participationStartDate, &time, sizeof(m_participationStartDate)); }
-void NexCommunityInfo::SetParticipationEndTime(const common::DateTime& time) { std::memcpy(&m_participationEndDate, &time, sizeof(m_participationEndDate)); }
+void NexCommunityInfo::SetParticipationStartTime(const common::DateTime& time) { m_participationStartDate = time; }
+void NexCommunityInfo::SetParticipationEndTime(const common::DateTime& time) { m_participationEndDate = time; }
 void NexCommunityInfo::SetRelatedSessionCount(unsigned int count) { m_relatedSessionCount = count; }
 
 void NexCommunityInfo::SetAttribute(unsigned char index, unsigned int value)

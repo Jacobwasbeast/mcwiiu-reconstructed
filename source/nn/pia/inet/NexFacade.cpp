@@ -44,10 +44,6 @@ NexFacade::NexFacade()
 {
 }
 
-NexFacade::~NexFacade()
-{
-}
-
 unsigned int NexFacade::GetRandomPortRangeMin() const
 {
     return cRandomPortRangeMin;

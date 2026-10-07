@@ -14,10 +14,6 @@ NexJoinSessionSetting::NexJoinSessionSetting()
 {
 }
 
-NexJoinSessionSetting::~NexJoinSessionSetting()
-{
-}
-
 void NexJoinSessionSetting::Reset()
 {
     session::JoinSessionSetting::Reset();

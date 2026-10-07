@@ -209,7 +209,6 @@ private:
     nn::pia::common::Time m_selectionPriorityUpdateTime;
     nn::pia::common::Time m_field190;
     NexSessionInfo m_sessionInfo;
-    unsigned char m_sessionInfoReserved[16];
     unsigned int m_randomMatchmakeScore;
     bool m_randomMatchmakeScoreAvailable;
     bool m_processingJoinMatchmakeSession;

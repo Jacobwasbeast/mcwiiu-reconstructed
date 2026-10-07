@@ -1,12 +1,15 @@
 #include "nn/pia/inet/NexCommunityInfoList.hpp"
 
+#include "nn/pia/NetworkFactory.hpp"
+#include "nn/pia/common/Memory.hpp"
+
 namespace nn { namespace pia { namespace inet {
 
 NexCommunityInfoList::~NexCommunityInfoList()
 {
-    for (unsigned int index = 0; index < m_size; ++index)
-        delete m_entries[index];
-    delete [] m_entries;
+    for (unsigned int index = 0; index < m_maxSize; ++index)
+        transport::DestroyObject(m_entries[index]);
+    common::DeleteArray(m_entries);
 }
 
 NexCommunityInfoList::const_iterator NexCommunityInfoList::Begin() const { return m_entries; }
@@ -18,9 +21,9 @@ unsigned int NexCommunityInfoList::GetMaxSize() const { return m_maxSize; }
 
 void NexCommunityInfoList::Clear()
 {
-    for (unsigned int index = 0; index < m_size; ++index)
-        m_entries[index]->Clear();
     m_size = 0;
+    for (unsigned int index = 0; index < m_maxSize; ++index)
+        m_entries[index]->Clear();
 }
 
 }}}

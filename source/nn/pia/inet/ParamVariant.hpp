@@ -10,7 +10,11 @@ class NexSessionSearchCriteria;
 class ParamVariant
 {
 public:
-    ParamVariant();
+    ParamVariant()
+    {
+        m_uint64Value = 0;
+        m_type = 0;
+    }
 
 private:
     friend class NexSessionSearchCriteria;

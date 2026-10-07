@@ -23,11 +23,11 @@ void NexSessionSearchCriteriaParticipant::Reset()
     for (unsigned int index = 0; index != 100; ++index) {
         principal_ids_[index] = 0;
     }
-    others_block_list_used_ = false;
-    application_data_enabled_ = true;
+    principal_id_size_ = 0;
     network_service_account_id_used_ = false;
     my_block_list_used_ = true;
-    principal_id_size_ = 0;
+    others_block_list_used_ = false;
+    application_data_enabled_ = true;
 }
 
 nn::pia::common::Result NexSessionSearchCriteriaParticipant::SetResultRange(uint32_t, uint32_t)

@@ -1,19 +1,28 @@
 #include "nn/pia/inet/NexSessionInfo.hpp"
+#include <coreinit/memory.h>
 #include <cstring>
 
 namespace nn { namespace pia { namespace inet {
 
 namespace {
-const Result cResultInvalidArgument = static_cast<Result>(0x10c07);
-const Result cResultBufferTooSmall = static_cast<Result>(0x10c04);
+enum
+{
+    cResultInvalidArgument = 0x10c07,
+    cResultBufferTooSmall = 0x10c04
+};
 }
 
 NexSessionInfo::NexSessionInfo() : game_mode_(0), session_id_(0),
     current_participant_num_(0), min_participant_num_(0), max_participant_num_(0),
-    opened_(false), attributes_(), application_data_(), application_data_size_(0),
-    user_password_enabled_(false), system_password_enabled_(false), session_type_(cSessionType_Normal),
-    auto_close_session_(false), host_principal_id_(0), target_principal_id_(0),
-    selection_priority_(0), started_time_(), community_id_(0) {}
+    opened_(false), user_password_enabled_(false), system_password_enabled_(false),
+    session_type_(cSessionType_Normal), auto_close_session_(false), host_principal_id_(0),
+    target_principal_id_(0), selection_priority_(0), started_time_(), community_id_(0)
+{
+    OSBlockSet(application_data_, 0, sizeof(application_data_));
+    application_data_size_ = 0;
+    started_time_.Clear();
+    OSBlockSet(attributes_, 0, sizeof(attributes_));
+}
 
 NexSessionInfo::~NexSessionInfo()
 {
@@ -49,17 +58,28 @@ uint16_t NexSessionInfo::GetMaxParticipantNum() const
     return max_participant_num_;
 }
 
-uint8_t NexSessionInfo::IsOpened() const
+bool NexSessionInfo::IsOpened() const
 {
     return opened_;
 }
 
 Result NexSessionInfo::GetApplicationData(void* buffer, unsigned int bufferSize) const
 {
-    if (buffer == NULL) return cResultInvalidArgument;
-    if (bufferSize < application_data_size_) return cResultBufferTooSmall;
-    std::memcpy(buffer, application_data_, application_data_size_);
-    return 0;
+    if (buffer == NULL)
+    {
+        Result result(cResultInvalidArgument);
+        return result;
+    }
+    else if (bufferSize < application_data_size_)
+    {
+        Result result(cResultBufferTooSmall);
+        return result;
+    }
+    else
+    {
+        OSBlockMove(buffer, application_data_, application_data_size_, false);
+        return 0;
+    }
 }
 
 uint32_t NexSessionInfo::GetApplicationDataSize() const
@@ -69,9 +89,20 @@ uint32_t NexSessionInfo::GetApplicationDataSize() const
 
 Result NexSessionInfo::GetAttribute(unsigned char index, unsigned int* value) const
 {
-    if (value == NULL || index >= 6) return cResultInvalidArgument;
-    *value = attributes_[index];
-    return 0;
+    if (value == NULL)
+    {
+        return Result(cResultInvalidArgument);
+    }
+    else if (index >= 6)
+    {
+        Result result(cResultInvalidArgument);
+        return result;
+    }
+    else
+    {
+        *value = attributes_[index];
+        return Result(0);
+    }
 }
 
 uint8_t NexSessionInfo::IsRestrictedByUserPassword() const
@@ -116,14 +147,24 @@ const common::DateTime& NexSessionInfo::GetStartedTime() const
 
 void NexSessionInfo::Clear()
 {
-    game_mode_ = session_id_ = community_id_ = 0;
-    current_participant_num_ = min_participant_num_ = max_participant_num_ = 0;
-    opened_ = user_password_enabled_ = system_password_enabled_ = auto_close_session_ = false;
-    session_type_ = cSessionType_Normal; host_principal_id_ = target_principal_id_ = 0;
-    selection_priority_ = 0; application_data_size_ = 0;
-    for (unsigned int i = 0; i < sizeof(attributes_) / sizeof(attributes_[0]); ++i) attributes_[i] = 0;
-    started_time_ = common::DateTime();
-    std::memset(application_data_, 0, sizeof(application_data_));
+    community_id_ = 0;
+    game_mode_ = 0;
+    session_id_ = 0;
+    current_participant_num_ = 0;
+    min_participant_num_ = 0;
+    max_participant_num_ = 0;
+    opened_ = false;
+    started_time_.Clear();
+    OSBlockSet(attributes_, 0, sizeof(attributes_));
+    OSBlockSet(application_data_, 0, sizeof(application_data_));
+    application_data_size_ = 0;
+    user_password_enabled_ = false;
+    system_password_enabled_ = false;
+    session_type_ = cSessionType_Normal;
+    auto_close_session_ = false;
+    host_principal_id_ = 0;
+    target_principal_id_ = 0;
+    selection_priority_ = 0;
 }
 
 void NexSessionInfo::Trace(unsigned long long traceId) const
@@ -166,14 +207,14 @@ void NexSessionInfo::SetAttribute(uint8_t index, uint32_t value)
     if (index < 6) attributes_[index] = value;
 }
 
-Result NexSessionInfo::SetApplicationData(const void* data, unsigned int size)
+void NexSessionInfo::SetApplicationData(const void* data, unsigned int size)
 {
-    if (data != NULL && size <= sizeof(application_data_)) {
-        std::memset(application_data_, 0, sizeof(application_data_));
-        std::memcpy(application_data_, data, size);
+    if (data != NULL && size <= sizeof(application_data_))
+    {
+        OSBlockSet(application_data_, 0, sizeof(application_data_));
+        OSBlockMove(application_data_, data, size, false);
         application_data_size_ = size;
     }
-    return 0;
 }
 
 void NexSessionInfo::SetUserPasswordEnabled(bool enabled)

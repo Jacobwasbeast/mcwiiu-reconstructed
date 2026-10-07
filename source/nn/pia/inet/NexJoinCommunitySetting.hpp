@@ -10,7 +10,6 @@ class NexJoinCommunitySetting : public session::JoinCommunitySetting
 {
 public:
     NexJoinCommunitySetting();
-    virtual ~NexJoinCommunitySetting();
     virtual void Reset();
 
     const common::String& GetCommunityUserPassword() const;

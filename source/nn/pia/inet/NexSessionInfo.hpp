@@ -5,6 +5,7 @@
 #include "nn/pia/Reconstruction.hpp"
 #include "nn/pia/common/DateTime.hpp"
 #include "nn/pia/inet/SessionType.hpp"
+#include "nn/pia/session/ISessionInfo.hpp"
 
 namespace nn
 {
@@ -12,7 +13,7 @@ namespace pia
 {
 namespace inet
 {
-class NexSessionInfo
+class NexSessionInfo : public session::ISessionInfo
 {
 public:
     NexSessionInfo();
@@ -22,7 +23,7 @@ public:
     virtual uint16_t GetCurrentParticipantNum() const;
     virtual uint16_t GetMinParticipantNum() const;
     virtual uint16_t GetMaxParticipantNum() const;
-    virtual uint8_t IsOpened() const;
+    virtual bool IsOpened() const;
     virtual Result GetApplicationData(void* buffer, unsigned int bufferSize) const;
     virtual uint32_t GetApplicationDataSize() const;
     virtual void Clear();
@@ -44,7 +45,7 @@ public:
     virtual void SetMaxParticipantNum(uint16_t participantNum);
     virtual void SetOpen(bool open);
     virtual void SetAttribute(uint8_t index, uint32_t value);
-    virtual Result SetApplicationData(const void* data, unsigned int size);
+    virtual void SetApplicationData(const void* data, unsigned int size);
     virtual void SetUserPasswordEnabled(bool enabled);
     virtual void SetSystemPasswordEnabled(bool enabled);
     virtual void SetSessionType(SessionType sessionType, bool autoCloseSession);

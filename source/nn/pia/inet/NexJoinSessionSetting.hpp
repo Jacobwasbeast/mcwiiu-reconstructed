@@ -11,7 +11,6 @@ class NexJoinSessionSetting : public session::JoinSessionSetting
 {
 public:
     NexJoinSessionSetting();
-    virtual ~NexJoinSessionSetting();
 
     virtual void Reset();
 

@@ -22,8 +22,8 @@ void MonitoringServerAddressResolveJob::Cleanup()
     }
     m_callContext.Reset();
     m_monitoringServerId = 0;
-    m_address = 0;
     m_sender = 0;
+    m_address = 0;
 }
 
 }}}
